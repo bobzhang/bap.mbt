@@ -67,6 +67,13 @@ priv struct ImageElfRelocationEntry {
 }
 
 ///|
+priv struct ImageElfDynamicRelocationTable {
+  addr : UInt64?
+  size : Int?
+  entry_size : Int?
+}
+
+///|
 priv struct ImageElfDynamicMetadata {
   required_libraries : Array[String]
   rpaths : Array[String]
@@ -887,6 +894,37 @@ fn image_elf_parse_relocation_entry(
   index : Int,
 ) -> Result[ImageElfRelocationEntry, String] {
   let base = relocation_section.offset + index * relocation_section.entsize
+  image_elf_parse_relocation_entry_at(data, header, base)
+}
+
+///|
+fn image_elf_parse_relocation_info(
+  header : ImageElfHeader,
+  info : UInt64,
+) -> Result[(Int, Int), String] {
+  let symbol_index = match header.class {
+    ImageElf32 =>
+      image_elf_uint_to_int(info >> 8, "ELF relocation symbol index")
+    ImageElf64 =>
+      image_elf_uint_to_int(info >> 32, "ELF relocation symbol index")
+  }
+  let typ = match header.class {
+    ImageElf32 => image_elf_uint_to_int(info & 0xffUL, "ELF relocation type")
+    ImageElf64 =>
+      image_elf_uint_to_int(info & 0xffffffffUL, "ELF relocation type")
+  }
+  match (symbol_index, typ) {
+    (Ok(symbol_index), Ok(typ)) => Ok((symbol_index, typ))
+    (Err(reason), _) | (_, Err(reason)) => Err(reason)
+  }
+}
+
+///|
+fn image_elf_parse_relocation_entry_at(
+  data : Bytes,
+  header : ImageElfHeader,
+  base : Int,
+) -> Result[ImageElfRelocationEntry, String] {
   let offset = match header.class {
     ImageElf32 => image_elf_read_u64(data, base, 4, header.endian)
     ImageElf64 => image_elf_read_u64(data, base, 8, header.endian)
@@ -896,24 +934,11 @@ fn image_elf_parse_relocation_entry(
     ImageElf64 => image_elf_read_u64(data, base + 8, 8, header.endian)
   }
   match (offset, info) {
-    (Ok(offset), Ok(info)) => {
-      let symbol_index = match header.class {
-        ImageElf32 =>
-          image_elf_uint_to_int(info >> 8, "ELF relocation symbol index")
-        ImageElf64 =>
-          image_elf_uint_to_int(info >> 32, "ELF relocation symbol index")
+    (Ok(offset), Ok(info)) =>
+      match image_elf_parse_relocation_info(header, info) {
+        Ok((symbol_index, typ)) => Ok({ offset, symbol_index, typ })
+        Err(reason) => Err(reason)
       }
-      let typ = match header.class {
-        ImageElf32 =>
-          image_elf_uint_to_int(info & 0xffUL, "ELF relocation type")
-        ImageElf64 =>
-          image_elf_uint_to_int(info & 0xffffffffUL, "ELF relocation type")
-      }
-      match (symbol_index, typ) {
-        (Ok(symbol_index), Ok(typ)) => Ok({ offset, symbol_index, typ })
-        (Err(reason), _) | (_, Err(reason)) => Err(reason)
-      }
-    }
     (Err(reason), _) | (_, Err(reason)) => Err(reason)
   }
 }
@@ -999,6 +1024,94 @@ fn image_elf_relocations(
     }
   }
   Ok((relocations, external_references))
+}
+
+///|
+fn image_elf_has_relocation_sections(
+  section_headers : Array[ImageElfSectionHeader],
+) -> Bool {
+  section_headers.any(section => section.typ == 4 || section.typ == 9)
+}
+
+///|
+fn image_elf_relocation_entry_size(
+  header : ImageElfHeader,
+  has_addend : Bool,
+) -> Int {
+  match (header.class, has_addend) {
+    (ImageElf32, false) => 8
+    (ImageElf32, true) => 12
+    (ImageElf64, false) => 16
+    (ImageElf64, true) => 24
+  }
+}
+
+///|
+fn image_elf_dynamic_relocation_table_empty() -> ImageElfDynamicRelocationTable {
+  { addr: None, size: None, entry_size: None }
+}
+
+///|
+fn image_elf_dynamic_relocation_table_entries(
+  data : Bytes,
+  header : ImageElfHeader,
+  program_headers : Array[ImageElfProgramHeader],
+  table : ImageElfDynamicRelocationTable,
+  has_addend : Bool,
+  name : String,
+) -> Result[Array[ImageElfRelocationEntry], String] {
+  match (table.addr, table.size) {
+    (Some(addr), Some(size)) if size > 0 => {
+      let entry_size = match table.entry_size {
+        Some(value) => value
+        None => image_elf_relocation_entry_size(header, has_addend)
+      }
+      let minimum_entry_size = image_elf_relocation_entry_size(
+        header, has_addend,
+      )
+      if entry_size < minimum_entry_size {
+        return Err("\{name} entry size is invalid")
+      }
+      if size % entry_size != 0 {
+        return Err("\{name} size is not entry-aligned")
+      }
+      let table_offset = match
+        image_elf_vaddr_range_offset(program_headers, addr, size, name) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let entries : Array[ImageElfRelocationEntry] = []
+      for i in 0..<(size / entry_size) {
+        match
+          image_elf_parse_relocation_entry_at(
+            data,
+            header,
+            table_offset + i * entry_size,
+          ) {
+          Ok(entry) => entries.push(entry)
+          Err(reason) => return Err(reason)
+        }
+      }
+      Ok(entries)
+    }
+    (Some(_), Some(_)) => Ok([])
+    (Some(_), None) | (None, Some(_)) => Err("\{name} metadata is incomplete")
+    (None, None) => Ok([])
+  }
+}
+
+///|
+fn image_elf_dynamic_relative_relocations_from_entries(
+  header : ImageElfHeader,
+  entries : Array[ImageElfRelocationEntry],
+) -> Array[Relocation] {
+  let relocations : Array[Relocation] = []
+  for entry in entries {
+    if image_elf_is_relative_relocation(header, entry.typ) {
+      relocations.push(Relocation::create(fixup=entry.offset, relative=true))
+    }
+  }
+  relocations
 }
 
 ///|
@@ -1209,6 +1322,88 @@ fn image_elf_dynamic_entries_from_program(
     }
   }
   Ok(entries)
+}
+
+///|
+fn image_elf_uint_to_dynamic_size(
+  value : UInt64,
+  what : String,
+) -> Result[Int, String] {
+  image_elf_uint_to_int(value, what)
+}
+
+///|
+fn image_elf_dynamic_relative_relocations_from_programs(
+  data : Bytes,
+  header : ImageElfHeader,
+  program_headers : Array[ImageElfProgramHeader],
+) -> Result[Array[Relocation], String] {
+  let relocations : Array[Relocation] = []
+  for program in program_headers {
+    if program.typ == 2 {
+      let entries = match
+        image_elf_dynamic_entries_from_program(data, header, program) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let mut rel = image_elf_dynamic_relocation_table_empty()
+      let mut rela = image_elf_dynamic_relocation_table_empty()
+      for entry in entries {
+        match entry {
+          (7UL, value) => rela = { ..rela, addr: Some(value) }
+          (8UL, value) =>
+            match image_elf_uint_to_dynamic_size(value, "ELF RELA size") {
+              Ok(size) => rela = { ..rela, size: Some(size) }
+              Err(reason) => return Err(reason)
+            }
+          (9UL, value) =>
+            match image_elf_uint_to_dynamic_size(value, "ELF RELA entry size") {
+              Ok(size) => rela = { ..rela, entry_size: Some(size) }
+              Err(reason) => return Err(reason)
+            }
+          (17UL, value) => rel = { ..rel, addr: Some(value) }
+          (18UL, value) =>
+            match image_elf_uint_to_dynamic_size(value, "ELF REL size") {
+              Ok(size) => rel = { ..rel, size: Some(size) }
+              Err(reason) => return Err(reason)
+            }
+          (19UL, value) =>
+            match image_elf_uint_to_dynamic_size(value, "ELF REL entry size") {
+              Ok(size) => rel = { ..rel, entry_size: Some(size) }
+              Err(reason) => return Err(reason)
+            }
+          _ => ()
+        }
+      }
+      let rela_entries = match
+        image_elf_dynamic_relocation_table_entries(
+          data, header, program_headers, rela, true, "ELF dynamic RELA table",
+        ) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      for
+        relocation in image_elf_dynamic_relative_relocations_from_entries(
+          header, rela_entries,
+        ) {
+        relocations.push(relocation)
+      }
+      let rel_entries = match
+        image_elf_dynamic_relocation_table_entries(
+          data, header, program_headers, rel, false, "ELF dynamic REL table",
+        ) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      for
+        relocation in image_elf_dynamic_relative_relocations_from_entries(
+          header, rel_entries,
+        ) {
+        relocations.push(relocation)
+      }
+    }
+  }
+  Ok(relocations)
 }
 
 ///|
@@ -1578,6 +1773,18 @@ fn image_elf_load(data : Bytes) -> Result[(Image, Array[String]), String] {
         image_elf_relocations(data, header, section_headers) {
         Ok(value) => value
         Err(reason) => return Err(reason)
+      }
+      if !image_elf_has_relocation_sections(section_headers) {
+        let dynamic_relocations = match
+          image_elf_dynamic_relative_relocations_from_programs(
+            data, header, program_headers,
+          ) {
+          Ok(value) => value
+          Err(reason) => return Err(reason)
+        }
+        for relocation in dynamic_relocations {
+          relocations.push(relocation)
+        }
       }
       let dynamic_metadata = match
         image_elf_dynamic_metadata(

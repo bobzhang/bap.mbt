@@ -164,6 +164,11 @@ against named undefined symbols become external references, relocations against
 named defined symbols can record the symbol value as the target, and known
 machine-relative relocation types can record a relative relocation. Leave
 type-specific relocation application to a later pass.
+For stripped ELF files, preserve relative dynamic relocations from `PT_DYNAMIC`
+when section relocation tables are absent. Resolve `DT_RELA`/`DT_REL` virtual
+addresses through `PT_LOAD` headers, bound them with `DT_RELASZ`/`DT_RELSZ`,
+honor entry-size tags when present, and record only known machine-relative
+relocation types until dynamic symbol-table resolution is ported.
 Project-level image fallback can enrich successful ELF loads with optional
 DWARF-derived function symbols, but unsupported or malformed DWARF should not
 turn a loadable stripped binary into a project-loading failure. Treat those

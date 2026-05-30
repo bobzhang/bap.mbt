@@ -66,6 +66,16 @@ pub fn[V] MemMap::intersects(self : MemMap[V], memory : Memory) -> Bool {
 }
 
 ///|
+pub fn[V] MemMap::remove(self : MemMap[V], memory : Memory) -> MemMap[V] {
+  {
+    entries: self.entries.filter(entry => {
+      entry.0.min_addr() != memory.min_addr() ||
+      entry.0.max_addr() != memory.max_addr()
+    }),
+  }
+}
+
+///|
 pub fn[V] MemMap::dominators(
   self : MemMap[V],
   memory : Memory,

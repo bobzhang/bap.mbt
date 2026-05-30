@@ -34,6 +34,7 @@ pub fn[V] MemMap::max_addr(Self[V]) -> UInt64?
 pub fn[V] MemMap::max_binding(Self[V]) -> (Memory, V)?
 pub fn[V] MemMap::min_addr(Self[V]) -> UInt64?
 pub fn[V] MemMap::min_binding(Self[V]) -> (Memory, V)?
+pub fn[V] MemMap::remove(Self[V], Memory) -> Self[V]
 pub fn[V] MemMap::remove_dominators(Self[V], Memory) -> Self[V]
 pub fn[V] MemMap::remove_intersections(Self[V], Memory) -> Self[V]
 pub fn[V] MemMap::singleton(Memory, V) -> Self[V]

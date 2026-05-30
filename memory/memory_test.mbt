@@ -138,4 +138,9 @@ test "memmap min max and removals follow BAP interval behavior" {
   let without_dominators = map.remove_dominators(point)
   assert_true(without_dominators.length() == 2)
   assert_true(!without_dominators.dominates(point))
+  let without_exact = map.remove(middle)
+  assert_true(without_exact.length() == 2)
+  assert_true(without_exact.lookup(0x100UL).length() == 1)
+  assert_true(without_exact.lookup(0x180UL).is_empty())
+  assert_true(without_exact.lookup(0x300UL).length() == 1)
 }

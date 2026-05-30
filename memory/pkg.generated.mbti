@@ -1,0 +1,63 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/memory"
+
+import {
+  "bobzhang/bap/bitvec",
+  "bobzhang/bap/types",
+  "moonbitlang/core/debug",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub(all) enum AddressPosition {
+  AddrInside
+  AddrBelow
+  AddrAbove
+} derive(Eq, @debug.Debug)
+
+type MemMap[V]
+pub fn[V] MemMap::add(Self[V], Memory, V) -> Self[V]
+pub fn[V] MemMap::contains(Self[V], UInt64) -> Bool
+pub fn[V] MemMap::dominates(Self[V], Memory) -> Bool
+pub fn[V] MemMap::dominators(Self[V], Memory) -> Array[(Memory, V)]
+pub fn[V] MemMap::empty() -> Self[V]
+pub fn[V] MemMap::entries(Self[V]) -> Array[(Memory, V)]
+pub fn[V] MemMap::find(Self[V], Memory) -> Array[(Memory, V)]
+pub fn[V] MemMap::intersections(Self[V], Memory) -> Array[(Memory, V)]
+pub fn[V] MemMap::length(Self[V]) -> Int
+pub fn[V] MemMap::lookup(Self[V], UInt64) -> Array[(Memory, V)]
+pub fn[V] MemMap::max_addr(Self[V]) -> UInt64?
+pub fn[V] MemMap::min_addr(Self[V]) -> UInt64?
+pub fn[V] MemMap::remove_intersections(Self[V], Memory) -> Self[V]
+pub fn[V] MemMap::singleton(Memory, V) -> Self[V]
+
+type Memory
+pub fn Memory::compare_with(Self, UInt64) -> AddressPosition
+pub fn Memory::contains(Self, UInt64) -> Bool
+pub fn Memory::create(endian~ : @bitvec.Endian, start~ : UInt64, Bytes, pos? : Int, len? : Int) -> Result[Self, String]
+pub fn Memory::dominates(Self, Self) -> Bool
+pub fn Memory::endian(Self) -> @bitvec.Endian
+pub fn Memory::first_byte(Self) -> Self
+pub fn Memory::from_bytes(endian~ : @bitvec.Endian, start~ : UInt64, Bytes) -> Self
+pub fn Memory::hexdump(Self) -> String
+pub fn Memory::intersects(Self, Self) -> Bool
+pub fn Memory::last_byte(Self) -> Self
+pub fn Memory::length(Self) -> Int
+pub fn Memory::load(Self, UInt64, width? : Int, disp? : Int, index? : Int, scale? : Int) -> Result[@types.Word, String]
+pub fn Memory::max_addr(Self) -> UInt64
+pub fn Memory::merge(Self, Self) -> Result[Self, String]
+pub fn Memory::min_addr(Self) -> UInt64
+pub fn Memory::range(Self, UInt64, UInt64) -> Result[Self, String]
+pub fn Memory::rebase(Self, UInt64) -> Self
+pub fn Memory::store(Self, UInt64, @types.Word) -> Result[Self, String]
+pub fn Memory::to_bytes(Self) -> Bytes
+pub fn Memory::to_string(Self) -> String
+pub fn Memory::view(Self, from? : UInt64, words? : Int, word_size? : Int) -> Result[Self, String]
+
+// Type aliases
+
+// Traits
+

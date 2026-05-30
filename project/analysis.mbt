@@ -163,25 +163,10 @@ fn project_analysis_join_grammar(grammar : Array[String]) -> String {
 fn project_analysis_parse_bitvec(
   text : String,
 ) -> Result[@bitvec.BitVec, String] {
-  match text.split_once(":") {
-    None => Err("expected bitvector literal <hex>:<width>")
-    Some((digits, suffix)) => {
-      let width_text = if suffix.has_suffix("u") || suffix.has_suffix("s") {
-        suffix[:suffix.length() - 1]
-      } else {
-        suffix
-      }
-      let width = try @string.parse_int(width_text) catch {
-        _ => return Err("invalid bitvector width")
-      } noraise {
-        value => value
-      }
-      try @bitvec.from_hex(width~, digits) catch {
-        _ => Err("invalid bitvector literal")
-      } noraise {
-        value => Ok(value)
-      }
-    }
+  try @bitvec.from_string(text) catch {
+    _ => Err("invalid bitvector literal")
+  } noraise {
+    value => Ok(value)
   }
 }
 

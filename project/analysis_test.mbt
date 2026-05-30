@@ -59,6 +59,14 @@ test "project analysis bitvec and core object arguments parse" {
     }
     Err(reason) => fail(reason)
   }
+  match bits.parse(["42:8"]) {
+    Ok(value) => assert_true(value.to_hex() == "0x2a")
+    Err(reason) => fail(reason)
+  }
+  match bits.parse(["true"]) {
+    Ok(value) => assert_true(value == @bitvec.b1())
+    Err(reason) => fail(reason)
+  }
   assert_true(bits.parse(["0x2a"]) is Err(_))
   let label_arg = @project.ProjectAnalysisArgs::one(
     @project.ProjectAnalysisArg::program(),

@@ -55,7 +55,13 @@ pub(all) enum DwarfForm {
   DwarfStrp
   DwarfStrx(DwarfIndexSpec)
   DwarfAddrx(DwarfIndexSpec)
+  DwarfData16
+  DwarfLineStrp
+  DwarfImplicitConst(Int64)
+  DwarfLoclistx
   DwarfRnglistx
+  DwarfStrpSup
+  DwarfRefSup4
   DwarfOffset
   DwarfRef(DwarfLenspec)
   DwarfIndirect
@@ -252,6 +258,20 @@ pub fn DwarfInput::read_code(
 }
 
 ///|
+fn DwarfInput::read_signed_code(
+  self : DwarfInput,
+) -> Result[(Int64, DwarfInput), String] {
+  match Leb128::read(self.data[:], signed=true, pos=self.position_value) {
+    Ok((leb, next_pos)) =>
+      match leb.to_int64() {
+        Ok(code) => Ok((code, self.with_position(next_pos)))
+        Err(reason) => Err(reason)
+      }
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
 fn dwarf_tag_of_int(code : Int) -> DwarfTag {
   match code {
     0x03 => DwarfEntryPoint
@@ -308,8 +328,14 @@ fn dwarf_form_of_int(code : Int) -> Result[DwarfForm, String] {
     0x19 => Ok(DwarfFlagPresent)
     0x1a => Ok(DwarfStrx(DwarfIndexLeb128))
     0x1b => Ok(DwarfAddrx(DwarfIndexLeb128))
-    0x23 => Ok(DwarfRnglistx)
+    0x1c => Ok(DwarfRefSup4)
+    0x1d => Ok(DwarfStrpSup)
+    0x1e => Ok(DwarfData16)
+    0x1f => Ok(DwarfLineStrp)
     0x20 => Ok(DwarfRef(DwarfEight))
+    0x21 => Ok(DwarfImplicitConst(0L))
+    0x22 => Ok(DwarfLoclistx)
+    0x23 => Ok(DwarfRnglistx)
     0x25 => Ok(DwarfStrx(DwarfIndexOne))
     0x26 => Ok(DwarfStrx(DwarfIndexTwo))
     0x27 => Ok(DwarfStrx(DwarfIndexThree))

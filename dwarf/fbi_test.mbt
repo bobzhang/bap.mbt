@@ -250,6 +250,49 @@ test "translated DWARF FBI resolves DWARF5 addrx function bounds" {
 }
 
 ///|
+test "translated DWARF FBI skips DWARF5 producer metadata forms" {
+  let abbrev = b"\x01\x11\x01" +
+    b"\x3a\x21\x01" +
+    b"\x7f\x1f" +
+    b"\x00\x00" +
+    b"\x02\x2e\x00" +
+    b"\x03\x08" +
+    b"\x11\x01" +
+    b"\x12\x0b" +
+    b"\x7e\x1e" +
+    b"\x7d\x22" +
+    b"\x7c\x1c" +
+    b"\x7b\x1d" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x33\x00\x00\x00" +
+    b"\x05\x00" +
+    b"\x01" +
+    b"\x04" +
+    b"\x00\x00\x00\x00" +
+    b"\x01" +
+    b"\x00\x00\x00\x00" +
+    b"\x02" +
+    b"forms\x00" +
+    b"\x40\x00\x00\x00" +
+    b"\x04" +
+    b"\x00\x00\x00\x00\x00\x00\x00\x00" +
+    b"\x00\x00\x00\x00\x00\x00\x00\x00" +
+    b"\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x00"
+  let data = expect_fbi_data(
+    @dwarf.DwarfData::from_bytes(endian=LittleEndian, info~, abbrev~, str=b""),
+  )
+  let functions = expect_functions(data.functions())
+  assert_true(functions.length() == 1)
+  assert_true(functions[0].name() == "forms")
+  assert_true(functions[0].low_pc() == 0x40UL)
+  assert_true(functions[0].high_pc() == Some(0x44UL))
+}
+
+///|
 test "translated DWARF FBI summarizes debug ranges" {
   let abbrev = b"\x01\x11\x01" +
     b"\x11\x01" +

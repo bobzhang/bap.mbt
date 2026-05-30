@@ -77,7 +77,13 @@ pub(all) enum DwarfForm {
   DwarfStrp
   DwarfStrx(DwarfIndexSpec)
   DwarfAddrx(DwarfIndexSpec)
+  DwarfData16
+  DwarfLineStrp
+  DwarfImplicitConst(Int64)
+  DwarfLoclistx
   DwarfRnglistx
+  DwarfStrpSup
+  DwarfRefSup4
   DwarfOffset
   DwarfRef(DwarfLenspec)
   DwarfIndirect

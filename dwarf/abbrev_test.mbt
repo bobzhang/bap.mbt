@@ -79,6 +79,24 @@ test "translated DWARF abbreviation parser supports offsets and unknown attrs" {
 }
 
 ///|
+test "translated DWARF abbreviation parser reads implicit constants" {
+  let bytes = b"\x05\x2e\x00" +
+    b"\x12\x21\x7e" +
+    b"\x7f\x1e" +
+    b"\x00\x00" +
+    b"\x00"
+  let table = expect_abbrev_table(@dwarf.DwarfAbbrevTable::of_bytes(bytes))
+  let entry = expect_abbrev_entry(table.lookup(5))
+  assert_true(entry.tag() == DwarfSubprogram)
+  assert_true(entry.fields().length() == 2)
+  assert_true(entry.fields()[0].attr() == DwarfHighPc)
+  assert_true(entry.fields()[0].form() == DwarfImplicitConst(-2L))
+  assert_true(entry.fields()[0].value_kind() == DwarfHighPcOffsetValue)
+  assert_true(entry.fields()[1].attr() == DwarfUnknownAttr(0x7f))
+  assert_true(entry.fields()[1].form() == DwarfData16)
+}
+
+///|
 test "translated DWARF abbreviation parser rejects duplicates and malformed fields" {
   let duplicate = b"\x01\x2e\x00\x00\x00" + b"\x01\x11\x00\x00\x00" + b"\x00"
   assert_true(

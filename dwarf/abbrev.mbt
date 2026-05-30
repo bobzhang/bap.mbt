@@ -65,7 +65,8 @@ pub fn DwarfAbbrevField::value_kind(
       DwarfEntryPcValue
     (DwarfHighPc, DwarfAddr) | (DwarfHighPc, DwarfAddrx(_)) =>
       DwarfHighPcAddressValue
-    (DwarfHighPc, DwarfConst(_)) => DwarfHighPcOffsetValue
+    (DwarfHighPc, DwarfConst(_)) | (DwarfHighPc, DwarfImplicitConst(_)) =>
+      DwarfHighPcOffsetValue
     (DwarfRanges, DwarfOffset) | (DwarfRanges, DwarfRnglistx) =>
       DwarfRangesValue
     (DwarfStrOffsetsBase, DwarfOffset) => DwarfStrOffsetsBaseValue
@@ -160,8 +161,8 @@ fn read_abbrev_fields(
               cursor = after_form
               done = true
             } else {
-              match dwarf_form_of_int(form_code) {
-                Ok(form) => {
+              match dwarf_abbrev_form_of_int(form_code, after_form) {
+                Ok((form, after_form)) => {
                   fields.push(
                     DwarfAbbrevField::create(
                       attr=dwarf_attr_of_int(attr_code),
@@ -179,6 +180,25 @@ fn read_abbrev_fields(
     }
   }
   Ok((fields, cursor))
+}
+
+///|
+fn dwarf_abbrev_form_of_int(
+  form_code : Int,
+  input : DwarfInput,
+) -> Result[(DwarfForm, DwarfInput), String] {
+  match form_code {
+    0x21 =>
+      match input.read_signed_code() {
+        Ok((value, next)) => Ok((DwarfImplicitConst(value), next))
+        Err(reason) => Err(reason)
+      }
+    _ =>
+      match dwarf_form_of_int(form_code) {
+        Ok(form) => Ok((form, input))
+        Err(reason) => Err(reason)
+      }
+  }
 }
 
 ///|

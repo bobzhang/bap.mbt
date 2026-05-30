@@ -91,6 +91,11 @@ fn dwarf_skip_form(
         Ok((_, next)) => Ok(next)
         Err(reason) => Err(reason)
       }
+    DwarfStrpSup | DwarfLineStrp =>
+      match input.read_offset(endian~, size=dwarf_size) {
+        Ok((_, next)) => Ok(next)
+        Err(reason) => Err(reason)
+      }
     DwarfStrx(spec) =>
       match input.read_index(spec, endian) {
         Ok((_, next)) => Ok(next)
@@ -106,6 +111,14 @@ fn dwarf_skip_form(
         Ok((_, next)) => Ok(next)
         Err(reason) => Err(reason)
       }
+    DwarfLoclistx =>
+      match input.read_code() {
+        Ok((_, next)) => Ok(next)
+        Err(reason) => Err(reason)
+      }
+    DwarfData16 => input.skip(bytes=16)
+    DwarfImplicitConst(_) => Ok(input)
+    DwarfRefSup4 => input.skip(bytes=4)
     DwarfString =>
       match input.read_cstring() {
         Ok((_, next)) => Ok(next)
@@ -631,6 +644,7 @@ fn dwarf_read_attr_value(
       }
     DwarfHighPcOffsetValue =>
       match field.form() {
+        DwarfImplicitConst(value) => Ok((DwarfAttrHighPcRel(value), input))
         DwarfConst(lenspec) =>
           match input.read_const(lenspec~, endian~) {
             Ok((offset, next)) => Ok((DwarfAttrHighPcRel(offset), next))

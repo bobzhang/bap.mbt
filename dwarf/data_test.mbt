@@ -79,6 +79,7 @@ test "translated DWARF section data rejects duplicates and builds from bytes" {
       str=b"names\x00",
       str_offsets=b"\x00\x00\x00\x00",
       ranges=b"\x00\x00\x00\x00\x00\x00\x00\x00",
+      rnglists=b"\x00",
     ),
   )
   assert_true(data.has_section(DwarfInfo))
@@ -86,6 +87,7 @@ test "translated DWARF section data rejects duplicates and builds from bytes" {
   assert_true(data.has_section(DwarfStr))
   assert_true(data.has_section(DwarfStrOffsets))
   assert_true(data.has_section(DwarfRanges))
+  assert_true(data.has_section(DwarfRnglists))
   assert_true(
     expect_section_buffer(data.section(DwarfStr)).data() == b"names\x00",
   )
@@ -96,5 +98,8 @@ test "translated DWARF section data rejects duplicates and builds from bytes" {
   assert_true(
     expect_section_buffer(data.section(DwarfRanges)).data() ==
     b"\x00\x00\x00\x00\x00\x00\x00\x00",
+  )
+  assert_true(
+    expect_section_buffer(data.section(DwarfRnglists)).data() == b"\x00",
   )
 }

@@ -284,6 +284,101 @@ test "translated DWARF FBI honors debug ranges base selection" {
 }
 
 ///|
+test "translated DWARF FBI summarizes DWARF5 rnglists offsets" {
+  let abbrev = b"\x01\x2e\x00" +
+    b"\x03\x08" +
+    b"\x55\x17" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x14\x00\x00\x00" +
+    b"\x05\x00" +
+    b"\x01" +
+    b"\x04" +
+    b"\x00\x00\x00\x00" +
+    b"\x01" +
+    b"rngv5\x00" +
+    b"\x0c\x00\x00\x00" +
+    b"\x00"
+  let rnglists = b"\x18\x00\x00\x00" +
+    b"\x05\x00" +
+    b"\x04" +
+    b"\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x06" +
+    b"\x30\x00\x00\x00" +
+    b"\x38\x00\x00\x00" +
+    b"\x07" +
+    b"\x40\x00\x00\x00" +
+    b"\x05" +
+    b"\x00"
+  let data = expect_fbi_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=LittleEndian,
+      info~,
+      abbrev~,
+      str=b"",
+      rnglists~,
+    ),
+  )
+  let functions = expect_functions(data.functions())
+  assert_true(functions.length() == 1)
+  assert_true(functions[0].name() == "rngv5")
+  assert_true(functions[0].low_pc() == 0x30UL)
+  assert_true(functions[0].high_pc() == Some(0x45UL))
+}
+
+///|
+test "translated DWARF FBI resolves DWARF5 rnglistx through base table" {
+  let abbrev = b"\x01\x11\x01" +
+    b"\x11\x01" +
+    b"\x74\x17" +
+    b"\x00\x00" +
+    b"\x02\x2e\x00" +
+    b"\x03\x08" +
+    b"\x55\x23" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x19\x00\x00\x00" +
+    b"\x05\x00" +
+    b"\x01" +
+    b"\x04" +
+    b"\x00\x00\x00\x00" +
+    b"\x01" +
+    b"\x00\x10\x00\x00" +
+    b"\x0c\x00\x00\x00" +
+    b"\x02" +
+    b"rngx\x00" +
+    b"\x00" +
+    b"\x00"
+  let rnglists = b"\x15\x00\x00\x00" +
+    b"\x05\x00" +
+    b"\x04" +
+    b"\x00" +
+    b"\x01\x00\x00\x00" +
+    b"\x04\x00\x00\x00" +
+    b"\x05" +
+    b"\x00\x20\x00\x00" +
+    b"\x04" +
+    b"\x10" +
+    b"\x18" +
+    b"\x00"
+  let data = expect_fbi_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=LittleEndian,
+      info~,
+      abbrev~,
+      str=b"",
+      rnglists~,
+    ),
+  )
+  let functions = expect_functions(data.functions())
+  assert_true(functions.length() == 1)
+  assert_true(functions[0].name() == "rngx")
+  assert_true(functions[0].low_pc() == 0x2010UL)
+  assert_true(functions[0].high_pc() == Some(0x2018UL))
+}
+
+///|
 test "translated DWARF FBI resolves indirect value forms" {
   let abbrev = b"\x01\x2e\x00" +
     b"\x03\x16" +

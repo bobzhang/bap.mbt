@@ -141,4 +141,12 @@ test "translated DWARF abbreviation value classification follows BAP FBI inputs"
     @dwarf.DwarfAbbrevField::create(attr=DwarfRanges, form=DwarfOffset).value_kind() ==
     DwarfRangesValue,
   )
+  assert_true(
+    @dwarf.DwarfAbbrevField::create(attr=DwarfRanges, form=DwarfRnglistx).value_kind() ==
+    DwarfRangesValue,
+  )
+  assert_true(
+    @dwarf.DwarfAbbrevField::create(attr=DwarfRnglistsBase, form=DwarfOffset).value_kind() ==
+    DwarfRnglistsBaseValue,
+  )
 }

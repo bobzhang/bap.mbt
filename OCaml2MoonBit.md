@@ -138,7 +138,12 @@ the source-level `DW_AT_name` as the display name. For DWARF4-style
 non-contiguous ranges to the covering function interval when the public MoonBit
 value only has `low_pc`/`high_pc`. Track the current compilation-unit
 `DW_AT_low_pc` as the default base, and honor base-address selection entries
-inside the range list.
+inside the range list. For DWARF5-style `.debug_rnglists`, treat
+`DW_FORM_sec_offset` as an absolute list offset in the section, while
+`DW_FORM_rnglistx` indexes the offset table at `DW_AT_rnglists_base`; the table
+entry is relative to that same base. Support absolute `start_end`,
+`start_length`, base-address, and base-relative `offset_pair` entries before
+adding address-indexed range entries that require `.debug_addr`.
 
 `text[i]` returns a `UInt16` code unit, not a `Char`. For text parsers that need character predicates or `StringBuilder::write_char`, use `text.get_char(offset)` and advance by `char.utf16_len()`. It is still fine to increment by one for syntax bytes you have already constrained to ASCII, such as `(`, `)`, `"` and `\\`, but do not mix code-unit offsets with `Char` APIs accidentally.
 

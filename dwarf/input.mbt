@@ -40,6 +40,7 @@ pub(all) enum DwarfAttr {
   DwarfEntryPc
   DwarfRanges
   DwarfStrOffsetsBase
+  DwarfRnglistsBase
   DwarfUnknownAttr(Int)
 } derive(Eq, Debug)
 
@@ -51,6 +52,7 @@ pub(all) enum DwarfForm {
   DwarfString
   DwarfStrp
   DwarfStrx(DwarfIndexSpec)
+  DwarfRnglistx
   DwarfOffset
   DwarfRef(DwarfLenspec)
   DwarfIndirect
@@ -267,6 +269,7 @@ fn dwarf_attr_of_int(code : Int) -> DwarfAttr {
     0x55 => DwarfRanges
     0x6e => DwarfLinkageName
     0x72 => DwarfStrOffsetsBase
+    0x74 => DwarfRnglistsBase
     other => DwarfUnknownAttr(other)
   }
 }
@@ -299,6 +302,7 @@ fn dwarf_form_of_int(code : Int) -> Result[DwarfForm, String] {
     0x18 => Ok(DwarfExpr)
     0x19 => Ok(DwarfFlagPresent)
     0x1a => Ok(DwarfStrx(DwarfIndexLeb128))
+    0x23 => Ok(DwarfRnglistx)
     0x20 => Ok(DwarfRef(DwarfEight))
     0x25 => Ok(DwarfStrx(DwarfIndexOne))
     0x26 => Ok(DwarfStrx(DwarfIndexTwo))

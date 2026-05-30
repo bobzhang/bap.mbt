@@ -346,7 +346,7 @@ moon run -c $'let table : ReadOnlyArray[Int?] = [for i in 0..<8 => if i == 5 { S
 # 8
 ```
 
-For dense lookup domains, define a private top-level `let table : ReadOnlyArray[T?] = [...]`. `ReadOnlyArray[T]` is the read-only counterpart of `Array[T]`; an array literal coerces directly, and **list comprehensions also produce `ReadOnlyArray[T]`** — so `[for i in 0..<N => entry(i)]` is the idiomatic way to populate a compile-time table without `makei` ceremony. Keep the bounds check at the lookup boundary.
+For dense lookup domains, define a private top-level `let table : ReadOnlyArray[T?] = [...]`. `ReadOnlyArray[T]` is the read-only counterpart of `Array[T]`; an array literal coerces directly, and **list comprehensions can initialize `ReadOnlyArray[T]` or an owned `Array[T]` depending on the expected type** — so `[for i in 0..<N => entry(i)]` is the idiomatic way to populate a compile-time table without `makei` ceremony. Keep the bounds check at the lookup boundary.
 
 ## Mutation, Refs, Arrays
 

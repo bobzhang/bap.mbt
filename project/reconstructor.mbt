@@ -155,8 +155,12 @@ fn project_reconstructor_default_groups(
   remaining.sort_by((left, right) => left.min_addr().compare(right.min_addr()))
   for block in remaining {
     if !project_reconstructor_group_contains(assigned, block) {
-      groups.push([block])
-      assigned.push(block)
+      let group = project_reconstructor_unassigned_reachable_blocks(
+        blocks, edges, assigned, block,
+      )
+      if !group.is_empty() {
+        groups.push(group)
+      }
     }
   }
   groups

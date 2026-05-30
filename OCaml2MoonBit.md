@@ -156,10 +156,14 @@ initial reconstructor emit direct IR gotos only for targets that correspond to
 blocks inside the reconstructed subroutine. Unknown or cross-subroutine
 destinations should remain preserved as disassembly metadata until a richer
 call/branch classifier is available. The default reconstructor should use
-known edge facts to group reachable blocks from no-incoming roots, while
-keeping isolated or otherwise unclaimed blocks as separate subroutines; this
-gives later recursive-descent decoding a CFG-shaped landing zone without
-fabricating instruction semantics. Model branchers as a checked project stage
+known edge facts to group reachable blocks from no-incoming roots and any
+remaining unrooted cyclic components, while keeping isolated or otherwise
+unclaimed blocks as separate subroutines; this gives later recursive-descent
+decoding a CFG-shaped landing zone without fabricating instruction semantics.
+BAP brancher destinations classify CFG edges only as jump, conditional jump,
+or fallthrough; preserve calls later through lifted IR `Call` jumps rather than
+adding a disassembly edge kind that BAP's brancher does not have. Model
+branchers as a checked project stage
 that enriches already materialized disassembly blocks with those edge facts;
 the empty brancher should be a no-op for existing blocks, while applying any
 brancher to a project without disassembly blocks should fail explicitly. Keep

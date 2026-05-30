@@ -106,6 +106,80 @@ test "project default reconstructor groups blocks by reachable disassembly edges
 }
 
 ///|
+test "project default reconstructor groups unrooted cyclic components" {
+  let target = @core_theory.Target::unknown()
+  let first = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x5300UL,
+    b"\x01",
+  )
+  let second = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x5310UL,
+    b"\x02",
+  )
+  let third = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x5400UL,
+    b"\x03",
+  )
+  let fourth = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x5410UL,
+    b"\x04",
+  )
+  let disassembly = @project.ProjectDisassemblyState::empty()
+    .add_block(second)
+    .add_block(fourth)
+    .add_block(first)
+    .add_block(third)
+    .add_edge(
+      @project.ProjectDisassemblyEdge::create(
+        source=0x5300UL,
+        target=0x5310UL,
+        kind=CondEdge,
+      ),
+    )
+    .add_edge(
+      @project.ProjectDisassemblyEdge::create(
+        source=0x5310UL,
+        target=0x5300UL,
+        kind=JumpEdge,
+      ),
+    )
+    .add_edge(
+      @project.ProjectDisassemblyEdge::create(
+        source=0x5400UL,
+        target=0x5410UL,
+        kind=FallEdge,
+      ),
+    )
+    .add_edge(
+      @project.ProjectDisassemblyEdge::create(
+        source=0x5410UL,
+        target=0x5400UL,
+        kind=JumpEdge,
+      ),
+    )
+  let project = @project.Project::empty(target).with_disassembly(disassembly)
+  match project.reconstruct() {
+    Ok(reconstructed) => {
+      let subs = reconstructed.state().subroutines()
+      assert_true(subs.length() == 2)
+      assert_true(subs[0].sub_name() == "sub_0x5300")
+      assert_true(subs[0].blks().length() == 2)
+      assert_true(subs[0].sub_has_edge(subs[0].blks()[0], subs[0].blks()[1]))
+      assert_true(subs[0].sub_has_edge(subs[0].blks()[1], subs[0].blks()[0]))
+      assert_true(subs[1].sub_name() == "sub_0x5400")
+      assert_true(subs[1].blks().length() == 2)
+      assert_true(subs[1].sub_has_edge(subs[1].blks()[0], subs[1].blks()[1]))
+      assert_true(subs[1].sub_has_edge(subs[1].blks()[1], subs[1].blks()[0]))
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project disassemble-and-reconstruct runs explicit driver and custom reconstructor" {
   match @project.register_builtin_disassembly_drivers() {
     Ok(_) => ()

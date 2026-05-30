@@ -199,6 +199,171 @@ pub fn simplify_stmts(stmts : Array[Stmt]) -> Array[Stmt] {
 }
 
 ///|
+fn const_lookup(ctx : Array[(Var, Exp)], variable : Var) -> Exp? {
+  match ctx.search_by(pair => pair.0 == variable) {
+    Some(i) => Some(ctx[i].1)
+    None => None
+  }
+}
+
+///|
+fn const_set(
+  ctx : Array[(Var, Exp)],
+  variable : Var,
+  value : Exp?,
+) -> Array[(Var, Exp)] {
+  let next = ctx.filter(pair => pair.0 != variable)
+  match value {
+    Some(exp) => next.push((variable, exp))
+    None => ()
+  }
+  next
+}
+
+///|
+fn const_value(exp : Exp) -> Exp? {
+  if is_constant_exp(exp) {
+    Some(exp)
+  } else {
+    None
+  }
+}
+
+///|
+fn join_const_contexts(
+  left : Array[(Var, Exp)],
+  right : Array[(Var, Exp)],
+) -> Array[(Var, Exp)] {
+  let joined = []
+  for pair in left {
+    match const_lookup(right, pair.0) {
+      Some(exp) if exp == pair.1 => joined.push(pair)
+      _ => ()
+    }
+  }
+  joined
+}
+
+///|
+fn stmt_defined_vars(stmt : Stmt, vars : Array[Var]) -> Unit {
+  match stmt {
+    Move(variable, _) => add_var(vars, variable)
+    If(yes~, no~, ..) => {
+      for item in yes {
+        stmt_defined_vars(item, vars)
+      }
+      for item in no {
+        stmt_defined_vars(item, vars)
+      }
+    }
+    While(body~, ..) =>
+      for item in body {
+        stmt_defined_vars(item, vars)
+      }
+    Jmp(_) | Special(_) | CpuExn(_) => ()
+  }
+}
+
+///|
+fn defined_vars_in_stmts(stmts : Array[Stmt]) -> Array[Var] {
+  let vars = []
+  for stmt in stmts {
+    stmt_defined_vars(stmt, vars)
+  }
+  vars
+}
+
+///|
+fn remove_context_vars(
+  ctx : Array[(Var, Exp)],
+  vars : Array[Var],
+) -> Array[(Var, Exp)] {
+  ctx.filter(pair => !vars.any(variable => variable == pair.0))
+}
+
+///|
+fn Exp::propagate_consts(self : Exp, ctx : Array[(Var, Exp)]) -> Exp {
+  match self {
+    Int(_) | Unknown(_) => self
+    Var(variable) =>
+      match const_lookup(ctx, variable) {
+        Some(exp) => exp
+        None => self
+      }
+    Load(mem~, addr~, endian~, typ~) =>
+      Load(
+        mem=mem.propagate_consts(ctx),
+        addr=addr.propagate_consts(ctx),
+        endian~,
+        typ~,
+      ).simplify()
+    Store(mem~, addr~, value~, endian~) =>
+      Store(
+        mem=mem.propagate_consts(ctx),
+        addr=addr.propagate_consts(ctx),
+        value=value.propagate_consts(ctx),
+        endian~,
+      ).simplify()
+    Let(variable, value, body) => {
+      let next_value = value.propagate_consts(ctx).simplify()
+      let inner = const_set(ctx, variable, const_value(next_value))
+      Let(variable, next_value, body.propagate_consts(inner)).simplify()
+    }
+    Cast(typ, exp) => Cast(typ, exp.propagate_consts(ctx)).simplify()
+    UnOp(op, exp) => UnOp(op, exp.propagate_consts(ctx)).simplify()
+    BinOp(op, lhs, rhs) =>
+      BinOp(op, lhs.propagate_consts(ctx), rhs.propagate_consts(ctx)).simplify()
+    Ite(cond~, yes~, no~) =>
+      Ite(
+        cond=cond.propagate_consts(ctx),
+        yes=yes.propagate_consts(ctx),
+        no=no.propagate_consts(ctx),
+      ).simplify()
+  }
+}
+
+///|
+fn propagate_const_loop(
+  stmts : Array[Stmt],
+  ctx_in : Array[(Var, Exp)],
+) -> (Array[Stmt], Array[(Var, Exp)]) {
+  let mut ctx = ctx_in.copy()
+  let result = []
+  for stmt in stmts {
+    match stmt {
+      Move(variable, exp) => {
+        let next_exp = exp.propagate_consts(ctx).simplify()
+        ctx = const_set(ctx, variable, const_value(next_exp))
+        result.push(Move(variable, next_exp))
+      }
+      Jmp(exp) => result.push(Jmp(exp.propagate_consts(ctx).simplify()))
+      Special(_) | CpuExn(_) => result.push(stmt)
+      If(cond~, yes~, no~) => {
+        let next_cond = cond.propagate_consts(ctx).simplify()
+        let yes_result = propagate_const_loop(yes, ctx)
+        let no_result = propagate_const_loop(no, ctx)
+        ctx = join_const_contexts(yes_result.1, no_result.1)
+        result.push(If(cond=next_cond, yes=yes_result.0, no=no_result.0))
+      }
+      While(cond~, body~) => {
+        let killed = defined_vars_in_stmts(body)
+        let loop_ctx = remove_context_vars(ctx, killed)
+        let next_cond = cond.propagate_consts(loop_ctx).simplify()
+        let body_result = propagate_const_loop(body, loop_ctx)
+        ctx = join_const_contexts(loop_ctx, body_result.1)
+        result.push(While(cond=next_cond, body=body_result.0))
+      }
+    }
+  }
+  (result, ctx)
+}
+
+///|
+pub fn propagate_const_stmts(stmts : Array[Stmt]) -> Array[Stmt] {
+  propagate_const_loop(stmts, []).0
+}
+
+///|
 fn remove_live_var(live : Array[Var], variable : Var) -> Array[Var] {
   live.filter(item => item != variable)
 }
@@ -260,5 +425,7 @@ pub fn prune_dead_virtual_stmts(stmts : Array[Stmt]) -> Array[Stmt] {
 
 ///|
 pub fn optimize_stmts(stmts : Array[Stmt]) -> Array[Stmt] {
-  prune_dead_virtual_stmts(simplify_stmts(stmts))
+  prune_dead_virtual_stmts(
+    simplify_stmts(propagate_const_stmts(simplify_stmts(stmts))),
+  )
 }

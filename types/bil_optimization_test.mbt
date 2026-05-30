@@ -63,3 +63,56 @@ test "bil optimize combines simplification and dead virtual pruning" {
   let optimized = @types.optimize_stmts(stmts)
   assert_true(stmt_text(optimized) == ["physical:imm8 := 0x05:8u"])
 }
+
+///|
+test "bil constant propagation folds straight-line moves" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let stmts = [
+    @types.Stmt::Move(x, Int(word8(2))),
+    Move(y, BinOp(Plus, Var(x), Int(word8(3)))),
+  ]
+  let propagated = @types.propagate_const_stmts(stmts)
+  assert_true(
+    stmt_text(propagated) == ["x:imm8 := 0x02:8u", "y:imm8 := 0x05:8u"],
+  )
+}
+
+///|
+test "bil constant propagation joins identical branch facts" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let cond = @types.Var::new(name="cond", typ~)
+  let stmts = [
+    @types.Stmt::If(cond=Var(cond), yes=[Move(x, Int(word8(4)))], no=[
+      Move(x, Int(word8(4))),
+    ]),
+    Move(y, BinOp(Plus, Var(x), Int(word8(1)))),
+  ]
+  let propagated = @types.propagate_const_stmts(stmts)
+  assert_true(
+    stmt_text(propagated) ==
+    ["if cond:imm8 then 1 stmts else 1 stmts", "y:imm8 := 0x05:8u"],
+  )
+}
+
+///|
+test "bil constant propagation drops facts that differ across branches" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let cond = @types.Var::new(name="cond", typ~)
+  let stmts = [
+    @types.Stmt::If(cond=Var(cond), yes=[Move(x, Int(word8(4)))], no=[
+      Move(x, Int(word8(5))),
+    ]),
+    Move(y, BinOp(Plus, Var(x), Int(word8(1)))),
+  ]
+  let propagated = @types.propagate_const_stmts(stmts)
+  assert_true(
+    stmt_text(propagated) ==
+    ["if cond:imm8 then 1 stmts else 1 stmts", "y:imm8 := (x:imm8 + 0x01:8u)"],
+  )
+}

@@ -104,6 +104,66 @@ test "translated BAP pruning preserves virtuals used by jumps" {
 }
 
 ///|
+test "translated BAP pruning preserves effects and conservative loops" {
+  let typ = @types.ValueType::Imm(8)
+  let could_be_dead = @types.Var::new(
+    name="could_be_dead",
+    typ~,
+    is_virtual=true,
+  )
+  let will_survive = @types.Var::new(name="will_survive", typ~, is_virtual=true)
+  let special = @types.prune_dead_virtual_stmts([
+    Move(could_be_dead, Int(word8(1))),
+    Special("I will survive!"),
+  ])
+  assert_true(stmt_text(special) == ["special I will survive!"])
+  let cpuexn = @types.prune_dead_virtual_stmts([
+    Move(could_be_dead, Int(word8(1))),
+    CpuExn(42),
+  ])
+  assert_true(stmt_text(cpuexn) == ["cpuexn 42"])
+  let loop_keeps_condition = @types.prune_dead_virtual_stmts([
+    Move(will_survive, Int(word8(1))),
+    While(cond=BinOp(Lt, Var(will_survive), Int(word8(4))), body=[
+      Move(will_survive, Int(word8(5))),
+    ]),
+  ])
+  assert_true(
+    stmt_text(loop_keeps_condition) ==
+    [
+      "%will_survive:imm8 := 1:8u", "while (%will_survive:imm8 < 4:8u) do 1 stmts",
+    ],
+  )
+  match loop_keeps_condition[1] {
+    While(body~, ..) =>
+      assert_true(stmt_text(body) == ["%will_survive:imm8 := 5:8u"])
+    _ => fail("expected loop")
+  }
+  let loop_keeps_body = @types.prune_dead_virtual_stmts([
+    Move(will_survive, Int(word8(2))),
+    While(cond=BinOp(Lt, Var(will_survive), Int(word8(4))), body=[
+      Move(could_be_dead, Int(word8(1))),
+      Move(will_survive, Int(word8(5))),
+    ]),
+    Move(could_be_dead, Int(word8(2))),
+  ])
+  assert_true(
+    stmt_text(loop_keeps_body) ==
+    [
+      "%will_survive:imm8 := 2:8u", "while (%will_survive:imm8 < 4:8u) do 2 stmts",
+    ],
+  )
+  match loop_keeps_body[1] {
+    While(body~, ..) =>
+      assert_true(
+        stmt_text(body) ==
+        ["%could_be_dead:imm8 := 1:8u", "%will_survive:imm8 := 5:8u"],
+      )
+    _ => fail("expected loop")
+  }
+}
+
+///|
 test "bil optimize combines simplification and dead virtual pruning" {
   let typ = @types.ValueType::Imm(8)
   let physical = @types.Var::new(name="physical", typ~)
@@ -166,6 +226,50 @@ test "bil constant propagation folds straight-line moves" {
   ]
   let propagated = @types.propagate_const_stmts(stmts)
   assert_true(stmt_text(propagated) == ["x:imm8 := 2:8u", "y:imm8 := 5:8u"])
+}
+
+///|
+test "translated BAP constant propagation covers jumps and unknown values" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let z = @types.Var::new(name="z", typ~)
+  let undefined = @types.Exp::Unknown("undefined", typ)
+  let through_jump = @types.propagate_const_stmts([
+    Move(x, Int(word8(42))),
+    Jmp(Var(x)),
+  ])
+  assert_true(stmt_text(through_jump) == ["x:imm8 := 0x2A:8u", "jmp 0x2A:8u"])
+  let after_jump = @types.propagate_const_stmts([
+    Move(x, Int(word8(42))),
+    Jmp(Var(y)),
+    Move(z, Var(x)),
+  ])
+  assert_true(
+    stmt_text(after_jump) ==
+    ["x:imm8 := 0x2A:8u", "jmp y:imm8", "z:imm8 := 0x2A:8u"],
+  )
+  let unknown = @types.propagate_const_stmts([
+    Move(x, undefined),
+    Move(z, Var(x)),
+  ])
+  assert_true(
+    stmt_text(unknown) ==
+    ["x:imm8 := unknown(undefined:imm8)", "z:imm8 := unknown(undefined:imm8)"],
+  )
+  let branch_unknown = @types.propagate_const_stmts([
+    Move(x, Int(word8(1))),
+    If(cond=BinOp(Lt, Var(x), Int(word8(0))), yes=[Move(y, undefined)], no=[
+      Move(y, undefined),
+    ]),
+    Move(z, Var(y)),
+  ])
+  assert_true(
+    stmt_text(branch_unknown) ==
+    [
+      "x:imm8 := 1:8u", "if 0:1u then 1 stmts else 1 stmts", "z:imm8 := unknown(undefined:imm8)",
+    ],
+  )
 }
 
 ///|

@@ -405,6 +405,8 @@ moon run -c $'fn main { let m : Map[Int, String] = Map([]); m[3] = "three"; m[1]
 
 For keyed lookup, prefer the built-in `Map[K, V]` — it is a **linked hashmap that preserves insertion order**, so iteration is deterministic and matches the order keys were written. Construct with `Map([])` (or `Map([], capacity=N)`); `Map::new()` is deprecated. Reach for `@hashmap.HashMap[K, V]` (from `moonbitlang/core/hashmap`) only when insertion order is irrelevant and you want a marginally cheaper structure. Use ordered arrays of pairs only when you need duplicate keys or sequence-style processing.
 
+For OCaml `Set` ports that only need membership and equality, use the built-in `Set[T]` with `Set([])` or `Set([], capacity=N)` for incremental construction; `Set::new()` is deprecated. Use `Set::from_array(view)` when a whole input sequence should become one group, and list comprehension plus `Set::from_array([element])` when porting discrete partition-style initializers.
+
 ## Errors
 
 OCaml exceptions (`Not_found`, `End_of_file`, `Invalid_argument`, domain errors) should not be copied as unchecked control flow.

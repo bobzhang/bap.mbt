@@ -424,9 +424,37 @@ fn aarch64_vars() -> Array[Var] {
 }
 
 ///|
+fn mips_gpr_alias_names() -> Array[String] {
+  [
+    "ZERO", "AT", "V0", "V1", "A0", "A1", "A2", "A3", "T0", "T1", "T2", "T3", "T4",
+    "T5", "T6", "T7", "S0", "S1", "S2", "S3", "S4", "S5", "S6", "S7", "T8", "T9",
+    "K0", "K1", "GP", "SP", "FP", "RA",
+  ]
+}
+
+///|
+fn mips_alias_vars(bits : Int) -> Array[Var] {
+  [
+    for name in mips_gpr_alias_names() => word_var(bits, name)
+  ]
+}
+
+///|
+fn mips_alias_origins(bits : Int) -> Array[AliasOrigin] {
+  let names = mips_gpr_alias_names()
+  [
+    for i in 0..<names.length() => {
+      AliasOrigin::register(word_var(bits, names[i]), word_var(bits, "R\{i}"))
+    }
+  ]
+}
+
+///|
 fn mips_vars(bits : Int) -> Array[Var] {
   let items = numbered_word_vars(bits, "R", 32)
-  append_vars(items, named_word_vars(bits, ["HI", "LO", "PC", "SP", "RA"]))
+  append_vars(items, numbered_word_vars(bits, "F", 32))
+  append_vars(items, mips_alias_vars(bits))
+  append_vars(items, named_word_vars(bits, ["HI", "LO", "PC"]))
   items.push(mem_var(bits, 8, "mem"))
   items
 }
@@ -1279,6 +1307,7 @@ pub fn Target::mips() -> Target {
     bits=32,
     endianness=BigEndian,
     vars=mips_vars(32),
+    alias_origins=mips_alias_origins(32),
   )
 }
 
@@ -1291,6 +1320,7 @@ pub fn Target::mipsel() -> Target {
     bits=32,
     endianness=LittleEndian,
     vars=mips_vars(32),
+    alias_origins=mips_alias_origins(32),
   )
 }
 
@@ -1302,6 +1332,7 @@ pub fn Target::mips64() -> Target {
     bits=64,
     endianness=BigEndian,
     vars=mips_vars(64),
+    alias_origins=mips_alias_origins(64),
   )
 }
 
@@ -1313,6 +1344,7 @@ pub fn Target::mips64el() -> Target {
     bits=64,
     endianness=LittleEndian,
     vars=mips_vars(64),
+    alias_origins=mips_alias_origins(64),
   )
 }
 

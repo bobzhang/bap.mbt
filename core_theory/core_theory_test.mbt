@@ -555,6 +555,24 @@ test "target role helpers classify common architecture variables" {
       assert_true(!riscv.roles_of_var(zero).contains(ResultRegister))
     None => fail("missing X0")
   }
+  let mips64 = @core_theory.Target::mips64()
+  assert_true(mips64.find_var("F31") is Some(_))
+  match mips64.find_var("F0") {
+    Some(result) =>
+      assert_true(mips64.roles_of_var(result).contains(ResultRegister))
+    None => fail("missing F0")
+  }
+  match mips64.find_var("F1") {
+    Some(arg) => assert_true(mips64.roles_of_var(arg).contains(Argument))
+    None => fail("missing F1")
+  }
+  match mips64.origin_of_name("V0") {
+    Some(origin) => {
+      assert_true(origin.aliased().ident() == "V0")
+      assert_true(origin.source().map(v => v.ident()) == Some("R2"))
+    }
+    None => fail("missing V0 alias origin")
+  }
   let aarch64 = @core_theory.Target::aarch64()
   match aarch64.find_var("X2") {
     Some(reg) => assert_true(!aarch64.roles_of_var(reg).contains(StackPointer))

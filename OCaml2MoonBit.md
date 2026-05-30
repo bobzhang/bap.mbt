@@ -94,6 +94,13 @@ moon run -c 'fn main { let s = "𝄞"; println(s.length()); println(s.char_lengt
 
 When preserving a BAP-style `of_string`/`from_string` compatibility entry point in MoonBit, make the encoding explicit in the implementation and tests. In this port, string helpers such as `Image::of_string` and `ProjectInput::from_string` encode text as UTF-8 before delegating to the byte-oriented loader. Use `of_bigstring`/`of_bytes` for binary payloads that came from OCaml `string`.
 
+When porting BAP loader registries, keep explicit user registration strict but
+make built-in registration idempotent. This lets tests and applications call
+initialization more than once while still surfacing accidental duplicate custom
+backend names. Built-in raw byte loaders should stay simple and predictable:
+load the bytes into a single executable segment at address zero, then let
+`ProjectInput` wrap the resulting image for higher-level orchestration.
+
 `text[i]` returns a `UInt16` code unit, not a `Char`. For text parsers that need character predicates or `StringBuilder::write_char`, use `text.get_char(offset)` and advance by `char.utf16_len()`. It is still fine to increment by one for syntax bytes you have already constrained to ASCII, such as `(`, `)`, `"` and `\\`, but do not mix code-unit offsets with `Char` APIs accidentally.
 
 For textual compatibility suffixes such as BAP-style SSA variable names

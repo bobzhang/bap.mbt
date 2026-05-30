@@ -86,6 +86,52 @@ pub fn register_backend(
 }
 
 ///|
+pub fn register_backend_if_absent(
+  backend : ImageBackend,
+) -> Result[Bool, String] {
+  if backend_registry.contains(backend.name()) {
+    Ok(false)
+  } else {
+    match register_backend(name=backend.name(), backend) {
+      Ok(_) => Ok(true)
+      Err(reason) => Err(reason)
+    }
+  }
+}
+
+///|
+pub fn ImageBackend::raw() -> ImageBackend {
+  ImageBackend::create(
+    name="raw",
+    description="raw bytes loaded at address zero",
+    extensions=["raw", "bin"],
+    priority=0,
+    load=data => {
+      let segment = Segment::create(
+        name=".raw",
+        endian=LittleEndian,
+        addr=0UL,
+        data,
+        readable=true,
+        executable=true,
+      )
+      Ok((Image::from_segments(entry=0UL, endian=LittleEndian, [segment]), []))
+    },
+  )
+}
+
+///|
+pub fn register_builtin_backends() -> Result[Unit, String] {
+  for backend in [ImageBackend::raw()] {
+    match register_backend_if_absent(backend) {
+      Ok(_) => ()
+      Err(reason) => return Err(reason)
+    }
+  }
+  Ok(())
+}
+
+///|
 pub fn find_backend(name : String) -> ImageBackend? {
   backend_registry.get(name)
 }

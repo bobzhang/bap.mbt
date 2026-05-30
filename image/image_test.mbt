@@ -425,6 +425,31 @@ test "image backend discovery returns extension matches by priority" {
 }
 
 ///|
+test "image registers built-in raw backend idempotently" {
+  match @image.register_builtin_backends() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  match @image.register_builtin_backends() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  assert_true(@image.find_backend("raw") is Some(_))
+  assert_true(@image.backend_names_for_extension("raw").contains("raw"))
+  assert_true(@image.backend_names_for_extension("bin").contains("raw"))
+  match @image.Image::of_bytes(b"\xaa\xbb", backend="raw") {
+    Ok((img, warnings)) => {
+      assert_true(warnings.is_empty())
+      assert_true(img.segments().length() == 1)
+      assert_true(img.segments()[0].name() == ".raw")
+      assert_true(img.segments()[0].is_executable())
+      assert_true(img.memory().lookup(0x01UL).length() == 1)
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "image backend discovery loads bytes by filename extension" {
   let failing = @image.ImageBackend::create(
     name="unit-image-failing-loader",

@@ -31,11 +31,14 @@ type Project
 pub fn Project::add_library(Self, Library) -> Self
 pub fn Project::create(target~ : @core_theory.Target, image? : @image.Image, filename? : String, program? : @types.Term[@types.Program], memory? : @memory.MemMap[String], storage? : Map[String, String], libraries? : Array[Library]) -> Self
 pub fn Project::del(Self, String) -> Self
+pub fn[T] Project::del_tag(Self, ProjectStorageTag[T]) -> Self
 pub fn Project::empty(@core_theory.Target) -> Self
 pub fn Project::filename(Self) -> String?
 pub fn Project::from_image(@image.Image, target? : @core_theory.Target, program? : @types.Term[@types.Program]) -> Self
 pub fn Project::get(Self, String) -> String?
+pub fn[T] Project::get_tag(Self, ProjectStorageTag[T]) -> Result[T?, String]
 pub fn Project::has(Self, String) -> Bool
+pub fn[T] Project::has_tag(Self, ProjectStorageTag[T]) -> Bool
 pub fn Project::image(Self) -> @image.Image?
 pub fn Project::libraries(Self) -> Array[Library]
 pub fn Project::map_program(Self, (@types.Term[@types.Program]) -> @types.Term[@types.Program]) -> Self
@@ -45,6 +48,7 @@ pub fn Project::run_autorun_passes(Self) -> Result[Self, String]
 pub fn Project::run_pass(Self, String) -> Result[Self, String]
 pub fn Project::run_passes(Self, Array[String]) -> Result[Self, String]
 pub fn Project::set(Self, String, String) -> Self
+pub fn[T] Project::set_tag(Self, ProjectStorageTag[T], T) -> Self
 pub fn Project::storage(Self) -> Map[String, String]
 pub fn Project::tag_memory(Self, @memory.Memory, String) -> Self
 pub fn Project::target(Self) -> @core_theory.Target
@@ -57,6 +61,15 @@ pub fn ProjectPass::create(name~ : String, autorun? : Bool, deps? : Array[String
 pub fn ProjectPass::deps(Self) -> Array[String]
 pub fn ProjectPass::name(Self) -> String
 pub fn ProjectPass::run(Self, Project) -> Result[Project, String]
+
+type ProjectStorageTag[T]
+pub fn ProjectStorageTag::bool(String) -> Self[Bool]
+pub fn[T] ProjectStorageTag::create(name~ : String, encode~ : (T) -> String, decode~ : (String) -> Result[T, String]) -> Self[T]
+pub fn[T] ProjectStorageTag::decode(Self[T], String) -> Result[T, String]
+pub fn[T] ProjectStorageTag::encode(Self[T], T) -> String
+pub fn ProjectStorageTag::int(String) -> Self[Int]
+pub fn[T] ProjectStorageTag::name(Self[T]) -> String
+pub fn ProjectStorageTag::string(String) -> Self[String]
 
 // Type aliases
 

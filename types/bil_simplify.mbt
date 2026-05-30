@@ -64,26 +64,41 @@ fn fold_cast(typ : ValueType, exp : Exp) -> Exp? {
 }
 
 ///|
+fn fold_store_chain(
+  mem : Exp,
+  memory : BilMemory,
+) -> Result[(BilMemory, Bool), String] {
+  match mem {
+    Store(mem=base, addr=Int(addr), value=Int(value), endian~) =>
+      match fold_store_chain(base, memory) {
+        Ok((base_memory, _)) =>
+          match base_memory.store(addr, value, endian~) {
+            Ok(stored) => Ok((stored, true))
+            Err(reason) => Err(reason)
+          }
+        Err(reason) => Err(reason)
+      }
+    _ => Ok((memory, false))
+  }
+}
+
+///|
 fn fold_load(
   mem : Exp,
   addr : Exp,
   endian : @bitvec.Endian,
   typ : ValueType,
 ) -> Exp? {
-  match (mem, addr, typ) {
-    (
-      Store(addr=Int(store_addr), value=Int(value), endian=store_endian, ..),
-      Int(load_addr),
-      Imm(width),
-    ) => {
-      let memory = BilMemory::empty(addr_width=store_addr.width())
-      match memory.store(store_addr, value, endian=store_endian) {
-        Ok(stored) =>
+  match (addr, typ) {
+    (Int(load_addr), Imm(width)) => {
+      let memory = BilMemory::empty(addr_width=load_addr.width())
+      match fold_store_chain(mem, memory) {
+        Ok((stored, true)) =>
           match stored.load(load_addr, endian~, width~) {
             Ok(word) => Some(Int(word))
             Err(_) => None
           }
-        Err(_) => None
+        Ok((_, false)) | Err(_) => None
       }
     }
     _ => None

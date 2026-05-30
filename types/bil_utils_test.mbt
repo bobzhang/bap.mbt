@@ -166,6 +166,7 @@ test "bil simplifier folds loads from recent stores" {
   let mem = @types.Var::new(name="mem", typ=mem_typ)
   let addr0 = @types.Int(word32(0))
   let addr1 = @types.Int(word32(1))
+  let addr4 = @types.Int(word32(4))
   let stored = @types.Store(
     mem=Var(mem),
     addr=addr0,
@@ -174,6 +175,19 @@ test "bil simplifier folds loads from recent stores" {
   )
   let load = @types.Load(mem=stored, addr=addr1, endian=BigEndian, typ=Imm(16))
   assert_true(load.simplify() == Int(word16(0xbead)))
+  let later = @types.Store(
+    mem=stored,
+    addr=addr4,
+    value=Int(word8(0xaa)),
+    endian=LittleEndian,
+  )
+  let earlier = @types.Load(
+    mem=later,
+    addr=addr1,
+    endian=BigEndian,
+    typ=Imm(16),
+  )
+  assert_true(earlier.simplify() == Int(word16(0xbead)))
 }
 
 ///|

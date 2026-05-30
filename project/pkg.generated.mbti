@@ -9,6 +9,11 @@ import {
 }
 
 // Values
+pub fn find_pass(String) -> ProjectPass?
+
+pub fn passes() -> Array[ProjectPass]
+
+pub fn register_pass(ProjectPass) -> Result[Unit, String]
 
 // Errors
 
@@ -34,12 +39,21 @@ pub fn Project::libraries(Self) -> Array[Library]
 pub fn Project::map_program(Self, (@types.Term[@types.Program]) -> @types.Term[@types.Program]) -> Self
 pub fn Project::memory(Self) -> @memory.MemMap[String]
 pub fn Project::program(Self) -> @types.Term[@types.Program]
+pub fn Project::run_autorun_passes(Self) -> Result[Self, String]
+pub fn Project::run_pass(Self, String) -> Result[Self, String]
 pub fn Project::set(Self, String, String) -> Self
 pub fn Project::storage(Self) -> Map[String, String]
 pub fn Project::tag_memory(Self, @memory.Memory, String) -> Self
 pub fn Project::target(Self) -> @core_theory.Target
 pub fn Project::with_memory(Self, @memory.MemMap[String]) -> Self
 pub fn Project::with_program(Self, @types.Term[@types.Program]) -> Self
+
+type ProjectPass
+pub fn ProjectPass::autorun(Self) -> Bool
+pub fn ProjectPass::create(name~ : String, autorun? : Bool, deps? : Array[String], run~ : (Project) -> Result[Project, String]) -> Self
+pub fn ProjectPass::deps(Self) -> Array[String]
+pub fn ProjectPass::name(Self) -> String
+pub fn ProjectPass::run(Self, Project) -> Result[Project, String]
 
 // Type aliases
 

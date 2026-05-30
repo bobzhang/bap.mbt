@@ -12,14 +12,14 @@ This repository is porting `.repos/bap` from OCaml to idiomatic MoonBit.
 - `core_theory`: symbolic sorts, typed values, variables, effect lattice values, labels, and target metadata with inheritance/matching helpers.
 - `memory`: byte-addressed memory regions with rebasing, views/ranges, endian-aware word loads and stores, contiguous merges, hexdumps, and a basic interval `MemMap` with lookup/intersection/dominator queries.
 - `image`: image metadata over `memory`, including segments, sections, symbols, memory maps, symbol/section/segment lookup, endian-aware `Image.words` extraction, and a MoonBit backend registry that loads bytes into `(Image, warnings)`.
-- `project`: initial project container over `core_theory`, `types`, `memory`, and `image`, with target/program/memory/image state, string storage, memory tagging, program mapping, and library records.
+- `project`: project container over `core_theory`, `types`, `memory`, and `image`, with target/program/memory/image state, string storage, memory tagging, program mapping, library records, and a named pass registry with explicit/autorun execution.
 
 ## Next Packages
 
 - Expand `core_theory` with the full BAP knowledge registry, target registry, role/alias origin tracking, program/unit/source/compiler slots, and architecture-specific target declarations.
 - Expand `types` with memory-aware BIL evaluation, optimizations, richer term traversal/mapping, free-variable analysis over IR terms, substitution in IR nodes, and the remaining tests translated from `.repos/bap/lib_test/bap_types`.
 - Expand `image` with Ogre spec parsing, file-backed loaders, backend discovery metadata, and richer symbol-to-memory handling for non-contiguous symbols.
-- Expand `project` with input loaders, pass registration/execution, collators, analysis arguments, disassembly state, and richer storage typed by tags rather than strings.
+- Expand `project` with input loaders, dependency-aware pass scheduling, collators, analysis arguments, disassembly state, and richer storage typed by tags rather than strings.
 
 ## Porting Defaults
 

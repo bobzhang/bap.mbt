@@ -151,6 +151,49 @@ test "bil constant propagation keeps selected branch facts for static conditions
 }
 
 ///|
+test "bil constant propagation does not leak selected branch facts past jumps" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let z = @types.Var::new(name="z", typ~)
+  let stmts = [
+    @types.Stmt::Move(x, Int(word8(1))),
+    Move(y, Int(word8(2))),
+    If(
+      cond=BinOp(Lt, Int(word8(0)), Var(x)),
+      yes=[
+        Move(y, Int(word8(1))),
+        If(cond=BinOp(Lt, Int(word8(0)), Var(y)), yes=[Jmp(Var(y))], no=[]),
+      ],
+      no=[],
+    ),
+    Move(z, Var(y)),
+  ]
+  let propagated = @types.propagate_const_stmts(stmts)
+  assert_true(
+    stmt_text(propagated) ==
+    [
+      "x:imm8 := 0x01:8u", "y:imm8 := 0x02:8u", "if 0x1:1u then 2 stmts else 0 stmts",
+      "z:imm8 := y:imm8",
+    ],
+  )
+  match propagated[2] {
+    If(yes~, ..) => {
+      assert_true(
+        stmt_text(yes) ==
+        ["y:imm8 := 0x01:8u", "if 0x1:1u then 1 stmts else 0 stmts"],
+      )
+      match yes[1] {
+        If(yes=inner_yes, ..) =>
+          assert_true(stmt_text(inner_yes) == ["jmp 0x01:8u"])
+        _ => fail("expected nested branch")
+      }
+    }
+    _ => fail("expected propagated branch")
+  }
+}
+
+///|
 test "bil constant propagation preserves facts after definitely skipped loops" {
   let typ = @types.ValueType::Imm(8)
   let x = @types.Var::new(name="x", typ~)

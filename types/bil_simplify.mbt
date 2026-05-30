@@ -245,15 +245,18 @@ fn join_const_contexts(
 }
 
 ///|
-fn const_context_after_if(
-  cond : Exp,
-  yes_ctx : Array[(Var, Exp)],
-  no_ctx : Array[(Var, Exp)],
-) -> Array[(Var, Exp)] {
-  match cond {
-    Int(word) => if word.is_zero() { no_ctx } else { yes_ctx }
-    _ => join_const_contexts(yes_ctx, no_ctx)
+fn stmt_may_jump(stmt : Stmt) -> Bool {
+  match stmt {
+    Jmp(_) => true
+    If(yes~, no~, ..) => stmts_may_jump(yes) || stmts_may_jump(no)
+    While(body~, ..) => stmts_may_jump(body)
+    Move(_, _) | Special(_) | CpuExn(_) => false
   }
+}
+
+///|
+fn stmts_may_jump(stmts : Array[Stmt]) -> Bool {
+  stmts.any(stmt_may_jump)
 }
 
 ///|
@@ -354,7 +357,21 @@ fn propagate_const_loop(
         let next_cond = cond.propagate_consts(ctx).simplify()
         let yes_result = propagate_const_loop(yes, ctx)
         let no_result = propagate_const_loop(no, ctx)
-        ctx = const_context_after_if(next_cond, yes_result.1, no_result.1)
+        ctx = match next_cond {
+          Int(word) => {
+            let (selected_stmts, selected_ctx) = if word.is_zero() {
+              (no_result.0, no_result.1)
+            } else {
+              (yes_result.0, yes_result.1)
+            }
+            if stmts_may_jump(selected_stmts) {
+              remove_context_vars(ctx, defined_vars_in_stmts(selected_stmts))
+            } else {
+              selected_ctx
+            }
+          }
+          _ => join_const_contexts(yes_result.1, no_result.1)
+        }
         result.push(If(cond=next_cond, yes=yes_result.0, no=no_result.0))
       }
       While(cond~, body~) => {

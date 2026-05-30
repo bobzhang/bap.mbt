@@ -90,8 +90,29 @@ pub fn ProjectInput::from_bytes(
   filename? : String,
   finish? : (Project) -> Project,
 ) -> ProjectInput {
+  ProjectInput::from_raw_bytes(
+    target~,
+    data,
+    endian~,
+    base~,
+    filename?,
+    finish?,
+    segment_name=".raw",
+  )
+}
+
+///|
+fn ProjectInput::from_raw_bytes(
+  target~ : @core_theory.Target,
+  data : Bytes,
+  endian~ : @bitvec.Endian,
+  base? : UInt64 = 0UL,
+  filename? : String,
+  finish? : (Project) -> Project,
+  segment_name~ : String,
+) -> ProjectInput {
   let segment = @image.Segment::create(
-    name=".raw",
+    name=segment_name,
     endian~,
     addr=base,
     data,
@@ -106,6 +127,31 @@ pub fn ProjectInput::from_bytes(
     target~,
   )
   ProjectInput::from_image(image, target~, finish?)
+}
+
+///|
+pub fn ProjectInput::raw_bytes(
+  target~ : @core_theory.Target,
+  data : Bytes,
+  base? : UInt64 = 0UL,
+  filename? : String,
+  finish? : (Project) -> Project,
+) -> Result[ProjectInput, String] {
+  if data.length() == 0 {
+    Err("raw project input is empty")
+  } else {
+    Ok(
+      ProjectInput::from_raw_bytes(
+        target~,
+        data,
+        endian=project_raw_endian(target),
+        base~,
+        filename?,
+        finish?,
+        segment_name="bap.user",
+      ),
+    )
+  }
 }
 
 ///|

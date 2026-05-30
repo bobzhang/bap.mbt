@@ -42,6 +42,7 @@ test "project raw file input uses target endian on native target" {
         Some(image) => {
           assert_true(image.endian() == BigEndian)
           assert_true(image.entry_point() == 0x500UL)
+          assert_true(image.segments()[0].name() == "bap.user")
         }
         None => fail("expected raw image")
       }

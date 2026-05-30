@@ -15,6 +15,35 @@ test "project input from bytes builds raw memory image" {
 }
 
 ///|
+test "project raw bytes reject empty input and use target metadata" {
+  let target = @core_theory.Target::sparc()
+  assert_true(@project.ProjectInput::raw_bytes(target~, b"") is Err(_))
+  match
+    @project.ProjectInput::raw_bytes(
+      target~,
+      b"\x01\x02",
+      base=0x300UL,
+      filename="raw.bin",
+    ) {
+    Ok(input) => {
+      let project = @project.Project::from_input(input)
+      assert_true(project.filename() == Some("raw.bin"))
+      assert_true(project.memory().lookup(0x300UL).length() == 1)
+      match project.image() {
+        Some(image) => {
+          assert_true(image.endian() == BigEndian)
+          let segments = image.segments()
+          assert_true(segments.length() == 1)
+          assert_true(segments[0].name() == "bap.user")
+        }
+        None => fail("expected raw image")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project input finish hook can finalize project storage" {
   let target = @core_theory.Target::unknown()
   let input = @project.ProjectInput::custom(target~, finish=project => {

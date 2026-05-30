@@ -30,15 +30,7 @@ pub fn ProjectInput::raw_file(
   }
   match @native_io.read_file(path) {
     Ok(data) =>
-      Ok(
-        ProjectInput::from_bytes(
-          target~,
-          data,
-          endian=project_raw_endian(target),
-          base~,
-          filename=selected_filename,
-        ),
-      )
+      ProjectInput::raw_bytes(target~, data, base~, filename=selected_filename)
     Err(reason) => Err(reason)
   }
 }

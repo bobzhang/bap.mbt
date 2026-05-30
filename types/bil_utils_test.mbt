@@ -249,6 +249,32 @@ test "bil BAP trie normalization applies substitutions before simplifying" {
 }
 
 ///|
+test "bil BAP normalize hoists store-chain load memories" {
+  let mem_typ = @types.ValueType::Mem(addr_width=32, value_width=8)
+  let mem = @types.Var::new(name="mem", typ=mem_typ)
+  let x = @types.Var::new(name="x", typ=Imm(32))
+  let addr = @types.Int(word32(0))
+  let store : @types.Exp = Store(
+    mem=Var(mem),
+    addr~,
+    value=Int(word32(0xdeadbeef)),
+    endian=LittleEndian,
+  )
+  let normalized = @types.normalize([
+    Move(x, Load(mem=store, addr~, endian=LittleEndian, typ=Imm(32))),
+  ])
+  assert_true(normalized.length() == 2)
+  inspect(
+    normalized[0].to_string(),
+    content="mem:mem32x8 := store(mem:mem32x8, 0:32u, 0xDEADBEEF:32u)",
+  )
+  inspect(
+    normalized[1].to_string(),
+    content="x:imm32 := load(mem:mem32x8, 0:32u):imm32",
+  )
+}
+
+///|
 test "bil normalize splits ITE expressions in moves and jumps" {
   let typ = @types.ValueType::Imm(8)
   let flag = @types.Var::new(name="flag", typ~)

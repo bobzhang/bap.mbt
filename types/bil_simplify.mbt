@@ -416,6 +416,91 @@ fn Stmt::split_ite(self : Stmt, normalize_exp : Bool) -> Array[Stmt] {
 }
 
 ///|
+fn Exp::find_non_var_load_mem(self : Exp) -> Exp? {
+  match self {
+    Load(mem=Var(_), addr~, ..) => addr.find_non_var_load_mem()
+    Load(mem~, ..) => Some(mem)
+    Store(mem~, addr~, value~, ..) =>
+      match mem.find_non_var_load_mem() {
+        Some(exp) => Some(exp)
+        None =>
+          match addr.find_non_var_load_mem() {
+            Some(exp) => Some(exp)
+            None => value.find_non_var_load_mem()
+          }
+      }
+    Let(_, value, body) =>
+      match value.find_non_var_load_mem() {
+        Some(exp) => Some(exp)
+        None => body.find_non_var_load_mem()
+      }
+    Cast(_, exp) | UnOp(_, exp) => exp.find_non_var_load_mem()
+    BinOp(_, lhs, rhs) =>
+      match lhs.find_non_var_load_mem() {
+        Some(exp) => Some(exp)
+        None => rhs.find_non_var_load_mem()
+      }
+    Ite(cond~, yes~, no~) =>
+      match cond.find_non_var_load_mem() {
+        Some(exp) => Some(exp)
+        None =>
+          match yes.find_non_var_load_mem() {
+            Some(exp) => Some(exp)
+            None => no.find_non_var_load_mem()
+          }
+      }
+    Int(_) | Var(_) | Unknown(_) => None
+  }
+}
+
+///|
+fn store_memory_var(exp : Exp) -> Var? {
+  match exp {
+    Store(mem=Var(variable), ..) => Some(variable)
+    Store(mem~, ..) => store_memory_var(mem)
+    _ => None
+  }
+}
+
+///|
+fn Stmt::rewrite_non_var_load_mem(self : Stmt, exp : Exp) -> Array[Stmt] {
+  match exp.find_non_var_load_mem() {
+    Some(store) =>
+      match store_memory_var(store) {
+        Some(variable) =>
+          hoist_load_stores([
+            Move(variable, store),
+            self.substitute(store, Var(variable)),
+          ])
+        None => [self]
+      }
+    None => [self]
+  }
+}
+
+///|
+fn Stmt::hoist_load_stores(self : Stmt) -> Array[Stmt] {
+  match self {
+    Move(_, exp) | Jmp(exp) => self.rewrite_non_var_load_mem(exp)
+    If(cond~, yes~, no~) =>
+      [If(cond~, yes=hoist_load_stores(yes), no=hoist_load_stores(no))]
+    While(cond~, body~) => [While(cond~, body=hoist_load_stores(body))]
+    Special(_) | CpuExn(_) => [self]
+  }
+}
+
+///|
+fn hoist_load_stores(stmts : Array[Stmt]) -> Array[Stmt] {
+  let result = []
+  for stmt in stmts {
+    for hoisted in stmt.hoist_load_stores() {
+      result.push(hoisted)
+    }
+  }
+  result
+}
+
+///|
 pub fn Stmt::normalize(
   self : Stmt,
   normalize_exp? : Bool = false,
@@ -495,7 +580,7 @@ pub fn normalize(
       result.push(normalized)
     }
   }
-  result
+  hoist_load_stores(result)
 }
 
 ///|

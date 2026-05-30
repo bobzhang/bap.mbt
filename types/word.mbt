@@ -94,6 +94,15 @@ pub fn Word::from_bytes(
 }
 
 ///|
+pub fn Word::of_binary(
+  endian : @bitvec.Endian,
+  bytes : BytesView,
+  width? : Int = -1,
+) -> Word raise @bitvec.BitVecError {
+  Word::from_bytes(bytes, endian~, width~)
+}
+
+///|
 pub fn Word::zero(width~ : Int) -> Word raise @bitvec.BitVecError {
   Word::from_bitvec(@bitvec.zero(width~))
 }

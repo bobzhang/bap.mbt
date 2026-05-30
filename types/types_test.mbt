@@ -10,6 +10,14 @@ test "word wraps bitvec operations" {
     content="0xdeadbeef",
   )
   inspect(
+    @types.Word::of_binary(BigEndian, b"\xde\xad\xbe\xef").to_hex(),
+    content="0xdeadbeef",
+  )
+  inspect(
+    @types.Word::of_binary(LittleEndian, b"\xef\xbe\xad\xde").to_hex(),
+    content="0xdeadbeef",
+  )
+  inspect(
     @types.Word::of_int(width=8, 0xff).add(@types.Word::one(width=8)).to_hex(),
     content="0x00",
   )

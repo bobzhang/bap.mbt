@@ -322,12 +322,16 @@ pub fn Project::set(self : Project, key : String, value : String) -> Project {
 
 ///|
 pub fn Project::get(self : Project, key : String) -> String? {
-  self.storage_value.get(key)
+  match self.storage_value.get(key) {
+    Some(value) => Some(value)
+    None => if key == "filename" { self.filename_value } else { None }
+  }
 }
 
 ///|
 pub fn Project::has(self : Project, key : String) -> Bool {
-  self.storage_value.contains(key)
+  self.storage_value.contains(key) ||
+  (key == "filename" && self.filename_value is Some(_))
 }
 
 ///|

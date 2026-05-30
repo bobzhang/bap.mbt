@@ -124,6 +124,11 @@ fn Project::subst_value(
   name : String,
 ) -> String {
   match name {
+    "filename" =>
+      match self.filename_value {
+        Some(filename) => filename
+        None => name
+      }
     "section" | "section_name" =>
       match self.subst_find_section(memory) {
         Some((_, section_name)) => section_name

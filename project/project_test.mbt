@@ -30,6 +30,8 @@ test "project can be created from image memory" {
   assert_true(project.target().is_unknown())
   assert_true(project.arch().is_unknown())
   assert_true(project.filename() == Some("tiny.bin"))
+  assert_true(project.has("filename"))
+  assert_true(project.get("filename") == Some("tiny.bin"))
   assert_true(project.image() is Some(_))
   assert_true(project.memory().lookup(0x1000UL).length() == 1)
   assert_true(project.symbols().length() == 1)
@@ -115,6 +117,26 @@ test "project substitutes memory annotation placeholders" {
     }
     Err(reason) => fail(reason)
   }
+}
+
+///|
+test "project substitutes filename placeholders" {
+  let target = @core_theory.Target::unknown()
+  let image = @image.Image::from_segments(
+    entry=0x1000UL,
+    endian=LittleEndian,
+    [raw_segment()],
+    filename="tiny.bin",
+    target~,
+  )
+  let tagged = @project.Project::from_image(image).substitute(
+    raw_segment().memory(),
+    "source",
+    "$filename",
+  )
+  assert_true(
+    tagged.memory().lookup(0x1000UL).any(entry => entry.1 == "source=tiny.bin"),
+  )
 }
 
 ///|

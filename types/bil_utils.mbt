@@ -267,45 +267,12 @@ fn eval_binop(op : BinOp, lhs : Word, rhs : Word) -> Result[Word, String] {
 
 ///|
 pub fn Exp::eval(self : Exp, env : Map[String, Word]) -> Result[Word, String] {
-  match self {
-    Int(word) => Ok(word)
-    Var(variable) =>
-      match env.get(variable.name) {
-        Some(value) => Ok(value)
-        None => Err("unbound variable \{variable.name}")
-      }
-    Unknown(name, _) => Err("unknown expression \{name}")
-    Load(_) | Store(_) =>
-      Err("memory expressions need an external memory model")
-    Let(variable, value, body) =>
-      match value.eval(env) {
-        Ok(word) => {
-          let next = env.copy()
-          next[variable.name] = word
-          body.eval(next)
-        }
-        Err(reason) => Err(reason)
-      }
-    Cast(typ, exp) =>
-      match exp.eval(env) {
-        Ok(word) => cast_word(typ, word)
-        Err(reason) => Err(reason)
-      }
-    UnOp(op, exp) =>
-      match exp.eval(env) {
-        Ok(word) => eval_unop(op, word)
-        Err(reason) => Err(reason)
-      }
-    BinOp(op, lhs, rhs) =>
-      match (lhs.eval(env), rhs.eval(env)) {
-        (Ok(left), Ok(right)) => eval_binop(op, left, right)
-        (Err(reason), _) | (_, Err(reason)) => Err(reason)
-      }
-    Ite(cond~, yes~, no~) =>
-      match cond.eval(env) {
-        Ok(word) => if word.is_zero() { no.eval(env) } else { yes.eval(env) }
-        Err(reason) => Err(reason)
-      }
+  let values : Map[String, BilValue] = Map([])
+  env.each((name, word) => values[name] = BilWord(word))
+  match self.eval_value(values) {
+    Ok(BilWord(word)) => Ok(word)
+    Ok(BilMem(_)) => Err("expression evaluated to memory")
+    Err(reason) => Err(reason)
   }
 }
 

@@ -63,6 +63,88 @@ test "bil eval folds scalar arithmetic comparisons and conditionals" {
 }
 
 ///|
+fn word32(value : UInt64) -> @types.Word raise @bitvec.BitVecError {
+  @types.Word::of_uint64(width=32, value)
+}
+
+///|
+fn word8(value : UInt64) -> @types.Word raise @bitvec.BitVecError {
+  @types.Word::of_uint64(width=8, value)
+}
+
+///|
+fn word16(value : UInt64) -> @types.Word raise @bitvec.BitVecError {
+  @types.Word::of_uint64(width=16, value)
+}
+
+///|
+fn assert_eval_word(
+  exp : @types.Exp,
+  env : Map[String, @types.BilValue],
+  expected : @types.Word,
+) -> Unit raise {
+  match exp.eval_value(env) {
+    Ok(BilWord(word)) => assert_true(word == expected)
+    Ok(BilMem(_)) => fail("expected scalar value")
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+test "bil eval handles byte-addressed load and store expressions" {
+  let mem_typ = @types.ValueType::Mem(addr_width=32, value_width=8)
+  let mem = @types.Var::new(name="mem", typ=mem_typ)
+  let env : Map[String, @types.BilValue] = {
+    "mem": BilMem(@types.BilMemory::empty(addr_width=32)),
+  }
+  let addr0 = @types.Int(word32(0))
+  let addr1 = @types.Int(word32(1))
+  let data = @types.Int(word32(0xdeadbeef))
+  assert_true(
+    @types.Exp::Load(mem=Var(mem), addr=addr0, endian=LittleEndian, typ=Imm(32)).eval_value(
+      env,
+    )
+    is Err(_),
+  )
+  let stored = @types.Exp::Store(
+    mem=Var(mem),
+    addr=addr0,
+    value=data,
+    endian=LittleEndian,
+  )
+  assert_eval_word(
+    Load(mem=stored, addr=addr0, endian=LittleEndian, typ=Imm(32)),
+    env,
+    word32(0xdeadbeef),
+  )
+  assert_eval_word(
+    Load(mem=stored, addr=addr0, endian=BigEndian, typ=Imm(32)),
+    env,
+    word32(0xefbeadde),
+  )
+  assert_eval_word(
+    Load(mem=stored, addr=addr0, endian=BigEndian, typ=Imm(8)),
+    env,
+    word8(0xef),
+  )
+  assert_eval_word(
+    Load(mem=stored, addr=addr1, endian=LittleEndian, typ=Imm(8)),
+    env,
+    word8(0xbe),
+  )
+  assert_eval_word(
+    Load(mem=stored, addr=addr1, endian=BigEndian, typ=Imm(16)),
+    env,
+    word16(0xbead),
+  )
+  assert_eval_word(
+    Load(mem=stored, addr=addr1, endian=LittleEndian, typ=Imm(16)),
+    env,
+    word16(0xadbe),
+  )
+}
+
+///|
 test "statement helpers expose used variables and substitute expressions" {
   let typ = @types.ValueType::Imm(8)
   let x = @types.Var::new(name="x", typ~)

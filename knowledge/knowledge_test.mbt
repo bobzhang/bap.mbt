@@ -11,6 +11,30 @@ test "names preserve packages and escaped separators" {
 }
 
 ///|
+fn optional_string_equal(lhs : String?, rhs : String?) -> Bool {
+  lhs == rhs
+}
+
+///|
+fn inspect_optional_string(value : String?) -> String {
+  match value {
+    Some(text) => "some(\{text})"
+    None => "none"
+  }
+}
+
+///|
+fn register_test_agent(
+  name : String,
+  reliability : @knowledge.AgentReliability,
+) -> @knowledge.Agent raise {
+  match @knowledge.Agent::register(name, pkg="test", reliability~) {
+    Ok(agent) => agent
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "flat domains keep bottom and reject conflicting facts" {
   let domain = @knowledge.Domain::flat(
     @knowledge.Name::create("color", pkg="test"),
@@ -63,6 +87,75 @@ test "translated BAP powerset domains join facts by union" {
   assert_true(facts.provide(object, ["main", "main"]) == Ok(["main"]))
   assert_true(facts.provide(object, ["entry", "main"]) == Ok(["main", "entry"]))
   assert_true(facts.has(object))
+}
+
+///|
+test "translated BAP opinion domains resolve by agent reliability" {
+  let weak = register_test_agent("opinion-weak", Unreliable)
+  let weak_peer = register_test_agent("opinion-weak-peer", Unreliable)
+  let strong = register_test_agent("opinion-strong", Reliable)
+  let mutable = register_test_agent("opinion-mutable", Unreliable)
+  assert_true(weak.name().show() == "test:opinion-weak")
+  assert_true(weak.weight() == 1)
+  assert_true(mutable.set_reliability(Authorative) == Ok(()))
+  assert_true(mutable.weight() == 16)
+
+  let empty_name : String? = None
+  let domain = @knowledge.Domain::opinions(
+    @knowledge.Name::create("possible-name", pkg="test"),
+    empty=empty_name,
+    equal=optional_string_equal,
+    inspect=inspect_optional_string,
+  )
+  let weak_opinion = @knowledge.Opinions::empty(
+    empty=empty_name,
+    equal=optional_string_equal,
+    inspect=inspect_optional_string,
+  ).add(weak, Some("helper"))
+  let strong_opinion = weak_opinion.add(strong, Some("main"))
+  assert_true(domain.order(weak_opinion, strong_opinion) == Less)
+  assert_true(strong_opinion.choice() == Some("main"))
+  inspect(strong_opinion.inspect(), content="[some(helper), some(main)]")
+
+  let cls : @knowledge.Class[Unit, String] = @knowledge.Class::create(
+    name=@knowledge.Name::create("opinion-program", pkg="test"),
+    sort="unit",
+  )
+  let slot = cls.property(
+    name=@knowledge.Name::create("possible-name", pkg="test"),
+    domain~,
+  )
+  let object = @knowledge.State::new().create(cls)
+  let facts = @knowledge.FactTable::new(slot)
+  assert_true(facts.resolve(object) == Ok(None))
+  match facts.suggest(weak, object, None) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  assert_true(facts.resolve(object) == Ok(None))
+  match facts.suggest(weak, object, Some("helper")) {
+    Ok(opinions) => assert_true(opinions.entries().length() == 1)
+    Err(reason) => fail(reason)
+  }
+  match facts.suggest(weak_peer, object, Some("helper")) {
+    Ok(opinions) =>
+      match opinions.entries().search_by(entry => entry.0 == Some("helper")) {
+        Some(index) => assert_true(opinions.entries()[index].1.length() == 2)
+        None => fail("missing helper opinion")
+      }
+    Err(reason) => fail(reason)
+  }
+  assert_true(facts.resolve(object) == Ok(Some("helper")))
+  match facts.suggest(strong, object, Some("main")) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  assert_true(facts.resolve(object) == Ok(Some("main")))
+  match facts.suggest(mutable, object, Some("helper")) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  assert_true(facts.resolve(object) == Ok(Some("helper")))
 }
 
 ///|

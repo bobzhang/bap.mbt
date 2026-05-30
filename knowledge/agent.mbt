@@ -1,0 +1,136 @@
+///|
+pub(all) enum AgentReliability {
+  Authorative
+  Reliable
+  Trustworthy
+  Doubtful
+  Unreliable
+} derive(Eq, Debug)
+
+///|
+struct Agent {
+  id_value : String
+} derive(Eq, Debug)
+
+///|
+priv struct AgentInfo {
+  name_value : Name
+  desc_value : String
+  reliability_value : AgentReliability
+}
+
+///|
+let agent_registry : Map[String, AgentInfo] = {}
+
+///|
+fn AgentReliability::weight(self : AgentReliability) -> Int {
+  match self {
+    Authorative => 16
+    Reliable => 8
+    Trustworthy => 4
+    Doubtful => 2
+    Unreliable => 1
+  }
+}
+
+///|
+pub fn AgentReliability::authorative() -> AgentReliability {
+  Authorative
+}
+
+///|
+pub fn AgentReliability::reliable() -> AgentReliability {
+  Reliable
+}
+
+///|
+pub fn AgentReliability::trustworthy() -> AgentReliability {
+  Trustworthy
+}
+
+///|
+pub fn AgentReliability::doubtful() -> AgentReliability {
+  Doubtful
+}
+
+///|
+pub fn AgentReliability::unreliable() -> AgentReliability {
+  Unreliable
+}
+
+///|
+pub fn Agent::register(
+  name : String,
+  pkg? : String,
+  desc? : String = "no description provided",
+  reliability? : AgentReliability = Trustworthy,
+) -> Result[Agent, String] {
+  let full_name = Name::create(name, pkg?)
+  let id = full_name.show()
+  if agent_registry.contains(id) {
+    Err("agent \{id} is already registered")
+  } else {
+    agent_registry[id] = {
+      name_value: full_name,
+      desc_value: desc,
+      reliability_value: reliability,
+    }
+    Ok({ id_value: id })
+  }
+}
+
+///|
+pub fn Agent::id(self : Agent) -> String {
+  self.id_value
+}
+
+///|
+pub fn Agent::registry() -> Array[Agent] {
+  let agents = []
+  agent_registry.each((id, _) => agents.push({ id_value: id }))
+  agents.sort_by((left, right) => left.id().compare(right.id()))
+  agents
+}
+
+///|
+pub fn Agent::name(self : Agent) -> Name {
+  match agent_registry.get(self.id_value) {
+    Some(info) => info.name_value
+    None => Name::read(self.id_value)
+  }
+}
+
+///|
+pub fn Agent::desc(self : Agent) -> String {
+  match agent_registry.get(self.id_value) {
+    Some(info) => info.desc_value
+    None => ""
+  }
+}
+
+///|
+pub fn Agent::reliability(self : Agent) -> AgentReliability {
+  match agent_registry.get(self.id_value) {
+    Some(info) => info.reliability_value
+    None => Unreliable
+  }
+}
+
+///|
+pub fn Agent::set_reliability(
+  self : Agent,
+  reliability : AgentReliability,
+) -> Result[Unit, String] {
+  match agent_registry.get(self.id_value) {
+    Some(info) => {
+      agent_registry[self.id_value] = { ..info, reliability_value: reliability }
+      Ok(())
+    }
+    None => Err("unknown agent \{self.id_value}")
+  }
+}
+
+///|
+pub fn Agent::weight(self : Agent) -> Int {
+  self.reliability().weight()
+}

@@ -178,6 +178,32 @@ pub fn[T : Eq] Domain::powerset(
 }
 
 ///|
+pub fn[T] Domain::opinions(
+  name : Name,
+  empty~ : T,
+  equal~ : (T, T) -> Bool,
+  inspect~ : (T) -> String,
+) -> Domain[Opinions[T]] {
+  Domain::new(
+    name~,
+    empty=Some(Opinions::empty(empty~, equal~, inspect~)),
+    is_empty=(value : Opinions[T]) => value.is_empty(),
+    order=(lhs : Opinions[T], rhs : Opinions[T]) => {
+      let order = lhs.total_weight().compare(rhs.total_weight())
+      if order < 0 {
+        Less
+      } else if order > 0 {
+        Greater
+      } else {
+        Equal
+      }
+    },
+    join=(lhs : Opinions[T], rhs : Opinions[T]) => Ok(lhs.merge(rhs)),
+    inspect=(value : Opinions[T]) => value.inspect(),
+  )
+}
+
+///|
 pub fn[T] Domain::name(self : Domain[T]) -> Name {
   self.name
 }

@@ -129,3 +129,33 @@ pub fn[K, P] FactTable::require(
       )
   }
 }
+
+///|
+pub fn[K, P] FactTable::suggest(
+  self : FactTable[K, Opinions[P]],
+  agent : Agent,
+  object : Object[K],
+  value : P,
+) -> Result[Opinions[P], String] {
+  match self.collect(object) {
+    Some(opinions) => self.provide(object, opinions.add(agent, value))
+    None =>
+      Err(
+        "opinion fact \{self.slot.name().show()} has no empty value for object \{object.id()}",
+      )
+  }
+}
+
+///|
+pub fn[K, P] FactTable::resolve(
+  self : FactTable[K, Opinions[P]],
+  object : Object[K],
+) -> Result[P, String] {
+  match self.collect(object) {
+    Some(opinions) => Ok(opinions.choice())
+    None =>
+      Err(
+        "opinion fact \{self.slot.name().show()} has no empty value for object \{object.id()}",
+      )
+  }
+}

@@ -10,6 +10,29 @@ import {
 // Errors
 
 // Types and methods
+type Agent derive(Eq, @debug.Debug)
+pub fn Agent::desc(Self) -> String
+pub fn Agent::id(Self) -> String
+pub fn Agent::name(Self) -> Name
+pub fn Agent::register(String, pkg? : String, desc? : String, reliability? : AgentReliability) -> Result[Self, String]
+pub fn Agent::registry() -> Array[Self]
+pub fn Agent::reliability(Self) -> AgentReliability
+pub fn Agent::set_reliability(Self, AgentReliability) -> Result[Unit, String]
+pub fn Agent::weight(Self) -> Int
+
+pub(all) enum AgentReliability {
+  Authorative
+  Reliable
+  Trustworthy
+  Doubtful
+  Unreliable
+} derive(Eq, @debug.Debug)
+pub fn AgentReliability::authorative() -> Self
+pub fn AgentReliability::doubtful() -> Self
+pub fn AgentReliability::reliable() -> Self
+pub fn AgentReliability::trustworthy() -> Self
+pub fn AgentReliability::unreliable() -> Self
+
 type Class[K, S]
 pub fn[K, S] Class::create(name~ : Name, sort~ : S, desc? : String) -> Self[K, S]
 pub fn[K, S] Class::desc(Self[K, S]) -> String?
@@ -28,6 +51,7 @@ pub fn[T] Domain::is_empty(Self[T], T) -> Bool
 pub fn[T] Domain::join(Self[T], T, T) -> Result[T, String]
 pub fn[T] Domain::name(Self[T]) -> Name
 pub fn[T] Domain::new(name~ : Name, empty~ : T?, is_empty~ : (T) -> Bool, order~ : (T, T) -> PartialOrder, join~ : (T, T) -> Result[T, String], inspect~ : (T) -> String) -> Self[T]
+pub fn[T] Domain::opinions(Name, empty~ : T, equal~ : (T, T) -> Bool, inspect~ : (T) -> String) -> Self[Opinions[T]]
 pub fn[T] Domain::optional(Self[T]) -> Self[T?]
 pub fn[T] Domain::order(Self[T], T, T) -> PartialOrder
 pub fn[T : Eq] Domain::powerset(Name, (T) -> String) -> Self[Array[T]]
@@ -39,7 +63,9 @@ pub fn[K, P] FactTable::has(Self[K, P], Object[K]) -> Bool
 pub fn[K, P] FactTable::new(Slot[K, P]) -> Self[K, P]
 pub fn[K, P] FactTable::provide(Self[K, P], Object[K], P) -> Result[P, String]
 pub fn[K, P] FactTable::require(Self[K, P], Object[K]) -> Result[P, String]
+pub fn[K, P] FactTable::resolve(Self[K, Opinions[P]], Object[K]) -> Result[P, String]
 pub fn[K, P] FactTable::slot(Self[K, P]) -> Slot[K, P]
+pub fn[K, P] FactTable::suggest(Self[K, Opinions[P]], Agent, Object[K], P) -> Result[Opinions[P], String]
 
 pub(all) struct Name {
   pkg : String
@@ -57,6 +83,16 @@ pub fn[K] Object::class_name(Self[K]) -> Name
 pub fn[K] Object::id(Self[K]) -> Int
 pub fn[K] Object::is_null(Self[K]) -> Bool
 pub fn[K, S] Object::null(Class[K, S]) -> Self[K]
+
+type Opinions[T]
+pub fn[T] Opinions::add(Self[T], Agent, T) -> Self[T]
+pub fn[T] Opinions::choice(Self[T]) -> T
+pub fn[T] Opinions::empty(empty~ : T, equal~ : (T, T) -> Bool, inspect~ : (T) -> String) -> Self[T]
+pub fn[T] Opinions::entries(Self[T]) -> Array[(T, Array[Agent])]
+pub fn[T] Opinions::inspect(Self[T]) -> String
+pub fn[T] Opinions::is_empty(Self[T]) -> Bool
+pub fn[T] Opinions::merge(Self[T], Self[T]) -> Self[T]
+pub fn[T] Opinions::total_weight(Self[T]) -> Int
 
 pub(all) enum PartialOrder {
   Less

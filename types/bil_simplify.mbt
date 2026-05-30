@@ -165,6 +165,11 @@ pub fn Exp::fold_consts(self : Exp) -> Exp {
 }
 
 ///|
+pub fn Exp::normalize(self : Exp) -> Exp {
+  self.normalize_negatives()
+}
+
+///|
 pub fn Exp::fixpoint(self : Exp, step : (Exp) -> Exp) -> Exp {
   let mut current = self
   let mut next = step(current)
@@ -278,6 +283,43 @@ pub fn Stmt::fold_consts(self : Stmt) -> Stmt {
 }
 
 ///|
+fn normalize_exp_if(exp : Exp, normalize_exp : Bool) -> Exp {
+  if normalize_exp {
+    exp.normalize()
+  } else {
+    exp
+  }
+}
+
+///|
+pub fn Stmt::normalize(
+  self : Stmt,
+  normalize_exp? : Bool = false,
+) -> Array[Stmt] {
+  match self {
+    Move(variable, exp) =>
+      [Move(variable, normalize_exp_if(exp, normalize_exp))]
+    Jmp(exp) => [Jmp(normalize_exp_if(exp, normalize_exp))]
+    Special(_) | CpuExn(_) => [self]
+    If(cond~, yes~, no~) =>
+      [
+        If(
+          cond=normalize_exp_if(cond, normalize_exp),
+          yes=normalize(yes, normalize_exp~),
+          no=normalize(no, normalize_exp~),
+        ),
+      ]
+    While(cond~, body~) =>
+      [
+        While(
+          cond=normalize_exp_if(cond, normalize_exp),
+          body=normalize(body, normalize_exp~),
+        ),
+      ]
+  }
+}
+
+///|
 pub fn Stmt::fixpoint(self : Stmt, step : (Stmt) -> Stmt) -> Stmt {
   let mut current = self
   let mut next = step(current)
@@ -311,6 +353,20 @@ pub fn simplify_stmts(stmts : Array[Stmt]) -> Array[Stmt] {
 ///|
 pub fn normalize_negatives(stmts : Array[Stmt]) -> Array[Stmt] {
   stmts.map(stmt => stmt.normalize_negatives())
+}
+
+///|
+pub fn normalize(
+  stmts : Array[Stmt],
+  normalize_exp? : Bool = false,
+) -> Array[Stmt] {
+  let result = []
+  for stmt in stmts {
+    for normalized in stmt.normalize(normalize_exp~) {
+      result.push(normalized)
+    }
+  }
+  result
 }
 
 ///|

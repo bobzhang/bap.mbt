@@ -181,6 +181,31 @@ test "bil BAP normalize negatives and fold const aliases" {
 }
 
 ///|
+test "bil BAP normalize wrappers recurse with optional expression normalization" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let minus_one = @types.Int(@types.Word::of_int(width=8, -1).signed())
+  let exp : @types.Exp = BinOp(Plus, Var(x), minus_one)
+  assert_true(exp.normalize() == BinOp(Minus, Var(x), Int(word8(1))))
+  let stmts = [@types.Stmt::Move(y, exp)]
+  assert_true(@types.normalize(stmts) == stmts)
+  let normalized = @types.normalize(stmts, normalize_exp=true)
+  inspect(normalized[0].to_string(), content="y:imm8 := (x:imm8 - 1:8u)")
+  let branch = @types.normalize(
+    [If(cond=exp, yes=[Move(y, exp)], no=[])],
+    normalize_exp=true,
+  )
+  match branch[0] {
+    If(cond~, yes~, ..) => {
+      inspect(cond.to_string(), content="(x:imm8 - 1:8u)")
+      inspect(yes[0].to_string(), content="y:imm8 := (x:imm8 - 1:8u)")
+    }
+    _ => fail("expected normalized branch")
+  }
+}
+
+///|
 test "bil BAP fixpoint helpers iterate until stable" {
   let typ = @types.ValueType::Imm(8)
   let x = @types.Var::new(name="x", typ~)

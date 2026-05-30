@@ -304,6 +304,20 @@ pub fn ProjectStorageTag::string_array(String) -> Self[Array[String]]
 pub fn ProjectStorageTag::uint64(String) -> Self[UInt64]
 pub fn ProjectStorageTag::uint64_array(String) -> Self[Array[UInt64]]
 
+type ProjectSymbolizer
+pub fn ProjectSymbolizer::chain(Array[Self]) -> Self
+pub fn ProjectSymbolizer::create((UInt64) -> String?, path? : String, biased? : Bool) -> Self
+pub fn ProjectSymbolizer::empty() -> Self
+pub fn ProjectSymbolizer::is_biased(Self) -> Bool
+pub fn ProjectSymbolizer::name_is_empty(String) -> Bool
+pub fn ProjectSymbolizer::name_of_addr(UInt64) -> String
+pub fn ProjectSymbolizer::of_blocks(Array[(String, UInt64, UInt64)]) -> Self
+pub fn ProjectSymbolizer::of_image(@image.Image) -> Self
+pub fn ProjectSymbolizer::path(Self) -> String?
+pub fn ProjectSymbolizer::resolve(Self, UInt64) -> String
+pub fn ProjectSymbolizer::run(Self, UInt64) -> String?
+pub fn ProjectSymbolizer::set_path(Self, String) -> Self
+
 type RegisteredProjectCollator
 pub fn RegisteredProjectCollator::apply(Self, Array[Project]) -> Unit
 pub fn[S] RegisteredProjectCollator::create(name~ : String, description? : String, prepare~ : (Project) -> S, collate~ : (Int, S, Project) -> S, summary~ : (S) -> Unit) -> Self

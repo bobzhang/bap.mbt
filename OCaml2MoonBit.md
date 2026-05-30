@@ -129,6 +129,11 @@ than a decoder. `Rooter.of_image` contributes the image entry point plus image
 symbol starts and carries filename/biased-address metadata; `Rooter.of_blocks`
 groups serialized `(name, start, stop)` blocks by name and keeps the lowest
 start address for each name.
+For BAP-style symbolizers, keep generated names (`sub_...`) as empty knowledge
+and fall back to `sub_<addr>` only at `resolve` time. Image/block symbolizers
+should skip ambiguous many-address-to-one-name or many-name-to-one-address
+mappings instead of picking a winner, while `chain` should use the first
+symbolizer that knows an address.
 Treat accumulated disassembly blocks as set-like by memory interval. Re-running
 root materialization should not append duplicate blocks for the same
 `min_addr`/`max_addr`, even if the current MoonBit representation stores them in

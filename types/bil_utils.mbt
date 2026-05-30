@@ -266,6 +266,55 @@ fn eval_binop(op : BinOp, lhs : Word, rhs : Word) -> Result[Word, String] {
 }
 
 ///|
+fn widen_apply_operand(value : Word, width : Int) -> Result[Word, String] {
+  if value.width() == width {
+    Ok(value)
+  } else if value.width() < width {
+    try value.widen(width~) catch {
+      _ => word_error()
+    } noraise {
+      word => Ok(word)
+    }
+  } else {
+    try value.truncate(width~) catch {
+      _ => word_error()
+    } noraise {
+      word => Ok(word)
+    }
+  }
+}
+
+///|
+fn align_apply_operands(lhs : Word, rhs : Word) -> Result[(Word, Word), String] {
+  let width = Int::max(lhs.width(), rhs.width())
+  match (widen_apply_operand(lhs, width), widen_apply_operand(rhs, width)) {
+    (Ok(left), Ok(right)) => Ok((left, right))
+    (Err(reason), _) | (_, Err(reason)) => Err(reason)
+  }
+}
+
+///|
+pub fn UnOp::apply(self : UnOp, value : Word) -> Result[Word, String] {
+  eval_unop(self, value)
+}
+
+///|
+pub fn BinOp::apply(
+  self : BinOp,
+  lhs : Word,
+  rhs : Word,
+) -> Result[Word, String] {
+  match self {
+    LShift | RShift | ARShift => eval_binop(self, lhs, rhs)
+    _ =>
+      match align_apply_operands(lhs, rhs) {
+        Ok((left, right)) => eval_binop(self, left, right)
+        Err(reason) => Err(reason)
+      }
+  }
+}
+
+///|
 pub fn Exp::eval(self : Exp, env : Map[String, Word]) -> Result[Word, String] {
   let values : Map[String, BilValue] = Map([])
   env.each((name, word) => values[name] = BilWord(word))

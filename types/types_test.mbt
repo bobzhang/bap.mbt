@@ -458,6 +458,40 @@ test "bil operators expose BAP compatibility metadata" {
 }
 
 ///|
+test "bil apply helpers expose BAP word operator behavior" {
+  let narrow = @types.Word::of_int(width=8, 0xff)
+  let wide_one = @types.Word::of_int(width=16, 1)
+  match @types.BinOp::Plus.apply(narrow, wide_one) {
+    Ok(word) => inspect(word.to_hex(), content="0x0100")
+    Err(reason) => fail(reason)
+  }
+  match @types.BinOp::Eq.apply(@types.Word::of_int(width=8, 1), wide_one) {
+    Ok(word) => assert_true(word == @types.Word::b1())
+    Err(reason) => fail(reason)
+  }
+  match
+    @types.BinOp::SignedDiv.apply(
+      @types.Word::of_int(width=8, -2),
+      @types.Word::of_int(width=8, 2),
+    ) {
+    Ok(word) => inspect(word.to_hex(), content="0xff")
+    Err(reason) => fail(reason)
+  }
+  match
+    @types.BinOp::LShift.apply(
+      @types.Word::of_int(width=8, 1),
+      @types.Word::of_int(width=8, 2),
+    ) {
+    Ok(word) => inspect(word.to_hex(), content="0x04")
+    Err(reason) => fail(reason)
+  }
+  match @types.UnOp::Not.apply(@types.Word::of_int(width=8, 0x55)) {
+    Ok(word) => inspect(word.to_hex(), content="0xaa")
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "bil expressions and statements expose BAP-style constructors" {
   let word = @types.Word::of_int(width=8, 1)
   let imm8 = @types.ValueType::Imm(8)

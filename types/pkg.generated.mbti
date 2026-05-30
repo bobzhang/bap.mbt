@@ -142,6 +142,7 @@ pub(all) enum BinOp {
   SignedLt
   SignedLe
 } derive(Eq, @debug.Debug)
+pub fn BinOp::apply(Self, Word, Word) -> Result[Word, String]
 pub fn BinOp::is_associative(Self) -> Bool
 pub fn BinOp::is_commutative(Self) -> Bool
 pub fn BinOp::string_of_binop(Self) -> String
@@ -519,6 +520,7 @@ pub(all) enum UnOp {
   Not
   Neg
 } derive(Eq, @debug.Debug)
+pub fn UnOp::apply(Self, Word) -> Result[Word, String]
 pub fn UnOp::string_of_unop(Self) -> String
 pub fn UnOp::to_string(Self) -> String
 

@@ -7,7 +7,7 @@ This repository is porting `.repos/bap` from OCaml to idiomatic MoonBit.
 - `bitvec`: fixed-width bitvectors with normalization, bit predicates, unsigned and signed shifts, modular arithmetic, unsigned division/remainder, gcd/lcm, concatenation, extraction, hexadecimal parsing/formatting, and endian byte conversion.
 - `regular`: printable helpers, deterministic digest wrappers, format metadata/registry support, and a prefix trie with `find`, `remove`, and longest-prefix matching.
 - `graphlib`: persistent directed graphs with node/edge operations, successor/predecessor queries, DFS edge classification, reachability, reverse postorder, and dominator-set computation.
-- `types`: BAP-style `Word` wrapper over `bitvec`, value types, variables, a BIL expression/statement AST with type inference, free-variable analysis, variable/expression substitution, scalar and byte-addressed memory expression evaluation, bounded statement execution over BIL state, focused BIL simplification, plus an initial IR term layer with tids, attributes, program/sub/block containers, defs, phis, jumps, calls, labels, arguments, and expression traversal/free-variable/substitution helpers.
+- `types`: BAP-style `Word` wrapper over `bitvec`, value types, variables, a BIL expression/statement AST with type inference, free-variable analysis, variable/expression substitution, scalar and byte-addressed memory expression evaluation, bounded statement execution over BIL state, focused BIL simplification, plus an initial IR term layer with tids, attributes, program/sub/block containers, defs, phis, jumps, calls, labels, arguments, expression traversal/free-variable/substitution helpers, and BAP-style block definition sequence/edit/split utilities.
 - `knowledge`: typed names, partial orders, monotone domains, class/slot metadata, object allocation, and fact tables that merge values through domain joins.
 - `core_theory`: symbolic sorts, typed values, variables, effect lattice values, labels, target metadata with inheritance/matching helpers, common architecture target declarations, and a target registry/lookup layer.
 - `memory`: byte-addressed memory regions with rebasing, views/ranges, endian-aware word loads and stores, contiguous merges, hexdumps, and a basic interval `MemMap` with lookup/intersection/dominator queries.
@@ -17,7 +17,7 @@ This repository is porting `.repos/bap` from OCaml to idiomatic MoonBit.
 ## Next Packages
 
 - Expand `core_theory` with the full BAP knowledge registry, richer role/alias origin tracking, program/unit/source/compiler slots, and more complete architecture-specific target metadata.
-- Expand `types` with richer BIL optimization passes, fuller IR visitors and control-flow semantics, data-flow helpers over the term layer, and the remaining tests translated from `.repos/bap/lib_test/bap_types`.
+- Expand `types` with richer BIL optimization passes, fuller IR visitors and control-flow semantics, phi-aware data-flow helpers over the term layer, and the remaining tests translated from `.repos/bap/lib_test/bap_types`.
 - Expand `image` with Ogre spec parsing, file-backed loaders, backend discovery metadata, and richer symbol-to-memory handling for non-contiguous symbols.
 - Expand `project` with file-backed input loaders, pass run-once/telemetry semantics, collators, analysis arguments, disassembly state, and richer non-string storage encodings.
 

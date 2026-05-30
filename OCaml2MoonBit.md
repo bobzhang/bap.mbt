@@ -636,6 +636,8 @@ Assertion style:
 - `@test.assert_eq` accepts a named `msg=` argument for shared assertion helpers.
 - Shared test helpers that call `@test.assert_eq`, `fail`, or fallible APIs should declare `-> Unit raise Error` unless they use a narrower project error type.
 - Pattern checks: `assert_true(value is Pattern(...))` or `guard ... else { fail(...) }`.
+- `option == None` requires the option payload type to implement `Eq`. For private
+  or intentionally non-`Eq` payloads, use `value is None` instead.
 - Snapshots: `inspect(value, content="...")` for small values; `debug_inspect(value, content=...)` for complex values with `Debug`. If the expected snapshot is unknown, write `inspect(value)`, run `moon test --update`, then review the diff.
 - Success paths through raising functions: call the fallible API directly and let the test fail on any error. Expected failures: `try f() catch { err => inspect(err) } noraise { _ => fail("expected to fail") }`.
 - Use a wildcard `catch` arm for "this should raise"; match a specific error variant only when that variant is itself part of the compatibility contract.

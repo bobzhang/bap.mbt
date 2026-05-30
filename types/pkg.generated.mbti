@@ -216,41 +216,62 @@ pub fn[T] Term::attrs(Self[T]) -> Map[String, String]
 pub fn Term::blk_free_vars(Self[Blk]) -> Array[Var]
 pub fn Term::blks(Self[Sub]) -> Array[Self[Blk]]
 pub fn[T] Term::clone(Self[T]) -> Self[T]
+pub fn Term::concat_map_defs(Self[Blk], (Self[Def]) -> Array[Self[Def]]) -> Self[Blk]
 pub fn Term::cond(Self[Jmp]) -> Exp
 pub fn[T] Term::create(T, tid? : Tid) -> Self[T]
+pub fn Term::def_count(Self[Blk]) -> Int
 pub fn Term::def_free_vars(Self[Def]) -> Array[Var]
+pub fn Term::def_occurs_after(Self[Blk], Tid, Tid) -> Bool
 pub fn Term::defines_var(Self[Blk], Var) -> Bool
 pub fn Term::defs(Self[Blk]) -> Array[Self[Def]]
+pub fn Term::defs_after(Self[Blk], Tid, rev? : Bool) -> Array[Self[Def]]
+pub fn Term::defs_before(Self[Blk], Tid, rev? : Bool) -> Array[Self[Def]]
 pub fn[T] Term::del_attr(Self[T], String) -> Self[T]
 pub fn Term::elts(Self[Blk], rev? : Bool) -> Array[BlkElt]
+pub fn Term::filter_defs(Self[Blk], (Self[Def]) -> Bool) -> Self[Blk]
+pub fn Term::filter_map_defs(Self[Blk], (Self[Def]) -> Self[Def]?) -> Self[Blk]
 pub fn Term::find_blk(Self[Sub], Tid) -> Self[Blk]?
 pub fn Term::find_def(Self[Blk], Tid) -> Self[Def]?
 pub fn Term::find_sub(Self[Program], Tid) -> Self[Sub]?
+pub fn Term::find_var(Self[Blk], Var) -> VarBinding?
+pub fn Term::first_def(Self[Blk]) -> Self[Def]?
 pub fn[T] Term::get_attr(Self[T], String) -> String?
 pub fn[T] Term::has_attr(Self[T], String) -> Bool
+pub fn Term::insert_def_after(Self[Blk], Self[Def], after? : Tid) -> Self[Blk]
+pub fn Term::insert_def_before(Self[Blk], Self[Def], before? : Tid) -> Self[Blk]
 pub fn Term::intent(Self[Arg]) -> Intent?
 pub fn Term::jmp_free_vars(Self[Jmp]) -> Array[Var]
 pub fn Term::jmps(Self[Blk]) -> Array[Self[Jmp]]
 pub fn Term::kind(Self[Jmp]) -> JmpKind
+pub fn Term::last_def(Self[Blk]) -> Self[Def]?
 pub fn Term::lhs(Self[Def]) -> Var
 pub fn Term::map_arg_exp(Self[Arg], (Exp) -> Exp) -> Self[Arg]
 pub fn Term::map_blk_exp(Self[Blk], (Exp) -> Exp) -> Self[Blk]
 pub fn Term::map_def_exp(Self[Def], (Exp) -> Exp) -> Self[Def]
+pub fn Term::map_defs(Self[Blk], (Self[Def]) -> Self[Def]) -> Self[Blk]
 pub fn Term::map_jmp_exp(Self[Jmp], (Exp) -> Exp) -> Self[Jmp]
 pub fn Term::map_phi_exp(Self[Phi], (Exp) -> Exp) -> Self[Phi]
 pub fn Term::map_program_exp(Self[Program], (Exp) -> Exp) -> Self[Program]
 pub fn Term::map_sub_exp(Self[Sub], (Exp) -> Exp) -> Self[Sub]
 pub fn[T] Term::name(Self[T]) -> String
+pub fn Term::next_def(Self[Blk], Tid) -> Self[Def]?
+pub fn Term::nth_def(Self[Blk], Int) -> Self[Def]?
 pub fn[T] Term::payload(Self[T]) -> T
 pub fn Term::phi_free_vars(Self[Phi]) -> Array[Var]
 pub fn Term::phi_lhs(Self[Phi]) -> Var
 pub fn Term::phis(Self[Blk]) -> Array[Self[Phi]]
+pub fn Term::prev_def(Self[Blk], Tid) -> Self[Def]?
 pub fn Term::program_free_vars(Self[Program]) -> Array[Var]
+pub fn Term::remove_def(Self[Blk], Tid) -> Self[Blk]
 pub fn Term::remove_phi(Self[Phi], Tid) -> Self[Phi]
 pub fn Term::rhs(Self[Def]) -> Exp
 pub fn[T] Term::same(Self[T], Self[T]) -> Bool
 pub fn Term::select(Self[Phi], Tid) -> Exp?
 pub fn[T] Term::set_attr(Self[T], Attr) -> Self[T]
+pub fn Term::split_after_def(Self[Blk], Self[Def]) -> (Self[Blk], Self[Blk])
+pub fn Term::split_before_def(Self[Blk], Self[Def]) -> (Self[Blk], Self[Blk])
+pub fn Term::split_bottom_defs(Self[Blk]) -> (Self[Blk], Self[Blk])
+pub fn Term::split_top_defs(Self[Blk]) -> (Self[Blk], Self[Blk])
 pub fn Term::sub_free_vars(Self[Sub]) -> Array[Var]
 pub fn Term::sub_name(Self[Sub]) -> String
 pub fn Term::subs(Self[Program]) -> Array[Self[Sub]]
@@ -262,7 +283,9 @@ pub fn Term::substitute_phi_var(Self[Phi], Var, Exp) -> Self[Phi]
 pub fn Term::substitute_program_var(Self[Program], Var, Exp) -> Self[Program]
 pub fn Term::substitute_sub_var(Self[Sub], Var, Exp) -> Self[Sub]
 pub fn[T] Term::tid(Self[T]) -> Tid
+pub fn Term::update_def(Self[Blk], Self[Def]) -> Self[Blk]
 pub fn Term::update_phi(Self[Phi], Tid, Exp) -> Self[Phi]
+pub fn Term::uses_var(Self[Blk], Var) -> Bool
 pub fn Term::values(Self[Phi]) -> Array[(Tid, Exp)]
 pub fn Term::with_cond(Self[Jmp], Exp) -> Self[Jmp]
 pub fn Term::with_intent(Self[Arg], Intent) -> Self[Arg]
@@ -304,6 +327,11 @@ pub(all) struct Var {
 } derive(Eq, @debug.Debug)
 pub fn Var::new(name~ : String, typ~ : ValueType, is_virtual? : Bool) -> Self
 pub fn Var::to_string(Self) -> String
+
+pub(all) enum VarBinding {
+  PhiBinding(Term[Phi])
+  DefBinding(Term[Def])
+}
 
 type Word derive(Eq, @debug.Debug)
 pub fn Word::add(Self, Self) -> Self raise @bitvec.BitVecError

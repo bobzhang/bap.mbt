@@ -270,6 +270,8 @@ test "program metadata tracks source compiler and units" {
   let target = @core_theory.Target::x86_64()
   let base = @types.Word::of_int(width=64, 0x400000)
   let upper = @types.Word::of_int(width=64, 0x4000ff)
+  let real = @types.Word::of_int(width=64, 0x1234)
+  let biased = @types.Word::of_int(width=64, 0x401234)
   let unit = @core_theory.ProgramUnit::for_file(
     "main.o",
     target~,
@@ -280,6 +282,11 @@ test "program metadata tracks source compiler and units" {
   assert_true(unit.path() == Some("main.o"))
   assert_true(unit.name() == "main.o")
   assert_true(unit.bias() == Some(base))
+  assert_true(unit.to_real_addr(biased) == Ok(real))
+  assert_true(unit.to_biased_addr(real) == Ok(biased))
+  assert_true(
+    unit.to_real_addr(@types.Word::of_int(width=32, 0x1234)) is Err(_),
+  )
   assert_true(unit.target().matches("amd64"))
   assert_true(unit.source().map(item => item.code()) == Some(source.code()))
   assert_true(unit.compiler().map(item => item.name()) == Some("clang"))
@@ -287,6 +294,8 @@ test "program metadata tracks source compiler and units" {
   assert_true(region.lower() == Some(base))
   assert_true(region.upper() == Some(upper))
   assert_true(region.name() == "\{base.to_hex()}-\{upper.to_hex()}")
+  assert_true(region.to_real_addr(base) == Ok(base))
+  assert_true(region.to_biased_addr(base) == Ok(base))
   let label = @core_theory.Label::for_name("main")
     .with_unit(unit)
     .with_encoding(language)

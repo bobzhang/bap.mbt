@@ -303,6 +303,43 @@ pub fn ProgramUnit::bias(self : ProgramUnit) -> @types.Word? {
 }
 
 ///|
+fn unit_bias_error() -> Result[@types.Word, String] {
+  Err("program unit bias conversion requires addresses with matching widths")
+}
+
+///|
+pub fn ProgramUnit::to_real_addr(
+  self : ProgramUnit,
+  address : @types.Word,
+) -> Result[@types.Word, String] {
+  match self.bias_value {
+    Some(bias) =>
+      try address.sub(bias) catch {
+        _ => unit_bias_error()
+      } noraise {
+        real => Ok(real)
+      }
+    None => Ok(address)
+  }
+}
+
+///|
+pub fn ProgramUnit::to_biased_addr(
+  self : ProgramUnit,
+  address : @types.Word,
+) -> Result[@types.Word, String] {
+  match self.bias_value {
+    Some(bias) =>
+      try address.add(bias) catch {
+        _ => unit_bias_error()
+      } noraise {
+        biased => Ok(biased)
+      }
+    None => Ok(address)
+  }
+}
+
+///|
 pub fn ProgramUnit::target(self : ProgramUnit) -> Target {
   self.target_value
 }

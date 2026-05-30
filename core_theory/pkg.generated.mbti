@@ -171,6 +171,8 @@ pub fn ProgramUnit::path(Self) -> String?
 pub fn ProgramUnit::same(Self, Self) -> Bool
 pub fn ProgramUnit::source(Self) -> Source?
 pub fn ProgramUnit::target(Self) -> Target
+pub fn ProgramUnit::to_biased_addr(Self, @types.Word) -> Result[@types.Word, String]
+pub fn ProgramUnit::to_real_addr(Self, @types.Word) -> Result[@types.Word, String]
 pub fn ProgramUnit::upper(Self) -> @types.Word?
 pub fn ProgramUnit::with_bias(Self, @types.Word) -> Self
 pub fn ProgramUnit::with_compiler(Self, Compiler) -> Self

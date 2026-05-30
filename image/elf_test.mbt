@@ -137,6 +137,7 @@ fn image_elf_test_make_x86_64() -> Bytes {
   buffer[4] = b'\x02'
   buffer[5] = b'\x01'
   buffer[6] = b'\x01'
+  buffer[7] = b'\x03'
   image_elf_test_set_u16_le(buffer, 16, 2)
   image_elf_test_set_u16_le(buffer, 18, 0x3e)
   image_elf_test_set_u32_le(buffer, 20, 1)
@@ -514,6 +515,7 @@ test "image ELF backend loads program segments and sections" {
     Some(target) => {
       assert_true(target.matches("x86_64"))
       assert_true(target.filetype() == Elf)
+      assert_true(target.system() == Linux)
     }
     None => fail("expected ELF target")
   }

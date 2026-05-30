@@ -8,6 +8,7 @@ priv enum ImageElfClass {
 priv struct ImageElfHeader {
   endian : @bitvec.Endian
   class : ImageElfClass
+  osabi : Int
   typ : Int
   machine : Int
   entry : UInt64
@@ -232,6 +233,7 @@ fn image_elf_parse_header(data : Bytes) -> Result[ImageElfHeader, String] {
   if data[6].to_int() != 1 {
     return Err("unsupported ELF version")
   }
+  let osabi = data[7].to_int()
   let min_header_size = match class {
     ImageElf32 => 52
     ImageElf64 => 64
@@ -372,6 +374,7 @@ fn image_elf_parse_header(data : Bytes) -> Result[ImageElfHeader, String] {
       Ok({
         endian,
         class,
+        osabi,
         typ,
         machine,
         entry,
@@ -1113,6 +1116,17 @@ fn image_elf_target_endian(endian : @bitvec.Endian) -> @core_theory.Endianness {
 }
 
 ///|
+fn image_elf_target_system(osabi : Int) -> @core_theory.System? {
+  match osabi {
+    3 => Some(Linux)
+    9 => Some(FreeBSD)
+    12 => Some(OpenBSD)
+    255 => Some(NoSystem)
+    _ => None
+  }
+}
+
+///|
 fn image_elf_target(header : ImageElfHeader) -> @core_theory.Target {
   let base = match header.machine {
     0x02 =>
@@ -1164,9 +1178,13 @@ fn image_elf_target(header : ImageElfHeader) -> @core_theory.Target {
         },
       )
   }
-  base
-  .with_endianness(image_elf_target_endian(header.endian))
-  .with_filetype(Elf)
+  let target = base
+    .with_endianness(image_elf_target_endian(header.endian))
+    .with_filetype(Elf)
+  match image_elf_target_system(header.osabi) {
+    Some(system) => target.with_system(system)
+    None => target
+  }
 }
 
 ///|

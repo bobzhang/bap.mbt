@@ -190,19 +190,61 @@ pub fn Image::symbols_of_segment(
 }
 
 ///|
+fn min_int(lhs : Int, rhs : Int) -> Int {
+  if lhs < rhs {
+    lhs
+  } else {
+    rhs
+  }
+}
+
+///|
+fn Image::symbol_memory_chunks(
+  self : Image,
+  symbol : Symbol,
+) -> Array[@memory.Memory]? {
+  let size = if symbol.size() <= 0 { 1 } else { symbol.size() }
+  let chunks = []
+  let mut current = symbol.addr()
+  let mut remaining = size
+  while remaining > 0 {
+    match self.segments_value.search_by(segment => segment.contains(current)) {
+      Some(i) => {
+        let memory = self.segments_value[i].memory()
+        let available = (memory.max_addr() - current).to_int() + 1
+        let take = min_int(remaining, available)
+        match memory.view(from=current, words=take) {
+          Ok(chunk) => {
+            chunks.push(chunk)
+            remaining = remaining - take
+            current = current + take.to_uint64()
+          }
+          Err(_) => return None
+        }
+      }
+      None => return None
+    }
+  }
+  Some(chunks)
+}
+
+///|
+pub fn Image::memories_of_symbol(
+  self : Image,
+  symbol : Symbol,
+) -> Array[@memory.Memory]? {
+  self.symbol_memory_chunks(symbol)
+}
+
+///|
 pub fn Image::memory_of_symbol(
   self : Image,
   symbol : Symbol,
 ) -> (@memory.Memory, Array[@memory.Memory])? {
-  match self.segment_of_symbol(symbol) {
-    Some(segment) => {
-      let size = if symbol.size() <= 0 { 1 } else { symbol.size() }
-      match segment.memory().view(from=symbol.addr(), words=size) {
-        Ok(mem) => Some((mem, []))
-        Err(_) => None
-      }
-    }
-    None => None
+  match self.symbol_memory_chunks(symbol) {
+    Some(chunks) if !chunks.is_empty() =>
+      Some((chunks[0], chunks[1:].to_owned()))
+    _ => None
   }
 }
 

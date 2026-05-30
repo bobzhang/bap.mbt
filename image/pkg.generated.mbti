@@ -32,6 +32,7 @@ pub fn Image::endian(Self) -> @bitvec.Endian
 pub fn Image::entry_point(Self) -> UInt64
 pub fn Image::filename(Self) -> String?
 pub fn Image::from_segments(entry~ : UInt64, endian~ : @bitvec.Endian, Array[Segment], sections? : Array[Section], symbols? : Array[Symbol], filename? : String, target? : @core_theory.Target) -> Self
+pub fn Image::memories_of_symbol(Self, Symbol) -> Array[@memory.Memory]?
 pub fn Image::memory(Self) -> @memory.MemMap[String]
 pub fn Image::memory_of_section(Self, Section) -> @memory.Memory?
 pub fn Image::memory_of_segment(Self, Segment) -> @memory.Memory

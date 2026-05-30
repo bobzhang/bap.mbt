@@ -48,6 +48,70 @@ test "image exposes segment memory and symbol membership" {
 }
 
 ///|
+test "image symbol memory can span contiguous segment chunks" {
+  let first = @image.Segment::create(
+    name=".a",
+    endian=LittleEndian,
+    addr=0x1000UL,
+    b"\x00\x01\x02\x03",
+  )
+  let second = @image.Segment::create(
+    name=".b",
+    endian=LittleEndian,
+    addr=0x1004UL,
+    b"\x04\x05\x06",
+  )
+  let symbol = @image.Symbol::create(name="span", addr=0x1002UL, size=5)
+  let image = @image.Image::from_segments(
+    entry=0x1000UL,
+    endian=LittleEndian,
+    [first, second],
+    symbols=[symbol],
+  )
+  match image.memories_of_symbol(symbol) {
+    Some(chunks) => {
+      assert_true(chunks.length() == 2)
+      inspect(chunks[0].hexdump(), content="02 03")
+      inspect(chunks[1].hexdump(), content="04 05 06")
+    }
+    None => fail("expected symbol chunks")
+  }
+  match image.memory_of_symbol(symbol) {
+    Some((head, rest)) => {
+      inspect(head.hexdump(), content="02 03")
+      assert_true(rest.length() == 1)
+      inspect(rest[0].hexdump(), content="04 05 06")
+    }
+    None => fail("expected symbol memory tuple")
+  }
+}
+
+///|
+test "image symbol memory rejects gaps across segments" {
+  let first = @image.Segment::create(
+    name=".a",
+    endian=LittleEndian,
+    addr=0x1000UL,
+    b"\x00\x01\x02\x03",
+  )
+  let second = @image.Segment::create(
+    name=".b",
+    endian=LittleEndian,
+    addr=0x1008UL,
+    b"\x08\x09",
+  )
+  let symbol = @image.Symbol::create(name="gap", addr=0x1002UL, size=5)
+  let image = @image.Image::from_segments(
+    entry=0x1000UL,
+    endian=LittleEndian,
+    [first, second],
+    symbols=[symbol],
+  )
+  assert_true(image.memories_of_symbol(symbol) is None)
+  assert_true(image.memory_of_symbol(symbol) is None)
+}
+
+///|
 test "image words follow endian-aware memory loads" {
   let little = @image.Segment::create(
     name=".data",

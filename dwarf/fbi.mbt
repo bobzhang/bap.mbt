@@ -316,6 +316,18 @@ fn dwarf_parse_unit(
 }
 
 ///|
+fn dwarf_remaining_is_zero_padding(input : DwarfInput) -> Bool {
+  let mut index = input.position()
+  while index < input.data.length() {
+    if input.data[index] != b'\x00' {
+      return false
+    }
+    index = index + 1
+  }
+  true
+}
+
+///|
 pub fn DwarfData::functions(
   self : DwarfData,
 ) -> Result[Array[DwarfFunction], String] {
@@ -334,6 +346,9 @@ pub fn DwarfData::functions(
   let functions : Array[DwarfFunction] = []
   let mut cursor = info_section.input()
   while cursor.remaining() > 0 {
+    if dwarf_remaining_is_zero_padding(cursor) {
+      return Ok(functions)
+    }
     match dwarf_parse_unit(cursor, abbrev_section, str_section, self.endian()) {
       Ok((unit_functions, next)) => {
         for function_item in unit_functions {

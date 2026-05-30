@@ -425,7 +425,7 @@ test "image backend discovery returns extension matches by priority" {
 }
 
 ///|
-test "image registers built-in raw backend idempotently" {
+test "image registers built-in raw and Ogre backends idempotently" {
   match @image.register_builtin_backends() {
     Ok(_) => ()
     Err(reason) => fail(reason)
@@ -435,8 +435,10 @@ test "image registers built-in raw backend idempotently" {
     Err(reason) => fail(reason)
   }
   assert_true(@image.find_backend("raw") is Some(_))
+  assert_true(@image.find_backend("ogre") is Some(_))
   assert_true(@image.backend_names_for_extension("raw").contains("raw"))
   assert_true(@image.backend_names_for_extension("bin").contains("raw"))
+  assert_true(@image.backend_names_for_extension("ogre").contains("ogre"))
   match @image.Image::of_bytes(b"\xaa\xbb", backend="raw") {
     Ok((img, warnings)) => {
       assert_true(warnings.is_empty())
@@ -447,6 +449,42 @@ test "image registers built-in raw backend idempotently" {
     }
     Err(reason) => fail(reason)
   }
+  let spec = "(declare arch (name str))" +
+    " (declare bits (size int))" +
+    " (declare entry-point (addr int))" +
+    " (declare is-little-endian (flag bool))" +
+    " (arch riscv64)" +
+    " (bits 64)" +
+    " (entry-point 0)" +
+    " (is-little-endian true)"
+  match @image.Image::of_bytes(@utf8.encode(spec), backend="ogre") {
+    Ok((img, warnings)) => {
+      assert_true(warnings.is_empty())
+      assert_true(img.entry_point() == 0UL)
+      assert_true(img.segments().is_empty())
+      match img.target() {
+        Some(target) => {
+          assert_true(target.matches("riscv64"))
+          assert_true(target.bits() == 64)
+          assert_true(target.endianness() == LittleEndian)
+        }
+        None => fail("expected Ogre target")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+  match
+    @image.Image::of_bytes_for_filename(
+      @utf8.encode(spec),
+      filename="unit.OGRE",
+    ) {
+    Ok((img, warnings)) => {
+      assert_true(warnings.is_empty())
+      assert_true(img.arch().matches("riscv64"))
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(@image.Image::of_bytes(b"\xff", backend="ogre") is Err(_))
 }
 
 ///|

@@ -121,8 +121,26 @@ pub fn ImageBackend::raw() -> ImageBackend {
 }
 
 ///|
+pub fn ImageBackend::ogre() -> ImageBackend {
+  ImageBackend::create(
+    name="ogre",
+    description="Ogre image specification",
+    extensions=["ogre"],
+    priority=20,
+    load=data => {
+      let spec = try @utf8.decode(data) catch {
+        _ => return Err("Ogre image specification is not valid UTF-8")
+      } noraise {
+        value => value
+      }
+      Image::of_ogre_string(b"", spec)
+    },
+  )
+}
+
+///|
 pub fn register_builtin_backends() -> Result[Unit, String] {
-  for backend in [ImageBackend::raw()] {
+  for backend in [ImageBackend::raw(), ImageBackend::ogre()] {
     match register_backend_if_absent(backend) {
       Ok(_) => ()
       Err(reason) => return Err(reason)

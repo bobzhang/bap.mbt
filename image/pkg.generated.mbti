@@ -69,6 +69,7 @@ pub fn ImageBackend::description(Self) -> String
 pub fn ImageBackend::extensions(Self) -> Array[String]
 pub fn ImageBackend::load(Self, Bytes) -> Result[(Image, Array[String]), String]
 pub fn ImageBackend::name(Self) -> String
+pub fn ImageBackend::ogre() -> Self
 pub fn ImageBackend::priority(Self) -> Int
 pub fn ImageBackend::raw() -> Self
 pub fn ImageBackend::supports_extension(Self, String) -> Bool

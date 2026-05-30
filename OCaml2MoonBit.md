@@ -155,9 +155,13 @@ known `(source, target?, kind)` disassembly edges explicitly, and let the
 initial reconstructor emit direct IR gotos only for targets that correspond to
 blocks inside the reconstructed subroutine. Unknown or cross-subroutine
 destinations should remain preserved as disassembly metadata until a richer
-call/branch classifier is available. Keep the top-level project orchestration
-explicit: a one-shot helper may run either a named or discovered disassembly
-driver and then a named/default reconstructor, but it
+call/branch classifier is available. Model branchers as a checked project stage
+that enriches already materialized disassembly blocks with those edge facts;
+the empty brancher should be a no-op for existing blocks, while applying any
+brancher to a project without disassembly blocks should fail explicitly. Keep
+the top-level project orchestration explicit: a one-shot helper may run either
+a named or discovered disassembly driver, optionally apply a brancher, and then
+a named/default reconstructor, but it
 should still surface each failing stage as a checked `Result` instead of hiding
 loader/disassembly/reconstruction failures.
 When a higher-level package exposes the same loader surface as a lower-level

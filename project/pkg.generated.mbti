@@ -78,6 +78,7 @@ pub fn Library::unit(Self) -> @core_theory.ProgramUnit
 
 type Project
 pub fn Project::add_library(Self, Library) -> Self
+pub fn Project::apply_brancher(Self, brancher? : ProjectBrancher) -> Result[Self, String]
 pub fn Project::arch(Self) -> @core_theory.Target
 pub fn Project::base_address(Self) -> UInt64?
 pub fn Project::create(target~ : @core_theory.Target, image? : @image.Image, filename? : String, program? : @types.Term[@types.Program], memory? : @memory.MemMap[String], symbols? : Array[@image.Symbol], storage? : Map[String, String], libraries? : Array[Library], state? : ProjectState) -> Self
@@ -85,7 +86,7 @@ pub fn Project::del(Self, String) -> Self
 pub fn[T] Project::del_tag(Self, ProjectStorageTag[T]) -> Self
 pub fn Project::destroy_ssa(Self) -> Self
 pub fn Project::disassemble(Self, driver~ : String) -> Result[Self, String]
-pub fn Project::disassemble_and_reconstruct(Self, driver? : String, reconstructor? : ProjectReconstructor) -> Result[Self, String]
+pub fn Project::disassemble_and_reconstruct(Self, driver? : String, brancher? : ProjectBrancher, reconstructor? : ProjectReconstructor) -> Result[Self, String]
 pub fn Project::disassemble_with_available(Self) -> Result[Self, String]
 pub fn Project::disassembly(Self) -> ProjectDisassemblyState
 pub fn Project::empty(@core_theory.Target) -> Self
@@ -181,6 +182,16 @@ pub fn ProjectAnalysisInfo::description(Self) -> String
 pub fn ProjectAnalysisInfo::grammar(Self) -> Array[String]
 pub fn ProjectAnalysisInfo::grammar_string(Self) -> String
 pub fn ProjectAnalysisInfo::name(Self) -> String
+
+type ProjectBrancher
+pub fn ProjectBrancher::create((@memory.Memory) -> Array[ProjectDisassemblyEdge]) -> Self
+pub fn ProjectBrancher::empty() -> Self
+pub fn ProjectBrancher::is_biased(Self) -> Bool
+pub fn ProjectBrancher::of_edges(Array[ProjectDisassemblyEdge]) -> Self
+pub fn ProjectBrancher::path(Self) -> String?
+pub fn ProjectBrancher::resolve(Self, @memory.Memory) -> Array[ProjectDisassemblyEdge]
+pub fn ProjectBrancher::set_path(Self, String) -> Self
+pub fn ProjectBrancher::with_biased(Self, Bool) -> Self
 
 type ProjectCollator[S, R]
 pub fn[S, R] ProjectCollator::apply(Self[S, R], Array[Project]) -> R?

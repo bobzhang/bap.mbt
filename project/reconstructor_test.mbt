@@ -104,6 +104,55 @@ test "project disassemble-and-reconstruct runs explicit driver and custom recons
 }
 
 ///|
+test "project disassemble-and-reconstruct applies brancher before reconstruction" {
+  match @project.register_builtin_disassembly_drivers() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let entry = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x4800UL,
+    b"\x01",
+  )
+  let exit = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x4810UL,
+    b"\x02",
+  )
+  let memory = @memory.MemMap::singleton(entry, "code").add(exit, "code")
+  let project = @project.Project::empty(@core_theory.Target::unknown()).with_memory(
+    memory,
+  )
+  let brancher = @project.ProjectBrancher::of_edges([
+    @project.ProjectDisassemblyEdge::create(
+      source=0x4800UL,
+      target=0x4810UL,
+      kind=FallEdge,
+    ),
+  ])
+  let reconstructor = @project.ProjectReconstructor::of_blocks([
+    ("main", 0x4800UL, 0x4800UL),
+    ("main", 0x4810UL, 0x4810UL),
+  ])
+  match
+    project.disassemble_and_reconstruct(
+      driver="memory-blocks",
+      brancher~,
+      reconstructor~,
+    ) {
+    Ok(reconstructed) => {
+      let subs = reconstructed.program().subs()
+      assert_true(subs.length() == 1)
+      let blocks = subs[0].blks()
+      assert_true(blocks.length() == 2)
+      assert_true(subs[0].sub_has_edge(blocks[0], blocks[1]))
+      assert_true(reconstructed.disassembly().edge_count() == 1)
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project block reconstructor groups serialized block starts by name" {
   let target = @core_theory.Target::unknown()
   let first = @memory.Memory::from_bytes(

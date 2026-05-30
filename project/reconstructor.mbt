@@ -216,6 +216,7 @@ pub fn Project::reconstruct(
 pub fn Project::disassemble_and_reconstruct(
   self : Project,
   driver? : String,
+  brancher? : ProjectBrancher,
   reconstructor? : ProjectReconstructor,
 ) -> Result[Project, String] {
   let disassembled = match driver {
@@ -230,5 +231,13 @@ pub fn Project::disassemble_and_reconstruct(
         Err(reason) => return Err(reason)
       }
   }
-  disassembled.reconstruct(reconstructor?)
+  let branched = match brancher {
+    Some(value) =>
+      match disassembled.apply_brancher(brancher=value) {
+        Ok(project) => project
+        Err(reason) => return Err(reason)
+      }
+    None => disassembled
+  }
+  branched.reconstruct(reconstructor?)
 }

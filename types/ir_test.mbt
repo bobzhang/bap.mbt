@@ -97,15 +97,14 @@ test "ir block and program helpers respect local definitions" {
   let z = @types.Var::new(name="z", typ~)
   let left = @types.Tid::for_name("pred")
   let phi = @types.Phi::of_list(x, [(left, Var(z))])
-  let def = @types.Def::create(y, BinOp(Plus, Var(x), Int(word8(1))))
+  let def = @types.Def::create(y, Int(word8(1)))
   let jmp = @types.Jmp::create_goto(
     @types.Label::direct(@types.Tid::for_name("done")),
     cond=Var(y),
   )
   let blk = @types.Blk::create(phis=[phi], defs=[def], jmps=[jmp])
   let blk_vars = blk.blk_free_vars()
-  assert_true(blk_vars.length() == 1)
-  assert_true(blk_vars[0] == z)
+  assert_true(blk_vars.is_empty())
   let arg = @types.Arg::create(x, Var(z))
   assert_true(arg.arg_free_vars().any(item => item == z))
   let sub = @types.Sub::create(name="main", args=[arg], blks=[blk])

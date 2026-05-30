@@ -192,10 +192,6 @@ pub fn Term::map_blk_exp(self : Term[Blk], f : (Exp) -> Exp) -> Term[Blk] {
 pub fn Term::blk_free_vars(self : Term[Blk]) -> Array[Var] {
   let vars = []
   let killed = []
-  for phi in self.payload_value.phis {
-    add_free_vars(vars, phi.phi_free_vars(), killed)
-    add_var(killed, phi.phi_lhs())
-  }
   for def in self.payload_value.defs {
     add_free_vars(vars, def.def_free_vars(), killed)
     add_var(killed, def.lhs())

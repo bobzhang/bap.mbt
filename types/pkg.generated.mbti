@@ -197,6 +197,7 @@ pub(all) enum Exp {
   Ite(cond~ : Exp, yes~ : Exp, no~ : Exp)
 } derive(Eq, @debug.Debug)
 pub fn Exp::binop(BinOp, Self, Self) -> Self
+pub fn Exp::effect(Self) -> ExpEffect
 pub fn Exp::eval(Self, Map[String, Word]) -> Result[Word, String]
 pub fn Exp::eval_value(Self, Map[String, BilValue]) -> Result[BilValue, String]
 pub fn Exp::free_vars(Self) -> Array[Var]
@@ -216,6 +217,23 @@ pub fn Exp::type_of(Self) -> ValueType
 pub fn Exp::unknown(String, ValueType) -> Self
 pub fn Exp::unop(UnOp, Self) -> Self
 pub fn Exp::var_exp(Var) -> Self
+
+type ExpEffect derive(Eq, @debug.Debug)
+pub fn ExpEffect::compute(Exp) -> Self
+pub fn ExpEffect::has_coeffects(Self) -> Bool
+pub fn ExpEffect::has_effects(Self) -> Bool
+pub fn ExpEffect::idempotent(Self) -> Bool
+pub fn ExpEffect::join(Self, Self) -> Self
+pub fn ExpEffect::load() -> Self
+pub fn ExpEffect::loads(Self) -> Bool
+pub fn ExpEffect::none() -> Self
+pub fn ExpEffect::of_list(Array[Self]) -> Self
+pub fn ExpEffect::raise_() -> Self
+pub fn ExpEffect::raises(Self) -> Bool
+pub fn ExpEffect::read() -> Self
+pub fn ExpEffect::reads(Self) -> Bool
+pub fn ExpEffect::store() -> Self
+pub fn ExpEffect::stores(Self) -> Bool
 
 pub(all) enum Intent {
   In

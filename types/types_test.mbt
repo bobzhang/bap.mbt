@@ -584,6 +584,56 @@ test "bil checked type inference mirrors BAP error cases" {
 }
 
 ///|
+test "bil expression effects mirror BAP read load store and raise approximations" {
+  let imm8 = @types.ValueType::Imm(8)
+  let mem32 = @types.ValueType::mem32_t(R8)
+  let x = @types.Var::new(name="x", typ=imm8)
+  let addr = @types.Var::new(name="addr", typ=Imm(32))
+  let mem = @types.Var::new(name="mem", typ=mem32)
+  let x_exp = @types.Exp::var_exp(x)
+  let addr_exp = @types.Exp::var_exp(addr)
+  let mem_exp = @types.Exp::var_exp(mem)
+  let none = @types.ExpEffect::none()
+  assert_true(none.idempotent())
+  assert_true(!none.has_effects())
+  assert_true(!none.has_coeffects())
+  let read = x_exp.effect()
+  assert_true(read.reads())
+  assert_true(read.has_coeffects())
+  assert_true(!read.has_effects())
+  let load_exp = @types.Exp::load(mem=mem_exp, addr=addr_exp, LittleEndian, R8)
+  let load_effect = load_exp.effect()
+  assert_true(load_effect.reads())
+  assert_true(load_effect.loads())
+  assert_true(load_effect.raises())
+  assert_true(load_effect.has_effects())
+  assert_true(load_effect.has_coeffects())
+  let store = @types.Exp::store(
+    mem=mem_exp,
+    addr=addr_exp,
+    x_exp,
+    BigEndian,
+    R8,
+  ).effect()
+  assert_true(store.reads())
+  assert_true(store.stores())
+  assert_true(store.raises())
+  assert_true(store.has_effects())
+  let zero = @types.Exp::int(@types.Word::zero(width=8))
+  let one = @types.Exp::int(@types.Word::one(width=8))
+  assert_true(@types.Exp::binop(Div, x_exp, zero).effect().raises())
+  assert_true(!@types.Exp::binop(Div, x_exp, one).effect().raises())
+  assert_true(@types.Exp::binop(Div, x_exp, addr_exp).effect().raises())
+  let nonzero_or = @types.Exp::binop(Or, zero, one)
+  assert_true(!@types.Exp::binop(Mod, x_exp, nonzero_or).effect().raises())
+  assert_true(@types.Exp::unknown("opaque", imm8).effect().idempotent())
+  assert_true(
+    @types.ExpEffect::compute(@types.Exp::let_(x, load_exp, x_exp)) ==
+    load_effect.join(read),
+  )
+}
+
+///|
 test "bil statements expose definitions" {
   let typ = @types.ValueType::Imm(8)
   let x = @types.Var::new(name="x", typ~)

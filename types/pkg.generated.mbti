@@ -440,7 +440,8 @@ pub fn Word::neg(Self) -> Self
 pub fn Word::of_binary(@bitvec.Endian, BytesView, width? : Int) -> Self raise @bitvec.BitVecError
 pub fn Word::of_bool(Bool) -> Self
 pub fn Word::of_int(width~ : Int, Int) -> Self raise @bitvec.BitVecError
-pub fn Word::of_int64(width~ : Int, Int64) -> Self raise @bitvec.BitVecError
+pub fn Word::of_int32(Int, width? : Int) -> Self raise @bitvec.BitVecError
+pub fn Word::of_int64(Int64, width? : Int) -> Self raise @bitvec.BitVecError
 pub fn Word::of_uint64(width~ : Int, UInt64) -> Self raise @bitvec.BitVecError
 pub fn Word::one(width~ : Int) -> Self raise @bitvec.BitVecError
 pub fn Word::ones(width~ : Int) -> Self raise @bitvec.BitVecError

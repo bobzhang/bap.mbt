@@ -51,9 +51,17 @@ pub fn Word::of_int(
 }
 
 ///|
+pub fn Word::of_int32(
+  value : Int,
+  width? : Int = 32,
+) -> Word raise @bitvec.BitVecError {
+  Word::from_bitvec(@bitvec.of_int(width~, value))
+}
+
+///|
 pub fn Word::of_int64(
-  width~ : Int,
   value : Int64,
+  width? : Int = 64,
 ) -> Word raise @bitvec.BitVecError {
   Word::from_bitvec(@bitvec.of_int64(width~, value))
 }

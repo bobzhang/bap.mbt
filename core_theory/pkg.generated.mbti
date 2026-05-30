@@ -327,6 +327,7 @@ pub fn Target::powerpc() -> Self
 pub fn Target::powerpc64() -> Self
 pub fn Target::powerpc64le() -> Self
 pub fn Target::r600() -> Self
+pub fn Target::register_variants(Self, systems? : Array[System], abis? : Array[Abi], fabis? : Array[Fabi], filetypes? : Array[Filetype], options? : Array[TargetOptions]) -> Result[Array[Self], String]
 pub fn Target::riscv32() -> Self
 pub fn Target::riscv64() -> Self
 pub fn Target::role_aliases(Self, Role) -> Array[String]

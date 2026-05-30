@@ -1414,6 +1414,140 @@ pub fn Target::select(
 }
 
 ///|
+fn target_system_component(system : System) -> String {
+  match system {
+    UnknownSystem => ""
+    _ => system.to_string()
+  }
+}
+
+///|
+fn target_abi_component(abi : Abi) -> String {
+  match abi {
+    UnknownAbi => ""
+    _ => abi.to_string()
+  }
+}
+
+///|
+fn target_fabi_component(fabi : Fabi) -> String {
+  match fabi {
+    UnknownFabi => ""
+    _ => fabi.to_string()
+  }
+}
+
+///|
+fn target_filetype_component(filetype : Filetype) -> String {
+  match filetype {
+    UnknownFiletype => ""
+    _ => filetype.to_string()
+  }
+}
+
+///|
+fn target_variant_name(
+  parent : Target,
+  system : System,
+  abi : Abi,
+  fabi : Fabi,
+  filetype : Filetype,
+  options : TargetOptions,
+) -> String {
+  let parts = []
+  let system_part = target_system_component(system)
+  if system_part != "" {
+    parts.push(system_part)
+  }
+  let abi_part = target_abi_component(abi) + target_fabi_component(fabi)
+  if abi_part != "" {
+    parts.push(abi_part)
+  }
+  let filetype_part = target_filetype_component(filetype)
+  if filetype_part != "" {
+    parts.push(filetype_part)
+  }
+  let fields = if parts.is_empty() { "" } else { "-\{parts.join("-")}" }
+  parent.name().unqualified() + fields + options.to_string()
+}
+
+///|
+fn target_variant_is_empty(
+  system : System,
+  abi : Abi,
+  fabi : Fabi,
+  filetype : Filetype,
+  options : TargetOptions,
+) -> Bool {
+  system == UnknownSystem &&
+  abi == UnknownAbi &&
+  fabi == UnknownFabi &&
+  filetype == UnknownFiletype &&
+  options.is_empty()
+}
+
+///|
+pub fn Target::register_variants(
+  parent : Target,
+  systems? : Array[System],
+  abis? : Array[Abi],
+  fabis? : Array[Fabi],
+  filetypes? : Array[Filetype],
+  options? : Array[TargetOptions],
+) -> Result[Array[Target], String] {
+  let systems = match systems {
+    Some(values) => values
+    None => [UnknownSystem]
+  }
+  let abis = match abis {
+    Some(values) => values
+    None => [UnknownAbi]
+  }
+  let fabis = match fabis {
+    Some(values) => values
+    None => [UnknownFabi]
+  }
+  let filetypes = match filetypes {
+    Some(values) => values
+    None => [UnknownFiletype]
+  }
+  let options = match options {
+    Some(values) => values
+    None => [TargetOptions::empty()]
+  }
+  let created = []
+  for system in systems {
+    for abi in abis {
+      for fabi in fabis {
+        for filetype in filetypes {
+          for opts in options {
+            if !target_variant_is_empty(system, abi, fabi, filetype, opts) {
+              let target = Target::create(
+                name=@knowledge.Name::create(
+                  target_variant_name(parent, system, abi, fabi, filetype, opts),
+                  pkg=parent.name().pkg(),
+                ),
+                parent~,
+                system~,
+                abi~,
+                fabi~,
+                filetype~,
+                options=opts,
+              )
+              match register_target(target) {
+                Ok(_) => created.push(target)
+                Err(reason) => return Err(reason)
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  Ok(created)
+}
+
+///|
 fn target_family_compare(left : Target, right : Target) -> Int {
   if left.name().show() == right.name().show() {
     0

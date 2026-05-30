@@ -294,6 +294,54 @@ test "target selection filters BAP-style metadata constraints" {
 }
 
 ///|
+test "target variant registration generates BAP-style names" {
+  let parent = @core_theory.Target::create(
+    name=@knowledge.Name::create("unit-variant-root", pkg="test"),
+    bits=64,
+  )
+  match @core_theory.register_target(parent) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let tuned = @core_theory.TargetOptions::singleton("cpu", "tiny")
+  match
+    @core_theory.Target::register_variants(
+      parent,
+      systems=[Linux, Darwin],
+      abis=[GNU],
+      filetypes=[Elf],
+      options=[@core_theory.TargetOptions::empty(), tuned],
+    ) {
+    Ok(variants) => {
+      assert_true(variants.length() == 4)
+      assert_true(
+        variants.any(target => {
+          target.name().unqualified() == "unit-variant-root-linux-gnu-elf"
+        }),
+      )
+      assert_true(
+        variants.any(target => {
+          target.name().unqualified() ==
+          "unit-variant-root-linux-gnu-elf+cpu=tiny"
+        }),
+      )
+      let tuned_matches = @core_theory.Target::filter(
+        parent~,
+        system=Linux,
+        options=tuned,
+      )
+      assert_true(tuned_matches.length() == 1)
+      assert_true(tuned_matches[0].options().get("cpu") == Some("tiny"))
+    }
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.Target::register_variants(parent) {
+    Ok(empty) => assert_true(empty.is_empty())
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "target metadata enums parse loader strings" {
   assert_true(
     @core_theory.Endianness::of_string("little-endian") == Some(LittleEndian),

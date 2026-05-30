@@ -164,6 +164,97 @@ test "translated BAP pruning preserves effects and conservative loops" {
 }
 
 ///|
+test "translated BAP pruning preserves condition-carried liveness" {
+  let typ = @types.ValueType::Imm(8)
+  let always_alive = @types.Var::new(name="always_alive", typ~)
+  let x = @types.Var::new(name="x", typ~)
+  let could_be_dead = @types.Var::new(
+    name="could_be_dead",
+    typ~,
+    is_virtual=true,
+  )
+  let will_survive = @types.Var::new(name="will_survive", typ~, is_virtual=true)
+  let branch_use = [
+    @types.Stmt::Move(x, Int(word8(1))),
+    Move(will_survive, Int(word8(2))),
+    If(cond=BinOp(Lt, Int(word8(0)), Var(x)), yes=[], no=[
+      Move(will_survive, Int(word8(1))),
+    ]),
+    Move(x, Var(will_survive)),
+  ]
+  assert_true(@types.prune_dead_virtual_stmts(branch_use) == branch_use)
+  let includes_conditions = @types.prune_dead_virtual_stmts([
+    Move(will_survive, Int(word8(42))),
+    If(
+      cond=BinOp(Lt, Int(word8(0)), Var(will_survive)),
+      yes=[Move(could_be_dead, Int(word8(1)))],
+      no=[Move(could_be_dead, Int(word8(2)))],
+    ),
+    Move(could_be_dead, Int(word8(1))),
+    Move(always_alive, Var(could_be_dead)),
+    Move(could_be_dead, UnOp(Not, Var(always_alive))),
+  ])
+  assert_true(
+    stmt_text(includes_conditions) ==
+    [
+      "%will_survive:imm8 := 0x2A:8u", "if (0:8u < %will_survive:imm8) then 0 stmts else 0 stmts",
+      "%could_be_dead:imm8 := 1:8u", "always_alive:imm8 := %could_be_dead:imm8",
+    ],
+  )
+}
+
+///|
+test "translated BAP pruning preserves deeply nested loop dependencies" {
+  let typ = @types.ValueType::Imm(8)
+  let always_alive = @types.Var::new(name="always_alive", typ~)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let z = @types.Var::new(name="z", typ~)
+  let could_be_dead = @types.Var::new(
+    name="could_be_dead",
+    typ~,
+    is_virtual=true,
+  )
+  let will_survive = @types.Var::new(name="will_survive", typ~, is_virtual=true)
+  let nested = [
+    @types.Stmt::Move(x, Int(word8(1))),
+    If(
+      cond=BinOp(Lt, Var(x), Int(word8(0))),
+      yes=[
+        If(cond=BinOp(Eq, BinOp(Plus, Var(x), Var(y)), Int(word8(1))), yes=[], no=[
+          While(cond=BinOp(Lt, Var(y), Var(z)), body=[
+            If(cond=BinOp(Lt, Int(word8(4)), Var(z)), yes=[], no=[
+              Move(will_survive, Int(word8(1))),
+            ]),
+          ]),
+        ]),
+      ],
+      no=[],
+    ),
+  ]
+  assert_true(@types.prune_dead_virtual_stmts(nested) == nested)
+  let deep = [
+    @types.Stmt::Move(always_alive, Int(word8(1))),
+    Move(will_survive, Int(word8(2))),
+    Move(always_alive, Int(word8(4))),
+    If(
+      cond=BinOp(Lt, Int(word8(0)), Var(will_survive)),
+      yes=[
+        While(cond=BinOp(Eq, Var(will_survive), Int(word8(2))), body=[
+          If(
+            cond=BinOp(Lt, Int(word8(0)), Var(always_alive)),
+            yes=[Move(will_survive, Int(word8(1)))],
+            no=[Move(could_be_dead, Int(word8(42)))],
+          ),
+        ]),
+      ],
+      no=[],
+    ),
+  ]
+  assert_true(@types.prune_dead_virtual_stmts(deep) == deep)
+}
+
+///|
 test "bil optimize combines simplification and dead virtual pruning" {
   let typ = @types.ValueType::Imm(8)
   let physical = @types.Var::new(name="physical", typ~)

@@ -214,6 +214,9 @@ test "target selection filters BAP-style metadata constraints" {
 
   let all = @core_theory.Target::filter(parent~)
   assert_true(all.length() == 4)
+  let family = @core_theory.Target::family(parent)
+  assert_true(family.length() == 4)
+  assert_true(family[0].name().unqualified() == "unit-select-root")
   let linux = @core_theory.Target::filter(parent~, system=Linux)
   assert_true(linux.length() == 2)
   assert_true(linux.all(target => target.system() == Linux))
@@ -244,6 +247,28 @@ test "target selection filters BAP-style metadata constraints" {
   assert_true(
     @core_theory.Target::filter().any(target => target.matches("x86_64")),
   )
+  let partitions = @core_theory.Target::partition([
+    @core_theory.Target::x86_64(),
+    darwin,
+    parent,
+    linux_elf,
+    @core_theory.Target::x86(),
+  ])
+  assert_true(partitions.length() == 2)
+  match
+    partitions.search_by(group => {
+      group[0].name().unqualified() == "unit-select-root"
+    }) {
+    Some(index) => assert_true(partitions[index].length() == 3)
+    None => fail("missing unit-select-root partition")
+  }
+  match partitions.search_by(group => group[0].matches("x86")) {
+    Some(index) => {
+      assert_true(partitions[index][0].matches("x86"))
+      assert_true(partitions[index][1].matches("x86_64"))
+    }
+    None => fail("missing x86 partition")
+  }
 }
 
 ///|

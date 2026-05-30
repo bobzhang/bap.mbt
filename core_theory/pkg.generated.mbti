@@ -299,6 +299,7 @@ pub fn Target::create(name~ : @knowledge.Name, parent? : Self, nicknames? : Arra
 pub fn Target::data_addr_size(Self) -> Int
 pub fn Target::endianness(Self) -> Endianness
 pub fn Target::fabi(Self) -> Fabi
+pub fn Target::family(Self) -> Array[Self]
 pub fn Target::filetype(Self) -> Filetype
 pub fn Target::filter(parent? : Self, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, strict? : Bool) -> Array[Self]
 pub fn Target::find_role(Self, Role) -> Var?
@@ -320,6 +321,7 @@ pub fn Target::origin_of_name(Self, String) -> AliasOrigin?
 pub fn Target::origin_of_var(Self, Var) -> AliasOrigin?
 pub fn Target::parent(Self) -> Self?
 pub fn Target::parents(Self) -> Array[Self]
+pub fn Target::partition(Array[Self]) -> Array[Array[Self]]
 pub fn Target::powerpc() -> Self
 pub fn Target::powerpc64() -> Self
 pub fn Target::powerpc64le() -> Self

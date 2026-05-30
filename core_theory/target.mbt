@@ -1301,18 +1301,80 @@ pub fn Target::select(
 }
 
 ///|
+fn target_family_compare(left : Target, right : Target) -> Int {
+  if left.name().show() == right.name().show() {
+    0
+  } else if left.belongs(right) {
+    1
+  } else if right.belongs(left) {
+    -1
+  } else {
+    left.name().unqualified().compare(right.name().unqualified())
+  }
+}
+
+///|
+fn sort_target_family(targets : Array[Target]) -> Array[Target] {
+  let result = targets.copy()
+  result.sort_by(target_family_compare)
+  result
+}
+
+///|
+fn target_array_contains(targets : Array[Target], target : Target) -> Bool {
+  targets.any(item => item.name().show() == target.name().show())
+}
+
+///|
+fn grandest_target_in(target : Target, universe : Array[Target]) -> Target {
+  for parent in target.parents() {
+    if target_array_contains(universe, parent) {
+      return parent
+    }
+  }
+  target
+}
+
+///|
+fn target_partition_compare(left : Array[Target], right : Array[Target]) -> Int {
+  match (left.get(0), right.get(0)) {
+    (Some(lhs), Some(rhs)) =>
+      lhs.name().unqualified().compare(rhs.name().unqualified())
+    (Some(_), None) => -1
+    (None, Some(_)) => 1
+    (None, None) => 0
+  }
+}
+
+///|
+pub fn Target::family(parent : Target) -> Array[Target] {
+  sort_target_family(
+    declared_targets().filter(target => target.belongs(parent)),
+  )
+}
+
+///|
+pub fn Target::partition(targets : Array[Target]) -> Array[Array[Target]] {
+  let groups : Array[(Target, Array[Target])] = []
+  for target in targets {
+    let root = grandest_target_in(target, targets)
+    match
+      groups.search_by(group => group.0.name().show() == root.name().show()) {
+      Some(index) => groups[index].1.push(target)
+      None => groups.push((root, [target]))
+    }
+  }
+  let result = [ for group in groups => sort_target_family(group.1) ]
+  result.sort_by(target_partition_compare)
+  result
+}
+
+///|
 pub fn target_family(parent : Target) -> Array[Target] {
-  declared_targets().filter(target => target.belongs(parent))
+  Target::family(parent)
 }
 
 ///|
 pub fn target_families() -> Array[Array[Target]] {
-  let families = []
-  for target in declared_targets() {
-    match target.parent() {
-      Some(_) => ()
-      None => families.push(target_family(target))
-    }
-  }
-  families
+  Target::partition(declared_targets())
 }

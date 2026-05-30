@@ -540,6 +540,7 @@ pub fn Word::logor(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::logxor(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::lsb(Self) -> Bool
 pub fn Word::lshift(Self, Int) -> Self
+pub fn Word::memref(Self, disp? : Int, index? : Int, scale? : Size) -> Self
 pub fn Word::modulo(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::msb(Self) -> Bool
 pub fn Word::mul(Self, Self) -> Self raise @bitvec.BitVecError

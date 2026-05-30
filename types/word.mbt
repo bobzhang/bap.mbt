@@ -296,6 +296,16 @@ pub fn Word::npred(self : Word, count : Int) -> Word {
 }
 
 ///|
+pub fn Word::memref(
+  self : Word,
+  disp? : Int = 0,
+  index? : Int = 0,
+  scale? : Size = R8,
+) -> Word {
+  self.nsucc(scale.in_bytes() * index + disp)
+}
+
+///|
 pub fn Word::bit_and(
   self : Word,
   other : Word,

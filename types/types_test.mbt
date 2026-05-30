@@ -68,6 +68,16 @@ test "word exposes BAP numeric compatibility aliases" {
 }
 
 ///|
+test "word address memref mirrors BAP scaling and wrapping" {
+  let base = @types.Word::of_int(width=32, 0x1000)
+  assert_true(base.memref(disp=4, index=3, scale=R16).to_int() == 0x100a)
+  assert_true(base.memref(disp=-0x10).to_int() == 0x0ff0)
+  assert_true(
+    @types.Word::of_int(width=8, 0xfe).memref(disp=4).to_hex() == "0x02",
+  )
+}
+
+///|
 test "word generic division follows BAP signedness flag" {
   let minus_two = @types.Word::of_int(width=8, -2).signed()
   let minus_three = @types.Word::of_int(width=8, -3).signed()

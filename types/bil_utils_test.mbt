@@ -240,7 +240,7 @@ test "statement helpers expose used variables and substitute expressions" {
   let y = @types.Var::new(name="y", typ~)
   let stmt = @types.Stmt::Move(x, BinOp(Plus, Var(y), Int(@types.Word::b1())))
   let vars = stmt.free_vars()
-  assert_true(vars.any(item => item == x))
+  assert_true(!vars.any(item => item == x))
   assert_true(vars.any(item => item == y))
   let next = stmt.substitute_var(y, Int(@types.Word::of_int(width=8, 9)))
   inspect(next.to_string(), content="x:imm8 := (0x09:8u + 0x1:1u)")

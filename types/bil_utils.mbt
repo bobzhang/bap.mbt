@@ -280,10 +280,7 @@ pub fn Exp::eval(self : Exp, env : Map[String, Word]) -> Result[Word, String] {
 pub fn Stmt::free_vars(self : Stmt) -> Array[Var] {
   let vars = []
   match self {
-    Move(lhs, rhs) => {
-      add_var(vars, lhs)
-      add_vars(vars, rhs.free_vars())
-    }
+    Move(_, rhs) => add_vars(vars, rhs.free_vars())
     Jmp(exp) => add_vars(vars, exp.free_vars())
     Special(_) | CpuExn(_) => ()
     If(cond~, yes~, no~) => {

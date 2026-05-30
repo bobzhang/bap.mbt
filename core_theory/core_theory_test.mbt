@@ -534,10 +534,13 @@ test "target role helpers classify common architecture variables" {
   assert_true(amd64.find_role(StackPointer).map(v => v.ident()) == Some("RSP"))
   assert_true(amd64.vars_with_role(Status).any(v => v.ident() == "ZF"))
   assert_true(amd64.role_aliases(ProgramCounter).contains("rip"))
+  assert_true(!amd64.role_aliases(ProgramCounter).contains("pc"))
   let arm = @core_theory.Target::arm()
   assert_true(arm.find_role(ProgramCounter).map(v => v.ident()) == Some("PC"))
   assert_true(arm.vars_with_role(Argument).any(v => v.ident() == "R0"))
   let riscv = @core_theory.Target::riscv64()
+  assert_true(riscv.role_aliases(ResultRegister).contains("x10"))
+  assert_true(!riscv.role_aliases(ResultRegister).contains("rax"))
   assert_true(riscv.find_var("F31") is Some(_))
   match riscv.find_var("X2") {
     Some(sp) => assert_true(riscv.roles_of_var(sp).contains(StackPointer))
@@ -574,6 +577,8 @@ test "target role helpers classify common architecture variables" {
     None => fail("missing V0 alias origin")
   }
   let ppc64 = @core_theory.Target::powerpc64()
+  assert_true(ppc64.role_aliases(Argument).contains("r3"))
+  assert_true(!ppc64.role_aliases(Argument).contains("rdi"))
   assert_true(ppc64.find_var("F31") is Some(_))
   assert_true(ppc64.find_var("V31") is Some(_))
   match ppc64.find_var("CR0EQ") {

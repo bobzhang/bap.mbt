@@ -1143,8 +1143,8 @@ pub fn Target::find_role(self : Target, role : Role) -> Var? {
 }
 
 ///|
-pub fn Target::role_aliases(_self : Target, role : Role) -> Array[String] {
-  target_role_names(role)
+pub fn Target::role_aliases(self : Target, role : Role) -> Array[String] {
+  target_role_names_for(self, role)
 }
 
 ///|

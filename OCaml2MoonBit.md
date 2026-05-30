@@ -131,6 +131,15 @@ read from `Var(mem)`. Keep store hoisting after recursive statement
 normalization so hoisted stores are visible as standalone statements and
 repeated hoisting can drain nested store-chain loads.
 
+BAP BIL constant propagation is continuation-sensitive. For a statically
+known `If`, propagate inside both arms, but only carry the selected arm's facts
+past the branch when the unselected arm may not continue. If both arms can fall
+through, join the two output contexts even when the condition simplified to a
+constant. For a `While`, remove variables defined in the body before
+propagating the guard/body, and for a folded false guard keep pre-loop facts
+only when the propagated body cannot fall through; otherwise join pre-loop
+facts with body facts.
+
 BAP BIL `Extract` and `Concat` are expression nodes, not just `Word` helpers.
 When adding them to a MoonBit AST, update every expression traversal together:
 type inference, effect/coeffect analysis, free variables, substitution,

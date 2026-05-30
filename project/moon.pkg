@@ -5,6 +5,7 @@ import {
   "bobzhang/bap/memory",
   "bobzhang/bap/native_io",
   "bobzhang/bap/types",
+  "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/string",
 }
 

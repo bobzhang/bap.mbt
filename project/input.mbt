@@ -155,6 +155,34 @@ pub fn ProjectInput::raw_bytes(
 }
 
 ///|
+pub fn ProjectInput::from_bigstring(
+  target~ : @core_theory.Target,
+  data : Bytes,
+  base? : UInt64 = 0UL,
+  filename? : String,
+  finish? : (Project) -> Project,
+) -> Result[ProjectInput, String] {
+  ProjectInput::raw_bytes(target~, data, base~, filename?, finish?)
+}
+
+///|
+pub fn ProjectInput::from_string(
+  target~ : @core_theory.Target,
+  text : String,
+  base? : UInt64 = 0UL,
+  filename? : String,
+  finish? : (Project) -> Project,
+) -> Result[ProjectInput, String] {
+  ProjectInput::raw_bytes(
+    target~,
+    @utf8.encode(text),
+    base~,
+    filename?,
+    finish?,
+  )
+}
+
+///|
 pub fn ProjectInput::target(self : ProjectInput) -> @core_theory.Target {
   self.target_value
 }

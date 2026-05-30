@@ -44,6 +44,42 @@ test "project raw bytes reject empty input and use target metadata" {
 }
 
 ///|
+test "project input from bigstring and string use checked raw bytes" {
+  let target = @core_theory.Target::x86_64()
+  assert_true(@project.ProjectInput::from_bigstring(target~, b"") is Err(_))
+  assert_true(@project.ProjectInput::from_string(target~, "") is Err(_))
+  match
+    @project.ProjectInput::from_bigstring(
+      target~,
+      b"\xaa\xbb",
+      base=0x600UL,
+      filename="raw.bin",
+    ) {
+    Ok(input) => {
+      let project = @project.Project::from_input(input)
+      assert_true(project.filename() == Some("raw.bin"))
+      assert_true(project.memory().lookup(0x601UL).length() == 1)
+    }
+    Err(reason) => fail(reason)
+  }
+  match
+    @project.ProjectInput::from_string(
+      target~,
+      "Aé",
+      base=0x700UL,
+      filename="text.bin",
+    ) {
+    Ok(input) => {
+      let project = @project.Project::from_input(input)
+      assert_true(project.filename() == Some("text.bin"))
+      assert_true(project.memory().lookup(0x700UL).length() == 1)
+      assert_true(project.memory().lookup(0x702UL).length() == 1)
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project input finish hook can finalize project storage" {
   let target = @core_theory.Target::unknown()
   let input = @project.ProjectInput::custom(target~, finish=project => {

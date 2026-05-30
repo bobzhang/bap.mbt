@@ -176,8 +176,10 @@ type ProjectInput
 pub fn ProjectInput::custom(target~ : @core_theory.Target, filename? : String, image? : @image.Image, program? : @types.Term[@types.Program], memory? : @memory.MemMap[String], libraries? : Array[Library], finish? : (Project) -> Project) -> Self
 pub fn ProjectInput::file(filename~ : String, loader? : String) -> Result[Self, String]
 pub fn ProjectInput::filename(Self) -> String?
+pub fn ProjectInput::from_bigstring(target~ : @core_theory.Target, Bytes, base? : UInt64, filename? : String, finish? : (Project) -> Project) -> Result[Self, String]
 pub fn ProjectInput::from_bytes(target~ : @core_theory.Target, Bytes, endian~ : @bitvec.Endian, base? : UInt64, filename? : String, finish? : (Project) -> Project) -> Self
 pub fn ProjectInput::from_image(@image.Image, target? : @core_theory.Target, program? : @types.Term[@types.Program], finish? : (Project) -> Project) -> Self
+pub fn ProjectInput::from_string(target~ : @core_theory.Target, String, base? : UInt64, filename? : String, finish? : (Project) -> Project) -> Result[Self, String]
 pub fn ProjectInput::image(Self) -> @image.Image?
 pub fn ProjectInput::libraries(Self) -> Array[Library]
 pub fn ProjectInput::load(Bytes, loader~ : String) -> Result[Self, String]

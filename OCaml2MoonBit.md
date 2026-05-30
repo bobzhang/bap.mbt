@@ -148,6 +148,9 @@ from the reusable term queries. Implement class/name/tid/attribute checks,
 direct-child enumeration, free/defined variable tests, and immediate-parent
 matching as typed `IrTerm`/`Term` helpers first; a BML parser or command plugin
 can then compose those helpers without re-encoding traversal semantics.
+Project-level marking should stay a thin wrapper over `Project::map_program`
+and `Term::map_program_terms`; unmarking string-valued MoonBit attributes is a
+key deletion rather than BAP's `Dict.Value.tagname` filtering.
 
 For BAP-style stub resolution, treat symbol names and aliases as an undirected
 graph and resolve by connected components. Link stubs only when a component has

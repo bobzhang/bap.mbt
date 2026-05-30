@@ -85,6 +85,58 @@ test "project wraps stub call resolution pass" {
 }
 
 ///|
+test "project maps and marks IR terms with typed predicates" {
+  let x = ir_reg8("x")
+  let y = ir_reg8("y")
+  let def = @types.Def::create(
+    x,
+    @types.Exp::binop(Plus, @types.Exp::var_exp(y), ir_word8(1)),
+  )
+  let blk = @types.Blk::create(defs=[def])
+  let sub = @types.Sub::create(name="main", blks=[blk])
+  let project = ir_project(@types.Program::create(subs=[sub]))
+  let marked = project.mark_program_terms(
+    term => term.def_lhs_name("x") && term.def_uses_name("y"),
+    @types.Attr::new(key="mark", value="def"),
+  )
+  let marked_def = marked.program().program_defs()[0]
+  assert_true(marked_def.get_attr("mark") == Some("def"))
+  assert_true(!marked.program().program_blks()[0].has_attr("mark"))
+  let unmarked = marked.unmark_program_terms("mark")
+  assert_true(
+    !unmarked.program().exists_program_term(term => term.has_attr("mark")),
+  )
+  let class_marked = project.map_program_terms(term => {
+    if term.has_class(DefTermClass) {
+      term.set_attr(@types.Attr::new(key="class", value=term.class_name()))
+    } else {
+      term
+    }
+  })
+  assert_true(
+    class_marked.program().program_defs()[0].get_attr("class") == Some("def"),
+  )
+}
+
+///|
+test "project term marker can use immediate parent predicates" {
+  let x = ir_reg8("x")
+  let def = @types.Def::create(x, ir_word8(1))
+  let blk = @types.Blk::create(defs=[def])
+  let sub = @types.Sub::create(name="main", blks=[blk])
+  let project = ir_project(@types.Program::create(subs=[sub]))
+  let original = project.program()
+  let marked = project.mark_program_terms(
+    term => original.program_parent_is(term, def.tid()),
+    @types.Attr::new(key="parent", value="def"),
+  )
+  assert_true(
+    marked.program().program_blks()[0].get_attr("parent") == Some("def"),
+  )
+  assert_true(marked.program().program_defs()[0].get_attr("parent") is None)
+}
+
+///|
 test "project registers built-in IR transform passes" {
   match @project.register_ir_transform_passes() {
     Ok(_) => ()

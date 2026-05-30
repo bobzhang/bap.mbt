@@ -92,6 +92,8 @@ pub fn[T] Project::has_tag(Self, ProjectStorageTag[T]) -> Bool
 pub fn Project::image(Self) -> @image.Image?
 pub fn Project::libraries(Self) -> Array[Library]
 pub fn Project::map_program(Self, (@types.Term[@types.Program]) -> @types.Term[@types.Program]) -> Self
+pub fn Project::map_program_terms(Self, (@types.IrTerm) -> @types.IrTerm) -> Self
+pub fn Project::mark_program_terms(Self, (@types.IrTerm) -> Bool, @types.Attr) -> Self
 pub fn Project::memory(Self) -> @memory.MemMap[String]
 pub fn Project::pass_has_run(Self, String) -> Bool
 pub fn Project::pass_run_count(Self, String) -> Int
@@ -111,6 +113,7 @@ pub fn Project::tag_memory(Self, @memory.Memory, String) -> Self
 pub fn Project::target(Self) -> @core_theory.Target
 pub fn Project::to_ssa(Self) -> Self
 pub fn Project::to_trivial_condition_form(Self) -> Self
+pub fn Project::unmark_program_terms(Self, String) -> Self
 pub fn Project::with_disassembly(Self, ProjectDisassemblyState) -> Self
 pub fn Project::with_memory(Self, @memory.MemMap[String]) -> Self
 pub fn Project::with_program(Self, @types.Term[@types.Program]) -> Self

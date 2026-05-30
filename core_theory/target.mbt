@@ -35,6 +35,8 @@ pub(all) enum Abi {
   VectorCall
   Watcom
   MSVC
+  SMC
+  HVC
 } derive(Eq, Debug)
 
 ///|
@@ -129,6 +131,8 @@ pub fn Abi::to_string(self : Abi) -> String {
     VectorCall => "vectorcall"
     Watcom => "watcom"
     MSVC => "ms"
+    SMC => "smc"
+    HVC => "hvc"
   }
 }
 
@@ -149,6 +153,8 @@ pub fn Abi::of_string(text : String) -> Abi? {
     "vectorcall" | "vector-call" => Some(VectorCall)
     "watcom" => Some(Watcom)
     "msvc" | "ms" => Some(MSVC)
+    "smc" => Some(SMC)
+    "hvc" => Some(HVC)
     _ => None
   }
 }
@@ -1294,6 +1300,31 @@ fn append_target_variants(
 }
 
 ///|
+fn append_target_variants_with_fabis(
+  items : Array[Target],
+  parent : Target,
+  systems : Array[System],
+  filetypes : Array[Filetype],
+  abis : Array[Abi],
+  fabis : Array[Fabi],
+) -> Unit {
+  let options = TargetOptions::empty()
+  for system in systems {
+    for filetype in filetypes {
+      for abi in abis {
+        for fabi in fabis {
+          if !target_variant_is_empty(system, abi, fabi, filetype, options) {
+            items.push(
+              target_variant(parent, system, abi, fabi, filetype, options),
+            )
+          }
+        }
+      }
+    }
+  }
+}
+
+///|
 fn append_x86_target_variants(items : Array[Target]) -> Unit {
   let x86 = Target::x86()
   let x86_64 = Target::x86_64()
@@ -1342,6 +1373,114 @@ fn append_x86_target_variants(items : Array[Target]) -> Unit {
   ])
   append_target_variants(items, x86, [UEFI], [UnknownFiletype, COFF], [CDecl])
   append_target_variants(items, x86_64, [UEFI], [UnknownFiletype, COFF], [MSVC])
+}
+
+///|
+fn append_arm_target_variants(items : Array[Target]) -> Unit {
+  append_target_variants_with_fabis(
+    items,
+    Target::arm(),
+    [UnknownSystem, NoSystem],
+    [UnknownFiletype],
+    [EABI],
+    [UnknownFabi, Hard],
+  )
+  append_target_variants_with_fabis(
+    items,
+    Target::armeb(),
+    [UnknownSystem, NoSystem],
+    [UnknownFiletype],
+    [EABI],
+    [UnknownFabi, Hard],
+  )
+  append_target_variants_with_fabis(
+    items,
+    Target::arm(),
+    [UEFI],
+    [UnknownFiletype, COFF],
+    [SMC],
+    [UnknownFabi],
+  )
+  append_target_variants_with_fabis(
+    items,
+    Target::arm(),
+    [Linux],
+    [UnknownFiletype, Elf],
+    [GNUEABI, GNU],
+    [UnknownFabi, Hard],
+  )
+  append_target_variants_with_fabis(
+    items,
+    Target::armeb(),
+    [Linux],
+    [UnknownFiletype, Elf],
+    [GNUEABI, GNU],
+    [UnknownFabi, Hard],
+  )
+  append_target_variants_with_fabis(
+    items,
+    Target::arm(),
+    [Darwin],
+    [UnknownFiletype, MachO],
+    [EABI],
+    [UnknownFabi],
+  )
+  append_target_variants_with_fabis(
+    items,
+    Target::aarch64(),
+    [UnknownSystem, NoSystem],
+    [UnknownFiletype],
+    [EABI],
+    [UnknownFabi],
+  )
+  append_target_variants_with_fabis(
+    items,
+    Target::aarch64_be(),
+    [UnknownSystem, NoSystem],
+    [UnknownFiletype],
+    [EABI],
+    [UnknownFabi],
+  )
+  append_target_variants_with_fabis(
+    items,
+    Target::aarch64(),
+    [UEFI],
+    [UnknownFiletype, COFF],
+    [SMC],
+    [UnknownFabi],
+  )
+  append_target_variants_with_fabis(
+    items,
+    Target::aarch64(),
+    [Linux],
+    [UnknownFiletype, Elf],
+    [GNU],
+    [UnknownFabi],
+  )
+  append_target_variants_with_fabis(
+    items,
+    Target::aarch64_be(),
+    [Linux],
+    [UnknownFiletype, Elf],
+    [GNU],
+    [UnknownFabi],
+  )
+  append_target_variants_with_fabis(
+    items,
+    Target::aarch64(),
+    [Darwin],
+    [UnknownFiletype, MachO],
+    [EABI],
+    [UnknownFabi],
+  )
+  append_target_variants_with_fabis(
+    items,
+    Target::aarch64(),
+    [Windows],
+    [UnknownFiletype, COFF],
+    [EABI],
+    [UnknownFabi],
+  )
 }
 
 ///|
@@ -1413,6 +1552,7 @@ pub fn common_targets() -> Array[Target] {
     Target::xcore(),
   ]
   append_x86_target_variants(items)
+  append_arm_target_variants(items)
   append_mips_target_variants(items)
   append_powerpc_target_variants(items)
   items

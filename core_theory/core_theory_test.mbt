@@ -193,6 +193,37 @@ test "target registry resolves common and custom declarations" {
       filetype=Elf,
     ).any(target => target.matches("x86-freebsd-cdecl-elf")),
   )
+  match @core_theory.Target::get("arm-linux-gnueabihard-elf") {
+    Ok(target) => {
+      assert_true(target.system() == Linux)
+      assert_true(target.abi() == GNUEABI)
+      assert_true(target.fabi() == Hard)
+      assert_true(target.filetype() == Elf)
+      assert_true(target.belongs(@core_theory.Target::arm()))
+    }
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.Target::get("aarch64-windows-eabi-coff") {
+    Ok(target) => {
+      assert_true(target.bits() == 64)
+      assert_true(target.system() == Windows)
+      assert_true(target.abi() == EABI)
+      assert_true(target.filetype() == COFF)
+      assert_true(target.belongs(@core_theory.Target::aarch64()))
+    }
+    Err(reason) => fail(reason)
+  }
+  match
+    @core_theory.Target::select(
+      parent=@core_theory.Target::aarch64(),
+      system=UEFI,
+      abi=SMC,
+      filetype=COFF,
+      unique=true,
+    ) {
+    Ok(target) => assert_true(target.matches("aarch64-uefi-smc-coff"))
+    Err(reason) => fail(reason)
+  }
   match @core_theory.Target::get("mips64el-linux-gnu-elf") {
     Ok(target) => {
       assert_true(target.bits() == 64)
@@ -446,6 +477,8 @@ test "target metadata enums parse loader strings" {
   assert_true(
     @core_theory.Abi::of_string("msvc").map(a => a.to_string()) == Some("ms"),
   )
+  assert_true(@core_theory.Abi::of_string("smc") == Some(SMC))
+  assert_true(@core_theory.Abi::of_string("hvc") == Some(HVC))
   assert_true(@core_theory.Fabi::of_string("hard-float") == Some(Hard))
   assert_true(@core_theory.Filetype::of_string("mach-o") == Some(MachO))
   assert_true(@core_theory.Filetype::of_string("coff") == Some(COFF))

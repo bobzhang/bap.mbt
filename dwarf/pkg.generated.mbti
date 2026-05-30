@@ -2,6 +2,7 @@
 package "bobzhang/bap/dwarf"
 
 import {
+  "bobzhang/bap/bitvec",
   "moonbitlang/core/debug",
 }
 
@@ -10,6 +11,71 @@ import {
 // Errors
 
 // Types and methods
+pub(all) enum DwarfAttr {
+  DwarfName
+  DwarfLowPc
+  DwarfHighPc
+  DwarfEntryPc
+  DwarfUnknownAttr(Int)
+} derive(Eq, @debug.Debug)
+
+pub(all) enum DwarfForm {
+  DwarfAddr
+  DwarfBlock(DwarfLenspec)
+  DwarfConst(DwarfLenspec)
+  DwarfString
+  DwarfStrp
+  DwarfOffset
+  DwarfRef(DwarfLenspec)
+  DwarfIndirect
+  DwarfExpr
+  DwarfFlagPresent
+} derive(Eq, @debug.Debug)
+
+type DwarfInput
+pub fn DwarfInput::of_bytes(Bytes) -> Self
+pub fn DwarfInput::position(Self) -> Int
+pub fn DwarfInput::read_address(Self, endian~ : @bitvec.Endian, size~ : DwarfWordSize) -> Result[(UInt64, Self), String]
+pub fn DwarfInput::read_address_size(Self) -> Result[(DwarfWordSize, Self), String]
+pub fn DwarfInput::read_attr(Self) -> Result[(DwarfAttr, Self), String]
+pub fn DwarfInput::read_block(Self, lenspec~ : DwarfLenspec, endian~ : @bitvec.Endian) -> Result[(Bytes, Self), String]
+pub fn DwarfInput::read_byte(Self) -> Result[(Int, Self), String]
+pub fn DwarfInput::read_code(Self) -> Result[(Int, Self), String]
+pub fn DwarfInput::read_const(Self, lenspec~ : DwarfLenspec, endian~ : @bitvec.Endian) -> Result[(Int64, Self), String]
+pub fn DwarfInput::read_cstring(Self) -> Result[(String, Self), String]
+pub fn DwarfInput::read_form(Self) -> Result[(DwarfForm, Self), String]
+pub fn DwarfInput::read_int(Self, endian~ : @bitvec.Endian, size~ : DwarfWordSize) -> Result[(Int, Self), String]
+pub fn DwarfInput::read_int16(Self, endian~ : @bitvec.Endian) -> Result[(Int, Self), String]
+pub fn DwarfInput::read_int64(Self, endian~ : @bitvec.Endian, size~ : DwarfWordSize) -> Result[(Int64, Self), String]
+pub fn DwarfInput::read_offset(Self, endian~ : @bitvec.Endian, size~ : DwarfWordSize) -> Result[(Int, Self), String]
+pub fn DwarfInput::read_tag(Self) -> Result[(DwarfTag, Self), String]
+pub fn DwarfInput::read_unit_size(Self, endian~ : @bitvec.Endian) -> Result[((DwarfWordSize, Int), Self), String]
+pub fn DwarfInput::read_version(Self) -> Result[(Int, Self), String]
+pub fn DwarfInput::remaining(Self) -> Int
+pub fn DwarfInput::skip(Self, bytes~ : Int) -> Result[Self, String]
+pub fn DwarfInput::skip_zeros(Self) -> Result[Self, String]
+
+pub(all) enum DwarfLenspec {
+  DwarfOne
+  DwarfTwo
+  DwarfFour
+  DwarfEight
+  DwarfLeb128
+} derive(Eq, @debug.Debug)
+
+pub(all) enum DwarfTag {
+  DwarfEntryPoint
+  DwarfCompileUnit
+  DwarfInlinedSubroutine
+  DwarfSubprogram
+  DwarfUnknownTag(Int)
+} derive(Eq, @debug.Debug)
+
+pub(all) enum DwarfWordSize {
+  W32
+  W64
+} derive(Eq, @debug.Debug)
+
 type Leb128 derive(Eq, @debug.Debug)
 pub fn Leb128::bytes(Self) -> Bytes
 pub fn Leb128::is_negative(Self) -> Bool

@@ -140,6 +140,10 @@ test "translated DWARF abbreviation value classification follows BAP FBI inputs"
     DwarfNameRefValue,
   )
   assert_true(
+    @dwarf.DwarfAbbrevField::create(attr=DwarfSpecification, form=DwarfRefAddr).value_kind() ==
+    DwarfNameRefValue,
+  )
+  assert_true(
     @dwarf.DwarfAbbrevField::create(
       attr=DwarfAbstractOrigin,
       form=DwarfRef(DwarfOne),

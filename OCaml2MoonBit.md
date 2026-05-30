@@ -155,10 +155,12 @@ signed LEB128 payload in the abbreviation table and do not expect bytes in the
 DIE stream. Unknown producer metadata forms such as `DW_FORM_line_strp`,
 `DW_FORM_data16`, and `DW_FORM_loclistx` should still be skippable so FBI
 extraction can keep useful function bounds.
-For concrete function DIEs that omit a direct name, resolve same-compilation-unit
+For concrete function DIEs that omit a direct name, resolve
 `DW_AT_specification` and `DW_AT_abstract_origin` references through the target
-DIE's `DW_AT_name` or `DW_AT_linkage_name`; collect DIE names for the whole unit
-before finalizing functions so forward references work too.
+DIE's `DW_AT_name` or `DW_AT_linkage_name`; support same-compilation-unit
+`DW_FORM_ref*` references and absolute `DW_FORM_ref_addr` references by
+collecting DIE names across the parsed `.debug_info` section before finalizing
+functions.
 
 `text[i]` returns a `UInt16` code unit, not a `Char`. For text parsers that need character predicates or `StringBuilder::write_char`, use `text.get_char(offset)` and advance by `char.utf16_len()`. It is still fine to increment by one for syntax bytes you have already constrained to ASCII, such as `(`, `)`, `"` and `\\`, but do not mix code-unit offsets with `Char` APIs accidentally.
 

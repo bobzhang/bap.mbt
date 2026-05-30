@@ -118,6 +118,7 @@ pub fn Project::specification(Self) -> @image.OgreDoc
 pub fn Project::state(Self) -> ProjectState
 pub fn Project::storage(Self) -> Map[String, String]
 pub fn Project::substitute(Self, @memory.Memory, String, String) -> Self
+pub fn Project::symbol_values(Self) -> Array[@image.SymbolValue]
 pub fn Project::symbols(Self) -> Array[@image.Symbol]
 pub fn Project::tag_memory(Self, @memory.Memory, String) -> Self
 pub fn Project::target(Self) -> @core_theory.Target

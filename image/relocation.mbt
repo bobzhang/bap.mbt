@@ -56,3 +56,24 @@ pub fn ExternalReference::addr(self : ExternalReference) -> UInt64 {
 pub fn ExternalReference::name(self : ExternalReference) -> String {
   self.name_value
 }
+
+///|
+struct SymbolValue {
+  addr_value : UInt64
+  value_value : UInt64
+}
+
+///|
+pub fn SymbolValue::create(addr~ : UInt64, value~ : UInt64) -> SymbolValue {
+  { addr_value: addr, value_value: value }
+}
+
+///|
+pub fn SymbolValue::addr(self : SymbolValue) -> UInt64 {
+  self.addr_value
+}
+
+///|
+pub fn SymbolValue::value(self : SymbolValue) -> UInt64 {
+  self.value_value
+}

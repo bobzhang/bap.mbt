@@ -11,6 +11,7 @@ struct Image {
   relocations_value : Array[Relocation]
   external_references_value : Array[ExternalReference]
   required_libraries_value : Array[String]
+  symbol_values_value : Array[SymbolValue]
   base_address_value : UInt64?
   spec_value : OgreDoc?
 }
@@ -33,6 +34,7 @@ pub fn Image::create(
   relocations? : Array[Relocation],
   external_references? : Array[ExternalReference],
   required_libraries? : Array[String],
+  symbol_values? : Array[SymbolValue],
   base_address? : UInt64,
   spec? : OgreDoc,
 ) -> Image {
@@ -69,6 +71,10 @@ pub fn Image::create(
       Some(items) => items.copy()
       None => []
     },
+    symbol_values_value: match symbol_values {
+      Some(items) => items.copy()
+      None => []
+    },
     base_address_value: base_address,
     spec_value: spec,
   }
@@ -84,6 +90,7 @@ pub fn Image::from_segments(
   relocations? : Array[Relocation],
   external_references? : Array[ExternalReference],
   required_libraries? : Array[String],
+  symbol_values? : Array[SymbolValue],
   base_address? : UInt64,
   filename? : String,
   target? : @core_theory.Target,
@@ -98,6 +105,7 @@ pub fn Image::from_segments(
     relocations?,
     external_references?,
     required_libraries?,
+    symbol_values?,
     base_address?,
     filename?,
     target?,
@@ -254,6 +262,11 @@ pub fn Image::external_references(self : Image) -> Array[ExternalReference] {
 ///|
 pub fn Image::required_libraries(self : Image) -> Array[String] {
   self.required_libraries_value.copy()
+}
+
+///|
+pub fn Image::symbol_values(self : Image) -> Array[SymbolValue] {
+  self.symbol_values_value.copy()
 }
 
 ///|
@@ -453,6 +466,16 @@ pub fn Image::add_required_library(self : Image, name : String) -> Image {
   let libraries = self.required_libraries_value.copy()
   libraries.push(name)
   { ..self, required_libraries_value: libraries }
+}
+
+///|
+pub fn Image::add_symbol_value(
+  self : Image,
+  symbol_value : SymbolValue,
+) -> Image {
+  let values = self.symbol_values_value.copy()
+  values.push(symbol_value)
+  { ..self, symbol_values_value: values }
 }
 
 ///|

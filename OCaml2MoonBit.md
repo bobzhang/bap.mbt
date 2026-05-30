@@ -133,6 +133,10 @@ Preserve BAP/Ogre `require` facts as image-owned required-library metadata.
 For ELF, extract `DT_NEEDED` names from `SHT_DYNAMIC` entries through the
 linked dynamic string table; keep this as dependency metadata rather than
 loading or resolving the libraries in the image backend.
+Keep BAP/Ogre `symbol-value` separate from named-symbol and symbol-chunk
+metadata. A symbol's runtime address may be biased or otherwise interpreted by
+the loader, while the raw value can still be useful to later disassembly roots
+and symbolization passes.
 For Ogre image specs, keep BAP-style relocation metadata separate from memory
 layout: `base-address`, `relocation`, `relative-relocation`, and
 `external-reference` should be preserved as image metadata even before a

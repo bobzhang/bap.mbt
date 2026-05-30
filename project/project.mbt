@@ -302,6 +302,14 @@ pub fn Project::required_libraries(self : Project) -> Array[String] {
 }
 
 ///|
+pub fn Project::symbol_values(self : Project) -> Array[@image.SymbolValue] {
+  match self.image_value {
+    Some(image) => image.symbol_values()
+    None => []
+  }
+}
+
+///|
 pub fn Project::base_address(self : Project) -> UInt64? {
   match self.image_value {
     Some(image) => image.base_address()

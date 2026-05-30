@@ -551,6 +551,25 @@ fn OgreDoc::image_required_libraries(
 }
 
 ///|
+fn OgreDoc::image_symbol_values(
+  self : OgreDoc,
+) -> Result[Array[SymbolValue], String] {
+  let values = []
+  for fact in self.facts("symbol-value") {
+    let addr = match ogre_fact_uint64_field(fact, "addr", 0) {
+      Ok(value) => value
+      Err(reason) => return Err(reason)
+    }
+    let value = match ogre_fact_uint64_field(fact, "value", 1) {
+      Ok(value) => value
+      Err(reason) => return Err(reason)
+    }
+    values.push(SymbolValue::create(addr~, value~))
+  }
+  Ok(values)
+}
+
+///|
 fn OgreDoc::image_base_address(self : OgreDoc) -> Result[UInt64?, String] {
   match self.facts("base-address") {
     [] => Ok(None)
@@ -603,6 +622,10 @@ pub fn Image::from_ogre(
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
+  let symbol_values = match doc.image_symbol_values() {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
   let base_address = match doc.image_base_address() {
     Ok(value) => value
     Err(reason) => return Err(reason)
@@ -618,6 +641,7 @@ pub fn Image::from_ogre(
         relocations~,
         external_references~,
         required_libraries~,
+        symbol_values~,
         base_address?,
         filename?,
         target=selected_target,

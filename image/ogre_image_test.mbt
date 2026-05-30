@@ -100,6 +100,7 @@ test "ogre image specs expose relocation metadata" {
   let spec = "(declare entry-point (addr int))" +
     " (declare base-address (addr int))" +
     " (declare require (name str))" +
+    " (declare symbol-value (addr int) (value int))" +
     " (declare relocation (fixup int) (addr int))" +
     " (declare relative-relocation (fixup int))" +
     " (declare external-reference (addr int) (name str))" +
@@ -107,6 +108,7 @@ test "ogre image specs expose relocation metadata" {
     " (base-address 4096)" +
     " (require libc.so.6)" +
     " (require libm.so.6)" +
+    " (symbol-value 4097 128)" +
     " (relocation 4100 8192)" +
     " (relative-relocation 4104)" +
     " (external-reference 4108 puts)"
@@ -127,6 +129,10 @@ test "ogre image specs expose relocation metadata" {
       assert_true(references[0].addr() == 4108UL)
       assert_true(references[0].name() == "puts")
       assert_true(image.required_libraries() == ["libc.so.6", "libm.so.6"])
+      let values = image.symbol_values()
+      assert_true(values.length() == 1)
+      assert_true(values[0].addr() == 4097UL)
+      assert_true(values[0].value() == 128UL)
     }
     Err(reason) => fail(reason)
   }

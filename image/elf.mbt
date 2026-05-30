@@ -813,6 +813,29 @@ fn image_elf_symbol_table_symbols(
 }
 
 ///|
+fn image_elf_symbol_table_values(
+  data : Bytes,
+  header : ImageElfHeader,
+  section_headers : Array[ImageElfSectionHeader],
+  symbol_table : ImageElfSectionHeader,
+) -> Result[Array[SymbolValue], String] {
+  let entries = match
+    image_elf_symbol_table_entries(data, header, section_headers, symbol_table) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let values : Array[SymbolValue] = []
+  for entry in entries {
+    match entry.name {
+      Some(_) if entry.shndx != 0 =>
+        values.push(SymbolValue::create(addr=entry.value, value=entry.value))
+      _ => ()
+    }
+  }
+  Ok(values)
+}
+
+///|
 fn image_elf_relocation_count(
   section : ImageElfSectionHeader,
 ) -> Result[Int, String] {
@@ -1055,6 +1078,28 @@ fn image_elf_symbols(
 }
 
 ///|
+fn image_elf_symbol_values(
+  data : Bytes,
+  header : ImageElfHeader,
+  section_headers : Array[ImageElfSectionHeader],
+) -> Result[Array[SymbolValue], String] {
+  let values : Array[SymbolValue] = []
+  for section in section_headers {
+    if section.typ == 2 || section.typ == 11 {
+      match
+        image_elf_symbol_table_values(data, header, section_headers, section) {
+        Ok(items) =>
+          for item in items {
+            values.push(item)
+          }
+        Err(reason) => return Err(reason)
+      }
+    }
+  }
+  Ok(values)
+}
+
+///|
 fn image_elf_target_endian(endian : @bitvec.Endian) -> @core_theory.Endianness {
   match endian {
     LittleEndian => LittleEndian
@@ -1233,6 +1278,11 @@ fn image_elf_load(data : Bytes) -> Result[(Image, Array[String]), String] {
         Ok(value) => value
         Err(reason) => return Err(reason)
       }
+      let symbol_values = match
+        image_elf_symbol_values(data, header, section_headers) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
       let (relocations, external_references) = match
         image_elf_relocations(data, header, section_headers) {
         Ok(value) => value
@@ -1293,6 +1343,7 @@ fn image_elf_load(data : Bytes) -> Result[(Image, Array[String]), String] {
             relocations~,
             external_references~,
             required_libraries~,
+            symbol_values~,
             target=image_elf_target(header),
           ),
           [],

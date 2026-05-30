@@ -533,6 +533,10 @@ test "image ELF backend loads program segments and sections" {
   assert_true(image.sections_of_segment(segments[0]).length() == 1)
   let symbols = image.symbols()
   assert_true(symbols.length() == 2)
+  let symbol_values = image.symbol_values()
+  assert_true(symbol_values.length() == 2)
+  assert_true(symbol_values.any(value => value.addr() == 0x400000UL))
+  assert_true(symbol_values.any(value => value.value() == 0x400002UL))
   let main_symbol = match symbols.search_by(symbol => symbol.name() == "main") {
     Some(index) => symbols[index]
     None => fail("expected main symbol")

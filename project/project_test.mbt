@@ -331,20 +331,32 @@ test "project and libraries carry disassembly state" {
     assembly="ret",
     bil="jmp LR",
   )
+  let edge = @project.ProjectDisassemblyEdge::create(
+    source=0x1000UL,
+    target=0x1001UL,
+    kind=FallEdge,
+  )
   let disassembly = @project.ProjectDisassemblyState::empty()
     .add_block(block)
     .add_block(same_block)
     .add_instruction(instruction)
-  let created = @project.ProjectDisassemblyState::create(blocks=[
-    block, same_block,
-  ])
-  let replaced = @project.ProjectDisassemblyState::empty().with_blocks([
-    block, same_block,
-  ])
+    .add_edge(edge)
+    .add_edge(edge)
+  let created = @project.ProjectDisassemblyState::create(
+    blocks=[block, same_block],
+    edges=[edge, edge],
+  )
+  let replaced = @project.ProjectDisassemblyState::empty()
+    .with_blocks([block, same_block])
+    .with_edges([edge, edge])
   assert_true(created.block_count() == 1)
+  assert_true(created.edge_count() == 1)
   assert_true(replaced.block_count() == 1)
+  assert_true(replaced.edge_count() == 1)
   assert_true(disassembly.has_block(block))
+  assert_true(disassembly.has_edge(edge))
   assert_true(disassembly.block_count() == 1)
+  assert_true(disassembly.edge_count() == 1)
   let state = @project.ProjectState::empty()
     .with_disassembly(disassembly)
     .add_subroutine(sub)
@@ -352,15 +364,21 @@ test "project and libraries carry disassembly state" {
   assert_true(project.state().subroutines().length() == 1)
   assert_true(project.disassembly().block_count() == 1)
   assert_true(project.disassembly().instruction_count() == 1)
+  assert_true(project.disassembly().edge_count() == 1)
   assert_true(project.disassembly().blocks()[0].min_addr() == 0x1000UL)
   assert_true(project.disassembly().instructions()[0].assembly() == "ret")
+  assert_true(project.disassembly().edges()[0].kind().to_string() == "fall")
+  assert_true(project.disassembly().edges_from(0x1000UL).length() == 1)
+  assert_true(project.disassembly().edges_to(0x1001UL).length() == 1)
   let cleared = project.with_disassembly(
     @project.ProjectDisassemblyState::empty(),
   )
   assert_true(cleared.disassembly().block_count() == 0)
   assert_true(cleared.disassembly().instruction_count() == 0)
+  assert_true(cleared.disassembly().edge_count() == 0)
   let library = @project.Library::create(name="libstate", target~, state~)
   assert_true(library.state().subroutines().length() == 1)
   assert_true(library.disassembly().block_count() == 1)
   assert_true(library.disassembly().instruction_count() == 1)
+  assert_true(library.disassembly().edge_count() == 1)
 }

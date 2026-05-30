@@ -149,6 +149,76 @@ test "project block reconstructor groups serialized block starts by name" {
 }
 
 ///|
+test "project reconstructor preserves known intra-subroutine disassembly edges" {
+  let target = @core_theory.Target::unknown()
+  let entry = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x3000UL,
+    b"\x01",
+  )
+  let body = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x3010UL,
+    b"\x02",
+  )
+  let exit = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x3020UL,
+    b"\x03",
+  )
+  let disassembly = @project.ProjectDisassemblyState::empty()
+    .add_block(entry)
+    .add_block(body)
+    .add_block(exit)
+    .add_edge(
+      @project.ProjectDisassemblyEdge::create(
+        source=0x3000UL,
+        target=0x3010UL,
+        kind=FallEdge,
+      ),
+    )
+    .add_edge(
+      @project.ProjectDisassemblyEdge::create(
+        source=0x3000UL,
+        target=0x3020UL,
+        kind=CondEdge,
+      ),
+    )
+    .add_edge(
+      @project.ProjectDisassemblyEdge::create(
+        source=0x3010UL,
+        target=0x9999UL,
+        kind=JumpEdge,
+      ),
+    )
+  let project = @project.Project::empty(target).with_disassembly(disassembly)
+  let reconstructor = @project.ProjectReconstructor::of_blocks([
+    ("main", 0x3000UL, 0x3000UL),
+    ("main", 0x3010UL, 0x3010UL),
+    ("main", 0x3020UL, 0x3020UL),
+  ])
+  match project.reconstruct(reconstructor~) {
+    Ok(reconstructed) => {
+      let subs = reconstructed.state().subroutines()
+      assert_true(subs.length() == 1)
+      let blocks = subs[0].blks()
+      assert_true(blocks.length() == 3)
+      assert_true(blocks[0].jmps().length() == 2)
+      assert_true(blocks[1].jmps().is_empty())
+      assert_true(subs[0].sub_has_edge(blocks[0], blocks[1]))
+      assert_true(subs[0].sub_has_edge(blocks[0], blocks[2]))
+      assert_true(!subs[0].sub_has_edge(blocks[1], blocks[2]))
+      let jmp_attrs = [
+        for jmp in blocks[0].jmps() => jmp.get_attr("disassembly-edge")
+      ]
+      assert_true(jmp_attrs.contains(Some("fall")))
+      assert_true(jmp_attrs.contains(Some("cond")))
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project reconstructor reports missing disassembly blocks" {
   let project = @project.Project::empty(@core_theory.Target::unknown())
   assert_true(project.reconstruct() is Err(_))

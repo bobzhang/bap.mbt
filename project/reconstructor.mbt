@@ -31,6 +31,29 @@ fn project_reconstructor_block_word(
 }
 
 ///|
+fn project_reconstructor_find_block_start(
+  blocks : Array[@memory.Memory],
+  addr : UInt64,
+) -> Int? {
+  for i in 0..<blocks.length() {
+    if blocks[i].min_addr() == addr {
+      return Some(i)
+    }
+  }
+  None
+}
+
+///|
+fn project_reconstructor_edge_jmp(
+  edge : ProjectDisassemblyEdge,
+  dst : @types.Tid,
+) -> @types.Term[@types.Jmp] {
+  @types.Jmp::create_goto(@types.Label::direct(dst)).set_attr(
+    @types.Attr::new(key="disassembly-edge", value=edge.kind().to_string()),
+  )
+}
+
+///|
 fn project_reconstructor_ir_block(
   project : Project,
   block : @memory.Memory,
@@ -58,6 +81,30 @@ fn project_reconstructor_subroutine(
       Ok(ir_block) => ir_blocks.push(ir_block)
       Err(reason) => return Err(reason)
     }
+  }
+  let edges = project.disassembly().edges()
+  for i in 0..<blocks.length() {
+    let source = blocks[i].min_addr()
+    let mut ir_block = ir_blocks[i]
+    for edge in edges {
+      if edge.source() == source {
+        match edge.target() {
+          Some(target) =>
+            match project_reconstructor_find_block_start(blocks, target) {
+              Some(target_index) =>
+                ir_block = ir_block.append_jmp(
+                  project_reconstructor_edge_jmp(
+                    edge,
+                    ir_blocks[target_index].tid(),
+                  ),
+                )
+              None => ()
+            }
+          None => ()
+        }
+      }
+    }
+    ir_blocks[i] = ir_block
   }
   Ok(@types.Sub::create(name~, blks=ir_blocks))
 }

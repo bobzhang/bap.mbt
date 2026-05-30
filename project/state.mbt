@@ -6,9 +6,24 @@ struct ProjectDisassemblyInstruction {
 }
 
 ///|
+pub(all) enum ProjectDisassemblyEdgeKind {
+  JumpEdge
+  CondEdge
+  FallEdge
+} derive(Eq)
+
+///|
+struct ProjectDisassemblyEdge {
+  source_value : UInt64
+  target_value : UInt64?
+  kind_value : ProjectDisassemblyEdgeKind
+}
+
+///|
 struct ProjectDisassemblyState {
   blocks_value : Array[@memory.Memory]
   instructions_value : Array[ProjectDisassemblyInstruction]
+  edges_value : Array[ProjectDisassemblyEdge]
 }
 
 ///|
@@ -36,6 +51,66 @@ fn project_disassembly_dedup_blocks(
     }
   }
   result
+}
+
+///|
+fn project_disassembly_same_edge(
+  left : ProjectDisassemblyEdge,
+  right : ProjectDisassemblyEdge,
+) -> Bool {
+  left.source_value == right.source_value &&
+  left.target_value == right.target_value &&
+  left.kind_value == right.kind_value
+}
+
+///|
+fn project_disassembly_dedup_edges(
+  edges : Array[ProjectDisassemblyEdge],
+) -> Array[ProjectDisassemblyEdge] {
+  let result : Array[ProjectDisassemblyEdge] = []
+  for edge in edges {
+    if !result.any(existing => project_disassembly_same_edge(existing, edge)) {
+      result.push(edge)
+    }
+  }
+  result
+}
+
+///|
+pub fn ProjectDisassemblyEdgeKind::to_string(
+  self : ProjectDisassemblyEdgeKind,
+) -> String {
+  match self {
+    JumpEdge => "jump"
+    CondEdge => "cond"
+    FallEdge => "fall"
+  }
+}
+
+///|
+pub fn ProjectDisassemblyEdge::create(
+  source~ : UInt64,
+  target? : UInt64,
+  kind? : ProjectDisassemblyEdgeKind = JumpEdge,
+) -> ProjectDisassemblyEdge {
+  { source_value: source, target_value: target, kind_value: kind }
+}
+
+///|
+pub fn ProjectDisassemblyEdge::source(self : ProjectDisassemblyEdge) -> UInt64 {
+  self.source_value
+}
+
+///|
+pub fn ProjectDisassemblyEdge::target(self : ProjectDisassemblyEdge) -> UInt64? {
+  self.target_value
+}
+
+///|
+pub fn ProjectDisassemblyEdge::kind(
+  self : ProjectDisassemblyEdge,
+) -> ProjectDisassemblyEdgeKind {
+  self.kind_value
 }
 
 ///|
@@ -70,13 +145,14 @@ pub fn ProjectDisassemblyInstruction::bil(
 
 ///|
 pub fn ProjectDisassemblyState::empty() -> ProjectDisassemblyState {
-  { blocks_value: [], instructions_value: [] }
+  { blocks_value: [], instructions_value: [], edges_value: [] }
 }
 
 ///|
 pub fn ProjectDisassemblyState::create(
   blocks? : Array[@memory.Memory],
   instructions? : Array[ProjectDisassemblyInstruction],
+  edges? : Array[ProjectDisassemblyEdge],
 ) -> ProjectDisassemblyState {
   {
     blocks_value: match blocks {
@@ -85,6 +161,10 @@ pub fn ProjectDisassemblyState::create(
     },
     instructions_value: match instructions {
       Some(items) => items.copy()
+      None => []
+    },
+    edges_value: match edges {
+      Some(items) => project_disassembly_dedup_edges(items)
       None => []
     },
   }
@@ -129,6 +209,44 @@ pub fn ProjectDisassemblyState::instruction_count(
 }
 
 ///|
+pub fn ProjectDisassemblyState::edges(
+  self : ProjectDisassemblyState,
+) -> Array[ProjectDisassemblyEdge] {
+  self.edges_value.copy()
+}
+
+///|
+pub fn ProjectDisassemblyState::edge_count(
+  self : ProjectDisassemblyState,
+) -> Int {
+  self.edges_value.length()
+}
+
+///|
+pub fn ProjectDisassemblyState::has_edge(
+  self : ProjectDisassemblyState,
+  edge : ProjectDisassemblyEdge,
+) -> Bool {
+  self.edges_value.any(existing => project_disassembly_same_edge(existing, edge))
+}
+
+///|
+pub fn ProjectDisassemblyState::edges_from(
+  self : ProjectDisassemblyState,
+  source : UInt64,
+) -> Array[ProjectDisassemblyEdge] {
+  self.edges_value.filter(edge => edge.source() == source)
+}
+
+///|
+pub fn ProjectDisassemblyState::edges_to(
+  self : ProjectDisassemblyState,
+  target : UInt64,
+) -> Array[ProjectDisassemblyEdge] {
+  self.edges_value.filter(edge => edge.target() == Some(target))
+}
+
+///|
 pub fn ProjectDisassemblyState::with_blocks(
   self : ProjectDisassemblyState,
   blocks : Array[@memory.Memory],
@@ -158,6 +276,14 @@ pub fn ProjectDisassemblyState::with_instructions(
 }
 
 ///|
+pub fn ProjectDisassemblyState::with_edges(
+  self : ProjectDisassemblyState,
+  edges : Array[ProjectDisassemblyEdge],
+) -> ProjectDisassemblyState {
+  { ..self, edges_value: project_disassembly_dedup_edges(edges) }
+}
+
+///|
 pub fn ProjectDisassemblyState::add_instruction(
   self : ProjectDisassemblyState,
   instruction : ProjectDisassemblyInstruction,
@@ -165,6 +291,19 @@ pub fn ProjectDisassemblyState::add_instruction(
   let instructions = self.instructions_value.copy()
   instructions.push(instruction)
   { ..self, instructions_value: instructions }
+}
+
+///|
+pub fn ProjectDisassemblyState::add_edge(
+  self : ProjectDisassemblyState,
+  edge : ProjectDisassemblyEdge,
+) -> ProjectDisassemblyState {
+  if self.has_edge(edge) {
+    return self
+  }
+  let edges = self.edges_value.copy()
+  edges.push(edge)
+  { ..self, edges_value: edges }
 }
 
 ///|

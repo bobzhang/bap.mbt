@@ -190,10 +190,12 @@ pub fn ProjectState::with_subroutines(Self, Array[@types.Term[@types.Sub]]) -> S
 
 type ProjectStorageTag[T]
 pub fn ProjectStorageTag::bool(String) -> Self[Bool]
+pub fn ProjectStorageTag::bool_array(String) -> Self[Array[Bool]]
 pub fn[T] ProjectStorageTag::create(name~ : String, encode~ : (T) -> String, decode~ : (String) -> Result[T, String]) -> Self[T]
 pub fn[T] ProjectStorageTag::decode(Self[T], String) -> Result[T, String]
 pub fn[T] ProjectStorageTag::encode(Self[T], T) -> String
 pub fn ProjectStorageTag::int(String) -> Self[Int]
+pub fn ProjectStorageTag::int_array(String) -> Self[Array[Int]]
 pub fn[T] ProjectStorageTag::name(Self[T]) -> String
 pub fn ProjectStorageTag::string(String) -> Self[String]
 pub fn ProjectStorageTag::string_array(String) -> Self[Array[String]]

@@ -24,23 +24,33 @@ pub fn ProjectStorageTag::string(name : String) -> ProjectStorageTag[String] {
 ///|
 pub fn ProjectStorageTag::bool(name : String) -> ProjectStorageTag[Bool] {
   ProjectStorageTag::create(name~, encode=value => value.to_string(), decode=value => {
-    match value {
-      "true" => Ok(true)
-      "false" => Ok(false)
-      _ => Err("can't decode project bool tag \{name}")
-    }
+    decode_project_bool(name, value)
   })
+}
+
+///|
+fn decode_project_bool(name : String, value : String) -> Result[Bool, String] {
+  match value {
+    "true" => Ok(true)
+    "false" => Ok(false)
+    _ => Err("can't decode project bool tag \{name}")
+  }
 }
 
 ///|
 pub fn ProjectStorageTag::int(name : String) -> ProjectStorageTag[Int] {
   ProjectStorageTag::create(name~, encode=value => value.to_string(), decode=value => {
-    try @string.parse_int(value) catch {
-      _ => Err("can't decode project int tag \{name}")
-    } noraise {
-      parsed => Ok(parsed)
-    }
+    decode_project_int(name, value)
   })
+}
+
+///|
+fn decode_project_int(name : String, value : String) -> Result[Int, String] {
+  try @string.parse_int(value) catch {
+    _ => Err("can't decode project int tag \{name}")
+  } noraise {
+    parsed => Ok(parsed)
+  }
 }
 
 ///|
@@ -92,6 +102,74 @@ pub fn ProjectStorageTag::string_array(
     encode=values => encode_string_array(values),
     decode=value => decode_string_array(name, value),
   )
+}
+
+///|
+fn encode_int_array(values : Array[Int]) -> String {
+  encode_string_array([ for value in values => value.to_string() ])
+}
+
+///|
+fn decode_int_array(
+  name : String,
+  value : String,
+) -> Result[Array[Int], String] {
+  match decode_string_array(name, value) {
+    Err(_) => Err("can't decode project int array tag \{name}")
+    Ok(items) => {
+      let values = []
+      for item in items {
+        match decode_project_int(name, item) {
+          Ok(parsed) => values.push(parsed)
+          Err(_) => return Err("can't decode project int array tag \{name}")
+        }
+      }
+      Ok(values)
+    }
+  }
+}
+
+///|
+pub fn ProjectStorageTag::int_array(
+  name : String,
+) -> ProjectStorageTag[Array[Int]] {
+  ProjectStorageTag::create(name~, encode=values => encode_int_array(values), decode=value => {
+    decode_int_array(name, value)
+  })
+}
+
+///|
+fn encode_bool_array(values : Array[Bool]) -> String {
+  encode_string_array([ for value in values => value.to_string() ])
+}
+
+///|
+fn decode_bool_array(
+  name : String,
+  value : String,
+) -> Result[Array[Bool], String] {
+  match decode_string_array(name, value) {
+    Err(_) => Err("can't decode project bool array tag \{name}")
+    Ok(items) => {
+      let values = []
+      for item in items {
+        match decode_project_bool(name, item) {
+          Ok(parsed) => values.push(parsed)
+          Err(_) => return Err("can't decode project bool array tag \{name}")
+        }
+      }
+      Ok(values)
+    }
+  }
+}
+
+///|
+pub fn ProjectStorageTag::bool_array(
+  name : String,
+) -> ProjectStorageTag[Array[Bool]] {
+  ProjectStorageTag::create(name~, encode=values => encode_bool_array(values), decode=value => {
+    decode_bool_array(name, value)
+  })
 }
 
 ///|

@@ -9,6 +9,23 @@ fn bytes_from_range(first : Int, length : Int) -> Bytes {
 }
 
 ///|
+fn assert_contiguous_word_addresses(
+  image : @image.Image,
+  word_size : Int,
+  base : UInt64,
+  count : Int,
+) -> Unit raise {
+  let entries = image.words(word_size~).entries()
+  let step = (word_size / 8).to_uint64()
+  assert_true(entries.length() == count)
+  for i in 0..<count {
+    let expected = base + (i * (word_size / 8)).to_uint64()
+    assert_true(entries[i].0.min_addr() == expected)
+    assert_true(entries[i].0.max_addr() == expected + step - 1UL)
+  }
+}
+
+///|
 test "image exposes segment memory and symbol membership" {
   let text = @image.Segment::create(
     name=".text",
@@ -172,6 +189,36 @@ test "image words follow endian-aware memory loads" {
   inspect(be_words[0].1.to_hex(), content="0x0001")
   inspect(le_words[7].1.to_hex(), content="0x0f0e")
   inspect(be_words[7].1.to_hex(), content="0x0e0f")
+}
+
+///|
+test "translated BAP image words keep high-base addresses contiguous by word size" {
+  let base = 0x1000ffUL
+  let segments = [
+    for i in 0..<4 => {
+      let first = i * 16
+      @image.Segment::create(
+        name=".high\{i}",
+        endian=LittleEndian,
+        addr=base + first.to_uint64(),
+        bytes_from_range(first, 16),
+      )
+    }
+  ]
+  let image = @image.Image::from_segments(
+    entry=base,
+    endian=LittleEndian,
+    segments,
+  )
+  assert_contiguous_word_addresses(image, 8, base, 64)
+  assert_contiguous_word_addresses(image, 16, base, 32)
+  assert_contiguous_word_addresses(image, 32, base, 16)
+  assert_contiguous_word_addresses(image, 64, base, 8)
+  let words = image.words(word_size=16).entries().map(entry => entry.1.to_hex())
+  assert_true(words[0:4].to_owned() == ["0x0100", "0x0302", "0x0504", "0x0706"])
+  assert_true(
+    words[28:32].to_owned() == ["0x3938", "0x3b3a", "0x3d3c", "0x3f3e"],
+  )
 }
 
 ///|

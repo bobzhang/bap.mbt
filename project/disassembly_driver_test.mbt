@@ -51,12 +51,20 @@ test "project registers built-in memory block disassembly driver" {
   }
   assert_true(@project.disassembly_driver_names().contains("memory-blocks"))
   assert_true(@project.disassembly_driver_names().contains("function-symbols"))
+  assert_true(@project.disassembly_driver_names().contains("entry-point"))
   match @project.find_disassembly_driver("function-symbols") {
     Some(driver) => {
       assert_true(driver.priority() == -50)
       assert_true(driver.description().contains("function symbol"))
     }
     None => fail("missing function-symbol driver")
+  }
+  match @project.find_disassembly_driver("entry-point") {
+    Some(driver) => {
+      assert_true(driver.priority() == -75)
+      assert_true(driver.description().contains("entry point"))
+    }
+    None => fail("missing entry-point driver")
   }
   match @project.find_disassembly_driver("memory-blocks") {
     Some(driver) => {
@@ -135,6 +143,39 @@ test "project function-symbol disassembly driver materializes symbol blocks" {
   }
   let no_symbols = @project.Project::empty(@core_theory.Target::unknown())
   assert_true(no_symbols.disassemble(driver="function-symbols") is Err(_))
+}
+
+///|
+test "project entry-point disassembly driver materializes mapped entry block" {
+  match @project.register_builtin_disassembly_drivers() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let segment = @image.Segment::create(
+    name=".text",
+    endian=LittleEndian,
+    addr=0x2000UL,
+    b"\x11\x22\x33\x44",
+    executable=true,
+  )
+  let image = @image.Image::from_segments(entry=0x2002UL, endian=LittleEndian, [
+    segment,
+  ])
+  let project = @project.Project::from_image(image)
+  match project.disassemble(driver="entry-point") {
+    Ok(next) => {
+      assert_true(next.get("disassembler") == Some("entry-point"))
+      let blocks = next.disassembly().blocks()
+      assert_true(blocks.length() == 1)
+      assert_true(blocks[0].min_addr() == 0x2002UL)
+      inspect(blocks[0].hexdump(), content="33 44")
+    }
+    Err(reason) => fail(reason)
+  }
+  let unmapped = @project.Project::from_image(
+    @image.Image::from_segments(entry=0x3000UL, endian=LittleEndian, [segment]),
+  )
+  assert_true(unmapped.disassemble(driver="entry-point") is Err(_))
 }
 
 ///|

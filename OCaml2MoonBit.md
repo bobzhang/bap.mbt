@@ -121,7 +121,8 @@ For disassembly-driver registries, separate orchestration from architecture
 decoding: a built-in driver may materialize memory regions as blocks, but it
 should not invent assembly text or lifted BIL unless a real target-specific
 decoder is present. Prefer function-symbol memory blocks over whole-memory
-fallbacks when image symbols are available; that preserves better roots for
+fallbacks when image symbols are available, and use an image entry-point block
+as the next fallback for stripped binaries; that preserves better roots for
 later target-specific decoding without fabricating instruction semantics.
 When a higher-level package exposes the same loader surface as a lower-level
 registry, prefer a small idempotent initializer that delegates to the owning

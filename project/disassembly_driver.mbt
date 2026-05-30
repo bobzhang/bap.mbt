@@ -152,10 +152,41 @@ pub fn ProjectDisassemblyDriver::function_symbols() -> ProjectDisassemblyDriver 
 }
 
 ///|
+pub fn ProjectDisassemblyDriver::entry_point() -> ProjectDisassemblyDriver {
+  ProjectDisassemblyDriver::create(
+    name="entry-point",
+    description="materialize image entry point memory as a disassembly block",
+    priority=-75,
+    run=project => {
+      let image = match project.image() {
+        Some(image) => image
+        None => return Err("project has no image entry point to disassemble")
+      }
+      let entry = image.entry_point()
+      for segment in image.segments() {
+        if segment.contains(entry) {
+          match segment.memory().view(from=entry) {
+            Ok(block) =>
+              return Ok(
+                project
+                .with_disassembly(project.disassembly().add_block(block))
+                .set("disassembler", "entry-point"),
+              )
+            Err(reason) => return Err(reason)
+          }
+        }
+      }
+      Err("project entry point is not mapped")
+    },
+  )
+}
+
+///|
 pub fn register_builtin_disassembly_drivers() -> Result[Unit, String] {
   for
     driver in [
       ProjectDisassemblyDriver::function_symbols(),
+      ProjectDisassemblyDriver::entry_point(),
       ProjectDisassemblyDriver::memory_blocks(),
     ] {
     match register_disassembly_driver_if_absent(driver) {

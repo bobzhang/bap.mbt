@@ -93,6 +93,23 @@ fn image_elf_test_write_symbol64(
 }
 
 ///|
+fn image_elf_test_write_rela64(
+  buffer : Array[Byte],
+  offset : Int,
+  relocation_offset : UInt64,
+  symbol_index : Int,
+  typ : Int,
+) -> Unit {
+  image_elf_test_set_u64_le(buffer, offset, relocation_offset)
+  image_elf_test_set_u64_le(
+    buffer,
+    offset + 8,
+    (symbol_index.to_uint64() << 32) | typ.to_uint64(),
+  )
+  image_elf_test_set_u64_le(buffer, offset + 16, 0UL)
+}
+
+///|
 fn image_elf_test_make_x86_64() -> Bytes {
   let shstr = b"\x00.shstrtab\x00.text\x00.debug_info\x00.symtab\x00.strtab\x00"
   let text = b"\x90\xc3\xcc\x00"
@@ -200,6 +217,118 @@ fn image_elf_test_make_x86_64() -> Bytes {
     1UL,
   )
   image_elf_test_write_bytes(buffer, strtab_offset, strtab)
+  Bytes::from_array(buffer)
+}
+
+///|
+fn image_elf_test_make_x86_64_with_relocations() -> Bytes {
+  let shstr = b"\x00.shstrtab\x00.text\x00.symtab\x00.strtab\x00.rela.text\x00"
+  let text = b"\x90\xc3\xcc\x00"
+  let strtab = b"\x00main\x00target\x00puts\x00"
+  let shstr_offset = 120 + 6 * 64
+  let text_offset = shstr_offset + shstr.length()
+  let symtab_offset = text_offset + text.length()
+  let strtab_offset = symtab_offset + 96
+  let rela_offset = strtab_offset + strtab.length()
+  let total = rela_offset + 72
+  let buffer = Array::make(total, b'\x00')
+  image_elf_test_write_bytes(buffer, 0, b"\x7fELF")
+  buffer[4] = b'\x02'
+  buffer[5] = b'\x01'
+  buffer[6] = b'\x01'
+  image_elf_test_set_u16_le(buffer, 16, 2)
+  image_elf_test_set_u16_le(buffer, 18, 0x3e)
+  image_elf_test_set_u32_le(buffer, 20, 1)
+  image_elf_test_set_u64_le(buffer, 24, 0x400000UL)
+  image_elf_test_set_u64_le(buffer, 32, 64UL)
+  image_elf_test_set_u64_le(buffer, 40, 120UL)
+  image_elf_test_set_u16_le(buffer, 52, 64)
+  image_elf_test_set_u16_le(buffer, 54, 56)
+  image_elf_test_set_u16_le(buffer, 56, 1)
+  image_elf_test_set_u16_le(buffer, 58, 64)
+  image_elf_test_set_u16_le(buffer, 60, 6)
+  image_elf_test_set_u16_le(buffer, 62, 1)
+  image_elf_test_set_u32_le(buffer, 64, 1)
+  image_elf_test_set_u32_le(buffer, 68, 5)
+  image_elf_test_set_u64_le(buffer, 72, text_offset.to_uint64())
+  image_elf_test_set_u64_le(buffer, 80, 0x400000UL)
+  image_elf_test_set_u64_le(buffer, 96, text.length().to_uint64())
+  image_elf_test_set_u64_le(buffer, 104, text.length().to_uint64())
+  image_elf_test_write_section64(
+    buffer,
+    1,
+    1,
+    3,
+    0UL,
+    0UL,
+    shstr_offset,
+    shstr.length(),
+    0,
+    0,
+  )
+  image_elf_test_write_section64(
+    buffer,
+    2,
+    11,
+    1,
+    6UL,
+    0x400000UL,
+    text_offset,
+    text.length(),
+    0,
+    0,
+  )
+  image_elf_test_write_section64(
+    buffer, 3, 17, 2, 0UL, 0UL, symtab_offset, 96, 4, 24,
+  )
+  image_elf_test_write_section64(
+    buffer,
+    4,
+    25,
+    3,
+    0UL,
+    0UL,
+    strtab_offset,
+    strtab.length(),
+    0,
+    0,
+  )
+  image_elf_test_write_section64(
+    buffer, 5, 33, 4, 0UL, 0UL, rela_offset, 72, 3, 24,
+  )
+  image_elf_test_write_bytes(buffer, shstr_offset, shstr)
+  image_elf_test_write_bytes(buffer, text_offset, text)
+  image_elf_test_write_symbol64(
+    buffer,
+    symtab_offset + 24,
+    1,
+    0x12,
+    2,
+    0x400000UL,
+    2UL,
+  )
+  image_elf_test_write_symbol64(
+    buffer,
+    symtab_offset + 48,
+    6,
+    0x12,
+    2,
+    0x400002UL,
+    1UL,
+  )
+  image_elf_test_write_symbol64(
+    buffer,
+    symtab_offset + 72,
+    13,
+    0x12,
+    0,
+    0UL,
+    0UL,
+  )
+  image_elf_test_write_bytes(buffer, strtab_offset, strtab)
+  image_elf_test_write_rela64(buffer, rela_offset, 0x400000UL, 2, 4)
+  image_elf_test_write_rela64(buffer, rela_offset + 24, 0x400001UL, 3, 4)
+  image_elf_test_write_rela64(buffer, rela_offset + 48, 0x400003UL, 0, 8)
   Bytes::from_array(buffer)
 }
 
@@ -355,6 +484,44 @@ test "image ELF backend resolves extended table counts" {
   assert_true(image.symbols().any(symbol => symbol.name() == "main"))
   assert_true(image.segments().length() == 1)
   assert_true(image.segments()[0].addr() == 0x400000UL)
+}
+
+///|
+test "image ELF backend extracts relocation metadata" {
+  match @image.register_builtin_backends() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let (image, warnings) = expect_elf_image(
+    @image.Image::of_bytes(
+      image_elf_test_make_x86_64_with_relocations(),
+      backend="elf",
+    ),
+  )
+  assert_true(warnings.is_empty())
+  assert_true(image.symbols().length() == 2)
+  assert_true(image.symbols().any(symbol => symbol.name() == "main"))
+  assert_true(image.symbols().any(symbol => symbol.name() == "target"))
+  let relocations = image.relocations()
+  assert_true(relocations.length() == 2)
+  let absolute = match
+    relocations.search_by(relocation => relocation.fixup() == 0x400000UL) {
+    Some(index) => relocations[index]
+    None => fail("expected absolute relocation")
+  }
+  assert_true(absolute.target() == Some(0x400002UL))
+  assert_true(!absolute.is_relative())
+  let relative = match
+    relocations.search_by(relocation => relocation.fixup() == 0x400003UL) {
+    Some(index) => relocations[index]
+    None => fail("expected relative relocation")
+  }
+  assert_true(relative.target() == None)
+  assert_true(relative.is_relative())
+  let references = image.external_references()
+  assert_true(references.length() == 1)
+  assert_true(references[0].addr() == 0x400001UL)
+  assert_true(references[0].name() == "puts")
 }
 
 ///|

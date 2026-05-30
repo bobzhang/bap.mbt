@@ -49,6 +49,22 @@ priv struct ImageElfSectionHeader {
 }
 
 ///|
+priv struct ImageElfSymbolEntry {
+  name : String?
+  shndx : Int
+  value : UInt64
+  size : Int
+  info : Int
+}
+
+///|
+priv struct ImageElfRelocationEntry {
+  offset : UInt64
+  symbol_index : Int
+  typ : Int
+}
+
+///|
 fn image_elf_minimum_section_header(class : ImageElfClass) -> Int {
   match class {
     ImageElf32 => 40
@@ -665,13 +681,13 @@ fn image_elf_symbol_count(
 }
 
 ///|
-fn image_elf_parse_symbol(
+fn image_elf_parse_symbol_entry(
   data : Bytes,
   header : ImageElfHeader,
   symbol_table : ImageElfSectionHeader,
   string_table : Bytes,
   index : Int,
-) -> Result[Symbol?, String] {
+) -> Result[ImageElfSymbolEntry, String] {
   let base = symbol_table.offset + index * symbol_table.entsize
   let name_offset = image_elf_read_int(
     data,
@@ -710,27 +726,15 @@ fn image_elf_parse_symbol(
   }
   match (name_offset, info, shndx, value, size) {
     (Ok(name_offset), Ok(info), Ok(shndx), Ok(value), Ok(size)) => {
-      if name_offset == 0 || shndx == 0 {
-        return Ok(None)
+      let name = if name_offset == 0 {
+        None
+      } else {
+        match image_elf_cstring(string_table, name_offset) {
+          Ok(text) => if text.length() == 0 { None } else { Some(text) }
+          Err(reason) => return Err(reason)
+        }
       }
-      match image_elf_cstring(string_table, name_offset) {
-        Ok(name) =>
-          if name.length() == 0 {
-            Ok(None)
-          } else {
-            Ok(
-              Some(
-                Symbol::create(
-                  name~,
-                  addr=value,
-                  size~,
-                  is_function=(info & 0x0f) == 2,
-                ),
-              ),
-            )
-          }
-        Err(reason) => Err(reason)
-      }
+      Ok({ name, shndx, value, size, info })
     }
     (Err(reason), _, _, _, _)
     | (_, Err(reason), _, _, _)
@@ -741,12 +745,28 @@ fn image_elf_parse_symbol(
 }
 
 ///|
-fn image_elf_symbol_table_symbols(
+fn image_elf_symbol_entry_symbol(entry : ImageElfSymbolEntry) -> Symbol? {
+  match entry.name {
+    Some(name) if entry.shndx != 0 =>
+      Some(
+        Symbol::create(
+          name~,
+          addr=entry.value,
+          size=entry.size,
+          is_function=(entry.info & 0x0f) == 2,
+        ),
+      )
+    _ => None
+  }
+}
+
+///|
+fn image_elf_symbol_table_entries(
   data : Bytes,
   header : ImageElfHeader,
   section_headers : Array[ImageElfSectionHeader],
   symbol_table : ImageElfSectionHeader,
-) -> Result[Array[Symbol], String] {
+) -> Result[Array[ImageElfSymbolEntry], String] {
   let string_section = match section_headers.get(symbol_table.link) {
     Some(section) => section
     None => return Err("ELF symbol string table link is out of bounds")
@@ -760,15 +780,171 @@ fn image_elf_symbol_table_symbols(
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  let symbols : Array[Symbol] = []
+  let entries : Array[ImageElfSymbolEntry] = []
   for i in 0..<count {
-    match image_elf_parse_symbol(data, header, symbol_table, strings, i) {
-      Ok(Some(symbol)) => symbols.push(symbol)
-      Ok(None) => ()
+    match image_elf_parse_symbol_entry(data, header, symbol_table, strings, i) {
+      Ok(entry) => entries.push(entry)
       Err(reason) => return Err(reason)
     }
   }
+  Ok(entries)
+}
+
+///|
+fn image_elf_symbol_table_symbols(
+  data : Bytes,
+  header : ImageElfHeader,
+  section_headers : Array[ImageElfSectionHeader],
+  symbol_table : ImageElfSectionHeader,
+) -> Result[Array[Symbol], String] {
+  let entries = match
+    image_elf_symbol_table_entries(data, header, section_headers, symbol_table) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let symbols : Array[Symbol] = []
+  for entry in entries {
+    match image_elf_symbol_entry_symbol(entry) {
+      Some(symbol) => symbols.push(symbol)
+      None => ()
+    }
+  }
   Ok(symbols)
+}
+
+///|
+fn image_elf_relocation_count(
+  section : ImageElfSectionHeader,
+) -> Result[Int, String] {
+  if section.entsize <= 0 {
+    Err("ELF relocation section entry size is invalid")
+  } else if section.size % section.entsize != 0 {
+    Err("ELF relocation section size is not entry-aligned")
+  } else {
+    Ok(section.size / section.entsize)
+  }
+}
+
+///|
+fn image_elf_parse_relocation_entry(
+  data : Bytes,
+  header : ImageElfHeader,
+  relocation_section : ImageElfSectionHeader,
+  index : Int,
+) -> Result[ImageElfRelocationEntry, String] {
+  let base = relocation_section.offset + index * relocation_section.entsize
+  let offset = match header.class {
+    ImageElf32 => image_elf_read_u64(data, base, 4, header.endian)
+    ImageElf64 => image_elf_read_u64(data, base, 8, header.endian)
+  }
+  let info = match header.class {
+    ImageElf32 => image_elf_read_u64(data, base + 4, 4, header.endian)
+    ImageElf64 => image_elf_read_u64(data, base + 8, 8, header.endian)
+  }
+  match (offset, info) {
+    (Ok(offset), Ok(info)) => {
+      let symbol_index = match header.class {
+        ImageElf32 =>
+          image_elf_uint_to_int(info >> 8, "ELF relocation symbol index")
+        ImageElf64 =>
+          image_elf_uint_to_int(info >> 32, "ELF relocation symbol index")
+      }
+      let typ = match header.class {
+        ImageElf32 =>
+          image_elf_uint_to_int(info & 0xffUL, "ELF relocation type")
+        ImageElf64 =>
+          image_elf_uint_to_int(info & 0xffffffffUL, "ELF relocation type")
+      }
+      match (symbol_index, typ) {
+        (Ok(symbol_index), Ok(typ)) => Ok({ offset, symbol_index, typ })
+        (Err(reason), _) | (_, Err(reason)) => Err(reason)
+      }
+    }
+    (Err(reason), _) | (_, Err(reason)) => Err(reason)
+  }
+}
+
+///|
+fn image_elf_is_relative_relocation(header : ImageElfHeader, typ : Int) -> Bool {
+  match header.machine {
+    0x03 | 0x3e => typ == 8 // R_386_RELATIVE / R_X86_64_RELATIVE
+    0xb7 => typ == 1027 // R_AARCH64_RELATIVE
+    0xf3 => typ == 3 // R_RISCV_RELATIVE
+    _ => false
+  }
+}
+
+///|
+fn image_elf_relocation_section_symbols(
+  data : Bytes,
+  header : ImageElfHeader,
+  section_headers : Array[ImageElfSectionHeader],
+  relocation_section : ImageElfSectionHeader,
+) -> Result[Array[ImageElfSymbolEntry], String] {
+  let symbol_table = match section_headers.get(relocation_section.link) {
+    Some(section) => section
+    None => return Err("ELF relocation symbol table link is out of bounds")
+  }
+  if symbol_table.typ != 2 && symbol_table.typ != 11 {
+    return Err("ELF relocation section does not link to a symbol table")
+  }
+  image_elf_symbol_table_entries(data, header, section_headers, symbol_table)
+}
+
+///|
+fn image_elf_relocations(
+  data : Bytes,
+  header : ImageElfHeader,
+  section_headers : Array[ImageElfSectionHeader],
+) -> Result[(Array[Relocation], Array[ExternalReference]), String] {
+  let relocations : Array[Relocation] = []
+  let external_references : Array[ExternalReference] = []
+  for section in section_headers {
+    if section.typ == 4 || section.typ == 9 {
+      let symbol_entries = match
+        image_elf_relocation_section_symbols(
+          data, header, section_headers, section,
+        ) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let count = match image_elf_relocation_count(section) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      for i in 0..<count {
+        let entry = match
+          image_elf_parse_relocation_entry(data, header, section, i) {
+          Ok(value) => value
+          Err(reason) => return Err(reason)
+        }
+        if image_elf_is_relative_relocation(header, entry.typ) {
+          relocations.push(
+            Relocation::create(fixup=entry.offset, relative=true),
+          )
+        } else if entry.symbol_index != 0 {
+          let symbol = match symbol_entries.get(entry.symbol_index) {
+            Some(value) => value
+            None => return Err("ELF relocation symbol index is out of bounds")
+          }
+          match symbol.name {
+            Some(name) =>
+              if symbol.shndx == 0 {
+                external_references.push(
+                  ExternalReference::create(addr=entry.offset, name~),
+                )
+              } else {
+                relocations.push(
+                  Relocation::create(fixup=entry.offset, target=symbol.value),
+                )
+              }
+            None => ()
+          }
+        }
+      }
+    }
+  }
+  Ok((relocations, external_references))
 }
 
 ///|
@@ -972,6 +1148,11 @@ fn image_elf_load(data : Bytes) -> Result[(Image, Array[String]), String] {
         Ok(value) => value
         Err(reason) => return Err(reason)
       }
+      let (relocations, external_references) = match
+        image_elf_relocations(data, header, section_headers) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
       let segments : Array[Segment] = []
       for i in 0..<header.program_count {
         match image_elf_parse_program_header(data, header, i) {
@@ -1019,6 +1200,8 @@ fn image_elf_load(data : Bytes) -> Result[(Image, Array[String]), String] {
             segments,
             sections~,
             symbols~,
+            relocations~,
+            external_references~,
             target=image_elf_target(header),
           ),
           [],

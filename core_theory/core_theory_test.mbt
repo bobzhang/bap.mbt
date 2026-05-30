@@ -179,6 +179,74 @@ test "target registry resolves common and custom declarations" {
 }
 
 ///|
+test "target selection filters BAP-style metadata constraints" {
+  let parent = @core_theory.Target::create(
+    name=@knowledge.Name::create("unit-select-root", pkg="test"),
+    bits=32,
+  )
+  let linux_elf = @core_theory.Target::create(
+    name=@knowledge.Name::create("unit-select-linux-elf", pkg="test"),
+    parent~,
+    system=Linux,
+    abi=GNU,
+    filetype=Elf,
+  )
+  let linux_macho = @core_theory.Target::create(
+    name=@knowledge.Name::create("unit-select-linux-macho", pkg="test"),
+    parent~,
+    system=Linux,
+    abi=GNU,
+    filetype=MachO,
+  )
+  let darwin = @core_theory.Target::create(
+    name=@knowledge.Name::create("unit-select-darwin", pkg="test"),
+    parent~,
+    system=Darwin,
+    abi=SysV,
+    filetype=MachO,
+  )
+  for target in [parent, linux_elf, linux_macho, darwin] {
+    match @core_theory.register_target(target) {
+      Ok(_) => ()
+      Err(reason) => fail(reason)
+    }
+  }
+
+  let all = @core_theory.Target::filter(parent~)
+  assert_true(all.length() == 4)
+  let linux = @core_theory.Target::filter(parent~, system=Linux)
+  assert_true(linux.length() == 2)
+  assert_true(linux.all(target => target.system() == Linux))
+  let linux_elf_matches = @core_theory.Target::filter(
+    parent~,
+    system=Linux,
+    abi=GNU,
+    filetype=Elf,
+  )
+  assert_true(linux_elf_matches.length() == 1)
+  assert_true(
+    linux_elf_matches[0].name().unqualified() == "unit-select-linux-elf",
+  )
+  match @core_theory.Target::select(parent~, system=Linux, abi=GNU) {
+    Ok(target) => assert_true(target.system() == Linux)
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    @core_theory.Target::select(parent~, system=Linux, abi=GNU, unique=true)
+    is Err(_),
+  )
+  assert_true(
+    @core_theory.Target::select(parent~, system=Windows, strict=true) is Err(_),
+  )
+  let strict_unknown = @core_theory.Target::filter(parent~, strict=true)
+  assert_true(strict_unknown.length() == 1)
+  assert_true(strict_unknown[0].name().unqualified() == "unit-select-root")
+  assert_true(
+    @core_theory.Target::filter().any(target => target.matches("x86_64")),
+  )
+}
+
+///|
 test "target metadata enums parse loader strings" {
   assert_true(
     @core_theory.Endianness::of_string("little-endian") == Some(LittleEndian),

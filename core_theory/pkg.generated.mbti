@@ -300,6 +300,7 @@ pub fn Target::data_addr_size(Self) -> Int
 pub fn Target::endianness(Self) -> Endianness
 pub fn Target::fabi(Self) -> Fabi
 pub fn Target::filetype(Self) -> Filetype
+pub fn Target::filter(parent? : Self, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, strict? : Bool) -> Array[Self]
 pub fn Target::find_role(Self, Role) -> Var?
 pub fn Target::find_var(Self, String) -> Var?
 pub fn Target::hexagon() -> Self
@@ -327,6 +328,7 @@ pub fn Target::riscv32() -> Self
 pub fn Target::riscv64() -> Self
 pub fn Target::role_aliases(Self, Role) -> Array[String]
 pub fn Target::roles_of_var(Self, Var) -> Array[Role]
+pub fn Target::select(parent? : Self, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, strict? : Bool, unique? : Bool) -> Result[Self, String]
 pub fn Target::sparc() -> Self
 pub fn Target::sparcv9() -> Self
 pub fn Target::system(Self) -> System

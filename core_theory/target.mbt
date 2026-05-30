@@ -775,7 +775,9 @@ pub fn Target::matches(self : Target, query : String) -> Bool {
 
 ///|
 pub fn Target::belongs(self : Target, parent : Target) -> Bool {
-  if self.name_value == parent.name() {
+  if parent.is_unknown() {
+    true
+  } else if self.name_value == parent.name() {
     true
   } else {
     match self.parent_value {
@@ -1184,6 +1186,117 @@ pub fn get_target(query : String) -> Result[Target, String] {
   match find_target(query) {
     Some(target) => Ok(target)
     None => Err("unknown target \{query}")
+  }
+}
+
+///|
+fn target_system_matches(
+  actual : System,
+  constraint : System,
+  strict : Bool,
+) -> Bool {
+  if strict {
+    actual == constraint
+  } else {
+    constraint == UnknownSystem || actual == constraint
+  }
+}
+
+///|
+fn target_abi_matches(actual : Abi, constraint : Abi, strict : Bool) -> Bool {
+  if strict {
+    actual == constraint
+  } else {
+    constraint == UnknownAbi || actual == constraint
+  }
+}
+
+///|
+fn target_fabi_matches(actual : Fabi, constraint : Fabi, strict : Bool) -> Bool {
+  if strict {
+    actual == constraint
+  } else {
+    constraint == UnknownFabi || actual == constraint
+  }
+}
+
+///|
+fn target_filetype_matches(
+  actual : Filetype,
+  constraint : Filetype,
+  strict : Bool,
+) -> Bool {
+  if strict {
+    actual == constraint
+  } else {
+    constraint == UnknownFiletype || actual == constraint
+  }
+}
+
+///|
+pub fn Target::filter(
+  parent? : Target,
+  system? : System,
+  abi? : Abi,
+  fabi? : Fabi,
+  filetype? : Filetype,
+  strict? : Bool = false,
+) -> Array[Target] {
+  let parent = match parent {
+    Some(target) => target
+    None => Target::unknown()
+  }
+  let system = match system {
+    Some(value) => value
+    None => UnknownSystem
+  }
+  let abi = match abi {
+    Some(value) => value
+    None => UnknownAbi
+  }
+  let fabi = match fabi {
+    Some(value) => value
+    None => UnknownFabi
+  }
+  let filetype = match filetype {
+    Some(value) => value
+    None => UnknownFiletype
+  }
+  target_family(parent).filter(target => {
+    target_system_matches(target.system(), system, strict) &&
+    target_abi_matches(target.abi(), abi, strict) &&
+    target_fabi_matches(target.fabi(), fabi, strict) &&
+    target_filetype_matches(target.filetype(), filetype, strict)
+  })
+}
+
+///|
+pub fn Target::select(
+  parent? : Target,
+  system? : System,
+  abi? : Abi,
+  fabi? : Fabi,
+  filetype? : Filetype,
+  strict? : Bool = false,
+  unique? : Bool = false,
+) -> Result[Target, String] {
+  let matches = Target::filter(
+    parent?,
+    system?,
+    abi?,
+    fabi?,
+    filetype?,
+    strict~,
+  )
+  match matches {
+    [] => Err("Target.select - no matching target")
+    [target] => Ok(target)
+    [target, ..] =>
+      if unique {
+        Err("Target.select - more than one target matches the constraints")
+      } else {
+        Ok(target)
+      }
   }
 }
 

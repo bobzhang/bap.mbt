@@ -820,7 +820,10 @@ pub fn Target::parents(self : Target) -> Array[Target] {
 pub fn Target::x86() -> Target {
   Target::create(
     name=target_name("x86"),
-    nicknames=["i386", "i486", "i586", "i686"],
+    nicknames=[
+      "x86-32", "x86_32", "ia32", "ia-32", "i186", "i286", "i386", "i486", "i586",
+      "i686",
+    ],
     bits=32,
     endianness=LittleEndian,
     vars=x86_32_vars(),
@@ -832,7 +835,7 @@ pub fn Target::x86_64() -> Target {
   Target::create(
     name=target_name("x86_64"),
     parent=Target::x86(),
-    nicknames=["x86-64", "amd64", "x64"],
+    nicknames=["x86-64", "amd64", "x64", "x86_64h"],
     bits=64,
     endianness=LittleEndian,
     vars=x86_64_vars(),
@@ -843,7 +846,7 @@ pub fn Target::x86_64() -> Target {
 pub fn Target::arm() -> Target {
   Target::create(
     name=target_name("arm"),
-    nicknames=["aarch32", "armv7"],
+    nicknames=["aarch32", "armv4", "armv5", "armv6", "armv7", "xscale"],
     bits=32,
     endianness=LittleEndian,
     vars=arm32_vars(),
@@ -855,7 +858,31 @@ pub fn Target::armeb() -> Target {
   Target::create(
     name=target_name("armeb"),
     parent=Target::arm(),
-    nicknames=["armv7eb", "aarch32eb"],
+    nicknames=["armv4eb", "armv5eb", "armv6eb", "armv7eb", "aarch32eb"],
+    bits=32,
+    endianness=BigEndian,
+    vars=arm32_vars(),
+  )
+}
+
+///|
+pub fn Target::thumb() -> Target {
+  Target::create(
+    name=target_name("thumb"),
+    parent=Target::arm(),
+    nicknames=["thumbv4", "thumbv5", "thumbv6", "thumbv7"],
+    bits=32,
+    endianness=LittleEndian,
+    vars=arm32_vars(),
+  )
+}
+
+///|
+pub fn Target::thumbeb() -> Target {
+  Target::create(
+    name=target_name("thumbeb"),
+    parent=Target::armeb(),
+    nicknames=["thumbv4eb", "thumbv5eb", "thumbv6eb", "thumbv7eb"],
     bits=32,
     endianness=BigEndian,
     vars=arm32_vars(),
@@ -947,7 +974,7 @@ pub fn Target::powerpc64() -> Target {
   Target::create(
     name=target_name("powerpc64"),
     parent=Target::powerpc(),
-    nicknames=["ppc64"],
+    nicknames=["ppc64", "ppu"],
     bits=64,
     endianness=BigEndian,
     vars=ppc_vars(64),
@@ -1079,6 +1106,8 @@ pub fn common_targets() -> Array[Target] {
     Target::x86_64(),
     Target::arm(),
     Target::armeb(),
+    Target::thumb(),
+    Target::thumbeb(),
     Target::aarch64(),
     Target::aarch64_be(),
     Target::mips(),

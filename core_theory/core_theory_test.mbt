@@ -84,6 +84,35 @@ test "target registry resolves common and custom declarations" {
     }
     Err(reason) => fail(reason)
   }
+  match @core_theory.get_target("thumb") {
+    Ok(target) => {
+      assert_true(target.bits() == 32)
+      assert_true(target.endianness() == LittleEndian)
+      assert_true(target.belongs(@core_theory.Target::arm()))
+      assert_true(target.matches("thumbv7"))
+    }
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.get_target("thumbv7eb") {
+    Ok(target) => {
+      assert_true(target.endianness() == BigEndian)
+      assert_true(target.belongs(@core_theory.Target::armeb()))
+      assert_true(target.matches("thumbeb"))
+    }
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.get_target("ia-32") {
+    Ok(target) => assert_true(target.matches("x86"))
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.get_target("x86_64h") {
+    Ok(target) => assert_true(target.matches("x86_64"))
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.get_target("ppu") {
+    Ok(target) => assert_true(target.matches("powerpc64"))
+    Err(reason) => fail(reason)
+  }
   match @core_theory.get_target("mips64el") {
     Ok(target) => {
       assert_true(target.bits() == 64)

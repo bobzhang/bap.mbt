@@ -28,6 +28,35 @@ fn identity_project(project : Project) -> Project {
 }
 
 ///|
+fn project_input_add_memory_entries(
+  target : @memory.MemMap[String],
+  source : @memory.MemMap[String],
+) -> @memory.MemMap[String] {
+  let mut result = target
+  for entry in source.entries() {
+    result = result.add(entry.0, entry.1)
+  }
+  result
+}
+
+///|
+fn project_input_union_memory(
+  code : @memory.MemMap[String]?,
+  data : @memory.MemMap[String]?,
+) -> @memory.MemMap[String] {
+  let mut result = @memory.MemMap::empty()
+  match code {
+    Some(map) => result = project_input_add_memory_entries(result, map)
+    None => ()
+  }
+  match data {
+    Some(map) => result = project_input_add_memory_entries(result, map)
+    None => ()
+  }
+  result
+}
+
+///|
 pub fn ProjectInput::custom(
   target~ : @core_theory.Target,
   filename? : String,
@@ -64,6 +93,22 @@ pub fn ProjectInput::custom(
       None => identity_project
     },
   }
+}
+
+///|
+pub fn ProjectInput::create(
+  target~ : @core_theory.Target,
+  filename~ : String,
+  code? : @memory.MemMap[String],
+  data? : @memory.MemMap[String],
+  finish? : (Project) -> Project,
+) -> ProjectInput {
+  ProjectInput::custom(
+    target~,
+    filename~,
+    memory=project_input_union_memory(code, data),
+    finish?,
+  )
 }
 
 ///|

@@ -118,3 +118,63 @@ test "bil constant propagation drops facts that differ across branches" {
     ["if cond:imm8 then 1 stmts else 1 stmts", "y:imm8 := (x:imm8 + 0x01:8u)"],
   )
 }
+
+///|
+test "bil constant propagation keeps selected branch facts for static conditions" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let z = @types.Var::new(name="z", typ~)
+  let stmts = [
+    @types.Stmt::Move(x, Int(word8(1))),
+    If(
+      cond=BinOp(Lt, Var(x), Int(word8(0))),
+      yes=[Move(y, Int(word8(2))), Jmp(Var(y))],
+      no=[Move(y, Int(word8(4)))],
+    ),
+    Move(z, Var(y)),
+  ]
+  let propagated = @types.propagate_const_stmts(stmts)
+  assert_true(
+    stmt_text(propagated) ==
+    [
+      "x:imm8 := 0x01:8u", "if 0x0:1u then 2 stmts else 1 stmts", "z:imm8 := 0x04:8u",
+    ],
+  )
+  match propagated[1] {
+    If(yes~, no~, ..) => {
+      assert_true(stmt_text(yes) == ["y:imm8 := 0x02:8u", "jmp 0x02:8u"])
+      assert_true(stmt_text(no) == ["y:imm8 := 0x04:8u"])
+    }
+    _ => fail("expected propagated branch")
+  }
+}
+
+///|
+test "bil constant propagation preserves facts after definitely skipped loops" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let z = @types.Var::new(name="z", typ~)
+  let stmts = [
+    @types.Stmt::Move(x, Int(word8(1))),
+    Move(y, Int(word8(2))),
+    While(cond=BinOp(Lt, Var(x), Int(word8(0))), body=[
+      Move(y, Int(word8(1))),
+      Jmp(Var(y)),
+    ]),
+    Move(z, Var(y)),
+  ]
+  let propagated = @types.propagate_const_stmts(stmts)
+  assert_true(
+    stmt_text(propagated) ==
+    [
+      "x:imm8 := 0x01:8u", "y:imm8 := 0x02:8u", "while 0x0:1u do 2 stmts", "z:imm8 := 0x02:8u",
+    ],
+  )
+  match propagated[2] {
+    While(body~, ..) =>
+      assert_true(stmt_text(body) == ["y:imm8 := 0x01:8u", "jmp 0x01:8u"])
+    _ => fail("expected propagated loop")
+  }
+}

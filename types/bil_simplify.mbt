@@ -245,6 +245,18 @@ fn join_const_contexts(
 }
 
 ///|
+fn const_context_after_if(
+  cond : Exp,
+  yes_ctx : Array[(Var, Exp)],
+  no_ctx : Array[(Var, Exp)],
+) -> Array[(Var, Exp)] {
+  match cond {
+    Int(word) => if word.is_zero() { no_ctx } else { yes_ctx }
+    _ => join_const_contexts(yes_ctx, no_ctx)
+  }
+}
+
+///|
 fn stmt_defined_vars(stmt : Stmt, vars : Array[Var]) -> Unit {
   match stmt {
     Move(variable, _) => add_var(vars, variable)
@@ -342,7 +354,7 @@ fn propagate_const_loop(
         let next_cond = cond.propagate_consts(ctx).simplify()
         let yes_result = propagate_const_loop(yes, ctx)
         let no_result = propagate_const_loop(no, ctx)
-        ctx = join_const_contexts(yes_result.1, no_result.1)
+        ctx = const_context_after_if(next_cond, yes_result.1, no_result.1)
         result.push(If(cond=next_cond, yes=yes_result.0, no=no_result.0))
       }
       While(cond~, body~) => {
@@ -350,7 +362,10 @@ fn propagate_const_loop(
         let loop_ctx = remove_context_vars(ctx, killed)
         let next_cond = cond.propagate_consts(loop_ctx).simplify()
         let body_result = propagate_const_loop(body, loop_ctx)
-        ctx = join_const_contexts(loop_ctx, body_result.1)
+        ctx = match next_cond {
+          Int(word) if word.is_zero() => ctx
+          _ => join_const_contexts(loop_ctx, body_result.1)
+        }
         result.push(While(cond=next_cond, body=body_result.0))
       }
     }

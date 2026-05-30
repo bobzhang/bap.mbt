@@ -175,6 +175,52 @@ test "image words follow endian-aware memory loads" {
 }
 
 ///|
+test "translated BAP image words expose expected byte and int64 lists" {
+  let little = @image.Image::from_segments(entry=0UL, endian=LittleEndian, [
+    @image.Segment::create(
+      name=".le",
+      endian=LittleEndian,
+      addr=0UL,
+      bytes_0_to_15(),
+    ),
+  ])
+  let big = @image.Image::from_segments(entry=0UL, endian=BigEndian, [
+    @image.Segment::create(
+      name=".be",
+      endian=BigEndian,
+      addr=0UL,
+      bytes_0_to_15(),
+    ),
+  ])
+  let le64 = little.words(word_size=64).entries().map(entry => entry.1.to_hex())
+  let be64 = big.words(word_size=64).entries().map(entry => entry.1.to_hex())
+  assert_true(le64 == ["0x0706050403020100", "0x0f0e0d0c0b0a0908"])
+  assert_true(be64 == ["0x0001020304050607", "0x08090a0b0c0d0e0f"])
+  let segments = [
+    for i in 0..<4 => {
+      let base = i * 16
+      @image.Segment::create(
+        name=".seg\{i}",
+        endian=LittleEndian,
+        addr=base.to_uint64(),
+        bytes_from_range(base, 16),
+      )
+    }
+  ]
+  let many = @image.Image::from_segments(
+    entry=0UL,
+    endian=LittleEndian,
+    segments,
+  )
+  let bytes = many.words(word_size=8).entries()
+  assert_true(bytes.length() == 64)
+  inspect(bytes[0].1.to_hex(), content="0x00")
+  inspect(bytes[15].1.to_hex(), content="0x0f")
+  inspect(bytes[16].1.to_hex(), content="0x10")
+  inspect(bytes[63].1.to_hex(), content="0x3f")
+}
+
+///|
 test "translated BAP image words preserve gapped segment addresses" {
   let segments = [
     for base in [0x000UL, 0x10dUL, 0x21aUL, 0x327UL] => {

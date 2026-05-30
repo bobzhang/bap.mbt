@@ -80,6 +80,62 @@ test "project storage and memory tags are persistent updates" {
 }
 
 ///|
+test "project substitutes memory annotation placeholders" {
+  let target = @core_theory.Target::unknown()
+  let section = @image.Section::create(name=".text", addr=0x1000UL, size=2)
+  let symbol = @image.Symbol::create(name="entry", addr=0x1000UL, size=2)
+  let image = @image.Image::from_segments(
+    entry=0x1000UL,
+    endian=LittleEndian,
+    [raw_segment()],
+    sections=[section],
+    symbols=[symbol],
+    target~,
+  )
+  match raw_segment().memory().view(from=0x1001UL, words=1) {
+    Ok(region) => {
+      let project = @project.Project::from_image(image)
+      let tagged = project.substitute(
+        region,
+        "comment",
+        "$symbol_name@$symbol_addr-$symbol_max_addr in " +
+        "$section_name@$section_addr-$section_max_addr " +
+        "covers $addr-$max_addr and $missing",
+      )
+      assert_true(
+        tagged
+        .memory()
+        .lookup(0x1001UL)
+        .any(entry => {
+          entry.1 ==
+          "comment=entry@0x1000-0x1001 in .text@0x1000-0x1001 " +
+          "covers 0x1001-0x1001 and missing"
+        }),
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+test "project substitutes disassembly block placeholders" {
+  let target = @core_theory.Target::unknown()
+  let block = raw_segment().memory()
+  let project = @project.Project::empty(target).with_disassembly(
+    @project.ProjectDisassemblyState::empty().add_block(block),
+  )
+  let tagged = project.substitute(
+    block, "block-comment", "$block_name spans $block_addr-$block_max_addr",
+  )
+  assert_true(
+    tagged
+    .memory()
+    .lookup(0x1000UL)
+    .any(entry => entry.1 == "block-comment=blk_0x1000 spans 0x1000-0x1001"),
+  )
+}
+
+///|
 test "project maps programs and stores libraries" {
   let target = @core_theory.Target::unknown()
   let sub = @types.Sub::create(name="main")

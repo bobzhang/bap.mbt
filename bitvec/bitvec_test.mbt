@@ -95,3 +95,22 @@ test "hex parsing truncates to the requested width" {
     _ => fail("expected invalid hex digit")
   }
 }
+
+///|
+test "string parsing accepts BAP boolean and width suffix forms" {
+  assert_true(@bitvec.from_string("false") == @bitvec.b0())
+  assert_true(@bitvec.from_string("true") == @bitvec.b1())
+  assert_true(@bitvec.from_string("0:1u") == @bitvec.b0())
+  assert_true(@bitvec.from_string("1:1") == @bitvec.b1())
+  inspect(@bitvec.from_string("7:4u").to_hex(), content="0x7")
+  inspect(@bitvec.from_string("7:3s").to_hex(), content="0x7")
+  inspect(@bitvec.from_string("7:2").to_hex(), content="0x3")
+  inspect(@bitvec.from_string("-1:3").to_hex(), content="0x7")
+  inspect(@bitvec.from_string("0xdeadbeef:16").to_hex(), content="0xbeef")
+  try @bitvec.from_string("7") catch {
+    InvalidLiteral(text) => inspect(text, content="7")
+    _ => fail("unexpected error")
+  } noraise {
+    _ => fail("expected invalid bitvector literal")
+  }
+}

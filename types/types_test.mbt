@@ -3,6 +3,8 @@ test "word wraps bitvec operations" {
   let high = @types.Word::of_int(width=16, 0xdead)
   let low = @types.Word::of_int(width=16, 0xbeef)
   inspect(high.concat(low).to_hex(), content="0xdeadbeef")
+  assert_true(@types.Word::from_string("true") == @types.Word::b1())
+  inspect(@types.Word::from_string("7:2").to_hex(), content="0x3")
   inspect(
     @types.Word::from_bytes(b"\xef\xbe\xad\xde", endian=LittleEndian).to_hex(),
     content="0xdeadbeef",

@@ -9,6 +9,7 @@ pub(all) suberror BitVecError {
   InvalidWidth(Int)
   IncompatibleWidths(lhs~ : Int, rhs~ : Int)
   InvalidHexDigit(Char)
+  InvalidLiteral(String)
 } derive(Eq, Debug)
 
 ///|

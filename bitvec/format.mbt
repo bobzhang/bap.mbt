@@ -36,6 +36,51 @@ pub fn from_hex(width~ : Int, text : StringView) -> BitVec raise BitVecError {
 }
 
 ///|
+fn parse_string_value(
+  width : Int,
+  text : StringView,
+) -> BitVec raise BitVecError {
+  if text.has_prefix("0x") || text.has_prefix("0X") {
+    from_hex(width~, text)
+  } else {
+    let source = text.to_owned()
+    let value = try @string.parse_int(source) catch {
+      _ => raise InvalidLiteral(source)
+    } noraise {
+      value => value
+    }
+    of_int(width~, value)
+  }
+}
+
+///|
+pub fn from_string(text : StringView) -> BitVec raise BitVecError {
+  let source = text.to_owned()
+  match source {
+    "false" => b0()
+    "true" => b1()
+    _ =>
+      match source.split_once(":") {
+        None => raise InvalidLiteral(source)
+        Some((digits, suffix)) => {
+          let width_text = if suffix.has_suffix("u") || suffix.has_suffix("s") {
+            suffix[:suffix.length() - 1]
+          } else {
+            suffix
+          }
+          let width_source = width_text.to_owned()
+          let width = try @string.parse_int(width_source) catch {
+            _ => raise InvalidLiteral(source)
+          } noraise {
+            value => value
+          }
+          parse_string_value(width, digits)
+        }
+      }
+  }
+}
+
+///|
 pub fn BitVec::to_hex(self : BitVec, prefix? : Bool = true) -> String {
   let digits = Int::max(1, (self.width + 3) / 4)
   let builder = StringBuilder()

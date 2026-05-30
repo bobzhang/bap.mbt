@@ -54,6 +54,11 @@ pub fn Word::from_hex(
 }
 
 ///|
+pub fn Word::from_string(text : StringView) -> Word raise @bitvec.BitVecError {
+  Word(@bitvec.from_string(text))
+}
+
+///|
 pub fn Word::from_bytes(
   bytes : BytesView,
   endian~ : @bitvec.Endian,

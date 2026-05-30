@@ -12,6 +12,8 @@ pub fn b1() -> BitVec
 
 pub fn from_hex(width~ : Int, StringView) -> BitVec raise BitVecError
 
+pub fn from_string(StringView) -> BitVec raise BitVecError
+
 pub fn of_bool(Bool) -> BitVec
 
 pub fn of_bytes(BytesView, endian~ : Endian, width? : Int) -> BitVec raise BitVecError
@@ -33,6 +35,7 @@ pub(all) suberror BitVecError {
   InvalidWidth(Int)
   IncompatibleWidths(lhs~ : Int, rhs~ : Int)
   InvalidHexDigit(Char)
+  InvalidLiteral(String)
 } derive(Eq, @debug.Debug)
 
 // Types and methods

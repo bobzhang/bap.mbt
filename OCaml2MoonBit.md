@@ -117,6 +117,11 @@ registry, prefer a small idempotent initializer that delegates to the owning
 registry instead of duplicating loader entries. For example, `ProjectInput`
 can initialize built-in raw/Ogre/ELF loading by registering `image` backends,
 then continue to expose those backend names through project-level discovery.
+Project-level image fallback can enrich successful ELF loads with optional
+DWARF-derived function symbols, but unsupported or malformed DWARF should not
+turn a loadable stripped binary into a project-loading failure. Treat those
+derived symbols as debug metadata and de-duplicate them against image symbols by
+stable identity such as `(name, address)`.
 
 `text[i]` returns a `UInt16` code unit, not a `Char`. For text parsers that need character predicates or `StringBuilder::write_char`, use `text.get_char(offset)` and advance by `char.utf16_len()`. It is still fine to increment by one for syntax bytes you have already constrained to ASCII, such as `(`, `)`, `"` and `\\`, but do not mix code-unit offsets with `Char` APIs accidentally.
 

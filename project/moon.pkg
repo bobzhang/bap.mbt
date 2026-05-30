@@ -1,6 +1,7 @@
 import {
   "bobzhang/bap/bitvec",
   "bobzhang/bap/core_theory",
+  "bobzhang/bap/dwarf",
   "bobzhang/bap/image",
   "bobzhang/bap/memory",
   "bobzhang/bap/native_io",

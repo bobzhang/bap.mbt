@@ -363,6 +363,70 @@ fn push_unique_string(items : Array[String], item : String) -> Unit {
 }
 
 ///|
+fn project_input_dwarf_symbol_size(function_item : @dwarf.DwarfFunction) -> Int {
+  match function_item.high_pc() {
+    Some(high) if high > function_item.low_pc() => {
+      let size = high - function_item.low_pc()
+      if size <= 2147483647UL {
+        size.to_int()
+      } else {
+        0
+      }
+    }
+    _ => 0
+  }
+}
+
+///|
+fn project_input_dwarf_symbols(data : Bytes) -> Array[@image.Symbol] {
+  let symbols : Array[@image.Symbol] = []
+  match @dwarf.DwarfData::from_elf_bytes(data) {
+    Ok(dwarf_data) =>
+      match dwarf_data.functions() {
+        Ok(functions) =>
+          for function_item in functions {
+            symbols.push(
+              @image.Symbol::create(
+                name=function_item.name(),
+                addr=function_item.low_pc(),
+                size=project_input_dwarf_symbol_size(function_item),
+                is_function=true,
+                is_debug=true,
+              ),
+            )
+          }
+        Err(_) => ()
+      }
+    Err(_) => ()
+  }
+  symbols
+}
+
+///|
+fn project_input_has_symbol(
+  symbols : Array[@image.Symbol],
+  candidate : @image.Symbol,
+) -> Bool {
+  symbols.any(symbol => {
+    symbol.addr() == candidate.addr() && symbol.name() == candidate.name()
+  })
+}
+
+///|
+fn ProjectInput::with_dwarf_symbols(
+  self : ProjectInput,
+  data : Bytes,
+) -> ProjectInput {
+  let symbols = self.symbols_value.copy()
+  for symbol in project_input_dwarf_symbols(data) {
+    if !project_input_has_symbol(symbols, symbol) {
+      symbols.push(symbol)
+    }
+  }
+  { ..self, symbols_value: symbols }
+}
+
+///|
 pub fn available_input_loaders() -> Array[String] {
   let names = []
   input_loader_registry.each((name, _) => names.push(name))
@@ -406,7 +470,8 @@ pub fn ProjectInput::load(
     Some(input_loader) => input_loader.load(data)
     None =>
       match @image.Image::of_bytes(data, backend=loader) {
-        Ok((image, _warnings)) => Ok(ProjectInput::from_image(image))
+        Ok((image, _warnings)) =>
+          Ok(ProjectInput::from_image(image).with_dwarf_symbols(data))
         Err(reason) =>
           Err(
             "unknown project input loader or image backend \{loader}: \{reason}",
@@ -444,7 +509,9 @@ pub fn ProjectInput::load_for_filename(
         match @image.Image::of_bytes_for_filename(data, filename~) {
           Ok((image, _warnings)) =>
             return Ok(
-              ProjectInput::from_image(image).with_default_filename(filename),
+              ProjectInput::from_image(image)
+              .with_default_filename(filename)
+              .with_dwarf_symbols(data),
             )
           Err(reason) =>
             return Err(
@@ -454,7 +521,11 @@ pub fn ProjectInput::load_for_filename(
       }
       match @image.Image::of_bytes_for_filename(data, filename~) {
         Ok((image, _warnings)) =>
-          Ok(ProjectInput::from_image(image).with_default_filename(filename))
+          Ok(
+            ProjectInput::from_image(image)
+            .with_default_filename(filename)
+            .with_dwarf_symbols(data),
+          )
         Err(reason) =>
           Err(
             "no project input loader or image backend for extension \{extension}: \{reason}",

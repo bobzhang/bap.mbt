@@ -170,6 +170,86 @@ pub fn Exp::normalize(self : Exp) -> Exp {
 }
 
 ///|
+fn Exp::first_ite_cond(self : Exp) -> Exp? {
+  match self {
+    Ite(cond~, ..) => Some(cond)
+    Load(mem~, addr~, ..) =>
+      match mem.first_ite_cond() {
+        Some(cond) => Some(cond)
+        None => addr.first_ite_cond()
+      }
+    Store(mem~, addr~, value~, ..) =>
+      match mem.first_ite_cond() {
+        Some(cond) => Some(cond)
+        None =>
+          match addr.first_ite_cond() {
+            Some(cond) => Some(cond)
+            None => value.first_ite_cond()
+          }
+      }
+    Let(_, value, body) =>
+      match value.first_ite_cond() {
+        Some(cond) => Some(cond)
+        None => body.first_ite_cond()
+      }
+    Cast(_, exp) | UnOp(_, exp) => exp.first_ite_cond()
+    BinOp(_, lhs, rhs) =>
+      match lhs.first_ite_cond() {
+        Some(cond) => Some(cond)
+        None => rhs.first_ite_cond()
+      }
+    Int(_) | Var(_) | Unknown(_) => None
+  }
+}
+
+///|
+fn Exp::assume_ite(self : Exp, target : Exp, take_yes : Bool) -> Exp {
+  match self {
+    Ite(cond~, yes~, no~) if cond == target =>
+      if take_yes {
+        yes.assume_ite(target, take_yes)
+      } else {
+        no.assume_ite(target, take_yes)
+      }
+    Ite(cond~, yes~, no~) =>
+      Ite(
+        cond=cond.assume_ite(target, take_yes),
+        yes=yes.assume_ite(target, take_yes),
+        no=no.assume_ite(target, take_yes),
+      )
+    Load(mem~, addr~, endian~, typ~) =>
+      Load(
+        mem=mem.assume_ite(target, take_yes),
+        addr=addr.assume_ite(target, take_yes),
+        endian~,
+        typ~,
+      )
+    Store(mem~, addr~, value~, endian~) =>
+      Store(
+        mem=mem.assume_ite(target, take_yes),
+        addr=addr.assume_ite(target, take_yes),
+        value=value.assume_ite(target, take_yes),
+        endian~,
+      )
+    Let(variable, value, body) =>
+      Let(
+        variable,
+        value.assume_ite(target, take_yes),
+        body.assume_ite(target, take_yes),
+      )
+    Cast(typ, exp) => Cast(typ, exp.assume_ite(target, take_yes))
+    UnOp(op, exp) => UnOp(op, exp.assume_ite(target, take_yes))
+    BinOp(op, lhs, rhs) =>
+      BinOp(
+        op,
+        lhs.assume_ite(target, take_yes),
+        rhs.assume_ite(target, take_yes),
+      )
+    Int(_) | Var(_) | Unknown(_) => self
+  }
+}
+
+///|
 pub fn Exp::fixpoint(self : Exp, step : (Exp) -> Exp) -> Exp {
   let mut current = self
   let mut next = step(current)
@@ -292,14 +372,63 @@ fn normalize_exp_if(exp : Exp, normalize_exp : Bool) -> Exp {
 }
 
 ///|
+fn Stmt::first_ite_cond(self : Stmt) -> Exp? {
+  match self {
+    Move(_, exp) | Jmp(exp) => exp.first_ite_cond()
+    Special(_) | CpuExn(_) | If(_) | While(_) => None
+  }
+}
+
+///|
+fn Stmt::assume_ite(self : Stmt, target : Exp, take_yes : Bool) -> Stmt {
+  match self {
+    Move(variable, exp) => Move(variable, exp.assume_ite(target, take_yes))
+    Jmp(exp) => Jmp(exp.assume_ite(target, take_yes))
+    Special(_) | CpuExn(_) => self
+    If(cond~, yes~, no~) =>
+      If(
+        cond=cond.assume_ite(target, take_yes),
+        yes=yes.map(stmt => stmt.assume_ite(target, take_yes)),
+        no=no.map(stmt => stmt.assume_ite(target, take_yes)),
+      )
+    While(cond~, body~) =>
+      While(
+        cond=cond.assume_ite(target, take_yes),
+        body=body.map(stmt => stmt.assume_ite(target, take_yes)),
+      )
+  }
+}
+
+///|
+fn Stmt::split_ite(self : Stmt, normalize_exp : Bool) -> Array[Stmt] {
+  match self.first_ite_cond() {
+    Some(cond) =>
+      normalize(
+        [
+          If(cond~, yes=[self.assume_ite(cond, true)], no=[
+            self.assume_ite(cond, false),
+          ]),
+        ],
+        normalize_exp~,
+      )
+    None => [self]
+  }
+}
+
+///|
 pub fn Stmt::normalize(
   self : Stmt,
   normalize_exp? : Bool = false,
 ) -> Array[Stmt] {
   match self {
-    Move(variable, exp) =>
-      [Move(variable, normalize_exp_if(exp, normalize_exp))]
-    Jmp(exp) => [Jmp(normalize_exp_if(exp, normalize_exp))]
+    Move(variable, exp) => {
+      let stmt = Move(variable, normalize_exp_if(exp, normalize_exp))
+      stmt.split_ite(normalize_exp)
+    }
+    Jmp(exp) => {
+      let stmt = Jmp(normalize_exp_if(exp, normalize_exp))
+      stmt.split_ite(normalize_exp)
+    }
     Special(_) | CpuExn(_) => [self]
     If(cond~, yes~, no~) =>
       [

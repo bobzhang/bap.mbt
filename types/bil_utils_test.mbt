@@ -206,6 +206,35 @@ test "bil BAP normalize wrappers recurse with optional expression normalization"
 }
 
 ///|
+test "bil normalize splits ITE expressions in moves and jumps" {
+  let typ = @types.ValueType::Imm(8)
+  let flag = @types.Var::new(name="flag", typ~)
+  let x = @types.Var::new(name="x", typ~)
+  let choice : @types.Exp = Ite(
+    cond=Var(flag),
+    yes=Int(word8(1)),
+    no=Int(word8(2)),
+  )
+  let moved = @types.normalize([Move(x, BinOp(Plus, choice, Int(word8(3))))])
+  match moved[0] {
+    If(cond~, yes~, no~) => {
+      assert_true(cond == Var(flag))
+      inspect(yes[0].to_string(), content="x:imm8 := (1:8u + 3:8u)")
+      inspect(no[0].to_string(), content="x:imm8 := (2:8u + 3:8u)")
+    }
+    _ => fail("expected split move")
+  }
+  let jumped = @types.normalize([Jmp(choice)])
+  match jumped[0] {
+    If(yes~, no~, ..) => {
+      inspect(yes[0].to_string(), content="jmp 1:8u")
+      inspect(no[0].to_string(), content="jmp 2:8u")
+    }
+    _ => fail("expected split jump")
+  }
+}
+
+///|
 test "bil BAP fixpoint helpers iterate until stable" {
   let typ = @types.ValueType::Imm(8)
   let x = @types.Var::new(name="x", typ~)

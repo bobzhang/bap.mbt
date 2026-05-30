@@ -133,7 +133,9 @@ For BAP-style symbolizers, keep generated names (`sub_...`) as empty knowledge
 and fall back to `sub_<addr>` only at `resolve` time. Image/block symbolizers
 should skip ambiguous many-address-to-one-name or many-name-to-one-address
 mappings instead of picking a winner, while `chain` should use the first
-symbolizer that knows an address.
+symbolizer that knows an address. Project-derived symbolizers should use the
+project's current symbol table, not only the retained source image, so later
+symbol replacement remains visible.
 Treat accumulated disassembly blocks as set-like by memory interval. Re-running
 root materialization should not append duplicate blocks for the same
 `min_addr`/`max_addr`, even if the current MoonBit representation stores them in

@@ -78,6 +78,32 @@ test "project symbolizer builds BAP-style image names" {
 }
 
 ///|
+test "project symbolizer builds names from symbol arrays and projects" {
+  let symbols = [
+    @image.Symbol::create(name="alpha", addr=0x1200UL),
+    @image.Symbol::create(name="beta", addr=0x1210UL),
+  ]
+  let symbolizer = @project.ProjectSymbolizer::of_symbols(
+    symbols,
+    path="symbols.bin",
+  )
+  symbols.push(@image.Symbol::create(name="mutated", addr=0x1220UL))
+  assert_true(symbolizer.path() == Some("symbols.bin"))
+  assert_true(!symbolizer.is_biased())
+  assert_true(symbolizer.resolve(0x1200UL) == "alpha")
+  assert_true(symbolizer.resolve(0x1220UL) == "sub_0x1220")
+  let project = @project.Project::create(
+    target=@core_theory.Target::unknown(),
+    filename="manual.bin",
+    symbols=[@image.Symbol::create(name="manual", addr=0x1300UL)],
+  )
+  let project_symbolizer = project.symbolizer()
+  assert_true(project_symbolizer.path() == Some("manual.bin"))
+  assert_true(!project_symbolizer.is_biased())
+  assert_true(project_symbolizer.resolve(0x1300UL) == "manual")
+}
+
+///|
 test "project symbolizer skips ambiguous image names" {
   let segment = @image.Segment::create(
     name=".text",

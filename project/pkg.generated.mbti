@@ -125,6 +125,7 @@ pub fn Project::state(Self) -> ProjectState
 pub fn Project::storage(Self) -> Map[String, String]
 pub fn Project::substitute(Self, @memory.Memory, String, String) -> Self
 pub fn Project::symbol_values(Self) -> Array[@image.SymbolValue]
+pub fn Project::symbolizer(Self) -> ProjectSymbolizer
 pub fn Project::symbols(Self) -> Array[@image.Symbol]
 pub fn Project::tag_memory(Self, @memory.Memory, String) -> Self
 pub fn Project::target(Self) -> @core_theory.Target
@@ -313,6 +314,7 @@ pub fn ProjectSymbolizer::name_is_empty(String) -> Bool
 pub fn ProjectSymbolizer::name_of_addr(UInt64) -> String
 pub fn ProjectSymbolizer::of_blocks(Array[(String, UInt64, UInt64)]) -> Self
 pub fn ProjectSymbolizer::of_image(@image.Image) -> Self
+pub fn ProjectSymbolizer::of_symbols(Array[@image.Symbol], path? : String, biased? : Bool) -> Self
 pub fn ProjectSymbolizer::path(Self) -> String?
 pub fn ProjectSymbolizer::resolve(Self, UInt64) -> String
 pub fn ProjectSymbolizer::run(Self, UInt64) -> String?

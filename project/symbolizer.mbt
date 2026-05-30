@@ -136,14 +136,27 @@ pub fn ProjectSymbolizer::chain(
 
 ///|
 pub fn ProjectSymbolizer::of_image(image : @image.Image) -> ProjectSymbolizer {
+  ProjectSymbolizer::of_symbols(
+    image.symbols(),
+    path?=image.filename(),
+    biased=true,
+  )
+}
+
+///|
+pub fn ProjectSymbolizer::of_symbols(
+  symbols : Array[@image.Symbol],
+  path? : String,
+  biased? : Bool = false,
+) -> ProjectSymbolizer {
   let pairs : Array[(UInt64, String)] = [
-    for symbol in image.symbols() => (symbol.addr(), symbol.name())
+    for symbol in symbols => (symbol.addr(), symbol.name())
   ]
   let saturated = project_symbolizer_saturated_pairs(pairs)
   ProjectSymbolizer::create(
     addr => project_symbolizer_find_pair(saturated, addr),
-    path?=image.filename(),
-    biased=true,
+    path?,
+    biased~,
   )
 }
 
@@ -172,4 +185,17 @@ pub fn ProjectSymbolizer::of_blocks(
   ProjectSymbolizer::create(addr => {
     project_symbolizer_find_pair(saturated, addr)
   })
+}
+
+///|
+pub fn Project::symbolizer(self : Project) -> ProjectSymbolizer {
+  let biased = match self.image_value {
+    Some(_) => true
+    None => false
+  }
+  ProjectSymbolizer::of_symbols(
+    self.symbols_value,
+    path?=self.filename_value,
+    biased~,
+  )
 }

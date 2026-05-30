@@ -348,22 +348,29 @@ test "target metadata enums parse loader strings" {
   )
   assert_true(@core_theory.Endianness::of_string("BE") == Some(BigEndian))
   assert_true(@core_theory.System::of_string("macos") == Some(Darwin))
+  assert_true(@core_theory.System::of_string("freebsd") == Some(FreeBSD))
+  assert_true(@core_theory.System::of_string("vx-works") == Some(VxWorks))
+  assert_true(@core_theory.System::of_string("bare-metal") == Some(NoSystem))
   assert_true(@core_theory.Abi::of_string("system-v") == Some(SysV))
+  assert_true(@core_theory.Abi::of_string("gnu-eabi") == Some(GNUEABI))
+  assert_true(@core_theory.Abi::of_string("std-call") == Some(StdCall))
   assert_true(@core_theory.Fabi::of_string("hard-float") == Some(Hard))
   assert_true(@core_theory.Filetype::of_string("mach-o") == Some(MachO))
-  assert_true(@core_theory.Filetype::of_string("coff") == Some(PE))
+  assert_true(@core_theory.Filetype::of_string("coff") == Some(COFF))
+  assert_true(@core_theory.Filetype::of_string("pe-coff") == Some(PE))
+  assert_true(@core_theory.Filetype::of_string("a.out") == Some(AOut))
   inspect(@core_theory.Raw.to_string(), content="raw")
   let target = @core_theory.Target::create(
     name=@knowledge.Name::create("unit-metadata", pkg="test"),
-    system=Linux,
-    abi=GNU,
+    system=FreeBSD,
+    abi=CDecl,
     fabi=Soft,
-    filetype=Elf,
+    filetype=AOut,
   )
-  assert_true(target.system().to_string() == "linux")
-  assert_true(target.abi().to_string() == "gnu")
+  assert_true(target.system().to_string() == "freebsd")
+  assert_true(target.abi().to_string() == "cdecl")
   assert_true(target.fabi().to_string() == "soft")
-  assert_true(target.filetype().to_string() == "elf")
+  assert_true(target.filetype().to_string() == "aout")
   let refined = @core_theory.Target::unknown()
     .with_bits(64)
     .with_endianness(BigEndian)

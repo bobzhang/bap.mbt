@@ -32,6 +32,11 @@ pub(all) enum Abi {
   SysV
   GNU
   EABI
+  GNUEABI
+  CDecl
+  StdCall
+  FastCall
+  Watcom
   MSVC
 } derive(Eq, @debug.Debug)
 pub fn Abi::of_string(String) -> Self?
@@ -107,7 +112,9 @@ pub(all) enum Filetype {
   UnknownFiletype
   Elf
   MachO
+  COFF
   PE
+  AOut
   Raw
 } derive(Eq, @debug.Debug)
 pub fn Filetype::of_string(String) -> Self?
@@ -279,7 +286,13 @@ pub(all) enum System {
   UnknownSystem
   Linux
   Darwin
+  VxWorks
+  FreeBSD
+  OpenBSD
   Windows
+  MSDOS
+  UEFI
+  NoSystem
 } derive(Eq, @debug.Debug)
 pub fn System::of_string(String) -> Self?
 pub fn System::to_string(Self) -> String

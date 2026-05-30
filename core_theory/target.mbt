@@ -10,7 +10,13 @@ pub(all) enum System {
   UnknownSystem
   Linux
   Darwin
+  VxWorks
+  FreeBSD
+  OpenBSD
   Windows
+  MSDOS
+  UEFI
+  NoSystem
 } derive(Eq, Debug)
 
 ///|
@@ -19,6 +25,11 @@ pub(all) enum Abi {
   SysV
   GNU
   EABI
+  GNUEABI
+  CDecl
+  StdCall
+  FastCall
+  Watcom
   MSVC
 } derive(Eq, Debug)
 
@@ -34,7 +45,9 @@ pub(all) enum Filetype {
   UnknownFiletype
   Elf
   MachO
+  COFF
   PE
+  AOut
   Raw
 } derive(Eq, Debug)
 
@@ -68,7 +81,13 @@ pub fn System::to_string(self : System) -> String {
     UnknownSystem => "unknown"
     Linux => "linux"
     Darwin => "darwin"
+    VxWorks => "vxworks"
+    FreeBSD => "freebsd"
+    OpenBSD => "openbsd"
     Windows => "windows"
+    MSDOS => "msdos"
+    UEFI => "uefi"
+    NoSystem => "none"
   }
 }
 
@@ -78,7 +97,13 @@ pub fn System::of_string(text : String) -> System? {
     "unknown" => Some(UnknownSystem)
     "linux" | "gnu/linux" => Some(Linux)
     "darwin" | "macos" | "macosx" => Some(Darwin)
+    "vxworks" | "vx-works" => Some(VxWorks)
+    "freebsd" | "free-bsd" => Some(FreeBSD)
+    "openbsd" | "open-bsd" => Some(OpenBSD)
     "windows" | "win32" | "win64" => Some(Windows)
+    "msdos" | "ms-dos" | "dos" => Some(MSDOS)
+    "uefi" => Some(UEFI)
+    "none" | "baremetal" | "bare-metal" => Some(NoSystem)
     _ => None
   }
 }
@@ -90,6 +115,11 @@ pub fn Abi::to_string(self : Abi) -> String {
     SysV => "sysv"
     GNU => "gnu"
     EABI => "eabi"
+    GNUEABI => "gnueabi"
+    CDecl => "cdecl"
+    StdCall => "stdcall"
+    FastCall => "fastcall"
+    Watcom => "watcom"
     MSVC => "msvc"
   }
 }
@@ -101,6 +131,11 @@ pub fn Abi::of_string(text : String) -> Abi? {
     "sysv" | "sys-v" | "system-v" => Some(SysV)
     "gnu" => Some(GNU)
     "eabi" => Some(EABI)
+    "gnueabi" | "gnu-eabi" => Some(GNUEABI)
+    "cdecl" | "c-decl" => Some(CDecl)
+    "stdcall" | "std-call" => Some(StdCall)
+    "fastcall" | "fast-call" => Some(FastCall)
+    "watcom" => Some(Watcom)
     "msvc" | "ms" => Some(MSVC)
     _ => None
   }
@@ -131,7 +166,9 @@ pub fn Filetype::to_string(self : Filetype) -> String {
     UnknownFiletype => "unknown"
     Elf => "elf"
     MachO => "macho"
+    COFF => "coff"
     PE => "pe"
+    AOut => "aout"
     Raw => "raw"
   }
 }
@@ -142,7 +179,9 @@ pub fn Filetype::of_string(text : String) -> Filetype? {
     "unknown" => Some(UnknownFiletype)
     "elf" => Some(Elf)
     "macho" | "mach-o" | "mach_o" => Some(MachO)
-    "pe" | "coff" | "pecoff" | "pe-coff" => Some(PE)
+    "coff" => Some(COFF)
+    "pe" | "pecoff" | "pe-coff" => Some(PE)
+    "aout" | "a.out" | "a-out" => Some(AOut)
     "raw" | "bin" | "binary" => Some(Raw)
     _ => None
   }

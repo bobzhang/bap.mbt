@@ -18,7 +18,11 @@ pub fn fold_consts(Array[Stmt]) -> Array[Stmt]
 
 pub fn free_vars(Array[Stmt]) -> Array[Var]
 
+pub fn is_assigned(Array[Stmt], Var, strict? : Bool) -> Bool
+
 pub fn is_assigned_stmts(Array[Stmt], Var, strict? : Bool) -> Bool
+
+pub fn is_referenced(Array[Stmt], Var) -> Bool
 
 pub fn is_referenced_stmts(Array[Stmt], Var) -> Bool
 

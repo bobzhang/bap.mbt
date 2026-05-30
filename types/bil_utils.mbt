@@ -396,6 +396,11 @@ pub fn is_referenced_stmts(stmts : Array[Stmt], variable : Var) -> Bool {
 }
 
 ///|
+pub fn is_referenced(stmts : Array[Stmt], variable : Var) -> Bool {
+  is_referenced_stmts(stmts, variable)
+}
+
+///|
 fn Stmt::is_assigned_under(
   self : Stmt,
   variable : Var,
@@ -429,6 +434,15 @@ pub fn is_assigned_stmts(
   strict? : Bool = false,
 ) -> Bool {
   stmts.any(stmt => stmt.is_assigned_under(variable, strict, false))
+}
+
+///|
+pub fn is_assigned(
+  stmts : Array[Stmt],
+  variable : Var,
+  strict? : Bool = false,
+) -> Bool {
+  is_assigned_stmts(stmts, variable, strict~)
 }
 
 ///|

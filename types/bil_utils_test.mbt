@@ -375,12 +375,15 @@ test "statement helpers mirror BAP reference and assignment predicates" {
   assert_true(top.is_referenced(y))
   assert_true(!top.is_referenced(x))
   assert_true(@types.is_referenced_stmts([top, branch], x))
+  assert_true(@types.is_referenced([top, branch], x))
   assert_true(top.is_assigned(x))
   assert_true(top.is_assigned(x, strict=true))
   assert_true(branch.is_assigned(z))
   assert_true(!branch.is_assigned(z, strict=true))
   assert_true(@types.is_assigned_stmts([top, branch], z))
   assert_true(!@types.is_assigned_stmts([top, branch], z, strict=true))
+  assert_true(@types.is_assigned([top, branch], z))
+  assert_true(!@types.is_assigned([top, branch], z, strict=true))
 }
 
 ///|

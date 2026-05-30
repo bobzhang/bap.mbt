@@ -190,3 +190,19 @@ test "translated BAP image table neighbors and intersections use memory ranges" 
     Set::from_array(["lo"]),
   )
 }
+
+///|
+test "translated BAP image table one-to-one link matches exact regions" {
+  let mem_low = memory_at(0x10UL, 0x10)
+  let mem_high = memory_at(0x30UL, 0x10)
+  let extra = memory_at(0x50UL, 0x30)
+  let table = @memory.MemMap::empty().add(mem_low, "lo").add(mem_high, "hi")
+  let regs = @memory.MemMap::empty()
+    .add(mem_low, "reg1")
+    .add(mem_high, "reg2")
+    .add(extra, "reg3")
+  let links = table.link_one_to_one(regs)
+  assert_true(links.get("lo") == Some("reg1"))
+  assert_true(links.get("hi") == Some("reg2"))
+  assert_true(links.get("missing") is None)
+}

@@ -61,6 +61,21 @@ pub fn[V] MemMap::has_memory(self : MemMap[V], memory : Memory) -> Bool {
 }
 
 ///|
+pub fn[V : Hash + Eq, U] MemMap::link_one_to_one(
+  self : MemMap[V],
+  other : MemMap[U],
+) -> Map[V, U] {
+  let links : Map[V, U] = {}
+  for entry in self.entries {
+    let matches = other.find(entry.0)
+    if matches.length() == 1 {
+      links[entry.1] = matches[0].1
+    }
+  }
+  links
+}
+
+///|
 pub fn[V] MemMap::intersections(
   self : MemMap[V],
   memory : Memory,

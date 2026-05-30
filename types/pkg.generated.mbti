@@ -426,6 +426,7 @@ pub fn Word::gcd_ext(Self, Self) -> (Self, Self, Self) raise @bitvec.BitVecError
 pub fn Word::is_negative(Self) -> Bool
 pub fn Word::is_non_negative(Self) -> Bool
 pub fn Word::is_non_positive(Self) -> Bool
+pub fn Word::is_one(Self) -> Bool
 pub fn Word::is_positive(Self) -> Bool
 pub fn Word::is_signed(Self) -> Bool
 pub fn Word::is_zero(Self) -> Bool

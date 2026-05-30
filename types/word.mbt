@@ -124,6 +124,11 @@ pub fn Word::is_zero(self : Word) -> Bool {
 }
 
 ///|
+pub fn Word::is_one(self : Word) -> Bool {
+  self.lsb() && self.bits_value.rshift(1).is_zero()
+}
+
+///|
 pub fn Word::msb(self : Word) -> Bool {
   self.bits_value.msb()
 }

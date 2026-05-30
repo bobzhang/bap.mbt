@@ -42,6 +42,31 @@ test "word literals preserve BAP signedness and display" {
 }
 
 ///|
+test "word signedness predicates match BAP validation cases" {
+  let zero32 = @types.Word::zero(width=32)
+  let zero64 = @types.Word::zero(width=64)
+  let deadbeef32 = @types.Word::of_uint64(width=32, 0xDEADBEEF)
+  let deadbeef64 = @types.Word::of_uint64(width=64, 0xDEADBEEF)
+  assert_true(@types.Word::b0().is_zero())
+  assert_true(!@types.Word::b0().is_one())
+  assert_true(@types.Word::b1().is_one())
+  assert_true(@types.Word::b1().is_positive())
+  assert_true(@types.Word::b1().is_non_negative())
+  assert_true(@types.Word::b0().is_non_negative())
+  assert_true(@types.Word::b0().is_non_positive())
+  assert_true(@types.Word::b1().neg().is_positive())
+  assert_true(@types.Word::b1().neg().signed().is_negative())
+  assert_true(@types.Word::b1().signed().is_negative())
+  assert_true(deadbeef32.compare_unsigned(zero32) > 0)
+  assert_true(deadbeef32.is_positive())
+  assert_true(deadbeef32.neg().is_positive())
+  assert_true(deadbeef32.neg().signed().is_positive())
+  assert_true(deadbeef64.compare_unsigned(zero64) > 0)
+  assert_true(deadbeef64.neg().is_positive())
+  assert_true(deadbeef64.neg().signed().is_negative())
+}
+
+///|
 test "value types and variables keep BAP-visible metadata" {
   let typ = @types.ValueType::Imm(8)
   let physical = @types.Var::new(name="r0", typ~)

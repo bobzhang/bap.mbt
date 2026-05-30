@@ -10,7 +10,7 @@ import {
 // Values
 pub fn exec_stmts(Array[Stmt], state? : BilState, max_steps? : Int) -> Result[BilState, String]
 
-pub fn optimize_stmts(Array[Stmt]) -> Array[Stmt]
+pub fn optimize_stmts(Array[Stmt], max_iterations? : Int) -> Array[Stmt]
 
 pub fn propagate_const_stmts(Array[Stmt]) -> Array[Stmt]
 

@@ -62,6 +62,8 @@ test "bil optimize combines simplification and dead virtual pruning" {
   ]
   let optimized = @types.optimize_stmts(stmts)
   assert_true(stmt_text(optimized) == ["physical:imm8 := 0x05:8u"])
+  let bounded = @types.optimize_stmts(stmts, max_iterations=2)
+  assert_true(bounded == optimized)
 }
 
 ///|

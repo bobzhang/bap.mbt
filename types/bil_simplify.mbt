@@ -424,8 +424,24 @@ pub fn prune_dead_virtual_stmts(stmts : Array[Stmt]) -> Array[Stmt] {
 }
 
 ///|
-pub fn optimize_stmts(stmts : Array[Stmt]) -> Array[Stmt] {
+fn optimize_stmts_once(stmts : Array[Stmt]) -> Array[Stmt] {
   prune_dead_virtual_stmts(
     simplify_stmts(propagate_const_stmts(simplify_stmts(stmts))),
   )
+}
+
+///|
+pub fn optimize_stmts(
+  stmts : Array[Stmt],
+  max_iterations? : Int = 16,
+) -> Array[Stmt] {
+  let mut current = stmts
+  let mut next = optimize_stmts_once(current)
+  let mut iterations = 1
+  while next != current && iterations < max_iterations {
+    current = next
+    next = optimize_stmts_once(current)
+    iterations = iterations + 1
+  }
+  next
 }

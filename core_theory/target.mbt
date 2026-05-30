@@ -1153,8 +1153,32 @@ pub fn Target::data_addr_size(self : Target) -> Int {
 }
 
 ///|
+pub fn Target::data_addr(
+  self : Target,
+  value : @bitvec.BitVec,
+) -> @types.Word raise @bitvec.BitVecError {
+  @types.Word::create(value, self.data_addr_size())
+}
+
+///|
 pub fn Target::code_addr_size(self : Target) -> Int {
   self.bits_value
+}
+
+///|
+pub fn Target::code_addr(
+  self : Target,
+  value : @bitvec.BitVec,
+) -> @types.Word raise @bitvec.BitVecError {
+  @types.Word::create(value, self.code_addr_size())
+}
+
+///|
+pub fn Target::data_word(
+  self : Target,
+  value : @bitvec.BitVec,
+) -> @types.Word raise @bitvec.BitVecError {
+  @types.Word::create(value, self.bits())
 }
 
 ///|

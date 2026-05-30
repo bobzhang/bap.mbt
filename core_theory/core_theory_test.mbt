@@ -82,6 +82,10 @@ test "target registry resolves common and custom declarations" {
     Ok(target) => {
       assert_true(target.bits() == 64)
       assert_true(target.code_addr_size() == 64)
+      let raw = @bitvec.of_uint64(width=128, 0x1234)
+      assert_true(target.code_addr(raw).to_string() == "0x1234:64u")
+      assert_true(target.data_addr(raw).to_string() == "0x1234:64u")
+      assert_true(target.data_word(raw).to_string() == "0x1234:64u")
       assert_true(target.belongs(@core_theory.Target::x86()))
       assert_true(target.find_var("RIP") is Some(_))
       assert_true(target.matching("x86") is Some(_))

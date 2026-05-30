@@ -2,6 +2,7 @@
 package "bobzhang/bap/core_theory"
 
 import {
+  "bobzhang/bap/bitvec",
   "bobzhang/bap/knowledge",
   "bobzhang/bap/types",
   "moonbitlang/core/debug",
@@ -313,9 +314,12 @@ pub fn Target::armeb() -> Self
 pub fn Target::belongs(Self, Self) -> Bool
 pub fn Target::bits(Self) -> Int
 pub fn Target::byte(Self) -> Int
+pub fn Target::code_addr(Self, @bitvec.BitVec) -> @types.Word raise @bitvec.BitVecError
 pub fn Target::code_addr_size(Self) -> Int
 pub fn Target::create(name~ : @knowledge.Name, parent? : Self, nicknames? : Array[String], bits? : Int, byte? : Int, endianness? : Endianness, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, options? : TargetOptions, vars? : Array[Var], alias_origins? : Array[AliasOrigin]) -> Self
+pub fn Target::data_addr(Self, @bitvec.BitVec) -> @types.Word raise @bitvec.BitVecError
 pub fn Target::data_addr_size(Self) -> Int
+pub fn Target::data_word(Self, @bitvec.BitVec) -> @types.Word raise @bitvec.BitVecError
 pub fn Target::declared() -> Array[Self]
 pub fn Target::endianness(Self) -> Endianness
 pub fn Target::fabi(Self) -> Fabi

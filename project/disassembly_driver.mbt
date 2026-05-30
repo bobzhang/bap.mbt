@@ -126,15 +126,19 @@ pub fn ProjectDisassemblyDriver::function_symbols() -> ProjectDisassemblyDriver 
       let mut added = 0
       for symbol in project.symbols() {
         if symbol.is_function() {
-          match image.memories_of_symbol(symbol) {
-            Some(chunks) =>
-              for chunk in chunks {
-                if chunk.length() > 0 {
-                  state = state.add_block(chunk)
-                  added = added + 1
-                }
+          match image.segment_of_symbol(symbol) {
+            Some(segment) if segment.is_executable() =>
+              match image.memories_of_symbol(symbol) {
+                Some(chunks) =>
+                  for chunk in chunks {
+                    if chunk.length() > 0 {
+                      state = state.add_block(chunk)
+                      added = added + 1
+                    }
+                  }
+                None => ()
               }
-            None => ()
+            _ => ()
           }
         }
       }
@@ -163,7 +167,7 @@ pub fn ProjectDisassemblyDriver::image_roots() -> ProjectDisassemblyDriver {
         None => return Err("project has no image roots to disassemble")
       }
       let rooter = project.rooter()
-      let blocks = match rooter.image_blocks(image) {
+      let blocks = match rooter.image_blocks(image, executable_only=true) {
         Ok(blocks) => blocks
         Err(reason) => return Err(reason)
       }
@@ -197,7 +201,7 @@ pub fn ProjectDisassemblyDriver::entry_point() -> ProjectDisassemblyDriver {
       }
       let entry = image.entry_point()
       for segment in image.segments() {
-        if segment.contains(entry) {
+        if segment.is_executable() && segment.contains(entry) {
           match segment.memory().view(from=entry) {
             Ok(block) =>
               return Ok(

@@ -123,7 +123,10 @@ should not invent assembly text or lifted BIL unless a real target-specific
 decoder is present. Prefer function-symbol memory blocks over whole-memory
 fallbacks when image symbols are available, and use an image entry-point block
 as the next fallback for stripped binaries; that preserves better roots for
-later target-specific decoding without fabricating instruction semantics.
+later target-specific decoding without fabricating instruction semantics. When
+the source is an image, these disassembly-oriented drivers should materialize
+only roots in executable image segments; keep whole-memory fallback behavior in
+an explicit memory-block driver.
 For BAP-style rooters, keep the rooter as a source of root addresses rather
 than a decoder. `Rooter.of_image` contributes the image entry point plus image
 symbol starts and carries filename/biased-address metadata; `Rooter.of_blocks`

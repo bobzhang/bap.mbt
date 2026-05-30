@@ -29,6 +29,12 @@ test "project rooter builds BAP-style image roots" {
     b"\x01\x02\x03\x04\x05",
     executable=true,
   )
+  let data_segment = @image.Segment::create(
+    name=".data",
+    endian=LittleEndian,
+    addr=0x2000UL,
+    b"\x06",
+  )
   let function_symbol = @image.Symbol::create(
     name="main",
     addr=0x1002UL,
@@ -36,28 +42,44 @@ test "project rooter builds BAP-style image roots" {
     is_function=true,
   )
   let data_symbol = @image.Symbol::create(name="table", addr=0x1004UL, size=1)
+  let non_exec_symbol = @image.Symbol::create(
+    name="global",
+    addr=0x2000UL,
+    size=1,
+  )
   let image = @image.Image::from_segments(
     entry=0x1001UL,
     endian=LittleEndian,
-    [segment],
-    symbols=[function_symbol, data_symbol],
+    [segment, data_segment],
+    symbols=[function_symbol, data_symbol, non_exec_symbol],
     filename="unit.bin",
   )
   let rooter = @project.ProjectRooter::of_image(image)
   let roots = rooter.roots()
-  assert_true(roots.length() == 3)
+  assert_true(roots.length() == 4)
   assert_true(roots[0] == 0x1001UL)
   assert_true(roots[1] == 0x1002UL)
   assert_true(roots[2] == 0x1004UL)
+  assert_true(roots[3] == 0x2000UL)
   assert_true(rooter.path() == Some("unit.bin"))
   assert_true(rooter.is_biased())
   match rooter.image_blocks(image) {
     Ok(blocks) => {
-      assert_true(blocks.length() == 3)
+      assert_true(blocks.length() == 4)
       assert_true(blocks[0].min_addr() == 0x1001UL)
       inspect(blocks[0].hexdump(), content="02 03 04 05")
       assert_true(blocks[2].min_addr() == 0x1004UL)
       inspect(blocks[2].hexdump(), content="05")
+      assert_true(blocks[3].min_addr() == 0x2000UL)
+    }
+    Err(reason) => fail(reason)
+  }
+  match rooter.image_blocks(image, executable_only=true) {
+    Ok(blocks) => {
+      assert_true(blocks.length() == 3)
+      assert_true(blocks[0].min_addr() == 0x1001UL)
+      assert_true(blocks[1].min_addr() == 0x1002UL)
+      assert_true(blocks[2].min_addr() == 0x1004UL)
     }
     Err(reason) => fail(reason)
   }

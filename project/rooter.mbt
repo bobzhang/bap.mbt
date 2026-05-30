@@ -145,12 +145,15 @@ pub fn ProjectRooter::of_blocks(
 pub fn ProjectRooter::image_blocks(
   self : ProjectRooter,
   image : @image.Image,
+  executable_only? : Bool = false,
 ) -> Result[Array[@memory.Memory], String] {
   let blocks : Array[@memory.Memory] = []
   for root in self.roots_value {
     let mut matched = false
     for segment in image.segments() {
-      if !matched && segment.contains(root) {
+      if !matched &&
+        (!executable_only || segment.is_executable()) &&
+        segment.contains(root) {
         match segment.memory().view(from=root) {
           Ok(block) => {
             if block.length() > 0 {

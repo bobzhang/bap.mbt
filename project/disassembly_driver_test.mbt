@@ -125,9 +125,21 @@ test "project function-symbol disassembly driver materializes symbol blocks" {
     b"\xaa\xbb\xcc\xdd",
     executable=true,
   )
+  let data_segment = @image.Segment::create(
+    name=".data",
+    endian=LittleEndian,
+    addr=0x1100UL,
+    b"\xee\xff",
+  )
   let function_symbol = @image.Symbol::create(
     name="main",
     addr=0x1001UL,
+    size=2,
+    is_function=true,
+  )
+  let data_function_symbol = @image.Symbol::create(
+    name="data_func",
+    addr=0x1100UL,
     size=2,
     is_function=true,
   )
@@ -135,8 +147,8 @@ test "project function-symbol disassembly driver materializes symbol blocks" {
   let image = @image.Image::from_segments(
     entry=0x1000UL,
     endian=LittleEndian,
-    [segment],
-    symbols=[function_symbol, data_symbol],
+    [segment, data_segment],
+    symbols=[function_symbol, data_function_symbol, data_symbol],
   )
   let project = @project.Project::from_image(image)
   match project.disassemble(driver="function-symbols") {
@@ -166,6 +178,12 @@ test "project image-root disassembly driver materializes entry and symbol blocks
     b"\x10\x20\x30\x40\x50",
     executable=true,
   )
+  let data_segment = @image.Segment::create(
+    name=".data",
+    endian=LittleEndian,
+    addr=0x1900UL,
+    b"\x60\x70",
+  )
   let function_symbol = @image.Symbol::create(
     name="main",
     addr=0x1802UL,
@@ -173,11 +191,16 @@ test "project image-root disassembly driver materializes entry and symbol blocks
     is_function=true,
   )
   let data_symbol = @image.Symbol::create(name="table", addr=0x1804UL, size=1)
+  let non_exec_symbol = @image.Symbol::create(
+    name="global",
+    addr=0x1900UL,
+    size=2,
+  )
   let image = @image.Image::from_segments(
     entry=0x1801UL,
     endian=LittleEndian,
-    [segment],
-    symbols=[function_symbol, data_symbol],
+    [segment, data_segment],
+    symbols=[function_symbol, data_symbol, non_exec_symbol],
   )
   let project = @project.Project::from_image(image)
   match project.disassemble(driver="image-roots") {
@@ -261,6 +284,18 @@ test "project entry-point disassembly driver materializes mapped entry block" {
     @image.Image::from_segments(entry=0x3000UL, endian=LittleEndian, [segment]),
   )
   assert_true(unmapped.disassemble(driver="entry-point") is Err(_))
+  let data_segment = @image.Segment::create(
+    name=".data",
+    endian=LittleEndian,
+    addr=0x4000UL,
+    b"\x55\x66",
+  )
+  let non_exec_entry = @project.Project::from_image(
+    @image.Image::from_segments(entry=0x4000UL, endian=LittleEndian, [
+      data_segment,
+    ]),
+  )
+  assert_true(non_exec_entry.disassemble(driver="entry-point") is Err(_))
 }
 
 ///|

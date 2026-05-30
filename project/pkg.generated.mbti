@@ -272,7 +272,7 @@ type ProjectRooter
 pub fn ProjectRooter::contains(Self, UInt64) -> Bool
 pub fn ProjectRooter::create(Array[UInt64], path? : String, biased? : Bool) -> Self
 pub fn ProjectRooter::empty() -> Self
-pub fn ProjectRooter::image_blocks(Self, @image.Image) -> Result[Array[@memory.Memory], String]
+pub fn ProjectRooter::image_blocks(Self, @image.Image, executable_only? : Bool) -> Result[Array[@memory.Memory], String]
 pub fn ProjectRooter::is_biased(Self) -> Bool
 pub fn ProjectRooter::of_blocks(Array[(String, UInt64, UInt64)]) -> Self
 pub fn ProjectRooter::of_image(@image.Image) -> Self

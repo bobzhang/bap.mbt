@@ -48,6 +48,62 @@ test "project default reconstructor turns disassembly blocks into named subrouti
 }
 
 ///|
+test "project disassemble-and-reconstruct runs explicit driver and custom reconstructor" {
+  match @project.register_builtin_disassembly_drivers() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let segment = @image.Segment::create(
+    name=".text",
+    endian=LittleEndian,
+    addr=0x4000UL,
+    b"\x10\x20\x30",
+    executable=true,
+  )
+  let image = @image.Image::from_segments(
+    entry=0x4001UL,
+    endian=LittleEndian,
+    [segment],
+    symbols=[
+      @image.Symbol::create(
+        name="entry",
+        addr=0x4001UL,
+        size=1,
+        is_function=true,
+      ),
+    ],
+  )
+  let project = @project.Project::from_image(image)
+  match project.disassemble_and_reconstruct(driver="image-roots") {
+    Ok(reconstructed) => {
+      assert_true(reconstructed.get("disassembler") == Some("image-roots"))
+      let subs = reconstructed.state().subroutines()
+      assert_true(subs.length() == 1)
+      assert_true(subs[0].sub_name() == "entry")
+      assert_true(reconstructed.program().subs().length() == 1)
+    }
+    Err(reason) => fail(reason)
+  }
+  let custom = @project.ProjectReconstructor::create(project => {
+    Ok(project.set("reconstructor", "custom"))
+  })
+  match
+    project.disassemble_and_reconstruct(
+      driver="entry-point",
+      reconstructor=custom,
+    ) {
+    Ok(reconstructed) => {
+      assert_true(reconstructed.get("disassembler") == Some("entry-point"))
+      assert_true(reconstructed.get("reconstructor") == Some("custom"))
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    project.disassemble_and_reconstruct(driver="missing-driver") is Err(_),
+  )
+}
+
+///|
 test "project block reconstructor groups serialized block starts by name" {
   let target = @core_theory.Target::unknown()
   let first = @memory.Memory::from_bytes(

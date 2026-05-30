@@ -164,3 +164,24 @@ pub fn Project::reconstruct(
   }
   selected.run(self)
 }
+
+///|
+pub fn Project::disassemble_and_reconstruct(
+  self : Project,
+  driver? : String,
+  reconstructor? : ProjectReconstructor,
+) -> Result[Project, String] {
+  let disassembled = match driver {
+    Some(name) =>
+      match self.disassemble(driver=name) {
+        Ok(project) => project
+        Err(reason) => return Err(reason)
+      }
+    None =>
+      match self.disassemble_with_available() {
+        Ok(project) => project
+        Err(reason) => return Err(reason)
+      }
+  }
+  disassembled.reconstruct(reconstructor?)
+}

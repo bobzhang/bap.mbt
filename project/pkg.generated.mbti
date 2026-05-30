@@ -85,6 +85,7 @@ pub fn Project::del(Self, String) -> Self
 pub fn[T] Project::del_tag(Self, ProjectStorageTag[T]) -> Self
 pub fn Project::destroy_ssa(Self) -> Self
 pub fn Project::disassemble(Self, driver~ : String) -> Result[Self, String]
+pub fn Project::disassemble_and_reconstruct(Self, driver? : String, reconstructor? : ProjectReconstructor) -> Result[Self, String]
 pub fn Project::disassemble_with_available(Self) -> Result[Self, String]
 pub fn Project::disassembly(Self) -> ProjectDisassemblyState
 pub fn Project::empty(@core_theory.Target) -> Self

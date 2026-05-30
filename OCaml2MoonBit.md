@@ -149,7 +149,11 @@ available, a project reconstructor can still preserve useful BAP structure by
 turning materialized disassembly blocks into IR block terms with address
 attributes and subroutine terms named through the active symbolizer. When
 creating address words from `Target::unknown()`, guard its zero bit width and
-fall back to a concrete address width before calling `Word::of_uint64`.
+fall back to a concrete address width before calling `Word::of_uint64`. Keep
+the top-level project orchestration explicit: a one-shot helper may run a named
+or discovered disassembly driver and then a named/default reconstructor, but it
+should still surface each failing stage as a checked `Result` instead of hiding
+loader/disassembly/reconstruction failures.
 When a higher-level package exposes the same loader surface as a lower-level
 registry, prefer a small idempotent initializer that delegates to the owning
 registry instead of duplicating loader entries. For example, `ProjectInput`

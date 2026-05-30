@@ -15,10 +15,24 @@ priv struct DwarfElfHeader {
 }
 
 ///|
+priv struct DwarfElfSectionZero {
+  section_count : Int
+  section_name_index : Int
+}
+
+///|
 priv struct DwarfElfSectionHeader {
   name_offset : Int
   file_offset : Int
   size : Int
+}
+
+///|
+fn dwarf_elf_minimum_section_header(class : DwarfElfClass) -> Int {
+  match class {
+    DwarfElf32 => 40
+    DwarfElf64 => 64
+  }
 }
 
 ///|
@@ -58,6 +72,70 @@ fn dwarf_elf_read_int(
   match dwarf_elf_read_uint(data, offset, bytes, endian) {
     Ok(value) => dwarf_elf_uint_to_int(value, what)
     Err(reason) => Err(reason)
+  }
+}
+
+///|
+fn dwarf_elf_parse_section_zero(
+  data : Bytes,
+  class : DwarfElfClass,
+  endian : @bitvec.Endian,
+  section_table_offset : Int,
+  section_header_size : Int,
+) -> Result[DwarfElfSectionZero, String] {
+  if section_table_offset == 0 {
+    return Err("ELF file has no section table")
+  }
+  let minimum_section_header = dwarf_elf_minimum_section_header(class)
+  if section_header_size < minimum_section_header {
+    return Err("ELF section headers are too small")
+  }
+  let table_offset64 = section_table_offset.to_uint64()
+  let table_size64 = section_header_size.to_uint64()
+  let data_size64 = data.length().to_uint64()
+  if table_offset64 > data_size64 || table_size64 > data_size64 - table_offset64 {
+    return Err("ELF section table is out of bounds")
+  }
+  let section_count = match class {
+    DwarfElf32 =>
+      dwarf_elf_read_int(
+        data,
+        section_table_offset + 20,
+        4,
+        endian,
+        "ELF extended section count",
+      )
+    DwarfElf64 =>
+      dwarf_elf_read_int(
+        data,
+        section_table_offset + 32,
+        8,
+        endian,
+        "ELF extended section count",
+      )
+  }
+  let section_name_index = match class {
+    DwarfElf32 =>
+      dwarf_elf_read_int(
+        data,
+        section_table_offset + 24,
+        4,
+        endian,
+        "ELF extended section name table index",
+      )
+    DwarfElf64 =>
+      dwarf_elf_read_int(
+        data,
+        section_table_offset + 40,
+        4,
+        endian,
+        "ELF extended section name table index",
+      )
+  }
+  match (section_count, section_name_index) {
+    (Ok(section_count), Ok(section_name_index)) =>
+      Ok({ section_count, section_name_index })
+    (Err(reason), _) | (_, Err(reason)) => Err(reason)
   }
 }
 
@@ -132,19 +210,40 @@ fn dwarf_elf_parse_header(data : Bytes) -> Result[DwarfElfHeader, String] {
     (
       Ok(section_table_offset),
       Ok(section_header_size),
-      Ok(section_count),
-      Ok(section_name_index),
+      Ok(raw_section_count),
+      Ok(raw_section_name_index),
     ) => {
-      if section_count == 0 || section_name_index == 0xffff {
-        return Err("extended ELF section tables are not supported")
+      if section_table_offset == 0 {
+        return Err("ELF file has no section table")
+      }
+      let section_zero = if raw_section_count == 0 ||
+        raw_section_name_index == 0xffff {
+        match
+          dwarf_elf_parse_section_zero(
+            data, class, endian, section_table_offset, section_header_size,
+          ) {
+          Ok(value) => Some(value)
+          Err(reason) => return Err(reason)
+        }
+      } else {
+        None
+      }
+      let section_count = match (raw_section_count, section_zero) {
+        (0, Some(section_zero)) => section_zero.section_count
+        _ => raw_section_count
+      }
+      let section_name_index = match (raw_section_name_index, section_zero) {
+        (0xffff, Some(section_zero)) => section_zero.section_name_index
+        (0xffff, None) => return Err("extended ELF section table is missing")
+        _ => raw_section_name_index
+      }
+      if section_count == 0 {
+        return Err("ELF file has no section table")
       }
       if section_name_index < 0 || section_name_index >= section_count {
         return Err("ELF section name table index is out of bounds")
       }
-      let minimum_section_header = match class {
-        DwarfElf32 => 40
-        DwarfElf64 => 64
-      }
+      let minimum_section_header = dwarf_elf_minimum_section_header(class)
       if section_header_size < minimum_section_header {
         return Err("ELF section headers are too small")
       }

@@ -183,6 +183,24 @@ fn elf_test_make_elf64_debug(
 }
 
 ///|
+fn elf_test_make_elf64_debug_extended_tables(
+  info : Bytes,
+  abbrev : Bytes,
+  str : Bytes,
+) -> Bytes {
+  let source = elf_test_make_elf64_debug(info, abbrev, str)
+  let buffer = Array::make(source.length(), b'\x00')
+  for i in 0..<source.length() {
+    buffer[i] = source[i]
+  }
+  elf_test_set_u16_le(buffer, 60, 0)
+  elf_test_set_u16_le(buffer, 62, 0xffff)
+  elf_test_set_u64_le(buffer, 64 + 32, 5UL)
+  elf_test_set_u32_le(buffer, 64 + 40, 1)
+  Bytes::from_array(buffer)
+}
+
+///|
 fn elf_test_make_elf64_debug_with_str_offsets(
   info : Bytes,
   abbrev : Bytes,
@@ -377,6 +395,22 @@ test "translated DWARF data extracts debug sections from ELF64" {
   let data = expect_elf_data(
     @dwarf.DwarfData::from_elf_bytes(
       elf_test_make_elf64_debug(info, abbrev, str),
+    ),
+  )
+  assert_true(data.endian() == LittleEndian)
+  assert_true(expect_elf_section(data.section(DwarfInfo)).data() == info)
+  assert_true(expect_elf_section(data.section(DwarfAbbrev)).data() == abbrev)
+  assert_true(expect_elf_section(data.section(DwarfStr)).data() == str)
+}
+
+///|
+test "translated DWARF data handles ELF extended section tables" {
+  let info = b"info"
+  let abbrev = b"abbrev"
+  let str = b"names\x00"
+  let data = expect_elf_data(
+    @dwarf.DwarfData::from_elf_bytes(
+      elf_test_make_elf64_debug_extended_tables(info, abbrev, str),
     ),
   )
   assert_true(data.endian() == LittleEndian)

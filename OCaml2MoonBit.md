@@ -111,7 +111,11 @@ the image. Treat `e_shstrndx == SHN_UNDEF` as an absent section-name string
 table: skip named `Section` metadata, but still parse section headers and
 symbol tables through `sh_link`. Accept `e_phnum == 0` with no program-header
 entry size, and for ELF objects without `PT_LOAD`, synthesize image segments
-from non-empty allocatable sections using `sh_flags`.
+from non-empty allocatable sections using `sh_flags`. For ELF extended table
+metadata, resolve `e_shnum == 0` from section header zero `sh_size`,
+`e_shstrndx == SHN_XINDEX` from `sh_link`, and `e_phnum == PN_XNUM` from
+`sh_info`; apply the section-count/name-index handling in both image loading
+and DWARF debug-section extraction.
 For disassembly-driver registries, separate orchestration from architecture
 decoding: a built-in driver may materialize memory regions as blocks, but it
 should not invent assembly text or lifted BIL unless a real target-specific

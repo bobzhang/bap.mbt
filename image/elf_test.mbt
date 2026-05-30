@@ -258,6 +258,22 @@ fn image_elf_test_make_x86_64_relocatable() -> Bytes {
 }
 
 ///|
+fn image_elf_test_make_x86_64_extended_tables() -> Bytes {
+  let source = image_elf_test_make_x86_64()
+  let buffer = Array::make(source.length(), b'\x00')
+  for i in 0..<source.length() {
+    buffer[i] = source[i]
+  }
+  image_elf_test_set_u16_le(buffer, 56, 0xffff)
+  image_elf_test_set_u16_le(buffer, 60, 0)
+  image_elf_test_set_u16_le(buffer, 62, 0xffff)
+  image_elf_test_set_u64_le(buffer, 120 + 32, 6UL)
+  image_elf_test_set_u32_le(buffer, 120 + 40, 1)
+  image_elf_test_set_u32_le(buffer, 120 + 44, 1)
+  Bytes::from_array(buffer)
+}
+
+///|
 test "image ELF backend loads program segments and sections" {
   match @image.register_builtin_backends() {
     Ok(_) => ()
@@ -319,6 +335,26 @@ test "image ELF backend loads program segments and sections" {
   assert_true(data_symbol.size() == 1)
   assert_true(!data_symbol.is_function())
   assert_true(image.symbols_of_segment(segments[0]).length() == 2)
+}
+
+///|
+test "image ELF backend resolves extended table counts" {
+  match @image.register_builtin_backends() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let (image, warnings) = expect_elf_image(
+    @image.Image::of_bytes(
+      image_elf_test_make_x86_64_extended_tables(),
+      backend="elf",
+    ),
+  )
+  assert_true(warnings.is_empty())
+  assert_true(image.sections().any(section => section.name() == ".text"))
+  assert_true(image.sections().any(section => section.name() == ".debug_info"))
+  assert_true(image.symbols().any(symbol => symbol.name() == "main"))
+  assert_true(image.segments().length() == 1)
+  assert_true(image.segments()[0].addr() == 0x400000UL)
 }
 
 ///|

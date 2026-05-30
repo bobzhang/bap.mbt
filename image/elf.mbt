@@ -20,6 +20,13 @@ priv struct ImageElfHeader {
 }
 
 ///|
+priv struct ImageElfSectionZero {
+  section_count : Int
+  section_name_index : Int
+  program_count : Int
+}
+
+///|
 priv struct ImageElfProgramHeader {
   typ : Int
   flags : Int
@@ -39,6 +46,14 @@ priv struct ImageElfSectionHeader {
   offset : Int
   size : Int
   entsize : Int
+}
+
+///|
+fn image_elf_minimum_section_header(class : ImageElfClass) -> Int {
+  match class {
+    ImageElf32 => 40
+    ImageElf64 => 64
+  }
 }
 
 ///|
@@ -93,6 +108,90 @@ fn image_elf_read_u64(
   endian : @bitvec.Endian,
 ) -> Result[UInt64, String] {
   image_elf_read_uint(data, offset, bytes, endian)
+}
+
+///|
+fn image_elf_parse_section_zero(
+  data : Bytes,
+  class : ImageElfClass,
+  endian : @bitvec.Endian,
+  section_table_offset : Int,
+  section_header_size : Int,
+) -> Result[ImageElfSectionZero, String] {
+  if section_table_offset == 0 {
+    return Err("extended ELF section table is missing")
+  }
+  let minimum_section_header = image_elf_minimum_section_header(class)
+  if section_header_size < minimum_section_header {
+    return Err("ELF section headers are too small")
+  }
+  match
+    image_elf_check_table(
+      data, section_table_offset, section_header_size, 1, "ELF section table",
+    ) {
+    Ok(_) => ()
+    Err(reason) => return Err(reason)
+  }
+  let section_count = match class {
+    ImageElf32 =>
+      image_elf_read_int(
+        data,
+        section_table_offset + 20,
+        4,
+        endian,
+        "ELF extended section count",
+      )
+    ImageElf64 =>
+      image_elf_read_int(
+        data,
+        section_table_offset + 32,
+        8,
+        endian,
+        "ELF extended section count",
+      )
+  }
+  let section_name_index = match class {
+    ImageElf32 =>
+      image_elf_read_int(
+        data,
+        section_table_offset + 24,
+        4,
+        endian,
+        "ELF extended section name table index",
+      )
+    ImageElf64 =>
+      image_elf_read_int(
+        data,
+        section_table_offset + 40,
+        4,
+        endian,
+        "ELF extended section name table index",
+      )
+  }
+  let program_count = match class {
+    ImageElf32 =>
+      image_elf_read_int(
+        data,
+        section_table_offset + 28,
+        4,
+        endian,
+        "ELF extended program count",
+      )
+    ImageElf64 =>
+      image_elf_read_int(
+        data,
+        section_table_offset + 44,
+        4,
+        endian,
+        "ELF extended program count",
+      )
+  }
+  match (section_count, section_name_index, program_count) {
+    (Ok(section_count), Ok(section_name_index), Ok(program_count)) =>
+      Ok({ section_count, section_name_index, program_count })
+    (Err(reason), _, _) | (_, Err(reason), _) | (_, _, Err(reason)) =>
+      Err(reason)
+  }
 }
 
 ///|
@@ -176,17 +275,46 @@ fn image_elf_parse_header(data : Bytes) -> Result[ImageElfHeader, String] {
       Ok(entry),
       Ok(program_table_offset),
       Ok(program_header_size),
-      Ok(program_count),
+      Ok(raw_program_count),
       Ok(section_table_offset),
       Ok(section_header_size),
-      Ok(section_count),
-      Ok(section_name_index),
+      Ok(raw_section_count),
+      Ok(raw_section_name_index),
     ) => {
+      let has_section_table = section_table_offset != 0
+      let section_zero = if has_section_table &&
+        (
+          raw_section_count == 0 ||
+          raw_section_name_index == 0xffff ||
+          raw_program_count == 0xffff
+        ) {
+        match
+          image_elf_parse_section_zero(
+            data, class, endian, section_table_offset, section_header_size,
+          ) {
+          Ok(value) => Some(value)
+          Err(reason) => return Err(reason)
+        }
+      } else {
+        None
+      }
+      let program_count = match (raw_program_count, section_zero) {
+        (0xffff, Some(section_zero)) => section_zero.program_count
+        (0xffff, None) => return Err("extended ELF program table is missing")
+        _ => raw_program_count
+      }
+      let section_count = match (raw_section_count, section_zero) {
+        (0, Some(section_zero)) => section_zero.section_count
+        _ => raw_section_count
+      }
+      let section_name_index = match (raw_section_name_index, section_zero) {
+        (0xffff, Some(section_zero)) => section_zero.section_name_index
+        (0xffff, None) => return Err("extended ELF section table is missing")
+        _ => raw_section_name_index
+      }
       let has_sections = section_count > 0
-      if program_count == 0xffff ||
-        (!has_sections && section_table_offset != 0) ||
-        section_name_index == 0xffff {
-        return Err("extended ELF tables are not supported")
+      if !has_sections && section_table_offset != 0 {
+        return Err("ELF section table is invalid")
       }
       if !has_sections && section_name_index != 0 {
         return Err("ELF section name table index is out of bounds")
@@ -199,10 +327,7 @@ fn image_elf_parse_header(data : Bytes) -> Result[ImageElfHeader, String] {
         ImageElf32 => 32
         ImageElf64 => 56
       }
-      let minimum_section_header = match class {
-        ImageElf32 => 40
-        ImageElf64 => 64
-      }
+      let minimum_section_header = image_elf_minimum_section_header(class)
       if program_count > 0 && program_header_size < minimum_program_header {
         return Err("ELF program headers are too small")
       }

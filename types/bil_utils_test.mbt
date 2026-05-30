@@ -206,6 +206,49 @@ test "bil BAP normalize wrappers recurse with optional expression normalization"
 }
 
 ///|
+test "bil BAP trie normalization prunes values and canonicalizes variables" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let virtual_x = @types.Var::new(name="x", typ~, is_virtual=true)
+  let dead = @types.Var::new(name="dead", typ~, is_virtual=true)
+  let y = @types.Var::new(name="y", typ~)
+  let stmts = [
+    @types.Stmt::Move(dead, Int(word8(7))),
+    Move(virtual_x, BinOp(Plus, Var(x), Int(word8(1)))),
+    Move(y, Var(virtual_x)),
+  ]
+  let normalized = @types.normalize_for_trie(stmts)
+  assert_true(normalized.length() == 2)
+  inspect(
+    normalized[0].to_string(),
+    content="x:imm8 := (x:imm8 + unknown(<pruned>:imm8))",
+  )
+  inspect(normalized[1].to_string(), content="y:imm8 := x:imm8")
+  match normalized[0] {
+    Move(lhs, BinOp(Plus, Var(rhs), Unknown("<pruned>", Imm(8)))) => {
+      assert_true(lhs == rhs)
+      assert_true(lhs.is_physical())
+    }
+    _ => fail("expected normalized trie move")
+  }
+}
+
+///|
+test "bil BAP trie normalization applies substitutions before simplifying" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let z = @types.Var::new(name="z", typ~)
+  let stmts = [@types.Stmt::Move(y, Var(x))]
+  let replacement : @types.Exp = BinOp(Plus, Var(z), Int(word8(0)))
+  let normalized = @types.normalize_for_trie(stmts, subst=[
+    (Var(x), replacement),
+  ])
+  assert_true(normalized.length() == 1)
+  inspect(normalized[0].to_string(), content="y:imm8 := z:imm8")
+}
+
+///|
 test "bil normalize splits ITE expressions in moves and jumps" {
   let typ = @types.ValueType::Imm(8)
   let flag = @types.Var::new(name="flag", typ~)

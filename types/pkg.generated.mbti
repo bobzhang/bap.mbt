@@ -28,6 +28,8 @@ pub fn is_referenced_stmts(Array[Stmt], Var) -> Bool
 
 pub fn normalize(Array[Stmt], normalize_exp? : Bool) -> Array[Stmt]
 
+pub fn normalize_for_trie(Array[Stmt], subst? : Array[(Exp, Exp)]) -> Array[Stmt]
+
 pub fn normalize_negatives(Array[Stmt]) -> Array[Stmt]
 
 pub fn optimize_stmts(Array[Stmt], max_iterations? : Int) -> Array[Stmt]

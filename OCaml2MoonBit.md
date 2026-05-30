@@ -118,6 +118,14 @@ after an unconditional `Move(x, rhs)`, substitute within that rhs and leave the
 following statements unchanged for `x`. Conditional branch bodies apply the
 same rule locally and do not kill substitution in the outer sequence.
 
+For BAP `Trie.normalize`, preserve the pipeline order: apply substitutions in
+the given order, prune unreferenced virtual definitions, normalize negative
+constants, simplify BIL, then normalize values for the trie key. That final
+pass canonicalizes variables by textual name and replaces every integer literal
+with `Unknown("<pruned>", Imm(bitwidth))`. In MoonBit, structural `Var`
+equality makes a per-normalization name cache sufficient for this key
+normalization; there is no need to model the OCaml table's object identity.
+
 BAP `Word.t` carries a signedness flag in addition to the payload bits and
 width. Keep the raw bitvector package sign-agnostic, but preserve this flag in
 the BAP-facing word wrapper for parsing, predicates, and printing. Arithmetic

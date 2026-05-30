@@ -504,6 +504,107 @@ pub fn fold_consts(stmts : Array[Stmt]) -> Array[Stmt] {
 }
 
 ///|
+fn normalize_trie_var(variable : Var, variables : Array[Var]) -> Var {
+  match variables.search_by(item => item.name() == variable.name()) {
+    Some(index) => variables[index]
+    None => {
+      let canonical = Var::new(name=variable.name(), typ=variable.typ())
+      variables.push(canonical)
+      canonical
+    }
+  }
+}
+
+///|
+fn Exp::normalize_trie_values(self : Exp, variables : Array[Var]) -> Exp {
+  match self {
+    Int(word) => Unknown("<pruned>", Imm(word.width()))
+    Var(variable) => Var(normalize_trie_var(variable, variables))
+    Unknown(_) => self
+    Load(mem~, addr~, endian~, typ~) =>
+      Load(
+        mem=mem.normalize_trie_values(variables),
+        addr=addr.normalize_trie_values(variables),
+        endian~,
+        typ~,
+      )
+    Store(mem~, addr~, value~, endian~) =>
+      Store(
+        mem=mem.normalize_trie_values(variables),
+        addr=addr.normalize_trie_values(variables),
+        value=value.normalize_trie_values(variables),
+        endian~,
+      )
+    Let(variable, value, body) =>
+      Let(
+        normalize_trie_var(variable, variables),
+        value.normalize_trie_values(variables),
+        body.normalize_trie_values(variables),
+      )
+    Cast(typ, exp) => Cast(typ, exp.normalize_trie_values(variables))
+    UnOp(op, exp) => UnOp(op, exp.normalize_trie_values(variables))
+    BinOp(op, lhs, rhs) =>
+      BinOp(
+        op,
+        lhs.normalize_trie_values(variables),
+        rhs.normalize_trie_values(variables),
+      )
+    Ite(cond~, yes~, no~) =>
+      Ite(
+        cond=cond.normalize_trie_values(variables),
+        yes=yes.normalize_trie_values(variables),
+        no=no.normalize_trie_values(variables),
+      )
+  }
+}
+
+///|
+fn Stmt::normalize_trie_values(self : Stmt, variables : Array[Var]) -> Stmt {
+  match self {
+    Move(variable, exp) =>
+      Move(
+        normalize_trie_var(variable, variables),
+        exp.normalize_trie_values(variables),
+      )
+    Jmp(exp) => Jmp(exp.normalize_trie_values(variables))
+    Special(_) | CpuExn(_) => self
+    If(cond~, yes~, no~) =>
+      If(
+        cond=cond.normalize_trie_values(variables),
+        yes=[ for stmt in yes => stmt.normalize_trie_values(variables) ],
+        no=[ for stmt in no => stmt.normalize_trie_values(variables) ],
+      )
+    While(cond~, body~) =>
+      While(
+        cond=cond.normalize_trie_values(variables),
+        body=[ for stmt in body => stmt.normalize_trie_values(variables) ],
+      )
+  }
+}
+
+///|
+pub fn normalize_for_trie(
+  stmts : Array[Stmt],
+  subst? : Array[(Exp, Exp)],
+) -> Array[Stmt] {
+  let mut current = stmts
+  match subst {
+    Some(pairs) =>
+      for pair in pairs {
+        current = substitute(current, pair.0, pair.1)
+      }
+    None => ()
+  }
+  current = prune_unreferenced(current, virtuals=true)
+  current = normalize_negatives(current)
+  current = simplify_stmts(current)
+  let variables = []
+  [
+    for stmt in current => stmt.normalize_trie_values(variables)
+  ]
+}
+
+///|
 pub fn fixpoint(
   stmts : Array[Stmt],
   step : (Array[Stmt]) -> Array[Stmt],

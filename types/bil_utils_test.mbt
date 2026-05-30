@@ -60,6 +60,19 @@ test "bil eval folds scalar arithmetic comparisons and conditionals" {
     Ok(word) => inspect(word.to_hex(), content="0xaa")
     Err(reason) => fail(reason)
   }
+  let shadow = @types.Let(
+    x,
+    Int(@types.Word::of_int(width=8, 2)),
+    Let(
+      x,
+      BinOp(Plus, Var(x), Int(@types.Word::of_int(width=8, 3))),
+      BinOp(Times, Var(x), Int(@types.Word::of_int(width=8, 2))),
+    ),
+  )
+  match shadow.eval(Map([])) {
+    Ok(word) => assert_true(word == @types.Word::of_int(width=8, 10))
+    Err(reason) => fail(reason)
+  }
 }
 
 ///|
@@ -106,6 +119,12 @@ test "bil eval handles byte-addressed load and store expressions" {
     )
     is Err(_),
   )
+  assert_true(
+    @types.Exp::Load(mem=Var(mem), addr=addr1, endian=LittleEndian, typ=Imm(32)).eval_value(
+      env,
+    )
+    is Err(_),
+  )
   let stored = @types.Exp::Store(
     mem=Var(mem),
     addr=addr0,
@@ -124,6 +143,11 @@ test "bil eval handles byte-addressed load and store expressions" {
   )
   assert_eval_word(
     Load(mem=stored, addr=addr0, endian=BigEndian, typ=Imm(8)),
+    env,
+    word8(0xef),
+  )
+  assert_eval_word(
+    Load(mem=stored, addr=addr0, endian=LittleEndian, typ=Imm(8)),
     env,
     word8(0xef),
   )
@@ -571,6 +595,10 @@ test "bil statement execution updates scalar variables" {
   let a = @types.Var::new(name="a", typ~)
   let b = @types.Var::new(name="b", typ~)
   let result = @types.Var::new(name="result", typ~)
+  match @types.exec_stmts([Move(result, Int(word32(2)))]) {
+    Ok(state) => assert_true(state.get_word("result") == Some(word32(2)))
+    Err(reason) => fail(reason)
+  }
   let stmts = [
     @types.Stmt::Move(a, Int(word32(2))),
     Move(b, Int(word32(3))),

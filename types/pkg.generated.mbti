@@ -12,9 +12,21 @@ pub fn check_stmt_types(Array[Stmt]) -> Result[Unit, TypeError]
 
 pub fn exec_stmts(Array[Stmt], state? : BilState, max_steps? : Int) -> Result[BilState, String]
 
+pub fn exists_exp(Array[Stmt], (Exp) -> Bool) -> Bool
+
+pub fn exists_stmt(Array[Stmt], (Stmt) -> Bool) -> Bool
+
+pub fn find_exp(Array[Stmt], (Exp) -> Bool) -> Exp?
+
+pub fn find_stmt(Array[Stmt], (Stmt) -> Bool) -> Stmt?
+
 pub fn fixpoint(Array[Stmt], (Array[Stmt]) -> Array[Stmt]) -> Array[Stmt]
 
+pub fn[A] fold(Array[Stmt], A, (A, Stmt) -> A) -> A
+
 pub fn fold_consts(Array[Stmt]) -> Array[Stmt]
+
+pub fn[A] fold_exps(Array[Stmt], A, (A, Exp) -> A) -> A
 
 pub fn free_vars(Array[Stmt]) -> Array[Var]
 
@@ -25,6 +37,8 @@ pub fn is_assigned_stmts(Array[Stmt], Var, strict? : Bool) -> Bool
 pub fn is_referenced(Array[Stmt], Var) -> Bool
 
 pub fn is_referenced_stmts(Array[Stmt], Var) -> Bool
+
+pub fn map_exps(Array[Stmt], (Exp) -> Exp) -> Array[Stmt]
 
 pub fn normalize(Array[Stmt], normalize_exp? : Bool) -> Array[Stmt]
 
@@ -243,8 +257,11 @@ pub fn Exp::concat(Self, Self) -> Self
 pub fn Exp::effect(Self) -> ExpEffect
 pub fn Exp::eval(Self, Map[String, Word]) -> Result[Word, String]
 pub fn Exp::eval_value(Self, Map[String, BilValue]) -> Result[BilValue, String]
+pub fn Exp::exists(Self, (Self) -> Bool) -> Bool
 pub fn Exp::extract(Self, hi? : Int, lo? : Int) -> Self
+pub fn Exp::find(Self, (Self) -> Bool) -> Self?
 pub fn Exp::fixpoint(Self, (Self) -> Self) -> Self
+pub fn[A] Exp::fold(Self, A, (A, Self) -> A) -> A
 pub fn Exp::fold_consts(Self) -> Self
 pub fn Exp::free_vars(Self) -> Array[Var]
 pub fn Exp::infer_type(Self) -> Result[ValueType, TypeError]
@@ -254,6 +271,7 @@ pub fn Exp::ite(if_~ : Self, then_~ : Self, else_~ : Self) -> Self
 pub fn Exp::let_(Var, Self, Self) -> Self
 pub fn Exp::load(mem~ : Self, addr~ : Self, @bitvec.Endian, Size) -> Self
 pub fn Exp::load_byte(mem~ : Self, addr~ : Self) -> Self
+pub fn Exp::map(Self, (Self) -> Self) -> Self
 pub fn Exp::normalize(Self) -> Self
 pub fn Exp::normalize_negatives(Self) -> Self
 pub fn Exp::simplify(Self) -> Self
@@ -368,13 +386,20 @@ pub fn Stmt::check_type(Self) -> Result[Unit, TypeError]
 pub fn Stmt::cpuexn(Int) -> Self
 pub fn Stmt::defined_var(Self) -> Var?
 pub fn Stmt::exec(Self, state? : BilState, max_steps? : Int) -> Result[BilState, String]
+pub fn Stmt::exists(Self, (Self) -> Bool) -> Bool
+pub fn Stmt::exists_exp(Self, (Exp) -> Bool) -> Bool
+pub fn Stmt::find(Self, (Self) -> Bool) -> Self?
+pub fn Stmt::find_exp(Self, (Exp) -> Bool) -> Exp?
 pub fn Stmt::fixpoint(Self, (Self) -> Self) -> Self
+pub fn[A] Stmt::fold(Self, A, (A, Self) -> A) -> A
 pub fn Stmt::fold_consts(Self) -> Self
+pub fn[A] Stmt::fold_exps(Self, A, (A, Exp) -> A) -> A
 pub fn Stmt::free_vars(Self) -> Array[Var]
 pub fn Stmt::if_(Exp, Array[Self], Array[Self]) -> Self
 pub fn Stmt::is_assigned(Self, Var, strict? : Bool) -> Bool
 pub fn Stmt::is_referenced(Self, Var) -> Bool
 pub fn Stmt::jmp(Exp) -> Self
+pub fn Stmt::map_exps(Self, (Exp) -> Exp) -> Self
 pub fn Stmt::move_stmt(Var, Exp) -> Self
 pub fn Stmt::normalize(Self, normalize_exp? : Bool) -> Array[Self]
 pub fn Stmt::normalize_negatives(Self) -> Self

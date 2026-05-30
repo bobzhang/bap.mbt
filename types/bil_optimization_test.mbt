@@ -620,7 +620,7 @@ test "bil constant propagation preserves facts through skipped nested branches" 
   assert_true(
     stmt_text(propagated) ==
     [
-      "x:imm8 := 1:8u", "y:imm8 := 2:8u", "while 0:1u do 2 stmts", "z:imm8 := 2:8u",
+      "x:imm8 := 1:8u", "y:imm8 := 2:8u", "while 0:1u do 2 stmts", "z:imm8 := y:imm8",
     ],
   )
   match propagated[2] {

@@ -1051,6 +1051,26 @@ fn stmts_may_jump(stmts : Array[Stmt]) -> Bool {
 }
 
 ///|
+fn stmt_can_fallthrough(stmt : Stmt) -> Bool {
+  match stmt {
+    Jmp(_) => false
+    If(yes~, no~, ..) => stmts_can_fallthrough(yes) || stmts_can_fallthrough(no)
+    Move(_, _) | Special(_) | CpuExn(_) | While(_) => true
+  }
+}
+
+///|
+fn stmts_can_fallthrough(stmts : Array[Stmt]) -> Bool {
+  let mut can_reach = true
+  for stmt in stmts {
+    if can_reach {
+      can_reach = stmt_can_fallthrough(stmt)
+    }
+  }
+  can_reach
+}
+
+///|
 fn stmt_defined_vars(stmt : Stmt, vars : Array[Var]) -> Unit {
   match stmt {
     Move(variable, _) => add_var(vars, variable)
@@ -1178,7 +1198,12 @@ fn propagate_const_loop(
         let next_cond = cond.propagate_consts(loop_ctx).simplify()
         let body_result = propagate_const_loop(body, loop_ctx)
         ctx = match next_cond {
-          Int(word) if word.is_zero() => ctx
+          Int(word) if word.is_zero() =>
+            if stmts_can_fallthrough(body_result.0) {
+              join_const_contexts(ctx, body_result.1)
+            } else {
+              ctx
+            }
           _ => join_const_contexts(loop_ctx, body_result.1)
         }
         result.push(While(cond=next_cond, body=body_result.0))

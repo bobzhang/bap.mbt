@@ -27,6 +27,7 @@ type Image
 pub fn Image::add_section(Self, Section) -> Self
 pub fn Image::add_segment(Self, Segment) -> Self
 pub fn Image::add_symbol(Self, Symbol) -> Self
+pub fn Image::addr_size(Self) -> Int
 pub fn Image::create(entry~ : UInt64, endian~ : @bitvec.Endian, filename? : String, target? : @core_theory.Target, data? : Bytes, segments? : Array[Segment], sections? : Array[Section], symbols? : Array[Symbol]) -> Self
 pub fn Image::data(Self) -> Bytes
 pub fn Image::endian(Self) -> @bitvec.Endian

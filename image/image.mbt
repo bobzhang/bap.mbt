@@ -139,6 +139,14 @@ pub fn Image::target(self : Image) -> @core_theory.Target? {
 }
 
 ///|
+pub fn Image::addr_size(self : Image) -> Int {
+  match self.target_value {
+    Some(target) if target.bits() > 0 => target.bits()
+    _ => 32
+  }
+}
+
+///|
 pub fn Image::endian(self : Image) -> @bitvec.Endian {
   self.endian_value
 }

@@ -181,12 +181,17 @@ fn image_elf_parse_header(data : Bytes) -> Result[ImageElfHeader, String] {
       Ok(section_count),
       Ok(section_name_index),
     ) => {
+      let has_sections = section_count > 0
       if program_count == 0xffff ||
-        section_count == 0 ||
+        (!has_sections && section_table_offset != 0) ||
         section_name_index == 0xffff {
         return Err("extended ELF tables are not supported")
       }
-      if section_name_index < 0 || section_name_index >= section_count {
+      if !has_sections && section_name_index != 0 {
+        return Err("ELF section name table index is out of bounds")
+      }
+      if has_sections &&
+        (section_name_index < 0 || section_name_index >= section_count) {
         return Err("ELF section name table index is out of bounds")
       }
       let minimum_program_header = match class {
@@ -200,7 +205,7 @@ fn image_elf_parse_header(data : Bytes) -> Result[ImageElfHeader, String] {
       if program_header_size < minimum_program_header {
         return Err("ELF program headers are too small")
       }
-      if section_header_size < minimum_section_header {
+      if has_sections && section_header_size < minimum_section_header {
         return Err("ELF section headers are too small")
       }
       match
@@ -210,26 +215,28 @@ fn image_elf_parse_header(data : Bytes) -> Result[ImageElfHeader, String] {
         Ok(_) => ()
         Err(reason) => return Err(reason)
       }
-      match
-        image_elf_check_table(
-          data, section_table_offset, section_header_size, section_count, "ELF section table",
-        ) {
-        Ok(_) =>
-          Ok({
-            endian,
-            class,
-            machine,
-            entry,
-            program_table_offset,
-            program_header_size,
-            program_count,
-            section_table_offset,
-            section_header_size,
-            section_count,
-            section_name_index,
-          })
-        Err(reason) => Err(reason)
+      if has_sections {
+        match
+          image_elf_check_table(
+            data, section_table_offset, section_header_size, section_count, "ELF section table",
+          ) {
+          Ok(_) => ()
+          Err(reason) => return Err(reason)
+        }
       }
+      Ok({
+        endian,
+        class,
+        machine,
+        entry,
+        program_table_offset,
+        program_header_size,
+        program_count,
+        section_table_offset,
+        section_header_size,
+        section_count,
+        section_name_index,
+      })
     }
     (Err(reason), _, _, _, _, _, _, _, _)
     | (_, Err(reason), _, _, _, _, _, _, _)
@@ -720,15 +727,17 @@ fn image_elf_load(data : Bytes) -> Result[(Image, Array[String]), String] {
           Err(reason) => return Err(reason)
         }
       }
-      let section_names = match section_headers.get(header.section_name_index) {
-        Some(section) =>
-          image_elf_section_data(data, section.offset, section.size)
-        None => Err("ELF section name table index is out of bounds")
-      }
-      let mut names = b""
-      match section_names {
-        Ok(value) => names = value
-        Err(reason) => return Err(reason)
+      let names = if section_headers.is_empty() {
+        b""
+      } else {
+        match section_headers.get(header.section_name_index) {
+          Some(section) =>
+            match image_elf_section_data(data, section.offset, section.size) {
+              Ok(value) => value
+              Err(reason) => return Err(reason)
+            }
+          None => return Err("ELF section name table index is out of bounds")
+        }
       }
       let sections : Array[Section] = []
       for section in section_headers {

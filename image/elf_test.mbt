@@ -204,6 +204,34 @@ fn image_elf_test_make_x86_64() -> Bytes {
 }
 
 ///|
+fn image_elf_test_make_x86_64_without_sections() -> Bytes {
+  let text = b"\x55\xc3"
+  let text_offset = 64 + 56
+  let total = text_offset + text.length()
+  let buffer = Array::make(total, b'\x00')
+  image_elf_test_write_bytes(buffer, 0, b"\x7fELF")
+  buffer[4] = b'\x02'
+  buffer[5] = b'\x01'
+  buffer[6] = b'\x01'
+  image_elf_test_set_u16_le(buffer, 16, 2)
+  image_elf_test_set_u16_le(buffer, 18, 0x3e)
+  image_elf_test_set_u32_le(buffer, 20, 1)
+  image_elf_test_set_u64_le(buffer, 24, 0x500000UL)
+  image_elf_test_set_u64_le(buffer, 32, 64UL)
+  image_elf_test_set_u16_le(buffer, 52, 64)
+  image_elf_test_set_u16_le(buffer, 54, 56)
+  image_elf_test_set_u16_le(buffer, 56, 1)
+  image_elf_test_set_u32_le(buffer, 64, 1)
+  image_elf_test_set_u32_le(buffer, 68, 5)
+  image_elf_test_set_u64_le(buffer, 72, text_offset.to_uint64())
+  image_elf_test_set_u64_le(buffer, 80, 0x500000UL)
+  image_elf_test_set_u64_le(buffer, 96, text.length().to_uint64())
+  image_elf_test_set_u64_le(buffer, 104, 4UL)
+  image_elf_test_write_bytes(buffer, text_offset, text)
+  Bytes::from_array(buffer)
+}
+
+///|
 test "image ELF backend loads program segments and sections" {
   match @image.register_builtin_backends() {
     Ok(_) => ()
@@ -265,6 +293,30 @@ test "image ELF backend loads program segments and sections" {
   assert_true(data_symbol.size() == 1)
   assert_true(!data_symbol.is_function())
   assert_true(image.symbols_of_segment(segments[0]).length() == 2)
+}
+
+///|
+test "image ELF backend loads files without section headers" {
+  match @image.register_builtin_backends() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let (image, warnings) = expect_elf_image(
+    @image.Image::of_bytes(
+      image_elf_test_make_x86_64_without_sections(),
+      backend="elf",
+    ),
+  )
+  assert_true(warnings.is_empty())
+  assert_true(image.entry_point() == 0x500000UL)
+  assert_true(image.sections().is_empty())
+  assert_true(image.symbols().is_empty())
+  let segments = image.segments()
+  assert_true(segments.length() == 1)
+  assert_true(segments[0].addr() == 0x500000UL)
+  assert_true(segments[0].size() == 4)
+  assert_true(segments[0].is_executable())
+  inspect(segments[0].memory().hexdump(), content="55 c3 00 00")
 }
 
 ///|

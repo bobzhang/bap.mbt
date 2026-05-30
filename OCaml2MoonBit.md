@@ -92,6 +92,8 @@ moon run -c 'fn main { let s = "𝄞"; println(s.length()); println(s.char_lengt
 
 `String::length()` is UTF-16 code units, `String::char_length()` is Unicode scalars, and neither is bytes. For byte-oriented formats use `Bytes`/`BytesView`. Convert between `Bytes` and `String` only through a named encoding helper (`@ascii.encode`, `@utf8.encode`, etc.) that documents the encoding assumption.
 
+`text[i]` returns a `UInt16` code unit, not a `Char`. For text parsers that need character predicates or `StringBuilder::write_char`, use `text.get_char(offset)` and advance by `char.utf16_len()`. It is still fine to increment by one for syntax bytes you have already constrained to ASCII, such as `(`, `)`, `"` and `\\`, but do not mix code-unit offsets with `Char` APIs accidentally.
+
 ```sh
 moon run -c 'fn main { let raw : Array[Byte] = [65, 0, 255]; let b = Bytes::from_array(raw); println(b.length()); println(b[2].to_int()) }'
 # 3

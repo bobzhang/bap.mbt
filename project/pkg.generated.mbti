@@ -98,6 +98,7 @@ pub fn Project::with_disassembly(Self, ProjectDisassemblyState) -> Self
 pub fn Project::with_memory(Self, @memory.MemMap[String]) -> Self
 pub fn Project::with_program(Self, @types.Term[@types.Program]) -> Self
 pub fn Project::with_state(Self, ProjectState) -> Self
+pub fn Project::with_storage(Self, Map[String, String]) -> Self
 
 type ProjectAnalysis
 pub fn ProjectAnalysis::apply(Self, Array[String]) -> Result[Unit, String]

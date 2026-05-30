@@ -237,6 +237,14 @@ pub fn Project::storage(self : Project) -> Map[String, String] {
 }
 
 ///|
+pub fn Project::with_storage(
+  self : Project,
+  storage : Map[String, String],
+) -> Project {
+  { ..self, storage_value: storage.copy() }
+}
+
+///|
 pub fn Project::set(self : Project, key : String, value : String) -> Project {
   let storage = self.storage_value.copy()
   storage[key] = value

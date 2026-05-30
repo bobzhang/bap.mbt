@@ -32,6 +32,11 @@ test "project storage and memory tags are persistent updates" {
   let project = @project.Project::empty(target).set("loader", "raw")
   assert_true(project.has("loader"))
   assert_true(project.get("loader") == Some("raw"))
+  let replacement = { "filename": "tiny.bin", "loader": "ogre" }
+  let replaced = project.with_storage(replacement)
+  replacement["loader"] = "mutated"
+  assert_true(replaced.get("filename") == Some("tiny.bin"))
+  assert_true(replaced.get("loader") == Some("ogre"))
   let cleared = project.del("loader")
   assert_true(!cleared.has("loader"))
   let tagged = cleared.tag_memory(raw_segment().memory(), "code")

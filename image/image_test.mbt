@@ -211,3 +211,61 @@ test "image backend discovery returns extension matches by priority" {
   )
   assert_true(@image.backends_for_extension("missing").is_empty())
 }
+
+///|
+test "image backend discovery loads bytes by filename extension" {
+  let failing = @image.ImageBackend::create(
+    name="unit-image-failing-loader",
+    extensions=["imgunit"],
+    priority=100,
+    load=_ => Err("not this backend"),
+  )
+  let fallback = @image.ImageBackend::create(
+    name="unit-image-fallback-loader",
+    extensions=["imgunit"],
+    priority=10,
+    load=data => {
+      let segment = @image.Segment::create(
+        name=".imgunit",
+        endian=LittleEndian,
+        addr=0x700UL,
+        data,
+      )
+      Ok(
+        (
+          @image.Image::from_segments(entry=0x700UL, endian=LittleEndian, [
+            segment,
+          ]),
+          ["fallback"],
+        ),
+      )
+    },
+  )
+  match @image.register_backend(name="unit-image-failing-loader", failing) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  match @image.register_backend(name="unit-image-fallback-loader", fallback) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    @image.backend_names_for_extension("imgunit") ==
+    ["unit-image-failing-loader", "unit-image-fallback-loader"],
+  )
+  match
+    @image.Image::of_bytes_for_filename(b"\xaa", filename="sample.IMGUNIT") {
+    Ok((img, warnings)) => {
+      assert_true(warnings == ["fallback"])
+      assert_true(img.memory().lookup(0x700UL).length() == 1)
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    @image.Image::of_bytes_for_filename(b"", filename="sample") is Err(_),
+  )
+  assert_true(
+    @image.Image::of_bytes_for_filename(b"", filename="sample.missing")
+    is Err(_),
+  )
+}

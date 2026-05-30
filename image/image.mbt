@@ -87,6 +87,43 @@ pub fn Image::of_bytes(
 }
 
 ///|
+fn image_filename_extension(filename : String) -> String? {
+  let parts = filename.split(".").to_array()
+  if parts.length() > 1 {
+    Some(parts[parts.length() - 1].to_owned().to_lower())
+  } else {
+    None
+  }
+}
+
+///|
+pub fn Image::of_bytes_for_filename(
+  data : Bytes,
+  filename~ : String,
+) -> Result[(Image, Array[String]), String] {
+  match image_filename_extension(filename) {
+    Some(extension) => {
+      let backends = backends_for_extension(extension)
+      if backends.is_empty() {
+        Err("no image backend for extension \{extension}")
+      } else {
+        let mut last_error = ""
+        for backend in backends {
+          match backend.load(data) {
+            Ok(result) => return Ok(result)
+            Err(reason) => last_error = reason
+          }
+        }
+        Err(
+          "all image backends failed for extension \{extension}: \{last_error}",
+        )
+      }
+    }
+    None => Err("can't infer image backend from filename \{filename}")
+  }
+}
+
+///|
 pub fn Image::entry_point(self : Image) -> UInt64 {
   self.entry_value
 }

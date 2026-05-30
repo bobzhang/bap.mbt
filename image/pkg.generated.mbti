@@ -38,6 +38,7 @@ pub fn Image::memory_of_section(Self, Section) -> @memory.Memory?
 pub fn Image::memory_of_segment(Self, Segment) -> @memory.Memory
 pub fn Image::memory_of_symbol(Self, Symbol) -> (@memory.Memory, Array[@memory.Memory])?
 pub fn Image::of_bytes(Bytes, backend? : String) -> Result[(Self, Array[String]), String]
+pub fn Image::of_bytes_for_filename(Bytes, filename~ : String) -> Result[(Self, Array[String]), String]
 pub fn Image::sections(Self) -> Array[Section]
 pub fn Image::sections_of_segment(Self, Segment) -> Array[Section]
 pub fn Image::segment_of_symbol(Self, Symbol) -> Segment?

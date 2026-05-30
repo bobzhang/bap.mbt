@@ -58,6 +58,36 @@ test "project preserves image loader specifications" {
 }
 
 ///|
+test "project exposes image relocation metadata" {
+  let target = @core_theory.Target::unknown()
+  let image = @image.Image::from_segments(
+    entry=0x1000UL,
+    endian=LittleEndian,
+    [raw_segment()],
+    relocations=[
+      @image.Relocation::create(fixup=0x1001UL, target=0x2000UL),
+      @image.Relocation::create(fixup=0x1002UL, relative=true),
+    ],
+    external_references=[
+      @image.ExternalReference::create(addr=0x1003UL, name="puts"),
+    ],
+    base_address=0x1000UL,
+    target~,
+  )
+  let project = @project.Project::from_image(image)
+  assert_true(project.base_address() == Some(0x1000UL))
+  assert_true(project.relocations().length() == 2)
+  assert_true(project.relocations()[0].target() == Some(0x2000UL))
+  assert_true(project.relocations()[1].is_relative())
+  assert_true(project.external_references().length() == 1)
+  assert_true(project.external_references()[0].name() == "puts")
+  let empty = @project.Project::empty(target)
+  assert_true(empty.base_address() == None)
+  assert_true(empty.relocations().is_empty())
+  assert_true(empty.external_references().is_empty())
+}
+
+///|
 test "project storage and memory tags are persistent updates" {
   let target = @core_theory.Target::unknown()
   let project = @project.Project::empty(target).set("loader", "raw")

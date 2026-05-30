@@ -126,6 +126,9 @@ registry, prefer a small idempotent initializer that delegates to the owning
 registry instead of duplicating loader entries. For example, `ProjectInput`
 can initialize built-in raw/Ogre/ELF loading by registering `image` backends,
 then continue to expose those backend names through project-level discovery.
+Project containers should delegate image-owned relocation, external-reference,
+and base-address metadata rather than copying it into independent project
+state; this keeps loader metadata coherent with the retained source image.
 For Ogre image specs, keep BAP-style relocation metadata separate from memory
 layout: `base-address`, `relocation`, `relative-relocation`, and
 `external-reference` should be preserved as image metadata even before a

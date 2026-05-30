@@ -276,6 +276,32 @@ pub fn Project::symbols(self : Project) -> Array[@image.Symbol] {
 }
 
 ///|
+pub fn Project::relocations(self : Project) -> Array[@image.Relocation] {
+  match self.image_value {
+    Some(image) => image.relocations()
+    None => []
+  }
+}
+
+///|
+pub fn Project::external_references(
+  self : Project,
+) -> Array[@image.ExternalReference] {
+  match self.image_value {
+    Some(image) => image.external_references()
+    None => []
+  }
+}
+
+///|
+pub fn Project::base_address(self : Project) -> UInt64? {
+  match self.image_value {
+    Some(image) => image.base_address()
+    None => None
+  }
+}
+
+///|
 pub fn Project::with_symbols(
   self : Project,
   symbols : Array[@image.Symbol],

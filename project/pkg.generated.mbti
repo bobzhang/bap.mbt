@@ -79,6 +79,7 @@ pub fn Library::unit(Self) -> @core_theory.ProgramUnit
 type Project
 pub fn Project::add_library(Self, Library) -> Self
 pub fn Project::arch(Self) -> @core_theory.Target
+pub fn Project::base_address(Self) -> UInt64?
 pub fn Project::create(target~ : @core_theory.Target, image? : @image.Image, filename? : String, program? : @types.Term[@types.Program], memory? : @memory.MemMap[String], symbols? : Array[@image.Symbol], storage? : Map[String, String], libraries? : Array[Library], state? : ProjectState) -> Self
 pub fn Project::del(Self, String) -> Self
 pub fn[T] Project::del_tag(Self, ProjectStorageTag[T]) -> Self
@@ -87,6 +88,7 @@ pub fn Project::disassemble(Self, driver~ : String) -> Result[Self, String]
 pub fn Project::disassemble_with_available(Self) -> Result[Self, String]
 pub fn Project::disassembly(Self) -> ProjectDisassemblyState
 pub fn Project::empty(@core_theory.Target) -> Self
+pub fn Project::external_references(Self) -> Array[@image.ExternalReference]
 pub fn Project::filename(Self) -> String?
 pub fn Project::flatten_program(Self) -> Self
 pub fn Project::from_image(@image.Image, target? : @core_theory.Target, program? : @types.Term[@types.Program]) -> Self
@@ -104,6 +106,7 @@ pub fn Project::memory(Self) -> @memory.MemMap[String]
 pub fn Project::pass_has_run(Self, String) -> Bool
 pub fn Project::pass_run_count(Self, String) -> Int
 pub fn Project::program(Self) -> @types.Term[@types.Program]
+pub fn Project::relocations(Self) -> Array[@image.Relocation]
 pub fn Project::resolve_stub_calls(Self, link_only? : Array[String], no_link? : Array[String]) -> Self
 pub fn Project::run_autorun_passes(Self) -> Result[Self, String]
 pub fn Project::run_pass(Self, String) -> Result[Self, String]

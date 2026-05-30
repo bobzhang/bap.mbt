@@ -5,11 +5,11 @@ let fresh_label_counter : Ref[Int] = Ref(0)
 struct Label {
   id : Int
   target_value : Target?
-  unit_value : String?
+  unit_value : ProgramUnit?
   addr_value : @types.Word?
   name_value : String?
   ivec_value : Int?
-  encoding_value : Bytes?
+  encoding_value : Language?
   aliases_value : Array[String]
   valid_flag : Bool
   subroutine_flag : Bool
@@ -24,11 +24,11 @@ fn next_label_id() -> Int {
 ///|
 fn Label::make(
   target? : Target,
-  unit? : String,
+  unit? : ProgramUnit,
   addr? : @types.Word,
   name? : String,
   ivec? : Int,
-  encoding? : Bytes,
+  encoding? : Language,
   aliases? : Array[String],
   is_valid? : Bool,
   is_subroutine? : Bool,
@@ -100,17 +100,38 @@ pub fn Label::with_alias(self : Label, alias_name : String) -> Label {
 }
 
 ///|
+pub fn Label::with_unit(self : Label, unit : ProgramUnit) -> Label {
+  { ..self, unit_value: Some(unit) }
+}
+
+///|
+pub fn Label::with_encoding(self : Label, language : Language) -> Label {
+  { ..self, encoding_value: Some(language) }
+}
+
+///|
+pub fn Label::with_subroutine(
+  self : Label,
+  is_subroutine? : Bool = true,
+) -> Label {
+  { ..self, subroutine_flag: is_subroutine }
+}
+
+///|
 pub fn Label::id(self : Label) -> Int {
   self.id
 }
 
 ///|
 pub fn Label::target(self : Label) -> Target? {
-  self.target_value
+  match self.target_value {
+    Some(target) => Some(target)
+    None => self.unit_value.map(unit => unit.target())
+  }
 }
 
 ///|
-pub fn Label::unit(self : Label) -> String? {
+pub fn Label::unit(self : Label) -> ProgramUnit? {
   self.unit_value
 }
 
@@ -130,7 +151,7 @@ pub fn Label::ivec(self : Label) -> Int? {
 }
 
 ///|
-pub fn Label::encoding(self : Label) -> Bytes? {
+pub fn Label::encoding(self : Label) -> Language? {
   self.encoding_value
 }
 

@@ -130,3 +130,59 @@ test "labels carry symbolic entry points" {
   assert_true(label.aliases() == ["_start"])
   assert_true(!@core_theory.Label::null().is_valid())
 }
+
+///|
+test "program metadata tracks source compiler and units" {
+  let language = @core_theory.Language::of_string("C++")
+  assert_true(language == Cxx)
+  inspect(language.to_string(), content="cxx")
+  let source = @core_theory.Source::create(
+    language~,
+    code="int main() { return 0; }",
+    file="main.cc",
+  )
+  assert_true(source.language() == Cxx)
+  assert_true(source.file() == Some("main.cc"))
+  let compiler = @core_theory.Compiler::create(
+    "clang",
+    version=["17", "0"],
+    options=["-O2"],
+    specs={ "triple": "x86_64-unknown-linux" },
+  )
+  assert_true(compiler.version() == ["17", "0"])
+  assert_true(compiler.options() == ["-O2"])
+  assert_true(compiler.spec("triple") == Some("x86_64-unknown-linux"))
+  inspect(compiler.to_string(), content="clang 17.0 -O2")
+  let target = @core_theory.Target::x86_64()
+  let base = @types.Word::of_int(width=64, 0x400000)
+  let upper = @types.Word::of_int(width=64, 0x4000ff)
+  let unit = @core_theory.ProgramUnit::for_file(
+    "main.o",
+    target~,
+    bias=base,
+    source~,
+    compiler~,
+  )
+  assert_true(unit.path() == Some("main.o"))
+  assert_true(unit.name() == "main.o")
+  assert_true(unit.bias() == Some(base))
+  assert_true(unit.target().matches("amd64"))
+  assert_true(unit.source().map(item => item.code()) == Some(source.code()))
+  assert_true(unit.compiler().map(item => item.name()) == Some("clang"))
+  let region = @core_theory.ProgramUnit::for_region(lower=base, upper~, target~)
+  assert_true(region.lower() == Some(base))
+  assert_true(region.upper() == Some(upper))
+  assert_true(region.name() == "\{base.to_hex()}-\{upper.to_hex()}")
+  let label = @core_theory.Label::for_name("main")
+    .with_unit(unit)
+    .with_encoding(language)
+    .with_subroutine()
+  assert_true(label.unit().map(item => item.same(unit)) == Some(true))
+  assert_true(label.encoding() == Some(Cxx))
+  assert_true(label.target().map(item => item.matches("amd64")) == Some(true))
+  assert_true(label.is_subroutine())
+  let program = @core_theory.Program::create(units=[unit], labels=[label])
+  assert_true(program.units().length() == 1)
+  assert_true(program.labels().length() == 1)
+  assert_true(program.target().map(item => item.matches("amd64")) == Some(true))
+}

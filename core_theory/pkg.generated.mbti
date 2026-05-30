@@ -35,6 +35,15 @@ pub(all) enum Abi {
   MSVC
 } derive(Eq, @debug.Debug)
 
+type Compiler
+pub fn Compiler::create(String, specs? : Map[String, String], version? : Array[String], options? : Array[String]) -> Self
+pub fn Compiler::name(Self) -> String
+pub fn Compiler::options(Self) -> Array[String]
+pub fn Compiler::spec(Self, String) -> String?
+pub fn Compiler::specs(Self) -> Map[String, String]
+pub fn Compiler::to_string(Self) -> String
+pub fn Compiler::version(Self) -> Array[String]
+
 type Effect
 pub fn Effect::barr() -> Self
 pub fn Effect::cjump() -> Self
@@ -84,7 +93,7 @@ pub(all) enum Filetype {
 type Label
 pub fn Label::addr(Self) -> @types.Word?
 pub fn Label::aliases(Self) -> Array[String]
-pub fn Label::encoding(Self) -> Bytes?
+pub fn Label::encoding(Self) -> Language?
 pub fn Label::for_addr(@types.Word, target? : Target) -> Self
 pub fn Label::for_ivec(Int, target? : Target) -> Self
 pub fn Label::for_name(String, target? : Target) -> Self
@@ -96,8 +105,54 @@ pub fn Label::ivec(Self) -> Int?
 pub fn Label::name(Self) -> String?
 pub fn Label::null() -> Self
 pub fn Label::target(Self) -> Target?
-pub fn Label::unit(Self) -> String?
+pub fn Label::unit(Self) -> ProgramUnit?
 pub fn Label::with_alias(Self, String) -> Self
+pub fn Label::with_encoding(Self, Language) -> Self
+pub fn Label::with_subroutine(Self, is_subroutine? : Bool) -> Self
+pub fn Label::with_unit(Self, ProgramUnit) -> Self
+
+pub(all) enum Language {
+  C
+  Cxx
+  Ada
+  Fortran
+  Pascal
+  OtherLanguage(String)
+} derive(Eq, @debug.Debug)
+pub fn Language::ada() -> Self
+pub fn Language::c() -> Self
+pub fn Language::cxx() -> Self
+pub fn Language::fortran() -> Self
+pub fn Language::of_string(String) -> Self
+pub fn Language::pascal() -> Self
+pub fn Language::to_string(Self) -> String
+
+type Program
+pub fn Program::add_label(Self, Label) -> Self
+pub fn Program::add_unit(Self, ProgramUnit) -> Self
+pub fn Program::create(units? : Array[ProgramUnit], labels? : Array[Label], target? : Target) -> Self
+pub fn Program::labels(Self) -> Array[Label]
+pub fn Program::target(Self) -> Target?
+pub fn Program::units(Self) -> Array[ProgramUnit]
+
+type ProgramUnit
+pub fn ProgramUnit::bias(Self) -> @types.Word?
+pub fn ProgramUnit::compiler(Self) -> Compiler?
+pub fn ProgramUnit::for_file(String, target? : Target, bias? : @types.Word, source? : Source, compiler? : Compiler) -> Self
+pub fn ProgramUnit::for_region(lower~ : @types.Word, upper~ : @types.Word, target? : Target, bias? : @types.Word, source? : Source, compiler? : Compiler) -> Self
+pub fn ProgramUnit::fresh(target? : Target, source? : Source, compiler? : Compiler) -> Self
+pub fn ProgramUnit::id(Self) -> Int
+pub fn ProgramUnit::lower(Self) -> @types.Word?
+pub fn ProgramUnit::name(Self) -> String
+pub fn ProgramUnit::path(Self) -> String?
+pub fn ProgramUnit::same(Self, Self) -> Bool
+pub fn ProgramUnit::source(Self) -> Source?
+pub fn ProgramUnit::target(Self) -> Target
+pub fn ProgramUnit::upper(Self) -> @types.Word?
+pub fn ProgramUnit::with_bias(Self, @types.Word) -> Self
+pub fn ProgramUnit::with_compiler(Self, Compiler) -> Self
+pub fn ProgramUnit::with_source(Self, Source) -> Self
+pub fn ProgramUnit::with_target(Self, Target) -> Self
 
 pub(all) enum Role {
   General
@@ -128,6 +183,15 @@ pub fn Sort::same(Self, Self) -> Bool
 pub fn Sort::sym(@knowledge.Name) -> Self
 pub fn Sort::tail(Self) -> Array[Self]
 pub fn Sort::to_string(Self) -> String
+
+type Source
+pub fn Source::code(Self) -> String
+pub fn Source::create(language? : Language, code? : String, file? : String) -> Self
+pub fn Source::file(Self) -> String?
+pub fn Source::language(Self) -> Language
+pub fn Source::with_code(Self, String) -> Self
+pub fn Source::with_file(Self, String) -> Self
+pub fn Source::with_language(Self, Language) -> Self
 
 pub(all) enum System {
   UnknownSystem

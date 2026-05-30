@@ -1646,6 +1646,22 @@ fn append_arm_target_variants(items : Array[Target]) -> Unit {
   )
   append_target_variants_with_fabis(
     items,
+    Target::thumb(),
+    [UnknownSystem, NoSystem],
+    [UnknownFiletype],
+    [EABI],
+    [UnknownFabi, Hard],
+  )
+  append_target_variants_with_fabis(
+    items,
+    Target::thumbeb(),
+    [UnknownSystem, NoSystem],
+    [UnknownFiletype],
+    [EABI],
+    [UnknownFabi, Hard],
+  )
+  append_target_variants_with_fabis(
+    items,
     Target::arm(),
     [UEFI],
     [UnknownFiletype, COFF],
@@ -1670,7 +1686,31 @@ fn append_arm_target_variants(items : Array[Target]) -> Unit {
   )
   append_target_variants_with_fabis(
     items,
+    Target::thumb(),
+    [Linux],
+    [UnknownFiletype, Elf],
+    [GNUEABI, GNU],
+    [UnknownFabi, Hard],
+  )
+  append_target_variants_with_fabis(
+    items,
+    Target::thumbeb(),
+    [Linux],
+    [UnknownFiletype, Elf],
+    [GNUEABI, GNU],
+    [UnknownFabi, Hard],
+  )
+  append_target_variants_with_fabis(
+    items,
     Target::arm(),
+    [Darwin],
+    [UnknownFiletype, MachO],
+    [EABI],
+    [UnknownFabi],
+  )
+  append_target_variants_with_fabis(
+    items,
+    Target::thumb(),
     [Darwin],
     [UnknownFiletype, MachO],
     [EABI],

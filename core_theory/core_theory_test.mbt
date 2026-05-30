@@ -203,6 +203,42 @@ test "target registry resolves common and custom declarations" {
     }
     Err(reason) => fail(reason)
   }
+  match @core_theory.Target::get("thumb-linux-gnueabihard-elf") {
+    Ok(target) => {
+      assert_true(target.system() == Linux)
+      assert_true(target.abi() == GNUEABI)
+      assert_true(target.fabi() == Hard)
+      assert_true(target.filetype() == Elf)
+      assert_true(target.endianness() == LittleEndian)
+      assert_true(target.belongs(@core_theory.Target::thumb()))
+      assert_true(target.belongs(@core_theory.Target::arm()))
+    }
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.Target::get("thumbeb-linux-gnu-elf") {
+    Ok(target) => {
+      assert_true(target.system() == Linux)
+      assert_true(target.abi() == GNU)
+      assert_true(target.filetype() == Elf)
+      assert_true(target.endianness() == BigEndian)
+      assert_true(target.belongs(@core_theory.Target::thumbeb()))
+      assert_true(target.belongs(@core_theory.Target::armeb()))
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(@core_theory.Target::lookup("thumb-none-eabihard") is Some(_))
+  match
+    @core_theory.Target::select(
+      parent=@core_theory.Target::thumb(),
+      system=Linux,
+      abi=GNUEABI,
+      fabi=Hard,
+      filetype=Elf,
+      unique=true,
+    ) {
+    Ok(target) => assert_true(target.matches("thumb-linux-gnueabihard-elf"))
+    Err(reason) => fail(reason)
+  }
   match @core_theory.Target::get("aarch64-windows-eabi-coff") {
     Ok(target) => {
       assert_true(target.bits() == 64)

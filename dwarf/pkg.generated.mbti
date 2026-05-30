@@ -11,6 +11,36 @@ import {
 // Errors
 
 // Types and methods
+type DwarfAbbrevEntry
+pub fn DwarfAbbrevEntry::captures_values(Self) -> Bool
+pub fn DwarfAbbrevEntry::code(Self) -> Int
+pub fn DwarfAbbrevEntry::create(code~ : Int, tag~ : DwarfTag, has_children~ : Bool, fields~ : Array[DwarfAbbrevField]) -> Self
+pub fn DwarfAbbrevEntry::fields(Self) -> Array[DwarfAbbrevField]
+pub fn DwarfAbbrevEntry::has_children(Self) -> Bool
+pub fn DwarfAbbrevEntry::tag(Self) -> DwarfTag
+pub fn DwarfAbbrevEntry::value_fields(Self) -> Array[DwarfAbbrevField]
+
+type DwarfAbbrevField
+pub fn DwarfAbbrevField::attr(Self) -> DwarfAttr
+pub fn DwarfAbbrevField::create(attr~ : DwarfAttr, form~ : DwarfForm) -> Self
+pub fn DwarfAbbrevField::form(Self) -> DwarfForm
+pub fn DwarfAbbrevField::is_value_field(Self) -> Bool
+pub fn DwarfAbbrevField::value_kind(Self) -> DwarfAbbrevValueKind
+
+type DwarfAbbrevTable
+pub fn DwarfAbbrevTable::entries(Self) -> Array[DwarfAbbrevEntry]
+pub fn DwarfAbbrevTable::lookup(Self, Int) -> DwarfAbbrevEntry?
+pub fn DwarfAbbrevTable::of_bytes(Bytes, offset? : Int) -> Result[Self, String]
+pub fn DwarfAbbrevTable::read(DwarfInput) -> Result[(Self, DwarfInput), String]
+
+pub(all) enum DwarfAbbrevValueKind {
+  DwarfIgnoredValue
+  DwarfNameValue
+  DwarfLowPcValue
+  DwarfHighPcAddressValue
+  DwarfHighPcOffsetValue
+} derive(Eq, @debug.Debug)
+
 pub(all) enum DwarfAttr {
   DwarfName
   DwarfLowPc

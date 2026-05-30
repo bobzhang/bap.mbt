@@ -1,4 +1,15 @@
 ///|
+fn register_core_test_agent(
+  name : String,
+  reliability : @knowledge.AgentReliability,
+) -> @knowledge.Agent raise {
+  match @knowledge.Agent::register(name, pkg="core-test", reliability~) {
+    Ok(agent) => agent
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "sorts model symbolic applications" {
   let word = @core_theory.Sort::bitv(32)
   inspect(word.to_string(), content="core:bitv<32>")
@@ -235,6 +246,8 @@ test "target role helpers classify common architecture variables" {
 
 ///|
 test "labels carry symbolic entry points" {
+  let weak = register_core_test_agent("possible-name-weak", Unreliable)
+  let strong = register_core_test_agent("possible-name-strong", Reliable)
   let named = @core_theory.Label::for_name("main")
   assert_true(named.is_valid())
   assert_true(named.name() == Some("main"))
@@ -243,8 +256,12 @@ test "labels carry symbolic entry points" {
     .with_alias("_start")
     .with_alias("_start")
     .with_alias("entry")
+    .with_possible_name(weak, "sub_400000")
+    .with_possible_name(strong, "_start")
   assert_true(label.addr() == Some(addr))
   assert_true(label.aliases() == ["_start", "entry"])
+  assert_true(label.possible_name() == Some("_start"))
+  assert_true(label.possible_name_opinions().entries().length() == 2)
   assert_true(!@core_theory.Label::null().is_valid())
 }
 

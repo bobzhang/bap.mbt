@@ -11,6 +11,7 @@ struct Label {
   ivec_value : Int?
   encoding_value : Language?
   aliases_value : Array[String]
+  possible_names_value : @knowledge.Opinions[String?]
   valid_flag : Bool
   subroutine_flag : Bool
 }
@@ -30,6 +31,29 @@ fn unique_aliases(items : Array[String]) -> Array[String] {
     }
   }
   result
+}
+
+///|
+fn possible_label_name_equal(lhs : String?, rhs : String?) -> Bool {
+  lhs == rhs
+}
+
+///|
+fn inspect_possible_label_name(value : String?) -> String {
+  match value {
+    Some(text) => text
+    None => "none"
+  }
+}
+
+///|
+fn empty_possible_label_names() -> @knowledge.Opinions[String?] {
+  let empty : String? = None
+  @knowledge.Opinions::empty(
+    empty~,
+    equal=possible_label_name_equal,
+    inspect=inspect_possible_label_name,
+  )
 }
 
 ///|
@@ -56,6 +80,7 @@ fn Label::make(
       Some(items) => unique_aliases(items)
       None => []
     },
+    possible_names_value: empty_possible_label_names(),
     valid_flag: match is_valid {
       Some(flag) => flag
       None => true
@@ -83,6 +108,7 @@ pub fn Label::null() -> Label {
     ivec_value: None,
     encoding_value: None,
     aliases_value: [],
+    possible_names_value: empty_possible_label_names(),
     valid_flag: false,
     subroutine_flag: false,
   }
@@ -110,6 +136,18 @@ pub fn Label::with_alias(self : Label, alias_name : String) -> Label {
     aliases.push(alias_name)
   }
   { ..self, aliases_value: aliases }
+}
+
+///|
+pub fn Label::with_possible_name(
+  self : Label,
+  agent : @knowledge.Agent,
+  name : String,
+) -> Label {
+  {
+    ..self,
+    possible_names_value: self.possible_names_value.add(agent, Some(name)),
+  }
 }
 
 ///|
@@ -156,6 +194,18 @@ pub fn Label::addr(self : Label) -> @types.Word? {
 ///|
 pub fn Label::name(self : Label) -> String? {
   self.name_value
+}
+
+///|
+pub fn Label::possible_name(self : Label) -> String? {
+  self.possible_names_value.choice()
+}
+
+///|
+pub fn Label::possible_name_opinions(
+  self : Label,
+) -> @knowledge.Opinions[String?] {
+  self.possible_names_value
 }
 
 ///|

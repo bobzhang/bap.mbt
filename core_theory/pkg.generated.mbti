@@ -127,10 +127,13 @@ pub fn Label::is_valid(Self) -> Bool
 pub fn Label::ivec(Self) -> Int?
 pub fn Label::name(Self) -> String?
 pub fn Label::null() -> Self
+pub fn Label::possible_name(Self) -> String?
+pub fn Label::possible_name_opinions(Self) -> @knowledge.Opinions[String?]
 pub fn Label::target(Self) -> Target?
 pub fn Label::unit(Self) -> ProgramUnit?
 pub fn Label::with_alias(Self, String) -> Self
 pub fn Label::with_encoding(Self, Language) -> Self
+pub fn Label::with_possible_name(Self, @knowledge.Agent, String) -> Self
 pub fn Label::with_subroutine(Self, is_subroutine? : Bool) -> Self
 pub fn Label::with_unit(Self, ProgramUnit) -> Self
 

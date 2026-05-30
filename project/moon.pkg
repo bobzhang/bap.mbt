@@ -3,6 +3,11 @@ import {
   "bobzhang/bap/core_theory",
   "bobzhang/bap/image",
   "bobzhang/bap/memory",
+  "bobzhang/bap/native_io",
   "bobzhang/bap/types",
   "moonbitlang/core/string",
 }
+
+options(
+  targets: { "file_native_test.mbt": [ "native" ] },
+)

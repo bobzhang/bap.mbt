@@ -119,3 +119,14 @@ test "project input loaders resolve by filename extension priority" {
     is Err(_),
   )
 }
+
+///|
+test "project input file loading reports read errors" {
+  assert_true(
+    @project.ProjectInput::load_file(
+      "__bap_mbt_missing_project__",
+      loader="unit-project-raw",
+    )
+    is Err(_),
+  )
+}

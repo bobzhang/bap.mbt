@@ -269,3 +269,8 @@ test "image backend discovery loads bytes by filename extension" {
     is Err(_),
   )
 }
+
+///|
+test "image file loading reports read errors" {
+  assert_true(@image.Image::of_file("__bap_mbt_missing_image__") is Err(_))
+}

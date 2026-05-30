@@ -109,7 +109,9 @@ ranges, keep section headers as metadata, extract defined symbols from
 target/endian/filetype from the ELF header before higher-level project code sees
 the image. Treat `e_shstrndx == SHN_UNDEF` as an absent section-name string
 table: skip named `Section` metadata, but still parse section headers and
-symbol tables through `sh_link`.
+symbol tables through `sh_link`. Accept `e_phnum == 0` with no program-header
+entry size, and for ELF objects without `PT_LOAD`, synthesize image segments
+from non-empty allocatable sections using `sh_flags`.
 For disassembly-driver registries, separate orchestration from architecture
 decoding: a built-in driver may materialize memory regions as blocks, but it
 should not invent assembly text or lifted BIL unless a real target-specific

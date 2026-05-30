@@ -33,6 +33,7 @@ priv struct ImageElfProgramHeader {
 priv struct ImageElfSectionHeader {
   name_offset : Int
   typ : Int
+  flags : UInt64
   link : Int
   addr : UInt64
   offset : Int
@@ -202,7 +203,7 @@ fn image_elf_parse_header(data : Bytes) -> Result[ImageElfHeader, String] {
         ImageElf32 => 40
         ImageElf64 => 64
       }
-      if program_header_size < minimum_program_header {
+      if program_count > 0 && program_header_size < minimum_program_header {
         return Err("ELF program headers are too small")
       }
       if has_sections && section_header_size < minimum_section_header {
@@ -367,6 +368,10 @@ fn image_elf_parse_section_header(
     header.endian,
     "ELF section type",
   )
+  let flags = match header.class {
+    ImageElf32 => image_elf_read_u64(data, base + 8, 4, header.endian)
+    ImageElf64 => image_elf_read_u64(data, base + 8, 8, header.endian)
+  }
   let addr = match header.class {
     ImageElf32 => image_elf_read_u64(data, base + 12, 4, header.endian)
     ImageElf64 => image_elf_read_u64(data, base + 16, 8, header.endian)
@@ -419,23 +424,25 @@ fn image_elf_parse_section_header(
         "ELF section entry size",
       )
   }
-  match (name_offset, typ, link, addr, offset, size, entsize) {
+  match (name_offset, typ, flags, link, addr, offset, size, entsize) {
     (
       Ok(name_offset),
       Ok(typ),
+      Ok(flags),
       Ok(link),
       Ok(addr),
       Ok(offset),
       Ok(size),
       Ok(entsize),
-    ) => Ok({ name_offset, typ, link, addr, offset, size, entsize })
-    (Err(reason), _, _, _, _, _, _)
-    | (_, Err(reason), _, _, _, _, _)
-    | (_, _, Err(reason), _, _, _, _)
-    | (_, _, _, Err(reason), _, _, _)
-    | (_, _, _, _, Err(reason), _, _)
-    | (_, _, _, _, _, Err(reason), _)
-    | (_, _, _, _, _, _, Err(reason)) => Err(reason)
+    ) => Ok({ name_offset, typ, flags, link, addr, offset, size, entsize })
+    (Err(reason), _, _, _, _, _, _, _)
+    | (_, Err(reason), _, _, _, _, _, _)
+    | (_, _, Err(reason), _, _, _, _, _)
+    | (_, _, _, Err(reason), _, _, _, _)
+    | (_, _, _, _, Err(reason), _, _, _)
+    | (_, _, _, _, _, Err(reason), _, _)
+    | (_, _, _, _, _, _, Err(reason), _)
+    | (_, _, _, _, _, _, _, Err(reason)) => Err(reason)
   }
 }
 
@@ -732,6 +739,69 @@ fn image_elf_flag_set(flags : Int, flag : Int) -> Bool {
 }
 
 ///|
+fn image_elf_section_flag_set(
+  section : ImageElfSectionHeader,
+  flag : UInt64,
+) -> Bool {
+  (section.flags & flag) != 0UL
+}
+
+///|
+fn image_elf_section_segment_name(index : Int, name : String?) -> String {
+  match name {
+    Some(name) => name
+    None => ".section\{index}"
+  }
+}
+
+///|
+fn image_elf_section_segment_data(
+  data : Bytes,
+  section : ImageElfSectionHeader,
+) -> Result[Bytes, String] {
+  if section.size < 0 {
+    return Err("ELF section range is invalid")
+  }
+  if section.typ == 8 {
+    Ok(Bytes::new(section.size))
+  } else {
+    image_elf_section_data(data, section.offset, section.size)
+  }
+}
+
+///|
+fn image_elf_alloc_section_segments(
+  data : Bytes,
+  header : ImageElfHeader,
+  section_headers : Array[ImageElfSectionHeader],
+  section_names : Array[String?],
+) -> Result[Array[Segment], String] {
+  let segments : Array[Segment] = []
+  for i in 0..<section_headers.length() {
+    let section = section_headers[i]
+    if image_elf_section_flag_set(section, 2UL) && section.size > 0 {
+      match image_elf_section_segment_data(data, section) {
+        Ok(segment_data) =>
+          segments.push(
+            Segment::create(
+              name=image_elf_section_segment_name(i, section_names[i]),
+              endian=header.endian,
+              addr=section.addr,
+              segment_data,
+              offset=section.offset,
+              readable=true,
+              writable=image_elf_section_flag_set(section, 1UL),
+              executable=image_elf_section_flag_set(section, 4UL),
+            ),
+          )
+        Err(reason) => return Err(reason)
+      }
+    }
+  }
+  Ok(segments)
+}
+
+///|
 fn image_elf_load(data : Bytes) -> Result[(Image, Array[String]), String] {
   match image_elf_parse_header(data) {
     Ok(header) => {
@@ -755,17 +825,22 @@ fn image_elf_load(data : Bytes) -> Result[(Image, Array[String]), String] {
           None => return Err("ELF section name table index is out of bounds")
         }
       }
-      let sections : Array[Section] = []
+      let section_names : Array[String?] = []
       for section in section_headers {
         match image_elf_section_name(names, section) {
-          Ok(Some(name)) =>
-            if section.size > 0 {
-              sections.push(
-                Section::create(name~, addr=section.addr, size=section.size),
-              )
-            }
-          Ok(None) => ()
+          Ok(name) => section_names.push(name)
           Err(reason) => return Err(reason)
+        }
+      }
+      let sections : Array[Section] = []
+      for i in 0..<section_headers.length() {
+        let section = section_headers[i]
+        match section_names[i] {
+          Some(name) if section.size > 0 =>
+            sections.push(
+              Section::create(name~, addr=section.addr, size=section.size),
+            )
+          _ => ()
         }
       }
       let symbols = match image_elf_symbols(data, header, section_headers) {
@@ -797,8 +872,19 @@ fn image_elf_load(data : Bytes) -> Result[(Image, Array[String]), String] {
           Err(reason) => return Err(reason)
         }
       }
+      let segments = if segments.is_empty() {
+        match
+          image_elf_alloc_section_segments(
+            data, header, section_headers, section_names,
+          ) {
+          Ok(value) => value
+          Err(reason) => return Err(reason)
+        }
+      } else {
+        segments
+      }
       if segments.is_empty() {
-        return Err("ELF file has no loadable segments")
+        return Err("ELF file has no loadable segments or allocatable sections")
       }
       Ok(
         (

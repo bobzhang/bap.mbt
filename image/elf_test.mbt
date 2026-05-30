@@ -243,6 +243,21 @@ fn image_elf_test_make_x86_64_without_section_names() -> Bytes {
 }
 
 ///|
+fn image_elf_test_make_x86_64_relocatable() -> Bytes {
+  let source = image_elf_test_make_x86_64()
+  let buffer = Array::make(source.length(), b'\x00')
+  for i in 0..<source.length() {
+    buffer[i] = source[i]
+  }
+  image_elf_test_set_u16_le(buffer, 16, 1)
+  image_elf_test_set_u64_le(buffer, 24, 0UL)
+  image_elf_test_set_u64_le(buffer, 32, 0UL)
+  image_elf_test_set_u16_le(buffer, 54, 0)
+  image_elf_test_set_u16_le(buffer, 56, 0)
+  Bytes::from_array(buffer)
+}
+
+///|
 test "image ELF backend loads program segments and sections" {
   match @image.register_builtin_backends() {
     Ok(_) => ()
@@ -325,6 +340,44 @@ test "image ELF backend loads symbol tables without section names" {
   assert_true(symbols.any(symbol => symbol.name() == "main"))
   assert_true(symbols.any(symbol => symbol.name() == "data_object"))
   assert_true(image.symbols_of_segment(image.segments()[0]).length() == 2)
+}
+
+///|
+test "image ELF backend maps alloc sections when program headers are absent" {
+  match @image.register_builtin_backends() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let (image, warnings) = expect_elf_image(
+    @image.Image::of_bytes(
+      image_elf_test_make_x86_64_relocatable(),
+      backend="elf",
+    ),
+  )
+  assert_true(warnings.is_empty())
+  assert_true(image.entry_point() == 0UL)
+  let segments = image.segments()
+  assert_true(segments.length() == 1)
+  assert_true(segments[0].name() == ".text")
+  assert_true(segments[0].addr() == 0x400000UL)
+  assert_true(segments[0].offset() > 0)
+  assert_true(segments[0].is_readable())
+  assert_true(!segments[0].is_writable())
+  assert_true(segments[0].is_executable())
+  inspect(segments[0].memory().hexdump(), content="90 c3 cc 00")
+  assert_true(image.sections_of_segment(segments[0]).length() == 1)
+  let main_symbol = match
+    image.symbols().search_by(symbol => symbol.name() == "main") {
+    Some(index) => image.symbols()[index]
+    None => fail("expected main symbol")
+  }
+  match image.memory_of_symbol(main_symbol) {
+    Some((memory, rest)) => {
+      assert_true(rest.length() == 0)
+      inspect(memory.hexdump(), content="90 c3")
+    }
+    None => fail("expected main symbol memory")
+  }
 }
 
 ///|

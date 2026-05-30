@@ -56,6 +56,11 @@ pub fn Library::target(self : Library) -> @core_theory.Target {
 }
 
 ///|
+pub fn Library::arch(self : Library) -> @core_theory.Target {
+  self.target_value
+}
+
+///|
 pub fn Library::specification(self : Library) -> @image.OgreDoc {
   @image.OgreDoc::from_target(self.target_value)
 }
@@ -157,6 +162,11 @@ pub fn Project::from_image(
 
 ///|
 pub fn Project::target(self : Project) -> @core_theory.Target {
+  self.target_value
+}
+
+///|
+pub fn Project::arch(self : Project) -> @core_theory.Target {
   self.target_value
 }
 

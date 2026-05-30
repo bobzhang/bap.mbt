@@ -144,6 +144,14 @@ pub fn Image::target(self : Image) -> @core_theory.Target? {
 }
 
 ///|
+pub fn Image::arch(self : Image) -> @core_theory.Target {
+  match self.target_value {
+    Some(target) => target
+    None => @core_theory.Target::unknown()
+  }
+}
+
+///|
 pub fn Image::spec(self : Image) -> OgreDoc {
   match self.spec_value {
     Some(doc) => doc

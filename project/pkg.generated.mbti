@@ -54,6 +54,7 @@ pub fn resolve_passes(Array[String]) -> Result[Array[ProjectPass], String]
 
 // Types and methods
 type Library
+pub fn Library::arch(Self) -> @core_theory.Target
 pub fn Library::create(name~ : String, target~ : @core_theory.Target, memory? : @memory.MemMap[String], program? : @types.Term[@types.Program], state? : ProjectState) -> Self
 pub fn Library::disassembly(Self) -> ProjectDisassemblyState
 pub fn Library::memory(Self) -> @memory.MemMap[String]
@@ -65,6 +66,7 @@ pub fn Library::target(Self) -> @core_theory.Target
 
 type Project
 pub fn Project::add_library(Self, Library) -> Self
+pub fn Project::arch(Self) -> @core_theory.Target
 pub fn Project::create(target~ : @core_theory.Target, image? : @image.Image, filename? : String, program? : @types.Term[@types.Program], memory? : @memory.MemMap[String], storage? : Map[String, String], libraries? : Array[Library], state? : ProjectState) -> Self
 pub fn Project::del(Self, String) -> Self
 pub fn[T] Project::del_tag(Self, ProjectStorageTag[T]) -> Self

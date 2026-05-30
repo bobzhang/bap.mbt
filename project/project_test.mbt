@@ -21,6 +21,7 @@ test "project can be created from image memory" {
   )
   let project = @project.Project::from_image(image)
   assert_true(project.target().is_unknown())
+  assert_true(project.arch().is_unknown())
   assert_true(project.filename() == Some("tiny.bin"))
   assert_true(project.image() is Some(_))
   assert_true(project.memory().lookup(0x1000UL).length() == 1)
@@ -77,6 +78,7 @@ test "project maps programs and stores libraries" {
   let with_library = project.add_library(library)
   assert_true(with_library.libraries().length() == 1)
   assert_true(with_library.libraries()[0].name() == "libc")
+  assert_true(with_library.libraries()[0].arch().is_unknown())
   assert_true(
     with_library.libraries()[0].specification().fact_count("arch") == 1,
   )

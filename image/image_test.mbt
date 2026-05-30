@@ -30,6 +30,7 @@ test "image exposes segment memory and symbol membership" {
   assert_true(image.entry_point() == 0x4004UL)
   assert_true(image.filename() == Some("a.out"))
   assert_true(image.addr_size() == 32)
+  assert_true(image.arch().is_unknown())
   assert_true(text.is_executable())
   assert_true(image.memory().lookup(0x4004UL).length() == 1)
   assert_true(image.sections_of_segment(text).length() == 1)
@@ -67,6 +68,7 @@ test "image address size follows target metadata" {
     target=@core_theory.Target::x86_64(),
   )
   assert_true(amd64.addr_size() == 64)
+  assert_true(amd64.arch().matches("x86_64"))
   let spec = amd64.spec()
   assert_true(spec.fact_count("arch") == 1)
   assert_true(spec.fact_count("bits") == 1)

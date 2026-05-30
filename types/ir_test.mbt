@@ -130,6 +130,73 @@ test "ir term mapping rewrites nested term attributes" {
 }
 
 ///|
+test "ir term query helpers match classes attributes vars and children" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let z = @types.Var::new(name="z", typ~)
+  let arg = @types.Arg::create(z, Var(y))
+  let phi = @types.Phi::of_list(x, [(arg.tid(), Var(z))])
+  let def = @types.Def::create(x, BinOp(Plus, Var(y), Int(word8(1)))).set_attr(
+    @types.Attr::new(key="color", value="red"),
+  )
+  let jmp = @types.Jmp::create_goto(
+    @types.Label::direct(@types.Tid::for_name("done")),
+    cond=Var(x),
+  )
+  let blk = @types.Blk::create(phis=[phi], defs=[def], jmps=[jmp])
+  let sub = @types.Sub::create(name="main", args=[arg], blks=[blk])
+  let program = @types.Program::create(subs=[sub])
+  let program_term = @types.ProgramTerm(program)
+  let sub_term = @types.SubTerm(sub)
+  let block_term = @types.BlkTerm(blk)
+  let def_term = @types.DefTerm(def)
+  assert_true(program_term.children().map(term => term.tid()) == [sub.tid()])
+  assert_true(
+    sub_term.children().map(term => term.class_name()) == ["arg", "blk"],
+  )
+  assert_true(
+    block_term.children().map(term => term.class_name()) ==
+    ["phi", "def", "jmp"],
+  )
+  assert_true(def_term.has_class(DefTermClass))
+  assert_true(def_term.has_tid(def.tid()))
+  assert_true(def_term.has_tid_text(def.tid().to_string()))
+  assert_true(def_term.has_name(def.name()))
+  assert_true(def_term.has_attr_value("color", "red"))
+  assert_true(!def_term.has_attr_value("color", "blue"))
+  assert_true(def_term.def_lhs_name("x"))
+  assert_true(def_term.def_uses_name("y"))
+  assert_true(!def_term.def_uses_name("z"))
+  assert_true(def_term.defines_var(x))
+  assert_true(def_term.defines_var_name("x"))
+  assert_true(def_term.uses_var(y))
+  assert_true(def_term.uses_var_name("y"))
+  assert_true(!def_term.uses_var_name("x"))
+  assert_true(sub_term.defines_var_name("z"))
+  assert_true(block_term.defines_var_name("x"))
+  assert_true(block_term.has_child_tid(def.tid()))
+  assert_true(!block_term.has_child_tid(sub.tid()))
+}
+
+///|
+test "ir term query helpers test immediate parent relationships" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let def = @types.Def::create(x, Int(word8(1)))
+  let blk = @types.Blk::create(defs=[def])
+  let sub = @types.Sub::create(name="main", blks=[blk])
+  let program = @types.Program::create(subs=[sub])
+  assert_true(program.program_parent_is(ProgramTerm(program), sub.tid()))
+  assert_true(program.program_parent_is(SubTerm(sub), blk.tid()))
+  assert_true(program.program_parent_is(BlkTerm(blk), def.tid()))
+  assert_true(!program.program_parent_is(SubTerm(sub), def.tid()))
+  assert_true(sub.sub_parent_is(SubTerm(sub), blk.tid()))
+  assert_true(sub.sub_parent_is(BlkTerm(blk), def.tid()))
+  assert_true(!sub.sub_parent_is(SubTerm(sub), def.tid()))
+}
+
+///|
 test "phi nodes jumps calls and args expose BAP-style payloads" {
   let typ = @types.ValueType::Imm(8)
   let lhs = @types.Var::new(name="r0", typ~)

@@ -143,6 +143,12 @@ mappers ignore accidental class changes instead of corrupting the enclosing
 tree. Parent lookup should report the nearest IR container: program for subs,
 sub for args/blocks, and block for phis/defs/jumps.
 
+When porting `map_terms`-style predicates, keep the parser/plugin layer separate
+from the reusable term queries. Implement class/name/tid/attribute checks,
+direct-child enumeration, free/defined variable tests, and immediate-parent
+matching as typed `IrTerm`/`Term` helpers first; a BML parser or command plugin
+can then compose those helpers without re-encoding traversal semantics.
+
 For BAP-style stub resolution, treat symbol names and aliases as an undirected
 graph and resolve by connected components. Link stubs only when a component has
 exactly one non-stub implementation; pairwise alias matching is too eager,

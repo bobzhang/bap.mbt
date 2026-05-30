@@ -11,7 +11,10 @@ test "project input from bytes builds raw memory image" {
   let project = @project.Project::from_input(input)
   assert_true(project.filename() == Some("raw.bin"))
   assert_true(project.memory().lookup(0x201UL).length() == 1)
-  assert_true(project.image() is Some(_))
+  match project.image() {
+    Some(image) => assert_true(image.base_address() == Some(0x200UL))
+    None => fail("expected raw image")
+  }
 }
 
 ///|
@@ -32,6 +35,7 @@ test "project raw bytes reject empty input and use target metadata" {
       match project.image() {
         Some(image) => {
           assert_true(image.endian() == BigEndian)
+          assert_true(image.base_address() == Some(0x300UL))
           let segments = image.segments()
           assert_true(segments.length() == 1)
           assert_true(segments[0].name() == "bap.user")

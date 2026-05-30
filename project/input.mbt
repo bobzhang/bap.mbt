@@ -179,6 +179,7 @@ fn ProjectInput::from_raw_bytes(
     entry=base,
     endian~,
     [segment],
+    base_address=base,
     filename?,
     target~,
   )

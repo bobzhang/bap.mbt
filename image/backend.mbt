@@ -115,7 +115,17 @@ pub fn ImageBackend::raw() -> ImageBackend {
         readable=true,
         executable=true,
       )
-      Ok((Image::from_segments(entry=0UL, endian=LittleEndian, [segment]), []))
+      Ok(
+        (
+          Image::from_segments(
+            entry=0UL,
+            endian=LittleEndian,
+            [segment],
+            base_address=0UL,
+          ),
+          [],
+        ),
+      )
     },
   )
 }

@@ -486,6 +486,7 @@ test "image registers built-in raw and Ogre backends idempotently" {
       assert_true(img.segments().length() == 1)
       assert_true(img.segments()[0].name() == ".raw")
       assert_true(img.segments()[0].is_executable())
+      assert_true(img.base_address() == Some(0UL))
       assert_true(img.memory().lookup(0x01UL).length() == 1)
     }
     Err(reason) => fail(reason)

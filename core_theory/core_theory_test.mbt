@@ -103,6 +103,31 @@ test "target registry resolves common and custom declarations" {
 }
 
 ///|
+test "target metadata enums parse loader strings" {
+  assert_true(
+    @core_theory.Endianness::of_string("little-endian") == Some(LittleEndian),
+  )
+  assert_true(@core_theory.Endianness::of_string("BE") == Some(BigEndian))
+  assert_true(@core_theory.System::of_string("macos") == Some(Darwin))
+  assert_true(@core_theory.Abi::of_string("system-v") == Some(SysV))
+  assert_true(@core_theory.Fabi::of_string("hard-float") == Some(Hard))
+  assert_true(@core_theory.Filetype::of_string("mach-o") == Some(MachO))
+  assert_true(@core_theory.Filetype::of_string("coff") == Some(PE))
+  inspect(@core_theory.Raw.to_string(), content="raw")
+  let target = @core_theory.Target::create(
+    name=@knowledge.Name::create("unit-metadata", pkg="test"),
+    system=Linux,
+    abi=GNU,
+    fabi=Soft,
+    filetype=Elf,
+  )
+  assert_true(target.system().to_string() == "linux")
+  assert_true(target.abi().to_string() == "gnu")
+  assert_true(target.fabi().to_string() == "soft")
+  assert_true(target.filetype().to_string() == "elf")
+}
+
+///|
 test "target role helpers classify common architecture variables" {
   let amd64 = @core_theory.Target::x86_64()
   match amd64.find_var("RSP") {

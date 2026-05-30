@@ -39,6 +39,111 @@ pub(all) enum Filetype {
 } derive(Eq, Debug)
 
 ///|
+pub fn Endianness::to_string(self : Endianness) -> String {
+  match self {
+    LittleEndian => "little"
+    BigEndian => "big"
+    BiEndian => "bi"
+  }
+}
+
+///|
+pub fn Endianness::of_string(text : String) -> Endianness? {
+  match text.to_lower() {
+    "little" | "little-endian" | "le" => Some(LittleEndian)
+    "big" | "big-endian" | "be" => Some(BigEndian)
+    "bi" | "bi-endian" | "both" => Some(BiEndian)
+    _ => None
+  }
+}
+
+///|
+pub fn System::to_string(self : System) -> String {
+  match self {
+    UnknownSystem => "unknown"
+    Linux => "linux"
+    Darwin => "darwin"
+    Windows => "windows"
+  }
+}
+
+///|
+pub fn System::of_string(text : String) -> System? {
+  match text.to_lower() {
+    "unknown" => Some(UnknownSystem)
+    "linux" | "gnu/linux" => Some(Linux)
+    "darwin" | "macos" | "macosx" => Some(Darwin)
+    "windows" | "win32" | "win64" => Some(Windows)
+    _ => None
+  }
+}
+
+///|
+pub fn Abi::to_string(self : Abi) -> String {
+  match self {
+    UnknownAbi => "unknown"
+    SysV => "sysv"
+    GNU => "gnu"
+    EABI => "eabi"
+    MSVC => "msvc"
+  }
+}
+
+///|
+pub fn Abi::of_string(text : String) -> Abi? {
+  match text.to_lower() {
+    "unknown" => Some(UnknownAbi)
+    "sysv" | "sys-v" | "system-v" => Some(SysV)
+    "gnu" => Some(GNU)
+    "eabi" => Some(EABI)
+    "msvc" | "ms" => Some(MSVC)
+    _ => None
+  }
+}
+
+///|
+pub fn Fabi::to_string(self : Fabi) -> String {
+  match self {
+    UnknownFabi => "unknown"
+    Soft => "soft"
+    Hard => "hard"
+  }
+}
+
+///|
+pub fn Fabi::of_string(text : String) -> Fabi? {
+  match text.to_lower() {
+    "unknown" => Some(UnknownFabi)
+    "soft" | "soft-float" => Some(Soft)
+    "hard" | "hard-float" => Some(Hard)
+    _ => None
+  }
+}
+
+///|
+pub fn Filetype::to_string(self : Filetype) -> String {
+  match self {
+    UnknownFiletype => "unknown"
+    Elf => "elf"
+    MachO => "macho"
+    PE => "pe"
+    Raw => "raw"
+  }
+}
+
+///|
+pub fn Filetype::of_string(text : String) -> Filetype? {
+  match text.to_lower() {
+    "unknown" => Some(UnknownFiletype)
+    "elf" => Some(Elf)
+    "macho" | "mach-o" | "mach_o" => Some(MachO)
+    "pe" | "coff" | "pecoff" | "pe-coff" => Some(PE)
+    "raw" | "bin" | "binary" => Some(Raw)
+    _ => None
+  }
+}
+
+///|
 pub(all) enum Role {
   General
   StackPointer

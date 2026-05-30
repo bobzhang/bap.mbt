@@ -34,6 +34,8 @@ pub(all) enum Abi {
   EABI
   MSVC
 } derive(Eq, @debug.Debug)
+pub fn Abi::of_string(String) -> Self?
+pub fn Abi::to_string(Self) -> String
 
 pub(all) enum AliasOrigin {
   RegisterAlias(aliased~ : Var, source~ : Var)
@@ -90,12 +92,16 @@ pub(all) enum Endianness {
   BigEndian
   BiEndian
 } derive(Eq, @debug.Debug)
+pub fn Endianness::of_string(String) -> Self?
+pub fn Endianness::to_string(Self) -> String
 
 pub(all) enum Fabi {
   UnknownFabi
   Soft
   Hard
 } derive(Eq, @debug.Debug)
+pub fn Fabi::of_string(String) -> Self?
+pub fn Fabi::to_string(Self) -> String
 
 pub(all) enum Filetype {
   UnknownFiletype
@@ -104,6 +110,8 @@ pub(all) enum Filetype {
   PE
   Raw
 } derive(Eq, @debug.Debug)
+pub fn Filetype::of_string(String) -> Self?
+pub fn Filetype::to_string(Self) -> String
 
 type Label
 pub fn Label::addr(Self) -> @types.Word?
@@ -214,6 +222,8 @@ pub(all) enum System {
   Darwin
   Windows
 } derive(Eq, @debug.Debug)
+pub fn System::of_string(String) -> Self?
+pub fn System::to_string(Self) -> String
 
 type Target
 pub fn Target::aarch64() -> Self

@@ -271,6 +271,38 @@ test "translated BAP image table neighbors and intersections use memory ranges" 
 }
 
 ///|
+test "translated BAP image table intersections cover boundary cases" {
+  let mem_low = memory_at(0x10UL, 0x10)
+  let mem_high = memory_at(0x30UL, 0x10)
+  let table = @memory.MemMap::empty().add(mem_low, "lo").add(mem_high, "hi")
+  assert_true(
+    table.intersections(memory_at(0x10UL, 0x30)).map(entry => entry.1) ==
+    ["lo", "hi"],
+  )
+  assert_true(
+    table.intersections(memory_at(0x1fUL, 0x30)).map(entry => entry.1) ==
+    ["lo", "hi"],
+  )
+  assert_true(table.intersections(memory_at(0x20UL, 0x10)).is_empty())
+  assert_true(
+    table.intersections(memory_at(0x20UL, 0x30)).map(entry => entry.1) == ["hi"],
+  )
+  assert_true(
+    table.intersections(memory_at(0x31UL, 0x01)).map(entry => entry.1) == ["hi"],
+  )
+  assert_true(
+    table.intersections(memory_at(0x31UL, 0x20)).map(entry => entry.1) == ["hi"],
+  )
+  assert_true(table.intersections(memory_at(0x00UL, 0x10)).is_empty())
+  assert_true(
+    table.intersections(memory_at(0x00UL, 0x11)).map(entry => entry.1) == ["lo"],
+  )
+  assert_true(
+    table.intersections(memory_at(0x00UL, 0x21)).map(entry => entry.1) == ["lo"],
+  )
+}
+
+///|
 test "translated BAP image table one-to-one link matches exact regions" {
   let mem_low = memory_at(0x10UL, 0x10)
   let mem_high = memory_at(0x30UL, 0x10)

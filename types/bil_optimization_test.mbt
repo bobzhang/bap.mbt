@@ -61,6 +61,49 @@ test "bil pruning keeps branch condition dependencies" {
 }
 
 ///|
+test "translated BAP pruning preserves virtuals used by jumps" {
+  let typ = @types.ValueType::Imm(8)
+  let always_alive = @types.Var::new(name="always_alive", typ~)
+  let will_survive = @types.Var::new(name="will_survive", typ~, is_virtual=true)
+  let direct = @types.prune_dead_virtual_stmts([
+    Move(will_survive, Int(word8(42))),
+    Jmp(Var(will_survive)),
+  ])
+  assert_true(
+    stmt_text(direct) ==
+    ["%will_survive:imm8 := 0x2a:8u", "jmp %will_survive:imm8"],
+  )
+  let then_jump = @types.prune_dead_virtual_stmts([
+    Move(always_alive, Int(word8(1))),
+    Move(will_survive, Int(word8(42))),
+    If(
+      cond=BinOp(Lt, Int(word8(0)), Var(always_alive)),
+      yes=[Jmp(Var(will_survive))],
+      no=[],
+    ),
+  ])
+  assert_true(
+    stmt_text(then_jump) ==
+    [
+      "always_alive:imm8 := 0x01:8u", "%will_survive:imm8 := 0x2a:8u", "if (0x00:8u < always_alive:imm8) then 1 stmts else 0 stmts",
+    ],
+  )
+  let else_jump = @types.prune_dead_virtual_stmts([
+    Move(always_alive, Int(word8(1))),
+    Move(will_survive, Int(word8(42))),
+    If(cond=BinOp(Lt, Int(word8(0)), Var(always_alive)), yes=[], no=[
+      Jmp(Var(will_survive)),
+    ]),
+  ])
+  assert_true(
+    stmt_text(else_jump) ==
+    [
+      "always_alive:imm8 := 0x01:8u", "%will_survive:imm8 := 0x2a:8u", "if (0x00:8u < always_alive:imm8) then 0 stmts else 1 stmts",
+    ],
+  )
+}
+
+///|
 test "bil optimize combines simplification and dead virtual pruning" {
   let typ = @types.ValueType::Imm(8)
   let physical = @types.Var::new(name="physical", typ~)

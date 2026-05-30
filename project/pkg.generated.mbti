@@ -109,6 +109,7 @@ pub fn Project::memory(Self) -> @memory.MemMap[String]
 pub fn Project::pass_has_run(Self, String) -> Bool
 pub fn Project::pass_run_count(Self, String) -> Int
 pub fn Project::program(Self) -> @types.Term[@types.Program]
+pub fn Project::reconstruct(Self, reconstructor? : ProjectReconstructor) -> Result[Self, String]
 pub fn Project::relocations(Self) -> Array[@image.Relocation]
 pub fn Project::required_libraries(Self) -> Array[String]
 pub fn Project::resolve_stub_calls(Self, link_only? : Array[String], no_link? : Array[String]) -> Self
@@ -267,6 +268,12 @@ pub fn ProjectPass::run_once(Self) -> Bool
 pub fn ProjectPass::ssa() -> Self
 pub fn ProjectPass::stub_resolver(link_only? : Array[String], no_link? : Array[String]) -> Self
 pub fn ProjectPass::trivial_condition_form() -> Self
+
+type ProjectReconstructor
+pub fn ProjectReconstructor::create((Project) -> Result[Project, String]) -> Self
+pub fn ProjectReconstructor::default() -> Self
+pub fn ProjectReconstructor::of_blocks(Array[(String, UInt64, UInt64)]) -> Self
+pub fn ProjectReconstructor::run(Self, Project) -> Result[Project, String]
 
 type ProjectRooter
 pub fn ProjectRooter::contains(Self, UInt64) -> Bool

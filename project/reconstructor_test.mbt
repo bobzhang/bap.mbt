@@ -1,0 +1,115 @@
+///|
+test "project default reconstructor turns disassembly blocks into named subroutines" {
+  match @project.register_builtin_disassembly_drivers() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let segment = @image.Segment::create(
+    name=".text",
+    endian=LittleEndian,
+    addr=0x1000UL,
+    b"\x01\x02\x03\x04",
+    executable=true,
+  )
+  let image = @image.Image::from_segments(
+    entry=0x1001UL,
+    endian=LittleEndian,
+    [segment],
+    symbols=[
+      @image.Symbol::create(
+        name="main",
+        addr=0x1001UL,
+        size=2,
+        is_function=true,
+      ),
+      @image.Symbol::create(name="helper", addr=0x1003UL, size=1),
+    ],
+    target=@core_theory.Target::unknown(),
+  )
+  let project = @project.Project::from_image(image)
+  match project.disassemble(driver="image-roots") {
+    Ok(disassembled) =>
+      match disassembled.reconstruct() {
+        Ok(reconstructed) => {
+          let subs = reconstructed.state().subroutines()
+          assert_true(subs.length() == 2)
+          assert_true(subs[0].sub_name() == "main")
+          assert_true(subs[1].sub_name() == "helper")
+          assert_true(reconstructed.program().subs().length() == 2)
+          let first_block = subs[0].blks()[0]
+          assert_true(
+            @types.BlkTerm(first_block).has_address_text("0x1001:32u"),
+          )
+        }
+        Err(reason) => fail(reason)
+      }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+test "project block reconstructor groups serialized block starts by name" {
+  let target = @core_theory.Target::unknown()
+  let first = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x2000UL,
+    b"\xaa\xbb",
+  )
+  let second = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x2010UL,
+    b"\xcc",
+  )
+  let third = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x3000UL,
+    b"\xdd",
+  )
+  let disassembly = @project.ProjectDisassemblyState::empty()
+    .add_block(second)
+    .add_block(third)
+    .add_block(first)
+  let project = @project.Project::empty(target).with_disassembly(disassembly)
+  let reconstructor = @project.ProjectReconstructor::of_blocks([
+    ("func", 0x2010UL, 0x2010UL),
+    ("missing", 0x9999UL, 0x9999UL),
+    ("func", 0x2000UL, 0x2001UL),
+    ("other", 0x3000UL, 0x3000UL),
+  ])
+  match project.reconstruct(reconstructor~) {
+    Ok(reconstructed) => {
+      let subs = reconstructed.state().subroutines()
+      assert_true(subs.length() == 2)
+      assert_true(subs[0].sub_name() == "func")
+      assert_true(subs[1].sub_name() == "other")
+      let blocks = subs[0].blks()
+      assert_true(blocks.length() == 2)
+      assert_true(@types.BlkTerm(blocks[0]).has_address_text("0x2000:32u"))
+      assert_true(@types.BlkTerm(blocks[1]).has_address_text("0x2010:32u"))
+      assert_true(reconstructed.program().subs().length() == 2)
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+test "project reconstructor reports missing disassembly blocks" {
+  let project = @project.Project::empty(@core_theory.Target::unknown())
+  assert_true(project.reconstruct() is Err(_))
+  let reconstructor = @project.ProjectReconstructor::of_blocks([
+    ("missing", 0x10UL, 0x10UL),
+  ])
+  let block = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x20UL,
+    b"\x00",
+  )
+  assert_true(
+    project
+    .with_disassembly(
+      @project.ProjectDisassemblyState::empty().add_block(block),
+    )
+    .reconstruct(reconstructor~)
+    is Err(_),
+  )
+}

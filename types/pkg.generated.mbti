@@ -35,6 +35,49 @@ pub fn AddrSize::in_bytes(Self) -> Int
 pub fn AddrSize::to_size(Self) -> Size
 pub fn AddrSize::to_string(Self) -> String
 
+pub(all) enum Arch {
+  X86
+  X86_64
+  Armv4
+  Armv5
+  Armv6
+  Armv7
+  Armv4eb
+  Armv5eb
+  Armv6eb
+  Armv7eb
+  Thumbv4
+  Thumbv5
+  Thumbv6
+  Thumbv7
+  Thumbv4eb
+  Thumbv5eb
+  Thumbv6eb
+  Thumbv7eb
+  Aarch64
+  Aarch64_be
+  Ppc
+  Ppc64
+  Ppc64le
+  Mips
+  Mipsel
+  Mips64
+  Mips64el
+  Sparc
+  Sparcv9
+  Nvptx
+  Nvptx64
+  Hexagon
+  R600
+  Systemz
+  Xcore
+  UnknownArch
+} derive(Eq, @debug.Debug)
+pub fn Arch::addr_size(Self) -> AddrSize
+pub fn Arch::endian(Self) -> @bitvec.Endian
+pub fn Arch::of_string(String) -> Self?
+pub fn Arch::to_string(Self) -> String
+
 pub(all) struct Arg {
   lhs : Var
   rhs : Exp

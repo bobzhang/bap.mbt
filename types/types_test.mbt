@@ -339,6 +339,28 @@ test "size helpers mirror BAP fixed word and address sizes" {
 }
 
 ///|
+test "arch helpers mirror BAP normalization size and endian cases" {
+  assert_true(@types.Arch::of_string(" i686 ") == Some(X86))
+  assert_true(@types.Arch::of_string("amd64") == Some(X86_64))
+  assert_true(@types.Arch::of_string("arm") == Some(Armv7))
+  assert_true(@types.Arch::of_string("thumbeb") == Some(Thumbv7eb))
+  assert_true(@types.Arch::of_string("powerpc64le") == Some(Ppc64le))
+  assert_true(@types.Arch::of_string("sparc64") == Some(Sparcv9))
+  assert_true(@types.Arch::of_string("s390x") == Some(Systemz))
+  assert_true(@types.Arch::of_string("arm64_be") == Some(Aarch64_be))
+  assert_true(@types.Arch::of_string("not-an-arch") == None)
+  assert_true(@types.Arch::X86.to_string() == "i386")
+  assert_true(@types.Arch::Ppc64.to_string() == "powerpc64")
+  assert_true(@types.Arch::Systemz.to_string() == "s390x")
+  assert_true(@types.Arch::X86.addr_size() == Addr32)
+  assert_true(@types.Arch::Aarch64.addr_size() == Addr64)
+  assert_true(@types.Arch::Mips64.endian() == BigEndian)
+  assert_true(@types.Arch::Mips64el.endian() == LittleEndian)
+  assert_true(@types.Arch::Thumbv7eb.endian() == BigEndian)
+  assert_true(@types.Arch::UnknownArch.addr_size() == Addr32)
+}
+
+///|
 test "value types expose BAP size-based constructors" {
   assert_true(@types.ValueType::bool_t() == Imm(1))
   assert_true(@types.ValueType::reg8_t() == Imm(8))

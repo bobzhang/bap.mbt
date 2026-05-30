@@ -104,18 +104,6 @@ fn Term::flatten_exp_into(
 }
 
 ///|
-fn Term::flatten_update_jmp(self : Term[Blk], term : Term[Jmp]) -> Term[Blk] {
-  let jmps = self.payload_value.jmps.copy()
-  match jmps.search_by(item => item.tid() == term.tid()) {
-    Some(i) => {
-      jmps[i] = term
-      self.with_payload({ ..self.payload_value, jmps, })
-    }
-    None => self
-  }
-}
-
-///|
 fn Term::flatten_label_into(
   self : Term[Blk],
   label : Label,
@@ -168,7 +156,7 @@ fn Term::flatten_jmp_kind_into(
 fn Term::flatten_jmp_into(self : Term[Blk], jmp : Term[Jmp]) -> Term[Blk] {
   let (cond, blk) = self.flatten_exp_into(jmp.cond())
   let (kind, blk) = blk.flatten_jmp_kind_into(jmp.kind())
-  blk.flatten_update_jmp(jmp.with_cond(cond).with_kind(kind))
+  blk.update_jmp(jmp.with_cond(cond).with_kind(kind))
 }
 
 ///|

@@ -10,6 +10,21 @@ fn find_def_index(defs : Array[Term[Def]], tid : Tid) -> Int? {
 }
 
 ///|
+fn find_phi_index(phis : Array[Term[Phi]], tid : Tid) -> Int? {
+  phis.search_by(term => term.tid() == tid)
+}
+
+///|
+fn find_jmp_index(jmps : Array[Term[Jmp]], tid : Tid) -> Int? {
+  jmps.search_by(term => term.tid() == tid)
+}
+
+///|
+fn find_blk_index(blks : Array[Term[Blk]], tid : Tid) -> Int? {
+  blks.search_by(term => term.tid() == tid)
+}
+
+///|
 fn clamp_def_index(index : Int, length : Int) -> Int {
   if index < 0 {
     0
@@ -48,6 +63,21 @@ fn copy_def_range(
 ///|
 fn Term::with_defs(self : Term[Blk], defs : Array[Term[Def]]) -> Term[Blk] {
   self.with_payload({ ..self.payload_value, defs, })
+}
+
+///|
+fn Term::with_phis(self : Term[Blk], phis : Array[Term[Phi]]) -> Term[Blk] {
+  self.with_payload({ ..self.payload_value, phis, })
+}
+
+///|
+fn Term::with_jmps(self : Term[Blk], jmps : Array[Term[Jmp]]) -> Term[Blk] {
+  self.with_payload({ ..self.payload_value, jmps, })
+}
+
+///|
+fn Term::with_blks(self : Term[Sub], blks : Array[Term[Blk]]) -> Term[Sub] {
+  self.with_payload({ ..self.payload_value, blks, })
 }
 
 ///|
@@ -235,6 +265,76 @@ pub fn Term::concat_map_defs(
     }
   }
   self.with_defs(defs)
+}
+
+///|
+pub fn Term::update_phi_term(self : Term[Blk], term : Term[Phi]) -> Term[Blk] {
+  let phis = self.payload_value.phis.copy()
+  match find_phi_index(phis, term.tid()) {
+    Some(i) => {
+      phis[i] = term
+      self.with_phis(phis)
+    }
+    None => self
+  }
+}
+
+///|
+pub fn Term::remove_phi_term(self : Term[Blk], tid : Tid) -> Term[Blk] {
+  self.with_phis(self.payload_value.phis.filter(term => term.tid() != tid))
+}
+
+///|
+pub fn Term::map_phis(
+  self : Term[Blk],
+  f : (Term[Phi]) -> Term[Phi],
+) -> Term[Blk] {
+  self.with_phis(self.payload_value.phis.map(f))
+}
+
+///|
+pub fn Term::update_jmp(self : Term[Blk], term : Term[Jmp]) -> Term[Blk] {
+  let jmps = self.payload_value.jmps.copy()
+  match find_jmp_index(jmps, term.tid()) {
+    Some(i) => {
+      jmps[i] = term
+      self.with_jmps(jmps)
+    }
+    None => self
+  }
+}
+
+///|
+pub fn Term::remove_jmp(self : Term[Blk], tid : Tid) -> Term[Blk] {
+  self.with_jmps(self.payload_value.jmps.filter(term => term.tid() != tid))
+}
+
+///|
+pub fn Term::map_jmps(
+  self : Term[Blk],
+  f : (Term[Jmp]) -> Term[Jmp],
+) -> Term[Blk] {
+  self.with_jmps(self.payload_value.jmps.map(f))
+}
+
+///|
+pub fn Term::update_blk(self : Term[Sub], blk : Term[Blk]) -> Term[Sub] {
+  let blks = self.payload_value.blks.copy()
+  match find_blk_index(blks, blk.tid()) {
+    Some(i) => {
+      blks[i] = blk
+      self.with_blks(blks)
+    }
+    None => self
+  }
+}
+
+///|
+pub fn Term::map_blks(
+  self : Term[Sub],
+  f : (Term[Blk]) -> Term[Blk],
+) -> Term[Sub] {
+  self.with_blks(self.payload_value.blks.map(f))
 }
 
 ///|

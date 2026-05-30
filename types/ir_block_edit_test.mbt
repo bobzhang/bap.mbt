@@ -112,6 +112,41 @@ test "block definition editing helpers insert update remove and map" {
 }
 
 ///|
+test "block phi jump and sub update helpers map terms" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let pred = @types.Tid::for_name("pred")
+  let dst = @types.Tid::for_name("dst")
+  let phi = @types.Phi::of_list(x, [(pred, Var(y))])
+  let jmp = @types.Jmp::create_goto(@types.Label::direct(dst), cond=Var(x))
+  let block = @types.Blk::create(phis=[phi], jmps=[jmp])
+  let updated_phi = phi.with_phi_lhs(y)
+  let updated_block = block.update_phi_term(updated_phi)
+  assert_true(updated_block.phis()[0].phi_lhs() == y)
+  assert_true(
+    block.map_phis(term => term.with_phi_lhs(y)).phis()[0].phi_lhs() == y,
+  )
+  assert_true(block.remove_phi_term(phi.tid()).phis().is_empty())
+  let updated_jmp = jmp.with_cond(Var(y))
+  assert_true(block.update_jmp(updated_jmp).jmps()[0].cond() == Var(y))
+  assert_true(
+    block.map_jmps(term => term.with_cond(Var(y))).jmps()[0].cond() == Var(y),
+  )
+  assert_true(block.remove_jmp(jmp.tid()).jmps().is_empty())
+  let sub = @types.Sub::create(name="main", blks=[block])
+  let rewritten = block.append_def(@types.Def::create(y, Var(x)))
+  assert_true(
+    sub.update_blk(rewritten).find_blk(block.tid()).map(blk => blk.def_count()) ==
+    Some(1),
+  )
+  assert_true(
+    sub.map_blks(blk => blk.append_def(@types.Def::create(y, Var(x)))).blks()[0].def_count() ==
+    1,
+  )
+}
+
+///|
 test "block definition split helpers preserve control transfer shape" {
   let typ = @types.ValueType::Imm(8)
   let x = @types.Var::new(name="x", typ~)

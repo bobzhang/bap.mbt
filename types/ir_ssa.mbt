@@ -40,18 +40,6 @@ fn Term::ssa_has_phi_for_var(self : Term[Blk], variable : Var) -> Bool {
 }
 
 ///|
-fn Term::ssa_update_blk(self : Term[Sub], blk : Term[Blk]) -> Term[Sub] {
-  let blks = self.payload_value.blks.copy()
-  match blks.search_by(term => term.tid() == blk.tid()) {
-    Some(i) => {
-      blks[i] = blk
-      self.with_payload({ ..self.payload_value, blks, })
-    }
-    None => self
-  }
-}
-
-///|
 fn Term::ssa_with_phis(self : Term[Blk], phis : Array[Term[Phi]]) -> Term[Blk] {
   self.with_payload({ ..self.payload_value, phis, })
 }
@@ -64,11 +52,6 @@ fn Term::ssa_with_defs(self : Term[Blk], defs : Array[Term[Def]]) -> Term[Blk] {
 ///|
 fn Term::ssa_with_jmps(self : Term[Blk], jmps : Array[Term[Jmp]]) -> Term[Blk] {
   self.with_payload({ ..self.payload_value, jmps, })
-}
-
-///|
-fn Term::ssa_with_phi_lhs(self : Term[Phi], lhs : Var) -> Term[Phi] {
-  self.with_payload({ ..self.payload_value, lhs, })
 }
 
 ///|
@@ -140,7 +123,7 @@ fn ssa_insert_phi_for_var(
         }
       ].filter_map(item => item)
       let phi = Phi::of_list(variable, values)
-      sub.ssa_update_blk(blk.append_phi(phi))
+      sub.update_blk(blk.append_phi(phi))
     }
     _ => sub
   }
@@ -262,7 +245,7 @@ fn ssa_rename_phi_lhs(
 ) -> Term[Phi] {
   let lhs = ssa_new_name(phi.phi_lhs(), stacks, counters)
   pushed.push(lhs)
-  phi.ssa_with_phi_lhs(lhs)
+  phi.with_phi_lhs(lhs)
 }
 
 ///|
@@ -320,7 +303,7 @@ fn ssa_update_successor_phis(
             ssa_update_phi_edge(phi, predecessor, stacks)
           }
         ]
-        updated = updated.ssa_update_blk(blk.ssa_with_phis(phis))
+        updated = updated.update_blk(blk.ssa_with_phis(phis))
       }
       None => ()
     }
@@ -376,7 +359,7 @@ fn ssa_rename_block(
         .ssa_with_phis(phis)
         .ssa_with_defs(defs)
         .ssa_with_jmps(jmps)
-      current = current.ssa_update_blk(renamed)
+      current = current.update_blk(renamed)
       current = ssa_update_successor_phis(current, graph, tid, stacks)
     }
     None => ()

@@ -510,6 +510,11 @@ pub fn Term::phi_lhs(self : Term[Phi]) -> Var {
 }
 
 ///|
+pub fn Term::with_phi_lhs(self : Term[Phi], lhs : Var) -> Term[Phi] {
+  self.with_payload({ ..self.payload_value, lhs, })
+}
+
+///|
 pub fn Term::values(self : Term[Phi]) -> Array[(Tid, Exp)] {
   self.payload_value.values.copy()
 }

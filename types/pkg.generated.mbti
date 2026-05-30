@@ -272,10 +272,13 @@ pub fn Term::last_def(Self[Blk]) -> Self[Def]?
 pub fn Term::lhs(Self[Def]) -> Var
 pub fn Term::map_arg_exp(Self[Arg], (Exp) -> Exp) -> Self[Arg]
 pub fn Term::map_blk_exp(Self[Blk], (Exp) -> Exp) -> Self[Blk]
+pub fn Term::map_blks(Self[Sub], (Self[Blk]) -> Self[Blk]) -> Self[Sub]
 pub fn Term::map_def_exp(Self[Def], (Exp) -> Exp) -> Self[Def]
 pub fn Term::map_defs(Self[Blk], (Self[Def]) -> Self[Def]) -> Self[Blk]
 pub fn Term::map_jmp_exp(Self[Jmp], (Exp) -> Exp) -> Self[Jmp]
+pub fn Term::map_jmps(Self[Blk], (Self[Jmp]) -> Self[Jmp]) -> Self[Blk]
 pub fn Term::map_phi_exp(Self[Phi], (Exp) -> Exp) -> Self[Phi]
+pub fn Term::map_phis(Self[Blk], (Self[Phi]) -> Self[Phi]) -> Self[Blk]
 pub fn Term::map_program_exp(Self[Program], (Exp) -> Exp) -> Self[Program]
 pub fn Term::map_sub_exp(Self[Sub], (Exp) -> Exp) -> Self[Sub]
 pub fn[T] Term::name(Self[T]) -> String
@@ -304,7 +307,9 @@ pub fn Term::program_resolved_callees(Self[Program], Self[Sub], resolve_indirect
 pub fn Term::program_resolved_callers(Self[Program], Self[Sub], resolve_indirect~ : (Exp) -> Array[Tid]) -> Array[Tid]
 pub fn Term::program_resolved_callgraph(Self[Program], resolve_indirect~ : (Exp) -> Array[Tid]) -> @graphlib.Graph[Tid, Array[Self[Jmp]]]
 pub fn Term::remove_def(Self[Blk], Tid) -> Self[Blk]
+pub fn Term::remove_jmp(Self[Blk], Tid) -> Self[Blk]
 pub fn Term::remove_phi(Self[Phi], Tid) -> Self[Phi]
+pub fn Term::remove_phi_term(Self[Blk], Tid) -> Self[Blk]
 pub fn Term::resolved_call_targets(Self[Jmp], resolve_indirect~ : (Exp) -> Array[Tid]) -> Array[Tid]
 pub fn Term::rhs(Self[Def]) -> Exp
 pub fn[T] Term::same(Self[T], Self[T]) -> Bool
@@ -342,8 +347,11 @@ pub fn Term::substitute_sub_var(Self[Sub], Var, Exp) -> Self[Sub]
 pub fn Term::succ_tid_of_jmp(Self[Jmp]) -> Tid?
 pub fn[T] Term::tid(Self[T]) -> Tid
 pub fn Term::to_ssa(Self[Sub], entry? : Tid) -> Self[Sub]
+pub fn Term::update_blk(Self[Sub], Self[Blk]) -> Self[Sub]
 pub fn Term::update_def(Self[Blk], Self[Def]) -> Self[Blk]
+pub fn Term::update_jmp(Self[Blk], Self[Jmp]) -> Self[Blk]
 pub fn Term::update_phi(Self[Phi], Tid, Exp) -> Self[Phi]
+pub fn Term::update_phi_term(Self[Blk], Self[Phi]) -> Self[Blk]
 pub fn Term::uses_var(Self[Blk], Var) -> Bool
 pub fn Term::values(Self[Phi]) -> Array[(Tid, Exp)]
 pub fn Term::with_cond(Self[Jmp], Exp) -> Self[Jmp]
@@ -351,6 +359,7 @@ pub fn Term::with_intent(Self[Arg], Intent) -> Self[Arg]
 pub fn Term::with_kind(Self[Jmp], JmpKind) -> Self[Jmp]
 pub fn Term::with_lhs(Self[Def], Var) -> Self[Def]
 pub fn[T] Term::with_payload(Self[T], T) -> Self[T]
+pub fn Term::with_phi_lhs(Self[Phi], Var) -> Self[Phi]
 pub fn Term::with_rhs(Self[Def], Exp) -> Self[Def]
 pub fn Term::with_sub_name(Self[Sub], String) -> Self[Sub]
 pub fn Term::with_unknown_intent(Self[Arg]) -> Self[Arg]

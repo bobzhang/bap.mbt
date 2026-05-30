@@ -484,6 +484,14 @@ fn image_relocation_word_value(word : @types.Word) -> Result[UInt64, String] {
 }
 
 ///|
+fn image_relocation_addend(base : UInt64, addend : Int64?) -> UInt64 {
+  match addend {
+    Some(value) => base + value.reinterpret_as_uint64()
+    None => base
+  }
+}
+
+///|
 fn Image::relocation_value(
   self : Image,
   relocation : Relocation,
@@ -493,15 +501,21 @@ fn Image::relocation_value(
   if relocation.is_relative() {
     match self.base_address_value {
       Some(base) => {
-        let current = match memory.load(relocation.fixup(), width~) {
-          Ok(word) =>
-            match image_relocation_word_value(word) {
-              Ok(value) => value
+        let value = match relocation.addend() {
+          Some(addend) => base + addend.reinterpret_as_uint64()
+          None => {
+            let current = match memory.load(relocation.fixup(), width~) {
+              Ok(word) =>
+                match image_relocation_word_value(word) {
+                  Ok(value) => value
+                  Err(reason) => return Err(reason)
+                }
               Err(reason) => return Err(reason)
             }
-          Err(reason) => return Err(reason)
+            base + current
+          }
         }
-        match image_relocation_word(width, base + current) {
+        match image_relocation_word(width, value) {
           Ok(word) => Ok(Some(word))
           Err(reason) => Err(reason)
         }
@@ -511,7 +525,11 @@ fn Image::relocation_value(
   } else {
     match relocation.target() {
       Some(target) =>
-        match image_relocation_word(width, target) {
+        match
+          image_relocation_word(
+            width,
+            image_relocation_addend(target, relocation.addend()),
+          ) {
           Ok(word) => Ok(Some(word))
           Err(reason) => Err(reason)
         }

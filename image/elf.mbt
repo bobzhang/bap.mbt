@@ -64,6 +64,7 @@ priv struct ImageElfRelocationEntry {
   offset : UInt64
   symbol_index : Int
   typ : Int
+  addend : Int64?
 }
 
 ///|
@@ -912,7 +913,12 @@ fn image_elf_parse_relocation_entry(
   index : Int,
 ) -> Result[ImageElfRelocationEntry, String] {
   let base = relocation_section.offset + index * relocation_section.entsize
-  image_elf_parse_relocation_entry_at(data, header, base)
+  image_elf_parse_relocation_entry_at(
+    data,
+    header,
+    base,
+    relocation_section.typ == 4,
+  )
 }
 
 ///|
@@ -938,10 +944,39 @@ fn image_elf_parse_relocation_info(
 }
 
 ///|
+fn image_elf_sign_extend(value : UInt64, bits : Int) -> Int64 {
+  if bits >= 64 {
+    value.reinterpret_as_int64()
+  } else {
+    let sign = 1UL << (bits - 1)
+    let extended = if (value & sign) != 0UL {
+      value | (UInt64::lnot(0UL) << bits)
+    } else {
+      value
+    }
+    extended.reinterpret_as_int64()
+  }
+}
+
+///|
+fn image_elf_read_addend(
+  data : Bytes,
+  offset : Int,
+  bytes : Int,
+  endian : @bitvec.Endian,
+) -> Result[Int64, String] {
+  match image_elf_read_uint(data, offset, bytes, endian) {
+    Ok(value) => Ok(image_elf_sign_extend(value, bytes * 8))
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
 fn image_elf_parse_relocation_entry_at(
   data : Bytes,
   header : ImageElfHeader,
   base : Int,
+  has_addend : Bool,
 ) -> Result[ImageElfRelocationEntry, String] {
   let offset = match header.class {
     ImageElf32 => image_elf_read_u64(data, base, 4, header.endian)
@@ -951,11 +986,29 @@ fn image_elf_parse_relocation_entry_at(
     ImageElf32 => image_elf_read_u64(data, base + 4, 4, header.endian)
     ImageElf64 => image_elf_read_u64(data, base + 8, 8, header.endian)
   }
+  let addend = if has_addend {
+    match header.class {
+      ImageElf32 => image_elf_read_addend(data, base + 8, 4, header.endian)
+      ImageElf64 => image_elf_read_addend(data, base + 16, 8, header.endian)
+    }
+  } else {
+    Ok(0L)
+  }
   match (offset, info) {
     (Ok(offset), Ok(info)) =>
-      match image_elf_parse_relocation_info(header, info) {
-        Ok((symbol_index, typ)) => Ok({ offset, symbol_index, typ })
-        Err(reason) => Err(reason)
+      match (image_elf_parse_relocation_info(header, info), addend) {
+        (Ok((symbol_index, typ)), Ok(addend)) =>
+          Ok({
+            offset,
+            symbol_index,
+            typ,
+            addend: if has_addend {
+              Some(addend)
+            } else {
+              None
+            },
+          })
+        (Err(reason), _) | (_, Err(reason)) => Err(reason)
       }
     (Err(reason), _) | (_, Err(reason)) => Err(reason)
   }
@@ -1017,7 +1070,11 @@ fn image_elf_relocations(
         }
         if image_elf_is_relative_relocation(header, entry.typ) {
           relocations.push(
-            Relocation::create(fixup=entry.offset, relative=true),
+            Relocation::create(
+              fixup=entry.offset,
+              addend?=entry.addend,
+              relative=true,
+            ),
           )
         } else if entry.symbol_index != 0 {
           let symbol = match symbol_entries.get(entry.symbol_index) {
@@ -1032,7 +1089,11 @@ fn image_elf_relocations(
                 )
               } else {
                 relocations.push(
-                  Relocation::create(fixup=entry.offset, target=symbol.value),
+                  Relocation::create(
+                    fixup=entry.offset,
+                    target=symbol.value,
+                    addend?=entry.addend,
+                  ),
                 )
               }
             None => ()
@@ -1105,6 +1166,7 @@ fn image_elf_dynamic_relocation_table_entries(
             data,
             header,
             table_offset + i * entry_size,
+            has_addend,
           ) {
           Ok(entry) => entries.push(entry)
           Err(reason) => return Err(reason)
@@ -1409,7 +1471,11 @@ fn image_elf_dynamic_external_or_target_relocation(
             Ok(
               (
                 Some(
-                  Relocation::create(fixup=entry.offset, target=symbol.value),
+                  Relocation::create(
+                    fixup=entry.offset,
+                    target=symbol.value,
+                    addend?=entry.addend,
+                  ),
                 ),
                 None,
               ),
@@ -1514,7 +1580,11 @@ fn image_elf_dynamic_relocations_from_programs(
       for entry in rela_entries {
         if image_elf_is_relative_relocation(header, entry.typ) {
           relocations.push(
-            Relocation::create(fixup=entry.offset, relative=true),
+            Relocation::create(
+              fixup=entry.offset,
+              addend?=entry.addend,
+              relative=true,
+            ),
           )
         } else {
           match
@@ -1539,7 +1609,11 @@ fn image_elf_dynamic_relocations_from_programs(
       for entry in rel_entries {
         if image_elf_is_relative_relocation(header, entry.typ) {
           relocations.push(
-            Relocation::create(fixup=entry.offset, relative=true),
+            Relocation::create(
+              fixup=entry.offset,
+              addend?=entry.addend,
+              relative=true,
+            ),
           )
         } else {
           match

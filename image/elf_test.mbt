@@ -118,6 +118,7 @@ fn image_elf_test_write_rela64(
   relocation_offset : UInt64,
   symbol_index : Int,
   typ : Int,
+  addend? : Int64 = 0L,
 ) -> Unit {
   image_elf_test_set_u64_le(buffer, offset, relocation_offset)
   image_elf_test_set_u64_le(
@@ -125,7 +126,7 @@ fn image_elf_test_write_rela64(
     offset + 8,
     (symbol_index.to_uint64() << 32) | typ.to_uint64(),
   )
-  image_elf_test_set_u64_le(buffer, offset + 16, 0UL)
+  image_elf_test_set_u64_le(buffer, offset + 16, addend.reinterpret_as_uint64())
 }
 
 ///|
@@ -357,9 +358,16 @@ fn image_elf_test_make_x86_64_with_relocations() -> Bytes {
     0UL,
   )
   image_elf_test_write_bytes(buffer, strtab_offset, strtab)
-  image_elf_test_write_rela64(buffer, rela_offset, 0x400000UL, 2, 4)
+  image_elf_test_write_rela64(buffer, rela_offset, 0x400000UL, 2, 4, addend=4L)
   image_elf_test_write_rela64(buffer, rela_offset + 24, 0x400001UL, 3, 4)
-  image_elf_test_write_rela64(buffer, rela_offset + 48, 0x400003UL, 0, 8)
+  image_elf_test_write_rela64(
+    buffer,
+    rela_offset + 48,
+    0x400003UL,
+    0,
+    8,
+    addend=-8L,
+  )
   Bytes::from_array(buffer)
 }
 
@@ -571,7 +579,14 @@ fn image_elf_test_make_x86_64_dynamic_without_sections() -> Bytes {
     0UL,
   )
   image_elf_test_write_bytes(buffer, dynstr_offset, dynstr)
-  image_elf_test_write_rela64(buffer, rela_offset, 0x600001UL, 0, 8)
+  image_elf_test_write_rela64(
+    buffer,
+    rela_offset,
+    0x600001UL,
+    0,
+    8,
+    addend=0x30L,
+  )
   image_elf_test_write_rela64(buffer, rela_offset + 24, 0x600008UL, 1, 7)
   Bytes::from_array(buffer)
 }
@@ -732,6 +747,7 @@ test "image ELF backend extracts relocation metadata" {
     None => fail("expected absolute relocation")
   }
   assert_true(absolute.target() == Some(0x400002UL))
+  assert_true(absolute.addend() == Some(4L))
   assert_true(!absolute.is_relative())
   let relative = match
     relocations.search_by(relocation => relocation.fixup() == 0x400003UL) {
@@ -739,6 +755,7 @@ test "image ELF backend extracts relocation metadata" {
     None => fail("expected relative relocation")
   }
   assert_true(relative.target() == None)
+  assert_true(relative.addend() == Some(-8L))
   assert_true(relative.is_relative())
   let references = image.external_references()
   assert_true(references.length() == 1)
@@ -874,6 +891,7 @@ test "image ELF backend extracts PT_DYNAMIC metadata without section headers" {
   let relocations = image.relocations()
   assert_true(relocations.length() == 1)
   assert_true(relocations[0].fixup() == 0x600001UL)
+  assert_true(relocations[0].addend() == Some(0x30L))
   assert_true(relocations[0].is_relative())
   let references = image.external_references()
   assert_true(references.length() == 1)

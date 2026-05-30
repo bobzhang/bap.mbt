@@ -135,7 +135,8 @@ pub(all) enum OgreFieldType {
 pub fn OgreFieldType::to_string(Self) -> String
 
 type Relocation
-pub fn Relocation::create(fixup~ : UInt64, target? : UInt64, relative? : Bool) -> Self
+pub fn Relocation::addend(Self) -> Int64?
+pub fn Relocation::create(fixup~ : UInt64, target? : UInt64, addend? : Int64, relative? : Bool) -> Self
 pub fn Relocation::fixup(Self) -> UInt64
 pub fn Relocation::is_relative(Self) -> Bool
 pub fn Relocation::target(Self) -> UInt64?

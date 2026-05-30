@@ -162,8 +162,10 @@ backend-specific relocation applier or symbolizer exists.
 For ELF relocation sections, preserve metadata conservatively: relocations
 against named undefined symbols become external references, relocations against
 named defined symbols can record the symbol value as the target, and known
-machine-relative relocation types can record a relative relocation. Leave
-type-specific relocation application to a later pass.
+machine-relative relocation types can record a relative relocation. Preserve
+signed `RELA` addends on the relocation metadata instead of folding them into
+symbol values; this keeps `S` and `A` distinguishable for later
+architecture-specific handling.
 For stripped ELF files, preserve relative dynamic relocations from `PT_DYNAMIC`
 when section relocation tables are absent. Resolve `DT_RELA`/`DT_REL` virtual
 addresses through `PT_LOAD` headers, bound them with `DT_RELASZ`/`DT_RELSZ`,
@@ -171,14 +173,18 @@ honor entry-size tags when present, and record only known machine-relative
 relocation types. When symbol-based dynamic relocations are present with
 `DT_SYMTAB`, `DT_SYMENT`, `DT_STRTAB`, and `DT_STRSZ`, resolve the referenced
 dynamic symbol by index: undefined symbols become external references, while
-defined symbols may become target relocations. Leave relocation application to
-the loader/runtime layer.
+defined symbols may become target relocations. Preserve signed `DT_RELA`
+addends for both relative and symbol-target relocations; `DT_REL` entries have
+no explicit addend and should keep using the encoded word at the fixup when a
+relocation applier needs one.
 For a pure MoonBit relocation application stage, keep it explicit and checked:
-absolute relocation facts write their target word at the fixup address, while
-relative relocation facts require image base-address metadata, read the current
-word at the fixup, add the base, and write the result back using the image
-address width and endian. Return a new image/project instead of mutating source
-segments, and fail on missing bases or out-of-bounds stores.
+absolute relocation facts write `target + addend` at the fixup address, while
+relative relocation facts require image base-address metadata and write
+`base + addend` when a `RELA` addend is present. Without an explicit addend,
+keep the BAP/Ogre-compatible fallback: read the current word at the fixup, add
+the base, and write the result back using the image address width and endian.
+Return a new image/project instead of mutating source segments, and fail on
+missing bases or out-of-bounds stores.
 Project-level image fallback can enrich successful ELF loads with optional
 DWARF-derived function symbols, but unsupported or malformed DWARF should not
 turn a loadable stripped binary into a project-loading failure. Treat those

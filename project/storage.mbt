@@ -54,6 +54,25 @@ fn decode_project_int(name : String, value : String) -> Result[Int, String] {
 }
 
 ///|
+pub fn ProjectStorageTag::uint64(name : String) -> ProjectStorageTag[UInt64] {
+  ProjectStorageTag::create(name~, encode=value => value.to_string(), decode=value => {
+    decode_project_uint64(name, value)
+  })
+}
+
+///|
+fn decode_project_uint64(
+  name : String,
+  value : String,
+) -> Result[UInt64, String] {
+  try @string.parse_uint64(value) catch {
+    _ => Err("can't decode project uint64 tag \{name}")
+  } noraise {
+    parsed => Ok(parsed)
+  }
+}
+
+///|
 pub fn ProjectStorageTag::bitvec(
   name : String,
 ) -> ProjectStorageTag[@bitvec.BitVec] {
@@ -157,6 +176,42 @@ pub fn ProjectStorageTag::int_array(
   ProjectStorageTag::create(name~, encode=values => encode_int_array(values), decode=value => {
     decode_int_array(name, value)
   })
+}
+
+///|
+fn encode_uint64_array(values : Array[UInt64]) -> String {
+  encode_string_array([ for value in values => value.to_string() ])
+}
+
+///|
+fn decode_uint64_array(
+  name : String,
+  value : String,
+) -> Result[Array[UInt64], String] {
+  match decode_string_array(name, value) {
+    Err(_) => Err("can't decode project uint64 array tag \{name}")
+    Ok(items) => {
+      let values = []
+      for item in items {
+        match decode_project_uint64(name, item) {
+          Ok(parsed) => values.push(parsed)
+          Err(_) => return Err("can't decode project uint64 array tag \{name}")
+        }
+      }
+      Ok(values)
+    }
+  }
+}
+
+///|
+pub fn ProjectStorageTag::uint64_array(
+  name : String,
+) -> ProjectStorageTag[Array[UInt64]] {
+  ProjectStorageTag::create(
+    name~,
+    encode=values => encode_uint64_array(values),
+    decode=value => decode_uint64_array(name, value),
+  )
 }
 
 ///|

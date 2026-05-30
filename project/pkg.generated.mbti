@@ -220,6 +220,8 @@ pub fn ProjectStorageTag::int_array(String) -> Self[Array[Int]]
 pub fn[T] ProjectStorageTag::name(Self[T]) -> String
 pub fn ProjectStorageTag::string(String) -> Self[String]
 pub fn ProjectStorageTag::string_array(String) -> Self[Array[String]]
+pub fn ProjectStorageTag::uint64(String) -> Self[UInt64]
+pub fn ProjectStorageTag::uint64_array(String) -> Self[Array[UInt64]]
 
 type RegisteredProjectCollator
 pub fn RegisteredProjectCollator::apply(Self, Array[Project]) -> Unit

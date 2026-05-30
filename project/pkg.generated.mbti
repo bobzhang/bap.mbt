@@ -14,11 +14,15 @@ pub fn apply_analysis(String, Array[String]) -> Result[Unit, String]
 
 pub fn available_input_loaders() -> Array[String]
 
+pub fn brancher_names() -> Array[String]
+
 pub fn disassembly_driver_names() -> Array[String]
 
 pub fn disassembly_drivers() -> Array[ProjectDisassemblyDriver]
 
 pub fn find_analysis(String) -> ProjectAnalysis?
+
+pub fn find_brancher(String) -> ProjectBrancher?
 
 pub fn find_collator(String) -> RegisteredProjectCollator?
 
@@ -35,6 +39,12 @@ pub fn input_loaders_for_extension(String) -> Array[ProjectInputLoader]
 pub fn passes() -> Array[ProjectPass]
 
 pub fn register_analysis(ProjectAnalysis) -> Result[Unit, String]
+
+pub fn register_brancher(name~ : String, ProjectBrancher) -> Result[Unit, String]
+
+pub fn register_brancher_if_absent(name~ : String, ProjectBrancher) -> Result[Bool, String]
+
+pub fn register_builtin_branchers() -> Result[Unit, String]
 
 pub fn register_builtin_disassembly_drivers() -> Result[Unit, String]
 
@@ -79,6 +89,7 @@ pub fn Library::unit(Self) -> @core_theory.ProgramUnit
 type Project
 pub fn Project::add_library(Self, Library) -> Self
 pub fn Project::apply_brancher(Self, brancher? : ProjectBrancher) -> Result[Self, String]
+pub fn Project::apply_brancher_named(Self, brancher~ : String) -> Result[Self, String]
 pub fn Project::arch(Self) -> @core_theory.Target
 pub fn Project::base_address(Self) -> UInt64?
 pub fn Project::create(target~ : @core_theory.Target, image? : @image.Image, filename? : String, program? : @types.Term[@types.Program], memory? : @memory.MemMap[String], symbols? : Array[@image.Symbol], storage? : Map[String, String], libraries? : Array[Library], state? : ProjectState) -> Self

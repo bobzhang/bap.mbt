@@ -159,6 +159,9 @@ call/branch classifier is available. Model branchers as a checked project stage
 that enriches already materialized disassembly blocks with those edge facts;
 the empty brancher should be a no-op for existing blocks, while applying any
 brancher to a project without disassembly blocks should fail explicitly. Keep
+brancher registration strict for user-provided names and idempotent for the
+built-in empty brancher, matching the loader/driver pattern of discoverable
+project services without hiding accidental duplicate custom providers. Keep
 the top-level project orchestration explicit: a one-shot helper may run either
 a named or discovered disassembly driver, optionally apply a brancher, and then
 a named/default reconstructor, but it

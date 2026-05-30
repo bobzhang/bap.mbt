@@ -6,6 +6,9 @@ struct ProjectBrancher {
 }
 
 ///|
+let project_brancher_registry : Map[String, ProjectBrancher] = {}
+
+///|
 pub fn ProjectBrancher::create(
   resolve : (@memory.Memory) -> Array[ProjectDisassemblyEdge],
 ) -> ProjectBrancher {
@@ -62,6 +65,55 @@ pub fn ProjectBrancher::resolve(
 }
 
 ///|
+pub fn register_brancher(
+  name~ : String,
+  brancher : ProjectBrancher,
+) -> Result[Unit, String] {
+  if project_brancher_registry.contains(name) {
+    Err("project brancher \{name} is already registered")
+  } else {
+    project_brancher_registry[name] = brancher
+    Ok(())
+  }
+}
+
+///|
+pub fn register_brancher_if_absent(
+  name~ : String,
+  brancher : ProjectBrancher,
+) -> Result[Bool, String] {
+  if project_brancher_registry.contains(name) {
+    Ok(false)
+  } else {
+    match register_brancher(name~, brancher) {
+      Ok(_) => Ok(true)
+      Err(reason) => Err(reason)
+    }
+  }
+}
+
+///|
+pub fn register_builtin_branchers() -> Result[Unit, String] {
+  match register_brancher_if_absent(name="empty", ProjectBrancher::empty()) {
+    Ok(_) => Ok(())
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+pub fn find_brancher(name : String) -> ProjectBrancher? {
+  project_brancher_registry.get(name)
+}
+
+///|
+pub fn brancher_names() -> Array[String] {
+  let names = []
+  project_brancher_registry.each((name, _) => names.push(name))
+  names.sort_by((left, right) => left.compare(right))
+  names
+}
+
+///|
 pub fn Project::apply_brancher(
   self : Project,
   brancher? : ProjectBrancher,
@@ -81,4 +133,15 @@ pub fn Project::apply_brancher(
     }
   }
   Ok(self.with_disassembly(state))
+}
+
+///|
+pub fn Project::apply_brancher_named(
+  self : Project,
+  brancher~ : String,
+) -> Result[Project, String] {
+  match find_brancher(brancher) {
+    Some(value) => self.apply_brancher(brancher=value)
+    None => Err("unknown project brancher \{brancher}")
+  }
 }

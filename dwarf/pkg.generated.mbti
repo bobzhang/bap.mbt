@@ -1,0 +1,27 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/dwarf"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+type Leb128 derive(Eq, @debug.Debug)
+pub fn Leb128::bytes(Self) -> Bytes
+pub fn Leb128::is_negative(Self) -> Bool
+pub fn Leb128::of_int(Int, signed? : Bool) -> Self
+pub fn Leb128::of_int64(Int64, signed? : Bool) -> Self
+pub fn Leb128::read(BytesView, signed? : Bool, pos? : Int) -> Result[(Self, Int), String]
+pub fn Leb128::size(Self) -> Int
+pub fn Leb128::to_int(Self) -> Result[Int, String]
+pub fn Leb128::to_int64(Self) -> Result[Int64, String]
+pub fn Leb128::write(Self) -> Bytes
+
+// Type aliases
+
+// Traits
+

@@ -274,6 +274,27 @@ fn dwarf_read_strp_name(
 }
 
 ///|
+fn dwarf_read_line_strp_name(
+  input : DwarfInput,
+  endian : @bitvec.Endian,
+  dwarf_size : DwarfWordSize,
+  line_str_section : DwarfSectionBuffer?,
+) -> Result[(String, DwarfInput), String] {
+  let section = match line_str_section {
+    Some(section) => section
+    None => return Err("section .debug_line_str is not available")
+  }
+  match input.read_offset(endian~, size=dwarf_size) {
+    Ok((offset, next)) =>
+      match dwarf_read_str_section_name(section, offset) {
+        Ok(name) => Ok((name, next))
+        Err(reason) => Err(reason)
+      }
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
 fn dwarf_read_strx_name(
   input : DwarfInput,
   spec : DwarfIndexSpec,
@@ -644,6 +665,7 @@ fn dwarf_read_attr_value(
   addr_base : Int?,
   addr_section : DwarfSectionBuffer?,
   str_offsets_base : Int,
+  line_str_section : DwarfSectionBuffer?,
   str_offsets_section : DwarfSectionBuffer?,
   str_section : DwarfSectionBuffer,
 ) -> Result[(DwarfFunctionAttrValue, DwarfInput), String] {
@@ -660,6 +682,7 @@ fn dwarf_read_attr_value(
             addr_base,
             addr_section,
             str_offsets_base,
+            line_str_section,
             str_offsets_section,
             str_section,
           )
@@ -677,6 +700,14 @@ fn dwarf_read_attr_value(
           }
         DwarfStrp =>
           match dwarf_read_strp_name(input, endian, dwarf_size, str_section) {
+            Ok((name, next)) => Ok((dwarf_name_value(field, name), next))
+            Err(reason) => Err(reason)
+          }
+        DwarfLineStrp =>
+          match
+            dwarf_read_line_strp_name(
+              input, endian, dwarf_size, line_str_section,
+            ) {
             Ok((name, next)) => Ok((dwarf_name_value(field, name), next))
             Err(reason) => Err(reason)
           }
@@ -1040,6 +1071,7 @@ fn dwarf_read_die(
   str_offsets_base : Int,
   rnglists_base : Int?,
   addr_section : DwarfSectionBuffer?,
+  line_str_section : DwarfSectionBuffer?,
   str_offsets_section : DwarfSectionBuffer?,
   str_section : DwarfSectionBuffer,
   ranges_section : DwarfSectionBuffer?,
@@ -1061,7 +1093,7 @@ fn dwarf_read_die(
       match
         dwarf_read_attr_value(
           cursor, field, endian, dwarf_size, addr_size, addr_base, addr_section,
-          str_offsets_base, str_offsets_section, str_section,
+          str_offsets_base, line_str_section, str_offsets_section, str_section,
         ) {
         Ok((value, next)) => {
           values.push(value)
@@ -1162,6 +1194,7 @@ fn dwarf_parse_unit(
   info : DwarfInput,
   abbrev_section : DwarfSectionBuffer,
   str_section : DwarfSectionBuffer,
+  line_str_section : DwarfSectionBuffer?,
   str_offsets_section : DwarfSectionBuffer?,
   addr_section : DwarfSectionBuffer?,
   ranges_section : DwarfSectionBuffer?,
@@ -1214,6 +1247,7 @@ fn dwarf_parse_unit(
                             str_offsets_base,
                             rnglists_base,
                             addr_section,
+                            line_str_section,
                             str_offsets_section,
                             str_section,
                             ranges_section,
@@ -1340,6 +1374,10 @@ pub fn DwarfData::functions(
     Ok(section) => Some(section)
     Err(_) => None
   }
+  let line_str_section = match self.section(DwarfLineStr) {
+    Ok(section) => Some(section)
+    Err(_) => None
+  }
   let addr_section = match self.section(DwarfAddr) {
     Ok(section) => Some(section)
     Err(_) => None
@@ -1366,6 +1404,7 @@ pub fn DwarfData::functions(
         cursor,
         abbrev_section,
         str_section,
+        line_str_section,
         str_offsets_section,
         addr_section,
         ranges_section,

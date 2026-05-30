@@ -249,6 +249,47 @@ fn elf_test_make_elf64_debug_with_str_offsets(
 }
 
 ///|
+fn elf_test_make_elf64_debug_with_line_str(
+  info : Bytes,
+  abbrev : Bytes,
+  str : Bytes,
+  line_str : Bytes,
+) -> Bytes {
+  let shstr = b"\x00.shstrtab\x00.debug_info\x00.debug_abbrev\x00.debug_str\x00.debug_line_str\x00"
+  let data_offset = 64 + 6 * 64
+  let shstr_offset = data_offset
+  let info_offset = shstr_offset + shstr.length()
+  let abbrev_offset = info_offset + info.length()
+  let str_offset = abbrev_offset + abbrev.length()
+  let line_str_offset = str_offset + str.length()
+  let total = line_str_offset + line_str.length()
+  let buffer = Array::make(total, b'\x00')
+  elf_test_write_bytes(buffer, 0, b"\x7fELF")
+  buffer[4] = b'\x02'
+  buffer[5] = b'\x01'
+  buffer[6] = b'\x01'
+  elf_test_set_u16_le(buffer, 16, 1)
+  elf_test_set_u16_le(buffer, 18, 0x3e)
+  elf_test_set_u32_le(buffer, 20, 1)
+  elf_test_set_u64_le(buffer, 40, 64UL)
+  elf_test_set_u16_le(buffer, 52, 64)
+  elf_test_set_u16_le(buffer, 58, 64)
+  elf_test_set_u16_le(buffer, 60, 6)
+  elf_test_set_u16_le(buffer, 62, 1)
+  elf_test_write_section64(buffer, 1, 1, 3, shstr_offset, shstr.length())
+  elf_test_write_section64(buffer, 2, 11, 1, info_offset, info.length())
+  elf_test_write_section64(buffer, 3, 23, 1, abbrev_offset, abbrev.length())
+  elf_test_write_section64(buffer, 4, 37, 1, str_offset, str.length())
+  elf_test_write_section64(buffer, 5, 48, 1, line_str_offset, line_str.length())
+  elf_test_write_bytes(buffer, shstr_offset, shstr)
+  elf_test_write_bytes(buffer, info_offset, info)
+  elf_test_write_bytes(buffer, abbrev_offset, abbrev)
+  elf_test_write_bytes(buffer, str_offset, str)
+  elf_test_write_bytes(buffer, line_str_offset, line_str)
+  Bytes::from_array(buffer)
+}
+
+///|
 fn elf_test_make_elf64_debug_with_ranges(
   info : Bytes,
   abbrev : Bytes,
@@ -578,6 +619,38 @@ test "translated DWARF FBI reads indexed strings from ELF debug sections" {
   assert_true(functions[0].name() == "elfx")
   assert_true(functions[0].low_pc() == 0xa0UL)
   assert_true(functions[0].high_pc() == Some(0xa4UL))
+}
+
+///|
+test "translated DWARF FBI reads line strings from ELF debug sections" {
+  let abbrev = b"\x01\x2e\x00" +
+    b"\x03\x1f" +
+    b"\x11\x01" +
+    b"\x12\x0b" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x13\x00\x00\x00" +
+    b"\x05\x00" +
+    b"\x01" +
+    b"\x04" +
+    b"\x00\x00\x00\x00" +
+    b"\x01" +
+    b"\x05\x00\x00\x00" +
+    b"\x44\x00\x00\x00" +
+    b"\x08" +
+    b"\x00"
+  let line_str = b"skip\x00elfline\x00"
+  let data = expect_elf_data(
+    @dwarf.DwarfData::from_elf_bytes(
+      elf_test_make_elf64_debug_with_line_str(info, abbrev, b"", line_str),
+    ),
+  )
+  assert_true(expect_elf_section(data.section(DwarfLineStr)).data() == line_str)
+  let functions = expect_elf_functions(data.functions())
+  assert_true(functions.length() == 1)
+  assert_true(functions[0].name() == "elfline")
+  assert_true(functions[0].low_pc() == 0x44UL)
+  assert_true(functions[0].high_pc() == Some(0x4cUL))
 }
 
 ///|

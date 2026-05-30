@@ -58,9 +58,11 @@ pub fn DwarfAbbrevField::value_kind(
     (DwarfName, DwarfString)
     | (DwarfName, DwarfStrp)
     | (DwarfName, DwarfStrx(_))
+    | (DwarfName, DwarfLineStrp)
     | (DwarfLinkageName, DwarfString)
     | (DwarfLinkageName, DwarfStrp)
-    | (DwarfLinkageName, DwarfStrx(_)) => DwarfNameValue
+    | (DwarfLinkageName, DwarfStrx(_))
+    | (DwarfLinkageName, DwarfLineStrp) => DwarfNameValue
     (DwarfLowPc, DwarfAddr) | (DwarfLowPc, DwarfAddrx(_)) => DwarfLowPcValue
     (DwarfEntryPc, DwarfAddr) | (DwarfEntryPc, DwarfAddrx(_)) =>
       DwarfEntryPcValue

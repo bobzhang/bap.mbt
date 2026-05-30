@@ -217,8 +217,9 @@ compile unit or lexical scope should seed that DIE's children, but it must not
 leak into following siblings after a null child-list terminator.
 For abbreviation-only values such as `DW_FORM_implicit_const`, consume the
 signed LEB128 payload in the abbreviation table and do not expect bytes in the
-DIE stream. Unknown producer metadata forms such as `DW_FORM_line_strp`,
-`DW_FORM_data16`, and `DW_FORM_loclistx` should still be skippable so FBI
+DIE stream. Preserve `.debug_line_str` and resolve `DW_FORM_line_strp` names
+from that section; other unknown producer metadata forms such as
+`DW_FORM_data16` and `DW_FORM_loclistx` should still be skippable so FBI
 extraction can keep useful function bounds.
 For concrete function DIEs that omit a direct name, resolve
 `DW_AT_specification` and `DW_AT_abstract_origin` references through the target

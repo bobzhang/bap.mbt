@@ -104,6 +104,40 @@ test "translated DWARF FBI extracts string-table names and absolute high pc" {
 }
 
 ///|
+test "translated DWARF FBI extracts line-string names" {
+  let abbrev = b"\x01\x2e\x00" +
+    b"\x03\x1f" +
+    b"\x11\x01" +
+    b"\x12\x0b" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x13\x00\x00\x00" +
+    b"\x05\x00" +
+    b"\x01" +
+    b"\x04" +
+    b"\x00\x00\x00\x00" +
+    b"\x01" +
+    b"\x05\x00\x00\x00" +
+    b"\x44\x00\x00\x00" +
+    b"\x08" +
+    b"\x00"
+  let data = expect_fbi_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=LittleEndian,
+      info~,
+      abbrev~,
+      str=b"",
+      line_str=b"skip\x00linefn\x00",
+    ),
+  )
+  let functions = expect_functions(data.functions())
+  assert_true(functions.length() == 1)
+  assert_true(functions[0].name() == "linefn")
+  assert_true(functions[0].low_pc() == 0x44UL)
+  assert_true(functions[0].high_pc() == Some(0x4cUL))
+}
+
+///|
 test "translated DWARF FBI falls back to linkage names" {
   let abbrev = b"\x01\x2e\x00" +
     b"\x6e\x08" +

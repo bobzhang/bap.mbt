@@ -65,7 +65,7 @@ pub(all) enum DwarfAttr {
 type DwarfData
 pub fn DwarfData::create(endian~ : @bitvec.Endian, sections~ : Array[(DwarfSection, DwarfSectionBuffer)]) -> Result[Self, String]
 pub fn DwarfData::endian(Self) -> @bitvec.Endian
-pub fn DwarfData::from_bytes(endian~ : @bitvec.Endian, info? : Bytes, abbrev? : Bytes, str? : Bytes, str_offsets? : Bytes, addr? : Bytes, ranges? : Bytes, rnglists? : Bytes) -> Result[Self, String]
+pub fn DwarfData::from_bytes(endian~ : @bitvec.Endian, info? : Bytes, abbrev? : Bytes, str? : Bytes, line_str? : Bytes, str_offsets? : Bytes, addr? : Bytes, ranges? : Bytes, rnglists? : Bytes) -> Result[Self, String]
 pub fn DwarfData::from_elf_bytes(Bytes) -> Result[Self, String]
 pub fn DwarfData::functions(Self) -> Result[Array[DwarfFunction], String]
 pub fn DwarfData::has_section(Self, DwarfSection) -> Bool
@@ -144,6 +144,7 @@ pub(all) enum DwarfSection {
   DwarfInfo
   DwarfAbbrev
   DwarfStr
+  DwarfLineStr
   DwarfStrOffsets
   DwarfAddr
   DwarfRanges

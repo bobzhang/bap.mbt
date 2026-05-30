@@ -3,6 +3,7 @@ pub(all) enum DwarfSection {
   DwarfInfo
   DwarfAbbrev
   DwarfStr
+  DwarfLineStr
   DwarfStrOffsets
   DwarfAddr
   DwarfRanges
@@ -27,6 +28,7 @@ pub fn DwarfSection::to_string(self : DwarfSection) -> String {
     DwarfInfo => ".debug_info"
     DwarfAbbrev => ".debug_abbrev"
     DwarfStr => ".debug_str"
+    DwarfLineStr => ".debug_line_str"
     DwarfStrOffsets => ".debug_str_offsets"
     DwarfAddr => ".debug_addr"
     DwarfRanges => ".debug_ranges"
@@ -106,6 +108,7 @@ pub fn DwarfData::from_bytes(
   info? : Bytes,
   abbrev? : Bytes,
   str? : Bytes,
+  line_str? : Bytes,
   str_offsets? : Bytes,
   addr? : Bytes,
   ranges? : Bytes,
@@ -132,6 +135,14 @@ pub fn DwarfData::from_bytes(
     Some(data) =>
       match DwarfSectionBuffer::create(data) {
         Ok(buffer) => sections.push((DwarfStr, buffer))
+        Err(reason) => return Err(reason)
+      }
+    None => ()
+  }
+  match line_str {
+    Some(data) =>
+      match DwarfSectionBuffer::create(data) {
+        Ok(buffer) => sections.push((DwarfLineStr, buffer))
         Err(reason) => return Err(reason)
       }
     None => ()

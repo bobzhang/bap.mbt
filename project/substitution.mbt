@@ -88,6 +88,36 @@ fn Project::subst_find_block(
 }
 
 ///|
+fn Project::subst_find_instruction(
+  self : Project,
+  memory : @memory.Memory,
+) -> ProjectDisassemblyInstruction? {
+  for instruction in self.state_value.disassembly().instructions() {
+    if instruction.memory().dominates(memory) {
+      return Some(instruction)
+    }
+  }
+  None
+}
+
+///|
+fn Project::subst_disassembly_text(
+  self : Project,
+  memory : @memory.Memory,
+  name : String,
+) -> String {
+  match self.subst_find_instruction(memory) {
+    Some(instruction) =>
+      match name {
+        "asm" => instruction.assembly()
+        "bil" => instruction.bil()
+        _ => name
+      }
+    None => "<disassembly unavailable>"
+  }
+}
+
+///|
 fn Project::subst_value(
   self : Project,
   memory : @memory.Memory,
@@ -143,7 +173,7 @@ fn Project::subst_value(
       }
     "min_addr" | "addr" => project_subst_memory_addr(memory, "min")
     "max_addr" => project_subst_memory_addr(memory, "max")
-    "asm" | "bil" => "<disassembly unavailable>"
+    "asm" | "bil" => self.subst_disassembly_text(memory, name)
     _ => name
   }
 }

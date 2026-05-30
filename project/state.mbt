@@ -1,6 +1,14 @@
 ///|
+struct ProjectDisassemblyInstruction {
+  memory_value : @memory.Memory
+  assembly_value : String
+  bil_value : String
+}
+
+///|
 struct ProjectDisassemblyState {
   blocks_value : Array[@memory.Memory]
+  instructions_value : Array[ProjectDisassemblyInstruction]
 }
 
 ///|
@@ -10,16 +18,51 @@ struct ProjectState {
 }
 
 ///|
+pub fn ProjectDisassemblyInstruction::create(
+  memory : @memory.Memory,
+  assembly? : String = "",
+  bil? : String = "",
+) -> ProjectDisassemblyInstruction {
+  { memory_value: memory, assembly_value: assembly, bil_value: bil }
+}
+
+///|
+pub fn ProjectDisassemblyInstruction::memory(
+  self : ProjectDisassemblyInstruction,
+) -> @memory.Memory {
+  self.memory_value
+}
+
+///|
+pub fn ProjectDisassemblyInstruction::assembly(
+  self : ProjectDisassemblyInstruction,
+) -> String {
+  self.assembly_value
+}
+
+///|
+pub fn ProjectDisassemblyInstruction::bil(
+  self : ProjectDisassemblyInstruction,
+) -> String {
+  self.bil_value
+}
+
+///|
 pub fn ProjectDisassemblyState::empty() -> ProjectDisassemblyState {
-  { blocks_value: [] }
+  { blocks_value: [], instructions_value: [] }
 }
 
 ///|
 pub fn ProjectDisassemblyState::create(
   blocks? : Array[@memory.Memory],
+  instructions? : Array[ProjectDisassemblyInstruction],
 ) -> ProjectDisassemblyState {
   {
     blocks_value: match blocks {
+      Some(items) => items.copy()
+      None => []
+    },
+    instructions_value: match instructions {
       Some(items) => items.copy()
       None => []
     },
@@ -41,11 +84,25 @@ pub fn ProjectDisassemblyState::block_count(
 }
 
 ///|
+pub fn ProjectDisassemblyState::instructions(
+  self : ProjectDisassemblyState,
+) -> Array[ProjectDisassemblyInstruction] {
+  self.instructions_value.copy()
+}
+
+///|
+pub fn ProjectDisassemblyState::instruction_count(
+  self : ProjectDisassemblyState,
+) -> Int {
+  self.instructions_value.length()
+}
+
+///|
 pub fn ProjectDisassemblyState::with_blocks(
-  _self : ProjectDisassemblyState,
+  self : ProjectDisassemblyState,
   blocks : Array[@memory.Memory],
 ) -> ProjectDisassemblyState {
-  { blocks_value: blocks.copy() }
+  { ..self, blocks_value: blocks.copy() }
 }
 
 ///|
@@ -55,7 +112,25 @@ pub fn ProjectDisassemblyState::add_block(
 ) -> ProjectDisassemblyState {
   let blocks = self.blocks_value.copy()
   blocks.push(block)
-  { blocks_value: blocks }
+  { ..self, blocks_value: blocks }
+}
+
+///|
+pub fn ProjectDisassemblyState::with_instructions(
+  self : ProjectDisassemblyState,
+  instructions : Array[ProjectDisassemblyInstruction],
+) -> ProjectDisassemblyState {
+  { ..self, instructions_value: instructions.copy() }
+}
+
+///|
+pub fn ProjectDisassemblyState::add_instruction(
+  self : ProjectDisassemblyState,
+  instruction : ProjectDisassemblyInstruction,
+) -> ProjectDisassemblyState {
+  let instructions = self.instructions_value.copy()
+  instructions.push(instruction)
+  { ..self, instructions_value: instructions }
 }
 
 ///|

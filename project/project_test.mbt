@@ -136,6 +136,34 @@ test "project substitutes disassembly block placeholders" {
 }
 
 ///|
+test "project substitutes disassembly instruction text placeholders" {
+  let target = @core_theory.Target::unknown()
+  let block = raw_segment().memory()
+  let instruction = @project.ProjectDisassemblyInstruction::create(
+    block,
+    assembly="nop; ret",
+    bil="jmp 0x1001",
+  )
+  let project = @project.Project::empty(target).with_disassembly(
+    @project.ProjectDisassemblyState::empty()
+    .add_block(block)
+    .add_instruction(instruction),
+  )
+  match block.view(from=0x1001UL, words=1) {
+    Ok(region) => {
+      let tagged = project.substitute(region, "disasm-comment", "$asm / $bil")
+      assert_true(
+        tagged
+        .memory()
+        .lookup(0x1001UL)
+        .any(entry => entry.1 == "disasm-comment=nop; ret / jmp 0x1001"),
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project maps programs and stores libraries" {
   let target = @core_theory.Target::unknown()
   let sub = @types.Sub::create(name="main")
@@ -174,19 +202,30 @@ test "project and libraries carry disassembly state" {
   let target = @core_theory.Target::unknown()
   let block = raw_segment().memory()
   let sub = @types.Sub::create(name="entry")
-  let disassembly = @project.ProjectDisassemblyState::empty().add_block(block)
+  let instruction = @project.ProjectDisassemblyInstruction::create(
+    block,
+    assembly="ret",
+    bil="jmp LR",
+  )
+  let disassembly = @project.ProjectDisassemblyState::empty()
+    .add_block(block)
+    .add_instruction(instruction)
   let state = @project.ProjectState::empty()
     .with_disassembly(disassembly)
     .add_subroutine(sub)
   let project = @project.Project::empty(target).with_state(state)
   assert_true(project.state().subroutines().length() == 1)
   assert_true(project.disassembly().block_count() == 1)
+  assert_true(project.disassembly().instruction_count() == 1)
   assert_true(project.disassembly().blocks()[0].min_addr() == 0x1000UL)
+  assert_true(project.disassembly().instructions()[0].assembly() == "ret")
   let cleared = project.with_disassembly(
     @project.ProjectDisassemblyState::empty(),
   )
   assert_true(cleared.disassembly().block_count() == 0)
+  assert_true(cleared.disassembly().instruction_count() == 0)
   let library = @project.Library::create(name="libstate", target~, state~)
   assert_true(library.state().subroutines().length() == 1)
   assert_true(library.disassembly().block_count() == 1)
+  assert_true(library.disassembly().instruction_count() == 1)
 }

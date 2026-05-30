@@ -124,6 +124,73 @@ pub(all) enum Exp {
 } derive(Eq, Debug)
 
 ///|
+pub fn Exp::load(
+  mem~ : Exp,
+  addr~ : Exp,
+  endian : @bitvec.Endian,
+  size : Size,
+) -> Exp {
+  Load(mem~, addr~, endian~, typ=Imm(size.in_bits()))
+}
+
+///|
+pub fn Exp::load_byte(mem~ : Exp, addr~ : Exp) -> Exp {
+  Exp::load(mem~, addr~, BigEndian, R8)
+}
+
+///|
+pub fn Exp::store(
+  mem~ : Exp,
+  addr~ : Exp,
+  value : Exp,
+  endian : @bitvec.Endian,
+  size : Size,
+) -> Exp {
+  let _ = size
+  Store(mem~, addr~, value~, endian~)
+}
+
+///|
+pub fn Exp::store_byte(mem~ : Exp, addr~ : Exp, value : Exp) -> Exp {
+  Exp::store(mem~, addr~, value, BigEndian, R8)
+}
+
+///|
+pub fn Exp::binop(op : BinOp, lhs : Exp, rhs : Exp) -> Exp {
+  BinOp(op, lhs, rhs)
+}
+
+///|
+pub fn Exp::unop(op : UnOp, exp : Exp) -> Exp {
+  UnOp(op, exp)
+}
+
+///|
+pub fn Exp::var_exp(variable : Var) -> Exp {
+  Var(variable)
+}
+
+///|
+pub fn Exp::int(word : Word) -> Exp {
+  Int(word)
+}
+
+///|
+pub fn Exp::let_(variable : Var, value : Exp, body : Exp) -> Exp {
+  Let(variable, value, body)
+}
+
+///|
+pub fn Exp::unknown(name : String, typ : ValueType) -> Exp {
+  Unknown(name, typ)
+}
+
+///|
+pub fn Exp::ite(if_~ : Exp, then_~ : Exp, else_~ : Exp) -> Exp {
+  Ite(cond=if_, yes=then_, no=else_)
+}
+
+///|
 pub fn Exp::type_of(self : Exp) -> ValueType {
   match self {
     Int(word) => Imm(word.width())
@@ -173,6 +240,36 @@ pub(all) enum Stmt {
   If(cond~ : Exp, yes~ : Array[Stmt], no~ : Array[Stmt])
   While(cond~ : Exp, body~ : Array[Stmt])
 } derive(Eq, Debug)
+
+///|
+pub fn Stmt::move_stmt(variable : Var, exp : Exp) -> Stmt {
+  Move(variable, exp)
+}
+
+///|
+pub fn Stmt::jmp(exp : Exp) -> Stmt {
+  Jmp(exp)
+}
+
+///|
+pub fn Stmt::special(text : String) -> Stmt {
+  Special(text)
+}
+
+///|
+pub fn Stmt::while_(cond : Exp, body : Array[Stmt]) -> Stmt {
+  While(cond~, body~)
+}
+
+///|
+pub fn Stmt::if_(cond : Exp, yes : Array[Stmt], no : Array[Stmt]) -> Stmt {
+  If(cond~, yes~, no~)
+}
+
+///|
+pub fn Stmt::cpuexn(code : Int) -> Stmt {
+  CpuExn(code)
+}
 
 ///|
 pub fn Stmt::to_string(self : Stmt) -> String {

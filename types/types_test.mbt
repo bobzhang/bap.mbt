@@ -458,6 +458,55 @@ test "bil operators expose BAP compatibility metadata" {
 }
 
 ///|
+test "bil expressions and statements expose BAP-style constructors" {
+  let word = @types.Word::of_int(width=8, 1)
+  let imm8 = @types.ValueType::Imm(8)
+  let mem_typ = @types.ValueType::mem32_t(R8)
+  let x = @types.Var::new(name="x", typ=imm8)
+  let mem = @types.Var::new(name="mem", typ=mem_typ)
+  let value = @types.Exp::int(word)
+  let mem_exp = @types.Exp::var_exp(mem)
+  let addr = @types.Exp::var_exp(x)
+  assert_true(@types.Exp::var_exp(x) == Var(x))
+  assert_true(@types.Exp::binop(Plus, value, addr) == BinOp(Plus, value, addr))
+  assert_true(@types.Exp::unop(Not, addr) == UnOp(Not, addr))
+  assert_true(@types.Exp::let_(x, value, addr) == Let(x, value, addr))
+  assert_true(@types.Exp::unknown("u", imm8) == Unknown("u", imm8))
+  assert_true(
+    @types.Exp::ite(if_=value, then_=addr, else_=mem_exp) ==
+    Ite(cond=value, yes=addr, no=mem_exp),
+  )
+  assert_true(
+    @types.Exp::load(mem=mem_exp, addr~, LittleEndian, R16) ==
+    Load(mem=mem_exp, addr~, endian=LittleEndian, typ=Imm(16)),
+  )
+  assert_true(
+    @types.Exp::load_byte(mem=mem_exp, addr~) ==
+    Load(mem=mem_exp, addr~, endian=BigEndian, typ=Imm(8)),
+  )
+  assert_true(
+    @types.Exp::store(mem=mem_exp, addr~, value, BigEndian, R8) ==
+    Store(mem=mem_exp, addr~, value~, endian=BigEndian),
+  )
+  assert_true(
+    @types.Exp::store_byte(mem=mem_exp, addr~, value) ==
+    Store(mem=mem_exp, addr~, value~, endian=BigEndian),
+  )
+  assert_true(@types.Stmt::move_stmt(x, value) == Move(x, value))
+  assert_true(@types.Stmt::jmp(addr) == Jmp(addr))
+  assert_true(@types.Stmt::special("halt") == Special("halt"))
+  assert_true(@types.Stmt::cpuexn(13) == CpuExn(13))
+  assert_true(
+    @types.Stmt::while_(value, [@types.Stmt::jmp(addr)]) ==
+    While(cond=value, body=[@types.Stmt::jmp(addr)]),
+  )
+  assert_true(
+    @types.Stmt::if_(value, [@types.Stmt::jmp(addr)], []) ==
+    If(cond=value, yes=[@types.Stmt::jmp(addr)], no=[]),
+  )
+}
+
+///|
 test "bil statements expose definitions" {
   let typ = @types.ValueType::Imm(8)
   let x = @types.Var::new(name="x", typ~)

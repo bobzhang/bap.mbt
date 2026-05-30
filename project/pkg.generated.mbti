@@ -16,6 +16,8 @@ pub fn available_input_loaders() -> Array[String]
 
 pub fn find_analysis(String) -> ProjectAnalysis?
 
+pub fn find_collator(String) -> RegisteredProjectCollator?
+
 pub fn find_input_loader(String) -> ProjectInputLoader?
 
 pub fn find_pass(String) -> ProjectPass?
@@ -28,11 +30,15 @@ pub fn passes() -> Array[ProjectPass]
 
 pub fn register_analysis(ProjectAnalysis) -> Result[Unit, String]
 
+pub fn register_collator(RegisteredProjectCollator) -> Result[Unit, String]
+
 pub fn register_input_loader(ProjectInputLoader) -> Result[Unit, String]
 
 pub fn register_pass(ProjectPass) -> Result[Unit, String]
 
 pub fn registered_analyses() -> Array[ProjectAnalysisInfo]
+
+pub fn registered_collators() -> Array[ProjectCollatorInfo]
 
 pub fn resolve_passes(Array[String]) -> Result[Array[ProjectPass], String]
 
@@ -121,9 +127,14 @@ pub fn[S, R] ProjectCollator::apply(Self[S, R], Array[Project]) -> R?
 pub fn[S, R] ProjectCollator::collate(Self[S, R], Int, S, Project) -> S
 pub fn[S, R] ProjectCollator::create(name~ : String, description? : String, prepare~ : (Project) -> S, collate~ : (Int, S, Project) -> S, summary~ : (S) -> R) -> Self[S, R]
 pub fn[S, R] ProjectCollator::description(Self[S, R]) -> String
+pub fn[S, R] ProjectCollator::info(Self[S, R]) -> ProjectCollatorInfo
 pub fn[S, R] ProjectCollator::name(Self[S, R]) -> String
 pub fn[S, R] ProjectCollator::prepare(Self[S, R], Project) -> S
 pub fn[S, R] ProjectCollator::summary(Self[S, R], S) -> R
+
+type ProjectCollatorInfo
+pub fn ProjectCollatorInfo::description(Self) -> String
+pub fn ProjectCollatorInfo::name(Self) -> String
 
 type ProjectInput
 pub fn ProjectInput::custom(target~ : @core_theory.Target, filename? : String, image? : @image.Image, program? : @types.Term[@types.Program], memory? : @memory.MemMap[String], libraries? : Array[Library], finish? : (Project) -> Project) -> Self
@@ -163,6 +174,14 @@ pub fn ProjectStorageTag::int(String) -> Self[Int]
 pub fn[T] ProjectStorageTag::name(Self[T]) -> String
 pub fn ProjectStorageTag::string(String) -> Self[String]
 pub fn ProjectStorageTag::string_array(String) -> Self[Array[String]]
+
+type RegisteredProjectCollator
+pub fn RegisteredProjectCollator::apply(Self, Array[Project]) -> Unit
+pub fn[S] RegisteredProjectCollator::create(name~ : String, description? : String, prepare~ : (Project) -> S, collate~ : (Int, S, Project) -> S, summary~ : (S) -> Unit) -> Self
+pub fn RegisteredProjectCollator::description(Self) -> String
+pub fn[S] RegisteredProjectCollator::from_collator(ProjectCollator[S, Unit]) -> Self
+pub fn RegisteredProjectCollator::info(Self) -> ProjectCollatorInfo
+pub fn RegisteredProjectCollator::name(Self) -> String
 
 // Type aliases
 

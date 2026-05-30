@@ -43,3 +43,37 @@ test "project collators ignore empty project sequences" {
   assert_true(collator.apply([]) is None)
   assert_true(collator.apply([project_with_value("only")]) == Some(0))
 }
+
+///|
+test "registered project collators can be discovered and applied" {
+  let summary : Ref[String] = Ref("")
+  let collator = @project.RegisteredProjectCollator::create(
+    name="unit-registered-collator",
+    description="collect project values",
+    prepare=project => project_value(project),
+    collate=(version, state, project) => {
+      state + "|\{version}:" + project_value(project)
+    },
+    summary=state => summary.val = state,
+  )
+  match @project.register_collator(collator) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  assert_true(@project.register_collator(collator) is Err(_))
+  match @project.find_collator("unit-registered-collator") {
+    Some(found) => {
+      assert_true(found.description() == "collect project values")
+      found.apply([project_with_value("base"), project_with_value("next")])
+      assert_true(summary.val == "base|0:next")
+    }
+    None => fail("collator was not registered")
+  }
+  let mut seen = false
+  for info in @project.registered_collators() {
+    if info.name() == "unit-registered-collator" {
+      seen = true
+    }
+  }
+  assert_true(seen)
+}

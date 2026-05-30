@@ -143,3 +143,88 @@ pub fn[N : Hash + Eq, E] Graph::dominators(
   }
   doms
 }
+
+///|
+fn[N : Hash + Eq] immediate_dominator_of(doms : Map[N, Set[N]], node : N) -> N? {
+  match doms.get(node) {
+    Some(dominators) => {
+      let strict = dominators.copy()
+      strict.remove(node)
+      for candidate in strict {
+        match doms.get(candidate) {
+          Some(candidate_doms) => {
+            let mut dominated_by_all = true
+            for other in strict {
+              if other != candidate && !candidate_doms.contains(other) {
+                dominated_by_all = false
+              }
+            }
+            if dominated_by_all {
+              return Some(candidate)
+            }
+          }
+          None => ()
+        }
+      }
+      None
+    }
+    None => None
+  }
+}
+
+///|
+pub fn[N : Hash + Eq, E] Graph::immediate_dominators(
+  self : Graph[N, E],
+  entry : N,
+) -> Map[N, N] {
+  let doms = self.dominators(entry)
+  let reachable = self.reachable(entry)
+  let idoms : Map[N, N] = {}
+  for node in self.nodes {
+    if node != entry && reachable.contains(node) {
+      match immediate_dominator_of(doms, node) {
+        Some(idom) => idoms[node] = idom
+        None => ()
+      }
+    }
+  }
+  idoms
+}
+
+///|
+pub fn[N : Hash + Eq, E] Graph::dominance_frontiers(
+  self : Graph[N, E],
+  entry : N,
+) -> Map[N, Set[N]] {
+  let reachable = self.reachable(entry)
+  let idoms = self.immediate_dominators(entry)
+  let frontiers : Map[N, Set[N]] = {}
+  for node in self.nodes {
+    frontiers[node] = Set([])
+  }
+  for node in self.nodes {
+    let preds = self.predecessors(node).filter(pred => reachable.contains(pred))
+    if reachable.contains(node) && preds.length() >= 2 {
+      match idoms.get(node) {
+        Some(stop) =>
+          for pred in preds {
+            let mut runner = pred
+            while runner != stop {
+              let frontier = match frontiers.get(runner) {
+                Some(set) => set
+                None => Set([])
+              }
+              frontier.add(node)
+              frontiers[runner] = frontier
+              match idoms.get(runner) {
+                Some(next) => runner = next
+                None => break
+              }
+            }
+          }
+        None => ()
+      }
+    }
+  }
+  frontiers
+}

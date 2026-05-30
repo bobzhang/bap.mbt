@@ -43,3 +43,38 @@ test "dominators converge for a small flow graph" {
   assert_true(doms[3] == Set::from_array([0, 1, 3]))
   assert_true(doms[4] == Set::from_array([0, 1, 4]))
 }
+
+///|
+test "immediate dominators and frontiers describe branches and loop headers" {
+  let graph = sample_graph()
+  let idoms = graph.immediate_dominators(0)
+  assert_true(!idoms.contains(0))
+  assert_true(idoms[1] == 0)
+  assert_true(idoms[2] == 1)
+  assert_true(idoms[3] == 1)
+  assert_true(idoms[4] == 1)
+  let frontiers = graph.dominance_frontiers(0)
+  assert_true(frontiers[0].is_empty())
+  assert_true(frontiers[1] == Set::from_array([1]))
+  assert_true(frontiers[2] == Set::from_array([4]))
+  assert_true(frontiers[3] == Set::from_array([4]))
+  assert_true(frontiers[4] == Set::from_array([1]))
+}
+
+///|
+test "dominance frontiers report diamond joins" {
+  let graph : @graphlib.Graph[Int, String] = @graphlib.Graph::new()
+    .add_edge(src=0, dst=1, label="then")
+    .add_edge(src=0, dst=2, label="else")
+    .add_edge(src=1, dst=3, label="join")
+    .add_edge(src=2, dst=3, label="join")
+  let idoms = graph.immediate_dominators(0)
+  assert_true(idoms[1] == 0)
+  assert_true(idoms[2] == 0)
+  assert_true(idoms[3] == 0)
+  let frontiers = graph.dominance_frontiers(0)
+  assert_true(frontiers[0].is_empty())
+  assert_true(frontiers[1] == Set::from_array([3]))
+  assert_true(frontiers[2] == Set::from_array([3]))
+  assert_true(frontiers[3].is_empty())
+}

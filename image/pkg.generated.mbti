@@ -32,6 +32,7 @@ pub fn Image::data(Self) -> Bytes
 pub fn Image::endian(Self) -> @bitvec.Endian
 pub fn Image::entry_point(Self) -> UInt64
 pub fn Image::filename(Self) -> String?
+pub fn Image::from_ogre(Bytes, OgreDoc, filename? : String, target? : @core_theory.Target) -> Result[(Self, Array[String]), String]
 pub fn Image::from_segments(entry~ : UInt64, endian~ : @bitvec.Endian, Array[Segment], sections? : Array[Section], symbols? : Array[Symbol], filename? : String, target? : @core_theory.Target) -> Self
 pub fn Image::memories_of_symbol(Self, Symbol) -> Array[@memory.Memory]?
 pub fn Image::memory(Self) -> @memory.MemMap[String]
@@ -42,6 +43,7 @@ pub fn Image::of_bytes(Bytes, backend? : String) -> Result[(Self, Array[String])
 pub fn Image::of_bytes_for_filename(Bytes, filename~ : String) -> Result[(Self, Array[String]), String]
 pub fn Image::of_file(String, backend? : String) -> Result[(Self, Array[String]), String]
 pub fn Image::of_file_for_filename(String, filename? : String) -> Result[(Self, Array[String]), String]
+pub fn Image::of_ogre_string(Bytes, String, filename? : String, target? : @core_theory.Target) -> Result[(Self, Array[String]), String]
 pub fn Image::sections(Self) -> Array[Section]
 pub fn Image::sections_of_segment(Self, Segment) -> Array[Section]
 pub fn Image::segment_of_symbol(Self, Symbol) -> Segment?

@@ -48,6 +48,64 @@ test "project default reconstructor turns disassembly blocks into named subrouti
 }
 
 ///|
+test "project default reconstructor groups blocks by reachable disassembly edges" {
+  let target = @core_theory.Target::unknown()
+  let entry = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x5100UL,
+    b"\x01",
+  )
+  let body = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x5110UL,
+    b"\x02",
+  )
+  let exit = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x5120UL,
+    b"\x03",
+  )
+  let isolated = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x5200UL,
+    b"\x04",
+  )
+  let disassembly = @project.ProjectDisassemblyState::empty()
+    .add_block(body)
+    .add_block(isolated)
+    .add_block(exit)
+    .add_block(entry)
+    .add_edge(
+      @project.ProjectDisassemblyEdge::create(
+        source=0x5100UL,
+        target=0x5110UL,
+        kind=FallEdge,
+      ),
+    )
+    .add_edge(
+      @project.ProjectDisassemblyEdge::create(
+        source=0x5110UL,
+        target=0x5120UL,
+        kind=CondEdge,
+      ),
+    )
+  let project = @project.Project::empty(target).with_disassembly(disassembly)
+  match project.reconstruct() {
+    Ok(reconstructed) => {
+      let subs = reconstructed.state().subroutines()
+      assert_true(subs.length() == 2)
+      assert_true(subs[0].sub_name() == "sub_0x5100")
+      assert_true(subs[0].blks().length() == 3)
+      assert_true(subs[0].sub_has_edge(subs[0].blks()[0], subs[0].blks()[1]))
+      assert_true(subs[0].sub_has_edge(subs[0].blks()[1], subs[0].blks()[2]))
+      assert_true(subs[1].sub_name() == "sub_0x5200")
+      assert_true(subs[1].blks().length() == 1)
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project disassemble-and-reconstruct runs explicit driver and custom reconstructor" {
   match @project.register_builtin_disassembly_drivers() {
     Ok(_) => ()

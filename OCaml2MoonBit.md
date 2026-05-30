@@ -155,7 +155,11 @@ known `(source, target?, kind)` disassembly edges explicitly, and let the
 initial reconstructor emit direct IR gotos only for targets that correspond to
 blocks inside the reconstructed subroutine. Unknown or cross-subroutine
 destinations should remain preserved as disassembly metadata until a richer
-call/branch classifier is available. Model branchers as a checked project stage
+call/branch classifier is available. The default reconstructor should use
+known edge facts to group reachable blocks from no-incoming roots, while
+keeping isolated or otherwise unclaimed blocks as separate subroutines; this
+gives later recursive-descent decoding a CFG-shaped landing zone without
+fabricating instruction semantics. Model branchers as a checked project stage
 that enriches already materialized disassembly blocks with those edge facts;
 the empty brancher should be a no-op for existing blocks, while applying any
 brancher to a project without disassembly blocks should fail explicitly. Keep

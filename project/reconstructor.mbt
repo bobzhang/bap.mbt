@@ -47,6 +47,122 @@ fn project_reconstructor_find_block_start(
 }
 
 ///|
+fn project_reconstructor_edge_target_index(
+  blocks : Array[@memory.Memory],
+  edge : ProjectDisassemblyEdge,
+) -> Int? {
+  match edge.target() {
+    Some(target) => project_reconstructor_find_block_start(blocks, target)
+    None => None
+  }
+}
+
+///|
+fn project_reconstructor_group_contains(
+  group : Array[@memory.Memory],
+  block : @memory.Memory,
+) -> Bool {
+  group.any(item => item.min_addr() == block.min_addr())
+}
+
+///|
+fn project_reconstructor_has_incoming_edge(
+  blocks : Array[@memory.Memory],
+  edges : Array[ProjectDisassemblyEdge],
+  block : @memory.Memory,
+) -> Bool {
+  edges.any(edge => {
+    match project_reconstructor_edge_target_index(blocks, edge) {
+      Some(target_index) => blocks[target_index].min_addr() == block.min_addr()
+      None => false
+    }
+  })
+}
+
+///|
+fn project_reconstructor_reachable_blocks(
+  blocks : Array[@memory.Memory],
+  edges : Array[ProjectDisassemblyEdge],
+  start : @memory.Memory,
+) -> Array[@memory.Memory] {
+  let group : Array[@memory.Memory] = []
+  let stack = [start]
+  while stack.length() > 0 {
+    match stack.pop() {
+      Some(block) =>
+        if !project_reconstructor_group_contains(group, block) {
+          group.push(block)
+          for edge in edges {
+            if edge.source() == block.min_addr() {
+              match project_reconstructor_edge_target_index(blocks, edge) {
+                Some(target_index) => stack.push(blocks[target_index])
+                None => ()
+              }
+            }
+          }
+        }
+      None => ()
+    }
+  }
+  group.sort_by((left, right) => left.min_addr().compare(right.min_addr()))
+  group
+}
+
+///|
+fn project_reconstructor_unassigned_reachable_blocks(
+  blocks : Array[@memory.Memory],
+  edges : Array[ProjectDisassemblyEdge],
+  assigned : Array[@memory.Memory],
+  start : @memory.Memory,
+) -> Array[@memory.Memory] {
+  let reachable = project_reconstructor_reachable_blocks(blocks, edges, start)
+  let group : Array[@memory.Memory] = []
+  for block in reachable {
+    if !project_reconstructor_group_contains(assigned, block) {
+      group.push(block)
+      assigned.push(block)
+    }
+  }
+  group
+}
+
+///|
+fn project_reconstructor_default_groups(
+  blocks : Array[@memory.Memory],
+  edges : Array[ProjectDisassemblyEdge],
+) -> Array[Array[@memory.Memory]] {
+  let starts : Array[@memory.Memory] = []
+  for block in blocks {
+    if !project_reconstructor_has_incoming_edge(blocks, edges, block) {
+      starts.push(block)
+    }
+  }
+  if starts.is_empty() && !blocks.is_empty() {
+    starts.push(blocks[0])
+  }
+  starts.sort_by((left, right) => left.min_addr().compare(right.min_addr()))
+  let assigned : Array[@memory.Memory] = []
+  let groups : Array[Array[@memory.Memory]] = []
+  for start in starts {
+    let group = project_reconstructor_unassigned_reachable_blocks(
+      blocks, edges, assigned, start,
+    )
+    if !group.is_empty() {
+      groups.push(group)
+    }
+  }
+  let remaining = blocks.copy()
+  remaining.sort_by((left, right) => left.min_addr().compare(right.min_addr()))
+  for block in remaining {
+    if !project_reconstructor_group_contains(assigned, block) {
+      groups.push([block])
+      assigned.push(block)
+    }
+  }
+  groups
+}
+
+///|
 fn project_reconstructor_edge_jmp(
   edge : ProjectDisassemblyEdge,
   dst : @types.Tid,
@@ -146,10 +262,14 @@ pub fn ProjectReconstructor::default() -> ProjectReconstructor {
       return Err("project has no disassembly blocks to reconstruct")
     }
     let symbolizer = project.symbolizer()
+    let groups = project_reconstructor_default_groups(
+      blocks,
+      project.disassembly().edges(),
+    )
     let subroutines : Array[@types.Term[@types.Sub]] = []
-    for block in blocks {
-      let name = symbolizer.resolve(block.min_addr())
-      match project_reconstructor_subroutine(project, name, [block]) {
+    for group in groups {
+      let name = symbolizer.resolve(group[0].min_addr())
+      match project_reconstructor_subroutine(project, name, group) {
         Ok(subroutine) => subroutines.push(subroutine)
         Err(reason) => return Err(reason)
       }

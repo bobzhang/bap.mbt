@@ -1,0 +1,7 @@
+// import {
+//   "bobzhang/bap" @lib,
+// }
+
+options(
+  "is-main": true,
+)

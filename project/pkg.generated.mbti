@@ -36,9 +36,13 @@ pub fn passes() -> Array[ProjectPass]
 
 pub fn register_analysis(ProjectAnalysis) -> Result[Unit, String]
 
+pub fn register_builtin_disassembly_drivers() -> Result[Unit, String]
+
 pub fn register_collator(RegisteredProjectCollator) -> Result[Unit, String]
 
 pub fn register_disassembly_driver(ProjectDisassemblyDriver) -> Result[Unit, String]
+
+pub fn register_disassembly_driver_if_absent(ProjectDisassemblyDriver) -> Result[Bool, String]
 
 pub fn register_input_loader(ProjectInputLoader) -> Result[Unit, String]
 
@@ -177,6 +181,7 @@ pub fn ProjectCollatorInfo::name(Self) -> String
 type ProjectDisassemblyDriver
 pub fn ProjectDisassemblyDriver::create(name~ : String, description? : String, priority? : Int, run~ : (Project) -> Result[Project, String]) -> Self
 pub fn ProjectDisassemblyDriver::description(Self) -> String
+pub fn ProjectDisassemblyDriver::memory_blocks() -> Self
 pub fn ProjectDisassemblyDriver::name(Self) -> String
 pub fn ProjectDisassemblyDriver::priority(Self) -> Int
 pub fn ProjectDisassemblyDriver::run(Self, Project) -> Result[Project, String]

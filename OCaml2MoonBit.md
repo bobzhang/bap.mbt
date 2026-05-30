@@ -100,6 +100,10 @@ initialization more than once while still surfacing accidental duplicate custom
 backend names. Built-in raw byte loaders should stay simple and predictable:
 load the bytes into a single executable segment at address zero, then let
 `ProjectInput` wrap the resulting image for higher-level orchestration.
+For disassembly-driver registries, separate orchestration from architecture
+decoding: a built-in driver may materialize memory regions as blocks, but it
+should not invent assembly text or lifted BIL unless a real target-specific
+decoder is present.
 
 `text[i]` returns a `UInt16` code unit, not a `Char`. For text parsers that need character predicates or `StringBuilder::write_char`, use `text.get_char(offset)` and advance by `char.utf16_len()`. It is still fine to increment by one for syntax bytes you have already constrained to ASCII, such as `(`, `)`, `"` and `\\`, but do not mix code-unit offsets with `Char` APIs accidentally.
 

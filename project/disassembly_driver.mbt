@@ -73,6 +73,56 @@ pub fn register_disassembly_driver(
 }
 
 ///|
+pub fn register_disassembly_driver_if_absent(
+  driver : ProjectDisassemblyDriver,
+) -> Result[Bool, String] {
+  if disassembly_driver_registry.contains(driver.name()) {
+    Ok(false)
+  } else {
+    match register_disassembly_driver(driver) {
+      Ok(_) => Ok(true)
+      Err(reason) => Err(reason)
+    }
+  }
+}
+
+///|
+pub fn ProjectDisassemblyDriver::memory_blocks() -> ProjectDisassemblyDriver {
+  ProjectDisassemblyDriver::create(
+    name="memory-blocks",
+    description="materialize project memory regions as disassembly blocks",
+    priority=-100,
+    run=project => {
+      let mut state = project.disassembly()
+      let mut added = 0
+      for entry in project.memory().entries() {
+        let block = entry.0
+        if block.length() > 0 {
+          state = state.add_block(block)
+          added = added + 1
+        }
+      }
+      if added == 0 {
+        Err("project has no memory blocks to disassemble")
+      } else {
+        Ok(project.with_disassembly(state).set("disassembler", "memory-blocks"))
+      }
+    },
+  )
+}
+
+///|
+pub fn register_builtin_disassembly_drivers() -> Result[Unit, String] {
+  for driver in [ProjectDisassemblyDriver::memory_blocks()] {
+    match register_disassembly_driver_if_absent(driver) {
+      Ok(_) => ()
+      Err(reason) => return Err(reason)
+    }
+  }
+  Ok(())
+}
+
+///|
 pub fn find_disassembly_driver(name : String) -> ProjectDisassemblyDriver? {
   disassembly_driver_registry.get(name)
 }

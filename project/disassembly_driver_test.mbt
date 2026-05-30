@@ -40,6 +40,55 @@ test "project disassembly drivers register lookup and run" {
 }
 
 ///|
+test "project registers built-in memory block disassembly driver" {
+  match @project.register_builtin_disassembly_drivers() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  match @project.register_builtin_disassembly_drivers() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  assert_true(@project.disassembly_driver_names().contains("memory-blocks"))
+  match @project.find_disassembly_driver("memory-blocks") {
+    Some(driver) => {
+      assert_true(driver.priority() == -100)
+      assert_true(driver.description().contains("memory regions"))
+    }
+    None => fail("missing built-in driver")
+  }
+  let first = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x100UL,
+    b"\x01\x02",
+  )
+  let second = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x200UL,
+    b"\x03",
+  )
+  let memory = @memory.MemMap::singleton(first, "code").add(second, "data")
+  let project = @project.Project::empty(@core_theory.Target::unknown()).with_memory(
+    memory,
+  )
+  match project.disassemble(driver="memory-blocks") {
+    Ok(next) => {
+      assert_true(next.get("disassembler") == Some("memory-blocks"))
+      let starts = next.disassembly().blocks().map(block => block.min_addr())
+      assert_true(starts.contains(0x100UL))
+      assert_true(starts.contains(0x200UL))
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    @project.Project::empty(@core_theory.Target::unknown()).disassemble(
+      driver="memory-blocks",
+    )
+    is Err(_),
+  )
+}
+
+///|
 test "project disassembly drivers fall back by priority" {
   let failing = @project.ProjectDisassemblyDriver::create(
     name="unit-disasm-priority-high",

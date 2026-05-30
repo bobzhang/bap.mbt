@@ -182,6 +182,23 @@ pub fn ProgramUnit::with_compiler(Self, Compiler) -> Self
 pub fn ProgramUnit::with_source(Self, Source) -> Self
 pub fn ProgramUnit::with_target(Self, Target) -> Self
 
+type ProgramUnitFacts
+pub fn ProgramUnitFacts::bias(Self) -> @knowledge.FactTable[Unit, @types.Word?]
+pub fn ProgramUnitFacts::class(Self) -> @knowledge.Class[Unit, Unit]
+pub fn ProgramUnitFacts::collect_bias(Self, @knowledge.Object[Unit]) -> @types.Word?
+pub fn ProgramUnitFacts::collect_compiler(Self, @knowledge.Object[Unit]) -> Compiler?
+pub fn ProgramUnitFacts::collect_path(Self, @knowledge.Object[Unit]) -> String?
+pub fn ProgramUnitFacts::collect_source(Self, @knowledge.Object[Unit]) -> Source?
+pub fn ProgramUnitFacts::collect_target(Self, @knowledge.Object[Unit]) -> Target
+pub fn ProgramUnitFacts::compiler(Self) -> @knowledge.FactTable[Unit, Compiler?]
+pub fn ProgramUnitFacts::create(Self) -> @knowledge.Object[Unit]
+pub fn ProgramUnitFacts::for_unit(Self, ProgramUnit) -> Result[@knowledge.Object[Unit], String]
+pub fn ProgramUnitFacts::new() -> Self
+pub fn ProgramUnitFacts::path(Self) -> @knowledge.FactTable[Unit, String?]
+pub fn ProgramUnitFacts::provide_unit(Self, @knowledge.Object[Unit], ProgramUnit) -> Result[Unit, String]
+pub fn ProgramUnitFacts::source(Self) -> @knowledge.FactTable[Unit, Source?]
+pub fn ProgramUnitFacts::target(Self) -> @knowledge.FactTable[Unit, Target]
+
 pub(all) enum Role {
   General
   StackPointer
@@ -220,6 +237,17 @@ pub fn Source::language(Self) -> Language
 pub fn Source::with_code(Self, String) -> Self
 pub fn Source::with_file(Self, String) -> Self
 pub fn Source::with_language(Self, Language) -> Self
+
+type SourceFacts
+pub fn SourceFacts::class(Self) -> @knowledge.Class[Unit, Unit]
+pub fn SourceFacts::code(Self) -> @knowledge.FactTable[Unit, String]
+pub fn SourceFacts::collect_source(Self, @knowledge.Object[Unit]) -> Source
+pub fn SourceFacts::create(Self) -> @knowledge.Object[Unit]
+pub fn SourceFacts::file(Self) -> @knowledge.FactTable[Unit, String?]
+pub fn SourceFacts::for_source(Self, Source) -> Result[@knowledge.Object[Unit], String]
+pub fn SourceFacts::language(Self) -> @knowledge.FactTable[Unit, Language]
+pub fn SourceFacts::new() -> Self
+pub fn SourceFacts::provide_source(Self, @knowledge.Object[Unit], Source) -> Result[Unit, String]
 
 pub(all) enum System {
   UnknownSystem

@@ -330,3 +330,81 @@ test "program metadata tracks source compiler and units" {
   assert_true(program.labels().length() == 1)
   assert_true(program.target().map(item => item.matches("amd64")) == Some(true))
 }
+
+///|
+test "program source and unit facts expose BAP-style Knowledge slots" {
+  let source = @core_theory.Source::create(
+    language=C,
+    code="int main(void) { return 0; }",
+    file="main.c",
+  )
+  let source_facts = @core_theory.SourceFacts::new()
+  match source_facts.for_source(source) {
+    Ok(source_object) => {
+      assert_true(source_facts.language().collect(source_object) == Some(C))
+      assert_true(
+        source_facts.code().require(source_object) ==
+        Ok("int main(void) { return 0; }"),
+      )
+      assert_true(
+        source_facts.file().collect(source_object) == Some(Some("main.c")),
+      )
+      let collected = source_facts.collect_source(source_object)
+      assert_true(collected.language() == C)
+      assert_true(collected.file() == Some("main.c"))
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let compiler = @core_theory.Compiler::create(
+    "clang",
+    version=["18"],
+    options=["-g"],
+    specs={ "triple": "x86_64-linux-gnu" },
+  )
+  let base = @types.Word::of_int(width=64, 0x400000)
+  let unit = @core_theory.ProgramUnit::for_file(
+    "main.o",
+    target=@core_theory.Target::x86_64(),
+    bias=base,
+    source~,
+    compiler~,
+  )
+  let unit_facts = @core_theory.ProgramUnitFacts::new()
+  let observed_paths : Ref[Int] = Ref(0)
+  unit_facts
+  .path()
+  .observe((_, path) => {
+    if path == Some("main.o") {
+      observed_paths.val = observed_paths.val + 1
+    }
+    Ok(())
+  })
+  match unit_facts.for_unit(unit) {
+    Ok(unit_object) => {
+      assert_true(observed_paths.val == 1)
+      assert_true(unit_facts.collect_path(unit_object) == Some("main.o"))
+      assert_true(unit_facts.collect_bias(unit_object) == Some(base))
+      assert_true(unit_facts.collect_target(unit_object).matches("amd64"))
+      assert_true(
+        unit_facts.collect_source(unit_object).map(item => item.file()) ==
+        Some(Some("main.c")),
+      )
+      assert_true(
+        unit_facts.collect_compiler(unit_object).map(item => item.name()) ==
+        Some("clang"),
+      )
+      assert_true(
+        unit_facts.provide_unit(
+          unit_object,
+          @core_theory.ProgramUnit::for_file("other.o"),
+        )
+        is Err(_),
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let unknown_object = unit_facts.create()
+  assert_true(unit_facts.collect_target(unknown_object).is_unknown())
+}

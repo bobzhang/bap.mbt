@@ -604,6 +604,7 @@ fn main { println(first_positive([-2, 0, 7]).unwrap()); println(first_positive([
 ## Surface Hazards
 
 - `alias` is a reserved keyword; avoid it as a local name, loop binder, or helper name to keep warning-enabled checks clean.
+- `asm` is also reserved for possible future use; use `assembly` for public accessors, named arguments, and local helpers while still accepting textual placeholders like `"$asm"` in ported data formats.
 - On the JavaScript backend, also avoid sentinel names like `undefined` for local test results — cross-target package tests can expose generated-JS name collisions.
 - Source files do **not** contain OCaml-style `open`. Add package imports in `moon.pkg`, then call imported packages with their `@alias`.
 - For `moon run -c` snippets that need extra packages, use an **MBTX import block** at the start: `import { "moonbitlang/x/crypto" }` (comma-separated entries for multiple packages). The source-file form `import "moonbitlang/core/encoding/ascii"` is rejected in command snippets.

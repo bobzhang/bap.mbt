@@ -22,6 +22,39 @@ test "word wraps bitvec operations" {
 }
 
 ///|
+fn assert_word_concat(
+  high : @types.Word,
+  low : @types.Word,
+  expected : @types.Word,
+) -> Unit raise {
+  assert_true(high.concat(low) == expected)
+}
+
+///|
+test "translated BAP word concatenation preserves operand widths" {
+  assert_word_concat(
+    @types.Word::of_int(width=16, 0xDEAD),
+    @types.Word::of_int(width=16, 0xBEEF),
+    @types.Word::of_uint64(width=32, 0xDEADBEEF),
+  )
+  assert_word_concat(
+    @types.Word::of_int(width=8, 0xDE),
+    @types.Word::of_int(width=24, 0xADBEEF),
+    @types.Word::of_uint64(width=32, 0xDEADBEEF),
+  )
+  assert_word_concat(
+    @types.Word::of_int(width=4, 0x0D),
+    @types.Word::of_int(width=28, 0x0EADBEEF),
+    @types.Word::of_uint64(width=32, 0xDEADBEEF),
+  )
+  assert_word_concat(
+    @types.Word::of_int(width=3, 0x6),
+    @types.Word::of_int(width=5, 0x17),
+    @types.Word::of_int(width=8, 0xD7),
+  )
+}
+
+///|
 fn byte_values(bytes : Bytes) -> Array[Int] {
   bytes.to_array().map(byte => byte.to_int())
 }

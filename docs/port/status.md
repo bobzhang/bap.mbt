@@ -11,14 +11,14 @@ This repository is porting `.repos/bap` from OCaml to idiomatic MoonBit.
 - `knowledge`: typed names, partial orders, monotone domains, class/slot metadata, object allocation, and fact tables that merge values through domain joins.
 - `core_theory`: symbolic sorts, typed values, variables, effect lattice values, labels, source/compiler/program-unit metadata, target metadata with inheritance/matching helpers, alias-origin tracking, conservative register role helpers, common architecture target declarations, and a target registry/lookup layer.
 - `memory`: byte-addressed memory regions with rebasing, views/ranges, endian-aware word loads and stores, contiguous merges, hexdumps, and a basic interval `MemMap` with lookup/intersection/dominator queries, min/max bindings, and interval removal helpers.
-- `image`: image metadata over `memory`, including segments, sections, symbols, memory maps, symbol/section/segment lookup, multi-segment symbol memory chunks, endian-aware `Image.words` extraction, and a MoonBit backend registry with description/extension/priority discovery metadata that loads bytes into `(Image, warnings)` by explicit backend or filename extension.
+- `image`: image metadata over `memory`, including segments, sections, symbols, memory maps, symbol/section/segment lookup, multi-segment symbol memory chunks, endian-aware `Image.words` extraction, a MoonBit backend registry with description/extension/priority discovery metadata that loads bytes into `(Image, warnings)` by explicit backend or filename extension, and an initial Ogre document parser with declaration/fact validation and scalar normalization.
 - `project`: project container over `core_theory`, `types`, `memory`, and `image`, with target/program/memory/image/disassembly state, typed storage tags over string-backed storage, including bitvector tags and lossless string-, int-, bool-, and bitvector-array tags, memory tagging, program mapping, library records, project input constructors/loaders with extension/priority metadata and filename-based selection, named dependency-aware pass registry with explicit/autorun execution, run-once passes, pass run-count telemetry, typed project collators with registration/discovery for comparing alternative project versions, and typed analysis argument parsers with BAP-style bitvector literals and named analysis registry/application.
 
 ## Next Packages
 
 - Expand `core_theory` with the full BAP knowledge registry, source/compiler/program-unit integration with facts, full alias provenance, and more complete architecture-specific target metadata.
 - Expand `types` with fuller BIL normalization and memory-aware optimization passes, richer IR visitors and control-flow semantics, additional SSA/data-flow transforms over the term layer, richer indirect call resolution integrations, and the remaining tests translated from `.repos/bap/lib_test/bap_types`.
-- Expand `image` with Ogre spec parsing and file-backed loaders.
+- Expand `image` with Ogre spec-to-image conversion and file-backed loaders.
 - Expand `project` with native file-backed input loader wrappers, disassembly driver integrations, and additional typed storage encodings.
 
 ## Porting Defaults

@@ -6,6 +6,7 @@ import {
   "bobzhang/bap/core_theory",
   "bobzhang/bap/memory",
   "bobzhang/bap/types",
+  "moonbitlang/core/debug",
 }
 
 // Values
@@ -56,6 +57,36 @@ pub fn ImageBackend::load(Self, Bytes) -> Result[(Image, Array[String]), String]
 pub fn ImageBackend::name(Self) -> String
 pub fn ImageBackend::priority(Self) -> Int
 pub fn ImageBackend::supports_extension(Self, String) -> Bool
+
+type OgreDoc
+pub fn OgreDoc::declaration(Self, String) -> Array[OgreField]?
+pub fn OgreDoc::declaration_count(Self) -> Int
+pub fn OgreDoc::declaration_names(Self) -> Array[String]
+pub fn OgreDoc::empty() -> Self
+pub fn OgreDoc::fact_count(Self, String) -> Int
+pub fn OgreDoc::facts(Self, String) -> Array[OgreFact]
+pub fn OgreDoc::from_string(String) -> Result[Self, String]
+
+type OgreFact
+pub fn OgreFact::attribute(Self) -> String
+pub fn OgreFact::fields(Self) -> Map[String, String]
+pub fn OgreFact::value(Self, String) -> String?
+
+pub(all) struct OgreField {
+  name : String
+  typ : OgreFieldType
+} derive(Eq, @debug.Debug)
+pub fn OgreField::create(name~ : String, typ~ : OgreFieldType) -> Self
+pub fn OgreField::name(Self) -> String
+pub fn OgreField::typ(Self) -> OgreFieldType
+
+pub(all) enum OgreFieldType {
+  OgreInt
+  OgreStr
+  OgreBool
+  OgreFloat
+} derive(Eq, @debug.Debug)
+pub fn OgreFieldType::to_string(Self) -> String
 
 type Section
 pub fn Section::addr(Self) -> UInt64

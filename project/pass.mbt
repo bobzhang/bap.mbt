@@ -18,15 +18,16 @@ pub fn ProjectPass::create(
   deps? : Array[String],
   run~ : (Project) -> Result[Project, String],
 ) -> ProjectPass {
+  let autorun_flag = match autorun {
+    Some(flag) => flag
+    None => false
+  }
   {
     name_value: name,
-    autorun_flag: match autorun {
-      Some(flag) => flag
-      None => false
-    },
+    autorun_flag,
     run_once_flag: match run_once {
       Some(flag) => flag
-      None => false
+      None => autorun_flag
     },
     deps_value: match deps {
       Some(items) => items.copy()

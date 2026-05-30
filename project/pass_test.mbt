@@ -33,6 +33,38 @@ test "autorun passes update projects" {
 }
 
 ///|
+test "autorun passes default to run once like BAP" {
+  let pass = @project.ProjectPass::create(
+    name="unit-autorun-once-default",
+    autorun=true,
+    run=project => {
+      let value = match project.get("auto-once") {
+        Some(text) => text + "x"
+        None => "x"
+      }
+      Ok(project.set("auto-once", value))
+    },
+  )
+  match @project.register_pass(pass) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  assert_true(pass.autorun())
+  assert_true(pass.run_once())
+  let project = @project.Project::empty(@core_theory.Target::unknown())
+  let first = match project.run_autorun_passes() {
+    Ok(next) => next
+    Err(reason) => fail(reason)
+  }
+  let second = match first.run_autorun_passes() {
+    Ok(next) => next
+    Err(reason) => fail(reason)
+  }
+  assert_true(second.get("auto-once") == Some("x"))
+  assert_true(second.pass_run_count("unit-autorun-once-default") == 1)
+}
+
+///|
 test "run_pass executes dependencies before requested pass" {
   let dep = @project.ProjectPass::create(name="unit-dep-a", run=project => {
     Ok(project.set("trace", "a"))

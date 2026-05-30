@@ -194,7 +194,10 @@ test "translated BAP pruning preserves effects and conservative loops" {
     typ~,
     is_virtual=true,
   )
+  let v = @types.Var::new(name="v", typ~, is_virtual=true)
+  let v1 = @types.Var::new(name="v1", typ~, is_virtual=true)
   let will_survive = @types.Var::new(name="will_survive", typ~, is_virtual=true)
+  let y = @types.Var::new(name="y", typ~)
   let special = @types.prune_dead_virtual_stmts([
     Move(could_be_dead, Int(word8(1))),
     Special("I will survive!"),
@@ -241,6 +244,29 @@ test "translated BAP pruning preserves effects and conservative loops" {
       assert_true(
         stmt_text(body) ==
         ["%could_be_dead:imm8 := 1:8u", "%will_survive:imm8 := 5:8u"],
+      )
+    _ => fail("expected loop")
+  }
+  let loop_keeps_physical_body_use = @types.prune_dead_virtual_stmts([
+    Move(v1, Int(word8(0))),
+    Move(v, Int(word8(4))),
+    While(cond=BinOp(Lt, Int(word8(0)), Var(v)), body=[
+      Move(y, BinOp(Plus, Var(v1), Int(word8(1)))),
+      Move(v1, Int(word8(1))),
+      Move(v, BinOp(Minus, Var(v), Int(word8(1)))),
+    ]),
+  ])
+  assert_true(
+    stmt_text(loop_keeps_physical_body_use) ==
+    ["%v1:imm8 := 0:8u", "%v:imm8 := 4:8u", "while (0:8u < %v:imm8) do 3 stmts"],
+  )
+  match loop_keeps_physical_body_use[2] {
+    While(body~, ..) =>
+      assert_true(
+        stmt_text(body) ==
+        [
+          "y:imm8 := (%v1:imm8 + 1:8u)", "%v1:imm8 := 1:8u", "%v:imm8 := (%v:imm8 - 1:8u)",
+        ],
       )
     _ => fail("expected loop")
   }

@@ -76,6 +76,49 @@ pub fn[V : Hash + Eq, U] MemMap::link_one_to_one(
 }
 
 ///|
+pub fn[V : Hash + Eq, U] MemMap::link_maybe_one(
+  self : MemMap[V],
+  other : MemMap[U],
+) -> Map[V, U?] {
+  let links : Map[V, U?] = {}
+  for entry in self.entries {
+    let matches = other.find(entry.0)
+    links[entry.1] = match matches {
+      [matched] => Some(matched.1)
+      _ => None
+    }
+  }
+  links
+}
+
+///|
+pub fn[V : Hash + Eq, U] MemMap::link_many(
+  self : MemMap[V],
+  other : MemMap[U],
+) -> Map[V, Array[U]] {
+  let links : Map[V, Array[U]] = {}
+  for entry in self.entries {
+    links[entry.1] = other.intersections(entry.0).map(item => item.1)
+  }
+  links
+}
+
+///|
+pub fn[V : Hash + Eq, U] MemMap::link_at_least_one(
+  self : MemMap[V],
+  other : MemMap[U],
+) -> Map[V, (U, Array[U])] {
+  let links : Map[V, (U, Array[U])] = {}
+  for entry in self.entries {
+    let matches = other.intersections(entry.0).map(item => item.1)
+    if !matches.is_empty() {
+      links[entry.1] = (matches[0], matches[1:].to_owned())
+    }
+  }
+  links
+}
+
+///|
 pub fn[V] MemMap::intersections(
   self : MemMap[V],
   memory : Memory,

@@ -206,3 +206,35 @@ test "translated BAP image table one-to-one link matches exact regions" {
   assert_true(links.get("hi") == Some("reg2"))
   assert_true(links.get("missing") is None)
 }
+
+///|
+test "translated BAP image table link variants handle exact and many intersections" {
+  let mem_low = memory_at(0x10UL, 0x10)
+  let mem_high = memory_at(0x30UL, 0x10)
+  let wide = memory_at(0x10UL, 0x30)
+  let missing = memory_at(0x90UL, 0x10)
+  let table = @memory.MemMap::empty()
+    .add(mem_low, "lo")
+    .add(wide, "wide")
+    .add(missing, "missing")
+  let regs = @memory.MemMap::empty().add(mem_low, "reg1").add(mem_high, "reg2")
+  let maybe = table.link_maybe_one(regs)
+  assert_true(maybe.get("lo") == Some(Some("reg1")))
+  assert_true(maybe.get("wide") == Some(None))
+  assert_true(maybe.get("missing") == Some(None))
+  let many = table.link_many(regs)
+  assert_true(many.get("missing") == Some([]))
+  match many.get("wide") {
+    Some(values) =>
+      assert_true(Set::from_array(values) == Set::from_array(["reg1", "reg2"]))
+    None => fail("expected many link entry")
+  }
+  match table.link_at_least_one(regs).get("wide") {
+    Some((head, rest)) => {
+      assert_true(head == "reg1")
+      assert_true(rest == ["reg2"])
+    }
+    None => fail("expected at-least-one link entry")
+  }
+  assert_true(table.link_at_least_one(regs).get("missing") is None)
+}

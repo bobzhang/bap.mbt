@@ -112,8 +112,52 @@ pub fn ProjectDisassemblyDriver::memory_blocks() -> ProjectDisassemblyDriver {
 }
 
 ///|
+pub fn ProjectDisassemblyDriver::function_symbols() -> ProjectDisassemblyDriver {
+  ProjectDisassemblyDriver::create(
+    name="function-symbols",
+    description="materialize function symbol memory as disassembly blocks",
+    priority=-50,
+    run=project => {
+      let image = match project.image() {
+        Some(image) => image
+        None => return Err("project has no image-backed symbols to disassemble")
+      }
+      let mut state = project.disassembly()
+      let mut added = 0
+      for symbol in project.symbols() {
+        if symbol.is_function() {
+          match image.memories_of_symbol(symbol) {
+            Some(chunks) =>
+              for chunk in chunks {
+                if chunk.length() > 0 {
+                  state = state.add_block(chunk)
+                  added = added + 1
+                }
+              }
+            None => ()
+          }
+        }
+      }
+      if added == 0 {
+        Err("project has no function symbol memory to disassemble")
+      } else {
+        Ok(
+          project
+          .with_disassembly(state)
+          .set("disassembler", "function-symbols"),
+        )
+      }
+    },
+  )
+}
+
+///|
 pub fn register_builtin_disassembly_drivers() -> Result[Unit, String] {
-  for driver in [ProjectDisassemblyDriver::memory_blocks()] {
+  for
+    driver in [
+      ProjectDisassemblyDriver::function_symbols(),
+      ProjectDisassemblyDriver::memory_blocks(),
+    ] {
     match register_disassembly_driver_if_absent(driver) {
       Ok(_) => ()
       Err(reason) => return Err(reason)

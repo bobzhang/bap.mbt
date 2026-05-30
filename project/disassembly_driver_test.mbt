@@ -50,6 +50,14 @@ test "project registers built-in memory block disassembly driver" {
     Err(reason) => fail(reason)
   }
   assert_true(@project.disassembly_driver_names().contains("memory-blocks"))
+  assert_true(@project.disassembly_driver_names().contains("function-symbols"))
+  match @project.find_disassembly_driver("function-symbols") {
+    Some(driver) => {
+      assert_true(driver.priority() == -50)
+      assert_true(driver.description().contains("function symbol"))
+    }
+    None => fail("missing function-symbol driver")
+  }
   match @project.find_disassembly_driver("memory-blocks") {
     Some(driver) => {
       assert_true(driver.priority() == -100)
@@ -86,6 +94,47 @@ test "project registers built-in memory block disassembly driver" {
     )
     is Err(_),
   )
+}
+
+///|
+test "project function-symbol disassembly driver materializes symbol blocks" {
+  match @project.register_builtin_disassembly_drivers() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let segment = @image.Segment::create(
+    name=".text",
+    endian=LittleEndian,
+    addr=0x1000UL,
+    b"\xaa\xbb\xcc\xdd",
+    executable=true,
+  )
+  let function_symbol = @image.Symbol::create(
+    name="main",
+    addr=0x1001UL,
+    size=2,
+    is_function=true,
+  )
+  let data_symbol = @image.Symbol::create(name="global", addr=0x1003UL, size=1)
+  let image = @image.Image::from_segments(
+    entry=0x1000UL,
+    endian=LittleEndian,
+    [segment],
+    symbols=[function_symbol, data_symbol],
+  )
+  let project = @project.Project::from_image(image)
+  match project.disassemble(driver="function-symbols") {
+    Ok(next) => {
+      assert_true(next.get("disassembler") == Some("function-symbols"))
+      let blocks = next.disassembly().blocks()
+      assert_true(blocks.length() == 1)
+      assert_true(blocks[0].min_addr() == 0x1001UL)
+      inspect(blocks[0].hexdump(), content="bb cc")
+    }
+    Err(reason) => fail(reason)
+  }
+  let no_symbols = @project.Project::empty(@core_theory.Target::unknown())
+  assert_true(no_symbols.disassemble(driver="function-symbols") is Err(_))
 }
 
 ///|

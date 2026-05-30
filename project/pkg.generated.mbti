@@ -195,6 +195,7 @@ pub fn ProjectCollatorInfo::name(Self) -> String
 type ProjectDisassemblyDriver
 pub fn ProjectDisassemblyDriver::create(name~ : String, description? : String, priority? : Int, run~ : (Project) -> Result[Project, String]) -> Self
 pub fn ProjectDisassemblyDriver::description(Self) -> String
+pub fn ProjectDisassemblyDriver::function_symbols() -> Self
 pub fn ProjectDisassemblyDriver::memory_blocks() -> Self
 pub fn ProjectDisassemblyDriver::name(Self) -> String
 pub fn ProjectDisassemblyDriver::priority(Self) -> Int

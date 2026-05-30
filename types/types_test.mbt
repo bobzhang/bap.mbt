@@ -32,6 +32,25 @@ test "value types and variables keep BAP-visible metadata" {
 }
 
 ///|
+test "variables expose BAP-style SSA indices" {
+  let typ = @types.ValueType::Imm(32)
+  let base = @types.Var::new(name="r0", typ~)
+  let indexed = base.with_index(7)
+  inspect(indexed.name, content="r0#7")
+  assert_true(indexed.index() == 7)
+  assert_true(indexed.base() == base)
+  assert_true(indexed.with_index(0) == base)
+  assert_true(indexed.with_index(-1) == base)
+  let virtual_var = @types.Var::new(name="tmp#12", typ~, is_virtual=true)
+  assert_true(virtual_var.index() == 12)
+  assert_true(virtual_var.base().name == "tmp")
+  assert_true(virtual_var.base().is_virtual)
+  let literal_hash = @types.Var::new(name="flag#hi", typ~)
+  assert_true(literal_hash.index() == 0)
+  assert_true(literal_hash.base() == literal_hash)
+}
+
+///|
 test "bil expressions infer simple result types and render" {
   let typ = @types.ValueType::Imm(8)
   let x = @types.Var::new(name="x", typ~)

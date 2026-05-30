@@ -34,8 +34,12 @@ pub(all) enum Abi {
   EABI
   GNUEABI
   CDecl
+  Pascal
+  FortranAbi
   StdCall
   FastCall
+  ThisCall
+  VectorCall
   Watcom
   MSVC
 } derive(Eq, @debug.Debug)

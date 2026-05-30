@@ -27,8 +27,12 @@ pub(all) enum Abi {
   EABI
   GNUEABI
   CDecl
+  Pascal
+  FortranAbi
   StdCall
   FastCall
+  ThisCall
+  VectorCall
   Watcom
   MSVC
 } derive(Eq, Debug)
@@ -117,8 +121,12 @@ pub fn Abi::to_string(self : Abi) -> String {
     EABI => "eabi"
     GNUEABI => "gnueabi"
     CDecl => "cdecl"
+    Pascal => "pascal"
+    FortranAbi => "fortran"
     StdCall => "stdcall"
     FastCall => "fastcall"
+    ThisCall => "thiscall"
+    VectorCall => "vectorcall"
     Watcom => "watcom"
     MSVC => "msvc"
   }
@@ -133,8 +141,12 @@ pub fn Abi::of_string(text : String) -> Abi? {
     "eabi" => Some(EABI)
     "gnueabi" | "gnu-eabi" => Some(GNUEABI)
     "cdecl" | "c-decl" => Some(CDecl)
+    "pascal" => Some(Pascal)
+    "fortran" => Some(FortranAbi)
     "stdcall" | "std-call" => Some(StdCall)
     "fastcall" | "fast-call" => Some(FastCall)
+    "thiscall" | "this-call" => Some(ThisCall)
+    "vectorcall" | "vector-call" => Some(VectorCall)
     "watcom" => Some(Watcom)
     "msvc" | "ms" => Some(MSVC)
     _ => None

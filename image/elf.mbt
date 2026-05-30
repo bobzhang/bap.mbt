@@ -32,9 +32,12 @@ priv struct ImageElfProgramHeader {
 ///|
 priv struct ImageElfSectionHeader {
   name_offset : Int
+  typ : Int
+  link : Int
   addr : UInt64
   offset : Int
   size : Int
+  entsize : Int
 }
 
 ///|
@@ -350,6 +353,13 @@ fn image_elf_parse_section_header(
     header.endian,
     "ELF section name offset",
   )
+  let typ = image_elf_read_int(
+    data,
+    base + 4,
+    4,
+    header.endian,
+    "ELF section type",
+  )
   let addr = match header.class {
     ImageElf32 => image_elf_read_u64(data, base + 12, 4, header.endian)
     ImageElf64 => image_elf_read_u64(data, base + 16, 8, header.endian)
@@ -378,13 +388,47 @@ fn image_elf_parse_section_header(
     ImageElf64 =>
       image_elf_read_int(data, base + 32, 8, header.endian, "ELF section size")
   }
-  match (name_offset, addr, offset, size) {
-    (Ok(name_offset), Ok(addr), Ok(offset), Ok(size)) =>
-      Ok({ name_offset, addr, offset, size })
-    (Err(reason), _, _, _)
-    | (_, Err(reason), _, _)
-    | (_, _, Err(reason), _)
-    | (_, _, _, Err(reason)) => Err(reason)
+  let link = match header.class {
+    ImageElf32 =>
+      image_elf_read_int(data, base + 24, 4, header.endian, "ELF section link")
+    ImageElf64 =>
+      image_elf_read_int(data, base + 40, 4, header.endian, "ELF section link")
+  }
+  let entsize = match header.class {
+    ImageElf32 =>
+      image_elf_read_int(
+        data,
+        base + 36,
+        4,
+        header.endian,
+        "ELF section entry size",
+      )
+    ImageElf64 =>
+      image_elf_read_int(
+        data,
+        base + 56,
+        8,
+        header.endian,
+        "ELF section entry size",
+      )
+  }
+  match (name_offset, typ, link, addr, offset, size, entsize) {
+    (
+      Ok(name_offset),
+      Ok(typ),
+      Ok(link),
+      Ok(addr),
+      Ok(offset),
+      Ok(size),
+      Ok(entsize),
+    ) => Ok({ name_offset, typ, link, addr, offset, size, entsize })
+    (Err(reason), _, _, _, _, _, _)
+    | (_, Err(reason), _, _, _, _, _)
+    | (_, _, Err(reason), _, _, _, _)
+    | (_, _, _, Err(reason), _, _, _)
+    | (_, _, _, _, Err(reason), _, _)
+    | (_, _, _, _, _, Err(reason), _)
+    | (_, _, _, _, _, _, Err(reason)) => Err(reason)
   }
 }
 
@@ -451,6 +495,148 @@ fn image_elf_segment_data(
     }
     Ok(Bytes::from_array(bytes))
   }
+}
+
+///|
+fn image_elf_symbol_count(
+  section : ImageElfSectionHeader,
+) -> Result[Int, String] {
+  if section.entsize <= 0 {
+    Err("ELF symbol section entry size is invalid")
+  } else if section.size % section.entsize != 0 {
+    Err("ELF symbol section size is not entry-aligned")
+  } else {
+    Ok(section.size / section.entsize)
+  }
+}
+
+///|
+fn image_elf_parse_symbol(
+  data : Bytes,
+  header : ImageElfHeader,
+  symbol_table : ImageElfSectionHeader,
+  string_table : Bytes,
+  index : Int,
+) -> Result[Symbol?, String] {
+  let base = symbol_table.offset + index * symbol_table.entsize
+  let name_offset = image_elf_read_int(
+    data,
+    base,
+    4,
+    header.endian,
+    "ELF symbol name offset",
+  )
+  let info = match header.class {
+    ImageElf32 =>
+      image_elf_read_int(data, base + 12, 1, header.endian, "ELF symbol info")
+    ImageElf64 =>
+      image_elf_read_int(data, base + 4, 1, header.endian, "ELF symbol info")
+  }
+  let shndx = match header.class {
+    ImageElf32 =>
+      image_elf_read_int(
+        data,
+        base + 14,
+        2,
+        header.endian,
+        "ELF symbol section",
+      )
+    ImageElf64 =>
+      image_elf_read_int(data, base + 6, 2, header.endian, "ELF symbol section")
+  }
+  let value = match header.class {
+    ImageElf32 => image_elf_read_u64(data, base + 4, 4, header.endian)
+    ImageElf64 => image_elf_read_u64(data, base + 8, 8, header.endian)
+  }
+  let size = match header.class {
+    ImageElf32 =>
+      image_elf_read_int(data, base + 8, 4, header.endian, "ELF symbol size")
+    ImageElf64 =>
+      image_elf_read_int(data, base + 16, 8, header.endian, "ELF symbol size")
+  }
+  match (name_offset, info, shndx, value, size) {
+    (Ok(name_offset), Ok(info), Ok(shndx), Ok(value), Ok(size)) => {
+      if name_offset == 0 || shndx == 0 {
+        return Ok(None)
+      }
+      match image_elf_cstring(string_table, name_offset) {
+        Ok(name) =>
+          if name.length() == 0 {
+            Ok(None)
+          } else {
+            Ok(
+              Some(
+                Symbol::create(
+                  name~,
+                  addr=value,
+                  size~,
+                  is_function=(info & 0x0f) == 2,
+                ),
+              ),
+            )
+          }
+        Err(reason) => Err(reason)
+      }
+    }
+    (Err(reason), _, _, _, _)
+    | (_, Err(reason), _, _, _)
+    | (_, _, Err(reason), _, _)
+    | (_, _, _, Err(reason), _)
+    | (_, _, _, _, Err(reason)) => Err(reason)
+  }
+}
+
+///|
+fn image_elf_symbol_table_symbols(
+  data : Bytes,
+  header : ImageElfHeader,
+  section_headers : Array[ImageElfSectionHeader],
+  symbol_table : ImageElfSectionHeader,
+) -> Result[Array[Symbol], String] {
+  let string_section = match section_headers.get(symbol_table.link) {
+    Some(section) => section
+    None => return Err("ELF symbol string table link is out of bounds")
+  }
+  let strings = match
+    image_elf_section_data(data, string_section.offset, string_section.size) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let count = match image_elf_symbol_count(symbol_table) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let symbols : Array[Symbol] = []
+  for i in 0..<count {
+    match image_elf_parse_symbol(data, header, symbol_table, strings, i) {
+      Ok(Some(symbol)) => symbols.push(symbol)
+      Ok(None) => ()
+      Err(reason) => return Err(reason)
+    }
+  }
+  Ok(symbols)
+}
+
+///|
+fn image_elf_symbols(
+  data : Bytes,
+  header : ImageElfHeader,
+  section_headers : Array[ImageElfSectionHeader],
+) -> Result[Array[Symbol], String] {
+  let symbols : Array[Symbol] = []
+  for section in section_headers {
+    if section.typ == 2 || section.typ == 11 {
+      match
+        image_elf_symbol_table_symbols(data, header, section_headers, section) {
+        Ok(items) =>
+          for symbol in items {
+            symbols.push(symbol)
+          }
+        Err(reason) => return Err(reason)
+      }
+    }
+  }
+  Ok(symbols)
 }
 
 ///|
@@ -556,6 +742,10 @@ fn image_elf_load(data : Bytes) -> Result[(Image, Array[String]), String] {
           Err(reason) => return Err(reason)
         }
       }
+      let symbols = match image_elf_symbols(data, header, section_headers) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
       let segments : Array[Segment] = []
       for i in 0..<header.program_count {
         match image_elf_parse_program_header(data, header, i) {
@@ -591,6 +781,7 @@ fn image_elf_load(data : Bytes) -> Result[(Image, Array[String]), String] {
             endian=header.endian,
             segments,
             sections~,
+            symbols~,
             target=image_elf_target(header),
           ),
           [],

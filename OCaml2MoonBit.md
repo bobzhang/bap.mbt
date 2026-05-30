@@ -104,8 +104,10 @@ object-format parsers such as ELF in `image` backends instead of duplicating
 them in `project`; project filename loading should discover them through the
 same image-backend fallback path as custom image loaders. For ELF, map
 `PT_LOAD` program headers to image segments, zero-fill `p_memsz > p_filesz`
-ranges, keep section headers as metadata, and derive target/endian/filetype
-from the ELF header before higher-level project code sees the image.
+ranges, keep section headers as metadata, extract defined symbols from
+`SHT_SYMTAB`/`SHT_DYNSYM` through their linked string tables, and derive
+target/endian/filetype from the ELF header before higher-level project code sees
+the image.
 For disassembly-driver registries, separate orchestration from architecture
 decoding: a built-in driver may materialize memory regions as blocks, but it
 should not invent assembly text or lifted BIL unless a real target-specific
@@ -543,6 +545,17 @@ moon run -c 'fn main { let xs = [(2, "b"), (1, "a")]; xs.sort_by(fn(a, b) { a.0.
 ```
 
 `Array::sort_by` sorts in place with an `Int`-returning comparator. `Array::rev()` returns a reversed **copy** and leaves the original unchanged — useful when porting OCaml list-building code that conses in reverse and conditionally applies `List.rev`.
+
+`Array::search_by(predicate)` returns the matching index (`Int?`), not the
+matched element. When porting OCaml `List.find_opt`/`Array.find_opt`, map the
+index back to the array element at the use site:
+
+```moonbit
+match symbols.search_by(symbol => symbol.name() == "main") {
+  Some(index) => symbols[index]
+  None => fail("expected symbol")
+}
+```
 
 ```sh
 moon run -c $'fn main { let m : Map[Int, String] = Map([]); m[3] = "three"; m[1] = "one"; m[2] = "two"; for k, v in m { println("\\{k}=\\{v}") } }'

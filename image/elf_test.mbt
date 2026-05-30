@@ -61,6 +61,8 @@ fn image_elf_test_write_section64(
   addr : UInt64,
   offset : Int,
   size : Int,
+  link : Int,
+  entsize : Int,
 ) -> Unit {
   let base = 120 + index * 64
   image_elf_test_set_u32_le(buffer, base, name_offset)
@@ -69,17 +71,39 @@ fn image_elf_test_write_section64(
   image_elf_test_set_u64_le(buffer, base + 16, addr)
   image_elf_test_set_u64_le(buffer, base + 24, offset.to_uint64())
   image_elf_test_set_u64_le(buffer, base + 32, size.to_uint64())
+  image_elf_test_set_u32_le(buffer, base + 40, link)
+  image_elf_test_set_u64_le(buffer, base + 56, entsize.to_uint64())
+}
+
+///|
+fn image_elf_test_write_symbol64(
+  buffer : Array[Byte],
+  offset : Int,
+  name_offset : Int,
+  info : Int,
+  shndx : Int,
+  value : UInt64,
+  size : UInt64,
+) -> Unit {
+  image_elf_test_set_u32_le(buffer, offset, name_offset)
+  buffer[offset + 4] = info.to_byte()
+  image_elf_test_set_u16_le(buffer, offset + 6, shndx)
+  image_elf_test_set_u64_le(buffer, offset + 8, value)
+  image_elf_test_set_u64_le(buffer, offset + 16, size)
 }
 
 ///|
 fn image_elf_test_make_x86_64() -> Bytes {
-  let shstr = b"\x00.shstrtab\x00.text\x00.debug_info\x00"
+  let shstr = b"\x00.shstrtab\x00.text\x00.debug_info\x00.symtab\x00.strtab\x00"
   let text = b"\x90\xc3\xcc\x00"
   let debug_info = b"debug"
-  let shstr_offset = 120 + 4 * 64
+  let strtab = b"\x00main\x00data_object\x00"
+  let shstr_offset = 120 + 6 * 64
   let text_offset = shstr_offset + shstr.length()
   let debug_offset = text_offset + text.length()
-  let total = debug_offset + debug_info.length()
+  let symtab_offset = debug_offset + debug_info.length()
+  let strtab_offset = symtab_offset + 72
+  let total = strtab_offset + strtab.length()
   let buffer = Array::make(total, b'\x00')
   image_elf_test_write_bytes(buffer, 0, b"\x7fELF")
   buffer[4] = b'\x02'
@@ -95,7 +119,7 @@ fn image_elf_test_make_x86_64() -> Bytes {
   image_elf_test_set_u16_le(buffer, 54, 56)
   image_elf_test_set_u16_le(buffer, 56, 1)
   image_elf_test_set_u16_le(buffer, 58, 64)
-  image_elf_test_set_u16_le(buffer, 60, 4)
+  image_elf_test_set_u16_le(buffer, 60, 6)
   image_elf_test_set_u16_le(buffer, 62, 1)
   image_elf_test_set_u32_le(buffer, 64, 1)
   image_elf_test_set_u32_le(buffer, 68, 5)
@@ -112,6 +136,8 @@ fn image_elf_test_make_x86_64() -> Bytes {
     0UL,
     shstr_offset,
     shstr.length(),
+    0,
+    0,
   )
   image_elf_test_write_section64(
     buffer,
@@ -122,6 +148,8 @@ fn image_elf_test_make_x86_64() -> Bytes {
     0x400000UL,
     text_offset,
     text.length(),
+    0,
+    0,
   )
   image_elf_test_write_section64(
     buffer,
@@ -132,10 +160,46 @@ fn image_elf_test_make_x86_64() -> Bytes {
     0UL,
     debug_offset,
     debug_info.length(),
+    0,
+    0,
+  )
+  image_elf_test_write_section64(
+    buffer, 4, 29, 2, 0UL, 0UL, symtab_offset, 72, 5, 24,
+  )
+  image_elf_test_write_section64(
+    buffer,
+    5,
+    37,
+    3,
+    0UL,
+    0UL,
+    strtab_offset,
+    strtab.length(),
+    0,
+    0,
   )
   image_elf_test_write_bytes(buffer, shstr_offset, shstr)
   image_elf_test_write_bytes(buffer, text_offset, text)
   image_elf_test_write_bytes(buffer, debug_offset, debug_info)
+  image_elf_test_write_symbol64(
+    buffer,
+    symtab_offset + 24,
+    1,
+    0x12,
+    2,
+    0x400000UL,
+    2UL,
+  )
+  image_elf_test_write_symbol64(
+    buffer,
+    symtab_offset + 48,
+    6,
+    0x11,
+    2,
+    0x400002UL,
+    1UL,
+  )
+  image_elf_test_write_bytes(buffer, strtab_offset, strtab)
   Bytes::from_array(buffer)
 }
 
@@ -176,6 +240,31 @@ test "image ELF backend loads program segments and sections" {
   assert_true(sections.any(section => section.name() == ".text"))
   assert_true(sections.any(section => section.name() == ".debug_info"))
   assert_true(image.sections_of_segment(segments[0]).length() == 1)
+  let symbols = image.symbols()
+  assert_true(symbols.length() == 2)
+  let main_symbol = match symbols.search_by(symbol => symbol.name() == "main") {
+    Some(index) => symbols[index]
+    None => fail("expected main symbol")
+  }
+  assert_true(main_symbol.addr() == 0x400000UL)
+  assert_true(main_symbol.size() == 2)
+  assert_true(main_symbol.is_function())
+  match image.memory_of_symbol(main_symbol) {
+    Some((memory, rest)) => {
+      assert_true(rest.length() == 0)
+      inspect(memory.hexdump(), content="90 c3")
+    }
+    None => fail("expected main symbol memory")
+  }
+  let data_symbol = match
+    symbols.search_by(symbol => symbol.name() == "data_object") {
+    Some(index) => symbols[index]
+    None => fail("expected data object symbol")
+  }
+  assert_true(data_symbol.addr() == 0x400002UL)
+  assert_true(data_symbol.size() == 1)
+  assert_true(!data_symbol.is_function())
+  assert_true(image.symbols_of_segment(segments[0]).length() == 2)
 }
 
 ///|

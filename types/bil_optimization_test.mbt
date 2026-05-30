@@ -31,7 +31,7 @@ test "bil pruning removes dead virtual assignments but preserves physical writes
   let pruned = @types.prune_dead_virtual_stmts(stmts)
   assert_true(
     stmt_text(pruned) ==
-    ["%live:imm8 := 0x01:8u", "physical:imm8 := (%live:imm8 + 0x02:8u)"],
+    ["%live:imm8 := 1:8u", "physical:imm8 := (%live:imm8 + 2:8u)"],
   )
 }
 
@@ -54,7 +54,7 @@ test "bil pruning keeps branch condition dependencies" {
   assert_true(
     stmt_text(pruned) ==
     [
-      "%cond:imm8 := 0x01:8u", "if (%cond:imm8 == 0x01:8u) then 0 stmts else 0 stmts",
+      "%cond:imm8 := 1:8u", "if (%cond:imm8 == 1:8u) then 0 stmts else 0 stmts",
       "physical:imm8 := %cond:imm8",
     ],
   )
@@ -71,7 +71,7 @@ test "translated BAP pruning preserves virtuals used by jumps" {
   ])
   assert_true(
     stmt_text(direct) ==
-    ["%will_survive:imm8 := 0x2a:8u", "jmp %will_survive:imm8"],
+    ["%will_survive:imm8 := 0x2A:8u", "jmp %will_survive:imm8"],
   )
   let then_jump = @types.prune_dead_virtual_stmts([
     Move(always_alive, Int(word8(1))),
@@ -85,7 +85,7 @@ test "translated BAP pruning preserves virtuals used by jumps" {
   assert_true(
     stmt_text(then_jump) ==
     [
-      "always_alive:imm8 := 0x01:8u", "%will_survive:imm8 := 0x2a:8u", "if (0x00:8u < always_alive:imm8) then 1 stmts else 0 stmts",
+      "always_alive:imm8 := 1:8u", "%will_survive:imm8 := 0x2A:8u", "if (0:8u < always_alive:imm8) then 1 stmts else 0 stmts",
     ],
   )
   let else_jump = @types.prune_dead_virtual_stmts([
@@ -98,7 +98,7 @@ test "translated BAP pruning preserves virtuals used by jumps" {
   assert_true(
     stmt_text(else_jump) ==
     [
-      "always_alive:imm8 := 0x01:8u", "%will_survive:imm8 := 0x2a:8u", "if (0x00:8u < always_alive:imm8) then 0 stmts else 1 stmts",
+      "always_alive:imm8 := 1:8u", "%will_survive:imm8 := 0x2A:8u", "if (0:8u < always_alive:imm8) then 0 stmts else 1 stmts",
     ],
   )
 }
@@ -116,7 +116,7 @@ test "bil optimize combines simplification and dead virtual pruning" {
     ),
   ]
   let optimized = @types.optimize_stmts(stmts)
-  assert_true(stmt_text(optimized) == ["physical:imm8 := 0x05:8u"])
+  assert_true(stmt_text(optimized) == ["physical:imm8 := 5:8u"])
   let bounded = @types.optimize_stmts(stmts, max_iterations=2)
   assert_true(bounded == optimized)
 }
@@ -134,7 +134,7 @@ test "bil optimize folds chained virtual constants into physical uses" {
     Move(x, Var(v)),
   ]
   let optimized = @types.optimize_stmts(stmts)
-  assert_true(stmt_text(optimized) == ["x:imm8 := 0x04:8u"])
+  assert_true(stmt_text(optimized) == ["x:imm8 := 4:8u"])
 }
 
 ///|
@@ -152,9 +152,7 @@ test "bil optimize removes dead virtual branches with computable conditions" {
     Move(z, Var(x)),
   ]
   let optimized = @types.optimize_stmts(stmts)
-  assert_true(
-    stmt_text(optimized) == ["x:imm8 := 0x01:8u", "z:imm8 := 0x01:8u"],
-  )
+  assert_true(stmt_text(optimized) == ["x:imm8 := 1:8u", "z:imm8 := 1:8u"])
 }
 
 ///|
@@ -167,9 +165,7 @@ test "bil constant propagation folds straight-line moves" {
     Move(y, BinOp(Plus, Var(x), Int(word8(3)))),
   ]
   let propagated = @types.propagate_const_stmts(stmts)
-  assert_true(
-    stmt_text(propagated) == ["x:imm8 := 0x02:8u", "y:imm8 := 0x05:8u"],
-  )
+  assert_true(stmt_text(propagated) == ["x:imm8 := 2:8u", "y:imm8 := 5:8u"])
 }
 
 ///|
@@ -187,7 +183,7 @@ test "bil constant propagation joins identical branch facts" {
   let propagated = @types.propagate_const_stmts(stmts)
   assert_true(
     stmt_text(propagated) ==
-    ["if cond:imm8 then 1 stmts else 1 stmts", "y:imm8 := 0x05:8u"],
+    ["if cond:imm8 then 1 stmts else 1 stmts", "y:imm8 := 5:8u"],
   )
 }
 
@@ -206,7 +202,7 @@ test "bil constant propagation drops facts that differ across branches" {
   let propagated = @types.propagate_const_stmts(stmts)
   assert_true(
     stmt_text(propagated) ==
-    ["if cond:imm8 then 1 stmts else 1 stmts", "y:imm8 := (x:imm8 + 0x01:8u)"],
+    ["if cond:imm8 then 1 stmts else 1 stmts", "y:imm8 := (x:imm8 + 1:8u)"],
   )
 }
 
@@ -228,14 +224,12 @@ test "bil constant propagation keeps selected branch facts for static conditions
   let propagated = @types.propagate_const_stmts(stmts)
   assert_true(
     stmt_text(propagated) ==
-    [
-      "x:imm8 := 0x01:8u", "if 0x0:1u then 2 stmts else 1 stmts", "z:imm8 := 0x04:8u",
-    ],
+    ["x:imm8 := 1:8u", "if 0:1u then 2 stmts else 1 stmts", "z:imm8 := 4:8u"],
   )
   match propagated[1] {
     If(yes~, no~, ..) => {
-      assert_true(stmt_text(yes) == ["y:imm8 := 0x02:8u", "jmp 0x02:8u"])
-      assert_true(stmt_text(no) == ["y:imm8 := 0x04:8u"])
+      assert_true(stmt_text(yes) == ["y:imm8 := 2:8u", "jmp 2:8u"])
+      assert_true(stmt_text(no) == ["y:imm8 := 4:8u"])
     }
     _ => fail("expected propagated branch")
   }
@@ -264,19 +258,18 @@ test "bil constant propagation does not leak selected branch facts past jumps" {
   assert_true(
     stmt_text(propagated) ==
     [
-      "x:imm8 := 0x01:8u", "y:imm8 := 0x02:8u", "if 0x1:1u then 2 stmts else 0 stmts",
-      "z:imm8 := y:imm8",
+      "x:imm8 := 1:8u", "y:imm8 := 2:8u", "if 1:1u then 2 stmts else 0 stmts", "z:imm8 := y:imm8",
     ],
   )
   match propagated[2] {
     If(yes~, ..) => {
       assert_true(
         stmt_text(yes) ==
-        ["y:imm8 := 0x01:8u", "if 0x1:1u then 1 stmts else 0 stmts"],
+        ["y:imm8 := 1:8u", "if 1:1u then 1 stmts else 0 stmts"],
       )
       match yes[1] {
         If(yes=inner_yes, ..) =>
-          assert_true(stmt_text(inner_yes) == ["jmp 0x01:8u"])
+          assert_true(stmt_text(inner_yes) == ["jmp 1:8u"])
         _ => fail("expected nested branch")
       }
     }
@@ -303,12 +296,12 @@ test "bil constant propagation preserves facts after definitely skipped loops" {
   assert_true(
     stmt_text(propagated) ==
     [
-      "x:imm8 := 0x01:8u", "y:imm8 := 0x02:8u", "while 0x0:1u do 2 stmts", "z:imm8 := 0x02:8u",
+      "x:imm8 := 1:8u", "y:imm8 := 2:8u", "while 0:1u do 2 stmts", "z:imm8 := 2:8u",
     ],
   )
   match propagated[2] {
     While(body~, ..) =>
-      assert_true(stmt_text(body) == ["y:imm8 := 0x01:8u", "jmp 0x01:8u"])
+      assert_true(stmt_text(body) == ["y:imm8 := 1:8u", "jmp 1:8u"])
     _ => fail("expected propagated loop")
   }
 }
@@ -328,12 +321,12 @@ test "bil constant propagation keeps loop-carried definitions conservative" {
   let propagated = @types.propagate_const_stmts(stmts)
   assert_true(
     stmt_text(propagated) ==
-    ["x:imm8 := 0x04:8u", "while (x:imm8 < 0x05:8u) do 2 stmts"],
+    ["x:imm8 := 4:8u", "while (x:imm8 < 5:8u) do 2 stmts"],
   )
   match propagated[1] {
     While(body~, ..) =>
       assert_true(
-        stmt_text(body) == ["y:imm8 := (x:imm8 + 0x01:8u)", "x:imm8 := 0x2a:8u"],
+        stmt_text(body) == ["y:imm8 := (x:imm8 + 1:8u)", "x:imm8 := 0x2A:8u"],
       )
     _ => fail("expected propagated loop")
   }
@@ -356,15 +349,13 @@ test "bil constant propagation reuses facts within a loop body after redefinitio
   let propagated = @types.propagate_const_stmts(stmts)
   assert_true(
     stmt_text(propagated) ==
-    ["x:imm8 := 0x2a:8u", "while (0x02:8u < x:imm8) do 3 stmts"],
+    ["x:imm8 := 0x2A:8u", "while (2:8u < x:imm8) do 3 stmts"],
   )
   match propagated[1] {
     While(body~, ..) =>
       assert_true(
         stmt_text(body) ==
-        [
-          "y:imm8 := (x:imm8 + 0x01:8u)", "x:imm8 := 0x01:8u", "z:imm8 := 0x03:8u",
-        ],
+        ["y:imm8 := (x:imm8 + 1:8u)", "x:imm8 := 1:8u", "z:imm8 := 3:8u"],
       )
     _ => fail("expected propagated loop")
   }
@@ -393,21 +384,21 @@ test "bil constant propagation carries invariant facts into loop branches" {
   let propagated = @types.propagate_const_stmts(stmts)
   assert_true(
     stmt_text(propagated) ==
-    ["x:imm8 := 0x2a:8u", "while (0x04:8u < z:imm8) do 3 stmts"],
+    ["x:imm8 := 0x2A:8u", "while (4:8u < z:imm8) do 3 stmts"],
   )
   match propagated[1] {
     While(body~, ..) => {
       assert_true(
         stmt_text(body) ==
         [
-          "if (0x01:8u < z:imm8) then 1 stmts else 1 stmts", "if 0x1:1u then 1 stmts else 1 stmts",
-          "z:imm8 := 0x00:8u",
+          "if (1:8u < z:imm8) then 1 stmts else 1 stmts", "if 1:1u then 1 stmts else 1 stmts",
+          "z:imm8 := 0:8u",
         ],
       )
       match body[1] {
         If(yes~, no~, ..) => {
-          assert_true(stmt_text(yes) == ["y:imm8 := 0x00:8u"])
-          assert_true(stmt_text(no) == ["y:imm8 := 0x02:8u"])
+          assert_true(stmt_text(yes) == ["y:imm8 := 0:8u"])
+          assert_true(stmt_text(no) == ["y:imm8 := 2:8u"])
         }
         _ => fail("expected inner branch")
       }
@@ -425,9 +416,7 @@ test "bil optimize keeps physical vars and folds propagated rhs" {
     Move(x, Int(word8(2))),
     Move(y, BinOp(Plus, Var(x), Int(word8(2)))),
   ])
-  assert_true(
-    stmt_text(optimized) == ["x:imm8 := 0x02:8u", "y:imm8 := 0x04:8u"],
-  )
+  assert_true(stmt_text(optimized) == ["x:imm8 := 2:8u", "y:imm8 := 4:8u"])
 }
 
 ///|
@@ -448,9 +437,7 @@ test "bil optimize folds computable condition while preserving physical trace" {
   ])
   assert_true(
     stmt_text(optimized) ==
-    [
-      "x:imm8 := 0x01:8u", "y:imm8 := 0x04:8u", "z:imm8 := 0x02:8u", "y:imm8 := 0x02:8u",
-    ],
+    ["x:imm8 := 1:8u", "y:imm8 := 4:8u", "z:imm8 := 2:8u", "y:imm8 := 2:8u"],
   )
 }
 
@@ -531,8 +518,6 @@ test "bil optimize handles nested virtual pipeline regression" {
   ])
   assert_true(
     stmt_text(optimized) ==
-    [
-      "x:imm8 := 0x08:8u", "y:imm8 := 0x04:8u", "z:imm8 := 0x02:8u", "x:imm8 := 0x02:8u",
-    ],
+    ["x:imm8 := 8:8u", "y:imm8 := 4:8u", "z:imm8 := 2:8u", "x:imm8 := 2:8u"],
   )
 }

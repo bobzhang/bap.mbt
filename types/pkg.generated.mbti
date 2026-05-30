@@ -417,12 +417,17 @@ pub fn Word::compare_unsigned(Self, Self) -> Int raise @bitvec.BitVecError
 pub fn Word::concat(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::div(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::extract(Self, hi? : Int, lo? : Int) -> Self raise @bitvec.BitVecError
-pub fn Word::from_bitvec(@bitvec.BitVec) -> Self
+pub fn Word::from_bitvec(@bitvec.BitVec, signed? : Bool) -> Self
 pub fn Word::from_bytes(BytesView, endian~ : @bitvec.Endian, width? : Int) -> Self raise @bitvec.BitVecError
 pub fn Word::from_hex(width~ : Int, StringView) -> Self raise @bitvec.BitVecError
 pub fn Word::from_string(StringView) -> Self raise @bitvec.BitVecError
 pub fn Word::gcd(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::gcd_ext(Self, Self) -> (Self, Self, Self) raise @bitvec.BitVecError
+pub fn Word::is_negative(Self) -> Bool
+pub fn Word::is_non_negative(Self) -> Bool
+pub fn Word::is_non_positive(Self) -> Bool
+pub fn Word::is_positive(Self) -> Bool
+pub fn Word::is_signed(Self) -> Bool
 pub fn Word::is_zero(Self) -> Bool
 pub fn Word::lcm(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::lnot(Self) -> Self
@@ -439,6 +444,7 @@ pub fn Word::one(width~ : Int) -> Self raise @bitvec.BitVecError
 pub fn Word::ones(width~ : Int) -> Self raise @bitvec.BitVecError
 pub fn Word::rem(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::rshift(Self, Int) -> Self
+pub fn Word::signed(Self) -> Self
 pub fn Word::signed_div(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::signed_rem(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::sub(Self, Self) -> Self raise @bitvec.BitVecError
@@ -448,6 +454,7 @@ pub fn Word::to_hex(Self, prefix? : Bool) -> String
 pub fn Word::to_string(Self) -> String
 pub fn Word::to_uint64(Self) -> UInt64 raise @bitvec.BitVecError
 pub fn Word::truncate(Self, width~ : Int) -> Self raise @bitvec.BitVecError
+pub fn Word::unsigned(Self) -> Self
 pub fn Word::widen(Self, width~ : Int) -> Self raise @bitvec.BitVecError
 pub fn Word::width(Self) -> Int
 pub fn Word::zero(width~ : Int) -> Self raise @bitvec.BitVecError

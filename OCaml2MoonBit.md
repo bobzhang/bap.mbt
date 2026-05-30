@@ -108,6 +108,16 @@ block's `free_vars`, while phi operands are edge-specific uses attributed to
 their predecessor block. Do not model phi lhs variables as ordinary block defs
 in the liveness transfer unless the OCaml source does so for that algorithm.
 
+BAP `Word.t` carries a signedness flag in addition to the payload bits and
+width. Keep the raw bitvector package sign-agnostic, but preserve this flag in
+the BAP-facing word wrapper for parsing, predicates, and printing. Arithmetic
+and bitwise operations in the OCaml shim repack an unsigned result, while
+`Word.signed`/`Word.unsigned`, `is_negative`, and full literal formatting
+observe the flag. BAP full word formatting uses uppercase hexadecimal with an
+automatic base prefix: values `0..9` print as `7:4u`, larger magnitudes print
+as `0x2A:8u`, and signed negative values print their two's-complement
+magnitude with an `s` suffix, e.g. `-1:3s`.
+
 ```sh
 moon run -c 'fn main { let raw : Array[Byte] = [65, 0, 255]; let b = Bytes::from_array(raw); println(b.length()); println(b[2].to_int()) }'
 # 3

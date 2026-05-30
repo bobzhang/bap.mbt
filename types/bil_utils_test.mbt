@@ -24,7 +24,7 @@ test "bil substitution avoids replacing let-bound variables" {
   let replaced_y = exp.substitute_var(y, one)
   inspect(
     replaced_y.to_string(),
-    content="let x:imm8 = 0x01:8u in (x:imm8 + 0x01:8u)",
+    content="let x:imm8 = 1:8u in (x:imm8 + 1:8u)",
   )
 }
 
@@ -293,5 +293,5 @@ test "statement helpers expose used variables and substitute expressions" {
   assert_true(!vars.any(item => item == x))
   assert_true(vars.any(item => item == y))
   let next = stmt.substitute_var(y, Int(@types.Word::of_int(width=8, 9)))
-  inspect(next.to_string(), content="x:imm8 := (0x09:8u + 0x1:1u)")
+  inspect(next.to_string(), content="x:imm8 := (9:8u + 1:1u)")
 }

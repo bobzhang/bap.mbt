@@ -22,6 +22,26 @@ test "word wraps bitvec operations" {
 }
 
 ///|
+test "word literals preserve BAP signedness and display" {
+  inspect(@types.Word::b0().to_string(), content="0:1u")
+  inspect(@types.Word::b1().to_string(), content="1:1u")
+  inspect(@types.Word::of_int(width=4, 7).to_string(), content="7:4u")
+  inspect(@types.Word::of_int(width=2, 7).to_string(), content="3:2u")
+  inspect(@types.Word::of_int(width=3, -1).to_string(), content="7:3u")
+  let signed_minus_one = @types.Word::of_int(width=3, -1).signed()
+  inspect(signed_minus_one.to_string(), content="-1:3s")
+  assert_true(signed_minus_one.is_signed())
+  assert_true(signed_minus_one.is_negative())
+  assert_true(signed_minus_one.is_non_positive())
+  assert_true(!signed_minus_one.is_positive())
+  let parsed_signed = @types.Word::from_string("7:3s")
+  assert_true(parsed_signed.is_signed())
+  inspect(parsed_signed.to_string(), content="-1:3s")
+  assert_true(@types.Word::from_string("-1:3").to_string() == "7:3u")
+  inspect(@types.Word::of_int(width=8, 42).to_string(), content="0x2A:8u")
+}
+
+///|
 test "value types and variables keep BAP-visible metadata" {
   let typ = @types.ValueType::Imm(8)
   let physical = @types.Var::new(name="r0", typ~)
@@ -60,7 +80,7 @@ test "bil expressions infer simple result types and render" {
     Int(@types.Word::of_int(width=8, 1)),
   )
   inspect(exp.type_of().to_string(), content="imm8")
-  inspect(exp.to_string(), content="(x:imm8 + 0x01:8u)")
+  inspect(exp.to_string(), content="(x:imm8 + 1:8u)")
   let cmp = @types.Exp::BinOp(Eq, exp, Int(@types.Word::of_int(width=8, 2)))
   inspect(cmp.type_of().to_string(), content="imm1")
 }
@@ -71,5 +91,5 @@ test "bil statements expose definitions" {
   let x = @types.Var::new(name="x", typ~)
   let stmt = @types.Stmt::Move(x, Int(@types.Word::of_int(width=8, 42)))
   assert_true(stmt.defined_var().map(v => v.name) == Some("x"))
-  inspect(stmt.to_string(), content="x:imm8 := 0x2a:8u")
+  inspect(stmt.to_string(), content="x:imm8 := 0x2A:8u")
 }

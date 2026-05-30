@@ -1,0 +1,168 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/core_theory"
+
+import {
+  "bobzhang/bap/knowledge",
+  "bobzhang/bap/types",
+  "moonbitlang/core/debug",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub(all) enum Abi {
+  UnknownAbi
+  SysV
+  GNU
+  EABI
+  MSVC
+} derive(Eq, @debug.Debug)
+
+type Effect
+pub fn Effect::barr() -> Self
+pub fn Effect::cjump() -> Self
+pub fn Effect::empty(EffectSort) -> Self
+pub fn Effect::fall() -> Self
+pub fn Effect::jump() -> Self
+pub fn Effect::name(Self) -> String
+pub fn Effect::named(String, EffectSort) -> Self
+pub fn Effect::rmem() -> Self
+pub fn Effect::rreg() -> Self
+pub fn Effect::sort(Self) -> EffectSort
+pub fn Effect::to_string(Self) -> String
+pub fn Effect::wmem() -> Self
+pub fn Effect::wreg() -> Self
+
+pub(all) enum EffectSort {
+  EffectBot
+  EffectData
+  EffectCtrl
+  EffectBoth
+  EffectTop
+} derive(Eq, @debug.Debug)
+pub fn EffectSort::order(Self, Self) -> @knowledge.PartialOrder
+pub fn EffectSort::to_string(Self) -> String
+pub fn EffectSort::union(Self, Self) -> Self
+
+pub(all) enum Endianness {
+  LittleEndian
+  BigEndian
+  BiEndian
+} derive(Eq, @debug.Debug)
+
+pub(all) enum Fabi {
+  UnknownFabi
+  Soft
+  Hard
+} derive(Eq, @debug.Debug)
+
+pub(all) enum Filetype {
+  UnknownFiletype
+  Elf
+  MachO
+  PE
+  Raw
+} derive(Eq, @debug.Debug)
+
+type Label
+pub fn Label::addr(Self) -> @types.Word?
+pub fn Label::aliases(Self) -> Array[String]
+pub fn Label::encoding(Self) -> Bytes?
+pub fn Label::for_addr(@types.Word, target? : Target) -> Self
+pub fn Label::for_ivec(Int, target? : Target) -> Self
+pub fn Label::for_name(String, target? : Target) -> Self
+pub fn Label::fresh(target? : Target) -> Self
+pub fn Label::id(Self) -> Int
+pub fn Label::is_subroutine(Self) -> Bool
+pub fn Label::is_valid(Self) -> Bool
+pub fn Label::ivec(Self) -> Int?
+pub fn Label::name(Self) -> String?
+pub fn Label::null() -> Self
+pub fn Label::target(Self) -> Target?
+pub fn Label::unit(Self) -> String?
+pub fn Label::with_alias(Self, String) -> Self
+
+pub(all) enum Role {
+  General
+  StackPointer
+  FramePointer
+  ProgramCounter
+  Status
+  Argument
+  ResultRegister
+} derive(Eq, @debug.Debug)
+
+pub(all) enum Sort {
+  Sym(@knowledge.Name)
+  IntSort(Int)
+  App(Sort, Sort)
+} derive(Eq, Hash, @debug.Debug)
+pub fn Sort::app(Self, Self) -> Self
+pub fn Sort::arrow(Self, Self) -> Self
+pub fn Sort::bitv(Int) -> Self
+pub fn Sort::bool() -> Self
+pub fn Sort::float(Int) -> Self
+pub fn Sort::head(Self) -> Self
+pub fn Sort::int(Int) -> Self
+pub fn Sort::mem(Self, Self) -> Self
+pub fn Sort::name(Self) -> @knowledge.Name?
+pub fn Sort::rmode() -> Self
+pub fn Sort::same(Self, Self) -> Bool
+pub fn Sort::sym(@knowledge.Name) -> Self
+pub fn Sort::tail(Self) -> Array[Self]
+pub fn Sort::to_string(Self) -> String
+
+pub(all) enum System {
+  UnknownSystem
+  Linux
+  Darwin
+  Windows
+} derive(Eq, @debug.Debug)
+
+type Target
+pub fn Target::abi(Self) -> Abi
+pub fn Target::belongs(Self, Self) -> Bool
+pub fn Target::bits(Self) -> Int
+pub fn Target::byte(Self) -> Int
+pub fn Target::create(name~ : @knowledge.Name, parent? : Self, nicknames? : Array[String], bits? : Int, byte? : Int, endianness? : Endianness, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, vars? : Array[Var]) -> Self
+pub fn Target::endianness(Self) -> Endianness
+pub fn Target::fabi(Self) -> Fabi
+pub fn Target::filetype(Self) -> Filetype
+pub fn Target::find_var(Self, String) -> Var?
+pub fn Target::is_unknown(Self) -> Bool
+pub fn Target::matches(Self, String) -> Bool
+pub fn Target::name(Self) -> @knowledge.Name
+pub fn Target::nicknames(Self) -> Array[String]
+pub fn Target::order(Self, Self) -> @knowledge.PartialOrder
+pub fn Target::parent(Self) -> Self?
+pub fn Target::system(Self) -> System
+pub fn Target::unknown() -> Self
+pub fn Target::vars(Self) -> Array[Var]
+
+type Value
+pub fn Value::empty(Sort) -> Self
+pub fn Value::fact(Self, String) -> String?
+pub fn Value::forget(Self) -> Self
+pub fn Value::sort(Self) -> Sort
+pub fn Value::with_fact(Self, String, String) -> Self
+
+type Var
+pub fn Var::create(Sort, String, is_mutable? : Bool, is_virtual? : Bool) -> Self
+pub fn Var::forget(Self) -> Self
+pub fn Var::fresh(Sort) -> Self
+pub fn Var::ident(Self) -> String
+pub fn Var::is_mutable(Self) -> Bool
+pub fn Var::is_virtual(Self) -> Bool
+pub fn Var::name(Self) -> String
+pub fn Var::resort(Self, Sort) -> Self
+pub fn Var::sort(Self) -> Sort
+pub fn Var::to_string(Self) -> String
+pub fn Var::version(Self) -> Int
+pub fn Var::versioned(Self, Int) -> Self
+
+// Type aliases
+
+// Traits
+

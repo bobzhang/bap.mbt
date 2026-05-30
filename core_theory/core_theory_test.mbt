@@ -160,6 +160,39 @@ test "target registry resolves common and custom declarations" {
   assert_true(@core_theory.get_target("hexagon") is Ok(_))
   assert_true(@core_theory.get_target("r600") is Ok(_))
   assert_true(@core_theory.get_target("xcore") is Ok(_))
+  match @core_theory.Target::get("x86_64-windows-ms-coff") {
+    Ok(target) => {
+      assert_true(target.bits() == 64)
+      assert_true(target.system() == Windows)
+      assert_true(target.abi() == MSVC)
+      assert_true(target.filetype() == COFF)
+      assert_true(target.belongs(@core_theory.Target::x86_64()))
+    }
+    Err(reason) => fail(reason)
+  }
+  match
+    @core_theory.Target::select(
+      parent=@core_theory.Target::x86_64(),
+      system=Windows,
+      abi=MSVC,
+      filetype=COFF,
+      unique=true,
+    ) {
+    Ok(target) => {
+      assert_true(target.matches("x86_64-windows-ms-coff"))
+      assert_true(target.filetype().to_string() == "coff")
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(@core_theory.Target::lookup("x86-linux-gnu-elf") is Some(_))
+  assert_true(
+    @core_theory.Target::filter(
+      parent=@core_theory.Target::x86(),
+      system=FreeBSD,
+      abi=CDecl,
+      filetype=Elf,
+    ).any(target => target.matches("x86-freebsd-cdecl-elf")),
+  )
   let target = @core_theory.Target::create(
     name=@knowledge.Name::create("unit-target-registry", pkg="test"),
     nicknames=["unit-target-alias"],

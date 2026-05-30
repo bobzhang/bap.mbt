@@ -1258,8 +1258,81 @@ pub fn Target::xcore() -> Target {
 }
 
 ///|
+fn append_target_variants(
+  items : Array[Target],
+  parent : Target,
+  systems : Array[System],
+  filetypes : Array[Filetype],
+  abis : Array[Abi],
+) -> Unit {
+  let options = TargetOptions::empty()
+  for system in systems {
+    for filetype in filetypes {
+      for abi in abis {
+        if !target_variant_is_empty(system, abi, UnknownFabi, filetype, options) {
+          items.push(
+            target_variant(parent, system, abi, UnknownFabi, filetype, options),
+          )
+        }
+      }
+    }
+  }
+}
+
+///|
+fn append_x86_target_variants(items : Array[Target]) -> Unit {
+  let x86 = Target::x86()
+  let x86_64 = Target::x86_64()
+  append_target_variants(
+    items,
+    x86,
+    [UnknownSystem],
+    [COFF, AOut, Elf, MachO],
+    [GNU, CDecl, StdCall, FastCall, Watcom, MSVC],
+  )
+  append_target_variants(
+    items,
+    x86_64,
+    [UnknownSystem],
+    [COFF, AOut, Elf, MachO],
+    [GNU, MSVC],
+  )
+  append_target_variants(
+    items,
+    x86,
+    [Linux, FreeBSD, OpenBSD],
+    [UnknownFiletype, AOut, COFF, Elf],
+    [GNU, CDecl],
+  )
+  append_target_variants(
+    items,
+    x86_64,
+    [Linux, FreeBSD, OpenBSD],
+    [UnknownFiletype, AOut, COFF, Elf],
+    [GNU, CDecl],
+  )
+  append_target_variants(items, x86, [Darwin], [UnknownFiletype, MachO], [GNU])
+  append_target_variants(items, x86_64, [Darwin], [UnknownFiletype, MachO], [
+    GNU,
+  ])
+  append_target_variants(items, x86, [Windows], [UnknownFiletype, COFF], [
+    MSVC,
+    CDecl,
+    FastCall,
+    Pascal,
+    FortranAbi,
+    Watcom,
+  ])
+  append_target_variants(items, x86_64, [Windows], [UnknownFiletype, COFF], [
+    MSVC,
+  ])
+  append_target_variants(items, x86, [UEFI], [UnknownFiletype, COFF], [CDecl])
+  append_target_variants(items, x86_64, [UEFI], [UnknownFiletype, COFF], [MSVC])
+}
+
+///|
 pub fn common_targets() -> Array[Target] {
-  [
+  let items = [
     Target::x86(),
     Target::x86_64(),
     Target::arm(),
@@ -1286,6 +1359,8 @@ pub fn common_targets() -> Array[Target] {
     Target::systemz(),
     Target::xcore(),
   ]
+  append_x86_target_variants(items)
+  items
 }
 
 ///|
@@ -1558,6 +1633,29 @@ fn target_variant_is_empty(
 }
 
 ///|
+fn target_variant(
+  parent : Target,
+  system : System,
+  abi : Abi,
+  fabi : Fabi,
+  filetype : Filetype,
+  options : TargetOptions,
+) -> Target {
+  Target::create(
+    name=@knowledge.Name::create(
+      target_variant_name(parent, system, abi, fabi, filetype, options),
+      pkg=parent.name().pkg(),
+    ),
+    parent~,
+    system~,
+    abi~,
+    fabi~,
+    filetype~,
+    options~,
+  )
+}
+
+///|
 pub fn Target::register_variants(
   parent : Target,
   systems? : Array[System],
@@ -1593,17 +1691,8 @@ pub fn Target::register_variants(
         for filetype in filetypes {
           for opts in options {
             if !target_variant_is_empty(system, abi, fabi, filetype, opts) {
-              let target = Target::create(
-                name=@knowledge.Name::create(
-                  target_variant_name(parent, system, abi, fabi, filetype, opts),
-                  pkg=parent.name().pkg(),
-                ),
-                parent~,
-                system~,
-                abi~,
-                fabi~,
-                filetype~,
-                options=opts,
+              let target = target_variant(
+                parent, system, abi, fabi, filetype, opts,
               )
               match register_target(target) {
                 Ok(_) => created.push(target)

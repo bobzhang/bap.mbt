@@ -96,6 +96,12 @@ When preserving a BAP-style `of_string`/`from_string` compatibility entry point 
 
 `text[i]` returns a `UInt16` code unit, not a `Char`. For text parsers that need character predicates or `StringBuilder::write_char`, use `text.get_char(offset)` and advance by `char.utf16_len()`. It is still fine to increment by one for syntax bytes you have already constrained to ASCII, such as `(`, `)`, `"` and `\\`, but do not mix code-unit offsets with `Char` APIs accidentally.
 
+For textual compatibility suffixes such as BAP-style SSA variable names
+(`name#index`), prefer `String::rev_split_once` over a forward split so names
+that contain the separator earlier are preserved. Parse the suffix with
+`@string.parse_int` and treat parse failure as "no suffix" instead of changing
+the base name.
+
 ```sh
 moon run -c 'fn main { let raw : Array[Byte] = [65, 0, 255]; let b = Bytes::from_array(raw); println(b.length()); println(b[2].to_int()) }'
 # 3

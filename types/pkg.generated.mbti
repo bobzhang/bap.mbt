@@ -261,6 +261,7 @@ pub fn[T] Term::has_attr(Self[T], String) -> Bool
 pub fn Term::insert_def_after(Self[Blk], Self[Def], after? : Tid) -> Self[Blk]
 pub fn Term::insert_def_before(Self[Blk], Self[Def], before? : Tid) -> Self[Blk]
 pub fn Term::intent(Self[Arg]) -> Intent?
+pub fn Term::is_ssa(Self[Sub]) -> Bool
 pub fn Term::jmp_free_vars(Self[Jmp]) -> Array[Var]
 pub fn Term::jmps(Self[Blk]) -> Array[Self[Jmp]]
 pub fn Term::kind(Self[Jmp]) -> JmpKind
@@ -334,6 +335,7 @@ pub fn Term::substitute_program_var(Self[Program], Var, Exp) -> Self[Program]
 pub fn Term::substitute_sub_var(Self[Sub], Var, Exp) -> Self[Sub]
 pub fn Term::succ_tid_of_jmp(Self[Jmp]) -> Tid?
 pub fn[T] Term::tid(Self[T]) -> Tid
+pub fn Term::to_ssa(Self[Sub], entry? : Tid) -> Self[Sub]
 pub fn Term::update_def(Self[Blk], Self[Def]) -> Self[Blk]
 pub fn Term::update_phi(Self[Phi], Tid, Exp) -> Self[Phi]
 pub fn Term::uses_var(Self[Blk], Var) -> Bool

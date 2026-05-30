@@ -89,6 +89,71 @@ pub fn[N : Hash + Eq, E] Graph::reverse_postorder(
 }
 
 ///|
+fn[N : Hash + Eq, E] strong_connect(
+  graph : Graph[N, E],
+  node : N,
+  index : Ref[Int],
+  indexes : Map[N, Int],
+  lowlinks : Map[N, Int],
+  stack : Array[N],
+  on_stack : Set[N],
+  components : Array[Set[N]],
+) -> Unit {
+  indexes[node] = index.val
+  lowlinks[node] = index.val
+  index.val = index.val + 1
+  stack.push(node)
+  on_stack.add(node)
+  for succ in graph.successors(node) {
+    if !indexes.contains(succ) {
+      strong_connect(
+        graph, succ, index, indexes, lowlinks, stack, on_stack, components,
+      )
+      lowlinks[node] = Int::min(lowlinks[node], lowlinks[succ])
+    } else if on_stack.contains(succ) {
+      lowlinks[node] = Int::min(lowlinks[node], indexes[succ])
+    }
+  }
+  if lowlinks[node] == indexes[node] {
+    let component : Set[N] = Set([])
+    let mut done = false
+    while !done {
+      match stack.pop() {
+        Some(item) => {
+          on_stack.remove(item)
+          component.add(item)
+          if item == node {
+            done = true
+          }
+        }
+        None => done = true
+      }
+    }
+    components.push(component)
+  }
+}
+
+///|
+pub fn[N : Hash + Eq, E] Graph::strong_components(
+  self : Graph[N, E],
+) -> Array[Set[N]] {
+  let index = Ref::Ref(0)
+  let indexes : Map[N, Int] = {}
+  let lowlinks : Map[N, Int] = {}
+  let stack : Array[N] = []
+  let on_stack : Set[N] = Set([])
+  let components : Array[Set[N]] = []
+  for node in self.nodes {
+    if !indexes.contains(node) {
+      strong_connect(
+        self, node, index, indexes, lowlinks, stack, on_stack, components,
+      )
+    }
+  }
+  components
+}
+
+///|
 pub fn[N : Hash + Eq, E] Graph::dominators(
   self : Graph[N, E],
   entry : N,

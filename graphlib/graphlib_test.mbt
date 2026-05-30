@@ -34,6 +34,48 @@ test "dfs classifies tree and back edges" {
 }
 
 ///|
+fn component_containing(components : Array[Set[Int]], node : Int) -> Set[Int]? {
+  components
+  .search_by(component => component.contains(node))
+  .map(index => components[index])
+}
+
+///|
+fn same_component(components : Array[Set[Int]], lhs : Int, rhs : Int) -> Bool {
+  match component_containing(components, lhs) {
+    Some(component) => component.contains(rhs)
+    None => false
+  }
+}
+
+///|
+test "strong components group mutually reachable nodes" {
+  let graph : @graphlib.Graph[Int, String] = @graphlib.Graph::new()
+    .add_edge(src=0, dst=1, label="entry")
+    .add_edge(src=1, dst=2, label="cycle")
+    .add_edge(src=2, dst=1, label="cycle")
+    .add_edge(src=2, dst=3, label="exit")
+    .add_edge(src=3, dst=4, label="cycle")
+    .add_edge(src=4, dst=3, label="cycle")
+    .add_edge(src=5, dst=5, label="self")
+  let components = graph.strong_components()
+  assert_true(components.length() == 4)
+  assert_true(component_containing(components, 0) == Some(Set::from_array([0])))
+  assert_true(
+    component_containing(components, 1) == Some(Set::from_array([1, 2])),
+  )
+  assert_true(
+    component_containing(components, 3) == Some(Set::from_array([3, 4])),
+  )
+  assert_true(component_containing(components, 5) == Some(Set::from_array([5])))
+  assert_true(same_component(components, 1, 2))
+  assert_true(same_component(components, 3, 4))
+  assert_true(!same_component(components, 0, 1))
+  assert_true(!same_component(components, 2, 3))
+  assert_true(!same_component(components, 4, 5))
+}
+
+///|
 test "dominators converge for a small flow graph" {
   let graph = sample_graph()
   let doms = graph.dominators(0)

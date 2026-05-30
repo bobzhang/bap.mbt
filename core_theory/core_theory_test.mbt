@@ -573,6 +573,26 @@ test "target role helpers classify common architecture variables" {
     }
     None => fail("missing V0 alias origin")
   }
+  let ppc64 = @core_theory.Target::powerpc64()
+  assert_true(ppc64.find_var("F31") is Some(_))
+  assert_true(ppc64.find_var("V31") is Some(_))
+  match ppc64.find_var("CR0EQ") {
+    Some(flag) => assert_true(ppc64.roles_of_var(flag).contains(Status))
+    None => fail("missing CR0EQ")
+  }
+  match ppc64.find_var("R1") {
+    Some(sp) => assert_true(ppc64.roles_of_var(sp).contains(StackPointer))
+    None => fail("missing R1")
+  }
+  match ppc64.find_var("F1") {
+    Some(arg) => assert_true(ppc64.roles_of_var(arg).contains(Argument))
+    None => fail("missing F1")
+  }
+  match ppc64.find_var("F0") {
+    Some(result) =>
+      assert_true(ppc64.roles_of_var(result).contains(ResultRegister))
+    None => fail("missing F0")
+  }
   let aarch64 = @core_theory.Target::aarch64()
   match aarch64.find_var("X2") {
     Some(reg) => assert_true(!aarch64.roles_of_var(reg).contains(StackPointer))

@@ -471,9 +471,34 @@ fn sparc_vars(bits : Int) -> Array[Var] {
 }
 
 ///|
+fn ppc_cr_flag_vars() -> Array[Var] {
+  let items = []
+  for group in 0..<=7 {
+    for suffix in ["UN", "EQ", "GT", "LT"] {
+      items.push(bool_var("CR\{group}\{suffix}"))
+    }
+  }
+  items
+}
+
+///|
+fn ppc_flag_vars() -> Array[Var] {
+  let items = [
+    for name in ["SO", "CA", "OV", "CA32", "OV32", "C", "FL", "FE", "FG", "FU"] => {
+      bool_var(name)
+    }
+  ]
+  append_vars(items, ppc_cr_flag_vars())
+  items
+}
+
+///|
 fn ppc_vars(bits : Int) -> Array[Var] {
   let items = numbered_word_vars(bits, "R", 32)
-  append_vars(items, named_word_vars(bits, ["LR", "CTR", "PC", "SP"]))
+  append_vars(items, numbered_word_vars(64, "F", 32))
+  append_vars(items, numbered_word_vars(128, "V", 32))
+  append_vars(items, ppc_flag_vars())
+  append_vars(items, named_word_vars(bits, ["CTR", "LR", "TAR", "PC", "SP"]))
   items.push(mem_var(bits, 8, "mem"))
   items
 }

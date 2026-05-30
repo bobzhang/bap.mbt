@@ -12,14 +12,14 @@ This repository is porting `.repos/bap` from OCaml to idiomatic MoonBit.
 - `core_theory`: symbolic sorts, typed values, variables, effect lattice values, labels, source/compiler/program-unit metadata, target metadata with inheritance/matching helpers, conservative register role helpers, common architecture target declarations, and a target registry/lookup layer.
 - `memory`: byte-addressed memory regions with rebasing, views/ranges, endian-aware word loads and stores, contiguous merges, hexdumps, and a basic interval `MemMap` with lookup/intersection/dominator queries, min/max bindings, and interval removal helpers.
 - `image`: image metadata over `memory`, including segments, sections, symbols, memory maps, symbol/section/segment lookup, multi-segment symbol memory chunks, endian-aware `Image.words` extraction, and a MoonBit backend registry with description/extension/priority discovery metadata that loads bytes into `(Image, warnings)` by explicit backend or filename extension.
-- `project`: project container over `core_theory`, `types`, `memory`, and `image`, with target/program/memory/image state, typed storage tags over string-backed storage, memory tagging, program mapping, library records, project input constructors/loaders with extension/priority metadata and filename-based selection, named dependency-aware pass registry with explicit/autorun execution, run-once passes, pass run-count telemetry, and typed project collators for comparing alternative project versions.
+- `project`: project container over `core_theory`, `types`, `memory`, and `image`, with target/program/memory/image state, typed storage tags over string-backed storage, including lossless string-array tags, memory tagging, program mapping, library records, project input constructors/loaders with extension/priority metadata and filename-based selection, named dependency-aware pass registry with explicit/autorun execution, run-once passes, pass run-count telemetry, and typed project collators for comparing alternative project versions.
 
 ## Next Packages
 
 - Expand `core_theory` with the full BAP knowledge registry, richer alias origin tracking, source/compiler/program-unit integration with facts, and more complete architecture-specific target metadata.
 - Expand `types` with fuller BIL normalization and memory-aware optimization passes, fuller IR visitors and control-flow semantics, additional SSA/data-flow transforms over the term layer, richer indirect call resolution integrations, and the remaining tests translated from `.repos/bap/lib_test/bap_types`.
 - Expand `image` with Ogre spec parsing and file-backed loaders.
-- Expand `project` with native file-backed input loader wrappers, collator registration/discovery, analysis arguments, disassembly state, and richer non-string storage encodings.
+- Expand `project` with native file-backed input loader wrappers, collator registration/discovery, analysis arguments, disassembly state, and additional typed storage encodings.
 
 ## Porting Defaults
 

@@ -115,6 +115,7 @@ pub fn[T] ProjectStorageTag::encode(Self[T], T) -> String
 pub fn ProjectStorageTag::int(String) -> Self[Int]
 pub fn[T] ProjectStorageTag::name(Self[T]) -> String
 pub fn ProjectStorageTag::string(String) -> Self[String]
+pub fn ProjectStorageTag::string_array(String) -> Self[Array[String]]
 
 // Type aliases
 

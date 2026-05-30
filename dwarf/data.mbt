@@ -8,6 +8,7 @@ pub(all) enum DwarfSection {
   DwarfAddr
   DwarfRanges
   DwarfRnglists
+  DwarfLoclists
 } derive(Eq, Debug)
 
 ///|
@@ -33,6 +34,7 @@ pub fn DwarfSection::to_string(self : DwarfSection) -> String {
     DwarfAddr => ".debug_addr"
     DwarfRanges => ".debug_ranges"
     DwarfRnglists => ".debug_rnglists"
+    DwarfLoclists => ".debug_loclists"
   }
 }
 
@@ -113,6 +115,7 @@ pub fn DwarfData::from_bytes(
   addr? : Bytes,
   ranges? : Bytes,
   rnglists? : Bytes,
+  loclists? : Bytes,
 ) -> Result[DwarfData, String] {
   let sections : Array[(DwarfSection, DwarfSectionBuffer)] = []
   match info {
@@ -175,6 +178,14 @@ pub fn DwarfData::from_bytes(
     Some(data) =>
       match DwarfSectionBuffer::create(data) {
         Ok(buffer) => sections.push((DwarfRnglists, buffer))
+        Err(reason) => return Err(reason)
+      }
+    None => ()
+  }
+  match loclists {
+    Some(data) =>
+      match DwarfSectionBuffer::create(data) {
+        Ok(buffer) => sections.push((DwarfLoclists, buffer))
         Err(reason) => return Err(reason)
       }
     None => ()

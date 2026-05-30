@@ -67,6 +67,42 @@ test "bil optimize combines simplification and dead virtual pruning" {
 }
 
 ///|
+test "bil optimize folds chained virtual constants into physical uses" {
+  let typ = @types.ValueType::Imm(8)
+  let v = @types.Var::new(name="v", typ~, is_virtual=true)
+  let x = @types.Var::new(name="x", typ~)
+  let stmts = [
+    @types.Stmt::Move(v, Int(word8(1))),
+    Move(v, BinOp(Plus, Var(v), Int(word8(1)))),
+    Move(v, BinOp(Plus, Var(v), Int(word8(1)))),
+    Move(v, BinOp(Plus, Var(v), Int(word8(1)))),
+    Move(x, Var(v)),
+  ]
+  let optimized = @types.optimize_stmts(stmts)
+  assert_true(stmt_text(optimized) == ["x:imm8 := 0x04:8u"])
+}
+
+///|
+test "bil optimize removes dead virtual branches with computable conditions" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let z = @types.Var::new(name="z", typ~)
+  let v = @types.Var::new(name="v", typ~, is_virtual=true)
+  let stmts = [
+    @types.Stmt::Move(x, Int(word8(1))),
+    Move(v, Int(word8(1))),
+    If(cond=BinOp(Lt, Int(word8(0)), Var(v)), yes=[Move(v, Int(word8(4)))], no=[
+      Move(v, Int(word8(2))),
+    ]),
+    Move(z, Var(x)),
+  ]
+  let optimized = @types.optimize_stmts(stmts)
+  assert_true(
+    stmt_text(optimized) == ["x:imm8 := 0x01:8u", "z:imm8 := 0x01:8u"],
+  )
+}
+
+///|
 test "bil constant propagation folds straight-line moves" {
   let typ = @types.ValueType::Imm(8)
   let x = @types.Var::new(name="x", typ~)

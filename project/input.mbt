@@ -262,9 +262,19 @@ pub fn find_input_loader(name : String) -> ProjectInputLoader? {
 }
 
 ///|
+fn push_unique_string(items : Array[String], item : String) -> Unit {
+  if !items.contains(item) {
+    items.push(item)
+  }
+}
+
+///|
 pub fn available_input_loaders() -> Array[String] {
   let names = []
   input_loader_registry.each((name, _) => names.push(name))
+  for name in @image.available_backends() {
+    push_unique_string(names, name)
+  }
   names
 }
 
@@ -284,7 +294,13 @@ pub fn input_loaders_for_extension(
 
 ///|
 pub fn input_loader_names_for_extension(extension : String) -> Array[String] {
-  input_loaders_for_extension(extension).map(loader => loader.name())
+  let names = [
+    for loader in input_loaders_for_extension(extension) => loader.name()
+  ]
+  for name in @image.backend_names_for_extension(extension) {
+    push_unique_string(names, name)
+  }
+  names
 }
 
 ///|

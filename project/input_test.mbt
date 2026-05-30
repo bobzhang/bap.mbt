@@ -126,6 +126,10 @@ test "project input loading falls back to image backends" {
     Ok(_) => ()
     Err(reason) => fail(reason)
   }
+  assert_true(@project.available_input_loaders().contains(backend.name()))
+  assert_true(
+    @project.input_loader_names_for_extension("pimg").contains(backend.name()),
+  )
   match @project.ProjectInput::load(b"\x7f", loader=backend.name()) {
     Ok(input) => {
       let project = @project.Project::from_input(input)

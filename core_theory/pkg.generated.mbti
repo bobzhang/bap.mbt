@@ -295,13 +295,13 @@ pub fn Target::belongs(Self, Self) -> Bool
 pub fn Target::bits(Self) -> Int
 pub fn Target::byte(Self) -> Int
 pub fn Target::code_addr_size(Self) -> Int
-pub fn Target::create(name~ : @knowledge.Name, parent? : Self, nicknames? : Array[String], bits? : Int, byte? : Int, endianness? : Endianness, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, vars? : Array[Var], alias_origins? : Array[AliasOrigin]) -> Self
+pub fn Target::create(name~ : @knowledge.Name, parent? : Self, nicknames? : Array[String], bits? : Int, byte? : Int, endianness? : Endianness, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, options? : TargetOptions, vars? : Array[Var], alias_origins? : Array[AliasOrigin]) -> Self
 pub fn Target::data_addr_size(Self) -> Int
 pub fn Target::endianness(Self) -> Endianness
 pub fn Target::fabi(Self) -> Fabi
 pub fn Target::family(Self) -> Array[Self]
 pub fn Target::filetype(Self) -> Filetype
-pub fn Target::filter(parent? : Self, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, strict? : Bool) -> Array[Self]
+pub fn Target::filter(parent? : Self, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, options? : TargetOptions, strict? : Bool) -> Array[Self]
 pub fn Target::find_role(Self, Role) -> Var?
 pub fn Target::find_var(Self, String) -> Var?
 pub fn Target::hexagon() -> Self
@@ -316,6 +316,7 @@ pub fn Target::name(Self) -> @knowledge.Name
 pub fn Target::nicknames(Self) -> Array[String]
 pub fn Target::nvptx() -> Self
 pub fn Target::nvptx64() -> Self
+pub fn Target::options(Self) -> TargetOptions
 pub fn Target::order(Self, Self) -> @knowledge.PartialOrder
 pub fn Target::origin_of_name(Self, String) -> AliasOrigin?
 pub fn Target::origin_of_var(Self, Var) -> AliasOrigin?
@@ -330,7 +331,7 @@ pub fn Target::riscv32() -> Self
 pub fn Target::riscv64() -> Self
 pub fn Target::role_aliases(Self, Role) -> Array[String]
 pub fn Target::roles_of_var(Self, Var) -> Array[Role]
-pub fn Target::select(parent? : Self, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, strict? : Bool, unique? : Bool) -> Result[Self, String]
+pub fn Target::select(parent? : Self, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, options? : TargetOptions, strict? : Bool, unique? : Bool) -> Result[Self, String]
 pub fn Target::sparc() -> Self
 pub fn Target::sparcv9() -> Self
 pub fn Target::system(Self) -> System
@@ -346,12 +347,25 @@ pub fn Target::with_bits(Self, Int) -> Self
 pub fn Target::with_endianness(Self, Endianness) -> Self
 pub fn Target::with_fabi(Self, Fabi) -> Self
 pub fn Target::with_filetype(Self, Filetype) -> Self
+pub fn Target::with_option(Self, String, String) -> Self
+pub fn Target::with_options(Self, TargetOptions) -> Self
 pub fn Target::with_system(Self, System) -> Self
 pub fn Target::with_var(Self, Var) -> Self
 pub fn Target::with_vars(Self, Array[Var]) -> Self
 pub fn Target::x86() -> Self
 pub fn Target::x86_64() -> Self
 pub fn Target::xcore() -> Self
+
+type TargetOptions
+pub fn TargetOptions::empty() -> Self
+pub fn TargetOptions::entries(Self) -> Array[(String, String)]
+pub fn TargetOptions::get(Self, String) -> String?
+pub fn TargetOptions::is_empty(Self) -> Bool
+pub fn TargetOptions::matches(Self, Self, strict? : Bool) -> Bool
+pub fn TargetOptions::of_map(Map[String, String]) -> Self
+pub fn TargetOptions::singleton(String, String) -> Self
+pub fn TargetOptions::to_string(Self) -> String
+pub fn TargetOptions::with_value(Self, String, String) -> Self
 
 type Value
 pub fn Value::empty(Sort) -> Self

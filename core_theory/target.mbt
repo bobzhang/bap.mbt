@@ -39,6 +39,11 @@ pub(all) enum Filetype {
 } derive(Eq, Debug)
 
 ///|
+struct TargetOptions {
+  values_value : Map[String, String]
+}
+
+///|
 pub fn Endianness::to_string(self : Endianness) -> String {
   match self {
     LittleEndian => "little"
@@ -144,6 +149,76 @@ pub fn Filetype::of_string(text : String) -> Filetype? {
 }
 
 ///|
+pub fn TargetOptions::empty() -> TargetOptions {
+  { values_value: {} }
+}
+
+///|
+pub fn TargetOptions::of_map(values : Map[String, String]) -> TargetOptions {
+  { values_value: values.copy() }
+}
+
+///|
+pub fn TargetOptions::singleton(key : String, value : String) -> TargetOptions {
+  let values : Map[String, String] = {}
+  values[key] = value
+  { values_value: values }
+}
+
+///|
+pub fn TargetOptions::entries(self : TargetOptions) -> Array[(String, String)] {
+  let entries = []
+  for entry in self.values_value {
+    entries.push(entry)
+  }
+  entries.sort_by((left, right) => left.0.compare(right.0))
+  entries
+}
+
+///|
+pub fn TargetOptions::get(self : TargetOptions, key : String) -> String? {
+  self.values_value.get(key)
+}
+
+///|
+pub fn TargetOptions::is_empty(self : TargetOptions) -> Bool {
+  self.values_value.length() == 0
+}
+
+///|
+pub fn TargetOptions::with_value(
+  self : TargetOptions,
+  key : String,
+  value : String,
+) -> TargetOptions {
+  let values = self.values_value.copy()
+  values[key] = value
+  { values_value: values }
+}
+
+///|
+pub fn TargetOptions::matches(
+  self : TargetOptions,
+  constraint : TargetOptions,
+  strict? : Bool = false,
+) -> Bool {
+  if strict && self.values_value.length() != constraint.values_value.length() {
+    return false
+  }
+  for entry in constraint.values_value {
+    if self.values_value.get(entry.0) != Some(entry.1) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+pub fn TargetOptions::to_string(self : TargetOptions) -> String {
+  [ for entry in self.entries() => "+\{entry.0}=\{entry.1}" ].join("")
+}
+
+///|
 pub(all) enum Role {
   General
   StackPointer
@@ -174,6 +249,7 @@ struct Target {
   abi_value : Abi
   fabi_value : Fabi
   filetype_value : Filetype
+  options_value : TargetOptions
   vars_value : Array[Var]
   alias_origins_value : Array[AliasOrigin]
 }
@@ -455,6 +531,7 @@ pub fn Target::unknown() -> Target {
     abi_value: UnknownAbi,
     fabi_value: UnknownFabi,
     filetype_value: UnknownFiletype,
+    options_value: TargetOptions::empty(),
     vars_value: [],
     alias_origins_value: [],
   }
@@ -472,6 +549,7 @@ pub fn Target::create(
   abi? : Abi,
   fabi? : Fabi,
   filetype? : Filetype,
+  options? : TargetOptions,
   vars? : Array[Var],
   alias_origins? : Array[AliasOrigin],
 ) -> Target {
@@ -536,6 +614,14 @@ pub fn Target::create(
         match parent {
           Some(target) => target.filetype()
           None => UnknownFiletype
+        }
+    },
+    options_value: match options {
+      Some(value) => value
+      None =>
+        match parent {
+          Some(target) => target.options()
+          None => TargetOptions::empty()
         }
     },
     vars_value: match vars {
@@ -608,6 +694,11 @@ pub fn Target::filetype(self : Target) -> Filetype {
 }
 
 ///|
+pub fn Target::options(self : Target) -> TargetOptions {
+  self.options_value
+}
+
+///|
 pub fn Target::vars(self : Target) -> Array[Var] {
   self.vars_value.copy()
 }
@@ -662,6 +753,20 @@ pub fn Target::with_fabi(self : Target, fabi : Fabi) -> Target {
 ///|
 pub fn Target::with_filetype(self : Target, filetype : Filetype) -> Target {
   { ..self, filetype_value: filetype }
+}
+
+///|
+pub fn Target::with_options(self : Target, options : TargetOptions) -> Target {
+  { ..self, options_value: options }
+}
+
+///|
+pub fn Target::with_option(
+  self : Target,
+  key : String,
+  value : String,
+) -> Target {
+  { ..self, options_value: self.options_value.with_value(key, value) }
 }
 
 ///|
@@ -1240,6 +1345,7 @@ pub fn Target::filter(
   abi? : Abi,
   fabi? : Fabi,
   filetype? : Filetype,
+  options? : TargetOptions,
   strict? : Bool = false,
 ) -> Array[Target] {
   let parent = match parent {
@@ -1262,11 +1368,16 @@ pub fn Target::filter(
     Some(value) => value
     None => UnknownFiletype
   }
+  let options = match options {
+    Some(value) => value
+    None => TargetOptions::empty()
+  }
   target_family(parent).filter(target => {
     target_system_matches(target.system(), system, strict) &&
     target_abi_matches(target.abi(), abi, strict) &&
     target_fabi_matches(target.fabi(), fabi, strict) &&
-    target_filetype_matches(target.filetype(), filetype, strict)
+    target_filetype_matches(target.filetype(), filetype, strict) &&
+    target.options().matches(options, strict~)
   })
 }
 
@@ -1277,6 +1388,7 @@ pub fn Target::select(
   abi? : Abi,
   fabi? : Fabi,
   filetype? : Filetype,
+  options? : TargetOptions,
   strict? : Bool = false,
   unique? : Bool = false,
 ) -> Result[Target, String] {
@@ -1286,6 +1398,7 @@ pub fn Target::select(
     abi?,
     fabi?,
     filetype?,
+    options?,
     strict~,
   )
   match matches {

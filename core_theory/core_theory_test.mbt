@@ -190,6 +190,7 @@ test "target selection filters BAP-style metadata constraints" {
     system=Linux,
     abi=GNU,
     filetype=Elf,
+    options=@core_theory.TargetOptions::singleton("cpu", "v2"),
   )
   let linux_macho = @core_theory.Target::create(
     name=@knowledge.Name::create("unit-select-linux-macho", pkg="test"),
@@ -197,6 +198,7 @@ test "target selection filters BAP-style metadata constraints" {
     system=Linux,
     abi=GNU,
     filetype=MachO,
+    options=@core_theory.TargetOptions::singleton("cpu", "v1"),
   )
   let darwin = @core_theory.Target::create(
     name=@knowledge.Name::create("unit-select-darwin", pkg="test"),
@@ -229,6 +231,26 @@ test "target selection filters BAP-style metadata constraints" {
   assert_true(linux_elf_matches.length() == 1)
   assert_true(
     linux_elf_matches[0].name().unqualified() == "unit-select-linux-elf",
+  )
+  assert_true(linux_elf_matches[0].options().get("cpu") == Some("v2"))
+  assert_true(linux_elf_matches[0].options().to_string() == "+cpu=v2")
+  let cpu_v2 = @core_theory.Target::filter(
+    parent~,
+    system=Linux,
+    options=@core_theory.TargetOptions::singleton("cpu", "v2"),
+  )
+  assert_true(cpu_v2.length() == 1)
+  assert_true(cpu_v2[0].name().unqualified() == "unit-select-linux-elf")
+  assert_true(
+    @core_theory.Target::filter(
+      parent~,
+      system=Linux,
+      abi=GNU,
+      filetype=Elf,
+      options=@core_theory.TargetOptions::singleton("cpu", "v2"),
+      strict=true,
+    ).length() ==
+    1,
   )
   match @core_theory.Target::select(parent~, system=Linux, abi=GNU) {
     Ok(target) => assert_true(target.system() == Linux)

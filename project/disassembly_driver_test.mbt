@@ -53,6 +53,7 @@ test "project registers built-in memory block disassembly driver" {
   assert_true(@project.disassembly_driver_names().contains("image-roots"))
   assert_true(@project.disassembly_driver_names().contains("function-symbols"))
   assert_true(@project.disassembly_driver_names().contains("entry-point"))
+  assert_true(@project.disassembly_driver_names().contains("project-roots"))
   match @project.find_disassembly_driver("image-roots") {
     Some(driver) => {
       assert_true(driver.priority() == -25)
@@ -73,6 +74,13 @@ test "project registers built-in memory block disassembly driver" {
       assert_true(driver.description().contains("entry point"))
     }
     None => fail("missing entry-point driver")
+  }
+  match @project.find_disassembly_driver("project-roots") {
+    Some(driver) => {
+      assert_true(driver.priority() == -90)
+      assert_true(driver.description().contains("project root"))
+    }
+    None => fail("missing project-root driver")
   }
   match @project.find_disassembly_driver("memory-blocks") {
     Some(driver) => {
@@ -108,6 +116,54 @@ test "project registers built-in memory block disassembly driver" {
     @project.Project::empty(@core_theory.Target::unknown()).disassemble(
       driver="memory-blocks",
     )
+    is Err(_),
+  )
+}
+
+///|
+test "project root disassembly driver materializes roots from memory" {
+  match @project.register_builtin_disassembly_drivers() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let code = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x8000UL,
+    b"\xaa\xbb\xcc\xdd",
+  )
+  let data = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x9000UL,
+    b"\xee",
+  )
+  let memory = @memory.MemMap::singleton(code, "code").add(data, "data")
+  let project = @project.Project::empty(@core_theory.Target::unknown())
+    .with_memory(memory)
+    .with_symbols([
+      @image.Symbol::create(name="root", addr=0x8002UL, size=1),
+      @image.Symbol::create(name="unmapped", addr=0x9900UL, size=1),
+    ])
+  match project.disassemble(driver="project-roots") {
+    Ok(next) => {
+      assert_true(next.get("disassembler") == Some("project-roots"))
+      let blocks = next.disassembly().blocks()
+      assert_true(blocks.length() == 1)
+      assert_true(blocks[0].min_addr() == 0x8002UL)
+      inspect(blocks[0].hexdump(), content="cc dd")
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    @project.Project::empty(@core_theory.Target::unknown())
+    .with_memory(memory)
+    .disassemble(driver="project-roots")
+    is Err(_),
+  )
+  assert_true(
+    @project.Project::empty(@core_theory.Target::unknown())
+    .with_memory(memory)
+    .with_symbols([@image.Symbol::create(name="missing", addr=0x9900UL)])
+    .disassemble(driver="project-roots")
     is Err(_),
   )
 }

@@ -189,6 +189,40 @@ pub fn ProjectDisassemblyDriver::image_roots() -> ProjectDisassemblyDriver {
 }
 
 ///|
+pub fn ProjectDisassemblyDriver::project_roots() -> ProjectDisassemblyDriver {
+  ProjectDisassemblyDriver::create(
+    name="project-roots",
+    description="materialize project root addresses from project memory",
+    priority=-90,
+    run=project => {
+      let roots = project.rooter().roots()
+      if roots.is_empty() {
+        return Err("project has no roots to disassemble")
+      }
+      let mut state = project.disassembly()
+      let mut added = 0
+      for root in roots {
+        for entry in project.memory().lookup(root) {
+          match entry.0.view(from=root) {
+            Ok(block) =>
+              if block.length() > 0 {
+                state = state.add_block(block)
+                added = added + 1
+              }
+            Err(reason) => return Err(reason)
+          }
+        }
+      }
+      if added == 0 {
+        Err("project roots are not mapped")
+      } else {
+        Ok(project.with_disassembly(state).set("disassembler", "project-roots"))
+      }
+    },
+  )
+}
+
+///|
 pub fn ProjectDisassemblyDriver::entry_point() -> ProjectDisassemblyDriver {
   ProjectDisassemblyDriver::create(
     name="entry-point",
@@ -225,6 +259,7 @@ pub fn register_builtin_disassembly_drivers() -> Result[Unit, String] {
       ProjectDisassemblyDriver::image_roots(),
       ProjectDisassemblyDriver::function_symbols(),
       ProjectDisassemblyDriver::entry_point(),
+      ProjectDisassemblyDriver::project_roots(),
       ProjectDisassemblyDriver::memory_blocks(),
     ] {
     match register_disassembly_driver_if_absent(driver) {

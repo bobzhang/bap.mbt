@@ -1,6 +1,7 @@
 ///|
 struct Library {
   name_value : String
+  unit_value : @core_theory.ProgramUnit
   target_value : @core_theory.Target
   memory_value : @memory.MemMap[String]
   symbols_value : Array[@image.Symbol]
@@ -25,6 +26,7 @@ struct Project {
 pub fn Library::create(
   name~ : String,
   target~ : @core_theory.Target,
+  unit? : @core_theory.ProgramUnit,
   memory? : @memory.MemMap[String],
   symbols? : Array[@image.Symbol],
   program? : @types.Term[@types.Program],
@@ -32,6 +34,10 @@ pub fn Library::create(
 ) -> Library {
   {
     name_value: name,
+    unit_value: match unit {
+      Some(value) => value
+      None => @core_theory.ProgramUnit::for_file(name, target~)
+    },
     target_value: target,
     memory_value: match memory {
       Some(map) => map
@@ -55,6 +61,11 @@ pub fn Library::create(
 ///|
 pub fn Library::name(self : Library) -> String {
   self.name_value
+}
+
+///|
+pub fn Library::unit(self : Library) -> @core_theory.ProgramUnit {
+  self.unit_value
 }
 
 ///|

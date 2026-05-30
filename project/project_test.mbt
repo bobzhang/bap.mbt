@@ -151,11 +151,22 @@ test "project maps programs and stores libraries" {
   let with_library = project.add_library(library)
   assert_true(with_library.libraries().length() == 1)
   assert_true(with_library.libraries()[0].name() == "libc")
+  assert_true(with_library.libraries()[0].unit().path() == Some("libc"))
   assert_true(with_library.libraries()[0].symbols().length() == 1)
   assert_true(with_library.libraries()[0].arch().is_unknown())
   assert_true(
     with_library.libraries()[0].specification().fact_count("arch") == 1,
   )
+  let explicit_unit = @core_theory.ProgramUnit::for_file(
+    "libexplicit.so",
+    target=@core_theory.Target::x86_64(),
+  )
+  let explicit_library = @project.Library::create(
+    name="libexplicit",
+    target~,
+    unit=explicit_unit,
+  )
+  assert_true(explicit_library.unit().same(explicit_unit))
 }
 
 ///|

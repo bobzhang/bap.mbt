@@ -132,7 +132,9 @@ Many BAP plugins are intentionally thin `Project.map_program` wrappers around
 term transforms (SSA, SSA destruction, flatten, trivial-condition-form, stub
 resolution). Port the pure `types` transform first, then expose a project-level
 wrapper that delegates to it; avoid duplicating term payload rewrites in the
-`project` package.
+`project` package. When exposing built-in pass registration, make it idempotent
+so tests and applications can initialize common passes more than once without
+turning global registry state into a failure mode.
 
 When porting BAP `Term.visitor`/`Term.mapper` users, prefer a typed sum view of
 IR terms over untyped callbacks. Keep traversal order explicit and stable

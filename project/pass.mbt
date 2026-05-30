@@ -105,6 +105,18 @@ pub fn register_pass(pass : ProjectPass) -> Result[Unit, String] {
 }
 
 ///|
+pub fn register_pass_if_absent(pass : ProjectPass) -> Result[Bool, String] {
+  if pass_registry.contains(pass.name()) {
+    Ok(false)
+  } else {
+    match register_pass(pass) {
+      Ok(_) => Ok(true)
+      Err(reason) => Err(reason)
+    }
+  }
+}
+
+///|
 pub fn find_pass(name : String) -> ProjectPass? {
   pass_registry.get(name)
 }

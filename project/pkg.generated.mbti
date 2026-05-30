@@ -42,7 +42,11 @@ pub fn register_disassembly_driver(ProjectDisassemblyDriver) -> Result[Unit, Str
 
 pub fn register_input_loader(ProjectInputLoader) -> Result[Unit, String]
 
+pub fn register_ir_transform_passes() -> Result[Unit, String]
+
 pub fn register_pass(ProjectPass) -> Result[Unit, String]
+
+pub fn register_pass_if_absent(ProjectPass) -> Result[Bool, String]
 
 pub fn registered_analyses() -> Array[ProjectAnalysisInfo]
 
@@ -227,9 +231,14 @@ type ProjectPass
 pub fn ProjectPass::autorun(Self) -> Bool
 pub fn ProjectPass::create(name~ : String, autorun? : Bool, run_once? : Bool, deps? : Array[String], run~ : (Project) -> Result[Project, String]) -> Self
 pub fn ProjectPass::deps(Self) -> Array[String]
+pub fn ProjectPass::destroy_ssa() -> Self
+pub fn ProjectPass::flatten() -> Self
 pub fn ProjectPass::name(Self) -> String
 pub fn ProjectPass::run(Self, Project) -> Result[Project, String]
 pub fn ProjectPass::run_once(Self) -> Bool
+pub fn ProjectPass::ssa() -> Self
+pub fn ProjectPass::stub_resolver(link_only? : Array[String], no_link? : Array[String]) -> Self
+pub fn ProjectPass::trivial_condition_form() -> Self
 
 type ProjectState
 pub fn ProjectState::add_subroutine(Self, @types.Term[@types.Sub]) -> Self

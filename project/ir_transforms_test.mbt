@@ -83,3 +83,57 @@ test "project wraps stub call resolution pass" {
     _ => fail("expected call jump")
   }
 }
+
+///|
+test "project registers built-in IR transform passes" {
+  match @project.register_ir_transform_passes() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  match @project.register_ir_transform_passes() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  assert_true(@project.find_pass("ssa") is Some(_))
+  assert_true(@project.find_pass("flatten") is Some(_))
+  assert_true(@project.find_pass("trivial-condition-form") is Some(_))
+  assert_true(@project.find_pass("stub-resolver") is Some(_))
+
+  let x = ir_reg8("x")
+  let flag = ir_bool("flag")
+  let target = @types.Blk::create(tid=@types.Tid::for_name("target"))
+  let entry = @types.Blk::create(
+    defs=[
+      @types.Def::create(
+        x,
+        @types.Exp::binop(Plus, @types.Exp::var_exp(x), ir_word8(1)),
+      ),
+    ],
+    jmps=[
+      @types.Jmp::create_goto(
+        @types.Label::direct(target.tid()),
+        cond=@types.Exp::binop(
+          Eq,
+          @types.Exp::var_exp(flag),
+          @types.Exp::int(@types.Word::b1()),
+        ),
+      ),
+    ],
+  )
+  let project = ir_project(
+    @types.Program::create(subs=[
+      @types.Sub::create(name="main", blks=[entry, target]),
+    ]),
+  )
+  let transformed = match
+    project.run_passes(["flatten", "trivial-condition-form", "ssa"]) {
+    Ok(next) => next
+    Err(reason) => fail(reason)
+  }
+  let sub = transformed.program().subs()[0]
+  assert_true(sub.is_ssa())
+  assert_true(sub.blks()[0].jmps()[0].jmp_has_trivial_condition())
+  assert_true(transformed.pass_run_count("flatten") == 1)
+  assert_true(transformed.pass_run_count("trivial-condition-form") == 1)
+  assert_true(transformed.pass_run_count("ssa") == 1)
+}

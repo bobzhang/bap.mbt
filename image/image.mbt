@@ -6,6 +6,7 @@ struct Image {
   endian_value : @bitvec.Endian
   data_value : Bytes
   segments_value : Array[Segment]
+  sections_value : Array[Section]
   symbols_value : Array[Symbol]
 }
 
@@ -22,6 +23,7 @@ pub fn Image::create(
   target? : @core_theory.Target,
   data? : Bytes,
   segments? : Array[Segment],
+  sections? : Array[Section],
   symbols? : Array[Symbol],
 ) -> Image {
   {
@@ -37,6 +39,10 @@ pub fn Image::create(
       Some(items) => items.copy()
       None => []
     },
+    sections_value: match sections {
+      Some(items) => items.copy()
+      None => []
+    },
     symbols_value: match symbols {
       Some(items) => items.copy()
       None => []
@@ -49,11 +55,35 @@ pub fn Image::from_segments(
   entry~ : UInt64,
   endian~ : @bitvec.Endian,
   segments : Array[Segment],
+  sections? : Array[Section],
   symbols? : Array[Symbol],
   filename? : String,
   target? : @core_theory.Target,
 ) -> Image {
-  Image::create(entry~, endian~, segments~, symbols?, filename?, target?)
+  Image::create(
+    entry~,
+    endian~,
+    segments~,
+    sections?,
+    symbols?,
+    filename?,
+    target?,
+  )
+}
+
+///|
+pub fn Image::of_bytes(
+  data : Bytes,
+  backend? : String,
+) -> Result[(Image, Array[String]), String] {
+  match backend {
+    Some(name) =>
+      match find_backend(name) {
+        Some(loader) => loader.load(data)
+        None => Err("unknown image backend \{name}")
+      }
+    None => Ok((Image::create(entry=0UL, endian=LittleEndian, data~), []))
+  }
 }
 
 ///|
@@ -87,6 +117,11 @@ pub fn Image::segments(self : Image) -> Array[Segment] {
 }
 
 ///|
+pub fn Image::sections(self : Image) -> Array[Section] {
+  self.sections_value.copy()
+}
+
+///|
 pub fn Image::symbols(self : Image) -> Array[Symbol] {
   self.symbols_value.copy()
 }
@@ -106,6 +141,37 @@ pub fn Image::memory_of_segment(
   segment : Segment,
 ) -> @memory.Memory {
   segment.memory()
+}
+
+///|
+pub fn Image::memory_of_section(
+  self : Image,
+  section : Section,
+) -> @memory.Memory? {
+  match
+    self.segments_value.search_by(segment => {
+      segment.contains(section.addr()) && segment.contains(section.max_addr())
+    }) {
+    Some(i) =>
+      match
+        self.segments_value[i]
+        .memory()
+        .view(from=section.addr(), words=section.size()) {
+        Ok(memory) => Some(memory)
+        Err(_) => None
+      }
+    None => None
+  }
+}
+
+///|
+pub fn Image::sections_of_segment(
+  self : Image,
+  segment : Segment,
+) -> Array[Section] {
+  self.sections_value.filter(section => {
+    segment.contains(section.addr()) && segment.contains(section.max_addr())
+  })
 }
 
 ///|
@@ -172,6 +238,13 @@ pub fn Image::add_segment(self : Image, segment : Segment) -> Image {
   let segments = self.segments_value.copy()
   segments.push(segment)
   { ..self, segments_value: segments }
+}
+
+///|
+pub fn Image::add_section(self : Image, section : Section) -> Image {
+  let sections = self.sections_value.copy()
+  sections.push(section)
+  { ..self, sections_value: sections }
 }
 
 ///|

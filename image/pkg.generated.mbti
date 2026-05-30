@@ -9,28 +9,51 @@ import {
 }
 
 // Values
+pub fn available_backends() -> Array[String]
+
+pub fn find_backend(String) -> ImageBackend?
+
+pub fn register_backend(name~ : String, ImageBackend) -> Result[Unit, String]
 
 // Errors
 
 // Types and methods
 type Image
+pub fn Image::add_section(Self, Section) -> Self
 pub fn Image::add_segment(Self, Segment) -> Self
 pub fn Image::add_symbol(Self, Symbol) -> Self
-pub fn Image::create(entry~ : UInt64, endian~ : @bitvec.Endian, filename? : String, target? : @core_theory.Target, data? : Bytes, segments? : Array[Segment], symbols? : Array[Symbol]) -> Self
+pub fn Image::create(entry~ : UInt64, endian~ : @bitvec.Endian, filename? : String, target? : @core_theory.Target, data? : Bytes, segments? : Array[Segment], sections? : Array[Section], symbols? : Array[Symbol]) -> Self
 pub fn Image::data(Self) -> Bytes
 pub fn Image::endian(Self) -> @bitvec.Endian
 pub fn Image::entry_point(Self) -> UInt64
 pub fn Image::filename(Self) -> String?
-pub fn Image::from_segments(entry~ : UInt64, endian~ : @bitvec.Endian, Array[Segment], symbols? : Array[Symbol], filename? : String, target? : @core_theory.Target) -> Self
+pub fn Image::from_segments(entry~ : UInt64, endian~ : @bitvec.Endian, Array[Segment], sections? : Array[Section], symbols? : Array[Symbol], filename? : String, target? : @core_theory.Target) -> Self
 pub fn Image::memory(Self) -> @memory.MemMap[String]
+pub fn Image::memory_of_section(Self, Section) -> @memory.Memory?
 pub fn Image::memory_of_segment(Self, Segment) -> @memory.Memory
 pub fn Image::memory_of_symbol(Self, Symbol) -> (@memory.Memory, Array[@memory.Memory])?
+pub fn Image::of_bytes(Bytes, backend? : String) -> Result[(Self, Array[String]), String]
+pub fn Image::sections(Self) -> Array[Section]
+pub fn Image::sections_of_segment(Self, Segment) -> Array[Section]
 pub fn Image::segment_of_symbol(Self, Symbol) -> Segment?
 pub fn Image::segments(Self) -> Array[Segment]
 pub fn Image::symbols(Self) -> Array[Symbol]
 pub fn Image::symbols_of_segment(Self, Segment) -> Array[Symbol]
 pub fn Image::target(Self) -> @core_theory.Target?
 pub fn Image::words(Self, word_size~ : Int) -> @memory.MemMap[@types.Word]
+
+type ImageBackend
+pub fn ImageBackend::create(name~ : String, load~ : (Bytes) -> Result[(Image, Array[String]), String]) -> Self
+pub fn ImageBackend::load(Self, Bytes) -> Result[(Image, Array[String]), String]
+pub fn ImageBackend::name(Self) -> String
+
+type Section
+pub fn Section::addr(Self) -> UInt64
+pub fn Section::contains(Self, UInt64) -> Bool
+pub fn Section::create(name~ : String, addr~ : UInt64, size~ : Int) -> Self
+pub fn Section::max_addr(Self) -> UInt64
+pub fn Section::name(Self) -> String
+pub fn Section::size(Self) -> Int
 
 type Segment
 pub fn Segment::addr(Self) -> UInt64

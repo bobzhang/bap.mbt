@@ -18,10 +18,12 @@ test "image exposes segment memory and symbol membership" {
     size=4,
     is_function=true,
   )
+  let section = @image.Section::create(name=".text.hot", addr=0x4004UL, size=4)
   let image = @image.Image::from_segments(
     entry=0x4004UL,
     endian=LittleEndian,
     [text],
+    sections=[section],
     symbols=[symbol],
     filename="a.out",
   )
@@ -29,8 +31,13 @@ test "image exposes segment memory and symbol membership" {
   assert_true(image.filename() == Some("a.out"))
   assert_true(text.is_executable())
   assert_true(image.memory().lookup(0x4004UL).length() == 1)
+  assert_true(image.sections_of_segment(text).length() == 1)
   assert_true(image.segment_of_symbol(symbol) is Some(_))
   assert_true(image.symbols_of_segment(text).length() == 1)
+  match image.memory_of_section(section) {
+    Some(mem) => inspect(mem.hexdump(), content="04 05 06 07")
+    None => fail("expected section memory")
+  }
   match image.memory_of_symbol(symbol) {
     Some((mem, rest)) => {
       assert_true(rest.length() == 0)
@@ -66,4 +73,36 @@ test "image words follow endian-aware memory loads" {
   inspect(be_words[0].1.to_hex(), content="0x0001")
   inspect(le_words[7].1.to_hex(), content="0x0f0e")
   inspect(be_words[7].1.to_hex(), content="0x0e0f")
+}
+
+///|
+test "image backends can be registered and used for byte loading" {
+  let backend = @image.ImageBackend::create(name="unit-raw", load=data => {
+    let segment = @image.Segment::create(
+      name=".raw",
+      endian=LittleEndian,
+      addr=0x80UL,
+      data,
+    )
+    Ok(
+      (
+        @image.Image::from_segments(entry=0x80UL, endian=LittleEndian, [segment]),
+        ["loaded"],
+      ),
+    )
+  })
+  match @image.register_backend(name="unit-raw", backend) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  assert_true(@image.find_backend("unit-raw") is Some(_))
+  assert_true(@image.available_backends().contains("unit-raw"))
+  match @image.Image::of_bytes(b"\xaa\xbb", backend="unit-raw") {
+    Ok((img, warnings)) => {
+      assert_true(warnings == ["loaded"])
+      assert_true(img.memory().lookup(0x81UL).length() == 1)
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(@image.register_backend(name="unit-raw", backend) is Err(_))
 }

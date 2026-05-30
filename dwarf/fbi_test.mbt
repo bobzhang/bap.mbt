@@ -131,6 +131,50 @@ test "translated DWARF FBI falls back to linkage names" {
 }
 
 ///|
+test "translated DWARF FBI resolves function name references" {
+  let abbrev = b"\x01\x2e\x00" +
+    b"\x47\x13" +
+    b"\x11\x01" +
+    b"\x12\x0b" +
+    b"\x00\x00" +
+    b"\x02\x2e\x00" +
+    b"\x03\x08" +
+    b"\x00\x00" +
+    b"\x03\x2e\x00" +
+    b"\x31\x13" +
+    b"\x11\x01" +
+    b"\x12\x0b" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x26\x00\x00\x00" +
+    b"\x04\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x04" +
+    b"\x01" +
+    b"\x15\x00\x00\x00" +
+    b"\x80\x00\x00\x00" +
+    b"\x04" +
+    b"\x02" +
+    b"declared\x00" +
+    b"\x03" +
+    b"\x15\x00\x00\x00" +
+    b"\x90\x00\x00\x00" +
+    b"\x05" +
+    b"\x00"
+  let data = expect_fbi_data(
+    @dwarf.DwarfData::from_bytes(endian=LittleEndian, info~, abbrev~, str=b""),
+  )
+  let functions = expect_functions(data.functions())
+  assert_true(functions.length() == 2)
+  assert_true(functions[0].name() == "declared")
+  assert_true(functions[0].low_pc() == 0x80UL)
+  assert_true(functions[0].high_pc() == Some(0x84UL))
+  assert_true(functions[1].name() == "declared")
+  assert_true(functions[1].low_pc() == 0x90UL)
+  assert_true(functions[1].high_pc() == Some(0x95UL))
+}
+
+///|
 test "translated DWARF FBI extracts indexed string-table names" {
   let abbrev = b"\x01\x2e\x00" +
     b"\x03\x25" +

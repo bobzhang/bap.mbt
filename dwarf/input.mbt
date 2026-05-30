@@ -40,6 +40,8 @@ pub(all) enum DwarfAttr {
   DwarfHighPc
   DwarfEntryPc
   DwarfRanges
+  DwarfAbstractOrigin
+  DwarfSpecification
   DwarfStrOffsetsBase
   DwarfAddrBase
   DwarfRnglistsBase
@@ -289,6 +291,8 @@ fn dwarf_attr_of_int(code : Int) -> DwarfAttr {
     0x03 => DwarfName
     0x11 => DwarfLowPc
     0x12 => DwarfHighPc
+    0x31 => DwarfAbstractOrigin
+    0x47 => DwarfSpecification
     0x52 => DwarfEntryPc
     0x55 => DwarfRanges
     0x6e => DwarfLinkageName

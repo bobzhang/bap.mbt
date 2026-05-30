@@ -41,6 +41,7 @@ pub(all) enum DwarfAbbrevValueKind {
   DwarfHighPcAddressValue
   DwarfHighPcOffsetValue
   DwarfRangesValue
+  DwarfNameRefValue
   DwarfStrOffsetsBaseValue
   DwarfAddrBaseValue
   DwarfRnglistsBaseValue
@@ -53,6 +54,8 @@ pub(all) enum DwarfAttr {
   DwarfHighPc
   DwarfEntryPc
   DwarfRanges
+  DwarfAbstractOrigin
+  DwarfSpecification
   DwarfStrOffsetsBase
   DwarfAddrBase
   DwarfRnglistsBase

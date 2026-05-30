@@ -440,6 +440,24 @@ test "bil expressions infer simple result types and render" {
 }
 
 ///|
+test "bil operators expose BAP compatibility metadata" {
+  assert_true(@types.BinOp::Plus.is_commutative())
+  assert_true(@types.BinOp::Eq.is_commutative())
+  assert_true(!@types.BinOp::Minus.is_commutative())
+  assert_true(@types.BinOp::Xor.is_associative())
+  assert_true(!@types.BinOp::Eq.is_associative())
+  assert_true(@types.BinOp::SignedDiv.string_of_binop() == "/$")
+  assert_true(@types.BinOp::SignedMod.string_of_binop() == "%$")
+  assert_true(@types.BinOp::ARShift.string_of_binop() == "~>>")
+  assert_true(@types.BinOp::Eq.string_of_binop() == "=")
+  assert_true(@types.BinOp::Neq.string_of_binop() == "<>")
+  assert_true(@types.BinOp::SignedLt.string_of_binop() == "<$")
+  assert_true(@types.BinOp::SignedLe.string_of_binop() == "<=$")
+  assert_true(@types.UnOp::Not.string_of_unop() == "~")
+  assert_true(@types.UnOp::Neg.string_of_unop() == "-")
+}
+
+///|
 test "bil statements expose definitions" {
   let typ = @types.ValueType::Imm(8)
   let x = @types.Var::new(name="x", typ~)

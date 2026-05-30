@@ -13,6 +13,14 @@ pub fn UnOp::to_string(self : UnOp) -> String {
 }
 
 ///|
+pub fn UnOp::string_of_unop(self : UnOp) -> String {
+  match self {
+    Not => "~"
+    Neg => "-"
+  }
+}
+
+///|
 pub(all) enum BinOp {
   Plus
   Minus
@@ -57,6 +65,47 @@ pub fn BinOp::to_string(self : BinOp) -> String {
     Le => "<="
     SignedLt => "s<"
     SignedLe => "s<="
+  }
+}
+
+///|
+pub fn BinOp::string_of_binop(self : BinOp) -> String {
+  match self {
+    Plus => "+"
+    Minus => "-"
+    Times => "*"
+    Div => "/"
+    SignedDiv => "/$"
+    Mod => "%"
+    SignedMod => "%$"
+    And => "&"
+    Or => "|"
+    Xor => "^"
+    LShift => "<<"
+    RShift => ">>"
+    ARShift => "~>>"
+    Eq => "="
+    Neq => "<>"
+    Lt => "<"
+    Le => "<="
+    SignedLt => "<$"
+    SignedLe => "<=$"
+  }
+}
+
+///|
+pub fn BinOp::is_commutative(self : BinOp) -> Bool {
+  match self {
+    Plus | Times | And | Xor | Or | Eq | Neq => true
+    _ => false
+  }
+}
+
+///|
+pub fn BinOp::is_associative(self : BinOp) -> Bool {
+  match self {
+    Plus | Times | And | Or | Xor => true
+    _ => false
   }
 }
 

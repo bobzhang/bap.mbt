@@ -463,6 +463,105 @@ pub fn Image::memory_of_symbol(
 }
 
 ///|
+fn image_relocation_word(
+  width : Int,
+  value : UInt64,
+) -> Result[@types.Word, String] {
+  try @types.Word::of_uint64(width~, value) catch {
+    _ => Err("failed to build relocation word")
+  } noraise {
+    word => Ok(word)
+  }
+}
+
+///|
+fn image_relocation_word_value(word : @types.Word) -> Result[UInt64, String] {
+  try word.to_uint64() catch {
+    _ => Err("failed to read relocation word")
+  } noraise {
+    value => Ok(value)
+  }
+}
+
+///|
+fn Image::relocation_value(
+  self : Image,
+  relocation : Relocation,
+  width : Int,
+  memory : @memory.Memory,
+) -> Result[@types.Word?, String] {
+  if relocation.is_relative() {
+    match self.base_address_value {
+      Some(base) => {
+        let current = match memory.load(relocation.fixup(), width~) {
+          Ok(word) =>
+            match image_relocation_word_value(word) {
+              Ok(value) => value
+              Err(reason) => return Err(reason)
+            }
+          Err(reason) => return Err(reason)
+        }
+        match image_relocation_word(width, base + current) {
+          Ok(word) => Ok(Some(word))
+          Err(reason) => Err(reason)
+        }
+      }
+      None => Err("relative relocation requires a base address")
+    }
+  } else {
+    match relocation.target() {
+      Some(target) =>
+        match image_relocation_word(width, target) {
+          Ok(word) => Ok(Some(word))
+          Err(reason) => Err(reason)
+        }
+      None => Ok(None)
+    }
+  }
+}
+
+///|
+fn Image::apply_relocation_to_segments(
+  self : Image,
+  segments : Array[Segment],
+  relocation : Relocation,
+  width : Int,
+) -> Result[Unit, String] {
+  for i in 0..<segments.length() {
+    let memory = segments[i].memory()
+    match self.relocation_value(relocation, width, memory) {
+      Ok(Some(word)) =>
+        match memory.store(relocation.fixup(), word) {
+          Ok(updated) => {
+            segments[i] = segments[i].with_memory(updated)
+            return Ok(())
+          }
+          Err(_) => ()
+        }
+      Ok(None) => return Ok(())
+      Err(reason) => return Err(reason)
+    }
+  }
+  Err("relocation fixup is outside image memory")
+}
+
+///|
+pub fn Image::with_applied_relocations(self : Image) -> Result[Image, String] {
+  let width = self.addr_size()
+  if width <= 0 || width % 8 != 0 {
+    return Err("image address size must be a positive multiple of 8")
+  }
+  let segments = self.segments_value.copy()
+  for relocation in self.relocations_value {
+    match self.apply_relocation_to_segments(segments, relocation, width) {
+      Ok(_) => ()
+      Err(reason) => return Err(reason)
+    }
+  }
+  Ok({ ..self, segments_value: segments })
+}
+
+///|
 pub fn Image::words(
   self : Image,
   word_size~ : Int,

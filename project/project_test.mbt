@@ -113,6 +113,52 @@ test "project exposes image relocation metadata" {
 }
 
 ///|
+test "project applies image relocations and refreshes memory" {
+  let target = @core_theory.Target::x86_64()
+  let segment = @image.Segment::create(
+    name=".data",
+    endian=LittleEndian,
+    addr=0x1000UL,
+    b"\x00\x00\x00\x00\x00\x00\x00\x00\x08\x00\x00\x00\x00\x00\x00\x00",
+    writable=true,
+  )
+  let image = @image.Image::from_segments(
+    entry=0x1000UL,
+    endian=LittleEndian,
+    [segment],
+    relocations=[
+      @image.Relocation::create(fixup=0x1000UL, target=0x4000UL),
+      @image.Relocation::create(fixup=0x1008UL, relative=true),
+    ],
+    base_address=0x2000UL,
+    target~,
+  )
+  let project = @project.Project::from_image(image)
+  match project.with_applied_relocations() {
+    Ok(applied) => {
+      match applied.image() {
+        Some(image) =>
+          inspect(
+            image.segments()[0].memory().hexdump(),
+            content="00 40 00 00 00 00 00 00 08 20 00 00 00 00 00 00",
+          )
+        None => fail("expected image")
+      }
+      match
+        applied.memory().lookup(0x1000UL)[0].0.view(from=0x1000UL, words=16) {
+        Ok(memory) =>
+          inspect(
+            memory.hexdump(),
+            content="00 40 00 00 00 00 00 00 08 20 00 00 00 00 00 00",
+          )
+        Err(reason) => fail(reason)
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project storage and memory tags are persistent updates" {
   let target = @core_theory.Target::unknown()
   let project = @project.Project::empty(target).set("loader", "raw")

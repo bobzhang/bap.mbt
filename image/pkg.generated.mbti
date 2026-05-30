@@ -83,6 +83,7 @@ pub fn Image::symbol_values(Self) -> Array[SymbolValue]
 pub fn Image::symbols(Self) -> Array[Symbol]
 pub fn Image::symbols_of_segment(Self, Segment) -> Array[Symbol]
 pub fn Image::target(Self) -> @core_theory.Target?
+pub fn Image::with_applied_relocations(Self) -> Result[Self, String]
 pub fn Image::with_base_address(Self, UInt64) -> Self
 pub fn Image::with_interpreter(Self, String) -> Self
 pub fn Image::with_is_executable(Self, Bool) -> Self
@@ -160,6 +161,7 @@ pub fn Segment::memory(Self) -> @memory.Memory
 pub fn Segment::name(Self) -> String
 pub fn Segment::offset(Self) -> Int
 pub fn Segment::size(Self) -> Int
+pub fn Segment::with_memory(Self, @memory.Memory) -> Self
 
 type Symbol
 pub fn Symbol::addr(Self) -> UInt64

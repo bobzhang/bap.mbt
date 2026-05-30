@@ -131,6 +131,7 @@ pub fn Project::target(Self) -> @core_theory.Target
 pub fn Project::to_ssa(Self) -> Self
 pub fn Project::to_trivial_condition_form(Self) -> Self
 pub fn Project::unmark_program_terms(Self, String) -> Self
+pub fn Project::with_applied_relocations(Self) -> Result[Self, String]
 pub fn Project::with_disassembly(Self, ProjectDisassemblyState) -> Self
 pub fn Project::with_memory(Self, @memory.MemMap[String]) -> Self
 pub fn Project::with_program(Self, @types.Term[@types.Program]) -> Self

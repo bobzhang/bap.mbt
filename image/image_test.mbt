@@ -182,6 +182,49 @@ test "image exposes relocation metadata defensively" {
 }
 
 ///|
+test "image applies relocation fixups immutably" {
+  let segment = @image.Segment::create(
+    name=".data",
+    endian=LittleEndian,
+    addr=0x1000UL,
+    b"\x00\x00\x00\x00\x00\x00\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00",
+    writable=true,
+  )
+  let image = @image.Image::from_segments(
+    entry=0x1000UL,
+    endian=LittleEndian,
+    [segment],
+    relocations=[
+      @image.Relocation::create(fixup=0x1000UL, target=0x1122334455667788UL),
+      @image.Relocation::create(fixup=0x1008UL, relative=true),
+    ],
+    base_address=0x1000UL,
+    target=@core_theory.Target::x86_64(),
+  )
+  match image.with_applied_relocations() {
+    Ok(applied) => {
+      inspect(
+        applied.segments()[0].memory().hexdump(),
+        content="88 77 66 55 44 33 22 11 20 10 00 00 00 00 00 00",
+      )
+      inspect(
+        image.segments()[0].memory().hexdump(),
+        content="00 00 00 00 00 00 00 00 20 00 00 00 00 00 00 00",
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+  let missing_base = @image.Image::from_segments(
+    entry=0x1000UL,
+    endian=LittleEndian,
+    [segment],
+    relocations=[@image.Relocation::create(fixup=0x1008UL, relative=true)],
+    target=@core_theory.Target::x86_64(),
+  )
+  assert_true(missing_base.with_applied_relocations() is Err(_))
+}
+
+///|
 test "image symbol memory can span contiguous segment chunks" {
   let first = @image.Segment::create(
     name=".a",

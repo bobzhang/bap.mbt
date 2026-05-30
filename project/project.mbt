@@ -366,6 +366,25 @@ pub fn Project::base_address(self : Project) -> UInt64? {
 }
 
 ///|
+pub fn Project::with_applied_relocations(
+  self : Project,
+) -> Result[Project, String] {
+  match self.image_value {
+    Some(image) =>
+      match image.with_applied_relocations() {
+        Ok(updated) =>
+          Ok({
+            ..self,
+            image_value: Some(updated),
+            memory_value: updated.memory(),
+          })
+        Err(reason) => Err(reason)
+      }
+    None => Ok(self)
+  }
+}
+
+///|
 pub fn Project::with_symbols(
   self : Project,
   symbols : Array[@image.Symbol],

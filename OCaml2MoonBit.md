@@ -173,6 +173,12 @@ relocation types. When symbol-based dynamic relocations are present with
 dynamic symbol by index: undefined symbols become external references, while
 defined symbols may become target relocations. Leave relocation application to
 the loader/runtime layer.
+For a pure MoonBit relocation application stage, keep it explicit and checked:
+absolute relocation facts write their target word at the fixup address, while
+relative relocation facts require image base-address metadata, read the current
+word at the fixup, add the base, and write the result back using the image
+address width and endian. Return a new image/project instead of mutating source
+segments, and fail on missing bases or out-of-bounds stores.
 Project-level image fallback can enrich successful ELF loads with optional
 DWARF-derived function symbols, but unsupported or malformed DWARF should not
 turn a loadable stripped binary into a project-loading failure. Treat those

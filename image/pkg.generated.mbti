@@ -11,6 +11,10 @@ import {
 // Values
 pub fn available_backends() -> Array[String]
 
+pub fn backend_names_for_extension(String) -> Array[String]
+
+pub fn backends_for_extension(String) -> Array[ImageBackend]
+
 pub fn find_backend(String) -> ImageBackend?
 
 pub fn register_backend(name~ : String, ImageBackend) -> Result[Unit, String]
@@ -43,9 +47,13 @@ pub fn Image::target(Self) -> @core_theory.Target?
 pub fn Image::words(Self, word_size~ : Int) -> @memory.MemMap[@types.Word]
 
 type ImageBackend
-pub fn ImageBackend::create(name~ : String, load~ : (Bytes) -> Result[(Image, Array[String]), String]) -> Self
+pub fn ImageBackend::create(name~ : String, description? : String, extensions? : Array[String], priority? : Int, load~ : (Bytes) -> Result[(Image, Array[String]), String]) -> Self
+pub fn ImageBackend::description(Self) -> String
+pub fn ImageBackend::extensions(Self) -> Array[String]
 pub fn ImageBackend::load(Self, Bytes) -> Result[(Image, Array[String]), String]
 pub fn ImageBackend::name(Self) -> String
+pub fn ImageBackend::priority(Self) -> Int
+pub fn ImageBackend::supports_extension(Self, String) -> Bool
 
 type Section
 pub fn Section::addr(Self) -> UInt64

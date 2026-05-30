@@ -77,26 +77,38 @@ test "image words follow endian-aware memory loads" {
 
 ///|
 test "image backends can be registered and used for byte loading" {
-  let backend = @image.ImageBackend::create(name="unit-raw", load=data => {
-    let segment = @image.Segment::create(
-      name=".raw",
-      endian=LittleEndian,
-      addr=0x80UL,
-      data,
-    )
-    Ok(
-      (
-        @image.Image::from_segments(entry=0x80UL, endian=LittleEndian, [segment]),
-        ["loaded"],
-      ),
-    )
-  })
+  let backend = @image.ImageBackend::create(
+    name="unit-raw",
+    description="raw bytes",
+    extensions=["raw", "bin"],
+    priority=10,
+    load=data => {
+      let segment = @image.Segment::create(
+        name=".raw",
+        endian=LittleEndian,
+        addr=0x80UL,
+        data,
+      )
+      Ok(
+        (
+          @image.Image::from_segments(entry=0x80UL, endian=LittleEndian, [
+            segment,
+          ]),
+          ["loaded"],
+        ),
+      )
+    },
+  )
   match @image.register_backend(name="unit-raw", backend) {
     Ok(_) => ()
     Err(reason) => fail(reason)
   }
   assert_true(@image.find_backend("unit-raw") is Some(_))
   assert_true(@image.available_backends().contains("unit-raw"))
+  assert_true(backend.description() == "raw bytes")
+  assert_true(backend.extensions() == ["raw", "bin"])
+  assert_true(backend.priority() == 10)
+  assert_true(backend.supports_extension("raw"))
   match @image.Image::of_bytes(b"\xaa\xbb", backend="unit-raw") {
     Ok((img, warnings)) => {
       assert_true(warnings == ["loaded"])
@@ -105,4 +117,33 @@ test "image backends can be registered and used for byte loading" {
     Err(reason) => fail(reason)
   }
   assert_true(@image.register_backend(name="unit-raw", backend) is Err(_))
+}
+
+///|
+test "image backend discovery returns extension matches by priority" {
+  let low = @image.ImageBackend::create(
+    name="unit-low-priority",
+    extensions=["unit"],
+    priority=1,
+    load=_ => Err("unused"),
+  )
+  let high = @image.ImageBackend::create(
+    name="unit-high-priority",
+    extensions=["unit"],
+    priority=100,
+    load=_ => Err("unused"),
+  )
+  match @image.register_backend(name="unit-low-priority", low) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  match @image.register_backend(name="unit-high-priority", high) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    @image.backend_names_for_extension("unit") ==
+    ["unit-high-priority", "unit-low-priority"],
+  )
+  assert_true(@image.backends_for_extension("missing").is_empty())
 }

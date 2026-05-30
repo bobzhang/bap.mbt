@@ -1,5 +1,6 @@
 import {
   "moonbitlang/core/string",
+  "moonbitlang/core/encoding/utf8",
   "bobzhang/bap/bitvec",
   "bobzhang/bap/core_theory",
   "bobzhang/bap/memory",

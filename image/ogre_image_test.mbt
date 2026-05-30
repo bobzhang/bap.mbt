@@ -78,6 +78,24 @@ test "ogre image specs build image metadata" {
 }
 
 ///|
+test "ogre image from_spec builds image metadata" {
+  match @image.OgreDoc::from_string(raw_ogre_spec) {
+    Ok(doc) =>
+      match @image.Image::from_spec(b"\x00\xaa\xbb\xcc\xdd", doc) {
+        Ok((image, warnings)) => {
+          assert_true(warnings.is_empty())
+          assert_true(image.entry_point() == 4098UL)
+          assert_true(image.segments().length() == 1)
+          assert_true(image.symbols()[0].name() == "main")
+          inspect(image.segments()[0].memory().hexdump(), content="aa bb cc dd")
+        }
+        Err(reason) => fail(reason)
+      }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "ogre image specs refine unknown targets from metadata facts" {
   let spec = "(declare bits (size int))" +
     " (declare format (name str))" +

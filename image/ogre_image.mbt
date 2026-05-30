@@ -515,6 +515,16 @@ pub fn Image::from_ogre(
 }
 
 ///|
+pub fn Image::from_spec(
+  data : Bytes,
+  doc : OgreDoc,
+  filename? : String,
+  target? : @core_theory.Target,
+) -> Result[(Image, Array[String]), String] {
+  Image::from_ogre(data, doc, filename?, target?)
+}
+
+///|
 pub fn Image::of_ogre_string(
   data : Bytes,
   spec : String,

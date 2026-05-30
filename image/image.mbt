@@ -92,6 +92,22 @@ pub fn Image::of_bytes(
 }
 
 ///|
+pub fn Image::of_bigstring(
+  data : Bytes,
+  backend? : String,
+) -> Result[(Image, Array[String]), String] {
+  Image::of_bytes(data, backend?)
+}
+
+///|
+pub fn Image::of_string(
+  data : String,
+  backend? : String,
+) -> Result[(Image, Array[String]), String] {
+  Image::of_bytes(@utf8.encode(data), backend?)
+}
+
+///|
 fn image_filename_extension(filename : String) -> String? {
   let parts = filename.split(".").to_array()
   if parts.length() > 1 {

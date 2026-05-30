@@ -92,6 +92,8 @@ moon run -c 'fn main { let s = "𝄞"; println(s.length()); println(s.char_lengt
 
 `String::length()` is UTF-16 code units, `String::char_length()` is Unicode scalars, and neither is bytes. For byte-oriented formats use `Bytes`/`BytesView`. Convert between `Bytes` and `String` only through a named encoding helper (`@ascii.encode`, `@utf8.encode`, etc.) that documents the encoding assumption.
 
+When preserving a BAP-style `of_string`/`from_string` compatibility entry point in MoonBit, make the encoding explicit in the implementation and tests. In this port, string helpers such as `Image::of_string` and `ProjectInput::from_string` encode text as UTF-8 before delegating to the byte-oriented loader. Use `of_bigstring`/`of_bytes` for binary payloads that came from OCaml `string`.
+
 `text[i]` returns a `UInt16` code unit, not a `Char`. For text parsers that need character predicates or `StringBuilder::write_char`, use `text.get_char(offset)` and advance by `char.utf16_len()`. It is still fine to increment by one for syntax bytes you have already constrained to ASCII, such as `(`, `)`, `"` and `\\`, but do not mix code-unit offsets with `Char` APIs accidentally.
 
 ```sh

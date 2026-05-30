@@ -210,6 +210,20 @@ test "image backends can be registered and used for byte loading" {
     }
     Err(reason) => fail(reason)
   }
+  match @image.Image::of_bigstring(b"\xcc\xdd", backend="unit-raw") {
+    Ok((img, warnings)) => {
+      assert_true(warnings == ["loaded"])
+      assert_true(img.memory().lookup(0x81UL).length() == 1)
+    }
+    Err(reason) => fail(reason)
+  }
+  match @image.Image::of_string("Aé", backend="unit-raw") {
+    Ok((img, warnings)) => {
+      assert_true(warnings == ["loaded"])
+      assert_true(img.memory().lookup(0x82UL).length() == 1)
+    }
+    Err(reason) => fail(reason)
+  }
   assert_true(@image.register_backend(name="unit-raw", backend) is Err(_))
 }
 

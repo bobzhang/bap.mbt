@@ -1120,9 +1120,23 @@ pub fn Target::mips64el() -> Target {
 pub fn Target::powerpc() -> Target {
   Target::create(
     name=target_name("powerpc"),
-    nicknames=["ppc"],
+    nicknames=["ppc", "powerpc32", "ppc32", "powerpc32be", "ppc32be"],
     bits=32,
     endianness=BigEndian,
+    vars=ppc_vars(32),
+  )
+}
+
+///|
+pub fn Target::powerpcle() -> Target {
+  Target::create(
+    name=target_name("powerpcle"),
+    parent=Target::powerpc(),
+    nicknames=[
+      "ppcle", "ppcel", "powerpc32le", "powerpc32el", "ppc32le", "ppc32el",
+    ],
+    bits=32,
+    endianness=LittleEndian,
     vars=ppc_vars(32),
   )
 }
@@ -1132,7 +1146,7 @@ pub fn Target::powerpc64() -> Target {
   Target::create(
     name=target_name("powerpc64"),
     parent=Target::powerpc(),
-    nicknames=["ppc64", "ppu"],
+    nicknames=["ppc64", "ppu", "powerpc64be", "ppc64be"],
     bits=64,
     endianness=BigEndian,
     vars=ppc_vars(64),
@@ -1144,7 +1158,7 @@ pub fn Target::powerpc64le() -> Target {
   Target::create(
     name=target_name("powerpc64le"),
     parent=Target::powerpc64(),
-    nicknames=["ppc64le"],
+    nicknames=["powerpc64el", "ppc64le", "ppc64el"],
     bits=64,
     endianness=LittleEndian,
     vars=ppc_vars(64),
@@ -1331,6 +1345,44 @@ fn append_x86_target_variants(items : Array[Target]) -> Unit {
 }
 
 ///|
+fn append_mips_target_variants(items : Array[Target]) -> Unit {
+  for
+    parent in [
+      Target::mips(),
+      Target::mipsel(),
+      Target::mips64(),
+      Target::mips64el(),
+    ] {
+    append_target_variants(
+      items,
+      parent,
+      [UnknownSystem, Linux, FreeBSD, OpenBSD],
+      [UnknownFiletype, Elf],
+      [UnknownAbi, GNU],
+    )
+  }
+}
+
+///|
+fn append_powerpc_target_variants(items : Array[Target]) -> Unit {
+  for
+    parent in [
+      Target::powerpc(),
+      Target::powerpcle(),
+      Target::powerpc64(),
+      Target::powerpc64le(),
+    ] {
+    append_target_variants(
+      items,
+      parent,
+      [UnknownSystem, Linux, FreeBSD, OpenBSD, VxWorks],
+      [UnknownFiletype, Elf, MachO],
+      [UnknownAbi, GNU],
+    )
+  }
+}
+
+///|
 pub fn common_targets() -> Array[Target] {
   let items = [
     Target::x86(),
@@ -1346,6 +1398,7 @@ pub fn common_targets() -> Array[Target] {
     Target::mips64(),
     Target::mips64el(),
     Target::powerpc(),
+    Target::powerpcle(),
     Target::powerpc64(),
     Target::powerpc64le(),
     Target::riscv32(),
@@ -1360,6 +1413,8 @@ pub fn common_targets() -> Array[Target] {
     Target::xcore(),
   ]
   append_x86_target_variants(items)
+  append_mips_target_variants(items)
+  append_powerpc_target_variants(items)
   items
 }
 

@@ -193,6 +193,45 @@ test "target registry resolves common and custom declarations" {
       filetype=Elf,
     ).any(target => target.matches("x86-freebsd-cdecl-elf")),
   )
+  match @core_theory.Target::get("mips64el-linux-gnu-elf") {
+    Ok(target) => {
+      assert_true(target.bits() == 64)
+      assert_true(target.endianness() == LittleEndian)
+      assert_true(target.system() == Linux)
+      assert_true(target.abi() == GNU)
+      assert_true(target.filetype() == Elf)
+      assert_true(target.belongs(@core_theory.Target::mips64el()))
+    }
+    Err(reason) => fail(reason)
+  }
+  match
+    @core_theory.Target::select(
+      parent=@core_theory.Target::mips64el(),
+      system=Linux,
+      abi=GNU,
+      filetype=Elf,
+      unique=true,
+    ) {
+    Ok(target) => assert_true(target.matches("mips64el-linux-gnu-elf"))
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.Target::get("ppc32le") {
+    Ok(target) => {
+      assert_true(target.matches("powerpcle"))
+      assert_true(target.bits() == 32)
+      assert_true(target.endianness() == LittleEndian)
+    }
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.Target::get("powerpcle-vxworks-gnu-macho") {
+    Ok(target) => {
+      assert_true(target.system() == VxWorks)
+      assert_true(target.abi() == GNU)
+      assert_true(target.filetype() == MachO)
+      assert_true(target.belongs(@core_theory.Target::powerpcle()))
+    }
+    Err(reason) => fail(reason)
+  }
   let target = @core_theory.Target::create(
     name=@knowledge.Name::create("unit-target-registry", pkg="test"),
     nicknames=["unit-target-alias"],

@@ -9,6 +9,17 @@ struct ProjectBrancher {
 let project_brancher_registry : Map[String, ProjectBrancher] = {}
 
 ///|
+fn project_brancher_applies_to_project(
+  brancher : ProjectBrancher,
+  project : Project,
+) -> Bool {
+  match brancher.path() {
+    Some(path) => project.filename() == Some(path)
+    None => true
+  }
+}
+
+///|
 pub fn ProjectBrancher::create(
   resolve : (@memory.Memory) -> Array[ProjectDisassemblyEdge],
 ) -> ProjectBrancher {
@@ -131,6 +142,9 @@ pub fn Project::apply_brancher(
   let selected = match brancher {
     Some(value) => value
     None => ProjectBrancher::empty()
+  }
+  if !project_brancher_applies_to_project(selected, self) {
+    return Ok(self)
   }
   let mut state = self.disassembly()
   for memory in subjects {

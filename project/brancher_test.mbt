@@ -38,7 +38,10 @@ test "project brancher resolves edge tables and applies them to blocks" {
   assert_true(brancher.is_biased())
   assert_true(brancher.resolve(first).length() == 3)
   assert_true(brancher.resolve(second).is_empty())
-  let project = @project.Project::empty(@core_theory.Target::unknown()).with_disassembly(
+  let project = @project.Project::create(
+    target=@core_theory.Target::unknown(),
+    filename="unit.bin",
+  ).with_disassembly(
     @project.ProjectDisassemblyState::empty().add_block(first).add_block(second),
   )
   match project.apply_brancher(brancher~) {
@@ -55,6 +58,47 @@ test "project brancher resolves edge tables and applies them to blocks" {
     @project.Project::empty(@core_theory.Target::unknown()).apply_brancher()
     is Err(_),
   )
+}
+
+///|
+test "project brancher path gates application by filename" {
+  let block = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x5400UL,
+    b"\x01",
+  )
+  let edge = @project.ProjectDisassemblyEdge::create(
+    source=0x5400UL,
+    target=0x5401UL,
+    kind=FallEdge,
+  )
+  let brancher = @project.ProjectBrancher::of_edges([edge]).set_path("unit.bin")
+  let project = @project.Project::create(
+    target=@core_theory.Target::unknown(),
+    filename="unit.bin",
+  ).with_disassembly(@project.ProjectDisassemblyState::empty().add_block(block))
+  match project.apply_brancher(brancher~) {
+    Ok(branched) => {
+      assert_true(branched.disassembly().edge_count() == 1)
+      assert_true(branched.disassembly().has_edge(edge))
+    }
+    Err(reason) => fail(reason)
+  }
+  let other = @project.Project::create(
+    target=@core_theory.Target::unknown(),
+    filename="other.bin",
+  ).with_disassembly(@project.ProjectDisassemblyState::empty().add_block(block))
+  match other.apply_brancher(brancher~) {
+    Ok(branched) => assert_true(branched.disassembly().edge_count() == 0)
+    Err(reason) => fail(reason)
+  }
+  let nameless = @project.Project::empty(@core_theory.Target::unknown()).with_disassembly(
+    @project.ProjectDisassemblyState::empty().add_block(block),
+  )
+  match nameless.apply_brancher(brancher~) {
+    Ok(branched) => assert_true(branched.disassembly().edge_count() == 0)
+    Err(reason) => fail(reason)
+  }
 }
 
 ///|

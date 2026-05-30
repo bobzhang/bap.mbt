@@ -12,6 +12,9 @@ struct ProjectInput {
 ///|
 struct ProjectInputLoader {
   name_value : String
+  description_value : String
+  extensions_value : Array[String]
+  priority_value : Int
   load_fn : (Bytes) -> Result[ProjectInput, String]
 }
 
@@ -133,14 +136,57 @@ pub fn ProjectInput::libraries(self : ProjectInput) -> Array[Library] {
 ///|
 pub fn ProjectInputLoader::create(
   name~ : String,
+  description? : String,
+  extensions? : Array[String],
+  priority? : Int,
   load~ : (Bytes) -> Result[ProjectInput, String],
 ) -> ProjectInputLoader {
-  { name_value: name, load_fn: load }
+  {
+    name_value: name,
+    description_value: match description {
+      Some(text) => text
+      None => ""
+    },
+    extensions_value: match extensions {
+      Some(items) => items.copy()
+      None => []
+    },
+    priority_value: match priority {
+      Some(value) => value
+      None => 0
+    },
+    load_fn: load,
+  }
 }
 
 ///|
 pub fn ProjectInputLoader::name(self : ProjectInputLoader) -> String {
   self.name_value
+}
+
+///|
+pub fn ProjectInputLoader::description(self : ProjectInputLoader) -> String {
+  self.description_value
+}
+
+///|
+pub fn ProjectInputLoader::extensions(
+  self : ProjectInputLoader,
+) -> Array[String] {
+  self.extensions_value.copy()
+}
+
+///|
+pub fn ProjectInputLoader::priority(self : ProjectInputLoader) -> Int {
+  self.priority_value
+}
+
+///|
+pub fn ProjectInputLoader::supports_extension(
+  self : ProjectInputLoader,
+  extension : String,
+) -> Bool {
+  self.extensions_value.any(item => item == extension)
 }
 
 ///|
@@ -177,6 +223,25 @@ pub fn available_input_loaders() -> Array[String] {
 }
 
 ///|
+pub fn input_loaders_for_extension(
+  extension : String,
+) -> Array[ProjectInputLoader] {
+  let result = []
+  input_loader_registry.each((_, loader) => {
+    if loader.supports_extension(extension) {
+      result.push(loader)
+    }
+  })
+  result.sort_by((left, right) => right.priority().compare(left.priority()))
+  result
+}
+
+///|
+pub fn input_loader_names_for_extension(extension : String) -> Array[String] {
+  input_loaders_for_extension(extension).map(loader => loader.name())
+}
+
+///|
 pub fn ProjectInput::load(
   data : Bytes,
   loader~ : String,
@@ -184,6 +249,43 @@ pub fn ProjectInput::load(
   match find_input_loader(loader) {
     Some(input_loader) => input_loader.load(data)
     None => Err("unknown project input loader \{loader}")
+  }
+}
+
+///|
+fn filename_extension(filename : String) -> String? {
+  let parts = filename.split(".").to_array()
+  if parts.length() > 1 {
+    Some(parts[parts.length() - 1].to_owned().to_lower())
+  } else {
+    None
+  }
+}
+
+///|
+pub fn ProjectInput::load_for_filename(
+  data : Bytes,
+  filename~ : String,
+) -> Result[ProjectInput, String] {
+  match filename_extension(filename) {
+    Some(extension) => {
+      let loaders = input_loaders_for_extension(extension)
+      if loaders.is_empty() {
+        Err("no project input loader for extension \{extension}")
+      } else {
+        let mut last_error = ""
+        for loader in loaders {
+          match loader.load(data) {
+            Ok(input) => return Ok(input)
+            Err(reason) => last_error = reason
+          }
+        }
+        Err(
+          "all project input loaders failed for extension \{extension}: \{last_error}",
+        )
+      }
+    }
+    None => Err("can't infer project input loader from filename \{filename}")
   }
 }
 

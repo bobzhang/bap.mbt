@@ -12,14 +12,14 @@ This repository is porting `.repos/bap` from OCaml to idiomatic MoonBit.
 - `core_theory`: symbolic sorts, typed values, variables, effect lattice values, labels, target metadata with inheritance/matching helpers, conservative register role helpers, common architecture target declarations, and a target registry/lookup layer.
 - `memory`: byte-addressed memory regions with rebasing, views/ranges, endian-aware word loads and stores, contiguous merges, hexdumps, and a basic interval `MemMap` with lookup/intersection/dominator queries.
 - `image`: image metadata over `memory`, including segments, sections, symbols, memory maps, symbol/section/segment lookup, endian-aware `Image.words` extraction, and a MoonBit backend registry with description/extension/priority discovery metadata that loads bytes into `(Image, warnings)`.
-- `project`: project container over `core_theory`, `types`, `memory`, and `image`, with target/program/memory/image state, typed storage tags over string-backed storage, memory tagging, program mapping, library records, project input constructors/loaders, and a named dependency-aware pass registry with explicit/autorun execution, run-once passes, and pass run-count telemetry.
+- `project`: project container over `core_theory`, `types`, `memory`, and `image`, with target/program/memory/image state, typed storage tags over string-backed storage, memory tagging, program mapping, library records, project input constructors/loaders with extension/priority metadata and filename-based selection, and a named dependency-aware pass registry with explicit/autorun execution, run-once passes, and pass run-count telemetry.
 
 ## Next Packages
 
 - Expand `core_theory` with the full BAP knowledge registry, richer alias origin tracking, program/unit/source/compiler slots, and more complete architecture-specific target metadata.
 - Expand `types` with fuller BIL normalization and memory-aware optimization passes, fuller IR visitors and control-flow semantics, phi-aware data-flow helpers over the term layer, indirect call resolution hooks, and the remaining tests translated from `.repos/bap/lib_test/bap_types`.
 - Expand `image` with Ogre spec parsing, file-backed loaders, and richer symbol-to-memory handling for non-contiguous symbols.
-- Expand `project` with file-backed input loaders, collators, analysis arguments, disassembly state, and richer non-string storage encodings.
+- Expand `project` with native file-backed input loader wrappers, collators, analysis arguments, disassembly state, and richer non-string storage encodings.
 
 ## Porting Defaults
 

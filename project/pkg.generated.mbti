@@ -16,6 +16,10 @@ pub fn find_input_loader(String) -> ProjectInputLoader?
 
 pub fn find_pass(String) -> ProjectPass?
 
+pub fn input_loader_names_for_extension(String) -> Array[String]
+
+pub fn input_loaders_for_extension(String) -> Array[ProjectInputLoader]
+
 pub fn passes() -> Array[ProjectPass]
 
 pub fn register_input_loader(ProjectInputLoader) -> Result[Unit, String]
@@ -73,13 +77,18 @@ pub fn ProjectInput::from_image(@image.Image, target? : @core_theory.Target, pro
 pub fn ProjectInput::image(Self) -> @image.Image?
 pub fn ProjectInput::libraries(Self) -> Array[Library]
 pub fn ProjectInput::load(Bytes, loader~ : String) -> Result[Self, String]
+pub fn ProjectInput::load_for_filename(Bytes, filename~ : String) -> Result[Self, String]
 pub fn ProjectInput::memory(Self) -> @memory.MemMap[String]
 pub fn ProjectInput::target(Self) -> @core_theory.Target
 
 type ProjectInputLoader
-pub fn ProjectInputLoader::create(name~ : String, load~ : (Bytes) -> Result[ProjectInput, String]) -> Self
+pub fn ProjectInputLoader::create(name~ : String, description? : String, extensions? : Array[String], priority? : Int, load~ : (Bytes) -> Result[ProjectInput, String]) -> Self
+pub fn ProjectInputLoader::description(Self) -> String
+pub fn ProjectInputLoader::extensions(Self) -> Array[String]
 pub fn ProjectInputLoader::load(Self, Bytes) -> Result[ProjectInput, String]
 pub fn ProjectInputLoader::name(Self) -> String
+pub fn ProjectInputLoader::priority(Self) -> Int
+pub fn ProjectInputLoader::supports_extension(Self, String) -> Bool
 
 type ProjectPass
 pub fn ProjectPass::autorun(Self) -> Bool

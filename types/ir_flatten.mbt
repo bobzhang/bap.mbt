@@ -188,3 +188,8 @@ pub fn Term::flatten_sub(self : Term[Sub]) -> Term[Sub] {
     blks: self.payload_value.blks.map(blk => blk.flatten_blk()),
   })
 }
+
+///|
+pub fn Term::flatten_program(self : Term[Program]) -> Term[Program] {
+  self.with_payload({ subs: self.subs().map(sub => sub.flatten_sub()) })
+}

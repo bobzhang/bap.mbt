@@ -466,6 +466,7 @@ pub fn Term::find_sub(Self[Program], Tid) -> Self[Sub]?
 pub fn Term::find_var(Self[Blk], Var) -> VarBinding?
 pub fn Term::first_def(Self[Blk]) -> Self[Def]?
 pub fn Term::flatten_blk(Self[Blk]) -> Self[Blk]
+pub fn Term::flatten_program(Self[Program]) -> Self[Program]
 pub fn Term::flatten_sub(Self[Sub]) -> Self[Sub]
 pub fn[T] Term::get_attr(Self[T], String) -> String?
 pub fn[T] Term::has_attr(Self[T], String) -> Bool
@@ -519,6 +520,7 @@ pub fn Term::program_resolved_callers(Self[Program], Self[Sub], resolve_indirect
 pub fn Term::program_resolved_callgraph(Self[Program], resolve_indirect~ : (Exp) -> Array[Tid]) -> @graphlib.Graph[Tid, Array[Self[Jmp]]]
 pub fn Term::program_stub_links(Self[Program], link_only? : Array[String], no_link? : Array[String]) -> Map[Tid, Tid]
 pub fn Term::program_stub_tids(Self[Program]) -> Array[Tid]
+pub fn Term::program_to_ssa(Self[Program]) -> Self[Program]
 pub fn Term::program_to_trivial_condition_form(Self[Program]) -> Self[Program]
 pub fn Term::remove_def(Self[Blk], Tid) -> Self[Blk]
 pub fn Term::remove_jmp(Self[Blk], Tid) -> Self[Blk]

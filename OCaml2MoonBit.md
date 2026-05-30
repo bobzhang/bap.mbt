@@ -128,6 +128,12 @@ virtual boolean definition. Multiple conditional jumps in one block need
 distinct variables; using the same textual name for every hoist changes later
 variable-based analyses.
 
+Many BAP plugins are intentionally thin `Project.map_program` wrappers around
+term transforms (SSA, SSA destruction, flatten, trivial-condition-form, stub
+resolution). Port the pure `types` transform first, then expose a project-level
+wrapper that delegates to it; avoid duplicating term payload rewrites in the
+`project` package.
+
 For BAP-style stub resolution, treat symbol names and aliases as an undirected
 graph and resolve by connected components. Link stubs only when a component has
 exactly one non-stub implementation; pairwise alias matching is too eager,

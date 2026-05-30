@@ -416,6 +416,11 @@ pub fn Term::to_ssa(self : Term[Sub], entry? : Tid) -> Term[Sub] {
 }
 
 ///|
+pub fn Term::program_to_ssa(self : Term[Program]) -> Term[Program] {
+  self.with_payload({ subs: self.payload_value.subs.map(sub => sub.to_ssa()) })
+}
+
+///|
 fn ssa_base_exp(exp : Exp) -> Exp {
   match exp {
     Int(_) | Unknown(_) => exp

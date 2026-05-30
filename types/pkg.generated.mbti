@@ -621,6 +621,7 @@ pub fn Word::enum_bytes(Self, endian~ : @bitvec.Endian) -> Array[Self]
 pub fn Word::enum_chars(Self, endian~ : @bitvec.Endian) -> Bytes
 pub fn Word::extract(Self, hi? : Int, lo? : Int) -> Self raise @bitvec.BitVecError
 pub fn Word::extract_exn(Self, hi? : Int, lo? : Int) -> Self raise @bitvec.BitVecError
+pub fn Word::format_value(Self, format? : WordValueFormat, letter_case? : WordLetterCase, prefix? : WordPrefix, suffix? : WordSuffix) -> String
 pub fn Word::from_bitvec(@bitvec.BitVec, signed? : Bool) -> Self
 pub fn Word::from_bytes(BytesView, endian~ : @bitvec.Endian, width? : Int) -> Self raise @bitvec.BitVecError
 pub fn Word::from_hex(width~ : Int, StringView) -> Self raise @bitvec.BitVecError
@@ -666,6 +667,7 @@ pub fn Word::rshift(Self, Int) -> Self
 pub fn Word::signed(Self) -> Self
 pub fn Word::signed_div(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::signed_rem(Self, Self) -> Self raise @bitvec.BitVecError
+pub fn Word::string_of_value(Self, hex? : Bool) -> String
 pub fn Word::sub(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::succ(Self) -> Self
 pub fn Word::to_bitvec(Self) -> @bitvec.BitVec
@@ -685,6 +687,18 @@ pub fn Word::widen(Self, width~ : Int) -> Self raise @bitvec.BitVecError
 pub fn Word::width(Self) -> Int
 pub fn Word::zero(width~ : Int) -> Self raise @bitvec.BitVecError
 
+pub(all) enum WordLetterCase {
+  WordUpperCase
+  WordLowerCase
+} derive(Eq, @debug.Debug)
+
+pub(all) enum WordPrefix {
+  WordAutoPrefix
+  WordBasePrefix
+  WordNoPrefix
+  WordCustomPrefix(String)
+} derive(Eq, @debug.Debug)
+
 pub(all) enum WordSize {
   W32
   W64
@@ -693,6 +707,19 @@ pub fn WordSize::in_bits(Self) -> Int
 pub fn WordSize::in_bytes(Self) -> Int
 pub fn WordSize::to_size(Self) -> Size
 pub fn WordSize::to_string(Self) -> String
+
+pub(all) enum WordSuffix {
+  WordNoSuffix
+  WordFullSuffix
+  WordSizeSuffix
+} derive(Eq, @debug.Debug)
+
+pub(all) enum WordValueFormat {
+  WordHex
+  WordDec
+  WordOct
+  WordBin
+} derive(Eq, @debug.Debug)
 
 // Type aliases
 

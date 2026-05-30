@@ -5,6 +5,35 @@ struct Word {
 } derive(Eq, Debug)
 
 ///|
+pub(all) enum WordValueFormat {
+  WordHex
+  WordDec
+  WordOct
+  WordBin
+} derive(Eq, Debug)
+
+///|
+pub(all) enum WordLetterCase {
+  WordUpperCase
+  WordLowerCase
+} derive(Eq, Debug)
+
+///|
+pub(all) enum WordPrefix {
+  WordAutoPrefix
+  WordBasePrefix
+  WordNoPrefix
+  WordCustomPrefix(String)
+} derive(Eq, Debug)
+
+///|
+pub(all) enum WordSuffix {
+  WordNoSuffix
+  WordFullSuffix
+  WordSizeSuffix
+} derive(Eq, Debug)
+
+///|
 pub fn Word::from_bitvec(
   value : @bitvec.BitVec,
   signed? : Bool = false,
@@ -562,67 +591,174 @@ pub fn Word::compare_signed(
 }
 
 ///|
-pub fn Word::to_hex(self : Word, prefix? : Bool = true) -> String {
-  self.bits_value.to_hex(prefix~)
-}
-
-///|
-fn char_is_zero(text : String, index : Int) -> Bool {
-  match text.get_char(index) {
-    Some(c) => c == '0'
-    None => false
+fn WordValueFormat::base(self : WordValueFormat) -> Int {
+  match self {
+    WordHex => 16
+    WordDec => 10
+    WordOct => 8
+    WordBin => 2
   }
 }
 
 ///|
-fn upper_hex_char(c : Char) -> Char {
-  if c >= 'a' && c <= 'f' {
-    (c.to_int() - 'a' + 'A').unsafe_to_char()
+fn WordValueFormat::base_prefix(self : WordValueFormat) -> String {
+  match self {
+    WordHex => "0x"
+    WordOct => "0o"
+    WordBin => "0b"
+    WordDec => ""
+  }
+}
+
+///|
+fn base_digit_char(digit : Int, letter_case : WordLetterCase) -> Char {
+  if digit < 10 {
+    (digit + '0').unsafe_to_char()
   } else {
-    c
+    let base = match letter_case {
+      WordUpperCase => 'A'
+      WordLowerCase => 'a'
+    }
+    (digit - 10 + base.to_int()).unsafe_to_char()
   }
 }
 
 ///|
-fn canonical_hex_digits(value : @bitvec.BitVec) -> String {
-  let raw = value.to_hex(prefix=false)
-  let mut start = 0
-  while start + 1 < raw.length() && char_is_zero(raw, start) {
-    start = start + 1
+fn digit_char_value(digit : Char) -> Int {
+  if digit >= '0' && digit <= '9' {
+    digit.to_int() - '0'
+  } else if digit >= 'A' && digit <= 'F' {
+    digit.to_int() - 'A' + 10
+  } else if digit >= 'a' && digit <= 'f' {
+    digit.to_int() - 'a' + 10
+  } else {
+    0
+  }
+}
+
+///|
+fn bitvec_to_base_string(
+  value : @bitvec.BitVec,
+  base : Int,
+  letter_case : WordLetterCase,
+) -> String {
+  let digits : Array[Int] = [0]
+  for offset in 0..<value.width() {
+    let bit = value.width() - offset - 1
+    let mut carry = if value.nth(bit) { 1 } else { 0 }
+    for i in 0..<digits.length() {
+      let next = digits[i] * 2 + carry
+      digits[i] = next % base
+      carry = next / base
+    }
+    while carry > 0 {
+      digits.push(carry % base)
+      carry = carry / base
+    }
   }
   let builder = StringBuilder()
-  for c in raw[start:] {
-    builder.write_char(upper_hex_char(c))
+  for offset in 0..<digits.length() {
+    let i = digits.length() - offset - 1
+    builder.write_char(base_digit_char(digits[i], letter_case))
   }
   builder.to_string()
 }
 
 ///|
-fn hex_digit_needs_prefix(c : Char) -> Bool {
-  c >= 'A' && c <= 'F'
+fn word_digits_need_auto_prefix(
+  format : WordValueFormat,
+  digits : String,
+) -> Bool {
+  match format {
+    WordDec => false
+    WordBin | WordOct => digits.length() > 1
+    WordHex =>
+      if digits.length() > 1 {
+        true
+      } else {
+        match digits.get_char(0) {
+          Some(digit) => digit_char_value(digit) >= 10
+          None => false
+        }
+      }
+  }
 }
 
 ///|
-fn should_prefix_hex(digits : String) -> Bool {
-  if digits.length() > 1 {
-    true
+fn word_prefix_text(
+  format : WordValueFormat,
+  prefix : WordPrefix,
+  digits : String,
+) -> String {
+  match prefix {
+    WordNoPrefix => ""
+    WordCustomPrefix(text) => text
+    WordBasePrefix => format.base_prefix()
+    WordAutoPrefix =>
+      if word_digits_need_auto_prefix(format, digits) {
+        format.base_prefix()
+      } else {
+        ""
+      }
+  }
+}
+
+///|
+fn Word::unsigned_magnitude(self : Word) -> @bitvec.BitVec {
+  if self.is_negative() {
+    self.bits_value.neg()
   } else {
-    match digits.get_char(0) {
-      Some(c) => hex_digit_needs_prefix(c)
-      None => false
+    self.bits_value
+  }
+}
+
+///|
+fn Word::format_suffix(self : Word, suffix : WordSuffix) -> String {
+  match suffix {
+    WordNoSuffix => ""
+    WordSizeSuffix => ":\{self.width()}"
+    WordFullSuffix => {
+      let sign = if self.is_signed() { "s" } else { "u" }
+      ":\{self.width()}\{sign}"
     }
   }
 }
 
 ///|
+pub fn Word::format_value(
+  self : Word,
+  format? : WordValueFormat = WordHex,
+  letter_case? : WordLetterCase = WordUpperCase,
+  prefix? : WordPrefix = WordAutoPrefix,
+  suffix? : WordSuffix = WordNoSuffix,
+) -> String {
+  let magnitude = self.unsigned_magnitude()
+  let digits = bitvec_to_base_string(magnitude, format.base(), letter_case)
+  let sign = if self.is_negative() { "-" } else { "" }
+  "\{sign}\{word_prefix_text(format, prefix, digits)}\{digits}\{self.format_suffix(suffix)}"
+}
+
+///|
+pub fn Word::string_of_value(self : Word, hex? : Bool = true) -> String {
+  if hex {
+    self.format_value(
+      format=WordHex,
+      letter_case=WordLowerCase,
+      prefix=WordNoPrefix,
+    )
+  } else {
+    self.format_value(format=WordDec)
+  }
+}
+
+///|
+pub fn Word::to_hex(self : Word, prefix? : Bool = true) -> String {
+  self.bits_value.to_hex(prefix~)
+}
+
+///|
 pub fn Word::to_string(self : Word) -> String {
-  let negative = self.is_negative()
-  let magnitude = if negative { self.bits_value.neg() } else { self.bits_value }
-  let digits = canonical_hex_digits(magnitude)
-  let prefix = if should_prefix_hex(digits) { "0x" } else { "" }
-  let sign = if negative { "-" } else { "" }
-  let suffix = if self.signed_value { "s" } else { "u" }
-  "\{sign}\{prefix}\{digits}:\{self.width()}\{suffix}"
+  self.format_value(suffix=WordFullSuffix)
 }
 
 ///|

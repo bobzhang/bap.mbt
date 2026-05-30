@@ -88,6 +88,38 @@ test "word exposes BAP numeric compatibility aliases" {
 }
 
 ///|
+test "word BAP value formatting covers radix prefix suffix and case" {
+  let value = @types.Word::of_int(width=8, 42)
+  assert_true(value.string_of_value() == "2a")
+  assert_true(value.string_of_value(hex=false) == "42")
+  assert_true(value.format_value() == "0x2A")
+  assert_true(
+    value.format_value(format=WordDec, suffix=WordFullSuffix) == "42:8u",
+  )
+  assert_true(value.format_value(format=WordOct) == "0o52")
+  assert_true(
+    @types.Word::of_int(width=8, 2).format_value(format=WordBin) == "0b10",
+  )
+  assert_true(
+    value.format_value(
+      letter_case=WordLowerCase,
+      prefix=WordCustomPrefix("#"),
+      suffix=WordSizeSuffix,
+    ) ==
+    "#2a:8",
+  )
+  let minus_one = @types.Word::of_int(width=8, -1).signed()
+  assert_true(minus_one.string_of_value() == "-1")
+  assert_true(
+    minus_one.format_value(format=WordDec, suffix=WordFullSuffix) == "-1:8s",
+  )
+  let min_i8 = @types.Word::of_int(width=8, -128).signed()
+  assert_true(
+    min_i8.format_value(format=WordDec, suffix=WordFullSuffix) == "-128:8s",
+  )
+}
+
+///|
 test "word address memref mirrors BAP scaling and wrapping" {
   let base = @types.Word::of_int(width=32, 0x1000)
   assert_true(base.memref(disp=4, index=3, scale=R16).to_int() == 0x100a)

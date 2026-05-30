@@ -604,6 +604,39 @@ pub fn Target::with_vars(self : Target, more : Array[Var]) -> Target {
 }
 
 ///|
+pub fn Target::with_bits(self : Target, bits : Int) -> Target {
+  { ..self, bits_value: bits }
+}
+
+///|
+pub fn Target::with_endianness(
+  self : Target,
+  endianness : Endianness,
+) -> Target {
+  { ..self, endianness_value: endianness }
+}
+
+///|
+pub fn Target::with_system(self : Target, system : System) -> Target {
+  { ..self, system_value: system }
+}
+
+///|
+pub fn Target::with_abi(self : Target, abi : Abi) -> Target {
+  { ..self, abi_value: abi }
+}
+
+///|
+pub fn Target::with_fabi(self : Target, fabi : Fabi) -> Target {
+  { ..self, fabi_value: fabi }
+}
+
+///|
+pub fn Target::with_filetype(self : Target, filetype : Filetype) -> Target {
+  { ..self, filetype_value: filetype }
+}
+
+///|
 pub fn Target::with_alias_origin(self : Target, origin : AliasOrigin) -> Target {
   let items = self.alias_origins_value.copy()
   items.push(origin)

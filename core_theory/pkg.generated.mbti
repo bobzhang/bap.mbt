@@ -266,7 +266,13 @@ pub fn Target::system(Self) -> System
 pub fn Target::unknown() -> Self
 pub fn Target::vars(Self) -> Array[Var]
 pub fn Target::vars_with_role(Self, Role) -> Array[Var]
+pub fn Target::with_abi(Self, Abi) -> Self
 pub fn Target::with_alias_origin(Self, AliasOrigin) -> Self
+pub fn Target::with_bits(Self, Int) -> Self
+pub fn Target::with_endianness(Self, Endianness) -> Self
+pub fn Target::with_fabi(Self, Fabi) -> Self
+pub fn Target::with_filetype(Self, Filetype) -> Self
+pub fn Target::with_system(Self, System) -> Self
 pub fn Target::with_var(Self, Var) -> Self
 pub fn Target::with_vars(Self, Array[Var]) -> Self
 pub fn Target::x86() -> Self

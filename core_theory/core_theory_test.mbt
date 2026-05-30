@@ -125,6 +125,19 @@ test "target metadata enums parse loader strings" {
   assert_true(target.abi().to_string() == "gnu")
   assert_true(target.fabi().to_string() == "soft")
   assert_true(target.filetype().to_string() == "elf")
+  let refined = @core_theory.Target::unknown()
+    .with_bits(64)
+    .with_endianness(BigEndian)
+    .with_system(Darwin)
+    .with_abi(SysV)
+    .with_fabi(Hard)
+    .with_filetype(MachO)
+  assert_true(refined.bits() == 64)
+  assert_true(refined.endianness() == BigEndian)
+  assert_true(refined.system() == Darwin)
+  assert_true(refined.abi() == SysV)
+  assert_true(refined.fabi() == Hard)
+  assert_true(refined.filetype() == MachO)
 }
 
 ///|

@@ -294,7 +294,14 @@ pub fn ProjectInput::load(
 ) -> Result[ProjectInput, String] {
   match find_input_loader(loader) {
     Some(input_loader) => input_loader.load(data)
-    None => Err("unknown project input loader \{loader}")
+    None =>
+      match @image.Image::of_bytes(data, backend=loader) {
+        Ok((image, _warnings)) => Ok(ProjectInput::from_image(image))
+        Err(reason) =>
+          Err(
+            "unknown project input loader or image backend \{loader}: \{reason}",
+          )
+      }
   }
 }
 
@@ -317,7 +324,14 @@ pub fn ProjectInput::load_for_filename(
     Some(extension) => {
       let loaders = input_loaders_for_extension(extension)
       if loaders.is_empty() {
-        Err("no project input loader for extension \{extension}")
+        match @image.Image::of_bytes_for_filename(data, filename~) {
+          Ok((image, _warnings)) =>
+            Ok(ProjectInput::from_image(image).with_default_filename(filename))
+          Err(reason) =>
+            Err(
+              "no project input loader or image backend for extension \{extension}: \{reason}",
+            )
+        }
       } else {
         let mut last_error = ""
         for loader in loaders {

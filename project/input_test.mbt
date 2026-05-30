@@ -92,6 +92,59 @@ test "project input loaders register and load bytes" {
 }
 
 ///|
+fn unit_project_image_backend() -> @image.ImageBackend {
+  @image.ImageBackend::create(
+    name="unit-project-image-backend",
+    description="project image fallback",
+    extensions=["pimg"],
+    priority=10,
+    load=data => {
+      let segment = @image.Segment::create(
+        name=".image",
+        endian=LittleEndian,
+        addr=0x440UL,
+        data,
+        readable=true,
+        executable=true,
+      )
+      Ok(
+        (
+          @image.Image::from_segments(entry=0x440UL, endian=LittleEndian, [
+            segment,
+          ]),
+          [],
+        ),
+      )
+    },
+  )
+}
+
+///|
+test "project input loading falls back to image backends" {
+  let backend = unit_project_image_backend()
+  match @image.register_backend(name=backend.name(), backend) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  match @project.ProjectInput::load(b"\x7f", loader=backend.name()) {
+    Ok(input) => {
+      let project = @project.Project::from_input(input)
+      assert_true(project.memory().lookup(0x440UL).length() == 1)
+    }
+    Err(reason) => fail(reason)
+  }
+  match
+    @project.ProjectInput::load_for_filename(b"\x7f", filename="sample.pimg") {
+    Ok(input) => {
+      let project = @project.Project::from_input(input)
+      assert_true(project.filename() == Some("sample.pimg"))
+      assert_true(project.memory().lookup(0x440UL).length() == 1)
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project input loaders resolve by filename extension priority" {
   let low = @project.ProjectInputLoader::create(
     name="unit-project-low-priority",

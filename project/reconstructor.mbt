@@ -4,6 +4,9 @@ struct ProjectReconstructor {
 }
 
 ///|
+let project_reconstructor_registry : Map[String, ProjectReconstructor] = {}
+
+///|
 fn project_reconstructor_find_name(
   names : Array[String],
   name : String,
@@ -201,6 +204,59 @@ pub fn ProjectReconstructor::of_blocks(
 }
 
 ///|
+pub fn register_reconstructor(
+  name~ : String,
+  reconstructor : ProjectReconstructor,
+) -> Result[Unit, String] {
+  if project_reconstructor_registry.contains(name) {
+    Err("project reconstructor \{name} is already registered")
+  } else {
+    project_reconstructor_registry[name] = reconstructor
+    Ok(())
+  }
+}
+
+///|
+pub fn register_reconstructor_if_absent(
+  name~ : String,
+  reconstructor : ProjectReconstructor,
+) -> Result[Bool, String] {
+  if project_reconstructor_registry.contains(name) {
+    Ok(false)
+  } else {
+    match register_reconstructor(name~, reconstructor) {
+      Ok(_) => Ok(true)
+      Err(reason) => Err(reason)
+    }
+  }
+}
+
+///|
+pub fn register_builtin_reconstructors() -> Result[Unit, String] {
+  match
+    register_reconstructor_if_absent(
+      name="default",
+      ProjectReconstructor::default(),
+    ) {
+    Ok(_) => Ok(())
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+pub fn find_reconstructor(name : String) -> ProjectReconstructor? {
+  project_reconstructor_registry.get(name)
+}
+
+///|
+pub fn reconstructor_names() -> Array[String] {
+  let names = []
+  project_reconstructor_registry.each((name, _) => names.push(name))
+  names.sort_by((left, right) => left.compare(right))
+  names
+}
+
+///|
 pub fn Project::reconstruct(
   self : Project,
   reconstructor? : ProjectReconstructor,
@@ -210,6 +266,17 @@ pub fn Project::reconstruct(
     None => ProjectReconstructor::default()
   }
   selected.run(self)
+}
+
+///|
+pub fn Project::reconstruct_named(
+  self : Project,
+  reconstructor~ : String,
+) -> Result[Project, String] {
+  match find_reconstructor(reconstructor) {
+    Some(value) => self.reconstruct(reconstructor=value)
+    None => Err("unknown project reconstructor \{reconstructor}")
+  }
 }
 
 ///|
@@ -240,4 +307,34 @@ pub fn Project::disassemble_and_reconstruct(
     None => disassembled
   }
   branched.reconstruct(reconstructor?)
+}
+
+///|
+pub fn Project::disassemble_and_reconstruct_named(
+  self : Project,
+  driver? : String,
+  brancher? : String,
+  reconstructor? : String,
+) -> Result[Project, String] {
+  let selected_brancher = match brancher {
+    Some(name) =>
+      match find_brancher(name) {
+        Some(value) => Some(value)
+        None => return Err("unknown project brancher \{name}")
+      }
+    None => None
+  }
+  let selected_reconstructor = match reconstructor {
+    Some(name) =>
+      match find_reconstructor(name) {
+        Some(value) => Some(value)
+        None => return Err("unknown project reconstructor \{name}")
+      }
+    None => None
+  }
+  self.disassemble_and_reconstruct(
+    driver?,
+    brancher?=selected_brancher,
+    reconstructor?=selected_reconstructor,
+  )
 }

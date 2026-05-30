@@ -32,11 +32,15 @@ pub fn find_input_loader(String) -> ProjectInputLoader?
 
 pub fn find_pass(String) -> ProjectPass?
 
+pub fn find_reconstructor(String) -> ProjectReconstructor?
+
 pub fn input_loader_names_for_extension(String) -> Array[String]
 
 pub fn input_loaders_for_extension(String) -> Array[ProjectInputLoader]
 
 pub fn passes() -> Array[ProjectPass]
+
+pub fn reconstructor_names() -> Array[String]
 
 pub fn register_analysis(ProjectAnalysis) -> Result[Unit, String]
 
@@ -49,6 +53,8 @@ pub fn register_builtin_branchers() -> Result[Unit, String]
 pub fn register_builtin_disassembly_drivers() -> Result[Unit, String]
 
 pub fn register_builtin_input_loaders() -> Result[Unit, String]
+
+pub fn register_builtin_reconstructors() -> Result[Unit, String]
 
 pub fn register_collator(RegisteredProjectCollator) -> Result[Unit, String]
 
@@ -63,6 +69,10 @@ pub fn register_ir_transform_passes() -> Result[Unit, String]
 pub fn register_pass(ProjectPass) -> Result[Unit, String]
 
 pub fn register_pass_if_absent(ProjectPass) -> Result[Bool, String]
+
+pub fn register_reconstructor(name~ : String, ProjectReconstructor) -> Result[Unit, String]
+
+pub fn register_reconstructor_if_absent(name~ : String, ProjectReconstructor) -> Result[Bool, String]
 
 pub fn registered_analyses() -> Array[ProjectAnalysisInfo]
 
@@ -98,6 +108,7 @@ pub fn[T] Project::del_tag(Self, ProjectStorageTag[T]) -> Self
 pub fn Project::destroy_ssa(Self) -> Self
 pub fn Project::disassemble(Self, driver~ : String) -> Result[Self, String]
 pub fn Project::disassemble_and_reconstruct(Self, driver? : String, brancher? : ProjectBrancher, reconstructor? : ProjectReconstructor) -> Result[Self, String]
+pub fn Project::disassemble_and_reconstruct_named(Self, driver? : String, brancher? : String, reconstructor? : String) -> Result[Self, String]
 pub fn Project::disassemble_with_available(Self) -> Result[Self, String]
 pub fn Project::disassembly(Self) -> ProjectDisassemblyState
 pub fn Project::empty(@core_theory.Target) -> Self
@@ -123,6 +134,7 @@ pub fn Project::pass_has_run(Self, String) -> Bool
 pub fn Project::pass_run_count(Self, String) -> Int
 pub fn Project::program(Self) -> @types.Term[@types.Program]
 pub fn Project::reconstruct(Self, reconstructor? : ProjectReconstructor) -> Result[Self, String]
+pub fn Project::reconstruct_named(Self, reconstructor~ : String) -> Result[Self, String]
 pub fn Project::relocations(Self) -> Array[@image.Relocation]
 pub fn Project::required_libraries(Self) -> Array[String]
 pub fn Project::resolve_stub_calls(Self, link_only? : Array[String], no_link? : Array[String]) -> Self

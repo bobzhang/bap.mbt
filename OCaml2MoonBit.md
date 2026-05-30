@@ -161,10 +161,13 @@ the empty brancher should be a no-op for existing blocks, while applying any
 brancher to a project without disassembly blocks should fail explicitly. Keep
 brancher registration strict for user-provided names and idempotent for the
 built-in empty brancher, matching the loader/driver pattern of discoverable
-project services without hiding accidental duplicate custom providers. Keep
-the top-level project orchestration explicit: a one-shot helper may run either
-a named or discovered disassembly driver, optionally apply a brancher, and then
-a named/default reconstructor, but it
+project services without hiding accidental duplicate custom providers. Apply
+the same pattern to reconstructors: register the built-in default
+reconstructor idempotently, reject duplicate custom reconstructor names, and
+offer a name-based pipeline helper only as a thin resolver over the checked
+driver/brancher/reconstructor stages. Keep the top-level project orchestration
+explicit: a one-shot helper may run either a named or discovered disassembly
+driver, optionally apply a brancher, and then a named/default reconstructor, but it
 should still surface each failing stage as a checked `Result` instead of hiding
 loader/disassembly/reconstruction failures.
 When a higher-level package exposes the same loader surface as a lower-level

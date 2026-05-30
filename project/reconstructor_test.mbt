@@ -153,6 +153,125 @@ test "project disassemble-and-reconstruct applies brancher before reconstruction
 }
 
 ///|
+test "project reconstructors register lookup and named application" {
+  match @project.register_builtin_reconstructors() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  match @project.register_builtin_reconstructors() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  assert_true(@project.reconstructor_names().contains("default"))
+  assert_true(@project.find_reconstructor("default") is Some(_))
+  let block = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x4a00UL,
+    b"\x01",
+  )
+  let project = @project.Project::empty(@core_theory.Target::unknown()).with_disassembly(
+    @project.ProjectDisassemblyState::empty().add_block(block),
+  )
+  match project.reconstruct_named(reconstructor="default") {
+    Ok(reconstructed) =>
+      assert_true(reconstructed.program().subs().length() == 1)
+    Err(reason) => fail(reason)
+  }
+  let custom = @project.ProjectReconstructor::create(project => {
+    Ok(project.set("reconstructor", "named-custom"))
+  })
+  match
+    @project.register_reconstructor(name="unit-named-reconstructor", custom) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  match project.reconstruct_named(reconstructor="unit-named-reconstructor") {
+    Ok(reconstructed) =>
+      assert_true(reconstructed.get("reconstructor") == Some("named-custom"))
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    @project.register_reconstructor(name="unit-named-reconstructor", custom)
+    is Err(_),
+  )
+  assert_true(project.reconstruct_named(reconstructor="missing") is Err(_))
+}
+
+///|
+test "project disassemble-and-reconstruct named resolves registered services" {
+  match @project.register_builtin_disassembly_drivers() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let entry = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x4b00UL,
+    b"\x01",
+  )
+  let exit = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x4b10UL,
+    b"\x02",
+  )
+  let memory = @memory.MemMap::singleton(entry, "code").add(exit, "code")
+  let project = @project.Project::empty(@core_theory.Target::unknown()).with_memory(
+    memory,
+  )
+  let brancher = @project.ProjectBrancher::of_edges([
+    @project.ProjectDisassemblyEdge::create(
+      source=0x4b00UL,
+      target=0x4b10UL,
+      kind=FallEdge,
+    ),
+  ])
+  let reconstructor = @project.ProjectReconstructor::of_blocks([
+    ("named", 0x4b00UL, 0x4b00UL),
+    ("named", 0x4b10UL, 0x4b10UL),
+  ])
+  match @project.register_brancher(name="unit-named-brancher", brancher) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  match
+    @project.register_reconstructor(
+      name="unit-pipeline-reconstructor",
+      reconstructor,
+    ) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  match
+    project.disassemble_and_reconstruct_named(
+      driver="memory-blocks",
+      brancher="unit-named-brancher",
+      reconstructor="unit-pipeline-reconstructor",
+    ) {
+    Ok(reconstructed) => {
+      let subs = reconstructed.program().subs()
+      assert_true(subs.length() == 1)
+      let blocks = subs[0].blks()
+      assert_true(blocks.length() == 2)
+      assert_true(subs[0].sub_has_edge(blocks[0], blocks[1]))
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    project.disassemble_and_reconstruct_named(
+      driver="memory-blocks",
+      brancher="missing",
+    )
+    is Err(_),
+  )
+  assert_true(
+    project.disassemble_and_reconstruct_named(
+      driver="memory-blocks",
+      reconstructor="missing",
+    )
+    is Err(_),
+  )
+}
+
+///|
 test "project block reconstructor groups serialized block starts by name" {
   let target = @core_theory.Target::unknown()
   let first = @memory.Memory::from_bytes(

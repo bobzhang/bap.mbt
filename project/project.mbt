@@ -4,6 +4,7 @@ struct Library {
   target_value : @core_theory.Target
   memory_value : @memory.MemMap[String]
   program_value : @types.Term[@types.Program]
+  state_value : ProjectState
 }
 
 ///|
@@ -15,6 +16,7 @@ struct Project {
   memory_value : @memory.MemMap[String]
   storage_value : Map[String, String]
   libraries_value : Array[Library]
+  state_value : ProjectState
 }
 
 ///|
@@ -23,6 +25,7 @@ pub fn Library::create(
   target~ : @core_theory.Target,
   memory? : @memory.MemMap[String],
   program? : @types.Term[@types.Program],
+  state? : ProjectState,
 ) -> Library {
   {
     name_value: name,
@@ -34,6 +37,10 @@ pub fn Library::create(
     program_value: match program {
       Some(term) => term
       None => @types.Program::create()
+    },
+    state_value: match state {
+      Some(value) => value
+      None => ProjectState::empty()
     },
   }
 }
@@ -59,6 +66,16 @@ pub fn Library::program(self : Library) -> @types.Term[@types.Program] {
 }
 
 ///|
+pub fn Library::state(self : Library) -> ProjectState {
+  self.state_value
+}
+
+///|
+pub fn Library::disassembly(self : Library) -> ProjectDisassemblyState {
+  self.state_value.disassembly()
+}
+
+///|
 pub fn Project::empty(target : @core_theory.Target) -> Project {
   {
     target_value: target,
@@ -68,6 +85,7 @@ pub fn Project::empty(target : @core_theory.Target) -> Project {
     memory_value: @memory.MemMap::empty(),
     storage_value: {},
     libraries_value: [],
+    state_value: ProjectState::empty(),
   }
 }
 
@@ -80,6 +98,7 @@ pub fn Project::create(
   memory? : @memory.MemMap[String],
   storage? : Map[String, String],
   libraries? : Array[Library],
+  state? : ProjectState,
 ) -> Project {
   {
     target_value: target,
@@ -100,6 +119,10 @@ pub fn Project::create(
     libraries_value: match libraries {
       Some(items) => items.copy()
       None => []
+    },
+    state_value: match state {
+      Some(value) => value
+      None => ProjectState::empty()
     },
   }
 }
@@ -145,6 +168,29 @@ pub fn Project::filename(self : Project) -> String? {
 ///|
 pub fn Project::program(self : Project) -> @types.Term[@types.Program] {
   self.program_value
+}
+
+///|
+pub fn Project::state(self : Project) -> ProjectState {
+  self.state_value
+}
+
+///|
+pub fn Project::with_state(self : Project, state : ProjectState) -> Project {
+  { ..self, state_value: state }
+}
+
+///|
+pub fn Project::disassembly(self : Project) -> ProjectDisassemblyState {
+  self.state_value.disassembly()
+}
+
+///|
+pub fn Project::with_disassembly(
+  self : Project,
+  disassembly : ProjectDisassemblyState,
+) -> Project {
+  self.with_state(self.state_value.with_disassembly(disassembly))
 }
 
 ///|

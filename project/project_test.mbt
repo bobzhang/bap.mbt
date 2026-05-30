@@ -54,3 +54,25 @@ test "project maps programs and stores libraries" {
   assert_true(with_library.libraries().length() == 1)
   assert_true(with_library.libraries()[0].name() == "libc")
 }
+
+///|
+test "project and libraries carry disassembly state" {
+  let target = @core_theory.Target::unknown()
+  let block = raw_segment().memory()
+  let sub = @types.Sub::create(name="entry")
+  let disassembly = @project.ProjectDisassemblyState::empty().add_block(block)
+  let state = @project.ProjectState::empty()
+    .with_disassembly(disassembly)
+    .add_subroutine(sub)
+  let project = @project.Project::empty(target).with_state(state)
+  assert_true(project.state().subroutines().length() == 1)
+  assert_true(project.disassembly().block_count() == 1)
+  assert_true(project.disassembly().blocks()[0].min_addr() == 0x1000UL)
+  let cleared = project.with_disassembly(
+    @project.ProjectDisassemblyState::empty(),
+  )
+  assert_true(cleared.disassembly().block_count() == 0)
+  let library = @project.Library::create(name="libstate", target~, state~)
+  assert_true(library.state().subroutines().length() == 1)
+  assert_true(library.disassembly().block_count() == 1)
+}

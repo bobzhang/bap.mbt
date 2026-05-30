@@ -46,17 +46,20 @@ pub fn resolve_passes(Array[String]) -> Result[Array[ProjectPass], String]
 
 // Types and methods
 type Library
-pub fn Library::create(name~ : String, target~ : @core_theory.Target, memory? : @memory.MemMap[String], program? : @types.Term[@types.Program]) -> Self
+pub fn Library::create(name~ : String, target~ : @core_theory.Target, memory? : @memory.MemMap[String], program? : @types.Term[@types.Program], state? : ProjectState) -> Self
+pub fn Library::disassembly(Self) -> ProjectDisassemblyState
 pub fn Library::memory(Self) -> @memory.MemMap[String]
 pub fn Library::name(Self) -> String
 pub fn Library::program(Self) -> @types.Term[@types.Program]
+pub fn Library::state(Self) -> ProjectState
 pub fn Library::target(Self) -> @core_theory.Target
 
 type Project
 pub fn Project::add_library(Self, Library) -> Self
-pub fn Project::create(target~ : @core_theory.Target, image? : @image.Image, filename? : String, program? : @types.Term[@types.Program], memory? : @memory.MemMap[String], storage? : Map[String, String], libraries? : Array[Library]) -> Self
+pub fn Project::create(target~ : @core_theory.Target, image? : @image.Image, filename? : String, program? : @types.Term[@types.Program], memory? : @memory.MemMap[String], storage? : Map[String, String], libraries? : Array[Library], state? : ProjectState) -> Self
 pub fn Project::del(Self, String) -> Self
 pub fn[T] Project::del_tag(Self, ProjectStorageTag[T]) -> Self
+pub fn Project::disassembly(Self) -> ProjectDisassemblyState
 pub fn Project::empty(@core_theory.Target) -> Self
 pub fn Project::filename(Self) -> String?
 pub fn Project::from_image(@image.Image, target? : @core_theory.Target, program? : @types.Term[@types.Program]) -> Self
@@ -77,11 +80,14 @@ pub fn Project::run_pass(Self, String) -> Result[Self, String]
 pub fn Project::run_passes(Self, Array[String]) -> Result[Self, String]
 pub fn Project::set(Self, String, String) -> Self
 pub fn[T] Project::set_tag(Self, ProjectStorageTag[T], T) -> Self
+pub fn Project::state(Self) -> ProjectState
 pub fn Project::storage(Self) -> Map[String, String]
 pub fn Project::tag_memory(Self, @memory.Memory, String) -> Self
 pub fn Project::target(Self) -> @core_theory.Target
+pub fn Project::with_disassembly(Self, ProjectDisassemblyState) -> Self
 pub fn Project::with_memory(Self, @memory.MemMap[String]) -> Self
 pub fn Project::with_program(Self, @types.Term[@types.Program]) -> Self
+pub fn Project::with_state(Self, ProjectState) -> Self
 
 type ProjectAnalysis
 pub fn ProjectAnalysis::apply(Self, Array[String]) -> Result[Unit, String]
@@ -136,6 +142,14 @@ type ProjectCollatorInfo
 pub fn ProjectCollatorInfo::description(Self) -> String
 pub fn ProjectCollatorInfo::name(Self) -> String
 
+type ProjectDisassemblyState
+pub fn ProjectDisassemblyState::add_block(Self, @memory.Memory) -> Self
+pub fn ProjectDisassemblyState::block_count(Self) -> Int
+pub fn ProjectDisassemblyState::blocks(Self) -> Array[@memory.Memory]
+pub fn ProjectDisassemblyState::create(blocks? : Array[@memory.Memory]) -> Self
+pub fn ProjectDisassemblyState::empty() -> Self
+pub fn ProjectDisassemblyState::with_blocks(Self, Array[@memory.Memory]) -> Self
+
 type ProjectInput
 pub fn ProjectInput::custom(target~ : @core_theory.Target, filename? : String, image? : @image.Image, program? : @types.Term[@types.Program], memory? : @memory.MemMap[String], libraries? : Array[Library], finish? : (Project) -> Project) -> Self
 pub fn ProjectInput::filename(Self) -> String?
@@ -164,6 +178,15 @@ pub fn ProjectPass::deps(Self) -> Array[String]
 pub fn ProjectPass::name(Self) -> String
 pub fn ProjectPass::run(Self, Project) -> Result[Project, String]
 pub fn ProjectPass::run_once(Self) -> Bool
+
+type ProjectState
+pub fn ProjectState::add_subroutine(Self, @types.Term[@types.Sub]) -> Self
+pub fn ProjectState::create(disassembly? : ProjectDisassemblyState, subroutines? : Array[@types.Term[@types.Sub]]) -> Self
+pub fn ProjectState::disassembly(Self) -> ProjectDisassemblyState
+pub fn ProjectState::empty() -> Self
+pub fn ProjectState::subroutines(Self) -> Array[@types.Term[@types.Sub]]
+pub fn ProjectState::with_disassembly(Self, ProjectDisassemblyState) -> Self
+pub fn ProjectState::with_subroutines(Self, Array[@types.Term[@types.Sub]]) -> Self
 
 type ProjectStorageTag[T]
 pub fn ProjectStorageTag::bool(String) -> Self[Bool]

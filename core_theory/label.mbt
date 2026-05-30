@@ -174,10 +174,14 @@ pub fn Label::id(self : Label) -> Int {
 }
 
 ///|
-pub fn Label::target(self : Label) -> Target? {
+pub fn Label::target(self : Label) -> Target {
   match self.target_value {
-    Some(target) => Some(target)
-    None => self.unit_value.map(unit => unit.target())
+    Some(target) => target
+    None =>
+      match self.unit_value {
+        Some(unit) => unit.target()
+        None => Target::unknown()
+      }
   }
 }
 

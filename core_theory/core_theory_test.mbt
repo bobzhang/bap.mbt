@@ -262,6 +262,7 @@ test "labels carry symbolic entry points" {
   assert_true(label.aliases() == ["_start", "entry"])
   assert_true(label.possible_name() == Some("_start"))
   assert_true(label.possible_name_opinions().entries().length() == 2)
+  assert_true(named.target().is_unknown())
   assert_true(!@core_theory.Label::null().is_valid())
 }
 
@@ -322,7 +323,7 @@ test "program metadata tracks source compiler and units" {
     .with_subroutine()
   assert_true(label.unit().map(item => item.same(unit)) == Some(true))
   assert_true(label.encoding() == Some(Cxx))
-  assert_true(label.target().map(item => item.matches("amd64")) == Some(true))
+  assert_true(label.target().matches("amd64"))
   assert_true(label.is_subroutine())
   let program = @core_theory.Program::create(units=[unit], labels=[label])
   assert_true(program.units().length() == 1)

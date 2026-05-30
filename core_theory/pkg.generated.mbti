@@ -129,7 +129,7 @@ pub fn Label::name(Self) -> String?
 pub fn Label::null() -> Self
 pub fn Label::possible_name(Self) -> String?
 pub fn Label::possible_name_opinions(Self) -> @knowledge.Opinions[String?]
-pub fn Label::target(Self) -> Target?
+pub fn Label::target(Self) -> Target
 pub fn Label::unit(Self) -> ProgramUnit?
 pub fn Label::with_alias(Self, String) -> Self
 pub fn Label::with_encoding(Self, Language) -> Self

@@ -173,6 +173,7 @@ pub fn ProjectDisassemblyState::empty() -> Self
 pub fn ProjectDisassemblyState::with_blocks(Self, Array[@memory.Memory]) -> Self
 
 type ProjectInput
+pub fn ProjectInput::binary(target~ : @core_theory.Target, filename~ : String, base? : UInt64) -> Result[Self, String]
 pub fn ProjectInput::custom(target~ : @core_theory.Target, filename? : String, image? : @image.Image, program? : @types.Term[@types.Program], memory? : @memory.MemMap[String], libraries? : Array[Library], finish? : (Project) -> Project) -> Self
 pub fn ProjectInput::file(filename~ : String, loader? : String) -> Result[Self, String]
 pub fn ProjectInput::filename(Self) -> String?

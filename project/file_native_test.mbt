@@ -58,3 +58,25 @@ test "project raw file input uses target endian on native target" {
     Err(reason) => fail(reason)
   }
 }
+
+///|
+test "project binary input is raw file loading with explicit target" {
+  let target = @core_theory.Target::x86_64()
+  match
+    @project.ProjectInput::binary(target~, filename="moon.mod", base=0x900UL) {
+    Ok(input) => {
+      let project = @project.Project::from_input(input)
+      assert_true(project.filename() == Some("moon.mod"))
+      assert_true(project.target().matches("x86_64"))
+      assert_true(project.memory().lookup(0x900UL).length() == 1)
+      match project.image() {
+        Some(image) => {
+          assert_true(image.endian() == LittleEndian)
+          assert_true(image.segments()[0].name() == "bap.user")
+        }
+        None => fail("expected raw image")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+}

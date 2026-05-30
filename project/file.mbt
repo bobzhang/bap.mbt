@@ -36,6 +36,15 @@ pub fn ProjectInput::raw_file(
 }
 
 ///|
+pub fn ProjectInput::binary(
+  target~ : @core_theory.Target,
+  filename~ : String,
+  base? : UInt64 = 0UL,
+) -> Result[ProjectInput, String] {
+  ProjectInput::raw_file(filename, target~, base~)
+}
+
+///|
 pub fn ProjectInput::load_file(
   path : String,
   loader~ : String,

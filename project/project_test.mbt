@@ -335,6 +335,14 @@ test "project and libraries carry disassembly state" {
     .add_block(block)
     .add_block(same_block)
     .add_instruction(instruction)
+  let created = @project.ProjectDisassemblyState::create(blocks=[
+    block, same_block,
+  ])
+  let replaced = @project.ProjectDisassemblyState::empty().with_blocks([
+    block, same_block,
+  ])
+  assert_true(created.block_count() == 1)
+  assert_true(replaced.block_count() == 1)
   assert_true(disassembly.has_block(block))
   assert_true(disassembly.block_count() == 1)
   let state = @project.ProjectState::empty()

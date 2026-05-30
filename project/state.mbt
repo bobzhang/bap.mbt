@@ -18,6 +18,27 @@ struct ProjectState {
 }
 
 ///|
+fn project_disassembly_same_block(
+  left : @memory.Memory,
+  right : @memory.Memory,
+) -> Bool {
+  left.min_addr() == right.min_addr() && left.max_addr() == right.max_addr()
+}
+
+///|
+fn project_disassembly_dedup_blocks(
+  blocks : Array[@memory.Memory],
+) -> Array[@memory.Memory] {
+  let result : Array[@memory.Memory] = []
+  for block in blocks {
+    if !result.any(existing => project_disassembly_same_block(existing, block)) {
+      result.push(block)
+    }
+  }
+  result
+}
+
+///|
 pub fn ProjectDisassemblyInstruction::create(
   memory : @memory.Memory,
   assembly? : String = "",
@@ -59,7 +80,7 @@ pub fn ProjectDisassemblyState::create(
 ) -> ProjectDisassemblyState {
   {
     blocks_value: match blocks {
-      Some(items) => items.copy()
+      Some(items) => project_disassembly_dedup_blocks(items)
       None => []
     },
     instructions_value: match instructions {
@@ -89,8 +110,7 @@ pub fn ProjectDisassemblyState::has_block(
   block : @memory.Memory,
 ) -> Bool {
   self.blocks_value.any(existing => {
-    existing.min_addr() == block.min_addr() &&
-    existing.max_addr() == block.max_addr()
+    project_disassembly_same_block(existing, block)
   })
 }
 
@@ -113,7 +133,7 @@ pub fn ProjectDisassemblyState::with_blocks(
   self : ProjectDisassemblyState,
   blocks : Array[@memory.Memory],
 ) -> ProjectDisassemblyState {
-  { ..self, blocks_value: blocks.copy() }
+  { ..self, blocks_value: project_disassembly_dedup_blocks(blocks) }
 }
 
 ///|

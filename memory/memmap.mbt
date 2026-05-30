@@ -26,7 +26,7 @@ pub fn[V] MemMap::add(
 
 ///|
 pub fn[V] MemMap::entries(self : MemMap[V]) -> Array[(Memory, V)] {
-  self.entries.copy()
+  self.ordered_entries()
 }
 
 ///|
@@ -36,7 +36,7 @@ pub fn[V] MemMap::length(self : MemMap[V]) -> Int {
 
 ///|
 pub fn[V] MemMap::lookup(self : MemMap[V], addr : UInt64) -> Array[(Memory, V)] {
-  self.entries.filter(entry => entry.0.contains(addr))
+  self.ordered_entries().filter(entry => entry.0.contains(addr))
 }
 
 ///|
@@ -88,7 +88,9 @@ pub fn[V, U] MemMap::filter_mapi(
 
 ///|
 pub fn[V] MemMap::find(self : MemMap[V], memory : Memory) -> Array[(Memory, V)] {
-  self.entries.filter(entry => {
+  self
+  .ordered_entries()
+  .filter(entry => {
     entry.0.min_addr() == memory.min_addr() &&
     entry.0.max_addr() == memory.max_addr()
   })
@@ -165,7 +167,7 @@ pub fn[V] MemMap::intersections(
   self : MemMap[V],
   memory : Memory,
 ) -> Array[(Memory, V)] {
-  self.entries.filter(entry => entry.0.intersects(memory))
+  self.ordered_entries().filter(entry => entry.0.intersects(memory))
 }
 
 ///|
@@ -188,7 +190,7 @@ pub fn[V] MemMap::dominators(
   self : MemMap[V],
   memory : Memory,
 ) -> Array[(Memory, V)] {
-  self.entries.filter(entry => entry.0.dominates(memory))
+  self.ordered_entries().filter(entry => entry.0.dominates(memory))
 }
 
 ///|
@@ -248,6 +250,31 @@ pub fn[V] MemMap::max_binding(self : MemMap[V]) -> (Memory, V)? {
 fn memory_range_less(left : Memory, right : Memory) -> Bool {
   left.min_addr() < right.min_addr() ||
   (left.min_addr() == right.min_addr() && left.max_addr() < right.max_addr())
+}
+
+///|
+fn memory_range_compare(left : Memory, right : Memory) -> Int {
+  if memory_range_less(left, right) {
+    -1
+  } else if memory_range_less(right, left) {
+    1
+  } else {
+    0
+  }
+}
+
+///|
+fn[V] MemMap::ordered_entries(self : MemMap[V]) -> Array[(Memory, V)] {
+  let indexed = [ for i in 0..<self.entries.length() => (self.entries[i], i) ]
+  indexed.sort_by(fn(left, right) {
+    let order = memory_range_compare(left.0.0, right.0.0)
+    if order != 0 {
+      order
+    } else {
+      left.1.compare(right.1)
+    }
+  })
+  indexed.map(item => item.0)
 }
 
 ///|

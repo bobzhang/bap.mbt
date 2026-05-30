@@ -182,6 +182,33 @@ test "translated BAP memmap transformations preserve ranges and duplicates" {
 }
 
 ///|
+test "translated BAP memmap public queries are range ordered" {
+  let first = memory_at(0x100UL, 2)
+  let middle = memory_at(0x180UL, 2)
+  let last = memory_at(0x300UL, 2)
+  let map = @memory.MemMap::empty()
+    .add(last, "last")
+    .add(first, "first")
+    .add(middle, "middle")
+    .add(first, "first-again")
+  assert_true(
+    map.entries().map(entry => entry.1) ==
+    ["first", "first-again", "middle", "last"],
+  )
+  assert_true(
+    map.lookup(0x100UL).map(entry => entry.1) == ["first", "first-again"],
+  )
+  assert_true(
+    map.intersections(memory_at(0x100UL, 0x201)).map(entry => entry.1) ==
+    ["first", "first-again", "middle", "last"],
+  )
+  assert_true(
+    map.dominators(memory_at(0x100UL, 1)).map(entry => entry.1) ==
+    ["first", "first-again"],
+  )
+}
+
+///|
 fn memmap_tags(entries : Array[(@memory.Memory, String)]) -> Set[String] {
   Set::from_array(entries.map(entry => entry.1))
 }

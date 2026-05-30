@@ -1,6 +1,11 @@
 ///|
 fn bytes_0_to_15() -> Bytes {
-  Bytes::from_array(Array::makei(16, i => i.to_byte()))
+  bytes_from_range(0, 16)
+}
+
+///|
+fn bytes_from_range(first : Int, length : Int) -> Bytes {
+  Bytes::from_array(Array::makei(length, i => (first + i).to_byte()))
 }
 
 ///|
@@ -201,6 +206,42 @@ test "translated BAP image words preserve gapped segment addresses" {
   assert_true(words.lookup(0x10dUL).length() == 1)
   assert_true(words.lookup(0x10cUL).is_empty())
   assert_true(words.lookup(0x21aUL).length() == 1)
+}
+
+///|
+test "translated BAP image words enumerate out-of-order segments by address" {
+  let high = @image.Segment::create(
+    name=".high",
+    endian=LittleEndian,
+    addr=0x20UL,
+    bytes_from_range(0x20, 16),
+  )
+  let low = @image.Segment::create(
+    name=".low",
+    endian=LittleEndian,
+    addr=0UL,
+    bytes_from_range(0, 16),
+  )
+  let middle = @image.Segment::create(
+    name=".middle",
+    endian=LittleEndian,
+    addr=0x10UL,
+    bytes_from_range(0x10, 16),
+  )
+  let image = @image.Image::from_segments(entry=0UL, endian=LittleEndian, [
+    high, low, middle,
+  ])
+  let entries = image.words(word_size=8).entries()
+  assert_true(entries.length() == 48)
+  assert_true(entries[0].0.min_addr() == 0UL)
+  inspect(entries[0].1.to_hex(), content="0x00")
+  inspect(entries[15].1.to_hex(), content="0x0f")
+  assert_true(entries[16].0.min_addr() == 0x10UL)
+  inspect(entries[16].1.to_hex(), content="0x10")
+  inspect(entries[31].1.to_hex(), content="0x1f")
+  assert_true(entries[32].0.min_addr() == 0x20UL)
+  inspect(entries[32].1.to_hex(), content="0x20")
+  inspect(entries[47].1.to_hex(), content="0x2f")
 }
 
 ///|

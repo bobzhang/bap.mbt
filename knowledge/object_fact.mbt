@@ -103,3 +103,25 @@ pub fn[K, P] FactTable::collect(
     None => self.slot.domain().empty()
   }
 }
+
+///|
+pub fn[K, P] FactTable::has(self : FactTable[K, P], object : Object[K]) -> Bool {
+  match self.collect(object) {
+    Some(value) => !self.slot.domain().is_empty(value)
+    None => false
+  }
+}
+
+///|
+pub fn[K, P] FactTable::require(
+  self : FactTable[K, P],
+  object : Object[K],
+) -> Result[P, String] {
+  match self.collect(object) {
+    Some(value) if !self.slot.domain().is_empty(value) => Ok(value)
+    _ =>
+      Err(
+        "required fact \{self.slot.name().show()} is empty for object \{object.id()}",
+      )
+  }
+}

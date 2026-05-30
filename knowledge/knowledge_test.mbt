@@ -57,6 +57,31 @@ test "classes slots and fact tables accumulate monotone facts" {
 }
 
 ///|
+test "translated BAP fact require fails on empty values" {
+  let cls : @knowledge.Class[Unit, String] = @knowledge.Class::create(
+    name=@knowledge.Name::create("required-fact", pkg="test"),
+    sort="unit",
+  )
+  let domain = @knowledge.Domain::bool(
+    @knowledge.Name::create("live", pkg="test"),
+  )
+  let slot = cls.property(
+    name=@knowledge.Name::create("live", pkg="test"),
+    domain~,
+  )
+  let facts = @knowledge.FactTable::new(slot)
+  let object = @knowledge.State::new().create(cls)
+  assert_true(!facts.has(object))
+  assert_true(facts.require(object) is Err(_))
+  assert_true(facts.provide(object, true) == Ok(true))
+  assert_true(facts.has(object))
+  assert_true(facts.require(object) == Ok(true))
+  let null = @knowledge.Object::null(cls)
+  assert_true(!facts.has(null))
+  assert_true(facts.require(null) is Err(_))
+}
+
+///|
 test "translated BAP null objects collect empty facts and discard provides" {
   let cls : @knowledge.Class[Unit, String] = @knowledge.Class::create(
     name=@knowledge.Name::create("null-object", pkg="test"),

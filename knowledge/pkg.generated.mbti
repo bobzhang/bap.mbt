@@ -34,8 +34,10 @@ pub fn Domain::string(Name) -> Self[String]
 
 type FactTable[K, P]
 pub fn[K, P] FactTable::collect(Self[K, P], Object[K]) -> P?
+pub fn[K, P] FactTable::has(Self[K, P], Object[K]) -> Bool
 pub fn[K, P] FactTable::new(Slot[K, P]) -> Self[K, P]
 pub fn[K, P] FactTable::provide(Self[K, P], Object[K], P) -> Result[P, String]
+pub fn[K, P] FactTable::require(Self[K, P], Object[K]) -> Result[P, String]
 pub fn[K, P] FactTable::slot(Self[K, P]) -> Slot[K, P]
 
 pub(all) struct Name {

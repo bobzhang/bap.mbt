@@ -54,6 +54,15 @@ fn Term::blk_phi_lhs_vars(self : Term[Blk]) -> Array[Var] {
 }
 
 ///|
+fn Term::blk_def_lhs_vars(self : Term[Blk]) -> Array[Var] {
+  let vars = []
+  for def in self.payload_value.defs {
+    add_var(vars, def.lhs())
+  }
+  vars
+}
+
+///|
 pub fn Term::blk_defined_vars(self : Term[Blk]) -> Array[Var] {
   let vars = self.blk_phi_lhs_vars()
   for def in self.payload_value.defs {
@@ -90,7 +99,7 @@ pub fn Term::blk_phi_edge_free_vars(
 
 ///|
 fn Term::blk_liveness_uses(self : Term[Blk]) -> Array[Var] {
-  vars_without(self.blk_free_vars(), self.blk_phi_lhs_vars())
+  self.blk_free_vars()
 }
 
 ///|
@@ -130,7 +139,7 @@ pub fn Term::sub_liveness(
         add_vars(out_vars, successor.blk_phi_edge_free_vars(block.tid()))
       }
       let in_vars = block.blk_liveness_uses()
-      add_vars(in_vars, vars_without(out_vars, block.blk_defined_vars()))
+      add_vars(in_vars, vars_without(out_vars, block.blk_def_lhs_vars()))
       if !var_set_equal(out_vars, liveness_map_get(live_out, block.tid())) {
         live_out[block.tid()] = out_vars
         changed = true
@@ -174,7 +183,7 @@ pub fn Term::sub_live_in_vars(self : Term[Sub], entry? : Tid) -> Array[Var] {
 pub fn Term::sub_ssa_free_vars(self : Term[Sub]) -> Array[Var] {
   let vars = []
   for blk in self.payload_value.blks {
-    for variable in blk.blk_value_free_vars() {
+    for variable in blk.blk_free_vars() {
       if variable.index() == 0 {
         add_var(vars, variable)
       }

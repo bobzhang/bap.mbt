@@ -102,6 +102,12 @@ that contain the separator earlier are preserved. Parse the suffix with
 `@string.parse_int` and treat parse failure as "no suffix" instead of changing
 the base name.
 
+When porting BAP liveness over IR phi nodes, keep the two phi roles separate:
+ordinary uses of a phi result inside its block still participate in that
+block's `free_vars`, while phi operands are edge-specific uses attributed to
+their predecessor block. Do not model phi lhs variables as ordinary block defs
+in the liveness transfer unless the OCaml source does so for that algorithm.
+
 ```sh
 moon run -c 'fn main { let raw : Array[Byte] = [65, 0, 255]; let b = Bytes::from_array(raw); println(b.length()); println(b[2].to_int()) }'
 # 3

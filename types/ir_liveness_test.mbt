@@ -74,7 +74,7 @@ test "ir liveness accounts for phi edge operands" {
   }
   match liveness_for(liveness, header) {
     Some(info) => {
-      assert_lacks_var(info.live_in(), p)
+      assert_has_var(info.live_in(), p)
       assert_lacks_var(info.live_out(), p)
     }
     None => fail("expected header liveness")
@@ -102,7 +102,7 @@ test "ir liveness reports ordinary block uses" {
 }
 
 ///|
-test "block value free vars include phi operands but not phi definitions" {
+test "block value free vars include phi operands and ordinary uses" {
   let typ = @types.ValueType::Imm(8)
   let input = @types.Var::new(name="input", typ~)
   let phi_lhs = @types.Var::new(name="x", typ~).with_index(1)
@@ -114,7 +114,7 @@ test "block value free vars include phi operands but not phi definitions" {
   )
   let vars = blk.blk_value_free_vars()
   assert_has_var(vars, input)
-  assert_lacks_var(vars, phi_lhs)
+  assert_has_var(vars, phi_lhs)
 }
 
 ///|

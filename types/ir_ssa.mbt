@@ -378,7 +378,7 @@ fn ssa_rename_block(
 ///|
 fn Term::ssa_rename(self : Term[Sub], entry : Tid) -> Term[Sub] {
   let graph = self.sub_cfg()
-  let blocks = self.sub_reverse_postorder(entry~)
+  let blocks = self.payload_value.blks.copy()
   let idoms = graph.immediate_dominators(entry)
   let stacks : Map[String, Array[Var]] = {}
   let counters : Map[String, Int] = {}

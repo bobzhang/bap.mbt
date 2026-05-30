@@ -10,6 +10,40 @@ fn ProjectInput::with_default_filename(
 }
 
 ///|
+fn project_raw_endian(target : @core_theory.Target) -> @bitvec.Endian {
+  match target.endianness() {
+    BigEndian => BigEndian
+    _ => LittleEndian
+  }
+}
+
+///|
+pub fn ProjectInput::raw_file(
+  path : String,
+  target~ : @core_theory.Target,
+  base? : UInt64 = 0UL,
+  filename? : String,
+) -> Result[ProjectInput, String] {
+  let selected_filename = match filename {
+    Some(value) => value
+    None => path
+  }
+  match @native_io.read_file(path) {
+    Ok(data) =>
+      Ok(
+        ProjectInput::from_bytes(
+          target~,
+          data,
+          endian=project_raw_endian(target),
+          base~,
+          filename=selected_filename,
+        ),
+      )
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
 pub fn ProjectInput::load_file(
   path : String,
   loader~ : String,

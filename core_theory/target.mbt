@@ -470,6 +470,7 @@ fn systemz_vars() -> Array[Var] {
 ///|
 fn riscv_vars(bits : Int) -> Array[Var] {
   let items = numbered_word_vars(bits, "X", 32)
+  append_vars(items, numbered_word_vars(bits, "F", 32))
   append_vars(items, named_word_vars(bits, ["PC", "SP", "RA"]))
   items.push(mem_var(bits, 8, "mem"))
   items
@@ -489,8 +490,8 @@ fn find_in_targets(items : Array[Target], query : String) -> Target? {
 fn target_role_names(role : Role) -> Array[String] {
   match role {
     General => []
-    StackPointer => ["sp", "esp", "rsp", "r13", "x31"]
-    FramePointer => ["fp", "ebp", "rbp", "r11", "x8"]
+    StackPointer => ["sp", "esp", "rsp"]
+    FramePointer => ["fp", "ebp", "rbp"]
     ProgramCounter => ["pc", "eip", "rip"]
     Status =>
       ["flags", "eflags", "cpsr", "nzcv", "cf", "pf", "af", "zf", "sf", "of"]
@@ -504,9 +505,202 @@ fn target_role_names(role : Role) -> Array[String] {
 }
 
 ///|
-fn name_has_role(name : String, role : Role) -> Bool {
+fn role_names(prefix : String, first : Int, last : Int) -> Array[String] {
+  [
+    for i in first..<=last => "\{prefix}\{i}"
+  ]
+}
+
+///|
+fn concat_role_names(groups : Array[Array[String]]) -> Array[String] {
+  let items = []
+  for group in groups {
+    for name in group {
+      items.push(name)
+    }
+  }
+  items
+}
+
+///|
+fn x86_64_role_names(role : Role) -> Array[String] {
+  match role {
+    General => []
+    StackPointer => ["rsp"]
+    FramePointer => ["rbp"]
+    ProgramCounter => ["rip"]
+    Status => ["eflags", "rflags", "cf", "pf", "af", "zf", "sf", "of"]
+    Argument => ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]
+    ResultRegister => ["rax", "rdx"]
+  }
+}
+
+///|
+fn x86_32_role_names(role : Role) -> Array[String] {
+  match role {
+    General => []
+    StackPointer => ["esp"]
+    FramePointer => ["ebp"]
+    ProgramCounter => ["eip"]
+    Status => ["eflags", "cf", "pf", "af", "zf", "sf", "of"]
+    Argument => []
+    ResultRegister => ["eax", "edx"]
+  }
+}
+
+///|
+fn arm32_role_names(role : Role) -> Array[String] {
+  match role {
+    General => []
+    StackPointer => ["sp"]
+    FramePointer => ["r11"]
+    ProgramCounter => ["pc"]
+    Status => ["cpsr", "nf", "zf", "cf", "vf", "qf"]
+    Argument => ["r0", "r1", "r2", "r3"]
+    ResultRegister => ["r0", "r1"]
+  }
+}
+
+///|
+fn aarch64_role_names(role : Role) -> Array[String] {
+  match role {
+    General => []
+    StackPointer => ["sp", "wsp", "r31"]
+    FramePointer => ["fp", "x29", "r29"]
+    ProgramCounter => ["pc"]
+    Status => ["nzcv", "nf", "zf", "cf", "vf"]
+    Argument =>
+      concat_role_names([role_names("x", 0, 7), role_names("v", 0, 7)])
+    ResultRegister => ["x0", "x1", "v0", "v1"]
+  }
+}
+
+///|
+fn mips_role_names(bits : Int, role : Role) -> Array[String] {
+  match role {
+    General => []
+    StackPointer => ["sp", "r29"]
+    FramePointer => ["fp", "r30"]
+    ProgramCounter => ["pc"]
+    Status => []
+    Argument =>
+      if bits == 64 {
+        concat_role_names([role_names("r", 4, 11), role_names("f", 1, 8)])
+      } else {
+        concat_role_names([role_names("r", 4, 7), role_names("f", 1, 4)])
+      }
+    ResultRegister => ["v0", "r2", "f0"]
+  }
+}
+
+///|
+fn powerpc_role_names(role : Role) -> Array[String] {
+  match role {
+    General => []
+    StackPointer => ["sp", "r1"]
+    FramePointer => []
+    ProgramCounter => ["pc"]
+    Status =>
+      concat_role_names([
+        ["so", "ca", "ov", "ca32", "ov32", "c", "fl", "fe", "fg", "fu"],
+        [
+          for group in 0..<=7 => "cr\{group}eq"
+        ],
+        [
+          for group in 0..<=7 => "cr\{group}lt"
+        ],
+        [
+          for group in 0..<=7 => "cr\{group}gt"
+        ],
+        [
+          for group in 0..<=7 => "cr\{group}un"
+        ],
+      ])
+    Argument =>
+      concat_role_names([role_names("r", 3, 10), role_names("f", 1, 8)])
+    ResultRegister => ["r3", "r4", "f0"]
+  }
+}
+
+///|
+fn riscv_role_names(role : Role) -> Array[String] {
+  match role {
+    General => []
+    StackPointer => ["sp", "x2"]
+    FramePointer => ["x8"]
+    ProgramCounter => ["pc"]
+    Status => []
+    Argument =>
+      concat_role_names([role_names("x", 10, 17), role_names("f", 10, 17)])
+    ResultRegister =>
+      concat_role_names([role_names("x", 10, 12), role_names("f", 10, 12)])
+  }
+}
+
+///|
+fn sparc_role_names(role : Role) -> Array[String] {
+  match role {
+    General => []
+    StackPointer => ["sp", "o6"]
+    FramePointer => ["i6"]
+    ProgramCounter => ["pc", "npc"]
+    Status => []
+    Argument => role_names("o", 0, 5)
+    ResultRegister => ["o0", "o1"]
+  }
+}
+
+///|
+fn systemz_role_names(role : Role) -> Array[String] {
+  match role {
+    General => []
+    StackPointer => ["sp", "r15"]
+    FramePointer => []
+    ProgramCounter => ["pc"]
+    Status => []
+    Argument => role_names("r", 2, 6)
+    ResultRegister => ["r2", "f0"]
+  }
+}
+
+///|
+fn target_specific_role_names(target : Target, role : Role) -> Array[String]? {
+  if target.belongs(Target::x86_64()) {
+    Some(x86_64_role_names(role))
+  } else if target.belongs(Target::x86()) {
+    Some(x86_32_role_names(role))
+  } else if target.belongs(Target::aarch64()) ||
+    target.belongs(Target::aarch64_be()) {
+    Some(aarch64_role_names(role))
+  } else if target.belongs(Target::arm()) || target.belongs(Target::armeb()) {
+    Some(arm32_role_names(role))
+  } else if target.belongs(Target::mips()) {
+    Some(mips_role_names(target.bits(), role))
+  } else if target.belongs(Target::powerpc()) {
+    Some(powerpc_role_names(role))
+  } else if target.belongs(Target::riscv32()) {
+    Some(riscv_role_names(role))
+  } else if target.belongs(Target::sparc()) {
+    Some(sparc_role_names(role))
+  } else if target.belongs(Target::systemz()) {
+    Some(systemz_role_names(role))
+  } else {
+    None
+  }
+}
+
+///|
+fn target_role_names_for(target : Target, role : Role) -> Array[String] {
+  match target_specific_role_names(target, role) {
+    Some(names) => names
+    None => target_role_names(role)
+  }
+}
+
+///|
+fn target_name_has_role(target : Target, name : String, role : Role) -> Bool {
   let lower = name.to_lower()
-  target_role_names(role).contains(lower)
+  target_role_names_for(target, role).contains(lower)
 }
 
 ///|
@@ -856,7 +1050,7 @@ pub fn Target::origin_of_name(self : Target, name : String) -> AliasOrigin? {
 }
 
 ///|
-pub fn Target::roles_of_var(_self : Target, variable : Var) -> Array[Role] {
+pub fn Target::roles_of_var(self : Target, variable : Var) -> Array[Role] {
   let roles = []
   for
     role in [
@@ -867,8 +1061,8 @@ pub fn Target::roles_of_var(_self : Target, variable : Var) -> Array[Role] {
       Argument,
       ResultRegister,
     ] {
-    if name_has_role(variable.ident(), role) ||
-      name_has_role(variable.name(), role) {
+    if target_name_has_role(self, variable.ident(), role) ||
+      target_name_has_role(self, variable.name(), role) {
       add_role(roles, role)
     }
   }

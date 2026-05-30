@@ -537,6 +537,34 @@ test "target role helpers classify common architecture variables" {
   let arm = @core_theory.Target::arm()
   assert_true(arm.find_role(ProgramCounter).map(v => v.ident()) == Some("PC"))
   assert_true(arm.vars_with_role(Argument).any(v => v.ident() == "R0"))
+  let riscv = @core_theory.Target::riscv64()
+  assert_true(riscv.find_var("F31") is Some(_))
+  match riscv.find_var("X2") {
+    Some(sp) => assert_true(riscv.roles_of_var(sp).contains(StackPointer))
+    None => fail("missing X2")
+  }
+  match riscv.find_var("X10") {
+    Some(arg) => {
+      assert_true(riscv.roles_of_var(arg).contains(Argument))
+      assert_true(riscv.roles_of_var(arg).contains(ResultRegister))
+    }
+    None => fail("missing X10")
+  }
+  match riscv.find_var("X0") {
+    Some(zero) =>
+      assert_true(!riscv.roles_of_var(zero).contains(ResultRegister))
+    None => fail("missing X0")
+  }
+  let aarch64 = @core_theory.Target::aarch64()
+  match aarch64.find_var("X2") {
+    Some(reg) => assert_true(!aarch64.roles_of_var(reg).contains(StackPointer))
+    None => fail("missing X2")
+  }
+  let systemz = @core_theory.Target::systemz()
+  match systemz.find_var("R15") {
+    Some(sp) => assert_true(systemz.roles_of_var(sp).contains(StackPointer))
+    None => fail("missing R15")
+  }
 }
 
 ///|

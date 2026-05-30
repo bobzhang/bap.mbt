@@ -166,6 +166,19 @@ test "project root disassembly driver materializes roots from memory" {
     .disassemble(driver="project-roots")
     is Err(_),
   )
+  let image = @image.Image::from_segments(entry=0x8000UL, endian=LittleEndian, [
+    @image.Segment::create(
+      name=".text",
+      endian=LittleEndian,
+      addr=0x8000UL,
+      b"\x01",
+      executable=true,
+    ),
+  ])
+  assert_true(
+    @project.Project::from_image(image).disassemble(driver="project-roots")
+    is Err(_),
+  )
 }
 
 ///|

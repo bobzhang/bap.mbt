@@ -195,6 +195,9 @@ pub fn ProjectDisassemblyDriver::project_roots() -> ProjectDisassemblyDriver {
     description="materialize project root addresses from project memory",
     priority=-90,
     run=project => {
+      if project.image() is Some(_) {
+        return Err("project-root disassembly is for non-image project memory")
+      }
       let roots = project.rooter().roots()
       if roots.is_empty() {
         return Err("project has no roots to disassemble")

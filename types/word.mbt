@@ -479,7 +479,38 @@ pub fn Word::extract(
   hi? : Int = -1,
   lo? : Int = 0,
 ) -> Word raise @bitvec.BitVecError {
-  Word::from_bitvec(self.bits_value.extract(hi~, lo~))
+  let actual_hi = if hi < 0 { self.width() - 1 } else { hi }
+  if lo < 0 || actual_hi < lo {
+    raise InvalidWidth(actual_hi - lo + 1)
+  }
+  let result_width = actual_hi - lo + 1
+  let value_width = self.width()
+  if lo >= value_width {
+    if self.is_signed() && self.msb() {
+      Word::ones(width=result_width)
+    } else {
+      Word::zero(width=result_width)
+    }
+  } else {
+    let bounded_hi = if actual_hi >= value_width {
+      value_width - 1
+    } else {
+      actual_hi
+    }
+    let low_bits = Word::from_bitvec(
+      self.bits_value.extract(hi=bounded_hi, lo~),
+    )
+    if actual_hi < value_width {
+      low_bits
+    } else {
+      let fill_width = actual_hi - value_width + 1
+      if self.is_signed() && self.msb() {
+        Word::ones(width=fill_width).concat(low_bits)
+      } else {
+        low_bits.widen(width=result_width)
+      }
+    }
+  }
 }
 
 ///|

@@ -197,6 +197,28 @@ test "translated BAP word extraction follows bit numbering cases" {
     lo=0x4,
     expected=@types.Word::of_int(width=8, 0xAD),
   )
+  assert_word_extract(
+    @types.Word::of_int(width=8, 1),
+    hi=8,
+    expected=@types.Word::of_uint64(width=9, 1),
+  )
+  assert_word_extract(
+    @types.Word::of_int(width=8, 1),
+    hi=15,
+    lo=8,
+    expected=@types.Word::zero(width=8),
+  )
+  assert_word_extract(
+    @types.Word::of_int(width=8, -1).signed(),
+    hi=15,
+    expected=@types.Word::of_uint64(width=16, 0xffff),
+  )
+  assert_word_extract(
+    @types.Word::of_int(width=8, -1).signed(),
+    hi=15,
+    lo=8,
+    expected=@types.Word::of_uint64(width=8, 0xff),
+  )
 }
 
 ///|

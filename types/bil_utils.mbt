@@ -152,49 +152,10 @@ fn word_error() -> Result[Word, String] {
 
 ///|
 fn extract_word(hi : Int, lo : Int, value : Word) -> Result[Word, String] {
-  if lo < 0 || hi < lo {
-    word_error()
-  } else {
-    let result_width = hi - lo + 1
-    let value_width = value.width()
-    if lo >= value_width {
-      try {
-        if value.is_signed() && value.msb() {
-          Word::ones(width=result_width)
-        } else {
-          Word::zero(width=result_width)
-        }
-      } catch {
-        _ => word_error()
-      } noraise {
-        word => Ok(word)
-      }
-    } else {
-      let actual_hi = if hi >= value_width { value_width - 1 } else { hi }
-      try value.extract(hi=actual_hi, lo~) catch {
-        _ => word_error()
-      } noraise {
-        low_bits =>
-          if hi < value_width {
-            Ok(low_bits)
-          } else {
-            let fill_width = hi - value_width + 1
-            if value.is_signed() && value.msb() {
-              try Word::ones(width=fill_width).concat(low_bits) catch {
-                _ => word_error()
-              } noraise {
-                word => Ok(word)
-              }
-            } else {
-              try low_bits.widen(width=result_width) catch {
-                _ => word_error()
-              } noraise {
-                word => Ok(word)
-              }
-            }
-          }
-      }
-    }
+  try value.extract(hi~, lo~) catch {
+    _ => word_error()
+  } noraise {
+    word => Ok(word)
   }
 }
 

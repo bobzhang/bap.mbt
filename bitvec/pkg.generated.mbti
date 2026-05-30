@@ -1,0 +1,86 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/bitvec"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn b0() -> BitVec
+
+pub fn b1() -> BitVec
+
+pub fn from_hex(width~ : Int, StringView) -> BitVec raise BitVecError
+
+pub fn of_bool(Bool) -> BitVec
+
+pub fn of_bytes(BytesView, endian~ : Endian, width? : Int) -> BitVec raise BitVecError
+
+pub fn of_int(width~ : Int, Int) -> BitVec raise BitVecError
+
+pub fn of_int64(width~ : Int, Int64) -> BitVec raise BitVecError
+
+pub fn of_uint64(width~ : Int, UInt64) -> BitVec raise BitVecError
+
+pub fn one(width~ : Int) -> BitVec raise BitVecError
+
+pub fn ones(width~ : Int) -> BitVec raise BitVecError
+
+pub fn zero(width~ : Int) -> BitVec raise BitVecError
+
+// Errors
+pub(all) suberror BitVecError {
+  InvalidWidth(Int)
+  IncompatibleWidths(lhs~ : Int, rhs~ : Int)
+  InvalidHexDigit(Char)
+} derive(Eq, @debug.Debug)
+
+// Types and methods
+type BitVec derive(Eq, @debug.Debug)
+pub fn BitVec::abs_signed(Self) -> Self
+pub fn BitVec::add(Self, Self) -> Self raise BitVecError
+pub fn BitVec::arshift(Self, Int) -> Self
+pub fn BitVec::bit_and(Self, Self) -> Self raise BitVecError
+pub fn BitVec::bit_or(Self, Self) -> Self raise BitVecError
+pub fn BitVec::bit_xor(Self, Self) -> Self raise BitVecError
+pub fn BitVec::compare_signed(Self, Self) -> Int raise BitVecError
+pub fn BitVec::compare_unsigned(Self, Self) -> Int raise BitVecError
+pub fn BitVec::concat(Self, Self) -> Self raise BitVecError
+pub fn BitVec::div(Self, Self) -> Self raise BitVecError
+pub fn BitVec::div_rem(Self, Self) -> (Self, Self) raise BitVecError
+pub fn BitVec::extract(Self, hi? : Int, lo? : Int) -> Self raise BitVecError
+pub fn BitVec::gcd(Self, Self) -> Self raise BitVecError
+pub fn BitVec::is_zero(Self) -> Bool
+pub fn BitVec::lcm(Self, Self) -> Self raise BitVecError
+pub fn BitVec::limb_count(Self) -> Int
+pub fn BitVec::lnot(Self) -> Self
+pub fn BitVec::lsb(Self) -> Bool
+pub fn BitVec::lshift(Self, Int) -> Self
+pub fn BitVec::msb(Self) -> Bool
+pub fn BitVec::mul(Self, Self) -> Self raise BitVecError
+pub fn BitVec::neg(Self) -> Self
+pub fn BitVec::nth(Self, Int) -> Bool
+pub fn BitVec::pred(Self) -> Self
+pub fn BitVec::rem(Self, Self) -> Self raise BitVecError
+pub fn BitVec::rshift(Self, Int) -> Self
+pub fn BitVec::sdiv(Self, Self) -> Self raise BitVecError
+pub fn BitVec::srem(Self, Self) -> Self raise BitVecError
+pub fn BitVec::sub(Self, Self) -> Self raise BitVecError
+pub fn BitVec::succ(Self) -> Self
+pub fn BitVec::to_bytes(Self, endian~ : Endian) -> Bytes
+pub fn BitVec::to_hex(Self, prefix? : Bool) -> String
+pub fn BitVec::to_string(Self) -> String
+pub fn BitVec::to_uint64(Self) -> UInt64 raise BitVecError
+pub fn BitVec::truncate(Self, width~ : Int) -> Self raise BitVecError
+pub fn BitVec::widen(Self, width~ : Int) -> Self raise BitVecError
+pub fn BitVec::width(Self) -> Int
+
+pub(all) enum Endian {
+  LittleEndian
+  BigEndian
+} derive(Eq, @debug.Debug)
+
+// Type aliases
+
+// Traits
+

@@ -1,0 +1,55 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/graphlib"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/set",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub(all) struct Edge[N, E] {
+  src : N
+  dst : N
+  label : E
+} derive(Eq, @debug.Debug)
+pub fn[N, E] Edge::new(src~ : N, dst~ : N, label~ : E) -> Self[N, E]
+
+pub(all) enum EdgeKind {
+  Tree
+  Back
+  Cross
+  Forward
+} derive(Eq, @debug.Debug)
+
+type Graph[N, E] derive(@debug.Debug)
+pub fn[N : Eq, E] Graph::add_edge(Self[N, E], src~ : N, dst~ : N, label~ : E) -> Self[N, E]
+pub fn[N : Eq, E] Graph::add_node(Self[N, E], N) -> Self[N, E]
+pub fn[N : Eq, E] Graph::degree(Self[N, E], N) -> Int
+pub fn[N : Hash + Eq, E] Graph::dfs_edges(Self[N, E], N) -> Array[(EdgeKind, Edge[N, E])]
+pub fn[N : Hash + Eq, E] Graph::dominators(Self[N, E], N) -> Map[N, @set.Set[N]]
+pub fn[N : Eq, E] Graph::edge(Self[N, E], N, N) -> Edge[N, E]?
+pub fn[N, E] Graph::edge_count(Self[N, E]) -> Int
+pub fn[N, E] Graph::edges(Self[N, E]) -> Array[Edge[N, E]]
+pub fn[N : Eq, E] Graph::has_edge(Self[N, E], N, N) -> Bool
+pub fn[N : Eq, E] Graph::has_node(Self[N, E], N) -> Bool
+pub fn[N : Eq, E] Graph::in_edges(Self[N, E], N) -> Array[Edge[N, E]]
+pub fn[N, E] Graph::is_empty(Self[N, E]) -> Bool
+pub fn[N, E] Graph::new() -> Self[N, E]
+pub fn[N, E] Graph::node_count(Self[N, E]) -> Int
+pub fn[N, E] Graph::nodes(Self[N, E]) -> Array[N]
+pub fn[N : Eq, E] Graph::out_edges(Self[N, E], N) -> Array[Edge[N, E]]
+pub fn[N : Eq, E] Graph::predecessors(Self[N, E], N) -> Array[N]
+pub fn[N : Hash + Eq, E] Graph::reachable(Self[N, E], N) -> @set.Set[N]
+pub fn[N : Eq, E] Graph::remove_edge(Self[N, E], N, N) -> Self[N, E]
+pub fn[N : Eq, E] Graph::remove_node(Self[N, E], N) -> Self[N, E]
+pub fn[N : Hash + Eq, E] Graph::reverse_postorder(Self[N, E], N) -> Array[N]
+pub fn[N : Eq, E] Graph::successors(Self[N, E], N) -> Array[N]
+
+// Type aliases
+
+// Traits
+

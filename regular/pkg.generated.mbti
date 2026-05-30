@@ -1,0 +1,61 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/regular"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn digest_bytes(BytesView) -> Digest
+
+pub fn digest_string(StringView) -> Digest
+
+pub fn[T : Printable] render(T) -> String
+
+pub fn[T : Printable] render_array(ArrayView[T], sep? : String) -> String
+
+// Errors
+
+// Types and methods
+pub(all) struct Digest(String) derive(Eq, @debug.Debug)
+pub fn Digest::to_string(Self) -> String
+pub impl Printable for Digest
+
+pub(all) struct FormatInfo {
+  name : String
+  version : String
+  description : String?
+} derive(Eq, @debug.Debug)
+pub fn FormatInfo::new(name~ : String, version~ : String, description? : String) -> Self
+pub fn FormatInfo::to_string(Self) -> String
+pub impl Printable for FormatInfo
+
+type FormatRegistry derive(@debug.Debug)
+pub fn FormatRegistry::add_reader(Self, FormatInfo) -> Unit
+pub fn FormatRegistry::add_writer(Self, FormatInfo) -> Unit
+pub fn FormatRegistry::default_reader(Self) -> FormatInfo?
+pub fn FormatRegistry::default_writer(Self) -> FormatInfo?
+pub fn FormatRegistry::find_reader(Self, StringView, version? : String) -> FormatInfo?
+pub fn FormatRegistry::find_writer(Self, StringView, version? : String) -> FormatInfo?
+pub fn FormatRegistry::new() -> Self
+pub fn FormatRegistry::readers(Self) -> Array[FormatInfo]
+pub fn FormatRegistry::writers(Self) -> Array[FormatInfo]
+
+type PrefixTrie[V]
+pub fn[V] PrefixTrie::add(Self[V], StringView, V) -> Unit
+pub fn[V] PrefixTrie::find(Self[V], StringView) -> V?
+pub fn[V] PrefixTrie::is_empty(Self[V]) -> Bool
+pub fn[V] PrefixTrie::longest_match(Self[V], StringView) -> (Int, V)?
+pub fn[V] PrefixTrie::new() -> Self[V]
+pub fn[V] PrefixTrie::remove(Self[V], StringView) -> Unit
+
+// Type aliases
+
+// Traits
+pub(open) trait Printable {
+  fn to_string(Self) -> String
+}
+pub impl Printable for Int
+pub impl Printable for UInt64
+pub impl Printable for String
+

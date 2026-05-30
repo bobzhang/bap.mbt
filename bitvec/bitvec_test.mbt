@@ -1,0 +1,97 @@
+///|
+test "normalization wraps values to width" {
+  inspect(@bitvec.of_int(width=7, 13 + 1024).to_hex(), content="0x0d")
+  inspect(@bitvec.of_int(width=7, 13 - 1024).to_hex(), content="0x0d")
+  inspect(@bitvec.of_int(width=2, 3 + 4).to_hex(), content="0x3")
+  inspect(@bitvec.of_int(width=2, 3 - 4).to_hex(), content="0x3")
+  inspect(@bitvec.of_int(width=3, -1).to_hex(), content="0x7")
+}
+
+///|
+test "basic predicates and string formatting" {
+  let zero = @bitvec.b0()
+  let one = @bitvec.b1()
+  inspect(zero.to_hex(), content="0x0")
+  inspect(one.to_hex(), content="0x1")
+  inspect(@bitvec.of_int(width=4, 7).to_string(), content="0x7:4u")
+  assert_true(zero.is_zero())
+  assert_true(!one.is_zero())
+  assert_true(one.lsb())
+  assert_true(one.msb())
+}
+
+///|
+test "byte conversion preserves endian order" {
+  let deadbeef = @bitvec.of_uint64(width=32, 0xdeadbeef)
+  assert_true(
+    deadbeef.to_bytes(endian=LittleEndian).to_array().map(b => b.to_int()) ==
+    [0xef, 0xbe, 0xad, 0xde],
+  )
+  assert_true(
+    deadbeef.to_bytes(endian=BigEndian).to_array().map(b => b.to_int()) ==
+    [0xde, 0xad, 0xbe, 0xef],
+  )
+  inspect(
+    @bitvec.of_bytes(b"\xef\xbe\xad\xde", endian=LittleEndian).to_hex(),
+    content="0xdeadbeef",
+  )
+  inspect(
+    @bitvec.of_bytes(b"\xde\xad\xbe\xef", endian=BigEndian).to_hex(),
+    content="0xdeadbeef",
+  )
+}
+
+///|
+test "concat and extract match BAP bit numbering cases" {
+  let high = @bitvec.of_int(width=16, 0xdead)
+  let low = @bitvec.of_int(width=16, 0xbeef)
+  inspect(high.concat(low).to_hex(), content="0xdeadbeef")
+  let word = @bitvec.of_int(width=16, 0xdad5)
+  inspect(word.extract(lo=0xC).to_hex(), content="0xd")
+  inspect(word.extract(lo=0x8).to_hex(), content="0xda")
+  inspect(word.extract(hi=0x7).to_hex(), content="0xd5")
+  inspect(word.extract(hi=0x3).to_hex(), content="0x5")
+  inspect(word.extract(hi=0xB, lo=0x4).to_hex(), content="0xad")
+}
+
+///|
+test "arithmetic and shifts are modulo bit width" {
+  let x = @bitvec.of_int(width=8, 0xff)
+  let one = @bitvec.of_int(width=8, 1)
+  inspect(x.add(one).to_hex(), content="0x00")
+  inspect(@bitvec.of_int(width=8, 0).sub(one).to_hex(), content="0xff")
+  inspect(
+    @bitvec.of_int(width=8, 0x11).mul(@bitvec.of_int(width=8, 0x0f)).to_hex(),
+    content="0xff",
+  )
+  inspect(one.lshift(10).to_hex(), content="0x00")
+  inspect(x.rshift(2).to_hex(), content="0x3f")
+  inspect(x.arshift(2).to_hex(), content="0xff")
+}
+
+///|
+test "division gcd and lcm use unsigned semantics" {
+  let x = @bitvec.of_int(width=8, 0x10)
+  let y = @bitvec.of_int(width=8, 0x0c)
+  inspect(x.gcd(y).to_hex(), content="0x04")
+  inspect(x.lcm(y).to_hex(), content="0x30")
+  inspect(
+    @bitvec.of_int(width=8, 0x1c).lcm(@bitvec.of_int(width=8, 0x23)).to_hex(),
+    content="0x8c",
+  )
+  let (q, r) = @bitvec.of_int(width=8, 20).div_rem(@bitvec.of_int(width=8, 6))
+  inspect(q.to_hex(), content="0x03")
+  inspect(r.to_hex(), content="0x02")
+}
+
+///|
+test "hex parsing truncates to the requested width" {
+  inspect(@bitvec.from_hex(width=16, "0xdeadbeef").to_hex(), content="0xbeef")
+  inspect(@bitvec.from_hex(width=4, "f").lnot().to_hex(), content="0x0")
+  try @bitvec.from_hex(width=8, "xz") catch {
+    InvalidHexDigit(c) => inspect(c, content="x")
+    _ => fail("unexpected error")
+  } noraise {
+    _ => fail("expected invalid hex digit")
+  }
+}

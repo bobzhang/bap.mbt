@@ -1,0 +1,116 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/types"
+
+import {
+  "bobzhang/bap/bitvec",
+  "moonbitlang/core/debug",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub(all) enum BinOp {
+  Plus
+  Minus
+  Times
+  Div
+  SignedDiv
+  Mod
+  SignedMod
+  And
+  Or
+  Xor
+  LShift
+  RShift
+  ARShift
+  Eq
+  Neq
+  Lt
+  Le
+  SignedLt
+  SignedLe
+} derive(Eq, @debug.Debug)
+pub fn BinOp::to_string(Self) -> String
+
+pub(all) enum Exp {
+  Int(Word)
+  Var(Var)
+  Unknown(String, ValueType)
+  Load(mem~ : Exp, addr~ : Exp, endian~ : @bitvec.Endian, typ~ : ValueType)
+  Store(mem~ : Exp, addr~ : Exp, value~ : Exp, endian~ : @bitvec.Endian)
+  Let(Var, Exp, Exp)
+  Cast(ValueType, Exp)
+  UnOp(UnOp, Exp)
+  BinOp(BinOp, Exp, Exp)
+  Ite(cond~ : Exp, yes~ : Exp, no~ : Exp)
+} derive(Eq, @debug.Debug)
+pub fn Exp::to_string(Self) -> String
+pub fn Exp::type_of(Self) -> ValueType
+
+pub(all) enum Stmt {
+  Move(Var, Exp)
+  Jmp(Exp)
+  Special(String)
+  CpuExn(Int)
+  If(cond~ : Exp, yes~ : Array[Stmt], no~ : Array[Stmt])
+  While(cond~ : Exp, body~ : Array[Stmt])
+} derive(Eq, @debug.Debug)
+pub fn Stmt::defined_var(Self) -> Var?
+pub fn Stmt::to_string(Self) -> String
+
+pub(all) enum UnOp {
+  Not
+  Neg
+} derive(Eq, @debug.Debug)
+pub fn UnOp::to_string(Self) -> String
+
+pub(all) enum ValueType {
+  Imm(Int)
+  Mem(addr_width~ : Int, value_width~ : Int)
+} derive(Eq, @debug.Debug)
+pub fn ValueType::bitwidth(Self) -> Int?
+pub fn ValueType::to_string(Self) -> String
+
+pub(all) struct Var {
+  name : String
+  typ : ValueType
+  is_virtual : Bool
+} derive(Eq, @debug.Debug)
+pub fn Var::new(name~ : String, typ~ : ValueType, is_virtual? : Bool) -> Self
+pub fn Var::to_string(Self) -> String
+
+type Word derive(Eq, @debug.Debug)
+pub fn Word::add(Self, Self) -> Self raise @bitvec.BitVecError
+pub fn Word::b0() -> Self
+pub fn Word::b1() -> Self
+pub fn Word::concat(Self, Self) -> Self raise @bitvec.BitVecError
+pub fn Word::extract(Self, hi? : Int, lo? : Int) -> Self raise @bitvec.BitVecError
+pub fn Word::from_bitvec(@bitvec.BitVec) -> Self
+pub fn Word::from_bytes(BytesView, endian~ : @bitvec.Endian, width? : Int) -> Self raise @bitvec.BitVecError
+pub fn Word::from_hex(width~ : Int, StringView) -> Self raise @bitvec.BitVecError
+pub fn Word::is_zero(Self) -> Bool
+pub fn Word::lnot(Self) -> Self
+pub fn Word::lsb(Self) -> Bool
+pub fn Word::msb(Self) -> Bool
+pub fn Word::mul(Self, Self) -> Self raise @bitvec.BitVecError
+pub fn Word::neg(Self) -> Self
+pub fn Word::of_bool(Bool) -> Self
+pub fn Word::of_int(width~ : Int, Int) -> Self raise @bitvec.BitVecError
+pub fn Word::of_int64(width~ : Int, Int64) -> Self raise @bitvec.BitVecError
+pub fn Word::of_uint64(width~ : Int, UInt64) -> Self raise @bitvec.BitVecError
+pub fn Word::one(width~ : Int) -> Self raise @bitvec.BitVecError
+pub fn Word::ones(width~ : Int) -> Self raise @bitvec.BitVecError
+pub fn Word::sub(Self, Self) -> Self raise @bitvec.BitVecError
+pub fn Word::to_bitvec(Self) -> @bitvec.BitVec
+pub fn Word::to_bytes(Self, endian~ : @bitvec.Endian) -> Bytes
+pub fn Word::to_hex(Self, prefix? : Bool) -> String
+pub fn Word::to_string(Self) -> String
+pub fn Word::width(Self) -> Int
+pub fn Word::zero(width~ : Int) -> Self raise @bitvec.BitVecError
+
+// Type aliases
+
+// Traits
+

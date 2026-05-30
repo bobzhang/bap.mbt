@@ -1,0 +1,145 @@
+///|
+fn[N : Hash + Eq, E] dfs_visit(
+  graph : Graph[N, E],
+  node : N,
+  colors : Map[N, Int],
+  entered : Map[N, Int],
+  time : Ref[Int],
+  events : Array[(EdgeKind, Edge[N, E])],
+) -> Unit {
+  colors[node] = 1
+  entered[node] = time.val
+  time.val = time.val + 1
+  for edge in graph.out_edges(node) {
+    match colors.get(edge.dst) {
+      None => {
+        events.push((Tree, edge))
+        dfs_visit(graph, edge.dst, colors, entered, time, events)
+      }
+      Some(1) => events.push((Back, edge))
+      Some(_) => {
+        let src_entered = entered.get_or_default(edge.src, 0)
+        let dst_entered = entered.get_or_default(edge.dst, 0)
+        if src_entered < dst_entered {
+          events.push((Forward, edge))
+        } else {
+          events.push((Cross, edge))
+        }
+      }
+    }
+  }
+  colors[node] = 2
+}
+
+///|
+fn[N : Hash + Eq, E] postorder_visit(
+  graph : Graph[N, E],
+  node : N,
+  seen : Set[N],
+  order : Array[N],
+) -> Unit {
+  if !seen.contains(node) {
+    seen.add(node)
+    for succ in graph.successors(node) {
+      postorder_visit(graph, succ, seen, order)
+    }
+    order.push(node)
+  }
+}
+
+///|
+pub fn[N : Hash + Eq, E] Graph::dfs_edges(
+  self : Graph[N, E],
+  start : N,
+) -> Array[(EdgeKind, Edge[N, E])] {
+  let colors : Map[N, Int] = {}
+  let entered : Map[N, Int] = {}
+  let time = Ref::Ref(0)
+  let events = []
+  if self.has_node(start) {
+    dfs_visit(self, start, colors, entered, time, events)
+  }
+  events
+}
+
+///|
+pub fn[N : Hash + Eq, E] Graph::reachable(
+  self : Graph[N, E],
+  start : N,
+) -> Set[N] {
+  let seen : Set[N] = Set([])
+  let order = []
+  if self.has_node(start) {
+    postorder_visit(self, start, seen, order)
+  }
+  seen
+}
+
+///|
+pub fn[N : Hash + Eq, E] Graph::reverse_postorder(
+  self : Graph[N, E],
+  start : N,
+) -> Array[N] {
+  let seen : Set[N] = Set([])
+  let order = []
+  if self.has_node(start) {
+    postorder_visit(self, start, seen, order)
+  }
+  order.rev()
+}
+
+///|
+pub fn[N : Hash + Eq, E] Graph::dominators(
+  self : Graph[N, E],
+  entry : N,
+) -> Map[N, Set[N]] {
+  let all_nodes : Set[N] = Set::from_array(self.nodes)
+  let reachable = self.reachable(entry)
+  let doms : Map[N, Set[N]] = {}
+  for node in self.nodes {
+    if node == entry {
+      doms[node] = Set::from_array([node])
+    } else if reachable.contains(node) {
+      doms[node] = all_nodes.copy()
+    } else {
+      doms[node] = Set::from_array([node])
+    }
+  }
+  let mut changed = true
+  while changed {
+    changed = false
+    for node in self.nodes {
+      if node != entry && reachable.contains(node) {
+        let preds = self
+          .predecessors(node)
+          .filter(pred => reachable.contains(pred))
+        let mut next : Set[N]? = None
+        for pred in preds {
+          match doms.get(pred) {
+            Some(pred_dom) =>
+              next = match next {
+                Some(acc) => Some(acc.intersection(pred_dom))
+                None => Some(pred_dom.copy())
+              }
+            None => ()
+          }
+        }
+        let candidate = match next {
+          Some(set) => {
+            set.add(node)
+            set
+          }
+          None => Set::from_array([node])
+        }
+        match doms.get(node) {
+          Some(old) if old == candidate => ()
+          _ => {
+            doms[node] = candidate
+            changed = true
+          }
+        }
+      }
+    }
+  }
+  doms
+}

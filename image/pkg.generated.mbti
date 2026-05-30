@@ -1,0 +1,61 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/image"
+
+import {
+  "bobzhang/bap/bitvec",
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/memory",
+  "bobzhang/bap/types",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+type Image
+pub fn Image::add_segment(Self, Segment) -> Self
+pub fn Image::add_symbol(Self, Symbol) -> Self
+pub fn Image::create(entry~ : UInt64, endian~ : @bitvec.Endian, filename? : String, target? : @core_theory.Target, data? : Bytes, segments? : Array[Segment], symbols? : Array[Symbol]) -> Self
+pub fn Image::data(Self) -> Bytes
+pub fn Image::endian(Self) -> @bitvec.Endian
+pub fn Image::entry_point(Self) -> UInt64
+pub fn Image::filename(Self) -> String?
+pub fn Image::from_segments(entry~ : UInt64, endian~ : @bitvec.Endian, Array[Segment], symbols? : Array[Symbol], filename? : String, target? : @core_theory.Target) -> Self
+pub fn Image::memory(Self) -> @memory.MemMap[String]
+pub fn Image::memory_of_segment(Self, Segment) -> @memory.Memory
+pub fn Image::memory_of_symbol(Self, Symbol) -> (@memory.Memory, Array[@memory.Memory])?
+pub fn Image::segment_of_symbol(Self, Symbol) -> Segment?
+pub fn Image::segments(Self) -> Array[Segment]
+pub fn Image::symbols(Self) -> Array[Symbol]
+pub fn Image::symbols_of_segment(Self, Segment) -> Array[Symbol]
+pub fn Image::target(Self) -> @core_theory.Target?
+pub fn Image::words(Self, word_size~ : Int) -> @memory.MemMap[@types.Word]
+
+type Segment
+pub fn Segment::addr(Self) -> UInt64
+pub fn Segment::contains(Self, UInt64) -> Bool
+pub fn Segment::create(name~ : String, endian~ : @bitvec.Endian, addr~ : UInt64, Bytes, offset? : Int, readable? : Bool, writable? : Bool, executable? : Bool) -> Self
+pub fn Segment::from_memory(name~ : String, memory~ : @memory.Memory, offset? : Int, readable? : Bool, writable? : Bool, executable? : Bool) -> Self
+pub fn Segment::is_executable(Self) -> Bool
+pub fn Segment::is_readable(Self) -> Bool
+pub fn Segment::is_writable(Self) -> Bool
+pub fn Segment::max_addr(Self) -> UInt64
+pub fn Segment::memory(Self) -> @memory.Memory
+pub fn Segment::name(Self) -> String
+pub fn Segment::offset(Self) -> Int
+pub fn Segment::size(Self) -> Int
+
+type Symbol
+pub fn Symbol::addr(Self) -> UInt64
+pub fn Symbol::contains(Self, UInt64) -> Bool
+pub fn Symbol::create(name~ : String, addr~ : UInt64, size? : Int, is_function? : Bool, is_debug? : Bool) -> Self
+pub fn Symbol::is_debug(Self) -> Bool
+pub fn Symbol::is_function(Self) -> Bool
+pub fn Symbol::name(Self) -> String
+pub fn Symbol::size(Self) -> Int
+
+// Type aliases
+
+// Traits
+

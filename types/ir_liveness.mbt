@@ -94,6 +94,16 @@ fn Term::blk_liveness_uses(self : Term[Blk]) -> Array[Var] {
 }
 
 ///|
+pub fn Term::blk_value_free_vars(self : Term[Blk]) -> Array[Var] {
+  let vars = []
+  for phi in self.payload_value.phis {
+    add_vars(vars, phi.phi_free_vars())
+  }
+  add_vars(vars, self.blk_liveness_uses())
+  vars
+}
+
+///|
 pub fn Term::sub_liveness(
   self : Term[Sub],
   entry? : Tid,
@@ -140,4 +150,44 @@ pub fn Term::sub_liveness(
       }
     }
   ]
+}
+
+///|
+pub fn Term::sub_live_in_vars(self : Term[Sub], entry? : Tid) -> Array[Var] {
+  let start = match entry {
+    Some(tid) => Some(tid)
+    None => self.entry_blk().map(term => term.tid())
+  }
+  match start {
+    Some(tid) => {
+      let liveness = self.sub_liveness(entry?)
+      match liveness.search_by(info => info.block().tid() == tid) {
+        Some(i) => liveness[i].live_in()
+        None => []
+      }
+    }
+    None => []
+  }
+}
+
+///|
+pub fn Term::sub_ssa_free_vars(self : Term[Sub]) -> Array[Var] {
+  let vars = []
+  for blk in self.payload_value.blks {
+    for variable in blk.blk_value_free_vars() {
+      if variable.index() == 0 {
+        add_var(vars, variable)
+      }
+    }
+  }
+  vars
+}
+
+///|
+pub fn Term::sub_external_vars(self : Term[Sub], entry? : Tid) -> Array[Var] {
+  if self.is_ssa() {
+    self.sub_ssa_free_vars()
+  } else {
+    self.sub_live_in_vars(entry?)
+  }
 }

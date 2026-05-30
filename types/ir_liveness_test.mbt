@@ -100,3 +100,37 @@ test "ir liveness reports ordinary block uses" {
     None => fail("expected start liveness")
   }
 }
+
+///|
+test "block value free vars include phi operands but not phi definitions" {
+  let typ = @types.ValueType::Imm(8)
+  let input = @types.Var::new(name="input", typ~)
+  let phi_lhs = @types.Var::new(name="x", typ~).with_index(1)
+  let pred = @types.Tid::for_name("pred")
+  let done = @types.Tid::for_name("done")
+  let phi = @types.Phi::of_list(phi_lhs, [(pred, Var(input))])
+  let blk = @types.Blk::create(phis=[phi]).append_jmp(
+    @types.Jmp::create_goto(@types.Label::direct(done), cond=Var(phi_lhs)),
+  )
+  let vars = blk.blk_value_free_vars()
+  assert_has_var(vars, input)
+  assert_lacks_var(vars, phi_lhs)
+}
+
+///|
+test "sub external vars use liveness before SSA and undefined vars after SSA" {
+  let typ = @types.ValueType::Imm(8)
+  let input = @types.Var::new(name="input", typ~)
+  let x = @types.Var::new(name="x", typ~)
+  let entry = @types.Blk::create(tid=@types.Tid::for_name("entry")).append_def(
+    @types.Def::create(x, Var(input)),
+  )
+  let sub = @types.Sub::create(name="free", blks=[entry])
+  let before = sub.sub_external_vars()
+  assert_has_var(before, input)
+  assert_lacks_var(before, x)
+  let ssa = sub.to_ssa()
+  let after = ssa.sub_external_vars()
+  assert_has_var(after, input)
+  assert_lacks_var(after, x.with_index(1))
+}

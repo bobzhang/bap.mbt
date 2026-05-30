@@ -5,6 +5,7 @@ import {
   "bobzhang/bap/bitvec",
   "bobzhang/bap/graphlib",
   "moonbitlang/core/debug",
+  "moonbitlang/core/set",
 }
 
 // Values
@@ -532,9 +533,15 @@ pub fn Term::sub_aliases(Self[Sub]) -> Array[String]
 pub fn Term::sub_cfg(Self[Sub]) -> @graphlib.Graph[Tid, Tid]
 pub fn Term::sub_defs(Self[Sub]) -> Array[Self[Def]]
 pub fn Term::sub_direct_call_tids(Self[Sub]) -> Array[Tid]
+pub fn Term::sub_dominance_frontier_blocks(Self[Sub], Self[Blk], entry? : Tid) -> Array[Self[Blk]]
+pub fn Term::sub_dominance_frontier_tids(Self[Sub], entry? : Tid) -> Map[Tid, @set.Set[Tid]]
+pub fn Term::sub_dominates(Self[Sub], Self[Blk], Self[Blk], entry? : Tid) -> Bool
+pub fn Term::sub_dominator_tids(Self[Sub], entry? : Tid) -> Map[Tid, @set.Set[Tid]]
 pub fn Term::sub_external_vars(Self[Sub], entry? : Tid) -> Array[Var]
 pub fn Term::sub_free_vars(Self[Sub]) -> Array[Var]
 pub fn Term::sub_has_edge(Self[Sub], Self[Blk], Self[Blk]) -> Bool
+pub fn Term::sub_immediate_dominator(Self[Sub], Self[Blk], entry? : Tid) -> Self[Blk]?
+pub fn Term::sub_immediate_dominator_tids(Self[Sub], entry? : Tid) -> Map[Tid, Tid]
 pub fn Term::sub_jmps(Self[Sub]) -> Array[Self[Jmp]]
 pub fn Term::sub_live_in_vars(Self[Sub], entry? : Tid) -> Array[Var]
 pub fn Term::sub_liveness(Self[Sub], entry? : Tid) -> Array[BlockLiveness]
@@ -545,6 +552,7 @@ pub fn Term::sub_reachable_blocks(Self[Sub], entry? : Tid) -> Array[Self[Blk]]
 pub fn Term::sub_resolved_call_tids(Self[Sub], resolve_indirect~ : (Exp) -> Array[Tid]) -> Array[Tid]
 pub fn Term::sub_reverse_postorder(Self[Sub], entry? : Tid) -> Array[Self[Blk]]
 pub fn Term::sub_ssa_free_vars(Self[Sub]) -> Array[Var]
+pub fn Term::sub_strictly_dominates(Self[Sub], Self[Blk], Self[Blk], entry? : Tid) -> Bool
 pub fn Term::sub_successor_blocks(Self[Sub], Self[Blk]) -> Array[Self[Blk]]
 pub fn Term::sub_symbol_names(Self[Sub]) -> Array[String]
 pub fn Term::subs(Self[Program]) -> Array[Self[Sub]]

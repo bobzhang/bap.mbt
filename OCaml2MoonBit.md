@@ -116,6 +116,12 @@ expressions. This preserves conditional and critical-edge behavior that would
 be lost by inserting all copies unconditionally at the end of a predecessor
 with multiple successors.
 
+For BAP IR control-flow algorithms, keep reusable graph algorithms in
+`graphlib` and expose term-layer wrappers over local block `Tid`s. Resolve an
+optional entry `Tid` against the subroutine's own block list before invoking
+dominance or frontier algorithms; a nonlocal entry should produce empty
+wrapper results instead of silently analyzing from an external or missing node.
+
 For BAP-style stub resolution, treat symbol names and aliases as an undirected
 graph and resolve by connected components. Link stubs only when a component has
 exactly one non-stub implementation; pairwise alias matching is too eager,

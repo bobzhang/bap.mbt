@@ -100,3 +100,92 @@ pub fn Term::sub_reachable_blocks(
 ) -> Array[Term[Blk]] {
   self.sub_reverse_postorder(entry?)
 }
+
+///|
+fn Term::sub_resolved_entry_tid(self : Term[Sub], entry : Tid?) -> Tid? {
+  match entry {
+    Some(tid) if self.find_blk(tid) is Some(_) => Some(tid)
+    Some(_) => None
+    None => self.entry_blk().map(term => term.tid())
+  }
+}
+
+///|
+pub fn Term::sub_dominator_tids(
+  self : Term[Sub],
+  entry? : Tid,
+) -> Map[Tid, Set[Tid]] {
+  match self.sub_resolved_entry_tid(entry) {
+    Some(tid) => self.sub_cfg().dominators(tid)
+    None => {}
+  }
+}
+
+///|
+pub fn Term::sub_immediate_dominator_tids(
+  self : Term[Sub],
+  entry? : Tid,
+) -> Map[Tid, Tid] {
+  match self.sub_resolved_entry_tid(entry) {
+    Some(tid) => self.sub_cfg().immediate_dominators(tid)
+    None => {}
+  }
+}
+
+///|
+pub fn Term::sub_dominance_frontier_tids(
+  self : Term[Sub],
+  entry? : Tid,
+) -> Map[Tid, Set[Tid]] {
+  match self.sub_resolved_entry_tid(entry) {
+    Some(tid) => self.sub_cfg().dominance_frontiers(tid)
+    None => {}
+  }
+}
+
+///|
+pub fn Term::sub_dominates(
+  self : Term[Sub],
+  dominator : Term[Blk],
+  block : Term[Blk],
+  entry? : Tid,
+) -> Bool {
+  match self.sub_dominator_tids(entry?).get(block.tid()) {
+    Some(dominators) => dominators.contains(dominator.tid())
+    None => false
+  }
+}
+
+///|
+pub fn Term::sub_strictly_dominates(
+  self : Term[Sub],
+  dominator : Term[Blk],
+  block : Term[Blk],
+  entry? : Tid,
+) -> Bool {
+  dominator.tid() != block.tid() && self.sub_dominates(dominator, block, entry?)
+}
+
+///|
+pub fn Term::sub_immediate_dominator(
+  self : Term[Sub],
+  block : Term[Blk],
+  entry? : Tid,
+) -> Term[Blk]? {
+  match self.sub_immediate_dominator_tids(entry?).get(block.tid()) {
+    Some(tid) => self.find_blk(tid)
+    None => None
+  }
+}
+
+///|
+pub fn Term::sub_dominance_frontier_blocks(
+  self : Term[Sub],
+  block : Term[Blk],
+  entry? : Tid,
+) -> Array[Term[Blk]] {
+  match self.sub_dominance_frontier_tids(entry?).get(block.tid()) {
+    Some(frontier) => self.blks().filter(blk => frontier.contains(blk.tid()))
+    None => []
+  }
+}

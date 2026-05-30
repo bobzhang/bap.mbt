@@ -81,3 +81,74 @@ test "ir graph helpers ignore unresolved and external successors" {
   assert_true(block_names(sub.sub_successor_blocks(start)) == ["@handler"])
   assert_true(block_names(sub.sub_predecessor_blocks(handler)) == ["@start"])
 }
+
+///|
+test "ir dominance helpers describe subroutine diamond cfgs" {
+  let entry = @types.Blk::create(tid=@types.Tid::for_name("entry"))
+  let left = @types.Blk::create(tid=@types.Tid::for_name("left"))
+  let right = @types.Blk::create(tid=@types.Tid::for_name("right"))
+  let join = @types.Blk::create(tid=@types.Tid::for_name("join"))
+  let exit = @types.Blk::create(tid=@types.Tid::for_name("exit"))
+  let dead = @types.Blk::create(tid=@types.Tid::for_name("dead"))
+  let entry = entry
+    .append_jmp(@types.Jmp::create_goto(@types.Label::direct(left.tid())))
+    .append_jmp(@types.Jmp::create_goto(@types.Label::direct(right.tid())))
+  let left = left.append_jmp(
+    @types.Jmp::create_goto(@types.Label::direct(join.tid())),
+  )
+  let right = right.append_jmp(
+    @types.Jmp::create_goto(@types.Label::direct(join.tid())),
+  )
+  let join = join.append_jmp(
+    @types.Jmp::create_goto(@types.Label::direct(exit.tid())),
+  )
+  let sub = @types.Sub::create(name="diamond", blks=[
+    entry, left, right, join, exit, dead,
+  ])
+
+  let doms = sub.sub_dominator_tids()
+  assert_true(doms[entry.tid()] == Set::from_array([entry.tid()]))
+  assert_true(doms[left.tid()] == Set::from_array([entry.tid(), left.tid()]))
+  assert_true(doms[right.tid()] == Set::from_array([entry.tid(), right.tid()]))
+  assert_true(doms[join.tid()] == Set::from_array([entry.tid(), join.tid()]))
+  assert_true(
+    doms[exit.tid()] == Set::from_array([entry.tid(), join.tid(), exit.tid()]),
+  )
+  assert_true(sub.sub_dominates(entry, join))
+  assert_true(sub.sub_strictly_dominates(entry, join))
+  assert_true(!sub.sub_strictly_dominates(join, join))
+  assert_true(!sub.sub_dominates(left, right))
+
+  let idoms = sub.sub_immediate_dominator_tids()
+  assert_true(!idoms.contains(entry.tid()))
+  assert_true(idoms[left.tid()] == entry.tid())
+  assert_true(idoms[right.tid()] == entry.tid())
+  assert_true(idoms[join.tid()] == entry.tid())
+  assert_true(idoms[exit.tid()] == join.tid())
+  match sub.sub_immediate_dominator(join) {
+    Some(block) => assert_true(block.name() == "@entry")
+    None => fail("expected join immediate dominator")
+  }
+  match sub.sub_immediate_dominator(exit) {
+    Some(block) => assert_true(block.name() == "@join")
+    None => fail("expected exit immediate dominator")
+  }
+
+  let frontiers = sub.sub_dominance_frontier_tids()
+  assert_true(frontiers[entry.tid()].is_empty())
+  assert_true(frontiers[left.tid()] == Set::from_array([join.tid()]))
+  assert_true(frontiers[right.tid()] == Set::from_array([join.tid()]))
+  assert_true(frontiers[join.tid()].is_empty())
+  assert_true(block_names(sub.sub_dominance_frontier_blocks(left)) == ["@join"])
+  assert_true(
+    block_names(sub.sub_dominance_frontier_blocks(right)) == ["@join"],
+  )
+
+  let missing = @types.Tid::for_name("missing")
+  assert_true(sub.sub_dominator_tids(entry=missing).is_empty())
+  assert_true(sub.sub_immediate_dominator_tids(entry=missing).is_empty())
+  assert_true(sub.sub_dominance_frontier_tids(entry=missing).is_empty())
+  assert_true(!sub.sub_dominates(entry, join, entry=missing))
+  assert_true(sub.sub_immediate_dominator(join, entry=missing) is None)
+  assert_true(sub.sub_dominance_frontier_blocks(left, entry=missing).is_empty())
+}

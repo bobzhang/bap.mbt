@@ -176,7 +176,7 @@ fn ogre_target_endian(target : @core_theory.Target) -> @bitvec.Endian {
 
 ///|
 fn OgreDoc::target(self : OgreDoc) -> @core_theory.Target {
-  match self.request_string("arch", "name") {
+  let mut target = match self.request_string("arch", "name") {
     Some(name) =>
       match @core_theory.find_target(name) {
         Some(target) => target
@@ -184,6 +184,44 @@ fn OgreDoc::target(self : OgreDoc) -> @core_theory.Target {
       }
     None => @core_theory.Target::unknown()
   }
+  match self.facts("bits") {
+    [fact, ..] =>
+      match ogre_fact_int(fact, "size") {
+        Ok(bits) => target = target.with_bits(bits)
+        Err(_) => ()
+      }
+    [] => ()
+  }
+  match self.request_bool("is-little-endian", "flag") {
+    Some(true) => target = target.with_endianness(LittleEndian)
+    Some(false) => target = target.with_endianness(BigEndian)
+    None => ()
+  }
+  match self.request_string("system", "name") {
+    Some(name) =>
+      match @core_theory.System::of_string(name) {
+        Some(system) => target = target.with_system(system)
+        None => ()
+      }
+    None => ()
+  }
+  match self.request_string("abi", "name") {
+    Some(name) =>
+      match @core_theory.Abi::of_string(name) {
+        Some(abi) => target = target.with_abi(abi)
+        None => ()
+      }
+    None => ()
+  }
+  match self.request_string("format", "name") {
+    Some(name) =>
+      match @core_theory.Filetype::of_string(name) {
+        Some(filetype) => target = target.with_filetype(filetype)
+        None => ()
+      }
+    None => ()
+  }
+  target
 }
 
 ///|

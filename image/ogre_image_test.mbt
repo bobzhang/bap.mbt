@@ -1,5 +1,9 @@
 ///|
 let raw_ogre_spec : String = "(declare arch (name str))" +
+  " (declare bits (size int))" +
+  " (declare format (name str))" +
+  " (declare system (name str))" +
+  " (declare abi (name str))" +
   " (declare entry-point (addr int))" +
   " (declare is-little-endian (flag bool))" +
   " (declare mapped (addr int) (size int) (off int))" +
@@ -10,6 +14,10 @@ let raw_ogre_spec : String = "(declare arch (name str))" +
   " (declare named-symbol (addr int) (name str))" +
   " (declare symbol-chunk (addr int) (size int) (root int))" +
   " (arch x86-64)" +
+  " (bits 64)" +
+  " (format elf)" +
+  " (system linux)" +
+  " (abi sysv)" +
   " (entry-point 4098)" +
   " (is-little-endian true)" +
   " (mapped 4096 4 1)" +
@@ -34,7 +42,14 @@ test "ogre image specs build image metadata" {
       assert_true(image.entry_point() == 4098UL)
       assert_true(image.endian() == LittleEndian)
       match image.target() {
-        Some(target) => assert_true(target.matches("x86_64"))
+        Some(target) => {
+          assert_true(target.matches("x86_64"))
+          assert_true(target.bits() == 64)
+          assert_true(target.endianness().to_string() == "little")
+          assert_true(target.system().to_string() == "linux")
+          assert_true(target.abi().to_string() == "sysv")
+          assert_true(target.filetype().to_string() == "elf")
+        }
         None => fail("expected target from arch fact")
       }
       let segments = image.segments()
@@ -53,6 +68,40 @@ test "ogre image specs build image metadata" {
       assert_true(symbols[0].addr() == 4097UL)
       assert_true(symbols[0].size() == 2)
       assert_true(symbols[0].is_function())
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+test "ogre image specs refine unknown targets from metadata facts" {
+  let spec = "(declare bits (size int))" +
+    " (declare format (name str))" +
+    " (declare system (name str))" +
+    " (declare abi (name str))" +
+    " (declare entry-point (addr int))" +
+    " (declare is-little-endian (flag bool))" +
+    " (bits 32)" +
+    " (format mach-o)" +
+    " (system macos)" +
+    " (abi system-v)" +
+    " (entry-point 0)" +
+    " (is-little-endian false)"
+  match @image.Image::of_ogre_string(b"", spec) {
+    Ok((image, warnings)) => {
+      assert_true(warnings.is_empty())
+      assert_true(image.endian() == BigEndian)
+      match image.target() {
+        Some(target) => {
+          assert_true(target.matches("unknown"))
+          assert_true(target.bits() == 32)
+          assert_true(target.endianness().to_string() == "big")
+          assert_true(target.system().to_string() == "darwin")
+          assert_true(target.abi().to_string() == "sysv")
+          assert_true(target.filetype().to_string() == "macho")
+        }
+        None => fail("expected target from metadata")
+      }
     }
     Err(reason) => fail(reason)
   }

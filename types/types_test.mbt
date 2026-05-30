@@ -55,6 +55,31 @@ test "translated BAP word concatenation preserves operand widths" {
 }
 
 ///|
+fn assert_word_extract(
+  source : @types.Word,
+  hi? : Int = -1,
+  lo? : Int = 0,
+  expected~ : @types.Word,
+) -> Unit raise {
+  assert_true(source.extract(hi~, lo~) == expected)
+}
+
+///|
+test "translated BAP word extraction follows bit numbering cases" {
+  let word = @types.Word::of_int(width=16, 0xDAD5)
+  assert_word_extract(word, lo=0xC, expected=@types.Word::of_int(width=4, 0xD))
+  assert_word_extract(word, lo=0x8, expected=@types.Word::of_int(width=8, 0xDA))
+  assert_word_extract(word, hi=0x7, expected=@types.Word::of_int(width=8, 0xD5))
+  assert_word_extract(word, hi=0x3, expected=@types.Word::of_int(width=4, 0x5))
+  assert_word_extract(
+    word,
+    hi=0xB,
+    lo=0x4,
+    expected=@types.Word::of_int(width=8, 0xAD),
+  )
+}
+
+///|
 fn byte_values(bytes : Bytes) -> Array[Int] {
   bytes.to_array().map(byte => byte.to_int())
 }

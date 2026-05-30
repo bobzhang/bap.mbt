@@ -36,6 +36,49 @@ test "bil pruning removes dead virtual assignments but preserves physical writes
 }
 
 ///|
+test "translated BAP pruning handles simple dead virtual regressions" {
+  let typ = @types.ValueType::Imm(8)
+  let always_alive = @types.Var::new(name="always_alive", typ~)
+  let could_be_dead = @types.Var::new(
+    name="could_be_dead",
+    typ~,
+    is_virtual=true,
+  )
+  let will_survive = @types.Var::new(name="will_survive", typ~, is_virtual=true)
+  let trailing_dead = @types.prune_dead_virtual_stmts([
+    Move(always_alive, Int(word8(0))),
+    Move(always_alive, Int(word8(1))),
+    Move(could_be_dead, BinOp(Plus, Var(always_alive), Int(word8(1)))),
+  ])
+  assert_true(
+    stmt_text(trailing_dead) ==
+    ["always_alive:imm8 := 0:8u", "always_alive:imm8 := 1:8u"],
+  )
+  let live_chain = @types.prune_dead_virtual_stmts([
+    Move(will_survive, Int(word8(1))),
+    Move(always_alive, BinOp(Plus, Var(will_survive), Int(word8(2)))),
+    Move(could_be_dead, UnOp(Not, Var(always_alive))),
+  ])
+  assert_true(
+    stmt_text(live_chain) ==
+    [
+      "%will_survive:imm8 := 1:8u", "always_alive:imm8 := (%will_survive:imm8 + 2:8u)",
+    ],
+  )
+  let reassigned = @types.prune_dead_virtual_stmts([
+    Move(could_be_dead, Int(word8(1))),
+    Move(always_alive, BinOp(Plus, Var(could_be_dead), Int(word8(2)))),
+    Move(could_be_dead, UnOp(Not, Var(always_alive))),
+  ])
+  assert_true(
+    stmt_text(reassigned) ==
+    [
+      "%could_be_dead:imm8 := 1:8u", "always_alive:imm8 := (%could_be_dead:imm8 + 2:8u)",
+    ],
+  )
+}
+
+///|
 test "bil pruning keeps branch condition dependencies" {
   let typ = @types.ValueType::Imm(8)
   let physical = @types.Var::new(name="physical", typ~)

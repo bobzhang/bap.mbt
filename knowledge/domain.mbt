@@ -127,6 +127,57 @@ pub fn Domain::string(name : Name) -> Domain[String] {
 }
 
 ///|
+fn[T : Eq] array_subset(lhs : Array[T], rhs : Array[T]) -> Bool {
+  lhs.all(item => rhs.contains(item))
+}
+
+///|
+fn[T : Eq] array_union(lhs : Array[T], rhs : Array[T]) -> Array[T] {
+  let result = []
+  for item in lhs {
+    if !result.contains(item) {
+      result.push(item)
+    }
+  }
+  for item in rhs {
+    if !result.contains(item) {
+      result.push(item)
+    }
+  }
+  result
+}
+
+///|
+pub fn[T : Eq] Domain::powerset(
+  name : Name,
+  inspect : (T) -> String,
+) -> Domain[Array[T]] {
+  let empty : Array[T] = []
+  Domain::new(
+    name~,
+    empty=Some(empty),
+    is_empty=(value : Array[T]) => value.is_empty(),
+    order=(lhs : Array[T], rhs : Array[T]) => {
+      let lhs_le_rhs = array_subset(lhs, rhs)
+      let rhs_le_lhs = array_subset(rhs, lhs)
+      if lhs_le_rhs && rhs_le_lhs {
+        Equal
+      } else if lhs_le_rhs {
+        Less
+      } else if rhs_le_lhs {
+        Greater
+      } else {
+        Incomparable
+      }
+    },
+    join=(lhs : Array[T], rhs : Array[T]) => Ok(array_union(lhs, rhs)),
+    inspect=(value : Array[T]) => {
+      "[\{[ for item in value => inspect(item) ].join(", ")}]"
+    },
+  )
+}
+
+///|
 pub fn[T] Domain::name(self : Domain[T]) -> Name {
   self.name
 }

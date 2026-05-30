@@ -30,6 +30,7 @@ pub fn[T] Domain::name(Self[T]) -> Name
 pub fn[T] Domain::new(name~ : Name, empty~ : T?, is_empty~ : (T) -> Bool, order~ : (T, T) -> PartialOrder, join~ : (T, T) -> Result[T, String], inspect~ : (T) -> String) -> Self[T]
 pub fn[T] Domain::optional(Self[T]) -> Self[T?]
 pub fn[T] Domain::order(Self[T], T, T) -> PartialOrder
+pub fn[T : Eq] Domain::powerset(Name, (T) -> String) -> Self[Array[T]]
 pub fn Domain::string(Name) -> Self[String]
 
 type FactTable[K, P]

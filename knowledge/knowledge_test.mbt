@@ -35,6 +35,37 @@ test "optional domains lift base order and joins" {
 }
 
 ///|
+test "translated BAP powerset domains join facts by union" {
+  let domain = @knowledge.Domain::powerset(
+    @knowledge.Name::create("aliases", pkg="test"),
+    value => value,
+  )
+  assert_true(domain.order([], ["main"]) == Less)
+  assert_true(domain.order(["main"], []) == Greater)
+  assert_true(domain.order(["main"], ["helper"]) == Incomparable)
+  assert_true(
+    domain.join(["main", "start"], ["main", "helper"]) ==
+    Ok(["main", "start", "helper"]),
+  )
+  inspect(domain.inspect(["main", "helper"]), content="[main, helper]")
+
+  let cls : @knowledge.Class[Unit, String] = @knowledge.Class::create(
+    name=@knowledge.Name::create("aliased-program", pkg="test"),
+    sort="unit",
+  )
+  let slot = cls.property(
+    name=@knowledge.Name::create("aliases", pkg="test"),
+    domain~,
+  )
+  let object = @knowledge.State::new().create(cls)
+  let facts = @knowledge.FactTable::new(slot)
+  assert_true(facts.collect(object) == Some([]))
+  assert_true(facts.provide(object, ["main", "main"]) == Ok(["main"]))
+  assert_true(facts.provide(object, ["entry", "main"]) == Ok(["main", "entry"]))
+  assert_true(facts.has(object))
+}
+
+///|
 test "classes slots and fact tables accumulate monotone facts" {
   let cls : @knowledge.Class[Unit, String] = @knowledge.Class::create(
     name=@knowledge.Name::create("program", pkg="test"),

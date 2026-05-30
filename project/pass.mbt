@@ -77,26 +77,90 @@ pub fn passes() -> Array[ProjectPass] {
 }
 
 ///|
-pub fn Project::run_pass(
-  self : Project,
+fn resolve_pass(
   name : String,
-) -> Result[Project, String] {
-  match find_pass(name) {
-    Some(pass) => pass.run(self)
-    None => Err("unknown project pass \{name}")
+  visiting : Array[String],
+  visited : Array[String],
+  order : Array[ProjectPass],
+) -> Result[Unit, String] {
+  if visited.contains(name) {
+    Ok(())
+  } else if visiting.contains(name) {
+    Err("cyclic project pass dependency at \{name}")
+  } else {
+    match find_pass(name) {
+      None => Err("unknown project pass \{name}")
+      Some(pass) => {
+        visiting.push(name)
+        for dep in pass.deps() {
+          match resolve_pass(dep, visiting, visited, order) {
+            Ok(_) => ()
+            Err(reason) => {
+              ignore(visiting.pop())
+              return Err(reason)
+            }
+          }
+        }
+        ignore(visiting.pop())
+        visited.push(name)
+        order.push(pass)
+        Ok(())
+      }
+    }
   }
 }
 
 ///|
-pub fn Project::run_autorun_passes(self : Project) -> Result[Project, String] {
-  let mut project = self
-  for pass in passes() {
-    if pass.autorun() {
-      match pass.run(project) {
-        Ok(next) => project = next
-        Err(reason) => return Err(reason)
-      }
+pub fn resolve_passes(
+  names : Array[String],
+) -> Result[Array[ProjectPass], String] {
+  let visiting = []
+  let visited = []
+  let order = []
+  for name in names {
+    match resolve_pass(name, visiting, visited, order) {
+      Ok(_) => ()
+      Err(reason) => return Err(reason)
     }
   }
-  Ok(project)
+  Ok(order)
+}
+
+///|
+pub fn Project::run_passes(
+  self : Project,
+  names : Array[String],
+) -> Result[Project, String] {
+  match resolve_passes(names) {
+    Ok(order) => {
+      let mut project = self
+      for pass in order {
+        match pass.run(project) {
+          Ok(next) => project = next
+          Err(reason) => return Err(reason)
+        }
+      }
+      Ok(project)
+    }
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+pub fn Project::run_pass(
+  self : Project,
+  name : String,
+) -> Result[Project, String] {
+  self.run_passes([name])
+}
+
+///|
+pub fn Project::run_autorun_passes(self : Project) -> Result[Project, String] {
+  let names = []
+  for pass in passes() {
+    if pass.autorun() {
+      names.push(pass.name())
+    }
+  }
+  self.run_passes(names)
 }

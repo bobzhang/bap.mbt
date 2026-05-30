@@ -15,6 +15,8 @@ pub fn passes() -> Array[ProjectPass]
 
 pub fn register_pass(ProjectPass) -> Result[Unit, String]
 
+pub fn resolve_passes(Array[String]) -> Result[Array[ProjectPass], String]
+
 // Errors
 
 // Types and methods
@@ -41,6 +43,7 @@ pub fn Project::memory(Self) -> @memory.MemMap[String]
 pub fn Project::program(Self) -> @types.Term[@types.Program]
 pub fn Project::run_autorun_passes(Self) -> Result[Self, String]
 pub fn Project::run_pass(Self, String) -> Result[Self, String]
+pub fn Project::run_passes(Self, Array[String]) -> Result[Self, String]
 pub fn Project::set(Self, String, String) -> Self
 pub fn Project::storage(Self) -> Map[String, String]
 pub fn Project::tag_memory(Self, @memory.Memory, String) -> Self

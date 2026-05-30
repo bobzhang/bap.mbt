@@ -96,6 +96,39 @@ test "ogre image from_spec builds image metadata" {
 }
 
 ///|
+test "ogre image specs expose relocation metadata" {
+  let spec = "(declare entry-point (addr int))" +
+    " (declare base-address (addr int))" +
+    " (declare relocation (fixup int) (addr int))" +
+    " (declare relative-relocation (fixup int))" +
+    " (declare external-reference (addr int) (name str))" +
+    " (entry-point 4096)" +
+    " (base-address 4096)" +
+    " (relocation 4100 8192)" +
+    " (relative-relocation 4104)" +
+    " (external-reference 4108 puts)"
+  match @image.Image::of_ogre_string(b"", spec) {
+    Ok((image, warnings)) => {
+      assert_true(warnings.is_empty())
+      assert_true(image.base_address() == Some(4096UL))
+      let relocations = image.relocations()
+      assert_true(relocations.length() == 2)
+      assert_true(relocations[0].fixup() == 4100UL)
+      assert_true(relocations[0].target() == Some(8192UL))
+      assert_true(!relocations[0].is_relative())
+      assert_true(relocations[1].fixup() == 4104UL)
+      assert_true(relocations[1].target() == None)
+      assert_true(relocations[1].is_relative())
+      let references = image.external_references()
+      assert_true(references.length() == 1)
+      assert_true(references[0].addr() == 4108UL)
+      assert_true(references[0].name() == "puts")
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "ogre image specs refine unknown targets from metadata facts" {
   let spec = "(declare bits (size int))" +
     " (declare format (name str))" +

@@ -100,6 +100,47 @@ test "image address size follows target metadata" {
 }
 
 ///|
+test "image exposes relocation metadata defensively" {
+  let segment = @image.Segment::create(
+    name=".raw",
+    endian=LittleEndian,
+    addr=0x1000UL,
+    b"\x00",
+  )
+  let relocations = [@image.Relocation::create(fixup=0x1004UL, target=0x2000UL)]
+  let references = [
+    @image.ExternalReference::create(addr=0x1008UL, name="puts"),
+  ]
+  let image = @image.Image::from_segments(
+    entry=0x1000UL,
+    endian=LittleEndian,
+    [segment],
+    relocations~,
+    external_references=references,
+    base_address=0x1000UL,
+  )
+  relocations.push(@image.Relocation::create(fixup=0x1010UL, relative=true))
+  references.push(@image.ExternalReference::create(addr=0x1018UL, name="exit"))
+  assert_true(image.base_address() == Some(0x1000UL))
+  assert_true(image.relocations().length() == 1)
+  assert_true(image.relocations()[0].fixup() == 0x1004UL)
+  assert_true(image.relocations()[0].target() == Some(0x2000UL))
+  assert_true(image.external_references().length() == 1)
+  assert_true(image.external_references()[0].name() == "puts")
+  let updated = image
+    .add_relocation(@image.Relocation::create(fixup=0x1010UL, relative=true))
+    .add_external_reference(
+      @image.ExternalReference::create(addr=0x1018UL, name="exit"),
+    )
+    .with_base_address(0x3000UL)
+  assert_true(image.base_address() == Some(0x1000UL))
+  assert_true(updated.base_address() == Some(0x3000UL))
+  assert_true(updated.relocations().length() == 2)
+  assert_true(updated.relocations()[1].is_relative())
+  assert_true(updated.external_references().length() == 2)
+}
+
+///|
 test "image symbol memory can span contiguous segment chunks" {
   let first = @image.Segment::create(
     name=".a",

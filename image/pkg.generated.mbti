@@ -27,19 +27,28 @@ pub fn register_builtin_backends() -> Result[Unit, String]
 // Errors
 
 // Types and methods
+type ExternalReference
+pub fn ExternalReference::addr(Self) -> UInt64
+pub fn ExternalReference::create(addr~ : UInt64, name~ : String) -> Self
+pub fn ExternalReference::name(Self) -> String
+
 type Image
+pub fn Image::add_external_reference(Self, ExternalReference) -> Self
+pub fn Image::add_relocation(Self, Relocation) -> Self
 pub fn Image::add_section(Self, Section) -> Self
 pub fn Image::add_segment(Self, Segment) -> Self
 pub fn Image::add_symbol(Self, Symbol) -> Self
 pub fn Image::addr_size(Self) -> Int
 pub fn Image::arch(Self) -> @core_theory.Target
-pub fn Image::create(entry~ : UInt64, endian~ : @bitvec.Endian, filename? : String, target? : @core_theory.Target, data? : Bytes, segments? : Array[Segment], sections? : Array[Section], symbols? : Array[Symbol], spec? : OgreDoc) -> Self
+pub fn Image::base_address(Self) -> UInt64?
+pub fn Image::create(entry~ : UInt64, endian~ : @bitvec.Endian, filename? : String, target? : @core_theory.Target, data? : Bytes, segments? : Array[Segment], sections? : Array[Section], symbols? : Array[Symbol], relocations? : Array[Relocation], external_references? : Array[ExternalReference], base_address? : UInt64, spec? : OgreDoc) -> Self
 pub fn Image::data(Self) -> Bytes
 pub fn Image::endian(Self) -> @bitvec.Endian
 pub fn Image::entry_point(Self) -> UInt64
+pub fn Image::external_references(Self) -> Array[ExternalReference]
 pub fn Image::filename(Self) -> String?
 pub fn Image::from_ogre(Bytes, OgreDoc, filename? : String, target? : @core_theory.Target) -> Result[(Self, Array[String]), String]
-pub fn Image::from_segments(entry~ : UInt64, endian~ : @bitvec.Endian, Array[Segment], sections? : Array[Section], symbols? : Array[Symbol], filename? : String, target? : @core_theory.Target, spec? : OgreDoc) -> Self
+pub fn Image::from_segments(entry~ : UInt64, endian~ : @bitvec.Endian, Array[Segment], sections? : Array[Section], symbols? : Array[Symbol], relocations? : Array[Relocation], external_references? : Array[ExternalReference], base_address? : UInt64, filename? : String, target? : @core_theory.Target, spec? : OgreDoc) -> Self
 pub fn Image::from_spec(Bytes, OgreDoc, filename? : String, target? : @core_theory.Target) -> Result[(Self, Array[String]), String]
 pub fn Image::memories_of_symbol(Self, Symbol) -> Array[@memory.Memory]?
 pub fn Image::memory(Self) -> @memory.MemMap[String]
@@ -53,6 +62,7 @@ pub fn Image::of_file(String, backend? : String) -> Result[(Self, Array[String])
 pub fn Image::of_file_for_filename(String, filename? : String) -> Result[(Self, Array[String]), String]
 pub fn Image::of_ogre_string(Bytes, String, filename? : String, target? : @core_theory.Target) -> Result[(Self, Array[String]), String]
 pub fn Image::of_string(String, backend? : String) -> Result[(Self, Array[String]), String]
+pub fn Image::relocations(Self) -> Array[Relocation]
 pub fn Image::sections(Self) -> Array[Section]
 pub fn Image::sections_of_segment(Self, Segment) -> Array[Section]
 pub fn Image::segment_of_symbol(Self, Symbol) -> Segment?
@@ -61,6 +71,7 @@ pub fn Image::spec(Self) -> OgreDoc
 pub fn Image::symbols(Self) -> Array[Symbol]
 pub fn Image::symbols_of_segment(Self, Segment) -> Array[Symbol]
 pub fn Image::target(Self) -> @core_theory.Target?
+pub fn Image::with_base_address(Self, UInt64) -> Self
 pub fn Image::words(Self, word_size~ : Int) -> @memory.MemMap[@types.Word]
 
 type ImageBackend
@@ -105,6 +116,12 @@ pub(all) enum OgreFieldType {
   OgreFloat
 } derive(Eq, @debug.Debug)
 pub fn OgreFieldType::to_string(Self) -> String
+
+type Relocation
+pub fn Relocation::create(fixup~ : UInt64, target? : UInt64, relative? : Bool) -> Self
+pub fn Relocation::fixup(Self) -> UInt64
+pub fn Relocation::is_relative(Self) -> Bool
+pub fn Relocation::target(Self) -> UInt64?
 
 type Section
 pub fn Section::addr(Self) -> UInt64

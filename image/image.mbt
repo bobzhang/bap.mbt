@@ -8,6 +8,9 @@ struct Image {
   segments_value : Array[Segment]
   sections_value : Array[Section]
   symbols_value : Array[Symbol]
+  relocations_value : Array[Relocation]
+  external_references_value : Array[ExternalReference]
+  base_address_value : UInt64?
   spec_value : OgreDoc?
 }
 
@@ -26,6 +29,9 @@ pub fn Image::create(
   segments? : Array[Segment],
   sections? : Array[Section],
   symbols? : Array[Symbol],
+  relocations? : Array[Relocation],
+  external_references? : Array[ExternalReference],
+  base_address? : UInt64,
   spec? : OgreDoc,
 ) -> Image {
   {
@@ -49,6 +55,15 @@ pub fn Image::create(
       Some(items) => items.copy()
       None => []
     },
+    relocations_value: match relocations {
+      Some(items) => items.copy()
+      None => []
+    },
+    external_references_value: match external_references {
+      Some(items) => items.copy()
+      None => []
+    },
+    base_address_value: base_address,
     spec_value: spec,
   }
 }
@@ -60,6 +75,9 @@ pub fn Image::from_segments(
   segments : Array[Segment],
   sections? : Array[Section],
   symbols? : Array[Symbol],
+  relocations? : Array[Relocation],
+  external_references? : Array[ExternalReference],
+  base_address? : UInt64,
   filename? : String,
   target? : @core_theory.Target,
   spec? : OgreDoc,
@@ -70,6 +88,9 @@ pub fn Image::from_segments(
     segments~,
     sections?,
     symbols?,
+    relocations?,
+    external_references?,
+    base_address?,
     filename?,
     target?,
     spec?,
@@ -210,6 +231,21 @@ pub fn Image::sections(self : Image) -> Array[Section] {
 ///|
 pub fn Image::symbols(self : Image) -> Array[Symbol] {
   self.symbols_value.copy()
+}
+
+///|
+pub fn Image::relocations(self : Image) -> Array[Relocation] {
+  self.relocations_value.copy()
+}
+
+///|
+pub fn Image::external_references(self : Image) -> Array[ExternalReference] {
+  self.external_references_value.copy()
+}
+
+///|
+pub fn Image::base_address(self : Image) -> UInt64? {
+  self.base_address_value
 }
 
 ///|
@@ -380,4 +416,26 @@ pub fn Image::add_symbol(self : Image, symbol : Symbol) -> Image {
   let symbols = self.symbols_value.copy()
   symbols.push(symbol)
   { ..self, symbols_value: symbols }
+}
+
+///|
+pub fn Image::add_relocation(self : Image, relocation : Relocation) -> Image {
+  let relocations = self.relocations_value.copy()
+  relocations.push(relocation)
+  { ..self, relocations_value: relocations }
+}
+
+///|
+pub fn Image::add_external_reference(
+  self : Image,
+  reference : ExternalReference,
+) -> Image {
+  let references = self.external_references_value.copy()
+  references.push(reference)
+  { ..self, external_references_value: references }
+}
+
+///|
+pub fn Image::with_base_address(self : Image, base_address : UInt64) -> Image {
+  { ..self, base_address_value: Some(base_address) }
 }

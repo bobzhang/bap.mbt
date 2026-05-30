@@ -54,6 +54,30 @@ fn ogre_fact_uint64(fact : OgreFact, field : String) -> Result[UInt64, String] {
 }
 
 ///|
+fn ogre_fact_uint64_field(
+  fact : OgreFact,
+  name : String,
+  positional : Int,
+) -> Result[UInt64, String] {
+  match fact.value(name) {
+    Some(_) => ogre_fact_uint64(fact, name)
+    None => ogre_fact_uint64(fact, positional.to_string())
+  }
+}
+
+///|
+fn ogre_fact_string_field(
+  fact : OgreFact,
+  name : String,
+  positional : Int,
+) -> Result[String, String] {
+  match fact.value(name) {
+    Some(_) => ogre_fact_string(fact, name)
+    None => ogre_fact_string(fact, positional.to_string())
+  }
+}
+
+///|
 fn ogre_fact_int(fact : OgreFact, field : String) -> Result[Int, String] {
   match ogre_fact_int64(fact, field) {
     Ok(value) => ogre_int64_as_int(value, "\{fact.attribute()}.\{field}")
@@ -468,50 +492,121 @@ fn OgreDoc::image_symbols(self : OgreDoc) -> Result[Array[Symbol], String] {
 }
 
 ///|
+fn OgreDoc::image_relocations(
+  self : OgreDoc,
+) -> Result[Array[Relocation], String] {
+  let relocations = []
+  for fact in self.facts("relocation") {
+    let fixup = match ogre_fact_uint64_field(fact, "fixup", 0) {
+      Ok(value) => value
+      Err(reason) => return Err(reason)
+    }
+    let target = match ogre_fact_uint64_field(fact, "addr", 1) {
+      Ok(value) => value
+      Err(reason) => return Err(reason)
+    }
+    relocations.push(Relocation::create(fixup~, target~))
+  }
+  for fact in self.facts("relative-relocation") {
+    let fixup = match ogre_fact_uint64_field(fact, "fixup", 0) {
+      Ok(value) => value
+      Err(reason) => return Err(reason)
+    }
+    relocations.push(Relocation::create(fixup~, relative=true))
+  }
+  Ok(relocations)
+}
+
+///|
+fn OgreDoc::image_external_references(
+  self : OgreDoc,
+) -> Result[Array[ExternalReference], String] {
+  let references = []
+  for fact in self.facts("external-reference") {
+    let addr = match ogre_fact_uint64_field(fact, "addr", 0) {
+      Ok(value) => value
+      Err(reason) => return Err(reason)
+    }
+    let name = match ogre_fact_string_field(fact, "name", 1) {
+      Ok(value) => value
+      Err(reason) => return Err(reason)
+    }
+    references.push(ExternalReference::create(addr~, name~))
+  }
+  Ok(references)
+}
+
+///|
+fn OgreDoc::image_base_address(self : OgreDoc) -> Result[UInt64?, String] {
+  match self.facts("base-address") {
+    [] => Ok(None)
+    [fact, ..] =>
+      match ogre_fact_uint64_field(fact, "addr", 0) {
+        Ok(value) => Ok(Some(value))
+        Err(reason) => Err(reason)
+      }
+  }
+}
+
+///|
 pub fn Image::from_ogre(
   data : Bytes,
   doc : OgreDoc,
   filename? : String,
   target? : @core_theory.Target,
 ) -> Result[(Image, Array[String]), String] {
-  match doc.request_uint64("entry-point", "addr") {
-    Err(reason) => Err(reason)
-    Ok(entry) => {
-      let selected_target = match target {
-        Some(value) => value
-        None => doc.target()
-      }
-      let endian = doc.image_endian(selected_target)
-      let warnings = []
-      match doc.image_segments(data, endian, warnings) {
-        Err(reason) => Err(reason)
-        Ok(segments) =>
-          match doc.image_sections(warnings) {
-            Err(reason) => Err(reason)
-            Ok(sections) =>
-              match doc.image_symbols() {
-                Err(reason) => Err(reason)
-                Ok(symbols) =>
-                  Ok(
-                    (
-                      Image::from_segments(
-                        entry~,
-                        endian~,
-                        segments,
-                        sections~,
-                        symbols~,
-                        filename?,
-                        target=selected_target,
-                        spec=doc,
-                      ),
-                      warnings,
-                    ),
-                  )
-              }
-          }
-      }
-    }
+  let entry = match doc.request_uint64("entry-point", "addr") {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
   }
+  let selected_target = match target {
+    Some(value) => value
+    None => doc.target()
+  }
+  let endian = doc.image_endian(selected_target)
+  let warnings = []
+  let segments = match doc.image_segments(data, endian, warnings) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let sections = match doc.image_sections(warnings) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let symbols = match doc.image_symbols() {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let relocations = match doc.image_relocations() {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let external_references = match doc.image_external_references() {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let base_address = match doc.image_base_address() {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  Ok(
+    (
+      Image::from_segments(
+        entry~,
+        endian~,
+        segments,
+        sections~,
+        symbols~,
+        relocations~,
+        external_references~,
+        base_address?,
+        filename?,
+        target=selected_target,
+        spec=doc,
+      ),
+      warnings,
+    ),
+  )
 }
 
 ///|

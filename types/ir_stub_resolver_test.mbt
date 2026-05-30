@@ -168,3 +168,48 @@ test "stub resolver redirects direct call targets" {
     None => fail("expected main subroutine")
   }
 }
+
+///|
+test "stub resolver honors link-only and no-link filters" {
+  let real_a = real_sub("filter-a", [])
+  let real_b = real_sub("filter-b", [])
+  let stub_a = stub_sub("stub-a", ["filter-a"])
+  let stub_b = stub_sub("stub-b", ["filter-b"])
+  let program = @types.Program::create(subs=[real_a, real_b, stub_a, stub_b])
+
+  let only_a = program.program_stub_links(link_only=["filter-a"])
+  assert_true(stub_link_count(only_a) == 1)
+  assert_stub_link(only_a, stub_a, real_a)
+  assert_true(only_a.get(stub_b.tid()) is None)
+
+  let skip_a = program.program_stub_links(no_link=["filter-a"])
+  assert_true(stub_link_count(skip_a) == 1)
+  assert_true(skip_a.get(stub_a.tid()) is None)
+  assert_stub_link(skip_a, stub_b, real_b)
+
+  let call_a = @types.Jmp::create_call(
+    @types.Call::create(target=@types.Label::direct(stub_a.tid())),
+  )
+  let call_b = @types.Jmp::create_call(
+    @types.Call::create(target=@types.Label::direct(stub_b.tid())),
+  )
+  let blk = @types.Blk::create(jmps=[call_a, call_b])
+  let main = @types.Sub::create(name="filter-main", blks=[blk])
+  let call_program = @types.Program::create(subs=[
+    main, real_a, real_b, stub_a, stub_b,
+  ])
+  let resolved = call_program.program_resolve_stub_calls(link_only=["filter-a"])
+  match resolved.find_sub(main.tid()) {
+    Some(resolved_main) => {
+      let jmps = resolved_main.blks()[0].jmps()
+      match (jmps[0].kind(), jmps[1].kind()) {
+        (JmpCall(first), JmpCall(second)) => {
+          assert_true(first.target == Direct(real_a.tid()))
+          assert_true(second.target == Direct(stub_b.tid()))
+        }
+        _ => fail("expected direct calls")
+      }
+    }
+    None => fail("expected main subroutine")
+  }
+}

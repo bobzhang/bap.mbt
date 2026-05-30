@@ -120,7 +120,8 @@ For BAP-style stub resolution, treat symbol names and aliases as an undirected
 graph and resolve by connected components. Link stubs only when a component has
 exactly one non-stub implementation; pairwise alias matching is too eager,
 because another alias edge can pull a second implementation into the same
-component and make the whole group ambiguous.
+component and make the whole group ambiguous. Apply `link_only`/`no_link` style
+filters to each subroutine's full name-or-alias set before building the graph.
 
 For BAP BIL helper predicates, expression references and statement references
 are close to free-variable queries, but assignment lhs variables are definitions

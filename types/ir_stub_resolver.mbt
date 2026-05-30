@@ -123,6 +123,31 @@ fn stub_alias_graph(subs : Array[Term[Sub]]) -> Map[String, Array[String]] {
 }
 
 ///|
+fn text_intersects(left : Array[String], right : Array[String]) -> Bool {
+  left.any(item => right.contains(item))
+}
+
+///|
+fn stub_should_link(
+  sub : Term[Sub],
+  link_only : Array[String],
+  no_link : Array[String],
+) -> Bool {
+  let symbols = sub.sub_symbol_names()
+  !text_intersects(symbols, no_link) &&
+  (link_only.is_empty() || text_intersects(symbols, link_only))
+}
+
+///|
+fn linkable_stub_subs(
+  subs : Array[Term[Sub]],
+  link_only : Array[String],
+  no_link : Array[String],
+) -> Array[Term[Sub]] {
+  subs.filter(sub => stub_should_link(sub, link_only, no_link))
+}
+
+///|
 fn stub_components(graph : Map[String, Array[String]]) -> Array[Array[String]] {
   let seen : Map[String, Bool] = {}
   let components = []
@@ -191,8 +216,22 @@ fn link_stub_component(
 }
 
 ///|
-pub fn Term::program_stub_links(self : Term[Program]) -> Map[Tid, Tid] {
-  let subs = self.subs()
+pub fn Term::program_stub_links(
+  self : Term[Program],
+  link_only? : Array[String],
+  no_link? : Array[String],
+) -> Map[Tid, Tid] {
+  let subs = linkable_stub_subs(
+    self.subs(),
+    match link_only {
+      Some(items) => items
+      None => []
+    },
+    match no_link {
+      Some(items) => items
+      None => []
+    },
+  )
   let graph = stub_alias_graph(subs)
   let links : Map[Tid, Tid] = {}
   for component in stub_components(graph) {
@@ -235,8 +274,12 @@ fn resolve_stub_jmp_kind(kind : JmpKind, links : Map[Tid, Tid]) -> JmpKind {
 }
 
 ///|
-pub fn Term::program_resolve_stub_calls(self : Term[Program]) -> Term[Program] {
-  let links = self.program_stub_links()
+pub fn Term::program_resolve_stub_calls(
+  self : Term[Program],
+  link_only? : Array[String],
+  no_link? : Array[String],
+) -> Term[Program] {
+  let links = self.program_stub_links(link_only?, no_link?)
   self.with_payload({
     subs: self
     .subs()

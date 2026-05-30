@@ -37,9 +37,9 @@ let cls : @knowledge.Class[Unit, String] =
 ```
 
 MoonBit may warn on identifiers reserved for future use, including `package`,
-`declare`, `define`, `var`, and `alias`. In ports, prefer nearby names such as
-`pkg`, `create`, `find_var`, and `alias_name` unless preserving the OCaml name is
-worth the warning.
+`declare`, `define`, `var`, `guard`, and `alias`. In ports, prefer nearby names
+such as `pkg`, `create`, `find_var`, `flag`, and `alias_name` unless preserving
+the OCaml name is worth the warning.
 
 Top-level mutable counters should use a `Ref`, e.g. `let counter : Ref[Int] =
 Ref(0)`. Top-level `let mut` is not accepted.

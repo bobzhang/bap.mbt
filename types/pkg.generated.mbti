@@ -98,6 +98,11 @@ pub(all) enum BlkElt {
   JmpElt(Term[Jmp])
 }
 
+type BlockLiveness
+pub fn BlockLiveness::block(Self) -> Term[Blk]
+pub fn BlockLiveness::live_in(Self) -> Array[Var]
+pub fn BlockLiveness::live_out(Self) -> Array[Var]
+
 pub(all) struct Call {
   target : Label
   return_label : Label?
@@ -222,7 +227,9 @@ pub fn Term::arg_lhs(Self[Arg]) -> Var
 pub fn Term::arg_rhs(Self[Arg]) -> Exp
 pub fn Term::args(Self[Sub]) -> Array[Self[Arg]]
 pub fn[T] Term::attrs(Self[T]) -> Map[String, String]
+pub fn Term::blk_defined_vars(Self[Blk]) -> Array[Var]
 pub fn Term::blk_free_vars(Self[Blk]) -> Array[Var]
+pub fn Term::blk_phi_edge_free_vars(Self[Blk], Tid) -> Array[Var]
 pub fn Term::blk_successor_tids(Self[Blk]) -> Array[Tid]
 pub fn Term::blks(Self[Sub]) -> Array[Self[Blk]]
 pub fn[T] Term::clone(Self[T]) -> Self[T]
@@ -269,6 +276,7 @@ pub fn[T] Term::name(Self[T]) -> String
 pub fn Term::next_def(Self[Blk], Tid) -> Self[Def]?
 pub fn Term::nth_def(Self[Blk], Int) -> Self[Def]?
 pub fn[T] Term::payload(Self[T]) -> T
+pub fn Term::phi_edge_free_vars(Self[Phi], Tid) -> Array[Var]
 pub fn Term::phi_free_vars(Self[Phi]) -> Array[Var]
 pub fn Term::phi_lhs(Self[Phi]) -> Var
 pub fn Term::phis(Self[Blk]) -> Array[Self[Phi]]
@@ -291,6 +299,7 @@ pub fn Term::sub_cfg(Self[Sub]) -> @graphlib.Graph[Tid, Tid]
 pub fn Term::sub_direct_call_tids(Self[Sub]) -> Array[Tid]
 pub fn Term::sub_free_vars(Self[Sub]) -> Array[Var]
 pub fn Term::sub_has_edge(Self[Sub], Self[Blk], Self[Blk]) -> Bool
+pub fn Term::sub_liveness(Self[Sub], entry? : Tid) -> Array[BlockLiveness]
 pub fn Term::sub_name(Self[Sub]) -> String
 pub fn Term::sub_predecessor_blocks(Self[Sub], Self[Blk]) -> Array[Self[Blk]]
 pub fn Term::sub_reachable_blocks(Self[Sub], entry? : Tid) -> Array[Self[Blk]]

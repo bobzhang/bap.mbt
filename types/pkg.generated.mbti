@@ -285,8 +285,12 @@ pub fn Term::program_callees(Self[Program], Self[Sub]) -> Array[Tid]
 pub fn Term::program_callers(Self[Program], Self[Sub]) -> Array[Tid]
 pub fn Term::program_callgraph(Self[Program]) -> @graphlib.Graph[Tid, Array[Self[Jmp]]]
 pub fn Term::program_free_vars(Self[Program]) -> Array[Var]
+pub fn Term::program_resolved_callees(Self[Program], Self[Sub], resolve_indirect~ : (Exp) -> Array[Tid]) -> Array[Tid]
+pub fn Term::program_resolved_callers(Self[Program], Self[Sub], resolve_indirect~ : (Exp) -> Array[Tid]) -> Array[Tid]
+pub fn Term::program_resolved_callgraph(Self[Program], resolve_indirect~ : (Exp) -> Array[Tid]) -> @graphlib.Graph[Tid, Array[Self[Jmp]]]
 pub fn Term::remove_def(Self[Blk], Tid) -> Self[Blk]
 pub fn Term::remove_phi(Self[Phi], Tid) -> Self[Phi]
+pub fn Term::resolved_call_targets(Self[Jmp], resolve_indirect~ : (Exp) -> Array[Tid]) -> Array[Tid]
 pub fn Term::rhs(Self[Def]) -> Exp
 pub fn[T] Term::same(Self[T], Self[T]) -> Bool
 pub fn Term::select(Self[Phi], Tid) -> Exp?
@@ -303,6 +307,7 @@ pub fn Term::sub_liveness(Self[Sub], entry? : Tid) -> Array[BlockLiveness]
 pub fn Term::sub_name(Self[Sub]) -> String
 pub fn Term::sub_predecessor_blocks(Self[Sub], Self[Blk]) -> Array[Self[Blk]]
 pub fn Term::sub_reachable_blocks(Self[Sub], entry? : Tid) -> Array[Self[Blk]]
+pub fn Term::sub_resolved_call_tids(Self[Sub], resolve_indirect~ : (Exp) -> Array[Tid]) -> Array[Tid]
 pub fn Term::sub_reverse_postorder(Self[Sub], entry? : Tid) -> Array[Self[Blk]]
 pub fn Term::sub_successor_blocks(Self[Sub], Self[Blk]) -> Array[Self[Blk]]
 pub fn Term::subs(Self[Program]) -> Array[Self[Sub]]

@@ -73,3 +73,76 @@ test "call accessors expose target and return labels" {
   assert_true(call.return_label() == Some(return_label))
   assert_true(call.with_noreturn().return_label() is None)
 }
+
+///|
+test "program callgraph can resolve indirect call targets" {
+  let typ = @types.ValueType::Imm(32)
+  let dispatch = @types.Var::new(name="dispatch", typ~)
+  let main_tid = @types.Tid::for_name("main-indirect")
+  let fast_tid = @types.Tid::for_name("fast")
+  let slow_tid = @types.Tid::for_name("slow")
+  let direct_tid = @types.Tid::for_name("direct")
+  let direct = @types.Sub::create(name="direct", tid=direct_tid)
+  let fast = @types.Sub::create(name="fast", tid=fast_tid)
+  let slow = @types.Sub::create(name="slow", tid=slow_tid)
+  let dispatch_exp : @types.Exp = Var(dispatch)
+  let indirect_call = @types.Jmp::create_call(
+    @types.Call::create(target=@types.Label::indirect(dispatch_exp)),
+  )
+  let direct_call = @types.Jmp::create_call(
+    @types.Call::create(target=@types.Label::direct(direct_tid)),
+  )
+  let main = @types.Sub::create(
+    name="main",
+    blks=[@types.Blk::create(jmps=[indirect_call, direct_call])],
+    tid=main_tid,
+  )
+  let resolver = exp => {
+    if exp == dispatch_exp {
+      [fast_tid, slow_tid]
+    } else {
+      []
+    }
+  }
+  assert_true(
+    indirect_call.resolved_call_targets(resolve_indirect=resolver) ==
+    [fast_tid, slow_tid],
+  )
+  assert_true(
+    direct_call.resolved_call_targets(resolve_indirect=resolver) == [direct_tid],
+  )
+  assert_true(
+    main.sub_resolved_call_tids(resolve_indirect=resolver).length() == 3,
+  )
+  let program = @types.Program::create(subs=[main, direct, fast, slow])
+  let graph = program.program_resolved_callgraph(resolve_indirect=resolver)
+  assert_true(graph.node_count() == 4)
+  assert_true(graph.edge_count() == 3)
+  match graph.edge(main_tid, fast_tid) {
+    Some(edge) => {
+      assert_true(edge.label.length() == 1)
+      assert_true(edge.label[0].same(indirect_call))
+    }
+    None => fail("expected resolved fast edge")
+  }
+  match graph.edge(main_tid, slow_tid) {
+    Some(edge) => assert_true(edge.label[0].same(indirect_call))
+    None => fail("expected resolved slow edge")
+  }
+  match graph.edge(main_tid, direct_tid) {
+    Some(edge) => assert_true(edge.label[0].same(direct_call))
+    None => fail("expected direct edge")
+  }
+  let callees = program.program_resolved_callees(
+    main,
+    resolve_indirect=resolver,
+  )
+  assert_true(callees.length() == 3)
+  assert_true(contains_tid(callees, direct_tid))
+  assert_true(contains_tid(callees, fast_tid))
+  assert_true(contains_tid(callees, slow_tid))
+  assert_true(
+    program.program_resolved_callers(fast, resolve_indirect=resolver) ==
+    [main_tid],
+  )
+}

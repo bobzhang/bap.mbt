@@ -80,6 +80,16 @@ fn project_reconstructor_has_incoming_edge(
 }
 
 ///|
+fn project_reconstructor_add_start(
+  starts : Array[@memory.Memory],
+  block : @memory.Memory,
+) -> Unit {
+  if !project_reconstructor_group_contains(starts, block) {
+    starts.push(block)
+  }
+}
+
+///|
 fn project_reconstructor_reachable_blocks(
   blocks : Array[@memory.Memory],
   edges : Array[ProjectDisassemblyEdge],
@@ -130,11 +140,18 @@ fn project_reconstructor_unassigned_reachable_blocks(
 fn project_reconstructor_default_groups(
   blocks : Array[@memory.Memory],
   edges : Array[ProjectDisassemblyEdge],
+  roots : Array[UInt64],
 ) -> Array[Array[@memory.Memory]] {
   let starts : Array[@memory.Memory] = []
+  for root in roots {
+    match project_reconstructor_find_block_start(blocks, root) {
+      Some(index) => project_reconstructor_add_start(starts, blocks[index])
+      None => ()
+    }
+  }
   for block in blocks {
     if !project_reconstructor_has_incoming_edge(blocks, edges, block) {
-      starts.push(block)
+      project_reconstructor_add_start(starts, block)
     }
   }
   if starts.is_empty() && !blocks.is_empty() {
@@ -144,11 +161,14 @@ fn project_reconstructor_default_groups(
   let assigned : Array[@memory.Memory] = []
   let groups : Array[Array[@memory.Memory]] = []
   for start in starts {
-    let group = project_reconstructor_unassigned_reachable_blocks(
-      blocks, edges, assigned, start,
-    )
+    let group = project_reconstructor_reachable_blocks(blocks, edges, start)
     if !group.is_empty() {
       groups.push(group)
+      for block in group {
+        if !project_reconstructor_group_contains(assigned, block) {
+          assigned.push(block)
+        }
+      }
     }
   }
   let remaining = blocks.copy()
@@ -269,6 +289,7 @@ pub fn ProjectReconstructor::default() -> ProjectReconstructor {
     let groups = project_reconstructor_default_groups(
       blocks,
       project.disassembly().edges(),
+      project.rooter().roots(),
     )
     let subroutines : Array[@types.Term[@types.Sub]] = []
     for group in groups {

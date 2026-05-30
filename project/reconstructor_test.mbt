@@ -106,6 +106,64 @@ test "project default reconstructor groups blocks by reachable disassembly edges
 }
 
 ///|
+test "project default reconstructor seeds groups from known function roots" {
+  let target = @core_theory.Target::unknown()
+  let entry = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x6100UL,
+    b"\x01",
+  )
+  let body = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x6110UL,
+    b"\x02",
+  )
+  let exit = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x6120UL,
+    b"\x03",
+  )
+  let disassembly = @project.ProjectDisassemblyState::empty()
+    .add_block(body)
+    .add_block(exit)
+    .add_block(entry)
+    .add_edge(
+      @project.ProjectDisassemblyEdge::create(
+        source=0x6100UL,
+        target=0x6110UL,
+        kind=FallEdge,
+      ),
+    )
+    .add_edge(
+      @project.ProjectDisassemblyEdge::create(
+        source=0x6110UL,
+        target=0x6120UL,
+        kind=FallEdge,
+      ),
+    )
+  let project = @project.Project::empty(target)
+    .with_symbols([
+      @image.Symbol::create(name="main", addr=0x6100UL, is_function=true),
+      @image.Symbol::create(name="helper", addr=0x6110UL, is_function=true),
+    ])
+    .with_disassembly(disassembly)
+  match project.reconstruct() {
+    Ok(reconstructed) => {
+      let subs = reconstructed.state().subroutines()
+      assert_true(subs.length() == 2)
+      assert_true(subs[0].sub_name() == "main")
+      assert_true(subs[0].blks().length() == 3)
+      assert_true(subs[0].sub_has_edge(subs[0].blks()[0], subs[0].blks()[1]))
+      assert_true(subs[0].sub_has_edge(subs[0].blks()[1], subs[0].blks()[2]))
+      assert_true(subs[1].sub_name() == "helper")
+      assert_true(subs[1].blks().length() == 2)
+      assert_true(subs[1].sub_has_edge(subs[1].blks()[0], subs[1].blks()[1]))
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project default reconstructor groups unrooted cyclic components" {
   let target = @core_theory.Target::unknown()
   let first = @memory.Memory::from_bytes(

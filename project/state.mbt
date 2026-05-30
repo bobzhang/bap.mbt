@@ -119,6 +119,21 @@ fn project_disassembly_dedup_edges(
 }
 
 ///|
+fn project_disassembly_edge_touches_block(
+  edge : ProjectDisassemblyEdge,
+  block : @memory.Memory,
+) -> Bool {
+  if block.contains(edge.source()) {
+    true
+  } else {
+    match edge.target() {
+      Some(target) => block.contains(target)
+      None => false
+    }
+  }
+}
+
+///|
 pub fn ProjectDisassemblyEdgeKind::to_string(
   self : ProjectDisassemblyEdgeKind,
 ) -> String {
@@ -361,6 +376,24 @@ pub fn ProjectDisassemblyState::add_block(
 }
 
 ///|
+pub fn ProjectDisassemblyState::remove_block(
+  self : ProjectDisassemblyState,
+  block : @memory.Memory,
+) -> ProjectDisassemblyState {
+  {
+    blocks_value: self.blocks_value.filter(existing => {
+      !project_disassembly_same_block(existing, block)
+    }),
+    instructions_value: self.instructions_value.filter(instruction => {
+      !block.dominates(instruction.memory())
+    }),
+    edges_value: self.edges_value.filter(edge => {
+      !project_disassembly_edge_touches_block(edge, block)
+    }),
+  }
+}
+
+///|
 pub fn ProjectDisassemblyState::with_instructions(
   self : ProjectDisassemblyState,
   instructions : Array[ProjectDisassemblyInstruction],
@@ -394,6 +427,19 @@ pub fn ProjectDisassemblyState::add_instruction(
 }
 
 ///|
+pub fn ProjectDisassemblyState::remove_instruction(
+  self : ProjectDisassemblyState,
+  instruction : ProjectDisassemblyInstruction,
+) -> ProjectDisassemblyState {
+  {
+    ..self,
+    instructions_value: self.instructions_value.filter(existing => {
+      !project_disassembly_same_instruction(existing, instruction)
+    }),
+  }
+}
+
+///|
 pub fn ProjectDisassemblyState::add_edge(
   self : ProjectDisassemblyState,
   edge : ProjectDisassemblyEdge,
@@ -404,6 +450,19 @@ pub fn ProjectDisassemblyState::add_edge(
   let edges = self.edges_value.copy()
   edges.push(edge)
   { ..self, edges_value: edges }
+}
+
+///|
+pub fn ProjectDisassemblyState::remove_edge(
+  self : ProjectDisassemblyState,
+  edge : ProjectDisassemblyEdge,
+) -> ProjectDisassemblyState {
+  {
+    ..self,
+    edges_value: self.edges_value.filter(existing => {
+      !project_disassembly_same_edge(existing, edge)
+    }),
+  }
 }
 
 ///|

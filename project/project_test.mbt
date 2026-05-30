@@ -349,6 +349,63 @@ test "project disassembly instructions replace by memory and support lookup" {
 }
 
 ///|
+test "project disassembly state removes blocks instructions and edges" {
+  let block = raw_segment().memory()
+  let other = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x2000UL,
+    b"\x03",
+  )
+  match block.view(words=1) {
+    Ok(first_byte) => {
+      let instruction = @project.ProjectDisassemblyInstruction::create(
+        first_byte,
+        assembly="head",
+      )
+      let other_instruction = @project.ProjectDisassemblyInstruction::create(
+        other,
+        assembly="other",
+      )
+      let edge = @project.ProjectDisassemblyEdge::create(
+        source=0x1000UL,
+        target=0x1001UL,
+        kind=FallEdge,
+      )
+      let other_edge = @project.ProjectDisassemblyEdge::create(
+        source=0x2000UL,
+        target=0x2000UL,
+        kind=JumpEdge,
+      )
+      let state = @project.ProjectDisassemblyState::empty()
+        .add_block(block)
+        .add_block(other)
+        .add_instruction(instruction)
+        .add_instruction(other_instruction)
+        .add_edge(edge)
+        .add_edge(other_edge)
+      let without_edge = state.remove_edge(edge)
+      assert_true(without_edge.edge_count() == 1)
+      assert_true(!without_edge.has_edge(edge))
+      assert_true(without_edge.has_edge(other_edge))
+      let without_instruction = state.remove_instruction(instruction)
+      assert_true(without_instruction.instruction_count() == 1)
+      assert_true(without_instruction.instruction_at(0x1000UL) is None)
+      assert_true(without_instruction.instruction_at(0x2000UL) is Some(_))
+      let without_block = state.remove_block(block)
+      assert_true(without_block.block_count() == 1)
+      assert_true(!without_block.has_block(block))
+      assert_true(without_block.has_block(other))
+      assert_true(without_block.instruction_count() == 1)
+      assert_true(without_block.instruction_at(0x1000UL) is None)
+      assert_true(without_block.edge_count() == 1)
+      assert_true(!without_block.has_edge(edge))
+      assert_true(without_block.has_edge(other_edge))
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project maps programs and stores libraries" {
   let target = @core_theory.Target::unknown()
   let sub = @types.Sub::create(name="main")

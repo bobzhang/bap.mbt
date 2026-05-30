@@ -312,8 +312,87 @@ pub fn Word::truncate(
 }
 
 ///|
+let max_int_as_uint64 : UInt64 = 0x7fffffff
+
+///|
+let min_int_value : Int64 = -0x80000000L
+
+///|
+let max_int_value : Int64 = 0x7fffffffL
+
+///|
+fn word_low_mask(width : Int) -> UInt64 {
+  if width <= 0 {
+    0
+  } else if width >= 64 {
+    UInt64::lnot(0)
+  } else {
+    ((1 : UInt64) << width) - 1
+  }
+}
+
+///|
+fn Word::word_unsigned_bits64(self : Word) -> UInt64 raise @bitvec.BitVecError {
+  self.bits_value.to_uint64()
+}
+
+///|
+fn Word::signed_int64_value(self : Word) -> Int64 raise @bitvec.BitVecError {
+  let raw = self.word_unsigned_bits64()
+  if self.width() >= 64 || !self.msb() {
+    raw.reinterpret_as_int64()
+  } else {
+    let mask = word_low_mask(self.width())
+    (raw | UInt64::lnot(mask)).reinterpret_as_int64()
+  }
+}
+
+///|
 pub fn Word::to_uint64(self : Word) -> UInt64 raise @bitvec.BitVecError {
   self.bits_value.to_uint64()
+}
+
+///|
+pub fn Word::to_int64(self : Word) -> Int64 raise @bitvec.BitVecError {
+  if self.signed_value {
+    self.signed_int64_value()
+  } else {
+    self.word_unsigned_bits64().reinterpret_as_int64()
+  }
+}
+
+///|
+pub fn Word::to_int32(self : Word) -> Int raise @bitvec.BitVecError {
+  if self.signed_value {
+    let value = self.signed_int64_value()
+    if value < min_int_value || value > max_int_value {
+      raise InvalidWidth(self.width())
+    }
+    value.to_int()
+  } else {
+    let raw = self.word_unsigned_bits64()
+    if raw > 0xffffffff {
+      raise InvalidWidth(self.width())
+    }
+    raw.to_int()
+  }
+}
+
+///|
+pub fn Word::to_int(self : Word) -> Int raise @bitvec.BitVecError {
+  if self.signed_value {
+    let value = self.signed_int64_value()
+    if value < min_int_value || value > max_int_value {
+      raise InvalidWidth(self.width())
+    }
+    value.to_int()
+  } else {
+    let raw = self.word_unsigned_bits64()
+    if raw > max_int_as_uint64 {
+      raise InvalidWidth(self.width())
+    }
+    raw.to_int()
+  }
 }
 
 ///|

@@ -454,6 +454,9 @@ pub fn Word::sub(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::to_bitvec(Self) -> @bitvec.BitVec
 pub fn Word::to_bytes(Self, endian~ : @bitvec.Endian) -> Bytes
 pub fn Word::to_hex(Self, prefix? : Bool) -> String
+pub fn Word::to_int(Self) -> Int raise @bitvec.BitVecError
+pub fn Word::to_int32(Self) -> Int raise @bitvec.BitVecError
+pub fn Word::to_int64(Self) -> Int64 raise @bitvec.BitVecError
 pub fn Word::to_string(Self) -> String
 pub fn Word::to_uint64(Self) -> UInt64 raise @bitvec.BitVecError
 pub fn Word::truncate(Self, width~ : Int) -> Self raise @bitvec.BitVecError

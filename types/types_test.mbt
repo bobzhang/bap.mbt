@@ -198,6 +198,45 @@ test "word signedness predicates match BAP validation cases" {
 }
 
 ///|
+test "word integer conversions follow BAP signedness" {
+  let x = @types.Word::of_int(width=8, -6)
+  assert_true(x.to_int() == 250)
+  assert_true(x.signed().to_int() == -6)
+  assert_true(x.to_int32() == 250)
+  assert_true(x.signed().to_int32() == -6)
+  assert_true(x.to_int64() == 250L)
+  assert_true(x.signed().to_int64() == -6L)
+  let all32 = @types.Word::of_uint64(width=32, 0xffffffff)
+  assert_true(all32.to_int32() == -1)
+  try all32.to_int() catch {
+    InvalidWidth(_) => ()
+    _ => fail("expected InvalidWidth")
+  } noraise {
+    _ => fail("expected InvalidWidth")
+  }
+  let signed_min32 = @types.Word::of_uint64(width=32, 0x80000000).signed()
+  assert_true(signed_min32.to_int() == 0x80000000)
+  assert_true(signed_min32.to_int32() == 0x80000000)
+  assert_true(signed_min32.to_int64() == -2147483648L)
+  let all64 = @types.Word::of_uint64(width=64, 0xffffffffffffffff)
+  assert_true(all64.to_int64() == -1L)
+  try all64.to_int32() catch {
+    InvalidWidth(_) => ()
+    _ => fail("expected InvalidWidth")
+  } noraise {
+    _ => fail("expected InvalidWidth")
+  }
+  assert_true(all64.signed().to_int32() == -1)
+  let signed_min64 = @types.Word::of_uint64(width=64, 0x8000000000000000).signed()
+  try signed_min64.to_int32() catch {
+    InvalidWidth(_) => ()
+    _ => fail("expected InvalidWidth")
+  } noraise {
+    _ => fail("expected InvalidWidth")
+  }
+}
+
+///|
 test "value types and variables keep BAP-visible metadata" {
   let typ = @types.ValueType::Imm(8)
   let physical = @types.Var::new(name="r0", typ~)

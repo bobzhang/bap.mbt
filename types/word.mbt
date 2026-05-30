@@ -118,6 +118,32 @@ pub fn Word::mul(self : Word, other : Word) -> Word raise @bitvec.BitVecError {
 }
 
 ///|
+pub fn Word::div(self : Word, other : Word) -> Word raise @bitvec.BitVecError {
+  Word(self.0.div(other.0))
+}
+
+///|
+pub fn Word::signed_div(
+  self : Word,
+  other : Word,
+) -> Word raise @bitvec.BitVecError {
+  Word(self.0.sdiv(other.0))
+}
+
+///|
+pub fn Word::rem(self : Word, other : Word) -> Word raise @bitvec.BitVecError {
+  Word(self.0.rem(other.0))
+}
+
+///|
+pub fn Word::signed_rem(
+  self : Word,
+  other : Word,
+) -> Word raise @bitvec.BitVecError {
+  Word(self.0.srem(other.0))
+}
+
+///|
 pub fn Word::lnot(self : Word) -> Word {
   Word(self.0.lnot())
 }
@@ -125,6 +151,45 @@ pub fn Word::lnot(self : Word) -> Word {
 ///|
 pub fn Word::neg(self : Word) -> Word {
   Word(self.0.neg())
+}
+
+///|
+pub fn Word::bit_and(
+  self : Word,
+  other : Word,
+) -> Word raise @bitvec.BitVecError {
+  Word(self.0.bit_and(other.0))
+}
+
+///|
+pub fn Word::bit_or(
+  self : Word,
+  other : Word,
+) -> Word raise @bitvec.BitVecError {
+  Word(self.0.bit_or(other.0))
+}
+
+///|
+pub fn Word::bit_xor(
+  self : Word,
+  other : Word,
+) -> Word raise @bitvec.BitVecError {
+  Word(self.0.bit_xor(other.0))
+}
+
+///|
+pub fn Word::lshift(self : Word, amount : Int) -> Word {
+  Word(self.0.lshift(amount))
+}
+
+///|
+pub fn Word::rshift(self : Word, amount : Int) -> Word {
+  Word(self.0.rshift(amount))
+}
+
+///|
+pub fn Word::arshift(self : Word, amount : Int) -> Word {
+  Word(self.0.arshift(amount))
 }
 
 ///|
@@ -139,6 +204,40 @@ pub fn Word::extract(
   lo? : Int = 0,
 ) -> Word raise @bitvec.BitVecError {
   Word(self.0.extract(hi~, lo~))
+}
+
+///|
+pub fn Word::widen(self : Word, width~ : Int) -> Word raise @bitvec.BitVecError {
+  Word(self.0.widen(width~))
+}
+
+///|
+pub fn Word::truncate(
+  self : Word,
+  width~ : Int,
+) -> Word raise @bitvec.BitVecError {
+  Word(self.0.truncate(width~))
+}
+
+///|
+pub fn Word::to_uint64(self : Word) -> UInt64 raise @bitvec.BitVecError {
+  self.0.to_uint64()
+}
+
+///|
+pub fn Word::compare_unsigned(
+  self : Word,
+  other : Word,
+) -> Int raise @bitvec.BitVecError {
+  self.0.compare_unsigned(other.0)
+}
+
+///|
+pub fn Word::compare_signed(
+  self : Word,
+  other : Word,
+) -> Int raise @bitvec.BitVecError {
+  self.0.compare_signed(other.0)
 }
 
 ///|

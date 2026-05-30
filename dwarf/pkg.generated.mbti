@@ -49,6 +49,14 @@ pub(all) enum DwarfAttr {
   DwarfUnknownAttr(Int)
 } derive(Eq, @debug.Debug)
 
+type DwarfData
+pub fn DwarfData::create(endian~ : @bitvec.Endian, sections~ : Array[(DwarfSection, DwarfSectionBuffer)]) -> Result[Self, String]
+pub fn DwarfData::endian(Self) -> @bitvec.Endian
+pub fn DwarfData::from_bytes(endian~ : @bitvec.Endian, info? : Bytes, abbrev? : Bytes, str? : Bytes) -> Result[Self, String]
+pub fn DwarfData::has_section(Self, DwarfSection) -> Bool
+pub fn DwarfData::section(Self, DwarfSection) -> Result[DwarfSectionBuffer, String]
+pub fn DwarfData::sections(Self) -> Array[(DwarfSection, DwarfSectionBuffer)]
+
 pub(all) enum DwarfForm {
   DwarfAddr
   DwarfBlock(DwarfLenspec)
@@ -92,6 +100,21 @@ pub(all) enum DwarfLenspec {
   DwarfEight
   DwarfLeb128
 } derive(Eq, @debug.Debug)
+
+pub(all) enum DwarfSection {
+  DwarfInfo
+  DwarfAbbrev
+  DwarfStr
+} derive(Eq, @debug.Debug)
+pub fn DwarfSection::to_string(Self) -> String
+
+type DwarfSectionBuffer
+pub fn DwarfSectionBuffer::create(Bytes, position? : Int) -> Result[Self, String]
+pub fn DwarfSectionBuffer::data(Self) -> Bytes
+pub fn DwarfSectionBuffer::input(Self) -> DwarfInput
+pub fn DwarfSectionBuffer::offset(Self, Int) -> Result[Self, String]
+pub fn DwarfSectionBuffer::position(Self) -> Int
+pub fn DwarfSectionBuffer::with_position(Self, Int) -> Result[Self, String]
 
 pub(all) enum DwarfTag {
   DwarfEntryPoint

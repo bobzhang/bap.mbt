@@ -14,9 +14,15 @@ pub fn apply_analysis(String, Array[String]) -> Result[Unit, String]
 
 pub fn available_input_loaders() -> Array[String]
 
+pub fn disassembly_driver_names() -> Array[String]
+
+pub fn disassembly_drivers() -> Array[ProjectDisassemblyDriver]
+
 pub fn find_analysis(String) -> ProjectAnalysis?
 
 pub fn find_collator(String) -> RegisteredProjectCollator?
+
+pub fn find_disassembly_driver(String) -> ProjectDisassemblyDriver?
 
 pub fn find_input_loader(String) -> ProjectInputLoader?
 
@@ -31,6 +37,8 @@ pub fn passes() -> Array[ProjectPass]
 pub fn register_analysis(ProjectAnalysis) -> Result[Unit, String]
 
 pub fn register_collator(RegisteredProjectCollator) -> Result[Unit, String]
+
+pub fn register_disassembly_driver(ProjectDisassemblyDriver) -> Result[Unit, String]
 
 pub fn register_input_loader(ProjectInputLoader) -> Result[Unit, String]
 
@@ -59,6 +67,8 @@ pub fn Project::add_library(Self, Library) -> Self
 pub fn Project::create(target~ : @core_theory.Target, image? : @image.Image, filename? : String, program? : @types.Term[@types.Program], memory? : @memory.MemMap[String], storage? : Map[String, String], libraries? : Array[Library], state? : ProjectState) -> Self
 pub fn Project::del(Self, String) -> Self
 pub fn[T] Project::del_tag(Self, ProjectStorageTag[T]) -> Self
+pub fn Project::disassemble(Self, driver~ : String) -> Result[Self, String]
+pub fn Project::disassemble_with_available(Self) -> Result[Self, String]
 pub fn Project::disassembly(Self) -> ProjectDisassemblyState
 pub fn Project::empty(@core_theory.Target) -> Self
 pub fn Project::filename(Self) -> String?
@@ -141,6 +151,13 @@ pub fn[S, R] ProjectCollator::summary(Self[S, R], S) -> R
 type ProjectCollatorInfo
 pub fn ProjectCollatorInfo::description(Self) -> String
 pub fn ProjectCollatorInfo::name(Self) -> String
+
+type ProjectDisassemblyDriver
+pub fn ProjectDisassemblyDriver::create(name~ : String, description? : String, priority? : Int, run~ : (Project) -> Result[Project, String]) -> Self
+pub fn ProjectDisassemblyDriver::description(Self) -> String
+pub fn ProjectDisassemblyDriver::name(Self) -> String
+pub fn ProjectDisassemblyDriver::priority(Self) -> Int
+pub fn ProjectDisassemblyDriver::run(Self, Project) -> Result[Project, String]
 
 type ProjectDisassemblyState
 pub fn ProjectDisassemblyState::add_block(Self, @memory.Memory) -> Self

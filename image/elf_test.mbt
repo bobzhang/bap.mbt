@@ -64,7 +64,26 @@ fn image_elf_test_write_section64(
   link : Int,
   entsize : Int,
 ) -> Unit {
-  let base = 120 + index * 64
+  image_elf_test_write_section64_at(
+    buffer, 120, index, name_offset, typ, flags, addr, offset, size, link, entsize,
+  )
+}
+
+///|
+fn image_elf_test_write_section64_at(
+  buffer : Array[Byte],
+  section_table_offset : Int,
+  index : Int,
+  name_offset : Int,
+  typ : Int,
+  flags : UInt64,
+  addr : UInt64,
+  offset : Int,
+  size : Int,
+  link : Int,
+  entsize : Int,
+) -> Unit {
+  let base = section_table_offset + index * 64
   image_elf_test_set_u32_le(buffer, base, name_offset)
   image_elf_test_set_u32_le(buffer, base + 4, typ)
   image_elf_test_set_u64_le(buffer, base + 8, flags)
@@ -346,13 +365,16 @@ fn image_elf_test_make_x86_64_with_relocations() -> Bytes {
 
 ///|
 fn image_elf_test_make_x86_64_with_dynamic_libraries() -> Bytes {
-  let shstr = b"\x00.shstrtab\x00.text\x00.dynamic\x00.dynstr\x00"
+  let section_table_offset = 64 + 2 * 56
+  let shstr = b"\x00.shstrtab\x00.text\x00.interp\x00.dynamic\x00.dynstr\x00"
   let text = b"\x90\xc3"
-  let dynstr = b"\x00libc.so.6\x00libm.so.6\x00"
-  let shstr_offset = 120 + 5 * 64
+  let interp = b"/lib64/ld-linux-x86-64.so.2\x00"
+  let dynstr = b"\x00libc.so.6\x00libm.so.6\x00libdemo.so\x00/opt/lib\x00$ORIGIN/lib\x00"
+  let shstr_offset = section_table_offset + 6 * 64
   let text_offset = shstr_offset + shstr.length()
-  let dynamic_offset = text_offset + text.length()
-  let dynstr_offset = dynamic_offset + 48
+  let interp_offset = text_offset + text.length()
+  let dynamic_offset = interp_offset + interp.length()
+  let dynstr_offset = dynamic_offset + 96
   let total = dynstr_offset + dynstr.length()
   let buffer = Array::make(total, b'\x00')
   image_elf_test_write_bytes(buffer, 0, b"\x7fELF")
@@ -364,12 +386,12 @@ fn image_elf_test_make_x86_64_with_dynamic_libraries() -> Bytes {
   image_elf_test_set_u32_le(buffer, 20, 1)
   image_elf_test_set_u64_le(buffer, 24, 0x400000UL)
   image_elf_test_set_u64_le(buffer, 32, 64UL)
-  image_elf_test_set_u64_le(buffer, 40, 120UL)
+  image_elf_test_set_u64_le(buffer, 40, section_table_offset.to_uint64())
   image_elf_test_set_u16_le(buffer, 52, 64)
   image_elf_test_set_u16_le(buffer, 54, 56)
-  image_elf_test_set_u16_le(buffer, 56, 1)
+  image_elf_test_set_u16_le(buffer, 56, 2)
   image_elf_test_set_u16_le(buffer, 58, 64)
-  image_elf_test_set_u16_le(buffer, 60, 5)
+  image_elf_test_set_u16_le(buffer, 60, 6)
   image_elf_test_set_u16_le(buffer, 62, 1)
   image_elf_test_set_u32_le(buffer, 64, 1)
   image_elf_test_set_u32_le(buffer, 68, 5)
@@ -377,8 +399,15 @@ fn image_elf_test_make_x86_64_with_dynamic_libraries() -> Bytes {
   image_elf_test_set_u64_le(buffer, 80, 0x400000UL)
   image_elf_test_set_u64_le(buffer, 96, text.length().to_uint64())
   image_elf_test_set_u64_le(buffer, 104, text.length().to_uint64())
-  image_elf_test_write_section64(
+  image_elf_test_set_u32_le(buffer, 120, 3)
+  image_elf_test_set_u32_le(buffer, 124, 4)
+  image_elf_test_set_u64_le(buffer, 128, interp_offset.to_uint64())
+  image_elf_test_set_u64_le(buffer, 136, 0x400200UL)
+  image_elf_test_set_u64_le(buffer, 152, interp.length().to_uint64())
+  image_elf_test_set_u64_le(buffer, 160, interp.length().to_uint64())
+  image_elf_test_write_section64_at(
     buffer,
+    section_table_offset,
     1,
     1,
     3,
@@ -389,8 +418,9 @@ fn image_elf_test_make_x86_64_with_dynamic_libraries() -> Bytes {
     0,
     0,
   )
-  image_elf_test_write_section64(
+  image_elf_test_write_section64_at(
     buffer,
+    section_table_offset,
     2,
     11,
     1,
@@ -401,13 +431,27 @@ fn image_elf_test_make_x86_64_with_dynamic_libraries() -> Bytes {
     0,
     0,
   )
-  image_elf_test_write_section64(
-    buffer, 3, 17, 6, 0UL, 0UL, dynamic_offset, 48, 4, 16,
-  )
-  image_elf_test_write_section64(
+  image_elf_test_write_section64_at(
     buffer,
-    4,
-    26,
+    section_table_offset,
+    3,
+    17,
+    1,
+    2UL,
+    0x400200UL,
+    interp_offset,
+    interp.length(),
+    0,
+    0,
+  )
+  image_elf_test_write_section64_at(
+    buffer, section_table_offset, 4, 25, 6, 0UL, 0UL, dynamic_offset, 96, 5, 16,
+  )
+  image_elf_test_write_section64_at(
+    buffer,
+    section_table_offset,
+    5,
+    34,
     3,
     0UL,
     0UL,
@@ -418,9 +462,13 @@ fn image_elf_test_make_x86_64_with_dynamic_libraries() -> Bytes {
   )
   image_elf_test_write_bytes(buffer, shstr_offset, shstr)
   image_elf_test_write_bytes(buffer, text_offset, text)
+  image_elf_test_write_bytes(buffer, interp_offset, interp)
   image_elf_test_write_dynamic64(buffer, dynamic_offset, 1UL, 1UL)
   image_elf_test_write_dynamic64(buffer, dynamic_offset + 16, 1UL, 11UL)
-  image_elf_test_write_dynamic64(buffer, dynamic_offset + 32, 0UL, 0UL)
+  image_elf_test_write_dynamic64(buffer, dynamic_offset + 32, 14UL, 21UL)
+  image_elf_test_write_dynamic64(buffer, dynamic_offset + 48, 15UL, 32UL)
+  image_elf_test_write_dynamic64(buffer, dynamic_offset + 64, 29UL, 41UL)
+  image_elf_test_write_dynamic64(buffer, dynamic_offset + 80, 0UL, 0UL)
   image_elf_test_write_bytes(buffer, dynstr_offset, dynstr)
   Bytes::from_array(buffer)
 }
@@ -624,7 +672,7 @@ test "image ELF backend extracts relocation metadata" {
 }
 
 ///|
-test "image ELF backend extracts required libraries" {
+test "image ELF backend extracts dynamic link metadata" {
   match @image.register_builtin_backends() {
     Ok(_) => ()
     Err(reason) => fail(reason)
@@ -637,6 +685,10 @@ test "image ELF backend extracts required libraries" {
   )
   assert_true(warnings.is_empty())
   assert_true(image.required_libraries() == ["libc.so.6", "libm.so.6"])
+  assert_true(image.interpreter() == Some("/lib64/ld-linux-x86-64.so.2"))
+  assert_true(image.soname() == Some("libdemo.so"))
+  assert_true(image.rpaths() == ["/opt/lib"])
+  assert_true(image.runpaths() == ["$ORIGIN/lib"])
 }
 
 ///|

@@ -302,10 +302,42 @@ pub fn Project::required_libraries(self : Project) -> Array[String] {
 }
 
 ///|
+pub fn Project::rpaths(self : Project) -> Array[String] {
+  match self.image_value {
+    Some(image) => image.rpaths()
+    None => []
+  }
+}
+
+///|
+pub fn Project::runpaths(self : Project) -> Array[String] {
+  match self.image_value {
+    Some(image) => image.runpaths()
+    None => []
+  }
+}
+
+///|
 pub fn Project::symbol_values(self : Project) -> Array[@image.SymbolValue] {
   match self.image_value {
     Some(image) => image.symbol_values()
     None => []
+  }
+}
+
+///|
+pub fn Project::interpreter(self : Project) -> String? {
+  match self.image_value {
+    Some(image) => image.interpreter()
+    None => None
+  }
+}
+
+///|
+pub fn Project::soname(self : Project) -> String? {
+  match self.image_value {
+    Some(image) => image.soname()
+    None => None
   }
 }
 

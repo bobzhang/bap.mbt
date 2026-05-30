@@ -67,6 +67,14 @@ priv struct ImageElfRelocationEntry {
 }
 
 ///|
+priv struct ImageElfDynamicMetadata {
+  required_libraries : Array[String]
+  rpaths : Array[String]
+  runpaths : Array[String]
+  soname : String?
+}
+
+///|
 fn image_elf_minimum_section_header(class : ImageElfClass) -> Int {
   match class {
     ImageElf32 => 40
@@ -1016,12 +1024,15 @@ fn image_elf_parse_dynamic_entry(
 }
 
 ///|
-fn image_elf_required_libraries(
+fn image_elf_dynamic_metadata(
   data : Bytes,
   header : ImageElfHeader,
   section_headers : Array[ImageElfSectionHeader],
-) -> Result[Array[String], String] {
+) -> Result[ImageElfDynamicMetadata, String] {
   let libraries : Array[String] = []
+  let rpaths : Array[String] = []
+  let runpaths : Array[String] = []
+  let mut soname : String? = None
   for section in section_headers {
     if section.typ == 6 {
       let string_section = match section_headers.get(section.link) {
@@ -1043,14 +1054,24 @@ fn image_elf_required_libraries(
       for i in 0..<count {
         match image_elf_parse_dynamic_entry(data, header, section, i) {
           Ok((0UL, _)) => ()
-          Ok((1UL, offset)) => {
+          Ok((tag, offset)) if tag == 1UL ||
+            tag == 14UL ||
+            tag == 15UL ||
+            tag == 29UL => {
             let string_offset = match
               image_elf_uint_to_int(offset, "ELF dynamic string offset") {
               Ok(value) => value
               Err(reason) => return Err(reason)
             }
             match image_elf_cstring(strings, string_offset) {
-              Ok(name) => libraries.push(name)
+              Ok(name) =>
+                match tag {
+                  1UL => libraries.push(name)
+                  14UL => if soname is None { soname = Some(name) }
+                  15UL => rpaths.push(name)
+                  29UL => runpaths.push(name)
+                  _ => ()
+                }
               Err(reason) => return Err(reason)
             }
           }
@@ -1060,7 +1081,7 @@ fn image_elf_required_libraries(
       }
     }
   }
-  Ok(libraries)
+  Ok({ required_libraries: libraries, rpaths, runpaths, soname })
 }
 
 ///|
@@ -1256,6 +1277,31 @@ fn image_elf_alloc_section_segments(
 }
 
 ///|
+fn image_elf_interpreter(
+  data : Bytes,
+  header : ImageElfHeader,
+) -> Result[String?, String] {
+  for i in 0..<header.program_count {
+    match image_elf_parse_program_header(data, header, i) {
+      Ok(program) =>
+        if program.typ == 3 {
+          let bytes = match
+            image_elf_section_data(data, program.offset, program.filesz) {
+            Ok(value) => value
+            Err(reason) => return Err(reason)
+          }
+          match image_elf_cstring(bytes, 0) {
+            Ok(value) => return Ok(Some(value))
+            Err(reason) => return Err(reason)
+          }
+        }
+      Err(reason) => return Err(reason)
+    }
+  }
+  Ok(None)
+}
+
+///|
 fn image_elf_load(data : Bytes) -> Result[(Image, Array[String]), String] {
   match image_elf_parse_header(data) {
     Ok(header) => {
@@ -1311,8 +1357,12 @@ fn image_elf_load(data : Bytes) -> Result[(Image, Array[String]), String] {
         Ok(value) => value
         Err(reason) => return Err(reason)
       }
-      let required_libraries = match
-        image_elf_required_libraries(data, header, section_headers) {
+      let dynamic_metadata = match
+        image_elf_dynamic_metadata(data, header, section_headers) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let interpreter = match image_elf_interpreter(data, header) {
         Ok(value) => value
         Err(reason) => return Err(reason)
       }
@@ -1365,8 +1415,12 @@ fn image_elf_load(data : Bytes) -> Result[(Image, Array[String]), String] {
             symbols~,
             relocations~,
             external_references~,
-            required_libraries~,
+            required_libraries=dynamic_metadata.required_libraries,
+            rpaths=dynamic_metadata.rpaths,
+            runpaths=dynamic_metadata.runpaths,
             symbol_values~,
+            interpreter?,
+            soname?=dynamic_metadata.soname,
             is_executable=header.typ == 2,
             target=image_elf_target(header),
           ),

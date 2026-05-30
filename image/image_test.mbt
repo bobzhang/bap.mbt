@@ -112,6 +112,8 @@ test "image exposes relocation metadata defensively" {
     @image.ExternalReference::create(addr=0x1008UL, name="puts"),
   ]
   let required_libraries = ["libc.so.6"]
+  let rpaths = ["/opt/lib"]
+  let runpaths = ["$ORIGIN/lib"]
   let symbol_values = [@image.SymbolValue::create(addr=0x1000UL, value=0x80UL)]
   let image = @image.Image::from_segments(
     entry=0x1000UL,
@@ -120,7 +122,11 @@ test "image exposes relocation metadata defensively" {
     relocations~,
     external_references=references,
     required_libraries~,
+    rpaths~,
+    runpaths~,
     symbol_values~,
+    interpreter="/lib64/ld-linux-x86-64.so.2",
+    soname="libdemo.so",
     load_bias=-16L,
     is_executable=true,
     base_address=0x1000UL,
@@ -128,6 +134,8 @@ test "image exposes relocation metadata defensively" {
   relocations.push(@image.Relocation::create(fixup=0x1010UL, relative=true))
   references.push(@image.ExternalReference::create(addr=0x1018UL, name="exit"))
   required_libraries.push("libm.so.6")
+  rpaths.push("/mutated")
+  runpaths.push("/mutated-run")
   symbol_values.push(@image.SymbolValue::create(addr=0x1001UL, value=0x81UL))
   assert_true(image.base_address() == Some(0x1000UL))
   assert_true(image.relocations().length() == 1)
@@ -136,8 +144,12 @@ test "image exposes relocation metadata defensively" {
   assert_true(image.external_references().length() == 1)
   assert_true(image.external_references()[0].name() == "puts")
   assert_true(image.required_libraries() == ["libc.so.6"])
+  assert_true(image.rpaths() == ["/opt/lib"])
+  assert_true(image.runpaths() == ["$ORIGIN/lib"])
   assert_true(image.symbol_values().length() == 1)
   assert_true(image.symbol_values()[0].value() == 0x80UL)
+  assert_true(image.interpreter() == Some("/lib64/ld-linux-x86-64.so.2"))
+  assert_true(image.soname() == Some("libdemo.so"))
   assert_true(image.load_bias() == Some(-16L))
   assert_true(image.is_executable() == Some(true))
   let updated = image
@@ -146,7 +158,11 @@ test "image exposes relocation metadata defensively" {
       @image.ExternalReference::create(addr=0x1018UL, name="exit"),
     )
     .add_required_library("libm.so.6")
+    .add_rpath("/vendor/lib")
+    .add_runpath("$ORIGIN/plugins")
     .add_symbol_value(@image.SymbolValue::create(addr=0x1001UL, value=0x81UL))
+    .with_interpreter("/lib/ld.so")
+    .with_soname("libupdated.so")
     .with_load_bias(32L)
     .with_is_executable(false)
     .with_base_address(0x3000UL)
@@ -156,7 +172,11 @@ test "image exposes relocation metadata defensively" {
   assert_true(updated.relocations()[1].is_relative())
   assert_true(updated.external_references().length() == 2)
   assert_true(updated.required_libraries() == ["libc.so.6", "libm.so.6"])
+  assert_true(updated.rpaths() == ["/opt/lib", "/vendor/lib"])
+  assert_true(updated.runpaths() == ["$ORIGIN/lib", "$ORIGIN/plugins"])
   assert_true(updated.symbol_values().length() == 2)
+  assert_true(updated.interpreter() == Some("/lib/ld.so"))
+  assert_true(updated.soname() == Some("libupdated.so"))
   assert_true(updated.load_bias() == Some(32L))
   assert_true(updated.is_executable() == Some(false))
 }

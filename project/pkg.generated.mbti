@@ -98,6 +98,7 @@ pub fn[T] Project::get_tag(Self, ProjectStorageTag[T]) -> Result[T?, String]
 pub fn Project::has(Self, String) -> Bool
 pub fn[T] Project::has_tag(Self, ProjectStorageTag[T]) -> Bool
 pub fn Project::image(Self) -> @image.Image?
+pub fn Project::interpreter(Self) -> String?
 pub fn Project::is_executable(Self) -> Bool?
 pub fn Project::libraries(Self) -> Array[Library]
 pub fn Project::load_bias(Self) -> Int64?
@@ -111,11 +112,14 @@ pub fn Project::program(Self) -> @types.Term[@types.Program]
 pub fn Project::relocations(Self) -> Array[@image.Relocation]
 pub fn Project::required_libraries(Self) -> Array[String]
 pub fn Project::resolve_stub_calls(Self, link_only? : Array[String], no_link? : Array[String]) -> Self
+pub fn Project::rpaths(Self) -> Array[String]
 pub fn Project::run_autorun_passes(Self) -> Result[Self, String]
 pub fn Project::run_pass(Self, String) -> Result[Self, String]
 pub fn Project::run_passes(Self, Array[String]) -> Result[Self, String]
+pub fn Project::runpaths(Self) -> Array[String]
 pub fn Project::set(Self, String, String) -> Self
 pub fn[T] Project::set_tag(Self, ProjectStorageTag[T], T) -> Self
+pub fn Project::soname(Self) -> String?
 pub fn Project::specification(Self) -> @image.OgreDoc
 pub fn Project::state(Self) -> ProjectState
 pub fn Project::storage(Self) -> Map[String, String]

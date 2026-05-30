@@ -11,7 +11,11 @@ struct Image {
   relocations_value : Array[Relocation]
   external_references_value : Array[ExternalReference]
   required_libraries_value : Array[String]
+  rpaths_value : Array[String]
+  runpaths_value : Array[String]
   symbol_values_value : Array[SymbolValue]
+  interpreter_value : String?
+  soname_value : String?
   load_bias_value : Int64?
   is_executable_value : Bool?
   base_address_value : UInt64?
@@ -36,7 +40,11 @@ pub fn Image::create(
   relocations? : Array[Relocation],
   external_references? : Array[ExternalReference],
   required_libraries? : Array[String],
+  rpaths? : Array[String],
+  runpaths? : Array[String],
   symbol_values? : Array[SymbolValue],
+  interpreter? : String,
+  soname? : String,
   load_bias? : Int64,
   is_executable? : Bool,
   base_address? : UInt64,
@@ -75,10 +83,20 @@ pub fn Image::create(
       Some(items) => items.copy()
       None => []
     },
+    rpaths_value: match rpaths {
+      Some(items) => items.copy()
+      None => []
+    },
+    runpaths_value: match runpaths {
+      Some(items) => items.copy()
+      None => []
+    },
     symbol_values_value: match symbol_values {
       Some(items) => items.copy()
       None => []
     },
+    interpreter_value: interpreter,
+    soname_value: soname,
     load_bias_value: load_bias,
     is_executable_value: is_executable,
     base_address_value: base_address,
@@ -96,7 +114,11 @@ pub fn Image::from_segments(
   relocations? : Array[Relocation],
   external_references? : Array[ExternalReference],
   required_libraries? : Array[String],
+  rpaths? : Array[String],
+  runpaths? : Array[String],
   symbol_values? : Array[SymbolValue],
+  interpreter? : String,
+  soname? : String,
   load_bias? : Int64,
   is_executable? : Bool,
   base_address? : UInt64,
@@ -113,7 +135,11 @@ pub fn Image::from_segments(
     relocations?,
     external_references?,
     required_libraries?,
+    rpaths?,
+    runpaths?,
     symbol_values?,
+    interpreter?,
+    soname?,
     load_bias?,
     is_executable?,
     base_address?,
@@ -275,8 +301,28 @@ pub fn Image::required_libraries(self : Image) -> Array[String] {
 }
 
 ///|
+pub fn Image::rpaths(self : Image) -> Array[String] {
+  self.rpaths_value.copy()
+}
+
+///|
+pub fn Image::runpaths(self : Image) -> Array[String] {
+  self.runpaths_value.copy()
+}
+
+///|
 pub fn Image::symbol_values(self : Image) -> Array[SymbolValue] {
   self.symbol_values_value.copy()
+}
+
+///|
+pub fn Image::interpreter(self : Image) -> String? {
+  self.interpreter_value
+}
+
+///|
+pub fn Image::soname(self : Image) -> String? {
+  self.soname_value
 }
 
 ///|
@@ -489,6 +535,20 @@ pub fn Image::add_required_library(self : Image, name : String) -> Image {
 }
 
 ///|
+pub fn Image::add_rpath(self : Image, path : String) -> Image {
+  let paths = self.rpaths_value.copy()
+  paths.push(path)
+  { ..self, rpaths_value: paths }
+}
+
+///|
+pub fn Image::add_runpath(self : Image, path : String) -> Image {
+  let paths = self.runpaths_value.copy()
+  paths.push(path)
+  { ..self, runpaths_value: paths }
+}
+
+///|
 pub fn Image::add_symbol_value(
   self : Image,
   symbol_value : SymbolValue,
@@ -501,6 +561,16 @@ pub fn Image::add_symbol_value(
 ///|
 pub fn Image::with_load_bias(self : Image, load_bias : Int64) -> Image {
   { ..self, load_bias_value: Some(load_bias) }
+}
+
+///|
+pub fn Image::with_interpreter(self : Image, interpreter : String) -> Image {
+  { ..self, interpreter_value: Some(interpreter) }
+}
+
+///|
+pub fn Image::with_soname(self : Image, soname : String) -> Image {
+  { ..self, soname_value: Some(soname) }
 }
 
 ///|

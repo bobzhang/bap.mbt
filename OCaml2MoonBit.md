@@ -133,6 +133,11 @@ Preserve BAP/Ogre `require` facts as image-owned required-library metadata.
 For ELF, extract `DT_NEEDED` names from `SHT_DYNAMIC` entries through the
 linked dynamic string table; keep this as dependency metadata rather than
 loading or resolving the libraries in the image backend.
+Preserve ELF dynamic-link metadata as image-owned loader metadata: `PT_INTERP`
+is the program interpreter, `DT_SONAME` is the produced shared-object name,
+and `DT_RPATH`/`DT_RUNPATH` are distinct search-path strings. Do not collapse
+them into required libraries or eagerly resolve their paths; later project or
+platform-specific linker orchestration can interpret those fields.
 Keep BAP/Ogre `symbol-value` separate from named-symbol and symbol-chunk
 metadata. A symbol's runtime address may be biased or otherwise interpreted by
 the loader, while the raw value can still be useful to later disassembly roots

@@ -55,3 +55,27 @@ test "classes slots and fact tables accumulate monotone facts" {
   assert_true(facts.provide(object, false) == Ok(true))
   assert_true(facts.collect(object) == Some(true))
 }
+
+///|
+test "translated BAP null objects collect empty facts and discard provides" {
+  let cls : @knowledge.Class[Unit, String] = @knowledge.Class::create(
+    name=@knowledge.Name::create("null-object", pkg="test"),
+    sort="unit",
+  )
+  let domain = @knowledge.Domain::bool(
+    @knowledge.Name::create("visited", pkg="test"),
+  )
+  let slot = cls.property(
+    name=@knowledge.Name::create("visited", pkg="test"),
+    domain~,
+  )
+  let facts = @knowledge.FactTable::new(slot)
+  let null = @knowledge.Object::null(cls)
+  assert_true(null.is_null())
+  assert_true(facts.collect(null) == Some(false))
+  assert_true(facts.provide(null, true) == Ok(false))
+  assert_true(facts.collect(null) == Some(false))
+  let object = @knowledge.State::new().create(cls)
+  assert_true(facts.provide(object, true) == Ok(true))
+  assert_true(facts.collect(object) == Some(true))
+}

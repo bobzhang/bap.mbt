@@ -69,6 +69,11 @@ pub fn[K, P] FactTable::provide(
     Err(
       "slot \{self.slot.name().show()} does not belong to class \{object.class_name().show()}",
     )
+  } else if object.is_null() {
+    match self.slot.domain().empty() {
+      Some(empty) => Ok(empty)
+      None => Ok(value)
+    }
   } else {
     let domain = self.slot.domain()
     let next = match self.facts.get(object.id()) {
@@ -90,6 +95,9 @@ pub fn[K, P] FactTable::collect(
   self : FactTable[K, P],
   object : Object[K],
 ) -> P? {
+  if object.is_null() {
+    return self.slot.domain().empty()
+  }
   match self.facts.get(object.id()) {
     Some(value) => Some(value)
     None => self.slot.domain().empty()

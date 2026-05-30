@@ -110,6 +110,21 @@ fn OgreDoc::find_named_region(
 }
 
 ///|
+fn OgreDoc::find_named_region_at(self : OgreDoc, addr : UInt64) -> String? {
+  for fact in self.facts("named-region") {
+    match ogre_fact_uint64(fact, "addr") {
+      Ok(other_addr) if other_addr == addr =>
+        match fact.value("name") {
+          Some(name) => return Some(name)
+          None => ()
+        }
+      _ => ()
+    }
+  }
+  None
+}
+
+///|
 fn OgreDoc::find_mapped_region(
   self : OgreDoc,
   addr : UInt64,
@@ -251,6 +266,73 @@ fn ogre_slice_data(
 }
 
 ///|
+fn region_max_addr(addr : UInt64, size : Int) -> UInt64 {
+  if size <= 0 {
+    addr
+  } else {
+    addr + (size - 1).to_uint64()
+  }
+}
+
+///|
+fn segments_cover_region(
+  segments : Array[Segment],
+  addr : UInt64,
+  size : Int,
+) -> Bool {
+  if size <= 0 {
+    false
+  } else {
+    let max_addr = region_max_addr(addr, size)
+    segments.any(segment => segment.contains(addr) && segment.contains(max_addr))
+  }
+}
+
+///|
+fn OgreDoc::add_code_region_segments(
+  self : OgreDoc,
+  data : Bytes,
+  endian : @bitvec.Endian,
+  segments : Array[Segment],
+  warnings : Array[String],
+) -> Result[Unit, String] {
+  for fact in self.facts("code-region") {
+    match ogre_fact_region(fact) {
+      Err(reason) => return Err(reason)
+      Ok((addr, size)) =>
+        if !segments_cover_region(segments, addr, size) {
+          let off = match ogre_fact_int(fact, "off") {
+            Ok(off) => off
+            Err(reason) => return Err(reason)
+          }
+          match self.find_named_region_at(addr) {
+            Some(name) =>
+              match ogre_slice_data(data, off, size, "\{name}@\{addr}") {
+                Ok(bytes) =>
+                  segments.push(
+                    Segment::create(
+                      name~,
+                      endian~,
+                      addr~,
+                      bytes,
+                      offset=off,
+                      readable=true,
+                      writable=false,
+                      executable=true,
+                    ),
+                  )
+                Err(reason) => warnings.push(reason)
+              }
+            None =>
+              warnings.push("Ogre code region at \{addr}+\{size} is unnamed")
+          }
+        }
+    }
+  }
+  Ok(())
+}
+
+///|
 fn OgreDoc::image_segments(
   self : OgreDoc,
   data : Bytes,
@@ -301,7 +383,10 @@ fn OgreDoc::image_segments(
       }
     }
   }
-  Ok(segments)
+  match self.add_code_region_segments(data, endian, segments, warnings) {
+    Ok(_) => Ok(segments)
+    Err(reason) => Err(reason)
+  }
 }
 
 ///|

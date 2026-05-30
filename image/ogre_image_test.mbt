@@ -108,6 +108,31 @@ test "ogre image specs refine unknown targets from metadata facts" {
 }
 
 ///|
+test "ogre image specs build executable segments from code regions" {
+  let spec = "(declare entry-point (addr int))" +
+    " (declare named-region (addr int) (size int) (name str))" +
+    " (declare code-region (addr int) (size int) (off int))" +
+    " (entry-point 8192)" +
+    " (named-region 8192 3 text)" +
+    " (code-region 8192 3 1)"
+  match @image.Image::of_ogre_string(b"\x00\x11\x22\x33\x44", spec) {
+    Ok((image, warnings)) => {
+      assert_true(warnings.is_empty())
+      let segments = image.segments()
+      assert_true(segments.length() == 1)
+      assert_true(segments[0].name() == "text")
+      assert_true(segments[0].addr() == 8192UL)
+      assert_true(segments[0].offset() == 1)
+      assert_true(segments[0].is_readable())
+      assert_true(!segments[0].is_writable())
+      assert_true(segments[0].is_executable())
+      inspect(segments[0].memory().hexdump(), content="11 22 33")
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "ogre image specs report unmappable regions as warnings" {
   let spec = raw_ogre_spec.replace(
     old="(mapped 4096 4 1)",

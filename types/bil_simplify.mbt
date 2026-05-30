@@ -114,6 +114,57 @@ fn is_constant_exp(exp : Exp) -> Bool {
 }
 
 ///|
+fn Exp::normalize_negative_binop(op : BinOp, lhs : Exp, rhs : Exp) -> Exp {
+  match (op, rhs) {
+    (Plus, Int(word)) if word.signed().is_negative() =>
+      BinOp(Minus, lhs, Int(word.signed().abs()))
+    _ => BinOp(op, lhs, rhs)
+  }
+}
+
+///|
+pub fn Exp::normalize_negatives(self : Exp) -> Exp {
+  match self {
+    Int(_) | Var(_) | Unknown(_) => self
+    Load(mem~, addr~, endian~, typ~) =>
+      Load(
+        mem=mem.normalize_negatives(),
+        addr=addr.normalize_negatives(),
+        endian~,
+        typ~,
+      )
+    Store(mem~, addr~, value~, endian~) =>
+      Store(
+        mem=mem.normalize_negatives(),
+        addr=addr.normalize_negatives(),
+        value=value.normalize_negatives(),
+        endian~,
+      )
+    Let(variable, value, body) =>
+      Let(variable, value.normalize_negatives(), body.normalize_negatives())
+    Cast(typ, exp) => Cast(typ, exp.normalize_negatives())
+    UnOp(op, exp) => UnOp(op, exp.normalize_negatives())
+    BinOp(op, lhs, rhs) =>
+      Exp::normalize_negative_binop(
+        op,
+        lhs.normalize_negatives(),
+        rhs.normalize_negatives(),
+      )
+    Ite(cond~, yes~, no~) =>
+      Ite(
+        cond=cond.normalize_negatives(),
+        yes=yes.normalize_negatives(),
+        no=no.normalize_negatives(),
+      )
+  }
+}
+
+///|
+pub fn Exp::fold_consts(self : Exp) -> Exp {
+  self.simplify()
+}
+
+///|
 pub fn Exp::simplify(self : Exp) -> Exp {
   match self {
     Int(_) | Var(_) | Unknown(_) => self
@@ -194,6 +245,28 @@ pub fn Stmt::simplify(self : Stmt) -> Stmt {
 }
 
 ///|
+pub fn Stmt::normalize_negatives(self : Stmt) -> Stmt {
+  match self {
+    Move(variable, exp) => Move(variable, exp.normalize_negatives())
+    Jmp(exp) => Jmp(exp.normalize_negatives())
+    Special(_) | CpuExn(_) => self
+    If(cond~, yes~, no~) =>
+      If(
+        cond=cond.normalize_negatives(),
+        yes=normalize_negatives(yes),
+        no=normalize_negatives(no),
+      )
+    While(cond~, body~) =>
+      While(cond=cond.normalize_negatives(), body=normalize_negatives(body))
+  }
+}
+
+///|
+pub fn Stmt::fold_consts(self : Stmt) -> Stmt {
+  self.simplify()
+}
+
+///|
 pub fn Stmt::simplify_to_list(self : Stmt) -> Array[Stmt] {
   match self.simplify() {
     If(cond=Int(word), yes~, no~) => if word.is_zero() { no } else { yes }
@@ -211,6 +284,16 @@ pub fn simplify_stmts(stmts : Array[Stmt]) -> Array[Stmt] {
     }
   }
   result
+}
+
+///|
+pub fn normalize_negatives(stmts : Array[Stmt]) -> Array[Stmt] {
+  stmts.map(stmt => stmt.normalize_negatives())
+}
+
+///|
+pub fn fold_consts(stmts : Array[Stmt]) -> Array[Stmt] {
+  simplify_stmts(stmts)
 }
 
 ///|

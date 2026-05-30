@@ -161,6 +161,26 @@ test "bil simplifier folds scalar constants and let bindings" {
 }
 
 ///|
+test "bil BAP normalize negatives and fold const aliases" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let minus_one = @types.Int(@types.Word::of_int(width=8, -1).signed())
+  let exp : @types.Exp = BinOp(Plus, Var(x), minus_one)
+  inspect(exp.normalize_negatives().to_string(), content="(x:imm8 - 1:8u)")
+  let nested = @types.Stmt::Move(y, BinOp(Plus, exp, Int(word8(2))))
+  let normalized = @types.normalize_negatives([nested])
+  inspect(
+    normalized[0].to_string(),
+    content="y:imm8 := ((x:imm8 - 1:8u) + 2:8u)",
+  )
+  let sum : @types.Exp = BinOp(Plus, Int(word8(1)), Int(word8(2)))
+  assert_true(sum.fold_consts() == Int(word8(3)))
+  let folded = @types.fold_consts([Move(y, sum)])
+  inspect(folded[0].to_string(), content="y:imm8 := 3:8u")
+}
+
+///|
 test "bil simplifier folds loads from recent stores" {
   let mem_typ = @types.ValueType::Mem(addr_width=32, value_width=8)
   let mem = @types.Var::new(name="mem", typ=mem_typ)

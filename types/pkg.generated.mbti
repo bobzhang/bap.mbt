@@ -12,9 +12,13 @@ pub fn check_stmt_types(Array[Stmt]) -> Result[Unit, TypeError]
 
 pub fn exec_stmts(Array[Stmt], state? : BilState, max_steps? : Int) -> Result[BilState, String]
 
+pub fn fold_consts(Array[Stmt]) -> Array[Stmt]
+
 pub fn is_assigned_stmts(Array[Stmt], Var, strict? : Bool) -> Bool
 
 pub fn is_referenced_stmts(Array[Stmt], Var) -> Bool
+
+pub fn normalize_negatives(Array[Stmt]) -> Array[Stmt]
 
 pub fn optimize_stmts(Array[Stmt], max_iterations? : Int) -> Array[Stmt]
 
@@ -205,6 +209,7 @@ pub fn Exp::binop(BinOp, Self, Self) -> Self
 pub fn Exp::effect(Self) -> ExpEffect
 pub fn Exp::eval(Self, Map[String, Word]) -> Result[Word, String]
 pub fn Exp::eval_value(Self, Map[String, BilValue]) -> Result[BilValue, String]
+pub fn Exp::fold_consts(Self) -> Self
 pub fn Exp::free_vars(Self) -> Array[Var]
 pub fn Exp::infer_type(Self) -> Result[ValueType, TypeError]
 pub fn Exp::int(Word) -> Self
@@ -213,6 +218,7 @@ pub fn Exp::ite(if_~ : Self, then_~ : Self, else_~ : Self) -> Self
 pub fn Exp::let_(Var, Self, Self) -> Self
 pub fn Exp::load(mem~ : Self, addr~ : Self, @bitvec.Endian, Size) -> Self
 pub fn Exp::load_byte(mem~ : Self, addr~ : Self) -> Self
+pub fn Exp::normalize_negatives(Self) -> Self
 pub fn Exp::simplify(Self) -> Self
 pub fn Exp::store(mem~ : Self, addr~ : Self, Self, @bitvec.Endian, Size) -> Self
 pub fn Exp::store_byte(mem~ : Self, addr~ : Self, Self) -> Self
@@ -325,12 +331,14 @@ pub fn Stmt::check_type(Self) -> Result[Unit, TypeError]
 pub fn Stmt::cpuexn(Int) -> Self
 pub fn Stmt::defined_var(Self) -> Var?
 pub fn Stmt::exec(Self, state? : BilState, max_steps? : Int) -> Result[BilState, String]
+pub fn Stmt::fold_consts(Self) -> Self
 pub fn Stmt::free_vars(Self) -> Array[Var]
 pub fn Stmt::if_(Exp, Array[Self], Array[Self]) -> Self
 pub fn Stmt::is_assigned(Self, Var, strict? : Bool) -> Bool
 pub fn Stmt::is_referenced(Self, Var) -> Bool
 pub fn Stmt::jmp(Exp) -> Self
 pub fn Stmt::move_stmt(Var, Exp) -> Self
+pub fn Stmt::normalize_negatives(Self) -> Self
 pub fn Stmt::simplify(Self) -> Self
 pub fn Stmt::simplify_to_list(Self) -> Array[Self]
 pub fn Stmt::special(String) -> Self

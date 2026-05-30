@@ -6,6 +6,18 @@ fn stmt_text(stmts : Array[@types.Stmt]) -> Array[String] {
 }
 
 ///|
+fn last_move_rhs(stmts : Array[@types.Stmt], name : String) -> @types.Exp? {
+  let mut found = None
+  for stmt in stmts {
+    match stmt {
+      Move(variable, exp) if variable.name == name => found = Some(exp)
+      _ => ()
+    }
+  }
+  found
+}
+
+///|
 test "bil pruning removes dead virtual assignments but preserves physical writes" {
   let typ = @types.ValueType::Imm(8)
   let physical = @types.Var::new(name="physical", typ~)
@@ -256,4 +268,228 @@ test "bil constant propagation preserves facts after definitely skipped loops" {
       assert_true(stmt_text(body) == ["y:imm8 := 0x01:8u", "jmp 0x01:8u"])
     _ => fail("expected propagated loop")
   }
+}
+
+///|
+test "bil constant propagation keeps loop-carried definitions conservative" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let stmts = [
+    @types.Stmt::Move(x, Int(word8(4))),
+    While(cond=BinOp(Lt, Var(x), Int(word8(5))), body=[
+      Move(y, BinOp(Plus, Var(x), Int(word8(1)))),
+      Move(x, Int(word8(42))),
+    ]),
+  ]
+  let propagated = @types.propagate_const_stmts(stmts)
+  assert_true(
+    stmt_text(propagated) ==
+    ["x:imm8 := 0x04:8u", "while (x:imm8 < 0x05:8u) do 2 stmts"],
+  )
+  match propagated[1] {
+    While(body~, ..) =>
+      assert_true(
+        stmt_text(body) == ["y:imm8 := (x:imm8 + 0x01:8u)", "x:imm8 := 0x2a:8u"],
+      )
+    _ => fail("expected propagated loop")
+  }
+}
+
+///|
+test "bil constant propagation reuses facts within a loop body after redefinition" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let z = @types.Var::new(name="z", typ~)
+  let stmts = [
+    @types.Stmt::Move(x, Int(word8(42))),
+    While(cond=BinOp(Lt, Int(word8(2)), Var(x)), body=[
+      Move(y, BinOp(Plus, Var(x), Int(word8(1)))),
+      Move(x, Int(word8(1))),
+      Move(z, BinOp(Plus, Var(x), Int(word8(2)))),
+    ]),
+  ]
+  let propagated = @types.propagate_const_stmts(stmts)
+  assert_true(
+    stmt_text(propagated) ==
+    ["x:imm8 := 0x2a:8u", "while (0x02:8u < x:imm8) do 3 stmts"],
+  )
+  match propagated[1] {
+    While(body~, ..) =>
+      assert_true(
+        stmt_text(body) ==
+        [
+          "y:imm8 := (x:imm8 + 0x01:8u)", "x:imm8 := 0x01:8u", "z:imm8 := 0x03:8u",
+        ],
+      )
+    _ => fail("expected propagated loop")
+  }
+}
+
+///|
+test "bil constant propagation carries invariant facts into loop branches" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let z = @types.Var::new(name="z", typ~)
+  let stmts = [
+    @types.Stmt::Move(x, Int(word8(42))),
+    While(cond=BinOp(Lt, Int(word8(4)), Var(z)), body=[
+      If(cond=BinOp(Lt, Int(word8(1)), Var(z)), yes=[Move(y, Int(word8(1)))], no=[
+        Move(y, Int(word8(1))),
+      ]),
+      If(
+        cond=BinOp(Lt, Int(word8(1)), BinOp(Plus, Var(x), Var(y))),
+        yes=[Move(y, Int(word8(0)))],
+        no=[Move(y, Int(word8(2)))],
+      ),
+      Move(z, Var(y)),
+    ]),
+  ]
+  let propagated = @types.propagate_const_stmts(stmts)
+  assert_true(
+    stmt_text(propagated) ==
+    ["x:imm8 := 0x2a:8u", "while (0x04:8u < z:imm8) do 3 stmts"],
+  )
+  match propagated[1] {
+    While(body~, ..) => {
+      assert_true(
+        stmt_text(body) ==
+        [
+          "if (0x01:8u < z:imm8) then 1 stmts else 1 stmts", "if 0x1:1u then 1 stmts else 1 stmts",
+          "z:imm8 := 0x00:8u",
+        ],
+      )
+      match body[1] {
+        If(yes~, no~, ..) => {
+          assert_true(stmt_text(yes) == ["y:imm8 := 0x00:8u"])
+          assert_true(stmt_text(no) == ["y:imm8 := 0x02:8u"])
+        }
+        _ => fail("expected inner branch")
+      }
+    }
+    _ => fail("expected propagated loop")
+  }
+}
+
+///|
+test "bil optimize keeps physical vars and folds propagated rhs" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let optimized = @types.optimize_stmts([
+    Move(x, Int(word8(2))),
+    Move(y, BinOp(Plus, Var(x), Int(word8(2)))),
+  ])
+  assert_true(
+    stmt_text(optimized) == ["x:imm8 := 0x02:8u", "y:imm8 := 0x04:8u"],
+  )
+}
+
+///|
+test "bil optimize folds computable condition while preserving physical trace" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let z = @types.Var::new(name="z", typ~)
+  let v = @types.Var::new(name="v", typ~, is_virtual=true)
+  let optimized = @types.optimize_stmts([
+    Move(x, Int(word8(1))),
+    Move(v, BinOp(Plus, Var(x), Int(word8(1)))),
+    Move(y, BinOp(Times, Var(v), Int(word8(2)))),
+    If(cond=BinOp(Lt, Var(y), Int(word8(2))), yes=[Move(z, Int(word8(1)))], no=[
+      Move(z, Int(word8(2))),
+    ]),
+    Move(y, Var(z)),
+  ])
+  assert_true(
+    stmt_text(optimized) ==
+    [
+      "x:imm8 := 0x01:8u", "y:imm8 := 0x04:8u", "z:imm8 := 0x02:8u", "y:imm8 := 0x02:8u",
+    ],
+  )
+}
+
+///|
+test "bil optimize exposes expected z value for BAP various-input cases" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let z = @types.Var::new(name="z", typ~)
+  let v = @types.Var::new(name="v", typ~, is_virtual=true)
+  fn make(input : @types.Exp) -> Array[@types.Stmt] raise {
+    [
+      Move(x, input),
+      If(
+        cond=BinOp(Lt, Int(word8(2)), Var(x)),
+        yes=[
+          While(cond=BinOp(Lt, Int(word8(0)), Var(x)), body=[
+            Move(y, BinOp(Times, Var(x), Int(word8(2)))),
+            Move(x, BinOp(Minus, Var(x), Int(word8(1)))),
+          ]),
+        ],
+        no=[
+          If(
+            cond=BinOp(Eq, Var(x), Int(word8(0))),
+            yes=[Move(y, Int(word8(1)))],
+            no=[
+              If(
+                cond=BinOp(Eq, Var(x), Int(word8(1))),
+                yes=[Move(y, Int(word8(2)))],
+                no=[Move(y, Int(word8(4)))],
+              ),
+            ],
+          ),
+        ],
+      ),
+      Move(z, Var(y)),
+    ]
+  }
+  let one_case = @types.optimize_stmts(make(Int(word8(1))))
+  assert_true(last_move_rhs(one_case, "z") == Some(Int(word8(2))))
+  let four_case = @types.optimize_stmts(make(Int(word8(4))))
+  assert_true(last_move_rhs(four_case, "z") == Some(Var(y)))
+  let unknown_case = @types.optimize_stmts(make(Var(v)))
+  assert_true(last_move_rhs(unknown_case, "z") == Some(Var(y)))
+}
+
+///|
+test "bil optimize handles nested virtual pipeline regression" {
+  let typ = @types.ValueType::Imm(8)
+  let v = @types.Var::new(name="v", typ~, is_virtual=true)
+  let v1 = @types.Var::new(name="v1", typ~, is_virtual=true)
+  let v2 = @types.Var::new(name="v2", typ~, is_virtual=true)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let z = @types.Var::new(name="z", typ~)
+  let optimized = @types.optimize_stmts([
+    Move(v, Int(word8(2))),
+    Move(v1, BinOp(Plus, Int(word8(4)), Var(v))),
+    If(
+      cond=BinOp(Lt, Int(word8(0)), Var(v1)),
+      yes=[
+        Move(v2, BinOp(Plus, Var(v1), Int(word8(1)))),
+        Move(x, BinOp(Plus, Var(v2), Int(word8(1)))),
+      ],
+      no=[Move(v2, BinOp(Plus, Var(v1), Int(word8(2)))), Move(x, Var(v2))],
+    ),
+    Move(v2, Int(word8(4))),
+    Move(y, BinOp(Minus, Var(x), Var(v2))),
+    If(
+      cond=BinOp(Lt, Var(y), Int(word8(0))),
+      yes=[
+        Move(z, Int(word8(4))),
+        Jmp(BinOp(Minus, BinOp(Plus, Var(z), Int(word8(2))), Var(y))),
+      ],
+      no=[Move(z, Int(word8(2)))],
+    ),
+    Move(x, Var(z)),
+  ])
+  assert_true(
+    stmt_text(optimized) ==
+    [
+      "x:imm8 := 0x08:8u", "y:imm8 := 0x04:8u", "z:imm8 := 0x02:8u", "x:imm8 := 0x02:8u",
+    ],
+  )
 }

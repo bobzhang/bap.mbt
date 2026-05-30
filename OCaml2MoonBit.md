@@ -108,6 +108,14 @@ block's `free_vars`, while phi operands are edge-specific uses attributed to
 their predecessor block. Do not model phi lhs variables as ordinary block defs
 in the liveness transfer unless the OCaml source does so for that algorithm.
 
+When lowering SSA back to ordinary IR, do not merely remove phi nodes or strip
+`#index` suffixes. A phi is an edge assignment: lower each predecessor value to
+a copy on the corresponding incoming edge, split the edge with a copy block
+when needed, then remove phis and strip SSA indices from the remaining
+expressions. This preserves conditional and critical-edge behavior that would
+be lost by inserting all copies unconditionally at the end of a predecessor
+with multiple successors.
+
 For BAP BIL helper predicates, expression references and statement references
 are close to free-variable queries, but assignment lhs variables are definitions
 rather than references. `Exp.Var(x)` references `x`; `Stmt.Move(x, rhs)` does

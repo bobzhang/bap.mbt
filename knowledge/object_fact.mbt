@@ -14,6 +14,7 @@ struct State {
 struct FactTable[K, P] {
   slot : Slot[K, P]
   facts : Map[Int, P]
+  observers : Array[(Object[K], P) -> Result[Unit, String]]
   _phantom : K?
 }
 
@@ -51,7 +52,7 @@ pub fn[K] Object::is_null(self : Object[K]) -> Bool {
 
 ///|
 pub fn[K, P] FactTable::new(slot : Slot[K, P]) -> FactTable[K, P] {
-  { slot, facts: {}, _phantom: None }
+  { slot, facts: {}, observers: [], _phantom: None }
 }
 
 ///|
@@ -69,10 +70,18 @@ pub fn[K, P] FactTable::provide(
     Err(
       "slot \{self.slot.name().show()} does not belong to class \{object.class_name().show()}",
     )
-  } else if object.is_null() {
+  } else if object.is_null() || self.slot.domain().is_empty(value) {
     match self.slot.domain().empty() {
-      Some(empty) => Ok(empty)
-      None => Ok(value)
+      Some(empty) =>
+        match self.collect(object) {
+          Some(current) => Ok(current)
+          None => Ok(empty)
+        }
+      None =>
+        match self.collect(object) {
+          Some(current) => Ok(current)
+          None => Ok(value)
+        }
     }
   } else {
     let domain = self.slot.domain()
@@ -87,11 +96,42 @@ pub fn[K, P] FactTable::provide(
     match next {
       Ok(joined) => {
         self.facts[object.id()] = joined
-        Ok(joined)
+        match self.notify(object, joined) {
+          Ok(_) => Ok(joined)
+          Err(reason) => Err(reason)
+        }
       }
       Err(reason) => Err(reason)
     }
   }
+}
+
+///|
+fn[K, P] FactTable::notify(
+  self : FactTable[K, P],
+  object : Object[K],
+  value : P,
+) -> Result[Unit, String] {
+  for observer in self.observers {
+    match observer(object, value) {
+      Ok(_) => ()
+      Err(reason) => return Err(reason)
+    }
+  }
+  Ok(())
+}
+
+///|
+pub fn[K, P] FactTable::observe(
+  self : FactTable[K, P],
+  observer : (Object[K], P) -> Result[Unit, String],
+) -> Unit {
+  self.observers.push(observer)
+}
+
+///|
+pub fn[K, P] FactTable::observer_count(self : FactTable[K, P]) -> Int {
+  self.observers.length()
 }
 
 ///|

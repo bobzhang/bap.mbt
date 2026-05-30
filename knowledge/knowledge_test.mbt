@@ -181,6 +181,44 @@ test "classes slots and fact tables accumulate monotone facts" {
 }
 
 ///|
+test "translated BAP fact observers receive non-empty provides" {
+  let cls : @knowledge.Class[Unit, String] = @knowledge.Class::create(
+    name=@knowledge.Name::create("observed-program", pkg="test"),
+    sort="unit",
+  )
+  let domain = @knowledge.Domain::bool(
+    @knowledge.Name::create("observed", pkg="test"),
+  )
+  let slot = cls.property(
+    name=@knowledge.Name::create("observed", pkg="test"),
+    domain~,
+  )
+  let facts = @knowledge.FactTable::new(slot)
+  let mirrored = @knowledge.FactTable::new(slot)
+  let calls : Ref[Int] = Ref(0)
+  facts.observe((object, value) => {
+    calls.val = calls.val + 1
+    match mirrored.provide(object, value) {
+      Ok(_) => Ok(())
+      Err(reason) => Err(reason)
+    }
+  })
+  assert_true(facts.observer_count() == 1)
+
+  let state = @knowledge.State::new()
+  let object = state.create(cls)
+  let null = @knowledge.Object::null(cls)
+  assert_true(facts.provide(null, true) == Ok(false))
+  assert_true(facts.provide(object, false) == Ok(false))
+  assert_true(calls.val == 0)
+  assert_true(facts.provide(object, true) == Ok(true))
+  assert_true(calls.val == 1)
+  assert_true(mirrored.collect(object) == Some(true))
+  assert_true(facts.provide(object, false) == Ok(true))
+  assert_true(calls.val == 1)
+}
+
+///|
 test "translated BAP fact require fails on empty values" {
   let cls : @knowledge.Class[Unit, String] = @knowledge.Class::create(
     name=@knowledge.Name::create("required-fact", pkg="test"),

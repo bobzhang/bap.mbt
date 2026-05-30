@@ -36,6 +36,8 @@ pub fn propagate_const_stmts(Array[Stmt]) -> Array[Stmt]
 
 pub fn prune_dead_virtual_stmts(Array[Stmt]) -> Array[Stmt]
 
+pub fn prune_unreferenced(Array[Stmt], such_that? : (Var) -> Bool, physicals? : Bool, virtuals? : Bool) -> Array[Stmt]
+
 pub fn simplify_stmts(Array[Stmt]) -> Array[Stmt]
 
 pub fn substitute(Array[Stmt], Exp, Exp) -> Array[Stmt]

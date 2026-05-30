@@ -36,6 +36,46 @@ test "bil pruning removes dead virtual assignments but preserves physical writes
 }
 
 ///|
+test "BAP prune_unreferenced honors physical virtual and custom filters" {
+  let typ = @types.ValueType::Imm(8)
+  let physical_dead = @types.Var::new(name="physical_dead", typ~)
+  let physical_live = @types.Var::new(name="physical_live", typ~)
+  let virtual_dead = @types.Var::new(name="virtual_dead", typ~, is_virtual=true)
+  let virtual_live = @types.Var::new(name="virtual_live", typ~, is_virtual=true)
+  let out = @types.Var::new(name="out", typ~)
+  let stmts = [
+    @types.Stmt::Move(physical_dead, Int(word8(1))),
+    Move(virtual_dead, Int(word8(2))),
+    Move(virtual_live, Int(word8(3))),
+    Move(out, BinOp(Plus, Var(virtual_live), Int(word8(4)))),
+    Move(physical_live, Var(out)),
+  ]
+  assert_true(@types.prune_unreferenced(stmts) == stmts)
+  assert_true(
+    stmt_text(@types.prune_unreferenced(stmts, virtuals=true)) ==
+    [
+      "physical_dead:imm8 := 1:8u", "%virtual_live:imm8 := 3:8u", "out:imm8 := (%virtual_live:imm8 + 4:8u)",
+      "physical_live:imm8 := out:imm8",
+    ],
+  )
+  assert_true(
+    stmt_text(@types.prune_unreferenced(stmts, physicals=true)) ==
+    [
+      "%virtual_dead:imm8 := 2:8u", "%virtual_live:imm8 := 3:8u", "out:imm8 := (%virtual_live:imm8 + 4:8u)",
+    ],
+  )
+  let custom = @types.prune_unreferenced(stmts, such_that=fn(variable) {
+    variable.name().contains("dead")
+  })
+  assert_true(
+    stmt_text(custom) ==
+    [
+      "%virtual_live:imm8 := 3:8u", "out:imm8 := (%virtual_live:imm8 + 4:8u)", "physical_live:imm8 := out:imm8",
+    ],
+  )
+}
+
+///|
 test "translated BAP pruning handles simple dead virtual regressions" {
   let typ = @types.ValueType::Imm(8)
   let always_alive = @types.Var::new(name="always_alive", typ~)

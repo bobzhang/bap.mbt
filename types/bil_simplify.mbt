@@ -775,6 +775,45 @@ pub fn prune_dead_virtual_stmts(stmts : Array[Stmt]) -> Array[Stmt] {
 }
 
 ///|
+fn should_prune_unreferenced(
+  variable : Var,
+  physicals : Bool,
+  virtuals : Bool,
+  such_that : ((Var) -> Bool)?,
+) -> Bool {
+  (physicals && !variable.is_virtual) ||
+  (virtuals && variable.is_virtual) ||
+  (match such_that {
+    Some(predicate) => predicate(variable)
+    None => false
+  })
+}
+
+///|
+pub fn prune_unreferenced(
+  stmts : Array[Stmt],
+  such_that? : (Var) -> Bool,
+  physicals? : Bool = false,
+  virtuals? : Bool = false,
+) -> Array[Stmt] {
+  let kept = []
+  for i in 0..<stmts.length() {
+    let stmt = stmts[i]
+    match stmt {
+      Move(variable, _) =>
+        if should_prune_unreferenced(variable, physicals, virtuals, such_that) &&
+          !is_referenced(stmts[i + 1:].to_owned(), variable) {
+          ()
+        } else {
+          kept.push(stmt)
+        }
+      _ => kept.push(stmt)
+    }
+  }
+  kept
+}
+
+///|
 fn optimize_stmts_once(stmts : Array[Stmt]) -> Array[Stmt] {
   prune_dead_virtual_stmts(
     simplify_stmts(propagate_const_stmts(simplify_stmts(stmts))),

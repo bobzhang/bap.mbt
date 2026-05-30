@@ -5,6 +5,7 @@ struct ProjectInput {
   image_value : @image.Image?
   program_value : @types.Term[@types.Program]?
   memory_value : @memory.MemMap[String]
+  symbols_value : Array[@image.Symbol]
   libraries_value : Array[Library]
   finish_fn : (Project) -> Project
 }
@@ -33,6 +34,7 @@ pub fn ProjectInput::custom(
   image? : @image.Image,
   program? : @types.Term[@types.Program],
   memory? : @memory.MemMap[String],
+  symbols? : Array[@image.Symbol],
   libraries? : Array[Library],
   finish? : (Project) -> Project,
 ) -> ProjectInput {
@@ -44,6 +46,14 @@ pub fn ProjectInput::custom(
     memory_value: match memory {
       Some(map) => map
       None => @memory.MemMap::empty()
+    },
+    symbols_value: match symbols {
+      Some(items) => items.copy()
+      None =>
+        match image {
+          Some(value) => value.symbols()
+          None => []
+        }
     },
     libraries_value: match libraries {
       Some(items) => items.copy()
@@ -77,6 +87,7 @@ pub fn ProjectInput::from_image(
     image~,
     program?,
     memory=image.memory(),
+    symbols=image.symbols(),
     finish?,
   )
 }
@@ -200,6 +211,11 @@ pub fn ProjectInput::image(self : ProjectInput) -> @image.Image? {
 ///|
 pub fn ProjectInput::memory(self : ProjectInput) -> @memory.MemMap[String] {
   self.memory_value
+}
+
+///|
+pub fn ProjectInput::symbols(self : ProjectInput) -> Array[@image.Symbol] {
+  self.symbols_value.copy()
 }
 
 ///|
@@ -401,6 +417,7 @@ pub fn Project::from_input(input : ProjectInput) -> Project {
     filename?=input.filename_value,
     program?=input.program_value,
     memory=input.memory_value,
+    symbols=input.symbols_value,
     libraries=input.libraries_value,
   )
   (input.finish_fn)(project)

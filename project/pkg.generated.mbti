@@ -177,7 +177,7 @@ pub fn ProjectDisassemblyState::with_blocks(Self, Array[@memory.Memory]) -> Self
 
 type ProjectInput
 pub fn ProjectInput::binary(target~ : @core_theory.Target, filename~ : String, base? : UInt64) -> Result[Self, String]
-pub fn ProjectInput::custom(target~ : @core_theory.Target, filename? : String, image? : @image.Image, program? : @types.Term[@types.Program], memory? : @memory.MemMap[String], libraries? : Array[Library], finish? : (Project) -> Project) -> Self
+pub fn ProjectInput::custom(target~ : @core_theory.Target, filename? : String, image? : @image.Image, program? : @types.Term[@types.Program], memory? : @memory.MemMap[String], symbols? : Array[@image.Symbol], libraries? : Array[Library], finish? : (Project) -> Project) -> Self
 pub fn ProjectInput::file(filename~ : String, loader? : String) -> Result[Self, String]
 pub fn ProjectInput::filename(Self) -> String?
 pub fn ProjectInput::from_bigstring(target~ : @core_theory.Target, Bytes, base? : UInt64, filename? : String, finish? : (Project) -> Project) -> Result[Self, String]
@@ -193,6 +193,7 @@ pub fn ProjectInput::load_for_filename(Bytes, filename~ : String) -> Result[Self
 pub fn ProjectInput::memory(Self) -> @memory.MemMap[String]
 pub fn ProjectInput::raw_bytes(target~ : @core_theory.Target, Bytes, base? : UInt64, filename? : String, finish? : (Project) -> Project) -> Result[Self, String]
 pub fn ProjectInput::raw_file(String, target~ : @core_theory.Target, base? : UInt64, filename? : String) -> Result[Self, String]
+pub fn ProjectInput::symbols(Self) -> Array[@image.Symbol]
 pub fn ProjectInput::target(Self) -> @core_theory.Target
 
 type ProjectInputLoader

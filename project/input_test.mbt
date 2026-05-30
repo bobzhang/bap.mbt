@@ -90,6 +90,18 @@ test "project input finish hook can finalize project storage" {
 }
 
 ///|
+test "project input custom symbols persist into projects" {
+  let target = @core_theory.Target::unknown()
+  let symbols = [@image.Symbol::create(name="custom", addr=0x80UL, size=1)]
+  let input = @project.ProjectInput::custom(target~, symbols~)
+  symbols.push(@image.Symbol::create(name="mutated", addr=0x81UL))
+  assert_true(input.symbols().length() == 1)
+  let project = @project.Project::from_input(input)
+  assert_true(project.symbols().length() == 1)
+  assert_true(project.symbols()[0].name() == "custom")
+}
+
+///|
 test "project input loaders register and load bytes" {
   let loader = @project.ProjectInputLoader::create(
     name="unit-project-raw",

@@ -205,6 +205,16 @@ pub fn Call::target(Self) -> Label
 pub fn Call::with_noreturn(Self) -> Self
 pub fn Call::with_return(Self, Label) -> Self
 
+pub(all) enum CastKind {
+  Unsigned
+  Signed
+  High
+  Low
+} derive(Eq, @debug.Debug)
+pub fn CastKind::apply(Self, Int, Word) -> Result[Word, String]
+pub fn CastKind::string_of_cast(Self) -> String
+pub fn CastKind::to_string(Self) -> String
+
 pub(all) struct Def {
   lhs : Var
   rhs : Exp
@@ -218,7 +228,7 @@ pub(all) enum Exp {
   Load(mem~ : Exp, addr~ : Exp, endian~ : @bitvec.Endian, typ~ : ValueType)
   Store(mem~ : Exp, addr~ : Exp, value~ : Exp, endian~ : @bitvec.Endian)
   Let(Var, Exp, Exp)
-  Cast(ValueType, Exp)
+  Cast(kind~ : CastKind, width~ : Int, exp~ : Exp)
   Extract(hi~ : Int, lo~ : Int, exp~ : Exp)
   Concat(high~ : Exp, low~ : Exp)
   UnOp(UnOp, Exp)
@@ -226,6 +236,7 @@ pub(all) enum Exp {
   Ite(cond~ : Exp, yes~ : Exp, no~ : Exp)
 } derive(Eq, @debug.Debug)
 pub fn Exp::binop(BinOp, Self, Self) -> Self
+pub fn Exp::cast(CastKind, Int, Self) -> Self
 pub fn Exp::concat(Self, Self) -> Self
 pub fn Exp::effect(Self) -> ExpEffect
 pub fn Exp::eval(Self, Map[String, Word]) -> Result[Word, String]

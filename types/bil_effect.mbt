@@ -161,7 +161,8 @@ fn Exp::nonzero_bits(self : Exp) -> Int {
       } else {
         exists_bits
       }
-    Cast(_, exp) => narrow_nonzero_bits(exp.nonzero_bits())
+    Cast(kind=High | Low, ..) => maybe_bits
+    Cast(exp~, ..) => narrow_nonzero_bits(exp.nonzero_bits())
     Extract(_) | Concat(_) => maybe_bits
     BinOp(Or, lhs, rhs) =>
       join_nonzero_bits(lhs.nonzero_bits(), rhs.nonzero_bits())
@@ -231,7 +232,7 @@ pub fn Exp::effect(self : Exp) -> ExpEffect {
     Concat(high~, low~) => high.effect().join(low.effect())
     Ite(cond~, yes~, no~) =>
       ExpEffect::of_list([cond.effect(), yes.effect(), no.effect()])
-    UnOp(_, exp) | Cast(_, exp) => exp.effect()
+    UnOp(_, exp) | Cast(exp~, ..) => exp.effect()
     Let(_, value, body) => value.effect().join(body.effect())
   }
 }

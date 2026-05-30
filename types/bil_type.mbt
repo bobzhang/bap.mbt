@@ -137,14 +137,40 @@ fn checked_extract(
   exp : Exp,
 ) -> Result[ValueType, TypeError] {
   match exp.infer_type() {
-    Ok(Imm(width)) =>
-      if lo < 0 || hi < lo || hi >= width {
+    Ok(Imm(_)) =>
+      if lo < 0 || hi < lo {
         Err(TypeError::bad_cast())
       } else {
         Ok(Imm(hi - lo + 1))
       }
     Ok(Mem(_)) => Err(TypeError::bad_imm())
     Err(err) => Err(err)
+  }
+}
+
+///|
+fn checked_cast(
+  kind : CastKind,
+  width : Int,
+  exp : Exp,
+) -> Result[ValueType, TypeError] {
+  if width <= 0 {
+    Err(TypeError::bad_cast())
+  } else {
+    match exp.infer_type() {
+      Ok(Imm(exp_width)) =>
+        match kind {
+          Unsigned | Signed => Ok(Imm(width))
+          High | Low =>
+            if exp_width >= width {
+              Ok(Imm(width))
+            } else {
+              Err(TypeError::bad_cast())
+            }
+        }
+      Ok(Mem(_)) => Err(TypeError::bad_imm())
+      Err(err) => Err(err)
+    }
   }
 }
 
@@ -174,19 +200,7 @@ pub fn Exp::infer_type(self : Exp) -> Result[ValueType, TypeError] {
           }
         Err(err) => Err(err)
       }
-    Cast(typ, exp) =>
-      match exp.infer_type() {
-        Ok(exp_typ) =>
-          match checked_imm(exp_typ) {
-            Ok(_) =>
-              match typ {
-                Imm(_) => Ok(typ)
-                Mem(_) => Err(TypeError::bad_imm())
-              }
-            Err(err) => Err(err)
-          }
-        Err(err) => Err(err)
-      }
+    Cast(kind~, width~, exp~) => checked_cast(kind, width, exp)
     Extract(hi~, lo~, exp~) => checked_extract(hi, lo, exp)
     Concat(high~, low~) => checked_concat(high, low)
     UnOp(_, exp) =>

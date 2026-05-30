@@ -52,10 +52,10 @@ fn fold_binop(op : BinOp, lhs : Exp, rhs : Exp) -> Exp? {
 }
 
 ///|
-fn fold_cast(typ : ValueType, exp : Exp) -> Exp? {
+fn fold_cast(kind : CastKind, width : Int, exp : Exp) -> Exp? {
   match exp {
     Int(word) =>
-      match cast_word(typ, word) {
+      match cast_word(kind, width, word) {
         Ok(result) => Some(Int(result))
         Err(_) => None
       }
@@ -67,12 +67,37 @@ fn fold_cast(typ : ValueType, exp : Exp) -> Exp? {
 fn fold_extract(hi : Int, lo : Int, exp : Exp) -> Exp? {
   match exp {
     Int(word) =>
-      try word.extract(hi~, lo~) catch {
-        _ => None
-      } noraise {
-        result => Some(Int(result))
+      match extract_word(hi, lo, word) {
+        Ok(result) => Some(Int(result))
+        Err(_) => None
       }
     _ => None
+  }
+}
+
+///|
+fn simplify_cast(kind : CastKind, width : Int, exp : Exp) -> Exp {
+  match fold_cast(kind, width, exp) {
+    Some(result) => result
+    None =>
+      match exp {
+        Cast(width=inner_width, ..) if width == inner_width => exp
+        Cast(kind=inner_kind, width=inner_width, exp=inner_exp) if kind ==
+          inner_kind &&
+          inner_width >= width => Cast(kind~, width~, exp=inner_exp)
+        Cast(kind=Unsigned, width=inner_width, exp=inner_exp) if kind ==
+          Unsigned &&
+          inner_width <= width => Cast(kind~, width~, exp=inner_exp)
+        Cast(kind=Signed, width=inner_width, exp=inner_exp) if kind == Signed &&
+          inner_width <= width => Cast(kind~, width~, exp=inner_exp)
+        Extract(hi~, exp=inner_exp, ..) if kind == High && width > 0 =>
+          Extract(hi~, lo=hi - width + 1, exp=inner_exp)
+        _ =>
+          match exp.infer_type() {
+            Ok(Imm(exp_width)) if exp_width == width => exp
+            _ => Cast(kind~, width~, exp~)
+          }
+      }
   }
 }
 
@@ -168,7 +193,8 @@ pub fn Exp::normalize_negatives(self : Exp) -> Exp {
       )
     Let(variable, value, body) =>
       Let(variable, value.normalize_negatives(), body.normalize_negatives())
-    Cast(typ, exp) => Cast(typ, exp.normalize_negatives())
+    Cast(kind~, width~, exp~) =>
+      Cast(kind~, width~, exp=exp.normalize_negatives())
     Extract(hi~, lo~, exp~) => Extract(hi~, lo~, exp=exp.normalize_negatives())
     Concat(high~, low~) =>
       Concat(high=high.normalize_negatives(), low=low.normalize_negatives())
@@ -221,7 +247,7 @@ fn Exp::first_ite_cond(self : Exp) -> Exp? {
         Some(cond) => Some(cond)
         None => body.first_ite_cond()
       }
-    Cast(_, exp) | UnOp(_, exp) => exp.first_ite_cond()
+    Cast(exp~, ..) | UnOp(_, exp) => exp.first_ite_cond()
     Extract(exp~, ..) => exp.first_ite_cond()
     Concat(high~, low~) =>
       match high.first_ite_cond() {
@@ -272,7 +298,8 @@ fn Exp::assume_ite(self : Exp, target : Exp, take_yes : Bool) -> Exp {
         value.assume_ite(target, take_yes),
         body.assume_ite(target, take_yes),
       )
-    Cast(typ, exp) => Cast(typ, exp.assume_ite(target, take_yes))
+    Cast(kind~, width~, exp~) =>
+      Cast(kind~, width~, exp=exp.assume_ite(target, take_yes))
     UnOp(op, exp) => UnOp(op, exp.assume_ite(target, take_yes))
     Extract(hi~, lo~, exp~) =>
       Extract(hi~, lo~, exp=exp.assume_ite(target, take_yes))
@@ -330,12 +357,9 @@ pub fn Exp::simplify(self : Exp) -> Exp {
         Let(variable, simple_value, simple_body)
       }
     }
-    Cast(typ, exp) => {
+    Cast(kind~, width~, exp~) => {
       let simple = exp.simplify()
-      match fold_cast(typ, simple) {
-        Some(result) => result
-        None => Cast(typ, simple)
-      }
+      simplify_cast(kind, width, simple)
     }
     Extract(hi~, lo~, exp~) => {
       let simple = exp.simplify()
@@ -491,7 +515,7 @@ fn Exp::find_non_var_load_mem(self : Exp) -> Exp? {
         Some(exp) => Some(exp)
         None => body.find_non_var_load_mem()
       }
-    Cast(_, exp) | UnOp(_, exp) => exp.find_non_var_load_mem()
+    Cast(exp~, ..) | UnOp(_, exp) => exp.find_non_var_load_mem()
     Extract(exp~, ..) => exp.find_non_var_load_mem()
     Concat(high~, low~) =>
       match high.find_non_var_load_mem() {
@@ -654,9 +678,9 @@ fn Exp::hoist_non_generative(self : Exp) -> (Array[Stmt], Exp) {
         Let(variable, hoisted_value, normalized_body),
       )
     }
-    Cast(typ, exp) => {
+    Cast(kind~, width~, exp~) => {
       let (stmts, normalized) = exp.hoist_non_generative()
-      (stmts, Cast(typ, normalized))
+      (stmts, Cast(kind~, width~, exp=normalized))
     }
     Extract(hi~, lo~, exp~) => {
       let (stmts, normalized) = exp.hoist_non_generative()
@@ -880,7 +904,8 @@ fn Exp::normalize_trie_values(self : Exp, variables : Array[Var]) -> Exp {
         value.normalize_trie_values(variables),
         body.normalize_trie_values(variables),
       )
-    Cast(typ, exp) => Cast(typ, exp.normalize_trie_values(variables))
+    Cast(kind~, width~, exp~) =>
+      Cast(kind~, width~, exp=exp.normalize_trie_values(variables))
     Extract(hi~, lo~, exp~) =>
       Extract(hi~, lo~, exp=exp.normalize_trie_values(variables))
     Concat(high~, low~) =>
@@ -1090,7 +1115,8 @@ fn Exp::propagate_consts(self : Exp, ctx : Array[(Var, Exp)]) -> Exp {
       let inner = const_set(ctx, variable, const_value(next_value))
       Let(variable, next_value, body.propagate_consts(inner)).simplify()
     }
-    Cast(typ, exp) => Cast(typ, exp.propagate_consts(ctx)).simplify()
+    Cast(kind~, width~, exp~) =>
+      Cast(kind~, width~, exp=exp.propagate_consts(ctx)).simplify()
     Extract(hi~, lo~, exp~) =>
       Extract(hi~, lo~, exp=exp.propagate_consts(ctx)).simplify()
     Concat(high~, low~) =>

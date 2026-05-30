@@ -175,10 +175,38 @@ test "bil extract and concat expressions mirror BAP word operations" {
   assert_true(extract.infer_type() == Ok(Imm(8)))
   assert_true(extract.simplify() == Int(word8(0xAD)))
   assert_eval_word(extract, Map([]), word8(0xAD))
+  let widened = @types.Extract(hi=8, lo=0, exp=Int(word8(1)))
+  assert_true(widened.infer_type() == Ok(Imm(9)))
+  assert_true(widened.simplify() == Int(@types.Word::of_uint64(width=9, 1)))
+  assert_eval_word(widened, Map([]), @types.Word::of_uint64(width=9, 1))
   assert_true(
-    @types.Extract(hi=8, lo=0, exp=Int(word8(1))).infer_type() ==
-    Err(@types.TypeError::bad_cast()),
+    @types.Extract(hi=15, lo=0, exp=Int(word8(0xff).signed())).simplify() ==
+    Int(word16(0xffff)),
   )
+}
+
+///|
+test "bil BAP cast kinds pad extend high and low bits" {
+  let byte_ff = @types.Int(word8(0xff))
+  let word_dead = @types.Int(word16(0xDEAD))
+  let unsigned = @types.Exp::cast(Unsigned, 16, byte_ff)
+  let signed = @types.Exp::cast(Signed, 16, byte_ff)
+  let high = @types.Exp::cast(High, 8, word_dead)
+  let low = @types.Exp::cast(Low, 8, word_dead)
+  assert_true(unsigned.type_of() == Imm(16))
+  assert_true(unsigned.infer_type() == Ok(Imm(16)))
+  assert_true(unsigned.simplify() == Int(word16(0x00ff)))
+  assert_true(signed.simplify() == Int(word16(0xffff)))
+  assert_true(high.simplify() == Int(word8(0xde)))
+  assert_true(low.simplify() == Int(word8(0xad)))
+  assert_eval_word(unsigned, Map([]), word16(0x00ff))
+  assert_eval_word(signed, Map([]), word16(0xffff))
+  assert_eval_word(high, Map([]), word8(0xde))
+  assert_eval_word(low, Map([]), word8(0xad))
+  match @types.Signed.apply(16, word8(0x80)) {
+    Ok(word) => assert_true(word == word16(0xff80))
+    Err(reason) => fail(reason)
+  }
 }
 
 ///|

@@ -137,6 +137,17 @@ type inference, effect/coeffect analysis, free variables, substitution,
 evaluation, simplification, normalization, constant propagation, SSA renaming,
 and IR flattening. Otherwise the port will either fail exhaustiveness checks or
 silently lose behavior in passes that use wildcard/default expression cases.
+Do not make `Extract`'s type rule stricter than BAP's source: BAP allows
+`hi >= lo` even when `hi` is above the operand width, because lifters use
+extract for widening. Runtime extraction should zero-fill unsigned words and
+sign-fill words that have been explicitly marked signed.
+
+BAP BIL `Cast` is not a generic `ValueType` resize. It carries a cast kind plus
+a target bit width: `UNSIGNED`/`SIGNED` are pad/sign-extension forms that may
+widen or narrow, while `HIGH`/`LOW` keep high or low bits and type-check only
+when the source width is at least the target width. Preserve the BAP pretty
+names (`pad`, `extend`, `high`, `low`) and update simplification rules for
+nested casts, constants, and `HIGH` over `Extract`.
 
 For BAP `Trie.normalize`, preserve the pipeline order: apply substitutions in
 the given order, prune unreferenced virtual definitions, normalize negative

@@ -575,6 +575,14 @@ test "bil expressions and statements expose BAP-style constructors" {
   assert_true(@types.Exp::let_(x, value, addr) == Let(x, value, addr))
   assert_true(@types.Exp::unknown("u", imm8) == Unknown("u", imm8))
   assert_true(
+    @types.Exp::cast(Unsigned, 16, value) ==
+    Cast(kind=Unsigned, width=16, exp=value),
+  )
+  inspect(@types.Unsigned.to_string(), content="pad")
+  inspect(@types.Signed.to_string(), content="extend")
+  inspect(@types.High.to_string(), content="high")
+  inspect(@types.Low.to_string(), content="low")
+  assert_true(
     @types.Exp::extract(value, hi=3, lo=0) == Extract(hi=3, lo=0, exp=value),
   )
   assert_true(@types.Exp::concat(value, addr) == Concat(high=value, low=addr))
@@ -615,6 +623,7 @@ test "bil expressions and statements expose BAP-style constructors" {
 ///|
 test "bil checked type inference mirrors BAP error cases" {
   let imm1 = @types.ValueType::Imm(1)
+  let imm4 = @types.ValueType::Imm(4)
   let imm8 = @types.ValueType::Imm(8)
   let imm16 = @types.ValueType::Imm(16)
   let imm32 = @types.ValueType::Imm(32)
@@ -638,6 +647,14 @@ test "bil checked type inference mirrors BAP error cases" {
   assert_true(@types.Exp::binop(Eq, x_exp, x_exp).infer_type() == Ok(imm1))
   assert_true(
     @types.Exp::binop(LShift, x_exp, addr_exp).infer_type() == Ok(imm8),
+  )
+  assert_true(@types.Exp::cast(Unsigned, 16, x_exp).infer_type() == Ok(imm16))
+  assert_true(@types.Exp::cast(Signed, 16, x_exp).infer_type() == Ok(imm16))
+  assert_true(@types.Exp::cast(Low, 4, x_exp).infer_type() == Ok(imm4))
+  assert_true(@types.Exp::cast(High, 16, x_exp).infer_type() == Err(BadCast))
+  assert_true(@types.Exp::cast(Unsigned, 0, x_exp).infer_type() == Err(BadCast))
+  assert_true(
+    @types.Exp::cast(Unsigned, 8, mem_exp).infer_type() == Err(BadKind(ImmKind)),
   )
   assert_true(
     @types.Exp::binop(Plus, x_exp, @types.Exp::var_exp(y)).infer_type() ==

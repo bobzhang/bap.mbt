@@ -48,7 +48,7 @@ pub fn Exp::free_vars(self : Exp) -> Array[Var] {
         }
       }
     }
-    Cast(_, exp) | UnOp(_, exp) => add_vars(vars, exp.free_vars())
+    Cast(exp~, ..) | UnOp(_, exp) => add_vars(vars, exp.free_vars())
     Extract(exp~, ..) => add_vars(vars, exp.free_vars())
     Concat(high~, low~) => {
       add_vars(vars, high.free_vars())
@@ -94,7 +94,8 @@ pub fn Exp::substitute(self : Exp, target : Exp, replacement : Exp) -> Exp {
           value.substitute(target, replacement),
           body.substitute(target, replacement),
         )
-      Cast(typ, exp) => Cast(typ, exp.substitute(target, replacement))
+      Cast(kind~, width~, exp~) =>
+        Cast(kind~, width~, exp=exp.substitute(target, replacement))
       UnOp(op, exp) => UnOp(op, exp.substitute(target, replacement))
       Extract(hi~, lo~, exp~) =>
         Extract(hi~, lo~, exp=exp.substitute(target, replacement))
@@ -150,6 +151,54 @@ fn word_error() -> Result[Word, String] {
 }
 
 ///|
+fn extract_word(hi : Int, lo : Int, value : Word) -> Result[Word, String] {
+  if lo < 0 || hi < lo {
+    word_error()
+  } else {
+    let result_width = hi - lo + 1
+    let value_width = value.width()
+    if lo >= value_width {
+      try {
+        if value.is_signed() && value.msb() {
+          Word::ones(width=result_width)
+        } else {
+          Word::zero(width=result_width)
+        }
+      } catch {
+        _ => word_error()
+      } noraise {
+        word => Ok(word)
+      }
+    } else {
+      let actual_hi = if hi >= value_width { value_width - 1 } else { hi }
+      try value.extract(hi=actual_hi, lo~) catch {
+        _ => word_error()
+      } noraise {
+        low_bits =>
+          if hi < value_width {
+            Ok(low_bits)
+          } else {
+            let fill_width = hi - value_width + 1
+            if value.is_signed() && value.msb() {
+              try Word::ones(width=fill_width).concat(low_bits) catch {
+                _ => word_error()
+              } noraise {
+                word => Ok(word)
+              }
+            } else {
+              try low_bits.widen(width=result_width) catch {
+                _ => word_error()
+              } noraise {
+                word => Ok(word)
+              }
+            }
+          }
+      }
+    }
+  }
+}
+
+///|
 fn eval_unop(op : UnOp, value : Word) -> Result[Word, String] {
   match op {
     Not => result_word(value.lnot())
@@ -167,26 +216,33 @@ fn shift_amount(value : Word) -> Result[Int, String] {
 }
 
 ///|
-fn cast_word(typ : ValueType, value : Word) -> Result[Word, String] {
-  match typ {
-    Imm(width) =>
-      if width == value.width() {
-        Ok(value)
-      } else if width < value.width() {
-        try value.truncate(width~) catch {
-          _ => word_error()
-        } noraise {
-          word => Ok(word)
-        }
-      } else {
-        try value.widen(width~) catch {
-          _ => word_error()
-        } noraise {
-          word => Ok(word)
-        }
+fn cast_word(
+  kind : CastKind,
+  width : Int,
+  value : Word,
+) -> Result[Word, String] {
+  if width <= 0 {
+    Err("malformed cast arguments")
+  } else {
+    match kind {
+      Unsigned => extract_word(width - 1, 0, value.unsigned())
+      Signed => extract_word(width - 1, 0, value.signed())
+      High => {
+        let lo = value.width() - width
+        extract_word(value.width() - 1, lo, value.unsigned())
       }
-    Mem(_) => Err("can't cast scalar word to memory type")
+      Low => extract_word(width - 1, 0, value.unsigned())
+    }
   }
+}
+
+///|
+pub fn CastKind::apply(
+  self : CastKind,
+  width : Int,
+  value : Word,
+) -> Result[Word, String] {
+  cast_word(self, width, value)
 }
 
 ///|

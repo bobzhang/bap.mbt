@@ -110,6 +110,29 @@ pub fn BinOp::is_associative(self : BinOp) -> Bool {
 }
 
 ///|
+pub(all) enum CastKind {
+  Unsigned
+  Signed
+  High
+  Low
+} derive(Eq, Debug)
+
+///|
+pub fn CastKind::to_string(self : CastKind) -> String {
+  match self {
+    Unsigned => "pad"
+    Signed => "extend"
+    High => "high"
+    Low => "low"
+  }
+}
+
+///|
+pub fn CastKind::string_of_cast(self : CastKind) -> String {
+  self.to_string()
+}
+
+///|
 pub(all) enum Exp {
   Int(Word)
   Var(Var)
@@ -117,7 +140,7 @@ pub(all) enum Exp {
   Load(mem~ : Exp, addr~ : Exp, endian~ : @bitvec.Endian, typ~ : ValueType)
   Store(mem~ : Exp, addr~ : Exp, value~ : Exp, endian~ : @bitvec.Endian)
   Let(Var, Exp, Exp)
-  Cast(ValueType, Exp)
+  Cast(kind~ : CastKind, width~ : Int, exp~ : Exp)
   Extract(hi~ : Int, lo~ : Int, exp~ : Exp)
   Concat(high~ : Exp, low~ : Exp)
   UnOp(UnOp, Exp)
@@ -183,6 +206,11 @@ pub fn Exp::let_(variable : Var, value : Exp, body : Exp) -> Exp {
 }
 
 ///|
+pub fn Exp::cast(kind : CastKind, width : Int, exp : Exp) -> Exp {
+  Cast(kind~, width~, exp~)
+}
+
+///|
 pub fn Exp::unknown(name : String, typ : ValueType) -> Exp {
   Unknown(name, typ)
 }
@@ -219,7 +247,7 @@ pub fn Exp::type_of(self : Exp) -> ValueType {
     Load(typ~, ..) => typ
     Store(mem~, ..) => mem.type_of()
     Let(_, _, body) => body.type_of()
-    Cast(typ, _) => typ
+    Cast(width~, ..) => Imm(width)
     Extract(hi~, lo~, ..) => Imm(hi - lo + 1)
     Concat(high~, low~) =>
       match (high.type_of(), low.type_of()) {
@@ -248,7 +276,8 @@ pub fn Exp::to_string(self : Exp) -> String {
       "store(\{mem.to_string()}, \{addr.to_string()}, \{value.to_string()})"
     Let(v, value, body) =>
       "let \{v.to_string()} = \{value.to_string()} in \{body.to_string()}"
-    Cast(typ, exp) => "cast(\{typ.to_string()}, \{exp.to_string()})"
+    Cast(kind~, width~, exp~) =>
+      "\{kind.to_string()}:\{width}[\{exp.to_string()}]"
     Extract(hi~, lo~, exp~) => "extract[\{hi}:\{lo}](\{exp.to_string()})"
     Concat(high~, low~) => "concat(\{high.to_string()}, \{low.to_string()})"
     UnOp(op, exp) => "(\{op.to_string()} \{exp.to_string()})"

@@ -224,9 +224,9 @@ pub fn Exp::eval_value(
         }
         Err(reason) => Err(reason)
       }
-    Cast(typ, exp) =>
+    Cast(kind~, width~, exp~) =>
       match eval_scalar(exp, env) {
-        Ok(word) => cast_word(typ, word).map(next => BilWord(next))
+        Ok(word) => cast_word(kind, width, word).map(next => BilWord(next))
         Err(reason) => Err(reason)
       }
     UnOp(op, exp) =>
@@ -236,12 +236,7 @@ pub fn Exp::eval_value(
       }
     Extract(hi~, lo~, exp~) =>
       match eval_scalar(exp, env) {
-        Ok(word) =>
-          try word.extract(hi~, lo~) catch {
-            _ => Err("bitvector operation failed")
-          } noraise {
-            result => Ok(BilWord(result))
-          }
+        Ok(word) => extract_word(hi, lo, word).map(result => BilWord(result))
         Err(reason) => Err(reason)
       }
     Concat(high~, low~) =>

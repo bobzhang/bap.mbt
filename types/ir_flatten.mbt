@@ -81,9 +81,9 @@ fn Term::flatten_exp_into(
         before?,
       )
     }
-    Cast(typ, inner) => {
+    Cast(kind~, width~, exp=inner) => {
       let (inner, blk) = self.flatten_exp_into(inner, before?)
-      blk.flatten_materialize(Cast(typ, inner), before?)
+      blk.flatten_materialize(Cast(kind~, width~, exp=inner), before?)
     }
     Extract(hi~, lo~, exp~) => {
       let (exp, blk) = self.flatten_exp_into(exp, before?)

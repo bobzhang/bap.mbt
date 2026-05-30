@@ -223,7 +223,8 @@ fn ssa_rename_exp(exp : Exp, stacks : Map[String, Array[Var]]) -> Exp {
         ssa_rename_exp(body, inner_stacks),
       )
     }
-    Cast(typ, inner) => Cast(typ, ssa_rename_exp(inner, stacks))
+    Cast(kind~, width~, exp=inner) =>
+      Cast(kind~, width~, exp=ssa_rename_exp(inner, stacks))
     UnOp(op, inner) => UnOp(op, ssa_rename_exp(inner, stacks))
     Extract(hi~, lo~, exp~) =>
       Extract(hi~, lo~, exp=ssa_rename_exp(exp, stacks))

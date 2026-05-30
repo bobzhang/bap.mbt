@@ -84,6 +84,42 @@ test "target registry resolves common and custom declarations" {
     }
     Err(reason) => fail(reason)
   }
+  match @core_theory.get_target("mips64el") {
+    Ok(target) => {
+      assert_true(target.bits() == 64)
+      assert_true(target.endianness() == LittleEndian)
+      assert_true(target.belongs(@core_theory.Target::mips()))
+    }
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.get_target("sparc64") {
+    Ok(target) => {
+      assert_true(target.bits() == 64)
+      assert_true(target.endianness() == BigEndian)
+      assert_true(target.matches("sparcv9"))
+      assert_true(target.belongs(@core_theory.Target::sparc()))
+    }
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.get_target("s390x") {
+    Ok(target) => {
+      assert_true(target.matches("systemz"))
+      assert_true(target.bits() == 64)
+      assert_true(target.endianness() == BigEndian)
+    }
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.get_target("nvptx64") {
+    Ok(target) => {
+      assert_true(target.bits() == 64)
+      assert_true(target.endianness() == LittleEndian)
+      assert_true(target.belongs(@core_theory.Target::nvptx()))
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(@core_theory.get_target("hexagon") is Ok(_))
+  assert_true(@core_theory.get_target("r600") is Ok(_))
+  assert_true(@core_theory.get_target("xcore") is Ok(_))
   let target = @core_theory.Target::create(
     name=@knowledge.Name::create("unit-target-registry", pkg="test"),
     nicknames=["unit-target-alias"],

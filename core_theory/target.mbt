@@ -299,10 +299,38 @@ fn mips_vars(bits : Int) -> Array[Var] {
 }
 
 ///|
+fn sparc_vars(bits : Int) -> Array[Var] {
+  let items = []
+  for prefix in ["G", "O", "L", "I"] {
+    append_vars(items, numbered_word_vars(bits, prefix, 8))
+  }
+  append_vars(items, named_word_vars(bits, ["PC", "NPC", "SP"]))
+  items.push(mem_var(bits, 8, "mem"))
+  items
+}
+
+///|
 fn ppc_vars(bits : Int) -> Array[Var] {
   let items = numbered_word_vars(bits, "R", 32)
   append_vars(items, named_word_vars(bits, ["LR", "CTR", "PC", "SP"]))
   items.push(mem_var(bits, 8, "mem"))
+  items
+}
+
+///|
+fn numbered_pc_mem_vars(bits : Int, prefix : String, count : Int) -> Array[Var] {
+  let items = numbered_word_vars(bits, prefix, count)
+  append_vars(items, named_word_vars(bits, ["PC"]))
+  items.push(mem_var(bits, 8, "mem"))
+  items
+}
+
+///|
+fn systemz_vars() -> Array[Var] {
+  let items = numbered_word_vars(64, "R", 16)
+  append_vars(items, numbered_word_vars(64, "F", 16))
+  append_vars(items, named_word_vars(64, ["PC", "SP"]))
+  items.push(mem_var(64, 8, "mem"))
   items
 }
 
@@ -882,6 +910,28 @@ pub fn Target::mipsel() -> Target {
 }
 
 ///|
+pub fn Target::mips64() -> Target {
+  Target::create(
+    name=target_name("mips64"),
+    parent=Target::mips(),
+    bits=64,
+    endianness=BigEndian,
+    vars=mips_vars(64),
+  )
+}
+
+///|
+pub fn Target::mips64el() -> Target {
+  Target::create(
+    name=target_name("mips64el"),
+    parent=Target::mips64(),
+    bits=64,
+    endianness=LittleEndian,
+    vars=mips_vars(64),
+  )
+}
+
+///|
 pub fn Target::powerpc() -> Target {
   Target::create(
     name=target_name("powerpc"),
@@ -939,6 +989,90 @@ pub fn Target::riscv64() -> Target {
 }
 
 ///|
+pub fn Target::sparc() -> Target {
+  Target::create(
+    name=target_name("sparc"),
+    bits=32,
+    endianness=BigEndian,
+    vars=sparc_vars(32),
+  )
+}
+
+///|
+pub fn Target::sparcv9() -> Target {
+  Target::create(
+    name=target_name("sparcv9"),
+    parent=Target::sparc(),
+    nicknames=["sparc64"],
+    bits=64,
+    endianness=BigEndian,
+    vars=sparc_vars(64),
+  )
+}
+
+///|
+pub fn Target::nvptx() -> Target {
+  Target::create(
+    name=target_name("nvptx"),
+    bits=32,
+    endianness=LittleEndian,
+    vars=numbered_pc_mem_vars(32, "R", 32),
+  )
+}
+
+///|
+pub fn Target::nvptx64() -> Target {
+  Target::create(
+    name=target_name("nvptx64"),
+    parent=Target::nvptx(),
+    bits=64,
+    endianness=LittleEndian,
+    vars=numbered_pc_mem_vars(64, "R", 32),
+  )
+}
+
+///|
+pub fn Target::hexagon() -> Target {
+  Target::create(
+    name=target_name("hexagon"),
+    bits=32,
+    endianness=LittleEndian,
+    vars=numbered_pc_mem_vars(32, "R", 32),
+  )
+}
+
+///|
+pub fn Target::r600() -> Target {
+  Target::create(
+    name=target_name("r600"),
+    bits=32,
+    endianness=LittleEndian,
+    vars=numbered_pc_mem_vars(32, "R", 32),
+  )
+}
+
+///|
+pub fn Target::systemz() -> Target {
+  Target::create(
+    name=target_name("systemz"),
+    nicknames=["s390x"],
+    bits=64,
+    endianness=BigEndian,
+    vars=systemz_vars(),
+  )
+}
+
+///|
+pub fn Target::xcore() -> Target {
+  Target::create(
+    name=target_name("xcore"),
+    bits=32,
+    endianness=LittleEndian,
+    vars=numbered_pc_mem_vars(32, "R", 16),
+  )
+}
+
+///|
 pub fn common_targets() -> Array[Target] {
   [
     Target::x86(),
@@ -949,11 +1083,21 @@ pub fn common_targets() -> Array[Target] {
     Target::aarch64_be(),
     Target::mips(),
     Target::mipsel(),
+    Target::mips64(),
+    Target::mips64el(),
     Target::powerpc(),
     Target::powerpc64(),
     Target::powerpc64le(),
     Target::riscv32(),
     Target::riscv64(),
+    Target::sparc(),
+    Target::sparcv9(),
+    Target::nvptx(),
+    Target::nvptx64(),
+    Target::hexagon(),
+    Target::r600(),
+    Target::systemz(),
+    Target::xcore(),
   ]
 }
 

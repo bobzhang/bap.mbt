@@ -157,8 +157,10 @@ blocks inside the reconstructed subroutine. Unknown or cross-subroutine
 destinations should remain preserved as disassembly metadata until a richer
 call/branch classifier is available. The default reconstructor should seed
 functions from project roots and no-incoming CFG nodes, then group blocks by
-reachable edge facts. Known roots may intentionally produce overlapping
-subroutines when they are reachable from an earlier function start. Remaining
+reachable edge facts. Known roots are traversal boundaries for other starts,
+matching BAP's treatment of roots as call-like destinations in the default
+reconstructor; until call semantics are lifted, keep those boundary edges as
+disassembly metadata instead of direct intra-subroutine gotos. Remaining
 unrooted cyclic components should still be grouped by reachability, while
 isolated blocks stay as separate subroutines; this gives later recursive-descent
 decoding a CFG-shaped landing zone without fabricating instruction semantics.

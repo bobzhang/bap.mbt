@@ -90,10 +90,11 @@ fn project_reconstructor_add_start(
 }
 
 ///|
-fn project_reconstructor_reachable_blocks(
+fn project_reconstructor_reachable_blocks_with_boundaries(
   blocks : Array[@memory.Memory],
   edges : Array[ProjectDisassemblyEdge],
   start : @memory.Memory,
+  boundaries : Array[@memory.Memory],
 ) -> Array[@memory.Memory] {
   let group : Array[@memory.Memory] = []
   let stack = [start]
@@ -105,7 +106,13 @@ fn project_reconstructor_reachable_blocks(
           for edge in edges {
             if edge.source() == block.min_addr() {
               match project_reconstructor_edge_target_index(blocks, edge) {
-                Some(target_index) => stack.push(blocks[target_index])
+                Some(target_index) => {
+                  let target = blocks[target_index]
+                  if target.min_addr() == start.min_addr() ||
+                    !project_reconstructor_group_contains(boundaries, target) {
+                    stack.push(target)
+                  }
+                }
                 None => ()
               }
             }
@@ -116,6 +123,15 @@ fn project_reconstructor_reachable_blocks(
   }
   group.sort_by((left, right) => left.min_addr().compare(right.min_addr()))
   group
+}
+
+///|
+fn project_reconstructor_reachable_blocks(
+  blocks : Array[@memory.Memory],
+  edges : Array[ProjectDisassemblyEdge],
+  start : @memory.Memory,
+) -> Array[@memory.Memory] {
+  project_reconstructor_reachable_blocks_with_boundaries(blocks, edges, start, [])
 }
 
 ///|
@@ -161,7 +177,9 @@ fn project_reconstructor_default_groups(
   let assigned : Array[@memory.Memory] = []
   let groups : Array[Array[@memory.Memory]] = []
   for start in starts {
-    let group = project_reconstructor_reachable_blocks(blocks, edges, start)
+    let group = project_reconstructor_reachable_blocks_with_boundaries(
+      blocks, edges, start, starts,
+    )
     if !group.is_empty() {
       groups.push(group)
       for block in group {

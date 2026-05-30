@@ -106,7 +106,7 @@ test "project default reconstructor groups blocks by reachable disassembly edges
 }
 
 ///|
-test "project default reconstructor seeds groups from known function roots" {
+test "project default reconstructor stops groups at known function roots" {
   let target = @core_theory.Target::unknown()
   let entry = @memory.Memory::from_bytes(
     endian=LittleEndian,
@@ -152,9 +152,8 @@ test "project default reconstructor seeds groups from known function roots" {
       let subs = reconstructed.state().subroutines()
       assert_true(subs.length() == 2)
       assert_true(subs[0].sub_name() == "main")
-      assert_true(subs[0].blks().length() == 3)
-      assert_true(subs[0].sub_has_edge(subs[0].blks()[0], subs[0].blks()[1]))
-      assert_true(subs[0].sub_has_edge(subs[0].blks()[1], subs[0].blks()[2]))
+      assert_true(subs[0].blks().length() == 1)
+      assert_true(subs[0].blks()[0].jmps().is_empty())
       assert_true(subs[1].sub_name() == "helper")
       assert_true(subs[1].blks().length() == 2)
       assert_true(subs[1].sub_has_edge(subs[1].blks()[0], subs[1].blks()[1]))

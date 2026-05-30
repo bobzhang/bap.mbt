@@ -53,7 +53,10 @@ pub fn DwarfAbbrevField::value_kind(
   match (self.attr_value, self.form_value) {
     (DwarfName, DwarfString)
     | (DwarfName, DwarfStrp)
-    | (DwarfName, DwarfStrx(_)) => DwarfNameValue
+    | (DwarfName, DwarfStrx(_))
+    | (DwarfLinkageName, DwarfString)
+    | (DwarfLinkageName, DwarfStrp)
+    | (DwarfLinkageName, DwarfStrx(_)) => DwarfNameValue
     (DwarfLowPc, DwarfAddr) => DwarfLowPcValue
     (DwarfEntryPc, DwarfAddr) => DwarfEntryPcValue
     (DwarfHighPc, DwarfAddr) => DwarfHighPcAddressValue

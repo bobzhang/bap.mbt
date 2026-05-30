@@ -131,7 +131,9 @@ keep string ownership explicit: `DW_FORM_strp` indexes `.debug_str` directly,
 whereas `DW_FORM_strx*` first indexes `.debug_str_offsets` using the
 compilation unit's `DW_AT_str_offsets_base`, then uses the resulting offset in
 `.debug_str`. Non-capturing DIE fields should still skip the encoded form
-without forcing optional sections to exist.
+without forcing optional sections to exist. Treat `DW_AT_linkage_name` as a
+function-name fallback when `DW_AT_name` is absent; if both are present, keep
+the source-level `DW_AT_name` as the display name.
 
 `text[i]` returns a `UInt16` code unit, not a `Char`. For text parsers that need character predicates or `StringBuilder::write_char`, use `text.get_char(offset)` and advance by `char.utf16_len()`. It is still fine to increment by one for syntax bytes you have already constrained to ASCII, such as `(`, `)`, `"` and `\\`, but do not mix code-unit offsets with `Char` APIs accidentally.
 

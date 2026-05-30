@@ -111,6 +111,10 @@ test "translated DWARF abbreviation value classification follows BAP FBI inputs"
     DwarfNameValue,
   )
   assert_true(
+    @dwarf.DwarfAbbrevField::create(attr=DwarfLinkageName, form=DwarfString).value_kind() ==
+    DwarfNameValue,
+  )
+  assert_true(
     @dwarf.DwarfAbbrevField::create(attr=DwarfHighPc, form=DwarfAddr).value_kind() ==
     DwarfHighPcAddressValue,
   )

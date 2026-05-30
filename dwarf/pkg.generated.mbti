@@ -45,6 +45,7 @@ pub(all) enum DwarfAbbrevValueKind {
 
 pub(all) enum DwarfAttr {
   DwarfName
+  DwarfLinkageName
   DwarfLowPc
   DwarfHighPc
   DwarfEntryPc

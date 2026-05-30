@@ -8,6 +8,7 @@ struct DwarfFunction {
 ///|
 priv enum DwarfFunctionAttrValue {
   DwarfAttrName(String)
+  DwarfAttrLinkageName(String)
   DwarfAttrLowPc(UInt64)
   DwarfAttrEntryPc(UInt64)
   DwarfAttrHighPcAbs(UInt64)
@@ -38,6 +39,17 @@ pub fn DwarfFunction::low_pc(self : DwarfFunction) -> UInt64 {
 ///|
 pub fn DwarfFunction::high_pc(self : DwarfFunction) -> UInt64? {
   self.high_pc_value
+}
+
+///|
+fn dwarf_name_value(
+  field : DwarfAbbrevField,
+  name : String,
+) -> DwarfFunctionAttrValue {
+  match field.attr() {
+    DwarfLinkageName => DwarfAttrLinkageName(name)
+    _ => DwarfAttrName(name)
+  }
 }
 
 ///|
@@ -194,12 +206,12 @@ fn dwarf_read_attr_value(
       match field.form() {
         DwarfString =>
           match input.read_cstring() {
-            Ok((name, next)) => Ok((DwarfAttrName(name), next))
+            Ok((name, next)) => Ok((dwarf_name_value(field, name), next))
             Err(reason) => Err(reason)
           }
         DwarfStrp =>
           match dwarf_read_strp_name(input, endian, dwarf_size, str_section) {
-            Ok((name, next)) => Ok((DwarfAttrName(name), next))
+            Ok((name, next)) => Ok((dwarf_name_value(field, name), next))
             Err(reason) => Err(reason)
           }
         DwarfStrx(spec) =>
@@ -208,7 +220,7 @@ fn dwarf_read_attr_value(
               input, spec, endian, dwarf_size, str_offsets_base, str_offsets_section,
               str_section,
             ) {
-            Ok((name, next)) => Ok((DwarfAttrName(name), next))
+            Ok((name, next)) => Ok((dwarf_name_value(field, name), next))
             Err(reason) => Err(reason)
           }
         form =>
@@ -264,6 +276,7 @@ fn dwarf_collect_function(
   values : Array[DwarfFunctionAttrValue],
 ) -> DwarfFunction? {
   let mut name : String? = None
+  let mut linkage_name : String? = None
   let mut low_pc : UInt64? = None
   let mut entry_pc : UInt64? = None
   let mut high_abs : UInt64? = None
@@ -271,6 +284,7 @@ fn dwarf_collect_function(
   for value in values {
     match value {
       DwarfAttrName(text) => name = Some(text)
+      DwarfAttrLinkageName(text) => linkage_name = Some(text)
       DwarfAttrLowPc(addr) => low_pc = Some(addr)
       DwarfAttrEntryPc(addr) => entry_pc = Some(addr)
       DwarfAttrHighPcAbs(addr) => high_abs = Some(addr)
@@ -283,7 +297,11 @@ fn dwarf_collect_function(
     Some(addr) => Some(addr)
     None => entry_pc
   }
-  match (name, start_pc) {
+  let display_name = match name {
+    Some(text) => Some(text)
+    None => linkage_name
+  }
+  match (display_name, start_pc) {
     (Some(text), Some(start)) => {
       let high = match high_abs {
         Some(addr) => Some(addr)

@@ -133,6 +133,11 @@ virtual boolean definition. Multiple conditional jumps in one block need
 distinct variables; using the same textual name for every hoist changes later
 variable-based analyses.
 
+For monomorphic BAP word/bitvector operations, preserve width checks even when
+both operands are representable in MoonBit scalar integers. Comparisons between
+different bit widths should fail with an incompatible-width error instead of
+implicitly widening, truncating, or comparing host integers.
+
 Many BAP plugins are intentionally thin `Project.map_program` wrappers around
 term transforms (SSA, SSA destruction, flatten, trivial-condition-form, stub
 resolution). Port the pure `types` transform first, then expose a project-level

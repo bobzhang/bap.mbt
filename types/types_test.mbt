@@ -368,6 +368,30 @@ test "word signedness predicates match BAP validation cases" {
 }
 
 ///|
+test "translated BAP monomorphic word comparisons reject mixed widths" {
+  let zero32 = @types.Word::zero(width=32)
+  let zero1 = @types.Word::b0()
+  try zero32.compare_unsigned(zero1) catch {
+    IncompatibleWidths(lhs~, rhs~) => {
+      assert_true(lhs == 32)
+      assert_true(rhs == 1)
+    }
+    _ => fail("expected IncompatibleWidths")
+  } noraise {
+    _ => fail("expected IncompatibleWidths")
+  }
+  try zero32.compare_signed(zero1) catch {
+    IncompatibleWidths(lhs~, rhs~) => {
+      assert_true(lhs == 32)
+      assert_true(rhs == 1)
+    }
+    _ => fail("expected IncompatibleWidths")
+  } noraise {
+    _ => fail("expected IncompatibleWidths")
+  }
+}
+
+///|
 test "word integer conversions follow BAP signedness" {
   let x = @types.Word::of_int(width=8, -6)
   assert_true(x.to_int() == 250)

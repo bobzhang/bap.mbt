@@ -90,6 +90,30 @@ test "division gcd and lcm use unsigned semantics" {
 }
 
 ///|
+test "translated BAP monomorphic bitvector comparisons reject mixed widths" {
+  let zero32 = @bitvec.of_int(width=32, 0)
+  let zero1 = @bitvec.b0()
+  try zero32.compare_unsigned(zero1) catch {
+    IncompatibleWidths(lhs~, rhs~) => {
+      assert_true(lhs == 32)
+      assert_true(rhs == 1)
+    }
+    _ => fail("expected IncompatibleWidths")
+  } noraise {
+    _ => fail("expected IncompatibleWidths")
+  }
+  try zero32.compare_signed(zero1) catch {
+    IncompatibleWidths(lhs~, rhs~) => {
+      assert_true(lhs == 32)
+      assert_true(rhs == 1)
+    }
+    _ => fail("expected IncompatibleWidths")
+  } noraise {
+    _ => fail("expected IncompatibleWidths")
+  }
+}
+
+///|
 test "hex parsing truncates to the requested width" {
   inspect(@bitvec.from_hex(width=16, "0xdeadbeef").to_hex(), content="0xbeef")
   inspect(@bitvec.from_hex(width=4, "f").lnot().to_hex(), content="0x0")

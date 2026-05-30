@@ -247,6 +247,8 @@ fn project_elf_test_write_section64(
   addr : UInt64,
   offset : Int,
   size : Int,
+  link : Int,
+  entsize : Int,
 ) -> Unit {
   let base = 120 + index * 64
   project_elf_test_set_u32_le(buffer, base, name_offset)
@@ -255,15 +257,37 @@ fn project_elf_test_write_section64(
   project_elf_test_set_u64_le(buffer, base + 16, addr)
   project_elf_test_set_u64_le(buffer, base + 24, offset.to_uint64())
   project_elf_test_set_u64_le(buffer, base + 32, size.to_uint64())
+  project_elf_test_set_u32_le(buffer, base + 40, link)
+  project_elf_test_set_u64_le(buffer, base + 56, entsize.to_uint64())
+}
+
+///|
+fn project_elf_test_write_symbol64(
+  buffer : Array[Byte],
+  offset : Int,
+  name_offset : Int,
+  info : Int,
+  shndx : Int,
+  value : UInt64,
+  size : UInt64,
+) -> Unit {
+  project_elf_test_set_u32_le(buffer, offset, name_offset)
+  buffer[offset + 4] = info.to_byte()
+  project_elf_test_set_u16_le(buffer, offset + 6, shndx)
+  project_elf_test_set_u64_le(buffer, offset + 8, value)
+  project_elf_test_set_u64_le(buffer, offset + 16, size)
 }
 
 ///|
 fn project_elf_test_make_x86_64() -> Bytes {
-  let shstr = b"\x00.shstrtab\x00.text\x00"
+  let shstr = b"\x00.shstrtab\x00.text\x00.symtab\x00.strtab\x00"
   let text = b"\x55\xc3"
-  let shstr_offset = 120 + 3 * 64
+  let strtab = b"\x00project_main\x00"
+  let shstr_offset = 120 + 5 * 64
   let text_offset = shstr_offset + shstr.length()
-  let total = text_offset + text.length()
+  let symtab_offset = text_offset + text.length()
+  let strtab_offset = symtab_offset + 48
+  let total = strtab_offset + strtab.length()
   let buffer = Array::make(total, b'\x00')
   project_elf_test_write_bytes(buffer, 0, b"\x7fELF")
   buffer[4] = b'\x02'
@@ -279,7 +303,7 @@ fn project_elf_test_make_x86_64() -> Bytes {
   project_elf_test_set_u16_le(buffer, 54, 56)
   project_elf_test_set_u16_le(buffer, 56, 1)
   project_elf_test_set_u16_le(buffer, 58, 64)
-  project_elf_test_set_u16_le(buffer, 60, 3)
+  project_elf_test_set_u16_le(buffer, 60, 5)
   project_elf_test_set_u16_le(buffer, 62, 1)
   project_elf_test_set_u32_le(buffer, 64, 1)
   project_elf_test_set_u32_le(buffer, 68, 5)
@@ -296,6 +320,8 @@ fn project_elf_test_make_x86_64() -> Bytes {
     0UL,
     shstr_offset,
     shstr.length(),
+    0,
+    0,
   )
   project_elf_test_write_section64(
     buffer,
@@ -306,9 +332,36 @@ fn project_elf_test_make_x86_64() -> Bytes {
     0x401000UL,
     text_offset,
     text.length(),
+    0,
+    0,
+  )
+  project_elf_test_write_section64(
+    buffer, 3, 17, 2, 0UL, 0UL, symtab_offset, 48, 4, 24,
+  )
+  project_elf_test_write_section64(
+    buffer,
+    4,
+    25,
+    3,
+    0UL,
+    0UL,
+    strtab_offset,
+    strtab.length(),
+    0,
+    0,
   )
   project_elf_test_write_bytes(buffer, shstr_offset, shstr)
   project_elf_test_write_bytes(buffer, text_offset, text)
+  project_elf_test_write_symbol64(
+    buffer,
+    symtab_offset + 24,
+    1,
+    0x12,
+    2,
+    0x401000UL,
+    2UL,
+  )
+  project_elf_test_write_bytes(buffer, strtab_offset, strtab)
   Bytes::from_array(buffer)
 }
 
@@ -359,12 +412,18 @@ test "project built-in image loaders include ELF input" {
       assert_true(project.filename() == Some("unit.elf"))
       assert_true(project.target().matches("x86_64"))
       assert_true(project.memory().lookup(0x401000UL).length() == 1)
+      let symbols = project.symbols()
+      assert_true(symbols.length() == 1)
+      assert_true(symbols[0].name() == "project_main")
+      assert_true(symbols[0].addr() == 0x401000UL)
+      assert_true(symbols[0].is_function())
       match project.image() {
         Some(image) => {
           assert_true(image.segments()[0].name() == ".load0")
           assert_true(
             image.sections().any(section => section.name() == ".text"),
           )
+          assert_true(image.symbols()[0].name() == "project_main")
         }
         None => fail("expected ELF image")
       }

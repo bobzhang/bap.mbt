@@ -502,6 +502,61 @@ fn image_elf_test_make_x86_64_without_sections() -> Bytes {
 }
 
 ///|
+fn image_elf_test_make_x86_64_dynamic_without_sections() -> Bytes {
+  let text = b"\x55\xc3"
+  let dynstr = b"\x00libx.so\x00libstrip.so\x00/strip/lib\x00$ORIGIN/strip\x00"
+  let dynamic_size = 112
+  let text_offset = 64 + 2 * 56
+  let dynamic_offset = text_offset + text.length()
+  let dynstr_offset = dynamic_offset + dynamic_size
+  let base_addr = 0x600000UL
+  let dynamic_addr = base_addr + (dynamic_offset - text_offset).to_uint64()
+  let dynstr_addr = base_addr + (dynstr_offset - text_offset).to_uint64()
+  let total = dynstr_offset + dynstr.length()
+  let load_size = total - text_offset
+  let buffer = Array::make(total, b'\x00')
+  image_elf_test_write_bytes(buffer, 0, b"\x7fELF")
+  buffer[4] = b'\x02'
+  buffer[5] = b'\x01'
+  buffer[6] = b'\x01'
+  image_elf_test_set_u16_le(buffer, 16, 3)
+  image_elf_test_set_u16_le(buffer, 18, 0x3e)
+  image_elf_test_set_u32_le(buffer, 20, 1)
+  image_elf_test_set_u64_le(buffer, 24, base_addr)
+  image_elf_test_set_u64_le(buffer, 32, 64UL)
+  image_elf_test_set_u16_le(buffer, 52, 64)
+  image_elf_test_set_u16_le(buffer, 54, 56)
+  image_elf_test_set_u16_le(buffer, 56, 2)
+  image_elf_test_set_u32_le(buffer, 64, 1)
+  image_elf_test_set_u32_le(buffer, 68, 5)
+  image_elf_test_set_u64_le(buffer, 72, text_offset.to_uint64())
+  image_elf_test_set_u64_le(buffer, 80, base_addr)
+  image_elf_test_set_u64_le(buffer, 96, load_size.to_uint64())
+  image_elf_test_set_u64_le(buffer, 104, load_size.to_uint64())
+  image_elf_test_set_u32_le(buffer, 120, 2)
+  image_elf_test_set_u32_le(buffer, 124, 4)
+  image_elf_test_set_u64_le(buffer, 128, dynamic_offset.to_uint64())
+  image_elf_test_set_u64_le(buffer, 136, dynamic_addr)
+  image_elf_test_set_u64_le(buffer, 152, dynamic_size.to_uint64())
+  image_elf_test_set_u64_le(buffer, 160, dynamic_size.to_uint64())
+  image_elf_test_write_bytes(buffer, text_offset, text)
+  image_elf_test_write_dynamic64(buffer, dynamic_offset, 5UL, dynstr_addr)
+  image_elf_test_write_dynamic64(
+    buffer,
+    dynamic_offset + 16,
+    10UL,
+    dynstr.length().to_uint64(),
+  )
+  image_elf_test_write_dynamic64(buffer, dynamic_offset + 32, 1UL, 1UL)
+  image_elf_test_write_dynamic64(buffer, dynamic_offset + 48, 14UL, 9UL)
+  image_elf_test_write_dynamic64(buffer, dynamic_offset + 64, 15UL, 21UL)
+  image_elf_test_write_dynamic64(buffer, dynamic_offset + 80, 29UL, 32UL)
+  image_elf_test_write_dynamic64(buffer, dynamic_offset + 96, 0UL, 0UL)
+  image_elf_test_write_bytes(buffer, dynstr_offset, dynstr)
+  Bytes::from_array(buffer)
+}
+
+///|
 fn image_elf_test_make_x86_64_without_section_names() -> Bytes {
   let source = image_elf_test_make_x86_64()
   let buffer = Array::make(source.length(), b'\x00')
@@ -773,6 +828,29 @@ test "image ELF backend loads files without section headers" {
   assert_true(segments[0].size() == 4)
   assert_true(segments[0].is_executable())
   inspect(segments[0].memory().hexdump(), content="55 c3 00 00")
+}
+
+///|
+test "image ELF backend extracts PT_DYNAMIC metadata without section headers" {
+  match @image.register_builtin_backends() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let (image, warnings) = expect_elf_image(
+    @image.Image::of_bytes(
+      image_elf_test_make_x86_64_dynamic_without_sections(),
+      backend="elf",
+    ),
+  )
+  assert_true(warnings.is_empty())
+  assert_true(image.sections().is_empty())
+  assert_true(image.symbols().is_empty())
+  assert_true(image.segments().length() == 1)
+  assert_true(image.segments()[0].addr() == 0x600000UL)
+  assert_true(image.required_libraries() == ["libx.so"])
+  assert_true(image.soname() == Some("libstrip.so"))
+  assert_true(image.rpaths() == ["/strip/lib"])
+  assert_true(image.runpaths() == ["$ORIGIN/strip"])
 }
 
 ///|

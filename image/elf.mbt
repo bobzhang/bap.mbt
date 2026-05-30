@@ -505,6 +505,21 @@ fn image_elf_parse_program_header(
 }
 
 ///|
+fn image_elf_program_headers(
+  data : Bytes,
+  header : ImageElfHeader,
+) -> Result[Array[ImageElfProgramHeader], String] {
+  let headers : Array[ImageElfProgramHeader] = []
+  for i in 0..<header.program_count {
+    match image_elf_parse_program_header(data, header, i) {
+      Ok(program) => headers.push(program)
+      Err(reason) => return Err(reason)
+    }
+  }
+  Ok(headers)
+}
+
+///|
 fn image_elf_parse_section_header(
   data : Bytes,
   header : ImageElfHeader,
@@ -1002,13 +1017,19 @@ fn image_elf_dynamic_count(
 }
 
 ///|
-fn image_elf_parse_dynamic_entry(
+fn image_elf_dynamic_entry_size(header : ImageElfHeader) -> Int {
+  match header.class {
+    ImageElf32 => 8
+    ImageElf64 => 16
+  }
+}
+
+///|
+fn image_elf_parse_dynamic_entry_at(
   data : Bytes,
   header : ImageElfHeader,
-  dynamic_section : ImageElfSectionHeader,
-  index : Int,
+  base : Int,
 ) -> Result[(UInt64, UInt64), String] {
-  let base = dynamic_section.offset + index * dynamic_section.entsize
   let tag = match header.class {
     ImageElf32 => image_elf_read_u64(data, base, 4, header.endian)
     ImageElf64 => image_elf_read_u64(data, base, 8, header.endian)
@@ -1024,17 +1045,107 @@ fn image_elf_parse_dynamic_entry(
 }
 
 ///|
-fn image_elf_dynamic_metadata(
+fn image_elf_parse_dynamic_entry(
   data : Bytes,
   header : ImageElfHeader,
-  section_headers : Array[ImageElfSectionHeader],
+  dynamic_section : ImageElfSectionHeader,
+  index : Int,
+) -> Result[(UInt64, UInt64), String] {
+  image_elf_parse_dynamic_entry_at(
+    data,
+    header,
+    dynamic_section.offset + index * dynamic_section.entsize,
+  )
+}
+
+///|
+fn image_elf_dynamic_metadata_empty() -> ImageElfDynamicMetadata {
+  { required_libraries: [], rpaths: [], runpaths: [], soname: None }
+}
+
+///|
+fn ImageElfDynamicMetadata::merge(
+  self : ImageElfDynamicMetadata,
+  other : ImageElfDynamicMetadata,
+) -> ImageElfDynamicMetadata {
+  let libraries = self.required_libraries.copy()
+  for name in other.required_libraries {
+    libraries.push(name)
+  }
+  let rpaths = self.rpaths.copy()
+  for path in other.rpaths {
+    rpaths.push(path)
+  }
+  let runpaths = self.runpaths.copy()
+  for path in other.runpaths {
+    runpaths.push(path)
+  }
+  let soname = match self.soname {
+    Some(_) => self.soname
+    None => other.soname
+  }
+  { required_libraries: libraries, rpaths, runpaths, soname }
+}
+
+///|
+fn image_elf_dynamic_entry_uses_string(tag : UInt64) -> Bool {
+  tag == 1UL || tag == 14UL || tag == 15UL || tag == 29UL
+}
+
+///|
+fn image_elf_dynamic_entries_use_strings(
+  entries : Array[(UInt64, UInt64)],
+) -> Bool {
+  entries.any(entry => image_elf_dynamic_entry_uses_string(entry.0))
+}
+
+///|
+fn image_elf_dynamic_metadata_from_entries(
+  entries : Array[(UInt64, UInt64)],
+  strings : Bytes,
 ) -> Result[ImageElfDynamicMetadata, String] {
   let libraries : Array[String] = []
   let rpaths : Array[String] = []
   let runpaths : Array[String] = []
   let mut soname : String? = None
+  for entry in entries {
+    match entry {
+      (0UL, _) => ()
+      (tag, offset) if image_elf_dynamic_entry_uses_string(tag) => {
+        let string_offset = match
+          image_elf_uint_to_int(offset, "ELF dynamic string offset") {
+          Ok(value) => value
+          Err(reason) => return Err(reason)
+        }
+        match image_elf_cstring(strings, string_offset) {
+          Ok(name) =>
+            match tag {
+              1UL => libraries.push(name)
+              14UL => if soname is None { soname = Some(name) }
+              15UL => rpaths.push(name)
+              29UL => runpaths.push(name)
+              _ => ()
+            }
+          Err(reason) => return Err(reason)
+        }
+      }
+      _ => ()
+    }
+  }
+  Ok({ required_libraries: libraries, rpaths, runpaths, soname })
+}
+
+///|
+fn image_elf_dynamic_metadata_from_sections(
+  data : Bytes,
+  header : ImageElfHeader,
+  section_headers : Array[ImageElfSectionHeader],
+) -> Result[(Bool, ImageElfDynamicMetadata), String] {
+  let mut metadata = image_elf_dynamic_metadata_empty()
+  let mut has_dynamic_section = false
   for section in section_headers {
     if section.typ == 6 {
+      has_dynamic_section = true
       let string_section = match section_headers.get(section.link) {
         Some(value) => value
         None => return Err("ELF dynamic string table link is out of bounds")
@@ -1051,37 +1162,148 @@ fn image_elf_dynamic_metadata(
         Ok(value) => value
         Err(reason) => return Err(reason)
       }
+      let entries : Array[(UInt64, UInt64)] = []
       for i in 0..<count {
-        match image_elf_parse_dynamic_entry(data, header, section, i) {
-          Ok((0UL, _)) => ()
-          Ok((tag, offset)) if tag == 1UL ||
-            tag == 14UL ||
-            tag == 15UL ||
-            tag == 29UL => {
-            let string_offset = match
-              image_elf_uint_to_int(offset, "ELF dynamic string offset") {
-              Ok(value) => value
-              Err(reason) => return Err(reason)
-            }
-            match image_elf_cstring(strings, string_offset) {
-              Ok(name) =>
-                match tag {
-                  1UL => libraries.push(name)
-                  14UL => if soname is None { soname = Some(name) }
-                  15UL => rpaths.push(name)
-                  29UL => runpaths.push(name)
-                  _ => ()
-                }
-              Err(reason) => return Err(reason)
-            }
+        if entries.is_empty() || entries[entries.length() - 1].0 != 0UL {
+          match image_elf_parse_dynamic_entry(data, header, section, i) {
+            Ok(entry) => entries.push(entry)
+            Err(reason) => return Err(reason)
           }
-          Ok(_) => ()
+        }
+      }
+      match image_elf_dynamic_metadata_from_entries(entries, strings) {
+        Ok(value) => metadata = metadata.merge(value)
+        Err(reason) => return Err(reason)
+      }
+    }
+  }
+  Ok((has_dynamic_section, metadata))
+}
+
+///|
+fn image_elf_dynamic_entries_from_program(
+  data : Bytes,
+  header : ImageElfHeader,
+  program : ImageElfProgramHeader,
+) -> Result[Array[(UInt64, UInt64)], String] {
+  let entry_size = image_elf_dynamic_entry_size(header)
+  if program.filesz == 0 {
+    return Ok([])
+  }
+  if program.filesz % entry_size != 0 {
+    return Err("ELF dynamic segment size is not entry-aligned")
+  }
+  let entries : Array[(UInt64, UInt64)] = []
+  let count = program.filesz / entry_size
+  for i in 0..<count {
+    if entries.is_empty() || entries[entries.length() - 1].0 != 0UL {
+      match
+        image_elf_parse_dynamic_entry_at(
+          data,
+          header,
+          program.offset + i * entry_size,
+        ) {
+        Ok(entry) => entries.push(entry)
+        Err(reason) => return Err(reason)
+      }
+    }
+  }
+  Ok(entries)
+}
+
+///|
+fn image_elf_vaddr_range_offset(
+  program_headers : Array[ImageElfProgramHeader],
+  addr : UInt64,
+  size : Int,
+  what : String,
+) -> Result[Int, String] {
+  if size < 0 {
+    return Err("\{what} size is invalid")
+  }
+  let size64 = size.to_uint64()
+  for program in program_headers {
+    if program.typ == 1 && program.filesz >= 0 && addr >= program.vaddr {
+      let delta = addr - program.vaddr
+      let segment_size = program.filesz.to_uint64()
+      if delta <= segment_size && size64 <= segment_size - delta {
+        let offset = program.offset.to_uint64() + delta
+        return image_elf_uint_to_int(offset, "\{what} file offset")
+      }
+    }
+  }
+  Err("\{what} is out of bounds")
+}
+
+///|
+fn image_elf_dynamic_metadata_from_programs(
+  data : Bytes,
+  header : ImageElfHeader,
+  program_headers : Array[ImageElfProgramHeader],
+) -> Result[ImageElfDynamicMetadata, String] {
+  let mut metadata = image_elf_dynamic_metadata_empty()
+  for program in program_headers {
+    if program.typ == 2 {
+      let entries = match
+        image_elf_dynamic_entries_from_program(data, header, program) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      if image_elf_dynamic_entries_use_strings(entries) {
+        let mut strtab : UInt64? = None
+        let mut strsz : Int? = None
+        for entry in entries {
+          match entry {
+            (5UL, value) => strtab = Some(value)
+            (10UL, value) =>
+              match
+                image_elf_uint_to_int(value, "ELF dynamic string table size") {
+                Ok(size) => strsz = Some(size)
+                Err(reason) => return Err(reason)
+              }
+            _ => ()
+          }
+        }
+        let (strtab, strsz) = match (strtab, strsz) {
+          (Some(strtab), Some(strsz)) => (strtab, strsz)
+          _ =>
+            return Err("ELF dynamic segment is missing string table metadata")
+        }
+        let string_offset = match
+          image_elf_vaddr_range_offset(
+            program_headers, strtab, strsz, "ELF dynamic string table",
+          ) {
+          Ok(value) => value
+          Err(reason) => return Err(reason)
+        }
+        let strings = match image_elf_section_data(data, string_offset, strsz) {
+          Ok(value) => value
+          Err(reason) => return Err(reason)
+        }
+        match image_elf_dynamic_metadata_from_entries(entries, strings) {
+          Ok(value) => metadata = metadata.merge(value)
           Err(reason) => return Err(reason)
         }
       }
     }
   }
-  Ok({ required_libraries: libraries, rpaths, runpaths, soname })
+  Ok(metadata)
+}
+
+///|
+fn image_elf_dynamic_metadata(
+  data : Bytes,
+  header : ImageElfHeader,
+  section_headers : Array[ImageElfSectionHeader],
+  program_headers : Array[ImageElfProgramHeader],
+) -> Result[ImageElfDynamicMetadata, String] {
+  match
+    image_elf_dynamic_metadata_from_sections(data, header, section_headers) {
+    Ok((true, metadata)) => Ok(metadata)
+    Ok((false, _)) =>
+      image_elf_dynamic_metadata_from_programs(data, header, program_headers)
+    Err(reason) => Err(reason)
+  }
 }
 
 ///|
@@ -1279,23 +1501,19 @@ fn image_elf_alloc_section_segments(
 ///|
 fn image_elf_interpreter(
   data : Bytes,
-  header : ImageElfHeader,
+  program_headers : Array[ImageElfProgramHeader],
 ) -> Result[String?, String] {
-  for i in 0..<header.program_count {
-    match image_elf_parse_program_header(data, header, i) {
-      Ok(program) =>
-        if program.typ == 3 {
-          let bytes = match
-            image_elf_section_data(data, program.offset, program.filesz) {
-            Ok(value) => value
-            Err(reason) => return Err(reason)
-          }
-          match image_elf_cstring(bytes, 0) {
-            Ok(value) => return Ok(Some(value))
-            Err(reason) => return Err(reason)
-          }
-        }
-      Err(reason) => return Err(reason)
+  for program in program_headers {
+    if program.typ == 3 {
+      let bytes = match
+        image_elf_section_data(data, program.offset, program.filesz) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      match image_elf_cstring(bytes, 0) {
+        Ok(value) => return Ok(Some(value))
+        Err(reason) => return Err(reason)
+      }
     }
   }
   Ok(None)
@@ -1305,6 +1523,10 @@ fn image_elf_interpreter(
 fn image_elf_load(data : Bytes) -> Result[(Image, Array[String]), String] {
   match image_elf_parse_header(data) {
     Ok(header) => {
+      let program_headers = match image_elf_program_headers(data, header) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
       let section_headers : Array[ImageElfSectionHeader] = []
       for i in 0..<header.section_count {
         match image_elf_parse_section_header(data, header, i) {
@@ -1358,37 +1580,35 @@ fn image_elf_load(data : Bytes) -> Result[(Image, Array[String]), String] {
         Err(reason) => return Err(reason)
       }
       let dynamic_metadata = match
-        image_elf_dynamic_metadata(data, header, section_headers) {
+        image_elf_dynamic_metadata(
+          data, header, section_headers, program_headers,
+        ) {
         Ok(value) => value
         Err(reason) => return Err(reason)
       }
-      let interpreter = match image_elf_interpreter(data, header) {
+      let interpreter = match image_elf_interpreter(data, program_headers) {
         Ok(value) => value
         Err(reason) => return Err(reason)
       }
       let segments : Array[Segment] = []
-      for i in 0..<header.program_count {
-        match image_elf_parse_program_header(data, header, i) {
-          Ok(program) =>
-            if program.typ == 1 && program.memsz > 0 {
-              match image_elf_segment_data(data, program) {
-                Ok(segment_data) =>
-                  segments.push(
-                    Segment::create(
-                      name=".load\{segments.length()}",
-                      endian=header.endian,
-                      addr=program.vaddr,
-                      segment_data,
-                      offset=program.offset,
-                      readable=image_elf_flag_set(program.flags, 4),
-                      writable=image_elf_flag_set(program.flags, 2),
-                      executable=image_elf_flag_set(program.flags, 1),
-                    ),
-                  )
-                Err(reason) => return Err(reason)
-              }
-            }
-          Err(reason) => return Err(reason)
+      for program in program_headers {
+        if program.typ == 1 && program.memsz > 0 {
+          match image_elf_segment_data(data, program) {
+            Ok(segment_data) =>
+              segments.push(
+                Segment::create(
+                  name=".load\{segments.length()}",
+                  endian=header.endian,
+                  addr=program.vaddr,
+                  segment_data,
+                  offset=program.offset,
+                  readable=image_elf_flag_set(program.flags, 4),
+                  writable=image_elf_flag_set(program.flags, 2),
+                  executable=image_elf_flag_set(program.flags, 1),
+                ),
+              )
+            Err(reason) => return Err(reason)
+          }
         }
       }
       let segments = if segments.is_empty() {

@@ -137,7 +137,11 @@ Preserve ELF dynamic-link metadata as image-owned loader metadata: `PT_INTERP`
 is the program interpreter, `DT_SONAME` is the produced shared-object name,
 and `DT_RPATH`/`DT_RUNPATH` are distinct search-path strings. Do not collapse
 them into required libraries or eagerly resolve their paths; later project or
-platform-specific linker orchestration can interpret those fields.
+platform-specific linker orchestration can interpret those fields. Do not rely
+on section headers for dynamic metadata: stripped ELF files may expose it only
+through `PT_DYNAMIC`. In that path, resolve `DT_STRTAB` virtual addresses
+through `PT_LOAD` program headers and bound the table with `DT_STRSZ` before
+reading string offsets.
 Keep BAP/Ogre `symbol-value` separate from named-symbol and symbol-chunk
 metadata. A symbol's runtime address may be biased or otherwise interpreted by
 the loader, while the raw value can still be useful to later disassembly roots

@@ -129,6 +129,10 @@ then continue to expose those backend names through project-level discovery.
 Project containers should delegate image-owned relocation, external-reference,
 and base-address metadata rather than copying it into independent project
 state; this keeps loader metadata coherent with the retained source image.
+Preserve BAP/Ogre `require` facts as image-owned required-library metadata.
+For ELF, extract `DT_NEEDED` names from `SHT_DYNAMIC` entries through the
+linked dynamic string table; keep this as dependency metadata rather than
+loading or resolving the libraries in the image backend.
 For Ogre image specs, keep BAP-style relocation metadata separate from memory
 layout: `base-address`, `relocation`, `relative-relocation`, and
 `external-reference` should be preserved as image metadata even before a

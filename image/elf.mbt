@@ -948,6 +948,91 @@ fn image_elf_relocations(
 }
 
 ///|
+fn image_elf_dynamic_count(
+  section : ImageElfSectionHeader,
+) -> Result[Int, String] {
+  if section.size == 0 {
+    Ok(0)
+  } else if section.entsize <= 0 {
+    Err("ELF dynamic section entry size is invalid")
+  } else if section.size % section.entsize != 0 {
+    Err("ELF dynamic section size is not entry-aligned")
+  } else {
+    Ok(section.size / section.entsize)
+  }
+}
+
+///|
+fn image_elf_parse_dynamic_entry(
+  data : Bytes,
+  header : ImageElfHeader,
+  dynamic_section : ImageElfSectionHeader,
+  index : Int,
+) -> Result[(UInt64, UInt64), String] {
+  let base = dynamic_section.offset + index * dynamic_section.entsize
+  let tag = match header.class {
+    ImageElf32 => image_elf_read_u64(data, base, 4, header.endian)
+    ImageElf64 => image_elf_read_u64(data, base, 8, header.endian)
+  }
+  let value = match header.class {
+    ImageElf32 => image_elf_read_u64(data, base + 4, 4, header.endian)
+    ImageElf64 => image_elf_read_u64(data, base + 8, 8, header.endian)
+  }
+  match (tag, value) {
+    (Ok(tag), Ok(value)) => Ok((tag, value))
+    (Err(reason), _) | (_, Err(reason)) => Err(reason)
+  }
+}
+
+///|
+fn image_elf_required_libraries(
+  data : Bytes,
+  header : ImageElfHeader,
+  section_headers : Array[ImageElfSectionHeader],
+) -> Result[Array[String], String] {
+  let libraries : Array[String] = []
+  for section in section_headers {
+    if section.typ == 6 {
+      let string_section = match section_headers.get(section.link) {
+        Some(value) => value
+        None => return Err("ELF dynamic string table link is out of bounds")
+      }
+      if string_section.typ != 3 {
+        return Err("ELF dynamic section does not link to a string table")
+      }
+      let strings = match
+        image_elf_section_data(data, string_section.offset, string_section.size) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let count = match image_elf_dynamic_count(section) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      for i in 0..<count {
+        match image_elf_parse_dynamic_entry(data, header, section, i) {
+          Ok((0UL, _)) => ()
+          Ok((1UL, offset)) => {
+            let string_offset = match
+              image_elf_uint_to_int(offset, "ELF dynamic string offset") {
+              Ok(value) => value
+              Err(reason) => return Err(reason)
+            }
+            match image_elf_cstring(strings, string_offset) {
+              Ok(name) => libraries.push(name)
+              Err(reason) => return Err(reason)
+            }
+          }
+          Ok(_) => ()
+          Err(reason) => return Err(reason)
+        }
+      }
+    }
+  }
+  Ok(libraries)
+}
+
+///|
 fn image_elf_symbols(
   data : Bytes,
   header : ImageElfHeader,
@@ -1153,6 +1238,11 @@ fn image_elf_load(data : Bytes) -> Result[(Image, Array[String]), String] {
         Ok(value) => value
         Err(reason) => return Err(reason)
       }
+      let required_libraries = match
+        image_elf_required_libraries(data, header, section_headers) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
       let segments : Array[Segment] = []
       for i in 0..<header.program_count {
         match image_elf_parse_program_header(data, header, i) {
@@ -1202,6 +1292,7 @@ fn image_elf_load(data : Bytes) -> Result[(Image, Array[String]), String] {
             symbols~,
             relocations~,
             external_references~,
+            required_libraries~,
             target=image_elf_target(header),
           ),
           [],

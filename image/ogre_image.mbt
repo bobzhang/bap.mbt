@@ -537,6 +537,20 @@ fn OgreDoc::image_external_references(
 }
 
 ///|
+fn OgreDoc::image_required_libraries(
+  self : OgreDoc,
+) -> Result[Array[String], String] {
+  let libraries = []
+  for fact in self.facts("require") {
+    match ogre_fact_string_field(fact, "name", 0) {
+      Ok(name) => libraries.push(name)
+      Err(reason) => return Err(reason)
+    }
+  }
+  Ok(libraries)
+}
+
+///|
 fn OgreDoc::image_base_address(self : OgreDoc) -> Result[UInt64?, String] {
   match self.facts("base-address") {
     [] => Ok(None)
@@ -585,6 +599,10 @@ pub fn Image::from_ogre(
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
+  let required_libraries = match doc.image_required_libraries() {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
   let base_address = match doc.image_base_address() {
     Ok(value) => value
     Err(reason) => return Err(reason)
@@ -599,6 +617,7 @@ pub fn Image::from_ogre(
         symbols~,
         relocations~,
         external_references~,
+        required_libraries~,
         base_address?,
         filename?,
         target=selected_target,

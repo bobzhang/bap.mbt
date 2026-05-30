@@ -111,33 +111,39 @@ test "image exposes relocation metadata defensively" {
   let references = [
     @image.ExternalReference::create(addr=0x1008UL, name="puts"),
   ]
+  let required_libraries = ["libc.so.6"]
   let image = @image.Image::from_segments(
     entry=0x1000UL,
     endian=LittleEndian,
     [segment],
     relocations~,
     external_references=references,
+    required_libraries~,
     base_address=0x1000UL,
   )
   relocations.push(@image.Relocation::create(fixup=0x1010UL, relative=true))
   references.push(@image.ExternalReference::create(addr=0x1018UL, name="exit"))
+  required_libraries.push("libm.so.6")
   assert_true(image.base_address() == Some(0x1000UL))
   assert_true(image.relocations().length() == 1)
   assert_true(image.relocations()[0].fixup() == 0x1004UL)
   assert_true(image.relocations()[0].target() == Some(0x2000UL))
   assert_true(image.external_references().length() == 1)
   assert_true(image.external_references()[0].name() == "puts")
+  assert_true(image.required_libraries() == ["libc.so.6"])
   let updated = image
     .add_relocation(@image.Relocation::create(fixup=0x1010UL, relative=true))
     .add_external_reference(
       @image.ExternalReference::create(addr=0x1018UL, name="exit"),
     )
+    .add_required_library("libm.so.6")
     .with_base_address(0x3000UL)
   assert_true(image.base_address() == Some(0x1000UL))
   assert_true(updated.base_address() == Some(0x3000UL))
   assert_true(updated.relocations().length() == 2)
   assert_true(updated.relocations()[1].is_relative())
   assert_true(updated.external_references().length() == 2)
+  assert_true(updated.required_libraries() == ["libc.so.6", "libm.so.6"])
 }
 
 ///|

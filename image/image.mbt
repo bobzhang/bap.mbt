@@ -10,6 +10,7 @@ struct Image {
   symbols_value : Array[Symbol]
   relocations_value : Array[Relocation]
   external_references_value : Array[ExternalReference]
+  required_libraries_value : Array[String]
   base_address_value : UInt64?
   spec_value : OgreDoc?
 }
@@ -31,6 +32,7 @@ pub fn Image::create(
   symbols? : Array[Symbol],
   relocations? : Array[Relocation],
   external_references? : Array[ExternalReference],
+  required_libraries? : Array[String],
   base_address? : UInt64,
   spec? : OgreDoc,
 ) -> Image {
@@ -63,6 +65,10 @@ pub fn Image::create(
       Some(items) => items.copy()
       None => []
     },
+    required_libraries_value: match required_libraries {
+      Some(items) => items.copy()
+      None => []
+    },
     base_address_value: base_address,
     spec_value: spec,
   }
@@ -77,6 +83,7 @@ pub fn Image::from_segments(
   symbols? : Array[Symbol],
   relocations? : Array[Relocation],
   external_references? : Array[ExternalReference],
+  required_libraries? : Array[String],
   base_address? : UInt64,
   filename? : String,
   target? : @core_theory.Target,
@@ -90,6 +97,7 @@ pub fn Image::from_segments(
     symbols?,
     relocations?,
     external_references?,
+    required_libraries?,
     base_address?,
     filename?,
     target?,
@@ -241,6 +249,11 @@ pub fn Image::relocations(self : Image) -> Array[Relocation] {
 ///|
 pub fn Image::external_references(self : Image) -> Array[ExternalReference] {
   self.external_references_value.copy()
+}
+
+///|
+pub fn Image::required_libraries(self : Image) -> Array[String] {
+  self.required_libraries_value.copy()
 }
 
 ///|
@@ -433,6 +446,13 @@ pub fn Image::add_external_reference(
   let references = self.external_references_value.copy()
   references.push(reference)
   { ..self, external_references_value: references }
+}
+
+///|
+pub fn Image::add_required_library(self : Image, name : String) -> Image {
+  let libraries = self.required_libraries_value.copy()
+  libraries.push(name)
+  { ..self, required_libraries_value: libraries }
 }
 
 ///|

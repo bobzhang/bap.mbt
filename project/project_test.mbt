@@ -71,6 +71,7 @@ test "project exposes image relocation metadata" {
     external_references=[
       @image.ExternalReference::create(addr=0x1003UL, name="puts"),
     ],
+    required_libraries=["libc.so.6"],
     base_address=0x1000UL,
     target~,
   )
@@ -81,10 +82,12 @@ test "project exposes image relocation metadata" {
   assert_true(project.relocations()[1].is_relative())
   assert_true(project.external_references().length() == 1)
   assert_true(project.external_references()[0].name() == "puts")
+  assert_true(project.required_libraries() == ["libc.so.6"])
   let empty = @project.Project::empty(target)
   assert_true(empty.base_address() == None)
   assert_true(empty.relocations().is_empty())
   assert_true(empty.external_references().is_empty())
+  assert_true(empty.required_libraries().is_empty())
 }
 
 ///|

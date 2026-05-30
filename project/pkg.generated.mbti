@@ -107,6 +107,7 @@ pub fn Project::pass_has_run(Self, String) -> Bool
 pub fn Project::pass_run_count(Self, String) -> Int
 pub fn Project::program(Self) -> @types.Term[@types.Program]
 pub fn Project::relocations(Self) -> Array[@image.Relocation]
+pub fn Project::required_libraries(Self) -> Array[String]
 pub fn Project::resolve_stub_calls(Self, link_only? : Array[String], no_link? : Array[String]) -> Self
 pub fn Project::run_autorun_passes(Self) -> Result[Self, String]
 pub fn Project::run_pass(Self, String) -> Result[Self, String]

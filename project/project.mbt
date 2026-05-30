@@ -294,6 +294,14 @@ pub fn Project::external_references(
 }
 
 ///|
+pub fn Project::required_libraries(self : Project) -> Array[String] {
+  match self.image_value {
+    Some(image) => image.required_libraries()
+    None => []
+  }
+}
+
+///|
 pub fn Project::base_address(self : Project) -> UInt64? {
   match self.image_value {
     Some(image) => image.base_address()

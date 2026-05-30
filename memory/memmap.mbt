@@ -45,6 +45,48 @@ pub fn[V] MemMap::contains(self : MemMap[V], addr : UInt64) -> Bool {
 }
 
 ///|
+pub fn[V, U] MemMap::map(self : MemMap[V], f : (V) -> U) -> MemMap[U] {
+  { entries: self.entries.map(entry => (entry.0, f(entry.1))) }
+}
+
+///|
+pub fn[V, U] MemMap::mapi(self : MemMap[V], f : (Memory, V) -> U) -> MemMap[U] {
+  { entries: self.entries.map(entry => (entry.0, f(entry.0, entry.1))) }
+}
+
+///|
+pub fn[V] MemMap::filter(self : MemMap[V], f : (V) -> Bool) -> MemMap[V] {
+  { entries: self.entries.filter(entry => f(entry.1)) }
+}
+
+///|
+pub fn[V, U] MemMap::filter_map(self : MemMap[V], f : (V) -> U?) -> MemMap[U] {
+  let entries = []
+  for entry in self.entries {
+    match f(entry.1) {
+      Some(value) => entries.push((entry.0, value))
+      None => ()
+    }
+  }
+  { entries, }
+}
+
+///|
+pub fn[V, U] MemMap::filter_mapi(
+  self : MemMap[V],
+  f : (Memory, V) -> U?,
+) -> MemMap[U] {
+  let entries = []
+  for entry in self.entries {
+    match f(entry.0, entry.1) {
+      Some(value) => entries.push((entry.0, value))
+      None => ()
+    }
+  }
+  { entries, }
+}
+
+///|
 pub fn[V] MemMap::find(self : MemMap[V], memory : Memory) -> Array[(Memory, V)] {
   self.entries.filter(entry => {
     entry.0.min_addr() == memory.min_addr() &&

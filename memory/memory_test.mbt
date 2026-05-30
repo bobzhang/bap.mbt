@@ -146,6 +146,42 @@ test "memmap min max and removals follow BAP interval behavior" {
 }
 
 ///|
+test "translated BAP memmap transformations preserve ranges and duplicates" {
+  let first = memory_at(0x100UL, 2)
+  let second = memory_at(0x200UL, 1)
+  let map = @memory.MemMap::empty().add(first, 1).add(first, 2).add(second, 3)
+  let doubled = map.map(value => value * 2)
+  assert_true(doubled.find(first).map(entry => entry.1) == [2, 4])
+  assert_true(doubled.find(second).map(entry => entry.1) == [6])
+  let with_addr = map.mapi((memory, value) => {
+    value + (memory.min_addr() - 0x100UL).to_int()
+  })
+  assert_true(with_addr.find(first).map(entry => entry.1) == [1, 2])
+  assert_true(with_addr.find(second).map(entry => entry.1) == [259])
+  let odd = map.filter(value => value % 2 == 1)
+  assert_true(odd.find(first).map(entry => entry.1) == [1])
+  assert_true(odd.find(second).map(entry => entry.1) == [3])
+  let labels = map.filter_map(value => {
+    if value > 1 {
+      Some("v\{value}")
+    } else {
+      None
+    }
+  })
+  assert_true(labels.find(first).map(entry => entry.1) == ["v2"])
+  assert_true(labels.find(second).map(entry => entry.1) == ["v3"])
+  let range_labels = map.filter_mapi((memory, value) => {
+    if memory.max_addr() == 0x101UL {
+      Some("a\{value}")
+    } else {
+      None
+    }
+  })
+  assert_true(range_labels.find(first).map(entry => entry.1) == ["a1", "a2"])
+  assert_true(range_labels.find(second).is_empty())
+}
+
+///|
 fn memmap_tags(entries : Array[(@memory.Memory, String)]) -> Set[String] {
   Set::from_array(entries.map(entry => entry.1))
 }

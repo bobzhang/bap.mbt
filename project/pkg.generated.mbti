@@ -189,6 +189,8 @@ pub fn ProjectState::with_disassembly(Self, ProjectDisassemblyState) -> Self
 pub fn ProjectState::with_subroutines(Self, Array[@types.Term[@types.Sub]]) -> Self
 
 type ProjectStorageTag[T]
+pub fn ProjectStorageTag::bitvec(String) -> Self[@bitvec.BitVec]
+pub fn ProjectStorageTag::bitvec_array(String) -> Self[Array[@bitvec.BitVec]]
 pub fn ProjectStorageTag::bool(String) -> Self[Bool]
 pub fn ProjectStorageTag::bool_array(String) -> Self[Array[Bool]]
 pub fn[T] ProjectStorageTag::create(name~ : String, encode~ : (T) -> String, decode~ : (String) -> Result[T, String]) -> Self[T]

@@ -54,6 +54,27 @@ fn decode_project_int(name : String, value : String) -> Result[Int, String] {
 }
 
 ///|
+pub fn ProjectStorageTag::bitvec(
+  name : String,
+) -> ProjectStorageTag[@bitvec.BitVec] {
+  ProjectStorageTag::create(name~, encode=value => value.to_string(), decode=value => {
+    decode_project_bitvec(name, value)
+  })
+}
+
+///|
+fn decode_project_bitvec(
+  name : String,
+  value : String,
+) -> Result[@bitvec.BitVec, String] {
+  try @bitvec.from_string(value) catch {
+    _ => Err("can't decode project bitvec tag \{name}")
+  } noraise {
+    parsed => Ok(parsed)
+  }
+}
+
+///|
 fn encode_string_array(values : Array[String]) -> String {
   let mut encoded = ""
   for value in values {
@@ -170,6 +191,42 @@ pub fn ProjectStorageTag::bool_array(
   ProjectStorageTag::create(name~, encode=values => encode_bool_array(values), decode=value => {
     decode_bool_array(name, value)
   })
+}
+
+///|
+fn encode_bitvec_array(values : Array[@bitvec.BitVec]) -> String {
+  encode_string_array([ for value in values => value.to_string() ])
+}
+
+///|
+fn decode_bitvec_array(
+  name : String,
+  value : String,
+) -> Result[Array[@bitvec.BitVec], String] {
+  match decode_string_array(name, value) {
+    Err(_) => Err("can't decode project bitvec array tag \{name}")
+    Ok(items) => {
+      let values = []
+      for item in items {
+        match decode_project_bitvec(name, item) {
+          Ok(parsed) => values.push(parsed)
+          Err(_) => return Err("can't decode project bitvec array tag \{name}")
+        }
+      }
+      Ok(values)
+    }
+  }
+}
+
+///|
+pub fn ProjectStorageTag::bitvec_array(
+  name : String,
+) -> ProjectStorageTag[Array[@bitvec.BitVec]] {
+  ProjectStorageTag::create(
+    name~,
+    encode=values => encode_bitvec_array(values),
+    decode=value => decode_bitvec_array(name, value),
+  )
 }
 
 ///|

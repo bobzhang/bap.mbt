@@ -257,6 +257,8 @@ pub fn Term::find_phi(Self[Blk], Tid) -> Self[Phi]?
 pub fn Term::find_sub(Self[Program], Tid) -> Self[Sub]?
 pub fn Term::find_var(Self[Blk], Var) -> VarBinding?
 pub fn Term::first_def(Self[Blk]) -> Self[Def]?
+pub fn Term::flatten_blk(Self[Blk]) -> Self[Blk]
+pub fn Term::flatten_sub(Self[Sub]) -> Self[Sub]
 pub fn[T] Term::get_attr(Self[T], String) -> String?
 pub fn[T] Term::has_attr(Self[T], String) -> Bool
 pub fn Term::insert_def_after(Self[Blk], Self[Def], after? : Tid) -> Self[Blk]

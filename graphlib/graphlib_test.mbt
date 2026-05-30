@@ -24,6 +24,30 @@ test "graph construction is persistent and deterministic" {
 }
 
 ///|
+fn edge_pairs(graph : @graphlib.Graph[Int, String]) -> Set[(Int, Int)] {
+  Set::from_array(graph.edges().map(edge => (edge.src, edge.dst)))
+}
+
+///|
+test "graph union and intersection follow set semantics" {
+  let left : @graphlib.Graph[Int, String] = @graphlib.Graph::new()
+    .add_node(0)
+    .add_edge(src=1, dst=2, label="a")
+    .add_edge(src=2, dst=3, label="b")
+  let right : @graphlib.Graph[Int, String] = @graphlib.Graph::new()
+    .add_edge(src=2, dst=3, label="b")
+    .add_edge(src=3, dst=4, label="c")
+  let union = left.union(right)
+  assert_true(
+    Set::from_array(union.nodes()) == Set::from_array([0, 1, 2, 3, 4]),
+  )
+  assert_true(edge_pairs(union) == Set::from_array([(1, 2), (2, 3), (3, 4)]))
+  let intersection = left.intersect(right)
+  assert_true(Set::from_array(intersection.nodes()) == Set::from_array([2, 3]))
+  assert_true(edge_pairs(intersection) == Set::from_array([(2, 3)]))
+}
+
+///|
 test "dfs classifies tree and back edges" {
   let graph = sample_graph()
   let kinds = graph.dfs_edges(0).map(pair => pair.0)

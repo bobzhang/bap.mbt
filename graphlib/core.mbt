@@ -84,6 +84,41 @@ pub fn[N : Eq, E] Graph::remove_node(
 }
 
 ///|
+fn[N : Eq, E : Eq] contains_edge(
+  edges : ArrayView[Edge[N, E]],
+  edge : Edge[N, E],
+) -> Bool {
+  edges.any(item => item == edge)
+}
+
+///|
+pub fn[N : Eq, E : Eq] Graph::union(
+  self : Graph[N, E],
+  other : Graph[N, E],
+) -> Graph[N, E] {
+  let mut out = self
+  for node in other.nodes {
+    out = out.add_node(node)
+  }
+  for edge in other.edges {
+    if !contains_edge(out.edges, edge) {
+      out = out.add_edge(src=edge.src, dst=edge.dst, label=edge.label)
+    }
+  }
+  out
+}
+
+///|
+pub fn[N : Eq, E : Eq] Graph::intersect(
+  self : Graph[N, E],
+  other : Graph[N, E],
+) -> Graph[N, E] {
+  let nodes = self.nodes.filter(node => other.has_node(node))
+  let edges = self.edges.filter(edge => contains_edge(other.edges, edge))
+  { nodes, edges }
+}
+
+///|
 pub fn[N : Eq, E] Graph::successors(self : Graph[N, E], node : N) -> Array[N] {
   self.edges.filter_map(edge => {
     if edge.src == node {

@@ -13,6 +13,19 @@ pub fn Word::from_bitvec(
 }
 
 ///|
+pub fn Word::create(
+  value : @bitvec.BitVec,
+  width : Int,
+) -> Word raise @bitvec.BitVecError {
+  let resized = if width >= value.width() {
+    value.widen(width~)
+  } else {
+    value.truncate(width~)
+  }
+  Word::from_bitvec(resized)
+}
+
+///|
 pub fn Word::to_bitvec(self : Word) -> @bitvec.BitVec {
   self.bits_value
 }
@@ -245,6 +258,14 @@ pub fn Word::gcd(self : Word, other : Word) -> Word raise @bitvec.BitVecError {
 }
 
 ///|
+pub fn Word::gcd_exn(
+  self : Word,
+  other : Word,
+) -> Word raise @bitvec.BitVecError {
+  self.gcd(other)
+}
+
+///|
 pub fn Word::gcd_ext(
   self : Word,
   other : Word,
@@ -254,8 +275,32 @@ pub fn Word::gcd_ext(
 }
 
 ///|
+pub fn Word::gcdext(
+  self : Word,
+  other : Word,
+) -> (Word, Word, Word) raise @bitvec.BitVecError {
+  self.gcd_ext(other)
+}
+
+///|
+pub fn Word::gcdext_exn(
+  self : Word,
+  other : Word,
+) -> (Word, Word, Word) raise @bitvec.BitVecError {
+  self.gcd_ext(other)
+}
+
+///|
 pub fn Word::lcm(self : Word, other : Word) -> Word raise @bitvec.BitVecError {
   Word::from_bitvec(self.bits_value.lcm(other.bits_value))
+}
+
+///|
+pub fn Word::lcm_exn(
+  self : Word,
+  other : Word,
+) -> Word raise @bitvec.BitVecError {
+  self.lcm(other)
 }
 
 ///|
@@ -380,6 +425,15 @@ pub fn Word::extract(
 }
 
 ///|
+pub fn Word::extract_exn(
+  self : Word,
+  hi? : Int = -1,
+  lo? : Int = 0,
+) -> Word raise @bitvec.BitVecError {
+  self.extract(hi~, lo~)
+}
+
+///|
 pub fn Word::widen(self : Word, width~ : Int) -> Word raise @bitvec.BitVecError {
   Word::from_bitvec(self.bits_value.widen(width~))
 }
@@ -443,6 +497,11 @@ pub fn Word::to_int64(self : Word) -> Int64 raise @bitvec.BitVecError {
 }
 
 ///|
+pub fn Word::to_int64_exn(self : Word) -> Int64 raise @bitvec.BitVecError {
+  self.to_int64()
+}
+
+///|
 pub fn Word::to_int32(self : Word) -> Int raise @bitvec.BitVecError {
   if self.signed_value {
     let value = self.signed_int64_value()
@@ -460,6 +519,11 @@ pub fn Word::to_int32(self : Word) -> Int raise @bitvec.BitVecError {
 }
 
 ///|
+pub fn Word::to_int32_exn(self : Word) -> Int raise @bitvec.BitVecError {
+  self.to_int32()
+}
+
+///|
 pub fn Word::to_int(self : Word) -> Int raise @bitvec.BitVecError {
   if self.signed_value {
     let value = self.signed_int64_value()
@@ -474,6 +538,11 @@ pub fn Word::to_int(self : Word) -> Int raise @bitvec.BitVecError {
     }
     raw.to_int()
   }
+}
+
+///|
+pub fn Word::to_int_exn(self : Word) -> Int raise @bitvec.BitVecError {
+  self.to_int()
 }
 
 ///|

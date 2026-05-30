@@ -614,17 +614,22 @@ pub fn Word::bitwidth(Self) -> Int
 pub fn Word::compare_signed(Self, Self) -> Int raise @bitvec.BitVecError
 pub fn Word::compare_unsigned(Self, Self) -> Int raise @bitvec.BitVecError
 pub fn Word::concat(Self, Self) -> Self raise @bitvec.BitVecError
+pub fn Word::create(@bitvec.BitVec, Int) -> Self raise @bitvec.BitVecError
 pub fn Word::div(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::enum_bits(Self, endian~ : @bitvec.Endian) -> Array[Bool]
 pub fn Word::enum_bytes(Self, endian~ : @bitvec.Endian) -> Array[Self]
 pub fn Word::enum_chars(Self, endian~ : @bitvec.Endian) -> Bytes
 pub fn Word::extract(Self, hi? : Int, lo? : Int) -> Self raise @bitvec.BitVecError
+pub fn Word::extract_exn(Self, hi? : Int, lo? : Int) -> Self raise @bitvec.BitVecError
 pub fn Word::from_bitvec(@bitvec.BitVec, signed? : Bool) -> Self
 pub fn Word::from_bytes(BytesView, endian~ : @bitvec.Endian, width? : Int) -> Self raise @bitvec.BitVecError
 pub fn Word::from_hex(width~ : Int, StringView) -> Self raise @bitvec.BitVecError
 pub fn Word::from_string(StringView) -> Self raise @bitvec.BitVecError
 pub fn Word::gcd(Self, Self) -> Self raise @bitvec.BitVecError
+pub fn Word::gcd_exn(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::gcd_ext(Self, Self) -> (Self, Self, Self) raise @bitvec.BitVecError
+pub fn Word::gcdext(Self, Self) -> (Self, Self, Self) raise @bitvec.BitVecError
+pub fn Word::gcdext_exn(Self, Self) -> (Self, Self, Self) raise @bitvec.BitVecError
 pub fn Word::is_negative(Self) -> Bool
 pub fn Word::is_non_negative(Self) -> Bool
 pub fn Word::is_non_positive(Self) -> Bool
@@ -633,6 +638,7 @@ pub fn Word::is_positive(Self) -> Bool
 pub fn Word::is_signed(Self) -> Bool
 pub fn Word::is_zero(Self) -> Bool
 pub fn Word::lcm(Self, Self) -> Self raise @bitvec.BitVecError
+pub fn Word::lcm_exn(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::lnot(Self) -> Self
 pub fn Word::logand(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::logor(Self, Self) -> Self raise @bitvec.BitVecError
@@ -667,7 +673,10 @@ pub fn Word::to_bytes(Self, endian~ : @bitvec.Endian) -> Bytes
 pub fn Word::to_hex(Self, prefix? : Bool) -> String
 pub fn Word::to_int(Self) -> Int raise @bitvec.BitVecError
 pub fn Word::to_int32(Self) -> Int raise @bitvec.BitVecError
+pub fn Word::to_int32_exn(Self) -> Int raise @bitvec.BitVecError
 pub fn Word::to_int64(Self) -> Int64 raise @bitvec.BitVecError
+pub fn Word::to_int64_exn(Self) -> Int64 raise @bitvec.BitVecError
+pub fn Word::to_int_exn(Self) -> Int raise @bitvec.BitVecError
 pub fn Word::to_string(Self) -> String
 pub fn Word::to_uint64(Self) -> UInt64 raise @bitvec.BitVecError
 pub fn Word::truncate(Self, width~ : Int) -> Self raise @bitvec.BitVecError

@@ -49,6 +49,12 @@ test "word wraps bitvec operations" {
 test "word exposes BAP numeric compatibility aliases" {
   let x = @types.Word::of_int(width=8, 0x10)
   let y = @types.Word::of_int(width=8, 0x33)
+  let source = @bitvec.of_uint64(width=16, 0xdead)
+  assert_true(@types.Word::create(source, 8).to_hex() == "0xad")
+  assert_true(
+    @types.Word::create(@bitvec.of_uint64(width=8, 0xef), 16).to_hex() ==
+    "0x00ef",
+  )
   assert_true(x.bitwidth() == 8)
   assert_true(@types.Word::of_int(width=8, 0xff).succ().is_zero())
   assert_true(@types.Word::zero(width=8).pred().to_hex() == "0xff")
@@ -64,6 +70,20 @@ test "word exposes BAP numeric compatibility aliases" {
     .modulo(@types.Word::of_int(width=8, 7))
     .to_int() ==
     2,
+  )
+  assert_true(x.gcd_exn(y) == x.gcd(y))
+  assert_true(x.lcm_exn(y) == x.lcm(y))
+  assert_true(x.gcdext(y) == x.gcd_ext(y))
+  assert_true(x.gcdext_exn(y) == x.gcd_ext(y))
+  assert_true(
+    @types.Word::of_int(width=16, 0xdad5)
+    .extract_exn(hi=0xB, lo=0x4)
+    .to_int_exn() ==
+    0xad,
+  )
+  assert_true(@types.Word::of_int(width=8, -6).signed().to_int32_exn() == -6)
+  assert_true(
+    @types.Word::of_int64(-6L, width=8).signed().to_int64_exn() == -6L,
   )
 }
 

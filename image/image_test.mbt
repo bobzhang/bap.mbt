@@ -170,6 +170,40 @@ test "image words follow endian-aware memory loads" {
 }
 
 ///|
+test "translated BAP image words preserve gapped segment addresses" {
+  let segments = [
+    for base in [0x000UL, 0x10dUL, 0x21aUL, 0x327UL] => {
+      @image.Segment::create(
+        name=".gap",
+        endian=LittleEndian,
+        addr=base,
+        bytes_0_to_15(),
+      )
+    }
+  ]
+  let image = @image.Image::from_segments(
+    entry=0UL,
+    endian=LittleEndian,
+    segments,
+  )
+  let words = image.words(word_size=8)
+  assert_true(words.length() == 64)
+  match (words.min_binding(), words.max_binding()) {
+    (Some((min_mem, min_word)), Some((max_mem, max_word))) => {
+      assert_true(min_mem.min_addr() == 0UL)
+      assert_true(max_mem.min_addr() == 0x336UL)
+      assert_true(max_mem.min_addr() - min_mem.min_addr() == 0x336UL)
+      inspect(min_word.to_hex(), content="0x00")
+      inspect(max_word.to_hex(), content="0x0f")
+    }
+    _ => fail("expected word min/max bindings")
+  }
+  assert_true(words.lookup(0x10dUL).length() == 1)
+  assert_true(words.lookup(0x10cUL).is_empty())
+  assert_true(words.lookup(0x21aUL).length() == 1)
+}
+
+///|
 test "image backends can be registered and used for byte loading" {
   let backend = @image.ImageBackend::create(
     name="unit-raw",

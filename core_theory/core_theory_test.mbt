@@ -92,6 +92,34 @@ test "target registry resolves common and custom declarations" {
 }
 
 ///|
+test "target role helpers classify common architecture variables" {
+  let amd64 = @core_theory.Target::x86_64()
+  match amd64.find_var("RSP") {
+    Some(sp) => assert_true(amd64.roles_of_var(sp).contains(StackPointer))
+    None => fail("missing RSP")
+  }
+  match amd64.find_var("RIP") {
+    Some(pc) => assert_true(amd64.roles_of_var(pc).contains(ProgramCounter))
+    None => fail("missing RIP")
+  }
+  match amd64.find_var("RDI") {
+    Some(arg) => assert_true(amd64.roles_of_var(arg).contains(Argument))
+    None => fail("missing RDI")
+  }
+  match amd64.find_var("RAX") {
+    Some(result) =>
+      assert_true(amd64.roles_of_var(result).contains(ResultRegister))
+    None => fail("missing RAX")
+  }
+  assert_true(amd64.find_role(StackPointer).map(v => v.ident()) == Some("RSP"))
+  assert_true(amd64.vars_with_role(Status).any(v => v.ident() == "ZF"))
+  assert_true(amd64.role_aliases(ProgramCounter).contains("rip"))
+  let arm = @core_theory.Target::arm()
+  assert_true(arm.find_role(ProgramCounter).map(v => v.ident()) == Some("PC"))
+  assert_true(arm.vars_with_role(Argument).any(v => v.ident() == "R0"))
+}
+
+///|
 test "labels carry symbolic entry points" {
   let named = @core_theory.Label::for_name("main")
   assert_true(named.is_valid())

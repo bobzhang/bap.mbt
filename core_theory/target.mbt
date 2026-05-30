@@ -211,6 +211,37 @@ fn find_in_targets(items : Array[Target], query : String) -> Target? {
 }
 
 ///|
+fn target_role_names(role : Role) -> Array[String] {
+  match role {
+    General => []
+    StackPointer => ["sp", "esp", "rsp", "r13", "x31"]
+    FramePointer => ["fp", "ebp", "rbp", "r11", "x8"]
+    ProgramCounter => ["pc", "eip", "rip"]
+    Status =>
+      ["flags", "eflags", "cpsr", "nzcv", "cf", "pf", "af", "zf", "sf", "of"]
+    Argument =>
+      [
+        "r0", "r1", "r2", "r3", "x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7", "rdi",
+        "rsi", "rdx", "rcx", "r8", "r9",
+      ]
+    ResultRegister => ["r0", "x0", "eax", "rax"]
+  }
+}
+
+///|
+fn name_has_role(name : String, role : Role) -> Bool {
+  let lower = name.to_lower()
+  target_role_names(role).contains(lower)
+}
+
+///|
+fn add_role(roles : Array[Role], role : Role) -> Unit {
+  if !roles.contains(role) {
+    roles.push(role)
+  }
+}
+
+///|
 pub fn Target::unknown() -> Target {
   {
     name_value: @knowledge.Name::create("unknown", pkg="target"),
@@ -389,6 +420,51 @@ pub fn Target::find_var(self : Target, name : String) -> Var? {
   self.vars_value
   .search_by(item => item.ident() == name || item.name() == name)
   .map(i => self.vars_value[i])
+}
+
+///|
+pub fn Target::roles_of_var(_self : Target, variable : Var) -> Array[Role] {
+  let roles = []
+  for
+    role in [
+      StackPointer,
+      FramePointer,
+      ProgramCounter,
+      Status,
+      Argument,
+      ResultRegister,
+    ] {
+    if name_has_role(variable.ident(), role) ||
+      name_has_role(variable.name(), role) {
+      add_role(roles, role)
+    }
+  }
+  if roles.is_empty() {
+    [General]
+  } else {
+    roles
+  }
+}
+
+///|
+pub fn Target::vars_with_role(self : Target, role : Role) -> Array[Var] {
+  self.vars_value.filter(variable => self.roles_of_var(variable).contains(role))
+}
+
+///|
+pub fn Target::find_role(self : Target, role : Role) -> Var? {
+  match
+    self.vars_value.search_by(variable => {
+      self.roles_of_var(variable).contains(role)
+    }) {
+    Some(i) => Some(self.vars_value[i])
+    None => None
+  }
+}
+
+///|
+pub fn Target::role_aliases(_self : Target, role : Role) -> Array[String] {
+  target_role_names(role)
 }
 
 ///|

@@ -151,6 +151,7 @@ pub fn Target::data_addr_size(Self) -> Int
 pub fn Target::endianness(Self) -> Endianness
 pub fn Target::fabi(Self) -> Fabi
 pub fn Target::filetype(Self) -> Filetype
+pub fn Target::find_role(Self, Role) -> Var?
 pub fn Target::find_var(Self, String) -> Var?
 pub fn Target::is_unknown(Self) -> Bool
 pub fn Target::matches(Self, String) -> Bool
@@ -167,9 +168,12 @@ pub fn Target::powerpc64() -> Self
 pub fn Target::powerpc64le() -> Self
 pub fn Target::riscv32() -> Self
 pub fn Target::riscv64() -> Self
+pub fn Target::role_aliases(Self, Role) -> Array[String]
+pub fn Target::roles_of_var(Self, Var) -> Array[Role]
 pub fn Target::system(Self) -> System
 pub fn Target::unknown() -> Self
 pub fn Target::vars(Self) -> Array[Var]
+pub fn Target::vars_with_role(Self, Role) -> Array[Var]
 pub fn Target::with_var(Self, Var) -> Self
 pub fn Target::with_vars(Self, Array[Var]) -> Self
 pub fn Target::x86() -> Self

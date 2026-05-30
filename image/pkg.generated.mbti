@@ -136,10 +136,11 @@ pub fn OgreFieldType::to_string(Self) -> String
 
 type Relocation
 pub fn Relocation::addend(Self) -> Int64?
-pub fn Relocation::create(fixup~ : UInt64, target? : UInt64, addend? : Int64, relative? : Bool) -> Self
+pub fn Relocation::create(fixup~ : UInt64, target? : UInt64, addend? : Int64, memory_addend? : Bool, relative? : Bool) -> Self
 pub fn Relocation::fixup(Self) -> UInt64
 pub fn Relocation::is_relative(Self) -> Bool
 pub fn Relocation::target(Self) -> UInt64?
+pub fn Relocation::uses_memory_addend(Self) -> Bool
 
 type Section
 pub fn Section::addr(Self) -> UInt64

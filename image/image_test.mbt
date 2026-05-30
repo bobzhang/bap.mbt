@@ -142,6 +142,7 @@ test "image exposes relocation metadata defensively" {
   assert_true(image.relocations()[0].fixup() == 0x1004UL)
   assert_true(image.relocations()[0].target() == Some(0x2000UL))
   assert_true(image.relocations()[0].addend() == None)
+  assert_true(!image.relocations()[0].uses_memory_addend())
   assert_true(image.external_references().length() == 1)
   assert_true(image.external_references()[0].name() == "puts")
   assert_true(image.required_libraries() == ["libc.so.6"])
@@ -252,6 +253,51 @@ test "image applies relocation addends" {
         applied.segments()[0].memory().hexdump(),
         content="08 40 00 00 00 00 00 00 30 10 00 00 00 00 00 00 f8 0f 00 00 00 00 00 00",
       )
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+test "image applies memory addend relocations" {
+  let text = @image.Segment::create(
+    name=".text",
+    endian=LittleEndian,
+    addr=0x1000UL,
+    b"\x90\xc3\x00\x00\x00\x00\x00\x00",
+    executable=true,
+  )
+  let data = @image.Segment::create(
+    name=".data",
+    endian=LittleEndian,
+    addr=0x2000UL,
+    b"\x20\x00\x00\x00\x00\x00\x00\x00",
+    writable=true,
+  )
+  let image = @image.Image::from_segments(
+    entry=0x1000UL,
+    endian=LittleEndian,
+    [text, data],
+    relocations=[
+      @image.Relocation::create(
+        fixup=0x2000UL,
+        target=0x4000UL,
+        memory_addend=true,
+      ),
+    ],
+    target=@core_theory.Target::x86_64(),
+  )
+  assert_true(image.relocations()[0].uses_memory_addend())
+  match image.with_applied_relocations() {
+    Ok(applied) => {
+      inspect(
+        applied.segments()[0].memory().hexdump(),
+        content="90 c3 00 00 00 00 00 00",
+      )
+      inspect(
+        applied.segments()[1].memory().hexdump(),
+        content="20 40 00 00 00 00 00 00",
+      )
+    }
     Err(reason) => fail(reason)
   }
 }

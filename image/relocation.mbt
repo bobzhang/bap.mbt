@@ -3,6 +3,7 @@ struct Relocation {
   fixup_value : UInt64
   target_value : UInt64?
   addend_value : Int64?
+  memory_addend_flag : Bool
   relative_flag : Bool
 }
 
@@ -11,12 +12,14 @@ pub fn Relocation::create(
   fixup~ : UInt64,
   target? : UInt64,
   addend? : Int64,
+  memory_addend? : Bool,
   relative? : Bool,
 ) -> Relocation {
   {
     fixup_value: fixup,
     target_value: target,
     addend_value: addend,
+    memory_addend_flag: default_flag(memory_addend, false),
     relative_flag: default_flag(relative, false),
   }
 }
@@ -34,6 +37,11 @@ pub fn Relocation::target(self : Relocation) -> UInt64? {
 ///|
 pub fn Relocation::addend(self : Relocation) -> Int64? {
   self.addend_value
+}
+
+///|
+pub fn Relocation::uses_memory_addend(self : Relocation) -> Bool {
+  self.memory_addend_flag
 }
 
 ///|

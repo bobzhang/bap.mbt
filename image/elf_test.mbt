@@ -130,6 +130,22 @@ fn image_elf_test_write_rela64(
 }
 
 ///|
+fn image_elf_test_write_rel64(
+  buffer : Array[Byte],
+  offset : Int,
+  relocation_offset : UInt64,
+  symbol_index : Int,
+  typ : Int,
+) -> Unit {
+  image_elf_test_set_u64_le(buffer, offset, relocation_offset)
+  image_elf_test_set_u64_le(
+    buffer,
+    offset + 8,
+    (symbol_index.to_uint64() << 32) | typ.to_uint64(),
+  )
+}
+
+///|
 fn image_elf_test_write_dynamic64(
   buffer : Array[Byte],
   offset : Int,
@@ -254,15 +270,16 @@ fn image_elf_test_make_x86_64() -> Bytes {
 
 ///|
 fn image_elf_test_make_x86_64_with_relocations() -> Bytes {
-  let shstr = b"\x00.shstrtab\x00.text\x00.symtab\x00.strtab\x00.rela.text\x00"
+  let shstr = b"\x00.shstrtab\x00.text\x00.symtab\x00.strtab\x00.rela.text\x00.rel.text\x00"
   let text = b"\x90\xc3\xcc\x00"
   let strtab = b"\x00main\x00target\x00puts\x00"
-  let shstr_offset = 120 + 6 * 64
+  let shstr_offset = 120 + 7 * 64
   let text_offset = shstr_offset + shstr.length()
   let symtab_offset = text_offset + text.length()
   let strtab_offset = symtab_offset + 96
   let rela_offset = strtab_offset + strtab.length()
-  let total = rela_offset + 72
+  let rel_offset = rela_offset + 72
+  let total = rel_offset + 16
   let buffer = Array::make(total, b'\x00')
   image_elf_test_write_bytes(buffer, 0, b"\x7fELF")
   buffer[4] = b'\x02'
@@ -278,7 +295,7 @@ fn image_elf_test_make_x86_64_with_relocations() -> Bytes {
   image_elf_test_set_u16_le(buffer, 54, 56)
   image_elf_test_set_u16_le(buffer, 56, 1)
   image_elf_test_set_u16_le(buffer, 58, 64)
-  image_elf_test_set_u16_le(buffer, 60, 6)
+  image_elf_test_set_u16_le(buffer, 60, 7)
   image_elf_test_set_u16_le(buffer, 62, 1)
   image_elf_test_set_u32_le(buffer, 64, 1)
   image_elf_test_set_u32_le(buffer, 68, 5)
@@ -328,6 +345,9 @@ fn image_elf_test_make_x86_64_with_relocations() -> Bytes {
   image_elf_test_write_section64(
     buffer, 5, 33, 4, 0UL, 0UL, rela_offset, 72, 3, 24,
   )
+  image_elf_test_write_section64(
+    buffer, 6, 44, 9, 0UL, 0UL, rel_offset, 16, 3, 16,
+  )
   image_elf_test_write_bytes(buffer, shstr_offset, shstr)
   image_elf_test_write_bytes(buffer, text_offset, text)
   image_elf_test_write_symbol64(
@@ -368,6 +388,7 @@ fn image_elf_test_make_x86_64_with_relocations() -> Bytes {
     8,
     addend=-8L,
   )
+  image_elf_test_write_rel64(buffer, rel_offset, 0x400002UL, 2, 4)
   Bytes::from_array(buffer)
 }
 
@@ -740,7 +761,7 @@ test "image ELF backend extracts relocation metadata" {
   assert_true(image.symbols().any(symbol => symbol.name() == "main"))
   assert_true(image.symbols().any(symbol => symbol.name() == "target"))
   let relocations = image.relocations()
-  assert_true(relocations.length() == 2)
+  assert_true(relocations.length() == 3)
   let absolute = match
     relocations.search_by(relocation => relocation.fixup() == 0x400000UL) {
     Some(index) => relocations[index]
@@ -748,7 +769,17 @@ test "image ELF backend extracts relocation metadata" {
   }
   assert_true(absolute.target() == Some(0x400002UL))
   assert_true(absolute.addend() == Some(4L))
+  assert_true(!absolute.uses_memory_addend())
   assert_true(!absolute.is_relative())
+  let implicit = match
+    relocations.search_by(relocation => relocation.fixup() == 0x400002UL) {
+    Some(index) => relocations[index]
+    None => fail("expected REL relocation")
+  }
+  assert_true(implicit.target() == Some(0x400002UL))
+  assert_true(implicit.addend() == None)
+  assert_true(implicit.uses_memory_addend())
+  assert_true(!implicit.is_relative())
   let relative = match
     relocations.search_by(relocation => relocation.fixup() == 0x400003UL) {
     Some(index) => relocations[index]
@@ -756,6 +787,7 @@ test "image ELF backend extracts relocation metadata" {
   }
   assert_true(relative.target() == None)
   assert_true(relative.addend() == Some(-8L))
+  assert_true(!relative.uses_memory_addend())
   assert_true(relative.is_relative())
   let references = image.external_references()
   assert_true(references.length() == 1)
@@ -892,6 +924,7 @@ test "image ELF backend extracts PT_DYNAMIC metadata without section headers" {
   assert_true(relocations.length() == 1)
   assert_true(relocations[0].fixup() == 0x600001UL)
   assert_true(relocations[0].addend() == Some(0x30L))
+  assert_true(!relocations[0].uses_memory_addend())
   assert_true(relocations[0].is_relative())
   let references = image.external_references()
   assert_true(references.length() == 1)

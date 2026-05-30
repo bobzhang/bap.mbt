@@ -175,13 +175,14 @@ relocation types. When symbol-based dynamic relocations are present with
 dynamic symbol by index: undefined symbols become external references, while
 defined symbols may become target relocations. Preserve signed `DT_RELA`
 addends for both relative and symbol-target relocations; `DT_REL` entries have
-no explicit addend and should keep using the encoded word at the fixup when a
-relocation applier needs one.
+no explicit addend, so mark their relocation metadata as using a memory addend
+instead of pretending the addend is zero.
 For a pure MoonBit relocation application stage, keep it explicit and checked:
 absolute relocation facts write `target + addend` at the fixup address, while
-relative relocation facts require image base-address metadata and write
-`base + addend` when a `RELA` addend is present. Without an explicit addend,
-keep the BAP/Ogre-compatible fallback: read the current word at the fixup, add
+ELF `REL` target relocations write `target + word_at_fixup`. Relative
+relocation facts require image base-address metadata and write `base + addend`
+when a `RELA` addend is present. Without an explicit addend, keep the
+BAP/Ogre-compatible relative fallback: read the current word at the fixup, add
 the base, and write the result back using the image address width and endian.
 Return a new image/project instead of mutating source segments, and fail on
 missing bases or out-of-bounds stores.

@@ -65,6 +65,7 @@ priv struct ImageElfRelocationEntry {
   symbol_index : Int
   typ : Int
   addend : Int64?
+  memory_addend : Bool
 }
 
 ///|
@@ -1007,6 +1008,7 @@ fn image_elf_parse_relocation_entry_at(
             } else {
               None
             },
+            memory_addend: !has_addend,
           })
         (Err(reason), _) | (_, Err(reason)) => Err(reason)
       }
@@ -1073,6 +1075,7 @@ fn image_elf_relocations(
             Relocation::create(
               fixup=entry.offset,
               addend?=entry.addend,
+              memory_addend=entry.memory_addend,
               relative=true,
             ),
           )
@@ -1093,6 +1096,7 @@ fn image_elf_relocations(
                     fixup=entry.offset,
                     target=symbol.value,
                     addend?=entry.addend,
+                    memory_addend=entry.memory_addend,
                   ),
                 )
               }
@@ -1475,6 +1479,7 @@ fn image_elf_dynamic_external_or_target_relocation(
                     fixup=entry.offset,
                     target=symbol.value,
                     addend?=entry.addend,
+                    memory_addend=entry.memory_addend,
                   ),
                 ),
                 None,
@@ -1583,6 +1588,7 @@ fn image_elf_dynamic_relocations_from_programs(
             Relocation::create(
               fixup=entry.offset,
               addend?=entry.addend,
+              memory_addend=entry.memory_addend,
               relative=true,
             ),
           )
@@ -1612,6 +1618,7 @@ fn image_elf_dynamic_relocations_from_programs(
             Relocation::create(
               fixup=entry.offset,
               addend?=entry.addend,
+              memory_addend=entry.memory_addend,
               relative=true,
             ),
           )

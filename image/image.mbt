@@ -484,10 +484,44 @@ fn image_relocation_word_value(word : @types.Word) -> Result[UInt64, String] {
 }
 
 ///|
-fn image_relocation_addend(base : UInt64, addend : Int64?) -> UInt64 {
-  match addend {
-    Some(value) => base + value.reinterpret_as_uint64()
-    None => base
+fn image_memory_covers_word(
+  memory : @memory.Memory,
+  addr : UInt64,
+  width : Int,
+) -> Bool {
+  let bytes = width / 8
+  bytes > 0 &&
+  memory.contains(addr) &&
+  memory.contains(addr + (bytes - 1).to_uint64())
+}
+
+///|
+fn image_relocation_memory_addend(
+  relocation : Relocation,
+  width : Int,
+  memory : @memory.Memory,
+) -> Result[UInt64, String] {
+  match memory.load(relocation.fixup(), width~) {
+    Ok(word) => image_relocation_word_value(word)
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+fn image_relocation_addend_value(
+  relocation : Relocation,
+  width : Int,
+  memory : @memory.Memory,
+  fallback_to_memory~ : Bool,
+) -> Result[UInt64, String] {
+  match relocation.addend() {
+    Some(addend) => Ok(addend.reinterpret_as_uint64())
+    None =>
+      if relocation.uses_memory_addend() || fallback_to_memory {
+        image_relocation_memory_addend(relocation, width, memory)
+      } else {
+        Ok(0UL)
+      }
   }
 }
 
@@ -501,21 +535,17 @@ fn Image::relocation_value(
   if relocation.is_relative() {
     match self.base_address_value {
       Some(base) => {
-        let value = match relocation.addend() {
-          Some(addend) => base + addend.reinterpret_as_uint64()
-          None => {
-            let current = match memory.load(relocation.fixup(), width~) {
-              Ok(word) =>
-                match image_relocation_word_value(word) {
-                  Ok(value) => value
-                  Err(reason) => return Err(reason)
-                }
-              Err(reason) => return Err(reason)
-            }
-            base + current
-          }
+        let addend = match
+          image_relocation_addend_value(
+            relocation,
+            width,
+            memory,
+            fallback_to_memory=true,
+          ) {
+          Ok(value) => value
+          Err(reason) => return Err(reason)
         }
-        match image_relocation_word(width, value) {
+        match image_relocation_word(width, base + addend) {
           Ok(word) => Ok(Some(word))
           Err(reason) => Err(reason)
         }
@@ -524,15 +554,22 @@ fn Image::relocation_value(
     }
   } else {
     match relocation.target() {
-      Some(target) =>
-        match
-          image_relocation_word(
+      Some(target) => {
+        let addend = match
+          image_relocation_addend_value(
+            relocation,
             width,
-            image_relocation_addend(target, relocation.addend()),
+            memory,
+            fallback_to_memory=false,
           ) {
+          Ok(value) => value
+          Err(reason) => return Err(reason)
+        }
+        match image_relocation_word(width, target + addend) {
           Ok(word) => Ok(Some(word))
           Err(reason) => Err(reason)
         }
+      }
       None => Ok(None)
     }
   }
@@ -547,17 +584,19 @@ fn Image::apply_relocation_to_segments(
 ) -> Result[Unit, String] {
   for i in 0..<segments.length() {
     let memory = segments[i].memory()
-    match self.relocation_value(relocation, width, memory) {
-      Ok(Some(word)) =>
-        match memory.store(relocation.fixup(), word) {
-          Ok(updated) => {
-            segments[i] = segments[i].with_memory(updated)
-            return Ok(())
+    if image_memory_covers_word(memory, relocation.fixup(), width) {
+      match self.relocation_value(relocation, width, memory) {
+        Ok(Some(word)) =>
+          match memory.store(relocation.fixup(), word) {
+            Ok(updated) => {
+              segments[i] = segments[i].with_memory(updated)
+              return Ok(())
+            }
+            Err(reason) => return Err(reason)
           }
-          Err(_) => ()
-        }
-      Ok(None) => return Ok(())
-      Err(reason) => return Err(reason)
+        Ok(None) => return Ok(())
+        Err(reason) => return Err(reason)
+      }
     }
   }
   Err("relocation fixup is outside image memory")

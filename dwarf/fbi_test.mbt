@@ -78,6 +78,35 @@ test "translated DWARF FBI extracts string-table names and absolute high pc" {
 }
 
 ///|
+test "translated DWARF FBI resolves indirect value forms" {
+  let abbrev = b"\x01\x2e\x00" +
+    b"\x03\x16" +
+    b"\x11\x01" +
+    b"\x12\x16" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x19\x00\x00\x00" +
+    b"\x04\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x04" +
+    b"\x01" +
+    b"\x08" +
+    b"indirect\x00" +
+    b"\x40\x00\x00\x00" +
+    b"\x0b" +
+    b"\x04" +
+    b"\x00"
+  let data = expect_fbi_data(
+    @dwarf.DwarfData::from_bytes(endian=LittleEndian, info~, abbrev~, str=b""),
+  )
+  let functions = expect_functions(data.functions())
+  assert_true(functions.length() == 1)
+  assert_true(functions[0].name() == "indirect")
+  assert_true(functions[0].low_pc() == 0x40UL)
+  assert_true(functions[0].high_pc() == Some(0x44UL))
+}
+
+///|
 test "translated DWARF FBI skips degenerate and non-function DIEs" {
   let abbrev = b"\x01\x11\x01" +
     b"\x03\x08" +

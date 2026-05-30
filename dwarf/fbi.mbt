@@ -117,6 +117,22 @@ fn dwarf_read_attr_value(
   addr_size : DwarfWordSize,
   str_section : DwarfSectionBuffer,
 ) -> Result[(DwarfFunctionAttrValue, DwarfInput), String] {
+  match field.form() {
+    DwarfIndirect =>
+      match input.read_form() {
+        Ok((actual_form, next)) =>
+          return dwarf_read_attr_value(
+            next,
+            DwarfAbbrevField::create(attr=field.attr(), form=actual_form),
+            endian,
+            dwarf_size,
+            addr_size,
+            str_section,
+          )
+        Err(reason) => return Err(reason)
+      }
+    _ => ()
+  }
   match field.value_kind() {
     DwarfNameValue =>
       match field.form() {

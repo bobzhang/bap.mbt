@@ -33,6 +33,11 @@ priv struct DwarfRangeSummary {
 }
 
 ///|
+priv struct DwarfScope {
+  range_base : UInt64
+}
+
+///|
 pub fn DwarfFunction::create(
   name~ : String,
   low_pc~ : UInt64,
@@ -967,6 +972,23 @@ fn dwarf_update_str_offsets_base(base : Int?, value : Int) -> Int {
 }
 
 ///|
+fn dwarf_current_scope(scopes : Array[DwarfScope]) -> DwarfScope {
+  scopes[scopes.length() - 1]
+}
+
+///|
+fn dwarf_current_range_base(scopes : Array[DwarfScope]) -> UInt64 {
+  dwarf_current_scope(scopes).range_base
+}
+
+///|
+fn dwarf_pop_scope(scopes : Array[DwarfScope]) -> Unit {
+  if scopes.length() > 1 {
+    ignore(scopes.pop())
+  }
+}
+
+///|
 fn dwarf_parse_unit(
   info : DwarfInput,
   abbrev_section : DwarfSectionBuffer,
@@ -998,23 +1020,37 @@ fn dwarf_parse_unit(
               let mut str_offsets_base = 0
               let mut addr_base : Int? = None
               let mut rnglists_base : Int? = None
-              let mut range_base = 0UL
+              let scopes : Array[DwarfScope] = [{ range_base: 0UL }]
               while cursor.position() < cu_end {
                 match cursor.read_code() {
-                  Ok((0, next)) => cursor = next
+                  Ok((0, next)) => {
+                    dwarf_pop_scope(scopes)
+                    cursor = next
+                  }
                   Ok((code, after_code)) =>
                     match table.lookup(code) {
                       Some(entry) =>
                         match
                           dwarf_read_die(
-                            after_code, entry, endian, dwarf_size, addr_size, version,
-                            addr_base, str_offsets_base, rnglists_base, addr_section,
-                            str_offsets_section, str_section, ranges_section, rnglists_section,
-                            range_base,
+                            after_code,
+                            entry,
+                            endian,
+                            dwarf_size,
+                            addr_size,
+                            version,
+                            addr_base,
+                            str_offsets_base,
+                            rnglists_base,
+                            addr_section,
+                            str_offsets_section,
+                            str_section,
+                            ranges_section,
+                            rnglists_section,
+                            dwarf_current_range_base(scopes),
                           ) {
                           Ok(
                             (
-                              Some(function_item),
+                              function_item,
                               str_base,
                               next_addr_base,
                               next_rnglists_base,
@@ -1022,7 +1058,10 @@ fn dwarf_parse_unit(
                               next,
                             )
                           ) => {
-                            functions.push(function_item)
+                            match function_item {
+                              Some(value) => functions.push(value)
+                              None => ()
+                            }
                             str_offsets_base = dwarf_update_str_offsets_base(
                               str_base, str_offsets_base,
                             )
@@ -1034,36 +1073,12 @@ fn dwarf_parse_unit(
                               Some(value) => rnglists_base = Some(value)
                               None => ()
                             }
-                            match next_range_base {
-                              Some(value) => range_base = value
-                              None => ()
-                            }
-                            cursor = next
-                          }
-                          Ok(
-                            (
-                              None,
-                              str_base,
-                              next_addr_base,
-                              next_rnglists_base,
-                              next_range_base,
-                              next,
-                            )
-                          ) => {
-                            str_offsets_base = dwarf_update_str_offsets_base(
-                              str_base, str_offsets_base,
-                            )
-                            match next_addr_base {
-                              Some(value) => addr_base = Some(value)
-                              None => ()
-                            }
-                            match next_rnglists_base {
-                              Some(value) => rnglists_base = Some(value)
-                              None => ()
-                            }
-                            match next_range_base {
-                              Some(value) => range_base = value
-                              None => ()
+                            if entry.has_children() {
+                              let child_range_base = match next_range_base {
+                                Some(value) => value
+                                None => dwarf_current_range_base(scopes)
+                              }
+                              scopes.push({ range_base: child_range_base })
                             }
                             cursor = next
                           }

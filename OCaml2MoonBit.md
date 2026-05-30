@@ -147,6 +147,9 @@ adding address-indexed range entries that require `.debug_addr`. For
 `.debug_addr`, track `DW_AT_addr_base` on the current compilation unit and
 resolve `DW_FORM_addrx*` values by indexing fixed-width entries from that base;
 require the base explicitly instead of guessing around the section header.
+Track DIE child nesting when carrying range bases: a `DW_AT_low_pc` on a
+compile unit or lexical scope should seed that DIE's children, but it must not
+leak into following siblings after a null child-list terminator.
 
 `text[i]` returns a `UInt16` code unit, not a `Char`. For text parsers that need character predicates or `StringBuilder::write_char`, use `text.get_char(offset)` and advance by `char.utf16_len()`. It is still fine to increment by one for syntax bytes you have already constrained to ASCII, such as `(`, `)`, `"` and `\\`, but do not mix code-unit offsets with `Char` APIs accidentally.
 

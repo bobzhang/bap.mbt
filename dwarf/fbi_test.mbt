@@ -329,6 +329,66 @@ test "translated DWARF FBI honors debug ranges base selection" {
 }
 
 ///|
+test "translated DWARF FBI keeps nested range bases scoped" {
+  let abbrev = b"\x01\x11\x01" +
+    b"\x11\x01" +
+    b"\x00\x00" +
+    b"\x02\x0b\x01" +
+    b"\x11\x01" +
+    b"\x00\x00" +
+    b"\x03\x2e\x00" +
+    b"\x03\x08" +
+    b"\x55\x17" +
+    b"\x00\x00" +
+    b"\x04\x2e\x00" +
+    b"\x03\x08" +
+    b"\x55\x17" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x2b\x00\x00\x00" +
+    b"\x04\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x04" +
+    b"\x01" +
+    b"\x00\x10\x00\x00" +
+    b"\x02" +
+    b"\x00\x30\x00\x00" +
+    b"\x03" +
+    b"child\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x00" +
+    b"\x04" +
+    b"sibling\x00" +
+    b"\x10\x00\x00\x00" +
+    b"\x00"
+  let ranges = b"\x10\x00\x00\x00" +
+    b"\x18\x00\x00\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x20\x00\x00\x00" +
+    b"\x28\x00\x00\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x00\x00\x00\x00"
+  let data = expect_fbi_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=LittleEndian,
+      info~,
+      abbrev~,
+      str=b"",
+      ranges~,
+    ),
+  )
+  let functions = expect_functions(data.functions())
+  assert_true(functions.length() == 2)
+  assert_true(functions[0].name() == "child")
+  assert_true(functions[0].low_pc() == 0x3010UL)
+  assert_true(functions[0].high_pc() == Some(0x3018UL))
+  assert_true(functions[1].name() == "sibling")
+  assert_true(functions[1].low_pc() == 0x1020UL)
+  assert_true(functions[1].high_pc() == Some(0x1028UL))
+}
+
+///|
 test "translated DWARF FBI summarizes DWARF5 rnglists offsets" {
   let abbrev = b"\x01\x2e\x00" +
     b"\x03\x08" +

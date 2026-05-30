@@ -108,6 +108,12 @@ block's `free_vars`, while phi operands are edge-specific uses attributed to
 their predecessor block. Do not model phi lhs variables as ordinary block defs
 in the liveness transfer unless the OCaml source does so for that algorithm.
 
+For BAP BIL helper predicates, expression references and statement references
+are close to free-variable queries, but assignment lhs variables are definitions
+rather than references. `Exp.Var(x)` references `x`; `Stmt.Move(x, rhs)` does
+not reference `x` unless `rhs` does. `is_assigned ~strict:true` also ignores
+assignments nested under conditional control flow such as `If` and `While`.
+
 BAP `Word.t` carries a signedness flag in addition to the payload bits and
 width. Keep the raw bitvector package sign-agnostic, but preserve this flag in
 the BAP-facing word wrapper for parsing, predicates, and printing. Arithmetic

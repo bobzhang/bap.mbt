@@ -352,6 +352,57 @@ pub fn Stmt::free_vars(self : Stmt) -> Array[Var] {
 }
 
 ///|
+pub fn Exp::is_referenced(self : Exp, variable : Var) -> Bool {
+  self.free_vars().any(item => item == variable)
+}
+
+///|
+pub fn Stmt::is_referenced(self : Stmt, variable : Var) -> Bool {
+  self.free_vars().any(item => item == variable)
+}
+
+///|
+pub fn is_referenced_stmts(stmts : Array[Stmt], variable : Var) -> Bool {
+  stmts.any(stmt => stmt.is_referenced(variable))
+}
+
+///|
+fn Stmt::is_assigned_under(
+  self : Stmt,
+  variable : Var,
+  strict : Bool,
+  under_condition : Bool,
+) -> Bool {
+  match self {
+    Move(lhs, _) => lhs == variable && !(strict && under_condition)
+    If(yes~, no~, ..) =>
+      yes.any(stmt => stmt.is_assigned_under(variable, strict, true)) ||
+      no.any(stmt => stmt.is_assigned_under(variable, strict, true))
+    While(body~, ..) =>
+      body.any(stmt => stmt.is_assigned_under(variable, strict, true))
+    Jmp(_) | Special(_) | CpuExn(_) => false
+  }
+}
+
+///|
+pub fn Stmt::is_assigned(
+  self : Stmt,
+  variable : Var,
+  strict? : Bool = false,
+) -> Bool {
+  self.is_assigned_under(variable, strict, false)
+}
+
+///|
+pub fn is_assigned_stmts(
+  stmts : Array[Stmt],
+  variable : Var,
+  strict? : Bool = false,
+) -> Bool {
+  stmts.any(stmt => stmt.is_assigned_under(variable, strict, false))
+}
+
+///|
 pub fn Stmt::substitute_var(
   self : Stmt,
   variable : Var,

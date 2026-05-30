@@ -295,3 +295,27 @@ test "statement helpers expose used variables and substitute expressions" {
   let next = stmt.substitute_var(y, Int(@types.Word::of_int(width=8, 9)))
   inspect(next.to_string(), content="x:imm8 := (9:8u + 1:1u)")
 }
+
+///|
+test "statement helpers mirror BAP reference and assignment predicates" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let z = @types.Var::new(name="z", typ~)
+  let one = @types.Int(word8(1))
+  let top = @types.Stmt::Move(x, BinOp(Plus, Var(y), one))
+  let branch = @types.Stmt::If(cond=Var(y), yes=[Move(z, Var(x))], no=[])
+  let x_exp : @types.Exp = Var(x)
+  let sum_exp : @types.Exp = BinOp(Plus, Var(y), one)
+  assert_true(x_exp.is_referenced(x))
+  assert_true(sum_exp.is_referenced(y))
+  assert_true(top.is_referenced(y))
+  assert_true(!top.is_referenced(x))
+  assert_true(@types.is_referenced_stmts([top, branch], x))
+  assert_true(top.is_assigned(x))
+  assert_true(top.is_assigned(x, strict=true))
+  assert_true(branch.is_assigned(z))
+  assert_true(!branch.is_assigned(z, strict=true))
+  assert_true(@types.is_assigned_stmts([top, branch], z))
+  assert_true(!@types.is_assigned_stmts([top, branch], z, strict=true))
+}

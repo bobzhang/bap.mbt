@@ -405,6 +405,7 @@ pub(all) enum VarBinding {
 }
 
 type Word derive(Eq, @debug.Debug)
+pub fn Word::abs(Self) -> Self
 pub fn Word::add(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::arshift(Self, Int) -> Self
 pub fn Word::b0() -> Self
@@ -412,10 +413,14 @@ pub fn Word::b1() -> Self
 pub fn Word::bit_and(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::bit_or(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::bit_xor(Self, Self) -> Self raise @bitvec.BitVecError
+pub fn Word::bitwidth(Self) -> Int
 pub fn Word::compare_signed(Self, Self) -> Int raise @bitvec.BitVecError
 pub fn Word::compare_unsigned(Self, Self) -> Int raise @bitvec.BitVecError
 pub fn Word::concat(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::div(Self, Self) -> Self raise @bitvec.BitVecError
+pub fn Word::enum_bits(Self, endian~ : @bitvec.Endian) -> Array[Bool]
+pub fn Word::enum_bytes(Self, endian~ : @bitvec.Endian) -> Array[Self]
+pub fn Word::enum_chars(Self, endian~ : @bitvec.Endian) -> Bytes
 pub fn Word::extract(Self, hi? : Int, lo? : Int) -> Self raise @bitvec.BitVecError
 pub fn Word::from_bitvec(@bitvec.BitVec, signed? : Bool) -> Self
 pub fn Word::from_bytes(BytesView, endian~ : @bitvec.Endian, width? : Int) -> Self raise @bitvec.BitVecError
@@ -432,11 +437,17 @@ pub fn Word::is_signed(Self) -> Bool
 pub fn Word::is_zero(Self) -> Bool
 pub fn Word::lcm(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::lnot(Self) -> Self
+pub fn Word::logand(Self, Self) -> Self raise @bitvec.BitVecError
+pub fn Word::logor(Self, Self) -> Self raise @bitvec.BitVecError
+pub fn Word::logxor(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::lsb(Self) -> Bool
 pub fn Word::lshift(Self, Int) -> Self
+pub fn Word::modulo(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::msb(Self) -> Bool
 pub fn Word::mul(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::neg(Self) -> Self
+pub fn Word::npred(Self, Int) -> Self
+pub fn Word::nsucc(Self, Int) -> Self
 pub fn Word::of_binary(@bitvec.Endian, BytesView, width? : Int) -> Self raise @bitvec.BitVecError
 pub fn Word::of_bool(Bool) -> Self
 pub fn Word::of_int(width~ : Int, Int) -> Self raise @bitvec.BitVecError
@@ -445,12 +456,14 @@ pub fn Word::of_int64(Int64, width? : Int) -> Self raise @bitvec.BitVecError
 pub fn Word::of_uint64(width~ : Int, UInt64) -> Self raise @bitvec.BitVecError
 pub fn Word::one(width~ : Int) -> Self raise @bitvec.BitVecError
 pub fn Word::ones(width~ : Int) -> Self raise @bitvec.BitVecError
+pub fn Word::pred(Self) -> Self
 pub fn Word::rem(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::rshift(Self, Int) -> Self
 pub fn Word::signed(Self) -> Self
 pub fn Word::signed_div(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::signed_rem(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::sub(Self, Self) -> Self raise @bitvec.BitVecError
+pub fn Word::succ(Self) -> Self
 pub fn Word::to_bitvec(Self) -> @bitvec.BitVec
 pub fn Word::to_bytes(Self, endian~ : @bitvec.Endian) -> Bytes
 pub fn Word::to_hex(Self, prefix? : Bool) -> String

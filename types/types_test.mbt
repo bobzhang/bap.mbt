@@ -46,6 +46,28 @@ test "word wraps bitvec operations" {
 }
 
 ///|
+test "word exposes BAP numeric compatibility aliases" {
+  let x = @types.Word::of_int(width=8, 0x10)
+  let y = @types.Word::of_int(width=8, 0x33)
+  assert_true(x.bitwidth() == 8)
+  assert_true(@types.Word::of_int(width=8, 0xff).succ().is_zero())
+  assert_true(@types.Word::zero(width=8).pred().to_hex() == "0xff")
+  assert_true(x.nsucc(0x20).to_hex() == "0x30")
+  assert_true(x.npred(0x11).to_hex() == "0xff")
+  assert_true(x.nsucc(-1) == x.pred())
+  assert_true(@types.Word::of_int(width=8, 0xff).abs().to_hex() == "0x01")
+  assert_true(x.logand(y) == x.bit_and(y))
+  assert_true(x.logor(y) == x.bit_or(y))
+  assert_true(x.logxor(y) == x.bit_xor(y))
+  assert_true(
+    @types.Word::of_int(width=8, 0xf0)
+    .modulo(@types.Word::of_int(width=8, 7))
+    .to_int() ==
+    2,
+  )
+}
+
+///|
 fn assert_word_concat(
   high : @types.Word,
   low : @types.Word,
@@ -109,6 +131,15 @@ fn byte_values(bytes : Bytes) -> Array[Int] {
 }
 
 ///|
+fn word_values(words : Array[@types.Word]) -> Array[Int] raise {
+  let values = []
+  for word in words {
+    values.push(word.to_int())
+  }
+  values
+}
+
+///|
 test "translated BAP word byte enumeration preserves endian order for odd widths" {
   assert_true(
     byte_values(@types.Word::of_int(width=128, 1).to_bytes(endian=LittleEndian)) ==
@@ -149,6 +180,33 @@ test "translated BAP word byte enumeration preserves endian order for odd widths
   )
   assert_true(
     byte_values(deadbeef.to_bytes(endian=BigEndian)) == [0xDE, 0xAD, 0xBE, 0xEF],
+  )
+}
+
+///|
+test "word enum aliases expose BAP byte and bit order" {
+  let value = @types.Word::of_uint64(width=16, 0x0102)
+  assert_true(byte_values(value.enum_chars(endian=BigEndian)) == [0x01, 0x02])
+  assert_true(
+    byte_values(value.enum_chars(endian=LittleEndian)) == [0x02, 0x01],
+  )
+  assert_true(word_values(value.enum_bytes(endian=BigEndian)) == [0x01, 0x02])
+  assert_true(
+    word_values(value.enum_bytes(endian=LittleEndian)) == [0x02, 0x01],
+  )
+  assert_true(
+    value.enum_bits(endian=BigEndian) ==
+    [
+      false, false, false, false, false, false, false, true, false, false, false,
+      false, false, false, true, false,
+    ],
+  )
+  assert_true(
+    value.enum_bits(endian=LittleEndian) ==
+    [
+      false, false, false, false, false, false, true, false, false, false, false,
+      false, false, false, false, true,
+    ],
   )
 }
 

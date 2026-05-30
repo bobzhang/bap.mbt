@@ -23,6 +23,11 @@ pub fn Word::width(self : Word) -> Int {
 }
 
 ///|
+pub fn Word::bitwidth(self : Word) -> Int {
+  self.width()
+}
+
+///|
 pub fn Word::signed(self : Word) -> Word {
   { ..self, signed_value: true }
 }
@@ -217,6 +222,14 @@ pub fn Word::signed_rem(
 }
 
 ///|
+pub fn Word::modulo(
+  self : Word,
+  other : Word,
+) -> Word raise @bitvec.BitVecError {
+  self.rem(other)
+}
+
+///|
 pub fn Word::gcd(self : Word, other : Word) -> Word raise @bitvec.BitVecError {
   Word::from_bitvec(self.bits_value.gcd(other.bits_value))
 }
@@ -246,11 +259,46 @@ pub fn Word::neg(self : Word) -> Word {
 }
 
 ///|
+pub fn Word::abs(self : Word) -> Word {
+  Word::from_bitvec(self.bits_value.abs_signed())
+}
+
+///|
+pub fn Word::succ(self : Word) -> Word {
+  Word::from_bitvec(self.bits_value.succ())
+}
+
+///|
+pub fn Word::pred(self : Word) -> Word {
+  Word::from_bitvec(self.bits_value.pred())
+}
+
+///|
+pub fn Word::nsucc(self : Word, count : Int) -> Word {
+  let delta = try! @bitvec.of_int(width=self.width(), count)
+  Word::from_bitvec(try! self.bits_value.add(delta))
+}
+
+///|
+pub fn Word::npred(self : Word, count : Int) -> Word {
+  let delta = try! @bitvec.of_int(width=self.width(), count)
+  Word::from_bitvec(try! self.bits_value.sub(delta))
+}
+
+///|
 pub fn Word::bit_and(
   self : Word,
   other : Word,
 ) -> Word raise @bitvec.BitVecError {
   Word::from_bitvec(self.bits_value.bit_and(other.bits_value))
+}
+
+///|
+pub fn Word::logand(
+  self : Word,
+  other : Word,
+) -> Word raise @bitvec.BitVecError {
+  self.bit_and(other)
 }
 
 ///|
@@ -262,11 +310,24 @@ pub fn Word::bit_or(
 }
 
 ///|
+pub fn Word::logor(self : Word, other : Word) -> Word raise @bitvec.BitVecError {
+  self.bit_or(other)
+}
+
+///|
 pub fn Word::bit_xor(
   self : Word,
   other : Word,
 ) -> Word raise @bitvec.BitVecError {
   Word::from_bitvec(self.bits_value.bit_xor(other.bits_value))
+}
+
+///|
+pub fn Word::logxor(
+  self : Word,
+  other : Word,
+) -> Word raise @bitvec.BitVecError {
+  self.bit_xor(other)
 }
 
 ///|
@@ -478,4 +539,33 @@ pub fn Word::to_string(self : Word) -> String {
 ///|
 pub fn Word::to_bytes(self : Word, endian~ : @bitvec.Endian) -> Bytes {
   self.bits_value.to_bytes(endian~)
+}
+
+///|
+pub fn Word::enum_chars(self : Word, endian~ : @bitvec.Endian) -> Bytes {
+  self.to_bytes(endian~)
+}
+
+///|
+pub fn Word::enum_bytes(self : Word, endian~ : @bitvec.Endian) -> Array[Word] {
+  let chars = self.enum_chars(endian~)
+  let words = []
+  for i in 0..<chars.length() {
+    words.push(try! Word::of_int(width=8, chars[i].to_int()))
+  }
+  words
+}
+
+///|
+pub fn Word::enum_bits(self : Word, endian~ : @bitvec.Endian) -> Array[Bool] {
+  let chars = self.enum_chars(endian~)
+  let bits = []
+  for i in 0..<chars.length() {
+    let byte = chars[i].to_int()
+    for j in 0..<8 {
+      let shift = 7 - j
+      bits.push(((byte >> shift) & 1) == 1)
+    }
+  }
+  bits
 }

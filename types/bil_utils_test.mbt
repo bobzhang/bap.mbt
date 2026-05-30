@@ -161,6 +161,27 @@ test "bil simplifier folds scalar constants and let bindings" {
 }
 
 ///|
+test "bil extract and concat expressions mirror BAP word operations" {
+  let high = @types.Int(word16(0xDEAD))
+  let low = @types.Int(word16(0xBEEF))
+  let concat = @types.Exp::concat(high, low)
+  assert_true(concat.type_of() == Imm(32))
+  assert_true(concat.infer_type() == Ok(Imm(32)))
+  assert_true(concat.simplify() == Int(word32(0xDEADBEEF)))
+  assert_eval_word(concat, Map([]), word32(0xDEADBEEF))
+  let source = @types.Int(@types.Word::of_int(width=16, 0xDAD5))
+  let extract = @types.Exp::extract(source, hi=0xB, lo=0x4)
+  assert_true(extract.type_of() == Imm(8))
+  assert_true(extract.infer_type() == Ok(Imm(8)))
+  assert_true(extract.simplify() == Int(word8(0xAD)))
+  assert_eval_word(extract, Map([]), word8(0xAD))
+  assert_true(
+    @types.Extract(hi=8, lo=0, exp=Int(word8(1))).infer_type() ==
+    Err(@types.TypeError::bad_cast()),
+  )
+}
+
+///|
 test "bil BAP normalize negatives and fold const aliases" {
   let typ = @types.ValueType::Imm(8)
   let x = @types.Var::new(name="x", typ~)

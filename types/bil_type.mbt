@@ -131,6 +131,33 @@ fn checked_ite(cond : Exp, yes : Exp, no : Exp) -> Result[ValueType, TypeError] 
 }
 
 ///|
+fn checked_extract(
+  hi : Int,
+  lo : Int,
+  exp : Exp,
+) -> Result[ValueType, TypeError] {
+  match exp.infer_type() {
+    Ok(Imm(width)) =>
+      if lo < 0 || hi < lo || hi >= width {
+        Err(TypeError::bad_cast())
+      } else {
+        Ok(Imm(hi - lo + 1))
+      }
+    Ok(Mem(_)) => Err(TypeError::bad_imm())
+    Err(err) => Err(err)
+  }
+}
+
+///|
+fn checked_concat(high : Exp, low : Exp) -> Result[ValueType, TypeError] {
+  match (high.infer_type(), low.infer_type()) {
+    (Ok(Imm(high_width)), Ok(Imm(low_width))) => Ok(Imm(high_width + low_width))
+    (Ok(Mem(_)), _) | (_, Ok(Mem(_))) => Err(TypeError::bad_imm())
+    (Err(err), _) | (_, Err(err)) => Err(err)
+  }
+}
+
+///|
 pub fn Exp::infer_type(self : Exp) -> Result[ValueType, TypeError] {
   match self {
     Int(word) => Ok(Imm(word.width()))
@@ -160,6 +187,8 @@ pub fn Exp::infer_type(self : Exp) -> Result[ValueType, TypeError] {
           }
         Err(err) => Err(err)
       }
+    Extract(hi~, lo~, exp~) => checked_extract(hi, lo, exp)
+    Concat(high~, low~) => checked_concat(high, low)
     UnOp(_, exp) =>
       match exp.infer_type() {
         Ok(exp_typ) =>

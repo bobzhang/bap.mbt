@@ -219,14 +219,18 @@ pub(all) enum Exp {
   Store(mem~ : Exp, addr~ : Exp, value~ : Exp, endian~ : @bitvec.Endian)
   Let(Var, Exp, Exp)
   Cast(ValueType, Exp)
+  Extract(hi~ : Int, lo~ : Int, exp~ : Exp)
+  Concat(high~ : Exp, low~ : Exp)
   UnOp(UnOp, Exp)
   BinOp(BinOp, Exp, Exp)
   Ite(cond~ : Exp, yes~ : Exp, no~ : Exp)
 } derive(Eq, @debug.Debug)
 pub fn Exp::binop(BinOp, Self, Self) -> Self
+pub fn Exp::concat(Self, Self) -> Self
 pub fn Exp::effect(Self) -> ExpEffect
 pub fn Exp::eval(Self, Map[String, Word]) -> Result[Word, String]
 pub fn Exp::eval_value(Self, Map[String, BilValue]) -> Result[BilValue, String]
+pub fn Exp::extract(Self, hi? : Int, lo? : Int) -> Self
 pub fn Exp::fixpoint(Self, (Self) -> Self) -> Self
 pub fn Exp::fold_consts(Self) -> Self
 pub fn Exp::free_vars(Self) -> Array[Var]

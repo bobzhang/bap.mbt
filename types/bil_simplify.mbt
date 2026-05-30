@@ -64,6 +64,32 @@ fn fold_cast(typ : ValueType, exp : Exp) -> Exp? {
 }
 
 ///|
+fn fold_extract(hi : Int, lo : Int, exp : Exp) -> Exp? {
+  match exp {
+    Int(word) =>
+      try word.extract(hi~, lo~) catch {
+        _ => None
+      } noraise {
+        result => Some(Int(result))
+      }
+    _ => None
+  }
+}
+
+///|
+fn fold_concat(high : Exp, low : Exp) -> Exp? {
+  match (high, low) {
+    (Int(high_word), Int(low_word)) =>
+      try high_word.concat(low_word) catch {
+        _ => None
+      } noraise {
+        result => Some(Int(result))
+      }
+    _ => None
+  }
+}
+
+///|
 fn fold_store_chain(
   mem : Exp,
   memory : BilMemory,
@@ -143,6 +169,9 @@ pub fn Exp::normalize_negatives(self : Exp) -> Exp {
     Let(variable, value, body) =>
       Let(variable, value.normalize_negatives(), body.normalize_negatives())
     Cast(typ, exp) => Cast(typ, exp.normalize_negatives())
+    Extract(hi~, lo~, exp~) => Extract(hi~, lo~, exp=exp.normalize_negatives())
+    Concat(high~, low~) =>
+      Concat(high=high.normalize_negatives(), low=low.normalize_negatives())
     UnOp(op, exp) => UnOp(op, exp.normalize_negatives())
     BinOp(op, lhs, rhs) =>
       Exp::normalize_negative_binop(
@@ -193,6 +222,12 @@ fn Exp::first_ite_cond(self : Exp) -> Exp? {
         None => body.first_ite_cond()
       }
     Cast(_, exp) | UnOp(_, exp) => exp.first_ite_cond()
+    Extract(exp~, ..) => exp.first_ite_cond()
+    Concat(high~, low~) =>
+      match high.first_ite_cond() {
+        Some(cond) => Some(cond)
+        None => low.first_ite_cond()
+      }
     BinOp(_, lhs, rhs) =>
       match lhs.first_ite_cond() {
         Some(cond) => Some(cond)
@@ -239,6 +274,13 @@ fn Exp::assume_ite(self : Exp, target : Exp, take_yes : Bool) -> Exp {
       )
     Cast(typ, exp) => Cast(typ, exp.assume_ite(target, take_yes))
     UnOp(op, exp) => UnOp(op, exp.assume_ite(target, take_yes))
+    Extract(hi~, lo~, exp~) =>
+      Extract(hi~, lo~, exp=exp.assume_ite(target, take_yes))
+    Concat(high~, low~) =>
+      Concat(
+        high=high.assume_ite(target, take_yes),
+        low=low.assume_ite(target, take_yes),
+      )
     BinOp(op, lhs, rhs) =>
       BinOp(
         op,
@@ -293,6 +335,21 @@ pub fn Exp::simplify(self : Exp) -> Exp {
       match fold_cast(typ, simple) {
         Some(result) => result
         None => Cast(typ, simple)
+      }
+    }
+    Extract(hi~, lo~, exp~) => {
+      let simple = exp.simplify()
+      match fold_extract(hi, lo, simple) {
+        Some(result) => result
+        None => Extract(hi~, lo~, exp=simple)
+      }
+    }
+    Concat(high~, low~) => {
+      let simple_high = high.simplify()
+      let simple_low = low.simplify()
+      match fold_concat(simple_high, simple_low) {
+        Some(result) => result
+        None => Concat(high=simple_high, low=simple_low)
       }
     }
     UnOp(op, exp) => {
@@ -435,6 +492,12 @@ fn Exp::find_non_var_load_mem(self : Exp) -> Exp? {
         None => body.find_non_var_load_mem()
       }
     Cast(_, exp) | UnOp(_, exp) => exp.find_non_var_load_mem()
+    Extract(exp~, ..) => exp.find_non_var_load_mem()
+    Concat(high~, low~) =>
+      match high.find_non_var_load_mem() {
+        Some(exp) => Some(exp)
+        None => low.find_non_var_load_mem()
+      }
     BinOp(_, lhs, rhs) =>
       match lhs.find_non_var_load_mem() {
         Some(exp) => Some(exp)
@@ -594,6 +657,18 @@ fn Exp::hoist_non_generative(self : Exp) -> (Array[Stmt], Exp) {
     Cast(typ, exp) => {
       let (stmts, normalized) = exp.hoist_non_generative()
       (stmts, Cast(typ, normalized))
+    }
+    Extract(hi~, lo~, exp~) => {
+      let (stmts, normalized) = exp.hoist_non_generative()
+      (stmts, Extract(hi~, lo~, exp=normalized))
+    }
+    Concat(high~, low~) => {
+      let (high_stmts, normalized_high) = high.hoist_non_generative()
+      let (low_stmts, normalized_low) = low.hoist_non_generative()
+      (
+        append_stmts(high_stmts, low_stmts),
+        Concat(high=normalized_high, low=normalized_low),
+      )
     }
     UnOp(op, exp) => {
       let (stmts, normalized) = exp.hoist_non_generative()
@@ -806,6 +881,13 @@ fn Exp::normalize_trie_values(self : Exp, variables : Array[Var]) -> Exp {
         body.normalize_trie_values(variables),
       )
     Cast(typ, exp) => Cast(typ, exp.normalize_trie_values(variables))
+    Extract(hi~, lo~, exp~) =>
+      Extract(hi~, lo~, exp=exp.normalize_trie_values(variables))
+    Concat(high~, low~) =>
+      Concat(
+        high=high.normalize_trie_values(variables),
+        low=low.normalize_trie_values(variables),
+      )
     UnOp(op, exp) => UnOp(op, exp.normalize_trie_values(variables))
     BinOp(op, lhs, rhs) =>
       BinOp(
@@ -1009,6 +1091,10 @@ fn Exp::propagate_consts(self : Exp, ctx : Array[(Var, Exp)]) -> Exp {
       Let(variable, next_value, body.propagate_consts(inner)).simplify()
     }
     Cast(typ, exp) => Cast(typ, exp.propagate_consts(ctx)).simplify()
+    Extract(hi~, lo~, exp~) =>
+      Extract(hi~, lo~, exp=exp.propagate_consts(ctx)).simplify()
+    Concat(high~, low~) =>
+      Concat(high=high.propagate_consts(ctx), low=low.propagate_consts(ctx)).simplify()
     UnOp(op, exp) => UnOp(op, exp.propagate_consts(ctx)).simplify()
     BinOp(op, lhs, rhs) =>
       BinOp(op, lhs.propagate_consts(ctx), rhs.propagate_consts(ctx)).simplify()

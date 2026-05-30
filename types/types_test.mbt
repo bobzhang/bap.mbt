@@ -575,6 +575,10 @@ test "bil expressions and statements expose BAP-style constructors" {
   assert_true(@types.Exp::let_(x, value, addr) == Let(x, value, addr))
   assert_true(@types.Exp::unknown("u", imm8) == Unknown("u", imm8))
   assert_true(
+    @types.Exp::extract(value, hi=3, lo=0) == Extract(hi=3, lo=0, exp=value),
+  )
+  assert_true(@types.Exp::concat(value, addr) == Concat(high=value, low=addr))
+  assert_true(
     @types.Exp::ite(if_=value, then_=addr, else_=mem_exp) ==
     Ite(cond=value, yes=addr, no=mem_exp),
   )

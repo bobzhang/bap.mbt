@@ -85,6 +85,15 @@ fn Term::flatten_exp_into(
       let (inner, blk) = self.flatten_exp_into(inner, before?)
       blk.flatten_materialize(Cast(typ, inner), before?)
     }
+    Extract(hi~, lo~, exp~) => {
+      let (exp, blk) = self.flatten_exp_into(exp, before?)
+      blk.flatten_materialize(Extract(hi~, lo~, exp~), before?)
+    }
+    Concat(high~, low~) => {
+      let (high, blk) = self.flatten_exp_into(high, before?)
+      let (low, blk) = blk.flatten_exp_into(low, before?)
+      blk.flatten_materialize(Concat(high~, low~), before?)
+    }
     UnOp(op, inner) => {
       let (inner, blk) = self.flatten_exp_into(inner, before?)
       blk.flatten_materialize(UnOp(op, inner), before?)

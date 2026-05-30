@@ -162,6 +162,7 @@ fn Exp::nonzero_bits(self : Exp) -> Int {
         exists_bits
       }
     Cast(_, exp) => narrow_nonzero_bits(exp.nonzero_bits())
+    Extract(_) | Concat(_) => maybe_bits
     BinOp(Or, lhs, rhs) =>
       join_nonzero_bits(lhs.nonzero_bits(), rhs.nonzero_bits())
     BinOp(_) => maybe_bits
@@ -226,6 +227,8 @@ pub fn Exp::effect(self : Exp) -> ExpEffect {
     BinOp(Div | SignedDiv | Mod | SignedMod, lhs, rhs) =>
       ExpEffect::of_list([division_effect(rhs), lhs.effect(), rhs.effect()])
     BinOp(_, lhs, rhs) => lhs.effect().join(rhs.effect())
+    Extract(exp~, ..) => exp.effect()
+    Concat(high~, low~) => high.effect().join(low.effect())
     Ite(cond~, yes~, no~) =>
       ExpEffect::of_list([cond.effect(), yes.effect(), no.effect()])
     UnOp(_, exp) | Cast(_, exp) => exp.effect()

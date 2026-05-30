@@ -118,6 +118,8 @@ pub(all) enum Exp {
   Store(mem~ : Exp, addr~ : Exp, value~ : Exp, endian~ : @bitvec.Endian)
   Let(Var, Exp, Exp)
   Cast(ValueType, Exp)
+  Extract(hi~ : Int, lo~ : Int, exp~ : Exp)
+  Concat(high~ : Exp, low~ : Exp)
   UnOp(UnOp, Exp)
   BinOp(BinOp, Exp, Exp)
   Ite(cond~ : Exp, yes~ : Exp, no~ : Exp)
@@ -186,6 +188,24 @@ pub fn Exp::unknown(name : String, typ : ValueType) -> Exp {
 }
 
 ///|
+pub fn Exp::extract(exp : Exp, hi? : Int = -1, lo? : Int = 0) -> Exp {
+  let actual_hi = if hi >= 0 {
+    hi
+  } else {
+    match exp.type_of() {
+      Imm(width) => width - 1
+      Mem(_) => hi
+    }
+  }
+  Extract(hi=actual_hi, lo~, exp~)
+}
+
+///|
+pub fn Exp::concat(high : Exp, low : Exp) -> Exp {
+  Concat(high~, low~)
+}
+
+///|
 pub fn Exp::ite(if_~ : Exp, then_~ : Exp, else_~ : Exp) -> Exp {
   Ite(cond=if_, yes=then_, no=else_)
 }
@@ -200,6 +220,12 @@ pub fn Exp::type_of(self : Exp) -> ValueType {
     Store(mem~, ..) => mem.type_of()
     Let(_, _, body) => body.type_of()
     Cast(typ, _) => typ
+    Extract(hi~, lo~, ..) => Imm(hi - lo + 1)
+    Concat(high~, low~) =>
+      match (high.type_of(), low.type_of()) {
+        (Imm(high_width), Imm(low_width)) => Imm(high_width + low_width)
+        (typ, _) => typ
+      }
     UnOp(_, exp) => exp.type_of()
     BinOp(op, lhs, _) =>
       match op {
@@ -223,6 +249,8 @@ pub fn Exp::to_string(self : Exp) -> String {
     Let(v, value, body) =>
       "let \{v.to_string()} = \{value.to_string()} in \{body.to_string()}"
     Cast(typ, exp) => "cast(\{typ.to_string()}, \{exp.to_string()})"
+    Extract(hi~, lo~, exp~) => "extract[\{hi}:\{lo}](\{exp.to_string()})"
+    Concat(high~, low~) => "concat(\{high.to_string()}, \{low.to_string()})"
     UnOp(op, exp) => "(\{op.to_string()} \{exp.to_string()})"
     BinOp(op, lhs, rhs) =>
       "(\{lhs.to_string()} \{op.to_string()} \{rhs.to_string()})"

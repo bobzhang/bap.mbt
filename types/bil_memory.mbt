@@ -234,6 +234,26 @@ pub fn Exp::eval_value(
         Ok(word) => eval_unop(op, word).map(next => BilWord(next))
         Err(reason) => Err(reason)
       }
+    Extract(hi~, lo~, exp~) =>
+      match eval_scalar(exp, env) {
+        Ok(word) =>
+          try word.extract(hi~, lo~) catch {
+            _ => Err("bitvector operation failed")
+          } noraise {
+            result => Ok(BilWord(result))
+          }
+        Err(reason) => Err(reason)
+      }
+    Concat(high~, low~) =>
+      match (eval_scalar(high, env), eval_scalar(low, env)) {
+        (Ok(high_word), Ok(low_word)) =>
+          try high_word.concat(low_word) catch {
+            _ => Err("bitvector operation failed")
+          } noraise {
+            result => Ok(BilWord(result))
+          }
+        (Err(reason), _) | (_, Err(reason)) => Err(reason)
+      }
     BinOp(op, lhs, rhs) =>
       match (eval_scalar(lhs, env), eval_scalar(rhs, env)) {
         (Ok(left), Ok(right)) =>

@@ -131,6 +131,13 @@ read from `Var(mem)`. Keep store hoisting after recursive statement
 normalization so hoisted stores are visible as standalone statements and
 repeated hoisting can drain nested store-chain loads.
 
+BAP BIL `Extract` and `Concat` are expression nodes, not just `Word` helpers.
+When adding them to a MoonBit AST, update every expression traversal together:
+type inference, effect/coeffect analysis, free variables, substitution,
+evaluation, simplification, normalization, constant propagation, SSA renaming,
+and IR flattening. Otherwise the port will either fail exhaustiveness checks or
+silently lose behavior in passes that use wildcard/default expression cases.
+
 For BAP `Trie.normalize`, preserve the pipeline order: apply substitutions in
 the given order, prune unreferenced virtual definitions, normalize negative
 constants, simplify BIL, then normalize values for the trie key. That final

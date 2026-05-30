@@ -49,6 +49,11 @@ pub fn Exp::free_vars(self : Exp) -> Array[Var] {
       }
     }
     Cast(_, exp) | UnOp(_, exp) => add_vars(vars, exp.free_vars())
+    Extract(exp~, ..) => add_vars(vars, exp.free_vars())
+    Concat(high~, low~) => {
+      add_vars(vars, high.free_vars())
+      add_vars(vars, low.free_vars())
+    }
     BinOp(_, lhs, rhs) => {
       add_vars(vars, lhs.free_vars())
       add_vars(vars, rhs.free_vars())
@@ -91,6 +96,13 @@ pub fn Exp::substitute(self : Exp, target : Exp, replacement : Exp) -> Exp {
         )
       Cast(typ, exp) => Cast(typ, exp.substitute(target, replacement))
       UnOp(op, exp) => UnOp(op, exp.substitute(target, replacement))
+      Extract(hi~, lo~, exp~) =>
+        Extract(hi~, lo~, exp=exp.substitute(target, replacement))
+      Concat(high~, low~) =>
+        Concat(
+          high=high.substitute(target, replacement),
+          low=low.substitute(target, replacement),
+        )
       BinOp(op, lhs, rhs) =>
         BinOp(
           op,

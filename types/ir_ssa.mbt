@@ -225,6 +225,10 @@ fn ssa_rename_exp(exp : Exp, stacks : Map[String, Array[Var]]) -> Exp {
     }
     Cast(typ, inner) => Cast(typ, ssa_rename_exp(inner, stacks))
     UnOp(op, inner) => UnOp(op, ssa_rename_exp(inner, stacks))
+    Extract(hi~, lo~, exp~) =>
+      Extract(hi~, lo~, exp=ssa_rename_exp(exp, stacks))
+    Concat(high~, low~) =>
+      Concat(high=ssa_rename_exp(high, stacks), low=ssa_rename_exp(low, stacks))
     BinOp(op, lhs, rhs) =>
       BinOp(op, ssa_rename_exp(lhs, stacks), ssa_rename_exp(rhs, stacks))
     Ite(cond~, yes~, no~) =>

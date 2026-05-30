@@ -314,15 +314,19 @@ pub fn Target::byte(Self) -> Int
 pub fn Target::code_addr_size(Self) -> Int
 pub fn Target::create(name~ : @knowledge.Name, parent? : Self, nicknames? : Array[String], bits? : Int, byte? : Int, endianness? : Endianness, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, options? : TargetOptions, vars? : Array[Var], alias_origins? : Array[AliasOrigin]) -> Self
 pub fn Target::data_addr_size(Self) -> Int
+pub fn Target::declared() -> Array[Self]
 pub fn Target::endianness(Self) -> Endianness
 pub fn Target::fabi(Self) -> Fabi
+pub fn Target::families() -> Array[Array[Self]]
 pub fn Target::family(Self) -> Array[Self]
 pub fn Target::filetype(Self) -> Filetype
 pub fn Target::filter(parent? : Self, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, options? : TargetOptions, strict? : Bool) -> Array[Self]
 pub fn Target::find_role(Self, Role) -> Var?
 pub fn Target::find_var(Self, String) -> Var?
+pub fn Target::get(String) -> Result[Self, String]
 pub fn Target::hexagon() -> Self
 pub fn Target::is_unknown(Self) -> Bool
+pub fn Target::lookup(String) -> Self?
 pub fn Target::matches(Self, String) -> Bool
 pub fn Target::matching(Self, String) -> Self?
 pub fn Target::mips() -> Self
@@ -344,6 +348,7 @@ pub fn Target::powerpc() -> Self
 pub fn Target::powerpc64() -> Self
 pub fn Target::powerpc64le() -> Self
 pub fn Target::r600() -> Self
+pub fn Target::register(Self) -> Result[Unit, String]
 pub fn Target::register_variants(Self, systems? : Array[System], abis? : Array[Abi], fabis? : Array[Fabi], filetypes? : Array[Filetype], options? : Array[TargetOptions]) -> Result[Array[Self], String]
 pub fn Target::riscv32() -> Self
 pub fn Target::riscv64() -> Self

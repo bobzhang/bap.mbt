@@ -165,16 +165,29 @@ test "target registry resolves common and custom declarations" {
     nicknames=["unit-target-alias"],
     bits=16,
   )
-  match @core_theory.register_target(target) {
+  match @core_theory.Target::register(target) {
     Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    @core_theory.Target::lookup("unit-target-alias").map(t => t.bits()) ==
+    Some(16),
+  )
+  match @core_theory.Target::get("unit-target-alias") {
+    Ok(target) => assert_true(target.bits() == 16)
     Err(reason) => fail(reason)
   }
   assert_true(
     @core_theory.find_target("unit-target-alias").map(t => t.bits()) == Some(16),
   )
-  assert_true(@core_theory.register_target(target) is Err(_))
+  assert_true(@core_theory.Target::register(target) is Err(_))
   assert_true(
-    @core_theory.declared_targets().any(t => t.matches("unit-target-alias")),
+    @core_theory.Target::declared().any(t => t.matches("unit-target-alias")),
+  )
+  assert_true(
+    @core_theory.Target::families().any(group => {
+      group.any(t => t.matches("unit-target-alias"))
+    }),
   )
 }
 

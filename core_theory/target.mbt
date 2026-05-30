@@ -1309,6 +1309,11 @@ pub fn register_target(target : Target) -> Result[Unit, String] {
 }
 
 ///|
+pub fn Target::register(target : Target) -> Result[Unit, String] {
+  register_target(target)
+}
+
+///|
 pub fn registered_targets() -> Array[Target] {
   let items = []
   target_registry.each((_, target) => items.push(target))
@@ -1325,6 +1330,11 @@ pub fn declared_targets() -> Array[Target] {
 }
 
 ///|
+pub fn Target::declared() -> Array[Target] {
+  declared_targets()
+}
+
+///|
 pub fn find_target(query : String) -> Target? {
   match find_in_targets(registered_targets(), query) {
     Some(target) => Some(target)
@@ -1338,11 +1348,21 @@ pub fn find_target(query : String) -> Target? {
 }
 
 ///|
+pub fn Target::lookup(query : String) -> Target? {
+  find_target(query)
+}
+
+///|
 pub fn get_target(query : String) -> Result[Target, String] {
   match find_target(query) {
     Some(target) => Ok(target)
     None => Err("unknown target \{query}")
   }
+}
+
+///|
+pub fn Target::get(query : String) -> Result[Target, String] {
+  get_target(query)
 }
 
 ///|
@@ -1675,4 +1695,9 @@ pub fn target_family(parent : Target) -> Array[Target] {
 ///|
 pub fn target_families() -> Array[Array[Target]] {
   Target::partition(declared_targets())
+}
+
+///|
+pub fn Target::families() -> Array[Array[Target]] {
+  target_families()
 }

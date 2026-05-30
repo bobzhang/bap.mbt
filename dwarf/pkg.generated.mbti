@@ -42,6 +42,7 @@ pub(all) enum DwarfAbbrevValueKind {
   DwarfHighPcOffsetValue
   DwarfRangesValue
   DwarfStrOffsetsBaseValue
+  DwarfAddrBaseValue
   DwarfRnglistsBaseValue
 } derive(Eq, @debug.Debug)
 
@@ -53,6 +54,7 @@ pub(all) enum DwarfAttr {
   DwarfEntryPc
   DwarfRanges
   DwarfStrOffsetsBase
+  DwarfAddrBase
   DwarfRnglistsBase
   DwarfUnknownAttr(Int)
 } derive(Eq, @debug.Debug)
@@ -60,7 +62,7 @@ pub(all) enum DwarfAttr {
 type DwarfData
 pub fn DwarfData::create(endian~ : @bitvec.Endian, sections~ : Array[(DwarfSection, DwarfSectionBuffer)]) -> Result[Self, String]
 pub fn DwarfData::endian(Self) -> @bitvec.Endian
-pub fn DwarfData::from_bytes(endian~ : @bitvec.Endian, info? : Bytes, abbrev? : Bytes, str? : Bytes, str_offsets? : Bytes, ranges? : Bytes, rnglists? : Bytes) -> Result[Self, String]
+pub fn DwarfData::from_bytes(endian~ : @bitvec.Endian, info? : Bytes, abbrev? : Bytes, str? : Bytes, str_offsets? : Bytes, addr? : Bytes, ranges? : Bytes, rnglists? : Bytes) -> Result[Self, String]
 pub fn DwarfData::from_elf_bytes(Bytes) -> Result[Self, String]
 pub fn DwarfData::functions(Self) -> Result[Array[DwarfFunction], String]
 pub fn DwarfData::has_section(Self, DwarfSection) -> Bool
@@ -74,6 +76,7 @@ pub(all) enum DwarfForm {
   DwarfString
   DwarfStrp
   DwarfStrx(DwarfIndexSpec)
+  DwarfAddrx(DwarfIndexSpec)
   DwarfRnglistx
   DwarfOffset
   DwarfRef(DwarfLenspec)
@@ -132,6 +135,7 @@ pub(all) enum DwarfSection {
   DwarfAbbrev
   DwarfStr
   DwarfStrOffsets
+  DwarfAddr
   DwarfRanges
   DwarfRnglists
 } derive(Eq, @debug.Debug)

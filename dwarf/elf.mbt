@@ -68,6 +68,7 @@ fn dwarf_elf_section_of_name(name : String) -> DwarfSection? {
     ".debug_abbrev" => Some(DwarfAbbrev)
     ".debug_str" => Some(DwarfStr)
     ".debug_str_offsets" => Some(DwarfStrOffsets)
+    ".debug_addr" => Some(DwarfAddr)
     ".debug_ranges" => Some(DwarfRanges)
     ".debug_rnglists" => Some(DwarfRnglists)
     _ => None
@@ -276,6 +277,7 @@ pub fn DwarfData::from_elf_bytes(data : Bytes) -> Result[DwarfData, String] {
       let mut abbrev : Bytes? = None
       let mut str : Bytes? = None
       let mut str_offsets : Bytes? = None
+      let mut addr : Bytes? = None
       let mut ranges : Bytes? = None
       let mut rnglists : Bytes? = None
       for section_header in section_headers {
@@ -302,6 +304,11 @@ pub fn DwarfData::from_elf_bytes(data : Bytes) -> Result[DwarfData, String] {
                   Ok(bytes) => str_offsets = Some(bytes)
                   Err(reason) => return Err(reason)
                 }
+              Some(DwarfAddr) =>
+                match dwarf_elf_section_data(data, section_header) {
+                  Ok(bytes) => addr = Some(bytes)
+                  Err(reason) => return Err(reason)
+                }
               Some(DwarfRanges) =>
                 match dwarf_elf_section_data(data, section_header) {
                   Ok(bytes) => ranges = Some(bytes)
@@ -323,6 +330,7 @@ pub fn DwarfData::from_elf_bytes(data : Bytes) -> Result[DwarfData, String] {
         abbrev?,
         str?,
         str_offsets?,
+        addr?,
         ranges?,
         rnglists?,
       )

@@ -121,6 +121,13 @@ test "translated DWARF abbreviation value classification follows BAP FBI inputs"
   assert_true(
     @dwarf.DwarfAbbrevField::create(
       attr=DwarfHighPc,
+      form=DwarfAddrx(DwarfIndexOne),
+    ).value_kind() ==
+    DwarfHighPcAddressValue,
+  )
+  assert_true(
+    @dwarf.DwarfAbbrevField::create(
+      attr=DwarfHighPc,
       form=DwarfConst(DwarfFour),
     ).value_kind() ==
     DwarfHighPcOffsetValue,
@@ -136,6 +143,10 @@ test "translated DWARF abbreviation value classification follows BAP FBI inputs"
   assert_true(
     @dwarf.DwarfAbbrevField::create(attr=DwarfStrOffsetsBase, form=DwarfOffset).value_kind() ==
     DwarfStrOffsetsBaseValue,
+  )
+  assert_true(
+    @dwarf.DwarfAbbrevField::create(attr=DwarfAddrBase, form=DwarfOffset).value_kind() ==
+    DwarfAddrBaseValue,
   )
   assert_true(
     @dwarf.DwarfAbbrevField::create(attr=DwarfRanges, form=DwarfOffset).value_kind() ==

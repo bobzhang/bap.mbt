@@ -143,7 +143,10 @@ inside the range list. For DWARF5-style `.debug_rnglists`, treat
 `DW_FORM_rnglistx` indexes the offset table at `DW_AT_rnglists_base`; the table
 entry is relative to that same base. Support absolute `start_end`,
 `start_length`, base-address, and base-relative `offset_pair` entries before
-adding address-indexed range entries that require `.debug_addr`.
+adding address-indexed range entries that require `.debug_addr`. For
+`.debug_addr`, track `DW_AT_addr_base` on the current compilation unit and
+resolve `DW_FORM_addrx*` values by indexing fixed-width entries from that base;
+require the base explicitly instead of guessing around the section header.
 
 `text[i]` returns a `UInt16` code unit, not a `Char`. For text parsers that need character predicates or `StringBuilder::write_char`, use `text.get_char(offset)` and advance by `char.utf16_len()`. It is still fine to increment by one for syntax bytes you have already constrained to ASCII, such as `(`, `)`, `"` and `\\`, but do not mix code-unit offsets with `Char` APIs accidentally.
 

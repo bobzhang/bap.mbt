@@ -205,6 +205,51 @@ test "translated DWARF FBI applies DWARF5 string offsets base" {
 }
 
 ///|
+test "translated DWARF FBI resolves DWARF5 addrx function bounds" {
+  let abbrev = b"\x01\x11\x01" +
+    b"\x73\x17" +
+    b"\x00\x00" +
+    b"\x02\x2e\x00" +
+    b"\x03\x08" +
+    b"\x11\x29" +
+    b"\x12\x29" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x17\x00\x00\x00" +
+    b"\x05\x00" +
+    b"\x01" +
+    b"\x04" +
+    b"\x00\x00\x00\x00" +
+    b"\x01" +
+    b"\x08\x00\x00\x00" +
+    b"\x02" +
+    b"addrx\x00" +
+    b"\x00" +
+    b"\x01" +
+    b"\x00"
+  let addr = b"\x0c\x00\x00\x00" +
+    b"\x05\x00" +
+    b"\x04" +
+    b"\x00" +
+    b"\x20\x00\x00\x00" +
+    b"\x2c\x00\x00\x00"
+  let data = expect_fbi_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=LittleEndian,
+      info~,
+      abbrev~,
+      str=b"",
+      addr~,
+    ),
+  )
+  let functions = expect_functions(data.functions())
+  assert_true(functions.length() == 1)
+  assert_true(functions[0].name() == "addrx")
+  assert_true(functions[0].low_pc() == 0x20UL)
+  assert_true(functions[0].high_pc() == Some(0x2cUL))
+}
+
+///|
 test "translated DWARF FBI summarizes debug ranges" {
   let abbrev = b"\x01\x11\x01" +
     b"\x11\x01" +
@@ -376,6 +421,72 @@ test "translated DWARF FBI resolves DWARF5 rnglistx through base table" {
   assert_true(functions[0].name() == "rngx")
   assert_true(functions[0].low_pc() == 0x2010UL)
   assert_true(functions[0].high_pc() == Some(0x2018UL))
+}
+
+///|
+test "translated DWARF FBI summarizes address-indexed DWARF5 rnglists" {
+  let abbrev = b"\x01\x11\x01" +
+    b"\x73\x17" +
+    b"\x74\x17" +
+    b"\x00\x00" +
+    b"\x02\x2e\x00" +
+    b"\x03\x08" +
+    b"\x55\x23" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x1b\x00\x00\x00" +
+    b"\x05\x00" +
+    b"\x01" +
+    b"\x04" +
+    b"\x00\x00\x00\x00" +
+    b"\x01" +
+    b"\x08\x00\x00\x00" +
+    b"\x0c\x00\x00\x00" +
+    b"\x02" +
+    b"addrng\x00" +
+    b"\x00" +
+    b"\x00"
+  let addr = b"\x14\x00\x00\x00" +
+    b"\x05\x00" +
+    b"\x04" +
+    b"\x00" +
+    b"\x00\x20\x00\x00" +
+    b"\x00\x30\x00\x00" +
+    b"\x10\x30\x00\x00" +
+    b"\x00\x40\x00\x00"
+  let rnglists = b"\x18\x00\x00\x00" +
+    b"\x05\x00" +
+    b"\x04" +
+    b"\x00" +
+    b"\x01\x00\x00\x00" +
+    b"\x04\x00\x00\x00" +
+    b"\x01" +
+    b"\x00" +
+    b"\x04" +
+    b"\x10" +
+    b"\x18" +
+    b"\x02" +
+    b"\x01" +
+    b"\x02" +
+    b"\x03" +
+    b"\x03" +
+    b"\x05" +
+    b"\x00"
+  let data = expect_fbi_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=LittleEndian,
+      info~,
+      abbrev~,
+      str=b"",
+      addr~,
+      rnglists~,
+    ),
+  )
+  let functions = expect_functions(data.functions())
+  assert_true(functions.length() == 1)
+  assert_true(functions[0].name() == "addrng")
+  assert_true(functions[0].low_pc() == 0x2010UL)
+  assert_true(functions[0].high_pc() == Some(0x4005UL))
 }
 
 ///|

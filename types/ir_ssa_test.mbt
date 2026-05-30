@@ -26,6 +26,24 @@ fn int8(value : Int) -> @types.Exp raise @bitvec.BitVecError {
 }
 
 ///|
+fn assert_ssa_copy_block(
+  blk : @types.Term[@types.Blk],
+  lhs : @types.Var,
+  rhs : @types.Var,
+  target : @types.Tid,
+) -> Unit raise {
+  assert_true(blk.phis().is_empty())
+  assert_true(blk.defs().length() == 1)
+  assert_true(blk.defs()[0].lhs() == lhs)
+  assert_true(blk.defs()[0].rhs() == Var(rhs))
+  assert_true(blk.jmps().length() == 1)
+  match blk.jmps()[0].kind() {
+    Goto(Direct(tid)) => assert_true(tid == target)
+    _ => fail("expected copy block to jump to phi target")
+  }
+}
+
+///|
 test "ssa renames straight-line definitions and uses" {
   let typ = @types.ValueType::Imm(8)
   let x = @types.Var::new(name="x", typ~)
@@ -91,6 +109,50 @@ test "ssa inserts phi nodes at diamond joins" {
   assert_true(join_defs.length() == 1)
   assert_true(join_defs[0].lhs().base() == y)
   assert_true(join_defs[0].rhs() == Var(phi_x))
+}
+
+///|
+test "ssa destruction lowers phis through edge copy blocks" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let entry = @types.Blk::create(tid=@types.Tid::for_name("entry"))
+  let left = @types.Blk::create(tid=@types.Tid::for_name("left"))
+  let right = @types.Blk::create(tid=@types.Tid::for_name("right"))
+  let join = @types.Blk::create(tid=@types.Tid::for_name("join"))
+  let entry = entry
+    .append_jmp(@types.Jmp::create_goto(@types.Label::direct(left.tid())))
+    .append_jmp(@types.Jmp::create_goto(@types.Label::direct(right.tid())))
+  let left = left
+    .append_def(@types.Def::create(x, int8(1)))
+    .append_jmp(@types.Jmp::create_goto(@types.Label::direct(join.tid())))
+  let right = right
+    .append_def(@types.Def::create(x, int8(2)))
+    .append_jmp(@types.Jmp::create_goto(@types.Label::direct(join.tid())))
+  let join = join.append_def(@types.Def::create(y, Var(x)))
+  let ssa = @types.Sub::create(name="diamond", blks=[entry, left, right, join]).to_ssa()
+  let lowered = ssa.destroy_ssa()
+  assert_true(!lowered.is_ssa())
+  let left = must_find_blk(lowered, left.tid())
+  let right = must_find_blk(lowered, right.tid())
+  let join = must_find_blk(lowered, join.tid())
+  assert_true(join.phis().is_empty())
+  assert_true(join.defs()[0].lhs() == y)
+  assert_true(join.defs()[0].rhs() == Var(x))
+  match left.jmps()[0].kind() {
+    Goto(Direct(copy_tid)) => {
+      assert_true(copy_tid != join.tid())
+      assert_ssa_copy_block(must_find_blk(lowered, copy_tid), x, x, join.tid())
+    }
+    _ => fail("expected left edge to be redirected through copy block")
+  }
+  match right.jmps()[0].kind() {
+    Goto(Direct(copy_tid)) => {
+      assert_true(copy_tid != join.tid())
+      assert_ssa_copy_block(must_find_blk(lowered, copy_tid), x, x, join.tid())
+    }
+    _ => fail("expected right edge to be redirected through copy block")
+  }
 }
 
 ///|

@@ -421,6 +421,8 @@ pub fn Term::defs(Self[Blk]) -> Array[Self[Def]]
 pub fn Term::defs_after(Self[Blk], Tid, rev? : Bool) -> Array[Self[Def]]
 pub fn Term::defs_before(Self[Blk], Tid, rev? : Bool) -> Array[Self[Def]]
 pub fn[T] Term::del_attr(Self[T], String) -> Self[T]
+pub fn Term::destroy_program_ssa(Self[Program]) -> Self[Program]
+pub fn Term::destroy_ssa(Self[Sub]) -> Self[Sub]
 pub fn Term::direct_call_target(Self[Jmp]) -> Tid?
 pub fn Term::elts(Self[Blk], rev? : Bool) -> Array[BlkElt]
 pub fn Term::entry_blk(Self[Sub]) -> Self[Blk]?

@@ -414,3 +414,189 @@ pub fn Term::to_ssa(self : Term[Sub], entry? : Tid) -> Term[Sub] {
     }
   }
 }
+
+///|
+fn ssa_base_exp(exp : Exp) -> Exp {
+  match exp {
+    Int(_) | Unknown(_) => exp
+    Var(variable) => Var(variable.base())
+    Load(mem~, addr~, endian~, typ~) =>
+      Load(mem=ssa_base_exp(mem), addr=ssa_base_exp(addr), endian~, typ~)
+    Store(mem~, addr~, value~, endian~) =>
+      Store(
+        mem=ssa_base_exp(mem),
+        addr=ssa_base_exp(addr),
+        value=ssa_base_exp(value),
+        endian~,
+      )
+    Let(variable, value, body) =>
+      Let(variable.base(), ssa_base_exp(value), ssa_base_exp(body))
+    Cast(kind~, width~, exp=inner) =>
+      Cast(kind~, width~, exp=ssa_base_exp(inner))
+    UnOp(op, inner) => UnOp(op, ssa_base_exp(inner))
+    Extract(hi~, lo~, exp~) => Extract(hi~, lo~, exp=ssa_base_exp(exp))
+    Concat(high~, low~) =>
+      Concat(high=ssa_base_exp(high), low=ssa_base_exp(low))
+    BinOp(op, lhs, rhs) => BinOp(op, ssa_base_exp(lhs), ssa_base_exp(rhs))
+    Ite(cond~, yes~, no~) =>
+      Ite(cond=ssa_base_exp(cond), yes=ssa_base_exp(yes), no=ssa_base_exp(no))
+  }
+}
+
+///|
+fn ssa_base_def(def : Term[Def]) -> Term[Def] {
+  def.with_lhs(def.lhs().base()).with_rhs(ssa_base_exp(def.rhs()))
+}
+
+///|
+fn ssa_base_arg(arg : Term[Arg]) -> Term[Arg] {
+  arg.with_payload({
+    ..arg.payload_value,
+    lhs: arg.arg_lhs().base(),
+    rhs: ssa_base_exp(arg.arg_rhs()),
+  })
+}
+
+///|
+fn ssa_base_label(label : Label, target? : Tid, replacement? : Tid) -> Label {
+  match label {
+    Direct(tid) =>
+      match (target, replacement) {
+        (Some(old), Some(next)) if tid == old => Direct(next)
+        _ => label
+      }
+    Indirect(exp) => Indirect(ssa_base_exp(exp))
+  }
+}
+
+///|
+fn ssa_base_call(call : Call, target? : Tid, replacement? : Tid) -> Call {
+  {
+    target: ssa_base_label(call.target, target?, replacement?),
+    return_label: match call.return_label {
+      Some(label) => Some(ssa_base_label(label, target?, replacement?))
+      None => None
+    },
+  }
+}
+
+///|
+fn ssa_base_jmp_kind(
+  kind : JmpKind,
+  target? : Tid,
+  replacement? : Tid,
+) -> JmpKind {
+  match kind {
+    JmpCall(call) => JmpCall(ssa_base_call(call, target?, replacement?))
+    Goto(label) => Goto(ssa_base_label(label, target?, replacement?))
+    Ret(label) => Ret(ssa_base_label(label, target?, replacement?))
+    Interrupt(num, tid) =>
+      match (target, replacement) {
+        (Some(old), Some(next)) if tid == old => Interrupt(num, next)
+        _ => kind
+      }
+  }
+}
+
+///|
+fn ssa_base_jmp(
+  jmp : Term[Jmp],
+  target? : Tid,
+  replacement? : Tid,
+) -> Term[Jmp] {
+  jmp
+  .with_kind(ssa_base_jmp_kind(jmp.kind(), target?, replacement?))
+  .with_cond(ssa_base_exp(jmp.cond()))
+}
+
+///|
+fn ssa_phi_copies(target : Term[Blk], predecessor : Tid) -> Array[Term[Def]] {
+  let copies = []
+  for phi in target.payload_value.phis {
+    match phi.select(predecessor) {
+      Some(exp) =>
+        copies.push(Def::create(phi.phi_lhs().base(), ssa_base_exp(exp)))
+      None => ()
+    }
+  }
+  copies
+}
+
+///|
+fn ssa_copy_tid(predecessor : Tid, target : Tid) -> Tid {
+  Tid::for_name("ssa.copy.\{predecessor.to_string()}.\{target.to_string()}")
+}
+
+///|
+fn ssa_redirect_for(
+  redirects : Map[(Tid, Tid), Tid],
+  predecessor : Tid,
+  target : Tid,
+) -> Tid? {
+  redirects.get((predecessor, target))
+}
+
+///|
+fn ssa_destroy_block(
+  blk : Term[Blk],
+  redirects : Map[(Tid, Tid), Tid],
+) -> Term[Blk] {
+  let jmps = [
+    for jmp in blk.payload_value.jmps => {
+      match jmp.succ_tid_of_jmp() {
+        Some(target) =>
+          ssa_base_jmp(
+            jmp,
+            target~,
+            replacement?=ssa_redirect_for(redirects, blk.tid(), target),
+          )
+        None => ssa_base_jmp(jmp)
+      }
+    }
+  ]
+  blk.with_payload({
+    phis: [],
+    defs: blk.payload_value.defs.map(ssa_base_def),
+    jmps,
+  })
+}
+
+///|
+pub fn Term::destroy_ssa(self : Term[Sub]) -> Term[Sub] {
+  let graph = self.sub_cfg()
+  let redirects : Map[(Tid, Tid), Tid] = {}
+  let copy_blocks = []
+  for target in self.payload_value.blks {
+    if !target.payload_value.phis.is_empty() {
+      for predecessor in graph.predecessors(target.tid()) {
+        let copies = ssa_phi_copies(target, predecessor)
+        if !copies.is_empty() {
+          let copy_tid = ssa_copy_tid(predecessor, target.tid())
+          redirects[(predecessor, target.tid())] = copy_tid
+          copy_blocks.push(
+            Blk::create(
+              defs=copies,
+              jmps=[Jmp::create_goto(Label::direct(target.tid()))],
+              tid=copy_tid,
+            ),
+          )
+        }
+      }
+    }
+  }
+  self
+  .with_payload({
+    ..self.payload_value,
+    args: self.payload_value.args.map(ssa_base_arg),
+    blks: self.payload_value.blks.map(blk => ssa_destroy_block(blk, redirects)) +
+    copy_blocks,
+  })
+  .del_attr(ssa_form_attr)
+}
+
+///|
+pub fn Term::destroy_program_ssa(self : Term[Program]) -> Term[Program] {
+  self.with_payload({
+    subs: self.payload_value.subs.map(sub => sub.destroy_ssa()),
+  })
+}

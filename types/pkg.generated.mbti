@@ -16,6 +16,8 @@ pub fn fixpoint(Array[Stmt], (Array[Stmt]) -> Array[Stmt]) -> Array[Stmt]
 
 pub fn fold_consts(Array[Stmt]) -> Array[Stmt]
 
+pub fn free_vars(Array[Stmt]) -> Array[Var]
+
 pub fn is_assigned_stmts(Array[Stmt], Var, strict? : Bool) -> Bool
 
 pub fn is_referenced_stmts(Array[Stmt], Var) -> Bool
@@ -29,6 +31,10 @@ pub fn propagate_const_stmts(Array[Stmt]) -> Array[Stmt]
 pub fn prune_dead_virtual_stmts(Array[Stmt]) -> Array[Stmt]
 
 pub fn simplify_stmts(Array[Stmt]) -> Array[Stmt]
+
+pub fn substitute(Array[Stmt], Exp, Exp) -> Array[Stmt]
+
+pub fn substitute_var(Array[Stmt], Var, Exp) -> Array[Stmt]
 
 // Errors
 pub(all) suberror SizeError {
@@ -346,6 +352,7 @@ pub fn Stmt::normalize_negatives(Self) -> Self
 pub fn Stmt::simplify(Self) -> Self
 pub fn Stmt::simplify_to_list(Self) -> Array[Self]
 pub fn Stmt::special(String) -> Self
+pub fn Stmt::substitute(Self, Exp, Exp) -> Self
 pub fn Stmt::substitute_var(Self, Var, Exp) -> Self
 pub fn Stmt::to_string(Self) -> String
 pub fn Stmt::while_(Exp, Array[Self]) -> Self

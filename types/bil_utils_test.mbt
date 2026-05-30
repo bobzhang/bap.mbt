@@ -382,3 +382,32 @@ test "statement helpers mirror BAP reference and assignment predicates" {
   assert_true(@types.is_assigned_stmts([top, branch], z))
   assert_true(!@types.is_assigned_stmts([top, branch], z, strict=true))
 }
+
+///|
+test "statement-list helpers preserve BAP substitution and free-var semantics" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let z = @types.Var::new(name="z", typ~)
+  let stmts = [
+    @types.Stmt::Move(x, Var(y)),
+    Move(z, BinOp(Plus, Var(x), Int(word8(1)))),
+  ]
+  assert_true(@types.free_vars(stmts) == [y])
+  let target : @types.Exp = BinOp(Plus, Var(x), Int(word8(1)))
+  let replaced = @types.substitute(stmts, target, Int(word8(4)))
+  inspect(replaced[1].to_string(), content="z:imm8 := 4:8u")
+  let killed = @types.substitute_var(stmts, x, Int(word8(9)))
+  inspect(killed[0].to_string(), content="x:imm8 := y:imm8")
+  inspect(killed[1].to_string(), content="z:imm8 := (x:imm8 + 1:8u)")
+  let branch = [
+    @types.Stmt::If(cond=Var(y), yes=[Move(x, Var(y)), Move(z, Var(x))], no=[]),
+    Move(z, Var(x)),
+  ]
+  let branch_sub = @types.substitute_var(branch, x, Int(word8(9)))
+  match branch_sub[0] {
+    If(yes~, ..) => inspect(yes[1].to_string(), content="z:imm8 := x:imm8")
+    _ => fail("expected branch")
+  }
+  inspect(branch_sub[1].to_string(), content="z:imm8 := 9:8u")
+}

@@ -13,6 +13,19 @@ fn add_vars(vars : Array[Var], more : Array[Var]) -> Unit {
 }
 
 ///|
+fn add_vars_without(
+  vars : Array[Var],
+  more : Array[Var],
+  killed : Array[Var],
+) -> Unit {
+  for variable in more {
+    if !killed.any(item => item == variable) {
+      add_var(vars, variable)
+    }
+  }
+}
+
+///|
 pub fn Exp::free_vars(self : Exp) -> Array[Var] {
   let vars = []
   match self {
@@ -352,6 +365,22 @@ pub fn Stmt::free_vars(self : Stmt) -> Array[Var] {
 }
 
 ///|
+pub fn free_vars(stmts : Array[Stmt]) -> Array[Var] {
+  let vars = []
+  let killed = []
+  for stmt in stmts {
+    match stmt {
+      Move(variable, exp) => {
+        add_vars_without(vars, exp.free_vars(), killed)
+        add_var(killed, variable)
+      }
+      _ => add_vars_without(vars, stmt.free_vars(), killed)
+    }
+  }
+  vars
+}
+
+///|
 pub fn Exp::is_referenced(self : Exp, variable : Var) -> Bool {
   self.free_vars().any(item => item == variable)
 }
@@ -424,4 +453,72 @@ pub fn Stmt::substitute_var(
         body=body.map(stmt => stmt.substitute_var(variable, replacement)),
       )
   }
+}
+
+///|
+pub fn Stmt::substitute(self : Stmt, target : Exp, replacement : Exp) -> Stmt {
+  match self {
+    Move(lhs, rhs) => Move(lhs, rhs.substitute(target, replacement))
+    Jmp(exp) => Jmp(exp.substitute(target, replacement))
+    Special(_) | CpuExn(_) => self
+    If(cond~, yes~, no~) =>
+      If(
+        cond=cond.substitute(target, replacement),
+        yes=yes.map(stmt => stmt.substitute(target, replacement)),
+        no=no.map(stmt => stmt.substitute(target, replacement)),
+      )
+    While(cond~, body~) =>
+      While(
+        cond=cond.substitute(target, replacement),
+        body=body.map(stmt => stmt.substitute(target, replacement)),
+      )
+  }
+}
+
+///|
+pub fn substitute(
+  stmts : Array[Stmt],
+  target : Exp,
+  replacement : Exp,
+) -> Array[Stmt] {
+  stmts.map(stmt => stmt.substitute(target, replacement))
+}
+
+///|
+pub fn substitute_var(
+  stmts : Array[Stmt],
+  variable : Var,
+  replacement : Exp,
+) -> Array[Stmt] {
+  let result = []
+  let mut stopped = false
+  for stmt in stmts {
+    if stopped {
+      result.push(stmt)
+    } else {
+      match stmt {
+        Move(lhs, rhs) if lhs == variable => {
+          result.push(Move(lhs, rhs.substitute_var(variable, replacement)))
+          stopped = true
+        }
+        If(cond~, yes~, no~) =>
+          result.push(
+            If(
+              cond=cond.substitute_var(variable, replacement),
+              yes=substitute_var(yes, variable, replacement),
+              no=substitute_var(no, variable, replacement),
+            ),
+          )
+        While(cond~, body~) =>
+          result.push(
+            While(
+              cond=cond.substitute_var(variable, replacement),
+              body=substitute_var(body, variable, replacement),
+            ),
+          )
+        _ => result.push(stmt.substitute_var(variable, replacement))
+      }
+    }
+  }
+  result
 }

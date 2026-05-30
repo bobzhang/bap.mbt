@@ -113,6 +113,10 @@ are close to free-variable queries, but assignment lhs variables are definitions
 rather than references. `Exp.Var(x)` references `x`; `Stmt.Move(x, rhs)` does
 not reference `x` unless `rhs` does. `is_assigned ~strict:true` also ignores
 assignments nested under conditional control flow such as `If` and `While`.
+For statement-list `substitute_var`, preserve BAP's sequence kill behavior:
+after an unconditional `Move(x, rhs)`, substitute within that rhs and leave the
+following statements unchanged for `x`. Conditional branch bodies apply the
+same rule locally and do not kill substitution in the outer sequence.
 
 BAP `Word.t` carries a signedness flag in addition to the payload bits and
 width. Keep the raw bitvector package sign-agnostic, but preserve this flag in

@@ -67,6 +67,12 @@ test "image address size follows target metadata" {
     target=@core_theory.Target::x86_64(),
   )
   assert_true(amd64.addr_size() == 64)
+  let spec = amd64.spec()
+  assert_true(spec.fact_count("arch") == 1)
+  assert_true(spec.fact_count("bits") == 1)
+  assert_true(spec.fact_count("is-little-endian") == 1)
+  assert_true(spec.facts("arch")[0].value("name") == Some("x86_64"))
+  assert_true(spec.facts("bits")[0].value("size") == Some("64"))
 }
 
 ///|

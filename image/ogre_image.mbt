@@ -502,6 +502,7 @@ pub fn Image::from_ogre(
                         symbols~,
                         filename?,
                         target=selected_target,
+                        spec=doc,
                       ),
                       warnings,
                     ),

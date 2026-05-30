@@ -28,13 +28,13 @@ pub fn Image::add_section(Self, Section) -> Self
 pub fn Image::add_segment(Self, Segment) -> Self
 pub fn Image::add_symbol(Self, Symbol) -> Self
 pub fn Image::addr_size(Self) -> Int
-pub fn Image::create(entry~ : UInt64, endian~ : @bitvec.Endian, filename? : String, target? : @core_theory.Target, data? : Bytes, segments? : Array[Segment], sections? : Array[Section], symbols? : Array[Symbol]) -> Self
+pub fn Image::create(entry~ : UInt64, endian~ : @bitvec.Endian, filename? : String, target? : @core_theory.Target, data? : Bytes, segments? : Array[Segment], sections? : Array[Section], symbols? : Array[Symbol], spec? : OgreDoc) -> Self
 pub fn Image::data(Self) -> Bytes
 pub fn Image::endian(Self) -> @bitvec.Endian
 pub fn Image::entry_point(Self) -> UInt64
 pub fn Image::filename(Self) -> String?
 pub fn Image::from_ogre(Bytes, OgreDoc, filename? : String, target? : @core_theory.Target) -> Result[(Self, Array[String]), String]
-pub fn Image::from_segments(entry~ : UInt64, endian~ : @bitvec.Endian, Array[Segment], sections? : Array[Section], symbols? : Array[Symbol], filename? : String, target? : @core_theory.Target) -> Self
+pub fn Image::from_segments(entry~ : UInt64, endian~ : @bitvec.Endian, Array[Segment], sections? : Array[Section], symbols? : Array[Symbol], filename? : String, target? : @core_theory.Target, spec? : OgreDoc) -> Self
 pub fn Image::memories_of_symbol(Self, Symbol) -> Array[@memory.Memory]?
 pub fn Image::memory(Self) -> @memory.MemMap[String]
 pub fn Image::memory_of_section(Self, Section) -> @memory.Memory?
@@ -49,6 +49,7 @@ pub fn Image::sections(Self) -> Array[Section]
 pub fn Image::sections_of_segment(Self, Segment) -> Array[Section]
 pub fn Image::segment_of_symbol(Self, Symbol) -> Segment?
 pub fn Image::segments(Self) -> Array[Segment]
+pub fn Image::spec(Self) -> OgreDoc
 pub fn Image::symbols(Self) -> Array[Symbol]
 pub fn Image::symbols_of_segment(Self, Segment) -> Array[Symbol]
 pub fn Image::target(Self) -> @core_theory.Target?
@@ -71,6 +72,7 @@ pub fn OgreDoc::empty() -> Self
 pub fn OgreDoc::fact_count(Self, String) -> Int
 pub fn OgreDoc::facts(Self, String) -> Array[OgreFact]
 pub fn OgreDoc::from_string(String) -> Result[Self, String]
+pub fn OgreDoc::from_target(@core_theory.Target) -> Self
 
 type OgreFact
 pub fn OgreFact::attribute(Self) -> String

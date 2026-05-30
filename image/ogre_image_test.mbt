@@ -41,6 +41,10 @@ test "ogre image specs build image metadata" {
       assert_true(image.filename() == Some("raw.bin"))
       assert_true(image.entry_point() == 4098UL)
       assert_true(image.endian() == LittleEndian)
+      let spec = image.spec()
+      assert_true(spec.fact_count("entry-point") == 1)
+      assert_true(spec.fact_count("arch") == 1)
+      assert_true(spec.facts("entry-point")[0].value("addr") == Some("4098"))
       match image.target() {
         Some(target) => {
           assert_true(target.matches("x86_64"))

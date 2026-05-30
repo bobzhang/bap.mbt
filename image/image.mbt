@@ -8,6 +8,7 @@ struct Image {
   segments_value : Array[Segment]
   sections_value : Array[Section]
   symbols_value : Array[Symbol]
+  spec_value : OgreDoc?
 }
 
 ///|
@@ -25,6 +26,7 @@ pub fn Image::create(
   segments? : Array[Segment],
   sections? : Array[Section],
   symbols? : Array[Symbol],
+  spec? : OgreDoc,
 ) -> Image {
   {
     filename_value: filename,
@@ -47,6 +49,7 @@ pub fn Image::create(
       Some(items) => items.copy()
       None => []
     },
+    spec_value: spec,
   }
 }
 
@@ -59,6 +62,7 @@ pub fn Image::from_segments(
   symbols? : Array[Symbol],
   filename? : String,
   target? : @core_theory.Target,
+  spec? : OgreDoc,
 ) -> Image {
   Image::create(
     entry~,
@@ -68,6 +72,7 @@ pub fn Image::from_segments(
     symbols?,
     filename?,
     target?,
+    spec?,
   )
 }
 
@@ -136,6 +141,18 @@ pub fn Image::filename(self : Image) -> String? {
 ///|
 pub fn Image::target(self : Image) -> @core_theory.Target? {
   self.target_value
+}
+
+///|
+pub fn Image::spec(self : Image) -> OgreDoc {
+  match self.spec_value {
+    Some(doc) => doc
+    None =>
+      match self.target_value {
+        Some(target) => OgreDoc::from_target(target)
+        None => OgreDoc::from_target(@core_theory.Target::unknown())
+      }
+  }
 }
 
 ///|

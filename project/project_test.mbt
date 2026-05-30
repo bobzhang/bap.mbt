@@ -24,6 +24,25 @@ test "project can be created from image memory" {
   assert_true(project.filename() == Some("tiny.bin"))
   assert_true(project.image() is Some(_))
   assert_true(project.memory().lookup(0x1000UL).length() == 1)
+  assert_true(project.specification().fact_count("arch") == 1)
+}
+
+///|
+test "project preserves image loader specifications" {
+  let target = @core_theory.Target::unknown()
+  let spec = @image.OgreDoc::from_target(@core_theory.Target::x86_64())
+  let image = @image.Image::from_segments(
+    entry=0x1000UL,
+    endian=LittleEndian,
+    [raw_segment()],
+    target~,
+    spec~,
+  )
+  let project = @project.Project::from_image(image)
+  assert_true(project.specification().fact_count("bits") == 1)
+  assert_true(
+    project.specification().facts("bits")[0].value("size") == Some("64"),
+  )
 }
 
 ///|
@@ -58,6 +77,9 @@ test "project maps programs and stores libraries" {
   let with_library = project.add_library(library)
   assert_true(with_library.libraries().length() == 1)
   assert_true(with_library.libraries()[0].name() == "libc")
+  assert_true(
+    with_library.libraries()[0].specification().fact_count("arch") == 1,
+  )
 }
 
 ///|

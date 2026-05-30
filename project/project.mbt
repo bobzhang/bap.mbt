@@ -56,6 +56,11 @@ pub fn Library::target(self : Library) -> @core_theory.Target {
 }
 
 ///|
+pub fn Library::specification(self : Library) -> @image.OgreDoc {
+  @image.OgreDoc::from_target(self.target_value)
+}
+
+///|
 pub fn Library::memory(self : Library) -> @memory.MemMap[String] {
   self.memory_value
 }
@@ -153,6 +158,14 @@ pub fn Project::from_image(
 ///|
 pub fn Project::target(self : Project) -> @core_theory.Target {
   self.target_value
+}
+
+///|
+pub fn Project::specification(self : Project) -> @image.OgreDoc {
+  match self.image_value {
+    Some(image) => image.spec()
+    None => @image.OgreDoc::from_target(self.target_value)
+  }
 }
 
 ///|

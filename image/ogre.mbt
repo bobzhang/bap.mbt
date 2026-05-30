@@ -123,6 +123,81 @@ pub fn OgreDoc::facts(self : OgreDoc, attribute : String) -> Array[OgreFact] {
 }
 
 ///|
+fn ogre_field_array(
+  fields : Array[(String, OgreFieldType)],
+) -> Array[OgreField] {
+  [
+    for field in fields => OgreField::create(name=field.0, typ=field.1)
+  ]
+}
+
+///|
+fn ogre_declaration_map(
+  declarations : Array[(String, Array[OgreField])],
+) -> Map[String, Array[OgreField]] {
+  let result : Map[String, Array[OgreField]] = {}
+  for declaration in declarations {
+    result[declaration.0] = declaration.1.copy()
+  }
+  result
+}
+
+///|
+fn ogre_fact(attribute : String, fields : Array[(String, String)]) -> OgreFact {
+  let values : Map[String, String] = {}
+  for field in fields {
+    values[field.0] = field.1
+  }
+  { attribute_value: attribute, fields_value: values }
+}
+
+///|
+fn ogre_fact_map(facts : Array[OgreFact]) -> Map[String, Array[OgreFact]] {
+  let result : Map[String, Array[OgreFact]] = {}
+  for fact in facts {
+    let values = match result.get(fact.attribute_value) {
+      Some(items) => items.copy()
+      None => []
+    }
+    values.push(fact)
+    result[fact.attribute_value] = values
+  }
+  result
+}
+
+///|
+pub fn OgreDoc::from_target(target : @core_theory.Target) -> OgreDoc {
+  let declarations = ogre_declaration_map([
+    ("arch", ogre_field_array([("name", OgreStr)])),
+    ("bits", ogre_field_array([("size", OgreInt)])),
+    ("is-little-endian", ogre_field_array([("flag", OgreBool)])),
+    ("system", ogre_field_array([("name", OgreStr)])),
+    ("abi", ogre_field_array([("name", OgreStr)])),
+    ("format", ogre_field_array([("name", OgreStr)])),
+  ])
+  let facts = [ogre_fact("arch", [("name", target.name().unqualified())])]
+  if target.bits() > 0 {
+    facts.push(ogre_fact("bits", [("size", target.bits().to_string())]))
+  }
+  match target.endianness() {
+    LittleEndian =>
+      facts.push(ogre_fact("is-little-endian", [("flag", "true")]))
+    BigEndian => facts.push(ogre_fact("is-little-endian", [("flag", "false")]))
+    BiEndian => ()
+  }
+  if target.system() != UnknownSystem {
+    facts.push(ogre_fact("system", [("name", target.system().to_string())]))
+  }
+  if target.abi() != UnknownAbi {
+    facts.push(ogre_fact("abi", [("name", target.abi().to_string())]))
+  }
+  if target.filetype() != UnknownFiletype {
+    facts.push(ogre_fact("format", [("name", target.filetype().to_string())]))
+  }
+  { declarations_value: declarations, facts_value: ogre_fact_map(facts) }
+}
+
+///|
 fn ogre_is_space(c : Char) -> Bool {
   c == ' ' || c == '\n' || c == '\r' || c == '\t'
 }

@@ -59,6 +59,7 @@ pub fn Library::disassembly(Self) -> ProjectDisassemblyState
 pub fn Library::memory(Self) -> @memory.MemMap[String]
 pub fn Library::name(Self) -> String
 pub fn Library::program(Self) -> @types.Term[@types.Program]
+pub fn Library::specification(Self) -> @image.OgreDoc
 pub fn Library::state(Self) -> ProjectState
 pub fn Library::target(Self) -> @core_theory.Target
 
@@ -90,6 +91,7 @@ pub fn Project::run_pass(Self, String) -> Result[Self, String]
 pub fn Project::run_passes(Self, Array[String]) -> Result[Self, String]
 pub fn Project::set(Self, String, String) -> Self
 pub fn[T] Project::set_tag(Self, ProjectStorageTag[T], T) -> Self
+pub fn Project::specification(Self) -> @image.OgreDoc
 pub fn Project::state(Self) -> ProjectState
 pub fn Project::storage(Self) -> Map[String, String]
 pub fn Project::tag_memory(Self, @memory.Memory, String) -> Self

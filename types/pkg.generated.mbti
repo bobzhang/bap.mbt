@@ -422,8 +422,21 @@ pub(all) enum ValueType {
   Imm(Int)
   Mem(addr_width~ : Int, value_width~ : Int)
 } derive(Eq, @debug.Debug)
+pub fn ValueType::addr_size(Self) -> AddrSize?
 pub fn ValueType::bitwidth(Self) -> Int?
+pub fn ValueType::bool_t() -> Self
+pub fn ValueType::mem(AddrSize, Size) -> Self
+pub fn ValueType::mem32_t(Size) -> Self
+pub fn ValueType::mem64_t(Size) -> Self
+pub fn ValueType::reg(Size) -> Self
+pub fn ValueType::reg128_t() -> Self
+pub fn ValueType::reg16_t() -> Self
+pub fn ValueType::reg256_t() -> Self
+pub fn ValueType::reg32_t() -> Self
+pub fn ValueType::reg64_t() -> Self
+pub fn ValueType::reg8_t() -> Self
 pub fn ValueType::to_string(Self) -> String
+pub fn ValueType::value_size(Self) -> Size?
 
 pub(all) struct Var {
   name : String

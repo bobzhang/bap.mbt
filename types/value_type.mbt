@@ -5,10 +5,81 @@ pub(all) enum ValueType {
 } derive(Eq, Debug)
 
 ///|
+pub fn ValueType::reg(size : Size) -> ValueType {
+  Imm(size.in_bits())
+}
+
+///|
+pub fn ValueType::bool_t() -> ValueType {
+  Imm(1)
+}
+
+///|
+pub fn ValueType::reg8_t() -> ValueType {
+  ValueType::reg(R8)
+}
+
+///|
+pub fn ValueType::reg16_t() -> ValueType {
+  ValueType::reg(R16)
+}
+
+///|
+pub fn ValueType::reg32_t() -> ValueType {
+  ValueType::reg(R32)
+}
+
+///|
+pub fn ValueType::reg64_t() -> ValueType {
+  ValueType::reg(R64)
+}
+
+///|
+pub fn ValueType::reg128_t() -> ValueType {
+  ValueType::reg(R128)
+}
+
+///|
+pub fn ValueType::reg256_t() -> ValueType {
+  ValueType::reg(R256)
+}
+
+///|
+pub fn ValueType::mem(addr_size : AddrSize, value_size : Size) -> ValueType {
+  Mem(addr_width=addr_size.in_bits(), value_width=value_size.in_bits())
+}
+
+///|
+pub fn ValueType::mem32_t(value_size : Size) -> ValueType {
+  ValueType::mem(Addr32, value_size)
+}
+
+///|
+pub fn ValueType::mem64_t(value_size : Size) -> ValueType {
+  ValueType::mem(Addr64, value_size)
+}
+
+///|
 pub fn ValueType::bitwidth(self : ValueType) -> Int? {
   match self {
     Imm(width) => Some(width)
     Mem(_) => None
+  }
+}
+
+///|
+pub fn ValueType::value_size(self : ValueType) -> Size? {
+  match self {
+    Imm(width) => Size::of_int_opt(width)
+    Mem(value_width~, ..) => Size::of_int_opt(value_width)
+  }
+}
+
+///|
+pub fn ValueType::addr_size(self : ValueType) -> AddrSize? {
+  match self {
+    Imm(_) => None
+    Mem(addr_width~, ..) => Size::addr_of_int_opt(addr_width)
   }
 }
 

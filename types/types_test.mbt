@@ -339,6 +339,23 @@ test "size helpers mirror BAP fixed word and address sizes" {
 }
 
 ///|
+test "value types expose BAP size-based constructors" {
+  assert_true(@types.ValueType::bool_t() == Imm(1))
+  assert_true(@types.ValueType::reg8_t() == Imm(8))
+  assert_true(@types.ValueType::reg32_t() == Imm(32))
+  assert_true(@types.ValueType::reg256_t() == Imm(256))
+  assert_true(@types.ValueType::reg(R128) == Imm(128))
+  let mem32 = @types.ValueType::mem32_t(R8)
+  let mem64 = @types.ValueType::mem64_t(R256)
+  assert_true(mem32 == Mem(addr_width=32, value_width=8))
+  assert_true(mem64 == Mem(addr_width=64, value_width=256))
+  assert_true(mem32.addr_size() == Some(Addr32))
+  assert_true(mem32.value_size() == Some(R8))
+  assert_true(@types.ValueType::reg64_t().addr_size() == None)
+  assert_true(@types.ValueType::reg64_t().value_size() == Some(R64))
+}
+
+///|
 test "value types and variables keep BAP-visible metadata" {
   let typ = @types.ValueType::Imm(8)
   let physical = @types.Var::new(name="r0", typ~)

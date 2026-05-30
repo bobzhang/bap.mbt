@@ -35,21 +35,84 @@ test "digest helpers are deterministic and byte-oriented" {
 }
 
 ///|
+fn assert_trie_longest(
+  trie : @regular.PrefixTrie[Int],
+  cases : Array[(String, (Int, Int)?)],
+) -> Unit raise {
+  for item in cases {
+    let (key, expected) = item
+    assert_true(trie.longest_match(key) == expected)
+  }
+}
+
+///|
+fn assert_trie_find(
+  trie : @regular.PrefixTrie[Int],
+  cases : Array[(String, Int?)],
+) -> Unit raise {
+  for item in cases {
+    let (key, expected) = item
+    assert_true(trie.find(key) == expected)
+  }
+}
+
+///|
 test "prefix trie find and longest_match follow BAP trie behavior" {
   let trie : @regular.PrefixTrie[Int] = @regular.PrefixTrie::new()
   trie.add("", 0)
   trie.add("a", 1)
   trie.add("abcde", 3)
-  assert_true(trie.longest_match("") == Some((0, 0)))
-  assert_true(trie.longest_match("abcd") == Some((1, 1)))
-  assert_true(trie.longest_match("abcdef") == Some((5, 3)))
+  assert_trie_longest(trie, [
+    ("", Some((0, 0))),
+    ("a", Some((1, 1))),
+    ("ab", Some((1, 1))),
+    ("abc", Some((1, 1))),
+    ("abcd", Some((1, 1))),
+    ("abcde", Some((5, 3))),
+    ("abcdef", Some((5, 3))),
+    ("nothing", Some((0, 0))),
+  ])
   trie.add("abc", 2)
-  assert_true(trie.longest_match("abcd") == Some((3, 2)))
+  assert_trie_longest(trie, [
+    ("", Some((0, 0))),
+    ("a", Some((1, 1))),
+    ("ab", Some((1, 1))),
+    ("abc", Some((3, 2))),
+    ("abcd", Some((3, 2))),
+    ("abcde", Some((5, 3))),
+    ("abcdef", Some((5, 3))),
+    ("nothing", Some((0, 0))),
+  ])
   trie.remove("abc")
-  assert_true(trie.longest_match("abcd") == Some((1, 1)))
+  assert_trie_longest(trie, [
+    ("", Some((0, 0))),
+    ("a", Some((1, 1))),
+    ("ab", Some((1, 1))),
+    ("abc", Some((1, 1))),
+    ("abcd", Some((1, 1))),
+    ("abcde", Some((5, 3))),
+    ("abcdef", Some((5, 3))),
+    ("nothing", Some((0, 0))),
+  ])
   trie.remove("")
-  assert_true(trie.longest_match("nothing") == None)
-  assert_true(trie.find("a") == Some(1))
-  assert_true(trie.find("abc") == None)
-  assert_true(trie.find("abcde") == Some(3))
+  assert_trie_longest(trie, [
+    ("", None),
+    ("a", Some((1, 1))),
+    ("ab", Some((1, 1))),
+    ("abc", Some((1, 1))),
+    ("abcd", Some((1, 1))),
+    ("abcde", Some((5, 3))),
+    ("abcdef", Some((5, 3))),
+    ("nothing", None),
+  ])
+  assert_trie_find(trie, [
+    ("", None),
+    ("a", Some(1)),
+    ("ab", None),
+    ("abc", None),
+    ("abcd", None),
+    ("abcde", Some(3)),
+    ("abcdef", None),
+    ("nothing", None),
+  ])
 }

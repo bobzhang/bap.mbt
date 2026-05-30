@@ -248,6 +248,42 @@ test "bil statement execution handles bounded loops" {
 }
 
 ///|
+test "translated BAP Bili statement tests handle let shadowing and collatz" {
+  let typ = @types.ValueType::Imm(32)
+  let a = @types.Var::new(name="a", typ~)
+  let result = @types.Var::new(name="result", typ~)
+  let shadow = @types.exec_stmts([
+    Move(a, Int(word32(3))),
+    Move(a, BinOp(Plus, Var(a), Let(a, Int(word32(2)), Var(a)))),
+    Move(result, Var(a)),
+  ])
+  match shadow {
+    Ok(state) => assert_true(state.get_word("result") == Some(word32(5)))
+    Err(reason) => fail(reason)
+  }
+  let zero = @types.Int(word32(0))
+  let one = @types.Int(word32(1))
+  let two = @types.Int(word32(2))
+  let three = @types.Int(word32(3))
+  let collatz = @types.exec_stmts([
+    Move(a, Int(word32(17))),
+    Move(result, zero),
+    While(cond=BinOp(Neq, one, Var(a)), body=[
+      If(
+        cond=BinOp(Eq, zero, BinOp(Mod, Var(a), two)),
+        yes=[Move(a, BinOp(Div, Var(a), two))],
+        no=[Move(a, BinOp(Plus, BinOp(Times, Var(a), three), one))],
+      ),
+      Move(result, BinOp(Plus, Var(result), one)),
+    ]),
+  ])
+  match collatz {
+    Ok(state) => assert_true(state.get_word("result") == Some(word32(12)))
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "statement helpers expose used variables and substitute expressions" {
   let typ = @types.ValueType::Imm(8)
   let x = @types.Var::new(name="x", typ~)

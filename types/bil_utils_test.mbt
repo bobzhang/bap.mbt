@@ -181,6 +181,49 @@ test "bil BAP normalize negatives and fold const aliases" {
 }
 
 ///|
+test "bil BAP fixpoint helpers iterate until stable" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let start_exp : @types.Exp = Unknown("start", typ)
+  let middle_exp : @types.Exp = Unknown("middle", typ)
+  let seven = @types.Int(word8(7))
+  fn step_exp(exp : @types.Exp) -> @types.Exp {
+    match exp {
+      Unknown(name, _) if name == "start" => middle_exp
+      Unknown(name, _) if name == "middle" => seven
+      _ => exp
+    }
+  }
+  assert_true(start_exp.fixpoint(step_exp) == seven)
+  let start_stmt = @types.Stmt::Move(x, start_exp)
+  fn step_stmt(stmt : @types.Stmt) -> @types.Stmt {
+    match stmt {
+      Move(variable, Unknown(name, _)) if name == "start" =>
+        Move(variable, middle_exp)
+      Move(variable, Unknown(name, _)) if name == "middle" =>
+        Move(variable, seven)
+      _ => stmt
+    }
+  }
+  inspect(start_stmt.fixpoint(step_stmt).to_string(), content="x:imm8 := 7:8u")
+  fn step_stmts(stmts : Array[@types.Stmt]) -> Array[@types.Stmt] {
+    if stmts.length() == 1 {
+      match stmts[0] {
+        Move(variable, Unknown(name, _)) if name == "start" =>
+          [Move(variable, middle_exp)]
+        Move(variable, Unknown(name, _)) if name == "middle" =>
+          [Move(variable, seven)]
+        _ => stmts
+      }
+    } else {
+      stmts
+    }
+  }
+  let fixed = @types.fixpoint([start_stmt], step_stmts)
+  inspect(fixed[0].to_string(), content="x:imm8 := 7:8u")
+}
+
+///|
 test "bil simplifier folds loads from recent stores" {
   let mem_typ = @types.ValueType::Mem(addr_width=32, value_width=8)
   let mem = @types.Var::new(name="mem", typ=mem_typ)

@@ -12,6 +12,8 @@ pub fn check_stmt_types(Array[Stmt]) -> Result[Unit, TypeError]
 
 pub fn exec_stmts(Array[Stmt], state? : BilState, max_steps? : Int) -> Result[BilState, String]
 
+pub fn fixpoint(Array[Stmt], (Array[Stmt]) -> Array[Stmt]) -> Array[Stmt]
+
 pub fn fold_consts(Array[Stmt]) -> Array[Stmt]
 
 pub fn is_assigned_stmts(Array[Stmt], Var, strict? : Bool) -> Bool
@@ -209,6 +211,7 @@ pub fn Exp::binop(BinOp, Self, Self) -> Self
 pub fn Exp::effect(Self) -> ExpEffect
 pub fn Exp::eval(Self, Map[String, Word]) -> Result[Word, String]
 pub fn Exp::eval_value(Self, Map[String, BilValue]) -> Result[BilValue, String]
+pub fn Exp::fixpoint(Self, (Self) -> Self) -> Self
 pub fn Exp::fold_consts(Self) -> Self
 pub fn Exp::free_vars(Self) -> Array[Var]
 pub fn Exp::infer_type(Self) -> Result[ValueType, TypeError]
@@ -331,6 +334,7 @@ pub fn Stmt::check_type(Self) -> Result[Unit, TypeError]
 pub fn Stmt::cpuexn(Int) -> Self
 pub fn Stmt::defined_var(Self) -> Var?
 pub fn Stmt::exec(Self, state? : BilState, max_steps? : Int) -> Result[BilState, String]
+pub fn Stmt::fixpoint(Self, (Self) -> Self) -> Self
 pub fn Stmt::fold_consts(Self) -> Self
 pub fn Stmt::free_vars(Self) -> Array[Var]
 pub fn Stmt::if_(Exp, Array[Self], Array[Self]) -> Self

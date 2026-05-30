@@ -165,6 +165,17 @@ pub fn Exp::fold_consts(self : Exp) -> Exp {
 }
 
 ///|
+pub fn Exp::fixpoint(self : Exp, step : (Exp) -> Exp) -> Exp {
+  let mut current = self
+  let mut next = step(current)
+  while next != current {
+    current = next
+    next = step(current)
+  }
+  current
+}
+
+///|
 pub fn Exp::simplify(self : Exp) -> Exp {
   match self {
     Int(_) | Var(_) | Unknown(_) => self
@@ -267,6 +278,17 @@ pub fn Stmt::fold_consts(self : Stmt) -> Stmt {
 }
 
 ///|
+pub fn Stmt::fixpoint(self : Stmt, step : (Stmt) -> Stmt) -> Stmt {
+  let mut current = self
+  let mut next = step(current)
+  while next != current {
+    current = next
+    next = step(current)
+  }
+  current
+}
+
+///|
 pub fn Stmt::simplify_to_list(self : Stmt) -> Array[Stmt] {
   match self.simplify() {
     If(cond=Int(word), yes~, no~) => if word.is_zero() { no } else { yes }
@@ -294,6 +316,20 @@ pub fn normalize_negatives(stmts : Array[Stmt]) -> Array[Stmt] {
 ///|
 pub fn fold_consts(stmts : Array[Stmt]) -> Array[Stmt] {
   simplify_stmts(stmts)
+}
+
+///|
+pub fn fixpoint(
+  stmts : Array[Stmt],
+  step : (Array[Stmt]) -> Array[Stmt],
+) -> Array[Stmt] {
+  let mut current = stmts
+  let mut next = step(current)
+  while next != current {
+    current = next
+    next = step(current)
+  }
+  current
 }
 
 ///|

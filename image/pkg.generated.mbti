@@ -43,15 +43,17 @@ pub fn Image::add_symbol_value(Self, SymbolValue) -> Self
 pub fn Image::addr_size(Self) -> Int
 pub fn Image::arch(Self) -> @core_theory.Target
 pub fn Image::base_address(Self) -> UInt64?
-pub fn Image::create(entry~ : UInt64, endian~ : @bitvec.Endian, filename? : String, target? : @core_theory.Target, data? : Bytes, segments? : Array[Segment], sections? : Array[Section], symbols? : Array[Symbol], relocations? : Array[Relocation], external_references? : Array[ExternalReference], required_libraries? : Array[String], symbol_values? : Array[SymbolValue], base_address? : UInt64, spec? : OgreDoc) -> Self
+pub fn Image::create(entry~ : UInt64, endian~ : @bitvec.Endian, filename? : String, target? : @core_theory.Target, data? : Bytes, segments? : Array[Segment], sections? : Array[Section], symbols? : Array[Symbol], relocations? : Array[Relocation], external_references? : Array[ExternalReference], required_libraries? : Array[String], symbol_values? : Array[SymbolValue], load_bias? : Int64, is_executable? : Bool, base_address? : UInt64, spec? : OgreDoc) -> Self
 pub fn Image::data(Self) -> Bytes
 pub fn Image::endian(Self) -> @bitvec.Endian
 pub fn Image::entry_point(Self) -> UInt64
 pub fn Image::external_references(Self) -> Array[ExternalReference]
 pub fn Image::filename(Self) -> String?
 pub fn Image::from_ogre(Bytes, OgreDoc, filename? : String, target? : @core_theory.Target) -> Result[(Self, Array[String]), String]
-pub fn Image::from_segments(entry~ : UInt64, endian~ : @bitvec.Endian, Array[Segment], sections? : Array[Section], symbols? : Array[Symbol], relocations? : Array[Relocation], external_references? : Array[ExternalReference], required_libraries? : Array[String], symbol_values? : Array[SymbolValue], base_address? : UInt64, filename? : String, target? : @core_theory.Target, spec? : OgreDoc) -> Self
+pub fn Image::from_segments(entry~ : UInt64, endian~ : @bitvec.Endian, Array[Segment], sections? : Array[Section], symbols? : Array[Symbol], relocations? : Array[Relocation], external_references? : Array[ExternalReference], required_libraries? : Array[String], symbol_values? : Array[SymbolValue], load_bias? : Int64, is_executable? : Bool, base_address? : UInt64, filename? : String, target? : @core_theory.Target, spec? : OgreDoc) -> Self
 pub fn Image::from_spec(Bytes, OgreDoc, filename? : String, target? : @core_theory.Target) -> Result[(Self, Array[String]), String]
+pub fn Image::is_executable(Self) -> Bool?
+pub fn Image::load_bias(Self) -> Int64?
 pub fn Image::memories_of_symbol(Self, Symbol) -> Array[@memory.Memory]?
 pub fn Image::memory(Self) -> @memory.MemMap[String]
 pub fn Image::memory_of_section(Self, Section) -> @memory.Memory?
@@ -76,6 +78,8 @@ pub fn Image::symbols(Self) -> Array[Symbol]
 pub fn Image::symbols_of_segment(Self, Segment) -> Array[Symbol]
 pub fn Image::target(Self) -> @core_theory.Target?
 pub fn Image::with_base_address(Self, UInt64) -> Self
+pub fn Image::with_is_executable(Self, Bool) -> Self
+pub fn Image::with_load_bias(Self, Int64) -> Self
 pub fn Image::words(Self, word_size~ : Int) -> @memory.MemMap[@types.Word]
 
 type ImageBackend

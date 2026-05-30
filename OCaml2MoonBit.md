@@ -137,6 +137,11 @@ Keep BAP/Ogre `symbol-value` separate from named-symbol and symbol-chunk
 metadata. A symbol's runtime address may be biased or otherwise interpreted by
 the loader, while the raw value can still be useful to later disassembly roots
 and symbolization passes.
+Preserve loader `bias` as signed `Int64` metadata, not an address. BAP loaders
+can compute a negative bias when a user-supplied base is below the file's real
+base. Preserve `is-executable` as an image/file flag separately from per-segment
+execute permissions; for ELF, derive it from `ET_EXEC` unless richer loader
+metadata is available.
 For Ogre image specs, keep BAP-style relocation metadata separate from memory
 layout: `base-address`, `relocation`, `relative-relocation`, and
 `external-reference` should be preserved as image metadata even before a

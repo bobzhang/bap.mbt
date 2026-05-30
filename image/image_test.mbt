@@ -121,6 +121,8 @@ test "image exposes relocation metadata defensively" {
     external_references=references,
     required_libraries~,
     symbol_values~,
+    load_bias=-16L,
+    is_executable=true,
     base_address=0x1000UL,
   )
   relocations.push(@image.Relocation::create(fixup=0x1010UL, relative=true))
@@ -136,6 +138,8 @@ test "image exposes relocation metadata defensively" {
   assert_true(image.required_libraries() == ["libc.so.6"])
   assert_true(image.symbol_values().length() == 1)
   assert_true(image.symbol_values()[0].value() == 0x80UL)
+  assert_true(image.load_bias() == Some(-16L))
+  assert_true(image.is_executable() == Some(true))
   let updated = image
     .add_relocation(@image.Relocation::create(fixup=0x1010UL, relative=true))
     .add_external_reference(
@@ -143,6 +147,8 @@ test "image exposes relocation metadata defensively" {
     )
     .add_required_library("libm.so.6")
     .add_symbol_value(@image.SymbolValue::create(addr=0x1001UL, value=0x81UL))
+    .with_load_bias(32L)
+    .with_is_executable(false)
     .with_base_address(0x3000UL)
   assert_true(image.base_address() == Some(0x1000UL))
   assert_true(updated.base_address() == Some(0x3000UL))
@@ -151,6 +157,8 @@ test "image exposes relocation metadata defensively" {
   assert_true(updated.external_references().length() == 2)
   assert_true(updated.required_libraries() == ["libc.so.6", "libm.so.6"])
   assert_true(updated.symbol_values().length() == 2)
+  assert_true(updated.load_bias() == Some(32L))
+  assert_true(updated.is_executable() == Some(false))
 }
 
 ///|

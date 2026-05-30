@@ -8,6 +8,7 @@ priv enum ImageElfClass {
 priv struct ImageElfHeader {
   endian : @bitvec.Endian
   class : ImageElfClass
+  typ : Int
   machine : Int
   entry : UInt64
   program_table_offset : Int
@@ -238,6 +239,7 @@ fn image_elf_parse_header(data : Bytes) -> Result[ImageElfHeader, String] {
   if data.length() < min_header_size {
     return Err("truncated ELF header")
   }
+  let typ = image_elf_read_int(data, 16, 2, endian, "ELF type")
   let machine = image_elf_read_int(data, 18, 2, endian, "ELF machine")
   let entry = match class {
     ImageElf32 => image_elf_read_u64(data, 24, 4, endian)
@@ -283,10 +285,11 @@ fn image_elf_parse_header(data : Bytes) -> Result[ImageElfHeader, String] {
   }
   match
     (
-      machine, entry, program_table_offset, program_header_size, program_count, section_table_offset,
-      section_header_size, section_count, section_name_index,
+      typ, machine, entry, program_table_offset, program_header_size, program_count,
+      section_table_offset, section_header_size, section_count, section_name_index,
     ) {
     (
+      Ok(typ),
       Ok(machine),
       Ok(entry),
       Ok(program_table_offset),
@@ -369,6 +372,7 @@ fn image_elf_parse_header(data : Bytes) -> Result[ImageElfHeader, String] {
       Ok({
         endian,
         class,
+        typ,
         machine,
         entry,
         program_table_offset,
@@ -380,15 +384,16 @@ fn image_elf_parse_header(data : Bytes) -> Result[ImageElfHeader, String] {
         section_name_index,
       })
     }
-    (Err(reason), _, _, _, _, _, _, _, _)
-    | (_, Err(reason), _, _, _, _, _, _, _)
-    | (_, _, Err(reason), _, _, _, _, _, _)
-    | (_, _, _, Err(reason), _, _, _, _, _)
-    | (_, _, _, _, Err(reason), _, _, _, _)
-    | (_, _, _, _, _, Err(reason), _, _, _)
-    | (_, _, _, _, _, _, Err(reason), _, _)
-    | (_, _, _, _, _, _, _, Err(reason), _)
-    | (_, _, _, _, _, _, _, _, Err(reason)) => Err(reason)
+    (Err(reason), _, _, _, _, _, _, _, _, _)
+    | (_, Err(reason), _, _, _, _, _, _, _, _)
+    | (_, _, Err(reason), _, _, _, _, _, _, _)
+    | (_, _, _, Err(reason), _, _, _, _, _, _)
+    | (_, _, _, _, Err(reason), _, _, _, _, _)
+    | (_, _, _, _, _, Err(reason), _, _, _, _)
+    | (_, _, _, _, _, _, Err(reason), _, _, _)
+    | (_, _, _, _, _, _, _, Err(reason), _, _)
+    | (_, _, _, _, _, _, _, _, Err(reason), _)
+    | (_, _, _, _, _, _, _, _, _, Err(reason)) => Err(reason)
   }
 }
 
@@ -1344,6 +1349,7 @@ fn image_elf_load(data : Bytes) -> Result[(Image, Array[String]), String] {
             external_references~,
             required_libraries~,
             symbol_values~,
+            is_executable=header.typ == 2,
             target=image_elf_target(header),
           ),
           [],

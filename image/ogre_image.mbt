@@ -66,6 +66,18 @@ fn ogre_fact_uint64_field(
 }
 
 ///|
+fn ogre_fact_int64_field(
+  fact : OgreFact,
+  name : String,
+  positional : Int,
+) -> Result[Int64, String] {
+  match fact.value(name) {
+    Some(_) => ogre_fact_int64(fact, name)
+    None => ogre_fact_int64(fact, positional.to_string())
+  }
+}
+
+///|
 fn ogre_fact_string_field(
   fact : OgreFact,
   name : String,
@@ -74,6 +86,18 @@ fn ogre_fact_string_field(
   match fact.value(name) {
     Some(_) => ogre_fact_string(fact, name)
     None => ogre_fact_string(fact, positional.to_string())
+  }
+}
+
+///|
+fn ogre_fact_bool_field(
+  fact : OgreFact,
+  name : String,
+  positional : Int,
+) -> Result[Bool, String] {
+  match fact.value(name) {
+    Some(_) => ogre_fact_bool(fact, name)
+    None => ogre_fact_bool(fact, positional.to_string())
   }
 }
 
@@ -582,6 +606,30 @@ fn OgreDoc::image_base_address(self : OgreDoc) -> Result[UInt64?, String] {
 }
 
 ///|
+fn OgreDoc::image_load_bias(self : OgreDoc) -> Result[Int64?, String] {
+  match self.facts("bias") {
+    [] => Ok(None)
+    [fact, ..] =>
+      match ogre_fact_int64_field(fact, "off", 0) {
+        Ok(value) => Ok(Some(value))
+        Err(reason) => Err(reason)
+      }
+  }
+}
+
+///|
+fn OgreDoc::image_is_executable(self : OgreDoc) -> Result[Bool?, String] {
+  match self.facts("is-executable") {
+    [] => Ok(None)
+    [fact, ..] =>
+      match ogre_fact_bool_field(fact, "flag", 0) {
+        Ok(value) => Ok(Some(value))
+        Err(reason) => Err(reason)
+      }
+  }
+}
+
+///|
 pub fn Image::from_ogre(
   data : Bytes,
   doc : OgreDoc,
@@ -630,6 +678,14 @@ pub fn Image::from_ogre(
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
+  let load_bias = match doc.image_load_bias() {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let is_executable = match doc.image_is_executable() {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
   Ok(
     (
       Image::from_segments(
@@ -642,6 +698,8 @@ pub fn Image::from_ogre(
         external_references~,
         required_libraries~,
         symbol_values~,
+        load_bias?,
+        is_executable?,
         base_address?,
         filename?,
         target=selected_target,

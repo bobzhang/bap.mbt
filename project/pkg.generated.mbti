@@ -98,7 +98,9 @@ pub fn[T] Project::get_tag(Self, ProjectStorageTag[T]) -> Result[T?, String]
 pub fn Project::has(Self, String) -> Bool
 pub fn[T] Project::has_tag(Self, ProjectStorageTag[T]) -> Bool
 pub fn Project::image(Self) -> @image.Image?
+pub fn Project::is_executable(Self) -> Bool?
 pub fn Project::libraries(Self) -> Array[Library]
+pub fn Project::load_bias(Self) -> Int64?
 pub fn Project::map_program(Self, (@types.Term[@types.Program]) -> @types.Term[@types.Program]) -> Self
 pub fn Project::map_program_terms(Self, (@types.IrTerm) -> @types.IrTerm) -> Self
 pub fn Project::mark_program_terms(Self, (@types.IrTerm) -> Bool, @types.Attr) -> Self

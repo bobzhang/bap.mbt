@@ -12,6 +12,8 @@ struct Image {
   external_references_value : Array[ExternalReference]
   required_libraries_value : Array[String]
   symbol_values_value : Array[SymbolValue]
+  load_bias_value : Int64?
+  is_executable_value : Bool?
   base_address_value : UInt64?
   spec_value : OgreDoc?
 }
@@ -35,6 +37,8 @@ pub fn Image::create(
   external_references? : Array[ExternalReference],
   required_libraries? : Array[String],
   symbol_values? : Array[SymbolValue],
+  load_bias? : Int64,
+  is_executable? : Bool,
   base_address? : UInt64,
   spec? : OgreDoc,
 ) -> Image {
@@ -75,6 +79,8 @@ pub fn Image::create(
       Some(items) => items.copy()
       None => []
     },
+    load_bias_value: load_bias,
+    is_executable_value: is_executable,
     base_address_value: base_address,
     spec_value: spec,
   }
@@ -91,6 +97,8 @@ pub fn Image::from_segments(
   external_references? : Array[ExternalReference],
   required_libraries? : Array[String],
   symbol_values? : Array[SymbolValue],
+  load_bias? : Int64,
+  is_executable? : Bool,
   base_address? : UInt64,
   filename? : String,
   target? : @core_theory.Target,
@@ -106,6 +114,8 @@ pub fn Image::from_segments(
     external_references?,
     required_libraries?,
     symbol_values?,
+    load_bias?,
+    is_executable?,
     base_address?,
     filename?,
     target?,
@@ -267,6 +277,16 @@ pub fn Image::required_libraries(self : Image) -> Array[String] {
 ///|
 pub fn Image::symbol_values(self : Image) -> Array[SymbolValue] {
   self.symbol_values_value.copy()
+}
+
+///|
+pub fn Image::load_bias(self : Image) -> Int64? {
+  self.load_bias_value
+}
+
+///|
+pub fn Image::is_executable(self : Image) -> Bool? {
+  self.is_executable_value
 }
 
 ///|
@@ -476,6 +496,16 @@ pub fn Image::add_symbol_value(
   let values = self.symbol_values_value.copy()
   values.push(symbol_value)
   { ..self, symbol_values_value: values }
+}
+
+///|
+pub fn Image::with_load_bias(self : Image, load_bias : Int64) -> Image {
+  { ..self, load_bias_value: Some(load_bias) }
+}
+
+///|
+pub fn Image::with_is_executable(self : Image, is_executable : Bool) -> Image {
+  { ..self, is_executable_value: Some(is_executable) }
 }
 
 ///|

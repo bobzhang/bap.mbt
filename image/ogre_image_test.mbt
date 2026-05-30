@@ -99,6 +99,8 @@ test "ogre image from_spec builds image metadata" {
 test "ogre image specs expose relocation metadata" {
   let spec = "(declare entry-point (addr int))" +
     " (declare base-address (addr int))" +
+    " (declare bias (off int))" +
+    " (declare is-executable (flag bool))" +
     " (declare require (name str))" +
     " (declare symbol-value (addr int) (value int))" +
     " (declare relocation (fixup int) (addr int))" +
@@ -106,6 +108,8 @@ test "ogre image specs expose relocation metadata" {
     " (declare external-reference (addr int) (name str))" +
     " (entry-point 4096)" +
     " (base-address 4096)" +
+    " (bias -16)" +
+    " (is-executable true)" +
     " (require libc.so.6)" +
     " (require libm.so.6)" +
     " (symbol-value 4097 128)" +
@@ -116,6 +120,8 @@ test "ogre image specs expose relocation metadata" {
     Ok((image, warnings)) => {
       assert_true(warnings.is_empty())
       assert_true(image.base_address() == Some(4096UL))
+      assert_true(image.load_bias() == Some(-16L))
+      assert_true(image.is_executable() == Some(true))
       let relocations = image.relocations()
       assert_true(relocations.length() == 2)
       assert_true(relocations[0].fixup() == 4100UL)

@@ -73,6 +73,8 @@ test "project exposes image relocation metadata" {
     ],
     required_libraries=["libc.so.6"],
     symbol_values=[@image.SymbolValue::create(addr=0x1000UL, value=0x80UL)],
+    load_bias=-16L,
+    is_executable=true,
     base_address=0x1000UL,
     target~,
   )
@@ -86,12 +88,16 @@ test "project exposes image relocation metadata" {
   assert_true(project.required_libraries() == ["libc.so.6"])
   assert_true(project.symbol_values().length() == 1)
   assert_true(project.symbol_values()[0].value() == 0x80UL)
+  assert_true(project.load_bias() == Some(-16L))
+  assert_true(project.is_executable() == Some(true))
   let empty = @project.Project::empty(target)
   assert_true(empty.base_address() == None)
   assert_true(empty.relocations().is_empty())
   assert_true(empty.external_references().is_empty())
   assert_true(empty.required_libraries().is_empty())
   assert_true(empty.symbol_values().is_empty())
+  assert_true(empty.load_bias() == None)
+  assert_true(empty.is_executable() == None)
 }
 
 ///|

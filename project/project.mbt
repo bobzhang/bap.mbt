@@ -310,6 +310,22 @@ pub fn Project::symbol_values(self : Project) -> Array[@image.SymbolValue] {
 }
 
 ///|
+pub fn Project::load_bias(self : Project) -> Int64? {
+  match self.image_value {
+    Some(image) => image.load_bias()
+    None => None
+  }
+}
+
+///|
+pub fn Project::is_executable(self : Project) -> Bool? {
+  match self.image_value {
+    Some(image) => image.is_executable()
+    None => None
+  }
+}
+
+///|
 pub fn Project::base_address(self : Project) -> UInt64? {
   match self.image_value {
     Some(image) => image.base_address()

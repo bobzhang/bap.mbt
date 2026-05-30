@@ -508,6 +508,7 @@ test "image ELF backend loads program segments and sections" {
   )
   assert_true(warnings.is_empty())
   assert_true(image.entry_point() == 0x400000UL)
+  assert_true(image.is_executable() == Some(true))
   assert_true(image.endian() == LittleEndian)
   match image.target() {
     Some(target) => {
@@ -671,6 +672,7 @@ test "image ELF backend maps alloc sections when program headers are absent" {
   )
   assert_true(warnings.is_empty())
   assert_true(image.entry_point() == 0UL)
+  assert_true(image.is_executable() == Some(false))
   let segments = image.segments()
   assert_true(segments.length() == 1)
   assert_true(segments[0].name() == ".text")

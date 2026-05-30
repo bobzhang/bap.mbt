@@ -108,6 +108,26 @@ pub fn Var::new(
 }
 
 ///|
+pub fn Var::name(self : Var) -> String {
+  self.name
+}
+
+///|
+pub fn Var::typ(self : Var) -> ValueType {
+  self.typ
+}
+
+///|
+pub fn Var::is_virtual(self : Var) -> Bool {
+  self.is_virtual
+}
+
+///|
+pub fn Var::is_physical(self : Var) -> Bool {
+  !self.is_virtual
+}
+
+///|
 fn parse_var_index(name : String) -> (String, Int)? {
   match name.rev_split_once("#") {
     Some((base, suffix)) => {
@@ -128,6 +148,11 @@ pub fn Var::base(self : Var) -> Var {
     Some((name, _)) => { ..self, name, }
     None => self
   }
+}
+
+///|
+pub fn Var::same(self : Var, other : Var) -> Bool {
+  self.base().name == other.base().name
 }
 
 ///|

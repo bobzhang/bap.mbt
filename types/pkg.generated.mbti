@@ -445,8 +445,13 @@ pub(all) struct Var {
 } derive(Eq, @debug.Debug)
 pub fn Var::base(Self) -> Self
 pub fn Var::index(Self) -> Int
+pub fn Var::is_physical(Self) -> Bool
+pub fn Var::is_virtual(Self) -> Bool
+pub fn Var::name(Self) -> String
 pub fn Var::new(name~ : String, typ~ : ValueType, is_virtual? : Bool) -> Self
+pub fn Var::same(Self, Self) -> Bool
 pub fn Var::to_string(Self) -> String
+pub fn Var::typ(Self) -> ValueType
 pub fn Var::with_index(Self, Int) -> Self
 
 pub(all) enum VarBinding {

@@ -92,6 +92,22 @@ test "memory merge accepts contiguous regions" {
 }
 
 ///|
+test "translated BAP memmap lookup covers every byte in added ranges" {
+  let chunk = memory_at(0x100UL, 10)
+  let map = @memory.MemMap::empty().add(chunk, 42)
+  for offset in 0..<10 {
+    let addr = 0x100UL + offset.to_uint64()
+    let got = map.lookup(addr)
+    assert_true(got.length() == 1)
+    assert_true(got[0].0.min_addr() == chunk.min_addr())
+    assert_true(got[0].0.max_addr() == chunk.max_addr())
+    assert_true(got[0].1 == 42)
+  }
+  assert_true(map.lookup(0x0ffUL).is_empty())
+  assert_true(map.lookup(0x10aUL).is_empty())
+}
+
+///|
 test "memmap lookup intersections and dominators follow address intervals" {
   let base = @memory.Memory::from_bytes(
     endian=LittleEndian,

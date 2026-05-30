@@ -282,6 +282,60 @@ test "project input loaders resolve by filename extension priority" {
 }
 
 ///|
+test "project input filename loading falls back to image backend after loader failures" {
+  let loader = @project.ProjectInputLoader::create(
+    name="unit-project-failing-mixed-loader",
+    extensions=["mixunit"],
+    priority=100,
+    load=_ => Err("project loader failed"),
+  )
+  let backend = @image.ImageBackend::create(
+    name="unit-project-mixed-image-backend",
+    extensions=["mixunit"],
+    priority=1,
+    load=data => {
+      let segment = @image.Segment::create(
+        name=".fallback",
+        endian=LittleEndian,
+        addr=0x880UL,
+        data,
+        readable=true,
+        executable=true,
+      )
+      Ok(
+        (
+          @image.Image::from_segments(entry=0x880UL, endian=LittleEndian, [
+            segment,
+          ]),
+          [],
+        ),
+      )
+    },
+  )
+  match @project.register_input_loader(loader) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  match @image.register_backend(name=backend.name(), backend) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    @project.input_loader_names_for_extension("mixunit") ==
+    ["unit-project-failing-mixed-loader", "unit-project-mixed-image-backend"],
+  )
+  match
+    @project.ProjectInput::load_for_filename(b"\x7f", filename="sample.mixunit") {
+    Ok(input) => {
+      let project = @project.Project::from_input(input)
+      assert_true(project.filename() == Some("sample.mixunit"))
+      assert_true(project.memory().lookup(0x880UL).length() == 1)
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project input file loading reports read errors" {
   assert_true(
     @project.ProjectInput::load_file(

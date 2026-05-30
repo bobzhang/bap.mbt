@@ -428,16 +428,7 @@ pub fn ProjectInput::load_for_filename(
   match filename_extension(filename) {
     Some(extension) => {
       let loaders = input_loaders_for_extension(extension)
-      if loaders.is_empty() {
-        match @image.Image::of_bytes_for_filename(data, filename~) {
-          Ok((image, _warnings)) =>
-            Ok(ProjectInput::from_image(image).with_default_filename(filename))
-          Err(reason) =>
-            Err(
-              "no project input loader or image backend for extension \{extension}: \{reason}",
-            )
-        }
-      } else {
+      if !loaders.is_empty() {
         let mut last_error = ""
         for loader in loaders {
           match loader.load(data) {
@@ -445,9 +436,24 @@ pub fn ProjectInput::load_for_filename(
             Err(reason) => last_error = reason
           }
         }
-        Err(
-          "all project input loaders failed for extension \{extension}: \{last_error}",
-        )
+        match @image.Image::of_bytes_for_filename(data, filename~) {
+          Ok((image, _warnings)) =>
+            return Ok(
+              ProjectInput::from_image(image).with_default_filename(filename),
+            )
+          Err(reason) =>
+            return Err(
+              "all project input loaders failed for extension \{extension}: \{last_error}; image backend fallback failed: \{reason}",
+            )
+        }
+      }
+      match @image.Image::of_bytes_for_filename(data, filename~) {
+        Ok((image, _warnings)) =>
+          Ok(ProjectInput::from_image(image).with_default_filename(filename))
+        Err(reason) =>
+          Err(
+            "no project input loader or image backend for extension \{extension}: \{reason}",
+          )
       }
     }
     None => Err("can't infer project input loader from filename \{filename}")

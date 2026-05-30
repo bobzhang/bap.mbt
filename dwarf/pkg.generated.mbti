@@ -37,6 +37,7 @@ pub(all) enum DwarfAbbrevValueKind {
   DwarfIgnoredValue
   DwarfNameValue
   DwarfLowPcValue
+  DwarfEntryPcValue
   DwarfHighPcAddressValue
   DwarfHighPcOffsetValue
 } derive(Eq, @debug.Debug)

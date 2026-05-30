@@ -9,6 +9,7 @@ struct DwarfFunction {
 priv enum DwarfFunctionAttrValue {
   DwarfAttrName(String)
   DwarfAttrLowPc(UInt64)
+  DwarfAttrEntryPc(UInt64)
   DwarfAttrHighPcAbs(UInt64)
   DwarfAttrHighPcRel(Int64)
   DwarfAttrIgnored
@@ -157,6 +158,11 @@ fn dwarf_read_attr_value(
         Ok((addr, next)) => Ok((DwarfAttrLowPc(addr), next))
         Err(reason) => Err(reason)
       }
+    DwarfEntryPcValue =>
+      match input.read_address(endian~, size=addr_size) {
+        Ok((addr, next)) => Ok((DwarfAttrEntryPc(addr), next))
+        Err(reason) => Err(reason)
+      }
     DwarfHighPcAddressValue =>
       match input.read_address(endian~, size=addr_size) {
         Ok((addr, next)) => Ok((DwarfAttrHighPcAbs(addr), next))
@@ -190,29 +196,35 @@ fn dwarf_collect_function(
 ) -> DwarfFunction? {
   let mut name : String? = None
   let mut low_pc : UInt64? = None
+  let mut entry_pc : UInt64? = None
   let mut high_abs : UInt64? = None
   let mut high_rel : Int64? = None
   for value in values {
     match value {
       DwarfAttrName(text) => name = Some(text)
       DwarfAttrLowPc(addr) => low_pc = Some(addr)
+      DwarfAttrEntryPc(addr) => entry_pc = Some(addr)
       DwarfAttrHighPcAbs(addr) => high_abs = Some(addr)
       DwarfAttrHighPcRel(offset) => high_rel = Some(offset)
       DwarfAttrIgnored => ()
     }
   }
-  match (name, low_pc) {
-    (Some(text), Some(low)) => {
+  let start_pc = match low_pc {
+    Some(addr) => Some(addr)
+    None => entry_pc
+  }
+  match (name, start_pc) {
+    (Some(text), Some(start)) => {
       let high = match high_abs {
         Some(addr) => Some(addr)
         None =>
-          match high_rel {
-            Some(offset) if offset >= 0L =>
+          match (low_pc, high_rel) {
+            (Some(low), Some(offset)) if offset >= 0L =>
               Some(low + offset.reinterpret_as_uint64())
             _ => None
           }
       }
-      Some(DwarfFunction::create(name=text, low_pc=low, high_pc?=high))
+      Some(DwarfFunction::create(name=text, low_pc=start, high_pc?=high))
     }
     _ => None
   }

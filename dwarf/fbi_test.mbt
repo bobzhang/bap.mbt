@@ -133,6 +133,62 @@ test "translated DWARF FBI resolves indirect value forms" {
 }
 
 ///|
+test "translated DWARF FBI accepts entry pc when low pc is absent" {
+  let abbrev = b"\x01\x2e\x00" +
+    b"\x03\x08" +
+    b"\x52\x01" +
+    b"\x12\x01" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x17\x00\x00\x00" +
+    b"\x04\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x04" +
+    b"\x01" +
+    b"entry\x00" +
+    b"\x50\x00\x00\x00" +
+    b"\x60\x00\x00\x00" +
+    b"\x00"
+  let data = expect_fbi_data(
+    @dwarf.DwarfData::from_bytes(endian=LittleEndian, info~, abbrev~, str=b""),
+  )
+  let functions = expect_functions(data.functions())
+  assert_true(functions.length() == 1)
+  assert_true(functions[0].name() == "entry")
+  assert_true(functions[0].low_pc() == 0x50UL)
+  assert_true(functions[0].high_pc() == Some(0x60UL))
+}
+
+///|
+test "translated DWARF FBI keeps low pc as relative high pc base" {
+  let abbrev = b"\x01\x2e\x00" +
+    b"\x03\x08" +
+    b"\x11\x01" +
+    b"\x52\x01" +
+    b"\x12\x0b" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x19\x00\x00\x00" +
+    b"\x04\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x04" +
+    b"\x01" +
+    b"offset\x00" +
+    b"\x20\x00\x00\x00" +
+    b"\x24\x00\x00\x00" +
+    b"\x08" +
+    b"\x00"
+  let data = expect_fbi_data(
+    @dwarf.DwarfData::from_bytes(endian=LittleEndian, info~, abbrev~, str=b""),
+  )
+  let functions = expect_functions(data.functions())
+  assert_true(functions.length() == 1)
+  assert_true(functions[0].name() == "offset")
+  assert_true(functions[0].low_pc() == 0x20UL)
+  assert_true(functions[0].high_pc() == Some(0x28UL))
+}
+
+///|
 test "translated DWARF FBI skips degenerate and non-function DIEs" {
   let abbrev = b"\x01\x11\x01" +
     b"\x03\x08" +

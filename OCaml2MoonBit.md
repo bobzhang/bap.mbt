@@ -433,6 +433,17 @@ fn main { let result = apply_pair(fn(x, y) { x + y }, 2, 3); println(result.0); 
 Polymorphic functions write type parameters **before** the name: `fn[A, B, C] name(...)`. The older `fn name[A, B, C](...)` spelling is deprecated.
 
 ```sh
+moon run -c $'struct Box[T] { value : T }\nfn Box::payload(self : Box[Int]) -> Int { self.value }\nfn Box::payload(self : Box[String]) -> String { self.value }\nfn main { println(Box::{ value: 1 }.payload()) }'
+# Error: The method payload for type Box has been defined ...
+```
+
+Methods are keyed by the generic receiver type name, not by each instantiated
+receiver type. Do not port OCaml functor/module-specialized helpers as several
+same-named `Type::method` declarations over `Term[Def]`, `Term[Phi]`, etc. Use
+one truly generic method when the implementation is uniform, or give the
+specialized methods distinct names such as `map_def_exp` and `map_phi_exp`.
+
+```sh
 moon run -c 'fn apply_twice(f : (Int) -> Int, value : Int) -> Int { f(f(value)) }
 fn main { println(apply_twice(fn(x) { x + 1 }, 40)) }'
 # 42

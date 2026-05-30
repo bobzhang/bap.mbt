@@ -46,3 +46,73 @@ test "phi nodes jumps calls and args expose BAP-style payloads" {
   let arg = @types.Arg::create(lhs, one).with_intent(Both)
   assert_true(arg.intent() == Some(Both))
 }
+
+///|
+test "ir definition phi and jump helpers traverse expressions" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let z = @types.Var::new(name="z", typ~)
+  let one = @types.Int(word8(1))
+  let def = @types.Def::create(x, BinOp(Plus, Var(y), one))
+  let def_vars = def.def_free_vars()
+  assert_true(def_vars.length() == 1)
+  assert_true(def_vars.any(item => item == y))
+  let def_subst = def.substitute_def_var(y, Int(word8(9)))
+  assert_true(def_subst.rhs() == BinOp(Plus, Int(word8(9)), one))
+  let folded = @types.Def::create(x, BinOp(Plus, Int(word8(2)), Int(word8(3)))).map_def_exp(exp => {
+      exp.simplify()
+    },
+  )
+  assert_true(folded.rhs() == Int(word8(5)))
+  let left = @types.Tid::for_name("left")
+  let right = @types.Tid::for_name("right")
+  let phi = @types.Phi::of_list(x, [
+    (left, Var(y)),
+    (right, BinOp(Xor, Var(z), one)),
+  ])
+  let phi_vars = phi.phi_free_vars()
+  assert_true(phi_vars.length() == 2)
+  assert_true(phi_vars.any(item => item == y))
+  assert_true(phi_vars.any(item => item == z))
+  let phi_subst = phi.substitute_phi_var(z, Int(word8(7)))
+  assert_true(phi_subst.select(right) == Some(BinOp(Xor, Int(word8(7)), one)))
+  let jmp = @types.Jmp::create_goto(
+    @types.Label::indirect(Var(y)),
+    cond=BinOp(Eq, Var(z), Int(word8(0))),
+  )
+  let jmp_vars = jmp.jmp_free_vars()
+  assert_true(jmp_vars.length() == 2)
+  assert_true(jmp_vars.any(item => item == y))
+  assert_true(jmp_vars.any(item => item == z))
+  let jmp_subst = jmp.substitute_jmp_var(y, Int(word8(4)))
+  assert_true(jmp_subst.kind() is Goto(Indirect(Int(_))))
+}
+
+///|
+test "ir block and program helpers respect local definitions" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let z = @types.Var::new(name="z", typ~)
+  let left = @types.Tid::for_name("pred")
+  let phi = @types.Phi::of_list(x, [(left, Var(z))])
+  let def = @types.Def::create(y, BinOp(Plus, Var(x), Int(word8(1))))
+  let jmp = @types.Jmp::create_goto(
+    @types.Label::direct(@types.Tid::for_name("done")),
+    cond=Var(y),
+  )
+  let blk = @types.Blk::create(phis=[phi], defs=[def], jmps=[jmp])
+  let blk_vars = blk.blk_free_vars()
+  assert_true(blk_vars.length() == 1)
+  assert_true(blk_vars[0] == z)
+  let arg = @types.Arg::create(x, Var(z))
+  assert_true(arg.arg_free_vars().any(item => item == z))
+  let sub = @types.Sub::create(name="main", args=[arg], blks=[blk])
+  let program = @types.Program::create().append_sub(sub)
+  let program_vars = program.program_free_vars()
+  assert_true(program_vars.length() == 1)
+  assert_true(program_vars[0] == z)
+  let rewritten = program.substitute_program_var(z, Int(word8(7)))
+  assert_true(rewritten.program_free_vars().is_empty())
+}

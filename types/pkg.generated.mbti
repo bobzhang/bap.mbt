@@ -96,6 +96,9 @@ pub(all) struct Call {
   return_label : Label?
 } derive(Eq, @debug.Debug)
 pub fn Call::create(target~ : Label, return_label? : Label) -> Self
+pub fn Call::free_vars(Self) -> Array[Var]
+pub fn Call::map_exp(Self, (Exp) -> Exp) -> Self
+pub fn Call::substitute_var(Self, Var, Exp) -> Self
 pub fn Call::with_noreturn(Self) -> Self
 pub fn Call::with_return(Self, Label) -> Self
 
@@ -148,6 +151,9 @@ pub(all) enum JmpKind {
   Ret(Label)
   Interrupt(Int, Tid)
 } derive(Eq, @debug.Debug)
+pub fn JmpKind::free_vars(Self) -> Array[Var]
+pub fn JmpKind::map_exp(Self, (Exp) -> Exp) -> Self
+pub fn JmpKind::substitute_var(Self, Var, Exp) -> Self
 pub fn JmpKind::to_string(Self) -> String
 
 pub(all) enum Label {
@@ -155,7 +161,10 @@ pub(all) enum Label {
   Indirect(Exp)
 } derive(Eq, @debug.Debug)
 pub fn Label::direct(Tid) -> Self
+pub fn Label::free_vars(Self) -> Array[Var]
 pub fn Label::indirect(Exp) -> Self
+pub fn Label::map_exp(Self, (Exp) -> Exp) -> Self
+pub fn Label::substitute_var(Self, Var, Exp) -> Self
 pub fn Label::to_string(Self) -> String
 
 pub(all) struct Phi {
@@ -199,14 +208,17 @@ pub fn Term::append_def(Self[Blk], Self[Def]) -> Self[Blk]
 pub fn Term::append_jmp(Self[Blk], Self[Jmp]) -> Self[Blk]
 pub fn Term::append_phi(Self[Blk], Self[Phi]) -> Self[Blk]
 pub fn Term::append_sub(Self[Program], Self[Sub]) -> Self[Program]
+pub fn Term::arg_free_vars(Self[Arg]) -> Array[Var]
 pub fn Term::arg_lhs(Self[Arg]) -> Var
 pub fn Term::arg_rhs(Self[Arg]) -> Exp
 pub fn Term::args(Self[Sub]) -> Array[Self[Arg]]
 pub fn[T] Term::attrs(Self[T]) -> Map[String, String]
+pub fn Term::blk_free_vars(Self[Blk]) -> Array[Var]
 pub fn Term::blks(Self[Sub]) -> Array[Self[Blk]]
 pub fn[T] Term::clone(Self[T]) -> Self[T]
 pub fn Term::cond(Self[Jmp]) -> Exp
 pub fn[T] Term::create(T, tid? : Tid) -> Self[T]
+pub fn Term::def_free_vars(Self[Def]) -> Array[Var]
 pub fn Term::defines_var(Self[Blk], Var) -> Bool
 pub fn Term::defs(Self[Blk]) -> Array[Self[Def]]
 pub fn[T] Term::del_attr(Self[T], String) -> Self[T]
@@ -217,20 +229,38 @@ pub fn Term::find_sub(Self[Program], Tid) -> Self[Sub]?
 pub fn[T] Term::get_attr(Self[T], String) -> String?
 pub fn[T] Term::has_attr(Self[T], String) -> Bool
 pub fn Term::intent(Self[Arg]) -> Intent?
+pub fn Term::jmp_free_vars(Self[Jmp]) -> Array[Var]
 pub fn Term::jmps(Self[Blk]) -> Array[Self[Jmp]]
 pub fn Term::kind(Self[Jmp]) -> JmpKind
 pub fn Term::lhs(Self[Def]) -> Var
+pub fn Term::map_arg_exp(Self[Arg], (Exp) -> Exp) -> Self[Arg]
+pub fn Term::map_blk_exp(Self[Blk], (Exp) -> Exp) -> Self[Blk]
+pub fn Term::map_def_exp(Self[Def], (Exp) -> Exp) -> Self[Def]
+pub fn Term::map_jmp_exp(Self[Jmp], (Exp) -> Exp) -> Self[Jmp]
+pub fn Term::map_phi_exp(Self[Phi], (Exp) -> Exp) -> Self[Phi]
+pub fn Term::map_program_exp(Self[Program], (Exp) -> Exp) -> Self[Program]
+pub fn Term::map_sub_exp(Self[Sub], (Exp) -> Exp) -> Self[Sub]
 pub fn[T] Term::name(Self[T]) -> String
 pub fn[T] Term::payload(Self[T]) -> T
+pub fn Term::phi_free_vars(Self[Phi]) -> Array[Var]
 pub fn Term::phi_lhs(Self[Phi]) -> Var
 pub fn Term::phis(Self[Blk]) -> Array[Self[Phi]]
+pub fn Term::program_free_vars(Self[Program]) -> Array[Var]
 pub fn Term::remove_phi(Self[Phi], Tid) -> Self[Phi]
 pub fn Term::rhs(Self[Def]) -> Exp
 pub fn[T] Term::same(Self[T], Self[T]) -> Bool
 pub fn Term::select(Self[Phi], Tid) -> Exp?
 pub fn[T] Term::set_attr(Self[T], Attr) -> Self[T]
+pub fn Term::sub_free_vars(Self[Sub]) -> Array[Var]
 pub fn Term::sub_name(Self[Sub]) -> String
 pub fn Term::subs(Self[Program]) -> Array[Self[Sub]]
+pub fn Term::substitute_arg_var(Self[Arg], Var, Exp) -> Self[Arg]
+pub fn Term::substitute_blk_var(Self[Blk], Var, Exp) -> Self[Blk]
+pub fn Term::substitute_def_var(Self[Def], Var, Exp) -> Self[Def]
+pub fn Term::substitute_jmp_var(Self[Jmp], Var, Exp) -> Self[Jmp]
+pub fn Term::substitute_phi_var(Self[Phi], Var, Exp) -> Self[Phi]
+pub fn Term::substitute_program_var(Self[Program], Var, Exp) -> Self[Program]
+pub fn Term::substitute_sub_var(Self[Sub], Var, Exp) -> Self[Sub]
 pub fn[T] Term::tid(Self[T]) -> Tid
 pub fn Term::update_phi(Self[Phi], Tid, Exp) -> Self[Phi]
 pub fn Term::values(Self[Phi]) -> Array[(Tid, Exp)]

@@ -7,6 +7,7 @@ import {
 }
 
 // Values
+pub fn exec_stmts(Array[Stmt], state? : BilState, max_steps? : Int) -> Result[BilState, String]
 
 // Errors
 
@@ -33,6 +34,17 @@ pub fn BilMemory::from_bytes(addr_width~ : Int, start? : UInt64, Bytes) -> Self
 pub fn BilMemory::load(Self, Word, endian~ : @bitvec.Endian, width~ : Int) -> Result[Word, String]
 pub fn BilMemory::store(Self, Word, Word, endian~ : @bitvec.Endian) -> Result[Self, String]
 pub fn BilMemory::value_width(Self) -> Int
+
+type BilState derive(Eq, @debug.Debug)
+pub fn BilState::from_values(Map[String, BilValue]) -> Self
+pub fn BilState::get(Self, String) -> BilValue?
+pub fn BilState::get_memory(Self, String) -> BilMemory?
+pub fn BilState::get_var(Self, Var) -> BilValue?
+pub fn BilState::get_word(Self, String) -> Word?
+pub fn BilState::new() -> Self
+pub fn BilState::set(Self, String, BilValue) -> Self
+pub fn BilState::set_var(Self, Var, BilValue) -> Result[Self, String]
+pub fn BilState::values(Self) -> Map[String, BilValue]
 
 pub(all) enum BilValue {
   BilWord(Word)
@@ -163,6 +175,7 @@ pub(all) enum Stmt {
   While(cond~ : Exp, body~ : Array[Stmt])
 } derive(Eq, @debug.Debug)
 pub fn Stmt::defined_var(Self) -> Var?
+pub fn Stmt::exec(Self, state? : BilState, max_steps? : Int) -> Result[BilState, String]
 pub fn Stmt::free_vars(Self) -> Array[Var]
 pub fn Stmt::substitute_var(Self, Var, Exp) -> Self
 pub fn Stmt::to_string(Self) -> String

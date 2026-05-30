@@ -145,6 +145,43 @@ test "bil eval handles byte-addressed load and store expressions" {
 }
 
 ///|
+test "bil statement execution updates scalar variables" {
+  let typ = @types.ValueType::Imm(32)
+  let a = @types.Var::new(name="a", typ~)
+  let b = @types.Var::new(name="b", typ~)
+  let result = @types.Var::new(name="result", typ~)
+  let stmts = [
+    @types.Stmt::Move(a, Int(word32(2))),
+    Move(b, Int(word32(3))),
+    Move(result, BinOp(Plus, Var(a), Var(b))),
+  ]
+  match @types.exec_stmts(stmts) {
+    Ok(state) => assert_true(state.get_word("result") == Some(word32(5)))
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+test "bil statement execution handles bounded loops" {
+  let typ = @types.ValueType::Imm(32)
+  let a = @types.Var::new(name="a", typ~)
+  let result = @types.Var::new(name="result", typ~)
+  let zero = @types.Int(word32(0))
+  let one = @types.Int(word32(1))
+  let loop_stmt = @types.Stmt::While(cond=BinOp(Lt, zero, Var(a)), body=[
+    Move(a, BinOp(Minus, Var(a), one)),
+    Move(result, BinOp(Plus, Var(result), one)),
+  ])
+  match
+    @types.exec_stmts([Move(a, Int(word32(3))), Move(result, zero), loop_stmt]) {
+    Ok(state) => assert_true(state.get_word("result") == Some(word32(3)))
+    Err(reason) => fail(reason)
+  }
+  let infinite = @types.Stmt::While(cond=Int(@types.Word::b1()), body=[])
+  assert_true(@types.exec_stmts([infinite], max_steps=3) is Err(_))
+}
+
+///|
 test "statement helpers expose used variables and substitute expressions" {
   let typ = @types.ValueType::Imm(8)
   let x = @types.Var::new(name="x", typ~)

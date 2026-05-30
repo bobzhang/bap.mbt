@@ -501,6 +501,38 @@ fn hoist_load_stores(stmts : Array[Stmt]) -> Array[Stmt] {
 }
 
 ///|
+let normalize_tmp_counter : Ref[Int] = Ref(0)
+
+///|
+fn normalize_fresh_var(typ : ValueType) -> Var {
+  normalize_tmp_counter.val = normalize_tmp_counter.val + 1
+  Var::new(name="tmp#\{normalize_tmp_counter.val}", typ~, is_virtual=true)
+}
+
+///|
+fn append_stmts(lhs : Array[Stmt], rhs : Array[Stmt]) -> Array[Stmt] {
+  let result = lhs.copy()
+  for stmt in rhs {
+    result.push(stmt)
+  }
+  result
+}
+
+///|
+fn Exp::needs_condition_hoist(self : Exp) -> Bool {
+  self.first_ite_cond() is Some(_) || self.find_non_var_load_mem() is Some(_)
+}
+
+///|
+fn normalize_condition_setup(
+  variable : Var,
+  cond : Exp,
+  normalize_exp : Bool,
+) -> Array[Stmt] {
+  Move(variable, cond).normalize(normalize_exp~)
+}
+
+///|
 pub fn Stmt::normalize(
   self : Stmt,
   normalize_exp? : Bool = false,
@@ -515,21 +547,34 @@ pub fn Stmt::normalize(
       stmt.split_ite(normalize_exp)
     }
     Special(_) | CpuExn(_) => [self]
-    If(cond~, yes~, no~) =>
-      [
-        If(
-          cond=normalize_exp_if(cond, normalize_exp),
-          yes=normalize(yes, normalize_exp~),
-          no=normalize(no, normalize_exp~),
-        ),
-      ]
-    While(cond~, body~) =>
-      [
-        While(
-          cond=normalize_exp_if(cond, normalize_exp),
-          body=normalize(body, normalize_exp~),
-        ),
-      ]
+    If(cond~, yes~, no~) => {
+      let normalized_cond = normalize_exp_if(cond, normalize_exp)
+      let normalized_yes = normalize(yes, normalize_exp~)
+      let normalized_no = normalize(no, normalize_exp~)
+      if normalized_cond.needs_condition_hoist() {
+        let variable = normalize_fresh_var(normalized_cond.type_of())
+        append_stmts(
+          normalize_condition_setup(variable, normalized_cond, normalize_exp),
+          [If(cond=Var(variable), yes=normalized_yes, no=normalized_no)],
+        )
+      } else {
+        [If(cond=normalized_cond, yes=normalized_yes, no=normalized_no)]
+      }
+    }
+    While(cond~, body~) => {
+      let normalized_cond = normalize_exp_if(cond, normalize_exp)
+      let normalized_body = normalize(body, normalize_exp~)
+      if normalized_cond.needs_condition_hoist() {
+        let variable = normalize_fresh_var(normalized_cond.type_of())
+        let setup = normalize_condition_setup(
+          variable, normalized_cond, normalize_exp,
+        )
+        let body_with_update = append_stmts(normalized_body, setup)
+        append_stmts(setup, [While(cond=Var(variable), body=body_with_update)])
+      } else {
+        [While(cond=normalized_cond, body=normalized_body)]
+      }
+    }
   }
 }
 

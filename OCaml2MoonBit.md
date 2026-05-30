@@ -118,12 +118,15 @@ after an unconditional `Move(x, rhs)`, substitute within that rhs and leave the
 following statements unchanged for `x`. Conditional branch bodies apply the
 same rule locally and do not kill substitution in the outer sequence.
 
-BAP `Bil.normalize` is more than ITE splitting. Its later store-hoisting pass
-finds `Load(mem=store_chain, ...)` shapes in move and jump expressions,
-recovers the base memory variable from the store chain, inserts `mem :=
-store_chain`, and substitutes the original load to read from `Var(mem)`. Keep
-this after recursive statement normalization so hoisted stores are visible as
-standalone statements and repeated hoisting can drain nested store-chain loads.
+BAP `Bil.normalize` is more than ITE splitting. It hoists `If` and `While`
+conditions that contain ITEs or non-variable load memories into fresh virtual
+definitions; for loops, append the same condition update to the loop body so
+the guard is refreshed each iteration. Its later store-hoisting pass finds
+`Load(mem=store_chain, ...)` shapes in move and jump expressions, recovers the
+base memory variable from the store chain, inserts `mem := store_chain`, and
+substitutes the original load to read from `Var(mem)`. Keep store hoisting after
+recursive statement normalization so hoisted stores are visible as standalone
+statements and repeated hoisting can drain nested store-chain loads.
 
 For BAP `Trie.normalize`, preserve the pipeline order: apply substitutions in
 the given order, prune unreferenced virtual definitions, normalize negative

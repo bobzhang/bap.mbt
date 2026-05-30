@@ -275,6 +275,79 @@ test "bil BAP normalize hoists store-chain load memories" {
 }
 
 ///|
+fn assert_ite_setup(stmt : @types.Stmt, flag : @types.Var) -> @types.Var raise {
+  match stmt {
+    If(cond=Var(seen_flag), yes~, no~) => {
+      assert_true(seen_flag == flag)
+      assert_true(yes.length() == 1)
+      assert_true(no.length() == 1)
+      match (yes[0], no[0]) {
+        (Move(lhs, Int(yes_word)), Move(rhs, Int(no_word))) => {
+          assert_true(lhs == rhs)
+          assert_true(lhs.is_virtual())
+          assert_true(yes_word == @types.Word::b1())
+          assert_true(no_word == @types.Word::b0())
+          lhs
+        }
+        _ => fail("expected hoisted condition assignment")
+      }
+    }
+    _ => fail("expected hoisted condition branch")
+  }
+}
+
+///|
+test "bil BAP normalize hoists ITE branch conditions" {
+  let flag = @types.Var::new(name="flag", typ=Imm(1))
+  let x = @types.Var::new(name="x", typ=Imm(8))
+  let cond : @types.Exp = Ite(
+    cond=Var(flag),
+    yes=Int(@types.Word::b1()),
+    no=Int(@types.Word::b0()),
+  )
+  let normalized = @types.normalize([
+    If(cond~, yes=[Move(x, Int(word8(1)))], no=[Move(x, Int(word8(2)))]),
+  ])
+  assert_true(normalized.length() == 2)
+  let temp = assert_ite_setup(normalized[0], flag)
+  match normalized[1] {
+    If(cond=Var(branch_temp), yes~, no~) => {
+      assert_true(branch_temp == temp)
+      assert_true(yes.length() == 1)
+      assert_true(no.length() == 1)
+      inspect(yes[0].to_string(), content="x:imm8 := 1:8u")
+      inspect(no[0].to_string(), content="x:imm8 := 2:8u")
+    }
+    _ => fail("expected normalized branch")
+  }
+}
+
+///|
+test "bil BAP normalize hoists ITE while conditions with loop updates" {
+  let flag = @types.Var::new(name="flag", typ=Imm(1))
+  let x = @types.Var::new(name="x", typ=Imm(8))
+  let cond : @types.Exp = Ite(
+    cond=Var(flag),
+    yes=Int(@types.Word::b1()),
+    no=Int(@types.Word::b0()),
+  )
+  let normalized = @types.normalize([
+    While(cond~, body=[Move(x, BinOp(Plus, Var(x), Int(word8(1))))]),
+  ])
+  assert_true(normalized.length() == 2)
+  let temp = assert_ite_setup(normalized[0], flag)
+  match normalized[1] {
+    While(cond=Var(loop_temp), body~) => {
+      assert_true(loop_temp == temp)
+      assert_true(body.length() == 2)
+      inspect(body[0].to_string(), content="x:imm8 := (x:imm8 + 1:8u)")
+      assert_true(assert_ite_setup(body[1], flag) == temp)
+    }
+    _ => fail("expected normalized loop")
+  }
+}
+
+///|
 test "bil normalize splits ITE expressions in moves and jumps" {
   let typ = @types.ValueType::Imm(8)
   let flag = @types.Var::new(name="flag", typ~)

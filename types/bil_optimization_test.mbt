@@ -320,6 +320,20 @@ test "bil constant propagation folds straight-line moves" {
 }
 
 ///|
+test "translated BAP constant propagation handles virtual straight-line facts" {
+  let typ = @types.ValueType::Imm(8)
+  let v = @types.Var::new(name="v", typ~, is_virtual=true)
+  let x = @types.Var::new(name="x", typ~)
+  let propagated = @types.propagate_const_stmts([
+    Move(v, Int(word8(42))),
+    Move(x, BinOp(Plus, Var(v), Int(word8(1)))),
+  ])
+  assert_true(
+    stmt_text(propagated) == ["%v:imm8 := 0x2A:8u", "x:imm8 := 0x2B:8u"],
+  )
+}
+
+///|
 test "translated BAP constant propagation covers jumps and unknown values" {
   let typ = @types.ValueType::Imm(8)
   let x = @types.Var::new(name="x", typ~)
@@ -469,6 +483,43 @@ test "bil constant propagation does not leak selected branch facts past jumps" {
       }
     }
     _ => fail("expected propagated branch")
+  }
+}
+
+///|
+test "bil constant propagation preserves facts through skipped nested branches" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let z = @types.Var::new(name="z", typ~)
+  let stmts = [
+    @types.Stmt::Move(x, Int(word8(1))),
+    Move(y, Int(word8(2))),
+    While(cond=BinOp(Lt, Var(x), Int(word8(0))), body=[
+      Move(y, Int(word8(1))),
+      If(cond=BinOp(Lt, Var(y), Int(word8(0))), yes=[Jmp(Var(y))], no=[]),
+    ]),
+    Move(z, Var(y)),
+  ]
+  let propagated = @types.propagate_const_stmts(stmts)
+  assert_true(
+    stmt_text(propagated) ==
+    [
+      "x:imm8 := 1:8u", "y:imm8 := 2:8u", "while 0:1u do 2 stmts", "z:imm8 := 2:8u",
+    ],
+  )
+  match propagated[2] {
+    While(body~, ..) => {
+      assert_true(
+        stmt_text(body) ==
+        ["y:imm8 := 1:8u", "if 0:1u then 1 stmts else 0 stmts"],
+      )
+      match body[1] {
+        If(yes~, ..) => assert_true(stmt_text(yes) == ["jmp 1:8u"])
+        _ => fail("expected loop branch")
+      }
+    }
+    _ => fail("expected loop")
   }
 }
 

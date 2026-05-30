@@ -66,6 +66,7 @@ pub fn Image::words(Self, word_size~ : Int) -> @memory.MemMap[@types.Word]
 type ImageBackend
 pub fn ImageBackend::create(name~ : String, description? : String, extensions? : Array[String], priority? : Int, load~ : (Bytes) -> Result[(Image, Array[String]), String]) -> Self
 pub fn ImageBackend::description(Self) -> String
+pub fn ImageBackend::elf() -> Self
 pub fn ImageBackend::extensions(Self) -> Array[String]
 pub fn ImageBackend::load(Self, Bytes) -> Result[(Image, Array[String]), String]
 pub fn ImageBackend::name(Self) -> String

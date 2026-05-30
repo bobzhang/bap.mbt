@@ -195,6 +195,124 @@ fn unit_project_image_backend() -> @image.ImageBackend {
 }
 
 ///|
+fn project_elf_test_set_u16_le(
+  buffer : Array[Byte],
+  offset : Int,
+  value : Int,
+) -> Unit {
+  buffer[offset] = (value & 0xff).to_byte()
+  buffer[offset + 1] = ((value >> 8) & 0xff).to_byte()
+}
+
+///|
+fn project_elf_test_set_u32_le(
+  buffer : Array[Byte],
+  offset : Int,
+  value : Int,
+) -> Unit {
+  for i in 0..<4 {
+    buffer[offset + i] = ((value >> (i * 8)) & 0xff).to_byte()
+  }
+}
+
+///|
+fn project_elf_test_set_u64_le(
+  buffer : Array[Byte],
+  offset : Int,
+  value : UInt64,
+) -> Unit {
+  for i in 0..<8 {
+    buffer[offset + i] = ((value >> (i * 8)) & 0xffUL).to_int().to_byte()
+  }
+}
+
+///|
+fn project_elf_test_write_bytes(
+  buffer : Array[Byte],
+  offset : Int,
+  data : Bytes,
+) -> Unit {
+  for i in 0..<data.length() {
+    buffer[offset + i] = data[i]
+  }
+}
+
+///|
+fn project_elf_test_write_section64(
+  buffer : Array[Byte],
+  index : Int,
+  name_offset : Int,
+  typ : Int,
+  flags : UInt64,
+  addr : UInt64,
+  offset : Int,
+  size : Int,
+) -> Unit {
+  let base = 120 + index * 64
+  project_elf_test_set_u32_le(buffer, base, name_offset)
+  project_elf_test_set_u32_le(buffer, base + 4, typ)
+  project_elf_test_set_u64_le(buffer, base + 8, flags)
+  project_elf_test_set_u64_le(buffer, base + 16, addr)
+  project_elf_test_set_u64_le(buffer, base + 24, offset.to_uint64())
+  project_elf_test_set_u64_le(buffer, base + 32, size.to_uint64())
+}
+
+///|
+fn project_elf_test_make_x86_64() -> Bytes {
+  let shstr = b"\x00.shstrtab\x00.text\x00"
+  let text = b"\x55\xc3"
+  let shstr_offset = 120 + 3 * 64
+  let text_offset = shstr_offset + shstr.length()
+  let total = text_offset + text.length()
+  let buffer = Array::make(total, b'\x00')
+  project_elf_test_write_bytes(buffer, 0, b"\x7fELF")
+  buffer[4] = b'\x02'
+  buffer[5] = b'\x01'
+  buffer[6] = b'\x01'
+  project_elf_test_set_u16_le(buffer, 16, 2)
+  project_elf_test_set_u16_le(buffer, 18, 0x3e)
+  project_elf_test_set_u32_le(buffer, 20, 1)
+  project_elf_test_set_u64_le(buffer, 24, 0x401000UL)
+  project_elf_test_set_u64_le(buffer, 32, 64UL)
+  project_elf_test_set_u64_le(buffer, 40, 120UL)
+  project_elf_test_set_u16_le(buffer, 52, 64)
+  project_elf_test_set_u16_le(buffer, 54, 56)
+  project_elf_test_set_u16_le(buffer, 56, 1)
+  project_elf_test_set_u16_le(buffer, 58, 64)
+  project_elf_test_set_u16_le(buffer, 60, 3)
+  project_elf_test_set_u16_le(buffer, 62, 1)
+  project_elf_test_set_u32_le(buffer, 64, 1)
+  project_elf_test_set_u32_le(buffer, 68, 5)
+  project_elf_test_set_u64_le(buffer, 72, text_offset.to_uint64())
+  project_elf_test_set_u64_le(buffer, 80, 0x401000UL)
+  project_elf_test_set_u64_le(buffer, 96, text.length().to_uint64())
+  project_elf_test_set_u64_le(buffer, 104, text.length().to_uint64())
+  project_elf_test_write_section64(
+    buffer,
+    1,
+    1,
+    3,
+    0UL,
+    0UL,
+    shstr_offset,
+    shstr.length(),
+  )
+  project_elf_test_write_section64(
+    buffer,
+    2,
+    11,
+    1,
+    6UL,
+    0x401000UL,
+    text_offset,
+    text.length(),
+  )
+  project_elf_test_write_bytes(buffer, shstr_offset, shstr)
+  project_elf_test_write_bytes(buffer, text_offset, text)
+  Bytes::from_array(buffer)
+}
+
+///|
 test "project input loading falls back to image backends" {
   let backend = unit_project_image_backend()
   match @image.register_backend(name=backend.name(), backend) {
@@ -218,6 +336,38 @@ test "project input loading falls back to image backends" {
       let project = @project.Project::from_input(input)
       assert_true(project.filename() == Some("sample.pimg"))
       assert_true(project.memory().lookup(0x440UL).length() == 1)
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+test "project built-in image loaders include ELF input" {
+  match @project.register_builtin_input_loaders() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  assert_true(@project.available_input_loaders().contains("elf"))
+  assert_true(@project.input_loader_names_for_extension("elf").contains("elf"))
+  match
+    @project.ProjectInput::load_for_filename(
+      project_elf_test_make_x86_64(),
+      filename="unit.elf",
+    ) {
+    Ok(input) => {
+      let project = @project.Project::from_input(input)
+      assert_true(project.filename() == Some("unit.elf"))
+      assert_true(project.target().matches("x86_64"))
+      assert_true(project.memory().lookup(0x401000UL).length() == 1)
+      match project.image() {
+        Some(image) => {
+          assert_true(image.segments()[0].name() == ".load0")
+          assert_true(
+            image.sections().any(section => section.name() == ".text"),
+          )
+        }
+        None => fail("expected ELF image")
+      }
     }
     Err(reason) => fail(reason)
   }

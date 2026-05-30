@@ -140,7 +140,8 @@ pub fn ImageBackend::ogre() -> ImageBackend {
 
 ///|
 pub fn register_builtin_backends() -> Result[Unit, String] {
-  for backend in [ImageBackend::raw(), ImageBackend::ogre()] {
+  for
+    backend in [ImageBackend::raw(), ImageBackend::ogre(), ImageBackend::elf()] {
     match register_backend_if_absent(backend) {
       Ok(_) => ()
       Err(reason) => return Err(reason)

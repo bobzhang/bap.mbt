@@ -1,4 +1,62 @@
 ///|
+let ir_address_attr = "address"
+
+///|
+pub fn Attr::address(addr : Word) -> Attr {
+  Attr::new(key=ir_address_attr, value=addr.to_string())
+}
+
+///|
+fn parse_ir_address_text(width : Int, text : String) -> Word? {
+  if text == "true" || text == "false" || text.split_once(":") is Some(_) {
+    try Word::from_string(text) catch {
+      _ => None
+    } noraise {
+      word => Some(word)
+    }
+  } else {
+    let value : Int64 = try @string.from_str(text) catch {
+      _ => return None
+    } noraise {
+      value => value
+    }
+    try Word::of_int64(value, width~) catch {
+      _ => None
+    } noraise {
+      word => Some(word)
+    }
+  }
+}
+
+///|
+pub fn IrTerm::has_address(self : IrTerm, addr : Word) -> Bool {
+  match self.get_attr(ir_address_attr) {
+    Some(text) =>
+      match parse_ir_address_text(addr.bitwidth(), text) {
+        Some(actual) => actual == addr
+        None => false
+      }
+    None => false
+  }
+}
+
+///|
+pub fn IrTerm::has_address_text(self : IrTerm, text : String) -> Bool {
+  match self.get_attr(ir_address_attr) {
+    Some(actual_text) =>
+      match parse_ir_address_text(64, actual_text) {
+        Some(actual) =>
+          match parse_ir_address_text(actual.bitwidth(), text) {
+            Some(expected) => actual == expected
+            None => false
+          }
+        None => false
+      }
+    None => false
+  }
+}
+
+///|
 pub fn IrTerm::same_term(self : IrTerm, other : IrTerm) -> Bool {
   self.class() == other.class() && self.tid() == other.tid()
 }

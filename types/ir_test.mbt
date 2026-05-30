@@ -180,6 +180,37 @@ test "ir term query helpers match classes attributes vars and children" {
 }
 
 ///|
+test "ir term address query helpers mirror BAP term-addr" {
+  let addr32 = @types.Word::of_int64(42L, width=32)
+  let addr64 = @types.Word::of_int64(42L, width=64)
+  let blk = @types.Blk::create().set_attr(@types.Attr::address(addr32))
+  let block_term = @types.BlkTerm(blk)
+  assert_true(block_term.has_address(addr32))
+  assert_true(!block_term.has_address(addr64))
+  assert_true(block_term.has_address_text("42"))
+  assert_true(block_term.has_address_text("0x2a"))
+  assert_true(block_term.has_address_text("0x2A:32u"))
+  assert_true(!block_term.has_address_text("43"))
+  assert_true(!block_term.has_address_text("0x2a:64u"))
+
+  let plain = @types.BlkTerm(
+    @types.Blk::create().set_attr(@types.Attr::new(key="address", value="0x2a")),
+  )
+  assert_true(plain.has_address(addr32))
+  assert_true(!plain.has_address(@types.Word::of_int64(43L, width=32)))
+
+  let invalid = @types.BlkTerm(
+    @types.Blk::create().set_attr(
+      @types.Attr::new(key="address", value="not-an-address"),
+    ),
+  )
+  assert_true(!invalid.has_address(addr32))
+  assert_true(
+    !@types.SubTerm(@types.Sub::create(name="main")).has_address(addr32),
+  )
+}
+
+///|
 test "ir term query helpers test immediate parent relationships" {
   let typ = @types.ValueType::Imm(8)
   let x = @types.Var::new(name="x", typ~)

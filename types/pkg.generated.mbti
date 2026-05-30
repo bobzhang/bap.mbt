@@ -132,6 +132,7 @@ pub(all) struct Attr {
   key : String
   value : String
 } derive(Eq, @debug.Debug)
+pub fn Attr::address(Word) -> Self
 pub fn Attr::comment(String) -> Self
 pub fn Attr::new(key~ : String, value~ : String) -> Self
 pub fn Attr::stub() -> Self
@@ -331,6 +332,8 @@ pub fn IrTerm::defines_var_name(Self, String) -> Bool
 pub fn IrTerm::del_attr(Self, String) -> Self
 pub fn IrTerm::free_vars(Self) -> Array[Var]
 pub fn IrTerm::get_attr(Self, String) -> String?
+pub fn IrTerm::has_address(Self, Word) -> Bool
+pub fn IrTerm::has_address_text(Self, String) -> Bool
 pub fn IrTerm::has_attr(Self, String) -> Bool
 pub fn IrTerm::has_attr_value(Self, String, String) -> Bool
 pub fn IrTerm::has_child_tid(Self, Tid) -> Bool

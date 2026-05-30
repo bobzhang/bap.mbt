@@ -11,6 +11,20 @@ import {
 // Errors
 
 // Types and methods
+pub(all) struct Arg {
+  lhs : Var
+  rhs : Exp
+  intent : Intent?
+} derive(Eq, @debug.Debug)
+pub fn Arg::create(Var, Exp, intent? : Intent, tid? : Tid) -> Term[Self]
+
+pub(all) struct Attr {
+  key : String
+  value : String
+} derive(Eq, @debug.Debug)
+pub fn Attr::comment(String) -> Self
+pub fn Attr::new(key~ : String, value~ : String) -> Self
+
 pub(all) enum BinOp {
   Plus
   Minus
@@ -34,6 +48,33 @@ pub(all) enum BinOp {
 } derive(Eq, @debug.Debug)
 pub fn BinOp::to_string(Self) -> String
 
+pub(all) struct Blk {
+  phis : Array[Term[Phi]]
+  defs : Array[Term[Def]]
+  jmps : Array[Term[Jmp]]
+}
+pub fn Blk::create(phis? : Array[Term[Phi]], defs? : Array[Term[Def]], jmps? : Array[Term[Jmp]], tid? : Tid) -> Term[Self]
+
+pub(all) enum BlkElt {
+  PhiElt(Term[Phi])
+  DefElt(Term[Def])
+  JmpElt(Term[Jmp])
+}
+
+pub(all) struct Call {
+  target : Label
+  return_label : Label?
+} derive(Eq, @debug.Debug)
+pub fn Call::create(target~ : Label, return_label? : Label) -> Self
+pub fn Call::with_noreturn(Self) -> Self
+pub fn Call::with_return(Self, Label) -> Self
+
+pub(all) struct Def {
+  lhs : Var
+  rhs : Exp
+} derive(Eq, @debug.Debug)
+pub fn Def::create(Var, Exp, tid? : Tid) -> Term[Self]
+
 pub(all) enum Exp {
   Int(Word)
   Var(Var)
@@ -49,6 +90,49 @@ pub(all) enum Exp {
 pub fn Exp::to_string(Self) -> String
 pub fn Exp::type_of(Self) -> ValueType
 
+pub(all) enum Intent {
+  In
+  Out
+  Both
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Jmp {
+  kind : JmpKind
+  cond : Exp
+} derive(Eq, @debug.Debug)
+pub fn Jmp::create(JmpKind, cond? : Exp, tid? : Tid) -> Term[Self]
+pub fn Jmp::create_call(Call, cond? : Exp, tid? : Tid) -> Term[Self]
+pub fn Jmp::create_goto(Label, cond? : Exp, tid? : Tid) -> Term[Self]
+pub fn Jmp::create_int(Int, Tid, cond? : Exp, term_tid? : Tid) -> Term[Self]
+pub fn Jmp::create_ret(Label, cond? : Exp, tid? : Tid) -> Term[Self]
+
+pub(all) enum JmpKind {
+  JmpCall(Call)
+  Goto(Label)
+  Ret(Label)
+  Interrupt(Int, Tid)
+} derive(Eq, @debug.Debug)
+pub fn JmpKind::to_string(Self) -> String
+
+pub(all) enum Label {
+  Direct(Tid)
+  Indirect(Exp)
+} derive(Eq, @debug.Debug)
+pub fn Label::direct(Tid) -> Self
+pub fn Label::indirect(Exp) -> Self
+pub fn Label::to_string(Self) -> String
+
+pub(all) struct Phi {
+  lhs : Var
+  values : Array[(Tid, Exp)]
+} derive(Eq, @debug.Debug)
+pub fn Phi::of_list(Var, Array[(Tid, Exp)], tid? : Tid) -> Term[Self]
+
+pub(all) struct Program {
+  subs : Array[Term[Sub]]
+}
+pub fn Program::create(subs? : Array[Term[Sub]], tid? : Tid) -> Term[Self]
+
 pub(all) enum Stmt {
   Move(Var, Exp)
   Jmp(Exp)
@@ -59,6 +143,75 @@ pub(all) enum Stmt {
 } derive(Eq, @debug.Debug)
 pub fn Stmt::defined_var(Self) -> Var?
 pub fn Stmt::to_string(Self) -> String
+
+pub(all) struct Sub {
+  name : String
+  args : Array[Term[Arg]]
+  blks : Array[Term[Blk]]
+}
+pub fn Sub::create(name? : String, args? : Array[Term[Arg]], blks? : Array[Term[Blk]], tid? : Tid) -> Term[Self]
+
+type Term[T]
+pub fn Term::append_arg(Self[Sub], Self[Arg]) -> Self[Sub]
+pub fn Term::append_blk(Self[Sub], Self[Blk]) -> Self[Sub]
+pub fn Term::append_def(Self[Blk], Self[Def]) -> Self[Blk]
+pub fn Term::append_jmp(Self[Blk], Self[Jmp]) -> Self[Blk]
+pub fn Term::append_phi(Self[Blk], Self[Phi]) -> Self[Blk]
+pub fn Term::append_sub(Self[Program], Self[Sub]) -> Self[Program]
+pub fn Term::arg_lhs(Self[Arg]) -> Var
+pub fn Term::arg_rhs(Self[Arg]) -> Exp
+pub fn Term::args(Self[Sub]) -> Array[Self[Arg]]
+pub fn[T] Term::attrs(Self[T]) -> Map[String, String]
+pub fn Term::blks(Self[Sub]) -> Array[Self[Blk]]
+pub fn[T] Term::clone(Self[T]) -> Self[T]
+pub fn Term::cond(Self[Jmp]) -> Exp
+pub fn[T] Term::create(T, tid? : Tid) -> Self[T]
+pub fn Term::defines_var(Self[Blk], Var) -> Bool
+pub fn Term::defs(Self[Blk]) -> Array[Self[Def]]
+pub fn[T] Term::del_attr(Self[T], String) -> Self[T]
+pub fn Term::elts(Self[Blk], rev? : Bool) -> Array[BlkElt]
+pub fn Term::find_blk(Self[Sub], Tid) -> Self[Blk]?
+pub fn Term::find_def(Self[Blk], Tid) -> Self[Def]?
+pub fn Term::find_sub(Self[Program], Tid) -> Self[Sub]?
+pub fn[T] Term::get_attr(Self[T], String) -> String?
+pub fn[T] Term::has_attr(Self[T], String) -> Bool
+pub fn Term::intent(Self[Arg]) -> Intent?
+pub fn Term::jmps(Self[Blk]) -> Array[Self[Jmp]]
+pub fn Term::kind(Self[Jmp]) -> JmpKind
+pub fn Term::lhs(Self[Def]) -> Var
+pub fn[T] Term::name(Self[T]) -> String
+pub fn[T] Term::payload(Self[T]) -> T
+pub fn Term::phi_lhs(Self[Phi]) -> Var
+pub fn Term::phis(Self[Blk]) -> Array[Self[Phi]]
+pub fn Term::remove_phi(Self[Phi], Tid) -> Self[Phi]
+pub fn Term::rhs(Self[Def]) -> Exp
+pub fn[T] Term::same(Self[T], Self[T]) -> Bool
+pub fn Term::select(Self[Phi], Tid) -> Exp?
+pub fn[T] Term::set_attr(Self[T], Attr) -> Self[T]
+pub fn Term::sub_name(Self[Sub]) -> String
+pub fn Term::subs(Self[Program]) -> Array[Self[Sub]]
+pub fn[T] Term::tid(Self[T]) -> Tid
+pub fn Term::update_phi(Self[Phi], Tid, Exp) -> Self[Phi]
+pub fn Term::values(Self[Phi]) -> Array[(Tid, Exp)]
+pub fn Term::with_cond(Self[Jmp], Exp) -> Self[Jmp]
+pub fn Term::with_intent(Self[Arg], Intent) -> Self[Arg]
+pub fn Term::with_kind(Self[Jmp], JmpKind) -> Self[Jmp]
+pub fn Term::with_lhs(Self[Def], Var) -> Self[Def]
+pub fn[T] Term::with_payload(Self[T], T) -> Self[T]
+pub fn Term::with_rhs(Self[Def], Exp) -> Self[Def]
+pub fn Term::with_sub_name(Self[Sub], String) -> Self[Sub]
+pub fn Term::with_unknown_intent(Self[Arg]) -> Self[Arg]
+
+pub(all) struct Tid {
+  id : Int
+  name : String?
+} derive(Eq, Hash, @debug.Debug)
+pub fn Tid::for_addr(Word) -> Self
+pub fn Tid::for_name(String) -> Self
+pub fn Tid::fresh() -> Self
+pub fn Tid::id(Self) -> Int
+pub fn Tid::name(Self) -> String?
+pub fn Tid::to_string(Self) -> String
 
 pub(all) enum UnOp {
   Not

@@ -51,6 +51,17 @@ pub fn ProjectInput::load_file(
 }
 
 ///|
+pub fn ProjectInput::file(
+  filename~ : String,
+  loader? : String,
+) -> Result[ProjectInput, String] {
+  match loader {
+    Some(name) => ProjectInput::load_file(filename, loader=name)
+    None => ProjectInput::load_file_for_filename(filename)
+  }
+}
+
+///|
 pub fn ProjectInput::load_file_for_filename(
   path : String,
   filename? : String,

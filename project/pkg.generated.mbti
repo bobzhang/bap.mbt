@@ -174,6 +174,7 @@ pub fn ProjectDisassemblyState::with_blocks(Self, Array[@memory.Memory]) -> Self
 
 type ProjectInput
 pub fn ProjectInput::custom(target~ : @core_theory.Target, filename? : String, image? : @image.Image, program? : @types.Term[@types.Program], memory? : @memory.MemMap[String], libraries? : Array[Library], finish? : (Project) -> Project) -> Self
+pub fn ProjectInput::file(filename~ : String, loader? : String) -> Result[Self, String]
 pub fn ProjectInput::filename(Self) -> String?
 pub fn ProjectInput::from_bytes(target~ : @core_theory.Target, Bytes, endian~ : @bitvec.Endian, base? : UInt64, filename? : String, finish? : (Project) -> Project) -> Self
 pub fn ProjectInput::from_image(@image.Image, target? : @core_theory.Target, program? : @types.Term[@types.Program], finish? : (Project) -> Project) -> Self

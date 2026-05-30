@@ -99,7 +99,9 @@ pub(all) struct Call {
 pub fn Call::create(target~ : Label, return_label? : Label) -> Self
 pub fn Call::free_vars(Self) -> Array[Var]
 pub fn Call::map_exp(Self, (Exp) -> Exp) -> Self
+pub fn Call::return_label(Self) -> Label?
 pub fn Call::substitute_var(Self, Var, Exp) -> Self
+pub fn Call::target(Self) -> Label
 pub fn Call::with_noreturn(Self) -> Self
 pub fn Call::with_return(Self, Label) -> Self
 
@@ -229,6 +231,7 @@ pub fn Term::defs(Self[Blk]) -> Array[Self[Def]]
 pub fn Term::defs_after(Self[Blk], Tid, rev? : Bool) -> Array[Self[Def]]
 pub fn Term::defs_before(Self[Blk], Tid, rev? : Bool) -> Array[Self[Def]]
 pub fn[T] Term::del_attr(Self[T], String) -> Self[T]
+pub fn Term::direct_call_target(Self[Jmp]) -> Tid?
 pub fn Term::elts(Self[Blk], rev? : Bool) -> Array[BlkElt]
 pub fn Term::entry_blk(Self[Sub]) -> Self[Blk]?
 pub fn Term::filter_defs(Self[Blk], (Self[Def]) -> Bool) -> Self[Blk]
@@ -264,6 +267,9 @@ pub fn Term::phi_free_vars(Self[Phi]) -> Array[Var]
 pub fn Term::phi_lhs(Self[Phi]) -> Var
 pub fn Term::phis(Self[Blk]) -> Array[Self[Phi]]
 pub fn Term::prev_def(Self[Blk], Tid) -> Self[Def]?
+pub fn Term::program_callees(Self[Program], Self[Sub]) -> Array[Tid]
+pub fn Term::program_callers(Self[Program], Self[Sub]) -> Array[Tid]
+pub fn Term::program_callgraph(Self[Program]) -> @graphlib.Graph[Tid, Array[Self[Jmp]]]
 pub fn Term::program_free_vars(Self[Program]) -> Array[Var]
 pub fn Term::remove_def(Self[Blk], Tid) -> Self[Blk]
 pub fn Term::remove_phi(Self[Phi], Tid) -> Self[Phi]
@@ -276,6 +282,7 @@ pub fn Term::split_before_def(Self[Blk], Self[Def]) -> (Self[Blk], Self[Blk])
 pub fn Term::split_bottom_defs(Self[Blk]) -> (Self[Blk], Self[Blk])
 pub fn Term::split_top_defs(Self[Blk]) -> (Self[Blk], Self[Blk])
 pub fn Term::sub_cfg(Self[Sub]) -> @graphlib.Graph[Tid, Tid]
+pub fn Term::sub_direct_call_tids(Self[Sub]) -> Array[Tid]
 pub fn Term::sub_free_vars(Self[Sub]) -> Array[Var]
 pub fn Term::sub_has_edge(Self[Sub], Self[Blk], Self[Blk]) -> Bool
 pub fn Term::sub_name(Self[Sub]) -> String

@@ -69,6 +69,15 @@ pub fn Project::target(Self) -> @core_theory.Target
 pub fn Project::with_memory(Self, @memory.MemMap[String]) -> Self
 pub fn Project::with_program(Self, @types.Term[@types.Program]) -> Self
 
+type ProjectCollator[S, R]
+pub fn[S, R] ProjectCollator::apply(Self[S, R], Array[Project]) -> R?
+pub fn[S, R] ProjectCollator::collate(Self[S, R], Int, S, Project) -> S
+pub fn[S, R] ProjectCollator::create(name~ : String, description? : String, prepare~ : (Project) -> S, collate~ : (Int, S, Project) -> S, summary~ : (S) -> R) -> Self[S, R]
+pub fn[S, R] ProjectCollator::description(Self[S, R]) -> String
+pub fn[S, R] ProjectCollator::name(Self[S, R]) -> String
+pub fn[S, R] ProjectCollator::prepare(Self[S, R], Project) -> S
+pub fn[S, R] ProjectCollator::summary(Self[S, R], S) -> R
+
 type ProjectInput
 pub fn ProjectInput::custom(target~ : @core_theory.Target, filename? : String, image? : @image.Image, program? : @types.Term[@types.Program], memory? : @memory.MemMap[String], libraries? : Array[Library], finish? : (Project) -> Project) -> Self
 pub fn ProjectInput::filename(Self) -> String?

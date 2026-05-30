@@ -3,7 +3,7 @@ test "project brancher resolves edge tables and applies them to blocks" {
   let first = @memory.Memory::from_bytes(
     endian=LittleEndian,
     start=0x5000UL,
-    b"\x01",
+    b"\x01\x02",
   )
   let second = @memory.Memory::from_bytes(
     endian=LittleEndian,
@@ -19,26 +19,34 @@ test "project brancher resolves edge tables and applies them to blocks" {
     source=0x5000UL,
     kind=JumpEdge,
   )
+  let interior = @project.ProjectDisassemblyEdge::create(
+    source=0x5001UL,
+    target=0x5010UL,
+    kind=CondEdge,
+  )
   let ignored = @project.ProjectDisassemblyEdge::create(
     source=0x6000UL,
     target=0x6010UL,
     kind=CondEdge,
   )
-  let brancher = @project.ProjectBrancher::of_edges([known, unknown, ignored])
+  let brancher = @project.ProjectBrancher::of_edges([
+      known, unknown, interior, ignored,
+    ])
     .set_path("unit.bin")
     .with_biased(true)
   assert_true(brancher.path() == Some("unit.bin"))
   assert_true(brancher.is_biased())
-  assert_true(brancher.resolve(first).length() == 2)
+  assert_true(brancher.resolve(first).length() == 3)
   assert_true(brancher.resolve(second).is_empty())
   let project = @project.Project::empty(@core_theory.Target::unknown()).with_disassembly(
     @project.ProjectDisassemblyState::empty().add_block(first).add_block(second),
   )
   match project.apply_brancher(brancher~) {
     Ok(branched) => {
-      assert_true(branched.disassembly().edge_count() == 2)
+      assert_true(branched.disassembly().edge_count() == 3)
       assert_true(branched.disassembly().has_edge(known))
       assert_true(branched.disassembly().has_edge(unknown))
+      assert_true(branched.disassembly().has_edge(interior))
       assert_true(!branched.disassembly().has_edge(ignored))
     }
     Err(reason) => fail(reason)
@@ -47,6 +55,48 @@ test "project brancher resolves edge tables and applies them to blocks" {
     @project.Project::empty(@core_theory.Target::unknown()).apply_brancher()
     is Err(_),
   )
+}
+
+///|
+test "project brancher prefers materialized instruction memories" {
+  let block = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x7300UL,
+    b"\x01\x02\x03",
+  )
+  match block.view(from=0x7301UL, words=1) {
+    Ok(instruction_memory) => {
+      let instruction = @project.ProjectDisassemblyInstruction::create(
+        instruction_memory,
+        assembly="jmp",
+      )
+      let edge = @project.ProjectDisassemblyEdge::create(
+        source=0x7301UL,
+        target=0x7302UL,
+        kind=JumpEdge,
+      )
+      let brancher = @project.ProjectBrancher::create(memory => {
+        if memory.min_addr() == 0x7301UL && memory.length() == 1 {
+          [edge]
+        } else {
+          []
+        }
+      })
+      let project = @project.Project::empty(@core_theory.Target::unknown()).with_disassembly(
+        @project.ProjectDisassemblyState::empty()
+        .add_block(block)
+        .add_instruction(instruction),
+      )
+      match project.apply_brancher(brancher~) {
+        Ok(branched) => {
+          assert_true(branched.disassembly().edge_count() == 1)
+          assert_true(branched.disassembly().has_edge(edge))
+        }
+        Err(reason) => fail(reason)
+      }
+    }
+    Err(reason) => fail(reason)
+  }
 }
 
 ///|

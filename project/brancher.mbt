@@ -26,7 +26,7 @@ pub fn ProjectBrancher::of_edges(
 ) -> ProjectBrancher {
   let known_edges = edges.copy()
   ProjectBrancher::create(block => {
-    known_edges.filter(edge => edge.source() == block.min_addr())
+    known_edges.filter(edge => block.contains(edge.source()))
   })
 }
 
@@ -122,13 +122,19 @@ pub fn Project::apply_brancher(
   if blocks.is_empty() {
     return Err("project has no disassembly blocks to branch")
   }
+  let instructions = self.disassembly().instructions()
+  let subjects = if instructions.is_empty() {
+    blocks
+  } else {
+    instructions.map(instruction => instruction.memory())
+  }
   let selected = match brancher {
     Some(value) => value
     None => ProjectBrancher::empty()
   }
   let mut state = self.disassembly()
-  for block in blocks {
-    for edge in selected.resolve(block) {
+  for memory in subjects {
+    for edge in selected.resolve(memory) {
       state = state.add_edge(edge)
     }
   }

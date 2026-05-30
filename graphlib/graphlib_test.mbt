@@ -48,6 +48,36 @@ test "graph union and intersection follow set semantics" {
 }
 
 ///|
+test "partitions support BAP trivial discrete union and refinement invariants" {
+  let elements = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+  let trivial = @graphlib.Partition::trivial(elements)
+  assert_true(trivial.group_count() == 1)
+  assert_true(elements.all(x => elements.all(y => trivial.equiv(x, y))))
+  let discrete = @graphlib.Partition::discrete(elements)
+  assert_true(discrete.group_count() == elements.length())
+  assert_true(
+    elements.all(x => elements.all(y => discrete.equiv(x, y) == (x == y))),
+  )
+  let joined = discrete.union(1, 2)
+  assert_true(joined.equiv(1, 2))
+  assert_true(!joined.equiv(1, 3))
+  let refined = trivial.refine((x, y) => (x - y) % 2 == 0)
+  assert_true(refined.group_count() == 2)
+  let covered : Set[Int] = Set([], capacity=elements.length())
+  for group in refined.groups() {
+    match group.iter().next() {
+      Some(representative) =>
+        for element in group {
+          covered.add(element)
+          assert_true((representative - element) % 2 == 0)
+        }
+      None => fail("empty partition group")
+    }
+  }
+  assert_true(covered == Set::from_array(elements))
+}
+
+///|
 test "dfs classifies tree and back edges" {
   let graph = sample_graph()
   let kinds = graph.dfs_edges(0).map(pair => pair.0)

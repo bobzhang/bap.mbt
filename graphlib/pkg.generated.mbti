@@ -54,6 +54,15 @@ pub fn[N : Hash + Eq, E] Graph::strong_components(Self[N, E]) -> Array[@set.Set[
 pub fn[N : Eq, E] Graph::successors(Self[N, E], N) -> Array[N]
 pub fn[N : Eq, E : Eq] Graph::union(Self[N, E], Self[N, E]) -> Self[N, E]
 
+type Partition[N] derive(@debug.Debug)
+pub fn[N : Hash + Eq] Partition::discrete(ArrayView[N]) -> Self[N]
+pub fn[N : Hash + Eq] Partition::equiv(Self[N], N, N) -> Bool
+pub fn[N] Partition::group_count(Self[N]) -> Int
+pub fn[N] Partition::groups(Self[N]) -> Array[@set.Set[N]]
+pub fn[N : Hash + Eq] Partition::refine(Self[N], (N, N) -> Bool) -> Self[N]
+pub fn[N : Hash + Eq] Partition::trivial(ArrayView[N]) -> Self[N]
+pub fn[N : Hash + Eq] Partition::union(Self[N], N, N) -> Self[N]
+
 // Type aliases
 
 // Traits

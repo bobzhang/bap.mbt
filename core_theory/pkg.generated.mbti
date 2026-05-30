@@ -8,6 +8,21 @@ import {
 }
 
 // Values
+pub fn common_targets() -> Array[Target]
+
+pub fn declared_targets() -> Array[Target]
+
+pub fn find_target(String) -> Target?
+
+pub fn get_target(String) -> Result[Target, String]
+
+pub fn register_target(Target) -> Result[Unit, String]
+
+pub fn registered_targets() -> Array[Target]
+
+pub fn target_families() -> Array[Array[Target]]
+
+pub fn target_family(Target) -> Array[Target]
 
 // Errors
 
@@ -122,24 +137,43 @@ pub(all) enum System {
 } derive(Eq, @debug.Debug)
 
 type Target
+pub fn Target::aarch64() -> Self
+pub fn Target::aarch64_be() -> Self
 pub fn Target::abi(Self) -> Abi
+pub fn Target::arm() -> Self
+pub fn Target::armeb() -> Self
 pub fn Target::belongs(Self, Self) -> Bool
 pub fn Target::bits(Self) -> Int
 pub fn Target::byte(Self) -> Int
+pub fn Target::code_addr_size(Self) -> Int
 pub fn Target::create(name~ : @knowledge.Name, parent? : Self, nicknames? : Array[String], bits? : Int, byte? : Int, endianness? : Endianness, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, vars? : Array[Var]) -> Self
+pub fn Target::data_addr_size(Self) -> Int
 pub fn Target::endianness(Self) -> Endianness
 pub fn Target::fabi(Self) -> Fabi
 pub fn Target::filetype(Self) -> Filetype
 pub fn Target::find_var(Self, String) -> Var?
 pub fn Target::is_unknown(Self) -> Bool
 pub fn Target::matches(Self, String) -> Bool
+pub fn Target::matching(Self, String) -> Self?
+pub fn Target::mips() -> Self
+pub fn Target::mipsel() -> Self
 pub fn Target::name(Self) -> @knowledge.Name
 pub fn Target::nicknames(Self) -> Array[String]
 pub fn Target::order(Self, Self) -> @knowledge.PartialOrder
 pub fn Target::parent(Self) -> Self?
+pub fn Target::parents(Self) -> Array[Self]
+pub fn Target::powerpc() -> Self
+pub fn Target::powerpc64() -> Self
+pub fn Target::powerpc64le() -> Self
+pub fn Target::riscv32() -> Self
+pub fn Target::riscv64() -> Self
 pub fn Target::system(Self) -> System
 pub fn Target::unknown() -> Self
 pub fn Target::vars(Self) -> Array[Var]
+pub fn Target::with_var(Self, Var) -> Self
+pub fn Target::with_vars(Self, Array[Var]) -> Self
+pub fn Target::x86() -> Self
+pub fn Target::x86_64() -> Self
 
 type Value
 pub fn Value::empty(Sort) -> Self

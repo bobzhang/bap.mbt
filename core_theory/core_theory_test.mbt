@@ -50,7 +50,45 @@ test "targets inherit defaults and match ancestry" {
   assert_true(target.bits() == 64)
   assert_true(target.endianness() == LittleEndian)
   assert_true(target.matches("amd64"))
+  assert_true(target.matches("X86"))
   assert_true(target.find_var("PC") is Some(_))
+}
+
+///|
+test "target registry resolves common and custom declarations" {
+  match @core_theory.get_target("AMD64") {
+    Ok(target) => {
+      assert_true(target.bits() == 64)
+      assert_true(target.code_addr_size() == 64)
+      assert_true(target.belongs(@core_theory.Target::x86()))
+      assert_true(target.find_var("RIP") is Some(_))
+      assert_true(target.matching("x86") is Some(_))
+    }
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.get_target("riscv64") {
+    Ok(target) => {
+      assert_true(target.bits() == 64)
+      assert_true(target.find_var("PC") is Some(_))
+    }
+    Err(reason) => fail(reason)
+  }
+  let target = @core_theory.Target::create(
+    name=@knowledge.Name::create("unit-target-registry", pkg="test"),
+    nicknames=["unit-target-alias"],
+    bits=16,
+  )
+  match @core_theory.register_target(target) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    @core_theory.find_target("unit-target-alias").map(t => t.bits()) == Some(16),
+  )
+  assert_true(@core_theory.register_target(target) is Err(_))
+  assert_true(
+    @core_theory.declared_targets().any(t => t.matches("unit-target-alias")),
+  )
 }
 
 ///|

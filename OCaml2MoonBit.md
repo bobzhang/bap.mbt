@@ -537,7 +537,7 @@ moon run -c 'fn main { let pairs = [(1, 2), (3, 4)]; let firsts = [ for pair in 
 # 3
 ```
 
-Comprehension syntax: `[ for x in xs => expr ]`. Use a simple identifier as the binder and destructure tuples or access fields inside the body.
+Comprehension syntax: `[ for x in xs => expr ]`. Use a simple identifier as the binder and destructure tuples or access fields inside the body. Prefer a comprehension over a manual `let out = []` plus `push` loop when porting pure OCaml `List.map`/`Array.map`-style transformations.
 
 ```sh
 moon run -c $'fn parse(s : String) -> Int raise { @string.parse_int(s) }\nfn main { let _ = [ for s in ["1"] => parse(s) ]; println("done") }'

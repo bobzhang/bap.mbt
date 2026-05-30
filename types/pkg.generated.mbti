@@ -8,6 +8,8 @@ import {
 }
 
 // Values
+pub fn check_stmt_types(Array[Stmt]) -> Result[Unit, TypeError]
+
 pub fn exec_stmts(Array[Stmt], state? : BilState, max_steps? : Int) -> Result[BilState, String]
 
 pub fn optimize_stmts(Array[Stmt], max_iterations? : Int) -> Array[Stmt]
@@ -198,6 +200,7 @@ pub fn Exp::binop(BinOp, Self, Self) -> Self
 pub fn Exp::eval(Self, Map[String, Word]) -> Result[Word, String]
 pub fn Exp::eval_value(Self, Map[String, BilValue]) -> Result[BilValue, String]
 pub fn Exp::free_vars(Self) -> Array[Var]
+pub fn Exp::infer_type(Self) -> Result[ValueType, TypeError]
 pub fn Exp::int(Word) -> Self
 pub fn Exp::ite(if_~ : Self, then_~ : Self, else_~ : Self) -> Self
 pub fn Exp::let_(Var, Self, Self) -> Self
@@ -294,6 +297,7 @@ pub(all) enum Stmt {
   If(cond~ : Exp, yes~ : Array[Stmt], no~ : Array[Stmt])
   While(cond~ : Exp, body~ : Array[Stmt])
 } derive(Eq, @debug.Debug)
+pub fn Stmt::check_type(Self) -> Result[Unit, TypeError]
 pub fn Stmt::cpuexn(Int) -> Self
 pub fn Stmt::defined_var(Self) -> Var?
 pub fn Stmt::exec(Self, state? : BilState, max_steps? : Int) -> Result[BilState, String]
@@ -474,6 +478,24 @@ pub fn Tid::fresh() -> Self
 pub fn Tid::id(Self) -> Int
 pub fn Tid::name(Self) -> String?
 pub fn Tid::to_string(Self) -> String
+
+pub(all) enum TypeError {
+  BadKind(TypeKind)
+  BadType(expected~ : ValueType, got~ : ValueType)
+  BadCast
+  UnknownType
+} derive(Eq, @debug.Debug)
+pub fn TypeError::bad_cast() -> Self
+pub fn TypeError::bad_imm() -> Self
+pub fn TypeError::bad_mem() -> Self
+pub fn TypeError::bad_type(expected~ : ValueType, got~ : ValueType) -> Self
+pub fn TypeError::to_string(Self) -> String
+pub fn TypeError::unknown() -> Self
+
+pub(all) enum TypeKind {
+  MemKind
+  ImmKind
+} derive(Eq, @debug.Debug)
 
 pub(all) enum UnOp {
   Not

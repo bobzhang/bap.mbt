@@ -507,6 +507,83 @@ test "bil expressions and statements expose BAP-style constructors" {
 }
 
 ///|
+test "bil checked type inference mirrors BAP error cases" {
+  let imm1 = @types.ValueType::Imm(1)
+  let imm8 = @types.ValueType::Imm(8)
+  let imm16 = @types.ValueType::Imm(16)
+  let imm32 = @types.ValueType::Imm(32)
+  let mem32 = @types.ValueType::mem32_t(R8)
+  let flag = @types.Var::new(name="flag", typ=imm1)
+  let x = @types.Var::new(name="x", typ=imm8)
+  let y = @types.Var::new(name="y", typ=imm16)
+  let addr = @types.Var::new(name="addr", typ=imm32)
+  let mem = @types.Var::new(name="mem", typ=mem32)
+  let mem_exp = @types.Exp::var_exp(mem)
+  let addr_exp = @types.Exp::var_exp(addr)
+  let x_exp = @types.Exp::var_exp(x)
+  assert_true(
+    @types.Exp::load(mem=mem_exp, addr=addr_exp, LittleEndian, R16).infer_type() ==
+    Ok(imm16),
+  )
+  assert_true(
+    @types.Exp::store(mem=mem_exp, addr=addr_exp, x_exp, BigEndian, R8).infer_type() ==
+    Ok(mem32),
+  )
+  assert_true(@types.Exp::binop(Eq, x_exp, x_exp).infer_type() == Ok(imm1))
+  assert_true(
+    @types.Exp::binop(LShift, x_exp, addr_exp).infer_type() == Ok(imm8),
+  )
+  assert_true(
+    @types.Exp::binop(Plus, x_exp, @types.Exp::var_exp(y)).infer_type() ==
+    Err(BadType(expected=imm8, got=imm16)),
+  )
+  assert_true(
+    @types.Exp::load(mem=x_exp, addr=addr_exp, LittleEndian, R8).infer_type() ==
+    Err(BadKind(MemKind)),
+  )
+  assert_true(
+    @types.Exp::load(mem=mem_exp, addr=x_exp, LittleEndian, R8).infer_type() ==
+    Err(BadType(expected=imm32, got=imm8)),
+  )
+  assert_true(
+    @types.Exp::ite(if_=x_exp, then_=x_exp, else_=x_exp).infer_type() ==
+    Err(BadType(expected=imm1, got=imm8)),
+  )
+  let bad_value = @types.Var::new(name="wide", typ=Imm(24))
+  assert_true(
+    @types.Exp::store(
+      mem=mem_exp,
+      addr=addr_exp,
+      @types.Exp::var_exp(bad_value),
+      BigEndian,
+      R8,
+    ).infer_type() ==
+    Err(BadCast),
+  )
+  assert_true(@types.Stmt::move_stmt(x, x_exp).check_type() == Ok(()))
+  assert_true(
+    @types.Stmt::move_stmt(x, @types.Exp::var_exp(y)).check_type() ==
+    Err(BadType(expected=imm8, got=imm16)),
+  )
+  assert_true(@types.Stmt::jmp(addr_exp).check_type() == Ok(()))
+  assert_true(@types.Stmt::jmp(mem_exp).check_type() == Err(BadKind(ImmKind)))
+  assert_true(
+    @types.check_stmt_types([
+      @types.Stmt::if_(
+        @types.Exp::var_exp(flag),
+        [@types.Stmt::jmp(addr_exp)],
+        [],
+      ),
+    ]) ==
+    Ok(()),
+  )
+  inspect(
+    @types.TypeError::bad_type(expected=imm8, got=imm16).to_string(),
+    content="expected value of type imm8, but got imm16",
+  )
+}
+
+///|
 test "bil statements expose definitions" {
   let typ = @types.ValueType::Imm(8)
   let x = @types.Var::new(name="x", typ~)

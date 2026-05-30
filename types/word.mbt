@@ -223,6 +223,35 @@ pub fn Word::is_non_positive(self : Word) -> Bool {
 }
 
 ///|
+fn validate_word(check : Bool, message : String) -> Result[Unit, String] {
+  if check {
+    Ok(())
+  } else {
+    Err(message)
+  }
+}
+
+///|
+pub fn Word::validate_positive(self : Word) -> Result[Unit, String] {
+  validate_word(self.is_positive(), "expects a positive number")
+}
+
+///|
+pub fn Word::validate_non_positive(self : Word) -> Result[Unit, String] {
+  validate_word(self.is_non_positive(), "expects a non positive number")
+}
+
+///|
+pub fn Word::validate_negative(self : Word) -> Result[Unit, String] {
+  validate_word(self.is_negative(), "expects a negative number")
+}
+
+///|
+pub fn Word::validate_non_negative(self : Word) -> Result[Unit, String] {
+  validate_word(self.is_non_negative(), "expects a non negative number")
+}
+
+///|
 pub fn Word::add(self : Word, other : Word) -> Word raise @bitvec.BitVecError {
   Word::from_bitvec(self.bits_value.add(other.bits_value))
 }

@@ -327,6 +327,22 @@ test "word signedness predicates match BAP validation cases" {
   assert_true(deadbeef64.compare_unsigned(zero64) > 0)
   assert_true(deadbeef64.neg().is_positive())
   assert_true(deadbeef64.neg().signed().is_negative())
+  assert_true(@types.Word::b1().validate_positive() == Ok(()))
+  assert_true(@types.Word::b1().validate_non_negative() == Ok(()))
+  assert_true(@types.Word::b0().validate_non_negative() == Ok(()))
+  assert_true(@types.Word::b0().validate_non_positive() == Ok(()))
+  assert_true(
+    @types.Word::b0().validate_positive() == Err("expects a positive number"),
+  )
+  assert_true(
+    @types.Word::b1().validate_negative() == Err("expects a negative number"),
+  )
+  assert_true(@types.Word::b1().neg().validate_positive() == Ok(()))
+  assert_true(@types.Word::b1().neg().signed().validate_negative() == Ok(()))
+  assert_true(deadbeef32.validate_positive() == Ok(()))
+  assert_true(deadbeef32.neg().validate_positive() == Ok(()))
+  assert_true(deadbeef32.neg().signed().validate_positive() == Ok(()))
+  assert_true(deadbeef64.neg().signed().validate_negative() == Ok(()))
 }
 
 ///|

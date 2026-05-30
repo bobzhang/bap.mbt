@@ -683,6 +683,10 @@ pub fn Word::to_string(Self) -> String
 pub fn Word::to_uint64(Self) -> UInt64 raise @bitvec.BitVecError
 pub fn Word::truncate(Self, width~ : Int) -> Self raise @bitvec.BitVecError
 pub fn Word::unsigned(Self) -> Self
+pub fn Word::validate_negative(Self) -> Result[Unit, String]
+pub fn Word::validate_non_negative(Self) -> Result[Unit, String]
+pub fn Word::validate_non_positive(Self) -> Result[Unit, String]
+pub fn Word::validate_positive(Self) -> Result[Unit, String]
 pub fn Word::widen(Self, width~ : Int) -> Self raise @bitvec.BitVecError
 pub fn Word::width(Self) -> Int
 pub fn Word::zero(width~ : Int) -> Self raise @bitvec.BitVecError

@@ -108,6 +108,28 @@ test "translated BAP memmap lookup covers every byte in added ranges" {
 }
 
 ///|
+test "translated BAP memmap lookup run-through matches interval membership" {
+  let first = memory_at(0x100UL, 0x10)
+  let second = memory_at(0x108UL, 0x08)
+  let third = memory_at(0x10fUL, 0x12)
+  let fourth = memory_at(0x120UL, 0x04)
+  let fixtures = [(first, 0), (second, 1), (third, 2), (fourth, 3)]
+  let map = @memory.MemMap::empty()
+    .add(first, 0)
+    .add(second, 1)
+    .add(third, 2)
+    .add(fourth, 3)
+  for offset in 0..<0x25 {
+    let addr = 0x100UL + offset.to_uint64()
+    let expect = fixtures
+      .filter(item => item.0.contains(addr))
+      .map(item => item.1)
+    let got = map.lookup(addr).map(entry => entry.1)
+    assert_true(got == expect)
+  }
+}
+
+///|
 test "memmap lookup intersections and dominators follow address intervals" {
   let base = @memory.Memory::from_bytes(
     endian=LittleEndian,

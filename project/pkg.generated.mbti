@@ -216,6 +216,7 @@ pub fn ProjectDisassemblyState::block_count(Self) -> Int
 pub fn ProjectDisassemblyState::blocks(Self) -> Array[@memory.Memory]
 pub fn ProjectDisassemblyState::create(blocks? : Array[@memory.Memory], instructions? : Array[ProjectDisassemblyInstruction]) -> Self
 pub fn ProjectDisassemblyState::empty() -> Self
+pub fn ProjectDisassemblyState::has_block(Self, @memory.Memory) -> Bool
 pub fn ProjectDisassemblyState::instruction_count(Self) -> Int
 pub fn ProjectDisassemblyState::instructions(Self) -> Array[ProjectDisassemblyInstruction]
 pub fn ProjectDisassemblyState::with_blocks(Self, Array[@memory.Memory]) -> Self

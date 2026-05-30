@@ -84,6 +84,17 @@ pub fn ProjectDisassemblyState::block_count(
 }
 
 ///|
+pub fn ProjectDisassemblyState::has_block(
+  self : ProjectDisassemblyState,
+  block : @memory.Memory,
+) -> Bool {
+  self.blocks_value.any(existing => {
+    existing.min_addr() == block.min_addr() &&
+    existing.max_addr() == block.max_addr()
+  })
+}
+
+///|
 pub fn ProjectDisassemblyState::instructions(
   self : ProjectDisassemblyState,
 ) -> Array[ProjectDisassemblyInstruction] {
@@ -110,6 +121,9 @@ pub fn ProjectDisassemblyState::add_block(
   self : ProjectDisassemblyState,
   block : @memory.Memory,
 ) -> ProjectDisassemblyState {
+  if self.has_block(block) {
+    return self
+  }
   let blocks = self.blocks_value.copy()
   blocks.push(block)
   { ..self, blocks_value: blocks }

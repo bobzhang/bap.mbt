@@ -194,6 +194,14 @@ test "project image-root disassembly driver materializes entry and symbol blocks
     }
     Err(reason) => fail(reason)
   }
+  match project.disassemble(driver="image-roots") {
+    Ok(once) =>
+      match once.disassemble(driver="image-roots") {
+        Ok(twice) => assert_true(twice.disassembly().block_count() == 3)
+        Err(reason) => fail(reason)
+      }
+    Err(reason) => fail(reason)
+  }
   let unmapped = @project.Project::from_image(
     @image.Image::from_segments(entry=0x2800UL, endian=LittleEndian, [segment]),
   )

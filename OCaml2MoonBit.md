@@ -129,6 +129,10 @@ than a decoder. `Rooter.of_image` contributes the image entry point plus image
 symbol starts and carries filename/biased-address metadata; `Rooter.of_blocks`
 groups serialized `(name, start, stop)` blocks by name and keeps the lowest
 start address for each name.
+Treat accumulated disassembly blocks as set-like by memory interval. Re-running
+root materialization should not append duplicate blocks for the same
+`min_addr`/`max_addr`, even if the current MoonBit representation stores them in
+an array for deterministic traversal.
 When a higher-level package exposes the same loader surface as a lower-level
 registry, prefer a small idempotent initializer that delegates to the owning
 registry instead of duplicating loader entries. For example, `ProjectInput`

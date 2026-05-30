@@ -324,6 +324,7 @@ test "project maps programs and stores libraries" {
 test "project and libraries carry disassembly state" {
   let target = @core_theory.Target::unknown()
   let block = raw_segment().memory()
+  let same_block = raw_segment().memory()
   let sub = @types.Sub::create(name="entry")
   let instruction = @project.ProjectDisassemblyInstruction::create(
     block,
@@ -332,7 +333,10 @@ test "project and libraries carry disassembly state" {
   )
   let disassembly = @project.ProjectDisassemblyState::empty()
     .add_block(block)
+    .add_block(same_block)
     .add_instruction(instruction)
+  assert_true(disassembly.has_block(block))
+  assert_true(disassembly.block_count() == 1)
   let state = @project.ProjectState::empty()
     .with_disassembly(disassembly)
     .add_subroutine(sub)

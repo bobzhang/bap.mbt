@@ -125,3 +125,58 @@ test "pass resolver reports missing dependencies and cycles" {
   }
   assert_true(@project.resolve_passes(["unit-cycle-a"]) is Err(_))
 }
+
+///|
+test "run_once passes skip after a successful run and record counts" {
+  let pass = @project.ProjectPass::create(name="unit-run-once", run_once=true, run=project => {
+    let value = match project.get("once-hit") {
+      Some(text) => text + "x"
+      None => "x"
+    }
+    Ok(project.set("once-hit", value))
+  })
+  match @project.register_pass(pass) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let project = @project.Project::empty(@core_theory.Target::unknown())
+  let first = match project.run_pass("unit-run-once") {
+    Ok(next) => next
+    Err(reason) => fail(reason)
+  }
+  assert_true(first.get("once-hit") == Some("x"))
+  assert_true(first.pass_has_run("unit-run-once"))
+  assert_true(first.pass_run_count("unit-run-once") == 1)
+  let second = match first.run_pass("unit-run-once") {
+    Ok(next) => next
+    Err(reason) => fail(reason)
+  }
+  assert_true(second.get("once-hit") == Some("x"))
+  assert_true(second.pass_run_count("unit-run-once") == 1)
+}
+
+///|
+test "regular passes record each successful execution" {
+  let pass = @project.ProjectPass::create(name="unit-run-many", run=project => {
+    let value = match project.get("many-hit") {
+      Some(text) => text + "x"
+      None => "x"
+    }
+    Ok(project.set("many-hit", value))
+  })
+  match @project.register_pass(pass) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let project = @project.Project::empty(@core_theory.Target::unknown())
+  let first = match project.run_pass("unit-run-many") {
+    Ok(next) => next
+    Err(reason) => fail(reason)
+  }
+  let second = match first.run_pass("unit-run-many") {
+    Ok(next) => next
+    Err(reason) => fail(reason)
+  }
+  assert_true(second.get("many-hit") == Some("xx"))
+  assert_true(second.pass_run_count("unit-run-many") == 2)
+}

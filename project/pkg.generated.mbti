@@ -51,6 +51,8 @@ pub fn Project::image(Self) -> @image.Image?
 pub fn Project::libraries(Self) -> Array[Library]
 pub fn Project::map_program(Self, (@types.Term[@types.Program]) -> @types.Term[@types.Program]) -> Self
 pub fn Project::memory(Self) -> @memory.MemMap[String]
+pub fn Project::pass_has_run(Self, String) -> Bool
+pub fn Project::pass_run_count(Self, String) -> Int
 pub fn Project::program(Self) -> @types.Term[@types.Program]
 pub fn Project::run_autorun_passes(Self) -> Result[Self, String]
 pub fn Project::run_pass(Self, String) -> Result[Self, String]
@@ -81,10 +83,11 @@ pub fn ProjectInputLoader::name(Self) -> String
 
 type ProjectPass
 pub fn ProjectPass::autorun(Self) -> Bool
-pub fn ProjectPass::create(name~ : String, autorun? : Bool, deps? : Array[String], run~ : (Project) -> Result[Project, String]) -> Self
+pub fn ProjectPass::create(name~ : String, autorun? : Bool, run_once? : Bool, deps? : Array[String], run~ : (Project) -> Result[Project, String]) -> Self
 pub fn ProjectPass::deps(Self) -> Array[String]
 pub fn ProjectPass::name(Self) -> String
 pub fn ProjectPass::run(Self, Project) -> Result[Project, String]
+pub fn ProjectPass::run_once(Self) -> Bool
 
 type ProjectStorageTag[T]
 pub fn ProjectStorageTag::bool(String) -> Self[Bool]

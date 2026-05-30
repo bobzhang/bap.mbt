@@ -2,6 +2,7 @@
 struct ProjectPass {
   name_value : String
   autorun_flag : Bool
+  run_once_flag : Bool
   deps_value : Array[String]
   run_fn : (Project) -> Result[Project, String]
 }
@@ -13,12 +14,17 @@ let pass_registry : Map[String, ProjectPass] = {}
 pub fn ProjectPass::create(
   name~ : String,
   autorun? : Bool,
+  run_once? : Bool,
   deps? : Array[String],
   run~ : (Project) -> Result[Project, String],
 ) -> ProjectPass {
   {
     name_value: name,
     autorun_flag: match autorun {
+      Some(flag) => flag
+      None => false
+    },
+    run_once_flag: match run_once {
       Some(flag) => flag
       None => false
     },
@@ -41,6 +47,11 @@ pub fn ProjectPass::autorun(self : ProjectPass) -> Bool {
 }
 
 ///|
+pub fn ProjectPass::run_once(self : ProjectPass) -> Bool {
+  self.run_once_flag
+}
+
+///|
 pub fn ProjectPass::deps(self : ProjectPass) -> Array[String] {
   self.deps_value.copy()
 }
@@ -51,6 +62,34 @@ pub fn ProjectPass::run(
   project : Project,
 ) -> Result[Project, String] {
   (self.run_fn)(project)
+}
+
+///|
+fn pass_run_key(name : String) -> String {
+  "pass.\{name}.runs"
+}
+
+///|
+pub fn Project::pass_run_count(self : Project, name : String) -> Int {
+  match self.get(pass_run_key(name)) {
+    Some(value) =>
+      try @string.parse_int(value) catch {
+        _ => 0
+      } noraise {
+        count => count
+      }
+    None => 0
+  }
+}
+
+///|
+pub fn Project::pass_has_run(self : Project, name : String) -> Bool {
+  self.pass_run_count(name) > 0
+}
+
+///|
+fn Project::mark_pass_run(self : Project, name : String) -> Project {
+  self.set(pass_run_key(name), (self.pass_run_count(name) + 1).to_string())
 }
 
 ///|
@@ -135,9 +174,13 @@ pub fn Project::run_passes(
     Ok(order) => {
       let mut project = self
       for pass in order {
-        match pass.run(project) {
-          Ok(next) => project = next
-          Err(reason) => return Err(reason)
+        if pass.run_once() && project.pass_has_run(pass.name()) {
+          ()
+        } else {
+          match pass.run(project) {
+            Ok(next) => project = next.mark_pass_run(pass.name())
+            Err(reason) => return Err(reason)
+          }
         }
       }
       Ok(project)

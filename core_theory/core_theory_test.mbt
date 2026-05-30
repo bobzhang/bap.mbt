@@ -239,9 +239,12 @@ test "labels carry symbolic entry points" {
   assert_true(named.is_valid())
   assert_true(named.name() == Some("main"))
   let addr = @types.Word::of_int(width=64, 0x400000)
-  let label = @core_theory.Label::for_addr(addr).with_alias("_start")
+  let label = @core_theory.Label::for_addr(addr)
+    .with_alias("_start")
+    .with_alias("_start")
+    .with_alias("entry")
   assert_true(label.addr() == Some(addr))
-  assert_true(label.aliases() == ["_start"])
+  assert_true(label.aliases() == ["_start", "entry"])
   assert_true(!@core_theory.Label::null().is_valid())
 }
 

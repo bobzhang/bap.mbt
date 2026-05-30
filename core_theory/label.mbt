@@ -22,6 +22,17 @@ fn next_label_id() -> Int {
 }
 
 ///|
+fn unique_aliases(items : Array[String]) -> Array[String] {
+  let result = []
+  for item in items {
+    if !result.contains(item) {
+      result.push(item)
+    }
+  }
+  result
+}
+
+///|
 fn Label::make(
   target? : Target,
   unit? : ProgramUnit,
@@ -42,7 +53,7 @@ fn Label::make(
     ivec_value: ivec,
     encoding_value: encoding,
     aliases_value: match aliases {
-      Some(items) => items.copy()
+      Some(items) => unique_aliases(items)
       None => []
     },
     valid_flag: match is_valid {
@@ -95,7 +106,9 @@ pub fn Label::for_ivec(ivec : Int, target? : Target) -> Label {
 ///|
 pub fn Label::with_alias(self : Label, alias_name : String) -> Label {
   let aliases = self.aliases_value.copy()
-  aliases.push(alias_name)
+  if !aliases.contains(alias_name) {
+    aliases.push(alias_name)
+  }
   { ..self, aliases_value: aliases }
 }
 

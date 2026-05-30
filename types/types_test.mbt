@@ -22,6 +22,55 @@ test "word wraps bitvec operations" {
 }
 
 ///|
+fn byte_values(bytes : Bytes) -> Array[Int] {
+  bytes.to_array().map(byte => byte.to_int())
+}
+
+///|
+test "translated BAP word byte enumeration preserves endian order for odd widths" {
+  assert_true(
+    byte_values(@types.Word::of_int(width=128, 1).to_bytes(endian=LittleEndian)) ==
+    [
+      for i in 0..<16 => if i == 0 { 1 } else { 0 }
+    ],
+  )
+  assert_true(
+    byte_values(@types.Word::of_int(width=128, 1).to_bytes(endian=BigEndian)) ==
+    [
+      for i in 0..<16 => if i == 15 { 1 } else { 0 }
+    ],
+  )
+  assert_true(
+    byte_values(@types.Word::of_int(width=13, 1).to_bytes(endian=LittleEndian)) ==
+    [1, 0],
+  )
+  assert_true(
+    byte_values(@types.Word::of_int(width=13, 1).to_bytes(endian=BigEndian)) ==
+    [0, 1],
+  )
+  assert_true(
+    byte_values(@types.Word::of_int(width=71, 1).to_bytes(endian=LittleEndian)) ==
+    [
+      for i in 0..<9 => if i == 0 { 1 } else { 0 }
+    ],
+  )
+  assert_true(
+    byte_values(@types.Word::of_int(width=71, 1).to_bytes(endian=BigEndian)) ==
+    [
+      for i in 0..<9 => if i == 8 { 1 } else { 0 }
+    ],
+  )
+  let deadbeef = @types.Word::of_uint64(width=32, 0xDEADBEEF)
+  assert_true(
+    byte_values(deadbeef.to_bytes(endian=LittleEndian)) ==
+    [0xEF, 0xBE, 0xAD, 0xDE],
+  )
+  assert_true(
+    byte_values(deadbeef.to_bytes(endian=BigEndian)) == [0xDE, 0xAD, 0xBE, 0xEF],
+  )
+}
+
+///|
 test "word literals preserve BAP signedness and display" {
   inspect(@types.Word::b0().to_string(), content="0:1u")
   inspect(@types.Word::b1().to_string(), content="1:1u")

@@ -224,6 +224,62 @@ test "project input loading falls back to image backends" {
 }
 
 ///|
+test "project registers built-in image loaders for raw and Ogre input" {
+  match @project.register_builtin_input_loaders() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  match @project.register_builtin_input_loaders() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  assert_true(@project.available_input_loaders().contains("raw"))
+  assert_true(@project.available_input_loaders().contains("ogre"))
+  assert_true(@project.input_loader_names_for_extension("bin").contains("raw"))
+  assert_true(
+    @project.input_loader_names_for_extension("ogre").contains("ogre"),
+  )
+  match @project.ProjectInput::load(b"\xaa\xbb", loader="raw") {
+    Ok(input) => {
+      let project = @project.Project::from_input(input)
+      assert_true(project.memory().lookup(0UL).length() == 1)
+      match project.image() {
+        Some(image) => assert_true(image.segments()[0].name() == ".raw")
+        None => fail("expected raw image")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+  let spec = "(declare arch (name str))" +
+    " (declare bits (size int))" +
+    " (declare entry-point (addr int))" +
+    " (declare is-little-endian (flag bool))" +
+    " (arch riscv64)" +
+    " (bits 64)" +
+    " (entry-point 0)" +
+    " (is-little-endian true)"
+  match
+    @project.ProjectInput::load_for_filename(
+      @utf8.encode(spec),
+      filename="sample.ogre",
+    ) {
+    Ok(input) => {
+      let project = @project.Project::from_input(input)
+      assert_true(project.filename() == Some("sample.ogre"))
+      assert_true(project.target().matches("riscv64"))
+      match project.image() {
+        Some(image) => {
+          assert_true(image.entry_point() == 0UL)
+          assert_true(image.addr_size() == 64)
+        }
+        None => fail("expected Ogre image")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project input loaders resolve by filename extension priority" {
   let low = @project.ProjectInputLoader::create(
     name="unit-project-low-priority",

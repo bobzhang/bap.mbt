@@ -346,6 +346,11 @@ pub fn register_input_loader(
 }
 
 ///|
+pub fn register_builtin_input_loaders() -> Result[Unit, String] {
+  @image.register_builtin_backends()
+}
+
+///|
 pub fn find_input_loader(name : String) -> ProjectInputLoader? {
   input_loader_registry.get(name)
 }

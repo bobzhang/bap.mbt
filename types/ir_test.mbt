@@ -57,6 +57,79 @@ test "program traversal helpers enumerate nested IR terms" {
 }
 
 ///|
+test "ir term views visit every nested term and report parents" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let arg = @types.Arg::create(x, Var(y))
+  let pred = @types.Tid::for_name("pred")
+  let phi = @types.Phi::of_list(x, [(pred, Var(y))])
+  let def = @types.Def::create(y, Int(word8(1)))
+  let jmp = @types.Jmp::create_goto(@types.Label::direct(pred))
+  let blk = @types.Blk::create(phis=[phi], defs=[def], jmps=[jmp])
+  let sub = @types.Sub::create(name="main", args=[arg], blks=[blk])
+  let program = @types.Program::create(subs=[sub])
+
+  assert_true(
+    program.program_terms().map(term => term.class_name()) ==
+    ["program", "sub", "arg", "blk", "phi", "def", "jmp"],
+  )
+  assert_true(
+    program.program_terms(include_self=false).map(term => term.class_name()) ==
+    ["sub", "arg", "blk", "phi", "def", "jmp"],
+  )
+  let names = program.fold_program_terms([], (acc, term) => {
+    acc.push("\{term.class_name()}:\{term.name()}")
+    acc
+  })
+  assert_true(names.length() == 7)
+  assert_true(program.exists_program_term(term => term.same_tid(def.tid())))
+  assert_true(
+    program.find_program_term(term => term.class_name() == "def")
+    is Some(DefTerm(_)),
+  )
+  match program.program_parent_term(sub.tid()) {
+    Some(parent) => assert_true(parent.class_name() == "program")
+    None => fail("expected sub parent")
+  }
+  match program.program_parent_term(arg.tid()) {
+    Some(parent) => assert_true(parent.class_name() == "sub")
+    None => fail("expected arg parent")
+  }
+  match program.program_parent_term(def.tid()) {
+    Some(parent) => assert_true(parent.class_name() == "blk")
+    None => fail("expected def parent")
+  }
+  assert_true(program.program_parent_term(program.tid()) is None)
+}
+
+///|
+test "ir term mapping rewrites nested term attributes" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let def = @types.Def::create(x, Int(word8(1)))
+  let blk = @types.Blk::create(defs=[def])
+  let sub = @types.Sub::create(name="main", blks=[blk])
+  let program = @types.Program::create(subs=[sub])
+
+  let marked = program.map_program_terms(term => {
+    term.set_attr(@types.Attr::new(key="visited", value=term.class_name()))
+  })
+  for term in marked.program_terms() {
+    assert_true(term.get_attr("visited") == Some(term.class_name()))
+  }
+  let unmarked = marked.map_program_terms(term => term.del_attr("visited"))
+  assert_true(!unmarked.exists_program_term(term => term.has_attr("visited")))
+  let ignored = program.map_program_terms(term => {
+    match term {
+      DefTerm(_) => ProgramTerm(program)
+      _ => term
+    }
+  })
+  assert_true(ignored.program_defs()[0].tid() == def.tid())
+}
+
+///|
 test "phi nodes jumps calls and args expose BAP-style payloads" {
   let typ = @types.ValueType::Imm(8)
   let lhs = @types.Var::new(name="r0", typ~)

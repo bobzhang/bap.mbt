@@ -1,4 +1,139 @@
 ///|
+
+///|
+pub(all) enum IrTermClass {
+  ProgramTermClass
+  SubTermClass
+  ArgTermClass
+  BlkTermClass
+  PhiTermClass
+  DefTermClass
+  JmpTermClass
+} derive(Eq, Debug)
+
+///|
+pub(all) enum IrTerm {
+  ProgramTerm(Term[Program])
+  SubTerm(Term[Sub])
+  ArgTerm(Term[Arg])
+  BlkTerm(Term[Blk])
+  PhiTerm(Term[Phi])
+  DefTerm(Term[Def])
+  JmpTerm(Term[Jmp])
+}
+
+///|
+pub fn IrTermClass::to_string(self : IrTermClass) -> String {
+  match self {
+    ProgramTermClass => "program"
+    SubTermClass => "sub"
+    ArgTermClass => "arg"
+    BlkTermClass => "blk"
+    PhiTermClass => "phi"
+    DefTermClass => "def"
+    JmpTermClass => "jmp"
+  }
+}
+
+///|
+pub fn IrTerm::class(self : IrTerm) -> IrTermClass {
+  match self {
+    ProgramTerm(_) => ProgramTermClass
+    SubTerm(_) => SubTermClass
+    ArgTerm(_) => ArgTermClass
+    BlkTerm(_) => BlkTermClass
+    PhiTerm(_) => PhiTermClass
+    DefTerm(_) => DefTermClass
+    JmpTerm(_) => JmpTermClass
+  }
+}
+
+///|
+pub fn IrTerm::class_name(self : IrTerm) -> String {
+  self.class().to_string()
+}
+
+///|
+pub fn IrTerm::tid(self : IrTerm) -> Tid {
+  match self {
+    ProgramTerm(term) => term.tid()
+    SubTerm(term) => term.tid()
+    ArgTerm(term) => term.tid()
+    BlkTerm(term) => term.tid()
+    PhiTerm(term) => term.tid()
+    DefTerm(term) => term.tid()
+    JmpTerm(term) => term.tid()
+  }
+}
+
+///|
+pub fn IrTerm::name(self : IrTerm) -> String {
+  self.tid().to_string()
+}
+
+///|
+pub fn IrTerm::attrs(self : IrTerm) -> Map[String, String] {
+  match self {
+    ProgramTerm(term) => term.attrs()
+    SubTerm(term) => term.attrs()
+    ArgTerm(term) => term.attrs()
+    BlkTerm(term) => term.attrs()
+    PhiTerm(term) => term.attrs()
+    DefTerm(term) => term.attrs()
+    JmpTerm(term) => term.attrs()
+  }
+}
+
+///|
+pub fn IrTerm::get_attr(self : IrTerm, key : String) -> String? {
+  match self {
+    ProgramTerm(term) => term.get_attr(key)
+    SubTerm(term) => term.get_attr(key)
+    ArgTerm(term) => term.get_attr(key)
+    BlkTerm(term) => term.get_attr(key)
+    PhiTerm(term) => term.get_attr(key)
+    DefTerm(term) => term.get_attr(key)
+    JmpTerm(term) => term.get_attr(key)
+  }
+}
+
+///|
+pub fn IrTerm::has_attr(self : IrTerm, key : String) -> Bool {
+  self.get_attr(key) is Some(_)
+}
+
+///|
+pub fn IrTerm::set_attr(self : IrTerm, attr : Attr) -> IrTerm {
+  match self {
+    ProgramTerm(term) => ProgramTerm(term.set_attr(attr))
+    SubTerm(term) => SubTerm(term.set_attr(attr))
+    ArgTerm(term) => ArgTerm(term.set_attr(attr))
+    BlkTerm(term) => BlkTerm(term.set_attr(attr))
+    PhiTerm(term) => PhiTerm(term.set_attr(attr))
+    DefTerm(term) => DefTerm(term.set_attr(attr))
+    JmpTerm(term) => JmpTerm(term.set_attr(attr))
+  }
+}
+
+///|
+pub fn IrTerm::del_attr(self : IrTerm, key : String) -> IrTerm {
+  match self {
+    ProgramTerm(term) => ProgramTerm(term.del_attr(key))
+    SubTerm(term) => SubTerm(term.del_attr(key))
+    ArgTerm(term) => ArgTerm(term.del_attr(key))
+    BlkTerm(term) => BlkTerm(term.del_attr(key))
+    PhiTerm(term) => PhiTerm(term.del_attr(key))
+    DefTerm(term) => DefTerm(term.del_attr(key))
+    JmpTerm(term) => JmpTerm(term.del_attr(key))
+  }
+}
+
+///|
+pub fn IrTerm::same_tid(self : IrTerm, tid : Tid) -> Bool {
+  self.tid() == tid
+}
+
+///|
 pub fn Term::sub_phis(self : Term[Sub]) -> Array[Term[Phi]] {
   let result = []
   for blk in self.payload_value.blks {
@@ -84,6 +219,296 @@ pub fn Term::program_jmps(self : Term[Program]) -> Array[Term[Jmp]] {
     }
   }
   result
+}
+
+///|
+pub fn Term::blk_terms(
+  self : Term[Blk],
+  include_self? : Bool = true,
+) -> Array[IrTerm] {
+  let result = []
+  if include_self {
+    result.push(BlkTerm(self))
+  }
+  for phi in self.payload_value.phis {
+    result.push(PhiTerm(phi))
+  }
+  for def in self.payload_value.defs {
+    result.push(DefTerm(def))
+  }
+  for jmp in self.payload_value.jmps {
+    result.push(JmpTerm(jmp))
+  }
+  result
+}
+
+///|
+pub fn Term::sub_terms(
+  self : Term[Sub],
+  include_self? : Bool = true,
+) -> Array[IrTerm] {
+  let result = []
+  if include_self {
+    result.push(SubTerm(self))
+  }
+  for arg in self.payload_value.args {
+    result.push(ArgTerm(arg))
+  }
+  for blk in self.payload_value.blks {
+    for term in blk.blk_terms() {
+      result.push(term)
+    }
+  }
+  result
+}
+
+///|
+pub fn Term::program_terms(
+  self : Term[Program],
+  include_self? : Bool = true,
+) -> Array[IrTerm] {
+  let result = []
+  if include_self {
+    result.push(ProgramTerm(self))
+  }
+  for sub in self.payload_value.subs {
+    for term in sub.sub_terms() {
+      result.push(term)
+    }
+  }
+  result
+}
+
+///|
+pub fn[A] Term::fold_blk_terms(
+  self : Term[Blk],
+  init : A,
+  f : (A, IrTerm) -> A,
+  include_self? : Bool = true,
+) -> A {
+  let mut acc = init
+  for term in self.blk_terms(include_self~) {
+    acc = f(acc, term)
+  }
+  acc
+}
+
+///|
+pub fn[A] Term::fold_sub_terms(
+  self : Term[Sub],
+  init : A,
+  f : (A, IrTerm) -> A,
+  include_self? : Bool = true,
+) -> A {
+  let mut acc = init
+  for term in self.sub_terms(include_self~) {
+    acc = f(acc, term)
+  }
+  acc
+}
+
+///|
+pub fn[A] Term::fold_program_terms(
+  self : Term[Program],
+  init : A,
+  f : (A, IrTerm) -> A,
+  include_self? : Bool = true,
+) -> A {
+  let mut acc = init
+  for term in self.program_terms(include_self~) {
+    acc = f(acc, term)
+  }
+  acc
+}
+
+///|
+pub fn Term::find_blk_term(
+  self : Term[Blk],
+  f : (IrTerm) -> Bool,
+  include_self? : Bool = true,
+) -> IrTerm? {
+  for term in self.blk_terms(include_self~) {
+    if f(term) {
+      return Some(term)
+    }
+  }
+  None
+}
+
+///|
+pub fn Term::find_sub_term(
+  self : Term[Sub],
+  f : (IrTerm) -> Bool,
+  include_self? : Bool = true,
+) -> IrTerm? {
+  for term in self.sub_terms(include_self~) {
+    if f(term) {
+      return Some(term)
+    }
+  }
+  None
+}
+
+///|
+pub fn Term::find_program_term(
+  self : Term[Program],
+  f : (IrTerm) -> Bool,
+  include_self? : Bool = true,
+) -> IrTerm? {
+  for term in self.program_terms(include_self~) {
+    if f(term) {
+      return Some(term)
+    }
+  }
+  None
+}
+
+///|
+pub fn Term::exists_blk_term(
+  self : Term[Blk],
+  f : (IrTerm) -> Bool,
+  include_self? : Bool = true,
+) -> Bool {
+  self.find_blk_term(f, include_self~) is Some(_)
+}
+
+///|
+pub fn Term::exists_sub_term(
+  self : Term[Sub],
+  f : (IrTerm) -> Bool,
+  include_self? : Bool = true,
+) -> Bool {
+  self.find_sub_term(f, include_self~) is Some(_)
+}
+
+///|
+pub fn Term::exists_program_term(
+  self : Term[Program],
+  f : (IrTerm) -> Bool,
+  include_self? : Bool = true,
+) -> Bool {
+  self.find_program_term(f, include_self~) is Some(_)
+}
+
+///|
+fn apply_arg_term(term : Term[Arg], f : (IrTerm) -> IrTerm) -> Term[Arg] {
+  match f(ArgTerm(term)) {
+    ArgTerm(next) => next
+    _ => term
+  }
+}
+
+///|
+fn apply_phi_term(term : Term[Phi], f : (IrTerm) -> IrTerm) -> Term[Phi] {
+  match f(PhiTerm(term)) {
+    PhiTerm(next) => next
+    _ => term
+  }
+}
+
+///|
+fn apply_def_term(term : Term[Def], f : (IrTerm) -> IrTerm) -> Term[Def] {
+  match f(DefTerm(term)) {
+    DefTerm(next) => next
+    _ => term
+  }
+}
+
+///|
+fn apply_jmp_term(term : Term[Jmp], f : (IrTerm) -> IrTerm) -> Term[Jmp] {
+  match f(JmpTerm(term)) {
+    JmpTerm(next) => next
+    _ => term
+  }
+}
+
+///|
+pub fn Term::map_blk_terms(
+  self : Term[Blk],
+  f : (IrTerm) -> IrTerm,
+) -> Term[Blk] {
+  let mapped = self
+    .with_phis(self.payload_value.phis.map(term => apply_phi_term(term, f)))
+    .with_defs(self.payload_value.defs.map(term => apply_def_term(term, f)))
+    .with_jmps(self.payload_value.jmps.map(term => apply_jmp_term(term, f)))
+  match f(BlkTerm(mapped)) {
+    BlkTerm(next) => next
+    _ => mapped
+  }
+}
+
+///|
+pub fn Term::map_sub_terms(
+  self : Term[Sub],
+  f : (IrTerm) -> IrTerm,
+) -> Term[Sub] {
+  let mapped = self.with_payload({
+    ..self.payload_value,
+    args: self.payload_value.args.map(term => apply_arg_term(term, f)),
+    blks: self.payload_value.blks.map(blk => blk.map_blk_terms(f)),
+  })
+  match f(SubTerm(mapped)) {
+    SubTerm(next) => next
+    _ => mapped
+  }
+}
+
+///|
+pub fn Term::map_program_terms(
+  self : Term[Program],
+  f : (IrTerm) -> IrTerm,
+) -> Term[Program] {
+  let mapped = self.with_payload({
+    subs: self.payload_value.subs.map(sub => sub.map_sub_terms(f)),
+  })
+  match f(ProgramTerm(mapped)) {
+    ProgramTerm(next) => next
+    _ => mapped
+  }
+}
+
+///|
+pub fn Term::sub_parent_term(self : Term[Sub], tid : Tid) -> IrTerm? {
+  for arg in self.payload_value.args {
+    if arg.tid() == tid {
+      return Some(SubTerm(self))
+    }
+  }
+  for blk in self.payload_value.blks {
+    if blk.tid() == tid {
+      return Some(SubTerm(self))
+    }
+    for phi in blk.payload_value.phis {
+      if phi.tid() == tid {
+        return Some(BlkTerm(blk))
+      }
+    }
+    for def in blk.payload_value.defs {
+      if def.tid() == tid {
+        return Some(BlkTerm(blk))
+      }
+    }
+    for jmp in blk.payload_value.jmps {
+      if jmp.tid() == tid {
+        return Some(BlkTerm(blk))
+      }
+    }
+  }
+  None
+}
+
+///|
+pub fn Term::program_parent_term(self : Term[Program], tid : Tid) -> IrTerm? {
+  for sub in self.payload_value.subs {
+    if sub.tid() == tid {
+      return Some(ProgramTerm(self))
+    }
+    match sub.sub_parent_term(tid) {
+      Some(parent) => return Some(parent)
+      None => ()
+    }
+  }
+  None
 }
 
 ///|

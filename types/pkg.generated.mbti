@@ -310,6 +310,37 @@ pub(all) enum Intent {
   Both
 } derive(Eq, @debug.Debug)
 
+pub(all) enum IrTerm {
+  ProgramTerm(Term[Program])
+  SubTerm(Term[Sub])
+  ArgTerm(Term[Arg])
+  BlkTerm(Term[Blk])
+  PhiTerm(Term[Phi])
+  DefTerm(Term[Def])
+  JmpTerm(Term[Jmp])
+}
+pub fn IrTerm::attrs(Self) -> Map[String, String]
+pub fn IrTerm::class(Self) -> IrTermClass
+pub fn IrTerm::class_name(Self) -> String
+pub fn IrTerm::del_attr(Self, String) -> Self
+pub fn IrTerm::get_attr(Self, String) -> String?
+pub fn IrTerm::has_attr(Self, String) -> Bool
+pub fn IrTerm::name(Self) -> String
+pub fn IrTerm::same_tid(Self, Tid) -> Bool
+pub fn IrTerm::set_attr(Self, Attr) -> Self
+pub fn IrTerm::tid(Self) -> Tid
+
+pub(all) enum IrTermClass {
+  ProgramTermClass
+  SubTermClass
+  ArgTermClass
+  BlkTermClass
+  PhiTermClass
+  DefTermClass
+  JmpTermClass
+} derive(Eq, @debug.Debug)
+pub fn IrTermClass::to_string(Self) -> String
+
 pub(all) struct Jmp {
   kind : JmpKind
   cond : Exp
@@ -436,6 +467,7 @@ pub fn Term::blk_defined_vars(Self[Blk]) -> Array[Var]
 pub fn Term::blk_free_vars(Self[Blk]) -> Array[Var]
 pub fn Term::blk_phi_edge_free_vars(Self[Blk], Tid) -> Array[Var]
 pub fn Term::blk_successor_tids(Self[Blk]) -> Array[Tid]
+pub fn Term::blk_terms(Self[Blk], include_self? : Bool) -> Array[IrTerm]
 pub fn Term::blk_to_trivial_condition_form(Self[Blk]) -> Self[Blk]
 pub fn Term::blk_value_free_vars(Self[Blk]) -> Array[Var]
 pub fn Term::blks(Self[Sub]) -> Array[Self[Blk]]
@@ -456,18 +488,27 @@ pub fn Term::destroy_ssa(Self[Sub]) -> Self[Sub]
 pub fn Term::direct_call_target(Self[Jmp]) -> Tid?
 pub fn Term::elts(Self[Blk], rev? : Bool) -> Array[BlkElt]
 pub fn Term::entry_blk(Self[Sub]) -> Self[Blk]?
+pub fn Term::exists_blk_term(Self[Blk], (IrTerm) -> Bool, include_self? : Bool) -> Bool
+pub fn Term::exists_program_term(Self[Program], (IrTerm) -> Bool, include_self? : Bool) -> Bool
+pub fn Term::exists_sub_term(Self[Sub], (IrTerm) -> Bool, include_self? : Bool) -> Bool
 pub fn Term::filter_defs(Self[Blk], (Self[Def]) -> Bool) -> Self[Blk]
 pub fn Term::filter_map_defs(Self[Blk], (Self[Def]) -> Self[Def]?) -> Self[Blk]
 pub fn Term::find_blk(Self[Sub], Tid) -> Self[Blk]?
+pub fn Term::find_blk_term(Self[Blk], (IrTerm) -> Bool, include_self? : Bool) -> IrTerm?
 pub fn Term::find_def(Self[Blk], Tid) -> Self[Def]?
 pub fn Term::find_jmp(Self[Blk], Tid) -> Self[Jmp]?
 pub fn Term::find_phi(Self[Blk], Tid) -> Self[Phi]?
+pub fn Term::find_program_term(Self[Program], (IrTerm) -> Bool, include_self? : Bool) -> IrTerm?
 pub fn Term::find_sub(Self[Program], Tid) -> Self[Sub]?
+pub fn Term::find_sub_term(Self[Sub], (IrTerm) -> Bool, include_self? : Bool) -> IrTerm?
 pub fn Term::find_var(Self[Blk], Var) -> VarBinding?
 pub fn Term::first_def(Self[Blk]) -> Self[Def]?
 pub fn Term::flatten_blk(Self[Blk]) -> Self[Blk]
 pub fn Term::flatten_program(Self[Program]) -> Self[Program]
 pub fn Term::flatten_sub(Self[Sub]) -> Self[Sub]
+pub fn[A] Term::fold_blk_terms(Self[Blk], A, (A, IrTerm) -> A, include_self? : Bool) -> A
+pub fn[A] Term::fold_program_terms(Self[Program], A, (A, IrTerm) -> A, include_self? : Bool) -> A
+pub fn[A] Term::fold_sub_terms(Self[Sub], A, (A, IrTerm) -> A, include_self? : Bool) -> A
 pub fn[T] Term::get_attr(Self[T], String) -> String?
 pub fn[T] Term::has_attr(Self[T], String) -> Bool
 pub fn Term::insert_def_after(Self[Blk], Self[Def], after? : Tid) -> Self[Blk]
@@ -483,6 +524,7 @@ pub fn Term::last_def(Self[Blk]) -> Self[Def]?
 pub fn Term::lhs(Self[Def]) -> Var
 pub fn Term::map_arg_exp(Self[Arg], (Exp) -> Exp) -> Self[Arg]
 pub fn Term::map_blk_exp(Self[Blk], (Exp) -> Exp) -> Self[Blk]
+pub fn Term::map_blk_terms(Self[Blk], (IrTerm) -> IrTerm) -> Self[Blk]
 pub fn Term::map_blks(Self[Sub], (Self[Blk]) -> Self[Blk]) -> Self[Sub]
 pub fn Term::map_def_exp(Self[Def], (Exp) -> Exp) -> Self[Def]
 pub fn Term::map_defs(Self[Blk], (Self[Def]) -> Self[Def]) -> Self[Blk]
@@ -491,7 +533,9 @@ pub fn Term::map_jmps(Self[Blk], (Self[Jmp]) -> Self[Jmp]) -> Self[Blk]
 pub fn Term::map_phi_exp(Self[Phi], (Exp) -> Exp) -> Self[Phi]
 pub fn Term::map_phis(Self[Blk], (Self[Phi]) -> Self[Phi]) -> Self[Blk]
 pub fn Term::map_program_exp(Self[Program], (Exp) -> Exp) -> Self[Program]
+pub fn Term::map_program_terms(Self[Program], (IrTerm) -> IrTerm) -> Self[Program]
 pub fn Term::map_sub_exp(Self[Sub], (Exp) -> Exp) -> Self[Sub]
+pub fn Term::map_sub_terms(Self[Sub], (IrTerm) -> IrTerm) -> Self[Sub]
 pub fn[T] Term::name(Self[T]) -> String
 pub fn Term::next_def(Self[Blk], Tid) -> Self[Def]?
 pub fn Term::nth_def(Self[Blk], Int) -> Self[Def]?
@@ -513,6 +557,7 @@ pub fn Term::program_find_jmp(Self[Program], Tid) -> Self[Jmp]?
 pub fn Term::program_find_phi(Self[Program], Tid) -> Self[Phi]?
 pub fn Term::program_free_vars(Self[Program]) -> Array[Var]
 pub fn Term::program_jmps(Self[Program]) -> Array[Self[Jmp]]
+pub fn Term::program_parent_term(Self[Program], Tid) -> IrTerm?
 pub fn Term::program_phis(Self[Program]) -> Array[Self[Phi]]
 pub fn Term::program_resolve_stub_calls(Self[Program], link_only? : Array[String], no_link? : Array[String]) -> Self[Program]
 pub fn Term::program_resolved_callees(Self[Program], Self[Sub], resolve_indirect~ : (Exp) -> Array[Tid]) -> Array[Tid]
@@ -520,6 +565,7 @@ pub fn Term::program_resolved_callers(Self[Program], Self[Sub], resolve_indirect
 pub fn Term::program_resolved_callgraph(Self[Program], resolve_indirect~ : (Exp) -> Array[Tid]) -> @graphlib.Graph[Tid, Array[Self[Jmp]]]
 pub fn Term::program_stub_links(Self[Program], link_only? : Array[String], no_link? : Array[String]) -> Map[Tid, Tid]
 pub fn Term::program_stub_tids(Self[Program]) -> Array[Tid]
+pub fn Term::program_terms(Self[Program], include_self? : Bool) -> Array[IrTerm]
 pub fn Term::program_to_ssa(Self[Program]) -> Self[Program]
 pub fn Term::program_to_trivial_condition_form(Self[Program]) -> Self[Program]
 pub fn Term::remove_def(Self[Blk], Tid) -> Self[Blk]
@@ -552,6 +598,7 @@ pub fn Term::sub_jmps(Self[Sub]) -> Array[Self[Jmp]]
 pub fn Term::sub_live_in_vars(Self[Sub], entry? : Tid) -> Array[Var]
 pub fn Term::sub_liveness(Self[Sub], entry? : Tid) -> Array[BlockLiveness]
 pub fn Term::sub_name(Self[Sub]) -> String
+pub fn Term::sub_parent_term(Self[Sub], Tid) -> IrTerm?
 pub fn Term::sub_phis(Self[Sub]) -> Array[Self[Phi]]
 pub fn Term::sub_predecessor_blocks(Self[Sub], Self[Blk]) -> Array[Self[Blk]]
 pub fn Term::sub_reachable_blocks(Self[Sub], entry? : Tid) -> Array[Self[Blk]]
@@ -561,6 +608,7 @@ pub fn Term::sub_ssa_free_vars(Self[Sub]) -> Array[Var]
 pub fn Term::sub_strictly_dominates(Self[Sub], Self[Blk], Self[Blk], entry? : Tid) -> Bool
 pub fn Term::sub_successor_blocks(Self[Sub], Self[Blk]) -> Array[Self[Blk]]
 pub fn Term::sub_symbol_names(Self[Sub]) -> Array[String]
+pub fn Term::sub_terms(Self[Sub], include_self? : Bool) -> Array[IrTerm]
 pub fn Term::sub_to_trivial_condition_form(Self[Sub]) -> Self[Sub]
 pub fn Term::subs(Self[Program]) -> Array[Self[Sub]]
 pub fn Term::substitute_arg_var(Self[Arg], Var, Exp) -> Self[Arg]

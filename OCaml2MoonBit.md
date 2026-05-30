@@ -134,6 +134,13 @@ resolution). Port the pure `types` transform first, then expose a project-level
 wrapper that delegates to it; avoid duplicating term payload rewrites in the
 `project` package.
 
+When porting BAP `Term.visitor`/`Term.mapper` users, prefer a typed sum view of
+IR terms over untyped callbacks. Keep traversal order explicit and stable
+(program, sub, args, block, phis, defs, jumps), and make reconstruction-aware
+mappers ignore accidental class changes instead of corrupting the enclosing
+tree. Parent lookup should report the nearest IR container: program for subs,
+sub for args/blocks, and block for phis/defs/jumps.
+
 For BAP-style stub resolution, treat symbol names and aliases as an undirected
 graph and resolve by connected components. Link stubs only when a component has
 exactly one non-stub implementation; pairwise alias matching is too eager,

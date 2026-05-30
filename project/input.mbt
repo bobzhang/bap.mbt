@@ -1,0 +1,201 @@
+///|
+struct ProjectInput {
+  target_value : @core_theory.Target
+  filename_value : String?
+  image_value : @image.Image?
+  program_value : @types.Term[@types.Program]?
+  memory_value : @memory.MemMap[String]
+  libraries_value : Array[Library]
+  finish_fn : (Project) -> Project
+}
+
+///|
+struct ProjectInputLoader {
+  name_value : String
+  load_fn : (Bytes) -> Result[ProjectInput, String]
+}
+
+///|
+let input_loader_registry : Map[String, ProjectInputLoader] = {}
+
+///|
+fn identity_project(project : Project) -> Project {
+  project
+}
+
+///|
+pub fn ProjectInput::custom(
+  target~ : @core_theory.Target,
+  filename? : String,
+  image? : @image.Image,
+  program? : @types.Term[@types.Program],
+  memory? : @memory.MemMap[String],
+  libraries? : Array[Library],
+  finish? : (Project) -> Project,
+) -> ProjectInput {
+  {
+    target_value: target,
+    filename_value: filename,
+    image_value: image,
+    program_value: program,
+    memory_value: match memory {
+      Some(map) => map
+      None => @memory.MemMap::empty()
+    },
+    libraries_value: match libraries {
+      Some(items) => items.copy()
+      None => []
+    },
+    finish_fn: match finish {
+      Some(f) => f
+      None => identity_project
+    },
+  }
+}
+
+///|
+pub fn ProjectInput::from_image(
+  image : @image.Image,
+  target? : @core_theory.Target,
+  program? : @types.Term[@types.Program],
+  finish? : (Project) -> Project,
+) -> ProjectInput {
+  let selected_target = match target {
+    Some(value) => value
+    None =>
+      match image.target() {
+        Some(value) => value
+        None => @core_theory.Target::unknown()
+      }
+  }
+  ProjectInput::custom(
+    target=selected_target,
+    filename?=image.filename(),
+    image~,
+    program?,
+    memory=image.memory(),
+    finish?,
+  )
+}
+
+///|
+pub fn ProjectInput::from_bytes(
+  target~ : @core_theory.Target,
+  data : Bytes,
+  endian~ : @bitvec.Endian,
+  base? : UInt64 = 0UL,
+  filename? : String,
+  finish? : (Project) -> Project,
+) -> ProjectInput {
+  let segment = @image.Segment::create(
+    name=".raw",
+    endian~,
+    addr=base,
+    data,
+    readable=true,
+    executable=true,
+  )
+  let image = @image.Image::from_segments(
+    entry=base,
+    endian~,
+    [segment],
+    filename?,
+    target~,
+  )
+  ProjectInput::from_image(image, target~, finish?)
+}
+
+///|
+pub fn ProjectInput::target(self : ProjectInput) -> @core_theory.Target {
+  self.target_value
+}
+
+///|
+pub fn ProjectInput::filename(self : ProjectInput) -> String? {
+  self.filename_value
+}
+
+///|
+pub fn ProjectInput::image(self : ProjectInput) -> @image.Image? {
+  self.image_value
+}
+
+///|
+pub fn ProjectInput::memory(self : ProjectInput) -> @memory.MemMap[String] {
+  self.memory_value
+}
+
+///|
+pub fn ProjectInput::libraries(self : ProjectInput) -> Array[Library] {
+  self.libraries_value.copy()
+}
+
+///|
+pub fn ProjectInputLoader::create(
+  name~ : String,
+  load~ : (Bytes) -> Result[ProjectInput, String],
+) -> ProjectInputLoader {
+  { name_value: name, load_fn: load }
+}
+
+///|
+pub fn ProjectInputLoader::name(self : ProjectInputLoader) -> String {
+  self.name_value
+}
+
+///|
+pub fn ProjectInputLoader::load(
+  self : ProjectInputLoader,
+  data : Bytes,
+) -> Result[ProjectInput, String] {
+  (self.load_fn)(data)
+}
+
+///|
+pub fn register_input_loader(
+  loader : ProjectInputLoader,
+) -> Result[Unit, String] {
+  let name = loader.name()
+  if input_loader_registry.contains(name) {
+    Err("project input loader \{name} is already registered")
+  } else {
+    input_loader_registry[name] = loader
+    Ok(())
+  }
+}
+
+///|
+pub fn find_input_loader(name : String) -> ProjectInputLoader? {
+  input_loader_registry.get(name)
+}
+
+///|
+pub fn available_input_loaders() -> Array[String] {
+  let names = []
+  input_loader_registry.each((name, _) => names.push(name))
+  names
+}
+
+///|
+pub fn ProjectInput::load(
+  data : Bytes,
+  loader~ : String,
+) -> Result[ProjectInput, String] {
+  match find_input_loader(loader) {
+    Some(input_loader) => input_loader.load(data)
+    None => Err("unknown project input loader \{loader}")
+  }
+}
+
+///|
+pub fn Project::from_input(input : ProjectInput) -> Project {
+  let project = Project::create(
+    target=input.target_value,
+    image?=input.image_value,
+    filename?=input.filename_value,
+    program?=input.program_value,
+    memory=input.memory_value,
+    libraries=input.libraries_value,
+  )
+  (input.finish_fn)(project)
+}

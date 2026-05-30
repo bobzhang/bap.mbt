@@ -2,6 +2,7 @@
 package "bobzhang/bap/project"
 
 import {
+  "bobzhang/bap/bitvec",
   "bobzhang/bap/core_theory",
   "bobzhang/bap/image",
   "bobzhang/bap/memory",
@@ -9,9 +10,15 @@ import {
 }
 
 // Values
+pub fn available_input_loaders() -> Array[String]
+
+pub fn find_input_loader(String) -> ProjectInputLoader?
+
 pub fn find_pass(String) -> ProjectPass?
 
 pub fn passes() -> Array[ProjectPass]
+
+pub fn register_input_loader(ProjectInputLoader) -> Result[Unit, String]
 
 pub fn register_pass(ProjectPass) -> Result[Unit, String]
 
@@ -35,6 +42,7 @@ pub fn[T] Project::del_tag(Self, ProjectStorageTag[T]) -> Self
 pub fn Project::empty(@core_theory.Target) -> Self
 pub fn Project::filename(Self) -> String?
 pub fn Project::from_image(@image.Image, target? : @core_theory.Target, program? : @types.Term[@types.Program]) -> Self
+pub fn Project::from_input(ProjectInput) -> Self
 pub fn Project::get(Self, String) -> String?
 pub fn[T] Project::get_tag(Self, ProjectStorageTag[T]) -> Result[T?, String]
 pub fn Project::has(Self, String) -> Bool
@@ -54,6 +62,22 @@ pub fn Project::tag_memory(Self, @memory.Memory, String) -> Self
 pub fn Project::target(Self) -> @core_theory.Target
 pub fn Project::with_memory(Self, @memory.MemMap[String]) -> Self
 pub fn Project::with_program(Self, @types.Term[@types.Program]) -> Self
+
+type ProjectInput
+pub fn ProjectInput::custom(target~ : @core_theory.Target, filename? : String, image? : @image.Image, program? : @types.Term[@types.Program], memory? : @memory.MemMap[String], libraries? : Array[Library], finish? : (Project) -> Project) -> Self
+pub fn ProjectInput::filename(Self) -> String?
+pub fn ProjectInput::from_bytes(target~ : @core_theory.Target, Bytes, endian~ : @bitvec.Endian, base? : UInt64, filename? : String, finish? : (Project) -> Project) -> Self
+pub fn ProjectInput::from_image(@image.Image, target? : @core_theory.Target, program? : @types.Term[@types.Program], finish? : (Project) -> Project) -> Self
+pub fn ProjectInput::image(Self) -> @image.Image?
+pub fn ProjectInput::libraries(Self) -> Array[Library]
+pub fn ProjectInput::load(Bytes, loader~ : String) -> Result[Self, String]
+pub fn ProjectInput::memory(Self) -> @memory.MemMap[String]
+pub fn ProjectInput::target(Self) -> @core_theory.Target
+
+type ProjectInputLoader
+pub fn ProjectInputLoader::create(name~ : String, load~ : (Bytes) -> Result[ProjectInput, String]) -> Self
+pub fn ProjectInputLoader::load(Self, Bytes) -> Result[ProjectInput, String]
+pub fn ProjectInputLoader::name(Self) -> String
 
 type ProjectPass
 pub fn ProjectPass::autorun(Self) -> Bool

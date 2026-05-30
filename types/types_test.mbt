@@ -307,6 +307,38 @@ test "word integer conversions follow BAP signedness" {
 }
 
 ///|
+test "size helpers mirror BAP fixed word and address sizes" {
+  assert_true(@types.Size::of_int_opt(8) == Some(R8))
+  assert_true(@types.Size::of_int_opt(256) == Some(R256))
+  assert_true(@types.Size::of_int_opt(24) == None)
+  assert_true(@types.Size::of_int_exn(32) == R32)
+  assert_true(@types.Size::R64.in_bits() == 64)
+  assert_true(@types.Size::R64.in_bytes() == 8)
+  assert_true(@types.Size::R128.to_string() == "u128")
+  assert_true(@types.Size::addr_of_int_opt(32) == Some(Addr32))
+  assert_true(@types.Size::addr_of_int_opt(16) == None)
+  assert_true(@types.Size::addr_of_int_exn(64) == Addr64)
+  assert_true(@types.Size::R64.to_addr_size_exn() == Addr64)
+  assert_true(@types.Size::R8.to_addr_size_opt() == None)
+  assert_true(@types.AddrSize::Addr32.to_size() == R32)
+  assert_true(@types.WordSize::W64.to_size() == R64)
+  assert_true(@types.Size::addr_of_word_size(W32) == Addr32)
+  assert_true(@types.Size::word_of_addr_size(Addr64) == W64)
+  try @types.Size::of_int_exn(24) catch {
+    UnsupportedWordSize(24) => ()
+    _ => fail("expected UnsupportedWordSize")
+  } noraise {
+    _ => fail("expected UnsupportedWordSize")
+  }
+  try @types.Size::R8.to_addr_size_exn() catch {
+    UnsupportedAddressSizeValue(R8) => ()
+    _ => fail("expected UnsupportedAddressSizeValue")
+  } noraise {
+    _ => fail("expected UnsupportedAddressSizeValue")
+  }
+}
+
+///|
 test "value types and variables keep BAP-visible metadata" {
   let typ = @types.ValueType::Imm(8)
   let physical = @types.Var::new(name="r0", typ~)

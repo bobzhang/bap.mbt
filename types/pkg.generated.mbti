@@ -19,8 +19,22 @@ pub fn prune_dead_virtual_stmts(Array[Stmt]) -> Array[Stmt]
 pub fn simplify_stmts(Array[Stmt]) -> Array[Stmt]
 
 // Errors
+pub(all) suberror SizeError {
+  UnsupportedWordSize(Int)
+  UnsupportedAddressSize(Int)
+  UnsupportedAddressSizeValue(Size)
+} derive(Eq, @debug.Debug)
 
 // Types and methods
+pub(all) enum AddrSize {
+  Addr32
+  Addr64
+} derive(Eq, @debug.Debug)
+pub fn AddrSize::in_bits(Self) -> Int
+pub fn AddrSize::in_bytes(Self) -> Int
+pub fn AddrSize::to_size(Self) -> Size
+pub fn AddrSize::to_string(Self) -> String
+
 pub(all) struct Arg {
   lhs : Var
   rhs : Exp
@@ -191,6 +205,29 @@ pub(all) struct Program {
   subs : Array[Term[Sub]]
 }
 pub fn Program::create(subs? : Array[Term[Sub]], tid? : Tid) -> Term[Self]
+
+pub(all) enum Size {
+  R8
+  R16
+  R32
+  R64
+  R128
+  R256
+} derive(Eq, @debug.Debug)
+pub fn Size::addr_of_int(Int) -> Result[AddrSize, String]
+pub fn Size::addr_of_int_exn(Int) -> AddrSize raise SizeError
+pub fn Size::addr_of_int_opt(Int) -> AddrSize?
+pub fn Size::addr_of_word_size(WordSize) -> AddrSize
+pub fn Size::in_bits(Self) -> Int
+pub fn Size::in_bytes(Self) -> Int
+pub fn Size::of_int(Int) -> Result[Self, String]
+pub fn Size::of_int_exn(Int) -> Self raise SizeError
+pub fn Size::of_int_opt(Int) -> Self?
+pub fn Size::to_addr_size(Self) -> Result[AddrSize, String]
+pub fn Size::to_addr_size_exn(Self) -> AddrSize raise SizeError
+pub fn Size::to_addr_size_opt(Self) -> AddrSize?
+pub fn Size::to_string(Self) -> String
+pub fn Size::word_of_addr_size(AddrSize) -> WordSize
 
 pub(all) enum Stmt {
   Move(Var, Exp)
@@ -477,6 +514,15 @@ pub fn Word::unsigned(Self) -> Self
 pub fn Word::widen(Self, width~ : Int) -> Self raise @bitvec.BitVecError
 pub fn Word::width(Self) -> Int
 pub fn Word::zero(width~ : Int) -> Self raise @bitvec.BitVecError
+
+pub(all) enum WordSize {
+  W32
+  W64
+} derive(Eq, @debug.Debug)
+pub fn WordSize::in_bits(Self) -> Int
+pub fn WordSize::in_bytes(Self) -> Int
+pub fn WordSize::to_size(Self) -> Size
+pub fn WordSize::to_string(Self) -> String
 
 // Type aliases
 

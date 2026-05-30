@@ -533,6 +533,139 @@ fn normalize_condition_setup(
 }
 
 ///|
+fn Exp::has_memory_effects(self : Exp) -> Bool {
+  let effect = self.effect()
+  effect.loads() || effect.stores()
+}
+
+///|
+fn Exp::hoist_if_memory_effect(self : Exp) -> (Array[Stmt], Exp) {
+  if self.has_memory_effects() {
+    let variable = normalize_fresh_var(self.type_of())
+    ([Move(variable, self)], Var(variable))
+  } else {
+    ([], self)
+  }
+}
+
+///|
+fn Exp::hoist_non_generative(self : Exp) -> (Array[Stmt], Exp) {
+  match self {
+    Int(_) | Var(_) | Unknown(_) => ([], self)
+    Load(mem~, addr~, endian~, typ~) => {
+      let (mem_stmts, normalized_mem) = mem.hoist_if_memory_effect()
+      let (addr_stmts, normalized_addr) = addr.hoist_if_memory_effect()
+      (
+        append_stmts(mem_stmts, addr_stmts),
+        Load(mem=normalized_mem, addr=normalized_addr, endian~, typ~),
+      )
+    }
+    Store(mem~, addr~, value~, endian~) => {
+      let (mem_stmts, normalized_mem) = mem.hoist_non_generative()
+      let (addr_stmts, normalized_addr) = addr.hoist_non_generative()
+      let (value_stmts, normalized_value) = value.hoist_non_generative()
+      let (addr_hoists, hoisted_addr) = normalized_addr.hoist_if_memory_effect()
+      let (value_hoists, hoisted_value) = normalized_value.hoist_if_memory_effect()
+      (
+        append_stmts(
+          append_stmts(
+            append_stmts(append_stmts(mem_stmts, addr_stmts), value_stmts),
+            addr_hoists,
+          ),
+          value_hoists,
+        ),
+        Store(
+          mem=normalized_mem,
+          addr=hoisted_addr,
+          value=hoisted_value,
+          endian~,
+        ),
+      )
+    }
+    Let(variable, value, body) => {
+      let (value_stmts, normalized_value) = value.hoist_non_generative()
+      let (body_stmts, normalized_body) = body.hoist_non_generative()
+      let (value_hoists, hoisted_value) = normalized_value.hoist_if_memory_effect()
+      (
+        append_stmts(append_stmts(value_stmts, body_stmts), value_hoists),
+        Let(variable, hoisted_value, normalized_body),
+      )
+    }
+    Cast(typ, exp) => {
+      let (stmts, normalized) = exp.hoist_non_generative()
+      (stmts, Cast(typ, normalized))
+    }
+    UnOp(op, exp) => {
+      let (stmts, normalized) = exp.hoist_non_generative()
+      (stmts, UnOp(op, normalized))
+    }
+    BinOp(op, lhs, rhs) => {
+      let (lhs_stmts, normalized_lhs) = lhs.hoist_non_generative()
+      let (rhs_stmts, normalized_rhs) = rhs.hoist_non_generative()
+      (
+        append_stmts(lhs_stmts, rhs_stmts),
+        BinOp(op, normalized_lhs, normalized_rhs),
+      )
+    }
+    Ite(cond~, yes~, no~) => {
+      let (cond_stmts, normalized_cond) = cond.hoist_non_generative()
+      let (yes_stmts, normalized_yes) = yes.hoist_non_generative()
+      let (no_stmts, normalized_no) = no.hoist_non_generative()
+      let (cond_hoists, hoisted_cond) = normalized_cond.hoist_if_memory_effect()
+      (
+        append_stmts(
+          append_stmts(append_stmts(cond_stmts, yes_stmts), no_stmts),
+          cond_hoists,
+        ),
+        Ite(cond=hoisted_cond, yes=normalized_yes, no=normalized_no),
+      )
+    }
+  }
+}
+
+///|
+fn Stmt::hoist_non_generative(self : Stmt) -> Array[Stmt] {
+  match self {
+    Move(variable, exp) => {
+      let (stmts, normalized) = exp.hoist_non_generative()
+      append_stmts(stmts, [Move(variable, normalized)])
+    }
+    Jmp(exp) => {
+      let (stmts, normalized) = exp.hoist_non_generative()
+      append_stmts(stmts, [Jmp(normalized)])
+    }
+    If(cond~, yes~, no~) => {
+      let (cond_stmts, normalized_cond) = cond.hoist_non_generative()
+      append_stmts(cond_stmts, [
+        If(
+          cond=normalized_cond,
+          yes=hoist_non_generative(yes),
+          no=hoist_non_generative(no),
+        ),
+      ])
+    }
+    While(cond~, body~) => {
+      let (cond_stmts, normalized_cond) = cond.hoist_non_generative()
+      append_stmts(cond_stmts, [
+        While(cond=normalized_cond, body=hoist_non_generative(body)),
+      ])
+    }
+    Special(_) | CpuExn(_) => [self]
+  }
+}
+
+///|
+fn hoist_non_generative(stmts : Array[Stmt]) -> Array[Stmt] {
+  let result = []
+  for stmt in stmts {
+    for hoisted in stmt.hoist_non_generative() {
+      result.push(hoisted)
+    }
+  }
+  result
+}
+
+///|
 pub fn Stmt::normalize(
   self : Stmt,
   normalize_exp? : Bool = false,
@@ -619,6 +752,7 @@ pub fn normalize(
   stmts : Array[Stmt],
   normalize_exp? : Bool = false,
 ) -> Array[Stmt] {
+  let stmts = hoist_non_generative(stmts)
   let result = []
   for stmt in stmts {
     for normalized in stmt.normalize(normalize_exp~) {

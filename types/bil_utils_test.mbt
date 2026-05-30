@@ -264,14 +264,61 @@ test "bil BAP normalize hoists store-chain load memories" {
     Move(x, Load(mem=store, addr~, endian=LittleEndian, typ=Imm(32))),
   ])
   assert_true(normalized.length() == 2)
-  inspect(
-    normalized[0].to_string(),
-    content="mem:mem32x8 := store(mem:mem32x8, 0:32u, 0xDEADBEEF:32u)",
+  match (normalized[0], normalized[1]) {
+    (
+      Move(
+        temp,
+        Store(mem=Var(base), addr=Int(store_addr), value=Int(value), ..)
+      ),
+      Move(lhs, Load(mem=Var(load_mem), addr=Int(load_addr), typ=Imm(32), ..)),
+    ) => {
+      assert_true(temp.is_virtual())
+      assert_true(temp.typ() == mem_typ)
+      assert_true(base == mem)
+      assert_true(store_addr == word32(0))
+      assert_true(value == word32(0xdeadbeef))
+      assert_true(lhs == x)
+      assert_true(load_mem == temp)
+      assert_true(load_addr == word32(0))
+    }
+    _ => fail("expected memory temp hoist before load")
+  }
+}
+
+///|
+test "bil BAP normalize hoists memory-effect load addresses" {
+  let mem_typ = @types.ValueType::Mem(addr_width=32, value_width=8)
+  let mem = @types.Var::new(name="mem", typ=mem_typ)
+  let x = @types.Var::new(name="x", typ=Imm(8))
+  let addr = @types.Int(word32(0))
+  let address_load : @types.Exp = Load(
+    mem=Var(mem),
+    addr~,
+    endian=LittleEndian,
+    typ=Imm(32),
   )
-  inspect(
-    normalized[1].to_string(),
-    content="x:imm32 := load(mem:mem32x8, 0:32u):imm32",
-  )
+  let normalized = @types.normalize([
+    Move(
+      x,
+      Load(mem=Var(mem), addr=address_load, endian=LittleEndian, typ=Imm(8)),
+    ),
+  ])
+  assert_true(normalized.length() == 2)
+  match (normalized[0], normalized[1]) {
+    (
+      Move(temp, Load(mem=Var(addr_mem), addr=Int(addr_word), typ=Imm(32), ..)),
+      Move(lhs, Load(mem=Var(load_mem), addr=Var(load_addr), typ=Imm(8), ..)),
+    ) => {
+      assert_true(temp.is_virtual())
+      assert_true(temp.typ() == Imm(32))
+      assert_true(addr_mem == mem)
+      assert_true(addr_word == word32(0))
+      assert_true(lhs == x)
+      assert_true(load_mem == mem)
+      assert_true(load_addr == temp)
+    }
+    _ => fail("expected address load hoist before outer load")
+  }
 }
 
 ///|

@@ -1,0 +1,380 @@
+///|
+struct LabelFacts {
+  state_value : @knowledge.State
+  class_value : @knowledge.Class[Unit, Unit]
+  addr_value : @knowledge.FactTable[Unit, @types.Word?]
+  name_value : @knowledge.FactTable[Unit, String?]
+  possible_name_value : @knowledge.FactTable[Unit, @knowledge.Opinions[String?]]
+  ivec_value : @knowledge.FactTable[Unit, Int?]
+  encoding_value : @knowledge.FactTable[Unit, Language]
+  aliases_value : @knowledge.FactTable[Unit, Array[String]]
+  unit_value : @knowledge.FactTable[Unit, ProgramUnit?]
+  valid_value : @knowledge.FactTable[Unit, Bool?]
+  subroutine_value : @knowledge.FactTable[Unit, Bool?]
+}
+
+///|
+fn optional_int_domain(name : String) -> @knowledge.Domain[Int?] {
+  @knowledge.Domain::optional(
+    @knowledge.Domain::flat(core_name(name), value => value.to_string()),
+  )
+}
+
+///|
+fn optional_bool_domain(name : String) -> @knowledge.Domain[Bool?] {
+  @knowledge.Domain::optional(
+    @knowledge.Domain::flat(core_name(name), value => value.to_string()),
+  )
+}
+
+///|
+fn possible_name_domain() -> @knowledge.Domain[@knowledge.Opinions[String?]] {
+  @knowledge.Domain::opinions(
+    core_name("possible-name"),
+    empty=None,
+    equal=possible_label_name_equal,
+    inspect=inspect_possible_label_name,
+  )
+}
+
+///|
+fn program_unit_equal(lhs : ProgramUnit, rhs : ProgramUnit) -> Bool {
+  lhs.same(rhs)
+}
+
+///|
+fn program_unit_domain() -> @knowledge.Domain[ProgramUnit?] {
+  @knowledge.Domain::optional(
+    @knowledge.Domain::new(
+      name=core_name("label-unit"),
+      empty=None,
+      is_empty=(_ : ProgramUnit) => false,
+      order=(lhs : ProgramUnit, rhs : ProgramUnit) => {
+        if program_unit_equal(lhs, rhs) {
+          Equal
+        } else {
+          Incomparable
+        }
+      },
+      join=(lhs : ProgramUnit, rhs : ProgramUnit) => {
+        if program_unit_equal(lhs, rhs) {
+          Ok(lhs)
+        } else {
+          Err("conflicting label unit facts")
+        }
+      },
+      inspect=(unit : ProgramUnit) => unit.name(),
+    ),
+  )
+}
+
+///|
+pub fn LabelFacts::new() -> LabelFacts {
+  let cls : @knowledge.Class[Unit, Unit] = @knowledge.Class::create(
+    name=core_name("program"),
+    sort=(),
+    desc="a class of program instances",
+  )
+  let addr = cls.property(
+    name=core_name("label-addr"),
+    domain=optional_word_domain("label-addr"),
+    desc="the program virtual address",
+  )
+  let name = cls.property(
+    name=core_name("label-name"),
+    domain=optional_string_domain("label-name"),
+    desc="the program linkage name",
+  )
+  let possible_name = cls.property(
+    name=core_name("possible-name"),
+    domain=possible_name_domain(),
+    desc="a unique name associated with the program",
+  )
+  let ivec = cls.property(
+    name=core_name("label-ivec"),
+    domain=optional_int_domain("label-ivec"),
+    desc="the program interrupt vector",
+  )
+  let encoding = cls.property(
+    name=core_name("encoding"),
+    domain=source_language_domain(),
+    desc="the language of the code",
+  )
+  let aliases = cls.property(
+    name=core_name("label-aliases"),
+    domain=@knowledge.Domain::powerset(core_name("label-aliases"), item => item),
+    desc="the set of known program names",
+  )
+  let unit = cls.property(
+    name=core_name("label-unit"),
+    domain=program_unit_domain(),
+    desc="the program unit",
+  )
+  let valid = cls.property(
+    name=core_name("is-valid"),
+    domain=optional_bool_domain("is-valid"),
+    desc="is the program valid or not",
+  )
+  let subroutine = cls.property(
+    name=core_name("is-subroutine"),
+    domain=optional_bool_domain("is-subroutine"),
+    desc="is the program a subroutine entry point",
+  )
+  {
+    state_value: @knowledge.State::new(),
+    class_value: cls,
+    addr_value: @knowledge.FactTable::new(addr),
+    name_value: @knowledge.FactTable::new(name),
+    possible_name_value: @knowledge.FactTable::new(possible_name),
+    ivec_value: @knowledge.FactTable::new(ivec),
+    encoding_value: @knowledge.FactTable::new(encoding),
+    aliases_value: @knowledge.FactTable::new(aliases),
+    unit_value: @knowledge.FactTable::new(unit),
+    valid_value: @knowledge.FactTable::new(valid),
+    subroutine_value: @knowledge.FactTable::new(subroutine),
+  }
+}
+
+///|
+pub fn LabelFacts::class(self : LabelFacts) -> @knowledge.Class[Unit, Unit] {
+  self.class_value
+}
+
+///|
+pub fn LabelFacts::create(self : LabelFacts) -> @knowledge.Object[Unit] {
+  self.state_value.create(self.class_value)
+}
+
+///|
+pub fn LabelFacts::addr(
+  self : LabelFacts,
+) -> @knowledge.FactTable[Unit, @types.Word?] {
+  self.addr_value
+}
+
+///|
+pub fn LabelFacts::name(
+  self : LabelFacts,
+) -> @knowledge.FactTable[Unit, String?] {
+  self.name_value
+}
+
+///|
+pub fn LabelFacts::possible_name(
+  self : LabelFacts,
+) -> @knowledge.FactTable[Unit, @knowledge.Opinions[String?]] {
+  self.possible_name_value
+}
+
+///|
+pub fn LabelFacts::ivec(self : LabelFacts) -> @knowledge.FactTable[Unit, Int?] {
+  self.ivec_value
+}
+
+///|
+pub fn LabelFacts::encoding(
+  self : LabelFacts,
+) -> @knowledge.FactTable[Unit, Language] {
+  self.encoding_value
+}
+
+///|
+pub fn LabelFacts::aliases(
+  self : LabelFacts,
+) -> @knowledge.FactTable[Unit, Array[String]] {
+  self.aliases_value
+}
+
+///|
+pub fn LabelFacts::unit(
+  self : LabelFacts,
+) -> @knowledge.FactTable[Unit, ProgramUnit?] {
+  self.unit_value
+}
+
+///|
+pub fn LabelFacts::is_valid(
+  self : LabelFacts,
+) -> @knowledge.FactTable[Unit, Bool?] {
+  self.valid_value
+}
+
+///|
+pub fn LabelFacts::is_subroutine(
+  self : LabelFacts,
+) -> @knowledge.FactTable[Unit, Bool?] {
+  self.subroutine_value
+}
+
+///|
+pub fn LabelFacts::provide_label(
+  self : LabelFacts,
+  object : @knowledge.Object[Unit],
+  label : Label,
+) -> Result[Unit, String] {
+  match self.addr_value.provide(object, label.addr()) {
+    Ok(_) => ()
+    Err(reason) => return Err(reason)
+  }
+  match self.name_value.provide(object, label.name()) {
+    Ok(_) => ()
+    Err(reason) => return Err(reason)
+  }
+  match
+    self.possible_name_value.provide(object, label.possible_name_opinions()) {
+    Ok(_) => ()
+    Err(reason) => return Err(reason)
+  }
+  match self.ivec_value.provide(object, label.ivec()) {
+    Ok(_) => ()
+    Err(reason) => return Err(reason)
+  }
+  match label.encoding() {
+    Some(language) =>
+      match self.encoding_value.provide(object, language) {
+        Ok(_) => ()
+        Err(reason) => return Err(reason)
+      }
+    None => ()
+  }
+  match self.aliases_value.provide(object, label.aliases()) {
+    Ok(_) => ()
+    Err(reason) => return Err(reason)
+  }
+  match self.unit_value.provide(object, label.unit()) {
+    Ok(_) => ()
+    Err(reason) => return Err(reason)
+  }
+  match self.valid_value.provide(object, Some(label.is_valid())) {
+    Ok(_) => ()
+    Err(reason) => return Err(reason)
+  }
+  match self.subroutine_value.provide(object, Some(label.is_subroutine())) {
+    Ok(_) => ()
+    Err(reason) => return Err(reason)
+  }
+  Ok(())
+}
+
+///|
+pub fn LabelFacts::for_label(
+  self : LabelFacts,
+  label : Label,
+) -> Result[@knowledge.Object[Unit], String] {
+  let object = self.create()
+  match self.provide_label(object, label) {
+    Ok(_) => Ok(object)
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+pub fn LabelFacts::collect_addr(
+  self : LabelFacts,
+  object : @knowledge.Object[Unit],
+) -> @types.Word? {
+  match self.addr_value.collect(object) {
+    Some(addr) => addr
+    None => None
+  }
+}
+
+///|
+pub fn LabelFacts::collect_name(
+  self : LabelFacts,
+  object : @knowledge.Object[Unit],
+) -> String? {
+  match self.name_value.collect(object) {
+    Some(name) => name
+    None => None
+  }
+}
+
+///|
+pub fn LabelFacts::collect_possible_name(
+  self : LabelFacts,
+  object : @knowledge.Object[Unit],
+) -> String? {
+  match self.possible_name_value.collect(object) {
+    Some(opinions) => opinions.choice()
+    None => None
+  }
+}
+
+///|
+pub fn LabelFacts::collect_ivec(
+  self : LabelFacts,
+  object : @knowledge.Object[Unit],
+) -> Int? {
+  match self.ivec_value.collect(object) {
+    Some(ivec) => ivec
+    None => None
+  }
+}
+
+///|
+pub fn LabelFacts::collect_encoding(
+  self : LabelFacts,
+  object : @knowledge.Object[Unit],
+) -> Language? {
+  match self.encoding_value.collect(object) {
+    Some(language) if !self.encoding_value.slot().domain().is_empty(language) =>
+      Some(language)
+    _ => None
+  }
+}
+
+///|
+pub fn LabelFacts::collect_aliases(
+  self : LabelFacts,
+  object : @knowledge.Object[Unit],
+) -> Array[String] {
+  match self.aliases_value.collect(object) {
+    Some(aliases) => aliases
+    None => []
+  }
+}
+
+///|
+pub fn LabelFacts::collect_unit(
+  self : LabelFacts,
+  object : @knowledge.Object[Unit],
+) -> ProgramUnit? {
+  match self.unit_value.collect(object) {
+    Some(unit) => unit
+    None => None
+  }
+}
+
+///|
+pub fn LabelFacts::collect_is_valid(
+  self : LabelFacts,
+  object : @knowledge.Object[Unit],
+) -> Bool? {
+  match self.valid_value.collect(object) {
+    Some(flag) => flag
+    None => None
+  }
+}
+
+///|
+pub fn LabelFacts::collect_is_subroutine(
+  self : LabelFacts,
+  object : @knowledge.Object[Unit],
+) -> Bool? {
+  match self.subroutine_value.collect(object) {
+    Some(flag) => flag
+    None => None
+  }
+}
+
+///|
+pub fn LabelFacts::collect_target(
+  self : LabelFacts,
+  object : @knowledge.Object[Unit],
+) -> Target {
+  match self.collect_unit(object) {
+    Some(unit) => unit.target()
+    None => Target::unknown()
+  }
+}

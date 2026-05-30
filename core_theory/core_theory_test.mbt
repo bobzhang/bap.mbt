@@ -408,3 +408,65 @@ test "program source and unit facts expose BAP-style Knowledge slots" {
   let unknown_object = unit_facts.create()
   assert_true(unit_facts.collect_target(unknown_object).is_unknown())
 }
+
+///|
+test "program label facts expose BAP-style Knowledge slots" {
+  let weak = register_core_test_agent("label-fact-weak", Unreliable)
+  let strong = register_core_test_agent("label-fact-strong", Reliable)
+  let source = @core_theory.Source::create(language=C, file="main.c")
+  let unit = @core_theory.ProgramUnit::for_file(
+    "main.o",
+    target=@core_theory.Target::x86_64(),
+    source~,
+  )
+  let addr = @types.Word::of_int(width=64, 0x401000)
+  let label = @core_theory.Label::for_addr(addr)
+    .with_unit(unit)
+    .with_alias("_main")
+    .with_alias("_main")
+    .with_alias("main")
+    .with_encoding(C)
+    .with_possible_name(weak, "sub_401000")
+    .with_possible_name(strong, "main")
+    .with_subroutine()
+  let facts = @core_theory.LabelFacts::new()
+  let alias_notifications : Ref[Int] = Ref(0)
+  facts
+  .aliases()
+  .observe((_, aliases) => {
+    if aliases.contains("main") {
+      alias_notifications.val = alias_notifications.val + 1
+    }
+    Ok(())
+  })
+  match facts.for_label(label) {
+    Ok(object) => {
+      assert_true(alias_notifications.val == 1)
+      assert_true(facts.collect_addr(object) == Some(addr))
+      assert_true(facts.collect_name(object) is None)
+      assert_true(facts.collect_possible_name(object) == Some("main"))
+      assert_true(facts.collect_encoding(object) == Some(C))
+      assert_true(facts.collect_aliases(object) == ["_main", "main"])
+      assert_true(
+        facts.collect_unit(object).map(item => item.same(unit)) == Some(true),
+      )
+      assert_true(facts.collect_target(object).matches("amd64"))
+      assert_true(facts.collect_is_valid(object) == Some(true))
+      assert_true(facts.collect_is_subroutine(object) == Some(true))
+      assert_true(
+        facts.provide_label(
+          object,
+          @core_theory.Label::for_addr(@types.Word::of_int(width=64, 0x402000))
+          .with_unit(unit)
+          .with_subroutine(),
+        )
+        is Err(_),
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let empty = facts.create()
+  assert_true(facts.collect_target(empty).is_unknown())
+  assert_true(facts.collect_encoding(empty) is None)
+}

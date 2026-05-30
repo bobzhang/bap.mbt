@@ -137,6 +137,32 @@ pub fn Label::with_possible_name(Self, @knowledge.Agent, String) -> Self
 pub fn Label::with_subroutine(Self, is_subroutine? : Bool) -> Self
 pub fn Label::with_unit(Self, ProgramUnit) -> Self
 
+type LabelFacts
+pub fn LabelFacts::addr(Self) -> @knowledge.FactTable[Unit, @types.Word?]
+pub fn LabelFacts::aliases(Self) -> @knowledge.FactTable[Unit, Array[String]]
+pub fn LabelFacts::class(Self) -> @knowledge.Class[Unit, Unit]
+pub fn LabelFacts::collect_addr(Self, @knowledge.Object[Unit]) -> @types.Word?
+pub fn LabelFacts::collect_aliases(Self, @knowledge.Object[Unit]) -> Array[String]
+pub fn LabelFacts::collect_encoding(Self, @knowledge.Object[Unit]) -> Language?
+pub fn LabelFacts::collect_is_subroutine(Self, @knowledge.Object[Unit]) -> Bool?
+pub fn LabelFacts::collect_is_valid(Self, @knowledge.Object[Unit]) -> Bool?
+pub fn LabelFacts::collect_ivec(Self, @knowledge.Object[Unit]) -> Int?
+pub fn LabelFacts::collect_name(Self, @knowledge.Object[Unit]) -> String?
+pub fn LabelFacts::collect_possible_name(Self, @knowledge.Object[Unit]) -> String?
+pub fn LabelFacts::collect_target(Self, @knowledge.Object[Unit]) -> Target
+pub fn LabelFacts::collect_unit(Self, @knowledge.Object[Unit]) -> ProgramUnit?
+pub fn LabelFacts::create(Self) -> @knowledge.Object[Unit]
+pub fn LabelFacts::encoding(Self) -> @knowledge.FactTable[Unit, Language]
+pub fn LabelFacts::for_label(Self, Label) -> Result[@knowledge.Object[Unit], String]
+pub fn LabelFacts::is_subroutine(Self) -> @knowledge.FactTable[Unit, Bool?]
+pub fn LabelFacts::is_valid(Self) -> @knowledge.FactTable[Unit, Bool?]
+pub fn LabelFacts::ivec(Self) -> @knowledge.FactTable[Unit, Int?]
+pub fn LabelFacts::name(Self) -> @knowledge.FactTable[Unit, String?]
+pub fn LabelFacts::new() -> Self
+pub fn LabelFacts::possible_name(Self) -> @knowledge.FactTable[Unit, @knowledge.Opinions[String?]]
+pub fn LabelFacts::provide_label(Self, @knowledge.Object[Unit], Label) -> Result[Unit, String]
+pub fn LabelFacts::unit(Self) -> @knowledge.FactTable[Unit, ProgramUnit?]
+
 pub(all) enum Language {
   C
   Cxx

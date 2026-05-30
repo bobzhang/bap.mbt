@@ -197,3 +197,68 @@ pub fn simplify_stmts(stmts : Array[Stmt]) -> Array[Stmt] {
   }
   result
 }
+
+///|
+fn remove_live_var(live : Array[Var], variable : Var) -> Array[Var] {
+  live.filter(item => item != variable)
+}
+
+///|
+fn add_stmt_live_vars(live : Array[Var], stmt : Stmt) -> Unit {
+  add_vars(live, stmt.free_vars())
+}
+
+///|
+fn prune_dead_virtuals_loop(
+  stmts : Array[Stmt],
+  live_out : Array[Var],
+) -> (Array[Stmt], Array[Var]) {
+  let mut live = live_out.copy()
+  let kept = []
+  for offset in 0..<stmts.length() {
+    let stmt = stmts[stmts.length() - offset - 1]
+    match stmt {
+      Move(variable, exp) =>
+        if variable.is_virtual && !live.any(item => item == variable) {
+          ()
+        } else {
+          live = remove_live_var(live, variable)
+          add_vars(live, exp.free_vars())
+          kept.push(stmt)
+        }
+      Jmp(exp) => {
+        add_vars(live, exp.free_vars())
+        kept.push(stmt)
+      }
+      Special(_) | CpuExn(_) => kept.push(stmt)
+      If(cond~, yes~, no~) => {
+        let yes_result = prune_dead_virtuals_loop(yes, live)
+        let no_result = prune_dead_virtuals_loop(no, live)
+        let next_live = []
+        add_vars(next_live, cond.free_vars())
+        add_vars(next_live, yes_result.1)
+        add_vars(next_live, no_result.1)
+        live = next_live
+        kept.push(If(cond~, yes=yes_result.0, no=no_result.0))
+      }
+      While(cond~, body~) => {
+        add_vars(live, cond.free_vars())
+        for body_stmt in body {
+          add_stmt_live_vars(live, body_stmt)
+        }
+        kept.push(stmt)
+      }
+    }
+  }
+  (kept.rev(), live)
+}
+
+///|
+pub fn prune_dead_virtual_stmts(stmts : Array[Stmt]) -> Array[Stmt] {
+  prune_dead_virtuals_loop(stmts, []).0
+}
+
+///|
+pub fn optimize_stmts(stmts : Array[Stmt]) -> Array[Stmt] {
+  prune_dead_virtual_stmts(simplify_stmts(stmts))
+}

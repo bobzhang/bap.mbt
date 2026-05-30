@@ -10,6 +10,10 @@ import {
 // Values
 pub fn exec_stmts(Array[Stmt], state? : BilState, max_steps? : Int) -> Result[BilState, String]
 
+pub fn optimize_stmts(Array[Stmt]) -> Array[Stmt]
+
+pub fn prune_dead_virtual_stmts(Array[Stmt]) -> Array[Stmt]
+
 pub fn simplify_stmts(Array[Stmt]) -> Array[Stmt]
 
 // Errors

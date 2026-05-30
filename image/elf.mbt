@@ -477,6 +477,21 @@ fn image_elf_cstring(data : Bytes, offset : Int) -> Result[String, String] {
 }
 
 ///|
+fn image_elf_section_name(
+  names : Bytes?,
+  section : ImageElfSectionHeader,
+) -> Result[String?, String] {
+  match names {
+    Some(names) =>
+      match image_elf_cstring(names, section.name_offset) {
+        Ok(name) => if name.length() == 0 { Ok(None) } else { Ok(Some(name)) }
+        Err(reason) => Err(reason)
+      }
+    None => Ok(None)
+  }
+}
+
+///|
 fn image_elf_segment_data(
   data : Bytes,
   program : ImageElfProgramHeader,
@@ -727,13 +742,14 @@ fn image_elf_load(data : Bytes) -> Result[(Image, Array[String]), String] {
           Err(reason) => return Err(reason)
         }
       }
-      let names = if section_headers.is_empty() {
-        b""
+      let names : Bytes? = if section_headers.is_empty() ||
+        header.section_name_index == 0 {
+        None
       } else {
         match section_headers.get(header.section_name_index) {
           Some(section) =>
             match image_elf_section_data(data, section.offset, section.size) {
-              Ok(value) => value
+              Ok(value) => Some(value)
               Err(reason) => return Err(reason)
             }
           None => return Err("ELF section name table index is out of bounds")
@@ -741,13 +757,14 @@ fn image_elf_load(data : Bytes) -> Result[(Image, Array[String]), String] {
       }
       let sections : Array[Section] = []
       for section in section_headers {
-        match image_elf_cstring(names, section.name_offset) {
-          Ok(name) =>
-            if name.length() > 0 && section.size > 0 {
+        match image_elf_section_name(names, section) {
+          Ok(Some(name)) =>
+            if section.size > 0 {
               sections.push(
                 Section::create(name~, addr=section.addr, size=section.size),
               )
             }
+          Ok(None) => ()
           Err(reason) => return Err(reason)
         }
       }

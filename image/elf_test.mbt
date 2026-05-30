@@ -232,6 +232,17 @@ fn image_elf_test_make_x86_64_without_sections() -> Bytes {
 }
 
 ///|
+fn image_elf_test_make_x86_64_without_section_names() -> Bytes {
+  let source = image_elf_test_make_x86_64()
+  let buffer = Array::make(source.length(), b'\x00')
+  for i in 0..<source.length() {
+    buffer[i] = source[i]
+  }
+  image_elf_test_set_u16_le(buffer, 62, 0)
+  Bytes::from_array(buffer)
+}
+
+///|
 test "image ELF backend loads program segments and sections" {
   match @image.register_builtin_backends() {
     Ok(_) => ()
@@ -293,6 +304,27 @@ test "image ELF backend loads program segments and sections" {
   assert_true(data_symbol.size() == 1)
   assert_true(!data_symbol.is_function())
   assert_true(image.symbols_of_segment(segments[0]).length() == 2)
+}
+
+///|
+test "image ELF backend loads symbol tables without section names" {
+  match @image.register_builtin_backends() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let (image, warnings) = expect_elf_image(
+    @image.Image::of_bytes(
+      image_elf_test_make_x86_64_without_section_names(),
+      backend="elf",
+    ),
+  )
+  assert_true(warnings.is_empty())
+  assert_true(image.sections().is_empty())
+  let symbols = image.symbols()
+  assert_true(symbols.length() == 2)
+  assert_true(symbols.any(symbol => symbol.name() == "main"))
+  assert_true(symbols.any(symbol => symbol.name() == "data_object"))
+  assert_true(image.symbols_of_segment(image.segments()[0]).length() == 2)
 }
 
 ///|

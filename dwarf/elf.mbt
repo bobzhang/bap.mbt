@@ -67,6 +67,7 @@ fn dwarf_elf_section_of_name(name : String) -> DwarfSection? {
     ".debug_info" => Some(DwarfInfo)
     ".debug_abbrev" => Some(DwarfAbbrev)
     ".debug_str" => Some(DwarfStr)
+    ".debug_str_offsets" => Some(DwarfStrOffsets)
     _ => None
   }
 }
@@ -272,6 +273,7 @@ pub fn DwarfData::from_elf_bytes(data : Bytes) -> Result[DwarfData, String] {
       let mut info : Bytes? = None
       let mut abbrev : Bytes? = None
       let mut str : Bytes? = None
+      let mut str_offsets : Bytes? = None
       for section_header in section_headers {
         match dwarf_elf_section_name(names, section_header.name_offset) {
           Ok(name) =>
@@ -291,12 +293,23 @@ pub fn DwarfData::from_elf_bytes(data : Bytes) -> Result[DwarfData, String] {
                   Ok(bytes) => str = Some(bytes)
                   Err(reason) => return Err(reason)
                 }
+              Some(DwarfStrOffsets) =>
+                match dwarf_elf_section_data(data, section_header) {
+                  Ok(bytes) => str_offsets = Some(bytes)
+                  Err(reason) => return Err(reason)
+                }
               None => ()
             }
           Err(reason) => return Err(reason)
         }
       }
-      DwarfData::from_bytes(endian=header.endian, info?, abbrev?, str?)
+      DwarfData::from_bytes(
+        endian=header.endian,
+        info?,
+        abbrev?,
+        str?,
+        str_offsets?,
+      )
     }
     Err(reason) => Err(reason)
   }

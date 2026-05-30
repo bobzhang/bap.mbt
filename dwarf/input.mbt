@@ -14,6 +14,15 @@ pub(all) enum DwarfLenspec {
 } derive(Eq, Debug)
 
 ///|
+pub(all) enum DwarfIndexSpec {
+  DwarfIndexLeb128
+  DwarfIndexOne
+  DwarfIndexTwo
+  DwarfIndexThree
+  DwarfIndexFour
+} derive(Eq, Debug)
+
+///|
 pub(all) enum DwarfTag {
   DwarfEntryPoint
   DwarfCompileUnit
@@ -28,6 +37,7 @@ pub(all) enum DwarfAttr {
   DwarfLowPc
   DwarfHighPc
   DwarfEntryPc
+  DwarfStrOffsetsBase
   DwarfUnknownAttr(Int)
 } derive(Eq, Debug)
 
@@ -38,6 +48,7 @@ pub(all) enum DwarfForm {
   DwarfConst(DwarfLenspec)
   DwarfString
   DwarfStrp
+  DwarfStrx(DwarfIndexSpec)
   DwarfOffset
   DwarfRef(DwarfLenspec)
   DwarfIndirect
@@ -251,6 +262,7 @@ fn dwarf_attr_of_int(code : Int) -> DwarfAttr {
     0x11 => DwarfLowPc
     0x12 => DwarfHighPc
     0x52 => DwarfEntryPc
+    0x72 => DwarfStrOffsetsBase
     other => DwarfUnknownAttr(other)
   }
 }
@@ -282,7 +294,12 @@ fn dwarf_form_of_int(code : Int) -> Result[DwarfForm, String] {
     0x17 => Ok(DwarfOffset)
     0x18 => Ok(DwarfExpr)
     0x19 => Ok(DwarfFlagPresent)
+    0x1a => Ok(DwarfStrx(DwarfIndexLeb128))
     0x20 => Ok(DwarfRef(DwarfEight))
+    0x25 => Ok(DwarfStrx(DwarfIndexOne))
+    0x26 => Ok(DwarfStrx(DwarfIndexTwo))
+    0x27 => Ok(DwarfStrx(DwarfIndexThree))
+    0x28 => Ok(DwarfStrx(DwarfIndexFour))
     other => Err("unknown DWARF form code: \{other}")
   }
 }
@@ -459,6 +476,42 @@ pub fn DwarfInput::read_const(
   endian~ : @bitvec.Endian,
 ) -> Result[(Int64, DwarfInput), String] {
   self.read_len(lenspec, endian)
+}
+
+///|
+fn DwarfInput::read_unsigned_bytes(
+  self : DwarfInput,
+  bytes : Int,
+  endian : @bitvec.Endian,
+) -> Result[(Int, DwarfInput), String] {
+  match self.read_uint(bytes, endian) {
+    Ok((value, next)) =>
+      if value > 2147483647UL {
+        Err("DWARF index does not fit in Int")
+      } else {
+        Ok((value.to_int(), next))
+      }
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+fn DwarfInput::read_index(
+  self : DwarfInput,
+  spec : DwarfIndexSpec,
+  endian : @bitvec.Endian,
+) -> Result[(Int, DwarfInput), String] {
+  match spec {
+    DwarfIndexLeb128 => self.read_code()
+    DwarfIndexOne =>
+      match self.read_byte() {
+        Ok((value, next)) => Ok((value, next))
+        Err(reason) => Err(reason)
+      }
+    DwarfIndexTwo => self.read_unsigned_bytes(2, endian)
+    DwarfIndexThree => self.read_unsigned_bytes(3, endian)
+    DwarfIndexFour => self.read_unsigned_bytes(4, endian)
+  }
 }
 
 ///|

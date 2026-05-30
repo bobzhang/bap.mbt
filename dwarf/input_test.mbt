@@ -58,13 +58,17 @@ test "translated DWARF input reads endian addresses and signed integers" {
 
 ///|
 test "translated DWARF input decodes tags attributes forms and LEB128 codes" {
-  let input = @dwarf.DwarfInput::of_bytes(b"\x2e\x52\x09\x7f")
+  let input = @dwarf.DwarfInput::of_bytes(b"\x2e\x72\x09\x25\x1a\x7f")
   let (tag, input) = expect_input_read(input.read_tag())
   assert_true(tag == DwarfSubprogram)
   let (attr, input) = expect_input_read(input.read_attr())
-  assert_true(attr == DwarfEntryPc)
+  assert_true(attr == DwarfStrOffsetsBase)
   let (form, input) = expect_input_read(input.read_form())
   assert_true(form == DwarfBlock(DwarfLeb128))
+  let (form, input) = expect_input_read(input.read_form())
+  assert_true(form == DwarfStrx(DwarfIndexOne))
+  let (form, input) = expect_input_read(input.read_form())
+  assert_true(form == DwarfStrx(DwarfIndexLeb128))
   let (code, input) = expect_input_read(input.read_code())
   assert_true(code == 127)
   assert_true(input.remaining() == 0)

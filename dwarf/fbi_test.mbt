@@ -104,6 +104,80 @@ test "translated DWARF FBI extracts string-table names and absolute high pc" {
 }
 
 ///|
+test "translated DWARF FBI extracts indexed string-table names" {
+  let abbrev = b"\x01\x2e\x00" +
+    b"\x03\x25" +
+    b"\x11\x01" +
+    b"\x12\x0b" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x0f\x00\x00\x00" +
+    b"\x04\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x04" +
+    b"\x01" +
+    b"\x01" +
+    b"\x70\x00\x00\x00" +
+    b"\x06" +
+    b"\x00"
+  let data = expect_fbi_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=LittleEndian,
+      info~,
+      abbrev~,
+      str=b"skip\x00strxfn\x00",
+      str_offsets=b"\x00\x00\x00\x00\x05\x00\x00\x00",
+    ),
+  )
+  let functions = expect_functions(data.functions())
+  assert_true(functions.length() == 1)
+  assert_true(functions[0].name() == "strxfn")
+  assert_true(functions[0].low_pc() == 0x70UL)
+  assert_true(functions[0].high_pc() == Some(0x76UL))
+}
+
+///|
+test "translated DWARF FBI applies DWARF5 string offsets base" {
+  let abbrev = b"\x01\x11\x01" +
+    b"\x72\x17" +
+    b"\x03\x25" +
+    b"\x00\x00" +
+    b"\x02\x2e\x00" +
+    b"\x03\x25" +
+    b"\x11\x01" +
+    b"\x12\x0b" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x16\x00\x00\x00" +
+    b"\x05\x00" +
+    b"\x01" +
+    b"\x04" +
+    b"\x00\x00\x00\x00" +
+    b"\x01" +
+    b"\x04\x00\x00\x00" +
+    b"\x00" +
+    b"\x02" +
+    b"\x00" +
+    b"\x90\x00\x00\x00" +
+    b"\x05" +
+    b"\x00"
+  let data = expect_fbi_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=LittleEndian,
+      info~,
+      abbrev~,
+      str=b"skip\x00based\x00",
+      str_offsets=b"\x00\x00\x00\x00\x05\x00\x00\x00",
+    ),
+  )
+  let functions = expect_functions(data.functions())
+  assert_true(functions.length() == 1)
+  assert_true(functions[0].name() == "based")
+  assert_true(functions[0].low_pc() == 0x90UL)
+  assert_true(functions[0].high_pc() == Some(0x95UL))
+}
+
+///|
 test "translated DWARF FBI resolves indirect value forms" {
   let abbrev = b"\x01\x2e\x00" +
     b"\x03\x16" +

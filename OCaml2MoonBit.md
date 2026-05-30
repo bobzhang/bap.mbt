@@ -126,6 +126,12 @@ DWARF-derived function symbols, but unsupported or malformed DWARF should not
 turn a loadable stripped binary into a project-loading failure. Treat those
 derived symbols as debug metadata and de-duplicate them against image symbols by
 stable identity such as `(name, address)`.
+When extending DWARF function-boundary extraction for newer producer output,
+keep string ownership explicit: `DW_FORM_strp` indexes `.debug_str` directly,
+whereas `DW_FORM_strx*` first indexes `.debug_str_offsets` using the
+compilation unit's `DW_AT_str_offsets_base`, then uses the resulting offset in
+`.debug_str`. Non-capturing DIE fields should still skip the encoded form
+without forcing optional sections to exist.
 
 `text[i]` returns a `UInt16` code unit, not a `Char`. For text parsers that need character predicates or `StringBuilder::write_char`, use `text.get_char(offset)` and advance by `char.utf16_len()`. It is still fine to increment by one for syntax bytes you have already constrained to ASCII, such as `(`, `)`, `"` and `\\`, but do not mix code-unit offsets with `Char` APIs accidentally.
 

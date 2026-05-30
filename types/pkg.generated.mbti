@@ -3,6 +3,7 @@ package "bobzhang/bap/types"
 
 import {
   "bobzhang/bap/bitvec",
+  "bobzhang/bap/graphlib",
   "moonbitlang/core/debug",
 }
 
@@ -214,6 +215,7 @@ pub fn Term::arg_rhs(Self[Arg]) -> Exp
 pub fn Term::args(Self[Sub]) -> Array[Self[Arg]]
 pub fn[T] Term::attrs(Self[T]) -> Map[String, String]
 pub fn Term::blk_free_vars(Self[Blk]) -> Array[Var]
+pub fn Term::blk_successor_tids(Self[Blk]) -> Array[Tid]
 pub fn Term::blks(Self[Sub]) -> Array[Self[Blk]]
 pub fn[T] Term::clone(Self[T]) -> Self[T]
 pub fn Term::concat_map_defs(Self[Blk], (Self[Def]) -> Array[Self[Def]]) -> Self[Blk]
@@ -228,6 +230,7 @@ pub fn Term::defs_after(Self[Blk], Tid, rev? : Bool) -> Array[Self[Def]]
 pub fn Term::defs_before(Self[Blk], Tid, rev? : Bool) -> Array[Self[Def]]
 pub fn[T] Term::del_attr(Self[T], String) -> Self[T]
 pub fn Term::elts(Self[Blk], rev? : Bool) -> Array[BlkElt]
+pub fn Term::entry_blk(Self[Sub]) -> Self[Blk]?
 pub fn Term::filter_defs(Self[Blk], (Self[Def]) -> Bool) -> Self[Blk]
 pub fn Term::filter_map_defs(Self[Blk], (Self[Def]) -> Self[Def]?) -> Self[Blk]
 pub fn Term::find_blk(Self[Sub], Tid) -> Self[Blk]?
@@ -272,8 +275,14 @@ pub fn Term::split_after_def(Self[Blk], Self[Def]) -> (Self[Blk], Self[Blk])
 pub fn Term::split_before_def(Self[Blk], Self[Def]) -> (Self[Blk], Self[Blk])
 pub fn Term::split_bottom_defs(Self[Blk]) -> (Self[Blk], Self[Blk])
 pub fn Term::split_top_defs(Self[Blk]) -> (Self[Blk], Self[Blk])
+pub fn Term::sub_cfg(Self[Sub]) -> @graphlib.Graph[Tid, Tid]
 pub fn Term::sub_free_vars(Self[Sub]) -> Array[Var]
+pub fn Term::sub_has_edge(Self[Sub], Self[Blk], Self[Blk]) -> Bool
 pub fn Term::sub_name(Self[Sub]) -> String
+pub fn Term::sub_predecessor_blocks(Self[Sub], Self[Blk]) -> Array[Self[Blk]]
+pub fn Term::sub_reachable_blocks(Self[Sub], entry? : Tid) -> Array[Self[Blk]]
+pub fn Term::sub_reverse_postorder(Self[Sub], entry? : Tid) -> Array[Self[Blk]]
+pub fn Term::sub_successor_blocks(Self[Sub], Self[Blk]) -> Array[Self[Blk]]
 pub fn Term::subs(Self[Program]) -> Array[Self[Sub]]
 pub fn Term::substitute_arg_var(Self[Arg], Var, Exp) -> Self[Arg]
 pub fn Term::substitute_blk_var(Self[Blk], Var, Exp) -> Self[Blk]
@@ -282,6 +291,7 @@ pub fn Term::substitute_jmp_var(Self[Jmp], Var, Exp) -> Self[Jmp]
 pub fn Term::substitute_phi_var(Self[Phi], Var, Exp) -> Self[Phi]
 pub fn Term::substitute_program_var(Self[Program], Var, Exp) -> Self[Program]
 pub fn Term::substitute_sub_var(Self[Sub], Var, Exp) -> Self[Sub]
+pub fn Term::succ_tid_of_jmp(Self[Jmp]) -> Tid?
 pub fn[T] Term::tid(Self[T]) -> Tid
 pub fn Term::update_def(Self[Blk], Self[Def]) -> Self[Blk]
 pub fn Term::update_phi(Self[Phi], Tid, Exp) -> Self[Phi]

@@ -1,3 +1,4 @@
 import {
   "bobzhang/bap/bitvec",
+  "bobzhang/bap/graphlib",
 }

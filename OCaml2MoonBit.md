@@ -133,7 +133,12 @@ compilation unit's `DW_AT_str_offsets_base`, then uses the resulting offset in
 `.debug_str`. Non-capturing DIE fields should still skip the encoded form
 without forcing optional sections to exist. Treat `DW_AT_linkage_name` as a
 function-name fallback when `DW_AT_name` is absent; if both are present, keep
-the source-level `DW_AT_name` as the display name.
+the source-level `DW_AT_name` as the display name. For DWARF4-style
+`DW_AT_ranges`, parse `.debug_ranges` address-pair lists and collapse
+non-contiguous ranges to the covering function interval when the public MoonBit
+value only has `low_pc`/`high_pc`. Track the current compilation-unit
+`DW_AT_low_pc` as the default base, and honor base-address selection entries
+inside the range list.
 
 `text[i]` returns a `UInt16` code unit, not a `Char`. For text parsers that need character predicates or `StringBuilder::write_char`, use `text.get_char(offset)` and advance by `char.utf16_len()`. It is still fine to increment by one for syntax bytes you have already constrained to ASCII, such as `(`, `)`, `"` and `\\`, but do not mix code-unit offsets with `Char` APIs accidentally.
 

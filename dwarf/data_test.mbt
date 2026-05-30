@@ -78,17 +78,23 @@ test "translated DWARF section data rejects duplicates and builds from bytes" {
       abbrev=b"abbrev",
       str=b"names\x00",
       str_offsets=b"\x00\x00\x00\x00",
+      ranges=b"\x00\x00\x00\x00\x00\x00\x00\x00",
     ),
   )
   assert_true(data.has_section(DwarfInfo))
   assert_true(data.has_section(DwarfAbbrev))
   assert_true(data.has_section(DwarfStr))
   assert_true(data.has_section(DwarfStrOffsets))
+  assert_true(data.has_section(DwarfRanges))
   assert_true(
     expect_section_buffer(data.section(DwarfStr)).data() == b"names\x00",
   )
   assert_true(
     expect_section_buffer(data.section(DwarfStrOffsets)).data() ==
     b"\x00\x00\x00\x00",
+  )
+  assert_true(
+    expect_section_buffer(data.section(DwarfRanges)).data() ==
+    b"\x00\x00\x00\x00\x00\x00\x00\x00",
   )
 }

@@ -13,8 +13,15 @@ priv enum DwarfFunctionAttrValue {
   DwarfAttrEntryPc(UInt64)
   DwarfAttrHighPcAbs(UInt64)
   DwarfAttrHighPcRel(Int64)
+  DwarfAttrRanges(Int)
   DwarfAttrStrOffsetsBase(Int)
   DwarfAttrIgnored
+}
+
+///|
+priv struct DwarfRangeSummary {
+  low : UInt64
+  high : UInt64
 }
 
 ///|
@@ -173,6 +180,65 @@ fn dwarf_read_strx_name(
 }
 
 ///|
+fn dwarf_max_address(size : DwarfWordSize) -> UInt64 {
+  match size {
+    W32 => 0xffffffffUL
+    W64 => UInt64::lnot(0UL)
+  }
+}
+
+///|
+fn dwarf_read_ranges_summary(
+  ranges_section : DwarfSectionBuffer,
+  offset : Int,
+  base_addr : UInt64,
+  endian : @bitvec.Endian,
+  addr_size : DwarfWordSize,
+) -> Result[DwarfRangeSummary?, String] {
+  let mut cursor = match ranges_section.offset(offset) {
+    Ok(buffer) => buffer.input()
+    Err(reason) => return Err(reason)
+  }
+  let max_addr = dwarf_max_address(addr_size)
+  let mut base = base_addr
+  let mut low : UInt64? = None
+  let mut high : UInt64? = None
+  let mut done = false
+  while !done {
+    match cursor.read_address(endian~, size=addr_size) {
+      Ok((start, after_start)) =>
+        match after_start.read_address(endian~, size=addr_size) {
+          Ok((end, after_end)) => {
+            cursor = after_end
+            if start == 0UL && end == 0UL {
+              done = true
+            } else if start == max_addr {
+              base = end
+            } else if end > start {
+              let abs_start = base + start
+              let abs_end = base + end
+              low = match low {
+                Some(value) if value <= abs_start => Some(value)
+                _ => Some(abs_start)
+              }
+              high = match high {
+                Some(value) if value >= abs_end => Some(value)
+                _ => Some(abs_end)
+              }
+            }
+          }
+          Err(reason) => return Err(reason)
+        }
+      Err(reason) => return Err(reason)
+    }
+  }
+  match (low, high) {
+    (Some(lo), Some(hi)) => Ok(Some({ low: lo, high: hi }))
+    _ => Ok(None)
+  }
+}
+
+///|
 fn dwarf_read_attr_value(
   input : DwarfInput,
   field : DwarfAbbrevField,
@@ -257,6 +323,11 @@ fn dwarf_read_attr_value(
             Err(reason) => Err(reason)
           }
       }
+    DwarfRangesValue =>
+      match input.read_offset(endian~, size=dwarf_size) {
+        Ok((offset, next)) => Ok((DwarfAttrRanges(offset), next))
+        Err(reason) => Err(reason)
+      }
     DwarfStrOffsetsBaseValue =>
       match input.read_offset(endian~, size=dwarf_size) {
         Ok((base, next)) => Ok((DwarfAttrStrOffsetsBase(base), next))
@@ -274,13 +345,18 @@ fn dwarf_read_attr_value(
 ///|
 fn dwarf_collect_function(
   values : Array[DwarfFunctionAttrValue],
-) -> DwarfFunction? {
+  ranges_section : DwarfSectionBuffer?,
+  endian : @bitvec.Endian,
+  addr_size : DwarfWordSize,
+  range_base : UInt64,
+) -> Result[DwarfFunction?, String] {
   let mut name : String? = None
   let mut linkage_name : String? = None
   let mut low_pc : UInt64? = None
   let mut entry_pc : UInt64? = None
   let mut high_abs : UInt64? = None
   let mut high_rel : Int64? = None
+  let mut ranges_offset : Int? = None
   for value in values {
     match value {
       DwarfAttrName(text) => name = Some(text)
@@ -289,13 +365,36 @@ fn dwarf_collect_function(
       DwarfAttrEntryPc(addr) => entry_pc = Some(addr)
       DwarfAttrHighPcAbs(addr) => high_abs = Some(addr)
       DwarfAttrHighPcRel(offset) => high_rel = Some(offset)
+      DwarfAttrRanges(offset) => ranges_offset = Some(offset)
       DwarfAttrStrOffsetsBase(_) => ()
       DwarfAttrIgnored => ()
     }
   }
-  let start_pc = match low_pc {
-    Some(addr) => Some(addr)
-    None => entry_pc
+  let ranges = match ranges_offset {
+    Some(offset) => {
+      let section = match ranges_section {
+        Some(section) => section
+        None => return Err("section .debug_ranges is not available")
+      }
+      let base = match low_pc {
+        Some(addr) => addr
+        None => range_base
+      }
+      match
+        dwarf_read_ranges_summary(section, offset, base, endian, addr_size) {
+        Ok(summary) => summary
+        Err(reason) => return Err(reason)
+      }
+    }
+    None => None
+  }
+  let start_pc = match ranges {
+    Some(summary) => Some(summary.low)
+    None =>
+      match low_pc {
+        Some(addr) => Some(addr)
+        None => entry_pc
+      }
   }
   let display_name = match name {
     Some(text) => Some(text)
@@ -303,18 +402,22 @@ fn dwarf_collect_function(
   }
   match (display_name, start_pc) {
     (Some(text), Some(start)) => {
-      let high = match high_abs {
-        Some(addr) => Some(addr)
+      let high = match ranges {
+        Some(summary) => Some(summary.high)
         None =>
-          match (low_pc, high_rel) {
-            (Some(low), Some(offset)) if offset >= 0L =>
-              Some(low + offset.reinterpret_as_uint64())
-            _ => None
+          match high_abs {
+            Some(addr) => Some(addr)
+            None =>
+              match (low_pc, high_rel) {
+                (Some(low), Some(offset)) if offset >= 0L =>
+                  Some(low + offset.reinterpret_as_uint64())
+                _ => None
+              }
           }
       }
-      Some(DwarfFunction::create(name=text, low_pc=start, high_pc?=high))
+      Ok(Some(DwarfFunction::create(name=text, low_pc=start, high_pc?=high)))
     }
-    _ => None
+    _ => Ok(None)
   }
 }
 
@@ -332,6 +435,17 @@ fn dwarf_collect_str_offsets_base(
 }
 
 ///|
+fn dwarf_collect_range_base(values : Array[DwarfFunctionAttrValue]) -> UInt64? {
+  for value in values {
+    match value {
+      DwarfAttrLowPc(addr) => return Some(addr)
+      _ => ()
+    }
+  }
+  None
+}
+
+///|
 fn dwarf_read_die(
   input : DwarfInput,
   entry : DwarfAbbrevEntry,
@@ -341,11 +455,15 @@ fn dwarf_read_die(
   str_offsets_base : Int,
   str_offsets_section : DwarfSectionBuffer?,
   str_section : DwarfSectionBuffer,
-) -> Result[(DwarfFunction?, Int?, DwarfInput), String] {
+  ranges_section : DwarfSectionBuffer?,
+  range_base : UInt64,
+) -> Result[(DwarfFunction?, Int?, UInt64?, DwarfInput), String] {
   let values : Array[DwarfFunctionAttrValue] = []
   let mut cursor = input
   for field in entry.fields() {
-    if entry.captures_values() || field.attr() == DwarfStrOffsetsBase {
+    if entry.captures_values() ||
+      field.attr() == DwarfStrOffsetsBase ||
+      field.attr() == DwarfLowPc {
       match
         dwarf_read_attr_value(
           cursor, field, endian, dwarf_size, addr_size, str_offsets_base, str_offsets_section,
@@ -365,10 +483,18 @@ fn dwarf_read_die(
       }
     }
   }
+  let function_item = match
+    dwarf_collect_function(
+      values, ranges_section, endian, addr_size, range_base,
+    ) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
   Ok(
     (
-      dwarf_collect_function(values),
+      function_item,
       dwarf_collect_str_offsets_base(values),
+      dwarf_collect_range_base(values),
       cursor,
     ),
   )
@@ -422,6 +548,7 @@ fn dwarf_parse_unit(
   abbrev_section : DwarfSectionBuffer,
   str_section : DwarfSectionBuffer,
   str_offsets_section : DwarfSectionBuffer?,
+  ranges_section : DwarfSectionBuffer?,
   endian : @bitvec.Endian,
 ) -> Result[(Array[DwarfFunction], DwarfInput), String] {
   match info.read_unit_size(endian~) {
@@ -443,6 +570,7 @@ fn dwarf_parse_unit(
               let functions : Array[DwarfFunction] = []
               let mut cursor = after_header
               let mut str_offsets_base = 0
+              let mut range_base = 0UL
               while cursor.position() < cu_end {
                 match cursor.read_code() {
                   Ok((0, next)) => cursor = next
@@ -452,19 +580,34 @@ fn dwarf_parse_unit(
                         match
                           dwarf_read_die(
                             after_code, entry, endian, dwarf_size, addr_size, str_offsets_base,
-                            str_offsets_section, str_section,
+                            str_offsets_section, str_section, ranges_section, range_base,
                           ) {
-                          Ok((Some(function_item), base, next)) => {
+                          Ok(
+                            (
+                              Some(function_item),
+                              str_base,
+                              next_range_base,
+                              next,
+                            )
+                          ) => {
                             functions.push(function_item)
                             str_offsets_base = dwarf_update_str_offsets_base(
-                              base, str_offsets_base,
+                              str_base, str_offsets_base,
                             )
+                            match next_range_base {
+                              Some(value) => range_base = value
+                              None => ()
+                            }
                             cursor = next
                           }
-                          Ok((None, base, next)) => {
+                          Ok((None, str_base, next_range_base, next)) => {
                             str_offsets_base = dwarf_update_str_offsets_base(
-                              base, str_offsets_base,
+                              str_base, str_offsets_base,
                             )
+                            match next_range_base {
+                              Some(value) => range_base = value
+                              None => ()
+                            }
                             cursor = next
                           }
                           Err(reason) => return Err(reason)
@@ -522,6 +665,10 @@ pub fn DwarfData::functions(
     Ok(section) => Some(section)
     Err(_) => None
   }
+  let ranges_section = match self.section(DwarfRanges) {
+    Ok(section) => Some(section)
+    Err(_) => None
+  }
   let functions : Array[DwarfFunction] = []
   let mut cursor = info_section.input()
   while cursor.remaining() > 0 {
@@ -534,6 +681,7 @@ pub fn DwarfData::functions(
         abbrev_section,
         str_section,
         str_offsets_section,
+        ranges_section,
         self.endian(),
       ) {
       Ok((unit_functions, next)) => {

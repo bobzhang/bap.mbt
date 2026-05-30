@@ -38,6 +38,7 @@ pub(all) enum DwarfAttr {
   DwarfLowPc
   DwarfHighPc
   DwarfEntryPc
+  DwarfRanges
   DwarfStrOffsetsBase
   DwarfUnknownAttr(Int)
 } derive(Eq, Debug)
@@ -263,6 +264,7 @@ fn dwarf_attr_of_int(code : Int) -> DwarfAttr {
     0x11 => DwarfLowPc
     0x12 => DwarfHighPc
     0x52 => DwarfEntryPc
+    0x55 => DwarfRanges
     0x6e => DwarfLinkageName
     0x72 => DwarfStrOffsetsBase
     other => DwarfUnknownAttr(other)

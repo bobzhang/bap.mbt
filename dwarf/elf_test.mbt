@@ -231,6 +231,47 @@ fn elf_test_make_elf64_debug_with_str_offsets(
 }
 
 ///|
+fn elf_test_make_elf64_debug_with_ranges(
+  info : Bytes,
+  abbrev : Bytes,
+  str : Bytes,
+  ranges : Bytes,
+) -> Bytes {
+  let shstr = b"\x00.shstrtab\x00.debug_info\x00.debug_abbrev\x00.debug_str\x00.debug_ranges\x00"
+  let data_offset = 64 + 6 * 64
+  let shstr_offset = data_offset
+  let info_offset = shstr_offset + shstr.length()
+  let abbrev_offset = info_offset + info.length()
+  let str_offset = abbrev_offset + abbrev.length()
+  let ranges_offset = str_offset + str.length()
+  let total = ranges_offset + ranges.length()
+  let buffer = Array::make(total, b'\x00')
+  elf_test_write_bytes(buffer, 0, b"\x7fELF")
+  buffer[4] = b'\x02'
+  buffer[5] = b'\x01'
+  buffer[6] = b'\x01'
+  elf_test_set_u16_le(buffer, 16, 1)
+  elf_test_set_u16_le(buffer, 18, 0x3e)
+  elf_test_set_u32_le(buffer, 20, 1)
+  elf_test_set_u64_le(buffer, 40, 64UL)
+  elf_test_set_u16_le(buffer, 52, 64)
+  elf_test_set_u16_le(buffer, 58, 64)
+  elf_test_set_u16_le(buffer, 60, 6)
+  elf_test_set_u16_le(buffer, 62, 1)
+  elf_test_write_section64(buffer, 1, 1, 3, shstr_offset, shstr.length())
+  elf_test_write_section64(buffer, 2, 11, 1, info_offset, info.length())
+  elf_test_write_section64(buffer, 3, 23, 1, abbrev_offset, abbrev.length())
+  elf_test_write_section64(buffer, 4, 37, 1, str_offset, str.length())
+  elf_test_write_section64(buffer, 5, 48, 1, ranges_offset, ranges.length())
+  elf_test_write_bytes(buffer, shstr_offset, shstr)
+  elf_test_write_bytes(buffer, info_offset, info)
+  elf_test_write_bytes(buffer, abbrev_offset, abbrev)
+  elf_test_write_bytes(buffer, str_offset, str)
+  elf_test_write_bytes(buffer, ranges_offset, ranges)
+  Bytes::from_array(buffer)
+}
+
+///|
 test "translated DWARF data extracts debug sections from ELF32 big-endian" {
   let info = b"be-info"
   let abbrev = b"be-abbrev"
@@ -260,6 +301,43 @@ test "translated DWARF data extracts debug sections from ELF64" {
   assert_true(expect_elf_section(data.section(DwarfInfo)).data() == info)
   assert_true(expect_elf_section(data.section(DwarfAbbrev)).data() == abbrev)
   assert_true(expect_elf_section(data.section(DwarfStr)).data() == str)
+}
+
+///|
+test "translated DWARF FBI reads ranges from ELF debug sections" {
+  let abbrev = b"\x01\x11\x01" +
+    b"\x11\x01" +
+    b"\x00\x00" +
+    b"\x02\x2e\x00" +
+    b"\x03\x08" +
+    b"\x55\x17" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x19\x00\x00\x00" +
+    b"\x04\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x04" +
+    b"\x01" +
+    b"\x00\x40\x00\x00" +
+    b"\x02" +
+    b"elfrng\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x00"
+  let ranges = b"\x02\x00\x00\x00" +
+    b"\x08\x00\x00\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x00\x00\x00\x00"
+  let data = expect_elf_data(
+    @dwarf.DwarfData::from_elf_bytes(
+      elf_test_make_elf64_debug_with_ranges(info, abbrev, b"", ranges),
+    ),
+  )
+  assert_true(expect_elf_section(data.section(DwarfRanges)).data() == ranges)
+  let functions = expect_elf_functions(data.functions())
+  assert_true(functions.length() == 1)
+  assert_true(functions[0].name() == "elfrng")
+  assert_true(functions[0].low_pc() == 0x4002UL)
+  assert_true(functions[0].high_pc() == Some(0x4008UL))
 }
 
 ///|

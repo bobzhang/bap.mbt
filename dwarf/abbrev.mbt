@@ -6,6 +6,7 @@ pub(all) enum DwarfAbbrevValueKind {
   DwarfEntryPcValue
   DwarfHighPcAddressValue
   DwarfHighPcOffsetValue
+  DwarfRangesValue
   DwarfStrOffsetsBaseValue
 } derive(Eq, Debug)
 
@@ -61,6 +62,7 @@ pub fn DwarfAbbrevField::value_kind(
     (DwarfEntryPc, DwarfAddr) => DwarfEntryPcValue
     (DwarfHighPc, DwarfAddr) => DwarfHighPcAddressValue
     (DwarfHighPc, DwarfConst(_)) => DwarfHighPcOffsetValue
+    (DwarfRanges, DwarfOffset) => DwarfRangesValue
     (DwarfStrOffsetsBase, DwarfOffset) => DwarfStrOffsetsBaseValue
     _ => DwarfIgnoredValue
   }

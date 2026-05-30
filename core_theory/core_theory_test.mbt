@@ -96,6 +96,7 @@ test "target registry resolves common and custom declarations" {
     Ok(target) => {
       assert_true(target.bits() == 64)
       assert_true(target.find_var("PC") is Some(_))
+      assert_true(target.find_var("a0") is Some(_))
     }
     Err(reason) => fail(reason)
   }
@@ -148,8 +149,17 @@ test "target registry resolves common and custom declarations" {
   match @core_theory.get_target("s390x") {
     Ok(target) => {
       assert_true(target.matches("systemz"))
+      assert_true(target.matches("systemz9"))
+      assert_true(target.belongs(@core_theory.Target::systemz()))
       assert_true(target.bits() == 64)
       assert_true(target.endianness() == BigEndian)
+    }
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.get_target("systemz9") {
+    Ok(target) => {
+      assert_true(target.matches("s390x"))
+      assert_true(target.belongs(@core_theory.Target::systemz()))
     }
     Err(reason) => fail(reason)
   }
@@ -580,11 +590,17 @@ test "target role helpers classify common architecture variables" {
   assert_true(arm.vars_with_role(Argument).any(v => v.ident() == "R0"))
   let riscv = @core_theory.Target::riscv64()
   assert_true(riscv.role_aliases(ResultRegister).contains("x10"))
+  assert_true(riscv.role_aliases(ResultRegister).contains("a0"))
+  assert_true(riscv.role_aliases(Argument).contains("a7"))
   assert_true(!riscv.role_aliases(ResultRegister).contains("rax"))
   assert_true(riscv.find_var("F31") is Some(_))
   match riscv.find_var("X2") {
     Some(sp) => assert_true(riscv.roles_of_var(sp).contains(StackPointer))
     None => fail("missing X2")
+  }
+  match riscv.find_var("sp") {
+    Some(sp) => assert_true(riscv.roles_of_var(sp).contains(StackPointer))
+    None => fail("missing sp alias")
   }
   match riscv.find_var("X10") {
     Some(arg) => {
@@ -592,6 +608,27 @@ test "target role helpers classify common architecture variables" {
       assert_true(riscv.roles_of_var(arg).contains(ResultRegister))
     }
     None => fail("missing X10")
+  }
+  match riscv.find_var("a0") {
+    Some(arg) => {
+      assert_true(riscv.roles_of_var(arg).contains(Argument))
+      assert_true(riscv.roles_of_var(arg).contains(ResultRegister))
+    }
+    None => fail("missing a0 alias")
+  }
+  match riscv.origin_of_name("A0") {
+    Some(origin) => {
+      assert_true(origin.aliased().ident() == "A0")
+      assert_true(origin.source().map(v => v.ident()) == Some("X10"))
+    }
+    None => fail("missing A0 alias origin")
+  }
+  match riscv.origin_of_name("sp") {
+    Some(origin) => {
+      assert_true(origin.aliased().ident() == "SP")
+      assert_true(origin.source().map(v => v.ident()) == Some("X2"))
+    }
+    None => fail("missing sp alias origin")
   }
   match riscv.find_var("X0") {
     Some(zero) =>
@@ -647,6 +684,13 @@ test "target role helpers classify common architecture variables" {
   match systemz.find_var("R15") {
     Some(sp) => assert_true(systemz.roles_of_var(sp).contains(StackPointer))
     None => fail("missing R15")
+  }
+  match @core_theory.Target::systemz9().origin_of_name("sp") {
+    Some(origin) => {
+      assert_true(origin.aliased().ident() == "SP")
+      assert_true(origin.source().map(v => v.ident()) == Some("R15"))
+    }
+    None => fail("missing systemz SP alias origin")
   }
 }
 

@@ -366,6 +366,7 @@ pub fn Target::sparc() -> Self
 pub fn Target::sparcv9() -> Self
 pub fn Target::system(Self) -> System
 pub fn Target::systemz() -> Self
+pub fn Target::systemz9() -> Self
 pub fn Target::thumb() -> Self
 pub fn Target::thumbeb() -> Self
 pub fn Target::unknown() -> Self

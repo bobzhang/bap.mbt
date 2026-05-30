@@ -460,6 +460,32 @@ fn mips_vars(bits : Int) -> Array[Var] {
 }
 
 ///|
+fn riscv_gpr_alias_names() -> Array[String] {
+  [
+    "ZERO", "RA", "SP", "GP", "TP", "T0", "T1", "T2", "S0", "S1", "A0", "A1", "A2",
+    "A3", "A4", "A5", "A6", "A7", "S2", "S3", "S4", "S5", "S6", "S7", "S8", "S9",
+    "S10", "S11", "T3", "T4", "T5", "T6",
+  ]
+}
+
+///|
+fn riscv_alias_vars(bits : Int) -> Array[Var] {
+  [
+    for name in riscv_gpr_alias_names() => word_var(bits, name)
+  ]
+}
+
+///|
+fn riscv_alias_origins(bits : Int) -> Array[AliasOrigin] {
+  let names = riscv_gpr_alias_names()
+  [
+    for i in 0..<names.length() => {
+      AliasOrigin::register(word_var(bits, names[i]), word_var(bits, "X\{i}"))
+    }
+  ]
+}
+
+///|
 fn sparc_vars(bits : Int) -> Array[Var] {
   let items = []
   for prefix in ["G", "O", "L", "I"] {
@@ -521,10 +547,16 @@ fn systemz_vars() -> Array[Var] {
 }
 
 ///|
+fn systemz_alias_origins() -> Array[AliasOrigin] {
+  [AliasOrigin::register(word_var(64, "SP"), word_var(64, "R15"))]
+}
+
+///|
 fn riscv_vars(bits : Int) -> Array[Var] {
   let items = numbered_word_vars(bits, "X", 32)
   append_vars(items, numbered_word_vars(bits, "F", 32))
-  append_vars(items, named_word_vars(bits, ["PC", "SP", "RA"]))
+  append_vars(items, riscv_alias_vars(bits))
+  append_vars(items, named_word_vars(bits, ["PC"]))
   items.push(mem_var(bits, 8, "mem"))
   items
 }
@@ -680,13 +712,21 @@ fn riscv_role_names(role : Role) -> Array[String] {
   match role {
     General => []
     StackPointer => ["sp", "x2"]
-    FramePointer => ["x8"]
+    FramePointer => ["fp", "s0", "x8"]
     ProgramCounter => ["pc"]
     Status => []
     Argument =>
-      concat_role_names([role_names("x", 10, 17), role_names("f", 10, 17)])
+      concat_role_names([
+        role_names("x", 10, 17),
+        role_names("f", 10, 17),
+        role_names("a", 0, 7),
+      ])
     ResultRegister =>
-      concat_role_names([role_names("x", 10, 12), role_names("f", 10, 12)])
+      concat_role_names([
+        role_names("x", 10, 12),
+        role_names("f", 10, 12),
+        role_names("a", 0, 2),
+      ])
   }
 }
 
@@ -1083,7 +1123,9 @@ pub fn Target::with_alias_origin(self : Target, origin : AliasOrigin) -> Target 
 ///|
 pub fn Target::find_var(self : Target, name : String) -> Var? {
   self.vars_value
-  .search_by(item => item.ident() == name || item.name() == name)
+  .search_by(item => {
+    same_target_name(item.ident(), name) || same_target_name(item.name(), name)
+  })
   .map(i => self.vars_value[i])
 }
 
@@ -1454,6 +1496,7 @@ pub fn Target::riscv32() -> Target {
     bits=32,
     endianness=LittleEndian,
     vars=riscv_vars(32),
+    alias_origins=riscv_alias_origins(32),
   )
 }
 
@@ -1465,6 +1508,7 @@ pub fn Target::riscv64() -> Target {
     bits=64,
     endianness=LittleEndian,
     vars=riscv_vars(64),
+    alias_origins=riscv_alias_origins(64),
   )
 }
 
@@ -1535,10 +1579,23 @@ pub fn Target::r600() -> Target {
 pub fn Target::systemz() -> Target {
   Target::create(
     name=target_name("systemz"),
+    bits=64,
+    endianness=BigEndian,
+    vars=systemz_vars(),
+    alias_origins=systemz_alias_origins(),
+  )
+}
+
+///|
+pub fn Target::systemz9() -> Target {
+  Target::create(
+    name=target_name("systemz9"),
+    parent=Target::systemz(),
     nicknames=["s390x"],
     bits=64,
     endianness=BigEndian,
     vars=systemz_vars(),
+    alias_origins=systemz_alias_origins(),
   )
 }
 
@@ -1864,6 +1921,7 @@ pub fn common_targets() -> Array[Target] {
     Target::hexagon(),
     Target::r600(),
     Target::systemz(),
+    Target::systemz9(),
     Target::xcore(),
   ]
   append_x86_target_variants(items)

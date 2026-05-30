@@ -507,6 +507,10 @@ moon run -c $'let table : ReadOnlyArray[Int?] = [for i in 0..<8 => if i == 5 { S
 
 For dense lookup domains, define a private top-level `let table : ReadOnlyArray[T?] = [...]`. `ReadOnlyArray[T]` is the read-only counterpart of `Array[T]`; an array literal coerces directly, and **list comprehensions can initialize `ReadOnlyArray[T]` or an owned `Array[T]` depending on the expected type** — so `[for i in 0..<N => entry(i)]` is the idiomatic way to populate a compile-time table without `makei` ceremony. Keep the bounds check at the lookup boundary.
 
+## Target Metadata
+
+When porting BAP target declarations, preserve canonical hardware registers and model ABI spellings as aliases with explicit provenance. If the OCaml side names user-facing registers in lowercase (`sp`, `a0`) but the MoonBit target table stores conventional uppercase variables (`SP`, `A0`), make lookup case-insensitive at the target boundary and keep `AliasOrigin` entries pointing to the numbered source register (`SP -> X2`, `A0 -> X10`). Build dense alias-origin tables with list comprehensions so the alias index stays visibly aligned with the canonical register number.
+
 ## Mutation, Refs, Arrays
 
 ```sh

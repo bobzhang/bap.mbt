@@ -156,6 +156,37 @@ fn bap_assert_phi_edge(
 }
 
 ///|
+fn bap_assert_cfg_edge(
+  cfg : @graphlib.Graph[@types.Tid, @types.Tid],
+  src : @types.Term[@types.Blk],
+  dst : @types.Term[@types.Blk],
+) -> Unit raise {
+  if !cfg.has_edge(src.tid(), dst.tid()) {
+    fail("expected CFG edge \{src.name()} -> \{dst.name()}")
+  }
+}
+
+///|
+test "translated BAP sema fixture builds expected CFG edges" {
+  let f = make_bap_sema_fixture()
+  let cfg = f.sub.sub_cfg()
+  inspect(cfg.node_count(), content="8")
+  inspect(cfg.edge_count(), content="9")
+  bap_assert_cfg_edge(cfg, f.entry, f.b1)
+  bap_assert_cfg_edge(cfg, f.b1, f.b2)
+  bap_assert_cfg_edge(cfg, f.b2, f.b3)
+  bap_assert_cfg_edge(cfg, f.b2, f.b4)
+  bap_assert_cfg_edge(cfg, f.b3, f.b2)
+  bap_assert_cfg_edge(cfg, f.b4, f.b5)
+  bap_assert_cfg_edge(cfg, f.b4, f.b6)
+  bap_assert_cfg_edge(cfg, f.b5, f.exit)
+  bap_assert_cfg_edge(cfg, f.b6, f.exit)
+  for block in [f.entry, f.b1, f.b2, f.b3, f.b4, f.b5, f.b6, f.exit] {
+    assert_true(cfg.degree(block.tid()) != 0)
+  }
+}
+
+///|
 test "translated BAP sema fixture reports expected block free vars" {
   let f = make_bap_sema_fixture()
   bap_assert_vars_contain(f.entry.blk_free_vars(), [])

@@ -149,11 +149,14 @@ blocks for the same `min_addr`/`max_addr`, even if the current MoonBit
 representation stores them in an array for deterministic traversal. Re-running
 instruction materialization for the same memory interval should replace stale
 assembly/BIL text and expose address- and memory-based lookup helpers for later
-drivers. Removal helpers should keep those facts coherent: removing a block
-also removes instructions dominated by that memory interval and CFG edges whose
-source or target touches the removed block, while exact instruction and edge
-removal supports decoder reruns and pruning. Until a real recursive-descent CFG
-is available, a project
+drivers. Also expose a block-scoped instruction lookup that returns instruction
+facts dominated by a disassembly block in address order; this preserves the
+BAP `Block.insns` bridge even while instructions and blocks are stored as
+separate project facts. Removal helpers should keep those facts coherent:
+removing a block also removes instructions dominated by that memory interval
+and CFG edges whose source or target touches the removed block, while exact
+instruction and edge removal supports decoder reruns and pruning. Until a real
+recursive-descent CFG is available, a project
 reconstructor can still preserve useful BAP structure by turning materialized
 disassembly blocks into IR block terms with address attributes and subroutine
 terms named through the active symbolizer. When

@@ -328,6 +328,11 @@ test "project disassembly instructions replace by memory and support lookup" {
         Some(instruction) => assert_true(instruction.assembly() == "tail")
         None => fail("missing tail instruction")
       }
+      let in_block = state.instructions_in(block)
+      assert_true(in_block.length() == 2)
+      assert_true(in_block[0].addr() == 0x1000UL)
+      assert_true(in_block[1].addr() == 0x1001UL)
+      assert_true(state.instructions_in(second_byte).length() == 1)
       assert_true(state.instruction_at(0x1002UL) is None)
       assert_true(state.instruction_for(block) is None)
       let created = @project.ProjectDisassemblyState::create(instructions=[

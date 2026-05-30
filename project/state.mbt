@@ -317,6 +317,18 @@ pub fn ProjectDisassemblyState::instruction_for(
 }
 
 ///|
+pub fn ProjectDisassemblyState::instructions_in(
+  self : ProjectDisassemblyState,
+  block : @memory.Memory,
+) -> Array[ProjectDisassemblyInstruction] {
+  let result = self.instructions_value.filter(instruction => {
+    block.dominates(instruction.memory())
+  })
+  result.sort_by((left, right) => left.addr().compare(right.addr()))
+  result
+}
+
+///|
 pub fn ProjectDisassemblyState::edges(
   self : ProjectDisassemblyState,
 ) -> Array[ProjectDisassemblyEdge] {

@@ -282,6 +282,7 @@ pub fn ProjectDisassemblyState::instruction_at(Self, UInt64) -> ProjectDisassemb
 pub fn ProjectDisassemblyState::instruction_count(Self) -> Int
 pub fn ProjectDisassemblyState::instruction_for(Self, @memory.Memory) -> ProjectDisassemblyInstruction?
 pub fn ProjectDisassemblyState::instructions(Self) -> Array[ProjectDisassemblyInstruction]
+pub fn ProjectDisassemblyState::instructions_in(Self, @memory.Memory) -> Array[ProjectDisassemblyInstruction]
 pub fn ProjectDisassemblyState::remove_block(Self, @memory.Memory) -> Self
 pub fn ProjectDisassemblyState::remove_edge(Self, ProjectDisassemblyEdge) -> Self
 pub fn ProjectDisassemblyState::remove_instruction(Self, ProjectDisassemblyInstruction) -> Self

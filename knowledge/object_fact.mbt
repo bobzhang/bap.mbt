@@ -130,6 +130,19 @@ pub fn[K, P] FactTable::observe(
 }
 
 ///|
+pub fn[K, P, R] FactTable::observing(
+  self : FactTable[K, P],
+  observer : (Object[K], P) -> Result[Unit, String],
+  body : () -> R,
+) -> R {
+  let index = self.observers.length()
+  self.observers.push(observer)
+  let result = body()
+  ignore(self.observers.remove(index))
+  result
+}
+
+///|
 pub fn[K, P] FactTable::observer_count(self : FactTable[K, P]) -> Int {
   self.observers.length()
 }

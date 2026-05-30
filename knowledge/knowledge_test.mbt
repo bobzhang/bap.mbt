@@ -219,6 +219,48 @@ test "translated BAP fact observers receive non-empty provides" {
 }
 
 ///|
+test "translated BAP fact observing is scoped" {
+  let cls : @knowledge.Class[Unit, String] = @knowledge.Class::create(
+    name=@knowledge.Name::create("scoped-observed-program", pkg="test"),
+    sort="unit",
+  )
+  let domain = @knowledge.Domain::bool(
+    @knowledge.Name::create("scoped-observed", pkg="test"),
+  )
+  let slot = cls.property(
+    name=@knowledge.Name::create("scoped-observed", pkg="test"),
+    domain~,
+  )
+  let state = @knowledge.State::new()
+  let first = state.create(cls)
+  let second = state.create(cls)
+  let facts = @knowledge.FactTable::new(slot)
+  let calls : Ref[Int] = Ref(0)
+  let count_during : Ref[Int] = Ref(-1)
+  let provided : Ref[Result[Bool, String]] = Ref(Err("not run"))
+  let result = facts.observing(
+    (_, value) => {
+      if value {
+        calls.val = calls.val + 1
+      }
+      Ok(())
+    },
+    () => {
+      count_during.val = facts.observer_count()
+      provided.val = facts.provide(first, true)
+      42
+    },
+  )
+  assert_true(result == 42)
+  assert_true(count_during.val == 1)
+  assert_true(provided.val == Ok(true))
+  assert_true(calls.val == 1)
+  assert_true(facts.observer_count() == 0)
+  assert_true(facts.provide(second, true) == Ok(true))
+  assert_true(calls.val == 1)
+}
+
+///|
 test "translated BAP fact require fails on empty values" {
   let cls : @knowledge.Class[Unit, String] = @knowledge.Class::create(
     name=@knowledge.Name::create("required-fact", pkg="test"),

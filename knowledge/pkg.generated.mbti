@@ -63,6 +63,7 @@ pub fn[K, P] FactTable::has(Self[K, P], Object[K]) -> Bool
 pub fn[K, P] FactTable::new(Slot[K, P]) -> Self[K, P]
 pub fn[K, P] FactTable::observe(Self[K, P], (Object[K], P) -> Result[Unit, String]) -> Unit
 pub fn[K, P] FactTable::observer_count(Self[K, P]) -> Int
+pub fn[K, P, R] FactTable::observing(Self[K, P], (Object[K], P) -> Result[Unit, String], () -> R) -> R
 pub fn[K, P] FactTable::provide(Self[K, P], Object[K], P) -> Result[P, String]
 pub fn[K, P] FactTable::require(Self[K, P], Object[K]) -> Result[P, String]
 pub fn[K, P] FactTable::resolve(Self[K, Opinions[P]], Object[K]) -> Result[P, String]

@@ -719,6 +719,14 @@ fn image_elf_symbol_count(
 }
 
 ///|
+fn image_elf_symbol_entry_size(header : ImageElfHeader) -> Int {
+  match header.class {
+    ImageElf32 => 16
+    ImageElf64 => 24
+  }
+}
+
+///|
 fn image_elf_parse_symbol_entry(
   data : Bytes,
   header : ImageElfHeader,
@@ -727,6 +735,16 @@ fn image_elf_parse_symbol_entry(
   index : Int,
 ) -> Result[ImageElfSymbolEntry, String] {
   let base = symbol_table.offset + index * symbol_table.entsize
+  image_elf_parse_symbol_entry_at(data, header, string_table, base)
+}
+
+///|
+fn image_elf_parse_symbol_entry_at(
+  data : Bytes,
+  header : ImageElfHeader,
+  string_table : Bytes,
+  base : Int,
+) -> Result[ImageElfSymbolEntry, String] {
   let name_offset = image_elf_read_int(
     data,
     base,
@@ -1101,20 +1119,6 @@ fn image_elf_dynamic_relocation_table_entries(
 }
 
 ///|
-fn image_elf_dynamic_relative_relocations_from_entries(
-  header : ImageElfHeader,
-  entries : Array[ImageElfRelocationEntry],
-) -> Array[Relocation] {
-  let relocations : Array[Relocation] = []
-  for entry in entries {
-    if image_elf_is_relative_relocation(header, entry.typ) {
-      relocations.push(Relocation::create(fixup=entry.offset, relative=true))
-    }
-  }
-  relocations
-}
-
-///|
 fn image_elf_dynamic_count(
   section : ImageElfSectionHeader,
 ) -> Result[Int, String] {
@@ -1333,12 +1337,99 @@ fn image_elf_uint_to_dynamic_size(
 }
 
 ///|
-fn image_elf_dynamic_relative_relocations_from_programs(
+fn image_elf_dynamic_symbol_entry(
   data : Bytes,
   header : ImageElfHeader,
   program_headers : Array[ImageElfProgramHeader],
-) -> Result[Array[Relocation], String] {
+  symbol_table_addr : UInt64?,
+  symbol_entry_size : Int?,
+  strings : Bytes?,
+  symbol_index : Int,
+) -> Result[ImageElfSymbolEntry?, String] {
+  match (symbol_table_addr, strings) {
+    (Some(symbol_table_addr), Some(strings)) => {
+      let entry_size = match symbol_entry_size {
+        Some(value) => value
+        None => image_elf_symbol_entry_size(header)
+      }
+      let minimum_entry_size = image_elf_symbol_entry_size(header)
+      if entry_size < minimum_entry_size {
+        return Err("ELF dynamic symbol entry size is invalid")
+      }
+      let symbol_addr = symbol_table_addr +
+        symbol_index.to_uint64() * entry_size.to_uint64()
+      let symbol_offset = match
+        image_elf_vaddr_range_offset(
+          program_headers, symbol_addr, entry_size, "ELF dynamic symbol",
+        ) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      match
+        image_elf_parse_symbol_entry_at(data, header, strings, symbol_offset) {
+        Ok(symbol) => Ok(Some(symbol))
+        Err(reason) => Err(reason)
+      }
+    }
+    _ => Ok(None)
+  }
+}
+
+///|
+fn image_elf_dynamic_external_or_target_relocation(
+  data : Bytes,
+  header : ImageElfHeader,
+  program_headers : Array[ImageElfProgramHeader],
+  strings : Bytes?,
+  symbol_table_addr : UInt64?,
+  symbol_entry_size : Int?,
+  entry : ImageElfRelocationEntry,
+) -> Result[(Relocation?, ExternalReference?), String] {
+  if entry.symbol_index == 0 {
+    return Ok((None, None))
+  }
+  match
+    image_elf_dynamic_symbol_entry(
+      data,
+      header,
+      program_headers,
+      symbol_table_addr,
+      symbol_entry_size,
+      strings,
+      entry.symbol_index,
+    ) {
+    Ok(Some(symbol)) =>
+      match symbol.name {
+        Some(name) =>
+          if symbol.shndx == 0 {
+            Ok(
+              (None, Some(ExternalReference::create(addr=entry.offset, name~))),
+            )
+          } else {
+            Ok(
+              (
+                Some(
+                  Relocation::create(fixup=entry.offset, target=symbol.value),
+                ),
+                None,
+              ),
+            )
+          }
+        None => Ok((None, None))
+      }
+    Ok(None) => Ok((None, None))
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+fn image_elf_dynamic_relocations_from_programs(
+  data : Bytes,
+  header : ImageElfHeader,
+  program_headers : Array[ImageElfProgramHeader],
+) -> Result[(Array[Relocation], Array[ExternalReference]), String] {
   let relocations : Array[Relocation] = []
+  let external_references : Array[ExternalReference] = []
   for program in program_headers {
     if program.typ == 2 {
       let entries = match
@@ -1348,8 +1439,14 @@ fn image_elf_dynamic_relative_relocations_from_programs(
       }
       let mut rel = image_elf_dynamic_relocation_table_empty()
       let mut rela = image_elf_dynamic_relocation_table_empty()
+      let mut string_table_addr : UInt64? = None
+      let mut string_table_size : Int? = None
+      let mut symbol_table_addr : UInt64? = None
+      let mut symbol_entry_size : Int? = None
       for entry in entries {
         match entry {
+          (5UL, value) => string_table_addr = Some(value)
+          (6UL, value) => symbol_table_addr = Some(value)
           (7UL, value) => rela = { ..rela, addr: Some(value) }
           (8UL, value) =>
             match image_elf_uint_to_dynamic_size(value, "ELF RELA size") {
@@ -1359,6 +1456,22 @@ fn image_elf_dynamic_relative_relocations_from_programs(
           (9UL, value) =>
             match image_elf_uint_to_dynamic_size(value, "ELF RELA entry size") {
               Ok(size) => rela = { ..rela, entry_size: Some(size) }
+              Err(reason) => return Err(reason)
+            }
+          (10UL, value) =>
+            match
+              image_elf_uint_to_dynamic_size(
+                value, "ELF dynamic string table size",
+              ) {
+              Ok(size) => string_table_size = Some(size)
+              Err(reason) => return Err(reason)
+            }
+          (11UL, value) =>
+            match
+              image_elf_uint_to_dynamic_size(
+                value, "ELF dynamic symbol entry size",
+              ) {
+              Ok(size) => symbol_entry_size = Some(size)
               Err(reason) => return Err(reason)
             }
           (17UL, value) => rel = { ..rel, addr: Some(value) }
@@ -1375,6 +1488,22 @@ fn image_elf_dynamic_relative_relocations_from_programs(
           _ => ()
         }
       }
+      let strings : Bytes? = match (string_table_addr, string_table_size) {
+        (Some(addr), Some(size)) => {
+          let string_offset = match
+            image_elf_vaddr_range_offset(
+              program_headers, addr, size, "ELF dynamic string table",
+            ) {
+            Ok(value) => value
+            Err(reason) => return Err(reason)
+          }
+          match image_elf_section_data(data, string_offset, size) {
+            Ok(value) => Some(value)
+            Err(reason) => return Err(reason)
+          }
+        }
+        _ => None
+      }
       let rela_entries = match
         image_elf_dynamic_relocation_table_entries(
           data, header, program_headers, rela, true, "ELF dynamic RELA table",
@@ -1382,11 +1511,23 @@ fn image_elf_dynamic_relative_relocations_from_programs(
         Ok(value) => value
         Err(reason) => return Err(reason)
       }
-      for
-        relocation in image_elf_dynamic_relative_relocations_from_entries(
-          header, rela_entries,
-        ) {
-        relocations.push(relocation)
+      for entry in rela_entries {
+        if image_elf_is_relative_relocation(header, entry.typ) {
+          relocations.push(
+            Relocation::create(fixup=entry.offset, relative=true),
+          )
+        } else {
+          match
+            image_elf_dynamic_external_or_target_relocation(
+              data, header, program_headers, strings, symbol_table_addr, symbol_entry_size,
+              entry,
+            ) {
+            Ok((Some(relocation), _)) => relocations.push(relocation)
+            Ok((_, Some(reference))) => external_references.push(reference)
+            Ok((None, None)) => ()
+            Err(reason) => return Err(reason)
+          }
+        }
       }
       let rel_entries = match
         image_elf_dynamic_relocation_table_entries(
@@ -1395,15 +1536,27 @@ fn image_elf_dynamic_relative_relocations_from_programs(
         Ok(value) => value
         Err(reason) => return Err(reason)
       }
-      for
-        relocation in image_elf_dynamic_relative_relocations_from_entries(
-          header, rel_entries,
-        ) {
-        relocations.push(relocation)
+      for entry in rel_entries {
+        if image_elf_is_relative_relocation(header, entry.typ) {
+          relocations.push(
+            Relocation::create(fixup=entry.offset, relative=true),
+          )
+        } else {
+          match
+            image_elf_dynamic_external_or_target_relocation(
+              data, header, program_headers, strings, symbol_table_addr, symbol_entry_size,
+              entry,
+            ) {
+            Ok((Some(relocation), _)) => relocations.push(relocation)
+            Ok((_, Some(reference))) => external_references.push(reference)
+            Ok((None, None)) => ()
+            Err(reason) => return Err(reason)
+          }
+        }
       }
     }
   }
-  Ok(relocations)
+  Ok((relocations, external_references))
 }
 
 ///|
@@ -1775,8 +1928,8 @@ fn image_elf_load(data : Bytes) -> Result[(Image, Array[String]), String] {
         Err(reason) => return Err(reason)
       }
       if !image_elf_has_relocation_sections(section_headers) {
-        let dynamic_relocations = match
-          image_elf_dynamic_relative_relocations_from_programs(
+        let (dynamic_relocations, dynamic_references) = match
+          image_elf_dynamic_relocations_from_programs(
             data, header, program_headers,
           ) {
           Ok(value) => value
@@ -1784,6 +1937,9 @@ fn image_elf_load(data : Bytes) -> Result[(Image, Array[String]), String] {
         }
         for relocation in dynamic_relocations {
           relocations.push(relocation)
+        }
+        for reference in dynamic_references {
+          external_references.push(reference)
         }
       }
       let dynamic_metadata = match

@@ -1,0 +1,81 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/knowledge"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+type Class[K, S]
+pub fn[K, S] Class::create(name~ : Name, sort~ : S, desc? : String) -> Self[K, S]
+pub fn[K, S] Class::desc(Self[K, S]) -> String?
+pub fn[K, S] Class::name(Self[K, S]) -> Name
+pub fn[K, S, P] Class::property(Self[K, S], name~ : Name, domain~ : Domain[P], desc? : String) -> Slot[K, P]
+pub fn[K, S, T] Class::refine(Self[K, S], name~ : Name, sort~ : T, desc? : String) -> Self[K, T]
+pub fn[K, S] Class::same(Self[K, S], Self[K, S]) -> Bool
+pub fn[K, S] Class::sort(Self[K, S]) -> S
+
+type Domain[T]
+pub fn Domain::bool(Name) -> Self[Bool]
+pub fn[T] Domain::empty(Self[T]) -> T?
+pub fn[T : Eq] Domain::flat(Name, (T) -> String, empty? : T) -> Self[T]
+pub fn[T] Domain::inspect(Self[T], T) -> String
+pub fn[T] Domain::is_empty(Self[T], T) -> Bool
+pub fn[T] Domain::join(Self[T], T, T) -> Result[T, String]
+pub fn[T] Domain::name(Self[T]) -> Name
+pub fn[T] Domain::new(name~ : Name, empty~ : T?, is_empty~ : (T) -> Bool, order~ : (T, T) -> PartialOrder, join~ : (T, T) -> Result[T, String], inspect~ : (T) -> String) -> Self[T]
+pub fn[T] Domain::optional(Self[T]) -> Self[T?]
+pub fn[T] Domain::order(Self[T], T, T) -> PartialOrder
+pub fn Domain::string(Name) -> Self[String]
+
+type FactTable[K, P]
+pub fn[K, P] FactTable::collect(Self[K, P], Object[K]) -> P?
+pub fn[K, P] FactTable::new(Slot[K, P]) -> Self[K, P]
+pub fn[K, P] FactTable::provide(Self[K, P], Object[K], P) -> Result[P, String]
+pub fn[K, P] FactTable::slot(Self[K, P]) -> Slot[K, P]
+
+pub(all) struct Name {
+  pkg : String
+  text : String
+} derive(Eq, Hash, @debug.Debug)
+pub fn Name::create(String, pkg? : String) -> Self
+pub fn Name::pkg(Self) -> String
+pub fn Name::read(String, pkg? : String) -> Self
+pub fn Name::show(Self) -> String
+pub fn Name::to_string(Self) -> String
+pub fn Name::unqualified(Self) -> String
+
+type Object[K]
+pub fn[K] Object::class_name(Self[K]) -> Name
+pub fn[K] Object::id(Self[K]) -> Int
+pub fn[K] Object::is_null(Self[K]) -> Bool
+pub fn[K, S] Object::null(Class[K, S]) -> Self[K]
+
+pub(all) enum PartialOrder {
+  Less
+  Equal
+  Greater
+  Incomparable
+} derive(Eq, @debug.Debug)
+pub fn PartialOrder::geq(Self) -> Bool
+pub fn PartialOrder::invert(Self) -> Self
+pub fn PartialOrder::leq(Self) -> Bool
+
+type Slot[K, P]
+pub fn[K, P] Slot::desc(Self[K, P]) -> String?
+pub fn[K, P] Slot::domain(Self[K, P]) -> Domain[P]
+pub fn[K, P] Slot::name(Self[K, P]) -> Name
+pub fn[K, P] Slot::owner(Self[K, P]) -> Name
+
+type State
+pub fn[K, S] State::create(Self, Class[K, S]) -> Object[K]
+pub fn State::new() -> Self
+
+// Type aliases
+
+// Traits
+

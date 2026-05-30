@@ -268,6 +268,7 @@ pub fn Exp::free_vars(Self) -> Array[Var]
 pub fn Exp::infer_type(Self) -> Result[ValueType, TypeError]
 pub fn Exp::int(Word) -> Self
 pub fn Exp::is_referenced(Self, Var) -> Bool
+pub fn Exp::is_trivial_condition(Self) -> Bool
 pub fn Exp::ite(if_~ : Self, then_~ : Self, else_~ : Self) -> Self
 pub fn Exp::let_(Var, Self, Self) -> Self
 pub fn Exp::load(mem~ : Self, addr~ : Self, @bitvec.Endian, Size) -> Self
@@ -435,6 +436,7 @@ pub fn Term::blk_defined_vars(Self[Blk]) -> Array[Var]
 pub fn Term::blk_free_vars(Self[Blk]) -> Array[Var]
 pub fn Term::blk_phi_edge_free_vars(Self[Blk], Tid) -> Array[Var]
 pub fn Term::blk_successor_tids(Self[Blk]) -> Array[Tid]
+pub fn Term::blk_to_trivial_condition_form(Self[Blk]) -> Self[Blk]
 pub fn Term::blk_value_free_vars(Self[Blk]) -> Array[Var]
 pub fn Term::blks(Self[Sub]) -> Array[Self[Blk]]
 pub fn[T] Term::clone(Self[T]) -> Self[T]
@@ -473,6 +475,7 @@ pub fn Term::intent(Self[Arg]) -> Intent?
 pub fn Term::is_ssa(Self[Sub]) -> Bool
 pub fn Term::is_stub(Self[Sub]) -> Bool
 pub fn Term::jmp_free_vars(Self[Jmp]) -> Array[Var]
+pub fn Term::jmp_has_trivial_condition(Self[Jmp]) -> Bool
 pub fn Term::jmps(Self[Blk]) -> Array[Self[Jmp]]
 pub fn Term::kind(Self[Jmp]) -> JmpKind
 pub fn Term::last_def(Self[Blk]) -> Self[Def]?
@@ -516,6 +519,7 @@ pub fn Term::program_resolved_callers(Self[Program], Self[Sub], resolve_indirect
 pub fn Term::program_resolved_callgraph(Self[Program], resolve_indirect~ : (Exp) -> Array[Tid]) -> @graphlib.Graph[Tid, Array[Self[Jmp]]]
 pub fn Term::program_stub_links(Self[Program], link_only? : Array[String], no_link? : Array[String]) -> Map[Tid, Tid]
 pub fn Term::program_stub_tids(Self[Program]) -> Array[Tid]
+pub fn Term::program_to_trivial_condition_form(Self[Program]) -> Self[Program]
 pub fn Term::remove_def(Self[Blk], Tid) -> Self[Blk]
 pub fn Term::remove_jmp(Self[Blk], Tid) -> Self[Blk]
 pub fn Term::remove_phi(Self[Phi], Tid) -> Self[Phi]
@@ -555,6 +559,7 @@ pub fn Term::sub_ssa_free_vars(Self[Sub]) -> Array[Var]
 pub fn Term::sub_strictly_dominates(Self[Sub], Self[Blk], Self[Blk], entry? : Tid) -> Bool
 pub fn Term::sub_successor_blocks(Self[Sub], Self[Blk]) -> Array[Self[Blk]]
 pub fn Term::sub_symbol_names(Self[Sub]) -> Array[String]
+pub fn Term::sub_to_trivial_condition_form(Self[Sub]) -> Self[Sub]
 pub fn Term::subs(Self[Program]) -> Array[Self[Sub]]
 pub fn Term::substitute_arg_var(Self[Arg], Var, Exp) -> Self[Arg]
 pub fn Term::substitute_blk_var(Self[Blk], Var, Exp) -> Self[Blk]

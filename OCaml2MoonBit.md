@@ -122,6 +122,12 @@ optional entry `Tid` against the subroutine's own block list before invoking
 dominance or frontier algorithms; a nonlocal entry should produce empty
 wrapper results instead of silently analyzing from an external or missing node.
 
+For BAP's Trivial Condition Form pass, preserve block structure and jump term
+identity while hoisting every non-`Int`/non-`Var` jump condition into a fresh
+virtual boolean definition. Multiple conditional jumps in one block need
+distinct variables; using the same textual name for every hoist changes later
+variable-based analyses.
+
 For BAP-style stub resolution, treat symbol names and aliases as an undirected
 graph and resolve by connected components. Link stubs only when a component has
 exactly one non-stub implementation; pairwise alias matching is too eager,

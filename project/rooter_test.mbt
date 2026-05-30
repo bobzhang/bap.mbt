@@ -64,6 +64,52 @@ test "project rooter builds BAP-style image roots" {
 }
 
 ///|
+test "project rooter builds roots from symbol arrays and projects" {
+  let symbols = [
+    @image.Symbol::create(name="alpha", addr=0x1200UL),
+    @image.Symbol::create(name="beta", addr=0x1210UL),
+  ]
+  let rooter = @project.ProjectRooter::of_symbols(
+    symbols,
+    entry=0x1100UL,
+    path="symbols.bin",
+    biased=true,
+  )
+  symbols.push(@image.Symbol::create(name="mutated", addr=0x1220UL))
+  let roots = rooter.roots()
+  assert_true(roots.length() == 3)
+  assert_true(roots[0] == 0x1100UL)
+  assert_true(roots[1] == 0x1200UL)
+  assert_true(roots[2] == 0x1210UL)
+  assert_true(rooter.path() == Some("symbols.bin"))
+  assert_true(rooter.is_biased())
+  let segment = @image.Segment::create(
+    name=".text",
+    endian=LittleEndian,
+    addr=0x1300UL,
+    b"\x01\x02\x03",
+    executable=true,
+  )
+  let image = @image.Image::from_segments(
+    entry=0x1300UL,
+    endian=LittleEndian,
+    [segment],
+    filename="image.bin",
+  )
+  let replacement = [
+    @image.Symbol::create(name="replacement", addr=0x1302UL, size=1),
+  ]
+  let project = @project.Project::from_image(image).with_symbols(replacement)
+  let project_rooter = project.rooter()
+  let project_roots = project_rooter.roots()
+  assert_true(project_roots.length() == 2)
+  assert_true(project_roots[0] == 0x1300UL)
+  assert_true(project_roots[1] == 0x1302UL)
+  assert_true(project_rooter.path() == Some("image.bin"))
+  assert_true(project_rooter.is_biased())
+}
+
+///|
 test "project rooter builds roots from named block starts" {
   let rooter = @project.ProjectRooter::of_blocks([
     ("foo", 0x30UL, 0x40UL),

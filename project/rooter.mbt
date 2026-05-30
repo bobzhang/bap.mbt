@@ -94,12 +94,31 @@ pub fn ProjectRooter::union(
 }
 
 ///|
-pub fn ProjectRooter::of_image(image : @image.Image) -> ProjectRooter {
-  let roots = [image.entry_point()]
-  for symbol in image.symbols() {
+pub fn ProjectRooter::of_symbols(
+  symbols : Array[@image.Symbol],
+  entry? : UInt64,
+  path? : String,
+  biased? : Bool = false,
+) -> ProjectRooter {
+  let roots : Array[UInt64] = []
+  match entry {
+    Some(addr) => roots.push(addr)
+    None => ()
+  }
+  for symbol in symbols {
     roots.push(symbol.addr())
   }
-  ProjectRooter::create(roots, path?=image.filename(), biased=true)
+  ProjectRooter::create(roots, path?, biased~)
+}
+
+///|
+pub fn ProjectRooter::of_image(image : @image.Image) -> ProjectRooter {
+  ProjectRooter::of_symbols(
+    image.symbols(),
+    entry=image.entry_point(),
+    path?=image.filename(),
+    biased=true,
+  )
 }
 
 ///|
@@ -145,4 +164,27 @@ pub fn ProjectRooter::image_blocks(
     }
   }
   Ok(blocks)
+}
+
+///|
+pub fn Project::rooter(self : Project) -> ProjectRooter {
+  let biased = match self.image_value {
+    Some(_) => true
+    None => false
+  }
+  match self.image_value {
+    Some(image) =>
+      ProjectRooter::of_symbols(
+        self.symbols_value,
+        entry=image.entry_point(),
+        path?=self.filename_value,
+        biased~,
+      )
+    None =>
+      ProjectRooter::of_symbols(
+        self.symbols_value,
+        path?=self.filename_value,
+        biased~,
+      )
+  }
 }

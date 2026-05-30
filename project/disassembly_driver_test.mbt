@@ -206,6 +206,28 @@ test "project image-root disassembly driver materializes entry and symbol blocks
     @image.Image::from_segments(entry=0x2800UL, endian=LittleEndian, [segment]),
   )
   assert_true(unmapped.disassemble(driver="image-roots") is Err(_))
+  let stripped = @image.Image::from_segments(
+    entry=0x1800UL,
+    endian=LittleEndian,
+    [segment],
+  )
+  let replacement = [
+    @image.Symbol::create(name="debug_main", addr=0x1803UL, size=1),
+  ]
+  let enriched = @project.Project::from_image(stripped).with_symbols(
+    replacement,
+  )
+  match enriched.disassemble(driver="image-roots") {
+    Ok(next) => {
+      let blocks = next.disassembly().blocks()
+      assert_true(blocks.length() == 2)
+      assert_true(blocks[0].min_addr() == 0x1800UL)
+      inspect(blocks[0].hexdump(), content="10 20 30 40 50")
+      assert_true(blocks[1].min_addr() == 0x1803UL)
+      inspect(blocks[1].hexdump(), content="40 50")
+    }
+    Err(reason) => fail(reason)
+  }
 }
 
 ///|

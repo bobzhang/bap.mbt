@@ -162,7 +162,7 @@ pub fn ProjectDisassemblyDriver::image_roots() -> ProjectDisassemblyDriver {
         Some(image) => image
         None => return Err("project has no image roots to disassemble")
       }
-      let rooter = ProjectRooter::of_image(image)
+      let rooter = project.rooter()
       let blocks = match rooter.image_blocks(image) {
         Ok(blocks) => blocks
         Err(reason) => return Err(reason)

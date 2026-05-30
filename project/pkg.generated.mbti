@@ -112,6 +112,7 @@ pub fn Project::program(Self) -> @types.Term[@types.Program]
 pub fn Project::relocations(Self) -> Array[@image.Relocation]
 pub fn Project::required_libraries(Self) -> Array[String]
 pub fn Project::resolve_stub_calls(Self, link_only? : Array[String], no_link? : Array[String]) -> Self
+pub fn Project::rooter(Self) -> ProjectRooter
 pub fn Project::rpaths(Self) -> Array[String]
 pub fn Project::run_autorun_passes(Self) -> Result[Self, String]
 pub fn Project::run_pass(Self, String) -> Result[Self, String]
@@ -275,6 +276,7 @@ pub fn ProjectRooter::image_blocks(Self, @image.Image) -> Result[Array[@memory.M
 pub fn ProjectRooter::is_biased(Self) -> Bool
 pub fn ProjectRooter::of_blocks(Array[(String, UInt64, UInt64)]) -> Self
 pub fn ProjectRooter::of_image(@image.Image) -> Self
+pub fn ProjectRooter::of_symbols(Array[@image.Symbol], entry? : UInt64, path? : String, biased? : Bool) -> Self
 pub fn ProjectRooter::path(Self) -> String?
 pub fn ProjectRooter::roots(Self) -> Array[UInt64]
 pub fn ProjectRooter::set_path(Self, String) -> Self

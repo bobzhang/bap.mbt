@@ -128,7 +128,9 @@ For BAP-style rooters, keep the rooter as a source of root addresses rather
 than a decoder. `Rooter.of_image` contributes the image entry point plus image
 symbol starts and carries filename/biased-address metadata; `Rooter.of_blocks`
 groups serialized `(name, start, stop)` blocks by name and keeps the lowest
-start address for each name.
+start address for each name. Project-derived rooters should use the project's
+current symbol table, not only the retained source image, while still retaining
+the image entry point when an image is present.
 For BAP-style symbolizers, keep generated names (`sub_...`) as empty knowledge
 and fall back to `sub_<addr>` only at `resolve` time. Image/block symbolizers
 should skip ambiguous many-address-to-one-name or many-name-to-one-address

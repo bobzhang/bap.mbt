@@ -92,12 +92,7 @@ fn Project::subst_find_instruction(
   self : Project,
   memory : @memory.Memory,
 ) -> ProjectDisassemblyInstruction? {
-  for instruction in self.state_value.disassembly().instructions() {
-    if instruction.memory().dominates(memory) {
-      return Some(instruction)
-    }
-  }
-  None
+  self.state_value.disassembly().instruction_for(memory)
 }
 
 ///|

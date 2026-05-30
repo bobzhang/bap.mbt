@@ -143,13 +143,16 @@ mappings instead of picking a winner, while `chain` should use the first
 symbolizer that knows an address. Project-derived symbolizers should use the
 project's current symbol table, not only the retained source image, so later
 symbol replacement remains visible.
-Treat accumulated disassembly blocks as set-like by memory interval. Re-running
-root materialization should not append duplicate blocks for the same
-`min_addr`/`max_addr`, even if the current MoonBit representation stores them in
-an array for deterministic traversal. Until a real recursive-descent CFG is
-available, a project reconstructor can still preserve useful BAP structure by
-turning materialized disassembly blocks into IR block terms with address
-attributes and subroutine terms named through the active symbolizer. When
+Treat accumulated disassembly blocks and instruction facts as set-like by
+memory interval. Re-running root materialization should not append duplicate
+blocks for the same `min_addr`/`max_addr`, even if the current MoonBit
+representation stores them in an array for deterministic traversal. Re-running
+instruction materialization for the same memory interval should replace stale
+assembly/BIL text and expose address- and memory-based lookup helpers for later
+drivers. Until a real recursive-descent CFG is available, a project
+reconstructor can still preserve useful BAP structure by turning materialized
+disassembly blocks into IR block terms with address attributes and subroutine
+terms named through the active symbolizer. When
 creating address words from `Target::unknown()`, guard its zero bit width and
 fall back to a concrete address width before calling `Word::of_uint64`. Keep
 brancher/CFG edge facts separate from lifted instruction semantics: store

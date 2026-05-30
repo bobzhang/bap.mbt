@@ -54,6 +54,48 @@ fn project_disassembly_dedup_blocks(
 }
 
 ///|
+fn project_disassembly_same_instruction(
+  left : ProjectDisassemblyInstruction,
+  right : ProjectDisassemblyInstruction,
+) -> Bool {
+  project_disassembly_same_block(left.memory_value, right.memory_value)
+}
+
+///|
+fn project_disassembly_replace_instruction(
+  instructions : Array[ProjectDisassemblyInstruction],
+  instruction : ProjectDisassemblyInstruction,
+) -> Array[ProjectDisassemblyInstruction] {
+  let result : Array[ProjectDisassemblyInstruction] = []
+  let mut replaced = false
+  for existing in instructions {
+    if project_disassembly_same_instruction(existing, instruction) {
+      if !replaced {
+        result.push(instruction)
+        replaced = true
+      }
+    } else {
+      result.push(existing)
+    }
+  }
+  if !replaced {
+    result.push(instruction)
+  }
+  result
+}
+
+///|
+fn project_disassembly_dedup_instructions(
+  instructions : Array[ProjectDisassemblyInstruction],
+) -> Array[ProjectDisassemblyInstruction] {
+  let mut result : Array[ProjectDisassemblyInstruction] = []
+  for instruction in instructions {
+    result = project_disassembly_replace_instruction(result, instruction)
+  }
+  result
+}
+
+///|
 fn project_disassembly_same_edge(
   left : ProjectDisassemblyEdge,
   right : ProjectDisassemblyEdge,
@@ -144,6 +186,21 @@ pub fn ProjectDisassemblyInstruction::bil(
 }
 
 ///|
+pub fn ProjectDisassemblyInstruction::addr(
+  self : ProjectDisassemblyInstruction,
+) -> UInt64 {
+  self.memory_value.min_addr()
+}
+
+///|
+pub fn ProjectDisassemblyInstruction::contains(
+  self : ProjectDisassemblyInstruction,
+  addr : UInt64,
+) -> Bool {
+  self.memory_value.contains(addr)
+}
+
+///|
 pub fn ProjectDisassemblyState::empty() -> ProjectDisassemblyState {
   { blocks_value: [], instructions_value: [], edges_value: [] }
 }
@@ -160,7 +217,7 @@ pub fn ProjectDisassemblyState::create(
       None => []
     },
     instructions_value: match instructions {
-      Some(items) => items.copy()
+      Some(items) => project_disassembly_dedup_instructions(items)
       None => []
     },
     edges_value: match edges {
@@ -206,6 +263,42 @@ pub fn ProjectDisassemblyState::instruction_count(
   self : ProjectDisassemblyState,
 ) -> Int {
   self.instructions_value.length()
+}
+
+///|
+pub fn ProjectDisassemblyState::has_instruction(
+  self : ProjectDisassemblyState,
+  instruction : ProjectDisassemblyInstruction,
+) -> Bool {
+  self.instructions_value.any(existing => {
+    project_disassembly_same_instruction(existing, instruction)
+  })
+}
+
+///|
+pub fn ProjectDisassemblyState::instruction_at(
+  self : ProjectDisassemblyState,
+  addr : UInt64,
+) -> ProjectDisassemblyInstruction? {
+  for instruction in self.instructions_value {
+    if instruction.contains(addr) {
+      return Some(instruction)
+    }
+  }
+  None
+}
+
+///|
+pub fn ProjectDisassemblyState::instruction_for(
+  self : ProjectDisassemblyState,
+  memory : @memory.Memory,
+) -> ProjectDisassemblyInstruction? {
+  for instruction in self.instructions_value {
+    if instruction.memory().dominates(memory) {
+      return Some(instruction)
+    }
+  }
+  None
 }
 
 ///|
@@ -272,7 +365,10 @@ pub fn ProjectDisassemblyState::with_instructions(
   self : ProjectDisassemblyState,
   instructions : Array[ProjectDisassemblyInstruction],
 ) -> ProjectDisassemblyState {
-  { ..self, instructions_value: instructions.copy() }
+  {
+    ..self,
+    instructions_value: project_disassembly_dedup_instructions(instructions),
+  }
 }
 
 ///|
@@ -288,9 +384,13 @@ pub fn ProjectDisassemblyState::add_instruction(
   self : ProjectDisassemblyState,
   instruction : ProjectDisassemblyInstruction,
 ) -> ProjectDisassemblyState {
-  let instructions = self.instructions_value.copy()
-  instructions.push(instruction)
-  { ..self, instructions_value: instructions }
+  {
+    ..self,
+    instructions_value: project_disassembly_replace_instruction(
+      self.instructions_value,
+      instruction,
+    ),
+  }
 }
 
 ///|

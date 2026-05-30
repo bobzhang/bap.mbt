@@ -256,8 +256,10 @@ pub(all) enum ProjectDisassemblyEdgeKind {
 pub fn ProjectDisassemblyEdgeKind::to_string(Self) -> String
 
 type ProjectDisassemblyInstruction
+pub fn ProjectDisassemblyInstruction::addr(Self) -> UInt64
 pub fn ProjectDisassemblyInstruction::assembly(Self) -> String
 pub fn ProjectDisassemblyInstruction::bil(Self) -> String
+pub fn ProjectDisassemblyInstruction::contains(Self, UInt64) -> Bool
 pub fn ProjectDisassemblyInstruction::create(@memory.Memory, assembly? : String, bil? : String) -> Self
 pub fn ProjectDisassemblyInstruction::memory(Self) -> @memory.Memory
 
@@ -275,7 +277,10 @@ pub fn ProjectDisassemblyState::edges_to(Self, UInt64) -> Array[ProjectDisassemb
 pub fn ProjectDisassemblyState::empty() -> Self
 pub fn ProjectDisassemblyState::has_block(Self, @memory.Memory) -> Bool
 pub fn ProjectDisassemblyState::has_edge(Self, ProjectDisassemblyEdge) -> Bool
+pub fn ProjectDisassemblyState::has_instruction(Self, ProjectDisassemblyInstruction) -> Bool
+pub fn ProjectDisassemblyState::instruction_at(Self, UInt64) -> ProjectDisassemblyInstruction?
 pub fn ProjectDisassemblyState::instruction_count(Self) -> Int
+pub fn ProjectDisassemblyState::instruction_for(Self, @memory.Memory) -> ProjectDisassemblyInstruction?
 pub fn ProjectDisassemblyState::instructions(Self) -> Array[ProjectDisassemblyInstruction]
 pub fn ProjectDisassemblyState::with_blocks(Self, Array[@memory.Memory]) -> Self
 pub fn ProjectDisassemblyState::with_edges(Self, Array[ProjectDisassemblyEdge]) -> Self

@@ -287,6 +287,68 @@ test "project substitutes disassembly instruction text placeholders" {
 }
 
 ///|
+test "project disassembly instructions replace by memory and support lookup" {
+  let block = raw_segment().memory()
+  match (block.view(words=1), block.view(from=0x1001UL, words=1)) {
+    (Ok(first_byte), Ok(second_byte)) => {
+      let first = @project.ProjectDisassemblyInstruction::create(
+        first_byte,
+        assembly="old",
+        bil="old-bil",
+      )
+      let replacement = @project.ProjectDisassemblyInstruction::create(
+        first_byte,
+        assembly="new",
+        bil="new-bil",
+      )
+      let second = @project.ProjectDisassemblyInstruction::create(
+        second_byte,
+        assembly="tail",
+        bil="tail-bil",
+      )
+      let state = @project.ProjectDisassemblyState::empty()
+        .add_instruction(first)
+        .add_instruction(replacement)
+        .add_instruction(second)
+      assert_true(first.addr() == 0x1000UL)
+      assert_true(first.contains(0x1000UL))
+      assert_true(!first.contains(0x1001UL))
+      assert_true(state.instruction_count() == 2)
+      assert_true(state.has_instruction(first))
+      assert_true(state.instructions()[0].assembly() == "new")
+      assert_true(state.instructions()[1].assembly() == "tail")
+      match state.instruction_at(0x1000UL) {
+        Some(instruction) => {
+          assert_true(instruction.assembly() == "new")
+          assert_true(instruction.bil() == "new-bil")
+        }
+        None => fail("missing replacement instruction")
+      }
+      match state.instruction_for(second_byte) {
+        Some(instruction) => assert_true(instruction.assembly() == "tail")
+        None => fail("missing tail instruction")
+      }
+      assert_true(state.instruction_at(0x1002UL) is None)
+      assert_true(state.instruction_for(block) is None)
+      let created = @project.ProjectDisassemblyState::create(instructions=[
+        first, replacement, second, second,
+      ])
+      assert_true(created.instruction_count() == 2)
+      match created.instruction_at(0x1000UL) {
+        Some(instruction) => assert_true(instruction.assembly() == "new")
+        None => fail("missing created replacement instruction")
+      }
+      let replaced = @project.ProjectDisassemblyState::empty().with_instructions([
+          first, replacement, second, second,
+        ],
+      )
+      assert_true(replaced.instruction_count() == 2)
+    }
+    (Err(reason), _) | (_, Err(reason)) => fail(reason)
+  }
+}
+
+///|
 test "project maps programs and stores libraries" {
   let target = @core_theory.Target::unknown()
   let sub = @types.Sub::create(name="main")

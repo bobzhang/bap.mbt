@@ -28,6 +28,35 @@ test "program sub and block containers preserve term order" {
 }
 
 ///|
+test "program traversal helpers enumerate nested IR terms" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let arg = @types.Arg::create(x, Var(y))
+  let pred = @types.Tid::for_name("pred")
+  let phi = @types.Phi::of_list(x, [(pred, Var(y))])
+  let def = @types.Def::create(y, Int(word8(1)))
+  let jmp = @types.Jmp::create_goto(@types.Label::direct(pred))
+  let blk = @types.Blk::create(phis=[phi], defs=[def], jmps=[jmp])
+  let sub = @types.Sub::create(name="main", args=[arg], blks=[blk])
+  let program = @types.Program::create(subs=[sub])
+  assert_true(program.program_args().length() == 1)
+  assert_true(program.program_blks().length() == 1)
+  assert_true(program.program_phis().map(term => term.tid()) == [phi.tid()])
+  assert_true(program.program_defs().map(term => term.tid()) == [def.tid()])
+  assert_true(program.program_jmps().map(term => term.tid()) == [jmp.tid()])
+  assert_true(sub.sub_phis().length() == 1)
+  assert_true(sub.sub_defs().length() == 1)
+  assert_true(sub.sub_jmps().length() == 1)
+  assert_true(blk.find_phi(phi.tid()) is Some(_))
+  assert_true(blk.find_jmp(jmp.tid()) is Some(_))
+  assert_true(program.program_find_blk(blk.tid()) is Some(_))
+  assert_true(program.program_find_phi(phi.tid()) is Some(_))
+  assert_true(program.program_find_def(def.tid()) is Some(_))
+  assert_true(program.program_find_jmp(jmp.tid()) is Some(_))
+}
+
+///|
 test "phi nodes jumps calls and args expose BAP-style payloads" {
   let typ = @types.ValueType::Imm(8)
   let lhs = @types.Var::new(name="r0", typ~)

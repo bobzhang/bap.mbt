@@ -251,6 +251,8 @@ pub fn Term::filter_defs(Self[Blk], (Self[Def]) -> Bool) -> Self[Blk]
 pub fn Term::filter_map_defs(Self[Blk], (Self[Def]) -> Self[Def]?) -> Self[Blk]
 pub fn Term::find_blk(Self[Sub], Tid) -> Self[Blk]?
 pub fn Term::find_def(Self[Blk], Tid) -> Self[Def]?
+pub fn Term::find_jmp(Self[Blk], Tid) -> Self[Jmp]?
+pub fn Term::find_phi(Self[Blk], Tid) -> Self[Phi]?
 pub fn Term::find_sub(Self[Program], Tid) -> Self[Sub]?
 pub fn Term::find_var(Self[Blk], Var) -> VarBinding?
 pub fn Term::first_def(Self[Blk]) -> Self[Def]?
@@ -281,10 +283,19 @@ pub fn Term::phi_free_vars(Self[Phi]) -> Array[Var]
 pub fn Term::phi_lhs(Self[Phi]) -> Var
 pub fn Term::phis(Self[Blk]) -> Array[Self[Phi]]
 pub fn Term::prev_def(Self[Blk], Tid) -> Self[Def]?
+pub fn Term::program_args(Self[Program]) -> Array[Self[Arg]]
+pub fn Term::program_blks(Self[Program]) -> Array[Self[Blk]]
 pub fn Term::program_callees(Self[Program], Self[Sub]) -> Array[Tid]
 pub fn Term::program_callers(Self[Program], Self[Sub]) -> Array[Tid]
 pub fn Term::program_callgraph(Self[Program]) -> @graphlib.Graph[Tid, Array[Self[Jmp]]]
+pub fn Term::program_defs(Self[Program]) -> Array[Self[Def]]
+pub fn Term::program_find_blk(Self[Program], Tid) -> Self[Blk]?
+pub fn Term::program_find_def(Self[Program], Tid) -> Self[Def]?
+pub fn Term::program_find_jmp(Self[Program], Tid) -> Self[Jmp]?
+pub fn Term::program_find_phi(Self[Program], Tid) -> Self[Phi]?
 pub fn Term::program_free_vars(Self[Program]) -> Array[Var]
+pub fn Term::program_jmps(Self[Program]) -> Array[Self[Jmp]]
+pub fn Term::program_phis(Self[Program]) -> Array[Self[Phi]]
 pub fn Term::program_resolved_callees(Self[Program], Self[Sub], resolve_indirect~ : (Exp) -> Array[Tid]) -> Array[Tid]
 pub fn Term::program_resolved_callers(Self[Program], Self[Sub], resolve_indirect~ : (Exp) -> Array[Tid]) -> Array[Tid]
 pub fn Term::program_resolved_callgraph(Self[Program], resolve_indirect~ : (Exp) -> Array[Tid]) -> @graphlib.Graph[Tid, Array[Self[Jmp]]]
@@ -300,11 +311,14 @@ pub fn Term::split_before_def(Self[Blk], Self[Def]) -> (Self[Blk], Self[Blk])
 pub fn Term::split_bottom_defs(Self[Blk]) -> (Self[Blk], Self[Blk])
 pub fn Term::split_top_defs(Self[Blk]) -> (Self[Blk], Self[Blk])
 pub fn Term::sub_cfg(Self[Sub]) -> @graphlib.Graph[Tid, Tid]
+pub fn Term::sub_defs(Self[Sub]) -> Array[Self[Def]]
 pub fn Term::sub_direct_call_tids(Self[Sub]) -> Array[Tid]
 pub fn Term::sub_free_vars(Self[Sub]) -> Array[Var]
 pub fn Term::sub_has_edge(Self[Sub], Self[Blk], Self[Blk]) -> Bool
+pub fn Term::sub_jmps(Self[Sub]) -> Array[Self[Jmp]]
 pub fn Term::sub_liveness(Self[Sub], entry? : Tid) -> Array[BlockLiveness]
 pub fn Term::sub_name(Self[Sub]) -> String
+pub fn Term::sub_phis(Self[Sub]) -> Array[Self[Phi]]
 pub fn Term::sub_predecessor_blocks(Self[Sub], Self[Blk]) -> Array[Self[Blk]]
 pub fn Term::sub_reachable_blocks(Self[Sub], entry? : Tid) -> Array[Self[Blk]]
 pub fn Term::sub_resolved_call_tids(Self[Sub], resolve_indirect~ : (Exp) -> Array[Tid]) -> Array[Tid]

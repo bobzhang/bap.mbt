@@ -84,6 +84,35 @@ pub fn[N : Eq, E] Graph::remove_node(
 }
 
 ///|
+pub fn[N : Eq, E] Graph::replace_node(
+  self : Graph[N, E],
+  old : N,
+  replacement : N,
+) -> Graph[N, E] {
+  if old == replacement || !self.has_node(old) {
+    self
+  } else {
+    let nodes = []
+    for node in self.nodes {
+      if node == old {
+        if !contains_node(nodes, replacement) {
+          nodes.push(replacement)
+        }
+      } else if !contains_node(nodes, node) {
+        nodes.push(node)
+      }
+    }
+    let mut out = { nodes, edges: [] }
+    for edge in self.edges {
+      let src = if edge.src == old { replacement } else { edge.src }
+      let dst = if edge.dst == old { replacement } else { edge.dst }
+      out = out.add_edge(src~, dst~, label=edge.label)
+    }
+    out
+  }
+}
+
+///|
 fn[N : Eq, E : Eq] contains_edge(
   edges : ArrayView[Edge[N, E]],
   edge : Edge[N, E],

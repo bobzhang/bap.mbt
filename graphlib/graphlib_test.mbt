@@ -24,6 +24,30 @@ test "graph construction is persistent and deterministic" {
 }
 
 ///|
+struct LabeledNode {
+  id : Int
+  name : String
+} derive(Eq, Debug)
+
+///|
+test "translated BAP graph node update preserves incident edges" {
+  let n1 = { id: 1, name: "1" }
+  let n2 = { id: 2, name: "2" }
+  let s1 = { id: 1, name: "one" }
+  let s2 = { id: 2, name: "two" }
+  let graph : @graphlib.Graph[LabeledNode, Unit] = @graphlib.Graph::new()
+    .add_edge(src=n1, dst=n2, label=())
+    .replace_node(n1, s1)
+    .replace_node(n2, s2)
+  assert_true(!graph.has_node(n1))
+  assert_true(!graph.has_node(n2))
+  assert_true(graph.has_edge(s1, s2))
+  assert_true(graph.predecessors(s2) == [s1])
+  assert_true(graph.successors(s1) == [s2])
+  inspect(graph.edge_count(), content="1")
+}
+
+///|
 fn edge_pairs(graph : @graphlib.Graph[Int, String]) -> Set[(Int, Int)] {
   Set::from_array(graph.edges().map(edge => (edge.src, edge.dst)))
 }

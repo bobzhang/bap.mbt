@@ -55,19 +55,20 @@ pub fn resolve_passes(Array[String]) -> Result[Array[ProjectPass], String]
 // Types and methods
 type Library
 pub fn Library::arch(Self) -> @core_theory.Target
-pub fn Library::create(name~ : String, target~ : @core_theory.Target, memory? : @memory.MemMap[String], program? : @types.Term[@types.Program], state? : ProjectState) -> Self
+pub fn Library::create(name~ : String, target~ : @core_theory.Target, memory? : @memory.MemMap[String], symbols? : Array[@image.Symbol], program? : @types.Term[@types.Program], state? : ProjectState) -> Self
 pub fn Library::disassembly(Self) -> ProjectDisassemblyState
 pub fn Library::memory(Self) -> @memory.MemMap[String]
 pub fn Library::name(Self) -> String
 pub fn Library::program(Self) -> @types.Term[@types.Program]
 pub fn Library::specification(Self) -> @image.OgreDoc
 pub fn Library::state(Self) -> ProjectState
+pub fn Library::symbols(Self) -> Array[@image.Symbol]
 pub fn Library::target(Self) -> @core_theory.Target
 
 type Project
 pub fn Project::add_library(Self, Library) -> Self
 pub fn Project::arch(Self) -> @core_theory.Target
-pub fn Project::create(target~ : @core_theory.Target, image? : @image.Image, filename? : String, program? : @types.Term[@types.Program], memory? : @memory.MemMap[String], storage? : Map[String, String], libraries? : Array[Library], state? : ProjectState) -> Self
+pub fn Project::create(target~ : @core_theory.Target, image? : @image.Image, filename? : String, program? : @types.Term[@types.Program], memory? : @memory.MemMap[String], symbols? : Array[@image.Symbol], storage? : Map[String, String], libraries? : Array[Library], state? : ProjectState) -> Self
 pub fn Project::del(Self, String) -> Self
 pub fn[T] Project::del_tag(Self, ProjectStorageTag[T]) -> Self
 pub fn Project::disassemble(Self, driver~ : String) -> Result[Self, String]
@@ -96,6 +97,7 @@ pub fn[T] Project::set_tag(Self, ProjectStorageTag[T], T) -> Self
 pub fn Project::specification(Self) -> @image.OgreDoc
 pub fn Project::state(Self) -> ProjectState
 pub fn Project::storage(Self) -> Map[String, String]
+pub fn Project::symbols(Self) -> Array[@image.Symbol]
 pub fn Project::tag_memory(Self, @memory.Memory, String) -> Self
 pub fn Project::target(Self) -> @core_theory.Target
 pub fn Project::with_disassembly(Self, ProjectDisassemblyState) -> Self
@@ -103,6 +105,7 @@ pub fn Project::with_memory(Self, @memory.MemMap[String]) -> Self
 pub fn Project::with_program(Self, @types.Term[@types.Program]) -> Self
 pub fn Project::with_state(Self, ProjectState) -> Self
 pub fn Project::with_storage(Self, Map[String, String]) -> Self
+pub fn Project::with_symbols(Self, Array[@image.Symbol]) -> Self
 
 type ProjectAnalysis
 pub fn ProjectAnalysis::apply(Self, Array[String]) -> Result[Unit, String]

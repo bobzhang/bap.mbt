@@ -12,10 +12,17 @@ fn raw_segment() -> @image.Segment {
 ///|
 test "project can be created from image memory" {
   let target = @core_theory.Target::unknown()
+  let symbol = @image.Symbol::create(
+    name="entry",
+    addr=0x1000UL,
+    size=2,
+    is_function=true,
+  )
   let image = @image.Image::from_segments(
     entry=0x1000UL,
     endian=LittleEndian,
     [raw_segment()],
+    symbols=[symbol],
     filename="tiny.bin",
     target~,
   )
@@ -25,6 +32,8 @@ test "project can be created from image memory" {
   assert_true(project.filename() == Some("tiny.bin"))
   assert_true(project.image() is Some(_))
   assert_true(project.memory().lookup(0x1000UL).length() == 1)
+  assert_true(project.symbols().length() == 1)
+  assert_true(project.symbols()[0].name() == "entry")
   assert_true(project.specification().fact_count("arch") == 1)
 }
 
@@ -61,6 +70,13 @@ test "project storage and memory tags are persistent updates" {
   assert_true(!cleared.has("loader"))
   let tagged = cleared.tag_memory(raw_segment().memory(), "code")
   assert_true(tagged.memory().lookup(0x1001UL).length() == 1)
+  let replacement_symbols = [
+    @image.Symbol::create(name="alt", addr=0x1001UL, size=1),
+  ]
+  let with_symbols = tagged.with_symbols(replacement_symbols)
+  replacement_symbols.push(@image.Symbol::create(name="mutated", addr=0x1002UL))
+  assert_true(with_symbols.symbols().length() == 1)
+  assert_true(with_symbols.symbols()[0].name() == "alt")
 }
 
 ///|
@@ -74,10 +90,12 @@ test "project maps programs and stores libraries" {
     name="libc",
     target~,
     memory=@memory.MemMap::singleton(raw_segment().memory(), "lib-code"),
+    symbols=[@image.Symbol::create(name="lib_start", addr=0x1000UL)],
   )
   let with_library = project.add_library(library)
   assert_true(with_library.libraries().length() == 1)
   assert_true(with_library.libraries()[0].name() == "libc")
+  assert_true(with_library.libraries()[0].symbols().length() == 1)
   assert_true(with_library.libraries()[0].arch().is_unknown())
   assert_true(
     with_library.libraries()[0].specification().fact_count("arch") == 1,

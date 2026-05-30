@@ -3,6 +3,7 @@ struct Library {
   name_value : String
   target_value : @core_theory.Target
   memory_value : @memory.MemMap[String]
+  symbols_value : Array[@image.Symbol]
   program_value : @types.Term[@types.Program]
   state_value : ProjectState
 }
@@ -14,6 +15,7 @@ struct Project {
   filename_value : String?
   program_value : @types.Term[@types.Program]
   memory_value : @memory.MemMap[String]
+  symbols_value : Array[@image.Symbol]
   storage_value : Map[String, String]
   libraries_value : Array[Library]
   state_value : ProjectState
@@ -24,6 +26,7 @@ pub fn Library::create(
   name~ : String,
   target~ : @core_theory.Target,
   memory? : @memory.MemMap[String],
+  symbols? : Array[@image.Symbol],
   program? : @types.Term[@types.Program],
   state? : ProjectState,
 ) -> Library {
@@ -33,6 +36,10 @@ pub fn Library::create(
     memory_value: match memory {
       Some(map) => map
       None => @memory.MemMap::empty()
+    },
+    symbols_value: match symbols {
+      Some(items) => items.copy()
+      None => []
     },
     program_value: match program {
       Some(term) => term
@@ -71,6 +78,11 @@ pub fn Library::memory(self : Library) -> @memory.MemMap[String] {
 }
 
 ///|
+pub fn Library::symbols(self : Library) -> Array[@image.Symbol] {
+  self.symbols_value.copy()
+}
+
+///|
 pub fn Library::program(self : Library) -> @types.Term[@types.Program] {
   self.program_value
 }
@@ -93,6 +105,7 @@ pub fn Project::empty(target : @core_theory.Target) -> Project {
     filename_value: None,
     program_value: @types.Program::create(),
     memory_value: @memory.MemMap::empty(),
+    symbols_value: [],
     storage_value: {},
     libraries_value: [],
     state_value: ProjectState::empty(),
@@ -106,6 +119,7 @@ pub fn Project::create(
   filename? : String,
   program? : @types.Term[@types.Program],
   memory? : @memory.MemMap[String],
+  symbols? : Array[@image.Symbol],
   storage? : Map[String, String],
   libraries? : Array[Library],
   state? : ProjectState,
@@ -121,6 +135,14 @@ pub fn Project::create(
     memory_value: match memory {
       Some(map) => map
       None => @memory.MemMap::empty()
+    },
+    symbols_value: match symbols {
+      Some(items) => items.copy()
+      None =>
+        match image {
+          Some(value) => value.symbols()
+          None => []
+        }
     },
     storage_value: match storage {
       Some(map) => map.copy()
@@ -235,6 +257,19 @@ pub fn Project::map_program(
 ///|
 pub fn Project::memory(self : Project) -> @memory.MemMap[String] {
   self.memory_value
+}
+
+///|
+pub fn Project::symbols(self : Project) -> Array[@image.Symbol] {
+  self.symbols_value.copy()
+}
+
+///|
+pub fn Project::with_symbols(
+  self : Project,
+  symbols : Array[@image.Symbol],
+) -> Project {
+  { ..self, symbols_value: symbols.copy() }
 }
 
 ///|

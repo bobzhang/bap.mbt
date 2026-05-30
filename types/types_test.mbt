@@ -68,6 +68,18 @@ test "word exposes BAP numeric compatibility aliases" {
 }
 
 ///|
+test "word generic division follows BAP signedness flag" {
+  let minus_two = @types.Word::of_int(width=8, -2).signed()
+  let minus_three = @types.Word::of_int(width=8, -3).signed()
+  let two = @types.Word::of_int(width=8, 2)
+  assert_true(minus_two.div(two).to_hex() == "0xff")
+  assert_true(minus_two.unsigned().div(two).to_hex() == "0x7f")
+  assert_true(minus_three.rem(two).to_hex() == "0xff")
+  assert_true(minus_three.unsigned().rem(two).to_hex() == "0x01")
+  assert_true(minus_three.modulo(two).to_hex() == "0xff")
+}
+
+///|
 fn assert_word_concat(
   high : @types.Word,
   low : @types.Word,

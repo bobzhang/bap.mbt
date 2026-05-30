@@ -197,7 +197,12 @@ pub fn Word::mul(self : Word, other : Word) -> Word raise @bitvec.BitVecError {
 
 ///|
 pub fn Word::div(self : Word, other : Word) -> Word raise @bitvec.BitVecError {
-  Word::from_bitvec(self.bits_value.div(other.bits_value))
+  let bits = if self.signed_value || other.signed_value {
+    self.bits_value.sdiv(other.bits_value)
+  } else {
+    self.bits_value.div(other.bits_value)
+  }
+  Word::from_bitvec(bits)
 }
 
 ///|
@@ -210,7 +215,12 @@ pub fn Word::signed_div(
 
 ///|
 pub fn Word::rem(self : Word, other : Word) -> Word raise @bitvec.BitVecError {
-  Word::from_bitvec(self.bits_value.rem(other.bits_value))
+  let bits = if self.signed_value || other.signed_value {
+    self.bits_value.srem(other.bits_value)
+  } else {
+    self.bits_value.rem(other.bits_value)
+  }
+  Word::from_bitvec(bits)
 }
 
 ///|

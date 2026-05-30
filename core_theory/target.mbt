@@ -128,7 +128,7 @@ pub fn Abi::to_string(self : Abi) -> String {
     ThisCall => "thiscall"
     VectorCall => "vectorcall"
     Watcom => "watcom"
-    MSVC => "msvc"
+    MSVC => "ms"
   }
 }
 

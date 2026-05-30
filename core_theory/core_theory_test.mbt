@@ -371,6 +371,9 @@ test "target metadata enums parse loader strings" {
   assert_true(@core_theory.Abi::of_string("std-call") == Some(StdCall))
   assert_true(@core_theory.Abi::of_string("this-call") == Some(ThisCall))
   assert_true(@core_theory.Abi::of_string("vector-call") == Some(VectorCall))
+  assert_true(
+    @core_theory.Abi::of_string("msvc").map(a => a.to_string()) == Some("ms"),
+  )
   assert_true(@core_theory.Fabi::of_string("hard-float") == Some(Hard))
   assert_true(@core_theory.Filetype::of_string("mach-o") == Some(MachO))
   assert_true(@core_theory.Filetype::of_string("coff") == Some(COFF))

@@ -144,3 +144,49 @@ test "memmap min max and removals follow BAP interval behavior" {
   assert_true(without_exact.lookup(0x180UL).is_empty())
   assert_true(without_exact.lookup(0x300UL).length() == 1)
 }
+
+///|
+fn memmap_tags(entries : Array[(@memory.Memory, String)]) -> Set[String] {
+  Set::from_array(entries.map(entry => entry.1))
+}
+
+///|
+test "translated BAP image table neighbors and intersections use memory ranges" {
+  let mem_low = memory_at(0x10UL, 0x10)
+  let mem_high = memory_at(0x30UL, 0x10)
+  let table = @memory.MemMap::empty().add(mem_low, "lo").add(mem_high, "hi")
+  assert_true(table.length() == 2)
+  assert_true(table.has_memory(memory_at(0x10UL, 0x10)))
+  assert_true(!table.has_memory(memory_at(0x10UL, 0x0f)))
+  match table.next_binding(mem_low) {
+    Some((memory, tag)) => {
+      assert_true(memory.min_addr() == mem_high.min_addr())
+      assert_true(tag == "hi")
+    }
+    None => fail("expected next table binding")
+  }
+  match table.prev_binding(mem_high) {
+    Some((memory, tag)) => {
+      assert_true(memory.min_addr() == mem_low.min_addr())
+      assert_true(tag == "lo")
+    }
+    None => fail("expected previous table binding")
+  }
+  match (table.min_binding(), table.max_binding()) {
+    (Some((_, "lo")), Some((_, "hi"))) => ()
+    _ => fail("expected table min/max bindings")
+  }
+  assert_true(
+    memmap_tags(table.intersections(memory_at(0x10UL, 0x30))) ==
+    Set::from_array(["lo", "hi"]),
+  )
+  assert_true(table.intersections(memory_at(0x20UL, 0x10)).is_empty())
+  assert_true(
+    memmap_tags(table.intersections(memory_at(0x20UL, 0x30))) ==
+    Set::from_array(["hi"]),
+  )
+  assert_true(
+    memmap_tags(table.intersections(memory_at(0x00UL, 0x11))) ==
+    Set::from_array(["lo"]),
+  )
+}

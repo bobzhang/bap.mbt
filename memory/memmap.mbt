@@ -53,6 +53,14 @@ pub fn[V] MemMap::find(self : MemMap[V], memory : Memory) -> Array[(Memory, V)] 
 }
 
 ///|
+pub fn[V] MemMap::has_memory(self : MemMap[V], memory : Memory) -> Bool {
+  self.entries.any(entry => {
+    entry.0.min_addr() == memory.min_addr() &&
+    entry.0.max_addr() == memory.max_addr()
+  })
+}
+
+///|
 pub fn[V] MemMap::intersections(
   self : MemMap[V],
   memory : Memory,
@@ -128,6 +136,54 @@ pub fn[V] MemMap::max_binding(self : MemMap[V]) -> (Memory, V)? {
       Some(j) if self.entries[j].0.max_addr() >= self.entries[i].0.max_addr() =>
         Some(j)
       _ => Some(i)
+    }
+  }
+  match best {
+    Some(i) => Some(self.entries[i])
+    None => None
+  }
+}
+
+///|
+fn memory_range_less(left : Memory, right : Memory) -> Bool {
+  left.min_addr() < right.min_addr() ||
+  (left.min_addr() == right.min_addr() && left.max_addr() < right.max_addr())
+}
+
+///|
+pub fn[V] MemMap::next_binding(
+  self : MemMap[V],
+  memory : Memory,
+) -> (Memory, V)? {
+  let mut best : Int? = None
+  for i in 0..<self.entries.length() {
+    let candidate = self.entries[i].0
+    if memory_range_less(memory, candidate) {
+      best = match best {
+        Some(j) if memory_range_less(self.entries[j].0, candidate) => Some(j)
+        _ => Some(i)
+      }
+    }
+  }
+  match best {
+    Some(i) => Some(self.entries[i])
+    None => None
+  }
+}
+
+///|
+pub fn[V] MemMap::prev_binding(
+  self : MemMap[V],
+  memory : Memory,
+) -> (Memory, V)? {
+  let mut best : Int? = None
+  for i in 0..<self.entries.length() {
+    let candidate = self.entries[i].0
+    if memory_range_less(candidate, memory) {
+      best = match best {
+        Some(j) if memory_range_less(candidate, self.entries[j].0) => Some(j)
+        _ => Some(i)
+      }
     }
   }
   match best {

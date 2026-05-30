@@ -26,6 +26,7 @@ pub fn[V] MemMap::dominators(Self[V], Memory) -> Array[(Memory, V)]
 pub fn[V] MemMap::empty() -> Self[V]
 pub fn[V] MemMap::entries(Self[V]) -> Array[(Memory, V)]
 pub fn[V] MemMap::find(Self[V], Memory) -> Array[(Memory, V)]
+pub fn[V] MemMap::has_memory(Self[V], Memory) -> Bool
 pub fn[V] MemMap::intersections(Self[V], Memory) -> Array[(Memory, V)]
 pub fn[V] MemMap::intersects(Self[V], Memory) -> Bool
 pub fn[V] MemMap::length(Self[V]) -> Int
@@ -34,6 +35,8 @@ pub fn[V] MemMap::max_addr(Self[V]) -> UInt64?
 pub fn[V] MemMap::max_binding(Self[V]) -> (Memory, V)?
 pub fn[V] MemMap::min_addr(Self[V]) -> UInt64?
 pub fn[V] MemMap::min_binding(Self[V]) -> (Memory, V)?
+pub fn[V] MemMap::next_binding(Self[V], Memory) -> (Memory, V)?
+pub fn[V] MemMap::prev_binding(Self[V], Memory) -> (Memory, V)?
 pub fn[V] MemMap::remove(Self[V], Memory) -> Self[V]
 pub fn[V] MemMap::remove_dominators(Self[V], Memory) -> Self[V]
 pub fn[V] MemMap::remove_intersections(Self[V], Memory) -> Self[V]

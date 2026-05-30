@@ -4,6 +4,15 @@ fn bytes_0_to_15() -> Bytes {
 }
 
 ///|
+fn memory_at(start : UInt64, size : Int) -> @memory.Memory {
+  @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start~,
+    Bytes::from_array(Array::make(size, b'\x00')),
+  )
+}
+
+///|
 test "memory views preserve address ranges" {
   let mem = @memory.Memory::create(
     endian=LittleEndian,
@@ -103,4 +112,30 @@ test "memmap lookup intersections and dominators follow address intervals" {
   assert_true(map.dominators(point).length() == 2)
   assert_true(map.dominates(chunk))
   assert_true(map.remove_intersections(point).length() == 0)
+}
+
+///|
+test "memmap min max and removals follow BAP interval behavior" {
+  let first = memory_at(0x100UL, 1)
+  let middle = memory_at(0x180UL, 10)
+  let last = memory_at(0x300UL, 100)
+  let map = @memory.MemMap::empty().add(middle, 1).add(last, 2).add(first, 0)
+  match (map.min_binding(), map.max_binding()) {
+    (Some((min_mem, min_value)), Some((max_mem, max_value))) => {
+      assert_true(min_mem.min_addr() == first.min_addr())
+      assert_true(min_value == 0)
+      assert_true(max_mem.max_addr() == last.max_addr())
+      assert_true(max_value == 2)
+    }
+    _ => fail("expected min and max memmap bindings")
+  }
+  let point = memory_at(0x184UL, 1)
+  assert_true(map.intersects(point))
+  assert_true(map.dominates(point))
+  let without_intersections = map.remove_intersections(point)
+  assert_true(without_intersections.length() == 2)
+  assert_true(!without_intersections.intersects(point))
+  let without_dominators = map.remove_dominators(point)
+  assert_true(without_dominators.length() == 2)
+  assert_true(!without_dominators.dominates(point))
 }

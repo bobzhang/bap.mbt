@@ -61,6 +61,11 @@ pub fn[V] MemMap::intersections(
 }
 
 ///|
+pub fn[V] MemMap::intersects(self : MemMap[V], memory : Memory) -> Bool {
+  self.entries.any(entry => entry.0.intersects(memory))
+}
+
+///|
 pub fn[V] MemMap::dominators(
   self : MemMap[V],
   memory : Memory,
@@ -79,6 +84,46 @@ pub fn[V] MemMap::remove_intersections(
   memory : Memory,
 ) -> MemMap[V] {
   { entries: self.entries.filter(entry => !entry.0.intersects(memory)) }
+}
+
+///|
+pub fn[V] MemMap::remove_dominators(
+  self : MemMap[V],
+  memory : Memory,
+) -> MemMap[V] {
+  { entries: self.entries.filter(entry => !entry.0.dominates(memory)) }
+}
+
+///|
+pub fn[V] MemMap::min_binding(self : MemMap[V]) -> (Memory, V)? {
+  let mut best : Int? = None
+  for i in 0..<self.entries.length() {
+    best = match best {
+      Some(j) if self.entries[j].0.min_addr() <= self.entries[i].0.min_addr() =>
+        Some(j)
+      _ => Some(i)
+    }
+  }
+  match best {
+    Some(i) => Some(self.entries[i])
+    None => None
+  }
+}
+
+///|
+pub fn[V] MemMap::max_binding(self : MemMap[V]) -> (Memory, V)? {
+  let mut best : Int? = None
+  for i in 0..<self.entries.length() {
+    best = match best {
+      Some(j) if self.entries[j].0.max_addr() >= self.entries[i].0.max_addr() =>
+        Some(j)
+      _ => Some(i)
+    }
+  }
+  match best {
+    Some(i) => Some(self.entries[i])
+    None => None
+  }
 }
 
 ///|

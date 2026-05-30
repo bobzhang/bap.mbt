@@ -35,6 +35,21 @@ pub(all) enum Abi {
   MSVC
 } derive(Eq, @debug.Debug)
 
+pub(all) enum AliasOrigin {
+  RegisterAlias(aliased~ : Var, source~ : Var)
+  SubRegister(aliased~ : Var, source~ : Var, lo~ : Int, hi~ : Int)
+  BitSetAlias(aliased~ : Var, bits~ : Array[Var])
+  UnknownAlias(aliased~ : Var)
+}
+pub fn AliasOrigin::aliased(Self) -> Var
+pub fn AliasOrigin::bit_set(Var, Array[Var]) -> Self
+pub fn AliasOrigin::bits(Self) -> Array[Var]
+pub fn AliasOrigin::range(Self) -> (Int, Int)?
+pub fn AliasOrigin::register(Var, Var) -> Self
+pub fn AliasOrigin::source(Self) -> Var?
+pub fn AliasOrigin::subregister(Var, Var, lo~ : Int, hi~ : Int) -> Self
+pub fn AliasOrigin::unknown(Var) -> Self
+
 type Compiler
 pub fn Compiler::create(String, specs? : Map[String, String], version? : Array[String], options? : Array[String]) -> Self
 pub fn Compiler::name(Self) -> String
@@ -204,13 +219,14 @@ type Target
 pub fn Target::aarch64() -> Self
 pub fn Target::aarch64_be() -> Self
 pub fn Target::abi(Self) -> Abi
+pub fn Target::alias_origins(Self) -> Array[AliasOrigin]
 pub fn Target::arm() -> Self
 pub fn Target::armeb() -> Self
 pub fn Target::belongs(Self, Self) -> Bool
 pub fn Target::bits(Self) -> Int
 pub fn Target::byte(Self) -> Int
 pub fn Target::code_addr_size(Self) -> Int
-pub fn Target::create(name~ : @knowledge.Name, parent? : Self, nicknames? : Array[String], bits? : Int, byte? : Int, endianness? : Endianness, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, vars? : Array[Var]) -> Self
+pub fn Target::create(name~ : @knowledge.Name, parent? : Self, nicknames? : Array[String], bits? : Int, byte? : Int, endianness? : Endianness, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, vars? : Array[Var], alias_origins? : Array[AliasOrigin]) -> Self
 pub fn Target::data_addr_size(Self) -> Int
 pub fn Target::endianness(Self) -> Endianness
 pub fn Target::fabi(Self) -> Fabi
@@ -225,6 +241,8 @@ pub fn Target::mipsel() -> Self
 pub fn Target::name(Self) -> @knowledge.Name
 pub fn Target::nicknames(Self) -> Array[String]
 pub fn Target::order(Self, Self) -> @knowledge.PartialOrder
+pub fn Target::origin_of_name(Self, String) -> AliasOrigin?
+pub fn Target::origin_of_var(Self, Var) -> AliasOrigin?
 pub fn Target::parent(Self) -> Self?
 pub fn Target::parents(Self) -> Array[Self]
 pub fn Target::powerpc() -> Self
@@ -238,6 +256,7 @@ pub fn Target::system(Self) -> System
 pub fn Target::unknown() -> Self
 pub fn Target::vars(Self) -> Array[Var]
 pub fn Target::vars_with_role(Self, Role) -> Array[Var]
+pub fn Target::with_alias_origin(Self, AliasOrigin) -> Self
 pub fn Target::with_var(Self, Var) -> Self
 pub fn Target::with_vars(Self, Array[Var]) -> Self
 pub fn Target::x86() -> Self
@@ -259,6 +278,7 @@ pub fn Var::is_mutable(Self) -> Bool
 pub fn Var::is_virtual(Self) -> Bool
 pub fn Var::name(Self) -> String
 pub fn Var::resort(Self, Sort) -> Self
+pub fn Var::same(Self, Self) -> Bool
 pub fn Var::sort(Self) -> Sort
 pub fn Var::to_string(Self) -> String
 pub fn Var::version(Self) -> Int

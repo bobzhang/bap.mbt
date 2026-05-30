@@ -61,6 +61,15 @@ pub fn Var::versioned(self : Var, version : Int) -> Var {
 }
 
 ///|
+pub fn Var::same(self : Var, other : Var) -> Bool {
+  self.ident_value == other.ident_value &&
+  self.version_value == other.version_value &&
+  self.mutable_flag == other.mutable_flag &&
+  self.virtual_flag == other.virtual_flag &&
+  self.sort_value.same(other.sort_value)
+}
+
+///|
 pub fn Var::ident(self : Var) -> String {
   self.ident_value
 }

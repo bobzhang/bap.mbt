@@ -33,12 +33,15 @@ test "effect sorts form the expected lattice" {
 test "targets inherit defaults and match ancestry" {
   let word = @core_theory.Sort::bitv(64)
   let pc = @core_theory.Var::create(word, "PC")
+  let rax = @core_theory.Var::create(word, "RAX")
+  let eax = @core_theory.Var::create(@core_theory.Sort::bitv(32), "EAX")
   let family = @core_theory.Target::create(
     name=@knowledge.Name::create("x86", pkg="target"),
     nicknames=["amd64-family"],
     bits=64,
     endianness=LittleEndian,
-    vars=[pc],
+    vars=[pc, rax, eax],
+    alias_origins=[@core_theory.AliasOrigin::subregister(eax, rax, lo=0, hi=31)],
   )
   let target = @core_theory.Target::create(
     name=@knowledge.Name::create("x86-64", pkg="target"),
@@ -52,6 +55,14 @@ test "targets inherit defaults and match ancestry" {
   assert_true(target.matches("amd64"))
   assert_true(target.matches("X86"))
   assert_true(target.find_var("PC") is Some(_))
+  match target.origin_of_name("EAX") {
+    Some(origin) => {
+      assert_true(origin.aliased().ident() == "EAX")
+      assert_true(origin.source().map(v => v.ident()) == Some("RAX"))
+      assert_true(origin.range() == Some((0, 31)))
+    }
+    None => fail("missing EAX alias origin")
+  }
 }
 
 ///|

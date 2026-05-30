@@ -50,6 +50,14 @@ pub(all) enum Role {
 } derive(Eq, Debug)
 
 ///|
+pub(all) enum AliasOrigin {
+  RegisterAlias(aliased~ : Var, source~ : Var)
+  SubRegister(aliased~ : Var, source~ : Var, lo~ : Int, hi~ : Int)
+  BitSetAlias(aliased~ : Var, bits~ : Array[Var])
+  UnknownAlias(aliased~ : Var)
+}
+
+///|
 struct Target {
   name_value : @knowledge.Name
   parent_value : Target?
@@ -62,6 +70,7 @@ struct Target {
   fabi_value : Fabi
   filetype_value : Filetype
   vars_value : Array[Var]
+  alias_origins_value : Array[AliasOrigin]
 }
 
 ///|
@@ -242,6 +251,65 @@ fn add_role(roles : Array[Role], role : Role) -> Unit {
 }
 
 ///|
+pub fn AliasOrigin::register(aliased : Var, source : Var) -> AliasOrigin {
+  RegisterAlias(aliased~, source~)
+}
+
+///|
+pub fn AliasOrigin::subregister(
+  aliased : Var,
+  source : Var,
+  lo~ : Int,
+  hi~ : Int,
+) -> AliasOrigin {
+  SubRegister(aliased~, source~, lo~, hi~)
+}
+
+///|
+pub fn AliasOrigin::bit_set(aliased : Var, bits : Array[Var]) -> AliasOrigin {
+  BitSetAlias(aliased~, bits=bits.copy())
+}
+
+///|
+pub fn AliasOrigin::unknown(aliased : Var) -> AliasOrigin {
+  UnknownAlias(aliased~)
+}
+
+///|
+pub fn AliasOrigin::aliased(self : AliasOrigin) -> Var {
+  match self {
+    RegisterAlias(aliased~, ..)
+    | SubRegister(aliased~, ..)
+    | BitSetAlias(aliased~, ..)
+    | UnknownAlias(aliased~) => aliased
+  }
+}
+
+///|
+pub fn AliasOrigin::source(self : AliasOrigin) -> Var? {
+  match self {
+    RegisterAlias(source~, ..) | SubRegister(source~, ..) => Some(source)
+    BitSetAlias(_) | UnknownAlias(_) => None
+  }
+}
+
+///|
+pub fn AliasOrigin::range(self : AliasOrigin) -> (Int, Int)? {
+  match self {
+    SubRegister(lo~, hi~, ..) => Some((lo, hi))
+    RegisterAlias(_) | BitSetAlias(_) | UnknownAlias(_) => None
+  }
+}
+
+///|
+pub fn AliasOrigin::bits(self : AliasOrigin) -> Array[Var] {
+  match self {
+    BitSetAlias(bits~, ..) => bits.copy()
+    RegisterAlias(_) | SubRegister(_) | UnknownAlias(_) => []
+  }
+}
+
+///|
 pub fn Target::unknown() -> Target {
   {
     name_value: @knowledge.Name::create("unknown", pkg="target"),
@@ -255,6 +323,7 @@ pub fn Target::unknown() -> Target {
     fabi_value: UnknownFabi,
     filetype_value: UnknownFiletype,
     vars_value: [],
+    alias_origins_value: [],
   }
 }
 
@@ -271,6 +340,7 @@ pub fn Target::create(
   fabi? : Fabi,
   filetype? : Filetype,
   vars? : Array[Var],
+  alias_origins? : Array[AliasOrigin],
 ) -> Target {
   {
     name_value: name,
@@ -343,6 +413,14 @@ pub fn Target::create(
           None => []
         }
     },
+    alias_origins_value: match alias_origins {
+      Some(items) => items.copy()
+      None =>
+        match parent {
+          Some(target) => target.alias_origins()
+          None => []
+        }
+    },
   }
 }
 
@@ -402,6 +480,11 @@ pub fn Target::vars(self : Target) -> Array[Var] {
 }
 
 ///|
+pub fn Target::alias_origins(self : Target) -> Array[AliasOrigin] {
+  self.alias_origins_value.copy()
+}
+
+///|
 pub fn Target::with_var(self : Target, item : Var) -> Target {
   let items = self.vars_value.copy()
   items.push(item)
@@ -416,10 +499,32 @@ pub fn Target::with_vars(self : Target, more : Array[Var]) -> Target {
 }
 
 ///|
+pub fn Target::with_alias_origin(self : Target, origin : AliasOrigin) -> Target {
+  let items = self.alias_origins_value.copy()
+  items.push(origin)
+  { ..self, alias_origins_value: items }
+}
+
+///|
 pub fn Target::find_var(self : Target, name : String) -> Var? {
   self.vars_value
   .search_by(item => item.ident() == name || item.name() == name)
   .map(i => self.vars_value[i])
+}
+
+///|
+pub fn Target::origin_of_var(self : Target, variable : Var) -> AliasOrigin? {
+  self.alias_origins_value
+  .search_by(origin => origin.aliased().same(variable))
+  .map(i => self.alias_origins_value[i])
+}
+
+///|
+pub fn Target::origin_of_name(self : Target, name : String) -> AliasOrigin? {
+  match self.find_var(name) {
+    Some(variable) => self.origin_of_var(variable)
+    None => None
+  }
 }
 
 ///|

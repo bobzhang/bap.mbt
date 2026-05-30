@@ -197,6 +197,7 @@ pub fn ProjectDisassemblyDriver::create(name~ : String, description? : String, p
 pub fn ProjectDisassemblyDriver::description(Self) -> String
 pub fn ProjectDisassemblyDriver::entry_point() -> Self
 pub fn ProjectDisassemblyDriver::function_symbols() -> Self
+pub fn ProjectDisassemblyDriver::image_roots() -> Self
 pub fn ProjectDisassemblyDriver::memory_blocks() -> Self
 pub fn ProjectDisassemblyDriver::name(Self) -> String
 pub fn ProjectDisassemblyDriver::priority(Self) -> Int
@@ -263,6 +264,19 @@ pub fn ProjectPass::run_once(Self) -> Bool
 pub fn ProjectPass::ssa() -> Self
 pub fn ProjectPass::stub_resolver(link_only? : Array[String], no_link? : Array[String]) -> Self
 pub fn ProjectPass::trivial_condition_form() -> Self
+
+type ProjectRooter
+pub fn ProjectRooter::contains(Self, UInt64) -> Bool
+pub fn ProjectRooter::create(Array[UInt64], path? : String, biased? : Bool) -> Self
+pub fn ProjectRooter::empty() -> Self
+pub fn ProjectRooter::image_blocks(Self, @image.Image) -> Result[Array[@memory.Memory], String]
+pub fn ProjectRooter::is_biased(Self) -> Bool
+pub fn ProjectRooter::of_blocks(Array[(String, UInt64, UInt64)]) -> Self
+pub fn ProjectRooter::of_image(@image.Image) -> Self
+pub fn ProjectRooter::path(Self) -> String?
+pub fn ProjectRooter::roots(Self) -> Array[UInt64]
+pub fn ProjectRooter::set_path(Self, String) -> Self
+pub fn ProjectRooter::union(Self, Self) -> Self
 
 type ProjectState
 pub fn ProjectState::add_subroutine(Self, @types.Term[@types.Sub]) -> Self

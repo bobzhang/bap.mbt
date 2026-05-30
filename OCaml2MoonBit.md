@@ -124,6 +124,11 @@ decoder is present. Prefer function-symbol memory blocks over whole-memory
 fallbacks when image symbols are available, and use an image entry-point block
 as the next fallback for stripped binaries; that preserves better roots for
 later target-specific decoding without fabricating instruction semantics.
+For BAP-style rooters, keep the rooter as a source of root addresses rather
+than a decoder. `Rooter.of_image` contributes the image entry point plus image
+symbol starts and carries filename/biased-address metadata; `Rooter.of_blocks`
+groups serialized `(name, start, stop)` blocks by name and keeps the lowest
+start address for each name.
 When a higher-level package exposes the same loader surface as a lower-level
 registry, prefer a small idempotent initializer that delegates to the owning
 registry instead of duplicating loader entries. For example, `ProjectInput`

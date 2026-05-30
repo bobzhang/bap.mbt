@@ -152,6 +152,39 @@ pub fn ProjectDisassemblyDriver::function_symbols() -> ProjectDisassemblyDriver 
 }
 
 ///|
+pub fn ProjectDisassemblyDriver::image_roots() -> ProjectDisassemblyDriver {
+  ProjectDisassemblyDriver::create(
+    name="image-roots",
+    description="materialize image root addresses as disassembly blocks",
+    priority=-25,
+    run=project => {
+      let image = match project.image() {
+        Some(image) => image
+        None => return Err("project has no image roots to disassemble")
+      }
+      let rooter = ProjectRooter::of_image(image)
+      let blocks = match rooter.image_blocks(image) {
+        Ok(blocks) => blocks
+        Err(reason) => return Err(reason)
+      }
+      let mut state = project.disassembly()
+      let mut added = 0
+      for block in blocks {
+        if block.length() > 0 {
+          state = state.add_block(block)
+          added = added + 1
+        }
+      }
+      if added == 0 {
+        Err("project image roots are not mapped")
+      } else {
+        Ok(project.with_disassembly(state).set("disassembler", "image-roots"))
+      }
+    },
+  )
+}
+
+///|
 pub fn ProjectDisassemblyDriver::entry_point() -> ProjectDisassemblyDriver {
   ProjectDisassemblyDriver::create(
     name="entry-point",
@@ -185,6 +218,7 @@ pub fn ProjectDisassemblyDriver::entry_point() -> ProjectDisassemblyDriver {
 pub fn register_builtin_disassembly_drivers() -> Result[Unit, String] {
   for
     driver in [
+      ProjectDisassemblyDriver::image_roots(),
       ProjectDisassemblyDriver::function_symbols(),
       ProjectDisassemblyDriver::entry_point(),
       ProjectDisassemblyDriver::memory_blocks(),

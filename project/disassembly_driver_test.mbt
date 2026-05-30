@@ -50,8 +50,16 @@ test "project registers built-in memory block disassembly driver" {
     Err(reason) => fail(reason)
   }
   assert_true(@project.disassembly_driver_names().contains("memory-blocks"))
+  assert_true(@project.disassembly_driver_names().contains("image-roots"))
   assert_true(@project.disassembly_driver_names().contains("function-symbols"))
   assert_true(@project.disassembly_driver_names().contains("entry-point"))
+  match @project.find_disassembly_driver("image-roots") {
+    Some(driver) => {
+      assert_true(driver.priority() == -25)
+      assert_true(driver.description().contains("image root"))
+    }
+    None => fail("missing image-root driver")
+  }
   match @project.find_disassembly_driver("function-symbols") {
     Some(driver) => {
       assert_true(driver.priority() == -50)
@@ -143,6 +151,53 @@ test "project function-symbol disassembly driver materializes symbol blocks" {
   }
   let no_symbols = @project.Project::empty(@core_theory.Target::unknown())
   assert_true(no_symbols.disassemble(driver="function-symbols") is Err(_))
+}
+
+///|
+test "project image-root disassembly driver materializes entry and symbol blocks" {
+  match @project.register_builtin_disassembly_drivers() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let segment = @image.Segment::create(
+    name=".text",
+    endian=LittleEndian,
+    addr=0x1800UL,
+    b"\x10\x20\x30\x40\x50",
+    executable=true,
+  )
+  let function_symbol = @image.Symbol::create(
+    name="main",
+    addr=0x1802UL,
+    size=2,
+    is_function=true,
+  )
+  let data_symbol = @image.Symbol::create(name="table", addr=0x1804UL, size=1)
+  let image = @image.Image::from_segments(
+    entry=0x1801UL,
+    endian=LittleEndian,
+    [segment],
+    symbols=[function_symbol, data_symbol],
+  )
+  let project = @project.Project::from_image(image)
+  match project.disassemble(driver="image-roots") {
+    Ok(next) => {
+      assert_true(next.get("disassembler") == Some("image-roots"))
+      let blocks = next.disassembly().blocks()
+      assert_true(blocks.length() == 3)
+      assert_true(blocks[0].min_addr() == 0x1801UL)
+      inspect(blocks[0].hexdump(), content="20 30 40 50")
+      assert_true(blocks[1].min_addr() == 0x1802UL)
+      inspect(blocks[1].hexdump(), content="30 40 50")
+      assert_true(blocks[2].min_addr() == 0x1804UL)
+      inspect(blocks[2].hexdump(), content="50")
+    }
+    Err(reason) => fail(reason)
+  }
+  let unmapped = @project.Project::from_image(
+    @image.Image::from_segments(entry=0x2800UL, endian=LittleEndian, [segment]),
+  )
+  assert_true(unmapped.disassemble(driver="image-roots") is Err(_))
 }
 
 ///|

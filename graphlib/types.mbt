@@ -7,6 +7,14 @@ pub(all) enum EdgeKind {
 } derive(Eq, Debug)
 
 ///|
+pub(all) struct DfsNodeInfo {
+  enter : Int
+  leave : Int
+  pre : Int
+  rpost : Int
+} derive(Eq, Debug)
+
+///|
 pub(all) struct Edge[N, E] {
   src : N
   dst : N

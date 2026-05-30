@@ -63,6 +63,70 @@ pub fn[N : Hash + Eq, E] Graph::dfs_edges(
 }
 
 ///|
+fn[N : Hash + Eq, E] dfs_numbering_visit(
+  graph : Graph[N, E],
+  node : N,
+  colors : Map[N, Int],
+  time : Ref[Int],
+  next_pre : Ref[Int],
+  numbering : Map[N, DfsNodeInfo],
+  leave_order : Array[N],
+) -> Unit {
+  colors[node] = 1
+  let enter = time.val
+  time.val += 1
+  let pre = next_pre.val
+  next_pre.val += 1
+  numbering[node] = { enter, leave: -1, pre, rpost: -1 }
+  for edge in graph.out_edges(node) {
+    if !colors.contains(edge.dst) {
+      dfs_numbering_visit(
+        graph,
+        edge.dst,
+        colors,
+        time,
+        next_pre,
+        numbering,
+        leave_order,
+      )
+    }
+  }
+  let leave = time.val
+  time.val += 1
+  match numbering.get(node) {
+    Some(info) => numbering[node] = { ..info, leave, }
+    None => ()
+  }
+  leave_order.push(node)
+  colors[node] = 2
+}
+
+///|
+pub fn[N : Hash + Eq, E] Graph::dfs_numbering(
+  self : Graph[N, E],
+  start : N,
+) -> Map[N, DfsNodeInfo] {
+  let colors : Map[N, Int] = {}
+  let numbering : Map[N, DfsNodeInfo] = {}
+  let time = Ref::Ref(0)
+  let next_pre = Ref::Ref(0)
+  let leave_order : Array[N] = []
+  if self.has_node(start) {
+    dfs_numbering_visit(
+      self, start, colors, time, next_pre, numbering, leave_order,
+    )
+  }
+  let rpo = leave_order.rev()
+  for i, node in rpo {
+    match numbering.get(node) {
+      Some(info) => numbering[node] = { ..info, rpost: i }
+      None => ()
+    }
+  }
+  numbering
+}
+
+///|
 pub fn[N : Hash + Eq, E] Graph::reachable(
   self : Graph[N, E],
   start : N,

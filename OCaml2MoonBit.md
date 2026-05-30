@@ -121,6 +121,11 @@ For BAP IR control-flow algorithms, keep reusable graph algorithms in
 optional entry `Tid` against the subroutine's own block list before invoking
 dominance or frontier algorithms; a nonlocal entry should produce empty
 wrapper results instead of silently analyzing from an external or missing node.
+When porting `Graphlib.depth_first_search` tests or clients that inspect the
+callback ordinals, record both wall-clock entry/leave timestamps and the
+preorder/reverse-postorder ordinals. BAP's `rpost` order matches
+`reverse_postorder`, so ancestors have smaller `rpost` values than their DFS
+descendants.
 
 For BAP's Trivial Condition Form pass, preserve block structure and jump term
 identity while hoisting every non-`Int`/non-`Var` jump condition into a fresh

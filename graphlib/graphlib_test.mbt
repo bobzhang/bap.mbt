@@ -112,6 +112,38 @@ test "dfs classifies tree and back edges" {
 }
 
 ///|
+test "dfs numbering exposes BAP timestamp and rpost invariants" {
+  let graph = sample_graph()
+  let numbering = graph.dfs_numbering(0)
+  let rpo = graph.reverse_postorder(0)
+  for i, node in rpo {
+    assert_true(numbering.contains(node))
+    let info = numbering[node]
+    assert_true(info.enter < info.leave)
+    assert_true(info.pre >= 0)
+    assert_true(info.rpost == i)
+  }
+  for event in graph.dfs_edges(0) {
+    let src = numbering[event.1.src]
+    let dst = numbering[event.1.dst]
+    match event.0 {
+      Back => {
+        assert_true(src.pre >= dst.pre)
+        assert_true(src.rpost >= dst.rpost)
+      }
+      Tree | Forward => {
+        assert_true(src.pre < dst.pre)
+        assert_true(src.rpost < dst.rpost)
+      }
+      Cross => {
+        assert_true(src.pre > dst.pre)
+        assert_true(src.rpost < dst.rpost)
+      }
+    }
+  }
+}
+
+///|
 fn component_containing(components : Array[Set[Int]], node : Int) -> Set[Int]? {
   components
   .search_by(component => component.contains(node))

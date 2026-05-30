@@ -82,6 +82,11 @@ test "division gcd and lcm use unsigned semantics" {
   let (q, r) = @bitvec.of_int(width=8, 20).div_rem(@bitvec.of_int(width=8, 6))
   inspect(q.to_hex(), content="0x03")
   inspect(r.to_hex(), content="0x02")
+  let (g, a, b) = x.gcd_ext(y)
+  inspect(g.to_hex(), content="0x04")
+  inspect(a.to_hex(), content="0x01")
+  inspect(b.to_hex(), content="0xff")
+  assert_true(a.mul(x).add(b.mul(y)) == g)
 }
 
 ///|

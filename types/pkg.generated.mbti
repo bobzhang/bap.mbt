@@ -387,7 +387,10 @@ pub fn Word::from_bitvec(@bitvec.BitVec) -> Self
 pub fn Word::from_bytes(BytesView, endian~ : @bitvec.Endian, width? : Int) -> Self raise @bitvec.BitVecError
 pub fn Word::from_hex(width~ : Int, StringView) -> Self raise @bitvec.BitVecError
 pub fn Word::from_string(StringView) -> Self raise @bitvec.BitVecError
+pub fn Word::gcd(Self, Self) -> Self raise @bitvec.BitVecError
+pub fn Word::gcd_ext(Self, Self) -> (Self, Self, Self) raise @bitvec.BitVecError
 pub fn Word::is_zero(Self) -> Bool
+pub fn Word::lcm(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::lnot(Self) -> Self
 pub fn Word::lsb(Self) -> Bool
 pub fn Word::lshift(Self, Int) -> Self

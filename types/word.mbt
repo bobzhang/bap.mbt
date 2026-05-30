@@ -149,6 +149,25 @@ pub fn Word::signed_rem(
 }
 
 ///|
+pub fn Word::gcd(self : Word, other : Word) -> Word raise @bitvec.BitVecError {
+  Word(self.0.gcd(other.0))
+}
+
+///|
+pub fn Word::gcd_ext(
+  self : Word,
+  other : Word,
+) -> (Word, Word, Word) raise @bitvec.BitVecError {
+  let (g, x, y) = self.0.gcd_ext(other.0)
+  (Word(g), Word(x), Word(y))
+}
+
+///|
+pub fn Word::lcm(self : Word, other : Word) -> Word raise @bitvec.BitVecError {
+  Word(self.0.lcm(other.0))
+}
+
+///|
 pub fn Word::lnot(self : Word) -> Word {
   Word(self.0.lnot())
 }

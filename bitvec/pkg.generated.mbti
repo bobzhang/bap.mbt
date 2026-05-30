@@ -53,6 +53,7 @@ pub fn BitVec::div(Self, Self) -> Self raise BitVecError
 pub fn BitVec::div_rem(Self, Self) -> (Self, Self) raise BitVecError
 pub fn BitVec::extract(Self, hi? : Int, lo? : Int) -> Self raise BitVecError
 pub fn BitVec::gcd(Self, Self) -> Self raise BitVecError
+pub fn BitVec::gcd_ext(Self, Self) -> (Self, Self, Self) raise BitVecError
 pub fn BitVec::is_zero(Self) -> Bool
 pub fn BitVec::lcm(Self, Self) -> Self raise BitVecError
 pub fn BitVec::limb_count(Self) -> Int

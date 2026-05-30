@@ -13,6 +13,12 @@ test "word wraps bitvec operations" {
     @types.Word::of_int(width=8, 0xff).add(@types.Word::one(width=8)).to_hex(),
     content="0x00",
   )
+  let x = @types.Word::of_int(width=8, 0x10)
+  let y = @types.Word::of_int(width=8, 0x0c)
+  inspect(x.gcd(y).to_hex(), content="0x04")
+  inspect(x.lcm(y).to_hex(), content="0x30")
+  let (g, a, b) = x.gcd_ext(y)
+  assert_true((g.to_hex(), a.to_hex(), b.to_hex()) == ("0x04", "0x01", "0xff"))
 }
 
 ///|

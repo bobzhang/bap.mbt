@@ -162,6 +162,32 @@ pub fn BitVec::gcd(self : BitVec, other : BitVec) -> BitVec raise BitVecError {
 }
 
 ///|
+pub fn BitVec::gcd_ext(
+  self : BitVec,
+  other : BitVec,
+) -> (BitVec, BitVec, BitVec) raise BitVecError {
+  require_same_width(self, other)
+  let mut old_r = self
+  let mut r = other
+  let mut old_s = one(width=self.width)
+  let mut s = zero(width=self.width)
+  let mut old_t = zero(width=self.width)
+  let mut t = one(width=self.width)
+  while !r.is_zero() {
+    let (quotient, next_r) = old_r.div_rem(r)
+    old_r = r
+    r = next_r
+    let next_s = old_s.sub(quotient.mul(s))
+    old_s = s
+    s = next_s
+    let next_t = old_t.sub(quotient.mul(t))
+    old_t = t
+    t = next_t
+  }
+  (old_r, old_s, old_t)
+}
+
+///|
 pub fn BitVec::lcm(self : BitVec, other : BitVec) -> BitVec raise BitVecError {
   require_same_width(self, other)
   if self.is_zero() || other.is_zero() {

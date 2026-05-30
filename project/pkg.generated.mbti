@@ -10,7 +10,11 @@ import {
 }
 
 // Values
+pub fn apply_analysis(String, Array[String]) -> Result[Unit, String]
+
 pub fn available_input_loaders() -> Array[String]
+
+pub fn find_analysis(String) -> ProjectAnalysis?
 
 pub fn find_input_loader(String) -> ProjectInputLoader?
 
@@ -22,9 +26,13 @@ pub fn input_loaders_for_extension(String) -> Array[ProjectInputLoader]
 
 pub fn passes() -> Array[ProjectPass]
 
+pub fn register_analysis(ProjectAnalysis) -> Result[Unit, String]
+
 pub fn register_input_loader(ProjectInputLoader) -> Result[Unit, String]
 
 pub fn register_pass(ProjectPass) -> Result[Unit, String]
+
+pub fn registered_analyses() -> Array[ProjectAnalysisInfo]
 
 pub fn resolve_passes(Array[String]) -> Result[Array[ProjectPass], String]
 
@@ -68,6 +76,45 @@ pub fn Project::tag_memory(Self, @memory.Memory, String) -> Self
 pub fn Project::target(Self) -> @core_theory.Target
 pub fn Project::with_memory(Self, @memory.MemMap[String]) -> Self
 pub fn Project::with_program(Self, @types.Term[@types.Program]) -> Self
+
+type ProjectAnalysis
+pub fn ProjectAnalysis::apply(Self, Array[String]) -> Result[Unit, String]
+pub fn[T] ProjectAnalysis::create(name~ : String, description? : String, args~ : ProjectAnalysisArgs[T], run~ : (T) -> Result[Unit, String]) -> Self
+pub fn ProjectAnalysis::description(Self) -> String
+pub fn ProjectAnalysis::grammar(Self) -> Array[String]
+pub fn ProjectAnalysis::grammar_string(Self) -> String
+pub fn ProjectAnalysis::info(Self) -> ProjectAnalysisInfo
+pub fn ProjectAnalysis::name(Self) -> String
+
+type ProjectAnalysisArg[T]
+pub fn[T] ProjectAnalysisArg::argument(rule~ : String, description? : String, parse~ : (String) -> Result[T, String]) -> Self[T]
+pub fn ProjectAnalysisArg::bitvec() -> Self[@bitvec.BitVec]
+pub fn[T] ProjectAnalysisArg::description(Self[T]) -> String
+pub fn ProjectAnalysisArg::empty() -> Self[Unit]
+pub fn ProjectAnalysisArg::flag(String) -> Self[Bool]
+pub fn ProjectAnalysisArg::int() -> Self[Int]
+pub fn[T] ProjectAnalysisArg::keyword(String, Self[T]) -> Self[T?]
+pub fn[A, B] ProjectAnalysisArg::map(Self[A], (A) -> B) -> Self[B]
+pub fn[T] ProjectAnalysisArg::optional(Self[T]) -> Self[T?]
+pub fn ProjectAnalysisArg::program() -> Self[@core_theory.Label]
+pub fn[T] ProjectAnalysisArg::rest(Self[T]) -> Self[Array[T]]
+pub fn[T] ProjectAnalysisArg::rule(Self[T]) -> String
+pub fn ProjectAnalysisArg::string() -> Self[String]
+pub fn ProjectAnalysisArg::unit() -> Self[@core_theory.ProgramUnit]
+
+type ProjectAnalysisArgs[T]
+pub fn[T] ProjectAnalysisArgs::grammar(Self[T]) -> Array[String]
+pub fn[T] ProjectAnalysisArgs::grammar_string(Self[T]) -> String
+pub fn[T] ProjectAnalysisArgs::one(ProjectAnalysisArg[T]) -> Self[T]
+pub fn[A, B] ProjectAnalysisArgs::pair(ProjectAnalysisArg[A], ProjectAnalysisArg[B]) -> Self[(A, B)]
+pub fn[T] ProjectAnalysisArgs::parse(Self[T], Array[String]) -> Result[T, String]
+pub fn[A, B, C] ProjectAnalysisArgs::triple(ProjectAnalysisArg[A], ProjectAnalysisArg[B], ProjectAnalysisArg[C]) -> Self[(A, B, C)]
+
+type ProjectAnalysisInfo
+pub fn ProjectAnalysisInfo::description(Self) -> String
+pub fn ProjectAnalysisInfo::grammar(Self) -> Array[String]
+pub fn ProjectAnalysisInfo::grammar_string(Self) -> String
+pub fn ProjectAnalysisInfo::name(Self) -> String
 
 type ProjectCollator[S, R]
 pub fn[S, R] ProjectCollator::apply(Self[S, R], Array[Project]) -> R?

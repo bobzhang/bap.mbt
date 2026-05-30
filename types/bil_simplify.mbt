@@ -1155,15 +1155,17 @@ fn propagate_const_loop(
         let no_result = propagate_const_loop(no, ctx)
         ctx = match next_cond {
           Int(word) => {
-            let (selected_stmts, selected_ctx) = if word.is_zero() {
-              (no_result.0, no_result.1)
+            let (selected_stmts, selected_ctx, other_stmts) = if word.is_zero() {
+              (no_result.0, no_result.1, yes_result.0)
             } else {
-              (yes_result.0, yes_result.1)
+              (yes_result.0, yes_result.1, no_result.0)
             }
             if stmts_may_jump(selected_stmts) {
               remove_context_vars(ctx, defined_vars_in_stmts(selected_stmts))
-            } else {
+            } else if stmts_may_jump(other_stmts) {
               selected_ctx
+            } else {
+              join_const_contexts(yes_result.1, no_result.1)
             }
           }
           _ => join_const_contexts(yes_result.1, no_result.1)

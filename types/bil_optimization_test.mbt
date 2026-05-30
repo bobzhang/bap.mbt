@@ -480,6 +480,38 @@ test "bil constant propagation joins identical branch facts" {
 }
 
 ///|
+test "bil constant propagation matches BAP branch joins for computable conditions" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let z = @types.Var::new(name="z", typ~)
+  let differing = @types.propagate_const_stmts([
+    Move(x, Int(word8(42))),
+    If(cond=BinOp(Lt, Int(word8(0)), Var(x)), yes=[Move(y, Int(word8(1)))], no=[
+      Move(y, Int(word8(2))),
+    ]),
+    Move(z, Var(y)),
+  ])
+  assert_true(
+    stmt_text(differing) ==
+    [
+      "x:imm8 := 0x2A:8u", "if 1:1u then 1 stmts else 1 stmts", "z:imm8 := y:imm8",
+    ],
+  )
+  let matching = @types.propagate_const_stmts([
+    Move(x, Int(word8(42))),
+    If(cond=BinOp(Lt, Int(word8(0)), Var(x)), yes=[Move(y, Int(word8(1)))], no=[
+      Move(y, Int(word8(1))),
+    ]),
+    Move(z, Var(y)),
+  ])
+  assert_true(
+    stmt_text(matching) ==
+    ["x:imm8 := 0x2A:8u", "if 1:1u then 1 stmts else 1 stmts", "z:imm8 := 1:8u"],
+  )
+}
+
+///|
 test "bil constant propagation drops facts that differ across branches" {
   let typ = @types.ValueType::Imm(8)
   let x = @types.Var::new(name="x", typ~)
@@ -721,7 +753,7 @@ test "bil constant propagation carries invariant facts into loop branches" {
         stmt_text(body) ==
         [
           "if (1:8u < z:imm8) then 1 stmts else 1 stmts", "if 1:1u then 1 stmts else 1 stmts",
-          "z:imm8 := 0:8u",
+          "z:imm8 := y:imm8",
         ],
       )
       match body[1] {

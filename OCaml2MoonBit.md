@@ -116,6 +116,12 @@ expressions. This preserves conditional and critical-edge behavior that would
 be lost by inserting all copies unconditionally at the end of a predecessor
 with multiple successors.
 
+For BAP-style stub resolution, treat symbol names and aliases as an undirected
+graph and resolve by connected components. Link stubs only when a component has
+exactly one non-stub implementation; pairwise alias matching is too eager,
+because another alias edge can pull a second implementation into the same
+component and make the whole group ambiguous.
+
 For BAP BIL helper predicates, expression references and statement references
 are close to free-variable queries, but assignment lhs variables are definitions
 rather than references. `Exp.Var(x)` references `x`; `Stmt.Move(x, rhs)` does

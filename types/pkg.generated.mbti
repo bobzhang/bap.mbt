@@ -119,6 +119,8 @@ pub(all) struct Attr {
 } derive(Eq, @debug.Debug)
 pub fn Attr::comment(String) -> Self
 pub fn Attr::new(key~ : String, value~ : String) -> Self
+pub fn Attr::stub() -> Self
+pub fn Attr::sub_alias(String) -> Self
 
 type BilMemory derive(Eq, @debug.Debug)
 pub fn BilMemory::addr_width(Self) -> Int
@@ -443,6 +445,7 @@ pub fn Term::insert_def_after(Self[Blk], Self[Def], after? : Tid) -> Self[Blk]
 pub fn Term::insert_def_before(Self[Blk], Self[Def], before? : Tid) -> Self[Blk]
 pub fn Term::intent(Self[Arg]) -> Intent?
 pub fn Term::is_ssa(Self[Sub]) -> Bool
+pub fn Term::is_stub(Self[Sub]) -> Bool
 pub fn Term::jmp_free_vars(Self[Jmp]) -> Array[Var]
 pub fn Term::jmps(Self[Blk]) -> Array[Self[Jmp]]
 pub fn Term::kind(Self[Jmp]) -> JmpKind
@@ -481,9 +484,12 @@ pub fn Term::program_find_phi(Self[Program], Tid) -> Self[Phi]?
 pub fn Term::program_free_vars(Self[Program]) -> Array[Var]
 pub fn Term::program_jmps(Self[Program]) -> Array[Self[Jmp]]
 pub fn Term::program_phis(Self[Program]) -> Array[Self[Phi]]
+pub fn Term::program_resolve_stub_calls(Self[Program]) -> Self[Program]
 pub fn Term::program_resolved_callees(Self[Program], Self[Sub], resolve_indirect~ : (Exp) -> Array[Tid]) -> Array[Tid]
 pub fn Term::program_resolved_callers(Self[Program], Self[Sub], resolve_indirect~ : (Exp) -> Array[Tid]) -> Array[Tid]
 pub fn Term::program_resolved_callgraph(Self[Program], resolve_indirect~ : (Exp) -> Array[Tid]) -> @graphlib.Graph[Tid, Array[Self[Jmp]]]
+pub fn Term::program_stub_links(Self[Program]) -> Map[Tid, Tid]
+pub fn Term::program_stub_tids(Self[Program]) -> Array[Tid]
 pub fn Term::remove_def(Self[Blk], Tid) -> Self[Blk]
 pub fn Term::remove_jmp(Self[Blk], Tid) -> Self[Blk]
 pub fn Term::remove_phi(Self[Phi], Tid) -> Self[Phi]
@@ -497,6 +503,7 @@ pub fn Term::split_after_def(Self[Blk], Self[Def]) -> (Self[Blk], Self[Blk])
 pub fn Term::split_before_def(Self[Blk], Self[Def]) -> (Self[Blk], Self[Blk])
 pub fn Term::split_bottom_defs(Self[Blk]) -> (Self[Blk], Self[Blk])
 pub fn Term::split_top_defs(Self[Blk]) -> (Self[Blk], Self[Blk])
+pub fn Term::sub_aliases(Self[Sub]) -> Array[String]
 pub fn Term::sub_cfg(Self[Sub]) -> @graphlib.Graph[Tid, Tid]
 pub fn Term::sub_defs(Self[Sub]) -> Array[Self[Def]]
 pub fn Term::sub_direct_call_tids(Self[Sub]) -> Array[Tid]
@@ -514,6 +521,7 @@ pub fn Term::sub_resolved_call_tids(Self[Sub], resolve_indirect~ : (Exp) -> Arra
 pub fn Term::sub_reverse_postorder(Self[Sub], entry? : Tid) -> Array[Self[Blk]]
 pub fn Term::sub_ssa_free_vars(Self[Sub]) -> Array[Var]
 pub fn Term::sub_successor_blocks(Self[Sub], Self[Blk]) -> Array[Self[Blk]]
+pub fn Term::sub_symbol_names(Self[Sub]) -> Array[String]
 pub fn Term::subs(Self[Program]) -> Array[Self[Sub]]
 pub fn Term::substitute_arg_var(Self[Arg], Var, Exp) -> Self[Arg]
 pub fn Term::substitute_blk_var(Self[Blk], Var, Exp) -> Self[Blk]
@@ -539,8 +547,11 @@ pub fn Term::with_lhs(Self[Def], Var) -> Self[Def]
 pub fn[T] Term::with_payload(Self[T], T) -> Self[T]
 pub fn Term::with_phi_lhs(Self[Phi], Var) -> Self[Phi]
 pub fn Term::with_rhs(Self[Def], Exp) -> Self[Def]
+pub fn Term::with_stub(Self[Sub]) -> Self[Sub]
+pub fn Term::with_sub_alias(Self[Sub], String) -> Self[Sub]
 pub fn Term::with_sub_name(Self[Sub], String) -> Self[Sub]
 pub fn Term::with_unknown_intent(Self[Arg]) -> Self[Arg]
+pub fn Term::without_stub(Self[Sub]) -> Self[Sub]
 
 pub(all) struct Tid {
   id : Int

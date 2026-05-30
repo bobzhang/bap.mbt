@@ -9,6 +9,8 @@ import {
 // Values
 pub fn exec_stmts(Array[Stmt], state? : BilState, max_steps? : Int) -> Result[BilState, String]
 
+pub fn simplify_stmts(Array[Stmt]) -> Array[Stmt]
+
 // Errors
 
 // Types and methods
@@ -118,6 +120,7 @@ pub(all) enum Exp {
 pub fn Exp::eval(Self, Map[String, Word]) -> Result[Word, String]
 pub fn Exp::eval_value(Self, Map[String, BilValue]) -> Result[BilValue, String]
 pub fn Exp::free_vars(Self) -> Array[Var]
+pub fn Exp::simplify(Self) -> Self
 pub fn Exp::substitute(Self, Self, Self) -> Self
 pub fn Exp::substitute_var(Self, Var, Self) -> Self
 pub fn Exp::to_string(Self) -> String
@@ -177,6 +180,8 @@ pub(all) enum Stmt {
 pub fn Stmt::defined_var(Self) -> Var?
 pub fn Stmt::exec(Self, state? : BilState, max_steps? : Int) -> Result[BilState, String]
 pub fn Stmt::free_vars(Self) -> Array[Var]
+pub fn Stmt::simplify(Self) -> Self
+pub fn Stmt::simplify_to_list(Self) -> Array[Self]
 pub fn Stmt::substitute_var(Self, Var, Exp) -> Self
 pub fn Stmt::to_string(Self) -> String
 

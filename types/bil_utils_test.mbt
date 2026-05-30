@@ -145,6 +145,58 @@ test "bil eval handles byte-addressed load and store expressions" {
 }
 
 ///|
+test "bil simplifier folds scalar constants and let bindings" {
+  let three = @types.Int(word8(3))
+  let eight = @types.Int(word8(8))
+  let arithmetic = @types.BinOp(
+    Div,
+    BinOp(Plus, BinOp(Times, three, eight), three),
+    three,
+  )
+  assert_true(arithmetic.simplify() == Int(word8(9)))
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let let_exp = @types.Let(x, Int(word8(2)), BinOp(Plus, Var(x), Int(word8(3))))
+  assert_true(let_exp.simplify() == Int(word8(5)))
+}
+
+///|
+test "bil simplifier folds loads from recent stores" {
+  let mem_typ = @types.ValueType::Mem(addr_width=32, value_width=8)
+  let mem = @types.Var::new(name="mem", typ=mem_typ)
+  let addr0 = @types.Int(word32(0))
+  let addr1 = @types.Int(word32(1))
+  let stored = @types.Store(
+    mem=Var(mem),
+    addr=addr0,
+    value=Int(word32(0xdeadbeef)),
+    endian=LittleEndian,
+  )
+  let load = @types.Load(mem=stored, addr=addr1, endian=BigEndian, typ=Imm(16))
+  assert_true(load.simplify() == Int(word16(0xbead)))
+}
+
+///|
+test "bil simplifier prunes statically selected branches" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let branch = @types.Stmt::If(
+    cond=Int(@types.Word::b0()),
+    yes=[Move(x, Int(word8(1)))],
+    no=[Move(x, Int(word8(2)))],
+  )
+  let simplified = @types.simplify_stmts([
+    branch,
+    While(cond=Int(@types.Word::b0()), body=[Move(x, Int(word8(3)))]),
+  ])
+  assert_true(simplified.length() == 1)
+  match @types.exec_stmts(simplified) {
+    Ok(state) => assert_true(state.get_word("x") == Some(word8(2)))
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "bil statement execution updates scalar variables" {
   let typ = @types.ValueType::Imm(32)
   let a = @types.Var::new(name="a", typ~)

@@ -86,50 +86,108 @@ pub(all) enum TraceEvent {
 } derive(Eq, Debug)
 
 ///|
+pub(all) struct TraceEventTagInfo {
+  name : String
+  uuid : String
+} derive(Eq, Debug)
+
+///|
 let trace_event_memory_load_tag : String = "memory-load"
+
+///|
+let trace_event_memory_load_uuid : String = "9546a981-de85-4e5c-8d59-73a15bf5c7bd"
 
 ///|
 let trace_event_memory_store_tag : String = "memory-store"
 
 ///|
+let trace_event_memory_store_uuid : String = "d5995d83-76be-410d-94a9-b0cfcb91f2de"
+
+///|
 let trace_event_register_read_tag : String = "register-read"
+
+///|
+let trace_event_register_read_uuid : String = "ded5dc91-dafc-4316-9c6c-4dad4e40a273"
 
 ///|
 let trace_event_register_write_tag : String = "register-write"
 
 ///|
+let trace_event_register_write_uuid : String = "395f5f37-5aed-4bd2-a51f-1c7216b5cd7c"
+
+///|
 let trace_event_timestamp_tag : String = "timestamp"
+
+///|
+let trace_event_timestamp_uuid : String = "0feea5c2-b471-48e4-a10f-c7e18cbf21a9"
 
 ///|
 let trace_event_pc_update_tag : String = "pc-update"
 
 ///|
+let trace_event_pc_update_uuid : String = "98ea397e-d726-43be-9ec5-bf226d67578f"
+
+///|
 let trace_event_code_exec_tag : String = "code-exec"
+
+///|
+let trace_event_code_exec_uuid : String = "b8b3af3a-d1aa-4bf0-a36f-4ea6d0dd2bbf"
 
 ///|
 let trace_event_context_switch_tag : String = "context-switch"
 
 ///|
+let trace_event_context_switch_uuid : String = "7f1d322a-d2cc-4e42-8e7a-081080751268"
+
+///|
 let trace_event_syscall_tag : String = "syscall"
+
+///|
+let trace_event_syscall_uuid : String = "6e0eec5c-2907-4c4c-b9b1-b879d2cbc69b"
 
 ///|
 let trace_event_exn_tag : String = "exn"
 
 ///|
+let trace_event_exn_uuid : String = "18ae62d6-aa66-429b-964c-e15b7913d57e"
+
+///|
 let trace_event_call_tag : String = "call"
+
+///|
+let trace_event_call_uuid : String = "fe9899fe-3b60-4d10-bb50-dbccfc4ee0da"
 
 ///|
 let trace_event_return_tag : String = "return"
 
 ///|
+let trace_event_return_uuid : String = "2cae388a-69cb-48a0-8355-d3f9d39ac8eb"
+
+///|
 let trace_event_modload_tag : String = "modload"
+
+///|
+let trace_event_modload_uuid : String = "7f842d03-6c9f-4745-af39-002f468f7fc8"
 
 ///|
 let trace_event_mode_tag : String = "mode"
 
 ///|
+let trace_event_mode_uuid : String = "f7ba0979-c3a9-4509-ba14-01faf577d478"
+
+///|
+fn trace_event_tag_info(name : String, uuid : String) -> TraceEventTagInfo {
+  { name, uuid }
+}
+
+///|
 pub fn TraceEvent::memory_load_tag() -> String {
   trace_event_memory_load_tag
+}
+
+///|
+pub fn TraceEvent::memory_load_uuid() -> String {
+  trace_event_memory_load_uuid
 }
 
 ///|
@@ -138,8 +196,18 @@ pub fn TraceEvent::memory_store_tag() -> String {
 }
 
 ///|
+pub fn TraceEvent::memory_store_uuid() -> String {
+  trace_event_memory_store_uuid
+}
+
+///|
 pub fn TraceEvent::register_read_tag() -> String {
   trace_event_register_read_tag
+}
+
+///|
+pub fn TraceEvent::register_read_uuid() -> String {
+  trace_event_register_read_uuid
 }
 
 ///|
@@ -148,8 +216,18 @@ pub fn TraceEvent::register_write_tag() -> String {
 }
 
 ///|
+pub fn TraceEvent::register_write_uuid() -> String {
+  trace_event_register_write_uuid
+}
+
+///|
 pub fn TraceEvent::timestamp_tag() -> String {
   trace_event_timestamp_tag
+}
+
+///|
+pub fn TraceEvent::timestamp_uuid() -> String {
+  trace_event_timestamp_uuid
 }
 
 ///|
@@ -158,8 +236,18 @@ pub fn TraceEvent::pc_update_tag() -> String {
 }
 
 ///|
+pub fn TraceEvent::pc_update_uuid() -> String {
+  trace_event_pc_update_uuid
+}
+
+///|
 pub fn TraceEvent::code_exec_tag() -> String {
   trace_event_code_exec_tag
+}
+
+///|
+pub fn TraceEvent::code_exec_uuid() -> String {
+  trace_event_code_exec_uuid
 }
 
 ///|
@@ -168,8 +256,18 @@ pub fn TraceEvent::context_switch_tag() -> String {
 }
 
 ///|
+pub fn TraceEvent::context_switch_uuid() -> String {
+  trace_event_context_switch_uuid
+}
+
+///|
 pub fn TraceEvent::syscall_tag() -> String {
   trace_event_syscall_tag
+}
+
+///|
+pub fn TraceEvent::syscall_uuid() -> String {
+  trace_event_syscall_uuid
 }
 
 ///|
@@ -178,8 +276,18 @@ pub fn TraceEvent::exn_tag() -> String {
 }
 
 ///|
+pub fn TraceEvent::exn_uuid() -> String {
+  trace_event_exn_uuid
+}
+
+///|
 pub fn TraceEvent::call_tag() -> String {
   trace_event_call_tag
+}
+
+///|
+pub fn TraceEvent::call_uuid() -> String {
+  trace_event_call_uuid
 }
 
 ///|
@@ -188,13 +296,28 @@ pub fn TraceEvent::return_tag() -> String {
 }
 
 ///|
+pub fn TraceEvent::return_uuid() -> String {
+  trace_event_return_uuid
+}
+
+///|
 pub fn TraceEvent::modload_tag() -> String {
   trace_event_modload_tag
 }
 
 ///|
+pub fn TraceEvent::modload_uuid() -> String {
+  trace_event_modload_uuid
+}
+
+///|
 pub fn TraceEvent::mode_tag() -> String {
   trace_event_mode_tag
+}
+
+///|
+pub fn TraceEvent::mode_uuid() -> String {
+  trace_event_mode_uuid
 }
 
 ///|
@@ -205,6 +328,36 @@ pub fn TraceEvent::common_tags() -> Array[String] {
     trace_event_code_exec_tag, trace_event_context_switch_tag, trace_event_syscall_tag,
     trace_event_exn_tag, trace_event_call_tag, trace_event_return_tag, trace_event_modload_tag,
     trace_event_mode_tag,
+  ]
+}
+
+///|
+pub fn TraceEvent::common_tag_infos() -> Array[TraceEventTagInfo] {
+  [
+    trace_event_tag_info(
+      trace_event_memory_load_tag, trace_event_memory_load_uuid,
+    ),
+    trace_event_tag_info(
+      trace_event_memory_store_tag, trace_event_memory_store_uuid,
+    ),
+    trace_event_tag_info(
+      trace_event_register_read_tag, trace_event_register_read_uuid,
+    ),
+    trace_event_tag_info(
+      trace_event_register_write_tag, trace_event_register_write_uuid,
+    ),
+    trace_event_tag_info(trace_event_timestamp_tag, trace_event_timestamp_uuid),
+    trace_event_tag_info(trace_event_pc_update_tag, trace_event_pc_update_uuid),
+    trace_event_tag_info(trace_event_code_exec_tag, trace_event_code_exec_uuid),
+    trace_event_tag_info(
+      trace_event_context_switch_tag, trace_event_context_switch_uuid,
+    ),
+    trace_event_tag_info(trace_event_syscall_tag, trace_event_syscall_uuid),
+    trace_event_tag_info(trace_event_exn_tag, trace_event_exn_uuid),
+    trace_event_tag_info(trace_event_call_tag, trace_event_call_uuid),
+    trace_event_tag_info(trace_event_return_tag, trace_event_return_uuid),
+    trace_event_tag_info(trace_event_modload_tag, trace_event_modload_uuid),
+    trace_event_tag_info(trace_event_mode_tag, trace_event_mode_uuid),
   ]
 }
 
@@ -226,6 +379,59 @@ pub fn TraceEvent::tag(self : TraceEvent) -> String {
     Modload(_) => trace_event_modload_tag
     Mode(_) => trace_event_mode_tag
   }
+}
+
+///|
+pub fn TraceEvent::tag_info(self : TraceEvent) -> TraceEventTagInfo {
+  match self {
+    MemoryLoad(_) =>
+      trace_event_tag_info(
+        trace_event_memory_load_tag, trace_event_memory_load_uuid,
+      )
+    MemoryStore(_) =>
+      trace_event_tag_info(
+        trace_event_memory_store_tag, trace_event_memory_store_uuid,
+      )
+    RegisterRead(_) =>
+      trace_event_tag_info(
+        trace_event_register_read_tag, trace_event_register_read_uuid,
+      )
+    RegisterWrite(_) =>
+      trace_event_tag_info(
+        trace_event_register_write_tag, trace_event_register_write_uuid,
+      )
+    Timestamp(_) =>
+      trace_event_tag_info(
+        trace_event_timestamp_tag, trace_event_timestamp_uuid,
+      )
+    PcUpdate(_) =>
+      trace_event_tag_info(
+        trace_event_pc_update_tag, trace_event_pc_update_uuid,
+      )
+    CodeExec(_) =>
+      trace_event_tag_info(
+        trace_event_code_exec_tag, trace_event_code_exec_uuid,
+      )
+    ContextSwitch(_) =>
+      trace_event_tag_info(
+        trace_event_context_switch_tag, trace_event_context_switch_uuid,
+      )
+    Syscall(_) =>
+      trace_event_tag_info(trace_event_syscall_tag, trace_event_syscall_uuid)
+    Exception(_) =>
+      trace_event_tag_info(trace_event_exn_tag, trace_event_exn_uuid)
+    Call(_) => trace_event_tag_info(trace_event_call_tag, trace_event_call_uuid)
+    Return(_) =>
+      trace_event_tag_info(trace_event_return_tag, trace_event_return_uuid)
+    Modload(_) =>
+      trace_event_tag_info(trace_event_modload_tag, trace_event_modload_uuid)
+    Mode(_) => trace_event_tag_info(trace_event_mode_tag, trace_event_mode_uuid)
+  }
+}
+
+///|
+pub fn TraceEvent::tag_uuid(self : TraceEvent) -> String {
+  self.tag_info().uuid
 }
 
 ///|

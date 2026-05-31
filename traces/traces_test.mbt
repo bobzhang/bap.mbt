@@ -142,6 +142,22 @@ test "translated BAP common trace event tags match helper constructors" {
       @traces.TraceEvent::mode_tag(),
     ],
   )
+  let expected_uuids = [
+    "9546a981-de85-4e5c-8d59-73a15bf5c7bd", "d5995d83-76be-410d-94a9-b0cfcb91f2de",
+    "ded5dc91-dafc-4316-9c6c-4dad4e40a273", "395f5f37-5aed-4bd2-a51f-1c7216b5cd7c",
+    "0feea5c2-b471-48e4-a10f-c7e18cbf21a9", "98ea397e-d726-43be-9ec5-bf226d67578f",
+    "b8b3af3a-d1aa-4bf0-a36f-4ea6d0dd2bbf", "7f1d322a-d2cc-4e42-8e7a-081080751268",
+    "6e0eec5c-2907-4c4c-b9b1-b879d2cbc69b", "18ae62d6-aa66-429b-964c-e15b7913d57e",
+    "fe9899fe-3b60-4d10-bb50-dbccfc4ee0da", "2cae388a-69cb-48a0-8355-d3f9d39ac8eb",
+    "7f842d03-6c9f-4745-af39-002f468f7fc8", "f7ba0979-c3a9-4509-ba14-01faf577d478",
+  ]
+  let tag_infos = @traces.TraceEvent::common_tag_infos()
+  assert_true(
+    [ for info in tag_infos => info.name ] == @traces.TraceEvent::common_tags(),
+  )
+  assert_true([ for info in tag_infos => info.uuid ] == expected_uuids)
+  assert_true(@traces.TraceEvent::memory_load_uuid() == expected_uuids[0])
+  assert_true(@traces.TraceEvent::mode_uuid() == expected_uuids[13])
   let events = test_events()
   assert_true(
     [
@@ -154,6 +170,13 @@ test "translated BAP common trace event tags match helper constructors" {
       @traces.TraceEvent::register_write_tag(),
     ],
   )
+  assert_true(
+    [
+      for event in events => event.tag_uuid()
+    ] ==
+    [expected_uuids[0], expected_uuids[1], expected_uuids[2], expected_uuids[3]],
+  )
+  assert_true(events[0].tag_info() == tag_infos[0])
   assert_true(events[0].memory_load_value() == Some(test_move()))
   assert_true(events[1].memory_store_value() == Some(test_move()))
   assert_true(events[2].register_read_value() == Some(register_move()))

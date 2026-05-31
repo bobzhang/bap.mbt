@@ -558,19 +558,21 @@ fn image_elf_test_make_x86_64_without_sections() -> Bytes {
 ///|
 fn image_elf_test_make_x86_64_dynamic_without_sections() -> Bytes {
   let text = b"\x55\xc3"
-  let dynstr = b"\x00libx.so\x00libstrip.so\x00/strip/lib\x00$ORIGIN/strip\x00puts\x00"
-  let dynamic_size = 192
+  let dynstr = b"\x00libx.so\x00libstrip.so\x00/strip/lib\x00$ORIGIN/strip\x00puts\x00printf\x00"
+  let dynamic_size = 240
   let text_offset = 64 + 2 * 56
   let dynamic_offset = text_offset + text.length()
   let dynsym_offset = dynamic_offset + dynamic_size
-  let dynstr_offset = dynsym_offset + 48
+  let dynstr_offset = dynsym_offset + 72
   let rela_offset = dynstr_offset + dynstr.length()
+  let jmprel_offset = rela_offset + 48
   let base_addr = 0x600000UL
   let dynamic_addr = base_addr + (dynamic_offset - text_offset).to_uint64()
   let dynsym_addr = base_addr + (dynsym_offset - text_offset).to_uint64()
   let dynstr_addr = base_addr + (dynstr_offset - text_offset).to_uint64()
   let rela_addr = base_addr + (rela_offset - text_offset).to_uint64()
-  let total = rela_offset + 48
+  let jmprel_addr = base_addr + (jmprel_offset - text_offset).to_uint64()
+  let total = jmprel_offset + 24
   let load_size = total - text_offset
   let buffer = Array::make(total, b'\x00')
   image_elf_test_write_bytes(buffer, 0, b"\x7fELF")
@@ -614,11 +616,28 @@ fn image_elf_test_make_x86_64_dynamic_without_sections() -> Bytes {
   image_elf_test_write_dynamic64(buffer, dynamic_offset + 128, 14UL, 9UL)
   image_elf_test_write_dynamic64(buffer, dynamic_offset + 144, 15UL, 21UL)
   image_elf_test_write_dynamic64(buffer, dynamic_offset + 160, 29UL, 32UL)
-  image_elf_test_write_dynamic64(buffer, dynamic_offset + 176, 0UL, 0UL)
+  image_elf_test_write_dynamic64(buffer, dynamic_offset + 176, 2UL, 24UL)
+  image_elf_test_write_dynamic64(buffer, dynamic_offset + 192, 20UL, 7UL)
+  image_elf_test_write_dynamic64(
+    buffer,
+    dynamic_offset + 208,
+    23UL,
+    jmprel_addr,
+  )
+  image_elf_test_write_dynamic64(buffer, dynamic_offset + 224, 0UL, 0UL)
   image_elf_test_write_symbol64(
     buffer,
     dynsym_offset + 24,
     46,
+    0x12,
+    0,
+    0UL,
+    0UL,
+  )
+  image_elf_test_write_symbol64(
+    buffer,
+    dynsym_offset + 48,
+    51,
     0x12,
     0,
     0UL,
@@ -634,6 +653,7 @@ fn image_elf_test_make_x86_64_dynamic_without_sections() -> Bytes {
     addend=0x30L,
   )
   image_elf_test_write_rela64(buffer, rela_offset + 24, 0x600008UL, 1, 7)
+  image_elf_test_write_rela64(buffer, jmprel_offset, 0x600010UL, 2, 7)
   Bytes::from_array(buffer)
 }
 
@@ -1052,9 +1072,11 @@ test "image ELF backend extracts PT_DYNAMIC metadata without section headers" {
   assert_true(!relocations[0].uses_memory_addend())
   assert_true(relocations[0].is_relative())
   let references = image.external_references()
-  assert_true(references.length() == 1)
+  assert_true(references.length() == 2)
   assert_true(references[0].addr() == 0x600008UL)
   assert_true(references[0].name() == "puts")
+  assert_true(references[1].addr() == 0x600010UL)
+  assert_true(references[1].name() == "printf")
 }
 
 ///|

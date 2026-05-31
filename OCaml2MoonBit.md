@@ -289,7 +289,10 @@ For stripped ELF files, preserve relative dynamic relocations from `PT_DYNAMIC`
 when section relocation tables are absent. Resolve `DT_RELA`/`DT_REL` virtual
 addresses through `PT_LOAD` headers, bound them with `DT_RELASZ`/`DT_RELSZ`,
 honor entry-size tags when present, and record only known machine-relative
-relocation types. When symbol-based dynamic relocations are present with
+relocation types. Also handle PLT relocation metadata: `DT_JMPREL` points to
+the PLT relocation table, `DT_PLTRELSZ` bounds it, and `DT_PLTREL` selects
+whether entries are `DT_REL` or `DT_RELA` shaped. When symbol-based dynamic
+relocations are present with
 `DT_SYMTAB`, `DT_SYMENT`, `DT_STRTAB`, and `DT_STRSZ`, resolve the referenced
 dynamic symbol by index: undefined symbols become external references, while
 defined symbols may become target relocations. Preserve signed `DT_RELA`

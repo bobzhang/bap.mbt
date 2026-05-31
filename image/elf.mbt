@@ -1498,6 +1498,74 @@ fn image_elf_dynamic_external_or_target_relocation(
 }
 
 ///|
+fn image_elf_add_dynamic_relocation_entry(
+  relocations : Array[Relocation],
+  external_references : Array[ExternalReference],
+  data : Bytes,
+  header : ImageElfHeader,
+  program_headers : Array[ImageElfProgramHeader],
+  strings : Bytes?,
+  symbol_table_addr : UInt64?,
+  symbol_entry_size : Int?,
+  entry : ImageElfRelocationEntry,
+) -> Result[Unit, String] {
+  if image_elf_is_relative_relocation(header, entry.typ) {
+    relocations.push(
+      Relocation::create(
+        fixup=entry.offset,
+        addend?=entry.addend,
+        memory_addend=entry.memory_addend,
+        relative=true,
+      ),
+    )
+  } else {
+    match
+      image_elf_dynamic_external_or_target_relocation(
+        data, header, program_headers, strings, symbol_table_addr, symbol_entry_size,
+        entry,
+      ) {
+      Ok((Some(relocation), _)) => relocations.push(relocation)
+      Ok((_, Some(reference))) => external_references.push(reference)
+      Ok((None, None)) => ()
+      Err(reason) => return Err(reason)
+    }
+  }
+  Ok(())
+}
+
+///|
+fn image_elf_dynamic_plt_table(
+  addr : UInt64?,
+  size : Int?,
+  typ : UInt64?,
+  rel_entry_size : Int?,
+  rela_entry_size : Int?,
+) -> Result[(ImageElfDynamicRelocationTable, Bool), String] {
+  match (addr, size, typ) {
+    (_, Some(0), _) => Ok((image_elf_dynamic_relocation_table_empty(), false))
+    (None, None, None) =>
+      Ok((image_elf_dynamic_relocation_table_empty(), false))
+    (Some(addr), Some(size), Some(7UL)) =>
+      Ok(
+        (
+          { addr: Some(addr), size: Some(size), entry_size: rela_entry_size },
+          true,
+        ),
+      )
+    (Some(addr), Some(size), Some(17UL)) =>
+      Ok(
+        (
+          { addr: Some(addr), size: Some(size), entry_size: rel_entry_size },
+          false,
+        ),
+      )
+    (Some(_), Some(_), Some(kind)) =>
+      Err("unsupported ELF PLT relocation type: \{kind}")
+    _ => Err("ELF PLT relocation metadata is incomplete")
+  }
+}
+
+///|
 fn image_elf_dynamic_relocations_from_programs(
   data : Bytes,
   header : ImageElfHeader,
@@ -1518,8 +1586,17 @@ fn image_elf_dynamic_relocations_from_programs(
       let mut string_table_size : Int? = None
       let mut symbol_table_addr : UInt64? = None
       let mut symbol_entry_size : Int? = None
+      let mut plt_addr : UInt64? = None
+      let mut plt_size : Int? = None
+      let mut plt_type : UInt64? = None
       for entry in entries {
         match entry {
+          (2UL, value) =>
+            match
+              image_elf_uint_to_dynamic_size(value, "ELF PLT relocation size") {
+              Ok(size) => plt_size = Some(size)
+              Err(reason) => return Err(reason)
+            }
           (5UL, value) => string_table_addr = Some(value)
           (6UL, value) => symbol_table_addr = Some(value)
           (7UL, value) => rela = { ..rela, addr: Some(value) }
@@ -1560,6 +1637,8 @@ fn image_elf_dynamic_relocations_from_programs(
               Ok(size) => rel = { ..rel, entry_size: Some(size) }
               Err(reason) => return Err(reason)
             }
+          (20UL, value) => plt_type = Some(value)
+          (23UL, value) => plt_addr = Some(value)
           _ => ()
         }
       }
@@ -1587,26 +1666,13 @@ fn image_elf_dynamic_relocations_from_programs(
         Err(reason) => return Err(reason)
       }
       for entry in rela_entries {
-        if image_elf_is_relative_relocation(header, entry.typ) {
-          relocations.push(
-            Relocation::create(
-              fixup=entry.offset,
-              addend?=entry.addend,
-              memory_addend=entry.memory_addend,
-              relative=true,
-            ),
-          )
-        } else {
-          match
-            image_elf_dynamic_external_or_target_relocation(
-              data, header, program_headers, strings, symbol_table_addr, symbol_entry_size,
-              entry,
-            ) {
-            Ok((Some(relocation), _)) => relocations.push(relocation)
-            Ok((_, Some(reference))) => external_references.push(reference)
-            Ok((None, None)) => ()
-            Err(reason) => return Err(reason)
-          }
+        match
+          image_elf_add_dynamic_relocation_entry(
+            relocations, external_references, data, header, program_headers, strings,
+            symbol_table_addr, symbol_entry_size, entry,
+          ) {
+          Ok(_) => ()
+          Err(reason) => return Err(reason)
         }
       }
       let rel_entries = match
@@ -1617,26 +1683,41 @@ fn image_elf_dynamic_relocations_from_programs(
         Err(reason) => return Err(reason)
       }
       for entry in rel_entries {
-        if image_elf_is_relative_relocation(header, entry.typ) {
-          relocations.push(
-            Relocation::create(
-              fixup=entry.offset,
-              addend?=entry.addend,
-              memory_addend=entry.memory_addend,
-              relative=true,
-            ),
-          )
-        } else {
-          match
-            image_elf_dynamic_external_or_target_relocation(
-              data, header, program_headers, strings, symbol_table_addr, symbol_entry_size,
-              entry,
-            ) {
-            Ok((Some(relocation), _)) => relocations.push(relocation)
-            Ok((_, Some(reference))) => external_references.push(reference)
-            Ok((None, None)) => ()
-            Err(reason) => return Err(reason)
-          }
+        match
+          image_elf_add_dynamic_relocation_entry(
+            relocations, external_references, data, header, program_headers, strings,
+            symbol_table_addr, symbol_entry_size, entry,
+          ) {
+          Ok(_) => ()
+          Err(reason) => return Err(reason)
+        }
+      }
+      let (plt, plt_has_addend) = match
+        image_elf_dynamic_plt_table(
+          plt_addr,
+          plt_size,
+          plt_type,
+          rel.entry_size,
+          rela.entry_size,
+        ) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let plt_entries = match
+        image_elf_dynamic_relocation_table_entries(
+          data, header, program_headers, plt, plt_has_addend, "ELF dynamic PLT relocation table",
+        ) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      for entry in plt_entries {
+        match
+          image_elf_add_dynamic_relocation_entry(
+            relocations, external_references, data, header, program_headers, strings,
+            symbol_table_addr, symbol_entry_size, entry,
+          ) {
+          Ok(_) => ()
+          Err(reason) => return Err(reason)
         }
       }
     }

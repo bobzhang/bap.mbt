@@ -451,7 +451,7 @@ pub fn Target::options(Self) -> TargetOptions
 pub fn Target::order(Self, Self) -> @knowledge.PartialOrder
 pub fn Target::origin_of_name(Self, String) -> AliasOrigin?
 pub fn Target::origin_of_var(Self, Var) -> AliasOrigin?
-pub fn Target::parent(Self) -> Self?
+pub fn Target::parent(Self) -> Self
 pub fn Target::parents(Self) -> Array[Self]
 pub fn Target::partition(Array[Self]) -> Array[Array[Self]]
 pub fn Target::powerpc() -> Self

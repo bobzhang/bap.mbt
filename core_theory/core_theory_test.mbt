@@ -72,6 +72,16 @@ test "targets inherit defaults and match ancestry" {
   assert_true(target.order(family) == Less)
   assert_true(target.bits() == 64)
   assert_true(target.endianness() == LittleEndian)
+  assert_true(target.parent().equal(family))
+  match target.parents().get(0) {
+    Some(parent) => assert_true(parent.equal(family))
+    None => fail("missing target parent")
+  }
+  match target.parents().get(target.parents().length() - 1) {
+    Some(parent) => assert_true(parent.is_unknown())
+    None => fail("missing unknown parent sentinel")
+  }
+  assert_true(@core_theory.Target::unknown().parent().is_unknown())
   let data_mem = @core_theory.Var::create(
     @core_theory.Sort::mem(
       @core_theory.Sort::bitv(32),

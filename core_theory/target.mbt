@@ -2184,8 +2184,11 @@ pub fn Target::compare(self : Target, other : Target) -> Int {
 }
 
 ///|
-pub fn Target::parent(self : Target) -> Target? {
-  self.parent_value
+pub fn Target::parent(self : Target) -> Target {
+  match self.parent_value {
+    Some(parent) => parent
+    None => Target::unknown()
+  }
 }
 
 ///|
@@ -2562,11 +2565,10 @@ pub fn Target::is_unknown(self : Target) -> Bool {
 pub fn Target::matching(self : Target, query : String) -> Target? {
   if target_has_name(self, query) {
     Some(self)
+  } else if self.is_unknown() {
+    None
   } else {
-    match self.parent_value {
-      Some(parent) => parent.matching(query)
-      None => None
-    }
+    self.parent().matching(query)
   }
 }
 
@@ -2584,11 +2586,10 @@ pub fn Target::belongs(self : Target, parent : Target) -> Bool {
     true
   } else if self.name_value == parent.name() {
     true
+  } else if self.is_unknown() {
+    false
   } else {
-    match self.parent_value {
-      Some(next) => next.belongs(parent)
-      None => false
-    }
+    self.parent().belongs(parent)
   }
 }
 
@@ -2607,12 +2608,10 @@ pub fn Target::order(self : Target, other : Target) -> @knowledge.PartialOrder {
 
 ///|
 fn collect_parents(target : Target, items : Array[Target]) -> Unit {
-  match target.parent() {
-    Some(parent) => {
-      collect_parents(parent, items)
-      items.push(parent)
-    }
-    None => ()
+  let parent = target.parent()
+  items.push(parent)
+  if !parent.is_unknown() {
+    collect_parents(parent, items)
   }
 }
 
@@ -4439,12 +4438,13 @@ fn target_array_contains(targets : Array[Target], target : Target) -> Bool {
 
 ///|
 fn grandest_target_in(target : Target, universe : Array[Target]) -> Target {
+  let mut root = target
   for parent in target.parents() {
     if target_array_contains(universe, parent) {
-      return parent
+      root = parent
     }
   }
-  target
+  root
 }
 
 ///|

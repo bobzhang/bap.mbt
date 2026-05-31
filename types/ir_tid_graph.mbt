@@ -69,3 +69,8 @@ pub fn Term::sub_tid_graph(self : Term[Sub]) -> @graphlib.Graph[Tid, Tid] {
   }
   graph
 }
+
+///|
+pub fn Term::to_graph(self : Term[Sub]) -> @graphlib.Graph[Tid, Tid] {
+  self.sub_tid_graph()
+}

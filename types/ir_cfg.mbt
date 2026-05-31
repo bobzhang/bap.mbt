@@ -19,8 +19,18 @@ pub fn Term::to_ir_cfg(self : Term[Sub]) -> IrCfg {
 }
 
 ///|
+pub fn Term::to_cfg(self : Term[Sub]) -> IrCfg {
+  self.to_ir_cfg()
+}
+
+///|
 pub fn IrCfg::to_sub(self : IrCfg) -> Term[Sub] {
   self.sub_value
+}
+
+///|
+pub fn Sub::of_cfg(cfg : IrCfg) -> Term[Sub] {
+  cfg.to_sub()
 }
 
 ///|
@@ -150,6 +160,11 @@ pub fn IrCfg::node_count(self : IrCfg) -> Int {
 }
 
 ///|
+pub fn IrCfg::number_of_nodes(self : IrCfg) -> Int {
+  self.node_count()
+}
+
+///|
 fn ir_cfg_contains_pair(
   pairs : ArrayView[(Tid, Tid)],
   pair : (Tid, Tid),
@@ -167,6 +182,11 @@ pub fn IrCfg::edge_count(self : IrCfg) -> Int {
     }
   }
   pairs.length()
+}
+
+///|
+pub fn IrCfg::number_of_edges(self : IrCfg) -> Int {
+  self.edge_count()
 }
 
 ///|

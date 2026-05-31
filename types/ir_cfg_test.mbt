@@ -33,11 +33,15 @@ test "BAP IR CFG create and sub round trip preserve sub identity" {
   assert_true(@types.IrCfg::is_directed())
   assert_true(cfg.is_empty())
   assert_true(cfg.node_count() == 0)
+  assert_true(cfg.number_of_nodes() == 0)
   assert_true(cfg.edge_count() == 0)
+  assert_true(cfg.number_of_edges() == 0)
   let sub = cfg.to_sub()
   assert_true(sub.tid() == tid)
   assert_true(sub.sub_name() == "main")
-  let round_trip = sub.to_ir_cfg().to_sub()
+  let round_trip = @types.Sub::of_cfg(sub.to_cfg())
+  assert_true(sub.to_cfg().to_sub().tid() == sub.tid())
+  assert_true(sub.to_ir_cfg().to_sub().tid() == sub.tid())
   assert_true(round_trip.tid() == sub.tid())
   assert_true(round_trip.sub_name() == sub.sub_name())
 }
@@ -64,6 +68,8 @@ test "BAP IR CFG exposes block nodes and positional edges" {
   )
   assert_true(cfg.edges().length() == 3)
   assert_true(cfg.edge_count() == 2)
+  assert_true(cfg.number_of_nodes() == 3)
+  assert_true(cfg.number_of_edges() == 2)
   assert_true(
     cfg_edge_tids(cfg.edges()) == [first.tid(), second.tid(), third.tid()],
   )
@@ -79,6 +85,35 @@ test "BAP IR CFG exposes block nodes and positional edges" {
     }
     None => fail("expected entry-to-body edge")
   }
+}
+
+///|
+test "BAP IR CFG node insertion materializes edges to present nodes" {
+  let b2 = @types.Blk::create(tid=@types.Tid::for_name("b2"))
+  let b3 = @types.Blk::create(tid=@types.Tid::for_name("b3"))
+  let b2 = b2.append_jmp(
+    @types.Jmp::create_goto(@types.Label::direct(b3.tid())),
+  )
+  let b3 = b3.append_jmp(
+    @types.Jmp::create_goto(@types.Label::direct(b2.tid())),
+  )
+  let cfg = @types.IrCfg::create(name="constructive")
+  let only_b2 = cfg.insert_node(b2)
+  assert_true(only_b2.number_of_nodes() == 1)
+  assert_true(only_b2.number_of_edges() == 0)
+  let both = only_b2.insert_node(b3)
+  assert_true(both.number_of_nodes() == 2)
+  assert_true(both.number_of_edges() == 2)
+  assert_true(both.has_edge(b2, b3))
+  assert_true(both.has_edge(b3, b2))
+  let removed = both.remove_node(b3)
+  assert_true(removed.number_of_nodes() == 1)
+  assert_true(removed.number_of_edges() == 0)
+  let reinserted = removed.insert_node(b3).insert_node(b3)
+  assert_true(reinserted.number_of_nodes() == 2)
+  assert_true(reinserted.number_of_edges() == 2)
+  assert_true(reinserted.has_edge(b2, b3))
+  assert_true(reinserted.has_edge(b3, b2))
 }
 
 ///|

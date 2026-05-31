@@ -487,6 +487,8 @@ pub fn IrCfg::is_directed() -> Bool
 pub fn IrCfg::is_empty(Self) -> Bool
 pub fn IrCfg::node_count(Self) -> Int
 pub fn IrCfg::nodes(Self) -> Array[Term[Blk]]
+pub fn IrCfg::number_of_edges(Self) -> Int
+pub fn IrCfg::number_of_nodes(Self) -> Int
 pub fn IrCfg::of_sub(Term[Sub]) -> Self
 pub fn IrCfg::out_degree(Self, Term[Blk]) -> Int
 pub fn IrCfg::out_edges(Self, Term[Blk]) -> Array[IrCfgEdge]
@@ -670,6 +672,7 @@ pub(all) struct Sub {
   blks : Array[Term[Blk]]
 }
 pub fn Sub::create(name? : String, args? : Array[Term[Arg]], blks? : Array[Term[Blk]], tid? : Tid) -> Term[Self]
+pub fn Sub::of_cfg(IrCfg) -> Term[Self]
 
 type Term[T]
 pub fn Term::append_arg(Self[Sub], Self[Arg]) -> Self[Sub]
@@ -858,6 +861,8 @@ pub fn Term::substitute_program_var(Self[Program], Var, Exp) -> Self[Program]
 pub fn Term::substitute_sub_var(Self[Sub], Var, Exp) -> Self[Sub]
 pub fn Term::succ_tid_of_jmp(Self[Jmp]) -> Tid?
 pub fn[T] Term::tid(Self[T]) -> Tid
+pub fn Term::to_cfg(Self[Sub]) -> IrCfg
+pub fn Term::to_graph(Self[Sub]) -> @graphlib.Graph[Tid, Tid]
 pub fn Term::to_ir_cfg(Self[Sub]) -> IrCfg
 pub fn Term::to_ssa(Self[Sub], entry? : Tid) -> Self[Sub]
 pub fn Term::update_blk(Self[Sub], Self[Blk]) -> Self[Sub]

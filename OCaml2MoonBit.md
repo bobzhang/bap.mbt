@@ -507,6 +507,10 @@ with no outgoing edge to exit. Then walk blocks in source order, connecting any
 component still unreachable from start and any component that still cannot
 reach exit. This mirrors BAP's DFS `start_tree` repair while keeping the result
 deterministic in MoonBit.
+Keep BAP's `Sub.to_graph` and `Sub.to_cfg` meanings distinct: `to_graph`
+returns the pseudo start/exit TID graph, while `to_cfg` returns the mutable
+IR graph view over block terms. `Sub.of_cfg` is just the projection back to the
+underlying subroutine term.
 
 For `bap_ir_graph` edge queries, preserve the jump position in the source block.
 BAP edge conditions are not just the selected jump condition: they conjoin the

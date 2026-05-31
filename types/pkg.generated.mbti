@@ -471,6 +471,16 @@ pub(all) enum Intent {
   Both
 } derive(Eq, @debug.Debug)
 
+type IrCfgEdge
+pub fn IrCfgEdge::cond(Self, Term[Sub]) -> Exp
+pub fn IrCfgEdge::dst(Self) -> Term[Blk]
+pub fn IrCfgEdge::jmp(Self) -> Term[Jmp]
+pub fn IrCfgEdge::jmps_after(Self, Term[Sub]) -> Array[Term[Jmp]]
+pub fn IrCfgEdge::jmps_before(Self, Term[Sub]) -> Array[Term[Jmp]]
+pub fn IrCfgEdge::position(Self) -> Int
+pub fn IrCfgEdge::src(Self) -> Term[Blk]
+pub fn IrCfgEdge::tid(Self) -> Tid
+
 pub(all) enum IrTerm {
   ProgramTerm(Term[Program])
   SubTerm(Term[Sub])
@@ -780,15 +790,19 @@ pub fn Term::sub_dominance_frontier_blocks(Self[Sub], Self[Blk], entry? : Tid) -
 pub fn Term::sub_dominance_frontier_tids(Self[Sub], entry? : Tid) -> Map[Tid, @set.Set[Tid]]
 pub fn Term::sub_dominates(Self[Sub], Self[Blk], Self[Blk], entry? : Tid) -> Bool
 pub fn Term::sub_dominator_tids(Self[Sub], entry? : Tid) -> Map[Tid, @set.Set[Tid]]
+pub fn Term::sub_edge(Self[Sub], Self[Blk], Self[Blk]) -> IrCfgEdge?
+pub fn Term::sub_edges(Self[Sub]) -> Array[IrCfgEdge]
 pub fn Term::sub_external_vars(Self[Sub], entry? : Tid) -> Array[Var]
 pub fn Term::sub_free_vars(Self[Sub]) -> Array[Var]
 pub fn Term::sub_has_edge(Self[Sub], Self[Blk], Self[Blk]) -> Bool
 pub fn Term::sub_immediate_dominator(Self[Sub], Self[Blk], entry? : Tid) -> Self[Blk]?
 pub fn Term::sub_immediate_dominator_tids(Self[Sub], entry? : Tid) -> Map[Tid, Tid]
+pub fn Term::sub_in_edges(Self[Sub], Self[Blk]) -> Array[IrCfgEdge]
 pub fn Term::sub_jmps(Self[Sub]) -> Array[Self[Jmp]]
 pub fn Term::sub_live_in_vars(Self[Sub], entry? : Tid) -> Array[Var]
 pub fn Term::sub_liveness(Self[Sub], entry? : Tid) -> Array[BlockLiveness]
 pub fn Term::sub_name(Self[Sub]) -> String
+pub fn Term::sub_out_edges(Self[Sub], Self[Blk]) -> Array[IrCfgEdge]
 pub fn Term::sub_parent_is(Self[Sub], IrTerm, Tid) -> Bool
 pub fn Term::sub_parent_term(Self[Sub], Tid) -> IrTerm?
 pub fn Term::sub_phis(Self[Sub]) -> Array[Self[Phi]]

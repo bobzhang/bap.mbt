@@ -508,6 +508,12 @@ component still unreachable from start and any component that still cannot
 reach exit. This mirrors BAP's DFS `start_tree` repair while keeping the result
 deterministic in MoonBit.
 
+For `bap_ir_graph` edge queries, preserve the jump position in the source block.
+BAP edge conditions are not just the selected jump condition: they conjoin the
+selected condition with the negation of each earlier jump condition in the same
+block, then simplify. Keep this as a read-only edge metadata helper unless the
+port is also implementing BAP's graph mutation semantics.
+
 When porting BAP `Term.visitor`/`Term.mapper` users, prefer a typed sum view of
 IR terms over untyped callbacks. Keep traversal order explicit and stable
 (program, sub, args, block, phis, defs, jumps), and make reconstruction-aware

@@ -60,6 +60,15 @@ generic record encoding of that pattern can trigger a compiler stack overflow.
 Prefer fixed-arity helpers (`map2`/`apply2`, etc.) plus domain-specific
 adapters such as list-backed collection helpers.
 
+BAP future-stream helpers whose OCaml names end in an apostrophe need semantic
+MoonBit names. In this port, `Stream.unfold'` is `Stream::unfold_many` and
+`Stream.map'` is `Stream::map_many`, since both helpers fan one signal/input
+event out to multiple output values. Keep the plain `unfold`/`map` names for
+the one-output-per-event helpers. Where BAP returns OCaml lists, prefer an
+array-facing primary MoonBit helper for efficient local use and add a narrow
+`_list` adapter (`take_list`, `before_list`, `concat_list`, etc.) for callers
+that are following the OCaml interface.
+
 ## Type-Mapping Cheatsheet
 
 | OCaml use | MoonBit default |

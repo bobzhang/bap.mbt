@@ -67,11 +67,37 @@ test "program callgraph groups direct call sites by subroutine tid" {
 ///|
 test "call accessors expose target and return labels" {
   let target = @types.Label::direct(@types.Tid::for_name("target"))
+  let changed_target = @types.Label::direct(@types.Tid::for_name("changed"))
   let return_label = @types.Label::direct(@types.Tid::for_name("return"))
   let call = @types.Call::create(target~, return_label~)
   assert_true(call.target() == target)
   assert_true(call.return_label() == Some(return_label))
+  assert_true(call.with_target(changed_target).target() == changed_target)
+  assert_true(
+    call.with_target(changed_target).return_label() == Some(return_label),
+  )
   assert_true(call.with_noreturn().return_label() is None)
+}
+
+///|
+test "labels expose BAP-style create and change helpers" {
+  let next = @types.Tid::for_name("next")
+  let target = @types.Var::new(name="target", typ=@types.ValueType::reg32_t())
+  let indirect_value = @types.Int(word32(4))
+  match @types.Label::create() {
+    Direct(_) => ()
+    Indirect(_) => fail("fresh labels should be direct")
+  }
+  assert_true(
+    @types.Label::direct(@types.Tid::for_name("old")).change(direct=_ => next) ==
+    @types.Label::direct(next),
+  )
+  assert_true(
+    @types.Label::indirect(Var(target)).change(indirect=_ => indirect_value) ==
+    @types.Label::indirect(indirect_value),
+  )
+  let direct = @types.Label::direct(next)
+  assert_true(direct.change(indirect=_ => indirect_value) == direct)
 }
 
 ///|

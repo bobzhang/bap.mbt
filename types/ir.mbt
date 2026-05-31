@@ -163,6 +163,11 @@ pub(all) enum Label {
 } derive(Eq, Debug)
 
 ///|
+pub fn Label::create() -> Label {
+  Direct(Tid::fresh())
+}
+
+///|
 pub fn Label::direct(tid : Tid) -> Label {
   Direct(tid)
 }
@@ -170,6 +175,26 @@ pub fn Label::direct(tid : Tid) -> Label {
 ///|
 pub fn Label::indirect(exp : Exp) -> Label {
   Indirect(exp)
+}
+
+///|
+pub fn Label::change(
+  self : Label,
+  direct? : (Tid) -> Tid,
+  indirect? : (Exp) -> Exp,
+) -> Label {
+  match self {
+    Direct(tid) =>
+      match direct {
+        Some(f) => Direct(f(tid))
+        None => self
+      }
+    Indirect(exp) =>
+      match indirect {
+        Some(f) => Indirect(f(exp))
+        None => self
+      }
+  }
 }
 
 ///|
@@ -189,6 +214,11 @@ pub(all) struct Call {
 ///|
 pub fn Call::create(target~ : Label, return_label? : Label) -> Call {
   { target, return_label }
+}
+
+///|
+pub fn Call::with_target(self : Call, target : Label) -> Call {
+  { target, return_label: self.return_label }
 }
 
 ///|

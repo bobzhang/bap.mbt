@@ -382,6 +382,7 @@ pub fn Call::substitute_var(Self, Var, Exp) -> Self
 pub fn Call::target(Self) -> Label
 pub fn Call::with_noreturn(Self) -> Self
 pub fn Call::with_return(Self, Label) -> Self
+pub fn Call::with_target(Self, Label) -> Self
 
 pub(all) enum CastKind {
   Unsigned
@@ -589,6 +590,8 @@ pub(all) enum Label {
   Direct(Tid)
   Indirect(Exp)
 } derive(Eq, @debug.Debug)
+pub fn Label::change(Self, direct? : (Tid) -> Tid, indirect? : (Exp) -> Exp) -> Self
+pub fn Label::create() -> Self
 pub fn Label::direct(Tid) -> Self
 pub fn Label::free_vars(Self) -> Array[Var]
 pub fn Label::indirect(Exp) -> Self

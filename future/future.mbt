@@ -120,6 +120,44 @@ pub fn[A, B] Future::apply(
 }
 
 ///|
+pub fn[A, B, C] Future::map2(
+  left : Future[A],
+  right : Future[B],
+  f : (A, B) -> C,
+) -> Future[C] {
+  left.bind(fn(l) { right.map(fn(r) { f(l, r) }) })
+}
+
+///|
+pub fn[A, B, C, D] Future::map3(
+  first : Future[A],
+  second : Future[B],
+  third : Future[C],
+  f : (A, B, C) -> D,
+) -> Future[D] {
+  Future::map2(first, second, fn(a, b) { fn(c) { f(a, b, c) } }).apply(third)
+}
+
+///|
+pub fn[A, B, C] Future::apply2(
+  functions : Future[(A, B) -> C],
+  left : Future[A],
+  right : Future[B],
+) -> Future[C] {
+  functions.bind(fn(f) { Future::map2(left, right, f) })
+}
+
+///|
+pub fn[A, B, C, D] Future::apply3(
+  functions : Future[(A, B, C) -> D],
+  first : Future[A],
+  second : Future[B],
+  third : Future[C],
+) -> Future[D] {
+  functions.bind(fn(f) { Future::map3(first, second, third, f) })
+}
+
+///|
 struct Signal[T] {
   send_fn : (T) -> Unit
 }
@@ -462,6 +500,55 @@ pub fn[A, B] Stream::apply(
   values : Stream[A],
 ) -> Stream[B] {
   functions.merge(values, fn(f, value) { f(value) })
+}
+
+///|
+pub fn[A, B, C] Stream::map2(
+  left : Stream[A],
+  right : Stream[B],
+  f : (A, B) -> C,
+) -> Stream[C] {
+  left.merge(right, f)
+}
+
+///|
+pub fn[A, B, C, D] Stream::map3(
+  first : Stream[A],
+  second : Stream[B],
+  third : Stream[C],
+  f : (A, B, C) -> D,
+) -> Stream[D] {
+  first
+  .zip(second)
+  .merge(third, fn(pair, c) {
+    let (a, b) = pair
+    f(a, b, c)
+  })
+}
+
+///|
+pub fn[A, B, C] Stream::apply2(
+  functions : Stream[(A, B) -> C],
+  left : Stream[A],
+  right : Stream[B],
+) -> Stream[C] {
+  Stream::map3(functions, left, right, fn(f, l, r) { f(l, r) })
+}
+
+///|
+pub fn[A, B, C, D] Stream::apply3(
+  functions : Stream[(A, B, C) -> D],
+  first : Stream[A],
+  second : Stream[B],
+  third : Stream[C],
+) -> Stream[D] {
+  functions
+  .zip(first)
+  .zip(second)
+  .merge(third, fn(pair, c) {
+    let ((f, a), b) = pair
+    f(a, b, c)
+  })
 }
 
 ///|

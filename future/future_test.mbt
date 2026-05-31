@@ -66,6 +66,42 @@ test "translated BAP future bind map and apply propagate decided values" {
 }
 
 ///|
+test "translated BAP future multi-argument applicative helpers" {
+  let (left, left_promise) = @future.Future::create()
+  let (right, right_promise) = @future.Future::create()
+  let mapped2 = @future.Future::map2(left, right, fn(l, r) { l * 10 + r })
+  let applied2 = @future.Future::apply2(
+    @future.Future::resolved(fn(l, r) { l + r }),
+    left,
+    right,
+  )
+  right_promise.fulfill(2)
+  assert_true(!mapped2.is_decided())
+  left_promise.fulfill(4)
+  assert_true(mapped2.peek_exn() == 42)
+  assert_true(applied2.peek_exn() == 6)
+
+  let (first, first_promise) = @future.Future::create()
+  let (second, second_promise) = @future.Future::create()
+  let (third, third_promise) = @future.Future::create()
+  let mapped3 = @future.Future::map3(first, second, third, fn(a, b, c) {
+    a * 100 + b * 10 + c
+  })
+  let applied3 = @future.Future::apply3(
+    @future.Future::resolved(fn(a, b, c) { a + b + c }),
+    first,
+    second,
+    third,
+  )
+  second_promise.fulfill(2)
+  third_promise.fulfill(3)
+  assert_true(!mapped3.is_decided())
+  first_promise.fulfill(1)
+  assert_true(mapped3.peek_exn() == 123)
+  assert_true(applied3.peek_exn() == 6)
+}
+
+///|
 test "translated BAP future resolved values are immediately decided" {
   let future = @future.Future::resolved(future_magic_value)
   assert_true(future.is_decided())
@@ -337,6 +373,75 @@ test "translated BAP stream map filter merge apply split and zip" {
   unzip_signal.repeat(times=3, ())
   assert_true(unzipped_left_values == [0, 1, 2])
   assert_true(unzipped_right_values == ["0", "1", "2"])
+}
+
+///|
+test "translated BAP stream multi-argument applicative helpers" {
+  let (left, left_signal, _) = @future.Stream::of_array([1, 2])
+  let (right, right_signal, _) = @future.Stream::of_array([10, 20])
+  let mapped2 = @future.Stream::map2(left, right, fn(l, r) { l + r })
+  let mapped2_values : Array[Int] = []
+  mapped2.observe(fn(value) { mapped2_values.push(value) })
+  left_signal.repeat(times=2, ())
+  right_signal.repeat(times=2, ())
+  assert_true(mapped2_values == [11, 22])
+
+  let functions2 : Array[(Int, Int) -> Int] = [
+    fn(l, r) { l + r },
+    fn(l, r) { l * r },
+  ]
+  let (function2_stream, function2_signal, _) = @future.Stream::of_array(
+    functions2,
+  )
+  let (apply2_left, apply2_left_signal, _) = @future.Stream::of_array([1, 2])
+  let (apply2_right, apply2_right_signal, _) = @future.Stream::of_array([10, 20])
+  let applied2 = @future.Stream::apply2(
+    function2_stream, apply2_left, apply2_right,
+  )
+  let applied2_values : Array[Int] = []
+  applied2.observe(fn(value) { applied2_values.push(value) })
+  function2_signal.repeat(times=2, ())
+  apply2_left_signal.repeat(times=2, ())
+  apply2_right_signal.repeat(times=2, ())
+  assert_true(applied2_values == [11, 40])
+
+  let (first, first_signal, _) = @future.Stream::of_array([1, 2])
+  let (second, second_signal, _) = @future.Stream::of_array([10, 20])
+  let (third, third_signal, _) = @future.Stream::of_array([100, 200])
+  let mapped3 = @future.Stream::map3(first, second, third, fn(a, b, c) {
+    a + b + c
+  })
+  let mapped3_values : Array[Int] = []
+  mapped3.observe(fn(value) { mapped3_values.push(value) })
+  first_signal.repeat(times=2, ())
+  second_signal.repeat(times=2, ())
+  third_signal.repeat(times=2, ())
+  assert_true(mapped3_values == [111, 222])
+
+  let functions3 : Array[(Int, Int, Int) -> Int] = [
+    fn(a, b, c) { a + b + c },
+    fn(a, b, c) { a * b + c },
+  ]
+  let (function3_stream, function3_signal, _) = @future.Stream::of_array(
+    functions3,
+  )
+  let (apply3_first, apply3_first_signal, _) = @future.Stream::of_array([1, 2])
+  let (apply3_second, apply3_second_signal, _) = @future.Stream::of_array([
+    10, 20,
+  ])
+  let (apply3_third, apply3_third_signal, _) = @future.Stream::of_array([
+    100, 200,
+  ])
+  let applied3 = @future.Stream::apply3(
+    function3_stream, apply3_first, apply3_second, apply3_third,
+  )
+  let applied3_values : Array[Int] = []
+  applied3.observe(fn(value) { applied3_values.push(value) })
+  function3_signal.repeat(times=2, ())
+  apply3_first_signal.repeat(times=2, ())
+  apply3_second_signal.repeat(times=2, ())
+  apply3_third_signal.repeat(times=2, ())
+  assert_true(applied3_values == [111, 240])
 }
 
 ///|

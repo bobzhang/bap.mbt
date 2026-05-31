@@ -21,11 +21,15 @@ pub(all) enum Either[A, B] {
 
 type Future[T]
 pub fn[A, B] Future::apply(Self[(A) -> B], Self[A]) -> Self[B]
+pub fn[A, B, C] Future::apply2(Self[(A, B) -> C], Self[A], Self[B]) -> Self[C]
+pub fn[A, B, C, D] Future::apply3(Self[(A, B, C) -> D], Self[A], Self[B], Self[C]) -> Self[D]
 pub fn[A, B] Future::bind(Self[A], (A) -> Self[B]) -> Self[B]
 pub fn[T] Future::create() -> (Self[T], Promise[T])
 pub fn[T] Future::full(T) -> Self[T]
 pub fn[T] Future::is_decided(Self[T]) -> Bool
 pub fn[A, B] Future::map(Self[A], (A) -> B) -> Self[B]
+pub fn[A, B, C] Future::map2(Self[A], Self[B], (A, B) -> C) -> Self[C]
+pub fn[A, B, C, D] Future::map3(Self[A], Self[B], Self[C], (A, B, C) -> D) -> Self[D]
 pub fn[T] Future::peek(Self[T]) -> T?
 pub fn[T] Future::peek_exn(Self[T]) -> T raise FutureError
 pub fn[T] Future::resolved(T) -> Self[T]
@@ -42,6 +46,8 @@ pub fn[T] Signal::send(Self[T], T) -> Unit
 
 type Stream[T]
 pub fn[A, B] Stream::apply(Self[(A) -> B], Self[A]) -> Self[B]
+pub fn[A, B, C] Stream::apply2(Self[(A, B) -> C], Self[A], Self[B]) -> Self[C]
+pub fn[A, B, C, D] Stream::apply3(Self[(A, B, C) -> D], Self[A], Self[B], Self[C]) -> Self[D]
 pub fn[T, E] Stream::before(Self[T], Future[E]) -> Future[Array[T]]
 pub fn[T] Stream::concat(Array[Self[T]]) -> Self[T]
 pub fn[T] Stream::concat_merge(Array[Self[T]], (T, T) -> T) -> Self[T]
@@ -58,6 +64,8 @@ pub fn[T] Stream::has_subscribers(Self[T]) -> Bool
 pub fn[T] Stream::hd(Self[T]) -> Future[T]
 pub fn[T, E] Stream::last_before(Self[T], Future[E], Int) -> Future[Array[T]]
 pub fn[A, B] Stream::map(Self[A], (A) -> B) -> Self[B]
+pub fn[A, B, C] Stream::map2(Self[A], Self[B], (A, B) -> C) -> Self[C]
+pub fn[A, B, C, D] Stream::map3(Self[A], Self[B], Self[C], (A, B, C) -> D) -> Self[D]
 pub fn[A, B] Stream::map_many(Self[A], (A) -> Array[B]) -> Self[B]
 pub fn[A, B, C] Stream::merge(Self[A], Self[B], (A, B) -> C) -> Self[C]
 pub fn[T] Stream::nth(Self[T], Int) -> Future[T]

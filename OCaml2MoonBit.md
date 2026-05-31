@@ -477,6 +477,13 @@ hash-table enumeration order for `passes`; prefer deterministic MoonBit
 enumeration instead, but document that it follows `String::compare` shortlex
 ordering rather than locale/alphabetic ordering.
 
+BAP BIL result values are a small printable wrapper around interpreter output:
+word results print through the word printer, memory results print as
+`<storage>`, and undefined results print as `bot`. Preserve the ID rendering as
+uppercase hexadecimal with a `0x` prefix. Linear result storage keeps duplicate
+saves and resolves loads to the newest matching address; sparse result storage
+replaces an existing address binding.
+
 When porting BAP `Term.visitor`/`Term.mapper` users, prefer a typed sum view of
 IR terms over untyped callbacks. Keep traversal order explicit and stable
 (program, sub, args, block, phis, defs, jumps), and make reconstruction-aware

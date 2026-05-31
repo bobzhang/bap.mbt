@@ -181,6 +181,35 @@ pub fn BilPass::name(Self) -> String
 pub fn BilPass::run(Self, Array[Stmt]) -> Array[Stmt]
 pub fn BilPass::to_string(Self) -> String
 
+type BilResult derive(Eq, @debug.Debug)
+pub fn BilResult::id(Self) -> BilResultId
+pub fn BilResult::storage(BilResultStorage, BilResultId) -> Self
+pub fn BilResult::to_string(Self) -> String
+pub fn BilResult::undefined(BilResultId) -> Self
+pub fn BilResult::value(Self) -> BilResultValue
+pub fn BilResult::word(Word, BilResultId) -> Self
+
+type BilResultId derive(Eq, @debug.Debug)
+pub fn BilResultId::of_uint64(UInt64) -> Self
+pub fn BilResultId::succ(Self) -> Self
+pub fn BilResultId::to_string(Self) -> String
+pub fn BilResultId::to_uint64(Self) -> UInt64
+pub fn BilResultId::zero() -> Self
+
+type BilResultStorage derive(Eq, @debug.Debug)
+pub fn BilResultStorage::is_sparse(Self) -> Bool
+pub fn BilResultStorage::linear() -> Self
+pub fn BilResultStorage::load(Self, Word) -> Word?
+pub fn BilResultStorage::save(Self, Word, Word) -> Self
+pub fn BilResultStorage::sparse() -> Self
+
+pub(all) enum BilResultValue {
+  BilResultImm(Word)
+  BilResultMem(BilResultStorage)
+  BilResultBot
+} derive(Eq, @debug.Debug)
+pub fn BilResultValue::to_string(Self) -> String
+
 type BilState derive(Eq, @debug.Debug)
 pub fn BilState::from_values(Map[String, BilValue]) -> Self
 pub fn BilState::get(Self, String) -> BilValue?

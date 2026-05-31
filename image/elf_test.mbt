@@ -393,6 +393,31 @@ fn image_elf_test_make_x86_64_with_relocations() -> Bytes {
 }
 
 ///|
+fn image_elf_test_rewrite_machine_relative_type(
+  data : Bytes,
+  machine : Int,
+  relative_type : Int,
+) -> Bytes {
+  let buffer = Array::make(data.length(), b'\x00')
+  for i in 0..<data.length() {
+    buffer[i] = data[i]
+  }
+  image_elf_test_set_u16_le(buffer, 18, machine)
+  let shstr = b"\x00.shstrtab\x00.text\x00.symtab\x00.strtab\x00.rela.text\x00.rel.text\x00"
+  let text = b"\x90\xc3\xcc\x00"
+  let strtab = b"\x00main\x00target\x00puts\x00"
+  let shstr_offset = 120 + 7 * 64
+  let text_offset = shstr_offset + shstr.length()
+  let symtab_offset = text_offset + text.length()
+  let strtab_offset = symtab_offset + 96
+  let rela_offset = strtab_offset + strtab.length()
+  // The third RELA entry in image_elf_test_make_x86_64_with_relocations is
+  // the symbol-free relative relocation at 0x400003.
+  image_elf_test_set_u32_le(buffer, rela_offset + 48 + 8, relative_type)
+  Bytes::from_array(buffer)
+}
+
+///|
 fn image_elf_test_make_x86_64_with_dynamic_libraries() -> Bytes {
   let section_table_offset = 64 + 2 * 56
   let shstr = b"\x00.shstrtab\x00.text\x00.interp\x00.dynamic\x00.dynstr\x00"
@@ -793,6 +818,45 @@ test "image ELF backend extracts relocation metadata" {
   assert_true(references.length() == 1)
   assert_true(references[0].addr() == 0x400001UL)
   assert_true(references[0].name() == "puts")
+}
+
+///|
+test "image ELF backend recognizes architecture-relative relocation types" {
+  match @image.register_builtin_backends() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let cases : Array[(String, Int, Int)] = [
+    ("sparc", 0x02, 22),
+    ("sparcv9", 0x2b, 22),
+    ("powerpc", 0x14, 22),
+    ("powerpc64", 0x15, 22),
+    ("systemz", 0x16, 12),
+    ("arm", 0x28, 23),
+  ]
+  for case in cases {
+    let (name, machine, typ) = case
+    let fixture = image_elf_test_rewrite_machine_relative_type(
+      image_elf_test_make_x86_64_with_relocations(),
+      machine,
+      typ,
+    )
+    let (image, warnings) = expect_elf_image(
+      @image.Image::of_bytes(fixture, backend="elf"),
+    )
+    assert_true(warnings.is_empty())
+    let relocation = match
+      image
+      .relocations()
+      .search_by(relocation => relocation.fixup() == 0x400003UL) {
+      Some(index) => image.relocations()[index]
+      None => fail("expected relative relocation for " + name)
+    }
+    assert_true(relocation.target() == None)
+    assert_true(relocation.addend() == Some(-8L))
+    assert_true(!relocation.uses_memory_addend())
+    assert_true(relocation.is_relative())
+  }
 }
 
 ///|

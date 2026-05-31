@@ -269,10 +269,13 @@ backend-specific relocation applier or symbolizer exists.
 For ELF relocation sections, preserve metadata conservatively: relocations
 against named undefined symbols become external references, relocations against
 named defined symbols can record the symbol value as the target, and known
-machine-relative relocation types can record a relative relocation. Preserve
-signed `RELA` addends on the relocation metadata instead of folding them into
-symbol values; this keeps `S` and `A` distinguishable for later
-architecture-specific handling.
+machine-relative relocation types can record a relative relocation. Keep that
+recognition as a per-machine whitelist, not a numeric shortcut: for example
+x86/x86-64 use relocation type 8, SPARC/PowerPC/PowerPC64 use type 22,
+SystemZ uses type 12, ARM uses type 23, AArch64 uses type 1027, and RISC-V
+uses type 3. Preserve signed `RELA` addends on the relocation metadata instead
+of folding them into symbol values; this keeps `S` and `A` distinguishable for
+later architecture-specific handling.
 For stripped ELF files, preserve relative dynamic relocations from `PT_DYNAMIC`
 when section relocation tables are absent. Resolve `DT_RELA`/`DT_REL` virtual
 addresses through `PT_LOAD` headers, bound them with `DT_RELASZ`/`DT_RELSZ`,

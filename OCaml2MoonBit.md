@@ -518,6 +518,11 @@ The graph wrapper can remain a thin view over `sub term` for read-only APIs:
 jumps, and `number_of_edges`/`edge_count` should count unique source/destination
 pairs like BAP's predecessor table rather than blindly counting parallel jump
 positions.
+BAP node updates are TID-preserving: inserting an existing block is a no-op,
+removing a block removes the graph node without rewriting stale jumps in other
+blocks, and updating should reject a replacement block with a different TID.
+For graph-level successor queries after an update, derive from current graph
+edges rather than from a stale block value held by the caller.
 
 When porting BAP `Term.visitor`/`Term.mapper` users, prefer a typed sum view of
 IR terms over untyped callbacks. Keep traversal order explicit and stable

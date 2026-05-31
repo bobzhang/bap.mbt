@@ -86,3 +86,58 @@ test "BAP IR CFG successor predecessor and degree queries use graph endpoints" {
   assert_true(cfg.in_degree(join) == 2)
   assert_true(cfg.degree(left) == 2)
 }
+
+///|
+test "BAP IR CFG node insertion and removal update graph membership" {
+  let entry = @types.Blk::create(tid=@types.Tid::for_name("entry"))
+  let body = @types.Blk::create(tid=@types.Tid::for_name("body"))
+  let exit = @types.Blk::create(tid=@types.Tid::for_name("exit"))
+  let entry = entry.append_jmp(
+    @types.Jmp::create_goto(@types.Label::direct(body.tid())),
+  )
+  let body = body.append_jmp(
+    @types.Jmp::create_goto(@types.Label::direct(exit.tid())),
+  )
+  let cfg = @types.IrCfg::create(name="editable")
+  let cfg = cfg.insert_node(entry).insert_node(body).insert_node(body)
+  assert_true(cfg.node_count() == 2)
+  assert_true(cfg.edge_count() == 1)
+  let cfg = cfg.insert_node(exit)
+  assert_true(cfg.node_count() == 3)
+  assert_true(cfg.edge_count() == 2)
+  let removed = cfg.remove_node(body)
+  assert_true(!removed.has_node(body))
+  assert_true(removed.node_count() == 2)
+  assert_true(!removed.has_edge(entry, body))
+  assert_true(removed.edge_count() == 0)
+  match removed.to_sub().find_blk(entry.tid()) {
+    Some(block) => assert_true(block.jmps().length() == 1)
+    None => fail("expected entry to remain")
+  }
+}
+
+///|
+test "BAP IR CFG node update only accepts same-TID replacement blocks" {
+  let entry = @types.Blk::create(tid=@types.Tid::for_name("entry"))
+  let body = @types.Blk::create(tid=@types.Tid::for_name("body"))
+  let exit = @types.Blk::create(tid=@types.Tid::for_name("exit"))
+  let entry = entry.append_jmp(
+    @types.Jmp::create_goto(@types.Label::direct(body.tid())),
+  )
+  let cfg = @types.IrCfg::of_sub(
+    @types.Sub::create(name="update", blks=[entry, body, exit]),
+  )
+  let wrong_tid = @types.Blk::create(jmps=[
+    @types.Jmp::create_goto(@types.Label::direct(exit.tid())),
+  ])
+  let unchanged = cfg.update_node(entry, wrong_tid)
+  assert_true(cfg_blk_tids(unchanged.successors(entry)) == [body.tid()])
+  let replacement = @types.Blk::create(tid=entry.tid(), jmps=[
+    @types.Jmp::create_goto(@types.Label::direct(exit.tid())),
+  ])
+  let updated = cfg.update_node(entry, replacement)
+  assert_true(updated.has_node(entry))
+  assert_true(cfg_blk_tids(updated.successors(entry)) == [exit.tid()])
+  assert_true(!updated.has_edge(entry, body))
+  assert_true(updated.has_edge(entry, exit))
+}

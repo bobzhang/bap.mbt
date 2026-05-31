@@ -39,6 +39,13 @@ pub fn IrCfg::nodes(self : IrCfg) -> Array[Term[Blk]] {
 }
 
 ///|
+fn IrCfg::with_nodes(self : IrCfg, nodes : Array[Term[Blk]]) -> IrCfg {
+  IrCfg::of_sub(
+    self.sub_value.with_payload({ ..self.sub_value.payload_value, blks: nodes }),
+  )
+}
+
+///|
 pub fn IrCfg::edges(self : IrCfg) -> Array[IrCfgEdge] {
   self.sub_value.sub_edges()
 }
@@ -74,6 +81,39 @@ pub fn IrCfg::has_node(self : IrCfg, blk : Term[Blk]) -> Bool {
 }
 
 ///|
+pub fn IrCfg::insert_node(self : IrCfg, blk : Term[Blk]) -> IrCfg {
+  if self.has_node(blk) {
+    self
+  } else {
+    IrCfg::of_sub(self.sub_value.append_blk(blk))
+  }
+}
+
+///|
+pub fn IrCfg::remove_node(self : IrCfg, blk : Term[Blk]) -> IrCfg {
+  if self.has_node(blk) {
+    self.with_nodes(
+      self.sub_value.blks().filter(node => node.tid() != blk.tid()),
+    )
+  } else {
+    self
+  }
+}
+
+///|
+pub fn IrCfg::update_node(
+  self : IrCfg,
+  old : Term[Blk],
+  replacement : Term[Blk],
+) -> IrCfg {
+  if old.tid() != replacement.tid() || !self.has_node(old) {
+    self
+  } else {
+    IrCfg::of_sub(self.sub_value.update_blk(replacement))
+  }
+}
+
+///|
 pub fn IrCfg::has_edge(self : IrCfg, src : Term[Blk], dst : Term[Blk]) -> Bool {
   self.edge(src, dst) is Some(_)
 }
@@ -89,7 +129,7 @@ pub fn IrCfg::edge(
 
 ///|
 pub fn IrCfg::successors(self : IrCfg, blk : Term[Blk]) -> Array[Term[Blk]] {
-  self.sub_value.sub_successor_blocks(blk)
+  self.out_edges(blk).map(edge => edge.dst())
 }
 
 ///|

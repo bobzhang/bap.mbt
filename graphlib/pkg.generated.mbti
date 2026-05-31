@@ -47,7 +47,7 @@ pub fn[N : Eq, E] Graph::has_edge(Self[N, E], N, N) -> Bool
 pub fn[N : Eq, E] Graph::has_node(Self[N, E], N) -> Bool
 pub fn[N : Hash + Eq, E] Graph::immediate_dominators(Self[N, E], N) -> Map[N, N]
 pub fn[N : Eq, E] Graph::in_edges(Self[N, E], N) -> Array[Edge[N, E]]
-pub fn[N : Eq, E : Eq] Graph::intersect(Self[N, E], Self[N, E]) -> Self[N, E]
+pub fn[N : Eq, E] Graph::intersect(Self[N, E], Self[N, E]) -> Self[N, E]
 pub fn[N, E] Graph::is_empty(Self[N, E]) -> Bool
 pub fn[N, E] Graph::new() -> Self[N, E]
 pub fn[N, E] Graph::node_count(Self[N, E]) -> Int
@@ -61,7 +61,7 @@ pub fn[N : Eq, E] Graph::replace_node(Self[N, E], N, N) -> Self[N, E]
 pub fn[N : Hash + Eq, E] Graph::reverse_postorder(Self[N, E], N) -> Array[N]
 pub fn[N : Hash + Eq, E] Graph::strong_components(Self[N, E]) -> Array[@set.Set[N]]
 pub fn[N : Eq, E] Graph::successors(Self[N, E], N) -> Array[N]
-pub fn[N : Eq, E : Eq] Graph::union(Self[N, E], Self[N, E]) -> Self[N, E]
+pub fn[N : Eq, E] Graph::union(Self[N, E], Self[N, E]) -> Self[N, E]
 
 type Partition[N] derive(@debug.Debug)
 pub fn[N : Hash + Eq] Partition::discrete(ArrayView[N]) -> Self[N]

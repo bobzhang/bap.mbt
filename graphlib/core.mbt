@@ -113,15 +113,16 @@ pub fn[N : Eq, E] Graph::replace_node(
 }
 
 ///|
-fn[N : Eq, E : Eq] contains_edge(
+fn[N : Eq, E] contains_edge_pair(
   edges : ArrayView[Edge[N, E]],
-  edge : Edge[N, E],
+  src : N,
+  dst : N,
 ) -> Bool {
-  edges.any(item => item == edge)
+  edges.any(item => item.src == src && item.dst == dst)
 }
 
 ///|
-pub fn[N : Eq, E : Eq] Graph::union(
+pub fn[N : Eq, E] Graph::union(
   self : Graph[N, E],
   other : Graph[N, E],
 ) -> Graph[N, E] {
@@ -130,7 +131,7 @@ pub fn[N : Eq, E : Eq] Graph::union(
     out = out.add_node(node)
   }
   for edge in other.edges {
-    if !contains_edge(out.edges, edge) {
+    if !contains_edge_pair(out.edges, edge.src, edge.dst) {
       out = out.add_edge(src=edge.src, dst=edge.dst, label=edge.label)
     }
   }
@@ -138,12 +139,12 @@ pub fn[N : Eq, E : Eq] Graph::union(
 }
 
 ///|
-pub fn[N : Eq, E : Eq] Graph::intersect(
+pub fn[N : Eq, E] Graph::intersect(
   self : Graph[N, E],
   other : Graph[N, E],
 ) -> Graph[N, E] {
   let nodes = self.nodes.filter(node => other.has_node(node))
-  let edges = self.edges.filter(edge => contains_edge(other.edges, edge))
+  let edges = self.edges.filter(edge => other.has_edge(edge.src, edge.dst))
   { nodes, edges }
 }
 

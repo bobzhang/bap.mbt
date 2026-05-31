@@ -109,6 +109,22 @@ test "graph union and intersection follow set semantics" {
 }
 
 ///|
+test "graph set operations key edges by endpoints and keep left labels" {
+  let left : @graphlib.Graph[Int, String] = @graphlib.Graph::new()
+    .add_edge(src=1, dst=2, label="left")
+    .add_edge(src=2, dst=3, label="only-left")
+  let right : @graphlib.Graph[Int, String] = @graphlib.Graph::new()
+    .add_edge(src=1, dst=2, label="right")
+    .add_edge(src=3, dst=4, label="only-right")
+  let union = left.union(right)
+  assert_true(edge_pairs(union) == Set::from_array([(1, 2), (2, 3), (3, 4)]))
+  assert_true(union.edge(1, 2).map(edge => edge.label) == Some("left"))
+  let intersection = left.intersect(right)
+  assert_true(edge_pairs(intersection) == Set::from_array([(1, 2)]))
+  assert_true(intersection.edge(1, 2).map(edge => edge.label) == Some("left"))
+}
+
+///|
 test "partitions support BAP trivial discrete union and refinement invariants" {
   let elements = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
   let trivial = @graphlib.Partition::trivial(elements)

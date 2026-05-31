@@ -62,6 +62,11 @@ pub fn IrTerm::same_term(self : IrTerm, other : IrTerm) -> Bool {
 }
 
 ///|
+pub fn IrTerm::same(self : IrTerm, other : IrTerm) -> Bool {
+  self.same_term(other)
+}
+
+///|
 pub fn IrTerm::has_class(self : IrTerm, cls : IrTermClass) -> Bool {
   self.class() == cls
 }
@@ -572,6 +577,127 @@ pub fn IrTerm::concat_map_children(
       )
     _ => self
   }
+}
+
+///|
+pub fn IrTerm::to_sequence(
+  self : IrTerm,
+  cls : IrTermClass,
+  rev? : Bool = false,
+) -> Array[IrTerm] {
+  self.children_of_class(cls, rev~)
+}
+
+///|
+pub fn IrTerm::find(self : IrTerm, cls : IrTermClass, tid : Tid) -> IrTerm? {
+  self.find_child(cls, tid)
+}
+
+///|
+pub fn IrTerm::update(self : IrTerm, child : IrTerm) -> IrTerm {
+  self.update_child(child)
+}
+
+///|
+pub fn IrTerm::remove(self : IrTerm, cls : IrTermClass, tid : Tid) -> IrTerm {
+  self.remove_child(cls, tid)
+}
+
+///|
+pub fn IrTerm::change(
+  self : IrTerm,
+  cls : IrTermClass,
+  tid : Tid,
+  f : (IrTerm?) -> IrTerm?,
+) -> IrTerm {
+  self.change_child(cls, tid, f)
+}
+
+///|
+pub fn IrTerm::length(self : IrTerm, cls : IrTermClass) -> Int {
+  self.child_count(cls)
+}
+
+///|
+pub fn IrTerm::nth(self : IrTerm, cls : IrTermClass, index : Int) -> IrTerm? {
+  self.nth_child(cls, index)
+}
+
+///|
+pub fn IrTerm::first(self : IrTerm, cls : IrTermClass) -> IrTerm? {
+  self.first_child(cls)
+}
+
+///|
+pub fn IrTerm::last(self : IrTerm, cls : IrTermClass) -> IrTerm? {
+  self.last_child(cls)
+}
+
+///|
+pub fn IrTerm::next(self : IrTerm, cls : IrTermClass, tid : Tid) -> IrTerm? {
+  self.next_child(cls, tid)
+}
+
+///|
+pub fn IrTerm::prev(self : IrTerm, cls : IrTermClass, tid : Tid) -> IrTerm? {
+  self.prev_child(cls, tid)
+}
+
+///|
+pub fn IrTerm::after(
+  self : IrTerm,
+  cls : IrTermClass,
+  tid : Tid,
+  rev? : Bool = false,
+) -> Array[IrTerm] {
+  self.children_after(cls, tid, rev~)
+}
+
+///|
+pub fn IrTerm::before(
+  self : IrTerm,
+  cls : IrTermClass,
+  tid : Tid,
+  rev? : Bool = false,
+) -> Array[IrTerm] {
+  self.children_before(cls, tid, rev~)
+}
+
+///|
+pub fn IrTerm::append(self : IrTerm, child : IrTerm, after? : Tid) -> IrTerm {
+  self.append_child(child, after?)
+}
+
+///|
+pub fn IrTerm::prepend(self : IrTerm, child : IrTerm, before? : Tid) -> IrTerm {
+  self.prepend_child(child, before?)
+}
+
+///|
+pub fn IrTerm::filter_map(
+  self : IrTerm,
+  cls : IrTermClass,
+  f : (IrTerm) -> IrTerm?,
+) -> IrTerm {
+  self.filter_map_children(cls, f)
+}
+
+///|
+pub fn IrTerm::filter(
+  self : IrTerm,
+  cls : IrTermClass,
+  f : (IrTerm) -> Bool,
+) -> IrTerm {
+  self.filter_children(cls, f)
+}
+
+///|
+pub fn IrTerm::concat_map(
+  self : IrTerm,
+  cls : IrTermClass,
+  f : (IrTerm) -> Array[IrTerm],
+) -> IrTerm {
+  self.concat_map_children(cls, f)
 }
 
 ///|

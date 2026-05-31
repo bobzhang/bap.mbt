@@ -144,6 +144,27 @@ pub fn IrTerm::nth_child_exn(
 }
 
 ///|
+pub fn IrTerm::find_exn(
+  self : IrTerm,
+  cls : IrTermClass,
+  tid : Tid,
+) -> IrTerm raise IrTermLookupError {
+  match self.find(cls, tid) {
+    Some(term) => term
+    None => raise MissingIrTerm(cls.to_string(), tid)
+  }
+}
+
+///|
+pub fn IrTerm::nth_exn(
+  self : IrTerm,
+  cls : IrTermClass,
+  index : Int,
+) -> IrTerm raise IrTermLookupError {
+  self.nth_child_exn(cls, index)
+}
+
+///|
 pub fn Term::program_find_arg(self : Term[Program], tid : Tid) -> Term[Arg]? {
   for sub in self.payload_value.subs {
     match sub.find_arg(tid) {

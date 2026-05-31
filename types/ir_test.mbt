@@ -381,6 +381,10 @@ test "IR term lookup exn helpers report missing terms" {
     @types.BlkTerm(blk).nth_child_exn(DefTermClass, 0).same_term(DefTerm(def)),
   )
   assert_true(
+    @types.BlkTerm(blk).find_exn(DefTermClass, def.tid()).same(DefTerm(def)),
+  )
+  assert_true(@types.BlkTerm(blk).nth_exn(DefTermClass, 0).same(DefTerm(def)))
+  assert_true(
     program.program_find_arg(arg.tid()).map(term => term.same(arg)) ==
     Some(true),
   )
@@ -416,6 +420,15 @@ test "IR term lookup exn helpers report missing terms" {
     _ => fail("expected MissingIrTermIndex")
   } noraise {
     _ => fail("expected MissingIrTermIndex")
+  }
+  try @types.BlkTerm(blk).find_exn(DefTermClass, missing) catch {
+    MissingIrTerm(kind, tid) => {
+      assert_true(kind == "def")
+      assert_true(tid == missing)
+    }
+    _ => fail("expected MissingIrTerm")
+  } noraise {
+    _ => fail("expected MissingIrTerm")
   }
 }
 
@@ -705,6 +718,7 @@ test "ir term direct-child helpers filter find update remove and change" {
   assert_true(
     program_term.find_child(SubTermClass, sub.tid()) is Some(SubTerm(_)),
   )
+  assert_true(program_term.find(SubTermClass, sub.tid()) is Some(SubTerm(_)))
   assert_true(program_term.find_child(DefTermClass, def_y.tid()) is None)
   assert_true(
     block_term.children_of_class(DefTermClass).map(term => term.tid()) ==
@@ -717,11 +731,14 @@ test "ir term direct-child helpers filter find update remove and change" {
 
   let mark = @types.Attr::new(key="edited", value="yes")
   let updated = block_term.update_child(DefTerm(def_y.set_attr(mark)))
+  let updated_alias = block_term.update(DefTerm(def_y.set_attr(mark)))
+  assert_true(updated_alias.same(updated))
   match updated.find_child(DefTermClass, def_y.tid()) {
     Some(DefTerm(term)) => assert_true(term.get_attr("edited") == Some("yes"))
     _ => fail("expected updated def child")
   }
   let removed = updated.remove_child(DefTermClass, def_z.tid())
+  assert_true(updated.remove(DefTermClass, def_z.tid()).same(removed))
   assert_true(removed.children_of_class(DefTermClass).length() == 1)
 
   let def_tail = @types.Def::create(x, Var(z), tid=@types.Tid::for_name("tail"))
@@ -730,6 +747,10 @@ test "ir term direct-child helpers filter find update remove and change" {
     saw_missing.val = current is None
     Some(DefTerm(def_tail))
   })
+  let alias_appended = removed.change(DefTermClass, def_tail.tid(), _ => {
+    Some(DefTerm(def_tail))
+  })
+  assert_true(alias_appended.same(appended))
   assert_true(saw_missing.val)
   assert_true(
     appended.children_of_class(DefTermClass).map(term => term.tid()) ==
@@ -758,20 +779,43 @@ test "ir term direct-child navigation mirrors BAP Term sequence helpers" {
   let blk = @types.Blk::create(defs=[a, b, c], jmps=[jmp])
   let block_term : @types.IrTerm = BlkTerm(blk)
 
+  assert_true(block_term.same(BlkTerm(blk)))
+  assert_true(
+    block_term.to_sequence(DefTermClass).map(term => term.tid()) ==
+    [a.tid(), b.tid(), c.tid()],
+  )
+  assert_true(
+    block_term.to_sequence(DefTermClass, rev=true).map(term => term.tid()) ==
+    [c.tid(), b.tid(), a.tid()],
+  )
   assert_true(block_term.child_count(DefTermClass) == 3)
+  assert_true(block_term.length(DefTermClass) == 3)
   assert_true(block_term.child_count(PhiTermClass) == 0)
   assert_true(block_term.nth_child(DefTermClass, -1) is None)
   assert_true(block_term.nth_child(DefTermClass, 0) is Some(DefTerm(_)))
+  assert_true(
+    block_term.nth(DefTermClass, 1).map(term => term.tid()) == Some(b.tid()),
+  )
   assert_true(block_term.nth_child(DefTermClass, 3) is None)
   assert_true(
     block_term.first_child(DefTermClass).map(term => term.tid()) ==
     Some(a.tid()),
   )
   assert_true(
+    block_term.first(DefTermClass).map(term => term.tid()) == Some(a.tid()),
+  )
+  assert_true(
     block_term.last_child(DefTermClass).map(term => term.tid()) == Some(c.tid()),
   )
   assert_true(
+    block_term.last(DefTermClass).map(term => term.tid()) == Some(c.tid()),
+  )
+  assert_true(
     block_term.next_child(DefTermClass, a.tid()).map(term => term.tid()) ==
+    Some(b.tid()),
+  )
+  assert_true(
+    block_term.next(DefTermClass, a.tid()).map(term => term.tid()) ==
     Some(b.tid()),
   )
   assert_true(block_term.next_child(DefTermClass, c.tid()) is None)
@@ -779,9 +823,17 @@ test "ir term direct-child navigation mirrors BAP Term sequence helpers" {
     block_term.prev_child(DefTermClass, c.tid()).map(term => term.tid()) ==
     Some(b.tid()),
   )
+  assert_true(
+    block_term.prev(DefTermClass, c.tid()).map(term => term.tid()) ==
+    Some(b.tid()),
+  )
   assert_true(block_term.prev_child(DefTermClass, a.tid()) is None)
   assert_true(
     block_term.children_after(DefTermClass, a.tid()).map(term => term.tid()) ==
+    [b.tid(), c.tid()],
+  )
+  assert_true(
+    block_term.after(DefTermClass, a.tid()).map(term => term.tid()) ==
     [b.tid(), c.tid()],
   )
   assert_true(
@@ -792,6 +844,10 @@ test "ir term direct-child navigation mirrors BAP Term sequence helpers" {
   )
   assert_true(
     block_term.children_before(DefTermClass, c.tid()).map(term => term.tid()) ==
+    [a.tid(), b.tid()],
+  )
+  assert_true(
+    block_term.before(DefTermClass, c.tid()).map(term => term.tid()) ==
     [a.tid(), b.tid()],
   )
   assert_true(
@@ -825,6 +881,13 @@ test "ir term direct-child insertion mirrors BAP append and prepend" {
 
   let appended = block_term.append_child(DefTerm(c))
   assert_true(
+    block_term
+    .append(DefTerm(c))
+    .children_of_class(DefTermClass)
+    .map(term => term.tid()) ==
+    [a.tid(), c.tid()],
+  )
+  assert_true(
     appended.children_of_class(DefTermClass).map(term => term.tid()) ==
     [a.tid(), c.tid()],
   )
@@ -843,6 +906,13 @@ test "ir term direct-child insertion mirrors BAP append and prepend" {
   )
 
   let prepended = inserted.prepend_child(DefTerm(head))
+  assert_true(
+    inserted
+    .prepend(DefTerm(head))
+    .children_of_class(DefTermClass)
+    .map(term => term.tid()) ==
+    [head.tid(), a.tid(), b.tid(), c.tid()],
+  )
   assert_true(
     prepended.children_of_class(DefTermClass).map(term => term.tid()) ==
     [head.tid(), a.tid(), b.tid(), c.tid()],
@@ -885,6 +955,10 @@ test "ir term direct-child sequence operations map filter and concat" {
   let filtered = mapped.filter_children(DefTermClass, child => {
     child.tid() != b.tid()
   })
+  let filtered_alias = mapped.filter(DefTermClass, child => {
+    child.tid() != b.tid()
+  })
+  assert_true(filtered_alias.same(filtered))
   assert_true(
     filtered.children_of_class(DefTermClass).map(term => term.tid()) ==
     [a.tid(), c.tid()],
@@ -898,6 +972,15 @@ test "ir term direct-child sequence operations map filter and concat" {
       _ => Some(child)
     }
   })
+  let renamed_alias = block_term.filter_map(DefTermClass, child => {
+    match child {
+      DefTerm(term) if term.tid() == b.tid() => None
+      DefTerm(term) if term.tid() == c.tid() =>
+        Some(DefTerm(term.with_lhs(@types.Var::new(name="renamed", typ~))))
+      _ => Some(child)
+    }
+  })
+  assert_true(renamed_alias.same(renamed))
   assert_true(
     renamed.children_of_class(DefTermClass).map(term => term.tid()) ==
     [a.tid(), c.tid()],
@@ -919,6 +1002,14 @@ test "ir term direct-child sequence operations map filter and concat" {
       _ => []
     }
   })
+  let expanded_alias = block_term.concat_map(DefTermClass, child => {
+    match child {
+      DefTerm(term) if term.tid() == b.tid() => [DefTerm(term), DefTerm(dup)]
+      DefTerm(_) => [child]
+      _ => []
+    }
+  })
+  assert_true(expanded_alias.same(expanded))
   assert_true(
     expanded.children_of_class(DefTermClass).map(term => term.tid()) ==
     [a.tid(), b.tid(), dup.tid(), c.tid()],

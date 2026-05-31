@@ -513,6 +513,11 @@ BAP edge conditions are not just the selected jump condition: they conjoin the
 selected condition with the negation of each earlier jump condition in the same
 block, then simplify. Keep this as a read-only edge metadata helper unless the
 port is also implementing BAP's graph mutation semantics.
+The graph wrapper can remain a thin view over `sub term` for read-only APIs:
+`nodes` are the block terms, positional `edges` are derived from direct local
+jumps, and `number_of_edges`/`edge_count` should count unique source/destination
+pairs like BAP's predecessor table rather than blindly counting parallel jump
+positions.
 
 When porting BAP `Term.visitor`/`Term.mapper` users, prefer a typed sum view of
 IR terms over untyped callbacks. Keep traversal order explicit and stable

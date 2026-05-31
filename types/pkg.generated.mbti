@@ -471,6 +471,27 @@ pub(all) enum Intent {
   Both
 } derive(Eq, @debug.Debug)
 
+type IrCfg
+pub fn IrCfg::create(tid? : Tid, name? : String) -> Self
+pub fn IrCfg::degree(Self, Term[Blk]) -> Int
+pub fn IrCfg::edge(Self, Term[Blk], Term[Blk]) -> IrCfgEdge?
+pub fn IrCfg::edge_count(Self) -> Int
+pub fn IrCfg::edges(Self) -> Array[IrCfgEdge]
+pub fn IrCfg::has_edge(Self, Term[Blk], Term[Blk]) -> Bool
+pub fn IrCfg::has_node(Self, Term[Blk]) -> Bool
+pub fn IrCfg::in_degree(Self, Term[Blk]) -> Int
+pub fn IrCfg::in_edges(Self, Term[Blk]) -> Array[IrCfgEdge]
+pub fn IrCfg::is_directed() -> Bool
+pub fn IrCfg::is_empty(Self) -> Bool
+pub fn IrCfg::node_count(Self) -> Int
+pub fn IrCfg::nodes(Self) -> Array[Term[Blk]]
+pub fn IrCfg::of_sub(Term[Sub]) -> Self
+pub fn IrCfg::out_degree(Self, Term[Blk]) -> Int
+pub fn IrCfg::out_edges(Self, Term[Blk]) -> Array[IrCfgEdge]
+pub fn IrCfg::predecessors(Self, Term[Blk]) -> Array[Term[Blk]]
+pub fn IrCfg::successors(Self, Term[Blk]) -> Array[Term[Blk]]
+pub fn IrCfg::to_sub(Self) -> Term[Sub]
+
 type IrCfgEdge
 pub fn IrCfgEdge::cond(Self, Term[Sub]) -> Exp
 pub fn IrCfgEdge::dst(Self) -> Term[Blk]
@@ -827,6 +848,7 @@ pub fn Term::substitute_program_var(Self[Program], Var, Exp) -> Self[Program]
 pub fn Term::substitute_sub_var(Self[Sub], Var, Exp) -> Self[Sub]
 pub fn Term::succ_tid_of_jmp(Self[Jmp]) -> Tid?
 pub fn[T] Term::tid(Self[T]) -> Tid
+pub fn Term::to_ir_cfg(Self[Sub]) -> IrCfg
 pub fn Term::to_ssa(Self[Sub], entry? : Tid) -> Self[Sub]
 pub fn Term::update_blk(Self[Sub], Self[Blk]) -> Self[Sub]
 pub fn Term::update_def(Self[Blk], Self[Def]) -> Self[Blk]

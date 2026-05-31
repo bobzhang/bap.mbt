@@ -740,6 +740,33 @@ test "target role helpers classify common architecture variables" {
     }
     None => fail("missing R4")
   }
+  match arm.find_var("NF") {
+    Some(flag) => assert_true(arm.roles_of_var(flag).contains(Status))
+    None => fail("missing NF")
+  }
+  match arm.origin_of_name("SP") {
+    Some(origin) => {
+      assert_true(origin.aliased().ident() == "SP")
+      assert_true(origin.source().map(v => v.ident()) == Some("R13"))
+    }
+    None => fail("missing ARM SP alias origin")
+  }
+  match arm.origin_of_name("CPSR") {
+    Some(origin) => {
+      assert_true(origin.source() is None)
+      assert_true(
+        origin.bits().map(v => v.ident()) == ["NF", "ZF", "CF", "VF", "QF"],
+      )
+    }
+    None => fail("missing CPSR alias origin")
+  }
+  match @core_theory.Target::thumb().origin_of_name("LR") {
+    Some(origin) => {
+      assert_true(origin.aliased().ident() == "LR")
+      assert_true(origin.source().map(v => v.ident()) == Some("R14"))
+    }
+    None => fail("missing Thumb LR alias origin")
+  }
   let riscv = @core_theory.Target::riscv64()
   assert_true(riscv.role_aliases(ResultRegister).contains("x10"))
   assert_true(riscv.role_aliases(ResultRegister).contains("a0"))

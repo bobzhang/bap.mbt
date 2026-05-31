@@ -623,8 +623,26 @@ fn x86_64_vars() -> Array[Var] {
 fn arm32_vars() -> Array[Var] {
   let items = numbered_word_vars(32, "R", 16)
   append_vars(items, named_word_vars(32, ["SP", "LR", "PC", "CPSR"]))
+  append_vars(items, arm32_flags())
   items.push(mem_var(32, 8, "mem"))
   items
+}
+
+///|
+fn arm32_flags() -> Array[Var] {
+  [
+    for name in ["NF", "ZF", "CF", "VF", "QF"] => bool_var(name)
+  ]
+}
+
+///|
+fn arm32_alias_origins() -> Array[AliasOrigin] {
+  [
+    AliasOrigin::register(word_var(32, "SP"), word_var(32, "R13")),
+    AliasOrigin::register(word_var(32, "LR"), word_var(32, "R14")),
+    AliasOrigin::register(word_var(32, "PC"), word_var(32, "R15")),
+    AliasOrigin::bit_set(word_var(32, "CPSR"), arm32_flags()),
+  ]
 }
 
 ///|
@@ -1812,6 +1830,7 @@ pub fn Target::arm() -> Target {
     bits=32,
     endianness=LittleEndian,
     vars=arm32_vars(),
+    alias_origins=arm32_alias_origins(),
   )
 }
 

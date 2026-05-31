@@ -362,7 +362,10 @@ For concrete function DIEs that omit a direct name, resolve
 DIE's `DW_AT_name` or `DW_AT_linkage_name`; support same-compilation-unit
 `DW_FORM_ref*` references and absolute `DW_FORM_ref_addr` references by
 collecting DIE names across the parsed `.debug_info` section before finalizing
-functions.
+functions. `DW_FORM_ref_addr` is version-sensitive: DWARF2 encodes it at the
+target address size, while DWARF3 and later encode it at the DWARF offset size.
+Use the compilation-unit version when consuming either captured or skipped
+`ref_addr` forms so later attributes do not become misaligned.
 
 `text[i]` returns a `UInt16` code unit, not a `Char`. For text parsers that need character predicates or `StringBuilder::write_char`, use `text.get_char(offset)` and advance by `char.utf16_len()`. It is still fine to increment by one for syntax bytes you have already constrained to ASCII, such as `(`, `)`, `"` and `\\`, but do not mix code-unit offsets with `Char` APIs accidentally.
 

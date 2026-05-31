@@ -169,10 +169,46 @@ fn DwarfFunctionCandidate::resolve(
 }
 
 ///|
+fn dwarf_ref_addr_size(
+  version : Int,
+  dwarf_size : DwarfWordSize,
+  addr_size : DwarfWordSize,
+) -> DwarfWordSize {
+  if version == 2 {
+    addr_size
+  } else {
+    dwarf_size
+  }
+}
+
+///|
+fn dwarf_read_ref_addr_offset(
+  input : DwarfInput,
+  endian : @bitvec.Endian,
+  version : Int,
+  dwarf_size : DwarfWordSize,
+  addr_size : DwarfWordSize,
+) -> Result[(Int, DwarfInput), String] {
+  match
+    input.read_address(
+      endian~,
+      size=dwarf_ref_addr_size(version, dwarf_size, addr_size),
+    ) {
+    Ok((offset, next)) =>
+      match dwarf_ref_uint_offset_to_int(offset) {
+        Ok(value) => Ok((value, next))
+        Err(reason) => Err(reason)
+      }
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
 fn dwarf_skip_form(
   input : DwarfInput,
   form : DwarfForm,
   endian : @bitvec.Endian,
+  version : Int,
   dwarf_size : DwarfWordSize,
   addr_size : DwarfWordSize,
 ) -> Result[DwarfInput, String] {
@@ -182,11 +218,17 @@ fn dwarf_skip_form(
         Ok((_, next)) => Ok(next)
         Err(reason) => Err(reason)
       }
-    DwarfStrp | DwarfOffset | DwarfRefAddr =>
+    DwarfStrp | DwarfOffset =>
       match input.read_offset(endian~, size=dwarf_size) {
         Ok((_, next)) => Ok(next)
         Err(reason) => Err(reason)
       }
+    DwarfRefAddr =>
+      input.skip(
+        bytes=dwarf_word_bytes(
+          dwarf_ref_addr_size(version, dwarf_size, addr_size),
+        ),
+      )
     DwarfStrpSup | DwarfLineStrp =>
       match input.read_offset(endian~, size=dwarf_size) {
         Ok((_, next)) => Ok(next)
@@ -247,7 +289,9 @@ fn dwarf_skip_form(
     DwarfIndirect =>
       match input.read_form() {
         Ok((indirect_form, next)) =>
-          dwarf_skip_form(next, indirect_form, endian, dwarf_size, addr_size)
+          dwarf_skip_form(
+            next, indirect_form, endian, version, dwarf_size, addr_size,
+          )
         Err(reason) => Err(reason)
       }
   }
@@ -680,6 +724,7 @@ fn dwarf_read_attr_value(
   input : DwarfInput,
   field : DwarfAbbrevField,
   endian : @bitvec.Endian,
+  version : Int,
   dwarf_size : DwarfWordSize,
   addr_size : DwarfWordSize,
   addr_base : Int?,
@@ -697,6 +742,7 @@ fn dwarf_read_attr_value(
             next,
             DwarfAbbrevField::create(attr=field.attr(), form=actual_form),
             endian,
+            version,
             dwarf_size,
             addr_size,
             addr_base,
@@ -741,7 +787,8 @@ fn dwarf_read_attr_value(
             Err(reason) => Err(reason)
           }
         form =>
-          match dwarf_skip_form(input, form, endian, dwarf_size, addr_size) {
+          match
+            dwarf_skip_form(input, form, endian, version, dwarf_size, addr_size) {
             Ok(next) => Ok((DwarfAttrIgnored, next))
             Err(reason) => Err(reason)
           }
@@ -807,7 +854,8 @@ fn dwarf_read_attr_value(
             Err(reason) => Err(reason)
           }
         form =>
-          match dwarf_skip_form(input, form, endian, dwarf_size, addr_size) {
+          match
+            dwarf_skip_form(input, form, endian, version, dwarf_size, addr_size) {
             Ok(next) => Ok((DwarfAttrIgnored, next))
             Err(reason) => Err(reason)
           }
@@ -827,7 +875,8 @@ fn dwarf_read_attr_value(
             Err(reason) => Err(reason)
           }
         form =>
-          match dwarf_skip_form(input, form, endian, dwarf_size, addr_size) {
+          match
+            dwarf_skip_form(input, form, endian, version, dwarf_size, addr_size) {
             Ok(next) => Ok((DwarfAttrIgnored, next))
             Err(reason) => Err(reason)
           }
@@ -844,7 +893,10 @@ fn dwarf_read_attr_value(
             Err(reason) => Err(reason)
           }
         DwarfRefAddr =>
-          match input.read_offset(endian~, size=dwarf_size) {
+          match
+            dwarf_read_ref_addr_offset(
+              input, endian, version, dwarf_size, addr_size,
+            ) {
             Ok((offset, next)) =>
               if offset < 0 {
                 Err("negative DWARF reference address")
@@ -854,7 +906,8 @@ fn dwarf_read_attr_value(
             Err(reason) => Err(reason)
           }
         form =>
-          match dwarf_skip_form(input, form, endian, dwarf_size, addr_size) {
+          match
+            dwarf_skip_form(input, form, endian, version, dwarf_size, addr_size) {
             Ok(next) => Ok((DwarfAttrIgnored, next))
             Err(reason) => Err(reason)
           }
@@ -876,7 +929,14 @@ fn dwarf_read_attr_value(
       }
     DwarfIgnoredValue =>
       match
-        dwarf_skip_form(input, field.form(), endian, dwarf_size, addr_size) {
+        dwarf_skip_form(
+          input,
+          field.form(),
+          endian,
+          version,
+          dwarf_size,
+          addr_size,
+        ) {
         Ok(next) => Ok((DwarfAttrIgnored, next))
         Err(reason) => Err(reason)
       }
@@ -1114,7 +1174,7 @@ fn dwarf_read_die(
       field.attr() == DwarfLowPc {
       match
         dwarf_read_attr_value(
-          cursor, field, endian, dwarf_size, addr_size, addr_base, addr_section,
+          cursor, field, endian, version, dwarf_size, addr_size, addr_base, addr_section,
           str_offsets_base, line_str_section, str_offsets_section, str_section,
         ) {
         Ok((value, next)) => {
@@ -1125,7 +1185,14 @@ fn dwarf_read_die(
       }
     } else {
       match
-        dwarf_skip_form(cursor, field.form(), endian, dwarf_size, addr_size) {
+        dwarf_skip_form(
+          cursor,
+          field.form(),
+          endian,
+          version,
+          dwarf_size,
+          addr_size,
+        ) {
         Ok(next) => cursor = next
         Err(reason) => return Err(reason)
       }

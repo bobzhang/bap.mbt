@@ -268,6 +268,38 @@ test "translated DWARF FBI resolves absolute function name references" {
 }
 
 ///|
+test "translated DWARF FBI reads DWARF2 ref_addr at address size" {
+  let abbrev = b"\x01\x2e\x00" +
+    b"\x47\x10" +
+    b"\x11\x01" +
+    b"\x12\x0b" +
+    b"\x00\x00" +
+    b"\x02\x2e\x00" +
+    b"\x03\x08" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x24\x00\x00\x00" +
+    b"\x02\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x08" +
+    b"\x01" +
+    b"\x1d\x00\x00\x00\x00\x00\x00\x00" +
+    b"\x00\x10\x00\x00\x00\x00\x00\x00" +
+    b"\x04" +
+    b"\x02" +
+    b"declared\x00" +
+    b"\x00"
+  let data = expect_fbi_data(
+    @dwarf.DwarfData::from_bytes(endian=LittleEndian, info~, abbrev~, str=b""),
+  )
+  let functions = expect_functions(data.functions())
+  assert_true(functions.length() == 1)
+  assert_true(functions[0].name() == "declared")
+  assert_true(functions[0].low_pc() == 0x1000UL)
+  assert_true(functions[0].high_pc() == Some(0x1004UL))
+}
+
+///|
 test "translated DWARF FBI extracts indexed string-table names" {
   let abbrev = b"\x01\x2e\x00" +
     b"\x03\x26" +

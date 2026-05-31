@@ -1220,6 +1220,27 @@ fn dwarf_read_die(
 }
 
 ///|
+fn dwarf_skip_unit_header_tail(
+  input : DwarfInput,
+  unit_type : Int,
+  dwarf_size : DwarfWordSize,
+) -> Result[DwarfInput, String] {
+  if unit_type == 1 || unit_type == 3 {
+    Ok(input)
+  } else if unit_type == 4 || unit_type == 5 {
+    input.skip(bytes=8)
+  } else if unit_type == 2 || unit_type == 6 {
+    match input.skip(bytes=8) {
+      Ok(after_signature) =>
+        after_signature.skip(bytes=dwarf_word_bytes(dwarf_size))
+      Err(reason) => Err(reason)
+    }
+  } else {
+    Err("unsupported DWARF5 unit type: \{unit_type}")
+  }
+}
+
+///|
 fn dwarf_read_unit_header(
   input : DwarfInput,
   version : Int,
@@ -1228,12 +1249,19 @@ fn dwarf_read_unit_header(
 ) -> Result[(Int, DwarfWordSize, DwarfInput), String] {
   if version >= 5 {
     match input.read_byte() {
-      Ok((_, after_unit_type)) =>
+      Ok((unit_type, after_unit_type)) =>
         match after_unit_type.read_address_size() {
           Ok((addr_size, after_addr_size)) =>
             match after_addr_size.read_offset(endian~, size=dwarf_size) {
               Ok((abbrev_offset, after_offset)) =>
-                Ok((abbrev_offset, addr_size, after_offset))
+                match
+                  dwarf_skip_unit_header_tail(
+                    after_offset, unit_type, dwarf_size,
+                  ) {
+                  Ok(after_header) =>
+                    Ok((abbrev_offset, addr_size, after_header))
+                  Err(reason) => Err(reason)
+                }
               Err(reason) => Err(reason)
             }
           Err(reason) => Err(reason)

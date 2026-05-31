@@ -317,7 +317,12 @@ compilation unit's `DW_AT_str_offsets_base`, then uses the resulting offset in
 `.debug_str`. Keep `.debug_str` itself demand-driven: inline `DW_FORM_string`
 names and `DW_FORM_line_strp` names must not require a string table, but
 `DW_FORM_strp`/`DW_FORM_strx*` should fail clearly when they dereference a
-missing one. Non-capturing DIE fields should still skip the encoded form
+missing one. DWARF5 unit headers are `unit_type`-dependent: full/partial
+compile units have no header tail after `debug_abbrev_offset`,
+skeleton/split-compile units add an 8-byte `dwo_id`, and type/split-type units
+add an 8-byte `type_signature` plus a DWARF-size `type_offset`. Consume that
+tail before the first DIE abbreviation code. Non-capturing DIE fields should
+still skip the encoded form
 without forcing optional sections to exist, including zero-length
 `DW_FORM_exprloc`/`DW_FORM_block*` payloads; fixed-width block lengths are
 unsigned sizes, not sign-extended integers. Keep `DW_FORM_data*` and

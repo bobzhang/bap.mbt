@@ -466,6 +466,68 @@ test "translated DWARF FBI skips DWARF5 producer metadata forms" {
 }
 
 ///|
+test "translated DWARF FBI skips DWARF5 skeleton dwo id" {
+  let abbrev = b"\x00"
+  let info = b"\x11\x00\x00\x00" +
+    b"\x05\x00" +
+    b"\x04" +
+    b"\x04" +
+    b"\x00\x00\x00\x00" +
+    b"\x7f\x06\x05\x04\x03\x02\x01\x00" +
+    b"\x00"
+  let data = expect_fbi_data(
+    @dwarf.DwarfData::from_bytes(endian=LittleEndian, info~, abbrev~, str=b""),
+  )
+  assert_true(expect_functions(data.functions()).is_empty())
+}
+
+///|
+test "translated DWARF FBI skips DWARF5 type unit signature fields" {
+  let abbrev = b"\x00"
+  let info = b"\x15\x00\x00\x00" +
+    b"\x05\x00" +
+    b"\x02" +
+    b"\x04" +
+    b"\x00\x00\x00\x00" +
+    b"\x7f\x06\x05\x04\x03\x02\x01\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x00"
+  let data = expect_fbi_data(
+    @dwarf.DwarfData::from_bytes(endian=LittleEndian, info~, abbrev~, str=b""),
+  )
+  assert_true(expect_functions(data.functions()).is_empty())
+}
+
+///|
+test "translated DWARF FBI skips DWARF5 split-unit header tails" {
+  let abbrev = b"\x00"
+  let split_compile = b"\x11\x00\x00\x00" +
+    b"\x05\x00" +
+    b"\x05" +
+    b"\x04" +
+    b"\x00\x00\x00\x00" +
+    b"\x7f\x06\x05\x04\x03\x02\x01\x00" +
+    b"\x00"
+  let split_type = b"\x15\x00\x00\x00" +
+    b"\x05\x00" +
+    b"\x06" +
+    b"\x04" +
+    b"\x00\x00\x00\x00" +
+    b"\x7f\x06\x05\x04\x03\x02\x01\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x00"
+  let data = expect_fbi_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=LittleEndian,
+      info=split_compile + split_type,
+      abbrev~,
+      str=b"",
+    ),
+  )
+  assert_true(expect_functions(data.functions()).is_empty())
+}
+
+///|
 test "translated DWARF FBI skips zero-length expression metadata" {
   let abbrev = b"\x01\x2e\x00" +
     b"\x03\x08" +

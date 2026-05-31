@@ -155,7 +155,11 @@ BAP `Block.insns` bridge even while instructions and blocks are stored as
 separate project facts. Removal helpers should keep those facts coherent:
 removing a block also removes instructions dominated by that memory interval
 and CFG edges whose source or target touches the removed block, while exact
-instruction and edge removal supports decoder reruns and pruning. Until a real
+instruction and edge removal supports decoder reruns and pruning. Since branch
+facts may point at interior instruction addresses, expose block-scoped edge
+lookups in addition to exact source/target address lookups; reconstruction and
+later analysis should consume those views when exact basic-block splitting is
+not yet available. Until a real
 recursive-descent CFG is available, a project
 reconstructor can still preserve useful BAP structure by turning materialized
 disassembly blocks into IR block terms with address attributes and subroutine

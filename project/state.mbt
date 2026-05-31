@@ -367,6 +367,37 @@ pub fn ProjectDisassemblyState::edges_to(
 }
 
 ///|
+pub fn ProjectDisassemblyState::edges_from_block(
+  self : ProjectDisassemblyState,
+  block : @memory.Memory,
+) -> Array[ProjectDisassemblyEdge] {
+  self.edges_value.filter(edge => block.contains(edge.source()))
+}
+
+///|
+pub fn ProjectDisassemblyState::edges_to_block(
+  self : ProjectDisassemblyState,
+  block : @memory.Memory,
+) -> Array[ProjectDisassemblyEdge] {
+  self.edges_value.filter(edge => {
+    match edge.target() {
+      Some(target) => block.contains(target)
+      None => false
+    }
+  })
+}
+
+///|
+pub fn ProjectDisassemblyState::edges_touching_block(
+  self : ProjectDisassemblyState,
+  block : @memory.Memory,
+) -> Array[ProjectDisassemblyEdge] {
+  self.edges_value.filter(edge => {
+    project_disassembly_edge_touches_block(edge, block)
+  })
+}
+
+///|
 pub fn ProjectDisassemblyState::with_blocks(
   self : ProjectDisassemblyState,
   blocks : Array[@memory.Memory],

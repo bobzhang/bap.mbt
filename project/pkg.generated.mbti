@@ -273,7 +273,10 @@ pub fn ProjectDisassemblyState::create(blocks? : Array[@memory.Memory], instruct
 pub fn ProjectDisassemblyState::edge_count(Self) -> Int
 pub fn ProjectDisassemblyState::edges(Self) -> Array[ProjectDisassemblyEdge]
 pub fn ProjectDisassemblyState::edges_from(Self, UInt64) -> Array[ProjectDisassemblyEdge]
+pub fn ProjectDisassemblyState::edges_from_block(Self, @memory.Memory) -> Array[ProjectDisassemblyEdge]
 pub fn ProjectDisassemblyState::edges_to(Self, UInt64) -> Array[ProjectDisassemblyEdge]
+pub fn ProjectDisassemblyState::edges_to_block(Self, @memory.Memory) -> Array[ProjectDisassemblyEdge]
+pub fn ProjectDisassemblyState::edges_touching_block(Self, @memory.Memory) -> Array[ProjectDisassemblyEdge]
 pub fn ProjectDisassemblyState::empty() -> Self
 pub fn ProjectDisassemblyState::has_block(Self, @memory.Memory) -> Bool
 pub fn ProjectDisassemblyState::has_edge(Self, ProjectDisassemblyEdge) -> Bool

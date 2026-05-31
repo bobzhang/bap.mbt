@@ -411,6 +411,59 @@ test "project disassembly state removes blocks instructions and edges" {
 }
 
 ///|
+test "project disassembly state exposes block-scoped edge lookup" {
+  let block = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x4000UL,
+    b"\x01\x02\x03\x04",
+  )
+  let other = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x5000UL,
+    b"\x05\x06",
+  )
+  let from_interior = @project.ProjectDisassemblyEdge::create(
+    source=0x4002UL,
+    target=0x5001UL,
+    kind=CondEdge,
+  )
+  let unknown_from_block = @project.ProjectDisassemblyEdge::create(
+    source=0x4003UL,
+    kind=JumpEdge,
+  )
+  let to_interior = @project.ProjectDisassemblyEdge::create(
+    source=0x3000UL,
+    target=0x4001UL,
+    kind=FallEdge,
+  )
+  let outside = @project.ProjectDisassemblyEdge::create(
+    source=0x6000UL,
+    target=0x6001UL,
+    kind=JumpEdge,
+  )
+  let state = @project.ProjectDisassemblyState::empty()
+    .add_block(block)
+    .add_block(other)
+    .add_edge(from_interior)
+    .add_edge(unknown_from_block)
+    .add_edge(to_interior)
+    .add_edge(outside)
+  let from_block = state.edges_from_block(block)
+  assert_true(from_block.length() == 2)
+  assert_true(from_block.any(edge => edge.source() == 0x4002UL))
+  assert_true(from_block.any(edge => edge.source() == 0x4003UL))
+  let to_block = state.edges_to_block(block)
+  assert_true(to_block.length() == 1)
+  assert_true(to_block[0].source() == 0x3000UL)
+  let touching = state.edges_touching_block(block)
+  assert_true(touching.length() == 3)
+  assert_true(touching.any(edge => edge.source() == 0x4002UL))
+  assert_true(touching.any(edge => edge.source() == 0x4003UL))
+  assert_true(touching.any(edge => edge.target() == Some(0x4001UL)))
+  assert_true(!touching.any(edge => edge.source() == 0x6000UL))
+}
+
+///|
 test "project maps programs and stores libraries" {
   let target = @core_theory.Target::unknown()
   let sub = @types.Sub::create(name="main")

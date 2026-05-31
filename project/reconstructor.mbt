@@ -256,25 +256,22 @@ fn project_reconstructor_subroutine(
       Err(reason) => return Err(reason)
     }
   }
-  let edges = project.disassembly().edges()
   for i in 0..<blocks.length() {
     let mut ir_block = ir_blocks[i]
-    for edge in edges {
-      if blocks[i].contains(edge.source()) {
-        match edge.target() {
-          Some(target) =>
-            match project_reconstructor_find_block_containing(blocks, target) {
-              Some(target_index) =>
-                ir_block = ir_block.append_jmp(
-                  project_reconstructor_edge_jmp(
-                    edge,
-                    ir_blocks[target_index].tid(),
-                  ),
-                )
-              None => ()
-            }
-          None => ()
-        }
+    for edge in project.disassembly().edges_from_block(blocks[i]) {
+      match edge.target() {
+        Some(target) =>
+          match project_reconstructor_find_block_containing(blocks, target) {
+            Some(target_index) =>
+              ir_block = ir_block.append_jmp(
+                project_reconstructor_edge_jmp(
+                  edge,
+                  ir_blocks[target_index].tid(),
+                ),
+              )
+            None => ()
+          }
+        None => ()
       }
     }
     ir_blocks[i] = ir_block

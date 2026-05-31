@@ -637,3 +637,106 @@ pub fn Term::with_intent(self : Term[Arg], intent : Intent) -> Term[Arg] {
 pub fn Term::with_unknown_intent(self : Term[Arg]) -> Term[Arg] {
   self.with_payload({ ..self.payload_value, intent: None })
 }
+
+///|
+fn ir_term_join_lines(lines : Array[String]) -> String {
+  let builder = StringBuilder()
+  for i, line in lines {
+    if i > 0 {
+      builder.write_string("\n")
+    }
+    builder.write_string(line)
+  }
+  builder.to_string()
+}
+
+///|
+fn ir_term_intent_prefix(intent : Intent?) -> String {
+  match intent {
+    Some(In) => "in "
+    Some(Out) => "out "
+    Some(Both) => "in out "
+    None => ""
+  }
+}
+
+///|
+pub fn Term::arg_to_string(self : Term[Arg]) -> String {
+  let lhs = self.arg_lhs()
+  "\{lhs.name()} :: \{ir_term_intent_prefix(self.intent())}\{lhs.typ().to_string()} = \{self.arg_rhs().to_string()}"
+}
+
+///|
+pub fn Term::def_to_string(self : Term[Def]) -> String {
+  "\{self.lhs().to_string()} := \{self.rhs().to_string()}"
+}
+
+///|
+pub fn Term::phi_to_string(self : Term[Phi]) -> String {
+  let values = []
+  for value in self.values() {
+    values.push("[\{value.1.to_string()}, \{value.0.to_string()}]")
+  }
+  "\{self.phi_lhs().to_string()} <- phi(\{values.join(", ")})"
+}
+
+///|
+pub fn Term::jmp_to_string(self : Term[Jmp]) -> String {
+  let cond = self.cond()
+  let prefix = match cond {
+    Int(word) if word.is_one() => ""
+    _ => "when \{cond.to_string()} "
+  }
+  let body = match self.kind() {
+    JmpCall(call) =>
+      match call.return_label {
+        Some(label) =>
+          "call \{call.target.to_string()} with return \{label.to_string()}"
+        None => "call \{call.target.to_string()} with noreturn"
+      }
+    Goto(label) => "goto \{label.to_string()}"
+    Ret(label) => "return \{label.to_string()}"
+    Interrupt(num, tid) =>
+      "interrupt 0x\{num.to_string(radix=16).to_upper()} return \{tid.to_string()}"
+  }
+  prefix + body
+}
+
+///|
+pub fn Term::blk_to_string(self : Term[Blk]) -> String {
+  let lines : Array[String] = [self.name()]
+  for phi in self.phis() {
+    lines.push(phi.phi_to_string())
+  }
+  for def in self.defs() {
+    lines.push(def.def_to_string())
+  }
+  for jmp in self.jmps() {
+    lines.push(jmp.jmp_to_string())
+  }
+  ir_term_join_lines(lines)
+}
+
+///|
+pub fn Term::sub_to_string(self : Term[Sub]) -> String {
+  let arg_names = self.args().map(arg => arg.arg_lhs().name())
+  let lines : Array[String] = [
+    "sub \{self.sub_name()}(\{arg_names.join(", ")})",
+  ]
+  for arg in self.args() {
+    lines.push(arg.arg_to_string())
+  }
+  for blk in self.blks() {
+    lines.push(blk.blk_to_string())
+  }
+  ir_term_join_lines(lines)
+}
+
+///|
+pub fn Term::program_to_string(self : Term[Program]) -> String {
+  let lines : Array[String] = ["program"]
+  for sub in self.subs() {
+    lines.push(sub.sub_to_string())
+  }
+  ir_term_join_lines(lines)
+}

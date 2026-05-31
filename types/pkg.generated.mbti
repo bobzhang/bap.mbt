@@ -549,6 +549,7 @@ pub fn IrTerm::same_term(Self, Self) -> Bool
 pub fn IrTerm::same_tid(Self, Tid) -> Bool
 pub fn IrTerm::set_attr(Self, Attr) -> Self
 pub fn IrTerm::tid(Self) -> Tid
+pub fn IrTerm::to_string(Self) -> String
 pub fn IrTerm::uses_var(Self, Var) -> Bool
 pub fn IrTerm::uses_var_name(Self, String) -> Bool
 
@@ -684,6 +685,7 @@ pub fn Term::append_sub(Self[Program], Self[Sub]) -> Self[Program]
 pub fn Term::arg_free_vars(Self[Arg]) -> Array[Var]
 pub fn Term::arg_lhs(Self[Arg]) -> Var
 pub fn Term::arg_rhs(Self[Arg]) -> Exp
+pub fn Term::arg_to_string(Self[Arg]) -> String
 pub fn Term::args(Self[Sub]) -> Array[Self[Arg]]
 pub fn[T] Term::attrs(Self[T]) -> Map[String, String]
 pub fn Term::blk_defined_vars(Self[Blk]) -> Array[Var]
@@ -691,6 +693,7 @@ pub fn Term::blk_free_vars(Self[Blk]) -> Array[Var]
 pub fn Term::blk_phi_edge_free_vars(Self[Blk], Tid) -> Array[Var]
 pub fn Term::blk_successor_tids(Self[Blk]) -> Array[Tid]
 pub fn Term::blk_terms(Self[Blk], include_self? : Bool) -> Array[IrTerm]
+pub fn Term::blk_to_string(Self[Blk]) -> String
 pub fn Term::blk_to_trivial_condition_form(Self[Blk]) -> Self[Blk]
 pub fn Term::blk_value_free_vars(Self[Blk]) -> Array[Var]
 pub fn Term::blks(Self[Sub]) -> Array[Self[Blk]]
@@ -701,6 +704,7 @@ pub fn[T] Term::create(T, tid? : Tid) -> Self[T]
 pub fn Term::def_count(Self[Blk]) -> Int
 pub fn Term::def_free_vars(Self[Def]) -> Array[Var]
 pub fn Term::def_occurs_after(Self[Blk], Tid, Tid) -> Bool
+pub fn Term::def_to_string(Self[Def]) -> String
 pub fn Term::defines_var(Self[Blk], Var) -> Bool
 pub fn Term::defs(Self[Blk]) -> Array[Self[Def]]
 pub fn Term::defs_after(Self[Blk], Tid, rev? : Bool) -> Array[Self[Def]]
@@ -751,6 +755,7 @@ pub fn Term::is_ssa(Self[Sub]) -> Bool
 pub fn Term::is_stub(Self[Sub]) -> Bool
 pub fn Term::jmp_free_vars(Self[Jmp]) -> Array[Var]
 pub fn Term::jmp_has_trivial_condition(Self[Jmp]) -> Bool
+pub fn Term::jmp_to_string(Self[Jmp]) -> String
 pub fn Term::jmps(Self[Blk]) -> Array[Self[Jmp]]
 pub fn Term::kind(Self[Jmp]) -> JmpKind
 pub fn Term::last_def(Self[Blk]) -> Self[Def]?
@@ -776,6 +781,7 @@ pub fn[T] Term::payload(Self[T]) -> T
 pub fn Term::phi_edge_free_vars(Self[Phi], Tid) -> Array[Var]
 pub fn Term::phi_free_vars(Self[Phi]) -> Array[Var]
 pub fn Term::phi_lhs(Self[Phi]) -> Var
+pub fn Term::phi_to_string(Self[Phi]) -> String
 pub fn Term::phis(Self[Blk]) -> Array[Self[Phi]]
 pub fn Term::prev_def(Self[Blk], Tid) -> Self[Def]?
 pub fn Term::program_args(Self[Program]) -> Array[Self[Arg]]
@@ -801,6 +807,7 @@ pub fn Term::program_stub_links(Self[Program], link_only? : Array[String], no_li
 pub fn Term::program_stub_tids(Self[Program]) -> Array[Tid]
 pub fn Term::program_terms(Self[Program], include_self? : Bool) -> Array[IrTerm]
 pub fn Term::program_to_ssa(Self[Program]) -> Self[Program]
+pub fn Term::program_to_string(Self[Program]) -> String
 pub fn Term::program_to_trivial_condition_form(Self[Program]) -> Self[Program]
 pub fn Term::remove_def(Self[Blk], Tid) -> Self[Blk]
 pub fn Term::remove_jmp(Self[Blk], Tid) -> Self[Blk]
@@ -850,6 +857,7 @@ pub fn Term::sub_successor_blocks(Self[Sub], Self[Blk]) -> Array[Self[Blk]]
 pub fn Term::sub_symbol_names(Self[Sub]) -> Array[String]
 pub fn Term::sub_terms(Self[Sub], include_self? : Bool) -> Array[IrTerm]
 pub fn Term::sub_tid_graph(Self[Sub]) -> @graphlib.Graph[Tid, Tid]
+pub fn Term::sub_to_string(Self[Sub]) -> String
 pub fn Term::sub_to_trivial_condition_form(Self[Sub]) -> Self[Sub]
 pub fn Term::subs(Self[Program]) -> Array[Self[Sub]]
 pub fn Term::substitute_arg_var(Self[Arg], Var, Exp) -> Self[Arg]

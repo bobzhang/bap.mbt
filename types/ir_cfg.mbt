@@ -369,38 +369,17 @@ fn ir_cfg_dot_join_lines(lines : Array[String]) -> String {
 
 ///|
 fn ir_cfg_dot_def_label(def : Term[Def]) -> String {
-  "\{def.lhs().to_string()} := \{def.rhs().to_string()}"
+  def.def_to_string()
 }
 
 ///|
 fn ir_cfg_dot_phi_label(phi : Term[Phi]) -> String {
-  let values = []
-  for value in phi.values() {
-    values.push("[\{value.1.to_string()}, \{value.0.to_string()}]")
-  }
-  "\{phi.phi_lhs().to_string()} <- phi(\{values.join(", ")})"
+  phi.phi_to_string()
 }
 
 ///|
 fn ir_cfg_dot_jmp_label(jmp : Term[Jmp]) -> String {
-  let cond = jmp.cond()
-  let prefix = match cond {
-    Int(word) if word.is_one() => ""
-    _ => "when \{cond.to_string()} "
-  }
-  let body = match jmp.kind() {
-    JmpCall(call) =>
-      match call.return_label {
-        Some(label) =>
-          "call \{call.target.to_string()} with return \{label.to_string()}"
-        None => "call \{call.target.to_string()} with noreturn"
-      }
-    Goto(label) => "goto \{label.to_string()}"
-    Ret(label) => "return \{label.to_string()}"
-    Interrupt(num, tid) =>
-      "interrupt 0x\{num.to_string(radix=16).to_upper()} return \{tid.to_string()}"
-  }
-  prefix + body
+  jmp.jmp_to_string()
 }
 
 ///|

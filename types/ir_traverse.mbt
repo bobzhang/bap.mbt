@@ -72,6 +72,19 @@ pub fn IrTerm::name(self : IrTerm) -> String {
 }
 
 ///|
+pub fn IrTerm::to_string(self : IrTerm) -> String {
+  match self {
+    ProgramTerm(term) => term.program_to_string()
+    SubTerm(term) => term.sub_to_string()
+    ArgTerm(term) => term.arg_to_string()
+    BlkTerm(term) => term.blk_to_string()
+    PhiTerm(term) => term.phi_to_string()
+    DefTerm(term) => term.def_to_string()
+    JmpTerm(term) => term.jmp_to_string()
+  }
+}
+
+///|
 pub fn IrTerm::attrs(self : IrTerm) -> Map[String, String] {
   match self {
     ProgramTerm(term) => term.attrs()

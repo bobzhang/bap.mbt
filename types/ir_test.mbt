@@ -306,6 +306,67 @@ test "phi nodes jumps calls and args expose BAP-style payloads" {
 }
 
 ///|
+test "ir terms render BAP-style strings" {
+  let typ = @types.ValueType::Imm(8)
+  let lhs = @types.Var::new(name="r0", typ~)
+  let flag = @types.Var::new(name="flag", typ=@types.ValueType::bool_t())
+  let target = @types.Var::new(name="target", typ=@types.ValueType::reg32_t())
+  let left = @types.Tid::for_name("left")
+  let right = @types.Tid::for_name("right")
+  let one = @types.Int(@types.Word::of_int(width=8, 1))
+  let two = @types.Int(@types.Word::of_int(width=8, 2))
+  let def = @types.Def::create(lhs, one)
+  let phi = @types.Phi::of_list(lhs, [(left, one), (right, two)])
+  let goto = @types.Jmp::create_goto(
+    @types.Label::indirect(Var(target)),
+    cond=Var(flag),
+  )
+  let call = @types.Jmp::create_call(
+    @types.Call::create(
+      target=@types.Label::direct(left),
+      return_label=@types.Label::direct(right),
+    ),
+  )
+  let noreturn = @types.Jmp::create_call(
+    @types.Call::create(target=@types.Label::direct(left)),
+  )
+  let ret = @types.Jmp::create_ret(@types.Label::direct(right))
+  let interrupt = @types.Jmp::create_int(13, right)
+  let arg = @types.Arg::create(lhs, one, intent=Both)
+
+  inspect(arg.arg_to_string(), content="r0 :: in out imm8 = 1:8u")
+  inspect(def.def_to_string(), content="r0:imm8 := 1:8u")
+  inspect(
+    phi.phi_to_string(),
+    content="r0:imm8 <- phi([1:8u, @left], [2:8u, @right])",
+  )
+  inspect(goto.jmp_to_string(), content="when flag:imm1 goto *target:imm32")
+  inspect(call.jmp_to_string(), content="call @left with return @right")
+  inspect(noreturn.jmp_to_string(), content="call @left with noreturn")
+  inspect(ret.jmp_to_string(), content="return @right")
+  inspect(interrupt.jmp_to_string(), content="interrupt 0xD return @right")
+  inspect(@types.DefTerm(def).to_string(), content="r0:imm8 := 1:8u")
+
+  let blk = @types.Blk::create(
+    phis=[phi],
+    defs=[def],
+    jmps=[goto],
+    tid=@types.Tid::for_name("entry"),
+  )
+  inspect(
+    blk.blk_to_string(),
+    content="@entry\nr0:imm8 <- phi([1:8u, @left], [2:8u, @right])\nr0:imm8 := 1:8u\nwhen flag:imm1 goto *target:imm32",
+  )
+  let sub = @types.Sub::create(name="main", args=[arg], blks=[blk])
+  assert_true(sub.sub_to_string().contains("sub main(r0)"))
+  assert_true(sub.sub_to_string().contains(arg.arg_to_string()))
+  assert_true(sub.sub_to_string().contains(blk.blk_to_string()))
+  let program = @types.Program::create(subs=[sub])
+  assert_true(program.program_to_string().contains("program\nsub main(r0)"))
+  assert_true(@types.ProgramTerm(program).to_string().contains("sub main(r0)"))
+}
+
+///|
 test "ir definition phi and jump helpers traverse expressions" {
   let typ = @types.ValueType::Imm(8)
   let x = @types.Var::new(name="x", typ~)

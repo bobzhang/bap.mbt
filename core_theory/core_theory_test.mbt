@@ -892,6 +892,21 @@ test "target role helpers classify common architecture variables" {
     Some(sp) => assert_true(ppc64.roles_of_var(sp).contains(StackPointer))
     None => fail("missing R1")
   }
+  match ppc64.origin_of_name("SP") {
+    Some(origin) => {
+      assert_true(origin.aliased().ident() == "SP")
+      assert_true(origin.source().map(v => v.ident()) == Some("R1"))
+    }
+    None => fail("missing PowerPC64 SP alias origin")
+  }
+  assert_true(ppc64.origin_of_name("ZERO") is None)
+  match @core_theory.Target::powerpc().origin_of_name("sp") {
+    Some(origin) => {
+      assert_true(origin.aliased().ident() == "SP")
+      assert_true(origin.source().map(v => v.ident()) == Some("R1"))
+    }
+    None => fail("missing PowerPC SP alias origin")
+  }
   match ppc64.find_var("F1") {
     Some(arg) => assert_true(ppc64.roles_of_var(arg).contains(Argument))
     None => fail("missing F1")

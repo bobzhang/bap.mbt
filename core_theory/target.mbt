@@ -830,6 +830,11 @@ fn ppc_vars(bits : Int) -> Array[Var] {
 }
 
 ///|
+fn ppc_alias_origins(bits : Int) -> Array[AliasOrigin] {
+  [AliasOrigin::register(word_var(bits, "SP"), word_var(bits, "R1"))]
+}
+
+///|
 fn numbered_pc_mem_vars(bits : Int, prefix : String, count : Int) -> Array[Var] {
   let items = numbered_word_vars(bits, prefix, count)
   append_vars(items, named_word_vars(bits, ["PC"]))
@@ -1936,6 +1941,7 @@ pub fn Target::powerpc() -> Target {
     bits=32,
     endianness=BigEndian,
     vars=ppc_vars(32),
+    alias_origins=ppc_alias_origins(32),
   )
 }
 
@@ -1955,6 +1961,7 @@ pub fn Target::powerpcle() -> Target {
     bits=32,
     endianness=LittleEndian,
     vars=ppc_vars(32),
+    alias_origins=ppc_alias_origins(32),
   )
 }
 
@@ -1967,6 +1974,7 @@ pub fn Target::powerpc64() -> Target {
     bits=64,
     endianness=BigEndian,
     vars=ppc_vars(64),
+    alias_origins=ppc_alias_origins(64),
   )
 }
 
@@ -1979,6 +1987,7 @@ pub fn Target::powerpc64le() -> Target {
     bits=64,
     endianness=LittleEndian,
     vars=ppc_vars(64),
+    alias_origins=ppc_alias_origins(64),
   )
 }
 

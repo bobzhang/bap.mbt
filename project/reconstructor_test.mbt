@@ -106,6 +106,52 @@ test "project default reconstructor groups blocks by reachable disassembly edges
 }
 
 ///|
+test "project reconstructor follows edges from interior instruction addresses" {
+  let target = @core_theory.Target::unknown()
+  let entry = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x5500UL,
+    b"\x01\x02",
+  )
+  let body = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x5510UL,
+    b"\x03",
+  )
+  let isolated = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x5520UL,
+    b"\x04",
+  )
+  let interior_edge = @project.ProjectDisassemblyEdge::create(
+    source=0x5501UL,
+    target=0x5510UL,
+    kind=JumpEdge,
+  )
+  let disassembly = @project.ProjectDisassemblyState::empty()
+    .add_block(body)
+    .add_block(isolated)
+    .add_block(entry)
+    .add_edge(interior_edge)
+  let project = @project.Project::empty(target).with_disassembly(disassembly)
+  match project.reconstruct() {
+    Ok(reconstructed) => {
+      let subs = reconstructed.state().subroutines()
+      assert_true(subs.length() == 2)
+      assert_true(subs[0].sub_name() == "sub_0x5500")
+      assert_true(subs[0].blks().length() == 2)
+      assert_true(subs[0].sub_has_edge(subs[0].blks()[0], subs[0].blks()[1]))
+      assert_true(subs[0].blks()[0].jmps().length() == 1)
+      assert_true(
+        subs[0].blks()[0].jmps()[0].get_attr("disassembly-edge") == Some("jump"),
+      )
+      assert_true(subs[1].sub_name() == "sub_0x5520")
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project default reconstructor stops groups at known function roots" {
   let target = @core_theory.Target::unknown()
   let entry = @memory.Memory::from_bytes(

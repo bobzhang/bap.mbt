@@ -104,7 +104,7 @@ fn project_reconstructor_reachable_blocks_with_boundaries(
         if !project_reconstructor_group_contains(group, block) {
           group.push(block)
           for edge in edges {
-            if edge.source() == block.min_addr() {
+            if block.contains(edge.source()) {
               match project_reconstructor_edge_target_index(blocks, edge) {
                 Some(target_index) => {
                   let target = blocks[target_index]
@@ -245,10 +245,9 @@ fn project_reconstructor_subroutine(
   }
   let edges = project.disassembly().edges()
   for i in 0..<blocks.length() {
-    let source = blocks[i].min_addr()
     let mut ir_block = ir_blocks[i]
     for edge in edges {
-      if edge.source() == source {
+      if blocks[i].contains(edge.source()) {
         match edge.target() {
           Some(target) =>
             match project_reconstructor_find_block_start(blocks, target) {

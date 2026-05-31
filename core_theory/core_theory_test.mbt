@@ -738,12 +738,21 @@ test "target selection filters BAP-style metadata constraints" {
   assert_true(
     linux_elf_matches[0].name().unqualified() == "unit-select-linux-elf",
   )
+  let cpu_v2_options = @core_theory.TargetOptions::of_map({ "cpu": "v2" })
   assert_true(linux_elf_matches[0].options().get("cpu") == Some("v2"))
+  assert_true(linux_elf_matches[0].options().equal(cpu_v2_options))
+  assert_true(linux_elf_matches[0].options().compare(cpu_v2_options) == 0)
+  assert_true(
+    linux_elf_matches[0]
+    .options()
+    .compare(@core_theory.TargetOptions::singleton("cpu", "v1")) !=
+    0,
+  )
   assert_true(linux_elf_matches[0].options().to_string() == "+cpu=v2")
   let cpu_v2 = @core_theory.Target::filter(
     parent~,
     system=Linux,
-    options=@core_theory.TargetOptions::singleton("cpu", "v2"),
+    options=cpu_v2_options,
   )
   assert_true(cpu_v2.length() == 1)
   assert_true(cpu_v2[0].name().unqualified() == "unit-select-linux-elf")

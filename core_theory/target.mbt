@@ -390,6 +390,45 @@ pub fn TargetOptions::is_empty(self : TargetOptions) -> Bool {
 }
 
 ///|
+pub fn TargetOptions::equal(
+  self : TargetOptions,
+  other : TargetOptions,
+) -> Bool {
+  self.values_value == other.values_value
+}
+
+///|
+fn target_option_entries_compare(
+  lhs : Array[(String, String)],
+  rhs : Array[(String, String)],
+) -> Int {
+  let limit = if lhs.length() < rhs.length() {
+    lhs.length()
+  } else {
+    rhs.length()
+  }
+  for i in 0..<limit {
+    let key_order = lhs[i].0.compare(rhs[i].0)
+    if key_order != 0 {
+      return key_order
+    }
+    let value_order = lhs[i].1.compare(rhs[i].1)
+    if value_order != 0 {
+      return value_order
+    }
+  }
+  lhs.length().compare(rhs.length())
+}
+
+///|
+pub fn TargetOptions::compare(
+  self : TargetOptions,
+  other : TargetOptions,
+) -> Int {
+  target_option_entries_compare(self.entries(), other.entries())
+}
+
+///|
 pub fn TargetOptions::with_value(
   self : TargetOptions,
   key : String,

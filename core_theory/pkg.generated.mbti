@@ -469,8 +469,10 @@ pub fn Target::x86_64() -> Self
 pub fn Target::xcore() -> Self
 
 type TargetOptions
+pub fn TargetOptions::compare(Self, Self) -> Int
 pub fn TargetOptions::empty() -> Self
 pub fn TargetOptions::entries(Self) -> Array[(String, String)]
+pub fn TargetOptions::equal(Self, Self) -> Bool
 pub fn TargetOptions::get(Self, String) -> String?
 pub fn TargetOptions::is_empty(Self) -> Bool
 pub fn TargetOptions::matches(Self, Self, strict? : Bool) -> Bool

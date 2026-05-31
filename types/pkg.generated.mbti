@@ -769,6 +769,8 @@ pub fn Term::arg_free_vars(Self[Arg]) -> Array[Var]
 pub fn Term::arg_lhs(Self[Arg]) -> Var
 pub fn Term::arg_rhs(Self[Arg]) -> Exp
 pub fn Term::arg_to_string(Self[Arg]) -> String
+pub fn Term::arg_value(Self[Arg]) -> Exp
+pub fn Term::arg_var(Self[Arg]) -> Var
 pub fn Term::args(Self[Sub]) -> Array[Self[Arg]]
 pub fn Term::args_after(Self[Sub], Tid, rev? : Bool) -> Array[Self[Arg]]
 pub fn Term::args_before(Self[Sub], Tid, rev? : Bool) -> Array[Self[Arg]]
@@ -804,6 +806,8 @@ pub fn Term::def_count(Self[Blk]) -> Int
 pub fn Term::def_free_vars(Self[Def]) -> Array[Var]
 pub fn Term::def_occurs_after(Self[Blk], Tid, Tid) -> Bool
 pub fn Term::def_to_string(Self[Def]) -> String
+pub fn Term::def_value(Self[Def]) -> Exp
+pub fn Term::def_var(Self[Def]) -> Var
 pub fn Term::defines_var(Self[Blk], Var) -> Bool
 pub fn Term::defs(Self[Blk]) -> Array[Self[Def]]
 pub fn Term::defs_after(Self[Blk], Tid, rev? : Bool) -> Array[Self[Def]]
@@ -891,6 +895,7 @@ pub fn Term::is_stub(Self[Sub]) -> Bool
 pub fn Term::jmp_count(Self[Blk]) -> Int
 pub fn Term::jmp_exps(Self[Jmp]) -> Array[Exp]
 pub fn Term::jmp_free_vars(Self[Jmp]) -> Array[Var]
+pub fn Term::jmp_guard(Self[Jmp]) -> Exp?
 pub fn Term::jmp_has_trivial_condition(Self[Jmp]) -> Bool
 pub fn Term::jmp_to_string(Self[Jmp]) -> String
 pub fn Term::jmps(Self[Blk]) -> Array[Self[Jmp]]
@@ -1080,6 +1085,7 @@ pub fn Term::with_dst(Self[Jmp], JmpDst?) -> Self[Jmp]
 pub fn Term::with_entry_point(Self[Sub]) -> Self[Sub]
 pub fn Term::with_extern(Self[Sub]) -> Self[Sub]
 pub fn[T] Term::with_flag(Self[T], String) -> Self[T]
+pub fn Term::with_guard(Self[Jmp], Exp?) -> Self[Jmp]
 pub fn Term::with_intent(Self[Arg], Intent) -> Self[Arg]
 pub fn Term::with_intrinsic(Self[Sub]) -> Self[Sub]
 pub fn Term::with_kind(Self[Jmp], JmpKind) -> Self[Jmp]

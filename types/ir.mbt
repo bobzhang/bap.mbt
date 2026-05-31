@@ -752,8 +752,18 @@ pub fn Term::lhs(self : Term[Def]) -> Var {
 }
 
 ///|
+pub fn Term::def_var(self : Term[Def]) -> Var {
+  self.lhs()
+}
+
+///|
 pub fn Term::rhs(self : Term[Def]) -> Exp {
   self.payload_value.rhs
+}
+
+///|
+pub fn Term::def_value(self : Term[Def]) -> Exp {
+  self.rhs()
 }
 
 ///|
@@ -878,6 +888,15 @@ pub fn Term::cond(self : Term[Jmp]) -> Exp {
 }
 
 ///|
+pub fn Term::jmp_guard(self : Term[Jmp]) -> Exp? {
+  if self.cond() == Int(Word::b1()) {
+    None
+  } else {
+    Some(self.cond())
+  }
+}
+
+///|
 pub fn Term::with_kind(self : Term[Jmp], kind : JmpKind) -> Term[Jmp] {
   self.with_payload({ ..self.payload_value, kind, })
 }
@@ -885,6 +904,16 @@ pub fn Term::with_kind(self : Term[Jmp], kind : JmpKind) -> Term[Jmp] {
 ///|
 pub fn Term::with_cond(self : Term[Jmp], cond : Exp) -> Term[Jmp] {
   self.with_payload({ ..self.payload_value, cond, })
+}
+
+///|
+pub fn Term::with_guard(self : Term[Jmp], value : Exp?) -> Term[Jmp] {
+  self.with_cond(
+    match value {
+      Some(exp) => exp
+      None => Int(Word::b1())
+    },
+  )
 }
 
 ///|
@@ -933,8 +962,18 @@ pub fn Term::arg_lhs(self : Term[Arg]) -> Var {
 }
 
 ///|
+pub fn Term::arg_var(self : Term[Arg]) -> Var {
+  self.arg_lhs()
+}
+
+///|
 pub fn Term::arg_rhs(self : Term[Arg]) -> Exp {
   self.payload_value.rhs
+}
+
+///|
+pub fn Term::arg_value(self : Term[Arg]) -> Exp {
+  self.arg_rhs()
 }
 
 ///|

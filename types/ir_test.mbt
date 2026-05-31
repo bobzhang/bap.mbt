@@ -942,6 +942,11 @@ test "phi nodes jumps calls and args expose BAP-style payloads" {
   let right = @types.Tid::for_name("right")
   let one = @types.Int(@types.Word::of_int(width=8, 1))
   let two = @types.Int(@types.Word::of_int(width=8, 2))
+  let flag = @types.Var::new(name="flag", typ=@types.ValueType::bool_t())
+  let guard_exp : @types.Exp = Var(flag)
+  let def = @types.Def::create(lhs, one)
+  assert_true(def.def_var() == lhs)
+  assert_true(def.def_value() == one)
   let ptr = @types.Var::new(name="ptr", typ=@types.ValueType::reg32_t())
   let ptr_exp : @types.Exp = Var(ptr)
   let phi = @types.Phi::of_list(lhs, [(left, one)]).update_phi(right, two)
@@ -974,6 +979,11 @@ test "phi nodes jumps calls and args expose BAP-style payloads" {
   let goto = @types.Jmp::create_goto(@types.Label::direct(left))
   assert_true(goto.dst() == Some(@types.Jmp::resolved(left)))
   assert_true(goto.alt() is None)
+  assert_true(goto.jmp_guard() is None)
+  assert_true(goto.with_guard(Some(guard_exp)).jmp_guard() == Some(guard_exp))
+  assert_true(
+    goto.with_guard(Some(guard_exp)).with_guard(None).jmp_guard() is None,
+  )
   assert_true(
     goto.with_dst(Some(@types.Jmp::indirect(ptr_exp))).kind() ==
     Goto(Indirect(ptr_exp)),
@@ -1005,6 +1015,8 @@ test "phi nodes jumps calls and args expose BAP-style payloads" {
   }
   let arg = @types.Arg::create(lhs, one).with_intent(Both)
   assert_true(arg.intent() == Some(Both))
+  assert_true(arg.arg_var() == lhs)
+  assert_true(arg.arg_value() == one)
   let tagged_arg = arg
     .set_attr(@types.Arg::warn_unused())
     .set_attr(@types.Arg::alloc_size())

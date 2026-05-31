@@ -100,7 +100,10 @@ initialization more than once while still surfacing accidental duplicate custom
 backend names. Built-in raw byte loaders should stay simple and predictable:
 load the bytes into a single executable segment and preserve the selected
 load address as image base-address metadata, then let `ProjectInput` wrap the
-resulting image for higher-level orchestration. Keep
+resulting image for higher-level orchestration. The image-level raw backend can
+remain a minimal address-zero byte image, but the project-level built-in `raw`
+loader should preserve BAP's default raw input behavior by selecting an
+`x86-64` target when no external raw-loader configuration is present. Keep
 object-format parsers such as ELF in `image` backends instead of duplicating
 them in `project`; project filename loading should discover them through the
 same image-backend fallback path as custom image loaders. For ELF, map

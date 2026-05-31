@@ -531,6 +531,7 @@ test "project registers built-in image loaders for raw and Ogre input" {
   }
   assert_true(@project.available_input_loaders().contains("raw"))
   assert_true(@project.available_input_loaders().contains("ogre"))
+  assert_true(@project.find_input_loader("raw") is Some(_))
   assert_true(@project.input_loader_names_for_extension("bin").contains("raw"))
   assert_true(
     @project.input_loader_names_for_extension("ogre").contains("ogre"),
@@ -538,9 +539,14 @@ test "project registers built-in image loaders for raw and Ogre input" {
   match @project.ProjectInput::load(b"\xaa\xbb", loader="raw") {
     Ok(input) => {
       let project = @project.Project::from_input(input)
+      assert_true(project.target().matches("x86_64"))
       assert_true(project.memory().lookup(0UL).length() == 1)
       match project.image() {
-        Some(image) => assert_true(image.segments()[0].name() == ".raw")
+        Some(image) => {
+          assert_true(image.entry_point() == 0UL)
+          assert_true(image.base_address() == Some(0UL))
+          assert_true(image.segments()[0].name() == "bap.user")
+        }
         None => fail("expected raw image")
       }
     }

@@ -347,7 +347,39 @@ pub fn register_input_loader(
 }
 
 ///|
+fn register_input_loader_if_absent(
+  loader : ProjectInputLoader,
+) -> Result[Bool, String] {
+  if input_loader_registry.contains(loader.name()) {
+    Ok(false)
+  } else {
+    match register_input_loader(loader) {
+      Ok(_) => Ok(true)
+      Err(reason) => Err(reason)
+    }
+  }
+}
+
+///|
+fn project_builtin_raw_loader() -> ProjectInputLoader {
+  ProjectInputLoader::create(
+    name="raw",
+    description="raw bytes loaded as a BAP-style x86-64 project input",
+    extensions=["raw", "bin"],
+    priority=0,
+    load=data => {
+      let target = @core_theory.Target::x86_64()
+      ProjectInput::raw_bytes(target~, data, base=0UL)
+    },
+  )
+}
+
+///|
 pub fn register_builtin_input_loaders() -> Result[Unit, String] {
+  match register_input_loader_if_absent(project_builtin_raw_loader()) {
+    Ok(_) => ()
+    Err(reason) => return Err(reason)
+  }
   @image.register_builtin_backends()
 }
 

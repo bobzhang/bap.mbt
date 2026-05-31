@@ -243,6 +243,17 @@ pub fn Term::map_blk_exp(
 }
 
 ///|
+pub fn Term::map_exp(
+  self : Term[Blk],
+  f : (Exp) -> Exp,
+  skip_phi? : Bool = false,
+  skip_def? : Bool = false,
+  skip_jmp? : Bool = false,
+) -> Term[Blk] {
+  self.map_blk_exp(f, skip_phi~, skip_def~, skip_jmp~)
+}
+
+///|
 pub fn Term::map_blk_lhs(
   self : Term[Blk],
   f : (Var) -> Var,
@@ -262,6 +273,16 @@ pub fn Term::map_blk_lhs(
       self.payload_value.defs.map(term => term.with_lhs(f(term.lhs())))
     },
   })
+}
+
+///|
+pub fn Term::map_lhs(
+  self : Term[Blk],
+  f : (Var) -> Var,
+  skip_phi? : Bool = false,
+  skip_def? : Bool = false,
+) -> Term[Blk] {
+  self.map_blk_lhs(f, skip_phi~, skip_def~)
 }
 
 ///|
@@ -289,6 +310,23 @@ pub fn Term::substitute_blk_var(
 ) -> Term[Blk] {
   self.map_blk_exp(
     exp => exp.substitute_var(variable, replacement),
+    skip_phi~,
+    skip_def~,
+    skip_jmp~,
+  )
+}
+
+///|
+pub fn Term::substitute(
+  self : Term[Blk],
+  target : Exp,
+  replacement : Exp,
+  skip_phi? : Bool = false,
+  skip_def? : Bool = false,
+  skip_jmp? : Bool = false,
+) -> Term[Blk] {
+  self.map_exp(
+    exp => exp.substitute(target, replacement),
     skip_phi~,
     skip_def~,
     skip_jmp~,

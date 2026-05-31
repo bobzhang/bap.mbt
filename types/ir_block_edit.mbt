@@ -1304,6 +1304,16 @@ pub fn Term::map_blk_elts(
 }
 
 ///|
+pub fn Term::map_elts(
+  self : Term[Blk],
+  phi? : (Term[Phi]) -> Term[Phi],
+  def? : (Term[Def]) -> Term[Def],
+  jmp? : (Term[Jmp]) -> Term[Jmp],
+) -> Term[Blk] {
+  self.map_blk_elts(phi?, def?, jmp?)
+}
+
+///|
 pub fn Term::update_blk(self : Term[Sub], blk : Term[Blk]) -> Term[Sub] {
   let blks = self.payload_value.blks.copy()
   match find_blk_index(blks, blk.tid()) {

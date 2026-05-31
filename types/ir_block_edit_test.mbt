@@ -815,10 +815,22 @@ test "block phi jump and sub update helpers map terms" {
   assert_true(mapped_elts.phis()[0].phi_lhs() == y)
   assert_true(mapped_elts.defs()[0].lhs() == y)
   assert_true(mapped_elts.jmps()[0].cond() == Var(y))
+  let mapped_elts_alias = elt_block.map_elts(
+    phi=term => term.with_phi_lhs(y),
+    def=term => term.with_lhs(y),
+    jmp=term => term.with_cond(Var(y)),
+  )
+  assert_true(mapped_elts_alias.phis()[0].phi_lhs() == y)
+  assert_true(mapped_elts_alias.defs()[0].lhs() == y)
+  assert_true(mapped_elts_alias.jmps()[0].cond() == Var(y))
   let def_only = elt_block.map_blk_elts(def=term => term.with_lhs(y))
+  let def_only_alias = elt_block.map_elts(def=term => term.with_lhs(y))
   assert_true(def_only.phis()[0].same(phi))
   assert_true(def_only.defs()[0].lhs() == y)
   assert_true(def_only.jmps()[0].same(jmp))
+  assert_true(def_only_alias.phis()[0].same(phi))
+  assert_true(def_only_alias.defs()[0].lhs() == y)
+  assert_true(def_only_alias.jmps()[0].same(jmp))
   let without_jmp = block.remove_jmp(jmp.tid())
   assert_true(without_jmp.jmp_count() == 1)
   assert_true(

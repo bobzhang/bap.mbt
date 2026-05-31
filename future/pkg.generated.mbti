@@ -31,6 +31,28 @@ pub fn[T] Promise::fulfill(Self[T], T) -> Unit raise FutureError
 pub fn[T] Promise::is_fulfilled(Self[T]) -> Bool
 pub fn[T] Promise::try_fulfill(Self[T], T) -> Bool
 
+type Signal[T]
+pub fn[T] Signal::repeat(Self[T], times~ : Int, T) -> Unit
+pub fn[T] Signal::send(Self[T], T) -> Unit
+
+type Stream[T]
+pub fn[T, E] Stream::before(Self[T], Future[E]) -> Future[Array[T]]
+pub fn[T] Stream::create() -> (Self[T], Signal[T])
+pub fn[T] Stream::from(() -> T) -> (Self[T], Signal[Unit])
+pub fn[T] Stream::has_subscribers(Self[T]) -> Bool
+pub fn[T] Stream::observe(Self[T], (T) -> Unit) -> Unit
+pub fn[T] Stream::of_array(Array[T]) -> (Self[T], Signal[Unit], Future[Unit])
+pub fn[T] Stream::on_subscribe(Self[T], (Int) -> Unit) -> Unit
+pub fn[T] Stream::on_unsubscribe(Self[T], (Int) -> Unit) -> Unit
+pub fn[T] Stream::on_wait(Self[T], () -> Unit) -> Unit
+pub fn[T] Stream::repeat(T) -> (Self[T], Signal[Unit])
+pub fn[T] Stream::subscribe(Self[T], (T) -> Unit) -> Int
+pub fn[S, T] Stream::unfold(init~ : S, f~ : (S) -> (T, S)) -> (Self[T], Signal[Unit])
+pub fn[S, T] Stream::unfold_until(init~ : S, f~ : (S) -> (T, S)?) -> (Self[T], Signal[Unit], Future[Unit])
+pub fn[T] Stream::unsubscribe(Self[T], Int) -> Unit
+pub fn[T] Stream::wait(Self[T]) -> Unit
+pub fn[T] Stream::watch(Self[T], (Int, T) -> Unit) -> Int
+
 // Type aliases
 
 // Traits

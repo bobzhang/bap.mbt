@@ -112,3 +112,203 @@ pub fn[A, B] Future::apply(
 ) -> Future[B] {
   functions.bind(fn(f) { values.map(f) })
 }
+
+///|
+struct Signal[T] {
+  send_fn : (T) -> Unit
+}
+
+///|
+struct Stream[T] {
+  subscribers : Map[Int, (Int, T) -> Unit]
+  last_id : Ref[Int]
+  on_subscribe_callbacks : Array[(Int) -> Unit]
+  on_unsubscribe_callbacks : Array[(Int) -> Unit]
+  waiters : Array[() -> Unit]
+}
+
+///|
+pub fn[T] Signal::send(self : Signal[T], value : T) -> Unit {
+  (self.send_fn)(value)
+}
+
+///|
+pub fn[T] Signal::repeat(self : Signal[T], times~ : Int, value : T) -> Unit {
+  for _ in 0..<times {
+    self.send(value)
+  }
+}
+
+///|
+fn[T] Stream::publish(self : Stream[T], value : T) -> Unit {
+  let callbacks : Array[(Int, (Int, T) -> Unit)] = []
+  for entry in self.subscribers {
+    callbacks.push(entry)
+  }
+  for item in callbacks {
+    let (id, notify) = item
+    notify(id, value)
+  }
+}
+
+///|
+pub fn[T] Stream::create() -> (Stream[T], Signal[T]) {
+  let stream = {
+    subscribers: {},
+    last_id: Ref(0),
+    on_subscribe_callbacks: [],
+    on_unsubscribe_callbacks: [],
+    waiters: [],
+  }
+  let signal = { send_fn: fn(value) { stream.publish(value) } }
+  (stream, signal)
+}
+
+///|
+fn[T] Stream::add(self : Stream[T], notify : (Int, T) -> Unit) -> Int {
+  self.last_id.val += 1
+  let id = self.last_id.val
+  self.subscribers[id] = notify
+  for callback in self.on_subscribe_callbacks {
+    callback(id)
+  }
+  id
+}
+
+///|
+pub fn[T] Stream::subscribe(self : Stream[T], notify : (T) -> Unit) -> Int {
+  self.add(fn(_, value) { notify(value) })
+}
+
+///|
+pub fn[T] Stream::watch(self : Stream[T], notify : (Int, T) -> Unit) -> Int {
+  self.add(notify)
+}
+
+///|
+pub fn[T] Stream::observe(self : Stream[T], notify : (T) -> Unit) -> Unit {
+  ignore(self.subscribe(notify))
+}
+
+///|
+pub fn[T] Stream::unsubscribe(self : Stream[T], id : Int) -> Unit {
+  self.subscribers.remove(id)
+  for callback in self.on_unsubscribe_callbacks {
+    callback(id)
+  }
+}
+
+///|
+pub fn[T] Stream::has_subscribers(self : Stream[T]) -> Bool {
+  !self.subscribers.is_empty()
+}
+
+///|
+pub fn[T] Stream::wait(self : Stream[T]) -> Unit {
+  for waiter in self.waiters {
+    waiter()
+  }
+}
+
+///|
+pub fn[T] Stream::on_wait(self : Stream[T], callback : () -> Unit) -> Unit {
+  self.waiters.push(callback)
+}
+
+///|
+pub fn[T] Stream::on_subscribe(
+  self : Stream[T],
+  callback : (Int) -> Unit,
+) -> Unit {
+  self.on_subscribe_callbacks.push(callback)
+}
+
+///|
+pub fn[T] Stream::on_unsubscribe(
+  self : Stream[T],
+  callback : (Int) -> Unit,
+) -> Unit {
+  self.on_unsubscribe_callbacks.push(callback)
+}
+
+///|
+pub fn[T] Stream::from(generator : () -> T) -> (Stream[T], Signal[Unit]) {
+  let (stream, signal) = Stream::create()
+  let signal = { send_fn: fn(_) { signal.send(generator()) } }
+  (stream, signal)
+}
+
+///|
+pub fn[T] Stream::repeat(value : T) -> (Stream[T], Signal[Unit]) {
+  Stream::from(fn() { value })
+}
+
+///|
+pub fn[S, T] Stream::unfold(
+  init~ : S,
+  f~ : (S) -> (T, S),
+) -> (Stream[T], Signal[Unit]) {
+  let state = Ref(init)
+  Stream::from(fn() {
+    let (value, next) = f(state.val)
+    state.val = next
+    value
+  })
+}
+
+///|
+pub fn[S, T] Stream::unfold_until(
+  init~ : S,
+  f~ : (S) -> (T, S)?,
+) -> (Stream[T], Signal[Unit], Future[Unit]) {
+  let (stream, signal) = Stream::create()
+  let (finished, promise) = Future::create()
+  let state = Ref(init)
+  let done = Ref(false)
+  let signal = {
+    send_fn: fn(_) {
+      if !done.val {
+        match f(state.val) {
+          Some((value, next)) => {
+            state.val = next
+            signal.send(value)
+          }
+          None => {
+            done.val = true
+            ignore(promise.try_fulfill(()))
+          }
+        }
+      }
+    },
+  }
+  (stream, signal, finished)
+}
+
+///|
+pub fn[T] Stream::of_array(
+  values : Array[T],
+) -> (Stream[T], Signal[Unit], Future[Unit]) {
+  let values = values.copy()
+  Stream::unfold_until(init=0, f=fn(index) {
+    if index < values.length() {
+      Some((values[index], index + 1))
+    } else {
+      None
+    }
+  })
+}
+
+///|
+pub fn[T, E] Stream::before(
+  self : Stream[T],
+  event : Future[E],
+) -> Future[Array[T]] {
+  let (future, promise) = Future::create()
+  let buffer : Array[T] = []
+  let id = self.subscribe(fn(value) { buffer.push(value) })
+  event.upon(fn(_) {
+    self.unsubscribe(id)
+    ignore(promise.try_fulfill(buffer.copy()))
+  })
+  future
+}

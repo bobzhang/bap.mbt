@@ -121,6 +121,37 @@ test "translated BAP future multi-argument applicative helpers" {
   three_promise.fulfill(3)
   assert_true(mapped4.peek_exn() == 1234)
   assert_true(applied4.peek_exn() == 10)
+
+  let (five_a, five_a_promise) = @future.Future::create()
+  let (five_b, five_b_promise) = @future.Future::create()
+  let (five_c, five_c_promise) = @future.Future::create()
+  let (five_d, five_d_promise) = @future.Future::create()
+  let (five_e, five_e_promise) = @future.Future::create()
+  let mapped5 = @future.Future::map5(five_a, five_b, five_c, five_d, five_e, fn(
+    a,
+    b,
+    c,
+    d,
+    e,
+  ) {
+    a * 10000 + b * 1000 + c * 100 + d * 10 + e
+  })
+  let applied5 = @future.Future::apply5(
+    @future.Future::resolved(fn(a, b, c, d, e) { a + b + c + d + e }),
+    five_a,
+    five_b,
+    five_c,
+    five_d,
+    five_e,
+  )
+  five_e_promise.fulfill(5)
+  five_b_promise.fulfill(2)
+  five_d_promise.fulfill(4)
+  assert_true(!mapped5.is_decided())
+  five_a_promise.fulfill(1)
+  five_c_promise.fulfill(3)
+  assert_true(mapped5.peek_exn() == 12345)
+  assert_true(applied5.peek_exn() == 15)
 }
 
 ///|
@@ -514,6 +545,65 @@ test "translated BAP stream multi-argument applicative helpers" {
   apply4_third_signal.repeat(times=2, ())
   apply4_fourth_signal.repeat(times=2, ())
   assert_true(applied4_values == [1111, 2240])
+
+  let (map5_first, map5_first_signal, _) = @future.Stream::of_array([1, 2])
+  let (map5_second, map5_second_signal, _) = @future.Stream::of_array([10, 20])
+  let (map5_third, map5_third_signal, _) = @future.Stream::of_array([100, 200])
+  let (map5_fourth, map5_fourth_signal, _) = @future.Stream::of_array([
+    1000, 2000,
+  ])
+  let (map5_fifth, map5_fifth_signal, _) = @future.Stream::of_array([
+    10000, 20000,
+  ])
+  let mapped5 = @future.Stream::map5(
+    map5_first,
+    map5_second,
+    map5_third,
+    map5_fourth,
+    map5_fifth,
+    fn(a, b, c, d, e) { a + b + c + d + e },
+  )
+  let mapped5_values : Array[Int] = []
+  mapped5.observe(fn(value) { mapped5_values.push(value) })
+  map5_first_signal.repeat(times=2, ())
+  map5_second_signal.repeat(times=2, ())
+  map5_third_signal.repeat(times=2, ())
+  map5_fourth_signal.repeat(times=2, ())
+  map5_fifth_signal.repeat(times=2, ())
+  assert_true(mapped5_values == [11111, 22222])
+
+  let functions5 : Array[(Int, Int, Int, Int, Int) -> Int] = [
+    fn(a, b, c, d, e) { a + b + c + d + e },
+    fn(a, b, c, d, e) { a * b + c + d + e },
+  ]
+  let (function5_stream, function5_signal, _) = @future.Stream::of_array(
+    functions5,
+  )
+  let (apply5_first, apply5_first_signal, _) = @future.Stream::of_array([1, 2])
+  let (apply5_second, apply5_second_signal, _) = @future.Stream::of_array([
+    10, 20,
+  ])
+  let (apply5_third, apply5_third_signal, _) = @future.Stream::of_array([
+    100, 200,
+  ])
+  let (apply5_fourth, apply5_fourth_signal, _) = @future.Stream::of_array([
+    1000, 2000,
+  ])
+  let (apply5_fifth, apply5_fifth_signal, _) = @future.Stream::of_array([
+    10000, 20000,
+  ])
+  let applied5 = @future.Stream::apply5(
+    function5_stream, apply5_first, apply5_second, apply5_third, apply5_fourth, apply5_fifth,
+  )
+  let applied5_values : Array[Int] = []
+  applied5.observe(fn(value) { applied5_values.push(value) })
+  function5_signal.repeat(times=2, ())
+  apply5_first_signal.repeat(times=2, ())
+  apply5_second_signal.repeat(times=2, ())
+  apply5_third_signal.repeat(times=2, ())
+  apply5_fourth_signal.repeat(times=2, ())
+  apply5_fifth_signal.repeat(times=2, ())
+  assert_true(applied5_values == [11111, 22240])
 }
 
 ///|

@@ -47,12 +47,25 @@ fn project_reconstructor_find_block_start(
 }
 
 ///|
+fn project_reconstructor_find_block_containing(
+  blocks : Array[@memory.Memory],
+  addr : UInt64,
+) -> Int? {
+  for i in 0..<blocks.length() {
+    if blocks[i].contains(addr) {
+      return Some(i)
+    }
+  }
+  None
+}
+
+///|
 fn project_reconstructor_edge_target_index(
   blocks : Array[@memory.Memory],
   edge : ProjectDisassemblyEdge,
 ) -> Int? {
   match edge.target() {
-    Some(target) => project_reconstructor_find_block_start(blocks, target)
+    Some(target) => project_reconstructor_find_block_containing(blocks, target)
     None => None
   }
 }
@@ -250,7 +263,7 @@ fn project_reconstructor_subroutine(
       if blocks[i].contains(edge.source()) {
         match edge.target() {
           Some(target) =>
-            match project_reconstructor_find_block_start(blocks, target) {
+            match project_reconstructor_find_block_containing(blocks, target) {
               Some(target_index) =>
                 ir_block = ir_block.append_jmp(
                   project_reconstructor_edge_jmp(

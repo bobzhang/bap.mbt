@@ -171,9 +171,11 @@ call/branch classifier is available. The default reconstructor should seed
 functions from project roots and no-incoming CFG nodes, then group blocks by
 reachable edge facts. Since brancher facts are instruction-address facts, the
 reconstructor should treat an edge source contained anywhere inside a
-materialized disassembly block as an edge from that block; otherwise
-instruction-aware branchers would produce facts that reconstruction silently
-ignores. Known roots are traversal boundaries for other starts,
+materialized disassembly block as an edge from that block, and should resolve
+edge targets to containing materialized blocks when exact basic-block splitting
+has not happened yet; otherwise instruction-aware branchers would produce facts
+that reconstruction silently ignores. Known roots are traversal boundaries for
+other starts,
 matching BAP's treatment of roots as call-like destinations in the default
 reconstructor; until call semantics are lifted, keep those boundary edges as
 disassembly metadata instead of direct intra-subroutine gotos. Remaining

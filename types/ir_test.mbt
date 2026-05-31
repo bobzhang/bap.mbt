@@ -592,6 +592,70 @@ test "ir term query helpers match classes attributes vars and children" {
 }
 
 ///|
+test "ir term direct-child helpers filter find update remove and change" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let z = @types.Var::new(name="z", typ~)
+  let def_y = @types.Def::create(y, Int(word8(1)))
+  let def_z = @types.Def::create(z, Var(y))
+  let jmp = @types.Jmp::create_goto(
+    @types.Label::direct(@types.Tid::for_name("done")),
+  )
+  let blk = @types.Blk::create(defs=[def_y, def_z], jmps=[jmp])
+  let sub = @types.Sub::create(name="main", blks=[blk])
+  let program = @types.Program::create(subs=[sub])
+  let program_term : @types.IrTerm = ProgramTerm(program)
+  let block_term : @types.IrTerm = BlkTerm(blk)
+
+  assert_true(
+    program_term.children_of_class(SubTermClass).map(term => term.tid()) ==
+    [sub.tid()],
+  )
+  assert_true(
+    program_term.find_child(SubTermClass, sub.tid()) is Some(SubTerm(_)),
+  )
+  assert_true(program_term.find_child(DefTermClass, def_y.tid()) is None)
+  assert_true(
+    block_term.children_of_class(DefTermClass).map(term => term.tid()) ==
+    [def_y.tid(), def_z.tid()],
+  )
+  assert_true(
+    block_term.children_of_class(DefTermClass, rev=true).map(term => term.tid()) ==
+    [def_z.tid(), def_y.tid()],
+  )
+
+  let mark = @types.Attr::new(key="edited", value="yes")
+  let updated = block_term.update_child(DefTerm(def_y.set_attr(mark)))
+  match updated.find_child(DefTermClass, def_y.tid()) {
+    Some(DefTerm(term)) => assert_true(term.get_attr("edited") == Some("yes"))
+    _ => fail("expected updated def child")
+  }
+  let removed = updated.remove_child(DefTermClass, def_z.tid())
+  assert_true(removed.children_of_class(DefTermClass).length() == 1)
+
+  let def_tail = @types.Def::create(x, Var(z), tid=@types.Tid::for_name("tail"))
+  let saw_missing = Ref(false)
+  let appended = removed.change_child(DefTermClass, def_tail.tid(), current => {
+    saw_missing.val = current is None
+    Some(DefTerm(def_tail))
+  })
+  assert_true(saw_missing.val)
+  assert_true(
+    appended.children_of_class(DefTermClass).map(term => term.tid()) ==
+    [def_y.tid(), def_tail.tid()],
+  )
+
+  let unchanged = appended.change_child(DefTermClass, def_y.tid(), _ => {
+    Some(JmpTerm(jmp))
+  })
+  assert_true(
+    unchanged.children_of_class(DefTermClass).map(term => term.tid()) ==
+    [def_y.tid(), def_tail.tid()],
+  )
+}
+
+///|
 test "ir term address query helpers mirror BAP term-addr" {
   let addr32 = @types.Word::of_int64(42L, width=32)
   let addr64 = @types.Word::of_int64(42L, width=64)

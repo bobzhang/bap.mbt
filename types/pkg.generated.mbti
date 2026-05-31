@@ -542,7 +542,9 @@ pub(all) enum IrTerm {
 }
 pub fn IrTerm::attrs(Self) -> Map[String, String]
 pub fn[A] IrTerm::cata(Self, init~ : A, program? : (Term[Program]) -> A, sub? : (Term[Sub]) -> A, arg? : (Term[Arg]) -> A, blk? : (Term[Blk]) -> A, phi? : (Term[Phi]) -> A, def? : (Term[Def]) -> A, jmp? : (Term[Jmp]) -> A) -> A
+pub fn IrTerm::change_child(Self, IrTermClass, Tid, (Self?) -> Self?) -> Self
 pub fn IrTerm::children(Self) -> Array[Self]
+pub fn IrTerm::children_of_class(Self, IrTermClass, rev? : Bool) -> Array[Self]
 pub fn IrTerm::class(Self) -> IrTermClass
 pub fn IrTerm::class_name(Self) -> String
 pub fn IrTerm::def_lhs_name(Self, String) -> Bool
@@ -551,6 +553,7 @@ pub fn IrTerm::defined_vars(Self) -> Array[Var]
 pub fn IrTerm::defines_var(Self, Var) -> Bool
 pub fn IrTerm::defines_var_name(Self, String) -> Bool
 pub fn IrTerm::del_attr(Self, String) -> Self
+pub fn IrTerm::find_child(Self, IrTermClass, Tid) -> Self?
 pub fn[A] IrTerm::fold_visit(Self, A, (A, IrVisitEvent) -> A) -> A
 pub fn IrTerm::free_vars(Self) -> Array[Var]
 pub fn IrTerm::get_attr(Self, String) -> String?
@@ -566,12 +569,14 @@ pub fn IrTerm::has_tid_text(Self, String) -> Bool
 pub fn IrTerm::map(Self, program? : (Term[Program]) -> Term[Program], sub? : (Term[Sub]) -> Term[Sub], arg? : (Term[Arg]) -> Term[Arg], blk? : (Term[Blk]) -> Term[Blk], phi? : (Term[Phi]) -> Term[Phi], def? : (Term[Def]) -> Term[Def], jmp? : (Term[Jmp]) -> Term[Jmp]) -> Self
 pub fn IrTerm::name(Self) -> String
 pub fn[A] IrTerm::proj(Self, program? : (Term[Program]) -> A?, sub? : (Term[Sub]) -> A?, arg? : (Term[Arg]) -> A?, blk? : (Term[Blk]) -> A?, phi? : (Term[Phi]) -> A?, def? : (Term[Def]) -> A?, jmp? : (Term[Jmp]) -> A?) -> A?
+pub fn IrTerm::remove_child(Self, IrTermClass, Tid) -> Self
 pub fn IrTerm::same_term(Self, Self) -> Bool
 pub fn IrTerm::same_tid(Self, Tid) -> Bool
 pub fn IrTerm::set_attr(Self, Attr) -> Self
 pub fn[A] IrTerm::switch(Self, program~ : (Term[Program]) -> A, sub~ : (Term[Sub]) -> A, arg~ : (Term[Arg]) -> A, blk~ : (Term[Blk]) -> A, phi~ : (Term[Phi]) -> A, def~ : (Term[Def]) -> A, jmp~ : (Term[Jmp]) -> A) -> A
 pub fn IrTerm::tid(Self) -> Tid
 pub fn IrTerm::to_string(Self) -> String
+pub fn IrTerm::update_child(Self, Self) -> Self
 pub fn IrTerm::uses_var(Self, Var) -> Bool
 pub fn IrTerm::uses_var_name(Self, String) -> Bool
 pub fn IrTerm::visit_events(Self) -> Array[IrVisitEvent]

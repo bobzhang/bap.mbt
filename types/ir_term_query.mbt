@@ -127,6 +127,170 @@ pub fn IrTerm::has_child_tid(self : IrTerm, tid : Tid) -> Bool {
 }
 
 ///|
+pub fn IrTerm::children_of_class(
+  self : IrTerm,
+  cls : IrTermClass,
+  rev? : Bool = false,
+) -> Array[IrTerm] {
+  let children = self.children().filter(child => child.class() == cls)
+  if rev {
+    children.rev()
+  } else {
+    children
+  }
+}
+
+///|
+pub fn IrTerm::find_child(
+  self : IrTerm,
+  cls : IrTermClass,
+  tid : Tid,
+) -> IrTerm? {
+  for child in self.children_of_class(cls) {
+    if child.tid() == tid {
+      return Some(child)
+    }
+  }
+  None
+}
+
+///|
+fn change_sub_child(
+  current : Term[Sub]?,
+  f : (IrTerm?) -> IrTerm?,
+) -> Term[Sub]? {
+  let current_ir = match current {
+    Some(term) => Some(SubTerm(term))
+    None => None
+  }
+  match f(current_ir) {
+    Some(SubTerm(term)) => Some(term)
+    Some(_) => current
+    None => None
+  }
+}
+
+///|
+fn change_arg_child(
+  current : Term[Arg]?,
+  f : (IrTerm?) -> IrTerm?,
+) -> Term[Arg]? {
+  let current_ir = match current {
+    Some(term) => Some(ArgTerm(term))
+    None => None
+  }
+  match f(current_ir) {
+    Some(ArgTerm(term)) => Some(term)
+    Some(_) => current
+    None => None
+  }
+}
+
+///|
+fn change_blk_child(
+  current : Term[Blk]?,
+  f : (IrTerm?) -> IrTerm?,
+) -> Term[Blk]? {
+  let current_ir = match current {
+    Some(term) => Some(BlkTerm(term))
+    None => None
+  }
+  match f(current_ir) {
+    Some(BlkTerm(term)) => Some(term)
+    Some(_) => current
+    None => None
+  }
+}
+
+///|
+fn change_phi_child(
+  current : Term[Phi]?,
+  f : (IrTerm?) -> IrTerm?,
+) -> Term[Phi]? {
+  let current_ir = match current {
+    Some(term) => Some(PhiTerm(term))
+    None => None
+  }
+  match f(current_ir) {
+    Some(PhiTerm(term)) => Some(term)
+    Some(_) => current
+    None => None
+  }
+}
+
+///|
+fn change_def_child(
+  current : Term[Def]?,
+  f : (IrTerm?) -> IrTerm?,
+) -> Term[Def]? {
+  let current_ir = match current {
+    Some(term) => Some(DefTerm(term))
+    None => None
+  }
+  match f(current_ir) {
+    Some(DefTerm(term)) => Some(term)
+    Some(_) => current
+    None => None
+  }
+}
+
+///|
+fn change_jmp_child(
+  current : Term[Jmp]?,
+  f : (IrTerm?) -> IrTerm?,
+) -> Term[Jmp]? {
+  let current_ir = match current {
+    Some(term) => Some(JmpTerm(term))
+    None => None
+  }
+  match f(current_ir) {
+    Some(JmpTerm(term)) => Some(term)
+    Some(_) => current
+    None => None
+  }
+}
+
+///|
+pub fn IrTerm::change_child(
+  self : IrTerm,
+  cls : IrTermClass,
+  tid : Tid,
+  f : (IrTerm?) -> IrTerm?,
+) -> IrTerm {
+  match (self, cls) {
+    (ProgramTerm(term), SubTermClass) =>
+      ProgramTerm(term.change_sub(tid, current => change_sub_child(current, f)))
+    (SubTerm(term), ArgTermClass) =>
+      SubTerm(term.change_arg(tid, current => change_arg_child(current, f)))
+    (SubTerm(term), BlkTermClass) =>
+      SubTerm(term.change_blk(tid, current => change_blk_child(current, f)))
+    (BlkTerm(term), PhiTermClass) =>
+      BlkTerm(
+        term.change_phi_term(tid, current => change_phi_child(current, f)),
+      )
+    (BlkTerm(term), DefTermClass) =>
+      BlkTerm(term.change_def(tid, current => change_def_child(current, f)))
+    (BlkTerm(term), JmpTermClass) =>
+      BlkTerm(term.change_jmp(tid, current => change_jmp_child(current, f)))
+    _ => self
+  }
+}
+
+///|
+pub fn IrTerm::update_child(self : IrTerm, child : IrTerm) -> IrTerm {
+  self.change_child(child.class(), child.tid(), _ => Some(child))
+}
+
+///|
+pub fn IrTerm::remove_child(
+  self : IrTerm,
+  cls : IrTermClass,
+  tid : Tid,
+) -> IrTerm {
+  self.change_child(cls, tid, _ => None)
+}
+
+///|
 pub fn IrTerm::free_vars(self : IrTerm) -> Array[Var] {
   match self {
     ProgramTerm(term) => term.program_free_vars()

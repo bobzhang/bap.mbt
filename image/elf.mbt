@@ -1794,8 +1794,15 @@ fn image_elf_target_endian(endian : @bitvec.Endian) -> @core_theory.Endianness {
 ///|
 fn image_elf_target_system(osabi : Int) -> @core_theory.System? {
   match osabi {
+    1 => Some(HPUX)
+    2 => Some(NetBSD)
     3 => Some(Linux)
+    6 => Some(Solaris)
+    7 => Some(AIX)
+    8 => Some(IRIX)
     9 => Some(FreeBSD)
+    10 => Some(Tru64)
+    11 => Some(Modesto)
     12 => Some(OpenBSD)
     255 => Some(NoSystem)
     _ => None

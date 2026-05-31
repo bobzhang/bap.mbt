@@ -8,10 +8,17 @@ pub(all) enum Endianness {
 ///|
 pub(all) enum System {
   UnknownSystem
+  HPUX
+  NetBSD
   Linux
+  Solaris
+  AIX
+  IRIX
   Darwin
   VxWorks
   FreeBSD
+  Tru64
+  Modesto
   OpenBSD
   Windows
   MSDOS
@@ -85,10 +92,17 @@ pub fn Endianness::of_string(text : String) -> Endianness? {
 pub fn System::to_string(self : System) -> String {
   match self {
     UnknownSystem => "unknown"
+    HPUX => "hpux"
+    NetBSD => "netbsd"
     Linux => "linux"
+    Solaris => "solaris"
+    AIX => "aix"
+    IRIX => "irix"
     Darwin => "darwin"
     VxWorks => "vxworks"
     FreeBSD => "freebsd"
+    Tru64 => "tru64"
+    Modesto => "modesto"
     OpenBSD => "openbsd"
     Windows => "windows"
     MSDOS => "msdos"
@@ -101,10 +115,17 @@ pub fn System::to_string(self : System) -> String {
 pub fn System::of_string(text : String) -> System? {
   match text.to_lower() {
     "unknown" => Some(UnknownSystem)
+    "hpux" | "hp-ux" => Some(HPUX)
+    "netbsd" | "net-bsd" => Some(NetBSD)
     "linux" | "gnu/linux" => Some(Linux)
+    "solaris" | "sunos" => Some(Solaris)
+    "aix" => Some(AIX)
+    "irix" => Some(IRIX)
     "darwin" | "macos" | "macosx" => Some(Darwin)
     "vxworks" | "vx-works" => Some(VxWorks)
     "freebsd" | "free-bsd" => Some(FreeBSD)
+    "tru64" | "tru-64" | "osf1" => Some(Tru64)
+    "modesto" => Some(Modesto)
     "openbsd" | "open-bsd" => Some(OpenBSD)
     "windows" | "win32" | "win64" => Some(Windows)
     "msdos" | "ms-dos" | "dos" => Some(MSDOS)

@@ -259,11 +259,11 @@ base. Preserve `is-executable` as an image/file flag separately from per-segment
 execute permissions; for ELF, derive it from `ET_EXEC` unless richer loader
 metadata is available.
 When refining targets from ELF headers, map only OSABI values that the current
-MoonBit target model can represent directly, such as Linux, FreeBSD, OpenBSD,
-and standalone/no-system. The OSABI byte can also refine ABI metadata when it
-is direct: System V maps to `SysV`, GNU/Linux to `GNU`, and ARM AEABI to
-`EABI`. Leave unmodeled OSABI values as unknown rather than guessing a near
-match.
+MoonBit target model can represent directly, including HPUX, NetBSD, Linux,
+Solaris, AIX, IRIX, FreeBSD, Tru64, Modesto, OpenBSD, and
+standalone/no-system. The OSABI byte can also refine ABI metadata when it is
+direct: System V maps to `SysV`, GNU/Linux to `GNU`, and ARM AEABI to `EABI`.
+Leave unmodeled OSABI values as unknown rather than guessing a near match.
 For Ogre image specs, keep BAP-style relocation metadata separate from memory
 layout: `base-address`, `relocation`, `relative-relocation`, and
 `external-reference` should be preserved as image metadata even before a

@@ -766,7 +766,7 @@ test "image ELF backend loads program segments and sections" {
 }
 
 ///|
-test "image ELF backend refines target ABI from OSABI" {
+test "image ELF backend refines target system and ABI from OSABI" {
   match @image.register_builtin_backends() {
     Ok(_) => ()
     Err(reason) => fail(reason)
@@ -775,7 +775,14 @@ test "image ELF backend refines target ABI from OSABI" {
     (String, Int, Int, String, @core_theory.System, @core_theory.Abi),
   ] = [
     ("sysv", 0x3e, 0, "x86_64", UnknownSystem, SysV),
+    ("hpux", 0x3e, 1, "x86_64", HPUX, UnknownAbi),
+    ("netbsd", 0x3e, 2, "x86_64", NetBSD, UnknownAbi),
     ("linux", 0x3e, 3, "x86_64", Linux, GNU),
+    ("solaris", 0x3e, 6, "x86_64", Solaris, UnknownAbi),
+    ("aix", 0x3e, 7, "x86_64", AIX, UnknownAbi),
+    ("irix", 0x3e, 8, "x86_64", IRIX, UnknownAbi),
+    ("tru64", 0x3e, 10, "x86_64", Tru64, UnknownAbi),
+    ("modesto", 0x3e, 11, "x86_64", Modesto, UnknownAbi),
     ("arm-aeabi", 0x28, 64, "arm", UnknownSystem, EABI),
   ]
   for case in cases {

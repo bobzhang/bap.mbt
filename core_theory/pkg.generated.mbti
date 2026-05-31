@@ -301,10 +301,17 @@ pub fn SourceFacts::provide_source(Self, @knowledge.Object[Unit], Source) -> Res
 
 pub(all) enum System {
   UnknownSystem
+  HPUX
+  NetBSD
   Linux
+  Solaris
+  AIX
+  IRIX
   Darwin
   VxWorks
   FreeBSD
+  Tru64
+  Modesto
   OpenBSD
   Windows
   MSDOS

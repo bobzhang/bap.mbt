@@ -958,7 +958,7 @@ When porting BAP target declarations, preserve canonical hardware registers and 
 
 BAP target nicknames are sometimes concrete CPU declarations, not plain spelling aliases. Keep the x86 chain (`i86`/`i186`/`i286`/`i386`/`i486`/`i586`/`i686`/`x86_64`) as parented targets instead of collapsing names like `8086`, `80386`, `p5`, or `p6` onto generic `x86`: the 16-bit targets have different address size and registers, while later 32-bit CPUs add ST, MM, and XMM register surfaces incrementally.
 
-For multi-endian architecture families, model the abstract family root separately from any one concrete endian target. For example, BAP's ARM declarations hang little-endian `arm` and big-endian `armeb` under `arm-family`; making `armeb` a child of `arm` makes cross-endian `belongs` checks too broad. Keep ARM version declarations concrete as well: the `+le` and `+be` chains parent the generic AArch32 `arm`/`armeb` targets, and BAP's switchable-endian ARMv7+ declarations should stay as distinct `+bi` targets.
+For multi-endian architecture families, model the abstract family root separately from any one concrete endian target. For example, BAP's ARM declarations hang little-endian `arm` and big-endian `armeb` under `arm-family`; making `armeb` a child of `arm` makes cross-endian `belongs` checks too broad. Keep ARM version declarations concrete as well: the `+le` and `+be` chains parent the generic AArch32 `arm`/`armeb` and AArch64 `aarch64`/`aarch64_be` targets, and BAP's switchable-endian ARMv7+ declarations should stay as distinct `+bi` targets.
 
 ## Mutation, Refs, Arrays
 

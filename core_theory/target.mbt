@@ -2493,6 +2493,137 @@ fn append_arm_bi_version_targets(items : Array[Target]) -> Unit {
 }
 
 ///|
+fn arm_le_v8() -> Target {
+  Target::create(
+    name=target_name("armv8+le"),
+    parent=Target::arm(),
+    bits=64,
+    endianness=LittleEndian,
+    vars=aarch64_vars(),
+    alias_origins=aarch64_alias_origins(),
+  )
+}
+
+///|
+fn arm_le_v8a() -> Target {
+  arm_le_base("armv8-a", "armv8-a", arm_le_v8())
+}
+
+///|
+fn arm_le_v81a() -> Target {
+  arm_le_base("armv8.1-a", "armv8.1-a", arm_le_v8a())
+}
+
+///|
+fn arm_le_v82a() -> Target {
+  arm_le_base("armv8.2-a", "armv8.2-a", arm_le_v81a())
+}
+
+///|
+fn arm_le_v83a() -> Target {
+  arm_le_base("armv8.3-a", "armv8.3-a", arm_le_v82a())
+}
+
+///|
+fn arm_le_v84a() -> Target {
+  arm_le_base("armv8.4-a", "armv8.4-a", arm_le_v83a())
+}
+
+///|
+fn arm_le_v85a() -> Target {
+  arm_le_base("armv8.5-a", "armv8.5-a", arm_le_v84a())
+}
+
+///|
+fn arm_le_v86a() -> Target {
+  arm_le_base("armv8.6-a", "armv8.6-a", arm_le_v85a())
+}
+
+///|
+fn arm_le_v9a() -> Target {
+  arm_le_base("armv9-a", "armv9-a", arm_le_v86a())
+}
+
+///|
+fn arm_be_v8() -> Target {
+  Target::create(
+    name=target_name("armv8+be"),
+    parent=Target::armeb(),
+    bits=64,
+    endianness=BigEndian,
+    vars=aarch64_vars(),
+    alias_origins=aarch64_alias_origins(),
+  )
+}
+
+///|
+fn arm_be_v8a() -> Target {
+  arm_be_base("armv8-a", "armv8-a", arm_be_v8())
+}
+
+///|
+fn arm_be_v81a() -> Target {
+  arm_be_base("armv8.1-a", "armv8.1-a", arm_be_v8a())
+}
+
+///|
+fn arm_be_v82a() -> Target {
+  arm_be_base("armv8.2-a", "armv8.2-a", arm_be_v81a())
+}
+
+///|
+fn arm_be_v83a() -> Target {
+  arm_be_base("armv8.3-a", "armv8.3-a", arm_be_v82a())
+}
+
+///|
+fn arm_be_v84a() -> Target {
+  arm_be_base("armv8.4-a", "armv8.4-a", arm_be_v83a())
+}
+
+///|
+fn arm_be_v85a() -> Target {
+  arm_be_base("armv8.5-a", "armv8.5-a", arm_be_v84a())
+}
+
+///|
+fn arm_be_v86a() -> Target {
+  arm_be_base("armv8.6-a", "armv8.6-a", arm_be_v85a())
+}
+
+///|
+fn arm_be_v9a() -> Target {
+  arm_be_base("armv9-a", "armv9-a", arm_be_v86a())
+}
+
+///|
+fn append_aarch64_version_targets(items : Array[Target]) -> Unit {
+  for
+    target in [
+      arm_le_v8(),
+      arm_le_v8a(),
+      arm_le_v81a(),
+      arm_le_v82a(),
+      arm_le_v83a(),
+      arm_le_v84a(),
+      arm_le_v85a(),
+      arm_le_v86a(),
+      arm_le_v9a(),
+      arm_be_v8(),
+      arm_be_v8a(),
+      arm_be_v81a(),
+      arm_be_v82a(),
+      arm_be_v83a(),
+      arm_be_v84a(),
+      arm_be_v85a(),
+      arm_be_v86a(),
+      arm_be_v9a(),
+    ] {
+    items.push(target)
+  }
+}
+
+///|
 fn with_endian_suffix(names : Array[String], suffix : String) -> Array[String] {
   names + [ for name in names => "\{name}+\{suffix}" ]
 }
@@ -2583,7 +2714,7 @@ pub fn Target::thumbeb() -> Target {
 pub fn Target::aarch64() -> Target {
   Target::create(
     name=target_name("aarch64"),
-    parent=Target::arm(),
+    parent=arm_le_v86a(),
     nicknames=["arm64"] + with_endian_suffix(aarch64_version_nicknames(), "le"),
     bits=64,
     endianness=LittleEndian,
@@ -2596,7 +2727,7 @@ pub fn Target::aarch64() -> Target {
 pub fn Target::aarch64_be() -> Target {
   Target::create(
     name=target_name("aarch64_be"),
-    parent=Target::armeb(),
+    parent=arm_be_v86a(),
     nicknames=["arm64_be", "arm64eb", "armv8eb"] +
       [
         for name in aarch64_version_nicknames() => "\{name}+be"
@@ -3218,6 +3349,7 @@ pub fn common_targets() -> Array[Target] {
   append_arm_le_version_targets(items)
   append_arm_be_version_targets(items)
   append_arm_bi_version_targets(items)
+  append_aarch64_version_targets(items)
   for
     target in [
       Target::arm(),

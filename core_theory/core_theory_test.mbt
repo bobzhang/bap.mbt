@@ -451,22 +451,25 @@ test "target registry resolves common and custom declarations" {
   }
   match @core_theory.Target::lookup("armv8.6-a") {
     Some(target) => {
-      assert_true(target.matches("aarch64"))
+      assert_true(target.matches("armv8.6-a+le"))
       assert_true(target.bits() == 64)
+      assert_true(@core_theory.Target::aarch64().belongs(target))
     }
     None => fail("missing ARMv8.6-A target alias")
   }
   match @core_theory.Target::lookup("armv8.1-a+le") {
     Some(target) => {
-      assert_true(target.matches("aarch64"))
+      assert_true(target.matches("armv8.1-a"))
       assert_true(target.endianness() == LittleEndian)
+      assert_true(target.find_var("XZR") is Some(_))
     }
     None => fail("missing ARMv8.1-A little-endian target alias")
   }
   match @core_theory.Target::lookup("armv8.1-a+be") {
     Some(target) => {
-      assert_true(target.matches("aarch64_be"))
+      assert_true(target.matches("armv8.1-a"))
       assert_true(target.endianness() == BigEndian)
+      assert_true(@core_theory.Target::aarch64_be().belongs(target))
     }
     None => fail("missing ARMv8.1-A big-endian target alias")
   }

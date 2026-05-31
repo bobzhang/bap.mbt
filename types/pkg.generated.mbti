@@ -79,6 +79,10 @@ pub fn substitute(Array[Stmt], Exp, Exp) -> Array[Stmt]
 
 pub fn substitute_var(Array[Stmt], Var, Exp) -> Array[Stmt]
 
+pub fn tid_graph_exit() -> Tid
+
+pub fn tid_graph_start() -> Tid
+
 // Errors
 pub(all) suberror SizeError {
   UnsupportedWordSize(Int)
@@ -745,6 +749,7 @@ pub fn Term::sub_strictly_dominates(Self[Sub], Self[Blk], Self[Blk], entry? : Ti
 pub fn Term::sub_successor_blocks(Self[Sub], Self[Blk]) -> Array[Self[Blk]]
 pub fn Term::sub_symbol_names(Self[Sub]) -> Array[String]
 pub fn Term::sub_terms(Self[Sub], include_self? : Bool) -> Array[IrTerm]
+pub fn Term::sub_tid_graph(Self[Sub]) -> @graphlib.Graph[Tid, Tid]
 pub fn Term::sub_to_trivial_condition_form(Self[Sub]) -> Self[Sub]
 pub fn Term::subs(Self[Program]) -> Array[Self[Sub]]
 pub fn Term::substitute_arg_var(Self[Arg], Var, Exp) -> Self[Arg]

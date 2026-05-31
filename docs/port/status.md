@@ -24,7 +24,7 @@ This repository is porting `.repos/bap` from OCaml to idiomatic MoonBit.
 - `project/reconstructor`: image-entry reconstructed subroutines are marked with the BAP-style `entry-point` semantic flag.
 - `project/callgraph`: direct and resolver-backed project callgraph wrappers over IR `Call` jumps.
 - `types/attributes`: common BAP-style term metadata and subroutine semantic flags over the string-backed MoonBit IR attribute map.
-- `types/lookup`: BAP-style option and checked lookup helpers for subroutine, argument, block, phi, def, and jump terms.
+- `types/lookup`: BAP-style option and checked lookup helpers for subroutine, argument, block, phi, def, and jump terms by tid and direct-child index.
 - `types/block-edit`: BAP-style term sequence accessors, positioned insertion, before/after slices, and rewrite/change helpers for program subroutines, subroutine arguments/blocks, and block definitions/phis/jumps.
 
 ## Next Packages

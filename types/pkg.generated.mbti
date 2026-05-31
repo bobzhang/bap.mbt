@@ -86,6 +86,7 @@ pub fn tid_graph_start() -> Tid
 // Errors
 pub(all) suberror IrTermLookupError {
   MissingIrTerm(String, Tid)
+  MissingIrTermIndex(String, Int)
 } derive(Eq, @debug.Debug)
 
 pub(all) suberror SizeError {
@@ -581,6 +582,7 @@ pub fn IrTerm::map_children(Self, IrTermClass, (Self) -> Self) -> Self
 pub fn IrTerm::name(Self) -> String
 pub fn IrTerm::next_child(Self, IrTermClass, Tid) -> Self?
 pub fn IrTerm::nth_child(Self, IrTermClass, Int) -> Self?
+pub fn IrTerm::nth_child_exn(Self, IrTermClass, Int) -> Self raise IrTermLookupError
 pub fn IrTerm::prepend_child(Self, Self, before? : Tid) -> Self
 pub fn IrTerm::prev_child(Self, IrTermClass, Tid) -> Self?
 pub fn[A] IrTerm::proj(Self, program? : (Term[Program]) -> A?, sub? : (Term[Sub]) -> A?, arg? : (Term[Arg]) -> A?, blk? : (Term[Blk]) -> A?, phi? : (Term[Phi]) -> A?, def? : (Term[Def]) -> A?, jmp? : (Term[Jmp]) -> A?) -> A?
@@ -928,11 +930,17 @@ pub fn Term::next_jmp(Self[Blk], Tid) -> Self[Jmp]?
 pub fn Term::next_phi(Self[Blk], Tid) -> Self[Phi]?
 pub fn Term::next_sub(Self[Program], Tid) -> Self[Sub]?
 pub fn Term::nth_arg(Self[Sub], Int) -> Self[Arg]?
+pub fn Term::nth_arg_exn(Self[Sub], Int) -> Self[Arg] raise IrTermLookupError
 pub fn Term::nth_blk(Self[Sub], Int) -> Self[Blk]?
+pub fn Term::nth_blk_exn(Self[Sub], Int) -> Self[Blk] raise IrTermLookupError
 pub fn Term::nth_def(Self[Blk], Int) -> Self[Def]?
+pub fn Term::nth_def_exn(Self[Blk], Int) -> Self[Def] raise IrTermLookupError
 pub fn Term::nth_jmp(Self[Blk], Int) -> Self[Jmp]?
+pub fn Term::nth_jmp_exn(Self[Blk], Int) -> Self[Jmp] raise IrTermLookupError
 pub fn Term::nth_phi(Self[Blk], Int) -> Self[Phi]?
+pub fn Term::nth_phi_exn(Self[Blk], Int) -> Self[Phi] raise IrTermLookupError
 pub fn Term::nth_sub(Self[Program], Int) -> Self[Sub]?
+pub fn Term::nth_sub_exn(Self[Program], Int) -> Self[Sub] raise IrTermLookupError
 pub fn Term::occurs(Self[Blk], after~ : Tid, Tid) -> Bool
 pub fn[T] Term::payload(Self[T]) -> T
 pub fn Term::phi_count(Self[Blk]) -> Int

@@ -301,7 +301,7 @@ test "ir term map applies class-specific handlers with identity defaults" {
 }
 
 ///|
-test "IR term lookup exn helpers report missing tids" {
+test "IR term lookup exn helpers report missing terms" {
   let typ = @types.ValueType::Imm(8)
   let x = @types.Var::new(name="x", typ~)
   let arg = @types.Arg::create(x, Var(x))
@@ -314,12 +314,21 @@ test "IR term lookup exn helpers report missing tids" {
   let sub = @types.Sub::create(name="main", args=[arg], blks=[blk])
   let program = @types.Program::create(subs=[sub])
   assert_true(program.find_sub_exn(sub.tid()).same(sub))
+  assert_true(program.nth_sub_exn(0).same(sub))
   assert_true(sub.find_arg(arg.tid()).map(term => term.same(arg)) == Some(true))
   assert_true(sub.find_arg_exn(arg.tid()).same(arg))
+  assert_true(sub.nth_arg_exn(0).same(arg))
   assert_true(sub.find_blk_exn(blk.tid()).same(blk))
+  assert_true(sub.nth_blk_exn(0).same(blk))
   assert_true(blk.find_phi_exn(phi.tid()).same(phi))
+  assert_true(blk.nth_phi_exn(0).same(phi))
   assert_true(blk.find_def_exn(def.tid()).same(def))
+  assert_true(blk.nth_def_exn(0).same(def))
   assert_true(blk.find_jmp_exn(jmp.tid()).same(jmp))
+  assert_true(blk.nth_jmp_exn(0).same(jmp))
+  assert_true(
+    @types.BlkTerm(blk).nth_child_exn(DefTermClass, 0).same_term(DefTerm(def)),
+  )
   assert_true(
     program.program_find_arg(arg.tid()).map(term => term.same(arg)) ==
     Some(true),
@@ -335,8 +344,27 @@ test "IR term lookup exn helpers report missing tids" {
       assert_true(kind == "def")
       assert_true(tid == missing)
     }
+    _ => fail("expected MissingIrTerm")
   } noraise {
     _ => fail("expected MissingIrTerm")
+  }
+  try blk.nth_def_exn(1) catch {
+    MissingIrTermIndex(kind, index) => {
+      assert_true(kind == "def")
+      assert_true(index == 1)
+    }
+    _ => fail("expected MissingIrTermIndex")
+  } noraise {
+    _ => fail("expected MissingIrTermIndex")
+  }
+  try @types.BlkTerm(blk).nth_child_exn(DefTermClass, -1) catch {
+    MissingIrTermIndex(kind, index) => {
+      assert_true(kind == "def")
+      assert_true(index == -1)
+    }
+    _ => fail("expected MissingIrTermIndex")
+  } noraise {
+    _ => fail("expected MissingIrTermIndex")
   }
 }
 

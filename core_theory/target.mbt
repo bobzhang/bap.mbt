@@ -806,9 +806,17 @@ fn sparc_vars(bits : Int) -> Array[Var] {
   for prefix in ["G", "O", "L", "I"] {
     append_vars(items, numbered_word_vars(bits, prefix, 8))
   }
-  append_vars(items, named_word_vars(bits, ["PC", "NPC", "SP"]))
+  append_vars(items, named_word_vars(bits, ["PC", "NPC", "SP", "FP"]))
   items.push(mem_var(bits, 8, "mem"))
   items
+}
+
+///|
+fn sparc_alias_origins(bits : Int) -> Array[AliasOrigin] {
+  [
+    AliasOrigin::register(word_var(bits, "SP"), word_var(bits, "O6")),
+    AliasOrigin::register(word_var(bits, "FP"), word_var(bits, "I6")),
+  ]
 }
 
 ///|
@@ -1213,7 +1221,7 @@ fn sparc_role_names(role : Role) -> Array[String] {
       ])
     FloatingRegister | VectorRegister => []
     StackPointer => ["sp", "o6"]
-    FramePointer => ["i6"]
+    FramePointer => ["fp", "i6"]
     ProgramCounter => ["pc", "npc"]
     Status => []
     Constant | ZeroRegister | ThreadPointer => []
@@ -2051,6 +2059,7 @@ pub fn Target::sparc() -> Target {
     bits=32,
     endianness=BigEndian,
     vars=sparc_vars(32),
+    alias_origins=sparc_alias_origins(32),
   )
 }
 
@@ -2063,6 +2072,7 @@ pub fn Target::sparcv9() -> Target {
     bits=64,
     endianness=BigEndian,
     vars=sparc_vars(64),
+    alias_origins=sparc_alias_origins(64),
   )
 }
 

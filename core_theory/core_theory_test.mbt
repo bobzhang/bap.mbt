@@ -878,6 +878,41 @@ test "target role helpers classify common architecture variables" {
     }
     None => fail("missing V0 alias origin")
   }
+  let sparcv9 = @core_theory.Target::sparcv9()
+  match sparcv9.find_var("SP") {
+    Some(sp) => {
+      assert_true(sparcv9.roles_of_var(sp).contains(StackPointer))
+      match sparcv9.origin_of_name("sp") {
+        Some(origin) => {
+          assert_true(origin.aliased().ident() == "SP")
+          assert_true(origin.source().map(v => v.ident()) == Some("O6"))
+        }
+        None => fail("missing SPARC SP alias origin")
+      }
+    }
+    None => fail("missing SPARC SP")
+  }
+  match sparcv9.find_var("FP") {
+    Some(fp) => {
+      assert_true(sparcv9.roles_of_var(fp).contains(FramePointer))
+      match sparcv9.origin_of_name("fp") {
+        Some(origin) => {
+          assert_true(origin.aliased().ident() == "FP")
+          assert_true(origin.source().map(v => v.ident()) == Some("I6"))
+        }
+        None => fail("missing SPARC FP alias origin")
+      }
+    }
+    None => fail("missing SPARC FP")
+  }
+  match sparcv9.find_var("O6") {
+    Some(sp) => assert_true(sparcv9.roles_of_var(sp).contains(StackPointer))
+    None => fail("missing SPARC O6")
+  }
+  match sparcv9.find_var("I6") {
+    Some(fp) => assert_true(sparcv9.roles_of_var(fp).contains(FramePointer))
+    None => fail("missing SPARC I6")
+  }
   let ppc64 = @core_theory.Target::powerpc64()
   assert_true(ppc64.role_aliases(Argument).contains("r3"))
   assert_true(!ppc64.role_aliases(Argument).contains("rdi"))

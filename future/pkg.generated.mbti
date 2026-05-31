@@ -1,0 +1,37 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/future"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+
+// Errors
+pub(all) suberror FutureError {
+  AlreadyDecided
+  EmptyFuture
+} derive(Eq, @debug.Debug)
+
+// Types and methods
+type Future[T]
+pub fn[A, B] Future::apply(Self[(A) -> B], Self[A]) -> Self[B]
+pub fn[A, B] Future::bind(Self[A], (A) -> Self[B]) -> Self[B]
+pub fn[T] Future::create() -> (Self[T], Promise[T])
+pub fn[T] Future::full(T) -> Self[T]
+pub fn[T] Future::is_decided(Self[T]) -> Bool
+pub fn[A, B] Future::map(Self[A], (A) -> B) -> Self[B]
+pub fn[T] Future::peek(Self[T]) -> T?
+pub fn[T] Future::peek_exn(Self[T]) -> T raise FutureError
+pub fn[T] Future::resolved(T) -> Self[T]
+pub fn[T] Future::upon(Self[T], (T) -> Unit) -> Unit
+
+type Promise[T]
+pub fn[T] Promise::fulfill(Self[T], T) -> Unit raise FutureError
+pub fn[T] Promise::is_fulfilled(Self[T]) -> Bool
+pub fn[T] Promise::try_fulfill(Self[T], T) -> Bool
+
+// Type aliases
+
+// Traits
+

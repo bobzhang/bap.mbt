@@ -377,10 +377,11 @@ test "translated DWARF FBI skips DWARF5 producer metadata forms" {
     b"\x7e\x1e" +
     b"\x7d\x22" +
     b"\x7c\x1c" +
+    b"\x7a\x24" +
     b"\x7b\x1d" +
     b"\x00\x00" +
     b"\x00"
-  let info = b"\x33\x00\x00\x00" +
+  let info = b"\x3b\x00\x00\x00" +
     b"\x05\x00" +
     b"\x01" +
     b"\x04" +
@@ -395,6 +396,7 @@ test "translated DWARF FBI skips DWARF5 producer metadata forms" {
     b"\x00\x00\x00\x00\x00\x00\x00\x00" +
     b"\x00" +
     b"\x00\x00\x00\x00" +
+    b"\x00\x00\x00\x00\x00\x00\x00\x00" +
     b"\x00\x00\x00\x00" +
     b"\x00"
   let data = expect_fbi_data(

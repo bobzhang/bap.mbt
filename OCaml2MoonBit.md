@@ -157,6 +157,11 @@ example, BAP declares `mips-family` and `powerpc-family` separately from the
 concrete `mips` and `powerpc` targets. Little-endian and 64-bit variants should
 belong to the family target, not to the 32-bit big-endian concrete target; use
 the family target for role dispatch and broad architecture filtering.
+Also check what the generic target inherits before assuming it is a minimal
+baseline. BAP's generic `arm` target inherits the VFP-capable AArch32 branch, so
+the MoonBit generic ARM metadata should include the `D0` through `D31` VFP
+registers and floating-register roles even though older concrete ARM revisions
+did not have that register file.
 For disassembly-driver registries, separate orchestration from architecture
 decoding: a built-in driver may materialize memory regions as blocks, but it
 should not invent assembly text or lifted BIL unless a real target-specific

@@ -772,6 +772,8 @@ pub fn Term::find_sub_exn(Self[Program], Tid) -> Self[Sub] raise IrTermLookupErr
 pub fn Term::find_sub_term(Self[Sub], (IrTerm) -> Bool, include_self? : Bool) -> IrTerm?
 pub fn Term::find_var(Self[Blk], Var) -> VarBinding?
 pub fn Term::first_def(Self[Blk]) -> Self[Def]?
+pub fn Term::first_jmp(Self[Blk]) -> Self[Jmp]?
+pub fn Term::first_phi(Self[Blk]) -> Self[Phi]?
 pub fn Term::flatten_blk(Self[Blk]) -> Self[Blk]
 pub fn Term::flatten_program(Self[Program]) -> Self[Program]
 pub fn Term::flatten_sub(Self[Sub]) -> Self[Sub]
@@ -795,6 +797,7 @@ pub fn Term::is_nothrow(Self[Sub]) -> Bool
 pub fn Term::is_pure(Self[Sub]) -> Bool
 pub fn Term::is_ssa(Self[Sub]) -> Bool
 pub fn Term::is_stub(Self[Sub]) -> Bool
+pub fn Term::jmp_count(Self[Blk]) -> Int
 pub fn Term::jmp_exps(Self[Jmp]) -> Array[Exp]
 pub fn Term::jmp_free_vars(Self[Jmp]) -> Array[Var]
 pub fn Term::jmp_has_trivial_condition(Self[Jmp]) -> Bool
@@ -802,6 +805,8 @@ pub fn Term::jmp_to_string(Self[Jmp]) -> String
 pub fn Term::jmps(Self[Blk]) -> Array[Self[Jmp]]
 pub fn Term::kind(Self[Jmp]) -> JmpKind
 pub fn Term::last_def(Self[Blk]) -> Self[Def]?
+pub fn Term::last_jmp(Self[Blk]) -> Self[Jmp]?
+pub fn Term::last_phi(Self[Blk]) -> Self[Phi]?
 pub fn Term::lhs(Self[Def]) -> Var
 pub fn Term::map_arg_exp(Self[Arg], (Exp) -> Exp) -> Self[Arg]
 pub fn Term::map_blk_elts(Self[Blk], phi? : (Self[Phi]) -> Self[Phi], def? : (Self[Def]) -> Self[Def], jmp? : (Self[Jmp]) -> Self[Jmp]) -> Self[Blk]
@@ -821,14 +826,21 @@ pub fn Term::map_sub_exp(Self[Sub], (Exp) -> Exp) -> Self[Sub]
 pub fn Term::map_sub_terms(Self[Sub], (IrTerm) -> IrTerm) -> Self[Sub]
 pub fn[T] Term::name(Self[T]) -> String
 pub fn Term::next_def(Self[Blk], Tid) -> Self[Def]?
+pub fn Term::next_jmp(Self[Blk], Tid) -> Self[Jmp]?
+pub fn Term::next_phi(Self[Blk], Tid) -> Self[Phi]?
 pub fn Term::nth_def(Self[Blk], Int) -> Self[Def]?
+pub fn Term::nth_jmp(Self[Blk], Int) -> Self[Jmp]?
+pub fn Term::nth_phi(Self[Blk], Int) -> Self[Phi]?
 pub fn[T] Term::payload(Self[T]) -> T
+pub fn Term::phi_count(Self[Blk]) -> Int
 pub fn Term::phi_edge_free_vars(Self[Phi], Tid) -> Array[Var]
 pub fn Term::phi_free_vars(Self[Phi]) -> Array[Var]
 pub fn Term::phi_lhs(Self[Phi]) -> Var
 pub fn Term::phi_to_string(Self[Phi]) -> String
 pub fn Term::phis(Self[Blk]) -> Array[Self[Phi]]
 pub fn Term::prev_def(Self[Blk], Tid) -> Self[Def]?
+pub fn Term::prev_jmp(Self[Blk], Tid) -> Self[Jmp]?
+pub fn Term::prev_phi(Self[Blk], Tid) -> Self[Phi]?
 pub fn Term::program_args(Self[Program]) -> Array[Self[Arg]]
 pub fn Term::program_blks(Self[Program]) -> Array[Self[Blk]]
 pub fn Term::program_callees(Self[Program], Self[Sub]) -> Array[Tid]

@@ -116,18 +116,51 @@ test "block phi jump and sub update helpers map terms" {
   let typ = @types.ValueType::Imm(8)
   let x = @types.Var::new(name="x", typ~)
   let y = @types.Var::new(name="y", typ~)
+  let z = @types.Var::new(name="z", typ~)
   let pred = @types.Tid::for_name("pred")
   let dst = @types.Tid::for_name("dst")
+  let fall = @types.Tid::for_name("fall")
   let phi = @types.Phi::of_list(x, [(pred, Var(y))])
+  let phi_z = @types.Phi::of_list(z, [(pred, Var(x))])
   let jmp = @types.Jmp::create_goto(@types.Label::direct(dst), cond=Var(x))
-  let block = @types.Blk::create(phis=[phi], jmps=[jmp])
+  let fall_jmp = @types.Jmp::create_goto(
+    @types.Label::direct(fall),
+    cond=Var(y),
+  )
+  let block = @types.Blk::create(phis=[phi, phi_z], jmps=[jmp, fall_jmp])
+  assert_true(block.phi_count() == 2)
+  assert_true(block.first_phi().map(term => term.phi_lhs()) == Some(x))
+  assert_true(block.last_phi().map(term => term.phi_lhs()) == Some(z))
+  assert_true(block.nth_phi(1).map(term => term.phi_lhs()) == Some(z))
+  assert_true(block.nth_phi(-1) is None)
+  assert_true(block.next_phi(phi.tid()).map(term => term.phi_lhs()) == Some(z))
+  assert_true(
+    block.prev_phi(phi_z.tid()).map(term => term.phi_lhs()) == Some(x),
+  )
+  assert_true(block.prev_phi(phi.tid()) is None)
+  assert_true(block.jmp_count() == 2)
+  assert_true(block.first_jmp().map(term => term.tid()) == Some(jmp.tid()))
+  assert_true(block.last_jmp().map(term => term.tid()) == Some(fall_jmp.tid()))
+  assert_true(block.nth_jmp(1).map(term => term.tid()) == Some(fall_jmp.tid()))
+  assert_true(block.nth_jmp(2) is None)
+  assert_true(
+    block.next_jmp(jmp.tid()).map(term => term.tid()) == Some(fall_jmp.tid()),
+  )
+  assert_true(
+    block.prev_jmp(fall_jmp.tid()).map(term => term.tid()) == Some(jmp.tid()),
+  )
+  assert_true(block.next_jmp(fall_jmp.tid()) is None)
   let updated_phi = phi.with_phi_lhs(y)
   let updated_block = block.update_phi_term(updated_phi)
   assert_true(updated_block.phis()[0].phi_lhs() == y)
   assert_true(
     block.map_phis(term => term.with_phi_lhs(y)).phis()[0].phi_lhs() == y,
   )
-  assert_true(block.remove_phi_term(phi.tid()).phis().is_empty())
+  let without_phi = block.remove_phi_term(phi.tid())
+  assert_true(without_phi.phi_count() == 1)
+  assert_true(
+    without_phi.first_phi().map(term => term.tid()) == Some(phi_z.tid()),
+  )
   let updated_jmp = jmp.with_cond(Var(y))
   assert_true(block.update_jmp(updated_jmp).jmps()[0].cond() == Var(y))
   assert_true(
@@ -147,7 +180,11 @@ test "block phi jump and sub update helpers map terms" {
   assert_true(def_only.phis()[0].same(phi))
   assert_true(def_only.defs()[0].lhs() == y)
   assert_true(def_only.jmps()[0].same(jmp))
-  assert_true(block.remove_jmp(jmp.tid()).jmps().is_empty())
+  let without_jmp = block.remove_jmp(jmp.tid())
+  assert_true(without_jmp.jmp_count() == 1)
+  assert_true(
+    without_jmp.first_jmp().map(term => term.tid()) == Some(fall_jmp.tid()),
+  )
   let sub = @types.Sub::create(name="main", blks=[block])
   let rewritten = block.append_def(@types.Def::create(y, Var(x)))
   assert_true(

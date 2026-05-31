@@ -139,6 +139,86 @@ pub fn Term::prev_def(self : Term[Blk], tid : Tid) -> Term[Def]? {
 }
 
 ///|
+pub fn Term::phi_count(self : Term[Blk]) -> Int {
+  self.payload_value.phis.length()
+}
+
+///|
+pub fn Term::nth_phi(self : Term[Blk], index : Int) -> Term[Phi]? {
+  if index >= 0 && index < self.payload_value.phis.length() {
+    Some(self.payload_value.phis[index])
+  } else {
+    None
+  }
+}
+
+///|
+pub fn Term::first_phi(self : Term[Blk]) -> Term[Phi]? {
+  self.nth_phi(0)
+}
+
+///|
+pub fn Term::last_phi(self : Term[Blk]) -> Term[Phi]? {
+  self.nth_phi(self.payload_value.phis.length() - 1)
+}
+
+///|
+pub fn Term::next_phi(self : Term[Blk], tid : Tid) -> Term[Phi]? {
+  match find_phi_index(self.payload_value.phis, tid) {
+    Some(i) => self.nth_phi(i + 1)
+    None => None
+  }
+}
+
+///|
+pub fn Term::prev_phi(self : Term[Blk], tid : Tid) -> Term[Phi]? {
+  match find_phi_index(self.payload_value.phis, tid) {
+    Some(i) => self.nth_phi(i - 1)
+    None => None
+  }
+}
+
+///|
+pub fn Term::jmp_count(self : Term[Blk]) -> Int {
+  self.payload_value.jmps.length()
+}
+
+///|
+pub fn Term::nth_jmp(self : Term[Blk], index : Int) -> Term[Jmp]? {
+  if index >= 0 && index < self.payload_value.jmps.length() {
+    Some(self.payload_value.jmps[index])
+  } else {
+    None
+  }
+}
+
+///|
+pub fn Term::first_jmp(self : Term[Blk]) -> Term[Jmp]? {
+  self.nth_jmp(0)
+}
+
+///|
+pub fn Term::last_jmp(self : Term[Blk]) -> Term[Jmp]? {
+  self.nth_jmp(self.payload_value.jmps.length() - 1)
+}
+
+///|
+pub fn Term::next_jmp(self : Term[Blk], tid : Tid) -> Term[Jmp]? {
+  match find_jmp_index(self.payload_value.jmps, tid) {
+    Some(i) => self.nth_jmp(i + 1)
+    None => None
+  }
+}
+
+///|
+pub fn Term::prev_jmp(self : Term[Blk], tid : Tid) -> Term[Jmp]? {
+  match find_jmp_index(self.payload_value.jmps, tid) {
+    Some(i) => self.nth_jmp(i - 1)
+    None => None
+  }
+}
+
+///|
 pub fn Term::defs_after(
   self : Term[Blk],
   tid : Tid,

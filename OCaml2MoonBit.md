@@ -194,13 +194,17 @@ instruction facts are available. Table-backed branchers should therefore match
 edge sources contained anywhere inside the memory range they are asked about,
 not only at the range start. Path-scoped branchers should be a no-op when the
 project filename does not match their path, mirroring BAP's unit/path
-applicability check. The empty brancher should be a no-op for existing blocks,
-while applying any brancher to a project without disassembly blocks should fail
-explicitly. Keep brancher registration strict for user-provided names and
-idempotent for the built-in empty brancher, matching the loader/driver pattern
-of discoverable project services without hiding accidental duplicate custom
-providers. Apply the same pattern to reconstructors: register the built-in
-default
+applicability check. Brancher bias is an address-domain contract, not just
+metadata: un-biased branchers should be called on memory rebased by the
+project/unit load bias, and their returned destinations should be translated
+back into the project's image address space before storing disassembly edges;
+branchers marked biased stay in the current image address space. The empty
+brancher should be a no-op for existing blocks, while applying any brancher to
+a project without disassembly blocks should fail explicitly. Keep brancher
+registration strict for user-provided names and idempotent for the built-in
+empty brancher, matching the loader/driver pattern of discoverable project
+services without hiding accidental duplicate custom providers. Apply the same
+pattern to reconstructors: register the built-in default
 reconstructor idempotently, reject duplicate custom reconstructor names, and
 offer a name-based pipeline helper only as a thin resolver over the checked
 driver/brancher/reconstructor stages. Keep the top-level project orchestration

@@ -20,6 +20,98 @@ fn project_brancher_applies_to_project(
 }
 
 ///|
+fn project_brancher_addr_word(addr : UInt64) -> Result[@types.Word, String] {
+  try @types.Word::of_uint64(width=64, addr) catch {
+    _ => Err("project brancher address conversion failed")
+  } noraise {
+    word => Ok(word)
+  }
+}
+
+///|
+fn project_brancher_bias_word(bias : Int64) -> Result[@types.Word, String] {
+  try @types.Word::of_int64(bias, width=64) catch {
+    _ => Err("project brancher bias conversion failed")
+  } noraise {
+    word => Ok(word)
+  }
+}
+
+///|
+fn project_brancher_word_to_uint64(
+  word : @types.Word,
+) -> Result[UInt64, String] {
+  try word.to_uint64() catch {
+    _ => Err("project brancher address conversion failed")
+  } noraise {
+    addr => Ok(addr)
+  }
+}
+
+///|
+fn project_brancher_translate_addr(
+  addr : UInt64,
+  bias : Int64,
+  to_biased~ : Bool,
+) -> Result[UInt64, String] {
+  let address = match project_brancher_addr_word(addr) {
+    Ok(word) => word
+    Err(reason) => return Err(reason)
+  }
+  let offset = match project_brancher_bias_word(bias) {
+    Ok(word) => word
+    Err(reason) => return Err(reason)
+  }
+  let translated = if to_biased {
+    try address.add(offset) catch {
+      _ => return Err("project brancher address/bias width mismatch")
+    } noraise {
+      word => word
+    }
+  } else {
+    try address.sub(offset) catch {
+      _ => return Err("project brancher address/bias width mismatch")
+    } noraise {
+      word => word
+    }
+  }
+  project_brancher_word_to_uint64(translated)
+}
+
+///|
+fn project_brancher_translate_memory(
+  memory : @memory.Memory,
+  bias : Int64,
+) -> Result[@memory.Memory, String] {
+  match
+    project_brancher_translate_addr(memory.min_addr(), bias, to_biased=false) {
+    Ok(start) => Ok(memory.rebase(start))
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+fn project_brancher_translate_edge(
+  edge : ProjectDisassemblyEdge,
+  bias : Int64,
+) -> Result[ProjectDisassemblyEdge, String] {
+  let source = match
+    project_brancher_translate_addr(edge.source(), bias, to_biased=true) {
+    Ok(addr) => addr
+    Err(reason) => return Err(reason)
+  }
+  let target = match edge.target() {
+    Some(addr) =>
+      match project_brancher_translate_addr(addr, bias, to_biased=true) {
+        Ok(value) => Some(value)
+        Err(reason) => return Err(reason)
+      }
+    None => None
+  }
+  Ok(ProjectDisassemblyEdge::create(source~, target?, kind=edge.kind()))
+}
+
+///|
 pub fn ProjectBrancher::create(
   resolve : (@memory.Memory) -> Array[ProjectDisassemblyEdge],
 ) -> ProjectBrancher {
@@ -146,10 +238,27 @@ pub fn Project::apply_brancher(
   if !project_brancher_applies_to_project(selected, self) {
     return Ok(self)
   }
+  let bias = if selected.is_biased() { None } else { self.load_bias() }
   let mut state = self.disassembly()
   for memory in subjects {
-    for edge in selected.resolve(memory) {
-      state = state.add_edge(edge)
+    let query_memory = match bias {
+      Some(value) =>
+        match project_brancher_translate_memory(memory, value) {
+          Ok(rebased) => rebased
+          Err(reason) => return Err(reason)
+        }
+      None => memory
+    }
+    for edge in selected.resolve(query_memory) {
+      let stored_edge = match bias {
+        Some(value) =>
+          match project_brancher_translate_edge(edge, value) {
+            Ok(translated) => translated
+            Err(reason) => return Err(reason)
+          }
+        None => edge
+      }
+      state = state.add_edge(stored_edge)
     }
   }
   Ok(self.with_disassembly(state))

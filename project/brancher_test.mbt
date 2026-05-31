@@ -144,6 +144,94 @@ test "project brancher prefers materialized instruction memories" {
 }
 
 ///|
+test "project brancher rebases un-biased image addresses through load bias" {
+  let target = @core_theory.Target::unknown()
+  let segment = @image.Segment::create(
+    name=".text",
+    endian=LittleEndian,
+    addr=0xff0UL,
+    b"\x01\x02\x03\x04",
+    executable=true,
+  )
+  let image = @image.Image::from_segments(
+    entry=0xff0UL,
+    endian=LittleEndian,
+    [segment],
+    load_bias=-16L,
+    target~,
+  )
+  let real_edge = @project.ProjectDisassemblyEdge::create(
+    source=0x1000UL,
+    target=0x1002UL,
+    kind=JumpEdge,
+  )
+  let brancher = @project.ProjectBrancher::create(memory => {
+    if memory.min_addr() == 0x1000UL {
+      [real_edge]
+    } else {
+      []
+    }
+  })
+  let project = @project.Project::from_image(image).with_disassembly(
+    @project.ProjectDisassemblyState::empty().add_block(segment.memory()),
+  )
+  match project.apply_brancher(brancher~) {
+    Ok(branched) => {
+      let biased_edge = @project.ProjectDisassemblyEdge::create(
+        source=0xff0UL,
+        target=0xff2UL,
+        kind=JumpEdge,
+      )
+      assert_true(branched.disassembly().edge_count() == 1)
+      assert_true(branched.disassembly().has_edge(biased_edge))
+      assert_true(!branched.disassembly().has_edge(real_edge))
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+test "project biased brancher keeps image address space" {
+  let target = @core_theory.Target::unknown()
+  let segment = @image.Segment::create(
+    name=".text",
+    endian=LittleEndian,
+    addr=0x401000UL,
+    b"\x01\x02",
+    executable=true,
+  )
+  let image = @image.Image::from_segments(
+    entry=0x401000UL,
+    endian=LittleEndian,
+    [segment],
+    load_bias=0x400000L,
+    target~,
+  )
+  let biased_edge = @project.ProjectDisassemblyEdge::create(
+    source=0x401000UL,
+    target=0x401001UL,
+    kind=FallEdge,
+  )
+  let brancher = @project.ProjectBrancher::create(memory => {
+    if memory.min_addr() == 0x401000UL {
+      [biased_edge]
+    } else {
+      []
+    }
+  }).with_biased(true)
+  let project = @project.Project::from_image(image).with_disassembly(
+    @project.ProjectDisassemblyState::empty().add_block(segment.memory()),
+  )
+  match project.apply_brancher(brancher~) {
+    Ok(branched) => {
+      assert_true(branched.disassembly().edge_count() == 1)
+      assert_true(branched.disassembly().has_edge(biased_edge))
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project empty brancher preserves existing disassembly blocks" {
   let block = @memory.Memory::from_bytes(
     endian=LittleEndian,

@@ -1463,12 +1463,25 @@ test "program metadata tracks source compiler and units" {
     "clang",
     version=["17", "0"],
     options=["-O2"],
-    specs={ "triple": "x86_64-unknown-linux" },
+    specs={ "triple": "x86_64-unknown-linux", "arch": "x86-64" },
   )
   assert_true(compiler.version() == ["17", "0"])
   assert_true(compiler.options() == ["-O2"])
   assert_true(compiler.spec("triple") == Some("x86_64-unknown-linux"))
-  inspect(compiler.to_string(), content="clang 17.0 -O2")
+  assert_true(compiler.spec("arch") == Some("x86-64"))
+  inspect(
+    compiler.to_string(),
+    content="((name clang) (version (17 0)) (options (-O2)) (specs ((arch x86-64) (triple x86_64-unknown-linux))))",
+  )
+  let quoted_compiler = @core_theory.Compiler::create(
+    "clang driver",
+    options=["-DMSG=hello world", "\"quoted\""],
+    specs={ "target triple": "x86_64 linux" },
+  )
+  inspect(
+    quoted_compiler.to_string(),
+    content="((name \"clang driver\") (version ()) (options (\"-DMSG=hello world\" \"\\\"quoted\\\"\")) (specs ((\"target triple\" \"x86_64 linux\"))))",
+  )
   let target = @core_theory.Target::x86_64()
   let base = @types.Word::of_int(width=64, 0x400000)
   let upper = @types.Word::of_int(width=64, 0x4000ff)

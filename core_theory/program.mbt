@@ -207,15 +207,83 @@ pub fn Compiler::spec(self : Compiler, key : String) -> String? {
 }
 
 ///|
+fn compiler_sexp_needs_quote(text : String) -> Bool {
+  if text == "" {
+    return true
+  }
+  for ch in text {
+    match ch {
+      '(' | ')' | '"' | '\\' | ' ' | '\n' | '\r' | '\t' => return true
+      _ => ()
+    }
+  }
+  false
+}
+
+///|
+fn compiler_sexp_atom(text : String) -> String {
+  if !compiler_sexp_needs_quote(text) {
+    return text
+  }
+  let builder = StringBuilder()
+  builder.write_char('"')
+  for ch in text {
+    match ch {
+      '\\' => builder.write_string("\\\\")
+      '"' => builder.write_string("\\\"")
+      '\n' => builder.write_string("\\n")
+      '\r' => builder.write_string("\\r")
+      '\t' => builder.write_string("\\t")
+      other => builder.write_char(other)
+    }
+  }
+  builder.write_char('"')
+  builder.to_string()
+}
+
+///|
+fn compiler_sexp_list(items : Array[String]) -> String {
+  "(\{items.join(" ")})"
+}
+
+///|
+fn compiler_sexp_string_list(items : Array[String]) -> String {
+  compiler_sexp_list([ for item in items => compiler_sexp_atom(item) ])
+}
+
+///|
+fn compiler_sexp_string_map(items : Map[String, String]) -> String {
+  let entries = []
+  for entry in items {
+    entries.push(entry)
+  }
+  entries.sort_by(fn(lhs, rhs) { lhs.0.compare(rhs.0) })
+  compiler_sexp_list(
+    [
+      for entry in entries => {
+        compiler_sexp_list([
+          compiler_sexp_atom(entry.0),
+          compiler_sexp_atom(entry.1),
+        ])
+      }
+    ],
+  )
+}
+
+///|
 pub fn Compiler::to_string(self : Compiler) -> String {
-  let parts = [self.name_value]
-  if !self.version_value.is_empty() {
-    parts.push(self.version_value.join("."))
-  }
-  for option in self.options_value {
-    parts.push(option)
-  }
-  parts.join(" ")
+  compiler_sexp_list([
+    compiler_sexp_list(["name", compiler_sexp_atom(self.name_value)]),
+    compiler_sexp_list([
+      "version",
+      compiler_sexp_string_list(self.version_value),
+    ]),
+    compiler_sexp_list([
+      "options",
+      compiler_sexp_string_list(self.options_value),
+    ]),
+    compiler_sexp_list(["specs", compiler_sexp_string_map(self.specs_value)]),
+  ])
 }
 
 ///|

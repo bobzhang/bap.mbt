@@ -8,6 +8,12 @@ test "terms carry tids and string attributes" {
   let clone = term.clone()
   assert_true(!term.same(clone))
   assert_true(clone.get_attr("comment") == Some("root"))
+  let attrs = { "phase": "imported" }
+  let replaced = term.with_attrs(attrs)
+  attrs["phase"] = "mutated"
+  assert_true(replaced.get_attr("comment") is None)
+  assert_true(replaced.get_attr("phase") == Some("imported"))
+  assert_true(replaced.tid() == term.tid())
 }
 
 ///|

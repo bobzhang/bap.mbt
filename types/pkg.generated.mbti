@@ -913,6 +913,7 @@ pub fn Term::update_phi_term(Self[Blk], Self[Phi]) -> Self[Blk]
 pub fn Term::uses_var(Self[Blk], Var) -> Bool
 pub fn Term::values(Self[Phi]) -> Array[(Tid, Exp)]
 pub fn Term::with_alt(Self[Jmp], JmpDst?) -> Self[Jmp]
+pub fn[T] Term::with_attrs(Self[T], Map[String, String]) -> Self[T]
 pub fn Term::with_cond(Self[Jmp], Exp) -> Self[Jmp]
 pub fn Term::with_const(Self[Sub]) -> Self[Sub]
 pub fn Term::with_dst(Self[Jmp], JmpDst?) -> Self[Jmp]

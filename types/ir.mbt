@@ -237,6 +237,18 @@ pub fn[T] Term::attrs(self : Term[T]) -> Map[String, String] {
 }
 
 ///|
+pub fn[T] Term::with_attrs(
+  self : Term[T],
+  attrs : Map[String, String],
+) -> Term[T] {
+  {
+    tid_value: self.tid_value,
+    payload_value: self.payload_value,
+    attrs_value: attrs.copy(),
+  }
+}
+
+///|
 pub(all) enum Label {
   Direct(Tid)
   Indirect(Exp)

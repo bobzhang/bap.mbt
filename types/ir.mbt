@@ -535,6 +535,11 @@ pub fn Phi::of_list(
 }
 
 ///|
+pub fn Phi::create(lhs : Var, src : Tid, exp : Exp, tid? : Tid) -> Term[Phi] {
+  Phi::of_list(lhs, [(src, exp)], tid?)
+}
+
+///|
 pub fn Term::phi_lhs(self : Term[Phi]) -> Var {
   self.payload_value.lhs
 }
@@ -554,6 +559,14 @@ pub fn Term::select(self : Term[Phi], tid : Tid) -> Exp? {
   self.payload_value.values
   .search_by(pair => pair.0 == tid)
   .map(i => self.payload_value.values[i].1)
+}
+
+///|
+pub fn Term::select_or_unknown(self : Term[Phi], tid : Tid) -> Exp {
+  match self.select(tid) {
+    Some(exp) => exp
+    None => Unknown("unresolved-tid \{tid.to_string()}", self.phi_lhs().typ())
+  }
 }
 
 ///|

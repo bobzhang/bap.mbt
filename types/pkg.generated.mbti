@@ -603,6 +603,7 @@ pub(all) struct Phi {
   lhs : Var
   values : Array[(Tid, Exp)]
 } derive(Eq, @debug.Debug)
+pub fn Phi::create(Var, Tid, Exp, tid? : Tid) -> Term[Self]
 pub fn Phi::of_list(Var, Array[(Tid, Exp)], tid? : Tid) -> Term[Self]
 
 pub(all) struct Program {
@@ -823,6 +824,7 @@ pub fn Term::returns_twice(Self[Sub]) -> Bool
 pub fn Term::rhs(Self[Def]) -> Exp
 pub fn[T] Term::same(Self[T], Self[T]) -> Bool
 pub fn Term::select(Self[Phi], Tid) -> Exp?
+pub fn Term::select_or_unknown(Self[Phi], Tid) -> Exp
 pub fn[T] Term::set_attr(Self[T], Attr) -> Self[T]
 pub fn Term::split_after_def(Self[Blk], Self[Def]) -> (Self[Blk], Self[Blk])
 pub fn Term::split_before_def(Self[Blk], Self[Def]) -> (Self[Blk], Self[Blk])

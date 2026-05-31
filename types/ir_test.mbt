@@ -294,8 +294,20 @@ test "phi nodes jumps calls and args expose BAP-style payloads" {
   let one = @types.Int(@types.Word::of_int(width=8, 1))
   let two = @types.Int(@types.Word::of_int(width=8, 2))
   let phi = @types.Phi::of_list(lhs, [(left, one)]).update_phi(right, two)
+  let single = @types.Phi::create(
+    lhs,
+    left,
+    one,
+    tid=@types.Tid::for_name("phi-term"),
+  )
+  assert_true(single.select(left) == Some(one))
+  assert_true(single.tid().name() == Some("phi-term"))
   assert_true(phi.select(left) == Some(one))
   assert_true(phi.select(right) == Some(two))
+  assert_true(single.select_or_unknown(left) == one)
+  assert_true(
+    single.select_or_unknown(right) == Unknown("unresolved-tid @right", typ),
+  )
   let call = @types.Call::create(target=@types.Label::direct(left)).with_return(
     @types.Label::direct(right),
   )

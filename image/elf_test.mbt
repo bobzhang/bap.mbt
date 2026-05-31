@@ -680,6 +680,21 @@ fn image_elf_test_make_x86_64_extended_tables() -> Bytes {
 }
 
 ///|
+fn image_elf_test_rewrite_machine_osabi(
+  data : Bytes,
+  machine : Int,
+  osabi : Int,
+) -> Bytes {
+  let buffer = Array::make(data.length(), b'\x00')
+  for i in 0..<data.length() {
+    buffer[i] = data[i]
+  }
+  buffer[7] = osabi.to_byte()
+  image_elf_test_set_u16_le(buffer, 18, machine)
+  Bytes::from_array(buffer)
+}
+
+///|
 test "image ELF backend loads program segments and sections" {
   match @image.register_builtin_backends() {
     Ok(_) => ()
@@ -700,6 +715,7 @@ test "image ELF backend loads program segments and sections" {
       assert_true(target.matches("x86_64"))
       assert_true(target.filetype() == Elf)
       assert_true(target.system() == Linux)
+      assert_true(target.abi() == GNU)
     }
     None => fail("expected ELF target")
   }
@@ -747,6 +763,44 @@ test "image ELF backend loads program segments and sections" {
   assert_true(data_symbol.size() == 1)
   assert_true(!data_symbol.is_function())
   assert_true(image.symbols_of_segment(segments[0]).length() == 2)
+}
+
+///|
+test "image ELF backend refines target ABI from OSABI" {
+  match @image.register_builtin_backends() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let cases : Array[
+    (String, Int, Int, String, @core_theory.System, @core_theory.Abi),
+  ] = [
+    ("sysv", 0x3e, 0, "x86_64", UnknownSystem, SysV),
+    ("linux", 0x3e, 3, "x86_64", Linux, GNU),
+    ("arm-aeabi", 0x28, 64, "arm", UnknownSystem, EABI),
+  ]
+  for case in cases {
+    let (name, machine, osabi, arch, system, abi) = case
+    let (image, warnings) = expect_elf_image(
+      @image.Image::of_bytes(
+        image_elf_test_rewrite_machine_osabi(
+          image_elf_test_make_x86_64(),
+          machine,
+          osabi,
+        ),
+        backend="elf",
+      ),
+    )
+    assert_true(warnings.is_empty())
+    match image.target() {
+      Some(target) => {
+        assert_true(target.matches(arch))
+        assert_true(target.filetype() == Elf)
+        assert_true(target.system() == system)
+        assert_true(target.abi() == abi)
+      }
+      None => fail("expected ELF target for " + name)
+    }
+  }
 }
 
 ///|

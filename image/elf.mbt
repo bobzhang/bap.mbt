@@ -1803,6 +1803,16 @@ fn image_elf_target_system(osabi : Int) -> @core_theory.System? {
 }
 
 ///|
+fn image_elf_target_abi(osabi : Int) -> @core_theory.Abi? {
+  match osabi {
+    0 => Some(SysV)
+    3 => Some(GNU)
+    64 => Some(EABI)
+    _ => None
+  }
+}
+
+///|
 fn image_elf_target(header : ImageElfHeader) -> @core_theory.Target {
   let base = match header.machine {
     0x02 =>
@@ -1857,8 +1867,12 @@ fn image_elf_target(header : ImageElfHeader) -> @core_theory.Target {
   let target = base
     .with_endianness(image_elf_target_endian(header.endian))
     .with_filetype(Elf)
-  match image_elf_target_system(header.osabi) {
+  let target = match image_elf_target_system(header.osabi) {
     Some(system) => target.with_system(system)
+    None => target
+  }
+  match image_elf_target_abi(header.osabi) {
+    Some(abi) => target.with_abi(abi)
     None => target
   }
 }

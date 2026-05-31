@@ -97,6 +97,18 @@ test "target registry resolves common and custom declarations" {
       assert_true(target.bits() == 64)
       assert_true(target.find_var("PC") is Some(_))
       assert_true(target.find_var("a0") is Some(_))
+      assert_true(target.belongs(@core_theory.Target::riscv()))
+      assert_true(!target.belongs(@core_theory.Target::riscv32()))
+      assert_true(target.matches("riscv"))
+    }
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.get_target("riscv") {
+    Ok(target) => {
+      assert_true(target.bits() == 0)
+      assert_true(target.endianness() == LittleEndian)
+      assert_true(@core_theory.Target::riscv32().belongs(target))
+      assert_true(@core_theory.Target::riscv64().belongs(target))
     }
     Err(reason) => fail(reason)
   }

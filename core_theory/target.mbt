@@ -852,6 +852,11 @@ fn systemz_alias_origins() -> Array[AliasOrigin] {
 }
 
 ///|
+fn riscv_family_vars() -> Array[Var] {
+  []
+}
+
+///|
 fn riscv_vars(bits : Int) -> Array[Var] {
   let items = numbered_word_vars(bits, "X", 32)
   append_vars(items, numbered_word_vars(bits, "F", 32))
@@ -1234,7 +1239,7 @@ fn target_specific_role_names(target : Target, role : Role) -> Array[String]? {
     Some(mips_role_names(target.bits(), role))
   } else if target.belongs(Target::powerpc()) {
     Some(powerpc_role_names(role))
-  } else if target.belongs(Target::riscv32()) {
+  } else if target.belongs(Target::riscv()) {
     Some(riscv_role_names(role))
   } else if target.belongs(Target::sparc()) {
     Some(sparc_role_names(role))
@@ -1966,10 +1971,20 @@ pub fn Target::powerpc64le() -> Target {
 }
 
 ///|
+pub fn Target::riscv() -> Target {
+  Target::create(
+    name=target_name("riscv"),
+    bits=0,
+    endianness=LittleEndian,
+    vars=riscv_family_vars(),
+  )
+}
+
+///|
 pub fn Target::riscv32() -> Target {
   Target::create(
     name=target_name("riscv32"),
-    nicknames=["riscv"],
+    parent=Target::riscv(),
     bits=32,
     endianness=LittleEndian,
     vars=riscv_vars(32),
@@ -1981,7 +1996,7 @@ pub fn Target::riscv32() -> Target {
 pub fn Target::riscv64() -> Target {
   Target::create(
     name=target_name("riscv64"),
-    parent=Target::riscv32(),
+    parent=Target::riscv(),
     bits=64,
     endianness=LittleEndian,
     vars=riscv_vars(64),
@@ -2389,6 +2404,7 @@ pub fn common_targets() -> Array[Target] {
     Target::powerpcle(),
     Target::powerpc64(),
     Target::powerpc64le(),
+    Target::riscv(),
     Target::riscv32(),
     Target::riscv64(),
     Target::sparc(),

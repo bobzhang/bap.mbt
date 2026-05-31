@@ -68,6 +68,32 @@ test "targets inherit defaults and match ancestry" {
   assert_true(target.order(family) == Less)
   assert_true(target.bits() == 64)
   assert_true(target.endianness() == LittleEndian)
+  let little = @core_theory.Endianness::of_string("le").unwrap()
+  let big = @core_theory.Endianness::of_string("be").unwrap()
+  assert_true(little.equal(little))
+  assert_true(little.compare(big) < 0)
+  let unknown_system = @core_theory.System::of_string("unknown").unwrap()
+  let linux = @core_theory.System::of_string("linux").unwrap()
+  assert_true(linux.equal(@core_theory.System::of_string("linux").unwrap()))
+  assert_true(unknown_system.compare(linux) < 0)
+  assert_true(
+    @core_theory.Abi::of_string("sysv")
+    .unwrap()
+    .compare(@core_theory.Abi::of_string("gnu").unwrap()) <
+    0,
+  )
+  assert_true(
+    @core_theory.Fabi::of_string("soft")
+    .unwrap()
+    .compare(@core_theory.Fabi::of_string("hard").unwrap()) <
+    0,
+  )
+  assert_true(
+    @core_theory.Filetype::of_string("elf")
+    .unwrap()
+    .compare(@core_theory.Filetype::of_string("raw").unwrap()) <
+    0,
+  )
   assert_true(target.matches("amd64"))
   assert_true(target.matches("X86"))
   assert_true(target.find_var("PC") is Some(_))

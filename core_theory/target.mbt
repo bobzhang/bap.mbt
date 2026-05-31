@@ -89,6 +89,25 @@ pub fn Endianness::of_string(text : String) -> Endianness? {
 }
 
 ///|
+fn Endianness::rank(self : Endianness) -> Int {
+  match self {
+    LittleEndian => 0
+    BigEndian => 1
+    BiEndian => 2
+  }
+}
+
+///|
+pub fn Endianness::equal(self : Endianness, other : Endianness) -> Bool {
+  self == other
+}
+
+///|
+pub fn Endianness::compare(self : Endianness, other : Endianness) -> Int {
+  self.rank().compare(other.rank())
+}
+
+///|
 pub fn System::to_string(self : System) -> String {
   match self {
     UnknownSystem => "unknown"
@@ -133,6 +152,39 @@ pub fn System::of_string(text : String) -> System? {
     "none" | "baremetal" | "bare-metal" => Some(NoSystem)
     _ => None
   }
+}
+
+///|
+fn System::rank(self : System) -> Int {
+  match self {
+    UnknownSystem => 0
+    HPUX => 1
+    NetBSD => 2
+    Linux => 3
+    Solaris => 4
+    AIX => 5
+    IRIX => 6
+    Darwin => 7
+    VxWorks => 8
+    FreeBSD => 9
+    Tru64 => 10
+    Modesto => 11
+    OpenBSD => 12
+    Windows => 13
+    MSDOS => 14
+    UEFI => 15
+    NoSystem => 16
+  }
+}
+
+///|
+pub fn System::equal(self : System, other : System) -> Bool {
+  self == other
+}
+
+///|
+pub fn System::compare(self : System, other : System) -> Int {
+  self.rank().compare(other.rank())
 }
 
 ///|
@@ -181,6 +233,38 @@ pub fn Abi::of_string(text : String) -> Abi? {
 }
 
 ///|
+fn Abi::rank(self : Abi) -> Int {
+  match self {
+    UnknownAbi => 0
+    SysV => 1
+    GNU => 2
+    EABI => 3
+    GNUEABI => 4
+    CDecl => 5
+    Pascal => 6
+    FortranAbi => 7
+    StdCall => 8
+    FastCall => 9
+    ThisCall => 10
+    VectorCall => 11
+    Watcom => 12
+    MSVC => 13
+    SMC => 14
+    HVC => 15
+  }
+}
+
+///|
+pub fn Abi::equal(self : Abi, other : Abi) -> Bool {
+  self == other
+}
+
+///|
+pub fn Abi::compare(self : Abi, other : Abi) -> Int {
+  self.rank().compare(other.rank())
+}
+
+///|
 pub fn Fabi::to_string(self : Fabi) -> String {
   match self {
     UnknownFabi => "unknown"
@@ -197,6 +281,25 @@ pub fn Fabi::of_string(text : String) -> Fabi? {
     "hard" | "hard-float" => Some(Hard)
     _ => None
   }
+}
+
+///|
+fn Fabi::rank(self : Fabi) -> Int {
+  match self {
+    UnknownFabi => 0
+    Soft => 1
+    Hard => 2
+  }
+}
+
+///|
+pub fn Fabi::equal(self : Fabi, other : Fabi) -> Bool {
+  self == other
+}
+
+///|
+pub fn Fabi::compare(self : Fabi, other : Fabi) -> Int {
+  self.rank().compare(other.rank())
 }
 
 ///|
@@ -224,6 +327,29 @@ pub fn Filetype::of_string(text : String) -> Filetype? {
     "raw" | "bin" | "binary" => Some(Raw)
     _ => None
   }
+}
+
+///|
+fn Filetype::rank(self : Filetype) -> Int {
+  match self {
+    UnknownFiletype => 0
+    Elf => 1
+    MachO => 2
+    COFF => 3
+    PE => 4
+    AOut => 5
+    Raw => 6
+  }
+}
+
+///|
+pub fn Filetype::equal(self : Filetype, other : Filetype) -> Bool {
+  self == other
+}
+
+///|
+pub fn Filetype::compare(self : Filetype, other : Filetype) -> Int {
+  self.rank().compare(other.rank())
 }
 
 ///|

@@ -2261,6 +2261,37 @@ pub fn Target::vars_with_role(self : Target, role : Role) -> Array[Var] {
 }
 
 ///|
+pub fn Target::has_roles(
+  self : Target,
+  roles : Array[Role],
+  variable : Var,
+) -> Bool {
+  let present = self.roles_of_var(variable)
+  roles.all(role => present.contains(role))
+}
+
+///|
+pub fn Target::regs(
+  self : Target,
+  roles? : Array[Role],
+  exclude? : Array[Role],
+) -> Array[Var] {
+  let included = match roles {
+    Some(items) => items
+    None => []
+  }
+  let excluded = match exclude {
+    Some(items) => items
+    None => []
+  }
+  self.vars_value.filter(variable => {
+    let present = self.roles_of_var(variable)
+    included.all(role => present.contains(role)) &&
+    !excluded.any(role => present.contains(role))
+  })
+}
+
+///|
 pub fn Target::find_role(self : Target, role : Role) -> Var? {
   match
     self.vars_value.search_by(variable => {
@@ -2268,6 +2299,20 @@ pub fn Target::find_role(self : Target, role : Role) -> Var? {
     }) {
     Some(i) => Some(self.vars_value[i])
     None => None
+  }
+}
+
+///|
+pub fn Target::reg(
+  self : Target,
+  role : Role,
+  exclude? : Array[Role],
+  unique? : Bool = false,
+) -> Var? {
+  match self.regs(roles=[role], exclude?) {
+    [] => None
+    [variable] => Some(variable)
+    [variable, ..] => if unique { None } else { Some(variable) }
   }
 }
 

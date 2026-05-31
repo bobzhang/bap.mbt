@@ -1038,6 +1038,19 @@ test "target role helpers classify common architecture variables" {
   assert_true(amd64.vars_with_role(AliasRegister).any(v => v.ident() == "EAX"))
   assert_true(amd64.vars_with_role(Status).any(v => v.ident() == "RFLAGS"))
   assert_true(amd64.vars_with_role(Status).any(v => v.ident() == "IOPL"))
+  match amd64.find_var("ZF") {
+    Some(flag) => assert_true(amd64.has_roles([Status, ZeroFlag], flag))
+    None => fail("missing ZF")
+  }
+  assert_true(amd64.regs(roles=[Status, ZeroFlag]).any(v => v.ident() == "ZF"))
+  assert_true(
+    !amd64.regs(roles=[Status], exclude=[ZeroFlag]).any(v => v.ident() == "ZF"),
+  )
+  assert_true(amd64.reg(StackPointer).map(v => v.ident()) == Some("RSP"))
+  assert_true(
+    amd64.reg(ProgramCounter, unique=true).map(v => v.ident()) == Some("RIP"),
+  )
+  assert_true(amd64.reg(ResultRegister, unique=true) is None)
   assert_true(amd64.role_aliases(ProgramCounter).contains("rip"))
   assert_true(!amd64.role_aliases(ProgramCounter).contains("pc"))
   let x86 = @core_theory.Target::x86()

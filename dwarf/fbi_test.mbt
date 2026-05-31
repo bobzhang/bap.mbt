@@ -72,6 +72,56 @@ test "translated DWARF FBI ignores zero padding after units" {
 }
 
 ///|
+test "translated DWARF FBI skips unsupported DWARF5 units" {
+  let abbrev = b"\x01\x2e\x00" +
+    b"\x03\x08" +
+    b"\x11\x01" +
+    b"\x12\x0b" +
+    b"\x00\x00" +
+    b"\x00"
+  let unsupported = b"\x09\x00\x00\x00" +
+    b"\x05\x00" +
+    b"\x7f" +
+    b"\x04" +
+    b"\x00\x00\x00\x00" +
+    b"\xaa"
+  let supported = b"\x13\x00\x00\x00" +
+    b"\x04\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x04" +
+    b"\x01" +
+    b"main\x00" +
+    b"\x10\x00\x00\x00" +
+    b"\x05" +
+    b"\x00"
+  let data = expect_fbi_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=LittleEndian,
+      info=unsupported + supported,
+      abbrev~,
+      str=b"",
+    ),
+  )
+  let functions = expect_functions(data.functions())
+  assert_true(functions.length() == 1)
+  assert_true(functions[0].name() == "main")
+  let truncated = b"\x09\x00\x00\x00" +
+    b"\x05\x00" +
+    b"\x7f" +
+    b"\x04" +
+    b"\x00\x00\x00\x00"
+  let truncated_data = expect_fbi_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=LittleEndian,
+      info=truncated,
+      abbrev~,
+      str=b"",
+    ),
+  )
+  assert_true(truncated_data.functions() is Err(_))
+}
+
+///|
 test "translated DWARF FBI extracts string-table names and absolute high pc" {
   let abbrev = b"\x01\x2e\x00" +
     b"\x03\x0e" +

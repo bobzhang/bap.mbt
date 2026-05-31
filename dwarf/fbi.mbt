@@ -58,6 +58,12 @@ priv struct DwarfParsedUnit {
 }
 
 ///|
+priv enum DwarfUnitHeader {
+  DwarfSupportedUnit(Int, DwarfWordSize, DwarfInput)
+  DwarfUnsupportedUnit
+}
+
+///|
 priv struct DwarfRangeSummary {
   low : UInt64
   high : UInt64
@@ -1224,19 +1230,25 @@ fn dwarf_skip_unit_header_tail(
   input : DwarfInput,
   unit_type : Int,
   dwarf_size : DwarfWordSize,
-) -> Result[DwarfInput, String] {
+) -> Result[DwarfInput?, String] {
   if unit_type == 1 || unit_type == 3 {
-    Ok(input)
+    Ok(Some(input))
   } else if unit_type == 4 || unit_type == 5 {
-    input.skip(bytes=8)
+    match input.skip(bytes=8) {
+      Ok(next) => Ok(Some(next))
+      Err(reason) => Err(reason)
+    }
   } else if unit_type == 2 || unit_type == 6 {
     match input.skip(bytes=8) {
       Ok(after_signature) =>
-        after_signature.skip(bytes=dwarf_word_bytes(dwarf_size))
+        match after_signature.skip(bytes=dwarf_word_bytes(dwarf_size)) {
+          Ok(next) => Ok(Some(next))
+          Err(reason) => Err(reason)
+        }
       Err(reason) => Err(reason)
     }
   } else {
-    Err("unsupported DWARF5 unit type: \{unit_type}")
+    Ok(None)
   }
 }
 
@@ -1246,7 +1258,7 @@ fn dwarf_read_unit_header(
   version : Int,
   endian : @bitvec.Endian,
   dwarf_size : DwarfWordSize,
-) -> Result[(Int, DwarfWordSize, DwarfInput), String] {
+) -> Result[DwarfUnitHeader, String] {
   if version >= 5 {
     match input.read_byte() {
       Ok((unit_type, after_unit_type)) =>
@@ -1258,8 +1270,11 @@ fn dwarf_read_unit_header(
                   dwarf_skip_unit_header_tail(
                     after_offset, unit_type, dwarf_size,
                   ) {
-                  Ok(after_header) =>
-                    Ok((abbrev_offset, addr_size, after_header))
+                  Ok(Some(after_header)) =>
+                    Ok(
+                      DwarfSupportedUnit(abbrev_offset, addr_size, after_header),
+                    )
+                  Ok(None) => Ok(DwarfUnsupportedUnit)
                   Err(reason) => Err(reason)
                 }
               Err(reason) => Err(reason)
@@ -1273,11 +1288,23 @@ fn dwarf_read_unit_header(
       Ok((abbrev_offset, after_offset)) =>
         match after_offset.read_address_size() {
           Ok((addr_size, after_header)) =>
-            Ok((abbrev_offset, addr_size, after_header))
+            Ok(DwarfSupportedUnit(abbrev_offset, addr_size, after_header))
           Err(reason) => Err(reason)
         }
       Err(reason) => Err(reason)
     }
+  }
+}
+
+///|
+fn dwarf_skip_to_unit_end(
+  input : DwarfInput,
+  cu_end : Int,
+) -> Result[DwarfInput, String] {
+  if cu_end > input.data.length() {
+    Err("truncated DWARF input")
+  } else {
+    Ok(input.with_position(cu_end))
   }
 }
 
@@ -1326,7 +1353,12 @@ fn dwarf_parse_unit(
         Ok((version, after_version)) =>
           match
             dwarf_read_unit_header(after_version, version, endian, dwarf_size) {
-            Ok((abbrev_offset, addr_size, after_header)) => {
+            Ok(DwarfUnsupportedUnit) =>
+              match dwarf_skip_to_unit_end(after_size, cu_end) {
+                Ok(next) => Ok({ function_candidates: [], die_names: [], next })
+                Err(reason) => Err(reason)
+              }
+            Ok(DwarfSupportedUnit(abbrev_offset, addr_size, after_header)) => {
               let table = match abbrev_section.offset(abbrev_offset) {
                 Ok(buffer) =>
                   match DwarfAbbrevTable::read(buffer.input()) {

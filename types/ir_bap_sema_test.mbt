@@ -167,6 +167,33 @@ fn bap_assert_cfg_edge(
 }
 
 ///|
+fn bap_insert_cfg(blks : Array[@types.Term[@types.Blk]]) -> @types.IrCfg {
+  let mut cfg = @types.IrCfg::create(name="inserted")
+  for blk in blks {
+    cfg = cfg.insert_node(blk)
+  }
+  cfg
+}
+
+///|
+fn bap_assert_ir_cfg_matches(
+  expected : @types.IrCfg,
+  actual : @types.IrCfg,
+) -> Unit raise {
+  assert_true(actual.node_count() == expected.node_count())
+  assert_true(actual.edge_count() == expected.edge_count())
+  assert_true(actual.edges().length() == expected.edges().length())
+  for edge in expected.edges() {
+    if !actual.has_edge(edge.src(), edge.dst()) {
+      fail("expected CFG edge \{edge.src().name()} -> \{edge.dst().name()}")
+    }
+  }
+  for blk in actual.nodes() {
+    assert_true(actual.degree(blk) != 0)
+  }
+}
+
+///|
 test "translated BAP sema fixture builds expected CFG edges" {
   let f = make_bap_sema_fixture()
   let cfg = f.sub.sub_cfg()
@@ -183,6 +210,19 @@ test "translated BAP sema fixture builds expected CFG edges" {
   bap_assert_cfg_edge(cfg, f.b6, f.exit)
   for block in [f.entry, f.b1, f.b2, f.b3, f.b4, f.b5, f.b6, f.exit] {
     assert_true(cfg.degree(block.tid()) != 0)
+  }
+}
+
+///|
+test "translated BAP IR CFG insertion order materializes all fixture edges" {
+  let f = make_bap_sema_fixture()
+  let expected = f.sub.to_cfg()
+  let forward = [f.entry, f.b1, f.b2, f.b3, f.b4, f.b5, f.b6, f.exit]
+  let reverse = [f.exit, f.b6, f.b5, f.b4, f.b3, f.b2, f.b1, f.entry]
+  let mixed = [f.b2, f.b4, f.exit, f.b5, f.b6, f.b3, f.b1, f.entry]
+  for order in [forward, reverse, mixed] {
+    let actual = bap_insert_cfg(order)
+    bap_assert_ir_cfg_matches(expected, actual)
   }
 }
 

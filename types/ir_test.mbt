@@ -715,6 +715,64 @@ test "ir term direct-child navigation mirrors BAP Term sequence helpers" {
 }
 
 ///|
+test "ir term direct-child insertion mirrors BAP append and prepend" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let a = @types.Def::create(x, Int(word8(1)), tid=@types.Tid::for_name("a"))
+  let b = @types.Def::create(x, Int(word8(2)), tid=@types.Tid::for_name("b"))
+  let c = @types.Def::create(x, Int(word8(3)), tid=@types.Tid::for_name("c"))
+  let head = @types.Def::create(
+    x,
+    Int(word8(0)),
+    tid=@types.Tid::for_name("head"),
+  )
+  let left = @types.Def::create(
+    x,
+    Int(word8(9)),
+    tid=@types.Tid::for_name("left"),
+  )
+  let block_term : @types.IrTerm = BlkTerm(@types.Blk::create(defs=[a]))
+
+  let appended = block_term.append_child(DefTerm(c))
+  assert_true(
+    appended.children_of_class(DefTermClass).map(term => term.tid()) ==
+    [a.tid(), c.tid()],
+  )
+  let inserted = appended.append_child(DefTerm(b), after=a.tid())
+  assert_true(
+    inserted.children_of_class(DefTermClass).map(term => term.tid()) ==
+    [a.tid(), b.tid(), c.tid()],
+  )
+  let missing_anchor = inserted.append_child(
+    DefTerm(head),
+    after=@types.Tid::for_name("missing"),
+  )
+  assert_true(
+    missing_anchor.children_of_class(DefTermClass).map(term => term.tid()) ==
+    [a.tid(), b.tid(), c.tid()],
+  )
+
+  let prepended = inserted.prepend_child(DefTerm(head))
+  assert_true(
+    prepended.children_of_class(DefTermClass).map(term => term.tid()) ==
+    [head.tid(), a.tid(), b.tid(), c.tid()],
+  )
+  let before_b = inserted.prepend_child(DefTerm(left), before=b.tid())
+  assert_true(
+    before_b.children_of_class(DefTermClass).map(term => term.tid()) ==
+    [a.tid(), left.tid(), b.tid(), c.tid()],
+  )
+
+  let wrong_child = inserted.append_child(
+    SubTerm(@types.Sub::create(name="not-a-block-child")),
+  )
+  assert_true(
+    wrong_child.children_of_class(DefTermClass).map(term => term.tid()) ==
+    [a.tid(), b.tid(), c.tid()],
+  )
+}
+
+///|
 test "ir term address query helpers mirror BAP term-addr" {
   let addr32 = @types.Word::of_int64(42L, width=32)
   let addr64 = @types.Word::of_int64(42L, width=64)

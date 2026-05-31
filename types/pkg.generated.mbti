@@ -540,6 +540,7 @@ pub(all) enum IrTerm {
   DefTerm(Term[Def])
   JmpTerm(Term[Jmp])
 }
+pub fn IrTerm::append_child(Self, Self, after? : Tid) -> Self
 pub fn IrTerm::attrs(Self) -> Map[String, String]
 pub fn[A] IrTerm::cata(Self, init~ : A, program? : (Term[Program]) -> A, sub? : (Term[Sub]) -> A, arg? : (Term[Arg]) -> A, blk? : (Term[Blk]) -> A, phi? : (Term[Phi]) -> A, def? : (Term[Def]) -> A, jmp? : (Term[Jmp]) -> A) -> A
 pub fn IrTerm::change_child(Self, IrTermClass, Tid, (Self?) -> Self?) -> Self
@@ -575,6 +576,7 @@ pub fn IrTerm::map(Self, program? : (Term[Program]) -> Term[Program], sub? : (Te
 pub fn IrTerm::name(Self) -> String
 pub fn IrTerm::next_child(Self, IrTermClass, Tid) -> Self?
 pub fn IrTerm::nth_child(Self, IrTermClass, Int) -> Self?
+pub fn IrTerm::prepend_child(Self, Self, before? : Tid) -> Self
 pub fn IrTerm::prev_child(Self, IrTermClass, Tid) -> Self?
 pub fn[A] IrTerm::proj(Self, program? : (Term[Program]) -> A?, sub? : (Term[Sub]) -> A?, arg? : (Term[Arg]) -> A?, blk? : (Term[Blk]) -> A?, phi? : (Term[Phi]) -> A?, def? : (Term[Def]) -> A?, jmp? : (Term[Jmp]) -> A?) -> A?
 pub fn IrTerm::remove_child(Self, IrTermClass, Tid) -> Self

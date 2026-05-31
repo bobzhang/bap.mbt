@@ -401,6 +401,52 @@ pub fn IrTerm::remove_child(
 }
 
 ///|
+pub fn IrTerm::append_child(
+  self : IrTerm,
+  child : IrTerm,
+  after? : Tid,
+) -> IrTerm {
+  match (self, child) {
+    (ProgramTerm(term), SubTerm(child)) =>
+      ProgramTerm(term.insert_sub_after(child, after?))
+    (SubTerm(term), ArgTerm(child)) =>
+      SubTerm(term.insert_arg_after(child, after?))
+    (SubTerm(term), BlkTerm(child)) =>
+      SubTerm(term.insert_blk_after(child, after?))
+    (BlkTerm(term), PhiTerm(child)) =>
+      BlkTerm(term.insert_phi_after(child, after?))
+    (BlkTerm(term), DefTerm(child)) =>
+      BlkTerm(term.insert_def_after(child, after?))
+    (BlkTerm(term), JmpTerm(child)) =>
+      BlkTerm(term.insert_jmp_after(child, after?))
+    _ => self
+  }
+}
+
+///|
+pub fn IrTerm::prepend_child(
+  self : IrTerm,
+  child : IrTerm,
+  before? : Tid,
+) -> IrTerm {
+  match (self, child) {
+    (ProgramTerm(term), SubTerm(child)) =>
+      ProgramTerm(term.insert_sub_before(child, before?))
+    (SubTerm(term), ArgTerm(child)) =>
+      SubTerm(term.insert_arg_before(child, before?))
+    (SubTerm(term), BlkTerm(child)) =>
+      SubTerm(term.insert_blk_before(child, before?))
+    (BlkTerm(term), PhiTerm(child)) =>
+      BlkTerm(term.insert_phi_before(child, before?))
+    (BlkTerm(term), DefTerm(child)) =>
+      BlkTerm(term.insert_def_before(child, before?))
+    (BlkTerm(term), JmpTerm(child)) =>
+      BlkTerm(term.insert_jmp_before(child, before?))
+    _ => self
+  }
+}
+
+///|
 pub fn IrTerm::free_vars(self : IrTerm) -> Array[Var] {
   match self {
     ProgramTerm(term) => term.program_free_vars()

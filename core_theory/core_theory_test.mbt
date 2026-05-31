@@ -913,6 +913,33 @@ test "target role helpers classify common architecture variables" {
     Some(fp) => assert_true(sparcv9.roles_of_var(fp).contains(FramePointer))
     None => fail("missing SPARC I6")
   }
+  match sparcv9.find_var("O7") {
+    Some(link) => {
+      assert_true(sparcv9.roles_of_var(link).contains(LinkRegister))
+      assert_true(sparcv9.roles_of_var(link).contains(CallerSaved))
+    }
+    None => fail("missing SPARC O7")
+  }
+  match sparcv9.find_var("I7") {
+    Some(link) => {
+      assert_true(sparcv9.roles_of_var(link).contains(LinkRegister))
+      assert_true(sparcv9.roles_of_var(link).contains(CalleeSaved))
+    }
+    None => fail("missing SPARC I7")
+  }
+  match sparcv9.find_var("L0") {
+    Some(saved) =>
+      assert_true(sparcv9.roles_of_var(saved).contains(CalleeSaved))
+    None => fail("missing SPARC L0")
+  }
+  match sparcv9.find_var("O0") {
+    Some(result) => {
+      assert_true(sparcv9.roles_of_var(result).contains(Argument))
+      assert_true(sparcv9.roles_of_var(result).contains(ResultRegister))
+      assert_true(sparcv9.roles_of_var(result).contains(CallerSaved))
+    }
+    None => fail("missing SPARC O0")
+  }
   let ppc64 = @core_theory.Target::powerpc64()
   assert_true(ppc64.role_aliases(Argument).contains("r3"))
   assert_true(!ppc64.role_aliases(Argument).contains("rdi"))

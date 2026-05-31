@@ -1225,11 +1225,12 @@ fn sparc_role_names(role : Role) -> Array[String] {
     ProgramCounter => ["pc", "npc"]
     Status => []
     Constant | ZeroRegister | ThreadPointer => []
-    LinkRegister => []
+    LinkRegister => ["o7", "i7"]
     Argument => role_names("o", 0, 5)
     ResultRegister => ["o0", "o1"]
-    CallerSaved => []
-    CalleeSaved => []
+    CallerSaved => concat_role_names([role_names("o", 0, 7), ["g1"]])
+    CalleeSaved =>
+      concat_role_names([role_names("l", 0, 7), role_names("i", 0, 7)])
     Reserved => []
   }
 }

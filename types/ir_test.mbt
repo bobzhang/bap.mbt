@@ -213,6 +213,56 @@ test "program traversal helpers enumerate nested IR terms" {
 }
 
 ///|
+test "ir term class dispatch helpers mirror BAP switch proj and cata" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let arg = @types.Arg::create(x, Var(y))
+  let pred = @types.Tid::for_name("pred")
+  let phi = @types.Phi::of_list(x, [(pred, Var(y))])
+  let def = @types.Def::create(y, Int(word8(1)))
+  let jmp = @types.Jmp::create_goto(@types.Label::direct(pred))
+  let blk = @types.Blk::create(phis=[phi], defs=[def], jmps=[jmp])
+  let sub = @types.Sub::create(name="main", args=[arg], blks=[blk])
+  let program = @types.Program::create(subs=[sub])
+
+  let switched = program
+    .program_terms()
+    .map(term => {
+      term.switch(
+        program=_ => "program",
+        sub=_ => "sub",
+        arg=_ => "arg",
+        blk=_ => "blk",
+        phi=_ => "phi",
+        def=_ => "def",
+        jmp=_ => "jmp",
+      )
+    })
+  assert_true(switched == ["program", "sub", "arg", "blk", "phi", "def", "jmp"])
+
+  let projected_def : String? = @types.DefTerm(def).proj(def=term => {
+    Some(term.name())
+  })
+  let projected_wrong : String? = @types.DefTerm(def).proj(blk=term => {
+    Some(term.name())
+  })
+  let projected_none : String? = @types.DefTerm(def).proj(def=_ => None)
+  assert_true(projected_def == Some(def.name()))
+  assert_true(projected_wrong is None)
+  assert_true(projected_none is None)
+
+  assert_true(
+    @types.ArgTerm(arg).cata(init="missing", arg=term => term.name()) ==
+    arg.name(),
+  )
+  assert_true(
+    @types.ArgTerm(arg).cata(init="missing", def=term => term.name()) ==
+    "missing",
+  )
+}
+
+///|
 test "IR term lookup exn helpers report missing tids" {
   let typ = @types.ValueType::Imm(8)
   let x = @types.Var::new(name="x", typ~)

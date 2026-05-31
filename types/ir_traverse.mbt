@@ -147,6 +147,129 @@ pub fn IrTerm::same_tid(self : IrTerm, tid : Tid) -> Bool {
 }
 
 ///|
+pub fn[A] IrTerm::switch(
+  self : IrTerm,
+  program~ : (Term[Program]) -> A,
+  sub~ : (Term[Sub]) -> A,
+  arg~ : (Term[Arg]) -> A,
+  blk~ : (Term[Blk]) -> A,
+  phi~ : (Term[Phi]) -> A,
+  def~ : (Term[Def]) -> A,
+  jmp~ : (Term[Jmp]) -> A,
+) -> A {
+  match self {
+    ProgramTerm(term) => program(term)
+    SubTerm(term) => sub(term)
+    ArgTerm(term) => arg(term)
+    BlkTerm(term) => blk(term)
+    PhiTerm(term) => phi(term)
+    DefTerm(term) => def(term)
+    JmpTerm(term) => jmp(term)
+  }
+}
+
+///|
+pub fn[A] IrTerm::proj(
+  self : IrTerm,
+  program? : (Term[Program]) -> A?,
+  sub? : (Term[Sub]) -> A?,
+  arg? : (Term[Arg]) -> A?,
+  blk? : (Term[Blk]) -> A?,
+  phi? : (Term[Phi]) -> A?,
+  def? : (Term[Def]) -> A?,
+  jmp? : (Term[Jmp]) -> A?,
+) -> A? {
+  match self {
+    ProgramTerm(term) =>
+      match program {
+        Some(f) => f(term)
+        None => None
+      }
+    SubTerm(term) =>
+      match sub {
+        Some(f) => f(term)
+        None => None
+      }
+    ArgTerm(term) =>
+      match arg {
+        Some(f) => f(term)
+        None => None
+      }
+    BlkTerm(term) =>
+      match blk {
+        Some(f) => f(term)
+        None => None
+      }
+    PhiTerm(term) =>
+      match phi {
+        Some(f) => f(term)
+        None => None
+      }
+    DefTerm(term) =>
+      match def {
+        Some(f) => f(term)
+        None => None
+      }
+    JmpTerm(term) =>
+      match jmp {
+        Some(f) => f(term)
+        None => None
+      }
+  }
+}
+
+///|
+pub fn[A] IrTerm::cata(
+  self : IrTerm,
+  init~ : A,
+  program? : (Term[Program]) -> A,
+  sub? : (Term[Sub]) -> A,
+  arg? : (Term[Arg]) -> A,
+  blk? : (Term[Blk]) -> A,
+  phi? : (Term[Phi]) -> A,
+  def? : (Term[Def]) -> A,
+  jmp? : (Term[Jmp]) -> A,
+) -> A {
+  match self {
+    ProgramTerm(term) =>
+      match program {
+        Some(f) => f(term)
+        None => init
+      }
+    SubTerm(term) =>
+      match sub {
+        Some(f) => f(term)
+        None => init
+      }
+    ArgTerm(term) =>
+      match arg {
+        Some(f) => f(term)
+        None => init
+      }
+    BlkTerm(term) =>
+      match blk {
+        Some(f) => f(term)
+        None => init
+      }
+    PhiTerm(term) =>
+      match phi {
+        Some(f) => f(term)
+        None => init
+      }
+    DefTerm(term) =>
+      match def {
+        Some(f) => f(term)
+        None => init
+      }
+    JmpTerm(term) =>
+      match jmp {
+        Some(f) => f(term)
+        None => init
+      }
+  }
+}
+
+///|
 pub fn Term::sub_phis(self : Term[Sub]) -> Array[Term[Phi]] {
   let result = []
   for blk in self.payload_value.blks {

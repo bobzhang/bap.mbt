@@ -541,6 +541,7 @@ pub(all) enum IrTerm {
   JmpTerm(Term[Jmp])
 }
 pub fn IrTerm::attrs(Self) -> Map[String, String]
+pub fn[A] IrTerm::cata(Self, init~ : A, program? : (Term[Program]) -> A, sub? : (Term[Sub]) -> A, arg? : (Term[Arg]) -> A, blk? : (Term[Blk]) -> A, phi? : (Term[Phi]) -> A, def? : (Term[Def]) -> A, jmp? : (Term[Jmp]) -> A) -> A
 pub fn IrTerm::children(Self) -> Array[Self]
 pub fn IrTerm::class(Self) -> IrTermClass
 pub fn IrTerm::class_name(Self) -> String
@@ -562,9 +563,11 @@ pub fn IrTerm::has_name(Self, String) -> Bool
 pub fn IrTerm::has_tid(Self, Tid) -> Bool
 pub fn IrTerm::has_tid_text(Self, String) -> Bool
 pub fn IrTerm::name(Self) -> String
+pub fn[A] IrTerm::proj(Self, program? : (Term[Program]) -> A?, sub? : (Term[Sub]) -> A?, arg? : (Term[Arg]) -> A?, blk? : (Term[Blk]) -> A?, phi? : (Term[Phi]) -> A?, def? : (Term[Def]) -> A?, jmp? : (Term[Jmp]) -> A?) -> A?
 pub fn IrTerm::same_term(Self, Self) -> Bool
 pub fn IrTerm::same_tid(Self, Tid) -> Bool
 pub fn IrTerm::set_attr(Self, Attr) -> Self
+pub fn[A] IrTerm::switch(Self, program~ : (Term[Program]) -> A, sub~ : (Term[Sub]) -> A, arg~ : (Term[Arg]) -> A, blk~ : (Term[Blk]) -> A, phi~ : (Term[Phi]) -> A, def~ : (Term[Def]) -> A, jmp~ : (Term[Jmp]) -> A) -> A
 pub fn IrTerm::tid(Self) -> Tid
 pub fn IrTerm::to_string(Self) -> String
 pub fn IrTerm::uses_var(Self, Var) -> Bool

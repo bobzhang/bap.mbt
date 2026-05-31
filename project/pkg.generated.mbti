@@ -57,6 +57,8 @@ pub fn register_builtin_input_loaders() -> Result[Unit, String]
 
 pub fn register_builtin_reconstructors() -> Result[Unit, String]
 
+pub fn register_builtin_services() -> Result[Unit, String]
+
 pub fn register_collator(RegisteredProjectCollator) -> Result[Unit, String]
 
 pub fn register_disassembly_driver(ProjectDisassemblyDriver) -> Result[Unit, String]

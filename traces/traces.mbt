@@ -729,9 +729,9 @@ pub fn Trace::read_all(
 ///|
 pub fn[T] Trace::read_all_matching(
   self : Trace,
-  select : (TraceEvent) -> T,
+  select : (TraceEvent) -> T?,
 ) -> Result[Array[T], TraceError] {
-  self.read_events().map(events => events.map(select))
+  self.read_events().map(events => events.filter_map(select))
 }
 
 ///|

@@ -90,7 +90,7 @@ pub fn[T] Trace::next_matching(Self, (TraceEvent) -> T?) -> Result[T?, TraceErro
 pub fn Trace::of_bytes(BytesView) -> Result[Self, TraceError]
 pub fn Trace::protocol(Self) -> String?
 pub fn Trace::read_all(Self, String) -> Result[Array[TraceEvent], TraceError]
-pub fn[T] Trace::read_all_matching(Self, (TraceEvent) -> T) -> Result[Array[T], TraceError]
+pub fn[T] Trace::read_all_matching(Self, (TraceEvent) -> T?) -> Result[Array[T], TraceError]
 pub fn Trace::read_events(Self, limit? : Int) -> Result[Array[TraceEvent], TraceError]
 pub fn Trace::register_protocol(TraceProtocol) -> Unit
 pub fn Trace::register_reader(String, (String) -> Result[TraceReader, TraceError]) -> Unit

@@ -320,12 +320,12 @@ test "translated BAP traces read matching events and tool support" {
   let categories = unwrap_string_events(
     new_trace().read_all_matching(fn(event) {
       match event {
-        MemoryLoad(_) | MemoryStore(_) => "Memory"
-        _ => "Unknown"
+        MemoryLoad(_) | MemoryStore(_) => Some("Memory")
+        _ => None
       }
     }),
   )
-  assert_true(categories.filter(value => value == "Memory").length() == 2)
+  assert_true(categories == ["Memory", "Memory"])
 
   let memory = unwrap_events(new_trace().read_all("memory-load"))
   assert_true(memory == [@traces.TraceEvent::memory_load(test_move())])

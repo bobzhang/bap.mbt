@@ -377,6 +377,66 @@ test "ir term views visit every nested term and report parents" {
 }
 
 ///|
+test "program class-filtered lookup and parent helpers mirror BAP Ir_program" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let arg = @types.Arg::create(x, Var(y))
+  let pred = @types.Tid::for_name("pred")
+  let phi = @types.Phi::of_list(x, [(pred, Var(y))])
+  let def = @types.Def::create(y, Int(word8(1)))
+  let jmp = @types.Jmp::create_goto(@types.Label::direct(pred))
+  let blk = @types.Blk::create(phis=[phi], defs=[def], jmps=[jmp])
+  let sub = @types.Sub::create(name="main", args=[arg], blks=[blk])
+  let program = @types.Program::create(subs=[sub])
+
+  assert_true(
+    program.program_lookup(ProgramTermClass, program.tid())
+    is Some(ProgramTerm(_)),
+  )
+  assert_true(
+    program.program_lookup(SubTermClass, sub.tid()) is Some(SubTerm(_)),
+  )
+  assert_true(
+    program.program_lookup(ArgTermClass, arg.tid()) is Some(ArgTerm(_)),
+  )
+  assert_true(
+    program.program_lookup(BlkTermClass, blk.tid()) is Some(BlkTerm(_)),
+  )
+  assert_true(
+    program.program_lookup(PhiTermClass, phi.tid()) is Some(PhiTerm(_)),
+  )
+  assert_true(
+    program.program_lookup(DefTermClass, def.tid()) is Some(DefTerm(_)),
+  )
+  assert_true(
+    program.program_lookup(JmpTermClass, jmp.tid()) is Some(JmpTerm(_)),
+  )
+  assert_true(program.program_lookup(BlkTermClass, def.tid()) is None)
+
+  assert_true(
+    program.program_parent(SubTermClass, sub.tid()) is Some(ProgramTerm(_)),
+  )
+  assert_true(
+    program.program_parent(ArgTermClass, arg.tid()) is Some(SubTerm(_)),
+  )
+  assert_true(
+    program.program_parent(BlkTermClass, blk.tid()) is Some(SubTerm(_)),
+  )
+  assert_true(
+    program.program_parent(PhiTermClass, phi.tid()) is Some(BlkTerm(_)),
+  )
+  assert_true(
+    program.program_parent(DefTermClass, def.tid()) is Some(BlkTerm(_)),
+  )
+  assert_true(
+    program.program_parent(JmpTermClass, jmp.tid()) is Some(BlkTerm(_)),
+  )
+  assert_true(program.program_parent(ProgramTermClass, program.tid()) is None)
+  assert_true(program.program_parent(BlkTermClass, def.tid()) is None)
+}
+
+///|
 test "ir term mapping rewrites nested term attributes" {
   let typ = @types.ValueType::Imm(8)
   let x = @types.Var::new(name="x", typ~)

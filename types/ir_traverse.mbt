@@ -698,6 +698,94 @@ pub fn Term::program_parent_term(self : Term[Program], tid : Tid) -> IrTerm? {
 }
 
 ///|
+pub fn Term::program_lookup(
+  self : Term[Program],
+  cls : IrTermClass,
+  tid : Tid,
+) -> IrTerm? {
+  match cls {
+    ProgramTermClass =>
+      if self.tid() == tid {
+        Some(ProgramTerm(self))
+      } else {
+        None
+      }
+    SubTermClass => self.find_sub(tid).map(term => SubTerm(term))
+    ArgTermClass => self.program_find_arg(tid).map(term => ArgTerm(term))
+    BlkTermClass => self.program_find_blk(tid).map(term => BlkTerm(term))
+    PhiTermClass => self.program_find_phi(tid).map(term => PhiTerm(term))
+    DefTermClass => self.program_find_def(tid).map(term => DefTerm(term))
+    JmpTermClass => self.program_find_jmp(tid).map(term => JmpTerm(term))
+  }
+}
+
+///|
+pub fn Term::program_parent(
+  self : Term[Program],
+  cls : IrTermClass,
+  tid : Tid,
+) -> IrTerm? {
+  match cls {
+    ProgramTermClass => None
+    SubTermClass =>
+      match self.find_sub(tid) {
+        Some(_) => Some(ProgramTerm(self))
+        None => None
+      }
+    ArgTermClass => {
+      for sub in self.payload_value.subs {
+        for arg in sub.payload_value.args {
+          if arg.tid() == tid {
+            return Some(SubTerm(sub))
+          }
+        }
+      }
+      None
+    }
+    BlkTermClass => {
+      for sub in self.payload_value.subs {
+        for blk in sub.payload_value.blks {
+          if blk.tid() == tid {
+            return Some(SubTerm(sub))
+          }
+        }
+      }
+      None
+    }
+    PhiTermClass => {
+      for blk in self.program_blks() {
+        for phi in blk.payload_value.phis {
+          if phi.tid() == tid {
+            return Some(BlkTerm(blk))
+          }
+        }
+      }
+      None
+    }
+    DefTermClass => {
+      for blk in self.program_blks() {
+        for def in blk.payload_value.defs {
+          if def.tid() == tid {
+            return Some(BlkTerm(blk))
+          }
+        }
+      }
+      None
+    }
+    JmpTermClass => {
+      for blk in self.program_blks() {
+        for jmp in blk.payload_value.jmps {
+          if jmp.tid() == tid {
+            return Some(BlkTerm(blk))
+          }
+        }
+      }
+      None
+    }
+  }
+}
+
+///|
 pub fn Term::find_phi(self : Term[Blk], tid : Tid) -> Term[Phi]? {
   self.payload_value.phis
   .search_by(term => term.tid() == tid)

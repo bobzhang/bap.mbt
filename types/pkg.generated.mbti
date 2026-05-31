@@ -932,6 +932,8 @@ pub fn Term::program_find_phi(Self[Program], Tid) -> Self[Phi]?
 pub fn Term::program_find_phi_exn(Self[Program], Tid) -> Self[Phi] raise IrTermLookupError
 pub fn Term::program_free_vars(Self[Program]) -> Array[Var]
 pub fn Term::program_jmps(Self[Program]) -> Array[Self[Jmp]]
+pub fn Term::program_lookup(Self[Program], IrTermClass, Tid) -> IrTerm?
+pub fn Term::program_parent(Self[Program], IrTermClass, Tid) -> IrTerm?
 pub fn Term::program_parent_is(Self[Program], IrTerm, Tid) -> Bool
 pub fn Term::program_parent_term(Self[Program], Tid) -> IrTerm?
 pub fn Term::program_phis(Self[Program]) -> Array[Self[Phi]]

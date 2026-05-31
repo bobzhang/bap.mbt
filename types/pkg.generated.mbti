@@ -95,6 +95,10 @@ pub(all) suberror SizeError {
   UnsupportedAddressSizeValue(Size)
 } derive(Eq, @debug.Debug)
 
+pub(all) suberror StmtAttributeError {
+  DuplicateStmtAttribute(String)
+} derive(Eq, @debug.Debug)
+
 pub(all) suberror TidParseError {
   InvalidTid(String)
 } derive(Eq, @debug.Debug)
@@ -723,9 +727,12 @@ pub(all) enum Stmt {
   If(cond~ : Exp, yes~ : Array[Stmt], no~ : Array[Stmt])
   While(cond~ : Exp, body~ : Array[Stmt])
 } derive(Eq, @debug.Debug)
+pub fn Stmt::call() -> StmtAttribute[String]
 pub fn Stmt::check_type(Self) -> Result[Unit, TypeError]
 pub fn Stmt::cpuexn(Int) -> Self
+pub fn[T] Stmt::decode(StmtAttribute[T], Self) -> T?
 pub fn Stmt::defined_var(Self) -> Var?
+pub fn[T] Stmt::encode(StmtAttribute[T], T) -> Self
 pub fn Stmt::exec(Self, state? : BilState, max_steps? : Int) -> Result[BilState, String]
 pub fn Stmt::exists(Self, (Self) -> Bool) -> Bool
 pub fn Stmt::exists_exp(Self, (Exp) -> Bool) -> Bool
@@ -736,10 +743,13 @@ pub fn[A] Stmt::fold(Self, A, (A, Self) -> A) -> A
 pub fn Stmt::fold_consts(Self) -> Self
 pub fn[A] Stmt::fold_exps(Self, A, (A, Exp) -> A) -> A
 pub fn Stmt::free_vars(Self) -> Array[Var]
+pub fn Stmt::goto() -> StmtAttribute[String]
 pub fn Stmt::if_(Exp, Array[Self], Array[Self]) -> Self
+pub fn Stmt::intrinsic() -> StmtAttribute[String]
 pub fn Stmt::is_assigned(Self, Var, strict? : Bool) -> Bool
 pub fn Stmt::is_referenced(Self, Var) -> Bool
 pub fn Stmt::jmp(Exp) -> Self
+pub fn Stmt::label() -> StmtAttribute[String]
 pub fn Stmt::map_exps(Self, (Exp) -> Exp) -> Self
 pub fn Stmt::move_stmt(Var, Exp) -> Self
 pub fn Stmt::normalize(Self, normalize_exp? : Bool) -> Array[Self]
@@ -751,6 +761,10 @@ pub fn Stmt::substitute(Self, Exp, Exp) -> Self
 pub fn Stmt::substitute_var(Self, Var, Exp) -> Self
 pub fn Stmt::to_string(Self) -> String
 pub fn Stmt::while_(Exp, Array[Self]) -> Self
+
+type StmtAttribute[T]
+pub fn[T] StmtAttribute::key(Self[T]) -> String
+pub fn[T] StmtAttribute::register(String, encode~ : (T) -> String, decode~ : (String) -> T, pkg? : String) -> Self[T] raise StmtAttributeError
 
 pub(all) struct Sub {
   name : String

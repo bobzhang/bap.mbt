@@ -687,6 +687,41 @@ test "bil expressions and statements expose BAP-style constructors" {
   assert_true(@types.Stmt::jmp(addr) == Jmp(addr))
   assert_true(@types.Stmt::special("halt") == Special("halt"))
   assert_true(@types.Stmt::cpuexn(13) == CpuExn(13))
+  let encoded_call = @types.Stmt::encode(@types.Stmt::call(), "puts")
+  assert_true(encoded_call == Special("@attribute:(bap:call puts)"))
+  assert_true(
+    @types.Stmt::decode(@types.Stmt::call(), encoded_call) == Some("puts"),
+  )
+  assert_true(@types.Stmt::decode(@types.Stmt::goto(), encoded_call) is None)
+  let empty_label = @types.Stmt::encode(@types.Stmt::label(), "")
+  assert_true(empty_label == Special("@attribute:bap:label"))
+  assert_true(
+    @types.Stmt::decode(@types.Stmt::label(), empty_label) == Some(""),
+  )
+  fn passthrough(value : String) -> String {
+    value
+  }
+  let custom_attr = @types.StmtAttribute::register(
+    "priority",
+    pkg="test",
+    encode=passthrough,
+    decode=passthrough,
+  )
+  let custom_stmt = @types.Stmt::encode(custom_attr, "high")
+  assert_true(custom_stmt == Special("@attribute:(test:priority high)"))
+  assert_true(@types.Stmt::decode(custom_attr, custom_stmt) == Some("high"))
+  try
+    @types.StmtAttribute::register(
+      "call",
+      pkg="bap",
+      encode=passthrough,
+      decode=passthrough,
+    )
+  catch {
+    DuplicateStmtAttribute(key) => assert_true(key == "bap:call")
+  } noraise {
+    _ => fail("expected duplicate BIL statement attribute")
+  }
   assert_true(
     @types.Stmt::while_(value, [@types.Stmt::jmp(addr)]) ==
     While(cond=value, body=[@types.Stmt::jmp(addr)]),

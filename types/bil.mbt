@@ -299,6 +299,130 @@ pub(all) enum Stmt {
 } derive(Eq, Debug)
 
 ///|
+struct StmtAttribute[T] {
+  key : String
+  encode_value : (T) -> String
+  decode_value : (String) -> T
+}
+
+///|
+pub(all) suberror StmtAttributeError {
+  DuplicateStmtAttribute(String)
+} derive(Eq, Debug)
+
+///|
+let stmt_attribute_prefix = "@attribute:"
+
+///|
+let stmt_attribute_registry : Array[String] = [
+  "bap:call", "bap:intrinsic", "bap:goto", "bap:label",
+]
+
+///|
+fn stmt_attribute_key(name : String, pkg? : String) -> String {
+  match pkg {
+    Some(value) if value != "" => "\{value}:\{name}"
+    _ => name
+  }
+}
+
+///|
+fn stmt_attribute_string(name : String, pkg? : String) -> StmtAttribute[String] {
+  {
+    key: stmt_attribute_key(name, pkg?),
+    encode_value: value => value,
+    decode_value: value => value,
+  }
+}
+
+///|
+pub fn[T] StmtAttribute::register(
+  name : String,
+  encode~ : (T) -> String,
+  decode~ : (String) -> T,
+  pkg? : String,
+) -> StmtAttribute[T] raise StmtAttributeError {
+  let key = stmt_attribute_key(name, pkg?)
+  if stmt_attribute_registry.contains(key) {
+    raise DuplicateStmtAttribute(key)
+  }
+  stmt_attribute_registry.push(key)
+  { key, encode_value: encode, decode_value: decode }
+}
+
+///|
+pub fn[T] StmtAttribute::key(self : StmtAttribute[T]) -> String {
+  self.key
+}
+
+///|
+fn stmt_attribute_quote_atom(text : String) -> String {
+  if text == "" ||
+    text.contains(" ") ||
+    text.contains("(") ||
+    text.contains(")") ||
+    text.contains("\"") {
+    "\"\{text}\""
+  } else {
+    text
+  }
+}
+
+///|
+fn stmt_attribute_unquote_atom(text : String) -> String {
+  if text.length() >= 2 && text.has_prefix("\"") && text.has_suffix("\"") {
+    text[1:text.length() - 1].to_owned()
+  } else {
+    text
+  }
+}
+
+///|
+fn stmt_attribute_encode_payload(key : String, data : String) -> String {
+  if data == "" {
+    stmt_attribute_prefix + key
+  } else {
+    stmt_attribute_prefix +
+    "(\{stmt_attribute_quote_atom(key)} \{stmt_attribute_quote_atom(data)})"
+  }
+}
+
+///|
+fn stmt_attribute_decode_payload(payload : String) -> (String, String)? {
+  if payload.has_prefix("(") && payload.has_suffix(")") {
+    let inner = payload[1:payload.length() - 1].to_owned()
+    let parts = inner.split(" ").to_array()
+    if parts.length() == 0 {
+      None
+    } else {
+      let key = stmt_attribute_unquote_atom(parts[0].to_owned())
+      if parts.length() == 1 {
+        Some((key, ""))
+      } else {
+        let data_parts = []
+        for i in 1..<parts.length() {
+          data_parts.push(parts[i].to_owned())
+        }
+        Some((key, stmt_attribute_unquote_atom(data_parts.join(" "))))
+      }
+    }
+  } else {
+    Some((payload, ""))
+  }
+}
+
+///|
+fn stmt_attribute_decode_special(text : String) -> (String, String)? {
+  if text.has_prefix(stmt_attribute_prefix) {
+    stmt_attribute_decode_payload(
+      text[stmt_attribute_prefix.length():].to_owned(),
+    )
+  } else {
+    None
+  }
+}
+
+///|
 pub fn Stmt::move_stmt(variable : Var, exp : Exp) -> Stmt {
   Move(variable, exp)
 }
@@ -326,6 +450,43 @@ pub fn Stmt::if_(cond : Exp, yes : Array[Stmt], no : Array[Stmt]) -> Stmt {
 ///|
 pub fn Stmt::cpuexn(code : Int) -> Stmt {
   CpuExn(code)
+}
+
+///|
+pub fn Stmt::call() -> StmtAttribute[String] {
+  stmt_attribute_string("call", pkg="bap")
+}
+
+///|
+pub fn Stmt::intrinsic() -> StmtAttribute[String] {
+  stmt_attribute_string("intrinsic", pkg="bap")
+}
+
+///|
+pub fn Stmt::goto() -> StmtAttribute[String] {
+  stmt_attribute_string("goto", pkg="bap")
+}
+
+///|
+pub fn Stmt::label() -> StmtAttribute[String] {
+  stmt_attribute_string("label", pkg="bap")
+}
+
+///|
+pub fn[T] Stmt::encode(attr : StmtAttribute[T], value : T) -> Stmt {
+  Special(stmt_attribute_encode_payload(attr.key, (attr.encode_value)(value)))
+}
+
+///|
+pub fn[T] Stmt::decode(attr : StmtAttribute[T], stmt : Stmt) -> T? {
+  match stmt {
+    Special(text) =>
+      match stmt_attribute_decode_special(text) {
+        Some((key, data)) if key == attr.key => Some((attr.decode_value)(data))
+        _ => None
+      }
+    _ => None
+  }
 }
 
 ///|

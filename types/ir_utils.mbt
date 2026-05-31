@@ -37,6 +37,14 @@ pub fn Label::substitute_var(
 }
 
 ///|
+fn Label::collect_exps(self : Label, out : Array[Exp]) -> Unit {
+  match self {
+    Direct(_) => ()
+    Indirect(exp) => out.push(exp)
+  }
+}
+
+///|
 pub fn Call::map_exp(self : Call, f : (Exp) -> Exp) -> Call {
   {
     target: self.target.map_exp(f),
@@ -67,6 +75,15 @@ pub fn Call::substitute_var(
 }
 
 ///|
+fn Call::collect_exps(self : Call, out : Array[Exp]) -> Unit {
+  match self.return_label {
+    Some(label) => label.collect_exps(out)
+    None => ()
+  }
+  self.target.collect_exps(out)
+}
+
+///|
 pub fn JmpKind::map_exp(self : JmpKind, f : (Exp) -> Exp) -> JmpKind {
   match self {
     JmpCall(call) => JmpCall(call.map_exp(f))
@@ -92,6 +109,15 @@ pub fn JmpKind::substitute_var(
   replacement : Exp,
 ) -> JmpKind {
   self.map_exp(exp => exp.substitute_var(variable, replacement))
+}
+
+///|
+fn JmpKind::collect_exps(self : JmpKind, out : Array[Exp]) -> Unit {
+  match self {
+    JmpCall(call) => call.collect_exps(out)
+    Goto(label) | Ret(label) => label.collect_exps(out)
+    Interrupt(_, _) => ()
+  }
 }
 
 ///|
@@ -145,9 +171,19 @@ pub fn Term::map_jmp_exp(self : Term[Jmp], f : (Exp) -> Exp) -> Term[Jmp] {
 }
 
 ///|
+pub fn Term::jmp_exps(self : Term[Jmp]) -> Array[Exp] {
+  let exps = []
+  self.kind().collect_exps(exps)
+  exps.push(self.cond())
+  exps
+}
+
+///|
 pub fn Term::jmp_free_vars(self : Term[Jmp]) -> Array[Var] {
-  let vars = self.cond().free_vars()
-  add_vars(vars, self.kind().free_vars())
+  let vars = []
+  for exp in self.jmp_exps() {
+    add_vars(vars, exp.free_vars())
+  }
   vars
 }
 

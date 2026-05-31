@@ -521,12 +521,29 @@ test "ir definition phi and jump helpers traverse expressions" {
     @types.Label::indirect(Var(y)),
     cond=BinOp(Eq, Var(z), Int(word8(0))),
   )
+  let jmp_exps = jmp.jmp_exps()
+  assert_true(jmp_exps.length() == 2)
+  assert_true(jmp_exps[0] == Var(y))
+  assert_true(jmp_exps[1] == BinOp(Eq, Var(z), Int(word8(0))))
   let jmp_vars = jmp.jmp_free_vars()
   assert_true(jmp_vars.length() == 2)
   assert_true(jmp_vars.any(item => item == y))
   assert_true(jmp_vars.any(item => item == z))
   let jmp_subst = jmp.substitute_jmp_var(y, Int(word8(4)))
   assert_true(jmp_subst.kind() is Goto(Indirect(Int(_))))
+  let call_return : @types.Exp = Var(x)
+  let call_jmp = @types.Jmp::create_call(
+    @types.Call::create(
+      target=@types.Label::indirect(Var(y)),
+      return_label=@types.Label::indirect(call_return),
+    ),
+    cond=Var(z),
+  )
+  let call_exps = call_jmp.jmp_exps()
+  assert_true(call_exps.length() == 3)
+  assert_true(call_exps[0] == call_return)
+  assert_true(call_exps[1] == Var(y))
+  assert_true(call_exps[2] == Var(z))
   let block = @types.Blk::create(phis=[phi], defs=[def], jmps=[jmp])
   let eight = @types.Int(word8(8))
   let mapped = block.map_blk_exp(_ => eight, skip_jmp=true)

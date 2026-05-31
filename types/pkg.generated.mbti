@@ -784,6 +784,7 @@ pub fn Term::is_nothrow(Self[Sub]) -> Bool
 pub fn Term::is_pure(Self[Sub]) -> Bool
 pub fn Term::is_ssa(Self[Sub]) -> Bool
 pub fn Term::is_stub(Self[Sub]) -> Bool
+pub fn Term::jmp_exps(Self[Jmp]) -> Array[Exp]
 pub fn Term::jmp_free_vars(Self[Jmp]) -> Array[Var]
 pub fn Term::jmp_has_trivial_condition(Self[Jmp]) -> Bool
 pub fn Term::jmp_to_string(Self[Jmp]) -> String

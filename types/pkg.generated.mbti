@@ -91,6 +91,58 @@ pub(all) suberror SizeError {
 } derive(Eq, @debug.Debug)
 
 // Types and methods
+type AddrR32 derive(Eq, @debug.Debug)
+pub fn AddrR32::abs(Self) -> Self
+pub fn AddrR32::add(Self, Self) -> Self
+pub fn AddrR32::arshift(Self, Self) -> Self
+pub fn AddrR32::create(Word) -> Result[Self, String]
+pub fn AddrR32::create_exn(Word) -> Self raise @bitvec.BitVecError
+pub fn AddrR32::div(Self, Self) -> Self
+pub fn AddrR32::lnot(Self) -> Self
+pub fn AddrR32::logand(Self, Self) -> Self
+pub fn AddrR32::logor(Self, Self) -> Self
+pub fn AddrR32::logxor(Self, Self) -> Self
+pub fn AddrR32::lshift(Self, Self) -> Self
+pub fn AddrR32::modulo(Self, Self) -> Self
+pub fn AddrR32::mul(Self, Self) -> Self
+pub fn AddrR32::neg(Self) -> Self
+pub fn AddrR32::of_int32(Int) -> Self
+pub fn AddrR32::one() -> Self
+pub fn AddrR32::pred(Self) -> Self
+pub fn AddrR32::rshift(Self, Self) -> Self
+pub fn AddrR32::sub(Self, Self) -> Self
+pub fn AddrR32::succ(Self) -> Self
+pub fn AddrR32::to_int32(Self) -> Int
+pub fn AddrR32::to_uint(Self) -> UInt
+pub fn AddrR32::to_word(Self) -> Word raise @bitvec.BitVecError
+pub fn AddrR32::zero() -> Self
+
+type AddrR64 derive(Eq, @debug.Debug)
+pub fn AddrR64::abs(Self) -> Self
+pub fn AddrR64::add(Self, Self) -> Self
+pub fn AddrR64::arshift(Self, Self) -> Self
+pub fn AddrR64::create(Word) -> Result[Self, String]
+pub fn AddrR64::create_exn(Word) -> Self raise @bitvec.BitVecError
+pub fn AddrR64::div(Self, Self) -> Self
+pub fn AddrR64::lnot(Self) -> Self
+pub fn AddrR64::logand(Self, Self) -> Self
+pub fn AddrR64::logor(Self, Self) -> Self
+pub fn AddrR64::logxor(Self, Self) -> Self
+pub fn AddrR64::lshift(Self, Self) -> Self
+pub fn AddrR64::modulo(Self, Self) -> Self
+pub fn AddrR64::mul(Self, Self) -> Self
+pub fn AddrR64::neg(Self) -> Self
+pub fn AddrR64::of_int64(Int64) -> Self
+pub fn AddrR64::one() -> Self
+pub fn AddrR64::pred(Self) -> Self
+pub fn AddrR64::rshift(Self, Self) -> Self
+pub fn AddrR64::sub(Self, Self) -> Self
+pub fn AddrR64::succ(Self) -> Self
+pub fn AddrR64::to_int64(Self) -> Int64
+pub fn AddrR64::to_uint64(Self) -> UInt64
+pub fn AddrR64::to_word(Self) -> Word raise @bitvec.BitVecError
+pub fn AddrR64::zero() -> Self
+
 pub(all) enum AddrSize {
   Addr32
   Addr64

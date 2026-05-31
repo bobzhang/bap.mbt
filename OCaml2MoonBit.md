@@ -729,7 +729,7 @@ moon run -c 'fn main { println((-8) >> 1); println(1 << 32); println(1 >> 32); l
 # 2147483644
 ```
 
-`Int` right shift is arithmetic, and shift counts are **masked to 5 bits**, so `1 << 32 == 1`. For OCaml `Int32.shift_right_logical`, reinterpret signed→unsigned, shift, reinterpret back. Numeric conversion (`.to_uint()`) is **not** the same as bit reinterpretation (`.reinterpret_as_uint()`).
+`Int` right shift is arithmetic, and shift counts are **masked to 5 bits**, so `1 << 32 == 1`. For OCaml `Int32.shift_right_logical`, reinterpret signed→unsigned, shift, reinterpret back. Numeric conversion (`.to_uint()`) is **not** the same as bit reinterpretation (`.reinterpret_as_uint()`). When a BAP source module normalizes shift operands modulo address width, make that modulo step explicit even if the backend shift operator would mask the count.
 
 ```sh
 moon run -c $'fn main { try @string.parse_int("2147483648") catch { _ => println(true) } noraise { _ => println(false) }; let mut value = 0; for digit in [50,49,52,55,52,56,51,54,52,56] { value = value * 10 + digit - 48 }; println(value); let mut wide = 0L; for digit in [50,49,52,55,52,56,51,54,52,56] { wide = wide * 10L + (digit - 48).to_int64() }; println(wide.to_string()) }'
@@ -758,7 +758,7 @@ fn main { let value : UInt64 = 0x0123456789abcdef; let full : UInt64 = UInt64::l
 # 1
 ```
 
-`UInt64` arithmetic wraps modulo 2^64. Unsigned right shifts are logical. Provide explicit `UInt64` context (`x : UInt64`) when the literal exceeds signed `Int` range.
+`UInt64` arithmetic wraps modulo 2^64. Unsigned right shifts are logical. `Int64`/`UInt64` shift counts are masked to 6 bits in the current toolchain, so address-style shift operands should be normalized modulo 64 before shifting to preserve the source contract visibly. Provide explicit `UInt64` context (`x : UInt64`) when the literal exceeds signed `Int` range.
 
 ```sh
 moon run -c 'fn main { println(Int::lnot(0)); println((0x0F).lnot()); println((!true).to_string()) }'

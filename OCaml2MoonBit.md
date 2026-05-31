@@ -523,6 +523,11 @@ removing a block removes the graph node without rewriting stale jumps in other
 blocks, and updating should reject a replacement block with a different TID.
 For graph-level successor queries after an update, derive from current graph
 edges rather than from a stale block value held by the caller.
+For edge insertion/removal, model BAP's edge-as-jump representation directly:
+inserting at an occupied position retargets that jump, inserting past the tail
+pads with dummy indirect-false jumps, removing a middle edge leaves a dummy in
+place to preserve later jump positions, and removing trailing edges trims a
+suffix of those dummy jumps.
 
 When porting BAP `Term.visitor`/`Term.mapper` users, prefer a typed sum view of
 IR terms over untyped callbacks. Keep traversal order explicit and stable

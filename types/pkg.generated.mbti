@@ -481,6 +481,7 @@ pub fn IrCfg::has_edge(Self, Term[Blk], Term[Blk]) -> Bool
 pub fn IrCfg::has_node(Self, Term[Blk]) -> Bool
 pub fn IrCfg::in_degree(Self, Term[Blk]) -> Int
 pub fn IrCfg::in_edges(Self, Term[Blk]) -> Array[IrCfgEdge]
+pub fn IrCfg::insert_edge(Self, Term[Blk], Term[Blk], position? : Int) -> Self
 pub fn IrCfg::insert_node(Self, Term[Blk]) -> Self
 pub fn IrCfg::is_directed() -> Bool
 pub fn IrCfg::is_empty(Self) -> Bool
@@ -490,6 +491,7 @@ pub fn IrCfg::of_sub(Term[Sub]) -> Self
 pub fn IrCfg::out_degree(Self, Term[Blk]) -> Int
 pub fn IrCfg::out_edges(Self, Term[Blk]) -> Array[IrCfgEdge]
 pub fn IrCfg::predecessors(Self, Term[Blk]) -> Array[Term[Blk]]
+pub fn IrCfg::remove_edge(Self, IrCfgEdge) -> Self
 pub fn IrCfg::remove_node(Self, Term[Blk]) -> Self
 pub fn IrCfg::successors(Self, Term[Blk]) -> Array[Term[Blk]]
 pub fn IrCfg::to_sub(Self) -> Term[Sub]

@@ -9,6 +9,19 @@ fn cfg_edge_tids(edges : Array[@types.IrCfgEdge]) -> Array[@types.Tid] {
 }
 
 ///|
+fn cfg_edge_positions(edges : Array[@types.IrCfgEdge]) -> Array[Int] {
+  edges.map(edge => edge.position())
+}
+
+///|
+fn cfg_block_jmp_count(
+  cfg : @types.IrCfg,
+  blk : @types.Term[@types.Blk],
+) -> Int {
+  cfg.to_sub().find_blk(blk.tid()).unwrap().jmps().length()
+}
+
+///|
 test "BAP IR CFG create and sub round trip preserve sub identity" {
   let tid = @types.Tid::for_name("cfg")
   let cfg = @types.IrCfg::create(name="main", tid~)
@@ -140,4 +153,51 @@ test "BAP IR CFG node update only accepts same-TID replacement blocks" {
   assert_true(cfg_blk_tids(updated.successors(entry)) == [exit.tid()])
   assert_true(!updated.has_edge(entry, body))
   assert_true(updated.has_edge(entry, exit))
+}
+
+///|
+test "BAP IR CFG edge insertion appends retargets and pads positions" {
+  let entry = @types.Blk::create(tid=@types.Tid::for_name("entry"))
+  let body = @types.Blk::create(tid=@types.Tid::for_name("body"))
+  let exit = @types.Blk::create(tid=@types.Tid::for_name("exit"))
+  let cfg = @types.IrCfg::create(name="edges").insert_edge(entry, body)
+  assert_true(cfg.node_count() == 2)
+  assert_true(cfg.has_edge(entry, body))
+  assert_true(cfg.out_edges(entry)[0].position() == 0)
+  let cfg = cfg.insert_edge(entry, exit, position=0)
+  assert_true(cfg.has_node(exit))
+  assert_true(!cfg.has_edge(entry, body))
+  assert_true(cfg.has_edge(entry, exit))
+  assert_true(cfg_block_jmp_count(cfg, entry) == 1)
+  let cfg = cfg.insert_edge(entry, body, position=2)
+  assert_true(cfg.has_edge(entry, body))
+  assert_true(cfg_edge_positions(cfg.out_edges(entry)) == [0, 2])
+  assert_true(cfg_block_jmp_count(cfg, entry) == 3)
+}
+
+///|
+test "BAP IR CFG edge removal leaves middle dummies and trims dummy tail" {
+  let entry = @types.Blk::create(tid=@types.Tid::for_name("entry"))
+  let first = @types.Blk::create(tid=@types.Tid::for_name("first"))
+  let middle = @types.Blk::create(tid=@types.Tid::for_name("middle"))
+  let last = @types.Blk::create(tid=@types.Tid::for_name("last"))
+  let cfg = @types.IrCfg::create(name="remove-edge")
+    .insert_edge(entry, first)
+    .insert_edge(entry, middle)
+    .insert_edge(entry, last)
+  assert_true(cfg_edge_positions(cfg.out_edges(entry)) == [0, 1, 2])
+  let middle_edge = cfg.edge(entry, middle).unwrap()
+  let cfg = cfg.remove_edge(middle_edge)
+  assert_true(!cfg.has_edge(entry, middle))
+  assert_true(cfg_edge_positions(cfg.out_edges(entry)) == [0, 2])
+  assert_true(cfg_block_jmp_count(cfg, entry) == 3)
+  let last_edge = cfg.edge(entry, last).unwrap()
+  let cfg = cfg.remove_edge(last_edge)
+  assert_true(!cfg.has_edge(entry, last))
+  assert_true(cfg_edge_positions(cfg.out_edges(entry)) == [0])
+  assert_true(cfg_block_jmp_count(cfg, entry) == 1)
+  let first_edge = cfg.edge(entry, first).unwrap()
+  let cfg = cfg.remove_edge(first_edge)
+  assert_true(cfg.out_edges(entry).is_empty())
+  assert_true(cfg_block_jmp_count(cfg, entry) == 0)
 }

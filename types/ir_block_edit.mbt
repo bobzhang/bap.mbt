@@ -5,6 +5,16 @@ pub(all) enum VarBinding {
 }
 
 ///|
+fn find_sub_index(subs : Array[Term[Sub]], tid : Tid) -> Int? {
+  subs.search_by(term => term.tid() == tid)
+}
+
+///|
+fn find_arg_index(args : Array[Term[Arg]], tid : Tid) -> Int? {
+  args.search_by(term => term.tid() == tid)
+}
+
+///|
 fn find_def_index(defs : Array[Term[Def]], tid : Tid) -> Int? {
   defs.search_by(term => term.tid() == tid)
 }
@@ -33,6 +43,81 @@ fn clamp_def_index(index : Int, length : Int) -> Int {
   } else {
     index
   }
+}
+
+///|
+fn copy_sub_range(
+  subs : Array[Term[Sub]],
+  start : Int,
+  stop : Int,
+  rev : Bool,
+) -> Array[Term[Sub]] {
+  let length = subs.length()
+  let from = clamp_def_index(start, length)
+  let until = clamp_def_index(stop, length)
+  let out = []
+  if from < until {
+    if rev {
+      for offset in 0..<(until - from) {
+        out.push(subs[until - offset - 1])
+      }
+    } else {
+      for i in from..<until {
+        out.push(subs[i])
+      }
+    }
+  }
+  out
+}
+
+///|
+fn copy_arg_range(
+  args : Array[Term[Arg]],
+  start : Int,
+  stop : Int,
+  rev : Bool,
+) -> Array[Term[Arg]] {
+  let length = args.length()
+  let from = clamp_def_index(start, length)
+  let until = clamp_def_index(stop, length)
+  let out = []
+  if from < until {
+    if rev {
+      for offset in 0..<(until - from) {
+        out.push(args[until - offset - 1])
+      }
+    } else {
+      for i in from..<until {
+        out.push(args[i])
+      }
+    }
+  }
+  out
+}
+
+///|
+fn copy_blk_range(
+  blks : Array[Term[Blk]],
+  start : Int,
+  stop : Int,
+  rev : Bool,
+) -> Array[Term[Blk]] {
+  let length = blks.length()
+  let from = clamp_def_index(start, length)
+  let until = clamp_def_index(stop, length)
+  let out = []
+  if from < until {
+    if rev {
+      for offset in 0..<(until - from) {
+        out.push(blks[until - offset - 1])
+      }
+    } else {
+      for i in from..<until {
+        out.push(blks[i])
+      }
+    }
+  }
+  out
 }
 
 ///|
@@ -111,6 +196,19 @@ fn copy_jmp_range(
 }
 
 ///|
+fn Term::with_subs(
+  self : Term[Program],
+  subs : Array[Term[Sub]],
+) -> Term[Program] {
+  self.with_payload({ subs, })
+}
+
+///|
+fn Term::with_args(self : Term[Sub], args : Array[Term[Arg]]) -> Term[Sub] {
+  self.with_payload({ ..self.payload_value, args, })
+}
+
+///|
 fn Term::with_defs(self : Term[Blk], defs : Array[Term[Def]]) -> Term[Blk] {
   self.with_payload({ ..self.payload_value, defs, })
 }
@@ -146,6 +244,348 @@ fn Term::split_def_at(self : Term[Blk], index : Int) -> (Term[Blk], Term[Blk]) {
     tid=next_tid,
   )
   (left, right)
+}
+
+///|
+pub fn Term::sub_count(self : Term[Program]) -> Int {
+  self.payload_value.subs.length()
+}
+
+///|
+pub fn Term::nth_sub(self : Term[Program], index : Int) -> Term[Sub]? {
+  if index >= 0 && index < self.payload_value.subs.length() {
+    Some(self.payload_value.subs[index])
+  } else {
+    None
+  }
+}
+
+///|
+pub fn Term::first_sub(self : Term[Program]) -> Term[Sub]? {
+  self.nth_sub(0)
+}
+
+///|
+pub fn Term::last_sub(self : Term[Program]) -> Term[Sub]? {
+  self.nth_sub(self.payload_value.subs.length() - 1)
+}
+
+///|
+pub fn Term::next_sub(self : Term[Program], tid : Tid) -> Term[Sub]? {
+  match find_sub_index(self.payload_value.subs, tid) {
+    Some(i) => self.nth_sub(i + 1)
+    None => None
+  }
+}
+
+///|
+pub fn Term::prev_sub(self : Term[Program], tid : Tid) -> Term[Sub]? {
+  match find_sub_index(self.payload_value.subs, tid) {
+    Some(i) => self.nth_sub(i - 1)
+    None => None
+  }
+}
+
+///|
+pub fn Term::subs_after(
+  self : Term[Program],
+  tid : Tid,
+  rev? : Bool = false,
+) -> Array[Term[Sub]] {
+  match find_sub_index(self.payload_value.subs, tid) {
+    Some(i) =>
+      copy_sub_range(
+        self.payload_value.subs,
+        i + 1,
+        self.payload_value.subs.length(),
+        rev,
+      )
+    None => []
+  }
+}
+
+///|
+pub fn Term::subs_before(
+  self : Term[Program],
+  tid : Tid,
+  rev? : Bool = false,
+) -> Array[Term[Sub]] {
+  match find_sub_index(self.payload_value.subs, tid) {
+    Some(i) => copy_sub_range(self.payload_value.subs, 0, i, rev)
+    None => []
+  }
+}
+
+///|
+pub fn Term::insert_sub_after(
+  self : Term[Program],
+  term : Term[Sub],
+  after? : Tid,
+) -> Term[Program] {
+  let subs = self.payload_value.subs.copy()
+  let index = match after {
+    Some(tid) =>
+      match find_sub_index(subs, tid) {
+        Some(i) => Some(i + 1)
+        None => None
+      }
+    None => Some(subs.length())
+  }
+  match index {
+    Some(i) => {
+      subs.insert(i, term)
+      self.with_subs(subs)
+    }
+    None => self
+  }
+}
+
+///|
+pub fn Term::insert_sub_before(
+  self : Term[Program],
+  term : Term[Sub],
+  before? : Tid,
+) -> Term[Program] {
+  let subs = self.payload_value.subs.copy()
+  let index = match before {
+    Some(tid) => find_sub_index(subs, tid)
+    None => Some(0)
+  }
+  match index {
+    Some(i) => {
+      subs.insert(i, term)
+      self.with_subs(subs)
+    }
+    None => self
+  }
+}
+
+///|
+pub fn Term::arg_count(self : Term[Sub]) -> Int {
+  self.payload_value.args.length()
+}
+
+///|
+pub fn Term::nth_arg(self : Term[Sub], index : Int) -> Term[Arg]? {
+  if index >= 0 && index < self.payload_value.args.length() {
+    Some(self.payload_value.args[index])
+  } else {
+    None
+  }
+}
+
+///|
+pub fn Term::first_arg(self : Term[Sub]) -> Term[Arg]? {
+  self.nth_arg(0)
+}
+
+///|
+pub fn Term::last_arg(self : Term[Sub]) -> Term[Arg]? {
+  self.nth_arg(self.payload_value.args.length() - 1)
+}
+
+///|
+pub fn Term::next_arg(self : Term[Sub], tid : Tid) -> Term[Arg]? {
+  match find_arg_index(self.payload_value.args, tid) {
+    Some(i) => self.nth_arg(i + 1)
+    None => None
+  }
+}
+
+///|
+pub fn Term::prev_arg(self : Term[Sub], tid : Tid) -> Term[Arg]? {
+  match find_arg_index(self.payload_value.args, tid) {
+    Some(i) => self.nth_arg(i - 1)
+    None => None
+  }
+}
+
+///|
+pub fn Term::args_after(
+  self : Term[Sub],
+  tid : Tid,
+  rev? : Bool = false,
+) -> Array[Term[Arg]] {
+  match find_arg_index(self.payload_value.args, tid) {
+    Some(i) =>
+      copy_arg_range(
+        self.payload_value.args,
+        i + 1,
+        self.payload_value.args.length(),
+        rev,
+      )
+    None => []
+  }
+}
+
+///|
+pub fn Term::args_before(
+  self : Term[Sub],
+  tid : Tid,
+  rev? : Bool = false,
+) -> Array[Term[Arg]] {
+  match find_arg_index(self.payload_value.args, tid) {
+    Some(i) => copy_arg_range(self.payload_value.args, 0, i, rev)
+    None => []
+  }
+}
+
+///|
+pub fn Term::insert_arg_after(
+  self : Term[Sub],
+  term : Term[Arg],
+  after? : Tid,
+) -> Term[Sub] {
+  let args = self.payload_value.args.copy()
+  let index = match after {
+    Some(tid) =>
+      match find_arg_index(args, tid) {
+        Some(i) => Some(i + 1)
+        None => None
+      }
+    None => Some(args.length())
+  }
+  match index {
+    Some(i) => {
+      args.insert(i, term)
+      self.with_args(args)
+    }
+    None => self
+  }
+}
+
+///|
+pub fn Term::insert_arg_before(
+  self : Term[Sub],
+  term : Term[Arg],
+  before? : Tid,
+) -> Term[Sub] {
+  let args = self.payload_value.args.copy()
+  let index = match before {
+    Some(tid) => find_arg_index(args, tid)
+    None => Some(0)
+  }
+  match index {
+    Some(i) => {
+      args.insert(i, term)
+      self.with_args(args)
+    }
+    None => self
+  }
+}
+
+///|
+pub fn Term::blk_count(self : Term[Sub]) -> Int {
+  self.payload_value.blks.length()
+}
+
+///|
+pub fn Term::nth_blk(self : Term[Sub], index : Int) -> Term[Blk]? {
+  if index >= 0 && index < self.payload_value.blks.length() {
+    Some(self.payload_value.blks[index])
+  } else {
+    None
+  }
+}
+
+///|
+pub fn Term::first_blk(self : Term[Sub]) -> Term[Blk]? {
+  self.nth_blk(0)
+}
+
+///|
+pub fn Term::last_blk(self : Term[Sub]) -> Term[Blk]? {
+  self.nth_blk(self.payload_value.blks.length() - 1)
+}
+
+///|
+pub fn Term::next_blk(self : Term[Sub], tid : Tid) -> Term[Blk]? {
+  match find_blk_index(self.payload_value.blks, tid) {
+    Some(i) => self.nth_blk(i + 1)
+    None => None
+  }
+}
+
+///|
+pub fn Term::prev_blk(self : Term[Sub], tid : Tid) -> Term[Blk]? {
+  match find_blk_index(self.payload_value.blks, tid) {
+    Some(i) => self.nth_blk(i - 1)
+    None => None
+  }
+}
+
+///|
+pub fn Term::blks_after(
+  self : Term[Sub],
+  tid : Tid,
+  rev? : Bool = false,
+) -> Array[Term[Blk]] {
+  match find_blk_index(self.payload_value.blks, tid) {
+    Some(i) =>
+      copy_blk_range(
+        self.payload_value.blks,
+        i + 1,
+        self.payload_value.blks.length(),
+        rev,
+      )
+    None => []
+  }
+}
+
+///|
+pub fn Term::blks_before(
+  self : Term[Sub],
+  tid : Tid,
+  rev? : Bool = false,
+) -> Array[Term[Blk]] {
+  match find_blk_index(self.payload_value.blks, tid) {
+    Some(i) => copy_blk_range(self.payload_value.blks, 0, i, rev)
+    None => []
+  }
+}
+
+///|
+pub fn Term::insert_blk_after(
+  self : Term[Sub],
+  term : Term[Blk],
+  after? : Tid,
+) -> Term[Sub] {
+  let blks = self.payload_value.blks.copy()
+  let index = match after {
+    Some(tid) =>
+      match find_blk_index(blks, tid) {
+        Some(i) => Some(i + 1)
+        None => None
+      }
+    None => Some(blks.length())
+  }
+  match index {
+    Some(i) => {
+      blks.insert(i, term)
+      self.with_blks(blks)
+    }
+    None => self
+  }
+}
+
+///|
+pub fn Term::insert_blk_before(
+  self : Term[Sub],
+  term : Term[Blk],
+  before? : Tid,
+) -> Term[Sub] {
+  let blks = self.payload_value.blks.copy()
+  let index = match before {
+    Some(tid) => find_blk_index(blks, tid)
+    None => Some(0)
+  }
+  match index {
+    Some(i) => {
+      blks.insert(i, term)
+      self.with_blks(blks)
+    }
+    None => self
+  }
 }
 
 ///|

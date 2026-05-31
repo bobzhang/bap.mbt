@@ -20,11 +20,170 @@ fn jmp_names(jmps : Array[@types.Term[@types.Jmp]]) -> Array[String] {
 }
 
 ///|
+fn sub_names(subs : Array[@types.Term[@types.Sub]]) -> Array[String] {
+  [
+    for term in subs => term.sub_name()
+  ]
+}
+
+///|
+fn arg_lhs_names(args : Array[@types.Term[@types.Arg]]) -> Array[String] {
+  [
+    for term in args => term.arg_lhs().name
+  ]
+}
+
+///|
+fn blk_names(blks : Array[@types.Term[@types.Blk]]) -> Array[String] {
+  [
+    for term in blks => {
+      match term.tid().name() {
+        Some(name) => name
+        None => term.name()
+      }
+    }
+  ]
+}
+
+///|
 fn assert_def_lhs_names(
   block : @types.Term[@types.Blk],
   expected : Array[String],
 ) -> Unit raise {
   assert_true(def_lhs_names(block.defs()) == expected)
+}
+
+///|
+test "program sub sequence helpers follow BAP term order" {
+  let main = @types.Sub::create(name="main")
+  let helper = @types.Sub::create(name="helper")
+  let exit = @types.Sub::create(name="exit")
+  let program = @types.Program::create(subs=[main, helper, exit])
+  assert_true(program.sub_count() == 3)
+  assert_true(program.first_sub().map(term => term.sub_name()) == Some("main"))
+  assert_true(program.last_sub().map(term => term.sub_name()) == Some("exit"))
+  assert_true(program.nth_sub(1).map(term => term.sub_name()) == Some("helper"))
+  assert_true(program.nth_sub(-1) is None)
+  assert_true(program.nth_sub(3) is None)
+  assert_true(
+    program.next_sub(main.tid()).map(term => term.sub_name()) == Some("helper"),
+  )
+  assert_true(
+    program.prev_sub(exit.tid()).map(term => term.sub_name()) == Some("helper"),
+  )
+  assert_true(program.prev_sub(main.tid()) is None)
+  assert_true(sub_names(program.subs_after(main.tid())) == ["helper", "exit"])
+  assert_true(
+    sub_names(program.subs_after(main.tid(), rev=true)) == ["exit", "helper"],
+  )
+  assert_true(sub_names(program.subs_before(exit.tid())) == ["main", "helper"])
+  assert_true(
+    sub_names(program.subs_before(exit.tid(), rev=true)) == ["helper", "main"],
+  )
+  let prologue = @types.Sub::create(name="prologue")
+  let middle = @types.Sub::create(name="middle")
+  let inserted = program
+    .insert_sub_after(middle, after=main.tid())
+    .insert_sub_before(prologue)
+  assert_true(
+    sub_names(inserted.subs()) ==
+    ["prologue", "main", "middle", "helper", "exit"],
+  )
+  assert_true(
+    inserted
+    .insert_sub_after(
+      @types.Sub::create(name="absent"),
+      after=@types.Tid::for_name("absent"),
+    )
+    .sub_count() ==
+    5,
+  )
+}
+
+///|
+test "sub argument and block sequence helpers follow BAP term order" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let z = @types.Var::new(name="z", typ~)
+  let w = @types.Var::new(name="w", typ~)
+  let arg_x = @types.Arg::create(x, Var(x))
+  let arg_y = @types.Arg::create(y, Var(y))
+  let arg_z = @types.Arg::create(z, Var(z))
+  let entry = @types.Blk::create(tid=@types.Tid::for_name("entry"))
+  let body = @types.Blk::create(tid=@types.Tid::for_name("body"))
+  let exit = @types.Blk::create(tid=@types.Tid::for_name("exit"))
+  let sub = @types.Sub::create(name="main", args=[arg_x, arg_y, arg_z], blks=[
+    entry, body, exit,
+  ])
+  assert_true(sub.arg_count() == 3)
+  assert_true(sub.first_arg().map(term => term.arg_lhs()) == Some(x))
+  assert_true(sub.last_arg().map(term => term.arg_lhs()) == Some(z))
+  assert_true(sub.nth_arg(1).map(term => term.arg_lhs()) == Some(y))
+  assert_true(sub.nth_arg(-1) is None)
+  assert_true(sub.next_arg(arg_x.tid()).map(term => term.arg_lhs()) == Some(y))
+  assert_true(sub.prev_arg(arg_z.tid()).map(term => term.arg_lhs()) == Some(y))
+  assert_true(sub.prev_arg(arg_x.tid()) is None)
+  assert_true(arg_lhs_names(sub.args_after(arg_x.tid())) == ["y", "z"])
+  assert_true(
+    arg_lhs_names(sub.args_after(arg_x.tid(), rev=true)) == ["z", "y"],
+  )
+  assert_true(arg_lhs_names(sub.args_before(arg_z.tid())) == ["x", "y"])
+  assert_true(
+    arg_lhs_names(sub.args_before(arg_z.tid(), rev=true)) == ["y", "x"],
+  )
+  let arg_w = @types.Arg::create(w, Var(w))
+  let arg_head = @types.Arg::create(x, Var(z))
+  let inserted_args = sub
+    .insert_arg_after(arg_w, after=arg_x.tid())
+    .insert_arg_before(arg_head)
+  assert_true(arg_lhs_names(inserted_args.args()) == ["x", "x", "w", "y", "z"])
+  assert_true(
+    inserted_args
+    .insert_arg_before(
+      @types.Arg::create(y, Var(x)),
+      before=@types.Tid::for_name("absent"),
+    )
+    .arg_count() ==
+    5,
+  )
+  assert_true(sub.blk_count() == 3)
+  assert_true(sub.first_blk().map(term => term.tid()) == Some(entry.tid()))
+  assert_true(sub.last_blk().map(term => term.tid()) == Some(exit.tid()))
+  assert_true(sub.nth_blk(1).map(term => term.tid()) == Some(body.tid()))
+  assert_true(sub.nth_blk(-1) is None)
+  assert_true(
+    sub.next_blk(entry.tid()).map(term => term.tid()) == Some(body.tid()),
+  )
+  assert_true(
+    sub.prev_blk(exit.tid()).map(term => term.tid()) == Some(body.tid()),
+  )
+  assert_true(sub.next_blk(exit.tid()) is None)
+  assert_true(blk_names(sub.blks_after(entry.tid())) == ["body", "exit"])
+  assert_true(
+    blk_names(sub.blks_after(entry.tid(), rev=true)) == ["exit", "body"],
+  )
+  assert_true(blk_names(sub.blks_before(exit.tid())) == ["entry", "body"])
+  assert_true(
+    blk_names(sub.blks_before(exit.tid(), rev=true)) == ["body", "entry"],
+  )
+  let pre = @types.Blk::create(tid=@types.Tid::for_name("pre"))
+  let mid = @types.Blk::create(tid=@types.Tid::for_name("mid"))
+  let inserted_blks = sub
+    .insert_blk_after(mid, after=entry.tid())
+    .insert_blk_before(pre)
+  assert_true(
+    blk_names(inserted_blks.blks()) == ["pre", "entry", "mid", "body", "exit"],
+  )
+  assert_true(
+    inserted_blks
+    .insert_blk_before(
+      @types.Blk::create(tid=@types.Tid::for_name("nope")),
+      before=@types.Tid::for_name("absent"),
+    )
+    .blk_count() ==
+    5,
+  )
 }
 
 ///|

@@ -716,12 +716,16 @@ pub fn Term::append_def(Self[Blk], Self[Def]) -> Self[Blk]
 pub fn Term::append_jmp(Self[Blk], Self[Jmp]) -> Self[Blk]
 pub fn Term::append_phi(Self[Blk], Self[Phi]) -> Self[Blk]
 pub fn Term::append_sub(Self[Program], Self[Sub]) -> Self[Program]
+pub fn Term::arg_count(Self[Sub]) -> Int
 pub fn Term::arg_free_vars(Self[Arg]) -> Array[Var]
 pub fn Term::arg_lhs(Self[Arg]) -> Var
 pub fn Term::arg_rhs(Self[Arg]) -> Exp
 pub fn Term::arg_to_string(Self[Arg]) -> String
 pub fn Term::args(Self[Sub]) -> Array[Self[Arg]]
+pub fn Term::args_after(Self[Sub], Tid, rev? : Bool) -> Array[Self[Arg]]
+pub fn Term::args_before(Self[Sub], Tid, rev? : Bool) -> Array[Self[Arg]]
 pub fn[T] Term::attrs(Self[T]) -> Map[String, String]
+pub fn Term::blk_count(Self[Sub]) -> Int
 pub fn Term::blk_defined_vars(Self[Blk]) -> Array[Var]
 pub fn Term::blk_free_vars(Self[Blk]) -> Array[Var]
 pub fn Term::blk_phi_edge_free_vars(Self[Blk], Tid) -> Array[Var]
@@ -731,6 +735,8 @@ pub fn Term::blk_to_string(Self[Blk]) -> String
 pub fn Term::blk_to_trivial_condition_form(Self[Blk]) -> Self[Blk]
 pub fn Term::blk_value_free_vars(Self[Blk]) -> Array[Var]
 pub fn Term::blks(Self[Sub]) -> Array[Self[Blk]]
+pub fn Term::blks_after(Self[Sub], Tid, rev? : Bool) -> Array[Self[Blk]]
+pub fn Term::blks_before(Self[Sub], Tid, rev? : Bool) -> Array[Self[Blk]]
 pub fn[T] Term::clone(Self[T]) -> Self[T]
 pub fn Term::concat_map_defs(Self[Blk], (Self[Def]) -> Array[Self[Def]]) -> Self[Blk]
 pub fn Term::cond(Self[Jmp]) -> Exp
@@ -771,9 +777,12 @@ pub fn Term::find_sub(Self[Program], Tid) -> Self[Sub]?
 pub fn Term::find_sub_exn(Self[Program], Tid) -> Self[Sub] raise IrTermLookupError
 pub fn Term::find_sub_term(Self[Sub], (IrTerm) -> Bool, include_self? : Bool) -> IrTerm?
 pub fn Term::find_var(Self[Blk], Var) -> VarBinding?
+pub fn Term::first_arg(Self[Sub]) -> Self[Arg]?
+pub fn Term::first_blk(Self[Sub]) -> Self[Blk]?
 pub fn Term::first_def(Self[Blk]) -> Self[Def]?
 pub fn Term::first_jmp(Self[Blk]) -> Self[Jmp]?
 pub fn Term::first_phi(Self[Blk]) -> Self[Phi]?
+pub fn Term::first_sub(Self[Program]) -> Self[Sub]?
 pub fn Term::flatten_blk(Self[Blk]) -> Self[Blk]
 pub fn Term::flatten_program(Self[Program]) -> Self[Program]
 pub fn Term::flatten_sub(Self[Sub]) -> Self[Sub]
@@ -783,12 +792,18 @@ pub fn[A] Term::fold_sub_terms(Self[Sub], A, (A, IrTerm) -> A, include_self? : B
 pub fn[T] Term::get_attr(Self[T], String) -> String?
 pub fn[T] Term::has_attr(Self[T], String) -> Bool
 pub fn[T] Term::has_flag(Self[T], String) -> Bool
+pub fn Term::insert_arg_after(Self[Sub], Self[Arg], after? : Tid) -> Self[Sub]
+pub fn Term::insert_arg_before(Self[Sub], Self[Arg], before? : Tid) -> Self[Sub]
+pub fn Term::insert_blk_after(Self[Sub], Self[Blk], after? : Tid) -> Self[Sub]
+pub fn Term::insert_blk_before(Self[Sub], Self[Blk], before? : Tid) -> Self[Sub]
 pub fn Term::insert_def_after(Self[Blk], Self[Def], after? : Tid) -> Self[Blk]
 pub fn Term::insert_def_before(Self[Blk], Self[Def], before? : Tid) -> Self[Blk]
 pub fn Term::insert_jmp_after(Self[Blk], Self[Jmp], after? : Tid) -> Self[Blk]
 pub fn Term::insert_jmp_before(Self[Blk], Self[Jmp], before? : Tid) -> Self[Blk]
 pub fn Term::insert_phi_after(Self[Blk], Self[Phi], after? : Tid) -> Self[Blk]
 pub fn Term::insert_phi_before(Self[Blk], Self[Phi], before? : Tid) -> Self[Blk]
+pub fn Term::insert_sub_after(Self[Program], Self[Sub], after? : Tid) -> Self[Program]
+pub fn Term::insert_sub_before(Self[Program], Self[Sub], before? : Tid) -> Self[Program]
 pub fn Term::intent(Self[Arg]) -> Intent?
 pub fn Term::is_const(Self[Sub]) -> Bool
 pub fn Term::is_entry_point(Self[Sub]) -> Bool
@@ -810,9 +825,12 @@ pub fn Term::jmps(Self[Blk]) -> Array[Self[Jmp]]
 pub fn Term::jmps_after(Self[Blk], Tid, rev? : Bool) -> Array[Self[Jmp]]
 pub fn Term::jmps_before(Self[Blk], Tid, rev? : Bool) -> Array[Self[Jmp]]
 pub fn Term::kind(Self[Jmp]) -> JmpKind
+pub fn Term::last_arg(Self[Sub]) -> Self[Arg]?
+pub fn Term::last_blk(Self[Sub]) -> Self[Blk]?
 pub fn Term::last_def(Self[Blk]) -> Self[Def]?
 pub fn Term::last_jmp(Self[Blk]) -> Self[Jmp]?
 pub fn Term::last_phi(Self[Blk]) -> Self[Phi]?
+pub fn Term::last_sub(Self[Program]) -> Self[Sub]?
 pub fn Term::lhs(Self[Def]) -> Var
 pub fn Term::map_arg_exp(Self[Arg], (Exp) -> Exp) -> Self[Arg]
 pub fn Term::map_blk_elts(Self[Blk], phi? : (Self[Phi]) -> Self[Phi], def? : (Self[Def]) -> Self[Def], jmp? : (Self[Jmp]) -> Self[Jmp]) -> Self[Blk]
@@ -831,12 +849,18 @@ pub fn Term::map_program_terms(Self[Program], (IrTerm) -> IrTerm) -> Self[Progra
 pub fn Term::map_sub_exp(Self[Sub], (Exp) -> Exp) -> Self[Sub]
 pub fn Term::map_sub_terms(Self[Sub], (IrTerm) -> IrTerm) -> Self[Sub]
 pub fn[T] Term::name(Self[T]) -> String
+pub fn Term::next_arg(Self[Sub], Tid) -> Self[Arg]?
+pub fn Term::next_blk(Self[Sub], Tid) -> Self[Blk]?
 pub fn Term::next_def(Self[Blk], Tid) -> Self[Def]?
 pub fn Term::next_jmp(Self[Blk], Tid) -> Self[Jmp]?
 pub fn Term::next_phi(Self[Blk], Tid) -> Self[Phi]?
+pub fn Term::next_sub(Self[Program], Tid) -> Self[Sub]?
+pub fn Term::nth_arg(Self[Sub], Int) -> Self[Arg]?
+pub fn Term::nth_blk(Self[Sub], Int) -> Self[Blk]?
 pub fn Term::nth_def(Self[Blk], Int) -> Self[Def]?
 pub fn Term::nth_jmp(Self[Blk], Int) -> Self[Jmp]?
 pub fn Term::nth_phi(Self[Blk], Int) -> Self[Phi]?
+pub fn Term::nth_sub(Self[Program], Int) -> Self[Sub]?
 pub fn[T] Term::payload(Self[T]) -> T
 pub fn Term::phi_count(Self[Blk]) -> Int
 pub fn Term::phi_edge_free_vars(Self[Phi], Tid) -> Array[Var]
@@ -846,9 +870,12 @@ pub fn Term::phi_to_string(Self[Phi]) -> String
 pub fn Term::phis(Self[Blk]) -> Array[Self[Phi]]
 pub fn Term::phis_after(Self[Blk], Tid, rev? : Bool) -> Array[Self[Phi]]
 pub fn Term::phis_before(Self[Blk], Tid, rev? : Bool) -> Array[Self[Phi]]
+pub fn Term::prev_arg(Self[Sub], Tid) -> Self[Arg]?
+pub fn Term::prev_blk(Self[Sub], Tid) -> Self[Blk]?
 pub fn Term::prev_def(Self[Blk], Tid) -> Self[Def]?
 pub fn Term::prev_jmp(Self[Blk], Tid) -> Self[Jmp]?
 pub fn Term::prev_phi(Self[Blk], Tid) -> Self[Phi]?
+pub fn Term::prev_sub(Self[Program], Tid) -> Self[Sub]?
 pub fn Term::program_args(Self[Program]) -> Array[Self[Arg]]
 pub fn Term::program_blks(Self[Program]) -> Array[Self[Blk]]
 pub fn Term::program_callees(Self[Program], Self[Sub]) -> Array[Tid]
@@ -898,6 +925,7 @@ pub fn Term::split_defs_while(Self[Blk], (Self[Def]) -> Bool) -> (Self[Blk], Sel
 pub fn Term::split_top_defs(Self[Blk]) -> (Self[Blk], Self[Blk])
 pub fn Term::sub_aliases(Self[Sub]) -> Array[String]
 pub fn Term::sub_cfg(Self[Sub]) -> @graphlib.Graph[Tid, Tid]
+pub fn Term::sub_count(Self[Program]) -> Int
 pub fn Term::sub_defs(Self[Sub]) -> Array[Self[Def]]
 pub fn Term::sub_direct_call_tids(Self[Sub]) -> Array[Tid]
 pub fn Term::sub_dominance_frontier_blocks(Self[Sub], Self[Blk], entry? : Tid) -> Array[Self[Blk]]
@@ -933,6 +961,8 @@ pub fn Term::sub_tid_graph(Self[Sub]) -> @graphlib.Graph[Tid, Tid]
 pub fn Term::sub_to_string(Self[Sub]) -> String
 pub fn Term::sub_to_trivial_condition_form(Self[Sub]) -> Self[Sub]
 pub fn Term::subs(Self[Program]) -> Array[Self[Sub]]
+pub fn Term::subs_after(Self[Program], Tid, rev? : Bool) -> Array[Self[Sub]]
+pub fn Term::subs_before(Self[Program], Tid, rev? : Bool) -> Array[Self[Sub]]
 pub fn Term::substitute_arg_var(Self[Arg], Var, Exp) -> Self[Arg]
 pub fn Term::substitute_blk_var(Self[Blk], Var, Exp, skip_phi? : Bool, skip_def? : Bool, skip_jmp? : Bool) -> Self[Blk]
 pub fn Term::substitute_def_var(Self[Def], Var, Exp) -> Self[Def]

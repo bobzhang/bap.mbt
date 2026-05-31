@@ -86,22 +86,145 @@ pub(all) enum TraceEvent {
 } derive(Eq, Debug)
 
 ///|
+let trace_event_memory_load_tag : String = "memory-load"
+
+///|
+let trace_event_memory_store_tag : String = "memory-store"
+
+///|
+let trace_event_register_read_tag : String = "register-read"
+
+///|
+let trace_event_register_write_tag : String = "register-write"
+
+///|
+let trace_event_timestamp_tag : String = "timestamp"
+
+///|
+let trace_event_pc_update_tag : String = "pc-update"
+
+///|
+let trace_event_code_exec_tag : String = "code-exec"
+
+///|
+let trace_event_context_switch_tag : String = "context-switch"
+
+///|
+let trace_event_syscall_tag : String = "syscall"
+
+///|
+let trace_event_exn_tag : String = "exn"
+
+///|
+let trace_event_call_tag : String = "call"
+
+///|
+let trace_event_return_tag : String = "return"
+
+///|
+let trace_event_modload_tag : String = "modload"
+
+///|
+let trace_event_mode_tag : String = "mode"
+
+///|
+pub fn TraceEvent::memory_load_tag() -> String {
+  trace_event_memory_load_tag
+}
+
+///|
+pub fn TraceEvent::memory_store_tag() -> String {
+  trace_event_memory_store_tag
+}
+
+///|
+pub fn TraceEvent::register_read_tag() -> String {
+  trace_event_register_read_tag
+}
+
+///|
+pub fn TraceEvent::register_write_tag() -> String {
+  trace_event_register_write_tag
+}
+
+///|
+pub fn TraceEvent::timestamp_tag() -> String {
+  trace_event_timestamp_tag
+}
+
+///|
+pub fn TraceEvent::pc_update_tag() -> String {
+  trace_event_pc_update_tag
+}
+
+///|
+pub fn TraceEvent::code_exec_tag() -> String {
+  trace_event_code_exec_tag
+}
+
+///|
+pub fn TraceEvent::context_switch_tag() -> String {
+  trace_event_context_switch_tag
+}
+
+///|
+pub fn TraceEvent::syscall_tag() -> String {
+  trace_event_syscall_tag
+}
+
+///|
+pub fn TraceEvent::exn_tag() -> String {
+  trace_event_exn_tag
+}
+
+///|
+pub fn TraceEvent::call_tag() -> String {
+  trace_event_call_tag
+}
+
+///|
+pub fn TraceEvent::return_tag() -> String {
+  trace_event_return_tag
+}
+
+///|
+pub fn TraceEvent::modload_tag() -> String {
+  trace_event_modload_tag
+}
+
+///|
+pub fn TraceEvent::mode_tag() -> String {
+  trace_event_mode_tag
+}
+
+///|
+pub fn TraceEvent::common_tags() -> Array[String] {
+  [
+    trace_event_memory_load_tag, trace_event_memory_store_tag, trace_event_register_read_tag,
+    trace_event_register_write_tag, trace_event_timestamp_tag, trace_event_pc_update_tag,
+    trace_event_code_exec_tag, trace_event_context_switch_tag, trace_event_syscall_tag,
+    trace_event_exn_tag, trace_event_call_tag, trace_event_return_tag, trace_event_modload_tag,
+    trace_event_mode_tag,
+  ]
+}
+
+///|
 pub fn TraceEvent::tag(self : TraceEvent) -> String {
   match self {
-    MemoryLoad(_) => "memory-load"
-    MemoryStore(_) => "memory-store"
-    RegisterRead(_) => "register-read"
-    RegisterWrite(_) => "register-write"
-    Timestamp(_) => "timestamp"
-    PcUpdate(_) => "pc-update"
-    CodeExec(_) => "code-exec"
-    ContextSwitch(_) => "context-switch"
-    Syscall(_) => "syscall"
-    Exception(_) => "exn"
-    Call(_) => "call"
-    Return(_) => "return"
-    Modload(_) => "modload"
-    Mode(_) => "mode"
+    MemoryLoad(_) => trace_event_memory_load_tag
+    MemoryStore(_) => trace_event_memory_store_tag
+    RegisterRead(_) => trace_event_register_read_tag
+    RegisterWrite(_) => trace_event_register_write_tag
+    Timestamp(_) => trace_event_timestamp_tag
+    PcUpdate(_) => trace_event_pc_update_tag
+    CodeExec(_) => trace_event_code_exec_tag
+    ContextSwitch(_) => trace_event_context_switch_tag
+    Syscall(_) => trace_event_syscall_tag
+    Exception(_) => trace_event_exn_tag
+    Call(_) => trace_event_call_tag
+    Return(_) => trace_event_return_tag
+    Modload(_) => trace_event_modload_tag
+    Mode(_) => trace_event_mode_tag
   }
 }
 
@@ -123,6 +246,56 @@ pub fn TraceEvent::register_read(value : Move[@types.Var]) -> TraceEvent {
 ///|
 pub fn TraceEvent::register_write(value : Move[@types.Var]) -> TraceEvent {
   RegisterWrite(value)
+}
+
+///|
+pub fn TraceEvent::timestamp(value : Int64) -> TraceEvent {
+  Timestamp(value)
+}
+
+///|
+pub fn TraceEvent::pc_update(value : @types.Word) -> TraceEvent {
+  PcUpdate(value)
+}
+
+///|
+pub fn TraceEvent::code_exec(value : Chunk) -> TraceEvent {
+  CodeExec(value)
+}
+
+///|
+pub fn TraceEvent::context_switch(value : Int) -> TraceEvent {
+  ContextSwitch(value)
+}
+
+///|
+pub fn TraceEvent::syscall(value : Syscall) -> TraceEvent {
+  Syscall(value)
+}
+
+///|
+pub fn TraceEvent::exn(value : TraceException) -> TraceEvent {
+  Exception(value)
+}
+
+///|
+pub fn TraceEvent::call(value : Call) -> TraceEvent {
+  Call(value)
+}
+
+///|
+pub fn TraceEvent::return_event(value : Return) -> TraceEvent {
+  Return(value)
+}
+
+///|
+pub fn TraceEvent::modload(value : Modload) -> TraceEvent {
+  Modload(value)
+}
+
+///|
+pub fn TraceEvent::mode(value : String) -> TraceEvent {
+  Mode(value)
 }
 
 ///|

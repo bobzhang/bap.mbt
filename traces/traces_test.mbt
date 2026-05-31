@@ -89,16 +89,22 @@ fn broad_events() -> Array[@traces.TraceEvent] raise {
   let caller = @traces.Location::{ name: Some("main"), addr: word32(0x401000) }
   let callee = @traces.Location::{ name: None, addr: word32(0x402000) }
   [
-    Timestamp(-42L),
-    PcUpdate(word32(0x401000)),
-    CodeExec(@traces.Chunk::create(addr=word32(0x401000), data=b"\x90\xcc")),
-    ContextSwitch(-1),
-    Syscall({ number: 60, args: [word32(0)] }),
-    Exception({ number: 13, src: Some(word32(1)), dst: None }),
-    Call({ caller, callee, args: [word32(1), word32(2)] }),
-    Return({ caller: "main", callee: "callee" }),
-    Modload({ name: "libc.so", low: word32(0x1000), high: word32(0x1fff) }),
-    Mode("thumb"),
+    @traces.TraceEvent::timestamp(-42L),
+    @traces.TraceEvent::pc_update(word32(0x401000)),
+    @traces.TraceEvent::code_exec(
+      @traces.Chunk::create(addr=word32(0x401000), data=b"\x90\xcc"),
+    ),
+    @traces.TraceEvent::context_switch(-1),
+    @traces.TraceEvent::syscall({ number: 60, args: [word32(0)] }),
+    @traces.TraceEvent::exn({ number: 13, src: Some(word32(1)), dst: None }),
+    @traces.TraceEvent::call({ caller, callee, args: [word32(1), word32(2)] }),
+    @traces.TraceEvent::return_event({ caller: "main", callee: "callee" }),
+    @traces.TraceEvent::modload({
+      name: "libc.so",
+      low: word32(0x1000),
+      high: word32(0x1fff),
+    }),
+    @traces.TraceEvent::mode("thumb"),
   ]
 }
 
@@ -113,6 +119,57 @@ fn tool_for_events(events : Array[@traces.TraceEvent]) -> @traces.TraceTool {
 ///|
 fn trace_ids(traces : Array[@traces.Trace]) -> Array[Int] {
   traces.map(trace => trace.id())
+}
+
+///|
+test "translated BAP common trace event tags match helper constructors" {
+  assert_true(
+    @traces.TraceEvent::common_tags() ==
+    [
+      @traces.TraceEvent::memory_load_tag(),
+      @traces.TraceEvent::memory_store_tag(),
+      @traces.TraceEvent::register_read_tag(),
+      @traces.TraceEvent::register_write_tag(),
+      @traces.TraceEvent::timestamp_tag(),
+      @traces.TraceEvent::pc_update_tag(),
+      @traces.TraceEvent::code_exec_tag(),
+      @traces.TraceEvent::context_switch_tag(),
+      @traces.TraceEvent::syscall_tag(),
+      @traces.TraceEvent::exn_tag(),
+      @traces.TraceEvent::call_tag(),
+      @traces.TraceEvent::return_tag(),
+      @traces.TraceEvent::modload_tag(),
+      @traces.TraceEvent::mode_tag(),
+    ],
+  )
+  assert_true(
+    [
+      for event in test_events() => event.tag()
+    ] ==
+    [
+      @traces.TraceEvent::memory_load_tag(),
+      @traces.TraceEvent::memory_store_tag(),
+      @traces.TraceEvent::register_read_tag(),
+      @traces.TraceEvent::register_write_tag(),
+    ],
+  )
+  assert_true(
+    [
+      for event in broad_events() => event.tag()
+    ] ==
+    [
+      @traces.TraceEvent::timestamp_tag(),
+      @traces.TraceEvent::pc_update_tag(),
+      @traces.TraceEvent::code_exec_tag(),
+      @traces.TraceEvent::context_switch_tag(),
+      @traces.TraceEvent::syscall_tag(),
+      @traces.TraceEvent::exn_tag(),
+      @traces.TraceEvent::call_tag(),
+      @traces.TraceEvent::return_tag(),
+      @traces.TraceEvent::modload_tag(),
+      @traces.TraceEvent::mode_tag(),
+    ],
+  )
 }
 
 ///|

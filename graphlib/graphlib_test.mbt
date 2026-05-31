@@ -24,6 +24,43 @@ test "graph construction is persistent and deterministic" {
 }
 
 ///|
+test "translated BAP graph removal keeps nodes and incident edges coherent" {
+  let graph : @graphlib.Graph[Int, String] = @graphlib.Graph::new()
+    .add_edge(src=0, dst=1, label="entry")
+    .add_edge(src=1, dst=2, label="body")
+    .add_edge(src=2, dst=0, label="loop")
+  let without_edge = graph.remove_edge(1, 2)
+  assert_true(without_edge.node_count() == 3)
+  assert_true(without_edge.edge_count() == 2)
+  assert_true(!without_edge.has_edge(1, 2))
+  assert_true(without_edge.predecessors(2).is_empty())
+  assert_true(without_edge.has_edge(0, 1))
+  assert_true(without_edge.has_edge(2, 0))
+
+  let without_node = graph.remove_node(1)
+  assert_true(without_node.node_count() == 2)
+  assert_true(without_node.edge_count() == 1)
+  assert_true(!without_node.has_node(1))
+  assert_true(!without_node.has_edge(0, 1))
+  assert_true(!without_node.has_edge(1, 2))
+  assert_true(without_node.has_edge(2, 0))
+
+  let reinserted = without_node.add_node(1)
+  assert_true(reinserted.node_count() == 3)
+  assert_true(reinserted.edge_count() == 1)
+  assert_true(reinserted.has_node(1))
+  assert_true(!reinserted.has_edge(0, 1))
+  assert_true(!reinserted.has_edge(1, 2))
+
+  let restored = reinserted
+    .add_edge(src=0, dst=1, label="entry")
+    .add_edge(src=1, dst=2, label="body")
+  assert_true(restored.node_count() == 3)
+  assert_true(restored.edge_count() == 3)
+  assert_true(edge_pairs(restored) == Set::from_array([(0, 1), (1, 2), (2, 0)]))
+}
+
+///|
 struct LabeledNode {
   id : Int
   name : String

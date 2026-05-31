@@ -61,6 +61,25 @@ test "word exposes BAP numeric compatibility aliases" {
   assert_true(x.nsucc(0x20).to_hex() == "0x30")
   assert_true(x.npred(0x11).to_hex() == "0xff")
   assert_true(x.nsucc(-1) == x.pred())
+  assert_true(
+    @types.Word::zero(width=8).sub(@types.Word::of_int(width=8, 1)).to_hex() ==
+    "0xff",
+  )
+  assert_true(@types.Word::of_int(width=8, 1).lshift(0xA).to_hex() == "0x00")
+  assert_true(@types.Word::of_int(width=8, 0xff).rshift(0x2).to_hex() == "0x3f")
+  assert_true(
+    @types.Word::of_int(width=8, 0xff).arshift(0x2).to_hex() == "0xff",
+  )
+  assert_true(
+    @types.Word::of_int(width=8, 13).lnot() == @types.Word::of_int(width=8, -14),
+  )
+  assert_true(
+    @types.Word::of_int(width=4, 1398765).lnot() ==
+    @types.Word::of_int(width=4, -1398766),
+  )
+  assert_true(
+    @types.Word::zero(width=4).lnot() == @types.Word::of_int(width=4, -1),
+  )
   assert_true(@types.Word::of_int(width=8, 0xff).abs().to_hex() == "0x01")
   assert_true(x.logand(y) == x.bit_and(y))
   assert_true(x.logor(y) == x.bit_or(y))
@@ -75,6 +94,18 @@ test "word exposes BAP numeric compatibility aliases" {
   assert_true(x.lcm_exn(y) == x.lcm(y))
   assert_true(x.gcdext(y) == x.gcd_ext(y))
   assert_true(x.gcdext_exn(y) == x.gcd_ext(y))
+  assert_true(
+    @types.Word::of_int(width=8, 0x11)
+    .gcd(@types.Word::of_int(width=8, 0x0f))
+    .to_hex() ==
+    "0x01",
+  )
+  assert_true(
+    @types.Word::of_int(width=8, 0x1c)
+    .lcm(@types.Word::of_int(width=8, 0x23))
+    .to_hex() ==
+    "0x8c",
+  )
   assert_true(
     @types.Word::of_int(width=16, 0xdad5)
     .extract_exn(hi=0xB, lo=0x4)

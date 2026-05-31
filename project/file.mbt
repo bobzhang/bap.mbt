@@ -22,6 +22,9 @@ pub fn ProjectInput::raw_file(
   path : String,
   target~ : @core_theory.Target,
   base? : UInt64 = 0UL,
+  offset? : Int = 0,
+  length? : Int,
+  entry? : UInt64,
   filename? : String,
 ) -> Result[ProjectInput, String] {
   let selected_filename = match filename {
@@ -30,7 +33,15 @@ pub fn ProjectInput::raw_file(
   }
   match @native_io.read_file(path) {
     Ok(data) =>
-      ProjectInput::raw_bytes(target~, data, base~, filename=selected_filename)
+      ProjectInput::raw_bytes(
+        target~,
+        data,
+        base~,
+        offset~,
+        length?,
+        entry?,
+        filename=selected_filename,
+      )
     Err(reason) => Err(reason)
   }
 }
@@ -40,8 +51,11 @@ pub fn ProjectInput::binary(
   target~ : @core_theory.Target,
   filename~ : String,
   base? : UInt64 = 0UL,
+  offset? : Int = 0,
+  length? : Int,
+  entry? : UInt64,
 ) -> Result[ProjectInput, String] {
-  ProjectInput::raw_file(filename, target~, base~)
+  ProjectInput::raw_file(filename, target~, base~, offset~, length?, entry?)
 }
 
 ///|

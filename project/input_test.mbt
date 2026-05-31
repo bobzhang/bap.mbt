@@ -21,24 +21,37 @@ test "project input from bytes builds raw memory image" {
 test "project raw bytes reject empty input and use target metadata" {
   let target = @core_theory.Target::sparc()
   assert_true(@project.ProjectInput::raw_bytes(target~, b"") is Err(_))
+  assert_true(
+    @project.ProjectInput::raw_bytes(target~, b"\x01", offset=2) is Err(_),
+  )
+  assert_true(
+    @project.ProjectInput::raw_bytes(target~, b"\x01", length=2) is Err(_),
+  )
   match
     @project.ProjectInput::raw_bytes(
       target~,
-      b"\x01\x02",
+      b"\x00\x01\x02\x03",
       base=0x300UL,
+      offset=1,
+      length=2,
+      entry=0x301UL,
       filename="raw.bin",
     ) {
     Ok(input) => {
       let project = @project.Project::from_input(input)
       assert_true(project.filename() == Some("raw.bin"))
       assert_true(project.memory().lookup(0x300UL).length() == 1)
+      assert_true(project.memory().lookup(0x302UL).is_empty())
       match project.image() {
         Some(image) => {
           assert_true(image.endian() == BigEndian)
+          assert_true(image.entry_point() == 0x301UL)
           assert_true(image.base_address() == Some(0x300UL))
           let segments = image.segments()
           assert_true(segments.length() == 1)
           assert_true(segments[0].name() == "bap.user")
+          assert_true(segments[0].offset() == 1)
+          assert_true(segments[0].memory().to_bytes() == b"\x01\x02")
         }
         None => fail("expected raw image")
       }
@@ -84,11 +97,15 @@ test "project input from bigstring and string use checked raw bytes" {
       target~,
       b"\xaa\xbb",
       base=0x600UL,
+      entry=0x601UL,
       filename="raw.bin",
     ) {
     Ok(input) => {
       let project = @project.Project::from_input(input)
       assert_true(project.filename() == Some("raw.bin"))
+      assert_true(
+        project.image().map(image => image.entry_point()) == Some(0x601UL),
+      )
       assert_true(project.memory().lookup(0x601UL).length() == 1)
     }
     Err(reason) => fail(reason)
@@ -98,13 +115,15 @@ test "project input from bigstring and string use checked raw bytes" {
       target~,
       "Aé",
       base=0x700UL,
+      offset=1,
+      length=2,
       filename="text.bin",
     ) {
     Ok(input) => {
       let project = @project.Project::from_input(input)
       assert_true(project.filename() == Some("text.bin"))
       assert_true(project.memory().lookup(0x700UL).length() == 1)
-      assert_true(project.memory().lookup(0x702UL).length() == 1)
+      assert_true(project.memory().lookup(0x702UL).is_empty())
     }
     Err(reason) => fail(reason)
   }

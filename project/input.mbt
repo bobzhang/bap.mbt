@@ -143,6 +143,8 @@ pub fn ProjectInput::from_bytes(
   data : Bytes,
   endian~ : @bitvec.Endian,
   base? : UInt64 = 0UL,
+  entry? : UInt64,
+  file_offset? : Int = 0,
   filename? : String,
   finish? : (Project) -> Project,
 ) -> ProjectInput {
@@ -151,6 +153,8 @@ pub fn ProjectInput::from_bytes(
     data,
     endian~,
     base~,
+    entry?,
+    file_offset~,
     filename?,
     finish?,
     segment_name=".raw",
@@ -163,6 +167,8 @@ fn ProjectInput::from_raw_bytes(
   data : Bytes,
   endian~ : @bitvec.Endian,
   base? : UInt64 = 0UL,
+  entry? : UInt64,
+  file_offset? : Int = 0,
   filename? : String,
   finish? : (Project) -> Project,
   segment_name~ : String,
@@ -172,11 +178,16 @@ fn ProjectInput::from_raw_bytes(
     endian~,
     addr=base,
     data,
+    offset=file_offset,
     readable=true,
     executable=true,
   )
+  let selected_entry = match entry {
+    Some(addr) => addr
+    None => base
+  }
   let image = @image.Image::from_segments(
-    entry=base,
+    entry=selected_entry,
     endian~,
     [segment],
     base_address=base,
@@ -187,27 +198,60 @@ fn ProjectInput::from_raw_bytes(
 }
 
 ///|
+fn project_slice_raw_bytes(
+  data : Bytes,
+  offset : Int,
+  length : Int?,
+) -> Result[Bytes, String] {
+  if offset < 0 {
+    Err("raw project input offset is negative")
+  } else if offset > data.length() {
+    Err("raw project input offset exceeds the input")
+  } else {
+    let available = data.length() - offset
+    let size = match length {
+      Some(value) => value
+      None => available
+    }
+    if size < 0 {
+      Err("raw project input length is negative")
+    } else if size == 0 {
+      Err("raw project input is empty")
+    } else if size > available {
+      Err("raw project input length exceeds the input")
+    } else {
+      Ok(data[offset:offset + size].to_owned())
+    }
+  }
+}
+
+///|
 pub fn ProjectInput::raw_bytes(
   target~ : @core_theory.Target,
   data : Bytes,
   base? : UInt64 = 0UL,
+  offset? : Int = 0,
+  length? : Int,
+  entry? : UInt64,
   filename? : String,
   finish? : (Project) -> Project,
 ) -> Result[ProjectInput, String] {
-  if data.length() == 0 {
-    Err("raw project input is empty")
-  } else {
-    Ok(
-      ProjectInput::from_raw_bytes(
-        target~,
-        data,
-        endian=project_raw_endian(target),
-        base~,
-        filename?,
-        finish?,
-        segment_name="bap.user",
-      ),
-    )
+  match project_slice_raw_bytes(data, offset, length) {
+    Ok(sliced) =>
+      Ok(
+        ProjectInput::from_raw_bytes(
+          target~,
+          sliced,
+          endian=project_raw_endian(target),
+          base~,
+          entry?,
+          file_offset=offset,
+          filename?,
+          finish?,
+          segment_name="bap.user",
+        ),
+      )
+    Err(reason) => Err(reason)
   }
 }
 
@@ -216,10 +260,22 @@ pub fn ProjectInput::from_bigstring(
   target~ : @core_theory.Target,
   data : Bytes,
   base? : UInt64 = 0UL,
+  offset? : Int = 0,
+  length? : Int,
+  entry? : UInt64,
   filename? : String,
   finish? : (Project) -> Project,
 ) -> Result[ProjectInput, String] {
-  ProjectInput::raw_bytes(target~, data, base~, filename?, finish?)
+  ProjectInput::raw_bytes(
+    target~,
+    data,
+    base~,
+    offset~,
+    length?,
+    entry?,
+    filename?,
+    finish?,
+  )
 }
 
 ///|
@@ -227,6 +283,9 @@ pub fn ProjectInput::from_string(
   target~ : @core_theory.Target,
   text : String,
   base? : UInt64 = 0UL,
+  offset? : Int = 0,
+  length? : Int,
+  entry? : UInt64,
   filename? : String,
   finish? : (Project) -> Project,
 ) -> Result[ProjectInput, String] {
@@ -234,6 +293,9 @@ pub fn ProjectInput::from_string(
     target~,
     @utf8.encode(text),
     base~,
+    offset~,
+    length?,
+    entry?,
     filename?,
     finish?,
   )

@@ -40,16 +40,26 @@ test "project input loaders read files on native target" {
 ///|
 test "project raw file input uses target endian on native target" {
   let target = @core_theory.Target::sparc()
-  match @project.ProjectInput::raw_file("moon.mod", target~, base=0x500UL) {
+  match
+    @project.ProjectInput::raw_file(
+      "moon.mod",
+      target~,
+      base=0x500UL,
+      offset=1,
+      length=2,
+      entry=0x501UL,
+    ) {
     Ok(input) => {
       let project = @project.Project::from_input(input)
       assert_true(project.filename() == Some("moon.mod"))
       assert_true(project.target().matches("sparc"))
       assert_true(project.memory().lookup(0x500UL).length() == 1)
+      assert_true(project.memory().lookup(0x502UL).is_empty())
       match project.image() {
         Some(image) => {
           assert_true(image.endian() == BigEndian)
-          assert_true(image.entry_point() == 0x500UL)
+          assert_true(image.entry_point() == 0x501UL)
+          assert_true(image.segments()[0].offset() == 1)
           assert_true(image.segments()[0].name() == "bap.user")
         }
         None => fail("expected raw image")

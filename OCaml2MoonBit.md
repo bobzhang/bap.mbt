@@ -103,7 +103,11 @@ load address as image base-address metadata, then let `ProjectInput` wrap the
 resulting image for higher-level orchestration. The image-level raw backend can
 remain a minimal address-zero byte image, but the project-level built-in `raw`
 loader should preserve BAP's default raw input behavior by selecting an
-`x86-64` target when no external raw-loader configuration is present. Keep
+`x86-64` target when no external raw-loader configuration is present. Direct
+raw project inputs should also preserve BAP-style `offset`, `length`, and
+`entry-point` semantics by slicing the input bytes before creating the mapped
+segment, storing the original file offset on the segment, and using the
+selected entry point independently of the mapped base address. Keep
 object-format parsers such as ELF in `image` backends instead of duplicating
 them in `project`; project filename loading should discover them through the
 same image-backend fallback path as custom image loaders. For ELF, map

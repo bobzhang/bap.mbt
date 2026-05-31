@@ -403,6 +403,94 @@ pub fn Term::insert_def_before(
 }
 
 ///|
+pub fn Term::insert_phi_after(
+  self : Term[Blk],
+  term : Term[Phi],
+  after? : Tid,
+) -> Term[Blk] {
+  let phis = self.payload_value.phis.copy()
+  let index = match after {
+    Some(tid) =>
+      match find_phi_index(phis, tid) {
+        Some(i) => Some(i + 1)
+        None => None
+      }
+    None => Some(phis.length())
+  }
+  match index {
+    Some(i) => {
+      phis.insert(i, term)
+      self.with_phis(phis)
+    }
+    None => self
+  }
+}
+
+///|
+pub fn Term::insert_phi_before(
+  self : Term[Blk],
+  term : Term[Phi],
+  before? : Tid,
+) -> Term[Blk] {
+  let phis = self.payload_value.phis.copy()
+  let index = match before {
+    Some(tid) => find_phi_index(phis, tid)
+    None => Some(0)
+  }
+  match index {
+    Some(i) => {
+      phis.insert(i, term)
+      self.with_phis(phis)
+    }
+    None => self
+  }
+}
+
+///|
+pub fn Term::insert_jmp_after(
+  self : Term[Blk],
+  term : Term[Jmp],
+  after? : Tid,
+) -> Term[Blk] {
+  let jmps = self.payload_value.jmps.copy()
+  let index = match after {
+    Some(tid) =>
+      match find_jmp_index(jmps, tid) {
+        Some(i) => Some(i + 1)
+        None => None
+      }
+    None => Some(jmps.length())
+  }
+  match index {
+    Some(i) => {
+      jmps.insert(i, term)
+      self.with_jmps(jmps)
+    }
+    None => self
+  }
+}
+
+///|
+pub fn Term::insert_jmp_before(
+  self : Term[Blk],
+  term : Term[Jmp],
+  before? : Tid,
+) -> Term[Blk] {
+  let jmps = self.payload_value.jmps.copy()
+  let index = match before {
+    Some(tid) => find_jmp_index(jmps, tid)
+    None => Some(0)
+  }
+  match index {
+    Some(i) => {
+      jmps.insert(i, term)
+      self.with_jmps(jmps)
+    }
+    None => self
+  }
+}
+
+///|
 pub fn Term::update_def(self : Term[Blk], term : Term[Def]) -> Term[Blk] {
   let defs = self.payload_value.defs.copy()
   match find_def_index(defs, term.tid()) {

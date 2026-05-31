@@ -131,6 +131,7 @@ test "block phi jump and sub update helpers map terms" {
   let x = @types.Var::new(name="x", typ~)
   let y = @types.Var::new(name="y", typ~)
   let z = @types.Var::new(name="z", typ~)
+  let w = @types.Var::new(name="w", typ~)
   let pred = @types.Tid::for_name("pred")
   let dst = @types.Tid::for_name("dst")
   let fall = @types.Tid::for_name("fall")
@@ -174,6 +175,45 @@ test "block phi jump and sub update helpers map terms" {
     jmp_names(block.jmps_before(fall_jmp.tid(), rev=true)) == [jmp.name()],
   )
   assert_true(block.jmps_after(fall_jmp.tid()).is_empty())
+  let phi_y = @types.Phi::of_list(y, [(pred, Var(x))])
+  let phi_w = @types.Phi::of_list(w, [(pred, Var(z))])
+  let inserted_phis = block
+    .insert_phi_after(phi_w, after=phi.tid())
+    .insert_phi_before(phi_y)
+  assert_true(phi_lhs_names(inserted_phis.phis()) == ["y", "x", "w", "z"])
+  assert_true(
+    inserted_phis
+    .insert_phi_after(
+      @types.Phi::of_list(w, [(pred, Var(y))]),
+      after=@types.Tid::for_name("absent"),
+    )
+    .phi_count() ==
+    4,
+  )
+  let head_jmp = @types.Jmp::create_goto(
+    @types.Label::direct(@types.Tid::for_name("head")),
+  )
+  let mid_jmp = @types.Jmp::create_goto(
+    @types.Label::direct(@types.Tid::for_name("mid")),
+  )
+  let inserted_jmps = block
+    .insert_jmp_after(mid_jmp, after=jmp.tid())
+    .insert_jmp_before(head_jmp)
+  assert_true(
+    jmp_names(inserted_jmps.jmps()) ==
+    [head_jmp.name(), jmp.name(), mid_jmp.name(), fall_jmp.name()],
+  )
+  assert_true(
+    inserted_jmps
+    .insert_jmp_before(
+      @types.Jmp::create_goto(
+        @types.Label::direct(@types.Tid::for_name("nope")),
+      ),
+      before=@types.Tid::for_name("absent"),
+    )
+    .jmp_count() ==
+    4,
+  )
   let updated_phi = phi.with_phi_lhs(y)
   let updated_block = block.update_phi_term(updated_phi)
   assert_true(updated_block.phis()[0].phi_lhs() == y)

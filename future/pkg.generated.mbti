@@ -63,6 +63,8 @@ pub fn[A, B, C] Stream::merge(Self[A], Self[B], (A, B) -> C) -> Self[C]
 pub fn[T] Stream::nth(Self[T], Int) -> Future[T]
 pub fn[T] Stream::observe(Self[T], (T) -> Unit) -> Unit
 pub fn[T] Stream::of_array(Array[T]) -> (Self[T], Signal[Unit], Future[Unit])
+pub fn[T] Stream::of_iter(Iter[T]) -> (Self[T], Signal[Unit], Future[Unit])
+pub fn[T] Stream::of_sequence(Iter[T]) -> (Self[T], Signal[Unit], Future[Unit])
 pub fn[T] Stream::on_subscribe(Self[T], (Int) -> Unit) -> Unit
 pub fn[T] Stream::on_unsubscribe(Self[T], (Int) -> Unit) -> Unit
 pub fn[T] Stream::on_wait(Self[T], () -> Unit) -> Unit

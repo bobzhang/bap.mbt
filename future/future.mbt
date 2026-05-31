@@ -324,6 +324,25 @@ pub fn[T] Stream::of_array(
 }
 
 ///|
+pub fn[T] Stream::of_iter(
+  values : Iter[T],
+) -> (Stream[T], Signal[Unit], Future[Unit]) {
+  Stream::unfold_until(init=values, f=fn(iter) {
+    match iter.next() {
+      Some(value) => Some((value, iter))
+      None => None
+    }
+  })
+}
+
+///|
+pub fn[T] Stream::of_sequence(
+  values : Iter[T],
+) -> (Stream[T], Signal[Unit], Future[Unit]) {
+  Stream::of_iter(values)
+}
+
+///|
 pub fn[T, E] Stream::before(
   self : Stream[T],
   event : Future[E],

@@ -159,6 +159,24 @@ test "translated BAP stream array and repeat sources are finite or repeated" {
 }
 
 ///|
+test "translated BAP stream iterator and sequence sources are finite" {
+  let values = [10, 20, 30]
+  let (iter_stream, iter_signal, iter_finished) = @future.Stream::of_iter(
+    values.iter(),
+  )
+  assert_stream_before_eq(iter_stream, iter_signal, repeat=4, values)
+  assert_true(iter_finished.is_decided())
+
+  let (sequence_stream, sequence_signal, sequence_finished) = @future.Stream::of_sequence(
+    [0, 1, 2, 3].iter().map(fn(value) { value * 2 }),
+  )
+  assert_stream_before_eq(sequence_stream, sequence_signal, repeat=5, [
+    0, 2, 4, 6,
+  ])
+  assert_true(sequence_finished.is_decided())
+}
+
+///|
 test "translated BAP stream subscriptions hooks and ids" {
   let (stream, signal, _) = @future.Stream::of_array([0, 1, 2, 3, 4, 5, 6, 7])
   assert_true(!stream.has_subscribers())

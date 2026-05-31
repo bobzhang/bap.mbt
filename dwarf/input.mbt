@@ -567,17 +567,37 @@ fn DwarfInput::read_index(
 }
 
 ///|
+fn DwarfInput::read_block_length(
+  self : DwarfInput,
+  lenspec : DwarfLenspec,
+  endian : @bitvec.Endian,
+) -> Result[(Int, DwarfInput), String] {
+  match lenspec {
+    DwarfLeb128 => self.read_code()
+    DwarfOne => self.read_byte()
+    DwarfTwo => self.read_unsigned_bytes(2, endian)
+    DwarfFour => self.read_unsigned_bytes(4, endian)
+    DwarfEight =>
+      match self.read_uint(8, endian) {
+        Ok((value, next)) =>
+          if value > 2147483647UL {
+            Err("invalid DWARF block size: \{value}")
+          } else {
+            Ok((value.to_int(), next))
+          }
+        Err(reason) => Err(reason)
+      }
+  }
+}
+
+///|
 pub fn DwarfInput::read_block(
   self : DwarfInput,
   lenspec~ : DwarfLenspec,
   endian~ : @bitvec.Endian,
 ) -> Result[(Bytes, DwarfInput), String] {
-  match self.read_len(lenspec, endian) {
-    Ok((len64, next)) => {
-      if len64 < 0L || len64 > 2147483647L {
-        return Err("invalid DWARF block size: \{len64}")
-      }
-      let len = len64.to_int()
+  match self.read_block_length(lenspec, endian) {
+    Ok((len, next)) =>
       match next.require(len) {
         Ok(_) =>
           Ok(
@@ -588,7 +608,6 @@ pub fn DwarfInput::read_block(
           )
         Err(reason) => Err(reason)
       }
-    }
     Err(reason) => Err(reason)
   }
 }

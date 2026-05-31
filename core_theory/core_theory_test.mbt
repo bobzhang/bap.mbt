@@ -744,6 +744,14 @@ test "target role helpers classify common architecture variables" {
     Some(flag) => assert_true(arm.roles_of_var(flag).contains(Status))
     None => fail("missing NF")
   }
+  match arm.find_var("D31") {
+    Some(float) => {
+      assert_true(arm.roles_of_var(float).contains(FloatingRegister))
+      assert_true(!arm.roles_of_var(float).contains(IntegerRegister))
+      assert_true(float.sort().same(@core_theory.Sort::bitv(64)))
+    }
+    None => fail("missing ARM D31")
+  }
   match arm.origin_of_name("SP") {
     Some(origin) => {
       assert_true(origin.aliased().ident() == "SP")

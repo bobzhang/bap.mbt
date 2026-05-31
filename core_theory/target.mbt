@@ -622,6 +622,7 @@ fn x86_64_vars() -> Array[Var] {
 ///|
 fn arm32_vars() -> Array[Var] {
   let items = numbered_word_vars(32, "R", 16)
+  append_vars(items, numbered_word_vars(64, "D", 32))
   append_vars(items, named_word_vars(32, ["SP", "LR", "PC", "CPSR"]))
   append_vars(items, arm32_flags())
   items.push(mem_var(32, 8, "mem"))
@@ -1020,7 +1021,8 @@ fn arm32_role_names(role : Role) -> Array[String] {
   match role {
     General => []
     IntegerRegister => concat_role_names([role_names("r", 0, 12), ["sp", "lr"]])
-    FloatingRegister | VectorRegister => []
+    FloatingRegister => role_names("d", 0, 31)
+    VectorRegister => []
     StackPointer => ["sp"]
     FramePointer => ["r11"]
     ProgramCounter => ["pc"]

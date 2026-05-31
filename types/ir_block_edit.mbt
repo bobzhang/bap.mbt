@@ -61,6 +61,56 @@ fn copy_def_range(
 }
 
 ///|
+fn copy_phi_range(
+  phis : Array[Term[Phi]],
+  start : Int,
+  stop : Int,
+  rev : Bool,
+) -> Array[Term[Phi]] {
+  let length = phis.length()
+  let from = clamp_def_index(start, length)
+  let until = clamp_def_index(stop, length)
+  let out = []
+  if from < until {
+    if rev {
+      for offset in 0..<(until - from) {
+        out.push(phis[until - offset - 1])
+      }
+    } else {
+      for i in from..<until {
+        out.push(phis[i])
+      }
+    }
+  }
+  out
+}
+
+///|
+fn copy_jmp_range(
+  jmps : Array[Term[Jmp]],
+  start : Int,
+  stop : Int,
+  rev : Bool,
+) -> Array[Term[Jmp]] {
+  let length = jmps.length()
+  let from = clamp_def_index(start, length)
+  let until = clamp_def_index(stop, length)
+  let out = []
+  if from < until {
+    if rev {
+      for offset in 0..<(until - from) {
+        out.push(jmps[until - offset - 1])
+      }
+    } else {
+      for i in from..<until {
+        out.push(jmps[i])
+      }
+    }
+  }
+  out
+}
+
+///|
 fn Term::with_defs(self : Term[Blk], defs : Array[Term[Def]]) -> Term[Blk] {
   self.with_payload({ ..self.payload_value, defs, })
 }
@@ -244,6 +294,66 @@ pub fn Term::defs_before(
 ) -> Array[Term[Def]] {
   match find_def_index(self.payload_value.defs, tid) {
     Some(i) => copy_def_range(self.payload_value.defs, 0, i, rev)
+    None => []
+  }
+}
+
+///|
+pub fn Term::phis_after(
+  self : Term[Blk],
+  tid : Tid,
+  rev? : Bool = false,
+) -> Array[Term[Phi]] {
+  match find_phi_index(self.payload_value.phis, tid) {
+    Some(i) =>
+      copy_phi_range(
+        self.payload_value.phis,
+        i + 1,
+        self.payload_value.phis.length(),
+        rev,
+      )
+    None => []
+  }
+}
+
+///|
+pub fn Term::phis_before(
+  self : Term[Blk],
+  tid : Tid,
+  rev? : Bool = false,
+) -> Array[Term[Phi]] {
+  match find_phi_index(self.payload_value.phis, tid) {
+    Some(i) => copy_phi_range(self.payload_value.phis, 0, i, rev)
+    None => []
+  }
+}
+
+///|
+pub fn Term::jmps_after(
+  self : Term[Blk],
+  tid : Tid,
+  rev? : Bool = false,
+) -> Array[Term[Jmp]] {
+  match find_jmp_index(self.payload_value.jmps, tid) {
+    Some(i) =>
+      copy_jmp_range(
+        self.payload_value.jmps,
+        i + 1,
+        self.payload_value.jmps.length(),
+        rev,
+      )
+    None => []
+  }
+}
+
+///|
+pub fn Term::jmps_before(
+  self : Term[Blk],
+  tid : Tid,
+  rev? : Bool = false,
+) -> Array[Term[Jmp]] {
+  match find_jmp_index(self.payload_value.jmps, tid) {
+    Some(i) => copy_jmp_range(self.payload_value.jmps, 0, i, rev)
     None => []
   }
 }

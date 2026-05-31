@@ -6,6 +6,20 @@ fn def_lhs_names(defs : Array[@types.Term[@types.Def]]) -> Array[String] {
 }
 
 ///|
+fn phi_lhs_names(phis : Array[@types.Term[@types.Phi]]) -> Array[String] {
+  [
+    for term in phis => term.phi_lhs().name
+  ]
+}
+
+///|
+fn jmp_names(jmps : Array[@types.Term[@types.Jmp]]) -> Array[String] {
+  [
+    for term in jmps => term.name()
+  ]
+}
+
+///|
 fn assert_def_lhs_names(
   block : @types.Term[@types.Blk],
   expected : Array[String],
@@ -150,6 +164,16 @@ test "block phi jump and sub update helpers map terms" {
     block.prev_jmp(fall_jmp.tid()).map(term => term.tid()) == Some(jmp.tid()),
   )
   assert_true(block.next_jmp(fall_jmp.tid()) is None)
+  assert_true(phi_lhs_names(block.phis_after(phi.tid())) == ["z"])
+  assert_true(phi_lhs_names(block.phis_before(phi_z.tid())) == ["x"])
+  assert_true(phi_lhs_names(block.phis_before(phi_z.tid(), rev=true)) == ["x"])
+  assert_true(block.phis_after(phi_z.tid()).is_empty())
+  assert_true(jmp_names(block.jmps_after(jmp.tid())) == [fall_jmp.name()])
+  assert_true(jmp_names(block.jmps_before(fall_jmp.tid())) == [jmp.name()])
+  assert_true(
+    jmp_names(block.jmps_before(fall_jmp.tid(), rev=true)) == [jmp.name()],
+  )
+  assert_true(block.jmps_after(fall_jmp.tid()).is_empty())
   let updated_phi = phi.with_phi_lhs(y)
   let updated_block = block.update_phi_term(updated_phi)
   assert_true(updated_block.phis()[0].phi_lhs() == y)

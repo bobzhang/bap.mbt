@@ -803,6 +803,8 @@ pub fn Term::jmp_free_vars(Self[Jmp]) -> Array[Var]
 pub fn Term::jmp_has_trivial_condition(Self[Jmp]) -> Bool
 pub fn Term::jmp_to_string(Self[Jmp]) -> String
 pub fn Term::jmps(Self[Blk]) -> Array[Self[Jmp]]
+pub fn Term::jmps_after(Self[Blk], Tid, rev? : Bool) -> Array[Self[Jmp]]
+pub fn Term::jmps_before(Self[Blk], Tid, rev? : Bool) -> Array[Self[Jmp]]
 pub fn Term::kind(Self[Jmp]) -> JmpKind
 pub fn Term::last_def(Self[Blk]) -> Self[Def]?
 pub fn Term::last_jmp(Self[Blk]) -> Self[Jmp]?
@@ -838,6 +840,8 @@ pub fn Term::phi_free_vars(Self[Phi]) -> Array[Var]
 pub fn Term::phi_lhs(Self[Phi]) -> Var
 pub fn Term::phi_to_string(Self[Phi]) -> String
 pub fn Term::phis(Self[Blk]) -> Array[Self[Phi]]
+pub fn Term::phis_after(Self[Blk], Tid, rev? : Bool) -> Array[Self[Phi]]
+pub fn Term::phis_before(Self[Blk], Tid, rev? : Bool) -> Array[Self[Phi]]
 pub fn Term::prev_def(Self[Blk], Tid) -> Self[Def]?
 pub fn Term::prev_jmp(Self[Blk], Tid) -> Self[Jmp]?
 pub fn Term::prev_phi(Self[Blk], Tid) -> Self[Phi]?

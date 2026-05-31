@@ -229,7 +229,9 @@ driver/brancher/reconstructor stages. Keep the top-level project orchestration
 explicit: a one-shot helper may run either a named or discovered disassembly
 driver, optionally apply a brancher, and then a named/default reconstructor, but it
 should still surface each failing stage as a checked `Result` instead of hiding
-loader/disassembly/reconstruction failures.
+loader/disassembly/reconstruction failures. When trying several disassembly
+driver candidates, report each failed driver name and reason instead of only the
+last failure; otherwise custom driver priority issues are unnecessarily opaque.
 When the project package owns several global registries, expose one idempotent
 `register_builtin_services` helper that delegates to the lower-level built-in
 loader, brancher, disassembly-driver, reconstructor, and IR-transform pass

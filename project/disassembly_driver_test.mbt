@@ -397,3 +397,24 @@ test "project disassembly drivers fall back by priority" {
   }
   assert_true(project.disassemble(driver="unit-disasm-missing") is Err(_))
 }
+
+///|
+test "project disassembly driver candidate lists report every failure" {
+  let first = @project.ProjectDisassemblyDriver::create(
+    name="unit-disasm-fail-first",
+    run=_ => Err("first reason"),
+  )
+  let second = @project.ProjectDisassemblyDriver::create(
+    name="unit-disasm-fail-second",
+    run=_ => Err("second reason"),
+  )
+  let project = @project.Project::empty(@core_theory.Target::unknown())
+  match project.disassemble_with_drivers([first, second]) {
+    Ok(_) => fail("expected disassembly drivers to fail")
+    Err(reason) => {
+      assert_true(reason.contains("unit-disasm-fail-first: first reason"))
+      assert_true(reason.contains("unit-disasm-fail-second: second reason"))
+    }
+  }
+  assert_true(project.disassemble_with_drivers([]) is Err(_))
+}

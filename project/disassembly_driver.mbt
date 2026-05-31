@@ -303,6 +303,25 @@ pub fn Project::disassemble(
 }
 
 ///|
+pub fn Project::disassemble_with_drivers(
+  self : Project,
+  drivers : Array[ProjectDisassemblyDriver],
+) -> Result[Project, String] {
+  if drivers.is_empty() {
+    Err("no project disassembly drivers are provided")
+  } else {
+    let failures : Array[String] = []
+    for driver in drivers {
+      match driver.run(self) {
+        Ok(project) => return Ok(project)
+        Err(reason) => failures.push("\{driver.name()}: \{reason}")
+      }
+    }
+    Err("all project disassembly drivers failed: \{failures.join("; ")}")
+  }
+}
+
+///|
 pub fn Project::disassemble_with_available(
   self : Project,
 ) -> Result[Project, String] {
@@ -310,13 +329,6 @@ pub fn Project::disassemble_with_available(
   if drivers.is_empty() {
     Err("no project disassembly drivers are registered")
   } else {
-    let mut last_error = ""
-    for driver in drivers {
-      match driver.run(self) {
-        Ok(project) => return Ok(project)
-        Err(reason) => last_error = reason
-      }
-    }
-    Err("all project disassembly drivers failed: \{last_error}")
+    self.disassemble_with_drivers(drivers)
   }
 }

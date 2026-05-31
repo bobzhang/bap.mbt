@@ -120,6 +120,7 @@ pub fn Project::disassemble(Self, driver~ : String) -> Result[Self, String]
 pub fn Project::disassemble_and_reconstruct(Self, driver? : String, brancher? : ProjectBrancher, reconstructor? : ProjectReconstructor) -> Result[Self, String]
 pub fn Project::disassemble_and_reconstruct_named(Self, driver? : String, brancher? : String, reconstructor? : String) -> Result[Self, String]
 pub fn Project::disassemble_with_available(Self) -> Result[Self, String]
+pub fn Project::disassemble_with_drivers(Self, Array[ProjectDisassemblyDriver]) -> Result[Self, String]
 pub fn Project::disassembly(Self) -> ProjectDisassemblyState
 pub fn Project::empty(@core_theory.Target) -> Self
 pub fn Project::external_references(Self) -> Array[@image.ExternalReference]

@@ -181,6 +181,11 @@ For AArch64, BAP keeps `R0` through `R31` as the canonical 64-bit register
 variables and models `X*`/`W*` spellings as aliases, with `W*` taking the low
 32 bits of the canonical `R*`. Preserve that direction in alias provenance
 instead of making the common assembler spelling the canonical source.
+When porting BAP `Knowledge.Object.S` values such as program units and labels,
+preserve object identity separately from payload fields. In MoonBit, prefer a
+stable generated id for `same`/`compare` helpers; two objects with equal path,
+address, or name metadata are still distinct unless they came from the same
+object.
 When porting target nickname tables, keep historical spellings that are exposed
 by BAP even if they look accidental. For example, BAP's MIPS target list
 contains `misp64le`; preserve it as a compatibility alias while also accepting

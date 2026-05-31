@@ -351,6 +351,11 @@ pub fn ProgramUnit::same(self : ProgramUnit, other : ProgramUnit) -> Bool {
 }
 
 ///|
+pub fn ProgramUnit::compare(self : ProgramUnit, other : ProgramUnit) -> Int {
+  self.id_value.compare(other.id_value)
+}
+
+///|
 pub fn ProgramUnit::path(self : ProgramUnit) -> String? {
   self.path_value
 }

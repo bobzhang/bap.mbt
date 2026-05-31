@@ -183,6 +183,16 @@ pub fn Label::id(self : Label) -> Int {
 }
 
 ///|
+pub fn Label::same(self : Label, other : Label) -> Bool {
+  self.id == other.id
+}
+
+///|
+pub fn Label::compare(self : Label, other : Label) -> Int {
+  self.id.compare(other.id)
+}
+
+///|
 pub fn Label::target(self : Label) -> Target {
   match self.target_value {
     Some(target) => target

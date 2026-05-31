@@ -132,6 +132,7 @@ pub fn Filetype::to_string(Self) -> String
 type Label
 pub fn Label::addr(Self) -> @types.Word?
 pub fn Label::aliases(Self) -> Array[String]
+pub fn Label::compare(Self, Self) -> Int
 pub fn Label::encoding(Self) -> Language?
 pub fn Label::for_addr(@types.Word, target? : Target) -> Self
 pub fn Label::for_ivec(Int, target? : Target) -> Self
@@ -145,6 +146,7 @@ pub fn Label::name(Self) -> String?
 pub fn Label::null() -> Self
 pub fn Label::possible_name(Self) -> String?
 pub fn Label::possible_name_opinions(Self) -> @knowledge.Opinions[String?]
+pub fn Label::same(Self, Self) -> Bool
 pub fn Label::semantics(Self) -> Semantics?
 pub fn Label::target(Self) -> Target
 pub fn Label::unit(Self) -> ProgramUnit?
@@ -209,6 +211,7 @@ pub fn Program::units(Self) -> Array[ProgramUnit]
 
 type ProgramUnit
 pub fn ProgramUnit::bias(Self) -> @types.Word?
+pub fn ProgramUnit::compare(Self, Self) -> Int
 pub fn ProgramUnit::compiler(Self) -> Compiler?
 pub fn ProgramUnit::for_file(String, target? : Target, bias? : @types.Word, source? : Source, compiler? : Compiler) -> Self
 pub fn ProgramUnit::for_region(lower~ : @types.Word, upper~ : @types.Word, target? : Target, bias? : @types.Word, source? : Source, compiler? : Compiler) -> Self

@@ -289,3 +289,145 @@ pub fn IrCfg::in_degree(self : IrCfg, blk : Term[Blk]) -> Int {
 pub fn IrCfg::degree(self : IrCfg, blk : Term[Blk]) -> Int {
   self.in_degree(blk) + self.out_degree(blk)
 }
+
+///|
+fn ir_cfg_dot_escape(text : String) -> String {
+  let builder = StringBuilder()
+  for i in 0..<text.char_length() {
+    match text.get_char(i) {
+      Some(char) =>
+        match char.to_int() {
+          10 => builder.write_string("\\l")
+          34 => builder.write_string("\\\"")
+          92 => builder.write_string("\\\\")
+          _ => builder.write_char(char)
+        }
+      None => ()
+    }
+  }
+  builder.to_string()
+}
+
+///|
+fn ir_cfg_dot_quote(text : String) -> String {
+  "\"\{ir_cfg_dot_escape(text)}\""
+}
+
+///|
+fn ir_cfg_dot_join_lines(lines : Array[String]) -> String {
+  let builder = StringBuilder()
+  for i, line in lines {
+    if i > 0 {
+      builder.write_string("\n")
+    }
+    builder.write_string(line)
+  }
+  builder.to_string()
+}
+
+///|
+fn ir_cfg_dot_def_label(def : Term[Def]) -> String {
+  "\{def.lhs().to_string()} := \{def.rhs().to_string()}"
+}
+
+///|
+fn ir_cfg_dot_phi_label(phi : Term[Phi]) -> String {
+  let values = []
+  for value in phi.values() {
+    values.push("[\{value.1.to_string()}, \{value.0.to_string()}]")
+  }
+  "\{phi.phi_lhs().to_string()} <- phi(\{values.join(", ")})"
+}
+
+///|
+fn ir_cfg_dot_jmp_label(jmp : Term[Jmp]) -> String {
+  let cond = jmp.cond()
+  let prefix = match cond {
+    Int(word) if word.is_one() => ""
+    _ => "when \{cond.to_string()} "
+  }
+  let body = match jmp.kind() {
+    JmpCall(call) =>
+      match call.return_label {
+        Some(label) =>
+          "call \{call.target.to_string()} with return \{label.to_string()}"
+        None => "call \{call.target.to_string()} with noreturn"
+      }
+    Goto(label) => "goto \{label.to_string()}"
+    Ret(label) => "return \{label.to_string()}"
+    Interrupt(num, tid) =>
+      "interrupt 0x\{num.to_string(radix=16).to_upper()} return \{tid.to_string()}"
+  }
+  prefix + body
+}
+
+///|
+fn ir_cfg_dot_show_jmp(jmp : Term[Jmp]) -> Bool {
+  match jmp.kind() {
+    Goto(_) => jmp.succ_tid_of_jmp() is None
+    JmpCall(_) | Ret(_) | Interrupt(_) => true
+  }
+}
+
+///|
+fn ir_cfg_dot_node_label(blk : Term[Blk]) -> String {
+  let lines : Array[String] = [blk.name()]
+  for phi in blk.phis() {
+    lines.push(ir_cfg_dot_phi_label(phi))
+  }
+  for def in blk.defs() {
+    lines.push(ir_cfg_dot_def_label(def))
+  }
+  for jmp in blk.jmps() {
+    if ir_cfg_dot_show_jmp(jmp) {
+      lines.push(ir_cfg_dot_jmp_label(jmp))
+    }
+  }
+  ir_cfg_dot_join_lines(lines)
+}
+
+///|
+fn ir_cfg_dot_edge_label(edge : IrCfgEdge, sub : Term[Sub]) -> String {
+  match edge.cond(sub) {
+    Int(word) if word.is_one() => ""
+    exp => exp.to_string()
+  }
+}
+
+///|
+pub fn IrCfg::to_dot(self : IrCfg) -> String {
+  let sub = self.sub_value
+  let builder = StringBuilder()
+  builder.write_string("digraph ")
+  builder.write_string(ir_cfg_dot_quote(sub.sub_name()))
+  builder.write_string(" {\n")
+  builder.write_string("  node[shape=box];\n")
+  for blk in self.nodes() {
+    builder.write_string("  ")
+    builder.write_string(ir_cfg_dot_quote(blk.name()))
+    builder.write_string(" [label=")
+    builder.write_string(ir_cfg_dot_quote(ir_cfg_dot_node_label(blk)))
+    builder.write_string("];\n")
+  }
+  for edge in self.edges() {
+    builder.write_string("  ")
+    builder.write_string(ir_cfg_dot_quote(edge.src().name()))
+    builder.write_string(" -> ")
+    builder.write_string(ir_cfg_dot_quote(edge.dst().name()))
+    let label = ir_cfg_dot_edge_label(edge, sub)
+    if label == "" {
+      builder.write_string(";\n")
+    } else {
+      builder.write_string(" [label=")
+      builder.write_string(ir_cfg_dot_quote(label))
+      builder.write_string("];\n")
+    }
+  }
+  builder.write_string("}\n")
+  builder.to_string()
+}
+
+///|
+pub fn IrCfg::to_string(self : IrCfg) -> String {
+  self.to_dot()
+}

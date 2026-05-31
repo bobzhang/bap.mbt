@@ -528,6 +528,11 @@ inserting at an occupied position retargets that jump, inserting past the tail
 pads with dummy indirect-false jumps, removing a middle edge leaves a dummy in
 place to preserve later jump positions, and removing trailing edges trims a
 suffix of those dummy jumps.
+BAP's full CFG printer is a DOT view over the same graph. Node labels contain
+block phis, defs, calls, returns, interrupts, and indirect gotos, but direct
+local gotos are omitted because they are already represented as graph edges.
+Edge labels should reuse the positional edge condition helper; omit the label
+only when the simplified edge condition is exactly true.
 
 When porting BAP `Term.visitor`/`Term.mapper` users, prefer a typed sum view of
 IR terms over untyped callbacks. Keep traversal order explicit and stable

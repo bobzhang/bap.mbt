@@ -494,6 +494,8 @@ pub fn IrCfg::predecessors(Self, Term[Blk]) -> Array[Term[Blk]]
 pub fn IrCfg::remove_edge(Self, IrCfgEdge) -> Self
 pub fn IrCfg::remove_node(Self, Term[Blk]) -> Self
 pub fn IrCfg::successors(Self, Term[Blk]) -> Array[Term[Blk]]
+pub fn IrCfg::to_dot(Self) -> String
+pub fn IrCfg::to_string(Self) -> String
 pub fn IrCfg::to_sub(Self) -> Term[Sub]
 pub fn IrCfg::update_node(Self, Term[Blk], Term[Blk]) -> Self
 

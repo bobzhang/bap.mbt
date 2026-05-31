@@ -22,6 +22,11 @@ fn cfg_block_jmp_count(
 }
 
 ///|
+fn cfg_dot_bool_var(name : String) -> @types.Var {
+  @types.Var::new(name~, typ=@types.ValueType::bool_t())
+}
+
+///|
 test "BAP IR CFG create and sub round trip preserve sub identity" {
   let tid = @types.Tid::for_name("cfg")
   let cfg = @types.IrCfg::create(name="main", tid~)
@@ -200,4 +205,44 @@ test "BAP IR CFG edge removal leaves middle dummies and trims dummy tail" {
   let cfg = cfg.remove_edge(first_edge)
   assert_true(cfg.out_edges(entry).is_empty())
   assert_true(cfg_block_jmp_count(cfg, entry) == 0)
+}
+
+///|
+test "BAP IR CFG DOT renders node bodies and edge conditions" {
+  let flag = cfg_dot_bool_var("flag")
+  let acc = cfg_dot_bool_var("acc")
+  let target = @types.Var::new(name="target", typ=@types.ValueType::reg32_t())
+  let entry = @types.Blk::create(tid=@types.Tid::for_name("entry"), defs=[
+    @types.Def::create(acc, Int(@types.Word::b1())),
+  ])
+  let left = @types.Blk::create(tid=@types.Tid::for_name("left"))
+  let right = @types.Blk::create(tid=@types.Tid::for_name("right"), jmps=[
+    @types.Jmp::create_goto(@types.Label::indirect(Var(target)), cond=Var(flag)),
+  ])
+  let exit = @types.Blk::create(tid=@types.Tid::for_name("exit"))
+  let entry = entry
+    .append_jmp(
+      @types.Jmp::create_goto(@types.Label::direct(left.tid()), cond=Var(flag)),
+    )
+    .append_jmp(@types.Jmp::create_goto(@types.Label::direct(right.tid())))
+  let left = left.append_jmp(
+    @types.Jmp::create_goto(@types.Label::direct(exit.tid())),
+  )
+  let cfg = @types.IrCfg::of_sub(
+    @types.Sub::create(name="flow", blks=[entry, left, right, exit]),
+  )
+  let dot = cfg.to_dot()
+  assert_true(dot.contains("digraph \"flow\""))
+  assert_true(dot.contains("node[shape=box];"))
+  assert_true(dot.contains("\"@entry\" [label=\"@entry\\lacc:imm1 := 1:1u\"]"))
+  assert_true(!dot.contains("goto @left"))
+  assert_true(dot.contains("goto *target:imm32"))
+  assert_true(dot.contains("\"@entry\" -> \"@left\" [label=\"flag:imm1\"];"))
+  assert_true(
+    dot.contains(
+      "\"@entry\" -> \"@right\" [label=\"(1:1u & (not flag:imm1))\"];",
+    ),
+  )
+  assert_true(dot.contains("\"@left\" -> \"@exit\";"))
+  assert_true(cfg.to_string() == dot)
 }

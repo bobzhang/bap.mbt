@@ -1092,8 +1092,7 @@ struct Trace {
   proto_name : String?
   tool_value : TraceTool
   meta_value : TraceMeta
-  source : Array[Result[TraceEvent, String]]
-  cursor : Ref[Int]
+  next_source : () -> Result[TraceEvent, String]?
   monitor : TraceMonitor
   mapper : (TraceEvent) -> TraceEvent?
 }
@@ -1151,6 +1150,43 @@ fn next_trace_id() -> Int {
 ///|
 fn next_trace_uuid() -> TraceId {
   trace_id_from_counter(next_trace_id())
+}
+
+///|
+fn trace_source_once(
+  next : () -> Result[TraceEvent, String]?,
+) -> () -> Result[TraceEvent, String]? {
+  let done = Ref(false)
+  fn() {
+    if done.val {
+      None
+    } else {
+      match next() {
+        Some(item) => Some(item)
+        None => {
+          done.val = true
+          None
+        }
+      }
+    }
+  }
+}
+
+///|
+fn trace_array_source(
+  events : Array[Result[TraceEvent, String]],
+) -> () -> Result[TraceEvent, String]? {
+  let source = events.copy()
+  let cursor = Ref(0)
+  trace_source_once(fn() {
+    if cursor.val >= source.length() {
+      None
+    } else {
+      let item = source[cursor.val]
+      cursor.val += 1
+      Some(item)
+    }
+  })
 }
 
 ///|
@@ -1295,9 +1331,9 @@ pub fn Trace::create(
 }
 
 ///|
-pub fn Trace::from_results(
+pub fn Trace::create_stream(
   tool : TraceTool,
-  source : Array[Result[TraceEvent, String]],
+  next : () -> Result[TraceEvent, String]?,
   monitor? : TraceMonitor = TraceMonitor::fail_on_error(),
 ) -> Trace {
   {
@@ -1305,11 +1341,19 @@ pub fn Trace::from_results(
     proto_name: None,
     tool_value: tool,
     meta_value: TraceMeta::empty(),
-    source: source.copy(),
-    cursor: Ref(0),
+    next_source: trace_source_once(next),
     monitor,
     mapper: event => Some(event),
   }
+}
+
+///|
+pub fn Trace::from_results(
+  tool : TraceTool,
+  source : Array[Result[TraceEvent, String]],
+  monitor? : TraceMonitor = TraceMonitor::fail_on_error(),
+) -> Trace {
+  Trace::create_stream(tool, trace_array_source(source), monitor~)
 }
 
 ///|
@@ -1439,25 +1483,24 @@ pub fn Trace::read_events(
 ) -> Result[Array[TraceEvent], TraceError] {
   let out : Array[TraceEvent] = []
   let done = Ref(false)
-  while !done.val && self.cursor.val < self.source.length() {
+  while !done.val {
     if limit >= 0 && out.length() >= limit {
       done.val = true
     } else {
-      let item = self.source[self.cursor.val]
-      self.cursor.val += 1
-      match item {
-        Ok(event) =>
+      match (self.next_source)() {
+        Some(Ok(event)) =>
           match (self.mapper)(event) {
             Some(mapped) => out.push(mapped)
             None => ()
           }
-        Err(reason) =>
+        Some(Err(reason)) =>
           match (self.monitor.handle)(reason) {
             Stop => done.val = true
             Skip => ()
             Fail => return Err(TraceFailure(reason))
             Make(event) => out.push(event)
           }
+        None => done.val = true
       }
     }
   }

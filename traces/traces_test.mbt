@@ -510,6 +510,35 @@ test "translated BAP traces read matching events and tool support" {
 }
 
 ///|
+test "translated BAP traces create from a lazy next callback" {
+  let events = test_events()
+  let index = Ref(0)
+  let calls = Ref(0)
+  let trace = @traces.Trace::create_stream(test_tool(), fn() {
+    calls.val += 1
+    if index.val >= events.length() {
+      None
+    } else {
+      let event = events[index.val]
+      index.val += 1
+      Some(Ok(event))
+    }
+  })
+  assert_true(calls.val == 0)
+  match trace.next_event() {
+    Ok(Some(MemoryLoad(value))) => assert_true(value == test_move())
+    _ => fail("expected first lazy event")
+  }
+  assert_true(calls.val == 1)
+  assert_true(
+    unwrap_events(trace.read_events()) == [events[1], events[2], events[3]],
+  )
+  assert_true(calls.val == events.length() + 1)
+  assert_true(unwrap_events(trace.read_events()) == [])
+  assert_true(calls.val == events.length() + 1)
+}
+
+///|
 fn unwrap_string_events(
   result : Result[Array[String], @traces.TraceError],
 ) -> Array[String] raise {

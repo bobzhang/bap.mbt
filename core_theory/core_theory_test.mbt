@@ -784,6 +784,64 @@ test "target role helpers classify common architecture variables" {
     Some(link) => assert_true(aarch64.roles_of_var(link).contains(LinkRegister))
     None => fail("missing X30")
   }
+  match aarch64.find_var("V0") {
+    Some(vector) => {
+      assert_true(aarch64.roles_of_var(vector).contains(VectorRegister))
+      assert_true(aarch64.roles_of_var(vector).contains(Argument))
+      assert_true(aarch64.roles_of_var(vector).contains(ResultRegister))
+    }
+    None => fail("missing V0")
+  }
+  match aarch64.find_var("D0") {
+    Some(float) =>
+      assert_true(aarch64.roles_of_var(float).contains(FloatingRegister))
+    None => fail("missing D0")
+  }
+  match aarch64.find_var("XZR") {
+    Some(zero) => {
+      assert_true(aarch64.roles_of_var(zero).contains(Constant))
+      assert_true(aarch64.roles_of_var(zero).contains(ZeroRegister))
+    }
+    None => fail("missing XZR")
+  }
+  match aarch64.origin_of_name("W0") {
+    Some(origin) => {
+      assert_true(origin.aliased().ident() == "W0")
+      assert_true(origin.source().map(v => v.ident()) == Some("X0"))
+      assert_true(origin.range() == Some((0, 31)))
+    }
+    None => fail("missing W0 alias origin")
+  }
+  match aarch64.origin_of_name("D0") {
+    Some(origin) => {
+      assert_true(origin.aliased().ident() == "D0")
+      assert_true(origin.source().map(v => v.ident()) == Some("V0"))
+      assert_true(origin.range() == Some((0, 63)))
+    }
+    None => fail("missing D0 alias origin")
+  }
+  match aarch64.origin_of_name("FP") {
+    Some(origin) => {
+      assert_true(origin.aliased().ident() == "FP")
+      assert_true(origin.source().map(v => v.ident()) == Some("X29"))
+    }
+    None => fail("missing FP alias origin")
+  }
+  match aarch64.origin_of_name("LR") {
+    Some(origin) => {
+      assert_true(origin.aliased().ident() == "LR")
+      assert_true(origin.source().map(v => v.ident()) == Some("X30"))
+    }
+    None => fail("missing LR alias origin")
+  }
+  match aarch64.origin_of_name("WSP") {
+    Some(origin) => {
+      assert_true(origin.aliased().ident() == "WSP")
+      assert_true(origin.source().map(v => v.ident()) == Some("SP"))
+      assert_true(origin.range() == Some((0, 31)))
+    }
+    None => fail("missing WSP alias origin")
+  }
   let systemz = @core_theory.Target::systemz()
   match systemz.find_var("R15") {
     Some(sp) => {

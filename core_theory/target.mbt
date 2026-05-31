@@ -447,10 +447,94 @@ fn arm32_vars() -> Array[Var] {
 
 ///|
 fn aarch64_vars() -> Array[Var] {
-  let items = numbered_word_vars(64, "X", 31)
+  let items = numbered_word_vars(64, "X", 32)
+  append_vars(items, numbered_word_vars(32, "W", 32))
+  append_vars(items, numbered_word_vars(128, "V", 32))
+  append_vars(items, numbered_word_vars(128, "Q", 32))
+  append_vars(items, numbered_word_vars(64, "D", 32))
+  append_vars(items, numbered_word_vars(32, "S", 32))
+  append_vars(items, numbered_word_vars(16, "H", 32))
+  append_vars(items, numbered_word_vars(8, "B", 32))
+  append_vars(items, named_word_vars(64, ["FP", "LR", "ZR", "XZR"]))
+  append_vars(items, named_word_vars(32, ["WSP", "WZR"]))
   append_vars(items, named_word_vars(64, ["SP", "PC"]))
   items.push(word_var(32, "NZCV"))
   items.push(mem_var(64, 8, "mem"))
+  items
+}
+
+///|
+fn aarch64_alias_origins() -> Array[AliasOrigin] {
+  let items : Array[AliasOrigin] = []
+  for i in 0..<32 {
+    items.push(
+      AliasOrigin::register(word_var(64, "R\{i}"), word_var(64, "X\{i}")),
+    )
+    items.push(
+      AliasOrigin::subregister(
+        word_var(32, "W\{i}"),
+        word_var(64, "X\{i}"),
+        lo=0,
+        hi=31,
+      ),
+    )
+    items.push(
+      AliasOrigin::register(word_var(128, "Q\{i}"), word_var(128, "V\{i}")),
+    )
+    items.push(
+      AliasOrigin::subregister(
+        word_var(64, "D\{i}"),
+        word_var(128, "V\{i}"),
+        lo=0,
+        hi=63,
+      ),
+    )
+    items.push(
+      AliasOrigin::subregister(
+        word_var(32, "S\{i}"),
+        word_var(128, "V\{i}"),
+        lo=0,
+        hi=31,
+      ),
+    )
+    items.push(
+      AliasOrigin::subregister(
+        word_var(16, "H\{i}"),
+        word_var(128, "V\{i}"),
+        lo=0,
+        hi=15,
+      ),
+    )
+    items.push(
+      AliasOrigin::subregister(
+        word_var(8, "B\{i}"),
+        word_var(128, "V\{i}"),
+        lo=0,
+        hi=7,
+      ),
+    )
+  }
+  items.push(AliasOrigin::register(word_var(64, "FP"), word_var(64, "X29")))
+  items.push(AliasOrigin::register(word_var(64, "LR"), word_var(64, "X30")))
+  items.push(AliasOrigin::register(word_var(64, "SP"), word_var(64, "X31")))
+  items.push(
+    AliasOrigin::subregister(
+      word_var(32, "WSP"),
+      word_var(64, "SP"),
+      lo=0,
+      hi=31,
+    ),
+  )
+  items.push(AliasOrigin::unknown(word_var(64, "XZR")))
+  items.push(AliasOrigin::register(word_var(64, "ZR"), word_var(64, "XZR")))
+  items.push(
+    AliasOrigin::subregister(
+      word_var(32, "WZR"),
+      word_var(64, "XZR"),
+      lo=0,
+      hi=31,
+    ),
+  )
   items
 }
 
@@ -720,17 +804,36 @@ fn arm32_role_names(role : Role) -> Array[String] {
 fn aarch64_role_names(role : Role) -> Array[String] {
   match role {
     General => []
-    IntegerRegister => concat_role_names([role_names("x", 0, 30), ["sp"]])
-    FloatingRegister | VectorRegister => []
-    StackPointer => ["sp", "wsp", "r31"]
+    IntegerRegister =>
+      concat_role_names([
+        role_names("x", 0, 31),
+        role_names("w", 0, 31),
+        role_names("r", 0, 31),
+        ["sp", "wsp"],
+      ])
+    FloatingRegister =>
+      concat_role_names([
+        role_names("d", 0, 31),
+        role_names("s", 0, 31),
+        role_names("h", 0, 31),
+        role_names("b", 0, 31),
+      ])
+    VectorRegister =>
+      concat_role_names([role_names("v", 0, 31), role_names("q", 0, 31)])
+    StackPointer => ["sp", "wsp", "x31", "r31"]
     FramePointer => ["fp", "x29", "r29"]
     ProgramCounter => ["pc"]
     Status => ["nzcv", "nf", "zf", "cf", "vf"]
-    Constant | ZeroRegister | ThreadPointer => []
+    Constant | ZeroRegister => ["zr", "xzr", "wzr"]
+    ThreadPointer => []
     LinkRegister => ["lr", "x30", "r30"]
     Argument =>
-      concat_role_names([role_names("x", 0, 7), role_names("v", 0, 7)])
-    ResultRegister => ["x0", "x1", "v0", "v1"]
+      concat_role_names([
+        role_names("x", 0, 7),
+        role_names("r", 0, 7),
+        role_names("v", 0, 7),
+      ])
+    ResultRegister => ["x0", "x1", "r0", "r1", "v0", "v1"]
     CallerSaved => []
     CalleeSaved => []
     Reserved => []
@@ -1547,6 +1650,7 @@ pub fn Target::aarch64() -> Target {
     bits=64,
     endianness=LittleEndian,
     vars=aarch64_vars(),
+    alias_origins=aarch64_alias_origins(),
   )
 }
 
@@ -1559,6 +1663,7 @@ pub fn Target::aarch64_be() -> Target {
     bits=64,
     endianness=BigEndian,
     vars=aarch64_vars(),
+    alias_origins=aarch64_alias_origins(),
   )
 }
 

@@ -172,6 +172,46 @@ test "program traversal helpers enumerate nested IR terms" {
 }
 
 ///|
+test "IR term lookup exn helpers report missing tids" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let arg = @types.Arg::create(x, Var(x))
+  let phi = @types.Phi::create(x, @types.Tid::for_name("entry"), Var(x))
+  let def = @types.Def::create(x, Int(word8(1)))
+  let jmp = @types.Jmp::create_goto(
+    @types.Label::direct(@types.Tid::for_name("exit")),
+  )
+  let blk = @types.Blk::create(phis=[phi], defs=[def], jmps=[jmp])
+  let sub = @types.Sub::create(name="main", args=[arg], blks=[blk])
+  let program = @types.Program::create(subs=[sub])
+  assert_true(program.find_sub_exn(sub.tid()).same(sub))
+  assert_true(sub.find_arg(arg.tid()).map(term => term.same(arg)) == Some(true))
+  assert_true(sub.find_arg_exn(arg.tid()).same(arg))
+  assert_true(sub.find_blk_exn(blk.tid()).same(blk))
+  assert_true(blk.find_phi_exn(phi.tid()).same(phi))
+  assert_true(blk.find_def_exn(def.tid()).same(def))
+  assert_true(blk.find_jmp_exn(jmp.tid()).same(jmp))
+  assert_true(
+    program.program_find_arg(arg.tid()).map(term => term.same(arg)) ==
+    Some(true),
+  )
+  assert_true(program.program_find_arg_exn(arg.tid()).same(arg))
+  assert_true(program.program_find_blk_exn(blk.tid()).same(blk))
+  assert_true(program.program_find_phi_exn(phi.tid()).same(phi))
+  assert_true(program.program_find_def_exn(def.tid()).same(def))
+  assert_true(program.program_find_jmp_exn(jmp.tid()).same(jmp))
+  let missing = @types.Tid::for_name("missing")
+  try program.program_find_def_exn(missing) catch {
+    MissingIrTerm(kind, tid) => {
+      assert_true(kind == "def")
+      assert_true(tid == missing)
+    }
+  } noraise {
+    _ => fail("expected MissingIrTerm")
+  }
+}
+
+///|
 test "ir term views visit every nested term and report parents" {
   let typ = @types.ValueType::Imm(8)
   let x = @types.Var::new(name="x", typ~)

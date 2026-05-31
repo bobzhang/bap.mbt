@@ -84,6 +84,10 @@ pub fn tid_graph_exit() -> Tid
 pub fn tid_graph_start() -> Tid
 
 // Errors
+pub(all) suberror IrTermLookupError {
+  MissingIrTerm(String, Tid)
+} derive(Eq, @debug.Debug)
+
 pub(all) suberror SizeError {
   UnsupportedWordSize(Int)
   UnsupportedAddressSize(Int)
@@ -751,13 +755,20 @@ pub fn Term::exists_program_term(Self[Program], (IrTerm) -> Bool, include_self? 
 pub fn Term::exists_sub_term(Self[Sub], (IrTerm) -> Bool, include_self? : Bool) -> Bool
 pub fn Term::filter_defs(Self[Blk], (Self[Def]) -> Bool) -> Self[Blk]
 pub fn Term::filter_map_defs(Self[Blk], (Self[Def]) -> Self[Def]?) -> Self[Blk]
+pub fn Term::find_arg(Self[Sub], Tid) -> Self[Arg]?
+pub fn Term::find_arg_exn(Self[Sub], Tid) -> Self[Arg] raise IrTermLookupError
 pub fn Term::find_blk(Self[Sub], Tid) -> Self[Blk]?
+pub fn Term::find_blk_exn(Self[Sub], Tid) -> Self[Blk] raise IrTermLookupError
 pub fn Term::find_blk_term(Self[Blk], (IrTerm) -> Bool, include_self? : Bool) -> IrTerm?
 pub fn Term::find_def(Self[Blk], Tid) -> Self[Def]?
+pub fn Term::find_def_exn(Self[Blk], Tid) -> Self[Def] raise IrTermLookupError
 pub fn Term::find_jmp(Self[Blk], Tid) -> Self[Jmp]?
+pub fn Term::find_jmp_exn(Self[Blk], Tid) -> Self[Jmp] raise IrTermLookupError
 pub fn Term::find_phi(Self[Blk], Tid) -> Self[Phi]?
+pub fn Term::find_phi_exn(Self[Blk], Tid) -> Self[Phi] raise IrTermLookupError
 pub fn Term::find_program_term(Self[Program], (IrTerm) -> Bool, include_self? : Bool) -> IrTerm?
 pub fn Term::find_sub(Self[Program], Tid) -> Self[Sub]?
+pub fn Term::find_sub_exn(Self[Program], Tid) -> Self[Sub] raise IrTermLookupError
 pub fn Term::find_sub_term(Self[Sub], (IrTerm) -> Bool, include_self? : Bool) -> IrTerm?
 pub fn Term::find_var(Self[Blk], Var) -> VarBinding?
 pub fn Term::first_def(Self[Blk]) -> Self[Def]?
@@ -824,10 +835,16 @@ pub fn Term::program_callees(Self[Program], Self[Sub]) -> Array[Tid]
 pub fn Term::program_callers(Self[Program], Self[Sub]) -> Array[Tid]
 pub fn Term::program_callgraph(Self[Program]) -> @graphlib.Graph[Tid, Array[Self[Jmp]]]
 pub fn Term::program_defs(Self[Program]) -> Array[Self[Def]]
+pub fn Term::program_find_arg(Self[Program], Tid) -> Self[Arg]?
+pub fn Term::program_find_arg_exn(Self[Program], Tid) -> Self[Arg] raise IrTermLookupError
 pub fn Term::program_find_blk(Self[Program], Tid) -> Self[Blk]?
+pub fn Term::program_find_blk_exn(Self[Program], Tid) -> Self[Blk] raise IrTermLookupError
 pub fn Term::program_find_def(Self[Program], Tid) -> Self[Def]?
+pub fn Term::program_find_def_exn(Self[Program], Tid) -> Self[Def] raise IrTermLookupError
 pub fn Term::program_find_jmp(Self[Program], Tid) -> Self[Jmp]?
+pub fn Term::program_find_jmp_exn(Self[Program], Tid) -> Self[Jmp] raise IrTermLookupError
 pub fn Term::program_find_phi(Self[Program], Tid) -> Self[Phi]?
+pub fn Term::program_find_phi_exn(Self[Program], Tid) -> Self[Phi] raise IrTermLookupError
 pub fn Term::program_free_vars(Self[Program]) -> Array[Var]
 pub fn Term::program_jmps(Self[Program]) -> Array[Self[Jmp]]
 pub fn Term::program_parent_is(Self[Program], IrTerm, Tid) -> Bool

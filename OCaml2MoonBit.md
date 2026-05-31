@@ -483,6 +483,10 @@ word results print through the word printer, memory results print as
 uppercase hexadecimal with a `0x` prefix. Linear result storage keeps duplicate
 saves and resolves loads to the newest matching address; sparse result storage
 replaces an existing address binding.
+BAP BIL contexts are persistent variable-result maps. Since the MoonBit `Var`
+port already treats runtime environments by variable name, keep context lookup
+and replacement name-based too, and sort `bindings()` by variable name to avoid
+exposing insertion or hash-map order.
 
 When porting BAP `Term.visitor`/`Term.mapper` users, prefer a typed sum view of
 IR terms over untyped callbacks. Keep traversal order explicit and stable

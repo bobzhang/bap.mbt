@@ -166,6 +166,12 @@ pub fn Attr::sub_returns_twice() -> Self
 pub fn Attr::synthetic() -> Self
 pub fn Attr::visited() -> Self
 
+type BilContext derive(Eq, @debug.Debug)
+pub fn BilContext::bindings(Self) -> Array[(Var, BilResult)]
+pub fn BilContext::lookup(Self, Var) -> BilResult?
+pub fn BilContext::new() -> Self
+pub fn BilContext::update(Self, Var, BilResult) -> Self
+
 type BilMemory derive(Eq, @debug.Debug)
 pub fn BilMemory::addr_width(Self) -> Int
 pub fn BilMemory::cell(Self, UInt64) -> Byte?

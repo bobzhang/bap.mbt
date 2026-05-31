@@ -312,3 +312,294 @@ pub fn[T, E] Stream::before(
   })
   future
 }
+
+///|
+fn[A, B] Stream::link(
+  self : Stream[A],
+  target : Stream[B],
+  step : (A) -> Unit,
+) -> Unit {
+  let key : Ref[Int?] = Ref(None)
+  target.on_subscribe(fn(_) {
+    match key.val {
+      Some(_) => ()
+      None => key.val = Some(self.subscribe(step))
+    }
+  })
+  target.on_unsubscribe(fn(_) {
+    if !target.has_subscribers() {
+      match key.val {
+        Some(id) => {
+          self.unsubscribe(id)
+          key.val = None
+        }
+        None => ()
+      }
+    }
+  })
+  target.on_wait(fn() { self.wait() })
+}
+
+///|
+pub fn[A, B] Stream::map_many(
+  self : Stream[A],
+  f : (A) -> Array[B],
+) -> Stream[B] {
+  let (target, signal) = Stream::create()
+  self.link(target, fn(value) {
+    for mapped in f(value) {
+      signal.send(mapped)
+    }
+  })
+  target
+}
+
+///|
+pub fn[A, B] Stream::filter_map(self : Stream[A], f : (A) -> B?) -> Stream[B] {
+  self.map_many(fn(value) {
+    match f(value) {
+      Some(mapped) => [mapped]
+      None => []
+    }
+  })
+}
+
+///|
+pub fn[T] Stream::filter(self : Stream[T], f : (T) -> Bool) -> Stream[T] {
+  self.filter_map(fn(value) { if f(value) { Some(value) } else { None } })
+}
+
+///|
+pub fn[A, B] Stream::map(self : Stream[A], f : (A) -> B) -> Stream[B] {
+  self.map_many(fn(value) { [f(value)] })
+}
+
+///|
+pub fn[A, B, C] Stream::merge(
+  self : Stream[A],
+  other : Stream[B],
+  f : (A, B) -> C,
+) -> Stream[C] {
+  let (target, signal) = Stream::create()
+  let left : Array[A] = []
+  let right : Array[B] = []
+  let process = fn() {
+    while left.length() > 0 && right.length() > 0 {
+      let l = left.remove(0)
+      let r = right.remove(0)
+      signal.send(f(l, r))
+    }
+  }
+  self.link(target, fn(value) {
+    left.push(value)
+    process()
+  })
+  other.link(target, fn(value) {
+    right.push(value)
+    process()
+  })
+  target
+}
+
+///|
+pub fn[A, B] Stream::apply(
+  functions : Stream[(A) -> B],
+  values : Stream[A],
+) -> Stream[B] {
+  functions.merge(values, fn(f, value) { f(value) })
+}
+
+///|
+pub fn[A, B] Stream::zip(self : Stream[A], other : Stream[B]) -> Stream[(A, B)] {
+  self.merge(other, fn(left, right) { (left, right) })
+}
+
+///|
+pub fn[A, B, C] Stream::split(
+  self : Stream[A],
+  f : (A) -> (B, C),
+) -> (Stream[B], Stream[C]) {
+  let (left, left_signal) = Stream::create()
+  let (right, right_signal) = Stream::create()
+  self.link(left, fn(value) {
+    let (l, _) = f(value)
+    left_signal.send(l)
+  })
+  self.link(right, fn(value) {
+    let (_, r) = f(value)
+    right_signal.send(r)
+  })
+  (left, right)
+}
+
+///|
+pub fn[A, B] Stream::unzip(self : Stream[(A, B)]) -> (Stream[A], Stream[B]) {
+  self.split(fn(value) { value })
+}
+
+///|
+pub fn[T] Stream::once(self : Stream[T]) -> Stream[T] {
+  let (target, signal) = Stream::create()
+  let key : Ref[Int?] = Ref(None)
+  target.on_subscribe(fn(_) {
+    match key.val {
+      Some(_) => ()
+      None => {
+        let id = self.watch(fn(id, value) {
+          signal.send(value)
+          self.unsubscribe(id)
+          key.val = None
+        })
+        key.val = Some(id)
+      }
+    }
+  })
+  target.on_unsubscribe(fn(_) {
+    if !target.has_subscribers() {
+      match key.val {
+        Some(id) => {
+          self.unsubscribe(id)
+          key.val = None
+        }
+        None => ()
+      }
+    }
+  })
+  target.on_wait(fn() { self.wait() })
+  target
+}
+
+///|
+pub fn[S, A, B] Stream::parse(
+  self : Stream[A],
+  init~ : S,
+  f~ : (S, A) -> (B?, S),
+) -> Stream[B] {
+  let state = Ref(init)
+  self.filter_map(fn(value) {
+    let (result, next) = f(state.val, value)
+    state.val = next
+    result
+  })
+}
+
+///|
+fn[A, B] Stream::resolve_and_unsubscribe(
+  self : Stream[A],
+  id : Int,
+  value : B,
+  promise : Promise[B],
+) -> Unit {
+  self.unsubscribe(id)
+  ignore(promise.try_fulfill(value))
+}
+
+///|
+pub fn[T, E] Stream::upon(self : Stream[T], event : Future[E]) -> Future[T] {
+  let latest : Ref[T?] = Ref(None)
+  self.observe(fn(value) { latest.val = Some(value) })
+  let (future, promise) = Future::create()
+  event.upon(fn(_) {
+    match latest.val {
+      Some(value) => ignore(promise.try_fulfill(value))
+      None => ()
+    }
+  })
+  future
+}
+
+///|
+pub fn[T, E] Stream::last_before(
+  self : Stream[T],
+  event : Future[E],
+  count : Int,
+) -> Future[Array[T]] {
+  let buffer : Array[T] = []
+  let id = self.subscribe(fn(value) {
+    if buffer.length() >= count && buffer.length() > 0 {
+      ignore(buffer.remove(0))
+    }
+    buffer.push(value)
+  })
+  let (future, promise) = Future::create()
+  event.upon(fn(_) { self.resolve_and_unsubscribe(id, buffer.copy(), promise) })
+  future
+}
+
+///|
+pub fn[T] Stream::take(self : Stream[T], count : Int) -> Future[Array[T]] {
+  let buffer : Array[T] = []
+  let (future, promise) = Future::create()
+  ignore(
+    self.watch(fn(id, value) {
+      if buffer.length() < count {
+        buffer.push(value)
+      }
+      if buffer.length() == count {
+        self.resolve_and_unsubscribe(id, buffer.copy(), promise)
+      }
+    }),
+  )
+  future
+}
+
+///|
+pub fn[T] Stream::nth(self : Stream[T], index : Int) -> Future[T] {
+  let seen = Ref(0)
+  let (future, promise) = Future::create()
+  ignore(
+    self.watch(fn(id, value) {
+      if seen.val == index {
+        self.resolve_and_unsubscribe(id, value, promise)
+      }
+      seen.val += 1
+    }),
+  )
+  future
+}
+
+///|
+pub fn[T] Stream::find(self : Stream[T], f : (T) -> Bool) -> Future[T] {
+  let (future, promise) = Future::create()
+  ignore(
+    self.watch(fn(id, value) {
+      if f(value) {
+        self.resolve_and_unsubscribe(id, value, promise)
+      }
+    }),
+  )
+  future
+}
+
+///|
+pub fn[A, B] Stream::find_map(self : Stream[A], f : (A) -> B?) -> Future[B] {
+  let (future, promise) = Future::create()
+  ignore(
+    self.watch(fn(id, value) {
+      match f(value) {
+        Some(result) => self.resolve_and_unsubscribe(id, result, promise)
+        None => ()
+      }
+    }),
+  )
+  future
+}
+
+///|
+pub fn[T] Stream::hd(self : Stream[T]) -> Future[T] {
+  self.nth(0)
+}
+
+///|
+pub fn[T] Stream::tl(self : Stream[T]) -> Stream[T] {
+  let skipped = Ref(false)
+  let (target, signal) = Stream::create()
+  self.link(target, fn(value) {
+    if skipped.val {
+      signal.send(value)
+    } else {
+      skipped.val = true
+    }
+  })
+  target
+}

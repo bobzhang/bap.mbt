@@ -215,3 +215,236 @@ test "translated BAP stream watch receives stable callback ids" {
   assert_true(right.val is Some(_))
   assert_true(left.val != right.val)
 }
+
+///|
+fn stream_values() -> Array[Int] {
+  [0, 1, 2, 3, 4, 5, 6, 7]
+}
+
+///|
+fn is_even(value : Int) -> Bool {
+  value % 2 == 0
+}
+
+///|
+fn even_opt(value : Int) -> Int? {
+  if is_even(value) {
+    Some(value)
+  } else {
+    None
+  }
+}
+
+///|
+test "translated BAP stream map filter merge apply split and zip" {
+  let values = stream_values()
+  let (source, source_signal, _) = @future.Stream::of_array(values)
+  let mapped = source.map(fn(value) { value + 1 })
+  source_signal.repeat(times=2, ())
+  assert_stream_before_eq(mapped, source_signal, repeat=4, [3, 4, 5, 6])
+
+  let (many_source, many_signal, _) = @future.Stream::of_array([0, 1, 2])
+  let many = many_source.map_many(fn(value) { [value, value] })
+  assert_stream_before_eq(many, many_signal, repeat=3, [0, 0, 1, 1, 2, 2])
+
+  let (filtered_source, filtered_signal, _) = @future.Stream::of_array(values)
+  let filtered = filtered_source.filter_map(even_opt)
+  assert_stream_before_eq(filtered, filtered_signal, repeat=values.length(), [
+    0, 2, 4, 6,
+  ])
+
+  let (kept_source, kept_signal, _) = @future.Stream::of_array(values)
+  let kept = kept_source.filter(is_even)
+  assert_stream_before_eq(kept, kept_signal, repeat=values.length(), [
+    0, 2, 4, 6,
+  ])
+
+  let (left, left_signal, _) = @future.Stream::of_array([0, 1, 2, 3])
+  let (right, right_signal, _) = @future.Stream::of_array([0, 1, 2, 3, 4, 5])
+  let merged = left.merge(right, fn(l, r) { l * 10 + r })
+  let merged_values : Array[Int] = []
+  merged.observe(fn(value) { merged_values.push(value) })
+  left_signal.repeat(times=6, ())
+  right_signal.repeat(times=6, ())
+  assert_true(merged_values == [0, 11, 22, 33])
+
+  let functions : Array[(Int) -> Int] = [
+    fn(value) { value + 0 },
+    fn(value) { value + 1 },
+    fn(value) { value + 2 },
+    fn(value) { value + 3 },
+  ]
+  let (function_stream, function_signal, _) = @future.Stream::of_array(
+    functions,
+  )
+  let (value_stream, value_signal, _) = @future.Stream::of_array([0, 1, 2, 3])
+  let applied = @future.Stream::apply(function_stream, value_stream)
+  let applied_values : Array[Int] = []
+  applied.observe(fn(value) { applied_values.push(value) })
+  function_signal.repeat(times=4, ())
+  value_signal.repeat(times=4, ())
+  assert_true(applied_values == [0, 2, 4, 6])
+
+  let (split_source, split_signal, _) = @future.Stream::of_array([0, 1, 2, 3])
+  let (split_left, split_right) = split_source.split(fn(value) {
+    (value, value + 1)
+  })
+  let split_left_values : Array[Int] = []
+  let split_right_values : Array[Int] = []
+  split_left.observe(fn(value) { split_left_values.push(value) })
+  split_right.observe(fn(value) { split_right_values.push(value) })
+  split_signal.repeat(times=4, ())
+  assert_true(split_left_values == [0, 1, 2, 3])
+  assert_true(split_right_values == [1, 2, 3, 4])
+
+  let (zip_left, zip_left_signal, _) = @future.Stream::of_array([0, 1, 2, 3])
+  let (zip_right, zip_right_signal, _) = @future.Stream::of_array([4, 5])
+  let zipped = zip_left.zip(zip_right)
+  let zipped_values : Array[(Int, Int)] = []
+  zipped.observe(fn(value) { zipped_values.push(value) })
+  zip_left_signal.repeat(times=4, ())
+  zip_right_signal.repeat(times=4, ())
+  assert_true(zipped_values == [(0, 4), (1, 5)])
+
+  let (unzip_source, unzip_signal, _) = @future.Stream::of_array([
+    (0, "0"),
+    (1, "1"),
+    (2, "2"),
+  ])
+  let (unzipped_left, unzipped_right) = unzip_source.unzip()
+  let unzipped_left_values : Array[Int] = []
+  let unzipped_right_values : Array[String] = []
+  unzipped_left.observe(fn(value) { unzipped_left_values.push(value) })
+  unzipped_right.observe(fn(value) { unzipped_right_values.push(value) })
+  unzip_signal.repeat(times=3, ())
+  assert_true(unzipped_left_values == [0, 1, 2])
+  assert_true(unzipped_right_values == ["0", "1", "2"])
+}
+
+///|
+fn fulfill_after_signals(
+  promise : @future.Promise[Unit],
+  after~ : Int,
+  max~ : Int,
+  signal : @future.Signal[Unit],
+) -> Unit raise {
+  for index in 0..<(max + 1) {
+    signal.send(())
+    if index == after {
+      promise.fulfill(())
+    }
+  }
+}
+
+///|
+test "translated BAP stream once parse and selector futures" {
+  let values = stream_values()
+
+  let (once_source, once_signal, _) = @future.Stream::of_array(values)
+  let once = once_source.once()
+  assert_stream_before_eq(once, once_signal, repeat=values.length(), [0])
+
+  let (parse_source, parse_signal, _) = @future.Stream::of_array(values)
+  let parsed = parse_source.parse(init=0, f=fn(_, value) {
+    if is_even(value) {
+      (Some(value), value + 1)
+    } else {
+      (None, value + 1)
+    }
+  })
+  assert_stream_before_eq(parsed, parse_signal, repeat=values.length(), [
+    0, 2, 4, 6,
+  ])
+
+  let (hd_source, hd_signal, _) = @future.Stream::of_array(values)
+  let hd = hd_source.hd()
+  hd_signal.repeat(times=2, ())
+  assert_true(hd.peek() == Some(0))
+
+  let (empty_hd_source, empty_hd_signal, _) = @future.Stream::of_array([])
+  let empty_hd : @future.Future[Int] = empty_hd_source.hd()
+  empty_hd_signal.repeat(times=2, ())
+  assert_true(!empty_hd.is_decided())
+
+  let (tl_source, tl_signal, _) = @future.Stream::of_array(values)
+  let tail = tl_source.tl()
+  assert_stream_before_eq(tail, tl_signal, repeat=values.length(), [
+    1, 2, 3, 4, 5, 6, 7,
+  ])
+
+  let (find_source, find_signal, _) = @future.Stream::of_array(values)
+  let found = find_source.find(fn(value) { value == 3 })
+  find_signal.repeat(times=values.length() + 1, ())
+  assert_true(found.peek() == Some(3))
+
+  let (missing_source, missing_signal, _) = @future.Stream::of_array(values)
+  let missing = missing_source.find(fn(value) { value == 10 })
+  missing_signal.repeat(times=values.length() + 1, ())
+  assert_true(!missing.is_decided())
+
+  let (find_map_source, find_map_signal, _) = @future.Stream::of_array(values)
+  let found_map = find_map_source.find_map(fn(value) {
+    if value == 3 {
+      Some(value + 1)
+    } else {
+      None
+    }
+  })
+  find_map_signal.repeat(times=values.length() + 1, ())
+  assert_true(found_map.peek() == Some(4))
+
+  let (take_source, take_signal, _) = @future.Stream::of_array(values)
+  let taken = take_source.take(3)
+  take_signal.repeat(times=values.length() + 1, ())
+  assert_true(taken.peek() == Some([0, 1, 2]))
+
+  let (take_zero_source, take_zero_signal, _) = @future.Stream::of_array(values)
+  let taken_zero = take_zero_source.take(0)
+  take_zero_signal.repeat(times=values.length() + 1, ())
+  assert_true(taken_zero.peek() == Some([]))
+
+  let (nth_source, nth_signal, _) = @future.Stream::of_array(values)
+  let nth = nth_source.nth(3)
+  nth_signal.repeat(times=4, ())
+  assert_true(nth.peek() == Some(3))
+
+  let (nth_missing_source, nth_missing_signal, _) = @future.Stream::of_array(
+    values,
+  )
+  let nth_missing = nth_missing_source.nth(10)
+  nth_missing_signal.repeat(times=11, ())
+  assert_true(!nth_missing.is_decided())
+
+  let (upon_source, upon_signal, _) = @future.Stream::of_array(values)
+  let (event, promise) = @future.Future::create()
+  let upon = upon_source.upon(event)
+  fulfill_after_signals(promise, after=3, max=values.length(), upon_signal)
+  assert_true(upon.peek() == Some(3))
+
+  let (upon_missing_source, upon_missing_signal, _) = @future.Stream::of_array(
+    values,
+  )
+  let (missing_event, _) : (@future.Future[Unit], @future.Promise[Unit]) = @future.Future::create()
+  let upon_missing = upon_missing_source.upon(missing_event)
+  upon_missing_signal.repeat(times=values.length() + 1, ())
+  assert_true(!upon_missing.is_decided())
+
+  let (last_source, last_signal, _) = @future.Stream::of_array(values)
+  let (last_event, last_promise) = @future.Future::create()
+  let last = last_source.last_before(last_event, 3)
+  fulfill_after_signals(last_promise, after=2, max=values.length(), last_signal)
+  assert_true(last.peek() == Some([0, 1, 2]))
+
+  let (last_short_source, last_short_signal, _) = @future.Stream::of_array(
+    values,
+  )
+  let (last_short_event, last_short_promise) = @future.Future::create()
+  let last_short = last_short_source.last_before(last_short_event, 2)
+  fulfill_after_signals(
+    last_short_promise,
+    after=4,
+    max=values.length(),
+    last_short_signal,
+  )
+  assert_true(last_short.peek() == Some([3, 4]))
+}

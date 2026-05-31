@@ -827,6 +827,10 @@ test "target selection filters BAP-style metadata constraints" {
     Ok(target) => assert_true(target.system() == Linux)
     Err(reason) => fail(reason)
   }
+  match @core_theory.Target::select(parent~, system=Windows) {
+    Ok(target) => assert_true(target.equal(parent))
+    Err(reason) => fail(reason)
+  }
   assert_true(
     @core_theory.Target::select(parent~, system=Linux, abi=GNU, unique=true)
     is Err(_),

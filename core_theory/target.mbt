@@ -4243,7 +4243,17 @@ pub fn Target::select(
     strict~,
   )
   match matches {
-    [] => Err("Target.select - no matching target")
+    [] =>
+      if strict {
+        Err("Target.select - no matching target")
+      } else {
+        Ok(
+          match parent {
+            Some(target) => target
+            None => Target::unknown()
+          },
+        )
+      }
     [target] => Ok(target)
     [target, ..] =>
       if unique {

@@ -488,6 +488,13 @@ port already treats runtime environments by variable name, keep context lookup
 and replacement name-based too, and sort `bindings()` by variable name to avoid
 exposing insertion or hash-map order.
 
+BAP's mutable vector is a capacity-backed logical sequence. Port operations
+against the logical `size`, not the backing array length, so `to_array`,
+mapping, folds, and search helpers never expose default-filled capacity slots.
+The OCaml implementation used `unsafe_get` internally and only checked the
+upper bound in `nth`; in MoonBit, guard both lower and upper bounds for `nth`
+and keep aborting `get`/`set` for invalid indexes.
+
 When porting BAP `Term.visitor`/`Term.mapper` users, prefer a typed sum view of
 IR terms over untyped callbacks. Keep traversal order explicit and stable
 (program, sub, args, block, phis, defs, jumps), and make reconstruction-aware

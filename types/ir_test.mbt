@@ -406,6 +406,27 @@ test "ir definition phi and jump helpers traverse expressions" {
   assert_true(jmp_vars.any(item => item == z))
   let jmp_subst = jmp.substitute_jmp_var(y, Int(word8(4)))
   assert_true(jmp_subst.kind() is Goto(Indirect(Int(_))))
+  let block = @types.Blk::create(phis=[phi], defs=[def], jmps=[jmp])
+  let eight = @types.Int(word8(8))
+  let mapped = block.map_blk_exp(_ => eight, skip_jmp=true)
+  assert_true(mapped.phis()[0].select(left) == Some(eight))
+  assert_true(mapped.defs()[0].rhs() == eight)
+  assert_true(mapped.jmps()[0].cond() == jmp.cond())
+  let phi_skipped = block.map_blk_exp(_ => eight, skip_phi=true)
+  assert_true(phi_skipped.phis()[0].select(left) == phi.select(left))
+  assert_true(phi_skipped.defs()[0].rhs() == eight)
+  let lhs_mapped = block.map_blk_lhs(
+    variable => variable.with_index(3),
+    skip_phi=true,
+  )
+  assert_true(lhs_mapped.phis()[0].phi_lhs() == x)
+  assert_true(lhs_mapped.defs()[0].lhs() == x.with_index(3))
+  let def_skipped = block.map_blk_lhs(
+    variable => variable.with_index(4),
+    skip_def=true,
+  )
+  assert_true(def_skipped.phis()[0].phi_lhs() == x.with_index(4))
+  assert_true(def_skipped.defs()[0].lhs() == x)
 }
 
 ///|

@@ -180,11 +180,51 @@ pub fn Term::substitute_arg_var(
 }
 
 ///|
-pub fn Term::map_blk_exp(self : Term[Blk], f : (Exp) -> Exp) -> Term[Blk] {
+pub fn Term::map_blk_exp(
+  self : Term[Blk],
+  f : (Exp) -> Exp,
+  skip_phi? : Bool = false,
+  skip_def? : Bool = false,
+  skip_jmp? : Bool = false,
+) -> Term[Blk] {
   self.with_payload({
-    phis: self.payload_value.phis.map(term => term.map_phi_exp(f)),
-    defs: self.payload_value.defs.map(term => term.map_def_exp(f)),
-    jmps: self.payload_value.jmps.map(term => term.map_jmp_exp(f)),
+    phis: if skip_phi {
+      self.payload_value.phis.copy()
+    } else {
+      self.payload_value.phis.map(term => term.map_phi_exp(f))
+    },
+    defs: if skip_def {
+      self.payload_value.defs.copy()
+    } else {
+      self.payload_value.defs.map(term => term.map_def_exp(f))
+    },
+    jmps: if skip_jmp {
+      self.payload_value.jmps.copy()
+    } else {
+      self.payload_value.jmps.map(term => term.map_jmp_exp(f))
+    },
+  })
+}
+
+///|
+pub fn Term::map_blk_lhs(
+  self : Term[Blk],
+  f : (Var) -> Var,
+  skip_phi? : Bool = false,
+  skip_def? : Bool = false,
+) -> Term[Blk] {
+  self.with_payload({
+    ..self.payload_value,
+    phis: if skip_phi {
+      self.payload_value.phis.copy()
+    } else {
+      self.payload_value.phis.map(term => term.with_phi_lhs(f(term.phi_lhs())))
+    },
+    defs: if skip_def {
+      self.payload_value.defs.copy()
+    } else {
+      self.payload_value.defs.map(term => term.with_lhs(f(term.lhs())))
+    },
   })
 }
 
@@ -207,8 +247,16 @@ pub fn Term::substitute_blk_var(
   self : Term[Blk],
   variable : Var,
   replacement : Exp,
+  skip_phi? : Bool = false,
+  skip_def? : Bool = false,
+  skip_jmp? : Bool = false,
 ) -> Term[Blk] {
-  self.map_blk_exp(exp => exp.substitute_var(variable, replacement))
+  self.map_blk_exp(
+    exp => exp.substitute_var(variable, replacement),
+    skip_phi~,
+    skip_def~,
+    skip_jmp~,
+  )
 }
 
 ///|

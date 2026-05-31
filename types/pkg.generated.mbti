@@ -200,7 +200,12 @@ pub(all) struct Arg {
   rhs : Exp
   intent : Intent?
 } derive(Eq, @debug.Debug)
+pub fn Arg::alloc_size() -> Attr
 pub fn Arg::create(Var, Exp, intent? : Intent, tid? : Tid) -> Term[Self]
+pub fn Arg::format(String) -> Attr
+pub fn Arg::nonnull() -> Attr
+pub fn Arg::restricted() -> Attr
+pub fn Arg::warn_unused() -> Attr
 
 pub(all) struct Attr {
   key : String

@@ -29,6 +29,21 @@ let sub_intrinsic_attr = "intrinsic"
 let sub_pure_attr = "pure"
 
 ///|
+let arg_warn_unused_attr = "warn-unused"
+
+///|
+let arg_alloc_size_attr = "alloc-size"
+
+///|
+let arg_format_attr = "format"
+
+///|
+let arg_restricted_attr = "restricted"
+
+///|
+let arg_nonnull_attr = "nonnull"
+
+///|
 pub fn Attr::flag(key : String) -> Attr {
   Attr::new(key~, value="true")
 }
@@ -116,6 +131,31 @@ pub fn Attr::sub_intrinsic() -> Attr {
 ///|
 pub fn Attr::sub_pure() -> Attr {
   Attr::flag(sub_pure_attr)
+}
+
+///|
+pub fn Arg::warn_unused() -> Attr {
+  Attr::flag(arg_warn_unused_attr)
+}
+
+///|
+pub fn Arg::alloc_size() -> Attr {
+  Attr::flag(arg_alloc_size_attr)
+}
+
+///|
+pub fn Arg::format(format : String) -> Attr {
+  Attr::new(key=arg_format_attr, value=format)
+}
+
+///|
+pub fn Arg::restricted() -> Attr {
+  Attr::flag(arg_restricted_attr)
+}
+
+///|
+pub fn Arg::nonnull() -> Attr {
+  Attr::flag(arg_nonnull_attr)
 }
 
 ///|

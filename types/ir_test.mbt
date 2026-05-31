@@ -356,6 +356,17 @@ test "phi nodes jumps calls and args expose BAP-style payloads" {
   }
   let arg = @types.Arg::create(lhs, one).with_intent(Both)
   assert_true(arg.intent() == Some(Both))
+  let tagged_arg = arg
+    .set_attr(@types.Arg::warn_unused())
+    .set_attr(@types.Arg::alloc_size())
+    .set_attr(@types.Arg::format("printf"))
+    .set_attr(@types.Arg::restricted())
+    .set_attr(@types.Arg::nonnull())
+  assert_true(tagged_arg.has_attr("warn-unused"))
+  assert_true(tagged_arg.has_attr("alloc-size"))
+  assert_true(tagged_arg.get_attr("format") == Some("printf"))
+  assert_true(tagged_arg.has_attr("restricted"))
+  assert_true(tagged_arg.has_attr("nonnull"))
 }
 
 ///|

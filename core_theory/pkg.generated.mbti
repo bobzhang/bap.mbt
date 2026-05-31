@@ -354,8 +354,10 @@ pub fn Target::matches(Self, String) -> Bool
 pub fn Target::matching(Self, String) -> Self?
 pub fn Target::mips() -> Self
 pub fn Target::mips64() -> Self
+pub fn Target::mips64bi() -> Self
 pub fn Target::mips64el() -> Self
 pub fn Target::mips_family() -> Self
+pub fn Target::mipsbi() -> Self
 pub fn Target::mipsel() -> Self
 pub fn Target::name(Self) -> @knowledge.Name
 pub fn Target::nicknames(Self) -> Array[String]
@@ -370,8 +372,10 @@ pub fn Target::parents(Self) -> Array[Self]
 pub fn Target::partition(Array[Self]) -> Array[Array[Self]]
 pub fn Target::powerpc() -> Self
 pub fn Target::powerpc64() -> Self
+pub fn Target::powerpc64bi() -> Self
 pub fn Target::powerpc64le() -> Self
 pub fn Target::powerpc_family() -> Self
+pub fn Target::powerpcbi() -> Self
 pub fn Target::powerpcle() -> Self
 pub fn Target::r600() -> Self
 pub fn Target::register(Self) -> Result[Unit, String]

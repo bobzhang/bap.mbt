@@ -161,8 +161,10 @@ test "target registry resolves common and custom declarations" {
   match @core_theory.get_target("mips-family") {
     Ok(target) => {
       assert_true(target.bits() == 0)
+      assert_true(@core_theory.Target::mipsbi().belongs(target))
       assert_true(@core_theory.Target::mips().belongs(target))
       assert_true(@core_theory.Target::mipsel().belongs(target))
+      assert_true(@core_theory.Target::mips64bi().belongs(target))
       assert_true(@core_theory.Target::mips64().belongs(target))
       assert_true(@core_theory.Target::mips64el().belongs(target))
     }
@@ -212,6 +214,13 @@ test "target registry resolves common and custom declarations" {
       assert_true(target.abi() == MSVC)
       assert_true(target.filetype() == COFF)
       assert_true(target.belongs(@core_theory.Target::x86_64()))
+    }
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.get_target("arm64_be") {
+    Ok(target) => {
+      assert_true(target.matches("aarch64_be"))
+      assert_true(target.endianness() == BigEndian)
     }
     Err(reason) => fail(reason)
   }
@@ -337,6 +346,40 @@ test "target registry resolves common and custom declarations" {
     }
     Err(reason) => fail(reason)
   }
+  match @core_theory.Target::get("mipsbe") {
+    Ok(target) => assert_true(target.matches("mips"))
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.Target::get("mips32bi") {
+    Ok(target) => {
+      assert_true(target.matches("mipsbi"))
+      assert_true(target.endianness() == BiEndian)
+    }
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.Target::get("mips32le") {
+    Ok(target) => assert_true(target.matches("mipsel"))
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.Target::get("mips64bi") {
+    Ok(target) => {
+      assert_true(target.matches("mips64bi"))
+      assert_true(target.endianness() == BiEndian)
+    }
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.Target::get("mips64be") {
+    Ok(target) => assert_true(target.matches("mips64"))
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.Target::get("mips64le") {
+    Ok(target) => assert_true(target.matches("mips64el"))
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.Target::get("misp64le") {
+    Ok(target) => assert_true(target.matches("mips64el"))
+    Err(reason) => fail(reason)
+  }
   match
     @core_theory.Target::select(
       parent=@core_theory.Target::mips64el(),
@@ -358,10 +401,42 @@ test "target registry resolves common and custom declarations" {
     }
     Err(reason) => fail(reason)
   }
+  match @core_theory.Target::get("power") {
+    Ok(target) => assert_true(target.matches("powerpc"))
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.Target::get("powerpc32+le") {
+    Ok(target) => assert_true(target.matches("powerpcle"))
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.Target::get("powerpc32+bi") {
+    Ok(target) => {
+      assert_true(target.matches("powerpcbi"))
+      assert_true(target.endianness() == BiEndian)
+    }
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.Target::get("power64be") {
+    Ok(target) => assert_true(target.matches("powerpc64"))
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.Target::get("powerpc64+bi") {
+    Ok(target) => {
+      assert_true(target.matches("powerpc64bi"))
+      assert_true(target.endianness() == BiEndian)
+    }
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.Target::get("power64le") {
+    Ok(target) => assert_true(target.matches("powerpc64le"))
+    Err(reason) => fail(reason)
+  }
   match @core_theory.Target::get("powerpc-family") {
     Ok(target) => {
+      assert_true(@core_theory.Target::powerpcbi().belongs(target))
       assert_true(@core_theory.Target::powerpc().belongs(target))
       assert_true(@core_theory.Target::powerpcle().belongs(target))
+      assert_true(@core_theory.Target::powerpc64bi().belongs(target))
       assert_true(@core_theory.Target::powerpc64().belongs(target))
       assert_true(@core_theory.Target::powerpc64le().belongs(target))
     }

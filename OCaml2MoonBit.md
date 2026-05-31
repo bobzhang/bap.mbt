@@ -165,7 +165,9 @@ concrete targets even when a common target name looks like a family. For
 example, BAP declares `mips-family` and `powerpc-family` separately from the
 concrete `mips` and `powerpc` targets. Little-endian and 64-bit variants should
 belong to the family target, not to the 32-bit big-endian concrete target; use
-the family target for role dispatch and broad architecture filtering.
+the family target for role dispatch and broad architecture filtering. Preserve
+BAP's bi-endian family targets separately as well, e.g. `mipsbi`,
+`mips64bi`, `powerpcbi`, and `powerpc64bi`.
 Also check what the generic target inherits before assuming it is a minimal
 baseline. BAP's generic `arm` target inherits the VFP-capable AArch32 branch, so
 the MoonBit generic ARM metadata should include the `D0` through `D31` VFP
@@ -175,6 +177,10 @@ For AArch64, BAP keeps `R0` through `R31` as the canonical 64-bit register
 variables and models `X*`/`W*` spellings as aliases, with `W*` taking the low
 32 bits of the canonical `R*`. Preserve that direction in alias provenance
 instead of making the common assembler spelling the canonical source.
+When porting target nickname tables, keep historical spellings that are exposed
+by BAP even if they look accidental. For example, BAP's MIPS target list
+contains `misp64le`; preserve it as a compatibility alias while also accepting
+the intended `mips64le` spelling.
 For disassembly-driver registries, separate orchestration from architecture
 decoding: a built-in driver may materialize memory regions as blocks, but it
 should not invent assembly text or lifted BIL unless a real target-specific

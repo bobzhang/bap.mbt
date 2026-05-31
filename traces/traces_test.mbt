@@ -95,11 +95,79 @@ test "translated BAP traces preserve ids tools metadata and in-memory save/load"
   }
   match @traces.Trace::load("memory://bap-trace") {
     Ok(loaded) => {
+      assert_true(loaded.protocol() == Some("memory"))
       assert_true(loaded.tool() == test_tool())
       assert_true(loaded.meta() == test_meta())
       assert_true(unwrap_events(loaded.read_events()) == test_events())
     }
     Err(_) => fail("load failed")
+  }
+}
+
+///|
+test "translated BAP trace protocol registry selects URI providers" {
+  match @traces.Trace::load("unknown://trace") {
+    Err(NoProvider("unknown://trace")) => ()
+    _ => fail("expected no provider")
+  }
+
+  let custom_tool = @traces.TraceTool::register(name="custom_tool", supported_tags=[
+    "memory-load", "register-read",
+  ])
+  let custom_events = [
+    Ok(@traces.TraceEvent::memory_load(test_move())),
+    Ok(@traces.TraceEvent::register_read(register_move())),
+  ]
+  let custom_protocol = @traces.TraceProtocol::create(
+    name="custom-provider",
+    supported_tags=["memory-load"],
+    probe=fn(uri) { uri.has_prefix("custom://") },
+  )
+  @traces.Trace::register_protocol(custom_protocol)
+  @traces.Trace::register_reader("custom-provider", fn(uri) {
+    if uri == "custom://trace" {
+      Ok({ tool: custom_tool, meta: test_meta(), events: custom_events })
+    } else {
+      Err(NoProvider(uri))
+    }
+  })
+  let saved_custom : Ref[String?] = Ref(None)
+  @traces.Trace::register_writer("custom-provider", fn(uri, trace) {
+    saved_custom.val = Some(uri)
+    match trace.read_events() {
+      Ok(_) => Ok(())
+      Err(error) => Err(error)
+    }
+  })
+  match @traces.Trace::load("custom://trace") {
+    Ok(trace) => {
+      assert_true(trace.protocol() == Some("custom-provider"))
+      assert_true(trace.tool() == custom_tool)
+      assert_true(trace.meta() == test_meta())
+      assert_true(trace.supports("memory-load"))
+      assert_true(!trace.supports("register-read"))
+      assert_true(unwrap_events(trace.read_events()).length() == 2)
+    }
+    Err(_) => fail("custom provider load failed")
+  }
+  match @traces.Trace::save("custom://saved", new_trace()) {
+    Ok(_) => assert_true(saved_custom.val == Some("custom://saved"))
+    Err(_) => fail("custom provider save failed")
+  }
+
+  @traces.Trace::register_protocol(
+    @traces.TraceProtocol::create(name="ambiguous-a", probe=fn(uri) {
+      uri.has_prefix("ambiguous://")
+    }),
+  )
+  @traces.Trace::register_protocol(
+    @traces.TraceProtocol::create(name="ambiguous-b", probe=fn(uri) {
+      uri.has_prefix("ambiguous://")
+    }),
+  )
+  match @traces.Trace::load("ambiguous://trace") {
+    Err(AmbiguousUri("ambiguous://trace")) => ()
+    _ => fail("expected ambiguous URI")
   }
 }
 

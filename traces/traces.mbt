@@ -209,6 +209,37 @@ pub fn TraceTool::supports(self : TraceTool, tag : String) -> Bool {
 }
 
 ///|
+struct TraceProtocol {
+  name : String
+  supported_tags : Set[String]
+  probe_fn : (String) -> Bool
+}
+
+///|
+pub fn TraceProtocol::create(
+  name~ : String,
+  supported_tags? : Array[String] = [],
+  probe~ : (String) -> Bool,
+) -> TraceProtocol {
+  { name, supported_tags: Set::from_array(supported_tags), probe_fn: probe }
+}
+
+///|
+pub fn TraceProtocol::name(self : TraceProtocol) -> String {
+  self.name
+}
+
+///|
+pub fn TraceProtocol::probe(self : TraceProtocol, uri : String) -> Bool {
+  (self.probe_fn)(uri)
+}
+
+///|
+pub fn TraceProtocol::supports(self : TraceProtocol, tag : String) -> Bool {
+  self.supported_tags.is_empty() || self.supported_tags.contains(tag)
+}
+
+///|
 pub(all) enum TraceStep {
   Stop
   Skip
@@ -260,11 +291,14 @@ pub fn TraceMonitor::create(filter : (String) -> TraceStep) -> TraceMonitor {
 pub(all) suberror TraceError {
   TraceFailure(String)
   NoProvider(String)
+  AmbiguousUri(String)
+  ProtocolError(String)
 } derive(Eq, Debug)
 
 ///|
 struct Trace {
   id_value : Int
+  proto_name : String?
   tool_value : TraceTool
   meta_value : TraceMeta
   source : Array[Result[TraceEvent, String]]
@@ -281,15 +315,118 @@ priv struct TraceSnapshot {
 }
 
 ///|
+pub(all) struct TraceReader {
+  tool : TraceTool
+  meta : TraceMeta
+  events : Array[Result[TraceEvent, String]]
+} derive(Eq, Debug)
+
+///|
 let trace_next_id : Ref[Int] = Ref(0)
 
 ///|
 let trace_store : Map[String, TraceSnapshot] = {}
 
 ///|
+let trace_protocol_registry : Map[String, TraceProtocol] = {}
+
+///|
+let trace_reader_registry : Map[
+  String,
+  (String) -> Result[TraceReader, TraceError],
+] = {}
+
+///|
+let trace_writer_registry : Map[
+  String,
+  (String, Trace) -> Result[Unit, TraceError],
+] = {}
+
+///|
+let trace_memory_provider_registered : Ref[Bool] = Ref(false)
+
+///|
 fn next_trace_id() -> Int {
   trace_next_id.val += 1
   trace_next_id.val
+}
+
+///|
+pub fn Trace::register_protocol(protocol : TraceProtocol) -> Unit {
+  trace_protocol_registry[protocol.name()] = protocol
+}
+
+///|
+pub fn Trace::register_reader(
+  protocol_name : String,
+  reader : (String) -> Result[TraceReader, TraceError],
+) -> Unit {
+  trace_reader_registry[protocol_name] = reader
+}
+
+///|
+pub fn Trace::register_writer(
+  protocol_name : String,
+  writer : (String, Trace) -> Result[Unit, TraceError],
+) -> Unit {
+  trace_writer_registry[protocol_name] = writer
+}
+
+///|
+fn ensure_memory_provider() -> Unit {
+  if !trace_memory_provider_registered.val {
+    let protocol = TraceProtocol::create(name="memory", probe=fn(uri) {
+      uri.has_prefix("memory://")
+    })
+    Trace::register_protocol(protocol)
+    Trace::register_reader("memory", fn(uri) {
+      match trace_store.get(uri) {
+        Some(snapshot) =>
+          Ok({
+            tool: snapshot.tool,
+            meta: snapshot.meta,
+            events: snapshot.events.map(event => Ok(event)),
+          })
+        None => Err(NoProvider(uri))
+      }
+    })
+    Trace::register_writer("memory", fn(uri, trace) {
+      match trace.read_events() {
+        Ok(events) => {
+          trace_store[uri] = {
+            tool: trace.tool_value,
+            meta: trace.meta_value,
+            events,
+          }
+          Ok(())
+        }
+        Err(error) => Err(error)
+      }
+    })
+    trace_memory_provider_registered.val = true
+  }
+}
+
+///|
+fn protocols_of_uri(uri : String) -> Array[String] {
+  ensure_memory_provider()
+  let protocols : Array[String] = []
+  for entry in trace_protocol_registry {
+    let (name, protocol) = entry
+    if protocol.probe(uri) {
+      protocols.push(name)
+    }
+  }
+  protocols
+}
+
+///|
+fn find_protocol(uri : String) -> Result[String, TraceError] {
+  match protocols_of_uri(uri) {
+    [] => Err(NoProvider(uri))
+    [protocol] => Ok(protocol)
+    _ => Err(AmbiguousUri(uri))
+  }
 }
 
 ///|
@@ -309,6 +446,7 @@ pub fn Trace::from_results(
 ) -> Trace {
   {
     id_value: next_trace_id(),
+    proto_name: None,
     tool_value: tool,
     meta_value: TraceMeta::empty(),
     source: source.copy(),
@@ -326,6 +464,11 @@ pub fn Trace::id(self : Trace) -> Int {
 ///|
 pub fn Trace::tool(self : Trace) -> TraceTool {
   self.tool_value
+}
+
+///|
+pub fn Trace::protocol(self : Trace) -> String? {
+  self.proto_name
 }
 
 ///|
@@ -359,7 +502,15 @@ pub fn Trace::has_attr(self : Trace, key : String) -> Bool {
 
 ///|
 pub fn Trace::supports(self : Trace, tag : String) -> Bool {
-  self.tool_value.supports(tag)
+  let protocol_supports = match self.proto_name {
+    Some(name) =>
+      match trace_protocol_registry.get(name) {
+        Some(protocol) => protocol.supports(tag)
+        None => true
+      }
+    None => true
+  }
+  self.tool_value.supports(tag) && protocol_supports
 }
 
 ///|
@@ -475,28 +626,34 @@ pub fn[T] Trace::read_all_matching(
 
 ///|
 pub fn Trace::save(uri : String, trace : Trace) -> Result[Unit, TraceError] {
-  match trace.read_events() {
-    Ok(events) => {
-      trace_store[uri] = {
-        tool: trace.tool_value,
-        meta: trace.meta_value,
-        events,
+  match find_protocol(uri) {
+    Ok(protocol) =>
+      match trace_writer_registry.get(protocol) {
+        Some(writer) => writer(uri, trace)
+        None => Err(NoProvider(uri))
       }
-      Ok(())
-    }
     Err(error) => Err(error)
   }
 }
 
 ///|
 pub fn Trace::load(uri : String) -> Result[Trace, TraceError] {
-  match trace_store.get(uri) {
-    Some(snapshot) =>
-      Ok(
-        Trace::create(snapshot.tool, events=snapshot.events).set_meta(
-          snapshot.meta,
-        ),
-      )
-    None => Err(NoProvider(uri))
+  match find_protocol(uri) {
+    Ok(protocol) =>
+      match trace_reader_registry.get(protocol) {
+        Some(reader) =>
+          match reader(uri) {
+            Ok(trace_reader) =>
+              Ok({
+                ..Trace::from_results(trace_reader.tool, trace_reader.events).set_meta(
+                  trace_reader.meta,
+                ),
+                proto_name: Some(protocol),
+              })
+            Err(error) => Err(error)
+          }
+        None => Err(NoProvider(uri))
+      }
+    Err(error) => Err(error)
   }
 }

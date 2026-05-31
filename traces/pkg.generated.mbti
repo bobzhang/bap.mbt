@@ -13,6 +13,8 @@ import {
 pub(all) suberror TraceError {
   TraceFailure(String)
   NoProvider(String)
+  AmbiguousUri(String)
+  ProtocolError(String)
 } derive(Eq, @debug.Debug)
 
 // Types and methods
@@ -75,9 +77,13 @@ pub fn Trace::meta(Self) -> TraceMeta
 pub fn Trace::next(Self, String) -> Result[TraceEvent?, TraceError]
 pub fn Trace::next_event(Self) -> Result[TraceEvent?, TraceError]
 pub fn[T] Trace::next_matching(Self, (TraceEvent) -> T?) -> Result[T?, TraceError]
+pub fn Trace::protocol(Self) -> String?
 pub fn Trace::read_all(Self, String) -> Result[Array[TraceEvent], TraceError]
 pub fn[T] Trace::read_all_matching(Self, (TraceEvent) -> T) -> Result[Array[T], TraceError]
 pub fn Trace::read_events(Self, limit? : Int) -> Result[Array[TraceEvent], TraceError]
+pub fn Trace::register_protocol(TraceProtocol) -> Unit
+pub fn Trace::register_reader(String, (String) -> Result[TraceReader, TraceError]) -> Unit
+pub fn Trace::register_writer(String, (String, Self) -> Result[Unit, TraceError]) -> Unit
 pub fn Trace::save(String, Self) -> Result[Unit, TraceError]
 pub fn Trace::set_attr(Self, String, TraceAttrValue) -> Self
 pub fn Trace::set_meta(Self, TraceMeta) -> Self
@@ -135,6 +141,18 @@ pub fn TraceMonitor::ignore_errors() -> Self
 pub fn TraceMonitor::pack_errors((String) -> TraceEvent) -> Self
 pub fn TraceMonitor::stop_on_error() -> Self
 pub fn TraceMonitor::warn_on_error((String) -> Unit) -> Self
+
+type TraceProtocol
+pub fn TraceProtocol::create(name~ : String, supported_tags? : Array[String], probe~ : (String) -> Bool) -> Self
+pub fn TraceProtocol::name(Self) -> String
+pub fn TraceProtocol::probe(Self, String) -> Bool
+pub fn TraceProtocol::supports(Self, String) -> Bool
+
+pub(all) struct TraceReader {
+  tool : TraceTool
+  meta : TraceMeta
+  events : Array[Result[TraceEvent, String]]
+} derive(Eq, @debug.Debug)
 
 pub(all) enum TraceStep {
   Stop

@@ -1839,7 +1839,11 @@ pub fn Target::x86_64() -> Target {
 pub fn Target::arm() -> Target {
   Target::create(
     name=target_name("arm"),
-    nicknames=["aarch32", "armv4", "armv5", "armv6", "armv7", "xscale"],
+    nicknames=[
+      "aarch32", "armv4", "armv4t", "armv5", "armv5t", "armv5te", "armv5tej", "armv6",
+      "armv6t2", "armv6z", "armv6k", "armv6-m", "armv7", "armv7-a", "armv7+fp", "armv7-a+fp",
+      "armv8-a+aarch32", "armv8-m+aarch32", "armv8-r+aarch32", "xscale",
+    ],
     bits=32,
     endianness=LittleEndian,
     vars=arm32_vars(),
@@ -1864,7 +1868,7 @@ pub fn Target::thumb() -> Target {
   Target::create(
     name=target_name("thumb"),
     parent=Target::arm(),
-    nicknames=["thumbv4", "thumbv5", "thumbv6", "thumbv7"],
+    nicknames=["thumbv4", "thumbv5", "thumbv6", "thumbv7", "armv7-m"],
     bits=32,
     endianness=LittleEndian,
     vars=arm32_vars(),
@@ -1888,7 +1892,10 @@ pub fn Target::aarch64() -> Target {
   Target::create(
     name=target_name("aarch64"),
     parent=Target::arm(),
-    nicknames=["arm64", "armv8"],
+    nicknames=[
+      "arm64", "armv8", "armv8-a", "armv8.1-a", "armv8.2-a", "armv8.3-a", "armv8.4-a",
+      "armv8.5-a", "armv8.6-a", "armv9-a",
+    ],
     bits=64,
     endianness=LittleEndian,
     vars=aarch64_vars(),

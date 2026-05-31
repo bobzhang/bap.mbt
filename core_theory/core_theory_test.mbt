@@ -264,6 +264,27 @@ test "target registry resolves common and custom declarations" {
     Err(reason) => fail(reason)
   }
   assert_true(@core_theory.Target::lookup("thumb-none-eabihard") is Some(_))
+  match @core_theory.Target::lookup("armv7-a+fp") {
+    Some(target) => {
+      assert_true(target.matches("arm"))
+      assert_true(target.find_var("D31") is Some(_))
+    }
+    None => fail("missing ARMv7-A+FP target alias")
+  }
+  match @core_theory.Target::lookup("armv7-m") {
+    Some(target) => {
+      assert_true(target.matches("thumb"))
+      assert_true(target.belongs(@core_theory.Target::arm()))
+    }
+    None => fail("missing ARMv7-M target alias")
+  }
+  match @core_theory.Target::lookup("armv8.6-a") {
+    Some(target) => {
+      assert_true(target.matches("aarch64"))
+      assert_true(target.bits() == 64)
+    }
+    None => fail("missing ARMv8.6-A target alias")
+  }
   match
     @core_theory.Target::select(
       parent=@core_theory.Target::thumb(),

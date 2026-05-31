@@ -1189,6 +1189,92 @@ fn image_elf_dynamic_relocation_table_entries(
 }
 
 ///|
+fn image_elf_dynamic_relr_word_bytes(header : ImageElfHeader) -> Int {
+  match header.class {
+    ImageElf32 => 4
+    ImageElf64 => 8
+  }
+}
+
+///|
+fn image_elf_add_dynamic_relr_entry(
+  relocations : Array[Relocation],
+  fixup : UInt64,
+) -> Unit {
+  relocations.push(
+    Relocation::create(fixup~, relative=true, memory_addend=true),
+  )
+}
+
+///|
+fn image_elf_dynamic_relr_relocations(
+  data : Bytes,
+  header : ImageElfHeader,
+  program_headers : Array[ImageElfProgramHeader],
+  table : ImageElfDynamicRelocationTable,
+) -> Result[Array[Relocation], String] {
+  match (table.addr, table.size) {
+    (Some(addr), Some(size)) if size > 0 => {
+      let word_bytes = image_elf_dynamic_relr_word_bytes(header)
+      let entry_size = match table.entry_size {
+        Some(value) => value
+        None => word_bytes
+      }
+      if entry_size < word_bytes {
+        return Err("ELF dynamic RELR table entry size is invalid")
+      }
+      if size % entry_size != 0 {
+        return Err("ELF dynamic RELR table size is not entry-aligned")
+      }
+      let table_offset = match
+        image_elf_vaddr_range_offset(
+          program_headers, addr, size, "ELF dynamic RELR table",
+        ) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let relocations : Array[Relocation] = []
+      let mut next_fixup = 0UL
+      let word_bits = word_bytes * 8
+      for i in 0..<(size / entry_size) {
+        let entry = match
+          image_elf_read_u64(
+            data,
+            table_offset + i * entry_size,
+            word_bytes,
+            header.endian,
+          ) {
+          Ok(value) => value
+          Err(reason) => return Err(reason)
+        }
+        if (entry & 1UL) == 0UL {
+          image_elf_add_dynamic_relr_entry(relocations, entry)
+          next_fixup = entry + word_bytes.to_uint64()
+        } else {
+          let mut bits = entry >> 1
+          for bit in 0..<(word_bits - 1) {
+            if (bits & 1UL) != 0UL {
+              image_elf_add_dynamic_relr_entry(
+                relocations,
+                next_fixup + bit.to_uint64() * word_bytes.to_uint64(),
+              )
+            }
+            bits = bits >> 1
+          }
+          next_fixup = next_fixup +
+            (word_bits - 1).to_uint64() * word_bytes.to_uint64()
+        }
+      }
+      Ok(relocations)
+    }
+    (Some(_), Some(_)) => Ok([])
+    (Some(_), None) | (None, Some(_)) =>
+      Err("ELF dynamic RELR table metadata is incomplete")
+    (None, None) => Ok([])
+  }
+}
+
+///|
 fn image_elf_dynamic_count(
   section : ImageElfSectionHeader,
 ) -> Result[Int, String] {
@@ -1589,6 +1675,7 @@ fn image_elf_dynamic_relocations_from_programs(
       let mut plt_addr : UInt64? = None
       let mut plt_size : Int? = None
       let mut plt_type : UInt64? = None
+      let mut relr = image_elf_dynamic_relocation_table_empty()
       for entry in entries {
         match entry {
           (2UL, value) =>
@@ -1639,6 +1726,17 @@ fn image_elf_dynamic_relocations_from_programs(
             }
           (20UL, value) => plt_type = Some(value)
           (23UL, value) => plt_addr = Some(value)
+          (35UL, value) =>
+            match image_elf_uint_to_dynamic_size(value, "ELF RELR size") {
+              Ok(size) => relr = { ..relr, size: Some(size) }
+              Err(reason) => return Err(reason)
+            }
+          (36UL, value) => relr = { ..relr, addr: Some(value) }
+          (37UL, value) =>
+            match image_elf_uint_to_dynamic_size(value, "ELF RELR entry size") {
+              Ok(size) => relr = { ..relr, entry_size: Some(size) }
+              Err(reason) => return Err(reason)
+            }
           _ => ()
         }
       }
@@ -1691,6 +1789,14 @@ fn image_elf_dynamic_relocations_from_programs(
           Ok(_) => ()
           Err(reason) => return Err(reason)
         }
+      }
+      let relr_entries = match
+        image_elf_dynamic_relr_relocations(data, header, program_headers, relr) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      for relocation in relr_entries {
+        relocations.push(relocation)
       }
       let (plt, plt_has_addend) = match
         image_elf_dynamic_plt_table(

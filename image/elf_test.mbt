@@ -672,6 +672,36 @@ fn image_elf_test_make_x86_64_dynamic_without_sections_rel_plt() -> Bytes {
 }
 
 ///|
+fn image_elf_test_make_x86_64_dynamic_without_sections_relr() -> Bytes {
+  let source = image_elf_test_make_x86_64_dynamic_without_sections()
+  let text_offset = 64 + 2 * 56
+  let dynamic_offset = text_offset + b"\x55\xc3".length()
+  let relr_offset = source.length()
+  let relr_size = 16
+  let total = source.length() + relr_size
+  let base_addr = 0x600000UL
+  let relr_addr = base_addr + (relr_offset - text_offset).to_uint64()
+  let load_size = total - text_offset
+  let buffer = Array::make(total, b'\x00')
+  for i in 0..<source.length() {
+    buffer[i] = source[i]
+  }
+  image_elf_test_set_u64_le(buffer, 96, load_size.to_uint64())
+  image_elf_test_set_u64_le(buffer, 104, load_size.to_uint64())
+  image_elf_test_write_dynamic64(buffer, dynamic_offset + 112, 36UL, relr_addr)
+  image_elf_test_write_dynamic64(
+    buffer,
+    dynamic_offset + 128,
+    35UL,
+    relr_size.to_uint64(),
+  )
+  image_elf_test_write_dynamic64(buffer, dynamic_offset + 144, 37UL, 8UL)
+  image_elf_test_set_u64_le(buffer, relr_offset, 0x600018UL)
+  image_elf_test_set_u64_le(buffer, relr_offset + 8, 0x0bUL)
+  Bytes::from_array(buffer)
+}
+
+///|
 fn image_elf_test_make_x86_64_without_section_names() -> Bytes {
   let source = image_elf_test_make_x86_64()
   let buffer = Array::make(source.length(), b'\x00')
@@ -1112,6 +1142,34 @@ test "image ELF backend extracts DT_REL PLT relocations without section headers"
   assert_true(references[0].name() == "puts")
   assert_true(references[1].addr() == 0x600010UL)
   assert_true(references[1].name() == "printf")
+}
+
+///|
+test "image ELF backend extracts DT_RELR relocations without section headers" {
+  match @image.register_builtin_backends() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let (image, warnings) = expect_elf_image(
+    @image.Image::of_bytes(
+      image_elf_test_make_x86_64_dynamic_without_sections_relr(),
+      backend="elf",
+    ),
+  )
+  assert_true(warnings.is_empty())
+  let relr = image
+    .relocations()
+    .filter(relocation => relocation.fixup() >= 0x600018UL)
+  assert_true(
+    relr.map(relocation => relocation.fixup()) ==
+    [0x600018UL, 0x600020UL, 0x600030UL],
+  )
+  for relocation in relr {
+    assert_true(relocation.is_relative())
+    assert_true(relocation.uses_memory_addend())
+    assert_true(relocation.target() == None)
+    assert_true(relocation.addend() == None)
+  }
 }
 
 ///|

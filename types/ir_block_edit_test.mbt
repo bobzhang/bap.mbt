@@ -159,6 +159,37 @@ test "program sub rewrite helpers update remove map and filter" {
     ) ==
     ["main", "helper", "helper-copy", "exit"],
   )
+  assert_true(
+    sub_names(
+      program
+      .change_sub(helper.tid(), current => {
+        match current {
+          Some(term) => Some(term.with_sub_name("changed"))
+          None => None
+        }
+      })
+      .subs(),
+    ) ==
+    ["main", "changed", "exit"],
+  )
+  assert_true(
+    sub_names(program.change_sub(helper.tid(), _ => None).subs()) ==
+    ["main", "exit"],
+  )
+  let plugin_tid = @types.Tid::for_name("plugin")
+  assert_true(
+    sub_names(
+      program
+      .change_sub(plugin_tid, current => {
+        match current {
+          Some(term) => Some(term)
+          None => Some(@types.Sub::create(name="plugin", tid=plugin_tid))
+        }
+      })
+      .subs(),
+    ) ==
+    ["main", "helper", "exit", "plugin"],
+  )
 }
 
 ///|
@@ -312,6 +343,37 @@ test "sub argument and block rewrite helpers update remove map and filter" {
     ) ==
     ["x", "y", "w", "z"],
   )
+  assert_true(
+    arg_lhs_names(
+      sub
+      .change_arg(arg_y.tid(), current => {
+        match current {
+          Some(term) =>
+            Some(@types.Arg::create(w, term.arg_rhs(), tid=term.tid()))
+          None => None
+        }
+      })
+      .args(),
+    ) ==
+    ["x", "w", "z"],
+  )
+  assert_true(
+    arg_lhs_names(sub.change_arg(arg_y.tid(), _ => None).args()) == ["x", "z"],
+  )
+  let arg_tail_tid = @types.Tid::for_name("arg-tail")
+  assert_true(
+    arg_lhs_names(
+      sub
+      .change_arg(arg_tail_tid, current => {
+        match current {
+          Some(term) => Some(term)
+          None => Some(@types.Arg::create(w, Var(w), tid=arg_tail_tid))
+        }
+      })
+      .args(),
+    ) ==
+    ["x", "y", "z", "w"],
+  )
   let rewritten_body = body.append_def(@types.Def::create(x, Var(y)))
   assert_true(
     sub.update_blk(rewritten_body).find_blk(body.tid()).unwrap().def_count() ==
@@ -363,6 +425,36 @@ test "sub argument and block rewrite helpers update remove map and filter" {
       .blks(),
     ) ==
     ["entry", "body", "body-tail", "exit"],
+  )
+  assert_true(
+    sub
+    .change_blk(body.tid(), current => {
+      match current {
+        Some(blk) => Some(blk.append_def(@types.Def::create(z, Var(x))))
+        None => None
+      }
+    })
+    .find_blk(body.tid())
+    .unwrap()
+    .def_count() ==
+    1,
+  )
+  assert_true(
+    blk_names(sub.change_blk(body.tid(), _ => None).blks()) == ["entry", "exit"],
+  )
+  let tail_tid = @types.Tid::for_name("tail-block")
+  assert_true(
+    blk_names(
+      sub
+      .change_blk(tail_tid, current => {
+        match current {
+          Some(blk) => Some(blk)
+          None => Some(@types.Blk::create(tid=tail_tid))
+        }
+      })
+      .blks(),
+    ) ==
+    ["entry", "body", "exit", "tail-block"],
   )
 }
 
@@ -461,6 +553,27 @@ test "block definition editing helpers insert update remove and map" {
       }
     }),
     ["x", "y", "y", "z"],
+  )
+  assert_def_lhs_names(
+    block.change_def(def_y.tid(), current => {
+      match current {
+        Some(term) => Some(term.with_lhs(s))
+        None => None
+      }
+    }),
+    ["x", "s", "z"],
+  )
+  assert_def_lhs_names(block.change_def(def_y.tid(), _ => None), ["x", "z"])
+  let def_tail_tid = @types.Tid::for_name("def-tail")
+  let def_tail = @types.Def::create(s, Int(word8(6)), tid=def_tail_tid)
+  assert_def_lhs_names(
+    block.change_def(def_tail_tid, current => {
+      match current {
+        Some(term) => Some(term)
+        None => Some(def_tail)
+      }
+    }),
+    ["x", "y", "z", "s"],
   )
 }
 
@@ -591,6 +704,35 @@ test "block phi jump and sub update helpers map terms" {
     ) ==
     ["x", "w", "z"],
   )
+  assert_true(
+    phi_lhs_names(
+      block
+      .change_phi_term(phi.tid(), current => {
+        match current {
+          Some(term) => Some(term.with_phi_lhs(w))
+          None => None
+        }
+      })
+      .phis(),
+    ) ==
+    ["w", "z"],
+  )
+  assert_true(block.change_phi_term(phi.tid(), _ => None).phi_count() == 1)
+  let phi_tail_tid = @types.Tid::for_name("phi-tail")
+  assert_true(
+    phi_lhs_names(
+      block
+      .change_phi_term(phi_tail_tid, current => {
+        match current {
+          Some(term) => Some(term)
+          None =>
+            Some(@types.Phi::of_list(w, [(pred, Var(y))], tid=phi_tail_tid))
+        }
+      })
+      .phis(),
+    ) ==
+    ["x", "z", "w"],
+  )
   let without_phi = block.remove_phi_term(phi.tid())
   assert_true(without_phi.phi_count() == 1)
   assert_true(
@@ -629,6 +771,36 @@ test "block phi jump and sub update helpers map terms" {
       .jmps(),
     ) ==
     [jmp.name(), tail_jmp.name(), fall_jmp.name()],
+  )
+  assert_true(
+    block
+    .change_jmp(jmp.tid(), current => {
+      match current {
+        Some(term) => Some(term.with_cond(Var(z)))
+        None => None
+      }
+    })
+    .jmps()[0].cond() ==
+    Var(z),
+  )
+  assert_true(block.change_jmp(jmp.tid(), _ => None).jmp_count() == 1)
+  let jmp_tail_tid = @types.Tid::for_name("jmp-tail")
+  assert_true(
+    block
+    .change_jmp(jmp_tail_tid, current => {
+      match current {
+        Some(term) => Some(term)
+        None =>
+          Some(
+            @types.Jmp::create_goto(
+              @types.Label::direct(fall),
+              tid=jmp_tail_tid,
+            ),
+          )
+      }
+    })
+    .jmp_count() ==
+    3,
   )
   let elt_def = @types.Def::create(x, Var(y))
   let elt_block = @types.Blk::create(phis=[phi], defs=[elt_def], jmps=[jmp])

@@ -1,0 +1,28 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/abi"
+
+import {
+  "bobzhang/bap/project",
+}
+
+// Values
+pub fn name() -> @project.ProjectStorageTag[String]
+
+pub fn name_uuid() -> String
+
+pub fn pass(@project.Project) -> @project.Project
+
+pub fn project_pass() -> @project.ProjectPass
+
+pub fn register_pass((@project.Project) -> @project.Project) -> Unit
+
+pub fn register_project_pass_if_absent() -> Result[Bool, String]
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+

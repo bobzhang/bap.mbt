@@ -259,6 +259,12 @@ dependencies have been resolved and the pass is actually going to run, emit
 finish on both success and failure, and keep run-once skips silent. Only mark a
 pass as run after a successful execution so failed passes remain retryable and
 their run-count metadata does not imply success.
+For dispatcher-only BAP libraries such as `bap_abi`, preserve registration
+order as behavior: OCaml prepends new callbacks and then folds the stored list,
+so the newest registered pass runs first. In MoonBit, keep the simple
+project-to-project function registry, expose stable metadata tag names and UUIDs
+where BAP does, and add a thin bridge into the project pass registry rather than
+mixing the dispatcher state into the generic pass system.
 When a higher-level package exposes the same loader surface as a lower-level
 registry, prefer a small idempotent initializer that delegates to the owning
 registry instead of duplicating loader entries. For example, `ProjectInput`

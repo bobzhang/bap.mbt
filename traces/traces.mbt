@@ -948,8 +948,83 @@ pub(all) suberror TraceError {
 } derive(Eq, Debug)
 
 ///|
+pub(all) struct TraceId {
+  value : String
+} derive(Eq, Hash, Debug)
+
+///|
+fn trace_id_is_hex_char(ch : Char) -> Bool {
+  ('0' <= ch && ch <= '9') ||
+  ('a' <= ch && ch <= 'f') ||
+  ('A' <= ch && ch <= 'F')
+}
+
+///|
+fn trace_id_is_uuid_text(value : String) -> Bool {
+  if value.length() != 36 {
+    false
+  } else {
+    let mut valid = true
+    for index, ch in value {
+      if index == 8 || index == 13 || index == 18 || index == 23 {
+        if ch != '-' {
+          valid = false
+        }
+      } else if !trace_id_is_hex_char(ch) {
+        valid = false
+      }
+    }
+    valid
+  }
+}
+
+///|
+fn trace_id_counter_tail(value : Int) -> String {
+  let padded = value.to_string(radix=16).pad_start(12, '0')
+  if padded.length() > 12 {
+    padded[padded.length() - 12:].to_owned()
+  } else {
+    padded
+  }
+}
+
+///|
+fn trace_id_from_counter(value : Int) -> TraceId {
+  { value: "00000000-0000-4000-8000-\{trace_id_counter_tail(value)}" }
+}
+
+///|
+pub fn TraceId::create(value : String) -> Result[TraceId, String] {
+  if trace_id_is_uuid_text(value) {
+    Ok({ value: value.to_lower() })
+  } else {
+    Err("invalid trace UUID: \{value}")
+  }
+}
+
+///|
+pub fn TraceId::of_string(value : String) -> Result[TraceId, String] {
+  TraceId::create(value)
+}
+
+///|
+pub fn TraceId::fresh() -> TraceId {
+  next_trace_uuid()
+}
+
+///|
+pub fn TraceId::to_string(self : TraceId) -> String {
+  self.value
+}
+
+///|
+pub fn TraceId::compare(self : TraceId, other : TraceId) -> Int {
+  self.value.compare(other.value)
+}
+
+///|
 struct Trace {
-  id_value : Int
+  id_value : TraceId
   proto_name : String?
   tool_value : TraceTool
   meta_value : TraceMeta
@@ -977,7 +1052,7 @@ pub(all) struct TraceReader {
 let trace_next_id : Ref[Int] = Ref(0)
 
 ///|
-let trace_loaded_registry : Map[Int, Trace] = {}
+let trace_loaded_registry : Map[TraceId, Trace] = {}
 
 ///|
 let trace_store : Map[String, Bytes] = {}
@@ -1007,6 +1082,11 @@ let trace_file_uri_prefix : String = "file://"
 fn next_trace_id() -> Int {
   trace_next_id.val += 1
   trace_next_id.val
+}
+
+///|
+fn next_trace_uuid() -> TraceId {
+  trace_id_from_counter(next_trace_id())
 }
 
 ///|
@@ -1157,7 +1237,7 @@ pub fn Trace::from_results(
   monitor? : TraceMonitor = TraceMonitor::fail_on_error(),
 ) -> Trace {
   {
-    id_value: next_trace_id(),
+    id_value: TraceId::fresh(),
     proto_name: None,
     tool_value: tool,
     meta_value: TraceMeta::empty(),
@@ -1169,7 +1249,7 @@ pub fn Trace::from_results(
 }
 
 ///|
-pub fn Trace::id(self : Trace) -> Int {
+pub fn Trace::id(self : Trace) -> TraceId {
   self.id_value
 }
 

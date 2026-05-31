@@ -117,7 +117,7 @@ fn tool_for_events(events : Array[@traces.TraceEvent]) -> @traces.TraceTool {
 }
 
 ///|
-fn trace_ids(traces : Array[@traces.Trace]) -> Array[Int] {
+fn trace_ids(traces : Array[@traces.Trace]) -> Array[@traces.TraceId] {
   traces.map(trace => trace.id())
 }
 
@@ -230,6 +230,17 @@ test "translated BAP traces preserve ids tools metadata and in-memory save/load"
   let first = new_trace()
   let second = new_trace()
   assert_true(first.id() != second.id())
+  assert_true(first.id().to_string().length() == 36)
+  assert_true(first.id().to_string().has_prefix("00000000-0000-4000-8000-"))
+  match @traces.TraceId::of_string(first.id().to_string()) {
+    Ok(id) => assert_true(id == first.id())
+    Err(_) => fail("expected trace id to parse")
+  }
+  match @traces.TraceId::of_string(first.id().to_string().to_upper()) {
+    Ok(id) => assert_true(id == first.id())
+    Err(_) => fail("expected uppercase trace id to parse")
+  }
+  assert_true(@traces.TraceId::of_string("not-a-uuid") is Err(_))
   assert_true(first.tool() == test_tool())
 
   let trace = first.set_attr("binary", Binary(test_binary()))
@@ -343,7 +354,7 @@ test "translated BAP loaded trace registry adds lists and removes traces" {
     ids.filter(id => id == first.id() || id == second.id()) ==
     [first.id(), second.id()],
   )
-  let iter_ids : Array[Int] = []
+  let iter_ids : Array[@traces.TraceId] = []
   @traces.Trace::loaded_iter().each(trace => {
     if trace.id() == first.id() || trace.id() == second.id() {
       iter_ids.push(trace.id())

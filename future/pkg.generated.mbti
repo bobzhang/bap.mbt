@@ -121,6 +121,12 @@ pub fn[T] Stream::wait(Self[T]) -> Unit
 pub fn[T] Stream::watch(Self[T], (Int, T) -> Unit) -> Int
 pub fn[A, B] Stream::zip(Self[A], Self[B]) -> Self[(A, B)]
 
+type StreamArgs[F, R]
+pub fn[F, A, R] StreamArgs::add(Self[F, (A) -> R], Stream[A]) -> Self[F, R]
+pub fn[F, R] StreamArgs::apply(F, Self[F, R]) -> Stream[R]
+pub fn[A, R] StreamArgs::args(Stream[A]) -> Self[(A) -> R, R]
+pub fn[F1, F2, R] StreamArgs::step(Self[F1, R], (F2) -> F1) -> Self[F2, R]
+
 // Type aliases
 
 // Traits

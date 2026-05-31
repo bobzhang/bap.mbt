@@ -723,6 +723,44 @@ test "translated BAP stream multi-argument applicative helpers" {
 }
 
 ///|
+test "BAP-style stream args apply curried functions" {
+  let (first, first_signal, _) = @future.Stream::of_array([1, 2])
+  let (second, second_signal, _) = @future.Stream::of_array([10, 20])
+  let (third, third_signal, _) = @future.Stream::of_array([100, 200])
+  let args : @future.StreamArgs[(Int) -> (Int) -> (Int) -> Int, Int] = @future.StreamArgs::args(
+      first,
+    )
+    .add(second)
+    .add(third)
+  let mapped = @future.StreamArgs::apply(
+    fn(a) { fn(b) { fn(c) { a + b + c } } },
+    args,
+  )
+  let values : Array[Int] = []
+  mapped.observe(fn(value) { values.push(value) })
+  first_signal.repeat(times=2, ())
+  second_signal.repeat(times=2, ())
+  third_signal.repeat(times=2, ())
+  assert_true(values == [111, 222])
+}
+
+///|
+test "BAP-style stream args step adapts a function input" {
+  let (numbers, signal, _) = @future.Stream::of_array([7, 42])
+  let args : @future.StreamArgs[(String) -> Int, Int] = @future.StreamArgs::args(
+    numbers,
+  ).step(fn(f : (String) -> Int) { fn(number : Int) { f(number.to_string()) } })
+  let mapped = @future.StreamArgs::apply(
+    fn(text : String) { text.length() + 1 },
+    args,
+  )
+  let values : Array[Int] = []
+  mapped.observe(fn(value) { values.push(value) })
+  signal.repeat(times=2, ())
+  assert_true(values == [2, 3])
+}
+
+///|
 fn fulfill_after_signals(
   promise : @future.Promise[Unit],
   after~ : Int,

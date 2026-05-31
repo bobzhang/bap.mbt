@@ -799,6 +799,37 @@ pub fn[A, B, C, D, E, F] Stream::apply5(
 }
 
 ///|
+struct StreamArgs[F, R] {
+  run : (F) -> Stream[R]
+}
+
+///|
+pub fn[A, R] StreamArgs::args(arg : Stream[A]) -> StreamArgs[(A) -> R, R] {
+  { run: fn(f) { arg.map(f) } }
+}
+
+///|
+pub fn[F, A, R] StreamArgs::add(
+  self : StreamArgs[F, (A) -> R],
+  arg : Stream[A],
+) -> StreamArgs[F, R] {
+  { run: fn(f) { Stream::apply((self.run)(f), arg) } }
+}
+
+///|
+pub fn[F1, F2, R] StreamArgs::step(
+  self : StreamArgs[F1, R],
+  f : (F2) -> F1,
+) -> StreamArgs[F2, R] {
+  { run: fn(function) { (self.run)(f(function)) } }
+}
+
+///|
+pub fn[F, R] StreamArgs::apply(f : F, args : StreamArgs[F, R]) -> Stream[R] {
+  (args.run)(f)
+}
+
+///|
 pub fn[A, B] Stream::zip(self : Stream[A], other : Stream[B]) -> Stream[(A, B)] {
   self.merge(other, fn(left, right) { (left, right) })
 }

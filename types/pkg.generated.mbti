@@ -49,11 +49,21 @@ pub fn normalize_negatives(Array[Stmt]) -> Array[Stmt]
 
 pub fn optimize_stmts(Array[Stmt], max_iterations? : Int) -> Array[Stmt]
 
+pub fn passes() -> Array[BilPass]
+
 pub fn propagate_const_stmts(Array[Stmt]) -> Array[Stmt]
 
 pub fn prune_dead_virtual_stmts(Array[Stmt]) -> Array[Stmt]
 
 pub fn prune_unreferenced(Array[Stmt], such_that? : (Var) -> Bool, physicals? : Bool, virtuals? : Bool) -> Array[Stmt]
+
+pub fn register_pass(String, (Array[Stmt]) -> Array[Stmt], desc? : String) -> BilPass
+
+pub fn run_selected_passes(Array[Stmt]) -> Array[Stmt]
+
+pub fn select_passes(Array[BilPass]) -> Unit
+
+pub fn selected_passes() -> Array[(Array[Stmt]) -> Array[Stmt]]
 
 pub fn simplify_stmts(Array[Stmt]) -> Array[Stmt]
 
@@ -164,6 +174,12 @@ pub fn BilMemory::from_bytes(addr_width~ : Int, start? : UInt64, Bytes) -> Self
 pub fn BilMemory::load(Self, Word, endian~ : @bitvec.Endian, width~ : Int) -> Result[Word, String]
 pub fn BilMemory::store(Self, Word, Word, endian~ : @bitvec.Endian) -> Result[Self, String]
 pub fn BilMemory::value_width(Self) -> Int
+
+type BilPass
+pub fn BilPass::desc(Self) -> String
+pub fn BilPass::name(Self) -> String
+pub fn BilPass::run(Self, Array[Stmt]) -> Array[Stmt]
+pub fn BilPass::to_string(Self) -> String
 
 type BilState derive(Eq, @debug.Debug)
 pub fn BilState::from_values(Map[String, BilValue]) -> Self

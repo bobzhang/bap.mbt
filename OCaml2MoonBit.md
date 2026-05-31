@@ -470,6 +470,13 @@ wrapper that delegates to it; avoid duplicating term payload rewrites in the
 so tests and applications can initialize common passes more than once without
 turning global registry state into a failure mode.
 
+BAP's BIL pass registry is separate from project passes: registering a pass
+with an existing name replaces the old metadata/body, while selecting passes
+preserves the caller-provided transform order. The OCaml implementation exposes
+hash-table enumeration order for `passes`; prefer deterministic MoonBit
+enumeration instead, but document that it follows `String::compare` shortlex
+ordering rather than locale/alphabetic ordering.
+
 When porting BAP `Term.visitor`/`Term.mapper` users, prefer a typed sum view of
 IR terms over untyped callbacks. Keep traversal order explicit and stable
 (program, sub, args, block, phis, defs, jumps), and make reconstruction-aware

@@ -216,7 +216,9 @@ pub fn Language::to_string(Self) -> String
 type Program
 pub fn Program::add_label(Self, Label) -> Self
 pub fn Program::add_unit(Self, ProgramUnit) -> Self
+pub fn Program::compare(Self, Self) -> Int
 pub fn Program::create(units? : Array[ProgramUnit], labels? : Array[Label], target? : Target) -> Self
+pub fn Program::equal(Self, Self) -> Bool
 pub fn Program::labels(Self) -> Array[Label]
 pub fn Program::target(Self) -> Target?
 pub fn Program::units(Self) -> Array[ProgramUnit]

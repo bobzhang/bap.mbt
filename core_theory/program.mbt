@@ -573,6 +573,83 @@ pub fn Program::target(self : Program) -> Target? {
 }
 
 ///|
+fn optional_target_equal(lhs : Target?, rhs : Target?) -> Bool {
+  match (lhs, rhs) {
+    (None, None) => true
+    (Some(left), Some(right)) => left.equal(right)
+    _ => false
+  }
+}
+
+///|
+fn optional_target_compare(lhs : Target?, rhs : Target?) -> Int {
+  match (lhs, rhs) {
+    (None, None) => 0
+    (None, Some(_)) => -1
+    (Some(_), None) => 1
+    (Some(left), Some(right)) => left.compare(right)
+  }
+}
+
+///|
+fn program_unit_array_compare(
+  lhs : Array[ProgramUnit],
+  rhs : Array[ProgramUnit],
+) -> Int {
+  let limit = if lhs.length() < rhs.length() {
+    lhs.length()
+  } else {
+    rhs.length()
+  }
+  for i in 0..<limit {
+    let order = lhs[i].compare(rhs[i])
+    if order != 0 {
+      return order
+    }
+  }
+  lhs.length().compare(rhs.length())
+}
+
+///|
+fn label_array_compare(lhs : Array[Label], rhs : Array[Label]) -> Int {
+  let limit = if lhs.length() < rhs.length() {
+    lhs.length()
+  } else {
+    rhs.length()
+  }
+  for i in 0..<limit {
+    let order = lhs[i].compare(rhs[i])
+    if order != 0 {
+      return order
+    }
+  }
+  lhs.length().compare(rhs.length())
+}
+
+///|
+pub fn Program::equal(self : Program, other : Program) -> Bool {
+  program_unit_array_compare(self.units_value, other.units_value) == 0 &&
+  label_array_compare(self.labels_value, other.labels_value) == 0 &&
+  optional_target_equal(self.target(), other.target())
+}
+
+///|
+pub fn Program::compare(self : Program, other : Program) -> Int {
+  let unit_order = program_unit_array_compare(
+    self.units_value,
+    other.units_value,
+  )
+  if unit_order != 0 {
+    return unit_order
+  }
+  let label_order = label_array_compare(self.labels_value, other.labels_value)
+  if label_order != 0 {
+    return label_order
+  }
+  optional_target_compare(self.target(), other.target())
+}
+
+///|
 pub fn Program::add_unit(self : Program, unit : ProgramUnit) -> Program {
   let units = self.units_value.copy()
   units.push(unit)

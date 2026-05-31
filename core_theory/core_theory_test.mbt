@@ -1603,6 +1603,18 @@ test "program metadata tracks source compiler and units" {
   assert_true(label.target().matches("amd64"))
   assert_true(label.is_subroutine())
   let program = @core_theory.Program::create(units=[unit], labels=[label])
+  let same_program = @core_theory.Program::create(
+    units=[unit],
+    labels=[label],
+    target~,
+  )
+  let region_program = @core_theory.Program::create(units=[region], labels=[
+    label,
+  ])
+  assert_true(program.equal(same_program))
+  assert_true(program.compare(same_program) == 0)
+  assert_true(!program.equal(region_program))
+  assert_true(program.compare(region_program) != 0)
   assert_true(program.units().length() == 1)
   assert_true(program.labels().length() == 1)
   assert_true(program.target().map(item => item.matches("amd64")) == Some(true))

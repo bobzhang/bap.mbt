@@ -72,6 +72,45 @@ test "targets inherit defaults and match ancestry" {
   assert_true(target.order(family) == Less)
   assert_true(target.bits() == 64)
   assert_true(target.endianness() == LittleEndian)
+  let data_mem = @core_theory.Var::create(
+    @core_theory.Sort::mem(
+      @core_theory.Sort::bitv(32),
+      @core_theory.Sort::bitv(16),
+    ),
+    "data-memory",
+    is_mutable=true,
+  )
+  let code_mem = @core_theory.Var::create(
+    @core_theory.Sort::mem(
+      @core_theory.Sort::bitv(48),
+      @core_theory.Sort::bitv(8),
+    ),
+    "code-memory",
+    is_mutable=true,
+  )
+  let memory_target = @core_theory.Target::create(
+    name=@knowledge.Name::create("x86-memory", pkg="target"),
+    parent=family,
+    bits=64,
+    data=data_mem,
+    code=code_mem,
+    data_alignment=16,
+    code_alignment=32,
+  )
+  assert_true(memory_target.data().same(data_mem))
+  assert_true(memory_target.code().same(code_mem))
+  assert_true(memory_target.data_addr_size() == 32)
+  assert_true(memory_target.code_addr_size() == 48)
+  assert_true(memory_target.data_alignment() == 16)
+  assert_true(memory_target.code_alignment() == 32)
+  assert_true(
+    memory_target.find_var("data-memory").map(v => v.same(data_mem)) ==
+    Some(true),
+  )
+  assert_true(
+    memory_target.find_var("code-memory").map(v => v.same(code_mem)) ==
+    Some(true),
+  )
   let little = @core_theory.Endianness::of_string("le").unwrap()
   let big = @core_theory.Endianness::of_string("be").unwrap()
   assert_true(little.equal(little))

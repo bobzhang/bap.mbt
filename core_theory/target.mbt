@@ -629,6 +629,10 @@ struct Target {
   nicknames_value : Array[String]
   bits_value : Int
   byte_value : Int
+  data_value : Var
+  code_value : Var
+  data_alignment_value : Int
+  code_alignment_value : Int
   endianness_value : Endianness
   system_value : System
   abi_value : Abi
@@ -676,6 +680,82 @@ fn mem_var(addr_bits : Int, byte_bits : Int, name : String) -> Var {
     name,
     is_mutable=true,
   )
+}
+
+///|
+fn default_memory_in_vars(items : Array[Var], bits : Int, byte : Int) -> Var? {
+  let expected = mem_var(bits, byte, "mem")
+  items
+  .search_by(variable => {
+    variable.ident() == "mem" && variable.sort().same(expected.sort())
+  })
+  .map(i => items[i])
+}
+
+///|
+fn append_var_unique(items : Array[Var], item : Var) -> Unit {
+  if items.search_by(variable => variable.same(item)) is None {
+    items.push(item)
+  }
+}
+
+///|
+fn vars_with_memories(items : Array[Var], data : Var, code : Var) -> Array[Var] {
+  let result = items.copy()
+  append_var_unique(result, data)
+  append_var_unique(result, code)
+  result
+}
+
+///|
+fn replace_var(items : Array[Var], old : Var, replacement : Var) -> Array[Var] {
+  let result : Array[Var] = []
+  for item in items {
+    if item.same(old) {
+      append_var_unique(result, replacement)
+    } else {
+      append_var_unique(result, item)
+    }
+  }
+  result
+}
+
+///|
+fn bitv_sort_width(sort : Sort) -> Int? {
+  match sort {
+    App(Sym(name), IntSort(width)) =>
+      if name == @knowledge.Name::create("bitv", pkg="core") {
+        Some(width)
+      } else {
+        None
+      }
+    _ => None
+  }
+}
+
+///|
+fn mem_sort_parts(sort : Sort) -> (Sort, Sort)? {
+  match sort {
+    App(App(Sym(name), keys), values) =>
+      if name == @knowledge.Name::create("mem", pkg="core") {
+        Some((keys, values))
+      } else {
+        None
+      }
+    _ => None
+  }
+}
+
+///|
+fn memory_key_width(variable : Var, default : Int) -> Int {
+  match mem_sort_parts(variable.sort()) {
+    Some((keys, _)) =>
+      match bitv_sort_width(keys) {
+        Some(width) => width
+        None => default
+      }
+    None => default
+  }
 }
 
 ///|
@@ -1899,12 +1979,17 @@ pub fn AliasOrigin::bits(self : AliasOrigin) -> Array[Var] {
 
 ///|
 pub fn Target::unknown() -> Target {
+  let memory = mem_var(0, 8, "mem")
   {
     name_value: @knowledge.Name::create("unknown", pkg="target"),
     parent_value: None,
     nicknames_value: [],
     bits_value: 0,
     byte_value: 8,
+    data_value: memory,
+    code_value: memory,
+    data_alignment_value: 8,
+    code_alignment_value: 8,
     endianness_value: BiEndian,
     system_value: UnknownSystem,
     abi_value: UnknownAbi,
@@ -1923,6 +2008,10 @@ pub fn Target::create(
   nicknames? : Array[String],
   bits? : Int,
   byte? : Int,
+  data? : Var,
+  code? : Var,
+  data_alignment? : Int,
+  code_alignment? : Int,
   endianness? : Endianness,
   system? : System,
   abi? : Abi,
@@ -1932,6 +2021,75 @@ pub fn Target::create(
   vars? : Array[Var],
   alias_origins? : Array[AliasOrigin],
 ) -> Target {
+  let bits_value = match bits {
+    Some(value) => value
+    None =>
+      match parent {
+        Some(target) => target.bits()
+        None => 0
+      }
+  }
+  let byte_value = match byte {
+    Some(value) => value
+    None =>
+      match parent {
+        Some(target) => target.byte()
+        None => 8
+      }
+  }
+  let vars_memory = match vars {
+    Some(items) => default_memory_in_vars(items, bits_value, byte_value)
+    None => None
+  }
+  let data_value = match data {
+    Some(variable) => variable
+    None =>
+      match vars_memory {
+        Some(variable) => variable
+        None =>
+          match parent {
+            Some(target) => target.data()
+            None => mem_var(bits_value, byte_value, "mem")
+          }
+      }
+  }
+  let code_value = match code {
+    Some(variable) => variable
+    None =>
+      match vars_memory {
+        Some(variable) => variable
+        None =>
+          match parent {
+            Some(target) => target.code()
+            None => mem_var(bits_value, byte_value, "mem")
+          }
+      }
+  }
+  let data_alignment_value = match data_alignment {
+    Some(value) => value
+    None =>
+      match parent {
+        Some(target) => target.data_alignment()
+        None => 8
+      }
+  }
+  let code_alignment_value = match code_alignment {
+    Some(value) => value
+    None =>
+      match parent {
+        Some(target) => target.code_alignment()
+        None => 8
+      }
+  }
+  let vars_value = match vars {
+    Some(items) => vars_with_memories(items, data_value, code_value)
+    None =>
+      match parent {
+        Some(target) =>
+          vars_with_memories(target.vars(), data_value, code_value)
+        None => vars_with_memories([], data_value, code_value)
+      }
+  }
   {
     name_value: name,
     parent_value: parent,
@@ -1939,22 +2097,12 @@ pub fn Target::create(
       Some(items) => items.copy()
       None => []
     },
-    bits_value: match bits {
-      Some(value) => value
-      None =>
-        match parent {
-          Some(target) => target.bits()
-          None => 0
-        }
-    },
-    byte_value: match byte {
-      Some(value) => value
-      None =>
-        match parent {
-          Some(target) => target.byte()
-          None => 8
-        }
-    },
+    bits_value,
+    byte_value,
+    data_value,
+    code_value,
+    data_alignment_value,
+    code_alignment_value,
     endianness_value: match endianness {
       Some(value) => value
       None =>
@@ -2003,14 +2151,7 @@ pub fn Target::create(
           None => TargetOptions::empty()
         }
     },
-    vars_value: match vars {
-      Some(items) => items.copy()
-      None =>
-        match parent {
-          Some(target) => target.vars()
-          None => []
-        }
-    },
+    vars_value,
     alias_origins_value: match alias_origins {
       Some(items) => items.copy()
       None =>
@@ -2105,20 +2246,47 @@ pub fn Target::alias_origins(self : Target) -> Array[AliasOrigin] {
 ///|
 pub fn Target::with_var(self : Target, item : Var) -> Target {
   let items = self.vars_value.copy()
-  items.push(item)
+  append_var_unique(items, item)
   { ..self, vars_value: items }
 }
 
 ///|
 pub fn Target::with_vars(self : Target, more : Array[Var]) -> Target {
   let items = self.vars_value.copy()
-  append_vars(items, more)
+  for item in more {
+    append_var_unique(items, item)
+  }
   { ..self, vars_value: items }
 }
 
 ///|
 pub fn Target::with_bits(self : Target, bits : Int) -> Target {
-  { ..self, bits_value: bits }
+  let previous = self.default_memory()
+  let current = mem_var(bits, self.byte_value, "mem")
+  let data = if self.data_value.same(previous) {
+    current
+  } else {
+    self.data_value
+  }
+  let code = if self.code_value.same(previous) {
+    current
+  } else {
+    self.code_value
+  }
+  let mut vars = self.vars_value
+  if !data.same(self.data_value) {
+    vars = replace_var(vars, previous, data)
+  }
+  if !code.same(self.code_value) {
+    vars = replace_var(vars, previous, code)
+  }
+  {
+    ..self,
+    bits_value: bits,
+    data_value: data,
+    code_value: code,
+    vars_value: vars,
+  }
 }
 
 ///|
@@ -2333,26 +2501,22 @@ fn Target::default_memory(self : Target) -> Var {
 
 ///|
 pub fn Target::data(self : Target) -> Var {
-  match self.find_var("mem") {
-    Some(variable) if variable.sort().same(self.default_memory().sort()) =>
-      variable
-    _ => self.default_memory()
-  }
+  self.data_value
 }
 
 ///|
 pub fn Target::code(self : Target) -> Var {
-  self.data()
+  self.code_value
 }
 
 ///|
 pub fn Target::data_addr_size(self : Target) -> Int {
-  self.bits_value
+  memory_key_width(self.data_value, self.bits_value)
 }
 
 ///|
 pub fn Target::data_alignment(self : Target) -> Int {
-  self.byte_value
+  self.data_alignment_value
 }
 
 ///|
@@ -2365,12 +2529,12 @@ pub fn Target::data_addr(
 
 ///|
 pub fn Target::code_addr_size(self : Target) -> Int {
-  self.bits_value
+  memory_key_width(self.code_value, self.bits_value)
 }
 
 ///|
 pub fn Target::code_alignment(self : Target) -> Int {
-  self.byte_value
+  self.code_alignment_value
 }
 
 ///|

@@ -406,7 +406,7 @@ pub fn Target::code_addr(Self, @bitvec.BitVec) -> @types.Word raise @bitvec.BitV
 pub fn Target::code_addr_size(Self) -> Int
 pub fn Target::code_alignment(Self) -> Int
 pub fn Target::compare(Self, Self) -> Int
-pub fn Target::create(name~ : @knowledge.Name, parent? : Self, nicknames? : Array[String], bits? : Int, byte? : Int, endianness? : Endianness, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, options? : TargetOptions, vars? : Array[Var], alias_origins? : Array[AliasOrigin]) -> Self
+pub fn Target::create(name~ : @knowledge.Name, parent? : Self, nicknames? : Array[String], bits? : Int, byte? : Int, data? : Var, code? : Var, data_alignment? : Int, code_alignment? : Int, endianness? : Endianness, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, options? : TargetOptions, vars? : Array[Var], alias_origins? : Array[AliasOrigin]) -> Self
 pub fn Target::data(Self) -> Var
 pub fn Target::data_addr(Self, @bitvec.BitVec) -> @types.Word raise @bitvec.BitVecError
 pub fn Target::data_addr_size(Self) -> Int

@@ -44,6 +44,15 @@ let arg_restricted_attr = "restricted"
 let arg_nonnull_attr = "nonnull"
 
 ///|
+let term_precondition_attr = "precondition"
+
+///|
+let term_invariant_attr = "invariant"
+
+///|
+let term_postcondition_attr = "postcondition"
+
+///|
 pub fn Attr::flag(key : String) -> Attr {
   Attr::new(key~, value="true")
 }
@@ -81,6 +90,21 @@ pub fn Attr::live() -> Attr {
 ///|
 pub fn Attr::dead() -> Attr {
   Attr::flag("dead")
+}
+
+///|
+pub fn Attr::precondition(exp : Exp) -> Attr {
+  Attr::new(key=term_precondition_attr, value=exp.to_string())
+}
+
+///|
+pub fn Attr::invariant(exp : Exp) -> Attr {
+  Attr::new(key=term_invariant_attr, value=exp.to_string())
+}
+
+///|
+pub fn Attr::postcondition(exp : Exp) -> Attr {
+  Attr::new(key=term_postcondition_attr, value=exp.to_string())
 }
 
 ///|

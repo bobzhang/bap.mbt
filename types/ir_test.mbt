@@ -63,6 +63,7 @@ test "tids parse BAP-style textual identifiers" {
 ///|
 test "terms expose common BAP-style attributes and flags" {
   let origin = @types.Tid::for_name("source")
+  let cond : @types.Exp = Var(@types.Var::new(name="ok", typ=Imm(1)))
   let def = @types.Def::create(
       @types.Var::new(name="x", typ=Imm(8)),
       Int(@types.Word::of_int(width=8, 1)),
@@ -71,11 +72,17 @@ test "terms expose common BAP-style attributes and flags" {
     .set_attr(@types.Attr::format("hex"))
     .set_attr(@types.Attr::origin(origin))
     .set_attr(@types.Attr::synthetic())
+    .set_attr(@types.Attr::precondition(cond))
+    .set_attr(@types.Attr::invariant(cond))
+    .set_attr(@types.Attr::postcondition(cond))
     .with_flag("custom-flag")
   assert_true(def.get_attr("filename") == Some("unit.bin"))
   assert_true(def.get_attr("format") == Some("hex"))
   assert_true(def.get_attr("origin") == Some(origin.to_string()))
   assert_true(def.has_flag("synthetic"))
+  assert_true(def.get_attr("precondition") == Some(cond.to_string()))
+  assert_true(def.get_attr("invariant") == Some(cond.to_string()))
+  assert_true(def.get_attr("postcondition") == Some(cond.to_string()))
   assert_true(def.has_flag("custom-flag"))
   assert_true(!def.without_flag("custom-flag").has_flag("custom-flag"))
 }

@@ -221,9 +221,12 @@ pub fn Attr::dead() -> Self
 pub fn Attr::filename(String) -> Self
 pub fn Attr::flag(String) -> Self
 pub fn Attr::format(String) -> Self
+pub fn Attr::invariant(Exp) -> Self
 pub fn Attr::live() -> Self
 pub fn Attr::new(key~ : String, value~ : String) -> Self
 pub fn Attr::origin(Tid) -> Self
+pub fn Attr::postcondition(Exp) -> Self
+pub fn Attr::precondition(Exp) -> Self
 pub fn Attr::stub() -> Self
 pub fn Attr::sub_alias(String) -> Self
 pub fn Attr::sub_const() -> Self

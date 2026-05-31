@@ -665,19 +665,45 @@ pub(all) struct TraceMeta {
 } derive(Eq, Debug)
 
 ///|
+pub(all) struct TraceMetaTagInfo {
+  name : String
+  uuid : String
+} derive(Eq, Debug)
+
+///|
 let trace_meta_binary_key : String = "binary"
+
+///|
+let trace_meta_binary_uuid : String = "391bb6c3-2c93-4592-b292-43e8ec52e786"
 
 ///|
 let trace_meta_tracer_key : String = "tracer"
 
 ///|
+let trace_meta_tracer_uuid : String = "6e36c74e-580c-4496-9bf6-32cc0a09ef04"
+
+///|
 let trace_meta_arch_key : String = "arch"
+
+///|
+let trace_meta_arch_uuid : String = "4bffe6d7-c554-45ec-9fb3-102f18e8f390"
 
 ///|
 let trace_meta_binary_file_stats_key : String = "file-stats"
 
 ///|
+let trace_meta_binary_file_stats_uuid : String = "f7cde0f9-633d-4a9a-8e71-28fef521bee5"
+
+///|
 let trace_meta_trace_stats_key : String = "trace-stats"
+
+///|
+let trace_meta_trace_stats_uuid : String = "c33eea1b-bca3-4cfe-91b5-52949e8f3c6b"
+
+///|
+fn trace_meta_tag_info(name : String, uuid : String) -> TraceMetaTagInfo {
+  { name, uuid }
+}
 
 ///|
 pub fn TraceMeta::empty() -> TraceMeta {
@@ -690,8 +716,18 @@ pub fn TraceMeta::binary_key() -> String {
 }
 
 ///|
+pub fn TraceMeta::binary_uuid() -> String {
+  trace_meta_binary_uuid
+}
+
+///|
 pub fn TraceMeta::tracer_key() -> String {
   trace_meta_tracer_key
+}
+
+///|
+pub fn TraceMeta::tracer_uuid() -> String {
+  trace_meta_tracer_uuid
 }
 
 ///|
@@ -700,13 +736,41 @@ pub fn TraceMeta::arch_key() -> String {
 }
 
 ///|
+pub fn TraceMeta::arch_uuid() -> String {
+  trace_meta_arch_uuid
+}
+
+///|
 pub fn TraceMeta::binary_file_stats_key() -> String {
   trace_meta_binary_file_stats_key
 }
 
 ///|
+pub fn TraceMeta::binary_file_stats_uuid() -> String {
+  trace_meta_binary_file_stats_uuid
+}
+
+///|
 pub fn TraceMeta::trace_stats_key() -> String {
   trace_meta_trace_stats_key
+}
+
+///|
+pub fn TraceMeta::trace_stats_uuid() -> String {
+  trace_meta_trace_stats_uuid
+}
+
+///|
+pub fn TraceMeta::common_tag_infos() -> Array[TraceMetaTagInfo] {
+  [
+    trace_meta_tag_info(trace_meta_binary_key, trace_meta_binary_uuid),
+    trace_meta_tag_info(trace_meta_tracer_key, trace_meta_tracer_uuid),
+    trace_meta_tag_info(trace_meta_arch_key, trace_meta_arch_uuid),
+    trace_meta_tag_info(
+      trace_meta_binary_file_stats_key, trace_meta_binary_file_stats_uuid,
+    ),
+    trace_meta_tag_info(trace_meta_trace_stats_key, trace_meta_trace_stats_uuid),
+  ]
 }
 
 ///|

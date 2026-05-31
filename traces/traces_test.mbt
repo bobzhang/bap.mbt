@@ -311,6 +311,21 @@ test "translated BAP trace metadata dictionaries expose sorted entries and remov
   assert_true(@traces.TraceMeta::arch_key() == "arch")
   assert_true(@traces.TraceMeta::binary_file_stats_key() == "file-stats")
   assert_true(@traces.TraceMeta::trace_stats_key() == "trace-stats")
+  let expected_meta_uuids = [
+    "391bb6c3-2c93-4592-b292-43e8ec52e786", "6e36c74e-580c-4496-9bf6-32cc0a09ef04",
+    "4bffe6d7-c554-45ec-9fb3-102f18e8f390", "f7cde0f9-633d-4a9a-8e71-28fef521bee5",
+    "c33eea1b-bca3-4cfe-91b5-52949e8f3c6b",
+  ]
+  let meta_infos = @traces.TraceMeta::common_tag_infos()
+  assert_true(
+    [
+      for info in meta_infos => info.name
+    ] ==
+    ["binary", "tracer", "arch", "file-stats", "trace-stats"],
+  )
+  assert_true([ for info in meta_infos => info.uuid ] == expected_meta_uuids)
+  assert_true(@traces.TraceMeta::binary_uuid() == expected_meta_uuids[0])
+  assert_true(@traces.TraceMeta::trace_stats_uuid() == expected_meta_uuids[4])
   assert_true(meta.binary() == Some(test_binary()))
   assert_true(meta.tracer() == Some(test_tracer()))
   assert_true(meta.arch() == Some(X86_64))

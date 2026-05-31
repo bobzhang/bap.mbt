@@ -2187,6 +2187,11 @@ pub fn Target::origin_of_var(self : Target, variable : Var) -> AliasOrigin? {
 }
 
 ///|
+pub fn Target::unalias(self : Target, variable : Var) -> AliasOrigin? {
+  self.origin_of_var(variable)
+}
+
+///|
 pub fn Target::origin_of_name(self : Target, name : String) -> AliasOrigin? {
   match self.find_var(name) {
     Some(variable) => self.origin_of_var(variable)

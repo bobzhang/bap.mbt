@@ -965,6 +965,9 @@ test "target role helpers classify common architecture variables" {
       assert_true(amd64.roles_of_var(alias_var).contains(IntegerRegister))
       assert_true(amd64.roles_of_var(alias_var).contains(ResultRegister))
       assert_true(amd64.roles_of_var(alias_var).contains(AliasRegister))
+      assert_true(
+        amd64.unalias(alias_var).map(o => o.range()) == Some(Some((0, 31))),
+      )
     }
     None => fail("missing EAX")
   }

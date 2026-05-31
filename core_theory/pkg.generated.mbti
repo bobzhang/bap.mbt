@@ -476,6 +476,7 @@ pub fn Target::systemz9() -> Self
 pub fn Target::thumb() -> Self
 pub fn Target::thumbeb() -> Self
 pub fn Target::to_string(Self) -> String
+pub fn Target::unalias(Self, Var) -> AliasOrigin?
 pub fn Target::unknown() -> Self
 pub fn Target::vars(Self) -> Array[Var]
 pub fn Target::vars_with_role(Self, Role) -> Array[Var]

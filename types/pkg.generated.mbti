@@ -31,6 +31,14 @@ pub fn[A] fold_exps(Array[Stmt], A, (A, Exp) -> A) -> A
 
 pub fn free_vars(Array[Stmt]) -> Array[Var]
 
+pub fn int_of_int32(Int) -> Result[Int, String]
+
+pub fn int_of_int64(Int64) -> Result[Int, String]
+
+pub fn int_of_uint64(UInt64) -> Result[Int, String]
+
+pub fn int_of_word(Word) -> Result[Int, String]
+
 pub fn is_assigned(Array[Stmt], Var, strict? : Bool) -> Bool
 
 pub fn is_assigned_stmts(Array[Stmt], Var, strict? : Bool) -> Bool

@@ -495,6 +495,12 @@ The OCaml implementation used `unsafe_get` internally and only checked the
 upper bound in `nth`; in MoonBit, guard both lower and upper bounds for `nth`
 and keep aborting `get`/`set` for invalid indexes.
 
+For `bap_int_conversions`, preserve the checked-narrowing contract: values that
+do not fit the host `Int` range return `Err` instead of wrapping. MoonBit `Int`
+is signed 32-bit, so `int_of_int64` accepts only `[-0x80000000, 0x7fffffff]`;
+unsigned inputs accept only `0..0x7fffffff`. Delegate word conversion to the
+ported `Word::to_int` so signed word literals keep BAP's signedness behavior.
+
 When porting BAP `Term.visitor`/`Term.mapper` users, prefer a typed sum view of
 IR terms over untyped callbacks. Keep traversal order explicit and stable
 (program, sub, args, block, phis, defs, jumps), and make reconstruction-aware

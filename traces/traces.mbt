@@ -190,6 +190,13 @@ pub fn TraceMeta::set(
 }
 
 ///|
+pub fn TraceMeta::remove(self : TraceMeta, key : String) -> TraceMeta {
+  let attrs = self.attrs.copy()
+  attrs.remove(key)
+  { attrs, }
+}
+
+///|
 pub fn TraceMeta::get(self : TraceMeta, key : String) -> TraceAttrValue? {
   self.attrs.get(key)
 }
@@ -197,6 +204,31 @@ pub fn TraceMeta::get(self : TraceMeta, key : String) -> TraceAttrValue? {
 ///|
 pub fn TraceMeta::has(self : TraceMeta, key : String) -> Bool {
   self.attrs.contains(key)
+}
+
+///|
+pub fn TraceMeta::is_empty(self : TraceMeta) -> Bool {
+  self.attrs.is_empty()
+}
+
+///|
+pub fn TraceMeta::length(self : TraceMeta) -> Int {
+  self.attrs.length()
+}
+
+///|
+pub fn TraceMeta::entries(self : TraceMeta) -> Array[(String, TraceAttrValue)] {
+  let entries = []
+  for entry in self.attrs {
+    entries.push(entry)
+  }
+  entries.sort_by((left, right) => left.0.compare(right.0))
+  entries
+}
+
+///|
+pub fn TraceMeta::keys(self : TraceMeta) -> Array[String] {
+  self.entries().map(entry => entry.0)
 }
 
 ///|

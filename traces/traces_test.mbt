@@ -186,6 +186,24 @@ test "translated BAP trace byte snapshots round trip metadata and event variants
 }
 
 ///|
+test "translated BAP trace metadata dictionaries expose sorted entries and removal" {
+  let meta = extended_meta()
+  assert_true(!meta.is_empty())
+  assert_true(meta.length() == 8)
+  assert_true(
+    meta.keys() ==
+    [
+      "pid", "arch", "binary", "tracer", "comment", "complete", "file-stats", "trace-stats",
+    ],
+  )
+  assert_true(meta.entries().map(entry => entry.0) == meta.keys())
+  let removed = meta.remove("pid")
+  assert_true(!removed.has("pid"))
+  assert_true(removed.length() == 7)
+  assert_true(removed.remove("missing").keys() == removed.keys())
+}
+
+///|
 test "translated BAP loaded trace registry adds lists and removes traces" {
   let first = new_trace()
   let second = new_trace()

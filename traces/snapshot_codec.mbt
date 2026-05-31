@@ -300,11 +300,7 @@ fn trace_write_attr_value(out : Array[Byte], value : TraceAttrValue) -> Unit {
 
 ///|
 fn trace_write_meta(out : Array[Byte], meta : TraceMeta) -> Unit {
-  let entries = []
-  for entry in meta.attrs {
-    entries.push(entry)
-  }
-  entries.sort_by((left, right) => left.0.compare(right.0))
+  let entries = meta.entries()
   trace_write_i32(out, entries.length())
   for entry in entries {
     trace_write_string(out, entry.0)

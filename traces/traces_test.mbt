@@ -158,6 +158,15 @@ test "translated BAP common trace event tags match helper constructors" {
   assert_true([ for info in tag_infos => info.uuid ] == expected_uuids)
   assert_true(@traces.TraceEvent::memory_load_uuid() == expected_uuids[0])
   assert_true(@traces.TraceEvent::mode_uuid() == expected_uuids[13])
+  assert_true(
+    @traces.TraceEvent::tag_info_for_name("memory-load") == Some(tag_infos[0]),
+  )
+  assert_true(@traces.TraceEvent::tag_info_for_name("missing") == None)
+  assert_true(
+    @traces.TraceEvent::tag_info_for_uuid(expected_uuids[0].to_upper()) ==
+    Some(tag_infos[0]),
+  )
+  assert_true(@traces.TraceEvent::tag_info_for_uuid("not-a-uuid") == None)
   let events = test_events()
   assert_true(
     [
@@ -326,6 +335,15 @@ test "translated BAP trace metadata dictionaries expose sorted entries and remov
   assert_true([ for info in meta_infos => info.uuid ] == expected_meta_uuids)
   assert_true(@traces.TraceMeta::binary_uuid() == expected_meta_uuids[0])
   assert_true(@traces.TraceMeta::trace_stats_uuid() == expected_meta_uuids[4])
+  assert_true(
+    @traces.TraceMeta::tag_info_for_name("binary") == Some(meta_infos[0]),
+  )
+  assert_true(@traces.TraceMeta::tag_info_for_name("missing") == None)
+  assert_true(
+    @traces.TraceMeta::tag_info_for_uuid(expected_meta_uuids[0].to_upper()) ==
+    Some(meta_infos[0]),
+  )
+  assert_true(@traces.TraceMeta::tag_info_for_uuid("not-a-uuid") == None)
   assert_true(meta.binary() == Some(test_binary()))
   assert_true(meta.tracer() == Some(test_tracer()))
   assert_true(meta.arch() == Some(X86_64))

@@ -362,6 +362,27 @@ pub fn TraceEvent::common_tag_infos() -> Array[TraceEventTagInfo] {
 }
 
 ///|
+pub fn TraceEvent::tag_info_for_name(name : String) -> TraceEventTagInfo? {
+  for info in TraceEvent::common_tag_infos() {
+    if info.name == name {
+      return Some(info)
+    }
+  }
+  None
+}
+
+///|
+pub fn TraceEvent::tag_info_for_uuid(uuid : String) -> TraceEventTagInfo? {
+  let normalized = uuid.to_lower()
+  for info in TraceEvent::common_tag_infos() {
+    if info.uuid == normalized {
+      return Some(info)
+    }
+  }
+  None
+}
+
+///|
 pub fn TraceEvent::tag(self : TraceEvent) -> String {
   match self {
     MemoryLoad(_) => trace_event_memory_load_tag
@@ -771,6 +792,27 @@ pub fn TraceMeta::common_tag_infos() -> Array[TraceMetaTagInfo] {
     ),
     trace_meta_tag_info(trace_meta_trace_stats_key, trace_meta_trace_stats_uuid),
   ]
+}
+
+///|
+pub fn TraceMeta::tag_info_for_name(name : String) -> TraceMetaTagInfo? {
+  for info in TraceMeta::common_tag_infos() {
+    if info.name == name {
+      return Some(info)
+    }
+  }
+  None
+}
+
+///|
+pub fn TraceMeta::tag_info_for_uuid(uuid : String) -> TraceMetaTagInfo? {
+  let normalized = uuid.to_lower()
+  for info in TraceMeta::common_tag_infos() {
+    if info.uuid == normalized {
+      return Some(info)
+    }
+  }
+  None
 }
 
 ///|

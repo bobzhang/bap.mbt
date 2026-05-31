@@ -190,6 +190,8 @@ pub fn TraceEvent::syscall_uuid() -> String
 pub fn TraceEvent::syscall_value(Self) -> Syscall?
 pub fn TraceEvent::tag(Self) -> String
 pub fn TraceEvent::tag_info(Self) -> TraceEventTagInfo
+pub fn TraceEvent::tag_info_for_name(String) -> TraceEventTagInfo?
+pub fn TraceEvent::tag_info_for_uuid(String) -> TraceEventTagInfo?
 pub fn TraceEvent::tag_uuid(Self) -> String
 pub fn TraceEvent::timestamp(Int64) -> Self
 pub fn TraceEvent::timestamp_tag() -> String
@@ -243,6 +245,8 @@ pub fn TraceMeta::set_binary(Self, BinaryInfo) -> Self
 pub fn TraceMeta::set_binary_file_stats(Self, FileStatsInfo) -> Self
 pub fn TraceMeta::set_trace_stats(Self, TraceStatsInfo) -> Self
 pub fn TraceMeta::set_tracer(Self, TracerInfo) -> Self
+pub fn TraceMeta::tag_info_for_name(String) -> TraceMetaTagInfo?
+pub fn TraceMeta::tag_info_for_uuid(String) -> TraceMetaTagInfo?
 pub fn TraceMeta::trace_stats(Self) -> TraceStatsInfo?
 pub fn TraceMeta::trace_stats_key() -> String
 pub fn TraceMeta::trace_stats_uuid() -> String

@@ -451,6 +451,17 @@ both operands are representable in MoonBit scalar integers. Comparisons between
 different bit widths should fail with an incompatible-width error instead of
 implicitly widening, truncating, or comparing host integers.
 
+For BAP relation matching, keep the callback contract aligned with the OCaml
+map/set implementation. Iterate left keys in comparator order, report a
+left-to-many relation as `NonInjectiveBwd`, and for many-left-to-one relations
+invoke the unmatched callback once for each left edge with the same
+`NonInjectiveFwd(lefts, right)` reason. Do not collapse those repeated forward
+reports into one aggregate callback; BAP's `matching` folds per left key.
+`bap_relation.mli` documents `mem rel x s` as membership of the pair `(x, s)`,
+but the OCaml implementation checks only that `x` appears on the left and `s`
+appears on the right. Preserve the documented pair-membership contract in the
+MoonBit port and keep a regression for the cross-pair case.
+
 Many BAP plugins are intentionally thin `Project.map_program` wrappers around
 term transforms (SSA, SSA destruction, flatten, trivial-condition-form, stub
 resolution). Port the pure `types` transform first, then expose a project-level

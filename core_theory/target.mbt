@@ -1423,7 +1423,9 @@ fn target_specific_role_names(target : Target, role : Role) -> Array[String]? {
   } else if target.belongs(Target::aarch64()) ||
     target.belongs(Target::aarch64_be()) {
     Some(aarch64_role_names(role))
-  } else if target.belongs(Target::arm()) || target.belongs(Target::armeb()) {
+  } else if target.belongs(Target::arm()) ||
+    target.belongs(Target::armeb()) ||
+    (target.belongs(Target::arm_family()) && target.bits() == 32) {
     Some(arm32_role_names(role))
   } else if target.belongs(Target::mips_family()) {
     Some(mips_role_names(target.bits(), role))
@@ -2064,6 +2066,142 @@ pub fn Target::arm_family() -> Target {
 }
 
 ///|
+fn arm_le_base(name : String, nickname : String, parent : Target) -> Target {
+  Target::create(name=target_name("\{name}+le"), parent~, nicknames=[nickname])
+}
+
+///|
+fn arm_le_v4() -> Target {
+  Target::create(
+    name=target_name("armv4+le"),
+    parent=Target::arm_family(),
+    nicknames=["armv4"],
+    bits=32,
+    endianness=LittleEndian,
+    vars=arm32_vars(),
+    alias_origins=arm32_alias_origins(),
+  )
+}
+
+///|
+fn arm_le_v4t() -> Target {
+  arm_le_base("armv4t", "armv4t", arm_le_v4())
+}
+
+///|
+fn arm_le_v5() -> Target {
+  arm_le_base("armv5", "armv5", arm_le_v4t())
+}
+
+///|
+fn arm_le_v5t() -> Target {
+  arm_le_base("armv5t", "armv5t", arm_le_v5())
+}
+
+///|
+fn arm_le_v5te() -> Target {
+  arm_le_base("armv5te", "armv5te", arm_le_v5t())
+}
+
+///|
+fn arm_le_v5tej() -> Target {
+  arm_le_base("armv5tej", "armv5tej", arm_le_v5te())
+}
+
+///|
+fn arm_le_v6() -> Target {
+  arm_le_base("armv6", "armv6", arm_le_v5tej())
+}
+
+///|
+fn arm_le_v6t2() -> Target {
+  arm_le_base("armv6t2", "armv6t2", arm_le_v6())
+}
+
+///|
+fn arm_le_v6z() -> Target {
+  arm_le_base("armv6z", "armv6z", arm_le_v6())
+}
+
+///|
+fn arm_le_v6k() -> Target {
+  arm_le_base("armv6k", "armv6k", arm_le_v6z())
+}
+
+///|
+fn arm_le_v6m() -> Target {
+  arm_le_base("armv6-m", "armv6-m", arm_le_v6())
+}
+
+///|
+fn arm_le_v7() -> Target {
+  arm_le_base("armv7", "armv7", arm_le_v6t2())
+}
+
+///|
+fn arm_le_v7m() -> Target {
+  arm_le_base("armv7-m", "armv7-m", arm_le_v7())
+}
+
+///|
+fn arm_le_v7fp() -> Target {
+  arm_le_base("armv7+fp", "armv7+fp", arm_le_v7())
+}
+
+///|
+fn arm_le_v7a() -> Target {
+  arm_le_base("armv7-a", "armv7-a", arm_le_v7())
+}
+
+///|
+fn arm_le_v7afp() -> Target {
+  arm_le_base("armv7-a+fp", "armv7-a+fp", arm_le_v7a())
+}
+
+///|
+fn arm_le_v8a32() -> Target {
+  arm_le_base("armv8-a+aarch32", "armv8-a+aarch32", arm_le_v7())
+}
+
+///|
+fn arm_le_v8m32() -> Target {
+  arm_le_base("armv8-m+aarch32", "armv8-m+aarch32", arm_le_v7m())
+}
+
+///|
+fn arm_le_v8r32() -> Target {
+  arm_le_base("armv8-r+aarch32", "armv8-r+aarch32", arm_le_v7())
+}
+
+///|
+fn append_arm_le_version_targets(items : Array[Target]) -> Unit {
+  for
+    target in [
+      arm_le_v4(),
+      arm_le_v4t(),
+      arm_le_v5(),
+      arm_le_v5t(),
+      arm_le_v5te(),
+      arm_le_v5tej(),
+      arm_le_v6(),
+      arm_le_v6t2(),
+      arm_le_v6z(),
+      arm_le_v6k(),
+      arm_le_v6m(),
+      arm_le_v7(),
+      arm_le_v7m(),
+      arm_le_v7fp(),
+      arm_le_v7a(),
+      arm_le_v7afp(),
+      arm_le_v8a32(),
+      arm_le_v8m32(),
+      arm_le_v8r32(),
+    ] {
+    items.push(target)
+  }
+}
+
+///|
 fn with_endian_suffix(names : Array[String], suffix : String) -> Array[String] {
   names + [ for name in names => "\{name}+\{suffix}" ]
 }
@@ -2103,7 +2241,7 @@ fn aarch64_version_nicknames() -> Array[String] {
 pub fn Target::arm() -> Target {
   Target::create(
     name=target_name("arm"),
-    parent=Target::arm_family(),
+    parent=arm_le_v7afp(),
     nicknames=arm32_le_nicknames(),
     bits=32,
     endianness=LittleEndian,
@@ -2785,39 +2923,45 @@ pub fn common_targets() -> Array[Target] {
     Target::i686(),
     Target::x86_64(),
     Target::arm_family(),
-    Target::arm(),
-    Target::armeb(),
-    Target::thumb(),
-    Target::thumbeb(),
-    Target::aarch64(),
-    Target::aarch64_be(),
-    Target::mips_family(),
-    Target::mipsbi(),
-    Target::mips(),
-    Target::mipsel(),
-    Target::mips64bi(),
-    Target::mips64(),
-    Target::mips64el(),
-    Target::powerpc_family(),
-    Target::powerpcbi(),
-    Target::powerpc(),
-    Target::powerpcle(),
-    Target::powerpc64bi(),
-    Target::powerpc64(),
-    Target::powerpc64le(),
-    Target::riscv(),
-    Target::riscv32(),
-    Target::riscv64(),
-    Target::sparc(),
-    Target::sparcv9(),
-    Target::nvptx(),
-    Target::nvptx64(),
-    Target::hexagon(),
-    Target::r600(),
-    Target::systemz(),
-    Target::systemz9(),
-    Target::xcore(),
   ]
+  append_arm_le_version_targets(items)
+  for
+    target in [
+      Target::arm(),
+      Target::armeb(),
+      Target::thumb(),
+      Target::thumbeb(),
+      Target::aarch64(),
+      Target::aarch64_be(),
+      Target::mips_family(),
+      Target::mipsbi(),
+      Target::mips(),
+      Target::mipsel(),
+      Target::mips64bi(),
+      Target::mips64(),
+      Target::mips64el(),
+      Target::powerpc_family(),
+      Target::powerpcbi(),
+      Target::powerpc(),
+      Target::powerpcle(),
+      Target::powerpc64bi(),
+      Target::powerpc64(),
+      Target::powerpc64le(),
+      Target::riscv(),
+      Target::riscv32(),
+      Target::riscv64(),
+      Target::sparc(),
+      Target::sparcv9(),
+      Target::nvptx(),
+      Target::nvptx64(),
+      Target::hexagon(),
+      Target::r600(),
+      Target::systemz(),
+      Target::systemz9(),
+      Target::xcore(),
+    ] {
+    items.push(target)
+  }
   append_x86_target_variants(items)
   append_arm_target_variants(items)
   append_mips_target_variants(items)

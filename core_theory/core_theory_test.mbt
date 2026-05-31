@@ -140,6 +140,33 @@ test "target registry resolves common and custom declarations" {
     }
     Err(reason) => fail(reason)
   }
+  match @core_theory.get_target("armv4") {
+    Ok(target) => {
+      assert_true(target.matches("armv4+le"))
+      assert_true(target.bits() == 32)
+      assert_true(target.endianness() == LittleEndian)
+      assert_true(target.belongs(@core_theory.Target::arm_family()))
+      assert_true(!target.belongs(@core_theory.Target::arm()))
+      assert_true(target.find_var("R0") is Some(_))
+    }
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.get_target("armv7-a+fp") {
+    Ok(target) => {
+      assert_true(target.matches("armv7-a+fp+le"))
+      assert_true(@core_theory.Target::arm().belongs(target))
+      assert_true(target.find_var("SP") is Some(_))
+    }
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.get_target("armv8-m+aarch32+le") {
+    Ok(target) => {
+      assert_true(target.matches("armv8-m+aarch32"))
+      assert_true(target.belongs(@core_theory.Target::arm_family()))
+      assert_true(target.endianness() == LittleEndian)
+    }
+    Err(reason) => fail(reason)
+  }
   match @core_theory.get_target("ia-32") {
     Ok(target) => assert_true(target.matches("x86"))
     Err(reason) => fail(reason)
@@ -354,13 +381,17 @@ test "target registry resolves common and custom declarations" {
   assert_true(@core_theory.Target::lookup("thumb-none-eabihard") is Some(_))
   match @core_theory.Target::lookup("armv7-a+fp") {
     Some(target) => {
-      assert_true(target.matches("arm"))
+      assert_true(target.matches("armv7-a+fp+le"))
+      assert_true(@core_theory.Target::arm().belongs(target))
       assert_true(target.find_var("D31") is Some(_))
     }
     None => fail("missing ARMv7-A+FP target alias")
   }
   match @core_theory.Target::lookup("armv7-a+fp+le") {
-    Some(target) => assert_true(target.matches("arm"))
+    Some(target) => {
+      assert_true(target.matches("armv7-a+fp"))
+      assert_true(@core_theory.Target::arm().belongs(target))
+    }
     None => fail("missing ARMv7-A+FP little-endian target alias")
   }
   match @core_theory.Target::lookup("armv7-a+fp+be") {
@@ -372,8 +403,9 @@ test "target registry resolves common and custom declarations" {
   }
   match @core_theory.Target::lookup("armv7-m") {
     Some(target) => {
-      assert_true(target.matches("thumb"))
-      assert_true(target.belongs(@core_theory.Target::arm()))
+      assert_true(target.matches("armv7-m+le"))
+      assert_true(target.belongs(@core_theory.Target::arm_family()))
+      assert_true(!target.belongs(@core_theory.Target::arm()))
     }
     None => fail("missing ARMv7-M target alias")
   }

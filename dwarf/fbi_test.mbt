@@ -248,17 +248,17 @@ test "translated DWARF FBI resolves absolute function name references" {
 ///|
 test "translated DWARF FBI extracts indexed string-table names" {
   let abbrev = b"\x01\x2e\x00" +
-    b"\x03\x25" +
+    b"\x03\x26" +
     b"\x11\x01" +
     b"\x12\x0b" +
     b"\x00\x00" +
     b"\x00"
-  let info = b"\x0f\x00\x00\x00" +
+  let info = b"\x10\x00\x00\x00" +
     b"\x04\x00" +
     b"\x00\x00\x00\x00" +
     b"\x04" +
     b"\x01" +
-    b"\x01" +
+    b"\x01\x00" +
     b"\x70\x00\x00\x00" +
     b"\x06" +
     b"\x00"
@@ -326,11 +326,11 @@ test "translated DWARF FBI resolves DWARF5 addrx function bounds" {
     b"\x00\x00" +
     b"\x02\x2e\x00" +
     b"\x03\x08" +
-    b"\x11\x29" +
-    b"\x12\x29" +
+    b"\x11\x2a" +
+    b"\x12\x2b" +
     b"\x00\x00" +
     b"\x00"
-  let info = b"\x17\x00\x00\x00" +
+  let info = b"\x1a\x00\x00\x00" +
     b"\x05\x00" +
     b"\x01" +
     b"\x04" +
@@ -339,8 +339,8 @@ test "translated DWARF FBI resolves DWARF5 addrx function bounds" {
     b"\x08\x00\x00\x00" +
     b"\x02" +
     b"addrx\x00" +
-    b"\x00" +
-    b"\x01" +
+    b"\x00\x00" +
+    b"\x01\x00\x00" +
     b"\x00"
   let addr = b"\x0c\x00\x00\x00" +
     b"\x05\x00" +

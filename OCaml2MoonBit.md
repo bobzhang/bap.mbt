@@ -303,9 +303,12 @@ keep string ownership explicit: `DW_FORM_strp` indexes `.debug_str` directly,
 whereas `DW_FORM_strx*` first indexes `.debug_str_offsets` using the
 compilation unit's `DW_AT_str_offsets_base`, then uses the resulting offset in
 `.debug_str`. Non-capturing DIE fields should still skip the encoded form
-without forcing optional sections to exist. Treat `DW_AT_linkage_name` as a
-function-name fallback when `DW_AT_name` is absent; if both are present, keep
-the source-level `DW_AT_name` as the display name. For DWARF4-style
+without forcing optional sections to exist. Fixed-width indexed forms such as
+`DW_FORM_strx2`/`DW_FORM_addrx3` encode the index in the DIE stream using the
+unit endian, unlike `DW_FORM_strx`/`DW_FORM_addrx` LEB128 indexes. Treat
+`DW_AT_linkage_name` as a function-name fallback when `DW_AT_name` is absent;
+if both are present, keep the source-level `DW_AT_name` as the display name.
+For DWARF4-style
 `DW_AT_ranges`, parse `.debug_ranges` address-pair lists and collapse
 non-contiguous ranges to the covering function interval when the public MoonBit
 value only has `low_pc`/`high_pc`. Track the current compilation-unit

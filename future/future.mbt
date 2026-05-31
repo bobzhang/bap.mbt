@@ -139,6 +139,19 @@ pub fn[A, B, C, D] Future::map3(
 }
 
 ///|
+pub fn[A, B, C, D, E] Future::map4(
+  first : Future[A],
+  second : Future[B],
+  third : Future[C],
+  fourth : Future[D],
+  f : (A, B, C, D) -> E,
+) -> Future[E] {
+  Future::map3(first, second, third, fn(a, b, c) { fn(d) { f(a, b, c, d) } }).apply(
+    fourth,
+  )
+}
+
+///|
 pub fn[A, B, C] Future::apply2(
   functions : Future[(A, B) -> C],
   left : Future[A],
@@ -155,6 +168,17 @@ pub fn[A, B, C, D] Future::apply3(
   third : Future[C],
 ) -> Future[D] {
   functions.bind(fn(f) { Future::map3(first, second, third, f) })
+}
+
+///|
+pub fn[A, B, C, D, E] Future::apply4(
+  functions : Future[(A, B, C, D) -> E],
+  first : Future[A],
+  second : Future[B],
+  third : Future[C],
+  fourth : Future[D],
+) -> Future[E] {
+  functions.bind(fn(f) { Future::map4(first, second, third, fourth, f) })
 }
 
 ///|
@@ -527,6 +551,23 @@ pub fn[A, B, C, D] Stream::map3(
 }
 
 ///|
+pub fn[A, B, C, D, E] Stream::map4(
+  first : Stream[A],
+  second : Stream[B],
+  third : Stream[C],
+  fourth : Stream[D],
+  f : (A, B, C, D) -> E,
+) -> Stream[E] {
+  first
+  .zip(second)
+  .zip(third)
+  .merge(fourth, fn(pair, d) {
+    let ((a, b), c) = pair
+    f(a, b, c, d)
+  })
+}
+
+///|
 pub fn[A, B, C] Stream::apply2(
   functions : Stream[(A, B) -> C],
   left : Stream[A],
@@ -548,6 +589,24 @@ pub fn[A, B, C, D] Stream::apply3(
   .merge(third, fn(pair, c) {
     let ((f, a), b) = pair
     f(a, b, c)
+  })
+}
+
+///|
+pub fn[A, B, C, D, E] Stream::apply4(
+  functions : Stream[(A, B, C, D) -> E],
+  first : Stream[A],
+  second : Stream[B],
+  third : Stream[C],
+  fourth : Stream[D],
+) -> Stream[E] {
+  functions
+  .zip(first)
+  .zip(second)
+  .zip(third)
+  .merge(fourth, fn(pair, d) {
+    let (((f, a), b), c) = pair
+    f(a, b, c, d)
   })
 }
 

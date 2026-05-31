@@ -99,6 +99,28 @@ test "translated BAP future multi-argument applicative helpers" {
   first_promise.fulfill(1)
   assert_true(mapped3.peek_exn() == 123)
   assert_true(applied3.peek_exn() == 6)
+
+  let (one, one_promise) = @future.Future::create()
+  let (two, two_promise) = @future.Future::create()
+  let (three, three_promise) = @future.Future::create()
+  let (four, four_promise) = @future.Future::create()
+  let mapped4 = @future.Future::map4(one, two, three, four, fn(a, b, c, d) {
+    a * 1000 + b * 100 + c * 10 + d
+  })
+  let applied4 = @future.Future::apply4(
+    @future.Future::resolved(fn(a, b, c, d) { a + b + c + d }),
+    one,
+    two,
+    three,
+    four,
+  )
+  two_promise.fulfill(2)
+  four_promise.fulfill(4)
+  assert_true(!mapped4.is_decided())
+  one_promise.fulfill(1)
+  three_promise.fulfill(3)
+  assert_true(mapped4.peek_exn() == 1234)
+  assert_true(applied4.peek_exn() == 10)
 }
 
 ///|
@@ -442,6 +464,56 @@ test "translated BAP stream multi-argument applicative helpers" {
   apply3_second_signal.repeat(times=2, ())
   apply3_third_signal.repeat(times=2, ())
   assert_true(applied3_values == [111, 240])
+
+  let (map4_first, map4_first_signal, _) = @future.Stream::of_array([1, 2])
+  let (map4_second, map4_second_signal, _) = @future.Stream::of_array([10, 20])
+  let (map4_third, map4_third_signal, _) = @future.Stream::of_array([100, 200])
+  let (map4_fourth, map4_fourth_signal, _) = @future.Stream::of_array([
+    1000, 2000,
+  ])
+  let mapped4 = @future.Stream::map4(
+    map4_first,
+    map4_second,
+    map4_third,
+    map4_fourth,
+    fn(a, b, c, d) { a + b + c + d },
+  )
+  let mapped4_values : Array[Int] = []
+  mapped4.observe(fn(value) { mapped4_values.push(value) })
+  map4_first_signal.repeat(times=2, ())
+  map4_second_signal.repeat(times=2, ())
+  map4_third_signal.repeat(times=2, ())
+  map4_fourth_signal.repeat(times=2, ())
+  assert_true(mapped4_values == [1111, 2222])
+
+  let functions4 : Array[(Int, Int, Int, Int) -> Int] = [
+    fn(a, b, c, d) { a + b + c + d },
+    fn(a, b, c, d) { a * b + c + d },
+  ]
+  let (function4_stream, function4_signal, _) = @future.Stream::of_array(
+    functions4,
+  )
+  let (apply4_first, apply4_first_signal, _) = @future.Stream::of_array([1, 2])
+  let (apply4_second, apply4_second_signal, _) = @future.Stream::of_array([
+    10, 20,
+  ])
+  let (apply4_third, apply4_third_signal, _) = @future.Stream::of_array([
+    100, 200,
+  ])
+  let (apply4_fourth, apply4_fourth_signal, _) = @future.Stream::of_array([
+    1000, 2000,
+  ])
+  let applied4 = @future.Stream::apply4(
+    function4_stream, apply4_first, apply4_second, apply4_third, apply4_fourth,
+  )
+  let applied4_values : Array[Int] = []
+  applied4.observe(fn(value) { applied4_values.push(value) })
+  function4_signal.repeat(times=2, ())
+  apply4_first_signal.repeat(times=2, ())
+  apply4_second_signal.repeat(times=2, ())
+  apply4_third_signal.repeat(times=2, ())
+  apply4_fourth_signal.repeat(times=2, ())
+  assert_true(applied4_values == [1111, 2240])
 }
 
 ///|

@@ -582,6 +582,13 @@ moon run -c $'fn main { let buf = @buffer.new(); buf.write_bytes(b"PDF"); buf.wr
 
 The canonical MoonBit byte-builder is `@buffer.Buffer` (from `moonbitlang/core/buffer`). Construct with `@buffer.new()` (optionally `size_hint=N`), append static ASCII via `buf.write_bytes(b"...")`, single bytes via `buf.write_byte(n)`, dynamic text via `buf.write_bytes(@ascii.encode(text))`, binary payloads via `buf.write_bytes(view)`, then freeze with `buf.contents()`. Reserve `Array[Byte]` plus `Bytes::from_array` for cases that need random-access mutation of in-flight bytes; `Buffer` is the OCaml `Buffer.t` analogue.
 
+OCaml libraries that derive `sexp_of_t` or bin-prot serializers for `Bytes.t`
+still need byte-specific MoonBit codecs. Do not round-trip arbitrary bytes
+through `String`. In this port, `regular` exposes explicit byte-safe hex/text
+and length-prefixed binary helpers for the BAP bytes round-trip tests; callers
+use those helpers at serialization boundaries and keep ordinary byte payloads as
+`Bytes`/`BytesView`.
+
 ```sh
 moon run -c 'fn main { let s = "/UniJIS-UCS2-H"; println(s.has_prefix("/Uni")); println(s.contains("-UCS2-")); println(s.has_suffix("-H")); println(s[1:]); println(s[1:].to_owned()) }'
 # true

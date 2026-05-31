@@ -6,6 +6,20 @@ import {
 }
 
 // Values
+pub fn bytes_bin_read(BytesView, pos? : Int) -> Result[(Bytes, Int), String]
+
+pub fn bytes_bin_size(BytesView) -> Int
+
+pub fn bytes_bin_write(BytesView) -> Bytes
+
+pub fn bytes_from_hex(StringView) -> Result[Bytes, String]
+
+pub fn bytes_from_sexp_atom(StringView) -> Result[Bytes, String]
+
+pub fn bytes_to_hex(BytesView) -> String
+
+pub fn bytes_to_sexp_atom(BytesView) -> String
+
 pub fn digest_bytes(BytesView) -> Digest
 
 pub fn digest_string(StringView) -> Digest

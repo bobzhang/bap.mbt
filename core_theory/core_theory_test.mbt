@@ -588,6 +588,17 @@ test "target role helpers classify common architecture variables" {
   let arm = @core_theory.Target::arm()
   assert_true(arm.find_role(ProgramCounter).map(v => v.ident()) == Some("PC"))
   assert_true(arm.vars_with_role(Argument).any(v => v.ident() == "R0"))
+  match arm.find_var("LR") {
+    Some(link) => {
+      assert_true(arm.roles_of_var(link).contains(LinkRegister))
+      assert_true(arm.roles_of_var(link).contains(CallerSaved))
+    }
+    None => fail("missing LR")
+  }
+  match arm.find_var("R4") {
+    Some(saved) => assert_true(arm.roles_of_var(saved).contains(CalleeSaved))
+    None => fail("missing R4")
+  }
   let riscv = @core_theory.Target::riscv64()
   assert_true(riscv.role_aliases(ResultRegister).contains("x10"))
   assert_true(riscv.role_aliases(ResultRegister).contains("a0"))
@@ -597,6 +608,29 @@ test "target role helpers classify common architecture variables" {
   match riscv.find_var("X2") {
     Some(sp) => assert_true(riscv.roles_of_var(sp).contains(StackPointer))
     None => fail("missing X2")
+  }
+  match riscv.find_var("X1") {
+    Some(ra) => {
+      assert_true(riscv.roles_of_var(ra).contains(LinkRegister))
+      assert_true(riscv.roles_of_var(ra).contains(CallerSaved))
+    }
+    None => fail("missing X1")
+  }
+  match riscv.find_var("X3") {
+    Some(tp) => assert_true(riscv.roles_of_var(tp).contains(ThreadPointer))
+    None => fail("missing X3")
+  }
+  match riscv.find_var("X8") {
+    Some(saved) => assert_true(riscv.roles_of_var(saved).contains(CalleeSaved))
+    None => fail("missing X8")
+  }
+  match riscv.find_var("X0") {
+    Some(zero) => {
+      assert_true(riscv.roles_of_var(zero).contains(Constant))
+      assert_true(riscv.roles_of_var(zero).contains(ZeroRegister))
+      assert_true(!riscv.roles_of_var(zero).contains(ResultRegister))
+    }
+    None => fail("missing X0")
   }
   match riscv.find_var("sp") {
     Some(sp) => assert_true(riscv.roles_of_var(sp).contains(StackPointer))
@@ -630,13 +664,24 @@ test "target role helpers classify common architecture variables" {
     }
     None => fail("missing sp alias origin")
   }
-  match riscv.find_var("X0") {
-    Some(zero) =>
-      assert_true(!riscv.roles_of_var(zero).contains(ResultRegister))
-    None => fail("missing X0")
-  }
   let mips64 = @core_theory.Target::mips64()
   assert_true(mips64.find_var("F31") is Some(_))
+  match mips64.find_var("ZERO") {
+    Some(zero) => {
+      assert_true(mips64.roles_of_var(zero).contains(Constant))
+      assert_true(mips64.roles_of_var(zero).contains(ZeroRegister))
+    }
+    None => fail("missing ZERO")
+  }
+  match mips64.find_var("R31") {
+    Some(link) => assert_true(mips64.roles_of_var(link).contains(LinkRegister))
+    None => fail("missing R31")
+  }
+  match mips64.find_var("R26") {
+    Some(reserved) =>
+      assert_true(mips64.roles_of_var(reserved).contains(Reserved))
+    None => fail("missing R26")
+  }
   match mips64.find_var("F0") {
     Some(result) =>
       assert_true(mips64.roles_of_var(result).contains(ResultRegister))
@@ -658,6 +703,26 @@ test "target role helpers classify common architecture variables" {
   assert_true(!ppc64.role_aliases(Argument).contains("rdi"))
   assert_true(ppc64.find_var("F31") is Some(_))
   assert_true(ppc64.find_var("V31") is Some(_))
+  match ppc64.find_var("LR") {
+    Some(link) => assert_true(ppc64.roles_of_var(link).contains(LinkRegister))
+    None => fail("missing LR")
+  }
+  match ppc64.find_var("ZERO") {
+    Some(zero) => {
+      assert_true(ppc64.roles_of_var(zero).contains(Constant))
+      assert_true(ppc64.roles_of_var(zero).contains(ZeroRegister))
+    }
+    None => fail("missing ZERO")
+  }
+  match ppc64.find_var("R2") {
+    Some(reserved) =>
+      assert_true(ppc64.roles_of_var(reserved).contains(Reserved))
+    None => fail("missing R2")
+  }
+  match ppc64.find_var("R14") {
+    Some(saved) => assert_true(ppc64.roles_of_var(saved).contains(CalleeSaved))
+    None => fail("missing R14")
+  }
   match ppc64.find_var("CR0EQ") {
     Some(flag) => assert_true(ppc64.roles_of_var(flag).contains(Status))
     None => fail("missing CR0EQ")
@@ -680,10 +745,18 @@ test "target role helpers classify common architecture variables" {
     Some(reg) => assert_true(!aarch64.roles_of_var(reg).contains(StackPointer))
     None => fail("missing X2")
   }
+  match aarch64.find_var("X30") {
+    Some(link) => assert_true(aarch64.roles_of_var(link).contains(LinkRegister))
+    None => fail("missing X30")
+  }
   let systemz = @core_theory.Target::systemz()
   match systemz.find_var("R15") {
     Some(sp) => assert_true(systemz.roles_of_var(sp).contains(StackPointer))
     None => fail("missing R15")
+  }
+  match systemz.find_var("R14") {
+    Some(link) => assert_true(systemz.roles_of_var(link).contains(LinkRegister))
+    None => fail("missing R14")
   }
   match @core_theory.Target::systemz9().origin_of_name("sp") {
     Some(origin) => {

@@ -282,8 +282,15 @@ pub(all) enum Role {
   FramePointer
   ProgramCounter
   Status
+  Constant
+  ZeroRegister
+  LinkRegister
+  ThreadPointer
   Argument
   ResultRegister
+  CallerSaved
+  CalleeSaved
+  Reserved
 } derive(Eq, Debug)
 
 ///|
@@ -524,7 +531,10 @@ fn ppc_vars(bits : Int) -> Array[Var] {
   append_vars(items, numbered_word_vars(64, "F", 32))
   append_vars(items, numbered_word_vars(128, "V", 32))
   append_vars(items, ppc_flag_vars())
-  append_vars(items, named_word_vars(bits, ["CTR", "LR", "TAR", "PC", "SP"]))
+  append_vars(
+    items,
+    named_word_vars(bits, ["CTR", "LR", "TAR", "PC", "SP", "ZERO"]),
+  )
   items.push(mem_var(bits, 8, "mem"))
   items
 }
@@ -580,12 +590,19 @@ fn target_role_names(role : Role) -> Array[String] {
     ProgramCounter => ["pc", "eip", "rip"]
     Status =>
       ["flags", "eflags", "cpsr", "nzcv", "cf", "pf", "af", "zf", "sf", "of"]
+    Constant => ["zero"]
+    ZeroRegister => ["zero"]
+    LinkRegister => ["lr", "ra"]
+    ThreadPointer => ["tp"]
     Argument =>
       [
         "r0", "r1", "r2", "r3", "x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7", "rdi",
         "rsi", "rdx", "rcx", "r8", "r9",
       ]
     ResultRegister => ["r0", "x0", "eax", "rax"]
+    CallerSaved => []
+    CalleeSaved => []
+    Reserved => []
   }
 }
 
@@ -615,8 +632,12 @@ fn x86_64_role_names(role : Role) -> Array[String] {
     FramePointer => ["rbp"]
     ProgramCounter => ["rip"]
     Status => ["eflags", "rflags", "cf", "pf", "af", "zf", "sf", "of"]
+    Constant | ZeroRegister | LinkRegister | ThreadPointer => []
     Argument => ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]
     ResultRegister => ["rax", "rdx"]
+    CallerSaved => []
+    CalleeSaved => []
+    Reserved => []
   }
 }
 
@@ -628,8 +649,12 @@ fn x86_32_role_names(role : Role) -> Array[String] {
     FramePointer => ["ebp"]
     ProgramCounter => ["eip"]
     Status => ["eflags", "cf", "pf", "af", "zf", "sf", "of"]
+    Constant | ZeroRegister | LinkRegister | ThreadPointer => []
     Argument => []
     ResultRegister => ["eax", "edx"]
+    CallerSaved => []
+    CalleeSaved => []
+    Reserved => []
   }
 }
 
@@ -641,8 +666,13 @@ fn arm32_role_names(role : Role) -> Array[String] {
     FramePointer => ["r11"]
     ProgramCounter => ["pc"]
     Status => ["cpsr", "nf", "zf", "cf", "vf", "qf"]
+    Constant | ZeroRegister | ThreadPointer => []
+    LinkRegister => ["lr", "r14"]
     Argument => ["r0", "r1", "r2", "r3"]
     ResultRegister => ["r0", "r1"]
+    CallerSaved => ["r0", "r1", "r2", "r3", "r12", "lr"]
+    CalleeSaved => ["r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11", "sp"]
+    Reserved => []
   }
 }
 
@@ -654,9 +684,14 @@ fn aarch64_role_names(role : Role) -> Array[String] {
     FramePointer => ["fp", "x29", "r29"]
     ProgramCounter => ["pc"]
     Status => ["nzcv", "nf", "zf", "cf", "vf"]
+    Constant | ZeroRegister | ThreadPointer => []
+    LinkRegister => ["lr", "x30", "r30"]
     Argument =>
       concat_role_names([role_names("x", 0, 7), role_names("v", 0, 7)])
     ResultRegister => ["x0", "x1", "v0", "v1"]
+    CallerSaved => []
+    CalleeSaved => []
+    Reserved => []
   }
 }
 
@@ -668,6 +703,10 @@ fn mips_role_names(bits : Int, role : Role) -> Array[String] {
     FramePointer => ["fp", "r30"]
     ProgramCounter => ["pc"]
     Status => []
+    Constant => ["zero", "r0"]
+    ZeroRegister => ["zero", "r0"]
+    LinkRegister => ["ra", "r31"]
+    ThreadPointer => []
     Argument =>
       if bits == 64 {
         concat_role_names([role_names("r", 4, 11), role_names("f", 1, 8)])
@@ -675,6 +714,9 @@ fn mips_role_names(bits : Int, role : Role) -> Array[String] {
         concat_role_names([role_names("r", 4, 7), role_names("f", 1, 4)])
       }
     ResultRegister => ["v0", "r2", "f0"]
+    CallerSaved => []
+    CalleeSaved => []
+    Reserved => ["k0", "k1", "r26", "r27"]
   }
 }
 
@@ -701,9 +743,22 @@ fn powerpc_role_names(role : Role) -> Array[String] {
           for group in 0..<=7 => "cr\{group}un"
         ],
       ])
+    Constant => ["zero"]
+    ZeroRegister => ["zero"]
+    LinkRegister => ["lr"]
+    ThreadPointer => []
     Argument =>
       concat_role_names([role_names("r", 3, 10), role_names("f", 1, 8)])
     ResultRegister => ["r3", "r4", "f0"]
+    CallerSaved =>
+      concat_role_names([["r0"], role_names("r", 3, 12), role_names("f", 0, 13)])
+    CalleeSaved =>
+      concat_role_names([
+        ["r1"],
+        role_names("r", 14, 31),
+        role_names("f", 14, 31),
+      ])
+    Reserved => ["r2"]
   }
 }
 
@@ -715,6 +770,10 @@ fn riscv_role_names(role : Role) -> Array[String] {
     FramePointer => ["fp", "s0", "x8"]
     ProgramCounter => ["pc"]
     Status => []
+    Constant => ["zero", "x0"]
+    ZeroRegister => ["zero", "x0"]
+    LinkRegister => ["ra", "x1"]
+    ThreadPointer => ["gp", "x3"]
     Argument =>
       concat_role_names([
         role_names("x", 10, 17),
@@ -727,6 +786,25 @@ fn riscv_role_names(role : Role) -> Array[String] {
         role_names("f", 10, 12),
         role_names("a", 0, 2),
       ])
+    CallerSaved =>
+      concat_role_names([
+        ["ra", "x1"],
+        role_names("x", 5, 7),
+        role_names("x", 10, 17),
+        role_names("x", 28, 31),
+        role_names("f", 0, 7),
+        role_names("f", 10, 17),
+        role_names("f", 28, 31),
+      ])
+    CalleeSaved =>
+      concat_role_names([
+        ["sp", "x2"],
+        role_names("x", 8, 9),
+        role_names("x", 18, 27),
+        role_names("f", 8, 9),
+        role_names("f", 18, 27),
+      ])
+    Reserved => []
   }
 }
 
@@ -738,8 +816,13 @@ fn sparc_role_names(role : Role) -> Array[String] {
     FramePointer => ["i6"]
     ProgramCounter => ["pc", "npc"]
     Status => []
+    Constant | ZeroRegister | ThreadPointer => []
+    LinkRegister => []
     Argument => role_names("o", 0, 5)
     ResultRegister => ["o0", "o1"]
+    CallerSaved => []
+    CalleeSaved => []
+    Reserved => []
   }
 }
 
@@ -751,8 +834,13 @@ fn systemz_role_names(role : Role) -> Array[String] {
     FramePointer => []
     ProgramCounter => ["pc"]
     Status => []
+    Constant | ZeroRegister | ThreadPointer => []
+    LinkRegister => ["r14"]
     Argument => role_names("r", 2, 6)
     ResultRegister => ["r2", "f0"]
+    CallerSaved => []
+    CalleeSaved => []
+    Reserved => []
   }
 }
 
@@ -1153,8 +1241,15 @@ pub fn Target::roles_of_var(self : Target, variable : Var) -> Array[Role] {
       FramePointer,
       ProgramCounter,
       Status,
+      Constant,
+      ZeroRegister,
+      LinkRegister,
+      ThreadPointer,
       Argument,
       ResultRegister,
+      CallerSaved,
+      CalleeSaved,
+      Reserved,
     ] {
     if target_name_has_role(self, variable.ident(), role) ||
       target_name_has_role(self, variable.name(), role) {

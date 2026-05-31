@@ -245,8 +245,15 @@ pub(all) enum Role {
   FramePointer
   ProgramCounter
   Status
+  Constant
+  ZeroRegister
+  LinkRegister
+  ThreadPointer
   Argument
   ResultRegister
+  CallerSaved
+  CalleeSaved
+  Reserved
 } derive(Eq, @debug.Debug)
 
 pub(all) enum Sort {

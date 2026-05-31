@@ -125,7 +125,18 @@ test "target registry resolves common and custom declarations" {
     Ok(target) => {
       assert_true(target.endianness() == BigEndian)
       assert_true(target.belongs(@core_theory.Target::armeb()))
+      assert_true(target.belongs(@core_theory.Target::arm_family()))
+      assert_true(!target.belongs(@core_theory.Target::arm()))
       assert_true(target.matches("thumbeb"))
+    }
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.get_target("arm-family") {
+    Ok(target) => {
+      assert_true(@core_theory.Target::arm().belongs(target))
+      assert_true(@core_theory.Target::armeb().belongs(target))
+      assert_true(@core_theory.Target::aarch64().belongs(target))
+      assert_true(@core_theory.Target::aarch64_be().belongs(target))
     }
     Err(reason) => fail(reason)
   }

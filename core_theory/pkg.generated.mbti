@@ -327,6 +327,7 @@ pub fn Target::aarch64_be() -> Self
 pub fn Target::abi(Self) -> Abi
 pub fn Target::alias_origins(Self) -> Array[AliasOrigin]
 pub fn Target::arm() -> Self
+pub fn Target::arm_family() -> Self
 pub fn Target::armeb() -> Self
 pub fn Target::belongs(Self, Self) -> Bool
 pub fn Target::bits(Self) -> Int

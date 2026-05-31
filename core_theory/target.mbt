@@ -2059,6 +2059,11 @@ pub fn Target::x86_64() -> Target {
 }
 
 ///|
+pub fn Target::arm_family() -> Target {
+  Target::create(name=target_name("arm-family"))
+}
+
+///|
 fn with_endian_suffix(names : Array[String], suffix : String) -> Array[String] {
   names + [ for name in names => "\{name}+\{suffix}" ]
 }
@@ -2098,6 +2103,7 @@ fn aarch64_version_nicknames() -> Array[String] {
 pub fn Target::arm() -> Target {
   Target::create(
     name=target_name("arm"),
+    parent=Target::arm_family(),
     nicknames=arm32_le_nicknames(),
     bits=32,
     endianness=LittleEndian,
@@ -2110,7 +2116,7 @@ pub fn Target::arm() -> Target {
 pub fn Target::armeb() -> Target {
   Target::create(
     name=target_name("armeb"),
-    parent=Target::arm(),
+    parent=Target::arm_family(),
     nicknames=arm32_be_nicknames(),
     bits=32,
     endianness=BigEndian,
@@ -2778,6 +2784,7 @@ pub fn common_targets() -> Array[Target] {
     Target::i586(),
     Target::i686(),
     Target::x86_64(),
+    Target::arm_family(),
     Target::arm(),
     Target::armeb(),
     Target::thumb(),

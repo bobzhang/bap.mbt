@@ -658,6 +658,20 @@ fn image_elf_test_make_x86_64_dynamic_without_sections() -> Bytes {
 }
 
 ///|
+fn image_elf_test_make_x86_64_dynamic_without_sections_rel_plt() -> Bytes {
+  let source = image_elf_test_make_x86_64_dynamic_without_sections()
+  let buffer = Array::make(source.length(), b'\x00')
+  for i in 0..<source.length() {
+    buffer[i] = source[i]
+  }
+  let text_offset = 64 + 2 * 56
+  let dynamic_offset = text_offset + b"\x55\xc3".length()
+  image_elf_test_write_dynamic64(buffer, dynamic_offset + 176, 2UL, 16UL)
+  image_elf_test_write_dynamic64(buffer, dynamic_offset + 192, 20UL, 17UL)
+  Bytes::from_array(buffer)
+}
+
+///|
 fn image_elf_test_make_x86_64_without_section_names() -> Bytes {
   let source = image_elf_test_make_x86_64()
   let buffer = Array::make(source.length(), b'\x00')
@@ -1071,6 +1085,27 @@ test "image ELF backend extracts PT_DYNAMIC metadata without section headers" {
   assert_true(relocations[0].addend() == Some(0x30L))
   assert_true(!relocations[0].uses_memory_addend())
   assert_true(relocations[0].is_relative())
+  let references = image.external_references()
+  assert_true(references.length() == 2)
+  assert_true(references[0].addr() == 0x600008UL)
+  assert_true(references[0].name() == "puts")
+  assert_true(references[1].addr() == 0x600010UL)
+  assert_true(references[1].name() == "printf")
+}
+
+///|
+test "image ELF backend extracts DT_REL PLT relocations without section headers" {
+  match @image.register_builtin_backends() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let (image, warnings) = expect_elf_image(
+    @image.Image::of_bytes(
+      image_elf_test_make_x86_64_dynamic_without_sections_rel_plt(),
+      backend="elf",
+    ),
+  )
+  assert_true(warnings.is_empty())
   let references = image.external_references()
   assert_true(references.length() == 2)
   assert_true(references[0].addr() == 0x600008UL)

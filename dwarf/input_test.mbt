@@ -169,11 +169,12 @@ test "translated DWARF input skips zero padding and reads const blocks" {
   )
   assert_true(block == b"abc")
   assert_true(block_input.remaining() == 0)
-  assert_true(
+  let (empty, empty_input) = expect_input_read(
     @dwarf.DwarfInput::of_bytes(b"\x00").read_block(
       lenspec=DwarfOne,
       endian=LittleEndian,
-    )
-    is Err(_),
+    ),
   )
+  assert_true(empty == b"")
+  assert_true(empty_input.remaining() == 0)
 }

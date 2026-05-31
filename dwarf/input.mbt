@@ -574,7 +574,7 @@ pub fn DwarfInput::read_block(
 ) -> Result[(Bytes, DwarfInput), String] {
   match self.read_len(lenspec, endian) {
     Ok((len64, next)) => {
-      if len64 <= 0L || len64 > 2147483647L {
+      if len64 < 0L || len64 > 2147483647L {
         return Err("invalid DWARF block size: \{len64}")
       }
       let len = len64.to_int()

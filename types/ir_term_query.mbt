@@ -155,6 +155,116 @@ pub fn IrTerm::find_child(
 }
 
 ///|
+pub fn IrTerm::child_count(self : IrTerm, cls : IrTermClass) -> Int {
+  self.children_of_class(cls).length()
+}
+
+///|
+pub fn IrTerm::nth_child(
+  self : IrTerm,
+  cls : IrTermClass,
+  index : Int,
+) -> IrTerm? {
+  let children = self.children_of_class(cls)
+  if index >= 0 && index < children.length() {
+    Some(children[index])
+  } else {
+    None
+  }
+}
+
+///|
+pub fn IrTerm::first_child(self : IrTerm, cls : IrTermClass) -> IrTerm? {
+  self.nth_child(cls, 0)
+}
+
+///|
+pub fn IrTerm::last_child(self : IrTerm, cls : IrTermClass) -> IrTerm? {
+  self.nth_child(cls, self.child_count(cls) - 1)
+}
+
+///|
+fn ir_child_index(children : Array[IrTerm], tid : Tid) -> Int? {
+  children.search_by(child => child.tid() == tid)
+}
+
+///|
+pub fn IrTerm::next_child(
+  self : IrTerm,
+  cls : IrTermClass,
+  tid : Tid,
+) -> IrTerm? {
+  let children = self.children_of_class(cls)
+  match ir_child_index(children, tid) {
+    Some(i) if i + 1 < children.length() => Some(children[i + 1])
+    _ => None
+  }
+}
+
+///|
+pub fn IrTerm::prev_child(
+  self : IrTerm,
+  cls : IrTermClass,
+  tid : Tid,
+) -> IrTerm? {
+  let children = self.children_of_class(cls)
+  match ir_child_index(children, tid) {
+    Some(i) if i > 0 => Some(children[i - 1])
+    _ => None
+  }
+}
+
+///|
+fn ir_child_range(
+  children : Array[IrTerm],
+  start : Int,
+  stop : Int,
+  rev : Bool,
+) -> Array[IrTerm] {
+  let out = []
+  let start = if start < 0 { 0 } else { start }
+  let stop = if stop > children.length() { children.length() } else { stop }
+  if start < stop {
+    for i in start..<stop {
+      out.push(children[i])
+    }
+  }
+  if rev {
+    out.rev()
+  } else {
+    out
+  }
+}
+
+///|
+pub fn IrTerm::children_after(
+  self : IrTerm,
+  cls : IrTermClass,
+  tid : Tid,
+  rev? : Bool = false,
+) -> Array[IrTerm] {
+  let children = self.children_of_class(cls)
+  match ir_child_index(children, tid) {
+    Some(i) => ir_child_range(children, i + 1, children.length(), rev)
+    None => []
+  }
+}
+
+///|
+pub fn IrTerm::children_before(
+  self : IrTerm,
+  cls : IrTermClass,
+  tid : Tid,
+  rev? : Bool = false,
+) -> Array[IrTerm] {
+  let children = self.children_of_class(cls)
+  match ir_child_index(children, tid) {
+    Some(i) => ir_child_range(children, 0, i, rev)
+    None => []
+  }
+}
+
+///|
 fn change_sub_child(
   current : Term[Sub]?,
   f : (IrTerm?) -> IrTerm?,

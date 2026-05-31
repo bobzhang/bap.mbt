@@ -656,6 +656,65 @@ test "ir term direct-child helpers filter find update remove and change" {
 }
 
 ///|
+test "ir term direct-child navigation mirrors BAP Term sequence helpers" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let a = @types.Def::create(x, Int(word8(1)), tid=@types.Tid::for_name("a"))
+  let b = @types.Def::create(x, Int(word8(2)), tid=@types.Tid::for_name("b"))
+  let c = @types.Def::create(x, Int(word8(3)), tid=@types.Tid::for_name("c"))
+  let jmp = @types.Jmp::create_goto(
+    @types.Label::direct(@types.Tid::for_name("done")),
+  )
+  let blk = @types.Blk::create(defs=[a, b, c], jmps=[jmp])
+  let block_term : @types.IrTerm = BlkTerm(blk)
+
+  assert_true(block_term.child_count(DefTermClass) == 3)
+  assert_true(block_term.child_count(PhiTermClass) == 0)
+  assert_true(block_term.nth_child(DefTermClass, -1) is None)
+  assert_true(block_term.nth_child(DefTermClass, 0) is Some(DefTerm(_)))
+  assert_true(block_term.nth_child(DefTermClass, 3) is None)
+  assert_true(
+    block_term.first_child(DefTermClass).map(term => term.tid()) ==
+    Some(a.tid()),
+  )
+  assert_true(
+    block_term.last_child(DefTermClass).map(term => term.tid()) == Some(c.tid()),
+  )
+  assert_true(
+    block_term.next_child(DefTermClass, a.tid()).map(term => term.tid()) ==
+    Some(b.tid()),
+  )
+  assert_true(block_term.next_child(DefTermClass, c.tid()) is None)
+  assert_true(
+    block_term.prev_child(DefTermClass, c.tid()).map(term => term.tid()) ==
+    Some(b.tid()),
+  )
+  assert_true(block_term.prev_child(DefTermClass, a.tid()) is None)
+  assert_true(
+    block_term.children_after(DefTermClass, a.tid()).map(term => term.tid()) ==
+    [b.tid(), c.tid()],
+  )
+  assert_true(
+    block_term
+    .children_after(DefTermClass, a.tid(), rev=true)
+    .map(term => term.tid()) ==
+    [c.tid(), b.tid()],
+  )
+  assert_true(
+    block_term.children_before(DefTermClass, c.tid()).map(term => term.tid()) ==
+    [a.tid(), b.tid()],
+  )
+  assert_true(
+    block_term
+    .children_before(DefTermClass, c.tid(), rev=true)
+    .map(term => term.tid()) ==
+    [b.tid(), a.tid()],
+  )
+  assert_true(block_term.children_after(DefTermClass, jmp.tid()).is_empty())
+  assert_true(block_term.children_before(DefTermClass, jmp.tid()).is_empty())
+}
+
+///|
 test "ir term address query helpers mirror BAP term-addr" {
   let addr32 = @types.Word::of_int64(42L, width=32)
   let addr64 = @types.Word::of_int64(42L, width=64)

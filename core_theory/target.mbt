@@ -483,6 +483,86 @@ pub(all) enum Role {
 } derive(Eq, Debug)
 
 ///|
+pub fn Role::to_string(self : Role) -> String {
+  match self {
+    General => "general"
+    IntegerRegister => "integer"
+    FloatingRegister => "floating"
+    VectorRegister => "vector"
+    StackPointer => "stack-pointer"
+    FramePointer => "frame-pointer"
+    ProgramCounter => "program-counter"
+    Status => "status"
+    Constant => "constant"
+    ZeroRegister => "zero"
+    LinkRegister => "link"
+    ThreadPointer => "thread"
+    Argument => "function-argument"
+    ResultRegister => "function-return"
+    CallerSaved => "caller-saved"
+    CalleeSaved => "callee-saved"
+    Reserved => "reserved"
+  }
+}
+
+///|
+pub fn Role::of_string(text : String) -> Role? {
+  match text.to_lower() {
+    "general" => Some(General)
+    "integer" | "integer-register" => Some(IntegerRegister)
+    "floating" | "floating-register" => Some(FloatingRegister)
+    "vector" | "vector-register" => Some(VectorRegister)
+    "stack-pointer" | "stack_pointer" | "sp" => Some(StackPointer)
+    "frame-pointer" | "frame_pointer" | "fp" => Some(FramePointer)
+    "program-counter" | "program_counter" | "pc" => Some(ProgramCounter)
+    "status" => Some(Status)
+    "constant" => Some(Constant)
+    "zero" | "zero-register" => Some(ZeroRegister)
+    "link" | "link-register" => Some(LinkRegister)
+    "thread" | "thread-pointer" => Some(ThreadPointer)
+    "function-argument" | "argument" => Some(Argument)
+    "function-return" | "result" | "result-register" => Some(ResultRegister)
+    "caller-saved" | "caller_saved" => Some(CallerSaved)
+    "callee-saved" | "callee_saved" => Some(CalleeSaved)
+    "reserved" => Some(Reserved)
+    _ => None
+  }
+}
+
+///|
+fn Role::rank(self : Role) -> Int {
+  match self {
+    General => 0
+    IntegerRegister => 1
+    FloatingRegister => 2
+    VectorRegister => 3
+    StackPointer => 4
+    FramePointer => 5
+    ProgramCounter => 6
+    Status => 7
+    Constant => 8
+    ZeroRegister => 9
+    LinkRegister => 10
+    ThreadPointer => 11
+    Argument => 12
+    ResultRegister => 13
+    CallerSaved => 14
+    CalleeSaved => 15
+    Reserved => 16
+  }
+}
+
+///|
+pub fn Role::equal(self : Role, other : Role) -> Bool {
+  self == other
+}
+
+///|
+pub fn Role::compare(self : Role, other : Role) -> Int {
+  self.rank().compare(other.rank())
+}
+
+///|
 pub(all) enum AliasOrigin {
   RegisterAlias(aliased~ : Var, source~ : Var)
   SubRegister(aliased~ : Var, source~ : Var, lo~ : Int, hi~ : Int)

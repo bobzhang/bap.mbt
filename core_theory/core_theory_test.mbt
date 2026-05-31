@@ -924,6 +924,15 @@ test "target metadata enums parse loader strings" {
 ///|
 test "target role helpers classify common architecture variables" {
   let amd64 = @core_theory.Target::x86_64()
+  let stack_pointer = @core_theory.Role::of_string("stack-pointer").unwrap()
+  let argument = @core_theory.Role::of_string("function-argument").unwrap()
+  let result = @core_theory.Role::of_string("function-return").unwrap()
+  assert_true(stack_pointer.to_string() == "stack-pointer")
+  assert_true(
+    @core_theory.Role::of_string("function-argument") == Some(Argument),
+  )
+  assert_true(argument.equal(argument))
+  assert_true(argument.compare(result) < 0)
   match amd64.find_var("RSP") {
     Some(sp) => assert_true(amd64.roles_of_var(sp).contains(StackPointer))
     None => fail("missing RSP")

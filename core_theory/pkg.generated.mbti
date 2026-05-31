@@ -281,6 +281,10 @@ pub(all) enum Role {
   CalleeSaved
   Reserved
 } derive(Eq, @debug.Debug)
+pub fn Role::compare(Self, Self) -> Int
+pub fn Role::equal(Self, Self) -> Bool
+pub fn Role::of_string(String) -> Self?
+pub fn Role::to_string(Self) -> String
 
 type Semantics
 pub fn Semantics::code(Self) -> Bytes?

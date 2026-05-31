@@ -65,7 +65,9 @@ pub fn AliasOrigin::subregister(Var, Var, lo~ : Int, hi~ : Int) -> Self
 pub fn AliasOrigin::unknown(Var) -> Self
 
 type Compiler
+pub fn Compiler::compare(Self, Self) -> Int
 pub fn Compiler::create(String, specs? : Map[String, String], version? : Array[String], options? : Array[String]) -> Self
+pub fn Compiler::equal(Self, Self) -> Bool
 pub fn Compiler::name(Self) -> String
 pub fn Compiler::options(Self) -> Array[String]
 pub fn Compiler::spec(Self, String) -> String?

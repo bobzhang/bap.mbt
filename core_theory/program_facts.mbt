@@ -111,6 +111,94 @@ fn compiler_equal(lhs : Compiler, rhs : Compiler) -> Bool {
 }
 
 ///|
+fn string_array_compare(lhs : Array[String], rhs : Array[String]) -> Int {
+  let limit = if lhs.length() < rhs.length() {
+    lhs.length()
+  } else {
+    rhs.length()
+  }
+  for i in 0..<limit {
+    let order = lhs[i].compare(rhs[i])
+    if order != 0 {
+      return order
+    }
+  }
+  lhs.length().compare(rhs.length())
+}
+
+///|
+fn sorted_string_map_entries(
+  items : Map[String, String],
+) -> Array[(String, String)] {
+  let entries = []
+  for entry in items {
+    entries.push(entry)
+  }
+  entries.sort_by(fn(lhs, rhs) {
+    let key_order = lhs.0.compare(rhs.0)
+    if key_order != 0 {
+      key_order
+    } else {
+      lhs.1.compare(rhs.1)
+    }
+  })
+  entries
+}
+
+///|
+fn string_map_compare(
+  lhs : Map[String, String],
+  rhs : Map[String, String],
+) -> Int {
+  let lhs_entries = sorted_string_map_entries(lhs)
+  let rhs_entries = sorted_string_map_entries(rhs)
+  let limit = if lhs_entries.length() < rhs_entries.length() {
+    lhs_entries.length()
+  } else {
+    rhs_entries.length()
+  }
+  for i in 0..<limit {
+    let key_order = lhs_entries[i].0.compare(rhs_entries[i].0)
+    if key_order != 0 {
+      return key_order
+    }
+    let value_order = lhs_entries[i].1.compare(rhs_entries[i].1)
+    if value_order != 0 {
+      return value_order
+    }
+  }
+  lhs_entries.length().compare(rhs_entries.length())
+}
+
+///|
+pub fn Compiler::equal(self : Compiler, other : Compiler) -> Bool {
+  compiler_equal(self, other)
+}
+
+///|
+pub fn Compiler::compare(self : Compiler, other : Compiler) -> Int {
+  let name_order = self.name_value.compare(other.name_value)
+  if name_order != 0 {
+    return name_order
+  }
+  let version_order = string_array_compare(
+    self.version_value,
+    other.version_value,
+  )
+  if version_order != 0 {
+    return version_order
+  }
+  let options_order = string_array_compare(
+    self.options_value,
+    other.options_value,
+  )
+  if options_order != 0 {
+    return options_order
+  }
+  string_map_compare(self.specs_value, other.specs_value)
+}
+
+///|
 fn compiler_inspect(compiler : Compiler) -> String {
   compiler.to_string()
 }

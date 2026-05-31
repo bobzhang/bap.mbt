@@ -746,6 +746,15 @@ pub fn Term::program_lookup(
 }
 
 ///|
+pub fn Term::lookup(
+  self : Term[Program],
+  cls : IrTermClass,
+  tid : Tid,
+) -> IrTerm? {
+  self.program_lookup(cls, tid)
+}
+
+///|
 pub fn Term::program_parent(
   self : Term[Program],
   cls : IrTermClass,
@@ -809,6 +818,15 @@ pub fn Term::program_parent(
       None
     }
   }
+}
+
+///|
+pub fn Term::parent(
+  self : Term[Program],
+  cls : IrTermClass,
+  tid : Tid,
+) -> IrTerm? {
+  self.program_parent(cls, tid)
 }
 
 ///|

@@ -954,6 +954,7 @@ pub fn Term::last_jmp(Self[Blk]) -> Self[Jmp]?
 pub fn Term::last_phi(Self[Blk]) -> Self[Phi]?
 pub fn Term::last_sub(Self[Program]) -> Self[Sub]?
 pub fn Term::lhs(Self[Def]) -> Var
+pub fn Term::lookup(Self[Program], IrTermClass, Tid) -> IrTerm?
 pub fn Term::map_arg_exp(Self[Arg], (Exp) -> Exp) -> Self[Arg]
 pub fn Term::map_args(Self[Sub], (Self[Arg]) -> Self[Arg]) -> Self[Sub]
 pub fn Term::map_blk_elts(Self[Blk], phi? : (Self[Phi]) -> Self[Phi], def? : (Self[Def]) -> Self[Def], jmp? : (Self[Jmp]) -> Self[Jmp]) -> Self[Blk]
@@ -992,6 +993,7 @@ pub fn Term::nth_phi_exn(Self[Blk], Int) -> Self[Phi] raise IrTermLookupError
 pub fn Term::nth_sub(Self[Program], Int) -> Self[Sub]?
 pub fn Term::nth_sub_exn(Self[Program], Int) -> Self[Sub] raise IrTermLookupError
 pub fn Term::occurs(Self[Blk], after~ : Tid, Tid) -> Bool
+pub fn Term::parent(Self[Program], IrTermClass, Tid) -> IrTerm?
 pub fn[T] Term::payload(Self[T]) -> T
 pub fn Term::phi_count(Self[Blk]) -> Int
 pub fn Term::phi_edge_free_vars(Self[Phi], Tid) -> Array[Var]

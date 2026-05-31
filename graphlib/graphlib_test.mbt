@@ -181,6 +181,70 @@ test "dfs numbering exposes BAP timestamp and rpost invariants" {
 }
 
 ///|
+fn dfs_tree_parents(
+  graph : @graphlib.Graph[Int, String],
+  start : Int,
+) -> Map[Int, Int] {
+  let parents : Map[Int, Int] = {}
+  for event in graph.dfs_edges(start) {
+    match event.0 {
+      Tree => parents[event.1.dst] = event.1.src
+      _ => ()
+    }
+  }
+  parents
+}
+
+///|
+fn dfs_tree_ancestors(parents : Map[Int, Int], node : Int) -> Set[Int] {
+  let ancestors : Set[Int] = Set([])
+  let mut current = node
+  let mut done = false
+  while !done {
+    match parents.get(current) {
+      Some(parent) => {
+        ancestors.add(parent)
+        current = parent
+      }
+      None => done = true
+    }
+  }
+  ancestors
+}
+
+///|
+fn dfs_intervals_are_disjoint_or_nested(
+  lhs : @graphlib.DfsNodeInfo,
+  rhs : @graphlib.DfsNodeInfo,
+) -> Bool {
+  (lhs.enter == rhs.enter && lhs.leave == rhs.leave) ||
+  lhs.leave < rhs.enter ||
+  rhs.leave < lhs.enter ||
+  (lhs.enter < rhs.enter && rhs.leave < lhs.leave) ||
+  (rhs.enter < lhs.enter && lhs.leave < rhs.leave)
+}
+
+///|
+test "translated BAP DFS timestamp intervals and ancestor lemma hold" {
+  let graph = sample_graph()
+  let numbering = graph.dfs_numbering(0)
+  let parents = dfs_tree_parents(graph, 0)
+  let nodes = graph.reachable(0).to_array()
+  for lhs in nodes {
+    for rhs in nodes {
+      assert_true(
+        dfs_intervals_are_disjoint_or_nested(numbering[lhs], numbering[rhs]),
+      )
+      if lhs != rhs {
+        let ordered = numbering[lhs].pre < numbering[rhs].pre &&
+          numbering[lhs].rpost < numbering[rhs].rpost
+        assert_true(ordered == dfs_tree_ancestors(parents, rhs).contains(lhs))
+      }
+    }
+  }
+}
+
+///|
 fn component_containing(components : Array[Set[Int]], node : Int) -> Set[Int]? {
   components
   .search_by(component => component.contains(node))

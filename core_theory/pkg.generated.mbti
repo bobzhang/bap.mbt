@@ -460,6 +460,7 @@ pub fn Target::powerpc_family() -> Self
 pub fn Target::powerpcbi() -> Self
 pub fn Target::powerpcle() -> Self
 pub fn Target::r600() -> Self
+pub fn Target::read(String) -> Result[Self, String]
 pub fn Target::reg(Self, Role, exclude? : Array[Role], unique? : Bool) -> Var?
 pub fn Target::register(Self) -> Result[Unit, String]
 pub fn Target::register_variants(Self, systems? : Array[System], abis? : Array[Abi], fabis? : Array[Fabi], filetypes? : Array[Filetype], options? : Array[TargetOptions]) -> Result[Array[Self], String]

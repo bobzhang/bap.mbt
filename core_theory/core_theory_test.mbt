@@ -129,6 +129,10 @@ test "target registry resolves common and custom declarations" {
     }
     Err(reason) => fail(reason)
   }
+  match @core_theory.Target::read("AMD64") {
+    Ok(target) => assert_true(target.bits() == 64)
+    Err(reason) => fail(reason)
+  }
   match @core_theory.get_target("riscv64") {
     Ok(target) => {
       assert_true(target.bits() == 64)

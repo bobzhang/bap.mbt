@@ -3948,6 +3948,11 @@ pub fn Target::get(query : String) -> Result[Target, String] {
 }
 
 ///|
+pub fn Target::read(query : String) -> Result[Target, String] {
+  Target::get(query)
+}
+
+///|
 fn target_system_matches(
   actual : System,
   constraint : System,

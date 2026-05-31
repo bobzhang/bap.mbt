@@ -1,0 +1,164 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/traces"
+
+import {
+  "bobzhang/bap/types",
+  "moonbitlang/core/debug",
+  "moonbitlang/core/set",
+}
+
+// Values
+
+// Errors
+pub(all) suberror TraceError {
+  TraceFailure(String)
+  NoProvider(String)
+} derive(Eq, @debug.Debug)
+
+// Types and methods
+pub(all) struct BinaryInfo {
+  path : String
+  args : Array[String]
+  envp : Array[String]
+  md5sum : String
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Call {
+  caller : Location
+  callee : Location
+  args : Array[@types.Word]
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Chunk {
+  addr : @types.Word
+  data : Bytes
+} derive(Eq, @debug.Debug)
+pub fn Chunk::create(addr~ : @types.Word, data~ : Bytes) -> Self
+
+pub(all) struct Location {
+  name : String?
+  addr : @types.Word
+} derive(Eq, @debug.Debug)
+pub fn Location::create(name? : String?, addr~ : @types.Word) -> Self
+
+pub(all) struct Modload {
+  name : String
+  low : @types.Word
+  high : @types.Word
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Move[T] {
+  cell : T
+  data : @types.Word
+} derive(Eq, @debug.Debug)
+pub fn[T] Move::create(cell~ : T, data~ : @types.Word) -> Self[T]
+
+pub(all) struct Return {
+  caller : String
+  callee : String
+} derive(Eq, @debug.Debug)
+
+pub(all) struct Syscall {
+  number : Int
+  args : Array[@types.Word]
+} derive(Eq, @debug.Debug)
+
+type Trace
+pub fn Trace::create(TraceTool, events? : Array[TraceEvent], monitor? : TraceMonitor) -> Self
+pub fn Trace::filter_map(Self, (TraceEvent) -> TraceEvent?) -> Self
+pub fn Trace::from_results(TraceTool, Array[Result[TraceEvent, String]], monitor? : TraceMonitor) -> Self
+pub fn Trace::get_attr(Self, String) -> TraceAttrValue?
+pub fn Trace::has_attr(Self, String) -> Bool
+pub fn Trace::id(Self) -> Int
+pub fn Trace::load(String) -> Result[Self, TraceError]
+pub fn Trace::meta(Self) -> TraceMeta
+pub fn Trace::next(Self, String) -> Result[TraceEvent?, TraceError]
+pub fn Trace::next_event(Self) -> Result[TraceEvent?, TraceError]
+pub fn[T] Trace::next_matching(Self, (TraceEvent) -> T?) -> Result[T?, TraceError]
+pub fn Trace::read_all(Self, String) -> Result[Array[TraceEvent], TraceError]
+pub fn[T] Trace::read_all_matching(Self, (TraceEvent) -> T) -> Result[Array[T], TraceError]
+pub fn Trace::read_events(Self, limit? : Int) -> Result[Array[TraceEvent], TraceError]
+pub fn Trace::save(String, Self) -> Result[Unit, TraceError]
+pub fn Trace::set_attr(Self, String, TraceAttrValue) -> Self
+pub fn Trace::set_meta(Self, TraceMeta) -> Self
+pub fn Trace::supports(Self, String) -> Bool
+pub fn Trace::tool(Self) -> TraceTool
+
+pub(all) enum TraceAttrValue {
+  Binary(BinaryInfo)
+  Tracer(TracerInfo)
+  Text(String)
+  Int(Int)
+  Bool(Bool)
+} derive(Eq, @debug.Debug)
+
+pub(all) enum TraceEvent {
+  MemoryLoad(Move[@types.Word])
+  MemoryStore(Move[@types.Word])
+  RegisterRead(Move[@types.Var])
+  RegisterWrite(Move[@types.Var])
+  Timestamp(Int64)
+  PcUpdate(@types.Word)
+  CodeExec(Chunk)
+  ContextSwitch(Int)
+  Syscall(Syscall)
+  Exception(TraceException)
+  Call(Call)
+  Return(Return)
+  Modload(Modload)
+  Mode(String)
+} derive(Eq, @debug.Debug)
+pub fn TraceEvent::memory_load(Move[@types.Word]) -> Self
+pub fn TraceEvent::memory_store(Move[@types.Word]) -> Self
+pub fn TraceEvent::register_read(Move[@types.Var]) -> Self
+pub fn TraceEvent::register_write(Move[@types.Var]) -> Self
+pub fn TraceEvent::tag(Self) -> String
+
+pub(all) struct TraceException {
+  number : Int
+  src : @types.Word?
+  dst : @types.Word?
+} derive(Eq, @debug.Debug)
+
+pub(all) struct TraceMeta {
+  attrs : Map[String, TraceAttrValue]
+} derive(Eq, @debug.Debug)
+pub fn TraceMeta::empty() -> Self
+pub fn TraceMeta::get(Self, String) -> TraceAttrValue?
+pub fn TraceMeta::has(Self, String) -> Bool
+pub fn TraceMeta::set(Self, String, TraceAttrValue) -> Self
+
+type TraceMonitor
+pub fn TraceMonitor::create((String) -> TraceStep) -> Self
+pub fn TraceMonitor::fail_on_error() -> Self
+pub fn TraceMonitor::ignore_errors() -> Self
+pub fn TraceMonitor::pack_errors((String) -> TraceEvent) -> Self
+pub fn TraceMonitor::stop_on_error() -> Self
+pub fn TraceMonitor::warn_on_error((String) -> Unit) -> Self
+
+pub(all) enum TraceStep {
+  Stop
+  Skip
+  Fail
+  Make(TraceEvent)
+} derive(Eq, @debug.Debug)
+
+pub(all) struct TraceTool {
+  name : String
+  supported_tags : @set.Set[String]
+} derive(Eq, @debug.Debug)
+pub fn TraceTool::create(name~ : String, supported_tags~ : Array[String]) -> Self
+pub fn TraceTool::register(name~ : String, supported_tags~ : Array[String]) -> Self
+pub fn TraceTool::supports(Self, String) -> Bool
+
+pub(all) struct TracerInfo {
+  name : String
+  args : Array[String]
+  envp : Array[String]
+  version : String
+} derive(Eq, @debug.Debug)
+
+// Type aliases
+
+// Traits
+

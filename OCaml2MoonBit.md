@@ -162,6 +162,10 @@ baseline. BAP's generic `arm` target inherits the VFP-capable AArch32 branch, so
 the MoonBit generic ARM metadata should include the `D0` through `D31` VFP
 registers and floating-register roles even though older concrete ARM revisions
 did not have that register file.
+For AArch64, BAP keeps `R0` through `R31` as the canonical 64-bit register
+variables and models `X*`/`W*` spellings as aliases, with `W*` taking the low
+32 bits of the canonical `R*`. Preserve that direction in alias provenance
+instead of making the common assembler spelling the canonical source.
 For disassembly-driver registries, separate orchestration from architecture
 decoding: a built-in driver may materialize memory regions as blocks, but it
 should not invent assembly text or lifted BIL unless a real target-specific

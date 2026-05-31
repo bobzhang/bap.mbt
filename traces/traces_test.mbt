@@ -78,6 +78,12 @@ fn test_meta() -> @traces.TraceMeta {
 ///|
 fn extended_meta() -> @traces.TraceMeta {
   test_meta()
+  .set("arch", Arch(X86_64))
+  .set(
+    "file-stats",
+    FileStats({ size: 42, atime: 1.25, mtime: 2.5, ctime: 3.75 }),
+  )
+  .set("trace-stats", TraceStats({ user: "me", host: "host", time: 4.5 }))
   .set("comment", Text("snapshot"))
   .set("pid", Int(-1))
   .set("complete", Bool(true))

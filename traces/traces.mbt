@@ -142,9 +142,27 @@ pub(all) struct TracerInfo {
 } derive(Eq, Debug)
 
 ///|
+pub(all) struct FileStatsInfo {
+  size : Int
+  atime : Double
+  mtime : Double
+  ctime : Double
+} derive(Eq, Debug)
+
+///|
+pub(all) struct TraceStatsInfo {
+  user : String
+  host : String
+  time : Double
+} derive(Eq, Debug)
+
+///|
 pub(all) enum TraceAttrValue {
   Binary(BinaryInfo)
   Tracer(TracerInfo)
+  Arch(@types.Arch)
+  FileStats(FileStatsInfo)
+  TraceStats(TraceStatsInfo)
   Text(String)
   Int(Int)
   Bool(Bool)

@@ -37,6 +37,13 @@ pub(all) struct Chunk {
 } derive(Eq, @debug.Debug)
 pub fn Chunk::create(addr~ : @types.Word, data~ : Bytes) -> Self
 
+pub(all) struct FileStatsInfo {
+  size : Int
+  atime : Double
+  mtime : Double
+  ctime : Double
+} derive(Eq, @debug.Debug)
+
 pub(all) struct Location {
   name : String?
   addr : @types.Word
@@ -99,6 +106,9 @@ pub fn Trace::tool(Self) -> TraceTool
 pub(all) enum TraceAttrValue {
   Binary(BinaryInfo)
   Tracer(TracerInfo)
+  Arch(@types.Arch)
+  FileStats(FileStatsInfo)
+  TraceStats(TraceStatsInfo)
   Text(String)
   Int(Int)
   Bool(Bool)
@@ -158,6 +168,12 @@ pub(all) struct TraceReader {
   tool : TraceTool
   meta : TraceMeta
   events : Array[Result[TraceEvent, String]]
+} derive(Eq, @debug.Debug)
+
+pub(all) struct TraceStatsInfo {
+  user : String
+  host : String
+  time : Double
 } derive(Eq, @debug.Debug)
 
 pub(all) enum TraceStep {

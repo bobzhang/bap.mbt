@@ -31,10 +31,19 @@ fn trace_write_i32(out : Array[Byte], value : Int) -> Unit {
 
 ///|
 fn trace_write_i64(out : Array[Byte], value : Int64) -> Unit {
-  let bits = value.reinterpret_as_uint64()
+  trace_write_u64(out, value.reinterpret_as_uint64())
+}
+
+///|
+fn trace_write_u64(out : Array[Byte], bits : UInt64) -> Unit {
   for i in 0..<8 {
     out.push(((bits >> (i * 8)) & 0xffUL).to_int().to_byte())
   }
+}
+
+///|
+fn trace_write_double(out : Array[Byte], value : Double) -> Unit {
+  trace_write_u64(out, value.reinterpret_as_uint64())
 }
 
 ///|
@@ -257,16 +266,33 @@ fn trace_write_attr_value(out : Array[Byte], value : TraceAttrValue) -> Unit {
       trace_write_string_array(out, info.envp)
       trace_write_string(out, info.version)
     }
-    Text(text) => {
+    Arch(arch) => {
       trace_write_byte(out, 2)
+      trace_write_string(out, arch.to_string())
+    }
+    FileStats(info) => {
+      trace_write_byte(out, 3)
+      trace_write_i32(out, info.size)
+      trace_write_double(out, info.atime)
+      trace_write_double(out, info.mtime)
+      trace_write_double(out, info.ctime)
+    }
+    TraceStats(info) => {
+      trace_write_byte(out, 4)
+      trace_write_string(out, info.user)
+      trace_write_string(out, info.host)
+      trace_write_double(out, info.time)
+    }
+    Text(text) => {
+      trace_write_byte(out, 5)
       trace_write_string(out, text)
     }
     Int(value) => {
-      trace_write_byte(out, 3)
+      trace_write_byte(out, 6)
       trace_write_i32(out, value)
     }
     Bool(value) => {
-      trace_write_byte(out, 4)
+      trace_write_byte(out, 7)
       trace_write_bool(out, value)
     }
   }
@@ -365,11 +391,25 @@ fn TraceSnapshotInput::read_len(
 fn TraceSnapshotInput::read_i64(
   self : TraceSnapshotInput,
 ) -> Int64 raise TraceError {
+  self.read_u64().reinterpret_as_int64()
+}
+
+///|
+fn TraceSnapshotInput::read_u64(
+  self : TraceSnapshotInput,
+) -> UInt64 raise TraceError {
   let mut value = 0UL
   for i in 0..<8 {
     value = value | (self.read_byte().to_uint64() << (i * 8))
   }
-  value.reinterpret_as_int64()
+  value
+}
+
+///|
+fn TraceSnapshotInput::read_double(
+  self : TraceSnapshotInput,
+) -> Double raise TraceError {
+  self.read_u64().reinterpret_as_double()
 }
 
 ///|
@@ -607,9 +647,29 @@ fn TraceSnapshotInput::read_attr_value(
         envp: self.read_string_array("tracer envp"),
         version: self.read_string("tracer version"),
       })
-    2 => Text(self.read_string("text attribute"))
-    3 => Int(self.read_i32())
-    4 => Bool(self.read_bool())
+    2 => {
+      let text = self.read_string("architecture")
+      match @types.Arch::of_string(text) {
+        Some(arch) => Arch(arch)
+        None => raise ProtocolError("unknown trace architecture: \{text}")
+      }
+    }
+    3 =>
+      FileStats({
+        size: self.read_i32(),
+        atime: self.read_double(),
+        mtime: self.read_double(),
+        ctime: self.read_double(),
+      })
+    4 =>
+      TraceStats({
+        user: self.read_string("trace user"),
+        host: self.read_string("trace host"),
+        time: self.read_double(),
+      })
+    5 => Text(self.read_string("text attribute"))
+    6 => Int(self.read_i32())
+    7 => Bool(self.read_bool())
     value =>
       raise ProtocolError(
         "unknown metadata value tag in trace snapshot: \{value}",

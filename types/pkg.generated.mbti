@@ -134,9 +134,27 @@ pub(all) struct Attr {
 } derive(Eq, @debug.Debug)
 pub fn Attr::address(Word) -> Self
 pub fn Attr::comment(String) -> Self
+pub fn Attr::dead() -> Self
+pub fn Attr::filename(String) -> Self
+pub fn Attr::flag(String) -> Self
+pub fn Attr::format(String) -> Self
+pub fn Attr::live() -> Self
 pub fn Attr::new(key~ : String, value~ : String) -> Self
+pub fn Attr::origin(Tid) -> Self
 pub fn Attr::stub() -> Self
 pub fn Attr::sub_alias(String) -> Self
+pub fn Attr::sub_const() -> Self
+pub fn Attr::sub_entry_point() -> Self
+pub fn Attr::sub_extern() -> Self
+pub fn Attr::sub_intrinsic() -> Self
+pub fn Attr::sub_leaf() -> Self
+pub fn Attr::sub_malloc() -> Self
+pub fn Attr::sub_noreturn() -> Self
+pub fn Attr::sub_nothrow() -> Self
+pub fn Attr::sub_pure() -> Self
+pub fn Attr::sub_returns_twice() -> Self
+pub fn Attr::synthetic() -> Self
+pub fn Attr::visited() -> Self
 
 type BilMemory derive(Eq, @debug.Debug)
 pub fn BilMemory::addr_width(Self) -> Int
@@ -530,9 +548,19 @@ pub fn[A] Term::fold_program_terms(Self[Program], A, (A, IrTerm) -> A, include_s
 pub fn[A] Term::fold_sub_terms(Self[Sub], A, (A, IrTerm) -> A, include_self? : Bool) -> A
 pub fn[T] Term::get_attr(Self[T], String) -> String?
 pub fn[T] Term::has_attr(Self[T], String) -> Bool
+pub fn[T] Term::has_flag(Self[T], String) -> Bool
 pub fn Term::insert_def_after(Self[Blk], Self[Def], after? : Tid) -> Self[Blk]
 pub fn Term::insert_def_before(Self[Blk], Self[Def], before? : Tid) -> Self[Blk]
 pub fn Term::intent(Self[Arg]) -> Intent?
+pub fn Term::is_const(Self[Sub]) -> Bool
+pub fn Term::is_entry_point(Self[Sub]) -> Bool
+pub fn Term::is_extern(Self[Sub]) -> Bool
+pub fn Term::is_intrinsic(Self[Sub]) -> Bool
+pub fn Term::is_leaf(Self[Sub]) -> Bool
+pub fn Term::is_malloc(Self[Sub]) -> Bool
+pub fn Term::is_noreturn(Self[Sub]) -> Bool
+pub fn Term::is_nothrow(Self[Sub]) -> Bool
+pub fn Term::is_pure(Self[Sub]) -> Bool
 pub fn Term::is_ssa(Self[Sub]) -> Bool
 pub fn Term::is_stub(Self[Sub]) -> Bool
 pub fn Term::jmp_free_vars(Self[Jmp]) -> Array[Var]
@@ -593,6 +621,7 @@ pub fn Term::remove_jmp(Self[Blk], Tid) -> Self[Blk]
 pub fn Term::remove_phi(Self[Phi], Tid) -> Self[Phi]
 pub fn Term::remove_phi_term(Self[Blk], Tid) -> Self[Blk]
 pub fn Term::resolved_call_targets(Self[Jmp], resolve_indirect~ : (Exp) -> Array[Tid]) -> Array[Tid]
+pub fn Term::returns_twice(Self[Sub]) -> Bool
 pub fn Term::rhs(Self[Def]) -> Exp
 pub fn[T] Term::same(Self[T], Self[T]) -> Bool
 pub fn Term::select(Self[Phi], Tid) -> Exp?
@@ -650,16 +679,38 @@ pub fn Term::update_phi_term(Self[Blk], Self[Phi]) -> Self[Blk]
 pub fn Term::uses_var(Self[Blk], Var) -> Bool
 pub fn Term::values(Self[Phi]) -> Array[(Tid, Exp)]
 pub fn Term::with_cond(Self[Jmp], Exp) -> Self[Jmp]
+pub fn Term::with_const(Self[Sub]) -> Self[Sub]
+pub fn Term::with_entry_point(Self[Sub]) -> Self[Sub]
+pub fn Term::with_extern(Self[Sub]) -> Self[Sub]
+pub fn[T] Term::with_flag(Self[T], String) -> Self[T]
 pub fn Term::with_intent(Self[Arg], Intent) -> Self[Arg]
+pub fn Term::with_intrinsic(Self[Sub]) -> Self[Sub]
 pub fn Term::with_kind(Self[Jmp], JmpKind) -> Self[Jmp]
+pub fn Term::with_leaf(Self[Sub]) -> Self[Sub]
 pub fn Term::with_lhs(Self[Def], Var) -> Self[Def]
+pub fn Term::with_malloc(Self[Sub]) -> Self[Sub]
+pub fn Term::with_noreturn(Self[Sub]) -> Self[Sub]
+pub fn Term::with_nothrow(Self[Sub]) -> Self[Sub]
 pub fn[T] Term::with_payload(Self[T], T) -> Self[T]
 pub fn Term::with_phi_lhs(Self[Phi], Var) -> Self[Phi]
+pub fn Term::with_pure(Self[Sub]) -> Self[Sub]
+pub fn Term::with_returns_twice(Self[Sub]) -> Self[Sub]
 pub fn Term::with_rhs(Self[Def], Exp) -> Self[Def]
 pub fn Term::with_stub(Self[Sub]) -> Self[Sub]
 pub fn Term::with_sub_alias(Self[Sub], String) -> Self[Sub]
 pub fn Term::with_sub_name(Self[Sub], String) -> Self[Sub]
 pub fn Term::with_unknown_intent(Self[Arg]) -> Self[Arg]
+pub fn Term::without_const(Self[Sub]) -> Self[Sub]
+pub fn Term::without_entry_point(Self[Sub]) -> Self[Sub]
+pub fn Term::without_extern(Self[Sub]) -> Self[Sub]
+pub fn[T] Term::without_flag(Self[T], String) -> Self[T]
+pub fn Term::without_intrinsic(Self[Sub]) -> Self[Sub]
+pub fn Term::without_leaf(Self[Sub]) -> Self[Sub]
+pub fn Term::without_malloc(Self[Sub]) -> Self[Sub]
+pub fn Term::without_noreturn(Self[Sub]) -> Self[Sub]
+pub fn Term::without_nothrow(Self[Sub]) -> Self[Sub]
+pub fn Term::without_pure(Self[Sub]) -> Self[Sub]
+pub fn Term::without_returns_twice(Self[Sub]) -> Self[Sub]
 pub fn Term::without_stub(Self[Sub]) -> Self[Sub]
 
 pub(all) struct Tid {

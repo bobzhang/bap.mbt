@@ -27,7 +27,7 @@ fn sorted_texts(items : Array[String]) -> Array[String] {
 
 ///|
 pub fn Attr::stub() -> Attr {
-  Attr::new(key=sub_stub_attr, value="true")
+  Attr::flag(sub_stub_attr)
 }
 
 ///|

@@ -398,6 +398,12 @@ by constructing addresses with `Attr::address` when possible.
 Project-level marking should stay a thin wrapper over `Project::map_program`
 and `Term::map_program_terms`; unmarking string-valued MoonBit attributes is a
 key deletion rather than BAP's `Dict.Value.tagname` filtering.
+When porting BAP unit-valued term attributes into MoonBit's string-backed
+attribute map, model them as presence flags with a stable `"true"` value and
+provide named helpers for common subroutine semantics (`extern`, `leaf`,
+`noreturn`, `entry-point`, etc.). Keep payload-carrying attributes such as
+`filename`, `format`, and `origin` explicit instead of overloading the same
+flag helper.
 
 For BAP-style stub resolution, treat symbol names and aliases as an undirected
 graph and resolve by connected components. Link stubs only when a component has

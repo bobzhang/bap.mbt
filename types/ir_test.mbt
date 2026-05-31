@@ -11,6 +11,64 @@ test "terms carry tids and string attributes" {
 }
 
 ///|
+test "terms expose common BAP-style attributes and flags" {
+  let origin = @types.Tid::for_name("source")
+  let def = @types.Def::create(
+      @types.Var::new(name="x", typ=Imm(8)),
+      Int(@types.Word::of_int(width=8, 1)),
+    )
+    .set_attr(@types.Attr::filename("unit.bin"))
+    .set_attr(@types.Attr::format("hex"))
+    .set_attr(@types.Attr::origin(origin))
+    .set_attr(@types.Attr::synthetic())
+    .with_flag("custom-flag")
+  assert_true(def.get_attr("filename") == Some("unit.bin"))
+  assert_true(def.get_attr("format") == Some("hex"))
+  assert_true(def.get_attr("origin") == Some(origin.to_string()))
+  assert_true(def.has_flag("synthetic"))
+  assert_true(def.has_flag("custom-flag"))
+  assert_true(!def.without_flag("custom-flag").has_flag("custom-flag"))
+}
+
+///|
+test "subroutines expose BAP-style semantic flags" {
+  let sub = @types.Sub::create(name="main")
+    .with_extern()
+    .with_leaf()
+    .with_malloc()
+    .with_const()
+    .with_noreturn()
+    .with_nothrow()
+    .with_returns_twice()
+    .with_entry_point()
+    .with_intrinsic()
+    .with_pure()
+  assert_true(sub.is_extern())
+  assert_true(sub.is_leaf())
+  assert_true(sub.is_malloc())
+  assert_true(sub.is_const())
+  assert_true(sub.is_noreturn())
+  assert_true(sub.is_nothrow())
+  assert_true(sub.returns_twice())
+  assert_true(sub.is_entry_point())
+  assert_true(sub.is_intrinsic())
+  assert_true(sub.is_pure())
+  assert_true(sub.get_attr("extern") == Some("true"))
+  assert_true(sub.get_attr("returns-twice") == Some("true"))
+  assert_true(sub.get_attr("entry-point") == Some("true"))
+  assert_true(!sub.without_extern().is_extern())
+  assert_true(!sub.without_leaf().is_leaf())
+  assert_true(!sub.without_malloc().is_malloc())
+  assert_true(!sub.without_const().is_const())
+  assert_true(!sub.without_noreturn().is_noreturn())
+  assert_true(!sub.without_nothrow().is_nothrow())
+  assert_true(!sub.without_returns_twice().returns_twice())
+  assert_true(!sub.without_entry_point().is_entry_point())
+  assert_true(!sub.without_intrinsic().is_intrinsic())
+  assert_true(!sub.without_pure().is_pure())
+}
+
+///|
 test "program sub and block containers preserve term order" {
   let typ = @types.ValueType::Imm(32)
   let lhs = @types.Var::new(name="x", typ~)

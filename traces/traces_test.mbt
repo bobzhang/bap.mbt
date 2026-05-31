@@ -440,6 +440,56 @@ test "translated BAP trace protocol registry selects URI providers" {
     Err(_) => fail("custom provider save failed")
   }
 
+  let stream_calls = Ref(0)
+  @traces.Trace::register_protocol(
+    @traces.TraceProtocol::create(
+      name="stream-provider",
+      supported_tags=["memory-load", "register-read"],
+      probe=fn(uri) { uri.has_prefix("stream://") },
+    ),
+  )
+  @traces.Trace::register_stream_reader("stream-provider", fn(uri) {
+    if uri != "stream://trace" {
+      Err(NoProvider(uri))
+    } else {
+      let index = Ref(0)
+      Ok(
+        @traces.TraceStreamReader::create(
+          custom_tool,
+          fn() {
+            stream_calls.val += 1
+            if index.val >= custom_events.length() {
+              None
+            } else {
+              let item = custom_events[index.val]
+              index.val += 1
+              Some(item)
+            }
+          },
+          meta=test_meta(),
+        ),
+      )
+    }
+  })
+  match @traces.Trace::load("stream://trace") {
+    Ok(trace) => {
+      assert_true(trace.protocol() == Some("stream-provider"))
+      assert_true(trace.meta() == test_meta())
+      assert_true(stream_calls.val == 0)
+      match trace.next_event() {
+        Ok(Some(MemoryLoad(value))) => assert_true(value == test_move())
+        _ => fail("expected stream reader first event")
+      }
+      assert_true(stream_calls.val == 1)
+      assert_true(
+        unwrap_events(trace.read_events()) ==
+        [@traces.TraceEvent::register_read(register_move())],
+      )
+      assert_true(stream_calls.val == custom_events.length() + 1)
+    }
+    Err(_) => fail("stream provider load failed")
+  }
+
   @traces.Trace::register_protocol(
     @traces.TraceProtocol::create(name="ambiguous-a", probe=fn(uri) {
       uri.has_prefix("ambiguous://")

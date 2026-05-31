@@ -95,6 +95,7 @@ pub fn[T] Trace::read_all_matching(Self, (TraceEvent) -> T?) -> Result[Array[T],
 pub fn Trace::read_events(Self, limit? : Int) -> Result[Array[TraceEvent], TraceError]
 pub fn Trace::register_protocol(TraceProtocol) -> Unit
 pub fn Trace::register_reader(String, (String) -> Result[TraceReader, TraceError]) -> Unit
+pub fn Trace::register_stream_reader(String, (String) -> Result[TraceStreamReader, TraceError]) -> Unit
 pub fn Trace::register_writer(String, (String, Self) -> Result[Unit, TraceError]) -> Unit
 pub fn Trace::remove_loaded(Self) -> Unit
 pub fn Trace::save(String, Self) -> Result[Unit, TraceError]
@@ -284,6 +285,14 @@ pub(all) enum TraceStep {
   Fail
   Make(TraceEvent)
 } derive(Eq, @debug.Debug)
+
+pub(all) struct TraceStreamReader {
+  tool : TraceTool
+  meta : TraceMeta
+  next : () -> Result[TraceEvent, String]?
+}
+pub fn TraceStreamReader::create(TraceTool, () -> Result[TraceEvent, String]?, meta? : TraceMeta) -> Self
+pub fn TraceStreamReader::from_results(TraceTool, Array[Result[TraceEvent, String]], meta? : TraceMeta) -> Self
 
 pub(all) struct TraceTool {
   name : String

@@ -1112,6 +1112,13 @@ pub(all) struct TraceReader {
 } derive(Eq, Debug)
 
 ///|
+pub(all) struct TraceStreamReader {
+  tool : TraceTool
+  meta : TraceMeta
+  next : () -> Result[TraceEvent, String]?
+}
+
+///|
 let trace_next_id : Ref[Int] = Ref(0)
 
 ///|
@@ -1127,6 +1134,12 @@ let trace_protocol_registry : Map[String, TraceProtocol] = {}
 let trace_reader_registry : Map[
   String,
   (String) -> Result[TraceReader, TraceError],
+] = {}
+
+///|
+let trace_stream_reader_registry : Map[
+  String,
+  (String) -> Result[TraceStreamReader, TraceError],
 ] = {}
 
 ///|
@@ -1225,6 +1238,14 @@ pub fn Trace::register_reader(
   reader : (String) -> Result[TraceReader, TraceError],
 ) -> Unit {
   trace_reader_registry[protocol_name] = reader
+}
+
+///|
+pub fn Trace::register_stream_reader(
+  protocol_name : String,
+  reader : (String) -> Result[TraceStreamReader, TraceError],
+) -> Unit {
+  trace_stream_reader_registry[protocol_name] = reader
 }
 
 ///|
@@ -1354,6 +1375,24 @@ pub fn Trace::from_results(
   monitor? : TraceMonitor = TraceMonitor::fail_on_error(),
 ) -> Trace {
   Trace::create_stream(tool, trace_array_source(source), monitor~)
+}
+
+///|
+pub fn TraceStreamReader::create(
+  tool : TraceTool,
+  next : () -> Result[TraceEvent, String]?,
+  meta? : TraceMeta = TraceMeta::empty(),
+) -> TraceStreamReader {
+  { tool, meta, next: trace_source_once(next) }
+}
+
+///|
+pub fn TraceStreamReader::from_results(
+  tool : TraceTool,
+  events : Array[Result[TraceEvent, String]],
+  meta? : TraceMeta = TraceMeta::empty(),
+) -> TraceStreamReader {
+  TraceStreamReader::create(tool, trace_array_source(events), meta~)
 }
 
 ///|
@@ -1539,19 +1578,34 @@ pub fn Trace::save(uri : String, trace : Trace) -> Result[Unit, TraceError] {
 pub fn Trace::load(uri : String) -> Result[Trace, TraceError] {
   match find_protocol(uri) {
     Ok(protocol) =>
-      match trace_reader_registry.get(protocol) {
+      match trace_stream_reader_registry.get(protocol) {
         Some(reader) =>
           match reader(uri) {
             Ok(trace_reader) =>
               Ok({
-                ..Trace::from_results(trace_reader.tool, trace_reader.events).set_meta(
+                ..Trace::create_stream(trace_reader.tool, trace_reader.next).set_meta(
                   trace_reader.meta,
                 ),
                 proto_name: Some(protocol),
               })
             Err(error) => Err(error)
           }
-        None => Err(NoProvider(uri))
+        None =>
+          match trace_reader_registry.get(protocol) {
+            Some(reader) =>
+              match reader(uri) {
+                Ok(trace_reader) =>
+                  Ok({
+                    ..Trace::from_results(
+                      trace_reader.tool,
+                      trace_reader.events,
+                    ).set_meta(trace_reader.meta),
+                    proto_name: Some(protocol),
+                  })
+                Err(error) => Err(error)
+              }
+            None => Err(NoProvider(uri))
+          }
       }
     Err(error) => Err(error)
   }

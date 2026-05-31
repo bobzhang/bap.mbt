@@ -312,8 +312,10 @@ For DWARF4-style
 `DW_AT_ranges`, parse `.debug_ranges` address-pair lists and collapse
 non-contiguous ranges to the covering function interval when the public MoonBit
 value only has `low_pc`/`high_pc`. Track the current compilation-unit
-`DW_AT_low_pc` as the default base, and honor base-address selection entries
-inside the range list. For DWARF5-style `.debug_rnglists`, treat
+`DW_AT_low_pc` as the default base, use that current scope base for a DIE's
+own `DW_AT_ranges` even when the DIE also has `DW_AT_low_pc`, and honor
+base-address selection entries inside the range list. For DWARF5-style
+`.debug_rnglists`, treat
 `DW_FORM_sec_offset` as an absolute list offset in the section, while
 `DW_FORM_rnglistx` indexes the offset table at `DW_AT_rnglists_base`; the table
 entry is relative to that same base. Support absolute `start_end`,

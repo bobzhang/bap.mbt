@@ -916,12 +916,10 @@ fn dwarf_collect_function(
         Some(section) => section
         None => return Err("section .debug_ranges is not available")
       }
-      let base = match low_pc {
-        Some(addr) => addr
-        None => range_base
-      }
       match
-        dwarf_read_ranges_summary(section, offset, base, endian, addr_size) {
+        dwarf_read_ranges_summary(
+          section, offset, range_base, endian, addr_size,
+        ) {
         Ok(summary) => summary
         Err(reason) => return Err(reason)
       }
@@ -931,13 +929,9 @@ fn dwarf_collect_function(
         Some(section) => section
         None => return Err("section .debug_rnglists is not available")
       }
-      let base = match low_pc {
-        Some(addr) => addr
-        None => range_base
-      }
       match
         dwarf_read_rnglists_summary(
-          section, offset, base, endian, addr_size, addr_base, addr_section,
+          section, offset, range_base, endian, addr_size, addr_base, addr_section,
         ) {
         Ok(summary) => summary
         Err(reason) => return Err(reason)
@@ -959,13 +953,9 @@ fn dwarf_collect_function(
         Ok(offset) => offset
         Err(reason) => return Err(reason)
       }
-      let base = match low_pc {
-        Some(addr) => addr
-        None => range_base
-      }
       match
         dwarf_read_rnglists_summary(
-          section, offset, base, endian, addr_size, addr_base, addr_section,
+          section, offset, range_base, endian, addr_size, addr_base, addr_section,
         ) {
         Ok(summary) => summary
         Err(reason) => return Err(reason)

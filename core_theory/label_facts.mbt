@@ -7,6 +7,7 @@ struct LabelFacts {
   possible_name_value : @knowledge.FactTable[Unit, @knowledge.Opinions[String?]]
   ivec_value : @knowledge.FactTable[Unit, Int?]
   encoding_value : @knowledge.FactTable[Unit, Language]
+  semantics_value : @knowledge.FactTable[Unit, Semantics]
   aliases_value : @knowledge.FactTable[Unit, Array[String]]
   unit_value : @knowledge.FactTable[Unit, ProgramUnit?]
   valid_value : @knowledge.FactTable[Unit, Bool?]
@@ -100,6 +101,11 @@ pub fn LabelFacts::new() -> LabelFacts {
     domain=source_language_domain(),
     desc="the language of the code",
   )
+  let semantics = cls.property(
+    name=core_name("semantics"),
+    domain=semantics_domain(),
+    desc="the program semantics",
+  )
   let aliases = cls.property(
     name=core_name("label-aliases"),
     domain=@knowledge.Domain::powerset(core_name("label-aliases"), item => item),
@@ -128,6 +134,7 @@ pub fn LabelFacts::new() -> LabelFacts {
     possible_name_value: @knowledge.FactTable::new(possible_name),
     ivec_value: @knowledge.FactTable::new(ivec),
     encoding_value: @knowledge.FactTable::new(encoding),
+    semantics_value: @knowledge.FactTable::new(semantics),
     aliases_value: @knowledge.FactTable::new(aliases),
     unit_value: @knowledge.FactTable::new(unit),
     valid_value: @knowledge.FactTable::new(valid),
@@ -176,6 +183,13 @@ pub fn LabelFacts::encoding(
   self : LabelFacts,
 ) -> @knowledge.FactTable[Unit, Language] {
   self.encoding_value
+}
+
+///|
+pub fn LabelFacts::semantics(
+  self : LabelFacts,
+) -> @knowledge.FactTable[Unit, Semantics] {
+  self.semantics_value
 }
 
 ///|
@@ -232,6 +246,14 @@ pub fn LabelFacts::provide_label(
   match label.encoding() {
     Some(language) =>
       match self.encoding_value.provide(object, language) {
+        Ok(_) => ()
+        Err(reason) => return Err(reason)
+      }
+    None => ()
+  }
+  match label.semantics() {
+    Some(semantics) =>
+      match self.semantics_value.provide(object, semantics) {
         Ok(_) => ()
         Err(reason) => return Err(reason)
       }
@@ -320,6 +342,18 @@ pub fn LabelFacts::collect_encoding(
   match self.encoding_value.collect(object) {
     Some(language) if !self.encoding_value.slot().domain().is_empty(language) =>
       Some(language)
+    _ => None
+  }
+}
+
+///|
+pub fn LabelFacts::collect_semantics(
+  self : LabelFacts,
+  object : @knowledge.Object[Unit],
+) -> Semantics? {
+  match self.semantics_value.collect(object) {
+    Some(semantics) if !self.semantics_value.slot().domain().is_empty(semantics) =>
+      Some(semantics)
     _ => None
   }
 }

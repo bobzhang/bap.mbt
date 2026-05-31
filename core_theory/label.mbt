@@ -10,6 +10,7 @@ struct Label {
   name_value : String?
   ivec_value : Int?
   encoding_value : Language?
+  semantics_value : Semantics?
   aliases_value : Array[String]
   possible_names_value : @knowledge.Opinions[String?]
   valid_flag : Bool
@@ -64,6 +65,7 @@ fn Label::make(
   name? : String,
   ivec? : Int,
   encoding? : Language,
+  semantics? : Semantics,
   aliases? : Array[String],
   is_valid? : Bool,
   is_subroutine? : Bool,
@@ -76,6 +78,7 @@ fn Label::make(
     name_value: name,
     ivec_value: ivec,
     encoding_value: encoding,
+    semantics_value: semantics,
     aliases_value: match aliases {
       Some(items) => unique_aliases(items)
       None => []
@@ -107,6 +110,7 @@ pub fn Label::null() -> Label {
     name_value: None,
     ivec_value: None,
     encoding_value: None,
+    semantics_value: None,
     aliases_value: [],
     possible_names_value: empty_possible_label_names(),
     valid_flag: false,
@@ -158,6 +162,11 @@ pub fn Label::with_unit(self : Label, unit : ProgramUnit) -> Label {
 ///|
 pub fn Label::with_encoding(self : Label, language : Language) -> Label {
   { ..self, encoding_value: Some(language) }
+}
+
+///|
+pub fn Label::with_semantics(self : Label, semantics : Semantics) -> Label {
+  { ..self, semantics_value: Some(semantics) }
 }
 
 ///|
@@ -220,6 +229,11 @@ pub fn Label::ivec(self : Label) -> Int? {
 ///|
 pub fn Label::encoding(self : Label) -> Language? {
   self.encoding_value
+}
+
+///|
+pub fn Label::semantics(self : Label) -> Semantics? {
+  self.semantics_value
 }
 
 ///|

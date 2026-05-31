@@ -1526,6 +1526,39 @@ test "program metadata tracks source compiler and units" {
 }
 
 ///|
+test "program semantics stores values and instruction bytes" {
+  let value = @core_theory.Value::empty(@core_theory.Sort::bool()).with_fact(
+    "kind", "lifted",
+  )
+  let semantics = @core_theory.Semantics::empty()
+    .with_value(value)
+    .with_code(b"\x90\xc3")
+  assert_true(semantics.value().fact("kind") == Some("lifted"))
+  assert_true(semantics.code() == Some(b"\x90\xc3"))
+  assert_true(semantics.code_hex() == Some("90c3"))
+  let facts = @core_theory.SemanticsFacts::new()
+  match facts.for_semantics(semantics) {
+    Ok(object) => {
+      assert_true(facts.value().has(object))
+      assert_true(facts.collect_value(object).fact("kind") == Some("lifted"))
+      assert_true(facts.collect_code(object) == Some(b"\x90\xc3"))
+      assert_true(facts.collect_semantics(object).code_hex() == Some("90c3"))
+      assert_true(
+        facts.provide_semantics(
+          object,
+          @core_theory.Semantics::empty().with_code(b"\x90\x90"),
+        )
+        is Err(_),
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+  let empty = facts.create()
+  assert_true(!facts.code().has(empty))
+  assert_true(facts.collect_semantics(empty).code() is None)
+}
+
+///|
 test "program source and unit facts expose BAP-style Knowledge slots" {
   let source = @core_theory.Source::create(
     language=C,
@@ -1622,6 +1655,7 @@ test "program label facts expose BAP-style Knowledge slots" {
     .with_encoding(C)
     .with_possible_name(weak, "sub_401000")
     .with_possible_name(strong, "main")
+    .with_semantics(@core_theory.Semantics::empty().with_code(b"\x55\xc3"))
     .with_subroutine()
   let facts = @core_theory.LabelFacts::new()
   let alias_notifications : Ref[Int] = Ref(0)
@@ -1640,6 +1674,10 @@ test "program label facts expose BAP-style Knowledge slots" {
       assert_true(facts.collect_name(object) is None)
       assert_true(facts.collect_possible_name(object) == Some("main"))
       assert_true(facts.collect_encoding(object) == Some(C))
+      assert_true(
+        facts.collect_semantics(object).map(s => s.code_hex()) ==
+        Some(Some("55c3")),
+      )
       assert_true(facts.collect_aliases(object) == ["_main", "main"])
       assert_true(
         facts.collect_unit(object).map(item => item.same(unit)) == Some(true),
@@ -1663,4 +1701,5 @@ test "program label facts expose BAP-style Knowledge slots" {
   let empty = facts.create()
   assert_true(facts.collect_target(empty).is_unknown())
   assert_true(facts.collect_encoding(empty) is None)
+  assert_true(facts.collect_semantics(empty) is None)
 }

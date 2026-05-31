@@ -501,6 +501,9 @@ test "block before and after definition slices support reverse order" {
   assert_true(block.def_occurs_after(def_x.tid(), def_z.tid()))
   assert_true(block.def_occurs_after(def_y.tid(), def_y.tid()))
   assert_true(!block.def_occurs_after(def_z.tid(), def_x.tid()))
+  assert_true(block.occurs(after=def_x.tid(), def_z.tid()))
+  assert_true(block.occurs(after=def_y.tid(), def_y.tid()))
+  assert_true(!block.occurs(after=def_z.tid(), def_x.tid()))
 }
 
 ///|

@@ -933,6 +933,7 @@ pub fn Term::nth_def(Self[Blk], Int) -> Self[Def]?
 pub fn Term::nth_jmp(Self[Blk], Int) -> Self[Jmp]?
 pub fn Term::nth_phi(Self[Blk], Int) -> Self[Phi]?
 pub fn Term::nth_sub(Self[Program], Int) -> Self[Sub]?
+pub fn Term::occurs(Self[Blk], after~ : Tid, Tid) -> Bool
 pub fn[T] Term::payload(Self[T]) -> T
 pub fn Term::phi_count(Self[Blk]) -> Int
 pub fn Term::phi_edge_free_vars(Self[Phi], Tid) -> Array[Var]

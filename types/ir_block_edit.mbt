@@ -1436,3 +1436,8 @@ pub fn Term::uses_var(self : Term[Blk], variable : Var) -> Bool {
 pub fn Term::def_occurs_after(self : Term[Blk], after : Tid, tid : Tid) -> Bool {
   after == tid || self.defs_after(after).any(term => term.tid() == tid)
 }
+
+///|
+pub fn Term::occurs(self : Term[Blk], after~ : Tid, tid : Tid) -> Bool {
+  self.def_occurs_after(after, tid)
+}

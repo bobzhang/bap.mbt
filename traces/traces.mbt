@@ -325,6 +325,9 @@ pub(all) struct TraceReader {
 let trace_next_id : Ref[Int] = Ref(0)
 
 ///|
+let trace_loaded_registry : Map[Int, Trace] = {}
+
+///|
 let trace_store : Map[String, Bytes] = {}
 
 ///|
@@ -349,6 +352,31 @@ let trace_memory_provider_registered : Ref[Bool] = Ref(false)
 fn next_trace_id() -> Int {
   trace_next_id.val += 1
   trace_next_id.val
+}
+
+///|
+pub fn Trace::add_loaded(trace : Trace) -> Unit {
+  trace_loaded_registry[trace.id()] = trace
+}
+
+///|
+pub fn Trace::remove_loaded(trace : Trace) -> Unit {
+  trace_loaded_registry.remove(trace.id())
+}
+
+///|
+pub fn Trace::loaded() -> Array[Trace] {
+  let traces : Array[Trace] = []
+  for entry in trace_loaded_registry {
+    traces.push(entry.1)
+  }
+  traces.sort_by((left, right) => left.id().compare(right.id()))
+  traces
+}
+
+///|
+pub fn Trace::loaded_iter() -> Iter[Trace] {
+  Trace::loaded().iter()
 }
 
 ///|

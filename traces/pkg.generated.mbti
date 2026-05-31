@@ -66,6 +66,7 @@ pub(all) struct Syscall {
 } derive(Eq, @debug.Debug)
 
 type Trace
+pub fn Trace::add_loaded(Self) -> Unit
 pub fn Trace::create(TraceTool, events? : Array[TraceEvent], monitor? : TraceMonitor) -> Self
 pub fn Trace::filter_map(Self, (TraceEvent) -> TraceEvent?) -> Self
 pub fn Trace::from_results(TraceTool, Array[Result[TraceEvent, String]], monitor? : TraceMonitor) -> Self
@@ -73,6 +74,8 @@ pub fn Trace::get_attr(Self, String) -> TraceAttrValue?
 pub fn Trace::has_attr(Self, String) -> Bool
 pub fn Trace::id(Self) -> Int
 pub fn Trace::load(String) -> Result[Self, TraceError]
+pub fn Trace::loaded() -> Array[Self]
+pub fn Trace::loaded_iter() -> Iter[Self]
 pub fn Trace::meta(Self) -> TraceMeta
 pub fn Trace::next(Self, String) -> Result[TraceEvent?, TraceError]
 pub fn Trace::next_event(Self) -> Result[TraceEvent?, TraceError]
@@ -85,6 +88,7 @@ pub fn Trace::read_events(Self, limit? : Int) -> Result[Array[TraceEvent], Trace
 pub fn Trace::register_protocol(TraceProtocol) -> Unit
 pub fn Trace::register_reader(String, (String) -> Result[TraceReader, TraceError]) -> Unit
 pub fn Trace::register_writer(String, (String, Self) -> Result[Unit, TraceError]) -> Unit
+pub fn Trace::remove_loaded(Self) -> Unit
 pub fn Trace::save(String, Self) -> Result[Unit, TraceError]
 pub fn Trace::set_attr(Self, String, TraceAttrValue) -> Self
 pub fn Trace::set_meta(Self, TraceMeta) -> Self

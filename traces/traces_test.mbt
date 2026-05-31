@@ -110,6 +110,11 @@ fn tool_for_events(events : Array[@traces.TraceEvent]) -> @traces.TraceTool {
 }
 
 ///|
+fn trace_ids(traces : Array[@traces.Trace]) -> Array[Int] {
+  traces.map(trace => trace.id())
+}
+
+///|
 test "translated BAP traces preserve ids tools metadata and in-memory save/load" {
   let first = new_trace()
   let second = new_trace()
@@ -172,6 +177,46 @@ test "translated BAP trace byte snapshots round trip metadata and event variants
     Err(ProtocolError(_)) => ()
     _ => fail("expected protocol error for malformed snapshot")
   }
+}
+
+///|
+test "translated BAP loaded trace registry adds lists and removes traces" {
+  let first = new_trace()
+  let second = new_trace()
+  @traces.Trace::remove_loaded(first)
+  @traces.Trace::remove_loaded(second)
+  let before = @traces.Trace::loaded().length()
+  @traces.Trace::add_loaded(second)
+  @traces.Trace::add_loaded(first)
+  @traces.Trace::add_loaded(first)
+
+  let loaded = @traces.Trace::loaded()
+  let ids = trace_ids(loaded)
+  assert_true(loaded.length() == before + 2)
+  assert_true(ids.contains(first.id()))
+  assert_true(ids.contains(second.id()))
+  assert_true(
+    ids.filter(id => id == first.id() || id == second.id()) ==
+    [first.id(), second.id()],
+  )
+  let iter_ids : Array[Int] = []
+  @traces.Trace::loaded_iter().each(trace => {
+    if trace.id() == first.id() || trace.id() == second.id() {
+      iter_ids.push(trace.id())
+    }
+  })
+  assert_true(iter_ids == [first.id(), second.id()])
+
+  @traces.Trace::remove_loaded(first)
+  let after_first_remove = trace_ids(@traces.Trace::loaded())
+  assert_true(!after_first_remove.contains(first.id()))
+  assert_true(after_first_remove.contains(second.id()))
+
+  @traces.Trace::remove_loaded(second)
+  let after_second_remove = trace_ids(@traces.Trace::loaded())
+  assert_true(!after_second_remove.contains(first.id()))
+  assert_true(!after_second_remove.contains(second.id()))
+  assert_true(after_second_remove.length() == before)
 }
 
 ///|

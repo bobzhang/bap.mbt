@@ -5,6 +5,7 @@ let tid_counter : Ref[Int] = Ref(0)
 pub(all) struct Tid {
   id : Int
   name : String?
+  ivec_value : Int?
 } derive(Eq, Hash, Debug)
 
 ///|
@@ -15,17 +16,22 @@ fn next_tid_id() -> Int {
 
 ///|
 pub fn Tid::fresh() -> Tid {
-  { id: next_tid_id(), name: None }
+  { id: next_tid_id(), name: None, ivec_value: None }
 }
 
 ///|
 pub fn Tid::for_name(name : String) -> Tid {
-  { id: next_tid_id(), name: Some(name) }
+  { id: next_tid_id(), name: Some(name), ivec_value: None }
 }
 
 ///|
 pub fn Tid::for_addr(addr : Word) -> Tid {
   Tid::for_name(addr.to_hex())
+}
+
+///|
+pub fn Tid::for_ivec(ivec : Int) -> Tid {
+  { id: next_tid_id(), name: None, ivec_value: Some(ivec) }
 }
 
 ///|
@@ -39,10 +45,19 @@ pub fn Tid::name(self : Tid) -> String? {
 }
 
 ///|
+pub fn Tid::ivec(self : Tid) -> Int? {
+  self.ivec_value
+}
+
+///|
 pub fn Tid::to_string(self : Tid) -> String {
   match self.name {
     Some(name) => "@\{name}"
-    None => "%\{self.id}"
+    None =>
+      match self.ivec_value {
+        Some(ivec) => "@interrupt:#\{ivec}"
+        None => "%\{self.id}"
+      }
   }
 }
 
@@ -202,6 +217,85 @@ pub fn Label::to_string(self : Label) -> String {
   match self {
     Direct(tid) => tid.to_string()
     Indirect(exp) => "*\{exp.to_string()}"
+  }
+}
+
+///|
+pub(all) enum JmpDst {
+  ResolvedDst(Tid)
+  IndirectDst(Exp)
+} derive(Eq, Debug)
+
+///|
+pub(all) enum JmpResolution {
+  ResolvedTarget(Tid)
+  IndirectTarget(Exp)
+} derive(Eq, Debug)
+
+///|
+pub fn Jmp::resolved(tid : Tid) -> JmpDst {
+  ResolvedDst(tid)
+}
+
+///|
+pub fn Jmp::indirect(exp : Exp) -> JmpDst {
+  IndirectDst(exp)
+}
+
+///|
+pub fn Jmp::resolve(dst : JmpDst) -> JmpResolution {
+  match dst {
+    ResolvedDst(tid) => ResolvedTarget(tid)
+    IndirectDst(exp) => IndirectTarget(exp)
+  }
+}
+
+///|
+fn jmp_dst_of_label(label : Label) -> JmpDst {
+  match label {
+    Direct(tid) => ResolvedDst(tid)
+    Indirect(exp) => IndirectDst(exp)
+  }
+}
+
+///|
+fn jmp_dst_to_label(dst : JmpDst) -> Label {
+  match dst {
+    ResolvedDst(tid) => Direct(tid)
+    IndirectDst(exp) => Indirect(exp)
+  }
+}
+
+///|
+fn jmp_dst_ivec(dst : JmpDst) -> Int? {
+  match dst {
+    ResolvedDst(tid) => tid.ivec()
+    IndirectDst(_) => None
+  }
+}
+
+///|
+fn jmp_unknown_dst() -> JmpDst {
+  IndirectDst(Unknown("unknown", Imm(0)))
+}
+
+///|
+fn jmp_kind_of_dst_alt(dst : JmpDst?, alt : JmpDst?) -> JmpKind {
+  match (dst, alt) {
+    (None, None) => Goto(jmp_dst_to_label(jmp_unknown_dst()))
+    (Some(dst), None) => Goto(jmp_dst_to_label(dst))
+    (None, Some(alt)) => JmpCall(Call::create(target=jmp_dst_to_label(alt)))
+    (Some(dst), Some(alt)) =>
+      match (dst, jmp_dst_ivec(alt)) {
+        (ResolvedDst(tid), Some(ivec)) => Interrupt(ivec, tid)
+        _ =>
+          JmpCall(
+            Call::create(
+              target=jmp_dst_to_label(alt),
+              return_label=jmp_dst_to_label(dst),
+            ),
+          )
+      }
   }
 }
 
@@ -644,6 +738,36 @@ pub fn Term::with_kind(self : Term[Jmp], kind : JmpKind) -> Term[Jmp] {
 ///|
 pub fn Term::with_cond(self : Term[Jmp], cond : Exp) -> Term[Jmp] {
   self.with_payload({ ..self.payload_value, cond, })
+}
+
+///|
+pub fn Term::dst(self : Term[Jmp]) -> JmpDst? {
+  match self.kind() {
+    Goto(label) => Some(jmp_dst_of_label(label))
+    Ret(_) => None
+    Interrupt(_, tid) => Some(ResolvedDst(tid))
+    JmpCall(call) => call.return_label.map(jmp_dst_of_label)
+  }
+}
+
+///|
+pub fn Term::alt(self : Term[Jmp]) -> JmpDst? {
+  match self.kind() {
+    Goto(_) => None
+    Ret(label) => Some(jmp_dst_of_label(label))
+    Interrupt(ivec, _) => Some(ResolvedDst(Tid::for_ivec(ivec)))
+    JmpCall(call) => Some(jmp_dst_of_label(call.target))
+  }
+}
+
+///|
+pub fn Term::with_dst(self : Term[Jmp], dst : JmpDst?) -> Term[Jmp] {
+  self.with_kind(jmp_kind_of_dst_alt(dst, self.alt()))
+}
+
+///|
+pub fn Term::with_alt(self : Term[Jmp], alt : JmpDst?) -> Term[Jmp] {
+  self.with_kind(jmp_kind_of_dst_alt(self.dst(), alt))
 }
 
 ///|

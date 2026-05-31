@@ -574,6 +574,14 @@ pub fn Jmp::create_call(Call, cond? : Exp, tid? : Tid) -> Term[Self]
 pub fn Jmp::create_goto(Label, cond? : Exp, tid? : Tid) -> Term[Self]
 pub fn Jmp::create_int(Int, Tid, cond? : Exp, term_tid? : Tid) -> Term[Self]
 pub fn Jmp::create_ret(Label, cond? : Exp, tid? : Tid) -> Term[Self]
+pub fn Jmp::indirect(Exp) -> JmpDst
+pub fn Jmp::resolve(JmpDst) -> JmpResolution
+pub fn Jmp::resolved(Tid) -> JmpDst
+
+pub(all) enum JmpDst {
+  ResolvedDst(Tid)
+  IndirectDst(Exp)
+} derive(Eq, @debug.Debug)
 
 pub(all) enum JmpKind {
   JmpCall(Call)
@@ -585,6 +593,11 @@ pub fn JmpKind::free_vars(Self) -> Array[Var]
 pub fn JmpKind::map_exp(Self, (Exp) -> Exp) -> Self
 pub fn JmpKind::substitute_var(Self, Var, Exp) -> Self
 pub fn JmpKind::to_string(Self) -> String
+
+pub(all) enum JmpResolution {
+  ResolvedTarget(Tid)
+  IndirectTarget(Exp)
+} derive(Eq, @debug.Debug)
 
 pub(all) enum Label {
   Direct(Tid)
@@ -680,6 +693,7 @@ pub fn Sub::create(name? : String, args? : Array[Term[Arg]], blks? : Array[Term[
 pub fn Sub::of_cfg(IrCfg) -> Term[Self]
 
 type Term[T]
+pub fn Term::alt(Self[Jmp]) -> JmpDst?
 pub fn Term::append_arg(Self[Sub], Self[Arg]) -> Self[Sub]
 pub fn Term::append_blk(Self[Sub], Self[Blk]) -> Self[Sub]
 pub fn Term::append_def(Self[Blk], Self[Def]) -> Self[Blk]
@@ -717,6 +731,7 @@ pub fn[T] Term::del_attr(Self[T], String) -> Self[T]
 pub fn Term::destroy_program_ssa(Self[Program]) -> Self[Program]
 pub fn Term::destroy_ssa(Self[Sub]) -> Self[Sub]
 pub fn Term::direct_call_target(Self[Jmp]) -> Tid?
+pub fn Term::dst(Self[Jmp]) -> JmpDst?
 pub fn Term::elts(Self[Blk], rev? : Bool) -> Array[BlkElt]
 pub fn Term::entry_blk(Self[Sub]) -> Self[Blk]?
 pub fn Term::exists_blk_term(Self[Blk], (IrTerm) -> Bool, include_self? : Bool) -> Bool
@@ -888,8 +903,10 @@ pub fn Term::update_phi(Self[Phi], Tid, Exp) -> Self[Phi]
 pub fn Term::update_phi_term(Self[Blk], Self[Phi]) -> Self[Blk]
 pub fn Term::uses_var(Self[Blk], Var) -> Bool
 pub fn Term::values(Self[Phi]) -> Array[(Tid, Exp)]
+pub fn Term::with_alt(Self[Jmp], JmpDst?) -> Self[Jmp]
 pub fn Term::with_cond(Self[Jmp], Exp) -> Self[Jmp]
 pub fn Term::with_const(Self[Sub]) -> Self[Sub]
+pub fn Term::with_dst(Self[Jmp], JmpDst?) -> Self[Jmp]
 pub fn Term::with_entry_point(Self[Sub]) -> Self[Sub]
 pub fn Term::with_extern(Self[Sub]) -> Self[Sub]
 pub fn[T] Term::with_flag(Self[T], String) -> Self[T]
@@ -926,11 +943,14 @@ pub fn Term::without_stub(Self[Sub]) -> Self[Sub]
 pub(all) struct Tid {
   id : Int
   name : String?
+  ivec_value : Int?
 } derive(Eq, Hash, @debug.Debug)
 pub fn Tid::for_addr(Word) -> Self
+pub fn Tid::for_ivec(Int) -> Self
 pub fn Tid::for_name(String) -> Self
 pub fn Tid::fresh() -> Self
 pub fn Tid::id(Self) -> Int
+pub fn Tid::ivec(Self) -> Int?
 pub fn Tid::name(Self) -> String?
 pub fn Tid::to_string(Self) -> String
 

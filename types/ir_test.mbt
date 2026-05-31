@@ -293,6 +293,8 @@ test "phi nodes jumps calls and args expose BAP-style payloads" {
   let right = @types.Tid::for_name("right")
   let one = @types.Int(@types.Word::of_int(width=8, 1))
   let two = @types.Int(@types.Word::of_int(width=8, 2))
+  let ptr = @types.Var::new(name="ptr", typ=@types.ValueType::reg32_t())
+  let ptr_exp : @types.Exp = Var(ptr)
   let phi = @types.Phi::of_list(lhs, [(left, one)]).update_phi(right, two)
   let single = @types.Phi::create(
     lhs,
@@ -313,6 +315,45 @@ test "phi nodes jumps calls and args expose BAP-style payloads" {
   )
   let jmp = @types.Jmp::create_call(call)
   inspect(jmp.kind().to_string(), content="call @left")
+  assert_true(
+    @types.Jmp::resolve(@types.Jmp::resolved(left)) == ResolvedTarget(left),
+  )
+  assert_true(
+    @types.Jmp::resolve(@types.Jmp::indirect(ptr_exp)) ==
+    IndirectTarget(ptr_exp),
+  )
+  let goto = @types.Jmp::create_goto(@types.Label::direct(left))
+  assert_true(goto.dst() == Some(@types.Jmp::resolved(left)))
+  assert_true(goto.alt() is None)
+  assert_true(
+    goto.with_dst(Some(@types.Jmp::indirect(ptr_exp))).kind() ==
+    Goto(Indirect(ptr_exp)),
+  )
+  assert_true(
+    goto.with_alt(Some(@types.Jmp::resolved(right))).kind() ==
+    JmpCall(
+      @types.Call::create(
+        target=@types.Label::direct(right),
+        return_label=@types.Label::direct(left),
+      ),
+    ),
+  )
+  assert_true(
+    goto.with_alt(Some(@types.Jmp::resolved(@types.Tid::for_ivec(7)))).kind() ==
+    Interrupt(7, left),
+  )
+  let ret = @types.Jmp::create_ret(@types.Label::direct(right))
+  assert_true(ret.dst() is None)
+  assert_true(ret.alt() == Some(@types.Jmp::resolved(right)))
+  let interrupt = @types.Jmp::create_int(13, right)
+  assert_true(interrupt.dst() == Some(@types.Jmp::resolved(right)))
+  match interrupt.alt() {
+    Some(ResolvedDst(tid)) => {
+      assert_true(tid.ivec() == Some(13))
+      inspect(tid.to_string(), content="@interrupt:#13")
+    }
+    _ => fail("expected interrupt vector destination")
+  }
   let arg = @types.Arg::create(lhs, one).with_intent(Both)
   assert_true(arg.intent() == Some(Both))
 }

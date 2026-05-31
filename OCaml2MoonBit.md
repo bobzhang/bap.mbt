@@ -74,6 +74,12 @@ Ref(0)`. Top-level `let mut` is not accepted.
 
 There is no `Int32` type in the current toolchain.
 
+MoonBit core has `Result`, but no built-in `Either`. When an OCaml API uses
+`Either` as a neutral two-way classification rather than success/error flow,
+prefer a small domain enum over encoding one branch as `Err`. For example, BAP
+IR jump destination resolution maps cleanly to a `JmpResolution` enum with
+direct and indirect cases.
+
 ## Bytes vs String
 
 OCaml `String.length` counts bytes; MoonBit `String::length()` counts UTF-16 code units. The same source character takes different positions in the two languages, and that difference is silent.

@@ -258,8 +258,22 @@ pub fn[T] Future::all(futures : Array[Future[T]]) -> Future[Array[T]] {
 }
 
 ///|
+pub fn[T] Future::all_list(
+  futures : @list.List[Future[T]],
+) -> Future[@list.List[T]] {
+  Future::all(futures.to_array()).map(fn(values) { @list.from_array(values) })
+}
+
+///|
 pub fn Future::all_unit(futures : Array[Future[Unit]]) -> Future[Unit] {
   Future::all(futures).map(fn(_) { () })
+}
+
+///|
+pub fn Future::all_unit_list(
+  futures : @list.List[Future[Unit]],
+) -> Future[Unit] {
+  Future::all_list(futures).map(fn(_) { () })
 }
 
 ///|
@@ -467,6 +481,13 @@ pub fn[T] Stream::of_array(
 }
 
 ///|
+pub fn[T] Stream::of_list(
+  values : @list.List[T],
+) -> (Stream[T], Signal[Unit], Future[Unit]) {
+  Stream::of_array(values.to_array())
+}
+
+///|
 pub fn[T] Stream::of_iter(
   values : Iter[T],
 ) -> (Stream[T], Signal[Unit], Future[Unit]) {
@@ -498,6 +519,14 @@ pub fn[T, E] Stream::before(
     ignore(promise.try_fulfill(buffer.copy()))
   })
   future
+}
+
+///|
+pub fn[T, E] Stream::before_list(
+  self : Stream[T],
+  event : Future[E],
+) -> Future[@list.List[T]] {
+  self.before(event).map(fn(values) { @list.from_array(values) })
 }
 
 ///|
@@ -848,6 +877,15 @@ pub fn[T, E] Stream::last_before(
 }
 
 ///|
+pub fn[T, E] Stream::last_before_list(
+  self : Stream[T],
+  event : Future[E],
+  count : Int,
+) -> Future[@list.List[T]] {
+  self.last_before(event, count).map(fn(values) { @list.from_array(values) })
+}
+
+///|
 pub fn[T] Stream::take(self : Stream[T], count : Int) -> Future[Array[T]] {
   let buffer : Array[T] = []
   let (future, promise) = Future::create()
@@ -862,6 +900,14 @@ pub fn[T] Stream::take(self : Stream[T], count : Int) -> Future[Array[T]] {
     }),
   )
   future
+}
+
+///|
+pub fn[T] Stream::take_list(
+  self : Stream[T],
+  count : Int,
+) -> Future[@list.List[T]] {
+  self.take(count).map(fn(values) { @list.from_array(values) })
 }
 
 ///|
@@ -935,6 +981,11 @@ pub fn[T] Stream::concat(streams : Array[Stream[T]]) -> Stream[T] {
 }
 
 ///|
+pub fn[T] Stream::concat_list(streams : @list.List[Stream[T]]) -> Stream[T] {
+  Stream::concat(streams.to_array())
+}
+
+///|
 pub fn[T] Stream::concat_merge(
   streams : Array[Stream[T]],
   f : (T, T) -> T,
@@ -948,6 +999,14 @@ pub fn[T] Stream::concat_merge(
       None => (Some(value), Some(value))
     }
   })
+}
+
+///|
+pub fn[T] Stream::concat_merge_list(
+  streams : @list.List[Stream[T]],
+  f : (T, T) -> T,
+) -> Stream[T] {
+  Stream::concat_merge(streams.to_array(), f)
 }
 
 ///|

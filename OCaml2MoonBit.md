@@ -48,6 +48,13 @@ OCaml `Future.return`, choose a semantic replacement such as `resolved`,
 Top-level mutable counters should use a `Ref`, e.g. `let counter : Ref[Int] =
 Ref(0)`. Top-level `let mut` is not accepted.
 
+Avoid direct ports of OCaml heterogeneous variadic encodings such as BAP
+`Future.Args`/`Variadic` when they rely on recursively composing function
+types through generic records. On the current MoonBit toolchain, a natural
+generic record encoding of that pattern can trigger a compiler stack overflow.
+Prefer fixed-arity helpers (`map2`/`apply2`, etc.) plus domain-specific
+adapters such as list-backed collection helpers.
+
 ## Type-Mapping Cheatsheet
 
 | OCaml use | MoonBit default |

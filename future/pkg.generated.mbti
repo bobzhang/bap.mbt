@@ -3,6 +3,7 @@ package "bobzhang/bap/future"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/list",
 }
 
 // Values
@@ -21,7 +22,9 @@ pub(all) enum Either[A, B] {
 
 type Future[T]
 pub fn[T] Future::all(Array[Self[T]]) -> Self[Array[T]]
+pub fn[T] Future::all_list(@list.List[Self[T]]) -> Self[@list.List[T]]
 pub fn Future::all_unit(Array[Self[Unit]]) -> Self[Unit]
+pub fn Future::all_unit_list(@list.List[Self[Unit]]) -> Self[Unit]
 pub fn[A, B] Future::apply(Self[(A) -> B], Self[A]) -> Self[B]
 pub fn[A, B, C] Future::apply2(Self[(A, B) -> C], Self[A], Self[B]) -> Self[C]
 pub fn[A, B, C, D] Future::apply3(Self[(A, B, C) -> D], Self[A], Self[B], Self[C]) -> Self[D]
@@ -58,8 +61,11 @@ pub fn[A, B, C, D] Stream::apply3(Self[(A, B, C) -> D], Self[A], Self[B], Self[C
 pub fn[A, B, C, D, E] Stream::apply4(Self[(A, B, C, D) -> E], Self[A], Self[B], Self[C], Self[D]) -> Self[E]
 pub fn[A, B, C, D, E, F] Stream::apply5(Self[(A, B, C, D, E) -> F], Self[A], Self[B], Self[C], Self[D], Self[E]) -> Self[F]
 pub fn[T, E] Stream::before(Self[T], Future[E]) -> Future[Array[T]]
+pub fn[T, E] Stream::before_list(Self[T], Future[E]) -> Future[@list.List[T]]
 pub fn[T] Stream::concat(Array[Self[T]]) -> Self[T]
+pub fn[T] Stream::concat_list(@list.List[Self[T]]) -> Self[T]
 pub fn[T] Stream::concat_merge(Array[Self[T]], (T, T) -> T) -> Self[T]
+pub fn[T] Stream::concat_merge_list(@list.List[Self[T]], (T, T) -> T) -> Self[T]
 pub fn[T] Stream::create() -> (Self[T], Signal[T])
 pub fn[A, B] Stream::either(Self[A], Self[B]) -> Self[Either[A, B]]
 pub fn[T] Stream::filter(Self[T], (T) -> Bool) -> Self[T]
@@ -72,6 +78,7 @@ pub fn[T] Stream::from(() -> T) -> (Self[T], Signal[Unit])
 pub fn[T] Stream::has_subscribers(Self[T]) -> Bool
 pub fn[T] Stream::hd(Self[T]) -> Future[T]
 pub fn[T, E] Stream::last_before(Self[T], Future[E], Int) -> Future[Array[T]]
+pub fn[T, E] Stream::last_before_list(Self[T], Future[E], Int) -> Future[@list.List[T]]
 pub fn[A, B] Stream::map(Self[A], (A) -> B) -> Self[B]
 pub fn[A, B, C] Stream::map2(Self[A], Self[B], (A, B) -> C) -> Self[C]
 pub fn[A, B, C, D] Stream::map3(Self[A], Self[B], Self[C], (A, B, C) -> D) -> Self[D]
@@ -83,6 +90,7 @@ pub fn[T] Stream::nth(Self[T], Int) -> Future[T]
 pub fn[T] Stream::observe(Self[T], (T) -> Unit) -> Unit
 pub fn[T] Stream::of_array(Array[T]) -> (Self[T], Signal[Unit], Future[Unit])
 pub fn[T] Stream::of_iter(Iter[T]) -> (Self[T], Signal[Unit], Future[Unit])
+pub fn[T] Stream::of_list(@list.List[T]) -> (Self[T], Signal[Unit], Future[Unit])
 pub fn[T] Stream::of_sequence(Iter[T]) -> (Self[T], Signal[Unit], Future[Unit])
 pub fn[T] Stream::on_subscribe(Self[T], (Int) -> Unit) -> Unit
 pub fn[T] Stream::on_unsubscribe(Self[T], (Int) -> Unit) -> Unit
@@ -94,6 +102,7 @@ pub fn[T] Stream::sample(Self[T], clk~ : Self[Unit]) -> Self[T?]
 pub fn[A, B, C] Stream::split(Self[A], (A) -> (B, C)) -> (Self[B], Self[C])
 pub fn[T] Stream::subscribe(Self[T], (T) -> Unit) -> Int
 pub fn[T] Stream::take(Self[T], Int) -> Future[Array[T]]
+pub fn[T] Stream::take_list(Self[T], Int) -> Future[@list.List[T]]
 pub fn[T] Stream::tl(Self[T]) -> Self[T]
 pub fn[S, T] Stream::unfold(init~ : S, f~ : (S) -> (T, S)) -> (Self[T], Signal[Unit])
 pub fn[S, T] Stream::unfold_many(init~ : S, f~ : (S) -> (Array[T], S)) -> (Self[T], Signal[Unit])

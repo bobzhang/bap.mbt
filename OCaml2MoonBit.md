@@ -191,6 +191,10 @@ or fallthrough; preserve calls later through lifted IR `Call` jumps rather than
 adding a disassembly edge kind that BAP's brancher does not have. Model
 branchers as a checked project stage
 that enriches already materialized disassembly blocks with those edge facts.
+Project-level callgraph helpers should delegate to the IR term callgraph while
+the project is built from IR `Call` jumps. Do not infer calls from
+disassembly-only branch edges; those facts are CFG hints until a target-specific
+decoder/lifter classifies calls and emits proper call jumps.
 BAP resolves branch destinations from each decoded instruction memory, so a
 MoonBit project brancher should prefer materialized instruction memories when
 they exist and only fall back to whole disassembly blocks before real

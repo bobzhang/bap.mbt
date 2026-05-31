@@ -4,6 +4,7 @@ package "bobzhang/bap/project"
 import {
   "bobzhang/bap/bitvec",
   "bobzhang/bap/core_theory",
+  "bobzhang/bap/graphlib",
   "bobzhang/bap/image",
   "bobzhang/bap/memory",
   "bobzhang/bap/types",
@@ -102,6 +103,9 @@ pub fn Project::apply_brancher(Self, brancher? : ProjectBrancher) -> Result[Self
 pub fn Project::apply_brancher_named(Self, brancher~ : String) -> Result[Self, String]
 pub fn Project::arch(Self) -> @core_theory.Target
 pub fn Project::base_address(Self) -> UInt64?
+pub fn Project::callees(Self, @types.Term[@types.Sub]) -> Array[@types.Tid]
+pub fn Project::callers(Self, @types.Term[@types.Sub]) -> Array[@types.Tid]
+pub fn Project::callgraph(Self) -> @graphlib.Graph[@types.Tid, Array[@types.Term[@types.Jmp]]]
 pub fn Project::create(target~ : @core_theory.Target, image? : @image.Image, filename? : String, program? : @types.Term[@types.Program], memory? : @memory.MemMap[String], symbols? : Array[@image.Symbol], storage? : Map[String, String], libraries? : Array[Library], state? : ProjectState) -> Self
 pub fn Project::del(Self, String) -> Self
 pub fn[T] Project::del_tag(Self, ProjectStorageTag[T]) -> Self
@@ -138,6 +142,9 @@ pub fn Project::reconstruct_named(Self, reconstructor~ : String) -> Result[Self,
 pub fn Project::relocations(Self) -> Array[@image.Relocation]
 pub fn Project::required_libraries(Self) -> Array[String]
 pub fn Project::resolve_stub_calls(Self, link_only? : Array[String], no_link? : Array[String]) -> Self
+pub fn Project::resolved_callees(Self, @types.Term[@types.Sub], resolve_indirect~ : (@types.Exp) -> Array[@types.Tid]) -> Array[@types.Tid]
+pub fn Project::resolved_callers(Self, @types.Term[@types.Sub], resolve_indirect~ : (@types.Exp) -> Array[@types.Tid]) -> Array[@types.Tid]
+pub fn Project::resolved_callgraph(Self, resolve_indirect~ : (@types.Exp) -> Array[@types.Tid]) -> @graphlib.Graph[@types.Tid, Array[@types.Term[@types.Jmp]]]
 pub fn Project::rooter(Self) -> ProjectRooter
 pub fn Project::rpaths(Self) -> Array[String]
 pub fn Project::run_autorun_passes(Self) -> Result[Self, String]

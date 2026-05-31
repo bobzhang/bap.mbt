@@ -132,34 +132,48 @@ pub(all) enum TraceEvent {
 } derive(Eq, @debug.Debug)
 pub fn TraceEvent::call(Call) -> Self
 pub fn TraceEvent::call_tag() -> String
+pub fn TraceEvent::call_value(Self) -> Call?
 pub fn TraceEvent::code_exec(Chunk) -> Self
 pub fn TraceEvent::code_exec_tag() -> String
+pub fn TraceEvent::code_exec_value(Self) -> Chunk?
 pub fn TraceEvent::common_tags() -> Array[String]
 pub fn TraceEvent::context_switch(Int) -> Self
 pub fn TraceEvent::context_switch_tag() -> String
+pub fn TraceEvent::context_switch_value(Self) -> Int?
 pub fn TraceEvent::exn(TraceException) -> Self
 pub fn TraceEvent::exn_tag() -> String
+pub fn TraceEvent::exn_value(Self) -> TraceException?
 pub fn TraceEvent::memory_load(Move[@types.Word]) -> Self
 pub fn TraceEvent::memory_load_tag() -> String
+pub fn TraceEvent::memory_load_value(Self) -> Move[@types.Word]?
 pub fn TraceEvent::memory_store(Move[@types.Word]) -> Self
 pub fn TraceEvent::memory_store_tag() -> String
+pub fn TraceEvent::memory_store_value(Self) -> Move[@types.Word]?
 pub fn TraceEvent::mode(String) -> Self
 pub fn TraceEvent::mode_tag() -> String
+pub fn TraceEvent::mode_value(Self) -> String?
 pub fn TraceEvent::modload(Modload) -> Self
 pub fn TraceEvent::modload_tag() -> String
+pub fn TraceEvent::modload_value(Self) -> Modload?
 pub fn TraceEvent::pc_update(@types.Word) -> Self
 pub fn TraceEvent::pc_update_tag() -> String
+pub fn TraceEvent::pc_update_value(Self) -> @types.Word?
 pub fn TraceEvent::register_read(Move[@types.Var]) -> Self
 pub fn TraceEvent::register_read_tag() -> String
+pub fn TraceEvent::register_read_value(Self) -> Move[@types.Var]?
 pub fn TraceEvent::register_write(Move[@types.Var]) -> Self
 pub fn TraceEvent::register_write_tag() -> String
+pub fn TraceEvent::register_write_value(Self) -> Move[@types.Var]?
 pub fn TraceEvent::return_event(Return) -> Self
 pub fn TraceEvent::return_tag() -> String
+pub fn TraceEvent::return_value(Self) -> Return?
 pub fn TraceEvent::syscall(Syscall) -> Self
 pub fn TraceEvent::syscall_tag() -> String
+pub fn TraceEvent::syscall_value(Self) -> Syscall?
 pub fn TraceEvent::tag(Self) -> String
 pub fn TraceEvent::timestamp(Int64) -> Self
 pub fn TraceEvent::timestamp_tag() -> String
+pub fn TraceEvent::timestamp_value(Self) -> Int64?
 
 pub(all) struct TraceException {
   number : Int

@@ -299,6 +299,118 @@ pub fn TraceEvent::mode(value : String) -> TraceEvent {
 }
 
 ///|
+pub fn TraceEvent::memory_load_value(self : TraceEvent) -> Move[@types.Word]? {
+  match self {
+    MemoryLoad(value) => Some(value)
+    _ => None
+  }
+}
+
+///|
+pub fn TraceEvent::memory_store_value(self : TraceEvent) -> Move[@types.Word]? {
+  match self {
+    MemoryStore(value) => Some(value)
+    _ => None
+  }
+}
+
+///|
+pub fn TraceEvent::register_read_value(self : TraceEvent) -> Move[@types.Var]? {
+  match self {
+    RegisterRead(value) => Some(value)
+    _ => None
+  }
+}
+
+///|
+pub fn TraceEvent::register_write_value(self : TraceEvent) -> Move[@types.Var]? {
+  match self {
+    RegisterWrite(value) => Some(value)
+    _ => None
+  }
+}
+
+///|
+pub fn TraceEvent::timestamp_value(self : TraceEvent) -> Int64? {
+  match self {
+    Timestamp(value) => Some(value)
+    _ => None
+  }
+}
+
+///|
+pub fn TraceEvent::pc_update_value(self : TraceEvent) -> @types.Word? {
+  match self {
+    PcUpdate(value) => Some(value)
+    _ => None
+  }
+}
+
+///|
+pub fn TraceEvent::code_exec_value(self : TraceEvent) -> Chunk? {
+  match self {
+    CodeExec(value) => Some(value)
+    _ => None
+  }
+}
+
+///|
+pub fn TraceEvent::context_switch_value(self : TraceEvent) -> Int? {
+  match self {
+    ContextSwitch(value) => Some(value)
+    _ => None
+  }
+}
+
+///|
+pub fn TraceEvent::syscall_value(self : TraceEvent) -> Syscall? {
+  match self {
+    Syscall(value) => Some(value)
+    _ => None
+  }
+}
+
+///|
+pub fn TraceEvent::exn_value(self : TraceEvent) -> TraceException? {
+  match self {
+    Exception(value) => Some(value)
+    _ => None
+  }
+}
+
+///|
+pub fn TraceEvent::call_value(self : TraceEvent) -> Call? {
+  match self {
+    Call(value) => Some(value)
+    _ => None
+  }
+}
+
+///|
+pub fn TraceEvent::return_value(self : TraceEvent) -> Return? {
+  match self {
+    Return(value) => Some(value)
+    _ => None
+  }
+}
+
+///|
+pub fn TraceEvent::modload_value(self : TraceEvent) -> Modload? {
+  match self {
+    Modload(value) => Some(value)
+    _ => None
+  }
+}
+
+///|
+pub fn TraceEvent::mode_value(self : TraceEvent) -> String? {
+  match self {
+    Mode(value) => Some(value)
+    _ => None
+  }
+}
+
+///|
 pub(all) struct BinaryInfo {
   path : String
   args : Array[String]

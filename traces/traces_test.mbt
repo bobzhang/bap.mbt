@@ -142,9 +142,10 @@ test "translated BAP common trace event tags match helper constructors" {
       @traces.TraceEvent::mode_tag(),
     ],
   )
+  let events = test_events()
   assert_true(
     [
-      for event in test_events() => event.tag()
+      for event in events => event.tag()
     ] ==
     [
       @traces.TraceEvent::memory_load_tag(),
@@ -153,9 +154,15 @@ test "translated BAP common trace event tags match helper constructors" {
       @traces.TraceEvent::register_write_tag(),
     ],
   )
+  assert_true(events[0].memory_load_value() == Some(test_move()))
+  assert_true(events[1].memory_store_value() == Some(test_move()))
+  assert_true(events[2].register_read_value() == Some(register_move()))
+  assert_true(events[3].register_write_value() == Some(register_move()))
+  assert_true(events[0].register_read_value() == None)
+  let broad = broad_events()
   assert_true(
     [
-      for event in broad_events() => event.tag()
+      for event in broad => event.tag()
     ] ==
     [
       @traces.TraceEvent::timestamp_tag(),
@@ -170,6 +177,29 @@ test "translated BAP common trace event tags match helper constructors" {
       @traces.TraceEvent::mode_tag(),
     ],
   )
+  assert_true(broad[0].timestamp_value() == Some(-42L))
+  assert_true(broad[1].pc_update_value() == Some(word32(0x401000)))
+  assert_true(
+    broad[2].code_exec_value() ==
+    Some(@traces.Chunk::create(addr=word32(0x401000), data=b"\x90\xcc")),
+  )
+  assert_true(broad[3].context_switch_value() == Some(-1))
+  assert_true(
+    broad[4].syscall_value() == Some({ number: 60, args: [word32(0)] }),
+  )
+  assert_true(
+    broad[5].exn_value() ==
+    Some({ number: 13, src: Some(word32(1)), dst: None }),
+  )
+  assert_true(broad[6].call_value() is Some(_))
+  assert_true(
+    broad[7].return_value() == Some({ caller: "main", callee: "callee" }),
+  )
+  assert_true(
+    broad[8].modload_value() ==
+    Some({ name: "libc.so", low: word32(0x1000), high: word32(0x1fff) }),
+  )
+  assert_true(broad[9].mode_value() == Some("thumb"))
 }
 
 ///|
@@ -396,6 +426,15 @@ test "translated BAP traces read matching events and tool support" {
 
   let memory = unwrap_events(new_trace().read_all("memory-load"))
   assert_true(memory == [@traces.TraceEvent::memory_load(test_move())])
+  match new_trace().read_all_matching(fn(event) { event.memory_load_value() }) {
+    Ok(loads) => assert_true(loads == [test_move()])
+    _ => fail("expected typed memory-load values")
+  }
+  match
+    new_trace().read_all_matching(fn(event) { event.register_read_value() }) {
+    Ok(reads) => assert_true(reads == [register_move()])
+    _ => fail("expected typed register-read values")
+  }
 
   match new_trace().next("register-read") {
     Ok(Some(RegisterRead(access))) => assert_true(access == register_move())

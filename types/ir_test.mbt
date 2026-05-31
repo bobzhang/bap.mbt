@@ -32,6 +32,9 @@ test "tids parse BAP-style textual identifiers" {
   let created = @types.Tid::create()
   assert_true(created.name() is None)
   assert_true(created.ivec() is None)
+  let packaged = @types.Tid::for_name("packaged", pkg="loader")
+  assert_true(packaged.name() == Some("packaged"))
+  assert_true(@types.Tid::for_ivec(4, pkg="loader").ivec() == Some(4))
   match @types.Tid::from_string("@entry") {
     Ok(tid) => {
       assert_true(tid.name() == Some("entry"))
@@ -94,6 +97,7 @@ test "BAP-style IR builders collect construction inputs" {
   let second_sub = sub_builder.result()
   assert_true(first_sub.tid() == sub_tid)
   assert_true(first_sub.sub_name() == "main")
+  assert_true(first_sub.with_name("renamed").sub_name() == "renamed")
   assert_true(first_sub.args().length() == 1)
   assert_true(first_sub.blks().map(blk => blk.tid()) == [first_blk.tid()])
   assert_true(

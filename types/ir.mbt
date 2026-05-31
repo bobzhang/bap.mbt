@@ -30,17 +30,20 @@ pub fn Tid::fresh() -> Tid {
 }
 
 ///|
-pub fn Tid::for_name(name : String) -> Tid {
+pub fn Tid::for_name(name : String, pkg? : String) -> Tid {
+  ignore(pkg)
   { id: next_tid_id(), name: Some(name), ivec_value: None }
 }
 
 ///|
-pub fn Tid::for_addr(addr : Word) -> Tid {
+pub fn Tid::for_addr(addr : Word, pkg? : String) -> Tid {
+  ignore(pkg)
   Tid::for_name(addr.to_hex())
 }
 
 ///|
-pub fn Tid::for_ivec(ivec : Int) -> Tid {
+pub fn Tid::for_ivec(ivec : Int, pkg? : String) -> Tid {
+  ignore(pkg)
   { id: next_tid_id(), name: None, ivec_value: Some(ivec) }
 }
 
@@ -622,6 +625,11 @@ pub fn Term::sub_name(self : Term[Sub]) -> String {
 ///|
 pub fn Term::with_sub_name(self : Term[Sub], name : String) -> Term[Sub] {
   self.with_payload({ ..self.payload_value, name, })
+}
+
+///|
+pub fn Term::with_name(self : Term[Sub], name : String) -> Term[Sub] {
+  self.with_sub_name(name)
 }
 
 ///|

@@ -1104,6 +1104,7 @@ pub fn Term::with_kind(Self[Jmp], JmpKind) -> Self[Jmp]
 pub fn Term::with_leaf(Self[Sub]) -> Self[Sub]
 pub fn Term::with_lhs(Self[Def], Var) -> Self[Def]
 pub fn Term::with_malloc(Self[Sub]) -> Self[Sub]
+pub fn Term::with_name(Self[Sub], String) -> Self[Sub]
 pub fn Term::with_noreturn(Self[Sub]) -> Self[Sub]
 pub fn Term::with_nothrow(Self[Sub]) -> Self[Sub]
 pub fn[T] Term::with_payload(Self[T], T) -> Self[T]
@@ -1135,9 +1136,9 @@ pub(all) struct Tid {
   ivec_value : Int?
 } derive(Eq, Hash, @debug.Debug)
 pub fn Tid::create() -> Self
-pub fn Tid::for_addr(Word) -> Self
-pub fn Tid::for_ivec(Int) -> Self
-pub fn Tid::for_name(String) -> Self
+pub fn Tid::for_addr(Word, pkg? : String) -> Self
+pub fn Tid::for_ivec(Int, pkg? : String) -> Self
+pub fn Tid::for_name(String, pkg? : String) -> Self
 pub fn Tid::fresh() -> Self
 pub fn Tid::from_string(String) -> Result[Self, String]
 pub fn Tid::from_string_exn(String) -> Self raise TidParseError

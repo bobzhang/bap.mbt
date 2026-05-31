@@ -577,8 +577,10 @@ test "target role helpers classify common architecture variables" {
     None => fail("missing RDI")
   }
   match amd64.find_var("RAX") {
-    Some(result) =>
+    Some(result) => {
+      assert_true(amd64.roles_of_var(result).contains(IntegerRegister))
       assert_true(amd64.roles_of_var(result).contains(ResultRegister))
+    }
     None => fail("missing RAX")
   }
   assert_true(amd64.find_role(StackPointer).map(v => v.ident()) == Some("RSP"))
@@ -596,7 +598,10 @@ test "target role helpers classify common architecture variables" {
     None => fail("missing LR")
   }
   match arm.find_var("R4") {
-    Some(saved) => assert_true(arm.roles_of_var(saved).contains(CalleeSaved))
+    Some(saved) => {
+      assert_true(arm.roles_of_var(saved).contains(IntegerRegister))
+      assert_true(arm.roles_of_var(saved).contains(CalleeSaved))
+    }
     None => fail("missing R4")
   }
   let riscv = @core_theory.Target::riscv64()
@@ -604,9 +609,16 @@ test "target role helpers classify common architecture variables" {
   assert_true(riscv.role_aliases(ResultRegister).contains("a0"))
   assert_true(riscv.role_aliases(Argument).contains("a7"))
   assert_true(!riscv.role_aliases(ResultRegister).contains("rax"))
-  assert_true(riscv.find_var("F31") is Some(_))
+  match riscv.find_var("F31") {
+    Some(float) =>
+      assert_true(riscv.roles_of_var(float).contains(FloatingRegister))
+    None => fail("missing F31")
+  }
   match riscv.find_var("X2") {
-    Some(sp) => assert_true(riscv.roles_of_var(sp).contains(StackPointer))
+    Some(sp) => {
+      assert_true(riscv.roles_of_var(sp).contains(IntegerRegister))
+      assert_true(riscv.roles_of_var(sp).contains(StackPointer))
+    }
     None => fail("missing X2")
   }
   match riscv.find_var("X1") {
@@ -665,9 +677,14 @@ test "target role helpers classify common architecture variables" {
     None => fail("missing sp alias origin")
   }
   let mips64 = @core_theory.Target::mips64()
-  assert_true(mips64.find_var("F31") is Some(_))
+  match mips64.find_var("F31") {
+    Some(float) =>
+      assert_true(mips64.roles_of_var(float).contains(FloatingRegister))
+    None => fail("missing F31")
+  }
   match mips64.find_var("ZERO") {
     Some(zero) => {
+      assert_true(mips64.roles_of_var(zero).contains(IntegerRegister))
       assert_true(mips64.roles_of_var(zero).contains(Constant))
       assert_true(mips64.roles_of_var(zero).contains(ZeroRegister))
     }
@@ -701,8 +718,16 @@ test "target role helpers classify common architecture variables" {
   let ppc64 = @core_theory.Target::powerpc64()
   assert_true(ppc64.role_aliases(Argument).contains("r3"))
   assert_true(!ppc64.role_aliases(Argument).contains("rdi"))
-  assert_true(ppc64.find_var("F31") is Some(_))
-  assert_true(ppc64.find_var("V31") is Some(_))
+  match ppc64.find_var("F31") {
+    Some(float) =>
+      assert_true(ppc64.roles_of_var(float).contains(FloatingRegister))
+    None => fail("missing F31")
+  }
+  match ppc64.find_var("V31") {
+    Some(vector) =>
+      assert_true(ppc64.roles_of_var(vector).contains(VectorRegister))
+    None => fail("missing V31")
+  }
   match ppc64.find_var("LR") {
     Some(link) => assert_true(ppc64.roles_of_var(link).contains(LinkRegister))
     None => fail("missing LR")
@@ -742,7 +767,10 @@ test "target role helpers classify common architecture variables" {
   }
   let aarch64 = @core_theory.Target::aarch64()
   match aarch64.find_var("X2") {
-    Some(reg) => assert_true(!aarch64.roles_of_var(reg).contains(StackPointer))
+    Some(reg) => {
+      assert_true(aarch64.roles_of_var(reg).contains(IntegerRegister))
+      assert_true(!aarch64.roles_of_var(reg).contains(StackPointer))
+    }
     None => fail("missing X2")
   }
   match aarch64.find_var("X30") {
@@ -751,8 +779,16 @@ test "target role helpers classify common architecture variables" {
   }
   let systemz = @core_theory.Target::systemz()
   match systemz.find_var("R15") {
-    Some(sp) => assert_true(systemz.roles_of_var(sp).contains(StackPointer))
+    Some(sp) => {
+      assert_true(systemz.roles_of_var(sp).contains(IntegerRegister))
+      assert_true(systemz.roles_of_var(sp).contains(StackPointer))
+    }
     None => fail("missing R15")
+  }
+  match systemz.find_var("F15") {
+    Some(float) =>
+      assert_true(systemz.roles_of_var(float).contains(FloatingRegister))
+    None => fail("missing F15")
   }
   match systemz.find_var("R14") {
     Some(link) => assert_true(systemz.roles_of_var(link).contains(LinkRegister))

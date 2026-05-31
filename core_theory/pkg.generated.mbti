@@ -241,6 +241,9 @@ pub fn ProgramUnitFacts::target(Self) -> @knowledge.FactTable[Unit, Target]
 
 pub(all) enum Role {
   General
+  IntegerRegister
+  FloatingRegister
+  VectorRegister
   StackPointer
   FramePointer
   ProgramCounter

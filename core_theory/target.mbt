@@ -278,6 +278,9 @@ pub fn TargetOptions::to_string(self : TargetOptions) -> String {
 ///|
 pub(all) enum Role {
   General
+  IntegerRegister
+  FloatingRegister
+  VectorRegister
   StackPointer
   FramePointer
   ProgramCounter
@@ -585,6 +588,7 @@ fn find_in_targets(items : Array[Target], query : String) -> Target? {
 fn target_role_names(role : Role) -> Array[String] {
   match role {
     General => []
+    IntegerRegister | FloatingRegister | VectorRegister => []
     StackPointer => ["sp", "esp", "rsp"]
     FramePointer => ["fp", "ebp", "rbp"]
     ProgramCounter => ["pc", "eip", "rip"]
@@ -628,6 +632,13 @@ fn concat_role_names(groups : Array[Array[String]]) -> Array[String] {
 fn x86_64_role_names(role : Role) -> Array[String] {
   match role {
     General => []
+    IntegerRegister =>
+      concat_role_names([
+        ["rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "rsp"],
+        role_names("r", 8, 15),
+        ["cs", "ds", "es", "ss"],
+      ])
+    FloatingRegister | VectorRegister => []
     StackPointer => ["rsp"]
     FramePointer => ["rbp"]
     ProgramCounter => ["rip"]
@@ -645,6 +656,12 @@ fn x86_64_role_names(role : Role) -> Array[String] {
 fn x86_32_role_names(role : Role) -> Array[String] {
   match role {
     General => []
+    IntegerRegister =>
+      [
+        "eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp", "cs", "ds", "es",
+        "ss", "fs", "gs",
+      ]
+    FloatingRegister | VectorRegister => []
     StackPointer => ["esp"]
     FramePointer => ["ebp"]
     ProgramCounter => ["eip"]
@@ -662,6 +679,8 @@ fn x86_32_role_names(role : Role) -> Array[String] {
 fn arm32_role_names(role : Role) -> Array[String] {
   match role {
     General => []
+    IntegerRegister => concat_role_names([role_names("r", 0, 12), ["sp", "lr"]])
+    FloatingRegister | VectorRegister => []
     StackPointer => ["sp"]
     FramePointer => ["r11"]
     ProgramCounter => ["pc"]
@@ -680,6 +699,8 @@ fn arm32_role_names(role : Role) -> Array[String] {
 fn aarch64_role_names(role : Role) -> Array[String] {
   match role {
     General => []
+    IntegerRegister => concat_role_names([role_names("x", 0, 30), ["sp"]])
+    FloatingRegister | VectorRegister => []
     StackPointer => ["sp", "wsp", "r31"]
     FramePointer => ["fp", "x29", "r29"]
     ProgramCounter => ["pc"]
@@ -699,6 +720,15 @@ fn aarch64_role_names(role : Role) -> Array[String] {
 fn mips_role_names(bits : Int, role : Role) -> Array[String] {
   match role {
     General => []
+    IntegerRegister =>
+      concat_role_names([
+        role_names("r", 0, 31),
+        [
+          for name in mips_gpr_alias_names() => name.to_lower()
+        ],
+      ])
+    FloatingRegister => role_names("f", 0, 31)
+    VectorRegister => []
     StackPointer => ["sp", "r29"]
     FramePointer => ["fp", "r30"]
     ProgramCounter => ["pc"]
@@ -724,6 +754,9 @@ fn mips_role_names(bits : Int, role : Role) -> Array[String] {
 fn powerpc_role_names(role : Role) -> Array[String] {
   match role {
     General => []
+    IntegerRegister => role_names("r", 0, 31)
+    FloatingRegister => role_names("f", 0, 31)
+    VectorRegister => role_names("v", 0, 31)
     StackPointer => ["sp", "r1"]
     FramePointer => []
     ProgramCounter => ["pc"]
@@ -766,6 +799,15 @@ fn powerpc_role_names(role : Role) -> Array[String] {
 fn riscv_role_names(role : Role) -> Array[String] {
   match role {
     General => []
+    IntegerRegister =>
+      concat_role_names([
+        role_names("x", 0, 31),
+        [
+          for name in riscv_gpr_alias_names() => name.to_lower()
+        ],
+      ])
+    FloatingRegister => role_names("f", 0, 31)
+    VectorRegister => []
     StackPointer => ["sp", "x2"]
     FramePointer => ["fp", "s0", "x8"]
     ProgramCounter => ["pc"]
@@ -812,6 +854,14 @@ fn riscv_role_names(role : Role) -> Array[String] {
 fn sparc_role_names(role : Role) -> Array[String] {
   match role {
     General => []
+    IntegerRegister =>
+      concat_role_names([
+        role_names("g", 0, 7),
+        role_names("o", 0, 7),
+        role_names("l", 0, 7),
+        role_names("i", 0, 7),
+      ])
+    FloatingRegister | VectorRegister => []
     StackPointer => ["sp", "o6"]
     FramePointer => ["i6"]
     ProgramCounter => ["pc", "npc"]
@@ -830,6 +880,9 @@ fn sparc_role_names(role : Role) -> Array[String] {
 fn systemz_role_names(role : Role) -> Array[String] {
   match role {
     General => []
+    IntegerRegister => role_names("r", 0, 15)
+    FloatingRegister => role_names("f", 0, 15)
+    VectorRegister => []
     StackPointer => ["sp", "r15"]
     FramePointer => []
     ProgramCounter => ["pc"]
@@ -1238,6 +1291,9 @@ pub fn Target::roles_of_var(self : Target, variable : Var) -> Array[Role] {
   for
     role in [
       StackPointer,
+      IntegerRegister,
+      FloatingRegister,
+      VectorRegister,
       FramePointer,
       ProgramCounter,
       Status,

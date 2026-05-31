@@ -36,7 +36,7 @@ test "translated DWARF FBI extracts function with inline name and relative high 
     b"\x05" +
     b"\x00"
   let data = expect_fbi_data(
-    @dwarf.DwarfData::from_bytes(endian=LittleEndian, info~, abbrev~, str=b""),
+    @dwarf.DwarfData::from_bytes(endian=LittleEndian, info~, abbrev~),
   )
   let functions = expect_functions(data.functions())
   assert_true(functions.length() == 1)
@@ -104,6 +104,29 @@ test "translated DWARF FBI extracts string-table names and absolute high pc" {
 }
 
 ///|
+test "translated DWARF FBI reports missing debug_str for string-table names" {
+  let abbrev = b"\x01\x2e\x00" +
+    b"\x03\x0e" +
+    b"\x11\x01" +
+    b"\x12\x01" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x15\x00\x00\x00" +
+    b"\x04\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x04" +
+    b"\x01" +
+    b"\x05\x00\x00\x00" +
+    b"\x20\x00\x00\x00" +
+    b"\x30\x00\x00\x00" +
+    b"\x00"
+  let data = expect_fbi_data(
+    @dwarf.DwarfData::from_bytes(endian=LittleEndian, info~, abbrev~),
+  )
+  assert_true(data.functions() is Err(_))
+}
+
+///|
 test "translated DWARF FBI extracts line-string names" {
   let abbrev = b"\x01\x2e\x00" +
     b"\x03\x1f" +
@@ -126,7 +149,6 @@ test "translated DWARF FBI extracts line-string names" {
       endian=LittleEndian,
       info~,
       abbrev~,
-      str=b"",
       line_str=b"skip\x00linefn\x00",
     ),
   )
@@ -873,11 +895,7 @@ test "translated DWARF FBI skips degenerate and non-function DIEs" {
 ///|
 test "translated DWARF FBI reports missing sections and unknown abbrev codes" {
   let data = expect_fbi_data(
-    @dwarf.DwarfData::from_bytes(
-      endian=LittleEndian,
-      info=b"\x00\x00\x00\x00",
-      abbrev=b"",
-    ),
+    @dwarf.DwarfData::from_bytes(endian=LittleEndian, info=b"\x00\x00\x00\x00"),
   )
   assert_true(data.functions() is Err(_))
   let abbrev = b"\x00"

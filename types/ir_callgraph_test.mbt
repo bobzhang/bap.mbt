@@ -72,11 +72,13 @@ test "call accessors expose target and return labels" {
   let call = @types.Call::create(target~, return_label~)
   assert_true(call.target() == target)
   assert_true(call.return_label() == Some(return_label))
+  assert_true(call.return_() == Some(return_label))
   assert_true(call.with_target(changed_target).target() == changed_target)
   assert_true(
     call.with_target(changed_target).return_label() == Some(return_label),
   )
   assert_true(call.with_noreturn().return_label() is None)
+  assert_true(call.with_noreturn().return_() is None)
 }
 
 ///|

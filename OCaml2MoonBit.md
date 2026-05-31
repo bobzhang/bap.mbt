@@ -44,6 +44,11 @@ the OCaml name is worth the warning.
 MoonBit keywords cannot be used as method names. When porting APIs such as
 OCaml `Future.return`, choose a semantic replacement such as `resolved`,
 `full`, or `pure` instead of trying to preserve the exact name.
+When an existing public port already has a clear semantic name, keep that name
+as primary and add a narrow compatibility alias only when it helps callers map
+from the OCaml interface. For example, BAP `Call.return` can be exposed as
+`return_label()` with a `return_()` alias, while BAP `Ir_jmp.guard` remains a
+more explicit `jmp_guard()` because `guard` is reserved.
 
 Top-level mutable counters should use a `Ref`, e.g. `let counter : Ref[Int] =
 Ref(0)`. Top-level `let mut` is not accepted.

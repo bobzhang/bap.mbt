@@ -9,6 +9,11 @@ pub fn Call::return_label(self : Call) -> Label? {
 }
 
 ///|
+pub fn Call::return_(self : Call) -> Label? {
+  self.return_label()
+}
+
+///|
 pub fn Term::direct_call_target(self : Term[Jmp]) -> Tid? {
   match self.kind() {
     JmpCall(call) =>

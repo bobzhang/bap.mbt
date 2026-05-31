@@ -1007,6 +1007,9 @@ test "phi nodes jumps calls and args expose BAP-style payloads" {
   assert_true(single.tid().name() == Some("phi-term"))
   assert_true(phi.select(left) == Some(one))
   assert_true(phi.select(right) == Some(two))
+  assert_true(phi.phi_var() == lhs)
+  assert_true(phi.phi_options() == phi.values())
+  assert_true(phi.with_phi_var(ptr).phi_var() == ptr)
   assert_true(single.select_or_unknown(left) == one)
   assert_true(
     single.select_or_unknown(right) == Unknown("unresolved-tid @right", typ),

@@ -883,13 +883,28 @@ pub fn Term::phi_lhs(self : Term[Phi]) -> Var {
 }
 
 ///|
+pub fn Term::phi_var(self : Term[Phi]) -> Var {
+  self.phi_lhs()
+}
+
+///|
 pub fn Term::with_phi_lhs(self : Term[Phi], lhs : Var) -> Term[Phi] {
   self.with_payload({ ..self.payload_value, lhs, })
 }
 
 ///|
+pub fn Term::with_phi_var(self : Term[Phi], variable : Var) -> Term[Phi] {
+  self.with_phi_lhs(variable)
+}
+
+///|
 pub fn Term::values(self : Term[Phi]) -> Array[(Tid, Exp)] {
   self.payload_value.values.copy()
+}
+
+///|
+pub fn Term::phi_options(self : Term[Phi]) -> Array[(Tid, Exp)] {
+  self.values()
 }
 
 ///|

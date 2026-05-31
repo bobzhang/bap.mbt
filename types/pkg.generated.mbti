@@ -403,6 +403,7 @@ pub(all) struct Call {
 pub fn Call::create(target~ : Label, return_label? : Label) -> Self
 pub fn Call::free_vars(Self) -> Array[Var]
 pub fn Call::map_exp(Self, (Exp) -> Exp) -> Self
+pub fn Call::return_(Self) -> Label?
 pub fn Call::return_label(Self) -> Label?
 pub fn Call::substitute_var(Self, Var, Exp) -> Self
 pub fn Call::target(Self) -> Label
@@ -961,7 +962,9 @@ pub fn Term::phi_count(Self[Blk]) -> Int
 pub fn Term::phi_edge_free_vars(Self[Phi], Tid) -> Array[Var]
 pub fn Term::phi_free_vars(Self[Phi]) -> Array[Var]
 pub fn Term::phi_lhs(Self[Phi]) -> Var
+pub fn Term::phi_options(Self[Phi]) -> Array[(Tid, Exp)]
 pub fn Term::phi_to_string(Self[Phi]) -> String
+pub fn Term::phi_var(Self[Phi]) -> Var
 pub fn Term::phis(Self[Blk]) -> Array[Self[Phi]]
 pub fn Term::phis_after(Self[Blk], Tid, rev? : Bool) -> Array[Self[Phi]]
 pub fn Term::phis_before(Self[Blk], Tid, rev? : Bool) -> Array[Self[Phi]]
@@ -1105,6 +1108,7 @@ pub fn Term::with_noreturn(Self[Sub]) -> Self[Sub]
 pub fn Term::with_nothrow(Self[Sub]) -> Self[Sub]
 pub fn[T] Term::with_payload(Self[T], T) -> Self[T]
 pub fn Term::with_phi_lhs(Self[Phi], Var) -> Self[Phi]
+pub fn Term::with_phi_var(Self[Phi], Var) -> Self[Phi]
 pub fn Term::with_pure(Self[Sub]) -> Self[Sub]
 pub fn Term::with_returns_twice(Self[Sub]) -> Self[Sub]
 pub fn Term::with_rhs(Self[Def], Exp) -> Self[Def]

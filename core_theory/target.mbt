@@ -648,7 +648,8 @@ fn arm32_alias_origins() -> Array[AliasOrigin] {
 
 ///|
 fn aarch64_vars() -> Array[Var] {
-  let items = numbered_word_vars(64, "X", 32)
+  let items = numbered_word_vars(64, "R", 32)
+  append_vars(items, numbered_word_vars(64, "X", 32))
   append_vars(items, numbered_word_vars(32, "W", 32))
   append_vars(items, numbered_word_vars(128, "V", 32))
   append_vars(items, numbered_word_vars(128, "Q", 32))
@@ -669,12 +670,12 @@ fn aarch64_alias_origins() -> Array[AliasOrigin] {
   let items : Array[AliasOrigin] = []
   for i in 0..<32 {
     items.push(
-      AliasOrigin::register(word_var(64, "R\{i}"), word_var(64, "X\{i}")),
+      AliasOrigin::register(word_var(64, "X\{i}"), word_var(64, "R\{i}")),
     )
     items.push(
       AliasOrigin::subregister(
         word_var(32, "W\{i}"),
-        word_var(64, "X\{i}"),
+        word_var(64, "R\{i}"),
         lo=0,
         hi=31,
       ),

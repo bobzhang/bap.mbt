@@ -1049,6 +1049,14 @@ test "target role helpers classify common architecture variables" {
     None => fail("missing F0")
   }
   let aarch64 = @core_theory.Target::aarch64()
+  match aarch64.find_var("R0") {
+    Some(reg) => {
+      assert_true(aarch64.roles_of_var(reg).contains(IntegerRegister))
+      assert_true(aarch64.roles_of_var(reg).contains(Argument))
+      assert_true(aarch64.roles_of_var(reg).contains(ResultRegister))
+    }
+    None => fail("missing R0")
+  }
   match aarch64.find_var("X2") {
     Some(reg) => {
       assert_true(aarch64.roles_of_var(reg).contains(IntegerRegister))
@@ -1080,10 +1088,18 @@ test "target role helpers classify common architecture variables" {
     }
     None => fail("missing XZR")
   }
+  match aarch64.origin_of_name("X0") {
+    Some(origin) => {
+      assert_true(origin.aliased().ident() == "X0")
+      assert_true(origin.source().map(v => v.ident()) == Some("R0"))
+    }
+    None => fail("missing X0 alias origin")
+  }
+  assert_true(aarch64.origin_of_name("R0") is None)
   match aarch64.origin_of_name("W0") {
     Some(origin) => {
       assert_true(origin.aliased().ident() == "W0")
-      assert_true(origin.source().map(v => v.ident()) == Some("X0"))
+      assert_true(origin.source().map(v => v.ident()) == Some("R0"))
       assert_true(origin.range() == Some((0, 31)))
     }
     None => fail("missing W0 alias origin")

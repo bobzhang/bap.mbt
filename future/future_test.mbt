@@ -448,3 +448,121 @@ test "translated BAP stream once parse and selector futures" {
   )
   assert_true(last_short.peek() == Some([3, 4]))
 }
+
+///|
+fn append_int(acc : Array[Int], value : Int) -> Array[Int] {
+  let out = acc.copy()
+  out.push(value)
+  out
+}
+
+///|
+fn run_time_line(
+  signal : @future.Signal[Unit],
+  clk_signal : @future.Signal[Unit],
+  timeline : Array[Int],
+) -> Unit {
+  let index = Ref(0)
+  let cursor = Ref(0)
+  while cursor.val < timeline.length() {
+    if timeline[cursor.val] == index.val {
+      clk_signal.send(())
+      cursor.val += 1
+    } else {
+      signal.send(())
+      index.val += 1
+    }
+  }
+}
+
+///|
+test "translated BAP stream batched unfold either concat and concat merge" {
+  let (batched, batched_signal) = @future.Stream::unfold_many(init=0, f=fn(
+    value,
+  ) {
+    ([value, value], value + 1)
+  })
+  assert_stream_before_eq(batched, batched_signal, repeat=3, [0, 0, 1, 1, 2, 2])
+
+  let (left, left_signal, _) = @future.Stream::of_array([0, 1])
+  let (right, right_signal, _) = @future.Stream::of_array(["a"])
+  let either = left.either(right)
+  let either_values : Array[@future.Either[Int, String]] = []
+  either.observe(fn(value) { either_values.push(value) })
+  left_signal.repeat(times=2, ())
+  right_signal.send(())
+  assert_true(either_values == [Left(0), Left(1), Right("a")])
+
+  let (first, first_signal, _) = @future.Stream::of_array([1, 2])
+  let (second, second_signal, _) = @future.Stream::of_array([10])
+  let concatenated = @future.Stream::concat([first, second])
+  let concatenated_values : Array[Int] = []
+  concatenated.observe(fn(value) { concatenated_values.push(value) })
+  first_signal.repeat(times=2, ())
+  second_signal.send(())
+  assert_true(concatenated_values == [1, 2, 10])
+
+  let (merge_first, merge_first_signal, _) = @future.Stream::of_array([1, 2])
+  let (merge_second, merge_second_signal, _) = @future.Stream::of_array([10])
+  let merged = @future.Stream::concat_merge([merge_first, merge_second], fn(
+    value,
+    previous,
+  ) {
+    value + previous
+  })
+  let merged_values : Array[Int] = []
+  merged.observe(fn(value) { merged_values.push(value) })
+  merge_first_signal.repeat(times=2, ())
+  merge_second_signal.send(())
+  assert_true(merged_values == [1, 3, 13])
+}
+
+///|
+test "translated BAP stream foldw frame and sample" {
+  let values = stream_values()
+
+  let (fold_source, fold_signal, _) = @future.Stream::of_array(values)
+  let folded = fold_source.foldw(3, init=0, f=fn(acc, value) { acc + value })
+  assert_stream_before_eq(folded, fold_signal, repeat=values.length() + 1, [
+    3, 6, 9, 12, 15, 18,
+  ])
+
+  let (stride_source, stride_signal, _) = @future.Stream::of_array(values)
+  let stride_folded = stride_source.foldw(
+    3,
+    init=0,
+    f=fn(acc, value) { acc + value },
+    stride=2,
+  )
+  assert_stream_before_eq(
+    stride_folded,
+    stride_signal,
+    repeat=values.length() + 1,
+    [3, 9, 15],
+  )
+
+  let (zero_source, zero_signal, _) = @future.Stream::of_array([0, 1, 2])
+  let zero_width = zero_source.foldw(
+    0,
+    init=[1],
+    f=fn(acc, value) { append_int(acc, value) },
+    stride=0,
+  )
+  assert_stream_before_eq(zero_width, zero_signal, repeat=4, [[1], [1], [1]])
+
+  let (frame_source, frame_signal, _) = @future.Stream::of_array(values)
+  let (clock, clock_signal) = @future.Stream::from(fn() { () })
+  let framed = frame_source.frame(clk=clock, init=[], f=append_int)
+  let frames : Array[Array[Int]] = []
+  framed.observe(fn(value) { frames.push(value) })
+  run_time_line(frame_signal, clock_signal, [1, 1, 3])
+  assert_true(frames == [[0], [], [1, 2]])
+
+  let (sample_source, sample_signal, _) = @future.Stream::of_array(values)
+  let (sample_clock, sample_clock_signal) = @future.Stream::from(fn() { () })
+  let sampled = sample_source.sample(clk=sample_clock)
+  let samples : Array[Int?] = []
+  sampled.observe(fn(value) { samples.push(value) })
+  run_time_line(sample_signal, sample_clock_signal, [0, 0, 1, 2])
+  assert_true(samples == [None, None, Some(0), Some(1)])
+}

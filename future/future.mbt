@@ -5,6 +5,12 @@ pub(all) suberror FutureError {
 } derive(Eq, Debug)
 
 ///|
+pub(all) enum Either[A, B] {
+  Left(A)
+  Right(B)
+} derive(Eq, Debug)
+
+///|
 struct Future[T] {
   value : Ref[T?]
   waiters : Array[(T) -> Unit]
@@ -257,6 +263,25 @@ pub fn[S, T] Stream::unfold(
 }
 
 ///|
+pub fn[S, T] Stream::unfold_many(
+  init~ : S,
+  f~ : (S) -> (Array[T], S),
+) -> (Stream[T], Signal[Unit]) {
+  let state = Ref(init)
+  let (stream, signal) = Stream::create()
+  let signal = {
+    send_fn: fn(_) {
+      let (values, next) = f(state.val)
+      state.val = next
+      for value in values {
+        signal.send(value)
+      }
+    },
+  }
+  (stream, signal)
+}
+
+///|
 pub fn[S, T] Stream::unfold_until(
   init~ : S,
   f~ : (S) -> (T, S)?,
@@ -398,6 +423,17 @@ pub fn[A, B, C] Stream::merge(
     right.push(value)
     process()
   })
+  target
+}
+
+///|
+pub fn[A, B] Stream::either(
+  self : Stream[A],
+  other : Stream[B],
+) -> Stream[Either[A, B]] {
+  let (target, signal) = Stream::create()
+  self.link(target, fn(value) { signal.send(Left(value)) })
+  other.link(target, fn(value) { signal.send(Right(value)) })
   target
 }
 
@@ -602,4 +638,117 @@ pub fn[T] Stream::tl(self : Stream[T]) -> Stream[T] {
     }
   })
   target
+}
+
+///|
+pub fn[T] Stream::concat(streams : Array[Stream[T]]) -> Stream[T] {
+  let (target, signal) = Stream::create()
+  for stream in streams {
+    stream.observe(fn(value) { signal.send(value) })
+  }
+  target
+}
+
+///|
+pub fn[T] Stream::concat_merge(
+  streams : Array[Stream[T]],
+  f : (T, T) -> T,
+) -> Stream[T] {
+  Stream::concat(streams).parse(init=None, f=fn(previous, value) {
+    match previous {
+      Some(prev) => {
+        let merged = f(value, prev)
+        (Some(merged), Some(merged))
+      }
+      None => (Some(value), Some(value))
+    }
+  })
+}
+
+///|
+fn[T] drop_front(buffer : Array[T], count : Int) -> Int {
+  let dropped = Ref(0)
+  while dropped.val < count && buffer.length() > 0 {
+    ignore(buffer.remove(0))
+    dropped.val += 1
+  }
+  dropped.val
+}
+
+///|
+pub fn[A, B] Stream::foldw(
+  self : Stream[A],
+  width : Int,
+  init~ : B,
+  f~ : (B, A) -> B,
+  stride? : Int = 1,
+) -> Stream[B] {
+  let buffer : Array[A] = []
+  let is_enough = fn() { buffer.length() == width }
+  let estimate_drop = fn(pushed : Bool) {
+    if stride == 0 {
+      0
+    } else if pushed {
+      stride
+    } else {
+      stride - 1
+    }
+  }
+  let publish = fn(pushed : Bool) {
+    let result = buffer.fold(init~, f)
+    let remaining_drop = estimate_drop(pushed) -
+      drop_front(buffer, estimate_drop(pushed))
+    (Some(result), remaining_drop)
+  }
+  let add = fn(value : A) {
+    buffer.push(value)
+    if is_enough() {
+      publish(true)
+    } else {
+      (None, 0)
+    }
+  }
+  let try_publish = fn(value : A) {
+    if is_enough() {
+      publish(false)
+    } else {
+      add(value)
+    }
+  }
+  self.parse(init=0, f=fn(drop, value) {
+    if drop == 0 {
+      try_publish(value)
+    } else {
+      (None, drop - 1)
+    }
+  })
+}
+
+///|
+fn[T] Stream::sync(self : Stream[T], clk : Stream[Unit]) -> Stream[Array[T]] {
+  let buffer : Array[T] = []
+  let (target, signal) = Stream::create()
+  self.link(target, fn(value) { buffer.push(value) })
+  clk.link(target, fn(_) {
+    signal.send(buffer.copy())
+    buffer.clear()
+  })
+  target
+}
+
+///|
+pub fn[A, B] Stream::frame(
+  self : Stream[A],
+  clk~ : Stream[Unit],
+  init~ : B,
+  f~ : (B, A) -> B,
+) -> Stream[B] {
+  self.sync(clk).map(fn(values) { values.fold(init~, f) })
+}
+
+///|
+pub fn[T] Stream::sample(self : Stream[T], clk~ : Stream[Unit]) -> Stream[T?] {
+  self
+  .sync(clk)
+  .map(fn(values) { if values.length() == 0 { None } else { Some(values[0]) } })
 }

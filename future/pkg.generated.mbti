@@ -14,6 +14,11 @@ pub(all) suberror FutureError {
 } derive(Eq, @debug.Debug)
 
 // Types and methods
+pub(all) enum Either[A, B] {
+  Left(A)
+  Right(B)
+} derive(Eq, @debug.Debug)
+
 type Future[T]
 pub fn[A, B] Future::apply(Self[(A) -> B], Self[A]) -> Self[B]
 pub fn[A, B] Future::bind(Self[A], (A) -> Self[B]) -> Self[B]
@@ -38,11 +43,16 @@ pub fn[T] Signal::send(Self[T], T) -> Unit
 type Stream[T]
 pub fn[A, B] Stream::apply(Self[(A) -> B], Self[A]) -> Self[B]
 pub fn[T, E] Stream::before(Self[T], Future[E]) -> Future[Array[T]]
+pub fn[T] Stream::concat(Array[Self[T]]) -> Self[T]
+pub fn[T] Stream::concat_merge(Array[Self[T]], (T, T) -> T) -> Self[T]
 pub fn[T] Stream::create() -> (Self[T], Signal[T])
+pub fn[A, B] Stream::either(Self[A], Self[B]) -> Self[Either[A, B]]
 pub fn[T] Stream::filter(Self[T], (T) -> Bool) -> Self[T]
 pub fn[A, B] Stream::filter_map(Self[A], (A) -> B?) -> Self[B]
 pub fn[T] Stream::find(Self[T], (T) -> Bool) -> Future[T]
 pub fn[A, B] Stream::find_map(Self[A], (A) -> B?) -> Future[B]
+pub fn[A, B] Stream::foldw(Self[A], Int, init~ : B, f~ : (B, A) -> B, stride? : Int) -> Self[B]
+pub fn[A, B] Stream::frame(Self[A], clk~ : Self[Unit], init~ : B, f~ : (B, A) -> B) -> Self[B]
 pub fn[T] Stream::from(() -> T) -> (Self[T], Signal[Unit])
 pub fn[T] Stream::has_subscribers(Self[T]) -> Bool
 pub fn[T] Stream::hd(Self[T]) -> Future[T]
@@ -59,11 +69,13 @@ pub fn[T] Stream::on_wait(Self[T], () -> Unit) -> Unit
 pub fn[T] Stream::once(Self[T]) -> Self[T]
 pub fn[S, A, B] Stream::parse(Self[A], init~ : S, f~ : (S, A) -> (B?, S)) -> Self[B]
 pub fn[T] Stream::repeat(T) -> (Self[T], Signal[Unit])
+pub fn[T] Stream::sample(Self[T], clk~ : Self[Unit]) -> Self[T?]
 pub fn[A, B, C] Stream::split(Self[A], (A) -> (B, C)) -> (Self[B], Self[C])
 pub fn[T] Stream::subscribe(Self[T], (T) -> Unit) -> Int
 pub fn[T] Stream::take(Self[T], Int) -> Future[Array[T]]
 pub fn[T] Stream::tl(Self[T]) -> Self[T]
 pub fn[S, T] Stream::unfold(init~ : S, f~ : (S) -> (T, S)) -> (Self[T], Signal[Unit])
+pub fn[S, T] Stream::unfold_many(init~ : S, f~ : (S) -> (Array[T], S)) -> (Self[T], Signal[Unit])
 pub fn[S, T] Stream::unfold_until(init~ : S, f~ : (S) -> (T, S)?) -> (Self[T], Signal[Unit], Future[Unit])
 pub fn[T] Stream::unsubscribe(Self[T], Int) -> Unit
 pub fn[A, B] Stream::unzip(Self[(A, B)]) -> (Self[A], Self[B])

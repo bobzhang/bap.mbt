@@ -14,6 +14,17 @@ test "terms carry tids and string attributes" {
   assert_true(replaced.get_attr("comment") is None)
   assert_true(replaced.get_attr("phase") == Some("imported"))
   assert_true(replaced.tid() == term.tid())
+  let erased = @types.ProgramTerm(term)
+  let erased_clone = erased.clone()
+  assert_true(erased_clone.class() == ProgramTermClass)
+  assert_true(erased_clone.tid() != erased.tid())
+  assert_true(erased_clone.get_attr("comment") == Some("root"))
+  let erased_attrs = { "phase": "erased" }
+  let erased_replaced = erased.with_attrs(erased_attrs)
+  erased_attrs["phase"] = "mutated"
+  assert_true(erased_replaced.get_attr("comment") is None)
+  assert_true(erased_replaced.get_attr("phase") == Some("erased"))
+  assert_true(erased_replaced.tid() == erased.tid())
 }
 
 ///|

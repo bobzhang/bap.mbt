@@ -72,6 +72,19 @@ pub fn IrTerm::name(self : IrTerm) -> String {
 }
 
 ///|
+pub fn IrTerm::clone(self : IrTerm) -> IrTerm {
+  match self {
+    ProgramTerm(term) => ProgramTerm(term.clone())
+    SubTerm(term) => SubTerm(term.clone())
+    ArgTerm(term) => ArgTerm(term.clone())
+    BlkTerm(term) => BlkTerm(term.clone())
+    PhiTerm(term) => PhiTerm(term.clone())
+    DefTerm(term) => DefTerm(term.clone())
+    JmpTerm(term) => JmpTerm(term.clone())
+  }
+}
+
+///|
 pub fn IrTerm::to_string(self : IrTerm) -> String {
   match self {
     ProgramTerm(term) => term.program_to_string()
@@ -94,6 +107,19 @@ pub fn IrTerm::attrs(self : IrTerm) -> Map[String, String] {
     PhiTerm(term) => term.attrs()
     DefTerm(term) => term.attrs()
     JmpTerm(term) => term.attrs()
+  }
+}
+
+///|
+pub fn IrTerm::with_attrs(self : IrTerm, attrs : Map[String, String]) -> IrTerm {
+  match self {
+    ProgramTerm(term) => ProgramTerm(term.with_attrs(attrs))
+    SubTerm(term) => SubTerm(term.with_attrs(attrs))
+    ArgTerm(term) => ArgTerm(term.with_attrs(attrs))
+    BlkTerm(term) => BlkTerm(term.with_attrs(attrs))
+    PhiTerm(term) => PhiTerm(term.with_attrs(attrs))
+    DefTerm(term) => DefTerm(term.with_attrs(attrs))
+    JmpTerm(term) => JmpTerm(term.with_attrs(attrs))
   }
 }
 

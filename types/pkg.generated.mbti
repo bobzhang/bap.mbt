@@ -551,6 +551,7 @@ pub fn IrTerm::children_before(Self, IrTermClass, Tid, rev? : Bool) -> Array[Sel
 pub fn IrTerm::children_of_class(Self, IrTermClass, rev? : Bool) -> Array[Self]
 pub fn IrTerm::class(Self) -> IrTermClass
 pub fn IrTerm::class_name(Self) -> String
+pub fn IrTerm::clone(Self) -> Self
 pub fn IrTerm::concat_map_children(Self, IrTermClass, (Self) -> Array[Self]) -> Self
 pub fn IrTerm::def_lhs_name(Self, String) -> Bool
 pub fn IrTerm::def_uses_name(Self, String) -> Bool
@@ -594,6 +595,7 @@ pub fn IrTerm::update_child(Self, Self) -> Self
 pub fn IrTerm::uses_var(Self, Var) -> Bool
 pub fn IrTerm::uses_var_name(Self, String) -> Bool
 pub fn IrTerm::visit_events(Self) -> Array[IrVisitEvent]
+pub fn IrTerm::with_attrs(Self, Map[String, String]) -> Self
 
 pub(all) enum IrTermClass {
   ProgramTermClass

@@ -76,6 +76,40 @@ fn test_meta() -> @traces.TraceMeta {
 }
 
 ///|
+fn extended_meta() -> @traces.TraceMeta {
+  test_meta()
+  .set("comment", Text("snapshot"))
+  .set("pid", Int(-1))
+  .set("complete", Bool(true))
+}
+
+///|
+fn broad_events() -> Array[@traces.TraceEvent] raise {
+  let caller = @traces.Location::{ name: Some("main"), addr: word32(0x401000) }
+  let callee = @traces.Location::{ name: None, addr: word32(0x402000) }
+  [
+    Timestamp(-42L),
+    PcUpdate(word32(0x401000)),
+    CodeExec(@traces.Chunk::create(addr=word32(0x401000), data=b"\x90\xcc")),
+    ContextSwitch(-1),
+    Syscall({ number: 60, args: [word32(0)] }),
+    Exception({ number: 13, src: Some(word32(1)), dst: None }),
+    Call({ caller, callee, args: [word32(1), word32(2)] }),
+    Return({ caller: "main", callee: "callee" }),
+    Modload({ name: "libc.so", low: word32(0x1000), high: word32(0x1fff) }),
+    Mode("thumb"),
+  ]
+}
+
+///|
+fn tool_for_events(events : Array[@traces.TraceEvent]) -> @traces.TraceTool {
+  @traces.TraceTool::register(
+    name="broad_tool",
+    supported_tags=[ for event in events => event.tag() ],
+  )
+}
+
+///|
 test "translated BAP traces preserve ids tools metadata and in-memory save/load" {
   let first = new_trace()
   let second = new_trace()
@@ -101,6 +135,42 @@ test "translated BAP traces preserve ids tools metadata and in-memory save/load"
       assert_true(unwrap_events(loaded.read_events()) == test_events())
     }
     Err(_) => fail("load failed")
+  }
+  match @traces.Trace::load("memory://bap-trace") {
+    Ok(loaded) =>
+      assert_true(unwrap_events(loaded.read_events()) == test_events())
+    Err(_) => fail("second load failed")
+  }
+}
+
+///|
+test "translated BAP trace byte snapshots round trip metadata and event variants" {
+  let events = broad_events()
+  let meta = extended_meta()
+  let trace = @traces.Trace::create(tool_for_events(events), events~).set_meta(
+    meta,
+  )
+  match trace.to_bytes() {
+    Ok(bytes) => {
+      assert_true(bytes.length() > 0)
+      match @traces.Trace::of_bytes(bytes) {
+        Ok(loaded) => {
+          assert_true(loaded.tool() == tool_for_events(events))
+          assert_true(loaded.meta() == meta)
+          assert_true(unwrap_events(loaded.read_events()) == events)
+        }
+        Err(_) => fail("snapshot decode failed")
+      }
+      match @traces.Trace::of_bytes(bytes) {
+        Ok(loaded) => assert_true(unwrap_events(loaded.read_events()) == events)
+        Err(_) => fail("second snapshot decode failed")
+      }
+    }
+    Err(_) => fail("snapshot encode failed")
+  }
+  match @traces.Trace::of_bytes(b"not a trace snapshot") {
+    Err(ProtocolError(_)) => ()
+    _ => fail("expected protocol error for malformed snapshot")
   }
 }
 

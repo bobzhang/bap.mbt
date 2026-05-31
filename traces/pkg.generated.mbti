@@ -77,6 +77,7 @@ pub fn Trace::meta(Self) -> TraceMeta
 pub fn Trace::next(Self, String) -> Result[TraceEvent?, TraceError]
 pub fn Trace::next_event(Self) -> Result[TraceEvent?, TraceError]
 pub fn[T] Trace::next_matching(Self, (TraceEvent) -> T?) -> Result[T?, TraceError]
+pub fn Trace::of_bytes(BytesView) -> Result[Self, TraceError]
 pub fn Trace::protocol(Self) -> String?
 pub fn Trace::read_all(Self, String) -> Result[Array[TraceEvent], TraceError]
 pub fn[T] Trace::read_all_matching(Self, (TraceEvent) -> T) -> Result[Array[T], TraceError]
@@ -88,6 +89,7 @@ pub fn Trace::save(String, Self) -> Result[Unit, TraceError]
 pub fn Trace::set_attr(Self, String, TraceAttrValue) -> Self
 pub fn Trace::set_meta(Self, TraceMeta) -> Self
 pub fn Trace::supports(Self, String) -> Bool
+pub fn Trace::to_bytes(Self) -> Result[Bytes, TraceError]
 pub fn Trace::tool(Self) -> TraceTool
 
 pub(all) enum TraceAttrValue {

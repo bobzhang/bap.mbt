@@ -325,7 +325,7 @@ pub(all) struct TraceReader {
 let trace_next_id : Ref[Int] = Ref(0)
 
 ///|
-let trace_store : Map[String, TraceSnapshot] = {}
+let trace_store : Map[String, Bytes] = {}
 
 ///|
 let trace_protocol_registry : Map[String, TraceProtocol] = {}
@@ -381,23 +381,18 @@ fn ensure_memory_provider() -> Unit {
     Trace::register_protocol(protocol)
     Trace::register_reader("memory", fn(uri) {
       match trace_store.get(uri) {
-        Some(snapshot) =>
-          Ok({
-            tool: snapshot.tool,
-            meta: snapshot.meta,
-            events: snapshot.events.map(event => Ok(event)),
-          })
+        Some(bytes) =>
+          match trace_snapshot_from_bytes(bytes) {
+            Ok(snapshot) => Ok(snapshot.to_reader())
+            Err(error) => Err(error)
+          }
         None => Err(NoProvider(uri))
       }
     })
     Trace::register_writer("memory", fn(uri, trace) {
-      match trace.read_events() {
-        Ok(events) => {
-          trace_store[uri] = {
-            tool: trace.tool_value,
-            meta: trace.meta_value,
-            events,
-          }
+      match trace.to_bytes() {
+        Ok(bytes) => {
+          trace_store[uri] = bytes
           Ok(())
         }
         Err(error) => Err(error)

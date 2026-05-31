@@ -370,12 +370,14 @@ pub fn Target::bits(Self) -> Int
 pub fn Target::byte(Self) -> Int
 pub fn Target::code_addr(Self, @bitvec.BitVec) -> @types.Word raise @bitvec.BitVecError
 pub fn Target::code_addr_size(Self) -> Int
+pub fn Target::compare(Self, Self) -> Int
 pub fn Target::create(name~ : @knowledge.Name, parent? : Self, nicknames? : Array[String], bits? : Int, byte? : Int, endianness? : Endianness, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, options? : TargetOptions, vars? : Array[Var], alias_origins? : Array[AliasOrigin]) -> Self
 pub fn Target::data_addr(Self, @bitvec.BitVec) -> @types.Word raise @bitvec.BitVecError
 pub fn Target::data_addr_size(Self) -> Int
 pub fn Target::data_word(Self, @bitvec.BitVec) -> @types.Word raise @bitvec.BitVecError
 pub fn Target::declared() -> Array[Self]
 pub fn Target::endianness(Self) -> Endianness
+pub fn Target::equal(Self, Self) -> Bool
 pub fn Target::fabi(Self) -> Fabi
 pub fn Target::families() -> Array[Array[Self]]
 pub fn Target::family(Self) -> Array[Self]
@@ -437,6 +439,7 @@ pub fn Target::systemz() -> Self
 pub fn Target::systemz9() -> Self
 pub fn Target::thumb() -> Self
 pub fn Target::thumbeb() -> Self
+pub fn Target::to_string(Self) -> String
 pub fn Target::unknown() -> Self
 pub fn Target::vars(Self) -> Array[Var]
 pub fn Target::vars_with_role(Self, Role) -> Array[Var]

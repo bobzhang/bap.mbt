@@ -1654,6 +1654,21 @@ pub fn Target::name(self : Target) -> @knowledge.Name {
 }
 
 ///|
+pub fn Target::to_string(self : Target) -> String {
+  self.name_value.to_string()
+}
+
+///|
+pub fn Target::equal(self : Target, other : Target) -> Bool {
+  self.name_value == other.name_value
+}
+
+///|
+pub fn Target::compare(self : Target, other : Target) -> Int {
+  self.name_value.to_string().compare(other.name_value.to_string())
+}
+
+///|
 pub fn Target::parent(self : Target) -> Target? {
   self.parent_value
 }

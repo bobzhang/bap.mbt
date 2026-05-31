@@ -59,6 +59,11 @@ test "targets inherit defaults and match ancestry" {
     parent=family,
     nicknames=["amd64"],
   )
+  assert_true(target.equal(target))
+  assert_true(!target.equal(family))
+  assert_true(target.compare(target) == 0)
+  assert_true(target.compare(family) != 0)
+  inspect(target.to_string(), content="target:x86-64")
   assert_true(target.belongs(family))
   assert_true(target.order(family) == Less)
   assert_true(target.bits() == 64)

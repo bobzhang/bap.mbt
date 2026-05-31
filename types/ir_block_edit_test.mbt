@@ -183,6 +183,18 @@ test "block definition split helpers preserve control transfer shape" {
   let after = block.split_after_def(def_y)
   assert_def_lhs_names(after.0, ["x", "y"])
   assert_def_lhs_names(after.1, ["z"])
+  let while_split = block.split_defs_while(term => term.lhs() != y)
+  assert_true(while_split.0.tid() == block.tid())
+  assert_def_lhs_names(while_split.0, ["x"])
+  assert_def_lhs_names(while_split.1, ["y", "z"])
+  match while_split.0.jmps()[0].kind() {
+    Goto(Direct(tid)) => assert_true(tid == while_split.1.tid())
+    _ => fail("split-while block must jump to the second block")
+  }
+  assert_true(while_split.1.jmps()[0].same(jmp))
+  let all_left = block.split_defs_while(_ => true)
+  assert_def_lhs_names(all_left.0, ["x", "y", "z"])
+  assert_def_lhs_names(all_left.1, [])
   let top = block.split_top_defs()
   assert_def_lhs_names(top.0, [])
   assert_def_lhs_names(top.1, ["x", "y", "z"])

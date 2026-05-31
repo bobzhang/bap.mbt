@@ -824,6 +824,7 @@ pub fn[T] Term::set_attr(Self[T], Attr) -> Self[T]
 pub fn Term::split_after_def(Self[Blk], Self[Def]) -> (Self[Blk], Self[Blk])
 pub fn Term::split_before_def(Self[Blk], Self[Def]) -> (Self[Blk], Self[Blk])
 pub fn Term::split_bottom_defs(Self[Blk]) -> (Self[Blk], Self[Blk])
+pub fn Term::split_defs_while(Self[Blk], (Self[Def]) -> Bool) -> (Self[Blk], Self[Blk])
 pub fn Term::split_top_defs(Self[Blk]) -> (Self[Blk], Self[Blk])
 pub fn Term::sub_aliases(Self[Sub]) -> Array[String]
 pub fn Term::sub_cfg(Self[Sub]) -> @graphlib.Graph[Tid, Tid]

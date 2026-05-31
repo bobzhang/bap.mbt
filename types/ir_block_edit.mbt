@@ -383,6 +383,17 @@ pub fn Term::split_after_def(
 }
 
 ///|
+pub fn Term::split_defs_while(
+  self : Term[Blk],
+  f : (Term[Def]) -> Bool,
+) -> (Term[Blk], Term[Blk]) {
+  match self.payload_value.defs.search_by(term => !f(term)) {
+    Some(i) => self.split_def_at(i)
+    None => self.split_def_at(self.payload_value.defs.length())
+  }
+}
+
+///|
 pub fn Term::split_top_defs(self : Term[Blk]) -> (Term[Blk], Term[Blk]) {
   self.split_def_at(0)
 }

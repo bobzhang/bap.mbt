@@ -166,6 +166,9 @@ disassembly blocks into IR block terms with address attributes and subroutine
 terms named through the active symbolizer. When
 creating address words from `Target::unknown()`, guard its zero bit width and
 fall back to a concrete address width before calling `Word::of_uint64`. Keep
+image-entry semantics at the subroutine layer too: when reconstruction groups a
+block that contains the image entry point, mark the resulting subroutine with
+the BAP-style `entry-point` flag. Keep
 brancher/CFG edge facts separate from lifted instruction semantics: store
 known `(source, target?, kind)` disassembly edges explicitly, and let the
 initial reconstructor emit direct IR gotos only for targets that correspond to

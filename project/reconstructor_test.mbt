@@ -361,7 +361,9 @@ test "project disassemble-and-reconstruct runs explicit driver and custom recons
       let subs = reconstructed.state().subroutines()
       assert_true(subs.length() == 1)
       assert_true(subs[0].sub_name() == "entry")
+      assert_true(subs[0].is_entry_point())
       assert_true(reconstructed.program().subs().length() == 1)
+      assert_true(reconstructed.program().subs()[0].is_entry_point())
     }
     Err(reason) => fail(reason)
   }

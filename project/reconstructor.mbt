@@ -276,7 +276,12 @@ fn project_reconstructor_subroutine(
     }
     ir_blocks[i] = ir_block
   }
-  Ok(@types.Sub::create(name~, blks=ir_blocks))
+  let sub = @types.Sub::create(name~, blks=ir_blocks)
+  match project.image() {
+    Some(image) if blocks.any(block => block.contains(image.entry_point())) =>
+      Ok(sub.with_entry_point())
+    _ => Ok(sub)
+  }
 }
 
 ///|

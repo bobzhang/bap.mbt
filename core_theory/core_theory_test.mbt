@@ -133,16 +133,68 @@ test "target registry resolves common and custom declarations" {
     Ok(target) => assert_true(target.matches("x86"))
     Err(reason) => fail(reason)
   }
+  match @core_theory.get_target("8086") {
+    Ok(target) => {
+      assert_true(target.matches("i86"))
+      assert_true(target.bits() == 16)
+      assert_true(target.find_var("AX") is Some(_))
+      assert_true(target.find_var("EAX") is None)
+    }
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.get_target("80186") {
+    Ok(target) => {
+      assert_true(target.matches("i186"))
+      assert_true(target.belongs(@core_theory.Target::i86()))
+      assert_true(target.bits() == 16)
+    }
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.get_target("80286") {
+    Ok(target) => {
+      assert_true(target.matches("i286"))
+      assert_true(target.belongs(@core_theory.Target::i186()))
+      assert_true(target.bits() == 16)
+    }
+    Err(reason) => fail(reason)
+  }
   match @core_theory.get_target("80386") {
-    Ok(target) => assert_true(target.matches("i386"))
+    Ok(target) => {
+      assert_true(target.matches("i386"))
+      assert_true(target.bits() == 32)
+      assert_true(target.find_var("EAX") is Some(_))
+      assert_true(target.find_var("ST0") is None)
+    }
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.get_target("80486") {
+    Ok(target) => {
+      assert_true(target.matches("i486"))
+      assert_true(target.find_var("ST0") is Some(_))
+      assert_true(target.find_var("MM0") is None)
+    }
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.get_target("p5") {
+    Ok(target) => {
+      assert_true(target.matches("i586"))
+      assert_true(target.find_var("MM0") is Some(_))
+      assert_true(target.find_var("XMM0") is None)
+    }
     Err(reason) => fail(reason)
   }
   match @core_theory.get_target("p6") {
-    Ok(target) => assert_true(target.matches("i686"))
+    Ok(target) => {
+      assert_true(target.matches("i686"))
+      assert_true(target.find_var("XMM0") is Some(_))
+    }
     Err(reason) => fail(reason)
   }
   match @core_theory.get_target("x86_64h") {
-    Ok(target) => assert_true(target.matches("x86_64"))
+    Ok(target) => {
+      assert_true(target.matches("x86_64"))
+      assert_true(target.belongs(@core_theory.Target::i686()))
+    }
     Err(reason) => fail(reason)
   }
   match @core_theory.get_target("ppu") {

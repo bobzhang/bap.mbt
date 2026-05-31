@@ -584,6 +584,71 @@ fn x86_64_alias_origins() -> Array[AliasOrigin] {
 
 ///|
 fn x86_32_vars() -> Array[Var] {
+  x86_i686_vars()
+}
+
+///|
+fn x86_16_alias_origins() -> Array[AliasOrigin] {
+  let items : Array[AliasOrigin] = []
+  let bases = ["AX", "BX", "CX", "DX"]
+  let lows = x86_8_low_gpr_names()
+  let highs = x86_8_high_gpr_names()
+  for i in 0..<bases.length() {
+    items.push(
+      AliasOrigin::subregister(
+        word_var(8, lows[i]),
+        word_var(16, bases[i]),
+        lo=0,
+        hi=7,
+      ),
+    )
+    items.push(
+      AliasOrigin::subregister(
+        word_var(8, highs[i]),
+        word_var(16, bases[i]),
+        lo=8,
+        hi=15,
+      ),
+    )
+  }
+  let indexes = ["SI", "DI", "BP", "SP"]
+  let index8 = ["SIL", "DIL", "BPL", "SPL"]
+  for i in 0..<indexes.length() {
+    items.push(
+      AliasOrigin::subregister(
+        word_var(8, index8[i]),
+        word_var(16, indexes[i]),
+        lo=0,
+        hi=7,
+      ),
+    )
+  }
+  items.push(AliasOrigin::bit_set(word_var(32, "EFLAGS"), x86_flags()))
+  items.push(
+    AliasOrigin::bit_set(word_var(2, "IOPL"), [
+      bool_var("IOPLH"),
+      bool_var("IOPLL"),
+    ]),
+  )
+  items
+}
+
+///|
+fn x86_16_vars() -> Array[Var] {
+  let items = named_word_vars(16, x86_16_gpr_names())
+  append_vars(items, named_word_vars(8, x86_8_low_gpr_names()))
+  append_vars(items, named_word_vars(8, x86_8_high_gpr_names()))
+  append_vars(items, named_word_vars(8, ["SIL", "DIL", "BPL", "SPL"]))
+  append_vars(items, named_word_vars(16, x86_segment_names(false)))
+  append_vars(items, named_word_vars(32, ["EFLAGS"]))
+  items.push(word_var(2, "IOPL"))
+  append_vars(items, x86_flags())
+  items.push(mem_var(16, 8, "mem"))
+  items
+}
+
+///|
+fn x86_i386_vars() -> Array[Var] {
   let items = named_word_vars(32, x86_32_gpr_names())
   append_vars(items, named_word_vars(32, ["EIP", "EFLAGS"]))
   append_vars(items, named_word_vars(16, x86_16_gpr_names()))
@@ -591,11 +656,29 @@ fn x86_32_vars() -> Array[Var] {
   append_vars(items, named_word_vars(8, x86_8_high_gpr_names()))
   append_vars(items, named_word_vars(16, x86_segment_names(true)))
   items.push(word_var(2, "IOPL"))
-  append_vars(items, numbered_word_vars(80, "ST", 8))
-  append_vars(items, numbered_word_vars(64, "MM", 8))
-  append_vars(items, numbered_word_vars(128, "XMM", 8))
   append_vars(items, x86_flags())
   items.push(mem_var(32, 8, "mem"))
+  items
+}
+
+///|
+fn x86_i486_vars() -> Array[Var] {
+  let items = x86_i386_vars()
+  append_vars(items, numbered_word_vars(80, "ST", 8))
+  items
+}
+
+///|
+fn x86_i586_vars() -> Array[Var] {
+  let items = x86_i486_vars()
+  append_vars(items, numbered_word_vars(64, "MM", 8))
+  items
+}
+
+///|
+fn x86_i686_vars() -> Array[Var] {
+  let items = x86_i586_vars()
+  append_vars(items, numbered_word_vars(128, "XMM", 8))
   items
 }
 
@@ -998,6 +1081,57 @@ fn x86_64_role_names(role : Role) -> Array[String] {
 }
 
 ///|
+fn x86_16_role_names(role : Role) -> Array[String] {
+  match role {
+    General => []
+    IntegerRegister =>
+      concat_role_names([
+        lower_names(x86_16_gpr_names()),
+        lower_names(x86_8_low_gpr_names()),
+        lower_names(x86_8_high_gpr_names()),
+        ["sil", "dil", "bpl", "spl"],
+        lower_names(x86_segment_names(false)),
+      ])
+    FloatingRegister => []
+    VectorRegister => []
+    StackPointer => ["sp", "spl"]
+    FramePointer => ["bp", "bpl"]
+    ProgramCounter => []
+    Status =>
+      concat_role_names([["eflags", "iopl"], lower_names(x86_flag_names())])
+    Constant | ZeroRegister | LinkRegister | ThreadPointer => []
+    Argument => []
+    ResultRegister => ["ax", "dx", "al", "dl"]
+    CallerSaved => []
+    CalleeSaved => []
+    Reserved => []
+  }
+}
+
+///|
+fn x86_32_cpu_role_names(
+  role : Role,
+  st~ : Bool,
+  mmx~ : Bool,
+  xmm~ : Bool,
+) -> Array[String] {
+  match role {
+    FloatingRegister => {
+      let groups = []
+      if st {
+        groups.push(role_names("st", 0, 7))
+      }
+      if mmx {
+        groups.push(role_names("mm", 0, 7))
+      }
+      concat_role_names(groups)
+    }
+    VectorRegister => if xmm { role_names("xmm", 0, 7) } else { [] }
+    _ => x86_32_role_names(role)
+  }
+}
+
+///|
 fn x86_32_role_names(role : Role) -> Array[String] {
   match role {
     General => []
@@ -1274,6 +1408,16 @@ fn systemz_role_names(role : Role) -> Array[String] {
 fn target_specific_role_names(target : Target, role : Role) -> Array[String]? {
   if target.belongs(Target::x86_64()) {
     Some(x86_64_role_names(role))
+  } else if target.belongs(Target::i686()) {
+    Some(x86_32_cpu_role_names(role, st=true, mmx=true, xmm=true))
+  } else if target.belongs(Target::i586()) {
+    Some(x86_32_cpu_role_names(role, st=true, mmx=true, xmm=false))
+  } else if target.belongs(Target::i486()) {
+    Some(x86_32_cpu_role_names(role, st=true, mmx=false, xmm=false))
+  } else if target.belongs(Target::i386()) {
+    Some(x86_32_cpu_role_names(role, st=false, mmx=false, xmm=false))
+  } else if target.belongs(Target::i86()) {
+    Some(x86_16_role_names(role))
   } else if target.belongs(Target::x86()) {
     Some(x86_32_role_names(role))
   } else if target.belongs(Target::aarch64()) ||
@@ -1821,11 +1965,7 @@ pub fn Target::parents(self : Target) -> Array[Target] {
 pub fn Target::x86() -> Target {
   Target::create(
     name=target_name("x86"),
-    nicknames=[
-      "x86-32", "x86_32", "ia32", "ia-32", "i186", "i286", "i386", "i486", "i586",
-      "i686", "386", "80386", "486", "80486", "586", "80586", "p5", "686", "80686",
-      "p6",
-    ],
+    nicknames=["x86-32", "x86_32", "ia32", "ia-32"],
     bits=32,
     endianness=LittleEndian,
     vars=x86_32_vars(),
@@ -1834,10 +1974,82 @@ pub fn Target::x86() -> Target {
 }
 
 ///|
+pub fn Target::i86() -> Target {
+  Target::create(
+    name=target_name("i86"),
+    parent=Target::x86(),
+    nicknames=["8086"],
+    bits=16,
+    endianness=LittleEndian,
+    vars=x86_16_vars(),
+    alias_origins=x86_16_alias_origins(),
+  )
+}
+
+///|
+pub fn Target::i186() -> Target {
+  Target::create(name=target_name("i186"), parent=Target::i86(), nicknames=[
+    "80186", "186",
+  ])
+}
+
+///|
+pub fn Target::i286() -> Target {
+  Target::create(name=target_name("i286"), parent=Target::i186(), nicknames=[
+    "80286", "286",
+  ])
+}
+
+///|
+pub fn Target::i386() -> Target {
+  Target::create(
+    name=target_name("i386"),
+    parent=Target::i286(),
+    nicknames=["386", "80386"],
+    bits=32,
+    vars=x86_i386_vars(),
+    alias_origins=x86_32_alias_origins(),
+  )
+}
+
+///|
+pub fn Target::i486() -> Target {
+  Target::create(
+    name=target_name("i486"),
+    parent=Target::i386(),
+    nicknames=["486", "80486"],
+    vars=x86_i486_vars(),
+    alias_origins=x86_32_alias_origins(),
+  )
+}
+
+///|
+pub fn Target::i586() -> Target {
+  Target::create(
+    name=target_name("i586"),
+    parent=Target::i486(),
+    nicknames=["586", "80586", "p5"],
+    vars=x86_i586_vars(),
+    alias_origins=x86_32_alias_origins(),
+  )
+}
+
+///|
+pub fn Target::i686() -> Target {
+  Target::create(
+    name=target_name("i686"),
+    parent=Target::i586(),
+    nicknames=["686", "80686", "p6"],
+    vars=x86_i686_vars(),
+    alias_origins=x86_32_alias_origins(),
+  )
+}
+
+///|
 pub fn Target::x86_64() -> Target {
   Target::create(
     name=target_name("x86_64"),
-    parent=Target::x86(),
+    parent=Target::i686(),
     nicknames=["x86-64", "amd64", "x64", "x86_64h"],
     bits=64,
     endianness=LittleEndian,
@@ -2558,6 +2770,13 @@ fn append_powerpc_target_variants(items : Array[Target]) -> Unit {
 pub fn common_targets() -> Array[Target] {
   let items = [
     Target::x86(),
+    Target::i86(),
+    Target::i186(),
+    Target::i286(),
+    Target::i386(),
+    Target::i486(),
+    Target::i586(),
+    Target::i686(),
     Target::x86_64(),
     Target::arm(),
     Target::armeb(),

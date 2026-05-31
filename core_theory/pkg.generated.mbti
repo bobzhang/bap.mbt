@@ -348,6 +348,13 @@ pub fn Target::find_role(Self, Role) -> Var?
 pub fn Target::find_var(Self, String) -> Var?
 pub fn Target::get(String) -> Result[Self, String]
 pub fn Target::hexagon() -> Self
+pub fn Target::i186() -> Self
+pub fn Target::i286() -> Self
+pub fn Target::i386() -> Self
+pub fn Target::i486() -> Self
+pub fn Target::i586() -> Self
+pub fn Target::i686() -> Self
+pub fn Target::i86() -> Self
 pub fn Target::is_unknown(Self) -> Bool
 pub fn Target::lookup(String) -> Self?
 pub fn Target::matches(Self, String) -> Bool

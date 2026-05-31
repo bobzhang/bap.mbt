@@ -956,6 +956,8 @@ For dense lookup domains, define a private top-level `let table : ReadOnlyArray[
 
 When porting BAP target declarations, preserve canonical hardware registers and model ABI spellings as aliases with explicit provenance. If the OCaml side names user-facing registers in lowercase (`sp`, `a0`) but the MoonBit target table stores conventional uppercase variables (`SP`, `A0`), make lookup case-insensitive at the target boundary and keep `AliasOrigin` entries pointing to the numbered source register (`SP -> X2`, `A0 -> X10`). Build dense alias-origin tables with list comprehensions so the alias index stays visibly aligned with the canonical register number. Port role metadata beyond argument/result registers too: BAP target declarations use roles such as integer, floating, vector, link, stack pointer, constant/zero, thread, caller-saved, callee-saved, and reserved to drive later calling-convention and de-aliasing passes.
 
+BAP target nicknames are sometimes concrete CPU declarations, not plain spelling aliases. Keep the x86 chain (`i86`/`i186`/`i286`/`i386`/`i486`/`i586`/`i686`/`x86_64`) as parented targets instead of collapsing names like `8086`, `80386`, `p5`, or `p6` onto generic `x86`: the 16-bit targets have different address size and registers, while later 32-bit CPUs add ST, MM, and XMM register surfaces incrementally.
+
 ## Mutation, Refs, Arrays
 
 ```sh

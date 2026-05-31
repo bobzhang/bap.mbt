@@ -437,6 +437,52 @@ test "program class-filtered lookup and parent helpers mirror BAP Ir_program" {
 }
 
 ///|
+fn ir_visit_event_tag(event : @types.IrVisitEvent) -> String {
+  match event {
+    EnterTerm(term) => "enter:\{term.class_name()}"
+    LeaveTerm(term) => "leave:\{term.class_name()}"
+    VisitVar(variable) => "var:\{variable.name()}"
+    VisitExp(exp) => "exp:\{traverse_exp_tag(exp)}"
+  }
+}
+
+///|
+test "ir visitor events include terms variables and expressions in BAP order" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let arg = @types.Arg::create(x, Var(y))
+  let pred = @types.Tid::for_name("pred")
+  let phi = @types.Phi::of_list(x, [(pred, Var(y))])
+  let def = @types.Def::create(y, BinOp(Plus, Var(y), Int(word8(1))))
+  let jmp = @types.Jmp::create_goto(@types.Label::direct(pred), cond=Var(x))
+  let blk = @types.Blk::create(phis=[phi], defs=[def], jmps=[jmp])
+  let sub = @types.Sub::create(name="main", args=[arg], blks=[blk])
+  let program = @types.Program::create(subs=[sub])
+
+  let tags = program.fold_program_visit([], (acc, event) => {
+    acc.push(ir_visit_event_tag(event))
+    acc
+  })
+  assert_true(
+    tags ==
+    [
+      "enter:program", "enter:sub", "enter:arg", "var:x", "exp:var", "leave:arg",
+      "enter:blk", "enter:phi", "var:x", "exp:var", "leave:phi", "enter:def", "var:y",
+      "exp:binop", "exp:var", "exp:int", "leave:def", "enter:jmp", "exp:var", "leave:jmp",
+      "leave:blk", "leave:sub", "leave:program",
+    ],
+  )
+  assert_true(program.program_visit_events().map(ir_visit_event_tag) == tags)
+  let root_term : @types.IrTerm = ProgramTerm(program)
+  assert_true(root_term.visit_events().map(ir_visit_event_tag) == tags)
+  assert_true(
+    sub.fold_sub_visit(0, (count, _) => count + 1) == tags.length() - 2,
+  )
+  assert_true(blk.fold_blk_visit(0, (count, _) => count + 1) == 15)
+}
+
+///|
 test "ir term mapping rewrites nested term attributes" {
   let typ = @types.ValueType::Imm(8)
   let x = @types.Var::new(name="x", typ~)

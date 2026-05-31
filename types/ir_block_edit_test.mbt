@@ -101,6 +101,67 @@ test "program sub sequence helpers follow BAP term order" {
 }
 
 ///|
+test "program sub rewrite helpers update remove map and filter" {
+  let main = @types.Sub::create(name="main")
+  let helper = @types.Sub::create(name="helper")
+  let exit = @types.Sub::create(name="exit")
+  let program = @types.Program::create(subs=[main, helper, exit])
+  let helper2 = @types.Sub::create(name="helper2", tid=helper.tid())
+  assert_true(
+    sub_names(program.update_sub(helper2).subs()) == ["main", "helper2", "exit"],
+  )
+  assert_true(
+    sub_names(program.remove_sub(helper.tid()).subs()) == ["main", "exit"],
+  )
+  assert_true(
+    sub_names(
+      program
+      .map_subs(term => {
+        if term.same(helper) {
+          term.with_sub_name("mapped")
+        } else {
+          term
+        }
+      })
+      .subs(),
+    ) ==
+    ["main", "mapped", "exit"],
+  )
+  assert_true(
+    sub_names(program.filter_subs(term => term.sub_name() != "helper").subs()) ==
+    ["main", "exit"],
+  )
+  assert_true(
+    sub_names(
+      program
+      .filter_map_subs(term => {
+        if term.sub_name() == "helper" {
+          None
+        } else {
+          Some(term)
+        }
+      })
+      .subs(),
+    ) ==
+    ["main", "exit"],
+  )
+  assert_true(
+    sub_names(
+      program
+      .concat_map_subs(term => {
+        if term.same(helper) {
+          [term, @types.Sub::create(name="helper-copy")]
+        } else {
+          [term]
+        }
+      })
+      .subs(),
+    ) ==
+    ["main", "helper", "helper-copy", "exit"],
+  )
+}
+
+///|
 test "sub argument and block sequence helpers follow BAP term order" {
   let typ = @types.ValueType::Imm(8)
   let x = @types.Var::new(name="x", typ~)
@@ -183,6 +244,125 @@ test "sub argument and block sequence helpers follow BAP term order" {
     )
     .blk_count() ==
     5,
+  )
+}
+
+///|
+test "sub argument and block rewrite helpers update remove map and filter" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let z = @types.Var::new(name="z", typ~)
+  let w = @types.Var::new(name="w", typ~)
+  let arg_x = @types.Arg::create(x, Var(x))
+  let arg_y = @types.Arg::create(y, Var(y))
+  let arg_z = @types.Arg::create(z, Var(z))
+  let entry = @types.Blk::create(tid=@types.Tid::for_name("entry"))
+  let body = @types.Blk::create(tid=@types.Tid::for_name("body"))
+  let exit = @types.Blk::create(tid=@types.Tid::for_name("exit"))
+  let sub = @types.Sub::create(name="main", args=[arg_x, arg_y, arg_z], blks=[
+    entry, body, exit,
+  ])
+  let arg_w = @types.Arg::create(w, Var(w), tid=arg_y.tid())
+  assert_true(arg_lhs_names(sub.update_arg(arg_w).args()) == ["x", "w", "z"])
+  assert_true(arg_lhs_names(sub.remove_arg(arg_y.tid()).args()) == ["x", "z"])
+  assert_true(
+    arg_lhs_names(
+      sub
+      .map_args(term => {
+        if term.same(arg_y) {
+          @types.Arg::create(w, term.arg_rhs(), tid=term.tid())
+        } else {
+          term
+        }
+      })
+      .args(),
+    ) ==
+    ["x", "w", "z"],
+  )
+  assert_true(
+    arg_lhs_names(sub.filter_args(term => term.arg_lhs() != y).args()) ==
+    ["x", "z"],
+  )
+  assert_true(
+    arg_lhs_names(
+      sub
+      .filter_map_args(term => {
+        if term.arg_lhs() == y {
+          None
+        } else {
+          Some(term)
+        }
+      })
+      .args(),
+    ) ==
+    ["x", "z"],
+  )
+  assert_true(
+    arg_lhs_names(
+      sub
+      .concat_map_args(term => {
+        if term.same(arg_y) {
+          [term, @types.Arg::create(w, Var(w))]
+        } else {
+          [term]
+        }
+      })
+      .args(),
+    ) ==
+    ["x", "y", "w", "z"],
+  )
+  let rewritten_body = body.append_def(@types.Def::create(x, Var(y)))
+  assert_true(
+    sub.update_blk(rewritten_body).find_blk(body.tid()).unwrap().def_count() ==
+    1,
+  )
+  assert_true(blk_names(sub.remove_blk(body.tid()).blks()) == ["entry", "exit"])
+  assert_true(
+    sub
+    .map_blks(blk => {
+      if blk.same(body) {
+        blk.append_def(@types.Def::create(y, Var(x)))
+      } else {
+        blk
+      }
+    })
+    .find_blk(body.tid())
+    .unwrap()
+    .def_count() ==
+    1,
+  )
+  assert_true(
+    blk_names(sub.filter_blks(blk => blk.tid() != body.tid()).blks()) ==
+    ["entry", "exit"],
+  )
+  assert_true(
+    blk_names(
+      sub
+      .filter_map_blks(blk => {
+        if blk.tid() == body.tid() {
+          None
+        } else {
+          Some(blk)
+        }
+      })
+      .blks(),
+    ) ==
+    ["entry", "exit"],
+  )
+  assert_true(
+    blk_names(
+      sub
+      .concat_map_blks(blk => {
+        if blk.same(body) {
+          [blk, @types.Blk::create(tid=@types.Tid::for_name("body-tail"))]
+        } else {
+          [blk]
+        }
+      })
+      .blks(),
+    ) ==
+    ["entry", "body", "body-tail", "exit"],
   )
 }
 

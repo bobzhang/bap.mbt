@@ -361,6 +361,64 @@ pub fn Term::insert_sub_before(
 }
 
 ///|
+pub fn Term::update_sub(
+  self : Term[Program],
+  term : Term[Sub],
+) -> Term[Program] {
+  let subs = self.payload_value.subs.copy()
+  match find_sub_index(subs, term.tid()) {
+    Some(i) => {
+      subs[i] = term
+      self.with_subs(subs)
+    }
+    None => self
+  }
+}
+
+///|
+pub fn Term::remove_sub(self : Term[Program], tid : Tid) -> Term[Program] {
+  self.with_subs(self.payload_value.subs.filter(term => term.tid() != tid))
+}
+
+///|
+pub fn Term::map_subs(
+  self : Term[Program],
+  f : (Term[Sub]) -> Term[Sub],
+) -> Term[Program] {
+  self.with_subs(self.payload_value.subs.map(f))
+}
+
+///|
+pub fn Term::filter_subs(
+  self : Term[Program],
+  f : (Term[Sub]) -> Bool,
+) -> Term[Program] {
+  self.with_subs(self.payload_value.subs.filter(f))
+}
+
+///|
+pub fn Term::filter_map_subs(
+  self : Term[Program],
+  f : (Term[Sub]) -> Term[Sub]?,
+) -> Term[Program] {
+  self.with_subs(self.payload_value.subs.filter_map(f))
+}
+
+///|
+pub fn Term::concat_map_subs(
+  self : Term[Program],
+  f : (Term[Sub]) -> Array[Term[Sub]],
+) -> Term[Program] {
+  let subs = []
+  for term in self.payload_value.subs {
+    for mapped in f(term) {
+      subs.push(mapped)
+    }
+  }
+  self.with_subs(subs)
+}
+
+///|
 pub fn Term::arg_count(self : Term[Sub]) -> Int {
   self.payload_value.args.length()
 }
@@ -472,6 +530,61 @@ pub fn Term::insert_arg_before(
     }
     None => self
   }
+}
+
+///|
+pub fn Term::update_arg(self : Term[Sub], term : Term[Arg]) -> Term[Sub] {
+  let args = self.payload_value.args.copy()
+  match find_arg_index(args, term.tid()) {
+    Some(i) => {
+      args[i] = term
+      self.with_args(args)
+    }
+    None => self
+  }
+}
+
+///|
+pub fn Term::remove_arg(self : Term[Sub], tid : Tid) -> Term[Sub] {
+  self.with_args(self.payload_value.args.filter(term => term.tid() != tid))
+}
+
+///|
+pub fn Term::map_args(
+  self : Term[Sub],
+  f : (Term[Arg]) -> Term[Arg],
+) -> Term[Sub] {
+  self.with_args(self.payload_value.args.map(f))
+}
+
+///|
+pub fn Term::filter_args(
+  self : Term[Sub],
+  f : (Term[Arg]) -> Bool,
+) -> Term[Sub] {
+  self.with_args(self.payload_value.args.filter(f))
+}
+
+///|
+pub fn Term::filter_map_args(
+  self : Term[Sub],
+  f : (Term[Arg]) -> Term[Arg]?,
+) -> Term[Sub] {
+  self.with_args(self.payload_value.args.filter_map(f))
+}
+
+///|
+pub fn Term::concat_map_args(
+  self : Term[Sub],
+  f : (Term[Arg]) -> Array[Term[Arg]],
+) -> Term[Sub] {
+  let args = []
+  for term in self.payload_value.args {
+    for mapped in f(term) {
+      args.push(mapped)
+    }
+  }
+  self.with_args(args)
 }
 
 ///|
@@ -1071,11 +1184,46 @@ pub fn Term::update_blk(self : Term[Sub], blk : Term[Blk]) -> Term[Sub] {
 }
 
 ///|
+pub fn Term::remove_blk(self : Term[Sub], tid : Tid) -> Term[Sub] {
+  self.with_blks(self.payload_value.blks.filter(term => term.tid() != tid))
+}
+
+///|
 pub fn Term::map_blks(
   self : Term[Sub],
   f : (Term[Blk]) -> Term[Blk],
 ) -> Term[Sub] {
   self.with_blks(self.payload_value.blks.map(f))
+}
+
+///|
+pub fn Term::filter_blks(
+  self : Term[Sub],
+  f : (Term[Blk]) -> Bool,
+) -> Term[Sub] {
+  self.with_blks(self.payload_value.blks.filter(f))
+}
+
+///|
+pub fn Term::filter_map_blks(
+  self : Term[Sub],
+  f : (Term[Blk]) -> Term[Blk]?,
+) -> Term[Sub] {
+  self.with_blks(self.payload_value.blks.filter_map(f))
+}
+
+///|
+pub fn Term::concat_map_blks(
+  self : Term[Sub],
+  f : (Term[Blk]) -> Array[Term[Blk]],
+) -> Term[Sub] {
+  let blks = []
+  for term in self.payload_value.blks {
+    for mapped in f(term) {
+      blks.push(mapped)
+    }
+  }
+  self.with_blks(blks)
 }
 
 ///|

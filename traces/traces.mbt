@@ -174,8 +174,48 @@ pub(all) struct TraceMeta {
 } derive(Eq, Debug)
 
 ///|
+let trace_meta_binary_key : String = "binary"
+
+///|
+let trace_meta_tracer_key : String = "tracer"
+
+///|
+let trace_meta_arch_key : String = "arch"
+
+///|
+let trace_meta_binary_file_stats_key : String = "file-stats"
+
+///|
+let trace_meta_trace_stats_key : String = "trace-stats"
+
+///|
 pub fn TraceMeta::empty() -> TraceMeta {
   { attrs: {} }
+}
+
+///|
+pub fn TraceMeta::binary_key() -> String {
+  trace_meta_binary_key
+}
+
+///|
+pub fn TraceMeta::tracer_key() -> String {
+  trace_meta_tracer_key
+}
+
+///|
+pub fn TraceMeta::arch_key() -> String {
+  trace_meta_arch_key
+}
+
+///|
+pub fn TraceMeta::binary_file_stats_key() -> String {
+  trace_meta_binary_file_stats_key
+}
+
+///|
+pub fn TraceMeta::trace_stats_key() -> String {
+  trace_meta_trace_stats_key
 }
 
 ///|
@@ -229,6 +269,77 @@ pub fn TraceMeta::entries(self : TraceMeta) -> Array[(String, TraceAttrValue)] {
 ///|
 pub fn TraceMeta::keys(self : TraceMeta) -> Array[String] {
   self.entries().map(entry => entry.0)
+}
+
+///|
+pub fn TraceMeta::set_binary(self : TraceMeta, value : BinaryInfo) -> TraceMeta {
+  self.set(trace_meta_binary_key, Binary(value))
+}
+
+///|
+pub fn TraceMeta::binary(self : TraceMeta) -> BinaryInfo? {
+  match self.get(trace_meta_binary_key) {
+    Some(Binary(value)) => Some(value)
+    _ => None
+  }
+}
+
+///|
+pub fn TraceMeta::set_tracer(self : TraceMeta, value : TracerInfo) -> TraceMeta {
+  self.set(trace_meta_tracer_key, Tracer(value))
+}
+
+///|
+pub fn TraceMeta::tracer(self : TraceMeta) -> TracerInfo? {
+  match self.get(trace_meta_tracer_key) {
+    Some(Tracer(value)) => Some(value)
+    _ => None
+  }
+}
+
+///|
+pub fn TraceMeta::set_arch(self : TraceMeta, value : @types.Arch) -> TraceMeta {
+  self.set(trace_meta_arch_key, Arch(value))
+}
+
+///|
+pub fn TraceMeta::arch(self : TraceMeta) -> @types.Arch? {
+  match self.get(trace_meta_arch_key) {
+    Some(Arch(value)) => Some(value)
+    _ => None
+  }
+}
+
+///|
+pub fn TraceMeta::set_binary_file_stats(
+  self : TraceMeta,
+  value : FileStatsInfo,
+) -> TraceMeta {
+  self.set(trace_meta_binary_file_stats_key, FileStats(value))
+}
+
+///|
+pub fn TraceMeta::binary_file_stats(self : TraceMeta) -> FileStatsInfo? {
+  match self.get(trace_meta_binary_file_stats_key) {
+    Some(FileStats(value)) => Some(value)
+    _ => None
+  }
+}
+
+///|
+pub fn TraceMeta::set_trace_stats(
+  self : TraceMeta,
+  value : TraceStatsInfo,
+) -> TraceMeta {
+  self.set(trace_meta_trace_stats_key, TraceStats(value))
+}
+
+///|
+pub fn TraceMeta::trace_stats(self : TraceMeta) -> TraceStatsInfo? {
+  match self.get(trace_meta_trace_stats_key) {
+    Some(TraceStats(value)) => Some(value)
+    _ => None
+  }
 }
 
 ///|

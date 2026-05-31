@@ -70,20 +70,15 @@ fn test_tracer() -> @traces.TracerInfo {
 
 ///|
 fn test_meta() -> @traces.TraceMeta {
-  @traces.TraceMeta::empty()
-  .set("binary", Binary(test_binary()))
-  .set("tracer", Tracer(test_tracer()))
+  @traces.TraceMeta::empty().set_binary(test_binary()).set_tracer(test_tracer())
 }
 
 ///|
 fn extended_meta() -> @traces.TraceMeta {
   test_meta()
-  .set("arch", Arch(X86_64))
-  .set(
-    "file-stats",
-    FileStats({ size: 42, atime: 1.25, mtime: 2.5, ctime: 3.75 }),
-  )
-  .set("trace-stats", TraceStats({ user: "me", host: "host", time: 4.5 }))
+  .set_arch(X86_64)
+  .set_binary_file_stats({ size: 42, atime: 1.25, mtime: 2.5, ctime: 3.75 })
+  .set_trace_stats({ user: "me", host: "host", time: 4.5 })
   .set("comment", Text("snapshot"))
   .set("pid", Int(-1))
   .set("complete", Bool(true))
@@ -190,6 +185,21 @@ test "translated BAP trace metadata dictionaries expose sorted entries and remov
   let meta = extended_meta()
   assert_true(!meta.is_empty())
   assert_true(meta.length() == 8)
+  assert_true(@traces.TraceMeta::binary_key() == "binary")
+  assert_true(@traces.TraceMeta::tracer_key() == "tracer")
+  assert_true(@traces.TraceMeta::arch_key() == "arch")
+  assert_true(@traces.TraceMeta::binary_file_stats_key() == "file-stats")
+  assert_true(@traces.TraceMeta::trace_stats_key() == "trace-stats")
+  assert_true(meta.binary() == Some(test_binary()))
+  assert_true(meta.tracer() == Some(test_tracer()))
+  assert_true(meta.arch() == Some(X86_64))
+  assert_true(
+    meta.binary_file_stats() ==
+    Some({ size: 42, atime: 1.25, mtime: 2.5, ctime: 3.75 }),
+  )
+  assert_true(
+    meta.trace_stats() == Some({ user: "me", host: "host", time: 4.5 }),
+  )
   assert_true(
     meta.keys() ==
     [

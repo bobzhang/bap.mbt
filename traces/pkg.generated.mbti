@@ -145,6 +145,12 @@ pub(all) struct TraceException {
 pub(all) struct TraceMeta {
   attrs : Map[String, TraceAttrValue]
 } derive(Eq, @debug.Debug)
+pub fn TraceMeta::arch(Self) -> @types.Arch?
+pub fn TraceMeta::arch_key() -> String
+pub fn TraceMeta::binary(Self) -> BinaryInfo?
+pub fn TraceMeta::binary_file_stats(Self) -> FileStatsInfo?
+pub fn TraceMeta::binary_file_stats_key() -> String
+pub fn TraceMeta::binary_key() -> String
 pub fn TraceMeta::empty() -> Self
 pub fn TraceMeta::entries(Self) -> Array[(String, TraceAttrValue)]
 pub fn TraceMeta::get(Self, String) -> TraceAttrValue?
@@ -154,6 +160,15 @@ pub fn TraceMeta::keys(Self) -> Array[String]
 pub fn TraceMeta::length(Self) -> Int
 pub fn TraceMeta::remove(Self, String) -> Self
 pub fn TraceMeta::set(Self, String, TraceAttrValue) -> Self
+pub fn TraceMeta::set_arch(Self, @types.Arch) -> Self
+pub fn TraceMeta::set_binary(Self, BinaryInfo) -> Self
+pub fn TraceMeta::set_binary_file_stats(Self, FileStatsInfo) -> Self
+pub fn TraceMeta::set_trace_stats(Self, TraceStatsInfo) -> Self
+pub fn TraceMeta::set_tracer(Self, TracerInfo) -> Self
+pub fn TraceMeta::trace_stats(Self) -> TraceStatsInfo?
+pub fn TraceMeta::trace_stats_key() -> String
+pub fn TraceMeta::tracer(Self) -> TracerInfo?
+pub fn TraceMeta::tracer_key() -> String
 
 type TraceMonitor
 pub fn TraceMonitor::create((String) -> TraceStep) -> Self

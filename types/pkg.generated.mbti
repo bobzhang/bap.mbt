@@ -90,6 +90,10 @@ pub(all) suberror SizeError {
   UnsupportedAddressSizeValue(Size)
 } derive(Eq, @debug.Debug)
 
+pub(all) suberror TidParseError {
+  InvalidTid(String)
+} derive(Eq, @debug.Debug)
+
 // Types and methods
 type AddrR32 derive(Eq, @debug.Debug)
 pub fn AddrR32::abs(Self) -> Self
@@ -950,10 +954,13 @@ pub(all) struct Tid {
   name : String?
   ivec_value : Int?
 } derive(Eq, Hash, @debug.Debug)
+pub fn Tid::create() -> Self
 pub fn Tid::for_addr(Word) -> Self
 pub fn Tid::for_ivec(Int) -> Self
 pub fn Tid::for_name(String) -> Self
 pub fn Tid::fresh() -> Self
+pub fn Tid::from_string(String) -> Result[Self, String]
+pub fn Tid::from_string_exn(String) -> Self raise TidParseError
 pub fn Tid::id(Self) -> Int
 pub fn Tid::ivec(Self) -> Int?
 pub fn Tid::name(Self) -> String?

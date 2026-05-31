@@ -11,6 +11,50 @@ test "terms carry tids and string attributes" {
 }
 
 ///|
+test "tids parse BAP-style textual identifiers" {
+  let created = @types.Tid::create()
+  assert_true(created.name() is None)
+  assert_true(created.ivec() is None)
+  match @types.Tid::from_string("@entry") {
+    Ok(tid) => {
+      assert_true(tid.name() == Some("entry"))
+      inspect(tid.to_string(), content="@entry")
+    }
+    Err(reason) => fail(reason)
+  }
+  match @types.Tid::from_string("plain") {
+    Ok(tid) => {
+      assert_true(tid.name() == Some("plain"))
+      inspect(tid.to_string(), content="@plain")
+    }
+    Err(reason) => fail(reason)
+  }
+  match @types.Tid::from_string("@interrupt:#13") {
+    Ok(tid) => {
+      assert_true(tid.ivec() == Some(13))
+      inspect(tid.to_string(), content="@interrupt:#13")
+    }
+    Err(reason) => fail(reason)
+  }
+  match @types.Tid::from_string("%42") {
+    Ok(tid) => {
+      assert_true(tid.id() == 42)
+      assert_true(tid.name() is None)
+      assert_true(tid.ivec() is None)
+      inspect(tid.to_string(), content="%42")
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(@types.Tid::from_string("%") is Err(_))
+  assert_true(@types.Tid::from_string("@interrupt:#") is Err(_))
+  try @types.Tid::from_string_exn("%bad") catch {
+    InvalidTid(text) => assert_true(text == "%bad")
+  } noraise {
+    _ => fail("expected invalid tid")
+  }
+}
+
+///|
 test "terms expose common BAP-style attributes and flags" {
   let origin = @types.Tid::for_name("source")
   let def = @types.Def::create(

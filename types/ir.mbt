@@ -9,9 +9,19 @@ pub(all) struct Tid {
 } derive(Eq, Hash, Debug)
 
 ///|
+pub(all) suberror TidParseError {
+  InvalidTid(String)
+} derive(Eq, Debug)
+
+///|
 fn next_tid_id() -> Int {
   tid_counter.val = tid_counter.val + 1
   tid_counter.val
+}
+
+///|
+pub fn Tid::create() -> Tid {
+  Tid::fresh()
 }
 
 ///|
@@ -32,6 +42,61 @@ pub fn Tid::for_addr(addr : Word) -> Tid {
 ///|
 pub fn Tid::for_ivec(ivec : Int) -> Tid {
   { id: next_tid_id(), name: None, ivec_value: Some(ivec) }
+}
+
+///|
+fn tid_for_id(id : Int) -> Tid {
+  if id > tid_counter.val {
+    tid_counter.val = id
+  }
+  { id, name: None, ivec_value: None }
+}
+
+///|
+fn tid_parse_error(text : String) -> String {
+  "invalid tid: \{text}"
+}
+
+///|
+fn tid_parse_int(text : StringView, source : String) -> Result[Int, String] {
+  if text.length() == 0 {
+    Err(tid_parse_error(source))
+  } else {
+    try @string.parse_int(text) catch {
+      _ => Err(tid_parse_error(source))
+    } noraise {
+      value => Ok(value)
+    }
+  }
+}
+
+///|
+pub fn Tid::from_string(text : String) -> Result[Tid, String] {
+  if text == "" {
+    Ok(Tid::for_name(""))
+  } else if text.has_prefix("@interrupt:#") {
+    match tid_parse_int(text[12:], text) {
+      Ok(ivec) => Ok(Tid::for_ivec(ivec))
+      Err(reason) => Err(reason)
+    }
+  } else if text.has_prefix("@") {
+    Ok(Tid::for_name(text[1:].to_owned()))
+  } else if text.has_prefix("%") {
+    match tid_parse_int(text[1:], text) {
+      Ok(id) if id >= 0 => Ok(tid_for_id(id))
+      _ => Err(tid_parse_error(text))
+    }
+  } else {
+    Ok(Tid::for_name(text))
+  }
+}
+
+///|
+pub fn Tid::from_string_exn(text : String) -> Tid raise TidParseError {
+  match Tid::from_string(text) {
+    Ok(tid) => tid
+    Err(_) => raise InvalidTid(text)
+  }
 }
 
 ///|

@@ -212,6 +212,7 @@ fn dwarf_skip_form(
     DwarfImplicitConst(_) => Ok(input)
     DwarfRefSup4 => input.skip(bytes=4)
     DwarfRefSup8 => input.skip(bytes=8)
+    DwarfRefSig8 => input.skip(bytes=8)
     DwarfString =>
       match input.read_cstring() {
         Ok((_, next)) => Ok(next)

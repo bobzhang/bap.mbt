@@ -332,7 +332,9 @@ from that section. Preserve `.debug_loclists` even before interpreting
 location lists; producer metadata forms such as `DW_FORM_data16` and
 `DW_FORM_loclistx`, plus supplementary reference forms such as
 `DW_FORM_ref_sup4`/`DW_FORM_ref_sup8`, should still be skippable so FBI
-extraction can keep useful function bounds.
+extraction can keep useful function bounds. Keep `DW_FORM_ref_sig8` distinct
+from ordinary `DW_FORM_ref8`: it is a type-signature reference, not a
+same-compilation-unit DIE offset for resolving `DW_AT_specification` names.
 For concrete function DIEs that omit a direct name, resolve
 `DW_AT_specification` and `DW_AT_abstract_origin` references through the target
 DIE's `DW_AT_name` or `DW_AT_linkage_name`; support same-compilation-unit

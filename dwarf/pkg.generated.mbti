@@ -89,6 +89,7 @@ pub(all) enum DwarfForm {
   DwarfRefSup4
   DwarfRefSup8
   DwarfRefAddr
+  DwarfRefSig8
   DwarfOffset
   DwarfRef(DwarfLenspec)
   DwarfIndirect

@@ -66,6 +66,7 @@ pub(all) enum DwarfForm {
   DwarfRefSup4
   DwarfRefSup8
   DwarfRefAddr
+  DwarfRefSig8
   DwarfOffset
   DwarfRef(DwarfLenspec)
   DwarfIndirect
@@ -338,7 +339,7 @@ fn dwarf_form_of_int(code : Int) -> Result[DwarfForm, String] {
     0x1d => Ok(DwarfStrpSup)
     0x1e => Ok(DwarfData16)
     0x1f => Ok(DwarfLineStrp)
-    0x20 => Ok(DwarfRef(DwarfEight))
+    0x20 => Ok(DwarfRefSig8)
     0x21 => Ok(DwarfImplicitConst(0L))
     0x22 => Ok(DwarfLoclistx)
     0x23 => Ok(DwarfRnglistx)

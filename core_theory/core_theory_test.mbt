@@ -1081,6 +1081,10 @@ test "target role helpers classify common architecture variables" {
       assert_true(aarch64.roles_of_var(float).contains(FloatingRegister))
     None => fail("missing D0")
   }
+  match aarch64.find_var("NF") {
+    Some(flag) => assert_true(aarch64.roles_of_var(flag).contains(Status))
+    None => fail("missing AArch64 NF")
+  }
   match aarch64.find_var("XZR") {
     Some(zero) => {
       assert_true(aarch64.roles_of_var(zero).contains(Constant))
@@ -1111,6 +1115,13 @@ test "target role helpers classify common architecture variables" {
       assert_true(origin.range() == Some((0, 63)))
     }
     None => fail("missing D0 alias origin")
+  }
+  match aarch64.origin_of_name("NZCV") {
+    Some(origin) => {
+      assert_true(origin.source() is None)
+      assert_true(origin.bits().map(v => v.ident()) == ["NF", "ZF", "CF", "VF"])
+    }
+    None => fail("missing NZCV alias origin")
   }
   match aarch64.origin_of_name("FP") {
     Some(origin) => {

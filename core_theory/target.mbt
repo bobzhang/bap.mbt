@@ -637,6 +637,13 @@ fn arm32_flags() -> Array[Var] {
 }
 
 ///|
+fn aarch64_flags() -> Array[Var] {
+  [
+    for name in ["NF", "ZF", "CF", "VF"] => bool_var(name)
+  ]
+}
+
+///|
 fn arm32_alias_origins() -> Array[AliasOrigin] {
   [
     AliasOrigin::register(word_var(32, "SP"), word_var(32, "R13")),
@@ -661,6 +668,7 @@ fn aarch64_vars() -> Array[Var] {
   append_vars(items, named_word_vars(32, ["WSP", "WZR"]))
   append_vars(items, named_word_vars(64, ["SP", "PC"]))
   items.push(word_var(32, "NZCV"))
+  append_vars(items, aarch64_flags())
   items.push(mem_var(64, 8, "mem"))
   items
 }
@@ -729,6 +737,7 @@ fn aarch64_alias_origins() -> Array[AliasOrigin] {
   )
   items.push(AliasOrigin::unknown(word_var(64, "XZR")))
   items.push(AliasOrigin::register(word_var(64, "ZR"), word_var(64, "XZR")))
+  items.push(AliasOrigin::bit_set(word_var(32, "NZCV"), aarch64_flags()))
   items.push(
     AliasOrigin::subregister(
       word_var(32, "WZR"),

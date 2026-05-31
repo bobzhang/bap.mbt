@@ -128,6 +128,11 @@ metadata, resolve `e_shnum == 0` from section header zero `sh_size`,
 `e_shstrndx == SHN_XINDEX` from `sh_link`, and `e_phnum == PN_XNUM` from
 `sh_info`; apply the section-count/name-index handling in both image loading
 and DWARF debug-section extraction.
+For BAP trace readers, preserve the loader-assigned trace id as observable
+input to reader callbacks. Keep URI-only registration as a compatibility
+adapter, but expose id-aware array and stream reader registrations so callbacks
+that build metadata or side tables can use the same UUID that the loaded
+`Trace` will report.
 For disassembly-driver registries, separate orchestration from architecture
 decoding: a built-in driver may materialize memory regions as blocks, but it
 should not invent assembly text or lifted BIL unless a real target-specific

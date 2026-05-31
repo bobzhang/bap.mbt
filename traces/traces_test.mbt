@@ -507,6 +507,77 @@ test "translated BAP trace protocol registry selects URI providers" {
 }
 
 ///|
+test "translated BAP trace readers receive generated ids" {
+  let custom_tool = @traces.TraceTool::register(name="id_tool", supported_tags=[
+    "memory-load",
+  ])
+  let custom_events = [Ok(@traces.TraceEvent::memory_load(test_move()))]
+  let seen_reader_id : Ref[@traces.TraceId?] = Ref(None)
+  @traces.Trace::register_protocol(
+    @traces.TraceProtocol::create(name="id-reader-provider", probe=fn(uri) {
+      uri.has_prefix("id-reader://")
+    }),
+  )
+  @traces.Trace::register_reader_with_id("id-reader-provider", fn(uri, id) {
+    if uri != "id-reader://trace" {
+      Err(NoProvider(uri))
+    } else {
+      seen_reader_id.val = Some(id)
+      Ok({ tool: custom_tool, meta: test_meta(), events: custom_events })
+    }
+  })
+  match @traces.Trace::load("id-reader://trace") {
+    Ok(trace) => {
+      assert_true(seen_reader_id.val == Some(trace.id()))
+      assert_true(trace.protocol() == Some("id-reader-provider"))
+      assert_true(unwrap_events(trace.read_events()).length() == 1)
+    }
+    Err(_) => fail("id-aware reader load failed")
+  }
+
+  let seen_stream_id : Ref[@traces.TraceId?] = Ref(None)
+  @traces.Trace::register_protocol(
+    @traces.TraceProtocol::create(name="id-stream-provider", probe=fn(uri) {
+      uri.has_prefix("id-stream://")
+    }),
+  )
+  @traces.Trace::register_stream_reader_with_id("id-stream-provider", fn(
+    uri,
+    id,
+  ) {
+    if uri != "id-stream://trace" {
+      Err(NoProvider(uri))
+    } else {
+      let index = Ref(0)
+      seen_stream_id.val = Some(id)
+      Ok(
+        @traces.TraceStreamReader::create(
+          custom_tool,
+          fn() {
+            if index.val >= custom_events.length() {
+              None
+            } else {
+              let item = custom_events[index.val]
+              index.val += 1
+              Some(item)
+            }
+          },
+          meta=test_meta(),
+        ),
+      )
+    }
+  })
+  match @traces.Trace::load("id-stream://trace") {
+    Ok(trace) => {
+      assert_true(seen_stream_id.val == Some(trace.id()))
+      assert_true(trace.protocol() == Some("id-stream-provider"))
+      assert_true(unwrap_events(trace.read_events()).length() == 1)
+    }
+    Err(_) => fail("id-aware stream reader load failed")
+  }
+}
+
+///|
 test "translated BAP traces read matching events and tool support" {
   let trace = new_trace()
   assert_true(trace.supports("memory-load"))

@@ -95,7 +95,9 @@ pub fn[T] Trace::read_all_matching(Self, (TraceEvent) -> T?) -> Result[Array[T],
 pub fn Trace::read_events(Self, limit? : Int) -> Result[Array[TraceEvent], TraceError]
 pub fn Trace::register_protocol(TraceProtocol) -> Unit
 pub fn Trace::register_reader(String, (String) -> Result[TraceReader, TraceError]) -> Unit
+pub fn Trace::register_reader_with_id(String, (String, TraceId) -> Result[TraceReader, TraceError]) -> Unit
 pub fn Trace::register_stream_reader(String, (String) -> Result[TraceStreamReader, TraceError]) -> Unit
+pub fn Trace::register_stream_reader_with_id(String, (String, TraceId) -> Result[TraceStreamReader, TraceError]) -> Unit
 pub fn Trace::register_writer(String, (String, Self) -> Result[Unit, TraceError]) -> Unit
 pub fn Trace::remove_loaded(Self) -> Unit
 pub fn Trace::save(String, Self) -> Result[Unit, TraceError]

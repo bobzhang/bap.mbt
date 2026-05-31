@@ -464,6 +464,9 @@ pub fn TargetOptions::to_string(self : TargetOptions) -> String {
 ///|
 pub(all) enum Role {
   General
+  SpecialRegister
+  AliasRegister
+  PseudoRegister
   IntegerRegister
   FloatingRegister
   VectorRegister
@@ -471,21 +474,34 @@ pub(all) enum Role {
   FramePointer
   ProgramCounter
   Status
+  ControlRegister
+  SystemRegister
+  HardwareRegister
   Constant
   ZeroRegister
+  OneRegister
   LinkRegister
   ThreadPointer
+  PrivilegedRegister
   Argument
   ResultRegister
   CallerSaved
   CalleeSaved
   Reserved
+  ZeroFlag
+  CarryFlag
+  SignFlag
+  OverflowFlag
+  ParityFlag
 } derive(Eq, Debug)
 
 ///|
 pub fn Role::to_string(self : Role) -> String {
   match self {
     General => "general"
+    SpecialRegister => "special"
+    AliasRegister => "alias"
+    PseudoRegister => "pseudo"
     IntegerRegister => "integer"
     FloatingRegister => "floating"
     VectorRegister => "vector"
@@ -493,15 +509,25 @@ pub fn Role::to_string(self : Role) -> String {
     FramePointer => "frame-pointer"
     ProgramCounter => "program-counter"
     Status => "status"
+    ControlRegister => "control"
+    SystemRegister => "system"
+    HardwareRegister => "hardware"
     Constant => "constant"
     ZeroRegister => "zero"
+    OneRegister => "one"
     LinkRegister => "link"
     ThreadPointer => "thread"
+    PrivilegedRegister => "privileged"
     Argument => "function-argument"
     ResultRegister => "function-return"
     CallerSaved => "caller-saved"
     CalleeSaved => "callee-saved"
     Reserved => "reserved"
+    ZeroFlag => "zero-flag"
+    CarryFlag => "carry-flag"
+    SignFlag => "sign-flag"
+    OverflowFlag => "overflow-flag"
+    ParityFlag => "parity-flag"
   }
 }
 
@@ -509,6 +535,9 @@ pub fn Role::to_string(self : Role) -> String {
 pub fn Role::of_string(text : String) -> Role? {
   match text.to_lower() {
     "general" => Some(General)
+    "special" | "special-register" => Some(SpecialRegister)
+    "alias" | "alias-register" => Some(AliasRegister)
+    "pseudo" | "pseudo-register" => Some(PseudoRegister)
     "integer" | "integer-register" => Some(IntegerRegister)
     "floating" | "floating-register" => Some(FloatingRegister)
     "vector" | "vector-register" => Some(VectorRegister)
@@ -516,15 +545,25 @@ pub fn Role::of_string(text : String) -> Role? {
     "frame-pointer" | "frame_pointer" | "fp" => Some(FramePointer)
     "program-counter" | "program_counter" | "pc" => Some(ProgramCounter)
     "status" => Some(Status)
+    "control" | "control-register" => Some(ControlRegister)
+    "system" | "system-register" => Some(SystemRegister)
+    "hardware" | "hardware-register" => Some(HardwareRegister)
     "constant" => Some(Constant)
     "zero" | "zero-register" => Some(ZeroRegister)
+    "one" | "one-register" => Some(OneRegister)
     "link" | "link-register" => Some(LinkRegister)
     "thread" | "thread-pointer" => Some(ThreadPointer)
+    "privileged" | "privileged-register" => Some(PrivilegedRegister)
     "function-argument" | "argument" => Some(Argument)
     "function-return" | "result" | "result-register" => Some(ResultRegister)
     "caller-saved" | "caller_saved" => Some(CallerSaved)
     "callee-saved" | "callee_saved" => Some(CalleeSaved)
     "reserved" => Some(Reserved)
+    "zero-flag" | "zero_flag" | "zf" => Some(ZeroFlag)
+    "carry-flag" | "carry_flag" | "cf" => Some(CarryFlag)
+    "sign-flag" | "sign_flag" | "sf" | "nf" => Some(SignFlag)
+    "overflow-flag" | "overflow_flag" | "of" | "vf" => Some(OverflowFlag)
+    "parity-flag" | "parity_flag" | "pf" => Some(ParityFlag)
     _ => None
   }
 }
@@ -533,22 +572,35 @@ pub fn Role::of_string(text : String) -> Role? {
 fn Role::rank(self : Role) -> Int {
   match self {
     General => 0
-    IntegerRegister => 1
-    FloatingRegister => 2
-    VectorRegister => 3
-    StackPointer => 4
-    FramePointer => 5
-    ProgramCounter => 6
-    Status => 7
-    Constant => 8
-    ZeroRegister => 9
-    LinkRegister => 10
-    ThreadPointer => 11
-    Argument => 12
-    ResultRegister => 13
-    CallerSaved => 14
-    CalleeSaved => 15
-    Reserved => 16
+    SpecialRegister => 1
+    AliasRegister => 2
+    PseudoRegister => 3
+    IntegerRegister => 4
+    FloatingRegister => 5
+    VectorRegister => 6
+    StackPointer => 7
+    FramePointer => 8
+    ProgramCounter => 9
+    Status => 10
+    ControlRegister => 11
+    SystemRegister => 12
+    HardwareRegister => 13
+    Constant => 14
+    ZeroRegister => 15
+    OneRegister => 16
+    LinkRegister => 17
+    ThreadPointer => 18
+    PrivilegedRegister => 19
+    Argument => 20
+    ResultRegister => 21
+    CallerSaved => 22
+    CalleeSaved => 23
+    Reserved => 24
+    ZeroFlag => 25
+    CarryFlag => 26
+    SignFlag => 27
+    OverflowFlag => 28
+    ParityFlag => 29
   }
 }
 
@@ -1251,16 +1303,20 @@ fn find_in_targets(items : Array[Target], query : String) -> Target? {
 fn target_role_names(role : Role) -> Array[String] {
   match role {
     General => []
+    SpecialRegister | AliasRegister | PseudoRegister => []
     IntegerRegister | FloatingRegister | VectorRegister => []
     StackPointer => ["sp", "esp", "rsp"]
     FramePointer => ["fp", "ebp", "rbp"]
     ProgramCounter => ["pc", "eip", "rip"]
     Status =>
       ["flags", "eflags", "cpsr", "nzcv", "cf", "pf", "af", "zf", "sf", "of"]
+    ControlRegister | SystemRegister | HardwareRegister => []
     Constant => ["zero"]
     ZeroRegister => ["zero"]
+    OneRegister => ["one"]
     LinkRegister => ["lr", "ra"]
     ThreadPointer => ["tp"]
+    PrivilegedRegister => []
     Argument =>
       [
         "r0", "r1", "r2", "r3", "x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7", "rdi",
@@ -1270,6 +1326,11 @@ fn target_role_names(role : Role) -> Array[String] {
     CallerSaved => []
     CalleeSaved => []
     Reserved => []
+    ZeroFlag => ["zf", "zero-flag"]
+    CarryFlag => ["cf", "carry-flag"]
+    SignFlag => ["sf", "nf", "sign-flag"]
+    OverflowFlag => ["of", "vf", "overflow-flag"]
+    ParityFlag => ["pf", "parity-flag"]
   }
 }
 
@@ -1295,6 +1356,7 @@ fn concat_role_names(groups : Array[Array[String]]) -> Array[String] {
 fn x86_64_role_names(role : Role) -> Array[String] {
   match role {
     General => []
+    SpecialRegister | AliasRegister | PseudoRegister => []
     IntegerRegister =>
       concat_role_names([
         lower_names(x86_64_gpr_names()),
@@ -1316,12 +1378,19 @@ fn x86_64_role_names(role : Role) -> Array[String] {
         ["eflags", "rflags", "mxcsr", "iopl"],
         lower_names(x86_flag_names()),
       ])
-    Constant | ZeroRegister | LinkRegister | ThreadPointer => []
+    ControlRegister | SystemRegister | HardwareRegister => []
+    Constant | ZeroRegister | OneRegister | LinkRegister | ThreadPointer => []
+    PrivilegedRegister => []
     Argument => ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]
     ResultRegister => ["rax", "rdx", "eax", "edx", "ax", "dx", "al", "dl"]
     CallerSaved => []
     CalleeSaved => []
     Reserved => []
+    ZeroFlag => ["zf"]
+    CarryFlag => ["cf"]
+    SignFlag => ["sf"]
+    OverflowFlag => ["of"]
+    ParityFlag => ["pf"]
   }
 }
 
@@ -1329,6 +1398,7 @@ fn x86_64_role_names(role : Role) -> Array[String] {
 fn x86_16_role_names(role : Role) -> Array[String] {
   match role {
     General => []
+    SpecialRegister | AliasRegister | PseudoRegister => []
     IntegerRegister =>
       concat_role_names([
         lower_names(x86_16_gpr_names()),
@@ -1344,12 +1414,19 @@ fn x86_16_role_names(role : Role) -> Array[String] {
     ProgramCounter => []
     Status =>
       concat_role_names([["eflags", "iopl"], lower_names(x86_flag_names())])
-    Constant | ZeroRegister | LinkRegister | ThreadPointer => []
+    ControlRegister | SystemRegister | HardwareRegister => []
+    Constant | ZeroRegister | OneRegister | LinkRegister | ThreadPointer => []
+    PrivilegedRegister => []
     Argument => []
     ResultRegister => ["ax", "dx", "al", "dl"]
     CallerSaved => []
     CalleeSaved => []
     Reserved => []
+    ZeroFlag => ["zf"]
+    CarryFlag => ["cf"]
+    SignFlag => ["sf"]
+    OverflowFlag => ["of"]
+    ParityFlag => ["pf"]
   }
 }
 
@@ -1380,6 +1457,7 @@ fn x86_32_cpu_role_names(
 fn x86_32_role_names(role : Role) -> Array[String] {
   match role {
     General => []
+    SpecialRegister | AliasRegister | PseudoRegister => []
     IntegerRegister =>
       concat_role_names([
         lower_names(x86_32_gpr_names()),
@@ -1396,12 +1474,19 @@ fn x86_32_role_names(role : Role) -> Array[String] {
     ProgramCounter => ["eip"]
     Status =>
       concat_role_names([["eflags", "iopl"], lower_names(x86_flag_names())])
-    Constant | ZeroRegister | LinkRegister | ThreadPointer => []
+    ControlRegister | SystemRegister | HardwareRegister => []
+    Constant | ZeroRegister | OneRegister | LinkRegister | ThreadPointer => []
+    PrivilegedRegister => []
     Argument => []
     ResultRegister => ["eax", "edx", "ax", "dx", "al", "dl"]
     CallerSaved => []
     CalleeSaved => []
     Reserved => []
+    ZeroFlag => ["zf"]
+    CarryFlag => ["cf"]
+    SignFlag => ["sf"]
+    OverflowFlag => ["of"]
+    ParityFlag => ["pf"]
   }
 }
 
@@ -1409,6 +1494,7 @@ fn x86_32_role_names(role : Role) -> Array[String] {
 fn arm32_role_names(role : Role) -> Array[String] {
   match role {
     General => []
+    SpecialRegister | AliasRegister | PseudoRegister => []
     IntegerRegister => concat_role_names([role_names("r", 0, 12), ["sp", "lr"]])
     FloatingRegister => role_names("d", 0, 31)
     VectorRegister => []
@@ -1416,13 +1502,20 @@ fn arm32_role_names(role : Role) -> Array[String] {
     FramePointer => ["r11"]
     ProgramCounter => ["pc"]
     Status => ["cpsr", "nf", "zf", "cf", "vf", "qf"]
-    Constant | ZeroRegister | ThreadPointer => []
+    ControlRegister | SystemRegister | HardwareRegister => []
+    Constant | ZeroRegister | OneRegister | ThreadPointer => []
     LinkRegister => ["lr", "r14"]
+    PrivilegedRegister => []
     Argument => ["r0", "r1", "r2", "r3"]
     ResultRegister => ["r0", "r1"]
     CallerSaved => ["r0", "r1", "r2", "r3", "r12", "lr"]
     CalleeSaved => ["r4", "r5", "r6", "r7", "r8", "r9", "r10", "r11", "sp"]
     Reserved => []
+    ZeroFlag => ["zf"]
+    CarryFlag => ["cf"]
+    SignFlag => ["nf"]
+    OverflowFlag => ["vf"]
+    ParityFlag => []
   }
 }
 
@@ -1430,6 +1523,7 @@ fn arm32_role_names(role : Role) -> Array[String] {
 fn aarch64_role_names(role : Role) -> Array[String] {
   match role {
     General => []
+    SpecialRegister | AliasRegister | PseudoRegister => []
     IntegerRegister =>
       concat_role_names([
         role_names("x", 0, 31),
@@ -1450,9 +1544,12 @@ fn aarch64_role_names(role : Role) -> Array[String] {
     FramePointer => ["fp", "x29", "r29"]
     ProgramCounter => ["pc"]
     Status => ["nzcv", "nf", "zf", "cf", "vf"]
+    ControlRegister | SystemRegister | HardwareRegister => []
     Constant | ZeroRegister => ["zr", "xzr", "wzr"]
+    OneRegister => []
     ThreadPointer => []
     LinkRegister => ["lr", "x30", "r30"]
+    PrivilegedRegister => []
     Argument =>
       concat_role_names([
         role_names("x", 0, 7),
@@ -1463,6 +1560,11 @@ fn aarch64_role_names(role : Role) -> Array[String] {
     CallerSaved => []
     CalleeSaved => []
     Reserved => []
+    ZeroFlag => ["zf"]
+    CarryFlag => ["cf"]
+    SignFlag => ["nf"]
+    OverflowFlag => ["vf"]
+    ParityFlag => []
   }
 }
 
@@ -1470,6 +1572,7 @@ fn aarch64_role_names(role : Role) -> Array[String] {
 fn mips_role_names(bits : Int, role : Role) -> Array[String] {
   match role {
     General => []
+    SpecialRegister | AliasRegister | PseudoRegister => []
     IntegerRegister =>
       concat_role_names([
         role_names("r", 0, 31),
@@ -1483,10 +1586,13 @@ fn mips_role_names(bits : Int, role : Role) -> Array[String] {
     FramePointer => ["fp", "r30"]
     ProgramCounter => ["pc"]
     Status => []
+    ControlRegister | SystemRegister | HardwareRegister => []
     Constant => ["zero", "r0"]
     ZeroRegister => ["zero", "r0"]
+    OneRegister => []
     LinkRegister => ["ra", "r31"]
     ThreadPointer => []
+    PrivilegedRegister => []
     Argument =>
       if bits == 64 {
         concat_role_names([role_names("r", 4, 11), role_names("f", 1, 8)])
@@ -1497,6 +1603,7 @@ fn mips_role_names(bits : Int, role : Role) -> Array[String] {
     CallerSaved => []
     CalleeSaved => []
     Reserved => ["k0", "k1", "r26", "r27"]
+    ZeroFlag | CarryFlag | SignFlag | OverflowFlag | ParityFlag => []
   }
 }
 
@@ -1504,6 +1611,7 @@ fn mips_role_names(bits : Int, role : Role) -> Array[String] {
 fn powerpc_role_names(role : Role) -> Array[String] {
   match role {
     General => []
+    SpecialRegister | AliasRegister | PseudoRegister => []
     IntegerRegister => role_names("r", 0, 31)
     FloatingRegister => role_names("f", 0, 31)
     VectorRegister => role_names("v", 0, 31)
@@ -1526,10 +1634,13 @@ fn powerpc_role_names(role : Role) -> Array[String] {
           for group in 0..<=7 => "cr\{group}un"
         ],
       ])
+    ControlRegister | SystemRegister | HardwareRegister => []
     Constant => ["zero"]
     ZeroRegister => ["zero"]
+    OneRegister => []
     LinkRegister => ["lr"]
     ThreadPointer => []
+    PrivilegedRegister => []
     Argument =>
       concat_role_names([role_names("r", 3, 10), role_names("f", 1, 8)])
     ResultRegister => ["r3", "r4", "f0"]
@@ -1542,6 +1653,11 @@ fn powerpc_role_names(role : Role) -> Array[String] {
         role_names("f", 14, 31),
       ])
     Reserved => ["r2"]
+    ZeroFlag => [ for group in 0..<=7 => "cr\{group}eq" ]
+    CarryFlag => ["ca", "ca32"]
+    SignFlag => [ for group in 0..<=7 => "cr\{group}lt" ]
+    OverflowFlag => ["ov", "ov32", "so"]
+    ParityFlag => []
   }
 }
 
@@ -1549,6 +1665,7 @@ fn powerpc_role_names(role : Role) -> Array[String] {
 fn riscv_role_names(role : Role) -> Array[String] {
   match role {
     General => []
+    SpecialRegister | AliasRegister | PseudoRegister => []
     IntegerRegister =>
       concat_role_names([
         role_names("x", 0, 31),
@@ -1562,10 +1679,13 @@ fn riscv_role_names(role : Role) -> Array[String] {
     FramePointer => ["fp", "s0", "x8"]
     ProgramCounter => ["pc"]
     Status => []
+    ControlRegister | SystemRegister | HardwareRegister => []
     Constant => ["zero", "x0"]
     ZeroRegister => ["zero", "x0"]
+    OneRegister => []
     LinkRegister => ["ra", "x1"]
     ThreadPointer => ["gp", "x3"]
+    PrivilegedRegister => []
     Argument =>
       concat_role_names([
         role_names("x", 10, 17),
@@ -1597,6 +1717,7 @@ fn riscv_role_names(role : Role) -> Array[String] {
         role_names("f", 18, 27),
       ])
     Reserved => []
+    ZeroFlag | CarryFlag | SignFlag | OverflowFlag | ParityFlag => []
   }
 }
 
@@ -1604,6 +1725,7 @@ fn riscv_role_names(role : Role) -> Array[String] {
 fn sparc_role_names(role : Role) -> Array[String] {
   match role {
     General => []
+    SpecialRegister | AliasRegister | PseudoRegister => []
     IntegerRegister =>
       concat_role_names([
         role_names("g", 0, 7),
@@ -1617,14 +1739,17 @@ fn sparc_role_names(role : Role) -> Array[String] {
     FramePointer => ["fp", "i6"]
     ProgramCounter => ["pc", "npc"]
     Status => []
-    Constant | ZeroRegister | ThreadPointer => []
+    ControlRegister | SystemRegister | HardwareRegister => []
+    Constant | ZeroRegister | OneRegister | ThreadPointer => []
     LinkRegister => ["o7", "i7"]
+    PrivilegedRegister => []
     Argument => role_names("o", 0, 5)
     ResultRegister => ["o0", "o1"]
     CallerSaved => concat_role_names([role_names("o", 0, 7), ["g1"]])
     CalleeSaved =>
       concat_role_names([role_names("l", 0, 7), role_names("i", 0, 7)])
     Reserved => []
+    ZeroFlag | CarryFlag | SignFlag | OverflowFlag | ParityFlag => []
   }
 }
 
@@ -1632,6 +1757,7 @@ fn sparc_role_names(role : Role) -> Array[String] {
 fn systemz_role_names(role : Role) -> Array[String] {
   match role {
     General => []
+    SpecialRegister | AliasRegister | PseudoRegister => []
     IntegerRegister => role_names("r", 0, 15)
     FloatingRegister => role_names("f", 0, 15)
     VectorRegister => []
@@ -1639,13 +1765,16 @@ fn systemz_role_names(role : Role) -> Array[String] {
     FramePointer => []
     ProgramCounter => ["pc"]
     Status => []
-    Constant | ZeroRegister | ThreadPointer => []
+    ControlRegister | SystemRegister | HardwareRegister => []
+    Constant | ZeroRegister | OneRegister | ThreadPointer => []
     LinkRegister => ["r14"]
+    PrivilegedRegister => []
     Argument => role_names("r", 2, 6)
     ResultRegister => ["r2", "f0"]
     CallerSaved => []
     CalleeSaved => []
     Reserved => []
+    ZeroFlag | CarryFlag | SignFlag | OverflowFlag | ParityFlag => []
   }
 }
 
@@ -2077,20 +2206,47 @@ pub fn Target::roles_of_var(self : Target, variable : Var) -> Array[Role] {
       FramePointer,
       ProgramCounter,
       Status,
+      ControlRegister,
+      SystemRegister,
+      HardwareRegister,
       Constant,
       ZeroRegister,
+      OneRegister,
       LinkRegister,
       ThreadPointer,
+      PrivilegedRegister,
       Argument,
       ResultRegister,
       CallerSaved,
       CalleeSaved,
       Reserved,
+      ZeroFlag,
+      CarryFlag,
+      SignFlag,
+      OverflowFlag,
+      ParityFlag,
     ] {
     if target_name_has_role(self, variable.ident(), role) ||
       target_name_has_role(self, variable.name(), role) {
       add_role(roles, role)
     }
+  }
+  if self.origin_of_var(variable) is Some(_) {
+    add_role(roles, AliasRegister)
+  }
+  if roles.contains(Status) ||
+    roles.contains(ControlRegister) ||
+    roles.contains(SystemRegister) ||
+    roles.contains(HardwareRegister) ||
+    roles.contains(PrivilegedRegister) ||
+    roles.contains(Reserved) {
+    add_role(roles, SpecialRegister)
+  }
+  if roles.contains(ProgramCounter) ||
+    roles.contains(Constant) ||
+    roles.contains(ZeroRegister) ||
+    roles.contains(OneRegister) {
+    add_role(roles, PseudoRegister)
   }
   if roles.is_empty() {
     [General]

@@ -264,6 +264,9 @@ pub fn ProgramUnitFacts::target(Self) -> @knowledge.FactTable[Unit, Target]
 
 pub(all) enum Role {
   General
+  SpecialRegister
+  AliasRegister
+  PseudoRegister
   IntegerRegister
   FloatingRegister
   VectorRegister
@@ -271,15 +274,25 @@ pub(all) enum Role {
   FramePointer
   ProgramCounter
   Status
+  ControlRegister
+  SystemRegister
+  HardwareRegister
   Constant
   ZeroRegister
+  OneRegister
   LinkRegister
   ThreadPointer
+  PrivilegedRegister
   Argument
   ResultRegister
   CallerSaved
   CalleeSaved
   Reserved
+  ZeroFlag
+  CarryFlag
+  SignFlag
+  OverflowFlag
+  ParityFlag
 } derive(Eq, @debug.Debug)
 pub fn Role::compare(Self, Self) -> Int
 pub fn Role::equal(Self, Self) -> Bool

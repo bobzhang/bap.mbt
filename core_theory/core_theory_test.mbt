@@ -927,10 +927,15 @@ test "target role helpers classify common architecture variables" {
   let stack_pointer = @core_theory.Role::of_string("stack-pointer").unwrap()
   let argument = @core_theory.Role::of_string("function-argument").unwrap()
   let result = @core_theory.Role::of_string("function-return").unwrap()
+  let alias_role = @core_theory.Role::of_string("alias").unwrap()
+  let zero_flag = @core_theory.Role::of_string("zero-flag").unwrap()
   assert_true(stack_pointer.to_string() == "stack-pointer")
+  assert_true(alias_role.to_string() == "alias")
+  assert_true(zero_flag.to_string() == "zero-flag")
   assert_true(
     @core_theory.Role::of_string("function-argument") == Some(Argument),
   )
+  assert_true(@core_theory.Role::of_string("sign-flag") == Some(SignFlag))
   assert_true(argument.equal(argument))
   assert_true(argument.compare(result) < 0)
   match amd64.find_var("RSP") {
@@ -938,7 +943,10 @@ test "target role helpers classify common architecture variables" {
     None => fail("missing RSP")
   }
   match amd64.find_var("RIP") {
-    Some(pc) => assert_true(amd64.roles_of_var(pc).contains(ProgramCounter))
+    Some(pc) => {
+      assert_true(amd64.roles_of_var(pc).contains(ProgramCounter))
+      assert_true(amd64.roles_of_var(pc).contains(PseudoRegister))
+    }
     None => fail("missing RIP")
   }
   match amd64.find_var("RDI") {
@@ -956,6 +964,7 @@ test "target role helpers classify common architecture variables" {
     Some(alias_var) => {
       assert_true(amd64.roles_of_var(alias_var).contains(IntegerRegister))
       assert_true(amd64.roles_of_var(alias_var).contains(ResultRegister))
+      assert_true(amd64.roles_of_var(alias_var).contains(AliasRegister))
     }
     None => fail("missing EAX")
   }
@@ -1021,6 +1030,12 @@ test "target role helpers classify common architecture variables" {
   }
   assert_true(amd64.find_role(StackPointer).map(v => v.ident()) == Some("RSP"))
   assert_true(amd64.vars_with_role(Status).any(v => v.ident() == "ZF"))
+  assert_true(amd64.vars_with_role(SpecialRegister).any(v => v.ident() == "ZF"))
+  assert_true(amd64.vars_with_role(ZeroFlag).any(v => v.ident() == "ZF"))
+  assert_true(amd64.vars_with_role(CarryFlag).any(v => v.ident() == "CF"))
+  assert_true(amd64.vars_with_role(OverflowFlag).any(v => v.ident() == "OF"))
+  assert_true(amd64.vars_with_role(ParityFlag).any(v => v.ident() == "PF"))
+  assert_true(amd64.vars_with_role(AliasRegister).any(v => v.ident() == "EAX"))
   assert_true(amd64.vars_with_role(Status).any(v => v.ident() == "RFLAGS"))
   assert_true(amd64.vars_with_role(Status).any(v => v.ident() == "IOPL"))
   assert_true(amd64.role_aliases(ProgramCounter).contains("rip"))

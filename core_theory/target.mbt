@@ -1421,7 +1421,8 @@ fn target_specific_role_names(target : Target, role : Role) -> Array[String]? {
   } else if target.belongs(Target::x86()) {
     Some(x86_32_role_names(role))
   } else if target.belongs(Target::aarch64()) ||
-    target.belongs(Target::aarch64_be()) {
+    target.belongs(Target::aarch64_be()) ||
+    (target.belongs(Target::arm_family()) && target.bits() == 64) {
     Some(aarch64_role_names(role))
   } else if target.belongs(Target::arm()) ||
     target.belongs(Target::armeb()) ||
@@ -2088,6 +2089,16 @@ fn arm_be_base(name : String, nickname : String, parent : Target) -> Target {
 }
 
 ///|
+fn arm_bi_base(name : String, nickname : String, parent : Target) -> Target {
+  arm_ordered_base(name, nickname, parent, "bi")
+}
+
+///|
+fn arm_bi64_base(name : String, parent : Target) -> Target {
+  Target::create(name=target_name("\{name}+bi"), parent~)
+}
+
+///|
 fn arm_le_v4() -> Target {
   Target::create(
     name=target_name("armv4+le"),
@@ -2350,6 +2361,132 @@ fn append_arm_be_version_targets(items : Array[Target]) -> Unit {
       arm_be_v8a32(),
       arm_be_v8m32(),
       arm_be_v8r32(),
+    ] {
+    items.push(target)
+  }
+}
+
+///|
+fn arm_bi_v7() -> Target {
+  Target::create(
+    name=target_name("armv7+bi"),
+    parent=Target::arm_family(),
+    nicknames=["armv7"],
+    bits=32,
+    endianness=BiEndian,
+    vars=arm32_vars(),
+    alias_origins=arm32_alias_origins(),
+  )
+}
+
+///|
+fn arm_bi_v7m() -> Target {
+  arm_bi_base("armv7-m", "armv7-m", arm_bi_v7())
+}
+
+///|
+fn arm_bi_v7fp() -> Target {
+  arm_bi_base("armv7+fp", "armv7+fp", arm_bi_v7())
+}
+
+///|
+fn arm_bi_v7a() -> Target {
+  arm_bi_base("armv7-a", "armv7-a", arm_bi_v7())
+}
+
+///|
+fn arm_bi_v7afp() -> Target {
+  arm_bi_base("armv7-a+fp", "armv7-a+fp", arm_bi_v7a())
+}
+
+///|
+fn arm_bi_v8() -> Target {
+  Target::create(
+    name=target_name("armv8+bi"),
+    parent=Target::arm_family(),
+    bits=64,
+    endianness=BiEndian,
+    vars=aarch64_vars(),
+    alias_origins=aarch64_alias_origins(),
+  )
+}
+
+///|
+fn arm_bi_v8a() -> Target {
+  arm_bi64_base("armv8-a", arm_bi_v8())
+}
+
+///|
+fn arm_bi_v8a32() -> Target {
+  arm_bi_base("armv8-a+aarch32", "armv8-a+aarch32", arm_bi_v7())
+}
+
+///|
+fn arm_bi_v8m32() -> Target {
+  arm_bi_base("armv8-m+aarch32", "armv8-m+aarch32", arm_bi_v7m())
+}
+
+///|
+fn arm_bi_v8r32() -> Target {
+  arm_bi_base("armv8-r+aarch32", "armv8-r+aarch32", arm_bi_v7())
+}
+
+///|
+fn arm_bi_v81a() -> Target {
+  arm_bi64_base("armv8.1-a", arm_bi_v8a())
+}
+
+///|
+fn arm_bi_v82a() -> Target {
+  arm_bi64_base("armv8.2-a", arm_bi_v81a())
+}
+
+///|
+fn arm_bi_v83a() -> Target {
+  arm_bi64_base("armv8.3-a", arm_bi_v82a())
+}
+
+///|
+fn arm_bi_v84a() -> Target {
+  arm_bi64_base("armv8.4-a", arm_bi_v83a())
+}
+
+///|
+fn arm_bi_v85a() -> Target {
+  arm_bi64_base("armv8.5-a", arm_bi_v84a())
+}
+
+///|
+fn arm_bi_v86a() -> Target {
+  arm_bi64_base("armv8.6-a", arm_bi_v85a())
+}
+
+///|
+fn arm_bi_v9a() -> Target {
+  arm_bi64_base("armv9-a", arm_bi_v86a())
+}
+
+///|
+fn append_arm_bi_version_targets(items : Array[Target]) -> Unit {
+  for
+    target in [
+      arm_bi_v7(),
+      arm_bi_v7m(),
+      arm_bi_v7fp(),
+      arm_bi_v7a(),
+      arm_bi_v7afp(),
+      arm_bi_v8(),
+      arm_bi_v8a(),
+      arm_bi_v8a32(),
+      arm_bi_v8m32(),
+      arm_bi_v8r32(),
+      arm_bi_v81a(),
+      arm_bi_v82a(),
+      arm_bi_v83a(),
+      arm_bi_v84a(),
+      arm_bi_v85a(),
+      arm_bi_v86a(),
+      arm_bi_v9a(),
     ] {
     items.push(target)
   }
@@ -3080,6 +3217,7 @@ pub fn common_targets() -> Array[Target] {
   ]
   append_arm_le_version_targets(items)
   append_arm_be_version_targets(items)
+  append_arm_bi_version_targets(items)
   for
     target in [
       Target::arm(),

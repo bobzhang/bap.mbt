@@ -177,6 +177,26 @@ test "target registry resolves common and custom declarations" {
     }
     Err(reason) => fail(reason)
   }
+  match @core_theory.get_target("armv7+bi") {
+    Ok(target) => {
+      assert_true(target.matches("armv7"))
+      assert_true(target.bits() == 32)
+      assert_true(target.endianness() == BiEndian)
+      assert_true(target.belongs(@core_theory.Target::arm_family()))
+      assert_true(!target.belongs(@core_theory.Target::arm()))
+      assert_true(!target.belongs(@core_theory.Target::armeb()))
+    }
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.get_target("armv8-a+bi") {
+    Ok(target) => {
+      assert_true(target.bits() == 64)
+      assert_true(target.endianness() == BiEndian)
+      assert_true(target.find_var("X0") is Some(_))
+      assert_true(target.find_var("XZR") is Some(_))
+    }
+    Err(reason) => fail(reason)
+  }
   match @core_theory.get_target("ia-32") {
     Ok(target) => assert_true(target.matches("x86"))
     Err(reason) => fail(reason)

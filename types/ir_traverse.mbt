@@ -440,14 +440,14 @@ pub fn Term::map_blk_terms(
   self : Term[Blk],
   f : (IrTerm) -> IrTerm,
 ) -> Term[Blk] {
-  let mapped = self
-    .with_phis(self.payload_value.phis.map(term => apply_phi_term(term, f)))
-    .with_defs(self.payload_value.defs.map(term => apply_def_term(term, f)))
-    .with_jmps(self.payload_value.jmps.map(term => apply_jmp_term(term, f)))
-  match f(BlkTerm(mapped)) {
+  let base = match f(BlkTerm(self)) {
     BlkTerm(next) => next
-    _ => mapped
+    _ => self
   }
+  base
+  .with_phis(base.payload_value.phis.map(term => apply_phi_term(term, f)))
+  .with_defs(base.payload_value.defs.map(term => apply_def_term(term, f)))
+  .with_jmps(base.payload_value.jmps.map(term => apply_jmp_term(term, f)))
 }
 
 ///|
@@ -455,15 +455,15 @@ pub fn Term::map_sub_terms(
   self : Term[Sub],
   f : (IrTerm) -> IrTerm,
 ) -> Term[Sub] {
-  let mapped = self.with_payload({
-    ..self.payload_value,
-    args: self.payload_value.args.map(term => apply_arg_term(term, f)),
-    blks: self.payload_value.blks.map(blk => blk.map_blk_terms(f)),
-  })
-  match f(SubTerm(mapped)) {
+  let base = match f(SubTerm(self)) {
     SubTerm(next) => next
-    _ => mapped
+    _ => self
   }
+  base.with_payload({
+    ..base.payload_value,
+    args: base.payload_value.args.map(term => apply_arg_term(term, f)),
+    blks: base.payload_value.blks.map(blk => blk.map_blk_terms(f)),
+  })
 }
 
 ///|
@@ -471,13 +471,13 @@ pub fn Term::map_program_terms(
   self : Term[Program],
   f : (IrTerm) -> IrTerm,
 ) -> Term[Program] {
-  let mapped = self.with_payload({
-    subs: self.payload_value.subs.map(sub => sub.map_sub_terms(f)),
-  })
-  match f(ProgramTerm(mapped)) {
+  let base = match f(ProgramTerm(self)) {
     ProgramTerm(next) => next
-    _ => mapped
+    _ => self
   }
+  base.with_payload({
+    subs: base.payload_value.subs.map(sub => sub.map_sub_terms(f)),
+  })
 }
 
 ///|

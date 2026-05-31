@@ -285,6 +285,39 @@ test "ir term mapping rewrites nested term attributes" {
 }
 
 ///|
+test "ir term mapping visits containers before children" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let arg = @types.Arg::create(x, Var(y))
+  let pred = @types.Tid::for_name("pred")
+  let phi = @types.Phi::of_list(x, [(pred, Var(y))])
+  let def = @types.Def::create(y, Int(word8(1)))
+  let jmp = @types.Jmp::create_goto(@types.Label::direct(pred))
+  let blk = @types.Blk::create(phis=[phi], defs=[def], jmps=[jmp])
+  let sub = @types.Sub::create(name="main", args=[arg], blks=[blk])
+  let program = @types.Program::create(subs=[sub])
+
+  let visits : Array[String] = []
+  let mapped = program.map_program_terms(term => {
+    visits.push(term.class_name())
+    match term {
+      ProgramTerm(program) =>
+        ProgramTerm(program.set_attr(@types.Attr::new(key="order", value="0")))
+      SubTerm(sub) =>
+        SubTerm(sub.set_attr(@types.Attr::new(key="order", value="1")))
+      BlkTerm(blk) =>
+        BlkTerm(blk.set_attr(@types.Attr::new(key="order", value="3")))
+      _ => term
+    }
+  })
+  assert_true(visits == ["program", "sub", "arg", "blk", "phi", "def", "jmp"])
+  assert_true(mapped.get_attr("order") == Some("0"))
+  assert_true(mapped.subs()[0].get_attr("order") == Some("1"))
+  assert_true(mapped.subs()[0].blks()[0].get_attr("order") == Some("3"))
+}
+
+///|
 test "ir term query helpers match classes attributes vars and children" {
   let typ = @types.ValueType::Imm(8)
   let x = @types.Var::new(name="x", typ~)

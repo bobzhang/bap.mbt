@@ -562,6 +562,7 @@ pub fn IrTerm::has_class(Self, IrTermClass) -> Bool
 pub fn IrTerm::has_name(Self, String) -> Bool
 pub fn IrTerm::has_tid(Self, Tid) -> Bool
 pub fn IrTerm::has_tid_text(Self, String) -> Bool
+pub fn IrTerm::map(Self, program? : (Term[Program]) -> Term[Program], sub? : (Term[Sub]) -> Term[Sub], arg? : (Term[Arg]) -> Term[Arg], blk? : (Term[Blk]) -> Term[Blk], phi? : (Term[Phi]) -> Term[Phi], def? : (Term[Def]) -> Term[Def], jmp? : (Term[Jmp]) -> Term[Jmp]) -> Self
 pub fn IrTerm::name(Self) -> String
 pub fn[A] IrTerm::proj(Self, program? : (Term[Program]) -> A?, sub? : (Term[Sub]) -> A?, arg? : (Term[Arg]) -> A?, blk? : (Term[Blk]) -> A?, phi? : (Term[Phi]) -> A?, def? : (Term[Def]) -> A?, jmp? : (Term[Jmp]) -> A?) -> A?
 pub fn IrTerm::same_term(Self, Self) -> Bool

@@ -270,6 +270,56 @@ pub fn[A] IrTerm::cata(
 }
 
 ///|
+pub fn IrTerm::map(
+  self : IrTerm,
+  program? : (Term[Program]) -> Term[Program],
+  sub? : (Term[Sub]) -> Term[Sub],
+  arg? : (Term[Arg]) -> Term[Arg],
+  blk? : (Term[Blk]) -> Term[Blk],
+  phi? : (Term[Phi]) -> Term[Phi],
+  def? : (Term[Def]) -> Term[Def],
+  jmp? : (Term[Jmp]) -> Term[Jmp],
+) -> IrTerm {
+  match self {
+    ProgramTerm(term) =>
+      match program {
+        Some(f) => ProgramTerm(f(term))
+        None => self
+      }
+    SubTerm(term) =>
+      match sub {
+        Some(f) => SubTerm(f(term))
+        None => self
+      }
+    ArgTerm(term) =>
+      match arg {
+        Some(f) => ArgTerm(f(term))
+        None => self
+      }
+    BlkTerm(term) =>
+      match blk {
+        Some(f) => BlkTerm(f(term))
+        None => self
+      }
+    PhiTerm(term) =>
+      match phi {
+        Some(f) => PhiTerm(f(term))
+        None => self
+      }
+    DefTerm(term) =>
+      match def {
+        Some(f) => DefTerm(f(term))
+        None => self
+      }
+    JmpTerm(term) =>
+      match jmp {
+        Some(f) => JmpTerm(f(term))
+        None => self
+      }
+  }
+}
+
+///|
 pub fn Term::sub_phis(self : Term[Sub]) -> Array[Term[Phi]] {
   let result = []
   for blk in self.payload_value.blks {

@@ -263,6 +263,33 @@ test "ir term class dispatch helpers mirror BAP switch proj and cata" {
 }
 
 ///|
+test "ir term map applies class-specific handlers with identity defaults" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let def = @types.Def::create(x, Int(word8(1)))
+  let blk = @types.Blk::create(defs=[def])
+  let sub = @types.Sub::create(name="main", blks=[blk])
+  let program = @types.Program::create(subs=[sub])
+  let mark = @types.Attr::new(key="mark", value="mapped")
+
+  let mapped = program.map_program_terms(term => {
+    term.map(
+      program=term => term.set_attr(mark),
+      blk=term => term.set_attr(mark),
+      def=term => term.set_attr(mark),
+    )
+  })
+  assert_true(mapped.get_attr("mark") == Some("mapped"))
+  assert_true(mapped.subs()[0].get_attr("mark") is None)
+  assert_true(mapped.subs()[0].blks()[0].get_attr("mark") == Some("mapped"))
+  assert_true(mapped.program_defs()[0].get_attr("mark") == Some("mapped"))
+
+  let unchanged = @types.DefTerm(def).map(blk=term => term.set_attr(mark))
+  assert_true(unchanged.same_term(DefTerm(def)))
+  assert_true(unchanged.get_attr("mark") is None)
+}
+
+///|
 test "IR term lookup exn helpers report missing tids" {
   let typ = @types.ValueType::Imm(8)
   let x = @types.Var::new(name="x", typ~)

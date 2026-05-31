@@ -97,6 +97,18 @@ pub fn Language::of_string(name : String) -> Language {
 }
 
 ///|
+fn Language::rank(self : Language) -> Int {
+  match self {
+    C => 0
+    Cxx => 1
+    Ada => 2
+    Fortran => 3
+    Pascal => 4
+    OtherLanguage(_) => 5
+  }
+}
+
+///|
 pub fn Language::to_string(self : Language) -> String {
   match self {
     C => "c"
@@ -105,6 +117,23 @@ pub fn Language::to_string(self : Language) -> String {
     Fortran => "fortran"
     Pascal => "pascal"
     OtherLanguage(name) => name
+  }
+}
+
+///|
+pub fn Language::equal(self : Language, other : Language) -> Bool {
+  self == other
+}
+
+///|
+pub fn Language::compare(self : Language, other : Language) -> Int {
+  let rank_order = self.rank().compare(other.rank())
+  if rank_order != 0 {
+    return rank_order
+  }
+  match (self, other) {
+    (OtherLanguage(lhs), OtherLanguage(rhs)) => lhs.compare(rhs)
+    _ => 0
   }
 }
 
@@ -140,6 +169,36 @@ pub fn Source::code(self : Source) -> String {
 ///|
 pub fn Source::file(self : Source) -> String? {
   self.file_value
+}
+
+///|
+pub fn Source::equal(self : Source, other : Source) -> Bool {
+  self.language_value.equal(other.language_value) &&
+  self.code_value == other.code_value &&
+  self.file_value == other.file_value
+}
+
+///|
+fn optional_string_compare(lhs : String?, rhs : String?) -> Int {
+  match (lhs, rhs) {
+    (None, None) => 0
+    (None, Some(_)) => -1
+    (Some(_), None) => 1
+    (Some(left), Some(right)) => left.compare(right)
+  }
+}
+
+///|
+pub fn Source::compare(self : Source, other : Source) -> Int {
+  let language_order = self.language_value.compare(other.language_value)
+  if language_order != 0 {
+    return language_order
+  }
+  let code_order = self.code_value.compare(other.code_value)
+  if code_order != 0 {
+    return code_order
+  }
+  optional_string_compare(self.file_value, other.file_value)
 }
 
 ///|

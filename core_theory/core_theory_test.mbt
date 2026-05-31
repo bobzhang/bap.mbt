@@ -1455,14 +1455,30 @@ test "labels carry symbolic entry points" {
 test "program metadata tracks source compiler and units" {
   let language = @core_theory.Language::of_string("C++")
   assert_true(language == Cxx)
+  assert_true(language.equal(Cxx))
+  assert_true(@core_theory.Language::c().compare(language) < 0)
+  assert_true(language.compare(Cxx) == 0)
+  let rust = @core_theory.Language::of_string("rust")
+  let zig = @core_theory.Language::of_string("zig")
+  assert_true(rust.compare(zig) != 0)
   inspect(language.to_string(), content="cxx")
   let source = @core_theory.Source::create(
     language~,
     code="int main() { return 0; }",
     file="main.cc",
   )
+  let same_source = @core_theory.Source::create(
+    language~,
+    code="int main() { return 0; }",
+    file="main.cc",
+  )
+  let newer_source = source.with_code("long main() { return 0; }")
   assert_true(source.language() == Cxx)
   assert_true(source.file() == Some("main.cc"))
+  assert_true(source.equal(same_source))
+  assert_true(source.compare(same_source) == 0)
+  assert_true(!source.equal(newer_source))
+  assert_true(source.compare(newer_source) != 0)
   let compiler = @core_theory.Compiler::create(
     "clang",
     version=["17", "0"],

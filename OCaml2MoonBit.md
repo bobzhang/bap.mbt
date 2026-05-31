@@ -186,6 +186,10 @@ preserve object identity separately from payload fields. In MoonBit, prefer a
 stable generated id for `same`/`compare` helpers; two objects with equal path,
 address, or name metadata are still distinct unless they came from the same
 object.
+For BAP `Knowledge.Value.S` records, compare semantic fields rather than
+generated identities. For enum-backed values, keep known variants in a stable
+declaration order and compare custom payloads only after the known variant
+rank.
 When porting target nickname tables, keep historical spellings that are exposed
 by BAP even if they look accidental. For example, BAP's MIPS target list
 contains `misp64le`; preserve it as a compatibility alias while also accepting

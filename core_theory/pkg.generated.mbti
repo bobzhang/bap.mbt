@@ -195,7 +195,9 @@ pub(all) enum Language {
 } derive(Eq, @debug.Debug)
 pub fn Language::ada() -> Self
 pub fn Language::c() -> Self
+pub fn Language::compare(Self, Self) -> Int
 pub fn Language::cxx() -> Self
+pub fn Language::equal(Self, Self) -> Bool
 pub fn Language::fortran() -> Self
 pub fn Language::of_string(String) -> Self
 pub fn Language::pascal() -> Self
@@ -313,7 +315,9 @@ pub fn Sort::to_string(Self) -> String
 
 type Source
 pub fn Source::code(Self) -> String
+pub fn Source::compare(Self, Self) -> Int
 pub fn Source::create(language? : Language, code? : String, file? : String) -> Self
+pub fn Source::equal(Self, Self) -> Bool
 pub fn Source::file(Self) -> String?
 pub fn Source::language(Self) -> Language
 pub fn Source::with_code(Self, String) -> Self

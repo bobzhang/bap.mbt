@@ -447,6 +447,134 @@ pub fn IrTerm::prepend_child(
 }
 
 ///|
+pub fn IrTerm::map_children(
+  self : IrTerm,
+  cls : IrTermClass,
+  f : (IrTerm) -> IrTerm,
+) -> IrTerm {
+  let mut result = self
+  for child in self.children_of_class(cls) {
+    result = result.change_child(cls, child.tid(), current => {
+      match current {
+        Some(term) => Some(f(term))
+        None => None
+      }
+    })
+  }
+  result
+}
+
+///|
+pub fn IrTerm::filter_map_children(
+  self : IrTerm,
+  cls : IrTermClass,
+  f : (IrTerm) -> IrTerm?,
+) -> IrTerm {
+  let mut result = self
+  for child in self.children_of_class(cls) {
+    result = result.change_child(cls, child.tid(), current => {
+      match current {
+        Some(term) => f(term)
+        None => None
+      }
+    })
+  }
+  result
+}
+
+///|
+pub fn IrTerm::filter_children(
+  self : IrTerm,
+  cls : IrTermClass,
+  f : (IrTerm) -> Bool,
+) -> IrTerm {
+  self.filter_map_children(cls, child => {
+    if f(child) {
+      Some(child)
+    } else {
+      None
+    }
+  })
+}
+
+///|
+fn collect_sub_terms(items : Array[IrTerm]) -> Array[Term[Sub]] {
+  [
+    for item in items if item is SubTerm(term) => term
+  ]
+}
+
+///|
+fn collect_arg_terms(items : Array[IrTerm]) -> Array[Term[Arg]] {
+  [
+    for item in items if item is ArgTerm(term) => term
+  ]
+}
+
+///|
+fn collect_blk_terms(items : Array[IrTerm]) -> Array[Term[Blk]] {
+  [
+    for item in items if item is BlkTerm(term) => term
+  ]
+}
+
+///|
+fn collect_phi_terms(items : Array[IrTerm]) -> Array[Term[Phi]] {
+  [
+    for item in items if item is PhiTerm(term) => term
+  ]
+}
+
+///|
+fn collect_def_terms(items : Array[IrTerm]) -> Array[Term[Def]] {
+  [
+    for item in items if item is DefTerm(term) => term
+  ]
+}
+
+///|
+fn collect_jmp_terms(items : Array[IrTerm]) -> Array[Term[Jmp]] {
+  [
+    for item in items if item is JmpTerm(term) => term
+  ]
+}
+
+///|
+pub fn IrTerm::concat_map_children(
+  self : IrTerm,
+  cls : IrTermClass,
+  f : (IrTerm) -> Array[IrTerm],
+) -> IrTerm {
+  match (self, cls) {
+    (ProgramTerm(term), SubTermClass) =>
+      ProgramTerm(
+        term.concat_map_subs(child => collect_sub_terms(f(SubTerm(child)))),
+      )
+    (SubTerm(term), ArgTermClass) =>
+      SubTerm(
+        term.concat_map_args(child => collect_arg_terms(f(ArgTerm(child)))),
+      )
+    (SubTerm(term), BlkTermClass) =>
+      SubTerm(
+        term.concat_map_blks(child => collect_blk_terms(f(BlkTerm(child)))),
+      )
+    (BlkTerm(term), PhiTermClass) =>
+      BlkTerm(
+        term.concat_map_phis(child => collect_phi_terms(f(PhiTerm(child)))),
+      )
+    (BlkTerm(term), DefTermClass) =>
+      BlkTerm(
+        term.concat_map_defs(child => collect_def_terms(f(DefTerm(child)))),
+      )
+    (BlkTerm(term), JmpTermClass) =>
+      BlkTerm(
+        term.concat_map_jmps(child => collect_jmp_terms(f(JmpTerm(child)))),
+      )
+    _ => self
+  }
+}
+
+///|
 pub fn IrTerm::free_vars(self : IrTerm) -> Array[Var] {
   match self {
     ProgramTerm(term) => term.program_free_vars()

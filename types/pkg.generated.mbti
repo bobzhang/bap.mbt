@@ -551,12 +551,15 @@ pub fn IrTerm::children_before(Self, IrTermClass, Tid, rev? : Bool) -> Array[Sel
 pub fn IrTerm::children_of_class(Self, IrTermClass, rev? : Bool) -> Array[Self]
 pub fn IrTerm::class(Self) -> IrTermClass
 pub fn IrTerm::class_name(Self) -> String
+pub fn IrTerm::concat_map_children(Self, IrTermClass, (Self) -> Array[Self]) -> Self
 pub fn IrTerm::def_lhs_name(Self, String) -> Bool
 pub fn IrTerm::def_uses_name(Self, String) -> Bool
 pub fn IrTerm::defined_vars(Self) -> Array[Var]
 pub fn IrTerm::defines_var(Self, Var) -> Bool
 pub fn IrTerm::defines_var_name(Self, String) -> Bool
 pub fn IrTerm::del_attr(Self, String) -> Self
+pub fn IrTerm::filter_children(Self, IrTermClass, (Self) -> Bool) -> Self
+pub fn IrTerm::filter_map_children(Self, IrTermClass, (Self) -> Self?) -> Self
 pub fn IrTerm::find_child(Self, IrTermClass, Tid) -> Self?
 pub fn IrTerm::first_child(Self, IrTermClass) -> Self?
 pub fn[A] IrTerm::fold_visit(Self, A, (A, IrVisitEvent) -> A) -> A
@@ -573,6 +576,7 @@ pub fn IrTerm::has_tid(Self, Tid) -> Bool
 pub fn IrTerm::has_tid_text(Self, String) -> Bool
 pub fn IrTerm::last_child(Self, IrTermClass) -> Self?
 pub fn IrTerm::map(Self, program? : (Term[Program]) -> Term[Program], sub? : (Term[Sub]) -> Term[Sub], arg? : (Term[Arg]) -> Term[Arg], blk? : (Term[Blk]) -> Term[Blk], phi? : (Term[Phi]) -> Term[Phi], def? : (Term[Def]) -> Term[Def], jmp? : (Term[Jmp]) -> Term[Jmp]) -> Self
+pub fn IrTerm::map_children(Self, IrTermClass, (Self) -> Self) -> Self
 pub fn IrTerm::name(Self) -> String
 pub fn IrTerm::next_child(Self, IrTermClass, Tid) -> Self?
 pub fn IrTerm::nth_child(Self, IrTermClass, Int) -> Self?

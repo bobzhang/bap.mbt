@@ -1139,6 +1139,14 @@ moon run -c 'fn main { let pairs = [(1, 2), (3, 4)]; let firsts = [ for pair in 
 Comprehension syntax: `[ for x in xs => expr ]`. Use a simple identifier as the binder and destructure tuples or access fields inside the body. Prefer a comprehension over a manual `let out = []` plus `push` loop when porting pure OCaml `List.map`/`Array.map`-style transformations.
 
 ```sh
+moon run -c $'enum Item { Keep(Int); Drop }\nfn main { let values = [Keep(1), Drop, Keep(3)]; let kept = [ for item in values if item is Keep(n) => n ]; println(kept.length()); println(kept[1]) }'
+# 2
+# 3
+```
+
+Guarded comprehensions support pattern binding in the `if` clause, which is a compact port for OCaml filter-map code that keeps only one variant payload.
+
+```sh
 moon run -c $'fn parse(s : String) -> Int raise { @string.parse_int(s) }\nfn main { let _ = [ for s in ["1"] => parse(s) ]; println("done") }'
 # Error: calling function with error is not allowed inside list comprehension.
 ```

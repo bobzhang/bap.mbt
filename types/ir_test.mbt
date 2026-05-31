@@ -773,6 +773,81 @@ test "ir term direct-child insertion mirrors BAP append and prepend" {
 }
 
 ///|
+test "ir term direct-child sequence operations map filter and concat" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let a = @types.Def::create(x, Int(word8(1)), tid=@types.Tid::for_name("a"))
+  let b = @types.Def::create(x, Int(word8(2)), tid=@types.Tid::for_name("b"))
+  let c = @types.Def::create(x, Int(word8(3)), tid=@types.Tid::for_name("c"))
+  let block_term : @types.IrTerm = BlkTerm(@types.Blk::create(defs=[a, b, c]))
+  let mark = @types.Attr::new(key="mapped", value="yes")
+
+  let mapped = block_term.map_children(DefTermClass, child => {
+    match child {
+      DefTerm(term) => DefTerm(term.set_attr(mark))
+      _ => child
+    }
+  })
+  for child in mapped.children_of_class(DefTermClass) {
+    assert_true(child.get_attr("mapped") == Some("yes"))
+  }
+
+  let filtered = mapped.filter_children(DefTermClass, child => {
+    child.tid() != b.tid()
+  })
+  assert_true(
+    filtered.children_of_class(DefTermClass).map(term => term.tid()) ==
+    [a.tid(), c.tid()],
+  )
+
+  let renamed = block_term.filter_map_children(DefTermClass, child => {
+    match child {
+      DefTerm(term) if term.tid() == b.tid() => None
+      DefTerm(term) if term.tid() == c.tid() =>
+        Some(DefTerm(term.with_lhs(@types.Var::new(name="renamed", typ~))))
+      _ => Some(child)
+    }
+  })
+  assert_true(
+    renamed.children_of_class(DefTermClass).map(term => term.tid()) ==
+    [a.tid(), c.tid()],
+  )
+  match renamed.find_child(DefTermClass, c.tid()) {
+    Some(DefTerm(term)) => assert_true(term.lhs().name() == "renamed")
+    _ => fail("expected renamed child")
+  }
+
+  let dup = @types.Def::create(
+    x,
+    Int(word8(4)),
+    tid=@types.Tid::for_name("dup"),
+  )
+  let expanded = block_term.concat_map_children(DefTermClass, child => {
+    match child {
+      DefTerm(term) if term.tid() == b.tid() => [DefTerm(term), DefTerm(dup)]
+      DefTerm(_) => [child]
+      _ => []
+    }
+  })
+  assert_true(
+    expanded.children_of_class(DefTermClass).map(term => term.tid()) ==
+    [a.tid(), b.tid(), dup.tid(), c.tid()],
+  )
+
+  let wrong_class = block_term.concat_map_children(DefTermClass, child => {
+    match child {
+      DefTerm(term) if term.tid() == b.tid() =>
+        [SubTerm(@types.Sub::create(name="ignored"))]
+      _ => [child]
+    }
+  })
+  assert_true(
+    wrong_class.children_of_class(DefTermClass).map(term => term.tid()) ==
+    [a.tid(), c.tid()],
+  )
+}
+
+///|
 test "ir term address query helpers mirror BAP term-addr" {
   let addr32 = @types.Word::of_int64(42L, width=32)
   let addr64 = @types.Word::of_int64(42L, width=64)

@@ -940,6 +940,20 @@ test "target role helpers classify common architecture variables" {
     }
     None => fail("missing SPARC O0")
   }
+  match sparcv9.find_var("F31") {
+    Some(float) => {
+      assert_true(sparcv9.roles_of_var(float).contains(FloatingRegister))
+      assert_true(!sparcv9.roles_of_var(float).contains(IntegerRegister))
+      assert_true(float.sort().same(@core_theory.Sort::bitv(32)))
+    }
+    None => fail("missing SPARC F31")
+  }
+  let sparc = @core_theory.Target::sparc()
+  match sparc.find_var("F0") {
+    Some(float) =>
+      assert_true(sparc.roles_of_var(float).contains(FloatingRegister))
+    None => fail("missing SPARC F0")
+  }
   let ppc64 = @core_theory.Target::powerpc64()
   assert_true(ppc64.role_aliases(Argument).contains("r3"))
   assert_true(!ppc64.role_aliases(Argument).contains("rdi"))

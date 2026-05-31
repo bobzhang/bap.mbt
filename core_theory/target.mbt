@@ -806,6 +806,7 @@ fn sparc_vars(bits : Int) -> Array[Var] {
   for prefix in ["G", "O", "L", "I"] {
     append_vars(items, numbered_word_vars(bits, prefix, 8))
   }
+  append_vars(items, numbered_word_vars(32, "F", 32))
   append_vars(items, named_word_vars(bits, ["PC", "NPC", "SP", "FP"]))
   items.push(mem_var(bits, 8, "mem"))
   items
@@ -1219,7 +1220,8 @@ fn sparc_role_names(role : Role) -> Array[String] {
         role_names("l", 0, 7),
         role_names("i", 0, 7),
       ])
-    FloatingRegister | VectorRegister => []
+    FloatingRegister => role_names("f", 0, 31)
+    VectorRegister => []
     StackPointer => ["sp", "o6"]
     FramePointer => ["fp", "i6"]
     ProgramCounter => ["pc", "npc"]

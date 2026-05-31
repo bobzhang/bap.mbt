@@ -318,6 +318,29 @@ pub fn Term::map_jmps(
 }
 
 ///|
+pub fn Term::map_blk_elts(
+  self : Term[Blk],
+  phi? : (Term[Phi]) -> Term[Phi],
+  def? : (Term[Def]) -> Term[Def],
+  jmp? : (Term[Jmp]) -> Term[Jmp],
+) -> Term[Blk] {
+  self.with_payload({
+    phis: match phi {
+      Some(f) => self.payload_value.phis.map(f)
+      None => self.payload_value.phis.copy()
+    },
+    defs: match def {
+      Some(f) => self.payload_value.defs.map(f)
+      None => self.payload_value.defs.copy()
+    },
+    jmps: match jmp {
+      Some(f) => self.payload_value.jmps.map(f)
+      None => self.payload_value.jmps.copy()
+    },
+  })
+}
+
+///|
 pub fn Term::update_blk(self : Term[Sub], blk : Term[Blk]) -> Term[Sub] {
   let blks = self.payload_value.blks.copy()
   match find_blk_index(blks, blk.tid()) {

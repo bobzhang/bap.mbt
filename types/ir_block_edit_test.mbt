@@ -133,6 +133,20 @@ test "block phi jump and sub update helpers map terms" {
   assert_true(
     block.map_jmps(term => term.with_cond(Var(y))).jmps()[0].cond() == Var(y),
   )
+  let elt_def = @types.Def::create(x, Var(y))
+  let elt_block = @types.Blk::create(phis=[phi], defs=[elt_def], jmps=[jmp])
+  let mapped_elts = elt_block.map_blk_elts(
+    phi=term => term.with_phi_lhs(y),
+    def=term => term.with_lhs(y),
+    jmp=term => term.with_cond(Var(y)),
+  )
+  assert_true(mapped_elts.phis()[0].phi_lhs() == y)
+  assert_true(mapped_elts.defs()[0].lhs() == y)
+  assert_true(mapped_elts.jmps()[0].cond() == Var(y))
+  let def_only = elt_block.map_blk_elts(def=term => term.with_lhs(y))
+  assert_true(def_only.phis()[0].same(phi))
+  assert_true(def_only.defs()[0].lhs() == y)
+  assert_true(def_only.jmps()[0].same(jmp))
   assert_true(block.remove_jmp(jmp.tid()).jmps().is_empty())
   let sub = @types.Sub::create(name="main", blks=[block])
   let rewritten = block.append_def(@types.Def::create(y, Var(x)))

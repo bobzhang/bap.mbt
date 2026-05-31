@@ -761,6 +761,7 @@ pub fn Term::kind(Self[Jmp]) -> JmpKind
 pub fn Term::last_def(Self[Blk]) -> Self[Def]?
 pub fn Term::lhs(Self[Def]) -> Var
 pub fn Term::map_arg_exp(Self[Arg], (Exp) -> Exp) -> Self[Arg]
+pub fn Term::map_blk_elts(Self[Blk], phi? : (Self[Phi]) -> Self[Phi], def? : (Self[Def]) -> Self[Def], jmp? : (Self[Jmp]) -> Self[Jmp]) -> Self[Blk]
 pub fn Term::map_blk_exp(Self[Blk], (Exp) -> Exp, skip_phi? : Bool, skip_def? : Bool, skip_jmp? : Bool) -> Self[Blk]
 pub fn Term::map_blk_lhs(Self[Blk], (Var) -> Var, skip_phi? : Bool, skip_def? : Bool) -> Self[Blk]
 pub fn Term::map_blk_terms(Self[Blk], (IrTerm) -> IrTerm) -> Self[Blk]

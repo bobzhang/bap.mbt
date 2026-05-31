@@ -84,12 +84,31 @@ fn string_to_utf8_bytes(text : String, append_nul : Bool) -> Bytes {
 extern "c" fn read_file_ffi(path : Bytes) -> Bytes = "bap_mbt_read_file"
 
 ///|
+#borrow(path, data)
+extern "c" fn write_file_ffi(path : Bytes, data : Bytes) -> Bytes = "bap_mbt_write_file"
+
+///|
 pub fn read_file(path : String) -> Result[Bytes, String] {
   let response = read_file_ffi(string_to_utf8_bytes(path, true))
   if response.length() == 0 {
     Err("file IO returned an empty response for \{path}")
   } else if response[0] == (0).to_byte() {
     Ok(response[1:].to_owned())
+  } else {
+    Err(utf8_bytes_to_string(response[1:].to_owned()))
+  }
+}
+
+///|
+pub fn write_file(path : String, data : BytesView) -> Result[Unit, String] {
+  let response = write_file_ffi(
+    string_to_utf8_bytes(path, true),
+    data.to_owned(),
+  )
+  if response.length() == 0 {
+    Err("file IO returned an empty response for \{path}")
+  } else if response[0] == (0).to_byte() {
+    Ok(())
   } else {
     Err(utf8_bytes_to_string(response[1:].to_owned()))
   }

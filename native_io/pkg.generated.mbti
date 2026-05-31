@@ -4,6 +4,8 @@ package "bobzhang/bap/native_io"
 // Values
 pub fn read_file(String) -> Result[Bytes, String]
 
+pub fn write_file(String, BytesView) -> Result[Unit, String]
+
 // Errors
 
 // Types and methods

@@ -346,7 +346,10 @@ let trace_writer_registry : Map[
 ] = {}
 
 ///|
-let trace_memory_provider_registered : Ref[Bool] = Ref(false)
+let trace_builtin_providers_registered : Ref[Bool] = Ref(false)
+
+///|
+let trace_file_uri_prefix : String = "file://"
 
 ///|
 fn next_trace_id() -> Int {
@@ -401,12 +404,17 @@ pub fn Trace::register_writer(
 }
 
 ///|
-fn ensure_memory_provider() -> Unit {
-  if !trace_memory_provider_registered.val {
-    let protocol = TraceProtocol::create(name="memory", probe=fn(uri) {
+fn trace_file_uri_path(uri : String) -> String {
+  uri[trace_file_uri_prefix.length():].to_owned()
+}
+
+///|
+fn ensure_builtin_providers() -> Unit {
+  if !trace_builtin_providers_registered.val {
+    let memory_protocol = TraceProtocol::create(name="memory", probe=fn(uri) {
       uri.has_prefix("memory://")
     })
-    Trace::register_protocol(protocol)
+    Trace::register_protocol(memory_protocol)
     Trace::register_reader("memory", fn(uri) {
       match trace_store.get(uri) {
         Some(bytes) =>
@@ -426,13 +434,42 @@ fn ensure_memory_provider() -> Unit {
         Err(error) => Err(error)
       }
     })
-    trace_memory_provider_registered.val = true
+
+    let binprot_protocol = TraceProtocol::create(name="trace.binprot", probe=fn(
+      uri,
+    ) {
+      uri.has_prefix(trace_file_uri_prefix) && uri.has_suffix(".binprot")
+    })
+    Trace::register_protocol(binprot_protocol)
+    Trace::register_reader("trace.binprot", fn(uri) {
+      let path = trace_file_uri_path(uri)
+      match @native_io.read_file(path) {
+        Ok(bytes) =>
+          match trace_snapshot_from_bytes(bytes) {
+            Ok(snapshot) => Ok(snapshot.to_reader())
+            Err(error) => Err(error)
+          }
+        Err(reason) => Err(ProtocolError(reason))
+      }
+    })
+    Trace::register_writer("trace.binprot", fn(uri, trace) {
+      let path = trace_file_uri_path(uri)
+      match trace.to_bytes() {
+        Ok(bytes) =>
+          match @native_io.write_file(path, bytes) {
+            Ok(_) => Ok(())
+            Err(reason) => Err(ProtocolError(reason))
+          }
+        Err(error) => Err(error)
+      }
+    })
+    trace_builtin_providers_registered.val = true
   }
 }
 
 ///|
 fn protocols_of_uri(uri : String) -> Array[String] {
-  ensure_memory_provider()
+  ensure_builtin_providers()
   let protocols : Array[String] = []
   for entry in trace_protocol_registry {
     let (name, protocol) = entry

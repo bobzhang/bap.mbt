@@ -117,6 +117,8 @@ test "target registry resolves common and custom declarations" {
     Ok(target) => {
       assert_true(target.bits() == 64)
       assert_true(target.code_addr_size() == 64)
+      assert_true(target.data_alignment() == 8)
+      assert_true(target.code_alignment() == 8)
       let raw = @bitvec.of_uint64(width=128, 0x1234)
       assert_true(target.code_addr(raw).to_string() == "0x1234:64u")
       assert_true(target.data_addr(raw).to_string() == "0x1234:64u")

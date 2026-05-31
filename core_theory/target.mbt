@@ -2332,6 +2332,11 @@ pub fn Target::data_addr_size(self : Target) -> Int {
 }
 
 ///|
+pub fn Target::data_alignment(self : Target) -> Int {
+  self.byte_value
+}
+
+///|
 pub fn Target::data_addr(
   self : Target,
   value : @bitvec.BitVec,
@@ -2342,6 +2347,11 @@ pub fn Target::data_addr(
 ///|
 pub fn Target::code_addr_size(self : Target) -> Int {
   self.bits_value
+}
+
+///|
+pub fn Target::code_alignment(self : Target) -> Int {
+  self.byte_value
 }
 
 ///|

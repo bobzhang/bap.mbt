@@ -45,6 +45,13 @@ pub fn[T] Future::peek_exn(Self[T]) -> T raise FutureError
 pub fn[T] Future::resolved(T) -> Self[T]
 pub fn[T] Future::upon(Self[T], (T) -> Unit) -> Unit
 
+type FutureArgs[F, R]
+pub fn[F, R] FutureArgs::applyN(Future[F], Self[F, R]) -> Future[R]
+pub fn[A, F, R] FutureArgs::cons(Future[A], Self[F, R]) -> Self[(A) -> F, R]
+pub fn[F, R] FutureArgs::mapN(F, Self[F, R]) -> Future[R]
+pub fn[R] FutureArgs::nil() -> Self[R, R]
+pub fn[F1, F2, R] FutureArgs::step(Self[F1, R], (F2) -> F1) -> Self[F2, R]
+
 type Promise[T]
 pub fn[T] Promise::fulfill(Self[T], T) -> Unit raise FutureError
 pub fn[T] Promise::is_fulfilled(Self[T]) -> Bool

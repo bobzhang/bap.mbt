@@ -216,6 +216,45 @@ pub fn[A, B, C, D, E, F] Future::apply5(
 }
 
 ///|
+struct FutureArgs[F, R] {
+  run : (Future[F]) -> Future[R]
+}
+
+///|
+pub fn[R] FutureArgs::nil() -> FutureArgs[R, R] {
+  { run: fn(functions) { functions } }
+}
+
+///|
+pub fn[A, F, R] FutureArgs::cons(
+  arg : Future[A],
+  args : FutureArgs[F, R],
+) -> FutureArgs[(A) -> F, R] {
+  { run: fn(functions) { (args.run)(Future::apply(functions, arg)) } }
+}
+
+///|
+pub fn[F1, F2, R] FutureArgs::step(
+  args : FutureArgs[F1, R],
+  f : (F2) -> F1,
+) -> FutureArgs[F2, R] {
+  { run: fn(functions) { (args.run)(functions.map(f)) } }
+}
+
+///|
+pub fn[F, R] FutureArgs::applyN(
+  functions : Future[F],
+  args : FutureArgs[F, R],
+) -> Future[R] {
+  (args.run)(functions)
+}
+
+///|
+pub fn[F, R] FutureArgs::mapN(f : F, args : FutureArgs[F, R]) -> Future[R] {
+  FutureArgs::applyN(Future::resolved(f), args)
+}
+
+///|
 pub fn[T] Future::all(futures : Array[Future[T]]) -> Future[Array[T]] {
   let (out, promise) = Future::create()
   let count = futures.length()

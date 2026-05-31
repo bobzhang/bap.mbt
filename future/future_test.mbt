@@ -155,6 +155,60 @@ test "translated BAP future multi-argument applicative helpers" {
 }
 
 ///|
+test "BAP-style future args apply curried functions" {
+  let (first, first_promise) = @future.Future::create()
+  let (second, second_promise) = @future.Future::create()
+  let (third, third_promise) = @future.Future::create()
+  let args : @future.FutureArgs[(Int) -> (Int) -> (Int) -> Int, Int] = @future.FutureArgs::cons(
+    first,
+    @future.FutureArgs::cons(
+      second,
+      @future.FutureArgs::cons(third, @future.FutureArgs::nil()),
+    ),
+  )
+  let mapped = @future.FutureArgs::mapN(
+    fn(a) { fn(b) { fn(c) { a * 100 + b * 10 + c } } },
+    args,
+  )
+  third_promise.fulfill(3)
+  second_promise.fulfill(2)
+  assert_true(!mapped.is_decided())
+  first_promise.fulfill(1)
+  assert_true(mapped.peek_exn() == 123)
+
+  let (left, left_promise) = @future.Future::create()
+  let (right, right_promise) = @future.Future::create()
+  let pair_args : @future.FutureArgs[(Int) -> (Int) -> Int, Int] = @future.FutureArgs::cons(
+    left,
+    @future.FutureArgs::cons(right, @future.FutureArgs::nil()),
+  )
+  let applied = @future.FutureArgs::applyN(
+    @future.Future::resolved(fn(a) { fn(b) { a * 10 + b } }),
+    pair_args,
+  )
+  left_promise.fulfill(4)
+  assert_true(!applied.is_decided())
+  right_promise.fulfill(2)
+  assert_true(applied.peek_exn() == 42)
+}
+
+///|
+test "BAP-style future args step adapts a function input" {
+  let (value, promise) = @future.Future::create()
+  let args : @future.FutureArgs[(String) -> Int, Int] = @future.FutureArgs::step(
+    @future.FutureArgs::cons(value, @future.FutureArgs::nil()),
+    fn(f : (String) -> Int) { fn(number : Int) { f(number.to_string()) } },
+  )
+  let mapped = @future.FutureArgs::mapN(
+    fn(text : String) { text.length() + 1 },
+    args,
+  )
+  assert_true(!mapped.is_decided())
+  promise.fulfill(1234)
+  assert_true(mapped.peek_exn() == 5)
+}
+
+///|
 test "BAP-style future collection helpers preserve input order" {
   let empty_inputs : Array[@future.Future[Int]] = []
   let empty = @future.Future::all(empty_inputs)

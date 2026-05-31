@@ -288,6 +288,17 @@ test "target registry resolves common and custom declarations" {
     }
     None => fail("missing ARMv7-A+FP target alias")
   }
+  match @core_theory.Target::lookup("armv7-a+fp+le") {
+    Some(target) => assert_true(target.matches("arm"))
+    None => fail("missing ARMv7-A+FP little-endian target alias")
+  }
+  match @core_theory.Target::lookup("armv7-a+fp+be") {
+    Some(target) => {
+      assert_true(target.matches("armeb"))
+      assert_true(target.endianness() == BigEndian)
+    }
+    None => fail("missing ARMv7-A+FP big-endian target alias")
+  }
   match @core_theory.Target::lookup("armv7-m") {
     Some(target) => {
       assert_true(target.matches("thumb"))
@@ -295,12 +306,33 @@ test "target registry resolves common and custom declarations" {
     }
     None => fail("missing ARMv7-M target alias")
   }
+  match @core_theory.Target::lookup("armv7-m+be") {
+    Some(target) => {
+      assert_true(target.matches("thumbeb"))
+      assert_true(target.endianness() == BigEndian)
+    }
+    None => fail("missing ARMv7-M big-endian target alias")
+  }
   match @core_theory.Target::lookup("armv8.6-a") {
     Some(target) => {
       assert_true(target.matches("aarch64"))
       assert_true(target.bits() == 64)
     }
     None => fail("missing ARMv8.6-A target alias")
+  }
+  match @core_theory.Target::lookup("armv8.1-a+le") {
+    Some(target) => {
+      assert_true(target.matches("aarch64"))
+      assert_true(target.endianness() == LittleEndian)
+    }
+    None => fail("missing ARMv8.1-A little-endian target alias")
+  }
+  match @core_theory.Target::lookup("armv8.1-a+be") {
+    Some(target) => {
+      assert_true(target.matches("aarch64_be"))
+      assert_true(target.endianness() == BigEndian)
+    }
+    None => fail("missing ARMv8.1-A big-endian target alias")
   }
   match
     @core_theory.Target::select(

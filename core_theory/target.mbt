@@ -1847,14 +1847,46 @@ pub fn Target::x86_64() -> Target {
 }
 
 ///|
+fn with_endian_suffix(names : Array[String], suffix : String) -> Array[String] {
+  names + [ for name in names => "\{name}+\{suffix}" ]
+}
+
+///|
+fn arm32_le_nicknames() -> Array[String] {
+  let names = [
+    "armv4", "armv4t", "armv5", "armv5t", "armv5te", "armv5tej", "armv6", "armv6t2",
+    "armv6z", "armv6k", "armv6-m", "armv7", "armv7-a", "armv7+fp", "armv7-a+fp",
+    "armv8-a+aarch32", "armv8-m+aarch32", "armv8-r+aarch32",
+  ]
+  ["aarch32"] + with_endian_suffix(names, "le") + ["xscale"]
+}
+
+///|
+fn arm32_be_nicknames() -> Array[String] {
+  let names = [
+    "armv4", "armv4t", "armv5", "armv5t", "armv5te", "armv5tej", "armv6", "armv6t2",
+    "armv6z", "armv6k", "armv6-m", "armv7", "armv7-a", "armv7+fp", "armv7-a+fp",
+    "armv8-a+aarch32", "armv8-m+aarch32", "armv8-r+aarch32",
+  ]
+  ["armv4eb", "armv5eb", "armv6eb", "armv7eb", "aarch32eb"] +
+  [
+    for name in names => "\{name}+be"
+  ]
+}
+
+///|
+fn aarch64_version_nicknames() -> Array[String] {
+  [
+    "armv8", "armv8-a", "armv8.1-a", "armv8.2-a", "armv8.3-a", "armv8.4-a", "armv8.5-a",
+    "armv8.6-a", "armv9-a",
+  ]
+}
+
+///|
 pub fn Target::arm() -> Target {
   Target::create(
     name=target_name("arm"),
-    nicknames=[
-      "aarch32", "armv4", "armv4t", "armv5", "armv5t", "armv5te", "armv5tej", "armv6",
-      "armv6t2", "armv6z", "armv6k", "armv6-m", "armv7", "armv7-a", "armv7+fp", "armv7-a+fp",
-      "armv8-a+aarch32", "armv8-m+aarch32", "armv8-r+aarch32", "xscale",
-    ],
+    nicknames=arm32_le_nicknames(),
     bits=32,
     endianness=LittleEndian,
     vars=arm32_vars(),
@@ -1867,7 +1899,7 @@ pub fn Target::armeb() -> Target {
   Target::create(
     name=target_name("armeb"),
     parent=Target::arm(),
-    nicknames=["armv4eb", "armv5eb", "armv6eb", "armv7eb", "aarch32eb"],
+    nicknames=arm32_be_nicknames(),
     bits=32,
     endianness=BigEndian,
     vars=arm32_vars(),
@@ -1879,7 +1911,9 @@ pub fn Target::thumb() -> Target {
   Target::create(
     name=target_name("thumb"),
     parent=Target::arm(),
-    nicknames=["thumbv4", "thumbv5", "thumbv6", "thumbv7", "armv7-m"],
+    nicknames=[
+      "thumbv4", "thumbv5", "thumbv6", "thumbv7", "armv7-m", "armv7-m+le",
+    ],
     bits=32,
     endianness=LittleEndian,
     vars=arm32_vars(),
@@ -1891,7 +1925,7 @@ pub fn Target::thumbeb() -> Target {
   Target::create(
     name=target_name("thumbeb"),
     parent=Target::armeb(),
-    nicknames=["thumbv4eb", "thumbv5eb", "thumbv6eb", "thumbv7eb"],
+    nicknames=["thumbv4eb", "thumbv5eb", "thumbv6eb", "thumbv7eb", "armv7-m+be"],
     bits=32,
     endianness=BigEndian,
     vars=arm32_vars(),
@@ -1903,10 +1937,7 @@ pub fn Target::aarch64() -> Target {
   Target::create(
     name=target_name("aarch64"),
     parent=Target::arm(),
-    nicknames=[
-      "arm64", "armv8", "armv8-a", "armv8.1-a", "armv8.2-a", "armv8.3-a", "armv8.4-a",
-      "armv8.5-a", "armv8.6-a", "armv9-a",
-    ],
+    nicknames=["arm64"] + with_endian_suffix(aarch64_version_nicknames(), "le"),
     bits=64,
     endianness=LittleEndian,
     vars=aarch64_vars(),
@@ -1919,7 +1950,10 @@ pub fn Target::aarch64_be() -> Target {
   Target::create(
     name=target_name("aarch64_be"),
     parent=Target::armeb(),
-    nicknames=["arm64_be", "arm64eb", "armv8eb"],
+    nicknames=["arm64_be", "arm64eb", "armv8eb"] +
+      [
+        for name in aarch64_version_nicknames() => "\{name}+be"
+      ],
     bits=64,
     endianness=BigEndian,
     vars=aarch64_vars(),

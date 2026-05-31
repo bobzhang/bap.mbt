@@ -168,6 +168,10 @@ belong to the family target, not to the 32-bit big-endian concrete target; use
 the family target for role dispatch and broad architecture filtering. Preserve
 BAP's bi-endian family targets separately as well, e.g. `mipsbi`,
 `mips64bi`, `powerpcbi`, and `powerpc64bi`.
+For ARM/AArch64, BAP also exposes ordered target names with explicit endian
+suffixes such as `armv7-a+fp+be` and `armv8.1-a+le`; keep those as aliases
+even when the MoonBit port collapses multiple revision-specific targets into
+one coarser metadata target.
 Also check what the generic target inherits before assuming it is a minimal
 baseline. BAP's generic `arm` target inherits the VFP-capable AArch32 branch, so
 the MoonBit generic ARM metadata should include the `D0` through `D31` VFP

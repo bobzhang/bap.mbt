@@ -559,6 +559,38 @@ test "block phi jump and sub update helpers map terms" {
   assert_true(
     block.map_phis(term => term.with_phi_lhs(y)).phis()[0].phi_lhs() == y,
   )
+  assert_true(
+    phi_lhs_names(block.filter_phis(term => term.phi_lhs() != x).phis()) ==
+    ["z"],
+  )
+  assert_true(
+    phi_lhs_names(
+      block
+      .filter_map_phis(term => {
+        if term.phi_lhs() == x {
+          None
+        } else {
+          Some(term)
+        }
+      })
+      .phis(),
+    ) ==
+    ["z"],
+  )
+  assert_true(
+    phi_lhs_names(
+      block
+      .concat_map_phis(term => {
+        if term.same(phi) {
+          [term, @types.Phi::of_list(w, [(pred, Var(z))])]
+        } else {
+          [term]
+        }
+      })
+      .phis(),
+    ) ==
+    ["x", "w", "z"],
+  )
   let without_phi = block.remove_phi_term(phi.tid())
   assert_true(without_phi.phi_count() == 1)
   assert_true(
@@ -568,6 +600,35 @@ test "block phi jump and sub update helpers map terms" {
   assert_true(block.update_jmp(updated_jmp).jmps()[0].cond() == Var(y))
   assert_true(
     block.map_jmps(term => term.with_cond(Var(y))).jmps()[0].cond() == Var(y),
+  )
+  assert_true(
+    jmp_names(block.filter_jmps(term => !term.same(jmp)).jmps()) ==
+    [fall_jmp.name()],
+  )
+  assert_true(
+    jmp_names(
+      block
+      .filter_map_jmps(term => if term.same(jmp) { None } else { Some(term) })
+      .jmps(),
+    ) ==
+    [fall_jmp.name()],
+  )
+  let tail_jmp = @types.Jmp::create_goto(
+    @types.Label::direct(@types.Tid::for_name("tail")),
+  )
+  assert_true(
+    jmp_names(
+      block
+      .concat_map_jmps(term => {
+        if term.same(jmp) {
+          [term, tail_jmp]
+        } else {
+          [term]
+        }
+      })
+      .jmps(),
+    ) ==
+    [jmp.name(), tail_jmp.name(), fall_jmp.name()],
   )
   let elt_def = @types.Def::create(x, Var(y))
   let elt_block = @types.Blk::create(phis=[phi], defs=[elt_def], jmps=[jmp])

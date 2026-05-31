@@ -741,6 +741,8 @@ pub fn[T] Term::clone(Self[T]) -> Self[T]
 pub fn Term::concat_map_args(Self[Sub], (Self[Arg]) -> Array[Self[Arg]]) -> Self[Sub]
 pub fn Term::concat_map_blks(Self[Sub], (Self[Blk]) -> Array[Self[Blk]]) -> Self[Sub]
 pub fn Term::concat_map_defs(Self[Blk], (Self[Def]) -> Array[Self[Def]]) -> Self[Blk]
+pub fn Term::concat_map_jmps(Self[Blk], (Self[Jmp]) -> Array[Self[Jmp]]) -> Self[Blk]
+pub fn Term::concat_map_phis(Self[Blk], (Self[Phi]) -> Array[Self[Phi]]) -> Self[Blk]
 pub fn Term::concat_map_subs(Self[Program], (Self[Sub]) -> Array[Self[Sub]]) -> Self[Program]
 pub fn Term::cond(Self[Jmp]) -> Exp
 pub fn[T] Term::create(T, tid? : Tid) -> Self[T]
@@ -765,10 +767,14 @@ pub fn Term::exists_sub_term(Self[Sub], (IrTerm) -> Bool, include_self? : Bool) 
 pub fn Term::filter_args(Self[Sub], (Self[Arg]) -> Bool) -> Self[Sub]
 pub fn Term::filter_blks(Self[Sub], (Self[Blk]) -> Bool) -> Self[Sub]
 pub fn Term::filter_defs(Self[Blk], (Self[Def]) -> Bool) -> Self[Blk]
+pub fn Term::filter_jmps(Self[Blk], (Self[Jmp]) -> Bool) -> Self[Blk]
 pub fn Term::filter_map_args(Self[Sub], (Self[Arg]) -> Self[Arg]?) -> Self[Sub]
 pub fn Term::filter_map_blks(Self[Sub], (Self[Blk]) -> Self[Blk]?) -> Self[Sub]
 pub fn Term::filter_map_defs(Self[Blk], (Self[Def]) -> Self[Def]?) -> Self[Blk]
+pub fn Term::filter_map_jmps(Self[Blk], (Self[Jmp]) -> Self[Jmp]?) -> Self[Blk]
+pub fn Term::filter_map_phis(Self[Blk], (Self[Phi]) -> Self[Phi]?) -> Self[Blk]
 pub fn Term::filter_map_subs(Self[Program], (Self[Sub]) -> Self[Sub]?) -> Self[Program]
+pub fn Term::filter_phis(Self[Blk], (Self[Phi]) -> Bool) -> Self[Blk]
 pub fn Term::filter_subs(Self[Program], (Self[Sub]) -> Bool) -> Self[Program]
 pub fn Term::find_arg(Self[Sub], Tid) -> Self[Arg]?
 pub fn Term::find_arg_exn(Self[Sub], Tid) -> Self[Arg] raise IrTermLookupError

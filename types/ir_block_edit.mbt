@@ -1124,6 +1124,36 @@ pub fn Term::map_phis(
 }
 
 ///|
+pub fn Term::filter_phis(
+  self : Term[Blk],
+  f : (Term[Phi]) -> Bool,
+) -> Term[Blk] {
+  self.with_phis(self.payload_value.phis.filter(f))
+}
+
+///|
+pub fn Term::filter_map_phis(
+  self : Term[Blk],
+  f : (Term[Phi]) -> Term[Phi]?,
+) -> Term[Blk] {
+  self.with_phis(self.payload_value.phis.filter_map(f))
+}
+
+///|
+pub fn Term::concat_map_phis(
+  self : Term[Blk],
+  f : (Term[Phi]) -> Array[Term[Phi]],
+) -> Term[Blk] {
+  let phis = []
+  for term in self.payload_value.phis {
+    for mapped in f(term) {
+      phis.push(mapped)
+    }
+  }
+  self.with_phis(phis)
+}
+
+///|
 pub fn Term::update_jmp(self : Term[Blk], term : Term[Jmp]) -> Term[Blk] {
   let jmps = self.payload_value.jmps.copy()
   match find_jmp_index(jmps, term.tid()) {
@@ -1146,6 +1176,36 @@ pub fn Term::map_jmps(
   f : (Term[Jmp]) -> Term[Jmp],
 ) -> Term[Blk] {
   self.with_jmps(self.payload_value.jmps.map(f))
+}
+
+///|
+pub fn Term::filter_jmps(
+  self : Term[Blk],
+  f : (Term[Jmp]) -> Bool,
+) -> Term[Blk] {
+  self.with_jmps(self.payload_value.jmps.filter(f))
+}
+
+///|
+pub fn Term::filter_map_jmps(
+  self : Term[Blk],
+  f : (Term[Jmp]) -> Term[Jmp]?,
+) -> Term[Blk] {
+  self.with_jmps(self.payload_value.jmps.filter_map(f))
+}
+
+///|
+pub fn Term::concat_map_jmps(
+  self : Term[Blk],
+  f : (Term[Jmp]) -> Array[Term[Jmp]],
+) -> Term[Blk] {
+  let jmps = []
+  for term in self.payload_value.jmps {
+    for mapped in f(term) {
+      jmps.push(mapped)
+    }
+  }
+  self.with_jmps(jmps)
 }
 
 ///|

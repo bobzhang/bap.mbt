@@ -151,6 +151,16 @@ test "target registry resolves common and custom declarations" {
     }
     Err(reason) => fail(reason)
   }
+  match @core_theory.get_target("armv4eb") {
+    Ok(target) => {
+      assert_true(target.matches("armv4+be"))
+      assert_true(target.bits() == 32)
+      assert_true(target.endianness() == BigEndian)
+      assert_true(target.belongs(@core_theory.Target::arm_family()))
+      assert_true(!target.belongs(@core_theory.Target::armeb()))
+    }
+    Err(reason) => fail(reason)
+  }
   match @core_theory.get_target("armv7-a+fp") {
     Ok(target) => {
       assert_true(target.matches("armv7-a+fp+le"))
@@ -396,7 +406,8 @@ test "target registry resolves common and custom declarations" {
   }
   match @core_theory.Target::lookup("armv7-a+fp+be") {
     Some(target) => {
-      assert_true(target.matches("armeb"))
+      assert_true(target.matches("armv7-a+fp"))
+      assert_true(@core_theory.Target::armeb().belongs(target))
       assert_true(target.endianness() == BigEndian)
     }
     None => fail("missing ARMv7-A+FP big-endian target alias")
@@ -411,7 +422,9 @@ test "target registry resolves common and custom declarations" {
   }
   match @core_theory.Target::lookup("armv7-m+be") {
     Some(target) => {
-      assert_true(target.matches("thumbeb"))
+      assert_true(target.matches("armv7-m"))
+      assert_true(target.belongs(@core_theory.Target::arm_family()))
+      assert_true(!target.belongs(@core_theory.Target::armeb()))
       assert_true(target.endianness() == BigEndian)
     }
     None => fail("missing ARMv7-M big-endian target alias")

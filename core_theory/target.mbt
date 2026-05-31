@@ -2066,8 +2066,25 @@ pub fn Target::arm_family() -> Target {
 }
 
 ///|
+fn arm_ordered_base(
+  name : String,
+  nickname : String,
+  parent : Target,
+  suffix : String,
+) -> Target {
+  Target::create(name=target_name("\{name}+\{suffix}"), parent~, nicknames=[
+    nickname,
+  ])
+}
+
+///|
 fn arm_le_base(name : String, nickname : String, parent : Target) -> Target {
-  Target::create(name=target_name("\{name}+le"), parent~, nicknames=[nickname])
+  arm_ordered_base(name, nickname, parent, "le")
+}
+
+///|
+fn arm_be_base(name : String, nickname : String, parent : Target) -> Target {
+  arm_ordered_base(name, nickname, parent, "be")
 }
 
 ///|
@@ -2202,6 +2219,143 @@ fn append_arm_le_version_targets(items : Array[Target]) -> Unit {
 }
 
 ///|
+fn arm_be_v4() -> Target {
+  Target::create(
+    name=target_name("armv4+be"),
+    parent=Target::arm_family(),
+    nicknames=["armv4", "armv4eb"],
+    bits=32,
+    endianness=BigEndian,
+    vars=arm32_vars(),
+    alias_origins=arm32_alias_origins(),
+  )
+}
+
+///|
+fn arm_be_v4t() -> Target {
+  arm_be_base("armv4t", "armv4t", arm_be_v4())
+}
+
+///|
+fn arm_be_v5() -> Target {
+  Target::create(name=target_name("armv5+be"), parent=arm_be_v4t(), nicknames=[
+    "armv5", "armv5eb",
+  ])
+}
+
+///|
+fn arm_be_v5t() -> Target {
+  arm_be_base("armv5t", "armv5t", arm_be_v5())
+}
+
+///|
+fn arm_be_v5te() -> Target {
+  arm_be_base("armv5te", "armv5te", arm_be_v5t())
+}
+
+///|
+fn arm_be_v5tej() -> Target {
+  arm_be_base("armv5tej", "armv5tej", arm_be_v5te())
+}
+
+///|
+fn arm_be_v6() -> Target {
+  Target::create(name=target_name("armv6+be"), parent=arm_be_v5tej(), nicknames=[
+    "armv6", "armv6eb",
+  ])
+}
+
+///|
+fn arm_be_v6t2() -> Target {
+  arm_be_base("armv6t2", "armv6t2", arm_be_v6())
+}
+
+///|
+fn arm_be_v6z() -> Target {
+  arm_be_base("armv6z", "armv6z", arm_be_v6())
+}
+
+///|
+fn arm_be_v6k() -> Target {
+  arm_be_base("armv6k", "armv6k", arm_be_v6z())
+}
+
+///|
+fn arm_be_v6m() -> Target {
+  arm_be_base("armv6-m", "armv6-m", arm_be_v6())
+}
+
+///|
+fn arm_be_v7() -> Target {
+  Target::create(name=target_name("armv7+be"), parent=arm_be_v6t2(), nicknames=[
+    "armv7", "armv7eb",
+  ])
+}
+
+///|
+fn arm_be_v7m() -> Target {
+  arm_be_base("armv7-m", "armv7-m", arm_be_v7())
+}
+
+///|
+fn arm_be_v7fp() -> Target {
+  arm_be_base("armv7+fp", "armv7+fp", arm_be_v7())
+}
+
+///|
+fn arm_be_v7a() -> Target {
+  arm_be_base("armv7-a", "armv7-a", arm_be_v7())
+}
+
+///|
+fn arm_be_v7afp() -> Target {
+  arm_be_base("armv7-a+fp", "armv7-a+fp", arm_be_v7a())
+}
+
+///|
+fn arm_be_v8a32() -> Target {
+  arm_be_base("armv8-a+aarch32", "armv8-a+aarch32", arm_be_v7())
+}
+
+///|
+fn arm_be_v8m32() -> Target {
+  arm_be_base("armv8-m+aarch32", "armv8-m+aarch32", arm_be_v7m())
+}
+
+///|
+fn arm_be_v8r32() -> Target {
+  arm_be_base("armv8-r+aarch32", "armv8-r+aarch32", arm_be_v7())
+}
+
+///|
+fn append_arm_be_version_targets(items : Array[Target]) -> Unit {
+  for
+    target in [
+      arm_be_v4(),
+      arm_be_v4t(),
+      arm_be_v5(),
+      arm_be_v5t(),
+      arm_be_v5te(),
+      arm_be_v5tej(),
+      arm_be_v6(),
+      arm_be_v6t2(),
+      arm_be_v6z(),
+      arm_be_v6k(),
+      arm_be_v6m(),
+      arm_be_v7(),
+      arm_be_v7m(),
+      arm_be_v7fp(),
+      arm_be_v7a(),
+      arm_be_v7afp(),
+      arm_be_v8a32(),
+      arm_be_v8m32(),
+      arm_be_v8r32(),
+    ] {
+    items.push(target)
+  }
+}
+
+///|
 fn with_endian_suffix(names : Array[String], suffix : String) -> Array[String] {
   names + [ for name in names => "\{name}+\{suffix}" ]
 }
@@ -2254,7 +2408,7 @@ pub fn Target::arm() -> Target {
 pub fn Target::armeb() -> Target {
   Target::create(
     name=target_name("armeb"),
-    parent=Target::arm_family(),
+    parent=arm_be_v7afp(),
     nicknames=arm32_be_nicknames(),
     bits=32,
     endianness=BigEndian,
@@ -2925,6 +3079,7 @@ pub fn common_targets() -> Array[Target] {
     Target::arm_family(),
   ]
   append_arm_le_version_targets(items)
+  append_arm_be_version_targets(items)
   for
     target in [
       Target::arm(),

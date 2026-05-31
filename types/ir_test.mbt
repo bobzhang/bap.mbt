@@ -101,6 +101,53 @@ test "BAP-style IR builders collect construction inputs" {
     [first_blk.tid(), second_blk.tid()],
   )
 
+  let lhs = @types.Var::new(name="x", typ~)
+  let one : @types.Exp = Int(@types.Word::of_int(width=32, 1))
+  let two : @types.Exp = Int(@types.Word::of_int(width=32, 2))
+  let phi = @types.Phi::create(lhs, first_blk.tid(), one)
+  let def = @types.Def::create(lhs, two)
+  let jmp = @types.Jmp::create_goto(@types.Label::direct(second_blk.tid()))
+  let block_tid = @types.Tid::for_name("block-builder")
+  let block_builder = @types.BlkBuilder::create(
+    tid=block_tid,
+    phis=1,
+    defs=1,
+    jmps=1,
+  )
+  block_builder.add_phi(phi)
+  block_builder.add_def(def)
+  block_builder.add_jmp(jmp)
+  let built_block = block_builder.result()
+  assert_true(built_block.tid() == block_tid)
+  assert_true(built_block.phis()[0].same(phi))
+  assert_true(built_block.defs()[0].same(def))
+  assert_true(built_block.jmps()[0].same(jmp))
+
+  let elt_builder = @types.BlkBuilder::create()
+  elt_builder.add_elt(PhiElt(phi))
+  elt_builder.add_elt(DefElt(def))
+  elt_builder.add_elt(JmpElt(jmp))
+  assert_true(elt_builder.result().elts().length() == 3)
+
+  let copied = @types.BlkBuilder::init(
+    built_block,
+    copy_defs=true,
+    copy_jmps=true,
+  ).result()
+  assert_true(copied.tid() == built_block.tid())
+  assert_true(copied.phis().length() == 0)
+  assert_true(copied.defs()[0].same(def))
+  assert_true(copied.jmps()[0].same(jmp))
+  let retid = @types.BlkBuilder::init(
+    built_block,
+    same_tid=false,
+    copy_phis=true,
+  ).result()
+  assert_true(retid.tid() != built_block.tid())
+  assert_true(retid.phis()[0].same(phi))
+  assert_true(retid.defs().length() == 0)
+  assert_true(retid.jmps().length() == 0)
+
   let program_tid = @types.Tid::for_name("program")
   let program_builder = @types.ProgramBuilder::create(tid=program_tid, subs=2)
   program_builder.add_sub(first_sub)

@@ -376,6 +376,15 @@ pub(all) struct Blk {
 }
 pub fn Blk::create(phis? : Array[Term[Phi]], defs? : Array[Term[Def]], jmps? : Array[Term[Jmp]], tid? : Tid) -> Term[Self]
 
+type BlkBuilder
+pub fn BlkBuilder::add_def(Self, Term[Def]) -> Unit
+pub fn BlkBuilder::add_elt(Self, BlkElt) -> Unit
+pub fn BlkBuilder::add_jmp(Self, Term[Jmp]) -> Unit
+pub fn BlkBuilder::add_phi(Self, Term[Phi]) -> Unit
+pub fn BlkBuilder::create(tid? : Tid, phis? : Int, defs? : Int, jmps? : Int) -> Self
+pub fn BlkBuilder::init(Term[Blk], same_tid? : Bool, copy_phis? : Bool, copy_defs? : Bool, copy_jmps? : Bool) -> Self
+pub fn BlkBuilder::result(Self) -> Term[Blk]
+
 pub(all) enum BlkElt {
   PhiElt(Term[Phi])
   DefElt(Term[Def])

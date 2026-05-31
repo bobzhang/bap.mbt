@@ -493,6 +493,14 @@ struct SubBuilder {
 }
 
 ///|
+struct BlkBuilder {
+  tid_value : Tid?
+  phis_value : Array[Term[Phi]]
+  defs_value : Array[Term[Def]]
+  jmps_value : Array[Term[Jmp]]
+}
+
+///|
 pub fn Program::create(subs? : Array[Term[Sub]], tid? : Tid) -> Term[Program] {
   Term::create(
     {
@@ -670,6 +678,85 @@ pub fn Blk::create(
       },
     },
     tid?,
+  )
+}
+
+///|
+pub fn BlkBuilder::create(
+  tid? : Tid,
+  phis? : Int,
+  defs? : Int,
+  jmps? : Int,
+) -> BlkBuilder {
+  ignore(phis)
+  ignore(defs)
+  ignore(jmps)
+  { tid_value: tid, phis_value: [], defs_value: [], jmps_value: [] }
+}
+
+///|
+pub fn BlkBuilder::init(
+  blk : Term[Blk],
+  same_tid? : Bool = true,
+  copy_phis? : Bool = false,
+  copy_defs? : Bool = false,
+  copy_jmps? : Bool = false,
+) -> BlkBuilder {
+  let builder = BlkBuilder::create(
+    tid=if same_tid { blk.tid() } else { Tid::fresh() },
+    phis=blk.payload_value.phis.length(),
+    defs=blk.payload_value.defs.length(),
+    jmps=blk.payload_value.jmps.length(),
+  )
+  if copy_phis {
+    for phi in blk.payload_value.phis {
+      builder.add_phi(phi)
+    }
+  }
+  if copy_defs {
+    for def in blk.payload_value.defs {
+      builder.add_def(def)
+    }
+  }
+  if copy_jmps {
+    for jmp in blk.payload_value.jmps {
+      builder.add_jmp(jmp)
+    }
+  }
+  builder
+}
+
+///|
+pub fn BlkBuilder::add_phi(self : BlkBuilder, phi : Term[Phi]) -> Unit {
+  self.phis_value.push(phi)
+}
+
+///|
+pub fn BlkBuilder::add_def(self : BlkBuilder, def : Term[Def]) -> Unit {
+  self.defs_value.push(def)
+}
+
+///|
+pub fn BlkBuilder::add_jmp(self : BlkBuilder, jmp : Term[Jmp]) -> Unit {
+  self.jmps_value.push(jmp)
+}
+
+///|
+pub fn BlkBuilder::add_elt(self : BlkBuilder, elt : BlkElt) -> Unit {
+  match elt {
+    PhiElt(phi) => self.add_phi(phi)
+    DefElt(def) => self.add_def(def)
+    JmpElt(jmp) => self.add_jmp(jmp)
+  }
+}
+
+///|
+pub fn BlkBuilder::result(self : BlkBuilder) -> Term[Blk] {
+  Blk::create(
+    phis=self.phis_value,
+    defs=self.defs_value,
+    jmps=self.jmps_value,
+    tid?=self.tid_value,
   )
 }
 

@@ -528,6 +528,11 @@ inserting at an occupied position retargets that jump, inserting past the tail
 pads with dummy indirect-false jumps, removing a middle edge leaves a dummy in
 place to preserve later jump positions, and removing trailing edges trims a
 suffix of those dummy jumps.
+BAP treats the edge label as the jump position. Updating an existing edge label
+rewrites the source block so the destination appears at the requested position;
+it may leave another jump to the same destination at the old position, because
+the graph-level edge identity is the source/destination pair rather than the
+individual jump slot.
 BAP's full CFG printer is a DOT view over the same graph. Node labels contain
 block phis, defs, calls, returns, interrupts, and indirect gotos, but direct
 local gotos are omitted because they are already represented as graph edges.

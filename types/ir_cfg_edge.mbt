@@ -21,6 +21,16 @@ pub fn IrCfgEdge::position(self : IrCfgEdge) -> Int {
 }
 
 ///|
+pub fn IrCfgEdge::label(self : IrCfgEdge) -> Int {
+  self.position()
+}
+
+///|
+pub fn IrCfgEdge::mem(self : IrCfgEdge, cfg : IrCfg) -> Bool {
+  cfg.has_edge(self.src(), self.dst())
+}
+
+///|
 pub fn IrCfgEdge::jmp(self : IrCfgEdge) -> Term[Jmp] {
   self.src_value.payload_value.jmps[self.pos_value]
 }

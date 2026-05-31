@@ -73,6 +73,8 @@ test "BAP IR CFG exposes block nodes and positional edges" {
   match cfg.edge(entry, body) {
     Some(edge) => {
       assert_true(edge.position() == 0)
+      assert_true(edge.label() == 0)
+      assert_true(edge.mem(cfg))
       assert_true(edge.tid() == first.tid())
     }
     None => fail("expected entry-to-body edge")
@@ -205,6 +207,46 @@ test "BAP IR CFG edge removal leaves middle dummies and trims dummy tail" {
   let cfg = cfg.remove_edge(first_edge)
   assert_true(cfg.out_edges(entry).is_empty())
   assert_true(cfg_block_jmp_count(cfg, entry) == 0)
+}
+
+///|
+test "BAP IR CFG edge update relabels existing positional edges" {
+  let entry = @types.Blk::create(tid=@types.Tid::for_name("entry"))
+  let first = @types.Blk::create(tid=@types.Tid::for_name("first"))
+  let second = @types.Blk::create(tid=@types.Tid::for_name("second"))
+  let cfg = @types.IrCfg::create(name="update-edge")
+    .insert_edge(entry, first)
+    .insert_edge(entry, second)
+  let first_edge = cfg.edge(entry, first).unwrap()
+  let cfg = cfg.update_edge(first_edge, position=1)
+  let out = cfg.out_edges(entry)
+  assert_true(cfg_edge_positions(out) == [0, 1])
+  assert_true(
+    cfg_blk_tids(out.map(edge => edge.dst())) == [first.tid(), first.tid()],
+  )
+  assert_true(cfg.has_edge(entry, first))
+  assert_true(!cfg.has_edge(entry, second))
+  assert_true(cfg.edge_count() == 1)
+  assert_true(cfg_block_jmp_count(cfg, entry) == 2)
+}
+
+///|
+test "BAP IR CFG edge update pads positions and ignores absent edges" {
+  let entry = @types.Blk::create(tid=@types.Tid::for_name("entry"))
+  let dst = @types.Blk::create(tid=@types.Tid::for_name("dst"))
+  let cfg = @types.IrCfg::create(name="update-edge-pad").insert_edge(entry, dst)
+  let edge = cfg.edge(entry, dst).unwrap()
+  let cfg = cfg.update_edge(edge, position=3)
+  assert_true(cfg_edge_positions(cfg.out_edges(entry)) == [0, 3])
+  assert_true(cfg_block_jmp_count(cfg, entry) == 4)
+  let original = @types.IrCfg::create(name="update-edge-absent").insert_edge(
+    entry, dst,
+  )
+  let absent_edge = original.edge(entry, dst).unwrap()
+  let removed = original.remove_edge(absent_edge)
+  let unchanged = removed.update_edge(absent_edge, position=2)
+  assert_true(unchanged.out_edges(entry).is_empty())
+  assert_true(cfg_block_jmp_count(unchanged, entry) == 0)
 }
 
 ///|

@@ -497,6 +497,7 @@ pub fn IrCfg::successors(Self, Term[Blk]) -> Array[Term[Blk]]
 pub fn IrCfg::to_dot(Self) -> String
 pub fn IrCfg::to_string(Self) -> String
 pub fn IrCfg::to_sub(Self) -> Term[Sub]
+pub fn IrCfg::update_edge(Self, IrCfgEdge, position~ : Int) -> Self
 pub fn IrCfg::update_node(Self, Term[Blk], Term[Blk]) -> Self
 
 type IrCfgEdge
@@ -505,6 +506,8 @@ pub fn IrCfgEdge::dst(Self) -> Term[Blk]
 pub fn IrCfgEdge::jmp(Self) -> Term[Jmp]
 pub fn IrCfgEdge::jmps_after(Self, Term[Sub]) -> Array[Term[Jmp]]
 pub fn IrCfgEdge::jmps_before(Self, Term[Sub]) -> Array[Term[Jmp]]
+pub fn IrCfgEdge::label(Self) -> Int
+pub fn IrCfgEdge::mem(Self, IrCfg) -> Bool
 pub fn IrCfgEdge::position(Self) -> Int
 pub fn IrCfgEdge::src(Self) -> Term[Blk]
 pub fn IrCfgEdge::tid(Self) -> Tid

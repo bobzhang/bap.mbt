@@ -256,6 +256,28 @@ pub fn IrCfg::remove_edge(self : IrCfg, edge : IrCfgEdge) -> IrCfg {
 }
 
 ///|
+pub fn IrCfg::update_edge(
+  self : IrCfg,
+  edge : IrCfgEdge,
+  position~ : Int,
+) -> IrCfg {
+  if !edge.mem(self) {
+    self
+  } else {
+    match self.sub_value.find_blk(edge.src().tid()) {
+      Some(src) => {
+        let updated_src = src.cfg_edge_source_at(edge.dst(), position)
+        self
+        .insert_node(edge.dst())
+        .insert_node(updated_src)
+        .update_node(updated_src, updated_src)
+      }
+      None => self
+    }
+  }
+}
+
+///|
 pub fn IrCfg::successors(self : IrCfg, blk : Term[Blk]) -> Array[Term[Blk]] {
   self.out_edges(blk).map(edge => edge.dst())
 }

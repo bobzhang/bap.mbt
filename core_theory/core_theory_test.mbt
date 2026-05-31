@@ -648,9 +648,19 @@ test "target role helpers classify common architecture variables" {
     }
     None => fail("missing EFLAGS alias origin")
   }
+  match amd64.origin_of_name("IOPL") {
+    Some(origin) => {
+      assert_true(origin.aliased().ident() == "IOPL")
+      assert_true(origin.bits().length() == 2)
+      assert_true(origin.bits()[0].ident() == "IOPLH")
+      assert_true(origin.bits()[1].ident() == "IOPLL")
+    }
+    None => fail("missing IOPL alias origin")
+  }
   assert_true(amd64.find_role(StackPointer).map(v => v.ident()) == Some("RSP"))
   assert_true(amd64.vars_with_role(Status).any(v => v.ident() == "ZF"))
   assert_true(amd64.vars_with_role(Status).any(v => v.ident() == "RFLAGS"))
+  assert_true(amd64.vars_with_role(Status).any(v => v.ident() == "IOPL"))
   assert_true(amd64.role_aliases(ProgramCounter).contains("rip"))
   assert_true(!amd64.role_aliases(ProgramCounter).contains("pc"))
   let x86 = @core_theory.Target::x86()
@@ -660,6 +670,14 @@ test "target role helpers classify common architecture variables" {
       assert_true(origin.range() == Some((0, 15)))
     }
     None => fail("missing AX alias origin")
+  }
+  match x86.origin_of_name("IOPL") {
+    Some(origin) => {
+      assert_true(origin.bits().length() == 2)
+      assert_true(origin.bits()[0].ident() == "IOPLH")
+      assert_true(origin.bits()[1].ident() == "IOPLL")
+    }
+    None => fail("missing x86 IOPL alias origin")
   }
   match x86.find_var("ST0") {
     Some(float) =>

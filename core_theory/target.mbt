@@ -523,6 +523,12 @@ fn x86_32_alias_origins() -> Array[AliasOrigin] {
     )
   }
   items.push(AliasOrigin::bit_set(word_var(32, "EFLAGS"), x86_flags()))
+  items.push(
+    AliasOrigin::bit_set(word_var(2, "IOPL"), [
+      bool_var("IOPLH"),
+      bool_var("IOPLL"),
+    ]),
+  )
   items
 }
 
@@ -567,6 +573,12 @@ fn x86_64_alias_origins() -> Array[AliasOrigin] {
     )
   }
   items.push(AliasOrigin::bit_set(word_var(32, "EFLAGS"), x86_flags()))
+  items.push(
+    AliasOrigin::bit_set(word_var(2, "IOPL"), [
+      bool_var("IOPLH"),
+      bool_var("IOPLL"),
+    ]),
+  )
   items
 }
 
@@ -578,6 +590,7 @@ fn x86_32_vars() -> Array[Var] {
   append_vars(items, named_word_vars(8, x86_8_low_gpr_names()))
   append_vars(items, named_word_vars(8, x86_8_high_gpr_names()))
   append_vars(items, named_word_vars(16, x86_segment_names(true)))
+  items.push(word_var(2, "IOPL"))
   append_vars(items, numbered_word_vars(80, "ST", 8))
   append_vars(items, numbered_word_vars(64, "MM", 8))
   append_vars(items, numbered_word_vars(128, "XMM", 8))
@@ -596,6 +609,7 @@ fn x86_64_vars() -> Array[Var] {
   append_vars(items, named_word_vars(8, x86_64_gpr8_alias_names()))
   append_vars(items, named_word_vars(8, x86_8_high_gpr_names()))
   append_vars(items, named_word_vars(16, x86_segment_names(false)))
+  items.push(word_var(2, "IOPL"))
   append_vars(items, numbered_word_vars(80, "ST", 8))
   append_vars(items, numbered_word_vars(64, "MM", 8))
   append_vars(items, numbered_word_vars(256, "YMM", 16))
@@ -923,7 +937,7 @@ fn x86_64_role_names(role : Role) -> Array[String] {
     ProgramCounter => ["rip"]
     Status =>
       concat_role_names([
-        ["eflags", "rflags", "mxcsr"],
+        ["eflags", "rflags", "mxcsr", "iopl"],
         lower_names(x86_flag_names()),
       ])
     Constant | ZeroRegister | LinkRegister | ThreadPointer => []
@@ -953,7 +967,8 @@ fn x86_32_role_names(role : Role) -> Array[String] {
     StackPointer => ["esp", "sp"]
     FramePointer => ["ebp", "bp"]
     ProgramCounter => ["eip"]
-    Status => concat_role_names([["eflags"], lower_names(x86_flag_names())])
+    Status =>
+      concat_role_names([["eflags", "iopl"], lower_names(x86_flag_names())])
     Constant | ZeroRegister | LinkRegister | ThreadPointer => []
     Argument => []
     ResultRegister => ["eax", "edx", "ax", "dx", "al", "dl"]

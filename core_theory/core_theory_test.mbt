@@ -133,6 +133,14 @@ test "target registry resolves common and custom declarations" {
     Ok(target) => assert_true(target.matches("x86"))
     Err(reason) => fail(reason)
   }
+  match @core_theory.get_target("80386") {
+    Ok(target) => assert_true(target.matches("i386"))
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.get_target("p6") {
+    Ok(target) => assert_true(target.matches("i686"))
+    Err(reason) => fail(reason)
+  }
   match @core_theory.get_target("x86_64h") {
     Ok(target) => assert_true(target.matches("x86_64"))
     Err(reason) => fail(reason)

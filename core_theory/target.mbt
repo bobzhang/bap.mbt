@@ -1823,7 +1823,8 @@ pub fn Target::x86() -> Target {
     name=target_name("x86"),
     nicknames=[
       "x86-32", "x86_32", "ia32", "ia-32", "i186", "i286", "i386", "i486", "i586",
-      "i686",
+      "i686", "386", "80386", "486", "80486", "586", "80586", "p5", "686", "80686",
+      "p6",
     ],
     bits=32,
     endianness=LittleEndian,

@@ -53,6 +53,8 @@ pub(all) enum DwarfForm {
   DwarfAddr
   DwarfBlock(DwarfLenspec)
   DwarfConst(DwarfLenspec)
+  DwarfSignedConst(DwarfLenspec)
+  DwarfFlag
   DwarfString
   DwarfStrp
   DwarfStrx(DwarfIndexSpec)
@@ -319,8 +321,8 @@ fn dwarf_form_of_int(code : Int) -> Result[DwarfForm, String] {
     0x09 => Ok(DwarfBlock(DwarfLeb128))
     0x0a => Ok(DwarfBlock(DwarfOne))
     0x0b => Ok(DwarfConst(DwarfOne))
-    0x0c => Ok(DwarfConst(DwarfOne))
-    0x0d => Ok(DwarfConst(DwarfLeb128))
+    0x0c => Ok(DwarfFlag)
+    0x0d => Ok(DwarfSignedConst(DwarfLeb128))
     0x0e => Ok(DwarfStrp)
     0x0f => Ok(DwarfConst(DwarfLeb128))
     0x10 => Ok(DwarfRefAddr)
@@ -528,6 +530,46 @@ pub fn DwarfInput::read_const(
   endian~ : @bitvec.Endian,
 ) -> Result[(Int64, DwarfInput), String] {
   self.read_len(lenspec, endian)
+}
+
+///|
+fn DwarfInput::read_unsigned_const(
+  self : DwarfInput,
+  lenspec : DwarfLenspec,
+  endian : @bitvec.Endian,
+) -> Result[(UInt64, DwarfInput), String] {
+  match lenspec {
+    DwarfLeb128 =>
+      match self.read_code() {
+        Ok((value, next)) =>
+          if value < 0 {
+            Err("negative DWARF unsigned constant")
+          } else {
+            Ok((value.to_uint64(), next))
+          }
+        Err(reason) => Err(reason)
+      }
+    DwarfOne =>
+      match self.read_byte() {
+        Ok((value, next)) => Ok((value.to_uint64(), next))
+        Err(reason) => Err(reason)
+      }
+    DwarfTwo => self.read_uint(2, endian)
+    DwarfFour => self.read_uint(4, endian)
+    DwarfEight => self.read_uint(8, endian)
+  }
+}
+
+///|
+fn DwarfInput::read_signed_const(
+  self : DwarfInput,
+  lenspec : DwarfLenspec,
+  endian : @bitvec.Endian,
+) -> Result[(Int64, DwarfInput), String] {
+  match lenspec {
+    DwarfLeb128 => self.read_signed_code()
+    _ => self.read_const(lenspec~, endian~)
+  }
 }
 
 ///|

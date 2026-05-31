@@ -68,8 +68,9 @@ pub fn DwarfAbbrevField::value_kind(
       DwarfEntryPcValue
     (DwarfHighPc, DwarfAddr) | (DwarfHighPc, DwarfAddrx(_)) =>
       DwarfHighPcAddressValue
-    (DwarfHighPc, DwarfConst(_)) | (DwarfHighPc, DwarfImplicitConst(_)) =>
-      DwarfHighPcOffsetValue
+    (DwarfHighPc, DwarfConst(_))
+    | (DwarfHighPc, DwarfSignedConst(_))
+    | (DwarfHighPc, DwarfImplicitConst(_)) => DwarfHighPcOffsetValue
     (DwarfRanges, DwarfOffset) | (DwarfRanges, DwarfRnglistx) =>
       DwarfRangesValue
     (DwarfSpecification, DwarfRef(_))

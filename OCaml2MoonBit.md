@@ -308,7 +308,10 @@ names and `DW_FORM_line_strp` names must not require a string table, but
 missing one. Non-capturing DIE fields should still skip the encoded form
 without forcing optional sections to exist, including zero-length
 `DW_FORM_exprloc`/`DW_FORM_block*` payloads; fixed-width block lengths are
-unsigned sizes, not sign-extended integers. Fixed-width indexed forms such as
+unsigned sizes, not sign-extended integers. Keep `DW_FORM_data*` and
+`DW_FORM_udata` as unsigned constants for attributes such as `DW_AT_high_pc`;
+only `DW_FORM_sdata` is signed, and `DW_FORM_flag` consumes a one-byte flag.
+Fixed-width indexed forms such as
 `DW_FORM_strx2`/`DW_FORM_addrx3` encode the index in the DIE stream using the
 unit endian, unlike `DW_FORM_strx`/`DW_FORM_addrx` LEB128 indexes. Treat
 `DW_AT_linkage_name` as a function-name fallback when `DW_AT_name` is absent;

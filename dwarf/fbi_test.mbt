@@ -898,6 +898,33 @@ test "translated DWARF FBI keeps low pc as relative high pc base" {
 }
 
 ///|
+test "translated DWARF FBI reads unsigned high pc constants" {
+  let abbrev = b"\x01\x2e\x00" +
+    b"\x03\x08" +
+    b"\x11\x01" +
+    b"\x12\x06" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x16\x00\x00\x00" +
+    b"\x04\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x04" +
+    b"\x01" +
+    b"wide\x00" +
+    b"\x10\x00\x00\x00" +
+    b"\x00\x00\x00\x80" +
+    b"\x00"
+  let data = expect_fbi_data(
+    @dwarf.DwarfData::from_bytes(endian=LittleEndian, info~, abbrev~),
+  )
+  let functions = expect_functions(data.functions())
+  assert_true(functions.length() == 1)
+  assert_true(functions[0].name() == "wide")
+  assert_true(functions[0].low_pc() == 0x10UL)
+  assert_true(functions[0].high_pc() == Some(0x80000010UL))
+}
+
+///|
 test "translated DWARF FBI skips degenerate and non-function DIEs" {
   let abbrev = b"\x01\x11\x01" +
     b"\x03\x08" +

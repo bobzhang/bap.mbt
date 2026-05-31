@@ -24,7 +24,7 @@ priv enum DwarfFunctionAttrValue {
   DwarfAttrLowPc(UInt64)
   DwarfAttrEntryPc(UInt64)
   DwarfAttrHighPcAbs(UInt64)
-  DwarfAttrHighPcRel(Int64)
+  DwarfAttrHighPcRel(UInt64)
   DwarfAttrRanges(DwarfRangeListRef)
   DwarfAttrNameRef(DwarfNameRef)
   DwarfAttrStrOffsetsBase(Int)
@@ -104,16 +104,20 @@ fn dwarf_name_value(
 }
 
 ///|
-fn dwarf_ref_offset_to_int(value : Int64) -> Result[Int, String] {
-  if value < 0L {
-    Err("negative DWARF reference offset")
+fn dwarf_ref_uint_offset_to_int(value : UInt64) -> Result[Int, String] {
+  if value > 2147483647UL {
+    Err("DWARF reference offset does not fit in Int")
   } else {
-    let offset = value.to_int()
-    if offset.to_int64() == value {
-      Ok(offset)
-    } else {
-      Err("DWARF reference offset does not fit in Int")
-    }
+    Ok(value.to_int())
+  }
+}
+
+///|
+fn dwarf_nonnegative_int64_to_uint64(value : Int64) -> Result[UInt64, String] {
+  if value < 0L {
+    Err("negative DWARF constant offset")
+  } else {
+    Ok(value.reinterpret_as_uint64())
   }
 }
 
@@ -224,10 +228,16 @@ fn dwarf_skip_form(
         Err(reason) => Err(reason)
       }
     DwarfRef(lenspec) | DwarfConst(lenspec) =>
-      match input.read_const(lenspec~, endian~) {
+      match input.read_unsigned_const(lenspec, endian) {
         Ok((_, next)) => Ok(next)
         Err(reason) => Err(reason)
       }
+    DwarfSignedConst(lenspec) =>
+      match input.read_signed_const(lenspec, endian) {
+        Ok((_, next)) => Ok(next)
+        Err(reason) => Err(reason)
+      }
+    DwarfFlag => input.skip(bytes=1)
     DwarfFlagPresent => Ok(input)
     DwarfExpr =>
       match input.read_block(lenspec=DwarfLeb128, endian~) {
@@ -777,10 +787,23 @@ fn dwarf_read_attr_value(
       }
     DwarfHighPcOffsetValue =>
       match field.form() {
-        DwarfImplicitConst(value) => Ok((DwarfAttrHighPcRel(value), input))
+        DwarfImplicitConst(value) =>
+          match dwarf_nonnegative_int64_to_uint64(value) {
+            Ok(offset) => Ok((DwarfAttrHighPcRel(offset), input))
+            Err(_) => Ok((DwarfAttrIgnored, input))
+          }
         DwarfConst(lenspec) =>
-          match input.read_const(lenspec~, endian~) {
+          match input.read_unsigned_const(lenspec, endian) {
             Ok((offset, next)) => Ok((DwarfAttrHighPcRel(offset), next))
+            Err(reason) => Err(reason)
+          }
+        DwarfSignedConst(lenspec) =>
+          match input.read_signed_const(lenspec, endian) {
+            Ok((offset, next)) =>
+              match dwarf_nonnegative_int64_to_uint64(offset) {
+                Ok(offset) => Ok((DwarfAttrHighPcRel(offset), next))
+                Err(_) => Ok((DwarfAttrIgnored, next))
+              }
             Err(reason) => Err(reason)
           }
         form =>
@@ -812,9 +835,9 @@ fn dwarf_read_attr_value(
     DwarfNameRefValue =>
       match field.form() {
         DwarfRef(lenspec) =>
-          match input.read_const(lenspec~, endian~) {
+          match input.read_unsigned_const(lenspec, endian) {
             Ok((offset, next)) =>
-              match dwarf_ref_offset_to_int(offset) {
+              match dwarf_ref_uint_offset_to_int(offset) {
                 Ok(value) => Ok((DwarfAttrNameRef(DwarfCuNameRef(value)), next))
                 Err(reason) => Err(reason)
               }
@@ -900,7 +923,7 @@ fn dwarf_collect_function(
   let mut low_pc : UInt64? = None
   let mut entry_pc : UInt64? = None
   let mut high_abs : UInt64? = None
-  let mut high_rel : Int64? = None
+  let mut high_rel : UInt64? = None
   let mut range_ref : DwarfRangeListRef? = None
   for value in values {
     match value {
@@ -993,8 +1016,7 @@ fn dwarf_collect_function(
             Some(addr) => Some(addr)
             None =>
               match (low_pc, high_rel) {
-                (Some(low), Some(offset)) if offset >= 0L =>
-                  Some(low + offset.reinterpret_as_uint64())
+                (Some(low), Some(offset)) => Some(low + offset)
                 _ => None
               }
           }

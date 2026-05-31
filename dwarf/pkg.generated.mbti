@@ -76,6 +76,8 @@ pub(all) enum DwarfForm {
   DwarfAddr
   DwarfBlock(DwarfLenspec)
   DwarfConst(DwarfLenspec)
+  DwarfSignedConst(DwarfLenspec)
+  DwarfFlag
   DwarfString
   DwarfStrp
   DwarfStrx(DwarfIndexSpec)

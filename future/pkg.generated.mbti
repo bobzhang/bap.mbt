@@ -20,12 +20,15 @@ pub(all) enum Either[A, B] {
 } derive(Eq, @debug.Debug)
 
 type Future[T]
+pub fn[T] Future::all(Array[Self[T]]) -> Self[Array[T]]
+pub fn Future::all_unit(Array[Self[Unit]]) -> Self[Unit]
 pub fn[A, B] Future::apply(Self[(A) -> B], Self[A]) -> Self[B]
 pub fn[A, B, C] Future::apply2(Self[(A, B) -> C], Self[A], Self[B]) -> Self[C]
 pub fn[A, B, C, D] Future::apply3(Self[(A, B, C) -> D], Self[A], Self[B], Self[C]) -> Self[D]
 pub fn[A, B, C, D, E] Future::apply4(Self[(A, B, C, D) -> E], Self[A], Self[B], Self[C], Self[D]) -> Self[E]
 pub fn[A, B, C, D, E, F] Future::apply5(Self[(A, B, C, D, E) -> F], Self[A], Self[B], Self[C], Self[D], Self[E]) -> Self[F]
 pub fn[A, B] Future::bind(Self[A], (A) -> Self[B]) -> Self[B]
+pub fn[A, B] Future::both(Self[A], Self[B]) -> Self[(A, B)]
 pub fn[T] Future::create() -> (Self[T], Promise[T])
 pub fn[T] Future::full(T) -> Self[T]
 pub fn[T] Future::is_decided(Self[T]) -> Bool

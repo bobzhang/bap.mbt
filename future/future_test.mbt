@@ -155,6 +155,40 @@ test "translated BAP future multi-argument applicative helpers" {
 }
 
 ///|
+test "BAP-style future collection helpers preserve input order" {
+  let empty_inputs : Array[@future.Future[Int]] = []
+  let empty = @future.Future::all(empty_inputs)
+  assert_true(empty.is_decided())
+  assert_true(empty.peek_exn() == [])
+
+  let (left, left_promise) = @future.Future::create()
+  let (right, right_promise) = @future.Future::create()
+  let pair = @future.Future::both(left, right)
+  right_promise.fulfill(2)
+  assert_true(!pair.is_decided())
+  left_promise.fulfill(1)
+  assert_true(pair.peek_exn() == (1, 2))
+
+  let (first, first_promise) = @future.Future::create()
+  let (second, second_promise) = @future.Future::create()
+  let (third, third_promise) = @future.Future::create()
+  let all = @future.Future::all([first, second, third])
+  third_promise.fulfill(3)
+  first_promise.fulfill(1)
+  assert_true(!all.is_decided())
+  second_promise.fulfill(2)
+  assert_true(all.peek_exn() == [1, 2, 3])
+
+  let (unit_first, unit_first_promise) = @future.Future::create()
+  let (unit_second, unit_second_promise) = @future.Future::create()
+  let all_unit = @future.Future::all_unit([unit_first, unit_second])
+  unit_second_promise.fulfill(())
+  assert_true(!all_unit.is_decided())
+  unit_first_promise.fulfill(())
+  assert_true(all_unit.is_decided())
+}
+
+///|
 test "translated BAP future resolved values are immediately decided" {
   let future = @future.Future::resolved(future_magic_value)
   assert_true(future.is_decided())

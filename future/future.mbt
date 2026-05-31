@@ -129,6 +129,14 @@ pub fn[A, B, C] Future::map2(
 }
 
 ///|
+pub fn[A, B] Future::both(
+  left : Future[A],
+  right : Future[B],
+) -> Future[(A, B)] {
+  Future::map2(left, right, fn(l, r) { (l, r) })
+}
+
+///|
 pub fn[A, B, C, D] Future::map3(
   first : Future[A],
   second : Future[B],
@@ -205,6 +213,53 @@ pub fn[A, B, C, D, E, F] Future::apply5(
   fifth : Future[E],
 ) -> Future[F] {
   functions.bind(fn(f) { Future::map5(first, second, third, fourth, fifth, f) })
+}
+
+///|
+pub fn[T] Future::all(futures : Array[Future[T]]) -> Future[Array[T]] {
+  let (out, promise) = Future::create()
+  let count = futures.length()
+  if count == 0 {
+    let empty : Array[T] = []
+    ignore(promise.try_fulfill(empty))
+  } else {
+    let values : Array[T?] = []
+    for _ in 0..<count {
+      values.push(None)
+    }
+    let remaining = Ref(count)
+    let finish = fn() {
+      if remaining.val == 0 {
+        let result : Array[T] = []
+        for value in values {
+          match value {
+            Some(item) => result.push(item)
+            None => ()
+          }
+        }
+        ignore(promise.try_fulfill(result))
+      }
+    }
+    for index in 0..<count {
+      let slot = index
+      futures[slot].upon(fn(value) {
+        match values[slot] {
+          Some(_) => ()
+          None => {
+            values[slot] = Some(value)
+            remaining.val -= 1
+            finish()
+          }
+        }
+      })
+    }
+  }
+  out
+}
+
+///|
+pub fn Future::all_unit(futures : Array[Future[Unit]]) -> Future[Unit] {
+  Future::all(futures).map(fn(_) { () })
 }
 
 ///|

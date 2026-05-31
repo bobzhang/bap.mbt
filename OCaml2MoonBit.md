@@ -235,6 +235,13 @@ When the project package owns several global registries, expose one idempotent
 loader, brancher, disassembly-driver, reconstructor, and IR-transform pass
 registrations. Keep this helper as orchestration only; individual registries
 should still own duplicate checks and provider metadata.
+For BAP project passes, preserve the observable lifecycle boundaries even when
+MoonBit does not expose OCaml-style streams. Record registration, start,
+success, failure, and finish events as ordered snapshots; emit start only after
+dependencies have been resolved and the pass is actually going to run, emit
+finish on both success and failure, and keep run-once skips silent. Only mark a
+pass as run after a successful execution so failed passes remain retryable and
+their run-count metadata does not imply success.
 When a higher-level package exposes the same loader surface as a lower-level
 registry, prefer a small idempotent initializer that delegates to the owning
 registry instead of duplicating loader entries. For example, `ProjectInput`

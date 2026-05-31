@@ -1,4 +1,14 @@
 ///|
+fn pass_event_names(events : Array[@project.ProjectPassEvent]) -> Array[String] {
+  events.map(event => event.pass_name())
+}
+
+///|
+fn pass_event_kinds(events : Array[@project.ProjectPassEvent]) -> Array[String] {
+  events.map(event => event.kind().to_string())
+}
+
+///|
 test "project passes register lookup and run" {
   let pass = @project.ProjectPass::create(name="unit-set-loader", run=project => {
     Ok(project.set("loader", "unit"))
@@ -211,4 +221,105 @@ test "regular passes record each successful execution" {
   }
   assert_true(second.get("many-hit") == Some("xx"))
   assert_true(second.pass_run_count("unit-run-many") == 2)
+}
+
+///|
+test "pass registrations are observable lifecycle events" {
+  let pass = @project.ProjectPass::create(name="unit-events-registration", run=project => {
+    Ok(project)
+  })
+  match @project.register_pass(pass) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let registrations = @project.pass_registrations().filter(event => {
+    event.pass_name() == "unit-events-registration"
+  })
+  assert_true(pass_event_names(registrations) == ["unit-events-registration"])
+  assert_true(pass_event_kinds(registrations) == ["registered"])
+  assert_true(registrations[0].sequence() > 0)
+  assert_true(pass_event_kinds(pass.events()) == ["registered"])
+}
+
+///|
+test "successful passes record start success and finish events" {
+  let pass = @project.ProjectPass::create(name="unit-events-success", run=project => {
+    Ok(project.set("events", "ok"))
+  })
+  match @project.register_pass(pass) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let project = @project.Project::empty(@core_theory.Target::unknown())
+  let next = match project.run_pass("unit-events-success") {
+    Ok(next) => next
+    Err(reason) => fail(reason)
+  }
+  assert_true(next.get("events") == Some("ok"))
+  assert_true(
+    pass_event_kinds(pass.events()) ==
+    ["registered", "started", "succeeded", "finished"],
+  )
+  assert_true(pass_event_names(pass.starts()) == ["unit-events-success"])
+  assert_true(pass_event_names(pass.successes()) == ["unit-events-success"])
+  assert_true(pass.failures().is_empty())
+  assert_true(pass_event_names(pass.finishes()) == ["unit-events-success"])
+}
+
+///|
+test "failing passes record failure finish and no successful run count" {
+  let pass = @project.ProjectPass::create(name="unit-events-failure", run=_ => {
+    Err("boom")
+  })
+  match @project.register_pass(pass) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let project = @project.Project::empty(@core_theory.Target::unknown())
+  assert_true(project.run_pass("unit-events-failure") is Err(_))
+  assert_true(project.pass_run_count("unit-events-failure") == 0)
+  assert_true(
+    pass_event_kinds(pass.events()) ==
+    ["registered", "started", "failed", "finished"],
+  )
+  assert_true(pass.successes().is_empty())
+  assert_true(pass_event_names(pass.failures()) == ["unit-events-failure"])
+  assert_true(pass_event_names(pass.finishes()) == ["unit-events-failure"])
+}
+
+///|
+test "run_once skipped passes do not emit lifecycle events" {
+  let pass = @project.ProjectPass::create(
+    name="unit-events-run-once",
+    run_once=true,
+    run=project => {
+      let value = match project.get("events-once") {
+        Some(text) => text + "x"
+        None => "x"
+      }
+      Ok(project.set("events-once", value))
+    },
+  )
+  match @project.register_pass(pass) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let project = @project.Project::empty(@core_theory.Target::unknown())
+  let first = match project.run_pass("unit-events-run-once") {
+    Ok(next) => next
+    Err(reason) => fail(reason)
+  }
+  let second = match first.run_pass("unit-events-run-once") {
+    Ok(next) => next
+    Err(reason) => fail(reason)
+  }
+  assert_true(second.get("events-once") == Some("x"))
+  assert_true(second.pass_run_count("unit-events-run-once") == 1)
+  assert_true(
+    pass_event_kinds(pass.events()) ==
+    ["registered", "started", "succeeded", "finished"],
+  )
+  assert_true(pass.starts().length() == 1)
+  assert_true(pass.successes().length() == 1)
+  assert_true(pass.finishes().length() == 1)
 }

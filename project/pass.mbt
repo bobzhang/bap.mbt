@@ -8,7 +8,90 @@ struct ProjectPass {
 }
 
 ///|
+pub(all) enum ProjectPassEventKind {
+  PassRegistered
+  PassStarted
+  PassSucceeded
+  PassFailed
+  PassFinished
+} derive(Eq)
+
+///|
+struct ProjectPassEvent {
+  pass_name_value : String
+  kind_value : ProjectPassEventKind
+  sequence_value : Int
+}
+
+///|
 let pass_registry : Map[String, ProjectPass] = {}
+
+///|
+let pass_event_log : Array[ProjectPassEvent] = []
+
+///|
+let pass_event_sequence : Ref[Int] = Ref(0)
+
+///|
+fn record_pass_event(name : String, kind : ProjectPassEventKind) -> Unit {
+  pass_event_sequence.val += 1
+  pass_event_log.push({
+    pass_name_value: name,
+    kind_value: kind,
+    sequence_value: pass_event_sequence.val,
+  })
+}
+
+///|
+fn pass_events_of_kind(kind : ProjectPassEventKind) -> Array[ProjectPassEvent] {
+  pass_event_log.filter(event => event.kind() == kind)
+}
+
+///|
+fn pass_events_for(
+  name : String,
+  kind : ProjectPassEventKind,
+) -> Array[ProjectPassEvent] {
+  pass_event_log.filter(event => {
+    event.pass_name() == name && event.kind() == kind
+  })
+}
+
+///|
+pub fn ProjectPassEventKind::to_string(self : ProjectPassEventKind) -> String {
+  match self {
+    PassRegistered => "registered"
+    PassStarted => "started"
+    PassSucceeded => "succeeded"
+    PassFailed => "failed"
+    PassFinished => "finished"
+  }
+}
+
+///|
+pub fn ProjectPassEvent::pass_name(self : ProjectPassEvent) -> String {
+  self.pass_name_value
+}
+
+///|
+pub fn ProjectPassEvent::kind(self : ProjectPassEvent) -> ProjectPassEventKind {
+  self.kind_value
+}
+
+///|
+pub fn ProjectPassEvent::sequence(self : ProjectPassEvent) -> Int {
+  self.sequence_value
+}
+
+///|
+pub fn pass_events() -> Array[ProjectPassEvent] {
+  pass_event_log.copy()
+}
+
+///|
+pub fn pass_registrations() -> Array[ProjectPassEvent] {
+  pass_events_of_kind(PassRegistered)
+}
 
 ///|
 pub fn ProjectPass::create(
@@ -66,6 +149,31 @@ pub fn ProjectPass::run(
 }
 
 ///|
+pub fn ProjectPass::events(self : ProjectPass) -> Array[ProjectPassEvent] {
+  pass_event_log.filter(event => event.pass_name() == self.name())
+}
+
+///|
+pub fn ProjectPass::starts(self : ProjectPass) -> Array[ProjectPassEvent] {
+  pass_events_for(self.name(), PassStarted)
+}
+
+///|
+pub fn ProjectPass::successes(self : ProjectPass) -> Array[ProjectPassEvent] {
+  pass_events_for(self.name(), PassSucceeded)
+}
+
+///|
+pub fn ProjectPass::failures(self : ProjectPass) -> Array[ProjectPassEvent] {
+  pass_events_for(self.name(), PassFailed)
+}
+
+///|
+pub fn ProjectPass::finishes(self : ProjectPass) -> Array[ProjectPassEvent] {
+  pass_events_for(self.name(), PassFinished)
+}
+
+///|
 fn pass_run_key(name : String) -> String {
   "pass.\{name}.runs"
 }
@@ -100,6 +208,7 @@ pub fn register_pass(pass : ProjectPass) -> Result[Unit, String] {
     Err("project pass \{name} is already registered")
   } else {
     pass_registry[name] = pass
+    record_pass_event(name, PassRegistered)
     Ok(())
   }
 }
@@ -187,12 +296,22 @@ pub fn Project::run_passes(
     Ok(order) => {
       let mut project = self
       for pass in order {
-        if pass.run_once() && project.pass_has_run(pass.name()) {
+        let name = pass.name()
+        if pass.run_once() && project.pass_has_run(name) {
           ()
         } else {
+          record_pass_event(name, PassStarted)
           match pass.run(project) {
-            Ok(next) => project = next.mark_pass_run(pass.name())
-            Err(reason) => return Err(reason)
+            Ok(next) => {
+              record_pass_event(name, PassSucceeded)
+              record_pass_event(name, PassFinished)
+              project = next.mark_pass_run(name)
+            }
+            Err(reason) => {
+              record_pass_event(name, PassFailed)
+              record_pass_event(name, PassFinished)
+              return Err(reason)
+            }
           }
         }
       }

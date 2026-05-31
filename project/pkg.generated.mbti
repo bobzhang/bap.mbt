@@ -39,6 +39,10 @@ pub fn input_loader_names_for_extension(String) -> Array[String]
 
 pub fn input_loaders_for_extension(String) -> Array[ProjectInputLoader]
 
+pub fn pass_events() -> Array[ProjectPassEvent]
+
+pub fn pass_registrations() -> Array[ProjectPassEvent]
+
 pub fn passes() -> Array[ProjectPass]
 
 pub fn reconstructor_names() -> Array[String]
@@ -338,13 +342,32 @@ pub fn ProjectPass::autorun(Self) -> Bool
 pub fn ProjectPass::create(name~ : String, autorun? : Bool, run_once? : Bool, deps? : Array[String], run~ : (Project) -> Result[Project, String]) -> Self
 pub fn ProjectPass::deps(Self) -> Array[String]
 pub fn ProjectPass::destroy_ssa() -> Self
+pub fn ProjectPass::events(Self) -> Array[ProjectPassEvent]
+pub fn ProjectPass::failures(Self) -> Array[ProjectPassEvent]
+pub fn ProjectPass::finishes(Self) -> Array[ProjectPassEvent]
 pub fn ProjectPass::flatten() -> Self
 pub fn ProjectPass::name(Self) -> String
 pub fn ProjectPass::run(Self, Project) -> Result[Project, String]
 pub fn ProjectPass::run_once(Self) -> Bool
 pub fn ProjectPass::ssa() -> Self
+pub fn ProjectPass::starts(Self) -> Array[ProjectPassEvent]
 pub fn ProjectPass::stub_resolver(link_only? : Array[String], no_link? : Array[String]) -> Self
+pub fn ProjectPass::successes(Self) -> Array[ProjectPassEvent]
 pub fn ProjectPass::trivial_condition_form() -> Self
+
+type ProjectPassEvent
+pub fn ProjectPassEvent::kind(Self) -> ProjectPassEventKind
+pub fn ProjectPassEvent::pass_name(Self) -> String
+pub fn ProjectPassEvent::sequence(Self) -> Int
+
+pub(all) enum ProjectPassEventKind {
+  PassRegistered
+  PassStarted
+  PassSucceeded
+  PassFailed
+  PassFinished
+} derive(Eq)
+pub fn ProjectPassEventKind::to_string(Self) -> String
 
 type ProjectReconstructor
 pub fn ProjectReconstructor::create((Project) -> Result[Project, String]) -> Self

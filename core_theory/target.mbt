@@ -2327,6 +2327,25 @@ pub fn Target::role_aliases(self : Target, role : Role) -> Array[String] {
 }
 
 ///|
+fn Target::default_memory(self : Target) -> Var {
+  mem_var(self.bits_value, self.byte_value, "mem")
+}
+
+///|
+pub fn Target::data(self : Target) -> Var {
+  match self.find_var("mem") {
+    Some(variable) if variable.sort().same(self.default_memory().sort()) =>
+      variable
+    _ => self.default_memory()
+  }
+}
+
+///|
+pub fn Target::code(self : Target) -> Var {
+  self.data()
+}
+
+///|
 pub fn Target::data_addr_size(self : Target) -> Int {
   self.bits_value
 }

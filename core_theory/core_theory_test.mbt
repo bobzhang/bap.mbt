@@ -119,6 +119,13 @@ test "target registry resolves common and custom declarations" {
       assert_true(target.code_addr_size() == 64)
       assert_true(target.data_alignment() == 8)
       assert_true(target.code_alignment() == 8)
+      assert_true(target.data().same(target.code()))
+      assert_true(target.data().ident() == "mem")
+      assert_true(target.data().is_mutable())
+      inspect(
+        target.data().sort().to_string(),
+        content="core:mem<core:bitv<64>><core:bitv<8>>",
+      )
       let raw = @bitvec.of_uint64(width=128, 0x1234)
       assert_true(target.code_addr(raw).to_string() == "0x1234:64u")
       assert_true(target.data_addr(raw).to_string() == "0x1234:64u")

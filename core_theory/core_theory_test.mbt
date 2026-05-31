@@ -145,7 +145,18 @@ test "target registry resolves common and custom declarations" {
     Ok(target) => {
       assert_true(target.bits() == 64)
       assert_true(target.endianness() == LittleEndian)
-      assert_true(target.belongs(@core_theory.Target::mips()))
+      assert_true(target.belongs(@core_theory.Target::mips_family()))
+      assert_true(!target.belongs(@core_theory.Target::mips()))
+    }
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.get_target("mips-family") {
+    Ok(target) => {
+      assert_true(target.bits() == 0)
+      assert_true(@core_theory.Target::mips().belongs(target))
+      assert_true(@core_theory.Target::mipsel().belongs(target))
+      assert_true(@core_theory.Target::mips64().belongs(target))
+      assert_true(@core_theory.Target::mips64el().belongs(target))
     }
     Err(reason) => fail(reason)
   }
@@ -313,6 +324,17 @@ test "target registry resolves common and custom declarations" {
       assert_true(target.matches("powerpcle"))
       assert_true(target.bits() == 32)
       assert_true(target.endianness() == LittleEndian)
+      assert_true(target.belongs(@core_theory.Target::powerpc_family()))
+      assert_true(!target.belongs(@core_theory.Target::powerpc()))
+    }
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.Target::get("powerpc-family") {
+    Ok(target) => {
+      assert_true(@core_theory.Target::powerpc().belongs(target))
+      assert_true(@core_theory.Target::powerpcle().belongs(target))
+      assert_true(@core_theory.Target::powerpc64().belongs(target))
+      assert_true(@core_theory.Target::powerpc64le().belongs(target))
     }
     Err(reason) => fail(reason)
   }

@@ -133,6 +133,12 @@ input to reader callbacks. Keep URI-only registration as a compatibility
 adapter, but expose id-aware array and stream reader registrations so callbacks
 that build metadata or side tables can use the same UUID that the loaded
 `Trace` will report.
+When porting BAP architecture targets, keep family declarations distinct from
+concrete targets even when a common target name looks like a family. For
+example, BAP declares `mips-family` and `powerpc-family` separately from the
+concrete `mips` and `powerpc` targets. Little-endian and 64-bit variants should
+belong to the family target, not to the 32-bit big-endian concrete target; use
+the family target for role dispatch and broad architecture filtering.
 For disassembly-driver registries, separate orchestration from architecture
 decoding: a built-in driver may materialize memory regions as blocks, but it
 should not invent assembly text or lifted BIL unless a real target-specific

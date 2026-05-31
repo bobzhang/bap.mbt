@@ -1235,9 +1235,9 @@ fn target_specific_role_names(target : Target, role : Role) -> Array[String]? {
     Some(aarch64_role_names(role))
   } else if target.belongs(Target::arm()) || target.belongs(Target::armeb()) {
     Some(arm32_role_names(role))
-  } else if target.belongs(Target::mips()) {
+  } else if target.belongs(Target::mips_family()) {
     Some(mips_role_names(target.bits(), role))
-  } else if target.belongs(Target::powerpc()) {
+  } else if target.belongs(Target::powerpc_family()) {
     Some(powerpc_role_names(role))
   } else if target.belongs(Target::riscv()) {
     Some(riscv_role_names(role))
@@ -1876,6 +1876,7 @@ pub fn Target::aarch64_be() -> Target {
 pub fn Target::mips() -> Target {
   Target::create(
     name=target_name("mips"),
+    parent=Target::mips_family(),
     nicknames=["mips32"],
     bits=32,
     endianness=BigEndian,
@@ -1885,10 +1886,15 @@ pub fn Target::mips() -> Target {
 }
 
 ///|
+pub fn Target::mips_family() -> Target {
+  Target::create(name=target_name("mips-family"))
+}
+
+///|
 pub fn Target::mipsel() -> Target {
   Target::create(
     name=target_name("mipsel"),
-    parent=Target::mips(),
+    parent=Target::mips_family(),
     nicknames=["mips32el"],
     bits=32,
     endianness=LittleEndian,
@@ -1901,7 +1907,7 @@ pub fn Target::mipsel() -> Target {
 pub fn Target::mips64() -> Target {
   Target::create(
     name=target_name("mips64"),
-    parent=Target::mips(),
+    parent=Target::mips_family(),
     bits=64,
     endianness=BigEndian,
     vars=mips_vars(64),
@@ -1913,7 +1919,7 @@ pub fn Target::mips64() -> Target {
 pub fn Target::mips64el() -> Target {
   Target::create(
     name=target_name("mips64el"),
-    parent=Target::mips64(),
+    parent=Target::mips_family(),
     bits=64,
     endianness=LittleEndian,
     vars=mips_vars(64),
@@ -1925,6 +1931,7 @@ pub fn Target::mips64el() -> Target {
 pub fn Target::powerpc() -> Target {
   Target::create(
     name=target_name("powerpc"),
+    parent=Target::powerpc_family(),
     nicknames=["ppc", "powerpc32", "ppc32", "powerpc32be", "ppc32be"],
     bits=32,
     endianness=BigEndian,
@@ -1933,10 +1940,15 @@ pub fn Target::powerpc() -> Target {
 }
 
 ///|
+pub fn Target::powerpc_family() -> Target {
+  Target::create(name=target_name("powerpc-family"))
+}
+
+///|
 pub fn Target::powerpcle() -> Target {
   Target::create(
     name=target_name("powerpcle"),
-    parent=Target::powerpc(),
+    parent=Target::powerpc_family(),
     nicknames=[
       "ppcle", "ppcel", "powerpc32le", "powerpc32el", "ppc32le", "ppc32el",
     ],
@@ -1950,7 +1962,7 @@ pub fn Target::powerpcle() -> Target {
 pub fn Target::powerpc64() -> Target {
   Target::create(
     name=target_name("powerpc64"),
-    parent=Target::powerpc(),
+    parent=Target::powerpc_family(),
     nicknames=["ppc64", "ppu", "powerpc64be", "ppc64be"],
     bits=64,
     endianness=BigEndian,
@@ -1962,7 +1974,7 @@ pub fn Target::powerpc64() -> Target {
 pub fn Target::powerpc64le() -> Target {
   Target::create(
     name=target_name("powerpc64le"),
-    parent=Target::powerpc64(),
+    parent=Target::powerpc_family(),
     nicknames=["powerpc64el", "ppc64le", "ppc64el"],
     bits=64,
     endianness=LittleEndian,
@@ -2396,10 +2408,12 @@ pub fn common_targets() -> Array[Target] {
     Target::thumbeb(),
     Target::aarch64(),
     Target::aarch64_be(),
+    Target::mips_family(),
     Target::mips(),
     Target::mipsel(),
     Target::mips64(),
     Target::mips64el(),
+    Target::powerpc_family(),
     Target::powerpc(),
     Target::powerpcle(),
     Target::powerpc64(),

@@ -31,7 +31,7 @@ This repository is porting `.repos/bap` from OCaml to idiomatic MoonBit.
 
 - Expand `core_theory` with the full BAP knowledge registry, deeper source/compiler/program-unit/label fact integration, remaining alias provenance, and deeper architecture-specific target metadata.
 - Expand `types` with fuller BIL normalization and broader memory-aware optimization passes, richer IR visitors and control-flow semantics, additional SSA/data-flow transforms over the term layer, richer indirect call resolution integrations, and the remaining tests translated from `.repos/bap/lib_test/bap_types`.
-- Expand `future` with any remaining higher-level BAP helpers such as higher-arity stream/future application adapters that are useful in MoonBit.
+- Expand `future` with any remaining higher-level BAP helpers such as Variadic/Args-style adapter encodings that are useful in MoonBit.
 - Expand `traces` with native OCaml bin_io compatibility for BAP-generated `.binprot` files, richer extensible tag/dictionary compatibility, and broader trace event metadata.
 - Expand `dwarf` with broader DWARF form coverage beyond indexed strings/range lists, richer nested-DIE attributes and references, richer function-boundary fixtures, and deeper loader integrations beyond project symbol enrichment.
 - Expand `image` with additional file-format backends beyond ELF, broader architecture-specific relocation semantics, dynamic-link resolution/orchestration beyond preserved metadata, and deeper loader metadata.

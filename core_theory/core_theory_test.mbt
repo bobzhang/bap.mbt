@@ -37,6 +37,10 @@ test "effect sorts form the expected lattice" {
   assert_true(@core_theory.EffectData.union(EffectCtrl) == EffectBoth)
   assert_true(@core_theory.EffectData.order(EffectBoth) == Less)
   assert_true(@core_theory.EffectData.order(EffectCtrl) == Incomparable)
+  assert_true(@core_theory.Effect::jump().equal(@core_theory.Effect::jump()))
+  assert_true(
+    @core_theory.Effect::jump().compare(@core_theory.Effect::fall()) != 0,
+  )
   inspect(@core_theory.Effect::jump().to_string(), content="jump")
 }
 
@@ -1609,9 +1613,21 @@ test "program semantics stores values and instruction bytes" {
   let value = @core_theory.Value::empty(@core_theory.Sort::bool()).with_fact(
     "kind", "lifted",
   )
+  let same_value = @core_theory.Value::empty(@core_theory.Sort::bool()).with_fact(
+    "kind", "lifted",
+  )
+  assert_true(value.equal(same_value))
+  assert_true(value.compare(same_value) == 0)
+  assert_true(!value.equal(value.with_fact("extra", "true")))
   let semantics = @core_theory.Semantics::empty()
     .with_value(value)
     .with_code(b"\x90\xc3")
+  let same_semantics = @core_theory.Semantics::empty()
+    .with_value(same_value)
+    .with_code(b"\x90\xc3")
+  assert_true(semantics.equal(same_semantics))
+  assert_true(semantics.compare(same_semantics) == 0)
+  assert_true(semantics.compare(semantics.with_code(b"\x90\xc4")) != 0)
   assert_true(semantics.value().fact("kind") == Some("lifted"))
   assert_true(semantics.code() == Some(b"\x90\xc3"))
   assert_true(semantics.code_hex() == Some("90c3"))

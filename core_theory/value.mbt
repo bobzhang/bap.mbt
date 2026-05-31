@@ -15,6 +15,23 @@ pub fn Value::sort(self : Value) -> Sort {
 }
 
 ///|
+pub fn Value::equal(self : Value, other : Value) -> Bool {
+  self.sort_value == other.sort_value &&
+  string_map_equal(self.facts, other.facts)
+}
+
+///|
+pub fn Value::compare(self : Value, other : Value) -> Int {
+  let sort_order = self.sort_value
+    .to_string()
+    .compare(other.sort_value.to_string())
+  if sort_order != 0 {
+    return sort_order
+  }
+  string_map_compare(self.facts, other.facts)
+}
+
+///|
 pub fn Value::with_fact(self : Value, key : String, value : String) -> Value {
   let facts = self.facts.copy()
   facts[key] = value

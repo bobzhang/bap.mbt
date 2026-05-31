@@ -95,12 +95,12 @@ pub fn Semantics::code_hex(self : Semantics) -> String? {
 
 ///|
 fn effect_equal(lhs : Effect, rhs : Effect) -> Bool {
-  lhs.sort_value == rhs.sort_value && lhs.name_value == rhs.name_value
+  lhs.equal(rhs)
 }
 
 ///|
 fn value_equal(lhs : Value, rhs : Value) -> Bool {
-  lhs.sort_value == rhs.sort_value && string_map_equal(lhs.facts, rhs.facts)
+  lhs.equal(rhs)
 }
 
 ///|
@@ -108,6 +108,50 @@ fn semantics_equal(lhs : Semantics, rhs : Semantics) -> Bool {
   effect_equal(lhs.effect_value, rhs.effect_value) &&
   value_equal(lhs.value_value, rhs.value_value) &&
   lhs.code_value == rhs.code_value
+}
+
+///|
+pub fn Semantics::equal(self : Semantics, other : Semantics) -> Bool {
+  semantics_equal(self, other)
+}
+
+///|
+fn optional_bytes_compare(lhs : Bytes?, rhs : Bytes?) -> Int {
+  match (lhs, rhs) {
+    (None, None) => 0
+    (None, Some(_)) => -1
+    (Some(_), None) => 1
+    (Some(left), Some(right)) => bytes_compare(left, right)
+  }
+}
+
+///|
+fn bytes_compare(lhs : BytesView, rhs : BytesView) -> Int {
+  let limit = if lhs.length() < rhs.length() {
+    lhs.length()
+  } else {
+    rhs.length()
+  }
+  for i in 0..<limit {
+    let order = lhs[i].to_int().compare(rhs[i].to_int())
+    if order != 0 {
+      return order
+    }
+  }
+  lhs.length().compare(rhs.length())
+}
+
+///|
+pub fn Semantics::compare(self : Semantics, other : Semantics) -> Int {
+  let effect_order = self.effect_value.compare(other.effect_value)
+  if effect_order != 0 {
+    return effect_order
+  }
+  let value_order = self.value_value.compare(other.value_value)
+  if value_order != 0 {
+    return value_order
+  }
+  optional_bytes_compare(self.code_value, other.code_value)
 }
 
 ///|

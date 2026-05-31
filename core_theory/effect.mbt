@@ -57,6 +57,17 @@ pub fn EffectSort::to_string(self : EffectSort) -> String {
 }
 
 ///|
+fn EffectSort::rank(self : EffectSort) -> Int {
+  match self {
+    EffectBot => 0
+    EffectData => 1
+    EffectCtrl => 2
+    EffectBoth => 3
+    EffectTop => 4
+  }
+}
+
+///|
 pub fn Effect::empty(sort : EffectSort) -> Effect {
   { sort_value: sort, name_value: sort.to_string() }
 }
@@ -79,6 +90,20 @@ pub fn Effect::name(self : Effect) -> String {
 ///|
 pub fn Effect::to_string(self : Effect) -> String {
   self.name_value
+}
+
+///|
+pub fn Effect::equal(self : Effect, other : Effect) -> Bool {
+  self.sort_value == other.sort_value && self.name_value == other.name_value
+}
+
+///|
+pub fn Effect::compare(self : Effect, other : Effect) -> Int {
+  let sort_order = self.sort_value.rank().compare(other.sort_value.rank())
+  if sort_order != 0 {
+    return sort_order
+  }
+  self.name_value.compare(other.name_value)
 }
 
 ///|

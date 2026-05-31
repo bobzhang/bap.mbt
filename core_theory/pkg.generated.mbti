@@ -80,7 +80,9 @@ pub fn Compiler::version(Self) -> Array[String]
 type Effect
 pub fn Effect::barr() -> Self
 pub fn Effect::cjump() -> Self
+pub fn Effect::compare(Self, Self) -> Int
 pub fn Effect::empty(EffectSort) -> Self
+pub fn Effect::equal(Self, Self) -> Bool
 pub fn Effect::fall() -> Self
 pub fn Effect::jump() -> Self
 pub fn Effect::name(Self) -> String
@@ -281,9 +283,11 @@ pub(all) enum Role {
 type Semantics
 pub fn Semantics::code(Self) -> Bytes?
 pub fn Semantics::code_hex(Self) -> String?
+pub fn Semantics::compare(Self, Self) -> Int
 pub fn Semantics::create(effect? : Effect, value? : Value, code? : Bytes) -> Self
 pub fn Semantics::effect(Self) -> Effect
 pub fn Semantics::empty() -> Self
+pub fn Semantics::equal(Self, Self) -> Bool
 pub fn Semantics::value(Self) -> Value
 pub fn Semantics::with_code(Self, Bytes) -> Self
 pub fn Semantics::with_effect(Self, Effect) -> Self
@@ -482,7 +486,9 @@ pub fn TargetOptions::to_string(Self) -> String
 pub fn TargetOptions::with_value(Self, String, String) -> Self
 
 type Value
+pub fn Value::compare(Self, Self) -> Int
 pub fn Value::empty(Sort) -> Self
+pub fn Value::equal(Self, Self) -> Bool
 pub fn Value::fact(Self, String) -> String?
 pub fn Value::forget(Self) -> Self
 pub fn Value::sort(Self) -> Sort

@@ -590,10 +590,87 @@ test "target role helpers classify common architecture variables" {
     }
     None => fail("missing RAX")
   }
+  match amd64.find_var("EAX") {
+    Some(alias_var) => {
+      assert_true(amd64.roles_of_var(alias_var).contains(IntegerRegister))
+      assert_true(amd64.roles_of_var(alias_var).contains(ResultRegister))
+    }
+    None => fail("missing EAX")
+  }
+  match amd64.origin_of_name("EAX") {
+    Some(origin) => {
+      assert_true(origin.aliased().ident() == "EAX")
+      assert_true(origin.source().map(v => v.ident()) == Some("RAX"))
+      assert_true(origin.range() == Some((0, 31)))
+    }
+    None => fail("missing EAX alias origin")
+  }
+  match amd64.origin_of_name("AL") {
+    Some(origin) => {
+      assert_true(origin.source().map(v => v.ident()) == Some("RAX"))
+      assert_true(origin.range() == Some((0, 7)))
+    }
+    None => fail("missing AL alias origin")
+  }
+  match amd64.origin_of_name("AH") {
+    Some(origin) => {
+      assert_true(origin.source().map(v => v.ident()) == Some("RAX"))
+      assert_true(origin.range() == Some((8, 15)))
+    }
+    None => fail("missing AH alias origin")
+  }
+  match amd64.origin_of_name("R9D") {
+    Some(origin) => {
+      assert_true(origin.source().map(v => v.ident()) == Some("R9"))
+      assert_true(origin.range() == Some((0, 31)))
+    }
+    None => fail("missing R9D alias origin")
+  }
+  match amd64.find_var("YMM7") {
+    Some(vector) =>
+      assert_true(amd64.roles_of_var(vector).contains(VectorRegister))
+    None => fail("missing YMM7")
+  }
+  match amd64.origin_of_name("XMM7") {
+    Some(origin) => {
+      assert_true(origin.source().map(v => v.ident()) == Some("YMM7"))
+      assert_true(origin.range() == Some((0, 127)))
+    }
+    None => fail("missing XMM7 alias origin")
+  }
+  match amd64.origin_of_name("EFLAGS") {
+    Some(origin) => {
+      assert_true(origin.aliased().ident() == "EFLAGS")
+      assert_true(origin.bits().length() == 32)
+      assert_true(origin.bits().any(v => v.ident() == "CF"))
+      assert_true(origin.bits().any(v => v.ident() == "ZF"))
+      assert_true(origin.bits().any(v => v.ident() == "OF"))
+    }
+    None => fail("missing EFLAGS alias origin")
+  }
   assert_true(amd64.find_role(StackPointer).map(v => v.ident()) == Some("RSP"))
   assert_true(amd64.vars_with_role(Status).any(v => v.ident() == "ZF"))
+  assert_true(amd64.vars_with_role(Status).any(v => v.ident() == "RFLAGS"))
   assert_true(amd64.role_aliases(ProgramCounter).contains("rip"))
   assert_true(!amd64.role_aliases(ProgramCounter).contains("pc"))
+  let x86 = @core_theory.Target::x86()
+  match x86.origin_of_name("AX") {
+    Some(origin) => {
+      assert_true(origin.source().map(v => v.ident()) == Some("EAX"))
+      assert_true(origin.range() == Some((0, 15)))
+    }
+    None => fail("missing AX alias origin")
+  }
+  match x86.find_var("ST0") {
+    Some(float) =>
+      assert_true(x86.roles_of_var(float).contains(FloatingRegister))
+    None => fail("missing ST0")
+  }
+  match x86.find_var("XMM0") {
+    Some(vector) =>
+      assert_true(x86.roles_of_var(vector).contains(VectorRegister))
+    None => fail("missing XMM0")
+  }
   let arm = @core_theory.Target::arm()
   assert_true(arm.find_role(ProgramCounter).map(v => v.ident()) == Some("PC"))
   assert_true(arm.vars_with_role(Argument).any(v => v.ident() == "R0"))

@@ -405,21 +405,182 @@ fn append_vars(items : Array[Var], more : Array[Var]) -> Unit {
 ///|
 fn x86_flags() -> Array[Var] {
   [
-    bool_var("CF"),
-    bool_var("PF"),
-    bool_var("AF"),
-    bool_var("ZF"),
-    bool_var("SF"),
-    bool_var("OF"),
+    for name in x86_flag_names() => bool_var(name)
   ]
 }
 
 ///|
+fn x86_flag_names() -> Array[String] {
+  [
+    "CF", "EFLAGS_1", "PF", "EFLAGS_3", "AF", "EFLAGS_5", "ZF", "SF", "TF", "IF",
+    "DF", "OF", "IOPLL", "IOPLH", "NT", "MD", "RF", "VM", "AC", "VIF", "VIP", "ID",
+    "EFLAGS_22", "EFLAGS_23", "EFLAGS_24", "EFLAGS_25", "EFLAGS_26", "EFLAGS_27",
+    "EFLAGS_28", "EFLAGS_29", "AES", "AI",
+  ]
+}
+
+///|
+fn x86_segment_names(include_fs_gs : Bool) -> Array[String] {
+  if include_fs_gs {
+    ["CS", "DS", "ES", "SS", "FS", "GS"]
+  } else {
+    ["CS", "DS", "ES", "SS"]
+  }
+}
+
+///|
+fn x86_32_gpr_names() -> Array[String] {
+  ["EAX", "EBX", "ECX", "EDX", "ESI", "EDI", "EBP", "ESP"]
+}
+
+///|
+fn x86_16_gpr_names() -> Array[String] {
+  ["AX", "BX", "CX", "DX", "SI", "DI", "BP", "SP"]
+}
+
+///|
+fn x86_8_low_gpr_names() -> Array[String] {
+  ["AL", "BL", "CL", "DL"]
+}
+
+///|
+fn x86_8_high_gpr_names() -> Array[String] {
+  ["AH", "BH", "CH", "DH"]
+}
+
+///|
+fn x86_64_gpr_names() -> Array[String] {
+  [
+    "RAX", "RBX", "RCX", "RDX", "RSI", "RDI", "RBP", "RSP", "R8", "R9", "R10", "R11",
+    "R12", "R13", "R14", "R15",
+  ]
+}
+
+///|
+fn x86_64_gpr32_alias_names() -> Array[String] {
+  [
+    "EAX", "EBX", "ECX", "EDX", "ESI", "EDI", "EBP", "ESP", "R8D", "R9D", "R10D",
+    "R11D", "R12D", "R13D", "R14D", "R15D",
+  ]
+}
+
+///|
+fn x86_64_gpr16_alias_names() -> Array[String] {
+  [
+    "AX", "BX", "CX", "DX", "SI", "DI", "BP", "SP", "R8W", "R9W", "R10W", "R11W",
+    "R12W", "R13W", "R14W", "R15W",
+  ]
+}
+
+///|
+fn x86_64_gpr8_alias_names() -> Array[String] {
+  [
+    "AL", "BL", "CL", "DL", "SIL", "DIL", "BPL", "SPL", "R8B", "R9B", "R10B", "R11B",
+    "R12B", "R13B", "R14B", "R15B",
+  ]
+}
+
+///|
+fn lower_names(names : Array[String]) -> Array[String] {
+  [
+    for name in names => name.to_lower()
+  ]
+}
+
+///|
+fn x86_32_alias_origins() -> Array[AliasOrigin] {
+  let items : Array[AliasOrigin] = []
+  let bases = x86_32_gpr_names()
+  let words = x86_16_gpr_names()
+  for i in 0..<bases.length() {
+    items.push(
+      AliasOrigin::subregister(
+        word_var(16, words[i]),
+        word_var(32, bases[i]),
+        lo=0,
+        hi=15,
+      ),
+    )
+  }
+  let lows = x86_8_low_gpr_names()
+  let highs = x86_8_high_gpr_names()
+  for i in 0..<lows.length() {
+    items.push(
+      AliasOrigin::subregister(
+        word_var(8, lows[i]),
+        word_var(32, bases[i]),
+        lo=0,
+        hi=7,
+      ),
+    )
+    items.push(
+      AliasOrigin::subregister(
+        word_var(8, highs[i]),
+        word_var(32, bases[i]),
+        lo=8,
+        hi=15,
+      ),
+    )
+  }
+  items.push(AliasOrigin::bit_set(word_var(32, "EFLAGS"), x86_flags()))
+  items
+}
+
+///|
+fn x86_64_alias_origins() -> Array[AliasOrigin] {
+  let items : Array[AliasOrigin] = []
+  let bases = x86_64_gpr_names()
+  let dwords = x86_64_gpr32_alias_names()
+  let words = x86_64_gpr16_alias_names()
+  let bytes = x86_64_gpr8_alias_names()
+  for i in 0..<bases.length() {
+    let base = word_var(64, bases[i])
+    items.push(
+      AliasOrigin::subregister(word_var(32, dwords[i]), base, lo=0, hi=31),
+    )
+    items.push(
+      AliasOrigin::subregister(word_var(16, words[i]), base, lo=0, hi=15),
+    )
+    items.push(
+      AliasOrigin::subregister(word_var(8, bytes[i]), base, lo=0, hi=7),
+    )
+  }
+  let highs = x86_8_high_gpr_names()
+  for i in 0..<highs.length() {
+    items.push(
+      AliasOrigin::subregister(
+        word_var(8, highs[i]),
+        word_var(64, bases[i]),
+        lo=8,
+        hi=15,
+      ),
+    )
+  }
+  for i in 0..<16 {
+    items.push(
+      AliasOrigin::subregister(
+        word_var(128, "XMM\{i}"),
+        word_var(256, "YMM\{i}"),
+        lo=0,
+        hi=127,
+      ),
+    )
+  }
+  items.push(AliasOrigin::bit_set(word_var(32, "EFLAGS"), x86_flags()))
+  items
+}
+
+///|
 fn x86_32_vars() -> Array[Var] {
-  let items = named_word_vars(32, [
-    "EAX", "EBX", "ECX", "EDX", "ESI", "EDI", "EBP", "ESP", "EIP", "EFLAGS",
-  ])
-  append_vars(items, named_word_vars(16, ["CS", "DS", "ES", "SS", "FS", "GS"]))
+  let items = named_word_vars(32, x86_32_gpr_names())
+  append_vars(items, named_word_vars(32, ["EIP", "EFLAGS"]))
+  append_vars(items, named_word_vars(16, x86_16_gpr_names()))
+  append_vars(items, named_word_vars(8, x86_8_low_gpr_names()))
+  append_vars(items, named_word_vars(8, x86_8_high_gpr_names()))
+  append_vars(items, named_word_vars(16, x86_segment_names(true)))
+  append_vars(items, numbered_word_vars(80, "ST", 8))
+  append_vars(items, numbered_word_vars(64, "MM", 8))
+  append_vars(items, numbered_word_vars(128, "XMM", 8))
   append_vars(items, x86_flags())
   items.push(mem_var(32, 8, "mem"))
   items
@@ -427,11 +588,18 @@ fn x86_32_vars() -> Array[Var] {
 
 ///|
 fn x86_64_vars() -> Array[Var] {
-  let items = named_word_vars(64, [
-    "RAX", "RBX", "RCX", "RDX", "RSI", "RDI", "RBP", "RSP", "RIP", "R8", "R9", "R10",
-    "R11", "R12", "R13", "R14", "R15",
-  ])
-  append_vars(items, named_word_vars(16, ["CS", "DS", "ES", "SS", "FS", "GS"]))
+  let items = named_word_vars(64, x86_64_gpr_names())
+  append_vars(items, named_word_vars(64, ["RIP", "RFLAGS"]))
+  append_vars(items, named_word_vars(32, x86_64_gpr32_alias_names()))
+  append_vars(items, named_word_vars(32, ["EFLAGS", "MXCSR"]))
+  append_vars(items, named_word_vars(16, x86_64_gpr16_alias_names()))
+  append_vars(items, named_word_vars(8, x86_64_gpr8_alias_names()))
+  append_vars(items, named_word_vars(8, x86_8_high_gpr_names()))
+  append_vars(items, named_word_vars(16, x86_segment_names(false)))
+  append_vars(items, numbered_word_vars(80, "ST", 8))
+  append_vars(items, numbered_word_vars(64, "MM", 8))
+  append_vars(items, numbered_word_vars(256, "YMM", 16))
+  append_vars(items, numbered_word_vars(128, "XMM", 16))
   append_vars(items, x86_flags())
   items.push(mem_var(64, 8, "mem"))
   items
@@ -739,18 +907,28 @@ fn x86_64_role_names(role : Role) -> Array[String] {
     General => []
     IntegerRegister =>
       concat_role_names([
-        ["rax", "rbx", "rcx", "rdx", "rsi", "rdi", "rbp", "rsp"],
-        role_names("r", 8, 15),
-        ["cs", "ds", "es", "ss"],
+        lower_names(x86_64_gpr_names()),
+        lower_names(x86_64_gpr32_alias_names()),
+        lower_names(x86_64_gpr16_alias_names()),
+        lower_names(x86_64_gpr8_alias_names()),
+        lower_names(x86_8_high_gpr_names()),
+        lower_names(x86_segment_names(false)),
       ])
-    FloatingRegister | VectorRegister => []
-    StackPointer => ["rsp"]
-    FramePointer => ["rbp"]
+    FloatingRegister =>
+      concat_role_names([role_names("st", 0, 7), role_names("mm", 0, 7)])
+    VectorRegister =>
+      concat_role_names([role_names("xmm", 0, 15), role_names("ymm", 0, 15)])
+    StackPointer => ["rsp", "esp", "sp", "spl"]
+    FramePointer => ["rbp", "ebp", "bp", "bpl"]
     ProgramCounter => ["rip"]
-    Status => ["eflags", "rflags", "cf", "pf", "af", "zf", "sf", "of"]
+    Status =>
+      concat_role_names([
+        ["eflags", "rflags", "mxcsr"],
+        lower_names(x86_flag_names()),
+      ])
     Constant | ZeroRegister | LinkRegister | ThreadPointer => []
     Argument => ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]
-    ResultRegister => ["rax", "rdx"]
+    ResultRegister => ["rax", "rdx", "eax", "edx", "ax", "dx", "al", "dl"]
     CallerSaved => []
     CalleeSaved => []
     Reserved => []
@@ -762,18 +940,23 @@ fn x86_32_role_names(role : Role) -> Array[String] {
   match role {
     General => []
     IntegerRegister =>
-      [
-        "eax", "ebx", "ecx", "edx", "esi", "edi", "ebp", "esp", "cs", "ds", "es",
-        "ss", "fs", "gs",
-      ]
-    FloatingRegister | VectorRegister => []
-    StackPointer => ["esp"]
-    FramePointer => ["ebp"]
+      concat_role_names([
+        lower_names(x86_32_gpr_names()),
+        lower_names(x86_16_gpr_names()),
+        lower_names(x86_8_low_gpr_names()),
+        lower_names(x86_8_high_gpr_names()),
+        lower_names(x86_segment_names(true)),
+      ])
+    FloatingRegister =>
+      concat_role_names([role_names("st", 0, 7), role_names("mm", 0, 7)])
+    VectorRegister => role_names("xmm", 0, 7)
+    StackPointer => ["esp", "sp"]
+    FramePointer => ["ebp", "bp"]
     ProgramCounter => ["eip"]
-    Status => ["eflags", "cf", "pf", "af", "zf", "sf", "of"]
+    Status => concat_role_names([["eflags"], lower_names(x86_flag_names())])
     Constant | ZeroRegister | LinkRegister | ThreadPointer => []
     Argument => []
-    ResultRegister => ["eax", "edx"]
+    ResultRegister => ["eax", "edx", "ax", "dx", "al", "dl"]
     CallerSaved => []
     CalleeSaved => []
     Reserved => []
@@ -1579,6 +1762,7 @@ pub fn Target::x86() -> Target {
     bits=32,
     endianness=LittleEndian,
     vars=x86_32_vars(),
+    alias_origins=x86_32_alias_origins(),
   )
 }
 
@@ -1591,6 +1775,7 @@ pub fn Target::x86_64() -> Target {
     bits=64,
     endianness=LittleEndian,
     vars=x86_64_vars(),
+    alias_origins=x86_64_alias_origins(),
   )
 }
 

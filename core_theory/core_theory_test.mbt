@@ -201,6 +201,14 @@ test "target registry resolves common and custom declarations" {
     Ok(target) => assert_true(target.matches("powerpc64"))
     Err(reason) => fail(reason)
   }
+  match @core_theory.get_target("ppc32eb") {
+    Ok(target) => {
+      assert_true(target.matches("powerpc"))
+      assert_true(target.matches("powerpc32eb"))
+      assert_true(target.endianness() == BigEndian)
+    }
+    Err(reason) => fail(reason)
+  }
   match @core_theory.get_target("mips64el") {
     Ok(target) => {
       assert_true(target.bits() == 64)

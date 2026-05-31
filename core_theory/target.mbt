@@ -2261,8 +2261,8 @@ pub fn Target::powerpc() -> Target {
     name=target_name("powerpc"),
     parent=Target::powerpc_family(),
     nicknames=[
-      "powerpc32+eb", "ppc", "powerpc32", "ppc32", "powerpc32be", "ppc32be", "power",
-      "power32",
+      "powerpc32+eb", "ppc", "powerpc32", "ppc32", "powerpc32eb", "powerpc32be",
+      "ppc32eb", "ppc32be", "power", "power32",
     ],
     bits=32,
     endianness=BigEndian,

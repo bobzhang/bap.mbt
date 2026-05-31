@@ -640,6 +640,11 @@ pub(all) struct Program {
 }
 pub fn Program::create(subs? : Array[Term[Sub]], tid? : Tid) -> Term[Self]
 
+type ProgramBuilder
+pub fn ProgramBuilder::add_sub(Self, Term[Sub]) -> Unit
+pub fn ProgramBuilder::create(tid? : Tid, subs? : Int) -> Self
+pub fn ProgramBuilder::result(Self) -> Term[Program]
+
 pub(all) enum Size {
   R8
   R16
@@ -707,6 +712,12 @@ pub(all) struct Sub {
 }
 pub fn Sub::create(name? : String, args? : Array[Term[Arg]], blks? : Array[Term[Blk]], tid? : Tid) -> Term[Self]
 pub fn Sub::of_cfg(IrCfg) -> Term[Self]
+
+type SubBuilder
+pub fn SubBuilder::add_arg(Self, Term[Arg]) -> Unit
+pub fn SubBuilder::add_blk(Self, Term[Blk]) -> Unit
+pub fn SubBuilder::create(tid? : Tid, args? : Int, blks? : Int, name? : String) -> Self
+pub fn SubBuilder::result(Self) -> Term[Sub]
 
 type Term[T]
 pub fn Term::alt(Self[Jmp]) -> JmpDst?

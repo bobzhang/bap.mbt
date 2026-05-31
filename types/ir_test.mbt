@@ -61,6 +61,47 @@ test "tids parse BAP-style textual identifiers" {
 }
 
 ///|
+test "BAP-style IR builders collect construction inputs" {
+  let typ = @types.ValueType::Imm(32)
+  let arg = @types.Arg::create(
+    @types.Var::new(name="argc", typ~),
+    Int(@types.Word::of_int(width=32, 1)),
+  )
+  let first_blk = @types.Blk::create(tid=@types.Tid::for_name("entry"))
+  let second_blk = @types.Blk::create(tid=@types.Tid::for_name("exit"))
+  let sub_tid = @types.Tid::for_name("main")
+  let sub_builder = @types.SubBuilder::create(
+    tid=sub_tid,
+    name="main",
+    args=1,
+    blks=2,
+  )
+  sub_builder.add_arg(arg)
+  sub_builder.add_blk(first_blk)
+  let first_sub = sub_builder.result()
+  sub_builder.add_blk(second_blk)
+  let second_sub = sub_builder.result()
+  assert_true(first_sub.tid() == sub_tid)
+  assert_true(first_sub.sub_name() == "main")
+  assert_true(first_sub.args().length() == 1)
+  assert_true(first_sub.blks().map(blk => blk.tid()) == [first_blk.tid()])
+  assert_true(
+    second_sub.blks().map(blk => blk.tid()) ==
+    [first_blk.tid(), second_blk.tid()],
+  )
+
+  let program_tid = @types.Tid::for_name("program")
+  let program_builder = @types.ProgramBuilder::create(tid=program_tid, subs=2)
+  program_builder.add_sub(first_sub)
+  let first_program = program_builder.result()
+  program_builder.add_sub(second_sub)
+  let second_program = program_builder.result()
+  assert_true(first_program.tid() == program_tid)
+  assert_true(first_program.subs().map(sub => sub.tid()) == [sub_tid])
+  assert_true(second_program.subs().map(sub => sub.tid()) == [sub_tid, sub_tid])
+}
+
+///|
 test "terms expose common BAP-style attributes and flags" {
   let origin = @types.Tid::for_name("source")
   let cond : @types.Exp = Var(@types.Var::new(name="ok", typ=Imm(1)))

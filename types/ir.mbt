@@ -479,6 +479,20 @@ pub(all) enum BlkElt {
 }
 
 ///|
+struct ProgramBuilder {
+  tid_value : Tid?
+  subs_value : Array[Term[Sub]]
+}
+
+///|
+struct SubBuilder {
+  tid_value : Tid?
+  name_value : String
+  args_value : Array[Term[Arg]]
+  blks_value : Array[Term[Blk]]
+}
+
+///|
 pub fn Program::create(subs? : Array[Term[Sub]], tid? : Tid) -> Term[Program] {
   Term::create(
     {
@@ -489,6 +503,22 @@ pub fn Program::create(subs? : Array[Term[Sub]], tid? : Tid) -> Term[Program] {
     },
     tid?,
   )
+}
+
+///|
+pub fn ProgramBuilder::create(tid? : Tid, subs? : Int) -> ProgramBuilder {
+  ignore(subs)
+  { tid_value: tid, subs_value: [] }
+}
+
+///|
+pub fn ProgramBuilder::add_sub(self : ProgramBuilder, sub : Term[Sub]) -> Unit {
+  self.subs_value.push(sub)
+}
+
+///|
+pub fn ProgramBuilder::result(self : ProgramBuilder) -> Term[Program] {
+  Program::create(subs=self.subs_value, tid?=self.tid_value)
 }
 
 ///|
@@ -533,6 +563,46 @@ pub fn Sub::create(
       },
     },
     tid?,
+  )
+}
+
+///|
+pub fn SubBuilder::create(
+  tid? : Tid,
+  args? : Int,
+  blks? : Int,
+  name? : String,
+) -> SubBuilder {
+  ignore(args)
+  ignore(blks)
+  {
+    tid_value: tid,
+    name_value: match name {
+      Some(value) => value
+      None => ""
+    },
+    args_value: [],
+    blks_value: [],
+  }
+}
+
+///|
+pub fn SubBuilder::add_arg(self : SubBuilder, arg : Term[Arg]) -> Unit {
+  self.args_value.push(arg)
+}
+
+///|
+pub fn SubBuilder::add_blk(self : SubBuilder, blk : Term[Blk]) -> Unit {
+  self.blks_value.push(blk)
+}
+
+///|
+pub fn SubBuilder::result(self : SubBuilder) -> Term[Sub] {
+  Sub::create(
+    name=self.name_value,
+    args=self.args_value,
+    blks=self.blks_value,
+    tid?=self.tid_value,
   )
 }
 

@@ -62,6 +62,26 @@ test "regular cache delegates load and save by digest" {
 }
 
 ///|
+test "regular sequence helpers mirror BAP sequence wrappers" {
+  let source = [1, 2, 3]
+  let copied = @regular.seq_of_array(source)
+  assert_true(copied == source)
+  source[0] = 9
+  assert_true(copied == [1, 2, 3])
+  assert_true(@regular.seq_cons(0, copied) == [0, 1, 2, 3])
+  let empty : Array[Int] = []
+  assert_true(@regular.seq_is_empty(empty))
+  assert_true(!@regular.seq_is_empty(copied))
+  assert_true(@regular.seq_filter(copied, value => value % 2 == 1) == [1, 3])
+  assert_true(@regular.seq_compare(Int::compare, [1, 2], [1, 3]) < 0)
+  assert_true(@regular.seq_compare(Int::compare, [1, 2, 3], [1, 2]) > 0)
+  assert_true(@regular.seq_compare(Int::compare, [1, 2], [1, 2, 0]) < 0)
+  assert_true(@regular.seq_compare(Int::compare, [1, 2], [1, 2]) == 0)
+  inspect(@regular.seq_render(copied), content="{1, 2, 3}")
+  inspect(@regular.seq_render(copied, max=2), content="{1, 2, ...}")
+}
+
+///|
 fn assert_trie_longest(
   trie : @regular.PrefixTrie[Int],
   cases : Array[(String, (Int, Int)?)],

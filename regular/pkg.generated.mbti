@@ -30,6 +30,18 @@ pub fn[T : Printable] render(T) -> String
 
 pub fn[T : Printable] render_array(ArrayView[T], sep? : String) -> String
 
+pub fn[A, B] seq_compare((A, B) -> Int, ArrayView[A], ArrayView[B]) -> Int
+
+pub fn[T] seq_cons(T, ArrayView[T]) -> Array[T]
+
+pub fn[T] seq_filter(ArrayView[T], (T) -> Bool) -> Array[T]
+
+pub fn[T] seq_is_empty(ArrayView[T]) -> Bool
+
+pub fn[T] seq_of_array(ArrayView[T]) -> Array[T]
+
+pub fn[T : Printable] seq_render(ArrayView[T], max? : Int) -> String
+
 // Errors
 
 // Types and methods

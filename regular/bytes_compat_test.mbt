@@ -71,6 +71,7 @@ test "translated BAP bytes comparison helpers use lexical byte order" {
   assert_true(@regular.bytes_compare(b"ab", b"ac") < 0)
   assert_true(@regular.bytes_compare(b"abc", b"ab") > 0)
   assert_true(@regular.bytes_compare(b"ab", b"ab") == 0)
+  assert_true(@regular.bytes_hash(b"same") == @regular.bytes_hash(b"same"))
   assert_true(@regular.bytes_mem(b"ab", b'b'))
   assert_true(!@regular.bytes_mem(b"ab", b'c'))
 }
@@ -164,6 +165,45 @@ test "translated BAP bytes traversal helpers scan in byte order" {
     @regular.bytes_fold(bytes, "", (acc, byte) => acc + "\{byte.to_int()};") ==
     "97;98;99;97;",
   )
+  assert_true(
+    @regular.bytes_to_list(bytes).to_array().map(byte => byte.to_int()) ==
+    [97, 98, 99, 97],
+  )
+  let folded : Result[Int, String] = @regular.bytes_fold_result(bytes, 0, (
+    acc,
+    byte,
+  ) => Ok(acc + byte.to_int()))
+  assert_true(folded == Ok(391))
+  assert_true(
+    @regular.bytes_fold_result(bytes, 0, (acc, byte) => {
+      if byte == b'c' {
+        Err("stop")
+      } else {
+        Ok(acc + byte.to_int())
+      }
+    }) ==
+    Err("stop"),
+  )
+  let finished : String = @regular.bytes_fold_until(
+    bytes,
+    init=0,
+    f=fn(acc, byte) { BytesContinue(acc + byte.to_int()) },
+    finish=fn(acc) { "done:\{acc}" },
+  )
+  assert_eq(finished, "done:391")
+  let stopped : String = @regular.bytes_fold_until(
+    bytes,
+    init=0,
+    f=fn(acc, byte) {
+      if byte == b'c' {
+        BytesStop("stop:\{acc}")
+      } else {
+        BytesContinue(acc + byte.to_int())
+      }
+    },
+    finish=fn(acc) { "done:\{acc}" },
+  )
+  assert_eq(stopped, "stop:195")
   assert_true(@regular.bytes_find(bytes, byte => byte > b'b') == Some(b'c'))
   assert_true(
     @regular.bytes_find_map(bytes, byte => {

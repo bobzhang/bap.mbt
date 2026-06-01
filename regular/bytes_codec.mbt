@@ -21,6 +21,12 @@ fn bytes_hex_value(c : Char) -> Int? {
 }
 
 ///|
+pub(all) enum BytesFoldStep[A, R] {
+  BytesContinue(A)
+  BytesStop(R)
+} derive(Eq, Debug)
+
+///|
 pub fn bytes_empty() -> Bytes {
   Bytes::new(0)
 }
@@ -75,6 +81,11 @@ pub fn bytes_equal(left : BytesView, right : BytesView) -> Bool {
 ///|
 pub fn bytes_compare(left : BytesView, right : BytesView) -> Int {
   left.compare(right)
+}
+
+///|
+pub fn bytes_hash(bytes : BytesView) -> Int {
+  bytes.hash()
 }
 
 ///|
@@ -147,6 +158,11 @@ pub fn bytes_to_array(bytes : BytesView) -> Array[Byte] {
 }
 
 ///|
+pub fn bytes_to_list(bytes : BytesView) -> @list.List[Byte] {
+  @list.from_array(bytes_to_array(bytes))
+}
+
+///|
 fn ascii_space_byte(byte : Byte) -> Bool {
   byte == b' ' ||
   byte == b'\t' ||
@@ -188,6 +204,39 @@ pub fn[A] bytes_fold(bytes : BytesView, init : A, f : (A, Byte) -> A) -> A {
     acc = f(acc, byte)
   }
   acc
+}
+
+///|
+pub fn[A, E] bytes_fold_result(
+  bytes : BytesView,
+  init : A,
+  f : (A, Byte) -> Result[A, E],
+) -> Result[A, E] {
+  let mut acc = init
+  for byte in bytes {
+    match f(acc, byte) {
+      Ok(next) => acc = next
+      Err(reason) => return Err(reason)
+    }
+  }
+  Ok(acc)
+}
+
+///|
+pub fn[A, R] bytes_fold_until(
+  bytes : BytesView,
+  init~ : A,
+  f~ : (A, Byte) -> BytesFoldStep[A, R],
+  finish~ : (A) -> R,
+) -> R {
+  let mut acc = init
+  for byte in bytes {
+    match f(acc, byte) {
+      BytesContinue(next) => acc = next
+      BytesStop(result) => return result
+    }
+  }
+  finish(acc)
 }
 
 ///|

@@ -3,6 +3,7 @@ package "bobzhang/bap/regular"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/list",
 }
 
 // Values
@@ -46,6 +47,10 @@ pub fn[A] bytes_find_map(BytesView, (Byte) -> A?) -> A?
 
 pub fn[A] bytes_fold(BytesView, A, (A, Byte) -> A) -> A
 
+pub fn[A, E] bytes_fold_result(BytesView, A, (A, Byte) -> Result[A, E]) -> Result[A, E]
+
+pub fn[A, R] bytes_fold_until(BytesView, init~ : A, f~ : (A, Byte) -> BytesFoldStep[A, R], finish~ : (A) -> R) -> R
+
 pub fn bytes_for_all(BytesView, (Byte) -> Bool) -> Bool
 
 pub fn bytes_from_hex(StringView) -> Result[Bytes, String]
@@ -53,6 +58,8 @@ pub fn bytes_from_hex(StringView) -> Result[Bytes, String]
 pub fn bytes_from_sexp_atom(StringView) -> Result[Bytes, String]
 
 pub fn bytes_get(BytesView, Int) -> Byte?
+
+pub fn bytes_hash(BytesView) -> Int
 
 pub fn bytes_index(BytesView, Byte) -> Int?
 
@@ -96,6 +103,8 @@ pub fn bytes_to_array(BytesView) -> Array[Byte]
 
 pub fn bytes_to_hex(BytesView) -> String
 
+pub fn bytes_to_list(BytesView) -> @list.List[Byte]
+
 pub fn bytes_to_sexp_atom(BytesView) -> String
 
 pub fn bytes_trim(BytesView) -> Bytes
@@ -129,6 +138,11 @@ pub fn[T : Printable] seq_render(ArrayView[T], max? : Int) -> String
 // Errors
 
 // Types and methods
+pub(all) enum BytesFoldStep[A, R] {
+  BytesContinue(A)
+  BytesStop(R)
+} derive(Eq, @debug.Debug)
+
 type Cache[T]
 pub fn[T] Cache::create(load~ : (Digest) -> T?, save~ : (Digest, T) -> Unit) -> Self[T]
 pub fn[T] Cache::load(Self[T], Digest) -> T?

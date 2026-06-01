@@ -43,6 +43,69 @@ fn[T : Eq] assert_persistent_round_trip(
 }
 
 ///|
+fn assert_optional_source_persistent_round_trip(
+  codec : @knowledge.Persistent[@core_theory.Source?]?,
+  value : @core_theory.Source?,
+  label : String,
+) -> Unit raise {
+  match codec {
+    Some(persistent) =>
+      match persistent.decode(persistent.encode(value)) {
+        Ok(decoded) =>
+          match (decoded, value) {
+            (None, None) => ()
+            (Some(left), Some(right)) => assert_true(left.equal(right))
+            _ => fail("unexpected decoded source for \{label}")
+          }
+        Err(reason) => fail(reason)
+      }
+    None => fail("missing persistent codec for \{label}")
+  }
+}
+
+///|
+fn assert_optional_compiler_persistent_round_trip(
+  codec : @knowledge.Persistent[@core_theory.Compiler?]?,
+  value : @core_theory.Compiler?,
+  label : String,
+) -> Unit raise {
+  match codec {
+    Some(persistent) =>
+      match persistent.decode(persistent.encode(value)) {
+        Ok(decoded) =>
+          match (decoded, value) {
+            (None, None) => ()
+            (Some(left), Some(right)) => assert_true(left.equal(right))
+            _ => fail("unexpected decoded compiler for \{label}")
+          }
+        Err(reason) => fail(reason)
+      }
+    None => fail("missing persistent codec for \{label}")
+  }
+}
+
+///|
+fn assert_optional_unit_persistent_round_trip(
+  codec : @knowledge.Persistent[@core_theory.ProgramUnit?]?,
+  value : @core_theory.ProgramUnit?,
+  label : String,
+) -> Unit raise {
+  match codec {
+    Some(persistent) =>
+      match persistent.decode(persistent.encode(value)) {
+        Ok(decoded) =>
+          match (decoded, value) {
+            (None, None) => ()
+            (Some(left), Some(right)) => assert_true(left.same(right))
+            _ => fail("unexpected decoded unit for \{label}")
+          }
+        Err(reason) => fail(reason)
+      }
+    None => fail("missing persistent codec for \{label}")
+  }
+}
+
+///|
 test "sorts model symbolic applications" {
   let word = @core_theory.Sort::bitv(32)
   inspect(word.to_string(), content="core:bitv<32>")
@@ -1753,6 +1816,11 @@ test "program metadata tracks source compiler and units" {
   assert_true(source.compare(same_source) == 0)
   assert_true(!source.equal(newer_source))
   assert_true(source.compare(newer_source) != 0)
+  let source_codec = @core_theory.Source::persistent()
+  match source_codec.decode(source_codec.encode(source)) {
+    Ok(decoded) => assert_true(decoded.equal(source))
+    Err(reason) => fail(reason)
+  }
   let compiler = @core_theory.Compiler::create(
     "clang",
     version=["17", "0"],
@@ -1778,6 +1846,11 @@ test "program metadata tracks source compiler and units" {
   assert_true(compiler.equal(same_compiler))
   assert_true(compiler.compare(same_compiler) == 0)
   assert_true(compiler.compare(optimized_compiler) < 0)
+  let compiler_codec = @core_theory.Compiler::persistent()
+  match compiler_codec.decode(compiler_codec.encode(compiler)) {
+    Ok(decoded) => assert_true(decoded.equal(compiler))
+    Err(reason) => fail(reason)
+  }
   inspect(
     compiler.to_string(),
     content="((name clang) (version (17 0)) (options (-O2)) (specs ((arch x86-64) (triple x86_64-unknown-linux))))",
@@ -1803,6 +1876,11 @@ test "program metadata tracks source compiler and units" {
     source~,
     compiler~,
   )
+  let unit_codec = @core_theory.ProgramUnit::persistent()
+  match unit_codec.decode(unit_codec.encode(unit)) {
+    Ok(decoded) => assert_true(decoded.same(unit))
+    Err(reason) => fail(reason)
+  }
   assert_true(unit.path() == Some("main.o"))
   assert_true(unit.same(unit))
   assert_true(unit.compare(unit) == 0)
@@ -1819,6 +1897,10 @@ test "program metadata tracks source compiler and units" {
   assert_true(unit.source().map(item => item.code()) == Some(source.code()))
   assert_true(unit.compiler().map(item => item.name()) == Some("clang"))
   let region = @core_theory.ProgramUnit::for_region(lower=base, upper~, target~)
+  match unit_codec.decode(unit_codec.encode(region)) {
+    Ok(decoded) => assert_true(decoded.same(region))
+    Err(reason) => fail(reason)
+  }
   assert_true(!unit.same(region))
   assert_true(
     region.same(@core_theory.ProgramUnit::for_region(lower=base, upper~)),
@@ -1999,6 +2081,26 @@ test "program source and unit facts expose BAP-style Knowledge slots" {
       }
     None => fail("missing persistent codec for unit target")
   }
+  assert_optional_source_persistent_round_trip(
+    unit_facts.source().slot().persistent(),
+    Some(source),
+    "unit source",
+  )
+  assert_optional_source_persistent_round_trip(
+    unit_facts.source().slot().persistent(),
+    None,
+    "empty unit source",
+  )
+  assert_optional_compiler_persistent_round_trip(
+    unit_facts.compiler().slot().persistent(),
+    Some(compiler),
+    "unit compiler",
+  )
+  assert_optional_compiler_persistent_round_trip(
+    unit_facts.compiler().slot().persistent(),
+    None,
+    "empty unit compiler",
+  )
   let observed_paths : Ref[Int] = Ref(0)
   unit_facts
   .path()
@@ -2083,6 +2185,16 @@ test "program label facts expose BAP-style Knowledge slots" {
     facts.aliases().slot().persistent(),
     ["_main", "main"],
     "label aliases",
+  )
+  assert_optional_unit_persistent_round_trip(
+    facts.unit().slot().persistent(),
+    Some(unit),
+    "label unit",
+  )
+  assert_optional_unit_persistent_round_trip(
+    facts.unit().slot().persistent(),
+    None,
+    "empty label unit",
   )
   assert_persistent_round_trip(
     facts.is_valid().slot().persistent(),

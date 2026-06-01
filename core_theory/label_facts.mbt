@@ -39,6 +39,11 @@ fn optional_bool_persistent() -> @knowledge.Persistent[Bool?] {
 }
 
 ///|
+fn optional_program_unit_persistent() -> @knowledge.Persistent[ProgramUnit?] {
+  @knowledge.Persistent::optional(ProgramUnit::persistent())
+}
+
+///|
 fn possible_name_domain() -> @knowledge.Domain[@knowledge.Opinions[String?]] {
   @knowledge.Domain::opinions(
     core_name("possible-name"),
@@ -138,6 +143,7 @@ pub fn LabelFacts::new() -> LabelFacts {
     name=core_name("label-unit"),
     domain=program_unit_domain(),
     desc="the program unit",
+    persistent=optional_program_unit_persistent(),
     public=true,
   )
   let valid = cls.property(

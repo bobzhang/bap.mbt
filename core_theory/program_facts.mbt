@@ -256,6 +256,16 @@ fn optional_word_persistent() -> @knowledge.Persistent[@types.Word?] {
 }
 
 ///|
+fn optional_source_persistent() -> @knowledge.Persistent[Source?] {
+  @knowledge.Persistent::optional(Source::persistent())
+}
+
+///|
+fn optional_compiler_persistent() -> @knowledge.Persistent[Compiler?] {
+  @knowledge.Persistent::optional(Compiler::persistent())
+}
+
+///|
 pub fn target_domain() -> @knowledge.Domain[Target] {
   let unknown = Target::unknown()
   @knowledge.Domain::new(
@@ -445,12 +455,14 @@ pub fn ProgramUnitFacts::new() -> ProgramUnitFacts {
     name=core_name("unit-source"),
     domain=source_domain(),
     desc="the source of the unit",
+    persistent=optional_source_persistent(),
     public=true,
   )
   let compiler = cls.property(
     name=core_name("unit-compiler"),
     domain=compiler_domain(),
     desc="the compiler that compiled the unit",
+    persistent=optional_compiler_persistent(),
     public=true,
   )
   {

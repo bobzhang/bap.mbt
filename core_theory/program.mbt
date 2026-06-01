@@ -247,6 +247,60 @@ pub fn Source::with_file(self : Source, file : String) -> Source {
 }
 
 ///|
+fn persistent_string_fields() -> @knowledge.Persistent[Array[String]] {
+  @knowledge.Persistent::array(@knowledge.Persistent::string())
+}
+
+///|
+fn persistent_decode_fields(
+  fields : Array[String],
+  count : Int,
+  context : String,
+) -> Result[Array[String], String] {
+  if fields.length() == count {
+    Ok(fields)
+  } else {
+    Err(
+      "invalid persistent \{context} encoding: expected \{count} fields, got \{fields.length()}",
+    )
+  }
+}
+
+///|
+pub fn Source::persistent() -> @knowledge.Persistent[Source] {
+  let file_codec = @knowledge.Persistent::optional(
+    @knowledge.Persistent::string(),
+  )
+  @knowledge.Persistent::convert(
+    to_persistent=source => {
+      [
+        source.language().to_string(),
+        source.code(),
+        file_codec.encode(source.file()),
+      ]
+    },
+    of_persistent=fields => {
+      match persistent_decode_fields(fields, 3, "source") {
+        Ok(_) => ()
+        Err(reason) => return Err(reason)
+      }
+      let file = match file_codec.decode(fields[2]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      Ok(
+        Source::create(
+          language=Language::of_string(fields[0]),
+          code=fields[1],
+          file?,
+        ),
+      )
+    },
+    persistent_string_fields(),
+  )
+}
+
+///|
 pub fn Compiler::create(
   name : String,
   specs? : Map[String, String],
@@ -373,6 +427,50 @@ pub fn Compiler::to_string(self : Compiler) -> String {
     ]),
     compiler_sexp_list(["specs", compiler_sexp_string_map(self.specs_value)]),
   ])
+}
+
+///|
+pub fn Compiler::persistent() -> @knowledge.Persistent[Compiler] {
+  let string_codec = @knowledge.Persistent::string()
+  let string_array_codec = @knowledge.Persistent::array(string_codec)
+  let specs_codec = @knowledge.Persistent::map(string_codec, string_codec)
+  @knowledge.Persistent::convert(
+    to_persistent=compiler => {
+      [
+        compiler.name(),
+        string_array_codec.encode(compiler.version()),
+        string_array_codec.encode(compiler.options()),
+        specs_codec.encode(compiler.specs()),
+      ]
+    },
+    of_persistent=fields => {
+      match persistent_decode_fields(fields, 4, "compiler") {
+        Ok(_) => ()
+        Err(reason) => return Err(reason)
+      }
+      let version = match string_array_codec.decode(fields[1]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let options = match string_array_codec.decode(fields[2]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let specs = match specs_codec.decode(fields[3]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      Ok(Compiler::create(fields[0], version~, options~, specs~))
+    },
+    persistent_string_fields(),
+  )
+}
+
+///|
+fn ensure_program_unit_counter_at_least(id : Int) -> Unit {
+  if program_unit_counter.val < id {
+    program_unit_counter.val = id
+  }
 }
 
 ///|
@@ -582,6 +680,148 @@ pub fn ProgramUnit::name(self : ProgramUnit) -> String {
         _ => "unit:\{self.id_value}"
       }
   }
+}
+
+///|
+fn ProgramUnit::persistent_kind(self : ProgramUnit) -> String {
+  match self.path_value {
+    Some(_) => "file"
+    None =>
+      match (self.lower_value, self.upper_value) {
+        (Some(_), Some(_)) => "region"
+        _ => "fresh"
+      }
+  }
+}
+
+///|
+fn[T] persistent_require_some(
+  value : T?,
+  field : String,
+  context : String,
+) -> Result[T, String] {
+  match value {
+    Some(item) => Ok(item)
+    None => Err("invalid persistent \{context} encoding: missing \{field}")
+  }
+}
+
+///|
+pub fn ProgramUnit::persistent() -> @knowledge.Persistent[ProgramUnit] {
+  let int_codec = @knowledge.Persistent::int()
+  let opt_string_codec = @knowledge.Persistent::optional(
+    @knowledge.Persistent::string(),
+  )
+  let opt_word_codec = @knowledge.Persistent::optional(word_persistent())
+  let target_codec = Target::persistent()
+  let opt_source_codec = @knowledge.Persistent::optional(Source::persistent())
+  let opt_compiler_codec = @knowledge.Persistent::optional(
+    Compiler::persistent(),
+  )
+  @knowledge.Persistent::convert(
+    to_persistent=unit => {
+      [
+        unit.persistent_kind(),
+        int_codec.encode(unit.id()),
+        opt_string_codec.encode(unit.path()),
+        opt_word_codec.encode(unit.lower()),
+        opt_word_codec.encode(unit.upper()),
+        opt_word_codec.encode(unit.bias()),
+        target_codec.encode(unit.target()),
+        opt_source_codec.encode(unit.source()),
+        opt_compiler_codec.encode(unit.compiler()),
+      ]
+    },
+    of_persistent=fields => {
+      match persistent_decode_fields(fields, 9, "program unit") {
+        Ok(_) => ()
+        Err(reason) => return Err(reason)
+      }
+      let id = match int_codec.decode(fields[1]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let path = match opt_string_codec.decode(fields[2]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let lower = match opt_word_codec.decode(fields[3]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let upper = match opt_word_codec.decode(fields[4]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let bias = match opt_word_codec.decode(fields[5]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let target = match target_codec.decode(fields[6]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let source = match opt_source_codec.decode(fields[7]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let compiler = match opt_compiler_codec.decode(fields[8]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      match fields[0] {
+        "file" => {
+          let file_path = match
+            persistent_require_some(path, "path", "program unit") {
+            Ok(value) => value
+            Err(reason) => return Err(reason)
+          }
+          Ok(
+            ProgramUnit::for_file(file_path, target~, bias?, source?, compiler?),
+          )
+        }
+        "region" => {
+          let lower = match
+            persistent_require_some(lower, "lower", "program unit") {
+            Ok(value) => value
+            Err(reason) => return Err(reason)
+          }
+          let upper = match
+            persistent_require_some(upper, "upper", "program unit") {
+            Ok(value) => value
+            Err(reason) => return Err(reason)
+          }
+          Ok(
+            ProgramUnit::for_region(
+              lower~,
+              upper~,
+              target~,
+              bias?,
+              source?,
+              compiler?,
+            ),
+          )
+        }
+        "fresh" => {
+          ensure_program_unit_counter_at_least(id)
+          Ok(
+            ProgramUnit::make(
+              id~,
+              path?,
+              lower?,
+              upper?,
+              bias?,
+              target~,
+              source?,
+              compiler?,
+            ),
+          )
+        }
+        _ => Err("invalid persistent program unit encoding: invalid kind")
+      }
+    },
+    persistent_string_fields(),
+  )
 }
 
 ///|

@@ -74,6 +74,7 @@ pub fn Compiler::create(String, specs? : Map[String, String], version? : Array[S
 pub fn Compiler::equal(Self, Self) -> Bool
 pub fn Compiler::name(Self) -> String
 pub fn Compiler::options(Self) -> Array[String]
+pub fn Compiler::persistent() -> @knowledge.Persistent[Self]
 pub fn Compiler::spec(Self, String) -> String?
 pub fn Compiler::specs(Self) -> Map[String, String]
 pub fn Compiler::to_string(Self) -> String
@@ -237,6 +238,7 @@ pub fn ProgramUnit::id(Self) -> Int
 pub fn ProgramUnit::lower(Self) -> @types.Word?
 pub fn ProgramUnit::name(Self) -> String
 pub fn ProgramUnit::path(Self) -> String?
+pub fn ProgramUnit::persistent() -> @knowledge.Persistent[Self]
 pub fn ProgramUnit::same(Self, Self) -> Bool
 pub fn ProgramUnit::source(Self) -> Source?
 pub fn ProgramUnit::target(Self) -> Target
@@ -354,6 +356,7 @@ pub fn Source::create(language? : Language, code? : String, file? : String) -> S
 pub fn Source::equal(Self, Self) -> Bool
 pub fn Source::file(Self) -> String?
 pub fn Source::language(Self) -> Language
+pub fn Source::persistent() -> @knowledge.Persistent[Self]
 pub fn Source::with_code(Self, String) -> Self
 pub fn Source::with_file(Self, String) -> Self
 pub fn Source::with_language(Self, Language) -> Self

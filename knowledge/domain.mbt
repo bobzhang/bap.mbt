@@ -55,10 +55,35 @@ pub fn[T] Domain::custom(
 }
 
 ///|
+fn[T : Eq] flat_default_join(
+  name : Name,
+  empty : T?,
+  lhs : T,
+  rhs : T,
+) -> Result[T, String] {
+  let is_empty = value => {
+    match empty {
+      Some(bottom) => value == bottom
+      None => false
+    }
+  }
+  if lhs == rhs || is_empty(rhs) {
+    Ok(lhs)
+  } else if is_empty(lhs) {
+    Ok(rhs)
+  } else {
+    Err("conflicting values in flat domain \{name.show()}")
+  }
+}
+
+///|
 pub fn[T : Eq] Domain::flat(
   name : Name,
   inspect : (T) -> String,
   empty? : T,
+  join? : (T, T) -> Result[T, String] = (lhs, rhs) => {
+    flat_default_join(name, empty, lhs, rhs)
+  },
 ) -> Domain[T] {
   let is_empty = value => {
     match empty {
@@ -81,17 +106,22 @@ pub fn[T : Eq] Domain::flat(
         Incomparable
       }
     },
-    join=(lhs, rhs) => {
-      if lhs == rhs || is_empty(rhs) {
-        Ok(lhs)
-      } else if is_empty(lhs) {
-        Ok(rhs)
-      } else {
-        Err("conflicting values in flat domain \{name.show()}")
-      }
-    },
+    join~,
     inspect~,
   )
+}
+
+///|
+fn[T] total_default_join(
+  compare : (T, T) -> Int,
+  lhs : T,
+  rhs : T,
+) -> Result[T, String] {
+  if compare(lhs, rhs) <= 0 {
+    Ok(rhs)
+  } else {
+    Ok(lhs)
+  }
 }
 
 ///|
@@ -100,6 +130,9 @@ pub fn[T] Domain::total(
   inspect : (T) -> String,
   empty~ : T,
   compare~ : (T, T) -> Int,
+  join? : (T, T) -> Result[T, String] = (lhs, rhs) => {
+    total_default_join(compare, lhs, rhs)
+  },
 ) -> Domain[T] {
   Domain::new(
     name~,
@@ -115,13 +148,7 @@ pub fn[T] Domain::total(
         Equal
       }
     },
-    join=(lhs : T, rhs : T) => {
-      if compare(lhs, rhs) <= 0 {
-        Ok(rhs)
-      } else {
-        Ok(lhs)
-      }
-    },
+    join~,
     inspect~,
   )
 }

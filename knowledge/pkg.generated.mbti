@@ -46,7 +46,7 @@ type Domain[T]
 pub fn Domain::bool(Name) -> Self[Bool]
 pub fn[T] Domain::custom(Name, (T) -> String, empty~ : T, order~ : (T, T) -> PartialOrder, join? : (T, T) -> Result[T, String]) -> Self[T]
 pub fn[T] Domain::empty(Self[T]) -> T?
-pub fn[T : Eq] Domain::flat(Name, (T) -> String, empty? : T) -> Self[T]
+pub fn[T : Eq] Domain::flat(Name, (T) -> String, empty? : T, join? : (T, T) -> Result[T, String]) -> Self[T]
 pub fn[T] Domain::inspect(Self[T], T) -> String
 pub fn[T] Domain::is_empty(Self[T], T) -> Bool
 pub fn[T] Domain::join(Self[T], T, T) -> Result[T, String]
@@ -59,7 +59,7 @@ pub fn[T] Domain::optional(Self[T]) -> Self[T?]
 pub fn[T] Domain::order(Self[T], T, T) -> PartialOrder
 pub fn[T : Eq] Domain::powerset(Name, (T) -> String) -> Self[Array[T]]
 pub fn Domain::string(Name) -> Self[String]
-pub fn[T] Domain::total(Name, (T) -> String, empty~ : T, compare~ : (T, T) -> Int) -> Self[T]
+pub fn[T] Domain::total(Name, (T) -> String, empty~ : T, compare~ : (T, T) -> Int, join? : (T, T) -> Result[T, String]) -> Self[T]
 
 type FactTable[K, P]
 pub fn[K, P] FactTable::collect(Self[K, P], Object[K]) -> P?

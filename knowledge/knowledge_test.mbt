@@ -62,6 +62,43 @@ test "flat domains keep bottom and reject conflicting facts" {
 }
 
 ///|
+test "flat and total domains accept custom joins" {
+  let flat = @knowledge.Domain::flat(
+    @knowledge.Name::create("joined-color", pkg="test"),
+    value => value,
+    empty="",
+    join=(lhs, rhs) => {
+      if lhs == "" {
+        Ok(rhs)
+      } else if rhs == "" || lhs == rhs {
+        Ok(lhs)
+      } else {
+        Ok("\{lhs}+\{rhs}")
+      }
+    },
+  )
+  assert_true(flat.order("red", "blue") == Incomparable)
+  assert_true(flat.join("red", "blue") == Ok("red+blue"))
+
+  let total = @knowledge.Domain::total(
+    @knowledge.Name::create("bounded-confidence", pkg="test"),
+    (value : Int) => value.to_string(),
+    empty=0,
+    compare=(lhs, rhs) => lhs.compare(rhs),
+    join=(lhs, rhs) => {
+      let upper = if lhs > rhs { lhs } else { rhs }
+      if upper <= 10 {
+        Ok(upper)
+      } else {
+        Err("confidence bound exceeded")
+      }
+    },
+  )
+  assert_true(total.join(4, 7) == Ok(7))
+  assert_true(total.join(4, 12) is Err(_))
+}
+
+///|
 test "custom domains derive default joins from partial order" {
   let domain = @knowledge.Domain::custom(
     @knowledge.Name::create("partial-level", pkg="test"),

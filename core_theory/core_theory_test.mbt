@@ -155,6 +155,10 @@ fn assert_var_persistent_round_trip(
 
 ///|
 test "sorts model symbolic applications" {
+  assert_true(
+    @core_theory.Sort::top().name() ==
+    Some(@knowledge.Name::create("Top", pkg="core")),
+  )
   let word = @core_theory.Sort::bitv(32)
   inspect(word.to_string(), content="core:bitv<32>")
   assert_true(word.name() == Some(@knowledge.Name::create("bitv", pkg="core")))
@@ -2069,6 +2073,12 @@ test "program metadata tracks source compiler and units" {
 
 ///|
 test "program semantics stores values and instruction bytes" {
+  assert_true(
+    @core_theory.Semantics::empty()
+    .value()
+    .sort()
+    .same(@core_theory.Sort::top()),
+  )
   let value = @core_theory.Value::empty(@core_theory.Sort::bool()).with_fact(
     "kind", "lifted",
   )

@@ -373,6 +373,7 @@ pub fn Sort::sym(@knowledge.Name) -> Self
 pub fn Sort::tail(Self) -> Array[Self]
 pub fn Sort::tl(Self) -> Self?
 pub fn Sort::to_string(Self) -> String
+pub fn Sort::top() -> Self
 pub fn Sort::value(Self) -> Int?
 
 type Source

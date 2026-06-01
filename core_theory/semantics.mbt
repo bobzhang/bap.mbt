@@ -7,7 +7,7 @@ struct Semantics {
 
 ///|
 fn semantics_default_value() -> Value {
-  Value::empty(Sym(@knowledge.Name::create("unit", pkg="core")))
+  Value::empty(Sort::top())
 }
 
 ///|

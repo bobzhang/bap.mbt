@@ -26,6 +26,11 @@ pub fn Sort::arrow(lhs : Sort, rhs : Sort) -> Sort {
 }
 
 ///|
+pub fn Sort::top() -> Sort {
+  Sym(@knowledge.Name::create("Top", pkg="core"))
+}
+
+///|
 pub fn Sort::bool() -> Sort {
   Sym(@knowledge.Name::create("bool", pkg="core"))
 }

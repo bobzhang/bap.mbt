@@ -19,9 +19,57 @@ fn default_bool(value : Bool?) -> Bool {
 }
 
 ///|
+fn bool_or(value : Bool?, default : Bool) -> Bool {
+  match value {
+    Some(flag) => flag
+    None => default
+  }
+}
+
+///|
 fn next_var_ident() -> String {
   fresh_var_counter.val = fresh_var_counter.val + 1
-  "%\{fresh_var_counter.val}"
+  "#\{fresh_var_counter.val}"
+}
+
+///|
+fn var_valid_first_char(ch : Char) -> Bool {
+  !(ch >= '0' && ch <= '9') && ch != '#' && ch != '$'
+}
+
+///|
+fn var_escape_worthy(ch : Char) -> Bool {
+  ch == '.' ||
+  ch == ' ' ||
+  ch == '\n' ||
+  ch == '\r' ||
+  ch == '\t' ||
+  ch.to_int() < 0x20 ||
+  ch.to_int() > 0x7e
+}
+
+///|
+fn var_mangle(name : String) -> String {
+  let builder = StringBuilder()
+  for ch in name {
+    if ch == '\\' {
+      builder.write_string("\\\\")
+    } else if var_escape_worthy(ch) {
+      builder.write_char('\\')
+      builder.write_char(ch)
+    } else {
+      builder.write_char(ch)
+    }
+  }
+  let escaped = builder.to_string()
+  if escaped.length() == 0 {
+    "_"
+  } else {
+    match escaped.get_char(0) {
+      Some(ch) if !var_valid_first_char(ch) => "_\{escaped}"
+      _ => escaped
+    }
+  }
 }
 
 ///|
@@ -33,16 +81,22 @@ pub fn Var::create(
 ) -> Var {
   {
     sort_value: sort,
-    ident_value: name,
+    ident_value: var_mangle(name),
     version_value: 0,
-    mutable_flag: default_bool(is_mutable),
+    mutable_flag: bool_or(is_mutable, true),
     virtual_flag: default_bool(is_virtual),
   }
 }
 
 ///|
 pub fn Var::fresh(sort : Sort) -> Var {
-  Var::create(sort, next_var_ident(), is_virtual=true)
+  {
+    sort_value: sort,
+    ident_value: next_var_ident(),
+    version_value: 0,
+    mutable_flag: true,
+    virtual_flag: true,
+  }
 }
 
 ///|
@@ -79,7 +133,7 @@ pub fn Var::name(self : Var) -> String {
   if self.version_value == 0 {
     self.ident_value
   } else {
-    "\{self.ident_value}#\{self.version_value}"
+    "\{self.ident_value}.\{self.version_value}"
   }
 }
 

@@ -182,15 +182,25 @@ test "sorts model symbolic applications" {
 ///|
 test "variables preserve sorts versions and mutability flags" {
   let sort = @core_theory.Sort::bitv(64)
-  let reg = @core_theory.Var::create(sort, "RAX", is_mutable=true)
+  let reg = @core_theory.Var::create(sort, "RAX")
   inspect(reg.name(), content="RAX")
   assert_true(reg.is_mutable())
   assert_true(!reg.is_virtual())
+  assert_true(
+    !@core_theory.Var::create(sort, "tmp", is_mutable=false).is_mutable(),
+  )
+  inspect(@core_theory.Var::create(sort, "").name(), content="_")
+  inspect(@core_theory.Var::create(sort, "0tmp").name(), content="_0tmp")
+  inspect(@core_theory.Var::create(sort, "R.0").name(), content="R\\.0")
+  inspect(@core_theory.Var::create(sort, "R 0").name(), content="R\\ 0")
   let versioned = reg.versioned(2)
-  inspect(versioned.name(), content="RAX#2")
+  inspect(versioned.name(), content="RAX.2")
   assert_true(versioned.sort().same(sort))
   assert_true(reg.forget().sort().same(sort))
-  assert_true(@core_theory.Var::fresh(sort).is_virtual())
+  let fresh = @core_theory.Var::fresh(sort)
+  assert_true(fresh.is_virtual())
+  assert_true(fresh.is_mutable())
+  assert_true(fresh.name().has_prefix("#"))
 }
 
 ///|

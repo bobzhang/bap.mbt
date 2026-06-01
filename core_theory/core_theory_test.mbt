@@ -2093,6 +2093,16 @@ test "target role helpers classify common architecture variables" {
     }
     None => fail("missing X2")
   }
+  match aarch64.find_var("X7") {
+    Some(result) =>
+      assert_true(aarch64.roles_of_var(result).contains(ResultRegister))
+    None => fail("missing X7")
+  }
+  match aarch64.find_var("R7") {
+    Some(result) =>
+      assert_true(aarch64.roles_of_var(result).contains(ResultRegister))
+    None => fail("missing R7")
+  }
   match aarch64.find_var("X30") {
     Some(link) => assert_true(aarch64.roles_of_var(link).contains(LinkRegister))
     None => fail("missing X30")
@@ -2104,6 +2114,13 @@ test "target role helpers classify common architecture variables" {
       assert_true(aarch64.roles_of_var(vector).contains(ResultRegister))
     }
     None => fail("missing V0")
+  }
+  match aarch64.find_var("V7") {
+    Some(vector) => {
+      assert_true(aarch64.roles_of_var(vector).contains(Argument))
+      assert_true(aarch64.roles_of_var(vector).contains(ResultRegister))
+    }
+    None => fail("missing V7")
   }
   match aarch64.find_var("D0") {
     Some(float) =>

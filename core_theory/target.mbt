@@ -2148,7 +2148,12 @@ fn aarch64_role_names(role : Role) -> Array[String] {
         role_names("r", 0, 7),
         role_names("v", 0, 7),
       ])
-    ResultRegister => ["x0", "x1", "r0", "r1", "v0", "v1"]
+    ResultRegister =>
+      concat_role_names([
+        role_names("x", 0, 7),
+        role_names("r", 0, 7),
+        role_names("v", 0, 7),
+      ])
     CallerSaved => []
     CalleeSaved => []
     Reserved => []

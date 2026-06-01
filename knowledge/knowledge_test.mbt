@@ -67,6 +67,12 @@ test "persistent codecs round trip strings names and arrays" {
   assert_true(map_codec.decode("1:a1:11:a1:2") is Err(_))
   assert_true(map_codec.decode("1:a1") is Err(_))
 
+  let set_codec = @knowledge.Persistent::set(string_codec)
+  let names = Set::from_array(["b", "a", "colon:key"])
+  assert_eq(set_codec.encode(names), "1:a1:b9:colon:key")
+  assert_true(set_codec.decode(set_codec.encode(names)) == Ok(names))
+  assert_true(set_codec.decode("2:a") is Err(_))
+
   let cls : @knowledge.Class[Unit, String] = @knowledge.Class::create(
     name=@knowledge.Name::create("persistent-program", pkg="test"),
     sort="unit",

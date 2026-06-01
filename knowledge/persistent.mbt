@@ -174,3 +174,40 @@ pub fn[K : Eq + Hash, V] Persistent::map(
     },
   )
 }
+
+///|
+pub fn[T : Eq + Hash] Persistent::set(
+  element : Persistent[T],
+) -> Persistent[Set[T]] {
+  Persistent::create(
+    to_string=values => {
+      let encoded_values = []
+      for item in values {
+        encoded_values.push(element.encode(item))
+      }
+      encoded_values.sort_by((left, right) => left.compare(right))
+      let parts = []
+      for encoded in encoded_values {
+        parts.push("\{encoded.length()}:\{encoded}")
+      }
+      parts.join("")
+    },
+    of_string=input => {
+      let result : Set[T] = Set([])
+      let mut offset = 0
+      while offset < input.length() {
+        let (encoded, next) = match
+          persistent_decode_chunk(input, offset, "set") {
+          Ok(chunk) => chunk
+          Err(reason) => return Err(reason)
+        }
+        match element.decode(encoded) {
+          Ok(item) => result.add(item)
+          Err(reason) => return Err(reason)
+        }
+        offset = next
+      }
+      Ok(result)
+    },
+  )
+}

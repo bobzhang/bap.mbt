@@ -4264,7 +4264,15 @@ fn append_target_variants_with_fabis(
 ///|
 fn append_x86_target_variants(items : Array[Target]) -> Unit {
   let x86 = Target::x86()
+  let i286 = Target::i286()
   let x86_64 = Target::x86_64()
+  append_target_variants(
+    items,
+    i286,
+    [UnknownSystem, MSDOS],
+    [UnknownFiletype],
+    [CDecl, Pascal, FortranAbi],
+  )
   append_target_variants(
     items,
     x86,

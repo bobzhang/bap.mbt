@@ -126,6 +126,16 @@ pub fn Language::llvm_a64() -> Language {
 }
 
 ///|
+pub fn Language::llvm_x86() -> Language {
+  OtherLanguage("llvm-x86")
+}
+
+///|
+pub fn Language::llvm_x86_64() -> Language {
+  OtherLanguage("llvm-x86_64")
+}
+
+///|
 pub fn Language::llvm_mips32() -> Language {
   OtherLanguage("llvm-mips32")
 }

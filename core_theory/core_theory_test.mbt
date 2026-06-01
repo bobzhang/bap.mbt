@@ -745,6 +745,24 @@ test "target registry resolves common and custom declarations" {
     }
     Err(reason) => fail(reason)
   }
+  match @core_theory.Target::get("i286-msdos-cdecl") {
+    Ok(target) => {
+      assert_true(target.bits() == 16)
+      assert_true(target.system() == MSDOS)
+      assert_true(target.abi() == CDecl)
+      assert_true(target.filetype() == UnknownFiletype)
+      assert_true(target.belongs(@core_theory.Target::i286()))
+    }
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.Target::get("i286-msdos-pascal") {
+    Ok(target) => {
+      assert_true(target.system() == MSDOS)
+      assert_true(target.abi() == Pascal)
+      assert_true(target.belongs(@core_theory.Target::i286()))
+    }
+    Err(reason) => fail(reason)
+  }
   match @core_theory.get_target("80386") {
     Ok(target) => {
       assert_true(target.matches("i386"))
@@ -2166,6 +2184,8 @@ test "program metadata tracks source compiler and units" {
   assert_true(@core_theory.Language::llvm_a32().to_string() == "llvm-armv7")
   assert_true(@core_theory.Language::llvm_t32().to_string() == "llvm-thumb")
   assert_true(@core_theory.Language::llvm_a64().to_string() == "llvm-aarch64")
+  assert_true(@core_theory.Language::llvm_x86().to_string() == "llvm-x86")
+  assert_true(@core_theory.Language::llvm_x86_64().to_string() == "llvm-x86_64")
   assert_true(@core_theory.Language::llvm_mips32().to_string() == "llvm-mips32")
   assert_true(
     @core_theory.Language::llvm_mips32le().to_string() == "llvm-mips32le",

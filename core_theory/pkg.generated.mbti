@@ -351,7 +351,13 @@ pub fn Sort::bitv(Int) -> Self
 pub fn Sort::bitv_size(Self) -> Int?
 pub fn Sort::bool() -> Self
 pub fn Sort::float(Int) -> Self
+pub fn Sort::float_bits(Self) -> Self?
+pub fn Sort::float_format(Self, Self) -> Self
+pub fn Sort::float_format_bits(Self) -> Self?
+pub fn Sort::float_format_exp(Self) -> Self?
+pub fn Sort::float_format_of(Self) -> Self?
 pub fn Sort::float_width(Self) -> Int?
+pub fn Sort::float_with_format(Self) -> Self
 pub fn Sort::forget(Self) -> Self
 pub fn Sort::hd(Self) -> Self?
 pub fn Sort::head(Self) -> Self

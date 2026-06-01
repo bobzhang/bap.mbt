@@ -189,6 +189,37 @@ test "sorts model symbolic applications" {
   }
   assert_true(@core_theory.Sort::float(80).float_width() == Some(80))
   assert_true(
+    @core_theory.Sort::float(80).float_bits() ==
+    Some(@core_theory.Sort::bitv(80)),
+  )
+  let ieee754 = @core_theory.Sort::app(
+    @core_theory.Sort::app(
+      @core_theory.Sort::app(
+        @core_theory.Sort::sym(@knowledge.Name::create("IEEE754", pkg="core")),
+        @core_theory.Sort::int(2),
+      ),
+      @core_theory.Sort::int(11),
+    ),
+    @core_theory.Sort::int(53),
+  )
+  let float_format = @core_theory.Sort::float_format(
+    ieee754,
+    @core_theory.Sort::bitv(64),
+  )
+  inspect(
+    float_format.to_string(),
+    content="core:bitv<core:IEEE754<2><11><53>><64>",
+  )
+  assert_true(float_format.float_format_exp() == Some(ieee754))
+  assert_true(
+    float_format.float_format_bits() == Some(@core_theory.Sort::bitv(64)),
+  )
+  let float64 = @core_theory.Sort::float_with_format(float_format)
+  assert_true(float64.refine_float() == Some(float64))
+  assert_true(float64.float_format_of() == Some(float_format))
+  assert_true(float64.float_bits() == Some(@core_theory.Sort::bitv(64)))
+  assert_true(float64.float_width() == Some(64))
+  assert_true(
     @core_theory.Sort::rmode().refine_rmode() ==
     Some(@core_theory.Sort::rmode()),
   )

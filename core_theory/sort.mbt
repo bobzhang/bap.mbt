@@ -51,6 +51,16 @@ pub fn Sort::float(width : Int) -> Sort {
 }
 
 ///|
+pub fn Sort::float_format(repr : Sort, bits : Sort) -> Sort {
+  sort_prepend_arg(bits, repr)
+}
+
+///|
+pub fn Sort::float_with_format(format : Sort) -> Sort {
+  App(Sym(core_sort_name("float")), format)
+}
+
+///|
 pub fn Sort::rmode() -> Sort {
   Sym(@knowledge.Name::create("rmode", pkg="core"))
 }
@@ -202,14 +212,42 @@ pub fn Sort::refine_float(self : Sort) -> Sort? {
 
 ///|
 pub fn Sort::float_width(self : Sort) -> Int? {
-  match self.refine_float() {
-    Some(sort) =>
-      match sort.tail() {
-        [IntSort(width)] => Some(width)
-        _ => None
+  match self.float_format_of() {
+    Some(IntSort(width)) => Some(width)
+    Some(format) =>
+      match format.float_format_bits() {
+        Some(bits) => bits.bitv_size()
+        None => None
       }
     None => None
   }
+}
+
+///|
+pub fn Sort::float_format_of(self : Sort) -> Sort? {
+  match self.refine_float() {
+    Some(sort) => sort.hd()
+    None => None
+  }
+}
+
+///|
+pub fn Sort::float_bits(self : Sort) -> Sort? {
+  match self.float_format_of() {
+    Some(IntSort(width)) => Some(Sort::bitv(width))
+    Some(format) => format.float_format_bits()
+    None => None
+  }
+}
+
+///|
+pub fn Sort::float_format_exp(self : Sort) -> Sort? {
+  self.hd()
+}
+
+///|
+pub fn Sort::float_format_bits(self : Sort) -> Sort? {
+  self.tl()
 }
 
 ///|
@@ -224,6 +262,15 @@ fn sort_with_args(head : Sort, args : Array[Sort], start : Int) -> Sort {
     result = App(result, args[i])
   }
   result
+}
+
+///|
+fn sort_prepend_arg(sort : Sort, arg : Sort) -> Sort {
+  let args = [arg]
+  for item in sort.tail() {
+    args.push(item)
+  }
+  sort_with_args(sort.head(), args, 0)
 }
 
 ///|

@@ -59,6 +59,7 @@ pub fn SemanticsFacts::new() -> SemanticsFacts {
     name=core_name("value"),
     domain=value_domain(),
     desc="the program semantics value",
+    persistent=Value::persistent(),
     public=true,
   )
   let code = cls.property(

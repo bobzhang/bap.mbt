@@ -90,6 +90,7 @@ pub fn Effect::fall() -> Self
 pub fn Effect::jump() -> Self
 pub fn Effect::name(Self) -> String
 pub fn Effect::named(String, EffectSort) -> Self
+pub fn Effect::persistent() -> @knowledge.Persistent[Self]
 pub fn Effect::rmem() -> Self
 pub fn Effect::rreg() -> Self
 pub fn Effect::sort(Self) -> EffectSort
@@ -105,6 +106,7 @@ pub(all) enum EffectSort {
   EffectTop
 } derive(Eq, @debug.Debug)
 pub fn EffectSort::order(Self, Self) -> @knowledge.PartialOrder
+pub fn EffectSort::persistent() -> @knowledge.Persistent[Self]
 pub fn EffectSort::to_string(Self) -> String
 pub fn EffectSort::union(Self, Self) -> Self
 
@@ -312,6 +314,7 @@ pub fn Semantics::create(effect? : Effect, value? : Value, code? : Bytes) -> Sel
 pub fn Semantics::effect(Self) -> Effect
 pub fn Semantics::empty() -> Self
 pub fn Semantics::equal(Self, Self) -> Bool
+pub fn Semantics::persistent() -> @knowledge.Persistent[Self]
 pub fn Semantics::value(Self) -> Value
 pub fn Semantics::with_code(Self, Bytes) -> Self
 pub fn Semantics::with_effect(Self, Effect) -> Self
@@ -343,6 +346,7 @@ pub fn Sort::head(Self) -> Self
 pub fn Sort::int(Int) -> Self
 pub fn Sort::mem(Self, Self) -> Self
 pub fn Sort::name(Self) -> @knowledge.Name?
+pub fn Sort::persistent() -> @knowledge.Persistent[Self]
 pub fn Sort::rmode() -> Self
 pub fn Sort::same(Self, Self) -> Bool
 pub fn Sort::sym(@knowledge.Name) -> Self
@@ -528,6 +532,7 @@ pub fn Value::empty(Sort) -> Self
 pub fn Value::equal(Self, Self) -> Bool
 pub fn Value::fact(Self, String) -> String?
 pub fn Value::forget(Self) -> Self
+pub fn Value::persistent() -> @knowledge.Persistent[Self]
 pub fn Value::sort(Self) -> Sort
 pub fn Value::with_fact(Self, String, String) -> Self
 

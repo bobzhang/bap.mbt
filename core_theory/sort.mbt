@@ -56,6 +56,54 @@ pub fn Sort::same(self : Sort, other : Sort) -> Bool {
 }
 
 ///|
+pub fn Sort::persistent() -> @knowledge.Persistent[Sort] {
+  let name_codec = @knowledge.Persistent::name()
+  let int_codec = @knowledge.Persistent::int()
+  let fields_codec = persistent_string_fields()
+  @knowledge.Persistent::convert(
+    to_persistent=sort => {
+      match sort {
+        Sym(name) => ["sym", name_codec.encode(name)]
+        IntSort(width) => ["int", int_codec.encode(width)]
+        App(lhs, rhs) =>
+          [
+            "app",
+            Sort::persistent().encode(lhs),
+            Sort::persistent().encode(rhs),
+          ]
+      }
+    },
+    of_persistent=fields => {
+      match fields {
+        ["sym", encoded] =>
+          match name_codec.decode(encoded) {
+            Ok(name) => Ok(Sym(name))
+            Err(reason) => Err(reason)
+          }
+        ["int", encoded] =>
+          match int_codec.decode(encoded) {
+            Ok(width) => Ok(IntSort(width))
+            Err(reason) => Err(reason)
+          }
+        ["app", encoded_lhs, encoded_rhs] => {
+          let lhs = match Sort::persistent().decode(encoded_lhs) {
+            Ok(value) => value
+            Err(reason) => return Err(reason)
+          }
+          let rhs = match Sort::persistent().decode(encoded_rhs) {
+            Ok(value) => value
+            Err(reason) => return Err(reason)
+          }
+          Ok(App(lhs, rhs))
+        }
+        _ => Err("invalid persistent sort encoding")
+      }
+    },
+    fields_codec,
+  )
+}
+
+///|
 pub fn Sort::name(self : Sort) -> @knowledge.Name? {
   match self {
     Sym(name) => Some(name)

@@ -94,6 +94,44 @@ pub fn Semantics::code_hex(self : Semantics) -> String? {
 }
 
 ///|
+pub fn Semantics::persistent() -> @knowledge.Persistent[Semantics] {
+  let effect_codec = Effect::persistent()
+  let value_codec = Value::persistent()
+  let code_codec = @knowledge.Persistent::optional(
+    @knowledge.Persistent::bytes(),
+  )
+  @knowledge.Persistent::convert(
+    to_persistent=semantics => {
+      [
+        effect_codec.encode(semantics.effect()),
+        value_codec.encode(semantics.value()),
+        code_codec.encode(semantics.code()),
+      ]
+    },
+    of_persistent=fields => {
+      match persistent_decode_fields(fields, 3, "semantics") {
+        Ok(_) => ()
+        Err(reason) => return Err(reason)
+      }
+      let effect = match effect_codec.decode(fields[0]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let value = match value_codec.decode(fields[1]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let code = match code_codec.decode(fields[2]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      Ok(Semantics::create(effect~, value~, code?))
+    },
+    persistent_string_fields(),
+  )
+}
+
+///|
 fn effect_equal(lhs : Effect, rhs : Effect) -> Bool {
   lhs.equal(rhs)
 }

@@ -44,6 +44,34 @@ pub fn Value::fact(self : Value, key : String) -> String? {
 }
 
 ///|
+pub fn Value::persistent() -> @knowledge.Persistent[Value] {
+  let string_codec = @knowledge.Persistent::string()
+  let facts_codec = @knowledge.Persistent::map(string_codec, string_codec)
+  let sort_codec = Sort::persistent()
+  @knowledge.Persistent::convert(
+    to_persistent=value => {
+      [sort_codec.encode(value.sort()), facts_codec.encode(value.facts)]
+    },
+    of_persistent=fields => {
+      match persistent_decode_fields(fields, 2, "value") {
+        Ok(_) => ()
+        Err(reason) => return Err(reason)
+      }
+      let sort = match sort_codec.decode(fields[0]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let facts = match facts_codec.decode(fields[1]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      Ok({ sort_value: sort, facts })
+    },
+    persistent_string_fields(),
+  )
+}
+
+///|
 pub fn Value::forget(self : Value) -> Value {
   {
     sort_value: Sym(@knowledge.Name::create("unit", pkg="core")),

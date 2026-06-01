@@ -57,6 +57,32 @@ pub fn EffectSort::to_string(self : EffectSort) -> String {
 }
 
 ///|
+fn EffectSort::of_string(input : String) -> EffectSort? {
+  match input {
+    "bot" => Some(EffectBot)
+    "data" => Some(EffectData)
+    "ctrl" => Some(EffectCtrl)
+    "both" => Some(EffectBoth)
+    "top" => Some(EffectTop)
+    _ => None
+  }
+}
+
+///|
+pub fn EffectSort::persistent() -> @knowledge.Persistent[EffectSort] {
+  @knowledge.Persistent::convert(
+    to_persistent=sort => sort.to_string(),
+    of_persistent=input => {
+      match EffectSort::of_string(input) {
+        Some(sort) => Ok(sort)
+        None => Err("invalid persistent effect sort")
+      }
+    },
+    @knowledge.Persistent::string(),
+  )
+}
+
+///|
 fn EffectSort::rank(self : EffectSort) -> Int {
   match self {
     EffectBot => 0
@@ -104,6 +130,26 @@ pub fn Effect::compare(self : Effect, other : Effect) -> Int {
     return sort_order
   }
   self.name_value.compare(other.name_value)
+}
+
+///|
+pub fn Effect::persistent() -> @knowledge.Persistent[Effect] {
+  let sort_codec = EffectSort::persistent()
+  @knowledge.Persistent::convert(
+    to_persistent=effect => [sort_codec.encode(effect.sort()), effect.name()],
+    of_persistent=fields => {
+      match persistent_decode_fields(fields, 2, "effect") {
+        Ok(_) => ()
+        Err(reason) => return Err(reason)
+      }
+      let sort = match sort_codec.decode(fields[0]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      Ok(Effect::named(fields[1], sort))
+    },
+    persistent_string_fields(),
+  )
 }
 
 ///|

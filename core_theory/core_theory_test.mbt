@@ -106,6 +106,38 @@ fn assert_optional_unit_persistent_round_trip(
 }
 
 ///|
+fn assert_value_persistent_round_trip(
+  codec : @knowledge.Persistent[@core_theory.Value]?,
+  value : @core_theory.Value,
+  label : String,
+) -> Unit raise {
+  match codec {
+    Some(persistent) =>
+      match persistent.decode(persistent.encode(value)) {
+        Ok(decoded) => assert_true(decoded.equal(value))
+        Err(reason) => fail(reason)
+      }
+    None => fail("missing persistent codec for \{label}")
+  }
+}
+
+///|
+fn assert_semantics_persistent_round_trip(
+  codec : @knowledge.Persistent[@core_theory.Semantics]?,
+  value : @core_theory.Semantics,
+  label : String,
+) -> Unit raise {
+  match codec {
+    Some(persistent) =>
+      match persistent.decode(persistent.encode(value)) {
+        Ok(decoded) => assert_true(decoded.equal(value))
+        Err(reason) => fail(reason)
+      }
+    None => fail("missing persistent codec for \{label}")
+  }
+}
+
+///|
 test "sorts model symbolic applications" {
   let word = @core_theory.Sort::bitv(32)
   inspect(word.to_string(), content="core:bitv<32>")
@@ -113,6 +145,11 @@ test "sorts model symbolic applications" {
   assert_true(word.tail() == [IntSort(32)])
   let mem = @core_theory.Sort::mem(@core_theory.Sort::bitv(64), word)
   inspect(mem.to_string(), content="core:mem<core:bitv<64>><core:bitv<32>>")
+  assert_persistent_round_trip(
+    Some(@core_theory.Sort::persistent()),
+    mem,
+    "sort",
+  )
 }
 
 ///|
@@ -133,7 +170,19 @@ test "effect sorts form the expected lattice" {
   assert_true(@core_theory.EffectData.union(EffectCtrl) == EffectBoth)
   assert_true(@core_theory.EffectData.order(EffectBoth) == Less)
   assert_true(@core_theory.EffectData.order(EffectCtrl) == Incomparable)
+  assert_persistent_round_trip(
+    Some(@core_theory.EffectSort::persistent()),
+    EffectBoth,
+    "effect sort",
+  )
   assert_true(@core_theory.Effect::jump().equal(@core_theory.Effect::jump()))
+  match
+    @core_theory.Effect::persistent().decode(
+      @core_theory.Effect::persistent().encode(@core_theory.Effect::jump()),
+    ) {
+    Ok(decoded) => assert_true(decoded.equal(@core_theory.Effect::jump()))
+    Err(reason) => fail(reason)
+  }
   assert_true(
     @core_theory.Effect::jump().compare(@core_theory.Effect::fall()) != 0,
   )
@@ -1959,6 +2008,16 @@ test "program semantics stores values and instruction bytes" {
   let same_semantics = @core_theory.Semantics::empty()
     .with_value(same_value)
     .with_code(b"\x90\xc3")
+  assert_value_persistent_round_trip(
+    Some(@core_theory.Value::persistent()),
+    value,
+    "semantics value",
+  )
+  assert_semantics_persistent_round_trip(
+    Some(@core_theory.Semantics::persistent()),
+    semantics,
+    "semantics",
+  )
   assert_true(semantics.equal(same_semantics))
   assert_true(semantics.compare(same_semantics) == 0)
   assert_true(semantics.compare(semantics.with_code(b"\x90\xc4")) != 0)
@@ -1966,6 +2025,11 @@ test "program semantics stores values and instruction bytes" {
   assert_true(semantics.code() == Some(b"\x90\xc3"))
   assert_true(semantics.code_hex() == Some("90c3"))
   let facts = @core_theory.SemanticsFacts::new()
+  assert_value_persistent_round_trip(
+    facts.value().slot().persistent(),
+    value,
+    "semantics fact value",
+  )
   assert_persistent_round_trip(
     facts.code().slot().persistent(),
     Some(b"\x90\xc3"),
@@ -2150,6 +2214,7 @@ test "program label facts expose BAP-style Knowledge slots" {
     source~,
   )
   let addr = @types.Word::of_int(width=64, 0x401000)
+  let label_semantics = @core_theory.Semantics::empty().with_code(b"\x55\xc3")
   let label = @core_theory.Label::for_addr(addr)
     .with_unit(unit)
     .with_alias("_main")
@@ -2158,7 +2223,7 @@ test "program label facts expose BAP-style Knowledge slots" {
     .with_encoding(C)
     .with_possible_name(weak, "sub_401000")
     .with_possible_name(strong, "main")
-    .with_semantics(@core_theory.Semantics::empty().with_code(b"\x55\xc3"))
+    .with_semantics(label_semantics)
     .with_subroutine()
   let facts = @core_theory.LabelFacts::new()
   assert_persistent_round_trip(
@@ -2185,6 +2250,11 @@ test "program label facts expose BAP-style Knowledge slots" {
     facts.aliases().slot().persistent(),
     ["_main", "main"],
     "label aliases",
+  )
+  assert_semantics_persistent_round_trip(
+    facts.semantics().slot().persistent(),
+    label_semantics,
+    "label semantics",
   )
   assert_optional_unit_persistent_round_trip(
     facts.unit().slot().persistent(),

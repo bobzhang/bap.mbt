@@ -2,6 +2,9 @@
 let fresh_label_counter : Ref[Int] = Ref(0)
 
 ///|
+let interned_label_ids : Map[String, Int] = {}
+
+///|
 struct Label {
   id : Int
   target_value : Target?
@@ -21,6 +24,37 @@ struct Label {
 fn next_label_id() -> Int {
   fresh_label_counter.val = fresh_label_counter.val + 1
   fresh_label_counter.val
+}
+
+///|
+fn label_package(pkg? : String) -> String {
+  @knowledge.Name::read("label", pkg?).pkg()
+}
+
+///|
+fn label_target_key(target : Target?) -> String {
+  match target {
+    Some(value) => value.name().show()
+    None => ""
+  }
+}
+
+///|
+fn interned_label_id(
+  kind : String,
+  pkg : String,
+  value : String,
+  target? : Target,
+) -> Int {
+  let key = "\{kind}|\{pkg}|\{value}|\{label_target_key(target)}"
+  match interned_label_ids.get(key) {
+    Some(id) => id
+    None => {
+      let id = next_label_id()
+      interned_label_ids[key] = id
+      id
+    }
+  }
 }
 
 ///|
@@ -59,6 +93,7 @@ fn empty_possible_label_names() -> @knowledge.Opinions[String?] {
 
 ///|
 fn Label::make(
+  id? : Int,
   target? : Target,
   unit? : ProgramUnit,
   addr? : @types.Word,
@@ -71,7 +106,10 @@ fn Label::make(
   is_subroutine? : Bool,
 ) -> Label {
   {
-    id: next_label_id(),
+    id: match id {
+      Some(value) => value
+      None => next_label_id()
+    },
     target_value: target,
     unit_value: unit,
     addr_value: addr,
@@ -119,18 +157,37 @@ pub fn Label::null() -> Label {
 }
 
 ///|
-pub fn Label::for_name(name : String, target? : Target) -> Label {
-  Label::make(name~, target?)
+pub fn Label::for_name(name : String, target? : Target, pkg? : String) -> Label {
+  let label_pkg = label_package(pkg?)
+  Label::make(
+    id=interned_label_id("name", label_pkg, name, target?),
+    name~,
+    target?,
+  )
 }
 
 ///|
-pub fn Label::for_addr(addr : @types.Word, target? : Target) -> Label {
-  Label::make(addr~, target?)
+pub fn Label::for_addr(
+  addr : @types.Word,
+  target? : Target,
+  pkg? : String,
+) -> Label {
+  let label_pkg = label_package(pkg?)
+  Label::make(
+    id=interned_label_id("addr", label_pkg, addr.to_hex(), target?),
+    addr~,
+    target?,
+  )
 }
 
 ///|
-pub fn Label::for_ivec(ivec : Int, target? : Target) -> Label {
-  Label::make(ivec~, target?)
+pub fn Label::for_ivec(ivec : Int, target? : Target, pkg? : String) -> Label {
+  let label_pkg = label_package(pkg?)
+  Label::make(
+    id=interned_label_id("ivec", label_pkg, ivec.to_string(), target?),
+    ivec~,
+    target?,
+  )
 }
 
 ///|

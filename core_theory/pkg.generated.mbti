@@ -144,9 +144,9 @@ pub fn Label::addr(Self) -> @types.Word?
 pub fn Label::aliases(Self) -> Array[String]
 pub fn Label::compare(Self, Self) -> Int
 pub fn Label::encoding(Self) -> Language?
-pub fn Label::for_addr(@types.Word, target? : Target) -> Self
-pub fn Label::for_ivec(Int, target? : Target) -> Self
-pub fn Label::for_name(String, target? : Target) -> Self
+pub fn Label::for_addr(@types.Word, target? : Target, pkg? : String) -> Self
+pub fn Label::for_ivec(Int, target? : Target, pkg? : String) -> Self
+pub fn Label::for_name(String, target? : Target, pkg? : String) -> Self
 pub fn Label::fresh(target? : Target) -> Self
 pub fn Label::id(Self) -> Int
 pub fn Label::is_subroutine(Self) -> Bool

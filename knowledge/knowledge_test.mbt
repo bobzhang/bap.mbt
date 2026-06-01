@@ -554,6 +554,74 @@ test "translated BAP fact observing is scoped" {
 }
 
 ///|
+test "translated BAP fact promises materialize deferred values" {
+  let cls : @knowledge.Class[Unit, String] = @knowledge.Class::create(
+    name=@knowledge.Name::create("promised-program", pkg="test"),
+    sort="unit",
+  )
+  let domain = @knowledge.Domain::bool(
+    @knowledge.Name::create("promised-live", pkg="test"),
+  )
+  let slot = cls.property(
+    name=@knowledge.Name::create("promised-live", pkg="test"),
+    domain~,
+  )
+  let facts = @knowledge.FactTable::new(slot)
+  let object = @knowledge.State::new().create(cls)
+  let null = @knowledge.Object::null(cls)
+  let calls : Ref[Int] = Ref(0)
+  facts.promise(current => {
+    calls.val = calls.val + 1
+    if current.equal(object) {
+      Ok(true)
+    } else {
+      Ok(false)
+    }
+  })
+  assert_true(facts.promise_count() == 1)
+  assert_true(facts.collect(object) == Some(false))
+  assert_true(facts.collect_promised(null) == Ok(Some(false)))
+  assert_true(calls.val == 0)
+  assert_true(facts.require(object) == Ok(true))
+  assert_true(calls.val == 1)
+  assert_true(facts.collect(object) == Some(true))
+  assert_true(facts.collect_promised(object) == Ok(Some(true)))
+  assert_true(calls.val == 1)
+}
+
+///|
+test "translated BAP fact promising is scoped" {
+  let cls : @knowledge.Class[Unit, String] = @knowledge.Class::create(
+    name=@knowledge.Name::create("scoped-promised-program", pkg="test"),
+    sort="unit",
+  )
+  let domain = @knowledge.Domain::bool(
+    @knowledge.Name::create("scoped-promised-live", pkg="test"),
+  )
+  let slot = cls.property(
+    name=@knowledge.Name::create("scoped-promised-live", pkg="test"),
+    domain~,
+  )
+  let state = @knowledge.State::new()
+  let first = state.create(cls)
+  let second = state.create(cls)
+  let facts = @knowledge.FactTable::new(slot)
+  let count_during : Ref[Int] = Ref(-1)
+  let result = facts.promising(
+    current => if current.equal(first) { Ok(true) } else { Ok(false) },
+    () => {
+      count_during.val = facts.promise_count()
+      facts.require(first)
+    },
+  )
+  assert_true(result == Ok(true))
+  assert_true(count_during.val == 1)
+  assert_true(facts.promise_count() == 0)
+  assert_true(facts.require_cached(first) == Ok(true))
+  assert_true(facts.require(second) is Err(_))
+}
+
+///|
 test "translated BAP fact require fails on empty values" {
   let cls : @knowledge.Class[Unit, String] = @knowledge.Class::create(
     name=@knowledge.Name::create("required-fact", pkg="test"),

@@ -18,6 +18,7 @@ struct FactTable[K, P] {
   slot : Slot[K, P]
   facts : Map[Int, P]
   observers : Array[(Object[K], P) -> Result[Unit, String]]
+  promises : Array[(Object[K]) -> Result[P, String]]
   _phantom : K?
 }
 
@@ -278,7 +279,7 @@ pub fn[K, S] Object::read(
 
 ///|
 pub fn[K, P] FactTable::new(slot : Slot[K, P]) -> FactTable[K, P] {
-  { slot, facts: {}, observers: [], _phantom: None }
+  { slot, facts: {}, observers: [], promises: [], _phantom: None }
 }
 
 ///|
@@ -374,6 +375,32 @@ pub fn[K, P] FactTable::observer_count(self : FactTable[K, P]) -> Int {
 }
 
 ///|
+pub fn[K, P] FactTable::promise(
+  self : FactTable[K, P],
+  provider : (Object[K]) -> Result[P, String],
+) -> Unit {
+  self.promises.push(provider)
+}
+
+///|
+pub fn[K, P, R] FactTable::promising(
+  self : FactTable[K, P],
+  provider : (Object[K]) -> Result[P, String],
+  body : () -> R,
+) -> R {
+  let index = self.promises.length()
+  self.promises.push(provider)
+  let result = body()
+  ignore(self.promises.remove(index))
+  result
+}
+
+///|
+pub fn[K, P] FactTable::promise_count(self : FactTable[K, P]) -> Int {
+  self.promises.length()
+}
+
+///|
 pub fn[K, P] FactTable::collect(
   self : FactTable[K, P],
   object : Object[K],
@@ -388,6 +415,38 @@ pub fn[K, P] FactTable::collect(
 }
 
 ///|
+pub fn[K, P] FactTable::collect_promised(
+  self : FactTable[K, P],
+  object : Object[K],
+) -> Result[P?, String] {
+  if object.is_null() {
+    return Ok(self.collect(object))
+  }
+  if object.class_name() != self.slot.owner() {
+    return Err(
+      "slot \{self.slot.name().show()} does not belong to class \{object.class_name().show()}",
+    )
+  }
+  match self.collect(object) {
+    Some(value) if !self.slot.domain().is_empty(value) => Ok(Some(value))
+    _ => {
+      for provider in self.promises {
+        match provider(object) {
+          Ok(value) if self.slot.domain().is_empty(value) => ()
+          Ok(value) =>
+            match self.provide(object, value) {
+              Ok(_) => ()
+              Err(reason) => return Err(reason)
+            }
+          Err(reason) => return Err(reason)
+        }
+      }
+      Ok(self.collect(object))
+    }
+  }
+}
+
+///|
 pub fn[K, P] FactTable::has(self : FactTable[K, P], object : Object[K]) -> Bool {
   match self.collect(object) {
     Some(value) => !self.slot.domain().is_empty(value)
@@ -397,6 +456,21 @@ pub fn[K, P] FactTable::has(self : FactTable[K, P], object : Object[K]) -> Bool 
 
 ///|
 pub fn[K, P] FactTable::require(
+  self : FactTable[K, P],
+  object : Object[K],
+) -> Result[P, String] {
+  match self.collect_promised(object) {
+    Ok(Some(value)) if !self.slot.domain().is_empty(value) => Ok(value)
+    Ok(_) =>
+      Err(
+        "required fact \{self.slot.name().show()} is empty for object \{object.id()}",
+      )
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+pub fn[K, P] FactTable::require_cached(
   self : FactTable[K, P],
   object : Object[K],
 ) -> Result[P, String] {

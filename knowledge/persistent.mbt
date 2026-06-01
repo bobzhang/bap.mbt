@@ -59,37 +59,53 @@ fn[T] persistent_decode_array(
   let values = []
   let mut offset = 0
   while offset < input.length() {
-    let mut separator = -1
-    let mut cursor = offset
-    while cursor < input.length() && separator < 0 {
-      if input[cursor] == ':' {
-        separator = cursor
-      }
-      cursor = cursor + 1
+    let (encoded, next) = match
+      persistent_decode_chunk(input, offset, "array") {
+      Ok(chunk) => chunk
+      Err(reason) => return Err(reason)
     }
-    if separator < 0 {
-      return Err("invalid persistent array encoding: missing length separator")
-    }
-    let length = try @string.parse_int(input[offset:separator]) catch {
-      _ => return Err("invalid persistent array encoding: invalid length")
-    } noraise {
-      value => value
-    }
-    if length < 0 {
-      return Err("invalid persistent array encoding: negative length")
-    }
-    let start = separator + 1
-    let end = start + length
-    if end > input.length() {
-      return Err("invalid persistent array encoding: truncated element")
-    }
-    match element.decode(input[start:end].to_owned()) {
+    match element.decode(encoded) {
       Ok(value) => values.push(value)
       Err(reason) => return Err(reason)
     }
-    offset = end
+    offset = next
   }
   Ok(values)
+}
+
+///|
+fn persistent_decode_chunk(
+  input : String,
+  offset : Int,
+  context : String,
+) -> Result[(String, Int), String] {
+  let mut separator = -1
+  let mut cursor = offset
+  while cursor < input.length() && separator < 0 {
+    if input[cursor] == ':' {
+      separator = cursor
+    }
+    cursor = cursor + 1
+  }
+  if separator < 0 {
+    return Err(
+      "invalid persistent \{context} encoding: missing length separator",
+    )
+  }
+  let length = try @string.parse_int(input[offset:separator]) catch {
+    _ => return Err("invalid persistent \{context} encoding: invalid length")
+  } noraise {
+    value => value
+  }
+  if length < 0 {
+    return Err("invalid persistent \{context} encoding: negative length")
+  }
+  let start = separator + 1
+  let end = start + length
+  if end > input.length() {
+    return Err("invalid persistent \{context} encoding: truncated element")
+  }
+  Ok((input[start:end].to_owned(), end))
 }
 
 ///|
@@ -104,5 +120,57 @@ pub fn[T] Persistent::array(element : Persistent[T]) -> Persistent[Array[T]] {
       parts.join("")
     },
     of_string=input => persistent_decode_array(element, input),
+  )
+}
+
+///|
+pub fn[K : Eq + Hash, V] Persistent::map(
+  key : Persistent[K],
+  value : Persistent[V],
+) -> Persistent[Map[K, V]] {
+  Persistent::create(
+    to_string=values => {
+      let entries = []
+      for entry in values {
+        entries.push((key.encode(entry.0), value.encode(entry.1)))
+      }
+      entries.sort_by((left, right) => left.0.compare(right.0))
+      let parts = []
+      for entry in entries {
+        parts.push(
+          "\{entry.0.length()}:\{entry.0}\{entry.1.length()}:\{entry.1}",
+        )
+      }
+      parts.join("")
+    },
+    of_string=input => {
+      let result : Map[K, V] = {}
+      let mut offset = 0
+      while offset < input.length() {
+        let (encoded_key, after_key) = match
+          persistent_decode_chunk(input, offset, "map") {
+          Ok(chunk) => chunk
+          Err(reason) => return Err(reason)
+        }
+        let (encoded_value, after_value) = match
+          persistent_decode_chunk(input, after_key, "map") {
+          Ok(chunk) => chunk
+          Err(reason) => return Err(reason)
+        }
+        let decoded_key = match key.decode(encoded_key) {
+          Ok(decoded) => decoded
+          Err(reason) => return Err(reason)
+        }
+        if result.contains(decoded_key) {
+          return Err("invalid persistent map encoding: duplicate key")
+        }
+        match value.decode(encoded_value) {
+          Ok(decoded_value) => result[decoded_key] = decoded_value
+          Err(reason) => return Err(reason)
+        }
+        offset = after_value
+      }
+      Ok(result)
+    },
   )
 }

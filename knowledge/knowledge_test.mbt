@@ -53,6 +53,20 @@ test "persistent codecs round trip strings names and arrays" {
   )
   assert_true(int_codec.decode(int_codec.encode(42)) == Ok(42))
 
+  let map_codec = @knowledge.Persistent::map(string_codec, int_codec)
+  let mapping : Map[String, Int] = { "b": 2, "a": 1, "colon:key": 3 }
+  assert_eq(map_codec.encode(mapping), "1:a1:11:b1:29:colon:key1:3")
+  match map_codec.decode(map_codec.encode(mapping)) {
+    Ok(decoded) => {
+      assert_true(decoded.get("a") == Some(1))
+      assert_true(decoded.get("b") == Some(2))
+      assert_true(decoded.get("colon:key") == Some(3))
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(map_codec.decode("1:a1:11:a1:2") is Err(_))
+  assert_true(map_codec.decode("1:a1") is Err(_))
+
   let cls : @knowledge.Class[Unit, String] = @knowledge.Class::create(
     name=@knowledge.Name::create("persistent-program", pkg="test"),
     sort="unit",

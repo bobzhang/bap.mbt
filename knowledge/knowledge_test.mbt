@@ -40,6 +40,13 @@ test "persistent codecs round trip strings names and arrays" {
   assert_true(array_codec.decode("2:a") is Err(_))
   assert_true(array_codec.decode("x:bad") is Err(_))
 
+  let list_codec = @knowledge.Persistent::list(string_codec)
+  let list_values = @list.from_array(["first", "", "last"])
+  match list_codec.decode(list_codec.encode(list_values)) {
+    Ok(decoded) => assert_true(decoded.to_array() == list_values.to_array())
+    Err(reason) => fail(reason)
+  }
+
   let int_codec = @knowledge.Persistent::convert(
     to_persistent=(value : Int) => value.to_string(),
     of_persistent=(input : String) => {

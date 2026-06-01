@@ -124,6 +124,17 @@ pub fn[T] Persistent::array(element : Persistent[T]) -> Persistent[Array[T]] {
 }
 
 ///|
+pub fn[T] Persistent::list(
+  element : Persistent[T],
+) -> Persistent[@list.List[T]] {
+  Persistent::convert(
+    to_persistent=(values : @list.List[T]) => values.to_array(),
+    of_persistent=(values : Array[T]) => Ok(@list.from_array(values)),
+    Persistent::array(element),
+  )
+}
+
+///|
 pub fn[K : Eq + Hash, V] Persistent::map(
   key : Persistent[K],
   value : Persistent[V],

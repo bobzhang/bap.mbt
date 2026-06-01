@@ -3,6 +3,7 @@ package "bobzhang/bap/knowledge"
 
 import {
   "moonbitlang/core/debug",
+  "moonbitlang/core/list",
   "moonbitlang/core/set",
 }
 
@@ -151,6 +152,7 @@ pub fn[A, B] Persistent::convert(to_persistent~ : (A) -> B, of_persistent~ : (B)
 pub fn[T] Persistent::create(to_string~ : (T) -> String, of_string~ : (String) -> Result[T, String]) -> Self[T]
 pub fn[T] Persistent::decode(Self[T], String) -> Result[T, String]
 pub fn[T] Persistent::encode(Self[T], T) -> String
+pub fn[T] Persistent::list(Self[T]) -> Self[@list.List[T]]
 pub fn[K : Eq + Hash, V] Persistent::map(Self[K], Self[V]) -> Self[Map[K, V]]
 pub fn Persistent::name() -> Self[Name]
 pub fn[T : Eq + Hash] Persistent::set(Self[T]) -> Self[@set.Set[T]]

@@ -129,12 +129,16 @@ pub fn[K, P] Slot::owner(Self[K, P]) -> Name
 
 type State
 pub fn[K, S] State::create(Self, Class[K, S]) -> Object[K]
+pub fn State::current_pkg(Self) -> String
 pub fn[K, S] State::intern(Self, Class[K, S], name~ : Name) -> Object[K]
+pub fn[K, S] State::intern_named(Self, Class[K, S], String, pkg? : String) -> Object[K]
 pub fn[K] State::interned_name(Self, Object[K]) -> Name?
 pub fn State::new() -> Self
 pub fn[K, S] State::objects(Self, Class[K, S]) -> Array[Object[K]]
 pub fn[K, S] State::read(Self, Class[K, S], String, pkg? : String) -> Result[Object[K], String]
 pub fn[K] State::repr(Self, Object[K]) -> String
+pub fn State::set_current_pkg(Self, String) -> Unit
+pub fn[R] State::with_pkg(Self, String, () -> R) -> R
 
 // Type aliases
 

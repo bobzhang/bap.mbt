@@ -8,6 +8,7 @@ struct Object[K] {
 ///|
 struct State {
   mut next_id : Int
+  mut current_pkg_value : String
   objects_by_class : Map[Name, Array[Int]]
   symbols_by_class : Map[Name, Map[Name, Int]]
 }
@@ -22,7 +23,12 @@ struct FactTable[K, P] {
 
 ///|
 pub fn State::new() -> State {
-  { next_id: 1, objects_by_class: {}, symbols_by_class: {} }
+  {
+    next_id: 1,
+    current_pkg_value: "user",
+    objects_by_class: {},
+    symbols_by_class: {},
+  }
 }
 
 ///|
@@ -40,6 +46,25 @@ fn[K, S] State::allocate(self : State, cls : Class[K, S]) -> Object[K] {
 ///|
 pub fn[K, S] State::create(self : State, cls : Class[K, S]) -> Object[K] {
   self.allocate(cls)
+}
+
+///|
+pub fn State::current_pkg(self : State) -> String {
+  self.current_pkg_value
+}
+
+///|
+pub fn State::set_current_pkg(self : State, pkg : String) -> Unit {
+  self.current_pkg_value = pkg
+}
+
+///|
+pub fn[R] State::with_pkg(self : State, pkg : String, body : () -> R) -> R {
+  let previous = self.current_pkg_value
+  self.current_pkg_value = pkg
+  let result = body()
+  self.current_pkg_value = previous
+  result
 }
 
 ///|
@@ -70,6 +95,20 @@ pub fn[K, S] State::intern(
 }
 
 ///|
+pub fn[K, S] State::intern_named(
+  self : State,
+  cls : Class[K, S],
+  name : String,
+  pkg? : String,
+) -> Object[K] {
+  let pkg_name = match pkg {
+    Some(value) => value
+    None => self.current_pkg_value
+  }
+  self.intern(cls, name=Name::create(name, pkg=pkg_name))
+}
+
+///|
 pub fn[K, S] State::read(
   self : State,
   cls : Class[K, S],
@@ -79,7 +118,11 @@ pub fn[K, S] State::read(
   if input == "nil" || input.has_prefix("#<") {
     Object::read(cls, input)
   } else {
-    Ok(self.intern(cls, name=Name::read(input, pkg?)))
+    let pkg_name = match pkg {
+      Some(value) => value
+      None => self.current_pkg_value
+    }
+    Ok(self.intern(cls, name=Name::read(input, pkg=pkg_name)))
   }
 }
 
@@ -113,7 +156,12 @@ pub fn[K] State::interned_name(self : State, object : Object[K]) -> Name? {
 ///|
 pub fn[K] State::repr(self : State, object : Object[K]) -> String {
   match self.interned_name(object) {
-    Some(name) => name.show()
+    Some(name) =>
+      if name.pkg() == self.current_pkg_value {
+        name.unqualified()
+      } else {
+        name.show()
+      }
     None => object.repr()
   }
 }

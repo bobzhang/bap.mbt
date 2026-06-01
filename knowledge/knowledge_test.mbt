@@ -275,6 +275,44 @@ test "state interns and reads BAP-style symbols by class" {
 }
 
 ///|
+test "state current package controls unqualified symbol reads and rendering" {
+  let state = @knowledge.State::new()
+  let cls : @knowledge.Class[Unit, String] = @knowledge.Class::create(
+    name=@knowledge.Name::create("packaged-object", pkg="test"),
+    sort="unit",
+  )
+  assert_eq(state.current_pkg(), "user")
+  match state.read(cls, "main") {
+    Ok(object) => {
+      assert_eq(state.repr(object), "main")
+      match state.interned_name(object) {
+        Some(name) => assert_eq(name.show(), "user:main")
+        None => fail("missing user symbol name")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+
+  state.set_current_pkg("analysis")
+  let analysis = state.intern_named(cls, "main")
+  assert_eq(state.repr(analysis), "main")
+  match state.interned_name(analysis) {
+    Some(name) => assert_eq(name.show(), "analysis:main")
+    None => fail("missing analysis symbol name")
+  }
+
+  let scoped_result = state.with_pkg("scoped", fn() { state.read(cls, "main") })
+  assert_eq(state.current_pkg(), "analysis")
+  match scoped_result {
+    Ok(scoped) => {
+      assert_eq(state.repr(scoped), "scoped:main")
+      assert_true(!analysis.equal(scoped))
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "optional domains lift base order and joins" {
   let base = @knowledge.Domain::bool(
     @knowledge.Name::create("flag", pkg="test"),

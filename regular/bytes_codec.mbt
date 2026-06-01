@@ -35,6 +35,97 @@ pub fn bytes_to_array(bytes : BytesView) -> Array[Byte] {
 }
 
 ///|
+pub fn bytes_iteri(bytes : BytesView, f : (Int, Byte) -> Unit) -> Unit {
+  for i in 0..<bytes.length() {
+    f(i, bytes[i])
+  }
+}
+
+///|
+pub fn bytes_iter(bytes : BytesView, f : (Byte) -> Unit) -> Unit {
+  bytes_iteri(bytes, (_, byte) => f(byte))
+}
+
+///|
+pub fn[A] bytes_fold(bytes : BytesView, init : A, f : (A, Byte) -> A) -> A {
+  let mut acc = init
+  for byte in bytes {
+    acc = f(acc, byte)
+  }
+  acc
+}
+
+///|
+pub fn[A] bytes_find_map(bytes : BytesView, f : (Byte) -> A?) -> A? {
+  for byte in bytes {
+    match f(byte) {
+      Some(value) => return Some(value)
+      None => ()
+    }
+  }
+  None
+}
+
+///|
+pub fn bytes_find(bytes : BytesView, f : (Byte) -> Bool) -> Byte? {
+  bytes_find_map(bytes, byte => if f(byte) { Some(byte) } else { None })
+}
+
+///|
+pub fn bytes_exists(bytes : BytesView, f : (Byte) -> Bool) -> Bool {
+  bytes_find(bytes, f) is Some(_)
+}
+
+///|
+pub fn bytes_for_all(bytes : BytesView, f : (Byte) -> Bool) -> Bool {
+  for byte in bytes {
+    if !f(byte) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+pub fn bytes_count(bytes : BytesView, f : (Byte) -> Bool) -> Int {
+  let mut total = 0
+  for byte in bytes {
+    if f(byte) {
+      total = total + 1
+    }
+  }
+  total
+}
+
+///|
+pub fn bytes_min_elt(bytes : BytesView) -> Byte? {
+  if bytes.length() == 0 {
+    return None
+  }
+  let mut best = bytes[0]
+  for i in 1..<bytes.length() {
+    if bytes[i] < best {
+      best = bytes[i]
+    }
+  }
+  Some(best)
+}
+
+///|
+pub fn bytes_max_elt(bytes : BytesView) -> Byte? {
+  if bytes.length() == 0 {
+    return None
+  }
+  let mut best = bytes[0]
+  for i in 1..<bytes.length() {
+    if bytes[i] > best {
+      best = bytes[i]
+    }
+  }
+  Some(best)
+}
+
+///|
 pub fn bytes_map(bytes : BytesView, f : (Byte) -> Byte) -> Bytes {
   Bytes::from_array(bytes_to_array(bytes).map(f))
 }

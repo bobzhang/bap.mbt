@@ -55,6 +55,43 @@ test "translated BAP bytes container helpers use byte indexes" {
 }
 
 ///|
+test "translated BAP bytes traversal helpers scan in byte order" {
+  let bytes = b"abca"
+  let indexed = []
+  @regular.bytes_iteri(bytes, (index, byte) => {
+    indexed.push((index, byte.to_int()))
+  })
+  assert_true(indexed == [(0, 97), (1, 98), (2, 99), (3, 97)])
+  let iterated = []
+  @regular.bytes_iter(bytes, byte => iterated.push(byte.to_int()))
+  assert_true(iterated == [97, 98, 99, 97])
+  assert_true(
+    @regular.bytes_fold(bytes, "", (acc, byte) => acc + "\{byte.to_int()};") ==
+    "97;98;99;97;",
+  )
+  assert_true(@regular.bytes_find(bytes, byte => byte > b'b') == Some(b'c'))
+  assert_true(
+    @regular.bytes_find_map(bytes, byte => {
+      if byte == b'b' {
+        Some(byte.to_int() + 1)
+      } else {
+        None
+      }
+    }) ==
+    Some(99),
+  )
+  assert_true(@regular.bytes_exists(bytes, byte => byte == b'c'))
+  assert_true(!@regular.bytes_exists(bytes, byte => byte == b'z'))
+  assert_true(@regular.bytes_for_all(bytes, byte => byte >= b'a'))
+  assert_true(!@regular.bytes_for_all(bytes, byte => byte < b'c'))
+  assert_true(@regular.bytes_count(bytes, byte => byte == b'a') == 2)
+  assert_true(@regular.bytes_min_elt(bytes) == Some(b'a'))
+  assert_true(@regular.bytes_max_elt(bytes) == Some(b'c'))
+  assert_true(@regular.bytes_min_elt(b"") is None)
+  assert_true(@regular.bytes_max_elt(b"") is None)
+}
+
+///|
 test "translated BAP bytes text and binary serialization round trip" {
   let bytes : Bytes = [
     0x54, 0x68, 0x69, 0x73, 0x00, 0xff, 0x20, 0x42, 0x41, 0x50,

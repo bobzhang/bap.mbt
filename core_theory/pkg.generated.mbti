@@ -369,6 +369,8 @@ pub(all) enum Role {
   IntegerRegister
   FloatingRegister
   VectorRegister
+  IndexRegister
+  SegmentRegister
   StackPointer
   FramePointer
   ProgramCounter
@@ -408,6 +410,7 @@ pub fn Role::function_argument() -> Self
 pub fn Role::function_return() -> Self
 pub fn Role::general() -> Self
 pub fn Role::hardware() -> Self
+pub fn Role::index() -> Self
 pub fn Role::integer() -> Self
 pub fn Role::link() -> Self
 pub fn Role::of_string(String) -> Self?
@@ -417,6 +420,7 @@ pub fn Role::parity_flag() -> Self
 pub fn Role::privileged() -> Self
 pub fn Role::pseudo() -> Self
 pub fn Role::reserved() -> Self
+pub fn Role::segment() -> Self
 pub fn Role::sign_flag() -> Self
 pub fn Role::special() -> Self
 pub fn Role::stack_pointer() -> Self

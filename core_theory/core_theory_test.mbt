@@ -1505,10 +1505,14 @@ test "target role helpers classify common architecture variables" {
   let argument = @core_theory.Role::of_string("function-argument").unwrap()
   let result = @core_theory.Role::of_string("function-return").unwrap()
   let alias_role = @core_theory.Role::of_string("alias").unwrap()
+  let index_role = @core_theory.Role::of_string("index").unwrap()
+  let segment_role = @core_theory.Role::of_string("segment").unwrap()
   let zero_flag = @core_theory.Role::of_string("zero-flag").unwrap()
   let thumb_role = @core_theory.Role::of_string("thumb").unwrap()
   assert_true(stack_pointer.to_string() == "stack-pointer")
   assert_true(alias_role.to_string() == "alias")
+  assert_true(index_role.to_string() == "index")
+  assert_true(segment_role.to_string() == "segment")
   assert_true(zero_flag.to_string() == "zero-flag")
   assert_true(thumb_role.to_string() == "thumb")
   assert_true(@core_theory.Role::general() == General)
@@ -1518,6 +1522,8 @@ test "target role helpers classify common architecture variables" {
   assert_true(@core_theory.Role::integer() == IntegerRegister)
   assert_true(@core_theory.Role::floating() == FloatingRegister)
   assert_true(@core_theory.Role::vector() == VectorRegister)
+  assert_true(@core_theory.Role::index() == IndexRegister)
+  assert_true(@core_theory.Role::segment() == SegmentRegister)
   assert_true(@core_theory.Role::stack_pointer() == StackPointer)
   assert_true(@core_theory.Role::frame_pointer() == FramePointer)
   assert_true(@core_theory.Role::link() == LinkRegister)
@@ -1544,6 +1550,12 @@ test "target role helpers classify common architecture variables" {
   assert_true(
     @core_theory.Role::of_string("function-argument") == Some(Argument),
   )
+  assert_true(
+    @core_theory.Role::of_string("index-register") == Some(IndexRegister),
+  )
+  assert_true(
+    @core_theory.Role::of_string("segment-register") == Some(SegmentRegister),
+  )
   assert_true(@core_theory.Role::of_string("sign-flag") == Some(SignFlag))
   assert_true(@core_theory.Role::of_string("thumb-mode") == Some(ThumbMode))
   assert_true(argument.equal(argument))
@@ -1560,8 +1572,16 @@ test "target role helpers classify common architecture variables" {
     None => fail("missing RIP")
   }
   match amd64.find_var("RDI") {
-    Some(arg) => assert_true(amd64.roles_of_var(arg).contains(Argument))
+    Some(arg) => {
+      assert_true(amd64.roles_of_var(arg).contains(Argument))
+      assert_true(amd64.roles_of_var(arg).contains(IndexRegister))
+    }
     None => fail("missing RDI")
+  }
+  match amd64.find_var("CS") {
+    Some(segment) =>
+      assert_true(amd64.roles_of_var(segment).contains(SegmentRegister))
+    None => fail("missing CS")
   }
   match amd64.find_var("RAX") {
     Some(result) => {
@@ -1708,6 +1728,17 @@ test "target role helpers classify common architecture variables" {
       assert_true(x86.roles_of_var(vector).contains(FloatingRegister))
     }
     None => fail("missing XMM0")
+  }
+  match x86.find_var("ESI") {
+    Some(index) => assert_true(x86.roles_of_var(index).contains(IndexRegister))
+    None => fail("missing ESI")
+  }
+  match @core_theory.Target::i86().find_var("SI") {
+    Some(index) =>
+      assert_true(
+        @core_theory.Target::i86().roles_of_var(index).contains(IndexRegister),
+      )
+    None => fail("missing SI")
   }
   let arm = @core_theory.Target::arm()
   assert_true(arm.find_role(ProgramCounter).map(v => v.ident()) == Some("PC"))

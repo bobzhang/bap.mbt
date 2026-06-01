@@ -725,6 +725,8 @@ pub(all) enum Role {
   IntegerRegister
   FloatingRegister
   VectorRegister
+  IndexRegister
+  SegmentRegister
   StackPointer
   FramePointer
   ProgramCounter
@@ -784,6 +786,16 @@ pub fn Role::floating() -> Role {
 ///|
 pub fn Role::vector() -> Role {
   VectorRegister
+}
+
+///|
+pub fn Role::index() -> Role {
+  IndexRegister
+}
+
+///|
+pub fn Role::segment() -> Role {
+  SegmentRegister
 }
 
 ///|
@@ -911,6 +923,8 @@ pub fn Role::to_string(self : Role) -> String {
     IntegerRegister => "integer"
     FloatingRegister => "floating"
     VectorRegister => "vector"
+    IndexRegister => "index"
+    SegmentRegister => "segment"
     StackPointer => "stack-pointer"
     FramePointer => "frame-pointer"
     ProgramCounter => "program-counter"
@@ -948,6 +962,8 @@ pub fn Role::of_string(text : String) -> Role? {
     "integer" | "integer-register" => Some(IntegerRegister)
     "floating" | "floating-register" => Some(FloatingRegister)
     "vector" | "vector-register" => Some(VectorRegister)
+    "index" | "index-register" => Some(IndexRegister)
+    "segment" | "segment-register" => Some(SegmentRegister)
     "stack-pointer" | "stack_pointer" | "sp" => Some(StackPointer)
     "frame-pointer" | "frame_pointer" | "fp" => Some(FramePointer)
     "program-counter" | "program_counter" | "pc" => Some(ProgramCounter)
@@ -986,30 +1002,32 @@ fn Role::rank(self : Role) -> Int {
     IntegerRegister => 4
     FloatingRegister => 5
     VectorRegister => 6
-    StackPointer => 7
-    FramePointer => 8
-    ProgramCounter => 9
-    Status => 10
-    ControlRegister => 11
-    SystemRegister => 12
-    HardwareRegister => 13
-    Constant => 14
-    ZeroRegister => 15
-    OneRegister => 16
-    LinkRegister => 17
-    ThreadPointer => 18
-    PrivilegedRegister => 19
-    Argument => 20
-    ResultRegister => 21
-    CallerSaved => 22
-    CalleeSaved => 23
-    Reserved => 24
-    ZeroFlag => 25
-    CarryFlag => 26
-    SignFlag => 27
-    OverflowFlag => 28
-    ParityFlag => 29
-    ThumbMode => 30
+    IndexRegister => 7
+    SegmentRegister => 8
+    StackPointer => 9
+    FramePointer => 10
+    ProgramCounter => 11
+    Status => 12
+    ControlRegister => 13
+    SystemRegister => 14
+    HardwareRegister => 15
+    Constant => 16
+    ZeroRegister => 17
+    OneRegister => 18
+    LinkRegister => 19
+    ThreadPointer => 20
+    PrivilegedRegister => 21
+    Argument => 22
+    ResultRegister => 23
+    CallerSaved => 24
+    CalleeSaved => 25
+    Reserved => 26
+    ZeroFlag => 27
+    CarryFlag => 28
+    SignFlag => 29
+    OverflowFlag => 30
+    ParityFlag => 31
+    ThumbMode => 32
   }
 }
 
@@ -1824,7 +1842,11 @@ fn target_role_names(role : Role) -> Array[String] {
   match role {
     General => []
     SpecialRegister | AliasRegister | PseudoRegister => []
-    IntegerRegister | FloatingRegister | VectorRegister => []
+    IntegerRegister
+    | FloatingRegister
+    | VectorRegister
+    | IndexRegister
+    | SegmentRegister => []
     StackPointer => ["sp", "esp", "rsp"]
     FramePointer => ["fp", "ebp", "rbp"]
     ProgramCounter => ["pc", "eip", "rip"]
@@ -1895,6 +1917,8 @@ fn x86_64_role_names(role : Role) -> Array[String] {
       ])
     VectorRegister =>
       concat_role_names([role_names("xmm", 0, 15), role_names("ymm", 0, 15)])
+    IndexRegister => ["rsi", "rdi", "rbp", "rsp"]
+    SegmentRegister => lower_names(x86_segment_names(false))
     StackPointer => ["rsp", "esp", "sp", "spl"]
     FramePointer => ["rbp", "ebp", "bp", "bpl"]
     ProgramCounter => ["rip"]
@@ -1935,6 +1959,8 @@ fn x86_16_role_names(role : Role) -> Array[String] {
       ])
     FloatingRegister => []
     VectorRegister => []
+    IndexRegister => ["si", "di", "bp", "sp"]
+    SegmentRegister => lower_names(x86_segment_names(false))
     StackPointer => ["sp", "spl"]
     FramePointer => ["bp", "bpl"]
     ProgramCounter => []
@@ -1979,6 +2005,7 @@ fn x86_32_cpu_role_names(
       concat_role_names(groups)
     }
     VectorRegister => if xmm { role_names("xmm", 0, 7) } else { [] }
+    IndexRegister | SegmentRegister => x86_32_role_names(role)
     _ => x86_32_role_names(role)
   }
 }
@@ -2003,6 +2030,8 @@ fn x86_32_role_names(role : Role) -> Array[String] {
         role_names("xmm", 0, 7),
       ])
     VectorRegister => role_names("xmm", 0, 7)
+    IndexRegister => ["esi", "edi", "ebp", "esp"]
+    SegmentRegister => lower_names(x86_segment_names(true))
     StackPointer => ["esp", "sp"]
     FramePointer => ["ebp", "bp"]
     ProgramCounter => ["eip"]
@@ -2033,6 +2062,7 @@ fn arm32_role_names(role : Role) -> Array[String] {
     IntegerRegister => concat_role_names([role_names("r", 0, 12), ["sp", "lr"]])
     FloatingRegister => role_names("d", 0, 31)
     VectorRegister => []
+    IndexRegister | SegmentRegister => []
     StackPointer => ["sp"]
     FramePointer => ["r11"]
     ProgramCounter => ["pc"]
@@ -2076,6 +2106,7 @@ fn aarch64_role_names(role : Role) -> Array[String] {
       ])
     VectorRegister =>
       concat_role_names([role_names("v", 0, 31), role_names("q", 0, 31)])
+    IndexRegister | SegmentRegister => []
     StackPointer => ["sp", "wsp", "x31", "r31"]
     FramePointer => ["fp", "x29", "r29"]
     ProgramCounter => ["pc"]
@@ -2119,6 +2150,7 @@ fn mips_role_names(bits : Int, role : Role) -> Array[String] {
       ])
     FloatingRegister => role_names("f", 0, 31)
     VectorRegister => []
+    IndexRegister | SegmentRegister => []
     StackPointer => ["sp", "r29"]
     FramePointer => ["fp", "r30"]
     ProgramCounter => ["pc"]
@@ -2154,6 +2186,7 @@ fn powerpc_role_names(role : Role) -> Array[String] {
     FloatingRegister =>
       concat_role_names([role_names("f", 0, 31), ["fl", "fe", "fg", "fu"]])
     VectorRegister => role_names("v", 0, 31)
+    IndexRegister | SegmentRegister => []
     StackPointer => ["sp", "r1"]
     FramePointer => []
     ProgramCounter => ["pc"]
@@ -2215,6 +2248,7 @@ fn riscv_role_names(role : Role) -> Array[String] {
       ])
     FloatingRegister => role_names("f", 0, 31)
     VectorRegister => []
+    IndexRegister | SegmentRegister => []
     StackPointer => ["sp", "x2"]
     FramePointer => ["fp", "s0", "x8"]
     ProgramCounter => ["pc"]
@@ -2276,6 +2310,7 @@ fn sparc_role_names(role : Role) -> Array[String] {
       ])
     FloatingRegister => role_names("f", 0, 31)
     VectorRegister => []
+    IndexRegister | SegmentRegister => []
     StackPointer => ["sp", "o6"]
     FramePointer => ["fp", "i6"]
     ProgramCounter => ["pc", "npc"]
@@ -2303,6 +2338,7 @@ fn systemz_role_names(role : Role) -> Array[String] {
     IntegerRegister => role_names("r", 0, 15)
     FloatingRegister => role_names("f", 0, 15)
     VectorRegister => []
+    IndexRegister | SegmentRegister => []
     StackPointer => ["sp", "r15"]
     FramePointer => []
     ProgramCounter => ["pc"]
@@ -2890,6 +2926,8 @@ pub fn Target::roles_of_var(self : Target, variable : Var) -> Array[Role] {
       IntegerRegister,
       FloatingRegister,
       VectorRegister,
+      IndexRegister,
+      SegmentRegister,
       FramePointer,
       ProgramCounter,
       Status,

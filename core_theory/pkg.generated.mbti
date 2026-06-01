@@ -339,10 +339,39 @@ pub(all) enum Role {
   OverflowFlag
   ParityFlag
 } derive(Eq, @debug.Debug)
+pub fn Role::alias_register() -> Self
+pub fn Role::callee_saved() -> Self
+pub fn Role::caller_saved() -> Self
+pub fn Role::carry_flag() -> Self
 pub fn Role::compare(Self, Self) -> Int
+pub fn Role::constant() -> Self
+pub fn Role::control() -> Self
 pub fn Role::equal(Self, Self) -> Bool
+pub fn Role::floating() -> Self
+pub fn Role::frame_pointer() -> Self
+pub fn Role::function_argument() -> Self
+pub fn Role::function_return() -> Self
+pub fn Role::general() -> Self
+pub fn Role::hardware() -> Self
+pub fn Role::integer() -> Self
+pub fn Role::link() -> Self
 pub fn Role::of_string(String) -> Self?
+pub fn Role::one() -> Self
+pub fn Role::overflow_flag() -> Self
+pub fn Role::parity_flag() -> Self
+pub fn Role::privileged() -> Self
+pub fn Role::pseudo() -> Self
+pub fn Role::reserved() -> Self
+pub fn Role::sign_flag() -> Self
+pub fn Role::special() -> Self
+pub fn Role::stack_pointer() -> Self
+pub fn Role::status() -> Self
+pub fn Role::system() -> Self
+pub fn Role::thread() -> Self
 pub fn Role::to_string(Self) -> String
+pub fn Role::vector() -> Self
+pub fn Role::zero() -> Self
+pub fn Role::zero_flag() -> Self
 
 type Semantics
 pub fn Semantics::code(Self) -> Bytes?

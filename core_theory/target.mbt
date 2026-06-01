@@ -551,6 +551,151 @@ pub(all) enum Role {
 } derive(Eq, Debug)
 
 ///|
+pub fn Role::general() -> Role {
+  General
+}
+
+///|
+pub fn Role::special() -> Role {
+  SpecialRegister
+}
+
+///|
+pub fn Role::alias_register() -> Role {
+  AliasRegister
+}
+
+///|
+pub fn Role::pseudo() -> Role {
+  PseudoRegister
+}
+
+///|
+pub fn Role::integer() -> Role {
+  IntegerRegister
+}
+
+///|
+pub fn Role::floating() -> Role {
+  FloatingRegister
+}
+
+///|
+pub fn Role::vector() -> Role {
+  VectorRegister
+}
+
+///|
+pub fn Role::stack_pointer() -> Role {
+  StackPointer
+}
+
+///|
+pub fn Role::frame_pointer() -> Role {
+  FramePointer
+}
+
+///|
+pub fn Role::link() -> Role {
+  LinkRegister
+}
+
+///|
+pub fn Role::thread() -> Role {
+  ThreadPointer
+}
+
+///|
+pub fn Role::privileged() -> Role {
+  PrivilegedRegister
+}
+
+///|
+pub fn Role::constant() -> Role {
+  Constant
+}
+
+///|
+pub fn Role::zero() -> Role {
+  ZeroRegister
+}
+
+///|
+pub fn Role::one() -> Role {
+  OneRegister
+}
+
+///|
+pub fn Role::status() -> Role {
+  Status
+}
+
+///|
+pub fn Role::control() -> Role {
+  ControlRegister
+}
+
+///|
+pub fn Role::system() -> Role {
+  SystemRegister
+}
+
+///|
+pub fn Role::hardware() -> Role {
+  HardwareRegister
+}
+
+///|
+pub fn Role::reserved() -> Role {
+  Reserved
+}
+
+///|
+pub fn Role::zero_flag() -> Role {
+  ZeroFlag
+}
+
+///|
+pub fn Role::sign_flag() -> Role {
+  SignFlag
+}
+
+///|
+pub fn Role::carry_flag() -> Role {
+  CarryFlag
+}
+
+///|
+pub fn Role::overflow_flag() -> Role {
+  OverflowFlag
+}
+
+///|
+pub fn Role::parity_flag() -> Role {
+  ParityFlag
+}
+
+///|
+pub fn Role::function_argument() -> Role {
+  Argument
+}
+
+///|
+pub fn Role::function_return() -> Role {
+  ResultRegister
+}
+
+///|
+pub fn Role::caller_saved() -> Role {
+  CallerSaved
+}
+
+///|
+pub fn Role::callee_saved() -> Role {
+  CalleeSaved
+}
+
+///|
 pub fn Role::to_string(self : Role) -> String {
   match self {
     General => "general"

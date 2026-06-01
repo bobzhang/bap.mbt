@@ -228,7 +228,7 @@ pub fn ProgramUnit::bias(Self) -> @types.Word?
 pub fn ProgramUnit::compare(Self, Self) -> Int
 pub fn ProgramUnit::compiler(Self) -> Compiler?
 pub fn ProgramUnit::for_file(String, target? : Target, bias? : @types.Word, source? : Source, compiler? : Compiler) -> Self
-pub fn ProgramUnit::for_region(lower~ : @types.Word, upper~ : @types.Word, target? : Target, bias? : @types.Word, source? : Source, compiler? : Compiler) -> Self
+pub fn ProgramUnit::for_region(lower~ : @types.Word, upper~ : @types.Word, target? : Target, bias? : @types.Word, source? : Source, compiler? : Compiler, pkg? : String) -> Self
 pub fn ProgramUnit::fresh(target? : Target, source? : Source, compiler? : Compiler) -> Self
 pub fn ProgramUnit::id(Self) -> Int
 pub fn ProgramUnit::lower(Self) -> @types.Word?

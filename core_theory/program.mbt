@@ -2,6 +2,9 @@
 let program_unit_counter : Ref[Int] = Ref(0)
 
 ///|
+let interned_program_unit_ids : Map[String, Int] = {}
+
+///|
 pub(all) enum Language {
   C
   Cxx
@@ -49,6 +52,24 @@ struct Program {
 fn next_program_unit_id() -> Int {
   program_unit_counter.val = program_unit_counter.val + 1
   program_unit_counter.val
+}
+
+///|
+fn program_unit_pkg(pkg? : String) -> String {
+  @knowledge.Name::read("unit", pkg?).pkg()
+}
+
+///|
+fn interned_program_unit_id(kind : String, value : String) -> Int {
+  let key = "\{kind}|\{value}"
+  match interned_program_unit_ids.get(key) {
+    Some(id) => id
+    None => {
+      let id = next_program_unit_id()
+      interned_program_unit_ids[key] = id
+      id
+    }
+  }
 }
 
 ///|
@@ -347,6 +368,7 @@ pub fn Compiler::to_string(self : Compiler) -> String {
 
 ///|
 fn ProgramUnit::make(
+  id? : Int,
   path? : String,
   lower? : @types.Word,
   upper? : @types.Word,
@@ -356,7 +378,10 @@ fn ProgramUnit::make(
   compiler? : Compiler,
 ) -> ProgramUnit {
   {
-    id_value: next_program_unit_id(),
+    id_value: match id {
+      Some(value) => value
+      None => next_program_unit_id()
+    },
     path_value: path,
     lower_value: lower,
     upper_value: upper,
@@ -384,7 +409,14 @@ pub fn ProgramUnit::for_file(
   source? : Source,
   compiler? : Compiler,
 ) -> ProgramUnit {
-  ProgramUnit::make(path~, target?, bias?, source?, compiler?)
+  ProgramUnit::make(
+    id=interned_program_unit_id("file", path),
+    path~,
+    target?,
+    bias?,
+    source?,
+    compiler?,
+  )
 }
 
 ///|
@@ -395,8 +427,21 @@ pub fn ProgramUnit::for_region(
   bias? : @types.Word,
   source? : Source,
   compiler? : Compiler,
+  pkg? : String,
 ) -> ProgramUnit {
-  ProgramUnit::make(lower~, upper~, target?, bias?, source?, compiler?)
+  let region_pkg = program_unit_pkg(pkg?)
+  ProgramUnit::make(
+    id=interned_program_unit_id(
+      "region",
+      "\{region_pkg}|\{lower.to_hex()}-\{upper.to_hex()}",
+    ),
+    lower~,
+    upper~,
+    target?,
+    bias?,
+    source?,
+    compiler?,
+  )
 }
 
 ///|

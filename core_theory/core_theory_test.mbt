@@ -1758,6 +1758,8 @@ test "program metadata tracks source compiler and units" {
   assert_true(unit.path() == Some("main.o"))
   assert_true(unit.same(unit))
   assert_true(unit.compare(unit) == 0)
+  assert_true(unit.same(@core_theory.ProgramUnit::for_file("main.o")))
+  assert_true(!unit.same(@core_theory.ProgramUnit::for_file("other.o")))
   assert_true(unit.name() == "main.o")
   assert_true(unit.bias() == Some(base))
   assert_true(unit.to_real_addr(biased) == Ok(real))
@@ -1770,6 +1772,14 @@ test "program metadata tracks source compiler and units" {
   assert_true(unit.compiler().map(item => item.name()) == Some("clang"))
   let region = @core_theory.ProgramUnit::for_region(lower=base, upper~, target~)
   assert_true(!unit.same(region))
+  assert_true(
+    region.same(@core_theory.ProgramUnit::for_region(lower=base, upper~)),
+  )
+  assert_true(
+    !region.same(
+      @core_theory.ProgramUnit::for_region(lower=base, upper~, pkg="alt"),
+    ),
+  )
   assert_true(unit.compare(region) != 0)
   assert_true(region.lower() == Some(base))
   assert_true(region.upper() == Some(upper))

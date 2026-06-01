@@ -21,6 +21,174 @@ fn bytes_hex_value(c : Char) -> Int? {
 }
 
 ///|
+pub fn bytes_is_empty(bytes : BytesView) -> Bool {
+  bytes.length() == 0
+}
+
+///|
+pub fn bytes_to_array(bytes : BytesView) -> Array[Byte] {
+  let out = []
+  for byte in bytes {
+    out.push(byte)
+  }
+  out
+}
+
+///|
+pub fn bytes_map(bytes : BytesView, f : (Byte) -> Byte) -> Bytes {
+  Bytes::from_array(bytes_to_array(bytes).map(f))
+}
+
+///|
+pub fn bytes_mapi(bytes : BytesView, f : (Int, Byte) -> Byte) -> Bytes {
+  Bytes::from_array(Array::makei(bytes.length(), i => f(i, bytes[i])))
+}
+
+///|
+pub fn bytes_cat(left : BytesView, right : BytesView) -> Bytes {
+  let out = []
+  for byte in left {
+    out.push(byte)
+  }
+  for byte in right {
+    out.push(byte)
+  }
+  Bytes::from_array(out)
+}
+
+///|
+pub fn bytes_concat(sep : BytesView, chunks : ArrayView[Bytes]) -> Bytes {
+  let out = []
+  for i, chunk in chunks {
+    if i > 0 {
+      for byte in sep {
+        out.push(byte)
+      }
+    }
+    for byte in chunk {
+      out.push(byte)
+    }
+  }
+  Bytes::from_array(out)
+}
+
+///|
+pub fn bytes_index_from(bytes : BytesView, start : Int, needle : Byte) -> Int? {
+  if start < 0 || start >= bytes.length() {
+    None
+  } else {
+    for i in start..<bytes.length() {
+      if bytes[i] == needle {
+        return Some(i)
+      }
+    }
+    None
+  }
+}
+
+///|
+pub fn bytes_index(bytes : BytesView, needle : Byte) -> Int? {
+  bytes_index_from(bytes, 0, needle)
+}
+
+///|
+pub fn bytes_rindex_from(bytes : BytesView, start : Int, needle : Byte) -> Int? {
+  if bytes.length() == 0 || start < 0 {
+    None
+  } else {
+    let mut i = if start >= bytes.length() { bytes.length() - 1 } else { start }
+    while i >= 0 {
+      if bytes[i] == needle {
+        return Some(i)
+      }
+      if i == 0 {
+        return None
+      }
+      i = i - 1
+    }
+    None
+  }
+}
+
+///|
+pub fn bytes_rindex(bytes : BytesView, needle : Byte) -> Int? {
+  bytes_rindex_from(bytes, bytes.length() - 1, needle)
+}
+
+///|
+pub fn bytes_contains_from(
+  bytes : BytesView,
+  start : Int,
+  needle : Byte,
+) -> Bool {
+  bytes_index_from(bytes, start, needle) is Some(_)
+}
+
+///|
+pub fn bytes_rcontains_from(
+  bytes : BytesView,
+  start : Int,
+  needle : Byte,
+) -> Bool {
+  bytes_rindex_from(bytes, start, needle) is Some(_)
+}
+
+///|
+pub fn bytes_contains(bytes : BytesView, needle : Byte) -> Bool {
+  bytes_contains_from(bytes, 0, needle)
+}
+
+///|
+fn ascii_upper_byte(byte : Byte) -> Byte {
+  if byte >= b'a' && byte <= b'z' {
+    (byte.to_int() - 32).to_byte()
+  } else {
+    byte
+  }
+}
+
+///|
+fn ascii_lower_byte(byte : Byte) -> Byte {
+  if byte >= b'A' && byte <= b'Z' {
+    (byte.to_int() + 32).to_byte()
+  } else {
+    byte
+  }
+}
+
+///|
+pub fn bytes_uppercase(bytes : BytesView) -> Bytes {
+  bytes_map(bytes, ascii_upper_byte)
+}
+
+///|
+pub fn bytes_lowercase(bytes : BytesView) -> Bytes {
+  bytes_map(bytes, ascii_lower_byte)
+}
+
+///|
+pub fn bytes_capitalize(bytes : BytesView) -> Bytes {
+  bytes_mapi(bytes, (i, byte) => {
+    if i == 0 {
+      ascii_upper_byte(byte)
+    } else {
+      byte
+    }
+  })
+}
+
+///|
+pub fn bytes_uncapitalize(bytes : BytesView) -> Bytes {
+  bytes_mapi(bytes, (i, byte) => {
+    if i == 0 {
+      ascii_lower_byte(byte)
+    } else {
+      byte
+    }
+  })
+}
+
+///|
 pub fn bytes_to_hex(bytes : BytesView) -> String {
   let out = StringBuilder()
   for byte in bytes {

@@ -12,13 +12,47 @@ pub fn bytes_bin_size(BytesView) -> Int
 
 pub fn bytes_bin_write(BytesView) -> Bytes
 
+pub fn bytes_capitalize(BytesView) -> Bytes
+
+pub fn bytes_cat(BytesView, BytesView) -> Bytes
+
+pub fn bytes_concat(BytesView, ArrayView[Bytes]) -> Bytes
+
+pub fn bytes_contains(BytesView, Byte) -> Bool
+
+pub fn bytes_contains_from(BytesView, Int, Byte) -> Bool
+
 pub fn bytes_from_hex(StringView) -> Result[Bytes, String]
 
 pub fn bytes_from_sexp_atom(StringView) -> Result[Bytes, String]
 
+pub fn bytes_index(BytesView, Byte) -> Int?
+
+pub fn bytes_index_from(BytesView, Int, Byte) -> Int?
+
+pub fn bytes_is_empty(BytesView) -> Bool
+
+pub fn bytes_lowercase(BytesView) -> Bytes
+
+pub fn bytes_map(BytesView, (Byte) -> Byte) -> Bytes
+
+pub fn bytes_mapi(BytesView, (Int, Byte) -> Byte) -> Bytes
+
+pub fn bytes_rcontains_from(BytesView, Int, Byte) -> Bool
+
+pub fn bytes_rindex(BytesView, Byte) -> Int?
+
+pub fn bytes_rindex_from(BytesView, Int, Byte) -> Int?
+
+pub fn bytes_to_array(BytesView) -> Array[Byte]
+
 pub fn bytes_to_hex(BytesView) -> String
 
 pub fn bytes_to_sexp_atom(BytesView) -> String
+
+pub fn bytes_uncapitalize(BytesView) -> Bytes
+
+pub fn bytes_uppercase(BytesView) -> Bytes
 
 pub fn digest(namespace_name~ : StringView, StringView) -> Digest
 

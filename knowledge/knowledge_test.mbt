@@ -52,6 +52,22 @@ test "persistent codecs round trip strings names and arrays" {
     string_codec,
   )
   assert_true(int_codec.decode(int_codec.encode(42)) == Ok(42))
+
+  let cls : @knowledge.Class[Unit, String] = @knowledge.Class::create(
+    name=@knowledge.Name::create("persistent-program", pkg="test"),
+    sort="unit",
+  )
+  let slot = cls.property(
+    name=@knowledge.Name::create("persistent-name", pkg="test"),
+    domain=@knowledge.Domain::string(
+      @knowledge.Name::create("persistent-name", pkg="test"),
+    ),
+    persistent=string_codec,
+  )
+  match slot.persistent() {
+    Some(codec) => assert_true(codec.decode(codec.encode("slot")) == Ok("slot"))
+    None => fail("missing persistent codec")
+  }
 }
 
 ///|

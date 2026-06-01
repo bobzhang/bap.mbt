@@ -37,7 +37,7 @@ type Class[K, S]
 pub fn[K, S] Class::create(name~ : Name, sort~ : S, desc? : String) -> Self[K, S]
 pub fn[K, S] Class::desc(Self[K, S]) -> String?
 pub fn[K, S] Class::name(Self[K, S]) -> Name
-pub fn[K, S, P] Class::property(Self[K, S], name~ : Name, domain~ : Domain[P], desc? : String) -> Slot[K, P]
+pub fn[K, S, P] Class::property(Self[K, S], name~ : Name, domain~ : Domain[P], desc? : String, persistent? : Persistent[P]) -> Slot[K, P]
 pub fn[K, S, T] Class::refine(Self[K, S], name~ : Name, sort~ : T, desc? : String) -> Self[K, T]
 pub fn[K, S, T] Class::same(Self[K, S], Self[K, T]) -> Bool
 pub fn[K, S] Class::sort(Self[K, S]) -> S
@@ -142,6 +142,7 @@ pub fn[K, P] Slot::desc(Self[K, P]) -> String?
 pub fn[K, P] Slot::domain(Self[K, P]) -> Domain[P]
 pub fn[K, P] Slot::name(Self[K, P]) -> Name
 pub fn[K, P] Slot::owner(Self[K, P]) -> Name
+pub fn[K, P] Slot::persistent(Self[K, P]) -> Persistent[P]?
 
 type State
 pub fn[K, S] State::create(Self, Class[K, S]) -> Object[K]

@@ -12,6 +12,7 @@ struct Slot[K, P] {
   name : Name
   domain_value : Domain[P]
   desc : String?
+  persistent_value : Persistent[P]?
   _phantom : K?
 }
 
@@ -68,8 +69,16 @@ pub fn[K, S, P] Class::property(
   name~ : Name,
   domain~ : Domain[P],
   desc? : String,
+  persistent? : Persistent[P],
 ) -> Slot[K, P] {
-  { owner: self.name, name, domain_value: domain, desc, _phantom: None }
+  {
+    owner: self.name,
+    name,
+    domain_value: domain,
+    desc,
+    persistent_value: persistent,
+    _phantom: None,
+  }
 }
 
 ///|
@@ -95,4 +104,9 @@ pub fn[K, P] Slot::domain(self : Slot[K, P]) -> Domain[P] {
 ///|
 pub fn[K, P] Slot::desc(self : Slot[K, P]) -> String? {
   self.desc
+}
+
+///|
+pub fn[K, P] Slot::persistent(self : Slot[K, P]) -> Persistent[P]? {
+  self.persistent_value
 }

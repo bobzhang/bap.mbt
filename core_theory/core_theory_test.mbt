@@ -2089,10 +2089,12 @@ test "target role helpers classify common architecture variables" {
   match aarch64.find_var("X2") {
     Some(reg) => {
       assert_true(aarch64.roles_of_var(reg).contains(IntegerRegister))
+      assert_true(aarch64.roles_of_var(reg).contains(FloatingRegister))
       assert_true(!aarch64.roles_of_var(reg).contains(StackPointer))
     }
     None => fail("missing X2")
   }
+  assert_true(aarch64.role_aliases(FloatingRegister).contains("x31"))
   match aarch64.find_var("X7") {
     Some(result) =>
       assert_true(aarch64.roles_of_var(result).contains(ResultRegister))

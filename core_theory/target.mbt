@@ -2124,6 +2124,7 @@ fn aarch64_role_names(role : Role) -> Array[String] {
       ])
     FloatingRegister =>
       concat_role_names([
+        role_names("x", 0, 31),
         role_names("d", 0, 31),
         role_names("s", 0, 31),
         role_names("h", 0, 31),

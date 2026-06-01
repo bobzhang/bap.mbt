@@ -21,6 +21,8 @@ pub fn register_target(Target) -> Result[Unit, String]
 
 pub fn registered_targets() -> Array[Target]
 
+pub fn target_domain() -> @knowledge.Domain[Target]
+
 pub fn target_families() -> Array[Array[Target]]
 
 pub fn target_family(Target) -> Array[Target]
@@ -413,6 +415,7 @@ pub fn Target::data_addr_size(Self) -> Int
 pub fn Target::data_alignment(Self) -> Int
 pub fn Target::data_word(Self, @bitvec.BitVec) -> @types.Word raise @bitvec.BitVecError
 pub fn Target::declared() -> Array[Self]
+pub fn Target::domain() -> @knowledge.Domain[Self]
 pub fn Target::endianness(Self) -> Endianness
 pub fn Target::equal(Self, Self) -> Bool
 pub fn Target::fabi(Self) -> Fabi

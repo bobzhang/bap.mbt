@@ -235,7 +235,7 @@ fn target_equal(lhs : Target, rhs : Target) -> Bool {
 }
 
 ///|
-fn target_domain() -> @knowledge.Domain[Target] {
+pub fn target_domain() -> @knowledge.Domain[Target] {
   let unknown = Target::unknown()
   @knowledge.Domain::new(
     name=core_name("unit-target"),
@@ -263,6 +263,11 @@ fn target_domain() -> @knowledge.Domain[Target] {
     },
     inspect=(target : Target) => target.name().show(),
   )
+}
+
+///|
+pub fn Target::domain() -> @knowledge.Domain[Target] {
+  target_domain()
 }
 
 ///|

@@ -75,6 +75,14 @@ test "targets inherit defaults and match ancestry" {
       name=@knowledge.Name::create("x86-64", pkg="target"),
     ).hash(),
   )
+  let domain = @core_theory.Target::domain()
+  assert_true(domain.is_empty(@core_theory.Target::unknown()))
+  assert_true(domain.order(@core_theory.Target::unknown(), target) == Less)
+  match domain.join(@core_theory.Target::unknown(), target) {
+    Ok(joined) => assert_true(joined.equal(target))
+    Err(reason) => fail(reason)
+  }
+  assert_true(domain.join(target, @core_theory.Target::arm()) is Err(_))
   assert_true(target.belongs(family))
   assert_true(target.order(family) == Less)
   assert_true(target.bits() == 64)

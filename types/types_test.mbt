@@ -515,17 +515,42 @@ test "size helpers mirror BAP fixed word and address sizes" {
 
 ///|
 test "arch helpers mirror BAP normalization size and endian cases" {
-  assert_true(@types.Arch::of_string(" i686 ") == Some(X86))
-  assert_true(@types.Arch::of_string("amd64") == Some(X86_64))
-  assert_true(@types.Arch::of_string("arm") == Some(Armv7))
-  assert_true(@types.Arch::of_string("thumbeb") == Some(Thumbv7eb))
-  assert_true(@types.Arch::of_string("powerpc64le") == Some(Ppc64le))
-  assert_true(@types.Arch::of_string("sparc64") == Some(Sparcv9))
-  assert_true(@types.Arch::of_string("s390x") == Some(Systemz))
-  assert_true(@types.Arch::of_string("arm64_be") == Some(Aarch64_be))
+  let alias_cases : Array[(String, @types.Arch)] = [
+    ("x86", X86),
+    ("x86-32", X86),
+    ("x86_32", X86),
+    ("ia32", X86),
+    ("ia-32", X86),
+    ("i386", X86),
+    ("i486", X86),
+    ("i586", X86),
+    (" i686 ", X86),
+    ("x86-64", X86_64),
+    ("x86_64", X86_64),
+    ("amd64", X86_64),
+    ("x64", X86_64),
+    ("X86_64H", X86_64),
+    ("powerpc", Ppc),
+    ("arm", Armv7),
+    ("thumb", Thumbv7),
+    ("armeb", Armv7eb),
+    ("thumbeb", Thumbv7eb),
+    ("xscale", Armv7),
+    ("powerpc64", Ppc64),
+    ("ppu", Ppc64),
+    ("powerpc64le", Ppc64le),
+    ("sparc64", Sparcv9),
+    ("s390x", Systemz),
+    ("arm64", Aarch64),
+    ("arm64_be", Aarch64_be),
+  ]
+  for item in alias_cases {
+    let (name, expected) = item
+    assert_true(@types.Arch::of_string(name) == Some(expected))
+    assert_true(@types.Arch::from_string(name) == expected)
+  }
   assert_true(@types.Arch::of_string("not-an-arch") == None)
   assert_true(@types.Arch::from_string("not-an-arch") == UnknownArch)
-  assert_true(@types.Arch::from_string("xscale") == Armv7)
   assert_true(@types.Arch::Aarch64.compare(Armv4) < 0)
   assert_true(@types.Arch::X86.compare(UnknownArch) < 0)
   assert_true(@types.Arch::Ppc64.equal(Ppc64))

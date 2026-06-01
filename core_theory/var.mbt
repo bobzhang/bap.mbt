@@ -52,7 +52,7 @@ pub fn Var::resort(self : Var, sort : Sort) -> Var {
 
 ///|
 pub fn Var::forget(self : Var) -> Var {
-  self.resort(Sym(@knowledge.Name::create("unit", pkg="core")))
+  self.resort(self.sort_value.forget())
 }
 
 ///|

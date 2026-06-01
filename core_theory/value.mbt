@@ -109,8 +109,5 @@ pub fn Value::persistent() -> @knowledge.Persistent[Value] {
 
 ///|
 pub fn Value::forget(self : Value) -> Value {
-  {
-    sort_value: Sym(@knowledge.Name::create("unit", pkg="core")),
-    facts: self.facts.copy(),
-  }
+  { sort_value: self.sort_value.forget(), facts: self.facts.copy() }
 }

@@ -189,6 +189,7 @@ test "variables preserve sorts versions and mutability flags" {
   let versioned = reg.versioned(2)
   inspect(versioned.name(), content="RAX#2")
   assert_true(versioned.sort().same(sort))
+  assert_true(reg.forget().sort().same(sort))
   assert_true(@core_theory.Var::fresh(sort).is_virtual())
 }
 
@@ -2074,6 +2075,9 @@ test "program semantics stores values and instruction bytes" {
   assert_true(value.equal(same_value))
   assert_true(value.compare(same_value) == 0)
   assert_true(!value.equal(value.with_fact("extra", "true")))
+  let forgotten_value = value.forget()
+  assert_true(forgotten_value.sort().same(@core_theory.Sort::bool()))
+  assert_true(forgotten_value.fact("kind") == Some("lifted"))
   let semantics = @core_theory.Semantics::empty()
     .with_value(value)
     .with_code(b"\x90\xc3")

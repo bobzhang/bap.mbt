@@ -544,7 +544,27 @@ test "translated BAP opinion domains resolve by agent reliability" {
     equal=optional_string_equal,
     inspect=inspect_optional_string,
   ).add(weak, Some("helper"))
+  let listed_opinions = @knowledge.Opinions::of_list(
+    [
+      (weak, Some("helper")),
+      (weak_peer, Some("helper")),
+      (strong, Some("main")),
+      (weak, None),
+    ],
+    empty=empty_name,
+    equal=optional_string_equal,
+    inspect=inspect_optional_string,
+  )
   let strong_opinion = weak_opinion.add(strong, Some("main"))
+  assert_true(weak_opinion.compare_votes(listed_opinions) < 0)
+  assert_true(listed_opinions.compare_votes(weak_opinion) > 0)
+  assert_true(listed_opinions.choice() == Some("main"))
+  assert_true(weak_opinion.join(listed_opinions).entries().length() == 2)
+  match
+    listed_opinions.entries().search_by(entry => entry.0 == Some("helper")) {
+    Some(index) => assert_true(listed_opinions.entries()[index].1.length() == 2)
+    None => fail("missing helper opinion from list")
+  }
   assert_true(domain.order(weak_opinion, strong_opinion) == Less)
   assert_true(strong_opinion.choice() == Some("main"))
   inspect(strong_opinion.inspect(), content="[some(helper), some(main)]")

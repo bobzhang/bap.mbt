@@ -27,6 +27,20 @@ pub fn[T] Opinions::empty(
 }
 
 ///|
+pub fn[T] Opinions::of_list(
+  entries : Array[(Agent, T)],
+  empty~ : T,
+  equal~ : (T, T) -> Bool,
+  inspect~ : (T) -> String,
+) -> Opinions[T] {
+  let mut result = Opinions::empty(empty~, equal~, inspect~)
+  for entry in entries {
+    result = result.add(entry.0, entry.1)
+  }
+  result
+}
+
+///|
 fn[T] Opinions::copy(self : Opinions[T]) -> Opinions[T] {
   {
     entries_value: self.entries_value.map(entry => {
@@ -119,6 +133,14 @@ pub fn[T] Opinions::merge(
 }
 
 ///|
+pub fn[T] Opinions::join(
+  self : Opinions[T],
+  other : Opinions[T],
+) -> Opinions[T] {
+  self.merge(other)
+}
+
+///|
 pub fn[T] Opinions::is_empty(self : Opinions[T]) -> Bool {
   self.entries_value.is_empty()
 }
@@ -130,6 +152,14 @@ pub fn[T] Opinions::total_weight(self : Opinions[T]) -> Int {
     weight = weight + agent_vote_weight(entry.votes)
   }
   weight
+}
+
+///|
+pub fn[T] Opinions::compare_votes(
+  self : Opinions[T],
+  other : Opinions[T],
+) -> Int {
+  self.total_weight().compare(other.total_weight())
 }
 
 ///|

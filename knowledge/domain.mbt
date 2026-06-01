@@ -387,7 +387,7 @@ pub fn[T] Domain::opinions(
     empty=Some(Opinions::empty(empty~, equal~, inspect~)),
     is_empty=(value : Opinions[T]) => value.is_empty(),
     order=(lhs : Opinions[T], rhs : Opinions[T]) => {
-      let order = lhs.total_weight().compare(rhs.total_weight())
+      let order = lhs.compare_votes(rhs)
       if order < 0 {
         Less
       } else if order > 0 {
@@ -396,7 +396,7 @@ pub fn[T] Domain::opinions(
         Equal
       }
     },
-    join=(lhs : Opinions[T], rhs : Opinions[T]) => Ok(lhs.merge(rhs)),
+    join=(lhs : Opinions[T], rhs : Opinions[T]) => Ok(lhs.join(rhs)),
     inspect=(value : Opinions[T]) => value.inspect(),
   )
 }

@@ -124,11 +124,14 @@ pub fn[K] Object::repr(Self[K]) -> String
 type Opinions[T]
 pub fn[T] Opinions::add(Self[T], Agent, T) -> Self[T]
 pub fn[T] Opinions::choice(Self[T]) -> T
+pub fn[T] Opinions::compare_votes(Self[T], Self[T]) -> Int
 pub fn[T] Opinions::empty(empty~ : T, equal~ : (T, T) -> Bool, inspect~ : (T) -> String) -> Self[T]
 pub fn[T] Opinions::entries(Self[T]) -> Array[(T, Array[Agent])]
 pub fn[T] Opinions::inspect(Self[T]) -> String
 pub fn[T] Opinions::is_empty(Self[T]) -> Bool
+pub fn[T] Opinions::join(Self[T], Self[T]) -> Self[T]
 pub fn[T] Opinions::merge(Self[T], Self[T]) -> Self[T]
+pub fn[T] Opinions::of_list(Array[(Agent, T)], empty~ : T, equal~ : (T, T) -> Bool, inspect~ : (T) -> String) -> Self[T]
 pub fn[T] Opinions::total_weight(Self[T]) -> Int
 
 pub(all) enum PartialOrder {

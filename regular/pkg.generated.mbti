@@ -59,7 +59,9 @@ type PrefixTrie[V]
 pub fn[V] PrefixTrie::add(Self[V], StringView, V) -> Unit
 pub fn[V] PrefixTrie::change(Self[V], StringView, (V?) -> V?) -> Unit
 pub fn[V] PrefixTrie::find(Self[V], StringView) -> V?
+pub fn[V, A] PrefixTrie::fold(Self[V], init~ : A, f~ : (A, String, V) -> A) -> A
 pub fn[V] PrefixTrie::is_empty(Self[V]) -> Bool
+pub fn[V] PrefixTrie::iter(Self[V], f~ : (String, V) -> Unit) -> Unit
 pub fn[V] PrefixTrie::length(Self[V]) -> Int
 pub fn[V] PrefixTrie::longest_match(Self[V], StringView) -> (Int, V)?
 pub fn[V] PrefixTrie::new() -> Self[V]

@@ -78,6 +78,41 @@ pub fn[V] PrefixTrie::remove(self : PrefixTrie[V], key : StringView) -> Unit {
 }
 
 ///|
+fn[V, A] PrefixTrie::fold_with_prefix(
+  self : PrefixTrie[V],
+  prefix : String,
+  acc : Ref[A],
+  f : (A, String, V) -> A,
+) -> Unit {
+  match self.value {
+    Some(value) => acc.val = f(acc.val, prefix, value)
+    None => ()
+  }
+  self.children.each((ch, child) => {
+    child.fold_with_prefix(prefix + "\{ch}", acc, f)
+  })
+}
+
+///|
+pub fn[V, A] PrefixTrie::fold(
+  self : PrefixTrie[V],
+  init~ : A,
+  f~ : (A, String, V) -> A,
+) -> A {
+  let acc = Ref(init)
+  self.fold_with_prefix("", acc, f)
+  acc.val
+}
+
+///|
+pub fn[V] PrefixTrie::iter(
+  self : PrefixTrie[V],
+  f~ : (String, V) -> Unit,
+) -> Unit {
+  self.fold(init=(), f=fn(_, key, value) { f(key, value) })
+}
+
+///|
 pub fn[V] PrefixTrie::longest_match(
   self : PrefixTrie[V],
   key : StringView,

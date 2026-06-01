@@ -115,6 +115,16 @@ test "prefix trie find and longest_match follow BAP trie behavior" {
   ])
   trie.remove("")
   assert_true(trie.length() == 2)
+  let folded = trie.fold(init=[], f=fn(acc, key, value) {
+    acc.push("\{key}=\{value}")
+    acc
+  })
+  folded.sort_by((left, right) => left.compare(right))
+  assert_true(folded == ["a=1", "abcde=3"])
+  let iterated = []
+  trie.iter(f=fn(key, value) { iterated.push("\{key}=\{value}") })
+  iterated.sort_by((left, right) => left.compare(right))
+  assert_true(iterated == folded)
   assert_trie_longest(trie, [
     ("", None),
     ("a", Some((1, 1))),

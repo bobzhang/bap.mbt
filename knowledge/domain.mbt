@@ -159,6 +159,16 @@ pub fn Domain::string(name : Name) -> Domain[String] {
 }
 
 ///|
+pub fn[K, S] Domain::obj(cls : Class[K, S]) -> Domain[Object[K]] {
+  Domain::total(
+    cls.name(),
+    (value : Object[K]) => value.repr(),
+    empty=Object::null(cls),
+    compare=(lhs, rhs) => lhs.compare(rhs),
+  )
+}
+
+///|
 fn[K : Eq + Hash, T] map_values_equal(
   lhs : Map[K, T],
   rhs : Map[K, T],

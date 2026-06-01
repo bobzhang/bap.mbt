@@ -122,6 +122,29 @@ test "mapping domains merge pointwise facts" {
 }
 
 ///|
+test "object domains use null as bottom" {
+  let cls : @knowledge.Class[Unit, String] = @knowledge.Class::create(
+    name=@knowledge.Name::create("object-domain", pkg="test"),
+    sort="unit",
+  )
+  let domain = @knowledge.Domain::obj(cls)
+  let null = @knowledge.Object::null(cls)
+  let object = @knowledge.State::new().create(cls)
+  match domain.empty() {
+    Some(empty) => assert_true(empty.equal(null))
+    None => fail("missing object domain bottom")
+  }
+  assert_true(domain.is_empty(null))
+  assert_true(!domain.is_empty(object))
+  assert_true(domain.order(null, object) == Less)
+  match domain.join(null, object) {
+    Ok(joined) => assert_true(joined.equal(object))
+    Err(reason) => fail(reason)
+  }
+  assert_eq(domain.inspect(object), "#<test:object-domain 1>")
+}
+
+///|
 test "optional domains lift base order and joins" {
   let base = @knowledge.Domain::bool(
     @knowledge.Name::create("flag", pkg="test"),

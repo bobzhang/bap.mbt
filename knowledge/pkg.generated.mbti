@@ -52,6 +52,7 @@ pub fn[T] Domain::join(Self[T], T, T) -> Result[T, String]
 pub fn[K : Eq + Hash, T] Domain::mapping(Name, (K) -> String, (T) -> String, equal~ : (T, T) -> Bool, join? : (T, T) -> Result[T, String]) -> Self[Map[K, T]]
 pub fn[T] Domain::name(Self[T]) -> Name
 pub fn[T] Domain::new(name~ : Name, empty~ : T?, is_empty~ : (T) -> Bool, order~ : (T, T) -> PartialOrder, join~ : (T, T) -> Result[T, String], inspect~ : (T) -> String) -> Self[T]
+pub fn[K, S] Domain::obj(Class[K, S]) -> Self[Object[K]]
 pub fn[T] Domain::opinions(Name, empty~ : T, equal~ : (T, T) -> Bool, inspect~ : (T) -> String) -> Self[Opinions[T]]
 pub fn[T] Domain::optional(Self[T]) -> Self[T?]
 pub fn[T] Domain::order(Self[T], T, T) -> PartialOrder

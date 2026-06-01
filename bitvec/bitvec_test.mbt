@@ -126,12 +126,15 @@ test "hex parsing truncates to the requested width" {
 }
 
 ///|
-test "string parsing accepts BAP boolean and width suffix forms" {
+test "string parsing accepts BAP boolean suffixed and unsuffixed width forms" {
   assert_true(@bitvec.from_string("false") == @bitvec.b0())
   assert_true(@bitvec.from_string("true") == @bitvec.b1())
   assert_true(@bitvec.from_string("0:1u") == @bitvec.b0())
+  assert_true(@bitvec.from_string("0:1") == @bitvec.b0())
   assert_true(@bitvec.from_string("1:1") == @bitvec.b1())
   inspect(@bitvec.from_string("7:4u").to_hex(), content="0x7")
+  inspect(@bitvec.from_string("7:4").to_hex(), content="0x7")
+  inspect(@bitvec.from_string("7:3").to_hex(), content="0x7")
   inspect(@bitvec.from_string("7:3s").to_hex(), content="0x7")
   inspect(@bitvec.from_string("7:2").to_hex(), content="0x3")
   inspect(@bitvec.from_string("-1:3").to_hex(), content="0x7")

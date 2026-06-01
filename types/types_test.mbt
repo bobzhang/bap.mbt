@@ -344,6 +344,26 @@ test "word literals preserve BAP signedness and display" {
   inspect(@types.Word::of_int(width=4, 7).to_string(), content="7:4u")
   inspect(@types.Word::of_int(width=2, 7).to_string(), content="3:2u")
   inspect(@types.Word::of_int(width=3, -1).to_string(), content="7:3u")
+  assert_true(@types.Word::from_string("false") == @types.Word::b0())
+  assert_true(@types.Word::from_string("true") == @types.Word::b1())
+  assert_true(@types.Word::from_string("0:1u") == @types.Word::b0())
+  assert_true(@types.Word::from_string("0:1") == @types.Word::b0())
+  assert_true(@types.Word::from_string("1:1") == @types.Word::b1())
+  assert_true(
+    @types.Word::from_string("7:4u") == @types.Word::of_int(width=4, 7),
+  )
+  assert_true(
+    @types.Word::from_string("7:4") == @types.Word::of_int(width=4, 7),
+  )
+  assert_true(
+    @types.Word::from_string("7:3u") == @types.Word::of_int(width=3, 7),
+  )
+  assert_true(
+    @types.Word::from_string("7:3") == @types.Word::of_int(width=3, 7),
+  )
+  assert_true(
+    @types.Word::from_string("7:2u") == @types.Word::of_int(width=2, 7),
+  )
   let signed_minus_one = @types.Word::of_int(width=3, -1).signed()
   inspect(signed_minus_one.to_string(), content="-1:3s")
   assert_true(signed_minus_one.is_signed())

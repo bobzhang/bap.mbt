@@ -274,7 +274,17 @@ test "translated BAP image table neighbors and intersections use memory ranges" 
   let table = @memory.MemMap::empty().add(mem_low, "lo").add(mem_high, "hi")
   assert_true(table.length() == 2)
   assert_true(table.has_memory(memory_at(0x10UL, 0x10)))
+  assert_true(table.mem(memory_at(0x10UL, 0x10)))
   assert_true(!table.has_memory(memory_at(0x10UL, 0x0f)))
+  assert_true(!table.mem(memory_at(0x10UL, 0x0f)))
+  match table.find_addr(0x12UL) {
+    Some((memory, tag)) => {
+      assert_true(memory.min_addr() == mem_low.min_addr())
+      assert_true(tag == "lo")
+    }
+    None => fail("expected address table binding")
+  }
+  assert_true(table.find_addr(0x20UL) is None)
   match table.next_binding(mem_low) {
     Some((memory, tag)) => {
       assert_true(memory.min_addr() == mem_high.min_addr())
@@ -282,6 +292,7 @@ test "translated BAP image table neighbors and intersections use memory ranges" 
     }
     None => fail("expected next table binding")
   }
+  assert_true(table.next(mem_low).map(entry => entry.1) == Some("hi"))
   match table.prev_binding(mem_high) {
     Some((memory, tag)) => {
       assert_true(memory.min_addr() == mem_low.min_addr())
@@ -289,10 +300,26 @@ test "translated BAP image table neighbors and intersections use memory ranges" 
     }
     None => fail("expected previous table binding")
   }
+  assert_true(table.prev(mem_high).map(entry => entry.1) == Some("lo"))
   match (table.min_binding(), table.max_binding()) {
     (Some((_, "lo")), Some((_, "hi"))) => ()
     _ => fail("expected table min/max bindings")
   }
+  match (table.min(), table.max()) {
+    (Some((_, "lo")), Some((_, "hi"))) => ()
+    _ => fail("expected table min/max aliases")
+  }
+  let folded = table.fold_intersections(memory_at(0x10UL, 0x30), init=[], f=fn(
+    _memory,
+    tag,
+    acc,
+  ) {
+    acc.push(tag)
+    acc
+  })
+  assert_true(folded == ["lo", "hi"])
+  assert_true(table.has_intersections(memory_at(0x10UL, 0x30)))
+  assert_true(!table.has_intersections(memory_at(0x20UL, 0x10)))
   assert_true(
     memmap_tags(table.intersections(memory_at(0x10UL, 0x30))) ==
     Set::from_array(["lo", "hi"]),

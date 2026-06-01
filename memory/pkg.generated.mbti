@@ -29,6 +29,9 @@ pub fn[V] MemMap::filter(Self[V], (V) -> Bool) -> Self[V]
 pub fn[V, U] MemMap::filter_map(Self[V], (V) -> U?) -> Self[U]
 pub fn[V, U] MemMap::filter_mapi(Self[V], (Memory, V) -> U?) -> Self[U]
 pub fn[V] MemMap::find(Self[V], Memory) -> Array[(Memory, V)]
+pub fn[V] MemMap::find_addr(Self[V], UInt64) -> (Memory, V)?
+pub fn[V, A] MemMap::fold_intersections(Self[V], Memory, init~ : A, f~ : (Memory, V, A) -> A) -> A
+pub fn[V] MemMap::has_intersections(Self[V], Memory) -> Bool
 pub fn[V] MemMap::has_memory(Self[V], Memory) -> Bool
 pub fn[V] MemMap::intersections(Self[V], Memory) -> Array[(Memory, V)]
 pub fn[V] MemMap::intersects(Self[V], Memory) -> Bool
@@ -40,11 +43,16 @@ pub fn[V : Hash + Eq, U] MemMap::link_one_to_one(Self[V], Self[U]) -> Map[V, U]
 pub fn[V] MemMap::lookup(Self[V], UInt64) -> Array[(Memory, V)]
 pub fn[V, U] MemMap::map(Self[V], (V) -> U) -> Self[U]
 pub fn[V, U] MemMap::mapi(Self[V], (Memory, V) -> U) -> Self[U]
+pub fn[V] MemMap::max(Self[V]) -> (Memory, V)?
 pub fn[V] MemMap::max_addr(Self[V]) -> UInt64?
 pub fn[V] MemMap::max_binding(Self[V]) -> (Memory, V)?
+pub fn[V] MemMap::mem(Self[V], Memory) -> Bool
+pub fn[V] MemMap::min(Self[V]) -> (Memory, V)?
 pub fn[V] MemMap::min_addr(Self[V]) -> UInt64?
 pub fn[V] MemMap::min_binding(Self[V]) -> (Memory, V)?
+pub fn[V] MemMap::next(Self[V], Memory) -> (Memory, V)?
 pub fn[V] MemMap::next_binding(Self[V], Memory) -> (Memory, V)?
+pub fn[V] MemMap::prev(Self[V], Memory) -> (Memory, V)?
 pub fn[V] MemMap::prev_binding(Self[V], Memory) -> (Memory, V)?
 pub fn[V] MemMap::remove(Self[V], Memory) -> Self[V]
 pub fn[V] MemMap::remove_dominators(Self[V], Memory) -> Self[V]

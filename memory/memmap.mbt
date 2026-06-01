@@ -40,6 +40,14 @@ pub fn[V] MemMap::lookup(self : MemMap[V], addr : UInt64) -> Array[(Memory, V)] 
 }
 
 ///|
+pub fn[V] MemMap::find_addr(self : MemMap[V], addr : UInt64) -> (Memory, V)? {
+  match self.lookup(addr) {
+    [entry, ..] => Some(entry)
+    [] => None
+  }
+}
+
+///|
 pub fn[V] MemMap::contains(self : MemMap[V], addr : UInt64) -> Bool {
   self.entries.any(entry => entry.0.contains(addr))
 }
@@ -102,6 +110,11 @@ pub fn[V] MemMap::has_memory(self : MemMap[V], memory : Memory) -> Bool {
     entry.0.min_addr() == memory.min_addr() &&
     entry.0.max_addr() == memory.max_addr()
   })
+}
+
+///|
+pub fn[V] MemMap::mem(self : MemMap[V], memory : Memory) -> Bool {
+  self.has_memory(memory)
 }
 
 ///|
@@ -171,8 +184,27 @@ pub fn[V] MemMap::intersections(
 }
 
 ///|
+pub fn[V, A] MemMap::fold_intersections(
+  self : MemMap[V],
+  memory : Memory,
+  init~ : A,
+  f~ : (Memory, V, A) -> A,
+) -> A {
+  let mut result = init
+  for entry in self.intersections(memory) {
+    result = f(entry.0, entry.1, result)
+  }
+  result
+}
+
+///|
 pub fn[V] MemMap::intersects(self : MemMap[V], memory : Memory) -> Bool {
   self.entries.any(entry => entry.0.intersects(memory))
+}
+
+///|
+pub fn[V] MemMap::has_intersections(self : MemMap[V], memory : Memory) -> Bool {
+  self.intersects(memory)
 }
 
 ///|
@@ -247,6 +279,16 @@ pub fn[V] MemMap::max_binding(self : MemMap[V]) -> (Memory, V)? {
 }
 
 ///|
+pub fn[V] MemMap::min(self : MemMap[V]) -> (Memory, V)? {
+  self.min_binding()
+}
+
+///|
+pub fn[V] MemMap::max(self : MemMap[V]) -> (Memory, V)? {
+  self.max_binding()
+}
+
+///|
 fn memory_range_less(left : Memory, right : Memory) -> Bool {
   left.min_addr() < right.min_addr() ||
   (left.min_addr() == right.min_addr() && left.max_addr() < right.max_addr())
@@ -299,6 +341,11 @@ pub fn[V] MemMap::next_binding(
 }
 
 ///|
+pub fn[V] MemMap::next(self : MemMap[V], memory : Memory) -> (Memory, V)? {
+  self.next_binding(memory)
+}
+
+///|
 pub fn[V] MemMap::prev_binding(
   self : MemMap[V],
   memory : Memory,
@@ -317,6 +364,11 @@ pub fn[V] MemMap::prev_binding(
     Some(i) => Some(self.entries[i])
     None => None
   }
+}
+
+///|
+pub fn[V] MemMap::prev(self : MemMap[V], memory : Memory) -> (Memory, V)? {
+  self.prev_binding(memory)
 }
 
 ///|

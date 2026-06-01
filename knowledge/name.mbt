@@ -92,6 +92,11 @@ pub fn Name::read(input : String, pkg? : String) -> Name {
 }
 
 ///|
+pub fn Name::of_string(input : String) -> Name {
+  Name::read(input)
+}
+
+///|
 pub fn Name::show(self : Name) -> String {
   "\{escape_name_part(self.pkg)}:\{escape_name_part(self.text)}"
 }
@@ -129,4 +134,9 @@ pub fn Name::hash(self : Name) -> Int {
 ///|
 pub fn Name::to_string(self : Name) -> String {
   self.show()
+}
+
+///|
+pub fn Name::str() -> (Name) -> String {
+  name => name.show()
 }

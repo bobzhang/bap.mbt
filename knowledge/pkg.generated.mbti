@@ -78,9 +78,11 @@ pub fn Name::compare(Self, Self) -> Int
 pub fn Name::create(String, pkg? : String) -> Self
 pub fn Name::equal(Self, Self) -> Bool
 pub fn Name::hash(Self) -> Int
+pub fn Name::of_string(String) -> Self
 pub fn Name::pkg(Self) -> String
 pub fn Name::read(String, pkg? : String) -> Self
 pub fn Name::show(Self) -> String
+pub fn Name::str() -> (Self) -> String
 pub fn Name::to_string(Self) -> String
 pub fn Name::unqualified(Self) -> String
 

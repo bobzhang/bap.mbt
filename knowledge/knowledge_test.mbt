@@ -8,6 +8,8 @@ test "names preserve packages and escaped separators" {
     @knowledge.Name::read("plain", pkg="local").show(),
     content="local:plain",
   )
+  assert_true(@knowledge.Name::of_string(name.show()).equal(name))
+  assert_eq(@knowledge.Name::str()(name), name.show())
   assert_true(
     name.hash() == @knowledge.Name::create("target:x", pkg="core").hash(),
   )

@@ -65,6 +65,17 @@ test "translated BAP bytes access and sub helpers use byte offsets" {
 }
 
 ///|
+test "translated BAP bytes comparison helpers use lexical byte order" {
+  assert_true(@regular.bytes_equal(b"ab", b"ab"))
+  assert_true(!@regular.bytes_equal(b"ab", b"ac"))
+  assert_true(@regular.bytes_compare(b"ab", b"ac") < 0)
+  assert_true(@regular.bytes_compare(b"abc", b"ab") > 0)
+  assert_true(@regular.bytes_compare(b"ab", b"ab") == 0)
+  assert_true(@regular.bytes_mem(b"ab", b'b'))
+  assert_true(!@regular.bytes_mem(b"ab", b'c'))
+}
+
+///|
 test "translated BAP bytes trim removes ASCII edge whitespace" {
   assert_true(@regular.bytes_trim(b" \t\nvalue\r\n") == b"value")
   assert_true(@regular.bytes_trim(b"\x0b\x0cvalue\x0c") == b"value")

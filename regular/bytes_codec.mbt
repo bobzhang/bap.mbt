@@ -68,6 +68,16 @@ pub fn bytes_get(bytes : BytesView, pos : Int) -> Byte? {
 }
 
 ///|
+pub fn bytes_equal(left : BytesView, right : BytesView) -> Bool {
+  left == right
+}
+
+///|
+pub fn bytes_compare(left : BytesView, right : BytesView) -> Int {
+  left.compare(right)
+}
+
+///|
 pub fn bytes_sub(
   bytes : BytesView,
   pos : Int,
@@ -352,6 +362,11 @@ pub fn bytes_rcontains_from(
 ///|
 pub fn bytes_contains(bytes : BytesView, needle : Byte) -> Bool {
   bytes_contains_from(bytes, 0, needle)
+}
+
+///|
+pub fn bytes_mem(bytes : BytesView, needle : Byte) -> Bool {
+  bytes_contains(bytes, needle)
 }
 
 ///|

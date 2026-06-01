@@ -16,6 +16,8 @@ pub fn bytes_capitalize(BytesView) -> Bytes
 
 pub fn bytes_cat(BytesView, BytesView) -> Bytes
 
+pub fn bytes_compare(BytesView, BytesView) -> Int
+
 pub fn bytes_concat(BytesView, ArrayView[Bytes]) -> Bytes
 
 pub fn bytes_contains(BytesView, Byte) -> Bool
@@ -29,6 +31,8 @@ pub fn bytes_count(BytesView, (Byte) -> Bool) -> Int
 pub fn bytes_create(Int) -> Result[Bytes, String]
 
 pub fn bytes_empty() -> Bytes
+
+pub fn bytes_equal(BytesView, BytesView) -> Bool
 
 pub fn bytes_escaped(BytesView) -> Bytes
 
@@ -73,6 +77,8 @@ pub fn bytes_map(BytesView, (Byte) -> Byte) -> Bytes
 pub fn bytes_mapi(BytesView, (Int, Byte) -> Byte) -> Bytes
 
 pub fn bytes_max_elt(BytesView) -> Byte?
+
+pub fn bytes_mem(BytesView, Byte) -> Bool
 
 pub fn bytes_min_elt(BytesView) -> Byte?
 

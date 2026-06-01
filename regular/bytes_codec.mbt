@@ -21,6 +21,43 @@ fn bytes_hex_value(c : Char) -> Int? {
 }
 
 ///|
+pub fn bytes_empty() -> Bytes {
+  Bytes::new(0)
+}
+
+///|
+pub fn bytes_create(length : Int) -> Result[Bytes, String] {
+  if length < 0 {
+    Err("byte length is negative")
+  } else {
+    Ok(Bytes::new(length))
+  }
+}
+
+///|
+pub fn bytes_make(length : Int, byte : Byte) -> Result[Bytes, String] {
+  if length < 0 {
+    Err("byte length is negative")
+  } else {
+    Ok(Bytes::from_array(Array::make(length, byte)))
+  }
+}
+
+///|
+pub fn bytes_init(length : Int, f : (Int) -> Byte) -> Result[Bytes, String] {
+  if length < 0 {
+    Err("byte length is negative")
+  } else {
+    Ok(Bytes::from_array(Array::makei(length, f)))
+  }
+}
+
+///|
+pub fn bytes_copy(bytes : BytesView) -> Bytes {
+  Bytes::makei(bytes.length(), i => bytes[i])
+}
+
+///|
 pub fn bytes_is_empty(bytes : BytesView) -> Bool {
   bytes.length() == 0
 }
@@ -32,6 +69,29 @@ pub fn bytes_to_array(bytes : BytesView) -> Array[Byte] {
     out.push(byte)
   }
   out
+}
+
+///|
+fn ascii_space_byte(byte : Byte) -> Bool {
+  byte == b' ' ||
+  byte == b'\t' ||
+  byte == b'\n' ||
+  byte == b'\r' ||
+  byte == b'\x0b' ||
+  byte == b'\x0c'
+}
+
+///|
+pub fn bytes_trim(bytes : BytesView) -> Bytes {
+  let mut start = 0
+  while start < bytes.length() && ascii_space_byte(bytes[start]) {
+    start = start + 1
+  }
+  let mut stop = bytes.length()
+  while stop > start && ascii_space_byte(bytes[stop - 1]) {
+    stop = stop - 1
+  }
+  bytes[start:stop].to_owned()
 }
 
 ///|

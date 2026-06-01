@@ -8,6 +8,22 @@ test "translated BAP bytes create allocates zero-filled byte storage" {
   let bytes = Bytes::new(8)
   assert_true(bytes.length() == 8)
   assert_true(byte_values(bytes) == [0, 0, 0, 0, 0, 0, 0, 0])
+  assert_true(@regular.bytes_empty().length() == 0)
+  match @regular.bytes_create(4) {
+    Ok(created) => assert_true(byte_values(created) == [0, 0, 0, 0])
+    Err(reason) => fail(reason)
+  }
+  assert_true(@regular.bytes_create(-1) is Err(_))
+  match @regular.bytes_make(3, b'X') {
+    Ok(made) => assert_true(made == b"XXX")
+    Err(reason) => fail(reason)
+  }
+  match @regular.bytes_init(4, i => (i + 65).to_byte()) {
+    Ok(initialized) => assert_true(initialized == b"ABCD")
+    Err(reason) => fail(reason)
+  }
+  assert_true(@regular.bytes_make(-1, b'X') is Err(_))
+  assert_true(@regular.bytes_init(-1, _ => b'X') is Err(_))
 }
 
 ///|
@@ -19,6 +35,17 @@ test "translated BAP bytes copy preserves value while owning storage" {
   let copied = Bytes::makei(bytes.length(), i => bytes[i])
   assert_true(copied == bytes)
   assert_true(byte_values(copied) == [84, 101, 115, 116])
+  assert_true(@regular.bytes_copy(bytes) == bytes)
+  assert_true(byte_values(@regular.bytes_copy(bytes)) == [84, 101, 115, 116])
+}
+
+///|
+test "translated BAP bytes trim removes ASCII edge whitespace" {
+  assert_true(@regular.bytes_trim(b" \t\nvalue\r\n") == b"value")
+  assert_true(@regular.bytes_trim(b"\x0b\x0cvalue\x0c") == b"value")
+  assert_true(@regular.bytes_trim(b"value") == b"value")
+  assert_true(@regular.bytes_trim(b" \n\t") == b"")
+  assert_true(@regular.bytes_trim(b"\x00 value \x00") == b"\x00 value \x00")
 }
 
 ///|

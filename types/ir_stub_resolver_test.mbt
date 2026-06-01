@@ -69,6 +69,15 @@ test "stub resolver ignores missing all-stub and all-impl components" {
     0,
   )
 
+  let dangling_real = real_sub("c0", [])
+  let dangling_stub = stub_sub("c1", ["c2"])
+  assert_true(
+    stub_link_count(
+      @types.Program::create(subs=[dangling_real, dangling_stub]).program_stub_links(),
+    ) ==
+    0,
+  )
+
   let stubs_only_a = stub_sub("d0", [])
   let stubs_only_b = stub_sub("d1", ["d0"])
   assert_true(
@@ -107,6 +116,34 @@ test "stub resolver resolves every stub in an unambiguous component" {
   assert_true(stub_link_count(alias_links) == 2)
   assert_stub_link(alias_links, alias_stub_a, real)
   assert_stub_link(alias_links, alias_stub_b, real)
+
+  let many_alias_real = real_sub("g0", ["g1", "g2"])
+  let many_alias_stub = stub_sub("g1", [])
+  let many_alias_links = @types.Program::create(subs=[
+    many_alias_real, many_alias_stub,
+  ]).program_stub_links()
+  assert_true(stub_link_count(many_alias_links) == 1)
+  assert_stub_link(many_alias_links, many_alias_stub, many_alias_real)
+
+  let cross_real = real_sub("j0", ["j1"])
+  let cross_stub = stub_sub("j1", ["j0"])
+  let cross_links = @types.Program::create(subs=[cross_real, cross_stub]).program_stub_links()
+  assert_true(stub_link_count(cross_links) == 1)
+  assert_stub_link(cross_links, cross_stub, cross_real)
+
+  let real_k0 = real_sub("k0", [])
+  let real_k1 = real_sub("k1", [])
+  let real_k2 = real_sub("k2", [])
+  let stub_k3 = stub_sub("k3", ["k0"])
+  let stub_k4 = stub_sub("k4", ["k1"])
+  let stub_k5 = stub_sub("k5", ["k2"])
+  let many_pair_links = @types.Program::create(subs=[
+    real_k0, real_k1, real_k2, stub_k3, stub_k4, stub_k5,
+  ]).program_stub_links()
+  assert_true(stub_link_count(many_pair_links) == 3)
+  assert_stub_link(many_pair_links, stub_k3, real_k0)
+  assert_stub_link(many_pair_links, stub_k4, real_k1)
+  assert_stub_link(many_pair_links, stub_k5, real_k2)
 }
 
 ///|
@@ -139,6 +176,22 @@ test "stub resolver rejects components with multiple implementations" {
   assert_stub_link(n_links, stub_n7, real_n6)
   assert_true(n_links.get(stub_n0.tid()) is None)
   assert_true(n_links.get(stub_n5.tid()) is None)
+}
+
+///|
+test "stub resolver resolves disconnected complex intersections" {
+  let stub_p0 = stub_sub("p0", ["p1", "p2", "p3"])
+  let stub_p4 = stub_sub("p4", ["p5", "p6", "p7"])
+  let real_p5 = real_sub("p5", [])
+  let stub_p6 = stub_sub("p6", ["p8", "p9", "p10", "p4"])
+  let real_p11 = real_sub("p11", ["p12", "p13", "p1"])
+  let links = @types.Program::create(subs=[
+    stub_p0, stub_p4, real_p5, stub_p6, real_p11,
+  ]).program_stub_links()
+  assert_true(stub_link_count(links) == 3)
+  assert_stub_link(links, stub_p0, real_p11)
+  assert_stub_link(links, stub_p4, real_p5)
+  assert_stub_link(links, stub_p6, real_p5)
 }
 
 ///|

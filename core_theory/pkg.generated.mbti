@@ -125,8 +125,11 @@ pub(all) enum Endianness {
   BigEndian
   BiEndian
 } derive(Eq, @debug.Debug)
+pub fn Endianness::bi() -> Self
 pub fn Endianness::compare(Self, Self) -> Int
+pub fn Endianness::eb() -> Self
 pub fn Endianness::equal(Self, Self) -> Bool
+pub fn Endianness::le() -> Self
 pub fn Endianness::of_string(String) -> Self?
 pub fn Endianness::to_string(Self) -> String
 

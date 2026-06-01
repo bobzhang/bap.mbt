@@ -6,6 +6,21 @@ pub(all) enum Endianness {
 } derive(Eq, Debug)
 
 ///|
+pub fn Endianness::le() -> Endianness {
+  LittleEndian
+}
+
+///|
+pub fn Endianness::eb() -> Endianness {
+  BigEndian
+}
+
+///|
+pub fn Endianness::bi() -> Endianness {
+  BiEndian
+}
+
+///|
 pub(all) enum System {
   UnknownSystem
   HPUX

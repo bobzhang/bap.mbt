@@ -736,6 +736,46 @@ test "target registry resolves common and custom declarations" {
     Ok(target) => assert_true(target.bits() == 16)
     Err(reason) => fail(reason)
   }
+  let packaged_a = @core_theory.Target::create(
+    name=@knowledge.Name::create("unit-packaged-target", pkg="test-a"),
+    bits=8,
+  )
+  let packaged_b = @core_theory.Target::create(
+    name=@knowledge.Name::create("unit-packaged-target", pkg="test-b"),
+    bits=32,
+  )
+  match @core_theory.Target::register(packaged_a) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.Target::register(packaged_b) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    @core_theory.Target::lookup("unit-packaged-target", pkg="test-a").map(t => {
+      t.bits()
+    }) ==
+    Some(8),
+  )
+  assert_true(
+    @core_theory.Target::lookup("test-b:unit-packaged-target").map(t => t.bits()) ==
+    Some(32),
+  )
+  assert_true(
+    @core_theory.Target::lookup("test-b:UNIT-PACKAGED-TARGET").map(t => t.bits()) ==
+    Some(32),
+  )
+  match @core_theory.Target::get("unit-packaged-target", pkg="test-b") {
+    Ok(target) => assert_true(target.bits() == 32)
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    @core_theory.Target::lookup("unit-packaged-target", pkg="missing") is None,
+  )
+  assert_true(
+    @core_theory.Target::lookup("missing:unit-packaged-target") is None,
+  )
   assert_true(
     @core_theory.find_target("unit-target-alias").map(t => t.bits()) == Some(16),
   )

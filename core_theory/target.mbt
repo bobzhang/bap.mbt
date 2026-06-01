@@ -659,6 +659,16 @@ fn target_has_name(target : Target, query : String) -> Bool {
 }
 
 ///|
+fn target_query_name(query : String, pkg? : String) -> @knowledge.Name {
+  @knowledge.Name::read(query, pkg?)
+}
+
+///|
+fn target_query_is_qualified(query : String) -> Bool {
+  @knowledge.Name::read(query).show() == query
+}
+
+///|
 fn target_name(text : String) -> @knowledge.Name {
   @knowledge.Name::create(text, pkg="target")
 }
@@ -1373,6 +1383,19 @@ fn riscv_vars(bits : Int) -> Array[Var] {
 fn find_in_targets(items : Array[Target], query : String) -> Target? {
   for target in items {
     if target_has_name(target, query) {
+      return Some(target)
+    }
+  }
+  None
+}
+
+///|
+fn find_exact_target_in(
+  items : Array[Target],
+  name : @knowledge.Name,
+) -> Target? {
+  for target in items {
+    if same_target_name(target.name().show(), name.show()) {
       return Some(target)
     }
   }
@@ -4055,11 +4078,9 @@ pub fn common_targets() -> Array[Target] {
 ///|
 pub fn register_target(target : Target) -> Result[Unit, String] {
   let key = target.name().show()
-  if find_in_targets(common_targets(), key) is Some(_) {
+  if find_exact_target_in(common_targets(), target.name()) is Some(_) {
     Err("target \{key} is a built-in target")
-  } else if find_target(target.name().unqualified()) is Some(_) {
-    Err("target \{target.name().unqualified()} is already registered")
-  } else if target_registry.contains(key) {
+  } else if find_exact_target_in(registered_targets(), target.name()) is Some(_) {
     Err("target \{key} is already registered")
   } else {
     for nick in target.nicknames() {
@@ -4099,39 +4120,52 @@ pub fn Target::declared() -> Array[Target] {
 }
 
 ///|
-pub fn find_target(query : String) -> Target? {
-  match find_in_targets(registered_targets(), query) {
+pub fn find_target(query : String, pkg? : String) -> Target? {
+  let name = target_query_name(query, pkg?)
+  match find_exact_target_in(registered_targets(), name) {
     Some(target) => Some(target)
     None =>
-      if target_has_name(Target::unknown(), query) {
-        Some(Target::unknown())
-      } else {
-        find_in_targets(common_targets(), query)
+      match find_exact_target_in(common_targets(), name) {
+        Some(target) => Some(target)
+        None =>
+          if pkg is Some(_) || target_query_is_qualified(query) {
+            None
+          } else {
+            match find_in_targets(registered_targets(), query) {
+              Some(target) => Some(target)
+              None =>
+                if target_has_name(Target::unknown(), query) {
+                  Some(Target::unknown())
+                } else {
+                  find_in_targets(common_targets(), query)
+                }
+            }
+          }
       }
   }
 }
 
 ///|
-pub fn Target::lookup(query : String) -> Target? {
-  find_target(query)
+pub fn Target::lookup(query : String, pkg? : String) -> Target? {
+  find_target(query, pkg?)
 }
 
 ///|
-pub fn get_target(query : String) -> Result[Target, String] {
-  match find_target(query) {
+pub fn get_target(query : String, pkg? : String) -> Result[Target, String] {
+  match find_target(query, pkg?) {
     Some(target) => Ok(target)
     None => Err("unknown target \{query}")
   }
 }
 
 ///|
-pub fn Target::get(query : String) -> Result[Target, String] {
-  get_target(query)
+pub fn Target::get(query : String, pkg? : String) -> Result[Target, String] {
+  get_target(query, pkg?)
 }
 
 ///|
-pub fn Target::read(query : String) -> Result[Target, String] {
-  Target::get(query)
+pub fn Target::read(query : String, pkg? : String) -> Result[Target, String] {
+  Target::get(query, pkg?)
 }
 
 ///|

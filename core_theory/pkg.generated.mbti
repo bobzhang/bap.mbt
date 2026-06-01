@@ -13,9 +13,9 @@ pub fn common_targets() -> Array[Target]
 
 pub fn declared_targets() -> Array[Target]
 
-pub fn find_target(String) -> Target?
+pub fn find_target(String, pkg? : String) -> Target?
 
-pub fn get_target(String) -> Result[Target, String]
+pub fn get_target(String, pkg? : String) -> Result[Target, String]
 
 pub fn register_target(Target) -> Result[Unit, String]
 
@@ -422,7 +422,7 @@ pub fn Target::filetype(Self) -> Filetype
 pub fn Target::filter(parent? : Self, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, options? : TargetOptions, strict? : Bool) -> Array[Self]
 pub fn Target::find_role(Self, Role) -> Var?
 pub fn Target::find_var(Self, String) -> Var?
-pub fn Target::get(String) -> Result[Self, String]
+pub fn Target::get(String, pkg? : String) -> Result[Self, String]
 pub fn Target::has_roles(Self, Array[Role], Var) -> Bool
 pub fn Target::hexagon() -> Self
 pub fn Target::i186() -> Self
@@ -433,7 +433,7 @@ pub fn Target::i586() -> Self
 pub fn Target::i686() -> Self
 pub fn Target::i86() -> Self
 pub fn Target::is_unknown(Self) -> Bool
-pub fn Target::lookup(String) -> Self?
+pub fn Target::lookup(String, pkg? : String) -> Self?
 pub fn Target::matches(Self, String) -> Bool
 pub fn Target::matching(Self, String) -> Self?
 pub fn Target::mips() -> Self
@@ -462,7 +462,7 @@ pub fn Target::powerpc_family() -> Self
 pub fn Target::powerpcbi() -> Self
 pub fn Target::powerpcle() -> Self
 pub fn Target::r600() -> Self
-pub fn Target::read(String) -> Result[Self, String]
+pub fn Target::read(String, pkg? : String) -> Result[Self, String]
 pub fn Target::reg(Self, Role, exclude? : Array[Role], unique? : Bool) -> Var?
 pub fn Target::register(Self) -> Result[Unit, String]
 pub fn Target::register_variants(Self, systems? : Array[System], abis? : Array[Abi], fabis? : Array[Fabi], filetypes? : Array[Filetype], options? : Array[TargetOptions]) -> Result[Array[Self], String]

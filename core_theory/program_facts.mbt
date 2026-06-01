@@ -235,6 +235,27 @@ fn target_equal(lhs : Target, rhs : Target) -> Bool {
 }
 
 ///|
+fn word_persistent() -> @knowledge.Persistent[@types.Word] {
+  @knowledge.Persistent::create(to_string=word => word.to_string(), of_string=input => {
+    try @types.Word::from_string(input[:]) catch {
+      _ => Err("invalid persistent word")
+    } noraise {
+      word => Ok(word)
+    }
+  })
+}
+
+///|
+fn optional_string_persistent() -> @knowledge.Persistent[String?] {
+  @knowledge.Persistent::optional(@knowledge.Persistent::string())
+}
+
+///|
+fn optional_word_persistent() -> @knowledge.Persistent[@types.Word?] {
+  @knowledge.Persistent::optional(word_persistent())
+}
+
+///|
 pub fn target_domain() -> @knowledge.Domain[Target] {
   let unknown = Target::unknown()
   @knowledge.Domain::new(
@@ -282,18 +303,21 @@ pub fn SourceFacts::new() -> SourceFacts {
     name=core_name("source-language"),
     domain=source_language_domain(),
     desc="the language of the unit source code",
+    persistent=Language::persistent(),
     public=true,
   )
   let code = cls.property(
     name=core_name("source-code"),
     domain=@knowledge.Domain::string(core_name("source-code")),
     desc="the unit source code text",
+    persistent=@knowledge.Persistent::string(),
     public=true,
   )
   let file = cls.property(
     name=core_name("source-path"),
     domain=optional_string_domain("source-path"),
     desc="a path to the source code file",
+    persistent=optional_string_persistent(),
     public=true,
   )
   {
@@ -400,18 +424,21 @@ pub fn ProgramUnitFacts::new() -> ProgramUnitFacts {
     name=core_name("unit-path"),
     domain=optional_string_domain("unit-path"),
     desc="a filesystem name of the file that contains the program",
+    persistent=optional_string_persistent(),
     public=true,
   )
   let bias = cls.property(
     name=core_name("unit-bias"),
     domain=optional_word_domain("unit-bias"),
     desc="the value by which all addresses of the unit are biased",
+    persistent=optional_word_persistent(),
     public=true,
   )
   let target = cls.property(
     name=core_name("unit-target"),
     domain=target_domain(),
     desc="the target system for the unit",
+    persistent=Target::persistent(),
     public=true,
   )
   let source = cls.property(

@@ -34,6 +34,29 @@ test "persistent codecs round trip strings names and arrays" {
   let name = @knowledge.Name::create("target:x", pkg="core")
   assert_true(name_codec.decode(name_codec.encode(name)) == Ok(name))
 
+  let int_codec = @knowledge.Persistent::int()
+  assert_true(int_codec.decode(int_codec.encode(42)) == Ok(42))
+  assert_true(int_codec.decode("forty-two") is Err(_))
+
+  let bool_codec = @knowledge.Persistent::bool()
+  assert_true(bool_codec.decode(bool_codec.encode(true)) == Ok(true))
+  assert_true(bool_codec.decode(bool_codec.encode(false)) == Ok(false))
+  assert_true(bool_codec.decode("yes") is Err(_))
+
+  let optional_string_codec = @knowledge.Persistent::optional(string_codec)
+  let missing : String? = None
+  assert_true(
+    optional_string_codec.decode(optional_string_codec.encode(missing)) ==
+    Ok(missing),
+  )
+  assert_true(
+    optional_string_codec.decode(optional_string_codec.encode(Some("a:b"))) ==
+    Ok(Some("a:b")),
+  )
+  assert_true(optional_string_codec.decode("4:none1:x") is Err(_))
+  assert_true(optional_string_codec.decode("4:some1:x") == Ok(Some("x")))
+  assert_true(optional_string_codec.decode("3:bad") is Err(_))
+
   let array_codec = @knowledge.Persistent::array(string_codec)
   let values = ["", "a:b", "moon"]
   assert_true(array_codec.decode(array_codec.encode(values)) == Ok(values))
@@ -47,7 +70,7 @@ test "persistent codecs round trip strings names and arrays" {
     Err(reason) => fail(reason)
   }
 
-  let int_codec = @knowledge.Persistent::convert(
+  let decimal_codec = @knowledge.Persistent::convert(
     to_persistent=(value : Int) => value.to_string(),
     of_persistent=(input : String) => {
       try @string.parse_int(input) catch {
@@ -58,7 +81,7 @@ test "persistent codecs round trip strings names and arrays" {
     },
     string_codec,
   )
-  assert_true(int_codec.decode(int_codec.encode(42)) == Ok(42))
+  assert_true(decimal_codec.decode(decimal_codec.encode(42)) == Ok(42))
 
   let map_codec = @knowledge.Persistent::map(string_codec, int_codec)
   let mapping : Map[String, Int] = { "b": 2, "a": 1, "colon:key": 3 }

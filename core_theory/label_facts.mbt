@@ -29,6 +29,16 @@ fn optional_bool_domain(name : String) -> @knowledge.Domain[Bool?] {
 }
 
 ///|
+fn optional_int_persistent() -> @knowledge.Persistent[Int?] {
+  @knowledge.Persistent::optional(@knowledge.Persistent::int())
+}
+
+///|
+fn optional_bool_persistent() -> @knowledge.Persistent[Bool?] {
+  @knowledge.Persistent::optional(@knowledge.Persistent::bool())
+}
+
+///|
 fn possible_name_domain() -> @knowledge.Domain[@knowledge.Opinions[String?]] {
   @knowledge.Domain::opinions(
     core_name("possible-name"),
@@ -81,12 +91,14 @@ pub fn LabelFacts::new() -> LabelFacts {
     name=core_name("label-addr"),
     domain=optional_word_domain("label-addr"),
     desc="the program virtual address",
+    persistent=optional_word_persistent(),
     public=true,
   )
   let name = cls.property(
     name=core_name("label-name"),
     domain=optional_string_domain("label-name"),
     desc="the program linkage name",
+    persistent=optional_string_persistent(),
     public=true,
   )
   let possible_name = cls.property(
@@ -99,12 +111,14 @@ pub fn LabelFacts::new() -> LabelFacts {
     name=core_name("label-ivec"),
     domain=optional_int_domain("label-ivec"),
     desc="the program interrupt vector",
+    persistent=optional_int_persistent(),
     public=true,
   )
   let encoding = cls.property(
     name=core_name("encoding"),
     domain=source_language_domain(),
     desc="the language of the code",
+    persistent=Language::persistent(),
     public=true,
   )
   let semantics = cls.property(
@@ -117,6 +131,7 @@ pub fn LabelFacts::new() -> LabelFacts {
     name=core_name("label-aliases"),
     domain=@knowledge.Domain::powerset(core_name("label-aliases"), item => item),
     desc="the set of known program names",
+    persistent=@knowledge.Persistent::array(@knowledge.Persistent::string()),
     public=true,
   )
   let unit = cls.property(
@@ -129,12 +144,14 @@ pub fn LabelFacts::new() -> LabelFacts {
     name=core_name("is-valid"),
     domain=optional_bool_domain("is-valid"),
     desc="is the program valid or not",
+    persistent=optional_bool_persistent(),
     public=true,
   )
   let subroutine = cls.property(
     name=core_name("is-subroutine"),
     domain=optional_bool_domain("is-subroutine"),
     desc="is the program a subroutine entry point",
+    persistent=optional_bool_persistent(),
     public=true,
   )
   {

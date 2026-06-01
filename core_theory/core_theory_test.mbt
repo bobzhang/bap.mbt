@@ -30,6 +30,19 @@ fn documented_name_count(names : Array[String], name : String) -> Int {
 }
 
 ///|
+fn[T : Eq] assert_persistent_round_trip(
+  codec : @knowledge.Persistent[T]?,
+  value : T,
+  label : String,
+) -> Unit raise {
+  match codec {
+    Some(persistent) =>
+      assert_true(persistent.decode(persistent.encode(value)) == Ok(value))
+    None => fail("missing persistent codec for \{label}")
+  }
+}
+
+///|
 test "sorts model symbolic applications" {
   let word = @core_theory.Sort::bitv(32)
   inspect(word.to_string(), content="core:bitv<32>")
@@ -1900,6 +1913,26 @@ test "program source and unit facts expose BAP-style Knowledge slots" {
     file="main.c",
   )
   let source_facts = @core_theory.SourceFacts::new()
+  assert_persistent_round_trip(
+    source_facts.language().slot().persistent(),
+    C,
+    "source language",
+  )
+  assert_persistent_round_trip(
+    source_facts.code().slot().persistent(),
+    "int main(void) { return 0; }",
+    "source code",
+  )
+  assert_persistent_round_trip(
+    source_facts.file().slot().persistent(),
+    Some("main.c"),
+    "source path",
+  )
+  assert_persistent_round_trip(
+    source_facts.file().slot().persistent(),
+    (None : String?),
+    "empty source path",
+  )
   match source_facts.for_source(source) {
     Ok(source_object) => {
       assert_true(source_facts.language().collect(source_object) == Some(C))
@@ -1932,6 +1965,30 @@ test "program source and unit facts expose BAP-style Knowledge slots" {
     compiler~,
   )
   let unit_facts = @core_theory.ProgramUnitFacts::new()
+  assert_persistent_round_trip(
+    unit_facts.path().slot().persistent(),
+    Some("main.o"),
+    "unit path",
+  )
+  assert_persistent_round_trip(
+    unit_facts.bias().slot().persistent(),
+    Some(base),
+    "unit bias",
+  )
+  assert_persistent_round_trip(
+    unit_facts.bias().slot().persistent(),
+    (None : @types.Word?),
+    "empty unit bias",
+  )
+  match unit_facts.target().slot().persistent() {
+    Some(persistent) =>
+      match
+        persistent.decode(persistent.encode(@core_theory.Target::x86_64())) {
+        Ok(decoded) => assert_true(decoded.matches("amd64"))
+        Err(reason) => fail(reason)
+      }
+    None => fail("missing persistent codec for unit target")
+  }
   let observed_paths : Ref[Int] = Ref(0)
   unit_facts
   .path()
@@ -1992,6 +2049,41 @@ test "program label facts expose BAP-style Knowledge slots" {
     .with_semantics(@core_theory.Semantics::empty().with_code(b"\x55\xc3"))
     .with_subroutine()
   let facts = @core_theory.LabelFacts::new()
+  assert_persistent_round_trip(
+    facts.addr().slot().persistent(),
+    Some(addr),
+    "label addr",
+  )
+  assert_persistent_round_trip(
+    facts.name().slot().persistent(),
+    (None : String?),
+    "label name",
+  )
+  assert_persistent_round_trip(
+    facts.ivec().slot().persistent(),
+    Some(0x80),
+    "label ivec",
+  )
+  assert_persistent_round_trip(
+    facts.encoding().slot().persistent(),
+    C,
+    "label encoding",
+  )
+  assert_persistent_round_trip(
+    facts.aliases().slot().persistent(),
+    ["_main", "main"],
+    "label aliases",
+  )
+  assert_persistent_round_trip(
+    facts.is_valid().slot().persistent(),
+    Some(true),
+    "label validity",
+  )
+  assert_persistent_round_trip(
+    facts.is_subroutine().slot().persistent(),
+    (None : Bool?),
+    "empty label subroutine flag",
+  )
   let alias_notifications : Ref[Int] = Ref(0)
   facts
   .aliases()

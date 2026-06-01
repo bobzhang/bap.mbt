@@ -45,6 +45,28 @@ pub fn Persistent::string() -> Persistent[String] {
 }
 
 ///|
+pub fn Persistent::int() -> Persistent[Int] {
+  Persistent::create(to_string=value => value.to_string(), of_string=input => {
+    try @string.parse_int(input) catch {
+      _ => Err("invalid persistent int")
+    } noraise {
+      value => Ok(value)
+    }
+  })
+}
+
+///|
+pub fn Persistent::bool() -> Persistent[Bool] {
+  Persistent::create(to_string=value => value.to_string(), of_string=input => {
+    match input {
+      "true" => Ok(true)
+      "false" => Ok(false)
+      _ => Err("invalid persistent bool")
+    }
+  })
+}
+
+///|
 pub fn Persistent::name() -> Persistent[Name] {
   Persistent::create(to_string=name => name.show(), of_string=input => {
     Ok(Name::read(input))
@@ -106,6 +128,50 @@ fn persistent_decode_chunk(
     return Err("invalid persistent \{context} encoding: truncated element")
   }
   Ok((input[start:end].to_owned(), end))
+}
+
+///|
+pub fn[T] Persistent::optional(element : Persistent[T]) -> Persistent[T?] {
+  Persistent::create(
+    to_string=value => {
+      match value {
+        None => "4:none"
+        Some(item) => {
+          let encoded = element.encode(item)
+          "4:some\{encoded.length()}:\{encoded}"
+        }
+      }
+    },
+    of_string=input => {
+      let (tag, offset) = match persistent_decode_chunk(input, 0, "optional") {
+        Ok(chunk) => chunk
+        Err(reason) => return Err(reason)
+      }
+      match tag {
+        "none" =>
+          if offset == input.length() {
+            Ok(None)
+          } else {
+            Err("invalid persistent optional encoding: trailing data")
+          }
+        "some" => {
+          let (encoded, end) = match
+            persistent_decode_chunk(input, offset, "optional") {
+            Ok(chunk) => chunk
+            Err(reason) => return Err(reason)
+          }
+          if end != input.length() {
+            return Err("invalid persistent optional encoding: trailing data")
+          }
+          match element.decode(encoded) {
+            Ok(value) => Ok(Some(value))
+            Err(reason) => Err(reason)
+          }
+        }
+        _ => Err("invalid persistent optional encoding: invalid tag")
+      }
+    },
+  )
 }
 
 ///|

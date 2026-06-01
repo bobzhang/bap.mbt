@@ -2197,6 +2197,15 @@ pub fn Target::to_string(self : Target) -> String {
 }
 
 ///|
+pub fn Target::persistent() -> @knowledge.Persistent[Target] {
+  @knowledge.Persistent::convert(
+    to_persistent=target => target.name().show(),
+    of_persistent=input => Target::read(input),
+    @knowledge.Persistent::string(),
+  )
+}
+
+///|
 pub fn Target::hash(self : Target) -> Int {
   self.name_value.hash()
 }

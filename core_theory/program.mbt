@@ -142,6 +142,15 @@ pub fn Language::to_string(self : Language) -> String {
 }
 
 ///|
+pub fn Language::persistent() -> @knowledge.Persistent[Language] {
+  @knowledge.Persistent::convert(
+    to_persistent=language => language.to_string(),
+    of_persistent=input => Ok(Language::of_string(input)),
+    @knowledge.Persistent::string(),
+  )
+}
+
+///|
 pub fn Language::equal(self : Language, other : Language) -> Bool {
   self == other
 }

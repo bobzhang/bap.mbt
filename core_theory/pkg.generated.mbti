@@ -213,6 +213,7 @@ pub fn Language::equal(Self, Self) -> Bool
 pub fn Language::fortran() -> Self
 pub fn Language::of_string(String) -> Self
 pub fn Language::pascal() -> Self
+pub fn Language::persistent() -> @knowledge.Persistent[Self]
 pub fn Language::to_string(Self) -> String
 
 type Program
@@ -458,6 +459,7 @@ pub fn Target::origin_of_var(Self, Var) -> AliasOrigin?
 pub fn Target::parent(Self) -> Self
 pub fn Target::parents(Self) -> Array[Self]
 pub fn Target::partition(Array[Self]) -> Array[Array[Self]]
+pub fn Target::persistent() -> @knowledge.Persistent[Self]
 pub fn Target::powerpc() -> Self
 pub fn Target::powerpc64() -> Self
 pub fn Target::powerpc64bi() -> Self

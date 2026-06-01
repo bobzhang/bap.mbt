@@ -57,8 +57,10 @@ pub fn FormatRegistry::writers(Self) -> Array[FormatInfo]
 
 type PrefixTrie[V]
 pub fn[V] PrefixTrie::add(Self[V], StringView, V) -> Unit
+pub fn[V] PrefixTrie::change(Self[V], StringView, (V?) -> V?) -> Unit
 pub fn[V] PrefixTrie::find(Self[V], StringView) -> V?
 pub fn[V] PrefixTrie::is_empty(Self[V]) -> Bool
+pub fn[V] PrefixTrie::length(Self[V]) -> Int
 pub fn[V] PrefixTrie::longest_match(Self[V], StringView) -> (Int, V)?
 pub fn[V] PrefixTrie::new() -> Self[V]
 pub fn[V] PrefixTrie::remove(Self[V], StringView) -> Unit

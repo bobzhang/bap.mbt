@@ -59,9 +59,13 @@ fn assert_trie_find(
 ///|
 test "prefix trie find and longest_match follow BAP trie behavior" {
   let trie : @regular.PrefixTrie[Int] = @regular.PrefixTrie::new()
+  assert_true(trie.length() == 0)
+  trie.change("missing", _ => None)
+  assert_true(trie.length() == 0)
   trie.add("", 0)
   trie.add("a", 1)
   trie.add("abcde", 3)
+  assert_true(trie.length() == 3)
   assert_trie_longest(trie, [
     ("", Some((0, 0))),
     ("a", Some((1, 1))),
@@ -73,6 +77,7 @@ test "prefix trie find and longest_match follow BAP trie behavior" {
     ("nothing", Some((0, 0))),
   ])
   trie.add("abc", 2)
+  assert_true(trie.length() == 4)
   assert_trie_longest(trie, [
     ("", Some((0, 0))),
     ("a", Some((1, 1))),
@@ -83,7 +88,21 @@ test "prefix trie find and longest_match follow BAP trie behavior" {
     ("abcdef", Some((5, 3))),
     ("nothing", Some((0, 0))),
   ])
+  trie.change("abc", value => {
+    match value {
+      Some(current) => Some(current + 10)
+      None => None
+    }
+  })
+  assert_true(trie.find("abc") == Some(12))
+  assert_true(trie.length() == 4)
+  trie.change("new", _ => Some(4))
+  assert_true(trie.find("new") == Some(4))
+  assert_true(trie.length() == 5)
+  trie.remove("new")
+  assert_true(trie.length() == 4)
   trie.remove("abc")
+  assert_true(trie.length() == 3)
   assert_trie_longest(trie, [
     ("", Some((0, 0))),
     ("a", Some((1, 1))),
@@ -95,6 +114,7 @@ test "prefix trie find and longest_match follow BAP trie behavior" {
     ("nothing", Some((0, 0))),
   ])
   trie.remove("")
+  assert_true(trie.length() == 2)
   assert_trie_longest(trie, [
     ("", None),
     ("a", Some((1, 1))),

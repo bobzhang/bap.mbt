@@ -15,16 +15,49 @@ pub fn[V] PrefixTrie::is_empty(self : PrefixTrie[V]) -> Bool {
 }
 
 ///|
+pub fn[V] PrefixTrie::length(self : PrefixTrie[V]) -> Int {
+  let total = Ref(if self.value is Some(_) { 1 } else { 0 })
+  self.children.each((_, child) => total.val = total.val + child.length())
+  total.val
+}
+
+///|
+pub fn[V] PrefixTrie::change(
+  self : PrefixTrie[V],
+  key : StringView,
+  f : (V?) -> V?,
+) -> Unit {
+  let chars = []
+  for ch in key {
+    chars.push(ch)
+  }
+  let mut node = self
+  for i in 0..<chars.length() {
+    match node.children.get(chars[i]) {
+      Some(next) => node = next
+      None =>
+        match f(None) {
+          Some(value) => {
+            for j in i..<chars.length() {
+              node = node.children.get_or_init(chars[j], () => PrefixTrie::new())
+            }
+            node.value = Some(value)
+            return
+          }
+          None => return
+        }
+    }
+  }
+  node.value = f(node.value)
+}
+
+///|
 pub fn[V] PrefixTrie::add(
   self : PrefixTrie[V],
   key : StringView,
   value : V,
 ) -> Unit {
-  let mut node = self
-  for ch in key {
-    node = node.children.get_or_init(ch, () => PrefixTrie::new())
-  }
-  node.value = Some(value)
+  self.change(key, _ => Some(value))
 }
 
 ///|
@@ -41,14 +74,7 @@ pub fn[V] PrefixTrie::find(self : PrefixTrie[V], key : StringView) -> V? {
 
 ///|
 pub fn[V] PrefixTrie::remove(self : PrefixTrie[V], key : StringView) -> Unit {
-  let mut node = self
-  for ch in key {
-    match node.children.get(ch) {
-      Some(next) => node = next
-      None => return
-    }
-  }
-  node.value = None
+  self.change(key, _ => None)
 }
 
 ///|

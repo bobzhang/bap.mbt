@@ -1536,7 +1536,7 @@ fn arm32_vars() -> Array[Var] {
 ///|
 fn arm32_fp_vars() -> Array[Var] {
   let items = arm32_vars()
-  append_vars(items, numbered_word_vars(64, "D", 32))
+  append_vars(items, numbered_word_vars(64, "D", 16))
   items
 }
 

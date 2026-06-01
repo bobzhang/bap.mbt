@@ -686,11 +686,13 @@ test "target registry resolves common and custom declarations" {
       assert_true(target.code_alignment() == 16)
       assert_true(@core_theory.Target::arm().belongs(target))
       assert_true(target.find_var("SP") is Some(_))
-      match target.find_var("D31") {
+      match target.find_var("D15") {
         Some(float) =>
           assert_true(target.roles_of_var(float).contains(FloatingRegister))
-        None => fail("missing ARMv7-A+FP D31")
+        None => fail("missing ARMv7-A+FP D15")
       }
+      assert_true(target.find_var("D16") is None)
+      assert_true(target.role_aliases(FloatingRegister).contains("d31"))
     }
     Err(reason) => fail(reason)
   }
@@ -960,7 +962,9 @@ test "target registry resolves common and custom declarations" {
     Some(target) => {
       assert_true(target.matches("armv7-a+fp+le"))
       assert_true(@core_theory.Target::arm().belongs(target))
-      assert_true(target.find_var("D31") is Some(_))
+      assert_true(target.find_var("D15") is Some(_))
+      assert_true(target.find_var("D16") is None)
+      assert_true(target.role_aliases(FloatingRegister).contains("d31"))
     }
     None => fail("missing ARMv7-A+FP target alias")
   }
@@ -1797,14 +1801,16 @@ test "target role helpers classify common architecture variables" {
     None => fail("missing QF")
   }
   assert_true(arm.role_aliases(IntegerRegister).contains("qf"))
-  match arm.find_var("D31") {
+  match arm.find_var("D15") {
     Some(float) => {
       assert_true(arm.roles_of_var(float).contains(FloatingRegister))
       assert_true(!arm.roles_of_var(float).contains(IntegerRegister))
       assert_true(float.sort().same(@core_theory.Sort::bitv(64)))
     }
-    None => fail("missing ARM D31")
+    None => fail("missing ARM D15")
   }
+  assert_true(arm.find_var("D16") is None)
+  assert_true(arm.role_aliases(FloatingRegister).contains("d31"))
   match arm.origin_of_name("SP") {
     Some(origin) => {
       assert_true(origin.aliased().ident() == "SP")

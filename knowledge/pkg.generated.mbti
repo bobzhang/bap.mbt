@@ -49,6 +49,7 @@ pub fn[T : Eq] Domain::flat(Name, (T) -> String, empty? : T) -> Self[T]
 pub fn[T] Domain::inspect(Self[T], T) -> String
 pub fn[T] Domain::is_empty(Self[T], T) -> Bool
 pub fn[T] Domain::join(Self[T], T, T) -> Result[T, String]
+pub fn[K : Eq + Hash, T] Domain::mapping(Name, (K) -> String, (T) -> String, equal~ : (T, T) -> Bool, join? : (T, T) -> Result[T, String]) -> Self[Map[K, T]]
 pub fn[T] Domain::name(Self[T]) -> Name
 pub fn[T] Domain::new(name~ : Name, empty~ : T?, is_empty~ : (T) -> Bool, order~ : (T, T) -> PartialOrder, join~ : (T, T) -> Result[T, String], inspect~ : (T) -> String) -> Self[T]
 pub fn[T] Domain::opinions(Name, empty~ : T, equal~ : (T, T) -> Bool, inspect~ : (T) -> String) -> Self[Opinions[T]]

@@ -159,6 +159,108 @@ pub fn Domain::string(name : Name) -> Domain[String] {
 }
 
 ///|
+fn[K : Eq + Hash, T] map_values_equal(
+  lhs : Map[K, T],
+  rhs : Map[K, T],
+  equal : (T, T) -> Bool,
+) -> Bool {
+  if lhs.length() != rhs.length() {
+    return false
+  }
+  for entry in lhs {
+    match rhs.get(entry.0) {
+      Some(value) if equal(entry.1, value) => ()
+      _ => return false
+    }
+  }
+  true
+}
+
+///|
+fn[K : Eq + Hash, T] map_values_leq(
+  lhs : Map[K, T],
+  rhs : Map[K, T],
+  equal : (T, T) -> Bool,
+) -> Bool {
+  for entry in lhs {
+    match rhs.get(entry.0) {
+      Some(value) if equal(entry.1, value) => ()
+      _ => return false
+    }
+  }
+  true
+}
+
+///|
+fn[K : Eq + Hash, T] map_join_values(
+  lhs : Map[K, T],
+  rhs : Map[K, T],
+  join : (T, T) -> Result[T, String],
+) -> Result[Map[K, T], String] {
+  let result : Map[K, T] = {}
+  for entry in lhs {
+    result[entry.0] = entry.1
+  }
+  for entry in rhs {
+    match result.get(entry.0) {
+      Some(value) =>
+        match join(value, entry.1) {
+          Ok(joined) => result[entry.0] = joined
+          Err(reason) => return Err(reason)
+        }
+      None => result[entry.0] = entry.1
+    }
+  }
+  Ok(result)
+}
+
+///|
+pub fn[K : Eq + Hash, T] Domain::mapping(
+  name : Name,
+  inspect_key : (K) -> String,
+  inspect_value : (T) -> String,
+  equal~ : (T, T) -> Bool,
+  join? : (T, T) -> Result[T, String] = (lhs, rhs) => {
+    if equal(lhs, rhs) {
+      Ok(rhs)
+    } else {
+      Err("conflicting values in mapping domain \{name.show()}")
+    }
+  },
+) -> Domain[Map[K, T]] {
+  let empty : Map[K, T] = {}
+  Domain::new(
+    name~,
+    empty=Some(empty),
+    is_empty=(value : Map[K, T]) => value.length() == 0,
+    order=(lhs : Map[K, T], rhs : Map[K, T]) => {
+      if map_values_equal(lhs, rhs, equal) {
+        Equal
+      } else {
+        let lhs_le_rhs = map_values_leq(lhs, rhs, equal)
+        let rhs_le_lhs = map_values_leq(rhs, lhs, equal)
+        if lhs_le_rhs {
+          Less
+        } else if rhs_le_lhs {
+          Greater
+        } else {
+          Incomparable
+        }
+      }
+    },
+    join=(lhs : Map[K, T], rhs : Map[K, T]) => map_join_values(lhs, rhs, join),
+    inspect=(value : Map[K, T]) => {
+      let entries = []
+      for entry in value {
+        entries.push("\{inspect_key(entry.0)}: \{inspect_value(entry.1)}")
+      }
+      entries.sort_by((lhs, rhs) => lhs.compare(rhs))
+      "{\{entries.join(", ")}}"
+    },
+  )
+}
+
+///|
 fn[T : Eq] array_subset(lhs : Array[T], rhs : Array[T]) -> Bool {
   lhs.all(item => rhs.contains(item))
 }

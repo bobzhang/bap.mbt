@@ -79,6 +79,49 @@ test "total domains order values and join by upper bound" {
 }
 
 ///|
+test "mapping domains merge pointwise facts" {
+  let domain = @knowledge.Domain::mapping(
+    @knowledge.Name::create("attributes", pkg="test"),
+    key => key,
+    (value : Int) => value.to_string(),
+    equal=(lhs, rhs) => lhs == rhs,
+  )
+  let empty : Map[String, Int] = {}
+  let base : Map[String, Int] = { "a": 1 }
+  let same : Map[String, Int] = { "a": 1 }
+  let extra : Map[String, Int] = { "b": 2 }
+  let extended : Map[String, Int] = { "a": 1, "b": 2 }
+  let conflict : Map[String, Int] = { "a": 2 }
+  assert_true(domain.is_empty(empty))
+  assert_true(domain.order(empty, base) == Less)
+  assert_true(domain.order(base, same) == Equal)
+  assert_true(domain.order(base, extended) == Less)
+  assert_true(domain.order(base, conflict) == Incomparable)
+  match domain.join(base, extra) {
+    Ok(joined) => {
+      assert_eq(joined.length(), 2)
+      assert_true(joined.get("a") == Some(1))
+      assert_true(joined.get("b") == Some(2))
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(domain.join(base, conflict) is Err(_))
+  assert_eq(domain.inspect(extended), "{a: 1, b: 2}")
+
+  let summing = @knowledge.Domain::mapping(
+    @knowledge.Name::create("summed-attributes", pkg="test"),
+    key => key,
+    (value : Int) => value.to_string(),
+    equal=(lhs, rhs) => lhs == rhs,
+    join=(lhs, rhs) => Ok(lhs + rhs),
+  )
+  match summing.join(base, conflict) {
+    Ok(joined) => assert_true(joined.get("a") == Some(3))
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "optional domains lift base order and joins" {
   let base = @knowledge.Domain::bool(
     @knowledge.Name::create("flag", pkg="test"),

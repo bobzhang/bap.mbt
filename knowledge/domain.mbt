@@ -68,6 +68,38 @@ pub fn[T : Eq] Domain::flat(
 }
 
 ///|
+pub fn[T] Domain::total(
+  name : Name,
+  inspect : (T) -> String,
+  empty~ : T,
+  compare~ : (T, T) -> Int,
+) -> Domain[T] {
+  Domain::new(
+    name~,
+    empty=Some(empty),
+    is_empty=(value : T) => compare(value, empty) == 0,
+    order=(lhs : T, rhs : T) => {
+      let order = compare(lhs, rhs)
+      if order < 0 {
+        Less
+      } else if order > 0 {
+        Greater
+      } else {
+        Equal
+      }
+    },
+    join=(lhs : T, rhs : T) => {
+      if compare(lhs, rhs) <= 0 {
+        Ok(rhs)
+      } else {
+        Ok(lhs)
+      }
+    },
+    inspect~,
+  )
+}
+
+///|
 pub fn[T] Domain::optional(base : Domain[T]) -> Domain[T?] {
   Domain::new(
     name=Name::create("\{base.name.unqualified()}?", pkg=base.name.pkg()),

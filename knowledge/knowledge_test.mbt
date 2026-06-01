@@ -62,6 +62,23 @@ test "flat domains keep bottom and reject conflicting facts" {
 }
 
 ///|
+test "total domains order values and join by upper bound" {
+  let domain = @knowledge.Domain::total(
+    @knowledge.Name::create("confidence", pkg="test"),
+    (value : Int) => value.to_string(),
+    empty=0,
+    compare=(lhs, rhs) => lhs.compare(rhs),
+  )
+  assert_true(domain.is_empty(0))
+  assert_true(domain.order(0, 2) == Less)
+  assert_true(domain.order(2, 0) == Greater)
+  assert_true(domain.order(2, 2) == Equal)
+  assert_true(domain.join(1, 3) == Ok(3))
+  assert_true(domain.join(3, 1) == Ok(3))
+  assert_eq(domain.inspect(3), "3")
+}
+
+///|
 test "optional domains lift base order and joins" {
   let base = @knowledge.Domain::bool(
     @knowledge.Name::create("flag", pkg="test"),

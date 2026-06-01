@@ -137,6 +137,7 @@ pub fn State::new() -> Self
 pub fn[K, S] State::objects(Self, Class[K, S]) -> Array[Object[K]]
 pub fn[K, S] State::read(Self, Class[K, S], String, pkg? : String) -> Result[Object[K], String]
 pub fn[K] State::repr(Self, Object[K]) -> String
+pub fn[K, S, R] State::scoped(Self, Class[K, S], (Object[K]) -> R) -> R
 pub fn State::set_current_pkg(Self, String) -> Unit
 pub fn[R] State::with_pkg(Self, String, () -> R) -> R
 

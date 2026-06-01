@@ -233,6 +233,32 @@ test "state enumerates objects by class in creation order" {
 }
 
 ///|
+test "state scoped objects are removed from class enumeration" {
+  let state = @knowledge.State::new()
+  let cls : @knowledge.Class[Unit, String] = @knowledge.Class::create(
+    name=@knowledge.Name::create("scoped-object", pkg="test"),
+    sort="unit",
+  )
+  let permanent = state.create(cls)
+  let scoped = state.scoped(cls, object => {
+    let objects = state.objects(cls)
+    (
+      object,
+      objects.length(),
+      objects.any(current => current.equal(object)),
+      objects.any(current => current.equal(permanent)),
+    )
+  })
+  assert_eq(scoped.1, 2)
+  assert_true(scoped.2)
+  assert_true(scoped.3)
+  let remaining = state.objects(cls)
+  assert_eq(remaining.length(), 1)
+  assert_true(remaining[0].equal(permanent))
+  assert_true(!remaining.any(object => object.equal(scoped.0)))
+}
+
+///|
 test "state interns and reads BAP-style symbols by class" {
   let state = @knowledge.State::new()
   let cls : @knowledge.Class[Unit, String] = @knowledge.Class::create(

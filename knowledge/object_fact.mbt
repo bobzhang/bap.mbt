@@ -49,6 +49,34 @@ pub fn[K, S] State::create(self : State, cls : Class[K, S]) -> Object[K] {
 }
 
 ///|
+fn State::forget_object(self : State, class_name : Name, id : Int) -> Unit {
+  match self.objects_by_class.get(class_name) {
+    Some(ids) => {
+      let kept = []
+      for current in ids {
+        if current != id {
+          kept.push(current)
+        }
+      }
+      self.objects_by_class[class_name] = kept
+    }
+    None => ()
+  }
+}
+
+///|
+pub fn[K, S, R] State::scoped(
+  self : State,
+  cls : Class[K, S],
+  body : (Object[K]) -> R,
+) -> R {
+  let object = self.allocate(cls)
+  let result = body(object)
+  self.forget_object(object.class_name(), object.id())
+  result
+}
+
+///|
 pub fn State::current_pkg(self : State) -> String {
   self.current_pkg_value
 }

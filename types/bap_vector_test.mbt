@@ -39,6 +39,7 @@ test "BAP-style vector traversal and mapping use occupied elements only" {
   vector.iter(value => iter_seen.push(value * 10))
   assert_true(iter_seen == [30, 40, 50])
   assert_true(vector.map_to_array(value => value * 2) == [6, 8, 10])
+  assert_true(vector.to_list().to_array() == [3, 4, 5])
   assert_true(vector.foldi(0, (index, acc, value) => acc + index + value) == 15)
   assert_true(vector.fold(1, (acc, value) => acc * value) == 60)
   let folded : Result[Int, String] = vector.fold_result(0, (acc, value) => {
@@ -55,6 +56,24 @@ test "BAP-style vector traversal and mapping use occupied elements only" {
     }) ==
     Err("stop"),
   )
+  let finished : String = vector.fold_until(
+    init=0,
+    f=fn(acc, value) { Continue(acc + value) },
+    finish=fn(acc) { "done:\{acc}" },
+  )
+  assert_eq(finished, "done:12")
+  let stopped : String = vector.fold_until(
+    init=0,
+    f=fn(acc, value) {
+      if value == 4 {
+        Stop("stop:\{acc}")
+      } else {
+        Continue(acc + value)
+      }
+    },
+    finish=fn(acc) { "done:\{acc}" },
+  )
+  assert_eq(stopped, "stop:3")
 }
 
 ///|

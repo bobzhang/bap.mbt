@@ -6,6 +6,12 @@ struct BapVector[T] {
 }
 
 ///|
+pub(all) enum ContinueOrStop[A, R] {
+  Continue(A)
+  Stop(R)
+} derive(Eq, Debug)
+
+///|
 pub fn[T] BapVector::create(default : T, capacity? : Int = 16) -> BapVector[T] {
   let actual_capacity = if capacity < 1 { 1 } else { capacity }
   {
@@ -57,6 +63,11 @@ pub fn[T] BapVector::capacity(self : BapVector[T]) -> Int {
 ///|
 pub fn[T] BapVector::to_array(self : BapVector[T]) -> Array[T] {
   self.data_value[0:self.size_value].to_owned()
+}
+
+///|
+pub fn[T] BapVector::to_list(self : BapVector[T]) -> @list.List[T] {
+  @list.from_array(self.to_array())
 }
 
 ///|
@@ -141,6 +152,23 @@ pub fn[T, A, E] BapVector::fold_result(
     }
   }
   Ok(acc)
+}
+
+///|
+pub fn[T, A, R] BapVector::fold_until(
+  self : BapVector[T],
+  init~ : A,
+  f~ : (A, T) -> ContinueOrStop[A, R],
+  finish~ : (A) -> R,
+) -> R {
+  let mut acc = init
+  for i in 0..<self.size_value {
+    match f(acc, self.data_value.unsafe_get(i)) {
+      Continue(next) => acc = next
+      Stop(result) => return result
+    }
+  }
+  finish(acc)
 }
 
 ///|

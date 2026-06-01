@@ -1,5 +1,6 @@
 import {
   "bobzhang/bap/bitvec",
   "bobzhang/bap/graphlib",
+  "moonbitlang/core/list",
   "moonbitlang/core/string",
 }

@@ -450,6 +450,84 @@ test "translated BAP opinion domains resolve by agent reliability" {
 }
 
 ///|
+test "translated BAP opinion proposals materialize deferred suggestions" {
+  let weak = register_test_agent("opinion-propose-weak", Unreliable)
+  let strong = register_test_agent("opinion-propose-strong", Reliable)
+  let empty_name : String? = None
+  let domain = @knowledge.Domain::opinions(
+    @knowledge.Name::create("proposed-name", pkg="test"),
+    empty=empty_name,
+    equal=optional_string_equal,
+    inspect=inspect_optional_string,
+  )
+  let cls : @knowledge.Class[Unit, String] = @knowledge.Class::create(
+    name=@knowledge.Name::create("proposed-program", pkg="test"),
+    sort="unit",
+  )
+  let slot = cls.property(
+    name=@knowledge.Name::create("proposed-name", pkg="test"),
+    domain~,
+  )
+  let state = @knowledge.State::new()
+  let object = state.create(cls)
+  let ranked = state.create(cls)
+  let missing = state.create(cls)
+  let facts = @knowledge.FactTable::new(slot)
+  let calls : Ref[Int] = Ref(0)
+  facts.propose(weak, current => {
+    calls.val = calls.val + 1
+    if current.equal(object) || current.equal(ranked) {
+      Ok(Some("helper"))
+    } else {
+      Ok(None)
+    }
+  })
+  facts.propose(strong, current => {
+    if current.equal(ranked) {
+      Ok(Some("main"))
+    } else {
+      Ok(None)
+    }
+  })
+  assert_true(facts.promise_count() == 2)
+  assert_true(facts.resolve(object) == Ok(Some("helper")))
+  assert_true(calls.val == 1)
+  assert_true(facts.resolve(object) == Ok(Some("helper")))
+  assert_true(calls.val == 1)
+  assert_true(facts.resolve(ranked) == Ok(Some("main")))
+  assert_true(calls.val == 2)
+  assert_true(facts.resolve(missing) == Ok(None))
+  assert_true(calls.val == 3)
+
+  let scoped_facts = @knowledge.FactTable::new(slot)
+  let scoped_object = state.create(cls)
+  let after_scope = state.create(cls)
+  let count_during : Ref[Int] = Ref(-1)
+  let scoped_calls : Ref[Int] = Ref(0)
+  let scoped_result = scoped_facts.proposing(
+    strong,
+    current => {
+      scoped_calls.val = scoped_calls.val + 1
+      if current.equal(scoped_object) {
+        Ok(Some("main"))
+      } else {
+        Ok(None)
+      }
+    },
+    () => {
+      count_during.val = scoped_facts.promise_count()
+      scoped_facts.resolve(scoped_object)
+    },
+  )
+  assert_true(scoped_result == Ok(Some("main")))
+  assert_true(count_during.val == 1)
+  assert_true(scoped_calls.val == 1)
+  assert_true(scoped_facts.promise_count() == 0)
+  assert_true(scoped_facts.resolve(after_scope) == Ok(None))
+  assert_true(scoped_calls.val == 1)
+}
+
+///|
 test "classes slots and fact tables accumulate monotone facts" {
   let cls : @knowledge.Class[Unit, String] = @knowledge.Class::create(
     name=@knowledge.Name::create("program", pkg="test"),

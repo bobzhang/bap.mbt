@@ -500,15 +500,56 @@ pub fn[K, P] FactTable::suggest(
 }
 
 ///|
+fn[K, P] FactTable::proposal(
+  self : FactTable[K, Opinions[P]],
+  agent : Agent,
+  provider : (Object[K]) -> Result[P, String],
+) -> (Object[K]) -> Result[Opinions[P], String] {
+  object => {
+    match self.collect(object) {
+      Some(opinions) =>
+        match provider(object) {
+          Ok(value) => Ok(opinions.add(agent, value))
+          Err(reason) => Err(reason)
+        }
+      None =>
+        Err(
+          "opinion fact \{self.slot.name().show()} has no empty value for object \{object.id()}",
+        )
+    }
+  }
+}
+
+///|
+pub fn[K, P] FactTable::propose(
+  self : FactTable[K, Opinions[P]],
+  agent : Agent,
+  provider : (Object[K]) -> Result[P, String],
+) -> Unit {
+  self.promise(self.proposal(agent, provider))
+}
+
+///|
+pub fn[K, P, R] FactTable::proposing(
+  self : FactTable[K, Opinions[P]],
+  agent : Agent,
+  provider : (Object[K]) -> Result[P, String],
+  body : () -> R,
+) -> R {
+  self.promising(self.proposal(agent, provider), body)
+}
+
+///|
 pub fn[K, P] FactTable::resolve(
   self : FactTable[K, Opinions[P]],
   object : Object[K],
 ) -> Result[P, String] {
-  match self.collect(object) {
-    Some(opinions) => Ok(opinions.choice())
-    None =>
+  match self.collect_promised(object) {
+    Ok(Some(opinions)) => Ok(opinions.choice())
+    Ok(None) =>
       Err(
         "opinion fact \{self.slot.name().show()} has no empty value for object \{object.id()}",
       )
+    Err(reason) => Err(reason)
   }
 }

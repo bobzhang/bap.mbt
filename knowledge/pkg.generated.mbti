@@ -72,6 +72,8 @@ pub fn[K, P, R] FactTable::observing(Self[K, P], (Object[K], P) -> Result[Unit, 
 pub fn[K, P] FactTable::promise(Self[K, P], (Object[K]) -> Result[P, String]) -> Unit
 pub fn[K, P] FactTable::promise_count(Self[K, P]) -> Int
 pub fn[K, P, R] FactTable::promising(Self[K, P], (Object[K]) -> Result[P, String], () -> R) -> R
+pub fn[K, P] FactTable::propose(Self[K, Opinions[P]], Agent, (Object[K]) -> Result[P, String]) -> Unit
+pub fn[K, P, R] FactTable::proposing(Self[K, Opinions[P]], Agent, (Object[K]) -> Result[P, String], () -> R) -> R
 pub fn[K, P] FactTable::provide(Self[K, P], Object[K], P) -> Result[P, String]
 pub fn[K, P] FactTable::require(Self[K, P], Object[K]) -> Result[P, String]
 pub fn[K, P] FactTable::require_cached(Self[K, P], Object[K]) -> Result[P, String]

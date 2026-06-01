@@ -34,18 +34,27 @@ pub fn AgentReliability::trustworthy() -> Self
 pub fn AgentReliability::unreliable() -> Self
 
 type Class[K, S]
-pub fn[K, S] Class::create(name~ : Name, sort~ : S, desc? : String) -> Self[K, S]
+pub fn[K, S] Class::create(name~ : Name, sort~ : S, desc? : String, public? : Bool) -> Self[K, S]
 pub fn[K, S] Class::desc(Self[K, S]) -> String?
 pub fn[K, S] Class::name(Self[K, S]) -> Name
-pub fn[K, S, P] Class::property(Self[K, S], name~ : Name, domain~ : Domain[P], desc? : String, persistent? : Persistent[P]) -> Slot[K, P]
+pub fn[K, S, P] Class::property(Self[K, S], name~ : Name, domain~ : Domain[P], desc? : String, persistent? : Persistent[P], public? : Bool) -> Slot[K, P]
 pub fn[K, S, T] Class::refine(Self[K, S], name~ : Name, sort~ : T, desc? : String) -> Self[K, T]
 pub fn[K, S, T] Class::same(Self[K, S], Self[K, T]) -> Bool
 pub fn[K, S] Class::sort(Self[K, S]) -> S
 
 type Documentation
 pub fn Documentation::agents() -> Array[Agent]
+pub fn Documentation::classes() -> Array[(DocumentationClass, Array[DocumentationProperty])]
 pub fn Documentation::new() -> Self
 pub fn Documentation::rules() -> Array[Rule]
+
+type DocumentationClass
+pub fn DocumentationClass::desc(Self) -> String
+pub fn DocumentationClass::name(Self) -> Name
+
+type DocumentationProperty
+pub fn DocumentationProperty::desc(Self) -> String
+pub fn DocumentationProperty::name(Self) -> Name
 
 type Domain[T]
 pub fn Domain::bool(Name) -> Self[Bool]

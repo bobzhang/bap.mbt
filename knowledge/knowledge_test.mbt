@@ -112,6 +112,60 @@ test "knowledge rules record BAP-style registry documentation" {
 }
 
 ///|
+test "knowledge documentation lists public classes and properties" {
+  let public_cls : @knowledge.Class[Unit, String] = @knowledge.Class::create(
+    name=@knowledge.Name::create("documented-program", pkg="test"),
+    sort="unit",
+    desc="documented class",
+    public=true,
+  )
+  let hidden_cls : @knowledge.Class[Unit, String] = @knowledge.Class::create(
+    name=@knowledge.Name::create("hidden-program", pkg="test"),
+    sort="unit",
+  )
+  let domain = @knowledge.Domain::string(
+    @knowledge.Name::create("documented-domain", pkg="test"),
+  )
+  let public_slot = public_cls.property(
+    name=@knowledge.Name::create("documented-property", pkg="test"),
+    domain~,
+    desc="documented property",
+    public=true,
+  )
+  ignore(
+    public_cls.property(
+      name=@knowledge.Name::create("hidden-property", pkg="test"),
+      domain~,
+    ),
+  )
+  ignore(
+    hidden_cls.property(
+      name=@knowledge.Name::create("orphan-public-property", pkg="test"),
+      domain~,
+      public=true,
+    ),
+  )
+
+  let classes = @knowledge.Documentation::classes()
+  match
+    classes.search_by(entry => {
+      entry.0.name().show() == "test:documented-program"
+    }) {
+    Some(index) => {
+      let (cls_doc, properties) = classes[index]
+      assert_eq(cls_doc.desc(), "documented class")
+      assert_eq(properties.length(), 1)
+      assert_true(properties[0].name().equal(public_slot.name()))
+      assert_eq(properties[0].desc(), "documented property")
+    }
+    None => fail("missing documented class")
+  }
+  assert_true(
+    !classes.any(entry => entry.0.name().show() == "test:hidden-program"),
+  )
+}
+
+///|
 fn optional_string_equal(lhs : String?, rhs : String?) -> Bool {
   lhs == rhs
 }

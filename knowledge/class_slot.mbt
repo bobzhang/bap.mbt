@@ -17,11 +17,47 @@ struct Slot[K, P] {
 }
 
 ///|
+struct DocumentationClass {
+  name_value : Name
+  desc_value : String
+}
+
+///|
+struct DocumentationProperty {
+  name_value : Name
+  desc_value : String
+}
+
+///|
+let documented_classes : Map[String, DocumentationClass] = {}
+
+///|
+let documented_properties : Map[String, Array[DocumentationProperty]] = {}
+
+///|
+fn documentation_desc(desc : String?) -> String {
+  match desc {
+    Some(text) => text
+    None => ""
+  }
+}
+
+///|
 pub fn[K, S] Class::create(
   name~ : Name,
   sort~ : S,
   desc? : String,
+  public? : Bool = false,
 ) -> Class[K, S] {
+  if public {
+    documented_classes[name.show()] = {
+      name_value: name,
+      desc_value: documentation_desc(desc),
+    }
+    if !documented_properties.contains(name.show()) {
+      documented_properties[name.show()] = []
+    }
+  }
   { name, sort_value: sort, desc, _phantom: None }
 }
 
@@ -70,7 +106,18 @@ pub fn[K, S, P] Class::property(
   domain~ : Domain[P],
   desc? : String,
   persistent? : Persistent[P],
+  public? : Bool = false,
 ) -> Slot[K, P] {
+  if public {
+    match documented_properties.get(self.name.show()) {
+      Some(properties) =>
+        properties.push({
+          name_value: name,
+          desc_value: documentation_desc(desc),
+        })
+      None => ()
+    }
+  }
   {
     owner: self.name,
     name,
@@ -112,4 +159,41 @@ pub fn[K, P] Slot::desc(self : Slot[K, P]) -> String {
 ///|
 pub fn[K, P] Slot::persistent(self : Slot[K, P]) -> Persistent[P]? {
   self.persistent_value
+}
+
+///|
+pub fn DocumentationClass::name(self : DocumentationClass) -> Name {
+  self.name_value
+}
+
+///|
+pub fn DocumentationClass::desc(self : DocumentationClass) -> String {
+  self.desc_value
+}
+
+///|
+pub fn DocumentationProperty::name(self : DocumentationProperty) -> Name {
+  self.name_value
+}
+
+///|
+pub fn DocumentationProperty::desc(self : DocumentationProperty) -> String {
+  self.desc_value
+}
+
+///|
+pub fn Documentation::classes() -> Array[
+  (DocumentationClass, Array[DocumentationProperty]),
+] {
+  let entries = []
+  documented_classes.each((key, cls) => {
+    let properties = match documented_properties.get(key) {
+      Some(values) => values.copy()
+      None => []
+    }
+    properties.sort_by((left, right) => left.name().compare(right.name()))
+    entries.push((cls, properties))
+  })
+  entries.sort_by((left, right) => left.0.name().compare(right.0.name()))
+  entries
 }

@@ -541,11 +541,20 @@ test "targets inherit defaults and match ancestry" {
   match target.origin_of_name("EAX") {
     Some(origin) => {
       assert_true(origin.aliased().ident() == "EAX")
+      assert_true(origin.reg().map(v => v.ident()) == Some("RAX"))
       assert_true(origin.source().map(v => v.ident()) == Some("RAX"))
       assert_true(origin.range() == Some((0, 31)))
+      assert_true(origin.lo() == Some(0))
+      assert_true(origin.hi() == Some(31))
+      assert_true(!origin.is_alias())
     }
     None => fail("missing EAX alias origin")
   }
+  let direct_alias = @core_theory.AliasOrigin::register(pc, rax)
+  assert_true(direct_alias.reg().map(v => v.ident()) == Some("RAX"))
+  assert_true(direct_alias.is_alias())
+  assert_true(direct_alias.lo() is None)
+  assert_true(direct_alias.hi() is None)
 }
 
 ///|
@@ -1567,6 +1576,10 @@ test "target role helpers classify common architecture variables" {
   match amd64.origin_of_name("EFLAGS") {
     Some(origin) => {
       assert_true(origin.aliased().ident() == "EFLAGS")
+      assert_true(!origin.is_alias())
+      assert_true(origin.reg() is None)
+      assert_true(origin.lo() is None)
+      assert_true(origin.hi() is None)
       assert_true(origin.bits().length() == 32)
       assert_true(origin.bits().any(v => v.ident() == "CF"))
       assert_true(origin.bits().any(v => v.ident() == "ZF"))

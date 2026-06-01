@@ -72,7 +72,11 @@ pub(all) enum AliasOrigin {
 pub fn AliasOrigin::aliased(Self) -> Var
 pub fn AliasOrigin::bit_set(Var, Array[Var]) -> Self
 pub fn AliasOrigin::bits(Self) -> Array[Var]
+pub fn AliasOrigin::hi(Self) -> Int?
+pub fn AliasOrigin::is_alias(Self) -> Bool
+pub fn AliasOrigin::lo(Self) -> Int?
 pub fn AliasOrigin::range(Self) -> (Int, Int)?
+pub fn AliasOrigin::reg(Self) -> Var?
 pub fn AliasOrigin::register(Var, Var) -> Self
 pub fn AliasOrigin::source(Self) -> Var?
 pub fn AliasOrigin::subregister(Var, Var, lo~ : Int, hi~ : Int) -> Self

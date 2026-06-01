@@ -2300,10 +2300,44 @@ pub fn AliasOrigin::source(self : AliasOrigin) -> Var? {
 }
 
 ///|
+pub fn AliasOrigin::reg(self : AliasOrigin) -> Var? {
+  self.source()
+}
+
+///|
 pub fn AliasOrigin::range(self : AliasOrigin) -> (Int, Int)? {
   match self {
     SubRegister(lo~, hi~, ..) => Some((lo, hi))
     RegisterAlias(_) | BitSetAlias(_) | UnknownAlias(_) => None
+  }
+}
+
+///|
+pub fn AliasOrigin::lo(self : AliasOrigin) -> Int? {
+  match self {
+    SubRegister(lo~, ..) => Some(lo)
+    RegisterAlias(_) | BitSetAlias(_) | UnknownAlias(_) => None
+  }
+}
+
+///|
+pub fn AliasOrigin::hi(self : AliasOrigin) -> Int? {
+  match self {
+    SubRegister(hi~, ..) => Some(hi)
+    RegisterAlias(_) | BitSetAlias(_) | UnknownAlias(_) => None
+  }
+}
+
+///|
+pub fn AliasOrigin::is_alias(self : AliasOrigin) -> Bool {
+  match self {
+    RegisterAlias(_) => true
+    SubRegister(source~, lo~, hi~, ..) =>
+      match source.sort().bitv_size() {
+        Some(width) => hi - lo + 1 == width
+        None => false
+      }
+    BitSetAlias(_) | UnknownAlias(_) => false
   }
 }
 

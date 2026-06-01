@@ -176,6 +176,46 @@ pub fn bytes_fill(
 }
 
 ///|
+fn bytes_valid_range(bytes : BytesView, pos : Int, len : Int) -> Bool {
+  pos >= 0 && len >= 0 && pos <= bytes.length() && len <= bytes.length() - pos
+}
+
+///|
+pub fn bytes_blit(
+  src : BytesView,
+  src_pos : Int,
+  dst : BytesView,
+  dst_pos : Int,
+  len : Int,
+) -> Result[Bytes, String] {
+  if !bytes_valid_range(src, src_pos, len) ||
+    !bytes_valid_range(dst, dst_pos, len) {
+    Err("byte blit range is out of bounds")
+  } else {
+    let out = bytes_to_array(dst)
+    for i in 0..<len {
+      out[dst_pos + i] = src[src_pos + i]
+    }
+    Ok(Bytes::from_array(out))
+  }
+}
+
+///|
+pub fn bytes_blito(
+  src : BytesView,
+  dst : BytesView,
+  src_pos? : Int = 0,
+  dst_pos? : Int = 0,
+  len? : Int,
+) -> Result[Bytes, String] {
+  let actual_len = match len {
+    Some(len) => len
+    None => if src_pos < 0 { -1 } else { src.length() - src_pos }
+  }
+  bytes_blit(src, src_pos, dst, dst_pos, actual_len)
+}
+
+///|
 pub fn bytes_extend(
   bytes : BytesView,
   left : Int,

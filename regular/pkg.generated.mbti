@@ -13,6 +13,10 @@ pub fn bytes_bin_size(BytesView) -> Int
 
 pub fn bytes_bin_write(BytesView) -> Bytes
 
+pub fn bytes_blit(BytesView, Int, BytesView, Int, Int) -> Result[Bytes, String]
+
+pub fn bytes_blito(BytesView, BytesView, src_pos? : Int, dst_pos? : Int, len? : Int) -> Result[Bytes, String]
+
 pub fn bytes_capitalize(BytesView) -> Bytes
 
 pub fn bytes_cat(BytesView, BytesView) -> Bytes

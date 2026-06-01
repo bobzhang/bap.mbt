@@ -105,6 +105,36 @@ test "translated BAP bytes update helpers return updated copies" {
 }
 
 ///|
+test "translated BAP bytes blit helpers update destination copies" {
+  match @regular.bytes_blit(b"abcd", 1, b"wxyz", 2, 2) {
+    Ok(updated) => assert_true(updated == b"wxbc")
+    Err(reason) => fail(reason)
+  }
+  match @regular.bytes_blit(b"abcdef", 0, b"abcdef", 2, 4) {
+    Ok(updated) => assert_true(updated == b"ababcd")
+    Err(reason) => fail(reason)
+  }
+  match @regular.bytes_blit(b"abcdef", 2, b"abcdef", 0, 4) {
+    Ok(updated) => assert_true(updated == b"cdefef")
+    Err(reason) => fail(reason)
+  }
+  match @regular.bytes_blito(b"abcd", b"______", src_pos=1, dst_pos=2, len=2) {
+    Ok(updated) => assert_true(updated == b"__bc__")
+    Err(reason) => fail(reason)
+  }
+  match @regular.bytes_blito(b"abcd", b"______", dst_pos=1) {
+    Ok(updated) => assert_true(updated == b"_abcd_")
+    Err(reason) => fail(reason)
+  }
+  assert_true(@regular.bytes_blit(b"abcd", -1, b"wxyz", 0, 1) is Err(_))
+  assert_true(@regular.bytes_blit(b"abcd", 0, b"wxyz", -1, 1) is Err(_))
+  assert_true(@regular.bytes_blit(b"abcd", 0, b"wxyz", 0, -1) is Err(_))
+  assert_true(@regular.bytes_blit(b"abcd", 3, b"wxyz", 0, 2) is Err(_))
+  assert_true(@regular.bytes_blit(b"abcd", 0, b"wxyz", 3, 2) is Err(_))
+  assert_true(@regular.bytes_blito(b"abcd", b"__", src_pos=-1) is Err(_))
+}
+
+///|
 test "translated BAP bytes comparison helpers use lexical byte order" {
   assert_true(@regular.bytes_equal(b"ab", b"ab"))
   assert_true(!@regular.bytes_equal(b"ab", b"ac"))

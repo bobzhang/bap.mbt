@@ -2197,6 +2197,11 @@ pub fn Target::to_string(self : Target) -> String {
 }
 
 ///|
+pub fn Target::hash(self : Target) -> Int {
+  self.name_value.hash()
+}
+
+///|
 pub fn Target::equal(self : Target, other : Target) -> Bool {
   self.name_value == other.name_value
 }

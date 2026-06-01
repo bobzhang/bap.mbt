@@ -68,6 +68,13 @@ test "targets inherit defaults and match ancestry" {
   assert_true(target.compare(target) == 0)
   assert_true(target.compare(family) != 0)
   inspect(target.to_string(), content="target:x86-64")
+  assert_true(target.hash() == target.name().hash())
+  assert_true(
+    target.hash() ==
+    @core_theory.Target::create(
+      name=@knowledge.Name::create("x86-64", pkg="target"),
+    ).hash(),
+  )
   assert_true(target.belongs(family))
   assert_true(target.order(family) == Less)
   assert_true(target.bits() == 64)

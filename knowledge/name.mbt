@@ -64,6 +64,21 @@ fn split_qualified(input : String) -> (String?, String) {
 }
 
 ///|
+fn fnv1a_hash_step(hash : UInt64, text : String) -> UInt64 {
+  let mut value = hash
+  for ch in text {
+    value = value ^ ch.to_uint().to_uint64()
+    value = value * 0x100000001b3
+  }
+  value
+}
+
+///|
+fn fnv1a_hash_parts(pkg : String, text : String) -> Int {
+  fnv1a_hash_step(fnv1a_hash_step(0xcbf29ce484222325, pkg), text).to_int()
+}
+
+///|
 pub fn Name::create(text : String, pkg? : String) -> Name {
   { pkg: default_pkg(pkg), text }
 }
@@ -89,6 +104,11 @@ pub fn Name::unqualified(self : Name) -> String {
 ///|
 pub fn Name::pkg(self : Name) -> String {
   self.pkg
+}
+
+///|
+pub fn Name::hash(self : Name) -> Int {
+  fnv1a_hash_parts(self.pkg, self.text)
 }
 
 ///|

@@ -75,6 +75,7 @@ pub(all) struct Name {
   text : String
 } derive(Eq, Hash, @debug.Debug)
 pub fn Name::create(String, pkg? : String) -> Self
+pub fn Name::hash(Self) -> Int
 pub fn Name::pkg(Self) -> String
 pub fn Name::read(String, pkg? : String) -> Self
 pub fn Name::show(Self) -> String

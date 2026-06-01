@@ -424,6 +424,7 @@ pub fn Target::find_role(Self, Role) -> Var?
 pub fn Target::find_var(Self, String) -> Var?
 pub fn Target::get(String, pkg? : String) -> Result[Self, String]
 pub fn Target::has_roles(Self, Array[Role], Var) -> Bool
+pub fn Target::hash(Self) -> Int
 pub fn Target::hexagon() -> Self
 pub fn Target::i186() -> Self
 pub fn Target::i286() -> Self

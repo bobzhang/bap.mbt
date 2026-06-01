@@ -34,6 +34,46 @@ pub fn EffectSort::ctrl() -> EffectSort {
 }
 
 ///|
+pub fn EffectSort::rreg() -> EffectSort {
+  EffectData
+}
+
+///|
+pub fn EffectSort::wreg() -> EffectSort {
+  EffectData
+}
+
+///|
+pub fn EffectSort::rmem() -> EffectSort {
+  EffectData
+}
+
+///|
+pub fn EffectSort::wmem() -> EffectSort {
+  EffectData
+}
+
+///|
+pub fn EffectSort::barr() -> EffectSort {
+  EffectData
+}
+
+///|
+pub fn EffectSort::fall() -> EffectSort {
+  EffectCtrl
+}
+
+///|
+pub fn EffectSort::jump() -> EffectSort {
+  EffectCtrl
+}
+
+///|
+pub fn EffectSort::cjmp() -> EffectSort {
+  EffectCtrl
+}
+
+///|
 pub fn EffectSort::both(self : EffectSort, other : EffectSort) -> EffectSort {
   self.union(other)
 }

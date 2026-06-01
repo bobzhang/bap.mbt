@@ -3,4 +3,5 @@ import {
   "bobzhang/bap/knowledge",
   "bobzhang/bap/types",
   "moonbitlang/core/math",
+  "moonbitlang/core/string",
 }

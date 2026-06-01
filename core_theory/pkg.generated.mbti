@@ -602,6 +602,7 @@ pub fn Var::ident(Self) -> String
 pub fn Var::is_mutable(Self) -> Bool
 pub fn Var::is_virtual(Self) -> Bool
 pub fn Var::name(Self) -> String
+pub fn Var::of_ident(Sort, String) -> Result[Self, String]
 pub fn Var::persistent() -> @knowledge.Persistent[Self]
 pub fn Var::resort(Self, Sort) -> Self
 pub fn Var::same(Self, Self) -> Bool

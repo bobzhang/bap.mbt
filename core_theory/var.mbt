@@ -33,6 +33,41 @@ fn next_var_ident() -> String {
 }
 
 ///|
+fn var_parse_int(text : StringView, source : String) -> Result[Int, String] {
+  if text.length() == 0 {
+    Err("invalid variable identifier: \{source}")
+  } else {
+    try @string.parse_int(text) catch {
+      _ => Err("invalid variable identifier: \{source}")
+    } noraise {
+      value => Ok(value)
+    }
+  }
+}
+
+///|
+fn var_split_version(text : String) -> Result[(String, Int), String] {
+  let mut split = -1
+  let mut escaped = false
+  for i in 0..<text.char_length() {
+    match text.get_char(i) {
+      Some(_) if escaped => escaped = false
+      Some('\\') => escaped = true
+      Some('.') => split = i
+      _ => ()
+    }
+  }
+  if split < 0 {
+    Ok((text, 0))
+  } else {
+    match var_parse_int(text[split + 1:], text) {
+      Ok(version) => Ok((text[:split].to_owned(), version))
+      Err(reason) => Err(reason)
+    }
+  }
+}
+
+///|
 fn var_valid_first_char(ch : Char) -> Bool {
   !(ch >= '0' && ch <= '9') && ch != '#' && ch != '$'
 }
@@ -96,6 +131,60 @@ pub fn Var::fresh(sort : Sort) -> Var {
     version_value: 0,
     mutable_flag: true,
     virtual_flag: true,
+  }
+}
+
+///|
+pub fn Var::of_ident(sort : Sort, ident : String) -> Result[Var, String] {
+  if ident.length() == 0 {
+    return Err("invalid variable identifier: \{ident}")
+  }
+  match ident.get_char(0) {
+    Some('$') => {
+      let number = match var_parse_int(ident[1:], ident) {
+        Ok(number) => number
+        Err(reason) => return Err(reason)
+      }
+      Ok({
+        sort_value: sort,
+        ident_value: "$\{number}",
+        version_value: 0,
+        mutable_flag: false,
+        virtual_flag: true,
+      })
+    }
+    Some('#') => {
+      let (number_text, version) = match
+        var_split_version(ident[1:].to_owned()) {
+        Ok(parts) => parts
+        Err(reason) => return Err(reason)
+      }
+      let number = match var_parse_int(number_text[:], ident) {
+        Ok(number) => number
+        Err(reason) => return Err(reason)
+      }
+      Ok({
+        sort_value: sort,
+        ident_value: "#\{number}",
+        version_value: version,
+        mutable_flag: true,
+        virtual_flag: true,
+      })
+    }
+    Some(_) => {
+      let (name, version) = match var_split_version(ident) {
+        Ok(parts) => parts
+        Err(reason) => return Err(reason)
+      }
+      Ok({
+        sort_value: sort,
+        ident_value: name,
+        version_value: version,
+        mutable_flag: true,
+        virtual_flag: false,
+      })
+    }
+    None => Err("invalid variable identifier: \{ident}")
   }
 }
 

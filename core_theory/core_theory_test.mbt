@@ -278,6 +278,45 @@ test "variables preserve sorts versions and mutability flags" {
   inspect(@core_theory.Var::create(sort, "0tmp").name(), content="_0tmp")
   inspect(@core_theory.Var::create(sort, "R.0").name(), content="R\\.0")
   inspect(@core_theory.Var::create(sort, "R 0").name(), content="R\\ 0")
+  match @core_theory.Var::of_ident(sort, "RAX.3") {
+    Ok(parsed) => {
+      inspect(parsed.ident(), content="RAX")
+      assert_true(parsed.version() == 3)
+      assert_true(parsed.is_mutable())
+      assert_true(!parsed.is_virtual())
+      inspect(parsed.name(), content="RAX.3")
+    }
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.Var::of_ident(sort, "R\\.0") {
+    Ok(parsed) => {
+      inspect(parsed.ident(), content="R\\.0")
+      assert_true(parsed.version() == 0)
+    }
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.Var::of_ident(sort, "#7.2") {
+    Ok(parsed) => {
+      inspect(parsed.ident(), content="#7")
+      assert_true(parsed.version() == 2)
+      assert_true(parsed.is_virtual())
+      assert_true(parsed.is_mutable())
+      inspect(parsed.name(), content="#7.2")
+    }
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.Var::of_ident(sort, "$4") {
+    Ok(parsed) => {
+      inspect(parsed.ident(), content="$4")
+      assert_true(parsed.version() == 0)
+      assert_true(parsed.is_virtual())
+      assert_true(!parsed.is_mutable())
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(@core_theory.Var::of_ident(sort, "") is Err(_))
+  assert_true(@core_theory.Var::of_ident(sort, "#x") is Err(_))
+  assert_true(@core_theory.Var::of_ident(sort, "R.") is Err(_))
   let versioned = reg.versioned(2)
   inspect(versioned.name(), content="RAX.2")
   assert_true(versioned.sort().same(sort))

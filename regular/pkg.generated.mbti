@@ -30,7 +30,11 @@ pub fn bytes_create(Int) -> Result[Bytes, String]
 
 pub fn bytes_empty() -> Bytes
 
+pub fn bytes_escaped(BytesView) -> Bytes
+
 pub fn bytes_exists(BytesView, (Byte) -> Bool) -> Bool
+
+pub fn bytes_extend(BytesView, Int, Int) -> Result[Bytes, String]
 
 pub fn bytes_find(BytesView, (Byte) -> Bool) -> Byte?
 

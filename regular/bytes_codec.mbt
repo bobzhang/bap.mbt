@@ -58,6 +58,35 @@ pub fn bytes_copy(bytes : BytesView) -> Bytes {
 }
 
 ///|
+pub fn bytes_extend(
+  bytes : BytesView,
+  left : Int,
+  right : Int,
+) -> Result[Bytes, String] {
+  let new_len = bytes.length() + left + right
+  if new_len < 0 {
+    Err("extended byte length is negative")
+  } else {
+    let out = Array::make(new_len, b'\x00')
+    let dst_start = if left > 0 { left } else { 0 }
+    let src_start = if left < 0 { -left } else { 0 }
+    let src_available = bytes.length() - src_start
+    let dst_available = new_len - dst_start
+    let copy_len = if src_available < dst_available {
+      src_available
+    } else {
+      dst_available
+    }
+    if copy_len > 0 {
+      for i in 0..<copy_len {
+        out[dst_start + i] = bytes[src_start + i]
+      }
+    }
+    Ok(Bytes::from_array(out))
+  }
+}
+
+///|
 pub fn bytes_is_empty(bytes : BytesView) -> Bool {
   bytes.length() == 0
 }
@@ -337,6 +366,45 @@ pub fn bytes_uncapitalize(bytes : BytesView) -> Bytes {
       byte
     }
   })
+}
+
+///|
+fn bytes_push_decimal_escape(out : Array[Byte], value : Int) -> Unit {
+  out.push(b'\\')
+  out.push((value / 100 + 48).to_byte())
+  out.push((value / 10 % 10 + 48).to_byte())
+  out.push((value % 10 + 48).to_byte())
+}
+
+///|
+pub fn bytes_escaped(bytes : BytesView) -> Bytes {
+  let out = []
+  for byte in bytes {
+    if byte == b'"' {
+      out.push(b'\\')
+      out.push(b'"')
+    } else if byte == b'\\' {
+      out.push(b'\\')
+      out.push(b'\\')
+    } else if byte == b'\n' {
+      out.push(b'\\')
+      out.push(b'n')
+    } else if byte == b'\t' {
+      out.push(b'\\')
+      out.push(b't')
+    } else if byte == b'\r' {
+      out.push(b'\\')
+      out.push(b'r')
+    } else if byte == b'\x08' {
+      out.push(b'\\')
+      out.push(b'b')
+    } else if byte < b' ' || byte > b'~' {
+      bytes_push_decimal_escape(out, byte.to_int())
+    } else {
+      out.push(byte)
+    }
+  }
+  Bytes::from_array(out)
 }
 
 ///|

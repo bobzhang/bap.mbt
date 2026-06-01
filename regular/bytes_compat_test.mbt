@@ -49,6 +49,33 @@ test "translated BAP bytes trim removes ASCII edge whitespace" {
 }
 
 ///|
+test "translated BAP bytes extend crops and pads deterministically" {
+  match @regular.bytes_extend(b"abc", 2, 3) {
+    Ok(extended) =>
+      assert_true(byte_values(extended) == [0, 0, 97, 98, 99, 0, 0, 0])
+    Err(reason) => fail(reason)
+  }
+  match @regular.bytes_extend(b"abc", -1, 0) {
+    Ok(extended) => assert_true(extended == b"bc")
+    Err(reason) => fail(reason)
+  }
+  match @regular.bytes_extend(b"abc", 0, -1) {
+    Ok(extended) => assert_true(extended == b"ab")
+    Err(reason) => fail(reason)
+  }
+  match @regular.bytes_extend(b"abc", -1, -1) {
+    Ok(extended) => assert_true(extended == b"b")
+    Err(reason) => fail(reason)
+  }
+  match @regular.bytes_extend(b"abc", 5, -7) {
+    Ok(extended) => assert_true(byte_values(extended) == [0])
+    Err(reason) => fail(reason)
+  }
+  assert_true(@regular.bytes_extend(b"abc", -4, 0) is Err(_))
+  assert_true(@regular.bytes_extend(b"abc", 0, -4) is Err(_))
+}
+
+///|
 test "translated BAP bytes container helpers use byte indexes" {
   let bytes = b"baNaNa"
   assert_true(!@regular.bytes_is_empty(bytes))
@@ -79,6 +106,11 @@ test "translated BAP bytes container helpers use byte indexes" {
   assert_true(@regular.bytes_lowercase(bytes) == b"banana")
   assert_true(@regular.bytes_capitalize(b"word") == b"Word")
   assert_true(@regular.bytes_uncapitalize(b"Word") == b"word")
+  assert_true(@regular.bytes_escaped(b"a\n\t\r\\\"b") == b"a\\n\\t\\r\\\\\\\"b")
+  assert_true(
+    @regular.bytes_escaped(Bytes::from_array([0, 8, 31, 127, 255])) ==
+    b"\\000\\b\\031\\127\\255",
+  )
 }
 
 ///|

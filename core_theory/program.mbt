@@ -111,6 +111,56 @@ pub fn Language::unknown() -> Language {
 }
 
 ///|
+pub fn Language::llvm_a32() -> Language {
+  OtherLanguage("llvm-armv7")
+}
+
+///|
+pub fn Language::llvm_t32() -> Language {
+  OtherLanguage("llvm-thumb")
+}
+
+///|
+pub fn Language::llvm_a64() -> Language {
+  OtherLanguage("llvm-aarch64")
+}
+
+///|
+pub fn Language::llvm_mips32() -> Language {
+  OtherLanguage("llvm-mips32")
+}
+
+///|
+pub fn Language::llvm_mips32le() -> Language {
+  OtherLanguage("llvm-mips32le")
+}
+
+///|
+pub fn Language::llvm_mips64() -> Language {
+  OtherLanguage("llvm-mips64")
+}
+
+///|
+pub fn Language::llvm_mips64le() -> Language {
+  OtherLanguage("llvm-mips64le")
+}
+
+///|
+pub fn Language::llvm_powerpc32() -> Language {
+  OtherLanguage("llvm-powerpc32")
+}
+
+///|
+pub fn Language::llvm_powerpc64() -> Language {
+  OtherLanguage("llvm-powerpc64")
+}
+
+///|
+pub fn Language::llvm_systemz() -> Language {
+  OtherLanguage("llvm-systemz")
+}
+
+///|
 pub fn Language::of_string(name : String) -> Language {
   match name.to_lower() {
     "c" => C

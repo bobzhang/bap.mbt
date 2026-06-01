@@ -277,6 +277,16 @@ pub fn Language::cxx() -> Self
 pub fn Language::equal(Self, Self) -> Bool
 pub fn Language::fortran() -> Self
 pub fn Language::is_unknown(Self) -> Bool
+pub fn Language::llvm_a32() -> Self
+pub fn Language::llvm_a64() -> Self
+pub fn Language::llvm_mips32() -> Self
+pub fn Language::llvm_mips32le() -> Self
+pub fn Language::llvm_mips64() -> Self
+pub fn Language::llvm_mips64le() -> Self
+pub fn Language::llvm_powerpc32() -> Self
+pub fn Language::llvm_powerpc64() -> Self
+pub fn Language::llvm_systemz() -> Self
+pub fn Language::llvm_t32() -> Self
 pub fn Language::of_string(String) -> Self
 pub fn Language::pascal() -> Self
 pub fn Language::persistent() -> @knowledge.Persistent[Self]

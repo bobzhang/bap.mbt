@@ -2146,6 +2146,26 @@ test "program metadata tracks source compiler and units" {
   let zig = @core_theory.Language::of_string("zig")
   assert_true(rust.compare(zig) != 0)
   inspect(language.to_string(), content="cxx")
+  assert_true(@core_theory.Language::llvm_a32().to_string() == "llvm-armv7")
+  assert_true(@core_theory.Language::llvm_t32().to_string() == "llvm-thumb")
+  assert_true(@core_theory.Language::llvm_a64().to_string() == "llvm-aarch64")
+  assert_true(@core_theory.Language::llvm_mips32().to_string() == "llvm-mips32")
+  assert_true(
+    @core_theory.Language::llvm_mips32le().to_string() == "llvm-mips32le",
+  )
+  assert_true(@core_theory.Language::llvm_mips64().to_string() == "llvm-mips64")
+  assert_true(
+    @core_theory.Language::llvm_mips64le().to_string() == "llvm-mips64le",
+  )
+  assert_true(
+    @core_theory.Language::llvm_powerpc32().to_string() == "llvm-powerpc32",
+  )
+  assert_true(
+    @core_theory.Language::llvm_powerpc64().to_string() == "llvm-powerpc64",
+  )
+  assert_true(
+    @core_theory.Language::llvm_systemz().to_string() == "llvm-systemz",
+  )
   let source = @core_theory.Source::create(
     language~,
     code="int main() { return 0; }",

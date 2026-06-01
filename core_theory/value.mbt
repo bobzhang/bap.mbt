@@ -15,6 +15,14 @@ pub fn Value::sort(self : Value) -> Sort {
 }
 
 ///|
+pub fn Value::resort(self : Value, refine : (Sort) -> Sort?) -> Value? {
+  match refine(self.sort_value.forget()) {
+    Some(sort) => Some({ sort_value: sort, facts: self.facts.copy() })
+    None => None
+  }
+}
+
+///|
 pub fn Value::equal(self : Value, other : Value) -> Bool {
   self.sort_value == other.sort_value &&
   string_map_equal(self.facts, other.facts)

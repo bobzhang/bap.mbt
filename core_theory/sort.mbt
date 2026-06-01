@@ -56,6 +56,11 @@ pub fn Sort::same(self : Sort, other : Sort) -> Bool {
 }
 
 ///|
+fn core_sort_name(text : String) -> @knowledge.Name {
+  @knowledge.Name::create(text, pkg="core")
+}
+
+///|
 pub fn Sort::persistent() -> @knowledge.Persistent[Sort] {
   let name_codec = @knowledge.Persistent::name()
   let int_codec = @knowledge.Persistent::int()
@@ -110,6 +115,101 @@ pub fn Sort::name(self : Sort) -> @knowledge.Name? {
     App(head, _) => head.name()
     IntSort(_) => None
   }
+}
+
+///|
+pub fn Sort::value(self : Sort) -> Int? {
+  match self {
+    IntSort(value) => Some(value)
+    _ => None
+  }
+}
+
+///|
+pub fn Sort::forget(self : Sort) -> Sort {
+  self
+}
+
+///|
+pub fn Sort::refine(self : Sort, witness : @knowledge.Name) -> Sort? {
+  match self {
+    Sym(name) if name == witness => Some(self)
+    App(_, _) if self.name() == Some(witness) => Some(self)
+    _ => None
+  }
+}
+
+///|
+pub fn Sort::refine_bool(self : Sort) -> Sort? {
+  self.refine(core_sort_name("bool"))
+}
+
+///|
+pub fn Sort::refine_bitv(self : Sort) -> Sort? {
+  self.refine(core_sort_name("bitv"))
+}
+
+///|
+pub fn Sort::bitv_size(self : Sort) -> Int? {
+  match self.refine_bitv() {
+    Some(sort) =>
+      match sort.tail() {
+        [IntSort(width)] => Some(width)
+        _ => None
+      }
+    None => None
+  }
+}
+
+///|
+pub fn Sort::refine_mem(self : Sort) -> Sort? {
+  self.refine(core_sort_name("mem"))
+}
+
+///|
+pub fn Sort::mem_keys(self : Sort) -> Sort? {
+  match self.refine_mem() {
+    Some(sort) =>
+      match sort.tail() {
+        [keys, _] => Some(keys)
+        _ => None
+      }
+    None => None
+  }
+}
+
+///|
+pub fn Sort::mem_values(self : Sort) -> Sort? {
+  match self.refine_mem() {
+    Some(sort) =>
+      match sort.tail() {
+        [_, values] => Some(values)
+        _ => None
+      }
+    None => None
+  }
+}
+
+///|
+pub fn Sort::refine_float(self : Sort) -> Sort? {
+  self.refine(core_sort_name("float"))
+}
+
+///|
+pub fn Sort::float_width(self : Sort) -> Int? {
+  match self.refine_float() {
+    Some(sort) =>
+      match sort.tail() {
+        [IntSort(width)] => Some(width)
+        _ => None
+      }
+    None => None
+  }
+}
+
+///|
+pub fn Sort::refine_rmode(self : Sort) -> Sort? {
+  self.refine(core_sort_name("rmode"))
 }
 
 ///|

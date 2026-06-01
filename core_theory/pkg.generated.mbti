@@ -340,18 +340,30 @@ pub(all) enum Sort {
 pub fn Sort::app(Self, Self) -> Self
 pub fn Sort::arrow(Self, Self) -> Self
 pub fn Sort::bitv(Int) -> Self
+pub fn Sort::bitv_size(Self) -> Int?
 pub fn Sort::bool() -> Self
 pub fn Sort::float(Int) -> Self
+pub fn Sort::float_width(Self) -> Int?
+pub fn Sort::forget(Self) -> Self
 pub fn Sort::head(Self) -> Self
 pub fn Sort::int(Int) -> Self
 pub fn Sort::mem(Self, Self) -> Self
+pub fn Sort::mem_keys(Self) -> Self?
+pub fn Sort::mem_values(Self) -> Self?
 pub fn Sort::name(Self) -> @knowledge.Name?
 pub fn Sort::persistent() -> @knowledge.Persistent[Self]
+pub fn Sort::refine(Self, @knowledge.Name) -> Self?
+pub fn Sort::refine_bitv(Self) -> Self?
+pub fn Sort::refine_bool(Self) -> Self?
+pub fn Sort::refine_float(Self) -> Self?
+pub fn Sort::refine_mem(Self) -> Self?
+pub fn Sort::refine_rmode(Self) -> Self?
 pub fn Sort::rmode() -> Self
 pub fn Sort::same(Self, Self) -> Bool
 pub fn Sort::sym(@knowledge.Name) -> Self
 pub fn Sort::tail(Self) -> Array[Self]
 pub fn Sort::to_string(Self) -> String
+pub fn Sort::value(Self) -> Int?
 
 type Source
 pub fn Source::code(Self) -> String
@@ -533,6 +545,7 @@ pub fn Value::equal(Self, Self) -> Bool
 pub fn Value::fact(Self, String) -> String?
 pub fn Value::forget(Self) -> Self
 pub fn Value::persistent() -> @knowledge.Persistent[Self]
+pub fn Value::resort(Self, (Sort) -> Sort?) -> Self?
 pub fn Value::sort(Self) -> Sort
 pub fn Value::with_fact(Self, String, String) -> Self
 

@@ -142,9 +142,24 @@ test "sorts model symbolic applications" {
   let word = @core_theory.Sort::bitv(32)
   inspect(word.to_string(), content="core:bitv<32>")
   assert_true(word.name() == Some(@knowledge.Name::create("bitv", pkg="core")))
-  assert_true(word.tail() == [IntSort(32)])
+  assert_true(word.value() is None)
+  assert_true(@core_theory.Sort::int(32).value() == Some(32))
+  assert_true(word.refine_bitv() == Some(word))
+  assert_true(word.bitv_size() == Some(32))
+  assert_true(word.refine_bool() is None)
+  assert_true(word.tail() == [@core_theory.Sort::int(32)])
   let mem = @core_theory.Sort::mem(@core_theory.Sort::bitv(64), word)
   inspect(mem.to_string(), content="core:mem<core:bitv<64>><core:bitv<32>>")
+  assert_true(
+    mem.refine(@knowledge.Name::create("mem", pkg="core")) == Some(mem),
+  )
+  assert_true(mem.mem_keys() == Some(@core_theory.Sort::bitv(64)))
+  assert_true(mem.mem_values() == Some(word))
+  assert_true(@core_theory.Sort::float(80).float_width() == Some(80))
+  assert_true(
+    @core_theory.Sort::rmode().refine_rmode() ==
+    Some(@core_theory.Sort::rmode()),
+  )
   assert_persistent_round_trip(
     Some(@core_theory.Sort::persistent()),
     mem,
@@ -1999,6 +2014,14 @@ test "program semantics stores values and instruction bytes" {
   let same_value = @core_theory.Value::empty(@core_theory.Sort::bool()).with_fact(
     "kind", "lifted",
   )
+  match value.resort(sort => sort.refine_bool()) {
+    Some(refined) => {
+      assert_true(refined.sort().same(@core_theory.Sort::bool()))
+      assert_true(refined.fact("kind") == Some("lifted"))
+    }
+    None => fail("expected bool value refinement")
+  }
+  assert_true(value.resort(sort => sort.refine_bitv()) is None)
   assert_true(value.equal(same_value))
   assert_true(value.compare(same_value) == 0)
   assert_true(!value.equal(value.with_fact("extra", "true")))

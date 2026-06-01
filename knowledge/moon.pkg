@@ -1,4 +1,5 @@
 import {
+  "bobzhang/bap/regular",
   "moonbitlang/core/list",
   "moonbitlang/core/string",
 }

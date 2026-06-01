@@ -65,6 +65,7 @@ pub fn SemanticsFacts::new() -> SemanticsFacts {
     name=core_name("insn-code"),
     domain=semantics_code_domain(),
     desc="the program memory contents",
+    persistent=@knowledge.Persistent::optional(@knowledge.Persistent::bytes()),
     public=true,
   )
   {

@@ -67,6 +67,13 @@ pub fn Persistent::bool() -> Persistent[Bool] {
 }
 
 ///|
+pub fn Persistent::bytes() -> Persistent[Bytes] {
+  Persistent::create(to_string=bytes => @regular.bytes_to_hex(bytes), of_string=input => {
+    @regular.bytes_from_hex(input[:])
+  })
+}
+
+///|
 pub fn Persistent::name() -> Persistent[Name] {
   Persistent::create(to_string=name => name.show(), of_string=input => {
     Ok(Name::read(input))

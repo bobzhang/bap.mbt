@@ -43,6 +43,14 @@ test "persistent codecs round trip strings names and arrays" {
   assert_true(bool_codec.decode(bool_codec.encode(false)) == Ok(false))
   assert_true(bool_codec.decode("yes") is Err(_))
 
+  let bytes_codec = @knowledge.Persistent::bytes()
+  assert_eq(bytes_codec.encode(b"\x00\xff:"), "00ff3a")
+  assert_true(
+    bytes_codec.decode(bytes_codec.encode(b"\x00\xff:")) == Ok(b"\x00\xff:"),
+  )
+  assert_true(bytes_codec.decode("abc") is Err(_))
+  assert_true(bytes_codec.decode("xx") is Err(_))
+
   let optional_string_codec = @knowledge.Persistent::optional(string_codec)
   let missing : String? = None
   assert_true(

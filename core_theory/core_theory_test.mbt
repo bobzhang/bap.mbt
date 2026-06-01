@@ -1884,6 +1884,16 @@ test "program semantics stores values and instruction bytes" {
   assert_true(semantics.code() == Some(b"\x90\xc3"))
   assert_true(semantics.code_hex() == Some("90c3"))
   let facts = @core_theory.SemanticsFacts::new()
+  assert_persistent_round_trip(
+    facts.code().slot().persistent(),
+    Some(b"\x90\xc3"),
+    "semantics instruction code",
+  )
+  assert_persistent_round_trip(
+    facts.code().slot().persistent(),
+    (None : Bytes?),
+    "empty semantics instruction code",
+  )
   match facts.for_semantics(semantics) {
     Ok(object) => {
       assert_true(facts.value().has(object))

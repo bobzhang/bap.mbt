@@ -149,6 +149,7 @@ pub fn PartialOrder::leq(Self) -> Bool
 type Persistent[T]
 pub fn[T] Persistent::array(Self[T]) -> Self[Array[T]]
 pub fn Persistent::bool() -> Self[Bool]
+pub fn Persistent::bytes() -> Self[Bytes]
 pub fn[A, B] Persistent::convert(to_persistent~ : (A) -> B, of_persistent~ : (B) -> Result[A, String], Self[B]) -> Self[A]
 pub fn[T] Persistent::create(to_string~ : (T) -> String, of_string~ : (String) -> Result[T, String]) -> Self[T]
 pub fn[T] Persistent::decode(Self[T], String) -> Result[T, String]

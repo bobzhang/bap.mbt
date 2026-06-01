@@ -170,6 +170,32 @@ test "object domains use null as bottom" {
 }
 
 ///|
+test "state enumerates objects by class in creation order" {
+  let state = @knowledge.State::new()
+  let cls : @knowledge.Class[Unit, String] = @knowledge.Class::create(
+    name=@knowledge.Name::create("enumerated-object", pkg="test"),
+    sort="unit",
+  )
+  let other : @knowledge.Class[String, String] = @knowledge.Class::create(
+    name=@knowledge.Name::create("other-object", pkg="test"),
+    sort="unit",
+  )
+  let first = state.create(cls)
+  ignore(state.create(other))
+  let second = state.create(cls)
+  let objects = state.objects(cls)
+  assert_eq(objects.length(), 2)
+  assert_true(objects[0].equal(first))
+  assert_true(objects[1].equal(second))
+  assert_true(state.objects(other).length() == 1)
+  let unseen : @knowledge.Class[Unit, String] = @knowledge.Class::create(
+    name=@knowledge.Name::create("unseen-object", pkg="test"),
+    sort="unit",
+  )
+  assert_true(state.objects(unseen).is_empty())
+}
+
+///|
 test "optional domains lift base order and joins" {
   let base = @knowledge.Domain::bool(
     @knowledge.Name::create("flag", pkg="test"),

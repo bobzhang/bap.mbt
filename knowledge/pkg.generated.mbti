@@ -130,6 +130,7 @@ pub fn[K, P] Slot::owner(Self[K, P]) -> Name
 type State
 pub fn[K, S] State::create(Self, Class[K, S]) -> Object[K]
 pub fn State::new() -> Self
+pub fn[K, S] State::objects(Self, Class[K, S]) -> Array[Object[K]]
 
 // Type aliases
 

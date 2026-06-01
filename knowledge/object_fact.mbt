@@ -8,6 +8,7 @@ struct Object[K] {
 ///|
 struct State {
   mut next_id : Int
+  objects_by_class : Map[Name, Array[Int]]
 }
 
 ///|
@@ -20,14 +21,31 @@ struct FactTable[K, P] {
 
 ///|
 pub fn State::new() -> State {
-  { next_id: 1 }
+  { next_id: 1, objects_by_class: {} }
 }
 
 ///|
 pub fn[K, S] State::create(self : State, cls : Class[K, S]) -> Object[K] {
   let id = self.next_id
   self.next_id = id + 1
-  { id, class_name: cls.name(), _phantom: None }
+  let class_name = cls.name()
+  match self.objects_by_class.get(class_name) {
+    Some(ids) => ids.push(id)
+    None => self.objects_by_class[class_name] = [id]
+  }
+  { id, class_name, _phantom: None }
+}
+
+///|
+pub fn[K, S] State::objects(
+  self : State,
+  cls : Class[K, S],
+) -> Array[Object[K]] {
+  let class_name = cls.name()
+  match self.objects_by_class.get(class_name) {
+    Some(ids) => ids.map(id => { id, class_name, _phantom: None })
+    None => []
+  }
 }
 
 ///|

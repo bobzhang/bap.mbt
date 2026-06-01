@@ -48,12 +48,20 @@ pub(all) enum Abi {
   SMC
   HVC
 } derive(Eq, @debug.Debug)
+pub fn Abi::cdecl() -> Self
 pub fn Abi::compare(Self, Self) -> Int
+pub fn Abi::eabi() -> Self
 pub fn Abi::equal(Self, Self) -> Bool
+pub fn Abi::fastcall() -> Self
+pub fn Abi::gnu() -> Self
+pub fn Abi::gnueabi() -> Self
 pub fn Abi::is_unknown(Self) -> Bool
+pub fn Abi::ms() -> Self
 pub fn Abi::of_string(String) -> Self?
+pub fn Abi::stdcall() -> Self
 pub fn Abi::to_string(Self) -> String
 pub fn Abi::unknown() -> Self
+pub fn Abi::watcom() -> Self
 
 pub(all) enum AliasOrigin {
   RegisterAlias(aliased~ : Var, source~ : Var)
@@ -140,8 +148,10 @@ pub(all) enum Fabi {
 } derive(Eq, @debug.Debug)
 pub fn Fabi::compare(Self, Self) -> Int
 pub fn Fabi::equal(Self, Self) -> Bool
+pub fn Fabi::hard() -> Self
 pub fn Fabi::is_unknown(Self) -> Bool
 pub fn Fabi::of_string(String) -> Self?
+pub fn Fabi::soft() -> Self
 pub fn Fabi::to_string(Self) -> String
 pub fn Fabi::unknown() -> Self
 
@@ -154,9 +164,13 @@ pub(all) enum Filetype {
   AOut
   Raw
 } derive(Eq, @debug.Debug)
+pub fn Filetype::aout() -> Self
+pub fn Filetype::coff() -> Self
 pub fn Filetype::compare(Self, Self) -> Int
+pub fn Filetype::elf() -> Self
 pub fn Filetype::equal(Self, Self) -> Bool
 pub fn Filetype::is_unknown(Self) -> Bool
+pub fn Filetype::macho() -> Self
 pub fn Filetype::of_string(String) -> Self?
 pub fn Filetype::to_string(Self) -> String
 pub fn Filetype::unknown() -> Self
@@ -489,11 +503,20 @@ pub(all) enum System {
   NoSystem
 } derive(Eq, @debug.Debug)
 pub fn System::compare(Self, Self) -> Int
+pub fn System::darwin() -> Self
 pub fn System::equal(Self, Self) -> Bool
+pub fn System::freebsd() -> Self
 pub fn System::is_unknown(Self) -> Bool
+pub fn System::linux() -> Self
+pub fn System::msdos() -> Self
+pub fn System::none() -> Self
 pub fn System::of_string(String) -> Self?
+pub fn System::openbsd() -> Self
 pub fn System::to_string(Self) -> String
+pub fn System::uefi() -> Self
 pub fn System::unknown() -> Self
+pub fn System::vxworks() -> Self
+pub fn System::windows() -> Self
 
 type Target
 pub fn Target::aarch64() -> Self

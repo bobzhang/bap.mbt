@@ -170,6 +170,51 @@ pub fn System::of_string(text : String) -> System? {
 }
 
 ///|
+pub fn System::linux() -> System {
+  Linux
+}
+
+///|
+pub fn System::darwin() -> System {
+  Darwin
+}
+
+///|
+pub fn System::vxworks() -> System {
+  VxWorks
+}
+
+///|
+pub fn System::freebsd() -> System {
+  FreeBSD
+}
+
+///|
+pub fn System::openbsd() -> System {
+  OpenBSD
+}
+
+///|
+pub fn System::windows() -> System {
+  Windows
+}
+
+///|
+pub fn System::msdos() -> System {
+  MSDOS
+}
+
+///|
+pub fn System::uefi() -> System {
+  UEFI
+}
+
+///|
+pub fn System::none() -> System {
+  NoSystem
+}
+
+///|
 pub fn System::unknown() -> System {
   UnknownSystem
 }
@@ -258,6 +303,46 @@ pub fn Abi::of_string(text : String) -> Abi? {
 }
 
 ///|
+pub fn Abi::gnu() -> Abi {
+  GNU
+}
+
+///|
+pub fn Abi::eabi() -> Abi {
+  EABI
+}
+
+///|
+pub fn Abi::gnueabi() -> Abi {
+  GNUEABI
+}
+
+///|
+pub fn Abi::cdecl() -> Abi {
+  CDecl
+}
+
+///|
+pub fn Abi::stdcall() -> Abi {
+  StdCall
+}
+
+///|
+pub fn Abi::fastcall() -> Abi {
+  FastCall
+}
+
+///|
+pub fn Abi::watcom() -> Abi {
+  Watcom
+}
+
+///|
+pub fn Abi::ms() -> Abi {
+  MSVC
+}
+
+///|
 pub fn Abi::unknown() -> Abi {
   UnknownAbi
 }
@@ -319,6 +404,16 @@ pub fn Fabi::of_string(text : String) -> Fabi? {
 }
 
 ///|
+pub fn Fabi::hard() -> Fabi {
+  Hard
+}
+
+///|
+pub fn Fabi::soft() -> Fabi {
+  Soft
+}
+
+///|
 pub fn Fabi::unknown() -> Fabi {
   UnknownFabi
 }
@@ -372,6 +467,26 @@ pub fn Filetype::of_string(text : String) -> Filetype? {
     "raw" | "bin" | "binary" => Some(Raw)
     _ => None
   }
+}
+
+///|
+pub fn Filetype::elf() -> Filetype {
+  Elf
+}
+
+///|
+pub fn Filetype::coff() -> Filetype {
+  COFF
+}
+
+///|
+pub fn Filetype::macho() -> Filetype {
+  MachO
+}
+
+///|
+pub fn Filetype::aout() -> Filetype {
+  AOut
 }
 
 ///|

@@ -48,6 +48,8 @@ pub fn bytes_from_hex(StringView) -> Result[Bytes, String]
 
 pub fn bytes_from_sexp_atom(StringView) -> Result[Bytes, String]
 
+pub fn bytes_get(BytesView, Int) -> Byte?
+
 pub fn bytes_index(BytesView, Byte) -> Int?
 
 pub fn bytes_index_from(BytesView, Int, Byte) -> Int?
@@ -59,6 +61,8 @@ pub fn bytes_is_empty(BytesView) -> Bool
 pub fn bytes_iter(BytesView, (Byte) -> Unit) -> Unit
 
 pub fn bytes_iteri(BytesView, (Int, Byte) -> Unit) -> Unit
+
+pub fn bytes_length(BytesView) -> Int
 
 pub fn bytes_lowercase(BytesView) -> Bytes
 
@@ -77,6 +81,10 @@ pub fn bytes_rcontains_from(BytesView, Int, Byte) -> Bool
 pub fn bytes_rindex(BytesView, Byte) -> Int?
 
 pub fn bytes_rindex_from(BytesView, Int, Byte) -> Int?
+
+pub fn bytes_sub(BytesView, Int, Int) -> Result[Bytes, String]
+
+pub fn bytes_subo(BytesView, pos? : Int, len? : Int) -> Result[Bytes, String]
 
 pub fn bytes_to_array(BytesView) -> Array[Byte]
 

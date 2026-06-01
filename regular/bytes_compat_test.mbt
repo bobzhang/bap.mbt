@@ -40,6 +40,31 @@ test "translated BAP bytes copy preserves value while owning storage" {
 }
 
 ///|
+test "translated BAP bytes access and sub helpers use byte offsets" {
+  let bytes = b"abcdef"
+  assert_true(@regular.bytes_length(bytes) == 6)
+  assert_true(@regular.bytes_get(bytes, 0) == Some(b'a'))
+  assert_true(@regular.bytes_get(bytes, 5) == Some(b'f'))
+  assert_true(@regular.bytes_get(bytes, -1) is None)
+  assert_true(@regular.bytes_get(bytes, 6) is None)
+  match @regular.bytes_sub(bytes, 2, 3) {
+    Ok(slice) => assert_true(slice == b"cde")
+    Err(reason) => fail(reason)
+  }
+  match @regular.bytes_subo(bytes, pos=2, len=3) {
+    Ok(slice) => assert_true(slice == b"cde")
+    Err(reason) => fail(reason)
+  }
+  match @regular.bytes_subo(bytes, pos=2) {
+    Ok(slice) => assert_true(slice == b"cdef")
+    Err(reason) => fail(reason)
+  }
+  assert_true(@regular.bytes_sub(bytes, -1, 1) is Err(_))
+  assert_true(@regular.bytes_sub(bytes, 1, -1) is Err(_))
+  assert_true(@regular.bytes_sub(bytes, 5, 2) is Err(_))
+}
+
+///|
 test "translated BAP bytes trim removes ASCII edge whitespace" {
   assert_true(@regular.bytes_trim(b" \t\nvalue\r\n") == b"value")
   assert_true(@regular.bytes_trim(b"\x0b\x0cvalue\x0c") == b"value")

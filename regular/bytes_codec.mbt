@@ -58,6 +58,42 @@ pub fn bytes_copy(bytes : BytesView) -> Bytes {
 }
 
 ///|
+pub fn bytes_length(bytes : BytesView) -> Int {
+  bytes.length()
+}
+
+///|
+pub fn bytes_get(bytes : BytesView, pos : Int) -> Byte? {
+  bytes.get(pos)
+}
+
+///|
+pub fn bytes_sub(
+  bytes : BytesView,
+  pos : Int,
+  len : Int,
+) -> Result[Bytes, String] {
+  if pos < 0 || len < 0 || pos > bytes.length() || len > bytes.length() - pos {
+    Err("byte slice is out of bounds")
+  } else {
+    Ok(bytes[pos:pos + len].to_owned())
+  }
+}
+
+///|
+pub fn bytes_subo(
+  bytes : BytesView,
+  pos? : Int = 0,
+  len? : Int,
+) -> Result[Bytes, String] {
+  let slice_len = match len {
+    Some(len) => len
+    None => bytes.length() - pos
+  }
+  bytes_sub(bytes, pos, slice_len)
+}
+
+///|
 pub fn bytes_extend(
   bytes : BytesView,
   left : Int,

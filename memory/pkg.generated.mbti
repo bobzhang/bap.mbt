@@ -21,28 +21,42 @@ pub(all) enum AddressPosition {
 type MemMap[V]
 pub fn[V] MemMap::add(Self[V], Memory, V) -> Self[V]
 pub fn[V] MemMap::contains(Self[V], UInt64) -> Bool
+pub fn[V] MemMap::count(Self[V], (V) -> Bool, start? : Memory?, until? : Memory?) -> Int
 pub fn[V] MemMap::dominates(Self[V], Memory) -> Bool
 pub fn[V] MemMap::dominators(Self[V], Memory) -> Array[(Memory, V)]
+pub fn[V] MemMap::elements(Self[V], start? : Memory?, until? : Memory?) -> Array[V]
 pub fn[V] MemMap::empty() -> Self[V]
 pub fn[V] MemMap::entries(Self[V]) -> Array[(Memory, V)]
-pub fn[V] MemMap::filter(Self[V], (V) -> Bool) -> Self[V]
-pub fn[V, U] MemMap::filter_map(Self[V], (V) -> U?) -> Self[U]
-pub fn[V, U] MemMap::filter_mapi(Self[V], (Memory, V) -> U?) -> Self[U]
+pub fn[V] MemMap::exists(Self[V], (V) -> Bool, start? : Memory?, until? : Memory?) -> Bool
+pub fn[V] MemMap::existsi(Self[V], (Memory, V) -> Bool, start? : Memory?, until? : Memory?) -> Bool
+pub fn[V] MemMap::filter(Self[V], (V) -> Bool, start? : Memory?, until? : Memory?) -> Self[V]
+pub fn[V, U] MemMap::filter_map(Self[V], (V) -> U?, start? : Memory?, until? : Memory?) -> Self[U]
+pub fn[V, U] MemMap::filter_mapi(Self[V], (Memory, V) -> U?, start? : Memory?, until? : Memory?) -> Self[U]
+pub fn[V] MemMap::filteri(Self[V], (Memory, V) -> Bool, start? : Memory?, until? : Memory?) -> Self[V]
 pub fn[V] MemMap::find(Self[V], Memory) -> Array[(Memory, V)]
 pub fn[V] MemMap::find_addr(Self[V], UInt64) -> (Memory, V)?
+pub fn[V] MemMap::find_if(Self[V], (V) -> Bool, start? : Memory?, until? : Memory?) -> V?
+pub fn[V, U] MemMap::find_map(Self[V], (V) -> U?, start? : Memory?, until? : Memory?) -> U?
+pub fn[V, U] MemMap::find_mapi(Self[V], (Memory, V) -> U?, start? : Memory?, until? : Memory?) -> U?
+pub fn[V, A] MemMap::fold(Self[V], A, (V, A) -> A, start? : Memory?, until? : Memory?) -> A
 pub fn[V, A] MemMap::fold_intersections(Self[V], Memory, init~ : A, f~ : (Memory, V, A) -> A) -> A
+pub fn[V, A] MemMap::foldi(Self[V], A, (Memory, V, A) -> A, start? : Memory?, until? : Memory?) -> A
+pub fn[V] MemMap::for_all(Self[V], (V) -> Bool, start? : Memory?, until? : Memory?) -> Bool
+pub fn[V] MemMap::for_alli(Self[V], (Memory, V) -> Bool, start? : Memory?, until? : Memory?) -> Bool
 pub fn[V] MemMap::has_intersections(Self[V], Memory) -> Bool
 pub fn[V] MemMap::has_memory(Self[V], Memory) -> Bool
 pub fn[V] MemMap::intersections(Self[V], Memory) -> Array[(Memory, V)]
 pub fn[V] MemMap::intersects(Self[V], Memory) -> Bool
+pub fn[V] MemMap::iter(Self[V], (V) -> Unit, start? : Memory?, until? : Memory?) -> Unit
+pub fn[V] MemMap::iteri(Self[V], (Memory, V) -> Unit, start? : Memory?, until? : Memory?) -> Unit
 pub fn[V] MemMap::length(Self[V]) -> Int
 pub fn[V : Hash + Eq, U] MemMap::link_at_least_one(Self[V], Self[U]) -> Map[V, (U, Array[U])]
 pub fn[V : Hash + Eq, U] MemMap::link_many(Self[V], Self[U]) -> Map[V, Array[U]]
 pub fn[V : Hash + Eq, U] MemMap::link_maybe_one(Self[V], Self[U]) -> Map[V, U?]
 pub fn[V : Hash + Eq, U] MemMap::link_one_to_one(Self[V], Self[U]) -> Map[V, U]
 pub fn[V] MemMap::lookup(Self[V], UInt64) -> Array[(Memory, V)]
-pub fn[V, U] MemMap::map(Self[V], (V) -> U) -> Self[U]
-pub fn[V, U] MemMap::mapi(Self[V], (Memory, V) -> U) -> Self[U]
+pub fn[V, U] MemMap::map(Self[V], (V) -> U, start? : Memory?, until? : Memory?) -> Self[U]
+pub fn[V, U] MemMap::mapi(Self[V], (Memory, V) -> U, start? : Memory?, until? : Memory?) -> Self[U]
 pub fn[V] MemMap::max(Self[V]) -> (Memory, V)?
 pub fn[V] MemMap::max_addr(Self[V]) -> UInt64?
 pub fn[V] MemMap::max_binding(Self[V]) -> (Memory, V)?
@@ -54,10 +68,12 @@ pub fn[V] MemMap::next(Self[V], Memory) -> (Memory, V)?
 pub fn[V] MemMap::next_binding(Self[V], Memory) -> (Memory, V)?
 pub fn[V] MemMap::prev(Self[V], Memory) -> (Memory, V)?
 pub fn[V] MemMap::prev_binding(Self[V], Memory) -> (Memory, V)?
+pub fn[V] MemMap::regions(Self[V], start? : Memory?, until? : Memory?) -> Array[Memory]
 pub fn[V] MemMap::remove(Self[V], Memory) -> Self[V]
 pub fn[V] MemMap::remove_dominators(Self[V], Memory) -> Self[V]
 pub fn[V] MemMap::remove_intersections(Self[V], Memory) -> Self[V]
 pub fn[V] MemMap::singleton(Memory, V) -> Self[V]
+pub fn[V] MemMap::to_sequence(Self[V], start? : Memory?, until? : Memory?) -> Array[(Memory, V)]
 
 type Memory
 pub fn Memory::compare_with(Self, UInt64) -> AddressPosition

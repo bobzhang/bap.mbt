@@ -263,6 +263,137 @@ test "translated BAP memmap public queries are range ordered" {
 }
 
 ///|
+test "translated BAP image table ranged traversal helpers follow key order" {
+  let first = memory_at(0x100UL, 2)
+  let second = memory_at(0x200UL, 2)
+  let third = memory_at(0x300UL, 2)
+  let fourth = memory_at(0x400UL, 2)
+  let table = @memory.MemMap::empty()
+    .add(third, 3)
+    .add(first, 1)
+    .add(fourth, 4)
+    .add(second, 2)
+  assert_true(table.to_sequence().map(entry => entry.1) == [1, 2, 3, 4])
+  assert_true(
+    table.regions().map(memory => memory.min_addr()) ==
+    [0x100UL, 0x200UL, 0x300UL, 0x400UL],
+  )
+  assert_true(table.elements() == [1, 2, 3, 4])
+  assert_true(
+    table
+    .to_sequence(start=Some(second), until=Some(third))
+    .map(entry => entry.1) ==
+    [2, 3],
+  )
+  assert_true(
+    table.to_sequence(until=Some(third)).map(entry => entry.1) == [1, 2, 3],
+  )
+  assert_true(
+    table.to_sequence(start=Some(second)).map(entry => entry.1) == [2, 3, 4],
+  )
+  assert_true(
+    table
+    .to_sequence(start=Some(third), until=Some(first))
+    .map(entry => entry.1) ==
+    [3, 2, 1],
+  )
+  let folded = table.fold([], (value, acc) => {
+    acc.push(value)
+    acc
+  })
+  assert_true(folded == [1, 2, 3, 4])
+  let folded_with_addr = table.foldi([], (memory, value, acc) => {
+    acc.push((memory.min_addr(), value))
+    acc
+  })
+  assert_true(
+    folded_with_addr == [(0x100UL, 1), (0x200UL, 2), (0x300UL, 3), (0x400UL, 4)],
+  )
+  let reverse_folded = table.fold(
+    [],
+    (value, acc) => {
+      acc.push(value)
+      acc
+    },
+    start=Some(third),
+    until=Some(first),
+  )
+  assert_true(reverse_folded == [3, 2, 1])
+  let iter_seen = []
+  table.iter(
+    value => iter_seen.push(value),
+    start=Some(second),
+    until=Some(third),
+  )
+  assert_true(iter_seen == [2, 3])
+  let iteri_seen = []
+  table.iteri((memory, value) => iteri_seen.push((memory.min_addr(), value)))
+  assert_true(
+    iteri_seen == [(0x100UL, 1), (0x200UL, 2), (0x300UL, 3), (0x400UL, 4)],
+  )
+  assert_true(table.exists(value => value == 3))
+  assert_true(table.existsi((memory, _) => memory.min_addr() == 0x200UL))
+  assert_true(table.for_all(value => value > 0))
+  assert_true(!table.for_alli((memory, _) => memory.min_addr() < 0x400UL))
+  assert_true(table.count(value => value % 2 == 0) == 2)
+  assert_true(table.find_if(value => value == 3) == Some(3))
+  assert_true(
+    table.find_map(value => if value == 2 { Some(value * 10) } else { None }) ==
+    Some(20),
+  )
+  assert_true(
+    table.find_mapi((memory, value) => {
+      if memory.min_addr() == 0x300UL {
+        Some(value + 10)
+      } else {
+        None
+      }
+    }) ==
+    Some(13),
+  )
+  assert_true(
+    table
+    .map(value => value * 10, start=Some(second), until=Some(third))
+    .elements() ==
+    [20, 30],
+  )
+  assert_true(
+    table
+    .mapi((memory, value) => value + (memory.min_addr() >> 8).to_int())
+    .elements() ==
+    [2, 4, 6, 8],
+  )
+  assert_true(
+    table
+    .filter(value => value != 3, start=Some(second), until=Some(fourth))
+    .elements() ==
+    [2, 4],
+  )
+  assert_true(
+    table.filteri((memory, _) => memory.min_addr() <= 0x200UL).elements() ==
+    [1, 2],
+  )
+  assert_true(
+    table
+    .filter_map(value => if value % 2 == 0 { Some(value + 1) } else { None })
+    .elements() ==
+    [3, 5],
+  )
+  assert_true(
+    table
+    .filter_mapi((memory, value) => {
+      if memory.min_addr() >= 0x300UL {
+        Some(value + 10)
+      } else {
+        None
+      }
+    })
+    .elements() ==
+    [13, 14],
+  )
+}
+
+///|
 fn memmap_tags(entries : Array[(@memory.Memory, String)]) -> Set[String] {
   Set::from_array(entries.map(entry => entry.1))
 }

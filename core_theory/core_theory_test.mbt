@@ -630,6 +630,8 @@ test "target registry resolves common and custom declarations" {
       assert_true(target.code_alignment() == 16)
       assert_true(target.belongs(@core_theory.Target::arm()))
       assert_true(target.matches("thumbv7"))
+      assert_true(target.find_var("D0") is None)
+      assert_true(!target.role_aliases(FloatingRegister).contains("d0"))
     }
     Err(reason) => fail(reason)
   }
@@ -662,6 +664,8 @@ test "target registry resolves common and custom declarations" {
       assert_true(target.belongs(@core_theory.Target::arm_family()))
       assert_true(!target.belongs(@core_theory.Target::arm()))
       assert_true(target.find_var("R0") is Some(_))
+      assert_true(target.find_var("D0") is None)
+      assert_true(!target.role_aliases(FloatingRegister).contains("d0"))
     }
     Err(reason) => fail(reason)
   }
@@ -682,6 +686,11 @@ test "target registry resolves common and custom declarations" {
       assert_true(target.code_alignment() == 16)
       assert_true(@core_theory.Target::arm().belongs(target))
       assert_true(target.find_var("SP") is Some(_))
+      match target.find_var("D31") {
+        Some(float) =>
+          assert_true(target.roles_of_var(float).contains(FloatingRegister))
+        None => fail("missing ARMv7-A+FP D31")
+      }
     }
     Err(reason) => fail(reason)
   }

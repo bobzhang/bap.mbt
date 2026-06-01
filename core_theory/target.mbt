@@ -1527,10 +1527,16 @@ fn x86_64_vars() -> Array[Var] {
 ///|
 fn arm32_vars() -> Array[Var] {
   let items = numbered_word_vars(32, "R", 16)
-  append_vars(items, numbered_word_vars(64, "D", 32))
   append_vars(items, named_word_vars(32, ["SP", "LR", "PC", "CPSR"]))
   append_vars(items, arm32_flags())
   items.push(mem_var(32, 8, "mem"))
+  items
+}
+
+///|
+fn arm32_fp_vars() -> Array[Var] {
+  let items = arm32_vars()
+  append_vars(items, numbered_word_vars(64, "D", 32))
   items
 }
 
@@ -2078,7 +2084,7 @@ fn x86_32_role_names(role : Role) -> Array[String] {
 }
 
 ///|
-fn arm32_role_names(role : Role) -> Array[String] {
+fn arm32_role_names(fp~ : Bool, role : Role) -> Array[String] {
   match role {
     General => []
     SpecialRegister | AliasRegister | PseudoRegister => []
@@ -2088,7 +2094,7 @@ fn arm32_role_names(role : Role) -> Array[String] {
         ["sp", "lr"],
         arm32_status_flag_role_names(),
       ])
-    FloatingRegister => role_names("d", 0, 31)
+    FloatingRegister => if fp { role_names("d", 0, 31) } else { [] }
     VectorRegister => []
     IndexRegister | SegmentRegister => []
     StackPointer => ["sp"]
@@ -2406,6 +2412,22 @@ fn systemz_role_names(role : Role) -> Array[String] {
 }
 
 ///|
+fn arm32_target_has_fp(target : Target) -> Bool {
+  if target.belongs(Target::thumb()) || target.belongs(Target::thumbeb()) {
+    false
+  } else {
+    target.belongs(Target::arm()) ||
+    target.belongs(Target::armeb()) ||
+    target.belongs(arm_le_v7fp()) ||
+    target.belongs(arm_le_v7afp()) ||
+    target.belongs(arm_be_v7fp()) ||
+    target.belongs(arm_be_v7afp()) ||
+    target.belongs(arm_bi_v7fp()) ||
+    target.belongs(arm_bi_v7afp())
+  }
+}
+
+///|
 fn target_specific_role_names(target : Target, role : Role) -> Array[String]? {
   if target.belongs(Target::x86_64()) {
     Some(x86_64_role_names(role))
@@ -2428,7 +2450,7 @@ fn target_specific_role_names(target : Target, role : Role) -> Array[String]? {
   } else if target.belongs(Target::arm()) ||
     target.belongs(Target::armeb()) ||
     (target.belongs(Target::arm_family()) && target.bits() == 32) {
-    Some(arm32_role_names(role))
+    Some(arm32_role_names(fp=arm32_target_has_fp(target), role))
   } else if target.belongs(Target::mips_family()) {
     Some(mips_role_names(target.bits(), role))
   } else if target.belongs(Target::powerpc_family()) {
@@ -3436,7 +3458,13 @@ fn arm_le_v7m() -> Target {
 
 ///|
 fn arm_le_v7fp() -> Target {
-  arm_le_base("armv7+fp", "armv7+fp", arm_le_v7())
+  Target::create(
+    name=target_name("armv7+fp+le"),
+    parent=arm_le_v7(),
+    nicknames=["armv7+fp"],
+    vars=arm32_fp_vars(),
+    alias_origins=arm32_alias_origins(),
+  )
 }
 
 ///|
@@ -3446,7 +3474,13 @@ fn arm_le_v7a() -> Target {
 
 ///|
 fn arm_le_v7afp() -> Target {
-  arm_le_base("armv7-a+fp", "armv7-a+fp", arm_le_v7a())
+  Target::create(
+    name=target_name("armv7-a+fp+le"),
+    parent=arm_le_v7a(),
+    nicknames=["armv7-a+fp"],
+    vars=arm32_fp_vars(),
+    alias_origins=arm32_alias_origins(),
+  )
 }
 
 ///|
@@ -3579,7 +3613,13 @@ fn arm_be_v7m() -> Target {
 
 ///|
 fn arm_be_v7fp() -> Target {
-  arm_be_base("armv7+fp", "armv7+fp", arm_be_v7())
+  Target::create(
+    name=target_name("armv7+fp+be"),
+    parent=arm_be_v7(),
+    nicknames=["armv7+fp"],
+    vars=arm32_fp_vars(),
+    alias_origins=arm32_alias_origins(),
+  )
 }
 
 ///|
@@ -3589,7 +3629,13 @@ fn arm_be_v7a() -> Target {
 
 ///|
 fn arm_be_v7afp() -> Target {
-  arm_be_base("armv7-a+fp", "armv7-a+fp", arm_be_v7a())
+  Target::create(
+    name=target_name("armv7-a+fp+be"),
+    parent=arm_be_v7a(),
+    nicknames=["armv7-a+fp"],
+    vars=arm32_fp_vars(),
+    alias_origins=arm32_alias_origins(),
+  )
 }
 
 ///|
@@ -3656,7 +3702,13 @@ fn arm_bi_v7m() -> Target {
 
 ///|
 fn arm_bi_v7fp() -> Target {
-  arm_bi_base("armv7+fp", "armv7+fp", arm_bi_v7())
+  Target::create(
+    name=target_name("armv7+fp+bi"),
+    parent=arm_bi_v7(),
+    nicknames=["armv7+fp"],
+    vars=arm32_fp_vars(),
+    alias_origins=arm32_alias_origins(),
+  )
 }
 
 ///|
@@ -3666,7 +3718,13 @@ fn arm_bi_v7a() -> Target {
 
 ///|
 fn arm_bi_v7afp() -> Target {
-  arm_bi_base("armv7-a+fp", "armv7-a+fp", arm_bi_v7a())
+  Target::create(
+    name=target_name("armv7-a+fp+bi"),
+    parent=arm_bi_v7a(),
+    nicknames=["armv7-a+fp"],
+    vars=arm32_fp_vars(),
+    alias_origins=arm32_alias_origins(),
+  )
 }
 
 ///|
@@ -3940,7 +3998,7 @@ pub fn Target::arm() -> Target {
     nicknames=arm32_le_nicknames(),
     bits=32,
     endianness=LittleEndian,
-    vars=arm32_vars(),
+    vars=arm32_fp_vars(),
     alias_origins=arm32_alias_origins(),
   )
 }
@@ -3953,7 +4011,7 @@ pub fn Target::armeb() -> Target {
     nicknames=arm32_be_nicknames(),
     bits=32,
     endianness=BigEndian,
-    vars=arm32_vars(),
+    vars=arm32_fp_vars(),
   )
 }
 

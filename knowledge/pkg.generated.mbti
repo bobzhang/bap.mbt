@@ -42,6 +42,11 @@ pub fn[K, S, T] Class::refine(Self[K, S], name~ : Name, sort~ : T, desc? : Strin
 pub fn[K, S, T] Class::same(Self[K, S], Self[K, T]) -> Bool
 pub fn[K, S] Class::sort(Self[K, S]) -> S
 
+type Documentation
+pub fn Documentation::agents() -> Array[Agent]
+pub fn Documentation::new() -> Self
+pub fn Documentation::rules() -> Array[Rule]
+
 type Domain[T]
 pub fn Domain::bool(Name) -> Self[Bool]
 pub fn[T] Domain::custom(Name, (T) -> String, empty~ : T, order~ : (T, T) -> PartialOrder, join? : (T, T) -> Result[T, String]) -> Self[T]
@@ -135,6 +140,23 @@ pub fn[T] Persistent::decode(Self[T], String) -> Result[T, String]
 pub fn[T] Persistent::encode(Self[T], T) -> String
 pub fn Persistent::name() -> Self[Name]
 pub fn Persistent::string() -> Self[String]
+
+type Rule
+pub fn Rule::create(String, pkg? : String) -> RuleDef
+pub fn Rule::desc(Self) -> String
+pub fn Rule::name(Self) -> Name
+pub fn Rule::parameters(Self) -> Array[Array[String]]
+pub fn Rule::provides(Self) -> Name
+pub fn Rule::registry() -> Array[Self]
+pub fn Rule::requires(Self) -> Array[Name]
+
+type RuleDef
+pub fn RuleDef::dynamic(Self, Array[String]) -> Self
+pub fn[K, P] RuleDef::provide(Self, Slot[K, P]) -> RuleDoc
+pub fn[K, P] RuleDef::require(Self, Slot[K, P]) -> Self
+
+type RuleDoc
+pub fn RuleDoc::comment(Self, String) -> Unit
 
 type Slot[K, P]
 pub fn[K, P] Slot::cls(Self[K, P]) -> Class[K, Unit]

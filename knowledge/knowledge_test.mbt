@@ -71,6 +71,47 @@ test "persistent codecs round trip strings names and arrays" {
 }
 
 ///|
+test "knowledge rules record BAP-style registry documentation" {
+  let cls : @knowledge.Class[Unit, String] = @knowledge.Class::create(
+    name=@knowledge.Name::create("rule-program", pkg="test"),
+    sort="unit",
+  )
+  let bool_domain = @knowledge.Domain::bool(
+    @knowledge.Name::create("rule-bool", pkg="test"),
+  )
+  let input = cls.property(
+    name=@knowledge.Name::create("rule-input", pkg="test"),
+    domain=bool_domain,
+  )
+  let output = cls.property(
+    name=@knowledge.Name::create("rule-output", pkg="test"),
+    domain=bool_domain,
+  )
+  let rule_def = @knowledge.Rule::create("rule-example", pkg="test")
+  let rule_doc = rule_def
+    .dynamic(["target", "mode"])
+    .require(input)
+    .provide(output)
+  rule_doc.comment("derive output from input")
+
+  let rules = @knowledge.Documentation::rules()
+  match rules.search_by(rule => rule.name().show() == "test:rule-example") {
+    Some(index) => {
+      let rule = rules[index]
+      assert_eq(rule.desc(), "derive output from input")
+      assert_true(rule.provides().equal(output.name()))
+      let required = rule.requires()
+      assert_eq(required.length(), 1)
+      assert_true(required[0].equal(input.name()))
+      let parameters = rule.parameters()
+      assert_eq(parameters.length(), 1)
+      assert_true(parameters[0] == ["target", "mode"])
+    }
+    None => fail("missing registered rule")
+  }
+}
+
+///|
 fn optional_string_equal(lhs : String?, rhs : String?) -> Bool {
   lhs == rhs
 }

@@ -65,6 +65,27 @@ test "translated BAP bytes access and sub helpers use byte offsets" {
 }
 
 ///|
+test "translated BAP bytes update helpers return updated copies" {
+  match @regular.bytes_set(b"abcd", 1, b'X') {
+    Ok(updated) => assert_true(updated == b"aXcd")
+    Err(reason) => fail(reason)
+  }
+  assert_true(@regular.bytes_set(b"abcd", -1, b'X') is Err(_))
+  assert_true(@regular.bytes_set(b"abcd", 4, b'X') is Err(_))
+  match @regular.bytes_fill(b"abcd", 1, 2, b'Y') {
+    Ok(updated) => assert_true(updated == b"aYYd")
+    Err(reason) => fail(reason)
+  }
+  match @regular.bytes_fill(b"abcd", 4, 0, b'Y') {
+    Ok(updated) => assert_true(updated == b"abcd")
+    Err(reason) => fail(reason)
+  }
+  assert_true(@regular.bytes_fill(b"abcd", -1, 1, b'Y') is Err(_))
+  assert_true(@regular.bytes_fill(b"abcd", 1, -1, b'Y') is Err(_))
+  assert_true(@regular.bytes_fill(b"abcd", 3, 2, b'Y') is Err(_))
+}
+
+///|
 test "translated BAP bytes comparison helpers use lexical byte order" {
   assert_true(@regular.bytes_equal(b"ab", b"ab"))
   assert_true(!@regular.bytes_equal(b"ab", b"ac"))

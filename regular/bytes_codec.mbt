@@ -115,6 +115,39 @@ pub fn bytes_subo(
 }
 
 ///|
+pub fn bytes_set(
+  bytes : BytesView,
+  pos : Int,
+  byte : Byte,
+) -> Result[Bytes, String] {
+  if pos < 0 || pos >= bytes.length() {
+    Err("byte index is out of bounds")
+  } else {
+    let out = bytes_to_array(bytes)
+    out[pos] = byte
+    Ok(Bytes::from_array(out))
+  }
+}
+
+///|
+pub fn bytes_fill(
+  bytes : BytesView,
+  pos : Int,
+  len : Int,
+  byte : Byte,
+) -> Result[Bytes, String] {
+  if pos < 0 || len < 0 || pos > bytes.length() || len > bytes.length() - pos {
+    Err("byte fill range is out of bounds")
+  } else {
+    let out = bytes_to_array(bytes)
+    for i in pos..<(pos + len) {
+      out[i] = byte
+    }
+    Ok(Bytes::from_array(out))
+  }
+}
+
+///|
 pub fn bytes_extend(
   bytes : BytesView,
   left : Int,

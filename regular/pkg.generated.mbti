@@ -41,6 +41,8 @@ pub fn bytes_exists(BytesView, (Byte) -> Bool) -> Bool
 
 pub fn bytes_extend(BytesView, Int, Int) -> Result[Bytes, String]
 
+pub fn bytes_fill(BytesView, Int, Int, Byte) -> Result[Bytes, String]
+
 pub fn bytes_find(BytesView, (Byte) -> Bool) -> Byte?
 
 pub fn[A] bytes_find_map(BytesView, (Byte) -> A?) -> A?
@@ -94,6 +96,8 @@ pub fn bytes_rcontains_from(BytesView, Int, Byte) -> Bool
 pub fn bytes_rindex(BytesView, Byte) -> Int?
 
 pub fn bytes_rindex_from(BytesView, Int, Byte) -> Int?
+
+pub fn bytes_set(BytesView, Int, Byte) -> Result[Bytes, String]
 
 pub fn bytes_sub(BytesView, Int, Int) -> Result[Bytes, String]
 

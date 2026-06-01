@@ -14,6 +14,12 @@ test "names preserve packages and escaped separators" {
   assert_true(
     name.hash() != @knowledge.Name::create("target:x", pkg="other").hash(),
   )
+  assert_true(name.equal(@knowledge.Name::create("target:x", pkg="core")))
+  assert_eq(name.compare(@knowledge.Name::create("target:x", pkg="core")), 0)
+  assert_true(
+    name.compare(@knowledge.Name::create("target:x", pkg="other")) < 0,
+  )
+  assert_true(name.compare(@knowledge.Name::create("aaa", pkg="core")) > 0)
 }
 
 ///|

@@ -107,6 +107,21 @@ pub fn Name::pkg(self : Name) -> String {
 }
 
 ///|
+pub fn Name::equal(self : Name, other : Name) -> Bool {
+  self == other
+}
+
+///|
+pub fn Name::compare(self : Name, other : Name) -> Int {
+  let pkg_order = self.pkg.compare(other.pkg)
+  if pkg_order != 0 {
+    pkg_order
+  } else {
+    self.text.compare(other.text)
+  }
+}
+
+///|
 pub fn Name::hash(self : Name) -> Int {
   fnv1a_hash_parts(self.pkg, self.text)
 }

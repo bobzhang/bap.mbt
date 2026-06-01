@@ -39,7 +39,7 @@ pub fn[K, S] Class::desc(Self[K, S]) -> String?
 pub fn[K, S] Class::name(Self[K, S]) -> Name
 pub fn[K, S, P] Class::property(Self[K, S], name~ : Name, domain~ : Domain[P], desc? : String) -> Slot[K, P]
 pub fn[K, S, T] Class::refine(Self[K, S], name~ : Name, sort~ : T, desc? : String) -> Self[K, T]
-pub fn[K, S] Class::same(Self[K, S], Self[K, S]) -> Bool
+pub fn[K, S, T] Class::same(Self[K, S], Self[K, T]) -> Bool
 pub fn[K, S] Class::sort(Self[K, S]) -> S
 
 type Domain[T]
@@ -115,6 +115,7 @@ pub fn PartialOrder::invert(Self) -> Self
 pub fn PartialOrder::leq(Self) -> Bool
 
 type Slot[K, P]
+pub fn[K, P] Slot::cls(Self[K, P]) -> Class[K, Unit]
 pub fn[K, P] Slot::desc(Self[K, P]) -> String?
 pub fn[K, P] Slot::domain(Self[K, P]) -> Domain[P]
 pub fn[K, P] Slot::name(Self[K, P]) -> Name

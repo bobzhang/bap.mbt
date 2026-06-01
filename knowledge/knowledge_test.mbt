@@ -183,6 +183,8 @@ test "classes slots and fact tables accumulate monotone facts" {
     name=@knowledge.Name::create("seen", pkg="test"),
     domain~,
   )
+  assert_true(slot.cls().same(cls))
+  assert_eq(slot.cls().name().show(), "test:program")
   let state = @knowledge.State::new()
   let object = state.create(cls)
   let facts = @knowledge.FactTable::new(slot)

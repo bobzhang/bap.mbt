@@ -43,7 +43,7 @@ pub fn[K, S, T] Class::refine(
 }
 
 ///|
-pub fn[K, S] Class::same(self : Class[K, S], other : Class[K, S]) -> Bool {
+pub fn[K, S, T] Class::same(self : Class[K, S], other : Class[K, T]) -> Bool {
   self.name == other.name
 }
 
@@ -75,6 +75,11 @@ pub fn[K, S, P] Class::property(
 ///|
 pub fn[K, P] Slot::owner(self : Slot[K, P]) -> Name {
   self.owner
+}
+
+///|
+pub fn[K, P] Slot::cls(self : Slot[K, P]) -> Class[K, Unit] {
+  { name: self.owner, sort_value: (), desc: None, _phantom: None }
 }
 
 ///|

@@ -102,8 +102,11 @@ pub fn[K, P] Slot::domain(self : Slot[K, P]) -> Domain[P] {
 }
 
 ///|
-pub fn[K, P] Slot::desc(self : Slot[K, P]) -> String? {
-  self.desc
+pub fn[K, P] Slot::desc(self : Slot[K, P]) -> String {
+  match self.desc {
+    Some(text) => text
+    None => "no description"
+  }
 }
 
 ///|

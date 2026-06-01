@@ -588,6 +588,13 @@ test "classes slots and fact tables accumulate monotone facts" {
   )
   assert_true(slot.cls().same(cls))
   assert_eq(slot.cls().name().show(), "test:program")
+  assert_eq(slot.desc(), "no description")
+  let described = cls.property(
+    name=@knowledge.Name::create("described-seen", pkg="test"),
+    domain~,
+    desc="execution flag",
+  )
+  assert_eq(described.desc(), "execution flag")
   let state = @knowledge.State::new()
   let object = state.create(cls)
   let facts = @knowledge.FactTable::new(slot)

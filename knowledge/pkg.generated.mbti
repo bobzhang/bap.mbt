@@ -138,7 +138,7 @@ pub fn Persistent::string() -> Self[String]
 
 type Slot[K, P]
 pub fn[K, P] Slot::cls(Self[K, P]) -> Class[K, Unit]
-pub fn[K, P] Slot::desc(Self[K, P]) -> String?
+pub fn[K, P] Slot::desc(Self[K, P]) -> String
 pub fn[K, P] Slot::domain(Self[K, P]) -> Domain[P]
 pub fn[K, P] Slot::name(Self[K, P]) -> Name
 pub fn[K, P] Slot::owner(Self[K, P]) -> Name

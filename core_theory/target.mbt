@@ -1640,13 +1640,12 @@ fn aarch64_alias_origins() -> Array[AliasOrigin] {
       hi=31,
     ),
   )
-  items.push(AliasOrigin::unknown(word_var(64, "XZR")))
-  items.push(AliasOrigin::register(word_var(64, "ZR"), word_var(64, "XZR")))
+  items.push(AliasOrigin::register(word_var(64, "XZR"), word_var(64, "ZR")))
   items.push(AliasOrigin::bit_set(word_var(32, "NZCV"), aarch64_flags()))
   items.push(
     AliasOrigin::subregister(
       word_var(32, "WZR"),
-      word_var(64, "XZR"),
+      word_var(64, "ZR"),
       lo=0,
       hi=31,
     ),

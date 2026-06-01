@@ -2153,8 +2153,18 @@ test "target role helpers classify common architecture variables" {
       assert_true(aarch64.roles_of_var(zero).contains(Constant))
       assert_true(aarch64.roles_of_var(zero).contains(ZeroRegister))
       assert_true(aarch64.roles_of_var(zero).contains(PseudoRegister))
+      assert_true(aarch64.roles_of_var(zero).contains(AliasRegister))
     }
     None => fail("missing XZR")
+  }
+  match aarch64.find_var("ZR") {
+    Some(zero) => {
+      assert_true(aarch64.roles_of_var(zero).contains(Constant))
+      assert_true(aarch64.roles_of_var(zero).contains(ZeroRegister))
+      assert_true(aarch64.roles_of_var(zero).contains(PseudoRegister))
+      assert_true(!aarch64.roles_of_var(zero).contains(AliasRegister))
+    }
+    None => fail("missing ZR")
   }
   assert_true(aarch64.role_aliases(PseudoRegister).contains("xzr"))
   assert_true(aarch64.role_aliases(PseudoRegister).contains("wzr"))
@@ -2182,6 +2192,23 @@ test "target role helpers classify common architecture variables" {
     }
     None => fail("missing D0 alias origin")
   }
+  match aarch64.origin_of_name("XZR") {
+    Some(origin) => {
+      assert_true(origin.aliased().ident() == "XZR")
+      assert_true(origin.source().map(v => v.ident()) == Some("ZR"))
+      assert_true(origin.is_alias())
+    }
+    None => fail("missing XZR alias origin")
+  }
+  match aarch64.origin_of_name("WZR") {
+    Some(origin) => {
+      assert_true(origin.aliased().ident() == "WZR")
+      assert_true(origin.source().map(v => v.ident()) == Some("ZR"))
+      assert_true(origin.range() == Some((0, 31)))
+    }
+    None => fail("missing WZR alias origin")
+  }
+  assert_true(aarch64.origin_of_name("ZR") is None)
   match aarch64.origin_of_name("NZCV") {
     Some(origin) => {
       assert_true(origin.source() is None)

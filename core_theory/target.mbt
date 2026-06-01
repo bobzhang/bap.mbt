@@ -155,6 +155,16 @@ pub fn System::of_string(text : String) -> System? {
 }
 
 ///|
+pub fn System::unknown() -> System {
+  UnknownSystem
+}
+
+///|
+pub fn System::is_unknown(self : System) -> Bool {
+  self == UnknownSystem
+}
+
+///|
 fn System::rank(self : System) -> Int {
   match self {
     UnknownSystem => 0
@@ -233,6 +243,16 @@ pub fn Abi::of_string(text : String) -> Abi? {
 }
 
 ///|
+pub fn Abi::unknown() -> Abi {
+  UnknownAbi
+}
+
+///|
+pub fn Abi::is_unknown(self : Abi) -> Bool {
+  self == UnknownAbi
+}
+
+///|
 fn Abi::rank(self : Abi) -> Int {
   match self {
     UnknownAbi => 0
@@ -284,6 +304,16 @@ pub fn Fabi::of_string(text : String) -> Fabi? {
 }
 
 ///|
+pub fn Fabi::unknown() -> Fabi {
+  UnknownFabi
+}
+
+///|
+pub fn Fabi::is_unknown(self : Fabi) -> Bool {
+  self == UnknownFabi
+}
+
+///|
 fn Fabi::rank(self : Fabi) -> Int {
   match self {
     UnknownFabi => 0
@@ -327,6 +357,16 @@ pub fn Filetype::of_string(text : String) -> Filetype? {
     "raw" | "bin" | "binary" => Some(Raw)
     _ => None
   }
+}
+
+///|
+pub fn Filetype::unknown() -> Filetype {
+  UnknownFiletype
+}
+
+///|
+pub fn Filetype::is_unknown(self : Filetype) -> Bool {
+  self == UnknownFiletype
 }
 
 ///|

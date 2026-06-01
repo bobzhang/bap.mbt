@@ -50,8 +50,10 @@ pub(all) enum Abi {
 } derive(Eq, @debug.Debug)
 pub fn Abi::compare(Self, Self) -> Int
 pub fn Abi::equal(Self, Self) -> Bool
+pub fn Abi::is_unknown(Self) -> Bool
 pub fn Abi::of_string(String) -> Self?
 pub fn Abi::to_string(Self) -> String
+pub fn Abi::unknown() -> Self
 
 pub(all) enum AliasOrigin {
   RegisterAlias(aliased~ : Var, source~ : Var)
@@ -135,8 +137,10 @@ pub(all) enum Fabi {
 } derive(Eq, @debug.Debug)
 pub fn Fabi::compare(Self, Self) -> Int
 pub fn Fabi::equal(Self, Self) -> Bool
+pub fn Fabi::is_unknown(Self) -> Bool
 pub fn Fabi::of_string(String) -> Self?
 pub fn Fabi::to_string(Self) -> String
+pub fn Fabi::unknown() -> Self
 
 pub(all) enum Filetype {
   UnknownFiletype
@@ -149,8 +153,10 @@ pub(all) enum Filetype {
 } derive(Eq, @debug.Debug)
 pub fn Filetype::compare(Self, Self) -> Int
 pub fn Filetype::equal(Self, Self) -> Bool
+pub fn Filetype::is_unknown(Self) -> Bool
 pub fn Filetype::of_string(String) -> Self?
 pub fn Filetype::to_string(Self) -> String
+pub fn Filetype::unknown() -> Self
 
 pub(all) struct Ieee754Parameters {
   base : Int
@@ -450,8 +456,10 @@ pub(all) enum System {
 } derive(Eq, @debug.Debug)
 pub fn System::compare(Self, Self) -> Int
 pub fn System::equal(Self, Self) -> Bool
+pub fn System::is_unknown(Self) -> Bool
 pub fn System::of_string(String) -> Self?
 pub fn System::to_string(Self) -> String
+pub fn System::unknown() -> Self
 
 type Target
 pub fn Target::aarch64() -> Self

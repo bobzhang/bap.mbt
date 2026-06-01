@@ -470,20 +470,29 @@ test "targets inherit defaults and match ancestry" {
   assert_true(little.compare(big) < 0)
   let unknown_system = @core_theory.System::of_string("unknown").unwrap()
   let linux = @core_theory.System::of_string("linux").unwrap()
+  assert_true(@core_theory.System::unknown().is_unknown())
+  assert_true(unknown_system.is_unknown())
+  assert_true(!linux.is_unknown())
   assert_true(linux.equal(@core_theory.System::of_string("linux").unwrap()))
   assert_true(unknown_system.compare(linux) < 0)
+  assert_true(@core_theory.Abi::unknown().is_unknown())
+  assert_true(!@core_theory.Abi::of_string("gnu").unwrap().is_unknown())
   assert_true(
     @core_theory.Abi::of_string("sysv")
     .unwrap()
     .compare(@core_theory.Abi::of_string("gnu").unwrap()) <
     0,
   )
+  assert_true(@core_theory.Fabi::unknown().is_unknown())
+  assert_true(!@core_theory.Fabi::of_string("hard").unwrap().is_unknown())
   assert_true(
     @core_theory.Fabi::of_string("soft")
     .unwrap()
     .compare(@core_theory.Fabi::of_string("hard").unwrap()) <
     0,
   )
+  assert_true(@core_theory.Filetype::unknown().is_unknown())
+  assert_true(!@core_theory.Filetype::of_string("elf").unwrap().is_unknown())
   assert_true(
     @core_theory.Filetype::of_string("elf")
     .unwrap()

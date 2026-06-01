@@ -138,6 +138,22 @@ fn assert_semantics_persistent_round_trip(
 }
 
 ///|
+fn assert_var_persistent_round_trip(
+  codec : @knowledge.Persistent[@core_theory.Var]?,
+  value : @core_theory.Var,
+  label : String,
+) -> Unit raise {
+  match codec {
+    Some(persistent) =>
+      match persistent.decode(persistent.encode(value)) {
+        Ok(decoded) => assert_true(decoded.equal(value))
+        Err(reason) => fail(reason)
+      }
+    None => fail("missing persistent codec for \{label}")
+  }
+}
+
+///|
 test "sorts model symbolic applications" {
   let word = @core_theory.Sort::bitv(32)
   inspect(word.to_string(), content="core:bitv<32>")
@@ -186,6 +202,7 @@ test "variables preserve sorts versions and mutability flags" {
   inspect(reg.name(), content="RAX")
   assert_true(reg.is_mutable())
   assert_true(!reg.is_virtual())
+  assert_true(reg.equal(@core_theory.Var::create(sort, "RAX")))
   assert_true(
     !@core_theory.Var::create(sort, "tmp", is_mutable=false).is_mutable(),
   )
@@ -196,11 +213,17 @@ test "variables preserve sorts versions and mutability flags" {
   let versioned = reg.versioned(2)
   inspect(versioned.name(), content="RAX.2")
   assert_true(versioned.sort().same(sort))
+  assert_true(reg.compare(versioned) < 0)
   assert_true(reg.forget().sort().same(sort))
   let fresh = @core_theory.Var::fresh(sort)
   assert_true(fresh.is_virtual())
   assert_true(fresh.is_mutable())
   assert_true(fresh.name().has_prefix("#"))
+  assert_var_persistent_round_trip(
+    Some(@core_theory.Var::persistent()),
+    versioned,
+    "var",
+  )
 }
 
 ///|

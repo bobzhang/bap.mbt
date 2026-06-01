@@ -124,6 +124,45 @@ pub fn Var::same(self : Var, other : Var) -> Bool {
 }
 
 ///|
+pub fn Var::equal(self : Var, other : Var) -> Bool {
+  self.same(other)
+}
+
+///|
+fn bool_compare(lhs : Bool, rhs : Bool) -> Int {
+  if lhs == rhs {
+    0
+  } else if !lhs && rhs {
+    -1
+  } else {
+    1
+  }
+}
+
+///|
+pub fn Var::compare(self : Var, other : Var) -> Int {
+  let ident_order = self.ident_value.compare(other.ident_value)
+  if ident_order != 0 {
+    return ident_order
+  }
+  let version_order = self.version_value.compare(other.version_value)
+  if version_order != 0 {
+    return version_order
+  }
+  let sort_order = self.sort_value
+    .to_string()
+    .compare(other.sort_value.to_string())
+  if sort_order != 0 {
+    return sort_order
+  }
+  let mutable_order = bool_compare(self.mutable_flag, other.mutable_flag)
+  if mutable_order != 0 {
+    return mutable_order
+  }
+  bool_compare(self.virtual_flag, other.virtual_flag)
+}
+
+///|
 pub fn Var::ident(self : Var) -> String {
   self.ident_value
 }
@@ -160,4 +199,57 @@ pub fn Var::is_mutable(self : Var) -> Bool {
 ///|
 pub fn Var::to_string(self : Var) -> String {
   "\{self.name()}:\{self.sort_value.to_string()}"
+}
+
+///|
+pub fn Var::persistent() -> @knowledge.Persistent[Var] {
+  let sort_codec = Sort::persistent()
+  let string_codec = @knowledge.Persistent::string()
+  let int_codec = @knowledge.Persistent::int()
+  let bool_codec = @knowledge.Persistent::bool()
+  @knowledge.Persistent::convert(
+    to_persistent=variable => {
+      [
+        sort_codec.encode(variable.sort_value),
+        string_codec.encode(variable.ident_value),
+        int_codec.encode(variable.version_value),
+        bool_codec.encode(variable.mutable_flag),
+        bool_codec.encode(variable.virtual_flag),
+      ]
+    },
+    of_persistent=fields => {
+      match persistent_decode_fields(fields, 5, "var") {
+        Ok(_) => ()
+        Err(reason) => return Err(reason)
+      }
+      let sort = match sort_codec.decode(fields[0]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let ident = match string_codec.decode(fields[1]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let version = match int_codec.decode(fields[2]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let mutable_flag = match bool_codec.decode(fields[3]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let virtual_flag = match bool_codec.decode(fields[4]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      Ok({
+        sort_value: sort,
+        ident_value: ident,
+        version_value: version,
+        mutable_flag,
+        virtual_flag,
+      })
+    },
+    persistent_string_fields(),
+  )
 }

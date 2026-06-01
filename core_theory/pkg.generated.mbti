@@ -554,13 +554,16 @@ pub fn Value::sort(Self) -> Sort
 pub fn Value::with_fact(Self, String, String) -> Self
 
 type Var
+pub fn Var::compare(Self, Self) -> Int
 pub fn Var::create(Sort, String, is_mutable? : Bool, is_virtual? : Bool) -> Self
+pub fn Var::equal(Self, Self) -> Bool
 pub fn Var::forget(Self) -> Self
 pub fn Var::fresh(Sort) -> Self
 pub fn Var::ident(Self) -> String
 pub fn Var::is_mutable(Self) -> Bool
 pub fn Var::is_virtual(Self) -> Bool
 pub fn Var::name(Self) -> String
+pub fn Var::persistent() -> @knowledge.Persistent[Self]
 pub fn Var::resort(Self, Sort) -> Self
 pub fn Var::same(Self, Self) -> Bool
 pub fn Var::sort(Self) -> Sort

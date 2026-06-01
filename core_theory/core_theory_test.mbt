@@ -148,6 +148,10 @@ test "sorts model symbolic applications" {
   assert_true(word.bitv_size() == Some(32))
   assert_true(word.refine_bool() is None)
   assert_true(word.tail() == [@core_theory.Sort::int(32)])
+  assert_true(word.hd() == Some(@core_theory.Sort::int(32)))
+  assert_true(word.tl() == Some(word.head()))
+  assert_true(@core_theory.Sort::bool().hd() is None)
+  assert_true(@core_theory.Sort::bool().tl() is None)
   let mem = @core_theory.Sort::mem(@core_theory.Sort::bitv(64), word)
   inspect(mem.to_string(), content="core:mem<core:bitv<64>><core:bitv<32>>")
   assert_true(
@@ -155,6 +159,14 @@ test "sorts model symbolic applications" {
   )
   assert_true(mem.mem_keys() == Some(@core_theory.Sort::bitv(64)))
   assert_true(mem.mem_values() == Some(word))
+  assert_true(mem.hd() == Some(@core_theory.Sort::bitv(64)))
+  match mem.tl() {
+    Some(rest) => {
+      inspect(rest.to_string(), content="core:mem<core:bitv<32>>")
+      assert_true(rest.hd() == Some(word))
+    }
+    None => fail("expected memory sort tail")
+  }
   assert_true(@core_theory.Sort::float(80).float_width() == Some(80))
   assert_true(
     @core_theory.Sort::rmode().refine_rmode() ==

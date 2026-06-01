@@ -213,6 +213,15 @@ pub fn Sort::refine_rmode(self : Sort) -> Sort? {
 }
 
 ///|
+fn sort_with_args(head : Sort, args : Array[Sort], start : Int) -> Sort {
+  let mut result = head
+  for i in start..<args.length() {
+    result = App(result, args[i])
+  }
+  result
+}
+
+///|
 pub fn Sort::head(self : Sort) -> Sort {
   match self {
     App(head, _) => head.head()
@@ -229,6 +238,26 @@ pub fn Sort::tail(self : Sort) -> Array[Sort] {
       args
     }
     _ => []
+  }
+}
+
+///|
+pub fn Sort::hd(self : Sort) -> Sort? {
+  let args = self.tail()
+  if args.length() == 0 {
+    None
+  } else {
+    Some(args[0])
+  }
+}
+
+///|
+pub fn Sort::tl(self : Sort) -> Sort? {
+  let args = self.tail()
+  if args.length() == 0 {
+    None
+  } else {
+    Some(sort_with_args(self.head(), args, 1))
   }
 }
 

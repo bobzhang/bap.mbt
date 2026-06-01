@@ -345,6 +345,7 @@ pub fn Sort::bool() -> Self
 pub fn Sort::float(Int) -> Self
 pub fn Sort::float_width(Self) -> Int?
 pub fn Sort::forget(Self) -> Self
+pub fn Sort::hd(Self) -> Self?
 pub fn Sort::head(Self) -> Self
 pub fn Sort::int(Int) -> Self
 pub fn Sort::mem(Self, Self) -> Self
@@ -362,6 +363,7 @@ pub fn Sort::rmode() -> Self
 pub fn Sort::same(Self, Self) -> Bool
 pub fn Sort::sym(@knowledge.Name) -> Self
 pub fn Sort::tail(Self) -> Array[Self]
+pub fn Sort::tl(Self) -> Self?
 pub fn Sort::to_string(Self) -> String
 pub fn Sort::value(Self) -> Int?
 

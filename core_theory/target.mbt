@@ -1888,7 +1888,11 @@ fn x86_64_role_names(role : Role) -> Array[String] {
         lower_names(x86_segment_names(false)),
       ])
     FloatingRegister =>
-      concat_role_names([role_names("st", 0, 7), role_names("mm", 0, 7)])
+      concat_role_names([
+        role_names("st", 0, 7),
+        role_names("mm", 0, 7),
+        role_names("ymm", 0, 15),
+      ])
     VectorRegister =>
       concat_role_names([role_names("xmm", 0, 15), role_names("ymm", 0, 15)])
     StackPointer => ["rsp", "esp", "sp", "spl"]
@@ -1969,6 +1973,9 @@ fn x86_32_cpu_role_names(
       if mmx {
         groups.push(role_names("mm", 0, 7))
       }
+      if xmm {
+        groups.push(role_names("xmm", 0, 7))
+      }
       concat_role_names(groups)
     }
     VectorRegister => if xmm { role_names("xmm", 0, 7) } else { [] }
@@ -1990,7 +1997,11 @@ fn x86_32_role_names(role : Role) -> Array[String] {
         lower_names(x86_segment_names(true)),
       ])
     FloatingRegister =>
-      concat_role_names([role_names("st", 0, 7), role_names("mm", 0, 7)])
+      concat_role_names([
+        role_names("st", 0, 7),
+        role_names("mm", 0, 7),
+        role_names("xmm", 0, 7),
+      ])
     VectorRegister => role_names("xmm", 0, 7)
     StackPointer => ["esp", "sp"]
     FramePointer => ["ebp", "bp"]

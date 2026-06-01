@@ -1611,8 +1611,10 @@ test "target role helpers classify common architecture variables" {
     None => fail("missing R9D alias origin")
   }
   match amd64.find_var("YMM7") {
-    Some(vector) =>
+    Some(vector) => {
       assert_true(amd64.roles_of_var(vector).contains(VectorRegister))
+      assert_true(amd64.roles_of_var(vector).contains(FloatingRegister))
+    }
     None => fail("missing YMM7")
   }
   match amd64.origin_of_name("XMM7") {
@@ -1701,8 +1703,10 @@ test "target role helpers classify common architecture variables" {
     None => fail("missing ST0")
   }
   match x86.find_var("XMM0") {
-    Some(vector) =>
+    Some(vector) => {
       assert_true(x86.roles_of_var(vector).contains(VectorRegister))
+      assert_true(x86.roles_of_var(vector).contains(FloatingRegister))
+    }
     None => fail("missing XMM0")
   }
   let arm = @core_theory.Target::arm()

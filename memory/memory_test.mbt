@@ -220,6 +220,22 @@ test "translated BAP memmap transformations preserve ranges and duplicates" {
 }
 
 ///|
+test "translated BAP memmap duplicate ranges all intersect and remove together" {
+  let chunk = memory_at(0x200UL, 10)
+  let map = @memory.MemMap::empty()
+    .add(chunk, "first")
+    .add(chunk, "second")
+    .add(chunk, "third")
+  assert_true(
+    map.intersections(chunk).map(entry => entry.1) ==
+    ["first", "second", "third"],
+  )
+  let removed = map.remove_intersections(chunk)
+  assert_true(removed.length() == 0)
+  assert_true(!removed.intersects(chunk))
+}
+
+///|
 test "translated BAP memmap public queries are range ordered" {
   let first = memory_at(0x100UL, 2)
   let middle = memory_at(0x180UL, 2)

@@ -3149,6 +3149,7 @@ fn arm_le_v4() -> Target {
     parent=Target::arm_family(),
     nicknames=["armv4"],
     bits=32,
+    code_alignment=32,
     endianness=LittleEndian,
     vars=arm32_vars(),
     alias_origins=arm32_alias_origins(),
@@ -3157,7 +3158,12 @@ fn arm_le_v4() -> Target {
 
 ///|
 fn arm_le_v4t() -> Target {
-  arm_le_base("armv4t", "armv4t", arm_le_v4())
+  Target::create(
+    name=target_name("armv4t+le"),
+    parent=arm_le_v4(),
+    nicknames=["armv4t"],
+    code_alignment=16,
+  )
 }
 
 ///|
@@ -3280,6 +3286,7 @@ fn arm_be_v4() -> Target {
     parent=Target::arm_family(),
     nicknames=["armv4", "armv4eb"],
     bits=32,
+    code_alignment=32,
     endianness=BigEndian,
     vars=arm32_vars(),
     alias_origins=arm32_alias_origins(),
@@ -3288,7 +3295,12 @@ fn arm_be_v4() -> Target {
 
 ///|
 fn arm_be_v4t() -> Target {
-  arm_be_base("armv4t", "armv4t", arm_be_v4())
+  Target::create(
+    name=target_name("armv4t+be"),
+    parent=arm_be_v4(),
+    nicknames=["armv4t"],
+    code_alignment=16,
+  )
 }
 
 ///|
@@ -3417,6 +3429,7 @@ fn arm_bi_v7() -> Target {
     parent=Target::arm_family(),
     nicknames=["armv7"],
     bits=32,
+    code_alignment=16,
     endianness=BiEndian,
     vars=arm32_vars(),
     alias_origins=arm32_alias_origins(),
@@ -3449,6 +3462,7 @@ fn arm_bi_v8() -> Target {
     name=target_name("armv8+bi"),
     parent=Target::arm_family(),
     bits=64,
+    code_alignment=32,
     endianness=BiEndian,
     vars=aarch64_vars(),
     alias_origins=aarch64_alias_origins(),
@@ -3542,6 +3556,7 @@ fn arm_le_v8() -> Target {
     name=target_name("armv8+le"),
     parent=Target::arm(),
     bits=64,
+    code_alignment=32,
     endianness=LittleEndian,
     vars=aarch64_vars(),
     alias_origins=aarch64_alias_origins(),
@@ -3594,6 +3609,7 @@ fn arm_be_v8() -> Target {
     name=target_name("armv8+be"),
     parent=Target::armeb(),
     bits=64,
+    code_alignment=32,
     endianness=BigEndian,
     vars=aarch64_vars(),
     alias_origins=aarch64_alias_origins(),

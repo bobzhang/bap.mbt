@@ -610,6 +610,7 @@ test "target registry resolves common and custom declarations" {
     Ok(target) => {
       assert_true(target.bits() == 32)
       assert_true(target.endianness() == LittleEndian)
+      assert_true(target.code_alignment() == 16)
       assert_true(target.belongs(@core_theory.Target::arm()))
       assert_true(target.matches("thumbv7"))
     }
@@ -618,6 +619,7 @@ test "target registry resolves common and custom declarations" {
   match @core_theory.get_target("thumbv7eb") {
     Ok(target) => {
       assert_true(target.endianness() == BigEndian)
+      assert_true(target.code_alignment() == 16)
       assert_true(target.belongs(@core_theory.Target::armeb()))
       assert_true(target.belongs(@core_theory.Target::arm_family()))
       assert_true(!target.belongs(@core_theory.Target::arm()))
@@ -639,6 +641,7 @@ test "target registry resolves common and custom declarations" {
       assert_true(target.matches("armv4+le"))
       assert_true(target.bits() == 32)
       assert_true(target.endianness() == LittleEndian)
+      assert_true(target.code_alignment() == 32)
       assert_true(target.belongs(@core_theory.Target::arm_family()))
       assert_true(!target.belongs(@core_theory.Target::arm()))
       assert_true(target.find_var("R0") is Some(_))
@@ -650,6 +653,7 @@ test "target registry resolves common and custom declarations" {
       assert_true(target.matches("armv4+be"))
       assert_true(target.bits() == 32)
       assert_true(target.endianness() == BigEndian)
+      assert_true(target.code_alignment() == 32)
       assert_true(target.belongs(@core_theory.Target::arm_family()))
       assert_true(!target.belongs(@core_theory.Target::armeb()))
     }
@@ -658,6 +662,7 @@ test "target registry resolves common and custom declarations" {
   match @core_theory.get_target("armv7-a+fp") {
     Ok(target) => {
       assert_true(target.matches("armv7-a+fp+le"))
+      assert_true(target.code_alignment() == 16)
       assert_true(@core_theory.Target::arm().belongs(target))
       assert_true(target.find_var("SP") is Some(_))
     }
@@ -668,6 +673,7 @@ test "target registry resolves common and custom declarations" {
       assert_true(target.matches("armv8-m+aarch32"))
       assert_true(target.belongs(@core_theory.Target::arm_family()))
       assert_true(target.endianness() == LittleEndian)
+      assert_true(target.code_alignment() == 16)
     }
     Err(reason) => fail(reason)
   }
@@ -676,6 +682,7 @@ test "target registry resolves common and custom declarations" {
       assert_true(target.matches("armv7"))
       assert_true(target.bits() == 32)
       assert_true(target.endianness() == BiEndian)
+      assert_true(target.code_alignment() == 16)
       assert_true(target.belongs(@core_theory.Target::arm_family()))
       assert_true(!target.belongs(@core_theory.Target::arm()))
       assert_true(!target.belongs(@core_theory.Target::armeb()))
@@ -686,6 +693,7 @@ test "target registry resolves common and custom declarations" {
     Ok(target) => {
       assert_true(target.bits() == 64)
       assert_true(target.endianness() == BiEndian)
+      assert_true(target.code_alignment() == 32)
       assert_true(target.find_var("X0") is Some(_))
       assert_true(target.find_var("XZR") is Some(_))
     }
@@ -843,6 +851,7 @@ test "target registry resolves common and custom declarations" {
     Ok(target) => {
       assert_true(target.matches("aarch64_be"))
       assert_true(target.endianness() == BigEndian)
+      assert_true(target.code_alignment() == 32)
     }
     Err(reason) => fail(reason)
   }
@@ -947,6 +956,7 @@ test "target registry resolves common and custom declarations" {
     Some(target) => {
       assert_true(target.matches("armv8.6-a+le"))
       assert_true(target.bits() == 64)
+      assert_true(target.code_alignment() == 32)
       assert_true(@core_theory.Target::aarch64().belongs(target))
     }
     None => fail("missing ARMv8.6-A target alias")

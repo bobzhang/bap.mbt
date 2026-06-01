@@ -23,6 +23,34 @@ pub fn Value::resort(self : Value, refine : (Sort) -> Sort?) -> Value? {
 }
 
 ///|
+pub fn[A] Value::match_can(
+  self : Value,
+  refine : (Sort) -> Sort?,
+  action : (Value) -> A,
+  otherwise : () -> A,
+) -> A {
+  match self.resort(refine) {
+    Some(value) => action(value)
+    None => otherwise()
+  }
+}
+
+///|
+pub fn[A] Value::match_both(
+  self : Value,
+  refine_self : (Sort) -> Sort?,
+  other : Value,
+  refine_other : (Sort) -> Sort?,
+  action : (Value, Value) -> A,
+  otherwise : () -> A,
+) -> A {
+  match (self.resort(refine_self), other.resort(refine_other)) {
+    (Some(lhs), Some(rhs)) => action(lhs, rhs)
+    _ => otherwise()
+  }
+}
+
+///|
 pub fn Value::equal(self : Value, other : Value) -> Bool {
   self.sort_value == other.sort_value &&
   string_map_equal(self.facts, other.facts)

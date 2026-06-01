@@ -544,6 +544,8 @@ pub fn Value::empty(Sort) -> Self
 pub fn Value::equal(Self, Self) -> Bool
 pub fn Value::fact(Self, String) -> String?
 pub fn Value::forget(Self) -> Self
+pub fn[A] Value::match_both(Self, (Sort) -> Sort?, Self, (Sort) -> Sort?, (Self, Self) -> A, () -> A) -> A
+pub fn[A] Value::match_can(Self, (Sort) -> Sort?, (Self) -> A, () -> A) -> A
 pub fn Value::persistent() -> @knowledge.Persistent[Self]
 pub fn Value::resort(Self, (Sort) -> Sort?) -> Self?
 pub fn Value::sort(Self) -> Sort

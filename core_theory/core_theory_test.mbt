@@ -2022,6 +2022,43 @@ test "program semantics stores values and instruction bytes" {
     None => fail("expected bool value refinement")
   }
   assert_true(value.resort(sort => sort.refine_bitv()) is None)
+  assert_true(
+    value.match_can(
+      sort => sort.refine_bool(),
+      refined => refined.fact("kind"),
+      () => None,
+    ) ==
+    Some("lifted"),
+  )
+  assert_true(
+    value.match_can(sort => sort.refine_bitv(), _ => Some("unexpected"), () => {
+      None
+    })
+    is None,
+  )
+  let byte_value = @core_theory.Value::empty(@core_theory.Sort::bitv(8))
+  assert_true(
+    value.match_both(
+      sort => sort.refine_bool(),
+      byte_value,
+      sort => sort.refine_bitv(),
+      (left, right) => {
+        left.sort().same(@core_theory.Sort::bool()) &&
+        right.sort().bitv_size() == Some(8)
+      },
+      () => false,
+    ),
+  )
+  assert_true(
+    value.match_both(
+      sort => sort.refine_bitv(),
+      byte_value,
+      sort => sort.refine_bitv(),
+      (_, _) => true,
+      () => false,
+    ) ==
+    false,
+  )
   assert_true(value.equal(same_value))
   assert_true(value.compare(same_value) == 0)
   assert_true(!value.equal(value.with_fact("extra", "true")))

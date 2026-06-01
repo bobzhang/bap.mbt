@@ -1774,9 +1774,20 @@ test "target role helpers classify common architecture variables" {
     None => fail("missing R4")
   }
   match arm.find_var("NF") {
-    Some(flag) => assert_true(arm.roles_of_var(flag).contains(Status))
+    Some(flag) => {
+      assert_true(arm.roles_of_var(flag).contains(Status))
+      assert_true(arm.roles_of_var(flag).contains(IntegerRegister))
+    }
     None => fail("missing NF")
   }
+  match arm.find_var("QF") {
+    Some(flag) => {
+      assert_true(arm.roles_of_var(flag).contains(Status))
+      assert_true(arm.roles_of_var(flag).contains(IntegerRegister))
+    }
+    None => fail("missing QF")
+  }
+  assert_true(arm.role_aliases(IntegerRegister).contains("qf"))
   match arm.find_var("D31") {
     Some(float) => {
       assert_true(arm.roles_of_var(float).contains(FloatingRegister))
@@ -2130,9 +2141,13 @@ test "target role helpers classify common architecture variables" {
     None => fail("missing D0")
   }
   match aarch64.find_var("NF") {
-    Some(flag) => assert_true(aarch64.roles_of_var(flag).contains(Status))
+    Some(flag) => {
+      assert_true(aarch64.roles_of_var(flag).contains(Status))
+      assert_true(aarch64.roles_of_var(flag).contains(IntegerRegister))
+    }
     None => fail("missing AArch64 NF")
   }
+  assert_true(aarch64.role_aliases(IntegerRegister).contains("vf"))
   match aarch64.find_var("XZR") {
     Some(zero) => {
       assert_true(aarch64.roles_of_var(zero).contains(Constant))

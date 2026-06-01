@@ -2083,14 +2083,19 @@ fn arm32_role_names(role : Role) -> Array[String] {
   match role {
     General => []
     SpecialRegister | AliasRegister | PseudoRegister => []
-    IntegerRegister => concat_role_names([role_names("r", 0, 12), ["sp", "lr"]])
+    IntegerRegister =>
+      concat_role_names([
+        role_names("r", 0, 12),
+        ["sp", "lr"],
+        arm32_status_flag_role_names(),
+      ])
     FloatingRegister => role_names("d", 0, 31)
     VectorRegister => []
     IndexRegister | SegmentRegister => []
     StackPointer => ["sp"]
     FramePointer => ["r11"]
     ProgramCounter => ["pc"]
-    Status => ["cpsr", "nf", "zf", "cf", "vf", "qf"]
+    Status => concat_role_names([["cpsr"], arm32_status_flag_role_names()])
     ControlRegister | SystemRegister | HardwareRegister => []
     Constant | ZeroRegister | OneRegister | ThreadPointer => []
     LinkRegister => ["lr", "r14"]
@@ -2110,6 +2115,11 @@ fn arm32_role_names(role : Role) -> Array[String] {
 }
 
 ///|
+fn arm32_status_flag_role_names() -> Array[String] {
+  ["nf", "zf", "cf", "vf", "qf"]
+}
+
+///|
 fn aarch64_role_names(role : Role) -> Array[String] {
   match role {
     General => []
@@ -2121,6 +2131,7 @@ fn aarch64_role_names(role : Role) -> Array[String] {
         role_names("w", 0, 31),
         role_names("r", 0, 31),
         ["sp", "wsp"],
+        aarch64_status_flag_role_names(),
       ])
     FloatingRegister =>
       concat_role_names([
@@ -2136,7 +2147,7 @@ fn aarch64_role_names(role : Role) -> Array[String] {
     StackPointer => ["sp", "wsp", "x31", "r31"]
     FramePointer => ["fp", "x29", "r29"]
     ProgramCounter => ["pc"]
-    Status => ["nzcv", "nf", "zf", "cf", "vf"]
+    Status => concat_role_names([["nzcv"], aarch64_status_flag_role_names()])
     ControlRegister | SystemRegister | HardwareRegister => []
     Constant | ZeroRegister => ["zr", "xzr", "wzr"]
     OneRegister => []
@@ -2165,6 +2176,11 @@ fn aarch64_role_names(role : Role) -> Array[String] {
     ParityFlag => []
     ThumbMode => []
   }
+}
+
+///|
+fn aarch64_status_flag_role_names() -> Array[String] {
+  ["nf", "zf", "cf", "vf"]
 }
 
 ///|

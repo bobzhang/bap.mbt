@@ -1963,6 +1963,13 @@ test "target role helpers classify common architecture variables" {
       assert_true(ppc64.roles_of_var(float).contains(FloatingRegister))
     None => fail("missing F31")
   }
+  match ppc64.find_var("FL") {
+    Some(flag) => {
+      assert_true(ppc64.roles_of_var(flag).contains(Status))
+      assert_true(ppc64.roles_of_var(flag).contains(FloatingRegister))
+    }
+    None => fail("missing FL")
+  }
   match ppc64.find_var("V31") {
     Some(vector) =>
       assert_true(ppc64.roles_of_var(vector).contains(VectorRegister))

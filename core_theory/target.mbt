@@ -2140,7 +2140,8 @@ fn powerpc_role_names(role : Role) -> Array[String] {
     General => []
     SpecialRegister | AliasRegister | PseudoRegister => []
     IntegerRegister => role_names("r", 0, 31)
-    FloatingRegister => role_names("f", 0, 31)
+    FloatingRegister =>
+      concat_role_names([role_names("f", 0, 31), ["fl", "fe", "fg", "fu"]])
     VectorRegister => role_names("v", 0, 31)
     StackPointer => ["sp", "r1"]
     FramePointer => []

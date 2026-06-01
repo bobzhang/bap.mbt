@@ -174,7 +174,7 @@ pub fn Effect::wmem() -> Effect {
 
 ///|
 pub fn Effect::barr() -> Effect {
-  Effect::named("barr", EffectBoth)
+  Effect::named("barr", EffectData)
 }
 
 ///|
@@ -188,6 +188,11 @@ pub fn Effect::jump() -> Effect {
 }
 
 ///|
+pub fn Effect::cjmp() -> Effect {
+  Effect::named("cjmp", EffectCtrl)
+}
+
+///|
 pub fn Effect::cjump() -> Effect {
-  Effect::named("cjump", EffectCtrl)
+  Effect::cjmp()
 }

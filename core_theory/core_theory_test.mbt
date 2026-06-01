@@ -248,6 +248,9 @@ test "effect sorts form the expected lattice" {
     @core_theory.Effect::jump().compare(@core_theory.Effect::fall()) != 0,
   )
   inspect(@core_theory.Effect::jump().to_string(), content="jump")
+  assert_true(@core_theory.Effect::barr().sort() == EffectData)
+  inspect(@core_theory.Effect::cjmp().to_string(), content="cjmp")
+  assert_true(@core_theory.Effect::cjump().equal(@core_theory.Effect::cjmp()))
 }
 
 ///|

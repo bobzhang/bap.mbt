@@ -146,3 +146,33 @@ test "prefix trie find and longest_match follow BAP trie behavior" {
     ("nothing", None),
   ])
 }
+
+///|
+test "suffix trie mirrors BAP reversed-token matching" {
+  let trie : @regular.SuffixTrie[Int] = @regular.SuffixTrie::new()
+  assert_true(trie.is_empty())
+  trie.add("", 0)
+  trie.add("c", 1)
+  trie.add("abc", 3)
+  assert_true(trie.length() == 3)
+  assert_true(trie.find("abc") == Some(3))
+  assert_true(trie.find("xxabc") == None)
+  assert_true(trie.longest_match("xxabc") == Some((3, 3)))
+  assert_true(trie.longest_match("zc") == Some((1, 1)))
+  assert_true(trie.longest_match("none") == Some((0, 0)))
+  trie.change("abc", value => {
+    match value {
+      Some(current) => Some(current + 10)
+      None => None
+    }
+  })
+  assert_true(trie.find("abc") == Some(13))
+  let entries = trie.fold(init=[], f=fn(acc, key, value) {
+    acc.push("\{key}=\{value}")
+    acc
+  })
+  entries.sort_by((left, right) => left.compare(right))
+  assert_true(entries == ["=0", "c=1", "abc=13"])
+  trie.remove("")
+  assert_true(trie.longest_match("none") == None)
+}

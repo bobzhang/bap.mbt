@@ -67,6 +67,18 @@ pub fn[V] PrefixTrie::longest_match(Self[V], StringView) -> (Int, V)?
 pub fn[V] PrefixTrie::new() -> Self[V]
 pub fn[V] PrefixTrie::remove(Self[V], StringView) -> Unit
 
+type SuffixTrie[V]
+pub fn[V] SuffixTrie::add(Self[V], StringView, V) -> Unit
+pub fn[V] SuffixTrie::change(Self[V], StringView, (V?) -> V?) -> Unit
+pub fn[V] SuffixTrie::find(Self[V], StringView) -> V?
+pub fn[V, A] SuffixTrie::fold(Self[V], init~ : A, f~ : (A, String, V) -> A) -> A
+pub fn[V] SuffixTrie::is_empty(Self[V]) -> Bool
+pub fn[V] SuffixTrie::iter(Self[V], f~ : (String, V) -> Unit) -> Unit
+pub fn[V] SuffixTrie::length(Self[V]) -> Int
+pub fn[V] SuffixTrie::longest_match(Self[V], StringView) -> (Int, V)?
+pub fn[V] SuffixTrie::new() -> Self[V]
+pub fn[V] SuffixTrie::remove(Self[V], StringView) -> Unit
+
 // Type aliases
 
 // Traits

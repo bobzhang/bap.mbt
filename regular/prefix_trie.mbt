@@ -5,6 +5,26 @@ struct PrefixTrie[V] {
 }
 
 ///|
+struct SuffixTrie[V] {
+  trie : PrefixTrie[V]
+}
+
+///|
+fn reverse_trie_key(key : StringView) -> String {
+  let chars = []
+  for ch in key {
+    chars.push(ch)
+  }
+  let mut out = ""
+  let mut i = chars.length()
+  while i > 0 {
+    i = i - 1
+    out = out + "\{chars[i]}"
+  }
+  out
+}
+
+///|
 pub fn[V] PrefixTrie::new() -> PrefixTrie[V] {
   { value: None, children: {} }
 }
@@ -135,4 +155,74 @@ pub fn[V] PrefixTrie::longest_match(
     }
   }
   best
+}
+
+///|
+pub fn[V] SuffixTrie::new() -> SuffixTrie[V] {
+  { trie: PrefixTrie::new() }
+}
+
+///|
+pub fn[V] SuffixTrie::is_empty(self : SuffixTrie[V]) -> Bool {
+  self.trie.is_empty()
+}
+
+///|
+pub fn[V] SuffixTrie::length(self : SuffixTrie[V]) -> Int {
+  self.trie.length()
+}
+
+///|
+pub fn[V] SuffixTrie::change(
+  self : SuffixTrie[V],
+  key : StringView,
+  f : (V?) -> V?,
+) -> Unit {
+  self.trie.change(reverse_trie_key(key), f)
+}
+
+///|
+pub fn[V] SuffixTrie::add(
+  self : SuffixTrie[V],
+  key : StringView,
+  value : V,
+) -> Unit {
+  self.change(key, _ => Some(value))
+}
+
+///|
+pub fn[V] SuffixTrie::find(self : SuffixTrie[V], key : StringView) -> V? {
+  self.trie.find(reverse_trie_key(key))
+}
+
+///|
+pub fn[V] SuffixTrie::remove(self : SuffixTrie[V], key : StringView) -> Unit {
+  self.change(key, _ => None)
+}
+
+///|
+pub fn[V, A] SuffixTrie::fold(
+  self : SuffixTrie[V],
+  init~ : A,
+  f~ : (A, String, V) -> A,
+) -> A {
+  self.trie.fold(init~, f=fn(acc, key, value) {
+    f(acc, reverse_trie_key(key), value)
+  })
+}
+
+///|
+pub fn[V] SuffixTrie::iter(
+  self : SuffixTrie[V],
+  f~ : (String, V) -> Unit,
+) -> Unit {
+  self.fold(init=(), f=fn(_, key, value) { f(key, value) })
+}
+
+///|
+pub fn[V] SuffixTrie::longest_match(
+  self : SuffixTrie[V],
+  key : StringView,
+) -> (Int, V)? {
+  self.trie.longest_match(reverse_trie_key(key))
 }

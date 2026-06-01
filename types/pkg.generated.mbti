@@ -204,7 +204,10 @@ pub(all) enum Arch {
   UnknownArch
 } derive(Eq, @debug.Debug)
 pub fn Arch::addr_size(Self) -> AddrSize
+pub fn Arch::compare(Self, Self) -> Int
 pub fn Arch::endian(Self) -> @bitvec.Endian
+pub fn Arch::equal(Self, Self) -> Bool
+pub fn Arch::from_string(String) -> Self
 pub fn Arch::of_string(String) -> Self?
 pub fn Arch::to_string(Self) -> String
 

@@ -52,7 +52,7 @@ fn normalize_arch_name(text : String) -> String {
     | "i686" => "x86"
     "x86-64" | "x86_64" | "amd64" | "x64" | "x86_64h" => "x86_64"
     "powerpc" => "ppc"
-    "arm" => "armv7"
+    "arm" | "xscale" => "armv7"
     "thumb" => "thumbv7"
     "armeb" => "armv7eb"
     "thumbeb" => "thumbv7eb"
@@ -110,6 +110,14 @@ pub fn Arch::of_string(text : String) -> Arch? {
 }
 
 ///|
+pub fn Arch::from_string(text : String) -> Arch {
+  match Arch::of_string(text) {
+    Some(arch) => arch
+    None => UnknownArch
+  }
+}
+
+///|
 pub fn Arch::to_string(self : Arch) -> String {
   match self {
     X86 => "i386"
@@ -149,6 +157,58 @@ pub fn Arch::to_string(self : Arch) -> String {
     Xcore => "xcore"
     UnknownArch => "unknown"
   }
+}
+
+///|
+fn Arch::rank(self : Arch) -> Int {
+  match self {
+    Aarch64 => 0
+    Aarch64_be => 1
+    Armv4 => 2
+    Armv5 => 3
+    Armv6 => 4
+    Armv7 => 5
+    Armv4eb => 6
+    Armv5eb => 7
+    Armv6eb => 8
+    Armv7eb => 9
+    Thumbv4 => 10
+    Thumbv5 => 11
+    Thumbv6 => 12
+    Thumbv7 => 13
+    Thumbv4eb => 14
+    Thumbv5eb => 15
+    Thumbv6eb => 16
+    Thumbv7eb => 17
+    Hexagon => 18
+    Mips => 19
+    Mipsel => 20
+    Mips64 => 21
+    Mips64el => 22
+    Nvptx => 23
+    Nvptx64 => 24
+    Ppc => 25
+    Ppc64 => 26
+    Ppc64le => 27
+    R600 => 28
+    Sparc => 29
+    Sparcv9 => 30
+    Systemz => 31
+    X86 => 32
+    X86_64 => 33
+    Xcore => 34
+    UnknownArch => 35
+  }
+}
+
+///|
+pub fn Arch::compare(self : Arch, other : Arch) -> Int {
+  self.rank().compare(other.rank())
+}
+
+///|
+pub fn Arch::equal(self : Arch, other : Arch) -> Bool {
+  self == other
 }
 
 ///|

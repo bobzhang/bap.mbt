@@ -40,6 +40,25 @@ test "translated BAP bytes copy preserves value while owning storage" {
 }
 
 ///|
+test "translated BAP bytes string helpers round trip ASCII text" {
+  match @regular.bytes_of_string("This is a test to Bytes module.") {
+    Ok(bytes) => {
+      assert_true(bytes.length() == 31)
+      assert_true(byte_values(bytes[:4].to_owned()) == [84, 104, 105, 115])
+      match @regular.bytes_to_string(bytes) {
+        Ok(text) => assert_eq(text, "This is a test to Bytes module.")
+        Err(reason) => fail(reason)
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(@regular.bytes_of_string("café") is Err(_))
+  assert_true(
+    @regular.bytes_to_string(Bytes::from_array([65, 255, 66])) is Err(_),
+  )
+}
+
+///|
 test "translated BAP bytes access and sub helpers use byte offsets" {
   let bytes = b"abcdef"
   assert_true(@regular.bytes_length(bytes) == 6)

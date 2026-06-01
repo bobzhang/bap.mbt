@@ -14,6 +14,31 @@ struct Effect {
 }
 
 ///|
+pub fn EffectSort::bot() -> EffectSort {
+  EffectBot
+}
+
+///|
+pub fn EffectSort::top() -> EffectSort {
+  EffectTop
+}
+
+///|
+pub fn EffectSort::data() -> EffectSort {
+  EffectData
+}
+
+///|
+pub fn EffectSort::ctrl() -> EffectSort {
+  EffectCtrl
+}
+
+///|
+pub fn EffectSort::both(self : EffectSort, other : EffectSort) -> EffectSort {
+  self.union(other)
+}
+
+///|
 pub fn EffectSort::union(self : EffectSort, other : EffectSort) -> EffectSort {
   match (self, other) {
     (EffectTop, _) | (_, EffectTop) => EffectTop
@@ -23,6 +48,23 @@ pub fn EffectSort::union(self : EffectSort, other : EffectSort) -> EffectSort {
     (EffectBoth, _) | (_, EffectBoth) => EffectBoth
     (EffectData, EffectCtrl) | (EffectCtrl, EffectData) => EffectBoth
   }
+}
+
+///|
+pub fn EffectSort::union_all(items : Array[EffectSort]) -> EffectSort {
+  let mut result = EffectBot
+  for item in items {
+    result = result.union(item)
+  }
+  result
+}
+
+///|
+pub fn EffectSort::join(
+  lhs : Array[EffectSort],
+  rhs : Array[EffectSort],
+) -> EffectSort {
+  EffectSort::union_all(lhs).union(EffectSort::union_all(rhs))
 }
 
 ///|

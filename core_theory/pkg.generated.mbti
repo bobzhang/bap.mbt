@@ -106,10 +106,17 @@ pub(all) enum EffectSort {
   EffectBoth
   EffectTop
 } derive(Eq, @debug.Debug)
+pub fn EffectSort::bot() -> Self
+pub fn EffectSort::both(Self, Self) -> Self
+pub fn EffectSort::ctrl() -> Self
+pub fn EffectSort::data() -> Self
+pub fn EffectSort::join(Array[Self], Array[Self]) -> Self
 pub fn EffectSort::order(Self, Self) -> @knowledge.PartialOrder
 pub fn EffectSort::persistent() -> @knowledge.Persistent[Self]
 pub fn EffectSort::to_string(Self) -> String
+pub fn EffectSort::top() -> Self
 pub fn EffectSort::union(Self, Self) -> Self
+pub fn EffectSort::union_all(Array[Self]) -> Self
 
 pub(all) enum Endianness {
   LittleEndian

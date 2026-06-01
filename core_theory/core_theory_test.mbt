@@ -228,6 +228,18 @@ test "variables preserve sorts versions and mutability flags" {
 
 ///|
 test "effect sorts form the expected lattice" {
+  assert_true(@core_theory.EffectSort::bot() == EffectBot)
+  assert_true(@core_theory.EffectSort::top() == EffectTop)
+  assert_true(@core_theory.EffectSort::data() == EffectData)
+  assert_true(@core_theory.EffectSort::ctrl() == EffectCtrl)
+  assert_true(@core_theory.EffectData.both(EffectCtrl) == EffectBoth)
+  assert_true(@core_theory.EffectSort::union_all([]) == EffectBot)
+  assert_true(
+    @core_theory.EffectSort::union_all([EffectData, EffectCtrl]) == EffectBoth,
+  )
+  assert_true(
+    @core_theory.EffectSort::join([EffectData], [EffectCtrl]) == EffectBoth,
+  )
   assert_true(@core_theory.EffectData.union(EffectCtrl) == EffectBoth)
   assert_true(@core_theory.EffectData.order(EffectBoth) == Less)
   assert_true(@core_theory.EffectData.order(EffectCtrl) == Incomparable)

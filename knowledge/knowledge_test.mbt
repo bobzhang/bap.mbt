@@ -233,6 +233,48 @@ test "state enumerates objects by class in creation order" {
 }
 
 ///|
+test "state interns and reads BAP-style symbols by class" {
+  let state = @knowledge.State::new()
+  let cls : @knowledge.Class[Unit, String] = @knowledge.Class::create(
+    name=@knowledge.Name::create("interned-object", pkg="test"),
+    sort="unit",
+  )
+  let other : @knowledge.Class[Unit, String] = @knowledge.Class::create(
+    name=@knowledge.Name::create("interned-other", pkg="test"),
+    sort="unit",
+  )
+  let name = @knowledge.Name::create("main", pkg="test")
+  let first = state.intern(cls, name~)
+  let again = state.intern(cls, name~)
+  assert_true(first.equal(again))
+  assert_eq(state.objects(cls).length(), 1)
+  match state.interned_name(first) {
+    Some(found) => assert_true(found.equal(name))
+    None => fail("missing interned name")
+  }
+  assert_eq(state.repr(first), "test:main")
+
+  let in_other_class = state.intern(other, name~)
+  assert_true(!first.equal(in_other_class))
+  assert_eq(state.objects(other).length(), 1)
+
+  match state.read(cls, "test:main") {
+    Ok(read) => assert_true(read.equal(first))
+    Err(reason) => fail(reason)
+  }
+  match state.read(cls, "helper", pkg="test") {
+    Ok(read) => {
+      assert_true(state.repr(read) == "test:helper")
+      assert_eq(state.objects(cls).length(), 2)
+    }
+    Err(reason) => fail(reason)
+  }
+  let fresh = state.create(cls)
+  assert_true(state.interned_name(fresh) is None)
+  assert_eq(state.repr(fresh), fresh.repr())
+}
+
+///|
 test "optional domains lift base order and joins" {
   let base = @knowledge.Domain::bool(
     @knowledge.Name::create("flag", pkg="test"),

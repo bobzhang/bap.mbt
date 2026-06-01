@@ -9,6 +9,7 @@ struct Object[K] {
 struct State {
   mut next_id : Int
   objects_by_class : Map[Name, Array[Int]]
+  symbols_by_class : Map[Name, Map[Name, Int]]
 }
 
 ///|
@@ -21,11 +22,11 @@ struct FactTable[K, P] {
 
 ///|
 pub fn State::new() -> State {
-  { next_id: 1, objects_by_class: {} }
+  { next_id: 1, objects_by_class: {}, symbols_by_class: {} }
 }
 
 ///|
-pub fn[K, S] State::create(self : State, cls : Class[K, S]) -> Object[K] {
+fn[K, S] State::allocate(self : State, cls : Class[K, S]) -> Object[K] {
   let id = self.next_id
   self.next_id = id + 1
   let class_name = cls.name()
@@ -37,6 +38,52 @@ pub fn[K, S] State::create(self : State, cls : Class[K, S]) -> Object[K] {
 }
 
 ///|
+pub fn[K, S] State::create(self : State, cls : Class[K, S]) -> Object[K] {
+  self.allocate(cls)
+}
+
+///|
+pub fn[K, S] State::intern(
+  self : State,
+  cls : Class[K, S],
+  name~ : Name,
+) -> Object[K] {
+  let class_name = cls.name()
+  match self.symbols_by_class.get(class_name) {
+    Some(symbols) =>
+      match symbols.get(name) {
+        Some(id) => { id, class_name, _phantom: None }
+        None => {
+          let object = self.allocate(cls)
+          symbols[name] = object.id()
+          object
+        }
+      }
+    None => {
+      let object = self.allocate(cls)
+      let symbols : Map[Name, Int] = {}
+      symbols[name] = object.id()
+      self.symbols_by_class[class_name] = symbols
+      object
+    }
+  }
+}
+
+///|
+pub fn[K, S] State::read(
+  self : State,
+  cls : Class[K, S],
+  input : String,
+  pkg? : String,
+) -> Result[Object[K], String] {
+  if input == "nil" || input.has_prefix("#<") {
+    Object::read(cls, input)
+  } else {
+    Ok(self.intern(cls, name=Name::read(input, pkg?)))
+  }
+}
+
+///|
 pub fn[K, S] State::objects(
   self : State,
   cls : Class[K, S],
@@ -45,6 +92,29 @@ pub fn[K, S] State::objects(
   match self.objects_by_class.get(class_name) {
     Some(ids) => ids.map(id => { id, class_name, _phantom: None })
     None => []
+  }
+}
+
+///|
+pub fn[K] State::interned_name(self : State, object : Object[K]) -> Name? {
+  match self.symbols_by_class.get(object.class_name()) {
+    Some(symbols) => {
+      for entry in symbols {
+        if entry.1 == object.id() {
+          return Some(entry.0)
+        }
+      }
+      None
+    }
+    None => None
+  }
+}
+
+///|
+pub fn[K] State::repr(self : State, object : Object[K]) -> String {
+  match self.interned_name(object) {
+    Some(name) => name.show()
+    None => object.repr()
   }
 }
 

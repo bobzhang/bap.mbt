@@ -20,6 +20,7 @@ pub(all) enum AddressPosition {
 
 type MemMap[V]
 pub fn[V] MemMap::add(Self[V], Memory, V) -> Self[V]
+pub fn[V] MemMap::change(Self[V], Memory, (Array[(Memory, V)]) -> MemMapChange[V]) -> Self[V]
 pub fn[V] MemMap::contains(Self[V], UInt64) -> Bool
 pub fn[V] MemMap::count(Self[V], (V) -> Bool, start? : Memory?, until? : Memory?) -> Int
 pub fn[V] MemMap::dominates(Self[V], Memory) -> Bool
@@ -74,6 +75,13 @@ pub fn[V] MemMap::remove_dominators(Self[V], Memory) -> Self[V]
 pub fn[V] MemMap::remove_intersections(Self[V], Memory) -> Self[V]
 pub fn[V] MemMap::singleton(Memory, V) -> Self[V]
 pub fn[V] MemMap::to_sequence(Self[V], start? : Memory?, until? : Memory?) -> Array[(Memory, V)]
+
+pub(all) enum MemMapChange[V] {
+  Rebind(Memory, V)
+  Update((Memory, V) -> V)
+  Remove
+  Ignore
+}
 
 type Memory
 pub fn Memory::compare_with(Self, UInt64) -> AddressPosition

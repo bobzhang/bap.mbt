@@ -4,6 +4,14 @@ struct MemMap[V] {
 }
 
 ///|
+pub(all) enum MemMapChange[V] {
+  Rebind(Memory, V)
+  Update((Memory, V) -> V)
+  Remove
+  Ignore
+}
+
+///|
 pub fn[V] MemMap::empty() -> MemMap[V] {
   { entries: [] }
 }
@@ -465,6 +473,33 @@ pub fn[V] MemMap::remove(self : MemMap[V], memory : Memory) -> MemMap[V] {
       entry.0.min_addr() != memory.min_addr() ||
       entry.0.max_addr() != memory.max_addr()
     }),
+  }
+}
+
+///|
+pub fn[V] MemMap::change(
+  self : MemMap[V],
+  memory : Memory,
+  f : (Array[(Memory, V)]) -> MemMapChange[V],
+) -> MemMap[V] {
+  match f(self.intersections(memory)) {
+    Ignore => self
+    Remove => self.remove_intersections(memory)
+    Update(update) =>
+      {
+        entries: self.entries.map(entry => {
+          if entry.0.intersects(memory) {
+            (entry.0, update(entry.0, entry.1))
+          } else {
+            entry
+          }
+        }),
+      }
+    Rebind(next_memory, next_value) => {
+      let entries = self.entries.filter(entry => !entry.0.intersects(memory))
+      entries.push((next_memory, next_value))
+      { entries, }
+    }
   }
 }
 

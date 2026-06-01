@@ -394,6 +394,42 @@ test "translated BAP image table ranged traversal helpers follow key order" {
 }
 
 ///|
+test "translated BAP image table change applies commands to intersections" {
+  let low = memory_at(0x10UL, 0x10)
+  let middle = memory_at(0x20UL, 0x10)
+  let high = memory_at(0x40UL, 0x10)
+  let target = memory_at(0x18UL, 0x20)
+  let table = @memory.MemMap::empty().add(high, 3).add(low, 1).add(middle, 2)
+  let ignored_matches : Ref[Array[Int]] = Ref([])
+  let ignored = table.change(target, matches => {
+    ignored_matches.val = matches.map(entry => entry.1)
+    Ignore
+  })
+  assert_true(ignored_matches.val == [1, 2])
+  assert_true(ignored.entries().map(entry => entry.1) == [1, 2, 3])
+  let updated_matches : Ref[Array[Int]] = Ref([])
+  let updated = table.change(target, matches => {
+    updated_matches.val = matches.map(entry => entry.1)
+    Update((memory, value) => value + (memory.min_addr() >> 4).to_int())
+  })
+  assert_true(updated_matches.val == [1, 2])
+  assert_true(updated.entries().map(entry => entry.1) == [2, 4, 3])
+  let removed = table.change(target, _ => Remove)
+  assert_true(removed.entries().map(entry => entry.1) == [3])
+  let rebound_memory = memory_at(0x80UL, 0x08)
+  let rebound = table.change(target, _ => Rebind(rebound_memory, 9))
+  assert_true(rebound.entries().map(entry => entry.1) == [3, 9])
+  assert_true(rebound.has_memory(rebound_memory))
+  let empty_matches = Ref(false)
+  let inserted = table.change(memory_at(0x60UL, 0x10), matches => {
+    empty_matches.val = matches.is_empty()
+    Rebind(rebound_memory, 7)
+  })
+  assert_true(empty_matches.val)
+  assert_true(inserted.entries().map(entry => entry.1) == [1, 2, 3, 7])
+}
+
+///|
 fn memmap_tags(entries : Array[(@memory.Memory, String)]) -> Set[String] {
   Set::from_array(entries.map(entry => entry.1))
 }

@@ -5,6 +5,41 @@ pub(all) enum ValueType {
 } derive(Eq, Debug)
 
 ///|
+fn ValueType::rank(self : ValueType) -> Int {
+  match self {
+    Imm(_) => 0
+    Mem(_) => 1
+  }
+}
+
+///|
+pub fn ValueType::equal(self : ValueType, other : ValueType) -> Bool {
+  self == other
+}
+
+///|
+pub fn ValueType::compare(self : ValueType, other : ValueType) -> Int {
+  let rank_order = self.rank().compare(other.rank())
+  if rank_order != 0 {
+    return rank_order
+  }
+  match (self, other) {
+    (Imm(left), Imm(right)) => left.compare(right)
+    (
+      Mem(addr_width=left_addr, value_width=left_value),
+      Mem(addr_width=right_addr, value_width=right_value),
+    ) => {
+      let addr_order = left_addr.compare(right_addr)
+      if addr_order != 0 {
+        return addr_order
+      }
+      left_value.compare(right_value)
+    }
+    _ => 0
+  }
+}
+
+///|
 pub fn ValueType::reg(size : Size) -> ValueType {
   Imm(size.in_bits())
 }

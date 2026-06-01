@@ -1201,6 +1201,8 @@ pub fn TypeError::bad_cast() -> Self
 pub fn TypeError::bad_imm() -> Self
 pub fn TypeError::bad_mem() -> Self
 pub fn TypeError::bad_type(expected~ : ValueType, got~ : ValueType) -> Self
+pub fn TypeError::compare(Self, Self) -> Int
+pub fn TypeError::equal(Self, Self) -> Bool
 pub fn TypeError::to_string(Self) -> String
 pub fn TypeError::unknown() -> Self
 
@@ -1224,6 +1226,8 @@ pub(all) enum ValueType {
 pub fn ValueType::addr_size(Self) -> AddrSize?
 pub fn ValueType::bitwidth(Self) -> Int?
 pub fn ValueType::bool_t() -> Self
+pub fn ValueType::compare(Self, Self) -> Int
+pub fn ValueType::equal(Self, Self) -> Bool
 pub fn ValueType::mem(AddrSize, Size) -> Self
 pub fn ValueType::mem32_t(Size) -> Self
 pub fn ValueType::mem64_t(Size) -> Self

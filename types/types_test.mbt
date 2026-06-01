@@ -532,6 +532,12 @@ test "value types expose BAP size-based constructors" {
   let mem64 = @types.ValueType::mem64_t(R256)
   assert_true(mem32 == Mem(addr_width=32, value_width=8))
   assert_true(mem64 == Mem(addr_width=64, value_width=256))
+  assert_true(@types.ValueType::reg8_t().equal(Imm(8)))
+  assert_true(
+    @types.ValueType::reg8_t().compare(@types.ValueType::reg16_t()) < 0,
+  )
+  assert_true(@types.ValueType::reg8_t().compare(mem32) < 0)
+  assert_true(mem32.compare(mem64) < 0)
   assert_true(mem32.addr_size() == Some(Addr32))
   assert_true(mem32.value_size() == Some(R8))
   assert_true(@types.ValueType::reg64_t().addr_size() == None)
@@ -821,6 +827,19 @@ test "bil checked type inference mirrors BAP error cases" {
   inspect(
     @types.TypeError::bad_type(expected=imm8, got=imm16).to_string(),
     content="expected value of type imm8, but got imm16",
+  )
+  assert_true(@types.TypeError::bad_mem().equal(BadKind(MemKind)))
+  assert_true(
+    @types.TypeError::bad_mem().compare(@types.TypeError::bad_imm()) < 0,
+  )
+  assert_true(
+    @types.TypeError::bad_type(expected=imm8, got=imm16).compare(
+      @types.TypeError::bad_type(expected=imm16, got=imm8),
+    ) <
+    0,
+  )
+  assert_true(
+    @types.TypeError::bad_cast().compare(@types.TypeError::unknown()) < 0,
   )
 }
 

@@ -1636,6 +1636,15 @@ test "target role helpers classify common architecture variables" {
     }
     None => fail("missing EFLAGS alias origin")
   }
+  assert_true(
+    amd64
+    .alias_origins()
+    .any(origin => {
+      origin.aliased().ident() == "EFLAGS" &&
+      origin.source().map(v => v.ident()) == Some("RFLAGS") &&
+      origin.range() == Some((0, 31))
+    }),
+  )
   match amd64.origin_of_name("IOPL") {
     Some(origin) => {
       assert_true(origin.aliased().ident() == "IOPL")

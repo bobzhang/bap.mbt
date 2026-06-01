@@ -1375,6 +1375,14 @@ fn x86_64_alias_origins() -> Array[AliasOrigin] {
       bool_var("IOPLL"),
     ]),
   )
+  items.push(
+    AliasOrigin::subregister(
+      word_var(32, "EFLAGS"),
+      word_var(64, "RFLAGS"),
+      lo=0,
+      hi=31,
+    ),
+  )
   items
 }
 

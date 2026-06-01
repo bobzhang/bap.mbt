@@ -127,6 +127,15 @@ pub fn PartialOrder::geq(Self) -> Bool
 pub fn PartialOrder::invert(Self) -> Self
 pub fn PartialOrder::leq(Self) -> Bool
 
+type Persistent[T]
+pub fn[T] Persistent::array(Self[T]) -> Self[Array[T]]
+pub fn[A, B] Persistent::convert(to_persistent~ : (A) -> B, of_persistent~ : (B) -> Result[A, String], Self[B]) -> Self[A]
+pub fn[T] Persistent::create(to_string~ : (T) -> String, of_string~ : (String) -> Result[T, String]) -> Self[T]
+pub fn[T] Persistent::decode(Self[T], String) -> Result[T, String]
+pub fn[T] Persistent::encode(Self[T], T) -> String
+pub fn Persistent::name() -> Self[Name]
+pub fn Persistent::string() -> Self[String]
+
 type Slot[K, P]
 pub fn[K, P] Slot::cls(Self[K, P]) -> Class[K, Unit]
 pub fn[K, P] Slot::desc(Self[K, P]) -> String?

@@ -25,6 +25,36 @@ test "names preserve packages and escaped separators" {
 }
 
 ///|
+test "persistent codecs round trip strings names and arrays" {
+  let string_codec = @knowledge.Persistent::string()
+  assert_eq(string_codec.encode("a:b"), "a:b")
+  assert_true(string_codec.decode("a:b") == Ok("a:b"))
+
+  let name_codec = @knowledge.Persistent::name()
+  let name = @knowledge.Name::create("target:x", pkg="core")
+  assert_true(name_codec.decode(name_codec.encode(name)) == Ok(name))
+
+  let array_codec = @knowledge.Persistent::array(string_codec)
+  let values = ["", "a:b", "moon"]
+  assert_true(array_codec.decode(array_codec.encode(values)) == Ok(values))
+  assert_true(array_codec.decode("2:a") is Err(_))
+  assert_true(array_codec.decode("x:bad") is Err(_))
+
+  let int_codec = @knowledge.Persistent::convert(
+    to_persistent=(value : Int) => value.to_string(),
+    of_persistent=(input : String) => {
+      try @string.parse_int(input) catch {
+        _ => Err("invalid integer")
+      } noraise {
+        value => Ok(value)
+      }
+    },
+    string_codec,
+  )
+  assert_true(int_codec.decode(int_codec.encode(42)) == Ok(42))
+}
+
+///|
 fn optional_string_equal(lhs : String?, rhs : String?) -> Bool {
   lhs == rhs
 }

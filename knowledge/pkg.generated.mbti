@@ -86,9 +86,13 @@ pub fn Name::unqualified(Self) -> String
 
 type Object[K]
 pub fn[K] Object::class_name(Self[K]) -> Name
+pub fn[K] Object::compare(Self[K], Self[K]) -> Int
+pub fn[K] Object::equal(Self[K], Self[K]) -> Bool
 pub fn[K] Object::id(Self[K]) -> Int
 pub fn[K] Object::is_null(Self[K]) -> Bool
 pub fn[K, S] Object::null(Class[K, S]) -> Self[K]
+pub fn[K, S] Object::read(Class[K, S], String) -> Result[Self[K], String]
+pub fn[K] Object::repr(Self[K]) -> String
 
 type Opinions[T]
 pub fn[T] Opinions::add(Self[T], Agent, T) -> Self[T]

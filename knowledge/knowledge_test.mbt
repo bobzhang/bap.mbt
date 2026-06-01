@@ -320,3 +320,31 @@ test "translated BAP null objects collect empty facts and discard provides" {
   assert_true(facts.provide(object, true) == Ok(true))
   assert_true(facts.collect(object) == Some(true))
 }
+
+///|
+test "knowledge objects expose BAP-style representation helpers" {
+  let cls : @knowledge.Class[Unit, String] = @knowledge.Class::create(
+    name=@knowledge.Name::create("object-repr", pkg="test"),
+    sort="unit",
+  )
+  let state = @knowledge.State::new()
+  let first = state.create(cls)
+  let second = state.create(cls)
+  assert_eq(first.repr(), "#<test:object-repr 1>")
+  assert_true(first.compare(second) < 0)
+  assert_true(second.compare(first) > 0)
+  match @knowledge.Object::read(cls, first.repr()) {
+    Ok(parsed) => {
+      assert_true(parsed.equal(first))
+      assert_eq(parsed.compare(first), 0)
+    }
+    Err(reason) => fail(reason)
+  }
+  let null = @knowledge.Object::null(cls)
+  assert_eq(null.repr(), "nil")
+  match @knowledge.Object::read(cls, "nil") {
+    Ok(parsed) => assert_true(parsed.equal(null))
+    Err(reason) => fail(reason)
+  }
+  assert_true(@knowledge.Object::read(cls, "#<test:object-repr bad>") is Err(_))
+}

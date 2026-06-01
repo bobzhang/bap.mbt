@@ -276,21 +276,25 @@ pub fn SourceFacts::new() -> SourceFacts {
     name=core_name("unit-source"),
     sort=(),
     desc="source-code artifact",
+    public=true,
   )
   let language = cls.property(
     name=core_name("source-language"),
     domain=source_language_domain(),
     desc="the language of the unit source code",
+    public=true,
   )
   let code = cls.property(
     name=core_name("source-code"),
     domain=@knowledge.Domain::string(core_name("source-code")),
     desc="the unit source code text",
+    public=true,
   )
   let file = cls.property(
     name=core_name("source-path"),
     domain=optional_string_domain("source-path"),
     desc="a path to the source code file",
+    public=true,
   )
   {
     state_value: @knowledge.State::new(),
@@ -390,31 +394,37 @@ pub fn ProgramUnitFacts::new() -> ProgramUnitFacts {
     name=core_name("unit"),
     sort=(),
     desc="a unit of code",
+    public=true,
   )
   let path = cls.property(
     name=core_name("unit-path"),
     domain=optional_string_domain("unit-path"),
     desc="a filesystem name of the file that contains the program",
+    public=true,
   )
   let bias = cls.property(
     name=core_name("unit-bias"),
     domain=optional_word_domain("unit-bias"),
     desc="the value by which all addresses of the unit are biased",
+    public=true,
   )
   let target = cls.property(
     name=core_name("unit-target"),
     domain=target_domain(),
     desc="the target system for the unit",
+    public=true,
   )
   let source = cls.property(
     name=core_name("unit-source"),
     domain=source_domain(),
     desc="the source of the unit",
+    public=true,
   )
   let compiler = cls.property(
     name=core_name("unit-compiler"),
     domain=compiler_domain(),
     desc="the compiler that compiled the unit",
+    public=true,
   )
   {
     state_value: @knowledge.State::new(),

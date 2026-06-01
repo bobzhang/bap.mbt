@@ -75,56 +75,67 @@ pub fn LabelFacts::new() -> LabelFacts {
     name=core_name("program"),
     sort=(),
     desc="a class of program instances",
+    public=true,
   )
   let addr = cls.property(
     name=core_name("label-addr"),
     domain=optional_word_domain("label-addr"),
     desc="the program virtual address",
+    public=true,
   )
   let name = cls.property(
     name=core_name("label-name"),
     domain=optional_string_domain("label-name"),
     desc="the program linkage name",
+    public=true,
   )
   let possible_name = cls.property(
     name=core_name("possible-name"),
     domain=possible_name_domain(),
     desc="a unique name associated with the program",
+    public=true,
   )
   let ivec = cls.property(
     name=core_name("label-ivec"),
     domain=optional_int_domain("label-ivec"),
     desc="the program interrupt vector",
+    public=true,
   )
   let encoding = cls.property(
     name=core_name("encoding"),
     domain=source_language_domain(),
     desc="the language of the code",
+    public=true,
   )
   let semantics = cls.property(
     name=core_name("semantics"),
     domain=semantics_domain(),
     desc="the program semantics",
+    public=true,
   )
   let aliases = cls.property(
     name=core_name("label-aliases"),
     domain=@knowledge.Domain::powerset(core_name("label-aliases"), item => item),
     desc="the set of known program names",
+    public=true,
   )
   let unit = cls.property(
     name=core_name("label-unit"),
     domain=program_unit_domain(),
     desc="the program unit",
+    public=true,
   )
   let valid = cls.property(
     name=core_name("is-valid"),
     domain=optional_bool_domain("is-valid"),
     desc="is the program valid or not",
+    public=true,
   )
   let subroutine = cls.property(
     name=core_name("is-subroutine"),
     domain=optional_bool_domain("is-subroutine"),
     desc="is the program a subroutine entry point",
+    public=true,
   )
   {
     state_value: @knowledge.State::new(),

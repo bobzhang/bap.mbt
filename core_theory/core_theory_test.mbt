@@ -10,6 +10,26 @@ fn register_core_test_agent(
 }
 
 ///|
+fn documented_core_properties(class_name : String) -> Array[String] {
+  let classes = @knowledge.Documentation::classes()
+  match classes.search_by(entry => entry.0.name().show() == class_name) {
+    Some(index) => classes[index].1.map(property => property.name().show())
+    None => []
+  }
+}
+
+///|
+fn documented_name_count(names : Array[String], name : String) -> Int {
+  let mut count = 0
+  for item in names {
+    if item == name {
+      count = count + 1
+    }
+  }
+  count
+}
+
+///|
 test "sorts model symbolic applications" {
   let word = @core_theory.Sort::bitv(32)
   inspect(word.to_string(), content="core:bitv<32>")
@@ -2016,4 +2036,42 @@ test "program label facts expose BAP-style Knowledge slots" {
   assert_true(facts.collect_target(empty).is_unknown())
   assert_true(facts.collect_encoding(empty) is None)
   assert_true(facts.collect_semantics(empty) is None)
+}
+
+///|
+test "core theory fact slots register public Knowledge documentation" {
+  ignore(@core_theory.SourceFacts::new())
+  ignore(@core_theory.ProgramUnitFacts::new())
+  ignore(@core_theory.LabelFacts::new())
+  ignore(@core_theory.SemanticsFacts::new())
+  ignore(@core_theory.LabelFacts::new())
+
+  let source_properties = documented_core_properties("core:unit-source")
+  assert_true(source_properties.contains("core:source-language"))
+  assert_true(source_properties.contains("core:source-code"))
+  assert_true(source_properties.contains("core:source-path"))
+
+  let unit_properties = documented_core_properties("core:unit")
+  assert_true(unit_properties.contains("core:unit-path"))
+  assert_true(unit_properties.contains("core:unit-bias"))
+  assert_true(unit_properties.contains("core:unit-target"))
+  assert_true(unit_properties.contains("core:unit-source"))
+  assert_true(unit_properties.contains("core:unit-compiler"))
+
+  let label_properties = documented_core_properties("core:program")
+  assert_true(label_properties.contains("core:label-addr"))
+  assert_true(label_properties.contains("core:label-name"))
+  assert_true(label_properties.contains("core:possible-name"))
+  assert_true(label_properties.contains("core:label-ivec"))
+  assert_true(label_properties.contains("core:encoding"))
+  assert_true(label_properties.contains("core:semantics"))
+  assert_true(label_properties.contains("core:label-aliases"))
+  assert_true(label_properties.contains("core:label-unit"))
+  assert_true(label_properties.contains("core:is-valid"))
+  assert_true(label_properties.contains("core:is-subroutine"))
+  assert_true(documented_name_count(label_properties, "core:label-addr") == 1)
+
+  let semantics_properties = documented_core_properties("core:semantics")
+  assert_true(semantics_properties.contains("core:value"))
+  assert_true(semantics_properties.contains("core:insn-code"))
 }

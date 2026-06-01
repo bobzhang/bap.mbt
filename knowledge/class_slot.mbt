@@ -43,6 +43,17 @@ fn documentation_desc(desc : String?) -> String {
 }
 
 ///|
+fn documentation_add_property(
+  properties : Array[DocumentationProperty],
+  property : DocumentationProperty,
+) -> Unit {
+  match properties.search_by(item => item.name().equal(property.name())) {
+    Some(index) => properties[index] = property
+    None => properties.push(property)
+  }
+}
+
+///|
 pub fn[K, S] Class::create(
   name~ : Name,
   sort~ : S,
@@ -111,7 +122,7 @@ pub fn[K, S, P] Class::property(
   if public {
     match documented_properties.get(self.name.show()) {
       Some(properties) =>
-        properties.push({
+        documentation_add_property(properties, {
           name_value: name,
           desc_value: documentation_desc(desc),
         })

@@ -53,16 +53,19 @@ pub fn SemanticsFacts::new() -> SemanticsFacts {
     name=core_name("semantics"),
     sort=EffectTop,
     desc="program semantics values",
+    public=true,
   )
   let value = cls.property(
     name=core_name("value"),
     domain=value_domain(),
     desc="the program semantics value",
+    public=true,
   )
   let code = cls.property(
     name=core_name("insn-code"),
     domain=semantics_code_domain(),
     desc="the program memory contents",
+    public=true,
   )
   {
     state_value: @knowledge.State::new(),

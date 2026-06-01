@@ -106,6 +106,11 @@ pub fn Language::pascal() -> Language {
 }
 
 ///|
+pub fn Language::unknown() -> Language {
+  OtherLanguage("unknown")
+}
+
+///|
 pub fn Language::of_string(name : String) -> Language {
   match name.to_lower() {
     "c" => C
@@ -115,6 +120,11 @@ pub fn Language::of_string(name : String) -> Language {
     "pascal" => Pascal
     other => OtherLanguage(other)
   }
+}
+
+///|
+pub fn Language::is_unknown(self : Language) -> Bool {
+  self == Language::unknown()
 }
 
 ///|
@@ -176,7 +186,7 @@ pub fn Source::create(
   {
     language_value: match language {
       Some(value) => value
-      None => OtherLanguage("unknown")
+      None => Language::unknown()
     },
     code_value: match code {
       Some(text) => text

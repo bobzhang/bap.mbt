@@ -247,10 +247,12 @@ pub fn Language::compare(Self, Self) -> Int
 pub fn Language::cxx() -> Self
 pub fn Language::equal(Self, Self) -> Bool
 pub fn Language::fortran() -> Self
+pub fn Language::is_unknown(Self) -> Bool
 pub fn Language::of_string(String) -> Self
 pub fn Language::pascal() -> Self
 pub fn Language::persistent() -> @knowledge.Persistent[Self]
 pub fn Language::to_string(Self) -> String
+pub fn Language::unknown() -> Self
 
 type Program
 pub fn Program::add_label(Self, Label) -> Self

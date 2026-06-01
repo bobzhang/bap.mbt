@@ -161,6 +161,21 @@ pub fn Language::llvm_systemz() -> Language {
 }
 
 ///|
+pub fn Language::pcode_arm() -> Language {
+  OtherLanguage("pcode-arm")
+}
+
+///|
+pub fn Language::pcode_mips() -> Language {
+  OtherLanguage("pcode-mips")
+}
+
+///|
+pub fn Language::pcode_powerpc() -> Language {
+  OtherLanguage("pcode-powerpc")
+}
+
+///|
 pub fn Language::of_string(name : String) -> Language {
   match name.to_lower() {
     "c" => C

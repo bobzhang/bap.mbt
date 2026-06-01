@@ -2166,6 +2166,11 @@ test "program metadata tracks source compiler and units" {
   assert_true(
     @core_theory.Language::llvm_systemz().to_string() == "llvm-systemz",
   )
+  assert_true(@core_theory.Language::pcode_arm().to_string() == "pcode-arm")
+  assert_true(@core_theory.Language::pcode_mips().to_string() == "pcode-mips")
+  assert_true(
+    @core_theory.Language::pcode_powerpc().to_string() == "pcode-powerpc",
+  )
   let source = @core_theory.Source::create(
     language~,
     code="int main() { return 0; }",

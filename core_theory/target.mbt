@@ -175,8 +175,33 @@ pub fn System::linux() -> System {
 }
 
 ///|
+pub fn System::hpux() -> System {
+  HPUX
+}
+
+///|
+pub fn System::netbsd() -> System {
+  NetBSD
+}
+
+///|
 pub fn System::darwin() -> System {
   Darwin
+}
+
+///|
+pub fn System::solaris() -> System {
+  Solaris
+}
+
+///|
+pub fn System::aix() -> System {
+  AIX
+}
+
+///|
+pub fn System::irix() -> System {
+  IRIX
 }
 
 ///|
@@ -187,6 +212,16 @@ pub fn System::vxworks() -> System {
 ///|
 pub fn System::freebsd() -> System {
   FreeBSD
+}
+
+///|
+pub fn System::tru64() -> System {
+  Tru64
+}
+
+///|
+pub fn System::modesto() -> System {
+  Modesto
 }
 
 ///|
@@ -308,6 +343,11 @@ pub fn Abi::gnu() -> Abi {
 }
 
 ///|
+pub fn Abi::sysv() -> Abi {
+  SysV
+}
+
+///|
 pub fn Abi::eabi() -> Abi {
   EABI
 }
@@ -323,6 +363,16 @@ pub fn Abi::cdecl() -> Abi {
 }
 
 ///|
+pub fn Abi::pascal() -> Abi {
+  Pascal
+}
+
+///|
+pub fn Abi::fortran() -> Abi {
+  FortranAbi
+}
+
+///|
 pub fn Abi::stdcall() -> Abi {
   StdCall
 }
@@ -333,6 +383,16 @@ pub fn Abi::fastcall() -> Abi {
 }
 
 ///|
+pub fn Abi::thiscall() -> Abi {
+  ThisCall
+}
+
+///|
+pub fn Abi::vectorcall() -> Abi {
+  VectorCall
+}
+
+///|
 pub fn Abi::watcom() -> Abi {
   Watcom
 }
@@ -340,6 +400,21 @@ pub fn Abi::watcom() -> Abi {
 ///|
 pub fn Abi::ms() -> Abi {
   MSVC
+}
+
+///|
+pub fn Abi::msvc() -> Abi {
+  MSVC
+}
+
+///|
+pub fn Abi::smc() -> Abi {
+  SMC
+}
+
+///|
+pub fn Abi::hvc() -> Abi {
+  HVC
 }
 
 ///|
@@ -487,6 +562,16 @@ pub fn Filetype::macho() -> Filetype {
 ///|
 pub fn Filetype::aout() -> Filetype {
   AOut
+}
+
+///|
+pub fn Filetype::pe() -> Filetype {
+  PE
+}
+
+///|
+pub fn Filetype::raw() -> Filetype {
+  Raw
 }
 
 ///|

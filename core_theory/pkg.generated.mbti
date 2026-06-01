@@ -53,14 +53,22 @@ pub fn Abi::compare(Self, Self) -> Int
 pub fn Abi::eabi() -> Self
 pub fn Abi::equal(Self, Self) -> Bool
 pub fn Abi::fastcall() -> Self
+pub fn Abi::fortran() -> Self
 pub fn Abi::gnu() -> Self
 pub fn Abi::gnueabi() -> Self
+pub fn Abi::hvc() -> Self
 pub fn Abi::is_unknown(Self) -> Bool
 pub fn Abi::ms() -> Self
+pub fn Abi::msvc() -> Self
 pub fn Abi::of_string(String) -> Self?
+pub fn Abi::pascal() -> Self
+pub fn Abi::smc() -> Self
 pub fn Abi::stdcall() -> Self
+pub fn Abi::sysv() -> Self
+pub fn Abi::thiscall() -> Self
 pub fn Abi::to_string(Self) -> String
 pub fn Abi::unknown() -> Self
+pub fn Abi::vectorcall() -> Self
 pub fn Abi::watcom() -> Self
 
 pub(all) enum AliasOrigin {
@@ -184,6 +192,8 @@ pub fn Filetype::equal(Self, Self) -> Bool
 pub fn Filetype::is_unknown(Self) -> Bool
 pub fn Filetype::macho() -> Self
 pub fn Filetype::of_string(String) -> Self?
+pub fn Filetype::pe() -> Self
+pub fn Filetype::raw() -> Self
 pub fn Filetype::to_string(Self) -> String
 pub fn Filetype::unknown() -> Self
 
@@ -529,17 +539,24 @@ pub(all) enum System {
   UEFI
   NoSystem
 } derive(Eq, @debug.Debug)
+pub fn System::aix() -> Self
 pub fn System::compare(Self, Self) -> Int
 pub fn System::darwin() -> Self
 pub fn System::equal(Self, Self) -> Bool
 pub fn System::freebsd() -> Self
+pub fn System::hpux() -> Self
+pub fn System::irix() -> Self
 pub fn System::is_unknown(Self) -> Bool
 pub fn System::linux() -> Self
+pub fn System::modesto() -> Self
 pub fn System::msdos() -> Self
+pub fn System::netbsd() -> Self
 pub fn System::none() -> Self
 pub fn System::of_string(String) -> Self?
 pub fn System::openbsd() -> Self
+pub fn System::solaris() -> Self
 pub fn System::to_string(Self) -> String
+pub fn System::tru64() -> Self
 pub fn System::uefi() -> Self
 pub fn System::unknown() -> Self
 pub fn System::vxworks() -> Self

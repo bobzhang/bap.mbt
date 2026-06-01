@@ -663,6 +663,7 @@ pub(all) enum Role {
   SignFlag
   OverflowFlag
   ParityFlag
+  ThumbMode
 } derive(Eq, Debug)
 
 ///|
@@ -811,6 +812,11 @@ pub fn Role::callee_saved() -> Role {
 }
 
 ///|
+pub fn Role::thumb() -> Role {
+  ThumbMode
+}
+
+///|
 pub fn Role::to_string(self : Role) -> String {
   match self {
     General => "general"
@@ -843,6 +849,7 @@ pub fn Role::to_string(self : Role) -> String {
     SignFlag => "sign-flag"
     OverflowFlag => "overflow-flag"
     ParityFlag => "parity-flag"
+    ThumbMode => "thumb"
   }
 }
 
@@ -879,6 +886,7 @@ pub fn Role::of_string(text : String) -> Role? {
     "sign-flag" | "sign_flag" | "sf" | "nf" => Some(SignFlag)
     "overflow-flag" | "overflow_flag" | "of" | "vf" => Some(OverflowFlag)
     "parity-flag" | "parity_flag" | "pf" => Some(ParityFlag)
+    "thumb" | "thumb-mode" | "thumb_mode" => Some(ThumbMode)
     _ => None
   }
 }
@@ -916,6 +924,7 @@ fn Role::rank(self : Role) -> Int {
     SignFlag => 27
     OverflowFlag => 28
     ParityFlag => 29
+    ThumbMode => 30
   }
 }
 
@@ -1749,6 +1758,7 @@ fn target_role_names(role : Role) -> Array[String] {
     SignFlag => ["sf", "nf", "sign-flag"]
     OverflowFlag => ["of", "vf", "overflow-flag"]
     ParityFlag => ["pf", "parity-flag"]
+    ThumbMode => []
   }
 }
 
@@ -1809,6 +1819,7 @@ fn x86_64_role_names(role : Role) -> Array[String] {
     SignFlag => ["sf"]
     OverflowFlag => ["of"]
     ParityFlag => ["pf"]
+    ThumbMode => []
   }
 }
 
@@ -1845,6 +1856,7 @@ fn x86_16_role_names(role : Role) -> Array[String] {
     SignFlag => ["sf"]
     OverflowFlag => ["of"]
     ParityFlag => ["pf"]
+    ThumbMode => []
   }
 }
 
@@ -1905,6 +1917,7 @@ fn x86_32_role_names(role : Role) -> Array[String] {
     SignFlag => ["sf"]
     OverflowFlag => ["of"]
     ParityFlag => ["pf"]
+    ThumbMode => []
   }
 }
 
@@ -1934,6 +1947,7 @@ fn arm32_role_names(role : Role) -> Array[String] {
     SignFlag => ["nf"]
     OverflowFlag => ["vf"]
     ParityFlag => []
+    ThumbMode => ["r0", "r1", "r2", "r3", "r4", "r5", "r6", "r7", "sp", "lr"]
   }
 }
 
@@ -1983,6 +1997,7 @@ fn aarch64_role_names(role : Role) -> Array[String] {
     SignFlag => ["nf"]
     OverflowFlag => ["vf"]
     ParityFlag => []
+    ThumbMode => []
   }
 }
 
@@ -2022,6 +2037,7 @@ fn mips_role_names(bits : Int, role : Role) -> Array[String] {
     CalleeSaved => []
     Reserved => ["k0", "k1", "r26", "r27"]
     ZeroFlag | CarryFlag | SignFlag | OverflowFlag | ParityFlag => []
+    ThumbMode => []
   }
 }
 
@@ -2076,6 +2092,7 @@ fn powerpc_role_names(role : Role) -> Array[String] {
     SignFlag => [ for group in 0..<=7 => "cr\{group}lt" ]
     OverflowFlag => ["ov", "ov32", "so"]
     ParityFlag => []
+    ThumbMode => []
   }
 }
 
@@ -2136,6 +2153,7 @@ fn riscv_role_names(role : Role) -> Array[String] {
       ])
     Reserved => []
     ZeroFlag | CarryFlag | SignFlag | OverflowFlag | ParityFlag => []
+    ThumbMode => []
   }
 }
 
@@ -2168,6 +2186,7 @@ fn sparc_role_names(role : Role) -> Array[String] {
       concat_role_names([role_names("l", 0, 7), role_names("i", 0, 7)])
     Reserved => []
     ZeroFlag | CarryFlag | SignFlag | OverflowFlag | ParityFlag => []
+    ThumbMode => []
   }
 }
 
@@ -2193,6 +2212,7 @@ fn systemz_role_names(role : Role) -> Array[String] {
     CalleeSaved => []
     Reserved => []
     ZeroFlag | CarryFlag | SignFlag | OverflowFlag | ParityFlag => []
+    ThumbMode => []
   }
 }
 
@@ -2787,6 +2807,7 @@ pub fn Target::roles_of_var(self : Target, variable : Var) -> Array[Role] {
       SignFlag,
       OverflowFlag,
       ParityFlag,
+      ThumbMode,
     ] {
     if target_name_has_role(self, variable.ident(), role) ||
       target_name_has_role(self, variable.name(), role) {

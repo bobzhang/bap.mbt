@@ -364,6 +364,7 @@ pub(all) enum Role {
   SignFlag
   OverflowFlag
   ParityFlag
+  ThumbMode
 } derive(Eq, @debug.Debug)
 pub fn Role::alias_register() -> Self
 pub fn Role::callee_saved() -> Self
@@ -394,6 +395,7 @@ pub fn Role::stack_pointer() -> Self
 pub fn Role::status() -> Self
 pub fn Role::system() -> Self
 pub fn Role::thread() -> Self
+pub fn Role::thumb() -> Self
 pub fn Role::to_string(Self) -> String
 pub fn Role::vector() -> Self
 pub fn Role::zero() -> Self

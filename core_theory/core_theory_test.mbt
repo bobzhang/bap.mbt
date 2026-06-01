@@ -1471,9 +1471,11 @@ test "target role helpers classify common architecture variables" {
   let result = @core_theory.Role::of_string("function-return").unwrap()
   let alias_role = @core_theory.Role::of_string("alias").unwrap()
   let zero_flag = @core_theory.Role::of_string("zero-flag").unwrap()
+  let thumb_role = @core_theory.Role::of_string("thumb").unwrap()
   assert_true(stack_pointer.to_string() == "stack-pointer")
   assert_true(alias_role.to_string() == "alias")
   assert_true(zero_flag.to_string() == "zero-flag")
+  assert_true(thumb_role.to_string() == "thumb")
   assert_true(@core_theory.Role::general() == General)
   assert_true(@core_theory.Role::special() == SpecialRegister)
   assert_true(@core_theory.Role::alias_register() == AliasRegister)
@@ -1503,10 +1505,12 @@ test "target role helpers classify common architecture variables" {
   assert_true(@core_theory.Role::function_return() == ResultRegister)
   assert_true(@core_theory.Role::caller_saved() == CallerSaved)
   assert_true(@core_theory.Role::callee_saved() == CalleeSaved)
+  assert_true(@core_theory.Role::thumb() == ThumbMode)
   assert_true(
     @core_theory.Role::of_string("function-argument") == Some(Argument),
   )
   assert_true(@core_theory.Role::of_string("sign-flag") == Some(SignFlag))
+  assert_true(@core_theory.Role::of_string("thumb-mode") == Some(ThumbMode))
   assert_true(argument.equal(argument))
   assert_true(argument.compare(result) < 0)
   match amd64.find_var("RSP") {
@@ -1660,10 +1664,21 @@ test "target role helpers classify common architecture variables" {
   let arm = @core_theory.Target::arm()
   assert_true(arm.find_role(ProgramCounter).map(v => v.ident()) == Some("PC"))
   assert_true(arm.vars_with_role(Argument).any(v => v.ident() == "R0"))
+  assert_true(arm.role_aliases(ThumbMode).contains("r7"))
+  assert_true(arm.role_aliases(ThumbMode).contains("lr"))
+  match arm.find_var("R0") {
+    Some(reg) => assert_true(arm.roles_of_var(reg).contains(ThumbMode))
+    None => fail("missing R0")
+  }
+  match arm.find_var("R8") {
+    Some(reg) => assert_true(!arm.roles_of_var(reg).contains(ThumbMode))
+    None => fail("missing R8")
+  }
   match arm.find_var("LR") {
     Some(link) => {
       assert_true(arm.roles_of_var(link).contains(LinkRegister))
       assert_true(arm.roles_of_var(link).contains(CallerSaved))
+      assert_true(arm.roles_of_var(link).contains(ThumbMode))
     }
     None => fail("missing LR")
   }

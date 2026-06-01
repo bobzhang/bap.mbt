@@ -20,6 +20,8 @@ pub fn bytes_to_hex(BytesView) -> String
 
 pub fn bytes_to_sexp_atom(BytesView) -> String
 
+pub fn digest(namespace_name~ : StringView, StringView) -> Digest
+
 pub fn digest_bytes(BytesView) -> Digest
 
 pub fn digest_string(StringView) -> Digest
@@ -31,7 +33,17 @@ pub fn[T : Printable] render_array(ArrayView[T], sep? : String) -> String
 // Errors
 
 // Types and methods
-pub(all) struct Digest(String) derive(Eq, @debug.Debug)
+type Cache[T]
+pub fn[T] Cache::create(load~ : (Digest) -> T?, save~ : (Digest, T) -> Unit) -> Self[T]
+pub fn[T] Cache::load(Self[T], Digest) -> T?
+pub fn[T] Cache::oblivion() -> Self[T]
+pub fn[T] Cache::save(Self[T], Digest, T) -> Unit
+
+pub(all) struct Digest(String) derive(Eq, Hash, @debug.Debug)
+pub fn Digest::add(Self, StringView) -> Self
+pub fn Digest::add_bytes(Self, BytesView) -> Self
+pub fn Digest::compare(Self, Self) -> Int
+pub fn Digest::create(namespace_name~ : StringView) -> Self
 pub fn Digest::to_string(Self) -> String
 pub impl Printable for Digest
 

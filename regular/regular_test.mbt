@@ -32,6 +32,33 @@ test "digest helpers are deterministic and byte-oriented" {
   inspect(a.to_string(), content="e71fa2190541574b")
   assert_true(a != b)
   assert_true(@regular.digest_string("abc").to_string() == a.to_string())
+  let root = @regular.Digest::create(namespace_name="cache")
+  assert_true(root == @regular.Digest::create(namespace_name="cache"))
+  assert_true(
+    root.add("entry") == @regular.digest(namespace_name="cache", "entry"),
+  )
+  assert_true(root.add("entry") != root.add("other"))
+  assert_true(
+    root.add_bytes(b"entry") ==
+    root.add(@regular.digest_bytes(b"entry").to_string()),
+  )
+  assert_true(root.compare(root.add("entry")) != 0)
+}
+
+///|
+test "regular cache delegates load and save by digest" {
+  let store : Map[@regular.Digest, String] = {}
+  let cache = @regular.Cache::create(load=key => store.get(key), save=(
+    key,
+    value,
+  ) => store[key] = value)
+  let key = @regular.digest(namespace_name="cache", "unit")
+  assert_true(cache.load(key) is None)
+  cache.save(key, "value")
+  assert_true(cache.load(key) == Some("value"))
+  let empty : @regular.Cache[String] = @regular.Cache::oblivion()
+  empty.save(key, "ignored")
+  assert_true(empty.load(key) is None)
 }
 
 ///|

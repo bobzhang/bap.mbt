@@ -960,6 +960,35 @@ test "target variant registration generates BAP-style names" {
     }
     Err(reason) => fail(reason)
   }
+  match
+    @core_theory.Target::register_variants(
+      parent,
+      systems=[Linux],
+      abis=[GNU],
+      filetypes=[Elf],
+      pkg="test-variant-override",
+    ) {
+    Ok(variants) => {
+      assert_true(variants.length() == 1)
+      let variant = variants[0]
+      assert_true(variant.name().pkg() == "test-variant-override")
+      assert_true(
+        @core_theory.Target::lookup(
+          "unit-variant-root-linux-gnu-elf",
+          pkg="test-variant-override",
+        ).map(target => target.name().pkg()) ==
+        Some("test-variant-override"),
+      )
+      assert_true(
+        @core_theory.Target::lookup(
+          "unit-variant-root-linux-gnu-elf",
+          pkg="test",
+        ).map(target => target.name().pkg()) ==
+        Some("test"),
+      )
+    }
+    Err(reason) => fail(reason)
+  }
   match @core_theory.Target::register_variants(parent) {
     Ok(empty) => assert_true(empty.is_empty())
     Err(reason) => fail(reason)

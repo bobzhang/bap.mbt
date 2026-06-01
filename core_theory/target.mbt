@@ -4378,11 +4378,16 @@ fn target_variant(
   fabi : Fabi,
   filetype : Filetype,
   options : TargetOptions,
+  pkg? : String,
 ) -> Target {
+  let variant_pkg = match pkg {
+    Some(value) => value
+    None => parent.name().pkg()
+  }
   Target::create(
     name=@knowledge.Name::create(
       target_variant_name(parent, system, abi, fabi, filetype, options),
-      pkg=parent.name().pkg(),
+      pkg=variant_pkg,
     ),
     parent~,
     system~,
@@ -4401,6 +4406,7 @@ pub fn Target::register_variants(
   fabis? : Array[Fabi],
   filetypes? : Array[Filetype],
   options? : Array[TargetOptions],
+  pkg? : String,
 ) -> Result[Array[Target], String] {
   let systems = match systems {
     Some(values) => values
@@ -4430,7 +4436,13 @@ pub fn Target::register_variants(
           for opts in options {
             if !target_variant_is_empty(system, abi, fabi, filetype, opts) {
               let target = target_variant(
-                parent, system, abi, fabi, filetype, opts,
+                parent,
+                system,
+                abi,
+                fabi,
+                filetype,
+                opts,
+                pkg?,
               )
               match register_target(target) {
                 Ok(_) => created.push(target)

@@ -2201,8 +2201,15 @@ test "program metadata tracks source compiler and units" {
     @core_theory.Language::llvm_powerpc64().to_string() == "llvm-powerpc64",
   )
   assert_true(
+    @core_theory.Language::llvm_riscv32().to_string() == "llvm-riscv32",
+  )
+  assert_true(
+    @core_theory.Language::llvm_riscv64().to_string() == "llvm-riscv64",
+  )
+  assert_true(
     @core_theory.Language::llvm_systemz().to_string() == "llvm-systemz",
   )
+  assert_true(@core_theory.Language::pcode_x86().to_string() == "pcode-x86")
   assert_true(@core_theory.Language::pcode_arm().to_string() == "pcode-arm")
   assert_true(@core_theory.Language::pcode_mips().to_string() == "pcode-mips")
   assert_true(

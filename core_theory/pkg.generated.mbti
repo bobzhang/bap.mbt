@@ -295,6 +295,8 @@ pub fn Language::llvm_mips64() -> Self
 pub fn Language::llvm_mips64le() -> Self
 pub fn Language::llvm_powerpc32() -> Self
 pub fn Language::llvm_powerpc64() -> Self
+pub fn Language::llvm_riscv32() -> Self
+pub fn Language::llvm_riscv64() -> Self
 pub fn Language::llvm_systemz() -> Self
 pub fn Language::llvm_t32() -> Self
 pub fn Language::llvm_x86() -> Self
@@ -304,6 +306,7 @@ pub fn Language::pascal() -> Self
 pub fn Language::pcode_arm() -> Self
 pub fn Language::pcode_mips() -> Self
 pub fn Language::pcode_powerpc() -> Self
+pub fn Language::pcode_x86() -> Self
 pub fn Language::persistent() -> @knowledge.Persistent[Self]
 pub fn Language::to_string(Self) -> String
 pub fn Language::unknown() -> Self

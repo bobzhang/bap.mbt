@@ -166,8 +166,23 @@ pub fn Language::llvm_powerpc64() -> Language {
 }
 
 ///|
+pub fn Language::llvm_riscv32() -> Language {
+  OtherLanguage("llvm-riscv32")
+}
+
+///|
+pub fn Language::llvm_riscv64() -> Language {
+  OtherLanguage("llvm-riscv64")
+}
+
+///|
 pub fn Language::llvm_systemz() -> Language {
   OtherLanguage("llvm-systemz")
+}
+
+///|
+pub fn Language::pcode_x86() -> Language {
+  OtherLanguage("pcode-x86")
 }
 
 ///|

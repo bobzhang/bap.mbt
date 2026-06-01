@@ -200,7 +200,7 @@ test "sorts model symbolic applications" {
       ),
       @core_theory.Sort::int(11),
     ),
-    @core_theory.Sort::int(53),
+    @core_theory.Sort::int(52),
   )
   let float_format = @core_theory.Sort::float_format(
     ieee754,
@@ -208,7 +208,7 @@ test "sorts model symbolic applications" {
   )
   inspect(
     float_format.to_string(),
-    content="core:bitv<core:IEEE754<2><11><53>><64>",
+    content="core:bitv<core:IEEE754<2><11><52>><64>",
   )
   assert_true(float_format.float_format_exp() == Some(ieee754))
   assert_true(
@@ -228,6 +228,39 @@ test "sorts model symbolic applications" {
     mem,
     "sort",
   )
+}
+
+///|
+test "IEEE754 parameters define floating point sorts" {
+  let binary64 = @core_theory.Ieee754Parameters::binary64()
+  assert_true(binary64.base == 2)
+  assert_true(binary64.bias == 1023)
+  assert_true(binary64.k == 64)
+  assert_true(binary64.p == 53)
+  assert_true(binary64.w == 11)
+  assert_true(binary64.t == 52)
+  assert_true(@core_theory.Ieee754Parameters::binary(64) == Some(binary64))
+  assert_true(@core_theory.Ieee754Parameters::binary(0) is None)
+  assert_true(@core_theory.Ieee754Parameters::binary(24) is None)
+  let decimal64 = @core_theory.Ieee754Parameters::decimal64()
+  assert_true(decimal64.base == 10)
+  assert_true(decimal64.k == 64)
+  assert_true(decimal64.p == 16)
+  assert_true(decimal64.w == 13)
+  assert_true(decimal64.t == 50)
+  assert_true(@core_theory.Ieee754Parameters::decimal(64) == Some(decimal64))
+  assert_true(@core_theory.Ieee754Parameters::decimal(16) is None)
+  let float64 = @core_theory.Sort::ieee754(binary64)
+  inspect(
+    float64.to_string(),
+    content="core:float<core:bitv<core:IEEE754<2><11><52>><64>>",
+  )
+  assert_true(float64.ieee754_spec() == Some(binary64))
+  assert_true(float64.ieee754_exps() == Some(@core_theory.Sort::bitv(11)))
+  assert_true(float64.ieee754_sigs() == Some(@core_theory.Sort::bitv(53)))
+  assert_true(float64.ieee754_bits() == Some(@core_theory.Sort::bitv(64)))
+  assert_true(float64.float_width() == Some(64))
+  assert_true(@core_theory.Sort::float(64).ieee754_spec() is None)
 }
 
 ///|

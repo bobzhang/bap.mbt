@@ -152,6 +152,25 @@ pub fn Filetype::equal(Self, Self) -> Bool
 pub fn Filetype::of_string(String) -> Self?
 pub fn Filetype::to_string(Self) -> String
 
+pub(all) struct Ieee754Parameters {
+  base : Int
+  bias : Int
+  k : Int
+  p : Int
+  w : Int
+  t : Int
+} derive(Eq, Hash, @debug.Debug)
+pub fn Ieee754Parameters::binary(Int) -> Self?
+pub fn Ieee754Parameters::binary128() -> Self
+pub fn Ieee754Parameters::binary16() -> Self
+pub fn Ieee754Parameters::binary32() -> Self
+pub fn Ieee754Parameters::binary64() -> Self
+pub fn Ieee754Parameters::binary80() -> Self
+pub fn Ieee754Parameters::decimal(Int) -> Self?
+pub fn Ieee754Parameters::decimal128() -> Self
+pub fn Ieee754Parameters::decimal32() -> Self
+pub fn Ieee754Parameters::decimal64() -> Self
+
 type Label
 pub fn Label::addr(Self) -> @types.Word?
 pub fn Label::aliases(Self) -> Array[String]
@@ -361,6 +380,11 @@ pub fn Sort::float_with_format(Self) -> Self
 pub fn Sort::forget(Self) -> Self
 pub fn Sort::hd(Self) -> Self?
 pub fn Sort::head(Self) -> Self
+pub fn Sort::ieee754(Ieee754Parameters) -> Self
+pub fn Sort::ieee754_bits(Self) -> Self?
+pub fn Sort::ieee754_exps(Self) -> Self?
+pub fn Sort::ieee754_sigs(Self) -> Self?
+pub fn Sort::ieee754_spec(Self) -> Ieee754Parameters?
 pub fn Sort::int(Int) -> Self
 pub fn Sort::mem(Self, Self) -> Self
 pub fn Sort::mem_keys(Self) -> Self?

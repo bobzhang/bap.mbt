@@ -2,4 +2,5 @@ import {
   "bobzhang/bap/bitvec",
   "bobzhang/bap/knowledge",
   "bobzhang/bap/types",
+  "moonbitlang/core/math",
 }

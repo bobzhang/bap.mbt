@@ -135,6 +135,11 @@ pub fn Var::fresh(sort : Sort) -> Var {
 }
 
 ///|
+pub fn Var::reset_temporary_counter() -> Unit {
+  fresh_var_counter.val = 0
+}
+
+///|
 pub fn Var::of_ident(sort : Sort, ident : String) -> Result[Var, String] {
   if ident.length() == 0 {
     return Err("invalid variable identifier: \{ident}")

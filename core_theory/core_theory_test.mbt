@@ -326,6 +326,8 @@ test "variables preserve sorts versions and mutability flags" {
   assert_true(fresh.is_virtual())
   assert_true(fresh.is_mutable())
   assert_true(fresh.name().has_prefix("#"))
+  @core_theory.Var::reset_temporary_counter()
+  inspect(@core_theory.Var::fresh(sort).name(), content="#1")
   assert_var_persistent_round_trip(
     Some(@core_theory.Var::persistent()),
     versioned,

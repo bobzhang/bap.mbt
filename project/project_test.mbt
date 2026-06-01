@@ -201,9 +201,9 @@ test "project substitutes memory annotation placeholders" {
       let tagged = project.substitute(
         region,
         "comment",
-        "$symbol_name@$symbol_addr-$symbol_max_addr in " +
-        "$section_name@$section_addr-$section_max_addr " +
-        "covers $addr-$max_addr and $missing",
+        "$symbol/$symbol_name@$symbol_addr/$symbol_min_addr-$symbol_max_addr in " +
+        "$section_name@$section_addr/$section_min_addr-$section_max_addr " +
+        "covers $addr/$min_addr-$max_addr and $missing",
       )
       assert_true(
         tagged
@@ -211,8 +211,9 @@ test "project substitutes memory annotation placeholders" {
         .lookup(0x1001UL)
         .any(entry => {
           entry.1 ==
-          "comment=entry@0x1000-0x1001 in .text@0x1000-0x1001 " +
-          "covers 0x1001-0x1001 and missing"
+          "comment=entry/entry@0x1000/0x1000-0x1001 in " +
+          ".text@0x1000/0x1000-0x1001 covers " +
+          "0x1001/0x1001-0x1001 and missing"
         }),
       )
     }
@@ -248,13 +249,16 @@ test "project substitutes disassembly block placeholders" {
     @project.ProjectDisassemblyState::empty().add_block(block),
   )
   let tagged = project.substitute(
-    block, "block-comment", "$block_name spans $block_addr-$block_max_addr",
+    block, "block-comment", "$block/$block_name spans $block_addr/$block_min_addr-$block_max_addr",
   )
   assert_true(
     tagged
     .memory()
     .lookup(0x1000UL)
-    .any(entry => entry.1 == "block-comment=blk_0x1000 spans 0x1000-0x1001"),
+    .any(entry => {
+      entry.1 ==
+      "block-comment=blk_0x1000/blk_0x1000 spans 0x1000/0x1000-0x1001"
+    }),
   )
 }
 

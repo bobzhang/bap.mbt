@@ -1812,6 +1812,8 @@ test "target role helpers classify common architecture variables" {
   assert_true(riscv.role_aliases(ResultRegister).contains("x10"))
   assert_true(riscv.role_aliases(ResultRegister).contains("a0"))
   assert_true(riscv.role_aliases(Argument).contains("a7"))
+  assert_true(riscv.role_aliases(PseudoRegister).contains("x0"))
+  assert_true(riscv.role_aliases(PseudoRegister).contains("pc"))
   assert_true(!riscv.role_aliases(ResultRegister).contains("rax"))
   match riscv.find_var("F31") {
     Some(float) =>
@@ -1844,9 +1846,14 @@ test "target role helpers classify common architecture variables" {
     Some(zero) => {
       assert_true(riscv.roles_of_var(zero).contains(Constant))
       assert_true(riscv.roles_of_var(zero).contains(ZeroRegister))
+      assert_true(riscv.roles_of_var(zero).contains(PseudoRegister))
       assert_true(!riscv.roles_of_var(zero).contains(ResultRegister))
     }
     None => fail("missing X0")
+  }
+  match riscv.find_var("PC") {
+    Some(pc) => assert_true(riscv.roles_of_var(pc).contains(PseudoRegister))
+    None => fail("missing RISC-V PC")
   }
   match riscv.find_var("sp") {
     Some(sp) => assert_true(riscv.roles_of_var(sp).contains(StackPointer))
@@ -1881,6 +1888,8 @@ test "target role helpers classify common architecture variables" {
     None => fail("missing sp alias origin")
   }
   let mips64 = @core_theory.Target::mips64()
+  assert_true(mips64.role_aliases(PseudoRegister).contains("zero"))
+  assert_true(mips64.role_aliases(PseudoRegister).contains("r0"))
   match mips64.find_var("F31") {
     Some(float) =>
       assert_true(mips64.roles_of_var(float).contains(FloatingRegister))
@@ -1891,6 +1900,7 @@ test "target role helpers classify common architecture variables" {
       assert_true(mips64.roles_of_var(zero).contains(IntegerRegister))
       assert_true(mips64.roles_of_var(zero).contains(Constant))
       assert_true(mips64.roles_of_var(zero).contains(ZeroRegister))
+      assert_true(mips64.roles_of_var(zero).contains(PseudoRegister))
     }
     None => fail("missing ZERO")
   }
@@ -2108,9 +2118,12 @@ test "target role helpers classify common architecture variables" {
     Some(zero) => {
       assert_true(aarch64.roles_of_var(zero).contains(Constant))
       assert_true(aarch64.roles_of_var(zero).contains(ZeroRegister))
+      assert_true(aarch64.roles_of_var(zero).contains(PseudoRegister))
     }
     None => fail("missing XZR")
   }
+  assert_true(aarch64.role_aliases(PseudoRegister).contains("xzr"))
+  assert_true(aarch64.role_aliases(PseudoRegister).contains("wzr"))
   match aarch64.origin_of_name("X0") {
     Some(origin) => {
       assert_true(origin.aliased().ident() == "X0")

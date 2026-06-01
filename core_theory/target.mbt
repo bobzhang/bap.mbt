@@ -2113,7 +2113,8 @@ fn arm32_role_names(role : Role) -> Array[String] {
 fn aarch64_role_names(role : Role) -> Array[String] {
   match role {
     General => []
-    SpecialRegister | AliasRegister | PseudoRegister => []
+    SpecialRegister | AliasRegister => []
+    PseudoRegister => ["xzr", "zr", "wzr"]
     IntegerRegister =>
       concat_role_names([
         role_names("x", 0, 31),
@@ -2164,7 +2165,8 @@ fn aarch64_role_names(role : Role) -> Array[String] {
 fn mips_role_names(bits : Int, role : Role) -> Array[String] {
   match role {
     General => []
-    SpecialRegister | AliasRegister | PseudoRegister => []
+    SpecialRegister | AliasRegister => []
+    PseudoRegister => ["zero", "r0"]
     IntegerRegister =>
       concat_role_names([
         role_names("r", 0, 31),
@@ -2262,7 +2264,8 @@ fn powerpc_role_names(role : Role) -> Array[String] {
 fn riscv_role_names(role : Role) -> Array[String] {
   match role {
     General => []
-    SpecialRegister | AliasRegister | PseudoRegister => []
+    SpecialRegister | AliasRegister => []
+    PseudoRegister => ["zero", "x0", "pc"]
     IntegerRegister =>
       concat_role_names([
         role_names("x", 0, 31),
@@ -2954,6 +2957,7 @@ pub fn Target::roles_of_var(self : Target, variable : Var) -> Array[Role] {
       SegmentRegister,
       FramePointer,
       ProgramCounter,
+      PseudoRegister,
       Status,
       ControlRegister,
       SystemRegister,

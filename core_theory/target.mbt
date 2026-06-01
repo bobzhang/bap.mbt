@@ -1896,6 +1896,21 @@ fn concat_role_names(groups : Array[Array[String]]) -> Array[String] {
 }
 
 ///|
+fn x86_integer_flag_role_names() -> Array[String] {
+  ["cf", "pf", "af", "zf", "sf", "of"]
+}
+
+///|
+fn x86_control_flag_role_names() -> Array[String] {
+  ["tf", "if", "df", "md"]
+}
+
+///|
+fn x86_system_flag_role_names() -> Array[String] {
+  ["iopll", "ioplh", "rf", "vm", "ac", "vif", "vip", "id", "aes", "ai"]
+}
+
+///|
 fn x86_64_role_names(role : Role) -> Array[String] {
   match role {
     General => []
@@ -1908,6 +1923,7 @@ fn x86_64_role_names(role : Role) -> Array[String] {
         lower_names(x86_64_gpr8_alias_names()),
         lower_names(x86_8_high_gpr_names()),
         lower_names(x86_segment_names(false)),
+        x86_integer_flag_role_names(),
       ])
     FloatingRegister =>
       concat_role_names([
@@ -1927,7 +1943,9 @@ fn x86_64_role_names(role : Role) -> Array[String] {
         ["eflags", "rflags", "mxcsr", "iopl"],
         lower_names(x86_flag_names()),
       ])
-    ControlRegister | SystemRegister | HardwareRegister => []
+    ControlRegister => x86_control_flag_role_names()
+    SystemRegister => x86_system_flag_role_names()
+    HardwareRegister => []
     Constant | ZeroRegister | OneRegister | LinkRegister | ThreadPointer => []
     PrivilegedRegister => []
     Argument => ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]
@@ -1956,6 +1974,7 @@ fn x86_16_role_names(role : Role) -> Array[String] {
         lower_names(x86_8_high_gpr_names()),
         ["sil", "dil", "bpl", "spl"],
         lower_names(x86_segment_names(false)),
+        x86_integer_flag_role_names(),
       ])
     FloatingRegister => []
     VectorRegister => []
@@ -1966,7 +1985,9 @@ fn x86_16_role_names(role : Role) -> Array[String] {
     ProgramCounter => []
     Status =>
       concat_role_names([["eflags", "iopl"], lower_names(x86_flag_names())])
-    ControlRegister | SystemRegister | HardwareRegister => []
+    ControlRegister => x86_control_flag_role_names()
+    SystemRegister => x86_system_flag_role_names()
+    HardwareRegister => []
     Constant | ZeroRegister | OneRegister | LinkRegister | ThreadPointer => []
     PrivilegedRegister => []
     Argument => []
@@ -2022,6 +2043,7 @@ fn x86_32_role_names(role : Role) -> Array[String] {
         lower_names(x86_8_low_gpr_names()),
         lower_names(x86_8_high_gpr_names()),
         lower_names(x86_segment_names(true)),
+        x86_integer_flag_role_names(),
       ])
     FloatingRegister =>
       concat_role_names([
@@ -2037,7 +2059,9 @@ fn x86_32_role_names(role : Role) -> Array[String] {
     ProgramCounter => ["eip"]
     Status =>
       concat_role_names([["eflags", "iopl"], lower_names(x86_flag_names())])
-    ControlRegister | SystemRegister | HardwareRegister => []
+    ControlRegister => x86_control_flag_role_names()
+    SystemRegister => x86_system_flag_role_names()
+    HardwareRegister => []
     Constant | ZeroRegister | OneRegister | LinkRegister | ThreadPointer => []
     PrivilegedRegister => []
     Argument => []

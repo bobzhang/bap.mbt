@@ -62,6 +62,31 @@ test "flat domains keep bottom and reject conflicting facts" {
 }
 
 ///|
+test "custom domains derive default joins from partial order" {
+  let domain = @knowledge.Domain::custom(
+    @knowledge.Name::create("partial-level", pkg="test"),
+    (value : Int) => value.to_string(),
+    empty=0,
+    order=(lhs, rhs) => {
+      if lhs == rhs {
+        Equal
+      } else if lhs == 0 {
+        Less
+      } else if rhs == 0 {
+        Greater
+      } else {
+        Incomparable
+      }
+    },
+  )
+  assert_true(domain.is_empty(0))
+  assert_true(domain.order(0, 2) == Less)
+  assert_true(domain.join(0, 2) == Ok(2))
+  assert_true(domain.join(2, 0) == Ok(2))
+  assert_true(domain.join(1, 2) is Err(_))
+}
+
+///|
 test "total domains order values and join by upper bound" {
   let domain = @knowledge.Domain::total(
     @knowledge.Name::create("confidence", pkg="test"),

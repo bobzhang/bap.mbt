@@ -44,6 +44,7 @@ pub fn[K, S] Class::sort(Self[K, S]) -> S
 
 type Domain[T]
 pub fn Domain::bool(Name) -> Self[Bool]
+pub fn[T] Domain::custom(Name, (T) -> String, empty~ : T, order~ : (T, T) -> PartialOrder, join? : (T, T) -> Result[T, String]) -> Self[T]
 pub fn[T] Domain::empty(Self[T]) -> T?
 pub fn[T : Eq] Domain::flat(Name, (T) -> String, empty? : T) -> Self[T]
 pub fn[T] Domain::inspect(Self[T], T) -> String

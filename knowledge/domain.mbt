@@ -28,6 +28,33 @@ pub fn[T] Domain::new(
 }
 
 ///|
+pub fn[T] Domain::custom(
+  name : Name,
+  inspect : (T) -> String,
+  empty~ : T,
+  order~ : (T, T) -> PartialOrder,
+  join? : (T, T) -> Result[T, String] = (lhs, rhs) => {
+    match order(lhs, rhs) {
+      Greater => Ok(lhs)
+      Equal | Less => Ok(rhs)
+      Incomparable =>
+        Err(
+          "domain \{name.show()} has no join for \{inspect(lhs)} and \{inspect(rhs)}",
+        )
+    }
+  },
+) -> Domain[T] {
+  Domain::new(
+    name~,
+    empty=Some(empty),
+    is_empty=(value : T) => order(empty, value) == Equal,
+    order~,
+    join~,
+    inspect~,
+  )
+}
+
+///|
 pub fn[T : Eq] Domain::flat(
   name : Name,
   inspect : (T) -> String,

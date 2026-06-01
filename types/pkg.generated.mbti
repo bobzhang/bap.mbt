@@ -263,8 +263,10 @@ pub fn[T] BapVector::create(T, capacity? : Int) -> Self[T]
 pub fn[T] BapVector::exists(Self[T], (T) -> Bool) -> Bool
 pub fn[T] BapVector::find(Self[T], (T) -> Bool) -> T?
 pub fn[T, A] BapVector::find_map(Self[T], (T) -> A?) -> A?
+pub fn[T, A] BapVector::find_mapi(Self[T], (Int, T) -> A?) -> A?
 pub fn[T] BapVector::findi(Self[T], (Int, T) -> Bool) -> (Int, T)?
 pub fn[T, A] BapVector::fold(Self[T], A, (A, T) -> A) -> A
+pub fn[T, A, E] BapVector::fold_result(Self[T], A, (A, T) -> Result[A, E]) -> Result[A, E]
 pub fn[T, A] BapVector::foldi(Self[T], A, (Int, A, T) -> A) -> A
 pub fn[T] BapVector::for_all(Self[T], (T) -> Bool) -> Bool
 pub fn[T] BapVector::get(Self[T], Int) -> T
@@ -273,9 +275,16 @@ pub fn[T : Eq] BapVector::index_exn(Self[T], T) -> Int
 pub fn[T : Eq] BapVector::index_with(Self[T], T, default~ : Int) -> Int
 pub fn[T] BapVector::index_with_by(Self[T], T, default~ : Int, (T, T) -> Bool) -> Int
 pub fn[T] BapVector::is_empty(Self[T]) -> Bool
+pub fn[T] BapVector::iter(Self[T], (T) -> Unit) -> Unit
 pub fn[T] BapVector::iteri(Self[T], (Int, T) -> Unit) -> Unit
 pub fn[T] BapVector::length(Self[T]) -> Int
 pub fn[A, B] BapVector::map_to_array(Self[A], (A) -> B) -> Array[B]
+pub fn[T] BapVector::max_elt(Self[T], compare~ : (T, T) -> Int) -> T?
+pub fn[T] BapVector::max_elt_by(Self[T], (T, T) -> Int) -> T?
+pub fn[T : Eq] BapVector::mem(Self[T], T) -> Bool
+pub fn[T] BapVector::mem_by(Self[T], T, (T, T) -> Bool) -> Bool
+pub fn[T] BapVector::min_elt(Self[T], compare~ : (T, T) -> Int) -> T?
+pub fn[T] BapVector::min_elt_by(Self[T], (T, T) -> Int) -> T?
 pub fn[T] BapVector::nth(Self[T], Int) -> T?
 pub fn[T] BapVector::set(Self[T], Int, T) -> Unit
 pub fn[T] BapVector::to_array(Self[T]) -> Array[T]

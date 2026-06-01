@@ -101,6 +101,11 @@ pub fn[T] BapVector::iteri(self : BapVector[T], f : (Int, T) -> Unit) -> Unit {
 }
 
 ///|
+pub fn[T] BapVector::iter(self : BapVector[T], f : (T) -> Unit) -> Unit {
+  self.iteri((_, value) => f(value))
+}
+
+///|
 pub fn[T, A] BapVector::foldi(
   self : BapVector[T],
   init : A,
@@ -123,6 +128,22 @@ pub fn[T, A] BapVector::fold(
 }
 
 ///|
+pub fn[T, A, E] BapVector::fold_result(
+  self : BapVector[T],
+  init : A,
+  f : (A, T) -> Result[A, E],
+) -> Result[A, E] {
+  let mut acc = init
+  for i in 0..<self.size_value {
+    match f(acc, self.data_value.unsafe_get(i)) {
+      Ok(next) => acc = next
+      Err(reason) => return Err(reason)
+    }
+  }
+  Ok(acc)
+}
+
+///|
 pub fn[T] BapVector::findi(
   self : BapVector[T],
   f : (Int, T) -> Bool,
@@ -131,6 +152,20 @@ pub fn[T] BapVector::findi(
     let value = self.data_value.unsafe_get(i)
     if f(i, value) {
       return Some((i, value))
+    }
+  }
+  None
+}
+
+///|
+pub fn[T, A] BapVector::find_mapi(
+  self : BapVector[T],
+  f : (Int, T) -> A?,
+) -> A? {
+  for i in 0..<self.size_value {
+    match f(i, self.data_value.unsafe_get(i)) {
+      Some(value) => return Some(value)
+      None => ()
     }
   }
   None
@@ -182,6 +217,58 @@ pub fn[T] BapVector::count(self : BapVector[T], f : (T) -> Bool) -> Int {
 }
 
 ///|
+pub fn[T] BapVector::min_elt_by(
+  self : BapVector[T],
+  compare : (T, T) -> Int,
+) -> T? {
+  if self.size_value == 0 {
+    return None
+  }
+  let mut best = self.data_value.unsafe_get(0)
+  for i in 1..<self.size_value {
+    let value = self.data_value.unsafe_get(i)
+    if compare(value, best) < 0 {
+      best = value
+    }
+  }
+  Some(best)
+}
+
+///|
+pub fn[T] BapVector::min_elt(
+  self : BapVector[T],
+  compare~ : (T, T) -> Int,
+) -> T? {
+  self.min_elt_by(compare)
+}
+
+///|
+pub fn[T] BapVector::max_elt_by(
+  self : BapVector[T],
+  compare : (T, T) -> Int,
+) -> T? {
+  if self.size_value == 0 {
+    return None
+  }
+  let mut best = self.data_value.unsafe_get(0)
+  for i in 1..<self.size_value {
+    let value = self.data_value.unsafe_get(i)
+    if compare(value, best) > 0 {
+      best = value
+    }
+  }
+  Some(best)
+}
+
+///|
+pub fn[T] BapVector::max_elt(
+  self : BapVector[T],
+  compare~ : (T, T) -> Int,
+) -> T? {
+  self.max_elt_by(compare)
+}
+
+///|
 pub fn[T] BapVector::index_with_by(
   self : BapVector[T],
   value : T,
@@ -226,6 +313,20 @@ pub fn[T : Eq] BapVector::index_exn(self : BapVector[T], value : T) -> Int {
 ///|
 pub fn[T : Eq] BapVector::contains(self : BapVector[T], value : T) -> Bool {
   self.index(value) is Some(_)
+}
+
+///|
+pub fn[T] BapVector::mem_by(
+  self : BapVector[T],
+  value : T,
+  equal : (T, T) -> Bool,
+) -> Bool {
+  self.index_with_by(value, default=-1, equal) >= 0
+}
+
+///|
+pub fn[T : Eq] BapVector::mem(self : BapVector[T], value : T) -> Bool {
+  self.contains(value)
 }
 
 ///|

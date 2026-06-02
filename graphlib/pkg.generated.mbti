@@ -35,6 +35,11 @@ pub(all) enum EdgeKind {
 type Equiv derive(Eq, @debug.Debug)
 pub fn Equiv::to_int(Self) -> Int
 
+type Frontier[N] derive(@debug.Debug)
+pub fn[N : Hash + Eq] Frontier::elements(Self[N], N) -> Array[N]
+pub fn[N : Hash + Eq] Frontier::mem(Self[N], N, N) -> Bool
+pub fn[N] Frontier::to_sequence(Self[N]) -> Array[N]
+
 type Graph[N, E] derive(@debug.Debug)
 pub fn[N : Eq, E] Graph::add_edge(Self[N, E], src~ : N, dst~ : N, label~ : E) -> Self[N, E]
 pub fn[N : Eq, E] Graph::add_node(Self[N, E], N) -> Self[N, E]
@@ -44,7 +49,9 @@ pub fn[N : Eq, E] Graph::degree(Self[N, E], N) -> Int
 pub fn[N : Hash + Eq, E, A] Graph::depth_first_search(Self[N, E], init~ : A, rev? : Bool, start? : N?, start_tree? : (N, A) -> A, enter_node? : (Int, N, A) -> A, leave_node? : (Int, N, A) -> A, enter_edge? : (EdgeKind, Edge[N, E], A) -> A, leave_edge? : (EdgeKind, Edge[N, E], A) -> A) -> A
 pub fn[N : Hash + Eq, E] Graph::dfs_edges(Self[N, E], N) -> Array[(EdgeKind, Edge[N, E])]
 pub fn[N : Hash + Eq, E] Graph::dfs_numbering(Self[N, E], N) -> Map[N, DfsNodeInfo]
+pub fn[N : Hash + Eq, E] Graph::dom_frontier(Self[N, E], N, rev? : Bool) -> Frontier[N]
 pub fn[N : Hash + Eq, E] Graph::dominance_frontiers(Self[N, E], N, rev? : Bool) -> Map[N, @set.Set[N]]
+pub fn[N : Hash + Eq, E] Graph::dominator_tree(Self[N, E], N, rev? : Bool) -> Tree[N]
 pub fn[N : Hash + Eq, E] Graph::dominators(Self[N, E], N, rev? : Bool) -> Map[N, @set.Set[N]]
 pub fn[N : Eq, E] Graph::edge(Self[N, E], N, N) -> Edge[N, E]?
 pub fn[N, E] Graph::edge_count(Self[N, E]) -> Int
@@ -107,6 +114,16 @@ pub fn[N] Partition::of_equiv(Self[N], Equiv) -> Group[N]?
 pub fn[N : Hash + Eq] Partition::refine(Self[N], (N, N) -> Bool) -> Self[N]
 pub fn[N : Hash + Eq] Partition::trivial(ArrayView[N]) -> Self[N]
 pub fn[N : Hash + Eq] Partition::union(Self[N], N, N) -> Self[N]
+
+type Tree[N] derive(@debug.Debug)
+pub fn[N : Hash + Eq] Tree::ancestors(Self[N], N) -> Array[N]
+pub fn[N : Hash + Eq] Tree::children(Self[N], N) -> Array[N]
+pub fn[N : Hash + Eq] Tree::descendants(Self[N], N) -> Array[N]
+pub fn[N : Hash + Eq] Tree::is_ancestor_of(Self[N], N, child~ : N) -> Bool
+pub fn[N : Hash + Eq] Tree::is_child_of(Self[N], N, parent~ : N) -> Bool
+pub fn[N : Hash + Eq] Tree::is_descendant_of(Self[N], N, parent~ : N) -> Bool
+pub fn[N : Hash + Eq] Tree::parent(Self[N], N) -> N?
+pub fn[N] Tree::to_sequence(Self[N]) -> Array[N]
 
 // Type aliases
 

@@ -469,6 +469,25 @@ test "effect sorts form the expected lattice" {
   assert_true(@core_theory.EffectData.union(EffectCtrl) == EffectBoth)
   assert_true(@core_theory.EffectData.order(EffectBoth) == Less)
   assert_true(@core_theory.EffectData.order(EffectCtrl) == Incomparable)
+  let effect_domain = @core_theory.Effect::domain()
+  let empty_effect = @core_theory.Effect::empty(EffectTop)
+  assert_true(effect_domain.name().show() == "core:effect")
+  assert_true(effect_domain.is_empty(empty_effect))
+  assert_true(
+    effect_domain.order(empty_effect, @core_theory.Effect::jump()) == Less,
+  )
+  assert_true(
+    @core_theory.Semantics::effect_slot().domain().name().show() ==
+    "core:effect",
+  )
+  match effect_domain.join(empty_effect, @core_theory.Effect::jump()) {
+    Ok(effect) => assert_true(effect.equal(@core_theory.Effect::jump()))
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    effect_domain.join(@core_theory.Effect::jump(), @core_theory.Effect::fall())
+    is Err(_),
+  )
   assert_persistent_round_trip(
     Some(@core_theory.EffectSort::persistent()),
     EffectBoth,

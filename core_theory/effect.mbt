@@ -245,6 +245,37 @@ pub fn Effect::persistent() -> @knowledge.Persistent[Effect] {
 }
 
 ///|
+pub fn Effect::domain() -> @knowledge.Domain[Effect] {
+  let empty = Effect::empty(EffectTop)
+  @knowledge.Domain::new(
+    name=core_name("effect"),
+    empty=Some(empty),
+    is_empty=effect => effect.equal(empty),
+    order=(lhs : Effect, rhs : Effect) => {
+      if lhs.equal(rhs) {
+        Equal
+      } else if lhs.equal(empty) {
+        Less
+      } else if rhs.equal(empty) {
+        Greater
+      } else {
+        Incomparable
+      }
+    },
+    join=(lhs : Effect, rhs : Effect) => {
+      if lhs.equal(rhs) || rhs.equal(empty) {
+        Ok(lhs)
+      } else if lhs.equal(empty) {
+        Ok(rhs)
+      } else {
+        Err("conflicting effects")
+      }
+    },
+    inspect=effect => effect.to_string(),
+  )
+}
+
+///|
 pub fn Effect::rreg() -> Effect {
   Effect::named("rreg", EffectData)
 }

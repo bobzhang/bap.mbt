@@ -8,36 +8,6 @@ struct SemanticsFacts {
 }
 
 ///|
-fn semantics_effect_domain() -> @knowledge.Domain[Effect] {
-  @knowledge.Domain::new(
-    name=core_name("semantics-effect"),
-    empty=Some(Effect::empty(EffectTop)),
-    is_empty=effect => effect.equal(Effect::empty(EffectTop)),
-    order=(lhs : Effect, rhs : Effect) => {
-      if lhs.equal(rhs) {
-        Equal
-      } else if lhs.equal(Effect::empty(EffectTop)) {
-        Less
-      } else if rhs.equal(Effect::empty(EffectTop)) {
-        Greater
-      } else {
-        Incomparable
-      }
-    },
-    join=(lhs : Effect, rhs : Effect) => {
-      if lhs.equal(rhs) || rhs.equal(Effect::empty(EffectTop)) {
-        Ok(lhs)
-      } else if lhs.equal(Effect::empty(EffectTop)) {
-        Ok(rhs)
-      } else {
-        Err("conflicting program semantics effects")
-      }
-    },
-    inspect=effect => effect.to_string(),
-  )
-}
-
-///|
 fn semantics_code_domain() -> @knowledge.Domain[Bytes?] {
   @knowledge.Domain::optional(bytes_domain("insn-code"))
 }
@@ -68,7 +38,7 @@ pub fn Semantics::value_slot() -> @knowledge.Slot[Unit, Value] {
 pub fn Semantics::effect_slot() -> @knowledge.Slot[Unit, Effect] {
   Semantics::cls().property(
     name=core_name("effect"),
-    domain=semantics_effect_domain(),
+    domain=Effect::domain(),
     desc="the program semantics effect",
     persistent=Effect::persistent(),
     public=true,

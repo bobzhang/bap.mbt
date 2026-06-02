@@ -586,9 +586,37 @@ test "translated BAP opinion domains resolve by agent reliability" {
   let strong = register_test_agent("opinion-strong", Reliable)
   let mutable = register_test_agent("opinion-mutable", Unreliable)
   assert_true(weak.name().show() == "test:opinion-weak")
+  assert_eq(weak.id(), @regular.digest_string(weak.name().show()).to_string())
+  assert_true(weak.id() != weak.name().show())
   assert_true(weak.weight() == 1)
   assert_true(mutable.set_reliability(Authorative) == Ok(()))
   assert_true(mutable.weight() == 16)
+  let documented = match
+    @knowledge.Agent::register(
+      "opinion-described",
+      pkg="test",
+      desc="agent registry entry",
+      reliability=Doubtful,
+    ) {
+    Ok(agent) => agent
+    Err(reason) => fail(reason)
+  }
+  let documented_id = @knowledge.Agent::read(documented.id())
+  assert_eq(documented_id.name().show(), "test:opinion-described")
+  assert_eq(documented_id.desc(), "agent registry entry")
+  assert_true(documented_id.reliability() == Doubtful)
+  assert_true(
+    @knowledge.Agent::registry().any(agent => agent.id() == documented.id()),
+  )
+  assert_true(
+    @knowledge.Documentation::agents().any(agent => {
+      agent.id() == documented.id()
+    }),
+  )
+  assert_eq(
+    @knowledge.Agent::read("opaque-agent-id", pkg="ignored").id(),
+    "opaque-agent-id",
+  )
 
   let empty_name : String? = None
   let domain = @knowledge.Domain::opinions(

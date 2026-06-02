@@ -23,6 +23,11 @@ priv struct AgentInfo {
 let agent_registry : Map[String, AgentInfo] = {}
 
 ///|
+fn agent_id_of_name(name : Name) -> String {
+  @regular.digest_string(name.show()).to_string()
+}
+
+///|
 fn AgentReliability::weight(self : AgentReliability) -> Int {
   match self {
     Authorative => 16
@@ -66,9 +71,9 @@ pub fn Agent::register(
   reliability? : AgentReliability = Trustworthy,
 ) -> Result[Agent, String] {
   let full_name = Name::create(name, pkg?)
-  let id = full_name.show()
+  let id = agent_id_of_name(full_name)
   if agent_registry.contains(id) {
-    Err("agent \{id} is already registered")
+    Err("agent \{full_name.show()} is already registered")
   } else {
     agent_registry[id] = {
       name_value: full_name,
@@ -86,7 +91,8 @@ pub fn Agent::id(self : Agent) -> String {
 
 ///|
 pub fn Agent::read(id : String, pkg? : String) -> Agent {
-  { id_value: Name::read(id, pkg?).show() }
+  ignore(pkg)
+  { id_value: id }
 }
 
 ///|

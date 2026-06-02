@@ -481,6 +481,7 @@ pub fn Role::zero() -> Self
 pub fn Role::zero_flag() -> Self
 
 type Semantics
+pub fn Semantics::cls() -> @knowledge.Class[Unit, EffectSort]
 pub fn Semantics::code(Self) -> Bytes?
 pub fn Semantics::code_hex(Self) -> String?
 pub fn Semantics::compare(Self, Self) -> Int

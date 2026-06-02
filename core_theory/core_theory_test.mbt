@@ -2880,7 +2880,12 @@ test "program semantics stores values and instruction bytes" {
   assert_true(semantics.value().fact("kind") == Some("lifted"))
   assert_true(semantics.code() == Some(b"\x90\xc3"))
   assert_true(semantics.code_hex() == Some("90c3"))
+  assert_true(@core_theory.Semantics::cls().name().show() == "core:semantics")
+  assert_true(
+    @core_theory.Semantics::cls().sort() == @core_theory.EffectSort::top(),
+  )
   let facts = @core_theory.SemanticsFacts::new()
+  assert_true(facts.class().same(@core_theory.Semantics::cls()))
   assert_value_persistent_round_trip(
     facts.value().slot().persistent(),
     value,

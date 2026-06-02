@@ -39,6 +39,16 @@ pub fn Semantics::create(
 }
 
 ///|
+pub fn Semantics::cls() -> @knowledge.Class[Unit, EffectSort] {
+  @knowledge.Class::create(
+    name=core_name("semantics"),
+    sort=EffectTop,
+    desc="program semantics values",
+    public=true,
+  )
+}
+
+///|
 pub fn Semantics::effect(self : Semantics) -> Effect {
   self.effect_value
 }

@@ -49,12 +49,7 @@ fn semantics_code_domain() -> @knowledge.Domain[Bytes?] {
 
 ///|
 pub fn SemanticsFacts::new() -> SemanticsFacts {
-  let cls : @knowledge.Class[Unit, EffectSort] = @knowledge.Class::create(
-    name=core_name("semantics"),
-    sort=EffectTop,
-    desc="program semantics values",
-    public=true,
-  )
+  let cls = Semantics::cls()
   let value = cls.property(
     name=core_name("value"),
     domain=value_domain(),

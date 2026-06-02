@@ -27,7 +27,11 @@ pub(all) struct Edge[N, E] {
   dst : N
   label : E
 } derive(Eq, @debug.Debug)
+pub fn[N, E] Edge::create(N, N, E) -> Self[N, E]
+pub fn[N, E] Edge::dst(Self[N, E]) -> N
+pub fn[N, E] Edge::label(Self[N, E]) -> E
 pub fn[N, E] Edge::new(src~ : N, dst~ : N, label~ : E) -> Self[N, E]
+pub fn[N, E] Edge::src(Self[N, E]) -> N
 
 pub(all) enum EdgeKind {
   Tree
@@ -81,6 +85,7 @@ pub fn[N : Eq, E] Graph::has_edge(Self[N, E], N, N) -> Bool
 pub fn[N : Eq, E] Graph::has_node(Self[N, E], N) -> Bool
 pub fn[N : Hash + Eq, E] Graph::immediate_dominators(Self[N, E], N, rev? : Bool) -> Map[N, N]
 pub fn[N : Eq, E] Graph::in_edges(Self[N, E], N) -> Array[Edge[N, E]]
+pub fn[N : Eq, E] Graph::inputs(Self[N, E], N) -> Array[Edge[N, E]]
 pub fn[N : Eq, E] Graph::inter(Self[N, E], Self[N, E]) -> Self[N, E]
 pub fn[N : Eq, E] Graph::intersect(Self[N, E], Self[N, E]) -> Self[N, E]
 pub fn[N, E] Graph::is_empty(Self[N, E]) -> Bool
@@ -89,9 +94,11 @@ pub fn[N, E] Graph::new() -> Self[N, E]
 pub fn[N, E] Graph::node_count(Self[N, E]) -> Int
 pub fn[N, E] Graph::nodes(Self[N, E]) -> Array[N]
 pub fn[N : Eq, E] Graph::out_edges(Self[N, E], N) -> Array[Edge[N, E]]
+pub fn[N : Eq, E] Graph::outputs(Self[N, E], N) -> Array[Edge[N, E]]
 pub fn[N : Hash + Eq, E] Graph::postorder(Self[N, E], N, rev? : Bool) -> Array[N]
 pub fn[N : Hash + Eq, E] Graph::postorder_traverse(Self[N, E], rev? : Bool, start? : N?) -> Array[N]
 pub fn[N : Eq, E] Graph::predecessors(Self[N, E], N) -> Array[N]
+pub fn[N : Eq, E] Graph::preds(Self[N, E], N) -> Array[N]
 pub fn[N : Hash + Eq, E] Graph::reachable(Self[N, E], N, rev? : Bool) -> @set.Set[N]
 pub fn[N : Eq, E] Graph::remove_edge(Self[N, E], N, N) -> Self[N, E]
 pub fn[N : Eq, E] Graph::remove_node(Self[N, E], N) -> Self[N, E]
@@ -101,6 +108,7 @@ pub fn[N : Hash + Eq, E] Graph::reverse_postorder_traverse(Self[N, E], rev? : Bo
 pub fn[N : Hash + Eq, E] Graph::shortest_path(Self[N, E], N, N, weight? : (Edge[N, E]) -> Int, rev? : Bool) -> GraphPath[Edge[N, E]]?
 pub fn[N : Hash + Eq, E] Graph::strong_components(Self[N, E]) -> Array[@set.Set[N]]
 pub fn[N : Eq, E] Graph::successors(Self[N, E], N) -> Array[N]
+pub fn[N : Eq, E] Graph::succs(Self[N, E], N) -> Array[N]
 pub fn[N : Hash + Eq, E] Graph::to_dot(Self[N, E], name? : String, graph_attrs? : ArrayView[(String, String)], node_attrs? : (N) -> Array[(String, String)], edge_attrs? : (Edge[N, E]) -> Array[(String, String)], string_of_node? : ((N) -> String)?, string_of_edge? : ((Edge[N, E]) -> String)?) -> String
 pub fn[N : Eq, E] Graph::union(Self[N, E], Self[N, E]) -> Self[N, E]
 pub fn[N, M : Eq, E, F] Graph::view(Self[N, E], node~ : (N) -> M, edge~ : (Edge[N, E]) -> F) -> Self[M, F]

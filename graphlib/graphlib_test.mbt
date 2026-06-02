@@ -19,8 +19,26 @@ test "graph construction is persistent and deterministic" {
   assert_true(graph.has_node(1))
   assert_true(graph.has_edge(1, 2))
   assert_true(graph.edge(1, 2).map(e => e.label) == Some("edge"))
+  match graph.edge(1, 2) {
+    Some(edge) => {
+      assert_true(edge.src() == 1)
+      assert_true(edge.dst() == 2)
+      assert_true(edge.label() == "edge")
+    }
+    None => fail("expected graph edge")
+  }
+  let created : @graphlib.Edge[Int, String] = @graphlib.Edge::create(
+    3, 4, "created",
+  )
+  assert_true(created.src() == 3)
+  assert_true(created.dst() == 4)
+  assert_true(created.label() == "created")
   assert_true(graph.successors(1) == [2])
+  assert_true(graph.succs(1) == [2])
   assert_true(graph.predecessors(2) == [1])
+  assert_true(graph.preds(2) == [1])
+  assert_true(graph.outputs(1).map(edge => edge.label()) == ["edge"])
+  assert_true(graph.inputs(2).map(edge => edge.label()) == ["edge"])
 }
 
 ///|

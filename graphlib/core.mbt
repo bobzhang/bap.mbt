@@ -321,6 +321,11 @@ pub fn[N : Eq, E] Graph::successors(self : Graph[N, E], node : N) -> Array[N] {
 }
 
 ///|
+pub fn[N : Eq, E] Graph::succs(self : Graph[N, E], node : N) -> Array[N] {
+  self.successors(node)
+}
+
+///|
 pub fn[N : Eq, E] Graph::predecessors(self : Graph[N, E], node : N) -> Array[N] {
   self.edges.filter_map(edge => {
     if edge.dst == node {
@@ -332,6 +337,11 @@ pub fn[N : Eq, E] Graph::predecessors(self : Graph[N, E], node : N) -> Array[N] 
 }
 
 ///|
+pub fn[N : Eq, E] Graph::preds(self : Graph[N, E], node : N) -> Array[N] {
+  self.predecessors(node)
+}
+
+///|
 pub fn[N : Eq, E] Graph::out_edges(
   self : Graph[N, E],
   node : N,
@@ -340,11 +350,27 @@ pub fn[N : Eq, E] Graph::out_edges(
 }
 
 ///|
+pub fn[N : Eq, E] Graph::outputs(
+  self : Graph[N, E],
+  node : N,
+) -> Array[Edge[N, E]] {
+  self.out_edges(node)
+}
+
+///|
 pub fn[N : Eq, E] Graph::in_edges(
   self : Graph[N, E],
   node : N,
 ) -> Array[Edge[N, E]] {
   self.edges.filter(edge => edge.dst == node)
+}
+
+///|
+pub fn[N : Eq, E] Graph::inputs(
+  self : Graph[N, E],
+  node : N,
+) -> Array[Edge[N, E]] {
+  self.in_edges(node)
 }
 
 ///|

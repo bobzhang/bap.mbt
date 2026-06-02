@@ -27,6 +27,26 @@ pub fn[N, E] Edge::new(src~ : N, dst~ : N, label~ : E) -> Edge[N, E] {
 }
 
 ///|
+pub fn[N, E] Edge::create(src : N, dst : N, label : E) -> Edge[N, E] {
+  Edge::new(src~, dst~, label~)
+}
+
+///|
+pub fn[N, E] Edge::src(self : Edge[N, E]) -> N {
+  self.src
+}
+
+///|
+pub fn[N, E] Edge::dst(self : Edge[N, E]) -> N {
+  self.dst
+}
+
+///|
+pub fn[N, E] Edge::label(self : Edge[N, E]) -> E {
+  self.label
+}
+
+///|
 struct GraphPath[E] {
   edges_value : Array[E]
   weight_value : Int

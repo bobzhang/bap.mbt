@@ -351,6 +351,12 @@ pub fn Label::persistent() -> @knowledge.Persistent[Label] {
   let aliases_codec = @knowledge.Persistent::array(
     @knowledge.Persistent::string(),
   )
+  let possible_names_codec = @knowledge.Opinions::persistent(
+    opt_string_codec,
+    empty=None,
+    equal=possible_label_name_equal,
+    inspect=inspect_possible_label_name,
+  )
   let bool_codec = @knowledge.Persistent::bool()
   @knowledge.Persistent::convert(
     to_persistent=label => {
@@ -364,14 +370,17 @@ pub fn Label::persistent() -> @knowledge.Persistent[Label] {
         opt_language_codec.encode(label.encoding()),
         opt_semantics_codec.encode(label.semantics()),
         aliases_codec.encode(label.aliases()),
+        possible_names_codec.encode(label.possible_name_opinions()),
         bool_codec.encode(label.is_valid()),
         bool_codec.encode(label.is_subroutine()),
       ]
     },
     of_persistent=fields => {
-      match persistent_decode_fields(fields, 11, "label") {
-        Ok(_) => ()
-        Err(reason) => return Err(reason)
+      let has_possible_names = fields.length() == 12
+      if fields.length() != 11 && fields.length() != 12 {
+        return Err(
+          "invalid persistent label encoding: expected 11 or 12 fields, got \{fields.length()}",
+        )
       }
       let id = match int_codec.decode(fields[0]) {
         Ok(value) => value
@@ -409,17 +418,27 @@ pub fn Label::persistent() -> @knowledge.Persistent[Label] {
         Ok(value) => value
         Err(reason) => return Err(reason)
       }
-      let valid = match bool_codec.decode(fields[9]) {
+      let possible_names = if has_possible_names {
+        match possible_names_codec.decode(fields[9]) {
+          Ok(value) => value
+          Err(reason) => return Err(reason)
+        }
+      } else {
+        empty_possible_label_names()
+      }
+      let valid_index = if has_possible_names { 10 } else { 9 }
+      let subroutine_index = if has_possible_names { 11 } else { 10 }
+      let valid = match bool_codec.decode(fields[valid_index]) {
         Ok(value) => value
         Err(reason) => return Err(reason)
       }
-      let subroutine = match bool_codec.decode(fields[10]) {
+      let subroutine = match bool_codec.decode(fields[subroutine_index]) {
         Ok(value) => value
         Err(reason) => return Err(reason)
       }
       ensure_label_counter_at_least(id)
-      Ok(
-        Label::make(
+      Ok({
+        ..Label::make(
           id~,
           target?,
           unit?,
@@ -432,7 +451,8 @@ pub fn Label::persistent() -> @knowledge.Persistent[Label] {
           is_valid=valid,
           is_subroutine=subroutine,
         ),
-      )
+        possible_names_value: possible_names,
+      })
     },
     persistent_string_fields(),
   )

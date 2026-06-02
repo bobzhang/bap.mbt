@@ -623,6 +623,27 @@ test "translated BAP opinion domains resolve by agent reliability" {
     Some(index) => assert_true(listed_opinions.entries()[index].1.length() == 2)
     None => fail("missing helper opinion from list")
   }
+  assert_true(@knowledge.Agent::read(weak.id()).id() == weak.id())
+  match
+    @knowledge.Agent::persistent().decode(
+      @knowledge.Agent::persistent().encode(strong),
+    ) {
+    Ok(agent) => assert_true(agent.id() == strong.id())
+    Err(reason) => fail(reason)
+  }
+  let opinion_codec = @knowledge.Opinions::persistent(
+    @knowledge.Persistent::optional(@knowledge.Persistent::string()),
+    empty=empty_name,
+    equal=optional_string_equal,
+    inspect=inspect_optional_string,
+  )
+  match opinion_codec.decode(opinion_codec.encode(listed_opinions)) {
+    Ok(decoded) => {
+      assert_true(decoded.choice() == Some("main"))
+      assert_true(decoded.entries() == listed_opinions.entries())
+    }
+    Err(reason) => fail(reason)
+  }
   assert_true(domain.order(weak_opinion, strong_opinion) == Less)
   assert_true(strong_opinion.choice() == Some("main"))
   inspect(strong_opinion.inspect(), content="[some(helper), some(main)]")

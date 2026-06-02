@@ -186,6 +186,57 @@ pub fn[T] Opinions::entries(self : Opinions[T]) -> Array[(T, Array[Agent])] {
 }
 
 ///|
+fn[T] persistent_opinion_entry(
+  value_codec : Persistent[T],
+) -> Persistent[(T, Array[Agent])] {
+  let fields_codec = Persistent::array(Persistent::string())
+  let agents_codec = Persistent::array(Agent::persistent())
+  Persistent::convert(
+    to_persistent=entry => {
+      [value_codec.encode(entry.0), agents_codec.encode(entry.1)]
+    },
+    of_persistent=fields => {
+      if fields.length() != 2 {
+        return Err(
+          "invalid persistent opinion entry encoding: expected 2 fields, got \{fields.length()}",
+        )
+      }
+      let value = match value_codec.decode(fields[0]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let agents = match agents_codec.decode(fields[1]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      Ok((value, agents))
+    },
+    fields_codec,
+  )
+}
+
+///|
+pub fn[T] Opinions::persistent(
+  value : Persistent[T],
+  empty~ : T,
+  equal~ : (T, T) -> Bool,
+  inspect~ : (T) -> String,
+) -> Persistent[Opinions[T]] {
+  let entries_codec = Persistent::array(persistent_opinion_entry(value))
+  Persistent::convert(
+    to_persistent=opinions => opinions.entries(),
+    of_persistent=entries => {
+      let mut opinions = Opinions::empty(empty~, equal~, inspect~)
+      for entry in entries {
+        opinions = opinions.add_entry(entry.0, entry.1)
+      }
+      Ok(opinions)
+    },
+    entries_codec,
+  )
+}
+
+///|
 pub fn[T] Opinions::inspect(self : Opinions[T]) -> String {
   "[\{[ for entry in self.entries_value => (self.inspect_fn)(entry.value) ].join(", ")}]"
 }

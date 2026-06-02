@@ -186,6 +186,11 @@ fn assert_label_persistent_round_trip(
             label,
           )
           assert_true(decoded.aliases() == value.aliases())
+          assert_true(decoded.possible_name() == value.possible_name())
+          assert_true(
+            decoded.possible_name_opinions().entries() ==
+            value.possible_name_opinions().entries(),
+          )
           assert_true(decoded.is_valid() == value.is_valid())
           assert_true(decoded.is_subroutine() == value.is_subroutine())
         }

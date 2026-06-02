@@ -16,6 +16,8 @@ type Agent derive(Eq, @debug.Debug)
 pub fn Agent::desc(Self) -> String
 pub fn Agent::id(Self) -> String
 pub fn Agent::name(Self) -> Name
+pub fn Agent::persistent() -> Persistent[Self]
+pub fn Agent::read(String, pkg? : String) -> Self
 pub fn Agent::register(String, pkg? : String, desc? : String, reliability? : AgentReliability) -> Result[Self, String]
 pub fn Agent::registry() -> Array[Self]
 pub fn Agent::reliability(Self) -> AgentReliability
@@ -134,6 +136,7 @@ pub fn[T] Opinions::is_empty(Self[T]) -> Bool
 pub fn[T] Opinions::join(Self[T], Self[T]) -> Self[T]
 pub fn[T] Opinions::merge(Self[T], Self[T]) -> Self[T]
 pub fn[T] Opinions::of_list(Array[(Agent, T)], empty~ : T, equal~ : (T, T) -> Bool, inspect~ : (T) -> String) -> Self[T]
+pub fn[T] Opinions::persistent(Persistent[T], empty~ : T, equal~ : (T, T) -> Bool, inspect~ : (T) -> String) -> Persistent[Self[T]]
 pub fn[T] Opinions::total_weight(Self[T]) -> Int
 
 pub(all) enum PartialOrder {

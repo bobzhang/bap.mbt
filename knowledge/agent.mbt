@@ -85,6 +85,20 @@ pub fn Agent::id(self : Agent) -> String {
 }
 
 ///|
+pub fn Agent::read(id : String, pkg? : String) -> Agent {
+  { id_value: Name::read(id, pkg?).show() }
+}
+
+///|
+pub fn Agent::persistent() -> Persistent[Agent] {
+  Persistent::convert(
+    to_persistent=agent => agent.id(),
+    of_persistent=id => Ok(Agent::read(id)),
+    Persistent::string(),
+  )
+}
+
+///|
 pub fn Agent::registry() -> Array[Agent] {
   let agents = []
   agent_registry.each((id, _) => agents.push({ id_value: id }))

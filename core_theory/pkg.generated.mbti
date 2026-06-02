@@ -156,15 +156,18 @@ pub fn EffectSort::wmem() -> Self
 pub fn EffectSort::wreg() -> Self
 
 pub(all) enum Endianness {
+  UnknownEndianness
   LittleEndian
   BigEndian
   BiEndian
 } derive(Eq, @debug.Debug)
 pub fn Endianness::bi() -> Self
 pub fn Endianness::compare(Self, Self) -> Int
+pub fn Endianness::domain() -> @knowledge.Domain[Self]
 pub fn Endianness::eb() -> Self
 pub fn Endianness::equal(Self, Self) -> Bool
 pub fn Endianness::hash(Self) -> Int
+pub fn Endianness::is_unknown(Self) -> Bool
 pub fn Endianness::le() -> Self
 pub fn Endianness::members() -> Array[Self]
 pub fn Endianness::name(Self) -> @knowledge.Name
@@ -172,6 +175,7 @@ pub fn Endianness::of_string(String) -> Self?
 pub fn Endianness::persistent() -> @knowledge.Persistent[Self]
 pub fn Endianness::read(String, pkg? : String) -> Result[Self, String]
 pub fn Endianness::to_string(Self) -> String
+pub fn Endianness::unknown() -> Self
 
 pub(all) enum Fabi {
   UnknownFabi
@@ -393,6 +397,7 @@ pub fn ProgramUnitFacts::source(Self) -> @knowledge.FactTable[Unit, Source?]
 pub fn ProgramUnitFacts::target(Self) -> @knowledge.FactTable[Unit, Target]
 
 pub(all) enum Role {
+  UnknownRole
   General
   SpecialRegister
   AliasRegister
@@ -434,6 +439,7 @@ pub fn Role::carry_flag() -> Self
 pub fn Role::compare(Self, Self) -> Int
 pub fn Role::constant() -> Self
 pub fn Role::control() -> Self
+pub fn Role::domain() -> @knowledge.Domain[Self]
 pub fn Role::equal(Self, Self) -> Bool
 pub fn Role::floating() -> Self
 pub fn Role::frame_pointer() -> Self
@@ -444,6 +450,7 @@ pub fn Role::hardware() -> Self
 pub fn Role::hash(Self) -> Int
 pub fn Role::index() -> Self
 pub fn Role::integer() -> Self
+pub fn Role::is_unknown(Self) -> Bool
 pub fn Role::link() -> Self
 pub fn Role::members() -> Array[Self]
 pub fn Role::name(Self) -> @knowledge.Name
@@ -465,6 +472,7 @@ pub fn Role::system() -> Self
 pub fn Role::thread() -> Self
 pub fn Role::thumb() -> Self
 pub fn Role::to_string(Self) -> String
+pub fn Role::unknown() -> Self
 pub fn Role::vector() -> Self
 pub fn Role::zero() -> Self
 pub fn Role::zero_flag() -> Self

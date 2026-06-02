@@ -1,9 +1,15 @@
 ///|
 pub(all) enum Endianness {
+  UnknownEndianness
   LittleEndian
   BigEndian
   BiEndian
 } derive(Eq, Debug)
+
+///|
+pub fn Endianness::unknown() -> Endianness {
+  UnknownEndianness
+}
 
 ///|
 pub fn Endianness::le() -> Endianness {
@@ -118,6 +124,7 @@ struct TargetOptions {
 ///|
 pub fn Endianness::to_string(self : Endianness) -> String {
   match self {
+    UnknownEndianness => "unknown"
     LittleEndian => "little"
     BigEndian => "big"
     BiEndian => "bi"
@@ -127,6 +134,7 @@ pub fn Endianness::to_string(self : Endianness) -> String {
 ///|
 pub fn Endianness::of_string(text : String) -> Endianness? {
   match text.to_lower() {
+    "unknown" => Some(UnknownEndianness)
     "little" | "little-endian" | "le" => Some(LittleEndian)
     "big" | "big-endian" | "be" => Some(BigEndian)
     "bi" | "bi-endian" | "both" => Some(BiEndian)
@@ -135,11 +143,17 @@ pub fn Endianness::of_string(text : String) -> Endianness? {
 }
 
 ///|
+pub fn Endianness::is_unknown(self : Endianness) -> Bool {
+  self == UnknownEndianness
+}
+
+///|
 fn Endianness::rank(self : Endianness) -> Int {
   match self {
-    LittleEndian => 0
-    BigEndian => 1
-    BiEndian => 2
+    UnknownEndianness => 0
+    LittleEndian => 1
+    BigEndian => 2
+    BiEndian => 3
   }
 }
 
@@ -156,6 +170,7 @@ pub fn Endianness::compare(self : Endianness, other : Endianness) -> Int {
 ///|
 pub fn Endianness::name(self : Endianness) -> @knowledge.Name {
   match self {
+    UnknownEndianness => unknown_target_enum_name()
     LittleEndian => core_target_enum_name("le")
     BigEndian => core_target_enum_name("eb")
     BiEndian => core_target_enum_name("bi")
@@ -169,7 +184,7 @@ pub fn Endianness::hash(self : Endianness) -> Int {
 
 ///|
 pub fn Endianness::members() -> Array[Endianness] {
-  [LittleEndian, BigEndian, BiEndian]
+  [UnknownEndianness, LittleEndian, BigEndian, BiEndian]
 }
 
 ///|
@@ -189,6 +204,11 @@ pub fn Endianness::read(
 ///|
 pub fn Endianness::persistent() -> @knowledge.Persistent[Endianness] {
   target_enum_persistent(value => value.name(), text => Endianness::read(text))
+}
+
+///|
+pub fn Endianness::domain() -> @knowledge.Domain[Endianness] {
+  target_enum_domain("endianness", UnknownEndianness, value => value.to_string())
 }
 
 ///|
@@ -1024,6 +1044,7 @@ pub fn TargetOptions::to_string(self : TargetOptions) -> String {
 
 ///|
 pub(all) enum Role {
+  UnknownRole
   General
   SpecialRegister
   AliasRegister
@@ -1058,6 +1079,11 @@ pub(all) enum Role {
   ParityFlag
   ThumbMode
 } derive(Eq, Debug)
+
+///|
+pub fn Role::unknown() -> Role {
+  UnknownRole
+}
 
 ///|
 pub fn Role::general() -> Role {
@@ -1222,6 +1248,7 @@ pub fn Role::thumb() -> Role {
 ///|
 pub fn Role::to_string(self : Role) -> String {
   match self {
+    UnknownRole => "unknown"
     General => "general"
     SpecialRegister => "special"
     AliasRegister => "alias"
@@ -1261,6 +1288,7 @@ pub fn Role::to_string(self : Role) -> String {
 ///|
 pub fn Role::of_string(text : String) -> Role? {
   match text.to_lower() {
+    "unknown" => Some(UnknownRole)
     "general" => Some(General)
     "special" | "special-register" => Some(SpecialRegister)
     "alias" | "alias-register" => Some(AliasRegister)
@@ -1299,41 +1327,47 @@ pub fn Role::of_string(text : String) -> Role? {
 }
 
 ///|
+pub fn Role::is_unknown(self : Role) -> Bool {
+  self == UnknownRole
+}
+
+///|
 fn Role::rank(self : Role) -> Int {
   match self {
-    General => 0
-    SpecialRegister => 1
-    AliasRegister => 2
-    PseudoRegister => 3
-    IntegerRegister => 4
-    FloatingRegister => 5
-    VectorRegister => 6
-    IndexRegister => 7
-    SegmentRegister => 8
-    StackPointer => 9
-    FramePointer => 10
-    ProgramCounter => 11
-    Status => 12
-    ControlRegister => 13
-    SystemRegister => 14
-    HardwareRegister => 15
-    Constant => 16
-    ZeroRegister => 17
-    OneRegister => 18
-    LinkRegister => 19
-    ThreadPointer => 20
-    PrivilegedRegister => 21
-    Argument => 22
-    ResultRegister => 23
-    CallerSaved => 24
-    CalleeSaved => 25
-    Reserved => 26
-    ZeroFlag => 27
-    CarryFlag => 28
-    SignFlag => 29
-    OverflowFlag => 30
-    ParityFlag => 31
-    ThumbMode => 32
+    UnknownRole => 0
+    General => 1
+    SpecialRegister => 2
+    AliasRegister => 3
+    PseudoRegister => 4
+    IntegerRegister => 5
+    FloatingRegister => 6
+    VectorRegister => 7
+    IndexRegister => 8
+    SegmentRegister => 9
+    StackPointer => 10
+    FramePointer => 11
+    ProgramCounter => 12
+    Status => 13
+    ControlRegister => 14
+    SystemRegister => 15
+    HardwareRegister => 16
+    Constant => 17
+    ZeroRegister => 18
+    OneRegister => 19
+    LinkRegister => 20
+    ThreadPointer => 21
+    PrivilegedRegister => 22
+    Argument => 23
+    ResultRegister => 24
+    CallerSaved => 25
+    CalleeSaved => 26
+    Reserved => 27
+    ZeroFlag => 28
+    CarryFlag => 29
+    SignFlag => 30
+    OverflowFlag => 31
+    ParityFlag => 32
+    ThumbMode => 33
   }
 }
 
@@ -1349,7 +1383,10 @@ pub fn Role::compare(self : Role, other : Role) -> Int {
 
 ///|
 pub fn Role::name(self : Role) -> @knowledge.Name {
-  core_target_enum_name(self.to_string())
+  match self {
+    UnknownRole => unknown_target_enum_name()
+    _ => core_target_enum_name(self.to_string())
+  }
 }
 
 ///|
@@ -1360,6 +1397,7 @@ pub fn Role::hash(self : Role) -> Int {
 ///|
 pub fn Role::members() -> Array[Role] {
   [
+    UnknownRole,
     General,
     SpecialRegister,
     AliasRegister,
@@ -1410,6 +1448,11 @@ pub fn Role::read(text : String, pkg? : String) -> Result[Role, String] {
 ///|
 pub fn Role::persistent() -> @knowledge.Persistent[Role] {
   target_enum_persistent(value => value.name(), text => Role::read(text))
+}
+
+///|
+pub fn Role::domain() -> @knowledge.Domain[Role] {
+  target_enum_domain("role", UnknownRole, value => value.to_string())
 }
 
 ///|
@@ -2216,6 +2259,7 @@ fn find_exact_target_in(
 ///|
 fn target_role_names(role : Role) -> Array[String] {
   match role {
+    UnknownRole => []
     General => []
     SpecialRegister | AliasRegister | PseudoRegister => []
     IntegerRegister
@@ -2289,6 +2333,7 @@ fn x86_system_flag_role_names() -> Array[String] {
 ///|
 fn x86_64_role_names(role : Role) -> Array[String] {
   match role {
+    UnknownRole => []
     General => []
     SpecialRegister | AliasRegister | PseudoRegister => []
     IntegerRegister =>
@@ -2341,6 +2386,7 @@ fn x86_64_role_names(role : Role) -> Array[String] {
 ///|
 fn x86_16_role_names(role : Role) -> Array[String] {
   match role {
+    UnknownRole => []
     General => []
     SpecialRegister | AliasRegister | PseudoRegister => []
     IntegerRegister =>
@@ -2388,6 +2434,7 @@ fn x86_32_cpu_role_names(
   xmm~ : Bool,
 ) -> Array[String] {
   match role {
+    UnknownRole => []
     FloatingRegister => {
       let groups = []
       if st {
@@ -2410,6 +2457,7 @@ fn x86_32_cpu_role_names(
 ///|
 fn x86_32_role_names(role : Role) -> Array[String] {
   match role {
+    UnknownRole => []
     General => []
     SpecialRegister | AliasRegister | PseudoRegister => []
     IntegerRegister =>
@@ -2457,6 +2505,7 @@ fn x86_32_role_names(role : Role) -> Array[String] {
 ///|
 fn arm32_role_names(fp~ : Bool, role : Role) -> Array[String] {
   match role {
+    UnknownRole => []
     General => []
     SpecialRegister | AliasRegister | PseudoRegister => []
     IntegerRegister =>
@@ -2498,6 +2547,7 @@ fn arm32_status_flag_role_names() -> Array[String] {
 ///|
 fn aarch64_role_names(role : Role) -> Array[String] {
   match role {
+    UnknownRole => []
     General => []
     SpecialRegister | AliasRegister => []
     PseudoRegister => ["xzr", "zr", "wzr"]
@@ -2562,6 +2612,7 @@ fn aarch64_status_flag_role_names() -> Array[String] {
 ///|
 fn mips_role_names(bits : Int, role : Role) -> Array[String] {
   match role {
+    UnknownRole => []
     General => []
     SpecialRegister | AliasRegister => []
     PseudoRegister => ["zero", "r0"]
@@ -2604,6 +2655,7 @@ fn mips_role_names(bits : Int, role : Role) -> Array[String] {
 ///|
 fn powerpc_role_names(role : Role) -> Array[String] {
   match role {
+    UnknownRole => []
     General => []
     SpecialRegister | AliasRegister | PseudoRegister => []
     IntegerRegister => role_names("r", 0, 31)
@@ -2661,6 +2713,7 @@ fn powerpc_role_names(role : Role) -> Array[String] {
 ///|
 fn riscv_role_names(role : Role) -> Array[String] {
   match role {
+    UnknownRole => []
     General => []
     SpecialRegister | AliasRegister => []
     PseudoRegister => ["zero", "x0", "pc"]
@@ -2724,6 +2777,7 @@ fn riscv_role_names(role : Role) -> Array[String] {
 ///|
 fn sparc_role_names(role : Role) -> Array[String] {
   match role {
+    UnknownRole => []
     General => []
     SpecialRegister | AliasRegister | PseudoRegister => []
     IntegerRegister =>
@@ -2758,6 +2812,7 @@ fn sparc_role_names(role : Role) -> Array[String] {
 ///|
 fn systemz_role_names(role : Role) -> Array[String] {
   match role {
+    UnknownRole => []
     General => []
     SpecialRegister | AliasRegister | PseudoRegister => []
     IntegerRegister => role_names("r", 0, 15)

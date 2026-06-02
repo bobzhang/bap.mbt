@@ -476,20 +476,43 @@ test "targets inherit defaults and match ancestry" {
   )
   let little = @core_theory.Endianness::of_string("le").unwrap()
   let big = @core_theory.Endianness::of_string("be").unwrap()
+  assert_true(@core_theory.Endianness::unknown().is_unknown())
   assert_true(@core_theory.Endianness::le() == LittleEndian)
   assert_true(@core_theory.Endianness::eb() == BigEndian)
   assert_true(@core_theory.Endianness::bi() == BiEndian)
+  assert_true(
+    @core_theory.Endianness::of_string("unknown") == Some(UnknownEndianness),
+  )
+  assert_true(!little.is_unknown())
   assert_true(little.equal(little))
   assert_true(little.compare(big) < 0)
   assert_true(little.name().show() == "core:le")
+  assert_true(@core_theory.Endianness::unknown().name().show() == ":unknown")
   assert_true(little.hash() == little.name().hash())
+  assert_true(@core_theory.Endianness::members().contains(UnknownEndianness))
   assert_true(@core_theory.Endianness::members().contains(BiEndian))
   let endian_codec = @core_theory.Endianness::persistent()
   assert_true(endian_codec.encode(little) == "core:le")
+  assert_persistent_round_trip(
+    Some(endian_codec),
+    UnknownEndianness,
+    "endianness",
+  )
   assert_persistent_round_trip(Some(endian_codec), BiEndian, "endianness")
   assert_true(endian_codec.decode("le") is Err(_))
+  let endian_domain = @core_theory.Endianness::domain()
+  assert_true(endian_domain.empty() == Some(UnknownEndianness))
+  assert_true(endian_domain.order(UnknownEndianness, LittleEndian) == Less)
+  assert_true(
+    endian_domain.join(UnknownEndianness, LittleEndian) == Ok(LittleEndian),
+  )
+  assert_true(endian_domain.join(LittleEndian, BigEndian) is Err(_))
   match @core_theory.Endianness::read("core:eb") {
     Ok(value) => assert_true(value == BigEndian)
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.Endianness::read(":unknown") {
+    Ok(value) => assert_true(value == UnknownEndianness)
     Err(reason) => fail(reason)
   }
   match @core_theory.Endianness::read("le", pkg="core") {
@@ -1640,6 +1663,8 @@ test "target role helpers classify common architecture variables" {
   let zero_flag = @core_theory.Role::of_string("zero-flag").unwrap()
   let program_counter = @core_theory.Role::of_string("pc").unwrap()
   let thumb_role = @core_theory.Role::of_string("thumb").unwrap()
+  assert_true(@core_theory.Role::unknown().is_unknown())
+  assert_true(@core_theory.Role::unknown().name().show() == ":unknown")
   assert_true(stack_pointer.to_string() == "stack-pointer")
   assert_true(alias_role.to_string() == "alias")
   assert_true(index_role.to_string() == "index")
@@ -1689,18 +1714,32 @@ test "target role helpers classify common architecture variables" {
   )
   assert_true(@core_theory.Role::of_string("sign-flag") == Some(SignFlag))
   assert_true(@core_theory.Role::of_string("thumb-mode") == Some(ThumbMode))
+  assert_true(@core_theory.Role::of_string("unknown") == Some(UnknownRole))
+  assert_true(!argument.is_unknown())
+  assert_true(@core_theory.Role::unknown().compare(argument) < 0)
   assert_true(argument.equal(argument))
   assert_true(argument.compare(result) < 0)
   assert_true(argument.name().show() == "core:function-argument")
   assert_true(result.name().show() == "core:function-return")
   assert_true(program_counter.name().show() == "core:program-counter")
   assert_true(argument.hash() == argument.name().hash())
+  assert_true(@core_theory.Role::members().contains(UnknownRole))
   assert_true(@core_theory.Role::members().contains(ResultRegister))
   assert_true(@core_theory.Role::members().contains(ThumbMode))
   let role_codec = @core_theory.Role::persistent()
   assert_true(role_codec.encode(argument) == "core:function-argument")
+  assert_persistent_round_trip(Some(role_codec), UnknownRole, "role")
   assert_persistent_round_trip(Some(role_codec), ThumbMode, "role")
   assert_true(role_codec.decode("function-argument") is Err(_))
+  let role_domain = @core_theory.Role::domain()
+  assert_true(role_domain.empty() == Some(UnknownRole))
+  assert_true(role_domain.order(UnknownRole, Argument) == Less)
+  assert_true(role_domain.join(UnknownRole, Argument) == Ok(Argument))
+  assert_true(role_domain.join(Argument, ResultRegister) is Err(_))
+  match @core_theory.Role::read(":unknown") {
+    Ok(value) => assert_true(value == UnknownRole)
+    Err(reason) => fail(reason)
+  }
   match @core_theory.Role::read("core:function-return") {
     Ok(value) => assert_true(value == ResultRegister)
     Err(reason) => fail(reason)

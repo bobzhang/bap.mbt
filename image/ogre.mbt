@@ -183,7 +183,7 @@ pub fn OgreDoc::from_target(target : @core_theory.Target) -> OgreDoc {
     LittleEndian =>
       facts.push(ogre_fact("is-little-endian", [("flag", "true")]))
     BigEndian => facts.push(ogre_fact("is-little-endian", [("flag", "false")]))
-    BiEndian => ()
+    BiEndian | UnknownEndianness => ()
   }
   if target.system() != UnknownSystem {
     facts.push(ogre_fact("system", [("name", target.system().to_string())]))

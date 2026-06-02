@@ -360,6 +360,22 @@ test "translated BAP depth first search starts requested tree then remaining for
 }
 
 ///|
+test "translated BAP postorder traverse covers whole forest" {
+  let graph : @graphlib.Graph[Int, String] = @graphlib.Graph::create(
+    edges=[(0, 1, "left"), (2, 3, "right")],
+    nodes=[4],
+  )
+  assert_true(graph.postorder(2) == [3, 2])
+  assert_true(graph.postorder_traverse() == [1, 0, 3, 2, 4])
+  assert_true(graph.reverse_postorder_traverse() == [4, 2, 3, 0, 1])
+  assert_true(graph.postorder_traverse(start=Some(2)) == [3, 2, 1, 0, 4])
+  assert_true(graph.postorder_traverse(start=Some(99)) == [1, 0, 3, 2, 4])
+  assert_true(
+    graph.postorder_traverse(rev=true, start=Some(3)) == [2, 3, 0, 1, 4],
+  )
+}
+
+///|
 test "dfs numbering exposes BAP timestamp and rpost invariants" {
   let graph = sample_graph()
   let numbering = graph.dfs_numbering(0)

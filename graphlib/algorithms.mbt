@@ -325,6 +325,31 @@ pub fn[N : Hash + Eq, E] Graph::postorder(
 }
 
 ///|
+pub fn[N : Hash + Eq, E] Graph::postorder_traverse(
+  self : Graph[N, E],
+  rev? : Bool = false,
+  start? : N? = None,
+) -> Array[N] {
+  self.depth_first_search(init=([] : Array[N]), rev~, start~, leave_node=(
+    _rpost,
+    node,
+    order,
+  ) => {
+    order.push(node)
+    order
+  })
+}
+
+///|
+pub fn[N : Hash + Eq, E] Graph::reverse_postorder_traverse(
+  self : Graph[N, E],
+  rev? : Bool = false,
+  start? : N? = None,
+) -> Array[N] {
+  self.postorder_traverse(rev~, start~).rev()
+}
+
+///|
 priv struct ShortestPathItem[N, E] {
   total : Int
   node : N

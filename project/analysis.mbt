@@ -24,7 +24,7 @@ struct ProjectAnalysisArgs[T] {
 
 ///|
 struct ProjectAnalysisInfo {
-  name_value : String
+  name_value : @knowledge.Name
   description_value : String
   grammar_value : Array[String]
 }
@@ -472,7 +472,19 @@ pub fn[T] ProjectAnalysisArgs::grammar_string(
 
 ///|
 pub fn ProjectAnalysisInfo::name(self : ProjectAnalysisInfo) -> String {
+  self.name_value.unqualified()
+}
+
+///|
+pub fn ProjectAnalysisInfo::qualified_name(
+  self : ProjectAnalysisInfo,
+) -> @knowledge.Name {
   self.name_value
+}
+
+///|
+pub fn ProjectAnalysisInfo::pkg(self : ProjectAnalysisInfo) -> String {
+  self.name_value.pkg()
 }
 
 ///|
@@ -497,12 +509,13 @@ pub fn ProjectAnalysisInfo::grammar_string(
 ///|
 pub fn[T] ProjectAnalysis::create(
   name~ : String,
+  pkg? : String,
   description? : String,
   args~ : ProjectAnalysisArgs[T],
   run~ : (T) -> Result[Unit, String],
 ) -> ProjectAnalysis {
   let info = {
-    name_value: name,
+    name_value: @knowledge.Name::read(name, pkg?),
     description_value: match description {
       Some(text) => text
       None => ""
@@ -523,6 +536,18 @@ pub fn[T] ProjectAnalysis::create(
 ///|
 pub fn ProjectAnalysis::name(self : ProjectAnalysis) -> String {
   self.info_value.name()
+}
+
+///|
+pub fn ProjectAnalysis::qualified_name(
+  self : ProjectAnalysis,
+) -> @knowledge.Name {
+  self.info_value.qualified_name()
+}
+
+///|
+pub fn ProjectAnalysis::pkg(self : ProjectAnalysis) -> String {
+  self.info_value.pkg()
 }
 
 ///|
@@ -555,7 +580,7 @@ pub fn ProjectAnalysis::apply(
 
 ///|
 pub fn register_analysis(analysis : ProjectAnalysis) -> Result[Unit, String] {
-  let name = analysis.name()
+  let name = analysis.qualified_name().show()
   if project_analysis_registry.contains(name) {
     Err("project analysis \{name} is already registered")
   } else {
@@ -565,8 +590,8 @@ pub fn register_analysis(analysis : ProjectAnalysis) -> Result[Unit, String] {
 }
 
 ///|
-pub fn find_analysis(name : String) -> ProjectAnalysis? {
-  project_analysis_registry.get(name)
+pub fn find_analysis(name : String, pkg? : String) -> ProjectAnalysis? {
+  project_analysis_registry.get(@knowledge.Name::read(name, pkg?).show())
 }
 
 ///|
@@ -580,8 +605,9 @@ pub fn registered_analyses() -> Array[ProjectAnalysisInfo] {
 pub fn apply_analysis(
   name : String,
   inputs : Array[String],
+  pkg? : String,
 ) -> Result[Unit, String] {
-  match find_analysis(name) {
+  match find_analysis(name, pkg?) {
     None => Err("unknown project analysis \{name}")
     Some(analysis) => analysis.apply(inputs)
   }

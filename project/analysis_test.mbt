@@ -107,6 +107,11 @@ test "project analyses register find and apply typed callbacks" {
   assert_true(@project.register_analysis(analysis) is Err(_))
   match @project.find_analysis("unit-analysis-registry") {
     Some(found) => {
+      assert_true(found.name() == "unit-analysis-registry")
+      assert_true(found.pkg() == "user")
+      assert_true(
+        found.qualified_name().show() == "user:unit-analysis-registry",
+      )
       assert_true(found.description() == "unit test analysis")
       assert_true(found.grammar_string() == "<string> [:dry-run]")
       match found.apply(["target", ":dry-run"]) {
@@ -120,5 +125,83 @@ test "project analyses register find and apply typed callbacks" {
     Ok(_) => assert_true(seen.val == "target:false")
     Err(reason) => fail(reason)
   }
+  let mut seen_info = false
+  for info in @project.registered_analyses() {
+    if info.name() == "unit-analysis-registry" {
+      seen_info = true
+      assert_true(info.pkg() == "user")
+      assert_true(info.qualified_name().show() == "user:unit-analysis-registry")
+    }
+  }
+  assert_true(seen_info)
   assert_true(@project.apply_analysis("missing-analysis", []) is Err(_))
+}
+
+///|
+test "project analyses support package-qualified lookup and apply" {
+  let left_seen : Ref[String] = Ref("")
+  let right_seen : Ref[String] = Ref("")
+  let args = @project.ProjectAnalysisArgs::one(
+    @project.ProjectAnalysisArg::string(),
+  )
+  let left = @project.ProjectAnalysis::create(
+    name="unit-packaged-analysis",
+    pkg="left",
+    args~,
+    run=value => {
+      left_seen.val = "L:" + value
+      Ok(())
+    },
+  )
+  let right = @project.ProjectAnalysis::create(
+    name="unit-packaged-analysis",
+    pkg="right",
+    args~,
+    run=value => {
+      right_seen.val = "R:" + value
+      Ok(())
+    },
+  )
+  match @project.register_analysis(left) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  match @project.register_analysis(right) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  assert_true(@project.register_analysis(left) is Err(_))
+  match @project.find_analysis("unit-packaged-analysis", pkg="left") {
+    Some(found) => {
+      assert_true(found.name() == "unit-packaged-analysis")
+      assert_true(found.pkg() == "left")
+      assert_true(
+        found.qualified_name().show() == "left:unit-packaged-analysis",
+      )
+      match found.apply(["alpha"]) {
+        Ok(_) => assert_true(left_seen.val == "L:alpha")
+        Err(reason) => fail(reason)
+      }
+    }
+    None => fail("left analysis was not registered")
+  }
+  match @project.find_analysis("right:unit-packaged-analysis") {
+    Some(found) => {
+      assert_true(found.pkg() == "right")
+      match found.apply(["beta"]) {
+        Ok(_) => assert_true(right_seen.val == "R:beta")
+        Err(reason) => fail(reason)
+      }
+    }
+    None => fail("right analysis was not registered")
+  }
+  assert_true(@project.find_analysis("unit-packaged-analysis") is None)
+  assert_true(
+    @project.apply_analysis("unit-packaged-analysis", ["gamma"]) is Err(_),
+  )
+  match
+    @project.apply_analysis("unit-packaged-analysis", ["gamma"], pkg="left") {
+    Ok(_) => assert_true(left_seen.val == "L:gamma")
+    Err(reason) => fail(reason)
+  }
 }

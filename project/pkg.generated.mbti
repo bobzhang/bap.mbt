@@ -12,7 +12,7 @@ import {
 }
 
 // Values
-pub fn apply_analysis(String, Array[String]) -> Result[Unit, String]
+pub fn apply_analysis(String, Array[String], pkg? : String) -> Result[Unit, String]
 
 pub fn available_input_loaders() -> Array[String]
 
@@ -22,7 +22,7 @@ pub fn disassembly_driver_names() -> Array[String]
 
 pub fn disassembly_drivers() -> Array[ProjectDisassemblyDriver]
 
-pub fn find_analysis(String) -> ProjectAnalysis?
+pub fn find_analysis(String, pkg? : String) -> ProjectAnalysis?
 
 pub fn find_brancher(String) -> ProjectBrancher?
 
@@ -186,12 +186,14 @@ pub fn Project::with_symbols(Self, Array[@image.Symbol]) -> Self
 
 type ProjectAnalysis
 pub fn ProjectAnalysis::apply(Self, Array[String]) -> Result[Unit, String]
-pub fn[T] ProjectAnalysis::create(name~ : String, description? : String, args~ : ProjectAnalysisArgs[T], run~ : (T) -> Result[Unit, String]) -> Self
+pub fn[T] ProjectAnalysis::create(name~ : String, pkg? : String, description? : String, args~ : ProjectAnalysisArgs[T], run~ : (T) -> Result[Unit, String]) -> Self
 pub fn ProjectAnalysis::description(Self) -> String
 pub fn ProjectAnalysis::grammar(Self) -> Array[String]
 pub fn ProjectAnalysis::grammar_string(Self) -> String
 pub fn ProjectAnalysis::info(Self) -> ProjectAnalysisInfo
 pub fn ProjectAnalysis::name(Self) -> String
+pub fn ProjectAnalysis::pkg(Self) -> String
+pub fn ProjectAnalysis::qualified_name(Self) -> @knowledge.Name
 
 type ProjectAnalysisArg[T]
 pub fn[T] ProjectAnalysisArg::argument(rule~ : String, description? : String, parse~ : (String) -> Result[T, String]) -> Self[T]
@@ -222,6 +224,8 @@ pub fn ProjectAnalysisInfo::description(Self) -> String
 pub fn ProjectAnalysisInfo::grammar(Self) -> Array[String]
 pub fn ProjectAnalysisInfo::grammar_string(Self) -> String
 pub fn ProjectAnalysisInfo::name(Self) -> String
+pub fn ProjectAnalysisInfo::pkg(Self) -> String
+pub fn ProjectAnalysisInfo::qualified_name(Self) -> @knowledge.Name
 
 type ProjectBrancher
 pub fn ProjectBrancher::create((@memory.Memory) -> Array[ProjectDisassemblyEdge]) -> Self

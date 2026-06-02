@@ -428,6 +428,11 @@ pub fn Source::create(
 }
 
 ///|
+pub fn Source::empty() -> Source {
+  Source::create()
+}
+
+///|
 pub fn Source::language(self : Source) -> Language {
   self.language_value
 }
@@ -1082,6 +1087,11 @@ pub fn Program::create(
     },
     target_value: target,
   }
+}
+
+///|
+pub fn Program::empty() -> Program {
+  Program::create()
 }
 
 ///|

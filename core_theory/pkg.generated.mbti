@@ -337,6 +337,7 @@ pub fn Program::add_label(Self, Label) -> Self
 pub fn Program::add_unit(Self, ProgramUnit) -> Self
 pub fn Program::compare(Self, Self) -> Int
 pub fn Program::create(units? : Array[ProgramUnit], labels? : Array[Label], target? : Target) -> Self
+pub fn Program::empty() -> Self
 pub fn Program::equal(Self, Self) -> Bool
 pub fn Program::labels(Self) -> Array[Label]
 pub fn Program::target(Self) -> Target?
@@ -535,6 +536,7 @@ type Source
 pub fn Source::code(Self) -> String
 pub fn Source::compare(Self, Self) -> Int
 pub fn Source::create(language? : Language, code? : String, file? : String) -> Self
+pub fn Source::empty() -> Self
 pub fn Source::equal(Self, Self) -> Bool
 pub fn Source::file(Self) -> String?
 pub fn Source::language(Self) -> Language

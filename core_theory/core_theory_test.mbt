@@ -2483,7 +2483,12 @@ test "program metadata tracks source compiler and units" {
     code="int main() { return 0; }",
     file="main.cc",
   )
+  let empty_source = @core_theory.Source::empty()
   let newer_source = source.with_code("long main() { return 0; }")
+  assert_true(empty_source.language().is_unknown())
+  assert_true(empty_source.code() == "")
+  assert_true(empty_source.file() is None)
+  assert_true(empty_source.equal(@core_theory.Source::create()))
   assert_true(source.language() == Cxx)
   assert_true(source.file() == Some("main.cc"))
   assert_true(source.equal(same_source))
@@ -2599,6 +2604,7 @@ test "program metadata tracks source compiler and units" {
   assert_true(label.target().matches("amd64"))
   assert_true(label.is_subroutine())
   let program = @core_theory.Program::create(units=[unit], labels=[label])
+  let empty_program = @core_theory.Program::empty()
   let same_program = @core_theory.Program::create(
     units=[unit],
     labels=[label],
@@ -2611,6 +2617,10 @@ test "program metadata tracks source compiler and units" {
   assert_true(program.compare(same_program) == 0)
   assert_true(!program.equal(region_program))
   assert_true(program.compare(region_program) != 0)
+  assert_true(empty_program.equal(@core_theory.Program::create()))
+  assert_true(empty_program.units().is_empty())
+  assert_true(empty_program.labels().is_empty())
+  assert_true(empty_program.target() is None)
   assert_true(program.units().length() == 1)
   assert_true(program.labels().length() == 1)
   assert_true(program.target().map(item => item.matches("amd64")) == Some(true))

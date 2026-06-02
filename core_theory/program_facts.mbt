@@ -304,27 +304,9 @@ pub fn Target::domain() -> @knowledge.Domain[Target] {
 ///|
 pub fn SourceFacts::new() -> SourceFacts {
   let cls = Source::cls()
-  let language = cls.property(
-    name=core_name("source-language"),
-    domain=source_language_domain(),
-    desc="the language of the unit source code",
-    persistent=Language::persistent(),
-    public=true,
-  )
-  let code = cls.property(
-    name=core_name("source-code"),
-    domain=@knowledge.Domain::string(core_name("source-code")),
-    desc="the unit source code text",
-    persistent=@knowledge.Persistent::string(),
-    public=true,
-  )
-  let file = cls.property(
-    name=core_name("source-path"),
-    domain=optional_string_domain("source-path"),
-    desc="a path to the source code file",
-    persistent=optional_string_persistent(),
-    public=true,
-  )
+  let language = Source::language_slot()
+  let code = Source::code_slot()
+  let file = Source::file_slot()
   {
     state_value: @knowledge.State::new(),
     class_value: cls,
@@ -332,6 +314,39 @@ pub fn SourceFacts::new() -> SourceFacts {
     code_value: @knowledge.FactTable::new(code),
     file_value: @knowledge.FactTable::new(file),
   }
+}
+
+///|
+pub fn Source::language_slot() -> @knowledge.Slot[Unit, Language] {
+  Source::cls().property(
+    name=core_name("source-language"),
+    domain=source_language_domain(),
+    desc="the language of the unit source code",
+    persistent=Language::persistent(),
+    public=true,
+  )
+}
+
+///|
+pub fn Source::code_slot() -> @knowledge.Slot[Unit, String] {
+  Source::cls().property(
+    name=core_name("source-code"),
+    domain=@knowledge.Domain::string(core_name("source-code")),
+    desc="the unit source code text",
+    persistent=@knowledge.Persistent::string(),
+    public=true,
+  )
+}
+
+///|
+pub fn Source::file_slot() -> @knowledge.Slot[Unit, String?] {
+  Source::cls().property(
+    name=core_name("source-path"),
+    domain=optional_string_domain("source-path"),
+    desc="a path to the source code file",
+    persistent=optional_string_persistent(),
+    public=true,
+  )
 }
 
 ///|

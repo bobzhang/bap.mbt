@@ -2954,23 +2954,35 @@ test "program source and unit facts expose BAP-style Knowledge slots" {
   let source_facts = @core_theory.SourceFacts::new()
   assert_true(@core_theory.Source::cls().name().show() == "core:unit-source")
   assert_true(source_facts.class().same(@core_theory.Source::cls()))
+  assert_true(
+    source_facts.language().slot().name().show() ==
+    @core_theory.Source::language_slot().name().show(),
+  )
+  assert_true(
+    source_facts.code().slot().owner().show() ==
+    @core_theory.Source::code_slot().owner().show(),
+  )
+  assert_true(
+    source_facts.file().slot().name().show() ==
+    @core_theory.Source::file_slot().name().show(),
+  )
   assert_persistent_round_trip(
-    source_facts.language().slot().persistent(),
+    @core_theory.Source::language_slot().persistent(),
     C,
     "source language",
   )
   assert_persistent_round_trip(
-    source_facts.code().slot().persistent(),
+    @core_theory.Source::code_slot().persistent(),
     "int main(void) { return 0; }",
     "source code",
   )
   assert_persistent_round_trip(
-    source_facts.file().slot().persistent(),
+    @core_theory.Source::file_slot().persistent(),
     Some("main.c"),
     "source path",
   )
   assert_persistent_round_trip(
-    source_facts.file().slot().persistent(),
+    @core_theory.Source::file_slot().persistent(),
     (None : String?),
     "empty source path",
   )

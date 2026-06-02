@@ -27,6 +27,33 @@ test "project passes register lookup and run" {
 }
 
 ///|
+test "register_pass_prime registers side-effect-only passes" {
+  let hits = Ref(0)
+  match
+    @project.register_pass_prime(name="unit-pass-prime", run=project => {
+      if project.get("kept") == Some("yes") {
+        hits.val += 1
+        Ok(())
+      } else {
+        Err("expected original project")
+      }
+    }) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let project = @project.Project::empty(@core_theory.Target::unknown()).set(
+    "kept", "yes",
+  )
+  let next = match project.run_pass("unit-pass-prime") {
+    Ok(next) => next
+    Err(reason) => fail(reason)
+  }
+  assert_true(hits.val == 1)
+  assert_true(next.get("kept") == Some("yes"))
+  assert_true(next.pass_run_count("unit-pass-prime") == 1)
+}
+
+///|
 test "autorun passes update projects" {
   let pass = @project.ProjectPass::create(name="unit-autorun", autorun=true, run=project => {
     Ok(project.set("autorun", "yes"))

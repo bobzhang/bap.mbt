@@ -77,6 +77,8 @@ pub fn register_pass(ProjectPass) -> Result[Unit, String]
 
 pub fn register_pass_if_absent(ProjectPass) -> Result[Bool, String]
 
+pub fn register_pass_prime(name~ : String, autorun? : Bool, run_once? : Bool, deps? : Array[String], run~ : (Project) -> Result[Unit, String]) -> Result[Unit, String]
+
 pub fn register_reconstructor(name~ : String, ProjectReconstructor) -> Result[Unit, String]
 
 pub fn register_reconstructor_if_absent(name~ : String, ProjectReconstructor) -> Result[Bool, String]

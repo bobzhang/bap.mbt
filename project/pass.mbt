@@ -214,6 +214,24 @@ pub fn register_pass(pass : ProjectPass) -> Result[Unit, String] {
 }
 
 ///|
+pub fn register_pass_prime(
+  name~ : String,
+  autorun? : Bool,
+  run_once? : Bool,
+  deps? : Array[String],
+  run~ : (Project) -> Result[Unit, String],
+) -> Result[Unit, String] {
+  register_pass(
+    ProjectPass::create(name~, autorun?, run_once?, deps?, run=project => {
+      match run(project) {
+        Ok(_) => Ok(project)
+        Err(reason) => Err(reason)
+      }
+    }),
+  )
+}
+
+///|
 pub fn register_pass_if_absent(pass : ProjectPass) -> Result[Bool, String] {
   if pass_registry.contains(pass.name()) {
     Ok(false)

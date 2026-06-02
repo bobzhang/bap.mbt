@@ -158,7 +158,11 @@ pub fn Image::of_bytes(
     Some(name) =>
       match find_backend(name) {
         Some(loader) => loader.load(data)
-        None => Err("unknown image backend \{name}")
+        None =>
+          match find_loader(name) {
+            Some(loader) => Image::of_bytes_with_loader(data, name, loader)
+            None => Err("unknown image backend or loader \{name}")
+          }
       }
     None => Ok((Image::create(entry=0UL, endian=LittleEndian, data~), []))
   }

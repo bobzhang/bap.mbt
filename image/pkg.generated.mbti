@@ -12,17 +12,23 @@ import {
 // Values
 pub fn available_backends() -> Array[String]
 
+pub fn available_loaders() -> Array[String]
+
 pub fn backend_names_for_extension(String) -> Array[String]
 
 pub fn backends_for_extension(String) -> Array[ImageBackend]
 
 pub fn find_backend(String) -> ImageBackend?
 
+pub fn find_loader(String) -> ImageLoader?
+
 pub fn register_backend(name~ : String, ImageBackend) -> Result[Unit, String]
 
 pub fn register_backend_if_absent(ImageBackend) -> Result[Bool, String]
 
 pub fn register_builtin_backends() -> Result[Unit, String]
+
+pub fn register_loader(name~ : String, ImageLoader) -> Result[Unit, String]
 
 // Errors
 
@@ -102,6 +108,11 @@ pub fn ImageBackend::ogre() -> Self
 pub fn ImageBackend::priority(Self) -> Int
 pub fn ImageBackend::raw() -> Self
 pub fn ImageBackend::supports_extension(Self, String) -> Bool
+
+type ImageLoader
+pub fn ImageLoader::create(from_data~ : (Bytes) -> Result[OgreDoc?, String], from_file? : (String) -> Result[OgreDoc?, String]) -> Self
+pub fn ImageLoader::from_data(Self, Bytes) -> Result[OgreDoc?, String]
+pub fn ImageLoader::from_file(Self, String) -> Result[OgreDoc?, String]
 
 type OgreDoc
 pub fn OgreDoc::declaration(Self, String) -> Array[OgreField]?

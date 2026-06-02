@@ -9,3 +9,40 @@ test "image reads files on native target" {
     Err(reason) => fail(reason)
   }
 }
+
+///|
+test "image named loaders can derive Ogre docs from file paths" {
+  let spec = "(declare entry-point (addr int))" +
+    " (declare mapped (addr int) (size int) (off int))" +
+    " (declare named-region (addr int) (size int) (name str))" +
+    " (declare segment (addr int) (size int) (r bool) (w bool) (x bool))" +
+    " (entry-point 32)" +
+    " (mapped 32 2 0)" +
+    " (named-region 32 2 header)" +
+    " (segment 32 2 true false false)"
+  let loader = @image.ImageLoader::create(from_data=_ => Ok(None), from_file=path => {
+    if path != "moon.mod" {
+      Err("unexpected loader path")
+    } else {
+      match @image.OgreDoc::from_string(spec) {
+        Ok(doc) => Ok(Some(doc))
+        Err(reason) => Err(reason)
+      }
+    }
+  })
+  match @image.register_loader(name="unit-native-ogre-loader", loader) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  match @image.Image::of_file("moon.mod", backend="unit-native-ogre-loader") {
+    Ok((image, warnings)) => {
+      assert_true(warnings.is_empty())
+      assert_true(image.filename() == Some("moon.mod"))
+      assert_true(image.entry_point() == 32UL)
+      assert_true(image.segments().length() == 1)
+      assert_true(image.segments()[0].addr() == 32UL)
+      inspect(image.segments()[0].memory().hexdump(), content="2f 2f")
+    }
+    Err(reason) => fail(reason)
+  }
+}

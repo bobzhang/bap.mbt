@@ -628,6 +628,52 @@ test "image backend discovery returns extension matches by priority" {
 }
 
 ///|
+test "image loader registry builds images from Ogre documents" {
+  let spec = "(declare entry-point (addr int))" +
+    " (declare mapped (addr int) (size int) (off int))" +
+    " (declare named-region (addr int) (size int) (name str))" +
+    " (declare segment (addr int) (size int) (r bool) (w bool) (x bool))" +
+    " (entry-point 16)" +
+    " (mapped 16 2 0)" +
+    " (named-region 16 2 loaded)" +
+    " (segment 16 2 true false true)"
+  let loader = @image.ImageLoader::create(from_data=_ => {
+    match @image.OgreDoc::from_string(spec) {
+      Ok(doc) => Ok(Some(doc))
+      Err(reason) => Err(reason)
+    }
+  })
+  match @image.register_loader(name="unit-ogre-doc-loader", loader) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  assert_true(@image.find_loader("unit-ogre-doc-loader") is Some(_))
+  assert_true(@image.available_loaders().contains("unit-ogre-doc-loader"))
+  match @image.Image::of_bytes(b"\xaa\xbb", backend="unit-ogre-doc-loader") {
+    Ok((img, warnings)) => {
+      assert_true(warnings.is_empty())
+      assert_true(img.entry_point() == 16UL)
+      assert_true(img.segments().length() == 1)
+      assert_true(img.segments()[0].addr() == 16UL)
+      inspect(img.segments()[0].memory().hexdump(), content="aa bb")
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    @image.register_loader(name="unit-ogre-doc-loader", loader) is Err(_),
+  )
+  let empty_loader = @image.ImageLoader::create(from_data=_ => Ok(None))
+  match @image.register_loader(name="unit-empty-doc-loader", empty_loader) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    @image.Image::of_bytes(b"\xaa\xbb", backend="unit-empty-doc-loader")
+    is Err(_),
+  )
+}
+
+///|
 test "image registers built-in raw and Ogre backends idempotently" {
   match @image.register_builtin_backends() {
     Ok(_) => ()

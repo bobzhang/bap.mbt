@@ -284,8 +284,10 @@ pub fn Language::ada() -> Self
 pub fn Language::c() -> Self
 pub fn Language::compare(Self, Self) -> Int
 pub fn Language::cxx() -> Self
+pub fn Language::declare_language(String, pkg? : String) -> Result[Self, String]
 pub fn Language::equal(Self, Self) -> Bool
 pub fn Language::fortran() -> Self
+pub fn Language::hash(Self) -> Int
 pub fn Language::is_unknown(Self) -> Bool
 pub fn Language::llvm_a32() -> Self
 pub fn Language::llvm_a64() -> Self
@@ -301,6 +303,8 @@ pub fn Language::llvm_systemz() -> Self
 pub fn Language::llvm_t32() -> Self
 pub fn Language::llvm_x86() -> Self
 pub fn Language::llvm_x86_64() -> Self
+pub fn Language::members() -> Array[Self]
+pub fn Language::name(Self) -> @knowledge.Name
 pub fn Language::of_string(String) -> Self
 pub fn Language::pascal() -> Self
 pub fn Language::pcode_arm() -> Self
@@ -308,6 +312,7 @@ pub fn Language::pcode_mips() -> Self
 pub fn Language::pcode_powerpc() -> Self
 pub fn Language::pcode_x86() -> Self
 pub fn Language::persistent() -> @knowledge.Persistent[Self]
+pub fn Language::read(String, pkg? : String) -> Result[Self, String]
 pub fn Language::to_string(Self) -> String
 pub fn Language::unknown() -> Self
 

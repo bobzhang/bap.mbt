@@ -2326,6 +2326,12 @@ test "program metadata tracks source compiler and units" {
   assert_true(!language.is_unknown())
   assert_true(@core_theory.Language::c().compare(language) < 0)
   assert_true(language.compare(Cxx) == 0)
+  assert_true(language.name().show() == "core:cxx")
+  assert_true(language.hash() == language.name().hash())
+  match @core_theory.Language::read("core:cxx") {
+    Ok(read_language) => assert_true(read_language == Cxx)
+    Err(reason) => fail(reason)
+  }
   let rust = @core_theory.Language::of_string("rust")
   let zig = @core_theory.Language::of_string("zig")
   assert_true(rust.compare(zig) != 0)
@@ -2350,6 +2356,15 @@ test "program metadata tracks source compiler and units" {
     @core_theory.Language::llvm_powerpc64().to_string() == "llvm-powerpc64",
   )
   assert_true(
+    @core_theory.Language::llvm_powerpc64().name().show() ==
+    "bap:llvm-powerpc64",
+  )
+  match @core_theory.Language::read("bap:llvm-powerpc64") {
+    Ok(read_language) =>
+      assert_true(read_language == @core_theory.Language::llvm_powerpc64())
+    Err(reason) => fail(reason)
+  }
+  assert_true(
     @core_theory.Language::llvm_riscv32().to_string() == "llvm-riscv32",
   )
   assert_true(
@@ -2364,6 +2379,23 @@ test "program metadata tracks source compiler and units" {
   assert_true(
     @core_theory.Language::pcode_powerpc().to_string() == "pcode-powerpc",
   )
+  match @core_theory.Language::declare_language("unit-language", pkg="test") {
+    Ok(custom) => {
+      assert_true(custom.name().show() == "test:unit-language")
+      assert_true(custom.hash() == custom.name().hash())
+      assert_true(@core_theory.Language::members().contains(custom))
+      match @core_theory.Language::read("unit-language", pkg="test") {
+        Ok(read_language) => assert_true(read_language == custom)
+        Err(reason) => fail(reason)
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    @core_theory.Language::declare_language("unit-language", pkg="test")
+    is Err(_),
+  )
+  assert_true(@core_theory.Language::read("missing", pkg="test") is Err(_))
   let source = @core_theory.Source::create(
     language~,
     code="int main() { return 0; }",

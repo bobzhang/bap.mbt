@@ -15,6 +15,90 @@ pub(all) enum Language {
 } derive(Eq, Debug)
 
 ///|
+let declared_languages : Map[String, Language] = {}
+
+///|
+fn core_language_name(text : String) -> @knowledge.Name {
+  @knowledge.Name::create(text, pkg="core")
+}
+
+///|
+fn unknown_language_name() -> @knowledge.Name {
+  @knowledge.Name::read(":unknown")
+}
+
+///|
+fn bap_language_names() -> Array[String] {
+  [
+    "llvm-armv7", "llvm-thumb", "llvm-aarch64", "llvm-x86", "llvm-x86_64", "llvm-mips32",
+    "llvm-mips32le", "llvm-mips64", "llvm-mips64le", "llvm-powerpc32", "llvm-powerpc64",
+    "llvm-riscv32", "llvm-riscv64", "llvm-systemz", "pcode-x86", "pcode-arm", "pcode-mips",
+    "pcode-powerpc",
+  ]
+}
+
+///|
+fn is_bap_language_name(text : String) -> Bool {
+  bap_language_names().contains(text)
+}
+
+///|
+fn language_name_from_text(text : String) -> @knowledge.Name {
+  if text == "unknown" {
+    unknown_language_name()
+  } else if is_bap_language_name(text) {
+    @knowledge.Name::create(text, pkg="bap")
+  } else {
+    @knowledge.Name::read(text)
+  }
+}
+
+///|
+fn builtin_languages() -> Array[Language] {
+  [
+    C,
+    Cxx,
+    Ada,
+    Fortran,
+    Pascal,
+    Language::unknown(),
+    Language::llvm_a32(),
+    Language::llvm_t32(),
+    Language::llvm_a64(),
+    Language::llvm_x86(),
+    Language::llvm_x86_64(),
+    Language::llvm_mips32(),
+    Language::llvm_mips32le(),
+    Language::llvm_mips64(),
+    Language::llvm_mips64le(),
+    Language::llvm_powerpc32(),
+    Language::llvm_powerpc64(),
+    Language::llvm_riscv32(),
+    Language::llvm_riscv64(),
+    Language::llvm_systemz(),
+    Language::pcode_x86(),
+    Language::pcode_arm(),
+    Language::pcode_mips(),
+    Language::pcode_powerpc(),
+  ]
+}
+
+///|
+fn language_for_known_name(name : @knowledge.Name) -> Language? {
+  for language in builtin_languages() {
+    let language_name = language.name()
+    if language_name.equal(name) ||
+      (
+        name.pkg() == "user" &&
+        language_name.unqualified() == name.unqualified()
+      ) {
+      return Some(language)
+    }
+  }
+  None
+}
+
+///|
 struct Source {
   language_value : Language
   code_value : String
@@ -198,6 +282,63 @@ pub fn Language::pcode_mips() -> Language {
 ///|
 pub fn Language::pcode_powerpc() -> Language {
   OtherLanguage("pcode-powerpc")
+}
+
+///|
+pub fn Language::name(self : Language) -> @knowledge.Name {
+  match self {
+    C => core_language_name("c")
+    Cxx => core_language_name("cxx")
+    Ada => core_language_name("ada")
+    Fortran => core_language_name("fortran")
+    Pascal => core_language_name("pascal")
+    OtherLanguage(name) => language_name_from_text(name)
+  }
+}
+
+///|
+pub fn Language::hash(self : Language) -> Int {
+  self.name().hash()
+}
+
+///|
+pub fn Language::members() -> Array[Language] {
+  let items = builtin_languages()
+  for entry in declared_languages {
+    if !items.contains(entry.1) {
+      items.push(entry.1)
+    }
+  }
+  items
+}
+
+///|
+pub fn Language::declare_language(
+  name : String,
+  pkg? : String,
+) -> Result[Language, String] {
+  let full_name = @knowledge.Name::create(name, pkg?)
+  if language_for_known_name(full_name) is Some(_) ||
+    declared_languages.get(full_name.show()) is Some(_) {
+    Err("language \{full_name.show()} is already declared")
+  } else {
+    let language = OtherLanguage(full_name.show())
+    declared_languages[full_name.show()] = language
+    Ok(language)
+  }
+}
+
+///|
+pub fn Language::read(name : String, pkg? : String) -> Result[Language, String] {
+  let full_name = @knowledge.Name::read(name, pkg?)
+  match language_for_known_name(full_name) {
+    Some(language) => Ok(language)
+    None =>
+      match declared_languages.get(full_name.show()) {
+        Some(language) => Ok(language)
+        None => Err("unknown language \{full_name.show()}")
+      }
+  }
 }
 
 ///|

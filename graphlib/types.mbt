@@ -77,6 +77,22 @@ pub fn[E] GraphPath::finish(self : GraphPath[E]) -> E? {
 }
 
 ///|
+pub fn[E] GraphPath::start_exn(self : GraphPath[E]) -> E {
+  match self.start() {
+    Some(edge) => edge
+    None => abort("empty graph path")
+  }
+}
+
+///|
+pub fn[E] GraphPath::finish_exn(self : GraphPath[E]) -> E {
+  match self.finish() {
+    Some(edge) => edge
+    None => abort("empty graph path")
+  }
+}
+
+///|
 struct Graph[N, E] {
   nodes : Array[N]
   edges : Array[Edge[N, E]]

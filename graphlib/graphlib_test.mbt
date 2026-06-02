@@ -481,6 +481,8 @@ test "translated BAP shortest path returns weighted edge path" {
       assert_true(
         path.finish().map(edge => (edge.src, edge.dst)) == Some((1, 3)),
       )
+      assert_true((path.start_exn().src, path.start_exn().dst) == (0, 2))
+      assert_true((path.finish_exn().src, path.finish_exn().dst) == (1, 3))
     }
     None => fail("expected a weighted shortest path")
   }

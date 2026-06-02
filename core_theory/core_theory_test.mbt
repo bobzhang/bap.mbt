@@ -393,13 +393,19 @@ test "targets inherit defaults and match ancestry" {
   let pc = @core_theory.Var::create(word, "PC")
   let rax = @core_theory.Var::create(word, "RAX")
   let eax = @core_theory.Var::create(@core_theory.Sort::bitv(32), "EAX")
+  let low = @core_theory.Var::create(@core_theory.Sort::bitv(32), "LOW")
+  let high = @core_theory.Var::create(@core_theory.Sort::bitv(32), "HIGH")
+  let wide = @core_theory.Var::create(word, "WIDE")
   let family = @core_theory.Target::create(
     name=@knowledge.Name::create("x86", pkg="target"),
     nicknames=["amd64-family"],
     bits=64,
     endianness=LittleEndian,
-    vars=[pc, rax, eax],
-    alias_origins=[@core_theory.AliasOrigin::subregister(eax, rax, lo=0, hi=31)],
+    vars=[pc, rax, eax, low, high, wide],
+    alias_origins=[
+      @core_theory.AliasOrigin::subregister(eax, rax, lo=0, hi=31),
+      @core_theory.AliasOrigin::register_set(wide, [high, low]),
+    ],
   )
   let target = @core_theory.Target::create(
     name=@knowledge.Name::create("x86-64", pkg="target"),
@@ -686,6 +692,9 @@ test "targets inherit defaults and match ancestry" {
       assert_true(origin.aliased().ident() == "EAX")
       assert_true(origin.reg().map(v => v.ident()) == Some("RAX"))
       assert_true(origin.source().map(v => v.ident()) == Some("RAX"))
+      assert_true(origin.cast_sub() is Some(_))
+      assert_true(origin.cast_sup() is None)
+      assert_true(origin.cast_set() is None)
       assert_true(origin.range() == Some((0, 31)))
       assert_true(origin.lo() == Some(0))
       assert_true(origin.hi() == Some(31))
@@ -699,6 +708,23 @@ test "targets inherit defaults and match ancestry" {
   assert_true(direct_alias.range() == Some((0, 63)))
   assert_true(direct_alias.lo() == Some(0))
   assert_true(direct_alias.hi() == Some(63))
+  assert_true(direct_alias.cast_sub() is Some(_))
+  let bit_alias = @core_theory.AliasOrigin::bit_set(pc, [
+    @core_theory.Var::create(@core_theory.Sort::bool(), "ZF"),
+  ])
+  assert_true(bit_alias.cast_set() is Some(_))
+  assert_true(bit_alias.cast_sub() is None)
+  assert_true(bit_alias.bits().map(v => v.ident()) == ["ZF"])
+  match target.origin_of_name("WIDE") {
+    Some(origin) => {
+      assert_true(origin.aliased().ident() == "WIDE")
+      assert_true(origin.cast_sup() is Some(_))
+      assert_true(origin.cast_sub() is None)
+      assert_true(origin.regs().map(v => v.ident()) == ["HIGH", "LOW"])
+      assert_true(!origin.is_alias())
+    }
+    None => fail("missing WIDE alias origin")
+  }
 }
 
 ///|

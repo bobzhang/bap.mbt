@@ -1468,6 +1468,7 @@ pub fn Role::domain() -> @knowledge.Domain[Role] {
 pub(all) enum AliasOrigin {
   RegisterAlias(aliased~ : Var, source~ : Var)
   SubRegister(aliased~ : Var, source~ : Var, lo~ : Int, hi~ : Int)
+  SuperRegister(aliased~ : Var, regs~ : Array[Var])
   BitSetAlias(aliased~ : Var, bits~ : Array[Var])
   UnknownAlias(aliased~ : Var)
 }
@@ -2943,6 +2944,14 @@ pub fn AliasOrigin::bit_set(aliased : Var, bits : Array[Var]) -> AliasOrigin {
 }
 
 ///|
+pub fn AliasOrigin::register_set(
+  aliased : Var,
+  regs : Array[Var],
+) -> AliasOrigin {
+  SuperRegister(aliased~, regs=regs.copy())
+}
+
+///|
 pub fn AliasOrigin::unknown(aliased : Var) -> AliasOrigin {
   UnknownAlias(aliased~)
 }
@@ -2952,6 +2961,7 @@ pub fn AliasOrigin::aliased(self : AliasOrigin) -> Var {
   match self {
     RegisterAlias(aliased~, ..)
     | SubRegister(aliased~, ..)
+    | SuperRegister(aliased~, ..)
     | BitSetAlias(aliased~, ..)
     | UnknownAlias(aliased~) => aliased
   }
@@ -2961,7 +2971,7 @@ pub fn AliasOrigin::aliased(self : AliasOrigin) -> Var {
 pub fn AliasOrigin::source(self : AliasOrigin) -> Var? {
   match self {
     RegisterAlias(source~, ..) | SubRegister(source~, ..) => Some(source)
-    BitSetAlias(_) | UnknownAlias(_) => None
+    SuperRegister(_) | BitSetAlias(_) | UnknownAlias(_) => None
   }
 }
 
@@ -2971,12 +2981,37 @@ pub fn AliasOrigin::reg(self : AliasOrigin) -> Var? {
 }
 
 ///|
+pub fn AliasOrigin::cast_sub(self : AliasOrigin) -> AliasOrigin? {
+  match self {
+    RegisterAlias(_) | SubRegister(_) => Some(self)
+    SuperRegister(_) | BitSetAlias(_) | UnknownAlias(_) => None
+  }
+}
+
+///|
+pub fn AliasOrigin::cast_sup(self : AliasOrigin) -> AliasOrigin? {
+  match self {
+    SuperRegister(_) => Some(self)
+    RegisterAlias(_) | SubRegister(_) | BitSetAlias(_) | UnknownAlias(_) => None
+  }
+}
+
+///|
+pub fn AliasOrigin::cast_set(self : AliasOrigin) -> AliasOrigin? {
+  match self {
+    BitSetAlias(_) => Some(self)
+    RegisterAlias(_) | SubRegister(_) | SuperRegister(_) | UnknownAlias(_) =>
+      None
+  }
+}
+
+///|
 pub fn AliasOrigin::range(self : AliasOrigin) -> (Int, Int)? {
   match self {
     SubRegister(lo~, hi~, ..) => Some((lo, hi))
     RegisterAlias(source~, ..) =>
       source.sort().bitv_size().map(width => (0, width - 1))
-    BitSetAlias(_) | UnknownAlias(_) => None
+    SuperRegister(_) | BitSetAlias(_) | UnknownAlias(_) => None
   }
 }
 
@@ -2999,7 +3034,7 @@ pub fn AliasOrigin::is_alias(self : AliasOrigin) -> Bool {
         Some(width) => hi - lo + 1 == width
         None => false
       }
-    BitSetAlias(_) | UnknownAlias(_) => false
+    SuperRegister(_) | BitSetAlias(_) | UnknownAlias(_) => false
   }
 }
 
@@ -3007,7 +3042,15 @@ pub fn AliasOrigin::is_alias(self : AliasOrigin) -> Bool {
 pub fn AliasOrigin::bits(self : AliasOrigin) -> Array[Var] {
   match self {
     BitSetAlias(bits~, ..) => bits.copy()
-    RegisterAlias(_) | SubRegister(_) | UnknownAlias(_) => []
+    RegisterAlias(_) | SubRegister(_) | SuperRegister(_) | UnknownAlias(_) => []
+  }
+}
+
+///|
+pub fn AliasOrigin::regs(self : AliasOrigin) -> Array[Var] {
+  match self {
+    SuperRegister(regs~, ..) => regs.copy()
+    RegisterAlias(_) | SubRegister(_) | BitSetAlias(_) | UnknownAlias(_) => []
   }
 }
 

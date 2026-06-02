@@ -71,6 +71,7 @@ pub fn[N : Hash + Eq, E] Graph::reverse_postorder_traverse(Self[N, E], rev? : Bo
 pub fn[N : Hash + Eq, E] Graph::shortest_path(Self[N, E], N, N, weight? : (Edge[N, E]) -> Int, rev? : Bool) -> GraphPath[Edge[N, E]]?
 pub fn[N : Hash + Eq, E] Graph::strong_components(Self[N, E]) -> Array[@set.Set[N]]
 pub fn[N : Eq, E] Graph::successors(Self[N, E], N) -> Array[N]
+pub fn[N : Hash + Eq, E] Graph::to_dot(Self[N, E], name? : String, graph_attrs? : ArrayView[(String, String)], node_attrs? : (N) -> Array[(String, String)], edge_attrs? : (Edge[N, E]) -> Array[(String, String)], string_of_node? : ((N) -> String)?, string_of_edge? : ((Edge[N, E]) -> String)?) -> String
 pub fn[N : Eq, E] Graph::union(Self[N, E], Self[N, E]) -> Self[N, E]
 
 type GraphPath[E] derive(Eq, @debug.Debug)

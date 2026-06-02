@@ -206,6 +206,53 @@ test "translated BAP graph filtered hides nodes and invisible edges" {
 }
 
 ///|
+test "translated BAP graph to_dot uses reverse-postorder node names by default" {
+  let graph : @graphlib.Graph[Int, String] = @graphlib.Graph::create(edges=[
+    (0, 1, "left"),
+    (0, 2, "right"),
+  ])
+  let dot = graph.to_dot()
+  assert_true(dot.contains("digraph \"G\""))
+  assert_true(dot.contains("\"0\";"))
+  assert_true(dot.contains("\"2\";"))
+  assert_true(dot.contains("\"1\";"))
+  assert_true(dot.contains("\"0\" -> \"2\";"))
+  assert_true(dot.contains("\"0\" -> \"1\";"))
+  assert_true(!dot.contains("left"))
+  assert_true(!dot.contains("right"))
+}
+
+///|
+test "translated BAP graph to_dot honors custom labels and attributes" {
+  let graph : @graphlib.Graph[Int, String] = @graphlib.Graph::create(edges=[
+    (0, 1, "auto"),
+    (1, 2, "manual"),
+  ])
+  let dot = graph.to_dot(
+    name="flow",
+    graph_attrs=[("rankdir", "LR")],
+    string_of_node=Some(node => "n\{node}"),
+    string_of_edge=Some(edge => edge.label),
+    node_attrs=node => [("label", "node \{node}")],
+    edge_attrs=edge => {
+      if edge.label == "manual" {
+        [("label", "given"), ("color", "blue")]
+      } else {
+        [("color", "red")]
+      }
+    },
+  )
+  assert_true(dot.contains("digraph \"flow\""))
+  assert_true(dot.contains("rankdir=\"LR\";"))
+  assert_true(dot.contains("\"n0\" [label=\"node 0\"];"))
+  assert_true(dot.contains("\"n0\" -> \"n1\" [label=\"auto\", color=\"red\"];"))
+  assert_true(
+    dot.contains("\"n1\" -> \"n2\" [label=\"given\", color=\"blue\"];"),
+  )
+  assert_true(!dot.contains("manual"))
+}
+
+///|
 test "partitions support BAP trivial discrete union and refinement invariants" {
   let elements = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
   let trivial = @graphlib.Partition::trivial(elements)

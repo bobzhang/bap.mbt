@@ -124,6 +124,11 @@ pub fn Var::create(
 }
 
 ///|
+pub fn Var::define_var(sort : Sort, name : String) -> Var {
+  Var::create(sort, name)
+}
+
+///|
 pub fn Var::fresh(sort : Sort) -> Var {
   {
     sort_value: sort,

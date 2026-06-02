@@ -345,6 +345,7 @@ test "variables preserve sorts versions and mutability flags" {
   assert_true(reg.is_mutable())
   assert_true(!reg.is_virtual())
   assert_true(reg.equal(@core_theory.Var::create(sort, "RAX")))
+  assert_true(reg.equal(@core_theory.Var::define_var(sort, "RAX")))
   assert_true(
     !@core_theory.Var::create(sort, "tmp", is_mutable=false).is_mutable(),
   )

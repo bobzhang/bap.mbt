@@ -8,6 +8,7 @@ struct LabelFacts {
   ivec_value : @knowledge.FactTable[Unit, Int?]
   encoding_value : @knowledge.FactTable[Unit, Language]
   semantics_value : @knowledge.FactTable[Unit, Semantics]
+  target_value : @knowledge.FactTable[Unit, Target]
   aliases_value : @knowledge.FactTable[Unit, Array[String]]
   unit_value : @knowledge.FactTable[Unit, ProgramUnit?]
   valid_value : @knowledge.FactTable[Unit, Bool?]
@@ -93,6 +94,7 @@ pub fn LabelFacts::new() -> LabelFacts {
   let ivec = Label::ivec_slot()
   let encoding = Label::encoding_slot()
   let semantics = Semantics::slot()
+  let target = Label::target_slot()
   let aliases = Label::aliases_slot()
   let unit = Label::unit_slot()
   let valid = Label::is_valid_slot()
@@ -106,6 +108,7 @@ pub fn LabelFacts::new() -> LabelFacts {
     ivec_value: @knowledge.FactTable::new(ivec),
     encoding_value: @knowledge.FactTable::new(encoding),
     semantics_value: @knowledge.FactTable::new(semantics),
+    target_value: @knowledge.FactTable::new(target),
     aliases_value: @knowledge.FactTable::new(aliases),
     unit_value: @knowledge.FactTable::new(unit),
     valid_value: @knowledge.FactTable::new(valid),
@@ -177,6 +180,17 @@ pub fn Label::aliases_slot() -> @knowledge.Slot[Unit, Array[String]] {
     domain=@knowledge.Domain::powerset(core_name("label-aliases"), item => item),
     desc="the set of known program names",
     persistent=@knowledge.Persistent::array(@knowledge.Persistent::string()),
+    public=true,
+  )
+}
+
+///|
+pub fn Label::target_slot() -> @knowledge.Slot[Unit, Target] {
+  Label::cls().property(
+    name=core_name("label-target"),
+    domain=target_domain_named("label-target"),
+    desc="the explicit program label target",
+    persistent=Target::persistent(),
     public=true,
   )
 }
@@ -272,6 +286,13 @@ pub fn LabelFacts::aliases(
 }
 
 ///|
+pub fn LabelFacts::target(
+  self : LabelFacts,
+) -> @knowledge.FactTable[Unit, Target] {
+  self.target_value
+}
+
+///|
 pub fn LabelFacts::unit(
   self : LabelFacts,
 ) -> @knowledge.FactTable[Unit, ProgramUnit?] {
@@ -332,6 +353,10 @@ pub fn LabelFacts::provide_label(
     None => ()
   }
   match self.aliases_value.provide(object, label.aliases()) {
+    Ok(_) => ()
+    Err(reason) => return Err(reason)
+  }
+  match self.target_value.provide(object, label.target()) {
     Ok(_) => ()
     Err(reason) => return Err(reason)
   }
@@ -479,8 +504,13 @@ pub fn LabelFacts::collect_target(
   self : LabelFacts,
   object : @knowledge.Object[Unit],
 ) -> Target {
-  match self.collect_unit(object) {
-    Some(unit) => unit.target()
-    None => Target::unknown()
+  match self.target_value.collect(object) {
+    Some(target) if !self.target_value.slot().domain().is_empty(target) =>
+      target
+    _ =>
+      match self.collect_unit(object) {
+        Some(unit) => unit.target()
+        None => Target::unknown()
+      }
   }
 }

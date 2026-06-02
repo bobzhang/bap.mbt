@@ -266,10 +266,10 @@ fn optional_compiler_persistent() -> @knowledge.Persistent[Compiler?] {
 }
 
 ///|
-pub fn target_domain() -> @knowledge.Domain[Target] {
+fn target_domain_named(name : String) -> @knowledge.Domain[Target] {
   let unknown = Target::unknown()
   @knowledge.Domain::new(
-    name=core_name("unit-target"),
+    name=core_name(name),
     empty=Some(unknown),
     is_empty=(target : Target) => target.is_unknown(),
     order=(lhs : Target, rhs : Target) => {
@@ -294,6 +294,11 @@ pub fn target_domain() -> @knowledge.Domain[Target] {
     },
     inspect=(target : Target) => target.name().show(),
   )
+}
+
+///|
+pub fn target_domain() -> @knowledge.Domain[Target] {
+  target_domain_named("unit-target")
 }
 
 ///|

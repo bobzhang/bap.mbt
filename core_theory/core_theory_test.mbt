@@ -3849,6 +3849,10 @@ test "program label facts expose BAP-style Knowledge slots" {
     @core_theory.Semantics::slot().name().show(),
   )
   assert_true(
+    facts.target().slot().name().show() ==
+    @core_theory.Label::target_slot().name().show(),
+  )
+  assert_true(
     facts.aliases().slot().name().show() ==
     @core_theory.Label::aliases_slot().name().show(),
   )
@@ -3895,6 +3899,14 @@ test "program label facts expose BAP-style Knowledge slots" {
     label_semantics,
     "label semantics",
   )
+  match facts.target().slot().persistent() {
+    Some(codec) =>
+      match codec.decode(codec.encode(@core_theory.Target::x86_64())) {
+        Ok(decoded) => assert_true(decoded.equal(@core_theory.Target::x86_64()))
+        Err(reason) => fail(reason)
+      }
+    None => fail("missing label target persistent codec")
+  }
   assert_optional_unit_persistent_round_trip(
     @core_theory.Label::unit_slot().persistent(),
     Some(unit),
@@ -3955,6 +3967,28 @@ test "program label facts expose BAP-style Knowledge slots" {
     Err(reason) => fail(reason)
   }
 
+  let target_only_label = @core_theory.Label::for_addr(
+    @types.Word::of_int(width=64, 0x403000),
+    target=@core_theory.Target::arm(),
+  )
+  match facts.for_label(target_only_label) {
+    Ok(object) => {
+      assert_true(facts.collect_unit(object) is None)
+      assert_true(facts.collect_target(object).matches("arm"))
+      assert_true(
+        facts.provide_label(
+          object,
+          @core_theory.Label::for_addr(
+            @types.Word::of_int(width=64, 0x403000),
+            target=@core_theory.Target::x86_64(),
+          ),
+        )
+        is Err(_),
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
   let empty = facts.create()
   assert_true(facts.collect_target(empty).is_unknown())
   assert_true(facts.collect_encoding(empty) is None)
@@ -3988,6 +4022,7 @@ test "core theory fact slots register public Knowledge documentation" {
   assert_true(label_properties.contains("core:label-ivec"))
   assert_true(label_properties.contains("core:encoding"))
   assert_true(label_properties.contains("core:semantics"))
+  assert_true(label_properties.contains("core:label-target"))
   assert_true(label_properties.contains("core:label-aliases"))
   assert_true(label_properties.contains("core:label-unit"))
   assert_true(label_properties.contains("core:is-valid"))
@@ -3995,6 +4030,7 @@ test "core theory fact slots register public Knowledge documentation" {
   assert_true(documented_name_count(label_properties, "core:label-addr") == 1)
 
   let semantics_properties = documented_core_properties("core:semantics")
+  assert_true(semantics_properties.contains("core:effect"))
   assert_true(semantics_properties.contains("core:value"))
   assert_true(semantics_properties.contains("core:insn-code"))
 

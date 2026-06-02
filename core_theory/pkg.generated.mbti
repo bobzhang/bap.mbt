@@ -302,6 +302,7 @@ pub fn Label::possible_name_slot() -> @knowledge.Slot[Unit, @knowledge.Opinions[
 pub fn Label::same(Self, Self) -> Bool
 pub fn Label::semantics(Self) -> Semantics?
 pub fn Label::target(Self) -> Target
+pub fn Label::target_slot() -> @knowledge.Slot[Unit, Target]
 pub fn Label::unit(Self) -> ProgramUnit?
 pub fn Label::unit_slot() -> @knowledge.Slot[Unit, ProgramUnit?]
 pub fn Label::with_alias(Self, String) -> Self
@@ -337,6 +338,7 @@ pub fn LabelFacts::new() -> Self
 pub fn LabelFacts::possible_name(Self) -> @knowledge.FactTable[Unit, @knowledge.Opinions[String?]]
 pub fn LabelFacts::provide_label(Self, @knowledge.Object[Unit], Label) -> Result[Unit, String]
 pub fn LabelFacts::semantics(Self) -> @knowledge.FactTable[Unit, Semantics]
+pub fn LabelFacts::target(Self) -> @knowledge.FactTable[Unit, Target]
 pub fn LabelFacts::unit(Self) -> @knowledge.FactTable[Unit, ProgramUnit?]
 
 pub(all) enum Language {

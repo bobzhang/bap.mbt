@@ -1150,6 +1150,10 @@ test "target registry resolves common and custom declarations" {
     }
     Err(reason) => fail(reason)
   }
+  let powerpc64 = @core_theory.Target::powerpc64()
+  assert_true(powerpc64.matches("powerpc64+bi"))
+  assert_true(powerpc64.nicknames().contains("powerpc64+bi"))
+  assert_true(powerpc64.endianness() == BigEndian)
   match @core_theory.Target::get("power64le") {
     Ok(target) => assert_true(target.matches("powerpc64le"))
     Err(reason) => fail(reason)

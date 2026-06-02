@@ -4221,8 +4221,9 @@ pub fn Target::powerpc64() -> Target {
     name=target_name("powerpc64"),
     parent=Target::powerpc_family(),
     nicknames=[
-      "ppc64", "ppu", "power64", "powerpc64eb", "powerpc64be", "ppc64eb", "ppc64be",
-      "power64eb", "power64be",
+      // BAP lists this duplicate nickname on powerpc64eb as well as powerpc64bi.
+      "powerpc64+bi", "ppc64", "ppu", "power64", "powerpc64eb", "powerpc64be", "ppc64eb",
+      "ppc64be", "power64eb", "power64be",
     ],
     bits=64,
     endianness=BigEndian,

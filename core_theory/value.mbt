@@ -46,6 +46,16 @@ pub fn[A] Value::match_can(
 }
 
 ///|
+pub fn[A] Value::can(
+  self : Value,
+  refine : (Sort) -> Sort?,
+  action : (Value) -> A,
+  otherwise : () -> A,
+) -> A {
+  self.match_can(refine, action, otherwise)
+}
+
+///|
 pub fn[A] Value::match_both(
   self : Value,
   refine_self : (Sort) -> Sort?,
@@ -58,6 +68,18 @@ pub fn[A] Value::match_both(
     (Some(lhs), Some(rhs)) => action(lhs, rhs)
     _ => otherwise()
   }
+}
+
+///|
+pub fn[A] Value::both(
+  self : Value,
+  refine_self : (Sort) -> Sort?,
+  other : Value,
+  refine_other : (Sort) -> Sort?,
+  action : (Value, Value) -> A,
+  otherwise : () -> A,
+) -> A {
+  self.match_both(refine_self, other, refine_other, action, otherwise)
 }
 
 ///|

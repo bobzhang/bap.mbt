@@ -815,6 +815,8 @@ pub fn TargetOptions::to_string(Self) -> String
 pub fn TargetOptions::with_value(Self, String, String) -> Self
 
 type Value
+pub fn[A] Value::both(Self, (Sort) -> Sort?, Self, (Sort) -> Sort?, (Self, Self) -> A, () -> A) -> A
+pub fn[A] Value::can(Self, (Sort) -> Sort?, (Self) -> A, () -> A) -> A
 pub fn Value::cls() -> @knowledge.Class[Unit, Unit]
 pub fn Value::compare(Self, Self) -> Int
 pub fn Value::domain() -> @knowledge.Domain[Self]

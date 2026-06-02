@@ -3357,6 +3357,16 @@ test "program semantics stores values and instruction bytes" {
     })
     is None,
   )
+  assert_true(
+    value.can(sort => sort.refine_bool(), refined => refined.fact("kind"), () => {
+      None
+    }) ==
+    Some("lifted"),
+  )
+  assert_true(
+    value.can(sort => sort.refine_bitv(), _ => Some("unexpected"), () => None)
+    is None,
+  )
   let byte_value = @core_theory.Value::empty(@core_theory.Sort::bitv(8))
   assert_true(
     value.match_both(
@@ -3372,6 +3382,28 @@ test "program semantics stores values and instruction bytes" {
   )
   assert_true(
     value.match_both(
+      sort => sort.refine_bitv(),
+      byte_value,
+      sort => sort.refine_bitv(),
+      (_, _) => true,
+      () => false,
+    ) ==
+    false,
+  )
+  assert_true(
+    value.both(
+      sort => sort.refine_bool(),
+      byte_value,
+      sort => sort.refine_bitv(),
+      (left, right) => {
+        left.sort().same(@core_theory.Sort::bool()) &&
+        right.sort().bitv_size() == Some(8)
+      },
+      () => false,
+    ),
+  )
+  assert_true(
+    value.both(
       sort => sort.refine_bitv(),
       byte_value,
       sort => sort.refine_bitv(),

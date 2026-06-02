@@ -775,7 +775,7 @@ pub fn Target::powerpcle() -> Self
 pub fn Target::r600() -> Self
 pub fn Target::read(String, pkg? : String) -> Result[Self, String]
 pub fn Target::reg(Self, Role, exclude? : Array[Role], unique? : Bool) -> Var?
-pub fn Target::register(Self) -> Result[Unit, String]
+pub fn Target::register(Self, systems? : Array[System], abis? : Array[Abi], fabis? : Array[Fabi], filetypes? : Array[Filetype], options? : Array[TargetOptions], pkg? : String) -> Result[Unit, String]
 pub fn Target::register_variants(Self, systems? : Array[System], abis? : Array[Abi], fabis? : Array[Fabi], filetypes? : Array[Filetype], options? : Array[TargetOptions], pkg? : String) -> Result[Array[Self], String]
 pub fn Target::regs(Self, roles? : Array[Role], exclude? : Array[Role]) -> Array[Var]
 pub fn Target::riscv() -> Self

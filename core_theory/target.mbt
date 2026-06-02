@@ -5795,8 +5795,38 @@ pub fn register_target(target : Target) -> Result[Unit, String] {
 }
 
 ///|
-pub fn Target::register(target : Target) -> Result[Unit, String] {
-  register_target(target)
+pub fn Target::register(
+  target : Target,
+  systems? : Array[System],
+  abis? : Array[Abi],
+  fabis? : Array[Fabi],
+  filetypes? : Array[Filetype],
+  options? : Array[TargetOptions],
+  pkg? : String,
+) -> Result[Unit, String] {
+  let has_variant_args = systems is Some(_) ||
+    abis is Some(_) ||
+    fabis is Some(_) ||
+    filetypes is Some(_) ||
+    options is Some(_) ||
+    pkg is Some(_)
+  if has_variant_args {
+    match
+      Target::register_variants(
+        target,
+        systems?,
+        abis?,
+        fabis?,
+        filetypes?,
+        options?,
+        pkg?,
+      ) {
+      Ok(_) => Ok(())
+      Err(reason) => Err(reason)
+    }
+  } else {
+    register_target(target)
+  }
 }
 
 ///|

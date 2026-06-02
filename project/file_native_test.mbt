@@ -90,3 +90,46 @@ test "project binary input is raw file loading with explicit target" {
     Err(reason) => fail(reason)
   }
 }
+
+///|
+test "project file input loads deduplicated libraries with the same loader" {
+  let loader = @project.ProjectInputLoader::create(
+    name="unit-project-library-native",
+    load=data => {
+      let base = if data.length() > 0 && data[0] == b'#' {
+        0x2200UL
+      } else {
+        0x1100UL
+      }
+      Ok(
+        @project.ProjectInput::from_bytes(
+          target=@core_theory.Target::unknown(),
+          data,
+          endian=LittleEndian,
+          base~,
+        ),
+      )
+    },
+  )
+  match @project.register_input_loader(loader) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  match
+    @project.ProjectInput::file(
+      filename="moon.mod",
+      loader="unit-project-library-native",
+      libraries=["README.mbt.md", "README.mbt.md", "moon.mod"],
+    ) {
+    Ok(input) => {
+      let project = @project.Project::from_input(input)
+      assert_true(project.filename() == Some("moon.mod"))
+      assert_true(project.memory().lookup(0x1100UL).length() == 1)
+      let libraries = project.libraries()
+      assert_true(libraries.length() == 1)
+      assert_true(libraries[0].name() == "README.mbt.md")
+      assert_true(libraries[0].memory().lookup(0x2200UL).length() == 1)
+    }
+    Err(reason) => fail(reason)
+  }
+}

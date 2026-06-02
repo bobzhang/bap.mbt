@@ -99,6 +99,7 @@ pub fn[N : Hash + Eq, E] Graph::strong_components(Self[N, E]) -> Array[@set.Set[
 pub fn[N : Eq, E] Graph::successors(Self[N, E], N) -> Array[N]
 pub fn[N : Hash + Eq, E] Graph::to_dot(Self[N, E], name? : String, graph_attrs? : ArrayView[(String, String)], node_attrs? : (N) -> Array[(String, String)], edge_attrs? : (Edge[N, E]) -> Array[(String, String)], string_of_node? : ((N) -> String)?, string_of_edge? : ((Edge[N, E]) -> String)?) -> String
 pub fn[N : Eq, E] Graph::union(Self[N, E], Self[N, E]) -> Self[N, E]
+pub fn[N, M : Eq, E, F] Graph::view(Self[N, E], node~ : (N) -> M, edge~ : (Edge[N, E]) -> F) -> Self[M, F]
 
 type GraphPath[E] derive(Eq, @debug.Debug)
 pub fn[E] GraphPath::edges(Self[E]) -> Array[E]

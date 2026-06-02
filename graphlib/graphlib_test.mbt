@@ -206,6 +206,31 @@ test "translated BAP graph filtered hides nodes and invisible edges" {
 }
 
 ///|
+test "translated BAP graph view maps nodes and edge labels" {
+  let graph : @graphlib.Graph[Int, String] = @graphlib.Graph::create(
+    edges=[(1, 2, "a"), (2, 3, "b")],
+    nodes=[4],
+  )
+  let view = graph.view(node=node => "n\{node}", edge=edge => {
+    "\{edge.src}->\{edge.dst}:\{edge.label}"
+  })
+  assert_true(view.nodes() == ["n1", "n2", "n3", "n4"])
+  assert_true(
+    view.edges() ==
+    [
+      { src: "n1", dst: "n2", label: "1->2:a" },
+      { src: "n2", dst: "n3", label: "2->3:b" },
+    ],
+  )
+  assert_true(view.has_edge("n1", "n2"))
+  assert_true(view.successors("n2") == ["n3"])
+
+  let changed = graph.add_edge(src=3, dst=4, label="c")
+  assert_true(changed.has_edge(3, 4))
+  assert_true(!view.has_edge("n3", "n4"))
+}
+
+///|
 test "translated BAP graph to_dot uses reverse-postorder node names by default" {
   let graph : @graphlib.Graph[Int, String] = @graphlib.Graph::create(edges=[
     (0, 1, "left"),

@@ -286,6 +286,22 @@ pub fn[N : Eq, E] Graph::filtered(
 }
 
 ///|
+pub fn[N, M : Eq, E, F] Graph::view(
+  self : Graph[N, E],
+  node~ : (N) -> M,
+  edge~ : (Edge[N, E]) -> F,
+) -> Graph[M, F] {
+  let mut out : Graph[M, F] = Graph::new()
+  for item in self.nodes {
+    out = out.add_node(node(item))
+  }
+  for item in self.edges {
+    out = out.add_edge(src=node(item.src), dst=node(item.dst), label=edge(item))
+  }
+  out
+}
+
+///|
 pub fn[N : Eq, E] Graph::successors(self : Graph[N, E], node : N) -> Array[N] {
   self.edges.filter_map(edge => {
     if edge.src == node {

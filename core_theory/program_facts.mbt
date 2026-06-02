@@ -435,41 +435,11 @@ pub fn SourceFacts::collect_source(
 ///|
 pub fn ProgramUnitFacts::new() -> ProgramUnitFacts {
   let cls = ProgramUnit::cls()
-  let path = cls.property(
-    name=core_name("unit-path"),
-    domain=optional_string_domain("unit-path"),
-    desc="a filesystem name of the file that contains the program",
-    persistent=optional_string_persistent(),
-    public=true,
-  )
-  let bias = cls.property(
-    name=core_name("unit-bias"),
-    domain=optional_word_domain("unit-bias"),
-    desc="the value by which all addresses of the unit are biased",
-    persistent=optional_word_persistent(),
-    public=true,
-  )
-  let target = cls.property(
-    name=core_name("unit-target"),
-    domain=target_domain(),
-    desc="the target system for the unit",
-    persistent=Target::persistent(),
-    public=true,
-  )
-  let source = cls.property(
-    name=core_name("unit-source"),
-    domain=source_domain(),
-    desc="the source of the unit",
-    persistent=optional_source_persistent(),
-    public=true,
-  )
-  let compiler = cls.property(
-    name=core_name("unit-compiler"),
-    domain=compiler_domain(),
-    desc="the compiler that compiled the unit",
-    persistent=optional_compiler_persistent(),
-    public=true,
-  )
+  let path = ProgramUnit::path_slot()
+  let bias = ProgramUnit::bias_slot()
+  let target = ProgramUnit::target_slot()
+  let source = ProgramUnit::source_slot()
+  let compiler = ProgramUnit::compiler_slot()
   {
     state_value: @knowledge.State::new(),
     class_value: cls,
@@ -479,6 +449,61 @@ pub fn ProgramUnitFacts::new() -> ProgramUnitFacts {
     source_value: @knowledge.FactTable::new(source),
     compiler_value: @knowledge.FactTable::new(compiler),
   }
+}
+
+///|
+pub fn ProgramUnit::path_slot() -> @knowledge.Slot[Unit, String?] {
+  ProgramUnit::cls().property(
+    name=core_name("unit-path"),
+    domain=optional_string_domain("unit-path"),
+    desc="a filesystem name of the file that contains the program",
+    persistent=optional_string_persistent(),
+    public=true,
+  )
+}
+
+///|
+pub fn ProgramUnit::bias_slot() -> @knowledge.Slot[Unit, @types.Word?] {
+  ProgramUnit::cls().property(
+    name=core_name("unit-bias"),
+    domain=optional_word_domain("unit-bias"),
+    desc="the value by which all addresses of the unit are biased",
+    persistent=optional_word_persistent(),
+    public=true,
+  )
+}
+
+///|
+pub fn ProgramUnit::target_slot() -> @knowledge.Slot[Unit, Target] {
+  ProgramUnit::cls().property(
+    name=core_name("unit-target"),
+    domain=target_domain(),
+    desc="the target system for the unit",
+    persistent=Target::persistent(),
+    public=true,
+  )
+}
+
+///|
+pub fn ProgramUnit::source_slot() -> @knowledge.Slot[Unit, Source?] {
+  ProgramUnit::cls().property(
+    name=core_name("unit-source"),
+    domain=source_domain(),
+    desc="the source of the unit",
+    persistent=optional_source_persistent(),
+    public=true,
+  )
+}
+
+///|
+pub fn ProgramUnit::compiler_slot() -> @knowledge.Slot[Unit, Compiler?] {
+  ProgramUnit::cls().property(
+    name=core_name("unit-compiler"),
+    domain=compiler_domain(),
+    desc="the compiler that compiled the unit",
+    persistent=optional_compiler_persistent(),
+    public=true,
+  )
 }
 
 ///|

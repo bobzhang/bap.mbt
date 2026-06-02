@@ -3020,22 +3020,42 @@ test "program source and unit facts expose BAP-style Knowledge slots" {
   let unit_facts = @core_theory.ProgramUnitFacts::new()
   assert_true(@core_theory.ProgramUnit::cls().name().show() == "core:unit")
   assert_true(unit_facts.class().same(@core_theory.ProgramUnit::cls()))
+  assert_true(
+    unit_facts.path().slot().name().show() ==
+    @core_theory.ProgramUnit::path_slot().name().show(),
+  )
+  assert_true(
+    unit_facts.bias().slot().owner().show() ==
+    @core_theory.ProgramUnit::bias_slot().owner().show(),
+  )
+  assert_true(
+    unit_facts.target().slot().name().show() ==
+    @core_theory.ProgramUnit::target_slot().name().show(),
+  )
+  assert_true(
+    unit_facts.source().slot().owner().show() ==
+    @core_theory.ProgramUnit::source_slot().owner().show(),
+  )
+  assert_true(
+    unit_facts.compiler().slot().name().show() ==
+    @core_theory.ProgramUnit::compiler_slot().name().show(),
+  )
   assert_persistent_round_trip(
-    unit_facts.path().slot().persistent(),
+    @core_theory.ProgramUnit::path_slot().persistent(),
     Some("main.o"),
     "unit path",
   )
   assert_persistent_round_trip(
-    unit_facts.bias().slot().persistent(),
+    @core_theory.ProgramUnit::bias_slot().persistent(),
     Some(base),
     "unit bias",
   )
   assert_persistent_round_trip(
-    unit_facts.bias().slot().persistent(),
+    @core_theory.ProgramUnit::bias_slot().persistent(),
     (None : @types.Word?),
     "empty unit bias",
   )
-  match unit_facts.target().slot().persistent() {
+  match @core_theory.ProgramUnit::target_slot().persistent() {
     Some(persistent) =>
       match
         persistent.decode(persistent.encode(@core_theory.Target::x86_64())) {
@@ -3045,22 +3065,22 @@ test "program source and unit facts expose BAP-style Knowledge slots" {
     None => fail("missing persistent codec for unit target")
   }
   assert_optional_source_persistent_round_trip(
-    unit_facts.source().slot().persistent(),
+    @core_theory.ProgramUnit::source_slot().persistent(),
     Some(source),
     "unit source",
   )
   assert_optional_source_persistent_round_trip(
-    unit_facts.source().slot().persistent(),
+    @core_theory.ProgramUnit::source_slot().persistent(),
     None,
     "empty unit source",
   )
   assert_optional_compiler_persistent_round_trip(
-    unit_facts.compiler().slot().persistent(),
+    @core_theory.ProgramUnit::compiler_slot().persistent(),
     Some(compiler),
     "unit compiler",
   )
   assert_optional_compiler_persistent_round_trip(
-    unit_facts.compiler().slot().persistent(),
+    @core_theory.ProgramUnit::compiler_slot().persistent(),
     None,
     "empty unit compiler",
   )

@@ -944,6 +944,18 @@ pub fn TargetOptions::persistent() -> @knowledge.Persistent[TargetOptions] {
 }
 
 ///|
+pub fn TargetOptions::domain() -> @knowledge.Domain[TargetOptions] {
+  @knowledge.Domain::new(
+    name=core_target_enum_name("target-options"),
+    empty=Some(TargetOptions::empty()),
+    is_empty=options => options.is_empty(),
+    order=target_options_order,
+    join=target_options_join,
+    inspect=options => options.to_string(),
+  )
+}
+
+///|
 pub fn TargetOptions::cls() -> @knowledge.Class[Unit, Unit] {
   @knowledge.Class::create(
     name=core_target_enum_name("target-options"),
@@ -1030,6 +1042,52 @@ pub fn TargetOptions::with_value(
 }
 
 ///|
+fn target_options_contains(
+  options : TargetOptions,
+  constraint : TargetOptions,
+) -> Bool {
+  for entry in constraint.values_value {
+    if options.values_value.get(entry.0) != Some(entry.1) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn target_options_order(
+  lhs : TargetOptions,
+  rhs : TargetOptions,
+) -> @knowledge.PartialOrder {
+  let lhs_contains_rhs = target_options_contains(lhs, rhs)
+  let rhs_contains_lhs = target_options_contains(rhs, lhs)
+  match (lhs_contains_rhs, rhs_contains_lhs) {
+    (true, true) => Equal
+    (true, false) => Greater
+    (false, true) => Less
+    (false, false) => Incomparable
+  }
+}
+
+///|
+fn target_options_join(
+  lhs : TargetOptions,
+  rhs : TargetOptions,
+) -> Result[TargetOptions, String] {
+  let values = lhs.values_value.copy()
+  for entry in rhs.values_value {
+    match values.get(entry.0) {
+      Some(value) =>
+        if value != entry.1 {
+          return Err("conflicting target option \{entry.0}")
+        }
+      None => values[entry.0] = entry.1
+    }
+  }
+  Ok(TargetOptions::of_map(values))
+}
+
+///|
 pub fn TargetOptions::matches(
   self : TargetOptions,
   constraint : TargetOptions,
@@ -1038,12 +1096,7 @@ pub fn TargetOptions::matches(
   if strict && self.values_value.length() != constraint.values_value.length() {
     return false
   }
-  for entry in constraint.values_value {
-    if self.values_value.get(entry.0) != Some(entry.1) {
-      return false
-    }
-  }
-  true
+  target_options_contains(self, constraint)
 }
 
 ///|

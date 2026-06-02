@@ -1754,6 +1754,39 @@ test "target selection filters BAP-style metadata constraints" {
   let options_cls = @core_theory.TargetOptions::cls()
   assert_true(options_cls.name().show() == "core:target-options")
   assert_true(options_cls.same(@core_theory.TargetOptions::cls()))
+  let options_domain = @core_theory.TargetOptions::domain()
+  let cpu_v2_debug_options = cpu_v2_options.with_value("debug", "true")
+  assert_true(options_domain.name().show() == "core:target-options")
+  assert_true(options_domain.empty().map(item => item.is_empty()) == Some(true))
+  assert_true(options_domain.order(cpu_v2_options, cpu_v2_options) == Equal)
+  assert_true(
+    options_domain.order(cpu_v2_debug_options, cpu_v2_options) == Greater,
+  )
+  assert_true(
+    options_domain.order(cpu_v2_options, cpu_v2_debug_options) == Less,
+  )
+  assert_true(
+    options_domain.order(
+      cpu_v2_options,
+      @core_theory.TargetOptions::singleton("cpu", "v1"),
+    ) ==
+    Incomparable,
+  )
+  match
+    options_domain.join(
+      cpu_v2_options,
+      @core_theory.TargetOptions::singleton("debug", "true"),
+    ) {
+    Ok(joined) => assert_true(joined.equal(cpu_v2_debug_options))
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    options_domain.join(
+      cpu_v2_options,
+      @core_theory.TargetOptions::singleton("cpu", "v1"),
+    )
+    is Err(_),
+  )
   assert_true(linux_elf_matches[0].options().get("cpu") == Some("v2"))
   assert_true(linux_elf_matches[0].options().equal(cpu_v2_options))
   assert_true(linux_elf_matches[0].options().compare(cpu_v2_options) == 0)

@@ -791,6 +791,7 @@ pub fn Target::xcore() -> Self
 type TargetOptions
 pub fn TargetOptions::cls() -> @knowledge.Class[Unit, Unit]
 pub fn TargetOptions::compare(Self, Self) -> Int
+pub fn TargetOptions::domain() -> @knowledge.Domain[Self]
 pub fn TargetOptions::empty() -> Self
 pub fn TargetOptions::entries(Self) -> Array[(String, String)]
 pub fn TargetOptions::equal(Self, Self) -> Bool

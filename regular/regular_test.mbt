@@ -275,6 +275,33 @@ test "regular sequence helpers mirror BAP sequence wrappers" {
 }
 
 ///|
+test "regular sequence generator helpers preserve monadic yield order" {
+  let empty : @regular.SeqGenerator[Unit, Int] = @regular.seq_generator_return(
+    (),
+  )
+  assert_true(@regular.seq_generator_run(empty) == [])
+  assert_true(
+    @regular.seq_generator_run(@regular.seq_generator_of_sequence([1, 2, 3])) ==
+    [1, 2, 3],
+  )
+  let direct = @regular.seq_generator_yield(1).bind(_ => {
+    @regular.seq_generator_yield(2).bind(_ => @regular.seq_generator_yield(3))
+  })
+  assert_true(@regular.seq_generator_run(direct) == [1, 2, 3])
+  let seeded : @regular.SeqGenerator[Int, Int] = @regular.seq_generator_return(
+    4,
+  )
+  let mapped = seeded
+    .map(value => value + 1)
+    .bind(value => @regular.seq_generator_yield(value * 10))
+  assert_true(@regular.seq_generator_run(mapped) == [50])
+  let chained = @regular.seq_generator_bind(@regular.seq_generator_yield(7), _ => {
+    @regular.seq_generator_yield(8)
+  })
+  assert_true(@regular.seq_generator_run(chained) == [7, 8])
+}
+
+///|
 fn assert_trie_longest(
   trie : @regular.PrefixTrie[Int],
   cases : Array[(String, (Int, Int)?)],

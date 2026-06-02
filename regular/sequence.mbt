@@ -11,6 +11,78 @@ pub(all) suberror SeqError {
 } derive(Eq, @debug.Debug)
 
 ///|
+struct SeqGenerator[R, T] {
+  run_into : (Array[T]) -> R
+}
+
+///|
+pub fn[R, T] seq_generator_return(value : R) -> SeqGenerator[R, T] {
+  { run_into: _ => value }
+}
+
+///|
+pub fn[T] seq_generator_yield(value : T) -> SeqGenerator[Unit, T] {
+  { run_into: out => out.push(value) }
+}
+
+///|
+pub fn[A, B, T] SeqGenerator::bind(
+  self : SeqGenerator[A, T],
+  f : (A) -> SeqGenerator[B, T],
+) -> SeqGenerator[B, T] {
+  {
+    run_into: out => {
+      let value = (self.run_into)(out)
+      (f(value).run_into)(out)
+    },
+  }
+}
+
+///|
+pub fn[A, B, T] seq_generator_bind(
+  generator : SeqGenerator[A, T],
+  f : (A) -> SeqGenerator[B, T],
+) -> SeqGenerator[B, T] {
+  generator.bind(f)
+}
+
+///|
+pub fn[A, B, T] SeqGenerator::map(
+  self : SeqGenerator[A, T],
+  f : (A) -> B,
+) -> SeqGenerator[B, T] {
+  self.bind(value => seq_generator_return(f(value)))
+}
+
+///|
+pub fn[A, B, T] seq_generator_map(
+  generator : SeqGenerator[A, T],
+  f : (A) -> B,
+) -> SeqGenerator[B, T] {
+  generator.map(f)
+}
+
+///|
+pub fn[T] seq_generator_of_sequence(
+  values : ArrayView[T],
+) -> SeqGenerator[Unit, T] {
+  {
+    run_into: out => {
+      for value in values {
+        out.push(value)
+      }
+    },
+  }
+}
+
+///|
+pub fn[T] seq_generator_run(generator : SeqGenerator[Unit, T]) -> Array[T] {
+  let out = []
+  (generator.run_into)(out)
+  out
+}
+
+///|
 pub fn[T] seq_of_array(values : ArrayView[T]) -> Array[T] {
   let out = []
   for value in values {

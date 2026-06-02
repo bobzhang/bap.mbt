@@ -179,6 +179,18 @@ pub fn[A, B] seq_foldi(ArrayView[A], B, (Int, B, A) -> B) -> B
 
 pub fn[T] seq_for_all(ArrayView[T], (T) -> Bool) -> Bool
 
+pub fn[A, B, T] seq_generator_bind(SeqGenerator[A, T], (A) -> SeqGenerator[B, T]) -> SeqGenerator[B, T]
+
+pub fn[A, B, T] seq_generator_map(SeqGenerator[A, T], (A) -> B) -> SeqGenerator[B, T]
+
+pub fn[T] seq_generator_of_sequence(ArrayView[T]) -> SeqGenerator[Unit, T]
+
+pub fn[R, T] seq_generator_return(R) -> SeqGenerator[R, T]
+
+pub fn[T] seq_generator_run(SeqGenerator[Unit, T]) -> Array[T]
+
+pub fn[T] seq_generator_yield(T) -> SeqGenerator[Unit, T]
+
 pub fn[T] seq_hd(ArrayView[T]) -> T?
 
 pub fn[T] seq_hd_exn(ArrayView[T]) -> T raise SeqError
@@ -295,6 +307,10 @@ pub fn[V] PrefixTrie::length(Self[V]) -> Int
 pub fn[V] PrefixTrie::longest_match(Self[V], StringView) -> (Int, V)?
 pub fn[V] PrefixTrie::new() -> Self[V]
 pub fn[V] PrefixTrie::remove(Self[V], StringView) -> Unit
+
+type SeqGenerator[R, T]
+pub fn[A, B, T] SeqGenerator::bind(Self[A, T], (A) -> Self[B, T]) -> Self[B, T]
+pub fn[A, B, T] SeqGenerator::map(Self[A, T], (A) -> B) -> Self[B, T]
 
 pub(all) enum SeqStep[T, S] {
   SeqYield(T, S)

@@ -86,12 +86,7 @@ fn program_unit_domain() -> @knowledge.Domain[ProgramUnit?] {
 
 ///|
 pub fn LabelFacts::new() -> LabelFacts {
-  let cls : @knowledge.Class[Unit, Unit] = @knowledge.Class::create(
-    name=core_name("program"),
-    sort=(),
-    desc="a class of program instances",
-    public=true,
-  )
+  let cls = Label::cls()
   let addr = cls.property(
     name=core_name("label-addr"),
     domain=optional_word_domain("label-addr"),

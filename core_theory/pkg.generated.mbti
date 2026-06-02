@@ -247,6 +247,7 @@ pub fn Ieee754Parameters::decimal64() -> Self
 type Label
 pub fn Label::addr(Self) -> @types.Word?
 pub fn Label::aliases(Self) -> Array[String]
+pub fn Label::cls() -> @knowledge.Class[Unit, Unit]
 pub fn Label::compare(Self, Self) -> Int
 pub fn Label::encoding(Self) -> Language?
 pub fn Label::for_addr(@types.Word, target? : Target, pkg? : String) -> Self

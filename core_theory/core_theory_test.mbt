@@ -3066,6 +3066,7 @@ test "program source and unit facts expose BAP-style Knowledge slots" {
 
 ///|
 test "program label facts expose BAP-style Knowledge slots" {
+  assert_true(@core_theory.Label::cls().name().show() == "core:program")
   let weak = register_core_test_agent("label-fact-weak", Unreliable)
   let strong = register_core_test_agent("label-fact-strong", Reliable)
   let source = @core_theory.Source::create(language=C, file="main.c")
@@ -3087,6 +3088,7 @@ test "program label facts expose BAP-style Knowledge slots" {
     .with_semantics(label_semantics)
     .with_subroutine()
   let facts = @core_theory.LabelFacts::new()
+  assert_true(facts.class().same(@core_theory.Label::cls()))
   assert_persistent_round_trip(
     facts.addr().slot().persistent(),
     Some(addr),

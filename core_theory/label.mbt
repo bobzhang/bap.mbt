@@ -134,6 +134,11 @@ fn Label::make(
 }
 
 ///|
+pub fn Label::cls() -> @knowledge.Class[Unit, Unit] {
+  Program::cls()
+}
+
+///|
 pub fn Label::fresh(target? : Target) -> Label {
   Label::make(target?)
 }

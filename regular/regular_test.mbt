@@ -72,6 +72,8 @@ test "regular sequence helpers mirror BAP sequence wrappers" {
   let helper_empty : Array[Int] = @regular.seq_empty()
   assert_true(helper_empty == [])
   assert_true(@regular.seq_singleton(4) == [4])
+  assert_true(@regular.seq_range(1, 4) == [1, 2, 3])
+  assert_true(@regular.seq_range(4, 1) == [])
   assert_true(@regular.seq_cons(0, copied) == [0, 1, 2, 3])
   assert_true(@regular.seq_append([0], copied) == [0, 1, 2, 3])
   assert_true(@regular.seq_concat([[0], copied, [4, 5]]) == [0, 1, 2, 3, 4, 5])

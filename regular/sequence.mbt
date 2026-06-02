@@ -23,6 +23,17 @@ pub fn[T] seq_singleton(value : T) -> Array[T] {
 }
 
 ///|
+pub fn seq_range(start : Int, stop : Int) -> Array[Int] {
+  let out = []
+  let mut value = start
+  while value < stop {
+    out.push(value)
+    value = value + 1
+  }
+  out
+}
+
+///|
 pub fn[T] seq_cons(value : T, values : ArrayView[T]) -> Array[T] {
   let out = [value]
   for item in values {

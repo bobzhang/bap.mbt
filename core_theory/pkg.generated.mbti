@@ -725,6 +725,7 @@ pub fn TargetOptions::get(Self, String) -> String?
 pub fn TargetOptions::is_empty(Self) -> Bool
 pub fn TargetOptions::matches(Self, Self, strict? : Bool) -> Bool
 pub fn TargetOptions::of_map(Map[String, String]) -> Self
+pub fn TargetOptions::persistent() -> @knowledge.Persistent[Self]
 pub fn TargetOptions::singleton(String, String) -> Self
 pub fn TargetOptions::to_string(Self) -> String
 pub fn TargetOptions::with_value(Self, String, String) -> Self

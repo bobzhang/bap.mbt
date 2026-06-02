@@ -847,6 +847,17 @@ pub fn TargetOptions::of_map(values : Map[String, String]) -> TargetOptions {
 }
 
 ///|
+pub fn TargetOptions::persistent() -> @knowledge.Persistent[TargetOptions] {
+  let string_codec = @knowledge.Persistent::string()
+  let options_codec = @knowledge.Persistent::map(string_codec, string_codec)
+  @knowledge.Persistent::convert(
+    to_persistent=options => options.values_value.copy(),
+    of_persistent=values => Ok(TargetOptions::of_map(values)),
+    options_codec,
+  )
+}
+
+///|
 pub fn TargetOptions::singleton(key : String, value : String) -> TargetOptions {
   let values : Map[String, String] = {}
   values[key] = value

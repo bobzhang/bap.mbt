@@ -1370,6 +1370,21 @@ test "target selection filters BAP-style metadata constraints" {
     0,
   )
   assert_true(linux_elf_matches[0].options().to_string() == "+cpu=v2")
+  let options_codec = @core_theory.TargetOptions::persistent()
+  match options_codec.decode(options_codec.encode(cpu_v2_options)) {
+    Ok(decoded) => {
+      assert_true(decoded.equal(cpu_v2_options))
+      assert_true(decoded.entries() == [("cpu", "v2")])
+    }
+    Err(reason) => fail(reason)
+  }
+  match
+    options_codec.decode(
+      options_codec.encode(@core_theory.TargetOptions::empty()),
+    ) {
+    Ok(decoded) => assert_true(decoded.is_empty())
+    Err(reason) => fail(reason)
+  }
   let cpu_v2 = @core_theory.Target::filter(
     parent~,
     system=Linux,

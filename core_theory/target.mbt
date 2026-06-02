@@ -90,6 +90,18 @@ fn unknown_target_enum_name() -> @knowledge.Name {
 }
 
 ///|
+fn[T] target_enum_persistent(
+  name_of : (T) -> @knowledge.Name,
+  read : (String) -> Result[T, String],
+) -> @knowledge.Persistent[T] {
+  @knowledge.Persistent::convert(
+    to_persistent=value => name_of(value).show(),
+    of_persistent=text => read(text),
+    @knowledge.Persistent::string(),
+  )
+}
+
+///|
 struct TargetOptions {
   values_value : Map[String, String]
 }
@@ -163,6 +175,11 @@ pub fn Endianness::read(
     }
   }
   Err("unknown endianness \{name.show()}")
+}
+
+///|
+pub fn Endianness::persistent() -> @knowledge.Persistent[Endianness] {
+  target_enum_persistent(value => value.name(), text => Endianness::read(text))
 }
 
 ///|
@@ -398,6 +415,11 @@ pub fn System::read(text : String, pkg? : String) -> Result[System, String] {
 }
 
 ///|
+pub fn System::persistent() -> @knowledge.Persistent[System] {
+  target_enum_persistent(value => value.name(), text => System::read(text))
+}
+
+///|
 pub fn Abi::to_string(self : Abi) -> String {
   match self {
     UnknownAbi => "unknown"
@@ -625,6 +647,11 @@ pub fn Abi::read(text : String, pkg? : String) -> Result[Abi, String] {
 }
 
 ///|
+pub fn Abi::persistent() -> @knowledge.Persistent[Abi] {
+  target_enum_persistent(value => value.name(), text => Abi::read(text))
+}
+
+///|
 pub fn Fabi::to_string(self : Fabi) -> String {
   match self {
     UnknownFabi => "unknown"
@@ -710,6 +737,11 @@ pub fn Fabi::read(text : String, pkg? : String) -> Result[Fabi, String] {
     }
   }
   Err("unknown floating-point ABI \{name.show()}")
+}
+
+///|
+pub fn Fabi::persistent() -> @knowledge.Persistent[Fabi] {
+  target_enum_persistent(value => value.name(), text => Fabi::read(text))
 }
 
 ///|
@@ -834,6 +866,11 @@ pub fn Filetype::read(text : String, pkg? : String) -> Result[Filetype, String] 
     }
   }
   Err("unknown file type \{name.show()}")
+}
+
+///|
+pub fn Filetype::persistent() -> @knowledge.Persistent[Filetype] {
+  target_enum_persistent(value => value.name(), text => Filetype::read(text))
 }
 
 ///|
@@ -1339,6 +1376,11 @@ pub fn Role::read(text : String, pkg? : String) -> Result[Role, String] {
     }
   }
   Err("unknown role \{name.show()}")
+}
+
+///|
+pub fn Role::persistent() -> @knowledge.Persistent[Role] {
+  target_enum_persistent(value => value.name(), text => Role::read(text))
 }
 
 ///|

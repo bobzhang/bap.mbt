@@ -484,6 +484,10 @@ test "targets inherit defaults and match ancestry" {
   assert_true(little.name().show() == "core:le")
   assert_true(little.hash() == little.name().hash())
   assert_true(@core_theory.Endianness::members().contains(BiEndian))
+  let endian_codec = @core_theory.Endianness::persistent()
+  assert_true(endian_codec.encode(little) == "core:le")
+  assert_persistent_round_trip(Some(endian_codec), BiEndian, "endianness")
+  assert_true(endian_codec.decode("le") is Err(_))
   match @core_theory.Endianness::read("core:eb") {
     Ok(value) => assert_true(value == BigEndian)
     Err(reason) => fail(reason)
@@ -520,6 +524,10 @@ test "targets inherit defaults and match ancestry" {
   assert_true(unknown_system.name().show() == ":unknown")
   assert_true(linux.hash() == linux.name().hash())
   assert_true(@core_theory.System::members().contains(NoSystem))
+  let system_codec = @core_theory.System::persistent()
+  assert_true(system_codec.encode(linux) == "core:linux")
+  assert_persistent_round_trip(Some(system_codec), UnknownSystem, "system")
+  assert_true(system_codec.decode("missing") is Err(_))
   match @core_theory.System::read("core:linux") {
     Ok(value) => assert_true(value == Linux)
     Err(reason) => fail(reason)
@@ -558,6 +566,10 @@ test "targets inherit defaults and match ancestry" {
     @core_theory.Abi::gnu().hash() == @core_theory.Abi::gnu().name().hash(),
   )
   assert_true(@core_theory.Abi::members().contains(HVC))
+  let abi_codec = @core_theory.Abi::persistent()
+  assert_true(abi_codec.encode(@core_theory.Abi::gnu()) == "core:gnu")
+  assert_persistent_round_trip(Some(abi_codec), MSVC, "abi")
+  assert_true(abi_codec.decode("gnu") is Err(_))
   match @core_theory.Abi::read("core:ms") {
     Ok(value) => assert_true(value == MSVC)
     Err(reason) => fail(reason)
@@ -578,6 +590,10 @@ test "targets inherit defaults and match ancestry" {
     @core_theory.Fabi::hard().hash() == @core_theory.Fabi::hard().name().hash(),
   )
   assert_true(@core_theory.Fabi::members().contains(UnknownFabi))
+  let fabi_codec = @core_theory.Fabi::persistent()
+  assert_true(fabi_codec.encode(@core_theory.Fabi::hard()) == "core:hf")
+  assert_persistent_round_trip(Some(fabi_codec), UnknownFabi, "fabi")
+  assert_true(fabi_codec.decode("hard") is Err(_))
   match @core_theory.Fabi::read("core:sf") {
     Ok(value) => assert_true(value == Soft)
     Err(reason) => fail(reason)
@@ -603,6 +619,12 @@ test "targets inherit defaults and match ancestry" {
     @core_theory.Filetype::macho().name().hash(),
   )
   assert_true(@core_theory.Filetype::members().contains(Raw))
+  let filetype_codec = @core_theory.Filetype::persistent()
+  assert_true(
+    filetype_codec.encode(@core_theory.Filetype::macho()) == "core:macho",
+  )
+  assert_persistent_round_trip(Some(filetype_codec), Raw, "filetype")
+  assert_true(filetype_codec.decode("raw") is Err(_))
   match @core_theory.Filetype::read("core:aout") {
     Ok(value) => assert_true(value == AOut)
     Err(reason) => fail(reason)
@@ -1655,6 +1677,10 @@ test "target role helpers classify common architecture variables" {
   assert_true(argument.hash() == argument.name().hash())
   assert_true(@core_theory.Role::members().contains(ResultRegister))
   assert_true(@core_theory.Role::members().contains(ThumbMode))
+  let role_codec = @core_theory.Role::persistent()
+  assert_true(role_codec.encode(argument) == "core:function-argument")
+  assert_persistent_round_trip(Some(role_codec), ThumbMode, "role")
+  assert_true(role_codec.decode("function-argument") is Err(_))
   match @core_theory.Role::read("core:function-return") {
     Ok(value) => assert_true(value == ResultRegister)
     Err(reason) => fail(reason)

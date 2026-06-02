@@ -65,6 +65,7 @@ pub fn Abi::msvc() -> Self
 pub fn Abi::name(Self) -> @knowledge.Name
 pub fn Abi::of_string(String) -> Self?
 pub fn Abi::pascal() -> Self
+pub fn Abi::persistent() -> @knowledge.Persistent[Self]
 pub fn Abi::read(String, pkg? : String) -> Result[Self, String]
 pub fn Abi::smc() -> Self
 pub fn Abi::stdcall() -> Self
@@ -167,6 +168,7 @@ pub fn Endianness::le() -> Self
 pub fn Endianness::members() -> Array[Self]
 pub fn Endianness::name(Self) -> @knowledge.Name
 pub fn Endianness::of_string(String) -> Self?
+pub fn Endianness::persistent() -> @knowledge.Persistent[Self]
 pub fn Endianness::read(String, pkg? : String) -> Result[Self, String]
 pub fn Endianness::to_string(Self) -> String
 
@@ -183,6 +185,7 @@ pub fn Fabi::is_unknown(Self) -> Bool
 pub fn Fabi::members() -> Array[Self]
 pub fn Fabi::name(Self) -> @knowledge.Name
 pub fn Fabi::of_string(String) -> Self?
+pub fn Fabi::persistent() -> @knowledge.Persistent[Self]
 pub fn Fabi::read(String, pkg? : String) -> Result[Self, String]
 pub fn Fabi::soft() -> Self
 pub fn Fabi::to_string(Self) -> String
@@ -209,6 +212,7 @@ pub fn Filetype::members() -> Array[Self]
 pub fn Filetype::name(Self) -> @knowledge.Name
 pub fn Filetype::of_string(String) -> Self?
 pub fn Filetype::pe() -> Self
+pub fn Filetype::persistent() -> @knowledge.Persistent[Self]
 pub fn Filetype::raw() -> Self
 pub fn Filetype::read(String, pkg? : String) -> Result[Self, String]
 pub fn Filetype::to_string(Self) -> String
@@ -443,6 +447,7 @@ pub fn Role::of_string(String) -> Self?
 pub fn Role::one() -> Self
 pub fn Role::overflow_flag() -> Self
 pub fn Role::parity_flag() -> Self
+pub fn Role::persistent() -> @knowledge.Persistent[Self]
 pub fn Role::privileged() -> Self
 pub fn Role::pseudo() -> Self
 pub fn Role::read(String, pkg? : String) -> Result[Self, String]
@@ -594,6 +599,7 @@ pub fn System::netbsd() -> Self
 pub fn System::none() -> Self
 pub fn System::of_string(String) -> Self?
 pub fn System::openbsd() -> Self
+pub fn System::persistent() -> @knowledge.Persistent[Self]
 pub fn System::read(String, pkg? : String) -> Result[Self, String]
 pub fn System::solaris() -> Self
 pub fn System::to_string(Self) -> String

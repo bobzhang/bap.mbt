@@ -376,6 +376,63 @@ pub fn[T : Eq] Domain::powerset(
 }
 
 ///|
+fn[T : Eq + Hash] set_subset(lhs : Set[T], rhs : Set[T]) -> Bool {
+  for item in lhs {
+    if !rhs.contains(item) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn[T : Eq + Hash] set_union(lhs : Set[T], rhs : Set[T]) -> Set[T] {
+  let result : Set[T] = Set([])
+  for item in lhs {
+    result.add(item)
+  }
+  for item in rhs {
+    result.add(item)
+  }
+  result
+}
+
+///|
+pub fn[T : Eq + Hash] Domain::set(
+  name : Name,
+  inspect : (T) -> String,
+) -> Domain[Set[T]] {
+  let empty : Set[T] = Set([])
+  Domain::new(
+    name~,
+    empty=Some(empty),
+    is_empty=(value : Set[T]) => value.is_empty(),
+    order=(lhs : Set[T], rhs : Set[T]) => {
+      let lhs_le_rhs = set_subset(lhs, rhs)
+      let rhs_le_lhs = set_subset(rhs, lhs)
+      if lhs_le_rhs && rhs_le_lhs {
+        Equal
+      } else if lhs_le_rhs {
+        Less
+      } else if rhs_le_lhs {
+        Greater
+      } else {
+        Incomparable
+      }
+    },
+    join=(lhs : Set[T], rhs : Set[T]) => Ok(set_union(lhs, rhs)),
+    inspect=(value : Set[T]) => {
+      let items = []
+      for item in value {
+        items.push(inspect(item))
+      }
+      items.sort_by((lhs, rhs) => lhs.compare(rhs))
+      "{\{items.join(", ")}}"
+    },
+  )
+}
+
+///|
 pub fn[T] Domain::opinions(
   name : Name,
   empty~ : T,

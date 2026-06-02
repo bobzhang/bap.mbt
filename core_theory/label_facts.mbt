@@ -9,7 +9,7 @@ struct LabelFacts {
   encoding_value : @knowledge.FactTable[Unit, Language]
   semantics_value : @knowledge.FactTable[Unit, Semantics]
   target_value : @knowledge.FactTable[Unit, Target]
-  aliases_value : @knowledge.FactTable[Unit, Array[String]]
+  aliases_value : @knowledge.FactTable[Unit, Set[String]]
   unit_value : @knowledge.FactTable[Unit, ProgramUnit?]
   valid_value : @knowledge.FactTable[Unit, Bool?]
   subroutine_value : @knowledge.FactTable[Unit, Bool?]
@@ -174,12 +174,12 @@ pub fn Label::encoding_slot() -> @knowledge.Slot[Unit, Language] {
 }
 
 ///|
-pub fn Label::aliases_slot() -> @knowledge.Slot[Unit, Array[String]] {
+pub fn Label::aliases_slot() -> @knowledge.Slot[Unit, Set[String]] {
   Label::cls().property(
     name=core_name("label-aliases"),
-    domain=@knowledge.Domain::powerset(core_name("label-aliases"), item => item),
+    domain=@knowledge.Domain::set(core_name("label-aliases"), item => item),
     desc="the set of known program names",
-    persistent=@knowledge.Persistent::array(@knowledge.Persistent::string()),
+    persistent=@knowledge.Persistent::set(@knowledge.Persistent::string()),
     public=true,
   )
 }
@@ -281,7 +281,7 @@ pub fn LabelFacts::semantics(
 ///|
 pub fn LabelFacts::aliases(
   self : LabelFacts,
-) -> @knowledge.FactTable[Unit, Array[String]] {
+) -> @knowledge.FactTable[Unit, Set[String]] {
   self.aliases_value
 }
 
@@ -352,7 +352,7 @@ pub fn LabelFacts::provide_label(
       }
     None => ()
   }
-  match self.aliases_value.provide(object, label.aliases()) {
+  match self.aliases_value.provide(object, label.aliases_set()) {
     Ok(_) => ()
     Err(reason) => return Err(reason)
   }
@@ -467,10 +467,10 @@ pub fn LabelFacts::collect_semantics(
 pub fn LabelFacts::collect_aliases(
   self : LabelFacts,
   object : @knowledge.Object[Unit],
-) -> Array[String] {
+) -> Set[String] {
   match self.aliases_value.collect(object) {
     Some(aliases) => aliases
-    None => []
+    None => Set([])
   }
 }
 

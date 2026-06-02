@@ -6,6 +6,7 @@ import {
   "bobzhang/bap/knowledge",
   "bobzhang/bap/types",
   "moonbitlang/core/debug",
+  "moonbitlang/core/set",
 }
 
 // Values
@@ -280,7 +281,7 @@ type Label
 pub fn Label::addr(Self) -> @types.Word?
 pub fn Label::addr_slot() -> @knowledge.Slot[Unit, @types.Word?]
 pub fn Label::aliases(Self) -> Array[String]
-pub fn Label::aliases_slot() -> @knowledge.Slot[Unit, Array[String]]
+pub fn Label::aliases_slot() -> @knowledge.Slot[Unit, @set.Set[String]]
 pub fn Label::cls() -> @knowledge.Class[Unit, Unit]
 pub fn Label::compare(Self, Self) -> Int
 pub fn Label::encoding(Self) -> Language?
@@ -319,10 +320,10 @@ pub fn Label::with_valid(Self, is_valid? : Bool) -> Self
 
 type LabelFacts
 pub fn LabelFacts::addr(Self) -> @knowledge.FactTable[Unit, @types.Word?]
-pub fn LabelFacts::aliases(Self) -> @knowledge.FactTable[Unit, Array[String]]
+pub fn LabelFacts::aliases(Self) -> @knowledge.FactTable[Unit, @set.Set[String]]
 pub fn LabelFacts::class(Self) -> @knowledge.Class[Unit, Unit]
 pub fn LabelFacts::collect_addr(Self, @knowledge.Object[Unit]) -> @types.Word?
-pub fn LabelFacts::collect_aliases(Self, @knowledge.Object[Unit]) -> Array[String]
+pub fn LabelFacts::collect_aliases(Self, @knowledge.Object[Unit]) -> @set.Set[String]
 pub fn LabelFacts::collect_encoding(Self, @knowledge.Object[Unit]) -> Language?
 pub fn LabelFacts::collect_is_subroutine(Self, @knowledge.Object[Unit]) -> Bool?
 pub fn LabelFacts::collect_is_valid(Self, @knowledge.Object[Unit]) -> Bool?

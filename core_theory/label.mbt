@@ -326,6 +326,15 @@ pub fn Label::aliases(self : Label) -> Array[String] {
 }
 
 ///|
+fn Label::aliases_set(self : Label) -> Set[String] {
+  let aliases : Set[String] = Set([])
+  for alias_name in self.aliases_value {
+    aliases.add(alias_name)
+  }
+  aliases
+}
+
+///|
 pub fn Label::is_valid(self : Label) -> Bool {
   self.valid_flag
 }

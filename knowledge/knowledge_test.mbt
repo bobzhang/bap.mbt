@@ -549,6 +549,22 @@ test "optional domains lift base order and joins" {
 }
 
 ///|
+fn test_string_set(items : Array[String]) -> Set[String] {
+  Set::from_array(items)
+}
+
+///|
+fn assert_test_string_set_equal(
+  actual : Set[String],
+  expected : Set[String],
+) -> Unit raise {
+  assert_true(actual.length() == expected.length())
+  for item in expected {
+    assert_true(actual.contains(item))
+  }
+}
+
+///|
 test "translated BAP powerset domains join facts by union" {
   let domain = @knowledge.Domain::powerset(
     @knowledge.Name::create("aliases", pkg="test"),
@@ -576,6 +592,59 @@ test "translated BAP powerset domains join facts by union" {
   assert_true(facts.collect(object) == Some([]))
   assert_true(facts.provide(object, ["main", "main"]) == Ok(["main"]))
   assert_true(facts.provide(object, ["entry", "main"]) == Ok(["main", "entry"]))
+  assert_true(facts.has(object))
+}
+
+///|
+test "set domains join facts by set union" {
+  let domain = @knowledge.Domain::set(
+    @knowledge.Name::create("alias-set", pkg="test"),
+    value => value,
+  )
+  let empty = test_string_set([])
+  let main = test_string_set(["main"])
+  let helper = test_string_set(["helper"])
+  let base = test_string_set(["main", "start"])
+  let extra = test_string_set(["main", "helper"])
+  assert_true(domain.order(empty, main) == Less)
+  assert_true(domain.order(main, empty) == Greater)
+  assert_true(domain.order(main, helper) == Incomparable)
+  match domain.join(base, extra) {
+    Ok(joined) =>
+      assert_test_string_set_equal(
+        joined,
+        test_string_set(["main", "start", "helper"]),
+      )
+    Err(reason) => fail(reason)
+  }
+  inspect(
+    domain.inspect(test_string_set(["helper", "main"])),
+    content="{main, helper}",
+  )
+
+  let cls : @knowledge.Class[Unit, String] = @knowledge.Class::create(
+    name=@knowledge.Name::create("set-aliased-program", pkg="test"),
+    sort="unit",
+  )
+  let slot = cls.property(
+    name=@knowledge.Name::create("alias-set", pkg="test"),
+    domain~,
+  )
+  let object = @knowledge.State::new().create(cls)
+  let facts = @knowledge.FactTable::new(slot)
+  match facts.collect(object) {
+    Some(value) => assert_true(value.is_empty())
+    None => fail("missing set domain bottom")
+  }
+  match facts.provide(object, test_string_set(["main", "main"])) {
+    Ok(value) => assert_test_string_set_equal(value, test_string_set(["main"]))
+    Err(reason) => fail(reason)
+  }
+  match facts.provide(object, test_string_set(["entry", "main"])) {
+    Ok(value) =>
+      assert_test_string_set_equal(value, test_string_set(["main", "entry"]))
+    Err(reason) => fail(reason)
+  }
   assert_true(facts.has(object))
 }
 

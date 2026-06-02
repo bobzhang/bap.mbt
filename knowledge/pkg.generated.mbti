@@ -76,6 +76,7 @@ pub fn[T] Domain::opinions(Name, empty~ : T, equal~ : (T, T) -> Bool, inspect~ :
 pub fn[T] Domain::optional(Self[T]) -> Self[T?]
 pub fn[T] Domain::order(Self[T], T, T) -> PartialOrder
 pub fn[T : Eq] Domain::powerset(Name, (T) -> String) -> Self[Array[T]]
+pub fn[T : Eq + Hash] Domain::set(Name, (T) -> String) -> Self[@set.Set[T]]
 pub fn Domain::string(Name) -> Self[String]
 pub fn[T] Domain::total(Name, (T) -> String, empty~ : T, compare~ : (T, T) -> Int, join? : (T, T) -> Result[T, String]) -> Self[T]
 

@@ -159,6 +159,42 @@ fn assert_optional_label_semantics_equal(
 }
 
 ///|
+fn string_set(items : Array[String]) -> Set[String] {
+  let result : Set[String] = Set([])
+  for item in items {
+    result.add(item)
+  }
+  result
+}
+
+///|
+fn assert_string_set_equal(
+  actual : Set[String],
+  expected : Set[String],
+) -> Unit raise {
+  assert_true(actual.length() == expected.length())
+  for item in expected {
+    assert_true(actual.contains(item))
+  }
+}
+
+///|
+fn assert_string_set_persistent_round_trip(
+  codec : @knowledge.Persistent[Set[String]]?,
+  value : Set[String],
+  label : String,
+) -> Unit raise {
+  match codec {
+    Some(persistent) =>
+      match persistent.decode(persistent.encode(value)) {
+        Ok(decoded) => assert_string_set_equal(decoded, value)
+        Err(reason) => fail(reason)
+      }
+    None => fail("missing persistent codec for \{label}")
+  }
+}
+
+///|
 fn assert_label_persistent_round_trip(
   codec : @knowledge.Persistent[@core_theory.Label]?,
   value : @core_theory.Label,
@@ -3948,9 +3984,9 @@ test "program label facts expose BAP-style Knowledge slots" {
     C,
     "label encoding",
   )
-  assert_persistent_round_trip(
+  assert_string_set_persistent_round_trip(
     @core_theory.Label::aliases_slot().persistent(),
-    ["_main", "main"],
+    string_set(["_main", "main"]),
     "label aliases",
   )
   assert_semantics_persistent_round_trip(
@@ -4018,7 +4054,10 @@ test "program label facts expose BAP-style Knowledge slots" {
         facts.collect_semantics(object).map(s => s.code_hex()) ==
         Some(Some("55c3")),
       )
-      assert_true(facts.collect_aliases(object) == ["_main", "main"])
+      assert_string_set_equal(
+        facts.collect_aliases(object),
+        string_set(["_main", "main"]),
+      )
       assert_true(
         facts.collect_unit(object).map(item => item.same(unit)) == Some(true),
       )

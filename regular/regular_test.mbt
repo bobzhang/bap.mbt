@@ -97,6 +97,19 @@ test "regular sequence helpers mirror BAP sequence wrappers" {
     }) ==
     [1, 3, 5],
   )
+  assert_true(
+    @regular.seq_unfold_with([1, 2, 3, 4], init=0, f=(sum, value) => {
+      let next = sum + value
+      if next > 6 {
+        SeqDone
+      } else if next % 2 == 0 {
+        SeqYield(next, next)
+      } else {
+        SeqSkip(next)
+      }
+    }) ==
+    [6],
+  )
   assert_true(@regular.seq_range(1, 4) == [1, 2, 3])
   assert_true(@regular.seq_range(4, 1) == [])
   assert_true(@regular.seq_range(1, 4, inclusive=true) == [1, 2, 3, 4])

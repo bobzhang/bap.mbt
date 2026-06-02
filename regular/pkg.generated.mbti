@@ -237,6 +237,8 @@ pub fn[T, S] seq_unfold(init~ : S, f~ : (S) -> (T, S)?) -> Array[T]
 
 pub fn[T, S] seq_unfold_step(init~ : S, f~ : (S) -> SeqStep[T, S]) -> Array[T]
 
+pub fn[A, B, S] seq_unfold_with(ArrayView[A], init~ : S, f~ : (S, A) -> SeqStep[B, S]) -> Array[B]
+
 // Errors
 pub(all) suberror SeqError {
   EmptySeq

@@ -84,6 +84,27 @@ pub fn[T, S] seq_unfold_step(init~ : S, f~ : (S) -> SeqStep[T, S]) -> Array[T] {
 }
 
 ///|
+pub fn[A, B, S] seq_unfold_with(
+  values : ArrayView[A],
+  init~ : S,
+  f~ : (S, A) -> SeqStep[B, S],
+) -> Array[B] {
+  let out = []
+  let mut state = init
+  for value in values {
+    match f(state, value) {
+      SeqYield(mapped, next) => {
+        out.push(mapped)
+        state = next
+      }
+      SeqSkip(next) => state = next
+      SeqDone => return out
+    }
+  }
+  out
+}
+
+///|
 pub fn seq_range(
   start : Int,
   stop : Int,

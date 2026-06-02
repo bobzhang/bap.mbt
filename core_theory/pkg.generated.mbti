@@ -737,6 +737,7 @@ pub fn Target::x86_64() -> Self
 pub fn Target::xcore() -> Self
 
 type TargetOptions
+pub fn TargetOptions::cls() -> @knowledge.Class[Unit, Unit]
 pub fn TargetOptions::compare(Self, Self) -> Int
 pub fn TargetOptions::empty() -> Self
 pub fn TargetOptions::entries(Self) -> Array[(String, String)]

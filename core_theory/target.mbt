@@ -944,6 +944,15 @@ pub fn TargetOptions::persistent() -> @knowledge.Persistent[TargetOptions] {
 }
 
 ///|
+pub fn TargetOptions::cls() -> @knowledge.Class[Unit, Unit] {
+  @knowledge.Class::create(
+    name=core_target_enum_name("target-options"),
+    sort=(),
+    desc="target-specific options",
+  )
+}
+
+///|
 pub fn TargetOptions::singleton(key : String, value : String) -> TargetOptions {
   let values : Map[String, String] = {}
   values[key] = value

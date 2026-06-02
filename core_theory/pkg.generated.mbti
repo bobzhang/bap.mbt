@@ -504,6 +504,7 @@ pub fn Role::overflow_flag() -> Self
 pub fn Role::parity_flag() -> Self
 pub fn Role::persistent() -> @knowledge.Persistent[Self]
 pub fn Role::privileged() -> Self
+pub fn Role::program_counter() -> Self
 pub fn Role::pseudo() -> Self
 pub fn Role::read(String, pkg? : String) -> Result[Self, String]
 pub fn Role::reserved() -> Self

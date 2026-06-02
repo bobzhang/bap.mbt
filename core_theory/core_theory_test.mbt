@@ -2051,6 +2051,7 @@ test "target role helpers classify common architecture variables" {
   assert_true(@core_theory.Role::segment() == SegmentRegister)
   assert_true(@core_theory.Role::stack_pointer() == StackPointer)
   assert_true(@core_theory.Role::frame_pointer() == FramePointer)
+  assert_true(@core_theory.Role::program_counter() == ProgramCounter)
   assert_true(@core_theory.Role::link() == LinkRegister)
   assert_true(@core_theory.Role::thread() == ThreadPointer)
   assert_true(@core_theory.Role::privileged() == PrivilegedRegister)
@@ -2264,7 +2265,10 @@ test "target role helpers classify common architecture variables" {
   )
   assert_true(amd64.reg(StackPointer).map(v => v.ident()) == Some("RSP"))
   assert_true(
-    amd64.reg(ProgramCounter, unique=true).map(v => v.ident()) == Some("RIP"),
+    amd64
+    .reg(@core_theory.Role::program_counter(), unique=true)
+    .map(v => v.ident()) ==
+    Some("RIP"),
   )
   assert_true(amd64.reg(ResultRegister, unique=true) is None)
   assert_true(amd64.role_aliases(ProgramCounter).contains("rip"))

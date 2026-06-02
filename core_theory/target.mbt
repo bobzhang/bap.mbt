@@ -1203,6 +1203,11 @@ pub fn Role::frame_pointer() -> Role {
 }
 
 ///|
+pub fn Role::program_counter() -> Role {
+  ProgramCounter
+}
+
+///|
 pub fn Role::link() -> Role {
   LinkRegister
 }

@@ -233,6 +233,55 @@ test "dfs numbering exposes BAP timestamp and rpost invariants" {
 }
 
 ///|
+fn int_edge_pairs(
+  edges : ArrayView[@graphlib.Edge[Int, Int]],
+) -> Array[(Int, Int)] {
+  edges.map(edge => (edge.src, edge.dst))
+}
+
+///|
+test "translated BAP shortest path returns weighted edge path" {
+  let graph : @graphlib.Graph[Int, Int] = @graphlib.Graph::new()
+    .add_edge(src=0, dst=1, label=5)
+    .add_edge(src=0, dst=2, label=1)
+    .add_edge(src=2, dst=1, label=1)
+    .add_edge(src=1, dst=3, label=1)
+    .add_edge(src=2, dst=3, label=10)
+  match graph.shortest_path(0, 3, weight=edge => edge.label) {
+    Some(path) => {
+      assert_true(path.weight() == 3)
+      assert_true(path.length() == 3)
+      assert_true(int_edge_pairs(path.edges()) == [(0, 2), (2, 1), (1, 3)])
+      assert_true(int_edge_pairs(path.edges_rev()) == [(1, 3), (2, 1), (0, 2)])
+      assert_true(
+        path.start().map(edge => (edge.src, edge.dst)) == Some((0, 2)),
+      )
+      assert_true(
+        path.finish().map(edge => (edge.src, edge.dst)) == Some((1, 3)),
+      )
+    }
+    None => fail("expected a weighted shortest path")
+  }
+  match graph.shortest_path(3, 0, weight=edge => edge.label, rev=true) {
+    Some(path) => {
+      assert_true(path.weight() == 3)
+      assert_true(int_edge_pairs(path.edges()) == [(1, 3), (2, 1), (0, 2)])
+    }
+    None => fail("expected a reverse-edge shortest path")
+  }
+  assert_true(graph.shortest_path(3, 0, weight=edge => edge.label) is None)
+  match graph.shortest_path(99, 99) {
+    Some(path) => {
+      assert_true(path.weight() == 0)
+      assert_true(path.length() == 0)
+      assert_true(path.start() is None)
+      assert_true(path.finish() is None)
+    }
+    None => fail("expected a zero-length path from a node to itself")
+  }
+}
+
+///|
 fn dfs_tree_parents(
   graph : @graphlib.Graph[Int, String],
   start : Int,

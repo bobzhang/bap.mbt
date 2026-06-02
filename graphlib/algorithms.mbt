@@ -220,6 +220,82 @@ pub fn[N : Hash + Eq, E] Graph::postorder(
 }
 
 ///|
+priv struct ShortestPathItem[N, E] {
+  total : Int
+  node : N
+  path : Array[Edge[N, E]]
+}
+
+///|
+fn[N, E] shortest_path_pop_min(
+  queue : Array[ShortestPathItem[N, E]],
+) -> ShortestPathItem[N, E]? {
+  if queue.is_empty() {
+    None
+  } else {
+    let mut best = 0
+    for i in 1..<queue.length() {
+      if queue[i].total < queue[best].total {
+        best = i
+      }
+    }
+    Some(queue.remove(best))
+  }
+}
+
+///|
+pub fn[N : Hash + Eq, E] Graph::shortest_path(
+  self : Graph[N, E],
+  start : N,
+  finish : N,
+  weight? : (Edge[N, E]) -> Int = _ => 1,
+  rev? : Bool = false,
+) -> GraphPath[Edge[N, E]]? {
+  let visited : Set[N] = Set([])
+  let distances : Map[N, Int] = {}
+  let queue : Array[ShortestPathItem[N, E]] = [
+    { total: 0, node: start, path: [] },
+  ]
+  distances[start] = 0
+  let mut result : GraphPath[Edge[N, E]]? = None
+  while result is None && !queue.is_empty() {
+    match shortest_path_pop_min(queue) {
+      Some(item) =>
+        if !visited.contains(item.node) {
+          if item.node == finish {
+            result = Some(GraphPath::new(item.path, weight=item.total))
+          } else {
+            visited.add(item.node)
+            let edges = if rev {
+              self.in_edges(item.node)
+            } else {
+              self.out_edges(item.node)
+            }
+            for edge in edges {
+              let next = if rev { edge.src } else { edge.dst }
+              if !visited.contains(next) {
+                let total = item.total + weight(edge)
+                let keep = match distances.get(next) {
+                  Some(old) => old < total
+                  None => false
+                }
+                if !keep {
+                  distances[next] = total
+                  let path = item.path.copy()
+                  path.push(edge)
+                  queue.push({ total, node: next, path })
+                }
+              }
+            }
+          }
+        }
+      None => ()
+    }
+  }
+  result
+}
+
+///|
 fn[N : Hash + Eq, E] strong_connect(
   graph : Graph[N, E],
   node : N,

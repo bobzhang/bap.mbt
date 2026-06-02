@@ -62,9 +62,19 @@ pub fn[N : Eq, E] Graph::remove_edge(Self[N, E], N, N) -> Self[N, E]
 pub fn[N : Eq, E] Graph::remove_node(Self[N, E], N) -> Self[N, E]
 pub fn[N : Eq, E] Graph::replace_node(Self[N, E], N, N) -> Self[N, E]
 pub fn[N : Hash + Eq, E] Graph::reverse_postorder(Self[N, E], N, rev? : Bool) -> Array[N]
+pub fn[N : Hash + Eq, E] Graph::shortest_path(Self[N, E], N, N, weight? : (Edge[N, E]) -> Int, rev? : Bool) -> GraphPath[Edge[N, E]]?
 pub fn[N : Hash + Eq, E] Graph::strong_components(Self[N, E]) -> Array[@set.Set[N]]
 pub fn[N : Eq, E] Graph::successors(Self[N, E], N) -> Array[N]
 pub fn[N : Eq, E] Graph::union(Self[N, E], Self[N, E]) -> Self[N, E]
+
+type GraphPath[E] derive(Eq, @debug.Debug)
+pub fn[E] GraphPath::edges(Self[E]) -> Array[E]
+pub fn[E] GraphPath::edges_rev(Self[E]) -> Array[E]
+pub fn[E] GraphPath::finish(Self[E]) -> E?
+pub fn[E] GraphPath::length(Self[E]) -> Int
+pub fn[E] GraphPath::new(ArrayView[E], weight~ : Int) -> Self[E]
+pub fn[E] GraphPath::start(Self[E]) -> E?
+pub fn[E] GraphPath::weight(Self[E]) -> Int
 
 type Partition[N] derive(@debug.Debug)
 pub fn[N : Hash + Eq] Partition::discrete(ArrayView[N]) -> Self[N]

@@ -4145,7 +4145,18 @@ pub fn Target::reg(
 
 ///|
 pub fn Target::role_aliases(self : Target, role : Role) -> Array[String] {
-  target_role_names_for(self, role)
+  if role == AliasRegister {
+    let names = []
+    for origin in self.alias_origins_value {
+      let name = origin.aliased().ident().to_lower()
+      if !names.contains(name) {
+        names.push(name)
+      }
+    }
+    names
+  } else {
+    target_role_names_for(self, role)
+  }
 }
 
 ///|

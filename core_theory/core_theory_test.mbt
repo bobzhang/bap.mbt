@@ -2333,6 +2333,9 @@ test "target role helpers classify common architecture variables" {
     Some("RIP"),
   )
   assert_true(amd64.reg(ResultRegister, unique=true) is None)
+  assert_true(amd64.role_aliases(AliasRegister).contains("eax"))
+  assert_true(amd64.role_aliases(AliasRegister).contains("eflags"))
+  assert_true(amd64.role_aliases(AliasRegister).contains("iopl"))
   assert_true(amd64.role_aliases(ProgramCounter).contains("rip"))
   assert_true(!amd64.role_aliases(ProgramCounter).contains("pc"))
   let x86 = @core_theory.Target::x86()
@@ -2530,6 +2533,8 @@ test "target role helpers classify common architecture variables" {
     None => fail("missing sp alias origin")
   }
   let mips64 = @core_theory.Target::mips64()
+  assert_true(mips64.role_aliases(AliasRegister).contains("zero"))
+  assert_true(mips64.role_aliases(AliasRegister).contains("v0"))
   assert_true(mips64.role_aliases(PseudoRegister).contains("zero"))
   assert_true(mips64.role_aliases(PseudoRegister).contains("r0"))
   match mips64.find_var("F31") {

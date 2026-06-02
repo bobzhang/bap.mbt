@@ -177,6 +177,35 @@ test "translated BAP graph compare follows endpoint and node-set ordering" {
 }
 
 ///|
+test "translated BAP graph filtered hides nodes and invisible edges" {
+  let graph : @graphlib.Graph[Int, String] = @graphlib.Graph::create(
+    edges=[(0, 1, "keep"), (1, 2, "hidden-by-node"), (3, 4, "hidden-by-edge")],
+    nodes=[5],
+  )
+  let filtered = graph.filtered(skip_node=node => node == 2, skip_edge=edge => {
+    edge.label == "hidden-by-edge"
+  })
+  assert_true(graph.has_node(2))
+  assert_true(!filtered.has_node(2))
+  assert_true(
+    Set::from_array(filtered.nodes()) == Set::from_array([0, 1, 3, 4, 5]),
+  )
+  assert_true(edge_pairs(filtered) == Set::from_array([(0, 1)]))
+  assert_true(!filtered.has_edge(1, 2))
+  assert_true(!filtered.has_edge(3, 4))
+  assert_true(filtered.has_node(3))
+  assert_true(filtered.has_node(4))
+
+  let unfiltered = graph.filtered()
+  assert_true(
+    Set::from_array(unfiltered.nodes()) == Set::from_array([0, 1, 2, 3, 4, 5]),
+  )
+  assert_true(
+    edge_pairs(unfiltered) == Set::from_array([(0, 1), (1, 2), (3, 4)]),
+  )
+}
+
+///|
 test "partitions support BAP trivial discrete union and refinement invariants" {
   let elements = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
   let trivial = @graphlib.Partition::trivial(elements)

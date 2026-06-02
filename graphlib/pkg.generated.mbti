@@ -45,6 +45,7 @@ pub fn[N : Hash + Eq, E] Graph::dominators(Self[N, E], N, rev? : Bool) -> Map[N,
 pub fn[N : Eq, E] Graph::edge(Self[N, E], N, N) -> Edge[N, E]?
 pub fn[N, E] Graph::edge_count(Self[N, E]) -> Int
 pub fn[N, E] Graph::edges(Self[N, E]) -> Array[Edge[N, E]]
+pub fn[N : Eq, E] Graph::filtered(Self[N, E], skip_node? : (N) -> Bool, skip_edge? : (Edge[N, E]) -> Bool) -> Self[N, E]
 pub fn[N : Hash + Eq, E, A] Graph::fold_reachable(Self[N, E], N, A, (A, N) -> A, rev? : Bool) -> A
 pub fn[N : Eq, E] Graph::has_edge(Self[N, E], N, N) -> Bool
 pub fn[N : Eq, E] Graph::has_node(Self[N, E], N) -> Bool

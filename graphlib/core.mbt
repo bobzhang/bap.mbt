@@ -256,6 +256,36 @@ pub fn[N : Eq, E] Graph::intersect(
 }
 
 ///|
+fn[N] skip_no_graph_node(_node : N) -> Bool {
+  false
+}
+
+///|
+fn[N, E] skip_no_graph_edge(_edge : Edge[N, E]) -> Bool {
+  false
+}
+
+///|
+pub fn[N : Eq, E] Graph::filtered(
+  self : Graph[N, E],
+  skip_node? : (N) -> Bool = skip_no_graph_node,
+  skip_edge? : (Edge[N, E]) -> Bool = skip_no_graph_edge,
+) -> Graph[N, E] {
+  let mut out : Graph[N, E] = Graph::new()
+  for node in self.nodes {
+    if !skip_node(node) {
+      out = out.add_node(node)
+    }
+  }
+  for edge in self.edges {
+    if !skip_edge(edge) && !skip_node(edge.src) && !skip_node(edge.dst) {
+      out = out.add_edge(src=edge.src, dst=edge.dst, label=edge.label)
+    }
+  }
+  out
+}
+
+///|
 pub fn[N : Eq, E] Graph::successors(self : Graph[N, E], node : N) -> Array[N] {
   self.edges.filter_map(edge => {
     if edge.src == node {

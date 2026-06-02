@@ -103,6 +103,7 @@ test "regular sequence helpers mirror BAP sequence wrappers" {
   assert_true(@regular.seq_range(4, 4, inclusive=true) == [4])
   assert_true(@regular.seq_range(4, 1, inclusive=true) == [])
   assert_true(@regular.seq_cons(0, copied) == [0, 1, 2, 3])
+  assert_true(@regular.seq_shift_right(copied, 0) == [0, 1, 2, 3])
   assert_true(@regular.seq_append([0], copied) == [0, 1, 2, 3])
   assert_true(@regular.seq_concat([[0], copied, [4, 5]]) == [0, 1, 2, 3, 4, 5])
   let empty : Array[Int] = []

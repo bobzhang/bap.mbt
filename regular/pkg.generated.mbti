@@ -213,6 +213,8 @@ pub fn[T] seq_return(T) -> Array[T]
 
 pub fn[T] seq_rev(ArrayView[T]) -> Array[T]
 
+pub fn[T] seq_shift_right(ArrayView[T], T) -> Array[T]
+
 pub fn[T] seq_singleton(T) -> Array[T]
 
 pub fn[T] seq_split_n(ArrayView[T], Int) -> (Array[T], Array[T])

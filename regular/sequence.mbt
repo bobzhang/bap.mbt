@@ -122,6 +122,11 @@ pub fn[T] seq_cons(value : T, values : ArrayView[T]) -> Array[T] {
 }
 
 ///|
+pub fn[T] seq_shift_right(values : ArrayView[T], value : T) -> Array[T] {
+  seq_cons(value, values)
+}
+
+///|
 pub fn[T] seq_append(left : ArrayView[T], right : ArrayView[T]) -> Array[T] {
   let out = []
   for value in left {

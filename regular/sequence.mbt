@@ -1,10 +1,13 @@
 ///|
-
-///|
 pub(all) enum SeqStep[T, S] {
   SeqYield(T, S)
   SeqSkip(S)
   SeqDone
+} derive(Eq, @debug.Debug)
+
+///|
+pub(all) suberror SeqError {
+  EmptySeq
 } derive(Eq, @debug.Debug)
 
 ///|
@@ -154,6 +157,14 @@ pub fn[T] seq_length(values : ArrayView[T]) -> Int {
 ///|
 pub fn[T] seq_hd(values : ArrayView[T]) -> T? {
   values.get(0)
+}
+
+///|
+pub fn[T] seq_hd_exn(values : ArrayView[T]) -> T raise SeqError {
+  match seq_hd(values) {
+    Some(value) => value
+    None => raise EmptySeq
+  }
 }
 
 ///|
@@ -412,6 +423,11 @@ pub fn[T] seq_for_all(values : ArrayView[T], f : (T) -> Bool) -> Bool {
     }
   }
   true
+}
+
+///|
+pub fn[T] seq_all(values : ArrayView[T], f : (T) -> Bool) -> Bool {
+  seq_for_all(values, f)
 }
 
 ///|

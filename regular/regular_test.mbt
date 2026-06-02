@@ -111,6 +111,12 @@ test "regular sequence helpers mirror BAP sequence wrappers" {
   assert_true(@regular.seq_length(copied) == 3)
   assert_true(@regular.seq_hd(copied) == Some(1))
   assert_true(@regular.seq_hd(empty) is None)
+  assert_true(@regular.seq_hd_exn(copied) == 1)
+  try @regular.seq_hd_exn(empty) catch {
+    EmptySeq => ()
+  } noraise {
+    _ => fail("expected EmptySeq")
+  }
   assert_true(@regular.seq_tl(copied) == Some([2, 3]))
   assert_true(@regular.seq_tl(empty) is None)
   assert_true(@regular.seq_next(copied) == Some((1, [2, 3])))
@@ -202,6 +208,8 @@ test "regular sequence helpers mirror BAP sequence wrappers" {
   assert_true(!@regular.seq_exists(copied, value => value == 9))
   assert_true(@regular.seq_for_all(copied, value => value > 0))
   assert_true(!@regular.seq_for_all(copied, value => value % 2 == 1))
+  assert_true(@regular.seq_all(copied, value => value < 4))
+  assert_true(!@regular.seq_all(copied, value => value < 3))
   assert_true(@regular.seq_to_list(copied).to_array() == [1, 2, 3])
   let as_array = @regular.seq_to_array(copied)
   assert_true(as_array == [1, 2, 3])

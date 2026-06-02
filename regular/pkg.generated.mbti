@@ -135,6 +135,8 @@ pub fn[T : Printable] render(T) -> String
 
 pub fn[T : Printable] render_array(ArrayView[T], sep? : String) -> String
 
+pub fn[T] seq_all(ArrayView[T], (T) -> Bool) -> Bool
+
 pub fn[T] seq_append(ArrayView[T], ArrayView[T]) -> Array[T]
 
 pub fn[A, B] seq_compare((A, B) -> Int, ArrayView[A], ArrayView[B]) -> Int
@@ -176,6 +178,8 @@ pub fn[A, B] seq_foldi(ArrayView[A], B, (Int, B, A) -> B) -> B
 pub fn[T] seq_for_all(ArrayView[T], (T) -> Bool) -> Bool
 
 pub fn[T] seq_hd(ArrayView[T]) -> T?
+
+pub fn[T] seq_hd_exn(ArrayView[T]) -> T raise SeqError
 
 pub fn[T] seq_init(Int, (Int) -> T) -> Array[T]
 
@@ -230,6 +234,9 @@ pub fn[T, S] seq_unfold(init~ : S, f~ : (S) -> (T, S)?) -> Array[T]
 pub fn[T, S] seq_unfold_step(init~ : S, f~ : (S) -> SeqStep[T, S]) -> Array[T]
 
 // Errors
+pub(all) suberror SeqError {
+  EmptySeq
+} derive(Eq, @debug.Debug)
 
 // Types and methods
 pub(all) enum BytesFoldStep[A, R] {

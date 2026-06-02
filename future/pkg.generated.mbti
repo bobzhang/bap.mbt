@@ -120,7 +120,8 @@ pub fn[T] Stream::unsubscribe(Self[T], Int) -> Unit
 pub fn[A, B] Stream::unzip(Self[(A, B)]) -> (Self[A], Self[B])
 pub fn[T, E] Stream::upon(Self[T], Future[E]) -> Future[T]
 pub fn[T] Stream::wait(Self[T]) -> Unit
-pub fn[T] Stream::watch(Self[T], (Int, T) -> Unit) -> Int
+pub fn[T] Stream::watch(Self[T], (Int, T) -> Unit) -> Unit
+pub fn[T] Stream::watch_id(Self[T], (Int, T) -> Unit) -> Int
 pub fn[A, B] Stream::zip(Self[A], Self[B]) -> Self[(A, B)]
 
 type StreamArgs[F, R]

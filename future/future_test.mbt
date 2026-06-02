@@ -419,7 +419,7 @@ test "translated BAP stream subscriptions hooks and ids" {
 test "translated BAP stream watch receives stable callback ids" {
   let (stream, signal, _) = @future.Stream::of_array([0, 1])
   let first_seen : Ref[Int?] = Ref(None)
-  ignore(stream.watch(fn(id, _) { first_seen.val = Some(id) }))
+  stream.watch(fn(id, _) { first_seen.val = Some(id) })
   signal.send(())
   let first_id = match first_seen.val {
     Some(id) => id
@@ -431,12 +431,15 @@ test "translated BAP stream watch receives stable callback ids" {
   let (other, other_signal) = @future.Stream::create()
   let left : Ref[Int?] = Ref(None)
   let right : Ref[Int?] = Ref(None)
-  ignore(other.watch(fn(id, _) { left.val = Some(id) }))
-  ignore(other.watch(fn(id, _) { right.val = Some(id) }))
+  other.watch(fn(id, _) { left.val = Some(id) })
+  other.watch(fn(id, _) { right.val = Some(id) })
   other_signal.send(())
   assert_true(left.val is Some(_))
   assert_true(right.val is Some(_))
   assert_true(left.val != right.val)
+
+  let returned = other.watch_id(fn(_, _) { () })
+  assert_true(returned > 0)
 }
 
 ///|

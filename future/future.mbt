@@ -383,8 +383,13 @@ pub fn[T] Stream::subscribe(self : Stream[T], notify : (T) -> Unit) -> Int {
 }
 
 ///|
-pub fn[T] Stream::watch(self : Stream[T], notify : (Int, T) -> Unit) -> Int {
+pub fn[T] Stream::watch_id(self : Stream[T], notify : (Int, T) -> Unit) -> Int {
   self.add(notify)
+}
+
+///|
+pub fn[T] Stream::watch(self : Stream[T], notify : (Int, T) -> Unit) -> Unit {
+  ignore(self.watch_id(notify))
 }
 
 ///|
@@ -881,7 +886,7 @@ pub fn[T] Stream::once(self : Stream[T]) -> Stream[T] {
     match key.val {
       Some(_) => ()
       None => {
-        let id = self.watch(fn(id, value) {
+        let id = self.watch_id(fn(id, value) {
           signal.send(value)
           self.unsubscribe(id)
           key.val = None
@@ -976,7 +981,7 @@ pub fn[T] Stream::take(self : Stream[T], count : Int) -> Future[Array[T]] {
   let buffer : Array[T] = []
   let (future, promise) = Future::create()
   ignore(
-    self.watch(fn(id, value) {
+    self.watch_id(fn(id, value) {
       if buffer.length() < count {
         buffer.push(value)
       }
@@ -1001,7 +1006,7 @@ pub fn[T] Stream::nth(self : Stream[T], index : Int) -> Future[T] {
   let seen = Ref(0)
   let (future, promise) = Future::create()
   ignore(
-    self.watch(fn(id, value) {
+    self.watch_id(fn(id, value) {
       if seen.val == index {
         self.resolve_and_unsubscribe(id, value, promise)
       }
@@ -1015,7 +1020,7 @@ pub fn[T] Stream::nth(self : Stream[T], index : Int) -> Future[T] {
 pub fn[T] Stream::find(self : Stream[T], f : (T) -> Bool) -> Future[T] {
   let (future, promise) = Future::create()
   ignore(
-    self.watch(fn(id, value) {
+    self.watch_id(fn(id, value) {
       if f(value) {
         self.resolve_and_unsubscribe(id, value, promise)
       }
@@ -1028,7 +1033,7 @@ pub fn[T] Stream::find(self : Stream[T], f : (T) -> Bool) -> Future[T] {
 pub fn[A, B] Stream::find_map(self : Stream[A], f : (A) -> B?) -> Future[B] {
   let (future, promise) = Future::create()
   ignore(
-    self.watch(fn(id, value) {
+    self.watch_id(fn(id, value) {
       match f(value) {
         Some(result) => self.resolve_and_unsubscribe(id, result, promise)
         None => ()

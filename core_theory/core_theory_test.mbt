@@ -1581,6 +1581,7 @@ test "target role helpers classify common architecture variables" {
   let index_role = @core_theory.Role::of_string("index").unwrap()
   let segment_role = @core_theory.Role::of_string("segment").unwrap()
   let zero_flag = @core_theory.Role::of_string("zero-flag").unwrap()
+  let program_counter = @core_theory.Role::of_string("pc").unwrap()
   let thumb_role = @core_theory.Role::of_string("thumb").unwrap()
   assert_true(stack_pointer.to_string() == "stack-pointer")
   assert_true(alias_role.to_string() == "alias")
@@ -1633,6 +1634,26 @@ test "target role helpers classify common architecture variables" {
   assert_true(@core_theory.Role::of_string("thumb-mode") == Some(ThumbMode))
   assert_true(argument.equal(argument))
   assert_true(argument.compare(result) < 0)
+  assert_true(argument.name().show() == "core:function-argument")
+  assert_true(result.name().show() == "core:function-return")
+  assert_true(program_counter.name().show() == "core:program-counter")
+  assert_true(argument.hash() == argument.name().hash())
+  assert_true(@core_theory.Role::members().contains(ResultRegister))
+  assert_true(@core_theory.Role::members().contains(ThumbMode))
+  match @core_theory.Role::read("core:function-return") {
+    Ok(value) => assert_true(value == ResultRegister)
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.Role::read("stack-pointer", pkg="core") {
+    Ok(value) => assert_true(value == StackPointer)
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.Role::read("core:thumb") {
+    Ok(value) => assert_true(value == ThumbMode)
+    Err(reason) => fail(reason)
+  }
+  assert_true(@core_theory.Role::read("argument", pkg="core") is Err(_))
+  assert_true(@core_theory.Role::read("function-return") is Err(_))
   match amd64.find_var("RSP") {
     Some(sp) => assert_true(amd64.roles_of_var(sp).contains(StackPointer))
     None => fail("missing RSP")

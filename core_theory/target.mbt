@@ -1271,6 +1271,66 @@ pub fn Role::compare(self : Role, other : Role) -> Int {
 }
 
 ///|
+pub fn Role::name(self : Role) -> @knowledge.Name {
+  core_target_enum_name(self.to_string())
+}
+
+///|
+pub fn Role::hash(self : Role) -> Int {
+  self.name().hash()
+}
+
+///|
+pub fn Role::members() -> Array[Role] {
+  [
+    General,
+    SpecialRegister,
+    AliasRegister,
+    PseudoRegister,
+    IntegerRegister,
+    FloatingRegister,
+    VectorRegister,
+    IndexRegister,
+    SegmentRegister,
+    StackPointer,
+    FramePointer,
+    ProgramCounter,
+    Status,
+    ControlRegister,
+    SystemRegister,
+    HardwareRegister,
+    Constant,
+    ZeroRegister,
+    OneRegister,
+    LinkRegister,
+    ThreadPointer,
+    PrivilegedRegister,
+    Argument,
+    ResultRegister,
+    CallerSaved,
+    CalleeSaved,
+    Reserved,
+    ZeroFlag,
+    CarryFlag,
+    SignFlag,
+    OverflowFlag,
+    ParityFlag,
+    ThumbMode,
+  ]
+}
+
+///|
+pub fn Role::read(text : String, pkg? : String) -> Result[Role, String] {
+  let name = @knowledge.Name::read(text, pkg?)
+  for value in Role::members() {
+    if value.name().equal(name) {
+      return Ok(value)
+    }
+  }
+  Err("unknown role \{name.show()}")
+}
+
+///|
 pub(all) enum AliasOrigin {
   RegisterAlias(aliased~ : Var, source~ : Var)
   SubRegister(aliased~ : Var, source~ : Var, lo~ : Int, hi~ : Int)

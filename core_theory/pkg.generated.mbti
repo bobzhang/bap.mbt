@@ -431,15 +431,19 @@ pub fn Role::function_argument() -> Self
 pub fn Role::function_return() -> Self
 pub fn Role::general() -> Self
 pub fn Role::hardware() -> Self
+pub fn Role::hash(Self) -> Int
 pub fn Role::index() -> Self
 pub fn Role::integer() -> Self
 pub fn Role::link() -> Self
+pub fn Role::members() -> Array[Self]
+pub fn Role::name(Self) -> @knowledge.Name
 pub fn Role::of_string(String) -> Self?
 pub fn Role::one() -> Self
 pub fn Role::overflow_flag() -> Self
 pub fn Role::parity_flag() -> Self
 pub fn Role::privileged() -> Self
 pub fn Role::pseudo() -> Self
+pub fn Role::read(String, pkg? : String) -> Result[Self, String]
 pub fn Role::reserved() -> Self
 pub fn Role::segment() -> Self
 pub fn Role::sign_flag() -> Self

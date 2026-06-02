@@ -50,6 +50,7 @@ pub(all) enum Abi {
 } derive(Eq, @debug.Debug)
 pub fn Abi::cdecl() -> Self
 pub fn Abi::compare(Self, Self) -> Int
+pub fn Abi::domain() -> @knowledge.Domain[Self]
 pub fn Abi::eabi() -> Self
 pub fn Abi::equal(Self, Self) -> Bool
 pub fn Abi::fastcall() -> Self
@@ -178,6 +179,7 @@ pub(all) enum Fabi {
   Hard
 } derive(Eq, @debug.Debug)
 pub fn Fabi::compare(Self, Self) -> Int
+pub fn Fabi::domain() -> @knowledge.Domain[Self]
 pub fn Fabi::equal(Self, Self) -> Bool
 pub fn Fabi::hard() -> Self
 pub fn Fabi::hash(Self) -> Int
@@ -203,6 +205,7 @@ pub(all) enum Filetype {
 pub fn Filetype::aout() -> Self
 pub fn Filetype::coff() -> Self
 pub fn Filetype::compare(Self, Self) -> Int
+pub fn Filetype::domain() -> @knowledge.Domain[Self]
 pub fn Filetype::elf() -> Self
 pub fn Filetype::equal(Self, Self) -> Bool
 pub fn Filetype::hash(Self) -> Int
@@ -306,6 +309,7 @@ pub fn Language::c() -> Self
 pub fn Language::compare(Self, Self) -> Int
 pub fn Language::cxx() -> Self
 pub fn Language::declare_language(String, pkg? : String) -> Result[Self, String]
+pub fn Language::domain() -> @knowledge.Domain[Self]
 pub fn Language::equal(Self, Self) -> Bool
 pub fn Language::fortran() -> Self
 pub fn Language::hash(Self) -> Int
@@ -584,6 +588,7 @@ pub(all) enum System {
 pub fn System::aix() -> Self
 pub fn System::compare(Self, Self) -> Int
 pub fn System::darwin() -> Self
+pub fn System::domain() -> @knowledge.Domain[Self]
 pub fn System::equal(Self, Self) -> Bool
 pub fn System::freebsd() -> Self
 pub fn System::hash(Self) -> Int

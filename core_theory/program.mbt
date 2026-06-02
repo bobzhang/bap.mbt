@@ -392,6 +392,15 @@ pub fn Language::persistent() -> @knowledge.Persistent[Language] {
 }
 
 ///|
+pub fn Language::domain() -> @knowledge.Domain[Language] {
+  @knowledge.Domain::flat(
+    core_name("language"),
+    value => value.to_string(),
+    empty=Language::unknown(),
+  )
+}
+
+///|
 pub fn Language::equal(self : Language, other : Language) -> Bool {
   self == other
 }

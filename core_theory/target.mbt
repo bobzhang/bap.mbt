@@ -102,6 +102,15 @@ fn[T] target_enum_persistent(
 }
 
 ///|
+fn[T : Eq] target_enum_domain(
+  name : String,
+  unknown : T,
+  inspect : (T) -> String,
+) -> @knowledge.Domain[T] {
+  @knowledge.Domain::flat(core_target_enum_name(name), inspect, empty=unknown)
+}
+
+///|
 struct TargetOptions {
   values_value : Map[String, String]
 }
@@ -420,6 +429,11 @@ pub fn System::persistent() -> @knowledge.Persistent[System] {
 }
 
 ///|
+pub fn System::domain() -> @knowledge.Domain[System] {
+  target_enum_domain("system", UnknownSystem, value => value.to_string())
+}
+
+///|
 pub fn Abi::to_string(self : Abi) -> String {
   match self {
     UnknownAbi => "unknown"
@@ -652,6 +666,11 @@ pub fn Abi::persistent() -> @knowledge.Persistent[Abi] {
 }
 
 ///|
+pub fn Abi::domain() -> @knowledge.Domain[Abi] {
+  target_enum_domain("abi", UnknownAbi, value => value.to_string())
+}
+
+///|
 pub fn Fabi::to_string(self : Fabi) -> String {
   match self {
     UnknownFabi => "unknown"
@@ -742,6 +761,11 @@ pub fn Fabi::read(text : String, pkg? : String) -> Result[Fabi, String] {
 ///|
 pub fn Fabi::persistent() -> @knowledge.Persistent[Fabi] {
   target_enum_persistent(value => value.name(), text => Fabi::read(text))
+}
+
+///|
+pub fn Fabi::domain() -> @knowledge.Domain[Fabi] {
+  target_enum_domain("fabi", UnknownFabi, value => value.to_string())
 }
 
 ///|
@@ -871,6 +895,11 @@ pub fn Filetype::read(text : String, pkg? : String) -> Result[Filetype, String] 
 ///|
 pub fn Filetype::persistent() -> @knowledge.Persistent[Filetype] {
   target_enum_persistent(value => value.name(), text => Filetype::read(text))
+}
+
+///|
+pub fn Filetype::domain() -> @knowledge.Domain[Filetype] {
+  target_enum_domain("filetype", UnknownFiletype, value => value.to_string())
 }
 
 ///|

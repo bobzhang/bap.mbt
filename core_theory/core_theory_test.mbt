@@ -528,6 +528,11 @@ test "targets inherit defaults and match ancestry" {
   assert_true(system_codec.encode(linux) == "core:linux")
   assert_persistent_round_trip(Some(system_codec), UnknownSystem, "system")
   assert_true(system_codec.decode("missing") is Err(_))
+  let system_domain = @core_theory.System::domain()
+  assert_true(system_domain.empty() == Some(UnknownSystem))
+  assert_true(system_domain.order(UnknownSystem, Linux) == Less)
+  assert_true(system_domain.join(UnknownSystem, Linux) == Ok(Linux))
+  assert_true(system_domain.join(Linux, Darwin) is Err(_))
   match @core_theory.System::read("core:linux") {
     Ok(value) => assert_true(value == Linux)
     Err(reason) => fail(reason)
@@ -570,6 +575,11 @@ test "targets inherit defaults and match ancestry" {
   assert_true(abi_codec.encode(@core_theory.Abi::gnu()) == "core:gnu")
   assert_persistent_round_trip(Some(abi_codec), MSVC, "abi")
   assert_true(abi_codec.decode("gnu") is Err(_))
+  let abi_domain = @core_theory.Abi::domain()
+  assert_true(abi_domain.empty() == Some(UnknownAbi))
+  assert_true(abi_domain.order(UnknownAbi, GNU) == Less)
+  assert_true(abi_domain.join(UnknownAbi, GNU) == Ok(GNU))
+  assert_true(abi_domain.join(GNU, SysV) is Err(_))
   match @core_theory.Abi::read("core:ms") {
     Ok(value) => assert_true(value == MSVC)
     Err(reason) => fail(reason)
@@ -594,6 +604,11 @@ test "targets inherit defaults and match ancestry" {
   assert_true(fabi_codec.encode(@core_theory.Fabi::hard()) == "core:hf")
   assert_persistent_round_trip(Some(fabi_codec), UnknownFabi, "fabi")
   assert_true(fabi_codec.decode("hard") is Err(_))
+  let fabi_domain = @core_theory.Fabi::domain()
+  assert_true(fabi_domain.empty() == Some(UnknownFabi))
+  assert_true(fabi_domain.order(UnknownFabi, Hard) == Less)
+  assert_true(fabi_domain.join(UnknownFabi, Hard) == Ok(Hard))
+  assert_true(fabi_domain.join(Hard, Soft) is Err(_))
   match @core_theory.Fabi::read("core:sf") {
     Ok(value) => assert_true(value == Soft)
     Err(reason) => fail(reason)
@@ -625,6 +640,11 @@ test "targets inherit defaults and match ancestry" {
   )
   assert_persistent_round_trip(Some(filetype_codec), Raw, "filetype")
   assert_true(filetype_codec.decode("raw") is Err(_))
+  let filetype_domain = @core_theory.Filetype::domain()
+  assert_true(filetype_domain.empty() == Some(UnknownFiletype))
+  assert_true(filetype_domain.order(UnknownFiletype, Elf) == Less)
+  assert_true(filetype_domain.join(UnknownFiletype, Elf) == Ok(Elf))
+  assert_true(filetype_domain.join(Elf, Raw) is Err(_))
   match @core_theory.Filetype::read("core:aout") {
     Ok(value) => assert_true(value == AOut)
     Err(reason) => fail(reason)
@@ -2446,6 +2466,15 @@ test "program metadata tracks source compiler and units" {
   assert_true(language.compare(Cxx) == 0)
   assert_true(language.name().show() == "core:cxx")
   assert_true(language.hash() == language.name().hash())
+  let language_domain = @core_theory.Language::domain()
+  assert_true(language_domain.empty() == Some(@core_theory.Language::unknown()))
+  assert_true(
+    language_domain.order(@core_theory.Language::unknown(), C) == Less,
+  )
+  assert_true(
+    language_domain.join(@core_theory.Language::unknown(), C) == Ok(C),
+  )
+  assert_true(language_domain.join(C, Cxx) is Err(_))
   match @core_theory.Language::read("core:cxx") {
     Ok(read_language) => assert_true(read_language == Cxx)
     Err(reason) => fail(reason)

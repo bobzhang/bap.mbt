@@ -321,12 +321,38 @@ pub fn[T : Eq] BapVector::index_with(
 }
 
 ///|
+pub fn[T] BapVector::index_by(
+  self : BapVector[T],
+  value : T,
+  equal : (T, T) -> Bool,
+) -> Int? {
+  let index = self.index_with_by(value, default=-1, equal)
+  if index < 0 {
+    None
+  } else {
+    Some(index)
+  }
+}
+
+///|
 pub fn[T : Eq] BapVector::index(self : BapVector[T], value : T) -> Int? {
   let index = self.index_with(value, default=-1)
   if index < 0 {
     None
   } else {
     Some(index)
+  }
+}
+
+///|
+pub fn[T] BapVector::index_exn_by(
+  self : BapVector[T],
+  value : T,
+  equal : (T, T) -> Bool,
+) -> Int {
+  match self.index_by(value, equal) {
+    Some(index) => index
+    None => abort("index out of bounds")
   }
 }
 

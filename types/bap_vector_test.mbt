@@ -132,6 +132,20 @@ test "BAP-style vector index helpers support equality and custom equality" {
     0,
   )
   assert_true(
+    vector.index_by("a", (left, right) => left.to_upper() == right.to_upper()) ==
+    Some(0),
+  )
+  assert_true(
+    vector.index_by("z", (left, right) => left.to_upper() == right.to_upper()) ==
+    None,
+  )
+  assert_true(
+    vector.index_exn_by("A", (left, right) => {
+      left.to_lower() == right.to_lower()
+    }) ==
+    0,
+  )
+  assert_true(
     vector.mem_by("a", (left, right) => left.to_upper() == right.to_upper()),
   )
   assert_eq(vector.to_string(value => value), "{A; b; a}")

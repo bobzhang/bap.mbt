@@ -273,7 +273,9 @@ pub fn[T, A] BapVector::foldi(Self[T], A, (Int, A, T) -> A) -> A
 pub fn[T] BapVector::for_all(Self[T], (T) -> Bool) -> Bool
 pub fn[T] BapVector::get(Self[T], Int) -> T
 pub fn[T : Eq] BapVector::index(Self[T], T) -> Int?
+pub fn[T] BapVector::index_by(Self[T], T, (T, T) -> Bool) -> Int?
 pub fn[T : Eq] BapVector::index_exn(Self[T], T) -> Int
+pub fn[T] BapVector::index_exn_by(Self[T], T, (T, T) -> Bool) -> Int
 pub fn[T : Eq] BapVector::index_with(Self[T], T, default~ : Int) -> Int
 pub fn[T] BapVector::index_with_by(Self[T], T, default~ : Int, (T, T) -> Bool) -> Int
 pub fn[T] BapVector::is_empty(Self[T]) -> Bool

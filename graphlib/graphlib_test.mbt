@@ -24,6 +24,25 @@ test "graph construction is persistent and deterministic" {
 }
 
 ///|
+test "translated BAP graph create folds edges before explicit nodes" {
+  let empty : @graphlib.Graph[Int, String] = @graphlib.Graph::create()
+  assert_true(empty.is_empty())
+
+  let graph : @graphlib.Graph[Int, String] = @graphlib.Graph::create(
+    edges=[(1, 2, "first"), (2, 3, "middle"), (1, 2, "updated")],
+    nodes=[0, 2, 4],
+  )
+  assert_true(
+    Set::from_array(graph.nodes()) == Set::from_array([0, 1, 2, 3, 4]),
+  )
+  assert_true(graph.nodes() == [1, 2, 3, 0, 4])
+  assert_true(edge_pairs(graph) == Set::from_array([(1, 2), (2, 3)]))
+  assert_true(graph.edge(1, 2).map(edge => edge.label) == Some("updated"))
+  assert_true(graph.has_node(0))
+  assert_true(graph.has_node(4))
+}
+
+///|
 test "translated BAP graph removal keeps nodes and incident edges coherent" {
   let graph : @graphlib.Graph[Int, String] = @graphlib.Graph::new()
     .add_edge(src=0, dst=1, label="entry")

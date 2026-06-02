@@ -35,6 +35,21 @@ pub fn[N : Eq, E] Graph::edge(
 }
 
 ///|
+pub fn[N : Eq, E] Graph::create(
+  nodes? : ArrayView[N] = [],
+  edges? : ArrayView[(N, N, E)] = [],
+) -> Graph[N, E] {
+  let mut graph : Graph[N, E] = Graph::new()
+  for edge in edges {
+    graph = graph.add_edge(src=edge.0, dst=edge.1, label=edge.2)
+  }
+  for node in nodes {
+    graph = graph.add_node(node)
+  }
+  graph
+}
+
+///|
 pub fn[N : Eq, E] Graph::add_node(self : Graph[N, E], node : N) -> Graph[N, E] {
   if self.has_node(node) {
     self

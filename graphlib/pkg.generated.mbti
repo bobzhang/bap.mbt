@@ -35,6 +35,7 @@ pub(all) enum EdgeKind {
 type Graph[N, E] derive(@debug.Debug)
 pub fn[N : Eq, E] Graph::add_edge(Self[N, E], src~ : N, dst~ : N, label~ : E) -> Self[N, E]
 pub fn[N : Eq, E] Graph::add_node(Self[N, E], N) -> Self[N, E]
+pub fn[N : Eq, E] Graph::create(nodes? : ArrayView[N], edges? : ArrayView[(N, N, E)]) -> Self[N, E]
 pub fn[N : Eq, E] Graph::degree(Self[N, E], N) -> Int
 pub fn[N : Hash + Eq, E] Graph::dfs_edges(Self[N, E], N) -> Array[(EdgeKind, Edge[N, E])]
 pub fn[N : Hash + Eq, E] Graph::dfs_numbering(Self[N, E], N) -> Map[N, DfsNodeInfo]

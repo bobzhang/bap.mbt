@@ -108,6 +108,7 @@ pub fn[N : Eq, E] Graph::replace_node(Self[N, E], N, N) -> Self[N, E]
 pub fn[N : Hash + Eq, E] Graph::reverse_postorder(Self[N, E], N, rev? : Bool) -> Array[N]
 pub fn[N : Hash + Eq, E] Graph::reverse_postorder_traverse(Self[N, E], rev? : Bool, start? : N?) -> Array[N]
 pub fn[N : Hash + Eq, E] Graph::shortest_path(Self[N, E], N, N, weight? : (Edge[N, E]) -> Int, rev? : Bool) -> GraphPath[Edge[N, E]]?
+pub fn[N : Hash + Eq, E] Graph::strong_component_partition(Self[N, E]) -> Partition[N]
 pub fn[N : Hash + Eq, E] Graph::strong_components(Self[N, E]) -> Array[@set.Set[N]]
 pub fn[N : Eq, E] Graph::successors(Self[N, E], N) -> Array[N]
 pub fn[N : Eq, E] Graph::succs(Self[N, E], N) -> Array[N]

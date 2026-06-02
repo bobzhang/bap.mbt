@@ -761,6 +761,23 @@ test "strong components group mutually reachable nodes" {
   assert_true(!same_component(components, 0, 1))
   assert_true(!same_component(components, 2, 3))
   assert_true(!same_component(components, 4, 5))
+  let partition = graph.strong_component_partition()
+  assert_true(partition.number_of_groups() == 4)
+  assert_true(partition.equiv(1, 2))
+  assert_true(partition.equiv(3, 4))
+  assert_true(!partition.equiv(0, 1))
+  assert_true(!partition.equiv(2, 3))
+  match partition.group(1) {
+    Some(group) => {
+      assert_true(group.mem(2))
+      assert_true(group.members() == Set::from_array([1, 2]))
+      match partition.of_equiv(group.to_equiv()) {
+        Some(same) => assert_true(same.members() == group.members())
+        None => fail("expected group from component equivalence id")
+      }
+    }
+    None => fail("expected component group")
+  }
 }
 
 ///|

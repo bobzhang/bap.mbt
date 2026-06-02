@@ -542,6 +542,24 @@ pub fn[N : Hash + Eq, E] Graph::strong_components(
 }
 
 ///|
+pub fn[N : Hash + Eq, E] Graph::strong_component_partition(
+  self : Graph[N, E],
+) -> Partition[N] {
+  let roots : Array[N] = []
+  let groups : Array[Set[N]] = []
+  for component in self.strong_components() {
+    match component.iter().next() {
+      Some(root) => {
+        roots.push(root)
+        groups.push(component.copy())
+      }
+      None => ()
+    }
+  }
+  { roots_value: roots, groups_value: groups }
+}
+
+///|
 pub fn[N : Hash + Eq, E] Graph::dominators(
   self : Graph[N, E],
   entry : N,

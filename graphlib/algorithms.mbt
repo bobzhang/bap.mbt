@@ -364,9 +364,10 @@ pub fn[N : Hash + Eq, E] Graph::strong_components(
 pub fn[N : Hash + Eq, E] Graph::dominators(
   self : Graph[N, E],
   entry : N,
+  rev? : Bool = false,
 ) -> Map[N, Set[N]] {
   let all_nodes : Set[N] = Set::from_array(self.nodes)
-  let reachable = self.reachable(entry)
+  let reachable = self.reachable(entry, rev~)
   let doms : Map[N, Set[N]] = {}
   for node in self.nodes {
     if node == entry {
@@ -382,9 +383,12 @@ pub fn[N : Hash + Eq, E] Graph::dominators(
     changed = false
     for node in self.nodes {
       if node != entry && reachable.contains(node) {
-        let preds = self
-          .predecessors(node)
-          .filter(pred => reachable.contains(pred))
+        let adjacent = if rev {
+          self.successors(node)
+        } else {
+          self.predecessors(node)
+        }
+        let preds = adjacent.filter(pred => reachable.contains(pred))
         let mut next : Set[N]? = None
         for pred in preds {
           match doms.get(pred) {
@@ -448,9 +452,10 @@ fn[N : Hash + Eq] immediate_dominator_of(doms : Map[N, Set[N]], node : N) -> N? 
 pub fn[N : Hash + Eq, E] Graph::immediate_dominators(
   self : Graph[N, E],
   entry : N,
+  rev? : Bool = false,
 ) -> Map[N, N] {
-  let doms = self.dominators(entry)
-  let reachable = self.reachable(entry)
+  let doms = self.dominators(entry, rev~)
+  let reachable = self.reachable(entry, rev~)
   let idoms : Map[N, N] = {}
   for node in self.nodes {
     if node != entry && reachable.contains(node) {
@@ -467,15 +472,21 @@ pub fn[N : Hash + Eq, E] Graph::immediate_dominators(
 pub fn[N : Hash + Eq, E] Graph::dominance_frontiers(
   self : Graph[N, E],
   entry : N,
+  rev? : Bool = false,
 ) -> Map[N, Set[N]] {
-  let reachable = self.reachable(entry)
-  let idoms = self.immediate_dominators(entry)
+  let reachable = self.reachable(entry, rev~)
+  let idoms = self.immediate_dominators(entry, rev~)
   let frontiers : Map[N, Set[N]] = {}
   for node in self.nodes {
     frontiers[node] = Set([])
   }
   for node in self.nodes {
-    let preds = self.predecessors(node).filter(pred => reachable.contains(pred))
+    let adjacent = if rev {
+      self.successors(node)
+    } else {
+      self.predecessors(node)
+    }
+    let preds = adjacent.filter(pred => reachable.contains(pred))
     if reachable.contains(node) && preds.length() >= 2 {
       match idoms.get(node) {
         Some(stop) =>

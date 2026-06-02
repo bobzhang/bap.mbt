@@ -396,6 +396,12 @@ test "dominators converge for a small flow graph" {
   assert_true(doms[2] == Set::from_array([0, 1, 2]))
   assert_true(doms[3] == Set::from_array([0, 1, 3]))
   assert_true(doms[4] == Set::from_array([0, 1, 4]))
+  let post_doms = graph.dominators(4, rev=true)
+  assert_true(post_doms[4] == Set::from_array([4]))
+  assert_true(post_doms[2] == Set::from_array([2, 4]))
+  assert_true(post_doms[3] == Set::from_array([3, 4]))
+  assert_true(post_doms[1] == Set::from_array([1, 4]))
+  assert_true(post_doms[0] == Set::from_array([0, 1, 4]))
 }
 
 ///|
@@ -413,6 +419,17 @@ test "immediate dominators and frontiers describe branches and loop headers" {
   assert_true(frontiers[2] == Set::from_array([4]))
   assert_true(frontiers[3] == Set::from_array([4]))
   assert_true(frontiers[4] == Set::from_array([1]))
+  let post_idoms = graph.immediate_dominators(4, rev=true)
+  assert_true(post_idoms[0] == 1)
+  assert_true(post_idoms[1] == 4)
+  assert_true(post_idoms[2] == 4)
+  assert_true(post_idoms[3] == 4)
+  let post_frontiers = graph.dominance_frontiers(4, rev=true)
+  assert_true(post_frontiers[0].is_empty())
+  assert_true(post_frontiers[1].is_empty())
+  assert_true(post_frontiers[2] == Set::from_array([1]))
+  assert_true(post_frontiers[3] == Set::from_array([1]))
+  assert_true(post_frontiers[4].is_empty())
 }
 
 ///|
@@ -431,4 +448,13 @@ test "dominance frontiers report diamond joins" {
   assert_true(frontiers[1] == Set::from_array([3]))
   assert_true(frontiers[2] == Set::from_array([3]))
   assert_true(frontiers[3].is_empty())
+  let post_idoms = graph.immediate_dominators(3, rev=true)
+  assert_true(post_idoms[0] == 3)
+  assert_true(post_idoms[1] == 3)
+  assert_true(post_idoms[2] == 3)
+  let post_frontiers = graph.dominance_frontiers(3, rev=true)
+  assert_true(post_frontiers[0].is_empty())
+  assert_true(post_frontiers[1] == Set::from_array([0]))
+  assert_true(post_frontiers[2] == Set::from_array([0]))
+  assert_true(post_frontiers[3].is_empty())
 }

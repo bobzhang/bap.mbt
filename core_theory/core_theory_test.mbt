@@ -2919,12 +2919,15 @@ test "program semantics stores values and instruction bytes" {
 
 ///|
 test "program source and unit facts expose BAP-style Knowledge slots" {
+  assert_true(@core_theory.Program::cls().name().show() == "core:program")
   let source = @core_theory.Source::create(
     language=C,
     code="int main(void) { return 0; }",
     file="main.c",
   )
   let source_facts = @core_theory.SourceFacts::new()
+  assert_true(@core_theory.Source::cls().name().show() == "core:unit-source")
+  assert_true(source_facts.class().same(@core_theory.Source::cls()))
   assert_persistent_round_trip(
     source_facts.language().slot().persistent(),
     C,
@@ -2977,6 +2980,8 @@ test "program source and unit facts expose BAP-style Knowledge slots" {
     compiler~,
   )
   let unit_facts = @core_theory.ProgramUnitFacts::new()
+  assert_true(@core_theory.ProgramUnit::cls().name().show() == "core:unit")
+  assert_true(unit_facts.class().same(@core_theory.ProgramUnit::cls()))
   assert_persistent_round_trip(
     unit_facts.path().slot().persistent(),
     Some("main.o"),

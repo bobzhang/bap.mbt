@@ -303,12 +303,7 @@ pub fn Target::domain() -> @knowledge.Domain[Target] {
 
 ///|
 pub fn SourceFacts::new() -> SourceFacts {
-  let cls : @knowledge.Class[Unit, Unit] = @knowledge.Class::create(
-    name=core_name("unit-source"),
-    sort=(),
-    desc="source-code artifact",
-    public=true,
-  )
+  let cls = Source::cls()
   let language = cls.property(
     name=core_name("source-language"),
     domain=source_language_domain(),
@@ -424,12 +419,7 @@ pub fn SourceFacts::collect_source(
 
 ///|
 pub fn ProgramUnitFacts::new() -> ProgramUnitFacts {
-  let cls : @knowledge.Class[Unit, Unit] = @knowledge.Class::create(
-    name=core_name("unit"),
-    sort=(),
-    desc="a unit of code",
-    public=true,
-  )
+  let cls = ProgramUnit::cls()
   let path = cls.property(
     name=core_name("unit-path"),
     domain=optional_string_domain("unit-path"),

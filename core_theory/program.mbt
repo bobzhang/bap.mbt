@@ -418,6 +418,16 @@ pub fn Language::compare(self : Language, other : Language) -> Int {
 }
 
 ///|
+pub fn Source::cls() -> @knowledge.Class[Unit, Unit] {
+  @knowledge.Class::create(
+    name=core_name("unit-source"),
+    sort=(),
+    desc="source-code artifact",
+    public=true,
+  )
+}
+
+///|
 pub fn Source::create(
   language? : Language,
   code? : String,
@@ -772,6 +782,16 @@ fn ProgramUnit::make(
 }
 
 ///|
+pub fn ProgramUnit::cls() -> @knowledge.Class[Unit, Unit] {
+  @knowledge.Class::create(
+    name=core_name("unit"),
+    sort=(),
+    desc="a unit of code",
+    public=true,
+  )
+}
+
+///|
 pub fn ProgramUnit::fresh(
   target? : Target,
   source? : Source,
@@ -1093,6 +1113,16 @@ pub fn ProgramUnit::persistent() -> @knowledge.Persistent[ProgramUnit] {
       }
     },
     persistent_string_fields(),
+  )
+}
+
+///|
+pub fn Program::cls() -> @knowledge.Class[Unit, Unit] {
+  @knowledge.Class::create(
+    name=core_name("program"),
+    sort=(),
+    desc="a class of program instances",
+    public=true,
   )
 }
 

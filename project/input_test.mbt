@@ -190,6 +190,53 @@ test "project input loaders register and load bytes" {
 }
 
 ///|
+test "project input exposes BAP-style loader registry aliases" {
+  match
+    @project.ProjectInput::register_loader(
+      name="unit-project-alias",
+      description="BAP-style project input alias",
+      extensions=["pia"],
+      priority=11,
+      load=data => {
+        Ok(
+          @project.ProjectInput::from_bytes(
+            target=@core_theory.Target::unknown(),
+            data,
+            endian=LittleEndian,
+            base=0x140UL,
+          ),
+        )
+      },
+    ) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  match @project.ProjectInput::find_loader("unit-project-alias") {
+    Some(loader) => {
+      assert_true(loader.description() == "BAP-style project input alias")
+      assert_true(loader.extensions() == ["pia"])
+      assert_true(loader.priority() == 11)
+    }
+    None => fail("expected registered project input loader")
+  }
+  assert_true(
+    @project.ProjectInput::available_loaders().contains("unit-project-alias"),
+  )
+  assert_true(
+    @project.input_loader_names_for_extension("pia").contains(
+      "unit-project-alias",
+    ),
+  )
+  match @project.ProjectInput::load(b"\x01\x02", loader="unit-project-alias") {
+    Ok(input) => {
+      let project = @project.Project::from_input(input)
+      assert_true(project.memory().lookup(0x140UL).length() == 1)
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 fn unit_project_image_backend() -> @image.ImageBackend {
   @image.ImageBackend::create(
     name="unit-project-image-backend",

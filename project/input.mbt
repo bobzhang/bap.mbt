@@ -409,6 +409,25 @@ pub fn register_input_loader(
 }
 
 ///|
+pub fn ProjectInput::register_loader(
+  name~ : String,
+  description? : String,
+  extensions? : Array[String],
+  priority? : Int,
+  load~ : (Bytes) -> Result[ProjectInput, String],
+) -> Result[Unit, String] {
+  register_input_loader(
+    ProjectInputLoader::create(
+      name~,
+      description?,
+      extensions?,
+      priority?,
+      load~,
+    ),
+  )
+}
+
+///|
 fn register_input_loader_if_absent(
   loader : ProjectInputLoader,
 ) -> Result[Bool, String] {
@@ -448,6 +467,11 @@ pub fn register_builtin_input_loaders() -> Result[Unit, String] {
 ///|
 pub fn find_input_loader(name : String) -> ProjectInputLoader? {
   input_loader_registry.get(name)
+}
+
+///|
+pub fn ProjectInput::find_loader(name : String) -> ProjectInputLoader? {
+  find_input_loader(name)
 }
 
 ///|
@@ -529,6 +553,11 @@ pub fn available_input_loaders() -> Array[String] {
     push_unique_string(names, name)
   }
   names
+}
+
+///|
+pub fn ProjectInput::available_loaders() -> Array[String] {
+  available_input_loaders()
 }
 
 ///|

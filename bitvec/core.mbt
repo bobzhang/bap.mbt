@@ -2,6 +2,15 @@
 let all_ones64 : UInt64 = UInt64::lnot(0)
 
 ///|
+let max_int_as_uint64 : UInt64 = 0x7fffffff
+
+///|
+let max_uint32_as_uint64 : UInt64 = 0xffffffff
+
+///|
+let max_int64_as_uint64 : UInt64 = 0x7fffffffffffffff
+
+///|
 fn check_width(width : Int) -> Unit raise BitVecError {
   if width <= 0 {
     raise InvalidWidth(width)
@@ -169,6 +178,52 @@ pub fn BitVec::to_uint64(self : BitVec) -> UInt64 raise BitVecError {
     }
   }
   self.limbs[0]
+}
+
+///|
+pub fn BitVec::fits_int(self : BitVec) -> Bool {
+  self.fits_int32()
+}
+
+///|
+pub fn BitVec::to_int(self : BitVec) -> Int raise BitVecError {
+  let raw = self.to_uint64()
+  if raw > max_int_as_uint64 {
+    raise InvalidWidth(self.width)
+  }
+  raw.to_int()
+}
+
+///|
+pub fn BitVec::fits_int32(self : BitVec) -> Bool {
+  try self.to_uint64() catch {
+    _ => false
+  } noraise {
+    raw => raw <= max_int_as_uint64
+  }
+}
+
+///|
+pub fn BitVec::to_int32(self : BitVec) -> Int raise BitVecError {
+  let raw = self.to_uint64()
+  if raw > max_uint32_as_uint64 {
+    raise InvalidWidth(self.width)
+  }
+  raw.to_int()
+}
+
+///|
+pub fn BitVec::fits_int64(self : BitVec) -> Bool {
+  try self.to_uint64() catch {
+    _ => false
+  } noraise {
+    raw => raw <= max_int64_as_uint64
+  }
+}
+
+///|
+pub fn BitVec::to_int64(self : BitVec) -> Int64 raise BitVecError {
+  self.to_uint64().reinterpret_as_int64()
 }
 
 ///|

@@ -42,6 +42,54 @@ test "byte conversion preserves endian order" {
 }
 
 ///|
+test "integer conversions mirror BAP bitvector representation checks" {
+  let max_int = @bitvec.of_uint64(width=32, 0x7fffffff)
+  assert_true(max_int.fits_int())
+  assert_true(max_int.fits_int32())
+  assert_true(max_int.fits_int64())
+  assert_true(max_int.to_int() == 0x7fffffff)
+  assert_true(max_int.to_int32() == 0x7fffffff)
+  assert_true(max_int.to_int64() == 0x7fffffffL)
+  let min_int32_bits = @bitvec.of_uint64(width=32, 0x80000000)
+  assert_true(!min_int32_bits.fits_int())
+  assert_true(!min_int32_bits.fits_int32())
+  assert_true(min_int32_bits.fits_int64())
+  assert_true(min_int32_bits.to_int32() == 0x80000000)
+  assert_true(min_int32_bits.to_int64() == 0x80000000L)
+  try min_int32_bits.to_int() catch {
+    InvalidWidth(_) => ()
+    _ => fail("expected InvalidWidth")
+  } noraise {
+    _ => fail("expected InvalidWidth")
+  }
+  let all32 = @bitvec.of_uint64(width=32, 0xffffffff)
+  assert_true(!all32.fits_int32())
+  assert_true(all32.to_int32() == -1)
+  assert_true(all32.to_int64() == 0xffffffffL)
+  let all64 = @bitvec.of_uint64(width=64, 0xffffffffffffffff)
+  assert_true(!all64.fits_int64())
+  assert_true(all64.to_int64() == -1L)
+  try all64.to_int32() catch {
+    InvalidWidth(_) => ()
+    _ => fail("expected InvalidWidth")
+  } noraise {
+    _ => fail("expected InvalidWidth")
+  }
+  let wide_low = @bitvec.of_uint64(width=128, 42)
+  assert_true(wide_low.fits_int())
+  assert_true(wide_low.to_int() == 42)
+  assert_true(wide_low.to_int64() == 42L)
+  let wide_high = @bitvec.one(width=128).lshift(80)
+  assert_true(!wide_high.fits_int64())
+  try wide_high.to_int64() catch {
+    InvalidWidth(width) => assert_true(width == 128)
+    _ => fail("expected InvalidWidth")
+  } noraise {
+    _ => fail("expected InvalidWidth")
+  }
+}
+
+///|
 test "concat and extract match BAP bit numbering cases" {
   let high = @bitvec.of_int(width=16, 0xdead)
   let low = @bitvec.of_int(width=16, 0xbeef)

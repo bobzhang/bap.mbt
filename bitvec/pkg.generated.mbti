@@ -60,6 +60,9 @@ pub fn BitVec::concat(Self, Self) -> Self raise BitVecError
 pub fn BitVec::div(Self, Self) -> Self raise BitVecError
 pub fn BitVec::div_rem(Self, Self) -> (Self, Self) raise BitVecError
 pub fn BitVec::extract(Self, hi? : Int, lo? : Int) -> Self raise BitVecError
+pub fn BitVec::fits_int(Self) -> Bool
+pub fn BitVec::fits_int32(Self) -> Bool
+pub fn BitVec::fits_int64(Self) -> Bool
 pub fn BitVec::gcd(Self, Self) -> Self raise BitVecError
 pub fn BitVec::gcd_ext(Self, Self) -> (Self, Self, Self) raise BitVecError
 pub fn BitVec::is_zero(Self) -> Bool
@@ -81,6 +84,9 @@ pub fn BitVec::sub(Self, Self) -> Self raise BitVecError
 pub fn BitVec::succ(Self) -> Self
 pub fn BitVec::to_bytes(Self, endian~ : Endian) -> Bytes
 pub fn BitVec::to_hex(Self, prefix? : Bool) -> String
+pub fn BitVec::to_int(Self) -> Int raise BitVecError
+pub fn BitVec::to_int32(Self) -> Int raise BitVecError
+pub fn BitVec::to_int64(Self) -> Int64 raise BitVecError
 pub fn BitVec::to_string(Self) -> String
 pub fn BitVec::to_uint64(Self) -> UInt64 raise BitVecError
 pub fn BitVec::truncate(Self, width~ : Int) -> Self raise BitVecError

@@ -808,6 +808,7 @@ pub fn TargetOptions::to_string(Self) -> String
 pub fn TargetOptions::with_value(Self, String, String) -> Self
 
 type Value
+pub fn Value::cls() -> @knowledge.Class[Unit, Unit]
 pub fn Value::compare(Self, Self) -> Int
 pub fn Value::empty(Sort) -> Self
 pub fn Value::equal(Self, Self) -> Bool

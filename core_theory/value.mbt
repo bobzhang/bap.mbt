@@ -5,6 +5,16 @@ struct Value {
 }
 
 ///|
+pub fn Value::cls() -> @knowledge.Class[Unit, Unit] {
+  @knowledge.Class::create(
+    name=core_name("value"),
+    sort=(),
+    desc="the denotation of an expression",
+    public=true,
+  )
+}
+
+///|
 pub fn Value::empty(sort : Sort) -> Value {
   { sort_value: sort, facts: {} }
 }

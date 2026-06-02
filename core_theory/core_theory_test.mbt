@@ -3204,6 +3204,10 @@ test "program metadata tracks source compiler and units" {
 
 ///|
 test "program semantics stores values and instruction bytes" {
+  assert_true(@core_theory.Value::cls().name().show() == "core:value")
+  assert_true(
+    @core_theory.Value::cls().desc() == Some("the denotation of an expression"),
+  )
   assert_true(
     @core_theory.Semantics::empty()
     .value()
@@ -3728,4 +3732,9 @@ test "core theory fact slots register public Knowledge documentation" {
   let semantics_properties = documented_core_properties("core:semantics")
   assert_true(semantics_properties.contains("core:value"))
   assert_true(semantics_properties.contains("core:insn-code"))
+
+  let class_names = @knowledge.Documentation::classes().map(entry => {
+    entry.0.name().show()
+  })
+  assert_true(class_names.contains("core:value"))
 }

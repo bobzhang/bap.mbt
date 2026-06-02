@@ -1957,6 +1957,38 @@ test "target variant registration generates BAP-style names" {
     Ok(empty) => assert_true(empty.is_empty())
     Err(reason) => fail(reason)
   }
+  let top_parent = @core_theory.Target::create(
+    name=@knowledge.Name::create("unit-top-variant-root", pkg="test"),
+    bits=32,
+  )
+  match @core_theory.register_target(top_parent) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  match
+    @core_theory.register_target_variants(
+      top_parent,
+      systems=[Linux],
+      abis=[GNU],
+      filetypes=[Elf],
+      pkg="test-top-variant",
+    ) {
+    Ok(variants) => {
+      assert_true(variants.length() == 1)
+      assert_true(
+        variants[0].name().show() ==
+        "test-top-variant:unit-top-variant-root-linux-gnu-elf",
+      )
+      assert_true(
+        @core_theory.lookup_target(
+          "unit-top-variant-root-linux-gnu-elf",
+          pkg="test-top-variant",
+        ).map(target => target.parent().name().show()) ==
+        Some("test:unit-top-variant-root"),
+      )
+    }
+    Err(reason) => fail(reason)
+  }
 }
 
 ///|

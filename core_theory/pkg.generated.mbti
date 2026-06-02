@@ -27,6 +27,8 @@ pub fn read_target(String, pkg? : String) -> Result[Target, String]
 
 pub fn register_target(Target) -> Result[Unit, String]
 
+pub fn register_target_variants(Target, systems? : Array[System], abis? : Array[Abi], fabis? : Array[Fabi], filetypes? : Array[Filetype], options? : Array[TargetOptions], pkg? : String) -> Result[Array[Target], String]
+
 pub fn registered_targets() -> Array[Target]
 
 pub fn select_target(parent? : Target, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, options? : TargetOptions, strict? : Bool, unique? : Bool) -> Result[Target, String]

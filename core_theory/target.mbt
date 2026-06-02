@@ -6193,6 +6193,27 @@ pub fn Target::register_variants(
 }
 
 ///|
+pub fn register_target_variants(
+  parent : Target,
+  systems? : Array[System],
+  abis? : Array[Abi],
+  fabis? : Array[Fabi],
+  filetypes? : Array[Filetype],
+  options? : Array[TargetOptions],
+  pkg? : String,
+) -> Result[Array[Target], String] {
+  Target::register_variants(
+    parent,
+    systems?,
+    abis?,
+    fabis?,
+    filetypes?,
+    options?,
+    pkg?,
+  )
+}
+
+///|
 fn target_family_compare(left : Target, right : Target) -> Int {
   if left.name().show() == right.name().show() {
     0

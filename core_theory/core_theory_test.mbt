@@ -450,14 +450,18 @@ test "effect sorts form the expected lattice" {
   assert_true(@core_theory.EffectSort::top() == EffectTop)
   assert_true(@core_theory.EffectSort::data() == EffectData)
   assert_true(@core_theory.EffectSort::ctrl() == EffectCtrl)
-  assert_true(@core_theory.EffectSort::rreg() == EffectData)
-  assert_true(@core_theory.EffectSort::wreg() == EffectData)
-  assert_true(@core_theory.EffectSort::rmem() == EffectData)
-  assert_true(@core_theory.EffectSort::wmem() == EffectData)
-  assert_true(@core_theory.EffectSort::barr() == EffectData)
-  assert_true(@core_theory.EffectSort::fall() == EffectCtrl)
-  assert_true(@core_theory.EffectSort::jump() == EffectCtrl)
-  assert_true(@core_theory.EffectSort::cjmp() == EffectCtrl)
+  assert_true(
+    @core_theory.EffectSort::rreg() != @core_theory.EffectSort::wreg(),
+  )
+  assert_true(
+    @core_theory.EffectSort::rmem() != @core_theory.EffectSort::wmem(),
+  )
+  assert_true(
+    @core_theory.EffectSort::fall() != @core_theory.EffectSort::jump(),
+  )
+  assert_true(
+    @core_theory.EffectSort::jump() != @core_theory.EffectSort::cjmp(),
+  )
   assert_true(@core_theory.EffectData.both(EffectCtrl) == EffectBoth)
   assert_true(@core_theory.EffectSort::union_all([]) == EffectBot)
   assert_true(
@@ -465,6 +469,23 @@ test "effect sorts form the expected lattice" {
   )
   assert_true(
     @core_theory.EffectSort::join([EffectData], [EffectCtrl]) == EffectBoth,
+  )
+  let register_effects = @core_theory.EffectSort::join(
+    [@core_theory.EffectSort::rreg()],
+    [@core_theory.EffectSort::wreg()],
+  )
+  inspect(register_effects.to_string(), content="rreg&wreg")
+  assert_true(@core_theory.EffectSort::rreg().order(register_effects) == Less)
+  assert_true(@core_theory.EffectSort::wreg().order(register_effects) == Less)
+  assert_true(
+    @core_theory.EffectSort::rreg().order(@core_theory.EffectSort::wreg()) ==
+    Incomparable,
+  )
+  assert_true(
+    @core_theory.EffectSort::data_named("custom-read")
+    .union(@core_theory.EffectSort::data_named("custom-write"))
+    .to_string() ==
+    "custom-read&custom-write",
   )
   assert_true(@core_theory.EffectData.union(EffectCtrl) == EffectBoth)
   assert_true(@core_theory.EffectData.order(EffectBoth) == Less)
@@ -493,6 +514,11 @@ test "effect sorts form the expected lattice" {
     EffectBoth,
     "effect sort",
   )
+  assert_persistent_round_trip(
+    Some(@core_theory.EffectSort::persistent()),
+    register_effects,
+    "effect sort set",
+  )
   assert_true(@core_theory.Effect::jump().equal(@core_theory.Effect::jump()))
   match
     @core_theory.Effect::persistent().decode(
@@ -505,7 +531,9 @@ test "effect sorts form the expected lattice" {
     @core_theory.Effect::jump().compare(@core_theory.Effect::fall()) != 0,
   )
   inspect(@core_theory.Effect::jump().to_string(), content="jump")
-  assert_true(@core_theory.Effect::barr().sort() == EffectData)
+  assert_true(
+    @core_theory.Effect::barr().sort() == @core_theory.EffectSort::barr(),
+  )
   inspect(@core_theory.Effect::cjmp().to_string(), content="cjmp")
   assert_true(@core_theory.Effect::cjump().equal(@core_theory.Effect::cjmp()))
 }

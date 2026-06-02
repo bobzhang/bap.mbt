@@ -162,6 +162,7 @@ pub(all) enum EffectSort {
   EffectData
   EffectCtrl
   EffectBoth
+  EffectSet(names~ : Array[String])
   EffectTop
 } derive(Eq, @debug.Debug)
 pub fn EffectSort::barr() -> Self
@@ -169,7 +170,9 @@ pub fn EffectSort::bot() -> Self
 pub fn EffectSort::both(Self, Self) -> Self
 pub fn EffectSort::cjmp() -> Self
 pub fn EffectSort::ctrl() -> Self
+pub fn EffectSort::ctrl_named(String) -> Self
 pub fn EffectSort::data() -> Self
+pub fn EffectSort::data_named(String) -> Self
 pub fn EffectSort::fall() -> Self
 pub fn EffectSort::join(Array[Self], Array[Self]) -> Self
 pub fn EffectSort::jump() -> Self

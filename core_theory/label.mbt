@@ -27,6 +27,13 @@ fn next_label_id() -> Int {
 }
 
 ///|
+fn ensure_label_counter_at_least(id : Int) -> Unit {
+  if fresh_label_counter.val < id {
+    fresh_label_counter.val = id
+  }
+}
+
+///|
 fn label_package(pkg? : String) -> String {
   @knowledge.Name::read("label", pkg?).pkg()
 }
@@ -321,4 +328,112 @@ pub fn Label::is_valid(self : Label) -> Bool {
 ///|
 pub fn Label::is_subroutine(self : Label) -> Bool {
   self.subroutine_flag
+}
+
+///|
+pub fn Label::persistent() -> @knowledge.Persistent[Label] {
+  let int_codec = @knowledge.Persistent::int()
+  let opt_target_codec = @knowledge.Persistent::optional(Target::persistent())
+  let opt_unit_codec = @knowledge.Persistent::optional(
+    ProgramUnit::persistent(),
+  )
+  let opt_word_codec = @knowledge.Persistent::optional(word_persistent())
+  let opt_string_codec = @knowledge.Persistent::optional(
+    @knowledge.Persistent::string(),
+  )
+  let opt_int_codec = @knowledge.Persistent::optional(int_codec)
+  let opt_language_codec = @knowledge.Persistent::optional(
+    Language::persistent(),
+  )
+  let opt_semantics_codec = @knowledge.Persistent::optional(
+    Semantics::persistent(),
+  )
+  let aliases_codec = @knowledge.Persistent::array(
+    @knowledge.Persistent::string(),
+  )
+  let bool_codec = @knowledge.Persistent::bool()
+  @knowledge.Persistent::convert(
+    to_persistent=label => {
+      [
+        int_codec.encode(label.id()),
+        opt_target_codec.encode(label.target_value),
+        opt_unit_codec.encode(label.unit()),
+        opt_word_codec.encode(label.addr()),
+        opt_string_codec.encode(label.name()),
+        opt_int_codec.encode(label.ivec()),
+        opt_language_codec.encode(label.encoding()),
+        opt_semantics_codec.encode(label.semantics()),
+        aliases_codec.encode(label.aliases()),
+        bool_codec.encode(label.is_valid()),
+        bool_codec.encode(label.is_subroutine()),
+      ]
+    },
+    of_persistent=fields => {
+      match persistent_decode_fields(fields, 11, "label") {
+        Ok(_) => ()
+        Err(reason) => return Err(reason)
+      }
+      let id = match int_codec.decode(fields[0]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let target = match opt_target_codec.decode(fields[1]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let unit = match opt_unit_codec.decode(fields[2]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let addr = match opt_word_codec.decode(fields[3]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let name = match opt_string_codec.decode(fields[4]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let ivec = match opt_int_codec.decode(fields[5]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let encoding = match opt_language_codec.decode(fields[6]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let semantics = match opt_semantics_codec.decode(fields[7]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let aliases = match aliases_codec.decode(fields[8]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let valid = match bool_codec.decode(fields[9]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let subroutine = match bool_codec.decode(fields[10]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      ensure_label_counter_at_least(id)
+      Ok(
+        Label::make(
+          id~,
+          target?,
+          unit?,
+          addr?,
+          name?,
+          ivec?,
+          encoding?,
+          semantics?,
+          aliases~,
+          is_valid=valid,
+          is_subroutine=subroutine,
+        ),
+      )
+    },
+    persistent_string_fields(),
+  )
 }

@@ -292,6 +292,7 @@ pub fn Label::ivec_slot() -> @knowledge.Slot[Unit, Int?]
 pub fn Label::name(Self) -> String?
 pub fn Label::name_slot() -> @knowledge.Slot[Unit, String?]
 pub fn Label::null() -> Self
+pub fn Label::persistent() -> @knowledge.Persistent[Self]
 pub fn Label::possible_name(Self) -> String?
 pub fn Label::possible_name_opinions(Self) -> @knowledge.Opinions[String?]
 pub fn Label::possible_name_slot() -> @knowledge.Slot[Unit, @knowledge.Opinions[String?]]
@@ -389,6 +390,7 @@ pub fn Program::create(units? : Array[ProgramUnit], labels? : Array[Label], targ
 pub fn Program::empty() -> Self
 pub fn Program::equal(Self, Self) -> Bool
 pub fn Program::labels(Self) -> Array[Label]
+pub fn Program::persistent() -> @knowledge.Persistent[Self]
 pub fn Program::target(Self) -> Target?
 pub fn Program::units(Self) -> Array[ProgramUnit]
 

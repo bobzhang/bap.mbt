@@ -1251,6 +1251,42 @@ pub fn Program::compare(self : Program, other : Program) -> Int {
 }
 
 ///|
+pub fn Program::persistent() -> @knowledge.Persistent[Program] {
+  let units_codec = @knowledge.Persistent::array(ProgramUnit::persistent())
+  let labels_codec = @knowledge.Persistent::array(Label::persistent())
+  let target_codec = @knowledge.Persistent::optional(Target::persistent())
+  @knowledge.Persistent::convert(
+    to_persistent=program => {
+      [
+        units_codec.encode(program.units()),
+        labels_codec.encode(program.labels()),
+        target_codec.encode(program.target_value),
+      ]
+    },
+    of_persistent=fields => {
+      match persistent_decode_fields(fields, 3, "program") {
+        Ok(_) => ()
+        Err(reason) => return Err(reason)
+      }
+      let units = match units_codec.decode(fields[0]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let labels = match labels_codec.decode(fields[1]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let target = match target_codec.decode(fields[2]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      Ok(Program::create(units~, labels~, target?))
+    },
+    persistent_string_fields(),
+  )
+}
+
+///|
 pub fn Program::add_unit(self : Program, unit : ProgramUnit) -> Program {
   let units = self.units_value.copy()
   units.push(unit)

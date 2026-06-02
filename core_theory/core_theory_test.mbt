@@ -138,6 +138,80 @@ fn assert_semantics_persistent_round_trip(
 }
 
 ///|
+fn assert_optional_label_unit_equal(
+  decoded : @core_theory.ProgramUnit?,
+  expected : @core_theory.ProgramUnit?,
+  label : String,
+) -> Unit raise {
+  match (decoded, expected) {
+    (None, None) => ()
+    (Some(left), Some(right)) => assert_true(left.same(right))
+    _ => fail("unexpected decoded label unit for \{label}")
+  }
+}
+
+///|
+fn assert_optional_label_semantics_equal(
+  decoded : @core_theory.Semantics?,
+  expected : @core_theory.Semantics?,
+  label : String,
+) -> Unit raise {
+  match (decoded, expected) {
+    (None, None) => ()
+    (Some(left), Some(right)) => assert_true(left.equal(right))
+    _ => fail("unexpected decoded label semantics for \{label}")
+  }
+}
+
+///|
+fn assert_label_persistent_round_trip(
+  codec : @knowledge.Persistent[@core_theory.Label]?,
+  value : @core_theory.Label,
+  label : String,
+) -> Unit raise {
+  match codec {
+    Some(persistent) =>
+      match persistent.decode(persistent.encode(value)) {
+        Ok(decoded) => {
+          assert_true(decoded.same(value))
+          assert_true(decoded.target().equal(value.target()))
+          assert_optional_label_unit_equal(decoded.unit(), value.unit(), label)
+          assert_true(decoded.addr() == value.addr())
+          assert_true(decoded.name() == value.name())
+          assert_true(decoded.ivec() == value.ivec())
+          assert_true(decoded.encoding() == value.encoding())
+          assert_optional_label_semantics_equal(
+            decoded.semantics(),
+            value.semantics(),
+            label,
+          )
+          assert_true(decoded.aliases() == value.aliases())
+          assert_true(decoded.is_valid() == value.is_valid())
+          assert_true(decoded.is_subroutine() == value.is_subroutine())
+        }
+        Err(reason) => fail(reason)
+      }
+    None => fail("missing persistent codec for \{label}")
+  }
+}
+
+///|
+fn assert_program_persistent_round_trip(
+  codec : @knowledge.Persistent[@core_theory.Program]?,
+  value : @core_theory.Program,
+  label : String,
+) -> Unit raise {
+  match codec {
+    Some(persistent) =>
+      match persistent.decode(persistent.encode(value)) {
+        Ok(decoded) => assert_true(decoded.equal(value))
+        Err(reason) => fail(reason)
+      }
+    None => fail("missing persistent codec for \{label}")
+  }
+}
+
+///|
 fn assert_var_persistent_round_trip(
   codec : @knowledge.Persistent[@core_theory.Var]?,
   value : @core_theory.Var,
@@ -2987,20 +3061,61 @@ test "program metadata tracks source compiler and units" {
   assert_true(region.name() == "\{base.to_hex()}-\{upper.to_hex()}")
   assert_true(region.to_real_addr(base) == Ok(base))
   assert_true(region.to_biased_addr(base) == Ok(base))
+  let label_semantics = @core_theory.Semantics::empty().with_code(b"\x90\xc3")
   let label = @core_theory.Label::for_name("main")
     .with_unit(unit)
+    .with_alias("_main")
+    .with_alias("main")
     .with_encoding(language)
+    .with_semantics(label_semantics)
     .with_subroutine()
+  let label_codec = @core_theory.Label::persistent()
+  assert_label_persistent_round_trip(
+    Some(label_codec),
+    label,
+    "program name label",
+  )
+  assert_label_persistent_round_trip(
+    Some(label_codec),
+    @core_theory.Label::for_addr(base, target~).with_unit(unit),
+    "program address label",
+  )
+  assert_label_persistent_round_trip(
+    Some(label_codec),
+    @core_theory.Label::for_ivec(0x80, target~),
+    "program interrupt-vector label",
+  )
+  assert_label_persistent_round_trip(
+    Some(label_codec),
+    @core_theory.Label::null(),
+    "null label",
+  )
   assert_true(label.unit().map(item => item.same(unit)) == Some(true))
   assert_true(label.encoding() == Some(Cxx))
   assert_true(label.target().matches("amd64"))
+  assert_true(
+    label.semantics().map(item => item.code()) == Some(Some(b"\x90\xc3")),
+  )
+  assert_true(label.aliases() == ["_main", "main"])
   assert_true(label.is_subroutine())
   let program = @core_theory.Program::create(units=[unit], labels=[label])
+  let program_codec = @core_theory.Program::persistent()
+  assert_program_persistent_round_trip(Some(program_codec), program, "program")
   let empty_program = @core_theory.Program::empty()
+  assert_program_persistent_round_trip(
+    Some(program_codec),
+    empty_program,
+    "empty program",
+  )
   let same_program = @core_theory.Program::create(
     units=[unit],
     labels=[label],
     target~,
+  )
+  assert_program_persistent_round_trip(
+    Some(program_codec),
+    same_program,
+    "program with explicit target",
   )
   let region_program = @core_theory.Program::create(units=[region], labels=[
     label,

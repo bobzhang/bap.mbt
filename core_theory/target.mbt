@@ -2974,24 +2974,20 @@ pub fn AliasOrigin::reg(self : AliasOrigin) -> Var? {
 pub fn AliasOrigin::range(self : AliasOrigin) -> (Int, Int)? {
   match self {
     SubRegister(lo~, hi~, ..) => Some((lo, hi))
-    RegisterAlias(_) | BitSetAlias(_) | UnknownAlias(_) => None
+    RegisterAlias(source~, ..) =>
+      source.sort().bitv_size().map(width => (0, width - 1))
+    BitSetAlias(_) | UnknownAlias(_) => None
   }
 }
 
 ///|
 pub fn AliasOrigin::lo(self : AliasOrigin) -> Int? {
-  match self {
-    SubRegister(lo~, ..) => Some(lo)
-    RegisterAlias(_) | BitSetAlias(_) | UnknownAlias(_) => None
-  }
+  self.range().map(range => range.0)
 }
 
 ///|
 pub fn AliasOrigin::hi(self : AliasOrigin) -> Int? {
-  match self {
-    SubRegister(hi~, ..) => Some(hi)
-    RegisterAlias(_) | BitSetAlias(_) | UnknownAlias(_) => None
-  }
+  self.range().map(range => range.1)
 }
 
 ///|

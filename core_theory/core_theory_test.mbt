@@ -696,8 +696,9 @@ test "targets inherit defaults and match ancestry" {
   let direct_alias = @core_theory.AliasOrigin::register(pc, rax)
   assert_true(direct_alias.reg().map(v => v.ident()) == Some("RAX"))
   assert_true(direct_alias.is_alias())
-  assert_true(direct_alias.lo() is None)
-  assert_true(direct_alias.hi() is None)
+  assert_true(direct_alias.range() == Some((0, 63)))
+  assert_true(direct_alias.lo() == Some(0))
+  assert_true(direct_alias.hi() == Some(63))
 }
 
 ///|
@@ -2485,6 +2486,7 @@ test "target role helpers classify common architecture variables" {
       assert_true(origin.aliased().ident() == "XZR")
       assert_true(origin.source().map(v => v.ident()) == Some("ZR"))
       assert_true(origin.is_alias())
+      assert_true(origin.range() == Some((0, 63)))
     }
     None => fail("missing XZR alias origin")
   }

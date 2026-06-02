@@ -423,8 +423,8 @@ pub fn ProgramUnit::path(Self) -> String?
 pub fn ProgramUnit::path_slot() -> @knowledge.Slot[Unit, String?]
 pub fn ProgramUnit::persistent() -> @knowledge.Persistent[Self]
 pub fn ProgramUnit::same(Self, Self) -> Bool
-pub fn ProgramUnit::source(Self) -> Source?
-pub fn ProgramUnit::source_slot() -> @knowledge.Slot[Unit, Source?]
+pub fn ProgramUnit::source(Self) -> Source
+pub fn ProgramUnit::source_slot() -> @knowledge.Slot[Unit, Source]
 pub fn ProgramUnit::target(Self) -> Target
 pub fn ProgramUnit::target_slot() -> @knowledge.Slot[Unit, Target]
 pub fn ProgramUnit::to_biased_addr(Self, @types.Word) -> Result[@types.Word, String]
@@ -441,7 +441,7 @@ pub fn ProgramUnitFacts::class(Self) -> @knowledge.Class[Unit, Unit]
 pub fn ProgramUnitFacts::collect_bias(Self, @knowledge.Object[Unit]) -> @types.Word?
 pub fn ProgramUnitFacts::collect_compiler(Self, @knowledge.Object[Unit]) -> Compiler?
 pub fn ProgramUnitFacts::collect_path(Self, @knowledge.Object[Unit]) -> String?
-pub fn ProgramUnitFacts::collect_source(Self, @knowledge.Object[Unit]) -> Source?
+pub fn ProgramUnitFacts::collect_source(Self, @knowledge.Object[Unit]) -> Source
 pub fn ProgramUnitFacts::collect_target(Self, @knowledge.Object[Unit]) -> Target
 pub fn ProgramUnitFacts::compiler(Self) -> @knowledge.FactTable[Unit, Compiler?]
 pub fn ProgramUnitFacts::create(Self) -> @knowledge.Object[Unit]
@@ -449,7 +449,7 @@ pub fn ProgramUnitFacts::for_unit(Self, ProgramUnit) -> Result[@knowledge.Object
 pub fn ProgramUnitFacts::new() -> Self
 pub fn ProgramUnitFacts::path(Self) -> @knowledge.FactTable[Unit, String?]
 pub fn ProgramUnitFacts::provide_unit(Self, @knowledge.Object[Unit], ProgramUnit) -> Result[Unit, String]
-pub fn ProgramUnitFacts::source(Self) -> @knowledge.FactTable[Unit, Source?]
+pub fn ProgramUnitFacts::source(Self) -> @knowledge.FactTable[Unit, Source]
 pub fn ProgramUnitFacts::target(Self) -> @knowledge.FactTable[Unit, Target]
 
 pub(all) enum Role {

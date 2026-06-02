@@ -14,7 +14,7 @@ struct ProgramUnitFacts {
   path_value : @knowledge.FactTable[Unit, String?]
   bias_value : @knowledge.FactTable[Unit, @types.Word?]
   target_value : @knowledge.FactTable[Unit, Target]
-  source_value : @knowledge.FactTable[Unit, Source?]
+  source_value : @knowledge.FactTable[Unit, Source]
   compiler_value : @knowledge.FactTable[Unit, Compiler?]
 }
 
@@ -45,45 +45,12 @@ fn optional_word_domain(name : String) -> @knowledge.Domain[@types.Word?] {
 }
 
 ///|
-fn source_equal(lhs : Source, rhs : Source) -> Bool {
-  lhs.language_value == rhs.language_value &&
-  lhs.code_value == rhs.code_value &&
-  lhs.file_value == rhs.file_value
-}
-
-///|
 fn source_inspect(source : Source) -> String {
   let file = match source.file_value {
     Some(path) => path
     None => "none"
   }
   "source(language=\{source.language_value.to_string()}, file=\{file})"
-}
-
-///|
-fn source_domain() -> @knowledge.Domain[Source?] {
-  @knowledge.Domain::optional(
-    @knowledge.Domain::new(
-      name=core_name("unit-source"),
-      empty=None,
-      is_empty=(_ : Source) => false,
-      order=(lhs : Source, rhs : Source) => {
-        if source_equal(lhs, rhs) {
-          Equal
-        } else {
-          Incomparable
-        }
-      },
-      join=(lhs : Source, rhs : Source) => {
-        if source_equal(lhs, rhs) {
-          Ok(lhs)
-        } else {
-          Err("conflicting source facts")
-        }
-      },
-      inspect=source_inspect,
-    ),
-  )
 }
 
 ///|
@@ -253,11 +220,6 @@ fn optional_string_persistent() -> @knowledge.Persistent[String?] {
 ///|
 fn optional_word_persistent() -> @knowledge.Persistent[@types.Word?] {
   @knowledge.Persistent::optional(word_persistent())
-}
-
-///|
-fn optional_source_persistent() -> @knowledge.Persistent[Source?] {
-  @knowledge.Persistent::optional(Source::persistent())
 }
 
 ///|
@@ -517,12 +479,12 @@ pub fn ProgramUnit::target_slot() -> @knowledge.Slot[Unit, Target] {
 }
 
 ///|
-pub fn ProgramUnit::source_slot() -> @knowledge.Slot[Unit, Source?] {
+pub fn ProgramUnit::source_slot() -> @knowledge.Slot[Unit, Source] {
   ProgramUnit::cls().property(
     name=core_name("unit-source"),
-    domain=source_domain(),
+    domain=Source::domain(),
     desc="the source of the unit",
-    persistent=optional_source_persistent(),
+    persistent=Source::persistent(),
     public=true,
   )
 }
@@ -576,7 +538,7 @@ pub fn ProgramUnitFacts::target(
 ///|
 pub fn ProgramUnitFacts::source(
   self : ProgramUnitFacts,
-) -> @knowledge.FactTable[Unit, Source?] {
+) -> @knowledge.FactTable[Unit, Source] {
   self.source_value
 }
 
@@ -665,10 +627,10 @@ pub fn ProgramUnitFacts::collect_target(
 pub fn ProgramUnitFacts::collect_source(
   self : ProgramUnitFacts,
   object : @knowledge.Object[Unit],
-) -> Source? {
+) -> Source {
   match self.source_value.collect(object) {
     Some(source) => source
-    None => None
+    None => Source::empty()
   }
 }
 

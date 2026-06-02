@@ -43,20 +43,15 @@ fn[T : Eq] assert_persistent_round_trip(
 }
 
 ///|
-fn assert_optional_source_persistent_round_trip(
-  codec : @knowledge.Persistent[@core_theory.Source?]?,
-  value : @core_theory.Source?,
+fn assert_source_persistent_round_trip(
+  codec : @knowledge.Persistent[@core_theory.Source]?,
+  value : @core_theory.Source,
   label : String,
 ) -> Unit raise {
   match codec {
     Some(persistent) =>
       match persistent.decode(persistent.encode(value)) {
-        Ok(decoded) =>
-          match (decoded, value) {
-            (None, None) => ()
-            (Some(left), Some(right)) => assert_true(left.equal(right))
-            _ => fail("unexpected decoded source for \{label}")
-          }
+        Ok(decoded) => assert_true(decoded.equal(value))
         Err(reason) => fail(reason)
       }
     None => fail("missing persistent codec for \{label}")
@@ -3260,7 +3255,7 @@ test "program metadata tracks source compiler and units" {
     unit.to_real_addr(@types.Word::of_int(width=32, 0x1234)) is Err(_),
   )
   assert_true(unit.target().matches("amd64"))
-  assert_true(unit.source().map(item => item.code()) == Some(source.code()))
+  assert_true(unit.source().code() == source.code())
   assert_true(unit.compiler().map(item => item.name()) == Some("clang"))
   let region = @core_theory.ProgramUnit::for_region(lower=base, upper~, target~)
   match unit_codec.decode(unit_codec.encode(region)) {
@@ -3797,14 +3792,14 @@ test "program source and unit facts expose BAP-style Knowledge slots" {
       }
     None => fail("missing persistent codec for unit target")
   }
-  assert_optional_source_persistent_round_trip(
+  assert_source_persistent_round_trip(
     @core_theory.ProgramUnit::source_slot().persistent(),
-    Some(source),
+    source,
     "unit source",
   )
-  assert_optional_source_persistent_round_trip(
+  assert_source_persistent_round_trip(
     @core_theory.ProgramUnit::source_slot().persistent(),
-    None,
+    @core_theory.Source::empty(),
     "empty unit source",
   )
   assert_optional_compiler_persistent_round_trip(
@@ -3833,8 +3828,7 @@ test "program source and unit facts expose BAP-style Knowledge slots" {
       assert_true(unit_facts.collect_bias(unit_object) == Some(base))
       assert_true(unit_facts.collect_target(unit_object).matches("amd64"))
       assert_true(
-        unit_facts.collect_source(unit_object).map(item => item.file()) ==
-        Some(Some("main.c")),
+        unit_facts.collect_source(unit_object).file() == Some("main.c"),
       )
       assert_true(
         unit_facts.collect_compiler(unit_object).map(item => item.name()) ==
@@ -3853,6 +3847,11 @@ test "program source and unit facts expose BAP-style Knowledge slots" {
 
   let unknown_object = unit_facts.create()
   assert_true(unit_facts.collect_target(unknown_object).is_unknown())
+  assert_true(
+    unit_facts
+    .collect_source(unknown_object)
+    .equal(@core_theory.Source::empty()),
+  )
 }
 
 ///|

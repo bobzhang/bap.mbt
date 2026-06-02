@@ -121,7 +121,7 @@ struct ProgramUnit {
   upper_value : @types.Word?
   bias_value : @types.Word?
   target_value : Target
-  source_value : Source?
+  source_value : Source
   compiler_value : Compiler?
 }
 
@@ -807,7 +807,10 @@ fn ProgramUnit::make(
     upper_value: upper,
     bias_value: bias,
     target_value: default_target(target),
-    source_value: source,
+    source_value: match source {
+      Some(value) => value
+      None => Source::empty()
+    },
     compiler_value: compiler,
   }
 }
@@ -952,7 +955,7 @@ pub fn ProgramUnit::target(self : ProgramUnit) -> Target {
 }
 
 ///|
-pub fn ProgramUnit::source(self : ProgramUnit) -> Source? {
+pub fn ProgramUnit::source(self : ProgramUnit) -> Source {
   self.source_value
 }
 
@@ -982,7 +985,7 @@ pub fn ProgramUnit::with_source(
   self : ProgramUnit,
   source : Source,
 ) -> ProgramUnit {
-  { ..self, source_value: Some(source) }
+  { ..self, source_value: source }
 }
 
 ///|
@@ -1037,7 +1040,8 @@ pub fn ProgramUnit::persistent() -> @knowledge.Persistent[ProgramUnit] {
   )
   let opt_word_codec = @knowledge.Persistent::optional(word_persistent())
   let target_codec = Target::persistent()
-  let opt_source_codec = @knowledge.Persistent::optional(Source::persistent())
+  let source_codec = Source::persistent()
+  let opt_source_codec = @knowledge.Persistent::optional(source_codec)
   let opt_compiler_codec = @knowledge.Persistent::optional(
     Compiler::persistent(),
   )
@@ -1051,7 +1055,7 @@ pub fn ProgramUnit::persistent() -> @knowledge.Persistent[ProgramUnit] {
         opt_word_codec.encode(unit.upper()),
         opt_word_codec.encode(unit.bias()),
         target_codec.encode(unit.target()),
-        opt_source_codec.encode(unit.source()),
+        source_codec.encode(unit.source()),
         opt_compiler_codec.encode(unit.compiler()),
       ]
     },
@@ -1084,9 +1088,14 @@ pub fn ProgramUnit::persistent() -> @knowledge.Persistent[ProgramUnit] {
         Ok(value) => value
         Err(reason) => return Err(reason)
       }
-      let source = match opt_source_codec.decode(fields[7]) {
+      let source = match source_codec.decode(fields[7]) {
         Ok(value) => value
-        Err(reason) => return Err(reason)
+        Err(_) =>
+          match opt_source_codec.decode(fields[7]) {
+            Ok(Some(value)) => value
+            Ok(None) => Source::empty()
+            Err(reason) => return Err(reason)
+          }
       }
       let compiler = match opt_compiler_codec.decode(fields[8]) {
         Ok(value) => value
@@ -1100,7 +1109,7 @@ pub fn ProgramUnit::persistent() -> @knowledge.Persistent[ProgramUnit] {
             Err(reason) => return Err(reason)
           }
           Ok(
-            ProgramUnit::for_file(file_path, target~, bias?, source?, compiler?),
+            ProgramUnit::for_file(file_path, target~, bias?, source~, compiler?),
           )
         }
         "region" => {
@@ -1120,7 +1129,7 @@ pub fn ProgramUnit::persistent() -> @knowledge.Persistent[ProgramUnit] {
               upper~,
               target~,
               bias?,
-              source?,
+              source~,
               compiler?,
             ),
           )
@@ -1135,7 +1144,7 @@ pub fn ProgramUnit::persistent() -> @knowledge.Persistent[ProgramUnit] {
               upper?,
               bias?,
               target~,
-              source?,
+              source~,
               compiler?,
             ),
           )

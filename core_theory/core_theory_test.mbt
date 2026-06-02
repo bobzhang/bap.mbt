@@ -709,6 +709,24 @@ test "targets inherit defaults and match ancestry" {
   assert_true(direct_alias.lo() == Some(0))
   assert_true(direct_alias.hi() == Some(63))
   assert_true(direct_alias.cast_sub() is Some(_))
+  let direct_spec = match
+    @core_theory.Alias::def(pc, [@core_theory.Alias::reg(rax)]) {
+    Ok(value) => value
+    Err(reason) => fail(reason)
+  }
+  let direct_alias_target = @core_theory.Target::create(
+    name=@knowledge.Name::create("direct-alias-dsl-target", pkg="test"),
+    bits=64,
+    vars=[pc, rax],
+    aliasing=[direct_spec],
+  )
+  match direct_alias_target.origin_of_name("PC") {
+    Some(origin) => {
+      assert_true(origin.reg().map(v => v.ident()) == Some("RAX"))
+      assert_true(origin.range() == Some((0, 63)))
+    }
+    None => fail("missing Alias.def direct origin")
+  }
   let bit_alias = @core_theory.AliasOrigin::bit_set(pc, [
     @core_theory.Var::create(@core_theory.Sort::bool(), "ZF"),
   ])
@@ -725,6 +743,67 @@ test "targets inherit defaults and match ancestry" {
     }
     None => fail("missing WIDE alias origin")
   }
+  let aggregate_spec = match
+    @core_theory.Alias::def(wide, [
+      @core_theory.Alias::reg(high),
+      @core_theory.Alias::reg(low),
+    ]) {
+    Ok(value) => value
+    Err(reason) => fail(reason)
+  }
+  let flags = @core_theory.Var::create(@core_theory.Sort::bitv(2), "FLAGS")
+  let flag_hi = @core_theory.Var::create(@core_theory.Sort::bool(), "FH")
+  let flag_lo = @core_theory.Var::create(@core_theory.Sort::bool(), "FL")
+  let flag_spec = match
+    @core_theory.Alias::def(flags, [
+      @core_theory.Alias::bit(flag_hi),
+      @core_theory.Alias::bit(flag_lo),
+    ]) {
+    Ok(value) => value
+    Err(reason) => fail(reason)
+  }
+  let alias_target = @core_theory.Target::create(
+    name=@knowledge.Name::create("alias-dsl-target", pkg="test"),
+    bits=64,
+    vars=[high, low, wide, flags, flag_hi, flag_lo],
+    aliasing=[aggregate_spec, flag_spec],
+  )
+  match alias_target.origin_of_name("WIDE") {
+    Some(origin) => {
+      assert_true(origin.cast_sup() is Some(_))
+      assert_true(origin.regs().map(v => v.ident()) == ["HIGH", "LOW"])
+    }
+    None => fail("missing Alias.def aggregate origin")
+  }
+  match alias_target.origin_of_name("FLAGS") {
+    Some(origin) => {
+      assert_true(origin.cast_set() is Some(_))
+      assert_true(origin.bits().map(v => v.ident()) == ["FH", "FL"])
+    }
+    None => fail("missing Alias.def bit-set origin")
+  }
+  match
+    @core_theory.Alias::def(wide, [
+      @core_theory.Alias::reg(high),
+      @core_theory.Alias::unk(),
+    ]) {
+    Ok(value) => {
+      let partial_target = @core_theory.Target::create(
+        name=@knowledge.Name::create("partial-alias-dsl-target", pkg="test"),
+        bits=64,
+        vars=[wide, high],
+        aliasing=[value],
+      )
+      match partial_target.origin_of_name("WIDE") {
+        Some(origin) => assert_true(origin is UnknownAlias(_))
+        None => fail("missing Alias.unk origin")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    @core_theory.Alias::def(wide, [@core_theory.Alias::reg(eax)]) is Err(_),
+  )
 }
 
 ///|

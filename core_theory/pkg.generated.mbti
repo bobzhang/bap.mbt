@@ -11,7 +11,7 @@ import {
 // Values
 pub fn common_targets() -> Array[Target]
 
-pub fn declare_target(String, pkg? : String, parent? : Target, nicknames? : Array[String], bits? : Int, byte? : Int, data? : Var, code? : Var, data_alignment? : Int, code_alignment? : Int, endianness? : Endianness, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, options? : TargetOptions, vars? : Array[Var], alias_origins? : Array[AliasOrigin]) -> Result[Target, String]
+pub fn declare_target(String, pkg? : String, parent? : Target, nicknames? : Array[String], bits? : Int, byte? : Int, data? : Var, code? : Var, data_alignment? : Int, code_alignment? : Int, endianness? : Endianness, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, options? : TargetOptions, vars? : Array[Var], alias_origins? : Array[AliasOrigin], aliasing? : Array[Alias]) -> Result[Target, String]
 
 pub fn declared_targets() -> Array[Target]
 
@@ -87,6 +87,12 @@ pub fn Abi::unknown() -> Self
 pub fn Abi::vectorcall() -> Self
 pub fn Abi::watcom() -> Self
 
+type Alias
+pub fn Alias::bit(Var) -> AliasPart
+pub fn Alias::def(Var, Array[AliasPart]) -> Result[Self, String]
+pub fn Alias::reg(Var) -> AliasPart
+pub fn Alias::unk() -> AliasPart
+
 pub(all) enum AliasOrigin {
   RegisterAlias(aliased~ : Var, source~ : Var)
   SubRegister(aliased~ : Var, source~ : Var, lo~ : Int, hi~ : Int)
@@ -111,6 +117,8 @@ pub fn AliasOrigin::regs(Self) -> Array[Var]
 pub fn AliasOrigin::source(Self) -> Var?
 pub fn AliasOrigin::subregister(Var, Var, lo~ : Int, hi~ : Int) -> Self
 pub fn AliasOrigin::unknown(Var) -> Self
+
+type AliasPart
 
 type Compiler
 pub fn Compiler::compare(Self, Self) -> Int
@@ -680,13 +688,13 @@ pub fn Target::code_addr(Self, @bitvec.BitVec) -> @types.Word raise @bitvec.BitV
 pub fn Target::code_addr_size(Self) -> Int
 pub fn Target::code_alignment(Self) -> Int
 pub fn Target::compare(Self, Self) -> Int
-pub fn Target::create(name~ : @knowledge.Name, parent? : Self, nicknames? : Array[String], bits? : Int, byte? : Int, data? : Var, code? : Var, data_alignment? : Int, code_alignment? : Int, endianness? : Endianness, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, options? : TargetOptions, vars? : Array[Var], alias_origins? : Array[AliasOrigin]) -> Self
+pub fn Target::create(name~ : @knowledge.Name, parent? : Self, nicknames? : Array[String], bits? : Int, byte? : Int, data? : Var, code? : Var, data_alignment? : Int, code_alignment? : Int, endianness? : Endianness, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, options? : TargetOptions, vars? : Array[Var], alias_origins? : Array[AliasOrigin], aliasing? : Array[Alias]) -> Self
 pub fn Target::data(Self) -> Var
 pub fn Target::data_addr(Self, @bitvec.BitVec) -> @types.Word raise @bitvec.BitVecError
 pub fn Target::data_addr_size(Self) -> Int
 pub fn Target::data_alignment(Self) -> Int
 pub fn Target::data_word(Self, @bitvec.BitVec) -> @types.Word raise @bitvec.BitVecError
-pub fn Target::declare_target(String, pkg? : String, parent? : Self, nicknames? : Array[String], bits? : Int, byte? : Int, data? : Var, code? : Var, data_alignment? : Int, code_alignment? : Int, endianness? : Endianness, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, options? : TargetOptions, vars? : Array[Var], alias_origins? : Array[AliasOrigin]) -> Result[Self, String]
+pub fn Target::declare_target(String, pkg? : String, parent? : Self, nicknames? : Array[String], bits? : Int, byte? : Int, data? : Var, code? : Var, data_alignment? : Int, code_alignment? : Int, endianness? : Endianness, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, options? : TargetOptions, vars? : Array[Var], alias_origins? : Array[AliasOrigin], aliasing? : Array[Alias]) -> Result[Self, String]
 pub fn Target::declared() -> Array[Self]
 pub fn Target::domain() -> @knowledge.Domain[Self]
 pub fn Target::endianness(Self) -> Endianness

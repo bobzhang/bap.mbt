@@ -1474,6 +1474,17 @@ pub(all) enum AliasOrigin {
 }
 
 ///|
+struct AliasPart {
+  variable : Var?
+}
+
+///|
+struct Alias {
+  aliased_value : Var
+  parts_value : Array[AliasPart]
+}
+
+///|
 struct Target {
   name_value : @knowledge.Name
   parent_value : Target?
@@ -1565,6 +1576,34 @@ fn vars_with_memories(items : Array[Var], data : Var, code : Var) -> Array[Var] 
   let result = items.copy()
   append_var_unique(result, data)
   append_var_unique(result, code)
+  result
+}
+
+///|
+fn target_alias_origins(
+  parent : Target?,
+  alias_origins : Array[AliasOrigin]?,
+  aliasing : Array[Alias]?,
+) -> Array[AliasOrigin] {
+  let result = match alias_origins {
+    Some(items) => items.copy()
+    None =>
+      match aliasing {
+        Some(_) => []
+        None =>
+          match parent {
+            Some(target) => target.alias_origins()
+            None => []
+          }
+      }
+  }
+  match aliasing {
+    Some(aliases) =>
+      for entry in aliases {
+        result.push(entry.origin())
+      }
+    None => ()
+  }
   result
 }
 
@@ -2924,6 +2963,120 @@ fn add_role(roles : Array[Role], role : Role) -> Unit {
 }
 
 ///|
+fn alias_part_size(variable : Var) -> Int? {
+  match variable.sort().bitv_size() {
+    Some(width) => Some(width)
+    None =>
+      match variable.sort().refine_bool() {
+        Some(_) => Some(1)
+        None => None
+      }
+  }
+}
+
+///|
+fn alias_def_error(variable : Var, reason : String) -> String {
+  "Theory.Alias.def: bad aliasing definition of \{variable.name()} - \{reason}"
+}
+
+///|
+pub fn Alias::reg(variable : Var) -> AliasPart {
+  { variable: Some(variable) }
+}
+
+///|
+pub fn Alias::bit(variable : Var) -> AliasPart {
+  { variable: Some(variable) }
+}
+
+///|
+pub fn Alias::unk() -> AliasPart {
+  { variable: None }
+}
+
+///|
+pub fn Alias::def(
+  variable : Var,
+  parts : Array[AliasPart],
+) -> Result[Alias, String] {
+  if parts.is_empty() {
+    return Err(alias_def_error(variable, "the parts list is empty"))
+  }
+  let total = match alias_part_size(variable) {
+    Some(width) => width
+    None => return Err(alias_def_error(variable, "unsupported alias sort"))
+  }
+  let width = total / parts.length()
+  for part in parts {
+    match part.variable {
+      Some(item) =>
+        match alias_part_size(item) {
+          Some(part_width) if part_width == width => ()
+          Some(_) =>
+            return Err(
+              alias_def_error(
+                variable,
+                "the size of \{item.name()} must be \{total} divided by \{parts.length()}",
+              ),
+            )
+          None =>
+            return Err(alias_def_error(variable, "unsupported alias part sort"))
+        }
+      None => ()
+    }
+  }
+  Ok({ aliased_value: variable, parts_value: parts.copy() })
+}
+
+///|
+fn Alias::all_parts(self : Alias, predicate : (Var) -> Bool) -> Array[Var]? {
+  let items : Array[Var] = []
+  for part in self.parts_value {
+    match part.variable {
+      Some(variable) if predicate(variable) => items.push(variable)
+      Some(_) | None => return None
+    }
+  }
+  Some(items)
+}
+
+///|
+fn Alias::origin(self : Alias) -> AliasOrigin {
+  match self.parts_value {
+    [part] =>
+      match part.variable {
+        Some(variable) =>
+          match alias_part_size(variable) {
+            Some(width) =>
+              if alias_part_size(self.aliased_value) == Some(width) {
+                AliasOrigin::register(self.aliased_value, variable)
+              } else {
+                AliasOrigin::subregister(
+                  self.aliased_value,
+                  variable,
+                  lo=0,
+                  hi=width - 1,
+                )
+              }
+            None => AliasOrigin::unknown(self.aliased_value)
+          }
+        None => AliasOrigin::unknown(self.aliased_value)
+      }
+    _ =>
+      match
+        self.all_parts(variable => variable.sort().refine_bool() is Some(_)) {
+        Some(bits) => AliasOrigin::bit_set(self.aliased_value, bits)
+        None =>
+          match
+            self.all_parts(variable => variable.sort().bitv_size() is Some(_)) {
+            Some(regs) => AliasOrigin::register_set(self.aliased_value, regs)
+            None => AliasOrigin::unknown(self.aliased_value)
+          }
+      }
+  }
+}
+
+///|
 pub fn AliasOrigin::register(aliased : Var, source : Var) -> AliasOrigin {
   RegisterAlias(aliased~, source~)
 }
@@ -3097,6 +3250,7 @@ pub fn Target::create(
   options? : TargetOptions,
   vars? : Array[Var],
   alias_origins? : Array[AliasOrigin],
+  aliasing? : Array[Alias],
 ) -> Target {
   let bits_value = match bits {
     Some(value) => value
@@ -3229,14 +3383,7 @@ pub fn Target::create(
         }
     },
     vars_value,
-    alias_origins_value: match alias_origins {
-      Some(items) => items.copy()
-      None =>
-        match parent {
-          Some(target) => target.alias_origins()
-          None => []
-        }
-    },
+    alias_origins_value: target_alias_origins(parent, alias_origins, aliasing),
   }
 }
 
@@ -3260,6 +3407,7 @@ pub fn Target::declare_target(
   options? : TargetOptions,
   vars? : Array[Var],
   alias_origins? : Array[AliasOrigin],
+  aliasing? : Array[Alias],
 ) -> Result[Target, String] {
   let target = Target::create(
     name=@knowledge.Name::create(name, pkg?),
@@ -3279,6 +3427,7 @@ pub fn Target::declare_target(
     options?,
     vars?,
     alias_origins?,
+    aliasing?,
   )
   match register_target(target) {
     Ok(_) => Ok(target)
@@ -3306,6 +3455,7 @@ pub fn declare_target(
   options? : TargetOptions,
   vars? : Array[Var],
   alias_origins? : Array[AliasOrigin],
+  aliasing? : Array[Alias],
 ) -> Result[Target, String] {
   Target::declare_target(
     name,
@@ -3326,6 +3476,7 @@ pub fn declare_target(
     options?,
     vars?,
     alias_origins?,
+    aliasing?,
   )
 }
 

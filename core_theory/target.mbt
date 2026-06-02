@@ -3193,6 +3193,52 @@ pub fn Target::create(
 }
 
 ///|
+pub fn Target::declare_target(
+  name : String,
+  pkg? : String,
+  parent? : Target,
+  nicknames? : Array[String],
+  bits? : Int,
+  byte? : Int,
+  data? : Var,
+  code? : Var,
+  data_alignment? : Int,
+  code_alignment? : Int,
+  endianness? : Endianness,
+  system? : System,
+  abi? : Abi,
+  fabi? : Fabi,
+  filetype? : Filetype,
+  options? : TargetOptions,
+  vars? : Array[Var],
+  alias_origins? : Array[AliasOrigin],
+) -> Result[Target, String] {
+  let target = Target::create(
+    name=@knowledge.Name::create(name, pkg?),
+    parent?,
+    nicknames?,
+    bits?,
+    byte?,
+    data?,
+    code?,
+    data_alignment?,
+    code_alignment?,
+    endianness?,
+    system?,
+    abi?,
+    fabi?,
+    filetype?,
+    options?,
+    vars?,
+    alias_origins?,
+  )
+  match register_target(target) {
+    Ok(_) => Ok(target)
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
 pub fn Target::name(self : Target) -> @knowledge.Name {
   self.name_value
 }

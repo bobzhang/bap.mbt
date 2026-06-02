@@ -644,6 +644,7 @@ pub fn Target::data_addr(Self, @bitvec.BitVec) -> @types.Word raise @bitvec.BitV
 pub fn Target::data_addr_size(Self) -> Int
 pub fn Target::data_alignment(Self) -> Int
 pub fn Target::data_word(Self, @bitvec.BitVec) -> @types.Word raise @bitvec.BitVecError
+pub fn Target::declare_target(String, pkg? : String, parent? : Self, nicknames? : Array[String], bits? : Int, byte? : Int, data? : Var, code? : Var, data_alignment? : Int, code_alignment? : Int, endianness? : Endianness, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, options? : TargetOptions, vars? : Array[Var], alias_origins? : Array[AliasOrigin]) -> Result[Self, String]
 pub fn Target::declared() -> Array[Self]
 pub fn Target::domain() -> @knowledge.Domain[Self]
 pub fn Target::endianness(Self) -> Endianness

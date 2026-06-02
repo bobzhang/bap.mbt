@@ -1316,6 +1316,41 @@ test "target registry resolves common and custom declarations" {
     Ok(target) => assert_true(target.bits() == 16)
     Err(reason) => fail(reason)
   }
+  match
+    @core_theory.Target::declare_target(
+      "unit-declared-target",
+      pkg="test",
+      parent=@core_theory.Target::x86(),
+      nicknames=["unit-declared-alias"],
+      bits=24,
+      byte=8,
+      endianness=LittleEndian,
+      system=Linux,
+      abi=GNU,
+      filetype=Elf,
+      options=@core_theory.TargetOptions::singleton("cpu", "declared"),
+    ) {
+    Ok(declared) => {
+      assert_true(declared.name().show() == "test:unit-declared-target")
+      assert_true(declared.parent().equal(@core_theory.Target::x86()))
+      assert_true(declared.bits() == 24)
+      assert_true(declared.byte() == 8)
+      assert_true(declared.endianness() == LittleEndian)
+      assert_true(declared.system() == Linux)
+      assert_true(declared.abi() == GNU)
+      assert_true(declared.filetype() == Elf)
+      assert_true(declared.options().get("cpu") == Some("declared"))
+      assert_true(
+        @core_theory.Target::lookup("unit-declared-alias").map(t => t.bits()) ==
+        Some(24),
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    @core_theory.Target::declare_target("unit-declared-target", pkg="test")
+    is Err(_),
+  )
   let packaged_a = @core_theory.Target::create(
     name=@knowledge.Name::create("unit-packaged-target", pkg="test-a"),
     bits=8,

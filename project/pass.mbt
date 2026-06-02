@@ -141,7 +141,7 @@ pub fn ProjectPass::deps(self : ProjectPass) -> Array[String] {
 }
 
 ///|
-pub fn ProjectPass::run(
+fn ProjectPass::run_body(
   self : ProjectPass,
   project : Project,
 ) -> Result[Project, String] {
@@ -262,30 +262,39 @@ fn resolve_pass(
   visited : Array[String],
   order : Array[ProjectPass],
 ) -> Result[Unit, String] {
+  match find_pass(name) {
+    None => Err("unknown project pass \{name}")
+    Some(pass) => resolve_pass_object(pass, visiting, visited, order)
+  }
+}
+
+///|
+fn resolve_pass_object(
+  pass : ProjectPass,
+  visiting : Array[String],
+  visited : Array[String],
+  order : Array[ProjectPass],
+) -> Result[Unit, String] {
+  let name = pass.name()
   if visited.contains(name) {
     Ok(())
   } else if visiting.contains(name) {
     Err("cyclic project pass dependency at \{name}")
   } else {
-    match find_pass(name) {
-      None => Err("unknown project pass \{name}")
-      Some(pass) => {
-        visiting.push(name)
-        for dep in pass.deps() {
-          match resolve_pass(dep, visiting, visited, order) {
-            Ok(_) => ()
-            Err(reason) => {
-              ignore(visiting.pop())
-              return Err(reason)
-            }
-          }
+    visiting.push(name)
+    for dep in pass.deps() {
+      match resolve_pass(dep, visiting, visited, order) {
+        Ok(_) => ()
+        Err(reason) => {
+          ignore(visiting.pop())
+          return Err(reason)
         }
-        ignore(visiting.pop())
-        visited.push(name)
-        order.push(pass)
-        Ok(())
       }
     }
+    ignore(visiting.pop())
+    visited.push(name)
+    order.push(pass)
+    Ok(())
   }
 }
 
@@ -306,35 +315,55 @@ pub fn resolve_passes(
 }
 
 ///|
+fn Project::run_resolved_passes(
+  self : Project,
+  order : Array[ProjectPass],
+) -> Result[Project, String] {
+  let mut project = self
+  for pass in order {
+    let name = pass.name()
+    if pass.run_once() && project.pass_has_run(name) {
+      ()
+    } else {
+      record_pass_event(name, PassStarted)
+      match pass.run_body(project) {
+        Ok(next) => {
+          record_pass_event(name, PassSucceeded)
+          record_pass_event(name, PassFinished)
+          project = next.mark_pass_run(name)
+        }
+        Err(reason) => {
+          record_pass_event(name, PassFailed)
+          record_pass_event(name, PassFinished)
+          return Err(reason)
+        }
+      }
+    }
+  }
+  Ok(project)
+}
+
+///|
+pub fn ProjectPass::run(
+  self : ProjectPass,
+  project : Project,
+) -> Result[Project, String] {
+  let visiting = []
+  let visited = []
+  let order = []
+  match resolve_pass_object(self, visiting, visited, order) {
+    Ok(_) => project.run_resolved_passes(order)
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
 pub fn Project::run_passes(
   self : Project,
   names : Array[String],
 ) -> Result[Project, String] {
   match resolve_passes(names) {
-    Ok(order) => {
-      let mut project = self
-      for pass in order {
-        let name = pass.name()
-        if pass.run_once() && project.pass_has_run(name) {
-          ()
-        } else {
-          record_pass_event(name, PassStarted)
-          match pass.run(project) {
-            Ok(next) => {
-              record_pass_event(name, PassSucceeded)
-              record_pass_event(name, PassFinished)
-              project = next.mark_pass_run(name)
-            }
-            Err(reason) => {
-              record_pass_event(name, PassFailed)
-              record_pass_event(name, PassFinished)
-              return Err(reason)
-            }
-          }
-        }
-      }
-      Ok(project)
-    }
+    Ok(order) => self.run_resolved_passes(order)
     Err(reason) => Err(reason)
   }
 }

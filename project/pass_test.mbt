@@ -135,6 +135,42 @@ test "run_pass executes dependencies before requested pass" {
 }
 
 ///|
+test "project pass run executes pass object with dependencies" {
+  let dep = @project.ProjectPass::create(name="unit-object-dep", run=project => {
+    Ok(project.set("object-trace", "d"))
+  })
+  match @project.register_pass(dep) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let pass = @project.ProjectPass::create(
+    name="unit-object-main",
+    deps=["unit-object-dep"],
+    run=project => {
+      Ok(
+        project.set("object-trace", project.get("object-trace").unwrap() + "m"),
+      )
+    },
+  )
+  assert_true(@project.find_pass("unit-object-main") is None)
+  let project = @project.Project::empty(@core_theory.Target::unknown())
+  let next = match pass.run(project) {
+    Ok(next) => next
+    Err(reason) => fail(reason)
+  }
+  assert_true(next.get("object-trace") == Some("dm"))
+  assert_true(next.pass_run_count("unit-object-dep") == 1)
+  assert_true(next.pass_run_count("unit-object-main") == 1)
+  assert_true(
+    pass_event_kinds(dep.events()) ==
+    ["registered", "started", "succeeded", "finished"],
+  )
+  assert_true(
+    pass_event_kinds(pass.events()) == ["started", "succeeded", "finished"],
+  )
+}
+
+///|
 test "autorun dependency roots include non-autorun deps" {
   let dep = @project.ProjectPass::create(name="unit-auto-dep", run=project => {
     Ok(project.set("auto-trace", "d"))

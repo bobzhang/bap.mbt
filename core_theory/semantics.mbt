@@ -269,3 +269,8 @@ fn semantics_domain() -> @knowledge.Domain[Semantics] {
     inspect=semantics_inspect,
   )
 }
+
+///|
+pub fn Semantics::domain() -> @knowledge.Domain[Semantics] {
+  semantics_domain()
+}

@@ -3343,6 +3343,39 @@ test "program semantics stores values and instruction bytes" {
   assert_true(semantics.equal(same_semantics))
   assert_true(semantics.compare(same_semantics) == 0)
   assert_true(semantics.compare(semantics.with_code(b"\x90\xc4")) != 0)
+  let semantics_domain = @core_theory.Semantics::domain()
+  match semantics_domain.empty() {
+    Some(value) => assert_true(value.equal(@core_theory.Semantics::empty()))
+    None => fail("missing semantics domain bottom")
+  }
+  assert_true(semantics_domain.is_empty(@core_theory.Semantics::empty()))
+  assert_true(
+    semantics_domain.order(@core_theory.Semantics::empty(), semantics) == Less,
+  )
+  assert_true(
+    semantics_domain.order(semantics, @core_theory.Semantics::empty()) ==
+    Greater,
+  )
+  assert_true(semantics_domain.order(semantics, same_semantics) == Equal)
+  assert_true(
+    semantics_domain.order(semantics, semantics.with_code(b"\x90\xc4")) ==
+    Incomparable,
+  )
+  match semantics_domain.join(@core_theory.Semantics::empty(), semantics) {
+    Ok(value) => assert_true(value.equal(semantics))
+    Err(reason) => fail(reason)
+  }
+  match semantics_domain.join(semantics, @core_theory.Semantics::empty()) {
+    Ok(value) => assert_true(value.equal(semantics))
+    Err(reason) => fail(reason)
+  }
+  match semantics_domain.join(semantics, same_semantics) {
+    Ok(value) => assert_true(value.equal(semantics))
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    semantics_domain.join(semantics, semantics.with_code(b"\x90\xc4")) is Err(_),
+  )
   assert_true(semantics.value().fact("kind") == Some("lifted"))
   assert_true(semantics.code() == Some(b"\x90\xc3"))
   assert_true(semantics.code_hex() == Some("90c3"))

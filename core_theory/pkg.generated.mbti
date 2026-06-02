@@ -531,6 +531,7 @@ pub fn Semantics::code_hex(Self) -> String?
 pub fn Semantics::code_slot() -> @knowledge.Slot[Unit, Bytes?]
 pub fn Semantics::compare(Self, Self) -> Int
 pub fn Semantics::create(effect? : Effect, value? : Value, code? : Bytes) -> Self
+pub fn Semantics::domain() -> @knowledge.Domain[Self]
 pub fn Semantics::effect(Self) -> Effect
 pub fn Semantics::empty() -> Self
 pub fn Semantics::equal(Self, Self) -> Bool

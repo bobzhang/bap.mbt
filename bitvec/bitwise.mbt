@@ -126,6 +126,31 @@ fn BitVec::low_bits(self : BitVec, width : Int) -> BitVec raise BitVecError {
 }
 
 ///|
+fn BitVec::bounded_bit(self : BitVec, index : Int) -> Bool {
+  if index < 0 || index >= self.width {
+    false
+  } else {
+    let limb = index / 64
+    let bit = index % 64
+    ((self.limbs[limb] >> bit) & 1) == 1
+  }
+}
+
+///|
+pub fn select(bits : ArrayView[Int], value : BitVec) -> BitVec {
+  if bits.length() == 0 {
+    return b0()
+  }
+  let mut out = make_unchecked(bits.length(), [])
+  for i in 0..<bits.length() {
+    if value.bounded_bit(bits[i]) {
+      out = out.set_bit(i)
+    }
+  }
+  out
+}
+
+///|
 pub fn append(
   high_width : Int,
   low_width : Int,

@@ -70,6 +70,18 @@ test "concat and extract match BAP bit numbering cases" {
   assert_true(@bitvec.repeat(4, times=0, nybble) == @bitvec.b0())
   let empty_values : Array[@bitvec.BitVec] = []
   assert_true(@bitvec.concat(8, empty_values) == @bitvec.b0())
+  let selected = @bitvec.select([3, 0, 1, 2], @bitvec.of_int(width=4, 0xd))
+  inspect(selected.to_hex(), content="0xb")
+  assert_true(selected.width() == 4)
+  inspect(
+    @bitvec.select([0, 0, 2, 1], @bitvec.of_int(width=4, 0x5)).to_hex(),
+    content="0x7",
+  )
+  assert_true(
+    @bitvec.select([8], @bitvec.of_int(width=8, 0xff)) == @bitvec.b0(),
+  )
+  let empty_bits : Array[Int] = []
+  assert_true(@bitvec.select(empty_bits, high) == @bitvec.b0())
   let word = @bitvec.of_int(width=16, 0xdad5)
   inspect(word.extract(lo=0xC).to_hex(), content="0xd")
   inspect(word.extract(lo=0x8).to_hex(), content="0xda")

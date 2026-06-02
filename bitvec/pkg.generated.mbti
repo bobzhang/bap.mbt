@@ -34,6 +34,8 @@ pub fn ones(width~ : Int) -> BitVec raise BitVecError
 
 pub fn repeat(Int, times~ : Int, BitVec) -> BitVec raise BitVecError
 
+pub fn select(ArrayView[Int], BitVec) -> BitVec
+
 pub fn zero(width~ : Int) -> BitVec raise BitVecError
 
 // Errors

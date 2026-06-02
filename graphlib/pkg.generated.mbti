@@ -84,6 +84,7 @@ pub fn[N : Hash + Eq, E, A] Graph::fold_reachable(Self[N, E], N, A, (A, N) -> A,
 pub fn[N : Eq, E] Graph::has_edge(Self[N, E], N, N) -> Bool
 pub fn[N : Eq, E] Graph::has_node(Self[N, E], N) -> Bool
 pub fn[N : Hash + Eq, E] Graph::immediate_dominators(Self[N, E], N, rev? : Bool) -> Map[N, N]
+pub fn[N : Eq, E] Graph::in_degree(Self[N, E], N) -> Int
 pub fn[N : Eq, E] Graph::in_edges(Self[N, E], N) -> Array[Edge[N, E]]
 pub fn[N : Eq, E] Graph::inputs(Self[N, E], N) -> Array[Edge[N, E]]
 pub fn[N : Eq, E] Graph::inter(Self[N, E], Self[N, E]) -> Self[N, E]
@@ -93,6 +94,7 @@ pub fn[N : Hash + Eq, E] Graph::is_reachable(Self[N, E], N, N, rev? : Bool) -> B
 pub fn[N, E] Graph::new() -> Self[N, E]
 pub fn[N, E] Graph::node_count(Self[N, E]) -> Int
 pub fn[N, E] Graph::nodes(Self[N, E]) -> Array[N]
+pub fn[N : Eq, E] Graph::out_degree(Self[N, E], N) -> Int
 pub fn[N : Eq, E] Graph::out_edges(Self[N, E], N) -> Array[Edge[N, E]]
 pub fn[N : Eq, E] Graph::outputs(Self[N, E], N) -> Array[Edge[N, E]]
 pub fn[N : Hash + Eq, E] Graph::postorder(Self[N, E], N, rev? : Bool) -> Array[N]
@@ -111,6 +113,7 @@ pub fn[N : Eq, E] Graph::successors(Self[N, E], N) -> Array[N]
 pub fn[N : Eq, E] Graph::succs(Self[N, E], N) -> Array[N]
 pub fn[N : Hash + Eq, E] Graph::to_dot(Self[N, E], name? : String, graph_attrs? : ArrayView[(String, String)], node_attrs? : (N) -> Array[(String, String)], edge_attrs? : (Edge[N, E]) -> Array[(String, String)], string_of_node? : ((N) -> String)?, string_of_edge? : ((Edge[N, E]) -> String)?) -> String
 pub fn[N : Eq, E] Graph::union(Self[N, E], Self[N, E]) -> Self[N, E]
+pub fn[N : Eq, E] Graph::update_edge(Self[N, E], N, N, label~ : E) -> Self[N, E]
 pub fn[N, M : Eq, E, F] Graph::view(Self[N, E], node~ : (N) -> M, edge~ : (Edge[N, E]) -> F) -> Self[M, F]
 
 type GraphPath[E] derive(Eq, @debug.Debug)

@@ -78,6 +78,23 @@ pub fn[N : Eq, E] Graph::add_edge(
 }
 
 ///|
+pub fn[N : Eq, E] Graph::update_edge(
+  self : Graph[N, E],
+  src : N,
+  dst : N,
+  label~ : E,
+) -> Graph[N, E] {
+  let edges = self.edges.copy()
+  match edge_index(edges, src, dst) {
+    Some(i) => {
+      edges[i] = Edge::new(src~, dst~, label~)
+      { nodes: self.nodes.copy(), edges }
+    }
+    None => self
+  }
+}
+
+///|
 pub fn[N : Eq, E] Graph::remove_edge(
   self : Graph[N, E],
   src : N,
@@ -376,4 +393,14 @@ pub fn[N : Eq, E] Graph::inputs(
 ///|
 pub fn[N : Eq, E] Graph::degree(self : Graph[N, E], node : N) -> Int {
   self.in_edges(node).length() + self.out_edges(node).length()
+}
+
+///|
+pub fn[N : Eq, E] Graph::in_degree(self : Graph[N, E], node : N) -> Int {
+  self.in_edges(node).length()
+}
+
+///|
+pub fn[N : Eq, E] Graph::out_degree(self : Graph[N, E], node : N) -> Int {
+  self.out_edges(node).length()
 }

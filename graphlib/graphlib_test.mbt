@@ -42,6 +42,21 @@ test "graph construction is persistent and deterministic" {
 }
 
 ///|
+test "translated BAP graph edge update only relabels existing edges" {
+  let graph : @graphlib.Graph[Int, String] = @graphlib.Graph::new()
+    .add_edge(src=1, dst=2, label="old")
+    .add_node(3)
+  let updated = graph.update_edge(1, 2, label="new")
+  assert_true(updated.edge_count() == graph.edge_count())
+  assert_true(updated.node_count() == graph.node_count())
+  assert_true(updated.edge(1, 2).map(edge => edge.label()) == Some("new"))
+  let unchanged = updated.update_edge(2, 3, label="missing")
+  assert_true(unchanged.edges() == updated.edges())
+  assert_true(unchanged.nodes() == updated.nodes())
+  assert_true(!unchanged.has_edge(2, 3))
+}
+
+///|
 test "translated BAP graph create folds edges before explicit nodes" {
   let empty : @graphlib.Graph[Int, String] = @graphlib.Graph::create()
   assert_true(empty.is_empty())
@@ -95,6 +110,9 @@ test "translated BAP graph removal keeps nodes and incident edges coherent" {
   assert_true(restored.node_count() == 3)
   assert_true(restored.edge_count() == 3)
   assert_true(edge_pairs(restored) == Set::from_array([(0, 1), (1, 2), (2, 0)]))
+  assert_true(restored.in_degree(0) == 1)
+  assert_true(restored.out_degree(0) == 1)
+  assert_true(restored.degree(0) == 2)
 }
 
 ///|

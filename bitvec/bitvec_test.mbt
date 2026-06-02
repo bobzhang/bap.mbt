@@ -46,6 +46,30 @@ test "concat and extract match BAP bit numbering cases" {
   let high = @bitvec.of_int(width=16, 0xdead)
   let low = @bitvec.of_int(width=16, 0xbeef)
   inspect(high.concat(low).to_hex(), content="0xdeadbeef")
+  inspect(@bitvec.append(16, 16, high, low).to_hex(), content="0xdeadbeef")
+  inspect(
+    @bitvec.append(
+      12,
+      20,
+      @bitvec.of_int(width=24, 0xbadadd),
+      @bitvec.of_int(width=24, 0xbadbeef),
+    ).to_hex(),
+    content="0xadddbeef",
+  )
+  let nybble = @bitvec.of_int(width=8, 0xba)
+  let repeated = @bitvec.repeat(4, times=3, nybble)
+  inspect(repeated.to_hex(), content="0xaaa")
+  assert_true(repeated.width() == 12)
+  let byte_values = [
+    @bitvec.of_int(width=16, 0x1de),
+    @bitvec.of_int(width=8, 0xad),
+    @bitvec.of_int(width=8, 0xbe),
+    @bitvec.of_int(width=8, 0xef),
+  ]
+  inspect(@bitvec.concat(8, byte_values).to_hex(), content="0xdeadbeef")
+  assert_true(@bitvec.repeat(4, times=0, nybble) == @bitvec.b0())
+  let empty_values : Array[@bitvec.BitVec] = []
+  assert_true(@bitvec.concat(8, empty_values) == @bitvec.b0())
   let word = @bitvec.of_int(width=16, 0xdad5)
   inspect(word.extract(lo=0xC).to_hex(), content="0xd")
   inspect(word.extract(lo=0x8).to_hex(), content="0xda")

@@ -113,6 +113,67 @@ pub fn BitVec::concat(self : BitVec, low : BitVec) -> BitVec raise BitVecError {
 }
 
 ///|
+fn BitVec::low_bits(self : BitVec, width : Int) -> BitVec raise BitVecError {
+  if width <= 0 {
+    raise InvalidWidth(width)
+  } else if self.width > width {
+    self.truncate(width~)
+  } else if self.width < width {
+    self.widen(width~)
+  } else {
+    self
+  }
+}
+
+///|
+pub fn append(
+  high_width : Int,
+  low_width : Int,
+  high : BitVec,
+  low : BitVec,
+) -> BitVec raise BitVecError {
+  high.low_bits(high_width).concat(low.low_bits(low_width))
+}
+
+///|
+pub fn repeat(
+  width : Int,
+  times~ : Int,
+  value : BitVec,
+) -> BitVec raise BitVecError {
+  if width <= 0 {
+    raise InvalidWidth(width)
+  }
+  if times <= 0 {
+    return b0()
+  }
+  let piece = value.low_bits(width)
+  let mut acc = piece
+  for _ in 1..<times {
+    acc = piece.concat(acc)
+  }
+  acc
+}
+
+///|
+pub fn concat(
+  width : Int,
+  values : ArrayView[BitVec],
+) -> BitVec raise BitVecError {
+  if width <= 0 {
+    raise InvalidWidth(width)
+  }
+  if values.length() == 0 {
+    return b0()
+  }
+  let mut acc = values[0].low_bits(width)
+  for i in 1..<values.length() {
+    acc = acc.concat(values[i].low_bits(width))
+  }
+  acc
+}
+
+///|
 pub fn BitVec::widen(self : BitVec, width~ : Int) -> BitVec raise BitVecError {
   if width < self.width {
     raise InvalidWidth(width)

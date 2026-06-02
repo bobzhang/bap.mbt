@@ -6,9 +6,13 @@ import {
 }
 
 // Values
+pub fn append(Int, Int, BitVec, BitVec) -> BitVec raise BitVecError
+
 pub fn b0() -> BitVec
 
 pub fn b1() -> BitVec
+
+pub fn concat(Int, ArrayView[BitVec]) -> BitVec raise BitVecError
 
 pub fn from_hex(width~ : Int, StringView) -> BitVec raise BitVecError
 
@@ -27,6 +31,8 @@ pub fn of_uint64(width~ : Int, UInt64) -> BitVec raise BitVecError
 pub fn one(width~ : Int) -> BitVec raise BitVecError
 
 pub fn ones(width~ : Int) -> BitVec raise BitVecError
+
+pub fn repeat(Int, times~ : Int, BitVec) -> BitVec raise BitVecError
 
 pub fn zero(width~ : Int) -> BitVec raise BitVecError
 

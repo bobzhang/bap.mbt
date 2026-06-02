@@ -8,6 +8,21 @@ pub fn[T] seq_of_array(values : ArrayView[T]) -> Array[T] {
 }
 
 ///|
+pub fn[T] seq_of_list(values : @list.List[T]) -> Array[T] {
+  values.to_array()
+}
+
+///|
+pub fn[T] seq_empty() -> Array[T] {
+  []
+}
+
+///|
+pub fn[T] seq_singleton(value : T) -> Array[T] {
+  [value]
+}
+
+///|
 pub fn[T] seq_cons(value : T, values : ArrayView[T]) -> Array[T] {
   let out = [value]
   for item in values {
@@ -150,6 +165,61 @@ pub fn[A, B] seq_mapi(values : ArrayView[A], f : (Int, A) -> B) -> Array[B] {
 }
 
 ///|
+pub fn[A, B] seq_filter_map(values : ArrayView[A], f : (A) -> B?) -> Array[B] {
+  let out = []
+  for value in values {
+    match f(value) {
+      Some(mapped) => out.push(mapped)
+      None => ()
+    }
+  }
+  out
+}
+
+///|
+pub fn[A, B] seq_filter_mapi(
+  values : ArrayView[A],
+  f : (Int, A) -> B?,
+) -> Array[B] {
+  let out = []
+  for i, value in values {
+    match f(i, value) {
+      Some(mapped) => out.push(mapped)
+      None => ()
+    }
+  }
+  out
+}
+
+///|
+pub fn[A, B] seq_concat_map(
+  values : ArrayView[A],
+  f : (A) -> Array[B],
+) -> Array[B] {
+  let out = []
+  for value in values {
+    for mapped in f(value) {
+      out.push(mapped)
+    }
+  }
+  out
+}
+
+///|
+pub fn[A, B] seq_concat_mapi(
+  values : ArrayView[A],
+  f : (Int, A) -> Array[B],
+) -> Array[B] {
+  let out = []
+  for i, value in values {
+    for mapped in f(i, value) {
+      out.push(mapped)
+    }
+  }
+  out
+}
+
+///|
 pub fn[T] seq_filter(values : ArrayView[T], f : (T) -> Bool) -> Array[T] {
   let out = []
   for value in values {
@@ -170,9 +240,29 @@ pub fn[A, B] seq_fold(values : ArrayView[A], init : B, f : (B, A) -> B) -> B {
 }
 
 ///|
+pub fn[A, B] seq_foldi(
+  values : ArrayView[A],
+  init : B,
+  f : (Int, B, A) -> B,
+) -> B {
+  let mut acc = init
+  for i, value in values {
+    acc = f(i, acc, value)
+  }
+  acc
+}
+
+///|
 pub fn[T] seq_iter(values : ArrayView[T], f : (T) -> Unit) -> Unit {
   for value in values {
     f(value)
+  }
+}
+
+///|
+pub fn[T] seq_iteri(values : ArrayView[T], f : (Int, T) -> Unit) -> Unit {
+  for i, value in values {
+    f(i, value)
   }
 }
 
@@ -181,6 +271,17 @@ pub fn[T] seq_find(values : ArrayView[T], f : (T) -> Bool) -> T? {
   for value in values {
     if f(value) {
       return Some(value)
+    }
+  }
+  None
+}
+
+///|
+pub fn[A, B] seq_find_map(values : ArrayView[A], f : (A) -> B?) -> B? {
+  for value in values {
+    match f(value) {
+      Some(mapped) => return Some(mapped)
+      None => ()
     }
   }
   None

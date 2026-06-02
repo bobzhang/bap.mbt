@@ -68,6 +68,10 @@ test "regular sequence helpers mirror BAP sequence wrappers" {
   assert_true(copied == source)
   source[0] = 9
   assert_true(copied == [1, 2, 3])
+  assert_true(@regular.seq_of_list(@list.from_array([1, 2, 3])) == [1, 2, 3])
+  let helper_empty : Array[Int] = @regular.seq_empty()
+  assert_true(helper_empty == [])
+  assert_true(@regular.seq_singleton(4) == [4])
   assert_true(@regular.seq_cons(0, copied) == [0, 1, 2, 3])
   assert_true(@regular.seq_append([0], copied) == [0, 1, 2, 3])
   assert_true(@regular.seq_concat([[0], copied, [4, 5]]) == [0, 1, 2, 3, 4, 5])
@@ -97,13 +101,67 @@ test "regular sequence helpers mirror BAP sequence wrappers" {
   assert_true(@regular.seq_drop_while(copied, value => value < 9) == [])
   assert_true(@regular.seq_map(copied, value => value * 2) == [2, 4, 6])
   assert_true(@regular.seq_mapi(copied, (i, value) => i + value) == [1, 3, 5])
+  assert_true(
+    @regular.seq_filter_map(copied, value => {
+      if value % 2 == 1 {
+        Some(value * 10)
+      } else {
+        None
+      }
+    }) ==
+    [10, 30],
+  )
+  assert_true(
+    @regular.seq_filter_mapi(copied, (i, value) => {
+      if value % 2 == 0 {
+        Some(i + value)
+      } else {
+        None
+      }
+    }) ==
+    [3],
+  )
+  assert_true(
+    @regular.seq_concat_map(copied, value => [value, -value]) ==
+    [1, -1, 2, -2, 3, -3],
+  )
+  assert_true(
+    @regular.seq_concat_mapi(copied, (i, value) => [i, value]) ==
+    [0, 1, 1, 2, 2, 3],
+  )
   assert_true(@regular.seq_filter(copied, value => value % 2 == 1) == [1, 3])
   assert_true(@regular.seq_fold(copied, 0, (acc, value) => acc + value) == 6)
+  assert_true(
+    @regular.seq_foldi(copied, 0, (i, acc, value) => acc + i * 10 + value) == 36,
+  )
   let iterated = []
   @regular.seq_iter(copied, value => iterated.push(value * 10))
   assert_true(iterated == [10, 20, 30])
+  let iteratedi = []
+  @regular.seq_iteri(copied, (i, value) => iteratedi.push(i + value))
+  assert_true(iteratedi == [1, 3, 5])
   assert_true(@regular.seq_find(copied, value => value > 1) == Some(2))
   assert_true(@regular.seq_find(copied, value => value > 5) is None)
+  assert_true(
+    @regular.seq_find_map(copied, value => {
+      if value % 2 == 0 {
+        Some(value * 10)
+      } else {
+        None
+      }
+    }) ==
+    Some(20),
+  )
+  assert_true(
+    @regular.seq_find_map(copied, value => {
+      if value > 5 {
+        Some(value * 10)
+      } else {
+        None
+      }
+    })
+    is None,
+  )
   assert_true(@regular.seq_exists(copied, value => value == 2))
   assert_true(!@regular.seq_exists(copied, value => value == 9))
   assert_true(@regular.seq_for_all(copied, value => value > 0))

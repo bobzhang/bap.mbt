@@ -141,6 +141,10 @@ pub fn[A, B] seq_compare((A, B) -> Int, ArrayView[A], ArrayView[B]) -> Int
 
 pub fn[T] seq_concat(ArrayView[Array[T]]) -> Array[T]
 
+pub fn[A, B] seq_concat_map(ArrayView[A], (A) -> Array[B]) -> Array[B]
+
+pub fn[A, B] seq_concat_mapi(ArrayView[A], (Int, A) -> Array[B]) -> Array[B]
+
 pub fn[T] seq_cons(T, ArrayView[T]) -> Array[T]
 
 pub fn[T] seq_drop(ArrayView[T], Int) -> Array[T]
@@ -149,13 +153,23 @@ pub fn[T] seq_drop_eagerly(ArrayView[T], Int) -> Array[T]
 
 pub fn[T] seq_drop_while(ArrayView[T], (T) -> Bool) -> Array[T]
 
+pub fn[T] seq_empty() -> Array[T]
+
 pub fn[T] seq_exists(ArrayView[T], (T) -> Bool) -> Bool
 
 pub fn[T] seq_filter(ArrayView[T], (T) -> Bool) -> Array[T]
 
+pub fn[A, B] seq_filter_map(ArrayView[A], (A) -> B?) -> Array[B]
+
+pub fn[A, B] seq_filter_mapi(ArrayView[A], (Int, A) -> B?) -> Array[B]
+
 pub fn[T] seq_find(ArrayView[T], (T) -> Bool) -> T?
 
+pub fn[A, B] seq_find_map(ArrayView[A], (A) -> B?) -> B?
+
 pub fn[A, B] seq_fold(ArrayView[A], B, (B, A) -> B) -> B
+
+pub fn[A, B] seq_foldi(ArrayView[A], B, (Int, B, A) -> B) -> B
 
 pub fn[T] seq_for_all(ArrayView[T], (T) -> Bool) -> Bool
 
@@ -164,6 +178,8 @@ pub fn[T] seq_hd(ArrayView[T]) -> T?
 pub fn[T] seq_is_empty(ArrayView[T]) -> Bool
 
 pub fn[T] seq_iter(ArrayView[T], (T) -> Unit) -> Unit
+
+pub fn[T] seq_iteri(ArrayView[T], (Int, T) -> Unit) -> Unit
 
 pub fn[T] seq_last(ArrayView[T]) -> T?
 
@@ -177,9 +193,13 @@ pub fn[T] seq_nth(ArrayView[T], Int) -> T?
 
 pub fn[T] seq_of_array(ArrayView[T]) -> Array[T]
 
+pub fn[T] seq_of_list(@list.List[T]) -> Array[T]
+
 pub fn[T : Printable] seq_render(ArrayView[T], max? : Int) -> String
 
 pub fn[T] seq_rev(ArrayView[T]) -> Array[T]
+
+pub fn[T] seq_singleton(T) -> Array[T]
 
 pub fn[T] seq_take(ArrayView[T], Int) -> Array[T]
 

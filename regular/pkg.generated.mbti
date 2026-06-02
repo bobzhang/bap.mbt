@@ -149,6 +149,8 @@ pub fn[A, B] seq_concat_mapi(ArrayView[A], (Int, A) -> Array[B]) -> Array[B]
 
 pub fn[T] seq_cons(T, ArrayView[T]) -> Array[T]
 
+pub fn[A, S, R] seq_delayed_fold(ArrayView[A], init~ : S, f~ : (S, A, (S) -> R) -> R, finish~ : (S) -> R) -> R
+
 pub fn[T] seq_drop(ArrayView[T], Int) -> Array[T]
 
 pub fn[T] seq_drop_eagerly(ArrayView[T], Int) -> Array[T]

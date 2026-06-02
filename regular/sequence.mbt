@@ -368,6 +368,33 @@ pub fn[A, B] seq_fold(values : ArrayView[A], init : B, f : (B, A) -> B) -> B {
 }
 
 ///|
+fn[A, S, R] seq_delayed_fold_loop(
+  values : ArrayView[A],
+  index : Int,
+  acc : S,
+  f : (S, A, (S) -> R) -> R,
+  finish : (S) -> R,
+) -> R {
+  if index >= values.length() {
+    finish(acc)
+  } else {
+    f(acc, values[index], next => {
+      seq_delayed_fold_loop(values, index + 1, next, f, finish)
+    })
+  }
+}
+
+///|
+pub fn[A, S, R] seq_delayed_fold(
+  values : ArrayView[A],
+  init~ : S,
+  f~ : (S, A, (S) -> R) -> R,
+  finish~ : (S) -> R,
+) -> R {
+  seq_delayed_fold_loop(values, 0, init, f, finish)
+}
+
+///|
 pub fn[A, B] seq_foldi(
   values : ArrayView[A],
   init : B,

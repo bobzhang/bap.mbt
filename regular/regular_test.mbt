@@ -175,6 +175,39 @@ test "regular sequence helpers mirror BAP sequence wrappers" {
   assert_true(@regular.seq_filter(copied, value => value % 2 == 1) == [1, 3])
   assert_true(@regular.seq_fold(copied, 0, (acc, value) => acc + value) == 6)
   assert_true(
+    @regular.seq_delayed_fold(
+      copied,
+      init=0,
+      f=(acc, value, k) => k(acc + value),
+      finish=acc => acc * 10,
+    ) ==
+    60,
+  )
+  assert_true(
+    @regular.seq_delayed_fold(
+      copied,
+      init=0,
+      f=(acc, value, k) => if value == 2 { acc } else { k(acc * 10 + value) },
+      finish=acc => acc + 100,
+    ) ==
+    1,
+  )
+  assert_true(
+    @regular.seq_delayed_fold(
+      [1, 2],
+      init=0,
+      f=(acc, value, k) => {
+        if value == 1 {
+          k(acc + value) + k(acc + value * 10)
+        } else {
+          k(acc + value)
+        }
+      },
+      finish=acc => acc,
+    ) ==
+    15,
+  )
+  assert_true(
     @regular.seq_foldi(copied, 0, (i, acc, value) => acc + i * 10 + value) == 36,
   )
   let iterated = []

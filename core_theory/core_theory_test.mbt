@@ -1356,6 +1356,40 @@ test "target registry resolves common and custom declarations" {
     @core_theory.Target::declare_target("unit-declared-target", pkg="test")
     is Err(_),
   )
+  match
+    @core_theory.declare_target(
+      "unit-top-declared-target",
+      pkg="test",
+      parent=@core_theory.Target::x86(),
+      nicknames=["unit-top-declared-alias"],
+      bits=40,
+      byte=8,
+      endianness=LittleEndian,
+      system=Linux,
+      abi=GNU,
+      filetype=Elf,
+    ) {
+    Ok(declared) => {
+      assert_true(declared.name().show() == "test:unit-top-declared-target")
+      assert_true(declared.parent().equal(@core_theory.Target::x86()))
+      assert_true(declared.bits() == 40)
+      assert_true(
+        @core_theory.lookup_target("unit-top-declared-alias").map(t => t.bits()) ==
+        Some(40),
+      )
+      match @core_theory.read_target("unit-top-declared-alias") {
+        Ok(read) => assert_true(read.equal(declared))
+        Err(reason) => fail(reason)
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    @core_theory.lookup_target("test:unit-top-declared-target").map(t => {
+      t.bits()
+    }) ==
+    Some(40),
+  )
   let packaged_a = @core_theory.Target::create(
     name=@knowledge.Name::create("unit-packaged-target", pkg="test-a"),
     bits=8,
@@ -1398,6 +1432,10 @@ test "target registry resolves common and custom declarations" {
   )
   assert_true(
     @core_theory.find_target("unit-target-alias").map(t => t.bits()) == Some(16),
+  )
+  assert_true(
+    @core_theory.lookup_target("unit-target-alias").map(t => t.bits()) ==
+    @core_theory.Target::lookup("unit-target-alias").map(t => t.bits()),
   )
   assert_true(@core_theory.Target::register(target) is Err(_))
   assert_true(
@@ -1454,6 +1492,10 @@ test "target selection filters BAP-style metadata constraints" {
   let linux = @core_theory.Target::filter(parent~, system=Linux)
   assert_true(linux.length() == 2)
   assert_true(linux.all(target => target.system() == Linux))
+  assert_true(
+    @core_theory.filter_targets(parent~, system=Linux).map(t => t.name().show()) ==
+    linux.map(t => t.name().show()),
+  )
   let linux_elf_matches = @core_theory.Target::filter(
     parent~,
     system=Linux,
@@ -1515,6 +1557,10 @@ test "target selection filters BAP-style metadata constraints" {
     Ok(target) => assert_true(target.system() == Linux)
     Err(reason) => fail(reason)
   }
+  match @core_theory.select_target(parent~, system=Linux, abi=GNU) {
+    Ok(target) => assert_true(target.system() == Linux)
+    Err(reason) => fail(reason)
+  }
   match @core_theory.Target::select(parent~, system=Windows) {
     Ok(target) => assert_true(target.equal(parent))
     Err(reason) => fail(reason)
@@ -1525,6 +1571,9 @@ test "target selection filters BAP-style metadata constraints" {
   )
   assert_true(
     @core_theory.Target::select(parent~, system=Windows, strict=true) is Err(_),
+  )
+  assert_true(
+    @core_theory.select_target(parent~, system=Windows, strict=true) is Err(_),
   )
   let strict_unknown = @core_theory.Target::filter(parent~, strict=true)
   assert_true(strict_unknown.length() == 1)

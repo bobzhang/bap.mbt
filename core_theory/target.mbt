@@ -3248,6 +3248,49 @@ pub fn Target::declare_target(
 }
 
 ///|
+pub fn declare_target(
+  name : String,
+  pkg? : String,
+  parent? : Target,
+  nicknames? : Array[String],
+  bits? : Int,
+  byte? : Int,
+  data? : Var,
+  code? : Var,
+  data_alignment? : Int,
+  code_alignment? : Int,
+  endianness? : Endianness,
+  system? : System,
+  abi? : Abi,
+  fabi? : Fabi,
+  filetype? : Filetype,
+  options? : TargetOptions,
+  vars? : Array[Var],
+  alias_origins? : Array[AliasOrigin],
+) -> Result[Target, String] {
+  Target::declare_target(
+    name,
+    pkg?,
+    parent?,
+    nicknames?,
+    bits?,
+    byte?,
+    data?,
+    code?,
+    data_alignment?,
+    code_alignment?,
+    endianness?,
+    system?,
+    abi?,
+    fabi?,
+    filetype?,
+    options?,
+    vars?,
+    alias_origins?,
+  )
+}
+
+///|
 pub fn Target::name(self : Target) -> @knowledge.Name {
   self.name_value
 }
@@ -5291,6 +5334,11 @@ pub fn Target::lookup(query : String, pkg? : String) -> Target? {
 }
 
 ///|
+pub fn lookup_target(query : String, pkg? : String) -> Target? {
+  Target::lookup(query, pkg?)
+}
+
+///|
 pub fn get_target(query : String, pkg? : String) -> Result[Target, String] {
   match find_target(query, pkg?) {
     Some(target) => Ok(target)
@@ -5306,6 +5354,11 @@ pub fn Target::get(query : String, pkg? : String) -> Result[Target, String] {
 ///|
 pub fn Target::read(query : String, pkg? : String) -> Result[Target, String] {
   Target::get(query, pkg?)
+}
+
+///|
+pub fn read_target(query : String, pkg? : String) -> Result[Target, String] {
+  Target::read(query, pkg?)
 }
 
 ///|
@@ -5396,6 +5449,19 @@ pub fn Target::filter(
 }
 
 ///|
+pub fn filter_targets(
+  parent? : Target,
+  system? : System,
+  abi? : Abi,
+  fabi? : Fabi,
+  filetype? : Filetype,
+  options? : TargetOptions,
+  strict? : Bool = false,
+) -> Array[Target] {
+  Target::filter(parent?, system?, abi?, fabi?, filetype?, options?, strict~)
+}
+
+///|
 pub fn Target::select(
   parent? : Target,
   system? : System,
@@ -5435,6 +5501,29 @@ pub fn Target::select(
         Ok(target)
       }
   }
+}
+
+///|
+pub fn select_target(
+  parent? : Target,
+  system? : System,
+  abi? : Abi,
+  fabi? : Fabi,
+  filetype? : Filetype,
+  options? : TargetOptions,
+  strict? : Bool = false,
+  unique? : Bool = false,
+) -> Result[Target, String] {
+  Target::select(
+    parent?,
+    system?,
+    abi?,
+    fabi?,
+    filetype?,
+    options?,
+    strict~,
+    unique~,
+  )
 }
 
 ///|

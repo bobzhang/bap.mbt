@@ -11,15 +11,25 @@ import {
 // Values
 pub fn common_targets() -> Array[Target]
 
+pub fn declare_target(String, pkg? : String, parent? : Target, nicknames? : Array[String], bits? : Int, byte? : Int, data? : Var, code? : Var, data_alignment? : Int, code_alignment? : Int, endianness? : Endianness, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, options? : TargetOptions, vars? : Array[Var], alias_origins? : Array[AliasOrigin]) -> Result[Target, String]
+
 pub fn declared_targets() -> Array[Target]
+
+pub fn filter_targets(parent? : Target, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, options? : TargetOptions, strict? : Bool) -> Array[Target]
 
 pub fn find_target(String, pkg? : String) -> Target?
 
 pub fn get_target(String, pkg? : String) -> Result[Target, String]
 
+pub fn lookup_target(String, pkg? : String) -> Target?
+
+pub fn read_target(String, pkg? : String) -> Result[Target, String]
+
 pub fn register_target(Target) -> Result[Unit, String]
 
 pub fn registered_targets() -> Array[Target]
+
+pub fn select_target(parent? : Target, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, options? : TargetOptions, strict? : Bool, unique? : Bool) -> Result[Target, String]
 
 pub fn target_domain() -> @knowledge.Domain[Target]
 

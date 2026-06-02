@@ -144,6 +144,39 @@ test "graph set operations key edges by endpoints and keep left labels" {
 }
 
 ///|
+test "translated BAP graph compare follows endpoint and node-set ordering" {
+  let same_edges : @graphlib.Graph[Int, String] = @graphlib.Graph::create(edges=[
+    (1, 2, "left"),
+  ])
+  let same_edges_extra_node : @graphlib.Graph[Int, Unit] = @graphlib.Graph::create(
+    edges=[(1, 2, ())],
+    nodes=[0],
+  )
+  assert_true(same_edges.compare(same_edges_extra_node) == 0)
+
+  let same_nodes_left : @graphlib.Graph[Int, String] = @graphlib.Graph::create(
+    edges=[(1, 2, "a")],
+    nodes=[3],
+  )
+  let same_nodes_right : @graphlib.Graph[Int, Unit] = @graphlib.Graph::create(
+    edges=[(1, 3, ())],
+    nodes=[2],
+  )
+  assert_true(same_nodes_left.compare(same_nodes_right) == 0)
+
+  let lower_nodes : @graphlib.Graph[Int, String] = @graphlib.Graph::create(
+    edges=[(1, 3, "a")],
+    nodes=[0],
+  )
+  let higher_nodes : @graphlib.Graph[Int, Unit] = @graphlib.Graph::create(
+    edges=[(1, 2, ())],
+    nodes=[9],
+  )
+  assert_true(lower_nodes.compare(higher_nodes) < 0)
+  assert_true(higher_nodes.compare(lower_nodes) > 0)
+}
+
+///|
 test "partitions support BAP trivial discrete union and refinement invariants" {
   let elements = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
   let trivial = @graphlib.Partition::trivial(elements)

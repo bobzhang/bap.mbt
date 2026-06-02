@@ -137,6 +137,98 @@ fn[N : Eq, E] contains_edge_pair(
 }
 
 ///|
+fn[N : Compare] compare_nodes(left : N, right : N) -> Int {
+  left.compare(right)
+}
+
+///|
+fn[N : Compare] compare_endpoint_pair(left : (N, N), right : (N, N)) -> Int {
+  let src_order = left.0.compare(right.0)
+  if src_order != 0 {
+    src_order
+  } else {
+    left.1.compare(right.1)
+  }
+}
+
+///|
+fn[N : Eq + Compare] sorted_unique_nodes(nodes : ArrayView[N]) -> Array[N] {
+  let sorted = nodes.to_owned()
+  sorted.sort_by(compare_nodes)
+  let unique : Array[N] = []
+  for node in sorted {
+    if !unique.any(previous => previous == node) {
+      unique.push(node)
+    }
+  }
+  unique
+}
+
+///|
+fn[N : Eq + Compare, E] sorted_unique_endpoint_pairs(
+  edges : ArrayView[Edge[N, E]],
+) -> Array[(N, N)] {
+  let sorted = edges.map(edge => (edge.src, edge.dst))
+  sorted.sort_by(compare_endpoint_pair)
+  let unique : Array[(N, N)] = []
+  for edge in sorted {
+    if !unique.any(previous => previous.0 == edge.0 && previous.1 == edge.1) {
+      unique.push(edge)
+    }
+  }
+  unique
+}
+
+///|
+fn[N : Compare] compare_node_sets(
+  left : ArrayView[N],
+  right : ArrayView[N],
+) -> Int {
+  let limit = left.length().min(right.length())
+  for i in 0..<limit {
+    let order = left[i].compare(right[i])
+    if order != 0 {
+      return order
+    }
+  }
+  left.length().compare(right.length())
+}
+
+///|
+fn[N : Compare] compare_endpoint_sets(
+  left : ArrayView[(N, N)],
+  right : ArrayView[(N, N)],
+) -> Int {
+  let limit = left.length().min(right.length())
+  for i in 0..<limit {
+    let order = compare_endpoint_pair(left[i], right[i])
+    if order != 0 {
+      return order
+    }
+  }
+  left.length().compare(right.length())
+}
+
+///|
+pub fn[N : Eq + Compare, E, F] Graph::compare(
+  self : Graph[N, E],
+  other : Graph[N, F],
+) -> Int {
+  let edge_order = compare_endpoint_sets(
+    sorted_unique_endpoint_pairs(self.edges),
+    sorted_unique_endpoint_pairs(other.edges),
+  )
+  if edge_order == 0 {
+    0
+  } else {
+    compare_node_sets(
+      sorted_unique_nodes(self.nodes),
+      sorted_unique_nodes(other.nodes),
+    )
+  }
+}
+
+///|
 pub fn[N : Eq, E] Graph::union(
   self : Graph[N, E],
   other : Graph[N, E],

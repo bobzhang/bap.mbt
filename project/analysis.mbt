@@ -449,6 +449,79 @@ pub fn[A, B, C] ProjectAnalysisArgs::triple(
 }
 
 ///|
+pub fn[A, B, C, D] ProjectAnalysisArgs::quad(
+  first : ProjectAnalysisArg[A],
+  second : ProjectAnalysisArg[B],
+  third : ProjectAnalysisArg[C],
+  fourth : ProjectAnalysisArg[D],
+) -> ProjectAnalysisArgs[(A, B, C, D)] {
+  {
+    grammar_value: [first.rule(), second.rule(), third.rule(), fourth.rule()],
+    parse_fn: inputs => {
+      let ctxt = project_analysis_context(inputs)
+      match project_analysis_parse_arg(first, ctxt) {
+        Err(reason) => Err(reason)
+        Ok((a, ctxt)) =>
+          match project_analysis_parse_arg(second, ctxt) {
+            Err(reason) => Err(reason)
+            Ok((b, ctxt)) =>
+              match project_analysis_parse_arg(third, ctxt) {
+                Err(reason) => Err(reason)
+                Ok((c, ctxt)) =>
+                  match project_analysis_parse_arg(fourth, ctxt) {
+                    Err(reason) => Err(reason)
+                    Ok((d, _)) => Ok((a, b, c, d))
+                  }
+              }
+          }
+      }
+    },
+  }
+}
+
+///|
+pub fn[A, B, C, D, E] ProjectAnalysisArgs::quint(
+  first : ProjectAnalysisArg[A],
+  second : ProjectAnalysisArg[B],
+  third : ProjectAnalysisArg[C],
+  fourth : ProjectAnalysisArg[D],
+  fifth : ProjectAnalysisArg[E],
+) -> ProjectAnalysisArgs[(A, B, C, D, E)] {
+  {
+    grammar_value: [
+      first.rule(),
+      second.rule(),
+      third.rule(),
+      fourth.rule(),
+      fifth.rule(),
+    ],
+    parse_fn: inputs => {
+      let ctxt = project_analysis_context(inputs)
+      match project_analysis_parse_arg(first, ctxt) {
+        Err(reason) => Err(reason)
+        Ok((a, ctxt)) =>
+          match project_analysis_parse_arg(second, ctxt) {
+            Err(reason) => Err(reason)
+            Ok((b, ctxt)) =>
+              match project_analysis_parse_arg(third, ctxt) {
+                Err(reason) => Err(reason)
+                Ok((c, ctxt)) =>
+                  match project_analysis_parse_arg(fourth, ctxt) {
+                    Err(reason) => Err(reason)
+                    Ok((d, ctxt)) =>
+                      match project_analysis_parse_arg(fifth, ctxt) {
+                        Err(reason) => Err(reason)
+                        Ok((e, _)) => Ok((a, b, c, d, e))
+                      }
+                  }
+              }
+          }
+      }
+    },
+  }
+}
+
+///|
 pub fn[T] ProjectAnalysisArgs::parse(
   self : ProjectAnalysisArgs[T],
   inputs : Array[String],

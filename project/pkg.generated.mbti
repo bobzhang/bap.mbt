@@ -217,6 +217,8 @@ pub fn[T] ProjectAnalysisArgs::grammar_string(Self[T]) -> String
 pub fn[T] ProjectAnalysisArgs::one(ProjectAnalysisArg[T]) -> Self[T]
 pub fn[A, B] ProjectAnalysisArgs::pair(ProjectAnalysisArg[A], ProjectAnalysisArg[B]) -> Self[(A, B)]
 pub fn[T] ProjectAnalysisArgs::parse(Self[T], Array[String]) -> Result[T, String]
+pub fn[A, B, C, D] ProjectAnalysisArgs::quad(ProjectAnalysisArg[A], ProjectAnalysisArg[B], ProjectAnalysisArg[C], ProjectAnalysisArg[D]) -> Self[(A, B, C, D)]
+pub fn[A, B, C, D, E] ProjectAnalysisArgs::quint(ProjectAnalysisArg[A], ProjectAnalysisArg[B], ProjectAnalysisArg[C], ProjectAnalysisArg[D], ProjectAnalysisArg[E]) -> Self[(A, B, C, D, E)]
 pub fn[A, B, C] ProjectAnalysisArgs::triple(ProjectAnalysisArg[A], ProjectAnalysisArg[B], ProjectAnalysisArg[C]) -> Self[(A, B, C)]
 
 type ProjectAnalysisInfo

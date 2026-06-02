@@ -31,6 +31,51 @@ test "project analysis args parse positional keyword flag and rest inputs" {
 }
 
 ///|
+test "project analysis args parse four and five argument tuples" {
+  let quad = @project.ProjectAnalysisArgs::quad(
+    @project.ProjectAnalysisArg::string(),
+    @project.ProjectAnalysisArg::int(),
+    @project.ProjectAnalysisArg::keyword(
+      "mode",
+      @project.ProjectAnalysisArg::string(),
+    ),
+    @project.ProjectAnalysisArg::flag("force"),
+  )
+  assert_true(
+    quad.grammar_string() == "<string> <int> [:mode <string>] [:force]",
+  )
+  match quad.parse(["main", "7", ":force", ":mode", "fast"]) {
+    Ok(value) => {
+      assert_true(value.0 == "main")
+      assert_true(value.1 == 7)
+      assert_true(value.2 == Some("fast"))
+      assert_true(value.3)
+    }
+    Err(reason) => fail(reason)
+  }
+  let quint = @project.ProjectAnalysisArgs::quint(
+    @project.ProjectAnalysisArg::string(),
+    @project.ProjectAnalysisArg::string(),
+    @project.ProjectAnalysisArg::int(),
+    @project.ProjectAnalysisArg::optional(@project.ProjectAnalysisArg::string()),
+    @project.ProjectAnalysisArg::flag("dry-run"),
+  )
+  assert_true(
+    quint.grammar_string() == "<string> <string> <int> [<string>] [:dry-run]",
+  )
+  match quint.parse(["from", "to", "3", "label", ":dry-run"]) {
+    Ok(value) => {
+      assert_true(value.0 == "from")
+      assert_true(value.1 == "to")
+      assert_true(value.2 == 3)
+      assert_true(value.3 == Some("label"))
+      assert_true(value.4)
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project analysis args report syntax failures" {
   let empty = @project.ProjectAnalysisArgs::one(
     @project.ProjectAnalysisArg::empty(),

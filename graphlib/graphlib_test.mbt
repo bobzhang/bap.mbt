@@ -307,6 +307,12 @@ test "partitions support BAP trivial discrete union and refinement invariants" {
       assert_true(group.mem(2))
       assert_true(group.members().contains(1))
       assert_true(Set::from_array(group.enumerate()) == Set::from_array([1, 2]))
+      let group_text = group.to_string(element_to_string=element => {
+        element.to_string()
+      })
+      assert_true(group_text.contains("{1: 1 => ("))
+      assert_true(group_text.contains("1"))
+      assert_true(group_text.contains("2"))
       match joined.of_equiv(group.to_equiv()) {
         Some(same) => {
           assert_true(same.mem(1))
@@ -320,6 +326,11 @@ test "partitions support BAP trivial discrete union and refinement invariants" {
   }
   let refined = trivial.refine((x, y) => (x - y) % 2 == 0)
   assert_true(refined.group_count() == 2)
+  let partition_text = refined.to_string(element_to_string=element => {
+    element.to_string()
+  })
+  assert_true(partition_text.contains("partition = {"))
+  assert_true(partition_text.contains("=> ("))
   let covered : Set[Int] = Set([], capacity=elements.length())
   for group in refined.groups() {
     let representative = group.top()
@@ -580,6 +591,10 @@ test "translated BAP shortest path returns weighted edge path" {
       )
       assert_true((path.start_exn().src, path.start_exn().dst) == (0, 2))
       assert_true((path.finish_exn().src, path.finish_exn().dst) == (1, 3))
+      assert_true(
+        path.to_string(edge_to_string=edge => "\{edge.src}->\{edge.dst}") ==
+        "{ 0->2, 2->1, 1->3}",
+      )
     }
     None => fail("expected a weighted shortest path")
   }
@@ -597,6 +612,10 @@ test "translated BAP shortest path returns weighted edge path" {
       assert_true(path.length() == 0)
       assert_true(path.start_opt() is None)
       assert_true(path.finish_opt() is None)
+      assert_true(
+        path.to_string(edge_to_string=edge => "\{edge.src}->\{edge.dst}") ==
+        "{}",
+      )
     }
     None => fail("expected a zero-length path from a node to itself")
   }
@@ -755,12 +774,19 @@ test "immediate dominators and frontiers describe branches and loop headers" {
   assert_true(tree.is_ancestor_of(0, child=4))
   assert_true(tree.is_descendant_of(4, parent=1))
   assert_true(tree.to_sequence() == graph.nodes())
+  let tree_text = tree.to_string(node_to_string=node => node.to_string())
+  assert_true(tree_text.contains("digraph {"))
+  assert_true(tree_text.contains("\"0\" -> \"1\""))
+  assert_true(tree_text.contains("\"1\" -> \"2\""))
   let frontier = graph.dom_frontier(0)
   assert_true(frontier.to_sequence() == [1, 2, 3, 4])
   assert_true(frontier.mem(1, 1))
   assert_true(frontier.elements(2) == [4])
   assert_true(frontier.enumerate(2) == [4])
   assert_true(frontier.elements(0).is_empty())
+  let frontier_text = frontier.to_string(node_to_string=node => node.to_string())
+  assert_true(frontier_text.contains("[1 => (1)]"))
+  assert_true(frontier_text.contains("[2 => (4)]"))
   let post_idoms = graph.immediate_dominators(4, rev=true)
   assert_true(post_idoms[0] == 1)
   assert_true(post_idoms[1] == 4)

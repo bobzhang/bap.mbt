@@ -55,6 +55,7 @@ pub fn[N : Hash + Eq] Frontier::elements(Self[N], N) -> Array[N]
 pub fn[N : Hash + Eq] Frontier::enumerate(Self[N], N) -> Array[N]
 pub fn[N : Hash + Eq] Frontier::mem(Self[N], N, N) -> Bool
 pub fn[N] Frontier::to_sequence(Self[N]) -> Array[N]
+pub fn[N : Hash + Eq] Frontier::to_string(Self[N], node_to_string~ : (N) -> String) -> String
 
 type Graph[N, E] derive(@debug.Debug)
 pub fn[N : Eq, E] Graph::add_edge(Self[N, E], src~ : N, dst~ : N, label~ : E) -> Self[N, E]
@@ -115,6 +116,7 @@ pub fn[E] GraphPath::new(ArrayView[E], weight~ : Int) -> Self[E]
 pub fn[E] GraphPath::start(Self[E]) -> E
 pub fn[E] GraphPath::start_exn(Self[E]) -> E
 pub fn[E] GraphPath::start_opt(Self[E]) -> E?
+pub fn[E] GraphPath::to_string(Self[E], edge_to_string~ : (E) -> String) -> String
 pub fn[E] GraphPath::weight(Self[E]) -> Int
 
 type Group[N] derive(@debug.Debug)
@@ -123,6 +125,7 @@ pub fn[N] Group::enumerate(Self[N]) -> Array[N]
 pub fn[N : Hash + Eq] Group::mem(Self[N], N) -> Bool
 pub fn[N] Group::members(Self[N]) -> @set.Set[N]
 pub fn[N] Group::to_equiv(Self[N]) -> Equiv
+pub fn[N] Group::to_string(Self[N], element_to_string~ : (N) -> String) -> String
 pub fn[N] Group::top(Self[N]) -> N
 
 type Partition[N] derive(@debug.Debug)
@@ -135,6 +138,7 @@ pub fn[N] Partition::groups(Self[N]) -> Array[Group[N]]
 pub fn[N] Partition::number_of_groups(Self[N]) -> Int
 pub fn[N] Partition::of_equiv(Self[N], Equiv) -> Group[N]?
 pub fn[N : Hash + Eq] Partition::refine(Self[N], (N, N) -> Bool) -> Self[N]
+pub fn[N] Partition::to_string(Self[N], element_to_string~ : (N) -> String) -> String
 pub fn[N : Hash + Eq] Partition::trivial(ArrayView[N]) -> Self[N]
 pub fn[N : Hash + Eq] Partition::union(Self[N], N, N) -> Self[N]
 
@@ -147,6 +151,7 @@ pub fn[N : Hash + Eq] Tree::is_child_of(Self[N], N, parent~ : N) -> Bool
 pub fn[N : Hash + Eq] Tree::is_descendant_of(Self[N], N, parent~ : N) -> Bool
 pub fn[N : Hash + Eq] Tree::parent(Self[N], N) -> N?
 pub fn[N] Tree::to_sequence(Self[N]) -> Array[N]
+pub fn[N : Hash + Eq] Tree::to_string(Self[N], node_to_string~ : (N) -> String) -> String
 
 // Type aliases
 

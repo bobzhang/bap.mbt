@@ -113,6 +113,7 @@ type Effect
 pub fn Effect::barr() -> Self
 pub fn Effect::cjmp() -> Self
 pub fn Effect::cjump() -> Self
+pub fn Effect::cls() -> @knowledge.Class[Unit, Unit]
 pub fn Effect::compare(Self, Self) -> Int
 pub fn Effect::empty(EffectSort) -> Self
 pub fn Effect::equal(Self, Self) -> Bool

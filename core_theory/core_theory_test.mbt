@@ -337,6 +337,11 @@ test "variables preserve sorts versions and mutability flags" {
 
 ///|
 test "effect sorts form the expected lattice" {
+  assert_true(@core_theory.Effect::cls().name().show() == "core:effect")
+  assert_true(
+    @core_theory.Effect::cls().desc() ==
+    Some("denotation of a result of effectful computation"),
+  )
   assert_true(@core_theory.EffectSort::bot() == EffectBot)
   assert_true(@core_theory.EffectSort::top() == EffectTop)
   assert_true(@core_theory.EffectSort::data() == EffectData)

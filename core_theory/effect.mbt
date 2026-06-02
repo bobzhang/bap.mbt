@@ -14,6 +14,16 @@ struct Effect {
 }
 
 ///|
+pub fn Effect::cls() -> @knowledge.Class[Unit, Unit] {
+  @knowledge.Class::create(
+    name=core_name("effect"),
+    sort=(),
+    desc="denotation of a result of effectful computation",
+    public=true,
+  )
+}
+
+///|
 pub fn EffectSort::bot() -> EffectSort {
   EffectBot
 }

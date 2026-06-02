@@ -35,6 +35,16 @@ pub(all) enum EdgeKind {
 type Equiv derive(Eq, @debug.Debug)
 pub fn Equiv::to_int(Self) -> Int
 
+type Fixpoint[N, D] derive(@debug.Debug)
+pub fn[N, D] Fixpoint::create(Map[N, D], D) -> Self[N, D]
+pub fn[N, D] Fixpoint::default(Self[N, D]) -> D
+pub fn[N : Hash + Eq, D, A] Fixpoint::derive_values(Self[N, D], (N, D) -> A?, A) -> Self[N, A]
+pub fn[N, D] Fixpoint::entries(Self[N, D]) -> Array[(N, D)]
+pub fn[N : Hash + Eq, D] Fixpoint::equal(Self[N, D], Self[N, D], equal~ : (D, D) -> Bool) -> Bool
+pub fn[N : Hash + Eq, D] Fixpoint::get(Self[N, D], N) -> D
+pub fn[N, D] Fixpoint::is_fixpoint(Self[N, D]) -> Bool
+pub fn[N, D] Fixpoint::iterations(Self[N, D]) -> Int
+
 type Frontier[N] derive(@debug.Debug)
 pub fn[N : Hash + Eq] Frontier::elements(Self[N], N) -> Array[N]
 pub fn[N : Hash + Eq] Frontier::mem(Self[N], N, N) -> Bool
@@ -57,6 +67,7 @@ pub fn[N : Eq, E] Graph::edge(Self[N, E], N, N) -> Edge[N, E]?
 pub fn[N, E] Graph::edge_count(Self[N, E]) -> Int
 pub fn[N, E] Graph::edges(Self[N, E]) -> Array[Edge[N, E]]
 pub fn[N : Eq, E] Graph::filtered(Self[N, E], skip_node? : (N) -> Bool, skip_edge? : (Edge[N, E]) -> Bool) -> Self[N, E]
+pub fn[N : Hash + Eq, E, D] Graph::fixpoint(Self[N, E], init~ : Fixpoint[N, D], equal~ : (D, D) -> Bool, merge~ : (D, D) -> D, f~ : (N, D) -> D, steps? : Int?, start? : N?, rev? : Bool, step? : ((Int, N, D, D) -> D)?) -> Fixpoint[N, D]
 pub fn[N : Hash + Eq, E, A] Graph::fold_reachable(Self[N, E], N, A, (A, N) -> A, rev? : Bool) -> A
 pub fn[N : Eq, E] Graph::has_edge(Self[N, E], N, N) -> Bool
 pub fn[N : Eq, E] Graph::has_node(Self[N, E], N) -> Bool

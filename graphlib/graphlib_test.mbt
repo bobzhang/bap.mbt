@@ -724,3 +724,95 @@ test "dominance frontiers report diamond joins" {
   assert_true(post_frontiers[2] == Set::from_array([0]))
   assert_true(post_frontiers[3].is_empty())
 }
+
+///|
+fn int_set_transfer(node : Int, facts : Set[Int]) -> Set[Int] {
+  let out = facts.copy()
+  out.add(node)
+  out
+}
+
+///|
+fn int_set_union(left : Set[Int], right : Set[Int]) -> Set[Int] {
+  left.union(right)
+}
+
+///|
+fn int_set_equal(left : Set[Int], right : Set[Int]) -> Bool {
+  left == right
+}
+
+///|
+test "graph fixpoint solves forward and reverse dataflow facts" {
+  let graph : @graphlib.Graph[Int, String] = @graphlib.Graph::new()
+    .add_edge(src=0, dst=1, label="then")
+    .add_edge(src=0, dst=2, label="else")
+    .add_edge(src=1, dst=3, label="join")
+    .add_edge(src=2, dst=3, label="join")
+  let init = @graphlib.Fixpoint::create(
+    { 0: Set::from_array([0]) },
+    Set::from_array([]),
+  )
+  assert_true(!init.is_fixpoint())
+  assert_true(init.iterations() == 0)
+  assert_true(init.default().is_empty())
+  assert_true(init.get(99).is_empty())
+  let solved = graph.fixpoint(
+    init~,
+    equal=int_set_equal,
+    merge=int_set_union,
+    f=int_set_transfer,
+  )
+  assert_true(solved.is_fixpoint())
+  assert_true(solved.iterations() > 0)
+  assert_true(solved.get(0) == Set::from_array([0]))
+  assert_true(solved.get(1) == Set::from_array([0]))
+  assert_true(solved.get(2) == Set::from_array([0]))
+  assert_true(solved.get(3) == Set::from_array([0, 1, 2]))
+  assert_true(solved.entries().length() == 4)
+  assert_true(solved.equal(solved, equal=int_set_equal))
+  let derived = solved.derive_values(
+    (_node, facts) => if facts.is_empty() { None } else { Some(facts.length()) },
+    0,
+  )
+  assert_true(!derived.is_fixpoint())
+  assert_true(derived.get(3) == 3)
+
+  let partial = graph.fixpoint(
+    init~,
+    equal=int_set_equal,
+    merge=int_set_union,
+    f=int_set_transfer,
+    steps=Some(1),
+  )
+  assert_true(!partial.is_fixpoint())
+  assert_true(partial.iterations() == 1)
+  let resumed = graph.fixpoint(
+    init=partial,
+    equal=int_set_equal,
+    merge=int_set_union,
+    f=int_set_transfer,
+    steps=Some(20),
+  )
+  assert_true(resumed.is_fixpoint())
+  assert_true(resumed.iterations() > partial.iterations())
+  assert_true(resumed.get(3) == solved.get(3))
+
+  let reverse_init = @graphlib.Fixpoint::create(
+    { 3: Set::from_array([3]) },
+    Set::from_array([]),
+  )
+  let reverse = graph.fixpoint(
+    init=reverse_init,
+    equal=int_set_equal,
+    merge=int_set_union,
+    f=int_set_transfer,
+    start=Some(3),
+    rev=true,
+  )
+  assert_true(reverse.is_fixpoint())
+  assert_true(reverse.get(3) == Set::from_array([3]))
+  assert_true(reverse.get(1) == Set::from_array([3]))
+  assert_true(reverse.get(2) == Set::from_array([3]))
+  assert_true(reverse.get(0) == Set::from_array([1, 2, 3]))
+}

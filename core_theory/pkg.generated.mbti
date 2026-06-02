@@ -625,6 +625,9 @@ pub fn Source::with_language(Self, Language) -> Self
 type SourceFacts
 pub fn SourceFacts::class(Self) -> @knowledge.Class[Unit, Unit]
 pub fn SourceFacts::code(Self) -> @knowledge.FactTable[Unit, String]
+pub fn SourceFacts::collect_code(Self, @knowledge.Object[Unit]) -> String
+pub fn SourceFacts::collect_file(Self, @knowledge.Object[Unit]) -> String?
+pub fn SourceFacts::collect_language(Self, @knowledge.Object[Unit]) -> Language
 pub fn SourceFacts::collect_source(Self, @knowledge.Object[Unit]) -> Source
 pub fn SourceFacts::create(Self) -> @knowledge.Object[Unit]
 pub fn SourceFacts::file(Self) -> @knowledge.FactTable[Unit, String?]

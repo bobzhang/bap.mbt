@@ -414,21 +414,48 @@ pub fn SourceFacts::for_source(
 }
 
 ///|
+pub fn SourceFacts::collect_language(
+  self : SourceFacts,
+  object : @knowledge.Object[Unit],
+) -> Language {
+  match self.language_value.collect(object) {
+    Some(value) => value
+    None => Language::unknown()
+  }
+}
+
+///|
+pub fn SourceFacts::collect_code(
+  self : SourceFacts,
+  object : @knowledge.Object[Unit],
+) -> String {
+  match self.code_value.collect(object) {
+    Some(value) => value
+    None => ""
+  }
+}
+
+///|
+pub fn SourceFacts::collect_file(
+  self : SourceFacts,
+  object : @knowledge.Object[Unit],
+) -> String? {
+  match self.file_value.collect(object) {
+    Some(file) => file
+    None => None
+  }
+}
+
+///|
 pub fn SourceFacts::collect_source(
   self : SourceFacts,
   object : @knowledge.Object[Unit],
 ) -> Source {
-  let language = match self.language_value.collect(object) {
-    Some(value) => value
-    None => OtherLanguage("unknown")
-  }
-  let code = match self.code_value.collect(object) {
-    Some(value) => value
-    None => ""
-  }
-  match self.file_value.collect(object) {
-    Some(Some(file)) => Source::create(language~, code~, file~)
-    _ => Source::create(language~, code~)
+  let language = self.collect_language(object)
+  let code = self.collect_code(object)
+  match self.collect_file(object) {
+    Some(file) => Source::create(language~, code~, file~)
+    None => Source::create(language~, code~)
   }
 }
 

@@ -3595,12 +3595,22 @@ test "program source and unit facts expose BAP-style Knowledge slots" {
       assert_true(
         source_facts.file().collect(source_object) == Some(Some("main.c")),
       )
+      assert_true(source_facts.collect_language(source_object) == C)
+      assert_true(
+        source_facts.collect_code(source_object) ==
+        "int main(void) { return 0; }",
+      )
+      assert_true(source_facts.collect_file(source_object) == Some("main.c"))
       let collected = source_facts.collect_source(source_object)
       assert_true(collected.language() == C)
       assert_true(collected.file() == Some("main.c"))
     }
     Err(reason) => fail(reason)
   }
+  let empty_source_object = source_facts.create()
+  assert_true(source_facts.collect_language(empty_source_object).is_unknown())
+  assert_true(source_facts.collect_code(empty_source_object) == "")
+  assert_true(source_facts.collect_file(empty_source_object) is None)
 
   let compiler = @core_theory.Compiler::create(
     "clang",

@@ -18,6 +18,10 @@ pub(all) struct DfsNodeInfo {
   rpost : Int
 } derive(Eq, @debug.Debug)
 
+type DfsVisitor[N, E, A] derive(@debug.Debug)
+pub fn[N, E, A] DfsVisitor::identity() -> Self[N, E, A]
+pub fn[N, E, A] DfsVisitor::new(start_tree? : (N, A) -> A, enter_node? : (Int, N, A) -> A, leave_node? : (Int, N, A) -> A, enter_edge? : (EdgeKind, Edge[N, E], A) -> A, leave_edge? : (EdgeKind, Edge[N, E], A) -> A) -> Self[N, E, A]
+
 pub(all) struct Edge[N, E] {
   src : N
   dst : N
@@ -57,6 +61,7 @@ pub fn[N : Eq + Compare, E, F] Graph::compare(Self[N, E], Self[N, F]) -> Int
 pub fn[N : Eq, E] Graph::create(nodes? : ArrayView[N], edges? : ArrayView[(N, N, E)]) -> Self[N, E]
 pub fn[N : Eq, E] Graph::degree(Self[N, E], N) -> Int
 pub fn[N : Hash + Eq, E, A] Graph::depth_first_search(Self[N, E], init~ : A, rev? : Bool, start? : N?, start_tree? : (N, A) -> A, enter_node? : (Int, N, A) -> A, leave_node? : (Int, N, A) -> A, enter_edge? : (EdgeKind, Edge[N, E], A) -> A, leave_edge? : (EdgeKind, Edge[N, E], A) -> A) -> A
+pub fn[N : Hash + Eq, E, A] Graph::depth_first_visit(Self[N, E], DfsVisitor[N, E, A], init~ : A, rev? : Bool, start? : N?) -> A
 pub fn[N : Hash + Eq, E] Graph::dfs_edges(Self[N, E], N) -> Array[(EdgeKind, Edge[N, E])]
 pub fn[N : Hash + Eq, E] Graph::dfs_numbering(Self[N, E], N) -> Map[N, DfsNodeInfo]
 pub fn[N : Hash + Eq, E] Graph::dom_frontier(Self[N, E], N, rev? : Bool) -> Frontier[N]

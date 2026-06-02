@@ -402,6 +402,52 @@ test "translated BAP depth first search invokes traversal callbacks" {
 }
 
 ///|
+test "translated BAP depth first visit delegates visitor callbacks" {
+  let graph : @graphlib.Graph[Int, String] = @graphlib.Graph::create(edges=[
+    (0, 1, "a"),
+    (1, 2, "b"),
+    (2, 0, "c"),
+    (0, 2, "d"),
+    (0, 3, "e"),
+    (3, 1, "f"),
+  ])
+  let visitor : @graphlib.DfsVisitor[Int, String, Array[String]] = @graphlib.DfsVisitor::new(
+    start_tree=(node, events) => {
+      events.push("start:\{node}")
+      events
+    },
+    enter_node=(pre, node, events) => {
+      events.push("enter:\{pre}:\{node}")
+      events
+    },
+    leave_node=(rpost, node, events) => {
+      events.push("leave:\{rpost}:\{node}")
+      events
+    },
+    enter_edge=(kind, edge, events) => {
+      events.push("edge:\{edge_kind_name(kind)}:\{edge.label}")
+      events
+    },
+  )
+  let events = graph.depth_first_visit(
+    visitor,
+    init=([] : Array[String]),
+    start=Some(0),
+  )
+  assert_true(
+    events ==
+    [
+      "start:0", "enter:0:0", "edge:tree:a", "enter:1:1", "edge:tree:b", "enter:2:2",
+      "edge:back:c", "leave:3:2", "leave:2:1", "edge:forward:d", "edge:tree:e", "enter:3:3",
+      "edge:cross:f", "leave:1:3", "leave:0:0",
+    ],
+  )
+
+  let identity : @graphlib.DfsVisitor[Int, String, Array[Int]] = @graphlib.DfsVisitor::identity()
+  assert_true(graph.depth_first_visit(identity, init=[7], start=Some(0)) == [7])
+}
+
+///|
 test "translated BAP depth first search starts requested tree then remaining forest" {
   let graph : @graphlib.Graph[Int, String] = @graphlib.Graph::create(edges=[
     (0, 1, "left"),

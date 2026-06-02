@@ -51,6 +51,37 @@ fn[N, E, A] dfs_edge_identity(
 }
 
 ///|
+struct DfsVisitor[N, E, A] {
+  start_tree_value : (N, A) -> A
+  enter_node_value : (Int, N, A) -> A
+  leave_node_value : (Int, N, A) -> A
+  enter_edge_value : (EdgeKind, Edge[N, E], A) -> A
+  leave_edge_value : (EdgeKind, Edge[N, E], A) -> A
+} derive(Debug)
+
+///|
+pub fn[N, E, A] DfsVisitor::new(
+  start_tree? : (N, A) -> A = dfs_start_tree_identity,
+  enter_node? : (Int, N, A) -> A = dfs_node_identity,
+  leave_node? : (Int, N, A) -> A = dfs_node_identity,
+  enter_edge? : (EdgeKind, Edge[N, E], A) -> A = dfs_edge_identity,
+  leave_edge? : (EdgeKind, Edge[N, E], A) -> A = dfs_edge_identity,
+) -> DfsVisitor[N, E, A] {
+  {
+    start_tree_value: start_tree,
+    enter_node_value: enter_node,
+    leave_node_value: leave_node,
+    enter_edge_value: enter_edge,
+    leave_edge_value: leave_edge,
+  }
+}
+
+///|
+pub fn[N, E, A] DfsVisitor::identity() -> DfsVisitor[N, E, A] {
+  DfsVisitor::new()
+}
+
+///|
 fn[N : Hash + Eq, E, A] depth_first_search_visit(
   graph : Graph[N, E],
   node : N,
@@ -134,6 +165,26 @@ pub fn[N : Hash + Eq, E, A] Graph::depth_first_search(
     }
   }
   state
+}
+
+///|
+pub fn[N : Hash + Eq, E, A] Graph::depth_first_visit(
+  self : Graph[N, E],
+  visitor : DfsVisitor[N, E, A],
+  init~ : A,
+  rev? : Bool = false,
+  start? : N? = None,
+) -> A {
+  self.depth_first_search(
+    init~,
+    rev~,
+    start~,
+    start_tree=visitor.start_tree_value,
+    enter_node=visitor.enter_node_value,
+    leave_node=visitor.leave_node_value,
+    enter_edge=visitor.enter_edge_value,
+    leave_edge=visitor.leave_edge_value,
+  )
 }
 
 ///|

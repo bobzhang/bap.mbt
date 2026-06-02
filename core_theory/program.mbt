@@ -497,6 +497,37 @@ pub fn Source::compare(self : Source, other : Source) -> Int {
 }
 
 ///|
+pub fn Source::domain() -> @knowledge.Domain[Source] {
+  let empty = Source::empty()
+  @knowledge.Domain::new(
+    name=core_name("unit-source"),
+    empty=Some(empty),
+    is_empty=source => source.equal(empty),
+    order=(lhs, rhs) => {
+      if lhs.equal(rhs) {
+        Equal
+      } else if lhs.equal(empty) {
+        Less
+      } else if rhs.equal(empty) {
+        Greater
+      } else {
+        Incomparable
+      }
+    },
+    join=(lhs, rhs) => {
+      if lhs.equal(rhs) || rhs.equal(empty) {
+        Ok(lhs)
+      } else if lhs.equal(empty) {
+        Ok(rhs)
+      } else {
+        Err("conflicting source values")
+      }
+    },
+    inspect=source_inspect,
+  )
+}
+
+///|
 pub fn Source::with_language(self : Source, language : Language) -> Source {
   { ..self, language_value: language }
 }

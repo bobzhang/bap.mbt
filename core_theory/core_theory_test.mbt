@@ -3040,6 +3040,29 @@ test "program metadata tracks source compiler and units" {
   assert_true(source.compare(same_source) == 0)
   assert_true(!source.equal(newer_source))
   assert_true(source.compare(newer_source) != 0)
+  let source_domain = @core_theory.Source::domain()
+  match source_domain.empty() {
+    Some(value) => assert_true(value.equal(empty_source))
+    None => fail("missing source domain bottom")
+  }
+  assert_true(source_domain.is_empty(empty_source))
+  assert_true(source_domain.order(empty_source, source) == Less)
+  assert_true(source_domain.order(source, empty_source) == Greater)
+  assert_true(source_domain.order(source, same_source) == Equal)
+  assert_true(source_domain.order(source, newer_source) == Incomparable)
+  match source_domain.join(empty_source, source) {
+    Ok(value) => assert_true(value.equal(source))
+    Err(reason) => fail(reason)
+  }
+  match source_domain.join(source, empty_source) {
+    Ok(value) => assert_true(value.equal(source))
+    Err(reason) => fail(reason)
+  }
+  match source_domain.join(source, same_source) {
+    Ok(value) => assert_true(value.equal(source))
+    Err(reason) => fail(reason)
+  }
+  assert_true(source_domain.join(source, newer_source) is Err(_))
   let source_codec = @core_theory.Source::persistent()
   match source_codec.decode(source_codec.encode(source)) {
     Ok(decoded) => assert_true(decoded.equal(source))

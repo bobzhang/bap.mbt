@@ -607,6 +607,7 @@ pub fn Source::code(Self) -> String
 pub fn Source::code_slot() -> @knowledge.Slot[Unit, String]
 pub fn Source::compare(Self, Self) -> Int
 pub fn Source::create(language? : Language, code? : String, file? : String) -> Self
+pub fn Source::domain() -> @knowledge.Domain[Self]
 pub fn Source::empty() -> Self
 pub fn Source::equal(Self, Self) -> Bool
 pub fn Source::file(Self) -> String?

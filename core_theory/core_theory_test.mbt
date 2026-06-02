@@ -3942,6 +3942,18 @@ test "program label facts expose BAP-style Knowledge slots" {
       assert_true(facts.collect_addr(object) == Some(addr))
       assert_true(facts.collect_name(object) is None)
       assert_true(facts.collect_possible_name(object) == Some("main"))
+      let possible_names = facts.collect_possible_name_opinions(object)
+      assert_true(possible_names.entries().length() == 2)
+      assert_true(
+        possible_names.entries().search_by(entry => entry.0 == Some("main"))
+        is Some(_),
+      )
+      assert_true(
+        possible_names
+        .entries()
+        .search_by(entry => entry.0 == Some("sub_401000"))
+        is Some(_),
+      )
       assert_true(facts.collect_encoding(object) == Some(C))
       assert_true(
         facts.collect_semantics(object).map(s => s.code_hex()) ==
@@ -3991,6 +4003,7 @@ test "program label facts expose BAP-style Knowledge slots" {
 
   let empty = facts.create()
   assert_true(facts.collect_target(empty).is_unknown())
+  assert_true(facts.collect_possible_name_opinions(empty).is_empty())
   assert_true(facts.collect_encoding(empty) is None)
   assert_true(facts.collect_semantics(empty) is None)
 }

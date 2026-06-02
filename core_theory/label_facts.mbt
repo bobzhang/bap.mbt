@@ -414,9 +414,17 @@ pub fn LabelFacts::collect_possible_name(
   self : LabelFacts,
   object : @knowledge.Object[Unit],
 ) -> String? {
+  self.collect_possible_name_opinions(object).choice()
+}
+
+///|
+pub fn LabelFacts::collect_possible_name_opinions(
+  self : LabelFacts,
+  object : @knowledge.Object[Unit],
+) -> @knowledge.Opinions[String?] {
   match self.possible_name_value.collect(object) {
-    Some(opinions) => opinions.choice()
-    None => None
+    Some(opinions) => opinions
+    None => empty_possible_label_names()
   }
 }
 

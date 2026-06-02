@@ -324,6 +324,7 @@ pub fn LabelFacts::collect_is_valid(Self, @knowledge.Object[Unit]) -> Bool?
 pub fn LabelFacts::collect_ivec(Self, @knowledge.Object[Unit]) -> Int?
 pub fn LabelFacts::collect_name(Self, @knowledge.Object[Unit]) -> String?
 pub fn LabelFacts::collect_possible_name(Self, @knowledge.Object[Unit]) -> String?
+pub fn LabelFacts::collect_possible_name_opinions(Self, @knowledge.Object[Unit]) -> @knowledge.Opinions[String?]
 pub fn LabelFacts::collect_semantics(Self, @knowledge.Object[Unit]) -> Semantics?
 pub fn LabelFacts::collect_target(Self, @knowledge.Object[Unit]) -> Target
 pub fn LabelFacts::collect_unit(Self, @knowledge.Object[Unit]) -> ProgramUnit?

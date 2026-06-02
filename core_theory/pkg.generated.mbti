@@ -813,6 +813,7 @@ pub fn TargetOptions::with_value(Self, String, String) -> Self
 type Value
 pub fn Value::cls() -> @knowledge.Class[Unit, Unit]
 pub fn Value::compare(Self, Self) -> Int
+pub fn Value::domain() -> @knowledge.Domain[Self]
 pub fn Value::empty(Sort) -> Self
 pub fn Value::equal(Self, Self) -> Bool
 pub fn Value::fact(Self, String) -> String?

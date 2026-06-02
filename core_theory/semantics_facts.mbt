@@ -7,42 +7,6 @@ struct SemanticsFacts {
 }
 
 ///|
-fn value_inspect(value : Value) -> String {
-  value.sort().to_string()
-}
-
-///|
-fn value_domain() -> @knowledge.Domain[Value] {
-  let empty = semantics_default_value()
-  @knowledge.Domain::new(
-    name=core_name("semantics-value"),
-    empty=Some(empty),
-    is_empty=(value : Value) => value_equal(value, empty),
-    order=(lhs : Value, rhs : Value) => {
-      if value_equal(lhs, rhs) {
-        Equal
-      } else if value_equal(lhs, empty) {
-        Less
-      } else if value_equal(rhs, empty) {
-        Greater
-      } else {
-        Incomparable
-      }
-    },
-    join=(lhs : Value, rhs : Value) => {
-      if value_equal(lhs, rhs) || value_equal(rhs, empty) {
-        Ok(lhs)
-      } else if value_equal(lhs, empty) {
-        Ok(rhs)
-      } else {
-        Err("conflicting semantics values")
-      }
-    },
-    inspect=value_inspect,
-  )
-}
-
-///|
 fn semantics_code_domain() -> @knowledge.Domain[Bytes?] {
   @knowledge.Domain::optional(bytes_domain("insn-code"))
 }
@@ -62,7 +26,7 @@ pub fn Semantics::slot() -> @knowledge.Slot[Unit, Semantics] {
 pub fn Semantics::value_slot() -> @knowledge.Slot[Unit, Value] {
   Semantics::cls().property(
     name=core_name("value"),
-    domain=value_domain(),
+    domain=Value::domain(),
     desc="the program semantics value",
     persistent=Value::persistent(),
     public=true,

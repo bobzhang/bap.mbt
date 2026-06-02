@@ -3343,7 +3343,50 @@ test "program semantics stores values and instruction bytes" {
   )
   assert_true(value.equal(same_value))
   assert_true(value.compare(same_value) == 0)
-  assert_true(!value.equal(value.with_fact("extra", "true")))
+  let extra_value = value.with_fact("extra", "true")
+  let disjoint_value = @core_theory.Value::empty(@core_theory.Sort::bool()).with_fact(
+    "source", "ssa",
+  )
+  let conflicting_value = value.with_fact("kind", "lowered")
+  assert_true(!value.equal(extra_value))
+  let value_domain = @core_theory.Value::domain()
+  let empty_value = @core_theory.Value::empty(@core_theory.Sort::top())
+  match value_domain.empty() {
+    Some(item) => assert_true(item.equal(empty_value))
+    None => fail("missing value domain bottom")
+  }
+  assert_true(value_domain.is_empty(empty_value))
+  assert_true(value_domain.order(empty_value, value) == Less)
+  assert_true(value_domain.order(value, empty_value) == Greater)
+  assert_true(value_domain.order(value, same_value) == Equal)
+  assert_true(value_domain.order(value, extra_value) == Less)
+  assert_true(value_domain.order(extra_value, value) == Greater)
+  assert_true(value_domain.order(value, disjoint_value) == Incomparable)
+  assert_true(value_domain.order(value, byte_value) == Incomparable)
+  match value_domain.join(empty_value, value) {
+    Ok(item) => assert_true(item.equal(value))
+    Err(reason) => fail(reason)
+  }
+  match value_domain.join(value, empty_value) {
+    Ok(item) => assert_true(item.equal(value))
+    Err(reason) => fail(reason)
+  }
+  match value_domain.join(value, extra_value) {
+    Ok(item) => {
+      assert_true(item.fact("kind") == Some("lifted"))
+      assert_true(item.fact("extra") == Some("true"))
+    }
+    Err(reason) => fail(reason)
+  }
+  match value_domain.join(value, disjoint_value) {
+    Ok(item) => {
+      assert_true(item.fact("kind") == Some("lifted"))
+      assert_true(item.fact("source") == Some("ssa"))
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(value_domain.join(value, byte_value) is Err(_))
+  assert_true(value_domain.join(value, conflicting_value) is Err(_))
   let forgotten_value = value.forget()
   assert_true(forgotten_value.sort().same(@core_theory.Sort::bool()))
   assert_true(forgotten_value.fact("kind") == Some("lifted"))

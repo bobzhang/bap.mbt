@@ -78,6 +78,88 @@ pub fn Value::compare(self : Value, other : Value) -> Int {
 }
 
 ///|
+fn string_map_subset(
+  lhs : Map[String, String],
+  rhs : Map[String, String],
+) -> Bool {
+  for entry in lhs {
+    if rhs.get(entry.0) != Some(entry.1) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn value_join_facts(
+  lhs : Value,
+  rhs : Value,
+) -> Result[Map[String, String], String] {
+  if lhs.sort_value != rhs.sort_value {
+    return Err("conflicting value sorts")
+  }
+  let facts = lhs.facts.copy()
+  for entry in rhs.facts {
+    match facts.get(entry.0) {
+      Some(value) if value != entry.1 => return Err("conflicting value facts")
+      _ => facts[entry.0] = entry.1
+    }
+  }
+  Ok(facts)
+}
+
+///|
+fn value_inspect(value : Value) -> String {
+  value.sort().to_string()
+}
+
+///|
+pub fn Value::domain() -> @knowledge.Domain[Value] {
+  let empty = Value::empty(Sort::top())
+  @knowledge.Domain::new(
+    name=core_name("value"),
+    empty=Some(empty),
+    is_empty=value => value.equal(empty),
+    order=(lhs, rhs) => {
+      if lhs.equal(rhs) {
+        Equal
+      } else if lhs.equal(empty) {
+        Less
+      } else if rhs.equal(empty) {
+        Greater
+      } else if lhs.sort_value == rhs.sort_value {
+        let lhs_subset = string_map_subset(lhs.facts, rhs.facts)
+        let rhs_subset = string_map_subset(rhs.facts, lhs.facts)
+        if lhs_subset && rhs_subset {
+          Equal
+        } else if lhs_subset {
+          Less
+        } else if rhs_subset {
+          Greater
+        } else {
+          Incomparable
+        }
+      } else {
+        Incomparable
+      }
+    },
+    join=(lhs, rhs) => {
+      if lhs.equal(empty) {
+        Ok(rhs)
+      } else if rhs.equal(empty) {
+        Ok(lhs)
+      } else {
+        match value_join_facts(lhs, rhs) {
+          Ok(facts) => Ok({ sort_value: lhs.sort_value, facts })
+          Err(reason) => Err(reason)
+        }
+      }
+    },
+    inspect=value_inspect,
+  )
+}
+
+///|
 pub fn Value::with_fact(self : Value, key : String, value : String) -> Value {
   let facts = self.facts.copy()
   facts[key] = value

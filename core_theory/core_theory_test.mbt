@@ -481,6 +481,18 @@ test "targets inherit defaults and match ancestry" {
   assert_true(@core_theory.Endianness::bi() == BiEndian)
   assert_true(little.equal(little))
   assert_true(little.compare(big) < 0)
+  assert_true(little.name().show() == "core:le")
+  assert_true(little.hash() == little.name().hash())
+  assert_true(@core_theory.Endianness::members().contains(BiEndian))
+  match @core_theory.Endianness::read("core:eb") {
+    Ok(value) => assert_true(value == BigEndian)
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.Endianness::read("le", pkg="core") {
+    Ok(value) => assert_true(value == LittleEndian)
+    Err(reason) => fail(reason)
+  }
+  assert_true(@core_theory.Endianness::read("le") is Err(_))
   let unknown_system = @core_theory.System::of_string("unknown").unwrap()
   let linux = @core_theory.System::of_string("linux").unwrap()
   assert_true(@core_theory.System::unknown().is_unknown())
@@ -504,6 +516,18 @@ test "targets inherit defaults and match ancestry" {
   assert_true(!linux.is_unknown())
   assert_true(linux.equal(@core_theory.System::of_string("linux").unwrap()))
   assert_true(unknown_system.compare(linux) < 0)
+  assert_true(linux.name().show() == "core:linux")
+  assert_true(unknown_system.name().show() == ":unknown")
+  assert_true(linux.hash() == linux.name().hash())
+  assert_true(@core_theory.System::members().contains(NoSystem))
+  match @core_theory.System::read("core:linux") {
+    Ok(value) => assert_true(value == Linux)
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.System::read(":unknown") {
+    Ok(value) => assert_true(value == UnknownSystem)
+    Err(reason) => fail(reason)
+  }
   assert_true(@core_theory.Abi::unknown().is_unknown())
   assert_true(@core_theory.Abi::gnu() == GNU)
   assert_true(@core_theory.Abi::sysv() == SysV)
@@ -528,6 +552,16 @@ test "targets inherit defaults and match ancestry" {
     .compare(@core_theory.Abi::of_string("gnu").unwrap()) <
     0,
   )
+  assert_true(@core_theory.Abi::gnu().name().show() == "core:gnu")
+  assert_true(@core_theory.Abi::ms().name().show() == "core:ms")
+  assert_true(
+    @core_theory.Abi::gnu().hash() == @core_theory.Abi::gnu().name().hash(),
+  )
+  assert_true(@core_theory.Abi::members().contains(HVC))
+  match @core_theory.Abi::read("core:ms") {
+    Ok(value) => assert_true(value == MSVC)
+    Err(reason) => fail(reason)
+  }
   assert_true(@core_theory.Fabi::unknown().is_unknown())
   assert_true(@core_theory.Fabi::hard() == Hard)
   assert_true(@core_theory.Fabi::soft() == Soft)
@@ -538,6 +572,16 @@ test "targets inherit defaults and match ancestry" {
     .compare(@core_theory.Fabi::of_string("hard").unwrap()) <
     0,
   )
+  assert_true(@core_theory.Fabi::hard().name().show() == "core:hf")
+  assert_true(@core_theory.Fabi::soft().name().show() == "core:sf")
+  assert_true(
+    @core_theory.Fabi::hard().hash() == @core_theory.Fabi::hard().name().hash(),
+  )
+  assert_true(@core_theory.Fabi::members().contains(UnknownFabi))
+  match @core_theory.Fabi::read("core:sf") {
+    Ok(value) => assert_true(value == Soft)
+    Err(reason) => fail(reason)
+  }
   assert_true(@core_theory.Filetype::unknown().is_unknown())
   assert_true(@core_theory.Filetype::elf() == Elf)
   assert_true(@core_theory.Filetype::coff() == COFF)
@@ -552,6 +596,18 @@ test "targets inherit defaults and match ancestry" {
     .compare(@core_theory.Filetype::of_string("raw").unwrap()) <
     0,
   )
+  assert_true(@core_theory.Filetype::macho().name().show() == "core:macho")
+  assert_true(@core_theory.Filetype::unknown().name().show() == ":unknown")
+  assert_true(
+    @core_theory.Filetype::macho().hash() ==
+    @core_theory.Filetype::macho().name().hash(),
+  )
+  assert_true(@core_theory.Filetype::members().contains(Raw))
+  match @core_theory.Filetype::read("core:aout") {
+    Ok(value) => assert_true(value == AOut)
+    Err(reason) => fail(reason)
+  }
+  assert_true(@core_theory.Filetype::read("missing", pkg="core") is Err(_))
   assert_true(target.matches("amd64"))
   assert_true(target.matches("X86"))
   assert_true(target.find_var("PC") is Some(_))

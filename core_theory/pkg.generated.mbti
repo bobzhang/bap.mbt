@@ -56,12 +56,16 @@ pub fn Abi::fastcall() -> Self
 pub fn Abi::fortran() -> Self
 pub fn Abi::gnu() -> Self
 pub fn Abi::gnueabi() -> Self
+pub fn Abi::hash(Self) -> Int
 pub fn Abi::hvc() -> Self
 pub fn Abi::is_unknown(Self) -> Bool
+pub fn Abi::members() -> Array[Self]
 pub fn Abi::ms() -> Self
 pub fn Abi::msvc() -> Self
+pub fn Abi::name(Self) -> @knowledge.Name
 pub fn Abi::of_string(String) -> Self?
 pub fn Abi::pascal() -> Self
+pub fn Abi::read(String, pkg? : String) -> Result[Self, String]
 pub fn Abi::smc() -> Self
 pub fn Abi::stdcall() -> Self
 pub fn Abi::sysv() -> Self
@@ -157,8 +161,12 @@ pub fn Endianness::bi() -> Self
 pub fn Endianness::compare(Self, Self) -> Int
 pub fn Endianness::eb() -> Self
 pub fn Endianness::equal(Self, Self) -> Bool
+pub fn Endianness::hash(Self) -> Int
 pub fn Endianness::le() -> Self
+pub fn Endianness::members() -> Array[Self]
+pub fn Endianness::name(Self) -> @knowledge.Name
 pub fn Endianness::of_string(String) -> Self?
+pub fn Endianness::read(String, pkg? : String) -> Result[Self, String]
 pub fn Endianness::to_string(Self) -> String
 
 pub(all) enum Fabi {
@@ -169,8 +177,12 @@ pub(all) enum Fabi {
 pub fn Fabi::compare(Self, Self) -> Int
 pub fn Fabi::equal(Self, Self) -> Bool
 pub fn Fabi::hard() -> Self
+pub fn Fabi::hash(Self) -> Int
 pub fn Fabi::is_unknown(Self) -> Bool
+pub fn Fabi::members() -> Array[Self]
+pub fn Fabi::name(Self) -> @knowledge.Name
 pub fn Fabi::of_string(String) -> Self?
+pub fn Fabi::read(String, pkg? : String) -> Result[Self, String]
 pub fn Fabi::soft() -> Self
 pub fn Fabi::to_string(Self) -> String
 pub fn Fabi::unknown() -> Self
@@ -189,11 +201,15 @@ pub fn Filetype::coff() -> Self
 pub fn Filetype::compare(Self, Self) -> Int
 pub fn Filetype::elf() -> Self
 pub fn Filetype::equal(Self, Self) -> Bool
+pub fn Filetype::hash(Self) -> Int
 pub fn Filetype::is_unknown(Self) -> Bool
 pub fn Filetype::macho() -> Self
+pub fn Filetype::members() -> Array[Self]
+pub fn Filetype::name(Self) -> @knowledge.Name
 pub fn Filetype::of_string(String) -> Self?
 pub fn Filetype::pe() -> Self
 pub fn Filetype::raw() -> Self
+pub fn Filetype::read(String, pkg? : String) -> Result[Self, String]
 pub fn Filetype::to_string(Self) -> String
 pub fn Filetype::unknown() -> Self
 
@@ -558,16 +574,20 @@ pub fn System::compare(Self, Self) -> Int
 pub fn System::darwin() -> Self
 pub fn System::equal(Self, Self) -> Bool
 pub fn System::freebsd() -> Self
+pub fn System::hash(Self) -> Int
 pub fn System::hpux() -> Self
 pub fn System::irix() -> Self
 pub fn System::is_unknown(Self) -> Bool
 pub fn System::linux() -> Self
+pub fn System::members() -> Array[Self]
 pub fn System::modesto() -> Self
 pub fn System::msdos() -> Self
+pub fn System::name(Self) -> @knowledge.Name
 pub fn System::netbsd() -> Self
 pub fn System::none() -> Self
 pub fn System::of_string(String) -> Self?
 pub fn System::openbsd() -> Self
+pub fn System::read(String, pkg? : String) -> Result[Self, String]
 pub fn System::solaris() -> Self
 pub fn System::to_string(Self) -> String
 pub fn System::tru64() -> Self

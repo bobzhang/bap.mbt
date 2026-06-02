@@ -80,6 +80,16 @@ pub(all) enum Filetype {
 } derive(Eq, Debug)
 
 ///|
+fn core_target_enum_name(text : String) -> @knowledge.Name {
+  @knowledge.Name::create(text, pkg="core")
+}
+
+///|
+fn unknown_target_enum_name() -> @knowledge.Name {
+  @knowledge.Name::read(":unknown")
+}
+
+///|
 struct TargetOptions {
   values_value : Map[String, String]
 }
@@ -120,6 +130,39 @@ pub fn Endianness::equal(self : Endianness, other : Endianness) -> Bool {
 ///|
 pub fn Endianness::compare(self : Endianness, other : Endianness) -> Int {
   self.rank().compare(other.rank())
+}
+
+///|
+pub fn Endianness::name(self : Endianness) -> @knowledge.Name {
+  match self {
+    LittleEndian => core_target_enum_name("le")
+    BigEndian => core_target_enum_name("eb")
+    BiEndian => core_target_enum_name("bi")
+  }
+}
+
+///|
+pub fn Endianness::hash(self : Endianness) -> Int {
+  self.name().hash()
+}
+
+///|
+pub fn Endianness::members() -> Array[Endianness] {
+  [LittleEndian, BigEndian, BiEndian]
+}
+
+///|
+pub fn Endianness::read(
+  text : String,
+  pkg? : String,
+) -> Result[Endianness, String] {
+  let name = @knowledge.Name::read(text, pkg?)
+  for value in Endianness::members() {
+    if value.name().equal(name) {
+      return Ok(value)
+    }
+  }
+  Err("unknown endianness \{name.show()}")
 }
 
 ///|
@@ -293,6 +336,68 @@ pub fn System::compare(self : System, other : System) -> Int {
 }
 
 ///|
+pub fn System::name(self : System) -> @knowledge.Name {
+  match self {
+    UnknownSystem => unknown_target_enum_name()
+    HPUX => core_target_enum_name("hpux")
+    NetBSD => core_target_enum_name("netbsd")
+    Linux => core_target_enum_name("linux")
+    Solaris => core_target_enum_name("solaris")
+    AIX => core_target_enum_name("aix")
+    IRIX => core_target_enum_name("irix")
+    Darwin => core_target_enum_name("darwin")
+    VxWorks => core_target_enum_name("vxworks")
+    FreeBSD => core_target_enum_name("freebsd")
+    Tru64 => core_target_enum_name("tru64")
+    Modesto => core_target_enum_name("modesto")
+    OpenBSD => core_target_enum_name("openbsd")
+    Windows => core_target_enum_name("windows")
+    MSDOS => core_target_enum_name("msdos")
+    UEFI => core_target_enum_name("uefi")
+    NoSystem => core_target_enum_name("none")
+  }
+}
+
+///|
+pub fn System::hash(self : System) -> Int {
+  self.name().hash()
+}
+
+///|
+pub fn System::members() -> Array[System] {
+  [
+    UnknownSystem,
+    HPUX,
+    NetBSD,
+    Linux,
+    Solaris,
+    AIX,
+    IRIX,
+    Darwin,
+    VxWorks,
+    FreeBSD,
+    Tru64,
+    Modesto,
+    OpenBSD,
+    Windows,
+    MSDOS,
+    UEFI,
+    NoSystem,
+  ]
+}
+
+///|
+pub fn System::read(text : String, pkg? : String) -> Result[System, String] {
+  let name = @knowledge.Name::read(text, pkg?)
+  for value in System::members() {
+    if value.name().equal(name) {
+      return Ok(value)
+    }
+  }
+  Err("unknown system \{name.show()}")
+}
+
+///|
 pub fn Abi::to_string(self : Abi) -> String {
   match self {
     UnknownAbi => "unknown"
@@ -460,6 +565,66 @@ pub fn Abi::compare(self : Abi, other : Abi) -> Int {
 }
 
 ///|
+pub fn Abi::name(self : Abi) -> @knowledge.Name {
+  match self {
+    UnknownAbi => unknown_target_enum_name()
+    SysV => core_target_enum_name("sysv")
+    GNU => core_target_enum_name("gnu")
+    EABI => core_target_enum_name("eabi")
+    GNUEABI => core_target_enum_name("gnueabi")
+    CDecl => core_target_enum_name("cdecl")
+    Pascal => core_target_enum_name("pascal")
+    FortranAbi => core_target_enum_name("fortran")
+    StdCall => core_target_enum_name("stdcall")
+    FastCall => core_target_enum_name("fastcall")
+    ThisCall => core_target_enum_name("thiscall")
+    VectorCall => core_target_enum_name("vectorcall")
+    Watcom => core_target_enum_name("watcom")
+    MSVC => core_target_enum_name("ms")
+    SMC => core_target_enum_name("smc")
+    HVC => core_target_enum_name("hvc")
+  }
+}
+
+///|
+pub fn Abi::hash(self : Abi) -> Int {
+  self.name().hash()
+}
+
+///|
+pub fn Abi::members() -> Array[Abi] {
+  [
+    UnknownAbi,
+    SysV,
+    GNU,
+    EABI,
+    GNUEABI,
+    CDecl,
+    Pascal,
+    FortranAbi,
+    StdCall,
+    FastCall,
+    ThisCall,
+    VectorCall,
+    Watcom,
+    MSVC,
+    SMC,
+    HVC,
+  ]
+}
+
+///|
+pub fn Abi::read(text : String, pkg? : String) -> Result[Abi, String] {
+  let name = @knowledge.Name::read(text, pkg?)
+  for value in Abi::members() {
+    if value.name().equal(name) {
+      return Ok(value)
+    }
+  }
+  Err("unknown ABI \{name.show()}")
+}
+
+///|
 pub fn Fabi::to_string(self : Fabi) -> String {
   match self {
     UnknownFabi => "unknown"
@@ -515,6 +680,36 @@ pub fn Fabi::equal(self : Fabi, other : Fabi) -> Bool {
 ///|
 pub fn Fabi::compare(self : Fabi, other : Fabi) -> Int {
   self.rank().compare(other.rank())
+}
+
+///|
+pub fn Fabi::name(self : Fabi) -> @knowledge.Name {
+  match self {
+    UnknownFabi => unknown_target_enum_name()
+    Soft => core_target_enum_name("sf")
+    Hard => core_target_enum_name("hf")
+  }
+}
+
+///|
+pub fn Fabi::hash(self : Fabi) -> Int {
+  self.name().hash()
+}
+
+///|
+pub fn Fabi::members() -> Array[Fabi] {
+  [UnknownFabi, Soft, Hard]
+}
+
+///|
+pub fn Fabi::read(text : String, pkg? : String) -> Result[Fabi, String] {
+  let name = @knowledge.Name::read(text, pkg?)
+  for value in Fabi::members() {
+    if value.name().equal(name) {
+      return Ok(value)
+    }
+  }
+  Err("unknown floating-point ABI \{name.show()}")
 }
 
 ///|
@@ -605,6 +800,40 @@ pub fn Filetype::equal(self : Filetype, other : Filetype) -> Bool {
 ///|
 pub fn Filetype::compare(self : Filetype, other : Filetype) -> Int {
   self.rank().compare(other.rank())
+}
+
+///|
+pub fn Filetype::name(self : Filetype) -> @knowledge.Name {
+  match self {
+    UnknownFiletype => unknown_target_enum_name()
+    Elf => core_target_enum_name("elf")
+    MachO => core_target_enum_name("macho")
+    COFF => core_target_enum_name("coff")
+    PE => core_target_enum_name("pe")
+    AOut => core_target_enum_name("aout")
+    Raw => core_target_enum_name("raw")
+  }
+}
+
+///|
+pub fn Filetype::hash(self : Filetype) -> Int {
+  self.name().hash()
+}
+
+///|
+pub fn Filetype::members() -> Array[Filetype] {
+  [UnknownFiletype, Elf, MachO, COFF, PE, AOut, Raw]
+}
+
+///|
+pub fn Filetype::read(text : String, pkg? : String) -> Result[Filetype, String] {
+  let name = @knowledge.Name::read(text, pkg?)
+  for value in Filetype::members() {
+    if value.name().equal(name) {
+      return Ok(value)
+    }
+  }
+  Err("unknown file type \{name.show()}")
 }
 
 ///|

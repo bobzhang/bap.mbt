@@ -48,22 +48,43 @@ fn semantics_code_domain() -> @knowledge.Domain[Bytes?] {
 }
 
 ///|
-pub fn SemanticsFacts::new() -> SemanticsFacts {
-  let cls = Semantics::cls()
-  let value = cls.property(
+pub fn Semantics::slot() -> @knowledge.Slot[Unit, Semantics] {
+  Program::cls().property(
+    name=core_name("semantics"),
+    domain=semantics_domain(),
+    desc="the program semantics",
+    persistent=Semantics::persistent(),
+    public=true,
+  )
+}
+
+///|
+pub fn Semantics::value_slot() -> @knowledge.Slot[Unit, Value] {
+  Semantics::cls().property(
     name=core_name("value"),
     domain=value_domain(),
     desc="the program semantics value",
     persistent=Value::persistent(),
     public=true,
   )
-  let code = cls.property(
+}
+
+///|
+pub fn Semantics::code_slot() -> @knowledge.Slot[Unit, Bytes?] {
+  Semantics::cls().property(
     name=core_name("insn-code"),
     domain=semantics_code_domain(),
     desc="the program memory contents",
     persistent=@knowledge.Persistent::optional(@knowledge.Persistent::bytes()),
     public=true,
   )
+}
+
+///|
+pub fn SemanticsFacts::new() -> SemanticsFacts {
+  let cls = Semantics::cls()
+  let value = Semantics::value_slot()
+  let code = Semantics::code_slot()
   {
     state_value: @knowledge.State::new(),
     class_value: cls,

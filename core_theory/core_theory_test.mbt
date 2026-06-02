@@ -2889,8 +2889,24 @@ test "program semantics stores values and instruction bytes" {
   assert_true(
     @core_theory.Semantics::cls().sort() == @core_theory.EffectSort::top(),
   )
+  let semantics_slot = @core_theory.Semantics::slot()
+  assert_true(semantics_slot.cls().same(@core_theory.Program::cls()))
+  assert_true(semantics_slot.name().show() == "core:semantics")
+  assert_semantics_persistent_round_trip(
+    semantics_slot.persistent(),
+    semantics,
+    "semantics slot",
+  )
   let facts = @core_theory.SemanticsFacts::new()
   assert_true(facts.class().same(@core_theory.Semantics::cls()))
+  assert_true(
+    facts.value().slot().owner().show() ==
+    @core_theory.Semantics::value_slot().owner().show(),
+  )
+  assert_true(
+    facts.code().slot().name().show() ==
+    @core_theory.Semantics::code_slot().name().show(),
+  )
   assert_value_persistent_round_trip(
     facts.value().slot().persistent(),
     value,
@@ -3099,6 +3115,14 @@ test "program label facts expose BAP-style Knowledge slots" {
     .with_subroutine()
   let facts = @core_theory.LabelFacts::new()
   assert_true(facts.class().same(@core_theory.Label::cls()))
+  assert_true(
+    facts.semantics().slot().owner().show() ==
+    @core_theory.Semantics::slot().owner().show(),
+  )
+  assert_true(
+    facts.semantics().slot().name().show() ==
+    @core_theory.Semantics::slot().name().show(),
+  )
   assert_persistent_round_trip(
     facts.addr().slot().persistent(),
     Some(addr),

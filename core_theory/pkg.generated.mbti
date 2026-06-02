@@ -485,13 +485,16 @@ type Semantics
 pub fn Semantics::cls() -> @knowledge.Class[Unit, EffectSort]
 pub fn Semantics::code(Self) -> Bytes?
 pub fn Semantics::code_hex(Self) -> String?
+pub fn Semantics::code_slot() -> @knowledge.Slot[Unit, Bytes?]
 pub fn Semantics::compare(Self, Self) -> Int
 pub fn Semantics::create(effect? : Effect, value? : Value, code? : Bytes) -> Self
 pub fn Semantics::effect(Self) -> Effect
 pub fn Semantics::empty() -> Self
 pub fn Semantics::equal(Self, Self) -> Bool
 pub fn Semantics::persistent() -> @knowledge.Persistent[Self]
+pub fn Semantics::slot() -> @knowledge.Slot[Unit, Self]
 pub fn Semantics::value(Self) -> Value
+pub fn Semantics::value_slot() -> @knowledge.Slot[Unit, Value]
 pub fn Semantics::with_code(Self, Bytes) -> Self
 pub fn Semantics::with_effect(Self, Effect) -> Self
 pub fn Semantics::with_value(Self, Value) -> Self

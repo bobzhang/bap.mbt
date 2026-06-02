@@ -121,13 +121,7 @@ pub fn LabelFacts::new() -> LabelFacts {
     persistent=Language::persistent(),
     public=true,
   )
-  let semantics = cls.property(
-    name=core_name("semantics"),
-    domain=semantics_domain(),
-    desc="the program semantics",
-    persistent=Semantics::persistent(),
-    public=true,
-  )
+  let semantics = Semantics::slot()
   let aliases = cls.property(
     name=core_name("label-aliases"),
     domain=@knowledge.Domain::powerset(core_name("label-aliases"), item => item),

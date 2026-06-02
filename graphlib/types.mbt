@@ -58,7 +58,7 @@ pub fn[E] GraphPath::edges_rev(self : GraphPath[E]) -> Array[E] {
 }
 
 ///|
-pub fn[E] GraphPath::start(self : GraphPath[E]) -> E? {
+pub fn[E] GraphPath::start_opt(self : GraphPath[E]) -> E? {
   if self.edges_value.is_empty() {
     None
   } else {
@@ -67,7 +67,7 @@ pub fn[E] GraphPath::start(self : GraphPath[E]) -> E? {
 }
 
 ///|
-pub fn[E] GraphPath::finish(self : GraphPath[E]) -> E? {
+pub fn[E] GraphPath::finish_opt(self : GraphPath[E]) -> E? {
   let length = self.edges_value.length()
   if length == 0 {
     None
@@ -77,19 +77,29 @@ pub fn[E] GraphPath::finish(self : GraphPath[E]) -> E? {
 }
 
 ///|
-pub fn[E] GraphPath::start_exn(self : GraphPath[E]) -> E {
-  match self.start() {
+pub fn[E] GraphPath::start(self : GraphPath[E]) -> E {
+  match self.start_opt() {
     Some(edge) => edge
     None => abort("empty graph path")
   }
 }
 
 ///|
-pub fn[E] GraphPath::finish_exn(self : GraphPath[E]) -> E {
-  match self.finish() {
+pub fn[E] GraphPath::finish(self : GraphPath[E]) -> E {
+  match self.finish_opt() {
     Some(edge) => edge
     None => abort("empty graph path")
   }
+}
+
+///|
+pub fn[E] GraphPath::start_exn(self : GraphPath[E]) -> E {
+  self.start()
+}
+
+///|
+pub fn[E] GraphPath::finish_exn(self : GraphPath[E]) -> E {
+  self.finish()
 }
 
 ///|

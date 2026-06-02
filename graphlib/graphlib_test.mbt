@@ -570,11 +570,13 @@ test "translated BAP shortest path returns weighted edge path" {
       assert_true(path.length() == 3)
       assert_true(int_edge_pairs(path.edges()) == [(0, 2), (2, 1), (1, 3)])
       assert_true(int_edge_pairs(path.edges_rev()) == [(1, 3), (2, 1), (0, 2)])
+      assert_true((path.start().src, path.start().dst) == (0, 2))
+      assert_true((path.finish().src, path.finish().dst) == (1, 3))
       assert_true(
-        path.start().map(edge => (edge.src, edge.dst)) == Some((0, 2)),
+        path.start_opt().map(edge => (edge.src, edge.dst)) == Some((0, 2)),
       )
       assert_true(
-        path.finish().map(edge => (edge.src, edge.dst)) == Some((1, 3)),
+        path.finish_opt().map(edge => (edge.src, edge.dst)) == Some((1, 3)),
       )
       assert_true((path.start_exn().src, path.start_exn().dst) == (0, 2))
       assert_true((path.finish_exn().src, path.finish_exn().dst) == (1, 3))
@@ -593,8 +595,8 @@ test "translated BAP shortest path returns weighted edge path" {
     Some(path) => {
       assert_true(path.weight() == 0)
       assert_true(path.length() == 0)
-      assert_true(path.start() is None)
-      assert_true(path.finish() is None)
+      assert_true(path.start_opt() is None)
+      assert_true(path.finish_opt() is None)
     }
     None => fail("expected a zero-length path from a node to itself")
   }

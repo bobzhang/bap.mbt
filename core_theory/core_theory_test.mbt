@@ -2510,6 +2510,26 @@ test "program metadata tracks source compiler and units" {
   assert_true(compiler.options() == ["-O2"])
   assert_true(compiler.spec("triple") == Some("x86_64-unknown-linux"))
   assert_true(compiler.spec("arch") == Some("x86-64"))
+  match
+    @core_theory.Compiler::create_from_specs(
+      "clang",
+      [("triple", "x86_64-unknown-linux"), ("arch", "x86-64")],
+      version=["17", "0"],
+      options=["-O2"],
+    ) {
+    Ok(from_specs) => {
+      assert_true(from_specs.equal(compiler))
+      assert_true(from_specs.spec("arch") == Some("x86-64"))
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    @core_theory.Compiler::create_from_specs("clang", [
+      ("arch", "x86-64"),
+      ("arch", "x86"),
+    ])
+    is Err(_),
+  )
   let same_compiler = @core_theory.Compiler::create(
     "clang",
     version=["17", "0"],

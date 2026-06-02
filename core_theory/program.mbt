@@ -571,6 +571,23 @@ pub fn Compiler::create(
 }
 
 ///|
+pub fn Compiler::create_from_specs(
+  name : String,
+  specs : Array[(String, String)],
+  version? : Array[String],
+  options? : Array[String],
+) -> Result[Compiler, String] {
+  let spec_map : Map[String, String] = {}
+  for entry in specs {
+    if spec_map.get(entry.0) is Some(_) {
+      return Err("duplicate compiler spec \{entry.0}")
+    }
+    spec_map[entry.0] = entry.1
+  }
+  Ok(Compiler::create(name, specs=spec_map, version?, options?))
+}
+
+///|
 pub fn Compiler::name(self : Compiler) -> String {
   self.name_value
 }

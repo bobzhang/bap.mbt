@@ -72,6 +72,7 @@ pub fn[N : Hash + Eq, E, A] Graph::depth_first_visit(Self[N, E], DfsVisitor[N, E
 pub fn[N : Hash + Eq, E] Graph::dfs_edges(Self[N, E], N) -> Array[(EdgeKind, Edge[N, E])]
 pub fn[N : Hash + Eq, E] Graph::dfs_numbering(Self[N, E], N) -> Map[N, DfsNodeInfo]
 pub fn[N : Hash + Eq, E] Graph::dom_frontier(Self[N, E], N, rev? : Bool) -> Frontier[N]
+pub fn[N : Hash + Eq, E] Graph::dom_frontier_of_tree(Self[N, E], Tree[N], rev? : Bool) -> Frontier[N]
 pub fn[N : Hash + Eq, E] Graph::dominance_frontiers(Self[N, E], N, rev? : Bool) -> Map[N, @set.Set[N]]
 pub fn[N : Hash + Eq, E] Graph::dominator_tree(Self[N, E], N, rev? : Bool) -> Tree[N]
 pub fn[N : Hash + Eq, E] Graph::dominators(Self[N, E], N, rev? : Bool) -> Map[N, @set.Set[N]]

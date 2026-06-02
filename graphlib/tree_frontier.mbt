@@ -233,3 +233,53 @@ pub fn[N : Hash + Eq, E] Graph::dom_frontier(
   }
   graph_frontier_new(nodes, frontiers)
 }
+
+///|
+pub fn[N : Hash + Eq, E] Graph::dom_frontier_of_tree(
+  self : Graph[N, E],
+  tree : Tree[N],
+  rev? : Bool = false,
+) -> Frontier[N] {
+  let frontiers : Map[N, Set[N]] = {}
+  for node in self.nodes {
+    let adjacent = if rev {
+      self.successors(node)
+    } else {
+      self.predecessors(node)
+    }
+    let stop = tree.parent(node)
+    let visited : Set[N] = Set([])
+    for predecessor in adjacent {
+      let mut runner = predecessor
+      let mut done = false
+      while !done {
+        match stop {
+          Some(limit) if runner == limit => done = true
+          _ => {
+            visited.add(runner)
+            match tree.parent(runner) {
+              Some(parent) => runner = parent
+              None => done = true
+            }
+          }
+        }
+      }
+    }
+    for runner in visited {
+      let frontier = match frontiers.get(runner) {
+        Some(set) => set
+        None => Set([])
+      }
+      frontier.add(node)
+      frontiers[runner] = frontier
+    }
+  }
+  let nodes : Array[N] = []
+  for node in self.nodes {
+    match frontiers.get(node) {
+      Some(frontier) if !frontier.is_empty() => nodes.push(node)
+      _ => ()
+    }
+  }
+  graph_frontier_new(nodes, frontiers)
+}

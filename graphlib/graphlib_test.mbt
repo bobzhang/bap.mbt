@@ -840,6 +840,12 @@ test "immediate dominators and frontiers describe branches and loop headers" {
   let frontier_text = frontier.to_string(node_to_string=node => node.to_string())
   assert_true(frontier_text.contains("[1 => (1)]"))
   assert_true(frontier_text.contains("[2 => (4)]"))
+  let frontier_from_tree = graph.dom_frontier_of_tree(tree)
+  assert_true(frontier_from_tree.to_sequence() == frontier.to_sequence())
+  assert_true(frontier_from_tree.elements(1) == frontier.elements(1))
+  assert_true(frontier_from_tree.elements(2) == frontier.elements(2))
+  assert_true(frontier_from_tree.elements(3) == frontier.elements(3))
+  assert_true(frontier_from_tree.elements(4) == frontier.elements(4))
   let post_idoms = graph.immediate_dominators(4, rev=true)
   assert_true(post_idoms[0] == 1)
   assert_true(post_idoms[1] == 4)
@@ -851,6 +857,14 @@ test "immediate dominators and frontiers describe branches and loop headers" {
   assert_true(post_frontiers[2] == Set::from_array([1]))
   assert_true(post_frontiers[3] == Set::from_array([1]))
   assert_true(post_frontiers[4].is_empty())
+  let post_tree = graph.dominator_tree(4, rev=true)
+  let post_frontier = graph.dom_frontier(4, rev=true)
+  let post_frontier_from_tree = graph.dom_frontier_of_tree(post_tree, rev=true)
+  assert_true(post_frontier_from_tree.to_sequence() == [1, 2, 3, 4])
+  assert_true(post_frontier_from_tree.elements(1) == [4])
+  assert_true(post_frontier_from_tree.elements(2) == post_frontier.elements(2))
+  assert_true(post_frontier_from_tree.elements(3) == post_frontier.elements(3))
+  assert_true(post_frontier_from_tree.elements(4) == [4])
 }
 
 ///|

@@ -3113,6 +3113,40 @@ test "program metadata tracks source compiler and units" {
   assert_true(compiler.equal(same_compiler))
   assert_true(compiler.compare(same_compiler) == 0)
   assert_true(compiler.compare(optimized_compiler) < 0)
+  let compiler_domain = @core_theory.Compiler::domain()
+  match compiler_domain.empty() {
+    Some(None) => ()
+    Some(Some(_)) => fail("unexpected compiler domain bottom")
+    None => fail("missing compiler domain bottom")
+  }
+  assert_true(compiler_domain.is_empty(None))
+  assert_true(compiler_domain.order(None, Some(compiler)) == Less)
+  assert_true(compiler_domain.order(Some(compiler), None) == Greater)
+  assert_true(
+    compiler_domain.order(Some(compiler), Some(same_compiler)) == Equal,
+  )
+  assert_true(
+    compiler_domain.order(Some(compiler), Some(optimized_compiler)) ==
+    Incomparable,
+  )
+  match compiler_domain.join(None, Some(compiler)) {
+    Ok(Some(value)) => assert_true(value.equal(compiler))
+    Ok(None) => fail("expected compiler fact")
+    Err(reason) => fail(reason)
+  }
+  match compiler_domain.join(Some(compiler), None) {
+    Ok(Some(value)) => assert_true(value.equal(compiler))
+    Ok(None) => fail("expected compiler fact")
+    Err(reason) => fail(reason)
+  }
+  match compiler_domain.join(Some(compiler), Some(same_compiler)) {
+    Ok(Some(value)) => assert_true(value.equal(compiler))
+    Ok(None) => fail("expected compiler fact")
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    compiler_domain.join(Some(compiler), Some(optimized_compiler)) is Err(_),
+  )
   let compiler_codec = @core_theory.Compiler::persistent()
   match compiler_codec.decode(compiler_codec.encode(compiler)) {
     Ok(decoded) => assert_true(decoded.equal(compiler))

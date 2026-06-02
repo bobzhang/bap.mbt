@@ -126,6 +126,7 @@ type Compiler
 pub fn Compiler::compare(Self, Self) -> Int
 pub fn Compiler::create(String, specs? : Map[String, String], version? : Array[String], options? : Array[String]) -> Self
 pub fn Compiler::create_from_specs(String, Array[(String, String)], version? : Array[String], options? : Array[String]) -> Result[Self, String]
+pub fn Compiler::domain() -> @knowledge.Domain[Self?]
 pub fn Compiler::equal(Self, Self) -> Bool
 pub fn Compiler::name(Self) -> String
 pub fn Compiler::options(Self) -> Array[String]

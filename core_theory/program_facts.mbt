@@ -204,7 +204,7 @@ fn compiler_inspect(compiler : Compiler) -> String {
 }
 
 ///|
-fn compiler_domain() -> @knowledge.Domain[Compiler?] {
+pub fn Compiler::domain() -> @knowledge.Domain[Compiler?] {
   @knowledge.Domain::optional(
     @knowledge.Domain::new(
       name=core_name("unit-compiler"),
@@ -499,7 +499,7 @@ pub fn ProgramUnit::source_slot() -> @knowledge.Slot[Unit, Source?] {
 pub fn ProgramUnit::compiler_slot() -> @knowledge.Slot[Unit, Compiler?] {
   ProgramUnit::cls().property(
     name=core_name("unit-compiler"),
-    domain=compiler_domain(),
+    domain=Compiler::domain(),
     desc="the compiler that compiled the unit",
     persistent=optional_compiler_persistent(),
     public=true,

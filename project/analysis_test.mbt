@@ -220,6 +220,7 @@ test "project analyses support package-qualified lookup and apply" {
     Some(found) => {
       assert_true(found.name() == "unit-packaged-analysis")
       assert_true(found.pkg() == "left")
+      assert_true(found.description() == "not provided")
       assert_true(
         found.qualified_name().show() == "left:unit-packaged-analysis",
       )
@@ -233,6 +234,7 @@ test "project analyses support package-qualified lookup and apply" {
   match @project.find_analysis("right:unit-packaged-analysis") {
     Some(found) => {
       assert_true(found.pkg() == "right")
+      assert_true(found.description() == "not provided")
       match found.apply(["beta"]) {
         Ok(_) => assert_true(right_seen.val == "R:beta")
         Err(reason) => fail(reason)

@@ -42,6 +42,7 @@ test "project collators ignore empty project sequences" {
     collate=(_, state, _) => state + 1,
     summary=state => state,
   )
+  assert_true(collator.description() == "not provided")
   assert_true(collator.apply([]) is None)
   assert_true(collator.apply([project_with_value("only")]) == Some(0))
 }
@@ -121,6 +122,7 @@ test "registered project collators support package-qualified lookup" {
       assert_true(
         found.qualified_name().show() == "left:unit-packaged-collator",
       )
+      assert_true(found.description() == "not provided")
       found.apply([project_with_value("base"), project_with_value("next")])
       assert_true(left_summary.val == "base|L0:next")
     }

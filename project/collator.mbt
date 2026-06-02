@@ -23,6 +23,9 @@ struct RegisteredProjectCollator {
 let project_collator_registry : Map[String, RegisteredProjectCollator] = {}
 
 ///|
+let project_registry_default_description = "not provided"
+
+///|
 pub fn[S, R] ProjectCollator::create(
   name~ : String,
   pkg? : String,
@@ -35,7 +38,7 @@ pub fn[S, R] ProjectCollator::create(
     name_value: @knowledge.Name::read(name, pkg?),
     description_value: match description {
       Some(text) => text
-      None => ""
+      None => project_registry_default_description
     },
     prepare_fn: prepare,
     collate_fn: collate,

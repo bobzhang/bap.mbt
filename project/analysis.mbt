@@ -591,7 +591,7 @@ pub fn[T] ProjectAnalysis::create(
     name_value: @knowledge.Name::read(name, pkg?),
     description_value: match description {
       Some(text) => text
-      None => ""
+      None => project_registry_default_description
     },
     grammar_value: args.grammar(),
   }

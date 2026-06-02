@@ -389,6 +389,7 @@ pub fn Program::add_unit(Self, ProgramUnit) -> Self
 pub fn Program::cls() -> @knowledge.Class[Unit, Unit]
 pub fn Program::compare(Self, Self) -> Int
 pub fn Program::create(units? : Array[ProgramUnit], labels? : Array[Label], target? : Target) -> Self
+pub fn Program::domain() -> @knowledge.Domain[Self]
 pub fn Program::empty() -> Self
 pub fn Program::equal(Self, Self) -> Bool
 pub fn Program::labels(Self) -> Array[Label]

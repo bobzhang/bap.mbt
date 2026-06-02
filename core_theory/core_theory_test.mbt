@@ -3246,6 +3246,29 @@ test "program metadata tracks source compiler and units" {
   assert_true(program.compare(same_program) == 0)
   assert_true(!program.equal(region_program))
   assert_true(program.compare(region_program) != 0)
+  let program_domain = @core_theory.Program::domain()
+  match program_domain.empty() {
+    Some(value) => assert_true(value.equal(empty_program))
+    None => fail("missing program domain bottom")
+  }
+  assert_true(program_domain.is_empty(empty_program))
+  assert_true(program_domain.order(empty_program, program) == Less)
+  assert_true(program_domain.order(program, empty_program) == Greater)
+  assert_true(program_domain.order(program, same_program) == Equal)
+  assert_true(program_domain.order(program, region_program) == Incomparable)
+  match program_domain.join(empty_program, program) {
+    Ok(value) => assert_true(value.equal(program))
+    Err(reason) => fail(reason)
+  }
+  match program_domain.join(program, empty_program) {
+    Ok(value) => assert_true(value.equal(program))
+    Err(reason) => fail(reason)
+  }
+  match program_domain.join(program, same_program) {
+    Ok(value) => assert_true(value.equal(program))
+    Err(reason) => fail(reason)
+  }
+  assert_true(program_domain.join(program, region_program) is Err(_))
   assert_true(empty_program.equal(@core_theory.Program::create()))
   assert_true(empty_program.units().is_empty())
   assert_true(empty_program.labels().is_empty())

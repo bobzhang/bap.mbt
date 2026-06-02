@@ -1282,6 +1282,46 @@ pub fn Program::compare(self : Program, other : Program) -> Int {
 }
 
 ///|
+fn program_inspect(program : Program) -> String {
+  let target = match program.target() {
+    Some(value) => value.name().show()
+    None => "none"
+  }
+  "program(units=\{program.units_value.length()}, labels=\{program.labels_value.length()}, target=\{target})"
+}
+
+///|
+pub fn Program::domain() -> @knowledge.Domain[Program] {
+  let empty = Program::empty()
+  @knowledge.Domain::new(
+    name=core_name("program"),
+    empty=Some(empty),
+    is_empty=program => program.equal(empty),
+    order=(lhs, rhs) => {
+      if lhs.equal(rhs) {
+        Equal
+      } else if lhs.equal(empty) {
+        Less
+      } else if rhs.equal(empty) {
+        Greater
+      } else {
+        Incomparable
+      }
+    },
+    join=(lhs, rhs) => {
+      if lhs.equal(rhs) || rhs.equal(empty) {
+        Ok(lhs)
+      } else if lhs.equal(empty) {
+        Ok(rhs)
+      } else {
+        Err("conflicting program values")
+      }
+    },
+    inspect=program_inspect,
+  )
+}
+
+///|
 pub fn Program::persistent() -> @knowledge.Persistent[Program] {
   let units_codec = @knowledge.Persistent::array(ProgramUnit::persistent())
   let labels_codec = @knowledge.Persistent::array(Label::persistent())

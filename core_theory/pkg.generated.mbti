@@ -535,6 +535,7 @@ pub fn Semantics::compare(Self, Self) -> Int
 pub fn Semantics::create(effect? : Effect, value? : Value, code? : Bytes) -> Self
 pub fn Semantics::domain() -> @knowledge.Domain[Self]
 pub fn Semantics::effect(Self) -> Effect
+pub fn Semantics::effect_slot() -> @knowledge.Slot[Unit, Effect]
 pub fn Semantics::empty() -> Self
 pub fn Semantics::equal(Self, Self) -> Bool
 pub fn Semantics::persistent() -> @knowledge.Persistent[Self]
@@ -549,9 +550,11 @@ type SemanticsFacts
 pub fn SemanticsFacts::class(Self) -> @knowledge.Class[Unit, EffectSort]
 pub fn SemanticsFacts::code(Self) -> @knowledge.FactTable[Unit, Bytes?]
 pub fn SemanticsFacts::collect_code(Self, @knowledge.Object[Unit]) -> Bytes?
+pub fn SemanticsFacts::collect_effect(Self, @knowledge.Object[Unit]) -> Effect
 pub fn SemanticsFacts::collect_semantics(Self, @knowledge.Object[Unit]) -> Semantics
 pub fn SemanticsFacts::collect_value(Self, @knowledge.Object[Unit]) -> Value
 pub fn SemanticsFacts::create(Self) -> @knowledge.Object[Unit]
+pub fn SemanticsFacts::effect(Self) -> @knowledge.FactTable[Unit, Effect]
 pub fn SemanticsFacts::for_semantics(Self, Semantics) -> Result[@knowledge.Object[Unit], String]
 pub fn SemanticsFacts::new() -> Self
 pub fn SemanticsFacts::provide_semantics(Self, @knowledge.Object[Unit], Semantics) -> Result[Unit, String]

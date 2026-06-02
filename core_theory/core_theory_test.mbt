@@ -3462,9 +3462,11 @@ test "program semantics stores values and instruction bytes" {
   assert_true(forgotten_value.sort().same(@core_theory.Sort::bool()))
   assert_true(forgotten_value.fact("kind") == Some("lifted"))
   let semantics = @core_theory.Semantics::empty()
+    .with_effect(@core_theory.Effect::jump())
     .with_value(value)
     .with_code(b"\x90\xc3")
   let same_semantics = @core_theory.Semantics::empty()
+    .with_effect(@core_theory.Effect::jump())
     .with_value(same_value)
     .with_code(b"\x90\xc3")
   assert_value_persistent_round_trip(
@@ -3535,6 +3537,10 @@ test "program semantics stores values and instruction bytes" {
     @core_theory.Semantics::value_slot().owner().show(),
   )
   assert_true(
+    facts.effect().slot().name().show() ==
+    @core_theory.Semantics::effect_slot().name().show(),
+  )
+  assert_true(
     facts.code().slot().name().show() ==
     @core_theory.Semantics::code_slot().name().show(),
   )
@@ -3543,6 +3549,14 @@ test "program semantics stores values and instruction bytes" {
     value,
     "semantics fact value",
   )
+  match facts.effect().slot().persistent() {
+    Some(codec) =>
+      match codec.decode(codec.encode(@core_theory.Effect::jump())) {
+        Ok(decoded) => assert_true(decoded.equal(@core_theory.Effect::jump()))
+        Err(reason) => fail(reason)
+      }
+    None => fail("missing semantics fact effect persistent codec")
+  }
   assert_persistent_round_trip(
     facts.code().slot().persistent(),
     Some(b"\x90\xc3"),
@@ -3557,8 +3571,26 @@ test "program semantics stores values and instruction bytes" {
     Ok(object) => {
       assert_true(facts.value().has(object))
       assert_true(facts.collect_value(object).fact("kind") == Some("lifted"))
+      assert_true(
+        facts.collect_effect(object).equal(@core_theory.Effect::jump()),
+      )
       assert_true(facts.collect_code(object) == Some(b"\x90\xc3"))
+      assert_true(
+        facts
+        .collect_semantics(object)
+        .effect()
+        .equal(@core_theory.Effect::jump()),
+      )
       assert_true(facts.collect_semantics(object).code_hex() == Some("90c3"))
+      assert_true(
+        facts.provide_semantics(
+          object,
+          @core_theory.Semantics::empty().with_effect(
+            @core_theory.Effect::fall(),
+          ),
+        )
+        is Err(_),
+      )
       assert_true(
         facts.provide_semantics(
           object,

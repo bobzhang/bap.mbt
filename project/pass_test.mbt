@@ -9,6 +9,11 @@ fn pass_event_kinds(events : Array[@project.ProjectPassEvent]) -> Array[String] 
 }
 
 ///|
+fn pass_names(passes : Array[@project.ProjectPass]) -> Array[String] {
+  passes.map(pass => pass.name())
+}
+
+///|
 test "project passes register lookup and run" {
   let pass = @project.ProjectPass::create(name="unit-set-loader", run=project => {
     Ok(project.set("loader", "unit"))
@@ -24,6 +29,69 @@ test "project passes register lookup and run" {
     Err(reason) => fail(reason)
   }
   assert_true(@project.register_pass(pass) is Err(_))
+}
+
+///|
+test "project passes preserve registration order" {
+  let z = @project.ProjectPass::create(name="unit-order-z", run=project => {
+    Ok(project)
+  })
+  let a = @project.ProjectPass::create(name="unit-order-a", run=project => {
+    Ok(project)
+  })
+  let m = @project.ProjectPass::create(name="unit-order-m", run=project => {
+    Ok(project)
+  })
+  for pass in [z, a, m] {
+    match @project.register_pass(pass) {
+      Ok(_) => ()
+      Err(reason) => fail(reason)
+    }
+  }
+  let names = pass_names(@project.passes()).filter(name => {
+    name.has_prefix("unit-order-")
+  })
+  assert_true(names == ["unit-order-z", "unit-order-a", "unit-order-m"])
+}
+
+///|
+test "autorun passes follow registration order" {
+  let first = @project.ProjectPass::create(
+    name="unit-autorun-order-z",
+    autorun=true,
+    run=project => {
+      let value = match project.get("autorun-order") {
+        Some(text) => text
+        None => ""
+      }
+      Ok(project.set("autorun-order", value + "z"))
+    },
+  )
+  let second = @project.ProjectPass::create(
+    name="unit-autorun-order-a",
+    autorun=true,
+    run=project => {
+      let value = match project.get("autorun-order") {
+        Some(text) => text
+        None => ""
+      }
+      Ok(project.set("autorun-order", value + "a"))
+    },
+  )
+  match @project.register_pass(first) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  match @project.register_pass(second) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let project = @project.Project::empty(@core_theory.Target::unknown())
+  let next = match project.run_autorun_passes() {
+    Ok(next) => next
+    Err(reason) => fail(reason)
+  }
+  assert_true(next.get("autorun-order") == Some("za"))
 }
 
 ///|

@@ -27,6 +27,9 @@ struct ProjectPassEvent {
 let pass_registry : Map[String, ProjectPass] = {}
 
 ///|
+let pass_registry_order : Array[String] = []
+
+///|
 let pass_event_log : Array[ProjectPassEvent] = []
 
 ///|
@@ -208,6 +211,7 @@ pub fn register_pass(pass : ProjectPass) -> Result[Unit, String] {
     Err("project pass \{name} is already registered")
   } else {
     pass_registry[name] = pass
+    pass_registry_order.push(name)
     record_pass_event(name, PassRegistered)
     Ok(())
   }
@@ -251,7 +255,12 @@ pub fn find_pass(name : String) -> ProjectPass? {
 ///|
 pub fn passes() -> Array[ProjectPass] {
   let result = []
-  pass_registry.each((_, pass) => result.push(pass))
+  for name in pass_registry_order {
+    match pass_registry.get(name) {
+      Some(pass) => result.push(pass)
+      None => ()
+    }
+  }
   result
 }
 

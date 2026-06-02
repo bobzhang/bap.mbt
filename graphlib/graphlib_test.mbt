@@ -161,6 +161,36 @@ test "dfs classifies tree and back edges" {
   assert_true(kinds.contains(Tree))
   assert_true(kinds.contains(Back))
   assert_true(graph.reachable(0).length() == 5)
+  assert_true(graph.is_reachable(0, 4))
+  assert_true(!graph.is_reachable(2, 0))
+  assert_true(graph.is_reachable(4, 0, rev=true))
+  assert_true(!graph.is_reachable(0, 4, rev=true))
+  assert_true(
+    graph.fold_reachable(0, [], (acc, node) => {
+      acc.push(node)
+      acc
+    }) ==
+    [0, 1, 2, 4, 3],
+  )
+  assert_true(
+    graph.fold_reachable(
+      4,
+      [],
+      (acc, node) => {
+        acc.push(node)
+        acc
+      },
+      rev=true,
+    ) ==
+    [4, 2, 1, 0, 3],
+  )
+  assert_true(
+    graph.fold_reachable(99, [7], (acc, node) => {
+      acc.push(node)
+      acc
+    }) ==
+    [7],
+  )
   assert_true(graph.reverse_postorder(0)[0] == 0)
 }
 

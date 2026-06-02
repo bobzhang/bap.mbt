@@ -43,12 +43,14 @@ pub fn[N : Hash + Eq, E] Graph::dominators(Self[N, E], N) -> Map[N, @set.Set[N]]
 pub fn[N : Eq, E] Graph::edge(Self[N, E], N, N) -> Edge[N, E]?
 pub fn[N, E] Graph::edge_count(Self[N, E]) -> Int
 pub fn[N, E] Graph::edges(Self[N, E]) -> Array[Edge[N, E]]
+pub fn[N : Hash + Eq, E, A] Graph::fold_reachable(Self[N, E], N, A, (A, N) -> A, rev? : Bool) -> A
 pub fn[N : Eq, E] Graph::has_edge(Self[N, E], N, N) -> Bool
 pub fn[N : Eq, E] Graph::has_node(Self[N, E], N) -> Bool
 pub fn[N : Hash + Eq, E] Graph::immediate_dominators(Self[N, E], N) -> Map[N, N]
 pub fn[N : Eq, E] Graph::in_edges(Self[N, E], N) -> Array[Edge[N, E]]
 pub fn[N : Eq, E] Graph::intersect(Self[N, E], Self[N, E]) -> Self[N, E]
 pub fn[N, E] Graph::is_empty(Self[N, E]) -> Bool
+pub fn[N : Hash + Eq, E] Graph::is_reachable(Self[N, E], N, N, rev? : Bool) -> Bool
 pub fn[N, E] Graph::new() -> Self[N, E]
 pub fn[N, E] Graph::node_count(Self[N, E]) -> Int
 pub fn[N, E] Graph::nodes(Self[N, E]) -> Array[N]

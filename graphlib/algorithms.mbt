@@ -140,6 +140,59 @@ pub fn[N : Hash + Eq, E] Graph::reachable(
 }
 
 ///|
+fn[N : Hash + Eq, E, A] fold_reachable_visit(
+  graph : Graph[N, E],
+  node : N,
+  seen : Set[N],
+  acc : A,
+  rev : Bool,
+  f : (A, N) -> A,
+) -> A {
+  if seen.contains(node) {
+    acc
+  } else {
+    seen.add(node)
+    let mut next = f(acc, node)
+    let edges = if rev { graph.in_edges(node) } else { graph.out_edges(node) }
+    for edge in edges {
+      let adjacent = if rev { edge.src } else { edge.dst }
+      next = fold_reachable_visit(graph, adjacent, seen, next, rev, f)
+    }
+    next
+  }
+}
+
+///|
+pub fn[N : Hash + Eq, E, A] Graph::fold_reachable(
+  self : Graph[N, E],
+  start : N,
+  init : A,
+  f : (A, N) -> A,
+  rev? : Bool = false,
+) -> A {
+  if self.has_node(start) {
+    fold_reachable_visit(self, start, Set([]), init, rev, f)
+  } else {
+    init
+  }
+}
+
+///|
+pub fn[N : Hash + Eq, E] Graph::is_reachable(
+  self : Graph[N, E],
+  start : N,
+  finish : N,
+  rev? : Bool = false,
+) -> Bool {
+  self.fold_reachable(
+    start,
+    false,
+    (found, node) => found || node == finish,
+    rev~,
+  )
+}
+
+///|
 pub fn[N : Hash + Eq, E] Graph::reverse_postorder(
   self : Graph[N, E],
   start : N,

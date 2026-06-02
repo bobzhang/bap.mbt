@@ -3148,6 +3148,26 @@ test "program label facts expose BAP-style Knowledge slots" {
   let facts = @core_theory.LabelFacts::new()
   assert_true(facts.class().same(@core_theory.Label::cls()))
   assert_true(
+    facts.addr().slot().name().show() ==
+    @core_theory.Label::addr_slot().name().show(),
+  )
+  assert_true(
+    facts.name().slot().owner().show() ==
+    @core_theory.Label::name_slot().owner().show(),
+  )
+  assert_true(
+    facts.possible_name().slot().name().show() ==
+    @core_theory.Label::possible_name_slot().name().show(),
+  )
+  assert_true(
+    facts.ivec().slot().owner().show() ==
+    @core_theory.Label::ivec_slot().owner().show(),
+  )
+  assert_true(
+    facts.encoding().slot().name().show() ==
+    @core_theory.Label::encoding_slot().name().show(),
+  )
+  assert_true(
     facts.semantics().slot().owner().show() ==
     @core_theory.Semantics::slot().owner().show(),
   )
@@ -3155,28 +3175,45 @@ test "program label facts expose BAP-style Knowledge slots" {
     facts.semantics().slot().name().show() ==
     @core_theory.Semantics::slot().name().show(),
   )
+  assert_true(
+    facts.aliases().slot().name().show() ==
+    @core_theory.Label::aliases_slot().name().show(),
+  )
+  assert_true(
+    facts.unit().slot().owner().show() ==
+    @core_theory.Label::unit_slot().owner().show(),
+  )
+  assert_true(
+    facts.is_valid().slot().name().show() ==
+    @core_theory.Label::is_valid_slot().name().show(),
+  )
+  assert_true(
+    facts.is_subroutine().slot().owner().show() ==
+    @core_theory.Label::is_subroutine_slot().owner().show(),
+  )
+  assert_true(@core_theory.Label::possible_name_slot().persistent() is None)
   assert_persistent_round_trip(
-    facts.addr().slot().persistent(),
+    @core_theory.Label::addr_slot().persistent(),
     Some(addr),
     "label addr",
   )
   assert_persistent_round_trip(
-    facts.name().slot().persistent(),
+    @core_theory.Label::name_slot().persistent(),
     (None : String?),
     "label name",
   )
   assert_persistent_round_trip(
-    facts.ivec().slot().persistent(),
+    @core_theory.Label::ivec_slot().persistent(),
     Some(0x80),
     "label ivec",
   )
   assert_persistent_round_trip(
-    facts.encoding().slot().persistent(),
+    @core_theory.Label::encoding_slot().persistent(),
     C,
     "label encoding",
   )
   assert_persistent_round_trip(
-    facts.aliases().slot().persistent(),
+    @core_theory.Label::aliases_slot().persistent(),
     ["_main", "main"],
     "label aliases",
   )
@@ -3186,22 +3223,22 @@ test "program label facts expose BAP-style Knowledge slots" {
     "label semantics",
   )
   assert_optional_unit_persistent_round_trip(
-    facts.unit().slot().persistent(),
+    @core_theory.Label::unit_slot().persistent(),
     Some(unit),
     "label unit",
   )
   assert_optional_unit_persistent_round_trip(
-    facts.unit().slot().persistent(),
+    @core_theory.Label::unit_slot().persistent(),
     None,
     "empty label unit",
   )
   assert_persistent_round_trip(
-    facts.is_valid().slot().persistent(),
+    @core_theory.Label::is_valid_slot().persistent(),
     Some(true),
     "label validity",
   )
   assert_persistent_round_trip(
-    facts.is_subroutine().slot().persistent(),
+    @core_theory.Label::is_subroutine_slot().persistent(),
     (None : Bool?),
     "empty label subroutine flag",
   )

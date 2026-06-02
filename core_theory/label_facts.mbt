@@ -87,69 +87,16 @@ fn program_unit_domain() -> @knowledge.Domain[ProgramUnit?] {
 ///|
 pub fn LabelFacts::new() -> LabelFacts {
   let cls = Label::cls()
-  let addr = cls.property(
-    name=core_name("label-addr"),
-    domain=optional_word_domain("label-addr"),
-    desc="the program virtual address",
-    persistent=optional_word_persistent(),
-    public=true,
-  )
-  let name = cls.property(
-    name=core_name("label-name"),
-    domain=optional_string_domain("label-name"),
-    desc="the program linkage name",
-    persistent=optional_string_persistent(),
-    public=true,
-  )
-  let possible_name = cls.property(
-    name=core_name("possible-name"),
-    domain=possible_name_domain(),
-    desc="a unique name associated with the program",
-    public=true,
-  )
-  let ivec = cls.property(
-    name=core_name("label-ivec"),
-    domain=optional_int_domain("label-ivec"),
-    desc="the program interrupt vector",
-    persistent=optional_int_persistent(),
-    public=true,
-  )
-  let encoding = cls.property(
-    name=core_name("encoding"),
-    domain=source_language_domain(),
-    desc="the language of the code",
-    persistent=Language::persistent(),
-    public=true,
-  )
+  let addr = Label::addr_slot()
+  let name = Label::name_slot()
+  let possible_name = Label::possible_name_slot()
+  let ivec = Label::ivec_slot()
+  let encoding = Label::encoding_slot()
   let semantics = Semantics::slot()
-  let aliases = cls.property(
-    name=core_name("label-aliases"),
-    domain=@knowledge.Domain::powerset(core_name("label-aliases"), item => item),
-    desc="the set of known program names",
-    persistent=@knowledge.Persistent::array(@knowledge.Persistent::string()),
-    public=true,
-  )
-  let unit = cls.property(
-    name=core_name("label-unit"),
-    domain=program_unit_domain(),
-    desc="the program unit",
-    persistent=optional_program_unit_persistent(),
-    public=true,
-  )
-  let valid = cls.property(
-    name=core_name("is-valid"),
-    domain=optional_bool_domain("is-valid"),
-    desc="is the program valid or not",
-    persistent=optional_bool_persistent(),
-    public=true,
-  )
-  let subroutine = cls.property(
-    name=core_name("is-subroutine"),
-    domain=optional_bool_domain("is-subroutine"),
-    desc="is the program a subroutine entry point",
-    persistent=optional_bool_persistent(),
-    public=true,
-  )
+  let aliases = Label::aliases_slot()
+  let unit = Label::unit_slot()
+  let valid = Label::is_valid_slot()
+  let subroutine = Label::is_subroutine_slot()
   {
     state_value: @knowledge.State::new(),
     class_value: cls,
@@ -164,6 +111,107 @@ pub fn LabelFacts::new() -> LabelFacts {
     valid_value: @knowledge.FactTable::new(valid),
     subroutine_value: @knowledge.FactTable::new(subroutine),
   }
+}
+
+///|
+pub fn Label::addr_slot() -> @knowledge.Slot[Unit, @types.Word?] {
+  Label::cls().property(
+    name=core_name("label-addr"),
+    domain=optional_word_domain("label-addr"),
+    desc="the program virtual address",
+    persistent=optional_word_persistent(),
+    public=true,
+  )
+}
+
+///|
+pub fn Label::name_slot() -> @knowledge.Slot[Unit, String?] {
+  Label::cls().property(
+    name=core_name("label-name"),
+    domain=optional_string_domain("label-name"),
+    desc="the program linkage name",
+    persistent=optional_string_persistent(),
+    public=true,
+  )
+}
+
+///|
+pub fn Label::possible_name_slot() -> @knowledge.Slot[
+  Unit,
+  @knowledge.Opinions[String?],
+] {
+  Label::cls().property(
+    name=core_name("possible-name"),
+    domain=possible_name_domain(),
+    desc="a unique name associated with the program",
+    public=true,
+  )
+}
+
+///|
+pub fn Label::ivec_slot() -> @knowledge.Slot[Unit, Int?] {
+  Label::cls().property(
+    name=core_name("label-ivec"),
+    domain=optional_int_domain("label-ivec"),
+    desc="the program interrupt vector",
+    persistent=optional_int_persistent(),
+    public=true,
+  )
+}
+
+///|
+pub fn Label::encoding_slot() -> @knowledge.Slot[Unit, Language] {
+  Label::cls().property(
+    name=core_name("encoding"),
+    domain=source_language_domain(),
+    desc="the language of the code",
+    persistent=Language::persistent(),
+    public=true,
+  )
+}
+
+///|
+pub fn Label::aliases_slot() -> @knowledge.Slot[Unit, Array[String]] {
+  Label::cls().property(
+    name=core_name("label-aliases"),
+    domain=@knowledge.Domain::powerset(core_name("label-aliases"), item => item),
+    desc="the set of known program names",
+    persistent=@knowledge.Persistent::array(@knowledge.Persistent::string()),
+    public=true,
+  )
+}
+
+///|
+pub fn Label::unit_slot() -> @knowledge.Slot[Unit, ProgramUnit?] {
+  Label::cls().property(
+    name=core_name("label-unit"),
+    domain=program_unit_domain(),
+    desc="the program unit",
+    persistent=optional_program_unit_persistent(),
+    public=true,
+  )
+}
+
+///|
+pub fn Label::is_valid_slot() -> @knowledge.Slot[Unit, Bool?] {
+  Label::cls().property(
+    name=core_name("is-valid"),
+    domain=optional_bool_domain("is-valid"),
+    desc="is the program valid or not",
+    persistent=optional_bool_persistent(),
+    public=true,
+  )
+}
+
+///|
+pub fn Label::is_subroutine_slot() -> @knowledge.Slot[Unit, Bool?] {
+  Label::cls().property(
+    name=core_name("is-subroutine"),
+    domain=optional_bool_domain("is-subroutine"),
+    desc="is the program a subroutine entry point",
+    persistent=optional_bool_persistent(),
+    public=true,
+  )
 }
 
 ///|

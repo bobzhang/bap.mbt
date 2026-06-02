@@ -32,6 +32,9 @@ pub(all) enum EdgeKind {
   Forward
 } derive(Eq, @debug.Debug)
 
+type Equiv derive(Eq, @debug.Debug)
+pub fn Equiv::to_int(Self) -> Int
+
 type Graph[N, E] derive(@debug.Debug)
 pub fn[N : Eq, E] Graph::add_edge(Self[N, E], src~ : N, dst~ : N, label~ : E) -> Self[N, E]
 pub fn[N : Eq, E] Graph::add_node(Self[N, E], N) -> Self[N, E]
@@ -85,11 +88,22 @@ pub fn[E] GraphPath::start(Self[E]) -> E?
 pub fn[E] GraphPath::start_exn(Self[E]) -> E
 pub fn[E] GraphPath::weight(Self[E]) -> Int
 
+type Group[N] derive(@debug.Debug)
+pub fn[N] Group::elements(Self[N]) -> Array[N]
+pub fn[N : Hash + Eq] Group::mem(Self[N], N) -> Bool
+pub fn[N] Group::members(Self[N]) -> @set.Set[N]
+pub fn[N] Group::to_equiv(Self[N]) -> Equiv
+pub fn[N] Group::top(Self[N]) -> N
+
 type Partition[N] derive(@debug.Debug)
 pub fn[N : Hash + Eq] Partition::discrete(ArrayView[N]) -> Self[N]
 pub fn[N : Hash + Eq] Partition::equiv(Self[N], N, N) -> Bool
+pub fn[N : Hash + Eq] Partition::group(Self[N], N) -> Group[N]?
 pub fn[N] Partition::group_count(Self[N]) -> Int
-pub fn[N] Partition::groups(Self[N]) -> Array[@set.Set[N]]
+pub fn[N] Partition::group_sets(Self[N]) -> Array[@set.Set[N]]
+pub fn[N] Partition::groups(Self[N]) -> Array[Group[N]]
+pub fn[N] Partition::number_of_groups(Self[N]) -> Int
+pub fn[N] Partition::of_equiv(Self[N], Equiv) -> Group[N]?
 pub fn[N : Hash + Eq] Partition::refine(Self[N], (N, N) -> Bool) -> Self[N]
 pub fn[N : Hash + Eq] Partition::trivial(ArrayView[N]) -> Self[N]
 pub fn[N : Hash + Eq] Partition::union(Self[N], N, N) -> Self[N]

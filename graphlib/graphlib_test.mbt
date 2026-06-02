@@ -254,6 +254,12 @@ test "translated BAP graph to_dot honors custom labels and attributes" {
 
 ///|
 test "partitions support BAP trivial discrete union and refinement invariants" {
+  let empty : @graphlib.Partition[Int] = @graphlib.Partition::trivial([])
+  assert_true(empty.group_count() == 0)
+  assert_true(empty.number_of_groups() == 0)
+  let empty_discrete : @graphlib.Partition[Int] = @graphlib.Partition::discrete([],
+  )
+  assert_true(empty_discrete.group_count() == 0)
   let elements = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
   let trivial = @graphlib.Partition::trivial(elements)
   assert_true(trivial.group_count() == 1)
@@ -263,20 +269,36 @@ test "partitions support BAP trivial discrete union and refinement invariants" {
   assert_true(
     elements.all(x => elements.all(y => discrete.equiv(x, y) == (x == y))),
   )
+  let unchanged = discrete.union(1, 99)
+  assert_true(unchanged.group_count() == discrete.group_count())
+  assert_true(!unchanged.equiv(1, 99))
   let joined = discrete.union(1, 2)
   assert_true(joined.equiv(1, 2))
   assert_true(!joined.equiv(1, 3))
+  match joined.group(1) {
+    Some(group) => {
+      assert_true(group.top() == 1)
+      assert_true(group.mem(2))
+      assert_true(group.members().contains(1))
+      match joined.of_equiv(group.to_equiv()) {
+        Some(same) => {
+          assert_true(same.mem(1))
+          assert_true(same.mem(2))
+          assert_true(same.to_equiv().to_int() == group.to_equiv().to_int())
+        }
+        None => fail("expected group by equivalence id")
+      }
+    }
+    None => fail("expected joined group")
+  }
   let refined = trivial.refine((x, y) => (x - y) % 2 == 0)
   assert_true(refined.group_count() == 2)
   let covered : Set[Int] = Set([], capacity=elements.length())
   for group in refined.groups() {
-    match group.iter().next() {
-      Some(representative) =>
-        for element in group {
-          covered.add(element)
-          assert_true((representative - element) % 2 == 0)
-        }
-      None => fail("empty partition group")
+    let representative = group.top()
+    for element in group.elements() {
+      covered.add(element)
+      assert_true((representative - element) % 2 == 0)
     }
   }
   assert_true(covered == Set::from_array(elements))

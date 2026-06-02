@@ -1,30 +1,105 @@
 ///|
+struct Equiv {
+  index : Int
+} derive(Eq, Debug)
+
+///|
+pub fn Equiv::to_int(self : Equiv) -> Int {
+  self.index
+}
+
+///|
+struct Group[N] {
+  top_value : N
+  members_value : Set[N]
+  equiv_value : Equiv
+} derive(Debug)
+
+///|
+fn[N] graph_group_new(root : N, members : Set[N], index : Int) -> Group[N] {
+  { top_value: root, members_value: members.copy(), equiv_value: { index, } }
+}
+
+///|
+pub fn[N] Group::elements(self : Group[N]) -> Array[N] {
+  let out : Array[N] = []
+  for element in self.members_value {
+    out.push(element)
+  }
+  out
+}
+
+///|
+pub fn[N] Group::members(self : Group[N]) -> Set[N] {
+  self.members_value.copy()
+}
+
+///|
+pub fn[N : Hash + Eq] Group::mem(self : Group[N], element : N) -> Bool {
+  self.members_value.contains(element)
+}
+
+///|
+pub fn[N] Group::top(self : Group[N]) -> N {
+  self.top_value
+}
+
+///|
+pub fn[N] Group::to_equiv(self : Group[N]) -> Equiv {
+  self.equiv_value
+}
+
+///|
 struct Partition[N] {
+  roots_value : Array[N]
   groups_value : Array[Set[N]]
 } derive(Debug)
 
 ///|
-pub fn[N] Partition::groups(self : Partition[N]) -> Array[Set[N]] {
+pub fn[N] Partition::group_sets(self : Partition[N]) -> Array[Set[N]] {
   self.groups_value.map(group => group.copy())
 }
 
 ///|
+pub fn[N] Partition::groups(self : Partition[N]) -> Array[Group[N]] {
+  let groups = []
+  for i in 0..<self.groups_value.length() {
+    groups.push(graph_group_new(self.roots_value[i], self.groups_value[i], i))
+  }
+  groups
+}
+
+///|
 pub fn[N] Partition::group_count(self : Partition[N]) -> Int {
-  self.groups_value.length()
+  self.roots_value.length()
+}
+
+///|
+pub fn[N] Partition::number_of_groups(self : Partition[N]) -> Int {
+  self.group_count()
 }
 
 ///|
 pub fn[N : Hash + Eq] Partition::trivial(
   elements : ArrayView[N],
 ) -> Partition[N] {
-  { groups_value: [Set::from_array(elements)] }
+  if elements.is_empty() {
+    { roots_value: [], groups_value: [] }
+  } else {
+    { roots_value: [elements[0]], groups_value: [Set::from_array(elements)] }
+  }
 }
 
 ///|
 pub fn[N : Hash + Eq] Partition::discrete(
   elements : ArrayView[N],
 ) -> Partition[N] {
-  { groups_value: [ for element in elements => Set::from_array([element]) ] }
+  {
+    roots_value: elements.to_owned(),
+    groups_value: [
+      for element in elements => Set::from_array([element])
+    ],
+  }
 }
 
 ///|
@@ -48,26 +123,55 @@ pub fn[N : Hash + Eq] Partition::equiv(
 }
 
 ///|
+fn[N] Partition::nth_group(self : Partition[N], index : Int) -> Group[N]? {
+  if index < 0 || index >= self.group_count() {
+    None
+  } else {
+    Some(
+      graph_group_new(self.roots_value[index], self.groups_value[index], index),
+    )
+  }
+}
+
+///|
+pub fn[N : Hash + Eq] Partition::group(
+  self : Partition[N],
+  element : N,
+) -> Group[N]? {
+  match partition_group_index(self.groups_value, element) {
+    Some(index) => self.nth_group(index)
+    None => None
+  }
+}
+
+///|
+pub fn[N] Partition::of_equiv(self : Partition[N], equiv : Equiv) -> Group[N]? {
+  self.nth_group(equiv.index)
+}
+
+///|
 pub fn[N : Hash + Eq] Partition::union(
   self : Partition[N],
   lhs : N,
   rhs : N,
 ) -> Partition[N] {
   let groups = self.groups_value.map(group => group.copy())
+  let roots = self.roots_value.copy()
   match
     (partition_group_index(groups, lhs), partition_group_index(groups, rhs)) {
     (Some(left), Some(right)) if left == right => ()
     (Some(left), Some(right)) => {
-      for element in groups[right] {
-        groups[left].add(element)
+      let target = left.min(right)
+      let source = left.max(right)
+      for element in groups[source] {
+        groups[target].add(element)
       }
-      ignore(groups.remove(right))
+      ignore(groups.remove(source))
+      ignore(roots.remove(source))
     }
-    (Some(left), None) => groups[left].add(rhs)
-    (None, Some(right)) => groups[right].add(lhs)
-    (None, None) => groups.push(Set::from_array([lhs, rhs]))
+    (Some(_), None) | (None, Some(_)) | (None, None) => ()
   }
-  { groups_value: groups }
+  { roots_value: roots, groups_value: groups }
 }
 
 ///|
@@ -93,6 +197,7 @@ pub fn[N : Hash + Eq] Partition::refine(
   self : Partition[N],
   equiv : (N, N) -> Bool,
 ) -> Partition[N] {
+  let roots : Array[N] = []
   let refined : Array[Set[N]] = []
   for group in self.groups_value {
     let subgroups : Array[Set[N]] = []
@@ -100,8 +205,14 @@ pub fn[N : Hash + Eq] Partition::refine(
       add_to_refined_groups(subgroups, element, equiv)
     }
     for item in subgroups {
-      refined.push(item)
+      match item.iter().next() {
+        Some(root) => {
+          roots.push(root)
+          refined.push(item)
+        }
+        None => ()
+      }
     }
   }
-  { groups_value: refined }
+  { roots_value: roots, groups_value: refined }
 }

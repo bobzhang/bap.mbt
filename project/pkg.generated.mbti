@@ -6,6 +6,7 @@ import {
   "bobzhang/bap/core_theory",
   "bobzhang/bap/graphlib",
   "bobzhang/bap/image",
+  "bobzhang/bap/knowledge",
   "bobzhang/bap/memory",
   "bobzhang/bap/types",
 }
@@ -25,7 +26,7 @@ pub fn find_analysis(String) -> ProjectAnalysis?
 
 pub fn find_brancher(String) -> ProjectBrancher?
 
-pub fn find_collator(String) -> RegisteredProjectCollator?
+pub fn find_collator(String, pkg? : String) -> RegisteredProjectCollator?
 
 pub fn find_disassembly_driver(String) -> ProjectDisassemblyDriver?
 
@@ -235,16 +236,20 @@ pub fn ProjectBrancher::with_biased(Self, Bool) -> Self
 type ProjectCollator[S, R]
 pub fn[S, R] ProjectCollator::apply(Self[S, R], Array[Project]) -> R?
 pub fn[S, R] ProjectCollator::collate(Self[S, R], Int, S, Project) -> S
-pub fn[S, R] ProjectCollator::create(name~ : String, description? : String, prepare~ : (Project) -> S, collate~ : (Int, S, Project) -> S, summary~ : (S) -> R) -> Self[S, R]
+pub fn[S, R] ProjectCollator::create(name~ : String, pkg? : String, description? : String, prepare~ : (Project) -> S, collate~ : (Int, S, Project) -> S, summary~ : (S) -> R) -> Self[S, R]
 pub fn[S, R] ProjectCollator::description(Self[S, R]) -> String
 pub fn[S, R] ProjectCollator::info(Self[S, R]) -> ProjectCollatorInfo
 pub fn[S, R] ProjectCollator::name(Self[S, R]) -> String
+pub fn[S, R] ProjectCollator::pkg(Self[S, R]) -> String
 pub fn[S, R] ProjectCollator::prepare(Self[S, R], Project) -> S
+pub fn[S, R] ProjectCollator::qualified_name(Self[S, R]) -> @knowledge.Name
 pub fn[S, R] ProjectCollator::summary(Self[S, R], S) -> R
 
 type ProjectCollatorInfo
 pub fn ProjectCollatorInfo::description(Self) -> String
 pub fn ProjectCollatorInfo::name(Self) -> String
+pub fn ProjectCollatorInfo::pkg(Self) -> String
+pub fn ProjectCollatorInfo::qualified_name(Self) -> @knowledge.Name
 
 type ProjectDisassemblyDriver
 pub fn ProjectDisassemblyDriver::create(name~ : String, description? : String, priority? : Int, run~ : (Project) -> Result[Project, String]) -> Self
@@ -437,11 +442,13 @@ pub fn ProjectSymbolizer::set_path(Self, String) -> Self
 
 type RegisteredProjectCollator
 pub fn RegisteredProjectCollator::apply(Self, Array[Project]) -> Unit
-pub fn[S] RegisteredProjectCollator::create(name~ : String, description? : String, prepare~ : (Project) -> S, collate~ : (Int, S, Project) -> S, summary~ : (S) -> Unit) -> Self
+pub fn[S] RegisteredProjectCollator::create(name~ : String, pkg? : String, description? : String, prepare~ : (Project) -> S, collate~ : (Int, S, Project) -> S, summary~ : (S) -> Unit) -> Self
 pub fn RegisteredProjectCollator::description(Self) -> String
 pub fn[S] RegisteredProjectCollator::from_collator(ProjectCollator[S, Unit]) -> Self
 pub fn RegisteredProjectCollator::info(Self) -> ProjectCollatorInfo
 pub fn RegisteredProjectCollator::name(Self) -> String
+pub fn RegisteredProjectCollator::pkg(Self) -> String
+pub fn RegisteredProjectCollator::qualified_name(Self) -> @knowledge.Name
 
 // Type aliases
 

@@ -1,6 +1,6 @@
 ///|
 struct ProjectCollator[S, R] {
-  name_value : String
+  name_value : @knowledge.Name
   description_value : String
   prepare_fn : (Project) -> S
   collate_fn : (Int, S, Project) -> S
@@ -9,7 +9,7 @@ struct ProjectCollator[S, R] {
 
 ///|
 struct ProjectCollatorInfo {
-  name_value : String
+  name_value : @knowledge.Name
   description_value : String
 }
 
@@ -25,13 +25,14 @@ let project_collator_registry : Map[String, RegisteredProjectCollator] = {}
 ///|
 pub fn[S, R] ProjectCollator::create(
   name~ : String,
+  pkg? : String,
   description? : String,
   prepare~ : (Project) -> S,
   collate~ : (Int, S, Project) -> S,
   summary~ : (S) -> R,
 ) -> ProjectCollator[S, R] {
   {
-    name_value: name,
+    name_value: @knowledge.Name::read(name, pkg?),
     description_value: match description {
       Some(text) => text
       None => ""
@@ -44,7 +45,19 @@ pub fn[S, R] ProjectCollator::create(
 
 ///|
 pub fn ProjectCollatorInfo::name(self : ProjectCollatorInfo) -> String {
+  self.name_value.unqualified()
+}
+
+///|
+pub fn ProjectCollatorInfo::qualified_name(
+  self : ProjectCollatorInfo,
+) -> @knowledge.Name {
   self.name_value
+}
+
+///|
+pub fn ProjectCollatorInfo::pkg(self : ProjectCollatorInfo) -> String {
+  self.name_value.pkg()
 }
 
 ///|
@@ -54,7 +67,19 @@ pub fn ProjectCollatorInfo::description(self : ProjectCollatorInfo) -> String {
 
 ///|
 pub fn[S, R] ProjectCollator::name(self : ProjectCollator[S, R]) -> String {
+  self.name_value.unqualified()
+}
+
+///|
+pub fn[S, R] ProjectCollator::qualified_name(
+  self : ProjectCollator[S, R],
+) -> @knowledge.Name {
   self.name_value
+}
+
+///|
+pub fn[S, R] ProjectCollator::pkg(self : ProjectCollator[S, R]) -> String {
+  self.name_value.pkg()
 }
 
 ///|
@@ -68,7 +93,7 @@ pub fn[S, R] ProjectCollator::description(
 pub fn[S, R] ProjectCollator::info(
   self : ProjectCollator[S, R],
 ) -> ProjectCollatorInfo {
-  { name_value: self.name(), description_value: self.description() }
+  { name_value: self.qualified_name(), description_value: self.description() }
 }
 
 ///|
@@ -116,6 +141,7 @@ pub fn[S, R] ProjectCollator::apply(
 ///|
 pub fn[S] RegisteredProjectCollator::create(
   name~ : String,
+  pkg? : String,
   description? : String,
   prepare~ : (Project) -> S,
   collate~ : (Int, S, Project) -> S,
@@ -123,6 +149,7 @@ pub fn[S] RegisteredProjectCollator::create(
 ) -> RegisteredProjectCollator {
   let collator = ProjectCollator::create(
     name~,
+    pkg?,
     description?,
     prepare~,
     collate~,
@@ -146,6 +173,20 @@ pub fn RegisteredProjectCollator::name(
   self : RegisteredProjectCollator,
 ) -> String {
   self.info_value.name()
+}
+
+///|
+pub fn RegisteredProjectCollator::qualified_name(
+  self : RegisteredProjectCollator,
+) -> @knowledge.Name {
+  self.info_value.qualified_name()
+}
+
+///|
+pub fn RegisteredProjectCollator::pkg(
+  self : RegisteredProjectCollator,
+) -> String {
+  self.info_value.pkg()
 }
 
 ///|
@@ -174,7 +215,7 @@ pub fn RegisteredProjectCollator::apply(
 pub fn register_collator(
   collator : RegisteredProjectCollator,
 ) -> Result[Unit, String] {
-  let name = collator.name()
+  let name = collator.qualified_name().show()
   if project_collator_registry.contains(name) {
     Err("project collator \{name} is already registered")
   } else {
@@ -184,8 +225,11 @@ pub fn register_collator(
 }
 
 ///|
-pub fn find_collator(name : String) -> RegisteredProjectCollator? {
-  project_collator_registry.get(name)
+pub fn find_collator(
+  name : String,
+  pkg? : String,
+) -> RegisteredProjectCollator? {
+  project_collator_registry.get(@knowledge.Name::read(name, pkg?).show())
 }
 
 ///|

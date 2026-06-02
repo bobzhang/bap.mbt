@@ -4,6 +4,7 @@ import {
   "bobzhang/bap/dwarf",
   "bobzhang/bap/graphlib",
   "bobzhang/bap/image",
+  "bobzhang/bap/knowledge",
   "bobzhang/bap/memory",
   "bobzhang/bap/native_io",
   "bobzhang/bap/types",

@@ -478,6 +478,14 @@ pub fn[S, T] Stream::unfold_many(
 }
 
 ///|
+pub fn[S, T] Stream::unfold_prime(
+  init~ : S,
+  f~ : (S) -> (Array[T], S),
+) -> (Stream[T], Signal[Unit]) {
+  Stream::unfold_many(init~, f~)
+}
+
+///|
 pub fn[S, T] Stream::unfold_until(
   init~ : S,
   f~ : (S) -> (T, S)?,
@@ -607,6 +615,14 @@ pub fn[A, B] Stream::map_many(
     }
   })
   target
+}
+
+///|
+pub fn[A, B] Stream::map_prime(
+  self : Stream[A],
+  f : (A) -> Array[B],
+) -> Stream[B] {
+  self.map_many(f)
 }
 
 ///|

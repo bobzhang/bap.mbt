@@ -92,6 +92,7 @@ pub fn[A, B, C, D] Stream::map3(Self[A], Self[B], Self[C], (A, B, C) -> D) -> Se
 pub fn[A, B, C, D, E] Stream::map4(Self[A], Self[B], Self[C], Self[D], (A, B, C, D) -> E) -> Self[E]
 pub fn[A, B, C, D, E, F] Stream::map5(Self[A], Self[B], Self[C], Self[D], Self[E], (A, B, C, D, E) -> F) -> Self[F]
 pub fn[A, B] Stream::map_many(Self[A], (A) -> Array[B]) -> Self[B]
+pub fn[A, B] Stream::map_prime(Self[A], (A) -> Array[B]) -> Self[B]
 pub fn[A, B, C] Stream::merge(Self[A], Self[B], (A, B) -> C) -> Self[C]
 pub fn[T] Stream::nth(Self[T], Int) -> Future[T]
 pub fn[T] Stream::observe(Self[T], (T) -> Unit) -> Unit
@@ -113,6 +114,7 @@ pub fn[T] Stream::take_list(Self[T], Int) -> Future[@list.List[T]]
 pub fn[T] Stream::tl(Self[T]) -> Self[T]
 pub fn[S, T] Stream::unfold(init~ : S, f~ : (S) -> (T, S)) -> (Self[T], Signal[Unit])
 pub fn[S, T] Stream::unfold_many(init~ : S, f~ : (S) -> (Array[T], S)) -> (Self[T], Signal[Unit])
+pub fn[S, T] Stream::unfold_prime(init~ : S, f~ : (S) -> (Array[T], S)) -> (Self[T], Signal[Unit])
 pub fn[S, T] Stream::unfold_until(init~ : S, f~ : (S) -> (T, S)?) -> (Self[T], Signal[Unit], Future[Unit])
 pub fn[T] Stream::unsubscribe(Self[T], Int) -> Unit
 pub fn[A, B] Stream::unzip(Self[(A, B)]) -> (Self[A], Self[B])

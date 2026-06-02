@@ -470,6 +470,10 @@ test "translated BAP stream map filter merge apply split and zip" {
   let many = many_source.map_many(fn(value) { [value, value] })
   assert_stream_before_eq(many, many_signal, repeat=3, [0, 0, 1, 1, 2, 2])
 
+  let (prime_source, prime_signal, _) = @future.Stream::of_array([0, 1])
+  let prime = prime_source.map_prime(fn(value) { [value, value + 10] })
+  assert_stream_before_eq(prime, prime_signal, repeat=2, [0, 10, 1, 11])
+
   let (filtered_source, filtered_signal, _) = @future.Stream::of_array(values)
   let filtered = filtered_source.filter_map(even_opt)
   assert_stream_before_eq(filtered, filtered_signal, repeat=values.length(), [
@@ -922,6 +926,14 @@ test "translated BAP stream batched unfold either concat and concat merge" {
     ([value, value], value + 1)
   })
   assert_stream_before_eq(batched, batched_signal, repeat=3, [0, 0, 1, 1, 2, 2])
+
+  let (prime_batched, prime_batched_signal) = @future.Stream::unfold_prime(
+    init=1,
+    f=fn(value) { ([value, value * 2], value + 1) },
+  )
+  assert_stream_before_eq(prime_batched, prime_batched_signal, repeat=2, [
+    1, 2, 2, 4,
+  ])
 
   let (left, left_signal, _) = @future.Stream::of_array([0, 1])
   let (right, right_signal, _) = @future.Stream::of_array(["a"])

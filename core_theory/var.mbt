@@ -2,6 +2,9 @@
 let fresh_var_counter : Ref[Int] = Ref(0)
 
 ///|
+let scoped_var_depth : Ref[Int] = Ref(0)
+
+///|
 struct Var {
   sort_value : Sort
   ident_value : String
@@ -137,6 +140,22 @@ pub fn Var::fresh(sort : Sort) -> Var {
     mutable_flag: true,
     virtual_flag: true,
   }
+}
+
+///|
+pub fn[A] Var::scoped(sort : Sort, action : (Var) -> A) -> A {
+  let id = scoped_var_depth.val
+  scoped_var_depth.val = id + 1
+  let variable = {
+    sort_value: sort,
+    ident_value: "$\{id}",
+    version_value: 0,
+    mutable_flag: false,
+    virtual_flag: true,
+  }
+  let result = action(variable)
+  scoped_var_depth.val = id
+  result
 }
 
 ///|

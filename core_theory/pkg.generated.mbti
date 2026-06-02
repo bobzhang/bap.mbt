@@ -837,6 +837,7 @@ pub fn Var::persistent() -> @knowledge.Persistent[Self]
 pub fn Var::reset_temporary_counter() -> Unit
 pub fn Var::resort(Self, Sort) -> Self
 pub fn Var::same(Self, Self) -> Bool
+pub fn[A] Var::scoped(Sort, (Self) -> A) -> A
 pub fn Var::sort(Self) -> Sort
 pub fn Var::to_string(Self) -> String
 pub fn Var::version(Self) -> Int

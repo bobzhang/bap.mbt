@@ -397,6 +397,35 @@ test "variables preserve sorts versions and mutability flags" {
   assert_true(versioned.sort().same(sort))
   assert_true(reg.compare(versioned) < 0)
   assert_true(reg.forget().sort().same(sort))
+  let (
+    scoped_name,
+    scoped_is_virtual,
+    scoped_is_mutable,
+    nested_name,
+    nested_is_virtual,
+    nested_is_mutable,
+  ) = @core_theory.Var::scoped(sort, scoped => {
+    let (nested_name, nested_is_virtual, nested_is_mutable) = @core_theory.Var::scoped(
+      sort,
+      nested => (nested.name(), nested.is_virtual(), nested.is_mutable()),
+    )
+    (
+      scoped.name(),
+      scoped.is_virtual(),
+      scoped.is_mutable(),
+      nested_name,
+      nested_is_virtual,
+      nested_is_mutable,
+    )
+  })
+  inspect(scoped_name, content="$0")
+  assert_true(scoped_is_virtual)
+  assert_true(!scoped_is_mutable)
+  inspect(nested_name, content="$1")
+  assert_true(nested_is_virtual)
+  assert_true(!nested_is_mutable)
+  let next_scoped_name = @core_theory.Var::scoped(sort, scoped => scoped.name())
+  inspect(next_scoped_name, content="$0")
   let fresh = @core_theory.Var::fresh(sort)
   assert_true(fresh.is_virtual())
   assert_true(fresh.is_mutable())

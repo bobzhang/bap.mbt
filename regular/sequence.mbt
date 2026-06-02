@@ -1,4 +1,13 @@
 ///|
+
+///|
+pub(all) enum SeqStep[T, S] {
+  SeqYield(T, S)
+  SeqSkip(S)
+  SeqDone
+} derive(Eq, @debug.Debug)
+
+///|
 pub fn[T] seq_of_array(values : ArrayView[T]) -> Array[T] {
   let out = []
   for value in values {
@@ -32,6 +41,41 @@ pub fn[T] seq_init(length : Int, f : (Int) -> T) -> Array[T] {
   let out = []
   for i in 0..<length {
     out.push(f(i))
+  }
+  out
+}
+
+///|
+pub fn[T, S] seq_unfold(init~ : S, f~ : (S) -> (T, S)?) -> Array[T] {
+  let out = []
+  let mut state = init
+  let mut running = true
+  while running {
+    match f(state) {
+      Some((value, next)) => {
+        out.push(value)
+        state = next
+      }
+      None => running = false
+    }
+  }
+  out
+}
+
+///|
+pub fn[T, S] seq_unfold_step(init~ : S, f~ : (S) -> SeqStep[T, S]) -> Array[T] {
+  let out = []
+  let mut state = init
+  let mut running = true
+  while running {
+    match f(state) {
+      SeqYield(value, next) => {
+        out.push(value)
+        state = next
+      }
+      SeqSkip(next) => state = next
+      SeqDone => running = false
+    }
   }
   out
 }

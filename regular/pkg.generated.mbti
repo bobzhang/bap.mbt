@@ -225,6 +225,10 @@ pub fn[T] seq_to_list(ArrayView[T]) -> @list.List[T]
 
 pub fn[T] seq_to_list_rev(ArrayView[T]) -> @list.List[T]
 
+pub fn[T, S] seq_unfold(init~ : S, f~ : (S) -> (T, S)?) -> Array[T]
+
+pub fn[T, S] seq_unfold_step(init~ : S, f~ : (S) -> SeqStep[T, S]) -> Array[T]
+
 // Errors
 
 // Types and methods
@@ -278,6 +282,12 @@ pub fn[V] PrefixTrie::length(Self[V]) -> Int
 pub fn[V] PrefixTrie::longest_match(Self[V], StringView) -> (Int, V)?
 pub fn[V] PrefixTrie::new() -> Self[V]
 pub fn[V] PrefixTrie::remove(Self[V], StringView) -> Unit
+
+pub(all) enum SeqStep[T, S] {
+  SeqYield(T, S)
+  SeqSkip(S)
+  SeqDone
+} derive(Eq, @debug.Debug)
 
 type SuffixTrie[V]
 pub fn[V] SuffixTrie::add(Self[V], StringView, V) -> Unit

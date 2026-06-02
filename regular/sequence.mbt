@@ -23,6 +23,20 @@ pub fn[T] seq_singleton(value : T) -> Array[T] {
 }
 
 ///|
+pub fn[T] seq_return(value : T) -> Array[T] {
+  seq_singleton(value)
+}
+
+///|
+pub fn[T] seq_init(length : Int, f : (Int) -> T) -> Array[T] {
+  let out = []
+  for i in 0..<length {
+    out.push(f(i))
+  }
+  out
+}
+
+///|
 pub fn seq_range(
   start : Int,
   stop : Int,
@@ -108,6 +122,14 @@ pub fn[T] seq_tl(values : ArrayView[T]) -> Array[T]? {
 }
 
 ///|
+pub fn[T] seq_next(values : ArrayView[T]) -> (T, Array[T])? {
+  match seq_hd(values) {
+    Some(head) => Some((head, seq_drop(values, 1)))
+    None => None
+  }
+}
+
+///|
 pub fn[T] seq_nth(values : ArrayView[T], index : Int) -> T? {
   if index < 0 {
     None
@@ -156,6 +178,11 @@ pub fn[T] seq_drop(values : ArrayView[T], n : Int) -> Array[T] {
 ///|
 pub fn[T] seq_drop_eagerly(values : ArrayView[T], n : Int) -> Array[T] {
   seq_drop(values, n)
+}
+
+///|
+pub fn[T] seq_split_n(values : ArrayView[T], n : Int) -> (Array[T], Array[T]) {
+  (seq_take(values, n), seq_drop(values, n))
 }
 
 ///|
@@ -214,6 +241,18 @@ pub fn[A, B] seq_filter_mapi(
   for i, value in values {
     match f(i, value) {
       Some(mapped) => out.push(mapped)
+      None => ()
+    }
+  }
+  out
+}
+
+///|
+pub fn[T] seq_filter_opt(values : ArrayView[T?]) -> Array[T] {
+  let out = []
+  for value in values {
+    match value {
+      Some(inner) => out.push(inner)
       None => ()
     }
   }

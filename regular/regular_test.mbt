@@ -72,6 +72,9 @@ test "regular sequence helpers mirror BAP sequence wrappers" {
   let helper_empty : Array[Int] = @regular.seq_empty()
   assert_true(helper_empty == [])
   assert_true(@regular.seq_singleton(4) == [4])
+  assert_true(@regular.seq_return(4) == [4])
+  assert_true(@regular.seq_init(4, i => i * 2) == [0, 2, 4, 6])
+  assert_true(@regular.seq_init(-1, i => i) == [])
   assert_true(@regular.seq_range(1, 4) == [1, 2, 3])
   assert_true(@regular.seq_range(4, 1) == [])
   assert_true(@regular.seq_range(1, 4, inclusive=true) == [1, 2, 3, 4])
@@ -88,6 +91,8 @@ test "regular sequence helpers mirror BAP sequence wrappers" {
   assert_true(@regular.seq_hd(empty) is None)
   assert_true(@regular.seq_tl(copied) == Some([2, 3]))
   assert_true(@regular.seq_tl(empty) is None)
+  assert_true(@regular.seq_next(copied) == Some((1, [2, 3])))
+  assert_true(@regular.seq_next(empty) is None)
   assert_true(@regular.seq_nth(copied, 1) == Some(2))
   assert_true(@regular.seq_nth(copied, -1) is None)
   assert_true(@regular.seq_nth(copied, 3) is None)
@@ -100,6 +105,9 @@ test "regular sequence helpers mirror BAP sequence wrappers" {
   assert_true(@regular.seq_drop(copied, -1) == copied)
   assert_true(@regular.seq_drop(copied, 9) == [])
   assert_true(@regular.seq_drop_eagerly(copied, 2) == [3])
+  assert_true(@regular.seq_split_n(copied, 2) == ([1, 2], [3]))
+  assert_true(@regular.seq_split_n(copied, -1) == ([], [1, 2, 3]))
+  assert_true(@regular.seq_split_n(copied, 9) == ([1, 2, 3], []))
   assert_true(@regular.seq_take_while(copied, value => value < 3) == [1, 2])
   assert_true(@regular.seq_take_while(copied, value => value < 0) == [])
   assert_true(@regular.seq_drop_while(copied, value => value < 3) == [3])
@@ -126,6 +134,7 @@ test "regular sequence helpers mirror BAP sequence wrappers" {
     }) ==
     [3],
   )
+  assert_true(@regular.seq_filter_opt([Some(1), None, Some(3), None]) == [1, 3])
   assert_true(
     @regular.seq_concat_map(copied, value => [value, -value]) ==
     [1, -1, 2, -2, 3, -3],

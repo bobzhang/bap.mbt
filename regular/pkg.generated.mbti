@@ -163,6 +163,8 @@ pub fn[A, B] seq_filter_map(ArrayView[A], (A) -> B?) -> Array[B]
 
 pub fn[A, B] seq_filter_mapi(ArrayView[A], (Int, A) -> B?) -> Array[B]
 
+pub fn[T] seq_filter_opt(ArrayView[T?]) -> Array[T]
+
 pub fn[T] seq_find(ArrayView[T], (T) -> Bool) -> T?
 
 pub fn[A, B] seq_find_map(ArrayView[A], (A) -> B?) -> B?
@@ -174,6 +176,8 @@ pub fn[A, B] seq_foldi(ArrayView[A], B, (Int, B, A) -> B) -> B
 pub fn[T] seq_for_all(ArrayView[T], (T) -> Bool) -> Bool
 
 pub fn[T] seq_hd(ArrayView[T]) -> T?
+
+pub fn[T] seq_init(Int, (Int) -> T) -> Array[T]
 
 pub fn[T] seq_is_empty(ArrayView[T]) -> Bool
 
@@ -189,6 +193,8 @@ pub fn[A, B] seq_map(ArrayView[A], (A) -> B) -> Array[B]
 
 pub fn[A, B] seq_mapi(ArrayView[A], (Int, A) -> B) -> Array[B]
 
+pub fn[T] seq_next(ArrayView[T]) -> (T, Array[T])?
+
 pub fn[T] seq_nth(ArrayView[T], Int) -> T?
 
 pub fn[T] seq_of_array(ArrayView[T]) -> Array[T]
@@ -199,9 +205,13 @@ pub fn seq_range(Int, Int, inclusive? : Bool) -> Array[Int]
 
 pub fn[T : Printable] seq_render(ArrayView[T], max? : Int) -> String
 
+pub fn[T] seq_return(T) -> Array[T]
+
 pub fn[T] seq_rev(ArrayView[T]) -> Array[T]
 
 pub fn[T] seq_singleton(T) -> Array[T]
+
+pub fn[T] seq_split_n(ArrayView[T], Int) -> (Array[T], Array[T])
 
 pub fn[T] seq_take(ArrayView[T], Int) -> Array[T]
 

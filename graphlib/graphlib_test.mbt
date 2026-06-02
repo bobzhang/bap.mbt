@@ -282,6 +282,84 @@ test "dfs classifies tree and back edges" {
 }
 
 ///|
+fn edge_kind_name(kind : @graphlib.EdgeKind) -> String {
+  match kind {
+    Tree => "tree"
+    Back => "back"
+    Forward => "forward"
+    Cross => "cross"
+  }
+}
+
+///|
+test "translated BAP depth first search invokes traversal callbacks" {
+  let graph : @graphlib.Graph[Int, String] = @graphlib.Graph::create(edges=[
+    (0, 1, "a"),
+    (1, 2, "b"),
+    (2, 0, "c"),
+    (0, 2, "d"),
+    (0, 3, "e"),
+    (3, 1, "f"),
+  ])
+  let initial_events : Array[String] = []
+  let events = graph.depth_first_search(
+    init=initial_events,
+    start=Some(0),
+    start_tree=(node, events) => {
+      events.push("start:\{node}")
+      events
+    },
+    enter_node=(pre, node, events) => {
+      events.push("enter:\{pre}:\{node}")
+      events
+    },
+    leave_node=(rpost, node, events) => {
+      events.push("leave:\{rpost}:\{node}")
+      events
+    },
+    enter_edge=(kind, edge, events) => {
+      events.push("edge:\{edge_kind_name(kind)}:\{edge.label}")
+      events
+    },
+  )
+  assert_true(
+    events ==
+    [
+      "start:0", "enter:0:0", "edge:tree:a", "enter:1:1", "edge:tree:b", "enter:2:2",
+      "edge:back:c", "leave:3:2", "leave:2:1", "edge:forward:d", "edge:tree:e", "enter:3:3",
+      "edge:cross:f", "leave:1:3", "leave:0:0",
+    ],
+  )
+}
+
+///|
+test "translated BAP depth first search starts requested tree then remaining forest" {
+  let graph : @graphlib.Graph[Int, String] = @graphlib.Graph::create(edges=[
+    (0, 1, "left"),
+    (2, 3, "right"),
+  ])
+  let starts = graph.depth_first_search(init=([] : Array[Int]), start=Some(2), start_tree=(
+    node,
+    starts,
+  ) => {
+    starts.push(node)
+    starts
+  })
+  assert_true(starts == [2, 0])
+
+  let reverse_edges = graph.depth_first_search(
+    init=([] : Array[String]),
+    rev=true,
+    start=Some(3),
+    enter_edge=(_kind, edge, labels) => {
+      labels.push(edge.label)
+      labels
+    },
+  )
+  assert_true(reverse_edges == ["right", "left"])
+}
+
+///|
 test "dfs numbering exposes BAP timestamp and rpost invariants" {
   let graph = sample_graph()
   let numbering = graph.dfs_numbering(0)

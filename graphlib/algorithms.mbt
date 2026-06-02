@@ -32,6 +32,111 @@ fn[N : Hash + Eq, E] dfs_visit(
 }
 
 ///|
+fn[N, A] dfs_start_tree_identity(_node : N, state : A) -> A {
+  state
+}
+
+///|
+fn[N, A] dfs_node_identity(_index : Int, _node : N, state : A) -> A {
+  state
+}
+
+///|
+fn[N, E, A] dfs_edge_identity(
+  _kind : EdgeKind,
+  _edge : Edge[N, E],
+  state : A,
+) -> A {
+  state
+}
+
+///|
+fn[N : Hash + Eq, E, A] depth_first_search_visit(
+  graph : Graph[N, E],
+  node : N,
+  state : A,
+  rev : Bool,
+  colors : Map[N, Int],
+  entered : Map[N, Int],
+  nodes_left : Ref[Int],
+  next_pre : Ref[Int],
+  enter_node : (Int, N, A) -> A,
+  leave_node : (Int, N, A) -> A,
+  enter_edge : (EdgeKind, Edge[N, E], A) -> A,
+  leave_edge : (EdgeKind, Edge[N, E], A) -> A,
+) -> A {
+  colors[node] = 1
+  let pre = next_pre.val
+  next_pre.val += 1
+  entered[node] = pre
+  let mut state = enter_node(pre, node, state)
+  let edges = if rev { graph.in_edges(node) } else { graph.out_edges(node) }
+  for edge in edges {
+    let adjacent = if rev { edge.src } else { edge.dst }
+    let kind = match colors.get(adjacent) {
+      None => Tree
+      Some(1) => Back
+      Some(_) =>
+        if pre < entered.get_or_default(adjacent, 0) {
+          Forward
+        } else {
+          Cross
+        }
+    }
+    state = enter_edge(kind, edge, state)
+    if kind is Tree {
+      state = depth_first_search_visit(
+        graph, adjacent, state, rev, colors, entered, nodes_left, next_pre, enter_node,
+        leave_node, enter_edge, leave_edge,
+      )
+    }
+    state = leave_edge(kind, edge, state)
+  }
+  colors[node] = 2
+  nodes_left.val -= 1
+  leave_node(nodes_left.val, node, state)
+}
+
+///|
+pub fn[N : Hash + Eq, E, A] Graph::depth_first_search(
+  self : Graph[N, E],
+  init~ : A,
+  rev? : Bool = false,
+  start? : N? = None,
+  start_tree? : (N, A) -> A = dfs_start_tree_identity,
+  enter_node? : (Int, N, A) -> A = dfs_node_identity,
+  leave_node? : (Int, N, A) -> A = dfs_node_identity,
+  enter_edge? : (EdgeKind, Edge[N, E], A) -> A = dfs_edge_identity,
+  leave_edge? : (EdgeKind, Edge[N, E], A) -> A = dfs_edge_identity,
+) -> A {
+  let colors : Map[N, Int] = {}
+  let entered : Map[N, Int] = {}
+  let nodes_left = Ref::Ref(self.node_count())
+  let next_pre = Ref::Ref(0)
+  let mut state = init
+  match start {
+    Some(node) if self.has_node(node) => {
+      state = start_tree(node, state)
+      state = depth_first_search_visit(
+        self, node, state, rev, colors, entered, nodes_left, next_pre, enter_node,
+        leave_node, enter_edge, leave_edge,
+      )
+    }
+    _ => ()
+  }
+  for node in self.nodes {
+    if !colors.contains(node) {
+      state = start_tree(node, state)
+      state = depth_first_search_visit(
+        self, node, state, rev, colors, entered, nodes_left, next_pre, enter_node,
+        leave_node, enter_edge, leave_edge,
+      )
+    }
+  }
+  state
+}
+
+///|
 fn[N : Hash + Eq, E] postorder_visit(
   graph : Graph[N, E],
   node : N,

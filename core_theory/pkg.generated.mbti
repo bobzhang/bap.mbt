@@ -729,6 +729,7 @@ pub fn Target::family(Self) -> Array[Self]
 pub fn Target::filetype(Self) -> Filetype
 pub fn Target::filter(parent? : Self, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, options? : TargetOptions, strict? : Bool) -> Array[Self]
 pub fn Target::find_role(Self, Role) -> Var?
+#alias(var)
 pub fn Target::find_var(Self, String) -> Var?
 pub fn Target::get(String, pkg? : String) -> Result[Self, String]
 pub fn Target::has_roles(Self, Array[Role], Var) -> Bool

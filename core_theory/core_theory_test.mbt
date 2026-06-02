@@ -2269,6 +2269,8 @@ test "target role helpers classify common architecture variables" {
   }
   assert_true(@core_theory.Role::read("argument", pkg="core") is Err(_))
   assert_true(@core_theory.Role::read("function-return") is Err(_))
+  assert_true(amd64.find_var("rsp").map(v => v.ident()) == Some("RSP"))
+  assert_true(amd64.find_var("__missing_register__") is None)
   match amd64.find_var("RSP") {
     Some(sp) => assert_true(amd64.roles_of_var(sp).contains(StackPointer))
     None => fail("missing RSP")

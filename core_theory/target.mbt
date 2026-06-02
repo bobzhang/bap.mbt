@@ -3989,6 +3989,7 @@ pub fn Target::with_alias_origin(self : Target, origin : AliasOrigin) -> Target 
 }
 
 ///|
+#alias(var)
 pub fn Target::find_var(self : Target, name : String) -> Var? {
   self.vars_value
   .search_by(item => {

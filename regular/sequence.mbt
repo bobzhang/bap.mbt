@@ -23,12 +23,30 @@ pub fn[T] seq_singleton(value : T) -> Array[T] {
 }
 
 ///|
-pub fn seq_range(start : Int, stop : Int) -> Array[Int] {
+pub fn seq_range(
+  start : Int,
+  stop : Int,
+  inclusive? : Bool = false,
+) -> Array[Int] {
   let out = []
-  let mut value = start
-  while value < stop {
-    out.push(value)
-    value = value + 1
+  if inclusive {
+    if start > stop {
+      return out
+    }
+    let mut value = start
+    while true {
+      out.push(value)
+      if value == stop {
+        return out
+      }
+      value = value + 1
+    }
+  } else {
+    let mut value = start
+    while value < stop {
+      out.push(value)
+      value = value + 1
+    }
   }
   out
 }

@@ -2959,6 +2959,14 @@ test "labels carry symbolic entry points" {
   let strong = register_core_test_agent("possible-name-strong", Reliable)
   let named = @core_theory.Label::for_name("main")
   assert_true(named.is_valid())
+  let invalid_named = named.with_valid(is_valid=false)
+  assert_true(!invalid_named.is_valid())
+  assert_true(invalid_named.with_valid().is_valid())
+  assert_label_persistent_round_trip(
+    Some(@core_theory.Label::persistent()),
+    invalid_named,
+    "invalid symbolic label",
+  )
   assert_true(named.same(named))
   assert_true(named.compare(named) == 0)
   assert_true(named.name() == Some("main"))
@@ -4046,6 +4054,23 @@ test "program label facts expose BAP-style Knowledge slots" {
             @types.Word::of_int(width=64, 0x403000),
             target=@core_theory.Target::x86_64(),
           ),
+        )
+        is Err(_),
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let invalid_label = @core_theory.Label::for_name("invalid-entry").with_valid(
+    is_valid=false,
+  )
+  match facts.for_label(invalid_label) {
+    Ok(object) => {
+      assert_true(facts.collect_is_valid(object) == Some(false))
+      assert_true(
+        facts.provide_label(
+          object,
+          @core_theory.Label::for_name("invalid-entry").with_valid(),
         )
         is Err(_),
       )

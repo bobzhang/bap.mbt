@@ -315,6 +315,7 @@ pub fn Label::with_possible_name(Self, @knowledge.Agent, String) -> Self
 pub fn Label::with_semantics(Self, Semantics) -> Self
 pub fn Label::with_subroutine(Self, is_subroutine? : Bool) -> Self
 pub fn Label::with_unit(Self, ProgramUnit) -> Self
+pub fn Label::with_valid(Self, is_valid? : Bool) -> Self
 
 type LabelFacts
 pub fn LabelFacts::addr(Self) -> @knowledge.FactTable[Unit, @types.Word?]

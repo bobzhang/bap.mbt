@@ -239,6 +239,11 @@ pub fn Label::with_semantics(self : Label, semantics : Semantics) -> Label {
 }
 
 ///|
+pub fn Label::with_valid(self : Label, is_valid? : Bool = true) -> Label {
+  { ..self, valid_flag: is_valid }
+}
+
+///|
 pub fn Label::with_subroutine(
   self : Label,
   is_subroutine? : Bool = true,

@@ -794,9 +794,12 @@ test "targets inherit defaults and match ancestry" {
         vars=[wide, high],
         aliasing=[value],
       )
-      match partial_target.origin_of_name("WIDE") {
-        Some(origin) => assert_true(origin is UnknownAlias(_))
-        None => fail("missing Alias.unk origin")
+      match partial_target.origin_of_name("HIGH") {
+        Some(origin) => {
+          assert_true(origin.reg().map(v => v.ident()) == Some("WIDE"))
+          assert_true(origin.range() == Some((32, 63)))
+        }
+        None => fail("missing Alias.unk part origin")
       }
     }
     Err(reason) => fail(reason)
@@ -804,6 +807,67 @@ test "targets inherit defaults and match ancestry" {
   assert_true(
     @core_theory.Alias::def(wide, [@core_theory.Alias::reg(eax)]) is Err(_),
   )
+  let rax_layout = match
+    @core_theory.Alias::def(rax, [
+      @core_theory.Alias::unk(),
+      @core_theory.Alias::reg(eax),
+    ]) {
+    Ok(value) => value
+    Err(reason) => fail(reason)
+  }
+  let ax = @core_theory.Var::create(@core_theory.Sort::bitv(16), "AX")
+  let ax_layout = match
+    @core_theory.Alias::def(eax, [
+      @core_theory.Alias::unk(),
+      @core_theory.Alias::reg(ax),
+    ]) {
+    Ok(value) => value
+    Err(reason) => fail(reason)
+  }
+  let ah = @core_theory.Var::create(@core_theory.Sort::bitv(8), "AH")
+  let al = @core_theory.Var::create(@core_theory.Sort::bitv(8), "AL")
+  let byte_layout = match
+    @core_theory.Alias::def(ax, [
+      @core_theory.Alias::reg(ah),
+      @core_theory.Alias::reg(al),
+    ]) {
+    Ok(value) => value
+    Err(reason) => fail(reason)
+  }
+  let chained_target = @core_theory.Target::create(
+    name=@knowledge.Name::create("chained-alias-dsl-target", pkg="test"),
+    bits=64,
+    vars=[rax, eax, ax, ah, al],
+    aliasing=[rax_layout, ax_layout, byte_layout],
+  )
+  match chained_target.origin_of_name("EAX") {
+    Some(origin) => {
+      assert_true(origin.reg().map(v => v.ident()) == Some("RAX"))
+      assert_true(origin.range() == Some((0, 31)))
+    }
+    None => fail("missing chained EAX origin")
+  }
+  match chained_target.origin_of_name("AX") {
+    Some(origin) => {
+      assert_true(origin.reg().map(v => v.ident()) == Some("RAX"))
+      assert_true(origin.range() == Some((0, 15)))
+    }
+    None => fail("missing chained AX origin")
+  }
+  match chained_target.origin_of_name("AH") {
+    Some(origin) => {
+      assert_true(origin.reg().map(v => v.ident()) == Some("RAX"))
+      assert_true(origin.range() == Some((8, 15)))
+    }
+    None => fail("missing chained AH origin")
+  }
+  match chained_target.origin_of_name("AL") {
+    Some(origin) => {
+      assert_true(origin.reg().map(v => v.ident()) == Some("RAX"))
+      assert_true(origin.range() == Some((0, 7)))
+    }
+    None => fail("missing chained AL origin")
+  }
 }
 
 ///|

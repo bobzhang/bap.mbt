@@ -1599,8 +1599,8 @@ fn target_alias_origins(
   }
   match aliasing {
     Some(aliases) =>
-      for entry in aliases {
-        result.push(entry.origin())
+      for origin in aliases_to_origins(aliases) {
+        append_alias_origin_unique(result, origin)
       }
     None => ()
   }
@@ -2980,6 +2980,19 @@ fn alias_def_error(variable : Var, reason : String) -> String {
 }
 
 ///|
+fn var_arrays_same(lhs : Array[Var], rhs : Array[Var]) -> Bool {
+  if lhs.length() != rhs.length() {
+    return false
+  }
+  for i in 0..<lhs.length() {
+    if !lhs[i].same(rhs[i]) {
+      return false
+    }
+  }
+  true
+}
+
+///|
 pub fn Alias::reg(variable : Var) -> AliasPart {
   { variable: Some(variable) }
 }
@@ -3041,39 +3054,284 @@ fn Alias::all_parts(self : Alias, predicate : (Var) -> Bool) -> Array[Var]? {
 }
 
 ///|
-fn Alias::origin(self : Alias) -> AliasOrigin {
-  match self.parts_value {
-    [part] =>
-      match part.variable {
-        Some(variable) =>
-          match alias_part_size(variable) {
-            Some(width) =>
-              if alias_part_size(self.aliased_value) == Some(width) {
-                AliasOrigin::register(self.aliased_value, variable)
-              } else {
-                AliasOrigin::subregister(
-                  self.aliased_value,
-                  variable,
-                  lo=0,
-                  hi=width - 1,
-                )
-              }
-            None => AliasOrigin::unknown(self.aliased_value)
+fn Alias::has_unknown(self : Alias) -> Bool {
+  self.parts_value.any(part => part.variable is None)
+}
+
+///|
+fn Alias::part_width(self : Alias) -> Int? {
+  match alias_part_size(self.aliased_value) {
+    Some(total) => Some(total / self.parts_value.length())
+    None => None
+  }
+}
+
+///|
+fn Alias::known_part_offsets(self : Alias) -> Array[(Int, Var)]? {
+  let width = match self.part_width() {
+    Some(width) => width
+    None => return None
+  }
+  let total = match alias_part_size(self.aliased_value) {
+    Some(total) => total
+    None => return None
+  }
+  let result : Array[(Int, Var)] = []
+  for i in 0..<self.parts_value.length() {
+    match self.parts_value[i].variable {
+      Some(variable) => result.push((total - i * width - width, variable))
+      None => ()
+    }
+  }
+  Some(result)
+}
+
+///|
+fn Alias::declared_origins(self : Alias) -> Array[AliasOrigin] {
+  let origins : Array[AliasOrigin] = []
+  match self.all_parts(variable => variable.sort().refine_bool() is Some(_)) {
+    Some(bits) => origins.push(AliasOrigin::bit_set(self.aliased_value, bits))
+    None =>
+      match self.all_parts(variable => variable.sort().bitv_size() is Some(_)) {
+        Some(regs) =>
+          match regs {
+            [source] =>
+              origins.push(AliasOrigin::register(self.aliased_value, source))
+            _ =>
+              origins.push(AliasOrigin::register_set(self.aliased_value, regs))
           }
-        None => AliasOrigin::unknown(self.aliased_value)
-      }
-    _ =>
-      match
-        self.all_parts(variable => variable.sort().refine_bool() is Some(_)) {
-        Some(bits) => AliasOrigin::bit_set(self.aliased_value, bits)
-        None =>
-          match
-            self.all_parts(variable => variable.sort().bitv_size() is Some(_)) {
-            Some(regs) => AliasOrigin::register_set(self.aliased_value, regs)
-            None => AliasOrigin::unknown(self.aliased_value)
-          }
+        None => ()
       }
   }
+  if self.has_unknown() {
+    match self.known_part_offsets() {
+      Some(parts) =>
+        for part in parts {
+          let offset = part.0
+          let variable = part.1
+          match variable.sort().bitv_size() {
+            Some(width) =>
+              origins.push(
+                AliasOrigin::subregister(
+                  variable,
+                  self.aliased_value,
+                  lo=offset,
+                  hi=offset + width - 1,
+                ),
+              )
+            None => ()
+          }
+        }
+      None => ()
+    }
+  }
+  origins
+}
+
+///|
+fn alias_origin_same(lhs : AliasOrigin, rhs : AliasOrigin) -> Bool {
+  match (lhs, rhs) {
+    (
+      RegisterAlias(aliased=laliased, source=lsource),
+      RegisterAlias(aliased=raliased, source=rsource),
+    ) => laliased.same(raliased) && lsource.same(rsource)
+    (
+      SubRegister(aliased=laliased, source=lsource, lo=llo, hi=lhi),
+      SubRegister(aliased=raliased, source=rsource, lo=rlo, hi=rhi),
+    ) =>
+      laliased.same(raliased) &&
+      lsource.same(rsource) &&
+      llo == rlo &&
+      lhi == rhi
+    (
+      SuperRegister(aliased=laliased, regs=lregs),
+      SuperRegister(aliased=raliased, regs=rregs),
+    ) => laliased.same(raliased) && var_arrays_same(lregs, rregs)
+    (
+      BitSetAlias(aliased=laliased, bits=lbits),
+      BitSetAlias(aliased=raliased, bits=rbits),
+    ) => laliased.same(raliased) && var_arrays_same(lbits, rbits)
+    (UnknownAlias(aliased=laliased), UnknownAlias(aliased=raliased)) =>
+      laliased.same(raliased)
+    _ => false
+  }
+}
+
+///|
+fn append_alias_origin_unique(
+  origins : Array[AliasOrigin],
+  origin : AliasOrigin,
+) -> Unit {
+  if origins.search_by(item => alias_origin_same(item, origin)) is None {
+    origins.push(origin)
+  }
+}
+
+///|
+fn find_alias_origin(
+  origins : Array[AliasOrigin],
+  variable : Var,
+) -> AliasOrigin? {
+  origins
+  .search_by(origin => origin.aliased().same(variable))
+  .map(i => origins[i])
+}
+
+///|
+fn resolve_sub_alias_origin(
+  origins : Array[AliasOrigin],
+  aliased : Var,
+  source : Var,
+  lo : Int,
+  hi : Int,
+  depth : Int,
+) -> AliasOrigin {
+  if depth <= 0 {
+    return AliasOrigin::subregister(aliased, source, lo~, hi~)
+  }
+  match find_alias_origin(origins, source) {
+    Some(RegisterAlias(source=base, ..)) =>
+      resolve_sub_alias_origin(origins, aliased, base, lo, hi, depth - 1)
+    Some(SubRegister(source=base, lo=base_lo, ..)) =>
+      resolve_sub_alias_origin(
+        origins,
+        aliased,
+        base,
+        base_lo + lo,
+        base_lo + hi,
+        depth - 1,
+      )
+    _ => AliasOrigin::subregister(aliased, source, lo~, hi~)
+  }
+}
+
+///|
+fn resolve_register_alias_origin(
+  origins : Array[AliasOrigin],
+  aliased : Var,
+  source : Var,
+  depth : Int,
+) -> AliasOrigin {
+  if depth <= 0 {
+    return AliasOrigin::register(aliased, source)
+  }
+  match find_alias_origin(origins, source) {
+    Some(RegisterAlias(source=base, ..)) =>
+      resolve_register_alias_origin(origins, aliased, base, depth - 1)
+    Some(SubRegister(source=base, lo~, hi~, ..)) =>
+      AliasOrigin::subregister(aliased, base, lo~, hi~)
+    Some(SuperRegister(regs~, ..)) => AliasOrigin::register_set(aliased, regs)
+    Some(BitSetAlias(bits~, ..)) => AliasOrigin::bit_set(aliased, bits)
+    Some(UnknownAlias(_)) | None => AliasOrigin::register(aliased, source)
+  }
+}
+
+///|
+fn resolve_alias_origin(
+  origins : Array[AliasOrigin],
+  origin : AliasOrigin,
+) -> AliasOrigin {
+  match origin {
+    RegisterAlias(aliased~, source~) =>
+      resolve_register_alias_origin(origins, aliased, source, 32)
+    SubRegister(aliased~, source~, lo~, hi~) =>
+      resolve_sub_alias_origin(origins, aliased, source, lo, hi, 32)
+    SuperRegister(_) | BitSetAlias(_) | UnknownAlias(_) => origin
+  }
+}
+
+///|
+fn resolve_alias_origins(origins : Array[AliasOrigin]) -> Array[AliasOrigin] {
+  [
+    for origin in origins => resolve_alias_origin(origins, origin)
+  ]
+}
+
+///|
+fn Alias::derived_part_origins(
+  self : Alias,
+  lhs_origin : AliasOrigin,
+) -> Array[AliasOrigin] {
+  let parts = match self.known_part_offsets() {
+    Some(items) => items
+    None => return []
+  }
+  if parts.length() != self.parts_value.length() {
+    return []
+  }
+  let result : Array[AliasOrigin] = []
+  match lhs_origin {
+    RegisterAlias(source=base, ..) =>
+      for part in parts {
+        let offset = part.0
+        let variable = part.1
+        if !variable.same(base) {
+          match variable.sort().bitv_size() {
+            Some(width) =>
+              result.push(
+                AliasOrigin::subregister(
+                  variable,
+                  base,
+                  lo=offset,
+                  hi=offset + width - 1,
+                ),
+              )
+            None => ()
+          }
+        }
+      }
+    SubRegister(source=base, lo=base_lo, ..) =>
+      for part in parts {
+        let offset = part.0
+        let variable = part.1
+        match variable.sort().bitv_size() {
+          Some(width) =>
+            result.push(
+              AliasOrigin::subregister(
+                variable,
+                base,
+                lo=base_lo + offset,
+                hi=base_lo + offset + width - 1,
+              ),
+            )
+          None => ()
+        }
+      }
+    SuperRegister(regs~, ..) =>
+      if regs.length() == parts.length() {
+        for i in 0..<parts.length() {
+          let variable = parts[i].1
+          let base = regs[i]
+          if !variable.same(base) {
+            result.push(AliasOrigin::register(variable, base))
+          }
+        }
+      }
+    BitSetAlias(_) | UnknownAlias(_) => ()
+  }
+  result
+}
+
+///|
+fn aliases_to_origins(aliases : Array[Alias]) -> Array[AliasOrigin] {
+  let declared : Array[AliasOrigin] = []
+  for entry in aliases {
+    for origin in entry.declared_origins() {
+      append_alias_origin_unique(declared, origin)
+    }
+  }
+  let resolved = resolve_alias_origins(declared)
+  let result = resolved.copy()
+  for entry in aliases {
+    match find_alias_origin(resolved, entry.aliased_value) {
+      Some(lhs_origin) =>
+        for origin in entry.derived_part_origins(lhs_origin) {
+          append_alias_origin_unique(result, origin)
+        }
+      None => ()
+    }
+  }
+  resolve_alias_origins(result)
 }
 
 ///|

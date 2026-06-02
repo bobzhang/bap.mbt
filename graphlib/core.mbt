@@ -256,6 +256,14 @@ pub fn[N : Eq, E] Graph::intersect(
 }
 
 ///|
+pub fn[N : Eq, E] Graph::inter(
+  self : Graph[N, E],
+  other : Graph[N, E],
+) -> Graph[N, E] {
+  self.intersect(other)
+}
+
+///|
 fn[N] skip_no_graph_node(_node : N) -> Bool {
   false
 }

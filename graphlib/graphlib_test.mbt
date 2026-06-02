@@ -125,6 +125,7 @@ test "graph union and intersection follow set semantics" {
   let intersection = left.intersect(right)
   assert_true(Set::from_array(intersection.nodes()) == Set::from_array([2, 3]))
   assert_true(edge_pairs(intersection) == Set::from_array([(2, 3)]))
+  assert_true(left.inter(right).edges() == intersection.edges())
 }
 
 ///|

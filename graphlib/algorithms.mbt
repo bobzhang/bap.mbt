@@ -37,11 +37,14 @@ fn[N : Hash + Eq, E] postorder_visit(
   node : N,
   seen : Set[N],
   order : Array[N],
+  rev : Bool,
 ) -> Unit {
   if !seen.contains(node) {
     seen.add(node)
-    for succ in graph.successors(node) {
-      postorder_visit(graph, succ, seen, order)
+    let edges = if rev { graph.in_edges(node) } else { graph.out_edges(node) }
+    for edge in edges {
+      let adjacent = if rev { edge.src } else { edge.dst }
+      postorder_visit(graph, adjacent, seen, order, rev)
     }
     order.push(node)
   }
@@ -130,11 +133,12 @@ pub fn[N : Hash + Eq, E] Graph::dfs_numbering(
 pub fn[N : Hash + Eq, E] Graph::reachable(
   self : Graph[N, E],
   start : N,
+  rev? : Bool = false,
 ) -> Set[N] {
   let seen : Set[N] = Set([])
   let order = []
   if self.has_node(start) {
-    postorder_visit(self, start, seen, order)
+    postorder_visit(self, start, seen, order, rev)
   }
   seen
 }
@@ -196,13 +200,23 @@ pub fn[N : Hash + Eq, E] Graph::is_reachable(
 pub fn[N : Hash + Eq, E] Graph::reverse_postorder(
   self : Graph[N, E],
   start : N,
+  rev? : Bool = false,
+) -> Array[N] {
+  self.postorder(start, rev~).rev()
+}
+
+///|
+pub fn[N : Hash + Eq, E] Graph::postorder(
+  self : Graph[N, E],
+  start : N,
+  rev? : Bool = false,
 ) -> Array[N] {
   let seen : Set[N] = Set([])
   let order = []
   if self.has_node(start) {
-    postorder_visit(self, start, seen, order)
+    postorder_visit(self, start, seen, order, rev)
   }
-  order.rev()
+  order
 }
 
 ///|

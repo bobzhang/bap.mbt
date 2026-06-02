@@ -306,6 +306,7 @@ test "partitions support BAP trivial discrete union and refinement invariants" {
       assert_true(group.top() == 1)
       assert_true(group.mem(2))
       assert_true(group.members().contains(1))
+      assert_true(Set::from_array(group.enumerate()) == Set::from_array([1, 2]))
       match joined.of_equiv(group.to_equiv()) {
         Some(same) => {
           assert_true(same.mem(1))
@@ -756,6 +757,7 @@ test "immediate dominators and frontiers describe branches and loop headers" {
   assert_true(frontier.to_sequence() == [1, 2, 3, 4])
   assert_true(frontier.mem(1, 1))
   assert_true(frontier.elements(2) == [4])
+  assert_true(frontier.enumerate(2) == [4])
   assert_true(frontier.elements(0).is_empty())
   let post_idoms = graph.immediate_dominators(4, rev=true)
   assert_true(post_idoms[0] == 1)
@@ -842,6 +844,7 @@ test "graph fixpoint solves forward and reverse dataflow facts" {
   assert_true(solved.get(2) == Set::from_array([0]))
   assert_true(solved.get(3) == Set::from_array([0, 1, 2]))
   assert_true(solved.entries().length() == 4)
+  assert_true(solved.enumerate().length() == solved.entries().length())
   assert_true(solved.equal(solved, equal=int_set_equal))
   let derived = solved.derive_values(
     (_node, facts) => if facts.is_empty() { None } else { Some(facts.length()) },

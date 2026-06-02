@@ -44,6 +44,7 @@ pub fn[N, D] Fixpoint::create(Map[N, D], D) -> Self[N, D]
 pub fn[N, D] Fixpoint::default(Self[N, D]) -> D
 pub fn[N : Hash + Eq, D, A] Fixpoint::derive_values(Self[N, D], (N, D) -> A?, A) -> Self[N, A]
 pub fn[N, D] Fixpoint::entries(Self[N, D]) -> Array[(N, D)]
+pub fn[N, D] Fixpoint::enumerate(Self[N, D]) -> Array[(N, D)]
 pub fn[N : Hash + Eq, D] Fixpoint::equal(Self[N, D], Self[N, D], equal~ : (D, D) -> Bool) -> Bool
 pub fn[N : Hash + Eq, D] Fixpoint::get(Self[N, D], N) -> D
 pub fn[N, D] Fixpoint::is_fixpoint(Self[N, D]) -> Bool
@@ -51,6 +52,7 @@ pub fn[N, D] Fixpoint::iterations(Self[N, D]) -> Int
 
 type Frontier[N] derive(@debug.Debug)
 pub fn[N : Hash + Eq] Frontier::elements(Self[N], N) -> Array[N]
+pub fn[N : Hash + Eq] Frontier::enumerate(Self[N], N) -> Array[N]
 pub fn[N : Hash + Eq] Frontier::mem(Self[N], N, N) -> Bool
 pub fn[N] Frontier::to_sequence(Self[N]) -> Array[N]
 
@@ -115,6 +117,7 @@ pub fn[E] GraphPath::weight(Self[E]) -> Int
 
 type Group[N] derive(@debug.Debug)
 pub fn[N] Group::elements(Self[N]) -> Array[N]
+pub fn[N] Group::enumerate(Self[N]) -> Array[N]
 pub fn[N : Hash + Eq] Group::mem(Self[N], N) -> Bool
 pub fn[N] Group::members(Self[N]) -> @set.Set[N]
 pub fn[N] Group::to_equiv(Self[N]) -> Equiv

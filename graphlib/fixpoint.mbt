@@ -47,6 +47,11 @@ pub fn[N, D] Fixpoint::entries(self : Fixpoint[N, D]) -> Array[(N, D)] {
 }
 
 ///|
+pub fn[N, D] Fixpoint::enumerate(self : Fixpoint[N, D]) -> Array[(N, D)] {
+  self.entries()
+}
+
+///|
 fn[N : Hash + Eq, D] Fixpoint::fixpoint_is_subset(
   self : Fixpoint[N, D],
   other : Fixpoint[N, D],

@@ -171,6 +171,14 @@ pub fn[N : Hash + Eq] Frontier::elements(
 }
 
 ///|
+pub fn[N : Hash + Eq] Frontier::enumerate(
+  self : Frontier[N],
+  node : N,
+) -> Array[N] {
+  self.elements(node)
+}
+
+///|
 pub fn[N : Hash + Eq] Frontier::mem(
   self : Frontier[N],
   node : N,

@@ -30,6 +30,11 @@ pub fn[N] Group::elements(self : Group[N]) -> Array[N] {
 }
 
 ///|
+pub fn[N] Group::enumerate(self : Group[N]) -> Array[N] {
+  self.elements()
+}
+
+///|
 pub fn[N] Group::members(self : Group[N]) -> Set[N] {
   self.members_value.copy()
 }

@@ -45,6 +45,97 @@ pub fn[T] seq_is_empty(values : ArrayView[T]) -> Bool {
 }
 
 ///|
+pub fn[T] seq_length(values : ArrayView[T]) -> Int {
+  values.length()
+}
+
+///|
+pub fn[T] seq_hd(values : ArrayView[T]) -> T? {
+  values.get(0)
+}
+
+///|
+pub fn[T] seq_tl(values : ArrayView[T]) -> Array[T]? {
+  if values.length() == 0 {
+    None
+  } else {
+    Some(seq_drop(values, 1))
+  }
+}
+
+///|
+pub fn[T] seq_nth(values : ArrayView[T], index : Int) -> T? {
+  if index < 0 {
+    None
+  } else {
+    values.get(index)
+  }
+}
+
+///|
+pub fn[T] seq_last(values : ArrayView[T]) -> T? {
+  values.last()
+}
+
+///|
+pub fn[T] seq_take(values : ArrayView[T], n : Int) -> Array[T] {
+  let limit = if n <= 0 {
+    0
+  } else if n > values.length() {
+    values.length()
+  } else {
+    n
+  }
+  let out = []
+  for i in 0..<limit {
+    out.push(values[i])
+  }
+  out
+}
+
+///|
+pub fn[T] seq_drop(values : ArrayView[T], n : Int) -> Array[T] {
+  let start = if n <= 0 {
+    0
+  } else if n > values.length() {
+    values.length()
+  } else {
+    n
+  }
+  let out = []
+  for i in start..<values.length() {
+    out.push(values[i])
+  }
+  out
+}
+
+///|
+pub fn[T] seq_drop_eagerly(values : ArrayView[T], n : Int) -> Array[T] {
+  seq_drop(values, n)
+}
+
+///|
+pub fn[T] seq_take_while(values : ArrayView[T], f : (T) -> Bool) -> Array[T] {
+  let out = []
+  for value in values {
+    if !f(value) {
+      return out
+    }
+    out.push(value)
+  }
+  out
+}
+
+///|
+pub fn[T] seq_drop_while(values : ArrayView[T], f : (T) -> Bool) -> Array[T] {
+  let mut start = 0
+  while start < values.length() && f(values[start]) {
+    start = start + 1
+  }
+  seq_drop(values, start)
+}
+
+///|
 pub fn[A, B] seq_map(values : ArrayView[A], f : (A) -> B) -> Array[B] {
   let out = []
   for value in values {
@@ -113,6 +204,30 @@ pub fn[T] seq_for_all(values : ArrayView[T], f : (T) -> Bool) -> Bool {
 ///|
 pub fn[T] seq_to_list(values : ArrayView[T]) -> @list.List[T] {
   @list.from_array(seq_of_array(values))
+}
+
+///|
+pub fn[T] seq_to_array(values : ArrayView[T]) -> Array[T] {
+  seq_of_array(values)
+}
+
+///|
+pub fn[T] seq_rev(values : ArrayView[T]) -> Array[T] {
+  let out = []
+  let mut i = values.length() - 1
+  while i >= 0 {
+    out.push(values[i])
+    if i == 0 {
+      return out
+    }
+    i = i - 1
+  }
+  out
+}
+
+///|
+pub fn[T] seq_to_list_rev(values : ArrayView[T]) -> @list.List[T] {
+  @list.from_array(seq_rev(values))
 }
 
 ///|

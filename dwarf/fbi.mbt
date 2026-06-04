@@ -29,6 +29,7 @@ priv enum DwarfFunctionAttrValue {
   DwarfAttrNameRef(DwarfNameRef)
   DwarfAttrStrOffsetsBase(Int)
   DwarfAttrAddrBase(Int)
+  DwarfAttrRangesBase(Int)
   DwarfAttrRnglistsBase(Int)
   DwarfAttrIgnored
 }
@@ -928,6 +929,11 @@ fn dwarf_read_attr_value(
         Ok((base, next)) => Ok((DwarfAttrAddrBase(base), next))
         Err(reason) => Err(reason)
       }
+    DwarfRangesBaseValue =>
+      match input.read_offset(endian~, size=dwarf_size) {
+        Ok((base, next)) => Ok((DwarfAttrRangesBase(base), next))
+        Err(reason) => Err(reason)
+      }
     DwarfRnglistsBaseValue =>
       match input.read_offset(endian~, size=dwarf_size) {
         Ok((base, next)) => Ok((DwarfAttrRnglistsBase(base), next))
@@ -980,6 +986,7 @@ fn dwarf_collect_function(
   addr_size : DwarfWordSize,
   version : Int,
   range_base : UInt64,
+  ranges_offset_base : Int,
   rnglists_base : Int?,
   addr_base : Int?,
 ) -> Result[DwarfFunctionCandidate?, String] {
@@ -991,6 +998,7 @@ fn dwarf_collect_function(
   let mut high_abs : UInt64? = None
   let mut high_rel : UInt64? = None
   let mut range_ref : DwarfRangeListRef? = None
+  let mut ranges_offset_base = ranges_offset_base
   for value in values {
     match value {
       DwarfAttrName(text) => name = Some(text)
@@ -1003,6 +1011,7 @@ fn dwarf_collect_function(
       DwarfAttrNameRef(offset) => name_ref = Some(offset)
       DwarfAttrStrOffsetsBase(_) => ()
       DwarfAttrAddrBase(_) => ()
+      DwarfAttrRangesBase(base) => ranges_offset_base = base
       DwarfAttrRnglistsBase(_) => ()
       DwarfAttrIgnored => ()
     }
@@ -1015,7 +1024,11 @@ fn dwarf_collect_function(
       }
       match
         dwarf_read_ranges_summary(
-          section, offset, range_base, endian, addr_size,
+          section,
+          ranges_offset_base + offset,
+          range_base,
+          endian,
+          addr_size,
         ) {
         Ok(summary) => summary
         Err(reason) => return Err(reason)
@@ -1137,6 +1150,19 @@ fn dwarf_collect_rnglists_base(values : Array[DwarfFunctionAttrValue]) -> Int? {
 }
 
 ///|
+fn dwarf_collect_ranges_offset_base(
+  values : Array[DwarfFunctionAttrValue],
+) -> Int? {
+  for value in values {
+    match value {
+      DwarfAttrRangesBase(base) => return Some(base)
+      _ => ()
+    }
+  }
+  None
+}
+
+///|
 fn dwarf_collect_range_base(values : Array[DwarfFunctionAttrValue]) -> UInt64? {
   for value in values {
     match value {
@@ -1157,6 +1183,7 @@ fn dwarf_read_die(
   version : Int,
   addr_base : Int?,
   str_offsets_base : Int,
+  ranges_offset_base : Int,
   rnglists_base : Int?,
   addr_section : DwarfSectionBuffer?,
   line_str_section : DwarfSectionBuffer?,
@@ -1167,7 +1194,16 @@ fn dwarf_read_die(
   range_base : UInt64,
   unit_start : Int,
 ) -> Result[
-  (DwarfFunctionCandidate?, String?, Int?, Int?, Int?, UInt64?, DwarfInput),
+  (
+    DwarfFunctionCandidate?,
+    String?,
+    Int?,
+    Int?,
+    Int?,
+    Int?,
+    UInt64?,
+    DwarfInput,
+  ),
   String,
 ] {
   let values : Array[DwarfFunctionAttrValue] = []
@@ -1176,6 +1212,7 @@ fn dwarf_read_die(
     if entry.captures_values() ||
       field.attr() == DwarfStrOffsetsBase ||
       field.attr() == DwarfAddrBase ||
+      field.attr() == DwarfRangesBase ||
       field.attr() == DwarfRnglistsBase ||
       field.attr() == DwarfLowPc {
       match
@@ -1207,7 +1244,8 @@ fn dwarf_read_die(
   let function_item = match
     dwarf_collect_function(
       values, unit_start, ranges_section, rnglists_section, addr_section, endian,
-      dwarf_size, addr_size, version, range_base, rnglists_base, addr_base,
+      dwarf_size, addr_size, version, range_base, ranges_offset_base, rnglists_base,
+      addr_base,
     ) {
     Ok(value) => value
     Err(reason) => return Err(reason)
@@ -1219,6 +1257,7 @@ fn dwarf_read_die(
       dwarf_collect_str_offsets_base(values),
       dwarf_collect_addr_base(values),
       dwarf_collect_rnglists_base(values),
+      dwarf_collect_ranges_offset_base(values),
       dwarf_collect_range_base(values),
       cursor,
     ),
@@ -1372,6 +1411,7 @@ fn dwarf_parse_unit(
               let mut cursor = after_header
               let mut str_offsets_base = 0
               let mut addr_base : Int? = None
+              let mut ranges_offset_base = 0
               let mut rnglists_base : Int? = None
               let scopes : Array[DwarfScope] = [{ range_base: 0UL }]
               while cursor.position() < cu_end {
@@ -1394,6 +1434,7 @@ fn dwarf_parse_unit(
                             version,
                             addr_base,
                             str_offsets_base,
+                            ranges_offset_base,
                             rnglists_base,
                             addr_section,
                             line_str_section,
@@ -1411,6 +1452,7 @@ fn dwarf_parse_unit(
                               str_base,
                               next_addr_base,
                               next_rnglists_base,
+                              next_ranges_offset_base,
                               next_range_base,
                               next,
                             )
@@ -1438,6 +1480,10 @@ fn dwarf_parse_unit(
                             }
                             match next_rnglists_base {
                               Some(value) => rnglists_base = Some(value)
+                              None => ()
+                            }
+                            match next_ranges_offset_base {
+                              Some(value) => ranges_offset_base = value
                               None => ()
                             }
                             if entry.has_children() {

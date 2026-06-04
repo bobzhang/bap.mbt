@@ -44,6 +44,7 @@ pub(all) enum DwarfAbbrevValueKind {
   DwarfNameRefValue
   DwarfStrOffsetsBaseValue
   DwarfAddrBaseValue
+  DwarfRangesBaseValue
   DwarfRnglistsBaseValue
 } derive(Eq, @debug.Debug)
 
@@ -58,6 +59,7 @@ pub(all) enum DwarfAttr {
   DwarfSpecification
   DwarfStrOffsetsBase
   DwarfAddrBase
+  DwarfRangesBase
   DwarfRnglistsBase
   DwarfUnknownAttr(Int)
 } derive(Eq, @debug.Debug)

@@ -750,6 +750,54 @@ test "translated DWARF FBI summarizes debug ranges" {
 }
 
 ///|
+test "translated DWARF FBI applies GNU debug ranges base" {
+  let abbrev = b"\x01\x11\x01" +
+    b"\x11\x01" +
+    b"\xb2\x42\x17" +
+    b"\x00\x00" +
+    b"\x02\x2e\x00" +
+    b"\x03\x08" +
+    b"\x11\x01" +
+    b"\x55\x17" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x20\x00\x00\x00" +
+    b"\x04\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x04" +
+    b"\x01" +
+    b"\x00\x10\x00\x00" +
+    b"\x10\x00\x00\x00" +
+    b"\x02" +
+    b"gbase\x00" +
+    b"\x00\x10\x00\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x00"
+  let ranges = b"\x01\x00\x00\x00" +
+    b"\x02\x00\x00\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x20\x00\x00\x00" +
+    b"\x28\x00\x00\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x00\x00\x00\x00"
+  let data = expect_fbi_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=LittleEndian,
+      info~,
+      abbrev~,
+      str=b"",
+      ranges~,
+    ),
+  )
+  let functions = expect_functions(data.functions())
+  assert_true(functions.length() == 1)
+  assert_true(functions[0].name() == "gbase")
+  assert_true(functions[0].low_pc() == 0x1020UL)
+  assert_true(functions[0].high_pc() == Some(0x1028UL))
+}
+
+///|
 test "translated DWARF FBI uses scope base for DWARF5 offset pairs" {
   let abbrev = b"\x01\x11\x01" +
     b"\x11\x01" +

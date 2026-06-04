@@ -216,7 +216,20 @@ pub fn ProjectInput::binary(
   length? : Int,
   entry? : UInt64,
 ) -> Result[ProjectInput, String] {
-  ProjectInput::raw_file(filename, target~, base~, offset~, length?, entry?)
+  match
+    ProjectInput::raw_file(filename, target~, base~, offset~, length?, entry?) {
+    Ok(input) =>
+      Ok({
+        ..input,
+        arch_value: target,
+        spec_value: if target.is_unknown() {
+          @image.OgreDoc::empty()
+        } else {
+          @image.OgreDoc::from_target(target)
+        },
+      })
+    Err(reason) => Err(reason)
+  }
 }
 
 ///|

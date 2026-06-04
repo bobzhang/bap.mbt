@@ -154,13 +154,28 @@ test "project raw file input uses target endian on native target" {
 ///|
 test "project binary input is raw file loading with explicit target" {
   let target = @core_theory.Target::x86_64()
+  let arch_sizes = []
+  let spec_counts = []
+  let arch_stream = @project.ProjectInfo::arch()
+  let spec_stream = @project.ProjectInfo::spec()
+  let arch_id = arch_stream.subscribe(arch => {
+    arch_sizes.push(arch.code_addr_size())
+  })
+  let spec_id = spec_stream.subscribe(spec => {
+    spec_counts.push(spec.declaration_count())
+  })
   match
     @project.ProjectInput::binary(target~, filename="moon.mod", base=0x900UL) {
     Ok(input) => {
       let project = @project.Project::from_input(input)
+      arch_stream.unsubscribe(arch_id)
+      spec_stream.unsubscribe(spec_id)
       assert_true(project.filename() == Some("moon.mod"))
       assert_true(project.target().matches("x86_64"))
+      assert_true(project.specification().declaration_count() == 6)
       assert_true(project.memory().lookup(0x900UL).length() == 1)
+      assert_true(arch_sizes == [64])
+      assert_true(spec_counts == [6])
       match project.image() {
         Some(image) => {
           assert_true(image.endian() == LittleEndian)
@@ -169,7 +184,11 @@ test "project binary input is raw file loading with explicit target" {
         None => fail("expected raw image")
       }
     }
-    Err(reason) => fail(reason)
+    Err(reason) => {
+      arch_stream.unsubscribe(arch_id)
+      spec_stream.unsubscribe(spec_id)
+      fail(reason)
+    }
   }
   match @project.Project::binary(target~, filename="moon.mod", base=0x900UL) {
     Ok(project) => {

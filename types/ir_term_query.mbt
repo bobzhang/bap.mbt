@@ -191,6 +191,66 @@ pub fn IrTerm::del_origin(self : IrTerm) -> IrTerm {
 }
 
 ///|
+pub fn IrTerm::precondition(self : IrTerm) -> String? {
+  self.get_attr(term_precondition_attr)
+}
+
+///|
+pub fn IrTerm::has_precondition(self : IrTerm, exp : Exp) -> Bool {
+  self.precondition() == Some(exp.to_string())
+}
+
+///|
+pub fn IrTerm::set_precondition(self : IrTerm, exp : Exp) -> IrTerm {
+  self.set_attr(Attr::precondition(exp))
+}
+
+///|
+pub fn IrTerm::del_precondition(self : IrTerm) -> IrTerm {
+  self.del_attr(term_precondition_attr)
+}
+
+///|
+pub fn IrTerm::invariant(self : IrTerm) -> String? {
+  self.get_attr(term_invariant_attr)
+}
+
+///|
+pub fn IrTerm::has_invariant(self : IrTerm, exp : Exp) -> Bool {
+  self.invariant() == Some(exp.to_string())
+}
+
+///|
+pub fn IrTerm::set_invariant(self : IrTerm, exp : Exp) -> IrTerm {
+  self.set_attr(Attr::invariant(exp))
+}
+
+///|
+pub fn IrTerm::del_invariant(self : IrTerm) -> IrTerm {
+  self.del_attr(term_invariant_attr)
+}
+
+///|
+pub fn IrTerm::postcondition(self : IrTerm) -> String? {
+  self.get_attr(term_postcondition_attr)
+}
+
+///|
+pub fn IrTerm::has_postcondition(self : IrTerm, exp : Exp) -> Bool {
+  self.postcondition() == Some(exp.to_string())
+}
+
+///|
+pub fn IrTerm::set_postcondition(self : IrTerm, exp : Exp) -> IrTerm {
+  self.set_attr(Attr::postcondition(exp))
+}
+
+///|
+pub fn IrTerm::del_postcondition(self : IrTerm) -> IrTerm {
+  self.del_attr(term_postcondition_attr)
+}
+
+///|
 pub fn IrTerm::comment(self : IrTerm) -> String? {
   self.get_attr(term_comment_attr)
 }

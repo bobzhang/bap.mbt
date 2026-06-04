@@ -418,6 +418,66 @@ pub fn[T] Term::has_origin(self : Term[T], tid : Tid) -> Bool {
 }
 
 ///|
+pub fn[T] Term::with_precondition(self : Term[T], exp : Exp) -> Term[T] {
+  self.set_attr(Attr::precondition(exp))
+}
+
+///|
+pub fn[T] Term::without_precondition(self : Term[T]) -> Term[T] {
+  self.del_attr(term_precondition_attr)
+}
+
+///|
+pub fn[T] Term::precondition(self : Term[T]) -> String? {
+  self.get_attr(term_precondition_attr)
+}
+
+///|
+pub fn[T] Term::has_precondition(self : Term[T], exp : Exp) -> Bool {
+  self.precondition() == Some(exp.to_string())
+}
+
+///|
+pub fn[T] Term::with_invariant(self : Term[T], exp : Exp) -> Term[T] {
+  self.set_attr(Attr::invariant(exp))
+}
+
+///|
+pub fn[T] Term::without_invariant(self : Term[T]) -> Term[T] {
+  self.del_attr(term_invariant_attr)
+}
+
+///|
+pub fn[T] Term::invariant(self : Term[T]) -> String? {
+  self.get_attr(term_invariant_attr)
+}
+
+///|
+pub fn[T] Term::has_invariant(self : Term[T], exp : Exp) -> Bool {
+  self.invariant() == Some(exp.to_string())
+}
+
+///|
+pub fn[T] Term::with_postcondition(self : Term[T], exp : Exp) -> Term[T] {
+  self.set_attr(Attr::postcondition(exp))
+}
+
+///|
+pub fn[T] Term::without_postcondition(self : Term[T]) -> Term[T] {
+  self.del_attr(term_postcondition_attr)
+}
+
+///|
+pub fn[T] Term::postcondition(self : Term[T]) -> String? {
+  self.get_attr(term_postcondition_attr)
+}
+
+///|
+pub fn[T] Term::has_postcondition(self : Term[T], exp : Exp) -> Bool {
+  self.postcondition() == Some(exp.to_string())
+}
+
+///|
 pub fn[T] Term::with_comment(self : Term[T], text : String) -> Term[T] {
   self.set_attr(Attr::comment(text))
 }

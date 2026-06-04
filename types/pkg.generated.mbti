@@ -695,9 +695,12 @@ pub fn IrTerm::del_filename(Self) -> Self
 pub fn IrTerm::del_flag(Self, String) -> Self
 pub fn IrTerm::del_foreground(Self) -> Self
 pub fn IrTerm::del_format(Self) -> Self
+pub fn IrTerm::del_invariant(Self) -> Self
 pub fn IrTerm::del_live(Self) -> Self
 pub fn IrTerm::del_mark(Self) -> Self
 pub fn IrTerm::del_origin(Self) -> Self
+pub fn IrTerm::del_postcondition(Self) -> Self
+pub fn IrTerm::del_precondition(Self) -> Self
 pub fn IrTerm::del_python(Self) -> Self
 pub fn IrTerm::del_shell(Self) -> Self
 pub fn IrTerm::del_sub_const(Self) -> Self
@@ -741,13 +744,17 @@ pub fn IrTerm::has_class(Self, IrTermClass) -> Bool
 pub fn IrTerm::has_color(Self, IrColor) -> Bool
 pub fn IrTerm::has_flag(Self, String) -> Bool
 pub fn IrTerm::has_foreground(Self, IrColor) -> Bool
+pub fn IrTerm::has_invariant(Self, Exp) -> Bool
 pub fn IrTerm::has_mark(Self) -> Bool
 pub fn IrTerm::has_name(Self, String) -> Bool
 pub fn IrTerm::has_origin(Self, Tid) -> Bool
+pub fn IrTerm::has_postcondition(Self, Exp) -> Bool
+pub fn IrTerm::has_precondition(Self, Exp) -> Bool
 pub fn IrTerm::has_tainted_ptr(Self, Tid) -> Bool
 pub fn IrTerm::has_tainted_reg(Self, Tid) -> Bool
 pub fn IrTerm::has_tid(Self, Tid) -> Bool
 pub fn IrTerm::has_tid_text(Self, String) -> Bool
+pub fn IrTerm::invariant(Self) -> String?
 pub fn IrTerm::is_arg_alloc_size(Self) -> Bool
 pub fn IrTerm::is_arg_nonnull(Self) -> Bool
 pub fn IrTerm::is_arg_restricted(Self) -> Bool
@@ -782,6 +789,8 @@ pub fn IrTerm::nth_child_exn(Self, IrTermClass, Int) -> Self raise IrTermLookupE
 pub fn IrTerm::nth_exn(Self, IrTermClass, Int) -> Self raise IrTermLookupError
 pub fn IrTerm::origin(Self) -> Tid?
 pub fn IrTerm::origin_text(Self) -> String?
+pub fn IrTerm::postcondition(Self) -> String?
+pub fn IrTerm::precondition(Self) -> String?
 pub fn IrTerm::prepend(Self, Self, before? : Tid) -> Self
 pub fn IrTerm::prepend_child(Self, Self, before? : Tid) -> Self
 pub fn IrTerm::prev(Self, IrTermClass, Tid) -> Self?
@@ -807,9 +816,12 @@ pub fn IrTerm::set_filename(Self, String) -> Self
 pub fn IrTerm::set_flag(Self, String) -> Self
 pub fn IrTerm::set_foreground(Self, IrColor) -> Self
 pub fn IrTerm::set_format(Self, String) -> Self
+pub fn IrTerm::set_invariant(Self, Exp) -> Self
 pub fn IrTerm::set_live(Self) -> Self
 pub fn IrTerm::set_mark(Self, value? : String) -> Self
 pub fn IrTerm::set_origin(Self, Tid) -> Self
+pub fn IrTerm::set_postcondition(Self, Exp) -> Self
+pub fn IrTerm::set_precondition(Self, Exp) -> Self
 pub fn IrTerm::set_python(Self, String) -> Self
 pub fn IrTerm::set_shell(Self, String) -> Self
 pub fn IrTerm::set_sub_const(Self) -> Self
@@ -1141,7 +1153,10 @@ pub fn[T] Term::has_background(Self[T], IrColor) -> Bool
 pub fn[T] Term::has_color(Self[T], IrColor) -> Bool
 pub fn[T] Term::has_flag(Self[T], String) -> Bool
 pub fn[T] Term::has_foreground(Self[T], IrColor) -> Bool
+pub fn[T] Term::has_invariant(Self[T], Exp) -> Bool
 pub fn[T] Term::has_origin(Self[T], Tid) -> Bool
+pub fn[T] Term::has_postcondition(Self[T], Exp) -> Bool
+pub fn[T] Term::has_precondition(Self[T], Exp) -> Bool
 pub fn[T] Term::has_tainted_ptr(Self[T], Tid) -> Bool
 pub fn[T] Term::has_tainted_reg(Self[T], Tid) -> Bool
 pub fn Term::insert_arg_after(Self[Sub], Self[Arg], after? : Tid) -> Self[Sub]
@@ -1157,6 +1172,7 @@ pub fn Term::insert_phi_before(Self[Blk], Self[Phi], before? : Tid) -> Self[Blk]
 pub fn Term::insert_sub_after(Self[Program], Self[Sub], after? : Tid) -> Self[Program]
 pub fn Term::insert_sub_before(Self[Program], Self[Sub], before? : Tid) -> Self[Program]
 pub fn Term::intent(Self[Arg]) -> Intent?
+pub fn[T] Term::invariant(Self[T]) -> String?
 pub fn Term::is_alloc_size(Self[Arg]) -> Bool
 pub fn Term::is_const(Self[Sub]) -> Bool
 pub fn[T] Term::is_dead(Self[T]) -> Bool
@@ -1249,6 +1265,8 @@ pub fn Term::phi_var(Self[Phi]) -> Var
 pub fn Term::phis(Self[Blk]) -> Array[Self[Phi]]
 pub fn Term::phis_after(Self[Blk], Tid, rev? : Bool) -> Array[Self[Phi]]
 pub fn Term::phis_before(Self[Blk], Tid, rev? : Bool) -> Array[Self[Phi]]
+pub fn[T] Term::postcondition(Self[T]) -> String?
+pub fn[T] Term::precondition(Self[T]) -> String?
 pub fn Term::prev_arg(Self[Sub], Tid) -> Self[Arg]?
 pub fn Term::prev_blk(Self[Sub], Tid) -> Self[Blk]?
 pub fn Term::prev_def(Self[Blk], Tid) -> Self[Def]?
@@ -1401,6 +1419,7 @@ pub fn[T] Term::with_format(Self[T], String) -> Self[T]
 pub fn Term::with_guard(Self[Jmp], Exp?) -> Self[Jmp]
 pub fn Term::with_intent(Self[Arg], Intent) -> Self[Arg]
 pub fn Term::with_intrinsic(Self[Sub]) -> Self[Sub]
+pub fn[T] Term::with_invariant(Self[T], Exp) -> Self[T]
 pub fn Term::with_kind(Self[Jmp], JmpKind) -> Self[Jmp]
 pub fn Term::with_leaf(Self[Sub]) -> Self[Sub]
 pub fn Term::with_lhs(Self[Def], Var) -> Self[Def]
@@ -1414,6 +1433,8 @@ pub fn[T] Term::with_origin(Self[T], Tid) -> Self[T]
 pub fn[T] Term::with_payload(Self[T], T) -> Self[T]
 pub fn Term::with_phi_lhs(Self[Phi], Var) -> Self[Phi]
 pub fn Term::with_phi_var(Self[Phi], Var) -> Self[Phi]
+pub fn[T] Term::with_postcondition(Self[T], Exp) -> Self[T]
+pub fn[T] Term::with_precondition(Self[T], Exp) -> Self[T]
 pub fn Term::with_pure(Self[Sub]) -> Self[Sub]
 pub fn[T] Term::with_python(Self[T], String) -> Self[T]
 pub fn Term::with_restricted(Self[Arg]) -> Self[Arg]
@@ -1444,6 +1465,7 @@ pub fn[T] Term::without_flag(Self[T], String) -> Self[T]
 pub fn[T] Term::without_foreground(Self[T]) -> Self[T]
 pub fn[T] Term::without_format(Self[T]) -> Self[T]
 pub fn Term::without_intrinsic(Self[Sub]) -> Self[Sub]
+pub fn[T] Term::without_invariant(Self[T]) -> Self[T]
 pub fn Term::without_leaf(Self[Sub]) -> Self[Sub]
 pub fn[T] Term::without_live(Self[T]) -> Self[T]
 pub fn Term::without_malloc(Self[Sub]) -> Self[Sub]
@@ -1451,6 +1473,8 @@ pub fn Term::without_nonnull(Self[Arg]) -> Self[Arg]
 pub fn Term::without_noreturn(Self[Sub]) -> Self[Sub]
 pub fn Term::without_nothrow(Self[Sub]) -> Self[Sub]
 pub fn[T] Term::without_origin(Self[T]) -> Self[T]
+pub fn[T] Term::without_postcondition(Self[T]) -> Self[T]
+pub fn[T] Term::without_precondition(Self[T]) -> Self[T]
 pub fn Term::without_pure(Self[Sub]) -> Self[Sub]
 pub fn[T] Term::without_python(Self[T]) -> Self[T]
 pub fn Term::without_restricted(Self[Arg]) -> Self[Arg]

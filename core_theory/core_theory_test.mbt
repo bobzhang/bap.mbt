@@ -3116,9 +3116,12 @@ test "target role helpers classify common architecture variables" {
     None => fail("missing V0 alias origin")
   }
   let sparcv9 = @core_theory.Target::sparcv9()
+  assert_true(sparcv9.role_aliases(CallerSaved).contains("sp"))
+  assert_true(sparcv9.role_aliases(CalleeSaved).contains("fp"))
   match sparcv9.find_var("SP") {
     Some(sp) => {
       assert_true(sparcv9.roles_of_var(sp).contains(StackPointer))
+      assert_true(sparcv9.roles_of_var(sp).contains(CallerSaved))
       match sparcv9.origin_of_name("sp") {
         Some(origin) => {
           assert_true(origin.aliased().ident() == "SP")
@@ -3132,6 +3135,7 @@ test "target role helpers classify common architecture variables" {
   match sparcv9.find_var("FP") {
     Some(fp) => {
       assert_true(sparcv9.roles_of_var(fp).contains(FramePointer))
+      assert_true(sparcv9.roles_of_var(fp).contains(CalleeSaved))
       match sparcv9.origin_of_name("fp") {
         Some(origin) => {
           assert_true(origin.aliased().ident() == "FP")

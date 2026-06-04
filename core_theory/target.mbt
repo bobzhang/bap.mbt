@@ -3244,9 +3244,9 @@ fn sparc_role_names(role : Role) -> Array[String] {
     PrivilegedRegister => []
     Argument => role_names("o", 0, 5)
     ResultRegister => ["o0", "o1"]
-    CallerSaved => concat_role_names([role_names("o", 0, 7), ["g1"]])
+    CallerSaved => concat_role_names([role_names("o", 0, 7), ["sp", "g1"]])
     CalleeSaved =>
-      concat_role_names([role_names("l", 0, 7), role_names("i", 0, 7)])
+      concat_role_names([role_names("l", 0, 7), role_names("i", 0, 7), ["fp"]])
     Reserved => []
     ZeroFlag | CarryFlag | SignFlag | OverflowFlag | ParityFlag => []
     ThumbMode => []

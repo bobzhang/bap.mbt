@@ -129,6 +129,7 @@ pub fn Project::disassemble_and_reconstruct_named(Self, driver? : String, branch
 pub fn Project::disassemble_with_available(Self) -> Result[Self, String]
 pub fn Project::disassemble_with_drivers(Self, Array[ProjectDisassemblyDriver]) -> Result[Self, String]
 pub fn Project::disassembly(Self) -> ProjectDisassemblyState
+pub fn Project::disassembly_calls(Self) -> ProjectDisassemblyCalls
 pub fn Project::empty(@core_theory.Target) -> Self
 pub fn Project::external_references(Self) -> Array[@image.ExternalReference]
 pub fn Project::file(filename~ : String, loader? : String, libraries? : Array[String]) -> Result[Self, String]
@@ -279,6 +280,14 @@ pub fn ProjectDisassemblyBlock::memory(Self) -> @memory.Memory
 pub fn ProjectDisassemblyBlock::same(Self, Self) -> Bool
 pub fn ProjectDisassemblyBlock::terminator(Self) -> ProjectDisassemblyInstruction
 pub fn ProjectDisassemblyBlock::to_string(Self) -> String
+
+type ProjectDisassemblyCalls
+pub fn ProjectDisassemblyCalls::belongs(Self, entry~ : UInt64, UInt64) -> Bool
+pub fn ProjectDisassemblyCalls::empty() -> Self
+pub fn ProjectDisassemblyCalls::entries(Self) -> Array[UInt64]
+pub fn ProjectDisassemblyCalls::entry(Self, UInt64) -> UInt64
+pub fn ProjectDisassemblyCalls::of_disassembly(ProjectDisassemblyState, Array[UInt64]) -> Self
+pub fn ProjectDisassemblyCalls::siblings(Self, UInt64, UInt64) -> Bool
 
 type ProjectDisassemblyDriver
 pub fn ProjectDisassemblyDriver::create(name~ : String, description? : String, priority? : Int, run~ : (Project) -> Result[Project, String]) -> Self

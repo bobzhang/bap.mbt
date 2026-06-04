@@ -130,6 +130,7 @@ pub fn Project::disassemble_with_available(Self) -> Result[Self, String]
 pub fn Project::disassemble_with_drivers(Self, Array[ProjectDisassemblyDriver]) -> Result[Self, String]
 pub fn Project::disassembly(Self) -> ProjectDisassemblyState
 pub fn Project::disassembly_calls(Self) -> ProjectDisassemblyCalls
+pub fn Project::disassembly_cfg(Self) -> ProjectDisassemblyCfg
 pub fn Project::disassembly_symtab(Self) -> ProjectDisassemblySymtab
 pub fn Project::empty(@core_theory.Target) -> Self
 pub fn Project::external_references(Self) -> Array[@image.ExternalReference]
@@ -290,6 +291,42 @@ pub fn ProjectDisassemblyCalls::entry(Self, UInt64) -> UInt64
 pub fn ProjectDisassemblyCalls::of_disassembly(ProjectDisassemblyState, Array[UInt64]) -> Self
 pub fn ProjectDisassemblyCalls::siblings(Self, UInt64, UInt64) -> Bool
 
+type ProjectDisassemblyCfg
+pub fn ProjectDisassemblyCfg::create(nodes? : Array[ProjectDisassemblyBlock], edges? : Array[ProjectDisassemblyCfgEdge]) -> Self
+pub fn ProjectDisassemblyCfg::degree(Self, ProjectDisassemblyBlock) -> Int
+pub fn ProjectDisassemblyCfg::edge(Self, ProjectDisassemblyBlock, ProjectDisassemblyBlock) -> ProjectDisassemblyCfgEdge?
+pub fn ProjectDisassemblyCfg::edge_count(Self) -> Int
+pub fn ProjectDisassemblyCfg::edges(Self) -> Array[ProjectDisassemblyCfgEdge]
+pub fn ProjectDisassemblyCfg::empty() -> Self
+pub fn ProjectDisassemblyCfg::has_edge(Self, ProjectDisassemblyBlock, ProjectDisassemblyBlock) -> Bool
+pub fn ProjectDisassemblyCfg::has_node(Self, ProjectDisassemblyBlock) -> Bool
+pub fn ProjectDisassemblyCfg::in_degree(Self, ProjectDisassemblyBlock) -> Int
+pub fn ProjectDisassemblyCfg::in_edges(Self, ProjectDisassemblyBlock) -> Array[ProjectDisassemblyCfgEdge]
+pub fn ProjectDisassemblyCfg::inputs(Self, ProjectDisassemblyBlock) -> Array[ProjectDisassemblyCfgEdge]
+pub fn ProjectDisassemblyCfg::insert_edge(Self, ProjectDisassemblyCfgEdge) -> Self
+pub fn ProjectDisassemblyCfg::insert_node(Self, ProjectDisassemblyBlock) -> Self
+pub fn ProjectDisassemblyCfg::is_empty(Self) -> Bool
+pub fn ProjectDisassemblyCfg::node_count(Self) -> Int
+pub fn ProjectDisassemblyCfg::nodes(Self) -> Array[ProjectDisassemblyBlock]
+pub fn ProjectDisassemblyCfg::of_disassembly(ProjectDisassemblyState) -> Self
+pub fn ProjectDisassemblyCfg::out_degree(Self, ProjectDisassemblyBlock) -> Int
+pub fn ProjectDisassemblyCfg::out_edges(Self, ProjectDisassemblyBlock) -> Array[ProjectDisassemblyCfgEdge]
+pub fn ProjectDisassemblyCfg::outputs(Self, ProjectDisassemblyBlock) -> Array[ProjectDisassemblyCfgEdge]
+pub fn ProjectDisassemblyCfg::predecessors(Self, ProjectDisassemblyBlock) -> Array[ProjectDisassemblyBlock]
+pub fn ProjectDisassemblyCfg::preds(Self, ProjectDisassemblyBlock) -> Array[ProjectDisassemblyBlock]
+pub fn ProjectDisassemblyCfg::remove_edge(Self, ProjectDisassemblyCfgEdge) -> Self
+pub fn ProjectDisassemblyCfg::remove_node(Self, ProjectDisassemblyBlock) -> Self
+pub fn ProjectDisassemblyCfg::successors(Self, ProjectDisassemblyBlock) -> Array[ProjectDisassemblyBlock]
+pub fn ProjectDisassemblyCfg::succs(Self, ProjectDisassemblyBlock) -> Array[ProjectDisassemblyBlock]
+pub fn ProjectDisassemblyCfg::to_disassembly_edges(Self) -> Array[ProjectDisassemblyEdge]
+
+type ProjectDisassemblyCfgEdge
+pub fn ProjectDisassemblyCfgEdge::create(src~ : ProjectDisassemblyBlock, dst~ : ProjectDisassemblyBlock, kind? : ProjectDisassemblyEdgeKind) -> Self
+pub fn ProjectDisassemblyCfgEdge::dst(Self) -> ProjectDisassemblyBlock
+pub fn ProjectDisassemblyCfgEdge::kind(Self) -> ProjectDisassemblyEdgeKind
+pub fn ProjectDisassemblyCfgEdge::same(Self, Self) -> Bool
+pub fn ProjectDisassemblyCfgEdge::src(Self) -> ProjectDisassemblyBlock
+
 type ProjectDisassemblyDriver
 pub fn ProjectDisassemblyDriver::create(name~ : String, description? : String, priority? : Int, run~ : (Project) -> Result[Project, String]) -> Self
 pub fn ProjectDisassemblyDriver::description(Self) -> String
@@ -370,6 +407,7 @@ pub fn ProjectDisassemblyState::block_count(Self) -> Int
 pub fn ProjectDisassemblyState::block_view(Self, @memory.Memory) -> Result[ProjectDisassemblyBlock, String]
 pub fn ProjectDisassemblyState::blocks(Self) -> Array[@memory.Memory]
 pub fn ProjectDisassemblyState::blocks_with_instructions(Self) -> Array[ProjectDisassemblyBlock]
+pub fn ProjectDisassemblyState::cfg(Self) -> ProjectDisassemblyCfg
 pub fn ProjectDisassemblyState::create(blocks? : Array[@memory.Memory], instructions? : Array[ProjectDisassemblyInstruction], edges? : Array[ProjectDisassemblyEdge]) -> Self
 pub fn ProjectDisassemblyState::edge_count(Self) -> Int
 pub fn ProjectDisassemblyState::edges(Self) -> Array[ProjectDisassemblyEdge]

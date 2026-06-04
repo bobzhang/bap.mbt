@@ -1,0 +1,46 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/bare"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub(all) enum BareError {
+  BareUnbound(String)
+  BareWildcard
+  BareParseError(String)
+  BareNotASexp(String)
+} derive(Eq, @debug.Debug)
+pub fn BareError::to_string(Self) -> String
+
+#alias(BareFact)
+#alias(BareTuple)
+pub(all) enum BareTerm {
+  BareAtom(String)
+  BareList(Array[BareTerm])
+} derive(Eq, @debug.Debug)
+pub fn BareTerm::atom(String) -> Self
+pub fn BareTerm::list(Array[Self]) -> Self
+pub fn BareTerm::parse(String) -> Result[Self, BareError]
+pub fn BareTerm::parse_many(String) -> Result[Array[Self], BareError]
+pub fn BareTerm::to_string(Self) -> String
+
+type Rule
+pub fn Rule::apply(Self, BareTerm) -> (Self, Array[BareTerm])
+pub fn Rule::from_file(String) -> Result[Array[Self], BareError]
+pub fn Rule::from_string(String) -> Result[Array[Self], BareError]
+pub fn Rule::lhs(Self) -> Array[BareTerm]
+pub fn Rule::of_string(String) -> Result[Self, BareError]
+pub fn Rule::patterns(Self) -> Array[BareTerm]
+pub fn Rule::reset(Self) -> Self
+pub fn Rule::rhs(Self) -> Array[BareTerm]
+pub fn Rule::spec(Self) -> String
+
+// Type aliases
+
+// Traits

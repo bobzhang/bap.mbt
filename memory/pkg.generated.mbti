@@ -53,8 +53,12 @@ pub fn[V] MemMap::iter(Self[V], (V) -> Unit, start? : Memory?, until? : Memory?)
 pub fn[V] MemMap::iteri(Self[V], (Memory, V) -> Unit, start? : Memory?, until? : Memory?) -> Unit
 pub fn[V] MemMap::length(Self[V]) -> Int
 pub fn[V : Hash + Eq, U] MemMap::link_at_least_one(Self[V], Self[U]) -> Map[V, (U, Array[U])]
+pub fn[V : Hash + Eq, U] MemMap::link_at_least_one_checked(Self[V], Self[U]) -> Result[Map[V, (U, Array[U])], String]
 pub fn[V : Hash + Eq, U] MemMap::link_many(Self[V], Self[U]) -> Map[V, Array[U]]
+pub fn[V : Hash + Eq, U] MemMap::link_many_checked(Self[V], Self[U]) -> Result[Map[V, Array[U]], String]
 pub fn[V : Hash + Eq, U] MemMap::link_maybe_one(Self[V], Self[U]) -> Map[V, U?]
+pub fn[V : Hash + Eq, U] MemMap::link_maybe_one_checked(Self[V], Self[U]) -> Result[Map[V, U?], String]
+pub fn[V : Hash + Eq, U] MemMap::link_one_checked(Self[V], Self[U]) -> Result[Map[V, U], String]
 pub fn[V : Hash + Eq, U] MemMap::link_one_to_one(Self[V], Self[U]) -> Map[V, U]
 pub fn[V] MemMap::lookup(Self[V], UInt64) -> Array[(Memory, V)]
 pub fn[V, U] MemMap::map(Self[V], (V) -> U, start? : Memory?, until? : Memory?) -> Self[U]

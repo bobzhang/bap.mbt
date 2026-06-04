@@ -267,6 +267,77 @@ pub fn[V : Hash + Eq, U] MemMap::link_at_least_one(
 }
 
 ///|
+pub fn[V : Hash + Eq, U] MemMap::link_maybe_one_checked(
+  self : MemMap[V],
+  other : MemMap[U],
+) -> Result[Map[V, U?], String] {
+  let links : Map[V, U?] = {}
+  for entry in self.ordered_entries() {
+    if links.get(entry.1) is Some(_) {
+      return Err("mapping is non-injective")
+    }
+    let matches = other.find(entry.0)
+    links[entry.1] = match matches {
+      [matched] => Some(matched.1)
+      _ => None
+    }
+  }
+  Ok(links)
+}
+
+///|
+pub fn[V : Hash + Eq, U] MemMap::link_one_checked(
+  self : MemMap[V],
+  other : MemMap[U],
+) -> Result[Map[V, U], String] {
+  let links : Map[V, U] = {}
+  for entry in self.ordered_entries() {
+    if links.get(entry.1) is Some(_) {
+      return Err("mapping is non-injective")
+    }
+    match other.find(entry.0) {
+      [matched] => links[entry.1] = matched.1
+      _ => return Err("link_exn: unbound value")
+    }
+  }
+  Ok(links)
+}
+
+///|
+pub fn[V : Hash + Eq, U] MemMap::link_many_checked(
+  self : MemMap[V],
+  other : MemMap[U],
+) -> Result[Map[V, Array[U]], String] {
+  let links : Map[V, Array[U]] = {}
+  for entry in self.ordered_entries() {
+    if links.get(entry.1) is Some(_) {
+      return Err("mapping is non-injective")
+    }
+    links[entry.1] = other.intersections(entry.0).map(item => item.1)
+  }
+  Ok(links)
+}
+
+///|
+pub fn[V : Hash + Eq, U] MemMap::link_at_least_one_checked(
+  self : MemMap[V],
+  other : MemMap[U],
+) -> Result[Map[V, (U, Array[U])], String] {
+  let links : Map[V, (U, Array[U])] = {}
+  for entry in self.ordered_entries() {
+    if links.get(entry.1) is Some(_) {
+      return Err("mapping is non-injective")
+    }
+    let matches = other.intersections(entry.0).map(item => item.1)
+    if matches.is_empty() {
+      return Err("at_least_one invariant failed. element is not mapped")
+    }
+    links[entry.1] = (matches[0], matches[1:].to_owned())
+  }
+  Ok(links)
+}
+
+///|
 fn[V : Hash + Eq] MemMap::rev_map_injective(
   self : MemMap[V],
 ) -> Result[Map[V, Memory], String] {

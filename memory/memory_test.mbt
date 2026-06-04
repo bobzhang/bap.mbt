@@ -655,6 +655,70 @@ test "translated BAP image table link variants handle exact and many intersectio
 }
 
 ///|
+test "translated BAP image table checked links preserve source invariants" {
+  let mem_low = memory_at(0x10UL, 0x10)
+  let mem_high = memory_at(0x30UL, 0x10)
+  let wide = memory_at(0x10UL, 0x30)
+  let missing = memory_at(0x90UL, 0x10)
+  let exact = @memory.MemMap::empty().add(mem_low, "lo").add(mem_high, "hi")
+  let table = exact.add(wide, "wide").add(missing, "missing")
+  let regs = @memory.MemMap::empty().add(mem_low, "reg1").add(mem_high, "reg2")
+  match exact.link_one_checked(regs) {
+    Ok(links) => {
+      assert_true(links.get("lo") == Some("reg1"))
+      assert_true(links.get("hi") == Some("reg2"))
+    }
+    Err(reason) => fail(reason)
+  }
+  match table.link_maybe_one_checked(regs) {
+    Ok(links) => {
+      assert_true(links.get("lo") == Some(Some("reg1")))
+      assert_true(links.get("wide") == Some(None))
+      assert_true(links.get("missing") == Some(None))
+    }
+    Err(reason) => fail(reason)
+  }
+  match table.link_one_checked(regs) {
+    Err(reason) => assert_eq(reason, "link_exn: unbound value")
+    Ok(_) => fail("expected missing exact link rejection")
+  }
+  match table.link_many_checked(regs) {
+    Ok(links) => {
+      assert_true(links.get("missing") == Some([]))
+      assert_true(links.get("wide") == Some(["reg1", "reg2"]))
+    }
+    Err(reason) => fail(reason)
+  }
+  match table.link_at_least_one_checked(regs) {
+    Err(reason) =>
+      assert_eq(reason, "at_least_one invariant failed. element is not mapped")
+    Ok(_) => fail("expected at-least-one missing link rejection")
+  }
+  match table.remove(missing).link_at_least_one_checked(regs) {
+    Ok(links) =>
+      match links.get("wide") {
+        Some((head, tail)) => {
+          assert_true(head == "reg1")
+          assert_true(tail == ["reg2"])
+        }
+        None => fail("expected wide at-least-one link")
+      }
+    Err(reason) => fail(reason)
+  }
+  let duplicated = @memory.MemMap::empty()
+    .add(mem_low, "same")
+    .add(mem_high, "same")
+  match duplicated.link_maybe_one_checked(regs) {
+    Err(reason) => assert_eq(reason, "mapping is non-injective")
+    Ok(_) => fail("expected duplicate maybe-one link rejection")
+  }
+  match duplicated.link_many_checked(regs) {
+    Err(reason) => assert_eq(reason, "mapping is non-injective")
+    Ok(_) => fail("expected duplicate many link rejection")
+  }
+}
+
+///|
 test "translated BAP image table reverse maps expose value-to-memory lookup" {
   let low = memory_at(0x10UL, 0x10)
   let high = memory_at(0x30UL, 0x10)

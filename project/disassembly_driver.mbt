@@ -97,6 +97,32 @@ fn project_raw_byte_bil(memory : @memory.Memory) -> String {
 }
 
 ///|
+fn project_raw_byte_code(memory : @memory.Memory) -> Int {
+  let bytes = memory.to_bytes()
+  if bytes.length() == 0 {
+    0
+  } else {
+    bytes[0].to_int()
+  }
+}
+
+///|
+fn project_raw_byte_instruction(
+  memory : @memory.Memory,
+) -> ProjectDisassemblyInstruction {
+  let code = project_raw_byte_code(memory)
+  ProjectDisassemblyInstruction::create(
+    memory,
+    assembly=project_raw_byte_assembly(memory),
+    bil=project_raw_byte_bil(memory),
+    code~,
+    name=".byte",
+    encoding="raw",
+    operands=[ProjectInstructionOperand::immediate(code.to_int64())],
+  )
+}
+
+///|
 fn project_disassembly_add_raw_byte_instructions(
   state : ProjectDisassemblyState,
   block : @memory.Memory,
@@ -106,13 +132,7 @@ fn project_disassembly_add_raw_byte_instructions(
     let addr = block.min_addr() + offset.to_uint64()
     match block.view(from=addr, words=1) {
       Ok(byte_memory) =>
-        next = next.add_instruction(
-          ProjectDisassemblyInstruction::create(
-            byte_memory,
-            assembly=project_raw_byte_assembly(byte_memory),
-            bil=project_raw_byte_bil(byte_memory),
-          ),
-        )
+        next = next.add_instruction(project_raw_byte_instruction(byte_memory))
       Err(reason) => return Err(reason)
     }
   }

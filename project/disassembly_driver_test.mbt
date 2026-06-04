@@ -153,19 +153,28 @@ test "project raw-byte disassembly driver materializes instruction records" {
       assert_true(instructions[0].addr() == 0x7100UL)
       assert_true(instructions[0].assembly() == ".byte 0x90")
       assert_true(instructions[0].bil() == "unknown 0x7100")
+      assert_true(instructions[0].code() == 0x90)
+      assert_true(instructions[0].name() == ".byte")
+      assert_true(instructions[0].encoding() == "raw")
+      assert_true(instructions[0].operand_count() == 1)
+      assert_true(instructions[0].operands()[0].to_int() == Some(0x90))
       assert_true(instructions[1].addr() == 0x7101UL)
       assert_true(instructions[1].assembly() == ".byte 0xc3")
       assert_true(instructions[1].bil() == "unknown 0x7101")
+      assert_true(instructions[1].code() == 0xc3)
+      assert_true(instructions[1].operands()[0].to_int() == Some(0xc3))
       match block.view(from=0x7101UL, words=1) {
         Ok(second_byte) => {
           let tagged = disassembled.substitute(
-            second_byte, "insn", "$asm / $bil",
+            second_byte, "insn", "$insn@$insn_code[$insn_encoding]: $asm / $bil",
           )
           assert_true(
             tagged
             .memory()
             .lookup(0x7101UL)
-            .any(entry => entry.1 == "insn=.byte 0xc3 / unknown 0x7101"),
+            .any(entry => {
+              entry.1 == "insn=.byte@0xc3[raw]: .byte 0xc3 / unknown 0x7101"
+            }),
           )
         }
         Err(reason) => fail(reason)

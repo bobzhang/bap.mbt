@@ -1,10 +1,14 @@
 ///|
 struct ProjectDisassemblyInstruction {
   memory_value : @memory.Memory
+  code_value : Int
+  name_value : String
+  encoding_value : String
   assembly_value : String
   bil_value : String
   kinds_value : Array[ProjectInstructionKind]
   operands_value : Array[ProjectInstructionOperand]
+  subinstructions_value : Array[ProjectDisassemblyInstruction]
 }
 
 ///|
@@ -424,11 +428,18 @@ pub fn ProjectDisassemblyInstruction::create(
   memory : @memory.Memory,
   assembly? : String = "",
   bil? : String = "",
+  code? : Int = 0,
+  name? : String = "",
+  encoding? : String = "",
   kinds? : Array[ProjectInstructionKind],
   operands? : Array[ProjectInstructionOperand],
+  subinstructions? : Array[ProjectDisassemblyInstruction],
 ) -> ProjectDisassemblyInstruction {
   {
     memory_value: memory,
+    code_value: code,
+    name_value: name,
+    encoding_value: encoding,
     assembly_value: assembly,
     bil_value: bil,
     kinds_value: match kinds {
@@ -436,6 +447,10 @@ pub fn ProjectDisassemblyInstruction::create(
       None => []
     },
     operands_value: match operands {
+      Some(items) => items.copy()
+      None => []
+    },
+    subinstructions_value: match subinstructions {
       Some(items) => items.copy()
       None => []
     },
@@ -454,6 +469,27 @@ pub fn ProjectDisassemblyInstruction::assembly(
   self : ProjectDisassemblyInstruction,
 ) -> String {
   self.assembly_value
+}
+
+///|
+pub fn ProjectDisassemblyInstruction::code(
+  self : ProjectDisassemblyInstruction,
+) -> Int {
+  self.code_value
+}
+
+///|
+pub fn ProjectDisassemblyInstruction::name(
+  self : ProjectDisassemblyInstruction,
+) -> String {
+  self.name_value
+}
+
+///|
+pub fn ProjectDisassemblyInstruction::encoding(
+  self : ProjectDisassemblyInstruction,
+) -> String {
+  self.encoding_value
 }
 
 ///|
@@ -485,11 +521,64 @@ pub fn ProjectDisassemblyInstruction::operand_count(
 }
 
 ///|
+pub fn ProjectDisassemblyInstruction::subinstructions(
+  self : ProjectDisassemblyInstruction,
+) -> Array[ProjectDisassemblyInstruction] {
+  self.subinstructions_value.copy()
+}
+
+///|
+pub fn ProjectDisassemblyInstruction::subs(
+  self : ProjectDisassemblyInstruction,
+) -> Array[ProjectDisassemblyInstruction] {
+  self.subinstructions()
+}
+
+///|
+pub fn ProjectDisassemblyInstruction::subinstruction_count(
+  self : ProjectDisassemblyInstruction,
+) -> Int {
+  self.subinstructions_value.length()
+}
+
+///|
+pub fn ProjectDisassemblyInstruction::with_metadata(
+  self : ProjectDisassemblyInstruction,
+  code? : Int,
+  name? : String,
+  encoding? : String,
+) -> ProjectDisassemblyInstruction {
+  {
+    ..self,
+    code_value: match code {
+      Some(value) => value
+      None => self.code_value
+    },
+    name_value: match name {
+      Some(value) => value
+      None => self.name_value
+    },
+    encoding_value: match encoding {
+      Some(value) => value
+      None => self.encoding_value
+    },
+  }
+}
+
+///|
 pub fn ProjectDisassemblyInstruction::with_operands(
   self : ProjectDisassemblyInstruction,
   operands : Array[ProjectInstructionOperand],
 ) -> ProjectDisassemblyInstruction {
   { ..self, operands_value: operands.copy() }
+}
+
+///|
+pub fn ProjectDisassemblyInstruction::with_subinstructions(
+  self : ProjectDisassemblyInstruction,
+  subinstructions : Array[ProjectDisassemblyInstruction],
+) -> ProjectDisassemblyInstruction {
+  { ..self, subinstructions_value: subinstructions.copy() }
 }
 
 ///|

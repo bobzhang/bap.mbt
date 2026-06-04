@@ -270,6 +270,9 @@ test "project substitutes disassembly instruction text placeholders" {
     block,
     assembly="nop; ret",
     bil="jmp 0x1001",
+    code=0x90,
+    name="nop",
+    encoding="x86",
   )
   let project = @project.Project::empty(target).with_disassembly(
     @project.ProjectDisassemblyState::empty()
@@ -278,12 +281,16 @@ test "project substitutes disassembly instruction text placeholders" {
   )
   match block.view(from=0x1001UL, words=1) {
     Ok(region) => {
-      let tagged = project.substitute(region, "disasm-comment", "$asm / $bil")
+      let tagged = project.substitute(
+        region, "disasm-comment", "$insn@$insn_code[$insn_encoding]: $asm / $bil",
+      )
       assert_true(
         tagged
         .memory()
         .lookup(0x1001UL)
-        .any(entry => entry.1 == "disasm-comment=nop; ret / jmp 0x1001"),
+        .any(entry => {
+          entry.1 == "disasm-comment=nop@0x90[x86]: nop; ret / jmp 0x1001"
+        }),
       )
     }
     Err(reason) => fail(reason)
@@ -352,6 +359,61 @@ test "project disassembly instructions replace by memory and support lookup" {
         ],
       )
       assert_true(replaced.instruction_count() == 2)
+    }
+    (Err(reason), _) | (_, Err(reason)) => fail(reason)
+  }
+}
+
+///|
+test "project disassembly instructions carry BAP instruction metadata" {
+  let block = raw_segment().memory()
+  match (block.view(words=1), block.view(from=0x1001UL, words=1)) {
+    (Ok(first_byte), Ok(second_byte)) => {
+      let sub = @project.ProjectDisassemblyInstruction::create(
+        second_byte,
+        assembly="ret",
+        code=0xc3,
+        name="ret",
+        encoding="x86",
+      )
+      let mutable_subs = [sub]
+      let instruction = @project.ProjectDisassemblyInstruction::create(
+        first_byte,
+        assembly="nop",
+        bil="skip",
+        code=0x90,
+        name="nop",
+        encoding="x86",
+        subinstructions=mutable_subs,
+      )
+      mutable_subs.push(
+        @project.ProjectDisassemblyInstruction::create(
+          second_byte,
+          code=0xcc,
+          name="int3",
+          encoding="x86",
+        ),
+      )
+      assert_true(instruction.code() == 0x90)
+      assert_true(instruction.name() == "nop")
+      assert_true(instruction.encoding() == "x86")
+      assert_true(instruction.subinstruction_count() == 1)
+      assert_true(instruction.subinstructions()[0].name() == "ret")
+      assert_true(instruction.subs()[0].code() == 0xc3)
+      let returned_subs = instruction.subinstructions()
+      returned_subs.push(sub)
+      assert_true(instruction.subinstruction_count() == 1)
+      let renamed = instruction.with_metadata(name="pause")
+      assert_true(renamed.code() == 0x90)
+      assert_true(renamed.name() == "pause")
+      assert_true(renamed.encoding() == "x86")
+      let recoded = renamed.with_metadata(code=0xf3, encoding="x86_64")
+      assert_true(recoded.code() == 0xf3)
+      assert_true(recoded.name() == "pause")
+      assert_true(recoded.encoding() == "x86_64")
+      assert_true(
+        instruction.with_subinstructions([]).subinstruction_count() == 0,
+      )
     }
     (Err(reason), _) | (_, Err(reason)) => fail(reason)
   }

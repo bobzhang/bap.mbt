@@ -298,19 +298,27 @@ pub fn ProjectDisassemblyInstruction::addr(Self) -> UInt64
 pub fn ProjectDisassemblyInstruction::affects_control_flow(Self) -> Bool
 pub fn ProjectDisassemblyInstruction::assembly(Self) -> String
 pub fn ProjectDisassemblyInstruction::bil(Self) -> String
+pub fn ProjectDisassemblyInstruction::code(Self) -> Int
 pub fn ProjectDisassemblyInstruction::contains(Self, UInt64) -> Bool
-pub fn ProjectDisassemblyInstruction::create(@memory.Memory, assembly? : String, bil? : String, kinds? : Array[ProjectInstructionKind], operands? : Array[ProjectInstructionOperand]) -> Self
+pub fn ProjectDisassemblyInstruction::create(@memory.Memory, assembly? : String, bil? : String, code? : Int, name? : String, encoding? : String, kinds? : Array[ProjectInstructionKind], operands? : Array[ProjectInstructionOperand], subinstructions? : Array[Self]) -> Self
+pub fn ProjectDisassemblyInstruction::encoding(Self) -> String
 pub fn ProjectDisassemblyInstruction::has_kind(Self, ProjectInstructionKind) -> Bool
 pub fn ProjectDisassemblyInstruction::has_side_effect(Self) -> Bool
 pub fn ProjectDisassemblyInstruction::is_branch(Self) -> Bool
 pub fn ProjectDisassemblyInstruction::kinds(Self) -> Array[ProjectInstructionKind]
 pub fn ProjectDisassemblyInstruction::memory(Self) -> @memory.Memory
+pub fn ProjectDisassemblyInstruction::name(Self) -> String
 pub fn ProjectDisassemblyInstruction::operand_count(Self) -> Int
 pub fn ProjectDisassemblyInstruction::operands(Self) -> Array[ProjectInstructionOperand]
 pub fn ProjectDisassemblyInstruction::same_normalized_operands(Self, Self) -> Bool
+pub fn ProjectDisassemblyInstruction::subinstruction_count(Self) -> Int
+pub fn ProjectDisassemblyInstruction::subinstructions(Self) -> Array[Self]
+pub fn ProjectDisassemblyInstruction::subs(Self) -> Array[Self]
 pub fn ProjectDisassemblyInstruction::with_kind(Self, ProjectInstructionKind) -> Self
 pub fn ProjectDisassemblyInstruction::with_kinds(Self, Array[ProjectInstructionKind]) -> Self
+pub fn ProjectDisassemblyInstruction::with_metadata(Self, code? : Int, name? : String, encoding? : String) -> Self
 pub fn ProjectDisassemblyInstruction::with_operands(Self, Array[ProjectInstructionOperand]) -> Self
+pub fn ProjectDisassemblyInstruction::with_subinstructions(Self, Array[Self]) -> Self
 pub fn ProjectDisassemblyInstruction::without_kind(Self, ProjectInstructionKind) -> Self
 
 type ProjectDisassemblyState

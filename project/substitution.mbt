@@ -19,6 +19,11 @@ fn project_subst_addr(addr : UInt64) -> String {
 }
 
 ///|
+fn project_subst_code(code : Int) -> String {
+  "0x" + code.to_string(radix=16)
+}
+
+///|
 fn project_subst_memory_addr(memory : @memory.Memory, bound : String) -> String {
   match bound {
     "max" => project_subst_addr(memory.max_addr())
@@ -106,6 +111,9 @@ fn Project::subst_disassembly_text(
       match name {
         "asm" => instruction.assembly()
         "bil" => instruction.bil()
+        "insn" | "insn_name" => instruction.name()
+        "insn_code" => project_subst_code(instruction.code())
+        "insn_encoding" => instruction.encoding()
         _ => name
       }
     None => "<disassembly unavailable>"
@@ -173,7 +181,8 @@ fn Project::subst_value(
       }
     "min_addr" | "addr" => project_subst_memory_addr(memory, "min")
     "max_addr" => project_subst_memory_addr(memory, "max")
-    "asm" | "bil" => self.subst_disassembly_text(memory, name)
+    "asm" | "bil" | "insn" | "insn_name" | "insn_code" | "insn_encoding" =>
+      self.subst_disassembly_text(memory, name)
     _ => name
   }
 }

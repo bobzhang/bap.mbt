@@ -981,8 +981,8 @@ pub fn TraceMeta::trace_stats_uuid() -> String {
 ///|
 pub fn TraceMeta::common_tag_infos() -> Array[TraceMetaTagInfo] {
   [
-    trace_meta_tag_info(trace_meta_binary_key, trace_meta_binary_uuid),
     trace_meta_tag_info(trace_meta_tracer_key, trace_meta_tracer_uuid),
+    trace_meta_tag_info(trace_meta_binary_key, trace_meta_binary_uuid),
     trace_meta_tag_info(trace_meta_arch_key, trace_meta_arch_uuid),
     trace_meta_tag_info(
       trace_meta_binary_file_stats_key, trace_meta_binary_file_stats_uuid,

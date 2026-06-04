@@ -278,6 +278,81 @@ pub fn[T] Term::is_dead(self : Term[T]) -> Bool {
 }
 
 ///|
+pub fn Term::with_warn_unused(self : Term[Arg]) -> Term[Arg] {
+  self.set_attr(Arg::warn_unused())
+}
+
+///|
+pub fn Term::without_warn_unused(self : Term[Arg]) -> Term[Arg] {
+  self.without_flag(arg_warn_unused_attr)
+}
+
+///|
+pub fn Term::is_warn_unused(self : Term[Arg]) -> Bool {
+  self.has_flag(arg_warn_unused_attr)
+}
+
+///|
+pub fn Term::with_alloc_size(self : Term[Arg]) -> Term[Arg] {
+  self.set_attr(Arg::alloc_size())
+}
+
+///|
+pub fn Term::without_alloc_size(self : Term[Arg]) -> Term[Arg] {
+  self.without_flag(arg_alloc_size_attr)
+}
+
+///|
+pub fn Term::is_alloc_size(self : Term[Arg]) -> Bool {
+  self.has_flag(arg_alloc_size_attr)
+}
+
+///|
+pub fn Term::with_arg_format(self : Term[Arg], format : String) -> Term[Arg] {
+  self.set_attr(Arg::format(format))
+}
+
+///|
+pub fn Term::without_arg_format(self : Term[Arg]) -> Term[Arg] {
+  self.del_attr(arg_format_attr)
+}
+
+///|
+pub fn Term::arg_format(self : Term[Arg]) -> String? {
+  self.get_attr(arg_format_attr)
+}
+
+///|
+pub fn Term::with_restricted(self : Term[Arg]) -> Term[Arg] {
+  self.set_attr(Arg::restricted())
+}
+
+///|
+pub fn Term::without_restricted(self : Term[Arg]) -> Term[Arg] {
+  self.without_flag(arg_restricted_attr)
+}
+
+///|
+pub fn Term::is_restricted(self : Term[Arg]) -> Bool {
+  self.has_flag(arg_restricted_attr)
+}
+
+///|
+pub fn Term::with_nonnull(self : Term[Arg]) -> Term[Arg] {
+  self.set_attr(Arg::nonnull())
+}
+
+///|
+pub fn Term::without_nonnull(self : Term[Arg]) -> Term[Arg] {
+  self.without_flag(arg_nonnull_attr)
+}
+
+///|
+pub fn Term::is_nonnull(self : Term[Arg]) -> Bool {
+  self.has_flag(arg_nonnull_attr)
+}
+
+///|
 pub fn Term::with_extern(self : Term[Sub]) -> Term[Sub] {
   self.with_flag(sub_extern_attr)
 }

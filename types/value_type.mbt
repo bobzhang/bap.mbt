@@ -134,12 +134,35 @@ pub(all) struct Var {
 } derive(Eq, Debug)
 
 ///|
+let var_create_fresh_counter : Ref[Int] = Ref(0xC00000)
+
+///|
+fn next_create_fresh_var_name() -> String {
+  var_create_fresh_counter.val -= 1
+  "#\{var_create_fresh_counter.val}"
+}
+
+///|
 pub fn Var::new(
   name~ : String,
   typ~ : ValueType,
   is_virtual? : Bool = false,
 ) -> Var {
   { name, typ, is_virtual }
+}
+
+///|
+pub fn Var::create(
+  name : String,
+  typ : ValueType,
+  is_virtual? : Bool = false,
+  fresh? : Bool = false,
+) -> Var {
+  if is_virtual || fresh {
+    Var::new(name=next_create_fresh_var_name(), typ~, is_virtual=true)
+  } else {
+    Var::new(name~, typ~)
+  }
 }
 
 ///|

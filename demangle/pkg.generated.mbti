@@ -1,0 +1,34 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/demangle"
+
+import {
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/knowledge",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+type Demangler
+pub fn Demangler::create(String, (String) -> String, pkg? : String) -> Result[Self, String]
+pub fn Demangler::declare_demangler(String, (String) -> String, pkg? : String) -> Result[Unit, String]
+pub fn Demangler::fullname(Self) -> @knowledge.Name
+pub fn Demangler::id() -> Self
+pub fn Demangler::name(Self) -> String
+pub fn Demangler::run(Self, String) -> String
+pub fn Demangler::strip_leading_underscore() -> Self
+
+pub(all) struct Demanglers {
+}
+pub fn Demanglers::available() -> Array[Demangler]
+pub fn Demanglers::get(String, pkg? : String) -> Result[Demangler, String]
+pub fn Demanglers::install(@core_theory.Target, Demangler) -> Result[Unit, String]
+pub fn Demanglers::lookup(String, pkg? : String) -> Demangler?
+pub fn Demanglers::register(Demangler) -> Unit
+pub fn Demanglers::select(@core_theory.Target) -> Demangler
+
+// Type aliases
+
+// Traits

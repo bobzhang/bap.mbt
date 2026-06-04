@@ -273,6 +273,115 @@ test "project create from input named resolves source registries" {
 }
 
 ///|
+test "project create from loader composes loaded input with sources" {
+  let loader = @project.ProjectInputLoader::create(name="unit-create-loader", load=data => {
+    Ok(
+      @project.ProjectInput::from_bytes(
+        target=@core_theory.Target::unknown(),
+        data,
+        endian=LittleEndian,
+        base=0x6600UL,
+        filename="loaded.bin",
+      ),
+    )
+  })
+  match @project.register_input_loader(loader) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let driver_source : @project.ProjectDisassemblySource[
+    @project.ProjectDisassemblyDriver,
+  ] = @project.ProjectDisassemblySource::single(
+    @project.ProjectDisassemblyDriver::memory_blocks(),
+  )
+  let symbolizer_source : @project.ProjectDisassemblySource[
+    @project.ProjectSymbolizer,
+  ] = @project.ProjectDisassemblySource::single(
+    @project.ProjectSymbolizer::create(addr => {
+      if addr == 0x6600UL {
+        Some("loaded_block")
+      } else {
+        None
+      }
+    }),
+  )
+  match
+    @project.Project::create_from_loader(
+      b"\x01\x02",
+      loader="unit-create-loader",
+      driver_source~,
+      symbolizer=symbolizer_source,
+    ) {
+    Ok(project) => {
+      assert_true(project.filename() == Some("loaded.bin"))
+      assert_true(project.get("disassembler") == Some("memory-blocks"))
+      assert_true(project.disassembly().block_count() == 1)
+      assert_true(project.program().subs()[0].sub_name() == "loaded_block")
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+test "project create for filename named composes loader and sources" {
+  let loader = @project.ProjectInputLoader::create(
+    name="unit-create-filename-loader",
+    extensions=["csource"],
+    priority=50,
+    load=data => {
+      Ok(
+        @project.ProjectInput::from_bytes(
+          target=@core_theory.Target::unknown(),
+          data,
+          endian=LittleEndian,
+          base=0x6800UL,
+          filename="sample.csource",
+        ),
+      )
+    },
+  )
+  match @project.register_input_loader(loader) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  @project.register_disassembly_driver_source_value(
+    name="unit-create-filename-driver-source",
+    @project.ProjectDisassemblyDriver::memory_blocks(),
+  )
+  @project.register_symbolizer_source_value(
+    name="unit-create-filename-symbolizer-source",
+    @project.ProjectSymbolizer::create(addr => {
+      if addr == 0x6800UL {
+        Some("filename_block")
+      } else {
+        None
+      }
+    }).set_path("sample.csource"),
+  )
+  match
+    @project.Project::create_for_filename_named(
+      b"\x03",
+      filename="sample.csource",
+      driver_source="unit-create-filename-driver-source",
+      symbolizer="unit-create-filename-symbolizer-source",
+    ) {
+    Ok(project) => {
+      assert_true(project.filename() == Some("sample.csource"))
+      assert_true(project.get("disassembler") == Some("memory-blocks"))
+      assert_true(project.program().subs()[0].sub_name() == "filename_block")
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    @project.Project::create_from_loader_named(
+      b"\x04",
+      loader="missing-create-loader",
+    )
+    is Err(_),
+  )
+}
+
+///|
 test "project input loaders register and load bytes" {
   let loader = @project.ProjectInputLoader::create(
     name="unit-project-raw",

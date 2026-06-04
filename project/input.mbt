@@ -978,6 +978,110 @@ pub fn Project::create_from_input_named(
 }
 
 ///|
+pub fn Project::create_from_loader(
+  data : Bytes,
+  loader~ : String,
+  disassembler? : String,
+  driver_source? : ProjectDisassemblySource[ProjectDisassemblyDriver],
+  brancher? : ProjectDisassemblySource[ProjectBrancher],
+  symbolizer? : ProjectDisassemblySource[ProjectSymbolizer],
+  rooter? : ProjectDisassemblySource[ProjectRooter],
+  reconstructor? : ProjectDisassemblySource[ProjectReconstructor],
+) -> Result[Project, String] {
+  match ProjectInput::load(data, loader~) {
+    Ok(input) =>
+      Project::create_from_input(
+        input,
+        disassembler?,
+        driver_source?,
+        brancher?,
+        symbolizer?,
+        rooter?,
+        reconstructor?,
+      )
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+pub fn Project::create_from_loader_named(
+  data : Bytes,
+  loader~ : String,
+  disassembler? : String,
+  driver_source? : String,
+  brancher? : String,
+  symbolizer? : String,
+  rooter? : String,
+  reconstructor? : String,
+) -> Result[Project, String] {
+  match ProjectInput::load(data, loader~) {
+    Ok(input) =>
+      Project::create_from_input_named(
+        input,
+        disassembler?,
+        driver_source?,
+        brancher?,
+        symbolizer?,
+        rooter?,
+        reconstructor?,
+      )
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+pub fn Project::create_for_filename(
+  data : Bytes,
+  filename~ : String,
+  disassembler? : String,
+  driver_source? : ProjectDisassemblySource[ProjectDisassemblyDriver],
+  brancher? : ProjectDisassemblySource[ProjectBrancher],
+  symbolizer? : ProjectDisassemblySource[ProjectSymbolizer],
+  rooter? : ProjectDisassemblySource[ProjectRooter],
+  reconstructor? : ProjectDisassemblySource[ProjectReconstructor],
+) -> Result[Project, String] {
+  match ProjectInput::load_for_filename(data, filename~) {
+    Ok(input) =>
+      Project::create_from_input(
+        input,
+        disassembler?,
+        driver_source?,
+        brancher?,
+        symbolizer?,
+        rooter?,
+        reconstructor?,
+      )
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+pub fn Project::create_for_filename_named(
+  data : Bytes,
+  filename~ : String,
+  disassembler? : String,
+  driver_source? : String,
+  brancher? : String,
+  symbolizer? : String,
+  rooter? : String,
+  reconstructor? : String,
+) -> Result[Project, String] {
+  match ProjectInput::load_for_filename(data, filename~) {
+    Ok(input) =>
+      Project::create_from_input_named(
+        input,
+        disassembler?,
+        driver_source?,
+        brancher?,
+        symbolizer?,
+        rooter?,
+        reconstructor?,
+      )
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
 pub fn Project::load(data : Bytes, loader~ : String) -> Result[Project, String] {
   project_from_input_result(ProjectInput::load(data, loader~))
 }

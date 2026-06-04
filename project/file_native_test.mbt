@@ -168,6 +168,56 @@ test "project disasm of_file uses explicit loader on native target" {
 }
 
 ///|
+test "project create file named uses loader and source registries on native target" {
+  let loader = @project.ProjectInputLoader::create(
+    name="unit-project-create-file-native",
+    load=data => {
+      Ok(
+        @project.ProjectInput::from_bytes(
+          target=@core_theory.Target::unknown(),
+          data,
+          endian=LittleEndian,
+          base=0x2600UL,
+          filename="moon.mod",
+        ),
+      )
+    },
+  )
+  match @project.register_input_loader(loader) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  @project.register_disassembly_driver_source_value(
+    name="unit-project-create-file-driver",
+    @project.ProjectDisassemblyDriver::memory_blocks(),
+  )
+  @project.register_symbolizer_source_value(
+    name="unit-project-create-file-symbolizer",
+    @project.ProjectSymbolizer::create(addr => {
+      if addr == 0x2600UL {
+        Some("file_entry")
+      } else {
+        None
+      }
+    }).set_path("moon.mod"),
+  )
+  match
+    @project.Project::create_file_named(
+      filename="moon.mod",
+      loader="unit-project-create-file-native",
+      driver_source="unit-project-create-file-driver",
+      symbolizer="unit-project-create-file-symbolizer",
+    ) {
+    Ok(project) => {
+      assert_true(project.filename() == Some("moon.mod"))
+      assert_true(project.get("disassembler") == Some("memory-blocks"))
+      assert_true(project.program().subs()[0].sub_name() == "file_entry")
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project file input loads deduplicated libraries with the same loader" {
   let loader = @project.ProjectInputLoader::create(
     name="unit-project-library-native",

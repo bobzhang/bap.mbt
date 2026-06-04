@@ -233,6 +233,60 @@ pub fn Project::file(
 }
 
 ///|
+pub fn Project::create_file(
+  filename~ : String,
+  loader? : String,
+  libraries? : Array[String] = [],
+  disassembler? : String,
+  driver_source? : ProjectDisassemblySource[ProjectDisassemblyDriver],
+  brancher? : ProjectDisassemblySource[ProjectBrancher],
+  symbolizer? : ProjectDisassemblySource[ProjectSymbolizer],
+  rooter? : ProjectDisassemblySource[ProjectRooter],
+  reconstructor? : ProjectDisassemblySource[ProjectReconstructor],
+) -> Result[Project, String] {
+  match ProjectInput::file(filename~, loader?, libraries~) {
+    Ok(input) =>
+      Project::create_from_input(
+        input,
+        disassembler?,
+        driver_source?,
+        brancher?,
+        symbolizer?,
+        rooter?,
+        reconstructor?,
+      )
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+pub fn Project::create_file_named(
+  filename~ : String,
+  loader? : String,
+  libraries? : Array[String] = [],
+  disassembler? : String,
+  driver_source? : String,
+  brancher? : String,
+  symbolizer? : String,
+  rooter? : String,
+  reconstructor? : String,
+) -> Result[Project, String] {
+  match ProjectInput::file(filename~, loader?, libraries~) {
+    Ok(input) =>
+      Project::create_from_input_named(
+        input,
+        disassembler?,
+        driver_source?,
+        brancher?,
+        symbolizer?,
+        rooter?,
+        reconstructor?,
+      )
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
 pub fn ProjectInput::load_file_for_filename(
   path : String,
   filename? : String,

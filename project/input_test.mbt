@@ -186,6 +186,10 @@ test "project input loaders register and load bytes" {
     }
     Err(reason) => fail(reason)
   }
+  match @project.Project::load(b"\xfe", loader="unit-project-raw") {
+    Ok(project) => assert_true(project.memory().lookup(0x40UL).length() == 1)
+    Err(reason) => fail(reason)
+  }
   assert_true(@project.register_input_loader(loader) is Err(_))
 }
 
@@ -697,6 +701,10 @@ test "project input loaders resolve by filename extension priority" {
       let project = @project.Project::from_input(input)
       assert_true(project.memory().lookup(0x90UL).length() == 1)
     }
+    Err(reason) => fail(reason)
+  }
+  match @project.Project::load_for_filename(b"\x02", filename="sample.UNIT") {
+    Ok(project) => assert_true(project.memory().lookup(0x90UL).length() == 1)
     Err(reason) => fail(reason)
   }
   assert_true(

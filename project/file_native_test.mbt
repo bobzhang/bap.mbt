@@ -35,6 +35,20 @@ test "project input loaders read files on native target" {
     }
     Err(reason) => fail(reason)
   }
+  match @project.Project::load_file_for_filename("moon.mod") {
+    Ok(project) => {
+      assert_true(project.filename() == Some("moon.mod"))
+      assert_true(project.memory().lookup(0x1000UL).length() == 1)
+    }
+    Err(reason) => fail(reason)
+  }
+  match @project.Project::file(filename="moon.mod") {
+    Ok(project) => {
+      assert_true(project.filename() == Some("moon.mod"))
+      assert_true(project.memory().lookup(0x1000UL).length() == 1)
+    }
+    Err(reason) => fail(reason)
+  }
 }
 
 ///|
@@ -67,6 +81,23 @@ test "project raw file input uses target endian on native target" {
     }
     Err(reason) => fail(reason)
   }
+  match
+    @project.Project::raw_file(
+      "moon.mod",
+      target~,
+      base=0x500UL,
+      offset=1,
+      length=2,
+      entry=0x501UL,
+    ) {
+    Ok(project) => {
+      assert_true(project.filename() == Some("moon.mod"))
+      assert_true(project.target().matches("sparc"))
+      assert_true(project.memory().lookup(0x500UL).length() == 1)
+      assert_true(project.memory().lookup(0x502UL).is_empty())
+    }
+    Err(reason) => fail(reason)
+  }
 }
 
 ///|
@@ -86,6 +117,14 @@ test "project binary input is raw file loading with explicit target" {
         }
         None => fail("expected raw image")
       }
+    }
+    Err(reason) => fail(reason)
+  }
+  match @project.Project::binary(target~, filename="moon.mod", base=0x900UL) {
+    Ok(project) => {
+      assert_true(project.filename() == Some("moon.mod"))
+      assert_true(project.target().matches("x86_64"))
+      assert_true(project.memory().lookup(0x900UL).length() == 1)
     }
     Err(reason) => fail(reason)
   }
@@ -123,6 +162,22 @@ test "project file input loads deduplicated libraries with the same loader" {
     ) {
     Ok(input) => {
       let project = @project.Project::from_input(input)
+      assert_true(project.filename() == Some("moon.mod"))
+      assert_true(project.memory().lookup(0x1100UL).length() == 1)
+      let libraries = project.libraries()
+      assert_true(libraries.length() == 1)
+      assert_true(libraries[0].name() == "README.mbt.md")
+      assert_true(libraries[0].memory().lookup(0x2200UL).length() == 1)
+    }
+    Err(reason) => fail(reason)
+  }
+  match
+    @project.Project::file(
+      filename="moon.mod",
+      loader="unit-project-library-native",
+      libraries=["README.mbt.md", "README.mbt.md", "moon.mod"],
+    ) {
+    Ok(project) => {
       assert_true(project.filename() == Some("moon.mod"))
       assert_true(project.memory().lookup(0x1100UL).length() == 1)
       let libraries = project.libraries()

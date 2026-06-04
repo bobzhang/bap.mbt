@@ -128,6 +128,29 @@ pub fn ProjectInput::raw_file(
 }
 
 ///|
+pub fn Project::raw_file(
+  path : String,
+  target~ : @core_theory.Target,
+  base? : UInt64 = 0UL,
+  offset? : Int = 0,
+  length? : Int,
+  entry? : UInt64,
+  filename? : String,
+) -> Result[Project, String] {
+  project_from_input_result(
+    ProjectInput::raw_file(
+      path,
+      target~,
+      base~,
+      offset~,
+      length?,
+      entry?,
+      filename?,
+    ),
+  )
+}
+
+///|
 pub fn ProjectInput::binary(
   target~ : @core_theory.Target,
   filename~ : String,
@@ -137,6 +160,20 @@ pub fn ProjectInput::binary(
   entry? : UInt64,
 ) -> Result[ProjectInput, String] {
   ProjectInput::raw_file(filename, target~, base~, offset~, length?, entry?)
+}
+
+///|
+pub fn Project::binary(
+  target~ : @core_theory.Target,
+  filename~ : String,
+  base? : UInt64 = 0UL,
+  offset? : Int = 0,
+  length? : Int,
+  entry? : UInt64,
+) -> Result[Project, String] {
+  project_from_input_result(
+    ProjectInput::binary(target~, filename~, base~, offset~, length?, entry?),
+  )
 }
 
 ///|
@@ -166,6 +203,15 @@ pub fn ProjectInput::load_file(
 }
 
 ///|
+pub fn Project::load_file(
+  path : String,
+  loader~ : String,
+  libraries? : Array[String] = [],
+) -> Result[Project, String] {
+  project_from_input_result(ProjectInput::load_file(path, loader~, libraries~))
+}
+
+///|
 pub fn ProjectInput::file(
   filename~ : String,
   loader? : String,
@@ -175,6 +221,15 @@ pub fn ProjectInput::file(
     Some(name) => ProjectInput::load_file(filename, loader=name, libraries~)
     None => ProjectInput::load_file_for_filename(filename, libraries~)
   }
+}
+
+///|
+pub fn Project::file(
+  filename~ : String,
+  loader? : String,
+  libraries? : Array[String] = [],
+) -> Result[Project, String] {
+  project_from_input_result(ProjectInput::file(filename~, loader?, libraries~))
 }
 
 ///|
@@ -210,4 +265,15 @@ pub fn ProjectInput::load_file_for_filename(
       }
     Err(reason) => Err(reason)
   }
+}
+
+///|
+pub fn Project::load_file_for_filename(
+  path : String,
+  filename? : String,
+  libraries? : Array[String] = [],
+) -> Result[Project, String] {
+  project_from_input_result(
+    ProjectInput::load_file_for_filename(path, filename?, libraries~),
+  )
 }

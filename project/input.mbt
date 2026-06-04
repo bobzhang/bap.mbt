@@ -661,6 +661,16 @@ pub fn ProjectInput::load_for_filename(
 }
 
 ///|
+fn project_from_input_result(
+  input : Result[ProjectInput, String],
+) -> Result[Project, String] {
+  match input {
+    Ok(value) => Ok(Project::from_input(value))
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
 pub fn Project::from_input(input : ProjectInput) -> Project {
   let project = Project::create(
     target=input.target_value,
@@ -672,4 +682,17 @@ pub fn Project::from_input(input : ProjectInput) -> Project {
     libraries=input.libraries_value,
   )
   (input.finish_fn)(project)
+}
+
+///|
+pub fn Project::load(data : Bytes, loader~ : String) -> Result[Project, String] {
+  project_from_input_result(ProjectInput::load(data, loader~))
+}
+
+///|
+pub fn Project::load_for_filename(
+  data : Bytes,
+  filename~ : String,
+) -> Result[Project, String] {
+  project_from_input_result(ProjectInput::load_for_filename(data, filename~))
 }

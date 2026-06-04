@@ -16,6 +16,19 @@ test "project symbolizer resolves custom names and fallback names" {
   assert_true(@project.ProjectSymbolizer::name_of_addr(0x30UL) == "sub_0x30")
   assert_true(@project.ProjectSymbolizer::name_is_empty("sub_0x30"))
   assert_true(!@project.ProjectSymbolizer::name_is_empty("main"))
+  assert_true(
+    @project.ProjectSymbolizer::name_order("sub_0x30", "sub_0x40") == Equal,
+  )
+  assert_true(
+    @project.ProjectSymbolizer::name_order("sub_0x30", "main") == Less,
+  )
+  assert_true(
+    @project.ProjectSymbolizer::name_order("main", "sub_0x30") == Greater,
+  )
+  assert_true(@project.ProjectSymbolizer::name_order("main", "main") == Equal)
+  assert_true(
+    @project.ProjectSymbolizer::name_order("main", "helper") == Incomparable,
+  )
 }
 
 ///|

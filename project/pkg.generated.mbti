@@ -536,6 +536,7 @@ pub fn ProjectSymbolizer::empty() -> Self
 pub fn ProjectSymbolizer::is_biased(Self) -> Bool
 pub fn ProjectSymbolizer::name_is_empty(String) -> Bool
 pub fn ProjectSymbolizer::name_of_addr(UInt64) -> String
+pub fn ProjectSymbolizer::name_order(String, String) -> @knowledge.PartialOrder
 pub fn ProjectSymbolizer::of_blocks(Array[(String, UInt64, UInt64)]) -> Self
 pub fn ProjectSymbolizer::of_image(@image.Image) -> Self
 pub fn ProjectSymbolizer::of_symbols(Array[@image.Symbol], path? : String, biased? : Bool) -> Self

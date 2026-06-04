@@ -83,6 +83,23 @@ pub fn ProjectSymbolizer::name_is_empty(name : String) -> Bool {
 }
 
 ///|
+pub fn ProjectSymbolizer::name_order(
+  lhs : String,
+  rhs : String,
+) -> @knowledge.PartialOrder {
+  match
+    (
+      ProjectSymbolizer::name_is_empty(lhs),
+      ProjectSymbolizer::name_is_empty(rhs),
+    ) {
+    (true, true) => Equal
+    (false, false) => if lhs == rhs { Equal } else { Incomparable }
+    (true, false) => Less
+    (false, true) => Greater
+  }
+}
+
+///|
 pub fn ProjectSymbolizer::path(self : ProjectSymbolizer) -> String? {
   self.path_value
 }

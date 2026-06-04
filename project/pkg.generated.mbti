@@ -19,6 +19,8 @@ pub fn available_input_loaders() -> Array[String]
 
 pub fn brancher_names() -> Array[String]
 
+pub fn disassembly_basic_backends() -> Array[String]
+
 pub fn disassembly_driver_names() -> Array[String]
 
 pub fn disassembly_drivers() -> Array[ProjectDisassemblyDriver]
@@ -68,6 +70,10 @@ pub fn register_builtin_reconstructors() -> Result[Unit, String]
 pub fn register_builtin_services() -> Result[Unit, String]
 
 pub fn register_collator(RegisteredProjectCollator) -> Result[Unit, String]
+
+pub fn register_disassembly_basic_backend(name~ : String, description? : String) -> Result[Unit, String]
+
+pub fn register_disassembly_basic_backend_if_absent(name~ : String, description? : String) -> Result[Bool, String]
 
 pub fn register_disassembly_driver(ProjectDisassemblyDriver) -> Result[Unit, String]
 
@@ -276,6 +282,59 @@ pub fn ProjectCollatorInfo::description(Self) -> String
 pub fn ProjectCollatorInfo::name(Self) -> String
 pub fn ProjectCollatorInfo::pkg(Self) -> String
 pub fn ProjectCollatorInfo::qualified_name(Self) -> @knowledge.Name
+
+type ProjectDisassemblyBasic
+pub fn ProjectDisassemblyBasic::attrs(Self) -> String
+pub fn ProjectDisassemblyBasic::available_backends() -> Array[String]
+pub fn ProjectDisassemblyBasic::backend(Self) -> String
+pub fn ProjectDisassemblyBasic::close(Self) -> Unit
+pub fn ProjectDisassemblyBasic::cpu(Self) -> String
+pub fn ProjectDisassemblyBasic::create(String, backend? : String, cpu? : String, attrs? : String, debug_level? : Int) -> Result[Self, String]
+pub fn ProjectDisassemblyBasic::custom(@core_theory.Target, @core_theory.Language, backend? : String) -> Self
+pub fn ProjectDisassemblyBasic::debug_level(Self) -> Int
+pub fn ProjectDisassemblyBasic::insn_of_mem(Self, @memory.Memory) -> Result[ProjectDisassemblyBasicInsnResult, String]
+pub fn ProjectDisassemblyBasic::lookup(@core_theory.Target, @core_theory.Language, backend? : String) -> Result[Self, String]
+pub fn ProjectDisassemblyBasic::run(Self, @memory.Memory, stop_on? : Array[ProjectDisassemblyBasicPred]) -> ProjectDisassemblyBasicState
+pub fn ProjectDisassemblyBasic::store_asm(Self) -> Self
+pub fn ProjectDisassemblyBasic::store_kinds(Self) -> Self
+pub fn ProjectDisassemblyBasic::stores_asm(Self) -> Bool
+pub fn ProjectDisassemblyBasic::stores_kinds(Self) -> Bool
+pub fn ProjectDisassemblyBasic::triple(Self) -> String
+pub fn[A] ProjectDisassemblyBasic::with_disasm(String, backend? : String, (Self) -> Result[A, String]) -> Result[A, String]
+
+type ProjectDisassemblyBasicInsnResult
+pub fn ProjectDisassemblyBasicInsnResult::create(@memory.Memory, instruction? : ProjectDisassemblyInstruction, ProjectDisassemblyBasicRemainder) -> Self
+pub fn ProjectDisassemblyBasicInsnResult::instruction(Self) -> ProjectDisassemblyInstruction?
+pub fn ProjectDisassemblyBasicInsnResult::memory(Self) -> @memory.Memory
+pub fn ProjectDisassemblyBasicInsnResult::remainder(Self) -> ProjectDisassemblyBasicRemainder
+
+pub(all) enum ProjectDisassemblyBasicPred {
+  BasicValid
+  BasicKind(ProjectInstructionKind)
+} derive(Eq, @debug.Debug)
+pub fn ProjectDisassemblyBasicPred::kind(ProjectInstructionKind) -> Self
+pub fn ProjectDisassemblyBasicPred::to_string(Self) -> String
+pub fn ProjectDisassemblyBasicPred::valid() -> Self
+
+pub(all) enum ProjectDisassemblyBasicRemainder {
+  BasicLeft(@memory.Memory)
+  BasicFinished
+}
+pub fn ProjectDisassemblyBasicRemainder::finished() -> Self
+pub fn ProjectDisassemblyBasicRemainder::is_finished(Self) -> Bool
+pub fn ProjectDisassemblyBasicRemainder::left(@memory.Memory) -> Self
+pub fn ProjectDisassemblyBasicRemainder::memory(Self) -> @memory.Memory?
+
+type ProjectDisassemblyBasicState
+pub fn ProjectDisassemblyBasicState::addr(Self) -> UInt64
+pub fn ProjectDisassemblyBasicState::create(disasm~ : ProjectDisassemblyBasic, memory~ : @memory.Memory, addr~ : UInt64, preds~ : Array[ProjectDisassemblyBasicPred], insns~ : Array[(@memory.Memory, ProjectDisassemblyInstruction?)]) -> Self
+pub fn ProjectDisassemblyBasicState::disasm(Self) -> ProjectDisassemblyBasic
+pub fn ProjectDisassemblyBasicState::insns(Self) -> Array[(@memory.Memory, ProjectDisassemblyInstruction?)]
+pub fn ProjectDisassemblyBasicState::last(Self, Int) -> Array[(@memory.Memory, ProjectDisassemblyInstruction?)]
+pub fn ProjectDisassemblyBasicState::memory(Self) -> @memory.Memory
+pub fn ProjectDisassemblyBasicState::preds(Self) -> Array[ProjectDisassemblyBasicPred]
+pub fn ProjectDisassemblyBasicState::switch(Self, ProjectDisassemblyBasic) -> Self
+pub fn ProjectDisassemblyBasicState::with_preds(Self, Array[ProjectDisassemblyBasicPred]) -> Self
 
 type ProjectDisassemblyBlock
 pub fn ProjectDisassemblyBlock::addr(Self) -> UInt64

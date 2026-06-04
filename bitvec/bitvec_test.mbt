@@ -21,6 +21,22 @@ test "basic predicates and string formatting" {
 }
 
 ///|
+test "translated BAP bitvec natural order compares numeric values" {
+  let one8 = @bitvec.of_int(width=8, 1)
+  let one16 = @bitvec.of_int(width=16, 1)
+  let high = @bitvec.of_int(width=16, 0x0100)
+  let low = @bitvec.of_int(width=8, 0xff)
+  assert_true(one8 != one16)
+  assert_eq(one8.compare(one16), 0)
+  assert_true(one8.equal(one16))
+  assert_eq(@bitvec.compare(one8, one16), 0)
+  assert_true(low.compare(high) < 0)
+  assert_true(@bitvec.BitVecOrder::ascending().compare(low, high) < 0)
+  assert_true(@bitvec.BitVecOrder::natural().compare(low, high) < 0)
+  assert_true(@bitvec.BitVecOrder::descending().compare(low, high) > 0)
+}
+
+///|
 test "byte conversion preserves endian order" {
   let deadbeef = @bitvec.of_uint64(width=32, 0xdeadbeef)
   assert_true(

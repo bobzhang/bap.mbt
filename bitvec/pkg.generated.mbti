@@ -12,7 +12,11 @@ pub fn b0() -> BitVec
 
 pub fn b1() -> BitVec
 
+pub fn compare(BitVec, BitVec) -> Int
+
 pub fn concat(Int, ArrayView[BitVec]) -> BitVec raise BitVecError
+
+pub fn equal(BitVec, BitVec) -> Bool
 
 pub fn from_hex(width~ : Int, StringView) -> BitVec raise BitVecError
 
@@ -54,11 +58,13 @@ pub fn BitVec::arshift(Self, Int) -> Self
 pub fn BitVec::bit_and(Self, Self) -> Self raise BitVecError
 pub fn BitVec::bit_or(Self, Self) -> Self raise BitVecError
 pub fn BitVec::bit_xor(Self, Self) -> Self raise BitVecError
+pub fn BitVec::compare(Self, Self) -> Int
 pub fn BitVec::compare_signed(Self, Self) -> Int raise BitVecError
 pub fn BitVec::compare_unsigned(Self, Self) -> Int raise BitVecError
 pub fn BitVec::concat(Self, Self) -> Self raise BitVecError
 pub fn BitVec::div(Self, Self) -> Self raise BitVecError
 pub fn BitVec::div_rem(Self, Self) -> (Self, Self) raise BitVecError
+pub fn BitVec::equal(Self, Self) -> Bool
 pub fn BitVec::extract(Self, hi? : Int, lo? : Int) -> Self raise BitVecError
 pub fn BitVec::fits_int(Self) -> Bool
 pub fn BitVec::fits_int32(Self) -> Bool
@@ -92,6 +98,15 @@ pub fn BitVec::to_uint64(Self) -> UInt64 raise BitVecError
 pub fn BitVec::truncate(Self, width~ : Int) -> Self raise BitVecError
 pub fn BitVec::widen(Self, width~ : Int) -> Self raise BitVecError
 pub fn BitVec::width(Self) -> Int
+
+pub(all) enum BitVecOrder {
+  BitVecAscending
+  BitVecDescending
+} derive(Eq, @debug.Debug)
+pub fn BitVecOrder::ascending() -> Self
+pub fn BitVecOrder::compare(Self, BitVec, BitVec) -> Int
+pub fn BitVecOrder::descending() -> Self
+pub fn BitVecOrder::natural() -> Self
 
 pub(all) enum Endian {
   LittleEndian

@@ -23,6 +23,9 @@ struct RegisteredProjectCollator {
 let project_collator_registry : Map[String, RegisteredProjectCollator] = {}
 
 ///|
+let project_collator_registry_order : Array[String] = []
+
+///|
 let project_registry_default_description = "not provided"
 
 ///|
@@ -69,6 +72,11 @@ pub fn ProjectCollatorInfo::description(self : ProjectCollatorInfo) -> String {
 }
 
 ///|
+pub fn ProjectCollatorInfo::desc(self : ProjectCollatorInfo) -> String {
+  self.description()
+}
+
+///|
 pub fn[S, R] ProjectCollator::name(self : ProjectCollator[S, R]) -> String {
   self.name_value.unqualified()
 }
@@ -90,6 +98,11 @@ pub fn[S, R] ProjectCollator::description(
   self : ProjectCollator[S, R],
 ) -> String {
   self.description_value
+}
+
+///|
+pub fn[S, R] ProjectCollator::desc(self : ProjectCollator[S, R]) -> String {
+  self.description()
 }
 
 ///|
@@ -200,6 +213,13 @@ pub fn RegisteredProjectCollator::description(
 }
 
 ///|
+pub fn RegisteredProjectCollator::desc(
+  self : RegisteredProjectCollator,
+) -> String {
+  self.description()
+}
+
+///|
 pub fn RegisteredProjectCollator::info(
   self : RegisteredProjectCollator,
 ) -> ProjectCollatorInfo {
@@ -223,6 +243,7 @@ pub fn register_collator(
     Err("project collator \{name} is already registered")
   } else {
     project_collator_registry[name] = collator
+    project_collator_registry_order.push(name)
     Ok(())
   }
 }
@@ -238,6 +259,11 @@ pub fn find_collator(
 ///|
 pub fn registered_collators() -> Array[ProjectCollatorInfo] {
   let result = []
-  project_collator_registry.each((_, collator) => result.push(collator.info()))
+  for name in project_collator_registry_order {
+    match project_collator_registry.get(name) {
+      Some(collator) => result.push(collator.info())
+      None => ()
+    }
+  }
   result
 }

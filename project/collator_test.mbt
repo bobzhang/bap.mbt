@@ -26,6 +26,7 @@ test "project collators fold alternatives against a base project" {
   assert_true(collator.pkg() == "user")
   assert_true(collator.qualified_name().show() == "user:unit-collator")
   assert_true(collator.description() == "collect value differences")
+  assert_true(collator.desc() == "collect value differences")
   let result = collator.apply([
     project_with_value("old"),
     project_with_value("new-a"),
@@ -43,6 +44,7 @@ test "project collators ignore empty project sequences" {
     summary=state => state,
   )
   assert_true(collator.description() == "not provided")
+  assert_true(collator.desc() == "not provided")
   assert_true(collator.apply([]) is None)
   assert_true(collator.apply([project_with_value("only")]) == Some(0))
 }
@@ -72,6 +74,8 @@ test "registered project collators can be discovered and applied" {
         found.qualified_name().show() == "user:unit-registered-collator",
       )
       assert_true(found.description() == "collect project values")
+      assert_true(found.desc() == "collect project values")
+      assert_true(found.info().desc() == "collect project values")
       found.apply([project_with_value("base"), project_with_value("next")])
       assert_true(summary.val == "base|0:next")
     }
@@ -137,4 +141,32 @@ test "registered project collators support package-qualified lookup" {
     None => fail("right collator was not registered")
   }
   assert_true(@project.find_collator("unit-packaged-collator") is None)
+}
+
+///|
+test "registered project collators preserve registration order" {
+  let make = name => {
+    @project.RegisteredProjectCollator::create(
+      name~,
+      prepare=project => project_value(project),
+      collate=(_, state, project) => state + project_value(project),
+      summary=_ => (),
+    )
+  }
+  let first = make("unit-order-collator-z")
+  let second = make("unit-order-collator-a")
+  let third = make("unit-order-collator-m")
+  for collator in [first, second, third] {
+    match @project.register_collator(collator) {
+      Ok(_) => ()
+      Err(reason) => fail(reason)
+    }
+  }
+  let names = @project.registered_collators()
+    .map(info => info.name())
+    .filter(name => name.has_prefix("unit-order-collator-"))
+  assert_true(
+    names ==
+    ["unit-order-collator-z", "unit-order-collator-a", "unit-order-collator-m"],
+  )
 }

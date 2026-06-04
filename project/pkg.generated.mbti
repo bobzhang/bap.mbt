@@ -333,6 +333,7 @@ type ProjectCollator[S, R]
 pub fn[S, R] ProjectCollator::apply(Self[S, R], Array[Project]) -> R?
 pub fn[S, R] ProjectCollator::collate(Self[S, R], Int, S, Project) -> S
 pub fn[S, R] ProjectCollator::create(name~ : String, pkg? : String, description? : String, prepare~ : (Project) -> S, collate~ : (Int, S, Project) -> S, summary~ : (S) -> R) -> Self[S, R]
+pub fn[S, R] ProjectCollator::desc(Self[S, R]) -> String
 pub fn[S, R] ProjectCollator::description(Self[S, R]) -> String
 pub fn[S, R] ProjectCollator::info(Self[S, R]) -> ProjectCollatorInfo
 pub fn[S, R] ProjectCollator::name(Self[S, R]) -> String
@@ -342,6 +343,7 @@ pub fn[S, R] ProjectCollator::qualified_name(Self[S, R]) -> @knowledge.Name
 pub fn[S, R] ProjectCollator::summary(Self[S, R], S) -> R
 
 type ProjectCollatorInfo
+pub fn ProjectCollatorInfo::desc(Self) -> String
 pub fn ProjectCollatorInfo::description(Self) -> String
 pub fn ProjectCollatorInfo::name(Self) -> String
 pub fn ProjectCollatorInfo::pkg(Self) -> String
@@ -860,6 +862,7 @@ pub fn ProjectSymbolizer::set_path(Self, String) -> Self
 type RegisteredProjectCollator
 pub fn RegisteredProjectCollator::apply(Self, Array[Project]) -> Unit
 pub fn[S] RegisteredProjectCollator::create(name~ : String, pkg? : String, description? : String, prepare~ : (Project) -> S, collate~ : (Int, S, Project) -> S, summary~ : (S) -> Unit) -> Self
+pub fn RegisteredProjectCollator::desc(Self) -> String
 pub fn RegisteredProjectCollator::description(Self) -> String
 pub fn[S] RegisteredProjectCollator::from_collator(ProjectCollator[S, Unit]) -> Self
 pub fn RegisteredProjectCollator::info(Self) -> ProjectCollatorInfo

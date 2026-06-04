@@ -2,8 +2,12 @@
 let tid_counter : Ref[Int] = Ref(0)
 
 ///|
+let interned_tid_ids : Map[String, Int] = {}
+
+///|
 pub(all) struct Tid {
   id : Int
+  pkg_value : String
   name : String?
   ivec_value : Int?
 } derive(Eq, Hash, Debug)
@@ -20,39 +24,161 @@ fn next_tid_id() -> Int {
 }
 
 ///|
+fn tid_default_pkg(pkg : String?) -> String {
+  match pkg {
+    Some(value) => value
+    None => "user"
+  }
+}
+
+///|
+fn ensure_tid_counter_at_least(id : Int) -> Unit {
+  if tid_counter.val < id {
+    tid_counter.val = id
+  }
+}
+
+///|
+fn interned_tid_id(kind : String, pkg : String, value : String) -> Int {
+  let key = "\{kind}|\{pkg}|\{value}"
+  match interned_tid_ids.get(key) {
+    Some(id) => id
+    None => {
+      let id = next_tid_id()
+      interned_tid_ids[key] = id
+      id
+    }
+  }
+}
+
+///|
+fn register_interned_tid_id(
+  kind : String,
+  pkg : String,
+  value : String,
+  id : Int,
+) -> Unit {
+  interned_tid_ids["\{kind}|\{pkg}|\{value}"] = id
+  ensure_tid_counter_at_least(id)
+}
+
+///|
+fn escape_tid_part(input : String) -> String {
+  let mut out = ""
+  for ch in input {
+    if ch == ':' || ch == '\\' {
+      out = out + "\\"
+    }
+    out = out + "\{ch}"
+  }
+  out
+}
+
+///|
+fn unescape_tid_part(input : String) -> String {
+  let mut out = ""
+  let mut escaped = false
+  for ch in input {
+    if escaped {
+      out = out + "\{ch}"
+      escaped = false
+    } else if ch == '\\' {
+      escaped = true
+    } else {
+      out = out + "\{ch}"
+    }
+  }
+  if escaped {
+    out + "\\"
+  } else {
+    out
+  }
+}
+
+///|
+fn split_tid_qualified(input : String) -> (String?, String) {
+  let mut escaped = false
+  for i, ch in input {
+    if escaped {
+      escaped = false
+    } else if ch == '\\' {
+      escaped = true
+    } else if ch == ':' {
+      return (
+        Some(unescape_tid_part(input[:i].to_owned())),
+        input[i + 1:].to_owned(),
+      )
+    }
+  }
+  (None, input)
+}
+
+///|
+fn tid_qualified_text(pkg : String, text : String) -> String {
+  if pkg == "user" {
+    escape_tid_part(text)
+  } else {
+    "\{escape_tid_part(pkg)}:\{escape_tid_part(text)}"
+  }
+}
+
+///|
 pub fn Tid::create() -> Tid {
   Tid::fresh()
 }
 
 ///|
 pub fn Tid::fresh() -> Tid {
-  { id: next_tid_id(), name: None, ivec_value: None }
+  { id: next_tid_id(), pkg_value: "user", name: None, ivec_value: None }
+}
+
+///|
+pub fn Tid::restore(
+  id~ : Int,
+  pkg? : String,
+  name? : String,
+  ivec? : Int,
+) -> Tid {
+  let tid_pkg = tid_default_pkg(pkg)
+  match (name, ivec) {
+    (Some(value), None) => register_interned_tid_id("name", tid_pkg, value, id)
+    (None, Some(value)) =>
+      register_interned_tid_id("ivec", tid_pkg, value.to_string(), id)
+    _ => ensure_tid_counter_at_least(id)
+  }
+  { id, pkg_value: tid_pkg, name, ivec_value: ivec }
 }
 
 ///|
 pub fn Tid::for_name(name : String, pkg? : String) -> Tid {
-  ignore(pkg)
-  { id: next_tid_id(), name: Some(name), ivec_value: None }
+  let tid_pkg = tid_default_pkg(pkg)
+  {
+    id: interned_tid_id("name", tid_pkg, name),
+    pkg_value: tid_pkg,
+    name: Some(name),
+    ivec_value: None,
+  }
 }
 
 ///|
 pub fn Tid::for_addr(addr : Word, pkg? : String) -> Tid {
-  ignore(pkg)
-  Tid::for_name(addr.to_hex())
+  Tid::for_name(addr.to_hex(), pkg?)
 }
 
 ///|
 pub fn Tid::for_ivec(ivec : Int, pkg? : String) -> Tid {
-  ignore(pkg)
-  { id: next_tid_id(), name: None, ivec_value: Some(ivec) }
+  let tid_pkg = tid_default_pkg(pkg)
+  {
+    id: interned_tid_id("ivec", tid_pkg, ivec.to_string()),
+    pkg_value: tid_pkg,
+    name: None,
+    ivec_value: Some(ivec),
+  }
 }
 
 ///|
 fn tid_for_id(id : Int) -> Tid {
-  if id > tid_counter.val {
-    tid_counter.val = id
-  }
-  { id, name: None, ivec_value: None }
+  Tid::restore(id~)
 }
 
 ///|
@@ -83,7 +209,16 @@ pub fn Tid::from_string(text : String) -> Result[Tid, String] {
       Err(reason) => Err(reason)
     }
   } else if text.has_prefix("@") {
-    Ok(Tid::for_name(text[1:].to_owned()))
+    let body = text[1:].to_owned()
+    match split_tid_qualified(body) {
+      (Some(pkg), rest) if rest.has_prefix("interrupt:#") =>
+        match tid_parse_int(rest[11:], text) {
+          Ok(ivec) => Ok(Tid::for_ivec(ivec, pkg~))
+          Err(reason) => Err(reason)
+        }
+      (Some(pkg), rest) => Ok(Tid::for_name(unescape_tid_part(rest), pkg~))
+      (None, rest) => Ok(Tid::for_name(unescape_tid_part(rest)))
+    }
   } else if text.has_prefix("%") {
     match tid_parse_int(text[1:], text) {
       Ok(id) if id >= 0 => Ok(tid_for_id(id))
@@ -108,6 +243,11 @@ pub fn Tid::id(self : Tid) -> Int {
 }
 
 ///|
+pub fn Tid::pkg(self : Tid) -> String {
+  self.pkg_value
+}
+
+///|
 pub fn Tid::name(self : Tid) -> String? {
   self.name
 }
@@ -120,10 +260,15 @@ pub fn Tid::ivec(self : Tid) -> Int? {
 ///|
 pub fn Tid::to_string(self : Tid) -> String {
   match self.name {
-    Some(name) => "@\{name}"
+    Some(name) => "@\{tid_qualified_text(self.pkg_value, name)}"
     None =>
       match self.ivec_value {
-        Some(ivec) => "@interrupt:#\{ivec}"
+        Some(ivec) =>
+          if self.pkg_value == "user" {
+            "@interrupt:#\{ivec}"
+          } else {
+            "@\{escape_tid_part(self.pkg_value)}:interrupt:#\{ivec}"
+          }
         None => "%\{self.id}"
       }
   }

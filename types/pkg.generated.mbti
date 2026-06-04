@@ -1595,6 +1595,7 @@ pub fn[T] Term::without_weight(Self[T]) -> Self[T]
 
 pub(all) struct Tid {
   id : Int
+  pkg_value : String
   name : String?
   ivec_value : Int?
 } derive(Eq, Hash, @debug.Debug)
@@ -1608,6 +1609,8 @@ pub fn Tid::from_string_exn(String) -> Self raise TidParseError
 pub fn Tid::id(Self) -> Int
 pub fn Tid::ivec(Self) -> Int?
 pub fn Tid::name(Self) -> String?
+pub fn Tid::pkg(Self) -> String
+pub fn Tid::restore(id~ : Int, pkg? : String, name? : String, ivec? : Int) -> Self
 pub fn Tid::to_string(Self) -> String
 
 pub(all) enum TypeError {

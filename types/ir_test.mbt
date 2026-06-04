@@ -41,10 +41,32 @@ test "tids parse BAP-style textual identifiers" {
   assert_true(created.ivec() is None)
   let packaged = @types.Tid::for_name("packaged", pkg="loader")
   assert_true(packaged.name() == Some("packaged"))
-  assert_true(@types.Tid::for_ivec(4, pkg="loader").ivec() == Some(4))
+  assert_true(packaged.pkg() == "loader")
+  inspect(packaged.to_string(), content="@loader:packaged")
+  assert_true(packaged == @types.Tid::for_name("packaged", pkg="loader"))
+  assert_true(packaged != @types.Tid::for_name("packaged", pkg="other"))
+  let packaged_ivec = @types.Tid::for_ivec(4, pkg="loader")
+  assert_true(packaged_ivec.pkg() == "loader")
+  assert_true(packaged_ivec.ivec() == Some(4))
+  inspect(packaged_ivec.to_string(), content="@loader:interrupt:#4")
+  match @types.Tid::from_string("@loader:packaged") {
+    Ok(tid) => assert_true(tid == packaged)
+    Err(reason) => fail(reason)
+  }
+  match @types.Tid::from_string("@loader:interrupt:#4") {
+    Ok(tid) => assert_true(tid == packaged_ivec)
+    Err(reason) => fail(reason)
+  }
+  let colon_name = @types.Tid::for_name("interrupt:#4", pkg="loader")
+  inspect(colon_name.to_string(), content="@loader:interrupt\\:#4")
+  match @types.Tid::from_string(colon_name.to_string()) {
+    Ok(tid) => assert_true(tid == colon_name)
+    Err(reason) => fail(reason)
+  }
   match @types.Tid::from_string("@entry") {
     Ok(tid) => {
       assert_true(tid.name() == Some("entry"))
+      assert_true(tid.pkg() == "user")
       inspect(tid.to_string(), content="@entry")
     }
     Err(reason) => fail(reason)

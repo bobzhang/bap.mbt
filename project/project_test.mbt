@@ -298,8 +298,8 @@ test "project persistent codec round trips metadata and storage" {
   let flag = @types.Var::new(name="flag", typ=Imm(1))
   let x = @types.Var::new(name="x", typ=Imm(8))
   let y = @types.Var::new(name="y", typ=Imm(8), is_virtual=true)
-  let entry_tid = @types.Tid::for_name("entry")
-  let exit_tid = @types.Tid::for_name("exit")
+  let entry_tid = @types.Tid::for_name("entry", pkg="persist")
+  let exit_tid = @types.Tid::for_name("exit", pkg="persist")
   let arg = @types.Arg::create(
     x,
     Var(x),
@@ -340,11 +340,11 @@ test "project persistent codec round trips metadata and storage" {
     name="main",
     args=[arg],
     blks=[entry_block, exit_block],
-    tid=@types.Tid::for_name("main"),
+    tid=@types.Tid::for_name("main", pkg="persist"),
   ).set_attr(@types.Attr::new(key="semantic", value="entry-point"))
   let program = @types.Program::create(
     subs=[main_sub],
-    tid=@types.Tid::for_name("program"),
+    tid=@types.Tid::for_name("program", pkg="persist"),
   ).set_attr(@types.Attr::comment("round-trip"))
   let memory_block = @memory.Memory::from_bytes(
     endian=BigEndian,
@@ -475,6 +475,7 @@ test "project persistent codec round trips metadata and storage" {
       assert_true(decoded_symbols[0].is_function())
       assert_true(decoded_symbols[0].is_debug())
       assert_true(decoded.program().tid() == program.tid())
+      assert_true(decoded.program().tid().pkg() == "persist")
       assert_true(decoded.program().attrs() == program.attrs())
       assert_true(
         @types.Program::to_string(decoded.program()) ==
@@ -483,6 +484,10 @@ test "project persistent codec round trips metadata and storage" {
       assert_true(decoded.state().disassembly().block_count() == 1)
       assert_true(decoded.state().disassembly().instruction_count() == 1)
       assert_true(decoded.state().disassembly().edge_count() == 2)
+      assert_true(decoded.state().subroutines()[0].tid().pkg() == "persist")
+      assert_true(
+        decoded.state().subroutines()[0].blks()[0].tid().pkg() == "persist",
+      )
       let decoded_instruction = decoded.state().disassembly().instructions()[0]
       assert_true(decoded_instruction.assembly() == "mov r0, #1")
       assert_true(decoded_instruction.code() == 0x01)

@@ -28,16 +28,18 @@ fn project_ir_tid_persistent() -> @knowledge.Persistent[@types.Tid] {
     @knowledge.Persistent::string(),
   )
   let ivec_codec = @knowledge.Persistent::optional(int_codec)
+  let string_codec = @knowledge.Persistent::string()
   @knowledge.Persistent::convert(
     to_persistent=tid => {
       [
         int_codec.encode(tid.id()),
         name_codec.encode(tid.name()),
         ivec_codec.encode(tid.ivec()),
+        string_codec.encode(tid.pkg()),
       ]
     },
     of_persistent=fields => {
-      if fields.length() != 3 {
+      if fields.length() != 3 && fields.length() != 4 {
         return Err("invalid persistent project IR tid")
       }
       let id = match int_codec.decode(fields[0]) {
@@ -52,11 +54,15 @@ fn project_ir_tid_persistent() -> @knowledge.Persistent[@types.Tid] {
         Ok(value) => value
         Err(reason) => return Err(reason)
       }
-      match @types.Tid::from_string("%\{id}") {
-        Ok(_) => ()
-        Err(reason) => return Err(reason)
+      let pkg = if fields.length() == 4 {
+        match string_codec.decode(fields[3]) {
+          Ok(value) => value
+          Err(reason) => return Err(reason)
+        }
+      } else {
+        "user"
       }
-      Ok({ id, name, ivec_value: ivec })
+      Ok(@types.Tid::restore(id~, pkg~, name?, ivec?))
     },
     project_ir_fields(),
   )

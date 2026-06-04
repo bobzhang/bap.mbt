@@ -224,7 +224,7 @@ test "project pass run executes pass object with dependencies" {
   let project = @project.Project::empty(@core_theory.Target::unknown())
   let next = match pass.run(project) {
     Ok(next) => next
-    Err(reason) => fail(reason)
+    Err(error) => fail(error.to_string())
   }
   assert_true(next.get("object-trace") == Some("dm"))
   assert_true(next.pass_run_count("unit-object-dep") == 1)
@@ -236,6 +236,37 @@ test "project pass run executes pass object with dependencies" {
   assert_true(
     pass_event_kinds(pass.events()) == ["started", "succeeded", "finished"],
   )
+}
+
+///|
+test "project pass run reports structured errors" {
+  let missing = @project.ProjectPass::create(
+    name="unit-structured-missing",
+    deps=["unit-structured-absent"],
+    run=project => Ok(project),
+  )
+  let project = @project.Project::empty(@core_theory.Target::unknown())
+  match missing.run(project) {
+    Err(error) => {
+      assert_true(error.pass().name() == "unit-structured-missing")
+      assert_true(error.dependency() == Some("unit-structured-absent"))
+      assert_true(error.reason() == "unit-structured-absent")
+      assert_true(error.to_string().contains("unsatisfied dependency"))
+    }
+    Ok(_) => fail("expected missing dependency error")
+  }
+  let failing = @project.ProjectPass::create(name="unit-structured-runtime", run=_ => {
+    Err("structured boom")
+  })
+  match failing.run(project) {
+    Err(error) => {
+      assert_true(error.pass().name() == "unit-structured-runtime")
+      assert_true(error.dependency() is None)
+      assert_true(error.reason() == "structured boom")
+      assert_true(error.to_string().contains("runtime error"))
+    }
+    Ok(_) => fail("expected runtime error")
+  }
 }
 
 ///|
@@ -259,7 +290,10 @@ test "project pass run_exn mirrors checked execution" {
     let _ = failing.run_exn(project)
     fail("unexpected run_exn success")
   } catch {
-    @project.ProjectPassFailure(reason) => assert_true(reason == "run-exn boom")
+    @project.ProjectPassFailure(reason) => {
+      assert_true(reason.contains("unit-run-exn-failure"))
+      assert_true(reason.contains("run-exn boom"))
+    }
     _ => fail("unexpected project pass exception")
   }
 }

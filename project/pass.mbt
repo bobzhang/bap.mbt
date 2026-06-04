@@ -17,6 +17,12 @@ pub(all) suberror ProjectPassError {
 } derive(Eq, Debug)
 
 ///|
+pub(all) enum ProjectPassRunError {
+  ProjectPassUnsatDep(ProjectPass, String)
+  ProjectPassRuntimeError(ProjectPass, String)
+}
+
+///|
 pub(all) enum ProjectPassEventKind {
   PassRegistered
   PassStarted
@@ -83,6 +89,40 @@ fn pass_events_for(
 ///|
 fn project_pass_failure(reason : String) -> ProjectPassError {
   ProjectPassFailure(reason)
+}
+
+///|
+pub fn ProjectPassRunError::pass(self : ProjectPassRunError) -> ProjectPass {
+  match self {
+    ProjectPassUnsatDep(pass, _) => pass
+    ProjectPassRuntimeError(pass, _) => pass
+  }
+}
+
+///|
+pub fn ProjectPassRunError::dependency(self : ProjectPassRunError) -> String? {
+  match self {
+    ProjectPassUnsatDep(_, dependency) => Some(dependency)
+    ProjectPassRuntimeError(_, _) => None
+  }
+}
+
+///|
+pub fn ProjectPassRunError::reason(self : ProjectPassRunError) -> String {
+  match self {
+    ProjectPassUnsatDep(_, dependency) => dependency
+    ProjectPassRuntimeError(_, reason) => reason
+  }
+}
+
+///|
+pub fn ProjectPassRunError::to_string(self : ProjectPassRunError) -> String {
+  match self {
+    ProjectPassUnsatDep(pass, dependency) =>
+      "unsatisfied dependency \{dependency} for project pass \{pass.name()}"
+    ProjectPassRuntimeError(pass, reason) =>
+      "runtime error in project pass \{pass.name()}: \{reason}"
+  }
 }
 
 ///|
@@ -405,6 +445,81 @@ pub fn resolve_passes(
 }
 
 ///|
+fn resolve_pass_for_run(
+  owner : ProjectPass,
+  name : String,
+  visiting : Array[String],
+  visited : Array[String],
+  order : Array[ProjectPass],
+) -> Result[Unit, ProjectPassRunError] {
+  match find_pass(name) {
+    Some(pass) => resolve_pass_object_for_run(pass, visiting, visited, order)
+    None => Err(ProjectPassUnsatDep(owner, name))
+  }
+}
+
+///|
+fn resolve_pass_object_for_run(
+  pass : ProjectPass,
+  visiting : Array[String],
+  visited : Array[String],
+  order : Array[ProjectPass],
+) -> Result[Unit, ProjectPassRunError] {
+  let name = pass.name()
+  if visited.contains(name) {
+    Ok(())
+  } else if visiting.contains(name) {
+    Err(
+      ProjectPassRuntimeError(pass, "cyclic project pass dependency at \{name}"),
+    )
+  } else {
+    visiting.push(name)
+    for dep in pass.deps() {
+      match resolve_pass_for_run(pass, dep, visiting, visited, order) {
+        Ok(_) => ()
+        Err(error) => {
+          ignore(visiting.pop())
+          return Err(error)
+        }
+      }
+    }
+    ignore(visiting.pop())
+    visited.push(name)
+    order.push(pass)
+    Ok(())
+  }
+}
+
+///|
+fn Project::run_resolved_passes_for_run(
+  self : Project,
+  order : Array[ProjectPass],
+) -> Result[Project, ProjectPassRunError] {
+  let mut project = self
+  for pass in order {
+    let name = pass.name()
+    if pass.run_once() && project.pass_has_run(name) {
+      ()
+    } else {
+      pass.record_lifecycle_event(PassStarted)
+      match pass.run_body(project) {
+        Ok(next) => {
+          pass.record_lifecycle_event(PassSucceeded)
+          pass.record_lifecycle_event(PassFinished)
+          project = next.mark_pass_run(name)
+        }
+        Err(reason) => {
+          pass.record_lifecycle_event(PassFailed)
+          pass.record_lifecycle_event(PassFinished)
+          return Err(ProjectPassRuntimeError(pass, reason))
+        }
+      }
+    }
+  }
+  Ok(project)
+}
+
+///|
 fn Project::run_resolved_passes(
   self : Project,
   order : Array[ProjectPass],
@@ -437,13 +552,13 @@ fn Project::run_resolved_passes(
 pub fn ProjectPass::run(
   self : ProjectPass,
   project : Project,
-) -> Result[Project, String] {
+) -> Result[Project, ProjectPassRunError] {
   let visiting = []
   let visited = []
   let order = []
-  match resolve_pass_object(self, visiting, visited, order) {
-    Ok(_) => project.run_resolved_passes(order)
-    Err(reason) => Err(reason)
+  match resolve_pass_object_for_run(self, visiting, visited, order) {
+    Ok(_) => project.run_resolved_passes_for_run(order)
+    Err(error) => Err(error)
   }
 }
 
@@ -454,7 +569,7 @@ pub fn ProjectPass::run_exn(
 ) -> Project raise ProjectPassError {
   match self.run(project) {
     Ok(result) => result
-    Err(reason) => raise project_pass_failure(reason)
+    Err(error) => raise project_pass_failure(error.to_string())
   }
 }
 

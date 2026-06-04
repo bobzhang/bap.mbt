@@ -761,7 +761,7 @@ pub fn ProjectPass::finish_events(Self) -> Array[ProjectPassEvent]
 pub fn ProjectPass::finishes(Self) -> @future.Stream[Double]
 pub fn ProjectPass::flatten() -> Self
 pub fn ProjectPass::name(Self) -> String
-pub fn ProjectPass::run(Self, Project) -> Result[Project, String]
+pub fn ProjectPass::run(Self, Project) -> Result[Project, ProjectPassRunError]
 pub fn ProjectPass::run_exn(Self, Project) -> Project raise ProjectPassError
 pub fn ProjectPass::run_once(Self) -> Bool
 pub fn ProjectPass::ssa() -> Self
@@ -785,6 +785,15 @@ pub(all) enum ProjectPassEventKind {
   PassFinished
 } derive(Eq)
 pub fn ProjectPassEventKind::to_string(Self) -> String
+
+pub(all) enum ProjectPassRunError {
+  ProjectPassUnsatDep(ProjectPass, String)
+  ProjectPassRuntimeError(ProjectPass, String)
+}
+pub fn ProjectPassRunError::dependency(Self) -> String?
+pub fn ProjectPassRunError::pass(Self) -> ProjectPass
+pub fn ProjectPassRunError::reason(Self) -> String
+pub fn ProjectPassRunError::to_string(Self) -> String
 
 type ProjectReconstructor
 pub fn ProjectReconstructor::create((Project) -> Result[Project, String]) -> Self

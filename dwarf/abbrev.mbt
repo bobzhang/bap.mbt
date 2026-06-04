@@ -58,11 +58,15 @@ pub fn DwarfAbbrevField::value_kind(
   match (self.attr_value, self.form_value) {
     (DwarfName, DwarfString)
     | (DwarfName, DwarfStrp)
+    | (DwarfName, DwarfStrpSup)
+    | (DwarfName, DwarfStrpAlt)
     | (DwarfName, DwarfStrx(_))
     | (DwarfName, DwarfLineStrp)
     | (DwarfName, DwarfIndirect)
     | (DwarfLinkageName, DwarfString)
     | (DwarfLinkageName, DwarfStrp)
+    | (DwarfLinkageName, DwarfStrpSup)
+    | (DwarfLinkageName, DwarfStrpAlt)
     | (DwarfLinkageName, DwarfStrx(_))
     | (DwarfLinkageName, DwarfLineStrp)
     | (DwarfLinkageName, DwarfIndirect) => DwarfNameValue

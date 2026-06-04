@@ -769,6 +769,37 @@ test "translated DWARF FBI skips external name reference forms" {
 }
 
 ///|
+test "translated DWARF FBI skips external name string forms" {
+  let abbrev = b"\x01\x2e\x00" +
+    b"\x03\xa1\x3e" +
+    b"\x6e\x08" +
+    b"\x11\x01" +
+    b"\x12\x0b" +
+    b"\x6e\x1d" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x1e\x00\x00\x00" +
+    b"\x04\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x04" +
+    b"\x01" +
+    b"\x00\x00\x00\x00" +
+    b"linkext\x00" +
+    b"\x70\x00\x00\x00" +
+    b"\x05" +
+    b"\x00\x00\x00\x00" +
+    b"\x00"
+  let data = expect_fbi_data(
+    @dwarf.DwarfData::from_bytes(endian=LittleEndian, info~, abbrev~, str=b""),
+  )
+  let functions = expect_functions(data.functions())
+  assert_true(functions.length() == 1)
+  assert_true(functions[0].name() == "linkext")
+  assert_true(functions[0].low_pc() == 0x70UL)
+  assert_true(functions[0].high_pc() == Some(0x75UL))
+}
+
+///|
 test "translated DWARF FBI skips DWARF5 skeleton dwo id" {
   let abbrev = b"\x00"
   let info = b"\x11\x00\x00\x00" +

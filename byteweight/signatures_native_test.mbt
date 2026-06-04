@@ -77,6 +77,28 @@ test "translated BAP byteweight signatures match target aliases modulo bits" {
 }
 
 ///|
+test "translated BAP byteweight typed update replaces target aliases" {
+  let data = bw_signature_bytes_data("unit-signatures-alias-update")
+  let path = "_build/byteweight-signatures-alias-update.db"
+  let target = @core_theory.Target::x86_64()
+  match
+    @byteweight.byteweight_signature_save(
+      path,
+      arch="amd64",
+      mode=data.name(),
+      b"old-alias-payload",
+    ) {
+    Ok(_) => ()
+    Err(err) => fail(err.to_string())
+  }
+  match data.update(path, target, b"new-target-payload") {
+    Ok(_) => ()
+    Err(err) => fail(err.to_string())
+  }
+  assert_true(data.lookup(target, paths=[path]) == Ok(b"new-target-payload"))
+}
+
+///|
 test "translated BAP byteweight signatures report corrupted databases" {
   let data = bw_signature_bytes_data("unit-signatures-corrupt")
   let path = "_build/byteweight-signatures-corrupt.db"

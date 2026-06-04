@@ -248,6 +248,23 @@ fn byteweight_signature_update_raw(
   data_name : String,
   payload : BytesView,
 ) -> Result[Unit, ByteweightSignatureError] {
+  byteweight_signature_update_entries(
+    path,
+    { target_name, compiler_name, data_name, payload: payload.to_owned() },
+    entry => {
+      entry.target_name == target_name &&
+      entry.compiler_name == compiler_name &&
+      entry.data_name == data_name
+    },
+  )
+}
+
+///|
+fn byteweight_signature_update_entries(
+  path : String,
+  replacement : ByteweightSignatureEntry,
+  should_remove : (ByteweightSignatureEntry) -> Bool,
+) -> Result[Unit, ByteweightSignatureError] {
   let entries = match @native_io.read_file(path) {
     Ok(bytes) =>
       match byteweight_signature_parse_entries(bytes) {
@@ -258,18 +275,11 @@ fn byteweight_signature_update_raw(
   }
   let out : Array[ByteweightSignatureEntry] = []
   for entry in entries {
-    if entry.target_name != target_name ||
-      entry.compiler_name != compiler_name ||
-      entry.data_name != data_name {
+    if !should_remove(entry) {
       out.push(entry)
     }
   }
-  out.push({
-    target_name,
-    compiler_name,
-    data_name,
-    payload: payload.to_owned(),
-  })
+  out.push(replacement)
   let encoded = byteweight_signature_entries_to_bytes(out)
   match @native_io.write_file(path, encoded) {
     Ok(_) => Ok(())
@@ -321,12 +331,17 @@ pub fn[T] ByteweightSignatureData::update(
   value : T,
   compiler? : @core_theory.Compiler,
 ) -> Result[Unit, ByteweightSignatureError] {
-  byteweight_signature_update_raw(
+  let target_name = byteweight_signature_target_name(target)
+  let compiler_name = byteweight_signature_compiler_name(compiler)
+  let data_name = self.name_value
+  byteweight_signature_update_entries(
     path,
-    byteweight_signature_target_name(target),
-    byteweight_signature_compiler_name(compiler),
-    self.name_value,
-    (self.save_fn)(value),
+    { target_name, compiler_name, data_name, payload: (self.save_fn)(value) },
+    entry => {
+      entry.compiler_name == compiler_name &&
+      entry.data_name == data_name &&
+      byteweight_signature_matches_target(target, entry.target_name)
+    },
   )
 }
 

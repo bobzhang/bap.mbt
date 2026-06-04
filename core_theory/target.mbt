@@ -2905,6 +2905,7 @@ fn aarch64_role_names(role : Role) -> Array[String] {
         role_names("x", 19, 29),
         role_names("w", 19, 29),
         role_names("r", 19, 29),
+        ["fp"],
         ["sp", "wsp", "x31", "r31"],
         role_names("v", 8, 15),
       ])

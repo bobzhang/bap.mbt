@@ -3321,6 +3321,7 @@ test "target role helpers classify common architecture variables" {
   assert_true(aarch64.role_aliases(CalleeSaved).contains("x19"))
   assert_true(aarch64.role_aliases(CalleeSaved).contains("w19"))
   assert_true(aarch64.role_aliases(CalleeSaved).contains("r19"))
+  assert_true(aarch64.role_aliases(CalleeSaved).contains("fp"))
   assert_true(aarch64.role_aliases(CalleeSaved).contains("sp"))
   assert_true(aarch64.role_aliases(CalleeSaved).contains("wsp"))
   assert_true(aarch64.role_aliases(CalleeSaved).contains("v8"))
@@ -3352,6 +3353,13 @@ test "target role helpers classify common architecture variables" {
       assert_true(!aarch64.roles_of_var(saved).contains(CallerSaved))
     }
     None => fail("missing X19")
+  }
+  match aarch64.find_var("FP") {
+    Some(saved) => {
+      assert_true(aarch64.roles_of_var(saved).contains(FramePointer))
+      assert_true(aarch64.roles_of_var(saved).contains(CalleeSaved))
+    }
+    None => fail("missing FP")
   }
   match aarch64.find_var("W19") {
     Some(saved) => {

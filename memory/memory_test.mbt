@@ -238,6 +238,7 @@ test "translated BAP memmap duplicate ranges all intersect and remove together" 
 ///|
 test "translated BAP memmap public queries are range ordered" {
   let first = memory_at(0x100UL, 2)
+  let first_wide = memory_at(0x100UL, 0x20)
   let middle = memory_at(0x180UL, 2)
   let last = memory_at(0x300UL, 2)
   let map = @memory.MemMap::empty()
@@ -245,20 +246,48 @@ test "translated BAP memmap public queries are range ordered" {
     .add(first, "first")
     .add(middle, "middle")
     .add(first, "first-again")
+    .add(first_wide, "first-wide")
   assert_true(
     map.entries().map(entry => entry.1) ==
-    ["first", "first-again", "middle", "last"],
+    ["first", "first-again", "first-wide", "middle", "last"],
   )
   assert_true(
-    map.lookup(0x100UL).map(entry => entry.1) == ["first", "first-again"],
+    map.lookup(0x100UL).map(entry => entry.1) ==
+    ["first", "first-again", "first-wide"],
   )
   assert_true(
     map.intersections(memory_at(0x100UL, 0x201)).map(entry => entry.1) ==
-    ["first", "first-again", "middle", "last"],
+    ["first", "first-again", "first-wide", "middle", "last"],
   )
   assert_true(
     map.dominators(memory_at(0x100UL, 1)).map(entry => entry.1) ==
-    ["first", "first-again"],
+    ["first", "first-again", "first-wide"],
+  )
+}
+
+///|
+test "translated BAP memmap max binding follows lower-bound order" {
+  let wide_low = memory_at(0x100UL, 0x200)
+  let narrow_high = memory_at(0x180UL, 1)
+  let same_lower_old = memory_at(0x300UL, 0x40)
+  let same_lower_new = memory_at(0x300UL, 1)
+  let table = @memory.MemMap::empty()
+    .add(wide_low, "wide-low")
+    .add(narrow_high, "narrow-high")
+    .add(same_lower_old, "same-lower-old")
+    .add(same_lower_new, "same-lower-new")
+  match table.max_binding() {
+    Some((memory, tag)) => {
+      assert_true(memory.min_addr() == same_lower_new.min_addr())
+      assert_true(tag == "same-lower-new")
+    }
+    None => fail("expected max binding")
+  }
+  let lower_only = @memory.MemMap::empty()
+    .add(wide_low, "wide-low")
+    .add(narrow_high, "narrow-high")
+  assert_true(
+    lower_only.max_binding().map(entry => entry.1) == Some("narrow-high"),
   )
 }
 

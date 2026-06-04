@@ -552,10 +552,17 @@ pub fn[V] MemMap::min_binding(self : MemMap[V]) -> (Memory, V)? {
 pub fn[V] MemMap::max_binding(self : MemMap[V]) -> (Memory, V)? {
   let mut best : Int? = None
   for i in 0..<self.entries.length() {
+    let candidate = self.entries[i].0
     best = match best {
-      Some(j) if self.entries[j].0.max_addr() >= self.entries[i].0.max_addr() =>
-        Some(j)
-      _ => Some(i)
+      Some(j) => {
+        let current = self.entries[j].0
+        if candidate.min_addr() >= current.min_addr() {
+          Some(i)
+        } else {
+          Some(j)
+        }
+      }
+      None => Some(i)
     }
   }
   match best {
@@ -576,8 +583,7 @@ pub fn[V] MemMap::max(self : MemMap[V]) -> (Memory, V)? {
 
 ///|
 fn memory_range_less(left : Memory, right : Memory) -> Bool {
-  left.min_addr() < right.min_addr() ||
-  (left.min_addr() == right.min_addr() && left.max_addr() < right.max_addr())
+  left.min_addr() < right.min_addr()
 }
 
 ///|

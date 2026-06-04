@@ -90,6 +90,11 @@ pub fn MainLogInfo::message(self : MainLogInfo) -> String {
 }
 
 ///|
+pub fn MainLogInfo::to_string(self : MainLogInfo) -> String {
+  self.section() + "." + self.level().to_string() + "> " + self.message()
+}
+
+///|
 pub fn MainProgress::create(
   task~ : String,
   note? : String,
@@ -120,6 +125,22 @@ pub fn MainProgress::total(self : MainProgress) -> Int? {
 }
 
 ///|
+pub fn MainProgress::to_string(self : MainProgress) -> String {
+  let note = match self.note() {
+    Some(note) => " " + note
+    None => ""
+  }
+  let stage = match (self.stage(), self.total()) {
+    (Some(stage), Some(total)) =>
+      " [" + stage.to_string() + "/" + total.to_string() + "]"
+    (Some(stage), None) => " [" + stage.to_string() + "]"
+    (None, Some(total)) => " [/" + total.to_string() + "]"
+    (None, None) => ""
+  }
+  "progress." + self.task() + ">" + stage + note
+}
+
+///|
 pub fn MainEvent::custom(name~ : String, payload? : String) -> MainEvent {
   MainCustomEvent(name, payload)
 }
@@ -137,22 +158,8 @@ pub fn MainEvent::progress(progress : MainProgress) -> MainEvent {
 ///|
 fn default_event_string(event : MainEvent) -> String {
   match event {
-    MainLogMessage(info) =>
-      info.section() + "." + info.level().to_string() + "> " + info.message()
-    MainLogProgress(progress) => {
-      let note = match progress.note() {
-        Some(note) => " " + note
-        None => ""
-      }
-      let stage = match (progress.stage(), progress.total()) {
-        (Some(stage), Some(total)) =>
-          " [" + stage.to_string() + "/" + total.to_string() + "]"
-        (Some(stage), None) => " [" + stage.to_string() + "]"
-        (None, Some(total)) => " [/" + total.to_string() + "]"
-        (None, None) => ""
-      }
-      "progress." + progress.task() + ">" + stage + note
-    }
+    MainLogMessage(info) => info.to_string()
+    MainLogProgress(progress) => progress.to_string()
     MainCustomEvent(name, Some(payload)) => name + ": " + payload
     MainCustomEvent(name, None) => name
   }
@@ -169,6 +176,37 @@ pub fn MainEvent::to_string(self : MainEvent) -> String {
     }
   }
   default_event_string(self)
+}
+
+///|
+pub fn observe_log_messages(notify~ : (MainLogInfo) -> Unit) -> Int {
+  stream().subscribe(event => {
+    match event {
+      MainLogMessage(info) => notify(info)
+      _ => ()
+    }
+  })
+}
+
+///|
+pub fn process_log_events(
+  write~ : (String) -> Unit,
+  error? : (String) -> Unit,
+) -> Int {
+  observe_log_messages(notify=info => {
+    write(info.to_string())
+    if info.level() == MainLogError {
+      match error {
+        Some(error) => error(info.message())
+        None => ()
+      }
+    }
+  })
+}
+
+///|
+pub fn unsubscribe(id : Int) -> Unit {
+  stream().unsubscribe(id)
 }
 
 ///|

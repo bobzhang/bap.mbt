@@ -9,6 +9,10 @@ import {
 // Values
 pub fn message(MainLogLevel, section~ : String, message~ : String) -> Unit
 
+pub fn observe_log_messages(notify~ : (MainLogInfo) -> Unit) -> Int
+
+pub fn process_log_events(write~ : (String) -> Unit, error? : (String) -> Unit) -> Int
+
 pub fn progress(String, note? : String, stage? : Int, total? : Int) -> Unit
 
 pub fn register_printer((MainEvent) -> String?) -> Unit
@@ -16,6 +20,8 @@ pub fn register_printer((MainEvent) -> String?) -> Unit
 pub fn send(MainEvent) -> Unit
 
 pub fn stream() -> @future.Stream[MainEvent]
+
+pub fn unsubscribe(Int) -> Unit
 
 // Errors
 
@@ -35,6 +41,7 @@ pub fn MainLogInfo::create(level~ : MainLogLevel, section~ : String, message~ : 
 pub fn MainLogInfo::level(Self) -> MainLogLevel
 pub fn MainLogInfo::message(Self) -> String
 pub fn MainLogInfo::section(Self) -> String
+pub fn MainLogInfo::to_string(Self) -> String
 
 pub(all) enum MainLogLevel {
   MainLogDebug
@@ -60,6 +67,7 @@ pub fn MainProgress::create(task~ : String, note? : String, stage? : Int, total?
 pub fn MainProgress::note(Self) -> String?
 pub fn MainProgress::stage(Self) -> Int?
 pub fn MainProgress::task(Self) -> String
+pub fn MainProgress::to_string(Self) -> String
 pub fn MainProgress::total(Self) -> Int?
 
 // Type aliases

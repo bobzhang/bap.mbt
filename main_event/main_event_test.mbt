@@ -77,3 +77,29 @@ test "main log reporter emits level-specific messages and progress" {
   assert_true(events[3].to_string() == "progress.quiet/phase> [2/4] parse")
   assert_true(events[4].to_string() == "noisy.debug> visible")
 }
+
+///|
+test "main event log processors filter messages and report errors" {
+  let infos : Array[@main_event.MainLogInfo] = []
+  let log_id = @main_event.observe_log_messages(notify=info => infos.push(info))
+  let lines : Array[String] = []
+  let errors : Array[String] = []
+  let process_id = @main_event.process_log_events(
+    write=line => lines.push(line),
+    error=message => errors.push(message),
+  )
+  @main_event.send(@main_event.MainEvent::custom(name="ignored"))
+  @main_event.progress("ignored-progress")
+  @main_event.message(MainLogWarning, section="processor", message="careful")
+  @main_event.message(MainLogError, section="processor", message="failed")
+  @main_event.unsubscribe(log_id)
+  @main_event.unsubscribe(process_id)
+  @main_event.message(MainLogInfo, section="processor", message="after")
+  assert_true(infos.length() == 2)
+  assert_true(infos[0].to_string() == "processor.warning> careful")
+  assert_true(infos[1].level() == MainLogError)
+  assert_true(
+    lines == ["processor.warning> careful", "processor.error> failed"],
+  )
+  assert_true(errors == ["failed"])
+}

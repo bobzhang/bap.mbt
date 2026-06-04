@@ -35,6 +35,8 @@ test "project default reconstructor turns disassembly blocks into named subrouti
           assert_true(subs.length() == 2)
           assert_true(subs[0].sub_name() == "main")
           assert_true(subs[1].sub_name() == "helper")
+          assert_true(@types.SubTerm(subs[0]).has_address_text("0x1001:32u"))
+          assert_true(@types.SubTerm(subs[1]).has_address_text("0x1003:32u"))
           assert_true(reconstructed.program().subs().length() == 2)
           let first_block = subs[0].blks()[0]
           assert_true(

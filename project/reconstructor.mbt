@@ -276,7 +276,13 @@ fn project_reconstructor_subroutine(
     }
     ir_blocks[i] = ir_block
   }
-  let sub = @types.Sub::create(name~, blks=ir_blocks)
+  let mut sub = @types.Sub::create(name~, blks=ir_blocks)
+  if !blocks.is_empty() {
+    match project_reconstructor_block_word(project, blocks[0]) {
+      Ok(addr) => sub = sub.set_attr(@types.Attr::address(addr))
+      Err(reason) => return Err(reason)
+    }
+  }
   match project.image() {
     Some(image) if blocks.any(block => block.contains(image.entry_point())) =>
       Ok(sub.with_entry_point())

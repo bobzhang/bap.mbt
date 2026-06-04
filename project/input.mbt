@@ -26,6 +26,9 @@ struct ProjectInputLoader {
 let input_loader_registry : Map[String, ProjectInputLoader] = {}
 
 ///|
+let project_input_address_attr = "address"
+
+///|
 fn identity_project(project : Project) -> Project {
   project
 }
@@ -979,11 +982,66 @@ fn project_input_reconstruct_with_sources(
 fn project_input_append_library_programs(project : Project) -> Project {
   let mut program = project.program()
   for library in project.libraries() {
-    for sub in library.program().subs() {
+    let library_program = project_input_annotate_program_filename(
+      library.program(),
+      project_input_library_filename(library),
+    )
+    for sub in library_program.subs() {
       program = program.append_sub(sub)
     }
   }
   project.with_program(program)
+}
+
+///|
+fn project_input_sub_has_address(sub : @types.Term[@types.Sub]) -> Bool {
+  sub.get_attr(project_input_address_attr) is Some(_)
+}
+
+///|
+fn project_input_annotate_sub_filename(
+  sub : @types.Term[@types.Sub],
+  filename : String,
+) -> @types.Term[@types.Sub] {
+  if project_input_sub_has_address(sub) {
+    sub.with_filename(filename)
+  } else {
+    sub
+  }
+}
+
+///|
+fn project_input_annotate_program_filename(
+  program : @types.Term[@types.Program],
+  filename : String,
+) -> @types.Term[@types.Program] {
+  program.map_subs(sub => project_input_annotate_sub_filename(sub, filename))
+}
+
+///|
+fn project_input_annotate_project_program(project : Project) -> Project {
+  match project.filename() {
+    Some(filename) => {
+      let subroutines = project
+        .state()
+        .subroutines()
+        .map(sub => project_input_annotate_sub_filename(sub, filename))
+      project
+      .with_program(
+        project_input_annotate_program_filename(project.program(), filename),
+      )
+      .with_state(project.state().with_subroutines(subroutines))
+    }
+    None => project
+  }
+}
+
+///|
+fn project_input_library_filename(library : Library) -> String {
+  match library.unit().path() {
+    Some(path) => path
+    None => library.name()
+  }
 }
 
 ///|
@@ -1043,7 +1101,8 @@ pub fn Project::create_from_input(
   }
   match project_input_reconstruct_with_sources(branched, reconstructor) {
     Ok(project) => {
-      let merged = project_input_append_library_programs(project)
+      let annotated = project_input_annotate_project_program(project)
+      let merged = project_input_append_library_programs(annotated)
       project_info_emit_reconstructed(merged)
       Ok(merged)
     }

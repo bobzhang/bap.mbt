@@ -352,7 +352,9 @@ test "project create from input folds library programs into final program" {
   let state = @project.ProjectState::empty().with_disassembly(
     @project.ProjectDisassemblyState::empty().add_block(block),
   )
-  let library_sub = @types.Sub::create(name="lib_entry")
+  let library_sub = @types.Sub::create(name="lib_entry").set_attr(
+    @types.Attr::address(@types.Word::of_int(width=32, 0x7000)),
+  )
   let library_program = @types.Program::create().append_sub(library_sub)
   let library = @project.Library::create(
     name="libunit",
@@ -386,6 +388,7 @@ test "project create from input folds library programs into final program" {
       assert_true(subs.length() == 2)
       assert_true(subs[0].sub_name() == "main_entry")
       assert_true(subs[1].sub_name() == "lib_entry")
+      assert_true(subs[1].filename() == Some("libunit"))
       assert_true(project.libraries().length() == 1)
       assert_true(project.libraries()[0].program().subs().length() == 1)
     }
@@ -549,6 +552,12 @@ test "project create for filename named composes loader and sources" {
       assert_true(project.filename() == Some("sample.csource"))
       assert_true(project.get("disassembler") == Some("memory-blocks"))
       assert_true(project.program().subs()[0].sub_name() == "filename_block")
+      assert_true(
+        project.program().subs()[0].filename() == Some("sample.csource"),
+      )
+      assert_true(
+        project.state().subroutines()[0].filename() == Some("sample.csource"),
+      )
     }
     Err(reason) => fail(reason)
   }

@@ -51,9 +51,11 @@ fn bare_check_rule(
   }
   let mut missing : String? = None
   used.each(fn(name, _) {
-    match missing {
-      None => if !defined.contains(name) { missing = Some(name) }
-      Some(_) => ()
+    if !defined.contains(name) {
+      match missing {
+        None => missing = Some(name)
+        Some(best) => if name.compare(best) < 0 { missing = Some(name) }
+      }
     }
   })
   match missing {

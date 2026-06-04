@@ -72,6 +72,10 @@ test "translated BARE rejects invalid rhs variables" {
   assert_true(
     @bare.Rule::of_string("(((seen ?x)) ((out ?y)))") is Err(BareUnbound("?y")),
   )
+  assert_true(
+    @bare.Rule::of_string("(((seen ?x)) ((out ?z ?a)))")
+    is Err(BareUnbound("?a")),
+  )
 }
 
 ///|

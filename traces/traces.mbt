@@ -1639,6 +1639,11 @@ pub fn Traces::iter() -> Iter[Trace] {
 }
 
 ///|
+pub fn Traces::enum_() -> Iter[Trace] {
+  Traces::iter()
+}
+
+///|
 pub fn Trace::register_protocol(protocol : TraceProtocol) -> Unit {
   trace_protocol_registry[protocol.name()] = protocol
 }

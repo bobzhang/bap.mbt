@@ -536,6 +536,13 @@ test "BAP-style loaded trace facade delegates to the registry" {
     }
   })
   assert_true(iter_ids == [first.id(), second.id()])
+  let enum_ids : Array[@traces.TraceId] = []
+  @traces.Traces::enum_().each(trace => {
+    if trace.id() == first.id() || trace.id() == second.id() {
+      enum_ids.push(trace.id())
+    }
+  })
+  assert_true(enum_ids == iter_ids)
 
   @traces.Traces::remove(first)
   @traces.Traces::remove(second)

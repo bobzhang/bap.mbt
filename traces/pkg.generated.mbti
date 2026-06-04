@@ -353,6 +353,7 @@ pub fn TracerInfo::to_string(Self) -> String
 pub(all) struct Traces {
 }
 pub fn Traces::add(Trace) -> Unit
+pub fn Traces::enum_() -> Iter[Trace]
 pub fn Traces::iter() -> Iter[Trace]
 pub fn Traces::remove(Trace) -> Unit
 pub fn Traces::to_list() -> Array[Trace]

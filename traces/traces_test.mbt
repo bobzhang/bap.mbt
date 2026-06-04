@@ -142,6 +142,25 @@ test "translated BAP common trace event tags match helper constructors" {
       @traces.TraceEvent::mode_tag(),
     ],
   )
+  assert_true(
+    [
+      @traces.Event::memory_load(),
+      @traces.Event::memory_store(),
+      @traces.Event::register_read(),
+      @traces.Event::register_write(),
+      @traces.Event::timestamp(),
+      @traces.Event::pc_update(),
+      @traces.Event::code_exec(),
+      @traces.Event::context_switch(),
+      @traces.Event::syscall(),
+      @traces.Event::exn(),
+      @traces.Event::call(),
+      @traces.Event::return_(),
+      @traces.Event::modload(),
+      @traces.Event::mode(),
+    ] ==
+    @traces.TraceEvent::common_tags(),
+  )
   let expected_uuids = [
     "9546a981-de85-4e5c-8d59-73a15bf5c7bd", "d5995d83-76be-410d-94a9-b0cfcb91f2de",
     "ded5dc91-dafc-4316-9c6c-4dad4e40a273", "395f5f37-5aed-4bd2-a51f-1c7216b5cd7c",
@@ -384,6 +403,16 @@ test "translated BAP trace metadata dictionaries expose sorted entries and remov
   assert_true(@traces.TraceMeta::arch_key() == "arch")
   assert_true(@traces.TraceMeta::binary_file_stats_key() == "file-stats")
   assert_true(@traces.TraceMeta::trace_stats_key() == "trace-stats")
+  assert_true(@traces.Meta::tracer() == @traces.TraceMeta::tracer_key())
+  assert_true(@traces.Meta::binary() == @traces.TraceMeta::binary_key())
+  assert_true(@traces.Meta::arch() == @traces.TraceMeta::arch_key())
+  assert_true(
+    @traces.Meta::binary_file_stats() ==
+    @traces.TraceMeta::binary_file_stats_key(),
+  )
+  assert_true(
+    @traces.Meta::trace_stats() == @traces.TraceMeta::trace_stats_key(),
+  )
   let expected_meta_uuids = [
     "6e36c74e-580c-4496-9bf6-32cc0a09ef04", "391bb6c3-2c93-4592-b292-43e8ec52e786",
     "4bffe6d7-c554-45ec-9fb3-102f18e8f390", "f7cde0f9-633d-4a9a-8e71-28fef521bee5",

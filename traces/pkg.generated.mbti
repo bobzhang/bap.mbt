@@ -41,6 +41,23 @@ pub(all) struct Chunk {
 pub fn Chunk::create(addr~ : @types.Word, data~ : Bytes) -> Self
 pub fn Chunk::to_string(Self) -> String
 
+pub(all) struct Event {
+}
+pub fn Event::call() -> String
+pub fn Event::code_exec() -> String
+pub fn Event::context_switch() -> String
+pub fn Event::exn() -> String
+pub fn Event::memory_load() -> String
+pub fn Event::memory_store() -> String
+pub fn Event::mode() -> String
+pub fn Event::modload() -> String
+pub fn Event::pc_update() -> String
+pub fn Event::register_read() -> String
+pub fn Event::register_write() -> String
+pub fn Event::return_() -> String
+pub fn Event::syscall() -> String
+pub fn Event::timestamp() -> String
+
 pub(all) struct FileStatsInfo {
   size : Int
   atime : Double
@@ -55,6 +72,14 @@ pub(all) struct Location {
 } derive(Eq, @debug.Debug)
 pub fn Location::create(name? : String?, addr~ : @types.Word) -> Self
 pub fn Location::to_string(Self) -> String
+
+pub(all) struct Meta {
+}
+pub fn Meta::arch() -> String
+pub fn Meta::binary() -> String
+pub fn Meta::binary_file_stats() -> String
+pub fn Meta::trace_stats() -> String
+pub fn Meta::tracer() -> String
 
 pub(all) struct Modload {
   name : String

@@ -446,6 +446,79 @@ pub fn TraceEvent::mode_uuid() -> String {
 }
 
 ///|
+pub(all) struct Event {}
+
+///|
+pub fn Event::memory_load() -> String {
+  TraceEvent::memory_load_tag()
+}
+
+///|
+pub fn Event::memory_store() -> String {
+  TraceEvent::memory_store_tag()
+}
+
+///|
+pub fn Event::register_read() -> String {
+  TraceEvent::register_read_tag()
+}
+
+///|
+pub fn Event::register_write() -> String {
+  TraceEvent::register_write_tag()
+}
+
+///|
+pub fn Event::timestamp() -> String {
+  TraceEvent::timestamp_tag()
+}
+
+///|
+pub fn Event::pc_update() -> String {
+  TraceEvent::pc_update_tag()
+}
+
+///|
+pub fn Event::code_exec() -> String {
+  TraceEvent::code_exec_tag()
+}
+
+///|
+pub fn Event::context_switch() -> String {
+  TraceEvent::context_switch_tag()
+}
+
+///|
+pub fn Event::syscall() -> String {
+  TraceEvent::syscall_tag()
+}
+
+///|
+pub fn Event::exn() -> String {
+  TraceEvent::exn_tag()
+}
+
+///|
+pub fn Event::call() -> String {
+  TraceEvent::call_tag()
+}
+
+///|
+pub fn Event::return_() -> String {
+  TraceEvent::return_tag()
+}
+
+///|
+pub fn Event::modload() -> String {
+  TraceEvent::modload_tag()
+}
+
+///|
+pub fn Event::mode() -> String {
+  TraceEvent::mode_tag()
+}
+
+///|
 pub fn TraceEvent::common_tags() -> Array[String] {
   [
     trace_event_memory_load_tag, trace_event_memory_store_tag, trace_event_register_read_tag,
@@ -1106,6 +1179,34 @@ pub fn TraceMeta::trace_stats_key() -> String {
 ///|
 pub fn TraceMeta::trace_stats_uuid() -> String {
   trace_meta_trace_stats_uuid
+}
+
+///|
+pub(all) struct Meta {}
+
+///|
+pub fn Meta::tracer() -> String {
+  TraceMeta::tracer_key()
+}
+
+///|
+pub fn Meta::binary() -> String {
+  TraceMeta::binary_key()
+}
+
+///|
+pub fn Meta::arch() -> String {
+  TraceMeta::arch_key()
+}
+
+///|
+pub fn Meta::binary_file_stats() -> String {
+  TraceMeta::binary_file_stats_key()
+}
+
+///|
+pub fn Meta::trace_stats() -> String {
+  TraceMeta::trace_stats_key()
 }
 
 ///|

@@ -25,6 +25,19 @@ test "names preserve packages and escaped separators" {
 }
 
 ///|
+test "names preserve BAP keyword package normalization" {
+  let keyword = @knowledge.Name::read(":unknown")
+  assert_eq(keyword.pkg(), "keyword")
+  assert_eq(keyword.unqualified(), ":unknown")
+  assert_eq(keyword.show(), ":unknown")
+  assert_true(@knowledge.Name::of_string(keyword.show()).equal(keyword))
+  assert_true(@knowledge.Name::read("keyword:unknown").equal(keyword))
+  assert_true(@knowledge.Name::create("unknown", pkg="keyword").equal(keyword))
+  assert_eq(@knowledge.Name::read("plain", pkg="").pkg(), "user")
+  assert_eq(@knowledge.Name::create("plain", pkg="").pkg(), "user")
+}
+
+///|
 test "persistent codecs round trip strings names and arrays" {
   let string_codec = @knowledge.Persistent::string()
   assert_eq(string_codec.encode("a:b"), "a:b")

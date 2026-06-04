@@ -7,6 +7,7 @@ pub(all) struct Name {
 ///|
 fn default_pkg(pkg : String?) -> String {
   match pkg {
+    Some("") => "user"
     Some(value) => value
     None => "user"
   }
@@ -22,6 +23,24 @@ fn escape_name_part(input : String) -> String {
     out = out + "\{ch}"
   }
   out
+}
+
+///|
+fn keyword_name_text(text : String) -> String {
+  if text.has_prefix(":") {
+    text
+  } else {
+    ":" + text
+  }
+}
+
+///|
+fn escape_keyword_name(input : String) -> String {
+  if input.has_prefix(":") {
+    ":" + escape_name_part(input[1:].to_owned())
+  } else {
+    ":" + escape_name_part(input)
+  }
 }
 
 ///|
@@ -80,13 +99,20 @@ fn fnv1a_hash_parts(pkg : String, text : String) -> Int {
 
 ///|
 pub fn Name::create(text : String, pkg? : String) -> Name {
-  { pkg: default_pkg(pkg), text }
+  let pkg = default_pkg(pkg)
+  let text = if pkg == "keyword" { keyword_name_text(text) } else { text }
+  { pkg, text }
 }
 
 ///|
 pub fn Name::read(input : String, pkg? : String) -> Name {
   match split_qualified(input) {
-    (Some(found_pkg), text) => { pkg: found_pkg, text }
+    (Some(""), text) => { pkg: "keyword", text: keyword_name_text(text) }
+    (Some(found_pkg), text) => {
+      let pkg = default_pkg(Some(found_pkg))
+      let text = if pkg == "keyword" { keyword_name_text(text) } else { text }
+      { pkg, text }
+    }
     (None, text) => { pkg: default_pkg(pkg), text }
   }
 }
@@ -98,7 +124,11 @@ pub fn Name::of_string(input : String) -> Name {
 
 ///|
 pub fn Name::show(self : Name) -> String {
-  "\{escape_name_part(self.pkg)}:\{escape_name_part(self.text)}"
+  if self.pkg == "keyword" {
+    escape_keyword_name(self.text)
+  } else {
+    "\{escape_name_part(self.pkg)}:\{escape_name_part(self.text)}"
+  }
 }
 
 ///|

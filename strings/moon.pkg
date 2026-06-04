@@ -1,3 +1,4 @@
 import {
   "bobzhang/bap/native_io",
+  "moonbitlang/core/math",
 }

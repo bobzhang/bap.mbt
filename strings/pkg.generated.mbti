@@ -19,6 +19,24 @@ pub fn StringsAlphabet::index(Self, Byte) -> Int
 pub fn StringsAlphabet::length(Self) -> Int
 pub fn StringsAlphabet::printable() -> Self
 
+type StringsDecision[T]
+pub fn[T] StringsDecision::accepted_count(Self[T]) -> Int
+pub fn[T] StringsDecision::chars(Self[T]) -> Bytes
+pub fn[T] StringsDecision::data(Self[T], rev? : Bool) -> Array[T]
+pub fn[T] StringsDecision::length(Self[T]) -> Int
+pub fn[T] StringsDecision::rejected_count(Self[T]) -> Int
+pub fn[T] StringsDecision::result(Self[T]) -> Array[(T, Byte)]
+
+type StringsDetector[T]
+pub fn[T] StringsDetector::abort(Self[T]) -> StringsDecision[T]?
+pub fn[T] StringsDetector::alphabet(Self[T]) -> StringsAlphabet
+pub fn[T] StringsDetector::create(StringsAlphabet, alpha? : Double, beta? : Double, p1? : Double, ps? : Double) -> Self[T]
+pub fn[T] StringsDetector::decision(Self[T]) -> StringsDecision[T]?
+pub fn[T] StringsDetector::run(Self[T], ArrayView[(T, Byte)]) -> Array[StringsDecision[T]]
+pub fn[T] StringsDetector::score(Self[T]) -> Double
+pub fn[T] StringsDetector::step(Self[T], T, Byte) -> Self[T]
+pub fn[T, R] StringsDetector::when_decided(Self[T], R, (StringsDecision[T]) -> R) -> R
+
 type StringsIndex[K]
 pub fn[K] StringsIndex::empty(key~ : StringsIndexKey[K]) -> Self[K]
 pub fn StringsIndex::empty_int() -> Self[Int]

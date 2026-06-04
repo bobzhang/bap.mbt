@@ -101,3 +101,48 @@ test "translated BAP strings unscrambler loads newline dictionaries" {
   assert_true(dict.build(b"owt").contains(b"two"))
   assert_true(dict.build(b"ether").contains(b"three"))
 }
+
+///|
+test "translated BAP strings detector emits finished decisions" {
+  let detector : @strings.StringsDetector[Int] = @strings.StringsDetector::create(
+    @strings.StringsAlphabet::alpha_caseless(),
+    beta=0.4,
+  )
+  let trace = [
+    (0, b'a'),
+    (1, b'b'),
+    (2, b'c'),
+    (3, b'!'),
+    (4, b'!'),
+    (5, b'!'),
+    (6, b'!'),
+    (7, b'!'),
+  ]
+  let decisions = detector.run(trace)
+  assert_eq(decisions.length(), 1)
+  assert_true(byte_values(decisions[0].chars()) == byte_values(b"abc"))
+  assert_true(decisions[0].data() == [0, 1, 2])
+  assert_true(decisions[0].result().map(item => item.0) == [0, 1, 2])
+  assert_true(
+    decisions[0].result().map(item => item.1.to_int()) == [97, 98, 99],
+  )
+}
+
+///|
+test "translated BAP strings detector supports aborting accepted hypotheses" {
+  let mut detector : @strings.StringsDetector[Int] = @strings.StringsDetector::create(
+    @strings.StringsAlphabet::alpha_caseless(),
+    beta=0.4,
+  )
+  detector = detector.step(10, b'h')
+  assert_true(detector.abort() is None)
+  detector = detector.step(11, b'i')
+  match detector.abort() {
+    Some(decision) => {
+      assert_true(byte_values(decision.chars()) == byte_values(b"hi"))
+      assert_true(decision.data() == [10, 11])
+      assert_true(decision.data(rev=true) == [11, 10])
+    }
+    None => fail("expected accepted detector hypothesis")
+  }
+}

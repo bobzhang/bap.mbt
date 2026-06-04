@@ -218,6 +218,15 @@ pub fn Exp::infer_type(self : Exp) -> Result[ValueType, TypeError] {
 }
 
 ///|
+#alias(infer_exn)
+pub fn Exp::infer_type_exn(self : Exp) -> ValueType raise TypeInferenceError {
+  match self.infer_type() {
+    Ok(typ) => typ
+    Err(err) => raise InvalidExpType(err)
+  }
+}
+
+///|
 fn checked_condition(cond : Exp) -> Result[Unit, TypeError] {
   match cond.infer_type() {
     Ok(Imm(1)) => Ok(())

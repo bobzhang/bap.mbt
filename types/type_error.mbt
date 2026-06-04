@@ -26,6 +26,11 @@ pub(all) enum TypeError {
 } derive(Eq, Debug)
 
 ///|
+pub(all) suberror TypeInferenceError {
+  InvalidExpType(TypeError)
+} derive(Eq, Debug)
+
+///|
 fn TypeError::rank(self : TypeError) -> Int {
   match self {
     BadKind(_) => 0

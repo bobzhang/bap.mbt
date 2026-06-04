@@ -819,6 +819,10 @@ test "bil checked type inference mirrors BAP error cases" {
     Ok(imm16),
   )
   assert_true(
+    @types.Exp::load(mem=mem_exp, addr=addr_exp, LittleEndian, R16).infer_type_exn() ==
+    imm16,
+  )
+  assert_true(
     @types.Exp::store(mem=mem_exp, addr=addr_exp, x_exp, BigEndian, R8).infer_type() ==
     Ok(mem32),
   )
@@ -838,6 +842,17 @@ test "bil checked type inference mirrors BAP error cases" {
     @types.Exp::binop(Plus, x_exp, @types.Exp::var_exp(y)).infer_type() ==
     Err(BadType(expected=imm8, got=imm16)),
   )
+  try
+    @types.Exp::binop(Plus, x_exp, @types.Exp::var_exp(y)).infer_type_exn()
+  catch {
+    InvalidExpType(BadType(expected~, got~)) => {
+      assert_true(expected == imm8)
+      assert_true(got == imm16)
+    }
+    _ => fail("expected InvalidExpType")
+  } noraise {
+    _ => fail("expected InvalidExpType")
+  }
   assert_true(
     @types.Exp::load(mem=x_exp, addr=addr_exp, LittleEndian, R8).infer_type() ==
     Err(BadKind(MemKind)),

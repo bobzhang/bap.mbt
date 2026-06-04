@@ -104,6 +104,10 @@ pub(all) suberror TidParseError {
   InvalidTid(String)
 } derive(Eq, @debug.Debug)
 
+pub(all) suberror TypeInferenceError {
+  InvalidExpType(TypeError)
+} derive(Eq, @debug.Debug)
+
 // Types and methods
 type AddrR32 derive(Eq, @debug.Debug)
 pub fn AddrR32::abs(Self) -> Self
@@ -481,6 +485,8 @@ pub fn[A] Exp::fold(Self, A, (A, Self) -> A) -> A
 pub fn Exp::fold_consts(Self) -> Self
 pub fn Exp::free_vars(Self) -> Array[Var]
 pub fn Exp::infer_type(Self) -> Result[ValueType, TypeError]
+#alias(infer_exn)
+pub fn Exp::infer_type_exn(Self) -> ValueType raise TypeInferenceError
 pub fn Exp::int(Word) -> Self
 pub fn Exp::is_referenced(Self, Var) -> Bool
 pub fn Exp::is_trivial_condition(Self) -> Bool

@@ -437,6 +437,186 @@ pub fn IrTerm::del_dead(self : IrTerm) -> IrTerm {
 }
 
 ///|
+fn IrTerm::set_sub_flag(self : IrTerm, key : String) -> IrTerm {
+  self.set_attr(Attr::flag(key))
+}
+
+///|
+fn IrTerm::del_sub_flag(self : IrTerm, key : String) -> IrTerm {
+  self.del_attr(key)
+}
+
+///|
+fn IrTerm::has_sub_flag(self : IrTerm, key : String) -> Bool {
+  self.has_attr(key)
+}
+
+///|
+pub fn IrTerm::set_sub_extern(self : IrTerm) -> IrTerm {
+  self.set_sub_flag(sub_extern_attr)
+}
+
+///|
+pub fn IrTerm::del_sub_extern(self : IrTerm) -> IrTerm {
+  self.del_sub_flag(sub_extern_attr)
+}
+
+///|
+pub fn IrTerm::is_sub_extern(self : IrTerm) -> Bool {
+  self.has_sub_flag(sub_extern_attr)
+}
+
+///|
+pub fn IrTerm::set_sub_leaf(self : IrTerm) -> IrTerm {
+  self.set_sub_flag(sub_leaf_attr)
+}
+
+///|
+pub fn IrTerm::del_sub_leaf(self : IrTerm) -> IrTerm {
+  self.del_sub_flag(sub_leaf_attr)
+}
+
+///|
+pub fn IrTerm::is_sub_leaf(self : IrTerm) -> Bool {
+  self.has_sub_flag(sub_leaf_attr)
+}
+
+///|
+pub fn IrTerm::set_sub_malloc(self : IrTerm) -> IrTerm {
+  self.set_sub_flag(sub_malloc_attr)
+}
+
+///|
+pub fn IrTerm::del_sub_malloc(self : IrTerm) -> IrTerm {
+  self.del_sub_flag(sub_malloc_attr)
+}
+
+///|
+pub fn IrTerm::is_sub_malloc(self : IrTerm) -> Bool {
+  self.has_sub_flag(sub_malloc_attr)
+}
+
+///|
+pub fn IrTerm::set_sub_const(self : IrTerm) -> IrTerm {
+  self.set_sub_flag(sub_const_attr)
+}
+
+///|
+pub fn IrTerm::del_sub_const(self : IrTerm) -> IrTerm {
+  self.del_sub_flag(sub_const_attr)
+}
+
+///|
+pub fn IrTerm::is_sub_const(self : IrTerm) -> Bool {
+  self.has_sub_flag(sub_const_attr)
+}
+
+///|
+pub fn IrTerm::set_sub_noreturn(self : IrTerm) -> IrTerm {
+  self.set_sub_flag(sub_noreturn_attr)
+}
+
+///|
+pub fn IrTerm::del_sub_noreturn(self : IrTerm) -> IrTerm {
+  self.del_sub_flag(sub_noreturn_attr)
+}
+
+///|
+pub fn IrTerm::is_sub_noreturn(self : IrTerm) -> Bool {
+  self.has_sub_flag(sub_noreturn_attr)
+}
+
+///|
+pub fn IrTerm::set_sub_nothrow(self : IrTerm) -> IrTerm {
+  self.set_sub_flag(sub_nothrow_attr)
+}
+
+///|
+pub fn IrTerm::del_sub_nothrow(self : IrTerm) -> IrTerm {
+  self.del_sub_flag(sub_nothrow_attr)
+}
+
+///|
+pub fn IrTerm::is_sub_nothrow(self : IrTerm) -> Bool {
+  self.has_sub_flag(sub_nothrow_attr)
+}
+
+///|
+pub fn IrTerm::set_sub_returns_twice(self : IrTerm) -> IrTerm {
+  self.set_sub_flag(sub_returns_twice_attr)
+}
+
+///|
+pub fn IrTerm::del_sub_returns_twice(self : IrTerm) -> IrTerm {
+  self.del_sub_flag(sub_returns_twice_attr)
+}
+
+///|
+pub fn IrTerm::is_sub_returns_twice(self : IrTerm) -> Bool {
+  self.has_sub_flag(sub_returns_twice_attr)
+}
+
+///|
+pub fn IrTerm::set_sub_entry_point(self : IrTerm) -> IrTerm {
+  self.set_sub_flag(sub_entry_point_attr)
+}
+
+///|
+pub fn IrTerm::del_sub_entry_point(self : IrTerm) -> IrTerm {
+  self.del_sub_flag(sub_entry_point_attr)
+}
+
+///|
+pub fn IrTerm::is_sub_entry_point(self : IrTerm) -> Bool {
+  self.has_sub_flag(sub_entry_point_attr)
+}
+
+///|
+pub fn IrTerm::set_sub_intrinsic(self : IrTerm) -> IrTerm {
+  self.set_sub_flag(sub_intrinsic_attr)
+}
+
+///|
+pub fn IrTerm::del_sub_intrinsic(self : IrTerm) -> IrTerm {
+  self.del_sub_flag(sub_intrinsic_attr)
+}
+
+///|
+pub fn IrTerm::is_sub_intrinsic(self : IrTerm) -> Bool {
+  self.has_sub_flag(sub_intrinsic_attr)
+}
+
+///|
+pub fn IrTerm::set_sub_pure(self : IrTerm) -> IrTerm {
+  self.set_sub_flag(sub_pure_attr)
+}
+
+///|
+pub fn IrTerm::del_sub_pure(self : IrTerm) -> IrTerm {
+  self.del_sub_flag(sub_pure_attr)
+}
+
+///|
+pub fn IrTerm::is_sub_pure(self : IrTerm) -> Bool {
+  self.has_sub_flag(sub_pure_attr)
+}
+
+///|
+pub fn IrTerm::set_sub_stub(self : IrTerm) -> IrTerm {
+  self.set_sub_flag(sub_stub_attr)
+}
+
+///|
+pub fn IrTerm::del_sub_stub(self : IrTerm) -> IrTerm {
+  self.del_sub_flag(sub_stub_attr)
+}
+
+///|
+pub fn IrTerm::is_sub_stub(self : IrTerm) -> Bool {
+  self.has_sub_flag(sub_stub_attr)
+}
+
+///|
 pub fn IrTerm::has_mark(self : IrTerm) -> Bool {
   self.has_attr(term_mark_attr)
 }

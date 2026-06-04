@@ -693,6 +693,17 @@ pub fn IrTerm::del_mark(Self) -> Self
 pub fn IrTerm::del_origin(Self) -> Self
 pub fn IrTerm::del_python(Self) -> Self
 pub fn IrTerm::del_shell(Self) -> Self
+pub fn IrTerm::del_sub_const(Self) -> Self
+pub fn IrTerm::del_sub_entry_point(Self) -> Self
+pub fn IrTerm::del_sub_extern(Self) -> Self
+pub fn IrTerm::del_sub_intrinsic(Self) -> Self
+pub fn IrTerm::del_sub_leaf(Self) -> Self
+pub fn IrTerm::del_sub_malloc(Self) -> Self
+pub fn IrTerm::del_sub_noreturn(Self) -> Self
+pub fn IrTerm::del_sub_nothrow(Self) -> Self
+pub fn IrTerm::del_sub_pure(Self) -> Self
+pub fn IrTerm::del_sub_returns_twice(Self) -> Self
+pub fn IrTerm::del_sub_stub(Self) -> Self
 pub fn IrTerm::del_synthetic(Self) -> Self
 pub fn IrTerm::del_tainted_ptr(Self) -> Self
 pub fn IrTerm::del_tainted_reg(Self) -> Self
@@ -731,6 +742,17 @@ pub fn IrTerm::has_tid(Self, Tid) -> Bool
 pub fn IrTerm::has_tid_text(Self, String) -> Bool
 pub fn IrTerm::is_dead(Self) -> Bool
 pub fn IrTerm::is_live(Self) -> Bool
+pub fn IrTerm::is_sub_const(Self) -> Bool
+pub fn IrTerm::is_sub_entry_point(Self) -> Bool
+pub fn IrTerm::is_sub_extern(Self) -> Bool
+pub fn IrTerm::is_sub_intrinsic(Self) -> Bool
+pub fn IrTerm::is_sub_leaf(Self) -> Bool
+pub fn IrTerm::is_sub_malloc(Self) -> Bool
+pub fn IrTerm::is_sub_noreturn(Self) -> Bool
+pub fn IrTerm::is_sub_nothrow(Self) -> Bool
+pub fn IrTerm::is_sub_pure(Self) -> Bool
+pub fn IrTerm::is_sub_returns_twice(Self) -> Bool
+pub fn IrTerm::is_sub_stub(Self) -> Bool
 pub fn IrTerm::is_synthetic(Self) -> Bool
 pub fn IrTerm::is_visited(Self) -> Bool
 pub fn IrTerm::last(Self, IrTermClass) -> Self?
@@ -772,6 +794,17 @@ pub fn IrTerm::set_mark(Self, value? : String) -> Self
 pub fn IrTerm::set_origin(Self, Tid) -> Self
 pub fn IrTerm::set_python(Self, String) -> Self
 pub fn IrTerm::set_shell(Self, String) -> Self
+pub fn IrTerm::set_sub_const(Self) -> Self
+pub fn IrTerm::set_sub_entry_point(Self) -> Self
+pub fn IrTerm::set_sub_extern(Self) -> Self
+pub fn IrTerm::set_sub_intrinsic(Self) -> Self
+pub fn IrTerm::set_sub_leaf(Self) -> Self
+pub fn IrTerm::set_sub_malloc(Self) -> Self
+pub fn IrTerm::set_sub_noreturn(Self) -> Self
+pub fn IrTerm::set_sub_nothrow(Self) -> Self
+pub fn IrTerm::set_sub_pure(Self) -> Self
+pub fn IrTerm::set_sub_returns_twice(Self) -> Self
+pub fn IrTerm::set_sub_stub(Self) -> Self
 pub fn IrTerm::set_synthetic(Self) -> Self
 pub fn IrTerm::set_tainted_ptr(Self, Tid) -> Self
 pub fn IrTerm::set_tainted_reg(Self, Tid) -> Self

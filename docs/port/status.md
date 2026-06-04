@@ -68,6 +68,7 @@ This repository is porting `.repos/bap` from OCaml to idiomatic MoonBit.
 - `types/stub-resolver`: translated BAP alias-graph regressions for dangling aliases, reverse aliases, cross-reference aliases, many independent pairs, ambiguous implementations, and disconnected complex intersections.
 - `types/block-edit`: BAP-style term sequence accessors, positioned insertion, before/after slices, and rewrite/change helpers for program subroutines, subroutine arguments/blocks, and block definitions/phis/jumps.
 - `types/BIL normalization`: Effectful memory-load branch and loop conditions are hoisted into virtual temporaries, with loop conditions refreshed at the end of the normalized body, expression hoists from `Let` bodies remain scoped under the original bound variable, and `normalize_exp:true` expands wide BIL memory loads/stores into byte-width operations.
+- `types/BIL constant propagation`: Translated branch/jump regressions cover BAP's selected-branch fact retention when the statically skipped branch exits through a jump.
 
 - `core_theory/RISC-V target roles`: RISC-V floating-point ABI aliases (`FA`, `FS`, `FT`) are included in target variables, alias-origin tracking, and argument/result/caller-saved/callee-saved role helpers, and fixed `gp`/`tp` registers carry reserved-role metadata with `tp`/`x4` as the thread pointer.
 - `core_theory/LoongArch target roles`: LoongArch floating-point ABI aliases (`FA`, `FT`, `FS`) are included in target variables, alias-origin tracking, and argument/result/caller-saved/callee-saved role helpers.

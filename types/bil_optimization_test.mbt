@@ -615,6 +615,34 @@ test "bil constant propagation keeps selected branch facts for static conditions
 }
 
 ///|
+test "translated BAP constant propagation keeps selected facts when skipped branch jumps" {
+  let typ = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let z = @types.Var::new(name="z", typ~)
+  let stmts = [
+    @types.Stmt::Move(x, Int(word8(1))),
+    If(cond=BinOp(Lt, Int(word8(0)), Var(x)), yes=[Move(y, Int(word8(2)))], no=[
+      Move(y, Int(word8(4))),
+      Jmp(Var(y)),
+    ]),
+    Move(z, Var(y)),
+  ]
+  let propagated = @types.propagate_const_stmts(stmts)
+  assert_true(
+    stmt_text(propagated) ==
+    ["x:imm8 := 1:8u", "if 1:1u then 1 stmts else 2 stmts", "z:imm8 := 2:8u"],
+  )
+  match propagated[1] {
+    If(yes~, no~, ..) => {
+      assert_true(stmt_text(yes) == ["y:imm8 := 2:8u"])
+      assert_true(stmt_text(no) == ["y:imm8 := 4:8u", "jmp 4:8u"])
+    }
+    _ => fail("expected propagated branch")
+  }
+}
+
+///|
 test "bil constant propagation does not leak selected branch facts past jumps" {
   let typ = @types.ValueType::Imm(8)
   let x = @types.Var::new(name="x", typ~)

@@ -2587,13 +2587,51 @@ test "target role helpers classify common architecture variables" {
   let riscv = @core_theory.Target::riscv64()
   assert_true(riscv.role_aliases(ResultRegister).contains("x10"))
   assert_true(riscv.role_aliases(ResultRegister).contains("a0"))
+  assert_true(riscv.role_aliases(ResultRegister).contains("fa0"))
   assert_true(riscv.role_aliases(Argument).contains("a7"))
+  assert_true(riscv.role_aliases(Argument).contains("fa7"))
+  assert_true(riscv.role_aliases(FloatingRegister).contains("ft0"))
+  assert_true(riscv.role_aliases(FloatingRegister).contains("fa0"))
+  assert_true(riscv.role_aliases(FloatingRegister).contains("fs11"))
+  assert_true(riscv.role_aliases(CallerSaved).contains("ft11"))
+  assert_true(riscv.role_aliases(CalleeSaved).contains("fs11"))
   assert_true(riscv.role_aliases(PseudoRegister).contains("x0"))
   assert_true(riscv.role_aliases(PseudoRegister).contains("pc"))
   assert_true(!riscv.role_aliases(ResultRegister).contains("rax"))
+  assert_true(riscv.find_var("FT0") is Some(_))
+  assert_true(riscv.find_var("FA0") is Some(_))
+  assert_true(riscv.find_var("FS11") is Some(_))
+  match riscv.find_var("F0") {
+    Some(ft0) => {
+      assert_true(riscv.roles_of_var(ft0).contains(FloatingRegister))
+      assert_true(riscv.roles_of_var(ft0).contains(CallerSaved))
+      assert_true(!riscv.roles_of_var(ft0).contains(CalleeSaved))
+    }
+    None => fail("missing F0")
+  }
+  match riscv.find_var("F10") {
+    Some(fa0) => {
+      assert_true(riscv.roles_of_var(fa0).contains(FloatingRegister))
+      assert_true(riscv.roles_of_var(fa0).contains(Argument))
+      assert_true(riscv.roles_of_var(fa0).contains(ResultRegister))
+      assert_true(riscv.roles_of_var(fa0).contains(CallerSaved))
+    }
+    None => fail("missing F10")
+  }
+  match riscv.find_var("F27") {
+    Some(fs11) => {
+      assert_true(riscv.roles_of_var(fs11).contains(FloatingRegister))
+      assert_true(riscv.roles_of_var(fs11).contains(CalleeSaved))
+      assert_true(!riscv.roles_of_var(fs11).contains(CallerSaved))
+    }
+    None => fail("missing F27")
+  }
   match riscv.find_var("F31") {
-    Some(float) =>
+    Some(float) => {
       assert_true(riscv.roles_of_var(float).contains(FloatingRegister))
+      assert_true(riscv.roles_of_var(float).contains(CallerSaved))
+      assert_true(!riscv.roles_of_var(float).contains(CalleeSaved))
+    }
     None => fail("missing F31")
   }
   match riscv.find_var("X2") {
@@ -2649,6 +2687,23 @@ test "target role helpers classify common architecture variables" {
     }
     None => fail("missing a0 alias")
   }
+  match riscv.find_var("fa0") {
+    Some(arg) => {
+      assert_true(riscv.roles_of_var(arg).contains(FloatingRegister))
+      assert_true(riscv.roles_of_var(arg).contains(Argument))
+      assert_true(riscv.roles_of_var(arg).contains(ResultRegister))
+      assert_true(riscv.roles_of_var(arg).contains(AliasRegister))
+    }
+    None => fail("missing fa0 alias")
+  }
+  match riscv.find_var("fs11") {
+    Some(saved) => {
+      assert_true(riscv.roles_of_var(saved).contains(FloatingRegister))
+      assert_true(riscv.roles_of_var(saved).contains(CalleeSaved))
+      assert_true(riscv.roles_of_var(saved).contains(AliasRegister))
+    }
+    None => fail("missing fs11 alias")
+  }
   match riscv.origin_of_name("A0") {
     Some(origin) => {
       assert_true(origin.aliased().ident() == "A0")
@@ -2662,6 +2717,27 @@ test "target role helpers classify common architecture variables" {
       assert_true(origin.source().map(v => v.ident()) == Some("X2"))
     }
     None => fail("missing sp alias origin")
+  }
+  match riscv.origin_of_name("FA0") {
+    Some(origin) => {
+      assert_true(origin.aliased().ident() == "FA0")
+      assert_true(origin.source().map(v => v.ident()) == Some("F10"))
+    }
+    None => fail("missing FA0 alias origin")
+  }
+  match riscv.origin_of_name("FS11") {
+    Some(origin) => {
+      assert_true(origin.aliased().ident() == "FS11")
+      assert_true(origin.source().map(v => v.ident()) == Some("F27"))
+    }
+    None => fail("missing FS11 alias origin")
+  }
+  match riscv.origin_of_name("FT11") {
+    Some(origin) => {
+      assert_true(origin.aliased().ident() == "FT11")
+      assert_true(origin.source().map(v => v.ident()) == Some("F31"))
+    }
+    None => fail("missing FT11 alias origin")
   }
   let loongarch = @core_theory.Target::loongarch64()
   assert_true(loongarch.find_var("R31") is Some(_))

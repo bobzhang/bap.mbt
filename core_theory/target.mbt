@@ -2226,20 +2226,62 @@ fn riscv_gpr_alias_names() -> Array[String] {
 }
 
 ///|
-fn riscv_alias_vars(bits : Int) -> Array[Var] {
+fn riscv_fpr_alias_pairs() -> Array[(Int, String)] {
+  let items : Array[(Int, String)] = []
+  for i in 0..<=7 {
+    items.push((i, "FT\{i}"))
+  }
+  for i in 0..<=1 {
+    items.push((8 + i, "FS\{i}"))
+  }
+  for i in 0..<=7 {
+    items.push((10 + i, "FA\{i}"))
+  }
+  for i in 0..<=9 {
+    items.push((18 + i, "FS\{2 + i}"))
+  }
+  for i in 0..<=3 {
+    items.push((28 + i, "FT\{8 + i}"))
+  }
+  items
+}
+
+///|
+fn riscv_fpr_alias_names() -> Array[String] {
   [
-    for name in riscv_gpr_alias_names() => word_var(bits, name)
+    for pair in riscv_fpr_alias_pairs() => pair.1
   ]
+}
+
+///|
+fn riscv_alias_vars(bits : Int) -> Array[Var] {
+  let items = [ for name in riscv_gpr_alias_names() => word_var(bits, name) ]
+  append_vars(
+    items,
+    [
+      for name in riscv_fpr_alias_names() => word_var(bits, name)
+    ],
+  )
+  items
 }
 
 ///|
 fn riscv_alias_origins(bits : Int) -> Array[AliasOrigin] {
   let names = riscv_gpr_alias_names()
-  [
+  let items = [
     for i in 0..<names.length() => {
       AliasOrigin::register(word_var(bits, names[i]), word_var(bits, "X\{i}"))
     }
   ]
+  for pair in riscv_fpr_alias_pairs() {
+    items.push(
+      AliasOrigin::register(
+        word_var(bits, pair.1),
+        word_var(bits, "F\{pair.0}"),
+      ),
+    )
+  }
+  items
 }
 
 ///|
@@ -2927,7 +2969,13 @@ fn riscv_role_names(role : Role) -> Array[String] {
           for name in riscv_gpr_alias_names() => name.to_lower()
         ],
       ])
-    FloatingRegister => role_names("f", 0, 31)
+    FloatingRegister =>
+      concat_role_names([
+        role_names("f", 0, 31),
+        [
+          for name in riscv_fpr_alias_names() => name.to_lower()
+        ],
+      ])
     VectorRegister => []
     IndexRegister | SegmentRegister => []
     StackPointer => ["sp", "x2"]
@@ -2946,12 +2994,14 @@ fn riscv_role_names(role : Role) -> Array[String] {
         role_names("x", 10, 17),
         role_names("f", 10, 17),
         role_names("a", 0, 7),
+        role_names("fa", 0, 7),
       ])
     ResultRegister =>
       concat_role_names([
         role_names("x", 10, 12),
         role_names("f", 10, 12),
         role_names("a", 0, 2),
+        role_names("fa", 0, 2),
       ])
     CallerSaved =>
       concat_role_names([
@@ -2962,6 +3012,8 @@ fn riscv_role_names(role : Role) -> Array[String] {
         role_names("f", 0, 7),
         role_names("f", 10, 17),
         role_names("f", 28, 31),
+        role_names("ft", 0, 11),
+        role_names("fa", 0, 7),
       ])
     CalleeSaved =>
       concat_role_names([
@@ -2970,6 +3022,7 @@ fn riscv_role_names(role : Role) -> Array[String] {
         role_names("x", 18, 27),
         role_names("f", 8, 9),
         role_names("f", 18, 27),
+        role_names("fs", 0, 11),
       ])
     Reserved => []
     ZeroFlag | CarryFlag | SignFlag | OverflowFlag | ParityFlag => []

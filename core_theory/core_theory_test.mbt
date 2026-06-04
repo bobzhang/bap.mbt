@@ -3248,6 +3248,15 @@ test "target role helpers classify common architecture variables" {
     }
     None => fail("missing R0")
   }
+  match aarch64.find_var("W0") {
+    Some(reg) => {
+      assert_true(aarch64.roles_of_var(reg).contains(IntegerRegister))
+      assert_true(aarch64.roles_of_var(reg).contains(Argument))
+      assert_true(aarch64.roles_of_var(reg).contains(ResultRegister))
+      assert_true(aarch64.roles_of_var(reg).contains(CallerSaved))
+    }
+    None => fail("missing W0")
+  }
   match aarch64.find_var("X2") {
     Some(reg) => {
       assert_true(aarch64.roles_of_var(reg).contains(General))
@@ -3258,15 +3267,22 @@ test "target role helpers classify common architecture variables" {
     None => fail("missing X2")
   }
   assert_true(aarch64.role_aliases(FloatingRegister).contains("x31"))
+  assert_true(aarch64.role_aliases(Argument).contains("w7"))
+  assert_true(aarch64.role_aliases(ResultRegister).contains("w7"))
   assert_true(aarch64.role_aliases(CallerSaved).contains("x18"))
+  assert_true(aarch64.role_aliases(CallerSaved).contains("w18"))
   assert_true(aarch64.role_aliases(CallerSaved).contains("r18"))
   assert_true(aarch64.role_aliases(CallerSaved).contains("v31"))
   assert_true(!aarch64.role_aliases(CallerSaved).contains("x19"))
+  assert_true(!aarch64.role_aliases(CallerSaved).contains("w19"))
   assert_true(aarch64.role_aliases(CalleeSaved).contains("x19"))
+  assert_true(aarch64.role_aliases(CalleeSaved).contains("w19"))
   assert_true(aarch64.role_aliases(CalleeSaved).contains("r19"))
   assert_true(aarch64.role_aliases(CalleeSaved).contains("sp"))
+  assert_true(aarch64.role_aliases(CalleeSaved).contains("wsp"))
   assert_true(aarch64.role_aliases(CalleeSaved).contains("v8"))
   assert_true(!aarch64.role_aliases(CalleeSaved).contains("x18"))
+  assert_true(!aarch64.role_aliases(CalleeSaved).contains("w18"))
   assert_true(!aarch64.role_aliases(CalleeSaved).contains("v16"))
   match aarch64.find_var("X7") {
     Some(result) =>
@@ -3280,12 +3296,26 @@ test "target role helpers classify common architecture variables" {
     }
     None => fail("missing X18")
   }
+  match aarch64.find_var("W18") {
+    Some(saved) => {
+      assert_true(aarch64.roles_of_var(saved).contains(CallerSaved))
+      assert_true(!aarch64.roles_of_var(saved).contains(CalleeSaved))
+    }
+    None => fail("missing W18")
+  }
   match aarch64.find_var("X19") {
     Some(saved) => {
       assert_true(aarch64.roles_of_var(saved).contains(CalleeSaved))
       assert_true(!aarch64.roles_of_var(saved).contains(CallerSaved))
     }
     None => fail("missing X19")
+  }
+  match aarch64.find_var("W19") {
+    Some(saved) => {
+      assert_true(aarch64.roles_of_var(saved).contains(CalleeSaved))
+      assert_true(!aarch64.roles_of_var(saved).contains(CallerSaved))
+    }
+    None => fail("missing W19")
   }
   match aarch64.find_var("R7") {
     Some(result) =>
@@ -3331,6 +3361,13 @@ test "target role helpers classify common architecture variables" {
       assert_true(aarch64.roles_of_var(sp).contains(CalleeSaved))
     }
     None => fail("missing AArch64 SP")
+  }
+  match aarch64.find_var("WSP") {
+    Some(sp) => {
+      assert_true(aarch64.roles_of_var(sp).contains(StackPointer))
+      assert_true(aarch64.roles_of_var(sp).contains(CalleeSaved))
+    }
+    None => fail("missing AArch64 WSP")
   }
   match aarch64.find_var("D0") {
     Some(float) => {

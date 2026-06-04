@@ -176,14 +176,14 @@ pub fn Project::callees(Self, @types.Term[@types.Sub]) -> Array[@types.Tid]
 pub fn Project::callers(Self, @types.Term[@types.Sub]) -> Array[@types.Tid]
 pub fn Project::callgraph(Self) -> @graphlib.Graph[@types.Tid, Array[@types.Term[@types.Jmp]]]
 pub fn Project::create(target~ : @core_theory.Target, image? : @image.Image, filename? : String, program? : @types.Term[@types.Program], memory? : @memory.MemMap[String], symbols? : Array[@image.Symbol], storage? : Map[String, String], libraries? : Array[Library], state? : ProjectState) -> Self
-pub fn Project::create_file(filename~ : String, loader? : String, libraries? : Array[String], disassembler? : String, driver_source? : ProjectDisassemblySource[ProjectDisassemblyDriver], brancher? : ProjectDisassemblySource[ProjectBrancher], symbolizer? : ProjectDisassemblySource[ProjectSymbolizer], rooter? : ProjectDisassemblySource[ProjectRooter], reconstructor? : ProjectDisassemblySource[ProjectReconstructor]) -> Result[Self, String]
-pub fn Project::create_file_named(filename~ : String, loader? : String, libraries? : Array[String], disassembler? : String, driver_source? : String, brancher? : String, symbolizer? : String, rooter? : String, reconstructor? : String) -> Result[Self, String]
-pub fn Project::create_for_filename(Bytes, filename~ : String, disassembler? : String, driver_source? : ProjectDisassemblySource[ProjectDisassemblyDriver], brancher? : ProjectDisassemblySource[ProjectBrancher], symbolizer? : ProjectDisassemblySource[ProjectSymbolizer], rooter? : ProjectDisassemblySource[ProjectRooter], reconstructor? : ProjectDisassemblySource[ProjectReconstructor]) -> Result[Self, String]
-pub fn Project::create_for_filename_named(Bytes, filename~ : String, disassembler? : String, driver_source? : String, brancher? : String, symbolizer? : String, rooter? : String, reconstructor? : String) -> Result[Self, String]
+pub fn Project::create_file(filename~ : String, loader? : String, libraries? : Array[String], target? : @core_theory.Target, disassembler? : String, driver_source? : ProjectDisassemblySource[ProjectDisassemblyDriver], brancher? : ProjectDisassemblySource[ProjectBrancher], symbolizer? : ProjectDisassemblySource[ProjectSymbolizer], rooter? : ProjectDisassemblySource[ProjectRooter], reconstructor? : ProjectDisassemblySource[ProjectReconstructor]) -> Result[Self, String]
+pub fn Project::create_file_named(filename~ : String, loader? : String, libraries? : Array[String], target? : @core_theory.Target, disassembler? : String, driver_source? : String, brancher? : String, symbolizer? : String, rooter? : String, reconstructor? : String) -> Result[Self, String]
+pub fn Project::create_for_filename(Bytes, filename~ : String, target? : @core_theory.Target, disassembler? : String, driver_source? : ProjectDisassemblySource[ProjectDisassemblyDriver], brancher? : ProjectDisassemblySource[ProjectBrancher], symbolizer? : ProjectDisassemblySource[ProjectSymbolizer], rooter? : ProjectDisassemblySource[ProjectRooter], reconstructor? : ProjectDisassemblySource[ProjectReconstructor]) -> Result[Self, String]
+pub fn Project::create_for_filename_named(Bytes, filename~ : String, target? : @core_theory.Target, disassembler? : String, driver_source? : String, brancher? : String, symbolizer? : String, rooter? : String, reconstructor? : String) -> Result[Self, String]
 pub fn Project::create_from_input(ProjectInput, disassembler? : String, driver_source? : ProjectDisassemblySource[ProjectDisassemblyDriver], brancher? : ProjectDisassemblySource[ProjectBrancher], symbolizer? : ProjectDisassemblySource[ProjectSymbolizer], rooter? : ProjectDisassemblySource[ProjectRooter], reconstructor? : ProjectDisassemblySource[ProjectReconstructor]) -> Result[Self, String]
 pub fn Project::create_from_input_named(ProjectInput, disassembler? : String, driver_source? : String, brancher? : String, symbolizer? : String, rooter? : String, reconstructor? : String) -> Result[Self, String]
-pub fn Project::create_from_loader(Bytes, loader~ : String, disassembler? : String, driver_source? : ProjectDisassemblySource[ProjectDisassemblyDriver], brancher? : ProjectDisassemblySource[ProjectBrancher], symbolizer? : ProjectDisassemblySource[ProjectSymbolizer], rooter? : ProjectDisassemblySource[ProjectRooter], reconstructor? : ProjectDisassemblySource[ProjectReconstructor]) -> Result[Self, String]
-pub fn Project::create_from_loader_named(Bytes, loader~ : String, disassembler? : String, driver_source? : String, brancher? : String, symbolizer? : String, rooter? : String, reconstructor? : String) -> Result[Self, String]
+pub fn Project::create_from_loader(Bytes, loader~ : String, target? : @core_theory.Target, disassembler? : String, driver_source? : ProjectDisassemblySource[ProjectDisassemblyDriver], brancher? : ProjectDisassemblySource[ProjectBrancher], symbolizer? : ProjectDisassemblySource[ProjectSymbolizer], rooter? : ProjectDisassemblySource[ProjectRooter], reconstructor? : ProjectDisassemblySource[ProjectReconstructor]) -> Result[Self, String]
+pub fn Project::create_from_loader_named(Bytes, loader~ : String, target? : @core_theory.Target, disassembler? : String, driver_source? : String, brancher? : String, symbolizer? : String, rooter? : String, reconstructor? : String) -> Result[Self, String]
 pub fn Project::del(Self, String) -> Self
 pub fn[T] Project::del_tag(Self, ProjectStorageTag[T]) -> Self
 pub fn Project::destroy_ssa(Self) -> Self
@@ -200,7 +200,7 @@ pub fn Project::disassembly_rec(Self) -> ProjectDisassemblyRec
 pub fn Project::disassembly_symtab(Self) -> ProjectDisassemblySymtab
 pub fn Project::empty(@core_theory.Target) -> Self
 pub fn Project::external_references(Self) -> Array[@image.ExternalReference]
-pub fn Project::file(filename~ : String, loader? : String, libraries? : Array[String]) -> Result[Self, String]
+pub fn Project::file(filename~ : String, loader? : String, libraries? : Array[String], target? : @core_theory.Target) -> Result[Self, String]
 pub fn Project::filename(Self) -> String?
 pub fn Project::flatten_program(Self) -> Self
 pub fn Project::from_image(@image.Image, target? : @core_theory.Target, program? : @types.Term[@types.Program]) -> Self
@@ -215,11 +215,11 @@ pub fn Project::is_executable(Self) -> Bool?
 pub fn Project::libraries(Self) -> Array[Library]
 pub fn Project::linear_sweep(Self, @memory.Memory, backend? : String) -> Result[Array[(@memory.Memory, ProjectDisassemblyInstruction?)], String]
 pub fn Project::linear_sweep_exn(Self, @memory.Memory, backend? : String) -> Array[(@memory.Memory, ProjectDisassemblyInstruction?)] raise ProjectDisassemblyLinearSweepError
-pub fn Project::load(Bytes, loader~ : String) -> Result[Self, String]
+pub fn Project::load(Bytes, loader~ : String, target? : @core_theory.Target) -> Result[Self, String]
 pub fn Project::load_bias(Self) -> Int64?
-pub fn Project::load_file(String, loader~ : String, libraries? : Array[String]) -> Result[Self, String]
-pub fn Project::load_file_for_filename(String, filename? : String, libraries? : Array[String]) -> Result[Self, String]
-pub fn Project::load_for_filename(Bytes, filename~ : String) -> Result[Self, String]
+pub fn Project::load_file(String, loader~ : String, libraries? : Array[String], target? : @core_theory.Target) -> Result[Self, String]
+pub fn Project::load_file_for_filename(String, filename? : String, libraries? : Array[String], target? : @core_theory.Target) -> Result[Self, String]
+pub fn Project::load_for_filename(Bytes, filename~ : String, target? : @core_theory.Target) -> Result[Self, String]
 pub fn Project::map_program(Self, (@types.Term[@types.Program]) -> @types.Term[@types.Program]) -> Self
 pub fn Project::map_program_terms(Self, (@types.IrTerm) -> @types.IrTerm) -> Self
 pub fn Project::mark_program_terms(Self, (@types.IrTerm) -> Bool, @types.Attr) -> Self
@@ -660,7 +660,7 @@ pub fn ProjectInput::available_loaders() -> Array[String]
 pub fn ProjectInput::binary(target~ : @core_theory.Target, filename~ : String, base? : UInt64, offset? : Int, length? : Int, entry? : UInt64) -> Result[Self, String]
 pub fn ProjectInput::create(target~ : @core_theory.Target, filename~ : String, code? : @memory.MemMap[String], data? : @memory.MemMap[String], finish? : (Project) -> Project) -> Self
 pub fn ProjectInput::custom(target~ : @core_theory.Target, filename? : String, image? : @image.Image, program? : @types.Term[@types.Program], memory? : @memory.MemMap[String], symbols? : Array[@image.Symbol], libraries? : Array[Library], finish? : (Project) -> Project) -> Self
-pub fn ProjectInput::file(filename~ : String, loader? : String, libraries? : Array[String]) -> Result[Self, String]
+pub fn ProjectInput::file(filename~ : String, loader? : String, libraries? : Array[String], target? : @core_theory.Target) -> Result[Self, String]
 pub fn ProjectInput::filename(Self) -> String?
 pub fn ProjectInput::find_loader(String) -> ProjectInputLoader?
 pub fn ProjectInput::from_bigstring(target~ : @core_theory.Target, Bytes, base? : UInt64, offset? : Int, length? : Int, entry? : UInt64, filename? : String, finish? : (Project) -> Project) -> Result[Self, String]
@@ -669,10 +669,10 @@ pub fn ProjectInput::from_image(@image.Image, target? : @core_theory.Target, pro
 pub fn ProjectInput::from_string(target~ : @core_theory.Target, String, base? : UInt64, offset? : Int, length? : Int, entry? : UInt64, filename? : String, finish? : (Project) -> Project) -> Result[Self, String]
 pub fn ProjectInput::image(Self) -> @image.Image?
 pub fn ProjectInput::libraries(Self) -> Array[Library]
-pub fn ProjectInput::load(Bytes, loader~ : String) -> Result[Self, String]
-pub fn ProjectInput::load_file(String, loader~ : String, libraries? : Array[String]) -> Result[Self, String]
-pub fn ProjectInput::load_file_for_filename(String, filename? : String, libraries? : Array[String]) -> Result[Self, String]
-pub fn ProjectInput::load_for_filename(Bytes, filename~ : String) -> Result[Self, String]
+pub fn ProjectInput::load(Bytes, loader~ : String, target? : @core_theory.Target) -> Result[Self, String]
+pub fn ProjectInput::load_file(String, loader~ : String, libraries? : Array[String], target? : @core_theory.Target) -> Result[Self, String]
+pub fn ProjectInput::load_file_for_filename(String, filename? : String, libraries? : Array[String], target? : @core_theory.Target) -> Result[Self, String]
+pub fn ProjectInput::load_for_filename(Bytes, filename~ : String, target? : @core_theory.Target) -> Result[Self, String]
 pub fn ProjectInput::memory(Self) -> @memory.MemMap[String]
 pub fn ProjectInput::raw_bytes(target~ : @core_theory.Target, Bytes, base? : UInt64, offset? : Int, length? : Int, entry? : UInt64, filename? : String, finish? : (Project) -> Project) -> Result[Self, String]
 pub fn ProjectInput::raw_file(String, target~ : @core_theory.Target, base? : UInt64, offset? : Int, length? : Int, entry? : UInt64, filename? : String) -> Result[Self, String]

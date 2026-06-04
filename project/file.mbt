@@ -74,12 +74,13 @@ fn project_input_load_libraries(
   display_name : String,
   libraries : Array[String],
   loader : String?,
+  target : @core_theory.Target?,
 ) -> Result[Array[Library], String] {
   let loaded = []
   for path in project_input_library_paths(main_path, display_name, libraries) {
     let input = match loader {
-      Some(name) => ProjectInput::load_file(path, loader=name)
-      None => ProjectInput::load_file_for_filename(path)
+      Some(name) => ProjectInput::load_file(path, loader=name, target?)
+      None => ProjectInput::load_file_for_filename(path, target?)
     }
     match input {
       Ok(value) => loaded.push(value.as_library(path))
@@ -181,13 +182,20 @@ pub fn ProjectInput::load_file(
   path : String,
   loader~ : String,
   libraries? : Array[String] = [],
+  target? : @core_theory.Target,
 ) -> Result[ProjectInput, String] {
   match @native_io.read_file(path) {
     Ok(data) =>
-      match ProjectInput::load(data, loader~) {
+      match ProjectInput::load(data, loader~, target?) {
         Ok(input) =>
           match
-            project_input_load_libraries(path, path, libraries, Some(loader)) {
+            project_input_load_libraries(
+              path,
+              path,
+              libraries,
+              Some(loader),
+              target,
+            ) {
             Ok(loaded_libraries) =>
               Ok(
                 input
@@ -207,8 +215,11 @@ pub fn Project::load_file(
   path : String,
   loader~ : String,
   libraries? : Array[String] = [],
+  target? : @core_theory.Target,
 ) -> Result[Project, String] {
-  project_from_input_result(ProjectInput::load_file(path, loader~, libraries~))
+  project_from_input_result(
+    ProjectInput::load_file(path, loader~, libraries~, target?),
+  )
 }
 
 ///|
@@ -216,10 +227,12 @@ pub fn ProjectInput::file(
   filename~ : String,
   loader? : String,
   libraries? : Array[String] = [],
+  target? : @core_theory.Target,
 ) -> Result[ProjectInput, String] {
   match loader {
-    Some(name) => ProjectInput::load_file(filename, loader=name, libraries~)
-    None => ProjectInput::load_file_for_filename(filename, libraries~)
+    Some(name) =>
+      ProjectInput::load_file(filename, loader=name, libraries~, target?)
+    None => ProjectInput::load_file_for_filename(filename, libraries~, target?)
   }
 }
 
@@ -228,8 +241,11 @@ pub fn Project::file(
   filename~ : String,
   loader? : String,
   libraries? : Array[String] = [],
+  target? : @core_theory.Target,
 ) -> Result[Project, String] {
-  project_from_input_result(ProjectInput::file(filename~, loader?, libraries~))
+  project_from_input_result(
+    ProjectInput::file(filename~, loader?, libraries~, target?),
+  )
 }
 
 ///|
@@ -237,6 +253,7 @@ pub fn Project::create_file(
   filename~ : String,
   loader? : String,
   libraries? : Array[String] = [],
+  target? : @core_theory.Target,
   disassembler? : String,
   driver_source? : ProjectDisassemblySource[ProjectDisassemblyDriver],
   brancher? : ProjectDisassemblySource[ProjectBrancher],
@@ -244,7 +261,7 @@ pub fn Project::create_file(
   rooter? : ProjectDisassemblySource[ProjectRooter],
   reconstructor? : ProjectDisassemblySource[ProjectReconstructor],
 ) -> Result[Project, String] {
-  match ProjectInput::file(filename~, loader?, libraries~) {
+  match ProjectInput::file(filename~, loader?, libraries~, target?) {
     Ok(input) =>
       Project::create_from_input(
         input,
@@ -264,6 +281,7 @@ pub fn Project::create_file_named(
   filename~ : String,
   loader? : String,
   libraries? : Array[String] = [],
+  target? : @core_theory.Target,
   disassembler? : String,
   driver_source? : String,
   brancher? : String,
@@ -271,7 +289,7 @@ pub fn Project::create_file_named(
   rooter? : String,
   reconstructor? : String,
 ) -> Result[Project, String] {
-  match ProjectInput::file(filename~, loader?, libraries~) {
+  match ProjectInput::file(filename~, loader?, libraries~, target?) {
     Ok(input) =>
       Project::create_from_input_named(
         input,
@@ -291,6 +309,7 @@ pub fn ProjectInput::load_file_for_filename(
   path : String,
   filename? : String,
   libraries? : Array[String] = [],
+  target? : @core_theory.Target,
 ) -> Result[ProjectInput, String] {
   let selected_filename = match filename {
     Some(value) => value
@@ -298,7 +317,12 @@ pub fn ProjectInput::load_file_for_filename(
   }
   match @native_io.read_file(path) {
     Ok(data) =>
-      match ProjectInput::load_for_filename(data, filename=selected_filename) {
+      match
+        ProjectInput::load_for_filename(
+          data,
+          filename=selected_filename,
+          target?,
+        ) {
         Ok(input) =>
           match
             project_input_load_libraries(
@@ -306,6 +330,7 @@ pub fn ProjectInput::load_file_for_filename(
               selected_filename,
               libraries,
               None,
+              target,
             ) {
             Ok(loaded_libraries) =>
               Ok(
@@ -326,8 +351,9 @@ pub fn Project::load_file_for_filename(
   path : String,
   filename? : String,
   libraries? : Array[String] = [],
+  target? : @core_theory.Target,
 ) -> Result[Project, String] {
   project_from_input_result(
-    ProjectInput::load_file_for_filename(path, filename?, libraries~),
+    ProjectInput::load_file_for_filename(path, filename?, libraries~, target?),
   )
 }

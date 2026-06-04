@@ -589,13 +589,14 @@ pub fn input_loader_names_for_extension(extension : String) -> Array[String] {
 pub fn ProjectInput::load(
   data : Bytes,
   loader~ : String,
+  target? : @core_theory.Target,
 ) -> Result[ProjectInput, String] {
   match find_input_loader(loader) {
     Some(input_loader) => input_loader.load(data)
     None =>
       match @image.Image::of_bytes(data, backend=loader) {
         Ok((image, _warnings)) =>
-          Ok(ProjectInput::from_image(image).with_dwarf_symbols(data))
+          Ok(ProjectInput::from_image(image, target?).with_dwarf_symbols(data))
         Err(reason) =>
           Err(
             "unknown project input loader or image backend \{loader}: \{reason}",
@@ -618,6 +619,7 @@ fn filename_extension(filename : String) -> String? {
 pub fn ProjectInput::load_for_filename(
   data : Bytes,
   filename~ : String,
+  target? : @core_theory.Target,
 ) -> Result[ProjectInput, String] {
   match filename_extension(filename) {
     Some(extension) => {
@@ -633,7 +635,7 @@ pub fn ProjectInput::load_for_filename(
         match @image.Image::of_bytes_for_filename(data, filename~) {
           Ok((image, _warnings)) =>
             return Ok(
-              ProjectInput::from_image(image)
+              ProjectInput::from_image(image, target?)
               .with_default_filename(filename)
               .with_dwarf_symbols(data),
             )
@@ -646,7 +648,7 @@ pub fn ProjectInput::load_for_filename(
       match @image.Image::of_bytes_for_filename(data, filename~) {
         Ok((image, _warnings)) =>
           Ok(
-            ProjectInput::from_image(image)
+            ProjectInput::from_image(image, target?)
             .with_default_filename(filename)
             .with_dwarf_symbols(data),
           )
@@ -989,6 +991,7 @@ pub fn Project::create_from_input_named(
 pub fn Project::create_from_loader(
   data : Bytes,
   loader~ : String,
+  target? : @core_theory.Target,
   disassembler? : String,
   driver_source? : ProjectDisassemblySource[ProjectDisassemblyDriver],
   brancher? : ProjectDisassemblySource[ProjectBrancher],
@@ -996,7 +999,7 @@ pub fn Project::create_from_loader(
   rooter? : ProjectDisassemblySource[ProjectRooter],
   reconstructor? : ProjectDisassemblySource[ProjectReconstructor],
 ) -> Result[Project, String] {
-  match ProjectInput::load(data, loader~) {
+  match ProjectInput::load(data, loader~, target?) {
     Ok(input) =>
       Project::create_from_input(
         input,
@@ -1015,6 +1018,7 @@ pub fn Project::create_from_loader(
 pub fn Project::create_from_loader_named(
   data : Bytes,
   loader~ : String,
+  target? : @core_theory.Target,
   disassembler? : String,
   driver_source? : String,
   brancher? : String,
@@ -1022,7 +1026,7 @@ pub fn Project::create_from_loader_named(
   rooter? : String,
   reconstructor? : String,
 ) -> Result[Project, String] {
-  match ProjectInput::load(data, loader~) {
+  match ProjectInput::load(data, loader~, target?) {
     Ok(input) =>
       Project::create_from_input_named(
         input,
@@ -1041,6 +1045,7 @@ pub fn Project::create_from_loader_named(
 pub fn Project::create_for_filename(
   data : Bytes,
   filename~ : String,
+  target? : @core_theory.Target,
   disassembler? : String,
   driver_source? : ProjectDisassemblySource[ProjectDisassemblyDriver],
   brancher? : ProjectDisassemblySource[ProjectBrancher],
@@ -1048,7 +1053,7 @@ pub fn Project::create_for_filename(
   rooter? : ProjectDisassemblySource[ProjectRooter],
   reconstructor? : ProjectDisassemblySource[ProjectReconstructor],
 ) -> Result[Project, String] {
-  match ProjectInput::load_for_filename(data, filename~) {
+  match ProjectInput::load_for_filename(data, filename~, target?) {
     Ok(input) =>
       Project::create_from_input(
         input,
@@ -1067,6 +1072,7 @@ pub fn Project::create_for_filename(
 pub fn Project::create_for_filename_named(
   data : Bytes,
   filename~ : String,
+  target? : @core_theory.Target,
   disassembler? : String,
   driver_source? : String,
   brancher? : String,
@@ -1074,7 +1080,7 @@ pub fn Project::create_for_filename_named(
   rooter? : String,
   reconstructor? : String,
 ) -> Result[Project, String] {
-  match ProjectInput::load_for_filename(data, filename~) {
+  match ProjectInput::load_for_filename(data, filename~, target?) {
     Ok(input) =>
       Project::create_from_input_named(
         input,
@@ -1090,14 +1096,21 @@ pub fn Project::create_for_filename_named(
 }
 
 ///|
-pub fn Project::load(data : Bytes, loader~ : String) -> Result[Project, String] {
-  project_from_input_result(ProjectInput::load(data, loader~))
+pub fn Project::load(
+  data : Bytes,
+  loader~ : String,
+  target? : @core_theory.Target,
+) -> Result[Project, String] {
+  project_from_input_result(ProjectInput::load(data, loader~, target?))
 }
 
 ///|
 pub fn Project::load_for_filename(
   data : Bytes,
   filename~ : String,
+  target? : @core_theory.Target,
 ) -> Result[Project, String] {
-  project_from_input_result(ProjectInput::load_for_filename(data, filename~))
+  project_from_input_result(
+    ProjectInput::load_for_filename(data, filename~, target?),
+  )
 }

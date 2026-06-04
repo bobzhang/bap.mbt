@@ -763,10 +763,62 @@ test "project input loading falls back to image backends" {
     Err(reason) => fail(reason)
   }
   match
+    @project.ProjectInput::load(
+      b"\x7f",
+      loader=backend.name(),
+      target=@core_theory.Target::sparc(),
+    ) {
+    Ok(input) => {
+      let project = @project.Project::from_input(input)
+      assert_true(project.target().matches("sparc"))
+      assert_true(project.memory().lookup(0x440UL).length() == 1)
+    }
+    Err(reason) => fail(reason)
+  }
+  match
+    @project.Project::load(
+      b"\x7f",
+      loader=backend.name(),
+      target=@core_theory.Target::sparc(),
+    ) {
+    Ok(project) => {
+      assert_true(project.target().matches("sparc"))
+      assert_true(project.memory().lookup(0x440UL).length() == 1)
+    }
+    Err(reason) => fail(reason)
+  }
+  match
     @project.ProjectInput::load_for_filename(b"\x7f", filename="sample.pimg") {
     Ok(input) => {
       let project = @project.Project::from_input(input)
       assert_true(project.filename() == Some("sample.pimg"))
+      assert_true(project.memory().lookup(0x440UL).length() == 1)
+    }
+    Err(reason) => fail(reason)
+  }
+  match
+    @project.ProjectInput::load_for_filename(
+      b"\x7f",
+      filename="sample.pimg",
+      target=@core_theory.Target::sparc(),
+    ) {
+    Ok(input) => {
+      let project = @project.Project::from_input(input)
+      assert_true(project.filename() == Some("sample.pimg"))
+      assert_true(project.target().matches("sparc"))
+      assert_true(project.memory().lookup(0x440UL).length() == 1)
+    }
+    Err(reason) => fail(reason)
+  }
+  match
+    @project.Project::load_for_filename(
+      b"\x7f",
+      filename="sample.pimg",
+      target=@core_theory.Target::sparc(),
+    ) {
+    Ok(project) => {
+      assert_true(project.filename() == Some("sample.pimg"))
+      assert_true(project.target().matches("sparc"))
       assert_true(project.memory().lookup(0x440UL).length() == 1)
     }
     Err(reason) => fail(reason)

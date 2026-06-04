@@ -84,6 +84,42 @@ test "project info file stream reports unnamed inputs as empty filenames" {
 }
 
 ///|
+test "project info streams retain raw input arch and spec provenance" {
+  let arch_sizes = []
+  let spec_counts = []
+  let arch_stream = @project.ProjectInfo::arch()
+  let spec_stream = @project.ProjectInfo::spec()
+  let arch_id = arch_stream.subscribe(target => {
+    arch_sizes.push(target.code_addr_size())
+  })
+  let spec_id = spec_stream.subscribe(spec => {
+    spec_counts.push(spec.declaration_count())
+  })
+  match
+    @project.ProjectInput::from_bigstring(
+      target=@core_theory.Target::x86_64(),
+      b"\x90",
+      filename="raw-info.bin",
+    ) {
+    Ok(input) => {
+      let project = @project.Project::from_input(input)
+      arch_stream.unsubscribe(arch_id)
+      spec_stream.unsubscribe(spec_id)
+      assert_true(project.filename() == Some("raw-info.bin"))
+      assert_true(project.arch().code_addr_size() == 64)
+      assert_true(project.specification().declaration_count() == 6)
+      assert_true(arch_sizes == [0])
+      assert_true(spec_counts == [0])
+    }
+    Err(reason) => {
+      arch_stream.unsubscribe(arch_id)
+      spec_stream.unsubscribe(spec_id)
+      fail(reason)
+    }
+  }
+}
+
+///|
 test "project info spec stream reports unknown create inputs as empty specs" {
   let spec_counts = []
   let spec_stream = @project.ProjectInfo::spec()

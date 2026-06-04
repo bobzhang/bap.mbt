@@ -275,7 +275,12 @@ fn ProjectInput::from_raw_bytes(
     filename?,
     target~,
   )
-  ProjectInput::from_image(image, target~, finish?)
+  let input = ProjectInput::from_image(image, target~, finish?)
+  {
+    ..input,
+    arch_value: @core_theory.Target::unknown(),
+    spec_value: @image.OgreDoc::empty(),
+  }
 }
 
 ///|

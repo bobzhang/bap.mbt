@@ -239,6 +239,32 @@ test "project pass run executes pass object with dependencies" {
 }
 
 ///|
+test "project pass run_exn mirrors checked execution" {
+  let pass = @project.ProjectPass::create(name="unit-run-exn-success", run=project => {
+    Ok(project.set("run-exn", "ok"))
+  })
+  let project = @project.Project::empty(@core_theory.Target::unknown())
+  try {
+    let next = pass.run_exn(project)
+    assert_true(next.get("run-exn") == Some("ok"))
+    assert_true(next.pass_run_count("unit-run-exn-success") == 1)
+  } catch {
+    @project.ProjectPassFailure(reason) => fail(reason)
+    _ => fail("unexpected project pass exception")
+  }
+  let failing = @project.ProjectPass::create(name="unit-run-exn-failure", run=_ => {
+    Err("run-exn boom")
+  })
+  try {
+    let _ = failing.run_exn(project)
+    fail("unexpected run_exn success")
+  } catch {
+    @project.ProjectPassFailure(reason) => assert_true(reason == "run-exn boom")
+    _ => fail("unexpected project pass exception")
+  }
+}
+
+///|
 test "autorun dependency roots include non-autorun deps" {
   let dep = @project.ProjectPass::create(name="unit-auto-dep", run=project => {
     Ok(project.set("auto-trace", "d"))

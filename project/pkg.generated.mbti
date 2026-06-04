@@ -151,6 +151,10 @@ pub(all) suberror ProjectDisassemblyLinearSweepError {
   LinearSweepFailure(String)
 } derive(Eq, @debug.Debug)
 
+pub(all) suberror ProjectPassError {
+  ProjectPassFailure(String)
+} derive(Eq, @debug.Debug)
+
 // Types and methods
 type Library
 pub fn Library::arch(Self) -> @core_theory.Target
@@ -756,6 +760,7 @@ pub fn ProjectPass::finishes(Self) -> @future.Stream[Double]
 pub fn ProjectPass::flatten() -> Self
 pub fn ProjectPass::name(Self) -> String
 pub fn ProjectPass::run(Self, Project) -> Result[Project, String]
+pub fn ProjectPass::run_exn(Self, Project) -> Project raise ProjectPassError
 pub fn ProjectPass::run_once(Self) -> Bool
 pub fn ProjectPass::ssa() -> Self
 pub fn ProjectPass::start_events(Self) -> Array[ProjectPassEvent]

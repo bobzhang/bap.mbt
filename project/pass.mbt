@@ -12,6 +12,11 @@ struct ProjectPass {
 }
 
 ///|
+pub(all) suberror ProjectPassError {
+  ProjectPassFailure(String)
+} derive(Eq, Debug)
+
+///|
 pub(all) enum ProjectPassEventKind {
   PassRegistered
   PassStarted
@@ -73,6 +78,11 @@ fn pass_events_for(
   pass_event_log.filter(event => {
     event.pass_name() == name && event.kind() == kind
   })
+}
+
+///|
+fn project_pass_failure(reason : String) -> ProjectPassError {
+  ProjectPassFailure(reason)
 }
 
 ///|
@@ -434,6 +444,17 @@ pub fn ProjectPass::run(
   match resolve_pass_object(self, visiting, visited, order) {
     Ok(_) => project.run_resolved_passes(order)
     Err(reason) => Err(reason)
+  }
+}
+
+///|
+pub fn ProjectPass::run_exn(
+  self : ProjectPass,
+  project : Project,
+) -> Project raise ProjectPassError {
+  match self.run(project) {
+    Ok(result) => result
+    Err(reason) => raise project_pass_failure(reason)
   }
 }
 

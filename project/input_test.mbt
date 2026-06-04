@@ -343,6 +343,57 @@ test "project create from input can seed disassembly state" {
 }
 
 ///|
+test "project create from input folds library programs into final program" {
+  let block = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x6350UL,
+    b"\x90",
+  )
+  let state = @project.ProjectState::empty().with_disassembly(
+    @project.ProjectDisassemblyState::empty().add_block(block),
+  )
+  let library_sub = @types.Sub::create(name="lib_entry")
+  let library_program = @types.Program::create().append_sub(library_sub)
+  let library = @project.Library::create(
+    name="libunit",
+    target=@core_theory.Target::unknown(),
+    program=library_program,
+  )
+  let input = @project.ProjectInput::custom(
+    target=@core_theory.Target::unknown(),
+    memory=@memory.MemMap::singleton(block, "code"),
+    libraries=[library],
+  )
+  let symbolizer_source : @project.ProjectDisassemblySource[
+    @project.ProjectSymbolizer,
+  ] = @project.ProjectDisassemblySource::single(
+    @project.ProjectSymbolizer::create(addr => {
+      if addr == 0x6350UL {
+        Some("main_entry")
+      } else {
+        None
+      }
+    }),
+  )
+  match
+    @project.Project::create_from_input(
+      input,
+      symbolizer=symbolizer_source,
+      state~,
+    ) {
+    Ok(project) => {
+      let subs = project.program().subs()
+      assert_true(subs.length() == 2)
+      assert_true(subs[0].sub_name() == "main_entry")
+      assert_true(subs[1].sub_name() == "lib_entry")
+      assert_true(project.libraries().length() == 1)
+      assert_true(project.libraries()[0].program().subs().length() == 1)
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project create from input named resolves source registries" {
   let block = @memory.Memory::from_bytes(
     endian=LittleEndian,

@@ -976,6 +976,17 @@ fn project_input_reconstruct_with_sources(
 }
 
 ///|
+fn project_input_append_library_programs(project : Project) -> Project {
+  let mut program = project.program()
+  for library in project.libraries() {
+    for sub in library.program().subs() {
+      program = program.append_sub(sub)
+    }
+  }
+  project.with_program(program)
+}
+
+///|
 pub fn Project::create_from_input(
   input : ProjectInput,
   disassembler? : String,
@@ -1032,8 +1043,9 @@ pub fn Project::create_from_input(
   }
   match project_input_reconstruct_with_sources(branched, reconstructor) {
     Ok(project) => {
-      project_info_emit_reconstructed(project)
-      Ok(project)
+      let merged = project_input_append_library_programs(project)
+      project_info_emit_reconstructed(merged)
+      Ok(merged)
     }
     Err(reason) => Err(reason)
   }

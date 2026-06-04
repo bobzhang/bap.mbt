@@ -113,7 +113,11 @@ pub fn Name::read(input : String, pkg? : String) -> Name {
       let text = if pkg == "keyword" { keyword_name_text(text) } else { text }
       { pkg, text }
     }
-    (None, text) => { pkg: default_pkg(pkg), text }
+    (None, text) => {
+      let pkg = default_pkg(pkg)
+      let text = if pkg == "keyword" { keyword_name_text(text) } else { text }
+      { pkg, text }
+    }
   }
 }
 

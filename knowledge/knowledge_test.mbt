@@ -33,6 +33,7 @@ test "names preserve BAP keyword package normalization" {
   assert_eq(keyword.show(), ":unknown")
   assert_true(@knowledge.Name::of_string(keyword.show()).equal(keyword))
   assert_true(@knowledge.Name::read("keyword:unknown").equal(keyword))
+  assert_true(@knowledge.Name::read("unknown", pkg="keyword").equal(keyword))
   assert_true(@knowledge.Name::create("unknown", pkg="keyword").equal(keyword))
   assert_eq(@knowledge.Name::read("plain", pkg="").pkg(), "user")
   assert_eq(@knowledge.Name::create("plain", pkg="").pkg(), "user")

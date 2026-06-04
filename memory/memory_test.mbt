@@ -40,6 +40,23 @@ test "memory views preserve address ranges" {
 }
 
 ///|
+test "translated BAP memory create rejects empty regions" {
+  assert_true(
+    @memory.Memory::create(endian=LittleEndian, start=0UL, b"") is Err(_),
+  )
+  assert_true(
+    @memory.Memory::create(endian=LittleEndian, start=0UL, b"\x01\x02", len=0)
+    is Err(_),
+  )
+  assert_true(
+    @memory.Memory::create(endian=LittleEndian, start=0UL, b"\x01\x02", pos=2)
+    is Err(_),
+  )
+  let mem = @memory.Memory::from_bytes(endian=LittleEndian, start=0UL, b"\x01")
+  assert_true(mem.view(words=0) is Err(_))
+}
+
+///|
 test "loads honor endian order and stores update bytes" {
   let le = @memory.Memory::from_bytes(
     endian=LittleEndian,

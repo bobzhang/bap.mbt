@@ -19,14 +19,18 @@ fn u64_from_int(value : Int) -> UInt64 {
 
 ///|
 fn checked_len(data : Bytes, pos : Int, len : Int) -> Result[Int, String] {
-  if pos < 0 {
+  if data.length() == 0 {
+    Err("memory input is empty")
+  } else if pos < 0 {
     Err("memory position is negative")
-  } else if pos > data.length() {
+  } else if pos >= data.length() {
     Err("memory position is past the input")
   } else {
     let available = data.length() - pos
     let size = if len < 0 { available } else { len }
-    if size < 0 || size > available {
+    if size <= 0 {
+      Err("memory length must be positive")
+    } else if size > available {
       Err("memory length exceeds the input")
     } else {
       Ok(size)

@@ -510,6 +510,88 @@ pub fn Project::with_storage(
 }
 
 ///|
+fn project_persistent_endian(endian : @bitvec.Endian) -> String {
+  match endian {
+    LittleEndian => "little"
+    BigEndian => "big"
+  }
+}
+
+///|
+fn project_read_persistent_endian(
+  input : String,
+) -> Result[@bitvec.Endian, String] {
+  match input {
+    "little" => Ok(LittleEndian)
+    "big" => Ok(BigEndian)
+    _ => Err("invalid persistent project memory endian")
+  }
+}
+
+///|
+fn project_read_persistent_uint64(input : String) -> Result[UInt64, String] {
+  try @string.parse_uint64(input) catch {
+    _ => Err("invalid persistent project memory address")
+  } noraise {
+    value => Ok(value)
+  }
+}
+
+///|
+fn project_memory_entry_persistent() -> @knowledge.Persistent[
+  (@memory.Memory, String),
+] {
+  let bytes_codec = @knowledge.Persistent::bytes()
+  @knowledge.Persistent::convert(
+    to_persistent=entry => {
+      [
+        project_persistent_endian(entry.0.endian()),
+        entry.0.min_addr().to_string(),
+        bytes_codec.encode(entry.0.to_bytes()),
+        entry.1,
+      ]
+    },
+    of_persistent=fields => {
+      if fields.length() != 4 {
+        return Err("invalid persistent project memory entry")
+      }
+      let endian = match project_read_persistent_endian(fields[0]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let start = match project_read_persistent_uint64(fields[1]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let data = match bytes_codec.decode(fields[2]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      Ok((@memory.Memory::from_bytes(endian~, start~, data), fields[3]))
+    },
+    @knowledge.Persistent::array(@knowledge.Persistent::string()),
+  )
+}
+
+///|
+fn project_memory_persistent() -> @knowledge.Persistent[@memory.MemMap[String]] {
+  let entries_codec = @knowledge.Persistent::array(
+    project_memory_entry_persistent(),
+  )
+  @knowledge.Persistent::convert(
+    to_persistent=memory => memory.entries(),
+    of_persistent=entries => {
+      let mut memory = @memory.MemMap::empty()
+      for entry in entries {
+        memory = memory.add(entry.0, entry.1)
+      }
+      Ok(memory)
+    },
+    entries_codec,
+  )
+}
+
+///|
 pub fn Project::persistent() -> @knowledge.Persistent[Project] {
   let target_codec = @core_theory.Target::persistent()
   let filename_codec = @knowledge.Persistent::optional(
@@ -519,16 +601,18 @@ pub fn Project::persistent() -> @knowledge.Persistent[Project] {
     @knowledge.Persistent::string(),
     @knowledge.Persistent::string(),
   )
+  let memory_codec = project_memory_persistent()
   @knowledge.Persistent::convert(
     to_persistent=project => {
       [
         target_codec.encode(project.target_value),
         filename_codec.encode(project.filename_value),
         storage_codec.encode(project.storage_value),
+        memory_codec.encode(project.memory_value),
       ]
     },
     of_persistent=fields => {
-      if fields.length() != 3 {
+      if fields.length() != 3 && fields.length() != 4 {
         return Err("invalid persistent project encoding")
       }
       let target = match target_codec.decode(fields[0]) {
@@ -543,7 +627,15 @@ pub fn Project::persistent() -> @knowledge.Persistent[Project] {
         Ok(value) => value
         Err(reason) => return Err(reason)
       }
-      Ok(Project::create(target~, filename?, storage~))
+      let memory = if fields.length() == 4 {
+        match memory_codec.decode(fields[3]) {
+          Ok(value) => value
+          Err(reason) => return Err(reason)
+        }
+      } else {
+        @memory.MemMap::empty()
+      }
+      Ok(Project::create(target~, filename?, storage~, memory~))
     },
     @knowledge.Persistent::array(@knowledge.Persistent::string()),
   )

@@ -276,10 +276,17 @@ test "project storage and memory tags are persistent updates" {
 ///|
 test "project persistent codec round trips metadata and storage" {
   let storage = { "loader": "raw", "note": "a:b" }
+  let memory_block = @memory.Memory::from_bytes(
+    endian=BigEndian,
+    start=0x8800UL,
+    b"\xaa\xbb",
+  )
+  let memory = @memory.MemMap::singleton(memory_block, "code:entry")
   let project = @project.Project::create(
     target=@core_theory.Target::x86_64(),
     filename="input:one",
     storage~,
+    memory~,
   ).set("analysis", "done")
   storage["loader"] = "mutated"
   let codec = @project.Project::persistent()
@@ -292,7 +299,12 @@ test "project persistent codec round trips metadata and storage" {
       assert_true(decoded.get("loader") == Some("raw"))
       assert_true(decoded.get("note") == Some("a:b"))
       assert_true(decoded.get("analysis") == Some("done"))
-      assert_true(decoded.memory().entries().is_empty())
+      let entries = decoded.memory().lookup(0x8801UL)
+      assert_true(entries.length() == 1)
+      assert_true(entries[0].1 == "code:entry")
+      assert_true(entries[0].0.endian() == BigEndian)
+      assert_true(entries[0].0.min_addr() == 0x8800UL)
+      assert_true(entries[0].0.to_bytes() == b"\xaa\xbb")
       assert_true(decoded.symbols().is_empty())
       assert_true(decoded.libraries().is_empty())
     }

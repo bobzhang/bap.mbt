@@ -167,7 +167,12 @@ pub fn ProjectInput::from_image(
   finish? : (Project) -> Project,
 ) -> ProjectInput {
   let selected_target = match target {
-    Some(value) => value
+    Some(value) if !value.is_unknown() => value
+    Some(_) =>
+      match image.target() {
+        Some(value) => value
+        None => @core_theory.Target::unknown()
+      }
     None =>
       match image.target() {
         Some(value) => value

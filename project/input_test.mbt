@@ -117,8 +117,23 @@ test "project input from image retains executable code and data splits" {
   assert_true(input.data().lookup(0x981UL).any(entry => entry.1 == ".rodata"))
   assert_true(input.data().lookup(0x900UL).is_empty())
   let project = @project.Project::from_input(input)
+  assert_true(project.target().matches("x86_64"))
   assert_true(project.memory().lookup(0x900UL).length() == 1)
   assert_true(project.memory().lookup(0x981UL).length() == 1)
+  let unknown_override = @project.Project::from_input(
+    @project.ProjectInput::from_image(
+      image,
+      target=@core_theory.Target::unknown(),
+    ),
+  )
+  assert_true(unknown_override.target().matches("x86_64"))
+  let concrete_override = @project.Project::from_input(
+    @project.ProjectInput::from_image(
+      image,
+      target=@core_theory.Target::sparc(),
+    ),
+  )
+  assert_true(concrete_override.target().matches("sparc"))
 }
 
 ///|

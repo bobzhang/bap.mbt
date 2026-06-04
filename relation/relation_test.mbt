@@ -37,6 +37,39 @@ test "relation add mem find and fold are deterministic" {
 }
 
 ///|
+test "relation exposes BAP-style top-level functions" {
+  let relation = @relation.empty(
+    compare_left=int_compare,
+    compare_right=string_compare,
+  )
+  assert_true(@relation.is_empty(relation))
+  let relation = @relation.add(relation, 2, "b")
+  let relation = @relation.add(relation, 1, "a")
+  assert_true(@relation.mem(relation, 2, "a"))
+  assert_true(@relation.findl(relation, 1) == ["a"])
+  assert_true(@relation.findr(relation, "b") == [2])
+  let folded = @relation.fold(relation, init=[], f=fn(left, right, acc) {
+    acc.push("\{left}:\{right}")
+    acc
+  })
+  assert_true(folded == ["1:a", "2:b"])
+  let iterated = []
+  @relation.iter(relation, fn(left, right) {
+    iterated.push("\{left}->\{right}")
+  })
+  assert_true(iterated == ["1->a", "2->b"])
+  let matched = @relation.matching(relation, init=[], saturated=fn(
+    left,
+    right,
+    acc,
+  ) {
+    acc.push("\{left}=\{right}")
+    acc
+  })
+  assert_true(matched == ["1=a", "2=b"])
+}
+
+///|
 test "relation add keeps exact edge suppression separate from BAP mem" {
   let relation = int_string_relation().add(1, "a").add(2, "b")
   assert_true(relation.mem(1, "b"))

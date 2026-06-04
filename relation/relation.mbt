@@ -28,6 +28,11 @@ pub fn[K, S] empty(
 }
 
 ///|
+pub fn[K, S] is_empty(relation : Relation[K, S]) -> Bool {
+  relation.is_empty()
+}
+
+///|
 pub fn[K, S] Relation::is_empty(self : Relation[K, S]) -> Bool {
   self.pairs.is_empty()
 }
@@ -83,6 +88,15 @@ pub fn[K : Eq, S : Eq] Relation::mem(
 }
 
 ///|
+pub fn[K : Eq, S : Eq] mem(
+  relation : Relation[K, S],
+  left : K,
+  right : S,
+) -> Bool {
+  relation.mem(left, right)
+}
+
+///|
 pub fn[K : Eq, S : Eq] Relation::add(
   self : Relation[K, S],
   left : K,
@@ -95,6 +109,15 @@ pub fn[K : Eq, S : Eq] Relation::add(
     pairs.push((left, right))
     { ..self, pairs, }
   }
+}
+
+///|
+pub fn[K : Eq, S : Eq] add(
+  relation : Relation[K, S],
+  left : K,
+  right : S,
+) -> Relation[K, S] {
+  relation.add(left, right)
 }
 
 ///|
@@ -111,6 +134,11 @@ pub fn[K : Eq, S] Relation::findl(self : Relation[K, S], left : K) -> Array[S] {
 }
 
 ///|
+pub fn[K : Eq, S] findl(relation : Relation[K, S], left : K) -> Array[S] {
+  relation.findl(left)
+}
+
+///|
 pub fn[K, S : Eq] Relation::findr(self : Relation[K, S], right : S) -> Array[K] {
   let values = self.pairs.filter_map(pair => {
     if pair.1 == right {
@@ -121,6 +149,11 @@ pub fn[K, S : Eq] Relation::findr(self : Relation[K, S], right : S) -> Array[K] 
   })
   values.sort_by(self.left_compare)
   values
+}
+
+///|
+pub fn[K, S : Eq] findr(relation : Relation[K, S], right : S) -> Array[K] {
+  relation.findr(right)
 }
 
 ///|
@@ -137,10 +170,24 @@ pub fn[K, S, A] Relation::fold(
 }
 
 ///|
+pub fn[K, S, A] fold(
+  relation : Relation[K, S],
+  init~ : A,
+  f~ : (K, S, A) -> A,
+) -> A {
+  relation.fold(init~, f~)
+}
+
+///|
 pub fn[K, S] Relation::iter(self : Relation[K, S], f : (K, S) -> Unit) -> Unit {
   for pair in self.sorted_pairs() {
     f(pair.0, pair.1)
   }
+}
+
+///|
+pub fn[K, S] iter(relation : Relation[K, S], f : (K, S) -> Unit) -> Unit {
+  relation.iter(f)
 }
 
 ///|
@@ -157,6 +204,16 @@ fn[K : Eq, S] Relation::lefts(self : Relation[K, S]) -> Array[K] {
     push_unique(values, pair.0)
   }
   values
+}
+
+///|
+pub fn[K : Eq, S : Eq, A] matching(
+  relation : Relation[K, S],
+  init~ : A,
+  saturated? : (K, S, A) -> A,
+  unmatched? : (NonInjective[K, S], A) -> A,
+) -> A {
+  relation.matching(init~, saturated?, unmatched?)
 }
 
 ///|

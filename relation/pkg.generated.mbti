@@ -6,7 +6,23 @@ import {
 }
 
 // Values
+pub fn[K : Eq, S : Eq] add(Relation[K, S], K, S) -> Relation[K, S]
+
 pub fn[K, S] empty(compare_left~ : (K, K) -> Int, compare_right~ : (S, S) -> Int) -> Relation[K, S]
+
+pub fn[K : Eq, S] findl(Relation[K, S], K) -> Array[S]
+
+pub fn[K, S : Eq] findr(Relation[K, S], S) -> Array[K]
+
+pub fn[K, S, A] fold(Relation[K, S], init~ : A, f~ : (K, S, A) -> A) -> A
+
+pub fn[K, S] is_empty(Relation[K, S]) -> Bool
+
+pub fn[K, S] iter(Relation[K, S], (K, S) -> Unit) -> Unit
+
+pub fn[K : Eq, S : Eq, A] matching(Relation[K, S], init~ : A, saturated? : (K, S, A) -> A, unmatched? : (NonInjective[K, S], A) -> A) -> A
+
+pub fn[K : Eq, S : Eq] mem(Relation[K, S], K, S) -> Bool
 
 // Errors
 
@@ -32,4 +48,3 @@ pub fn[K, S] Relation::pairs(Self[K, S]) -> Array[(K, S)]
 // Type aliases
 
 // Traits
-

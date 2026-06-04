@@ -23,10 +23,15 @@ struct ProjectAnalysisArgs[T] {
 }
 
 ///|
+struct ProjectAnalysisGrammar {
+  rules_value : Array[String]
+}
+
+///|
 struct ProjectAnalysisInfo {
   name_value : @knowledge.Name
   description_value : String
-  grammar_value : Array[String]
+  grammar_value : ProjectAnalysisGrammar
 }
 
 ///|
@@ -160,6 +165,13 @@ fn project_analysis_join_grammar(grammar : Array[String]) -> String {
     builder.write_string(grammar[i])
   }
   builder.to_string()
+}
+
+///|
+fn project_analysis_grammar_from_rules(
+  rules : Array[String],
+) -> ProjectAnalysisGrammar {
+  { rules_value: rules.copy() }
 }
 
 ///|
@@ -540,10 +552,38 @@ pub fn[T] ProjectAnalysisArgs::grammar(
 }
 
 ///|
+pub fn[T] ProjectAnalysisArgs::grammar_rules(
+  self : ProjectAnalysisArgs[T],
+) -> Array[String] {
+  self.grammar()
+}
+
+///|
 pub fn[T] ProjectAnalysisArgs::grammar_string(
   self : ProjectAnalysisArgs[T],
 ) -> String {
   project_analysis_join_grammar(self.grammar_value)
+}
+
+///|
+pub fn ProjectAnalysisGrammar::create(
+  rules : Array[String],
+) -> ProjectAnalysisGrammar {
+  project_analysis_grammar_from_rules(rules)
+}
+
+///|
+pub fn ProjectAnalysisGrammar::rules(
+  self : ProjectAnalysisGrammar,
+) -> Array[String] {
+  self.rules_value.copy()
+}
+
+///|
+pub fn ProjectAnalysisGrammar::to_string(
+  self : ProjectAnalysisGrammar,
+) -> String {
+  project_analysis_join_grammar(self.rules_value)
 }
 
 ///|
@@ -576,15 +616,22 @@ pub fn ProjectAnalysisInfo::desc(self : ProjectAnalysisInfo) -> String {
 ///|
 pub fn ProjectAnalysisInfo::grammar(
   self : ProjectAnalysisInfo,
+) -> ProjectAnalysisGrammar {
+  self.grammar_value
+}
+
+///|
+pub fn ProjectAnalysisInfo::grammar_rules(
+  self : ProjectAnalysisInfo,
 ) -> Array[String] {
-  self.grammar_value.copy()
+  self.grammar_value.rules()
 }
 
 ///|
 pub fn ProjectAnalysisInfo::grammar_string(
   self : ProjectAnalysisInfo,
 ) -> String {
-  project_analysis_join_grammar(self.grammar_value)
+  self.grammar_value.to_string()
 }
 
 ///|
@@ -601,7 +648,7 @@ pub fn[T] ProjectAnalysis::create(
       Some(text) => text
       None => project_registry_default_description
     },
-    grammar_value: args.grammar(),
+    grammar_value: project_analysis_grammar_from_rules(args.grammar()),
   }
   {
     info_value: info,
@@ -642,8 +689,15 @@ pub fn ProjectAnalysis::desc(self : ProjectAnalysis) -> String {
 }
 
 ///|
-pub fn ProjectAnalysis::grammar(self : ProjectAnalysis) -> Array[String] {
+pub fn ProjectAnalysis::grammar(
+  self : ProjectAnalysis,
+) -> ProjectAnalysisGrammar {
   self.info_value.grammar()
+}
+
+///|
+pub fn ProjectAnalysis::grammar_rules(self : ProjectAnalysis) -> Array[String] {
+  self.info_value.grammar_rules()
 }
 
 ///|

@@ -31,6 +31,30 @@ test "project analysis args parse positional keyword flag and rest inputs" {
 }
 
 ///|
+test "project analysis grammar exposes BAP-style string rendering" {
+  let rules = ["<string>", "[:dry-run]"]
+  let grammar = @project.ProjectAnalysisGrammar::create(rules)
+  rules.push("<mutated>")
+  assert_true(grammar.rules() == ["<string>", "[:dry-run]"])
+  assert_true(grammar.to_string() == "<string> [:dry-run]")
+  let args = @project.ProjectAnalysisArgs::pair(
+    @project.ProjectAnalysisArg::string(),
+    @project.ProjectAnalysisArg::flag("dry-run"),
+  )
+  assert_true(args.grammar_rules() == ["<string>", "[:dry-run]"])
+  let analysis = @project.ProjectAnalysis::create(
+    name="unit-analysis-grammar",
+    args~,
+    run=_ => Ok(()),
+  )
+  assert_true(analysis.grammar().to_string() == "<string> [:dry-run]")
+  assert_true(analysis.grammar_rules() == ["<string>", "[:dry-run]"])
+  let info = analysis.info()
+  assert_true(info.grammar().to_string() == "<string> [:dry-run]")
+  assert_true(info.grammar_rules() == ["<string>", "[:dry-run]"])
+}
+
+///|
 test "project analysis args parse four and five argument tuples" {
   let quad = @project.ProjectAnalysisArgs::quad(
     @project.ProjectAnalysisArg::string(),

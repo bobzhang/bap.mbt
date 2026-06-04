@@ -279,7 +279,8 @@ pub fn ProjectAnalysis::apply(Self, Array[String]) -> Result[Unit, String]
 pub fn[T] ProjectAnalysis::create(name~ : String, pkg? : String, description? : String, args~ : ProjectAnalysisArgs[T], run~ : (T) -> Result[Unit, String]) -> Self
 pub fn ProjectAnalysis::desc(Self) -> String
 pub fn ProjectAnalysis::description(Self) -> String
-pub fn ProjectAnalysis::grammar(Self) -> Array[String]
+pub fn ProjectAnalysis::grammar(Self) -> ProjectAnalysisGrammar
+pub fn ProjectAnalysis::grammar_rules(Self) -> Array[String]
 pub fn ProjectAnalysis::grammar_string(Self) -> String
 pub fn ProjectAnalysis::info(Self) -> ProjectAnalysisInfo
 pub fn ProjectAnalysis::name(Self) -> String
@@ -304,6 +305,7 @@ pub fn ProjectAnalysisArg::unit() -> Self[@core_theory.ProgramUnit]
 
 type ProjectAnalysisArgs[T]
 pub fn[T] ProjectAnalysisArgs::grammar(Self[T]) -> Array[String]
+pub fn[T] ProjectAnalysisArgs::grammar_rules(Self[T]) -> Array[String]
 pub fn[T] ProjectAnalysisArgs::grammar_string(Self[T]) -> String
 pub fn[T] ProjectAnalysisArgs::one(ProjectAnalysisArg[T]) -> Self[T]
 pub fn[A, B] ProjectAnalysisArgs::pair(ProjectAnalysisArg[A], ProjectAnalysisArg[B]) -> Self[(A, B)]
@@ -312,10 +314,16 @@ pub fn[A, B, C, D] ProjectAnalysisArgs::quad(ProjectAnalysisArg[A], ProjectAnaly
 pub fn[A, B, C, D, E] ProjectAnalysisArgs::quint(ProjectAnalysisArg[A], ProjectAnalysisArg[B], ProjectAnalysisArg[C], ProjectAnalysisArg[D], ProjectAnalysisArg[E]) -> Self[(A, B, C, D, E)]
 pub fn[A, B, C] ProjectAnalysisArgs::triple(ProjectAnalysisArg[A], ProjectAnalysisArg[B], ProjectAnalysisArg[C]) -> Self[(A, B, C)]
 
+type ProjectAnalysisGrammar
+pub fn ProjectAnalysisGrammar::create(Array[String]) -> Self
+pub fn ProjectAnalysisGrammar::rules(Self) -> Array[String]
+pub fn ProjectAnalysisGrammar::to_string(Self) -> String
+
 type ProjectAnalysisInfo
 pub fn ProjectAnalysisInfo::desc(Self) -> String
 pub fn ProjectAnalysisInfo::description(Self) -> String
-pub fn ProjectAnalysisInfo::grammar(Self) -> Array[String]
+pub fn ProjectAnalysisInfo::grammar(Self) -> ProjectAnalysisGrammar
+pub fn ProjectAnalysisInfo::grammar_rules(Self) -> Array[String]
 pub fn ProjectAnalysisInfo::grammar_string(Self) -> String
 pub fn ProjectAnalysisInfo::name(Self) -> String
 pub fn ProjectAnalysisInfo::pkg(Self) -> String

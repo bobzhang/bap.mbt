@@ -234,6 +234,7 @@ pub fn Project::mark_program_terms(Self, (@types.IrTerm) -> Bool, @types.Attr) -
 pub fn Project::memory(Self) -> @memory.MemMap[String]
 pub fn Project::pass_has_run(Self, String) -> Bool
 pub fn Project::pass_run_count(Self, String) -> Int
+pub fn Project::persistent() -> @knowledge.Persistent[Self]
 pub fn Project::program(Self) -> @types.Term[@types.Program]
 pub fn Project::raw_file(String, target~ : @core_theory.Target, base? : UInt64, offset? : Int, length? : Int, entry? : UInt64, filename? : String) -> Result[Self, String]
 pub fn Project::reconstruct(Self, reconstructor? : ProjectReconstructor) -> Result[Self, String]

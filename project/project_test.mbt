@@ -274,6 +274,34 @@ test "project storage and memory tags are persistent updates" {
 }
 
 ///|
+test "project persistent codec round trips metadata and storage" {
+  let storage = { "loader": "raw", "note": "a:b" }
+  let project = @project.Project::create(
+    target=@core_theory.Target::x86_64(),
+    filename="input:one",
+    storage~,
+  ).set("analysis", "done")
+  storage["loader"] = "mutated"
+  let codec = @project.Project::persistent()
+  let encoded = codec.encode(project)
+  match codec.decode(encoded) {
+    Ok(decoded) => {
+      assert_true(decoded.target().equal(@core_theory.Target::x86_64()))
+      assert_true(decoded.filename() == Some("input:one"))
+      assert_true(decoded.get("filename") == Some("input:one"))
+      assert_true(decoded.get("loader") == Some("raw"))
+      assert_true(decoded.get("note") == Some("a:b"))
+      assert_true(decoded.get("analysis") == Some("done"))
+      assert_true(decoded.memory().entries().is_empty())
+      assert_true(decoded.symbols().is_empty())
+      assert_true(decoded.libraries().is_empty())
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(codec.decode("1:x") is Err(_))
+}
+
+///|
 test "project restore_state reports unsupported compatibility hook" {
   let project = @project.Project::empty(@core_theory.Target::unknown())
   match project.restore_state() {

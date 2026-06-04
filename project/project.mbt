@@ -510,6 +510,46 @@ pub fn Project::with_storage(
 }
 
 ///|
+pub fn Project::persistent() -> @knowledge.Persistent[Project] {
+  let target_codec = @core_theory.Target::persistent()
+  let filename_codec = @knowledge.Persistent::optional(
+    @knowledge.Persistent::string(),
+  )
+  let storage_codec = @knowledge.Persistent::map(
+    @knowledge.Persistent::string(),
+    @knowledge.Persistent::string(),
+  )
+  @knowledge.Persistent::convert(
+    to_persistent=project => {
+      [
+        target_codec.encode(project.target_value),
+        filename_codec.encode(project.filename_value),
+        storage_codec.encode(project.storage_value),
+      ]
+    },
+    of_persistent=fields => {
+      if fields.length() != 3 {
+        return Err("invalid persistent project encoding")
+      }
+      let target = match target_codec.decode(fields[0]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let filename = match filename_codec.decode(fields[1]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let storage = match storage_codec.decode(fields[2]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      Ok(Project::create(target~, filename?, storage~))
+    },
+    @knowledge.Persistent::array(@knowledge.Persistent::string()),
+  )
+}
+
+///|
 pub fn Project::set(self : Project, key : String, value : String) -> Project {
   let storage = self.storage_value.copy()
   storage[key] = value

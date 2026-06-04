@@ -2,10 +2,19 @@
 package "bobzhang/bap/byteweight"
 
 import {
+  "bobzhang/bap/core_theory",
   "bobzhang/bap/memory",
+  "moonbitlang/core/debug",
 }
 
 // Values
+pub fn byteweight_signature_default_path() -> String
+
+pub fn byteweight_signature_load(paths? : Array[String], arch~ : String, mode~ : String, compiler? : String) -> Result[Bytes, ByteweightSignatureError]
+
+pub fn byteweight_signature_save(String, arch~ : String, mode~ : String, BytesView, compiler? : String) -> Result[Unit, ByteweightSignatureError]
+
+pub fn byteweight_signature_system_path() -> String
 
 // Errors
 
@@ -25,6 +34,20 @@ pub fn Byteweight::next(Self, length~ : Int, threshold~ : Double, @memory.Memory
 pub fn Byteweight::next_if(Self, length~ : Int, f~ : (@memory.Memory, Int, ByteweightStats) -> Bool, @memory.Memory, Int) -> Int?
 pub fn Byteweight::train(Self, max_length~ : Int, (@memory.Memory) -> Bool, @memory.Memory) -> Self
 
+type ByteweightSignatureData[T]
+pub fn[T] ByteweightSignatureData::lookup(Self[T], @core_theory.Target, paths? : Array[String], compiler? : @core_theory.Compiler) -> Result[T, ByteweightSignatureError]
+pub fn[T] ByteweightSignatureData::name(Self[T]) -> String
+pub fn[T] ByteweightSignatureData::register(String, load~ : (Bytes) -> Result[T, String], save~ : (T) -> Bytes) -> Result[Self[T], String]
+pub fn[T] ByteweightSignatureData::update(Self[T], String, @core_theory.Target, T, compiler? : @core_theory.Compiler) -> Result[Unit, ByteweightSignatureError]
+
+pub(all) enum ByteweightSignatureError {
+  ByteweightSignatureCorrupted(String)
+  ByteweightSignatureNoSignatures
+  ByteweightSignatureNoEntry(String)
+  ByteweightSignatureSysError(String)
+} derive(Eq, @debug.Debug)
+pub fn ByteweightSignatureError::to_string(Self) -> String
+
 type ByteweightStats
 pub fn ByteweightStats::create(h1? : Int, h0? : Int) -> Self
 pub fn ByteweightStats::h0(Self) -> Int
@@ -36,3 +59,4 @@ pub fn ByteweightStats::trials(Self) -> Int
 // Type aliases
 
 // Traits
+

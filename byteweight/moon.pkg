@@ -1,3 +1,11 @@
 import {
+  "bobzhang/bap/core_theory",
   "bobzhang/bap/memory",
+  "bobzhang/bap/native_io",
+  "bobzhang/bap/regular",
+  "moonbitlang/core/encoding/utf8",
 }
+
+options(
+  targets: { "signatures_native_test.mbt": [ "native" ] },
+)

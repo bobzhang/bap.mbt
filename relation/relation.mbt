@@ -64,7 +64,7 @@ pub fn[K, S] Relation::pairs(self : Relation[K, S]) -> Array[(K, S)] {
 }
 
 ///|
-pub fn[K : Eq, S : Eq] Relation::mem(
+fn[K : Eq, S : Eq] Relation::contains_pair(
   self : Relation[K, S],
   left : K,
   right : S,
@@ -73,12 +73,22 @@ pub fn[K : Eq, S : Eq] Relation::mem(
 }
 
 ///|
+pub fn[K : Eq, S : Eq] Relation::mem(
+  self : Relation[K, S],
+  left : K,
+  right : S,
+) -> Bool {
+  self.pairs.any(pair => pair.0 == left) &&
+  self.pairs.any(pair => pair.1 == right)
+}
+
+///|
 pub fn[K : Eq, S : Eq] Relation::add(
   self : Relation[K, S],
   left : K,
   right : S,
 ) -> Relation[K, S] {
-  if self.mem(left, right) {
+  if self.contains_pair(left, right) {
     self
   } else {
     let pairs = self.pairs.copy()

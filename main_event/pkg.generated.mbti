@@ -1,0 +1,68 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/main_event"
+
+import {
+  "bobzhang/bap/future",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn message(MainLogLevel, section~ : String, message~ : String) -> Unit
+
+pub fn progress(String, note? : String, stage? : Int, total? : Int) -> Unit
+
+pub fn register_printer((MainEvent) -> String?) -> Unit
+
+pub fn send(MainEvent) -> Unit
+
+pub fn stream() -> @future.Stream[MainEvent]
+
+// Errors
+
+// Types and methods
+pub(all) enum MainEvent {
+  MainLogMessage(MainLogInfo)
+  MainLogProgress(MainProgress)
+  MainCustomEvent(String, String?)
+} derive(Eq, @debug.Debug)
+pub fn MainEvent::custom(name~ : String, payload? : String) -> Self
+pub fn MainEvent::log(MainLogInfo) -> Self
+pub fn MainEvent::progress(MainProgress) -> Self
+pub fn MainEvent::to_string(Self) -> String
+
+type MainLogInfo derive(Eq, @debug.Debug)
+pub fn MainLogInfo::create(level~ : MainLogLevel, section~ : String, message~ : String) -> Self
+pub fn MainLogInfo::level(Self) -> MainLogLevel
+pub fn MainLogInfo::message(Self) -> String
+pub fn MainLogInfo::section(Self) -> String
+
+pub(all) enum MainLogLevel {
+  MainLogDebug
+  MainLogInfo
+  MainLogWarning
+  MainLogError
+} derive(Eq, @debug.Debug)
+pub fn MainLogLevel::to_string(Self) -> String
+
+type MainLogReporter
+pub fn MainLogReporter::create(section~ : String, debug_enabled? : Bool) -> Self
+pub fn MainLogReporter::debug(Self, message~ : String) -> Unit
+pub fn MainLogReporter::debug_enabled(Self) -> Bool
+pub fn MainLogReporter::error(Self, message~ : String) -> Unit
+pub fn MainLogReporter::info(Self, message~ : String) -> Unit
+pub fn MainLogReporter::message(Self, MainLogLevel, message~ : String) -> Unit
+pub fn MainLogReporter::report_progress(Self, task? : String, note? : String, stage? : Int, total? : Int) -> Unit
+pub fn MainLogReporter::section(Self) -> String
+pub fn MainLogReporter::warning(Self, message~ : String) -> Unit
+
+type MainProgress derive(Eq, @debug.Debug)
+pub fn MainProgress::create(task~ : String, note? : String, stage? : Int, total? : Int) -> Self
+pub fn MainProgress::note(Self) -> String?
+pub fn MainProgress::stage(Self) -> Int?
+pub fn MainProgress::task(Self) -> String
+pub fn MainProgress::total(Self) -> Int?
+
+// Type aliases
+
+// Traits
+

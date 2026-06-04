@@ -3030,7 +3030,7 @@ fn powerpc_role_names(role : Role) -> Array[String] {
       concat_role_names([["r0"], role_names("r", 3, 12), role_names("f", 0, 13)])
     CalleeSaved =>
       concat_role_names([
-        ["r1"],
+        ["sp", "r1"],
         role_names("r", 14, 31),
         role_names("f", 14, 31),
       ])

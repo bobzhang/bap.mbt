@@ -3195,6 +3195,7 @@ test "target role helpers classify common architecture variables" {
   let ppc64 = @core_theory.Target::powerpc64()
   assert_true(ppc64.role_aliases(Argument).contains("r3"))
   assert_true(!ppc64.role_aliases(Argument).contains("rdi"))
+  assert_true(ppc64.role_aliases(CalleeSaved).contains("sp"))
   match ppc64.find_var("F31") {
     Some(float) => {
       assert_true(ppc64.roles_of_var(float).contains(General))
@@ -3244,6 +3245,13 @@ test "target role helpers classify common architecture variables" {
   match ppc64.find_var("R1") {
     Some(sp) => assert_true(ppc64.roles_of_var(sp).contains(StackPointer))
     None => fail("missing R1")
+  }
+  match ppc64.find_var("SP") {
+    Some(sp) => {
+      assert_true(ppc64.roles_of_var(sp).contains(StackPointer))
+      assert_true(ppc64.roles_of_var(sp).contains(CalleeSaved))
+    }
+    None => fail("missing PowerPC64 SP")
   }
   match ppc64.origin_of_name("SP") {
     Some(origin) => {

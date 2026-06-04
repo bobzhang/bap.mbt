@@ -17,6 +17,7 @@ struct ProjectInputLoader {
   extensions_value : Array[String]
   priority_value : Int
   load_fn : (Bytes) -> Result[ProjectInput, String]
+  load_file_fn : ((String) -> Result[ProjectInput, String])?
 }
 
 ///|
@@ -336,6 +337,7 @@ pub fn ProjectInputLoader::create(
   extensions? : Array[String],
   priority? : Int,
   load~ : (Bytes) -> Result[ProjectInput, String],
+  load_file? : (String) -> Result[ProjectInput, String],
 ) -> ProjectInputLoader {
   {
     name_value: name,
@@ -352,7 +354,26 @@ pub fn ProjectInputLoader::create(
       None => 0
     },
     load_fn: load,
+    load_file_fn: load_file,
   }
+}
+
+///|
+pub fn ProjectInputLoader::create_file(
+  name~ : String,
+  description? : String,
+  extensions? : Array[String],
+  priority? : Int,
+  load~ : (String) -> Result[ProjectInput, String],
+) -> ProjectInputLoader {
+  ProjectInputLoader::create(
+    name~,
+    description?,
+    extensions?,
+    priority?,
+    load=(_ : Bytes) => Err("project input loader \{name} requires a filename"),
+    load_file=load,
+  )
 }
 
 ///|
@@ -413,9 +434,30 @@ pub fn ProjectInput::register_loader(
   extensions? : Array[String],
   priority? : Int,
   load~ : (Bytes) -> Result[ProjectInput, String],
+  load_file? : (String) -> Result[ProjectInput, String],
 ) -> Result[Unit, String] {
   register_input_loader(
     ProjectInputLoader::create(
+      name~,
+      description?,
+      extensions?,
+      priority?,
+      load~,
+      load_file?,
+    ),
+  )
+}
+
+///|
+pub fn ProjectInput::register_file_loader(
+  name~ : String,
+  description? : String,
+  extensions? : Array[String],
+  priority? : Int,
+  load~ : (String) -> Result[ProjectInput, String],
+) -> Result[Unit, String] {
+  register_input_loader(
+    ProjectInputLoader::create_file(
       name~,
       description?,
       extensions?,

@@ -52,6 +52,57 @@ test "project input loaders read files on native target" {
 }
 
 ///|
+test "project input path loaders receive filenames on native target" {
+  let seen_path : Ref[String] = Ref("")
+  match
+    @project.ProjectInput::register_file_loader(
+      name="unit-project-path-native",
+      description="BAP-style filename loader",
+      extensions=["missing"],
+      priority=20,
+      load=path => {
+        seen_path.val = path
+        Ok(
+          @project.ProjectInput::from_bytes(
+            target=@core_theory.Target::unknown(),
+            b"\x7f",
+            endian=LittleEndian,
+            base=0x7700UL,
+            filename="loaded:" + path,
+          ),
+        )
+      },
+    ) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  match
+    @project.ProjectInput::load_file(
+      "does-not-exist.unit-project-path",
+      loader="unit-project-path-native",
+    ) {
+    Ok(input) => {
+      assert_true(seen_path.val == "does-not-exist.unit-project-path")
+      let project = @project.Project::from_input(input)
+      assert_true(
+        project.filename() == Some("loaded:does-not-exist.unit-project-path"),
+      )
+      assert_true(project.memory().lookup(0x7700UL).length() == 1)
+    }
+    Err(reason) => fail(reason)
+  }
+  match @project.ProjectInput::find_loader("unit-project-path-native") {
+    Some(loader) => {
+      assert_true(loader.description() == "BAP-style filename loader")
+      assert_true(loader.extensions() == ["missing"])
+      assert_true(loader.priority() == 20)
+      assert_true(loader.load(b"\x00") is Err(_))
+    }
+    None => fail("expected filename loader")
+  }
+}
+
+///|
 test "project raw file input uses target endian on native target" {
   let target = @core_theory.Target::sparc()
   match

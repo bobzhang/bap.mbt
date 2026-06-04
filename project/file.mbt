@@ -178,32 +178,51 @@ pub fn Project::binary(
 }
 
 ///|
+pub fn ProjectInputLoader::load_file(
+  self : ProjectInputLoader,
+  path : String,
+) -> Result[ProjectInput, String] {
+  match self.load_file_fn {
+    Some(load) => load(path)
+    None =>
+      match @native_io.read_file(path) {
+        Ok(data) => self.load(data)
+        Err(reason) => Err(reason)
+      }
+  }
+}
+
+///|
 pub fn ProjectInput::load_file(
   path : String,
   loader~ : String,
   libraries? : Array[String] = [],
   target? : @core_theory.Target,
 ) -> Result[ProjectInput, String] {
-  match @native_io.read_file(path) {
-    Ok(data) =>
-      match ProjectInput::load(data, loader~, target?) {
-        Ok(input) =>
-          match
-            project_input_load_libraries(
-              path,
-              path,
-              libraries,
-              Some(loader),
-              target,
-            ) {
-            Ok(loaded_libraries) =>
-              Ok(
-                input
-                .with_default_filename(path)
-                .with_extra_libraries(loaded_libraries),
-              )
-            Err(reason) => Err(reason)
-          }
+  let input = match find_input_loader(loader) {
+    Some(input_loader) => input_loader.load_file(path)
+    None =>
+      match @native_io.read_file(path) {
+        Ok(data) => ProjectInput::load(data, loader~, target?)
+        Err(reason) => Err(reason)
+      }
+  }
+  match input {
+    Ok(input) =>
+      match
+        project_input_load_libraries(
+          path,
+          path,
+          libraries,
+          Some(loader),
+          target,
+        ) {
+        Ok(loaded_libraries) =>
+          Ok(
+            input
+            .with_default_filename(path)
+            .with_extra_libraries(loaded_libraries),
+          )
         Err(reason) => Err(reason)
       }
     Err(reason) => Err(reason)

@@ -267,6 +267,7 @@ pub fn ProjectDisassemblyDriver::memory_blocks() -> Self
 pub fn ProjectDisassemblyDriver::name(Self) -> String
 pub fn ProjectDisassemblyDriver::priority(Self) -> Int
 pub fn ProjectDisassemblyDriver::project_roots() -> Self
+pub fn ProjectDisassemblyDriver::raw_bytes() -> Self
 pub fn ProjectDisassemblyDriver::run(Self, Project) -> Result[Project, String]
 
 type ProjectDisassemblyEdge

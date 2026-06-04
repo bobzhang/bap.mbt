@@ -87,6 +87,39 @@ pub fn register_disassembly_driver_if_absent(
 }
 
 ///|
+fn project_raw_byte_assembly(memory : @memory.Memory) -> String {
+  ".byte 0x" + memory.hexdump()
+}
+
+///|
+fn project_raw_byte_bil(memory : @memory.Memory) -> String {
+  "unknown 0x" + memory.min_addr().to_string(radix=16)
+}
+
+///|
+fn project_disassembly_add_raw_byte_instructions(
+  state : ProjectDisassemblyState,
+  block : @memory.Memory,
+) -> Result[ProjectDisassemblyState, String] {
+  let mut next = state.add_block(block)
+  for offset in 0..<block.length() {
+    let addr = block.min_addr() + offset.to_uint64()
+    match block.view(from=addr, words=1) {
+      Ok(byte_memory) =>
+        next = next.add_instruction(
+          ProjectDisassemblyInstruction::create(
+            byte_memory,
+            assembly=project_raw_byte_assembly(byte_memory),
+            bil=project_raw_byte_bil(byte_memory),
+          ),
+        )
+      Err(reason) => return Err(reason)
+    }
+  }
+  Ok(next)
+}
+
+///|
 pub fn ProjectDisassemblyDriver::memory_blocks() -> ProjectDisassemblyDriver {
   ProjectDisassemblyDriver::create(
     name="memory-blocks",
@@ -106,6 +139,36 @@ pub fn ProjectDisassemblyDriver::memory_blocks() -> ProjectDisassemblyDriver {
         Err("project has no memory blocks to disassemble")
       } else {
         Ok(project.with_disassembly(state).set("disassembler", "memory-blocks"))
+      }
+    },
+  )
+}
+
+///|
+pub fn ProjectDisassemblyDriver::raw_bytes() -> ProjectDisassemblyDriver {
+  ProjectDisassemblyDriver::create(
+    name="raw-bytes",
+    description="materialize project memory regions as byte-granular instructions",
+    priority=-95,
+    run=project => {
+      let mut state = project.disassembly()
+      let mut added = 0
+      for entry in project.memory().entries() {
+        let block = entry.0
+        if block.length() > 0 {
+          match project_disassembly_add_raw_byte_instructions(state, block) {
+            Ok(next) => {
+              state = next
+              added = added + 1
+            }
+            Err(reason) => return Err(reason)
+          }
+        }
+      }
+      if added == 0 {
+        Err("project has no memory blocks to disassemble")
+      } else {
+        Ok(project.with_disassembly(state).set("disassembler", "raw-bytes"))
       }
     },
   )
@@ -263,6 +326,7 @@ pub fn register_builtin_disassembly_drivers() -> Result[Unit, String] {
       ProjectDisassemblyDriver::function_symbols(),
       ProjectDisassemblyDriver::entry_point(),
       ProjectDisassemblyDriver::project_roots(),
+      ProjectDisassemblyDriver::raw_bytes(),
       ProjectDisassemblyDriver::memory_blocks(),
     ] {
     match register_disassembly_driver_if_absent(driver) {

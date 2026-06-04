@@ -54,6 +54,7 @@ test "project registers built-in memory block disassembly driver" {
   assert_true(@project.disassembly_driver_names().contains("function-symbols"))
   assert_true(@project.disassembly_driver_names().contains("entry-point"))
   assert_true(@project.disassembly_driver_names().contains("project-roots"))
+  assert_true(@project.disassembly_driver_names().contains("raw-bytes"))
   match @project.find_disassembly_driver("image-roots") {
     Some(driver) => {
       assert_true(driver.priority() == -25)
@@ -81,6 +82,13 @@ test "project registers built-in memory block disassembly driver" {
       assert_true(driver.description().contains("project root"))
     }
     None => fail("missing project-root driver")
+  }
+  match @project.find_disassembly_driver("raw-bytes") {
+    Some(driver) => {
+      assert_true(driver.priority() == -95)
+      assert_true(driver.description().contains("byte-granular"))
+    }
+    None => fail("missing raw-byte driver")
   }
   match @project.find_disassembly_driver("memory-blocks") {
     Some(driver) => {
@@ -115,6 +123,78 @@ test "project registers built-in memory block disassembly driver" {
   assert_true(
     @project.Project::empty(@core_theory.Target::unknown()).disassemble(
       driver="memory-blocks",
+    )
+    is Err(_),
+  )
+}
+
+///|
+test "project raw-byte disassembly driver materializes instruction records" {
+  match @project.register_builtin_disassembly_drivers() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let block = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x7100UL,
+    b"\x90\xc3",
+  )
+  let memory = @memory.MemMap::singleton(block, "code")
+  let project = @project.Project::empty(@core_theory.Target::unknown()).with_memory(
+    memory,
+  )
+  match project.disassemble(driver="raw-bytes") {
+    Ok(disassembled) => {
+      assert_true(disassembled.get("disassembler") == Some("raw-bytes"))
+      assert_true(disassembled.disassembly().block_count() == 1)
+      assert_true(disassembled.disassembly().instruction_count() == 2)
+      let instructions = disassembled.disassembly().instructions_in(block)
+      assert_true(instructions.length() == 2)
+      assert_true(instructions[0].addr() == 0x7100UL)
+      assert_true(instructions[0].assembly() == ".byte 0x90")
+      assert_true(instructions[0].bil() == "unknown 0x7100")
+      assert_true(instructions[1].addr() == 0x7101UL)
+      assert_true(instructions[1].assembly() == ".byte 0xc3")
+      assert_true(instructions[1].bil() == "unknown 0x7101")
+      match block.view(from=0x7101UL, words=1) {
+        Ok(second_byte) => {
+          let tagged = disassembled.substitute(
+            second_byte, "insn", "$asm / $bil",
+          )
+          assert_true(
+            tagged
+            .memory()
+            .lookup(0x7101UL)
+            .any(entry => entry.1 == "insn=.byte 0xc3 / unknown 0x7101"),
+          )
+        }
+        Err(reason) => fail(reason)
+      }
+      let edge = @project.ProjectDisassemblyEdge::create(
+        source=0x7101UL,
+        target=0x7100UL,
+        kind=JumpEdge,
+      )
+      let brancher = @project.ProjectBrancher::create(memory => {
+        if memory.min_addr() == 0x7101UL && memory.length() == 1 {
+          [edge]
+        } else {
+          []
+        }
+      })
+      match disassembled.apply_brancher(brancher~) {
+        Ok(branched) => {
+          assert_true(branched.disassembly().edge_count() == 1)
+          assert_true(branched.disassembly().has_edge(edge))
+        }
+        Err(reason) => fail(reason)
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    @project.Project::empty(@core_theory.Target::unknown()).disassemble(
+      driver="raw-bytes",
     )
     is Err(_),
   )

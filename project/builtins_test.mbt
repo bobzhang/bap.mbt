@@ -13,6 +13,7 @@ test "project builtin service registration is idempotent and complete" {
   assert_true(@project.brancher_names().contains("empty"))
   assert_true(@project.disassembly_driver_names().contains("memory-blocks"))
   assert_true(@project.disassembly_driver_names().contains("image-roots"))
+  assert_true(@project.disassembly_driver_names().contains("raw-bytes"))
   assert_true(@project.reconstructor_names().contains("default"))
   assert_true(@project.find_pass("ssa") is Some(_))
   assert_true(@project.find_pass("flatten") is Some(_))

@@ -38,12 +38,14 @@ test "translated DWARF abbreviation tables parse entries and terminators" {
     b"\x02\x11\x00" +
     b"\x03\x0e" +
     b"\x00\x00" +
+    b"\x03\x3c\x00" +
+    b"\x00\x00" +
     b"\x00tail"
   let (table, next) = expect_abbrev_read(
     @dwarf.DwarfAbbrevTable::read(@dwarf.DwarfInput::of_bytes(bytes)),
   )
   assert_true(next.position() == bytes.length() - 4)
-  assert_true(table.entries().length() == 2)
+  assert_true(table.entries().length() == 3)
   let subprogram = expect_abbrev_entry(table.lookup(1))
   assert_true(subprogram.tag() == DwarfSubprogram)
   assert_true(subprogram.has_children())
@@ -60,6 +62,11 @@ test "translated DWARF abbreviation tables parse entries and terminators" {
   assert_true(!compile_unit.has_children())
   assert_true(!compile_unit.captures_values())
   assert_true(compile_unit.value_fields().is_empty())
+  let partial_unit = expect_abbrev_entry(table.lookup(3))
+  assert_true(partial_unit.tag() == DwarfPartialUnit)
+  assert_true(!partial_unit.has_children())
+  assert_true(!partial_unit.captures_values())
+  assert_true(partial_unit.value_fields().is_empty())
 }
 
 ///|

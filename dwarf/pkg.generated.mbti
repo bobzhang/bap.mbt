@@ -172,6 +172,7 @@ pub fn DwarfSectionBuffer::with_position(Self, Int) -> Result[Self, String]
 pub(all) enum DwarfTag {
   DwarfEntryPoint
   DwarfCompileUnit
+  DwarfPartialUnit
   DwarfLexicalBlock
   DwarfInlinedSubroutine
   DwarfSubprogram

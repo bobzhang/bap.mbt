@@ -26,6 +26,7 @@ pub(all) enum DwarfIndexSpec {
 pub(all) enum DwarfTag {
   DwarfEntryPoint
   DwarfCompileUnit
+  DwarfPartialUnit
   DwarfLexicalBlock
   DwarfInlinedSubroutine
   DwarfSubprogram
@@ -289,6 +290,7 @@ fn dwarf_tag_of_int(code : Int) -> DwarfTag {
     0x11 => DwarfCompileUnit
     0x1d => DwarfInlinedSubroutine
     0x2e => DwarfSubprogram
+    0x3c => DwarfPartialUnit
     other => DwarfUnknownTag(other)
   }
 }

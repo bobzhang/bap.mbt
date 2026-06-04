@@ -443,3 +443,32 @@ test "suffix trie mirrors BAP reversed-token matching" {
   trie.remove("")
   assert_true(trie.longest_match("none") == None)
 }
+
+///|
+test "prefix and suffix tries report UTF-8 byte match lengths like BAP strings" {
+  let prefix : @regular.PrefixTrie[Int] = @regular.PrefixTrie::new()
+  prefix.add("é", 1)
+  prefix.add("éx", 2)
+  assert_true(prefix.find("éx") == Some(2))
+  assert_true(prefix.longest_match("éz") == Some((2, 1)))
+  assert_true(prefix.longest_match("éxy") == Some((3, 2)))
+  let prefix_entries = prefix.fold(init=[], f=fn(acc, key, value) {
+    acc.push("\{key}=\{value}")
+    acc
+  })
+  prefix_entries.sort_by((left, right) => left.compare(right))
+  assert_true(prefix_entries == ["é=1", "éx=2"])
+
+  let suffix : @regular.SuffixTrie[Int] = @regular.SuffixTrie::new()
+  suffix.add("é", 1)
+  suffix.add("xé", 2)
+  assert_true(suffix.find("xé") == Some(2))
+  assert_true(suffix.longest_match("zzé") == Some((2, 1)))
+  assert_true(suffix.longest_match("zzxé") == Some((3, 2)))
+  let suffix_entries = suffix.fold(init=[], f=fn(acc, key, value) {
+    acc.push("\{key}=\{value}")
+    acc
+  })
+  suffix_entries.sort_by((left, right) => left.compare(right))
+  assert_true(suffix_entries == ["é=1", "xé=2"])
+}

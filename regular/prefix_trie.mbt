@@ -1,7 +1,7 @@
 ///|
 struct PrefixTrie[V] {
   mut value : V?
-  children : Map[Char, PrefixTrie[V]]
+  children : Map[Byte, PrefixTrie[V]]
 }
 
 ///|
@@ -10,18 +10,22 @@ struct SuffixTrie[V] {
 }
 
 ///|
-fn reverse_trie_key(key : StringView) -> String {
-  let chars = []
-  for ch in key {
-    chars.push(ch)
+fn trie_key_bytes(key : StringView) -> Bytes {
+  @utf8.encode(key.to_owned())
+}
+
+///|
+fn reverse_trie_bytes(key : BytesView) -> Bytes {
+  Bytes::from_array(Array::makei(key.length(), i => key[key.length() - i - 1]))
+}
+
+///|
+fn decode_trie_bytes(key : BytesView) -> String {
+  try @utf8.decode(key) catch {
+    _ => abort("invalid UTF-8 trie key")
+  } noraise {
+    text => text
   }
-  let mut out = ""
-  let mut i = chars.length()
-  while i > 0 {
-    i = i - 1
-    out = out + "\{chars[i]}"
-  }
-  out
 }
 
 ///|
@@ -47,19 +51,24 @@ pub fn[V] PrefixTrie::change(
   key : StringView,
   f : (V?) -> V?,
 ) -> Unit {
-  let chars = []
-  for ch in key {
-    chars.push(ch)
-  }
+  self.change_bytes(trie_key_bytes(key), f)
+}
+
+///|
+fn[V] PrefixTrie::change_bytes(
+  self : PrefixTrie[V],
+  key : BytesView,
+  f : (V?) -> V?,
+) -> Unit {
   let mut node = self
-  for i in 0..<chars.length() {
-    match node.children.get(chars[i]) {
+  for i in 0..<key.length() {
+    match node.children.get(key[i]) {
       Some(next) => node = next
       None =>
         match f(None) {
           Some(value) => {
-            for j in i..<chars.length() {
-              node = node.children.get_or_init(chars[j], () => PrefixTrie::new())
+            for j in i..<key.length() {
+              node = node.children.get_or_init(key[j], () => PrefixTrie::new())
             }
             node.value = Some(value)
             return
@@ -82,9 +91,14 @@ pub fn[V] PrefixTrie::add(
 
 ///|
 pub fn[V] PrefixTrie::find(self : PrefixTrie[V], key : StringView) -> V? {
+  self.find_bytes(trie_key_bytes(key))
+}
+
+///|
+fn[V] PrefixTrie::find_bytes(self : PrefixTrie[V], key : BytesView) -> V? {
   let mut node = self
-  for ch in key {
-    match node.children.get(ch) {
+  for byte in key {
+    match node.children.get(byte) {
       Some(next) => node = next
       None => return None
     }
@@ -100,17 +114,30 @@ pub fn[V] PrefixTrie::remove(self : PrefixTrie[V], key : StringView) -> Unit {
 ///|
 fn[V, A] PrefixTrie::fold_with_prefix(
   self : PrefixTrie[V],
-  prefix : String,
+  prefix : Array[Byte],
   acc : Ref[A],
-  f : (A, String, V) -> A,
+  f : (A, ArrayView[Byte], V) -> A,
 ) -> Unit {
   match self.value {
     Some(value) => acc.val = f(acc.val, prefix, value)
     None => ()
   }
   self.children.each((ch, child) => {
-    child.fold_with_prefix(prefix + "\{ch}", acc, f)
+    let next_prefix = prefix.copy()
+    next_prefix.push(ch)
+    child.fold_with_prefix(next_prefix, acc, f)
   })
+}
+
+///|
+fn[V, A] PrefixTrie::fold_bytes(
+  self : PrefixTrie[V],
+  init~ : A,
+  f~ : (A, ArrayView[Byte], V) -> A,
+) -> A {
+  let acc = Ref(init)
+  self.fold_with_prefix([], acc, f)
+  acc.val
 }
 
 ///|
@@ -119,9 +146,9 @@ pub fn[V, A] PrefixTrie::fold(
   init~ : A,
   f~ : (A, String, V) -> A,
 ) -> A {
-  let acc = Ref(init)
-  self.fold_with_prefix("", acc, f)
-  acc.val
+  self.fold_bytes(init~, f=fn(acc, key, value) {
+    f(acc, decode_trie_bytes(Bytes::from_array(key)), value)
+  })
 }
 
 ///|
@@ -137,13 +164,21 @@ pub fn[V] PrefixTrie::longest_match(
   self : PrefixTrie[V],
   key : StringView,
 ) -> (Int, V)? {
+  self.longest_match_bytes(trie_key_bytes(key))
+}
+
+///|
+fn[V] PrefixTrie::longest_match_bytes(
+  self : PrefixTrie[V],
+  key : BytesView,
+) -> (Int, V)? {
   let mut node = self
   let mut best : (Int, V)? = match node.value {
     Some(value) => Some((0, value))
     None => None
   }
-  for i, ch in key {
-    match node.children.get(ch) {
+  for i in 0..<key.length() {
+    match node.children.get(key[i]) {
       Some(next) => {
         node = next
         match node.value {
@@ -178,7 +213,7 @@ pub fn[V] SuffixTrie::change(
   key : StringView,
   f : (V?) -> V?,
 ) -> Unit {
-  self.trie.change(reverse_trie_key(key), f)
+  self.trie.change_bytes(reverse_trie_bytes(trie_key_bytes(key)), f)
 }
 
 ///|
@@ -192,7 +227,7 @@ pub fn[V] SuffixTrie::add(
 
 ///|
 pub fn[V] SuffixTrie::find(self : SuffixTrie[V], key : StringView) -> V? {
-  self.trie.find(reverse_trie_key(key))
+  self.trie.find_bytes(reverse_trie_bytes(trie_key_bytes(key)))
 }
 
 ///|
@@ -206,8 +241,8 @@ pub fn[V, A] SuffixTrie::fold(
   init~ : A,
   f~ : (A, String, V) -> A,
 ) -> A {
-  self.trie.fold(init~, f=fn(acc, key, value) {
-    f(acc, reverse_trie_key(key), value)
+  self.trie.fold_bytes(init~, f=fn(acc, key, value) {
+    f(acc, decode_trie_bytes(reverse_trie_bytes(Bytes::from_array(key))), value)
   })
 }
 
@@ -224,5 +259,5 @@ pub fn[V] SuffixTrie::longest_match(
   self : SuffixTrie[V],
   key : StringView,
 ) -> (Int, V)? {
-  self.trie.longest_match(reverse_trie_key(key))
+  self.trie.longest_match_bytes(reverse_trie_bytes(trie_key_bytes(key)))
 }

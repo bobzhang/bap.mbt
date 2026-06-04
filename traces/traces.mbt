@@ -27,11 +27,28 @@ pub(all) struct Syscall {
 } derive(Eq, Debug)
 
 ///|
+pub fn Syscall::create(number~ : Int, args~ : Array[@types.Word]) -> Syscall {
+  { number, args }
+}
+
+///|
 pub(all) struct TraceException {
   number : Int
   src : @types.Word?
   dst : @types.Word?
 } derive(Eq, Debug)
+
+///|
+pub(all) struct Exn {}
+
+///|
+pub fn Exn::create(
+  number~ : Int,
+  src? : @types.Word? = None,
+  dst? : @types.Word? = None,
+) -> TraceException {
+  { number, src, dst }
+}
 
 ///|
 pub(all) struct Location {
@@ -55,10 +72,24 @@ pub(all) struct Call {
 } derive(Eq, Debug)
 
 ///|
+pub fn Call::create(
+  caller~ : Location,
+  callee~ : Location,
+  args~ : Array[@types.Word],
+) -> Call {
+  { caller, callee, args }
+}
+
+///|
 pub(all) struct Return {
   caller : String
   callee : String
 } derive(Eq, Debug)
+
+///|
+pub fn Return::create(caller~ : String, callee~ : String) -> Return {
+  { caller, callee }
+}
 
 ///|
 pub(all) struct Modload {
@@ -66,6 +97,15 @@ pub(all) struct Modload {
   low : @types.Word
   high : @types.Word
 } derive(Eq, Debug)
+
+///|
+pub fn Modload::create(
+  name~ : String,
+  low~ : @types.Word,
+  high~ : @types.Word,
+) -> Modload {
+  { name, low, high }
+}
 
 ///|
 pub(all) struct TraceMode {
@@ -925,6 +965,11 @@ fn trace_optional_addr(prefix : String, value : @types.Word?) -> String {
 ///|
 pub fn TraceException::to_string(self : TraceException) -> String {
   "exn \{self.number}\{trace_optional_addr("from", self.src)}\{trace_optional_addr("to", self.dst)}"
+}
+
+///|
+pub fn Exn::to_string(value : TraceException) -> String {
+  value.to_string()
 }
 
 ///|

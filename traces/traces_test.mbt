@@ -100,8 +100,11 @@ fn extended_meta() -> @traces.TraceMeta {
 
 ///|
 fn broad_events() -> Array[@traces.TraceEvent] raise {
-  let caller = @traces.Location::{ name: Some("main"), addr: word32(0x401000) }
-  let callee = @traces.Location::{ name: None, addr: word32(0x402000) }
+  let caller = @traces.Location::create(
+    name=Some("main"),
+    addr=word32(0x401000),
+  )
+  let callee = @traces.Location::create(addr=word32(0x402000))
   [
     @traces.TraceEvent::timestamp(-42L),
     @traces.TraceEvent::pc_update(word32(0x401000)),
@@ -109,15 +112,23 @@ fn broad_events() -> Array[@traces.TraceEvent] raise {
       @traces.Chunk::create(addr=word32(0x401000), data=b"\x90\xcc"),
     ),
     @traces.TraceEvent::context_switch(-1),
-    @traces.TraceEvent::syscall({ number: 60, args: [word32(0)] }),
-    @traces.TraceEvent::exn({ number: 13, src: Some(word32(1)), dst: None }),
-    @traces.TraceEvent::call({ caller, callee, args: [word32(1), word32(2)] }),
-    @traces.TraceEvent::return_event({ caller: "main", callee: "callee" }),
-    @traces.TraceEvent::modload({
-      name: "libc.so",
-      low: word32(0x1000),
-      high: word32(0x1fff),
-    }),
+    @traces.TraceEvent::syscall(
+      @traces.Syscall::create(number=60, args=[word32(0)]),
+    ),
+    @traces.TraceEvent::exn(@traces.Exn::create(number=13, src=Some(word32(1)))),
+    @traces.TraceEvent::call(
+      @traces.Call::create(caller~, callee~, args=[word32(1), word32(2)]),
+    ),
+    @traces.TraceEvent::return_event(
+      @traces.Return::create(caller="main", callee="callee"),
+    ),
+    @traces.TraceEvent::modload(
+      @traces.Modload::create(
+        name="libc.so",
+        low=word32(0x1000),
+        high=word32(0x1fff),
+      ),
+    ),
     @traces.TraceEvent::mode("thumb"),
   ]
 }
@@ -252,23 +263,46 @@ test "translated BAP common trace event tags match helper constructors" {
   )
   assert_true(broad[3].context_switch_value() == Some(-1))
   assert_true(
-    broad[4].syscall_value() == Some({ number: 60, args: [word32(0)] }),
+    broad[4].syscall_value() ==
+    Some(@traces.Syscall::create(number=60, args=[word32(0)])),
   )
   assert_true(
     broad[5].exn_value() ==
-    Some({ number: 13, src: Some(word32(1)), dst: None }),
+    Some(@traces.Exn::create(number=13, src=Some(word32(1)))),
   )
-  assert_true(broad[6].call_value() is Some(_))
+  let expected_caller = @traces.Location::create(
+    name=Some("main"),
+    addr=word32(0x401000),
+  )
+  let expected_callee = @traces.Location::create(addr=word32(0x402000))
   assert_true(
-    broad[7].return_value() == Some({ caller: "main", callee: "callee" }),
+    broad[6].call_value() ==
+    Some(
+      @traces.Call::create(caller=expected_caller, callee=expected_callee, args=[
+        word32(1),
+        word32(2),
+      ]),
+    ),
   )
   assert_true(
-    @traces.TraceEvent::return_({ caller: "main", callee: "callee" }) ==
+    broad[7].return_value() ==
+    Some(@traces.Return::create(caller="main", callee="callee")),
+  )
+  assert_true(
+    @traces.TraceEvent::return_(
+      @traces.Return::create(caller="main", callee="callee"),
+    ) ==
     broad[7],
   )
   assert_true(
     broad[8].modload_value() ==
-    Some({ name: "libc.so", low: word32(0x1000), high: word32(0x1fff) }),
+    Some(
+      @traces.Modload::create(
+        name="libc.so",
+        low=word32(0x1000),
+        high=word32(0x1fff),
+      ),
+    ),
   )
   assert_true(broad[9].mode_value() == Some("thumb"))
   assert_true(broad[0].to_string() == "timestamp: -42")
@@ -277,6 +311,10 @@ test "translated BAP common trace event tags match helper constructors" {
   assert_true(broad[3].to_string() == "context-switch: -1")
   assert_true(broad[4].to_string() == "syscall[60](0:32u)")
   assert_true(broad[5].to_string() == "exn 13 from 1:32u")
+  assert_true(
+    @traces.Exn::to_string(@traces.Exn::create(number=13, src=Some(word32(1)))) ==
+    "exn 13 from 1:32u",
+  )
   assert_true(
     broad[6].to_string() == "main@ 0x401000:32u -> 0x402000:32u(1:32u, 2:32u)",
   )

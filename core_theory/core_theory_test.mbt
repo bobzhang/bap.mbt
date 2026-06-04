@@ -3258,10 +3258,34 @@ test "target role helpers classify common architecture variables" {
     None => fail("missing X2")
   }
   assert_true(aarch64.role_aliases(FloatingRegister).contains("x31"))
+  assert_true(aarch64.role_aliases(CallerSaved).contains("x18"))
+  assert_true(aarch64.role_aliases(CallerSaved).contains("r18"))
+  assert_true(aarch64.role_aliases(CallerSaved).contains("v31"))
+  assert_true(!aarch64.role_aliases(CallerSaved).contains("x19"))
+  assert_true(aarch64.role_aliases(CalleeSaved).contains("x19"))
+  assert_true(aarch64.role_aliases(CalleeSaved).contains("r19"))
+  assert_true(aarch64.role_aliases(CalleeSaved).contains("sp"))
+  assert_true(aarch64.role_aliases(CalleeSaved).contains("v8"))
+  assert_true(!aarch64.role_aliases(CalleeSaved).contains("x18"))
+  assert_true(!aarch64.role_aliases(CalleeSaved).contains("v16"))
   match aarch64.find_var("X7") {
     Some(result) =>
       assert_true(aarch64.roles_of_var(result).contains(ResultRegister))
     None => fail("missing X7")
+  }
+  match aarch64.find_var("X18") {
+    Some(saved) => {
+      assert_true(aarch64.roles_of_var(saved).contains(CallerSaved))
+      assert_true(!aarch64.roles_of_var(saved).contains(CalleeSaved))
+    }
+    None => fail("missing X18")
+  }
+  match aarch64.find_var("X19") {
+    Some(saved) => {
+      assert_true(aarch64.roles_of_var(saved).contains(CalleeSaved))
+      assert_true(!aarch64.roles_of_var(saved).contains(CallerSaved))
+    }
+    None => fail("missing X19")
   }
   match aarch64.find_var("R7") {
     Some(result) =>
@@ -3286,6 +3310,27 @@ test "target role helpers classify common architecture variables" {
       assert_true(aarch64.roles_of_var(vector).contains(ResultRegister))
     }
     None => fail("missing V7")
+  }
+  match aarch64.find_var("V8") {
+    Some(vector) => {
+      assert_true(aarch64.roles_of_var(vector).contains(CalleeSaved))
+      assert_true(!aarch64.roles_of_var(vector).contains(CallerSaved))
+    }
+    None => fail("missing V8")
+  }
+  match aarch64.find_var("V16") {
+    Some(vector) => {
+      assert_true(aarch64.roles_of_var(vector).contains(CallerSaved))
+      assert_true(!aarch64.roles_of_var(vector).contains(CalleeSaved))
+    }
+    None => fail("missing V16")
+  }
+  match aarch64.find_var("SP") {
+    Some(sp) => {
+      assert_true(aarch64.roles_of_var(sp).contains(StackPointer))
+      assert_true(aarch64.roles_of_var(sp).contains(CalleeSaved))
+    }
+    None => fail("missing AArch64 SP")
   }
   match aarch64.find_var("D0") {
     Some(float) => {

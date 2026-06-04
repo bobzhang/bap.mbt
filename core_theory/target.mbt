@@ -2878,8 +2878,20 @@ fn aarch64_role_names(role : Role) -> Array[String] {
         role_names("r", 0, 7),
         role_names("v", 0, 7),
       ])
-    CallerSaved => []
-    CalleeSaved => []
+    CallerSaved =>
+      concat_role_names([
+        role_names("x", 0, 18),
+        role_names("r", 0, 18),
+        role_names("v", 0, 7),
+        role_names("v", 16, 31),
+      ])
+    CalleeSaved =>
+      concat_role_names([
+        role_names("x", 19, 29),
+        role_names("r", 19, 29),
+        ["sp", "wsp", "x31", "r31"],
+        role_names("v", 8, 15),
+      ])
     Reserved => []
     ZeroFlag => ["zf"]
     CarryFlag => ["cf"]

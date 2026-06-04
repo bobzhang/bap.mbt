@@ -867,6 +867,11 @@ pub fn Term::lhs(self : Term[Def]) -> Var {
 }
 
 ///|
+pub fn Def::lhs(def : Term[Def]) -> Var {
+  def.lhs()
+}
+
+///|
 pub fn Term::def_var(self : Term[Def]) -> Var {
   self.lhs()
 }
@@ -877,8 +882,18 @@ pub fn Term::rhs(self : Term[Def]) -> Exp {
 }
 
 ///|
+pub fn Def::rhs(def : Term[Def]) -> Exp {
+  def.rhs()
+}
+
+///|
 pub fn Term::def_value(self : Term[Def]) -> Exp {
   self.rhs()
+}
+
+///|
+pub fn Def::value(def : Term[Def]) -> Exp {
+  def.def_value()
 }
 
 ///|
@@ -887,8 +902,18 @@ pub fn Term::with_lhs(self : Term[Def], lhs : Var) -> Term[Def] {
 }
 
 ///|
+pub fn Def::with_lhs(def : Term[Def], lhs : Var) -> Term[Def] {
+  def.with_lhs(lhs)
+}
+
+///|
 pub fn Term::with_rhs(self : Term[Def], rhs : Exp) -> Term[Def] {
   self.with_payload({ ..self.payload_value, rhs, })
+}
+
+///|
+pub fn Def::with_rhs(def : Term[Def], rhs : Exp) -> Term[Def] {
+  def.with_rhs(rhs)
 }
 
 ///|
@@ -911,6 +936,11 @@ pub fn Term::phi_lhs(self : Term[Phi]) -> Var {
 }
 
 ///|
+pub fn Phi::lhs(phi : Term[Phi]) -> Var {
+  phi.phi_lhs()
+}
+
+///|
 pub fn Term::phi_var(self : Term[Phi]) -> Var {
   self.phi_lhs()
 }
@@ -918,6 +948,11 @@ pub fn Term::phi_var(self : Term[Phi]) -> Var {
 ///|
 pub fn Term::with_phi_lhs(self : Term[Phi], lhs : Var) -> Term[Phi] {
   self.with_payload({ ..self.payload_value, lhs, })
+}
+
+///|
+pub fn Phi::with_lhs(phi : Term[Phi], lhs : Var) -> Term[Phi] {
+  phi.with_phi_lhs(lhs)
 }
 
 ///|
@@ -931,6 +966,11 @@ pub fn Term::values(self : Term[Phi]) -> Array[(Tid, Exp)] {
 }
 
 ///|
+pub fn Phi::values(phi : Term[Phi]) -> Array[(Tid, Exp)] {
+  phi.values()
+}
+
+///|
 pub fn Term::phi_options(self : Term[Phi]) -> Array[(Tid, Exp)] {
   self.values()
 }
@@ -941,10 +981,20 @@ pub fn Term::options(self : Term[Phi]) -> Array[(Tid, Exp)] {
 }
 
 ///|
+pub fn Phi::options(phi : Term[Phi]) -> Array[(Tid, Exp)] {
+  phi.options()
+}
+
+///|
 pub fn Term::select(self : Term[Phi], tid : Tid) -> Exp? {
   self.payload_value.values
   .search_by(pair => pair.0 == tid)
   .map(i => self.payload_value.values[i].1)
+}
+
+///|
+pub fn Phi::select(phi : Term[Phi], tid : Tid) -> Exp? {
+  phi.select(tid)
 }
 
 ///|
@@ -953,6 +1003,11 @@ pub fn Term::select_or_unknown(self : Term[Phi], tid : Tid) -> Exp {
     Some(exp) => exp
     None => Unknown("unresolved-tid \{tid.to_string()}", self.phi_lhs().typ())
   }
+}
+
+///|
+pub fn Phi::select_or_unknown(phi : Term[Phi], tid : Tid) -> Exp {
+  phi.select_or_unknown(tid)
 }
 
 ///|
@@ -966,11 +1021,21 @@ pub fn Term::update_phi(self : Term[Phi], tid : Tid, exp : Exp) -> Term[Phi] {
 }
 
 ///|
+pub fn Phi::update(phi : Term[Phi], tid : Tid, exp : Exp) -> Term[Phi] {
+  phi.update_phi(tid, exp)
+}
+
+///|
 pub fn Term::remove_phi(self : Term[Phi], tid : Tid) -> Term[Phi] {
   self.with_payload({
     ..self.payload_value,
     values: self.payload_value.values.filter(pair => pair.0 != tid),
   })
+}
+
+///|
+pub fn Phi::remove(phi : Term[Phi], tid : Tid) -> Term[Phi] {
+  phi.remove_phi(tid)
 }
 
 ///|
@@ -1018,8 +1083,18 @@ pub fn Term::kind(self : Term[Jmp]) -> JmpKind {
 }
 
 ///|
+pub fn Jmp::kind(jmp : Term[Jmp]) -> JmpKind {
+  jmp.kind()
+}
+
+///|
 pub fn Term::cond(self : Term[Jmp]) -> Exp {
   self.payload_value.cond
+}
+
+///|
+pub fn Jmp::cond(jmp : Term[Jmp]) -> Exp {
+  jmp.cond()
 }
 
 ///|
@@ -1037,8 +1112,18 @@ pub fn Term::with_kind(self : Term[Jmp], kind : JmpKind) -> Term[Jmp] {
 }
 
 ///|
+pub fn Jmp::with_kind(jmp : Term[Jmp], kind : JmpKind) -> Term[Jmp] {
+  jmp.with_kind(kind)
+}
+
+///|
 pub fn Term::with_cond(self : Term[Jmp], cond : Exp) -> Term[Jmp] {
   self.with_payload({ ..self.payload_value, cond, })
+}
+
+///|
+pub fn Jmp::with_cond(jmp : Term[Jmp], cond : Exp) -> Term[Jmp] {
+  jmp.with_cond(cond)
 }
 
 ///|
@@ -1052,6 +1137,11 @@ pub fn Term::with_guard(self : Term[Jmp], value : Exp?) -> Term[Jmp] {
 }
 
 ///|
+pub fn Jmp::with_guard(jmp : Term[Jmp], value : Exp?) -> Term[Jmp] {
+  jmp.with_guard(value)
+}
+
+///|
 pub fn Term::dst(self : Term[Jmp]) -> JmpDst? {
   match self.kind() {
     Goto(label) => Some(jmp_dst_of_label(label))
@@ -1059,6 +1149,11 @@ pub fn Term::dst(self : Term[Jmp]) -> JmpDst? {
     Interrupt(_, tid) => Some(ResolvedDst(tid))
     JmpCall(call) => call.return_label.map(jmp_dst_of_label)
   }
+}
+
+///|
+pub fn Jmp::dst(jmp : Term[Jmp]) -> JmpDst? {
+  jmp.dst()
 }
 
 ///|
@@ -1072,13 +1167,28 @@ pub fn Term::alt(self : Term[Jmp]) -> JmpDst? {
 }
 
 ///|
+pub fn Jmp::alt(jmp : Term[Jmp]) -> JmpDst? {
+  jmp.alt()
+}
+
+///|
 pub fn Term::with_dst(self : Term[Jmp], dst : JmpDst?) -> Term[Jmp] {
   self.with_kind(jmp_kind_of_dst_alt(dst, self.alt()))
 }
 
 ///|
+pub fn Jmp::with_dst(jmp : Term[Jmp], dst : JmpDst?) -> Term[Jmp] {
+  jmp.with_dst(dst)
+}
+
+///|
 pub fn Term::with_alt(self : Term[Jmp], alt : JmpDst?) -> Term[Jmp] {
   self.with_kind(jmp_kind_of_dst_alt(self.dst(), alt))
+}
+
+///|
+pub fn Jmp::with_alt(jmp : Term[Jmp], alt : JmpDst?) -> Term[Jmp] {
+  jmp.with_alt(alt)
 }
 
 ///|
@@ -1097,6 +1207,11 @@ pub fn Term::arg_lhs(self : Term[Arg]) -> Var {
 }
 
 ///|
+pub fn Arg::lhs(arg : Term[Arg]) -> Var {
+  arg.arg_lhs()
+}
+
+///|
 pub fn Term::arg_var(self : Term[Arg]) -> Var {
   self.arg_lhs()
 }
@@ -1107,8 +1222,18 @@ pub fn Term::arg_rhs(self : Term[Arg]) -> Exp {
 }
 
 ///|
+pub fn Arg::rhs(arg : Term[Arg]) -> Exp {
+  arg.arg_rhs()
+}
+
+///|
 pub fn Term::arg_value(self : Term[Arg]) -> Exp {
   self.arg_rhs()
+}
+
+///|
+pub fn Arg::value(arg : Term[Arg]) -> Exp {
+  arg.arg_value()
 }
 
 ///|
@@ -1117,13 +1242,28 @@ pub fn Term::intent(self : Term[Arg]) -> Intent? {
 }
 
 ///|
+pub fn Arg::intent(arg : Term[Arg]) -> Intent? {
+  arg.intent()
+}
+
+///|
 pub fn Term::with_intent(self : Term[Arg], intent : Intent) -> Term[Arg] {
   self.with_payload({ ..self.payload_value, intent: Some(intent) })
 }
 
 ///|
+pub fn Arg::with_intent(arg : Term[Arg], intent : Intent) -> Term[Arg] {
+  arg.with_intent(intent)
+}
+
+///|
 pub fn Term::with_unknown_intent(self : Term[Arg]) -> Term[Arg] {
   self.with_payload({ ..self.payload_value, intent: None })
+}
+
+///|
+pub fn Arg::with_unknown_intent(arg : Term[Arg]) -> Term[Arg] {
+  arg.with_unknown_intent()
 }
 
 ///|

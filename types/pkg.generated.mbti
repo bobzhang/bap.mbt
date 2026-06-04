@@ -232,9 +232,15 @@ pub(all) struct Arg {
 pub fn Arg::alloc_size() -> Attr
 pub fn Arg::create(Var, Exp, intent? : Intent, tid? : Tid) -> Term[Self]
 pub fn Arg::format(String) -> Attr
+pub fn Arg::intent(Term[Self]) -> Intent?
+pub fn Arg::lhs(Term[Self]) -> Var
 pub fn Arg::nonnull() -> Attr
 pub fn Arg::restricted() -> Attr
+pub fn Arg::rhs(Term[Self]) -> Exp
+pub fn Arg::value(Term[Self]) -> Exp
 pub fn Arg::warn_unused() -> Attr
+pub fn Arg::with_intent(Term[Self], Intent) -> Term[Self]
+pub fn Arg::with_unknown_intent(Term[Self]) -> Term[Self]
 
 pub(all) struct Attr {
   key : String
@@ -517,6 +523,14 @@ pub(all) struct Def {
   rhs : Exp
 } derive(Eq, @debug.Debug)
 pub fn Def::create(Var, Exp, tid? : Tid) -> Term[Self]
+pub fn Def::free_vars(Term[Self]) -> Array[Var]
+pub fn Def::lhs(Term[Self]) -> Var
+pub fn Def::map_exp(Term[Self], (Exp) -> Exp) -> Term[Self]
+pub fn Def::rhs(Term[Self]) -> Exp
+pub fn Def::substitute(Term[Self], Exp, Exp) -> Term[Self]
+pub fn Def::value(Term[Self]) -> Exp
+pub fn Def::with_lhs(Term[Self], Var) -> Term[Self]
+pub fn Def::with_rhs(Term[Self], Exp) -> Term[Self]
 
 pub(all) enum Exp {
   Int(Word)
@@ -907,14 +921,27 @@ pub(all) struct Jmp {
   kind : JmpKind
   cond : Exp
 } derive(Eq, @debug.Debug)
+pub fn Jmp::alt(Term[Self]) -> JmpDst?
+pub fn Jmp::cond(Term[Self]) -> Exp
 pub fn Jmp::create(JmpKind, cond? : Exp, tid? : Tid) -> Term[Self]
 pub fn Jmp::create_call(Call, cond? : Exp, tid? : Tid) -> Term[Self]
 pub fn Jmp::create_goto(Label, cond? : Exp, tid? : Tid) -> Term[Self]
 pub fn Jmp::create_int(Int, Tid, cond? : Exp, term_tid? : Tid) -> Term[Self]
 pub fn Jmp::create_ret(Label, cond? : Exp, tid? : Tid) -> Term[Self]
+pub fn Jmp::dst(Term[Self]) -> JmpDst?
+pub fn Jmp::exps(Term[Self]) -> Array[Exp]
+pub fn Jmp::free_vars(Term[Self]) -> Array[Var]
 pub fn Jmp::indirect(Exp) -> JmpDst
+pub fn Jmp::kind(Term[Self]) -> JmpKind
+pub fn Jmp::map_exp(Term[Self], (Exp) -> Exp) -> Term[Self]
 pub fn Jmp::resolve(JmpDst) -> JmpResolution
 pub fn Jmp::resolved(Tid) -> JmpDst
+pub fn Jmp::substitute(Term[Self], Exp, Exp) -> Term[Self]
+pub fn Jmp::with_alt(Term[Self], JmpDst?) -> Term[Self]
+pub fn Jmp::with_cond(Term[Self], Exp) -> Term[Self]
+pub fn Jmp::with_dst(Term[Self], JmpDst?) -> Term[Self]
+pub fn Jmp::with_guard(Term[Self], Exp?) -> Term[Self]
+pub fn Jmp::with_kind(Term[Self], JmpKind) -> Term[Self]
 
 pub(all) enum JmpDst {
   ResolvedDst(Tid)
@@ -955,7 +982,18 @@ pub(all) struct Phi {
   values : Array[(Tid, Exp)]
 } derive(Eq, @debug.Debug)
 pub fn Phi::create(Var, Tid, Exp, tid? : Tid) -> Term[Self]
+pub fn Phi::free_vars(Term[Self]) -> Array[Var]
+pub fn Phi::lhs(Term[Self]) -> Var
+pub fn Phi::map_exp(Term[Self], (Exp) -> Exp) -> Term[Self]
 pub fn Phi::of_list(Var, Array[(Tid, Exp)], tid? : Tid) -> Term[Self]
+pub fn Phi::options(Term[Self]) -> Array[(Tid, Exp)]
+pub fn Phi::remove(Term[Self], Tid) -> Term[Self]
+pub fn Phi::select(Term[Self], Tid) -> Exp?
+pub fn Phi::select_or_unknown(Term[Self], Tid) -> Exp
+pub fn Phi::substitute(Term[Self], Exp, Exp) -> Term[Self]
+pub fn Phi::update(Term[Self], Tid, Exp) -> Term[Self]
+pub fn Phi::values(Term[Self]) -> Array[(Tid, Exp)]
+pub fn Phi::with_lhs(Term[Self], Var) -> Term[Self]
 
 pub(all) struct Program {
   subs : Array[Term[Sub]]

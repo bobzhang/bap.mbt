@@ -1415,8 +1415,13 @@ test "phi nodes jumps calls and args expose BAP-style payloads" {
   let def = @types.Def::create(lhs, one)
   assert_true(def.def_var() == lhs)
   assert_true(def.def_value() == one)
+  assert_true(@types.Def::lhs(def) == lhs)
+  assert_true(@types.Def::rhs(def) == one)
+  assert_true(@types.Def::value(def) == one)
   let ptr = @types.Var::new(name="ptr", typ=@types.ValueType::reg32_t())
   let ptr_exp : @types.Exp = Var(ptr)
+  assert_true(@types.Def::with_lhs(def, ptr).lhs() == ptr)
+  assert_true(@types.Def::with_rhs(def, ptr_exp).rhs() == ptr_exp)
   let phi = @types.Phi::of_list(lhs, [(left, one)]).update_phi(right, two)
   let single = @types.Phi::create(
     lhs,
@@ -1427,12 +1432,20 @@ test "phi nodes jumps calls and args expose BAP-style payloads" {
   assert_true(single.select(left) == Some(one))
   assert_true(single.tid().name() == Some("phi-term"))
   assert_true(phi.select(left) == Some(one))
+  assert_true(@types.Phi::select(phi, left) == Some(one))
   assert_true(phi.select(right) == Some(two))
+  assert_true(@types.Phi::update(single, right, two).select(right) == Some(two))
   assert_true(phi.phi_var() == lhs)
+  assert_true(@types.Phi::lhs(phi) == lhs)
   assert_true(phi.phi_options() == phi.values())
   assert_true(phi.options() == phi.values())
+  assert_true(@types.Phi::values(phi) == phi.values())
+  assert_true(@types.Phi::options(phi) == phi.options())
   assert_true(phi.with_phi_var(ptr).phi_var() == ptr)
+  assert_true(@types.Phi::with_lhs(phi, ptr).phi_lhs() == ptr)
+  assert_true(@types.Phi::remove(phi, right).select(right) is None)
   assert_true(single.select_or_unknown(left) == one)
+  assert_true(@types.Phi::select_or_unknown(single, left) == one)
   assert_true(
     single.select_or_unknown(right) == Unknown("unresolved-tid @right", typ),
   )
@@ -1450,18 +1463,44 @@ test "phi nodes jumps calls and args expose BAP-style payloads" {
   )
   let goto = @types.Jmp::create_goto(@types.Label::direct(left))
   assert_true(goto.dst() == Some(@types.Jmp::resolved(left)))
+  assert_true(@types.Jmp::dst(goto) == Some(@types.Jmp::resolved(left)))
   assert_true(goto.alt() is None)
+  assert_true(@types.Jmp::alt(goto) is None)
   assert_true(goto.jmp_guard() is None)
   assert_true(goto.with_guard(Some(guard_exp)).jmp_guard() == Some(guard_exp))
   assert_true(
+    @types.Jmp::with_guard(goto, Some(guard_exp)).jmp_guard() == Some(guard_exp),
+  )
+  assert_true(
     goto.with_guard(Some(guard_exp)).with_guard(None).jmp_guard() is None,
+  )
+  assert_true(@types.Jmp::with_guard(goto, None).jmp_guard() is None)
+  assert_true(@types.Jmp::kind(goto) == goto.kind())
+  assert_true(@types.Jmp::cond(goto) == goto.cond())
+  assert_true(@types.Jmp::with_cond(goto, guard_exp).cond() == guard_exp)
+  assert_true(
+    @types.Jmp::with_kind(goto, Ret(@types.Label::direct(right))).kind()
+    is Ret(_),
   )
   assert_true(
     goto.with_dst(Some(@types.Jmp::indirect(ptr_exp))).kind() ==
     Goto(Indirect(ptr_exp)),
   )
   assert_true(
+    @types.Jmp::with_dst(goto, Some(@types.Jmp::indirect(ptr_exp))).kind() ==
+    Goto(Indirect(ptr_exp)),
+  )
+  assert_true(
     goto.with_alt(Some(@types.Jmp::resolved(right))).kind() ==
+    JmpCall(
+      @types.Call::create(
+        target=@types.Label::direct(right),
+        return_label=@types.Label::direct(left),
+      ),
+    ),
+  )
+  assert_true(
+    @types.Jmp::with_alt(goto, Some(@types.Jmp::resolved(right))).kind() ==
     JmpCall(
       @types.Call::create(
         target=@types.Label::direct(right),
@@ -1489,6 +1528,15 @@ test "phi nodes jumps calls and args expose BAP-style payloads" {
   assert_true(arg.intent() == Some(Both))
   assert_true(arg.arg_var() == lhs)
   assert_true(arg.arg_value() == one)
+  assert_true(@types.Arg::lhs(arg) == lhs)
+  assert_true(@types.Arg::rhs(arg) == one)
+  assert_true(@types.Arg::value(arg) == one)
+  assert_true(@types.Arg::intent(arg) == Some(Both))
+  assert_true(
+    @types.Arg::with_intent(@types.Arg::create(lhs, one), Out).intent() ==
+    Some(Out),
+  )
+  assert_true(@types.Arg::with_unknown_intent(arg).intent() is None)
   let tagged_arg = arg
     .with_warn_unused()
     .with_alloc_size()
@@ -1584,13 +1632,21 @@ test "ir definition phi and jump helpers traverse expressions" {
   let def_vars = def.def_free_vars()
   assert_true(def_vars.length() == 1)
   assert_true(def_vars.any(item => item == y))
+  assert_true(@types.Def::free_vars(def) == def_vars)
   let def_subst = def.substitute_def_var(y, Int(word8(9)))
   assert_true(def_subst.rhs() == BinOp(Plus, Int(word8(9)), one))
+  let def_subst_alias = @types.Def::substitute(def, Var(y), Int(word8(9)))
+  assert_true(def_subst_alias.rhs() == BinOp(Plus, Int(word8(9)), one))
   let folded = @types.Def::create(x, BinOp(Plus, Int(word8(2)), Int(word8(3)))).map_def_exp(exp => {
       exp.simplify()
     },
   )
   assert_true(folded.rhs() == Int(word8(5)))
+  let folded_alias = @types.Def::map_exp(
+    @types.Def::create(x, BinOp(Plus, Int(word8(2)), Int(word8(3)))),
+    exp => exp.simplify(),
+  )
+  assert_true(folded_alias.rhs() == Int(word8(5)))
   let left = @types.Tid::for_name("left")
   let right = @types.Tid::for_name("right")
   let phi = @types.Phi::of_list(x, [
@@ -1601,14 +1657,23 @@ test "ir definition phi and jump helpers traverse expressions" {
   assert_true(phi_vars.length() == 2)
   assert_true(phi_vars.any(item => item == y))
   assert_true(phi_vars.any(item => item == z))
+  assert_true(@types.Phi::free_vars(phi) == phi_vars)
   let phi_subst = phi.substitute_phi_var(z, Int(word8(7)))
   assert_true(phi_subst.select(right) == Some(BinOp(Xor, Int(word8(7)), one)))
+  let phi_subst_alias = @types.Phi::substitute(phi, Var(z), Int(word8(7)))
+  assert_true(
+    phi_subst_alias.select(right) == Some(BinOp(Xor, Int(word8(7)), one)),
+  )
+  let phi_mapped_alias = @types.Phi::map_exp(phi, _ => one)
+  assert_true(phi_mapped_alias.select(left) == Some(one))
+  assert_true(phi_mapped_alias.select(right) == Some(one))
   let jmp = @types.Jmp::create_goto(
     @types.Label::indirect(Var(y)),
     cond=BinOp(Eq, Var(z), Int(word8(0))),
   )
   let jmp_exps = jmp.jmp_exps()
   assert_true(jmp.exps() == jmp_exps)
+  assert_true(@types.Jmp::exps(jmp) == jmp_exps)
   assert_true(jmp_exps.length() == 2)
   assert_true(jmp_exps[0] == Var(y))
   assert_true(jmp_exps[1] == BinOp(Eq, Var(z), Int(word8(0))))
@@ -1616,8 +1681,15 @@ test "ir definition phi and jump helpers traverse expressions" {
   assert_true(jmp_vars.length() == 2)
   assert_true(jmp_vars.any(item => item == y))
   assert_true(jmp_vars.any(item => item == z))
+  assert_true(@types.Jmp::free_vars(jmp) == jmp_vars)
   let jmp_subst = jmp.substitute_jmp_var(y, Int(word8(4)))
   assert_true(jmp_subst.kind() is Goto(Indirect(Int(_))))
+  let jmp_subst_alias = @types.Jmp::substitute(jmp, Var(y), Int(word8(4)))
+  assert_true(jmp_subst_alias.kind() is Goto(Indirect(Int(_))))
+  let jmp_mapped_alias = @types.Jmp::map_exp(jmp, _ => one)
+  assert_true(jmp_mapped_alias.exps().length() == 2)
+  assert_true(jmp_mapped_alias.exps()[0] == one)
+  assert_true(jmp_mapped_alias.cond() == one)
   let call_return : @types.Exp = Var(x)
   let call_jmp = @types.Jmp::create_call(
     @types.Call::create(

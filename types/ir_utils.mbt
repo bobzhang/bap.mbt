@@ -126,8 +126,18 @@ pub fn Term::map_def_exp(self : Term[Def], f : (Exp) -> Exp) -> Term[Def] {
 }
 
 ///|
+pub fn Def::map_exp(def : Term[Def], f : (Exp) -> Exp) -> Term[Def] {
+  def.map_def_exp(f)
+}
+
+///|
 pub fn Term::def_free_vars(self : Term[Def]) -> Array[Var] {
   self.rhs().free_vars()
+}
+
+///|
+pub fn Def::free_vars(def : Term[Def]) -> Array[Var] {
+  def.def_free_vars()
 }
 
 ///|
@@ -140,11 +150,25 @@ pub fn Term::substitute_def_var(
 }
 
 ///|
+pub fn Def::substitute(
+  def : Term[Def],
+  target : Exp,
+  replacement : Exp,
+) -> Term[Def] {
+  def.map_def_exp(exp => exp.substitute(target, replacement))
+}
+
+///|
 pub fn Term::map_phi_exp(self : Term[Phi], f : (Exp) -> Exp) -> Term[Phi] {
   self.with_payload({
     ..self.payload_value,
     values: self.payload_value.values.map(pair => (pair.0, f(pair.1))),
   })
+}
+
+///|
+pub fn Phi::map_exp(phi : Term[Phi], f : (Exp) -> Exp) -> Term[Phi] {
+  phi.map_phi_exp(f)
 }
 
 ///|
@@ -157,6 +181,11 @@ pub fn Term::phi_free_vars(self : Term[Phi]) -> Array[Var] {
 }
 
 ///|
+pub fn Phi::free_vars(phi : Term[Phi]) -> Array[Var] {
+  phi.phi_free_vars()
+}
+
+///|
 pub fn Term::substitute_phi_var(
   self : Term[Phi],
   variable : Var,
@@ -166,8 +195,22 @@ pub fn Term::substitute_phi_var(
 }
 
 ///|
+pub fn Phi::substitute(
+  phi : Term[Phi],
+  target : Exp,
+  replacement : Exp,
+) -> Term[Phi] {
+  phi.map_phi_exp(exp => exp.substitute(target, replacement))
+}
+
+///|
 pub fn Term::map_jmp_exp(self : Term[Jmp], f : (Exp) -> Exp) -> Term[Jmp] {
   self.with_payload({ kind: self.kind().map_exp(f), cond: f(self.cond()) })
+}
+
+///|
+pub fn Jmp::map_exp(jmp : Term[Jmp], f : (Exp) -> Exp) -> Term[Jmp] {
+  jmp.map_jmp_exp(f)
 }
 
 ///|
@@ -176,6 +219,11 @@ pub fn Term::jmp_exps(self : Term[Jmp]) -> Array[Exp] {
   self.kind().collect_exps(exps)
   exps.push(self.cond())
   exps
+}
+
+///|
+pub fn Jmp::exps(jmp : Term[Jmp]) -> Array[Exp] {
+  jmp.jmp_exps()
 }
 
 ///|
@@ -193,12 +241,26 @@ pub fn Term::jmp_free_vars(self : Term[Jmp]) -> Array[Var] {
 }
 
 ///|
+pub fn Jmp::free_vars(jmp : Term[Jmp]) -> Array[Var] {
+  jmp.jmp_free_vars()
+}
+
+///|
 pub fn Term::substitute_jmp_var(
   self : Term[Jmp],
   variable : Var,
   replacement : Exp,
 ) -> Term[Jmp] {
   self.map_jmp_exp(exp => exp.substitute_var(variable, replacement))
+}
+
+///|
+pub fn Jmp::substitute(
+  jmp : Term[Jmp],
+  target : Exp,
+  replacement : Exp,
+) -> Term[Jmp] {
+  jmp.map_jmp_exp(exp => exp.substitute(target, replacement))
 }
 
 ///|

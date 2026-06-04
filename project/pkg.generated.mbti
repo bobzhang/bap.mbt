@@ -100,6 +100,10 @@ pub fn registered_collators() -> Array[ProjectCollatorInfo]
 pub fn resolve_passes(Array[String]) -> Result[Array[ProjectPass], String]
 
 // Errors
+pub(all) suberror ProjectDisasmError {
+  ProjectDisasmFailure(String)
+} derive(Eq, @debug.Debug)
+
 pub(all) suberror ProjectDisassemblyLinearSweepError {
   LinearSweepFailure(String)
 } derive(Eq, @debug.Debug)
@@ -282,6 +286,25 @@ pub fn ProjectCollatorInfo::description(Self) -> String
 pub fn ProjectCollatorInfo::name(Self) -> String
 pub fn ProjectCollatorInfo::pkg(Self) -> String
 pub fn ProjectCollatorInfo::qualified_name(Self) -> @knowledge.Name
+
+type ProjectDisasm
+pub fn ProjectDisasm::cfg(Self) -> ProjectDisassemblyCfg
+pub fn ProjectDisasm::create(ProjectDisassemblyCfg) -> Self
+pub fn ProjectDisasm::disassembly(Self) -> ProjectDisassemblyState
+pub fn ProjectDisasm::errors(Self) -> Array[ProjectDisassemblyRecError]
+pub fn ProjectDisasm::from_project(Project, errors? : Array[ProjectDisassemblyRecError]) -> Self
+pub fn ProjectDisasm::has_errors(Self) -> Bool
+pub fn ProjectDisasm::insns(Self) -> Array[(@memory.Memory, ProjectDisassemblyInstruction)]
+pub fn ProjectDisasm::merge(Self, Self) -> Self
+pub fn ProjectDisasm::of_file(String, backend? : String, brancher? : ProjectBrancher, rooter? : ProjectRooter, loader? : String) -> Result[Self, String]
+pub fn ProjectDisasm::of_file_exn(String, backend? : String, brancher? : ProjectBrancher, rooter? : ProjectRooter, loader? : String) -> Self raise ProjectDisasmError
+pub fn ProjectDisasm::of_image(@image.Image, backend? : String, brancher? : ProjectBrancher, rooter? : ProjectRooter) -> Result[Self, String]
+pub fn ProjectDisasm::of_image_exn(@image.Image, backend? : String, brancher? : ProjectBrancher, rooter? : ProjectRooter) -> Self raise ProjectDisasmError
+pub fn ProjectDisasm::of_mem(@core_theory.Target, @memory.Memory, backend? : String, brancher? : ProjectBrancher, rooter? : ProjectRooter) -> Result[Self, String]
+pub fn ProjectDisasm::of_mem_exn(@core_theory.Target, @memory.Memory, backend? : String, brancher? : ProjectBrancher, rooter? : ProjectRooter) -> Self raise ProjectDisasmError
+pub fn ProjectDisasm::of_project(Project, backend? : String, brancher? : ProjectBrancher) -> Result[Self, String]
+pub fn ProjectDisasm::of_project_exn(Project, backend? : String, brancher? : ProjectBrancher) -> Self raise ProjectDisasmError
+pub fn ProjectDisasm::project(Self) -> Project
 
 type ProjectDisassemblyBasic
 pub fn ProjectDisassemblyBasic::attrs(Self) -> String

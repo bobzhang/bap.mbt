@@ -131,6 +131,43 @@ test "project binary input is raw file loading with explicit target" {
 }
 
 ///|
+test "project disasm of_file uses explicit loader on native target" {
+  let loader = @project.ProjectInputLoader::create(
+    name="unit-project-disasm-file-native",
+    extensions=["mod"],
+    priority=20,
+    load=data => {
+      Ok(
+        @project.ProjectInput::from_bytes(
+          target=@core_theory.Target::unknown(),
+          data,
+          endian=LittleEndian,
+          base=0x1200UL,
+          filename="moon.mod",
+        ),
+      )
+    },
+  )
+  match @project.register_input_loader(loader) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  match
+    @project.ProjectDisasm::of_file(
+      "moon.mod",
+      loader="unit-project-disasm-file-native",
+      backend="raw-bytes",
+    ) {
+    Ok(disasm) => {
+      assert_true(disasm.project().filename() == Some("moon.mod"))
+      assert_true(disasm.disassembly().instruction_count() > 0)
+      assert_true(disasm.project().get("disassembler") == Some("raw-bytes"))
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project file input loads deduplicated libraries with the same loader" {
   let loader = @project.ProjectInputLoader::create(
     name="unit-project-library-native",

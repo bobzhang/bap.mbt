@@ -873,6 +873,10 @@ test "ir term query helpers match classes attributes vars and children" {
   assert_true(!mapped_flags.del_visited().is_visited())
   assert_true(!mapped_flags.del_live().is_live())
   assert_true(!mapped_flags.del_dead().is_dead())
+  let custom_flag = def_term.set_flag("bml-custom")
+  assert_true(custom_flag.get_attr("bml-custom") == Some("true"))
+  assert_true(custom_flag.has_flag("bml-custom"))
+  assert_true(!custom_flag.del_flag("bml-custom").has_flag("bml-custom"))
   let mapped_sub_flags = sub_term
     .set_sub_extern()
     .set_sub_leaf()

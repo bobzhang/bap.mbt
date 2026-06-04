@@ -96,6 +96,21 @@ pub fn IrTerm::has_attr_value(
 }
 
 ///|
+pub fn IrTerm::set_flag(self : IrTerm, key : String) -> IrTerm {
+  self.set_attr(Attr::flag(key))
+}
+
+///|
+pub fn IrTerm::del_flag(self : IrTerm, key : String) -> IrTerm {
+  self.del_attr(key)
+}
+
+///|
+pub fn IrTerm::has_flag(self : IrTerm, key : String) -> Bool {
+  self.has_attr(key)
+}
+
+///|
 fn ir_term_double(term : IrTerm, key : String) -> Double? {
   match term.get_attr(key) {
     Some(text) =>
@@ -378,77 +393,77 @@ pub fn IrTerm::taints(self : IrTerm) -> Bool {
 
 ///|
 pub fn IrTerm::is_synthetic(self : IrTerm) -> Bool {
-  self.has_attr(term_synthetic_attr)
+  self.has_flag(term_synthetic_attr)
 }
 
 ///|
 pub fn IrTerm::set_synthetic(self : IrTerm) -> IrTerm {
-  self.set_attr(Attr::synthetic())
+  self.set_flag(term_synthetic_attr)
 }
 
 ///|
 pub fn IrTerm::del_synthetic(self : IrTerm) -> IrTerm {
-  self.del_attr(term_synthetic_attr)
+  self.del_flag(term_synthetic_attr)
 }
 
 ///|
 pub fn IrTerm::is_visited(self : IrTerm) -> Bool {
-  self.has_attr(term_visited_attr)
+  self.has_flag(term_visited_attr)
 }
 
 ///|
 pub fn IrTerm::set_visited(self : IrTerm) -> IrTerm {
-  self.set_attr(Attr::visited())
+  self.set_flag(term_visited_attr)
 }
 
 ///|
 pub fn IrTerm::del_visited(self : IrTerm) -> IrTerm {
-  self.del_attr(term_visited_attr)
+  self.del_flag(term_visited_attr)
 }
 
 ///|
 pub fn IrTerm::is_live(self : IrTerm) -> Bool {
-  self.has_attr(term_live_attr)
+  self.has_flag(term_live_attr)
 }
 
 ///|
 pub fn IrTerm::set_live(self : IrTerm) -> IrTerm {
-  self.set_attr(Attr::live())
+  self.set_flag(term_live_attr)
 }
 
 ///|
 pub fn IrTerm::del_live(self : IrTerm) -> IrTerm {
-  self.del_attr(term_live_attr)
+  self.del_flag(term_live_attr)
 }
 
 ///|
 pub fn IrTerm::is_dead(self : IrTerm) -> Bool {
-  self.has_attr(term_dead_attr)
+  self.has_flag(term_dead_attr)
 }
 
 ///|
 pub fn IrTerm::set_dead(self : IrTerm) -> IrTerm {
-  self.set_attr(Attr::dead())
+  self.set_flag(term_dead_attr)
 }
 
 ///|
 pub fn IrTerm::del_dead(self : IrTerm) -> IrTerm {
-  self.del_attr(term_dead_attr)
+  self.del_flag(term_dead_attr)
 }
 
 ///|
 fn IrTerm::set_sub_flag(self : IrTerm, key : String) -> IrTerm {
-  self.set_attr(Attr::flag(key))
+  self.set_flag(key)
 }
 
 ///|
 fn IrTerm::del_sub_flag(self : IrTerm, key : String) -> IrTerm {
-  self.del_attr(key)
+  self.del_flag(key)
 }
 
 ///|
 fn IrTerm::has_sub_flag(self : IrTerm, key : String) -> Bool {
-  self.has_attr(key)
+  self.has_flag(key)
 }
 
 ///|
@@ -618,17 +633,17 @@ pub fn IrTerm::is_sub_stub(self : IrTerm) -> Bool {
 
 ///|
 fn IrTerm::set_arg_flag(self : IrTerm, key : String) -> IrTerm {
-  self.set_attr(Attr::flag(key))
+  self.set_flag(key)
 }
 
 ///|
 fn IrTerm::del_arg_flag(self : IrTerm, key : String) -> IrTerm {
-  self.del_attr(key)
+  self.del_flag(key)
 }
 
 ///|
 fn IrTerm::has_arg_flag(self : IrTerm, key : String) -> Bool {
-  self.has_attr(key)
+  self.has_flag(key)
 }
 
 ///|

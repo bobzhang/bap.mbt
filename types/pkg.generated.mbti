@@ -692,6 +692,7 @@ pub fn IrTerm::del_color(Self) -> Self
 pub fn IrTerm::del_comment(Self) -> Self
 pub fn IrTerm::del_dead(Self) -> Self
 pub fn IrTerm::del_filename(Self) -> Self
+pub fn IrTerm::del_flag(Self, String) -> Self
 pub fn IrTerm::del_foreground(Self) -> Self
 pub fn IrTerm::del_format(Self) -> Self
 pub fn IrTerm::del_live(Self) -> Self
@@ -738,6 +739,7 @@ pub fn IrTerm::has_background(Self, IrColor) -> Bool
 pub fn IrTerm::has_child_tid(Self, Tid) -> Bool
 pub fn IrTerm::has_class(Self, IrTermClass) -> Bool
 pub fn IrTerm::has_color(Self, IrColor) -> Bool
+pub fn IrTerm::has_flag(Self, String) -> Bool
 pub fn IrTerm::has_foreground(Self, IrColor) -> Bool
 pub fn IrTerm::has_mark(Self) -> Bool
 pub fn IrTerm::has_name(Self, String) -> Bool
@@ -802,6 +804,7 @@ pub fn IrTerm::set_color(Self, IrColor) -> Self
 pub fn IrTerm::set_comment(Self, String) -> Self
 pub fn IrTerm::set_dead(Self) -> Self
 pub fn IrTerm::set_filename(Self, String) -> Self
+pub fn IrTerm::set_flag(Self, String) -> Self
 pub fn IrTerm::set_foreground(Self, IrColor) -> Self
 pub fn IrTerm::set_format(Self, String) -> Self
 pub fn IrTerm::set_live(Self) -> Self

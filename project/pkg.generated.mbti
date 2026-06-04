@@ -155,6 +155,7 @@ pub(all) suberror ProjectDisassemblyLinearSweepError {
 type Library
 pub fn Library::arch(Self) -> @core_theory.Target
 pub fn Library::create(name~ : String, target~ : @core_theory.Target, unit? : @core_theory.ProgramUnit, memory? : @memory.MemMap[String], symbols? : Array[@image.Symbol], program? : @types.Term[@types.Program], state? : ProjectState) -> Self
+pub fn Library::disasm(Self) -> ProjectDisasm
 pub fn Library::disassembly(Self) -> ProjectDisassemblyState
 pub fn Library::memory(Self) -> @memory.MemMap[String]
 pub fn Library::name(Self) -> String
@@ -187,6 +188,7 @@ pub fn Project::create_from_loader_named(Bytes, loader~ : String, target? : @cor
 pub fn Project::del(Self, String) -> Self
 pub fn[T] Project::del_tag(Self, ProjectStorageTag[T]) -> Self
 pub fn Project::destroy_ssa(Self) -> Self
+pub fn Project::disasm(Self) -> ProjectDisasm
 pub fn Project::disassemble(Self, driver~ : String) -> Result[Self, String]
 pub fn Project::disassemble_and_reconstruct(Self, driver? : String, brancher? : ProjectBrancher, reconstructor? : ProjectReconstructor) -> Result[Self, String]
 pub fn Project::disassemble_and_reconstruct_named(Self, driver? : String, brancher? : String, reconstructor? : String) -> Result[Self, String]

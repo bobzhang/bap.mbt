@@ -106,6 +106,25 @@ pub fn ProjectDisasm::from_project(
 }
 
 ///|
+pub fn Project::disasm(self : Project) -> ProjectDisasm {
+  ProjectDisasm::from_project(self)
+}
+
+///|
+pub fn Library::disasm(self : Library) -> ProjectDisasm {
+  ProjectDisasm::from_project(
+    Project::create(
+      target=self.target(),
+      filename?=self.unit().path(),
+      program=self.program(),
+      memory=self.memory(),
+      symbols=self.symbols(),
+      state=self.state(),
+    ),
+  )
+}
+
+///|
 pub fn ProjectDisasm::project(self : ProjectDisasm) -> Project {
   self.project_value
 }

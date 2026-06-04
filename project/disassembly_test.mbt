@@ -26,6 +26,40 @@ test "project disasm constructs from cfg and enumerates instructions" {
 }
 
 ///|
+test "project and library disasm accessors wrap existing state" {
+  let memory = project_disasm_test_memory(0xe050UL, b"\xc3")
+  let instruction = @project.ProjectDisassemblyInstruction::create(
+    memory,
+    assembly="ret",
+    code=0xc3,
+  )
+  let state = @project.ProjectState::empty().with_disassembly(
+    @project.ProjectDisassemblyState::empty()
+    .add_block(memory)
+    .add_instruction(instruction),
+  )
+  let project = @project.Project::empty(@core_theory.Target::unknown()).with_state(
+    state,
+  )
+  let project_disasm = project.disasm()
+  assert_true(project_disasm.disassembly().block_count() == 1)
+  assert_true(project_disasm.insns().length() == 1)
+  assert_true(
+    project_disasm.project().disassembly().instructions()[0].code() == 0xc3,
+  )
+  let library = @project.Library::create(
+    name="libdisasm.so",
+    target=@core_theory.Target::unknown(),
+    memory=@memory.MemMap::singleton(memory, "code"),
+    state~,
+  )
+  let library_disasm = library.disasm()
+  assert_true(library_disasm.disassembly().instruction_count() == 1)
+  assert_true(library_disasm.project().filename() == Some("libdisasm.so"))
+  assert_true(library_disasm.project().memory().length() == 1)
+}
+
+///|
 test "project disasm runs over memory and honors explicit brancher roots" {
   let memory = project_disasm_test_memory(0xe100UL, b"\x10\x20")
   let brancher = @project.ProjectBrancher::of_edges([

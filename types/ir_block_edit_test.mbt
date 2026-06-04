@@ -863,32 +863,59 @@ test "block definition split helpers preserve control transfer shape" {
   let before = block.split_before_def(def_y)
   assert_def_lhs_names(before.0, ["x"])
   assert_def_lhs_names(before.1, ["y", "z"])
+  let before_alias = block.split_before(def_y)
+  assert_def_lhs_names(before_alias.0, ["x"])
+  assert_def_lhs_names(before_alias.1, ["y", "z"])
   match before.0.jmps()[0].kind() {
     Goto(Direct(tid)) => assert_true(tid == before.1.tid())
     _ => fail("split block must jump to the second block")
   }
+  match before_alias.0.jmps()[0].kind() {
+    Goto(Direct(tid)) => assert_true(tid == before_alias.1.tid())
+    _ => fail("split-before alias must jump to the second block")
+  }
   assert_true(before.1.jmps()[0].same(jmp))
+  assert_true(before_alias.1.jmps()[0].same(jmp))
   let after = block.split_after_def(def_y)
   assert_def_lhs_names(after.0, ["x", "y"])
   assert_def_lhs_names(after.1, ["z"])
+  let after_alias = block.split_after(def_y)
+  assert_def_lhs_names(after_alias.0, ["x", "y"])
+  assert_def_lhs_names(after_alias.1, ["z"])
+  assert_true(after_alias.1.jmps()[0].same(jmp))
   let while_split = block.split_defs_while(term => term.lhs() != y)
   assert_true(while_split.0.tid() == block.tid())
   assert_def_lhs_names(while_split.0, ["x"])
   assert_def_lhs_names(while_split.1, ["y", "z"])
+  let while_alias = block.split_while(term => term.lhs() != y)
+  assert_true(while_alias.0.tid() == block.tid())
+  assert_def_lhs_names(while_alias.0, ["x"])
+  assert_def_lhs_names(while_alias.1, ["y", "z"])
   match while_split.0.jmps()[0].kind() {
     Goto(Direct(tid)) => assert_true(tid == while_split.1.tid())
     _ => fail("split-while block must jump to the second block")
   }
+  match while_alias.0.jmps()[0].kind() {
+    Goto(Direct(tid)) => assert_true(tid == while_alias.1.tid())
+    _ => fail("split-while alias must jump to the second block")
+  }
   assert_true(while_split.1.jmps()[0].same(jmp))
+  assert_true(while_alias.1.jmps()[0].same(jmp))
   let all_left = block.split_defs_while(_ => true)
   assert_def_lhs_names(all_left.0, ["x", "y", "z"])
   assert_def_lhs_names(all_left.1, [])
   let top = block.split_top_defs()
   assert_def_lhs_names(top.0, [])
   assert_def_lhs_names(top.1, ["x", "y", "z"])
+  let top_alias = block.split_top()
+  assert_def_lhs_names(top_alias.0, [])
+  assert_def_lhs_names(top_alias.1, ["x", "y", "z"])
   let bottom = block.split_bottom_defs()
   assert_def_lhs_names(bottom.0, ["x", "y", "z"])
   assert_def_lhs_names(bottom.1, [])
+  let bot_alias = block.split_bot()
+  assert_def_lhs_names(bot_alias.0, ["x", "y", "z"])
+  assert_def_lhs_names(bot_alias.1, [])
 }
 
 ///|

@@ -1329,11 +1329,16 @@ pub fn Term::select(Self[Phi], Tid) -> Exp?
 pub fn Term::select_or_unknown(Self[Phi], Tid) -> Exp
 pub fn[T] Term::set_attr(Self[T], Attr) -> Self[T]
 pub fn[T] Term::shell(Self[T]) -> String?
+pub fn Term::split_after(Self[Blk], Self[Def]) -> (Self[Blk], Self[Blk])
 pub fn Term::split_after_def(Self[Blk], Self[Def]) -> (Self[Blk], Self[Blk])
+pub fn Term::split_before(Self[Blk], Self[Def]) -> (Self[Blk], Self[Blk])
 pub fn Term::split_before_def(Self[Blk], Self[Def]) -> (Self[Blk], Self[Blk])
+pub fn Term::split_bot(Self[Blk]) -> (Self[Blk], Self[Blk])
 pub fn Term::split_bottom_defs(Self[Blk]) -> (Self[Blk], Self[Blk])
 pub fn Term::split_defs_while(Self[Blk], (Self[Def]) -> Bool) -> (Self[Blk], Self[Blk])
+pub fn Term::split_top(Self[Blk]) -> (Self[Blk], Self[Blk])
 pub fn Term::split_top_defs(Self[Blk]) -> (Self[Blk], Self[Blk])
+pub fn Term::split_while(Self[Blk], (Self[Def]) -> Bool) -> (Self[Blk], Self[Blk])
 pub fn Term::sub_aliases(Self[Sub]) -> Array[String]
 pub fn Term::sub_cfg(Self[Sub]) -> @graphlib.Graph[Tid, Tid]
 pub fn Term::sub_count(Self[Program]) -> Int

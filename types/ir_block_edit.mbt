@@ -1421,6 +1421,40 @@ pub fn Term::split_bottom_defs(self : Term[Blk]) -> (Term[Blk], Term[Blk]) {
 }
 
 ///|
+pub fn Term::split_before(
+  self : Term[Blk],
+  term : Term[Def],
+) -> (Term[Blk], Term[Blk]) {
+  self.split_before_def(term)
+}
+
+///|
+pub fn Term::split_after(
+  self : Term[Blk],
+  term : Term[Def],
+) -> (Term[Blk], Term[Blk]) {
+  self.split_after_def(term)
+}
+
+///|
+pub fn Term::split_while(
+  self : Term[Blk],
+  f : (Term[Def]) -> Bool,
+) -> (Term[Blk], Term[Blk]) {
+  self.split_defs_while(f)
+}
+
+///|
+pub fn Term::split_top(self : Term[Blk]) -> (Term[Blk], Term[Blk]) {
+  self.split_top_defs()
+}
+
+///|
+pub fn Term::split_bot(self : Term[Blk]) -> (Term[Blk], Term[Blk]) {
+  self.split_bottom_defs()
+}
+
+///|
 pub fn Term::find_var(self : Term[Blk], variable : Var) -> VarBinding? {
   let defs = self.payload_value.defs
   for offset in 0..<defs.length() {

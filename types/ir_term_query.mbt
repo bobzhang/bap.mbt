@@ -96,6 +96,26 @@ pub fn IrTerm::has_attr_value(
 }
 
 ///|
+pub fn IrTerm::is_synthetic(self : IrTerm) -> Bool {
+  self.has_attr(term_synthetic_attr)
+}
+
+///|
+pub fn IrTerm::is_visited(self : IrTerm) -> Bool {
+  self.has_attr(term_visited_attr)
+}
+
+///|
+pub fn IrTerm::is_live(self : IrTerm) -> Bool {
+  self.has_attr(term_live_attr)
+}
+
+///|
+pub fn IrTerm::is_dead(self : IrTerm) -> Bool {
+  self.has_attr(term_dead_attr)
+}
+
+///|
 pub fn IrTerm::has_mark(self : IrTerm) -> Bool {
   self.has_attr(term_mark_attr)
 }

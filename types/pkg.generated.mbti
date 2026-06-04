@@ -675,6 +675,10 @@ pub fn IrTerm::has_mark(Self) -> Bool
 pub fn IrTerm::has_name(Self, String) -> Bool
 pub fn IrTerm::has_tid(Self, Tid) -> Bool
 pub fn IrTerm::has_tid_text(Self, String) -> Bool
+pub fn IrTerm::is_dead(Self) -> Bool
+pub fn IrTerm::is_live(Self) -> Bool
+pub fn IrTerm::is_synthetic(Self) -> Bool
+pub fn IrTerm::is_visited(Self) -> Bool
 pub fn IrTerm::last(Self, IrTermClass) -> Self?
 pub fn IrTerm::last_child(Self, IrTermClass) -> Self?
 pub fn IrTerm::length(Self, IrTermClass) -> Int
@@ -1008,16 +1012,20 @@ pub fn Term::insert_sub_after(Self[Program], Self[Sub], after? : Tid) -> Self[Pr
 pub fn Term::insert_sub_before(Self[Program], Self[Sub], before? : Tid) -> Self[Program]
 pub fn Term::intent(Self[Arg]) -> Intent?
 pub fn Term::is_const(Self[Sub]) -> Bool
+pub fn[T] Term::is_dead(Self[T]) -> Bool
 pub fn Term::is_entry_point(Self[Sub]) -> Bool
 pub fn Term::is_extern(Self[Sub]) -> Bool
 pub fn Term::is_intrinsic(Self[Sub]) -> Bool
 pub fn Term::is_leaf(Self[Sub]) -> Bool
+pub fn[T] Term::is_live(Self[T]) -> Bool
 pub fn Term::is_malloc(Self[Sub]) -> Bool
 pub fn Term::is_noreturn(Self[Sub]) -> Bool
 pub fn Term::is_nothrow(Self[Sub]) -> Bool
 pub fn Term::is_pure(Self[Sub]) -> Bool
 pub fn Term::is_ssa(Self[Sub]) -> Bool
 pub fn Term::is_stub(Self[Sub]) -> Bool
+pub fn[T] Term::is_synthetic(Self[T]) -> Bool
+pub fn[T] Term::is_visited(Self[T]) -> Bool
 pub fn Term::jmp_count(Self[Blk]) -> Int
 pub fn Term::jmp_exps(Self[Jmp]) -> Array[Exp]
 pub fn Term::jmp_free_vars(Self[Jmp]) -> Array[Var]
@@ -1215,6 +1223,7 @@ pub fn Term::with_alt(Self[Jmp], JmpDst?) -> Self[Jmp]
 pub fn[T] Term::with_attrs(Self[T], Map[String, String]) -> Self[T]
 pub fn Term::with_cond(Self[Jmp], Exp) -> Self[Jmp]
 pub fn Term::with_const(Self[Sub]) -> Self[Sub]
+pub fn[T] Term::with_dead(Self[T]) -> Self[T]
 pub fn Term::with_dst(Self[Jmp], JmpDst?) -> Self[Jmp]
 pub fn Term::with_entry_point(Self[Sub]) -> Self[Sub]
 pub fn Term::with_extern(Self[Sub]) -> Self[Sub]
@@ -1225,6 +1234,7 @@ pub fn Term::with_intrinsic(Self[Sub]) -> Self[Sub]
 pub fn Term::with_kind(Self[Jmp], JmpKind) -> Self[Jmp]
 pub fn Term::with_leaf(Self[Sub]) -> Self[Sub]
 pub fn Term::with_lhs(Self[Def], Var) -> Self[Def]
+pub fn[T] Term::with_live(Self[T]) -> Self[T]
 pub fn Term::with_malloc(Self[Sub]) -> Self[Sub]
 pub fn Term::with_name(Self[Sub], String) -> Self[Sub]
 pub fn Term::with_noreturn(Self[Sub]) -> Self[Sub]
@@ -1238,19 +1248,25 @@ pub fn Term::with_rhs(Self[Def], Exp) -> Self[Def]
 pub fn Term::with_stub(Self[Sub]) -> Self[Sub]
 pub fn Term::with_sub_alias(Self[Sub], String) -> Self[Sub]
 pub fn Term::with_sub_name(Self[Sub], String) -> Self[Sub]
+pub fn[T] Term::with_synthetic(Self[T]) -> Self[T]
 pub fn Term::with_unknown_intent(Self[Arg]) -> Self[Arg]
+pub fn[T] Term::with_visited(Self[T]) -> Self[T]
 pub fn Term::without_const(Self[Sub]) -> Self[Sub]
+pub fn[T] Term::without_dead(Self[T]) -> Self[T]
 pub fn Term::without_entry_point(Self[Sub]) -> Self[Sub]
 pub fn Term::without_extern(Self[Sub]) -> Self[Sub]
 pub fn[T] Term::without_flag(Self[T], String) -> Self[T]
 pub fn Term::without_intrinsic(Self[Sub]) -> Self[Sub]
 pub fn Term::without_leaf(Self[Sub]) -> Self[Sub]
+pub fn[T] Term::without_live(Self[T]) -> Self[T]
 pub fn Term::without_malloc(Self[Sub]) -> Self[Sub]
 pub fn Term::without_noreturn(Self[Sub]) -> Self[Sub]
 pub fn Term::without_nothrow(Self[Sub]) -> Self[Sub]
 pub fn Term::without_pure(Self[Sub]) -> Self[Sub]
 pub fn Term::without_returns_twice(Self[Sub]) -> Self[Sub]
 pub fn Term::without_stub(Self[Sub]) -> Self[Sub]
+pub fn[T] Term::without_synthetic(Self[T]) -> Self[T]
+pub fn[T] Term::without_visited(Self[T]) -> Self[T]
 
 pub(all) struct Tid {
   id : Int

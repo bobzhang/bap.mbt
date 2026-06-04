@@ -44,6 +44,18 @@ let arg_restricted_attr = "restricted"
 let arg_nonnull_attr = "nonnull"
 
 ///|
+let term_synthetic_attr = "synthetic"
+
+///|
+let term_visited_attr = "visited"
+
+///|
+let term_live_attr = "live"
+
+///|
+let term_dead_attr = "dead"
+
+///|
 let term_precondition_attr = "precondition"
 
 ///|
@@ -77,22 +89,22 @@ pub fn Attr::origin(tid : Tid) -> Attr {
 
 ///|
 pub fn Attr::synthetic() -> Attr {
-  Attr::flag("synthetic")
+  Attr::flag(term_synthetic_attr)
 }
 
 ///|
 pub fn Attr::visited() -> Attr {
-  Attr::flag("visited")
+  Attr::flag(term_visited_attr)
 }
 
 ///|
 pub fn Attr::live() -> Attr {
-  Attr::flag("live")
+  Attr::flag(term_live_attr)
 }
 
 ///|
 pub fn Attr::dead() -> Attr {
-  Attr::flag("dead")
+  Attr::flag(term_dead_attr)
 }
 
 ///|
@@ -203,6 +215,66 @@ pub fn[T] Term::without_flag(self : Term[T], key : String) -> Term[T] {
 ///|
 pub fn[T] Term::has_flag(self : Term[T], key : String) -> Bool {
   self.has_attr(key)
+}
+
+///|
+pub fn[T] Term::with_synthetic(self : Term[T]) -> Term[T] {
+  self.with_flag(term_synthetic_attr)
+}
+
+///|
+pub fn[T] Term::without_synthetic(self : Term[T]) -> Term[T] {
+  self.without_flag(term_synthetic_attr)
+}
+
+///|
+pub fn[T] Term::is_synthetic(self : Term[T]) -> Bool {
+  self.has_flag(term_synthetic_attr)
+}
+
+///|
+pub fn[T] Term::with_visited(self : Term[T]) -> Term[T] {
+  self.with_flag(term_visited_attr)
+}
+
+///|
+pub fn[T] Term::without_visited(self : Term[T]) -> Term[T] {
+  self.without_flag(term_visited_attr)
+}
+
+///|
+pub fn[T] Term::is_visited(self : Term[T]) -> Bool {
+  self.has_flag(term_visited_attr)
+}
+
+///|
+pub fn[T] Term::with_live(self : Term[T]) -> Term[T] {
+  self.with_flag(term_live_attr)
+}
+
+///|
+pub fn[T] Term::without_live(self : Term[T]) -> Term[T] {
+  self.without_flag(term_live_attr)
+}
+
+///|
+pub fn[T] Term::is_live(self : Term[T]) -> Bool {
+  self.has_flag(term_live_attr)
+}
+
+///|
+pub fn[T] Term::with_dead(self : Term[T]) -> Term[T] {
+  self.with_flag(term_dead_attr)
+}
+
+///|
+pub fn[T] Term::without_dead(self : Term[T]) -> Term[T] {
+  self.without_flag(term_dead_attr)
+}
+
+///|
+pub fn[T] Term::is_dead(self : Term[T]) -> Bool {
+  self.has_flag(term_dead_attr)
 }
 
 ///|

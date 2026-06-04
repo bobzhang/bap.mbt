@@ -282,12 +282,23 @@ test "project persistent codec round trips metadata and storage" {
     b"\xaa\xbb",
   )
   let memory = @memory.MemMap::singleton(memory_block, "code:entry")
+  let symbols = [
+    @image.Symbol::create(
+      name="main:entry",
+      addr=0x8800UL,
+      size=2,
+      is_function=true,
+      is_debug=true,
+    ),
+  ]
   let project = @project.Project::create(
     target=@core_theory.Target::x86_64(),
     filename="input:one",
     storage~,
     memory~,
+    symbols~,
   ).set("analysis", "done")
+  symbols.push(@image.Symbol::create(name="mutated", addr=0x9000UL))
   storage["loader"] = "mutated"
   let codec = @project.Project::persistent()
   let encoded = codec.encode(project)
@@ -305,7 +316,13 @@ test "project persistent codec round trips metadata and storage" {
       assert_true(entries[0].0.endian() == BigEndian)
       assert_true(entries[0].0.min_addr() == 0x8800UL)
       assert_true(entries[0].0.to_bytes() == b"\xaa\xbb")
-      assert_true(decoded.symbols().is_empty())
+      let decoded_symbols = decoded.symbols()
+      assert_true(decoded_symbols.length() == 1)
+      assert_true(decoded_symbols[0].name() == "main:entry")
+      assert_true(decoded_symbols[0].addr() == 0x8800UL)
+      assert_true(decoded_symbols[0].size() == 2)
+      assert_true(decoded_symbols[0].is_function())
+      assert_true(decoded_symbols[0].is_debug())
       assert_true(decoded.libraries().is_empty())
     }
     Err(reason) => fail(reason)

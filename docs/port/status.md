@@ -36,7 +36,7 @@ This repository is porting `.repos/bap` from OCaml to idiomatic MoonBit.
 - `project/input filename loaders`: Project input loaders can be registered as filename-based loaders, matching upstream loader callbacks that receive the path before any byte-read fallback.
 - `project/state-seeded creation`: Source-driven project creation helpers accept a precomputed project state and reconstruct from it without rerunning disassembly drivers.
 - `project/restore_state`: The deprecated upstream project state-restore hook is exposed as an explicit unsupported compatibility result that directs callers to top-level state persistence.
-- `project/persistent metadata`: Project exposes an initial persistent codec for target, filename, string storage metadata, and annotated memory maps as a step toward the upstream `Data.S` project surface.
+- `project/persistent metadata`: Project exposes an initial persistent codec for target, filename, string storage metadata, annotated memory maps, and project symbols as a step toward the upstream `Data.S` project surface.
 - `project/disasm accessors`: Project and library values expose BAP-style `disasm` facades over their retained disassembly state.
 - `project/pass run_exn`: Project passes expose a BAP-style raising `run_exn` wrapper that preserves checked pass execution, dependency handling, and lifecycle telemetry.
 - `project/pass errors`: Project pass object execution reports BAP-style structured dependency and runtime errors while preserving string-returning project-level convenience runners.

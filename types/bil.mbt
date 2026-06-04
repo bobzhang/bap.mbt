@@ -191,6 +191,7 @@ pub fn Exp::unop(op : UnOp, exp : Exp) -> Exp {
 }
 
 ///|
+#alias(var)
 pub fn Exp::var_exp(variable : Var) -> Exp {
   Var(variable)
 }
@@ -423,6 +424,7 @@ fn stmt_attribute_decode_special(text : String) -> (String, String)? {
 }
 
 ///|
+#alias(move)
 pub fn Stmt::move_stmt(variable : Var, exp : Exp) -> Stmt {
   Move(variable, exp)
 }

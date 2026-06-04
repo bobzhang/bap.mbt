@@ -506,6 +506,7 @@ pub fn Exp::to_string(Self) -> String
 pub fn Exp::type_of(Self) -> ValueType
 pub fn Exp::unknown(String, ValueType) -> Self
 pub fn Exp::unop(UnOp, Self) -> Self
+#alias(var)
 pub fn Exp::var_exp(Var) -> Self
 
 type ExpEffect derive(Eq, @debug.Debug)
@@ -800,6 +801,7 @@ pub fn Stmt::is_referenced(Self, Var) -> Bool
 pub fn Stmt::jmp(Exp) -> Self
 pub fn Stmt::label() -> StmtAttribute[String]
 pub fn Stmt::map_exps(Self, (Exp) -> Exp) -> Self
+#alias(move)
 pub fn Stmt::move_stmt(Var, Exp) -> Self
 pub fn Stmt::normalize(Self, normalize_exp? : Bool) -> Array[Self]
 pub fn Stmt::normalize_negatives(Self) -> Self

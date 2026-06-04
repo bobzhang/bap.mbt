@@ -813,6 +813,11 @@ pub fn Term::elts(self : Term[Blk], rev? : Bool = false) -> Array[BlkElt] {
 }
 
 ///|
+pub fn Blk::elts(blk : Term[Blk], rev? : Bool = false) -> Array[BlkElt] {
+  blk.elts(rev~)
+}
+
+///|
 pub fn Term::append_phi(self : Term[Blk], phi : Term[Phi]) -> Term[Blk] {
   let phis = self.payload_value.phis.copy()
   phis.push(phi)
@@ -844,6 +849,11 @@ pub fn Term::find_def(self : Term[Blk], tid : Tid) -> Term[Def]? {
 pub fn Term::defines_var(self : Term[Blk], variable : Var) -> Bool {
   self.payload_value.defs.any(term => term.payload().lhs == variable) ||
   self.payload_value.phis.any(term => term.payload().lhs == variable)
+}
+
+///|
+pub fn Blk::defines_var(blk : Term[Blk], variable : Var) -> Bool {
+  blk.defines_var(variable)
 }
 
 ///|

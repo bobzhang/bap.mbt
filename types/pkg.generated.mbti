@@ -439,6 +439,21 @@ pub(all) struct Blk {
   jmps : Array[Term[Jmp]]
 }
 pub fn Blk::create(phis? : Array[Term[Phi]], defs? : Array[Term[Def]], jmps? : Array[Term[Jmp]], tid? : Tid) -> Term[Self]
+pub fn Blk::defines_var(Term[Self], Var) -> Bool
+pub fn Blk::elts(Term[Self], rev? : Bool) -> Array[BlkElt]
+pub fn Blk::find_var(Term[Self], Var) -> VarBinding?
+pub fn Blk::free_vars(Term[Self]) -> Array[Var]
+pub fn Blk::map_elts(Term[Self], phi? : (Term[Phi]) -> Term[Phi], def? : (Term[Def]) -> Term[Def], jmp? : (Term[Jmp]) -> Term[Jmp]) -> Term[Self]
+pub fn Blk::map_exp(Term[Self], (Exp) -> Exp, skip_phi? : Bool, skip_def? : Bool, skip_jmp? : Bool) -> Term[Self]
+pub fn Blk::map_lhs(Term[Self], (Var) -> Var, skip_phi? : Bool, skip_def? : Bool) -> Term[Self]
+pub fn Blk::occurs(Term[Self], after~ : Tid, Tid) -> Bool
+pub fn Blk::split_after(Term[Self], Term[Def]) -> (Term[Self], Term[Self])
+pub fn Blk::split_before(Term[Self], Term[Def]) -> (Term[Self], Term[Self])
+pub fn Blk::split_bot(Term[Self]) -> (Term[Self], Term[Self])
+pub fn Blk::split_top(Term[Self]) -> (Term[Self], Term[Self])
+pub fn Blk::split_while(Term[Self], (Term[Def]) -> Bool) -> (Term[Self], Term[Self])
+pub fn Blk::substitute(Term[Self], Exp, Exp, skip_phi? : Bool, skip_def? : Bool, skip_jmp? : Bool) -> Term[Self]
+pub fn Blk::uses_var(Term[Self], Var) -> Bool
 
 type BlkBuilder
 pub fn BlkBuilder::add_def(Self, Term[Def]) -> Unit

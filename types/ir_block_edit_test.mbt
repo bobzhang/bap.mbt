@@ -504,6 +504,9 @@ test "block before and after definition slices support reverse order" {
   assert_true(block.occurs(after=def_x.tid(), def_z.tid()))
   assert_true(block.occurs(after=def_y.tid(), def_y.tid()))
   assert_true(!block.occurs(after=def_z.tid(), def_x.tid()))
+  assert_true(@types.Blk::occurs(block, after=def_x.tid(), def_z.tid()))
+  assert_true(@types.Blk::occurs(block, after=def_y.tid(), def_y.tid()))
+  assert_true(!@types.Blk::occurs(block, after=def_z.tid(), def_x.tid()))
 }
 
 ///|
@@ -823,14 +826,29 @@ test "block phi jump and sub update helpers map terms" {
   assert_true(mapped_elts_alias.phis()[0].phi_lhs() == y)
   assert_true(mapped_elts_alias.defs()[0].lhs() == y)
   assert_true(mapped_elts_alias.jmps()[0].cond() == Var(y))
+  let mapped_elts_blk_alias = @types.Blk::map_elts(
+    elt_block,
+    phi=term => term.with_phi_lhs(y),
+    def=term => term.with_lhs(y),
+    jmp=term => term.with_cond(Var(y)),
+  )
+  assert_true(mapped_elts_blk_alias.phis()[0].phi_lhs() == y)
+  assert_true(mapped_elts_blk_alias.defs()[0].lhs() == y)
+  assert_true(mapped_elts_blk_alias.jmps()[0].cond() == Var(y))
   let def_only = elt_block.map_blk_elts(def=term => term.with_lhs(y))
   let def_only_alias = elt_block.map_elts(def=term => term.with_lhs(y))
+  let def_only_blk_alias = @types.Blk::map_elts(elt_block, def=term => {
+    term.with_lhs(y)
+  })
   assert_true(def_only.phis()[0].same(phi))
   assert_true(def_only.defs()[0].lhs() == y)
   assert_true(def_only.jmps()[0].same(jmp))
   assert_true(def_only_alias.phis()[0].same(phi))
   assert_true(def_only_alias.defs()[0].lhs() == y)
   assert_true(def_only_alias.jmps()[0].same(jmp))
+  assert_true(def_only_blk_alias.phis()[0].same(phi))
+  assert_true(def_only_blk_alias.defs()[0].lhs() == y)
+  assert_true(def_only_blk_alias.jmps()[0].same(jmp))
   let without_jmp = block.remove_jmp(jmp.tid())
   assert_true(without_jmp.jmp_count() == 1)
   assert_true(
@@ -866,6 +884,9 @@ test "block definition split helpers preserve control transfer shape" {
   let before_alias = block.split_before(def_y)
   assert_def_lhs_names(before_alias.0, ["x"])
   assert_def_lhs_names(before_alias.1, ["y", "z"])
+  let before_blk_alias = @types.Blk::split_before(block, def_y)
+  assert_def_lhs_names(before_blk_alias.0, ["x"])
+  assert_def_lhs_names(before_blk_alias.1, ["y", "z"])
   match before.0.jmps()[0].kind() {
     Goto(Direct(tid)) => assert_true(tid == before.1.tid())
     _ => fail("split block must jump to the second block")
@@ -876,13 +897,18 @@ test "block definition split helpers preserve control transfer shape" {
   }
   assert_true(before.1.jmps()[0].same(jmp))
   assert_true(before_alias.1.jmps()[0].same(jmp))
+  assert_true(before_blk_alias.1.jmps()[0].same(jmp))
   let after = block.split_after_def(def_y)
   assert_def_lhs_names(after.0, ["x", "y"])
   assert_def_lhs_names(after.1, ["z"])
   let after_alias = block.split_after(def_y)
   assert_def_lhs_names(after_alias.0, ["x", "y"])
   assert_def_lhs_names(after_alias.1, ["z"])
+  let after_blk_alias = @types.Blk::split_after(block, def_y)
+  assert_def_lhs_names(after_blk_alias.0, ["x", "y"])
+  assert_def_lhs_names(after_blk_alias.1, ["z"])
   assert_true(after_alias.1.jmps()[0].same(jmp))
+  assert_true(after_blk_alias.1.jmps()[0].same(jmp))
   let while_split = block.split_defs_while(term => term.lhs() != y)
   assert_true(while_split.0.tid() == block.tid())
   assert_def_lhs_names(while_split.0, ["x"])
@@ -891,6 +917,10 @@ test "block definition split helpers preserve control transfer shape" {
   assert_true(while_alias.0.tid() == block.tid())
   assert_def_lhs_names(while_alias.0, ["x"])
   assert_def_lhs_names(while_alias.1, ["y", "z"])
+  let while_blk_alias = @types.Blk::split_while(block, term => term.lhs() != y)
+  assert_true(while_blk_alias.0.tid() == block.tid())
+  assert_def_lhs_names(while_blk_alias.0, ["x"])
+  assert_def_lhs_names(while_blk_alias.1, ["y", "z"])
   match while_split.0.jmps()[0].kind() {
     Goto(Direct(tid)) => assert_true(tid == while_split.1.tid())
     _ => fail("split-while block must jump to the second block")
@@ -901,6 +931,7 @@ test "block definition split helpers preserve control transfer shape" {
   }
   assert_true(while_split.1.jmps()[0].same(jmp))
   assert_true(while_alias.1.jmps()[0].same(jmp))
+  assert_true(while_blk_alias.1.jmps()[0].same(jmp))
   let all_left = block.split_defs_while(_ => true)
   assert_def_lhs_names(all_left.0, ["x", "y", "z"])
   assert_def_lhs_names(all_left.1, [])
@@ -910,12 +941,18 @@ test "block definition split helpers preserve control transfer shape" {
   let top_alias = block.split_top()
   assert_def_lhs_names(top_alias.0, [])
   assert_def_lhs_names(top_alias.1, ["x", "y", "z"])
+  let top_blk_alias = @types.Blk::split_top(block)
+  assert_def_lhs_names(top_blk_alias.0, [])
+  assert_def_lhs_names(top_blk_alias.1, ["x", "y", "z"])
   let bottom = block.split_bottom_defs()
   assert_def_lhs_names(bottom.0, ["x", "y", "z"])
   assert_def_lhs_names(bottom.1, [])
   let bot_alias = block.split_bot()
   assert_def_lhs_names(bot_alias.0, ["x", "y", "z"])
   assert_def_lhs_names(bot_alias.1, [])
+  let bot_blk_alias = @types.Blk::split_bot(block)
+  assert_def_lhs_names(bot_blk_alias.0, ["x", "y", "z"])
+  assert_def_lhs_names(bot_blk_alias.1, [])
 }
 
 ///|
@@ -933,11 +970,22 @@ test "block variable lookup prefers latest definitions then phi bindings" {
     Some(DefBinding(term)) => assert_true(term.same(def_y2))
     _ => fail("expected latest def binding")
   }
+  match @types.Blk::find_var(block, y) {
+    Some(DefBinding(term)) => assert_true(term.same(def_y2))
+    _ => fail("expected latest def binding from Blk namespace")
+  }
   match block.find_var(x) {
     Some(PhiBinding(term)) => assert_true(term.same(phi))
     _ => fail("expected phi binding")
   }
+  match @types.Blk::find_var(block, x) {
+    Some(PhiBinding(term)) => assert_true(term.same(phi))
+    _ => fail("expected phi binding from Blk namespace")
+  }
   assert_true(block.uses_var(x))
   assert_true(!block.uses_var(y))
   assert_true(block.find_var(z) is None)
+  assert_true(@types.Blk::uses_var(block, x))
+  assert_true(!@types.Blk::uses_var(block, y))
+  assert_true(@types.Blk::find_var(block, z) is None)
 }

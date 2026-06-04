@@ -136,6 +136,7 @@ test "BAP-style IR builders collect construction inputs" {
   elt_builder.add_elt(DefElt(def))
   elt_builder.add_elt(JmpElt(jmp))
   assert_true(elt_builder.result().elts().length() == 3)
+  assert_true(@types.Blk::elts(elt_builder.result()).length() == 3)
 
   let copied = @types.BlkBuilder::init(
     built_block,
@@ -339,7 +340,9 @@ test "program sub and block containers preserve term order" {
   assert_true(sub.find_blk(blk.tid()) is Some(_))
   assert_true(blk.find_def(def.tid()) is Some(_))
   assert_true(blk.defines_var(lhs))
+  assert_true(@types.Blk::defines_var(blk, lhs))
   inspect(blk.elts().length().to_string(), content="2")
+  inspect(@types.Blk::elts(blk).length().to_string(), content="2")
 }
 
 ///|
@@ -1639,6 +1642,10 @@ test "ir definition phi and jump helpers traverse expressions" {
   assert_true(mapped_alias.phis()[0].select(left) == Some(eight))
   assert_true(mapped_alias.defs()[0].rhs() == eight)
   assert_true(mapped_alias.jmps()[0].cond() == jmp.cond())
+  let mapped_blk_alias = @types.Blk::map_exp(block, _ => eight, skip_jmp=true)
+  assert_true(mapped_blk_alias.phis()[0].select(left) == Some(eight))
+  assert_true(mapped_blk_alias.defs()[0].rhs() == eight)
+  assert_true(mapped_blk_alias.jmps()[0].cond() == jmp.cond())
   let phi_skipped = block.map_blk_exp(_ => eight, skip_phi=true)
   assert_true(phi_skipped.phis()[0].select(left) == phi.select(left))
   assert_true(phi_skipped.defs()[0].rhs() == eight)
@@ -1654,6 +1661,13 @@ test "ir definition phi and jump helpers traverse expressions" {
   )
   assert_true(lhs_alias.phis()[0].phi_lhs() == x)
   assert_true(lhs_alias.defs()[0].lhs() == x.with_index(3))
+  let lhs_blk_alias = @types.Blk::map_lhs(
+    block,
+    variable => variable.with_index(3),
+    skip_phi=true,
+  )
+  assert_true(lhs_blk_alias.phis()[0].phi_lhs() == x)
+  assert_true(lhs_blk_alias.defs()[0].lhs() == x.with_index(3))
   let def_skipped = block.map_blk_lhs(
     variable => variable.with_index(4),
     skip_def=true,
@@ -1663,6 +1677,14 @@ test "ir definition phi and jump helpers traverse expressions" {
   let substituted = block.substitute(Var(y), eight, skip_jmp=true)
   assert_true(substituted.defs()[0].rhs() == BinOp(Plus, eight, one))
   assert_true(substituted.jmps()[0].kind() == jmp.kind())
+  let substituted_blk_alias = @types.Blk::substitute(
+    block,
+    Var(y),
+    eight,
+    skip_jmp=true,
+  )
+  assert_true(substituted_blk_alias.defs()[0].rhs() == BinOp(Plus, eight, one))
+  assert_true(substituted_blk_alias.jmps()[0].kind() == jmp.kind())
 }
 
 ///|
@@ -1681,6 +1703,7 @@ test "ir block and program helpers respect local definitions" {
   let blk = @types.Blk::create(phis=[phi], defs=[def], jmps=[jmp])
   let blk_vars = blk.blk_free_vars()
   assert_true(blk_vars.is_empty())
+  assert_true(@types.Blk::free_vars(blk).is_empty())
   let arg = @types.Arg::create(x, Var(z))
   assert_true(arg.arg_free_vars().any(item => item == z))
   let sub = @types.Sub::create(name="main", args=[arg], blks=[blk])

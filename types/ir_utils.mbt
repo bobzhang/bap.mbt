@@ -259,6 +259,17 @@ pub fn Term::map_exp(
 }
 
 ///|
+pub fn Blk::map_exp(
+  blk : Term[Blk],
+  f : (Exp) -> Exp,
+  skip_phi? : Bool = false,
+  skip_def? : Bool = false,
+  skip_jmp? : Bool = false,
+) -> Term[Blk] {
+  blk.map_exp(f, skip_phi~, skip_def~, skip_jmp~)
+}
+
+///|
 pub fn Term::map_blk_lhs(
   self : Term[Blk],
   f : (Var) -> Var,
@@ -291,6 +302,16 @@ pub fn Term::map_lhs(
 }
 
 ///|
+pub fn Blk::map_lhs(
+  blk : Term[Blk],
+  f : (Var) -> Var,
+  skip_phi? : Bool = false,
+  skip_def? : Bool = false,
+) -> Term[Blk] {
+  blk.map_lhs(f, skip_phi~, skip_def~)
+}
+
+///|
 pub fn Term::blk_free_vars(self : Term[Blk]) -> Array[Var] {
   let vars = []
   let killed = []
@@ -302,6 +323,11 @@ pub fn Term::blk_free_vars(self : Term[Blk]) -> Array[Var] {
     add_free_vars(vars, jmp.jmp_free_vars(), killed)
   }
   vars
+}
+
+///|
+pub fn Blk::free_vars(blk : Term[Blk]) -> Array[Var] {
+  blk.blk_free_vars()
 }
 
 ///|
@@ -336,6 +362,18 @@ pub fn Term::substitute(
     skip_def~,
     skip_jmp~,
   )
+}
+
+///|
+pub fn Blk::substitute(
+  blk : Term[Blk],
+  target : Exp,
+  replacement : Exp,
+  skip_phi? : Bool = false,
+  skip_def? : Bool = false,
+  skip_jmp? : Bool = false,
+) -> Term[Blk] {
+  blk.substitute(target, replacement, skip_phi~, skip_def~, skip_jmp~)
 }
 
 ///|

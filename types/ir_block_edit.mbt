@@ -1314,6 +1314,16 @@ pub fn Term::map_elts(
 }
 
 ///|
+pub fn Blk::map_elts(
+  blk : Term[Blk],
+  phi? : (Term[Phi]) -> Term[Phi],
+  def? : (Term[Def]) -> Term[Def],
+  jmp? : (Term[Jmp]) -> Term[Jmp],
+) -> Term[Blk] {
+  blk.map_elts(phi?, def?, jmp?)
+}
+
+///|
 pub fn Term::update_blk(self : Term[Sub], blk : Term[Blk]) -> Term[Sub] {
   let blks = self.payload_value.blks.copy()
   match find_blk_index(blks, blk.tid()) {
@@ -1429,11 +1439,27 @@ pub fn Term::split_before(
 }
 
 ///|
+pub fn Blk::split_before(
+  blk : Term[Blk],
+  term : Term[Def],
+) -> (Term[Blk], Term[Blk]) {
+  blk.split_before(term)
+}
+
+///|
 pub fn Term::split_after(
   self : Term[Blk],
   term : Term[Def],
 ) -> (Term[Blk], Term[Blk]) {
   self.split_after_def(term)
+}
+
+///|
+pub fn Blk::split_after(
+  blk : Term[Blk],
+  term : Term[Def],
+) -> (Term[Blk], Term[Blk]) {
+  blk.split_after(term)
 }
 
 ///|
@@ -1445,13 +1471,31 @@ pub fn Term::split_while(
 }
 
 ///|
+pub fn Blk::split_while(
+  blk : Term[Blk],
+  f : (Term[Def]) -> Bool,
+) -> (Term[Blk], Term[Blk]) {
+  blk.split_while(f)
+}
+
+///|
 pub fn Term::split_top(self : Term[Blk]) -> (Term[Blk], Term[Blk]) {
   self.split_top_defs()
 }
 
 ///|
+pub fn Blk::split_top(blk : Term[Blk]) -> (Term[Blk], Term[Blk]) {
+  blk.split_top()
+}
+
+///|
 pub fn Term::split_bot(self : Term[Blk]) -> (Term[Blk], Term[Blk]) {
   self.split_bottom_defs()
+}
+
+///|
+pub fn Blk::split_bot(blk : Term[Blk]) -> (Term[Blk], Term[Blk]) {
+  blk.split_bot()
 }
 
 ///|
@@ -1472,8 +1516,18 @@ pub fn Term::find_var(self : Term[Blk], variable : Var) -> VarBinding? {
 }
 
 ///|
+pub fn Blk::find_var(blk : Term[Blk], variable : Var) -> VarBinding? {
+  blk.find_var(variable)
+}
+
+///|
 pub fn Term::uses_var(self : Term[Blk], variable : Var) -> Bool {
   self.blk_free_vars().any(item => item == variable)
+}
+
+///|
+pub fn Blk::uses_var(blk : Term[Blk], variable : Var) -> Bool {
+  blk.uses_var(variable)
 }
 
 ///|
@@ -1484,4 +1538,9 @@ pub fn Term::def_occurs_after(self : Term[Blk], after : Tid, tid : Tid) -> Bool 
 ///|
 pub fn Term::occurs(self : Term[Blk], after~ : Tid, tid : Tid) -> Bool {
   self.def_occurs_after(after, tid)
+}
+
+///|
+pub fn Blk::occurs(blk : Term[Blk], after~ : Tid, tid : Tid) -> Bool {
+  blk.occurs(after~, tid)
 }

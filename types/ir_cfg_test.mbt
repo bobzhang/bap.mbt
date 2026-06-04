@@ -122,9 +122,11 @@ test "BAP IR CFG successor predecessor and degree queries use graph endpoints" {
   let left = @types.Blk::create(tid=@types.Tid::for_name("left"))
   let right = @types.Blk::create(tid=@types.Tid::for_name("right"))
   let join = @types.Blk::create(tid=@types.Tid::for_name("join"))
-  let entry = entry
-    .append_jmp(@types.Jmp::create_goto(@types.Label::direct(left.tid())))
-    .append_jmp(@types.Jmp::create_goto(@types.Label::direct(right.tid())))
+  let entry_left_jmp = @types.Jmp::create_goto(@types.Label::direct(left.tid()))
+  let entry_right_jmp = @types.Jmp::create_goto(
+    @types.Label::direct(right.tid()),
+  )
+  let entry = entry.append_jmp(entry_left_jmp).append_jmp(entry_right_jmp)
   let left_jmp = @types.Jmp::create_goto(@types.Label::direct(join.tid()))
   let right_jmp = @types.Jmp::create_goto(@types.Label::direct(join.tid()))
   let left = left.append_jmp(left_jmp)
@@ -133,9 +135,18 @@ test "BAP IR CFG successor predecessor and degree queries use graph endpoints" {
     @types.Sub::create(name="diamond", blks=[entry, left, right, join]),
   )
   assert_true(cfg_blk_tids(cfg.successors(entry)) == [left.tid(), right.tid()])
+  assert_true(cfg_blk_tids(cfg.succs(entry)) == [left.tid(), right.tid()])
   assert_true(cfg_blk_tids(cfg.predecessors(join)) == [left.tid(), right.tid()])
+  assert_true(cfg_blk_tids(cfg.preds(join)) == [left.tid(), right.tid()])
   assert_true(
     cfg_edge_tids(cfg.in_edges(join)) == [left_jmp.tid(), right_jmp.tid()],
+  )
+  assert_true(
+    cfg_edge_tids(cfg.inputs(join)) == [left_jmp.tid(), right_jmp.tid()],
+  )
+  assert_true(
+    cfg_edge_tids(cfg.outputs(entry)) ==
+    [entry_left_jmp.tid(), entry_right_jmp.tid()],
   )
   assert_true(cfg.out_degree(entry) == 2)
   assert_true(cfg.in_degree(join) == 2)

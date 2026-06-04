@@ -303,8 +303,18 @@ pub fn IrCfg::successors(self : IrCfg, blk : Term[Blk]) -> Array[Term[Blk]] {
 }
 
 ///|
+pub fn IrCfg::succs(self : IrCfg, blk : Term[Blk]) -> Array[Term[Blk]] {
+  self.successors(blk)
+}
+
+///|
 pub fn IrCfg::predecessors(self : IrCfg, blk : Term[Blk]) -> Array[Term[Blk]] {
   self.sub_value.sub_predecessor_blocks(blk)
+}
+
+///|
+pub fn IrCfg::preds(self : IrCfg, blk : Term[Blk]) -> Array[Term[Blk]] {
+  self.predecessors(blk)
 }
 
 ///|
@@ -313,8 +323,18 @@ pub fn IrCfg::out_edges(self : IrCfg, blk : Term[Blk]) -> Array[IrCfgEdge] {
 }
 
 ///|
+pub fn IrCfg::outputs(self : IrCfg, blk : Term[Blk]) -> Array[IrCfgEdge] {
+  self.out_edges(blk)
+}
+
+///|
 pub fn IrCfg::in_edges(self : IrCfg, blk : Term[Blk]) -> Array[IrCfgEdge] {
   self.sub_value.sub_in_edges(blk)
+}
+
+///|
+pub fn IrCfg::inputs(self : IrCfg, blk : Term[Blk]) -> Array[IrCfgEdge] {
+  self.in_edges(blk)
 }
 
 ///|

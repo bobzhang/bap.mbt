@@ -157,6 +157,149 @@ fn project_disassembly_dedup_edges(
 }
 
 ///|
+fn project_memory_array_equal(
+  lhs : Array[@memory.Memory],
+  rhs : Array[@memory.Memory],
+) -> Bool {
+  if lhs.length() != rhs.length() {
+    return false
+  }
+  for i in 0..<lhs.length() {
+    if !project_memory_equal(lhs[i], rhs[i]) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn project_disassembly_instruction_array_equal(
+  lhs : Array[ProjectDisassemblyInstruction],
+  rhs : Array[ProjectDisassemblyInstruction],
+) -> Bool {
+  if lhs.length() != rhs.length() {
+    return false
+  }
+  for i in 0..<lhs.length() {
+    if !project_disassembly_instruction_equal(lhs[i], rhs[i]) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn project_disassembly_instruction_equal(
+  lhs : ProjectDisassemblyInstruction,
+  rhs : ProjectDisassemblyInstruction,
+) -> Bool {
+  project_memory_equal(lhs.memory_value, rhs.memory_value) &&
+  lhs.code_value == rhs.code_value &&
+  lhs.name_value == rhs.name_value &&
+  lhs.encoding_value == rhs.encoding_value &&
+  lhs.assembly_value == rhs.assembly_value &&
+  lhs.bil_value == rhs.bil_value &&
+  lhs.kinds_value == rhs.kinds_value &&
+  lhs.operands_value == rhs.operands_value &&
+  project_disassembly_instruction_array_equal(
+    lhs.subinstructions_value,
+    rhs.subinstructions_value,
+  )
+}
+
+///|
+fn project_disassembly_edge_array_equal(
+  lhs : Array[ProjectDisassemblyEdge],
+  rhs : Array[ProjectDisassemblyEdge],
+) -> Bool {
+  if lhs.length() != rhs.length() {
+    return false
+  }
+  for i in 0..<lhs.length() {
+    if !project_disassembly_same_edge(lhs[i], rhs[i]) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn project_disassembly_state_equal(
+  lhs : ProjectDisassemblyState,
+  rhs : ProjectDisassemblyState,
+) -> Bool {
+  project_memory_array_equal(lhs.blocks_value, rhs.blocks_value) &&
+  project_disassembly_instruction_array_equal(
+    lhs.instructions_value,
+    rhs.instructions_value,
+  ) &&
+  project_disassembly_edge_array_equal(lhs.edges_value, rhs.edges_value)
+}
+
+///|
+fn project_subroutine_equal(
+  lhs : @types.Term[@types.Sub],
+  rhs : @types.Term[@types.Sub],
+) -> Bool {
+  lhs.tid() == rhs.tid() &&
+  lhs.attrs() == rhs.attrs() &&
+  @types.Sub::to_string(lhs) == @types.Sub::to_string(rhs)
+}
+
+///|
+fn project_subroutine_array_equal(
+  lhs : Array[@types.Term[@types.Sub]],
+  rhs : Array[@types.Term[@types.Sub]],
+) -> Bool {
+  if lhs.length() != rhs.length() {
+    return false
+  }
+  for i in 0..<lhs.length() {
+    if !project_subroutine_equal(lhs[i], rhs[i]) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn project_state_equal(lhs : ProjectState, rhs : ProjectState) -> Bool {
+  project_disassembly_state_equal(lhs.disassembly_value, rhs.disassembly_value) &&
+  project_subroutine_array_equal(lhs.subroutines_value, rhs.subroutines_value)
+}
+
+///|
+fn project_state_order(
+  lhs : ProjectState,
+  rhs : ProjectState,
+) -> @knowledge.PartialOrder {
+  if project_state_equal(lhs, rhs) {
+    Equal
+  } else if project_state_equal(lhs, ProjectState::empty()) {
+    Less
+  } else if project_state_equal(rhs, ProjectState::empty()) {
+    Greater
+  } else {
+    Incomparable
+  }
+}
+
+///|
+fn project_state_inspect(state : ProjectState) -> String {
+  "(:number-of-basic-blocks \{state.disassembly_value.block_count()}) (:number-of-subroutines \{state.subroutines_value.length()})"
+}
+
+///|
+fn project_state_domain() -> @knowledge.Domain[ProjectState] {
+  @knowledge.Domain::custom(
+    project_name("disassembly"),
+    project_state_inspect,
+    empty=ProjectState::empty(),
+    order=project_state_order,
+  )
+}
+
+///|
 fn project_disassembly_edge_touches_block(
   edge : ProjectDisassemblyEdge,
   block : @memory.Memory,
@@ -1139,6 +1282,14 @@ pub fn ProjectDisassemblyState::remove_edge(
 ///|
 pub fn ProjectState::empty() -> ProjectState {
   { disassembly_value: ProjectDisassemblyState::empty(), subroutines_value: [] }
+}
+
+///|
+pub fn ProjectState::slot() -> @knowledge.Slot[Unit, ProjectState] {
+  @core_theory.ProgramUnit::cls().property(
+    name=project_name("disassembly"),
+    domain=project_state_domain(),
+  )
 }
 
 ///|

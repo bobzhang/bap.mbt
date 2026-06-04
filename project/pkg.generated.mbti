@@ -811,6 +811,7 @@ pub fn ProjectState::add_subroutine(Self, @types.Term[@types.Sub]) -> Self
 pub fn ProjectState::create(disassembly? : ProjectDisassemblyState, subroutines? : Array[@types.Term[@types.Sub]]) -> Self
 pub fn ProjectState::disassembly(Self) -> ProjectDisassemblyState
 pub fn ProjectState::empty() -> Self
+pub fn ProjectState::slot() -> @knowledge.Slot[Unit, Self]
 pub fn ProjectState::subroutines(Self) -> Array[@types.Term[@types.Sub]]
 pub fn ProjectState::with_disassembly(Self, ProjectDisassemblyState) -> Self
 pub fn ProjectState::with_subroutines(Self, Array[@types.Term[@types.Sub]]) -> Self

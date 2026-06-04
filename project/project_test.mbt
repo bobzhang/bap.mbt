@@ -54,6 +54,53 @@ test "project exposes BAP memory knowledge slot" {
 }
 
 ///|
+fn assert_project_state_shape(
+  state : @project.ProjectState,
+  blocks : Int,
+  subroutines : Int,
+) -> Unit raise {
+  assert_true(state.disassembly().block_count() == blocks)
+  assert_true(state.subroutines().length() == subroutines)
+}
+
+///|
+test "project state exposes BAP disassembly knowledge slot" {
+  let slot = @project.ProjectState::slot()
+  assert_true(slot.cls().same(@core_theory.ProgramUnit::cls()))
+  assert_true(slot.owner().show() == "core:unit")
+  assert_true(slot.name().show() == "bap:disassembly")
+  assert_true(slot.desc() == "no description")
+  assert_true(slot.persistent() is None)
+  let domain = slot.domain()
+  let empty = @project.ProjectState::empty()
+  assert_true(domain.name().show() == "bap:disassembly")
+  assert_true(domain.empty() is Some(_))
+  assert_true(domain.is_empty(empty))
+  let state = @project.ProjectState::empty().with_disassembly(
+    @project.ProjectDisassemblyState::empty().add_block(raw_segment().memory()),
+  )
+  assert_true(!domain.is_empty(state))
+  assert_true(domain.inspect(state).contains(":number-of-basic-blocks 1"))
+  assert_true(domain.inspect(state).contains(":number-of-subroutines 0"))
+  assert_true(domain.order(empty, state) == Less)
+  match domain.join(empty, state) {
+    Ok(joined) => assert_project_state_shape(joined, 1, 0)
+    Err(_) => abort("expected empty project state to join with disassembly")
+  }
+  match domain.join(state, empty) {
+    Ok(joined) => assert_project_state_shape(joined, 1, 0)
+    Err(_) => abort("expected project state to join with empty state")
+  }
+  match domain.join(state, state) {
+    Ok(joined) => assert_project_state_shape(joined, 1, 0)
+    Err(_) => abort("expected identical project states to join")
+  }
+  let other = state.add_subroutine(@types.Sub::create(name="slot-other"))
+  assert_true(domain.order(state, other) == Incomparable)
+  assert_true(domain.join(state, other) is Err(_))
+}
+
+///|
 test "project can be created from image memory" {
   let target = @core_theory.Target::unknown()
   let symbol = @image.Symbol::create(

@@ -54,6 +54,20 @@ test "project info streams observe input realization" {
 }
 
 ///|
+test "project info file stream reports unnamed inputs as empty filenames" {
+  let files = []
+  let file_stream = @project.ProjectInfo::file()
+  let file_id = file_stream.subscribe(file => files.push(file))
+  let input = @project.ProjectInput::custom(
+    target=@core_theory.Target::unknown(),
+  )
+  let project = @project.Project::from_input(input)
+  file_stream.unsubscribe(file_id)
+  assert_true(project.filename() is None)
+  assert_true(files == [""])
+}
+
+///|
 test "project info streams observe source-driven reconstruction" {
   let cfg_counts = []
   let symtab_counts = []

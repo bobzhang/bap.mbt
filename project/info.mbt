@@ -106,10 +106,15 @@ pub fn ProjectInfo::spec() -> @future.Stream[@image.OgreDoc] {
 
 ///|
 fn project_info_emit_input(input : ProjectInput, project : Project) -> Unit {
-  match project.filename() {
-    Some(filename) => project_info_file_pair.1.send(filename)
-    None => ()
+  let filename = match project.filename() {
+    Some(value) => value
+    None =>
+      match input.filename() {
+        Some(value) => value
+        None => ""
+      }
   }
+  project_info_file_pair.1.send(filename)
   project_info_arch_pair.1.send(project.arch())
   project_info_data_pair.1.send(input.data())
   project_info_code_pair.1.send(input.code())

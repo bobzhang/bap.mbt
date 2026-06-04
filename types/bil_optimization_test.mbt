@@ -134,6 +134,17 @@ test "translated BAP pruning handles simple dead virtual regressions" {
       "%will_survive:imm8 := 1:8u", "always_alive:imm8 := (%will_survive:imm8 + 2:8u)",
     ],
   )
+  let dead_between_live_defs = @types.prune_dead_virtual_stmts([
+    Move(will_survive, Int(word8(1))),
+    Move(could_be_dead, UnOp(Not, Var(always_alive))),
+    Move(always_alive, BinOp(Plus, Var(will_survive), Int(word8(2)))),
+  ])
+  assert_true(
+    stmt_text(dead_between_live_defs) ==
+    [
+      "%will_survive:imm8 := 1:8u", "always_alive:imm8 := (%will_survive:imm8 + 2:8u)",
+    ],
+  )
   let reassigned = @types.prune_dead_virtual_stmts([
     Move(could_be_dead, Int(word8(1))),
     Move(always_alive, BinOp(Plus, Var(could_be_dead), Int(word8(2)))),
@@ -153,6 +164,14 @@ test "bil pruning keeps branch condition dependencies" {
   let physical = @types.Var::new(name="physical", typ~)
   let cond_var = @types.Var::new(name="cond", typ~, is_virtual=true)
   let branch_tmp = @types.Var::new(name="branch_tmp", typ~, is_virtual=true)
+  let condition_only = @types.prune_dead_virtual_stmts([
+    Move(cond_var, Int(word8(1))),
+    If(cond=BinOp(Lt, Var(cond_var), Int(word8(0))), yes=[], no=[]),
+  ])
+  assert_true(
+    stmt_text(condition_only) ==
+    ["%cond:imm8 := 1:8u", "if (%cond:imm8 < 0:8u) then 0 stmts else 0 stmts"],
+  )
   let stmts = [
     @types.Stmt::Move(cond_var, Int(word8(1))),
     If(

@@ -1174,6 +1174,31 @@ fn dwarf_collect_range_base(values : Array[DwarfFunctionAttrValue]) -> UInt64? {
 }
 
 ///|
+fn dwarf_entry_allows_name_capture(entry : DwarfAbbrevEntry) -> Bool {
+  match entry.tag() {
+    DwarfCompileUnit | DwarfPartialUnit => false
+    _ => true
+  }
+}
+
+///|
+fn dwarf_should_read_die_field(
+  entry : DwarfAbbrevEntry,
+  field : DwarfAbbrevField,
+) -> Bool {
+  entry.captures_values() ||
+  field.attr() == DwarfStrOffsetsBase ||
+  field.attr() == DwarfAddrBase ||
+  field.attr() == DwarfRangesBase ||
+  field.attr() == DwarfRnglistsBase ||
+  field.attr() == DwarfLowPc ||
+  (
+    dwarf_entry_allows_name_capture(entry) &&
+    field.value_kind() == DwarfNameValue
+  )
+}
+
+///|
 fn dwarf_read_die(
   input : DwarfInput,
   entry : DwarfAbbrevEntry,
@@ -1209,12 +1234,7 @@ fn dwarf_read_die(
   let values : Array[DwarfFunctionAttrValue] = []
   let mut cursor = input
   for field in entry.fields() {
-    if entry.captures_values() ||
-      field.attr() == DwarfStrOffsetsBase ||
-      field.attr() == DwarfAddrBase ||
-      field.attr() == DwarfRangesBase ||
-      field.attr() == DwarfRnglistsBase ||
-      field.attr() == DwarfLowPc {
+    if dwarf_should_read_die_field(entry, field) {
       match
         dwarf_read_attr_value(
           cursor, field, endian, version, dwarf_size, addr_size, addr_base, addr_section,

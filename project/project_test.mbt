@@ -183,6 +183,19 @@ test "project storage and memory tags are persistent updates" {
 }
 
 ///|
+test "project restore_state reports unsupported compatibility hook" {
+  let project = @project.Project::empty(@core_theory.Target::unknown())
+  match project.restore_state() {
+    Err(reason) =>
+      assert_true(
+        reason ==
+        "Project.restore_state: this function should no be used. Please use the Toplevel module to save/restore the state.",
+      )
+    Ok(_) => fail("unexpected restore_state success")
+  }
+}
+
+///|
 test "project substitutes memory annotation placeholders" {
   let target = @core_theory.Target::unknown()
   let section = @image.Section::create(name=".text", addr=0x1000UL, size=2)

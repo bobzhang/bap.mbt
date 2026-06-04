@@ -236,6 +236,7 @@ pub fn Project::resolve_stub_calls(Self, link_only? : Array[String], no_link? : 
 pub fn Project::resolved_callees(Self, @types.Term[@types.Sub], resolve_indirect~ : (@types.Exp) -> Array[@types.Tid]) -> Array[@types.Tid]
 pub fn Project::resolved_callers(Self, @types.Term[@types.Sub], resolve_indirect~ : (@types.Exp) -> Array[@types.Tid]) -> Array[@types.Tid]
 pub fn Project::resolved_callgraph(Self, resolve_indirect~ : (@types.Exp) -> Array[@types.Tid]) -> @graphlib.Graph[@types.Tid, Array[@types.Term[@types.Jmp]]]
+pub fn Project::restore_state(Self) -> Result[Unit, String]
 pub fn Project::rooter(Self) -> ProjectRooter
 pub fn Project::rpaths(Self) -> Array[String]
 pub fn Project::run_autorun_passes(Self) -> Result[Self, String]

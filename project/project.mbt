@@ -237,6 +237,14 @@ pub fn Project::with_state(self : Project, state : ProjectState) -> Project {
 }
 
 ///|
+pub fn Project::restore_state(self : Project) -> Result[Unit, String] {
+  let _ = self
+  Err(
+    "Project.restore_state: this function should no be used. Please use the Toplevel module to save/restore the state.",
+  )
+}
+
+///|
 pub fn Project::disassembly(self : Project) -> ProjectDisassemblyState {
   self.state_value.disassembly()
 }

@@ -814,6 +814,7 @@ pub fn Stmt::to_string(Self) -> String
 pub fn Stmt::while_(Exp, Array[Self]) -> Self
 
 type StmtAttribute[T]
+pub fn[T] StmtAttribute::declare_(String, encode~ : (T) -> String, decode~ : (String) -> T, pkg? : String) -> Self[T] raise StmtAttributeError
 pub fn[T] StmtAttribute::key(Self[T]) -> String
 pub fn[T] StmtAttribute::register(String, encode~ : (T) -> String, decode~ : (String) -> T, pkg? : String) -> Self[T] raise StmtAttributeError
 

@@ -776,6 +776,15 @@ test "bil expressions and statements expose BAP-style constructors" {
   let custom_stmt = @types.Stmt::encode(custom_attr, "high")
   assert_true(custom_stmt == Special("@attribute:(test:priority high)"))
   assert_true(@types.Stmt::decode(custom_attr, custom_stmt) == Some("high"))
+  let declared_attr = @types.StmtAttribute::declare_(
+    "owner",
+    pkg="test",
+    encode=passthrough,
+    decode=passthrough,
+  )
+  let declared_stmt = @types.Stmt::encode(declared_attr, "team")
+  assert_true(declared_stmt == Special("@attribute:(test:owner team)"))
+  assert_true(@types.Stmt::decode(declared_attr, declared_stmt) == Some("team"))
   try
     @types.StmtAttribute::register(
       "call",

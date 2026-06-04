@@ -352,6 +352,16 @@ pub fn[T] StmtAttribute::register(
 }
 
 ///|
+pub fn[T] StmtAttribute::declare_(
+  name : String,
+  encode~ : (T) -> String,
+  decode~ : (String) -> T,
+  pkg? : String,
+) -> StmtAttribute[T] raise StmtAttributeError {
+  StmtAttribute::register(name, encode~, decode~, pkg?)
+}
+
+///|
 pub fn[T] StmtAttribute::key(self : StmtAttribute[T]) -> String {
   self.key
 }

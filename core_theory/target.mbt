@@ -3540,6 +3540,20 @@ fn find_alias_origin(
 }
 
 ///|
+fn find_alias_origins(
+  origins : Array[AliasOrigin],
+  variable : Var,
+) -> Array[AliasOrigin] {
+  let result : Array[AliasOrigin] = []
+  for origin in origins {
+    if origin.aliased().same(variable) {
+      result.push(origin)
+    }
+  }
+  result
+}
+
+///|
 fn resolve_sub_alias_origin(
   origins : Array[AliasOrigin],
   aliased : Var,
@@ -3685,12 +3699,10 @@ fn aliases_to_origins(aliases : Array[Alias]) -> Array[AliasOrigin] {
   let resolved = resolve_alias_origins(declared)
   let result = resolved.copy()
   for entry in aliases {
-    match find_alias_origin(resolved, entry.aliased_value) {
-      Some(lhs_origin) =>
-        for origin in entry.derived_part_origins(lhs_origin) {
-          append_alias_origin_unique(result, origin)
-        }
-      None => ()
+    for lhs_origin in find_alias_origins(resolved, entry.aliased_value) {
+      for origin in entry.derived_part_origins(lhs_origin) {
+        append_alias_origin_unique(result, origin)
+      }
     }
   }
   resolve_alias_origins(result)

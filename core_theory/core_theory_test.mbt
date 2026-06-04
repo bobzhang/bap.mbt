@@ -1055,6 +1055,53 @@ test "targets inherit defaults and match ancestry" {
     }
     None => fail("missing chained AL origin")
   }
+  let r25 = @core_theory.Var::create(@core_theory.Sort::bitv(8), "R25")
+  let r24 = @core_theory.Var::create(@core_theory.Sort::bitv(8), "R24")
+  let r25r24 = @core_theory.Var::create(@core_theory.Sort::bitv(16), "R25R24")
+  let w = @core_theory.Var::create(@core_theory.Sort::bitv(16), "W")
+  let whi = @core_theory.Var::create(@core_theory.Sort::bitv(8), "WHI")
+  let wlo = @core_theory.Var::create(@core_theory.Sort::bitv(8), "WLO")
+  let r25r24_layout = match
+    @core_theory.Alias::def(r25r24, [
+      @core_theory.Alias::reg(r25),
+      @core_theory.Alias::reg(r24),
+    ]) {
+    Ok(value) => value
+    Err(reason) => fail(reason)
+  }
+  let w_pair_layout = match
+    @core_theory.Alias::def(w, [@core_theory.Alias::reg(r25r24)]) {
+    Ok(value) => value
+    Err(reason) => fail(reason)
+  }
+  let w_half_layout = match
+    @core_theory.Alias::def(w, [
+      @core_theory.Alias::reg(whi),
+      @core_theory.Alias::reg(wlo),
+    ]) {
+    Ok(value) => value
+    Err(reason) => fail(reason)
+  }
+  let duplicate_lhs_target = @core_theory.Target::create(
+    name=@knowledge.Name::create("duplicate-lhs-alias-dsl-target", pkg="test"),
+    bits=16,
+    vars=[r25, r24, r25r24, w, whi, wlo],
+    aliasing=[w_half_layout, w_pair_layout, r25r24_layout],
+  )
+  match duplicate_lhs_target.origin_of_name("WHI") {
+    Some(origin) => {
+      assert_true(origin.reg().map(v => v.ident()) == Some("R25"))
+      assert_true(origin.is_alias())
+    }
+    None => fail("missing inferred WHI alias origin")
+  }
+  match duplicate_lhs_target.origin_of_name("WLO") {
+    Some(origin) => {
+      assert_true(origin.reg().map(v => v.ident()) == Some("R24"))
+      assert_true(origin.is_alias())
+    }
+    None => fail("missing inferred WLO alias origin")
+  }
 }
 
 ///|

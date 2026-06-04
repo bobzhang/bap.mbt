@@ -1434,6 +1434,7 @@ test "phi nodes jumps calls and args expose BAP-style payloads" {
   let guard_exp : @types.Exp = Var(flag)
   let def = @types.Def::create(lhs, one)
   assert_true(def.def_var() == lhs)
+  assert_true(@types.Def::var_(def) == lhs)
   assert_true(def.def_value() == one)
   assert_true(@types.Def::lhs(def) == lhs)
   assert_true(@types.Def::rhs(def) == one)
@@ -1456,6 +1457,7 @@ test "phi nodes jumps calls and args expose BAP-style payloads" {
   assert_true(phi.select(right) == Some(two))
   assert_true(@types.Phi::update(single, right, two).select(right) == Some(two))
   assert_true(phi.phi_var() == lhs)
+  assert_true(@types.Phi::var_(phi) == lhs)
   assert_true(@types.Phi::lhs(phi) == lhs)
   assert_true(phi.phi_options() == phi.values())
   assert_true(phi.options() == phi.values())
@@ -1487,7 +1489,11 @@ test "phi nodes jumps calls and args expose BAP-style payloads" {
   assert_true(goto.alt() is None)
   assert_true(@types.Jmp::alt(goto) is None)
   assert_true(goto.jmp_guard() is None)
+  assert_true(@types.Jmp::guard_(goto) is None)
   assert_true(goto.with_guard(Some(guard_exp)).jmp_guard() == Some(guard_exp))
+  assert_true(
+    @types.Jmp::guard_(goto.with_guard(Some(guard_exp))) == Some(guard_exp),
+  )
   assert_true(
     @types.Jmp::with_guard(goto, Some(guard_exp)).jmp_guard() == Some(guard_exp),
   )
@@ -1547,6 +1553,7 @@ test "phi nodes jumps calls and args expose BAP-style payloads" {
   let arg = @types.Arg::create(lhs, one).with_intent(Both)
   assert_true(arg.intent() == Some(Both))
   assert_true(arg.arg_var() == lhs)
+  assert_true(@types.Arg::var_(arg) == lhs)
   assert_true(arg.arg_value() == one)
   assert_true(@types.Arg::lhs(arg) == lhs)
   assert_true(@types.Arg::rhs(arg) == one)

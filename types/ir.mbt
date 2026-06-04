@@ -886,6 +886,11 @@ pub fn Term::def_var(self : Term[Def]) -> Var {
 }
 
 ///|
+pub fn Def::var_(def : Term[Def]) -> Var {
+  def.def_var()
+}
+
+///|
 pub fn Term::rhs(self : Term[Def]) -> Exp {
   self.payload_value.rhs
 }
@@ -952,6 +957,11 @@ pub fn Phi::lhs(phi : Term[Phi]) -> Var {
 ///|
 pub fn Term::phi_var(self : Term[Phi]) -> Var {
   self.phi_lhs()
+}
+
+///|
+pub fn Phi::var_(phi : Term[Phi]) -> Var {
+  phi.phi_var()
 }
 
 ///|
@@ -1116,6 +1126,11 @@ pub fn Term::jmp_guard(self : Term[Jmp]) -> Exp? {
 }
 
 ///|
+pub fn Jmp::guard_(jmp : Term[Jmp]) -> Exp? {
+  jmp.jmp_guard()
+}
+
+///|
 pub fn Term::with_kind(self : Term[Jmp], kind : JmpKind) -> Term[Jmp] {
   self.with_payload({ ..self.payload_value, kind, })
 }
@@ -1223,6 +1238,11 @@ pub fn Arg::lhs(arg : Term[Arg]) -> Var {
 ///|
 pub fn Term::arg_var(self : Term[Arg]) -> Var {
   self.arg_lhs()
+}
+
+///|
+pub fn Arg::var_(arg : Term[Arg]) -> Var {
+  arg.arg_var()
 }
 
 ///|

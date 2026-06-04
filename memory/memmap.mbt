@@ -267,6 +267,67 @@ pub fn[V : Hash + Eq, U] MemMap::link_at_least_one(
 }
 
 ///|
+fn[V : Hash + Eq] MemMap::rev_map_injective(
+  self : MemMap[V],
+) -> Result[Map[V, Memory], String] {
+  let result : Map[V, Memory] = {}
+  for entry in self.ordered_entries() {
+    if result.get(entry.1) is Some(_) {
+      return Err("mapping is non-injective")
+    }
+    result[entry.1] = entry.0
+  }
+  Ok(result)
+}
+
+///|
+pub fn[V : Hash + Eq] MemMap::rev_map_one(
+  self : MemMap[V],
+) -> Result[Map[V, Memory], String] {
+  self.rev_map_injective()
+}
+
+///|
+pub fn[V : Hash + Eq] MemMap::rev_map_maybe_one(
+  self : MemMap[V],
+) -> Result[Map[V, Memory], String] {
+  self.rev_map_injective()
+}
+
+///|
+pub fn[V : Hash + Eq] MemMap::rev_map_many(
+  self : MemMap[V],
+) -> Map[V, Array[Memory]] {
+  let result : Map[V, Array[Memory]] = {}
+  for entry in self.ordered_entries() {
+    match result.get(entry.1) {
+      Some(memories) => {
+        let next = memories.copy()
+        next.push(entry.0)
+        result[entry.1] = next
+      }
+      None => result[entry.1] = [entry.0]
+    }
+  }
+  result
+}
+
+///|
+pub fn[V : Hash + Eq] MemMap::rev_map_at_least_one(
+  self : MemMap[V],
+) -> Map[V, (Memory, Array[Memory])] {
+  let result : Map[V, (Memory, Array[Memory])] = {}
+  self
+  .rev_map_many()
+  .each((value, memories) => {
+    if !memories.is_empty() {
+      result[value] = (memories[0], memories[1:].to_owned())
+    }
+  })
+  result
+}
+
+///|
 pub fn[V] MemMap::intersections(
   self : MemMap[V],
   memory : Memory,

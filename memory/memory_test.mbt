@@ -653,3 +653,51 @@ test "translated BAP image table link variants handle exact and many intersectio
   }
   assert_true(table.link_at_least_one(regs).get("missing") is None)
 }
+
+///|
+test "translated BAP image table reverse maps expose value-to-memory lookup" {
+  let low = memory_at(0x10UL, 0x10)
+  let high = memory_at(0x30UL, 0x10)
+  let later_low = memory_at(0x50UL, 0x08)
+  let unique = @memory.MemMap::empty().add(low, "text").add(high, "data")
+  match unique.rev_map_one() {
+    Ok(back) => {
+      assert_true(
+        back.get("text").map(memory => memory.min_addr()) == Some(0x10UL),
+      )
+      assert_true(
+        back.get("data").map(memory => memory.min_addr()) == Some(0x30UL),
+      )
+      assert_true(back.get("missing") is None)
+    }
+    Err(reason) => fail(reason)
+  }
+  match unique.rev_map_maybe_one() {
+    Ok(back) =>
+      assert_true(
+        back.get("text").map(memory => memory.max_addr()) == Some(0x1fUL),
+      )
+    Err(reason) => fail(reason)
+  }
+  let duplicated = unique.add(later_low, "text")
+  match duplicated.rev_map_one() {
+    Err(reason) => assert_eq(reason, "mapping is non-injective")
+    Ok(_) => fail("expected duplicate value rejection")
+  }
+  match duplicated.rev_map_maybe_one() {
+    Err(reason) => assert_eq(reason, "mapping is non-injective")
+    Ok(_) => fail("expected maybe-one duplicate value rejection")
+  }
+  match duplicated.rev_map_many().get("text") {
+    Some(memories) =>
+      assert_true(memories.map(memory => memory.min_addr()) == [0x10UL, 0x50UL])
+    None => fail("expected reverse many text bindings")
+  }
+  match duplicated.rev_map_at_least_one().get("text") {
+    Some((head, tail)) => {
+      assert_true(head.min_addr() == 0x10UL)
+      assert_true(tail.map(memory => memory.min_addr()) == [0x50UL])
+    }
+    None => fail("expected reverse at-least-one text binding")
+  }
+}

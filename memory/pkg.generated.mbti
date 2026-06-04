@@ -74,6 +74,10 @@ pub fn[V] MemMap::regions(Self[V], start? : Memory?, until? : Memory?) -> Array[
 pub fn[V] MemMap::remove(Self[V], Memory) -> Self[V]
 pub fn[V] MemMap::remove_dominators(Self[V], Memory) -> Self[V]
 pub fn[V] MemMap::remove_intersections(Self[V], Memory) -> Self[V]
+pub fn[V : Hash + Eq] MemMap::rev_map_at_least_one(Self[V]) -> Map[V, (Memory, Array[Memory])]
+pub fn[V : Hash + Eq] MemMap::rev_map_many(Self[V]) -> Map[V, Array[Memory]]
+pub fn[V : Hash + Eq] MemMap::rev_map_maybe_one(Self[V]) -> Result[Map[V, Memory], String]
+pub fn[V : Hash + Eq] MemMap::rev_map_one(Self[V]) -> Result[Map[V, Memory], String]
 pub fn[V] MemMap::singleton(Memory, V) -> Self[V]
 pub fn[V] MemMap::to_sequence(Self[V], start? : Memory?, until? : Memory?) -> Array[(Memory, V)]
 

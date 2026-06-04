@@ -130,6 +130,7 @@ pub fn Project::disassemble_with_available(Self) -> Result[Self, String]
 pub fn Project::disassemble_with_drivers(Self, Array[ProjectDisassemblyDriver]) -> Result[Self, String]
 pub fn Project::disassembly(Self) -> ProjectDisassemblyState
 pub fn Project::disassembly_calls(Self) -> ProjectDisassemblyCalls
+pub fn Project::disassembly_symtab(Self) -> ProjectDisassemblySymtab
 pub fn Project::empty(@core_theory.Target) -> Self
 pub fn Project::external_references(Self) -> Array[@image.ExternalReference]
 pub fn Project::file(filename~ : String, loader? : String, libraries? : Array[String]) -> Result[Self, String]
@@ -315,6 +316,18 @@ pub(all) enum ProjectDisassemblyEdgeKind {
 } derive(Eq)
 pub fn ProjectDisassemblyEdgeKind::to_string(Self) -> String
 
+type ProjectDisassemblyFunction
+pub fn ProjectDisassemblyFunction::addr(Self) -> UInt64
+pub fn ProjectDisassemblyFunction::block_count(Self) -> Int
+pub fn ProjectDisassemblyFunction::blocks(Self) -> Array[ProjectDisassemblyBlock]
+pub fn ProjectDisassemblyFunction::contains_addr(Self, UInt64) -> Bool
+pub fn ProjectDisassemblyFunction::create(name~ : String, entry~ : ProjectDisassemblyBlock, blocks? : Array[ProjectDisassemblyBlock]) -> Self
+pub fn ProjectDisassemblyFunction::dominates(Self, @memory.Memory) -> Bool
+pub fn ProjectDisassemblyFunction::entry(Self) -> ProjectDisassemblyBlock
+pub fn ProjectDisassemblyFunction::intersects(Self, @memory.Memory) -> Bool
+pub fn ProjectDisassemblyFunction::name(Self) -> String
+pub fn ProjectDisassemblyFunction::span(Self) -> @memory.MemMap[Unit]
+
 type ProjectDisassemblyInstruction
 pub fn ProjectDisassemblyInstruction::addr(Self) -> UInt64
 pub fn ProjectDisassemblyInstruction::affects_control_flow(Self) -> Bool
@@ -381,6 +394,23 @@ pub fn ProjectDisassemblyState::remove_instruction(Self, ProjectDisassemblyInstr
 pub fn ProjectDisassemblyState::with_blocks(Self, Array[@memory.Memory]) -> Self
 pub fn ProjectDisassemblyState::with_edges(Self, Array[ProjectDisassemblyEdge]) -> Self
 pub fn ProjectDisassemblyState::with_instructions(Self, Array[ProjectDisassemblyInstruction]) -> Self
+
+type ProjectDisassemblySymtab
+pub fn ProjectDisassemblySymtab::add_symbol(Self, ProjectDisassemblyFunction) -> Self
+pub fn ProjectDisassemblySymtab::callee(Self, UInt64) -> String?
+pub fn ProjectDisassemblySymtab::create(functions? : Array[ProjectDisassemblyFunction]) -> Self
+pub fn ProjectDisassemblySymtab::dominators(Self, @memory.Memory) -> Array[ProjectDisassemblyFunction]
+pub fn ProjectDisassemblySymtab::empty() -> Self
+pub fn ProjectDisassemblySymtab::explicit_callee(Self, UInt64) -> String?
+pub fn ProjectDisassemblySymtab::find_by_name(Self, String) -> ProjectDisassemblyFunction?
+pub fn ProjectDisassemblySymtab::find_by_start(Self, UInt64) -> ProjectDisassemblyFunction?
+pub fn ProjectDisassemblySymtab::implicit_callee(Self, UInt64) -> String?
+pub fn ProjectDisassemblySymtab::insert_call(Self, ProjectDisassemblyBlock, String, implicit? : Bool) -> Self
+pub fn ProjectDisassemblySymtab::intersecting(Self, @memory.Memory) -> Array[ProjectDisassemblyFunction]
+pub fn ProjectDisassemblySymtab::of_project(Project) -> Self
+pub fn ProjectDisassemblySymtab::owners(Self, UInt64) -> Array[ProjectDisassemblyFunction]
+pub fn ProjectDisassemblySymtab::remove(Self, ProjectDisassemblyFunction) -> Self
+pub fn ProjectDisassemblySymtab::to_sequence(Self) -> Array[ProjectDisassemblyFunction]
 
 type ProjectInput
 pub fn ProjectInput::available_loaders() -> Array[String]

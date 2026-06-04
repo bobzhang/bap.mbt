@@ -68,6 +68,8 @@ pub(all) enum DwarfForm {
   DwarfStrpSup
   DwarfRefSup4
   DwarfRefSup8
+  DwarfRefAlt
+  DwarfStrpAlt
   DwarfRefAddr
   DwarfRefSig8
   DwarfOffset
@@ -360,6 +362,8 @@ fn dwarf_form_of_int(code : Int) -> Result[DwarfForm, String] {
     0x2c => Ok(DwarfAddrx(DwarfIndexFour))
     0x1f01 => Ok(DwarfAddrx(DwarfIndexLeb128))
     0x1f02 => Ok(DwarfStrx(DwarfIndexLeb128))
+    0x1f20 => Ok(DwarfRefAlt)
+    0x1f21 => Ok(DwarfStrpAlt)
     other => Err("unknown DWARF form code: \{other}")
   }
 }

@@ -92,6 +92,8 @@ pub(all) enum DwarfForm {
   DwarfStrpSup
   DwarfRefSup4
   DwarfRefSup8
+  DwarfRefAlt
+  DwarfStrpAlt
   DwarfRefAddr
   DwarfRefSig8
   DwarfOffset

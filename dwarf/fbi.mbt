@@ -236,7 +236,7 @@ fn dwarf_skip_form(
           dwarf_ref_addr_size(version, dwarf_size, addr_size),
         ),
       )
-    DwarfStrpSup | DwarfLineStrp =>
+    DwarfStrpSup | DwarfStrpAlt | DwarfRefAlt | DwarfLineStrp =>
       match input.read_offset(endian~, size=dwarf_size) {
         Ok((_, next)) => Ok(next)
         Err(reason) => Err(reason)

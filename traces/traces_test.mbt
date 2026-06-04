@@ -663,6 +663,54 @@ test "translated BAP traces read matching events and tool support" {
 }
 
 ///|
+test "translated BAP trace filter maps compose and preserve context" {
+  let expected_meta = test_meta().set("complete", Bool(true))
+  let source = new_trace()
+    .set_meta(test_meta())
+    .set_attr("complete", Bool(true))
+  match @traces.Trace::save("memory://bap-filter-map-context", source) {
+    Ok(_) => ()
+    Err(_) => fail("filter-map save failed")
+  }
+
+  match @traces.Trace::load("memory://bap-filter-map-context") {
+    Ok(loaded) => {
+      let loaded_id = loaded.id()
+      let filtered = loaded
+        .filter_map(fn(event) {
+          match event {
+            MemoryLoad(_) | MemoryStore(_) | RegisterRead(_) => Some(event)
+            _ => None
+          }
+        })
+        .filter_map(fn(event) {
+          match event {
+            MemoryStore(_) => Some(@traces.TraceEvent::mode("store"))
+            RegisterRead(_) => Some(@traces.TraceEvent::mode("register"))
+            _ => None
+          }
+        })
+      assert_true(filtered.id() == loaded_id)
+      assert_true(filtered.protocol() == Some("memory"))
+      assert_true(filtered.tool() == test_tool())
+      assert_true(filtered.meta() == expected_meta)
+      assert_true(filtered.has_attr("complete"))
+      assert_true(filtered.get_attr("complete") == Some(Bool(true)))
+      assert_true(filtered.supports("memory-store"))
+      assert_true(!filtered.supports("register-write"))
+      assert_true(
+        unwrap_events(filtered.read_events()) ==
+        [
+          @traces.TraceEvent::mode("store"),
+          @traces.TraceEvent::mode("register"),
+        ],
+      )
+    }
+    Err(_) => fail("filter-map load failed")
+  }
+}
+
+///|
 test "translated BAP traces create from a lazy next callback" {
   let events = test_events()
   let index = Ref(0)

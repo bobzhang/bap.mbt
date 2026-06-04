@@ -382,8 +382,28 @@ pub fn IrTerm::is_synthetic(self : IrTerm) -> Bool {
 }
 
 ///|
+pub fn IrTerm::set_synthetic(self : IrTerm) -> IrTerm {
+  self.set_attr(Attr::synthetic())
+}
+
+///|
+pub fn IrTerm::del_synthetic(self : IrTerm) -> IrTerm {
+  self.del_attr(term_synthetic_attr)
+}
+
+///|
 pub fn IrTerm::is_visited(self : IrTerm) -> Bool {
   self.has_attr(term_visited_attr)
+}
+
+///|
+pub fn IrTerm::set_visited(self : IrTerm) -> IrTerm {
+  self.set_attr(Attr::visited())
+}
+
+///|
+pub fn IrTerm::del_visited(self : IrTerm) -> IrTerm {
+  self.del_attr(term_visited_attr)
 }
 
 ///|
@@ -392,8 +412,28 @@ pub fn IrTerm::is_live(self : IrTerm) -> Bool {
 }
 
 ///|
+pub fn IrTerm::set_live(self : IrTerm) -> IrTerm {
+  self.set_attr(Attr::live())
+}
+
+///|
+pub fn IrTerm::del_live(self : IrTerm) -> IrTerm {
+  self.del_attr(term_live_attr)
+}
+
+///|
 pub fn IrTerm::is_dead(self : IrTerm) -> Bool {
   self.has_attr(term_dead_attr)
+}
+
+///|
+pub fn IrTerm::set_dead(self : IrTerm) -> IrTerm {
+  self.set_attr(Attr::dead())
+}
+
+///|
+pub fn IrTerm::del_dead(self : IrTerm) -> IrTerm {
+  self.del_attr(term_dead_attr)
 }
 
 ///|

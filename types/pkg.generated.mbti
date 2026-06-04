@@ -684,15 +684,19 @@ pub fn IrTerm::del_attr(Self, String) -> Self
 pub fn IrTerm::del_background(Self) -> Self
 pub fn IrTerm::del_color(Self) -> Self
 pub fn IrTerm::del_comment(Self) -> Self
+pub fn IrTerm::del_dead(Self) -> Self
 pub fn IrTerm::del_filename(Self) -> Self
 pub fn IrTerm::del_foreground(Self) -> Self
 pub fn IrTerm::del_format(Self) -> Self
+pub fn IrTerm::del_live(Self) -> Self
 pub fn IrTerm::del_mark(Self) -> Self
 pub fn IrTerm::del_origin(Self) -> Self
 pub fn IrTerm::del_python(Self) -> Self
 pub fn IrTerm::del_shell(Self) -> Self
+pub fn IrTerm::del_synthetic(Self) -> Self
 pub fn IrTerm::del_tainted_ptr(Self) -> Self
 pub fn IrTerm::del_tainted_reg(Self) -> Self
+pub fn IrTerm::del_visited(Self) -> Self
 pub fn IrTerm::del_weight(Self) -> Self
 pub fn IrTerm::filename(Self) -> String?
 pub fn IrTerm::filter(Self, IrTermClass, (Self) -> Bool) -> Self
@@ -759,15 +763,19 @@ pub fn IrTerm::set_attr(Self, Attr) -> Self
 pub fn IrTerm::set_background(Self, IrColor) -> Self
 pub fn IrTerm::set_color(Self, IrColor) -> Self
 pub fn IrTerm::set_comment(Self, String) -> Self
+pub fn IrTerm::set_dead(Self) -> Self
 pub fn IrTerm::set_filename(Self, String) -> Self
 pub fn IrTerm::set_foreground(Self, IrColor) -> Self
 pub fn IrTerm::set_format(Self, String) -> Self
+pub fn IrTerm::set_live(Self) -> Self
 pub fn IrTerm::set_mark(Self, value? : String) -> Self
 pub fn IrTerm::set_origin(Self, Tid) -> Self
 pub fn IrTerm::set_python(Self, String) -> Self
 pub fn IrTerm::set_shell(Self, String) -> Self
+pub fn IrTerm::set_synthetic(Self) -> Self
 pub fn IrTerm::set_tainted_ptr(Self, Tid) -> Self
 pub fn IrTerm::set_tainted_reg(Self, Tid) -> Self
+pub fn IrTerm::set_visited(Self) -> Self
 pub fn IrTerm::set_weight(Self, Double) -> Self
 pub fn IrTerm::shell(Self) -> String?
 pub fn[A] IrTerm::switch(Self, program~ : (Term[Program]) -> A, sub~ : (Term[Sub]) -> A, arg~ : (Term[Arg]) -> A, blk~ : (Term[Blk]) -> A, phi~ : (Term[Phi]) -> A, def~ : (Term[Def]) -> A, jmp~ : (Term[Jmp]) -> A) -> A

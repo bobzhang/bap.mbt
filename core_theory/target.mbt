@@ -2341,6 +2341,11 @@ fn riscv_vars(bits : Int) -> Array[Var] {
 }
 
 ///|
+fn loongarch_vars(bits : Int) -> Array[Var] {
+  [mem_var(bits, 8, "mem")]
+}
+
+///|
 fn find_in_targets(items : Array[Target], query : String) -> Target? {
   for target in items {
     if target_has_name(target, query) {
@@ -5324,6 +5329,33 @@ pub fn Target::riscv64() -> Target {
 }
 
 ///|
+pub fn Target::loongarch() -> Target {
+  Target::create(name=target_name("loongarch"), bits=0, endianness=LittleEndian)
+}
+
+///|
+pub fn Target::loongarch32() -> Target {
+  Target::create(
+    name=target_name("loongarch32"),
+    parent=Target::loongarch(),
+    bits=32,
+    endianness=LittleEndian,
+    vars=loongarch_vars(32),
+  )
+}
+
+///|
+pub fn Target::loongarch64() -> Target {
+  Target::create(
+    name=target_name("loongarch64"),
+    parent=Target::loongarch(),
+    bits=64,
+    endianness=LittleEndian,
+    vars=loongarch_vars(64),
+  )
+}
+
+///|
 pub fn Target::sparc() -> Target {
   Target::create(
     name=target_name("sparc"),
@@ -5757,6 +5789,9 @@ pub fn common_targets() -> Array[Target] {
       Target::riscv(),
       Target::riscv32(),
       Target::riscv64(),
+      Target::loongarch(),
+      Target::loongarch32(),
+      Target::loongarch64(),
       Target::sparc(),
       Target::sparcv9(),
       Target::nvptx(),

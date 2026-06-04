@@ -1106,6 +1106,26 @@ test "target registry resolves common and custom declarations" {
     }
     Err(reason) => fail(reason)
   }
+  match @core_theory.get_target("loongarch64") {
+    Ok(target) => {
+      assert_true(target.bits() == 64)
+      assert_true(target.data_addr_size() == 64)
+      assert_true(target.code_addr_size() == 64)
+      assert_true(target.belongs(@core_theory.Target::loongarch()))
+      assert_true(!target.belongs(@core_theory.Target::loongarch32()))
+      assert_true(target.matches("loongarch"))
+    }
+    Err(reason) => fail(reason)
+  }
+  match @core_theory.get_target("loongarch") {
+    Ok(target) => {
+      assert_true(target.bits() == 0)
+      assert_true(target.endianness() == LittleEndian)
+      assert_true(@core_theory.Target::loongarch32().belongs(target))
+      assert_true(@core_theory.Target::loongarch64().belongs(target))
+    }
+    Err(reason) => fail(reason)
+  }
   match @core_theory.get_target("thumb") {
     Ok(target) => {
       assert_true(target.bits() == 32)

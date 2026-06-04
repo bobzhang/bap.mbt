@@ -744,6 +744,9 @@ pub fn Target::i686() -> Self
 pub fn Target::i86() -> Self
 pub fn Target::is_unknown(Self) -> Bool
 pub fn Target::lookup(String, pkg? : String) -> Self?
+pub fn Target::loongarch() -> Self
+pub fn Target::loongarch32() -> Self
+pub fn Target::loongarch64() -> Self
 pub fn Target::matches(Self, String) -> Bool
 pub fn Target::matching(Self, String) -> Self?
 pub fn Target::mips() -> Self

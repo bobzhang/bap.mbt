@@ -848,6 +848,7 @@ test "image ELF backend refines target system and ABI from OSABI" {
     ("tru64", 0x3e, 10, "x86_64", Tru64, UnknownAbi),
     ("modesto", 0x3e, 11, "x86_64", Modesto, UnknownAbi),
     ("arm-aeabi", 0x28, 64, "arm", UnknownSystem, EABI),
+    ("loongarch-linux", 0x102, 3, "loongarch64", Linux, GNU),
   ]
   for case in cases {
     let (name, machine, osabi, arch, system, abi) = case

@@ -2051,6 +2051,11 @@ fn image_elf_target(header : ImageElfHeader) -> @core_theory.Target {
         ImageElf64 => @core_theory.Target::riscv64()
         ImageElf32 => @core_theory.Target::riscv32()
       }
+    0x102 =>
+      match header.class {
+        ImageElf64 => @core_theory.Target::loongarch64()
+        ImageElf32 => @core_theory.Target::loongarch32()
+      }
     _ =>
       @core_theory.Target::unknown().with_bits(
         match header.class {

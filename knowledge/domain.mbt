@@ -238,11 +238,32 @@ pub fn Domain::string(name : Name) -> Domain[String] {
 
 ///|
 pub fn[K, S] Domain::obj(cls : Class[K, S]) -> Domain[Object[K]] {
-  Domain::total(
-    cls.name(),
-    (value : Object[K]) => value.repr(),
-    empty=Object::null(cls),
-    compare=(lhs, rhs) => lhs.compare(rhs),
+  let empty = Object::null(cls)
+  Domain::new(
+    name=cls.name(),
+    empty=Some(empty),
+    is_empty=(value : Object[K]) => value.equal(empty),
+    order=(lhs : Object[K], rhs : Object[K]) => {
+      if lhs.equal(rhs) {
+        Equal
+      } else if lhs.equal(empty) {
+        Less
+      } else if rhs.equal(empty) {
+        Greater
+      } else {
+        Incomparable
+      }
+    },
+    join=(lhs : Object[K], rhs : Object[K]) => {
+      if lhs.equal(rhs) || rhs.equal(empty) {
+        Ok(lhs)
+      } else if lhs.equal(empty) {
+        Ok(rhs)
+      } else {
+        Err("conflicting object facts in domain \{cls.name().show()}")
+      }
+    },
+    inspect=(value : Object[K]) => value.repr(),
   )
 }
 

@@ -429,7 +429,9 @@ test "object domains use null as bottom" {
   )
   let domain = @knowledge.Domain::obj(cls)
   let null = @knowledge.Object::null(cls)
-  let object = @knowledge.State::new().create(cls)
+  let state = @knowledge.State::new()
+  let object = state.create(cls)
+  let other = state.create(cls)
   match domain.empty() {
     Some(empty) => assert_true(empty.equal(null))
     None => fail("missing object domain bottom")
@@ -437,10 +439,12 @@ test "object domains use null as bottom" {
   assert_true(domain.is_empty(null))
   assert_true(!domain.is_empty(object))
   assert_true(domain.order(null, object) == Less)
+  assert_true(domain.order(object, other) == Incomparable)
   match domain.join(null, object) {
     Ok(joined) => assert_true(joined.equal(object))
     Err(reason) => fail(reason)
   }
+  assert_true(domain.join(object, other) is Err(_))
   assert_eq(domain.inspect(object), "#<test:object-domain 1>")
 }
 

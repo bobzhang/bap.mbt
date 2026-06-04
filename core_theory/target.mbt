@@ -2272,15 +2272,44 @@ fn loongarch_gpr_alias_names() -> Array[String] {
 }
 
 ///|
-fn loongarch_alias_vars(bits : Int) -> Array[Var] {
+fn loongarch_fpr_alias_pairs() -> Array[(Int, String)] {
+  let items : Array[(Int, String)] = []
+  for i in 0..<=7 {
+    items.push((i, "FA\{i}"))
+  }
+  for i in 0..<=15 {
+    items.push((8 + i, "FT\{i}"))
+  }
+  for i in 0..<=7 {
+    items.push((24 + i, "FS\{i}"))
+  }
+  items
+}
+
+///|
+fn loongarch_fpr_alias_names() -> Array[String] {
   [
-    for name in loongarch_gpr_alias_names() => word_var(bits, name)
+    for pair in loongarch_fpr_alias_pairs() => pair.1
   ]
 }
 
 ///|
+fn loongarch_alias_vars(bits : Int) -> Array[Var] {
+  let items = [
+    for name in loongarch_gpr_alias_names() => word_var(bits, name)
+  ]
+  append_vars(
+    items,
+    [
+      for name in loongarch_fpr_alias_names() => word_var(bits, name)
+    ],
+  )
+  items
+}
+
+///|
 fn loongarch_alias_origins(bits : Int) -> Array[AliasOrigin] {
-  [
+  let items = [
     for pair in loongarch_gpr_alias_pairs() => {
       AliasOrigin::register(
         word_var(bits, pair.1),
@@ -2288,6 +2317,15 @@ fn loongarch_alias_origins(bits : Int) -> Array[AliasOrigin] {
       )
     }
   ]
+  for pair in loongarch_fpr_alias_pairs() {
+    items.push(
+      AliasOrigin::register(
+        word_var(bits, pair.1),
+        word_var(bits, "F\{pair.0}"),
+      ),
+    )
+  }
+  items
 }
 
 ///|
@@ -2953,7 +2991,13 @@ fn loongarch_role_names(role : Role) -> Array[String] {
           for name in loongarch_gpr_alias_names() => name.to_lower()
         ],
       ])
-    FloatingRegister => role_names("f", 0, 31)
+    FloatingRegister =>
+      concat_role_names([
+        role_names("f", 0, 31),
+        [
+          for name in loongarch_fpr_alias_names() => name.to_lower()
+        ],
+      ])
     VectorRegister => []
     IndexRegister | SegmentRegister => []
     StackPointer => ["sp", "r3"]
@@ -2968,21 +3012,36 @@ fn loongarch_role_names(role : Role) -> Array[String] {
     ThreadPointer => ["tp", "r2"]
     PrivilegedRegister => []
     Argument =>
-      concat_role_names([role_names("r", 4, 11), role_names("a", 0, 7)])
+      concat_role_names([
+        role_names("r", 4, 11),
+        role_names("a", 0, 7),
+        role_names("f", 0, 7),
+        role_names("fa", 0, 7),
+      ])
     ResultRegister =>
-      concat_role_names([role_names("r", 4, 5), role_names("a", 0, 1)])
+      concat_role_names([
+        role_names("r", 4, 5),
+        role_names("a", 0, 1),
+        role_names("f", 0, 1),
+        role_names("fa", 0, 1),
+      ])
     CallerSaved =>
       concat_role_names([
         ["ra", "r1"],
         role_names("r", 4, 20),
         role_names("a", 0, 7),
         role_names("t", 0, 8),
+        role_names("f", 0, 23),
+        role_names("fa", 0, 7),
+        role_names("ft", 0, 15),
       ])
     CalleeSaved =>
       concat_role_names([
         ["sp", "r3", "fp", "s9", "r22"],
         role_names("r", 23, 31),
         role_names("s", 0, 8),
+        role_names("f", 24, 31),
+        role_names("fs", 0, 7),
       ])
     Reserved => ["r21"]
     ZeroFlag | CarryFlag | SignFlag | OverflowFlag | ParityFlag => []

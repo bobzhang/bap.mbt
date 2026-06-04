@@ -2666,10 +2666,20 @@ test "target role helpers classify common architecture variables" {
   let loongarch = @core_theory.Target::loongarch64()
   assert_true(loongarch.find_var("R31") is Some(_))
   assert_true(loongarch.find_var("F31") is Some(_))
+  assert_true(loongarch.find_var("FA0") is Some(_))
+  assert_true(loongarch.find_var("FT15") is Some(_))
+  assert_true(loongarch.find_var("FS7") is Some(_))
   assert_true(loongarch.find_var("PC") is Some(_))
   assert_true(loongarch.role_aliases(ResultRegister).contains("r4"))
   assert_true(loongarch.role_aliases(ResultRegister).contains("a0"))
+  assert_true(loongarch.role_aliases(ResultRegister).contains("fa0"))
   assert_true(loongarch.role_aliases(Argument).contains("a7"))
+  assert_true(loongarch.role_aliases(Argument).contains("fa7"))
+  assert_true(loongarch.role_aliases(FloatingRegister).contains("fa0"))
+  assert_true(loongarch.role_aliases(FloatingRegister).contains("ft15"))
+  assert_true(loongarch.role_aliases(FloatingRegister).contains("fs7"))
+  assert_true(loongarch.role_aliases(CallerSaved).contains("ft15"))
+  assert_true(loongarch.role_aliases(CalleeSaved).contains("fs7"))
   assert_true(loongarch.role_aliases(PseudoRegister).contains("r0"))
   assert_true(loongarch.role_aliases(PseudoRegister).contains("pc"))
   assert_true(!loongarch.role_aliases(ResultRegister).contains("x10"))
@@ -2712,12 +2722,46 @@ test "target role helpers classify common architecture variables" {
     }
     None => fail("missing LoongArch R0")
   }
+  match loongarch.find_var("F0") {
+    Some(fa0) => {
+      assert_true(loongarch.roles_of_var(fa0).contains(FloatingRegister))
+      assert_true(loongarch.roles_of_var(fa0).contains(Argument))
+      assert_true(loongarch.roles_of_var(fa0).contains(ResultRegister))
+      assert_true(loongarch.roles_of_var(fa0).contains(CallerSaved))
+    }
+    None => fail("missing LoongArch F0")
+  }
+  match loongarch.find_var("F23") {
+    Some(ft15) => {
+      assert_true(loongarch.roles_of_var(ft15).contains(FloatingRegister))
+      assert_true(loongarch.roles_of_var(ft15).contains(CallerSaved))
+      assert_true(!loongarch.roles_of_var(ft15).contains(CalleeSaved))
+    }
+    None => fail("missing LoongArch F23")
+  }
+  match loongarch.find_var("F31") {
+    Some(fs7) => {
+      assert_true(loongarch.roles_of_var(fs7).contains(FloatingRegister))
+      assert_true(loongarch.roles_of_var(fs7).contains(CalleeSaved))
+      assert_true(!loongarch.roles_of_var(fs7).contains(CallerSaved))
+    }
+    None => fail("missing LoongArch F31")
+  }
   match loongarch.find_var("a0") {
     Some(arg) => {
       assert_true(loongarch.roles_of_var(arg).contains(Argument))
       assert_true(loongarch.roles_of_var(arg).contains(ResultRegister))
     }
     None => fail("missing LoongArch a0 alias")
+  }
+  match loongarch.find_var("fa0") {
+    Some(arg) => {
+      assert_true(loongarch.roles_of_var(arg).contains(FloatingRegister))
+      assert_true(loongarch.roles_of_var(arg).contains(Argument))
+      assert_true(loongarch.roles_of_var(arg).contains(ResultRegister))
+      assert_true(loongarch.roles_of_var(arg).contains(AliasRegister))
+    }
+    None => fail("missing LoongArch fa0 alias")
   }
   match loongarch.origin_of_name("A0") {
     Some(origin) => {
@@ -2732,6 +2776,20 @@ test "target role helpers classify common architecture variables" {
       assert_true(origin.source().map(v => v.ident()) == Some("R22"))
     }
     None => fail("missing LoongArch S9 alias origin")
+  }
+  match loongarch.origin_of_name("FA0") {
+    Some(origin) => {
+      assert_true(origin.aliased().ident() == "FA0")
+      assert_true(origin.source().map(v => v.ident()) == Some("F0"))
+    }
+    None => fail("missing LoongArch FA0 alias origin")
+  }
+  match loongarch.origin_of_name("FS7") {
+    Some(origin) => {
+      assert_true(origin.aliased().ident() == "FS7")
+      assert_true(origin.source().map(v => v.ident()) == Some("F31"))
+    }
+    None => fail("missing LoongArch FS7 alias origin")
   }
   let mips64 = @core_theory.Target::mips64()
   assert_true(mips64.role_aliases(AliasRegister).contains("zero"))

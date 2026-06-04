@@ -50,21 +50,29 @@ test "project info streams observe input realization" {
   assert_true(arch_sizes == [64])
   assert_true(code_counts == [1])
   assert_true(data_counts == [1])
-  assert_true(spec_counts.length() == 1)
+  assert_true(spec_counts == [6])
 }
 
 ///|
 test "project info file stream reports unnamed inputs as empty filenames" {
   let files = []
+  let spec_counts = []
   let file_stream = @project.ProjectInfo::file()
+  let spec_stream = @project.ProjectInfo::spec()
   let file_id = file_stream.subscribe(file => files.push(file))
+  let spec_id = spec_stream.subscribe(spec => {
+    spec_counts.push(spec.declaration_count())
+  })
   let input = @project.ProjectInput::custom(
-    target=@core_theory.Target::unknown(),
+    target=@core_theory.Target::x86_64(),
   )
   let project = @project.Project::from_input(input)
   file_stream.unsubscribe(file_id)
+  spec_stream.unsubscribe(spec_id)
   assert_true(project.filename() is None)
+  assert_true(project.specification().declaration_count() == 6)
   assert_true(files == [""])
+  assert_true(spec_counts == [0])
 }
 
 ///|

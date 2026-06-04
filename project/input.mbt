@@ -3,6 +3,7 @@ struct ProjectInput {
   target_value : @core_theory.Target
   filename_value : String?
   image_value : @image.Image?
+  spec_value : @image.OgreDoc
   program_value : @types.Term[@types.Program]?
   code_value : @memory.MemMap[String]
   data_value : @memory.MemMap[String]
@@ -121,6 +122,10 @@ pub fn ProjectInput::custom(
     target_value: target,
     filename_value: filename,
     image_value: image,
+    spec_value: match image {
+      Some(value) => value.spec()
+      None => @image.OgreDoc::empty()
+    },
     program_value: program,
     code_value,
     data_value,
@@ -156,7 +161,10 @@ pub fn ProjectInput::create(
   data? : @memory.MemMap[String],
   finish? : (Project) -> Project,
 ) -> ProjectInput {
-  ProjectInput::custom(target~, filename~, code?, data?, finish?)
+  {
+    ..ProjectInput::custom(target~, filename~, code?, data?, finish?),
+    spec_value: @image.OgreDoc::from_target(target),
+  }
 }
 
 ///|

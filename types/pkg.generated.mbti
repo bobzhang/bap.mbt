@@ -771,6 +771,7 @@ pub fn IrTerm::del_tainted_ptr(Self) -> Self
 pub fn IrTerm::del_tainted_reg(Self) -> Self
 pub fn IrTerm::del_visited(Self) -> Self
 pub fn IrTerm::del_weight(Self) -> Self
+pub fn IrTerm::enum_(Self, IrTermClass, rev? : Bool) -> Array[Self]
 pub fn IrTerm::filename(Self) -> String?
 pub fn IrTerm::filter(Self, IrTermClass, (Self) -> Bool) -> Self
 pub fn IrTerm::filter_children(Self, IrTermClass, (Self) -> Bool) -> Self

@@ -1126,6 +1126,14 @@ test "ir term direct-child navigation mirrors BAP Term sequence helpers" {
     block_term.to_sequence(DefTermClass, rev=true).map(term => term.tid()) ==
     [c.tid(), b.tid(), a.tid()],
   )
+  assert_true(
+    block_term.enum_(DefTermClass).map(term => term.tid()) ==
+    [a.tid(), b.tid(), c.tid()],
+  )
+  assert_true(
+    block_term.enum_(DefTermClass, rev=true).map(term => term.tid()) ==
+    [c.tid(), b.tid(), a.tid()],
+  )
   assert_true(block_term.child_count(DefTermClass) == 3)
   assert_true(block_term.length(DefTermClass) == 3)
   assert_true(block_term.child_count(PhiTermClass) == 0)

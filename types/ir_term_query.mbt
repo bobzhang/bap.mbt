@@ -1340,6 +1340,15 @@ pub fn IrTerm::to_sequence(
 }
 
 ///|
+pub fn IrTerm::enum_(
+  self : IrTerm,
+  cls : IrTermClass,
+  rev? : Bool = false,
+) -> Array[IrTerm] {
+  self.to_sequence(cls, rev~)
+}
+
+///|
 pub fn IrTerm::find(self : IrTerm, cls : IrTermClass, tid : Tid) -> IrTerm? {
   self.find_child(cls, tid)
 }

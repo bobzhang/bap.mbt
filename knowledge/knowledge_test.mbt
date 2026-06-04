@@ -274,6 +274,32 @@ test "flat domains keep bottom and reject conflicting facts" {
 }
 
 ///|
+test "translated BAP string domains join by source ordering" {
+  let domain = @knowledge.Domain::string(
+    @knowledge.Name::create("string-domain", pkg="test"),
+  )
+  assert_true(domain.is_empty(""))
+  assert_true(domain.order("", "red") == Greater)
+  assert_true(domain.order("blue", "red") == Less)
+  assert_true(domain.join("", "red") == Ok(""))
+  assert_true(domain.join("red", "") == Ok(""))
+  assert_true(domain.join("blue", "red") == Ok("red"))
+  assert_true(domain.join("red", "blue") == Ok("red"))
+  let cls : @knowledge.Class[Unit, String] = @knowledge.Class::create(
+    name=@knowledge.Name::create("string-domain-program", pkg="test"),
+    sort="unit",
+  )
+  let slot = cls.property(
+    name=@knowledge.Name::create("string-domain-slot", pkg="test"),
+    domain~,
+  )
+  let object = @knowledge.State::new().create(cls)
+  let facts = @knowledge.FactTable::new(slot)
+  assert_true(facts.provide(object, "red") == Ok("red"))
+  assert_true(facts.collect(object) == Some("red"))
+}
+
+///|
 test "flat and total domains accept custom joins" {
   let flat = @knowledge.Domain::flat(
     @knowledge.Name::create("joined-color", pkg="test"),
@@ -551,14 +577,16 @@ test "state current package controls unqualified symbol reads and rendering" {
 }
 
 ///|
-test "optional domains lift base order and joins" {
+test "translated BAP optional domains are flat over present values" {
   let base = @knowledge.Domain::bool(
     @knowledge.Name::create("flag", pkg="test"),
   )
   let opt = @knowledge.Domain::optional(base)
   assert_true(opt.order(None, Some(true)) == Less)
   assert_true(opt.join(None, Some(true)) == Ok(Some(true)))
-  assert_true(opt.join(Some(false), Some(true)) == Ok(Some(true)))
+  assert_true(opt.order(Some(false), Some(true)) == Incomparable)
+  assert_true(opt.join(Some(false), Some(true)) is Err(_))
+  assert_true(opt.join(Some(true), Some(true)) == Ok(Some(true)))
 }
 
 ///|
@@ -603,7 +631,7 @@ test "translated BAP powerset domains join facts by union" {
   let object = @knowledge.State::new().create(cls)
   let facts = @knowledge.FactTable::new(slot)
   assert_true(facts.collect(object) == Some([]))
-  assert_true(facts.provide(object, ["main", "main"]) == Ok(["main"]))
+  assert_true(facts.provide(object, ["main"]) == Ok(["main"]))
   assert_true(facts.provide(object, ["entry", "main"]) == Ok(["main", "entry"]))
   assert_true(facts.has(object))
 }

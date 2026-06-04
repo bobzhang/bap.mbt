@@ -314,11 +314,7 @@ pub fn[K, P] FactTable::provide(
     let domain = self.slot.domain()
     let next = match self.facts.get(object.id()) {
       Some(previous) => domain.join(previous, value)
-      None =>
-        match domain.empty() {
-          Some(empty) => domain.join(empty, value)
-          None => Ok(value)
-        }
+      None => Ok(value)
     }
     match next {
       Ok(joined) => {

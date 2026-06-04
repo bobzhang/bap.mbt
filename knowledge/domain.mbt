@@ -164,7 +164,12 @@ pub fn[T] Domain::optional(base : Domain[T]) -> Domain[T?] {
         (None, None) => Equal
         (None, Some(_)) => Less
         (Some(_), None) => Greater
-        (Some(l), Some(r)) => base.order(l, r)
+        (Some(l), Some(r)) =>
+          if base.order(l, r) == Equal {
+            Equal
+          } else {
+            Incomparable
+          }
       }
     },
     join=(lhs, rhs) => {
@@ -172,9 +177,12 @@ pub fn[T] Domain::optional(base : Domain[T]) -> Domain[T?] {
         (None, value) => Ok(value)
         (value, None) => Ok(value)
         (Some(l), Some(r)) =>
-          match base.join(l, r) {
-            Ok(value) => Ok(Some(value))
-            Err(reason) => Err(reason)
+          if base.order(l, r) == Equal {
+            Ok(Some(r))
+          } else {
+            Err(
+              "domain \{base.name().show()}? has no join for \{base.inspect(l)} and \{base.inspect(r)}",
+            )
           }
       }
     },
@@ -209,7 +217,23 @@ pub fn Domain::bool(name : Name) -> Domain[Bool] {
 
 ///|
 pub fn Domain::string(name : Name) -> Domain[String] {
-  Domain::flat(name, value => value, empty="")
+  Domain::custom(name, value => value, empty="", order=(lhs, rhs) => {
+    match (lhs == "", rhs == "") {
+      (true, true) => Equal
+      (true, false) => Greater
+      (false, true) => Less
+      (false, false) => {
+        let order = lhs.compare(rhs)
+        if order > 0 {
+          Less
+        } else if order < 0 {
+          Greater
+        } else {
+          Equal
+        }
+      }
+    }
+  })
 }
 
 ///|

@@ -98,6 +98,15 @@ pub(all) struct Modload {
 } derive(Eq, @debug.Debug)
 pub fn Modload::to_string(Self) -> String
 
+pub(all) struct Monitor {
+}
+pub fn Monitor::create((String) -> TraceStep) -> TraceMonitor
+pub fn Monitor::fail_on_error() -> TraceMonitor
+pub fn Monitor::ignore_errors() -> TraceMonitor
+pub fn Monitor::pack_errors((String) -> TraceEvent) -> TraceMonitor
+pub fn Monitor::stop_on_error() -> TraceMonitor
+pub fn Monitor::warn_on_error((String) -> Unit) -> TraceMonitor
+
 pub(all) struct Move[T] {
   cell : T
   data : @types.Word

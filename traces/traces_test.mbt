@@ -984,6 +984,33 @@ test "translated BAP trace monitors handle source errors" {
 
   let user = trace_with_monitor(@traces.TraceMonitor::create(fn(_) { Skip }))
   assert_true(unwrap_events(user.read_events()) == test_events())
+
+  let facade_failed = trace_with_monitor(@traces.Monitor::fail_on_error()).read_events()
+  assert_true(facade_failed == Err(TraceFailure("syscall failed")))
+
+  let facade_ignored = trace_with_monitor(@traces.Monitor::ignore_errors())
+  assert_true(unwrap_events(facade_ignored.read_events()) == test_events())
+
+  let facade_stopped = trace_with_monitor(@traces.Monitor::stop_on_error())
+  assert_true(unwrap_events(facade_stopped.read_events()) == [])
+
+  let facade_packed = trace_with_monitor(
+    @traces.Monitor::pack_errors(fn(_) { packed_event }),
+  )
+  assert_true(
+    unwrap_events(facade_packed.read_events()).length() ==
+    test_events().length() + 1,
+  )
+
+  let facade_warnings = Ref(0)
+  let facade_warned = trace_with_monitor(
+    @traces.Monitor::warn_on_error(fn(_) { facade_warnings.val += 1 }),
+  )
+  assert_true(unwrap_events(facade_warned.read_events()) == test_events())
+  assert_true(facade_warnings.val == 1)
+
+  let facade_user = trace_with_monitor(@traces.Monitor::create(fn(_) { Skip }))
+  assert_true(unwrap_events(facade_user.read_events()) == test_events())
 }
 
 ///|

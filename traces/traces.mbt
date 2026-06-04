@@ -1492,6 +1492,9 @@ struct TraceMonitor {
 }
 
 ///|
+pub(all) struct Monitor {}
+
+///|
 pub fn TraceMonitor::ignore_errors() -> TraceMonitor {
   { handle: fn(_) { Skip } }
 }
@@ -1524,6 +1527,36 @@ pub fn TraceMonitor::warn_on_error(warn : (String) -> Unit) -> TraceMonitor {
 ///|
 pub fn TraceMonitor::create(filter : (String) -> TraceStep) -> TraceMonitor {
   { handle: filter }
+}
+
+///|
+pub fn Monitor::ignore_errors() -> TraceMonitor {
+  TraceMonitor::ignore_errors()
+}
+
+///|
+pub fn Monitor::stop_on_error() -> TraceMonitor {
+  TraceMonitor::stop_on_error()
+}
+
+///|
+pub fn Monitor::fail_on_error() -> TraceMonitor {
+  TraceMonitor::fail_on_error()
+}
+
+///|
+pub fn Monitor::pack_errors(pack : (String) -> TraceEvent) -> TraceMonitor {
+  TraceMonitor::pack_errors(pack)
+}
+
+///|
+pub fn Monitor::warn_on_error(warn : (String) -> Unit) -> TraceMonitor {
+  TraceMonitor::warn_on_error(warn)
+}
+
+///|
+pub fn Monitor::create(filter : (String) -> TraceStep) -> TraceMonitor {
+  TraceMonitor::create(filter)
 }
 
 ///|

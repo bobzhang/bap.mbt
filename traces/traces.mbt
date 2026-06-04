@@ -73,6 +73,9 @@ pub(all) struct TraceMode {
 } derive(Eq, Debug)
 
 ///|
+pub(all) struct Mode {}
+
+///|
 let trace_mode_members : Map[String, TraceMode] = {}
 
 ///|
@@ -190,6 +193,44 @@ pub fn TraceMode::slot() -> @knowledge.Slot[Unit, TraceMode] {
     persistent=TraceMode::persistent(),
     public=true,
   )
+}
+
+///|
+pub fn Mode::unknown() -> TraceMode {
+  TraceMode::unknown()
+}
+
+///|
+pub fn Mode::declare_(
+  name : String,
+  pkg? : String,
+) -> Result[TraceMode, String] {
+  TraceMode::declare_mode(name, pkg?)
+}
+
+///|
+pub fn Mode::read(name : String, pkg? : String) -> Result[TraceMode, String] {
+  TraceMode::read(name, pkg?)
+}
+
+///|
+pub fn Mode::members() -> Array[TraceMode] {
+  TraceMode::members()
+}
+
+///|
+pub fn Mode::domain() -> @knowledge.Domain[TraceMode] {
+  TraceMode::domain()
+}
+
+///|
+pub fn Mode::persistent() -> @knowledge.Persistent[TraceMode] {
+  TraceMode::persistent()
+}
+
+///|
+pub fn Mode::slot() -> @knowledge.Slot[Unit, TraceMode] {
+  TraceMode::slot()
 }
 
 ///|

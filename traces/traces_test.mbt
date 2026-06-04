@@ -277,6 +277,7 @@ test "translated BAP trace modes expose Knowledge enum and program slot" {
   assert_true(unknown.is_unknown())
   assert_true(unknown.name().show() == ":unknown")
   assert_true(@traces.TraceMode::members().contains(unknown))
+  assert_true(@traces.Mode::unknown().equal(unknown))
   match @traces.TraceMode::declare_mode("unit-thumb", pkg="bap") {
     Ok(mode) => {
       assert_true(mode.name().show() == "bap:unit-thumb")
@@ -299,14 +300,38 @@ test "translated BAP trace modes expose Knowledge enum and program slot" {
     @traces.TraceMode::declare_mode("unit-thumb", pkg="bap") is Err(_),
   )
   assert_true(@traces.TraceMode::read("missing-mode", pkg="bap") is Err(_))
+  match @traces.Mode::declare_("unit-mode-facade", pkg="bap") {
+    Ok(mode) => {
+      assert_true(mode.name().show() == "bap:unit-mode-facade")
+      assert_true(@traces.Mode::members().contains(mode))
+      match @traces.Mode::read("unit-mode-facade", pkg="bap") {
+        Ok(read_mode) => assert_true(read_mode.equal(mode))
+        Err(reason) => fail(reason)
+      }
+      match @traces.Mode::persistent().decode("bap:unit-mode-facade") {
+        Ok(decoded) => assert_true(decoded.equal(mode))
+        Err(reason) => fail(reason)
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(@traces.Mode::read("missing-mode", pkg="bap") is Err(_))
   let domain = @traces.TraceMode::domain()
   assert_true(domain.name().show() == "enum")
   assert_true(domain.empty() == Some(unknown))
   assert_true(domain.is_empty(unknown))
+  let mode_domain = @traces.Mode::domain()
+  assert_true(mode_domain.name().show() == "enum")
+  assert_true(mode_domain.empty() == Some(unknown))
+  assert_true(mode_domain.is_empty(unknown))
   let slot = @traces.TraceMode::slot()
   assert_true(slot.owner().show() == "core:program")
   assert_true(slot.name().show() == "bap:mode")
   assert_true(slot.domain().empty() == Some(unknown))
+  let mode_slot = @traces.Mode::slot()
+  assert_true(mode_slot.owner().show() == "core:program")
+  assert_true(mode_slot.name().show() == "bap:mode")
+  assert_true(mode_slot.domain().empty() == Some(unknown))
   match slot.persistent() {
     Some(codec) =>
       match codec.decode(":unknown") {

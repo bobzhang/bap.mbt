@@ -81,6 +81,16 @@ pub fn Meta::binary_file_stats() -> String
 pub fn Meta::trace_stats() -> String
 pub fn Meta::tracer() -> String
 
+pub(all) struct Mode {
+}
+pub fn Mode::declare_(String, pkg? : String) -> Result[TraceMode, String]
+pub fn Mode::domain() -> @knowledge.Domain[TraceMode]
+pub fn Mode::members() -> Array[TraceMode]
+pub fn Mode::persistent() -> @knowledge.Persistent[TraceMode]
+pub fn Mode::read(String, pkg? : String) -> Result[TraceMode, String]
+pub fn Mode::slot() -> @knowledge.Slot[Unit, TraceMode]
+pub fn Mode::unknown() -> TraceMode
+
 pub(all) struct Modload {
   name : String
   low : @types.Word

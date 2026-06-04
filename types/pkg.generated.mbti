@@ -398,8 +398,10 @@ pub fn BinOp::arshift() -> Self
 pub fn BinOp::bit_and() -> Self
 pub fn BinOp::bit_or() -> Self
 pub fn BinOp::bit_xor() -> Self
+pub fn BinOp::compare(Self, Self) -> Int
 pub fn BinOp::divide() -> Self
 pub fn BinOp::eq() -> Self
+pub fn BinOp::equal(Self, Self) -> Bool
 pub fn BinOp::is_associative(Self) -> Bool
 pub fn BinOp::is_commutative(Self) -> Bool
 pub fn BinOp::le() -> Self
@@ -468,6 +470,8 @@ pub(all) enum CastKind {
 } derive(Eq, @debug.Debug)
 pub fn CastKind::apply(Self, Int, Word) -> Result[Word, String]
 pub fn CastKind::apply_exn(Self, Int, Word) -> Word raise BilApplyError
+pub fn CastKind::compare(Self, Self) -> Int
+pub fn CastKind::equal(Self, Self) -> Bool
 pub fn CastKind::high() -> Self
 pub fn CastKind::low() -> Self
 pub fn CastKind::signed() -> Self
@@ -502,8 +506,10 @@ pub(all) enum Exp {
 } derive(Eq, @debug.Debug)
 pub fn Exp::binop(BinOp, Self, Self) -> Self
 pub fn Exp::cast(CastKind, Int, Self) -> Self
+pub fn Exp::compare(Self, Self) -> Int
 pub fn Exp::concat(Self, Self) -> Self
 pub fn Exp::effect(Self) -> ExpEffect
+pub fn Exp::equal(Self, Self) -> Bool
 pub fn Exp::eval(Self, Map[String, Word]) -> Result[Word, String]
 pub fn Exp::eval_value(Self, Map[String, BilValue]) -> Result[BilValue, String]
 pub fn Exp::exists(Self, (Self) -> Bool) -> Bool
@@ -814,10 +820,12 @@ pub(all) enum Stmt {
 } derive(Eq, @debug.Debug)
 pub fn Stmt::call() -> StmtAttribute[String]
 pub fn Stmt::check_type(Self) -> Result[Unit, TypeError]
+pub fn Stmt::compare(Self, Self) -> Int
 pub fn Stmt::cpuexn(Int) -> Self
 pub fn[T] Stmt::decode(StmtAttribute[T], Self) -> T?
 pub fn Stmt::defined_var(Self) -> Var?
 pub fn[T] Stmt::encode(StmtAttribute[T], T) -> Self
+pub fn Stmt::equal(Self, Self) -> Bool
 pub fn Stmt::exec(Self, state? : BilState, max_steps? : Int) -> Result[BilState, String]
 pub fn Stmt::exists(Self, (Self) -> Bool) -> Bool
 pub fn Stmt::exists_exp(Self, (Exp) -> Bool) -> Bool
@@ -1280,6 +1288,8 @@ pub(all) enum UnOp {
 } derive(Eq, @debug.Debug)
 pub fn UnOp::apply(Self, Word) -> Result[Word, String]
 pub fn UnOp::apply_exn(Self, Word) -> Word raise BilApplyError
+pub fn UnOp::compare(Self, Self) -> Int
+pub fn UnOp::equal(Self, Self) -> Bool
 pub fn UnOp::neg() -> Self
 pub fn UnOp::not() -> Self
 pub fn UnOp::string_of_unop(Self) -> String
@@ -1313,7 +1323,9 @@ pub(all) struct Var {
   is_virtual : Bool
 } derive(Eq, @debug.Debug)
 pub fn Var::base(Self) -> Self
+pub fn Var::compare(Self, Self) -> Int
 pub fn Var::create(String, ValueType, is_virtual? : Bool, fresh? : Bool) -> Self
+pub fn Var::equal(Self, Self) -> Bool
 pub fn Var::index(Self) -> Int
 pub fn Var::is_physical(Self) -> Bool
 pub fn Var::is_virtual(Self) -> Bool
@@ -1339,6 +1351,7 @@ pub fn Word::bit_and(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::bit_or(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::bit_xor(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::bitwidth(Self) -> Int
+pub fn Word::compare(Self, Self) -> Int
 pub fn Word::compare_signed(Self, Self) -> Int raise @bitvec.BitVecError
 pub fn Word::compare_unsigned(Self, Self) -> Int raise @bitvec.BitVecError
 pub fn Word::concat(Self, Self) -> Self raise @bitvec.BitVecError
@@ -1347,6 +1360,7 @@ pub fn Word::div(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::enum_bits(Self, endian~ : @bitvec.Endian) -> Array[Bool]
 pub fn Word::enum_bytes(Self, endian~ : @bitvec.Endian) -> Array[Self]
 pub fn Word::enum_chars(Self, endian~ : @bitvec.Endian) -> Bytes
+pub fn Word::equal(Self, Self) -> Bool
 pub fn Word::extract(Self, hi? : Int, lo? : Int) -> Self raise @bitvec.BitVecError
 pub fn Word::extract_exn(Self, hi? : Int, lo? : Int) -> Self raise @bitvec.BitVecError
 pub fn Word::format_value(Self, format? : WordValueFormat, letter_case? : WordLetterCase, prefix? : WordPrefix, suffix? : WordSuffix) -> String

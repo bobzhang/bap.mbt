@@ -651,6 +651,28 @@ pub fn Word::compare_signed(
 }
 
 ///|
+pub fn Word::equal(self : Word, other : Word) -> Bool {
+  self == other
+}
+
+///|
+pub fn Word::compare(self : Word, other : Word) -> Int {
+  let width_order = self.width().compare(other.width())
+  if width_order != 0 {
+    return width_order
+  }
+  let value_order = try self.compare_unsigned(other) catch {
+    _ => self.to_hex(prefix=false).compare(other.to_hex(prefix=false))
+  } noraise {
+    order => order
+  }
+  if value_order != 0 {
+    return value_order
+  }
+  self.is_signed().compare(other.is_signed())
+}
+
+///|
 fn WordValueFormat::base(self : WordValueFormat) -> Int {
   match self {
     WordHex => 16

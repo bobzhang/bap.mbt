@@ -904,6 +904,58 @@ test "bil expressions expose opt-in BAP smart constructors" {
 }
 
 ///|
+test "bil regular comparison helpers order structural ASTs" {
+  let imm8 = @types.ValueType::Imm(8)
+  let imm16 = @types.ValueType::Imm(16)
+  let x = @types.Var::new(name="x", typ=imm8)
+  let y = @types.Var::new(name="y", typ=imm8)
+  let x_exp = @types.Exp::var_exp(x)
+  let y_exp = @types.Exp::var_exp(y)
+  let one8 = @types.Word::one(width=8)
+  let one16 = @types.Word::one(width=16)
+  assert_true(one8.equal(@types.Word::one(width=8)))
+  assert_true(one8.compare(one16) < 0)
+  assert_true(one8.compare(one8.signed()) < 0)
+  assert_true(x.equal(@types.Var::new(name="x", typ=imm8)))
+  assert_true(x.compare(y) < 0)
+  assert_true(x.compare(@types.Var::new(name="x", typ=imm16)) < 0)
+  assert_true(@types.BinOp::Plus.compare(Minus) < 0)
+  assert_true(@types.UnOp::Not.compare(Neg) < 0)
+  assert_true(@types.CastKind::Unsigned.compare(Signed) < 0)
+  assert_true(x_exp.equal(@types.Exp::var_exp(x)))
+  assert_true(@types.Exp::int(one8).compare(x_exp) < 0)
+  assert_true(x_exp.compare(y_exp) < 0)
+  let plus_xx = @types.Exp::BinOp(Plus, x_exp, x_exp)
+  let plus_xy = @types.Exp::BinOp(Plus, x_exp, y_exp)
+  let little_load = @types.Exp::Load(
+    mem=x_exp,
+    addr=x_exp,
+    endian=LittleEndian,
+    typ=imm8,
+  )
+  let big_load = @types.Exp::Load(
+    mem=x_exp,
+    addr=x_exp,
+    endian=BigEndian,
+    typ=imm8,
+  )
+  assert_true(plus_xx.compare(plus_xy) < 0)
+  assert_true(little_load.compare(big_load) < 0)
+  let move_x = @types.Stmt::move_stmt(x, x_exp)
+  let move_y = @types.Stmt::move_stmt(y, x_exp)
+  let jump_x = @types.Stmt::jmp(x_exp)
+  assert_true(move_x.equal(@types.Stmt::move_stmt(x, x_exp)))
+  assert_true(move_x.compare(jump_x) < 0)
+  assert_true(move_x.compare(move_y) < 0)
+  assert_true(
+    @types.Stmt::if_(x_exp, [move_x], []).compare(
+      @types.Stmt::if_(x_exp, [move_x, jump_x], []),
+    ) <
+    0,
+  )
+}
+
+///|
 test "bil checked type inference mirrors BAP error cases" {
   let imm1 = @types.ValueType::Imm(1)
   let imm4 = @types.ValueType::Imm(4)

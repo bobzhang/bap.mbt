@@ -214,6 +214,24 @@ pub fn Var::same(self : Var, other : Var) -> Bool {
 }
 
 ///|
+pub fn Var::equal(self : Var, other : Var) -> Bool {
+  self == other
+}
+
+///|
+pub fn Var::compare(self : Var, other : Var) -> Int {
+  let name_order = self.name.compare(other.name)
+  if name_order != 0 {
+    return name_order
+  }
+  let type_order = self.typ.compare(other.typ)
+  if type_order != 0 {
+    return type_order
+  }
+  self.is_virtual.compare(other.is_virtual)
+}
+
+///|
 pub fn Var::index(self : Var) -> Int {
   match parse_var_index(self.name) {
     Some((_, index)) => index

@@ -24,6 +24,7 @@ pub(all) struct BinaryInfo {
   envp : Array[String]
   md5sum : String
 } derive(Eq, @debug.Debug)
+pub fn BinaryInfo::to_string(Self) -> String
 
 pub(all) struct Call {
   caller : Location
@@ -45,6 +46,7 @@ pub(all) struct FileStatsInfo {
   mtime : Double
   ctime : Double
 } derive(Eq, @debug.Debug)
+pub fn FileStatsInfo::to_string(Self) -> String
 
 pub(all) struct Location {
   name : String?
@@ -293,6 +295,7 @@ pub(all) struct TraceStatsInfo {
   host : String
   time : Double
 } derive(Eq, @debug.Debug)
+pub fn TraceStatsInfo::to_string(Self) -> String
 
 pub(all) enum TraceStep {
   Stop
@@ -323,6 +326,7 @@ pub(all) struct TracerInfo {
   envp : Array[String]
   version : String
 } derive(Eq, @debug.Debug)
+pub fn TracerInfo::to_string(Self) -> String
 
 // Type aliases
 

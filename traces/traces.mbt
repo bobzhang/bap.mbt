@@ -760,6 +760,112 @@ pub(all) struct TraceStatsInfo {
 } derive(Eq, Debug)
 
 ///|
+fn trace_pad2(value : Int) -> String {
+  value.to_string().pad_start(2, '0')
+}
+
+///|
+fn trace_pad4(value : Int) -> String {
+  value.to_string().pad_start(4, '0')
+}
+
+///|
+fn trace_time_floor_seconds(time : Double) -> Int {
+  let mut seconds = time.to_int()
+  if time < 0.0 && seconds.to_double() > time {
+    seconds -= 1
+  }
+  seconds
+}
+
+///|
+fn trace_leap_year(year : Int) -> Bool {
+  (year % 4 == 0 && year % 100 != 0) || year % 400 == 0
+}
+
+///|
+fn trace_days_in_year(year : Int) -> Int {
+  if trace_leap_year(year) {
+    366
+  } else {
+    365
+  }
+}
+
+///|
+fn trace_days_in_month(year : Int, month : Int) -> Int {
+  match month {
+    0 | 2 | 4 | 6 | 7 | 9 | 11 => 31
+    3 | 5 | 8 | 10 => 30
+    1 => if trace_leap_year(year) { 29 } else { 28 }
+    _ => 30
+  }
+}
+
+///|
+fn trace_time_to_string(time : Double) -> String {
+  let seconds = trace_time_floor_seconds(time)
+  let mut days = seconds / 86400
+  let mut rem = seconds % 86400
+  if rem < 0 {
+    rem += 86400
+    days -= 1
+  }
+  let hour = rem / 3600
+  rem = rem % 3600
+  let minute = rem / 60
+  let second = rem % 60
+
+  let mut year = 1970
+  let mut day = days
+  while day < 0 {
+    year -= 1
+    day += trace_days_in_year(year)
+  }
+  while day >= trace_days_in_year(year) {
+    day -= trace_days_in_year(year)
+    year += 1
+  }
+  let mut month = 0
+  while day >= trace_days_in_month(year, month) {
+    day -= trace_days_in_month(year, month)
+    month += 1
+  }
+  // BAP prints Unix.tm_mon directly, so months are zero-based here.
+  "\{trace_pad2(hour)}:\{trace_pad2(minute)}:\{trace_pad2(second)} \{trace_pad2(day + 1)}.\{trace_pad2(month)}.\{trace_pad4(year)} GMT"
+}
+
+///|
+fn trace_args_to_string(args : Array[String]) -> String {
+  args.join(" ")
+}
+
+///|
+fn trace_envp_to_string(envp : Array[String]) -> String {
+  [ for item in envp => "  " + item ].join("\n")
+}
+
+///|
+pub fn TracerInfo::to_string(self : TracerInfo) -> String {
+  "tracer {\n  name:    \{self.name}\n  version: \{self.version}\n  args:    \{trace_args_to_string(self.args)}\n  envp:\n\{trace_envp_to_string(self.envp)}\n}"
+}
+
+///|
+pub fn BinaryInfo::to_string(self : BinaryInfo) -> String {
+  "binary {\n  path:   \{self.path}\n  md5sum: \{self.md5sum}\n  args:   \{trace_args_to_string(self.args)}\n  envp:\n\{trace_envp_to_string(self.envp)}\n}"
+}
+
+///|
+pub fn FileStatsInfo::to_string(self : FileStatsInfo) -> String {
+  "trace stats {\n  size: \{self.size}\n  atime: \{trace_time_to_string(self.atime)}\n  mtime: \{trace_time_to_string(self.mtime)}\n  ctime: \{trace_time_to_string(self.ctime)}\n}"
+}
+
+///|
+pub fn TraceStatsInfo::to_string(self : TraceStatsInfo) -> String {
+  "Trace created on \{self.host} by \{self.user} at \{trace_time_to_string(self.time)}"
+}
+
+///|
 pub(all) enum TraceAttrValue {
   Binary(BinaryInfo)
   Tracer(TracerInfo)

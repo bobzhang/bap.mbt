@@ -382,6 +382,52 @@ test "translated BAP trace metadata dictionaries expose sorted entries and remov
 }
 
 ///|
+test "translated BAP trace metadata values render like source printers" {
+  let binary : @traces.BinaryInfo = {
+    path: "/bin/echo",
+    args: ["echo", "hello"],
+    envp: ["LANG=C", "TERM=dumb"],
+    md5sum: "d41d8cd98f00b204e9800998ecf8427e",
+  }
+  assert_true(
+    binary.to_string() ==
+    "binary {\n  path:   /bin/echo\n  md5sum: d41d8cd98f00b204e9800998ecf8427e\n  args:   echo hello\n  envp:\n  LANG=C\n  TERM=dumb\n}",
+  )
+
+  let tracer : @traces.TracerInfo = {
+    name: "qemu-user",
+    version: "8.2",
+    args: ["-d", "exec"],
+    envp: ["TRACE=1"],
+  }
+  assert_true(
+    tracer.to_string() ==
+    "tracer {\n  name:    qemu-user\n  version: 8.2\n  args:    -d exec\n  envp:\n  TRACE=1\n}",
+  )
+
+  let file_stats : @traces.FileStatsInfo = {
+    size: 42,
+    atime: 0.0,
+    mtime: 86400.0,
+    ctime: 2678400.0,
+  }
+  assert_true(
+    file_stats.to_string() ==
+    "trace stats {\n  size: 42\n  atime: 00:00:00 01.00.1970 GMT\n  mtime: 00:00:00 02.00.1970 GMT\n  ctime: 00:00:00 01.01.1970 GMT\n}",
+  )
+
+  let trace_stats : @traces.TraceStatsInfo = {
+    user: "me",
+    host: "host",
+    time: 4.5,
+  }
+  assert_true(
+    trace_stats.to_string() ==
+    "Trace created on host by me at 00:00:04 01.00.1970 GMT",
+  )
+}
+
+///|
 test "translated BAP loaded trace registry adds lists and removes traces" {
   let first = new_trace()
   let second = new_trace()

@@ -166,6 +166,8 @@ test "BAP-style IR builders collect construction inputs" {
 ///|
 test "terms expose common BAP-style attributes and flags" {
   let origin = @types.Tid::for_name("source")
+  let reg_seed = @types.Tid::for_name("reg-seed")
+  let ptr_seed = @types.Tid::for_name("ptr-seed")
   let cond : @types.Exp = Var(@types.Var::new(name="ok", typ=Imm(1)))
   let def = @types.Def::create(
       @types.Var::new(name="x", typ=Imm(8)),
@@ -177,6 +179,8 @@ test "terms expose common BAP-style attributes and flags" {
     .with_color(IrRed)
     .with_foreground(IrBlue)
     .with_background(IrGray)
+    .with_tainted_reg(reg_seed)
+    .with_tainted_ptr(ptr_seed)
     .with_synthetic()
     .with_visited()
     .with_live()
@@ -197,6 +201,23 @@ test "terms expose common BAP-style attributes and flags" {
   assert_true(def.get_attr("color") == Some("red"))
   assert_true(def.get_attr("foreground") == Some("blue"))
   assert_true(def.get_attr("background") == Some("gray"))
+  assert_true(def.tainted_reg_text() == Some(reg_seed.to_string()))
+  assert_true(def.tainted_ptr_text() == Some(ptr_seed.to_string()))
+  assert_true(def.has_tainted_reg(reg_seed))
+  assert_true(def.has_tainted_ptr(ptr_seed))
+  match def.tainted_reg() {
+    Some(seed) => assert_true(seed.to_string() == reg_seed.to_string())
+    None => fail("expected tainted-reg seed")
+  }
+  match def.tainted_ptr() {
+    Some(seed) => assert_true(seed.to_string() == ptr_seed.to_string())
+    None => fail("expected tainted-ptr seed")
+  }
+  assert_true(def.taints_reg())
+  assert_true(def.taints_ptr())
+  assert_true(def.taints())
+  assert_true(def.get_attr("tainted-reg") == Some(reg_seed.to_string()))
+  assert_true(def.get_attr("tainted-ptr") == Some(ptr_seed.to_string()))
   assert_true(def.is_synthetic())
   assert_true(def.is_visited())
   assert_true(def.is_live())
@@ -204,6 +225,8 @@ test "terms expose common BAP-style attributes and flags" {
   assert_true(!def.without_color().has_color(IrRed))
   assert_true(!def.without_foreground().has_foreground(IrBlue))
   assert_true(!def.without_background().has_background(IrGray))
+  assert_true(!def.without_tainted_reg().taints_reg())
+  assert_true(!def.without_tainted_ptr().taints_ptr())
   assert_true(!def.without_synthetic().is_synthetic())
   assert_true(!def.without_visited().is_visited())
   assert_true(!def.without_live().is_live())
@@ -693,6 +716,8 @@ test "ir term query helpers match classes attributes vars and children" {
     .with_color(IrRed)
     .with_foreground(IrBlue)
     .with_background(IrGray)
+    .with_tainted_reg(arg.tid())
+    .with_tainted_ptr(phi.tid())
   let jmp = @types.Jmp::create_goto(
     @types.Label::direct(@types.Tid::for_name("done")),
     cond=Var(x),
@@ -724,6 +749,13 @@ test "ir term query helpers match classes attributes vars and children" {
   assert_true(def_term.has_color(IrRed))
   assert_true(def_term.has_foreground(IrBlue))
   assert_true(def_term.has_background(IrGray))
+  assert_true(def_term.tainted_reg() == Some(arg.tid()))
+  assert_true(def_term.tainted_ptr() == Some(phi.tid()))
+  assert_true(def_term.has_tainted_reg(arg.tid()))
+  assert_true(def_term.has_tainted_ptr(phi.tid()))
+  assert_true(def_term.taints_reg())
+  assert_true(def_term.taints_ptr())
+  assert_true(def_term.taints())
   let styled_def_term = def_term
     .set_color(IrGreen)
     .set_foreground(IrYellow)
@@ -734,6 +766,15 @@ test "ir term query helpers match classes attributes vars and children" {
   assert_true(styled_def_term.del_color().color() is None)
   assert_true(styled_def_term.del_foreground().foreground() is None)
   assert_true(styled_def_term.del_background().background() is None)
+  let tainted_def_term = def_term
+    .set_tainted_reg(sub.tid())
+    .set_tainted_ptr(blk.tid())
+  assert_true(tainted_def_term.tainted_reg() == Some(sub.tid()))
+  assert_true(tainted_def_term.tainted_ptr() == Some(blk.tid()))
+  assert_true(tainted_def_term.has_tainted_reg(sub.tid()))
+  assert_true(tainted_def_term.has_tainted_ptr(blk.tid()))
+  assert_true(!tainted_def_term.del_tainted_reg().taints_reg())
+  assert_true(!tainted_def_term.del_tainted_ptr().taints_ptr())
   let flagged_def = @types.DefTerm(
     def.with_synthetic().with_visited().with_live().with_dead(),
   )

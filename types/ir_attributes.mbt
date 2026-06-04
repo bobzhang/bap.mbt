@@ -53,6 +53,12 @@ let term_foreground_attr = "foreground"
 let term_background_attr = "background"
 
 ///|
+let term_tainted_reg_attr = "tainted-reg"
+
+///|
+let term_tainted_ptr_attr = "tainted-ptr"
+
+///|
 let term_synthetic_attr = "synthetic"
 
 ///|
@@ -153,6 +159,16 @@ pub fn Attr::foreground(color : IrColor) -> Attr {
 ///|
 pub fn Attr::background(color : IrColor) -> Attr {
   Attr::new(key=term_background_attr, value=color.to_string())
+}
+
+///|
+pub fn Attr::tainted_reg(seed : Tid) -> Attr {
+  Attr::new(key=term_tainted_reg_attr, value=seed.to_string())
+}
+
+///|
+pub fn Attr::tainted_ptr(seed : Tid) -> Attr {
+  Attr::new(key=term_tainted_ptr_attr, value=seed.to_string())
 }
 
 ///|
@@ -351,6 +367,87 @@ pub fn[T] Term::background(self : Term[T]) -> IrColor? {
 ///|
 pub fn[T] Term::has_background(self : Term[T], color : IrColor) -> Bool {
   self.background() == Some(color)
+}
+
+///|
+fn taint_seed(text : String) -> Tid? {
+  match Tid::from_string(text) {
+    Ok(tid) => Some(tid)
+    Err(_) => None
+  }
+}
+
+///|
+fn[T] term_taint_seed(term : Term[T], key : String) -> Tid? {
+  match term.get_attr(key) {
+    Some(text) => taint_seed(text)
+    None => None
+  }
+}
+
+///|
+pub fn[T] Term::with_tainted_reg(self : Term[T], seed : Tid) -> Term[T] {
+  self.set_attr(Attr::tainted_reg(seed))
+}
+
+///|
+pub fn[T] Term::without_tainted_reg(self : Term[T]) -> Term[T] {
+  self.del_attr(term_tainted_reg_attr)
+}
+
+///|
+pub fn[T] Term::tainted_reg(self : Term[T]) -> Tid? {
+  term_taint_seed(self, term_tainted_reg_attr)
+}
+
+///|
+pub fn[T] Term::tainted_reg_text(self : Term[T]) -> String? {
+  self.get_attr(term_tainted_reg_attr)
+}
+
+///|
+pub fn[T] Term::has_tainted_reg(self : Term[T], seed : Tid) -> Bool {
+  self.tainted_reg_text() == Some(seed.to_string())
+}
+
+///|
+pub fn[T] Term::taints_reg(self : Term[T]) -> Bool {
+  self.has_attr(term_tainted_reg_attr)
+}
+
+///|
+pub fn[T] Term::with_tainted_ptr(self : Term[T], seed : Tid) -> Term[T] {
+  self.set_attr(Attr::tainted_ptr(seed))
+}
+
+///|
+pub fn[T] Term::without_tainted_ptr(self : Term[T]) -> Term[T] {
+  self.del_attr(term_tainted_ptr_attr)
+}
+
+///|
+pub fn[T] Term::tainted_ptr(self : Term[T]) -> Tid? {
+  term_taint_seed(self, term_tainted_ptr_attr)
+}
+
+///|
+pub fn[T] Term::tainted_ptr_text(self : Term[T]) -> String? {
+  self.get_attr(term_tainted_ptr_attr)
+}
+
+///|
+pub fn[T] Term::has_tainted_ptr(self : Term[T], seed : Tid) -> Bool {
+  self.tainted_ptr_text() == Some(seed.to_string())
+}
+
+///|
+pub fn[T] Term::taints_ptr(self : Term[T]) -> Bool {
+  self.has_attr(term_tainted_ptr_attr)
+}
+
+///|
+pub fn[T] Term::taints(self : Term[T]) -> Bool {
+  self.taints_reg() || self.taints_ptr()
 }
 
 ///|

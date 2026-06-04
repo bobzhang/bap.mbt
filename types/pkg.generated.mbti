@@ -265,6 +265,8 @@ pub fn Attr::sub_nothrow() -> Self
 pub fn Attr::sub_pure() -> Self
 pub fn Attr::sub_returns_twice() -> Self
 pub fn Attr::synthetic() -> Self
+pub fn Attr::tainted_ptr(Tid) -> Self
+pub fn Attr::tainted_reg(Tid) -> Self
 pub fn Attr::visited() -> Self
 
 type BapVector[T]
@@ -675,6 +677,8 @@ pub fn IrTerm::del_background(Self) -> Self
 pub fn IrTerm::del_color(Self) -> Self
 pub fn IrTerm::del_foreground(Self) -> Self
 pub fn IrTerm::del_mark(Self) -> Self
+pub fn IrTerm::del_tainted_ptr(Self) -> Self
+pub fn IrTerm::del_tainted_reg(Self) -> Self
 pub fn IrTerm::filter(Self, IrTermClass, (Self) -> Bool) -> Self
 pub fn IrTerm::filter_children(Self, IrTermClass, (Self) -> Bool) -> Self
 pub fn IrTerm::filter_map(Self, IrTermClass, (Self) -> Self?) -> Self
@@ -699,6 +703,8 @@ pub fn IrTerm::has_color(Self, IrColor) -> Bool
 pub fn IrTerm::has_foreground(Self, IrColor) -> Bool
 pub fn IrTerm::has_mark(Self) -> Bool
 pub fn IrTerm::has_name(Self, String) -> Bool
+pub fn IrTerm::has_tainted_ptr(Self, Tid) -> Bool
+pub fn IrTerm::has_tainted_reg(Self, Tid) -> Bool
 pub fn IrTerm::has_tid(Self, Tid) -> Bool
 pub fn IrTerm::has_tid_text(Self, String) -> Bool
 pub fn IrTerm::is_dead(Self) -> Bool
@@ -733,7 +739,16 @@ pub fn IrTerm::set_background(Self, IrColor) -> Self
 pub fn IrTerm::set_color(Self, IrColor) -> Self
 pub fn IrTerm::set_foreground(Self, IrColor) -> Self
 pub fn IrTerm::set_mark(Self, value? : String) -> Self
+pub fn IrTerm::set_tainted_ptr(Self, Tid) -> Self
+pub fn IrTerm::set_tainted_reg(Self, Tid) -> Self
 pub fn[A] IrTerm::switch(Self, program~ : (Term[Program]) -> A, sub~ : (Term[Sub]) -> A, arg~ : (Term[Arg]) -> A, blk~ : (Term[Blk]) -> A, phi~ : (Term[Phi]) -> A, def~ : (Term[Def]) -> A, jmp~ : (Term[Jmp]) -> A) -> A
+pub fn IrTerm::tainted_ptr(Self) -> Tid?
+pub fn IrTerm::tainted_ptr_text(Self) -> String?
+pub fn IrTerm::tainted_reg(Self) -> Tid?
+pub fn IrTerm::tainted_reg_text(Self) -> String?
+pub fn IrTerm::taints(Self) -> Bool
+pub fn IrTerm::taints_ptr(Self) -> Bool
+pub fn IrTerm::taints_reg(Self) -> Bool
 pub fn IrTerm::tid(Self) -> Tid
 pub fn IrTerm::to_sequence(Self, IrTermClass, rev? : Bool) -> Array[Self]
 pub fn IrTerm::to_string(Self) -> String
@@ -1034,6 +1049,8 @@ pub fn[T] Term::has_background(Self[T], IrColor) -> Bool
 pub fn[T] Term::has_color(Self[T], IrColor) -> Bool
 pub fn[T] Term::has_flag(Self[T], String) -> Bool
 pub fn[T] Term::has_foreground(Self[T], IrColor) -> Bool
+pub fn[T] Term::has_tainted_ptr(Self[T], Tid) -> Bool
+pub fn[T] Term::has_tainted_reg(Self[T], Tid) -> Bool
 pub fn Term::insert_arg_after(Self[Sub], Self[Arg], after? : Tid) -> Self[Sub]
 pub fn Term::insert_arg_before(Self[Sub], Self[Arg], before? : Tid) -> Self[Sub]
 pub fn Term::insert_blk_after(Self[Sub], Self[Blk], after? : Tid) -> Self[Sub]
@@ -1245,6 +1262,13 @@ pub fn Term::substitute_phi_var(Self[Phi], Var, Exp) -> Self[Phi]
 pub fn Term::substitute_program_var(Self[Program], Var, Exp) -> Self[Program]
 pub fn Term::substitute_sub_var(Self[Sub], Var, Exp) -> Self[Sub]
 pub fn Term::succ_tid_of_jmp(Self[Jmp]) -> Tid?
+pub fn[T] Term::tainted_ptr(Self[T]) -> Tid?
+pub fn[T] Term::tainted_ptr_text(Self[T]) -> String?
+pub fn[T] Term::tainted_reg(Self[T]) -> Tid?
+pub fn[T] Term::tainted_reg_text(Self[T]) -> String?
+pub fn[T] Term::taints(Self[T]) -> Bool
+pub fn[T] Term::taints_ptr(Self[T]) -> Bool
+pub fn[T] Term::taints_reg(Self[T]) -> Bool
 pub fn[T] Term::tid(Self[T]) -> Tid
 pub fn Term::to_cfg(Self[Sub]) -> IrCfg
 pub fn Term::to_graph(Self[Sub]) -> @graphlib.Graph[Tid, Tid]
@@ -1296,6 +1320,8 @@ pub fn Term::with_stub(Self[Sub]) -> Self[Sub]
 pub fn Term::with_sub_alias(Self[Sub], String) -> Self[Sub]
 pub fn Term::with_sub_name(Self[Sub], String) -> Self[Sub]
 pub fn[T] Term::with_synthetic(Self[T]) -> Self[T]
+pub fn[T] Term::with_tainted_ptr(Self[T], Tid) -> Self[T]
+pub fn[T] Term::with_tainted_reg(Self[T], Tid) -> Self[T]
 pub fn Term::with_unknown_intent(Self[Arg]) -> Self[Arg]
 pub fn[T] Term::with_visited(Self[T]) -> Self[T]
 pub fn Term::with_warn_unused(Self[Arg]) -> Self[Arg]
@@ -1321,6 +1347,8 @@ pub fn Term::without_restricted(Self[Arg]) -> Self[Arg]
 pub fn Term::without_returns_twice(Self[Sub]) -> Self[Sub]
 pub fn Term::without_stub(Self[Sub]) -> Self[Sub]
 pub fn[T] Term::without_synthetic(Self[T]) -> Self[T]
+pub fn[T] Term::without_tainted_ptr(Self[T]) -> Self[T]
+pub fn[T] Term::without_tainted_reg(Self[T]) -> Self[T]
 pub fn[T] Term::without_visited(Self[T]) -> Self[T]
 pub fn Term::without_warn_unused(Self[Arg]) -> Self[Arg]
 

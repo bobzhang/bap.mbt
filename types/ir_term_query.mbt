@@ -164,6 +164,79 @@ pub fn IrTerm::del_background(self : IrTerm) -> IrTerm {
 }
 
 ///|
+fn ir_term_taint_seed(term : IrTerm, key : String) -> Tid? {
+  match term.get_attr(key) {
+    Some(text) => taint_seed(text)
+    None => None
+  }
+}
+
+///|
+pub fn IrTerm::set_tainted_reg(self : IrTerm, seed : Tid) -> IrTerm {
+  self.set_attr(Attr::tainted_reg(seed))
+}
+
+///|
+pub fn IrTerm::del_tainted_reg(self : IrTerm) -> IrTerm {
+  self.del_attr(term_tainted_reg_attr)
+}
+
+///|
+pub fn IrTerm::tainted_reg(self : IrTerm) -> Tid? {
+  ir_term_taint_seed(self, term_tainted_reg_attr)
+}
+
+///|
+pub fn IrTerm::tainted_reg_text(self : IrTerm) -> String? {
+  self.get_attr(term_tainted_reg_attr)
+}
+
+///|
+pub fn IrTerm::has_tainted_reg(self : IrTerm, seed : Tid) -> Bool {
+  self.tainted_reg_text() == Some(seed.to_string())
+}
+
+///|
+pub fn IrTerm::taints_reg(self : IrTerm) -> Bool {
+  self.has_attr(term_tainted_reg_attr)
+}
+
+///|
+pub fn IrTerm::set_tainted_ptr(self : IrTerm, seed : Tid) -> IrTerm {
+  self.set_attr(Attr::tainted_ptr(seed))
+}
+
+///|
+pub fn IrTerm::del_tainted_ptr(self : IrTerm) -> IrTerm {
+  self.del_attr(term_tainted_ptr_attr)
+}
+
+///|
+pub fn IrTerm::tainted_ptr(self : IrTerm) -> Tid? {
+  ir_term_taint_seed(self, term_tainted_ptr_attr)
+}
+
+///|
+pub fn IrTerm::tainted_ptr_text(self : IrTerm) -> String? {
+  self.get_attr(term_tainted_ptr_attr)
+}
+
+///|
+pub fn IrTerm::has_tainted_ptr(self : IrTerm, seed : Tid) -> Bool {
+  self.tainted_ptr_text() == Some(seed.to_string())
+}
+
+///|
+pub fn IrTerm::taints_ptr(self : IrTerm) -> Bool {
+  self.has_attr(term_tainted_ptr_attr)
+}
+
+///|
+pub fn IrTerm::taints(self : IrTerm) -> Bool {
+  self.taints_reg() || self.taints_ptr()
+}
+
+///|
 pub fn IrTerm::is_synthetic(self : IrTerm) -> Bool {
   self.has_attr(term_synthetic_attr)
 }

@@ -352,7 +352,7 @@ test "project create file named uses loader and source registries on native targ
 }
 
 ///|
-test "project file input loads deduplicated libraries with the same loader" {
+test "project file input keeps main library entries with custom loaders" {
   let loader = @project.ProjectInputLoader::create(
     name="unit-project-library-native",
     load=data => {
@@ -386,9 +386,11 @@ test "project file input loads deduplicated libraries with the same loader" {
       assert_true(project.filename() == Some("moon.mod"))
       assert_true(project.memory().lookup(0x1100UL).length() == 1)
       let libraries = project.libraries()
-      assert_true(libraries.length() == 1)
+      assert_true(libraries.length() == 2)
       assert_true(libraries[0].name() == "README.mbt.md")
       assert_true(libraries[0].memory().lookup(0x2200UL).length() == 1)
+      assert_true(libraries[1].name() == "moon.mod")
+      assert_true(libraries[1].memory().lookup(0x1100UL).length() == 1)
     }
     Err(reason) => fail(reason)
   }
@@ -402,9 +404,11 @@ test "project file input loads deduplicated libraries with the same loader" {
       assert_true(project.filename() == Some("moon.mod"))
       assert_true(project.memory().lookup(0x1100UL).length() == 1)
       let libraries = project.libraries()
-      assert_true(libraries.length() == 1)
+      assert_true(libraries.length() == 2)
       assert_true(libraries[0].name() == "README.mbt.md")
       assert_true(libraries[0].memory().lookup(0x2200UL).length() == 1)
+      assert_true(libraries[1].name() == "moon.mod")
+      assert_true(libraries[1].memory().lookup(0x1100UL).length() == 1)
     }
     Err(reason) => fail(reason)
   }

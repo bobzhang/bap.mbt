@@ -55,8 +55,10 @@ fn push_library_path(
   main_path : String,
   display_name : String,
   path : String,
+  allow_main~ : Bool,
 ) -> Unit {
-  if path != main_path && path != display_name && !paths.contains(path) {
+  if (allow_main || (path != main_path && path != display_name)) &&
+    !paths.contains(path) {
     paths.push(path)
   }
 }
@@ -66,10 +68,11 @@ fn project_input_library_paths(
   main_path : String,
   display_name : String,
   libraries : Array[String],
+  allow_main~ : Bool,
 ) -> Array[String] {
   let paths = []
   for path in libraries {
-    push_library_path(paths, main_path, display_name, path)
+    push_library_path(paths, main_path, display_name, path, allow_main~)
   }
   paths
 }
@@ -119,10 +122,17 @@ fn project_input_load_libraries(
   loader : String?,
   target : @core_theory.Target?,
   initial_bias : UInt64?,
+  allow_main_library? : Bool = false,
 ) -> Result[Array[Library], String] {
   let loaded = []
   let mut next_bias = initial_bias
-  for path in project_input_library_paths(main_path, display_name, libraries) {
+  for
+    path in project_input_library_paths(
+      main_path,
+      display_name,
+      libraries,
+      allow_main=allow_main_library,
+    ) {
     let input = match loader {
       Some(name) => ProjectInput::load_file(path, loader=name, target?)
       None => ProjectInput::load_file_for_filename(path, target?)
@@ -268,7 +278,8 @@ pub fn ProjectInput::load_file(
   libraries? : Array[String] = [],
   target? : @core_theory.Target,
 ) -> Result[ProjectInput, String] {
-  let input = match find_input_loader(loader) {
+  let input_loader = find_input_loader(loader)
+  let input = match input_loader {
     Some(input_loader) => input_loader.load_file(path)
     None =>
       match @native_io.read_file(path) {
@@ -286,6 +297,7 @@ pub fn ProjectInput::load_file(
           Some(loader),
           target,
           input.next_library_bias(None),
+          allow_main_library=input_loader is Some(_),
         ) {
         Ok(loaded_libraries) =>
           Ok(

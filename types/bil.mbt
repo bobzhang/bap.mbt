@@ -5,6 +5,16 @@ pub(all) enum UnOp {
 } derive(Eq, Debug)
 
 ///|
+pub fn UnOp::not() -> UnOp {
+  Not
+}
+
+///|
+pub fn UnOp::neg() -> UnOp {
+  Neg
+}
+
+///|
 pub fn UnOp::to_string(self : UnOp) -> String {
   match self {
     Not => "not"
@@ -42,6 +52,101 @@ pub(all) enum BinOp {
   SignedLt
   SignedLe
 } derive(Eq, Debug)
+
+///|
+pub fn BinOp::plus() -> BinOp {
+  Plus
+}
+
+///|
+pub fn BinOp::minus() -> BinOp {
+  Minus
+}
+
+///|
+pub fn BinOp::times() -> BinOp {
+  Times
+}
+
+///|
+pub fn BinOp::divide() -> BinOp {
+  Div
+}
+
+///|
+pub fn BinOp::sdivide() -> BinOp {
+  SignedDiv
+}
+
+///|
+pub fn BinOp::modulo() -> BinOp {
+  Mod
+}
+
+///|
+pub fn BinOp::smodulo() -> BinOp {
+  SignedMod
+}
+
+///|
+pub fn BinOp::lshift() -> BinOp {
+  LShift
+}
+
+///|
+pub fn BinOp::rshift() -> BinOp {
+  RShift
+}
+
+///|
+pub fn BinOp::arshift() -> BinOp {
+  ARShift
+}
+
+///|
+pub fn BinOp::bit_and() -> BinOp {
+  And
+}
+
+///|
+pub fn BinOp::bit_or() -> BinOp {
+  Or
+}
+
+///|
+pub fn BinOp::bit_xor() -> BinOp {
+  Xor
+}
+
+///|
+pub fn BinOp::eq() -> BinOp {
+  Eq
+}
+
+///|
+pub fn BinOp::neq() -> BinOp {
+  Neq
+}
+
+///|
+pub fn BinOp::lt() -> BinOp {
+  Lt
+}
+
+///|
+pub fn BinOp::le() -> BinOp {
+  Le
+}
+
+///|
+pub fn BinOp::slt() -> BinOp {
+  SignedLt
+}
+
+///|
+pub fn BinOp::sle() -> BinOp {
+  SignedLe
+}
 
 ///|
 pub fn BinOp::to_string(self : BinOp) -> String {
@@ -116,6 +221,26 @@ pub(all) enum CastKind {
   High
   Low
 } derive(Eq, Debug)
+
+///|
+pub fn CastKind::unsigned() -> CastKind {
+  Unsigned
+}
+
+///|
+pub fn CastKind::signed() -> CastKind {
+  Signed
+}
+
+///|
+pub fn CastKind::high() -> CastKind {
+  High
+}
+
+///|
+pub fn CastKind::low() -> CastKind {
+  Low
+}
 
 ///|
 pub fn CastKind::to_string(self : CastKind) -> String {

@@ -389,9 +389,28 @@ pub(all) enum BinOp {
   SignedLe
 } derive(Eq, @debug.Debug)
 pub fn BinOp::apply(Self, Word, Word) -> Result[Word, String]
+pub fn BinOp::arshift() -> Self
+pub fn BinOp::bit_and() -> Self
+pub fn BinOp::bit_or() -> Self
+pub fn BinOp::bit_xor() -> Self
+pub fn BinOp::divide() -> Self
+pub fn BinOp::eq() -> Self
 pub fn BinOp::is_associative(Self) -> Bool
 pub fn BinOp::is_commutative(Self) -> Bool
+pub fn BinOp::le() -> Self
+pub fn BinOp::lshift() -> Self
+pub fn BinOp::lt() -> Self
+pub fn BinOp::minus() -> Self
+pub fn BinOp::modulo() -> Self
+pub fn BinOp::neq() -> Self
+pub fn BinOp::plus() -> Self
+pub fn BinOp::rshift() -> Self
+pub fn BinOp::sdivide() -> Self
+pub fn BinOp::sle() -> Self
+pub fn BinOp::slt() -> Self
+pub fn BinOp::smodulo() -> Self
 pub fn BinOp::string_of_binop(Self) -> String
+pub fn BinOp::times() -> Self
 pub fn BinOp::to_string(Self) -> String
 
 pub(all) struct Blk {
@@ -443,8 +462,12 @@ pub(all) enum CastKind {
   Low
 } derive(Eq, @debug.Debug)
 pub fn CastKind::apply(Self, Int, Word) -> Result[Word, String]
+pub fn CastKind::high() -> Self
+pub fn CastKind::low() -> Self
+pub fn CastKind::signed() -> Self
 pub fn CastKind::string_of_cast(Self) -> String
 pub fn CastKind::to_string(Self) -> String
+pub fn CastKind::unsigned() -> Self
 
 pub(all) enum ContinueOrStop[A, R] {
   Continue(A)
@@ -1244,6 +1267,8 @@ pub(all) enum UnOp {
   Neg
 } derive(Eq, @debug.Debug)
 pub fn UnOp::apply(Self, Word) -> Result[Word, String]
+pub fn UnOp::neg() -> Self
+pub fn UnOp::not() -> Self
 pub fn UnOp::string_of_unop(Self) -> String
 pub fn UnOp::to_string(Self) -> String
 

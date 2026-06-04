@@ -3722,6 +3722,7 @@ test "program metadata tracks source compiler and units" {
   assert_true(unit.same(@core_theory.ProgramUnit::for_file("main.o")))
   assert_true(!unit.same(@core_theory.ProgramUnit::for_file("other.o")))
   assert_true(unit.name() == "main.o")
+  assert_true(unit.pkg() == "user")
   assert_true(unit.bias() == Some(base))
   assert_true(unit.to_real_addr(biased) == Ok(real))
   assert_true(unit.to_biased_addr(real) == Ok(biased))
@@ -3731,6 +3732,23 @@ test "program metadata tracks source compiler and units" {
   assert_true(unit.target().matches("amd64"))
   assert_true(unit.source().code() == source.code())
   assert_true(unit.compiler().map(item => item.name()) == Some("clang"))
+  let packaged_file = @core_theory.ProgramUnit::for_file(
+    "main.o",
+    target~,
+    pkg="alt",
+  )
+  assert_true(packaged_file.path() == Some("main.o"))
+  assert_true(packaged_file.pkg() == "alt")
+  assert_true(!packaged_file.same(unit))
+  assert_true(
+    packaged_file.same(
+      @core_theory.ProgramUnit::for_file("main.o", target~, pkg="alt"),
+    ),
+  )
+  match unit_codec.decode(unit_codec.encode(packaged_file)) {
+    Ok(decoded) => assert_true(decoded.same(packaged_file))
+    Err(reason) => fail(reason)
+  }
   let region = @core_theory.ProgramUnit::for_region(lower=base, upper~, target~)
   match unit_codec.decode(unit_codec.encode(region)) {
     Ok(decoded) => assert_true(decoded.same(region))
@@ -3745,6 +3763,17 @@ test "program metadata tracks source compiler and units" {
       @core_theory.ProgramUnit::for_region(lower=base, upper~, pkg="alt"),
     ),
   )
+  let packaged_region = @core_theory.ProgramUnit::for_region(
+    lower=base,
+    upper~,
+    target~,
+    pkg="alt",
+  )
+  assert_true(packaged_region.pkg() == "alt")
+  match unit_codec.decode(unit_codec.encode(packaged_region)) {
+    Ok(decoded) => assert_true(decoded.same(packaged_region))
+    Err(reason) => fail(reason)
+  }
   assert_true(unit.compare(region) != 0)
   assert_true(region.lower() == Some(base))
   assert_true(region.upper() == Some(upper))

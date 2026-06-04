@@ -116,6 +116,7 @@ struct Compiler {
 ///|
 struct ProgramUnit {
   id_value : Int
+  pkg_value : String
   path_value : String?
   lower_value : @types.Word?
   upper_value : @types.Word?
@@ -789,6 +790,7 @@ fn ensure_program_unit_counter_at_least(id : Int) -> Unit {
 ///|
 fn ProgramUnit::make(
   id? : Int,
+  pkg? : String,
   path? : String,
   lower? : @types.Word,
   upper? : @types.Word,
@@ -802,6 +804,7 @@ fn ProgramUnit::make(
       Some(value) => value
       None => next_program_unit_id()
     },
+    pkg_value: program_unit_pkg(pkg?),
     path_value: path,
     lower_value: lower,
     upper_value: upper,
@@ -841,9 +844,12 @@ pub fn ProgramUnit::for_file(
   bias? : @types.Word,
   source? : Source,
   compiler? : Compiler,
+  pkg? : String,
 ) -> ProgramUnit {
+  let file_pkg = program_unit_pkg(pkg?)
   ProgramUnit::make(
-    id=interned_program_unit_id("file", path),
+    id=interned_program_unit_id("file", "\{file_pkg}|\{path}"),
+    pkg=file_pkg,
     path~,
     target?,
     bias?,
@@ -868,6 +874,7 @@ pub fn ProgramUnit::for_region(
       "region",
       "\{region_pkg}|\{lower.to_hex()}-\{upper.to_hex()}",
     ),
+    pkg=region_pkg,
     lower~,
     upper~,
     target?,
@@ -895,6 +902,11 @@ pub fn ProgramUnit::compare(self : ProgramUnit, other : ProgramUnit) -> Int {
 ///|
 pub fn ProgramUnit::path(self : ProgramUnit) -> String? {
   self.path_value
+}
+
+///|
+pub fn ProgramUnit::pkg(self : ProgramUnit) -> String {
+  self.pkg_value
 }
 
 ///|
@@ -1057,12 +1069,14 @@ pub fn ProgramUnit::persistent() -> @knowledge.Persistent[ProgramUnit] {
         target_codec.encode(unit.target()),
         source_codec.encode(unit.source()),
         opt_compiler_codec.encode(unit.compiler()),
+        unit.pkg(),
       ]
     },
     of_persistent=fields => {
-      match persistent_decode_fields(fields, 9, "program unit") {
-        Ok(_) => ()
-        Err(reason) => return Err(reason)
+      if fields.length() != 9 && fields.length() != 10 {
+        return Err(
+          "invalid persistent program unit encoding: expected 9 or 10 fields, got \{fields.length()}",
+        )
       }
       let id = match int_codec.decode(fields[1]) {
         Ok(value) => value
@@ -1101,6 +1115,7 @@ pub fn ProgramUnit::persistent() -> @knowledge.Persistent[ProgramUnit] {
         Ok(value) => value
         Err(reason) => return Err(reason)
       }
+      let pkg = if fields.length() == 10 { Some(fields[9]) } else { None }
       match fields[0] {
         "file" => {
           let file_path = match
@@ -1109,7 +1124,14 @@ pub fn ProgramUnit::persistent() -> @knowledge.Persistent[ProgramUnit] {
             Err(reason) => return Err(reason)
           }
           Ok(
-            ProgramUnit::for_file(file_path, target~, bias?, source~, compiler?),
+            ProgramUnit::for_file(
+              file_path,
+              target~,
+              bias?,
+              source~,
+              compiler?,
+              pkg?,
+            ),
           )
         }
         "region" => {
@@ -1131,6 +1153,7 @@ pub fn ProgramUnit::persistent() -> @knowledge.Persistent[ProgramUnit] {
               bias?,
               source~,
               compiler?,
+              pkg?,
             ),
           )
         }
@@ -1146,6 +1169,7 @@ pub fn ProgramUnit::persistent() -> @knowledge.Persistent[ProgramUnit] {
               target~,
               source~,
               compiler?,
+              pkg?,
             ),
           )
         }

@@ -459,7 +459,7 @@ pub fn ProgramUnit::cls() -> @knowledge.Class[Unit, Unit]
 pub fn ProgramUnit::compare(Self, Self) -> Int
 pub fn ProgramUnit::compiler(Self) -> Compiler?
 pub fn ProgramUnit::compiler_slot() -> @knowledge.Slot[Unit, Compiler?]
-pub fn ProgramUnit::for_file(String, target? : Target, bias? : @types.Word, source? : Source, compiler? : Compiler) -> Self
+pub fn ProgramUnit::for_file(String, target? : Target, bias? : @types.Word, source? : Source, compiler? : Compiler, pkg? : String) -> Self
 pub fn ProgramUnit::for_region(lower~ : @types.Word, upper~ : @types.Word, target? : Target, bias? : @types.Word, source? : Source, compiler? : Compiler, pkg? : String) -> Self
 pub fn ProgramUnit::fresh(target? : Target, source? : Source, compiler? : Compiler) -> Self
 pub fn ProgramUnit::id(Self) -> Int
@@ -468,6 +468,7 @@ pub fn ProgramUnit::name(Self) -> String
 pub fn ProgramUnit::path(Self) -> String?
 pub fn ProgramUnit::path_slot() -> @knowledge.Slot[Unit, String?]
 pub fn ProgramUnit::persistent() -> @knowledge.Persistent[Self]
+pub fn ProgramUnit::pkg(Self) -> String
 pub fn ProgramUnit::same(Self, Self) -> Bool
 pub fn ProgramUnit::source(Self) -> Source
 pub fn ProgramUnit::source_slot() -> @knowledge.Slot[Unit, Source]

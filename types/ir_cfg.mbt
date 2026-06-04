@@ -24,6 +24,11 @@ pub fn Term::to_cfg(self : Term[Sub]) -> IrCfg {
 }
 
 ///|
+pub fn Sub::to_cfg(sub : Term[Sub]) -> IrCfg {
+  sub.to_ir_cfg()
+}
+
+///|
 pub fn IrCfg::to_sub(self : IrCfg) -> Term[Sub] {
   self.sub_value
 }

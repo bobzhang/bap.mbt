@@ -97,7 +97,11 @@ test "BAP-style IR builders collect construction inputs" {
   let second_sub = sub_builder.result()
   assert_true(first_sub.tid() == sub_tid)
   assert_true(first_sub.sub_name() == "main")
+  assert_true(@types.Sub::name(first_sub) == "main")
   assert_true(first_sub.with_name("renamed").sub_name() == "renamed")
+  assert_true(
+    @types.Sub::with_name(first_sub, "renamed").sub_name() == "renamed",
+  )
   assert_true(first_sub.args().length() == 1)
   assert_true(first_sub.blks().map(blk => blk.tid()) == [first_blk.tid()])
   assert_true(

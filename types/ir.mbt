@@ -623,6 +623,11 @@ pub fn Term::sub_name(self : Term[Sub]) -> String {
 }
 
 ///|
+pub fn Sub::name(sub : Term[Sub]) -> String {
+  sub.sub_name()
+}
+
+///|
 pub fn Term::with_sub_name(self : Term[Sub], name : String) -> Term[Sub] {
   self.with_payload({ ..self.payload_value, name, })
 }
@@ -630,6 +635,11 @@ pub fn Term::with_sub_name(self : Term[Sub], name : String) -> Term[Sub] {
 ///|
 pub fn Term::with_name(self : Term[Sub], name : String) -> Term[Sub] {
   self.with_sub_name(name)
+}
+
+///|
+pub fn Sub::with_name(sub : Term[Sub], name : String) -> Term[Sub] {
+  sub.with_sub_name(name)
 }
 
 ///|

@@ -1035,7 +1035,11 @@ pub(all) struct Sub {
   blks : Array[Term[Blk]]
 }
 pub fn Sub::create(name? : String, args? : Array[Term[Arg]], blks? : Array[Term[Blk]], tid? : Tid) -> Term[Self]
+pub fn Sub::name(Term[Self]) -> String
 pub fn Sub::of_cfg(IrCfg) -> Term[Self]
+pub fn Sub::to_cfg(Term[Self]) -> IrCfg
+pub fn Sub::to_graph(Term[Self]) -> @graphlib.Graph[Tid, Tid]
+pub fn Sub::with_name(Term[Self], String) -> Term[Self]
 
 type SubBuilder
 pub fn SubBuilder::add_arg(Self, Term[Arg]) -> Unit

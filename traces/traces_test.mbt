@@ -514,6 +514,35 @@ test "translated BAP loaded trace registry adds lists and removes traces" {
 }
 
 ///|
+test "BAP-style loaded trace facade delegates to the registry" {
+  let first = new_trace()
+  let second = new_trace()
+  @traces.Traces::remove(first)
+  @traces.Traces::remove(second)
+  let before = @traces.Traces::to_list().length()
+  @traces.Traces::add(second)
+  @traces.Traces::add(first)
+  @traces.Traces::add(first)
+
+  let ids = trace_ids(@traces.Traces::to_list())
+  assert_true(
+    ids.filter(id => id == first.id() || id == second.id()) ==
+    [first.id(), second.id()],
+  )
+  let iter_ids : Array[@traces.TraceId] = []
+  @traces.Traces::iter().each(trace => {
+    if trace.id() == first.id() || trace.id() == second.id() {
+      iter_ids.push(trace.id())
+    }
+  })
+  assert_true(iter_ids == [first.id(), second.id()])
+
+  @traces.Traces::remove(first)
+  @traces.Traces::remove(second)
+  assert_true(@traces.Traces::to_list().length() == before)
+}
+
+///|
 test "translated BAP trace protocol registry selects URI providers" {
   match @traces.Trace::load("unknown://trace") {
     Err(NoProvider("unknown://trace")) => ()

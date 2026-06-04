@@ -346,6 +346,13 @@ pub(all) struct TracerInfo {
 } derive(Eq, @debug.Debug)
 pub fn TracerInfo::to_string(Self) -> String
 
+pub(all) struct Traces {
+}
+pub fn Traces::add(Trace) -> Unit
+pub fn Traces::iter() -> Iter[Trace]
+pub fn Traces::remove(Trace) -> Unit
+pub fn Traces::to_list() -> Array[Trace]
+
 // Type aliases
 
 // Traits

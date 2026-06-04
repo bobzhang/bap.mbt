@@ -1604,6 +1604,29 @@ pub fn Trace::loaded_iter() -> Iter[Trace] {
 }
 
 ///|
+pub(all) struct Traces {}
+
+///|
+pub fn Traces::add(trace : Trace) -> Unit {
+  Trace::add_loaded(trace)
+}
+
+///|
+pub fn Traces::remove(trace : Trace) -> Unit {
+  Trace::remove_loaded(trace)
+}
+
+///|
+pub fn Traces::to_list() -> Array[Trace] {
+  Trace::loaded()
+}
+
+///|
+pub fn Traces::iter() -> Iter[Trace] {
+  Trace::loaded_iter()
+}
+
+///|
 pub fn Trace::register_protocol(protocol : TraceProtocol) -> Unit {
   trace_protocol_registry[protocol.name()] = protocol
 }

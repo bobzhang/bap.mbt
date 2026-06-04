@@ -848,6 +848,62 @@ test "bil expressions and statements expose BAP-style constructors" {
 }
 
 ///|
+test "bil expressions expose opt-in BAP smart constructors" {
+  let imm8 = @types.ValueType::Imm(8)
+  let x = @types.Var::new(name="x", typ=imm8)
+  let y = @types.Var::new(name="y", typ=imm8)
+  let x_exp = @types.Exp::var_exp(x)
+  let y_exp = @types.Exp::var_exp(y)
+  let zero = @types.Exp::int(@types.Word::zero(width=8))
+  let one = @types.Exp::int(@types.Word::one(width=8))
+  let bool_true = @types.Exp::int(@types.Word::b1())
+  let all_ones = @types.Exp::int(@types.Word::of_int(width=8, 0xff))
+  let two = @types.Exp::int(@types.Word::of_int(width=8, 2))
+  let three = @types.Exp::int(@types.Word::of_int(width=8, 3))
+  assert_true(@types.Exp::smart_binop(Plus, zero, x_exp) == x_exp)
+  assert_true(@types.Exp::smart_binop(Minus, x_exp, x_exp) == zero)
+  assert_true(@types.Exp::smart_binop(Mod, x_exp, one) == zero)
+  assert_true(@types.Exp::smart_binop(And, all_ones, x_exp) == x_exp)
+  assert_true(
+    @types.Exp::smart_binop(Eq, x_exp, x_exp) ==
+    @types.Exp::int(@types.Word::b1()),
+  )
+  assert_true(
+    @types.Exp::smart_binop(Plus, BinOp(Plus, x_exp, two), three) ==
+    BinOp(Plus, x_exp, @types.Exp::int(@types.Word::of_int(width=8, 5))),
+  )
+  assert_true(
+    @types.Exp::smart_unop(Not, BinOp(Lt, x_exp, y_exp)) ==
+    BinOp(Le, y_exp, x_exp),
+  )
+  assert_true(@types.Exp::smart_unop(Neg, UnOp(Neg, x_exp)) == x_exp)
+  assert_true(@types.Exp::smart_cast(Unsigned, 8, x_exp) == x_exp)
+  assert_true(
+    @types.Exp::smart_cast(High, 4, Extract(hi=7, lo=0, exp=x_exp)) ==
+    Extract(hi=7, lo=4, exp=x_exp),
+  )
+  assert_true(
+    @types.Exp::smart_ite(if_=bool_true, then_=x_exp, else_=y_exp) == x_exp,
+  )
+  assert_true(@types.Exp::smart_extract(x_exp, hi=7, lo=0) == x_exp)
+  assert_true(
+    @types.Exp::smart_extract(
+      @types.Exp::int(@types.Word::of_int(width=16, 0xdead)),
+      hi=11,
+      lo=4,
+    ) ==
+    @types.Exp::int(@types.Word::of_int(width=8, 0xea)),
+  )
+  assert_true(
+    @types.Exp::smart_concat(
+      @types.Exp::int(@types.Word::of_int(width=4, 0xa)),
+      @types.Exp::int(@types.Word::of_int(width=4, 0xb)),
+    ) ==
+    @types.Exp::int(@types.Word::of_int(width=8, 0xab)),
+  )
+}
+
+///|
 test "bil checked type inference mirrors BAP error cases" {
   let imm1 = @types.ValueType::Imm(1)
   let imm4 = @types.ValueType::Imm(4)

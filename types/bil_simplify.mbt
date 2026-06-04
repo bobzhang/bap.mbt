@@ -115,6 +115,239 @@ fn fold_concat(high : Exp, low : Exp) -> Exp? {
 }
 
 ///|
+fn zero_or(exp : Exp, fallback : Exp) -> Exp {
+  match exp.infer_type() {
+    Ok(Imm(width)) =>
+      try Word::zero(width~) catch {
+        _ => fallback
+      } noraise {
+        word => Int(word)
+      }
+    _ => fallback
+  }
+}
+
+///|
+fn word_is_all_ones(word : Word) -> Bool {
+  word.lnot().is_zero()
+}
+
+///|
+fn int_word(exp : Exp) -> Word? {
+  match exp {
+    Int(word) => Some(word)
+    _ => None
+  }
+}
+
+///|
+fn exp_is_zero(exp : Exp) -> Bool {
+  match int_word(exp) {
+    Some(word) => word.is_zero()
+    None => false
+  }
+}
+
+///|
+fn exp_is_one(exp : Exp) -> Bool {
+  match int_word(exp) {
+    Some(word) => word.is_one()
+    None => false
+  }
+}
+
+///|
+fn exp_is_all_ones(exp : Exp) -> Bool {
+  match int_word(exp) {
+    Some(word) => word_is_all_ones(word)
+    None => false
+  }
+}
+
+///|
+fn fold_apply_binop(op : BinOp, lhs : Word, rhs : Word) -> Exp? {
+  match op.apply(lhs, rhs) {
+    Ok(word) => Some(Int(word))
+    Err(_) => None
+  }
+}
+
+///|
+fn smart_raw_binop(op : BinOp, lhs : Exp, rhs : Exp) -> Exp {
+  BinOp(op, lhs, rhs)
+}
+
+///|
+pub fn Exp::smart_binop(op : BinOp, lhs : Exp, rhs : Exp) -> Exp {
+  let raw = smart_raw_binop(op, lhs, rhs)
+  match (op, lhs, rhs) {
+    (_, Int(left), Int(right)) =>
+      match fold_apply_binop(op, left, right) {
+        Some(result) => result
+        None => raw
+      }
+    (Plus, BinOp(Plus, left, Int(y)), Int(z)) =>
+      match fold_apply_binop(Plus, y, z) {
+        Some(Int(sum)) => BinOp(Plus, left, Int(sum))
+        _ => raw
+      }
+    (Plus, BinOp(Plus, Int(y), right), Int(z)) =>
+      match fold_apply_binop(Plus, y, z) {
+        Some(Int(sum)) => BinOp(Plus, right, Int(sum))
+        _ => raw
+      }
+    (Plus, left, right) if exp_is_zero(left) => right
+    (Plus, left, right) if exp_is_zero(right) => left
+    (Minus, left, right) if exp_is_zero(left) => UnOp(Neg, right)
+    (Minus, left, right) if exp_is_zero(right) => left
+    (Minus, left, right) if left == right => zero_or(raw, raw)
+    (Minus, BinOp(Minus, left, Int(y)), Int(z)) =>
+      match fold_apply_binop(Plus, y, z) {
+        Some(Int(sum)) => BinOp(Minus, left, Int(sum))
+        _ => raw
+      }
+    (Minus, BinOp(Plus, left, Int(c1)), Int(c2)) =>
+      match fold_apply_binop(Minus, c1, c2) {
+        Some(Int(diff)) => BinOp(Plus, left, Int(diff))
+        _ => raw
+      }
+    (Minus, BinOp(Plus, Int(c1), right), Int(c2)) =>
+      match fold_apply_binop(Minus, c1, c2) {
+        Some(Int(diff)) => BinOp(Plus, right, Int(diff))
+        _ => raw
+      }
+    (Times, left, _) if exp_is_zero(left) => left
+    (Times, _, right) if exp_is_zero(right) => right
+    (Times, left, right) if exp_is_one(left) => right
+    (Times, left, right) if exp_is_one(right) => left
+    (Div | SignedDiv, left, right) if exp_is_one(right) => left
+    (Mod | SignedMod, _, right) if exp_is_one(right) => zero_or(raw, raw)
+    (LShift | RShift | ARShift, left, right) if exp_is_zero(right) => left
+    (LShift | RShift | ARShift, left, _) if exp_is_zero(left) => left
+    (ARShift, left, _) if exp_is_all_ones(left) => left
+    (And, left, _) if exp_is_zero(left) => left
+    (And, _, right) if exp_is_zero(right) => right
+    (And, left, right) if exp_is_all_ones(left) => right
+    (And, left, right) if exp_is_all_ones(right) => left
+    (And, left, right) if left == right => left
+    (Or, left, right) if exp_is_zero(left) => right
+    (Or, left, right) if exp_is_zero(right) => left
+    (Or, left, _) if exp_is_all_ones(left) => left
+    (Or, _, right) if exp_is_all_ones(right) => right
+    (Or, left, right) if left == right => left
+    (Xor, left, right) if left == right => zero_or(raw, raw)
+    (Xor, left, right) if exp_is_zero(left) => right
+    (Xor, left, right) if exp_is_zero(right) => left
+    (Eq, left, right) if left == right => Int(Word::b1())
+    (Neq, left, right) if left == right => Int(Word::b0())
+    (Lt | SignedLt, left, right) if left == right => Int(Word::b0())
+    _ => raw
+  }
+}
+
+///|
+pub fn Exp::smart_unop(op : UnOp, exp : Exp) -> Exp {
+  let raw = UnOp(op, exp)
+  match (op, exp) {
+    (_, Int(word)) =>
+      match op.apply(word) {
+        Ok(result) => Int(result)
+        Err(_) => raw
+      }
+    (_, UnOp(inner, inner_exp)) if op == inner => inner_exp
+    (Not, BinOp(Lt, left, right)) => Exp::smart_binop(Le, right, left)
+    (Not, BinOp(Le, left, right)) => Exp::smart_binop(Lt, right, left)
+    (Not, BinOp(SignedLt, left, right)) =>
+      Exp::smart_binop(SignedLe, right, left)
+    (Not, BinOp(SignedLe, left, right)) =>
+      Exp::smart_binop(SignedLt, right, left)
+    (Not, BinOp(Eq, left, right)) => Exp::smart_binop(Neq, left, right)
+    (Not, BinOp(Neq, left, right)) => Exp::smart_binop(Eq, left, right)
+    _ => raw
+  }
+}
+
+///|
+fn exp_has_width(width : Int, exp : Exp) -> Bool {
+  match exp.infer_type() {
+    Ok(Imm(actual)) => actual == width
+    _ => false
+  }
+}
+
+///|
+pub fn Exp::smart_cast(kind : CastKind, width : Int, exp : Exp) -> Exp {
+  match exp {
+    Int(word) =>
+      match kind.apply(width, word) {
+        Ok(result) => Int(result)
+        Err(_) => Cast(kind~, width~, exp~)
+      }
+    Cast(width=inner_width, ..) if width == inner_width => exp
+    Cast(kind=inner_kind, width=inner_width, exp=inner_exp) if kind ==
+      inner_kind &&
+      inner_width >= width => Cast(kind~, width~, exp=inner_exp)
+    Cast(kind=Unsigned, width=inner_width, exp=inner_exp) if kind == Unsigned &&
+      inner_width <= width => Cast(kind~, width~, exp=inner_exp)
+    Cast(kind=Signed, width=inner_width, exp=inner_exp) if kind == Signed &&
+      inner_width <= width => Cast(kind~, width~, exp=inner_exp)
+    Extract(hi~, exp=inner_exp, ..) if kind == High && width > 0 =>
+      Extract(hi~, lo=hi - width + 1, exp=inner_exp)
+    _ => if exp_has_width(width, exp) { exp } else { Cast(kind~, width~, exp~) }
+  }
+}
+
+///|
+pub fn Exp::smart_ite(if_~ : Exp, then_~ : Exp, else_~ : Exp) -> Exp {
+  match if_ {
+    Int(word) => if word == Word::b1() { then_ } else { else_ }
+    _ => Ite(cond=if_, yes=then_, no=else_)
+  }
+}
+
+///|
+pub fn Exp::smart_extract(exp : Exp, hi~ : Int, lo~ : Int) -> Exp {
+  match exp {
+    Int(word) =>
+      match extract_word(hi, lo, word) {
+        Ok(result) => Int(result)
+        Err(_) => Extract(hi~, lo~, exp~)
+      }
+    Extract(hi=inner_hi, lo=inner_lo, exp=inner_exp) if hi <= inner_hi &&
+      lo >= inner_lo => Extract(hi~, lo~, exp=inner_exp)
+    _ =>
+      if lo == 0 && exp_has_width(hi + 1, exp) {
+        exp
+      } else {
+        Extract(hi~, lo~, exp~)
+      }
+  }
+}
+
+///|
+pub fn Exp::smart_concat(high : Exp, low : Exp) -> Exp {
+  match (fold_concat(high, low), high, low) {
+    (Some(result), _, _) => result
+    (
+      _,
+      Cast(kind=High, width=cast_width, exp=Var(variable) as source),
+      Extract(hi~, lo~, exp=Var(other)),
+    ) if variable == other && exp_has_width(hi + cast_width + 1, source) =>
+      Exp::smart_cast(High, cast_width + hi - lo + 1, source)
+    (
+      _,
+      Cast(kind=High, width=cast_width, exp=Var(variable) as source),
+      Concat(high=Extract(hi~, lo~, exp=Var(other)), low=tail),
+    ) if variable == other && exp_has_width(hi + cast_width + 1, source) =>
+      Concat(
+        high=Exp::smart_cast(High, cast_width + hi - lo + 1, source),
+        low=tail,
+      )
+    _ => Concat(high~, low~)
+  }
+}
+
+///|
 fn fold_store_chain(
   mem : Exp,
   memory : BilMemory,

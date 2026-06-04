@@ -527,6 +527,12 @@ pub fn Exp::map(Self, (Self) -> Self) -> Self
 pub fn Exp::normalize(Self) -> Self
 pub fn Exp::normalize_negatives(Self) -> Self
 pub fn Exp::simplify(Self) -> Self
+pub fn Exp::smart_binop(BinOp, Self, Self) -> Self
+pub fn Exp::smart_cast(CastKind, Int, Self) -> Self
+pub fn Exp::smart_concat(Self, Self) -> Self
+pub fn Exp::smart_extract(Self, hi~ : Int, lo~ : Int) -> Self
+pub fn Exp::smart_ite(if_~ : Self, then_~ : Self, else_~ : Self) -> Self
+pub fn Exp::smart_unop(UnOp, Self) -> Self
 pub fn Exp::store(mem~ : Self, addr~ : Self, Self, @bitvec.Endian, Size) -> Self
 pub fn Exp::store_byte(mem~ : Self, addr~ : Self, Self) -> Self
 pub fn Exp::substitute(Self, Self, Self) -> Self

@@ -1,6 +1,7 @@
 ///|
 struct ProjectInput {
   target_value : @core_theory.Target
+  arch_value : @core_theory.Target
   filename_value : String?
   image_value : @image.Image?
   spec_value : @image.OgreDoc
@@ -90,6 +91,14 @@ fn project_input_data_segments(image : @image.Image) -> @memory.MemMap[String] {
 }
 
 ///|
+fn project_input_image_arch(image : @image.Image) -> @core_theory.Target {
+  match image.target() {
+    Some(value) => value
+    None => @core_theory.Target::unknown()
+  }
+}
+
+///|
 pub fn ProjectInput::custom(
   target~ : @core_theory.Target,
   filename? : String,
@@ -120,6 +129,10 @@ pub fn ProjectInput::custom(
   }
   {
     target_value: target,
+    arch_value: match image {
+      Some(value) => project_input_image_arch(value)
+      None => @core_theory.Target::unknown()
+    },
     filename_value: filename,
     image_value: image,
     spec_value: match image {
@@ -168,6 +181,7 @@ pub fn ProjectInput::create(
   }
   {
     ..ProjectInput::custom(target~, filename~, code?, data?, finish?),
+    arch_value: target,
     spec_value: spec,
   }
 }

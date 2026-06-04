@@ -56,10 +56,15 @@ test "project info streams observe input realization" {
 ///|
 test "project info file stream reports unnamed inputs as empty filenames" {
   let files = []
+  let arch_sizes = []
   let spec_counts = []
   let file_stream = @project.ProjectInfo::file()
+  let arch_stream = @project.ProjectInfo::arch()
   let spec_stream = @project.ProjectInfo::spec()
   let file_id = file_stream.subscribe(file => files.push(file))
+  let arch_id = arch_stream.subscribe(target => {
+    arch_sizes.push(target.code_addr_size())
+  })
   let spec_id = spec_stream.subscribe(spec => {
     spec_counts.push(spec.declaration_count())
   })
@@ -68,10 +73,13 @@ test "project info file stream reports unnamed inputs as empty filenames" {
   )
   let project = @project.Project::from_input(input)
   file_stream.unsubscribe(file_id)
+  arch_stream.unsubscribe(arch_id)
   spec_stream.unsubscribe(spec_id)
   assert_true(project.filename() is None)
+  assert_true(project.arch().code_addr_size() == 64)
   assert_true(project.specification().declaration_count() == 6)
   assert_true(files == [""])
+  assert_true(arch_sizes == [0])
   assert_true(spec_counts == [0])
 }
 

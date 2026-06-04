@@ -115,7 +115,7 @@ fn project_info_emit_input(input : ProjectInput, project : Project) -> Unit {
       }
   }
   project_info_file_pair.1.send(filename)
-  project_info_arch_pair.1.send(project.arch())
+  project_info_arch_pair.1.send(input.arch_value)
   project_info_data_pair.1.send(input.data())
   project_info_code_pair.1.send(input.code())
   project_info_spec_pair.1.send(input.spec_value)

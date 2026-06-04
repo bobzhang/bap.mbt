@@ -2663,6 +2663,76 @@ test "target role helpers classify common architecture variables" {
     }
     None => fail("missing sp alias origin")
   }
+  let loongarch = @core_theory.Target::loongarch64()
+  assert_true(loongarch.find_var("R31") is Some(_))
+  assert_true(loongarch.find_var("F31") is Some(_))
+  assert_true(loongarch.find_var("PC") is Some(_))
+  assert_true(loongarch.role_aliases(ResultRegister).contains("r4"))
+  assert_true(loongarch.role_aliases(ResultRegister).contains("a0"))
+  assert_true(loongarch.role_aliases(Argument).contains("a7"))
+  assert_true(loongarch.role_aliases(PseudoRegister).contains("r0"))
+  assert_true(loongarch.role_aliases(PseudoRegister).contains("pc"))
+  assert_true(!loongarch.role_aliases(ResultRegister).contains("x10"))
+  match loongarch.find_var("R3") {
+    Some(sp) => {
+      assert_true(loongarch.roles_of_var(sp).contains(StackPointer))
+      assert_true(loongarch.roles_of_var(sp).contains(CalleeSaved))
+    }
+    None => fail("missing LoongArch R3")
+  }
+  match loongarch.find_var("R1") {
+    Some(ra) => {
+      assert_true(loongarch.roles_of_var(ra).contains(LinkRegister))
+      assert_true(loongarch.roles_of_var(ra).contains(CallerSaved))
+    }
+    None => fail("missing LoongArch R1")
+  }
+  match loongarch.find_var("R2") {
+    Some(tp) => assert_true(loongarch.roles_of_var(tp).contains(ThreadPointer))
+    None => fail("missing LoongArch R2")
+  }
+  match loongarch.find_var("R21") {
+    Some(reserved) =>
+      assert_true(loongarch.roles_of_var(reserved).contains(Reserved))
+    None => fail("missing LoongArch R21")
+  }
+  match loongarch.find_var("R22") {
+    Some(fp) => {
+      assert_true(loongarch.roles_of_var(fp).contains(FramePointer))
+      assert_true(loongarch.roles_of_var(fp).contains(CalleeSaved))
+    }
+    None => fail("missing LoongArch R22")
+  }
+  match loongarch.find_var("R0") {
+    Some(zero) => {
+      assert_true(loongarch.roles_of_var(zero).contains(Constant))
+      assert_true(loongarch.roles_of_var(zero).contains(ZeroRegister))
+      assert_true(loongarch.roles_of_var(zero).contains(PseudoRegister))
+      assert_true(!loongarch.roles_of_var(zero).contains(ResultRegister))
+    }
+    None => fail("missing LoongArch R0")
+  }
+  match loongarch.find_var("a0") {
+    Some(arg) => {
+      assert_true(loongarch.roles_of_var(arg).contains(Argument))
+      assert_true(loongarch.roles_of_var(arg).contains(ResultRegister))
+    }
+    None => fail("missing LoongArch a0 alias")
+  }
+  match loongarch.origin_of_name("A0") {
+    Some(origin) => {
+      assert_true(origin.aliased().ident() == "A0")
+      assert_true(origin.source().map(v => v.ident()) == Some("R4"))
+    }
+    None => fail("missing LoongArch A0 alias origin")
+  }
+  match loongarch.origin_of_name("S9") {
+    Some(origin) => {
+      assert_true(origin.aliased().ident() == "S9")
+      assert_true(origin.source().map(v => v.ident()) == Some("R22"))
+    }
+    None => fail("missing LoongArch S9 alias origin")
+  }
   let mips64 = @core_theory.Target::mips64()
   assert_true(mips64.role_aliases(AliasRegister).contains("zero"))
   assert_true(mips64.role_aliases(AliasRegister).contains("v0"))

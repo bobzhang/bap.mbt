@@ -2243,6 +2243,54 @@ fn riscv_alias_origins(bits : Int) -> Array[AliasOrigin] {
 }
 
 ///|
+fn loongarch_gpr_alias_pairs() -> Array[(Int, String)] {
+  let items : Array[(Int, String)] = [
+    (0, "ZERO"),
+    (1, "RA"),
+    (2, "TP"),
+    (3, "SP"),
+  ]
+  for i in 0..<=7 {
+    items.push((4 + i, "A\{i}"))
+  }
+  for i in 0..<=8 {
+    items.push((12 + i, "T\{i}"))
+  }
+  items.push((22, "FP"))
+  items.push((22, "S9"))
+  for i in 0..<=8 {
+    items.push((23 + i, "S\{i}"))
+  }
+  items
+}
+
+///|
+fn loongarch_gpr_alias_names() -> Array[String] {
+  [
+    for pair in loongarch_gpr_alias_pairs() => pair.1
+  ]
+}
+
+///|
+fn loongarch_alias_vars(bits : Int) -> Array[Var] {
+  [
+    for name in loongarch_gpr_alias_names() => word_var(bits, name)
+  ]
+}
+
+///|
+fn loongarch_alias_origins(bits : Int) -> Array[AliasOrigin] {
+  [
+    for pair in loongarch_gpr_alias_pairs() => {
+      AliasOrigin::register(
+        word_var(bits, pair.1),
+        word_var(bits, "R\{pair.0}"),
+      )
+    }
+  ]
+}
+
+///|
 fn sparc_vars(bits : Int) -> Array[Var] {
   let items = []
   for prefix in ["G", "O", "L", "I"] {
@@ -2342,7 +2390,12 @@ fn riscv_vars(bits : Int) -> Array[Var] {
 
 ///|
 fn loongarch_vars(bits : Int) -> Array[Var] {
-  [mem_var(bits, 8, "mem")]
+  let items = numbered_word_vars(bits, "R", 32)
+  append_vars(items, numbered_word_vars(bits, "F", 32))
+  append_vars(items, loongarch_alias_vars(bits))
+  append_vars(items, named_word_vars(bits, ["PC"]))
+  items.push(mem_var(bits, 8, "mem"))
+  items
 }
 
 ///|
@@ -2887,6 +2940,57 @@ fn riscv_role_names(role : Role) -> Array[String] {
 }
 
 ///|
+fn loongarch_role_names(role : Role) -> Array[String] {
+  match role {
+    UnknownRole => []
+    General => []
+    SpecialRegister | AliasRegister => []
+    PseudoRegister => ["zero", "r0", "pc"]
+    IntegerRegister =>
+      concat_role_names([
+        role_names("r", 0, 31),
+        [
+          for name in loongarch_gpr_alias_names() => name.to_lower()
+        ],
+      ])
+    FloatingRegister => role_names("f", 0, 31)
+    VectorRegister => []
+    IndexRegister | SegmentRegister => []
+    StackPointer => ["sp", "r3"]
+    FramePointer => ["fp", "s9", "r22"]
+    ProgramCounter => ["pc"]
+    Status => []
+    ControlRegister | SystemRegister | HardwareRegister => []
+    Constant => ["zero", "r0"]
+    ZeroRegister => ["zero", "r0"]
+    OneRegister => []
+    LinkRegister => ["ra", "r1"]
+    ThreadPointer => ["tp", "r2"]
+    PrivilegedRegister => []
+    Argument =>
+      concat_role_names([role_names("r", 4, 11), role_names("a", 0, 7)])
+    ResultRegister =>
+      concat_role_names([role_names("r", 4, 5), role_names("a", 0, 1)])
+    CallerSaved =>
+      concat_role_names([
+        ["ra", "r1"],
+        role_names("r", 4, 20),
+        role_names("a", 0, 7),
+        role_names("t", 0, 8),
+      ])
+    CalleeSaved =>
+      concat_role_names([
+        ["sp", "r3", "fp", "s9", "r22"],
+        role_names("r", 23, 31),
+        role_names("s", 0, 8),
+      ])
+    Reserved => ["r21"]
+    ZeroFlag | CarryFlag | SignFlag | OverflowFlag | ParityFlag => []
+    ThumbMode => []
+  }
+}
+
+///|
 fn sparc_role_names(role : Role) -> Array[String] {
   match role {
     UnknownRole => []
@@ -2995,6 +3099,8 @@ fn target_specific_role_names(target : Target, role : Role) -> Array[String]? {
     Some(powerpc_role_names(role))
   } else if target.belongs(Target::riscv()) {
     Some(riscv_role_names(role))
+  } else if target.belongs(Target::loongarch()) {
+    Some(loongarch_role_names(role))
   } else if target.belongs(Target::sparc()) {
     Some(sparc_role_names(role))
   } else if target.belongs(Target::systemz()) {
@@ -5341,6 +5447,7 @@ pub fn Target::loongarch32() -> Target {
     bits=32,
     endianness=LittleEndian,
     vars=loongarch_vars(32),
+    alias_origins=loongarch_alias_origins(32),
   )
 }
 
@@ -5352,6 +5459,7 @@ pub fn Target::loongarch64() -> Target {
     bits=64,
     endianness=LittleEndian,
     vars=loongarch_vars(64),
+    alias_origins=loongarch_alias_origins(64),
   )
 }
 

@@ -20,6 +20,7 @@ pub(all) enum AddressPosition {
 
 type MemMap[V]
 pub fn[V] MemMap::add(Self[V], Memory, V) -> Self[V]
+pub fn[V] MemMap::add_checked(Self[V], Memory, V) -> Result[Self[V], String]
 pub fn[V] MemMap::change(Self[V], Memory, (Array[(Memory, V)]) -> MemMapChange[V]) -> Self[V]
 pub fn[V] MemMap::contains(Self[V], UInt64) -> Bool
 pub fn[V] MemMap::count(Self[V], (V) -> Bool, start? : Memory?, until? : Memory?) -> Int

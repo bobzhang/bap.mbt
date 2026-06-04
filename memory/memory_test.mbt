@@ -253,6 +253,32 @@ test "translated BAP memmap duplicate ranges all intersect and remove together" 
 }
 
 ///|
+test "translated BAP image table checked add rejects intersections" {
+  let low = memory_at(0x10UL, 0x10)
+  let high = memory_at(0x30UL, 0x10)
+  let overlap = memory_at(0x18UL, 0x10)
+  let exact = memory_at(0x10UL, 0x10)
+  let table = match @memory.MemMap::empty().add_checked(low, "lo") {
+    Ok(table) => table
+    Err(reason) => fail(reason)
+  }
+  assert_true(table.entries().map(entry => entry.1) == ["lo"])
+  match table.add_checked(overlap, "overlap") {
+    Err(reason) => assert_eq(reason, "memory has intersections")
+    Ok(_) => fail("expected overlap rejection")
+  }
+  match table.add_checked(exact, "again") {
+    Err(reason) => assert_eq(reason, "memory has intersections")
+    Ok(_) => fail("expected exact overlap rejection")
+  }
+  let table = match table.add_checked(high, "hi") {
+    Ok(table) => table
+    Err(reason) => fail(reason)
+  }
+  assert_true(table.entries().map(entry => entry.1) == ["lo", "hi"])
+}
+
+///|
 test "translated BAP memmap public queries are range ordered" {
   let first = memory_at(0x100UL, 2)
   let first_wide = memory_at(0x100UL, 0x20)

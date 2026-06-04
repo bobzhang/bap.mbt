@@ -33,6 +33,19 @@ pub fn[V] MemMap::add(
 }
 
 ///|
+pub fn[V] MemMap::add_checked(
+  self : MemMap[V],
+  memory : Memory,
+  value : V,
+) -> Result[MemMap[V], String] {
+  if self.has_intersections(memory) {
+    Err("memory has intersections")
+  } else {
+    Ok(self.add(memory, value))
+  }
+}
+
+///|
 pub fn[V] MemMap::entries(self : MemMap[V]) -> Array[(Memory, V)] {
   self.ordered_entries()
 }

@@ -594,9 +594,16 @@ test "program class-filtered lookup and parent helpers mirror BAP Ir_program" {
     program.lookup(ProgramTermClass, program.tid()) is Some(ProgramTerm(_)),
   )
   assert_true(
+    @types.Program::lookup(program, ProgramTermClass, program.tid())
+    is Some(ProgramTerm(_)),
+  )
+  assert_true(
     program.program_lookup(SubTermClass, sub.tid()) is Some(SubTerm(_)),
   )
   assert_true(program.lookup(SubTermClass, sub.tid()) is Some(SubTerm(_)))
+  assert_true(
+    @types.Program::lookup(program, SubTermClass, sub.tid()) is Some(SubTerm(_)),
+  )
   assert_true(
     program.program_lookup(ArgTermClass, arg.tid()) is Some(ArgTerm(_)),
   )
@@ -614,11 +621,16 @@ test "program class-filtered lookup and parent helpers mirror BAP Ir_program" {
   )
   assert_true(program.program_lookup(BlkTermClass, def.tid()) is None)
   assert_true(program.lookup(BlkTermClass, def.tid()) is None)
+  assert_true(@types.Program::lookup(program, BlkTermClass, def.tid()) is None)
 
   assert_true(
     program.program_parent(SubTermClass, sub.tid()) is Some(ProgramTerm(_)),
   )
   assert_true(program.parent(SubTermClass, sub.tid()) is Some(ProgramTerm(_)))
+  assert_true(
+    @types.Program::parent(program, SubTermClass, sub.tid())
+    is Some(ProgramTerm(_)),
+  )
   assert_true(
     program.program_parent(ArgTermClass, arg.tid()) is Some(SubTerm(_)),
   )
@@ -637,8 +649,12 @@ test "program class-filtered lookup and parent helpers mirror BAP Ir_program" {
   )
   assert_true(program.program_parent(ProgramTermClass, program.tid()) is None)
   assert_true(program.parent(ProgramTermClass, program.tid()) is None)
+  assert_true(
+    @types.Program::parent(program, ProgramTermClass, program.tid()) is None,
+  )
   assert_true(program.program_parent(BlkTermClass, def.tid()) is None)
   assert_true(program.parent(BlkTermClass, def.tid()) is None)
+  assert_true(@types.Program::parent(program, BlkTermClass, def.tid()) is None)
 }
 
 ///|

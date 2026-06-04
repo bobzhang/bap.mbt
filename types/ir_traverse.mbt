@@ -755,6 +755,15 @@ pub fn Term::lookup(
 }
 
 ///|
+pub fn Program::lookup(
+  program : Term[Program],
+  cls : IrTermClass,
+  tid : Tid,
+) -> IrTerm? {
+  program.program_lookup(cls, tid)
+}
+
+///|
 pub fn Term::program_parent(
   self : Term[Program],
   cls : IrTermClass,
@@ -827,6 +836,15 @@ pub fn Term::parent(
   tid : Tid,
 ) -> IrTerm? {
   self.program_parent(cls, tid)
+}
+
+///|
+pub fn Program::parent(
+  program : Term[Program],
+  cls : IrTermClass,
+  tid : Tid,
+) -> IrTerm? {
+  program.program_parent(cls, tid)
 }
 
 ///|

@@ -946,6 +946,8 @@ pub(all) struct Program {
   subs : Array[Term[Sub]]
 }
 pub fn Program::create(subs? : Array[Term[Sub]], tid? : Tid) -> Term[Self]
+pub fn Program::lookup(Term[Self], IrTermClass, Tid) -> IrTerm?
+pub fn Program::parent(Term[Self], IrTermClass, Tid) -> IrTerm?
 pub fn Program::to_graph(Term[Self]) -> @graphlib.Graph[Tid, Array[Term[Jmp]]]
 
 type ProgramBuilder

@@ -68,6 +68,131 @@ pub(all) struct Modload {
 } derive(Eq, Debug)
 
 ///|
+pub(all) struct TraceMode {
+  name_value : @knowledge.Name
+} derive(Eq, Debug)
+
+///|
+let trace_mode_members : Map[String, TraceMode] = {}
+
+///|
+fn trace_mode_domain_name() -> @knowledge.Name {
+  @knowledge.Name::create("enum")
+}
+
+///|
+fn trace_mode_slot_name() -> @knowledge.Name {
+  @knowledge.Name::create("mode", pkg="bap")
+}
+
+///|
+pub fn TraceMode::unknown() -> TraceMode {
+  { name_value: @knowledge.Name::read(":unknown") }
+}
+
+///|
+pub fn TraceMode::declare_mode(
+  name : String,
+  pkg? : String,
+) -> Result[TraceMode, String] {
+  let full_name = @knowledge.Name::create(name, pkg?)
+  let key = full_name.show()
+  if full_name.equal(TraceMode::unknown().name()) ||
+    trace_mode_members.contains(key) {
+    Err("trace mode \{key} is already declared")
+  } else {
+    let mode = { name_value: full_name }
+    trace_mode_members[key] = mode
+    Ok(mode)
+  }
+}
+
+///|
+pub fn TraceMode::read(
+  name : String,
+  pkg? : String,
+) -> Result[TraceMode, String] {
+  let full_name = @knowledge.Name::read(name, pkg?)
+  if full_name.equal(TraceMode::unknown().name()) {
+    Ok(TraceMode::unknown())
+  } else {
+    match trace_mode_members.get(full_name.show()) {
+      Some(mode) => Ok(mode)
+      None => Err("unknown trace mode \{full_name.show()}")
+    }
+  }
+}
+
+///|
+pub fn TraceMode::name(self : TraceMode) -> @knowledge.Name {
+  self.name_value
+}
+
+///|
+pub fn TraceMode::to_string(self : TraceMode) -> String {
+  self.name().show()
+}
+
+///|
+pub fn TraceMode::hash(self : TraceMode) -> Int {
+  self.name().hash()
+}
+
+///|
+pub fn TraceMode::equal(self : TraceMode, other : TraceMode) -> Bool {
+  self == other
+}
+
+///|
+pub fn TraceMode::compare(self : TraceMode, other : TraceMode) -> Int {
+  self.name().compare(other.name())
+}
+
+///|
+pub fn TraceMode::is_unknown(self : TraceMode) -> Bool {
+  self.equal(TraceMode::unknown())
+}
+
+///|
+pub fn TraceMode::members() -> Array[TraceMode] {
+  let values = [TraceMode::unknown()]
+  for entry in trace_mode_members {
+    values.push(entry.1)
+  }
+  values.sort_by((lhs, rhs) => lhs.compare(rhs))
+  values
+}
+
+///|
+pub fn TraceMode::domain() -> @knowledge.Domain[TraceMode] {
+  @knowledge.Domain::flat(
+    trace_mode_domain_name(),
+    mode => mode.to_string(),
+    empty=TraceMode::unknown(),
+  )
+}
+
+///|
+pub fn TraceMode::persistent() -> @knowledge.Persistent[TraceMode] {
+  @knowledge.Persistent::convert(
+    to_persistent=mode => mode.to_string(),
+    of_persistent=text => TraceMode::read(text),
+    @knowledge.Persistent::string(),
+  )
+}
+
+///|
+pub fn TraceMode::slot() -> @knowledge.Slot[Unit, TraceMode] {
+  @core_theory.Program::cls().property(
+    name=trace_mode_slot_name(),
+    domain=TraceMode::domain(),
+    desc="the CPU execution mode",
+    persistent=TraceMode::persistent(),
+    public=true,
+  )
+}
+
+///|
 pub(all) enum TraceEvent {
   MemoryLoad(Move[@types.Word])
   MemoryStore(Move[@types.Word])

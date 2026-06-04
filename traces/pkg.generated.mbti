@@ -2,6 +2,7 @@
 package "bobzhang/bap/traces"
 
 import {
+  "bobzhang/bap/knowledge",
   "bobzhang/bap/types",
   "moonbitlang/core/debug",
   "moonbitlang/core/set",
@@ -269,6 +270,23 @@ pub(all) struct TraceMetaTagInfo {
   name : String
   uuid : String
 } derive(Eq, @debug.Debug)
+
+pub(all) struct TraceMode {
+  name_value : @knowledge.Name
+} derive(Eq, @debug.Debug)
+pub fn TraceMode::compare(Self, Self) -> Int
+pub fn TraceMode::declare_mode(String, pkg? : String) -> Result[Self, String]
+pub fn TraceMode::domain() -> @knowledge.Domain[Self]
+pub fn TraceMode::equal(Self, Self) -> Bool
+pub fn TraceMode::hash(Self) -> Int
+pub fn TraceMode::is_unknown(Self) -> Bool
+pub fn TraceMode::members() -> Array[Self]
+pub fn TraceMode::name(Self) -> @knowledge.Name
+pub fn TraceMode::persistent() -> @knowledge.Persistent[Self]
+pub fn TraceMode::read(String, pkg? : String) -> Result[Self, String]
+pub fn TraceMode::slot() -> @knowledge.Slot[Unit, Self]
+pub fn TraceMode::to_string(Self) -> String
+pub fn TraceMode::unknown() -> Self
 
 type TraceMonitor
 pub fn TraceMonitor::create((String) -> TraceStep) -> Self

@@ -249,6 +249,52 @@ test "translated BAP common trace event tags match helper constructors" {
 }
 
 ///|
+test "translated BAP trace modes expose Knowledge enum and program slot" {
+  let unknown = @traces.TraceMode::unknown()
+  assert_true(unknown.is_unknown())
+  assert_true(unknown.name().show() == ":unknown")
+  assert_true(@traces.TraceMode::members().contains(unknown))
+  match @traces.TraceMode::declare_mode("unit-thumb", pkg="bap") {
+    Ok(mode) => {
+      assert_true(mode.name().show() == "bap:unit-thumb")
+      assert_true(mode.to_string() == "bap:unit-thumb")
+      assert_true(mode.hash() == mode.name().hash())
+      assert_true(!mode.is_unknown())
+      assert_true(@traces.TraceMode::members().contains(mode))
+      match @traces.TraceMode::read("unit-thumb", pkg="bap") {
+        Ok(read_mode) => assert_true(read_mode.equal(mode))
+        Err(reason) => fail(reason)
+      }
+      match @traces.TraceMode::persistent().decode("bap:unit-thumb") {
+        Ok(decoded) => assert_true(decoded.equal(mode))
+        Err(reason) => fail(reason)
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    @traces.TraceMode::declare_mode("unit-thumb", pkg="bap") is Err(_),
+  )
+  assert_true(@traces.TraceMode::read("missing-mode", pkg="bap") is Err(_))
+  let domain = @traces.TraceMode::domain()
+  assert_true(domain.name().show() == "enum")
+  assert_true(domain.empty() == Some(unknown))
+  assert_true(domain.is_empty(unknown))
+  let slot = @traces.TraceMode::slot()
+  assert_true(slot.owner().show() == "core:program")
+  assert_true(slot.name().show() == "bap:mode")
+  assert_true(slot.domain().empty() == Some(unknown))
+  match slot.persistent() {
+    Some(codec) =>
+      match codec.decode(":unknown") {
+        Ok(decoded) => assert_true(decoded.equal(unknown))
+        Err(reason) => fail(reason)
+      }
+    None => fail("missing trace mode persistent codec")
+  }
+}
+
+///|
 test "translated BAP traces preserve ids tools metadata and in-memory save/load" {
   let first = new_trace()
   let second = new_trace()

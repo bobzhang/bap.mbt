@@ -160,6 +160,44 @@ test "project disassembly source brancher registry keeps checked streams" {
 }
 
 ///|
+test "project disassembly source symbolizer registry keeps checked streams" {
+  let symbolizer = @project.ProjectSymbolizer::create(addr => {
+    if addr == 0x3000UL {
+      Some("main")
+    } else {
+      None
+    }
+  })
+  @project.register_symbolizer_source_value(
+    name="unit-source-symbolizer",
+    symbolizer,
+  )
+  assert_true(
+    @project.symbolizer_source_names().contains("unit-source-symbolizer"),
+  )
+  match @project.find_symbolizer_source("unit-source-symbolizer") {
+    Some(source) => {
+      let symbolizers = source.values()
+      assert_true(symbolizers.length() == 1)
+      assert_true(symbolizers[0].resolve(0x3000UL) == "main")
+      assert_true(symbolizers[0].resolve(0x3010UL) == "sub_0x3010")
+    }
+    None => fail("missing symbolizer source")
+  }
+  @project.register_symbolizer_source(
+    name="unit-source-symbolizer",
+    @project.ProjectDisassemblySource::error("symbolizer unavailable"),
+  )
+  match @project.find_symbolizer_source("unit-source-symbolizer") {
+    Some(source) => {
+      assert_true(source.values().is_empty())
+      assert_true(source.errors() == ["symbolizer unavailable"])
+    }
+    None => fail("missing overwritten symbolizer source")
+  }
+}
+
+///|
 test "project disassembly source driver registry keeps checked streams" {
   let driver = @project.ProjectDisassemblyDriver::create(
     name="unit-source-driver",
@@ -195,5 +233,45 @@ test "project disassembly source driver registry keeps checked streams" {
       assert_true(source.errors() == ["driver unavailable"])
     }
     None => fail("missing overwritten disassembly driver source")
+  }
+}
+
+///|
+test "project disassembly source reconstructor registry keeps checked streams" {
+  let reconstructor = @project.ProjectReconstructor::create(project => {
+    Ok(project.set("source-reconstructor", "ran"))
+  })
+  @project.register_reconstructor_source_value(
+    name="unit-source-reconstructor",
+    reconstructor,
+  )
+  assert_true(
+    @project.reconstructor_source_names().contains("unit-source-reconstructor"),
+  )
+  match @project.find_reconstructor_source("unit-source-reconstructor") {
+    Some(source) => {
+      let reconstructors = source.values()
+      assert_true(reconstructors.length() == 1)
+      match
+        reconstructors[0].run(
+          @project.Project::empty(@core_theory.Target::unknown()),
+        ) {
+        Ok(project) =>
+          assert_true(project.get("source-reconstructor") == Some("ran"))
+        Err(reason) => fail(reason)
+      }
+    }
+    None => fail("missing reconstructor source")
+  }
+  @project.register_reconstructor_source(
+    name="unit-source-reconstructor",
+    @project.ProjectDisassemblySource::error("reconstructor unavailable"),
+  )
+  match @project.find_reconstructor_source("unit-source-reconstructor") {
+    Some(source) => {
+      assert_true(source.values().is_empty())
+      assert_true(source.errors() == ["reconstructor unavailable"])
+    }
+    None => fail("missing overwritten reconstructor source")
   }
 }

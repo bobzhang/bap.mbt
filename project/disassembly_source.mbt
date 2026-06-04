@@ -23,9 +23,21 @@ let project_brancher_source_registry : Map[
 ] = {}
 
 ///|
+let project_symbolizer_source_registry : Map[
+  String,
+  ProjectDisassemblySource[ProjectSymbolizer],
+] = {}
+
+///|
 let project_disassembly_driver_source_registry : Map[
   String,
   ProjectDisassemblySource[ProjectDisassemblyDriver],
+] = {}
+
+///|
+let project_reconstructor_source_registry : Map[
+  String,
+  ProjectDisassemblySource[ProjectReconstructor],
 ] = {}
 
 ///|
@@ -367,6 +379,37 @@ pub fn brancher_source_names() -> Array[String] {
 }
 
 ///|
+pub fn register_symbolizer_source(
+  name~ : String,
+  source : ProjectDisassemblySource[ProjectSymbolizer],
+) -> Unit {
+  project_symbolizer_source_registry[name] = source
+}
+
+///|
+pub fn register_symbolizer_source_value(
+  name~ : String,
+  symbolizer : ProjectSymbolizer,
+) -> Unit {
+  register_symbolizer_source(
+    name~,
+    ProjectDisassemblySource::single(symbolizer),
+  )
+}
+
+///|
+pub fn find_symbolizer_source(
+  name : String,
+) -> ProjectDisassemblySource[ProjectSymbolizer]? {
+  project_symbolizer_source_registry.get(name)
+}
+
+///|
+pub fn symbolizer_source_names() -> Array[String] {
+  project_disassembly_source_registry_names(project_symbolizer_source_registry)
+}
+
+///|
 pub fn register_disassembly_driver_source(
   name~ : String,
   source : ProjectDisassemblySource[ProjectDisassemblyDriver],
@@ -396,5 +439,38 @@ pub fn find_disassembly_driver_source(
 pub fn disassembly_driver_source_names() -> Array[String] {
   project_disassembly_source_registry_names(
     project_disassembly_driver_source_registry,
+  )
+}
+
+///|
+pub fn register_reconstructor_source(
+  name~ : String,
+  source : ProjectDisassemblySource[ProjectReconstructor],
+) -> Unit {
+  project_reconstructor_source_registry[name] = source
+}
+
+///|
+pub fn register_reconstructor_source_value(
+  name~ : String,
+  reconstructor : ProjectReconstructor,
+) -> Unit {
+  register_reconstructor_source(
+    name~,
+    ProjectDisassemblySource::single(reconstructor),
+  )
+}
+
+///|
+pub fn find_reconstructor_source(
+  name : String,
+) -> ProjectDisassemblySource[ProjectReconstructor]? {
+  project_reconstructor_source_registry.get(name)
+}
+
+///|
+pub fn reconstructor_source_names() -> Array[String] {
+  project_disassembly_source_registry_names(
+    project_reconstructor_source_registry,
   )
 }

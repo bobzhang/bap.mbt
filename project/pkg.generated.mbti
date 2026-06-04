@@ -60,7 +60,9 @@ pub fn input_loaders_for_extension(String) -> Array[ProjectInputLoader]
 
 pub fn pass_events() -> Array[ProjectPassEvent]
 
-pub fn pass_registrations() -> Array[ProjectPassEvent]
+pub fn pass_registration_events() -> Array[ProjectPassEvent]
+
+pub fn pass_registrations() -> @future.Stream[ProjectPass]
 
 pub fn passes() -> Array[ProjectPass]
 
@@ -744,16 +746,20 @@ pub fn ProjectPass::create(name~ : String, autorun? : Bool, run_once? : Bool, de
 pub fn ProjectPass::deps(Self) -> Array[String]
 pub fn ProjectPass::destroy_ssa() -> Self
 pub fn ProjectPass::events(Self) -> Array[ProjectPassEvent]
-pub fn ProjectPass::failures(Self) -> Array[ProjectPassEvent]
-pub fn ProjectPass::finishes(Self) -> Array[ProjectPassEvent]
+pub fn ProjectPass::failure_events(Self) -> Array[ProjectPassEvent]
+pub fn ProjectPass::failures(Self) -> @future.Stream[Double]
+pub fn ProjectPass::finish_events(Self) -> Array[ProjectPassEvent]
+pub fn ProjectPass::finishes(Self) -> @future.Stream[Double]
 pub fn ProjectPass::flatten() -> Self
 pub fn ProjectPass::name(Self) -> String
 pub fn ProjectPass::run(Self, Project) -> Result[Project, String]
 pub fn ProjectPass::run_once(Self) -> Bool
 pub fn ProjectPass::ssa() -> Self
-pub fn ProjectPass::starts(Self) -> Array[ProjectPassEvent]
+pub fn ProjectPass::start_events(Self) -> Array[ProjectPassEvent]
+pub fn ProjectPass::starts(Self) -> @future.Stream[Double]
 pub fn ProjectPass::stub_resolver(link_only? : Array[String], no_link? : Array[String]) -> Self
-pub fn ProjectPass::successes(Self) -> Array[ProjectPassEvent]
+pub fn ProjectPass::success_events(Self) -> Array[ProjectPassEvent]
+pub fn ProjectPass::successes(Self) -> @future.Stream[Double]
 pub fn ProjectPass::trivial_condition_form() -> Self
 
 type ProjectPassEvent

@@ -5,6 +5,10 @@ struct ProjectPass {
   run_once_flag : Bool
   deps_value : Array[String]
   run_fn : (Project) -> Result[Project, String]
+  starts_pair : (@future.Stream[Double], @future.Signal[Double])
+  successes_pair : (@future.Stream[Double], @future.Signal[Double])
+  failures_pair : (@future.Stream[Double], @future.Signal[Double])
+  finishes_pair : (@future.Stream[Double], @future.Signal[Double])
 }
 
 ///|
@@ -36,13 +40,24 @@ let pass_event_log : Array[ProjectPassEvent] = []
 let pass_event_sequence : Ref[Int] = Ref(0)
 
 ///|
-fn record_pass_event(name : String, kind : ProjectPassEventKind) -> Unit {
+let pass_registration_pair : (
+  @future.Stream[ProjectPass],
+  @future.Signal[ProjectPass],
+) = @future.Stream::create()
+
+///|
+fn record_pass_event(
+  name : String,
+  kind : ProjectPassEventKind,
+) -> ProjectPassEvent {
   pass_event_sequence.val += 1
-  pass_event_log.push({
+  let event = {
     pass_name_value: name,
     kind_value: kind,
     sequence_value: pass_event_sequence.val,
-  })
+  }
+  pass_event_log.push(event)
+  event
 }
 
 ///|
@@ -92,8 +107,13 @@ pub fn pass_events() -> Array[ProjectPassEvent] {
 }
 
 ///|
-pub fn pass_registrations() -> Array[ProjectPassEvent] {
+pub fn pass_registration_events() -> Array[ProjectPassEvent] {
   pass_events_of_kind(PassRegistered)
+}
+
+///|
+pub fn pass_registrations() -> @future.Stream[ProjectPass] {
+  pass_registration_pair.0
 }
 
 ///|
@@ -108,6 +128,10 @@ pub fn ProjectPass::create(
     Some(flag) => flag
     None => false
   }
+  let starts_pair = @future.Stream::create()
+  let successes_pair = @future.Stream::create()
+  let failures_pair = @future.Stream::create()
+  let finishes_pair = @future.Stream::create()
   {
     name_value: name,
     autorun_flag,
@@ -120,6 +144,10 @@ pub fn ProjectPass::create(
       None => []
     },
     run_fn: run,
+    starts_pair,
+    successes_pair,
+    failures_pair,
+    finishes_pair,
   }
 }
 
@@ -152,28 +180,70 @@ fn ProjectPass::run_body(
 }
 
 ///|
+fn ProjectPass::record_lifecycle_event(
+  self : ProjectPass,
+  kind : ProjectPassEventKind,
+) -> Unit {
+  let event = record_pass_event(self.name(), kind)
+  let stamp = event.sequence().to_double()
+  match kind {
+    PassStarted => self.starts_pair.1.send(stamp)
+    PassSucceeded => self.successes_pair.1.send(stamp)
+    PassFailed => self.failures_pair.1.send(stamp)
+    PassFinished => self.finishes_pair.1.send(stamp)
+    PassRegistered => ()
+  }
+}
+
+///|
 pub fn ProjectPass::events(self : ProjectPass) -> Array[ProjectPassEvent] {
   pass_event_log.filter(event => event.pass_name() == self.name())
 }
 
 ///|
-pub fn ProjectPass::starts(self : ProjectPass) -> Array[ProjectPassEvent] {
+pub fn ProjectPass::start_events(self : ProjectPass) -> Array[ProjectPassEvent] {
   pass_events_for(self.name(), PassStarted)
 }
 
 ///|
-pub fn ProjectPass::successes(self : ProjectPass) -> Array[ProjectPassEvent] {
+pub fn ProjectPass::success_events(
+  self : ProjectPass,
+) -> Array[ProjectPassEvent] {
   pass_events_for(self.name(), PassSucceeded)
 }
 
 ///|
-pub fn ProjectPass::failures(self : ProjectPass) -> Array[ProjectPassEvent] {
+pub fn ProjectPass::failure_events(
+  self : ProjectPass,
+) -> Array[ProjectPassEvent] {
   pass_events_for(self.name(), PassFailed)
 }
 
 ///|
-pub fn ProjectPass::finishes(self : ProjectPass) -> Array[ProjectPassEvent] {
+pub fn ProjectPass::finish_events(
+  self : ProjectPass,
+) -> Array[ProjectPassEvent] {
   pass_events_for(self.name(), PassFinished)
+}
+
+///|
+pub fn ProjectPass::starts(self : ProjectPass) -> @future.Stream[Double] {
+  self.starts_pair.0
+}
+
+///|
+pub fn ProjectPass::successes(self : ProjectPass) -> @future.Stream[Double] {
+  self.successes_pair.0
+}
+
+///|
+pub fn ProjectPass::failures(self : ProjectPass) -> @future.Stream[Double] {
+  self.failures_pair.0
+}
+
+///|
+pub fn ProjectPass::finishes(self : ProjectPass) -> @future.Stream[Double] {
+  self.finishes_pair.0
 }
 
 ///|
@@ -212,7 +282,8 @@ pub fn register_pass(pass : ProjectPass) -> Result[Unit, String] {
   } else {
     pass_registry[name] = pass
     pass_registry_order.push(name)
-    record_pass_event(name, PassRegistered)
+    ignore(record_pass_event(name, PassRegistered))
+    pass_registration_pair.1.send(pass)
     Ok(())
   }
 }
@@ -334,16 +405,16 @@ fn Project::run_resolved_passes(
     if pass.run_once() && project.pass_has_run(name) {
       ()
     } else {
-      record_pass_event(name, PassStarted)
+      pass.record_lifecycle_event(PassStarted)
       match pass.run_body(project) {
         Ok(next) => {
-          record_pass_event(name, PassSucceeded)
-          record_pass_event(name, PassFinished)
+          pass.record_lifecycle_event(PassSucceeded)
+          pass.record_lifecycle_event(PassFinished)
           project = next.mark_pass_run(name)
         }
         Err(reason) => {
-          record_pass_event(name, PassFailed)
-          record_pass_event(name, PassFinished)
+          pass.record_lifecycle_event(PassFailed)
+          pass.record_lifecycle_event(PassFinished)
           return Err(reason)
         }
       }

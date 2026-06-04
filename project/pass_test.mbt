@@ -363,7 +363,7 @@ test "pass registrations are observable lifecycle events" {
     Ok(_) => ()
     Err(reason) => fail(reason)
   }
-  let registrations = @project.pass_registrations().filter(event => {
+  let registrations = @project.pass_registration_events().filter(event => {
     event.pass_name() == "unit-events-registration"
   })
   assert_true(pass_event_names(registrations) == ["unit-events-registration"])
@@ -373,10 +373,35 @@ test "pass registrations are observable lifecycle events" {
 }
 
 ///|
+test "pass registrations stream registered pass objects" {
+  let names = []
+  let stream = @project.pass_registrations()
+  let id = stream.subscribe(pass => names.push(pass.name()))
+  let pass = @project.ProjectPass::create(
+    name="unit-events-registration-stream",
+    run=project => Ok(project),
+  )
+  match @project.register_pass(pass) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  stream.unsubscribe(id)
+  assert_true(names == ["unit-events-registration-stream"])
+}
+
+///|
 test "successful passes record start success and finish events" {
   let pass = @project.ProjectPass::create(name="unit-events-success", run=project => {
     Ok(project.set("events", "ok"))
   })
+  let starts = []
+  let successes = []
+  let failures = []
+  let finishes = []
+  let start_id = pass.starts().subscribe(time => starts.push(time))
+  let success_id = pass.successes().subscribe(time => successes.push(time))
+  let failure_id = pass.failures().subscribe(time => failures.push(time))
+  let finish_id = pass.finishes().subscribe(time => finishes.push(time))
   match @project.register_pass(pass) {
     Ok(_) => ()
     Err(reason) => fail(reason)
@@ -391,10 +416,22 @@ test "successful passes record start success and finish events" {
     pass_event_kinds(pass.events()) ==
     ["registered", "started", "succeeded", "finished"],
   )
-  assert_true(pass_event_names(pass.starts()) == ["unit-events-success"])
-  assert_true(pass_event_names(pass.successes()) == ["unit-events-success"])
-  assert_true(pass.failures().is_empty())
-  assert_true(pass_event_names(pass.finishes()) == ["unit-events-success"])
+  pass.starts().unsubscribe(start_id)
+  pass.successes().unsubscribe(success_id)
+  pass.failures().unsubscribe(failure_id)
+  pass.finishes().unsubscribe(finish_id)
+  assert_true(pass_event_names(pass.start_events()) == ["unit-events-success"])
+  assert_true(
+    pass_event_names(pass.success_events()) == ["unit-events-success"],
+  )
+  assert_true(pass.failure_events().is_empty())
+  assert_true(pass_event_names(pass.finish_events()) == ["unit-events-success"])
+  assert_true(starts.length() == 1)
+  assert_true(successes.length() == 1)
+  assert_true(failures.is_empty())
+  assert_true(finishes.length() == 1)
+  assert_true(starts[0] < successes[0])
+  assert_true(successes[0] < finishes[0])
 }
 
 ///|
@@ -402,6 +439,14 @@ test "failing passes record failure finish and no successful run count" {
   let pass = @project.ProjectPass::create(name="unit-events-failure", run=_ => {
     Err("boom")
   })
+  let starts = []
+  let successes = []
+  let failures = []
+  let finishes = []
+  let start_id = pass.starts().subscribe(time => starts.push(time))
+  let success_id = pass.successes().subscribe(time => successes.push(time))
+  let failure_id = pass.failures().subscribe(time => failures.push(time))
+  let finish_id = pass.finishes().subscribe(time => finishes.push(time))
   match @project.register_pass(pass) {
     Ok(_) => ()
     Err(reason) => fail(reason)
@@ -413,9 +458,21 @@ test "failing passes record failure finish and no successful run count" {
     pass_event_kinds(pass.events()) ==
     ["registered", "started", "failed", "finished"],
   )
-  assert_true(pass.successes().is_empty())
-  assert_true(pass_event_names(pass.failures()) == ["unit-events-failure"])
-  assert_true(pass_event_names(pass.finishes()) == ["unit-events-failure"])
+  pass.starts().unsubscribe(start_id)
+  pass.successes().unsubscribe(success_id)
+  pass.failures().unsubscribe(failure_id)
+  pass.finishes().unsubscribe(finish_id)
+  assert_true(pass.success_events().is_empty())
+  assert_true(
+    pass_event_names(pass.failure_events()) == ["unit-events-failure"],
+  )
+  assert_true(pass_event_names(pass.finish_events()) == ["unit-events-failure"])
+  assert_true(starts.length() == 1)
+  assert_true(successes.is_empty())
+  assert_true(failures.length() == 1)
+  assert_true(finishes.length() == 1)
+  assert_true(starts[0] < failures[0])
+  assert_true(failures[0] < finishes[0])
 }
 
 ///|
@@ -450,7 +507,7 @@ test "run_once skipped passes do not emit lifecycle events" {
     pass_event_kinds(pass.events()) ==
     ["registered", "started", "succeeded", "finished"],
   )
-  assert_true(pass.starts().length() == 1)
-  assert_true(pass.successes().length() == 1)
-  assert_true(pass.finishes().length() == 1)
+  assert_true(pass.start_events().length() == 1)
+  assert_true(pass.success_events().length() == 1)
+  assert_true(pass.finish_events().length() == 1)
 }

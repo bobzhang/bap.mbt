@@ -91,6 +91,27 @@ test "translated BAP strings unscrambler builds dictionary words from bytes" {
 }
 
 ///|
+test "translated BAP strings unscrambler build order follows count trie" {
+  let dict = @strings.StringsUnscrambler::empty(
+      alphabet=@strings.StringsAlphabet::alpha_caseless(),
+    )
+    .add_word(b"aa")
+    .add_word(b"b")
+    .add_word(b"a")
+    .add_word(b"ba")
+    .add_word(b"ab")
+    .add_word(b"")
+  let built = dict.build(b"aab")
+  assert_eq(built.length(), 6)
+  assert_true(built[0] == b"")
+  assert_true(built[1] == b"b")
+  assert_true(built[2] == b"a")
+  assert_true(built[3] == b"ab")
+  assert_true(built[4] == b"ba")
+  assert_true(built[5] == b"aa")
+}
+
+///|
 test "translated BAP strings unscrambler loads newline dictionaries" {
   let dict = @strings.StringsUnscrambler::of_bytes(
     alphabet=@strings.StringsAlphabet::alpha_caseless(),

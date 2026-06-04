@@ -165,6 +165,22 @@ fn strings_spectrum_subset(
 }
 
 ///|
+fn strings_compare_spectrum(lhs : ArrayView[Int], rhs : ArrayView[Int]) -> Int {
+  let limit = if lhs.length() < rhs.length() {
+    lhs.length()
+  } else {
+    rhs.length()
+  }
+  for i in 0..<limit {
+    let order = lhs[i].compare(rhs[i])
+    if order != 0 {
+      return order
+    }
+  }
+  lhs.length().compare(rhs.length())
+}
+
+///|
 pub fn StringsUnscrambler::empty(
   alphabet~ : StringsAlphabet,
 ) -> StringsUnscrambler {
@@ -279,11 +295,26 @@ pub fn StringsUnscrambler::build(
   chars : BytesView,
 ) -> Array[Bytes] {
   let available = self.alphabet_value.spectrum(chars)
-  let out = []
+  let matches = []
+  let mut ordinal = 0
   for word in self.words_value {
-    if strings_spectrum_subset(available, self.alphabet_value.spectrum(word)) {
-      out.push(word)
+    let spectrum = self.alphabet_value.spectrum(word)
+    if strings_spectrum_subset(available, spectrum) {
+      matches.push((ordinal, word, spectrum))
     }
+    ordinal = ordinal + 1
+  }
+  matches.sort_by(fn(left, right) {
+    let spectrum_order = strings_compare_spectrum(left.2, right.2)
+    if spectrum_order != 0 {
+      spectrum_order
+    } else {
+      right.0.compare(left.0)
+    }
+  })
+  let out = []
+  for entry in matches {
+    out.push(entry.1)
   }
   out
 }

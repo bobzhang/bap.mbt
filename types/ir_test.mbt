@@ -17,6 +17,13 @@ test "terms carry tids and string attributes" {
   let erased = @types.ProgramTerm(term)
   let erased_clone = erased.clone()
   assert_true(erased_clone.class() == ProgramTermClass)
+  assert_true(@types.program_t() == ProgramTermClass)
+  assert_true(@types.sub_t() == SubTermClass)
+  assert_true(@types.arg_t() == ArgTermClass)
+  assert_true(@types.blk_t() == BlkTermClass)
+  assert_true(@types.phi_t() == PhiTermClass)
+  assert_true(@types.def_t() == DefTermClass)
+  assert_true(@types.jmp_t() == JmpTermClass)
   assert_true(erased_clone.tid() != erased.tid())
   assert_true(erased_clone.get_attr("comment") == Some("root"))
   let erased_attrs = { "phase": "erased" }
@@ -594,74 +601,79 @@ test "program class-filtered lookup and parent helpers mirror BAP Ir_program" {
   let program = @types.Program::create(subs=[sub])
 
   assert_true(
-    program.program_lookup(ProgramTermClass, program.tid())
+    program.program_lookup(@types.program_t(), program.tid())
     is Some(ProgramTerm(_)),
   )
   assert_true(
-    program.lookup(ProgramTermClass, program.tid()) is Some(ProgramTerm(_)),
+    program.lookup(@types.program_t(), program.tid()) is Some(ProgramTerm(_)),
   )
   assert_true(
-    @types.Program::lookup(program, ProgramTermClass, program.tid())
+    @types.Program::lookup(program, @types.program_t(), program.tid())
     is Some(ProgramTerm(_)),
   )
   assert_true(
-    program.program_lookup(SubTermClass, sub.tid()) is Some(SubTerm(_)),
+    program.program_lookup(@types.sub_t(), sub.tid()) is Some(SubTerm(_)),
   )
-  assert_true(program.lookup(SubTermClass, sub.tid()) is Some(SubTerm(_)))
+  assert_true(program.lookup(@types.sub_t(), sub.tid()) is Some(SubTerm(_)))
   assert_true(
-    @types.Program::lookup(program, SubTermClass, sub.tid()) is Some(SubTerm(_)),
-  )
-  assert_true(
-    program.program_lookup(ArgTermClass, arg.tid()) is Some(ArgTerm(_)),
+    @types.Program::lookup(program, @types.sub_t(), sub.tid())
+    is Some(SubTerm(_)),
   )
   assert_true(
-    program.program_lookup(BlkTermClass, blk.tid()) is Some(BlkTerm(_)),
+    program.program_lookup(@types.arg_t(), arg.tid()) is Some(ArgTerm(_)),
   )
   assert_true(
-    program.program_lookup(PhiTermClass, phi.tid()) is Some(PhiTerm(_)),
+    program.program_lookup(@types.blk_t(), blk.tid()) is Some(BlkTerm(_)),
   )
   assert_true(
-    program.program_lookup(DefTermClass, def.tid()) is Some(DefTerm(_)),
+    program.program_lookup(@types.phi_t(), phi.tid()) is Some(PhiTerm(_)),
   )
   assert_true(
-    program.program_lookup(JmpTermClass, jmp.tid()) is Some(JmpTerm(_)),
+    program.program_lookup(@types.def_t(), def.tid()) is Some(DefTerm(_)),
   )
-  assert_true(program.program_lookup(BlkTermClass, def.tid()) is None)
-  assert_true(program.lookup(BlkTermClass, def.tid()) is None)
-  assert_true(@types.Program::lookup(program, BlkTermClass, def.tid()) is None)
+  assert_true(
+    program.program_lookup(@types.jmp_t(), jmp.tid()) is Some(JmpTerm(_)),
+  )
+  assert_true(program.program_lookup(@types.blk_t(), def.tid()) is None)
+  assert_true(program.lookup(@types.blk_t(), def.tid()) is None)
+  assert_true(
+    @types.Program::lookup(program, @types.blk_t(), def.tid()) is None,
+  )
 
   assert_true(
-    program.program_parent(SubTermClass, sub.tid()) is Some(ProgramTerm(_)),
+    program.program_parent(@types.sub_t(), sub.tid()) is Some(ProgramTerm(_)),
   )
-  assert_true(program.parent(SubTermClass, sub.tid()) is Some(ProgramTerm(_)))
+  assert_true(program.parent(@types.sub_t(), sub.tid()) is Some(ProgramTerm(_)))
   assert_true(
-    @types.Program::parent(program, SubTermClass, sub.tid())
+    @types.Program::parent(program, @types.sub_t(), sub.tid())
     is Some(ProgramTerm(_)),
   )
   assert_true(
-    program.program_parent(ArgTermClass, arg.tid()) is Some(SubTerm(_)),
+    program.program_parent(@types.arg_t(), arg.tid()) is Some(SubTerm(_)),
   )
-  assert_true(program.parent(ArgTermClass, arg.tid()) is Some(SubTerm(_)))
+  assert_true(program.parent(@types.arg_t(), arg.tid()) is Some(SubTerm(_)))
   assert_true(
-    program.program_parent(BlkTermClass, blk.tid()) is Some(SubTerm(_)),
-  )
-  assert_true(
-    program.program_parent(PhiTermClass, phi.tid()) is Some(BlkTerm(_)),
+    program.program_parent(@types.blk_t(), blk.tid()) is Some(SubTerm(_)),
   )
   assert_true(
-    program.program_parent(DefTermClass, def.tid()) is Some(BlkTerm(_)),
+    program.program_parent(@types.phi_t(), phi.tid()) is Some(BlkTerm(_)),
   )
   assert_true(
-    program.program_parent(JmpTermClass, jmp.tid()) is Some(BlkTerm(_)),
+    program.program_parent(@types.def_t(), def.tid()) is Some(BlkTerm(_)),
   )
-  assert_true(program.program_parent(ProgramTermClass, program.tid()) is None)
-  assert_true(program.parent(ProgramTermClass, program.tid()) is None)
   assert_true(
-    @types.Program::parent(program, ProgramTermClass, program.tid()) is None,
+    program.program_parent(@types.jmp_t(), jmp.tid()) is Some(BlkTerm(_)),
   )
-  assert_true(program.program_parent(BlkTermClass, def.tid()) is None)
-  assert_true(program.parent(BlkTermClass, def.tid()) is None)
-  assert_true(@types.Program::parent(program, BlkTermClass, def.tid()) is None)
+  assert_true(program.program_parent(@types.program_t(), program.tid()) is None)
+  assert_true(program.parent(@types.program_t(), program.tid()) is None)
+  assert_true(
+    @types.Program::parent(program, @types.program_t(), program.tid()) is None,
+  )
+  assert_true(program.program_parent(@types.blk_t(), def.tid()) is None)
+  assert_true(program.parent(@types.blk_t(), def.tid()) is None)
+  assert_true(
+    @types.Program::parent(program, @types.blk_t(), def.tid()) is None,
+  )
 }
 
 ///|

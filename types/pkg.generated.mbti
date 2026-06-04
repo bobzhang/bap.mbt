@@ -10,7 +10,13 @@ import {
 }
 
 // Values
+pub fn arg_t() -> IrTermClass
+
+pub fn blk_t() -> IrTermClass
+
 pub fn check_stmt_types(Array[Stmt]) -> Result[Unit, TypeError]
+
+pub fn def_t() -> IrTermClass
 
 pub fn exec_stmts(Array[Stmt], state? : BilState, max_steps? : Int) -> Result[BilState, String]
 
@@ -48,6 +54,8 @@ pub fn is_referenced(Array[Stmt], Var) -> Bool
 
 pub fn is_referenced_stmts(Array[Stmt], Var) -> Bool
 
+pub fn jmp_t() -> IrTermClass
+
 pub fn map_exps(Array[Stmt], (Exp) -> Exp) -> Array[Stmt]
 
 pub fn normalize(Array[Stmt], normalize_exp? : Bool) -> Array[Stmt]
@@ -59,6 +67,10 @@ pub fn normalize_negatives(Array[Stmt]) -> Array[Stmt]
 pub fn optimize_stmts(Array[Stmt], max_iterations? : Int) -> Array[Stmt]
 
 pub fn passes() -> Array[BilPass]
+
+pub fn phi_t() -> IrTermClass
+
+pub fn program_t() -> IrTermClass
 
 pub fn propagate_const_stmts(Array[Stmt]) -> Array[Stmt]
 
@@ -79,6 +91,8 @@ pub fn select_passes(Array[BilPass]) -> Unit
 pub fn selected_passes() -> Array[(Array[Stmt]) -> Array[Stmt]]
 
 pub fn simplify_stmts(Array[Stmt]) -> Array[Stmt]
+
+pub fn sub_t() -> IrTermClass
 
 pub fn substitute(Array[Stmt], Exp, Exp) -> Array[Stmt]
 

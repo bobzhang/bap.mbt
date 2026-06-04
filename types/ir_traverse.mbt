@@ -12,6 +12,41 @@ pub(all) enum IrTermClass {
 } derive(Eq, Debug)
 
 ///|
+pub fn program_t() -> IrTermClass {
+  ProgramTermClass
+}
+
+///|
+pub fn sub_t() -> IrTermClass {
+  SubTermClass
+}
+
+///|
+pub fn arg_t() -> IrTermClass {
+  ArgTermClass
+}
+
+///|
+pub fn blk_t() -> IrTermClass {
+  BlkTermClass
+}
+
+///|
+pub fn phi_t() -> IrTermClass {
+  PhiTermClass
+}
+
+///|
+pub fn def_t() -> IrTermClass {
+  DefTermClass
+}
+
+///|
+pub fn jmp_t() -> IrTermClass {
+  JmpTermClass
+}
+
+///|
 pub(all) enum IrTerm {
   ProgramTerm(Term[Program])
   SubTerm(Term[Sub])

@@ -349,6 +349,9 @@ test "translated BAP traces preserve ids tools metadata and in-memory save/load"
   assert_true(first.id() != second.id())
   assert_true(first.id().to_string().length() == 36)
   assert_true(first.id().to_string().has_prefix("00000000-0000-4000-8000-"))
+  assert_true(first.id().hash() == first.id().to_string().hash())
+  assert_true(first.id().equal(first.id()))
+  assert_true(!first.id().equal(second.id()))
   match @traces.TraceId::of_string(first.id().to_string()) {
     Ok(id) => assert_true(id == first.id())
     Err(_) => fail("expected trace id to parse")
@@ -358,6 +361,21 @@ test "translated BAP traces preserve ids tools metadata and in-memory save/load"
     Err(_) => fail("expected uppercase trace id to parse")
   }
   assert_true(@traces.TraceId::of_string("not-a-uuid") is Err(_))
+  assert_true(@traces.Id::to_string(first.id()) == first.id().to_string())
+  assert_true(@traces.Id::hash(first.id()) == first.id().hash())
+  assert_true(@traces.Id::equal(first.id(), first.id()))
+  assert_true(!@traces.Id::equal(first.id(), second.id()))
+  assert_true(@traces.Id::compare(first.id(), second.id()) < 0)
+  assert_true(@traces.Id::fresh().to_string().length() == 36)
+  match @traces.Id::create(first.id().to_string()) {
+    Ok(id) => assert_true(id.equal(first.id()))
+    Err(_) => fail("expected facade trace id create to parse")
+  }
+  match @traces.Id::of_string(first.id().to_string().to_upper()) {
+    Ok(id) => assert_true(id.equal(first.id()))
+    Err(_) => fail("expected facade trace id parse")
+  }
+  assert_true(@traces.Id::of_string("not-a-uuid") is Err(_))
   assert_true(first.tool() == test_tool())
 
   let trace = first.set_attr("binary", Binary(test_binary()))

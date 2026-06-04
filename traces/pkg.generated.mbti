@@ -66,6 +66,16 @@ pub(all) struct FileStatsInfo {
 } derive(Eq, @debug.Debug)
 pub fn FileStatsInfo::to_string(Self) -> String
 
+pub(all) struct Id {
+}
+pub fn Id::compare(TraceId, TraceId) -> Int
+pub fn Id::create(String) -> Result[TraceId, String]
+pub fn Id::equal(TraceId, TraceId) -> Bool
+pub fn Id::fresh() -> TraceId
+pub fn Id::hash(TraceId) -> Int
+pub fn Id::of_string(String) -> Result[TraceId, String]
+pub fn Id::to_string(TraceId) -> String
+
 pub(all) struct Location {
   name : String?
   addr : @types.Word
@@ -273,7 +283,9 @@ pub(all) struct TraceId {
 } derive(Eq, Hash, @debug.Debug)
 pub fn TraceId::compare(Self, Self) -> Int
 pub fn TraceId::create(String) -> Result[Self, String]
+pub fn TraceId::equal(Self, Self) -> Bool
 pub fn TraceId::fresh() -> Self
+pub fn TraceId::hash(Self) -> Int
 pub fn TraceId::of_string(String) -> Result[Self, String]
 pub fn TraceId::to_string(Self) -> String
 

@@ -1573,6 +1573,9 @@ pub(all) struct TraceId {
 } derive(Eq, Hash, Debug)
 
 ///|
+pub(all) struct Id {}
+
+///|
 fn trace_id_is_hex_char(ch : Char) -> Bool {
   ('0' <= ch && ch <= '9') ||
   ('a' <= ch && ch <= 'f') ||
@@ -1638,8 +1641,53 @@ pub fn TraceId::to_string(self : TraceId) -> String {
 }
 
 ///|
+pub fn TraceId::hash(self : TraceId) -> Int {
+  self.value.hash()
+}
+
+///|
+pub fn TraceId::equal(self : TraceId, other : TraceId) -> Bool {
+  self == other
+}
+
+///|
 pub fn TraceId::compare(self : TraceId, other : TraceId) -> Int {
   self.value.compare(other.value)
+}
+
+///|
+pub fn Id::create(value : String) -> Result[TraceId, String] {
+  TraceId::create(value)
+}
+
+///|
+pub fn Id::of_string(value : String) -> Result[TraceId, String] {
+  TraceId::of_string(value)
+}
+
+///|
+pub fn Id::fresh() -> TraceId {
+  TraceId::fresh()
+}
+
+///|
+pub fn Id::to_string(id : TraceId) -> String {
+  id.to_string()
+}
+
+///|
+pub fn Id::hash(id : TraceId) -> Int {
+  id.hash()
+}
+
+///|
+pub fn Id::equal(id : TraceId, other : TraceId) -> Bool {
+  id.equal(other)
+}
+
+///|
+pub fn Id::compare(id : TraceId, other : TraceId) -> Int {
+  id.compare(other)
 }
 
 ///|

@@ -419,7 +419,7 @@ pub fn[T] Stream::wait(self : Stream[T]) -> Unit {
 
 ///|
 pub fn[T] Stream::on_wait(self : Stream[T], callback : () -> Unit) -> Unit {
-  self.waiters.push(callback)
+  self.waiters.insert(0, callback)
 }
 
 ///|
@@ -427,7 +427,7 @@ pub fn[T] Stream::on_subscribe(
   self : Stream[T],
   callback : (Int) -> Unit,
 ) -> Unit {
-  self.on_subscribe_callbacks.push(callback)
+  self.on_subscribe_callbacks.insert(0, callback)
 }
 
 ///|
@@ -435,7 +435,7 @@ pub fn[T] Stream::on_unsubscribe(
   self : Stream[T],
   callback : (Int) -> Unit,
 ) -> Unit {
-  self.on_unsubscribe_callbacks.push(callback)
+  self.on_unsubscribe_callbacks.insert(0, callback)
 }
 
 ///|

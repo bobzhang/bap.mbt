@@ -416,6 +416,34 @@ test "translated BAP stream subscriptions hooks and ids" {
 }
 
 ///|
+test "translated BAP stream lifecycle hooks run newest first" {
+  let (stream, _) : (@future.Stream[Unit], @future.Signal[Unit]) = @future.Stream::create()
+  let events : Array[String] = []
+  stream.on_wait(fn() { events.push("wait:first") })
+  stream.on_wait(fn() { events.push("wait:last") })
+  stream.on_subscribe(fn(id) { events.push("sub:first:\{id}") })
+  stream.on_subscribe(fn(id) { events.push("sub:last:\{id}") })
+  stream.on_unsubscribe(fn(id) { events.push("unsub:first:\{id}") })
+  stream.on_unsubscribe(fn(id) { events.push("unsub:last:\{id}") })
+
+  stream.wait()
+  let id = stream.subscribe(fn(_) { () })
+  stream.unsubscribe(id)
+
+  assert_true(
+    events ==
+    [
+      "wait:last",
+      "wait:first",
+      "sub:last:\{id}",
+      "sub:first:\{id}",
+      "unsub:last:\{id}",
+      "unsub:first:\{id}",
+    ],
+  )
+}
+
+///|
 test "translated BAP stream watch receives stable callback ids" {
   let (stream, signal, _) = @future.Stream::of_array([0, 1])
   let first_seen : Ref[Int?] = Ref(None)

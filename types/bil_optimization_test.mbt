@@ -36,6 +36,35 @@ test "bil pruning removes dead virtual assignments but preserves physical writes
 }
 
 ///|
+test "BAP optimization aliases match MoonBit statement helpers" {
+  let typ = @types.ValueType::Imm(8)
+  let physical = @types.Var::new(name="physical", typ~)
+  let dead = @types.Var::new(name="dead", typ~, is_virtual=true)
+  let x = @types.Var::new(name="x", typ~)
+  let y = @types.Var::new(name="y", typ~)
+  let pruned = [
+    @types.Stmt::Move(dead, Int(word8(1))),
+    Move(physical, Int(word8(2))),
+  ]
+  assert_true(
+    @types.prune_dead_virtuals(pruned) ==
+    @types.prune_dead_virtual_stmts(pruned),
+  )
+  let propagated = [
+    @types.Stmt::Move(x, Int(word8(2))),
+    Move(y, BinOp(Plus, Var(x), Int(word8(3)))),
+  ]
+  assert_true(
+    @types.propagate_consts(propagated) ==
+    @types.propagate_const_stmts(propagated),
+  )
+  assert_true(
+    stmt_text(@types.propagate_consts(propagated)) ==
+    ["x:imm8 := 2:8u", "y:imm8 := 5:8u"],
+  )
+}
+
+///|
 test "BAP prune_unreferenced honors physical virtual and custom filters" {
   let typ = @types.ValueType::Imm(8)
   let physical_dead = @types.Var::new(name="physical_dead", typ~)

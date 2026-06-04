@@ -1452,6 +1452,11 @@ pub fn propagate_const_stmts(stmts : Array[Stmt]) -> Array[Stmt] {
 }
 
 ///|
+pub fn propagate_consts(stmts : Array[Stmt]) -> Array[Stmt] {
+  propagate_const_stmts(stmts)
+}
+
+///|
 fn remove_live_var(live : Array[Var], variable : Var) -> Array[Var] {
   live.filter(item => item != variable)
 }
@@ -1509,6 +1514,11 @@ fn prune_dead_virtuals_loop(
 ///|
 pub fn prune_dead_virtual_stmts(stmts : Array[Stmt]) -> Array[Stmt] {
   prune_dead_virtuals_loop(stmts, []).0
+}
+
+///|
+pub fn prune_dead_virtuals(stmts : Array[Stmt]) -> Array[Stmt] {
+  prune_dead_virtual_stmts(stmts)
 }
 
 ///|

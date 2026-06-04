@@ -62,7 +62,11 @@ pub fn passes() -> Array[BilPass]
 
 pub fn propagate_const_stmts(Array[Stmt]) -> Array[Stmt]
 
+pub fn propagate_consts(Array[Stmt]) -> Array[Stmt]
+
 pub fn prune_dead_virtual_stmts(Array[Stmt]) -> Array[Stmt]
+
+pub fn prune_dead_virtuals(Array[Stmt]) -> Array[Stmt]
 
 pub fn prune_unreferenced(Array[Stmt], such_that? : (Var) -> Bool, physicals? : Bool, virtuals? : Bool) -> Array[Stmt]
 

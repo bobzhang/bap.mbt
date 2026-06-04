@@ -39,7 +39,8 @@ priv struct DwarfDieName {
   unit_start : Int
   unit_offset : Int
   section_offset : Int
-  name : String
+  name : String?
+  name_ref : DwarfNameRef?
 }
 
 ///|
@@ -134,6 +135,24 @@ fn dwarf_lookup_die_name(
   unit_start : Int,
   name_ref : DwarfNameRef,
 ) -> String? {
+  dwarf_lookup_die_name_with_budget(
+    names,
+    unit_start,
+    name_ref,
+    names.length() + 1,
+  )
+}
+
+///|
+fn dwarf_lookup_die_name_with_budget(
+  names : Array[DwarfDieName],
+  unit_start : Int,
+  name_ref : DwarfNameRef,
+  remaining : Int,
+) -> String? {
+  if remaining <= 0 {
+    return None
+  }
   let index = match name_ref {
     DwarfCuNameRef(offset) =>
       names.search_by(item => {
@@ -143,7 +162,23 @@ fn dwarf_lookup_die_name(
       names.search_by(item => item.section_offset == offset)
   }
   match index {
-    Some(index) => Some(names[index].name)
+    Some(index) => {
+      let item = names[index]
+      match item.name {
+        Some(name) => Some(name)
+        None =>
+          match item.name_ref {
+            Some(next_ref) =>
+              dwarf_lookup_die_name_with_budget(
+                names,
+                item.unit_start,
+                next_ref,
+                remaining - 1,
+              )
+            None => None
+          }
+      }
+    }
     None => None
   }
 }
@@ -975,6 +1010,19 @@ fn dwarf_collect_display_name(
 }
 
 ///|
+fn dwarf_collect_name_ref(
+  values : Array[DwarfFunctionAttrValue],
+) -> DwarfNameRef? {
+  for value in values {
+    match value {
+      DwarfAttrNameRef(name_ref) => return Some(name_ref)
+      _ => ()
+    }
+  }
+  None
+}
+
+///|
 fn dwarf_collect_function(
   values : Array[DwarfFunctionAttrValue],
   unit_start : Int,
@@ -1194,7 +1242,10 @@ fn dwarf_should_read_die_field(
   field.attr() == DwarfLowPc ||
   (
     dwarf_entry_allows_name_capture(entry) &&
-    field.value_kind() == DwarfNameValue
+    (
+      field.value_kind() == DwarfNameValue ||
+      field.value_kind() == DwarfNameRefValue
+    )
   )
 }
 
@@ -1222,6 +1273,7 @@ fn dwarf_read_die(
   (
     DwarfFunctionCandidate?,
     String?,
+    DwarfNameRef?,
     Int?,
     Int?,
     Int?,
@@ -1274,6 +1326,7 @@ fn dwarf_read_die(
     (
       function_item,
       dwarf_collect_display_name(values),
+      dwarf_collect_name_ref(values),
       dwarf_collect_str_offsets_base(values),
       dwarf_collect_addr_base(values),
       dwarf_collect_rnglists_base(values),
@@ -1469,6 +1522,7 @@ fn dwarf_parse_unit(
                             (
                               function_item,
                               die_name,
+                              die_name_ref,
                               str_base,
                               next_addr_base,
                               next_rnglists_base,
@@ -1481,15 +1535,16 @@ fn dwarf_parse_unit(
                               Some(value) => function_candidates.push(value)
                               None => ()
                             }
-                            match die_name {
-                              Some(name) =>
-                                die_names.push({
-                                  unit_start,
-                                  unit_offset: die_offset,
-                                  section_offset: cursor.position(),
-                                  name,
-                                })
-                              None => ()
+                            if die_name is Some(_) || die_name_ref is Some(_) {
+                              die_names.push({
+                                unit_start,
+                                unit_offset: die_offset,
+                                section_offset: cursor.position(),
+                                name: die_name,
+                                name_ref: die_name_ref,
+                              })
+                            } else {
+                              ()
                             }
                             str_offsets_base = dwarf_update_str_offsets_base(
                               str_base, str_offsets_base,

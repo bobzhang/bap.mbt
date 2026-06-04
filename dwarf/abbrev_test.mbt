@@ -162,12 +162,24 @@ test "translated DWARF abbreviation value classification follows BAP FBI inputs"
     DwarfNameRefValue,
   )
   assert_true(
-    @dwarf.DwarfAbbrevField::create(attr=DwarfSpecification, form=DwarfIndirect).value_kind() ==
+    @dwarf.DwarfAbbrevField::create(attr=DwarfSpecification, form=DwarfRefSup4).value_kind() ==
+    DwarfNameRefValue,
+  )
+  assert_true(
+    @dwarf.DwarfAbbrevField::create(attr=DwarfSpecification, form=DwarfRefSup8).value_kind() ==
+    DwarfNameRefValue,
+  )
+  assert_true(
+    @dwarf.DwarfAbbrevField::create(attr=DwarfSpecification, form=DwarfRefAlt).value_kind() ==
     DwarfNameRefValue,
   )
   assert_true(
     @dwarf.DwarfAbbrevField::create(attr=DwarfSpecification, form=DwarfRefSig8).value_kind() ==
-    DwarfIgnoredValue,
+    DwarfNameRefValue,
+  )
+  assert_true(
+    @dwarf.DwarfAbbrevField::create(attr=DwarfSpecification, form=DwarfIndirect).value_kind() ==
+    DwarfNameRefValue,
   )
   assert_true(
     @dwarf.DwarfAbbrevField::create(
@@ -181,6 +193,22 @@ test "translated DWARF abbreviation value classification follows BAP FBI inputs"
       attr=DwarfAbstractOrigin,
       form=DwarfIndirect,
     ).value_kind() ==
+    DwarfNameRefValue,
+  )
+  assert_true(
+    @dwarf.DwarfAbbrevField::create(attr=DwarfAbstractOrigin, form=DwarfRefSup4).value_kind() ==
+    DwarfNameRefValue,
+  )
+  assert_true(
+    @dwarf.DwarfAbbrevField::create(attr=DwarfAbstractOrigin, form=DwarfRefSup8).value_kind() ==
+    DwarfNameRefValue,
+  )
+  assert_true(
+    @dwarf.DwarfAbbrevField::create(attr=DwarfAbstractOrigin, form=DwarfRefAlt).value_kind() ==
+    DwarfNameRefValue,
+  )
+  assert_true(
+    @dwarf.DwarfAbbrevField::create(attr=DwarfAbstractOrigin, form=DwarfRefSig8).value_kind() ==
     DwarfNameRefValue,
   )
   assert_true(

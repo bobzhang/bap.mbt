@@ -734,6 +734,41 @@ test "translated DWARF FBI skips DWARF5 producer metadata forms" {
 }
 
 ///|
+test "translated DWARF FBI skips external name reference forms" {
+  let abbrev = b"\x01\x2e\x00" +
+    b"\x03\x08" +
+    b"\x11\x01" +
+    b"\x12\x0b" +
+    b"\x47\x20" +
+    b"\x31\x1c" +
+    b"\x47\x24" +
+    b"\x31\xa0\x3e" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x2e\x00\x00\x00" +
+    b"\x04\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x04" +
+    b"\x01" +
+    b"extrefs\x00" +
+    b"\x60\x00\x00\x00" +
+    b"\x07" +
+    b"\x00\x00\x00\x00\x00\x00\x00\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x00\x00\x00\x00\x00\x00\x00\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x00"
+  let data = expect_fbi_data(
+    @dwarf.DwarfData::from_bytes(endian=LittleEndian, info~, abbrev~, str=b""),
+  )
+  let functions = expect_functions(data.functions())
+  assert_true(functions.length() == 1)
+  assert_true(functions[0].name() == "extrefs")
+  assert_true(functions[0].low_pc() == 0x60UL)
+  assert_true(functions[0].high_pc() == Some(0x67UL))
+}
+
+///|
 test "translated DWARF FBI skips DWARF5 skeleton dwo id" {
   let abbrev = b"\x00"
   let info = b"\x11\x00\x00\x00" +

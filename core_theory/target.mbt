@@ -2190,6 +2190,18 @@ fn mips_gpr_alias_names() -> Array[String] {
 }
 
 ///|
+fn mips_gpr_alias_role_names(first : Int, last : Int) -> Array[String] {
+  let names = mips_gpr_alias_names()
+  let items = []
+  for i in first..<=last {
+    if i >= 0 && i < names.length() {
+      items.push(names[i].to_lower())
+    }
+  }
+  items
+}
+
+///|
 fn mips_alias_vars(bits : Int) -> Array[Var] {
   [
     for name in mips_gpr_alias_names() => word_var(bits, name)
@@ -2948,9 +2960,17 @@ fn mips_role_names(bits : Int, role : Role) -> Array[String] {
     PrivilegedRegister => []
     Argument =>
       if bits == 64 {
-        concat_role_names([role_names("r", 4, 11), role_names("f", 1, 8)])
+        concat_role_names([
+          role_names("r", 4, 11),
+          mips_gpr_alias_role_names(4, 11),
+          role_names("f", 1, 8),
+        ])
       } else {
-        concat_role_names([role_names("r", 4, 7), role_names("f", 1, 4)])
+        concat_role_names([
+          role_names("r", 4, 7),
+          mips_gpr_alias_role_names(4, 7),
+          role_names("f", 1, 4),
+        ])
       }
     ResultRegister => ["v0", "r2", "f0"]
     CallerSaved => []

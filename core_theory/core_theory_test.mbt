@@ -3043,6 +3043,11 @@ test "target role helpers classify common architecture variables" {
   assert_true(mips64.role_aliases(AliasRegister).contains("v0"))
   assert_true(mips64.role_aliases(PseudoRegister).contains("zero"))
   assert_true(mips64.role_aliases(PseudoRegister).contains("r0"))
+  assert_true(mips64.role_aliases(Argument).contains("a0"))
+  assert_true(mips64.role_aliases(Argument).contains("a3"))
+  assert_true(mips64.role_aliases(Argument).contains("t0"))
+  assert_true(mips64.role_aliases(Argument).contains("t3"))
+  assert_true(!mips64.role_aliases(Argument).contains("t4"))
   match mips64.find_var("F31") {
     Some(float) => {
       assert_true(mips64.roles_of_var(float).contains(General))
@@ -3076,6 +3081,32 @@ test "target role helpers classify common architecture variables" {
   match mips64.find_var("F1") {
     Some(arg) => assert_true(mips64.roles_of_var(arg).contains(Argument))
     None => fail("missing F1")
+  }
+  match mips64.find_var("A0") {
+    Some(arg) => assert_true(mips64.roles_of_var(arg).contains(Argument))
+    None => fail("missing MIPS64 A0")
+  }
+  match mips64.find_var("T3") {
+    Some(arg) => assert_true(mips64.roles_of_var(arg).contains(Argument))
+    None => fail("missing MIPS64 T3")
+  }
+  match mips64.find_var("T4") {
+    Some(non_arg) =>
+      assert_true(!mips64.roles_of_var(non_arg).contains(Argument))
+    None => fail("missing MIPS64 T4")
+  }
+  let mips32 = @core_theory.Target::mips()
+  assert_true(mips32.role_aliases(Argument).contains("a0"))
+  assert_true(mips32.role_aliases(Argument).contains("a3"))
+  assert_true(!mips32.role_aliases(Argument).contains("t0"))
+  match mips32.find_var("A3") {
+    Some(arg) => assert_true(mips32.roles_of_var(arg).contains(Argument))
+    None => fail("missing MIPS32 A3")
+  }
+  match mips32.find_var("T0") {
+    Some(non_arg) =>
+      assert_true(!mips32.roles_of_var(non_arg).contains(Argument))
+    None => fail("missing MIPS32 T0")
   }
   match mips64.origin_of_name("V0") {
     Some(origin) => {

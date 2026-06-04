@@ -53,6 +53,9 @@ let term_invariant_attr = "invariant"
 let term_postcondition_attr = "postcondition"
 
 ///|
+let term_mark_attr = "mark"
+
+///|
 pub fn Attr::flag(key : String) -> Attr {
   Attr::new(key~, value="true")
 }
@@ -90,6 +93,11 @@ pub fn Attr::live() -> Attr {
 ///|
 pub fn Attr::dead() -> Attr {
   Attr::flag("dead")
+}
+
+///|
+pub fn Attr::mark(value? : String = "true") -> Attr {
+  Attr::new(key=term_mark_attr, value~)
 }
 
 ///|

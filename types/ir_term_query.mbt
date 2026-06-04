@@ -96,6 +96,26 @@ pub fn IrTerm::has_attr_value(
 }
 
 ///|
+pub fn IrTerm::has_mark(self : IrTerm) -> Bool {
+  self.has_attr(term_mark_attr)
+}
+
+///|
+pub fn IrTerm::mark_value(self : IrTerm) -> String? {
+  self.get_attr(term_mark_attr)
+}
+
+///|
+pub fn IrTerm::set_mark(self : IrTerm, value? : String = "true") -> IrTerm {
+  self.set_attr(Attr::mark(value~))
+}
+
+///|
+pub fn IrTerm::del_mark(self : IrTerm) -> IrTerm {
+  self.del_attr(term_mark_attr)
+}
+
+///|
 pub fn IrTerm::children(self : IrTerm) -> Array[IrTerm] {
   match self {
     ProgramTerm(term) => [ for sub in term.subs() => SubTerm(sub) ]

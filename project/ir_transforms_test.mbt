@@ -97,15 +97,13 @@ test "project maps and marks IR terms with typed predicates" {
   let project = ir_project(@types.Program::create(subs=[sub]))
   let marked = project.mark_program_terms(
     term => term.def_lhs_name("x") && term.def_uses_name("y"),
-    @types.Attr::new(key="mark", value="def"),
+    @types.Attr::mark(value="def"),
   )
   let marked_def = marked.program().program_defs()[0]
-  assert_true(marked_def.get_attr("mark") == Some("def"))
+  assert_true(@types.DefTerm(marked_def).mark_value() == Some("def"))
   assert_true(!marked.program().program_blks()[0].has_attr("mark"))
   let unmarked = marked.unmark_program_terms("mark")
-  assert_true(
-    !unmarked.program().exists_program_term(term => term.has_attr("mark")),
-  )
+  assert_true(!unmarked.program().exists_program_term(term => term.has_mark()))
   let class_marked = project.map_program_terms(term => {
     if term.has_class(DefTermClass) {
       term.set_attr(@types.Attr::new(key="class", value=term.class_name()))

@@ -244,6 +244,7 @@ pub fn Attr::flag(String) -> Self
 pub fn Attr::format(String) -> Self
 pub fn Attr::invariant(Exp) -> Self
 pub fn Attr::live() -> Self
+pub fn Attr::mark(value? : String) -> Self
 pub fn Attr::new(key~ : String, value~ : String) -> Self
 pub fn Attr::origin(Tid) -> Self
 pub fn Attr::postcondition(Exp) -> Self
@@ -651,6 +652,7 @@ pub fn IrTerm::defined_vars(Self) -> Array[Var]
 pub fn IrTerm::defines_var(Self, Var) -> Bool
 pub fn IrTerm::defines_var_name(Self, String) -> Bool
 pub fn IrTerm::del_attr(Self, String) -> Self
+pub fn IrTerm::del_mark(Self) -> Self
 pub fn IrTerm::filter(Self, IrTermClass, (Self) -> Bool) -> Self
 pub fn IrTerm::filter_children(Self, IrTermClass, (Self) -> Bool) -> Self
 pub fn IrTerm::filter_map(Self, IrTermClass, (Self) -> Self?) -> Self
@@ -669,6 +671,7 @@ pub fn IrTerm::has_attr(Self, String) -> Bool
 pub fn IrTerm::has_attr_value(Self, String, String) -> Bool
 pub fn IrTerm::has_child_tid(Self, Tid) -> Bool
 pub fn IrTerm::has_class(Self, IrTermClass) -> Bool
+pub fn IrTerm::has_mark(Self) -> Bool
 pub fn IrTerm::has_name(Self, String) -> Bool
 pub fn IrTerm::has_tid(Self, Tid) -> Bool
 pub fn IrTerm::has_tid_text(Self, String) -> Bool
@@ -677,6 +680,7 @@ pub fn IrTerm::last_child(Self, IrTermClass) -> Self?
 pub fn IrTerm::length(Self, IrTermClass) -> Int
 pub fn IrTerm::map(Self, program? : (Term[Program]) -> Term[Program], sub? : (Term[Sub]) -> Term[Sub], arg? : (Term[Arg]) -> Term[Arg], blk? : (Term[Blk]) -> Term[Blk], phi? : (Term[Phi]) -> Term[Phi], def? : (Term[Def]) -> Term[Def], jmp? : (Term[Jmp]) -> Term[Jmp]) -> Self
 pub fn IrTerm::map_children(Self, IrTermClass, (Self) -> Self) -> Self
+pub fn IrTerm::mark_value(Self) -> String?
 pub fn IrTerm::name(Self) -> String
 pub fn IrTerm::next(Self, IrTermClass, Tid) -> Self?
 pub fn IrTerm::next_child(Self, IrTermClass, Tid) -> Self?
@@ -695,6 +699,7 @@ pub fn IrTerm::same(Self, Self) -> Bool
 pub fn IrTerm::same_term(Self, Self) -> Bool
 pub fn IrTerm::same_tid(Self, Tid) -> Bool
 pub fn IrTerm::set_attr(Self, Attr) -> Self
+pub fn IrTerm::set_mark(Self, value? : String) -> Self
 pub fn[A] IrTerm::switch(Self, program~ : (Term[Program]) -> A, sub~ : (Term[Sub]) -> A, arg~ : (Term[Arg]) -> A, blk~ : (Term[Blk]) -> A, phi~ : (Term[Phi]) -> A, def~ : (Term[Def]) -> A, jmp~ : (Term[Jmp]) -> A) -> A
 pub fn IrTerm::tid(Self) -> Tid
 pub fn IrTerm::to_sequence(Self, IrTermClass, rev? : Bool) -> Array[Self]

@@ -124,6 +124,11 @@ pub(all) struct Move[T] {
 pub fn[T] Move::create(cell~ : T, data~ : @types.Word) -> Self[T]
 pub fn[T] Move::to_string(Self[T], (T) -> String, arrow~ : String) -> String
 
+pub(all) struct Reader {
+}
+pub fn Reader::create(TraceTool, () -> Result[TraceEvent, String]?, meta? : TraceMeta) -> TraceStreamReader
+pub fn Reader::from_results(TraceTool, Array[Result[TraceEvent, String]], meta? : TraceMeta) -> TraceStreamReader
+
 pub(all) struct Return {
   caller : String
   callee : String

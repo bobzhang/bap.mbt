@@ -1723,6 +1723,9 @@ pub(all) struct TraceStreamReader {
 }
 
 ///|
+pub(all) struct Reader {}
+
+///|
 let trace_next_id : Ref[Int] = Ref(0)
 
 ///|
@@ -2087,6 +2090,24 @@ pub fn TraceStreamReader::from_results(
   meta? : TraceMeta = TraceMeta::empty(),
 ) -> TraceStreamReader {
   TraceStreamReader::create(tool, trace_array_source(events), meta~)
+}
+
+///|
+pub fn Reader::create(
+  tool : TraceTool,
+  next : () -> Result[TraceEvent, String]?,
+  meta? : TraceMeta = TraceMeta::empty(),
+) -> TraceStreamReader {
+  TraceStreamReader::create(tool, next, meta~)
+}
+
+///|
+pub fn Reader::from_results(
+  tool : TraceTool,
+  events : Array[Result[TraceEvent, String]],
+  meta? : TraceMeta = TraceMeta::empty(),
+) -> TraceStreamReader {
+  TraceStreamReader::from_results(tool, events, meta~)
 }
 
 ///|

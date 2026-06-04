@@ -694,7 +694,7 @@ test "translated BAP trace protocol registry selects URI providers" {
     } else {
       let index = Ref(0)
       Ok(
-        @traces.TraceStreamReader::create(
+        @traces.Reader::create(
           custom_tool,
           fn() {
             stream_calls.val += 1
@@ -791,7 +791,7 @@ test "translated BAP trace readers receive generated ids" {
       let index = Ref(0)
       seen_stream_id.val = Some(id)
       Ok(
-        @traces.TraceStreamReader::create(
+        @traces.Reader::create(
           custom_tool,
           fn() {
             if index.val >= custom_events.length() {
@@ -1041,7 +1041,7 @@ test "BAP-style trace load monitor controls provider stream errors" {
   )
   @traces.Trace::register_stream_reader("load-monitor-provider", fn(uri) {
     if uri == "load-monitor://trace" {
-      Ok(@traces.TraceStreamReader::from_results(test_tool(), events))
+      Ok(@traces.Reader::from_results(test_tool(), events))
     } else {
       Err(NoProvider(uri))
     }

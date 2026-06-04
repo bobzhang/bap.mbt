@@ -395,6 +395,67 @@ test "bil BAP normalize hoists memory-effect load addresses" {
 }
 
 ///|
+test "bil BAP normalize hoists memory-effect branch conditions" {
+  let mem_typ = @types.ValueType::Mem(addr_width=32, value_width=8)
+  let mem = @types.Var::new(name="mem", typ=mem_typ)
+  let x = @types.Var::new(name="x", typ=Imm(8))
+  let cond : @types.Exp = Load(
+    mem=Var(mem),
+    addr=Int(word32(0)),
+    endian=LittleEndian,
+    typ=Imm(8),
+  )
+  let normalized_if = @types.normalize([
+    If(cond~, yes=[Move(x, Int(word8(1)))], no=[Move(x, Int(word8(2)))]),
+  ])
+  assert_true(normalized_if.length() == 2)
+  match (normalized_if[0], normalized_if[1]) {
+    (
+      Move(temp, Load(mem=Var(load_mem), addr=Int(load_addr), typ=Imm(8), ..)),
+      If(cond=Var(flag), yes~, no~),
+    ) => {
+      assert_true(temp.is_virtual())
+      assert_true(temp.typ() == Imm(8))
+      assert_true(load_mem == mem)
+      assert_true(load_addr == word32(0))
+      assert_true(flag == temp)
+      assert_true(yes == [Move(x, Int(word8(1)))])
+      assert_true(no == [Move(x, Int(word8(2)))])
+    }
+    _ => fail("expected if condition load hoist")
+  }
+  let normalized_while = @types.normalize([
+    While(cond~, body=[Move(x, Int(word8(3)))]),
+  ])
+  assert_true(normalized_while.length() == 2)
+  match (normalized_while[0], normalized_while[1]) {
+    (
+      Move(temp, Load(mem=Var(setup_mem), addr=Int(setup_addr), typ=Imm(8), ..)),
+      While(cond=Var(flag), body~),
+    ) => {
+      assert_true(temp.is_virtual())
+      assert_true(flag == temp)
+      assert_true(setup_mem == mem)
+      assert_true(setup_addr == word32(0))
+      assert_true(body.length() == 2)
+      assert_true(body[0] == Move(x, Int(word8(3))))
+      match body[1] {
+        Move(
+          update,
+          Load(mem=Var(update_mem), addr=Int(update_addr), typ=Imm(8), ..)
+        ) => {
+          assert_true(update == temp)
+          assert_true(update_mem == mem)
+          assert_true(update_addr == word32(0))
+        }
+        _ => fail("expected while condition refresh")
+      }
+    }
+    _ => fail("expected while condition load hoist")
+  }
+}
+
+///|
 fn assert_ite_setup(stmt : @types.Stmt, flag : @types.Var) -> @types.Var raise {
   match stmt {
     If(cond=Var(seen_flag), yes~, no~) => {

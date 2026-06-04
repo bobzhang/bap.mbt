@@ -840,7 +840,9 @@ fn append_stmts(lhs : Array[Stmt], rhs : Array[Stmt]) -> Array[Stmt] {
 
 ///|
 fn Exp::needs_condition_hoist(self : Exp) -> Bool {
-  self.first_ite_cond() is Some(_) || self.find_non_var_load_mem() is Some(_)
+  self.first_ite_cond() is Some(_) ||
+  self.find_non_var_load_mem() is Some(_) ||
+  self.has_memory_effects()
 }
 
 ///|

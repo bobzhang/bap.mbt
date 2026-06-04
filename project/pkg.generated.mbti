@@ -58,6 +58,8 @@ pub fn input_loader_names_for_extension(String) -> Array[String]
 
 pub fn input_loaders_for_extension(String) -> Array[ProjectInputLoader]
 
+pub fn memory_slot() -> @knowledge.Slot[Unit, @memory.MemMap[String]]
+
 pub fn pass_events() -> Array[ProjectPassEvent]
 
 pub fn pass_registration_events() -> Array[ProjectPassEvent]

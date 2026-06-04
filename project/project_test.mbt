@@ -10,6 +10,50 @@ fn raw_segment() -> @image.Segment {
 }
 
 ///|
+fn assert_single_memory_value(
+  memory : @memory.MemMap[String],
+  value : String,
+) -> Unit raise {
+  assert_true(memory.entries().length() == 1)
+  let matches = memory.lookup(0x1000UL)
+  assert_true(matches.length() == 1)
+  assert_true(matches[0].1 == value)
+}
+
+///|
+test "project exposes BAP memory knowledge slot" {
+  let slot = @project.memory_slot()
+  assert_true(slot.cls().same(@core_theory.ProgramUnit::cls()))
+  assert_true(slot.owner().show() == "core:unit")
+  assert_true(slot.name().show() == "bap:unit-memory")
+  assert_true(slot.desc() == "annotated memory regions of the unit")
+  assert_true(slot.persistent() is None)
+  let domain = slot.domain()
+  let empty : @memory.MemMap[String] = @memory.MemMap::empty()
+  assert_true(domain.name().show() == "bap:unit-memory")
+  assert_true(domain.empty() is Some(_))
+  assert_true(domain.is_empty(empty))
+  let memory = raw_segment().memory()
+  let code = @memory.MemMap::singleton(memory, "code")
+  assert_true(!domain.is_empty(code))
+  assert_true(domain.order(empty, code) == Less)
+  match domain.join(empty, code) {
+    Ok(joined) => assert_single_memory_value(joined, "code")
+    Err(_) => abort("expected empty memory map to join with code map")
+  }
+  match domain.join(code, empty) {
+    Ok(joined) => assert_single_memory_value(joined, "code")
+    Err(_) => abort("expected code map to join with empty memory map")
+  }
+  match domain.join(code, code) {
+    Ok(joined) => assert_single_memory_value(joined, "code")
+    Err(_) => abort("expected identical code maps to join")
+  }
+  let data = @memory.MemMap::singleton(memory, "data")
+  assert_true(domain.join(code, data) is Err(_))
+}
+
+///|
 test "project can be created from image memory" {
   let target = @core_theory.Target::unknown()
   let symbol = @image.Symbol::create(

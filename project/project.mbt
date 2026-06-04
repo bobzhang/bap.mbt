@@ -23,6 +23,85 @@ struct Project {
 }
 
 ///|
+fn project_name(text : String) -> @knowledge.Name {
+  @knowledge.Name::create(text, pkg="bap")
+}
+
+///|
+fn project_memory_equal(lhs : @memory.Memory, rhs : @memory.Memory) -> Bool {
+  lhs.endian() == rhs.endian() &&
+  lhs.min_addr() == rhs.min_addr() &&
+  lhs.max_addr() == rhs.max_addr() &&
+  lhs.to_bytes() == rhs.to_bytes()
+}
+
+///|
+fn project_memory_maps_equal(
+  lhs : @memory.MemMap[String],
+  rhs : @memory.MemMap[String],
+) -> Bool {
+  let lhs_entries = lhs.entries()
+  let rhs_entries = rhs.entries()
+  if lhs_entries.length() != rhs_entries.length() {
+    return false
+  }
+  for i in 0..<lhs_entries.length() {
+    if !project_memory_equal(lhs_entries[i].0, rhs_entries[i].0) ||
+      lhs_entries[i].1 != rhs_entries[i].1 {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn project_memory_order(
+  lhs : @memory.MemMap[String],
+  rhs : @memory.MemMap[String],
+) -> @knowledge.PartialOrder {
+  if project_memory_maps_equal(lhs, rhs) {
+    Equal
+  } else if lhs.length() == 0 {
+    Less
+  } else if rhs.length() == 0 {
+    Greater
+  } else {
+    Incomparable
+  }
+}
+
+///|
+fn project_memory_inspect(memory : @memory.MemMap[String]) -> String {
+  let entries = memory.entries()
+  if entries.is_empty() {
+    "{}"
+  } else {
+    entries.map(entry => "\{entry.0.to_string()} => \{entry.1}").join("; ")
+  }
+}
+
+///|
+fn project_memory_domain() -> @knowledge.Domain[@memory.MemMap[String]] {
+  let empty : @memory.MemMap[String] = @memory.MemMap::empty()
+  @knowledge.Domain::custom(
+    project_name("unit-memory"),
+    project_memory_inspect,
+    empty~,
+    order=project_memory_order,
+  )
+}
+
+///|
+pub fn memory_slot() -> @knowledge.Slot[Unit, @memory.MemMap[String]] {
+  @core_theory.ProgramUnit::cls().property(
+    name=project_name("unit-memory"),
+    domain=project_memory_domain(),
+    desc="annotated memory regions of the unit",
+    public=true,
+  )
+}
+
+///|
 pub fn Library::create(
   name~ : String,
   target~ : @core_theory.Target,

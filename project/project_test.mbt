@@ -27,7 +27,7 @@ test "project exposes BAP memory knowledge slot" {
   assert_true(slot.owner().show() == "core:unit")
   assert_true(slot.name().show() == "bap:unit-memory")
   assert_true(slot.desc() == "annotated memory regions of the unit")
-  assert_true(slot.persistent() is None)
+  assert_true(slot.persistent() is Some(_))
   let domain = slot.domain()
   let empty : @memory.MemMap[String] = @memory.MemMap::empty()
   assert_true(domain.name().show() == "bap:unit-memory")
@@ -51,6 +51,14 @@ test "project exposes BAP memory knowledge slot" {
   }
   let data = @memory.MemMap::singleton(memory, "data")
   assert_true(domain.join(code, data) is Err(_))
+  match slot.persistent() {
+    Some(codec) =>
+      match codec.decode(codec.encode(code)) {
+        Ok(decoded) => assert_single_memory_value(decoded, "code")
+        Err(reason) => fail(reason)
+      }
+    None => fail("missing project memory persistent codec")
+  }
 }
 
 ///|

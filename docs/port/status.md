@@ -40,7 +40,7 @@ This repository is porting `.repos/bap` from OCaml to idiomatic MoonBit.
 - `project/disasm accessors`: Project and library values expose BAP-style `disasm` facades over their retained disassembly state.
 - `project/pass run_exn`: Project passes expose a BAP-style raising `run_exn` wrapper that preserves checked pass execution, dependency handling, and lifecycle telemetry.
 - `project/pass errors`: Project pass object execution reports BAP-style structured dependency and runtime errors while preserving string-returning project-level convenience runners.
-- `project/memory_slot`: Project exposes the BAP-style public `unit-memory` Knowledge slot on program units with a flat memory-map domain over retained memory annotations.
+- `project/memory_slot`: Project exposes the BAP-style public `unit-memory` Knowledge slot on program units with a flat memory-map domain and port-native persistence over retained memory annotations.
 - `project/state slot`: Project state exposes the BAP-style `disassembly` Knowledge slot on program units with a flat domain and port-native persistence over retained disassembly/subroutine state; upstream bin_io-compatible byte compatibility remains future work.
 - `project/collator registry`: Project collators expose BAP-style `desc` aliases and return registered collator metadata in registration order.
 - `project/analysis registry`: Project analyses expose BAP-style `desc` aliases and return registered analysis metadata in registration order.

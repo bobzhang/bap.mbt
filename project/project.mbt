@@ -97,6 +97,7 @@ pub fn memory_slot() -> @knowledge.Slot[Unit, @memory.MemMap[String]] {
     name=project_name("unit-memory"),
     domain=project_memory_domain(),
     desc="annotated memory regions of the unit",
+    persistent=project_memory_persistent(),
     public=true,
   )
 }

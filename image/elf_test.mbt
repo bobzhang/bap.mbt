@@ -773,6 +773,7 @@ test "image ELF backend loads program segments and sections" {
   assert_true(warnings.is_empty())
   assert_true(image.entry_point() == 0x400000UL)
   assert_true(image.is_executable() == Some(true))
+  assert_true(image.base_address() == Some(0x400000UL))
   assert_true(image.endian() == LittleEndian)
   match image.target() {
     Some(target) => {
@@ -1109,6 +1110,7 @@ test "image ELF backend extracts PT_DYNAMIC metadata without section headers" {
   assert_true(image.symbols().is_empty())
   assert_true(image.segments().length() == 1)
   assert_true(image.segments()[0].addr() == 0x600000UL)
+  assert_true(image.base_address() == Some(0x600000UL))
   assert_true(image.required_libraries() == ["libx.so"])
   assert_true(image.soname() == Some("libstrip.so"))
   assert_true(image.rpaths() == ["/strip/lib"])
@@ -1125,6 +1127,14 @@ test "image ELF backend extracts PT_DYNAMIC metadata without section headers" {
   assert_true(references[0].name() == "puts")
   assert_true(references[1].addr() == 0x600010UL)
   assert_true(references[1].name() == "printf")
+  match image.with_applied_relocations() {
+    Ok(applied) =>
+      match applied.segments()[0].memory().load(0x600001UL, width=64) {
+        Ok(word) => assert_true(word.to_uint64() == 0x600030UL)
+        Err(reason) => fail(reason)
+      }
+    Err(reason) => fail(reason)
+  }
 }
 
 ///|

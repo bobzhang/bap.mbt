@@ -2167,6 +2167,21 @@ fn image_elf_interpreter(
 }
 
 ///|
+fn image_elf_base_address(segments : Array[Segment]) -> UInt64? {
+  if segments.is_empty() {
+    None
+  } else {
+    let mut base = segments[0].addr()
+    for segment in segments[1:] {
+      if segment.addr() < base {
+        base = segment.addr()
+      }
+    }
+    Some(base)
+  }
+}
+
+///|
 fn image_elf_load(data : Bytes) -> Result[(Image, Array[String]), String] {
   match image_elf_parse_header(data) {
     Ok(header) => {
@@ -2287,6 +2302,7 @@ fn image_elf_load(data : Bytes) -> Result[(Image, Array[String]), String] {
       if segments.is_empty() {
         return Err("ELF file has no loadable segments or allocatable sections")
       }
+      let base_address = image_elf_base_address(segments)
       Ok(
         (
           Image::from_segments(
@@ -2304,6 +2320,7 @@ fn image_elf_load(data : Bytes) -> Result[(Image, Array[String]), String] {
             interpreter?,
             soname?=dynamic_metadata.soname,
             is_executable=header.typ == 2,
+            base_address?,
             target=image_elf_target(header),
           ),
           [],

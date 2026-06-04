@@ -32,6 +32,7 @@ This repository is porting `.repos/bap` from OCaml to idiomatic MoonBit.
 - `project/info`: BAP-style project information streams expose realized input metadata and reconstructed CFG, symtab, and program events over the local `future` stream substrate.
 - `project/pass telemetry`: Project pass registration and start/success/failure/finish notifications now expose BAP-style streams while retaining deterministic event snapshots for tests and diagnostics.
 - `project/input target overrides`: Image-backed byte, filename, and native-file project input loading now honors caller-provided target metadata while preserving custom project loader ownership of target selection.
+- `project/input custom memory`: `ProjectInput::custom` accepts upstream-style separate code and data memory maps while preserving the port's existing combined memory argument.
 - `project/state-seeded creation`: Source-driven project creation helpers accept a precomputed project state and reconstruct from it without rerunning disassembly drivers.
 - `project/restore_state`: The deprecated upstream project state-restore hook is exposed as an explicit unsupported compatibility result that directs callers to top-level state persistence.
 - `project/disasm accessors`: Project and library values expose BAP-style `disasm` facades over their retained disassembly state.

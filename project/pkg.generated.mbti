@@ -672,7 +672,7 @@ type ProjectInput
 pub fn ProjectInput::available_loaders() -> Array[String]
 pub fn ProjectInput::binary(target~ : @core_theory.Target, filename~ : String, base? : UInt64, offset? : Int, length? : Int, entry? : UInt64) -> Result[Self, String]
 pub fn ProjectInput::create(target~ : @core_theory.Target, filename~ : String, code? : @memory.MemMap[String], data? : @memory.MemMap[String], finish? : (Project) -> Project) -> Self
-pub fn ProjectInput::custom(target~ : @core_theory.Target, filename? : String, image? : @image.Image, program? : @types.Term[@types.Program], memory? : @memory.MemMap[String], symbols? : Array[@image.Symbol], libraries? : Array[Library], finish? : (Project) -> Project) -> Self
+pub fn ProjectInput::custom(target~ : @core_theory.Target, filename? : String, image? : @image.Image, program? : @types.Term[@types.Program], memory? : @memory.MemMap[String], code? : @memory.MemMap[String], data? : @memory.MemMap[String], symbols? : Array[@image.Symbol], libraries? : Array[Library], finish? : (Project) -> Project) -> Self
 pub fn ProjectInput::file(filename~ : String, loader? : String, libraries? : Array[String], target? : @core_theory.Target) -> Result[Self, String]
 pub fn ProjectInput::filename(Self) -> String?
 pub fn ProjectInput::find_loader(String) -> ProjectInputLoader?

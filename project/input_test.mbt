@@ -88,6 +88,43 @@ test "project input create combines code and data memory" {
 }
 
 ///|
+test "project input custom accepts code and data memory" {
+  let target = @core_theory.Target::unknown()
+  let extra_memory = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x300UL,
+    b"\xff",
+  )
+  let code_memory = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x400UL,
+    b"\x90",
+  )
+  let data_memory = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x500UL,
+    b"\x01\x02",
+  )
+  let memory = @memory.MemMap::singleton(extra_memory, "memory")
+  let code = @memory.MemMap::singleton(code_memory, "code")
+  let data = @memory.MemMap::singleton(data_memory, "data")
+  let input = @project.ProjectInput::custom(
+    target~,
+    filename="custom.bin",
+    memory~,
+    code~,
+    data~,
+  )
+  let project = @project.Project::from_input(input)
+  assert_true(project.filename() == Some("custom.bin"))
+  assert_true(
+    project.memory().lookup(0x300UL).any(entry => entry.1 == "memory"),
+  )
+  assert_true(project.memory().lookup(0x400UL).any(entry => entry.1 == "code"))
+  assert_true(project.memory().lookup(0x501UL).any(entry => entry.1 == "data"))
+}
+
+///|
 test "project input from bigstring and string use checked raw bytes" {
   let target = @core_theory.Target::x86_64()
   assert_true(@project.ProjectInput::from_bigstring(target~, b"") is Err(_))

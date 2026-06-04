@@ -41,10 +41,14 @@ fn project_input_add_memory_entries(
 
 ///|
 fn project_input_union_memory(
+  memory : @memory.MemMap[String]?,
   code : @memory.MemMap[String]?,
   data : @memory.MemMap[String]?,
 ) -> @memory.MemMap[String] {
-  let mut result = @memory.MemMap::empty()
+  let mut result = match memory {
+    Some(map) => map
+    None => @memory.MemMap::empty()
+  }
   match code {
     Some(map) => result = project_input_add_memory_entries(result, map)
     None => ()
@@ -63,6 +67,8 @@ pub fn ProjectInput::custom(
   image? : @image.Image,
   program? : @types.Term[@types.Program],
   memory? : @memory.MemMap[String],
+  code? : @memory.MemMap[String],
+  data? : @memory.MemMap[String],
   symbols? : Array[@image.Symbol],
   libraries? : Array[Library],
   finish? : (Project) -> Project,
@@ -72,10 +78,7 @@ pub fn ProjectInput::custom(
     filename_value: filename,
     image_value: image,
     program_value: program,
-    memory_value: match memory {
-      Some(map) => map
-      None => @memory.MemMap::empty()
-    },
+    memory_value: project_input_union_memory(memory, code, data),
     symbols_value: match symbols {
       Some(items) => items.copy()
       None =>
@@ -103,12 +106,7 @@ pub fn ProjectInput::create(
   data? : @memory.MemMap[String],
   finish? : (Project) -> Project,
 ) -> ProjectInput {
-  ProjectInput::custom(
-    target~,
-    filename~,
-    memory=project_input_union_memory(code, data),
-    finish?,
-  )
+  ProjectInput::custom(target~, filename~, code?, data?, finish?)
 }
 
 ///|

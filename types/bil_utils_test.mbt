@@ -91,6 +91,44 @@ fn word16(value : UInt64) -> @types.Word raise @bitvec.BitVecError {
 }
 
 ///|
+fn assert_addr_offset(
+  exp : @types.Exp,
+  base : @types.Var,
+  offset : Int,
+) -> Unit raise {
+  if offset == 0 {
+    match exp {
+      Var(variable) => assert_true(variable == base)
+      _ => fail("expected base address")
+    }
+  } else {
+    match exp {
+      BinOp(Plus, Var(variable), Int(word)) => {
+        assert_true(variable == base)
+        assert_true(word == @types.Word::of_int(width=32, offset))
+      }
+      _ => fail("expected address offset")
+    }
+  }
+}
+
+///|
+fn assert_byte_load(
+  exp : @types.Exp,
+  mem : @types.Var,
+  addr : @types.Var,
+  offset : Int,
+) -> Unit raise {
+  match exp {
+    Load(mem=Var(load_mem), addr=load_addr, typ=Imm(8), ..) => {
+      assert_true(load_mem == mem)
+      assert_addr_offset(load_addr, addr, offset)
+    }
+    _ => fail("expected byte load")
+  }
+}
+
+///|
 fn assert_eval_word(
   exp : @types.Exp,
   env : Map[String, @types.BilValue],
@@ -275,6 +313,96 @@ test "bil BAP normalize wrappers recurse with optional expression normalization"
       inspect(yes[0].to_string(), content="y:imm8 := (x:imm8 - 1:8u)")
     }
     _ => fail("expected normalized branch")
+  }
+}
+
+///|
+test "bil BAP normalize_exp expands wide loads into byte loads" {
+  let mem_typ = @types.ValueType::Mem(addr_width=32, value_width=8)
+  let mem = @types.Var::new(name="mem", typ=mem_typ)
+  let addr = @types.Var::new(name="addr", typ=Imm(32))
+  let x = @types.Var::new(name="x", typ=Imm(32))
+  let normalized = @types.normalize(
+    [
+      Move(
+        x,
+        Load(mem=Var(mem), addr=Var(addr), endian=LittleEndian, typ=Imm(32)),
+      ),
+    ],
+    normalize_exp=true,
+  )
+  assert_true(normalized.length() == 1)
+  match normalized[0] {
+    Move(
+      lhs,
+      Concat(
+        high=Concat(high=Concat(high=byte3, low=byte2), low=byte1),
+        low=byte0
+      )
+    ) => {
+      assert_true(lhs == x)
+      assert_byte_load(byte3, mem, addr, 3)
+      assert_byte_load(byte2, mem, addr, 2)
+      assert_byte_load(byte1, mem, addr, 1)
+      assert_byte_load(byte0, mem, addr, 0)
+    }
+    _ => fail("expected little-endian byte-load concat")
+  }
+}
+
+///|
+test "bil BAP normalize_exp expands wide stores into byte stores" {
+  let mem_typ = @types.ValueType::Mem(addr_width=32, value_width=8)
+  let mem = @types.Var::new(name="mem", typ=mem_typ)
+  let addr = @types.Var::new(name="addr", typ=Imm(32))
+  let data = @types.Var::new(name="data", typ=Imm(32))
+  let normalized = @types.normalize(
+    [
+      Move(
+        mem,
+        Store(mem=Var(mem), addr=Var(addr), value=Var(data), endian=BigEndian),
+      ),
+    ],
+    normalize_exp=true,
+  )
+  assert_true(normalized.length() == 1)
+  match normalized[0] {
+    Move(
+      lhs,
+      Store(
+        mem=Store(
+          mem=Store(
+            mem=Store(
+              mem=Var(base),
+              addr=addr0,
+              value=Extract(hi=31, lo=24, exp=Var(value0)),
+              endian=LittleEndian
+            ),
+            addr=addr1,
+            value=Extract(hi=23, lo=16, exp=Var(value1)),
+            endian=LittleEndian
+          ),
+          addr=addr2,
+          value=Extract(hi=15, lo=8, exp=Var(value2)),
+          endian=LittleEndian
+        ),
+        addr=addr3,
+        value=Extract(hi=7, lo=0, exp=Var(value3)),
+        endian=LittleEndian
+      )
+    ) => {
+      assert_true(lhs == mem)
+      assert_true(base == mem)
+      assert_true(value0 == data)
+      assert_true(value1 == data)
+      assert_true(value2 == data)
+      assert_true(value3 == data)
+      assert_addr_offset(addr0, addr, 0)
+      assert_addr_offset(addr1, addr, 1)
+      assert_addr_offset(addr2, addr, 2)
+      assert_addr_offset(addr3, addr, 3)
+    }
+    _ => fail("expected big-endian byte-store chain")
   }
 }
 

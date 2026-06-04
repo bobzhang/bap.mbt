@@ -454,7 +454,158 @@ pub fn Exp::fold_consts(self : Exp) -> Exp {
 
 ///|
 pub fn Exp::normalize(self : Exp) -> Exp {
-  self.normalize_negatives()
+  self.normalize_negatives().expand_memory()
+}
+
+///|
+fn memory_addr_offset(mem : Exp, addr : Exp, offset : Int) -> Exp {
+  if offset == 0 {
+    addr
+  } else {
+    match mem.type_of() {
+      Mem(addr_width~, ..) if addr_width > 0 =>
+        BinOp(Plus, addr, Int(try! Word::of_int(width=addr_width, offset)))
+      _ => addr
+    }
+  }
+}
+
+///|
+fn memory_cell_count(total_width : Int, cell_width : Int) -> Int? {
+  if cell_width <= 0 || total_width <= cell_width {
+    None
+  } else if total_width % cell_width == 0 {
+    Some(total_width / cell_width)
+  } else {
+    None
+  }
+}
+
+///|
+fn expand_load_memory(
+  mem : Exp,
+  addr : Exp,
+  endian : @bitvec.Endian,
+  cell_width : Int,
+  count : Int,
+  index : Int,
+) -> Exp {
+  let current = Load(
+    mem~,
+    addr=memory_addr_offset(mem, addr, index),
+    endian~,
+    typ=Imm(cell_width),
+  )
+  if index + 1 >= count {
+    current
+  } else {
+    let rest = expand_load_memory(
+      mem,
+      addr,
+      endian,
+      cell_width,
+      count,
+      index + 1,
+    )
+    if endian == LittleEndian {
+      Concat(high=rest, low=current)
+    } else {
+      Concat(high=current, low=rest)
+    }
+  }
+}
+
+///|
+fn expand_store_memory(
+  mem : Exp,
+  addr : Exp,
+  value : Exp,
+  endian : @bitvec.Endian,
+  cell_width : Int,
+  count : Int,
+) -> Exp {
+  let mut result = mem
+  for index in 0..<count {
+    let piece_index = if endian == BigEndian {
+      count - index - 1
+    } else {
+      index
+    }
+    let lo = piece_index * cell_width
+    let hi = lo + cell_width - 1
+    result = Store(
+      mem=result,
+      addr=memory_addr_offset(mem, addr, index),
+      value=Extract(hi~, lo~, exp=value),
+      endian=LittleEndian,
+    )
+  }
+  result
+}
+
+///|
+fn Exp::expand_memory(self : Exp) -> Exp {
+  match self {
+    Int(_) | Var(_) | Unknown(_) => self
+    Load(mem~, addr~, endian~, typ~) => {
+      let expanded_mem = mem.expand_memory()
+      let expanded_addr = addr.expand_memory()
+      match (expanded_mem.type_of(), typ) {
+        (Mem(value_width~, ..), Imm(load_width)) =>
+          match memory_cell_count(load_width, value_width) {
+            Some(count) =>
+              expand_load_memory(
+                expanded_mem, expanded_addr, endian, value_width, count, 0,
+              )
+            None => Load(mem=expanded_mem, addr=expanded_addr, endian~, typ~)
+          }
+        _ => Load(mem=expanded_mem, addr=expanded_addr, endian~, typ~)
+      }
+    }
+    Store(mem~, addr~, value~, endian~) => {
+      let expanded_mem = mem.expand_memory()
+      let expanded_addr = addr.expand_memory()
+      let expanded_value = value.expand_memory()
+      match (expanded_mem.type_of(), expanded_value.type_of()) {
+        (Mem(value_width~, ..), Imm(store_width)) =>
+          match memory_cell_count(store_width, value_width) {
+            Some(count) =>
+              expand_store_memory(
+                expanded_mem, expanded_addr, expanded_value, endian, value_width,
+                count,
+              )
+            None =>
+              Store(
+                mem=expanded_mem,
+                addr=expanded_addr,
+                value=expanded_value,
+                endian~,
+              )
+          }
+        _ =>
+          Store(
+            mem=expanded_mem,
+            addr=expanded_addr,
+            value=expanded_value,
+            endian~,
+          )
+      }
+    }
+    Let(variable, value, body) =>
+      Let(variable, value.expand_memory(), body.expand_memory())
+    Cast(kind~, width~, exp~) => Cast(kind~, width~, exp=exp.expand_memory())
+    Extract(hi~, lo~, exp~) => Extract(hi~, lo~, exp=exp.expand_memory())
+    Concat(high~, low~) =>
+      Concat(high=high.expand_memory(), low=low.expand_memory())
+    UnOp(op, exp) => UnOp(op, exp.expand_memory())
+    BinOp(op, lhs, rhs) => BinOp(op, lhs.expand_memory(), rhs.expand_memory())
+    Ite(cond~, yes~, no~) =>
+      Ite(
+        cond=cond.expand_memory(),
+        yes=yes.expand_memory(),
+        no=no.expand_memory(),
+      )
+  }
 }
 
 ///|

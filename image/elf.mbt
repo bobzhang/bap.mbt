@@ -1021,6 +1021,7 @@ fn image_elf_is_relative_relocation(header : ImageElfHeader, typ : Int) -> Bool 
   match header.machine {
     0x02 | 0x2b => typ == 22 // R_SPARC_RELATIVE
     0x03 | 0x3e => typ == 8 // R_386_RELATIVE / R_X86_64_RELATIVE
+    0x08 => typ == 3 // R_MIPS_REL32
     0x14 | 0x15 => typ == 22 // R_PPC_RELATIVE / R_PPC64_RELATIVE
     0x16 => typ == 12 // R_390_RELATIVE
     0x28 => typ == 23 // R_ARM_RELATIVE

@@ -956,6 +956,7 @@ test "image ELF backend recognizes architecture-relative relocation types" {
   let cases : Array[(String, Int, Int)] = [
     ("sparc", 0x02, 22),
     ("sparcv9", 0x2b, 22),
+    ("mips", 0x08, 3),
     ("powerpc", 0x14, 22),
     ("powerpc64", 0x15, 22),
     ("systemz", 0x16, 12),

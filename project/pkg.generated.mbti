@@ -344,6 +344,7 @@ pub fn ProjectDisassemblyState::instruction_count(Self) -> Int
 pub fn ProjectDisassemblyState::instruction_for(Self, @memory.Memory) -> ProjectDisassemblyInstruction?
 pub fn ProjectDisassemblyState::instructions(Self) -> Array[ProjectDisassemblyInstruction]
 pub fn ProjectDisassemblyState::instructions_in(Self, @memory.Memory) -> Array[ProjectDisassemblyInstruction]
+pub fn ProjectDisassemblyState::key_of_first_insns(Self, @memory.Memory, len~ : Int) -> ProjectInstructionKey?
 pub fn ProjectDisassemblyState::remove_block(Self, @memory.Memory) -> Self
 pub fn ProjectDisassemblyState::remove_edge(Self, ProjectDisassemblyEdge) -> Self
 pub fn ProjectDisassemblyState::remove_instruction(Self, ProjectDisassemblyInstruction) -> Self
@@ -385,6 +386,14 @@ pub fn ProjectInputLoader::name(Self) -> String
 pub fn ProjectInputLoader::priority(Self) -> Int
 pub fn ProjectInputLoader::supports_extension(Self, String) -> Bool
 
+type ProjectInstructionKey
+pub fn ProjectInstructionKey::create(Array[ProjectInstructionToken]) -> Self
+pub fn ProjectInstructionKey::length(Self) -> Int
+pub fn ProjectInstructionKey::nth(Self, Int) -> ProjectInstructionToken?
+pub fn ProjectInstructionKey::of_instructions(Array[ProjectDisassemblyInstruction], len~ : Int) -> Self?
+pub fn ProjectInstructionKey::same_normalized(Self, Self) -> Bool
+pub fn ProjectInstructionKey::tokens(Self) -> Array[ProjectInstructionToken]
+
 pub(all) enum ProjectInstructionKind {
   ProjectConditionalBranch
   ProjectUnconditionalBranch
@@ -419,6 +428,14 @@ pub fn ProjectInstructionOperand::to_int(Self) -> Int?
 pub fn ProjectInstructionOperand::to_int64(Self) -> Int64?
 pub fn ProjectInstructionOperand::to_string(Self) -> String
 pub fn ProjectInstructionOperand::to_word(Self, width~ : Int) -> @types.Word?
+
+type ProjectInstructionToken
+pub fn ProjectInstructionToken::code(Self) -> Int
+pub fn ProjectInstructionToken::create(code~ : Int, operands? : Array[ProjectInstructionOperand]) -> Self
+pub fn ProjectInstructionToken::of_instruction(ProjectDisassemblyInstruction) -> Self
+pub fn ProjectInstructionToken::operand_count(Self) -> Int
+pub fn ProjectInstructionToken::operands(Self) -> Array[ProjectInstructionOperand]
+pub fn ProjectInstructionToken::same_normalized(Self, Self) -> Bool
 
 type ProjectPass
 pub fn ProjectPass::autorun(Self) -> Bool

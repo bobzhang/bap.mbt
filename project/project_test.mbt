@@ -420,6 +420,105 @@ test "project disassembly instructions carry BAP instruction metadata" {
 }
 
 ///|
+test "project disassembly instruction keys normalize operand tokens" {
+  let block = raw_segment().memory()
+  match (block.view(words=1), block.view(from=0x1001UL, words=1)) {
+    (Ok(first_byte), Ok(second_byte)) => {
+      let reg = @project.ProjectInstructionOperand::register(name="RAX", code=1)
+      let first = @project.ProjectDisassemblyInstruction::create(
+        first_byte,
+        code=0x90,
+        name="nop",
+        operands=[reg, @project.ProjectInstructionOperand::immediate(1L)],
+      )
+      let second = @project.ProjectDisassemblyInstruction::create(
+        second_byte,
+        code=0xc3,
+        name="ret",
+        operands=[@project.ProjectInstructionOperand::immediate(2L)],
+      )
+      let state = @project.ProjectDisassemblyState::empty()
+        .add_block(block)
+        .add_instruction(second)
+        .add_instruction(first)
+      match state.key_of_first_insns(block, len=2) {
+        Some(key) => {
+          assert_true(key.length() == 2)
+          match key.nth(0) {
+            Some(token) => {
+              assert_true(token.code() == 0x90)
+              assert_true(token.operand_count() == 2)
+            }
+            None => fail("missing first token")
+          }
+          match key.nth(1) {
+            Some(token) => assert_true(token.code() == 0xc3)
+            None => fail("missing second token")
+          }
+          assert_true(key.nth(2) is None)
+          let exposed = key.tokens()
+          exposed.push(@project.ProjectInstructionToken::create(code=0xcc))
+          assert_true(key.length() == 2)
+          let same_shape = @project.ProjectInstructionKey::of_instructions(
+            [
+              first.with_operands([
+                @project.ProjectInstructionOperand::register(name="RAX", code=1),
+                @project.ProjectInstructionOperand::immediate(99L),
+                @project.ProjectInstructionOperand::floating(3.0),
+              ]),
+              second.with_operands([
+                @project.ProjectInstructionOperand::immediate(100L),
+                @project.ProjectInstructionOperand::register(
+                  name="ignored",
+                  code=9,
+                ),
+              ]),
+            ],
+            len=2,
+          )
+          match same_shape {
+            Some(other) => assert_true(key.same_normalized(other))
+            None => fail("missing normalized key")
+          }
+          let different_code = @project.ProjectInstructionKey::of_instructions(
+            [first.with_metadata(code=0xcc), second],
+            len=2,
+          )
+          match different_code {
+            Some(other) => assert_true(!key.same_normalized(other))
+            None => fail("missing different-code key")
+          }
+          let shorter = @project.ProjectInstructionKey::of_instructions(
+            [first],
+            len=1,
+          )
+          match shorter {
+            Some(other) => assert_true(!key.same_normalized(other))
+            None => fail("missing shorter key")
+          }
+        }
+        None => fail("missing instruction key")
+      }
+      assert_true(state.key_of_first_insns(block, len=3) is None)
+      assert_true(
+        @project.ProjectInstructionKey::of_instructions([first], len=-1) is None,
+      )
+      let mutable_operands = [@project.ProjectInstructionOperand::immediate(7L)]
+      let token = @project.ProjectInstructionToken::create(
+        code=0x77,
+        operands=mutable_operands,
+      )
+      mutable_operands.push(reg)
+      assert_true(token.operand_count() == 1)
+      let exposed_operands = token.operands()
+      exposed_operands.push(reg)
+      assert_true(token.operand_count() == 1)
+    }
+    (Err(reason), _) | (_, Err(reason)) => fail(reason)
+  }
+}
+
+///|
 test "project disassembly instructions carry BAP instruction kinds" {
   let block = raw_segment().memory()
   match block.view(words=1) {

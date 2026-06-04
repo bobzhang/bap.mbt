@@ -33,6 +33,17 @@ pub(all) enum ProjectInstructionKind {
 } derive(Eq, Debug)
 
 ///|
+struct ProjectInstructionToken {
+  code_value : Int
+  operands_value : Array[ProjectInstructionOperand]
+}
+
+///|
+struct ProjectInstructionKey {
+  tokens_value : Array[ProjectInstructionToken]
+}
+
+///|
 pub(all) enum ProjectDisassemblyEdgeKind {
   JumpEdge
   CondEdge
@@ -296,6 +307,119 @@ pub fn project_instruction_operands_same_normalized_prefix(
   }
   for i in 0..<len {
     if !left[i].same_normalized(right[i]) {
+      return false
+    }
+  }
+  true
+}
+
+///|
+pub fn ProjectInstructionToken::create(
+  code~ : Int,
+  operands? : Array[ProjectInstructionOperand],
+) -> ProjectInstructionToken {
+  {
+    code_value: code,
+    operands_value: match operands {
+      Some(items) => items.copy()
+      None => []
+    },
+  }
+}
+
+///|
+pub fn ProjectInstructionToken::code(self : ProjectInstructionToken) -> Int {
+  self.code_value
+}
+
+///|
+pub fn ProjectInstructionToken::operands(
+  self : ProjectInstructionToken,
+) -> Array[ProjectInstructionOperand] {
+  self.operands_value.copy()
+}
+
+///|
+pub fn ProjectInstructionToken::operand_count(
+  self : ProjectInstructionToken,
+) -> Int {
+  self.operands_value.length()
+}
+
+///|
+pub fn ProjectInstructionToken::of_instruction(
+  instruction : ProjectDisassemblyInstruction,
+) -> ProjectInstructionToken {
+  ProjectInstructionToken::create(
+    code=instruction.code(),
+    operands=instruction.operands(),
+  )
+}
+
+///|
+pub fn ProjectInstructionToken::same_normalized(
+  self : ProjectInstructionToken,
+  other : ProjectInstructionToken,
+) -> Bool {
+  self.code_value == other.code_value &&
+  project_instruction_operands_same_normalized_prefix(
+    self.operands_value,
+    other.operands_value,
+  )
+}
+
+///|
+pub fn ProjectInstructionKey::create(
+  tokens : Array[ProjectInstructionToken],
+) -> ProjectInstructionKey {
+  { tokens_value: tokens.copy() }
+}
+
+///|
+pub fn ProjectInstructionKey::of_instructions(
+  instructions : Array[ProjectDisassemblyInstruction],
+  len~ : Int,
+) -> ProjectInstructionKey? {
+  if len < 0 || instructions.length() < len {
+    return None
+  }
+  let tokens : Array[ProjectInstructionToken] = []
+  for i in 0..<len {
+    tokens.push(ProjectInstructionToken::of_instruction(instructions[i]))
+  }
+  Some(ProjectInstructionKey::create(tokens))
+}
+
+///|
+pub fn ProjectInstructionKey::length(self : ProjectInstructionKey) -> Int {
+  self.tokens_value.length()
+}
+
+///|
+pub fn ProjectInstructionKey::tokens(
+  self : ProjectInstructionKey,
+) -> Array[ProjectInstructionToken] {
+  self.tokens_value.copy()
+}
+
+///|
+pub fn ProjectInstructionKey::nth(
+  self : ProjectInstructionKey,
+  index : Int,
+) -> ProjectInstructionToken? {
+  self.tokens_value.get(index)
+}
+
+///|
+pub fn ProjectInstructionKey::same_normalized(
+  self : ProjectInstructionKey,
+  other : ProjectInstructionKey,
+) -> Bool {
+  if self.tokens_value.length() != other.tokens_value.length() {
+    return false
+  }
+  for i in 0..<self.tokens_value.length() {
+    if !self.tokens_value[i].same_normalized(other.tokens_value[i]) {
       return false
     }
   }
@@ -773,6 +897,15 @@ pub fn ProjectDisassemblyState::instructions_in(
   })
   result.sort_by((left, right) => left.addr().compare(right.addr()))
   result
+}
+
+///|
+pub fn ProjectDisassemblyState::key_of_first_insns(
+  self : ProjectDisassemblyState,
+  block : @memory.Memory,
+  len~ : Int,
+) -> ProjectInstructionKey? {
+  ProjectInstructionKey::of_instructions(self.instructions_in(block), len~)
 }
 
 ///|

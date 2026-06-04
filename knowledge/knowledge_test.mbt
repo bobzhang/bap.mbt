@@ -408,7 +408,7 @@ test "mapping domains merge pointwise facts" {
     Err(reason) => fail(reason)
   }
   assert_true(domain.join(base, conflict) is Err(_))
-  assert_eq(domain.inspect(extended), "{a: 1, b: 2}")
+  assert_eq(domain.inspect(extended), "(a b)")
 
   let summing = @knowledge.Domain::mapping(
     @knowledge.Name::create("summed-attributes", pkg="test"),

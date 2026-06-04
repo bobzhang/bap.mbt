@@ -372,7 +372,9 @@ pub fn[K : Eq + Hash, T] Domain::mapping(
     if equal(lhs, rhs) {
       Ok(rhs)
     } else {
-      Err("conflicting values in mapping domain \{name.show()}")
+      Err(
+        "mapping domain \{name.show()} has no join for \{inspect_value(lhs)} and \{inspect_value(rhs)}",
+      )
     }
   },
 ) -> Domain[Map[K, T]] {
@@ -398,12 +400,12 @@ pub fn[K : Eq + Hash, T] Domain::mapping(
     },
     join=(lhs : Map[K, T], rhs : Map[K, T]) => map_join_values(lhs, rhs, join),
     inspect=(value : Map[K, T]) => {
-      let entries = []
+      let keys = []
       for entry in value {
-        entries.push("\{inspect_key(entry.0)}: \{inspect_value(entry.1)}")
+        keys.push(inspect_key(entry.0))
       }
-      entries.sort_by((lhs, rhs) => lhs.compare(rhs))
-      "{\{entries.join(", ")}}"
+      keys.sort_by((lhs, rhs) => lhs.compare(rhs))
+      "(\{keys.join(" ")})"
     },
   )
 }

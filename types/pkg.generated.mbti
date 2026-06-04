@@ -607,6 +607,8 @@ pub fn IrCfg::update_node(Self, Term[Blk], Term[Blk]) -> Self
 type IrCfgEdge
 pub fn IrCfgEdge::cond(Self, Term[Sub]) -> Exp
 pub fn IrCfgEdge::dst(Self) -> Term[Blk]
+pub fn IrCfgEdge::edges_after(Self, Term[Sub]) -> Array[Self]
+pub fn IrCfgEdge::edges_before(Self, Term[Sub]) -> Array[Self]
 pub fn IrCfgEdge::jmp(Self) -> Term[Jmp]
 pub fn IrCfgEdge::jmps_after(Self, Term[Sub]) -> Array[Term[Jmp]]
 pub fn IrCfgEdge::jmps_before(Self, Term[Sub]) -> Array[Term[Jmp]]

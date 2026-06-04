@@ -114,6 +114,54 @@ fn ir_cfg_edge_of_jmp(
 }
 
 ///|
+fn ir_cfg_edge_edges_in_range(
+  sub : Term[Sub],
+  src : Term[Blk],
+  start : Int,
+  stop : Int,
+) -> Array[IrCfgEdge] {
+  let jmps = src.payload_value.jmps
+  let lo = Int::max(0, Int::min(start, jmps.length()))
+  let hi = Int::max(lo, Int::min(stop, jmps.length()))
+  let edges = []
+  for pos in lo..<hi {
+    match ir_cfg_edge_of_jmp(sub, src, pos, jmps[pos]) {
+      Some(edge) => edges.push(edge)
+      None => ()
+    }
+  }
+  edges
+}
+
+///|
+pub fn IrCfgEdge::edges_before(
+  self : IrCfgEdge,
+  sub : Term[Sub],
+) -> Array[IrCfgEdge] {
+  match ir_cfg_edge_current_src(sub, self) {
+    Some(src) => ir_cfg_edge_edges_in_range(sub, src, 0, self.pos_value)
+    None => []
+  }
+}
+
+///|
+pub fn IrCfgEdge::edges_after(
+  self : IrCfgEdge,
+  sub : Term[Sub],
+) -> Array[IrCfgEdge] {
+  match ir_cfg_edge_current_src(sub, self) {
+    Some(src) =>
+      ir_cfg_edge_edges_in_range(
+        sub,
+        src,
+        self.pos_value + 1,
+        src.payload_value.jmps.length(),
+      )
+    None => []
+  }
+}
+
+///|
 pub fn Term::sub_out_edges(
   self : Term[Sub],
   blk : Term[Blk],

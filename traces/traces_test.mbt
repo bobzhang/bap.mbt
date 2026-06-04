@@ -60,12 +60,22 @@ fn unwrap_events(
 
 ///|
 fn test_binary() -> @traces.BinaryInfo {
-  { path: "home", args: ["go"], envp: ["drink=coffee"], md5sum: "" }
+  @traces.Binary::create(
+    path="home",
+    args=["go"],
+    envp=["drink=coffee"],
+    md5sum="",
+  )
 }
 
 ///|
 fn test_tracer() -> @traces.TracerInfo {
-  { name: "coffee", args: ["scent"], envp: ["require=coffee"], version: "0.1" }
+  @traces.Tracer::create(
+    name="coffee",
+    args=["scent"],
+    envp=["require=coffee"],
+    version="0.1",
+  )
 }
 
 ///|
@@ -77,8 +87,12 @@ fn test_meta() -> @traces.TraceMeta {
 fn extended_meta() -> @traces.TraceMeta {
   test_meta()
   .set_arch(X86_64)
-  .set_binary_file_stats({ size: 42, atime: 1.25, mtime: 2.5, ctime: 3.75 })
-  .set_trace_stats({ user: "me", host: "host", time: 4.5 })
+  .set_binary_file_stats(
+    @traces.File_stats::create(size=42, atime=1.25, mtime=2.5, ctime=3.75),
+  )
+  .set_trace_stats(
+    @traces.Trace_stats::create(user="me", host="host", time=4.5),
+  )
   .set("comment", Text("snapshot"))
   .set("pid", Int(-1))
   .set("complete", Bool(true))
@@ -505,47 +519,55 @@ test "translated BAP trace metadata dictionaries expose sorted entries and remov
 
 ///|
 test "translated BAP trace metadata values render like source printers" {
-  let binary : @traces.BinaryInfo = {
-    path: "/bin/echo",
-    args: ["echo", "hello"],
-    envp: ["LANG=C", "TERM=dumb"],
-    md5sum: "d41d8cd98f00b204e9800998ecf8427e",
-  }
+  let binary = @traces.Binary::create(
+    path="/bin/echo",
+    args=["echo", "hello"],
+    envp=["LANG=C", "TERM=dumb"],
+    md5sum="d41d8cd98f00b204e9800998ecf8427e",
+  )
   assert_true(
     binary.to_string() ==
     "binary {\n  path:   /bin/echo\n  md5sum: d41d8cd98f00b204e9800998ecf8427e\n  args:   echo hello\n  envp:\n  LANG=C\n  TERM=dumb\n}",
   )
+  assert_true(@traces.Binary::to_string(binary) == binary.to_string())
 
-  let tracer : @traces.TracerInfo = {
-    name: "qemu-user",
-    version: "8.2",
-    args: ["-d", "exec"],
-    envp: ["TRACE=1"],
-  }
+  let tracer = @traces.Tracer::create(
+    name="qemu-user",
+    version="8.2",
+    args=["-d", "exec"],
+    envp=["TRACE=1"],
+  )
   assert_true(
     tracer.to_string() ==
     "tracer {\n  name:    qemu-user\n  version: 8.2\n  args:    -d exec\n  envp:\n  TRACE=1\n}",
   )
+  assert_true(@traces.Tracer::to_string(tracer) == tracer.to_string())
 
-  let file_stats : @traces.FileStatsInfo = {
-    size: 42,
-    atime: 0.0,
-    mtime: 86400.0,
-    ctime: 2678400.0,
-  }
+  let file_stats = @traces.File_stats::create(
+    size=42,
+    atime=0.0,
+    mtime=86400.0,
+    ctime=2678400.0,
+  )
   assert_true(
     file_stats.to_string() ==
     "trace stats {\n  size: 42\n  atime: 00:00:00 01.00.1970 GMT\n  mtime: 00:00:00 02.00.1970 GMT\n  ctime: 00:00:00 01.01.1970 GMT\n}",
   )
+  assert_true(
+    @traces.File_stats::to_string(file_stats) == file_stats.to_string(),
+  )
 
-  let trace_stats : @traces.TraceStatsInfo = {
-    user: "me",
-    host: "host",
-    time: 4.5,
-  }
+  let trace_stats = @traces.Trace_stats::create(
+    user="me",
+    host="host",
+    time=4.5,
+  )
   assert_true(
     trace_stats.to_string() ==
     "Trace created on host by me at 00:00:04 01.00.1970 GMT",
+  )
+  assert_true(
+    @traces.Trace_stats::to_string(trace_stats) == trace_stats.to_string(),
   )
 }
 

@@ -1004,6 +1004,18 @@ pub(all) struct TraceStatsInfo {
 } derive(Eq, Debug)
 
 ///|
+pub(all) struct Tracer {}
+
+///|
+pub(all) struct Binary {}
+
+///|
+pub(all) struct File_stats {}
+
+///|
+pub(all) struct Trace_stats {}
+
+///|
 fn trace_pad2(value : Int) -> String {
   value.to_string().pad_start(2, '0')
 }
@@ -1107,6 +1119,65 @@ pub fn FileStatsInfo::to_string(self : FileStatsInfo) -> String {
 ///|
 pub fn TraceStatsInfo::to_string(self : TraceStatsInfo) -> String {
   "Trace created on \{self.host} by \{self.user} at \{trace_time_to_string(self.time)}"
+}
+
+///|
+pub fn Tracer::create(
+  name~ : String,
+  args~ : Array[String],
+  envp~ : Array[String],
+  version~ : String,
+) -> TracerInfo {
+  { name, args, envp, version }
+}
+
+///|
+pub fn Tracer::to_string(value : TracerInfo) -> String {
+  value.to_string()
+}
+
+///|
+pub fn Binary::create(
+  path~ : String,
+  args~ : Array[String],
+  envp~ : Array[String],
+  md5sum~ : String,
+) -> BinaryInfo {
+  { path, args, envp, md5sum }
+}
+
+///|
+pub fn Binary::to_string(value : BinaryInfo) -> String {
+  value.to_string()
+}
+
+///|
+pub fn File_stats::create(
+  size~ : Int,
+  atime~ : Double,
+  mtime~ : Double,
+  ctime~ : Double,
+) -> FileStatsInfo {
+  { size, atime, mtime, ctime }
+}
+
+///|
+pub fn File_stats::to_string(value : FileStatsInfo) -> String {
+  value.to_string()
+}
+
+///|
+pub fn Trace_stats::create(
+  user~ : String,
+  host~ : String,
+  time~ : Double,
+) -> TraceStatsInfo {
+  { user, host, time }
+}
+
+///|
+pub fn Trace_stats::to_string(value : TraceStatsInfo) -> String {
+  value.to_string()
 }
 
 ///|

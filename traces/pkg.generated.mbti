@@ -19,6 +19,11 @@ pub(all) suberror TraceError {
 } derive(Eq, @debug.Debug)
 
 // Types and methods
+pub(all) struct Binary {
+}
+pub fn Binary::create(path~ : String, args~ : Array[String], envp~ : Array[String], md5sum~ : String) -> BinaryInfo
+pub fn Binary::to_string(BinaryInfo) -> String
+
 pub(all) struct BinaryInfo {
   path : String
   args : Array[String]
@@ -65,6 +70,11 @@ pub(all) struct FileStatsInfo {
   ctime : Double
 } derive(Eq, @debug.Debug)
 pub fn FileStatsInfo::to_string(Self) -> String
+
+pub(all) struct File_stats {
+}
+pub fn File_stats::create(size~ : Int, atime~ : Double, mtime~ : Double, ctime~ : Double) -> FileStatsInfo
+pub fn File_stats::to_string(FileStatsInfo) -> String
 
 pub(all) struct Id {
 }
@@ -403,6 +413,16 @@ pub fn TraceTool::name(Self) -> String
 pub fn TraceTool::register(name~ : String, supported_tags~ : Array[String]) -> Self
 pub fn TraceTool::supported_tags(Self) -> Array[String]
 pub fn TraceTool::supports(Self, String) -> Bool
+
+pub(all) struct Trace_stats {
+}
+pub fn Trace_stats::create(user~ : String, host~ : String, time~ : Double) -> TraceStatsInfo
+pub fn Trace_stats::to_string(TraceStatsInfo) -> String
+
+pub(all) struct Tracer {
+}
+pub fn Tracer::create(name~ : String, args~ : Array[String], envp~ : Array[String], version~ : String) -> TracerInfo
+pub fn Tracer::to_string(TracerInfo) -> String
 
 pub(all) struct TracerInfo {
   name : String

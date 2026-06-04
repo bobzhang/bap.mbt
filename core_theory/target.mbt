@@ -2987,7 +2987,7 @@ fn riscv_role_names(role : Role) -> Array[String] {
     ZeroRegister => ["zero", "x0"]
     OneRegister => []
     LinkRegister => ["ra", "x1"]
-    ThreadPointer => ["gp", "x3"]
+    ThreadPointer => ["tp", "x4"]
     PrivilegedRegister => []
     Argument =>
       concat_role_names([
@@ -3024,7 +3024,7 @@ fn riscv_role_names(role : Role) -> Array[String] {
         role_names("f", 18, 27),
         role_names("fs", 0, 11),
       ])
-    Reserved => []
+    Reserved => ["gp", "tp", "x3", "x4"]
     ZeroFlag | CarryFlag | SignFlag | OverflowFlag | ParityFlag => []
     ThumbMode => []
   }

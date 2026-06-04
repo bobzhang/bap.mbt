@@ -2595,6 +2595,11 @@ test "target role helpers classify common architecture variables" {
   assert_true(riscv.role_aliases(FloatingRegister).contains("fs11"))
   assert_true(riscv.role_aliases(CallerSaved).contains("ft11"))
   assert_true(riscv.role_aliases(CalleeSaved).contains("fs11"))
+  assert_true(riscv.role_aliases(ThreadPointer).contains("tp"))
+  assert_true(riscv.role_aliases(ThreadPointer).contains("x4"))
+  assert_true(!riscv.role_aliases(ThreadPointer).contains("gp"))
+  assert_true(riscv.role_aliases(Reserved).contains("gp"))
+  assert_true(riscv.role_aliases(Reserved).contains("tp"))
   assert_true(riscv.role_aliases(PseudoRegister).contains("x0"))
   assert_true(riscv.role_aliases(PseudoRegister).contains("pc"))
   assert_true(!riscv.role_aliases(ResultRegister).contains("rax"))
@@ -2649,8 +2654,19 @@ test "target role helpers classify common architecture variables" {
     None => fail("missing X1")
   }
   match riscv.find_var("X3") {
-    Some(tp) => assert_true(riscv.roles_of_var(tp).contains(ThreadPointer))
+    Some(gp) => {
+      assert_true(riscv.roles_of_var(gp).contains(Reserved))
+      assert_true(riscv.roles_of_var(gp).contains(SpecialRegister))
+      assert_true(!riscv.roles_of_var(gp).contains(ThreadPointer))
+    }
     None => fail("missing X3")
+  }
+  match riscv.find_var("X4") {
+    Some(tp) => {
+      assert_true(riscv.roles_of_var(tp).contains(ThreadPointer))
+      assert_true(riscv.roles_of_var(tp).contains(Reserved))
+    }
+    None => fail("missing X4")
   }
   match riscv.find_var("X8") {
     Some(saved) => assert_true(riscv.roles_of_var(saved).contains(CalleeSaved))
@@ -2672,6 +2688,20 @@ test "target role helpers classify common architecture variables" {
   match riscv.find_var("sp") {
     Some(sp) => assert_true(riscv.roles_of_var(sp).contains(StackPointer))
     None => fail("missing sp alias")
+  }
+  match riscv.find_var("gp") {
+    Some(gp) => {
+      assert_true(riscv.roles_of_var(gp).contains(Reserved))
+      assert_true(!riscv.roles_of_var(gp).contains(ThreadPointer))
+    }
+    None => fail("missing gp alias")
+  }
+  match riscv.find_var("tp") {
+    Some(tp) => {
+      assert_true(riscv.roles_of_var(tp).contains(ThreadPointer))
+      assert_true(riscv.roles_of_var(tp).contains(Reserved))
+    }
+    None => fail("missing tp alias")
   }
   match riscv.find_var("X10") {
     Some(arg) => {
@@ -2717,6 +2747,13 @@ test "target role helpers classify common architecture variables" {
       assert_true(origin.source().map(v => v.ident()) == Some("X2"))
     }
     None => fail("missing sp alias origin")
+  }
+  match riscv.origin_of_name("TP") {
+    Some(origin) => {
+      assert_true(origin.aliased().ident() == "TP")
+      assert_true(origin.source().map(v => v.ident()) == Some("X4"))
+    }
+    None => fail("missing TP alias origin")
   }
   match riscv.origin_of_name("FA0") {
     Some(origin) => {

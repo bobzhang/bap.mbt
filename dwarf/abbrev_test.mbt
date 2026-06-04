@@ -132,7 +132,15 @@ test "translated DWARF abbreviation value classification follows BAP FBI inputs"
     DwarfNameValue,
   )
   assert_true(
+    @dwarf.DwarfAbbrevField::create(attr=DwarfName, form=DwarfIndirect).value_kind() ==
+    DwarfNameValue,
+  )
+  assert_true(
     @dwarf.DwarfAbbrevField::create(attr=DwarfLinkageName, form=DwarfString).value_kind() ==
+    DwarfNameValue,
+  )
+  assert_true(
+    @dwarf.DwarfAbbrevField::create(attr=DwarfLinkageName, form=DwarfIndirect).value_kind() ==
     DwarfNameValue,
   )
   assert_true(
@@ -194,8 +202,16 @@ test "translated DWARF abbreviation value classification follows BAP FBI inputs"
     DwarfHighPcOffsetValue,
   )
   assert_true(
+    @dwarf.DwarfAbbrevField::create(attr=DwarfHighPc, form=DwarfIndirect).value_kind() ==
+    DwarfIgnoredValue,
+  )
+  assert_true(
     @dwarf.DwarfAbbrevField::create(attr=DwarfLowPc, form=DwarfConst(DwarfFour)).value_kind() ==
     DwarfIgnoredValue,
+  )
+  assert_true(
+    @dwarf.DwarfAbbrevField::create(attr=DwarfLowPc, form=DwarfIndirect).value_kind() ==
+    DwarfLowPcValue,
   )
   assert_true(
     @dwarf.DwarfAbbrevField::create(attr=DwarfLowPc, form=DwarfFlag).value_kind() ==
@@ -206,7 +222,18 @@ test "translated DWARF abbreviation value classification follows BAP FBI inputs"
     DwarfEntryPcValue,
   )
   assert_true(
+    @dwarf.DwarfAbbrevField::create(attr=DwarfEntryPc, form=DwarfIndirect).value_kind() ==
+    DwarfEntryPcValue,
+  )
+  assert_true(
     @dwarf.DwarfAbbrevField::create(attr=DwarfStrOffsetsBase, form=DwarfOffset).value_kind() ==
+    DwarfStrOffsetsBaseValue,
+  )
+  assert_true(
+    @dwarf.DwarfAbbrevField::create(
+      attr=DwarfStrOffsetsBase,
+      form=DwarfIndirect,
+    ).value_kind() ==
     DwarfStrOffsetsBaseValue,
   )
   assert_true(
@@ -214,7 +241,15 @@ test "translated DWARF abbreviation value classification follows BAP FBI inputs"
     DwarfAddrBaseValue,
   )
   assert_true(
+    @dwarf.DwarfAbbrevField::create(attr=DwarfAddrBase, form=DwarfIndirect).value_kind() ==
+    DwarfAddrBaseValue,
+  )
+  assert_true(
     @dwarf.DwarfAbbrevField::create(attr=DwarfRangesBase, form=DwarfOffset).value_kind() ==
+    DwarfRangesBaseValue,
+  )
+  assert_true(
+    @dwarf.DwarfAbbrevField::create(attr=DwarfRangesBase, form=DwarfIndirect).value_kind() ==
     DwarfRangesBaseValue,
   )
   assert_true(
@@ -226,7 +261,15 @@ test "translated DWARF abbreviation value classification follows BAP FBI inputs"
     DwarfRangesValue,
   )
   assert_true(
+    @dwarf.DwarfAbbrevField::create(attr=DwarfRanges, form=DwarfIndirect).value_kind() ==
+    DwarfRangesValue,
+  )
+  assert_true(
     @dwarf.DwarfAbbrevField::create(attr=DwarfRnglistsBase, form=DwarfOffset).value_kind() ==
+    DwarfRnglistsBaseValue,
+  )
+  assert_true(
+    @dwarf.DwarfAbbrevField::create(attr=DwarfRnglistsBase, form=DwarfIndirect).value_kind() ==
     DwarfRnglistsBaseValue,
   )
 }

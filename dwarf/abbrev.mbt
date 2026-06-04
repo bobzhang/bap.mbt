@@ -60,30 +60,40 @@ pub fn DwarfAbbrevField::value_kind(
     | (DwarfName, DwarfStrp)
     | (DwarfName, DwarfStrx(_))
     | (DwarfName, DwarfLineStrp)
+    | (DwarfName, DwarfIndirect)
     | (DwarfLinkageName, DwarfString)
     | (DwarfLinkageName, DwarfStrp)
     | (DwarfLinkageName, DwarfStrx(_))
-    | (DwarfLinkageName, DwarfLineStrp) => DwarfNameValue
-    (DwarfLowPc, DwarfAddr) | (DwarfLowPc, DwarfAddrx(_)) => DwarfLowPcValue
-    (DwarfEntryPc, DwarfAddr) | (DwarfEntryPc, DwarfAddrx(_)) =>
-      DwarfEntryPcValue
+    | (DwarfLinkageName, DwarfLineStrp)
+    | (DwarfLinkageName, DwarfIndirect) => DwarfNameValue
+    (DwarfLowPc, DwarfAddr)
+    | (DwarfLowPc, DwarfAddrx(_))
+    | (DwarfLowPc, DwarfIndirect) => DwarfLowPcValue
+    (DwarfEntryPc, DwarfAddr)
+    | (DwarfEntryPc, DwarfAddrx(_))
+    | (DwarfEntryPc, DwarfIndirect) => DwarfEntryPcValue
     (DwarfHighPc, DwarfAddr) | (DwarfHighPc, DwarfAddrx(_)) =>
       DwarfHighPcAddressValue
     (DwarfHighPc, DwarfConst(_))
     | (DwarfHighPc, DwarfSignedConst(_))
     | (DwarfHighPc, DwarfImplicitConst(_)) => DwarfHighPcOffsetValue
-    (DwarfRanges, DwarfOffset) | (DwarfRanges, DwarfRnglistx) =>
-      DwarfRangesValue
+    (DwarfRanges, DwarfOffset)
+    | (DwarfRanges, DwarfRnglistx)
+    | (DwarfRanges, DwarfIndirect) => DwarfRangesValue
     (DwarfSpecification, DwarfRef(_))
     | (DwarfSpecification, DwarfRefAddr)
     | (DwarfSpecification, DwarfIndirect)
     | (DwarfAbstractOrigin, DwarfRef(_))
     | (DwarfAbstractOrigin, DwarfRefAddr)
     | (DwarfAbstractOrigin, DwarfIndirect) => DwarfNameRefValue
-    (DwarfStrOffsetsBase, DwarfOffset) => DwarfStrOffsetsBaseValue
-    (DwarfAddrBase, DwarfOffset) => DwarfAddrBaseValue
-    (DwarfRangesBase, DwarfOffset) => DwarfRangesBaseValue
-    (DwarfRnglistsBase, DwarfOffset) => DwarfRnglistsBaseValue
+    (DwarfStrOffsetsBase, DwarfOffset) | (DwarfStrOffsetsBase, DwarfIndirect) =>
+      DwarfStrOffsetsBaseValue
+    (DwarfAddrBase, DwarfOffset) | (DwarfAddrBase, DwarfIndirect) =>
+      DwarfAddrBaseValue
+    (DwarfRangesBase, DwarfOffset) | (DwarfRangesBase, DwarfIndirect) =>
+      DwarfRangesBaseValue
+    (DwarfRnglistsBase, DwarfOffset) | (DwarfRnglistsBase, DwarfIndirect) =>
+      DwarfRnglistsBaseValue
     _ => DwarfIgnoredValue
   }
 }

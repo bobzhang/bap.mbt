@@ -529,6 +529,45 @@ test "translated DWARF FBI resolves DWARF5 addrx function bounds" {
 }
 
 ///|
+test "translated DWARF FBI resolves GNU addr index with GNU addr base" {
+  let abbrev = b"\x01\x11\x01" +
+    b"\xb3\x42\x17" +
+    b"\x00\x00" +
+    b"\x02\x2e\x00" +
+    b"\x03\x08" +
+    b"\x11\x81\x3e" +
+    b"\x12\x81\x3e" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x17\x00\x00\x00" +
+    b"\x04\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x04" +
+    b"\x01" +
+    b"\x00\x00\x00\x00" +
+    b"\x02" +
+    b"gaddrx\x00" +
+    b"\x00" +
+    b"\x01" +
+    b"\x00"
+  let addr = b"\x20\x00\x00\x00" + b"\x2c\x00\x00\x00"
+  let data = expect_fbi_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=LittleEndian,
+      info~,
+      abbrev~,
+      str=b"",
+      addr~,
+    ),
+  )
+  let functions = expect_functions(data.functions())
+  assert_true(functions.length() == 1)
+  assert_true(functions[0].name() == "gaddrx")
+  assert_true(functions[0].low_pc() == 0x20UL)
+  assert_true(functions[0].high_pc() == Some(0x2cUL))
+}
+
+///|
 test "translated DWARF FBI skips DWARF5 producer metadata forms" {
   let abbrev = b"\x01\x11\x01" +
     b"\x3a\x21\x01" +

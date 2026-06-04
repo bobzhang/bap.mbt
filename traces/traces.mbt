@@ -2010,7 +2010,10 @@ pub fn Trace::save(uri : String, trace : Trace) -> Result[Unit, TraceError] {
 }
 
 ///|
-pub fn Trace::load(uri : String) -> Result[Trace, TraceError] {
+pub fn Trace::load(
+  uri : String,
+  monitor? : TraceMonitor = TraceMonitor::fail_on_error(),
+) -> Result[Trace, TraceError] {
   match find_protocol(uri) {
     Ok(protocol) =>
       match trace_stream_reader_with_id_registry.get(protocol) {
@@ -2023,6 +2026,7 @@ pub fn Trace::load(uri : String) -> Result[Trace, TraceError] {
                   trace_id,
                   trace_reader.tool,
                   trace_reader.next,
+                  monitor~,
                 ).set_meta(trace_reader.meta),
                 proto_name: Some(protocol),
               })
@@ -2035,9 +2039,11 @@ pub fn Trace::load(uri : String) -> Result[Trace, TraceError] {
               match reader(uri) {
                 Ok(trace_reader) =>
                   Ok({
-                    ..Trace::create_stream(trace_reader.tool, trace_reader.next).set_meta(
-                      trace_reader.meta,
-                    ),
+                    ..Trace::create_stream(
+                      trace_reader.tool,
+                      trace_reader.next,
+                      monitor~,
+                    ).set_meta(trace_reader.meta),
                     proto_name: Some(protocol),
                   })
                 Err(error) => Err(error)
@@ -2053,6 +2059,7 @@ pub fn Trace::load(uri : String) -> Result[Trace, TraceError] {
                           trace_id,
                           trace_reader.tool,
                           trace_reader.events,
+                          monitor~,
                         ).set_meta(trace_reader.meta),
                         proto_name: Some(protocol),
                       })
@@ -2068,6 +2075,7 @@ pub fn Trace::load(uri : String) -> Result[Trace, TraceError] {
                             ..Trace::from_results(
                               trace_reader.tool,
                               trace_reader.events,
+                              monitor~,
                             ).set_meta(trace_reader.meta),
                             proto_name: Some(protocol),
                           })

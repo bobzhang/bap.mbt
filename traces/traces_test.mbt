@@ -916,3 +916,34 @@ test "translated BAP trace monitors handle source errors" {
   let user = trace_with_monitor(@traces.TraceMonitor::create(fn(_) { Skip }))
   assert_true(unwrap_events(user.read_events()) == test_events())
 }
+
+///|
+test "BAP-style trace load monitor controls provider stream errors" {
+  let events = events_with_error()
+  @traces.Trace::register_protocol(
+    @traces.TraceProtocol::create(name="load-monitor-provider", probe=fn(uri) {
+      uri.has_prefix("load-monitor://")
+    }),
+  )
+  @traces.Trace::register_stream_reader("load-monitor-provider", fn(uri) {
+    if uri == "load-monitor://trace" {
+      Ok(@traces.TraceStreamReader::from_results(test_tool(), events))
+    } else {
+      Err(NoProvider(uri))
+    }
+  })
+  match @traces.Trace::load("load-monitor://trace") {
+    Ok(trace) =>
+      assert_true(trace.read_events() == Err(TraceFailure("syscall failed")))
+    Err(_) => fail("default monitored load failed")
+  }
+  match
+    @traces.Trace::load(
+      "load-monitor://trace",
+      monitor=@traces.TraceMonitor::ignore_errors(),
+    ) {
+    Ok(trace) =>
+      assert_true(unwrap_events(trace.read_events()) == test_events())
+    Err(_) => fail("ignore-error monitored load failed")
+  }
+}

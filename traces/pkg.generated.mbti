@@ -91,7 +91,7 @@ pub fn Trace::from_results(TraceTool, Array[Result[TraceEvent, String]], monitor
 pub fn Trace::get_attr(Self, String) -> TraceAttrValue?
 pub fn Trace::has_attr(Self, String) -> Bool
 pub fn Trace::id(Self) -> TraceId
-pub fn Trace::load(String) -> Result[Self, TraceError]
+pub fn Trace::load(String, monitor? : TraceMonitor) -> Result[Self, TraceError]
 pub fn Trace::loaded() -> Array[Self]
 pub fn Trace::loaded_iter() -> Iter[Self]
 pub fn Trace::meta(Self) -> TraceMeta

@@ -33,7 +33,9 @@ pub fn name_uuid() -> String {
 
 ///|
 pub fn project_pass() -> @project.ProjectPass {
-  @project.ProjectPass::create(name="abi", run=project => Ok(pass(project)))
+  @project.ProjectPass::create(name="abi", autorun=true, run=project => {
+    Ok(pass(project))
+  })
 }
 
 ///|

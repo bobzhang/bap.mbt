@@ -54,6 +54,7 @@ test "abi dispatcher applies newest registered passes first" {
 test "abi dispatcher can be installed as a project pass" {
   let tag = @project.ProjectStorageTag::string("abi-project-pass")
   @abi.register_pass(project => project.set_tag(tag, "ran"))
+  assert_true(@abi.project_pass().autorun())
   match @abi.register_project_pass_if_absent() {
     Ok(_) => ()
     Err(reason) => fail(reason)
@@ -62,5 +63,14 @@ test "abi dispatcher can be installed as a project pass" {
     Ok(project) => assert_eq(expect_string_tag(project, tag), "ran")
     Err(reason) => fail(reason)
   }
-  assert_true(@project.find_pass("abi") is Some(_))
+  match @project.find_pass("abi") {
+    Some(pass) => assert_true(pass.autorun())
+    None => fail("missing abi pass")
+  }
+  let autorun_tag = @project.ProjectStorageTag::string("abi-autorun-pass")
+  @abi.register_pass(project => project.set_tag(autorun_tag, "autorun"))
+  match empty_project().run_autorun_passes() {
+    Ok(project) => assert_eq(expect_string_tag(project, autorun_tag), "autorun")
+    Err(reason) => fail(reason)
+  }
 }

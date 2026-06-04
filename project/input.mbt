@@ -685,6 +685,299 @@ pub fn Project::from_input(input : ProjectInput) -> Project {
 }
 
 ///|
+fn[T] project_input_source_values(
+  kind : String,
+  source : ProjectDisassemblySource[T]?,
+) -> Result[Array[T], String] {
+  match source {
+    None => Ok([])
+    Some(source) => {
+      let errors = source.errors()
+      if errors.is_empty() {
+        Ok(source.values())
+      } else {
+        Err("project \{kind} source failed: \{errors.join("; ")}")
+      }
+    }
+  }
+}
+
+///|
+fn project_input_provider_applies(path : String?, project : Project) -> Bool {
+  match path {
+    Some(value) => project.filename() == Some(value)
+    None => true
+  }
+}
+
+///|
+fn project_input_root_symbol(
+  root : UInt64,
+  symbolizer : ProjectSymbolizer?,
+) -> @image.Symbol {
+  let name = match symbolizer {
+    Some(value) => value.resolve(root)
+    None => ProjectSymbolizer::name_of_addr(root)
+  }
+  @image.Symbol::create(name~, addr=root, is_function=true)
+}
+
+///|
+fn project_input_push_symbol_if_absent(
+  symbols : Array[@image.Symbol],
+  symbol : @image.Symbol,
+) -> Unit {
+  if !project_input_has_symbol(symbols, symbol) {
+    symbols.push(symbol)
+  }
+}
+
+///|
+fn project_input_chain_symbolizers(
+  project : Project,
+  symbolizers : Array[ProjectSymbolizer],
+) -> ProjectSymbolizer? {
+  let applicable = []
+  for symbolizer in symbolizers {
+    if project_input_provider_applies(symbolizer.path(), project) {
+      applicable.push(symbolizer)
+    }
+  }
+  if applicable.is_empty() {
+    None
+  } else {
+    Some(ProjectSymbolizer::chain(applicable))
+  }
+}
+
+///|
+fn project_input_apply_rooters(
+  project : Project,
+  rooters : Array[ProjectRooter],
+  symbolizer : ProjectSymbolizer?,
+) -> Project {
+  let mut selected = ProjectRooter::empty()
+  for rooter in rooters {
+    if project_input_provider_applies(rooter.path(), project) {
+      selected = selected.union(rooter)
+    }
+  }
+  let roots = selected.roots()
+  if roots.is_empty() {
+    project
+  } else {
+    let symbols = project.symbols()
+    for root in roots {
+      project_input_push_symbol_if_absent(
+        symbols,
+        project_input_root_symbol(root, symbolizer),
+      )
+    }
+    project.with_symbols(symbols)
+  }
+}
+
+///|
+fn project_input_apply_symbolizers(
+  project : Project,
+  symbolizer : ProjectSymbolizer?,
+) -> Project {
+  match symbolizer {
+    None => project
+    Some(symbolizer) => {
+      let symbols = project.symbols()
+      for block in project.disassembly().blocks() {
+        match symbolizer.run(block.min_addr()) {
+          Some(name) =>
+            project_input_push_symbol_if_absent(
+              symbols,
+              @image.Symbol::create(
+                name~,
+                addr=block.min_addr(),
+                is_function=true,
+              ),
+            )
+          None => ()
+        }
+      }
+      project.with_symbols(symbols)
+    }
+  }
+}
+
+///|
+fn project_input_disassemble_with_sources(
+  project : Project,
+  disassembler : String?,
+  driver_source : ProjectDisassemblySource[ProjectDisassemblyDriver]?,
+) -> Result[Project, String] {
+  let drivers = match
+    project_input_source_values("disassembly driver", driver_source) {
+    Ok(values) => values
+    Err(reason) => return Err(reason)
+  }
+  if !drivers.is_empty() {
+    project.disassemble_with_drivers(drivers)
+  } else {
+    match disassembler {
+      Some(name) => project.disassemble(driver=name)
+      None => project.disassemble_with_available()
+    }
+  }
+}
+
+///|
+fn project_input_apply_branchers(
+  project : Project,
+  branchers : Array[ProjectBrancher],
+) -> Result[Project, String] {
+  let mut result = project
+  for brancher in branchers {
+    match result.apply_brancher(brancher~) {
+      Ok(next) => result = next
+      Err(reason) => return Err(reason)
+    }
+  }
+  Ok(result)
+}
+
+///|
+fn project_input_reconstruct_with_sources(
+  project : Project,
+  reconstructor_source : ProjectDisassemblySource[ProjectReconstructor]?,
+) -> Result[Project, String] {
+  let reconstructors = match
+    project_input_source_values("reconstructor", reconstructor_source) {
+    Ok(values) => values
+    Err(reason) => return Err(reason)
+  }
+  if reconstructors.is_empty() {
+    project.reconstruct()
+  } else {
+    let failures = []
+    for reconstructor in reconstructors {
+      match reconstructor.run(project) {
+        Ok(result) => return Ok(result)
+        Err(reason) => failures.push(reason)
+      }
+    }
+    Err("all project reconstructors failed: \{failures.join("; ")}")
+  }
+}
+
+///|
+pub fn Project::create_from_input(
+  input : ProjectInput,
+  disassembler? : String,
+  driver_source? : ProjectDisassemblySource[ProjectDisassemblyDriver],
+  brancher? : ProjectDisassemblySource[ProjectBrancher],
+  symbolizer? : ProjectDisassemblySource[ProjectSymbolizer],
+  rooter? : ProjectDisassemblySource[ProjectRooter],
+  reconstructor? : ProjectDisassemblySource[ProjectReconstructor],
+) -> Result[Project, String] {
+  match register_builtin_disassembly_drivers() {
+    Ok(_) => ()
+    Err(reason) => return Err(reason)
+  }
+  match register_builtin_reconstructors() {
+    Ok(_) => ()
+    Err(reason) => return Err(reason)
+  }
+  let symbolizers = match
+    project_input_source_values("symbolizer", symbolizer) {
+    Ok(values) => values
+    Err(reason) => return Err(reason)
+  }
+  let rooters = match project_input_source_values("rooter", rooter) {
+    Ok(values) => values
+    Err(reason) => return Err(reason)
+  }
+  let branchers = match project_input_source_values("brancher", brancher) {
+    Ok(values) => values
+    Err(reason) => return Err(reason)
+  }
+  let project = Project::from_input(input)
+  let selected_symbolizer = project_input_chain_symbolizers(
+    project, symbolizers,
+  )
+  let rooted = project_input_apply_rooters(
+    project, rooters, selected_symbolizer,
+  )
+  let disassembled = match
+    project_input_disassemble_with_sources(rooted, disassembler, driver_source) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let named = project_input_apply_symbolizers(disassembled, selected_symbolizer)
+  let branched = match project_input_apply_branchers(named, branchers) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  project_input_reconstruct_with_sources(branched, reconstructor)
+}
+
+///|
+pub fn Project::create_from_input_named(
+  input : ProjectInput,
+  disassembler? : String,
+  driver_source? : String,
+  brancher? : String,
+  symbolizer? : String,
+  rooter? : String,
+  reconstructor? : String,
+) -> Result[Project, String] {
+  let selected_driver_source = match driver_source {
+    Some(name) =>
+      match find_disassembly_driver_source(name) {
+        Some(source) => Some(source)
+        None => return Err("unknown project disassembly driver source \{name}")
+      }
+    None => None
+  }
+  let selected_brancher = match brancher {
+    Some(name) =>
+      match find_brancher_source(name) {
+        Some(source) => Some(source)
+        None => return Err("unknown project brancher source \{name}")
+      }
+    None => None
+  }
+  let selected_symbolizer = match symbolizer {
+    Some(name) =>
+      match find_symbolizer_source(name) {
+        Some(source) => Some(source)
+        None => return Err("unknown project symbolizer source \{name}")
+      }
+    None => None
+  }
+  let selected_rooter = match rooter {
+    Some(name) =>
+      match find_rooter_source(name) {
+        Some(source) => Some(source)
+        None => return Err("unknown project rooter source \{name}")
+      }
+    None => None
+  }
+  let selected_reconstructor = match reconstructor {
+    Some(name) =>
+      match find_reconstructor_source(name) {
+        Some(source) => Some(source)
+        None => return Err("unknown project reconstructor source \{name}")
+      }
+    None => None
+  }
+  Project::create_from_input(
+    input,
+    disassembler?,
+    driver_source?=selected_driver_source,
+    brancher?=selected_brancher,
+    symbolizer?=selected_symbolizer,
+    rooter?=selected_rooter,
+    reconstructor?=selected_reconstructor,
+  )
+}
+
+///|
 pub fn Project::load(data : Bytes, loader~ : String) -> Result[Project, String] {
   project_from_input_result(ProjectInput::load(data, loader~))
 }

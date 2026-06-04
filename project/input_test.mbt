@@ -152,6 +152,127 @@ test "project input custom symbols persist into projects" {
 }
 
 ///|
+test "project create from input applies disassembly source providers" {
+  let block = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x6200UL,
+    b"\xaa\xbb\xcc",
+  )
+  let input = @project.ProjectInput::custom(
+    target=@core_theory.Target::unknown(),
+    memory=@memory.MemMap::singleton(block, "code"),
+  )
+  let driver_source : @project.ProjectDisassemblySource[
+    @project.ProjectDisassemblyDriver,
+  ] = @project.ProjectDisassemblySource::single(
+    @project.ProjectDisassemblyDriver::project_roots(),
+  )
+  let rooter_source : @project.ProjectDisassemblySource[@project.ProjectRooter] = @project.ProjectDisassemblySource::single(
+    @project.ProjectRooter::create([0x6201UL]),
+  )
+  let symbolizer = @project.ProjectSymbolizer::create(addr => {
+    if addr == 0x6201UL {
+      Some("selected_root")
+    } else {
+      None
+    }
+  })
+  let symbolizer_source : @project.ProjectDisassemblySource[
+    @project.ProjectSymbolizer,
+  ] = @project.ProjectDisassemblySource::single(symbolizer)
+  match
+    @project.Project::create_from_input(
+      input,
+      driver_source~,
+      rooter=rooter_source,
+      symbolizer=symbolizer_source,
+    ) {
+    Ok(project) => {
+      assert_true(project.get("disassembler") == Some("project-roots"))
+      assert_true(project.disassembly().block_count() == 1)
+      assert_true(project.disassembly().blocks()[0].min_addr() == 0x6201UL)
+      let subs = project.program().subs()
+      assert_true(subs.length() == 1)
+      assert_true(subs[0].sub_name() == "selected_root")
+    }
+    Err(reason) => fail(reason)
+  }
+  let failing_driver_source : @project.ProjectDisassemblySource[
+    @project.ProjectDisassemblyDriver,
+  ] = @project.ProjectDisassemblySource::error("driver unavailable")
+  match
+    @project.Project::create_from_input(
+      input,
+      driver_source=failing_driver_source,
+    ) {
+    Err(reason) =>
+      assert_true(
+        reason == "project disassembly driver source failed: driver unavailable",
+      )
+    Ok(_) => fail("unexpected project creation success")
+  }
+}
+
+///|
+test "project create from input named resolves source registries" {
+  let block = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x6400UL,
+    b"\x01\x02",
+  )
+  let input = @project.ProjectInput::custom(
+    target=@core_theory.Target::unknown(),
+    memory=@memory.MemMap::singleton(block, "code"),
+  )
+  @project.register_disassembly_driver_source_value(
+    name="unit-create-driver-source",
+    @project.ProjectDisassemblyDriver::memory_blocks(),
+  )
+  @project.register_brancher_source_value(
+    name="unit-create-brancher-source",
+    @project.ProjectBrancher::of_edges([
+      @project.ProjectDisassemblyEdge::create(
+        source=0x6400UL,
+        target=0x6401UL,
+        kind=FallEdge,
+      ),
+    ]),
+  )
+  @project.register_reconstructor_source_value(
+    name="unit-create-reconstructor-source",
+    @project.ProjectReconstructor::create(project => {
+      Ok(
+        project.set(
+          "edge-count",
+          project.disassembly().edge_count().to_string(),
+        ),
+      )
+    }),
+  )
+  match
+    @project.Project::create_from_input_named(
+      input,
+      driver_source="unit-create-driver-source",
+      brancher="unit-create-brancher-source",
+      reconstructor="unit-create-reconstructor-source",
+    ) {
+    Ok(project) => {
+      assert_true(project.get("disassembler") == Some("memory-blocks"))
+      assert_true(project.get("edge-count") == Some("1"))
+      assert_true(project.disassembly().edge_count() == 1)
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    @project.Project::create_from_input_named(
+      input,
+      driver_source="missing-create-driver-source",
+    )
+    is Err(_),
+  )
+}
+
+///|
 test "project input loaders register and load bytes" {
   let loader = @project.ProjectInputLoader::create(
     name="unit-project-raw",

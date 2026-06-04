@@ -4,7 +4,15 @@ struct ProjectDisassemblyInstruction {
   assembly_value : String
   bil_value : String
   kinds_value : Array[ProjectInstructionKind]
+  operands_value : Array[ProjectInstructionOperand]
 }
+
+///|
+pub(all) enum ProjectInstructionOperand {
+  ProjectRegisterOperand(Int, String)
+  ProjectImmediateOperand(Int64)
+  ProjectFloatingOperand(Double)
+} derive(Eq, Debug)
 
 ///|
 pub(all) enum ProjectInstructionKind {
@@ -149,6 +157,148 @@ fn project_disassembly_edge_touches_block(
 }
 
 ///|
+pub fn ProjectInstructionOperand::register(
+  name~ : String,
+  code? : Int = 0,
+) -> ProjectInstructionOperand {
+  ProjectRegisterOperand(code, name)
+}
+
+///|
+pub fn ProjectInstructionOperand::immediate(
+  value : Int64,
+) -> ProjectInstructionOperand {
+  ProjectImmediateOperand(value)
+}
+
+///|
+pub fn ProjectInstructionOperand::floating(
+  value : Double,
+) -> ProjectInstructionOperand {
+  ProjectFloatingOperand(value)
+}
+
+///|
+pub fn ProjectInstructionOperand::to_string(
+  self : ProjectInstructionOperand,
+) -> String {
+  match self {
+    ProjectRegisterOperand(_, name) => name
+    ProjectImmediateOperand(value) =>
+      if value < 0L {
+        "-0x" + (-value).to_string(radix=16)
+      } else {
+        "0x" + value.to_string(radix=16)
+      }
+    ProjectFloatingOperand(value) => value.to_string()
+  }
+}
+
+///|
+pub fn ProjectInstructionOperand::register_code(
+  self : ProjectInstructionOperand,
+) -> Int? {
+  match self {
+    ProjectRegisterOperand(code, _) => Some(code)
+    _ => None
+  }
+}
+
+///|
+pub fn ProjectInstructionOperand::register_name(
+  self : ProjectInstructionOperand,
+) -> String? {
+  match self {
+    ProjectRegisterOperand(_, name) => Some(name)
+    _ => None
+  }
+}
+
+///|
+pub fn ProjectInstructionOperand::to_int64(
+  self : ProjectInstructionOperand,
+) -> Int64? {
+  match self {
+    ProjectImmediateOperand(value) => Some(value)
+    _ => None
+  }
+}
+
+///|
+pub fn ProjectInstructionOperand::to_int(
+  self : ProjectInstructionOperand,
+) -> Int? {
+  match self {
+    ProjectImmediateOperand(value) =>
+      match @types.int_of_int64(value) {
+        Ok(value) => Some(value)
+        Err(_) => None
+      }
+    _ => None
+  }
+}
+
+///|
+pub fn ProjectInstructionOperand::to_word(
+  self : ProjectInstructionOperand,
+  width~ : Int,
+) -> @types.Word? {
+  match self {
+    ProjectImmediateOperand(value) =>
+      try @types.Word::of_int64(value, width~) catch {
+        _ => None
+      } noraise {
+        word => Some(word)
+      }
+    _ => None
+  }
+}
+
+///|
+pub fn ProjectInstructionOperand::to_float(
+  self : ProjectInstructionOperand,
+) -> Double? {
+  match self {
+    ProjectFloatingOperand(value) => Some(value)
+    _ => None
+  }
+}
+
+///|
+pub fn ProjectInstructionOperand::same_normalized(
+  self : ProjectInstructionOperand,
+  other : ProjectInstructionOperand,
+) -> Bool {
+  match (self, other) {
+    (ProjectImmediateOperand(_), ProjectImmediateOperand(_)) => true
+    (ProjectFloatingOperand(_), ProjectFloatingOperand(_)) => true
+    (
+      ProjectRegisterOperand(left_code, left_name),
+      ProjectRegisterOperand(right_code, right_name),
+    ) => left_code == right_code && left_name == right_name
+    _ => false
+  }
+}
+
+///|
+pub fn project_instruction_operands_same_normalized_prefix(
+  left : Array[ProjectInstructionOperand],
+  right : Array[ProjectInstructionOperand],
+) -> Bool {
+  let len = if left.length() < right.length() {
+    left.length()
+  } else {
+    right.length()
+  }
+  for i in 0..<len {
+    if !left[i].same_normalized(right[i]) {
+      return false
+    }
+  }
+  true
+}
+
+///|
 pub fn ProjectInstructionKind::members() -> Array[ProjectInstructionKind] {
   [
     ProjectConditionalBranch,
@@ -275,6 +425,7 @@ pub fn ProjectDisassemblyInstruction::create(
   assembly? : String = "",
   bil? : String = "",
   kinds? : Array[ProjectInstructionKind],
+  operands? : Array[ProjectInstructionOperand],
 ) -> ProjectDisassemblyInstruction {
   {
     memory_value: memory,
@@ -282,6 +433,10 @@ pub fn ProjectDisassemblyInstruction::create(
     bil_value: bil,
     kinds_value: match kinds {
       Some(items) => project_instruction_kinds_normalize(items)
+      None => []
+    },
+    operands_value: match operands {
+      Some(items) => items.copy()
       None => []
     },
   }
@@ -313,6 +468,39 @@ pub fn ProjectDisassemblyInstruction::kinds(
   self : ProjectDisassemblyInstruction,
 ) -> Array[ProjectInstructionKind] {
   self.kinds_value.copy()
+}
+
+///|
+pub fn ProjectDisassemblyInstruction::operands(
+  self : ProjectDisassemblyInstruction,
+) -> Array[ProjectInstructionOperand] {
+  self.operands_value.copy()
+}
+
+///|
+pub fn ProjectDisassemblyInstruction::operand_count(
+  self : ProjectDisassemblyInstruction,
+) -> Int {
+  self.operands_value.length()
+}
+
+///|
+pub fn ProjectDisassemblyInstruction::with_operands(
+  self : ProjectDisassemblyInstruction,
+  operands : Array[ProjectInstructionOperand],
+) -> ProjectDisassemblyInstruction {
+  { ..self, operands_value: operands.copy() }
+}
+
+///|
+pub fn ProjectDisassemblyInstruction::same_normalized_operands(
+  self : ProjectDisassemblyInstruction,
+  other : ProjectDisassemblyInstruction,
+) -> Bool {
+  project_instruction_operands_same_normalized_prefix(
+    self.operands_value,
+    other.operands_value,
+  )
 }
 
 ///|

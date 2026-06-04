@@ -47,6 +47,8 @@ pub fn pass_registrations() -> Array[ProjectPassEvent]
 
 pub fn passes() -> Array[ProjectPass]
 
+pub fn project_instruction_operands_same_normalized_prefix(Array[ProjectInstructionOperand], Array[ProjectInstructionOperand]) -> Bool
+
 pub fn reconstructor_names() -> Array[String]
 
 pub fn register_analysis(ProjectAnalysis) -> Result[Unit, String]
@@ -297,14 +299,18 @@ pub fn ProjectDisassemblyInstruction::affects_control_flow(Self) -> Bool
 pub fn ProjectDisassemblyInstruction::assembly(Self) -> String
 pub fn ProjectDisassemblyInstruction::bil(Self) -> String
 pub fn ProjectDisassemblyInstruction::contains(Self, UInt64) -> Bool
-pub fn ProjectDisassemblyInstruction::create(@memory.Memory, assembly? : String, bil? : String, kinds? : Array[ProjectInstructionKind]) -> Self
+pub fn ProjectDisassemblyInstruction::create(@memory.Memory, assembly? : String, bil? : String, kinds? : Array[ProjectInstructionKind], operands? : Array[ProjectInstructionOperand]) -> Self
 pub fn ProjectDisassemblyInstruction::has_kind(Self, ProjectInstructionKind) -> Bool
 pub fn ProjectDisassemblyInstruction::has_side_effect(Self) -> Bool
 pub fn ProjectDisassemblyInstruction::is_branch(Self) -> Bool
 pub fn ProjectDisassemblyInstruction::kinds(Self) -> Array[ProjectInstructionKind]
 pub fn ProjectDisassemblyInstruction::memory(Self) -> @memory.Memory
+pub fn ProjectDisassemblyInstruction::operand_count(Self) -> Int
+pub fn ProjectDisassemblyInstruction::operands(Self) -> Array[ProjectInstructionOperand]
+pub fn ProjectDisassemblyInstruction::same_normalized_operands(Self, Self) -> Bool
 pub fn ProjectDisassemblyInstruction::with_kind(Self, ProjectInstructionKind) -> Self
 pub fn ProjectDisassemblyInstruction::with_kinds(Self, Array[ProjectInstructionKind]) -> Self
+pub fn ProjectDisassemblyInstruction::with_operands(Self, Array[ProjectInstructionOperand]) -> Self
 pub fn ProjectDisassemblyInstruction::without_kind(Self, ProjectInstructionKind) -> Self
 
 type ProjectDisassemblyState
@@ -388,6 +394,23 @@ pub fn ProjectInstructionKind::has_side_effect(Self) -> Bool
 pub fn ProjectInstructionKind::is_branch(Self) -> Bool
 pub fn ProjectInstructionKind::members() -> Array[Self]
 pub fn ProjectInstructionKind::to_string(Self) -> String
+
+pub(all) enum ProjectInstructionOperand {
+  ProjectRegisterOperand(Int, String)
+  ProjectImmediateOperand(Int64)
+  ProjectFloatingOperand(Double)
+} derive(Eq, @debug.Debug)
+pub fn ProjectInstructionOperand::floating(Double) -> Self
+pub fn ProjectInstructionOperand::immediate(Int64) -> Self
+pub fn ProjectInstructionOperand::register(name~ : String, code? : Int) -> Self
+pub fn ProjectInstructionOperand::register_code(Self) -> Int?
+pub fn ProjectInstructionOperand::register_name(Self) -> String?
+pub fn ProjectInstructionOperand::same_normalized(Self, Self) -> Bool
+pub fn ProjectInstructionOperand::to_float(Self) -> Double?
+pub fn ProjectInstructionOperand::to_int(Self) -> Int?
+pub fn ProjectInstructionOperand::to_int64(Self) -> Int64?
+pub fn ProjectInstructionOperand::to_string(Self) -> String
+pub fn ProjectInstructionOperand::to_word(Self, width~ : Int) -> @types.Word?
 
 type ProjectPass
 pub fn ProjectPass::autorun(Self) -> Bool

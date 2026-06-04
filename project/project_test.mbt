@@ -397,6 +397,54 @@ test "project disassembly instructions carry BAP instruction kinds" {
 }
 
 ///|
+test "project disassembly instructions carry BAP operands" {
+  let block = raw_segment().memory()
+  match block.view(words=1) {
+    Ok(first_byte) => {
+      let reg = @project.ProjectInstructionOperand::register(name="RAX", code=1)
+      let imm = @project.ProjectInstructionOperand::immediate(0x1234L)
+      let wide_imm = @project.ProjectInstructionOperand::immediate(0x80000000L)
+      let fmm = @project.ProjectInstructionOperand::floating(1.5)
+      let instruction = @project.ProjectDisassemblyInstruction::create(
+        first_byte,
+        operands=[reg, imm, fmm],
+      )
+      assert_true(instruction.operand_count() == 3)
+      assert_true(
+        instruction.operands().map(operand => operand.to_string()) ==
+        ["RAX", "0x1234", "1.5"],
+      )
+      assert_true(reg.register_code() == Some(1))
+      assert_true(reg.register_name() == Some("RAX"))
+      assert_true(imm.to_int64() == Some(0x1234L))
+      assert_true(imm.to_int() == Some(0x1234))
+      assert_true(
+        imm.to_word(width=16) ==
+        Some(try! @types.Word::of_int64(0x1234L, width=16)),
+      )
+      assert_true(wide_imm.to_int() is None)
+      assert_true(fmm.to_float() == Some(1.5))
+      assert_true(
+        @project.ProjectInstructionOperand::immediate(7L).same_normalized(
+          @project.ProjectInstructionOperand::immediate(99L),
+        ),
+      )
+      let same_shape = instruction.with_operands([
+        @project.ProjectInstructionOperand::register(name="RAX", code=1),
+        @project.ProjectInstructionOperand::immediate(99L),
+      ])
+      assert_true(instruction.same_normalized_operands(same_shape))
+      let different_reg = instruction.with_operands([
+        @project.ProjectInstructionOperand::register(name="RBX", code=2),
+        @project.ProjectInstructionOperand::immediate(99L),
+      ])
+      assert_true(!instruction.same_normalized_operands(different_reg))
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project disassembly state removes blocks instructions and edges" {
   let block = raw_segment().memory()
   let other = @memory.Memory::from_bytes(

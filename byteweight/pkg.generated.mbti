@@ -1,0 +1,38 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/byteweight"
+
+import {
+  "bobzhang/bap/memory",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+type Byteweight
+pub fn Byteweight::create() -> Self
+pub fn Byteweight::entries(Self) -> Array[(Bytes, ByteweightStats)]
+pub fn Byteweight::find(Self, BytesView) -> ByteweightStats?
+pub fn Byteweight::find_if(Self, length~ : Int, f~ : (@memory.Memory, Int, ByteweightStats) -> Bool, @memory.Memory) -> Array[UInt64]
+pub fn Byteweight::find_positive(Self, length~ : Int, threshold~ : Double, @memory.Memory) -> Array[UInt64]
+pub fn Byteweight::find_using_bayes_factor(Self, min_length~ : Int, max_length~ : Int, Double, @memory.Memory) -> Array[UInt64]
+pub fn Byteweight::find_using_threshold(Self, min_length~ : Int, max_length~ : Int, Double, @memory.Memory) -> Array[UInt64]
+pub fn[A] Byteweight::fold(Self, init~ : A, f~ : (A, Bytes, ByteweightStats) -> A) -> A
+pub fn Byteweight::length(Self) -> Int
+pub fn Byteweight::longest_match(Self, BytesView) -> (Int, ByteweightStats)?
+pub fn Byteweight::next(Self, length~ : Int, threshold~ : Double, @memory.Memory, Int) -> Int?
+pub fn Byteweight::next_if(Self, length~ : Int, f~ : (@memory.Memory, Int, ByteweightStats) -> Bool, @memory.Memory, Int) -> Int?
+pub fn Byteweight::train(Self, max_length~ : Int, (@memory.Memory) -> Bool, @memory.Memory) -> Self
+
+type ByteweightStats
+pub fn ByteweightStats::create(h1? : Int, h0? : Int) -> Self
+pub fn ByteweightStats::h0(Self) -> Int
+pub fn ByteweightStats::h1(Self) -> Int
+pub fn ByteweightStats::probability_h0(Self) -> Double
+pub fn ByteweightStats::probability_h1(Self) -> Double
+pub fn ByteweightStats::trials(Self) -> Int
+
+// Type aliases
+
+// Traits

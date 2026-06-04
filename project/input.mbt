@@ -393,6 +393,11 @@ pub fn ProjectInput::target(self : ProjectInput) -> @core_theory.Target {
 }
 
 ///|
+pub fn ProjectInput::arch(self : ProjectInput) -> @core_theory.Target {
+  self.arch_value
+}
+
+///|
 pub fn ProjectInput::filename(self : ProjectInput) -> String? {
   self.filename_value
 }
@@ -400,6 +405,11 @@ pub fn ProjectInput::filename(self : ProjectInput) -> String? {
 ///|
 pub fn ProjectInput::image(self : ProjectInput) -> @image.Image? {
   self.image_value
+}
+
+///|
+pub fn ProjectInput::specification(self : ProjectInput) -> @image.OgreDoc {
+  self.spec_value
 }
 
 ///|

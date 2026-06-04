@@ -680,6 +680,7 @@ pub fn ProjectInfo::spec() -> @future.Stream[@image.OgreDoc]
 pub fn ProjectInfo::symtab() -> @future.Stream[ProjectDisassemblySymtab]
 
 type ProjectInput
+pub fn ProjectInput::arch(Self) -> @core_theory.Target
 pub fn ProjectInput::available_loaders() -> Array[String]
 pub fn ProjectInput::binary(target~ : @core_theory.Target, filename~ : String, base? : UInt64, offset? : Int, length? : Int, entry? : UInt64) -> Result[Self, String]
 pub fn ProjectInput::code(Self) -> @memory.MemMap[String]
@@ -704,6 +705,7 @@ pub fn ProjectInput::raw_bytes(target~ : @core_theory.Target, Bytes, base? : UIn
 pub fn ProjectInput::raw_file(String, target~ : @core_theory.Target, base? : UInt64, offset? : Int, length? : Int, entry? : UInt64, filename? : String) -> Result[Self, String]
 pub fn ProjectInput::register_file_loader(name~ : String, description? : String, extensions? : Array[String], priority? : Int, load~ : (String) -> Result[Self, String]) -> Result[Unit, String]
 pub fn ProjectInput::register_loader(name~ : String, description? : String, extensions? : Array[String], priority? : Int, load~ : (Bytes) -> Result[Self, String], load_file? : (String) -> Result[Self, String]) -> Result[Unit, String]
+pub fn ProjectInput::specification(Self) -> @image.OgreDoc
 pub fn ProjectInput::symbols(Self) -> Array[@image.Symbol]
 pub fn ProjectInput::target(Self) -> @core_theory.Target
 

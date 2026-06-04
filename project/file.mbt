@@ -13,6 +13,7 @@ fn ProjectInput::with_default_filename(
 fn ProjectInput::as_library(
   self : ProjectInput,
   default_name : String,
+  bias? : @types.Word,
 ) -> Library {
   let name = match self.filename_value {
     Some(value) => value
@@ -21,6 +22,11 @@ fn ProjectInput::as_library(
   Library::create(
     name~,
     target=self.target_value,
+    unit=@core_theory.ProgramUnit::for_file(
+      name,
+      target=self.target_value,
+      bias?,
+    ),
     memory=self.memory_value,
     symbols=self.symbols_value,
     program?=self.program_value,
@@ -69,21 +75,71 @@ fn project_input_library_paths(
 }
 
 ///|
+fn project_input_page_align_up(addr : UInt64) -> UInt64 {
+  (addr + 0xfffUL) / 0x1000UL * 0x1000UL
+}
+
+///|
+fn ProjectInput::next_library_bias(
+  self : ProjectInput,
+  current : UInt64?,
+) -> UInt64? {
+  match (self.memory_value.min(), self.memory_value.max()) {
+    (Some(min_entry), Some(max_entry)) => {
+      let raw = match current {
+        Some(bias) =>
+          bias + (max_entry.0.max_addr() - min_entry.0.min_addr() + 1UL)
+        None => max_entry.0.max_addr()
+      }
+      Some(project_input_page_align_up(raw))
+    }
+    _ => current
+  }
+}
+
+///|
+fn ProjectInput::library_bias_word(
+  self : ProjectInput,
+  bias : UInt64,
+) -> Result[@types.Word, String] {
+  let code_width = self.target_value.code_addr_size()
+  let width = if code_width <= 0 { 64 } else { code_width }
+  try @types.Word::of_uint64(width~, bias) catch {
+    _ => Err("project library unit bias is not representable by target")
+  } noraise {
+    word => Ok(word)
+  }
+}
+
+///|
 fn project_input_load_libraries(
   main_path : String,
   display_name : String,
   libraries : Array[String],
   loader : String?,
   target : @core_theory.Target?,
+  initial_bias : UInt64?,
 ) -> Result[Array[Library], String] {
   let loaded = []
+  let mut next_bias = initial_bias
   for path in project_input_library_paths(main_path, display_name, libraries) {
     let input = match loader {
       Some(name) => ProjectInput::load_file(path, loader=name, target?)
       None => ProjectInput::load_file_for_filename(path, target?)
     }
     match input {
-      Ok(value) => loaded.push(value.as_library(path))
+      Ok(value) => {
+        let bias = match next_bias {
+          Some(raw_bias) =>
+            match value.library_bias_word(raw_bias) {
+              Ok(word) => Some(word)
+              Err(reason) => return Err(reason)
+            }
+          None => None
+        }
+        loaded.push(value.as_library(path, bias?))
+        next_bias = value.next_library_bias(next_bias)
+      }
       Err(reason) =>
         return Err("failed to load project library \{path}: \{reason}")
     }
@@ -216,6 +272,7 @@ pub fn ProjectInput::load_file(
           libraries,
           Some(loader),
           target,
+          input.next_library_bias(None),
         ) {
         Ok(loaded_libraries) =>
           Ok(
@@ -354,6 +411,7 @@ pub fn ProjectInput::load_file_for_filename(
               libraries,
               None,
               target,
+              input.next_library_bias(None),
             ) {
             Ok(loaded_libraries) =>
               Ok(

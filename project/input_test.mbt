@@ -238,6 +238,66 @@ test "project input custom symbols persist into projects" {
 }
 
 ///|
+test "project file library loading assigns page-aligned unit biases" {
+  match
+    @project.ProjectInput::register_file_loader(
+      name="unit-project-library-bias",
+      extensions=["biasunit"],
+      priority=10,
+      load=path => {
+        let (addr, size) = match path {
+          "main.biasunit" => (0x1000UL, 0x100)
+          "liba.biasunit" => (0x4000UL, 0x180)
+          "libb.biasunit" => (0x8000UL, 0x20)
+          _ => (0xa000UL, 0x10)
+        }
+        let segment = @image.Segment::create(
+          name=".text",
+          endian=LittleEndian,
+          addr~,
+          Bytes::new(size),
+          executable=true,
+        )
+        Ok(
+          @project.ProjectInput::from_image(
+            @image.Image::from_segments(
+              entry=addr,
+              endian=LittleEndian,
+              [segment],
+              filename=path,
+              target=@core_theory.Target::x86_64(),
+            ),
+          ),
+        )
+      },
+    ) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  match
+    @project.ProjectInput::load_file(
+      "main.biasunit",
+      loader="unit-project-library-bias",
+      libraries=["liba.biasunit", "libb.biasunit"],
+    ) {
+    Ok(input) => {
+      let project = @project.Project::from_input(input)
+      let libraries = project.libraries()
+      assert_true(libraries.length() == 2)
+      assert_true(
+        libraries[0].unit().bias() ==
+        Some(@types.Word::of_uint64(width=64, 0x2000UL)),
+      )
+      assert_true(
+        libraries[1].unit().bias() ==
+        Some(@types.Word::of_uint64(width=64, 0x3000UL)),
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project create from input applies disassembly source providers" {
   let block = @memory.Memory::from_bytes(
     endian=LittleEndian,

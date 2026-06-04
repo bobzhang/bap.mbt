@@ -406,6 +406,15 @@ pub fn Call::with_noreturn(self : Call) -> Call {
 }
 
 ///|
+pub fn Call::to_string(self : Call) -> String {
+  match self.return_label {
+    Some(label) =>
+      "call \{self.target.to_string()} with return \{label.to_string()}"
+    None => "call \{self.target.to_string()} with noreturn"
+  }
+}
+
+///|
 pub(all) enum JmpKind {
   JmpCall(Call)
   Goto(Label)
@@ -1295,8 +1304,18 @@ pub fn Term::arg_to_string(self : Term[Arg]) -> String {
 }
 
 ///|
+pub fn Arg::to_string(arg : Term[Arg]) -> String {
+  arg.arg_to_string()
+}
+
+///|
 pub fn Term::def_to_string(self : Term[Def]) -> String {
   "\{self.lhs().to_string()} := \{self.rhs().to_string()}"
+}
+
+///|
+pub fn Def::to_string(def : Term[Def]) -> String {
+  def.def_to_string()
 }
 
 ///|
@@ -1309,6 +1328,11 @@ pub fn Term::phi_to_string(self : Term[Phi]) -> String {
 }
 
 ///|
+pub fn Phi::to_string(phi : Term[Phi]) -> String {
+  phi.phi_to_string()
+}
+
+///|
 pub fn Term::jmp_to_string(self : Term[Jmp]) -> String {
   let cond = self.cond()
   let prefix = match cond {
@@ -1316,18 +1340,18 @@ pub fn Term::jmp_to_string(self : Term[Jmp]) -> String {
     _ => "when \{cond.to_string()} "
   }
   let body = match self.kind() {
-    JmpCall(call) =>
-      match call.return_label {
-        Some(label) =>
-          "call \{call.target.to_string()} with return \{label.to_string()}"
-        None => "call \{call.target.to_string()} with noreturn"
-      }
+    JmpCall(call) => call.to_string()
     Goto(label) => "goto \{label.to_string()}"
     Ret(label) => "return \{label.to_string()}"
     Interrupt(num, tid) =>
       "interrupt 0x\{num.to_string(radix=16).to_upper()} return \{tid.to_string()}"
   }
   prefix + body
+}
+
+///|
+pub fn Jmp::to_string(jmp : Term[Jmp]) -> String {
+  jmp.jmp_to_string()
 }
 
 ///|
@@ -1346,6 +1370,11 @@ pub fn Term::blk_to_string(self : Term[Blk]) -> String {
 }
 
 ///|
+pub fn Blk::to_string(blk : Term[Blk]) -> String {
+  blk.blk_to_string()
+}
+
+///|
 pub fn Term::sub_to_string(self : Term[Sub]) -> String {
   let arg_names = self.args().map(arg => arg.arg_lhs().name())
   let lines : Array[String] = [
@@ -1361,10 +1390,20 @@ pub fn Term::sub_to_string(self : Term[Sub]) -> String {
 }
 
 ///|
+pub fn Sub::to_string(sub : Term[Sub]) -> String {
+  sub.sub_to_string()
+}
+
+///|
 pub fn Term::program_to_string(self : Term[Program]) -> String {
   let lines : Array[String] = ["program"]
   for sub in self.subs() {
     lines.push(sub.sub_to_string())
   }
   ir_term_join_lines(lines)
+}
+
+///|
+pub fn Program::to_string(program : Term[Program]) -> String {
+  program.program_to_string()
 }

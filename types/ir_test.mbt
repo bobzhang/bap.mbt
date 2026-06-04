@@ -1576,28 +1576,44 @@ test "ir terms render BAP-style strings" {
     @types.Label::indirect(Var(target)),
     cond=Var(flag),
   )
-  let call = @types.Jmp::create_call(
-    @types.Call::create(
-      target=@types.Label::direct(left),
-      return_label=@types.Label::direct(right),
-    ),
+  let call_payload = @types.Call::create(
+    target=@types.Label::direct(left),
+    return_label=@types.Label::direct(right),
   )
-  let noreturn = @types.Jmp::create_call(
-    @types.Call::create(target=@types.Label::direct(left)),
-  )
+  let call = @types.Jmp::create_call(call_payload)
+  let noreturn_payload = @types.Call::create(target=@types.Label::direct(left))
+  let noreturn = @types.Jmp::create_call(noreturn_payload)
   let ret = @types.Jmp::create_ret(@types.Label::direct(right))
   let interrupt = @types.Jmp::create_int(13, right)
   let arg = @types.Arg::create(lhs, one, intent=Both)
 
   inspect(arg.arg_to_string(), content="r0 :: in out imm8 = 1:8u")
+  inspect(@types.Arg::to_string(arg), content="r0 :: in out imm8 = 1:8u")
   inspect(def.def_to_string(), content="r0:imm8 := 1:8u")
+  inspect(@types.Def::to_string(def), content="r0:imm8 := 1:8u")
   inspect(
     phi.phi_to_string(),
     content="r0:imm8 <- phi([1:8u, @left], [2:8u, @right])",
   )
+  inspect(
+    @types.Phi::to_string(phi),
+    content="r0:imm8 <- phi([1:8u, @left], [2:8u, @right])",
+  )
   inspect(goto.jmp_to_string(), content="when flag:imm1 goto *target:imm32")
+  inspect(
+    @types.Jmp::to_string(goto),
+    content="when flag:imm1 goto *target:imm32",
+  )
   inspect(call.jmp_to_string(), content="call @left with return @right")
+  inspect(
+    @types.Call::to_string(call_payload),
+    content="call @left with return @right",
+  )
   inspect(noreturn.jmp_to_string(), content="call @left with noreturn")
+  inspect(
+    @types.Call::to_string(noreturn_payload),
+    content="call @left with noreturn",
+  )
   inspect(ret.jmp_to_string(), content="return @right")
   inspect(interrupt.jmp_to_string(), content="interrupt 0xD return @right")
   inspect(@types.DefTerm(def).to_string(), content="r0:imm8 := 1:8u")
@@ -1612,12 +1628,20 @@ test "ir terms render BAP-style strings" {
     blk.blk_to_string(),
     content="@entry\nr0:imm8 <- phi([1:8u, @left], [2:8u, @right])\nr0:imm8 := 1:8u\nwhen flag:imm1 goto *target:imm32",
   )
+  inspect(
+    @types.Blk::to_string(blk),
+    content="@entry\nr0:imm8 <- phi([1:8u, @left], [2:8u, @right])\nr0:imm8 := 1:8u\nwhen flag:imm1 goto *target:imm32",
+  )
   let sub = @types.Sub::create(name="main", args=[arg], blks=[blk])
   assert_true(sub.sub_to_string().contains("sub main(r0)"))
   assert_true(sub.sub_to_string().contains(arg.arg_to_string()))
   assert_true(sub.sub_to_string().contains(blk.blk_to_string()))
+  assert_true(@types.Sub::to_string(sub).contains("sub main(r0)"))
   let program = @types.Program::create(subs=[sub])
   assert_true(program.program_to_string().contains("program\nsub main(r0)"))
+  assert_true(
+    @types.Program::to_string(program).contains("program\nsub main(r0)"),
+  )
   assert_true(@types.ProgramTerm(program).to_string().contains("sub main(r0)"))
 }
 

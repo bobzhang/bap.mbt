@@ -214,6 +214,64 @@ test "project create from input applies disassembly source providers" {
 }
 
 ///|
+test "project create from input can seed disassembly state" {
+  let block = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x6300UL,
+    b"\x90",
+  )
+  let instruction = @project.ProjectDisassemblyInstruction::create(
+    block,
+    assembly="seeded",
+    bil="nop",
+  )
+  let state = @project.ProjectState::empty().with_disassembly(
+    @project.ProjectDisassemblyState::empty()
+    .add_block(block)
+    .add_instruction(instruction),
+  )
+  let input = @project.ProjectInput::custom(
+    target=@core_theory.Target::unknown(),
+    memory=@memory.MemMap::singleton(block, "code"),
+  )
+  let failing_driver_source : @project.ProjectDisassemblySource[
+    @project.ProjectDisassemblyDriver,
+  ] = @project.ProjectDisassemblySource::error("driver should be skipped")
+  let symbolizer_source : @project.ProjectDisassemblySource[
+    @project.ProjectSymbolizer,
+  ] = @project.ProjectDisassemblySource::single(
+    @project.ProjectSymbolizer::create(addr => {
+      if addr == 0x6300UL {
+        Some("seeded_block")
+      } else {
+        None
+      }
+    }),
+  )
+  match
+    @project.Project::create_from_input(
+      input,
+      disassembler="missing-driver",
+      driver_source=failing_driver_source,
+      symbolizer=symbolizer_source,
+      state~,
+    ) {
+    Ok(project) => {
+      assert_true(project.get("disassembler") == None)
+      assert_true(project.disassembly().block_count() == 1)
+      assert_true(project.disassembly().instruction_count() == 1)
+      assert_true(
+        project.disassembly().instructions()[0].assembly() == "seeded",
+      )
+      let subs = project.program().subs()
+      assert_true(subs.length() == 1)
+      assert_true(subs[0].sub_name() == "seeded_block")
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project create from input named resolves source registries" {
   let block = @memory.Memory::from_bytes(
     endian=LittleEndian,

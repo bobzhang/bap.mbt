@@ -260,6 +260,7 @@ pub fn Project::create_file(
   symbolizer? : ProjectDisassemblySource[ProjectSymbolizer],
   rooter? : ProjectDisassemblySource[ProjectRooter],
   reconstructor? : ProjectDisassemblySource[ProjectReconstructor],
+  state? : ProjectState,
 ) -> Result[Project, String] {
   match ProjectInput::file(filename~, loader?, libraries~, target?) {
     Ok(input) =>
@@ -271,6 +272,7 @@ pub fn Project::create_file(
         symbolizer?,
         rooter?,
         reconstructor?,
+        state?,
       )
     Err(reason) => Err(reason)
   }
@@ -288,6 +290,7 @@ pub fn Project::create_file_named(
   symbolizer? : String,
   rooter? : String,
   reconstructor? : String,
+  state? : ProjectState,
 ) -> Result[Project, String] {
   match ProjectInput::file(filename~, loader?, libraries~, target?) {
     Ok(input) =>
@@ -299,6 +302,7 @@ pub fn Project::create_file_named(
         symbolizer?,
         rooter?,
         reconstructor?,
+        state?,
       )
     Err(reason) => Err(reason)
   }

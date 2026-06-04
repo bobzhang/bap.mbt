@@ -6,6 +6,19 @@ package "bobzhang/bap/strings"
 // Errors
 
 // Types and methods
+type StringsAlphabet
+pub fn StringsAlphabet::alpha() -> Self
+pub fn StringsAlphabet::alpha_caseless() -> Self
+pub fn StringsAlphabet::alphanum() -> Self
+pub fn StringsAlphabet::alphanum_caseless() -> Self
+pub fn StringsAlphabet::ascii() -> Self
+pub fn StringsAlphabet::contains(Self, Byte) -> Bool
+pub fn StringsAlphabet::create(length~ : Int, index~ : (Byte) -> Int) -> Self
+pub fn StringsAlphabet::digits() -> Self
+pub fn StringsAlphabet::index(Self, Byte) -> Int
+pub fn StringsAlphabet::length(Self) -> Int
+pub fn StringsAlphabet::printable() -> Self
+
 type StringsIndex[K]
 pub fn[K] StringsIndex::empty(key~ : StringsIndexKey[K]) -> Self[K]
 pub fn StringsIndex::empty_int() -> Self[Int]
@@ -24,6 +37,19 @@ pub fn StringsScanner::next((Int) -> Byte?, Int, is_stop? : (Byte) -> Bool) -> B
 pub fn StringsScanner::read_bytes(BytesView) -> (Int) -> Byte?
 pub fn StringsScanner::run((Int) -> Byte?, Int, is_stop? : (Byte) -> Bool) -> Array[(Int, Bytes)]
 pub fn StringsScanner::scan_bytes(BytesView, offset? : Int, is_stop? : (Byte) -> Bool) -> Array[(Int, Bytes)]
+
+type StringsUnscrambler
+pub fn StringsUnscrambler::add_word(Self, BytesView) -> Self
+pub fn StringsUnscrambler::alphabet(Self) -> StringsAlphabet
+pub fn StringsUnscrambler::build(Self, BytesView) -> Array[Bytes]
+pub fn StringsUnscrambler::empty(alphabet~ : StringsAlphabet) -> Self
+pub fn StringsUnscrambler::empty_ascii() -> Self
+pub fn StringsUnscrambler::is_buildable(Self, BytesView) -> Bool
+pub fn StringsUnscrambler::of_bytes(alphabet~ : StringsAlphabet, BytesView) -> Self
+pub fn StringsUnscrambler::of_file(alphabet~ : StringsAlphabet, String) -> Result[Self, String]
+pub fn StringsUnscrambler::of_files(alphabet~ : StringsAlphabet, ArrayView[String]) -> Result[Self, String]
+pub fn StringsUnscrambler::of_lines(alphabet~ : StringsAlphabet, ArrayView[Bytes]) -> Self
+pub fn StringsUnscrambler::words(Self) -> Array[Bytes]
 
 // Type aliases
 

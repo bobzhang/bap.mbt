@@ -939,6 +939,23 @@ test "ir term query helpers match classes attributes vars and children" {
   assert_true(!mapped_sub_flags.del_sub_intrinsic().is_sub_intrinsic())
   assert_true(!mapped_sub_flags.del_sub_pure().is_sub_pure())
   assert_true(!mapped_sub_flags.del_sub_stub().is_sub_stub())
+  let mapped_sub_aliases = sub_term
+    .set_sub_alias("entry")
+    .set_sub_alias("main.alt")
+    .set_attr(@types.Attr::new(key="alias:legacy", value=""))
+  assert_true(mapped_sub_aliases.get_attr("alias:entry") == Some("entry"))
+  assert_true(mapped_sub_aliases.has_sub_alias("entry"))
+  assert_true(mapped_sub_aliases.has_sub_alias("legacy"))
+  assert_true(
+    mapped_sub_aliases.sub_aliases() == ["entry", "legacy", "main.alt"],
+  )
+  let mapped_symbol_names = mapped_sub_aliases.sub_symbol_names()
+  assert_true(mapped_symbol_names.length() == 4)
+  assert_true(mapped_symbol_names.contains("entry"))
+  assert_true(mapped_symbol_names.contains("legacy"))
+  assert_true(mapped_symbol_names.contains("main"))
+  assert_true(mapped_symbol_names.contains("main.alt"))
+  assert_true(!mapped_sub_aliases.del_sub_alias("entry").has_sub_alias("entry"))
   let mapped_arg_flags = arg_term
     .set_arg_warn_unused()
     .set_arg_alloc_size()

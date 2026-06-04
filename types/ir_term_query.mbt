@@ -692,6 +692,51 @@ pub fn IrTerm::is_sub_stub(self : IrTerm) -> Bool {
 }
 
 ///|
+pub fn IrTerm::set_sub_alias(self : IrTerm, alias_name : String) -> IrTerm {
+  self.set_attr(Attr::sub_alias(alias_name))
+}
+
+///|
+pub fn IrTerm::del_sub_alias(self : IrTerm, alias_name : String) -> IrTerm {
+  self.del_attr(sub_alias_attr_prefix + alias_name)
+}
+
+///|
+pub fn IrTerm::sub_aliases(self : IrTerm) -> Array[String] {
+  let aliases = []
+  let attrs = self.attrs()
+  attrs.each((key, value) => {
+    if key.has_prefix(sub_alias_attr_prefix) {
+      let alias_name = if value != "" {
+        value
+      } else {
+        key[sub_alias_attr_prefix.length():].to_owned()
+      }
+      add_unique_text(aliases, alias_name)
+    }
+  })
+  sorted_texts(aliases)
+}
+
+///|
+pub fn IrTerm::has_sub_alias(self : IrTerm, alias_name : String) -> Bool {
+  self.sub_aliases().contains(alias_name)
+}
+
+///|
+fn IrTerm::sub_symbol_base_name(self : IrTerm) -> String {
+  match self {
+    SubTerm(term) => term.sub_name()
+    _ => self.name()
+  }
+}
+
+///|
+pub fn IrTerm::sub_symbol_names(self : IrTerm) -> Array[String] {
+  sorted_texts([self.sub_symbol_base_name()] + self.sub_aliases())
+}
+
+///|
 fn IrTerm::set_arg_flag(self : IrTerm, key : String) -> IrTerm {
   self.set_flag(key)
 }

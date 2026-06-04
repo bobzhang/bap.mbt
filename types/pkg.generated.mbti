@@ -703,6 +703,7 @@ pub fn IrTerm::del_postcondition(Self) -> Self
 pub fn IrTerm::del_precondition(Self) -> Self
 pub fn IrTerm::del_python(Self) -> Self
 pub fn IrTerm::del_shell(Self) -> Self
+pub fn IrTerm::del_sub_alias(Self, String) -> Self
 pub fn IrTerm::del_sub_const(Self) -> Self
 pub fn IrTerm::del_sub_entry_point(Self) -> Self
 pub fn IrTerm::del_sub_extern(Self) -> Self
@@ -750,6 +751,7 @@ pub fn IrTerm::has_name(Self, String) -> Bool
 pub fn IrTerm::has_origin(Self, Tid) -> Bool
 pub fn IrTerm::has_postcondition(Self, Exp) -> Bool
 pub fn IrTerm::has_precondition(Self, Exp) -> Bool
+pub fn IrTerm::has_sub_alias(Self, String) -> Bool
 pub fn IrTerm::has_tainted_ptr(Self, Tid) -> Bool
 pub fn IrTerm::has_tainted_reg(Self, Tid) -> Bool
 pub fn IrTerm::has_tid(Self, Tid) -> Bool
@@ -824,6 +826,7 @@ pub fn IrTerm::set_postcondition(Self, Exp) -> Self
 pub fn IrTerm::set_precondition(Self, Exp) -> Self
 pub fn IrTerm::set_python(Self, String) -> Self
 pub fn IrTerm::set_shell(Self, String) -> Self
+pub fn IrTerm::set_sub_alias(Self, String) -> Self
 pub fn IrTerm::set_sub_const(Self) -> Self
 pub fn IrTerm::set_sub_entry_point(Self) -> Self
 pub fn IrTerm::set_sub_extern(Self) -> Self
@@ -841,6 +844,8 @@ pub fn IrTerm::set_tainted_reg(Self, Tid) -> Self
 pub fn IrTerm::set_visited(Self) -> Self
 pub fn IrTerm::set_weight(Self, Double) -> Self
 pub fn IrTerm::shell(Self) -> String?
+pub fn IrTerm::sub_aliases(Self) -> Array[String]
+pub fn IrTerm::sub_symbol_names(Self) -> Array[String]
 pub fn[A] IrTerm::switch(Self, program~ : (Term[Program]) -> A, sub~ : (Term[Sub]) -> A, arg~ : (Term[Arg]) -> A, blk~ : (Term[Blk]) -> A, phi~ : (Term[Phi]) -> A, def~ : (Term[Def]) -> A, jmp~ : (Term[Jmp]) -> A) -> A
 pub fn IrTerm::tainted_ptr(Self) -> Tid?
 pub fn IrTerm::tainted_ptr_text(Self) -> String?

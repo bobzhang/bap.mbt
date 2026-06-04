@@ -44,6 +44,15 @@ let arg_restricted_attr = "restricted"
 let arg_nonnull_attr = "nonnull"
 
 ///|
+let term_filename_attr = "filename"
+
+///|
+let term_format_attr = "format"
+
+///|
+let term_origin_attr = "origin"
+
+///|
 let term_comment_attr = "comment"
 
 ///|
@@ -145,17 +154,17 @@ pub fn Attr::flag(key : String) -> Attr {
 
 ///|
 pub fn Attr::filename(filename : String) -> Attr {
-  Attr::new(key="filename", value=filename)
+  Attr::new(key=term_filename_attr, value=filename)
 }
 
 ///|
 pub fn Attr::format(format : String) -> Attr {
-  Attr::new(key="format", value=format)
+  Attr::new(key=term_format_attr, value=format)
 }
 
 ///|
 pub fn Attr::origin(tid : Tid) -> Attr {
-  Attr::new(key="origin", value=tid.to_string())
+  Attr::new(key=term_origin_attr, value=tid.to_string())
 }
 
 ///|
@@ -339,6 +348,73 @@ fn[T] term_double(term : Term[T], key : String) -> Double? {
       }
     None => None
   }
+}
+
+///|
+fn[T] term_tid(term : Term[T], key : String) -> Tid? {
+  match term.get_attr(key) {
+    Some(text) =>
+      match Tid::from_string(text) {
+        Ok(tid) => Some(tid)
+        Err(_) => None
+      }
+    None => None
+  }
+}
+
+///|
+pub fn[T] Term::with_filename(self : Term[T], filename : String) -> Term[T] {
+  self.set_attr(Attr::filename(filename))
+}
+
+///|
+pub fn[T] Term::without_filename(self : Term[T]) -> Term[T] {
+  self.del_attr(term_filename_attr)
+}
+
+///|
+pub fn[T] Term::filename(self : Term[T]) -> String? {
+  self.get_attr(term_filename_attr)
+}
+
+///|
+pub fn[T] Term::with_format(self : Term[T], format : String) -> Term[T] {
+  self.set_attr(Attr::format(format))
+}
+
+///|
+pub fn[T] Term::without_format(self : Term[T]) -> Term[T] {
+  self.del_attr(term_format_attr)
+}
+
+///|
+pub fn[T] Term::format(self : Term[T]) -> String? {
+  self.get_attr(term_format_attr)
+}
+
+///|
+pub fn[T] Term::with_origin(self : Term[T], tid : Tid) -> Term[T] {
+  self.set_attr(Attr::origin(tid))
+}
+
+///|
+pub fn[T] Term::without_origin(self : Term[T]) -> Term[T] {
+  self.del_attr(term_origin_attr)
+}
+
+///|
+pub fn[T] Term::origin(self : Term[T]) -> Tid? {
+  term_tid(self, term_origin_attr)
+}
+
+///|
+pub fn[T] Term::origin_text(self : Term[T]) -> String? {
+  self.get_attr(term_origin_attr)
+}
+
+///|
+pub fn[T] Term::has_origin(self : Term[T], tid : Tid) -> Bool {
+  self.origin_text() == Some(tid.to_string())
 }
 
 ///|

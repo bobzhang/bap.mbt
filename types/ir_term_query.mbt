@@ -109,6 +109,73 @@ fn ir_term_double(term : IrTerm, key : String) -> Double? {
 }
 
 ///|
+fn ir_term_tid(term : IrTerm, key : String) -> Tid? {
+  match term.get_attr(key) {
+    Some(text) =>
+      match Tid::from_string(text) {
+        Ok(tid) => Some(tid)
+        Err(_) => None
+      }
+    None => None
+  }
+}
+
+///|
+pub fn IrTerm::filename(self : IrTerm) -> String? {
+  self.get_attr(term_filename_attr)
+}
+
+///|
+pub fn IrTerm::set_filename(self : IrTerm, filename : String) -> IrTerm {
+  self.set_attr(Attr::filename(filename))
+}
+
+///|
+pub fn IrTerm::del_filename(self : IrTerm) -> IrTerm {
+  self.del_attr(term_filename_attr)
+}
+
+///|
+pub fn IrTerm::format(self : IrTerm) -> String? {
+  self.get_attr(term_format_attr)
+}
+
+///|
+pub fn IrTerm::set_format(self : IrTerm, format : String) -> IrTerm {
+  self.set_attr(Attr::format(format))
+}
+
+///|
+pub fn IrTerm::del_format(self : IrTerm) -> IrTerm {
+  self.del_attr(term_format_attr)
+}
+
+///|
+pub fn IrTerm::origin(self : IrTerm) -> Tid? {
+  ir_term_tid(self, term_origin_attr)
+}
+
+///|
+pub fn IrTerm::origin_text(self : IrTerm) -> String? {
+  self.get_attr(term_origin_attr)
+}
+
+///|
+pub fn IrTerm::has_origin(self : IrTerm, tid : Tid) -> Bool {
+  self.origin_text() == Some(tid.to_string())
+}
+
+///|
+pub fn IrTerm::set_origin(self : IrTerm, tid : Tid) -> IrTerm {
+  self.set_attr(Attr::origin(tid))
+}
+
+///|
+pub fn IrTerm::del_origin(self : IrTerm) -> IrTerm {
+  self.del_attr(term_origin_attr)
+}
+
+///|
 pub fn IrTerm::comment(self : IrTerm) -> String? {
   self.get_attr(term_comment_attr)
 }

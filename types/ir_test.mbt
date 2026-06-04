@@ -173,9 +173,9 @@ test "terms expose common BAP-style attributes and flags" {
       @types.Var::new(name="x", typ=Imm(8)),
       Int(@types.Word::of_int(width=8, 1)),
     )
-    .set_attr(@types.Attr::filename("unit.bin"))
-    .set_attr(@types.Attr::format("hex"))
-    .set_attr(@types.Attr::origin(origin))
+    .with_filename("unit.bin")
+    .with_format("hex")
+    .with_origin(origin)
     .with_comment("root def")
     .with_python("print('x')")
     .with_shell("echo x")
@@ -196,6 +196,14 @@ test "terms expose common BAP-style attributes and flags" {
   assert_true(def.get_attr("filename") == Some("unit.bin"))
   assert_true(def.get_attr("format") == Some("hex"))
   assert_true(def.get_attr("origin") == Some(origin.to_string()))
+  assert_true(def.filename() == Some("unit.bin"))
+  assert_true(def.format() == Some("hex"))
+  assert_true(def.origin_text() == Some(origin.to_string()))
+  assert_true(def.has_origin(origin))
+  match def.origin() {
+    Some(tid) => assert_true(tid.to_string() == origin.to_string())
+    None => fail("expected origin tid")
+  }
   assert_true(def.comment() == Some("root def"))
   assert_true(def.python() == Some("print('x')"))
   assert_true(def.shell() == Some("echo x"))
@@ -237,6 +245,9 @@ test "terms expose common BAP-style attributes and flags" {
   assert_true(!def.without_color().has_color(IrRed))
   assert_true(!def.without_foreground().has_foreground(IrBlue))
   assert_true(!def.without_background().has_background(IrGray))
+  assert_true(def.without_filename().filename() is None)
+  assert_true(def.without_format().format() is None)
+  assert_true(def.without_origin().origin_text() is None)
   assert_true(def.without_comment().comment() is None)
   assert_true(def.without_python().python() is None)
   assert_true(def.without_shell().shell() is None)
@@ -257,6 +268,9 @@ test "terms expose common BAP-style attributes and flags" {
   assert_true(@types.IrColor::of_string("orange") is None)
   assert_true(
     def.set_attr(@types.Attr::new(key="weight", value="heavy")).weight() is None,
+  )
+  assert_true(
+    def.set_attr(@types.Attr::new(key="origin", value="%oops")).origin() is None,
   )
 }
 
@@ -769,15 +783,29 @@ test "ir term query helpers match classes attributes vars and children" {
   assert_true(def_term.has_foreground(IrBlue))
   assert_true(def_term.has_background(IrGray))
   let annotated_def_term = def_term
+    .set_filename("query.bin")
+    .set_format("octets")
+    .set_origin(sub.tid())
     .set_comment("comment")
     .set_python("print(1)")
     .set_shell("echo 1")
     .set_weight(1.25)
+  assert_true(annotated_def_term.filename() == Some("query.bin"))
+  assert_true(annotated_def_term.format() == Some("octets"))
+  assert_true(annotated_def_term.origin_text() == Some(sub.tid().to_string()))
+  assert_true(annotated_def_term.has_origin(sub.tid()))
+  match annotated_def_term.origin() {
+    Some(tid) => assert_true(tid.to_string() == sub.tid().to_string())
+    None => fail("expected ir term origin tid")
+  }
   assert_true(annotated_def_term.comment() == Some("comment"))
   assert_true(annotated_def_term.python() == Some("print(1)"))
   assert_true(annotated_def_term.shell() == Some("echo 1"))
   assert_true(annotated_def_term.weight() == Some(1.25))
   assert_true(annotated_def_term.get_attr("weight") == Some("1.25"))
+  assert_true(annotated_def_term.del_filename().filename() is None)
+  assert_true(annotated_def_term.del_format().format() is None)
+  assert_true(annotated_def_term.del_origin().origin_text() is None)
   assert_true(annotated_def_term.del_comment().comment() is None)
   assert_true(annotated_def_term.del_python().python() is None)
   assert_true(annotated_def_term.del_shell().shell() is None)
@@ -786,6 +814,12 @@ test "ir term query helpers match classes attributes vars and children" {
     annotated_def_term
     .set_attr(@types.Attr::new(key="weight", value="heavy"))
     .weight()
+    is None,
+  )
+  assert_true(
+    annotated_def_term
+    .set_attr(@types.Attr::new(key="origin", value="%oops"))
+    .origin()
     is None,
   )
   assert_true(def_term.tainted_reg() == Some(arg.tid()))

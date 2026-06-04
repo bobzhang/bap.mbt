@@ -188,6 +188,51 @@ pub fn EffectSort::union_all(Array[Self]) -> Self
 pub fn EffectSort::wmem() -> Self
 pub fn EffectSort::wreg() -> Self
 
+pub(all) struct Elementary {
+}
+pub fn Elementary::is_table(String) -> Bool
+pub fn Elementary::operation(String) -> Result[String, String]
+pub fn Elementary::operation_exn(String) -> String
+pub fn Elementary::table(String, Sort, Int) -> String
+
+pub(all) struct ElementaryScheme {
+}
+pub fn ElementaryScheme::acos(Sort, Int) -> String
+pub fn ElementaryScheme::acosh(Sort, Int) -> String
+pub fn ElementaryScheme::asin(Sort, Int) -> String
+pub fn ElementaryScheme::asinh(Sort, Int) -> String
+pub fn ElementaryScheme::atan(Sort, Int) -> String
+pub fn ElementaryScheme::atan2(Sort, Int) -> String
+pub fn ElementaryScheme::atan2pi(Sort, Int) -> String
+pub fn ElementaryScheme::atanh(Sort, Int) -> String
+pub fn ElementaryScheme::atanpi(Sort, Int) -> String
+pub fn ElementaryScheme::compound(Sort, Int) -> String
+pub fn ElementaryScheme::cos(Sort, Int) -> String
+pub fn ElementaryScheme::cosh(Sort, Int) -> String
+pub fn ElementaryScheme::cospi(Sort, Int) -> String
+pub fn ElementaryScheme::exp(Sort, Int) -> String
+pub fn ElementaryScheme::exp10(Sort, Int) -> String
+pub fn ElementaryScheme::exp10m1(Sort, Int) -> String
+pub fn ElementaryScheme::exp2(Sort, Int) -> String
+pub fn ElementaryScheme::exp2m1(Sort, Int) -> String
+pub fn ElementaryScheme::expm1(Sort, Int) -> String
+pub fn ElementaryScheme::hypot(Sort, Int) -> String
+pub fn ElementaryScheme::log(Sort, Int) -> String
+pub fn ElementaryScheme::log10(Sort, Int) -> String
+pub fn ElementaryScheme::log10p1(Sort, Int) -> String
+pub fn ElementaryScheme::log2(Sort, Int) -> String
+pub fn ElementaryScheme::log2p1(Sort, Int) -> String
+pub fn ElementaryScheme::logp1(Sort, Int) -> String
+pub fn ElementaryScheme::pow(Sort, Int) -> String
+pub fn ElementaryScheme::pown(Sort, Int) -> String
+pub fn ElementaryScheme::rootn(Sort, Int) -> String
+pub fn ElementaryScheme::rsqrt(Sort, Int) -> String
+pub fn ElementaryScheme::sin(Sort, Int) -> String
+pub fn ElementaryScheme::sinh(Sort, Int) -> String
+pub fn ElementaryScheme::sinpi(Sort, Int) -> String
+pub fn ElementaryScheme::tan(Sort, Int) -> String
+pub fn ElementaryScheme::tanh(Sort, Int) -> String
+
 pub(all) enum Endianness {
   UnknownEndianness
   LittleEndian

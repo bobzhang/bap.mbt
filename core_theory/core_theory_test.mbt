@@ -374,6 +374,70 @@ test "IEEE754 parameters define floating point sorts" {
 }
 
 ///|
+test "BAP elementary table naming schemes expose operation identifiers" {
+  let float64 = @core_theory.Sort::ieee754(
+    @core_theory.Ieee754Parameters::binary64(),
+  )
+  let table = @core_theory.Elementary::table("exp", float64, 3)
+  inspect(
+    table,
+    content="exp/core:float<core:bitv<core:IEEE754<2><11><52>><64>>/3",
+  )
+  assert_true(@core_theory.Elementary::is_table(table))
+  assert_true(@core_theory.Elementary::operation(table) == Ok("exp"))
+  assert_true(@core_theory.Elementary::operation_exn(table) == "exp")
+  assert_true(!@core_theory.Elementary::is_table("exp/core:float"))
+  assert_true(@core_theory.Elementary::operation("exp/core:float") is Err(_))
+  let names = [
+    @core_theory.ElementaryScheme::pow(float64, 1),
+    @core_theory.ElementaryScheme::compound(float64, 1),
+    @core_theory.ElementaryScheme::rootn(float64, 1),
+    @core_theory.ElementaryScheme::pown(float64, 1),
+    @core_theory.ElementaryScheme::rsqrt(float64, 1),
+    @core_theory.ElementaryScheme::hypot(float64, 1),
+    @core_theory.ElementaryScheme::exp(float64, 1),
+    @core_theory.ElementaryScheme::expm1(float64, 1),
+    @core_theory.ElementaryScheme::exp2(float64, 1),
+    @core_theory.ElementaryScheme::exp2m1(float64, 1),
+    @core_theory.ElementaryScheme::exp10(float64, 1),
+    @core_theory.ElementaryScheme::exp10m1(float64, 1),
+    @core_theory.ElementaryScheme::log(float64, 1),
+    @core_theory.ElementaryScheme::log2(float64, 1),
+    @core_theory.ElementaryScheme::log10(float64, 1),
+    @core_theory.ElementaryScheme::logp1(float64, 1),
+    @core_theory.ElementaryScheme::log2p1(float64, 1),
+    @core_theory.ElementaryScheme::log10p1(float64, 1),
+    @core_theory.ElementaryScheme::sin(float64, 1),
+    @core_theory.ElementaryScheme::cos(float64, 1),
+    @core_theory.ElementaryScheme::tan(float64, 1),
+    @core_theory.ElementaryScheme::sinpi(float64, 1),
+    @core_theory.ElementaryScheme::cospi(float64, 1),
+    @core_theory.ElementaryScheme::atanpi(float64, 1),
+    @core_theory.ElementaryScheme::atan2pi(float64, 1),
+    @core_theory.ElementaryScheme::asin(float64, 1),
+    @core_theory.ElementaryScheme::acos(float64, 1),
+    @core_theory.ElementaryScheme::atan(float64, 1),
+    @core_theory.ElementaryScheme::atan2(float64, 1),
+    @core_theory.ElementaryScheme::sinh(float64, 1),
+    @core_theory.ElementaryScheme::cosh(float64, 1),
+    @core_theory.ElementaryScheme::tanh(float64, 1),
+    @core_theory.ElementaryScheme::asinh(float64, 1),
+    @core_theory.ElementaryScheme::acosh(float64, 1),
+    @core_theory.ElementaryScheme::atanh(float64, 1),
+  ]
+  assert_true(names.all(@core_theory.Elementary::is_table))
+  assert_true(
+    names.map(@core_theory.Elementary::operation_exn) ==
+    [
+      "pow", "compound", "rootn", "pown", "rsqrt", "hypot", "exp", "expm1", "exp2",
+      "exp2m1", "exp10", "exp10m1", "log", "log2", "log10", "logp1", "log2p1", "log10p1",
+      "sin", "cos", "tan", "sinpi", "cospi", "atanpi", "atan2pi", "asin", "acos",
+      "atan", "atan2", "sinh", "cosh", "tanh", "asinh", "acosh", "atanh",
+    ],
+  )
+}
+
+///|
 test "variables preserve sorts versions and mutability flags" {
   let sort = @core_theory.Sort::bitv(64)
   let reg = @core_theory.Var::create(sort, "RAX")

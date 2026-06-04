@@ -946,6 +946,7 @@ pub(all) struct Program {
   subs : Array[Term[Sub]]
 }
 pub fn Program::create(subs? : Array[Term[Sub]], tid? : Tid) -> Term[Self]
+pub fn Program::to_graph(Term[Self]) -> @graphlib.Graph[Tid, Array[Term[Jmp]]]
 
 type ProgramBuilder
 pub fn ProgramBuilder::add_sub(Self, Term[Sub]) -> Unit
@@ -1729,6 +1730,7 @@ pub(all) enum WordValueFormat {
 } derive(Eq, @debug.Debug)
 
 // Type aliases
+pub type Callgraph = @graphlib.Graph[Tid, Array[Term[Jmp]]]
 
 // Traits
 

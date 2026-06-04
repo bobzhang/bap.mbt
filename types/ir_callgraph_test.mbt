@@ -38,8 +38,11 @@ test "program callgraph groups direct call sites by subroutine tid" {
   assert_true(main.sub_direct_call_tids().length() == 3)
   let program = @types.Program::create(subs=[main, callee])
   let graph = program.program_callgraph()
+  let graph_alias : @types.Callgraph = @types.Program::to_graph(program)
   assert_true(graph.node_count() == 3)
+  assert_true(graph_alias.node_count() == 3)
   assert_true(graph.edge_count() == 2)
+  assert_true(graph_alias.edge_count() == 2)
   match graph.edge(main_tid, callee_tid) {
     Some(edge) => {
       assert_true(edge.label.length() == 2)
@@ -54,6 +57,14 @@ test "program callgraph groups direct call sites by subroutine tid" {
       assert_true(edge.label[0].same(external_call))
     }
     None => fail("expected external call edge")
+  }
+  match graph_alias.edge(main_tid, callee_tid) {
+    Some(edge) => {
+      assert_true(edge.label.length() == 2)
+      assert_true(edge.label[0].same(call_1))
+      assert_true(edge.label[1].same(call_2))
+    }
+    None => fail("expected grouped call edge through Program::to_graph")
   }
   let callees = program.program_callees(main)
   assert_true(callees.length() == 2)

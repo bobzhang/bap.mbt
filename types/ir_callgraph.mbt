@@ -14,6 +14,9 @@ pub fn Call::return_(self : Call) -> Label? {
 }
 
 ///|
+pub type Callgraph = @graphlib.Graph[Tid, Array[Term[Jmp]]]
+
+///|
 pub fn Term::direct_call_target(self : Term[Jmp]) -> Tid? {
   match self.kind() {
     JmpCall(call) =>
@@ -108,6 +111,11 @@ pub fn Term::program_callgraph(
     }
   }
   graph
+}
+
+///|
+pub fn Program::to_graph(program : Term[Program]) -> Callgraph {
+  program.program_callgraph()
 }
 
 ///|

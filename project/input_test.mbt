@@ -735,6 +735,64 @@ test "project input exposes BAP-style loader registry aliases" {
 }
 
 ///|
+test "project input available loaders appends image backend names" {
+  let name = "unit-project-shared-available-loader"
+  match
+    @project.ProjectInput::register_loader(
+      name~,
+      description="project input loader with an image backend name twin",
+      extensions=["dupavail"],
+      load=data => {
+        Ok(
+          @project.ProjectInput::from_bytes(
+            target=@core_theory.Target::unknown(),
+            data,
+            endian=LittleEndian,
+            base=0x240UL,
+          ),
+        )
+      },
+    ) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let backend = @image.ImageBackend::create(
+    name~,
+    description="image backend with a project input loader name twin",
+    extensions=["dupavail-img"],
+    load=data => {
+      let segment = @image.Segment::create(
+        name=".dupavail",
+        endian=LittleEndian,
+        addr=0x340UL,
+        data,
+        readable=true,
+        executable=true,
+      )
+      Ok(
+        (
+          @image.Image::from_segments(entry=0x340UL, endian=LittleEndian, [
+            segment,
+          ]),
+          [],
+        ),
+      )
+    },
+  )
+  match @image.register_backend(name~, backend) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let mut count = 0
+  for loader in @project.ProjectInput::available_loaders() {
+    if loader == name {
+      count += 1
+    }
+  }
+  assert_true(count == 2)
+}
+
+///|
 fn unit_project_image_backend() -> @image.ImageBackend {
   @image.ImageBackend::create(
     name="unit-project-image-backend",

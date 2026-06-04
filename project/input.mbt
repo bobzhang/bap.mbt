@@ -687,7 +687,7 @@ pub fn available_input_loaders() -> Array[String] {
   let names = []
   input_loader_registry.each((name, _) => names.push(name))
   for name in @image.available_backends() {
-    push_unique_string(names, name)
+    names.push(name)
   }
   names
 }

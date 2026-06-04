@@ -327,12 +327,18 @@ pub fn ProjectDisassemblyInstruction::encoding(Self) -> String
 pub fn ProjectDisassemblyInstruction::has_kind(Self, ProjectInstructionKind) -> Bool
 pub fn ProjectDisassemblyInstruction::has_side_effect(Self) -> Bool
 pub fn ProjectDisassemblyInstruction::is_branch(Self) -> Bool
+pub fn ProjectDisassemblyInstruction::is_kind(Self, ProjectInstructionKind) -> Bool
 pub fn ProjectDisassemblyInstruction::kinds(Self) -> Array[ProjectInstructionKind]
+pub fn ProjectDisassemblyInstruction::may(Self, ProjectInstructionKind) -> Bool
 pub fn ProjectDisassemblyInstruction::memory(Self) -> @memory.Memory
+pub fn ProjectDisassemblyInstruction::must(Self, ProjectInstructionKind) -> Self
+pub fn ProjectDisassemblyInstruction::must_not(Self, ProjectInstructionKind) -> Self
 pub fn ProjectDisassemblyInstruction::name(Self) -> String
 pub fn ProjectDisassemblyInstruction::operand_count(Self) -> Int
 pub fn ProjectDisassemblyInstruction::operands(Self) -> Array[ProjectInstructionOperand]
 pub fn ProjectDisassemblyInstruction::same_normalized_operands(Self, Self) -> Bool
+pub fn ProjectDisassemblyInstruction::should(Self, ProjectInstructionKind) -> Self
+pub fn ProjectDisassemblyInstruction::should_not(Self, ProjectInstructionKind) -> Self
 pub fn ProjectDisassemblyInstruction::subinstruction_count(Self) -> Int
 pub fn ProjectDisassemblyInstruction::subinstructions(Self) -> Array[Self]
 pub fn ProjectDisassemblyInstruction::subs(Self) -> Array[Self]

@@ -614,17 +614,23 @@ test "project disassembly instructions carry BAP instruction kinds" {
         ["conditional-branch", "call", "may-store"],
       )
       assert_true(instruction.has_kind(ProjectCall))
+      assert_true(instruction.is_kind(ProjectCall))
+      assert_true(instruction.may(ProjectMayStore))
       assert_true(instruction.is_branch())
       assert_true(instruction.affects_control_flow())
       assert_true(instruction.has_side_effect())
       let updated = instruction
-        .without_kind(ProjectCall)
-        .with_kind(ProjectMayLoad)
+        .must_not(ProjectCall)
+        .should(ProjectMayLoad)
+        .must(ProjectReturn)
+        .should_not(ProjectMayStore)
       assert_true(!updated.has_kind(ProjectCall))
       assert_true(updated.has_kind(ProjectMayLoad))
+      assert_true(updated.is_kind(ProjectReturn))
+      assert_true(!updated.may(ProjectMayStore))
       assert_true(
         updated.kinds().map(kind => kind.to_string()) ==
-        ["conditional-branch", "may-load", "may-store"],
+        ["conditional-branch", "return", "may-load"],
       )
       assert_true(@project.ProjectIndirectBranch.is_branch())
       assert_true(!@project.ProjectMayLoad.affects_control_flow())

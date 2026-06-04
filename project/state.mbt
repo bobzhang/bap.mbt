@@ -725,6 +725,22 @@ pub fn ProjectDisassemblyInstruction::has_kind(
 }
 
 ///|
+pub fn ProjectDisassemblyInstruction::is_kind(
+  self : ProjectDisassemblyInstruction,
+  kind : ProjectInstructionKind,
+) -> Bool {
+  self.has_kind(kind)
+}
+
+///|
+pub fn ProjectDisassemblyInstruction::may(
+  self : ProjectDisassemblyInstruction,
+  kind : ProjectInstructionKind,
+) -> Bool {
+  self.has_kind(kind)
+}
+
+///|
 pub fn ProjectDisassemblyInstruction::with_kinds(
   self : ProjectDisassemblyInstruction,
   kinds : Array[ProjectInstructionKind],
@@ -743,11 +759,43 @@ pub fn ProjectDisassemblyInstruction::with_kind(
 }
 
 ///|
+pub fn ProjectDisassemblyInstruction::must(
+  self : ProjectDisassemblyInstruction,
+  kind : ProjectInstructionKind,
+) -> ProjectDisassemblyInstruction {
+  self.with_kind(kind)
+}
+
+///|
 pub fn ProjectDisassemblyInstruction::without_kind(
   self : ProjectDisassemblyInstruction,
   kind : ProjectInstructionKind,
 ) -> ProjectDisassemblyInstruction {
   self.with_kinds(self.kinds_value.filter(existing => existing != kind))
+}
+
+///|
+pub fn ProjectDisassemblyInstruction::must_not(
+  self : ProjectDisassemblyInstruction,
+  kind : ProjectInstructionKind,
+) -> ProjectDisassemblyInstruction {
+  self.without_kind(kind)
+}
+
+///|
+pub fn ProjectDisassemblyInstruction::should(
+  self : ProjectDisassemblyInstruction,
+  kind : ProjectInstructionKind,
+) -> ProjectDisassemblyInstruction {
+  self.with_kind(kind)
+}
+
+///|
+pub fn ProjectDisassemblyInstruction::should_not(
+  self : ProjectDisassemblyInstruction,
+  kind : ProjectInstructionKind,
+) -> ProjectDisassemblyInstruction {
+  self.without_kind(kind)
 }
 
 ///|

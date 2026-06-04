@@ -237,6 +237,33 @@ test "translated DWARF FBI falls back to linkage names" {
 }
 
 ///|
+test "translated DWARF FBI accepts GNU MIPS linkage names" {
+  let abbrev = b"\x01\x2e\x00" +
+    b"\x87\x40\x08" +
+    b"\x11\x01" +
+    b"\x12\x0b" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x15\x00\x00\x00" +
+    b"\x04\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x04" +
+    b"\x01" +
+    b"gnuold\x00" +
+    b"\xc0\x00\x00\x00" +
+    b"\x04" +
+    b"\x00"
+  let data = expect_fbi_data(
+    @dwarf.DwarfData::from_bytes(endian=LittleEndian, info~, abbrev~, str=b""),
+  )
+  let functions = expect_functions(data.functions())
+  assert_true(functions.length() == 1)
+  assert_true(functions[0].name() == "gnuold")
+  assert_true(functions[0].low_pc() == 0xc0UL)
+  assert_true(functions[0].high_pc() == Some(0xc4UL))
+}
+
+///|
 test "translated DWARF FBI resolves function name references" {
   let abbrev = b"\x01\x2e\x00" +
     b"\x47\x13" +

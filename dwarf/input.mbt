@@ -301,6 +301,7 @@ fn dwarf_attr_of_int(code : Int) -> DwarfAttr {
     0x52 => DwarfEntryPc
     0x55 => DwarfRanges
     0x6e => DwarfLinkageName
+    0x2007 => DwarfLinkageName
     0x72 => DwarfStrOffsetsBase
     0x73 => DwarfAddrBase
     0x74 => DwarfRnglistsBase

@@ -657,6 +657,7 @@ pub(all) enum IrTerm {
 pub fn IrTerm::after(Self, IrTermClass, Tid, rev? : Bool) -> Array[Self]
 pub fn IrTerm::append(Self, Self, after? : Tid) -> Self
 pub fn IrTerm::append_child(Self, Self, after? : Tid) -> Self
+pub fn IrTerm::arg_format(Self) -> String?
 pub fn IrTerm::attrs(Self) -> Map[String, String]
 pub fn IrTerm::background(Self) -> IrColor?
 pub fn IrTerm::before(Self, IrTermClass, Tid, rev? : Bool) -> Array[Self]
@@ -680,6 +681,11 @@ pub fn IrTerm::def_uses_name(Self, String) -> Bool
 pub fn IrTerm::defined_vars(Self) -> Array[Var]
 pub fn IrTerm::defines_var(Self, Var) -> Bool
 pub fn IrTerm::defines_var_name(Self, String) -> Bool
+pub fn IrTerm::del_arg_alloc_size(Self) -> Self
+pub fn IrTerm::del_arg_format(Self) -> Self
+pub fn IrTerm::del_arg_nonnull(Self) -> Self
+pub fn IrTerm::del_arg_restricted(Self) -> Self
+pub fn IrTerm::del_arg_warn_unused(Self) -> Self
 pub fn IrTerm::del_attr(Self, String) -> Self
 pub fn IrTerm::del_background(Self) -> Self
 pub fn IrTerm::del_color(Self) -> Self
@@ -740,6 +746,10 @@ pub fn IrTerm::has_tainted_ptr(Self, Tid) -> Bool
 pub fn IrTerm::has_tainted_reg(Self, Tid) -> Bool
 pub fn IrTerm::has_tid(Self, Tid) -> Bool
 pub fn IrTerm::has_tid_text(Self, String) -> Bool
+pub fn IrTerm::is_arg_alloc_size(Self) -> Bool
+pub fn IrTerm::is_arg_nonnull(Self) -> Bool
+pub fn IrTerm::is_arg_restricted(Self) -> Bool
+pub fn IrTerm::is_arg_warn_unused(Self) -> Bool
 pub fn IrTerm::is_dead(Self) -> Bool
 pub fn IrTerm::is_live(Self) -> Bool
 pub fn IrTerm::is_sub_const(Self) -> Bool
@@ -781,6 +791,11 @@ pub fn IrTerm::remove_child(Self, IrTermClass, Tid) -> Self
 pub fn IrTerm::same(Self, Self) -> Bool
 pub fn IrTerm::same_term(Self, Self) -> Bool
 pub fn IrTerm::same_tid(Self, Tid) -> Bool
+pub fn IrTerm::set_arg_alloc_size(Self) -> Self
+pub fn IrTerm::set_arg_format(Self, String) -> Self
+pub fn IrTerm::set_arg_nonnull(Self) -> Self
+pub fn IrTerm::set_arg_restricted(Self) -> Self
+pub fn IrTerm::set_arg_warn_unused(Self) -> Self
 pub fn IrTerm::set_attr(Self, Attr) -> Self
 pub fn IrTerm::set_background(Self, IrColor) -> Self
 pub fn IrTerm::set_color(Self, IrColor) -> Self

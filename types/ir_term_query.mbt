@@ -617,6 +617,96 @@ pub fn IrTerm::is_sub_stub(self : IrTerm) -> Bool {
 }
 
 ///|
+fn IrTerm::set_arg_flag(self : IrTerm, key : String) -> IrTerm {
+  self.set_attr(Attr::flag(key))
+}
+
+///|
+fn IrTerm::del_arg_flag(self : IrTerm, key : String) -> IrTerm {
+  self.del_attr(key)
+}
+
+///|
+fn IrTerm::has_arg_flag(self : IrTerm, key : String) -> Bool {
+  self.has_attr(key)
+}
+
+///|
+pub fn IrTerm::set_arg_warn_unused(self : IrTerm) -> IrTerm {
+  self.set_arg_flag(arg_warn_unused_attr)
+}
+
+///|
+pub fn IrTerm::del_arg_warn_unused(self : IrTerm) -> IrTerm {
+  self.del_arg_flag(arg_warn_unused_attr)
+}
+
+///|
+pub fn IrTerm::is_arg_warn_unused(self : IrTerm) -> Bool {
+  self.has_arg_flag(arg_warn_unused_attr)
+}
+
+///|
+pub fn IrTerm::set_arg_alloc_size(self : IrTerm) -> IrTerm {
+  self.set_arg_flag(arg_alloc_size_attr)
+}
+
+///|
+pub fn IrTerm::del_arg_alloc_size(self : IrTerm) -> IrTerm {
+  self.del_arg_flag(arg_alloc_size_attr)
+}
+
+///|
+pub fn IrTerm::is_arg_alloc_size(self : IrTerm) -> Bool {
+  self.has_arg_flag(arg_alloc_size_attr)
+}
+
+///|
+pub fn IrTerm::set_arg_format(self : IrTerm, format : String) -> IrTerm {
+  self.set_attr(Arg::format(format))
+}
+
+///|
+pub fn IrTerm::del_arg_format(self : IrTerm) -> IrTerm {
+  self.del_attr(arg_format_attr)
+}
+
+///|
+pub fn IrTerm::arg_format(self : IrTerm) -> String? {
+  self.get_attr(arg_format_attr)
+}
+
+///|
+pub fn IrTerm::set_arg_restricted(self : IrTerm) -> IrTerm {
+  self.set_arg_flag(arg_restricted_attr)
+}
+
+///|
+pub fn IrTerm::del_arg_restricted(self : IrTerm) -> IrTerm {
+  self.del_arg_flag(arg_restricted_attr)
+}
+
+///|
+pub fn IrTerm::is_arg_restricted(self : IrTerm) -> Bool {
+  self.has_arg_flag(arg_restricted_attr)
+}
+
+///|
+pub fn IrTerm::set_arg_nonnull(self : IrTerm) -> IrTerm {
+  self.set_arg_flag(arg_nonnull_attr)
+}
+
+///|
+pub fn IrTerm::del_arg_nonnull(self : IrTerm) -> IrTerm {
+  self.del_arg_flag(arg_nonnull_attr)
+}
+
+///|
+pub fn IrTerm::is_arg_nonnull(self : IrTerm) -> Bool {
+  self.has_arg_flag(arg_nonnull_attr)
+}
+
+///|
 pub fn IrTerm::has_mark(self : IrTerm) -> Bool {
   self.has_attr(term_mark_attr)
 }

@@ -2579,7 +2579,14 @@ fn x86_system_flag_role_names() -> Array[String] {
 fn x86_64_role_names(role : Role) -> Array[String] {
   match role {
     UnknownRole => []
-    General => []
+    General =>
+      concat_role_names([
+        lower_names(x86_64_gpr_names()),
+        lower_names(x86_segment_names(false)),
+        role_names("st", 0, 7),
+        role_names("mm", 0, 7),
+        role_names("ymm", 0, 15),
+      ])
     SpecialRegister | AliasRegister | PseudoRegister => []
     IntegerRegister =>
       concat_role_names([
@@ -2632,7 +2639,11 @@ fn x86_64_role_names(role : Role) -> Array[String] {
 fn x86_16_role_names(role : Role) -> Array[String] {
   match role {
     UnknownRole => []
-    General => []
+    General =>
+      concat_role_names([
+        lower_names(x86_16_gpr_names()),
+        lower_names(x86_segment_names(false)),
+      ])
     SpecialRegister | AliasRegister | PseudoRegister => []
     IntegerRegister =>
       concat_role_names([
@@ -2680,6 +2691,22 @@ fn x86_32_cpu_role_names(
 ) -> Array[String] {
   match role {
     UnknownRole => []
+    General => {
+      let groups = [
+        lower_names(x86_32_gpr_names()),
+        lower_names(x86_segment_names(true)),
+      ]
+      if st {
+        groups.push(role_names("st", 0, 7))
+      }
+      if mmx {
+        groups.push(role_names("mm", 0, 7))
+      }
+      if xmm {
+        groups.push(role_names("xmm", 0, 7))
+      }
+      concat_role_names(groups)
+    }
     FloatingRegister => {
       let groups = []
       if st {
@@ -2703,7 +2730,14 @@ fn x86_32_cpu_role_names(
 fn x86_32_role_names(role : Role) -> Array[String] {
   match role {
     UnknownRole => []
-    General => []
+    General =>
+      concat_role_names([
+        lower_names(x86_32_gpr_names()),
+        lower_names(x86_segment_names(true)),
+        role_names("st", 0, 7),
+        role_names("mm", 0, 7),
+        role_names("xmm", 0, 7),
+      ])
     SpecialRegister | AliasRegister | PseudoRegister => []
     IntegerRegister =>
       concat_role_names([
@@ -2751,7 +2785,13 @@ fn x86_32_role_names(role : Role) -> Array[String] {
 fn arm32_role_names(fp~ : Bool, role : Role) -> Array[String] {
   match role {
     UnknownRole => []
-    General => []
+    General => {
+      let groups = [concat_role_names([role_names("r", 0, 12), ["sp", "lr"]])]
+      if fp {
+        groups.push(role_names("d", 0, 31))
+      }
+      concat_role_names(groups)
+    }
     SpecialRegister | AliasRegister | PseudoRegister => []
     IntegerRegister =>
       concat_role_names([
@@ -2793,7 +2833,8 @@ fn arm32_status_flag_role_names() -> Array[String] {
 fn aarch64_role_names(role : Role) -> Array[String] {
   match role {
     UnknownRole => []
-    General => []
+    General =>
+      concat_role_names([role_names("r", 0, 31), role_names("x", 0, 31)])
     SpecialRegister | AliasRegister => []
     PseudoRegister => ["xzr", "zr", "wzr"]
     IntegerRegister =>
@@ -2858,7 +2899,14 @@ fn aarch64_status_flag_role_names() -> Array[String] {
 fn mips_role_names(bits : Int, role : Role) -> Array[String] {
   match role {
     UnknownRole => []
-    General => []
+    General =>
+      concat_role_names([
+        role_names("r", 0, 31),
+        [
+          for name in mips_gpr_alias_names() => name.to_lower()
+        ],
+        role_names("f", 0, 31),
+      ])
     SpecialRegister | AliasRegister => []
     PseudoRegister => ["zero", "r0"]
     IntegerRegister =>
@@ -2901,7 +2949,12 @@ fn mips_role_names(bits : Int, role : Role) -> Array[String] {
 fn powerpc_role_names(role : Role) -> Array[String] {
   match role {
     UnknownRole => []
-    General => []
+    General =>
+      concat_role_names([
+        role_names("r", 0, 31),
+        role_names("f", 0, 31),
+        role_names("v", 0, 31),
+      ])
     SpecialRegister | AliasRegister | PseudoRegister => []
     IntegerRegister => role_names("r", 0, 31)
     FloatingRegister =>
@@ -2959,7 +3012,17 @@ fn powerpc_role_names(role : Role) -> Array[String] {
 fn riscv_role_names(role : Role) -> Array[String] {
   match role {
     UnknownRole => []
-    General => []
+    General =>
+      concat_role_names([
+        role_names("x", 0, 31),
+        [
+          for name in riscv_gpr_alias_names() => name.to_lower()
+        ],
+        role_names("f", 0, 31),
+        [
+          for name in riscv_fpr_alias_names() => name.to_lower()
+        ],
+      ])
     SpecialRegister | AliasRegister => []
     PseudoRegister => ["zero", "x0", "pc"]
     IntegerRegister =>
@@ -3034,7 +3097,17 @@ fn riscv_role_names(role : Role) -> Array[String] {
 fn loongarch_role_names(role : Role) -> Array[String] {
   match role {
     UnknownRole => []
-    General => []
+    General =>
+      concat_role_names([
+        role_names("r", 0, 31),
+        [
+          for name in loongarch_gpr_alias_names() => name.to_lower()
+        ],
+        role_names("f", 0, 31),
+        [
+          for name in loongarch_fpr_alias_names() => name.to_lower()
+        ],
+      ])
     SpecialRegister | AliasRegister => []
     PseudoRegister => ["zero", "r0", "pc"]
     IntegerRegister =>
@@ -3106,7 +3179,14 @@ fn loongarch_role_names(role : Role) -> Array[String] {
 fn sparc_role_names(role : Role) -> Array[String] {
   match role {
     UnknownRole => []
-    General => []
+    General =>
+      concat_role_names([
+        role_names("g", 0, 7),
+        role_names("o", 0, 7),
+        role_names("l", 0, 7),
+        role_names("i", 0, 7),
+        role_names("f", 0, 31),
+      ])
     SpecialRegister | AliasRegister | PseudoRegister => []
     IntegerRegister =>
       concat_role_names([
@@ -3141,7 +3221,8 @@ fn sparc_role_names(role : Role) -> Array[String] {
 fn systemz_role_names(role : Role) -> Array[String] {
   match role {
     UnknownRole => []
-    General => []
+    General =>
+      concat_role_names([role_names("r", 0, 15), role_names("f", 0, 15)])
     SpecialRegister | AliasRegister | PseudoRegister => []
     IntegerRegister => role_names("r", 0, 15)
     FloatingRegister => role_names("f", 0, 15)
@@ -4246,6 +4327,7 @@ pub fn Target::roles_of_var(self : Target, variable : Var) -> Array[Role] {
   let roles = []
   for
     role in [
+      General,
       StackPointer,
       IntegerRegister,
       FloatingRegister,

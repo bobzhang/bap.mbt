@@ -32,6 +32,7 @@ pub fn Byteweight::length(Self) -> Int
 pub fn Byteweight::longest_match(Self, BytesView) -> (Int, ByteweightStats)?
 pub fn Byteweight::next(Self, length~ : Int, threshold~ : Double, @memory.Memory, Int) -> Int?
 pub fn Byteweight::next_if(Self, length~ : Int, f~ : (@memory.Memory, Int, ByteweightStats) -> Bool, @memory.Memory, Int) -> Int?
+pub fn Byteweight::to_string(Self) -> String
 pub fn Byteweight::train(Self, max_length~ : Int, (@memory.Memory) -> Bool, @memory.Memory) -> Self
 
 type ByteweightSignatureData[T]

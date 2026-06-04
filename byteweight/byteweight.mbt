@@ -50,6 +50,19 @@ pub fn ByteweightStats::probability_h0(self : ByteweightStats) -> Double {
 }
 
 ///|
+fn byteweight_column(text : String) -> String {
+  text.pad_end(8, ' ') + " "
+}
+
+///|
+fn byteweight_fixed4(value : Double) -> String {
+  let scaled = (value * 10000.0).round().to_int()
+  let whole = scaled / 10000
+  let fraction = scaled % 10000
+  whole.to_string() + "." + fraction.to_string().pad_start(4, '0')
+}
+
+///|
 pub fn Byteweight::create() -> Byteweight {
   { entries_value: [] }
 }
@@ -236,6 +249,22 @@ pub fn[A] Byteweight::fold(
     result = f(result, entry.0, entry.1)
   }
   result
+}
+
+///|
+pub fn Byteweight::to_string(self : Byteweight) -> String {
+  let out = StringBuilder()
+  for entry in self.entries_value {
+    let stats = entry.1
+    out.write_string(byteweight_column(stats.trials().to_string()))
+    out.write_string(byteweight_column(stats.h1().to_string()))
+    out.write_string(byteweight_column(stats.h0().to_string()))
+    out.write_string(byteweight_fixed4(stats.probability_h1()))
+    out.write_string(" ")
+    out.write_string(@regular.bytes_to_hex(entry.0))
+    out.write_char('\n')
+  }
+  out.to_string()
 }
 
 ///|

@@ -33,6 +33,22 @@ test "translated BAP byteweight training records positive and negative stats" {
 }
 
 ///|
+test "translated BAP byteweight printer renders stats and hex signatures" {
+  let corpus = bw_memory(0x100UL, b"\xaa\xbb\xaa\xbb")
+  let starts = Set::from_array([0x100UL])
+  let decider = @byteweight.Byteweight::create().train(
+    max_length=2,
+    mem => starts.contains(mem.min_addr()),
+    corpus,
+  )
+  let expected =
+    #|2        1        1        0.5000 aabb
+    #|2        1        1        0.5000 aa
+    #|
+  inspect(decider.to_string(), content=expected)
+}
+
+///|
 test "translated BAP byteweight scanning uses longest known signatures" {
   let corpus = bw_memory(0x100UL, b"abcxabcy")
   let decider = @byteweight.Byteweight::create().train(

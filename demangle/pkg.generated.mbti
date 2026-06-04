@@ -13,6 +13,7 @@ import {
 // Types and methods
 type Demangler
 pub fn Demangler::create(String, (String) -> String, pkg? : String) -> Result[Self, String]
+pub fn Demangler::declare_(String, (String) -> String, pkg? : String) -> Result[Unit, String]
 pub fn Demangler::declare_demangler(String, (String) -> String, pkg? : String) -> Result[Unit, String]
 pub fn Demangler::fullname(Self) -> @knowledge.Name
 pub fn Demangler::id() -> Self

@@ -97,6 +97,15 @@ pub fn Demangler::declare_demangler(
   run : (String) -> String,
   pkg? : String,
 ) -> Result[Unit, String] {
+  Demangler::declare_(name, run, pkg?)
+}
+
+///|
+pub fn Demangler::declare_(
+  name : String,
+  run : (String) -> String,
+  pkg? : String,
+) -> Result[Unit, String] {
   Demangler::create(name, run, pkg?).map(_ => ())
 }
 

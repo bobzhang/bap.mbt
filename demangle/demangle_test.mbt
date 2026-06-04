@@ -45,7 +45,7 @@ test "translated BAP demangler registry rejects duplicate full names" {
   )
 
   match
-    @demangle.Demangler::declare_demangler("unit-suffix", pkg="test", fn(name) {
+    @demangle.Demangler::declare_("unit-suffix", pkg="test", fn(name) {
       name + ":unit"
     }) {
     Ok(_) => ()
@@ -55,6 +55,10 @@ test "translated BAP demangler registry rejects duplicate full names" {
     Ok(demangler) => assert_eq(demangler.run("main"), "main:unit")
     Err(reason) => fail(reason)
   }
+  assert_true(
+    @demangle.Demangler::declare_("unit-suffix", pkg="test", fn(name) { name })
+    is Err(_),
+  )
   assert_true(@demangle.Demanglers::lookup("missing", pkg="test") is None)
   assert_true(@demangle.Demanglers::get("missing", pkg="test") is Err(_))
 }

@@ -230,6 +230,10 @@ test "translated BAP common trace event tags match helper constructors" {
     broad[7].return_value() == Some({ caller: "main", callee: "callee" }),
   )
   assert_true(
+    @traces.TraceEvent::return_({ caller: "main", callee: "callee" }) ==
+    broad[7],
+  )
+  assert_true(
     broad[8].modload_value() ==
     Some({ name: "libc.so", low: word32(0x1000), high: word32(0x1fff) }),
   )

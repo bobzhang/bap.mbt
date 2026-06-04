@@ -192,6 +192,7 @@ pub fn TraceEvent::register_write(Move[@types.Var]) -> Self
 pub fn TraceEvent::register_write_tag() -> String
 pub fn TraceEvent::register_write_uuid() -> String
 pub fn TraceEvent::register_write_value(Self) -> Move[@types.Var]?
+pub fn TraceEvent::return_(Return) -> Self
 pub fn TraceEvent::return_event(Return) -> Self
 pub fn TraceEvent::return_tag() -> String
 pub fn TraceEvent::return_uuid() -> String

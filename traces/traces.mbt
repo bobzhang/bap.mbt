@@ -641,6 +641,11 @@ pub fn TraceEvent::return_event(value : Return) -> TraceEvent {
 }
 
 ///|
+pub fn TraceEvent::return_(value : Return) -> TraceEvent {
+  TraceEvent::return_event(value)
+}
+
+///|
 pub fn TraceEvent::modload(value : Modload) -> TraceEvent {
   Modload(value)
 }

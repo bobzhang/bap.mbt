@@ -1,0 +1,30 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/strings"
+
+// Values
+
+// Errors
+
+// Types and methods
+type StringsIndex[K]
+pub fn[K] StringsIndex::empty(key~ : StringsIndexKey[K]) -> Self[K]
+pub fn StringsIndex::empty_int() -> Self[Int]
+pub fn[K] StringsIndex::key(Self[K], BytesView) -> K
+pub fn[K] StringsIndex::register(Self[K], BytesView) -> Self[K]
+pub fn[K] StringsIndex::registered(Self[K], BytesView) -> Bool
+pub fn[K] StringsIndex::string(Self[K], K) -> Bytes
+
+type StringsIndexKey[K]
+pub fn[K] StringsIndexKey::create(null~ : K, succ~ : (K) -> K, compare~ : (K, K) -> Int) -> Self[K]
+pub fn StringsIndexKey::int() -> Self[Int]
+
+pub(all) struct StringsScanner {
+}
+pub fn StringsScanner::next((Int) -> Byte?, Int, is_stop? : (Byte) -> Bool) -> Bytes
+pub fn StringsScanner::read_bytes(BytesView) -> (Int) -> Byte?
+pub fn StringsScanner::run((Int) -> Byte?, Int, is_stop? : (Byte) -> Bool) -> Array[(Int, Bytes)]
+pub fn StringsScanner::scan_bytes(BytesView, offset? : Int, is_stop? : (Byte) -> Bool) -> Array[(Int, Bytes)]
+
+// Type aliases
+
+// Traits

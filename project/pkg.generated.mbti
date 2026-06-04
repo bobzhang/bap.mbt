@@ -267,6 +267,19 @@ pub fn ProjectCollatorInfo::name(Self) -> String
 pub fn ProjectCollatorInfo::pkg(Self) -> String
 pub fn ProjectCollatorInfo::qualified_name(Self) -> @knowledge.Name
 
+type ProjectDisassemblyBlock
+pub fn ProjectDisassemblyBlock::addr(Self) -> UInt64
+pub fn ProjectDisassemblyBlock::compare(Self, Self) -> Int
+pub fn ProjectDisassemblyBlock::create(@memory.Memory, Array[ProjectDisassemblyInstruction]) -> Result[Self, String]
+pub fn ProjectDisassemblyBlock::insns(Self) -> Array[(@memory.Memory, ProjectDisassemblyInstruction)]
+pub fn ProjectDisassemblyBlock::instruction_count(Self) -> Int
+pub fn ProjectDisassemblyBlock::instructions(Self) -> Array[ProjectDisassemblyInstruction]
+pub fn ProjectDisassemblyBlock::leader(Self) -> ProjectDisassemblyInstruction
+pub fn ProjectDisassemblyBlock::memory(Self) -> @memory.Memory
+pub fn ProjectDisassemblyBlock::same(Self, Self) -> Bool
+pub fn ProjectDisassemblyBlock::terminator(Self) -> ProjectDisassemblyInstruction
+pub fn ProjectDisassemblyBlock::to_string(Self) -> String
+
 type ProjectDisassemblyDriver
 pub fn ProjectDisassemblyDriver::create(name~ : String, description? : String, priority? : Int, run~ : (Project) -> Result[Project, String]) -> Self
 pub fn ProjectDisassemblyDriver::description(Self) -> String
@@ -326,7 +339,9 @@ pub fn ProjectDisassemblyState::add_block(Self, @memory.Memory) -> Self
 pub fn ProjectDisassemblyState::add_edge(Self, ProjectDisassemblyEdge) -> Self
 pub fn ProjectDisassemblyState::add_instruction(Self, ProjectDisassemblyInstruction) -> Self
 pub fn ProjectDisassemblyState::block_count(Self) -> Int
+pub fn ProjectDisassemblyState::block_view(Self, @memory.Memory) -> Result[ProjectDisassemblyBlock, String]
 pub fn ProjectDisassemblyState::blocks(Self) -> Array[@memory.Memory]
+pub fn ProjectDisassemblyState::blocks_with_instructions(Self) -> Array[ProjectDisassemblyBlock]
 pub fn ProjectDisassemblyState::create(blocks? : Array[@memory.Memory], instructions? : Array[ProjectDisassemblyInstruction], edges? : Array[ProjectDisassemblyEdge]) -> Self
 pub fn ProjectDisassemblyState::edge_count(Self) -> Int
 pub fn ProjectDisassemblyState::edges(Self) -> Array[ProjectDisassemblyEdge]

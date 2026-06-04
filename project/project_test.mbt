@@ -365,6 +365,83 @@ test "project disassembly instructions replace by memory and support lookup" {
 }
 
 ///|
+test "project disassembly block views expose BAP block accessors" {
+  let block = raw_segment().memory()
+  let other = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x2000UL,
+    b"\x01",
+  )
+  match (block.view(words=1), block.view(from=0x1001UL, words=1)) {
+    (Ok(first_byte), Ok(second_byte)) => {
+      let first = @project.ProjectDisassemblyInstruction::create(
+        first_byte,
+        assembly="nop",
+        code=0x90,
+        name="nop",
+      )
+      let second = @project.ProjectDisassemblyInstruction::create(
+        second_byte,
+        assembly="ret",
+        code=0xc3,
+        name="ret",
+      )
+      let mutable_insns = [first, second]
+      match @project.ProjectDisassemblyBlock::create(block, mutable_insns) {
+        Ok(view) => {
+          mutable_insns.push(first)
+          assert_true(view.addr() == 0x1000UL)
+          assert_true(view.memory().min_addr() == 0x1000UL)
+          assert_true(view.leader().name() == "nop")
+          assert_true(view.terminator().name() == "ret")
+          assert_true(view.instruction_count() == 2)
+          assert_true(view.instructions().length() == 2)
+          let exposed = view.instructions()
+          exposed.push(first)
+          assert_true(view.instruction_count() == 2)
+          let pairs = view.insns()
+          assert_true(pairs.length() == 2)
+          assert_true(pairs[0].0.min_addr() == 0x1000UL)
+          assert_true(pairs[0].1.name() == "nop")
+          assert_true(pairs[1].0.min_addr() == 0x1001UL)
+          assert_true(pairs[1].1.name() == "ret")
+          assert_true(view.to_string() == "[0x1000,0x1001]")
+          match @project.ProjectDisassemblyBlock::create(other, [first]) {
+            Ok(other_view) => {
+              assert_true(view.compare(other_view) < 0)
+              assert_true(!view.same(other_view))
+            }
+            Err(reason) => fail(reason)
+          }
+        }
+        Err(reason) => fail(reason)
+      }
+      assert_true(@project.ProjectDisassemblyBlock::create(block, []) is Err(_))
+      let state = @project.ProjectDisassemblyState::empty()
+        .add_block(block)
+        .add_block(other)
+        .add_instruction(second)
+        .add_instruction(first)
+      match state.block_view(block) {
+        Ok(view) => {
+          assert_true(view.leader().addr() == 0x1000UL)
+          assert_true(view.terminator().addr() == 0x1001UL)
+        }
+        Err(reason) => fail(reason)
+      }
+      assert_true(state.block_view(other) is Err(_))
+      let views = state.blocks_with_instructions()
+      assert_true(views.length() == 1)
+      match state.block_view(block) {
+        Ok(view) => assert_true(views[0].same(view))
+        Err(reason) => fail(reason)
+      }
+    }
+    (Err(reason), _) | (_, Err(reason)) => fail(reason)
+  }
+}
+
+///|
 test "project disassembly instructions carry BAP instruction metadata" {
   let block = raw_segment().memory()
   match (block.view(words=1), block.view(from=0x1001UL, words=1)) {

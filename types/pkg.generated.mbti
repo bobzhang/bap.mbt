@@ -237,10 +237,13 @@ pub(all) struct Attr {
   value : String
 } derive(Eq, @debug.Debug)
 pub fn Attr::address(Word) -> Self
+pub fn Attr::background(IrColor) -> Self
+pub fn Attr::color(IrColor) -> Self
 pub fn Attr::comment(String) -> Self
 pub fn Attr::dead() -> Self
 pub fn Attr::filename(String) -> Self
 pub fn Attr::flag(String) -> Self
+pub fn Attr::foreground(IrColor) -> Self
 pub fn Attr::format(String) -> Self
 pub fn Attr::invariant(Exp) -> Self
 pub fn Attr::live() -> Self
@@ -619,6 +622,20 @@ pub fn IrCfgEdge::position(Self) -> Int
 pub fn IrCfgEdge::src(Self) -> Term[Blk]
 pub fn IrCfgEdge::tid(Self) -> Tid
 
+pub(all) enum IrColor {
+  IrBlack
+  IrRed
+  IrGreen
+  IrYellow
+  IrBlue
+  IrMagenta
+  IrCyan
+  IrWhite
+  IrGray
+} derive(Eq, @debug.Debug)
+pub fn IrColor::of_string(String) -> Self?
+pub fn IrColor::to_string(Self) -> String
+
 pub(all) enum IrTerm {
   ProgramTerm(Term[Program])
   SubTerm(Term[Sub])
@@ -632,6 +649,7 @@ pub fn IrTerm::after(Self, IrTermClass, Tid, rev? : Bool) -> Array[Self]
 pub fn IrTerm::append(Self, Self, after? : Tid) -> Self
 pub fn IrTerm::append_child(Self, Self, after? : Tid) -> Self
 pub fn IrTerm::attrs(Self) -> Map[String, String]
+pub fn IrTerm::background(Self) -> IrColor?
 pub fn IrTerm::before(Self, IrTermClass, Tid, rev? : Bool) -> Array[Self]
 pub fn[A] IrTerm::cata(Self, init~ : A, program? : (Term[Program]) -> A, sub? : (Term[Sub]) -> A, arg? : (Term[Arg]) -> A, blk? : (Term[Blk]) -> A, phi? : (Term[Phi]) -> A, def? : (Term[Def]) -> A, jmp? : (Term[Jmp]) -> A) -> A
 pub fn IrTerm::change(Self, IrTermClass, Tid, (Self?) -> Self?) -> Self
@@ -644,6 +662,7 @@ pub fn IrTerm::children_of_class(Self, IrTermClass, rev? : Bool) -> Array[Self]
 pub fn IrTerm::class(Self) -> IrTermClass
 pub fn IrTerm::class_name(Self) -> String
 pub fn IrTerm::clone(Self) -> Self
+pub fn IrTerm::color(Self) -> IrColor?
 pub fn IrTerm::concat_map(Self, IrTermClass, (Self) -> Array[Self]) -> Self
 pub fn IrTerm::concat_map_children(Self, IrTermClass, (Self) -> Array[Self]) -> Self
 pub fn IrTerm::def_lhs_name(Self, String) -> Bool
@@ -652,6 +671,9 @@ pub fn IrTerm::defined_vars(Self) -> Array[Var]
 pub fn IrTerm::defines_var(Self, Var) -> Bool
 pub fn IrTerm::defines_var_name(Self, String) -> Bool
 pub fn IrTerm::del_attr(Self, String) -> Self
+pub fn IrTerm::del_background(Self) -> Self
+pub fn IrTerm::del_color(Self) -> Self
+pub fn IrTerm::del_foreground(Self) -> Self
 pub fn IrTerm::del_mark(Self) -> Self
 pub fn IrTerm::filter(Self, IrTermClass, (Self) -> Bool) -> Self
 pub fn IrTerm::filter_children(Self, IrTermClass, (Self) -> Bool) -> Self
@@ -663,14 +685,18 @@ pub fn IrTerm::find_exn(Self, IrTermClass, Tid) -> Self raise IrTermLookupError
 pub fn IrTerm::first(Self, IrTermClass) -> Self?
 pub fn IrTerm::first_child(Self, IrTermClass) -> Self?
 pub fn[A] IrTerm::fold_visit(Self, A, (A, IrVisitEvent) -> A) -> A
+pub fn IrTerm::foreground(Self) -> IrColor?
 pub fn IrTerm::free_vars(Self) -> Array[Var]
 pub fn IrTerm::get_attr(Self, String) -> String?
 pub fn IrTerm::has_address(Self, Word) -> Bool
 pub fn IrTerm::has_address_text(Self, String) -> Bool
 pub fn IrTerm::has_attr(Self, String) -> Bool
 pub fn IrTerm::has_attr_value(Self, String, String) -> Bool
+pub fn IrTerm::has_background(Self, IrColor) -> Bool
 pub fn IrTerm::has_child_tid(Self, Tid) -> Bool
 pub fn IrTerm::has_class(Self, IrTermClass) -> Bool
+pub fn IrTerm::has_color(Self, IrColor) -> Bool
+pub fn IrTerm::has_foreground(Self, IrColor) -> Bool
 pub fn IrTerm::has_mark(Self) -> Bool
 pub fn IrTerm::has_name(Self, String) -> Bool
 pub fn IrTerm::has_tid(Self, Tid) -> Bool
@@ -703,6 +729,9 @@ pub fn IrTerm::same(Self, Self) -> Bool
 pub fn IrTerm::same_term(Self, Self) -> Bool
 pub fn IrTerm::same_tid(Self, Tid) -> Bool
 pub fn IrTerm::set_attr(Self, Attr) -> Self
+pub fn IrTerm::set_background(Self, IrColor) -> Self
+pub fn IrTerm::set_color(Self, IrColor) -> Self
+pub fn IrTerm::set_foreground(Self, IrColor) -> Self
 pub fn IrTerm::set_mark(Self, value? : String) -> Self
 pub fn[A] IrTerm::switch(Self, program~ : (Term[Program]) -> A, sub~ : (Term[Sub]) -> A, arg~ : (Term[Arg]) -> A, blk~ : (Term[Blk]) -> A, phi~ : (Term[Phi]) -> A, def~ : (Term[Def]) -> A, jmp~ : (Term[Jmp]) -> A) -> A
 pub fn IrTerm::tid(Self) -> Tid
@@ -906,6 +935,7 @@ pub fn Term::args(Self[Sub]) -> Array[Self[Arg]]
 pub fn Term::args_after(Self[Sub], Tid, rev? : Bool) -> Array[Self[Arg]]
 pub fn Term::args_before(Self[Sub], Tid, rev? : Bool) -> Array[Self[Arg]]
 pub fn[T] Term::attrs(Self[T]) -> Map[String, String]
+pub fn[T] Term::background(Self[T]) -> IrColor?
 pub fn Term::blk_count(Self[Sub]) -> Int
 pub fn Term::blk_defined_vars(Self[Blk]) -> Array[Var]
 pub fn Term::blk_free_vars(Self[Blk]) -> Array[Var]
@@ -925,6 +955,7 @@ pub fn Term::change_jmp(Self[Blk], Tid, (Self[Jmp]?) -> Self[Jmp]?) -> Self[Blk]
 pub fn Term::change_phi_term(Self[Blk], Tid, (Self[Phi]?) -> Self[Phi]?) -> Self[Blk]
 pub fn Term::change_sub(Self[Program], Tid, (Self[Sub]?) -> Self[Sub]?) -> Self[Program]
 pub fn[T] Term::clone(Self[T]) -> Self[T]
+pub fn[T] Term::color(Self[T]) -> IrColor?
 pub fn Term::concat_map_args(Self[Sub], (Self[Arg]) -> Array[Self[Arg]]) -> Self[Sub]
 pub fn Term::concat_map_blks(Self[Sub], (Self[Blk]) -> Array[Self[Blk]]) -> Self[Sub]
 pub fn Term::concat_map_defs(Self[Blk], (Self[Def]) -> Array[Self[Def]]) -> Self[Blk]
@@ -996,9 +1027,13 @@ pub fn[A] Term::fold_program_terms(Self[Program], A, (A, IrTerm) -> A, include_s
 pub fn[A] Term::fold_program_visit(Self[Program], A, (A, IrVisitEvent) -> A) -> A
 pub fn[A] Term::fold_sub_terms(Self[Sub], A, (A, IrTerm) -> A, include_self? : Bool) -> A
 pub fn[A] Term::fold_sub_visit(Self[Sub], A, (A, IrVisitEvent) -> A) -> A
+pub fn[T] Term::foreground(Self[T]) -> IrColor?
 pub fn[T] Term::get_attr(Self[T], String) -> String?
 pub fn[T] Term::has_attr(Self[T], String) -> Bool
+pub fn[T] Term::has_background(Self[T], IrColor) -> Bool
+pub fn[T] Term::has_color(Self[T], IrColor) -> Bool
 pub fn[T] Term::has_flag(Self[T], String) -> Bool
+pub fn[T] Term::has_foreground(Self[T], IrColor) -> Bool
 pub fn Term::insert_arg_after(Self[Sub], Self[Arg], after? : Tid) -> Self[Sub]
 pub fn Term::insert_arg_before(Self[Sub], Self[Arg], before? : Tid) -> Self[Sub]
 pub fn Term::insert_blk_after(Self[Sub], Self[Blk], after? : Tid) -> Self[Sub]
@@ -1228,6 +1263,8 @@ pub fn Term::with_alloc_size(Self[Arg]) -> Self[Arg]
 pub fn Term::with_alt(Self[Jmp], JmpDst?) -> Self[Jmp]
 pub fn Term::with_arg_format(Self[Arg], String) -> Self[Arg]
 pub fn[T] Term::with_attrs(Self[T], Map[String, String]) -> Self[T]
+pub fn[T] Term::with_background(Self[T], IrColor) -> Self[T]
+pub fn[T] Term::with_color(Self[T], IrColor) -> Self[T]
 pub fn Term::with_cond(Self[Jmp], Exp) -> Self[Jmp]
 pub fn Term::with_const(Self[Sub]) -> Self[Sub]
 pub fn[T] Term::with_dead(Self[T]) -> Self[T]
@@ -1235,6 +1272,7 @@ pub fn Term::with_dst(Self[Jmp], JmpDst?) -> Self[Jmp]
 pub fn Term::with_entry_point(Self[Sub]) -> Self[Sub]
 pub fn Term::with_extern(Self[Sub]) -> Self[Sub]
 pub fn[T] Term::with_flag(Self[T], String) -> Self[T]
+pub fn[T] Term::with_foreground(Self[T], IrColor) -> Self[T]
 pub fn Term::with_guard(Self[Jmp], Exp?) -> Self[Jmp]
 pub fn Term::with_intent(Self[Arg], Intent) -> Self[Arg]
 pub fn Term::with_intrinsic(Self[Sub]) -> Self[Sub]
@@ -1263,11 +1301,14 @@ pub fn[T] Term::with_visited(Self[T]) -> Self[T]
 pub fn Term::with_warn_unused(Self[Arg]) -> Self[Arg]
 pub fn Term::without_alloc_size(Self[Arg]) -> Self[Arg]
 pub fn Term::without_arg_format(Self[Arg]) -> Self[Arg]
+pub fn[T] Term::without_background(Self[T]) -> Self[T]
+pub fn[T] Term::without_color(Self[T]) -> Self[T]
 pub fn Term::without_const(Self[Sub]) -> Self[Sub]
 pub fn[T] Term::without_dead(Self[T]) -> Self[T]
 pub fn Term::without_entry_point(Self[Sub]) -> Self[Sub]
 pub fn Term::without_extern(Self[Sub]) -> Self[Sub]
 pub fn[T] Term::without_flag(Self[T], String) -> Self[T]
+pub fn[T] Term::without_foreground(Self[T]) -> Self[T]
 pub fn Term::without_intrinsic(Self[Sub]) -> Self[Sub]
 pub fn Term::without_leaf(Self[Sub]) -> Self[Sub]
 pub fn[T] Term::without_live(Self[T]) -> Self[T]

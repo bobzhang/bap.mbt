@@ -174,6 +174,9 @@ test "terms expose common BAP-style attributes and flags" {
     .set_attr(@types.Attr::filename("unit.bin"))
     .set_attr(@types.Attr::format("hex"))
     .set_attr(@types.Attr::origin(origin))
+    .with_color(IrRed)
+    .with_foreground(IrBlue)
+    .with_background(IrGray)
     .with_synthetic()
     .with_visited()
     .with_live()
@@ -185,10 +188,22 @@ test "terms expose common BAP-style attributes and flags" {
   assert_true(def.get_attr("filename") == Some("unit.bin"))
   assert_true(def.get_attr("format") == Some("hex"))
   assert_true(def.get_attr("origin") == Some(origin.to_string()))
+  assert_true(def.color() == Some(IrRed))
+  assert_true(def.foreground() == Some(IrBlue))
+  assert_true(def.background() == Some(IrGray))
+  assert_true(def.has_color(IrRed))
+  assert_true(def.has_foreground(IrBlue))
+  assert_true(def.has_background(IrGray))
+  assert_true(def.get_attr("color") == Some("red"))
+  assert_true(def.get_attr("foreground") == Some("blue"))
+  assert_true(def.get_attr("background") == Some("gray"))
   assert_true(def.is_synthetic())
   assert_true(def.is_visited())
   assert_true(def.is_live())
   assert_true(def.is_dead())
+  assert_true(!def.without_color().has_color(IrRed))
+  assert_true(!def.without_foreground().has_foreground(IrBlue))
+  assert_true(!def.without_background().has_background(IrGray))
   assert_true(!def.without_synthetic().is_synthetic())
   assert_true(!def.without_visited().is_visited())
   assert_true(!def.without_live().is_live())
@@ -198,6 +213,9 @@ test "terms expose common BAP-style attributes and flags" {
   assert_true(def.get_attr("postcondition") == Some(cond.to_string()))
   assert_true(def.has_flag("custom-flag"))
   assert_true(!def.without_flag("custom-flag").has_flag("custom-flag"))
+  assert_true(@types.IrColor::of_string("cyan") == Some(IrCyan))
+  assert_true(@types.IrMagenta.to_string() == "magenta")
+  assert_true(@types.IrColor::of_string("orange") is None)
 }
 
 ///|
@@ -671,9 +689,10 @@ test "ir term query helpers match classes attributes vars and children" {
   let z = @types.Var::new(name="z", typ~)
   let arg = @types.Arg::create(z, Var(y))
   let phi = @types.Phi::of_list(x, [(arg.tid(), Var(z))])
-  let def = @types.Def::create(x, BinOp(Plus, Var(y), Int(word8(1)))).set_attr(
-    @types.Attr::new(key="color", value="red"),
-  )
+  let def = @types.Def::create(x, BinOp(Plus, Var(y), Int(word8(1))))
+    .with_color(IrRed)
+    .with_foreground(IrBlue)
+    .with_background(IrGray)
   let jmp = @types.Jmp::create_goto(
     @types.Label::direct(@types.Tid::for_name("done")),
     cond=Var(x),
@@ -699,6 +718,22 @@ test "ir term query helpers match classes attributes vars and children" {
   assert_true(def_term.has_name(def.name()))
   assert_true(def_term.has_attr_value("color", "red"))
   assert_true(!def_term.has_attr_value("color", "blue"))
+  assert_true(def_term.color() == Some(IrRed))
+  assert_true(def_term.foreground() == Some(IrBlue))
+  assert_true(def_term.background() == Some(IrGray))
+  assert_true(def_term.has_color(IrRed))
+  assert_true(def_term.has_foreground(IrBlue))
+  assert_true(def_term.has_background(IrGray))
+  let styled_def_term = def_term
+    .set_color(IrGreen)
+    .set_foreground(IrYellow)
+    .set_background(IrBlack)
+  assert_true(styled_def_term.has_color(IrGreen))
+  assert_true(styled_def_term.has_foreground(IrYellow))
+  assert_true(styled_def_term.has_background(IrBlack))
+  assert_true(styled_def_term.del_color().color() is None)
+  assert_true(styled_def_term.del_foreground().foreground() is None)
+  assert_true(styled_def_term.del_background().background() is None)
   let flagged_def = @types.DefTerm(
     def.with_synthetic().with_visited().with_live().with_dead(),
   )

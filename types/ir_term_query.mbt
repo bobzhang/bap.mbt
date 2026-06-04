@@ -96,6 +96,74 @@ pub fn IrTerm::has_attr_value(
 }
 
 ///|
+fn ir_term_color(term : IrTerm, key : String) -> IrColor? {
+  match term.get_attr(key) {
+    Some(text) => IrColor::of_string(text)
+    None => None
+  }
+}
+
+///|
+pub fn IrTerm::color(self : IrTerm) -> IrColor? {
+  ir_term_color(self, term_color_attr)
+}
+
+///|
+pub fn IrTerm::has_color(self : IrTerm, color : IrColor) -> Bool {
+  self.color() == Some(color)
+}
+
+///|
+pub fn IrTerm::set_color(self : IrTerm, color : IrColor) -> IrTerm {
+  self.set_attr(Attr::color(color))
+}
+
+///|
+pub fn IrTerm::del_color(self : IrTerm) -> IrTerm {
+  self.del_attr(term_color_attr)
+}
+
+///|
+pub fn IrTerm::foreground(self : IrTerm) -> IrColor? {
+  ir_term_color(self, term_foreground_attr)
+}
+
+///|
+pub fn IrTerm::has_foreground(self : IrTerm, color : IrColor) -> Bool {
+  self.foreground() == Some(color)
+}
+
+///|
+pub fn IrTerm::set_foreground(self : IrTerm, color : IrColor) -> IrTerm {
+  self.set_attr(Attr::foreground(color))
+}
+
+///|
+pub fn IrTerm::del_foreground(self : IrTerm) -> IrTerm {
+  self.del_attr(term_foreground_attr)
+}
+
+///|
+pub fn IrTerm::background(self : IrTerm) -> IrColor? {
+  ir_term_color(self, term_background_attr)
+}
+
+///|
+pub fn IrTerm::has_background(self : IrTerm, color : IrColor) -> Bool {
+  self.background() == Some(color)
+}
+
+///|
+pub fn IrTerm::set_background(self : IrTerm, color : IrColor) -> IrTerm {
+  self.set_attr(Attr::background(color))
+}
+
+///|
+pub fn IrTerm::del_background(self : IrTerm) -> IrTerm {
+  self.del_attr(term_background_attr)
+}
+
+///|
 pub fn IrTerm::is_synthetic(self : IrTerm) -> Bool {
   self.has_attr(term_synthetic_attr)
 }

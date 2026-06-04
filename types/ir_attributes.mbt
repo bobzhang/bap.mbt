@@ -44,6 +44,15 @@ let arg_restricted_attr = "restricted"
 let arg_nonnull_attr = "nonnull"
 
 ///|
+let term_color_attr = "color"
+
+///|
+let term_foreground_attr = "foreground"
+
+///|
+let term_background_attr = "background"
+
+///|
 let term_synthetic_attr = "synthetic"
 
 ///|
@@ -68,6 +77,50 @@ let term_postcondition_attr = "postcondition"
 let term_mark_attr = "mark"
 
 ///|
+pub(all) enum IrColor {
+  IrBlack
+  IrRed
+  IrGreen
+  IrYellow
+  IrBlue
+  IrMagenta
+  IrCyan
+  IrWhite
+  IrGray
+} derive(Eq, Debug)
+
+///|
+pub fn IrColor::to_string(self : IrColor) -> String {
+  match self {
+    IrBlack => "black"
+    IrRed => "red"
+    IrGreen => "green"
+    IrYellow => "yellow"
+    IrBlue => "blue"
+    IrMagenta => "magenta"
+    IrCyan => "cyan"
+    IrWhite => "white"
+    IrGray => "gray"
+  }
+}
+
+///|
+pub fn IrColor::of_string(text : String) -> IrColor? {
+  match text {
+    "black" => Some(IrBlack)
+    "red" => Some(IrRed)
+    "green" => Some(IrGreen)
+    "yellow" => Some(IrYellow)
+    "blue" => Some(IrBlue)
+    "magenta" => Some(IrMagenta)
+    "cyan" => Some(IrCyan)
+    "white" => Some(IrWhite)
+    "gray" => Some(IrGray)
+    _ => None
+  }
+}
+
+///|
 pub fn Attr::flag(key : String) -> Attr {
   Attr::new(key~, value="true")
 }
@@ -85,6 +138,21 @@ pub fn Attr::format(format : String) -> Attr {
 ///|
 pub fn Attr::origin(tid : Tid) -> Attr {
   Attr::new(key="origin", value=tid.to_string())
+}
+
+///|
+pub fn Attr::color(color : IrColor) -> Attr {
+  Attr::new(key=term_color_attr, value=color.to_string())
+}
+
+///|
+pub fn Attr::foreground(color : IrColor) -> Attr {
+  Attr::new(key=term_foreground_attr, value=color.to_string())
+}
+
+///|
+pub fn Attr::background(color : IrColor) -> Attr {
+  Attr::new(key=term_background_attr, value=color.to_string())
 }
 
 ///|
@@ -215,6 +283,74 @@ pub fn[T] Term::without_flag(self : Term[T], key : String) -> Term[T] {
 ///|
 pub fn[T] Term::has_flag(self : Term[T], key : String) -> Bool {
   self.has_attr(key)
+}
+
+///|
+fn[T] term_color(term : Term[T], key : String) -> IrColor? {
+  match term.get_attr(key) {
+    Some(text) => IrColor::of_string(text)
+    None => None
+  }
+}
+
+///|
+pub fn[T] Term::with_color(self : Term[T], color : IrColor) -> Term[T] {
+  self.set_attr(Attr::color(color))
+}
+
+///|
+pub fn[T] Term::without_color(self : Term[T]) -> Term[T] {
+  self.del_attr(term_color_attr)
+}
+
+///|
+pub fn[T] Term::color(self : Term[T]) -> IrColor? {
+  term_color(self, term_color_attr)
+}
+
+///|
+pub fn[T] Term::has_color(self : Term[T], color : IrColor) -> Bool {
+  self.color() == Some(color)
+}
+
+///|
+pub fn[T] Term::with_foreground(self : Term[T], color : IrColor) -> Term[T] {
+  self.set_attr(Attr::foreground(color))
+}
+
+///|
+pub fn[T] Term::without_foreground(self : Term[T]) -> Term[T] {
+  self.del_attr(term_foreground_attr)
+}
+
+///|
+pub fn[T] Term::foreground(self : Term[T]) -> IrColor? {
+  term_color(self, term_foreground_attr)
+}
+
+///|
+pub fn[T] Term::has_foreground(self : Term[T], color : IrColor) -> Bool {
+  self.foreground() == Some(color)
+}
+
+///|
+pub fn[T] Term::with_background(self : Term[T], color : IrColor) -> Term[T] {
+  self.set_attr(Attr::background(color))
+}
+
+///|
+pub fn[T] Term::without_background(self : Term[T]) -> Term[T] {
+  self.del_attr(term_background_attr)
+}
+
+///|
+pub fn[T] Term::background(self : Term[T]) -> IrColor? {
+  term_color(self, term_background_attr)
+}
+
+///|
+pub fn[T] Term::has_background(self : Term[T], color : IrColor) -> Bool {
+  self.background() == Some(color)
 }
 
 ///|

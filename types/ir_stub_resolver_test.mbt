@@ -50,6 +50,9 @@ test "stub resolver links direct and reverse aliases" {
   assert_true(stub_link_count(links) == 1)
   assert_stub_link(links, direct_stub, real)
   assert_true(program.program_stub_tids() == [direct_stub.tid()])
+  assert_true(direct_stub.has_sub_alias("a0"))
+  assert_true(!direct_stub.has_sub_alias("missing"))
+  assert_true(direct_stub.without_sub_alias("a0").sub_aliases().is_empty())
 
   let impl_alias = real_sub("f0", ["f1"])
   let reverse_stub = stub_sub("f1", [])

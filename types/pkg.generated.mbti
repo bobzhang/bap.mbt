@@ -1162,6 +1162,7 @@ pub fn[T] Term::has_invariant(Self[T], Exp) -> Bool
 pub fn[T] Term::has_origin(Self[T], Tid) -> Bool
 pub fn[T] Term::has_postcondition(Self[T], Exp) -> Bool
 pub fn[T] Term::has_precondition(Self[T], Exp) -> Bool
+pub fn Term::has_sub_alias(Self[Sub], String) -> Bool
 pub fn[T] Term::has_tainted_ptr(Self[T], Tid) -> Bool
 pub fn[T] Term::has_tainted_reg(Self[T], Tid) -> Bool
 pub fn Term::insert_arg_after(Self[Sub], Self[Arg], after? : Tid) -> Self[Sub]
@@ -1486,6 +1487,7 @@ pub fn Term::without_restricted(Self[Arg]) -> Self[Arg]
 pub fn Term::without_returns_twice(Self[Sub]) -> Self[Sub]
 pub fn[T] Term::without_shell(Self[T]) -> Self[T]
 pub fn Term::without_stub(Self[Sub]) -> Self[Sub]
+pub fn Term::without_sub_alias(Self[Sub], String) -> Self[Sub]
 pub fn[T] Term::without_synthetic(Self[T]) -> Self[T]
 pub fn[T] Term::without_tainted_ptr(Self[T]) -> Self[T]
 pub fn[T] Term::without_tainted_reg(Self[T]) -> Self[T]

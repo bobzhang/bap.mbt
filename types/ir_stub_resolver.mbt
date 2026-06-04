@@ -56,6 +56,14 @@ pub fn Term::with_sub_alias(self : Term[Sub], alias_name : String) -> Term[Sub] 
 }
 
 ///|
+pub fn Term::without_sub_alias(
+  self : Term[Sub],
+  alias_name : String,
+) -> Term[Sub] {
+  self.del_attr(sub_alias_attr_prefix + alias_name)
+}
+
+///|
 pub fn Term::sub_aliases(self : Term[Sub]) -> Array[String] {
   let aliases = []
   let attrs = self.attrs()
@@ -70,6 +78,11 @@ pub fn Term::sub_aliases(self : Term[Sub]) -> Array[String] {
     }
   })
   sorted_texts(aliases)
+}
+
+///|
+pub fn Term::has_sub_alias(self : Term[Sub], alias_name : String) -> Bool {
+  self.sub_aliases().contains(alias_name)
 }
 
 ///|

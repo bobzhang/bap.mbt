@@ -81,10 +81,44 @@ test "project input create combines code and data memory" {
     code~,
     data~,
   )
+  assert_true(input.code().lookup(0x400UL).any(entry => entry.1 == "code"))
+  assert_true(input.data().lookup(0x501UL).any(entry => entry.1 == "data"))
   let project = @project.Project::from_input(input)
   assert_true(project.filename() == Some("split.bin"))
   assert_true(project.memory().lookup(0x400UL).any(entry => entry.1 == "code"))
   assert_true(project.memory().lookup(0x501UL).any(entry => entry.1 == "data"))
+}
+
+///|
+test "project input from image retains executable code and data splits" {
+  let text = @image.Segment::create(
+    name=".text",
+    endian=LittleEndian,
+    addr=0x900UL,
+    b"\x90",
+    executable=true,
+  )
+  let rodata = @image.Segment::create(
+    name=".rodata",
+    endian=LittleEndian,
+    addr=0x980UL,
+    b"\x01\x02",
+    readable=true,
+  )
+  let image = @image.Image::from_segments(
+    entry=0x900UL,
+    endian=LittleEndian,
+    [text, rodata],
+    target=@core_theory.Target::x86_64(),
+  )
+  let input = @project.ProjectInput::from_image(image)
+  assert_true(input.code().lookup(0x900UL).any(entry => entry.1 == ".text"))
+  assert_true(input.code().lookup(0x980UL).is_empty())
+  assert_true(input.data().lookup(0x981UL).any(entry => entry.1 == ".rodata"))
+  assert_true(input.data().lookup(0x900UL).is_empty())
+  let project = @project.Project::from_input(input)
+  assert_true(project.memory().lookup(0x900UL).length() == 1)
+  assert_true(project.memory().lookup(0x981UL).length() == 1)
 }
 
 ///|

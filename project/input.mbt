@@ -4,6 +4,8 @@ struct ProjectInput {
   filename_value : String?
   image_value : @image.Image?
   program_value : @types.Term[@types.Program]?
+  code_value : @memory.MemMap[String]
+  data_value : @memory.MemMap[String]
   memory_value : @memory.MemMap[String]
   symbols_value : Array[@image.Symbol]
   libraries_value : Array[Library]
@@ -62,6 +64,28 @@ fn project_input_union_memory(
 }
 
 ///|
+fn project_input_code_segments(image : @image.Image) -> @memory.MemMap[String] {
+  let mut result = @memory.MemMap::empty()
+  for segment in image.segments() {
+    if segment.is_executable() {
+      result = result.add(segment.memory(), segment.name())
+    }
+  }
+  result
+}
+
+///|
+fn project_input_data_segments(image : @image.Image) -> @memory.MemMap[String] {
+  let mut result = @memory.MemMap::empty()
+  for segment in image.segments() {
+    if !segment.is_executable() {
+      result = result.add(segment.memory(), segment.name())
+    }
+  }
+  result
+}
+
+///|
 pub fn ProjectInput::custom(
   target~ : @core_theory.Target,
   filename? : String,
@@ -74,12 +98,34 @@ pub fn ProjectInput::custom(
   libraries? : Array[Library],
   finish? : (Project) -> Project,
 ) -> ProjectInput {
+  let code_value = match code {
+    Some(map) => map
+    None =>
+      match image {
+        Some(value) => project_input_code_segments(value)
+        None => @memory.MemMap::empty()
+      }
+  }
+  let data_value = match data {
+    Some(map) => map
+    None =>
+      match image {
+        Some(value) => project_input_data_segments(value)
+        None => @memory.MemMap::empty()
+      }
+  }
   {
     target_value: target,
     filename_value: filename,
     image_value: image,
     program_value: program,
-    memory_value: project_input_union_memory(memory, code, data),
+    code_value,
+    data_value,
+    memory_value: project_input_union_memory(
+      memory,
+      Some(code_value),
+      Some(data_value),
+    ),
     symbols_value: match symbols {
       Some(items) => items.copy()
       None =>
@@ -130,7 +176,8 @@ pub fn ProjectInput::from_image(
     filename?=image.filename(),
     image~,
     program?,
-    memory=image.memory(),
+    code=project_input_code_segments(image),
+    data=project_input_data_segments(image),
     symbols=image.symbols(),
     finish?,
   )
@@ -318,6 +365,16 @@ pub fn ProjectInput::image(self : ProjectInput) -> @image.Image? {
 ///|
 pub fn ProjectInput::memory(self : ProjectInput) -> @memory.MemMap[String] {
   self.memory_value
+}
+
+///|
+pub fn ProjectInput::code(self : ProjectInput) -> @memory.MemMap[String] {
+  self.code_value
+}
+
+///|
+pub fn ProjectInput::data(self : ProjectInput) -> @memory.MemMap[String] {
+  self.data_value
 }
 
 ///|
@@ -733,7 +790,7 @@ fn project_from_input_with_state(
     state?,
   )
   let finalized = (input.finish_fn)(project)
-  project_info_emit_input(finalized)
+  project_info_emit_input(input, finalized)
   finalized
 }
 

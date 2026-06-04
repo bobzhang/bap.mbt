@@ -36,8 +36,8 @@ test "project info streams observe input realization" {
   let input = @project.ProjectInput::create(
     target=@core_theory.Target::x86_64(),
     filename="info.bin",
-    code=@memory.MemMap::singleton(code_memory, "code"),
-    data=@memory.MemMap::singleton(data_memory, "data"),
+    code=@memory.MemMap::singleton(code_memory, ".text"),
+    data=@memory.MemMap::singleton(data_memory, ".rodata"),
   )
   let project = @project.Project::from_input(input)
   file_stream.unsubscribe(file_id)

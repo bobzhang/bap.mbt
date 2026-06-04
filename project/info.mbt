@@ -105,23 +105,14 @@ pub fn ProjectInfo::spec() -> @future.Stream[@image.OgreDoc] {
 }
 
 ///|
-fn project_info_named_memory(
-  memory : @memory.MemMap[String],
-  name : String,
-) -> @memory.MemMap[String] {
-  memory.filter(label => label == name)
-}
-
-///|
-fn project_info_emit_input(project : Project) -> Unit {
+fn project_info_emit_input(input : ProjectInput, project : Project) -> Unit {
   match project.filename() {
     Some(filename) => project_info_file_pair.1.send(filename)
     None => ()
   }
-  let memory = project.memory()
   project_info_arch_pair.1.send(project.arch())
-  project_info_data_pair.1.send(project_info_named_memory(memory, "data"))
-  project_info_code_pair.1.send(project_info_named_memory(memory, "code"))
+  project_info_data_pair.1.send(input.data())
+  project_info_code_pair.1.send(input.code())
   project_info_spec_pair.1.send(project.specification())
 }
 

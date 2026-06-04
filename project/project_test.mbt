@@ -436,6 +436,7 @@ test "project persistent codec round trips metadata and storage" {
   let project = @project.Project::create(
     target=@core_theory.Target::x86_64(),
     filename="input:one",
+    pkg="persist-project",
     storage~,
     memory~,
     symbols~,
@@ -457,6 +458,7 @@ test "project persistent codec round trips metadata and storage" {
     Ok(decoded) => {
       assert_true(decoded.target().equal(@core_theory.Target::x86_64()))
       assert_true(decoded.filename() == Some("input:one"))
+      assert_true(decoded.pkg() == Some("persist-project"))
       assert_true(decoded.get("filename") == Some("input:one"))
       assert_true(decoded.get("loader") == Some("raw"))
       assert_true(decoded.get("note") == Some("a:b"))

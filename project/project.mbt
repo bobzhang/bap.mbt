@@ -14,6 +14,7 @@ struct Project {
   target_value : @core_theory.Target
   image_value : @image.Image?
   filename_value : String?
+  package_value : String?
   program_value : @types.Term[@types.Program]
   memory_value : @memory.MemMap[String]
   symbols_value : Array[@image.Symbol]
@@ -194,6 +195,7 @@ pub fn Project::empty(target : @core_theory.Target) -> Project {
     target_value: target,
     image_value: None,
     filename_value: None,
+    package_value: None,
     program_value: @types.Program::create(),
     memory_value: @memory.MemMap::empty(),
     symbols_value: [],
@@ -208,6 +210,7 @@ pub fn Project::create(
   target~ : @core_theory.Target,
   image? : @image.Image,
   filename? : String,
+  pkg? : String,
   program? : @types.Term[@types.Program],
   memory? : @memory.MemMap[String],
   symbols? : Array[@image.Symbol],
@@ -219,6 +222,7 @@ pub fn Project::create(
     target_value: target,
     image_value: image,
     filename_value: filename,
+    package_value: pkg,
     program_value: match program {
       Some(term) => term
       None => @types.Program::create()
@@ -255,6 +259,7 @@ pub fn Project::from_image(
   image : @image.Image,
   target? : @core_theory.Target,
   program? : @types.Term[@types.Program],
+  pkg? : String,
 ) -> Project {
   let selected_target = match target {
     Some(value) => value
@@ -268,6 +273,7 @@ pub fn Project::from_image(
     target=selected_target,
     image~,
     filename?=image.filename(),
+    pkg?,
     program?,
     memory=image.memory(),
   )
@@ -299,6 +305,11 @@ pub fn Project::image(self : Project) -> @image.Image? {
 ///|
 pub fn Project::filename(self : Project) -> String? {
   self.filename_value
+}
+
+///|
+pub fn Project::pkg(self : Project) -> String? {
+  self.package_value
 }
 
 ///|
@@ -729,6 +740,9 @@ pub fn Project::persistent() -> @knowledge.Persistent[Project] {
   )
   let program_codec = project_program_persistent()
   let state_codec = ProjectState::persistent()
+  let package_codec = @knowledge.Persistent::optional(
+    @knowledge.Persistent::string(),
+  )
   @knowledge.Persistent::convert(
     to_persistent=project => {
       [
@@ -740,6 +754,7 @@ pub fn Project::persistent() -> @knowledge.Persistent[Project] {
         libraries_codec.encode(project.libraries_value),
         program_codec.encode(project.program_value),
         state_codec.encode(project.state_value),
+        package_codec.encode(project.package_value),
       ]
     },
     of_persistent=fields => {
@@ -747,7 +762,8 @@ pub fn Project::persistent() -> @knowledge.Persistent[Project] {
         fields.length() != 4 &&
         fields.length() != 5 &&
         fields.length() != 6 &&
-        fields.length() != 8 {
+        fields.length() != 8 &&
+        fields.length() != 9 {
         return Err("invalid persistent project encoding")
       }
       let target = match target_codec.decode(fields[0]) {
@@ -783,7 +799,7 @@ pub fn Project::persistent() -> @knowledge.Persistent[Project] {
           Ok(value) => value
           Err(reason) => return Err(reason)
         }
-      } else if fields.length() == 8 {
+      } else if fields.length() == 8 || fields.length() == 9 {
         match libraries_codec.decode(fields[5]) {
           Ok(value) => value
           Err(reason) => return Err(reason)
@@ -791,7 +807,7 @@ pub fn Project::persistent() -> @knowledge.Persistent[Project] {
       } else {
         []
       }
-      let program = if fields.length() == 8 {
+      let program = if fields.length() == 8 || fields.length() == 9 {
         match program_codec.decode(fields[6]) {
           Ok(value) => value
           Err(reason) => return Err(reason)
@@ -799,7 +815,7 @@ pub fn Project::persistent() -> @knowledge.Persistent[Project] {
       } else {
         @types.Program::create()
       }
-      let state = if fields.length() == 8 {
+      let state = if fields.length() == 8 || fields.length() == 9 {
         match state_codec.decode(fields[7]) {
           Ok(value) => value
           Err(reason) => return Err(reason)
@@ -807,10 +823,19 @@ pub fn Project::persistent() -> @knowledge.Persistent[Project] {
       } else {
         ProjectState::empty()
       }
+      let package_name = if fields.length() == 9 {
+        match package_codec.decode(fields[8]) {
+          Ok(value) => value
+          Err(reason) => return Err(reason)
+        }
+      } else {
+        None
+      }
       Ok(
         Project::create(
           target~,
           filename?,
+          pkg?=package_name,
           storage~,
           memory~,
           symbols~,

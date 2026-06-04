@@ -362,6 +362,7 @@ pub fn Project::create_file(
   rooter? : ProjectDisassemblySource[ProjectRooter],
   reconstructor? : ProjectDisassemblySource[ProjectReconstructor],
   state? : ProjectState,
+  pkg? : String,
 ) -> Result[Project, String] {
   match ProjectInput::file(filename~, loader?, libraries~, target?) {
     Ok(input) =>
@@ -374,6 +375,7 @@ pub fn Project::create_file(
         rooter?,
         reconstructor?,
         state?,
+        pkg?,
       )
     Err(reason) => Err(reason)
   }
@@ -392,6 +394,7 @@ pub fn Project::create_file_named(
   rooter? : String,
   reconstructor? : String,
   state? : ProjectState,
+  pkg? : String,
 ) -> Result[Project, String] {
   match ProjectInput::file(filename~, loader?, libraries~, target?) {
     Ok(input) =>
@@ -404,6 +407,7 @@ pub fn Project::create_file_named(
         rooter?,
         reconstructor?,
         state?,
+        pkg?,
       )
     Err(reason) => Err(reason)
   }

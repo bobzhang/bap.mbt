@@ -418,6 +418,70 @@ test "project create from input can seed disassembly state" {
 }
 
 ///|
+test "project create from input scopes reconstructed tids by package" {
+  let block = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x6310UL,
+    b"\x90",
+  )
+  let state = @project.ProjectState::empty().with_disassembly(
+    @project.ProjectDisassemblyState::empty().add_block(block),
+  )
+  let symbolizer_source : @project.ProjectDisassemblySource[
+    @project.ProjectSymbolizer,
+  ] = @project.ProjectDisassemblySource::single(
+    @project.ProjectSymbolizer::create(addr => {
+      if addr == 0x6310UL {
+        Some("scoped_entry")
+      } else {
+        None
+      }
+    }),
+  )
+  let default_input = @project.ProjectInput::custom(
+    target=@core_theory.Target::unknown(),
+    filename="scope-file",
+    memory=@memory.MemMap::singleton(block, "code"),
+  )
+  match
+    @project.Project::create_from_input(
+      default_input,
+      symbolizer=symbolizer_source,
+      state~,
+    ) {
+    Ok(project) => {
+      assert_true(project.pkg() == Some("scope-file"))
+      let subs = project.program().subs()
+      assert_true(subs.length() == 1)
+      assert_true(subs[0].tid().pkg() == "scope-file")
+      assert_true(subs[0].blks()[0].tid().pkg() == "scope-file")
+    }
+    Err(reason) => fail(reason)
+  }
+  let override_input = @project.ProjectInput::custom(
+    target=@core_theory.Target::unknown(),
+    filename="ignored-file",
+    memory=@memory.MemMap::singleton(block, "code"),
+  )
+  match
+    @project.Project::create_from_input(
+      override_input,
+      symbolizer=symbolizer_source,
+      state~,
+      pkg="analysis-package",
+    ) {
+    Ok(project) => {
+      assert_true(project.pkg() == Some("analysis-package"))
+      let subs = project.program().subs()
+      assert_true(subs.length() == 1)
+      assert_true(subs[0].tid().pkg() == "analysis-package")
+      assert_true(subs[0].blks()[0].tid().pkg() == "analysis-package")
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project create from input folds library programs into final program" {
   let block = @memory.Memory::from_bytes(
     endian=LittleEndian,

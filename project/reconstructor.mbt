@@ -235,7 +235,7 @@ fn project_reconstructor_ir_block(
   match project_reconstructor_block_word(project, block) {
     Ok(addr) =>
       Ok(
-        @types.Blk::create(tid=@types.Tid::for_addr(addr)).set_attr(
+        @types.Blk::create(tid=@types.Tid::for_addr(addr, pkg?=project.pkg())).set_attr(
           @types.Attr::address(addr),
         ),
       )
@@ -276,7 +276,11 @@ fn project_reconstructor_subroutine(
     }
     ir_blocks[i] = ir_block
   }
-  let mut sub = @types.Sub::create(name~, blks=ir_blocks)
+  let mut sub = @types.Sub::create(
+    name~,
+    blks=ir_blocks,
+    tid=@types.Tid::for_name(name, pkg?=project.pkg()),
+  )
   if !blocks.is_empty() {
     match project_reconstructor_block_word(project, blocks[0]) {
       Ok(addr) => sub = sub.set_attr(@types.Attr::address(addr))

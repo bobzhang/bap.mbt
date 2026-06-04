@@ -822,14 +822,24 @@ pub fn Project::from_input(input : ProjectInput) -> Project {
 }
 
 ///|
+fn project_input_package(input : ProjectInput, pkg? : String) -> String? {
+  match pkg {
+    Some(value) => Some(value)
+    None => input.filename_value
+  }
+}
+
+///|
 fn project_from_input_with_state(
   input : ProjectInput,
   state? : ProjectState,
+  pkg? : String,
 ) -> Project {
   let project = Project::create(
     target=input.target_value,
     image?=input.image_value,
     filename?=input.filename_value,
+    pkg?=project_input_package(input, pkg?),
     program?=input.program_value,
     memory=input.memory_value,
     symbols=input.symbols_value,
@@ -1098,6 +1108,7 @@ pub fn Project::create_from_input(
   rooter? : ProjectDisassemblySource[ProjectRooter],
   reconstructor? : ProjectDisassemblySource[ProjectReconstructor],
   state? : ProjectState,
+  pkg? : String,
 ) -> Result[Project, String] {
   match register_builtin_disassembly_drivers() {
     Ok(_) => ()
@@ -1120,7 +1131,7 @@ pub fn Project::create_from_input(
     Ok(values) => values
     Err(reason) => return Err(reason)
   }
-  let project = project_from_input_with_state(input, state?)
+  let project = project_from_input_with_state(input, state?, pkg?)
   let selected_symbolizer = project_input_chain_symbolizers(
     project, symbolizers,
   )
@@ -1164,6 +1175,7 @@ pub fn Project::create_from_input_named(
   rooter? : String,
   reconstructor? : String,
   state? : ProjectState,
+  pkg? : String,
 ) -> Result[Project, String] {
   let selected_driver_source = match driver_source {
     Some(name) =>
@@ -1214,6 +1226,7 @@ pub fn Project::create_from_input_named(
     rooter?=selected_rooter,
     reconstructor?=selected_reconstructor,
     state?,
+    pkg?,
   )
 }
 
@@ -1229,6 +1242,7 @@ pub fn Project::create_from_loader(
   rooter? : ProjectDisassemblySource[ProjectRooter],
   reconstructor? : ProjectDisassemblySource[ProjectReconstructor],
   state? : ProjectState,
+  pkg? : String,
 ) -> Result[Project, String] {
   match ProjectInput::load(data, loader~, target?) {
     Ok(input) =>
@@ -1241,6 +1255,7 @@ pub fn Project::create_from_loader(
         rooter?,
         reconstructor?,
         state?,
+        pkg?,
       )
     Err(reason) => Err(reason)
   }
@@ -1258,6 +1273,7 @@ pub fn Project::create_from_loader_named(
   rooter? : String,
   reconstructor? : String,
   state? : ProjectState,
+  pkg? : String,
 ) -> Result[Project, String] {
   match ProjectInput::load(data, loader~, target?) {
     Ok(input) =>
@@ -1270,6 +1286,7 @@ pub fn Project::create_from_loader_named(
         rooter?,
         reconstructor?,
         state?,
+        pkg?,
       )
     Err(reason) => Err(reason)
   }
@@ -1287,6 +1304,7 @@ pub fn Project::create_for_filename(
   rooter? : ProjectDisassemblySource[ProjectRooter],
   reconstructor? : ProjectDisassemblySource[ProjectReconstructor],
   state? : ProjectState,
+  pkg? : String,
 ) -> Result[Project, String] {
   match ProjectInput::load_for_filename(data, filename~, target?) {
     Ok(input) =>
@@ -1299,6 +1317,7 @@ pub fn Project::create_for_filename(
         rooter?,
         reconstructor?,
         state?,
+        pkg?,
       )
     Err(reason) => Err(reason)
   }
@@ -1316,6 +1335,7 @@ pub fn Project::create_for_filename_named(
   rooter? : String,
   reconstructor? : String,
   state? : ProjectState,
+  pkg? : String,
 ) -> Result[Project, String] {
   match ProjectInput::load_for_filename(data, filename~, target?) {
     Ok(input) =>
@@ -1328,6 +1348,7 @@ pub fn Project::create_for_filename_named(
         rooter?,
         reconstructor?,
         state?,
+        pkg?,
       )
     Err(reason) => Err(reason)
   }

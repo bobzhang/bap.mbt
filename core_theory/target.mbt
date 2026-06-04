@@ -1585,7 +1585,17 @@ fn target_query_name(query : String, pkg? : String) -> @knowledge.Name {
 
 ///|
 fn target_query_is_qualified(query : String) -> Bool {
-  @knowledge.Name::read(query).show() == query
+  let mut escaped = false
+  for _, ch in query {
+    if escaped {
+      escaped = false
+    } else if ch == '\\' {
+      escaped = true
+    } else if ch == ':' {
+      return true
+    }
+  }
+  false
 }
 
 ///|

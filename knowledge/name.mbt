@@ -126,6 +126,8 @@ pub fn Name::of_string(input : String) -> Name {
 pub fn Name::show(self : Name) -> String {
   if self.pkg == "keyword" {
     escape_keyword_name(self.text)
+  } else if self.pkg == "user" {
+    escape_name_part(self.text)
   } else {
     "\{escape_name_part(self.pkg)}:\{escape_name_part(self.text)}"
   }

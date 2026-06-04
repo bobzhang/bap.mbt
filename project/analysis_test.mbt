@@ -178,9 +178,7 @@ test "project analyses register find and apply typed callbacks" {
     Some(found) => {
       assert_true(found.name() == "unit-analysis-registry")
       assert_true(found.pkg() == "user")
-      assert_true(
-        found.qualified_name().show() == "user:unit-analysis-registry",
-      )
+      assert_true(found.qualified_name().show() == "unit-analysis-registry")
       assert_true(found.description() == "unit test analysis")
       assert_true(found.desc() == "unit test analysis")
       assert_true(found.grammar_string() == "<string> [:dry-run]")
@@ -200,7 +198,7 @@ test "project analyses register find and apply typed callbacks" {
     if info.name() == "unit-analysis-registry" {
       seen_info = true
       assert_true(info.pkg() == "user")
-      assert_true(info.qualified_name().show() == "user:unit-analysis-registry")
+      assert_true(info.qualified_name().show() == "unit-analysis-registry")
       assert_true(info.desc() == "unit test analysis")
     }
   }

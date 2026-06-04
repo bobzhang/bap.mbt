@@ -8,6 +8,7 @@ test "names preserve packages and escaped separators" {
     @knowledge.Name::read("plain", pkg="local").show(),
     content="local:plain",
   )
+  inspect(@knowledge.Name::create("target:x").show(), content="target\\:x")
   assert_true(@knowledge.Name::of_string(name.show()).equal(name))
   assert_eq(@knowledge.Name::str()(name), name.show())
   assert_true(
@@ -554,7 +555,7 @@ test "state current package controls unqualified symbol reads and rendering" {
     Ok(object) => {
       assert_eq(state.repr(object), "main")
       match state.interned_name(object) {
-        Some(name) => assert_eq(name.show(), "user:main")
+        Some(name) => assert_eq(name.show(), "main")
         None => fail("missing user symbol name")
       }
     }

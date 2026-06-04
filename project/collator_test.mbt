@@ -24,7 +24,7 @@ test "project collators fold alternatives against a base project" {
   )
   assert_true(collator.name() == "unit-collator")
   assert_true(collator.pkg() == "user")
-  assert_true(collator.qualified_name().show() == "user:unit-collator")
+  assert_true(collator.qualified_name().show() == "unit-collator")
   assert_true(collator.description() == "collect value differences")
   assert_true(collator.desc() == "collect value differences")
   let result = collator.apply([
@@ -70,9 +70,7 @@ test "registered project collators can be discovered and applied" {
     Some(found) => {
       assert_true(found.name() == "unit-registered-collator")
       assert_true(found.pkg() == "user")
-      assert_true(
-        found.qualified_name().show() == "user:unit-registered-collator",
-      )
+      assert_true(found.qualified_name().show() == "unit-registered-collator")
       assert_true(found.description() == "collect project values")
       assert_true(found.desc() == "collect project values")
       assert_true(found.info().desc() == "collect project values")

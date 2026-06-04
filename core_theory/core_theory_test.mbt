@@ -1208,6 +1208,8 @@ test "target registry resolves common and custom declarations" {
     }
     Err(reason) => fail(reason)
   }
+  assert_true(@core_theory.Target::lookup("riscv64") is Some(_))
+  assert_true(@core_theory.Target::lookup("riscv\\:64") is None)
   match @core_theory.get_target("riscv") {
     Ok(target) => {
       assert_true(target.bits() == 0)

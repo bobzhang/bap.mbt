@@ -158,6 +158,7 @@ test "project analyses register find and apply typed callbacks" {
         found.qualified_name().show() == "user:unit-analysis-registry",
       )
       assert_true(found.description() == "unit test analysis")
+      assert_true(found.desc() == "unit test analysis")
       assert_true(found.grammar_string() == "<string> [:dry-run]")
       match found.apply(["target", ":dry-run"]) {
         Ok(_) => assert_true(seen.val == "target:true")
@@ -176,6 +177,7 @@ test "project analyses register find and apply typed callbacks" {
       seen_info = true
       assert_true(info.pkg() == "user")
       assert_true(info.qualified_name().show() == "user:unit-analysis-registry")
+      assert_true(info.desc() == "unit test analysis")
     }
   }
   assert_true(seen_info)
@@ -221,6 +223,7 @@ test "project analyses support package-qualified lookup and apply" {
       assert_true(found.name() == "unit-packaged-analysis")
       assert_true(found.pkg() == "left")
       assert_true(found.description() == "not provided")
+      assert_true(found.desc() == "not provided")
       assert_true(
         found.qualified_name().show() == "left:unit-packaged-analysis",
       )
@@ -251,4 +254,30 @@ test "project analyses support package-qualified lookup and apply" {
     Ok(_) => assert_true(left_seen.val == "L:gamma")
     Err(reason) => fail(reason)
   }
+}
+
+///|
+test "registered project analyses preserve registration order" {
+  let args = @project.ProjectAnalysisArgs::one(
+    @project.ProjectAnalysisArg::string(),
+  )
+  let make = name => {
+    @project.ProjectAnalysis::create(name~, args~, run=_ => Ok(()))
+  }
+  let first = make("unit-order-analysis-z")
+  let second = make("unit-order-analysis-a")
+  let third = make("unit-order-analysis-m")
+  for analysis in [first, second, third] {
+    match @project.register_analysis(analysis) {
+      Ok(_) => ()
+      Err(reason) => fail(reason)
+    }
+  }
+  let names = @project.registered_analyses()
+    .map(info => info.name())
+    .filter(name => name.has_prefix("unit-order-analysis-"))
+  assert_true(
+    names ==
+    ["unit-order-analysis-z", "unit-order-analysis-a", "unit-order-analysis-m"],
+  )
 }

@@ -39,6 +39,9 @@ struct ProjectAnalysis {
 let project_analysis_registry : Map[String, ProjectAnalysis] = {}
 
 ///|
+let project_analysis_registry_order : Array[String] = []
+
+///|
 fn project_analysis_context(inputs : Array[String]) -> ProjectAnalysisContext {
   {
     rule_value: "",
@@ -566,6 +569,11 @@ pub fn ProjectAnalysisInfo::description(self : ProjectAnalysisInfo) -> String {
 }
 
 ///|
+pub fn ProjectAnalysisInfo::desc(self : ProjectAnalysisInfo) -> String {
+  self.description()
+}
+
+///|
 pub fn ProjectAnalysisInfo::grammar(
   self : ProjectAnalysisInfo,
 ) -> Array[String] {
@@ -629,6 +637,11 @@ pub fn ProjectAnalysis::description(self : ProjectAnalysis) -> String {
 }
 
 ///|
+pub fn ProjectAnalysis::desc(self : ProjectAnalysis) -> String {
+  self.description()
+}
+
+///|
 pub fn ProjectAnalysis::grammar(self : ProjectAnalysis) -> Array[String] {
   self.info_value.grammar()
 }
@@ -658,6 +671,7 @@ pub fn register_analysis(analysis : ProjectAnalysis) -> Result[Unit, String] {
     Err("project analysis \{name} is already registered")
   } else {
     project_analysis_registry[name] = analysis
+    project_analysis_registry_order.push(name)
     Ok(())
   }
 }
@@ -670,7 +684,12 @@ pub fn find_analysis(name : String, pkg? : String) -> ProjectAnalysis? {
 ///|
 pub fn registered_analyses() -> Array[ProjectAnalysisInfo] {
   let result = []
-  project_analysis_registry.each((_, analysis) => result.push(analysis.info()))
+  for name in project_analysis_registry_order {
+    match project_analysis_registry.get(name) {
+      Some(analysis) => result.push(analysis.info())
+      None => ()
+    }
+  }
   result
 }
 

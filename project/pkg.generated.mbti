@@ -277,6 +277,7 @@ pub fn Project::with_symbols(Self, Array[@image.Symbol]) -> Self
 type ProjectAnalysis
 pub fn ProjectAnalysis::apply(Self, Array[String]) -> Result[Unit, String]
 pub fn[T] ProjectAnalysis::create(name~ : String, pkg? : String, description? : String, args~ : ProjectAnalysisArgs[T], run~ : (T) -> Result[Unit, String]) -> Self
+pub fn ProjectAnalysis::desc(Self) -> String
 pub fn ProjectAnalysis::description(Self) -> String
 pub fn ProjectAnalysis::grammar(Self) -> Array[String]
 pub fn ProjectAnalysis::grammar_string(Self) -> String
@@ -312,6 +313,7 @@ pub fn[A, B, C, D, E] ProjectAnalysisArgs::quint(ProjectAnalysisArg[A], ProjectA
 pub fn[A, B, C] ProjectAnalysisArgs::triple(ProjectAnalysisArg[A], ProjectAnalysisArg[B], ProjectAnalysisArg[C]) -> Self[(A, B, C)]
 
 type ProjectAnalysisInfo
+pub fn ProjectAnalysisInfo::desc(Self) -> String
 pub fn ProjectAnalysisInfo::description(Self) -> String
 pub fn ProjectAnalysisInfo::grammar(Self) -> Array[String]
 pub fn ProjectAnalysisInfo::grammar_string(Self) -> String

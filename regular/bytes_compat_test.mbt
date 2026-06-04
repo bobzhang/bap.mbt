@@ -40,7 +40,7 @@ test "translated BAP bytes copy preserves value while owning storage" {
 }
 
 ///|
-test "translated BAP bytes string helpers round trip ASCII text" {
+test "translated BAP bytes string helpers round trip UTF-8 text" {
   match @regular.bytes_of_string("This is a test to Bytes module.") {
     Ok(bytes) => {
       assert_true(bytes.length() == 31)
@@ -52,7 +52,16 @@ test "translated BAP bytes string helpers round trip ASCII text" {
     }
     Err(reason) => fail(reason)
   }
-  assert_true(@regular.bytes_of_string("café") is Err(_))
+  match @regular.bytes_of_string("café") {
+    Ok(bytes) => {
+      assert_true(byte_values(bytes) == [99, 97, 102, 195, 169])
+      match @regular.bytes_to_string(bytes) {
+        Ok(text) => assert_eq(text, "café")
+        Err(reason) => fail(reason)
+      }
+    }
+    Err(reason) => fail(reason)
+  }
   assert_true(
     @regular.bytes_to_string(Bytes::from_array([65, 255, 66])) is Err(_),
   )

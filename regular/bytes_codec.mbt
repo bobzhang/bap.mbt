@@ -64,28 +64,14 @@ pub fn bytes_copy(bytes : BytesView) -> Bytes {
 }
 
 ///|
-fn ascii_string_view(text : StringView) -> Bool {
-  for c in text {
-    if c.to_int() > 0x7f {
-      return false
-    }
-  }
-  true
-}
-
-///|
 pub fn bytes_of_string(text : StringView) -> Result[Bytes, String] {
-  if ascii_string_view(text) {
-    Ok(@ascii.encode(text))
-  } else {
-    Err("byte string contains non-ASCII text")
-  }
+  Ok(@utf8.encode(text))
 }
 
 ///|
 pub fn bytes_to_string(bytes : BytesView) -> Result[String, String] {
-  try @ascii.decode(bytes) catch {
-    _ => Err("bytes are not valid ASCII text")
+  try @utf8.decode(bytes) catch {
+    _ => Err("bytes are not valid UTF-8 text")
   } noraise {
     text => Ok(text)
   }

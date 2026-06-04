@@ -3,7 +3,22 @@ struct ProjectDisassemblyInstruction {
   memory_value : @memory.Memory
   assembly_value : String
   bil_value : String
+  kinds_value : Array[ProjectInstructionKind]
 }
+
+///|
+pub(all) enum ProjectInstructionKind {
+  ProjectConditionalBranch
+  ProjectUnconditionalBranch
+  ProjectIndirectBranch
+  ProjectReturn
+  ProjectCall
+  ProjectBarrier
+  ProjectTerminator
+  ProjectMayAffectControlFlow
+  ProjectMayLoad
+  ProjectMayStore
+} derive(Eq, Debug)
 
 ///|
 pub(all) enum ProjectDisassemblyEdgeKind {
@@ -134,6 +149,90 @@ fn project_disassembly_edge_touches_block(
 }
 
 ///|
+pub fn ProjectInstructionKind::members() -> Array[ProjectInstructionKind] {
+  [
+    ProjectConditionalBranch,
+    ProjectUnconditionalBranch,
+    ProjectIndirectBranch,
+    ProjectReturn,
+    ProjectCall,
+    ProjectBarrier,
+    ProjectTerminator,
+    ProjectMayAffectControlFlow,
+    ProjectMayLoad,
+    ProjectMayStore,
+  ]
+}
+
+///|
+pub fn ProjectInstructionKind::to_string(
+  self : ProjectInstructionKind,
+) -> String {
+  match self {
+    ProjectConditionalBranch => "conditional-branch"
+    ProjectUnconditionalBranch => "unconditional-branch"
+    ProjectIndirectBranch => "indirect-branch"
+    ProjectReturn => "return"
+    ProjectCall => "call"
+    ProjectBarrier => "barrier"
+    ProjectTerminator => "terminator"
+    ProjectMayAffectControlFlow => "may-affect-control-flow"
+    ProjectMayLoad => "may-load"
+    ProjectMayStore => "may-store"
+  }
+}
+
+///|
+pub fn ProjectInstructionKind::is_branch(self : ProjectInstructionKind) -> Bool {
+  match self {
+    ProjectConditionalBranch
+    | ProjectUnconditionalBranch
+    | ProjectIndirectBranch => true
+    _ => false
+  }
+}
+
+///|
+pub fn ProjectInstructionKind::affects_control_flow(
+  self : ProjectInstructionKind,
+) -> Bool {
+  match self {
+    ProjectConditionalBranch
+    | ProjectUnconditionalBranch
+    | ProjectIndirectBranch
+    | ProjectReturn
+    | ProjectCall
+    | ProjectBarrier
+    | ProjectTerminator
+    | ProjectMayAffectControlFlow => true
+    _ => false
+  }
+}
+
+///|
+pub fn ProjectInstructionKind::has_side_effect(
+  self : ProjectInstructionKind,
+) -> Bool {
+  match self {
+    ProjectMayLoad | ProjectMayStore => true
+    _ => false
+  }
+}
+
+///|
+fn project_instruction_kinds_normalize(
+  kinds : Array[ProjectInstructionKind],
+) -> Array[ProjectInstructionKind] {
+  let out : Array[ProjectInstructionKind] = []
+  for known in ProjectInstructionKind::members() {
+    if kinds.contains(known) {
+      out.push(known)
+    }
+  }
+  out
+}
+
+///|
 pub fn ProjectDisassemblyEdgeKind::to_string(
   self : ProjectDisassemblyEdgeKind,
 ) -> String {
@@ -175,8 +274,17 @@ pub fn ProjectDisassemblyInstruction::create(
   memory : @memory.Memory,
   assembly? : String = "",
   bil? : String = "",
+  kinds? : Array[ProjectInstructionKind],
 ) -> ProjectDisassemblyInstruction {
-  { memory_value: memory, assembly_value: assembly, bil_value: bil }
+  {
+    memory_value: memory,
+    assembly_value: assembly,
+    bil_value: bil,
+    kinds_value: match kinds {
+      Some(items) => project_instruction_kinds_normalize(items)
+      None => []
+    },
+  }
 }
 
 ///|
@@ -198,6 +306,68 @@ pub fn ProjectDisassemblyInstruction::bil(
   self : ProjectDisassemblyInstruction,
 ) -> String {
   self.bil_value
+}
+
+///|
+pub fn ProjectDisassemblyInstruction::kinds(
+  self : ProjectDisassemblyInstruction,
+) -> Array[ProjectInstructionKind] {
+  self.kinds_value.copy()
+}
+
+///|
+pub fn ProjectDisassemblyInstruction::has_kind(
+  self : ProjectDisassemblyInstruction,
+  kind : ProjectInstructionKind,
+) -> Bool {
+  self.kinds_value.contains(kind)
+}
+
+///|
+pub fn ProjectDisassemblyInstruction::with_kinds(
+  self : ProjectDisassemblyInstruction,
+  kinds : Array[ProjectInstructionKind],
+) -> ProjectDisassemblyInstruction {
+  { ..self, kinds_value: project_instruction_kinds_normalize(kinds) }
+}
+
+///|
+pub fn ProjectDisassemblyInstruction::with_kind(
+  self : ProjectDisassemblyInstruction,
+  kind : ProjectInstructionKind,
+) -> ProjectDisassemblyInstruction {
+  let kinds = self.kinds_value.copy()
+  kinds.push(kind)
+  self.with_kinds(kinds)
+}
+
+///|
+pub fn ProjectDisassemblyInstruction::without_kind(
+  self : ProjectDisassemblyInstruction,
+  kind : ProjectInstructionKind,
+) -> ProjectDisassemblyInstruction {
+  self.with_kinds(self.kinds_value.filter(existing => existing != kind))
+}
+
+///|
+pub fn ProjectDisassemblyInstruction::is_branch(
+  self : ProjectDisassemblyInstruction,
+) -> Bool {
+  self.kinds_value.any(kind => kind.is_branch())
+}
+
+///|
+pub fn ProjectDisassemblyInstruction::affects_control_flow(
+  self : ProjectDisassemblyInstruction,
+) -> Bool {
+  self.kinds_value.any(kind => kind.affects_control_flow())
+}
+
+///|
+pub fn ProjectDisassemblyInstruction::has_side_effect(
+  self : ProjectDisassemblyInstruction,
+) -> Bool {
+  self.kinds_value.any(kind => kind.has_side_effect())
 }
 
 ///|

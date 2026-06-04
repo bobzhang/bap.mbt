@@ -9,6 +9,7 @@ import {
   "bobzhang/bap/knowledge",
   "bobzhang/bap/memory",
   "bobzhang/bap/types",
+  "moonbitlang/core/debug",
 }
 
 // Values
@@ -292,11 +293,19 @@ pub fn ProjectDisassemblyEdgeKind::to_string(Self) -> String
 
 type ProjectDisassemblyInstruction
 pub fn ProjectDisassemblyInstruction::addr(Self) -> UInt64
+pub fn ProjectDisassemblyInstruction::affects_control_flow(Self) -> Bool
 pub fn ProjectDisassemblyInstruction::assembly(Self) -> String
 pub fn ProjectDisassemblyInstruction::bil(Self) -> String
 pub fn ProjectDisassemblyInstruction::contains(Self, UInt64) -> Bool
-pub fn ProjectDisassemblyInstruction::create(@memory.Memory, assembly? : String, bil? : String) -> Self
+pub fn ProjectDisassemblyInstruction::create(@memory.Memory, assembly? : String, bil? : String, kinds? : Array[ProjectInstructionKind]) -> Self
+pub fn ProjectDisassemblyInstruction::has_kind(Self, ProjectInstructionKind) -> Bool
+pub fn ProjectDisassemblyInstruction::has_side_effect(Self) -> Bool
+pub fn ProjectDisassemblyInstruction::is_branch(Self) -> Bool
+pub fn ProjectDisassemblyInstruction::kinds(Self) -> Array[ProjectInstructionKind]
 pub fn ProjectDisassemblyInstruction::memory(Self) -> @memory.Memory
+pub fn ProjectDisassemblyInstruction::with_kind(Self, ProjectInstructionKind) -> Self
+pub fn ProjectDisassemblyInstruction::with_kinds(Self, Array[ProjectInstructionKind]) -> Self
+pub fn ProjectDisassemblyInstruction::without_kind(Self, ProjectInstructionKind) -> Self
 
 type ProjectDisassemblyState
 pub fn ProjectDisassemblyState::add_block(Self, @memory.Memory) -> Self
@@ -361,6 +370,24 @@ pub fn ProjectInputLoader::load(Self, Bytes) -> Result[ProjectInput, String]
 pub fn ProjectInputLoader::name(Self) -> String
 pub fn ProjectInputLoader::priority(Self) -> Int
 pub fn ProjectInputLoader::supports_extension(Self, String) -> Bool
+
+pub(all) enum ProjectInstructionKind {
+  ProjectConditionalBranch
+  ProjectUnconditionalBranch
+  ProjectIndirectBranch
+  ProjectReturn
+  ProjectCall
+  ProjectBarrier
+  ProjectTerminator
+  ProjectMayAffectControlFlow
+  ProjectMayLoad
+  ProjectMayStore
+} derive(Eq, @debug.Debug)
+pub fn ProjectInstructionKind::affects_control_flow(Self) -> Bool
+pub fn ProjectInstructionKind::has_side_effect(Self) -> Bool
+pub fn ProjectInstructionKind::is_branch(Self) -> Bool
+pub fn ProjectInstructionKind::members() -> Array[Self]
+pub fn ProjectInstructionKind::to_string(Self) -> String
 
 type ProjectPass
 pub fn ProjectPass::autorun(Self) -> Bool

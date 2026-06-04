@@ -358,6 +358,45 @@ test "project disassembly instructions replace by memory and support lookup" {
 }
 
 ///|
+test "project disassembly instructions carry BAP instruction kinds" {
+  let block = raw_segment().memory()
+  match block.view(words=1) {
+    Ok(first_byte) => {
+      let instruction = @project.ProjectDisassemblyInstruction::create(
+        first_byte,
+        kinds=[
+          ProjectMayStore,
+          ProjectCall,
+          ProjectMayStore,
+          ProjectConditionalBranch,
+        ],
+      )
+      assert_true(
+        instruction.kinds().map(kind => kind.to_string()) ==
+        ["conditional-branch", "call", "may-store"],
+      )
+      assert_true(instruction.has_kind(ProjectCall))
+      assert_true(instruction.is_branch())
+      assert_true(instruction.affects_control_flow())
+      assert_true(instruction.has_side_effect())
+      let updated = instruction
+        .without_kind(ProjectCall)
+        .with_kind(ProjectMayLoad)
+      assert_true(!updated.has_kind(ProjectCall))
+      assert_true(updated.has_kind(ProjectMayLoad))
+      assert_true(
+        updated.kinds().map(kind => kind.to_string()) ==
+        ["conditional-branch", "may-load", "may-store"],
+      )
+      assert_true(@project.ProjectIndirectBranch.is_branch())
+      assert_true(!@project.ProjectMayLoad.affects_control_flow())
+      assert_true(@project.ProjectMayLoad.has_side_effect())
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project disassembly state removes blocks instructions and edges" {
   let block = raw_segment().memory()
   let other = @memory.Memory::from_bytes(

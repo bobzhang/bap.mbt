@@ -30,12 +30,14 @@ pub(all) struct Call {
   callee : Location
   args : Array[@types.Word]
 } derive(Eq, @debug.Debug)
+pub fn Call::to_string(Self) -> String
 
 pub(all) struct Chunk {
   addr : @types.Word
   data : Bytes
 } derive(Eq, @debug.Debug)
 pub fn Chunk::create(addr~ : @types.Word, data~ : Bytes) -> Self
+pub fn Chunk::to_string(Self) -> String
 
 pub(all) struct FileStatsInfo {
   size : Int
@@ -49,28 +51,33 @@ pub(all) struct Location {
   addr : @types.Word
 } derive(Eq, @debug.Debug)
 pub fn Location::create(name? : String?, addr~ : @types.Word) -> Self
+pub fn Location::to_string(Self) -> String
 
 pub(all) struct Modload {
   name : String
   low : @types.Word
   high : @types.Word
 } derive(Eq, @debug.Debug)
+pub fn Modload::to_string(Self) -> String
 
 pub(all) struct Move[T] {
   cell : T
   data : @types.Word
 } derive(Eq, @debug.Debug)
 pub fn[T] Move::create(cell~ : T, data~ : @types.Word) -> Self[T]
+pub fn[T] Move::to_string(Self[T], (T) -> String, arrow~ : String) -> String
 
 pub(all) struct Return {
   caller : String
   callee : String
 } derive(Eq, @debug.Debug)
+pub fn Return::to_string(Self) -> String
 
 pub(all) struct Syscall {
   number : Int
   args : Array[@types.Word]
 } derive(Eq, @debug.Debug)
+pub fn Syscall::to_string(Self) -> String
 
 type Trace
 pub fn Trace::add_loaded(Self) -> Unit
@@ -197,6 +204,7 @@ pub fn TraceEvent::timestamp(Int64) -> Self
 pub fn TraceEvent::timestamp_tag() -> String
 pub fn TraceEvent::timestamp_uuid() -> String
 pub fn TraceEvent::timestamp_value(Self) -> Int64?
+pub fn TraceEvent::to_string(Self) -> String
 
 pub(all) struct TraceEventTagInfo {
   name : String
@@ -208,6 +216,7 @@ pub(all) struct TraceException {
   src : @types.Word?
   dst : @types.Word?
 } derive(Eq, @debug.Debug)
+pub fn TraceException::to_string(Self) -> String
 
 pub(all) struct TraceId {
   value : String

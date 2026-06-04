@@ -638,6 +638,97 @@ pub fn TraceEvent::mode_value(self : TraceEvent) -> String? {
 }
 
 ///|
+pub fn[T] Move::to_string(
+  self : Move[T],
+  cell_to_string : (T) -> String,
+  arrow~ : String,
+) -> String {
+  "\{cell_to_string(self.cell)} \{arrow} \{self.data.to_string()}"
+}
+
+///|
+fn trace_word_array_to_string(items : Array[@types.Word]) -> String {
+  [ for item in items => item.to_string() ].join(", ")
+}
+
+///|
+fn trace_bytes_to_hex(data : Bytes) -> String {
+  let parts : Array[String] = []
+  for byte in data {
+    parts.push(byte.to_int().to_string(radix=16).to_upper().pad_start(2, '0'))
+  }
+  parts.join(" ")
+}
+
+///|
+pub fn Chunk::to_string(self : Chunk) -> String {
+  "@\{self.addr.to_string()}: \{trace_bytes_to_hex(self.data)}"
+}
+
+///|
+pub fn Syscall::to_string(self : Syscall) -> String {
+  "syscall[\{self.number}](\{trace_word_array_to_string(self.args)})"
+}
+
+///|
+fn trace_optional_addr(prefix : String, value : @types.Word?) -> String {
+  match value {
+    Some(addr) => " \{prefix} \{addr.to_string()}"
+    None => ""
+  }
+}
+
+///|
+pub fn TraceException::to_string(self : TraceException) -> String {
+  "exn \{self.number}\{trace_optional_addr("from", self.src)}\{trace_optional_addr("to", self.dst)}"
+}
+
+///|
+pub fn Location::to_string(self : Location) -> String {
+  match self.name {
+    Some(name) => "\{name}@ \{self.addr.to_string()}"
+    None => self.addr.to_string()
+  }
+}
+
+///|
+pub fn Call::to_string(self : Call) -> String {
+  "\{self.caller.to_string()} -> \{self.callee.to_string()}(\{trace_word_array_to_string(self.args)})"
+}
+
+///|
+pub fn Return::to_string(self : Return) -> String {
+  "\{self.caller} <- \{self.callee}"
+}
+
+///|
+pub fn Modload::to_string(self : Modload) -> String {
+  "\{self.name}: \{self.low.to_string()} - \{self.high.to_string()}"
+}
+
+///|
+pub fn TraceEvent::to_string(self : TraceEvent) -> String {
+  match self {
+    MemoryLoad(value) => value.to_string(word => word.to_string(), arrow="=>")
+    MemoryStore(value) => value.to_string(word => word.to_string(), arrow="<=")
+    RegisterRead(value) =>
+      value.to_string(variable => variable.to_string(), arrow="=>")
+    RegisterWrite(value) =>
+      value.to_string(variable => variable.to_string(), arrow="<=")
+    Timestamp(value) => "timestamp: \{value}"
+    PcUpdate(value) => "pc-update: \{value.to_string()}"
+    CodeExec(value) => value.to_string()
+    ContextSwitch(value) => "context-switch: \{value}"
+    Syscall(value) => value.to_string()
+    Exception(value) => value.to_string()
+    Call(value) => value.to_string()
+    Return(value) => value.to_string()
+    Modload(value) => value.to_string()
+    Mode(value) => "mode: \{value}"
+  }
+}
+
+///|
 pub(all) struct BinaryInfo {
   path : String
   args : Array[String]

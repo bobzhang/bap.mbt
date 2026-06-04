@@ -191,6 +191,8 @@ test "translated BAP common trace event tags match helper constructors" {
   assert_true(events[2].register_read_value() == Some(register_move()))
   assert_true(events[3].register_write_value() == Some(register_move()))
   assert_true(events[0].register_read_value() == None)
+  assert_true(events[0].to_string() == "0xBED:32u => 0xC0FFEE:32u")
+  assert_true(events[1].to_string() == "0xBED:32u <= 0xC0FFEE:32u")
   let broad = broad_events()
   assert_true(
     [
@@ -232,6 +234,18 @@ test "translated BAP common trace event tags match helper constructors" {
     Some({ name: "libc.so", low: word32(0x1000), high: word32(0x1fff) }),
   )
   assert_true(broad[9].mode_value() == Some("thumb"))
+  assert_true(broad[0].to_string() == "timestamp: -42")
+  assert_true(broad[1].to_string() == "pc-update: 0x401000:32u")
+  assert_true(broad[2].to_string() == "@0x401000:32u: 90 CC")
+  assert_true(broad[3].to_string() == "context-switch: -1")
+  assert_true(broad[4].to_string() == "syscall[60](0:32u)")
+  assert_true(broad[5].to_string() == "exn 13 from 1:32u")
+  assert_true(
+    broad[6].to_string() == "main@ 0x401000:32u -> 0x402000:32u(1:32u, 2:32u)",
+  )
+  assert_true(broad[7].to_string() == "main <- callee")
+  assert_true(broad[8].to_string() == "libc.so: 0x1000:32u - 0x1FFF:32u")
+  assert_true(broad[9].to_string() == "mode: thumb")
 }
 
 ///|

@@ -30,6 +30,7 @@ test "main event stream sends log progress and custom events" {
     _ => fail("expected progress event")
   }
   assert_true(observed[2].to_string() == "unit: payload")
+  assert_true(@main_event.pp(observed[2]) == "unit: payload")
 }
 
 ///|
@@ -49,6 +50,7 @@ test "main event printers use last registered precedence" {
     }
   })
   assert_true(custom.to_string() == "last:x")
+  assert_true(@main_event.pp(custom) == "last:x")
   assert_true(
     @main_event.MainEvent::custom(name="other").to_string() == "other",
   )

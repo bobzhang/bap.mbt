@@ -179,6 +179,11 @@ pub fn MainEvent::to_string(self : MainEvent) -> String {
 }
 
 ///|
+pub fn pp(event : MainEvent) -> String {
+  event.to_string()
+}
+
+///|
 pub fn observe_log_messages(notify~ : (MainLogInfo) -> Unit) -> Int {
   stream().subscribe(event => {
     match event {

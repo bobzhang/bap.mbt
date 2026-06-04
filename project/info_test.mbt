@@ -76,6 +76,24 @@ test "project info file stream reports unnamed inputs as empty filenames" {
 }
 
 ///|
+test "project info spec stream reports unknown create inputs as empty specs" {
+  let spec_counts = []
+  let spec_stream = @project.ProjectInfo::spec()
+  let spec_id = spec_stream.subscribe(spec => {
+    spec_counts.push(spec.declaration_count())
+  })
+  let input = @project.ProjectInput::create(
+    target=@core_theory.Target::unknown(),
+    filename="unknown.bin",
+  )
+  let project = @project.Project::from_input(input)
+  spec_stream.unsubscribe(spec_id)
+  assert_true(project.filename() == Some("unknown.bin"))
+  assert_true(project.specification().declaration_count() == 6)
+  assert_true(spec_counts == [0])
+}
+
+///|
 test "project info streams observe source-driven reconstruction" {
   let cfg_counts = []
   let symtab_counts = []

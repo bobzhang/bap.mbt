@@ -161,9 +161,14 @@ pub fn ProjectInput::create(
   data? : @memory.MemMap[String],
   finish? : (Project) -> Project,
 ) -> ProjectInput {
+  let spec = if target.is_unknown() {
+    @image.OgreDoc::empty()
+  } else {
+    @image.OgreDoc::from_target(target)
+  }
   {
     ..ProjectInput::custom(target~, filename~, code?, data?, finish?),
-    spec_value: @image.OgreDoc::from_target(target),
+    spec_value: spec,
   }
 }
 

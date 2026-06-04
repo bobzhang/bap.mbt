@@ -645,6 +645,8 @@ fn project_library_persistent() -> @knowledge.Persistent[Library] {
   let unit_codec = @core_theory.ProgramUnit::persistent()
   let memory_codec = project_memory_persistent()
   let symbols_codec = @knowledge.Persistent::array(project_symbol_persistent())
+  let program_codec = project_program_persistent()
+  let state_codec = ProjectState::persistent()
   @knowledge.Persistent::convert(
     to_persistent=library => {
       [
@@ -653,10 +655,12 @@ fn project_library_persistent() -> @knowledge.Persistent[Library] {
         unit_codec.encode(library.unit()),
         memory_codec.encode(library.memory()),
         symbols_codec.encode(library.symbols()),
+        program_codec.encode(library.program()),
+        state_codec.encode(library.state()),
       ]
     },
     of_persistent=fields => {
-      if fields.length() != 5 {
+      if fields.length() != 5 && fields.length() != 7 {
         return Err("invalid persistent project library")
       }
       let target = match target_codec.decode(fields[1]) {
@@ -675,7 +679,33 @@ fn project_library_persistent() -> @knowledge.Persistent[Library] {
         Ok(value) => value
         Err(reason) => return Err(reason)
       }
-      Ok(Library::create(name=fields[0], target~, unit~, memory~, symbols~))
+      let program = if fields.length() >= 7 {
+        match program_codec.decode(fields[5]) {
+          Ok(value) => value
+          Err(reason) => return Err(reason)
+        }
+      } else {
+        @types.Program::create()
+      }
+      let state = if fields.length() >= 7 {
+        match state_codec.decode(fields[6]) {
+          Ok(value) => value
+          Err(reason) => return Err(reason)
+        }
+      } else {
+        ProjectState::empty()
+      }
+      Ok(
+        Library::create(
+          name=fields[0],
+          target~,
+          unit~,
+          memory~,
+          symbols~,
+          program~,
+          state~,
+        ),
+      )
     },
     @knowledge.Persistent::array(@knowledge.Persistent::string()),
   )
@@ -696,6 +726,8 @@ pub fn Project::persistent() -> @knowledge.Persistent[Project] {
   let libraries_codec = @knowledge.Persistent::array(
     project_library_persistent(),
   )
+  let program_codec = project_program_persistent()
+  let state_codec = ProjectState::persistent()
   @knowledge.Persistent::convert(
     to_persistent=project => {
       [
@@ -705,13 +737,16 @@ pub fn Project::persistent() -> @knowledge.Persistent[Project] {
         memory_codec.encode(project.memory_value),
         symbols_codec.encode(project.symbols_value),
         libraries_codec.encode(project.libraries_value),
+        program_codec.encode(project.program_value),
+        state_codec.encode(project.state_value),
       ]
     },
     of_persistent=fields => {
       if fields.length() != 3 &&
         fields.length() != 4 &&
         fields.length() != 5 &&
-        fields.length() != 6 {
+        fields.length() != 6 &&
+        fields.length() != 8 {
         return Err("invalid persistent project encoding")
       }
       let target = match target_codec.decode(fields[0]) {
@@ -747,8 +782,29 @@ pub fn Project::persistent() -> @knowledge.Persistent[Project] {
           Ok(value) => value
           Err(reason) => return Err(reason)
         }
+      } else if fields.length() == 8 {
+        match libraries_codec.decode(fields[5]) {
+          Ok(value) => value
+          Err(reason) => return Err(reason)
+        }
       } else {
         []
+      }
+      let program = if fields.length() == 8 {
+        match program_codec.decode(fields[6]) {
+          Ok(value) => value
+          Err(reason) => return Err(reason)
+        }
+      } else {
+        @types.Program::create()
+      }
+      let state = if fields.length() == 8 {
+        match state_codec.decode(fields[7]) {
+          Ok(value) => value
+          Err(reason) => return Err(reason)
+        }
+      } else {
+        ProjectState::empty()
       }
       Ok(
         Project::create(
@@ -758,6 +814,8 @@ pub fn Project::persistent() -> @knowledge.Persistent[Project] {
           memory~,
           symbols~,
           libraries~,
+          program~,
+          state~,
         ),
       )
     },

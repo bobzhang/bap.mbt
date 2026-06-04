@@ -643,6 +643,7 @@ pub fn ProjectDisassemblyState::instruction_for(Self, @memory.Memory) -> Project
 pub fn ProjectDisassemblyState::instructions(Self) -> Array[ProjectDisassemblyInstruction]
 pub fn ProjectDisassemblyState::instructions_in(Self, @memory.Memory) -> Array[ProjectDisassemblyInstruction]
 pub fn ProjectDisassemblyState::key_of_first_insns(Self, @memory.Memory, len~ : Int) -> ProjectInstructionKey?
+pub fn ProjectDisassemblyState::persistent() -> @knowledge.Persistent[Self]
 pub fn ProjectDisassemblyState::remove_block(Self, @memory.Memory) -> Self
 pub fn ProjectDisassemblyState::remove_edge(Self, ProjectDisassemblyEdge) -> Self
 pub fn ProjectDisassemblyState::remove_instruction(Self, ProjectDisassemblyInstruction) -> Self
@@ -836,6 +837,7 @@ pub fn ProjectState::add_subroutine(Self, @types.Term[@types.Sub]) -> Self
 pub fn ProjectState::create(disassembly? : ProjectDisassemblyState, subroutines? : Array[@types.Term[@types.Sub]]) -> Self
 pub fn ProjectState::disassembly(Self) -> ProjectDisassemblyState
 pub fn ProjectState::empty() -> Self
+pub fn ProjectState::persistent() -> @knowledge.Persistent[Self]
 pub fn ProjectState::slot() -> @knowledge.Slot[Unit, Self]
 pub fn ProjectState::subroutines(Self) -> Array[@types.Term[@types.Sub]]
 pub fn ProjectState::with_disassembly(Self, ProjectDisassemblyState) -> Self

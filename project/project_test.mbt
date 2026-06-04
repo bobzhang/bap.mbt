@@ -70,7 +70,7 @@ test "project state exposes BAP disassembly knowledge slot" {
   assert_true(slot.owner().show() == "core:unit")
   assert_true(slot.name().show() == "bap:disassembly")
   assert_true(slot.desc() == "no description")
-  assert_true(slot.persistent() is None)
+  assert_true(slot.persistent() is Some(_))
   let domain = slot.domain()
   let empty = @project.ProjectState::empty()
   assert_true(domain.name().show() == "bap:disassembly")
@@ -98,6 +98,17 @@ test "project state exposes BAP disassembly knowledge slot" {
   let other = state.add_subroutine(@types.Sub::create(name="slot-other"))
   assert_true(domain.order(state, other) == Incomparable)
   assert_true(domain.join(state, other) is Err(_))
+  match slot.persistent() {
+    Some(codec) =>
+      match codec.decode(codec.encode(other)) {
+        Ok(decoded) => {
+          assert_project_state_shape(decoded, 1, 1)
+          assert_true(decoded.subroutines()[0].sub_name() == "slot-other")
+        }
+        Err(reason) => fail(reason)
+      }
+    None => fail("missing project state persistent codec")
+  }
 }
 
 ///|
@@ -276,6 +287,57 @@ test "project storage and memory tags are persistent updates" {
 ///|
 test "project persistent codec round trips metadata and storage" {
   let storage = { "loader": "raw", "note": "a:b" }
+  let flag = @types.Var::new(name="flag", typ=Imm(1))
+  let x = @types.Var::new(name="x", typ=Imm(8))
+  let y = @types.Var::new(name="y", typ=Imm(8), is_virtual=true)
+  let entry_tid = @types.Tid::for_name("entry")
+  let exit_tid = @types.Tid::for_name("exit")
+  let arg = @types.Arg::create(
+    x,
+    Var(x),
+    intent=In,
+    tid=@types.Tid::for_name("arg"),
+  )
+  let def = @types.Def::create(
+    y,
+    Let(
+      x,
+      Int(@types.Word::of_int(width=8, 1)),
+      BinOp(Plus, Var(x), Int(@types.Word::of_int(width=8, 2))),
+    ),
+    tid=@types.Tid::for_name("def"),
+  ).set_attr(@types.Attr::new(key="origin", value="unit"))
+  let phi = @types.Phi::of_list(
+    y,
+    [(entry_tid, Var(x)), (exit_tid, Unknown("incoming", Imm(8)))],
+    tid=@types.Tid::for_name("phi"),
+  )
+  let jmp = @types.Jmp::create_goto(
+    @types.Label::direct(exit_tid),
+    cond=Ite(
+      cond=Var(flag),
+      yes=Int(@types.Word::b1()),
+      no=Int(@types.Word::b0()),
+    ),
+    tid=@types.Tid::for_name("jmp"),
+  )
+  let entry_block = @types.Blk::create(
+    phis=[phi],
+    defs=[def],
+    jmps=[jmp],
+    tid=entry_tid,
+  ).set_attr(@types.Attr::address(@types.Word::of_int(width=32, 0x8800)))
+  let exit_block = @types.Blk::create(tid=exit_tid)
+  let main_sub = @types.Sub::create(
+    name="main",
+    args=[arg],
+    blks=[entry_block, exit_block],
+    tid=@types.Tid::for_name("main"),
+  ).set_attr(@types.Attr::new(key="semantic", value="entry-point"))
+  let program = @types.Program::create(
+    subs=[main_sub],
+    tid=@types.Tid::for_name("program"),
+  ).set_attr(@types.Attr::comment("round-trip"))
   let memory_block = @memory.Memory::from_bytes(
     endian=BigEndian,
     start=0x8800UL,
@@ -291,6 +353,52 @@ test "project persistent codec round trips metadata and storage" {
       is_debug=true,
     ),
   ]
+  let state_instruction = @project.ProjectDisassemblyInstruction::create(
+    memory_block,
+    assembly="mov r0, #1",
+    bil="y := 1",
+    code=0x01,
+    name="mov",
+    encoding="unit",
+    kinds=[ProjectMayLoad, ProjectCall],
+    operands=[
+      @project.ProjectInstructionOperand::register(name="R0", code=1),
+      @project.ProjectInstructionOperand::immediate(1L),
+      @project.ProjectInstructionOperand::floating(1.5),
+    ],
+    subinstructions=[
+      @project.ProjectDisassemblyInstruction::create(
+        @memory.Memory::from_bytes(endian=BigEndian, start=0x8801UL, b"\xbb"),
+        assembly="sub",
+      ),
+    ],
+  )
+  let state = @project.ProjectState::empty()
+    .with_disassembly(
+      @project.ProjectDisassemblyState::empty()
+      .add_block(memory_block)
+      .add_instruction(state_instruction)
+      .add_edge(
+        @project.ProjectDisassemblyEdge::create(
+          source=0x8800UL,
+          target=0x8801UL,
+          kind=CondEdge,
+        ),
+      )
+      .add_edge(@project.ProjectDisassemblyEdge::create(source=0x8801UL)),
+    )
+    .add_subroutine(main_sub)
+  let library_program = @types.Program::create(
+    subs=[
+      @types.Sub::create(name="lib_entry", tid=@types.Tid::for_name("lib-sub")),
+    ],
+    tid=@types.Tid::for_name("lib-program"),
+  )
+  let library_state = @project.ProjectState::empty().with_disassembly(
+    @project.ProjectDisassemblyState::empty().add_block(
+      @memory.Memory::from_bytes(endian=LittleEndian, start=0x9900UL, b"\x11"),
+    ),
+  )
   let library_memory = @memory.MemMap::singleton(
     @memory.Memory::from_bytes(endian=LittleEndian, start=0x9900UL, b"\x11\x22"),
     "lib:code",
@@ -305,6 +413,8 @@ test "project persistent codec round trips metadata and storage" {
       target=@core_theory.Target::x86_64(),
       unit=library_unit,
       memory=library_memory,
+      program=library_program,
+      state=library_state,
       symbols=[
         @image.Symbol::create(
           name="lib_entry",
@@ -322,6 +432,8 @@ test "project persistent codec round trips metadata and storage" {
     memory~,
     symbols~,
     libraries~,
+    program~,
+    state~,
   ).set("analysis", "done")
   symbols.push(@image.Symbol::create(name="mutated", addr=0x9000UL))
   libraries.push(
@@ -354,6 +466,34 @@ test "project persistent codec round trips metadata and storage" {
       assert_true(decoded_symbols[0].size() == 2)
       assert_true(decoded_symbols[0].is_function())
       assert_true(decoded_symbols[0].is_debug())
+      assert_true(decoded.program().tid() == program.tid())
+      assert_true(decoded.program().attrs() == program.attrs())
+      assert_true(
+        @types.Program::to_string(decoded.program()) ==
+        @types.Program::to_string(program),
+      )
+      assert_true(decoded.state().disassembly().block_count() == 1)
+      assert_true(decoded.state().disassembly().instruction_count() == 1)
+      assert_true(decoded.state().disassembly().edge_count() == 2)
+      let decoded_instruction = decoded.state().disassembly().instructions()[0]
+      assert_true(decoded_instruction.assembly() == "mov r0, #1")
+      assert_true(decoded_instruction.code() == 0x01)
+      assert_true(decoded_instruction.name() == "mov")
+      assert_true(decoded_instruction.encoding() == "unit")
+      assert_true(decoded_instruction.kinds() == [ProjectCall, ProjectMayLoad])
+      assert_true(decoded_instruction.operands().length() == 3)
+      assert_true(
+        decoded_instruction.operands()[0].register_name() == Some("R0"),
+      )
+      assert_true(decoded_instruction.operands()[1].to_int64() == Some(1L))
+      assert_true(decoded_instruction.operands()[2].to_float() == Some(1.5))
+      assert_true(decoded_instruction.subinstruction_count() == 1)
+      assert_true(decoded.state().subroutines().length() == 1)
+      assert_true(decoded.state().subroutines()[0].tid() == main_sub.tid())
+      assert_true(
+        @types.Sub::to_string(decoded.state().subroutines()[0]) ==
+        @types.Sub::to_string(main_sub),
+      )
       let decoded_libraries = decoded.libraries()
       assert_true(decoded_libraries.length() == 1)
       assert_true(decoded_libraries[0].name() == "libdemo")
@@ -369,6 +509,11 @@ test "project persistent codec round trips metadata and storage" {
       assert_true(library_symbols.length() == 1)
       assert_true(library_symbols[0].name() == "lib_entry")
       assert_true(library_symbols[0].is_function())
+      assert_true(
+        @types.Program::to_string(decoded_libraries[0].program()) ==
+        @types.Program::to_string(library_program),
+      )
+      assert_true(decoded_libraries[0].state().disassembly().block_count() == 1)
     }
     Err(reason) => fail(reason)
   }

@@ -36,12 +36,12 @@ This repository is porting `.repos/bap` from OCaml to idiomatic MoonBit.
 - `project/input filename loaders`: Project input loaders can be registered as filename-based loaders, matching upstream loader callbacks that receive the path before any byte-read fallback.
 - `project/state-seeded creation`: Source-driven project creation helpers accept a precomputed project state and reconstruct from it without rerunning disassembly drivers.
 - `project/restore_state`: The deprecated upstream project state-restore hook is exposed as an explicit unsupported compatibility result that directs callers to top-level state persistence.
-- `project/persistent metadata`: Project exposes an initial persistent codec for target, filename, string storage metadata, annotated memory maps, project symbols, and library metadata/memory/symbols as a step toward the upstream `Data.S` project surface.
+- `project/persistent metadata`: Project exposes an initial persistent codec for target, filename, string storage metadata, annotated memory maps, project symbols, library metadata/memory/symbols, and retained MoonBit IR program/disassembly state as a step toward the upstream `Data.S` project surface.
 - `project/disasm accessors`: Project and library values expose BAP-style `disasm` facades over their retained disassembly state.
 - `project/pass run_exn`: Project passes expose a BAP-style raising `run_exn` wrapper that preserves checked pass execution, dependency handling, and lifecycle telemetry.
 - `project/pass errors`: Project pass object execution reports BAP-style structured dependency and runtime errors while preserving string-returning project-level convenience runners.
 - `project/memory_slot`: Project exposes the BAP-style public `unit-memory` Knowledge slot on program units with a flat memory-map domain over retained memory annotations.
-- `project/state slot`: Project state exposes the BAP-style `disassembly` Knowledge slot on program units with a flat domain over retained disassembly/subroutine state; upstream bin_io-compatible persistence remains future work.
+- `project/state slot`: Project state exposes the BAP-style `disassembly` Knowledge slot on program units with a flat domain and port-native persistence over retained disassembly/subroutine state; upstream bin_io-compatible byte compatibility remains future work.
 - `project/collator registry`: Project collators expose BAP-style `desc` aliases and return registered collator metadata in registration order.
 - `project/analysis registry`: Project analyses expose BAP-style `desc` aliases and return registered analysis metadata in registration order.
 - `project/analysis grammar`: Project analyses expose a BAP-style grammar object with `to_string` rendering while retaining explicit raw-rule accessors for local callers.

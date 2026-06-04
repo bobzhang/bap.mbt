@@ -1289,6 +1289,7 @@ pub fn ProjectState::slot() -> @knowledge.Slot[Unit, ProjectState] {
   @core_theory.ProgramUnit::cls().property(
     name=project_name("disassembly"),
     domain=project_state_domain(),
+    persistent=ProjectState::persistent(),
   )
 }
 

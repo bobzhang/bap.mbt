@@ -1,0 +1,24 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/language"
+
+// Values
+
+// Errors
+
+// Types and methods
+type Language
+pub fn Language::compare(Self, Self) -> Int
+pub fn Language::create(name~ : String) -> Self
+pub fn Language::equal(Self, Self) -> Bool
+pub fn Language::name(Self) -> String
+pub fn Language::to_string(Self) -> String
+
+type LanguageProperty[T]
+pub fn[T] LanguageProperty::contains(Self[T], Language) -> Bool
+pub fn[T] LanguageProperty::create() -> Self[T]
+pub fn[T] LanguageProperty::get(Self[T], Language) -> T?
+pub fn[T] LanguageProperty::set(Self[T], Language, T) -> Unit
+
+// Type aliases
+
+// Traits

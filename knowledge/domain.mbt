@@ -216,6 +216,45 @@ pub fn Domain::bool(name : Name) -> Domain[Bool] {
 }
 
 ///|
+pub fn Domain::tribool(name? : Name) -> Domain[Bool?] {
+  let name = match name {
+    Some(value) => value
+    None => Name::create("bool")
+  }
+  Domain::new(
+    name~,
+    empty=Some(None),
+    is_empty=(value : Bool?) => value is None,
+    order=(lhs : Bool?, rhs : Bool?) => {
+      match (lhs, rhs) {
+        (None, None) => Equal
+        (None, Some(_)) => Less
+        (Some(_), None) => Greater
+        (Some(l), Some(r)) => if l == r { Equal } else { Incomparable }
+      }
+    },
+    join=(lhs : Bool?, rhs : Bool?) => {
+      match (lhs, rhs) {
+        (None, value) => Ok(value)
+        (value, None) => Ok(value)
+        (Some(l), Some(r)) =>
+          if l == r {
+            Ok(Some(r))
+          } else {
+            Err("domain \{name.show()} has no join for \{l} and \{r}")
+          }
+      }
+    },
+    inspect=(value : Bool?) => {
+      match value {
+        Some(inner) => inner.to_string()
+        None => "none"
+      }
+    },
+  )
+}
+
+///|
 pub fn Domain::string(name : Name) -> Domain[String] {
   Domain::custom(name, value => value, empty="", order=(lhs, rhs) => {
     match (lhs == "", rhs == "") {

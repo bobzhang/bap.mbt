@@ -79,6 +79,7 @@ pub fn[T : Eq] Domain::powerset(Name, (T) -> String) -> Self[Array[T]]
 pub fn[T : Eq + Hash] Domain::set(Name, (T) -> String) -> Self[@set.Set[T]]
 pub fn Domain::string(Name) -> Self[String]
 pub fn[T] Domain::total(Name, (T) -> String, empty~ : T, compare~ : (T, T) -> Int, join? : (T, T) -> Result[T, String]) -> Self[T]
+pub fn Domain::tribool(name? : Name) -> Self[Bool?]
 
 type FactTable[K, P]
 pub fn[K, P] FactTable::collect(Self[K, P], Object[K]) -> P?

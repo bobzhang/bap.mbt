@@ -596,6 +596,20 @@ test "translated BAP optional domains are flat over present values" {
 }
 
 ///|
+test "translated BAP tribool domain is flat over boolean facts" {
+  let domain = @knowledge.Domain::tribool()
+  assert_eq(domain.name().show(), "bool")
+  assert_true(domain.is_empty(None))
+  assert_true(domain.order(None, Some(false)) == Less)
+  assert_true(domain.order(Some(true), None) == Greater)
+  assert_true(domain.order(Some(false), Some(true)) == Incomparable)
+  assert_true(domain.join(None, Some(false)) == Ok(Some(false)))
+  assert_true(domain.join(Some(true), None) == Ok(Some(true)))
+  assert_true(domain.join(Some(true), Some(true)) == Ok(Some(true)))
+  assert_true(domain.join(Some(false), Some(true)) is Err(_))
+}
+
+///|
 fn test_string_set(items : Array[String]) -> Set[String] {
   Set::from_array(items)
 }

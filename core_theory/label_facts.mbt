@@ -23,10 +23,8 @@ fn optional_int_domain(name : String) -> @knowledge.Domain[Int?] {
 }
 
 ///|
-fn optional_bool_domain(name : String) -> @knowledge.Domain[Bool?] {
-  @knowledge.Domain::optional(
-    @knowledge.Domain::flat(core_name(name), value => value.to_string()),
-  )
+fn label_bool_domain() -> @knowledge.Domain[Bool?] {
+  @knowledge.Domain::tribool()
 }
 
 ///|
@@ -210,7 +208,7 @@ pub fn Label::unit_slot() -> @knowledge.Slot[Unit, ProgramUnit?] {
 pub fn Label::is_valid_slot() -> @knowledge.Slot[Unit, Bool?] {
   Label::cls().property(
     name=core_name("is-valid"),
-    domain=optional_bool_domain("is-valid"),
+    domain=label_bool_domain(),
     desc="is the program valid or not",
     persistent=optional_bool_persistent(),
     public=true,
@@ -221,7 +219,7 @@ pub fn Label::is_valid_slot() -> @knowledge.Slot[Unit, Bool?] {
 pub fn Label::is_subroutine_slot() -> @knowledge.Slot[Unit, Bool?] {
   Label::cls().property(
     name=core_name("is-subroutine"),
-    domain=optional_bool_domain("is-subroutine"),
+    domain=label_bool_domain(),
     desc="is the program a subroutine entry point",
     persistent=optional_bool_persistent(),
     public=true,

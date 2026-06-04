@@ -4562,8 +4562,14 @@ test "program label facts expose BAP-style Knowledge slots" {
     @core_theory.Label::is_valid_slot().name().show(),
   )
   assert_true(
+    @core_theory.Label::is_valid_slot().domain().name().show() == "bool",
+  )
+  assert_true(
     facts.is_subroutine().slot().owner().show() ==
     @core_theory.Label::is_subroutine_slot().owner().show(),
+  )
+  assert_true(
+    @core_theory.Label::is_subroutine_slot().domain().name().show() == "bool",
   )
   assert_true(@core_theory.Label::possible_name_slot().persistent() is None)
   assert_persistent_round_trip(

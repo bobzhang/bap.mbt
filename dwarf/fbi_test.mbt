@@ -410,6 +410,39 @@ test "translated DWARF FBI extracts indexed string-table names" {
 }
 
 ///|
+test "translated DWARF FBI extracts GNU indexed string-table names" {
+  let abbrev = b"\x01\x2e\x00" +
+    b"\x03\x82\x3e" +
+    b"\x11\x01" +
+    b"\x12\x0b" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x0f\x00\x00\x00" +
+    b"\x04\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x04" +
+    b"\x01" +
+    b"\x01" +
+    b"\x80\x00\x00\x00" +
+    b"\x07" +
+    b"\x00"
+  let data = expect_fbi_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=LittleEndian,
+      info~,
+      abbrev~,
+      str=b"skip\x00gnustrx\x00",
+      str_offsets=b"\x00\x00\x00\x00\x05\x00\x00\x00",
+    ),
+  )
+  let functions = expect_functions(data.functions())
+  assert_true(functions.length() == 1)
+  assert_true(functions[0].name() == "gnustrx")
+  assert_true(functions[0].low_pc() == 0x80UL)
+  assert_true(functions[0].high_pc() == Some(0x87UL))
+}
+
+///|
 test "translated DWARF FBI applies DWARF5 string offsets base" {
   let abbrev = b"\x01\x11\x01" +
     b"\x72\x17" +

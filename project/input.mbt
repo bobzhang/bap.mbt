@@ -728,7 +728,7 @@ pub fn ProjectInput::load_for_filename(
         let mut last_error = ""
         for loader in loaders {
           match loader.load(data) {
-            Ok(input) => return Ok(input)
+            Ok(input) => return Ok(input.with_default_filename(filename))
             Err(reason) => last_error = reason
           }
         }

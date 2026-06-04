@@ -1170,12 +1170,16 @@ test "project input loaders resolve by filename extension priority" {
     @project.ProjectInput::load_for_filename(b"\x01", filename="sample.UNIT") {
     Ok(input) => {
       let project = @project.Project::from_input(input)
+      assert_true(project.filename() == Some("sample.UNIT"))
       assert_true(project.memory().lookup(0x90UL).length() == 1)
     }
     Err(reason) => fail(reason)
   }
   match @project.Project::load_for_filename(b"\x02", filename="sample.UNIT") {
-    Ok(project) => assert_true(project.memory().lookup(0x90UL).length() == 1)
+    Ok(project) => {
+      assert_true(project.filename() == Some("sample.UNIT"))
+      assert_true(project.memory().lookup(0x90UL).length() == 1)
+    }
     Err(reason) => fail(reason)
   }
   assert_true(

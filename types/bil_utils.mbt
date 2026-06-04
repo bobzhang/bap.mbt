@@ -146,6 +146,19 @@ fn result_word(value : Word) -> Result[Word, String] {
 }
 
 ///|
+pub(all) suberror BilApplyError {
+  InvalidWordApply(String)
+} derive(Eq, Debug)
+
+///|
+fn unwrap_word_apply(result : Result[Word, String]) -> Word raise BilApplyError {
+  match result {
+    Ok(word) => word
+    Err(reason) => raise InvalidWordApply(reason)
+  }
+}
+
+///|
 fn word_error() -> Result[Word, String] {
   Err("bitvector operation failed")
 }
@@ -204,6 +217,15 @@ pub fn CastKind::apply(
   value : Word,
 ) -> Result[Word, String] {
   cast_word(self, width, value)
+}
+
+///|
+pub fn CastKind::apply_exn(
+  self : CastKind,
+  width : Int,
+  value : Word,
+) -> Word raise BilApplyError {
+  unwrap_word_apply(self.apply(width, value))
 }
 
 ///|
@@ -341,6 +363,11 @@ pub fn UnOp::apply(self : UnOp, value : Word) -> Result[Word, String] {
 }
 
 ///|
+pub fn UnOp::apply_exn(self : UnOp, value : Word) -> Word raise BilApplyError {
+  unwrap_word_apply(self.apply(value))
+}
+
+///|
 pub fn BinOp::apply(
   self : BinOp,
   lhs : Word,
@@ -354,6 +381,15 @@ pub fn BinOp::apply(
         Err(reason) => Err(reason)
       }
   }
+}
+
+///|
+pub fn BinOp::apply_exn(
+  self : BinOp,
+  lhs : Word,
+  rhs : Word,
+) -> Word raise BilApplyError {
+  unwrap_word_apply(self.apply(lhs, rhs))
 }
 
 ///|

@@ -701,6 +701,10 @@ test "bil apply helpers expose BAP word operator behavior" {
     Ok(word) => inspect(word.to_hex(), content="0x0100")
     Err(reason) => fail(reason)
   }
+  inspect(
+    @types.BinOp::Plus.apply_exn(narrow, wide_one).to_hex(),
+    content="0x0100",
+  )
   match @types.BinOp::Eq.apply(@types.Word::of_int(width=8, 1), wide_one) {
     Ok(word) => assert_true(word == @types.Word::b1())
     Err(reason) => fail(reason)
@@ -724,6 +728,17 @@ test "bil apply helpers expose BAP word operator behavior" {
   match @types.UnOp::Not.apply(@types.Word::of_int(width=8, 0x55)) {
     Ok(word) => inspect(word.to_hex(), content="0xaa")
     Err(reason) => fail(reason)
+  }
+  inspect(
+    @types.UnOp::Not.apply_exn(@types.Word::of_int(width=8, 0x55)).to_hex(),
+    content="0xaa",
+  )
+  inspect(@types.CastKind::Low.apply_exn(4, narrow).to_hex(), content="0xf")
+  try @types.CastKind::Low.apply_exn(0, narrow) catch {
+    InvalidWordApply(reason) =>
+      assert_true(reason == "malformed cast arguments")
+  } noraise {
+    _ => fail("expected InvalidWordApply")
   }
 }
 

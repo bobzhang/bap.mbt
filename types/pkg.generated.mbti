@@ -85,6 +85,10 @@ pub fn tid_graph_exit() -> Tid
 pub fn tid_graph_start() -> Tid
 
 // Errors
+pub(all) suberror BilApplyError {
+  InvalidWordApply(String)
+} derive(Eq, @debug.Debug)
+
 pub(all) suberror IrTermLookupError {
   MissingIrTerm(String, Tid)
   MissingIrTermIndex(String, Int)
@@ -389,6 +393,7 @@ pub(all) enum BinOp {
   SignedLe
 } derive(Eq, @debug.Debug)
 pub fn BinOp::apply(Self, Word, Word) -> Result[Word, String]
+pub fn BinOp::apply_exn(Self, Word, Word) -> Word raise BilApplyError
 pub fn BinOp::arshift() -> Self
 pub fn BinOp::bit_and() -> Self
 pub fn BinOp::bit_or() -> Self
@@ -462,6 +467,7 @@ pub(all) enum CastKind {
   Low
 } derive(Eq, @debug.Debug)
 pub fn CastKind::apply(Self, Int, Word) -> Result[Word, String]
+pub fn CastKind::apply_exn(Self, Int, Word) -> Word raise BilApplyError
 pub fn CastKind::high() -> Self
 pub fn CastKind::low() -> Self
 pub fn CastKind::signed() -> Self
@@ -1267,6 +1273,7 @@ pub(all) enum UnOp {
   Neg
 } derive(Eq, @debug.Debug)
 pub fn UnOp::apply(Self, Word) -> Result[Word, String]
+pub fn UnOp::apply_exn(Self, Word) -> Word raise BilApplyError
 pub fn UnOp::neg() -> Self
 pub fn UnOp::not() -> Self
 pub fn UnOp::string_of_unop(Self) -> String

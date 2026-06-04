@@ -76,8 +76,10 @@ pub fn DwarfAbbrevField::value_kind(
       DwarfRangesValue
     (DwarfSpecification, DwarfRef(_))
     | (DwarfSpecification, DwarfRefAddr)
+    | (DwarfSpecification, DwarfIndirect)
     | (DwarfAbstractOrigin, DwarfRef(_))
-    | (DwarfAbstractOrigin, DwarfRefAddr) => DwarfNameRefValue
+    | (DwarfAbstractOrigin, DwarfRefAddr)
+    | (DwarfAbstractOrigin, DwarfIndirect) => DwarfNameRefValue
     (DwarfStrOffsetsBase, DwarfOffset) => DwarfStrOffsetsBaseValue
     (DwarfAddrBase, DwarfOffset) => DwarfAddrBaseValue
     (DwarfRangesBase, DwarfOffset) => DwarfRangesBaseValue

@@ -1106,6 +1106,7 @@ pub fn Term::entry_blk(Self[Sub]) -> Self[Blk]?
 pub fn Term::exists_blk_term(Self[Blk], (IrTerm) -> Bool, include_self? : Bool) -> Bool
 pub fn Term::exists_program_term(Self[Program], (IrTerm) -> Bool, include_self? : Bool) -> Bool
 pub fn Term::exists_sub_term(Self[Sub], (IrTerm) -> Bool, include_self? : Bool) -> Bool
+pub fn Term::exps(Self[Jmp]) -> Array[Exp]
 pub fn[T] Term::filename(Self[T]) -> String?
 pub fn Term::filter_args(Self[Sub], (Self[Arg]) -> Bool) -> Self[Sub]
 pub fn Term::filter_blks(Self[Sub], (Self[Blk]) -> Bool) -> Self[Sub]
@@ -1257,6 +1258,7 @@ pub fn Term::nth_phi_exn(Self[Blk], Int) -> Self[Phi] raise IrTermLookupError
 pub fn Term::nth_sub(Self[Program], Int) -> Self[Sub]?
 pub fn Term::nth_sub_exn(Self[Program], Int) -> Self[Sub] raise IrTermLookupError
 pub fn Term::occurs(Self[Blk], after~ : Tid, Tid) -> Bool
+pub fn Term::options(Self[Phi]) -> Array[(Tid, Exp)]
 pub fn[T] Term::origin(Self[T]) -> Tid?
 pub fn[T] Term::origin_text(Self[T]) -> String?
 pub fn Term::parent(Self[Program], IrTermClass, Tid) -> IrTerm?

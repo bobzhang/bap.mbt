@@ -179,6 +179,11 @@ pub fn Term::jmp_exps(self : Term[Jmp]) -> Array[Exp] {
 }
 
 ///|
+pub fn Term::exps(self : Term[Jmp]) -> Array[Exp] {
+  self.jmp_exps()
+}
+
+///|
 pub fn Term::jmp_free_vars(self : Term[Jmp]) -> Array[Var] {
   let vars = []
   for exp in self.jmp_exps() {

@@ -1407,6 +1407,7 @@ test "phi nodes jumps calls and args expose BAP-style payloads" {
   assert_true(phi.select(right) == Some(two))
   assert_true(phi.phi_var() == lhs)
   assert_true(phi.phi_options() == phi.values())
+  assert_true(phi.options() == phi.values())
   assert_true(phi.with_phi_var(ptr).phi_var() == ptr)
   assert_true(single.select_or_unknown(left) == one)
   assert_true(
@@ -1584,6 +1585,7 @@ test "ir definition phi and jump helpers traverse expressions" {
     cond=BinOp(Eq, Var(z), Int(word8(0))),
   )
   let jmp_exps = jmp.jmp_exps()
+  assert_true(jmp.exps() == jmp_exps)
   assert_true(jmp_exps.length() == 2)
   assert_true(jmp_exps[0] == Var(y))
   assert_true(jmp_exps[1] == BinOp(Eq, Var(z), Int(word8(0))))
@@ -1602,6 +1604,7 @@ test "ir definition phi and jump helpers traverse expressions" {
     cond=Var(z),
   )
   let call_exps = call_jmp.jmp_exps()
+  assert_true(call_jmp.exps() == call_exps)
   assert_true(call_exps.length() == 3)
   assert_true(call_exps[0] == call_return)
   assert_true(call_exps[1] == Var(y))

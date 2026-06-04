@@ -916,6 +916,11 @@ pub fn Term::phi_options(self : Term[Phi]) -> Array[(Tid, Exp)] {
 }
 
 ///|
+pub fn Term::options(self : Term[Phi]) -> Array[(Tid, Exp)] {
+  self.phi_options()
+}
+
+///|
 pub fn Term::select(self : Term[Phi], tid : Tid) -> Exp? {
   self.payload_value.values
   .search_by(pair => pair.0 == tid)

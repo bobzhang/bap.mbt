@@ -839,6 +839,20 @@ fn append_stmts(lhs : Array[Stmt], rhs : Array[Stmt]) -> Array[Stmt] {
 }
 
 ///|
+fn embed_hoisted_moves(stmts : Array[Stmt], body : Exp) -> Exp {
+  let mut result = body
+  let mut i = stmts.length()
+  while i > 0 {
+    i = i - 1
+    match stmts[i] {
+      Move(variable, exp) => result = Let(variable, exp, result)
+      _ => ()
+    }
+  }
+  result
+}
+
+///|
 fn Exp::needs_condition_hoist(self : Exp) -> Bool {
   self.first_ite_cond() is Some(_) ||
   self.find_non_var_load_mem() is Some(_) ||
@@ -909,8 +923,12 @@ fn Exp::hoist_non_generative(self : Exp) -> (Array[Stmt], Exp) {
       let (body_stmts, normalized_body) = body.hoist_non_generative()
       let (value_hoists, hoisted_value) = normalized_value.hoist_if_memory_effect()
       (
-        append_stmts(append_stmts(value_stmts, body_stmts), value_hoists),
-        Let(variable, hoisted_value, normalized_body),
+        append_stmts(value_stmts, value_hoists),
+        Let(
+          variable,
+          hoisted_value,
+          embed_hoisted_moves(body_stmts, normalized_body),
+        ),
       )
     }
     Cast(kind~, width~, exp~) => {

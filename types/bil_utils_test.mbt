@@ -395,6 +395,51 @@ test "bil BAP normalize hoists memory-effect load addresses" {
 }
 
 ///|
+test "bil BAP normalize keeps let body hoists scoped" {
+  let mem_typ = @types.ValueType::Mem(addr_width=32, value_width=8)
+  let mem = @types.Var::new(name="mem", typ=mem_typ)
+  let x = @types.Var::new(name="x", typ=Imm(32))
+  let y = @types.Var::new(name="y", typ=Imm(8))
+  let body_addr : @types.Exp = Load(
+    mem=Var(mem),
+    addr=Var(x),
+    endian=LittleEndian,
+    typ=Imm(32),
+  )
+  let exp : @types.Exp = Let(
+    x,
+    Int(word32(0)),
+    Load(mem=Var(mem), addr=body_addr, endian=LittleEndian, typ=Imm(8)),
+  )
+  let normalized = @types.normalize([Move(y, exp)])
+  assert_true(normalized.length() == 1)
+  match normalized[0] {
+    Move(
+      lhs,
+      Let(
+        bound,
+        Int(value),
+        Let(
+          temp,
+          Load(mem=Var(addr_mem), addr=Var(addr_var), typ=Imm(32), ..),
+          Load(mem=Var(load_mem), addr=Var(load_addr), typ=Imm(8), ..)
+        )
+      )
+    ) => {
+      assert_true(lhs == y)
+      assert_true(bound == x)
+      assert_true(value == word32(0))
+      assert_true(temp.is_virtual())
+      assert_true(addr_mem == mem)
+      assert_true(addr_var == x)
+      assert_true(load_mem == mem)
+      assert_true(load_addr == temp)
+    }
+    _ => fail("expected let body hoist to remain inside let scope")
+  }
+}
+
+///|
 test "bil BAP normalize hoists memory-effect branch conditions" {
   let mem_typ = @types.ValueType::Mem(addr_width=32, value_width=8)
   let mem = @types.Var::new(name="mem", typ=mem_typ)

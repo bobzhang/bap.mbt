@@ -19,9 +19,13 @@ pub fn available_input_loaders() -> Array[String]
 
 pub fn brancher_names() -> Array[String]
 
+pub fn brancher_source_names() -> Array[String]
+
 pub fn disassembly_basic_backends() -> Array[String]
 
 pub fn disassembly_driver_names() -> Array[String]
+
+pub fn disassembly_driver_source_names() -> Array[String]
 
 pub fn disassembly_drivers() -> Array[ProjectDisassemblyDriver]
 
@@ -29,15 +33,21 @@ pub fn find_analysis(String, pkg? : String) -> ProjectAnalysis?
 
 pub fn find_brancher(String) -> ProjectBrancher?
 
+pub fn find_brancher_source(String) -> ProjectDisassemblySource[ProjectBrancher]?
+
 pub fn find_collator(String, pkg? : String) -> RegisteredProjectCollator?
 
 pub fn find_disassembly_driver(String) -> ProjectDisassemblyDriver?
+
+pub fn find_disassembly_driver_source(String) -> ProjectDisassemblySource[ProjectDisassemblyDriver]?
 
 pub fn find_input_loader(String) -> ProjectInputLoader?
 
 pub fn find_pass(String) -> ProjectPass?
 
 pub fn find_reconstructor(String) -> ProjectReconstructor?
+
+pub fn find_rooter_source(String) -> ProjectDisassemblySource[ProjectRooter]?
 
 pub fn input_loader_names_for_extension(String) -> Array[String]
 
@@ -59,6 +69,10 @@ pub fn register_brancher(name~ : String, ProjectBrancher) -> Result[Unit, String
 
 pub fn register_brancher_if_absent(name~ : String, ProjectBrancher) -> Result[Bool, String]
 
+pub fn register_brancher_source(name~ : String, ProjectDisassemblySource[ProjectBrancher]) -> Unit
+
+pub fn register_brancher_source_value(name~ : String, ProjectBrancher) -> Unit
+
 pub fn register_builtin_branchers() -> Result[Unit, String]
 
 pub fn register_builtin_disassembly_drivers() -> Result[Unit, String]
@@ -79,6 +93,10 @@ pub fn register_disassembly_driver(ProjectDisassemblyDriver) -> Result[Unit, Str
 
 pub fn register_disassembly_driver_if_absent(ProjectDisassemblyDriver) -> Result[Bool, String]
 
+pub fn register_disassembly_driver_source(name~ : String, ProjectDisassemblySource[ProjectDisassemblyDriver]) -> Unit
+
+pub fn register_disassembly_driver_source_value(name~ : String, ProjectDisassemblyDriver) -> Unit
+
 pub fn register_input_loader(ProjectInputLoader) -> Result[Unit, String]
 
 pub fn register_ir_transform_passes() -> Result[Unit, String]
@@ -93,11 +111,17 @@ pub fn register_reconstructor(name~ : String, ProjectReconstructor) -> Result[Un
 
 pub fn register_reconstructor_if_absent(name~ : String, ProjectReconstructor) -> Result[Bool, String]
 
+pub fn register_rooter_source(name~ : String, ProjectDisassemblySource[ProjectRooter]) -> Unit
+
+pub fn register_rooter_source_value(name~ : String, ProjectRooter) -> Unit
+
 pub fn registered_analyses() -> Array[ProjectAnalysisInfo]
 
 pub fn registered_collators() -> Array[ProjectCollatorInfo]
 
 pub fn resolve_passes(Array[String]) -> Result[Array[ProjectPass], String]
+
+pub fn rooter_source_names() -> Array[String]
 
 // Errors
 pub(all) suberror ProjectDisasmError {
@@ -521,6 +545,16 @@ pub fn ProjectDisassemblyReconstructor::create((ProjectDisassemblyCfg) -> Projec
 pub fn ProjectDisassemblyReconstructor::default((UInt64) -> String, Array[UInt64]) -> Self
 pub fn ProjectDisassemblyReconstructor::of_blocks(Array[(String, UInt64, UInt64)]) -> Self
 pub fn ProjectDisassemblyReconstructor::run(Self, ProjectDisassemblyCfg) -> ProjectDisassemblySymtab
+
+type ProjectDisassemblySource[T]
+pub fn[T] ProjectDisassemblySource::create(Array[Result[T, String]]) -> Self[T]
+pub fn[T] ProjectDisassemblySource::error(String) -> Self[T]
+pub fn[T] ProjectDisassemblySource::errors(Self[T]) -> Array[String]
+pub fn[T] ProjectDisassemblySource::is_empty(Self[T]) -> Bool
+pub fn[T] ProjectDisassemblySource::items(Self[T]) -> Array[Result[T, String]]
+pub fn[T] ProjectDisassemblySource::length(Self[T]) -> Int
+pub fn[T] ProjectDisassemblySource::single(T) -> Self[T]
+pub fn[T] ProjectDisassemblySource::values(Self[T]) -> Array[T]
 
 type ProjectDisassemblySourceContext
 pub fn ProjectDisassemblySourceContext::bias(Self) -> @types.Word?

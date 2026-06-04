@@ -1284,6 +1284,18 @@ pub fn TraceTool::register(
 }
 
 ///|
+pub fn TraceTool::name(self : TraceTool) -> String {
+  self.name
+}
+
+///|
+pub fn TraceTool::supported_tags(self : TraceTool) -> Array[String] {
+  let tags = self.supported_tags.to_array()
+  tags.sort()
+  tags
+}
+
+///|
 pub fn TraceTool::supports(self : TraceTool, tag : String) -> Bool {
   self.supported_tags.contains(tag)
 }
@@ -1629,6 +1641,20 @@ pub fn Traces::iter() -> Iter[Trace] {
 ///|
 pub fn Trace::register_protocol(protocol : TraceProtocol) -> Unit {
   trace_protocol_registry[protocol.name()] = protocol
+}
+
+///|
+pub fn Trace::register_proto(protocol : TraceProtocol) -> String {
+  Trace::register_protocol(protocol)
+  protocol.name()
+}
+
+///|
+pub fn Trace::register_tool(
+  name~ : String,
+  supported_tags~ : Array[String],
+) -> TraceTool {
+  TraceTool::register(name~, supported_tags~)
 }
 
 ///|

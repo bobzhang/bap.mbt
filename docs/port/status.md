@@ -64,6 +64,7 @@ This repository is porting `.repos/bap` from OCaml to idiomatic MoonBit.
 - `project/reconstructor`: reconstructed subroutines are marked with their first block address, and image-entry reconstructed subroutines are marked with the BAP-style `entry-point` semantic flag.
 - `project/callgraph`: direct and resolver-backed project callgraph wrappers over IR `Call` jumps.
 - `image/ELF relocations`: MIPS `R_MIPS_REL32` entries, including `EM_MIPS_RS3_LE` objects, are recognized as image-relative relocation metadata alongside the existing architecture-specific relative relocation set.
+- `traces/API aliases`: Trace registration exposes BAP-style `Trace::register_tool` and `Trace::register_proto` helpers, with tool name and supported-tag accessors over the port's structured trace tool descriptors.
 - `types/attributes`: common BAP-style term metadata and subroutine semantic flags over the string-backed MoonBit IR attribute map.
 - `types/lookup`: BAP-style option and checked lookup helpers for subroutine, argument, block, phi, def, and jump terms by tid and direct-child index.
 - `types/tids`: Named, address-derived, and interrupt-vector TIDs now preserve package-qualified identity, parse/render escaped package-qualified names, and round-trip package metadata through project IR persistence.

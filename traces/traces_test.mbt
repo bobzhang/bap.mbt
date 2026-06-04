@@ -549,9 +549,11 @@ test "translated BAP trace protocol registry selects URI providers" {
     _ => fail("expected no provider")
   }
 
-  let custom_tool = @traces.TraceTool::register(name="custom_tool", supported_tags=[
+  let custom_tool = @traces.Trace::register_tool(name="custom_tool", supported_tags=[
     "memory-load", "register-read",
   ])
+  assert_true(custom_tool.name() == "custom_tool")
+  assert_true(custom_tool.supported_tags() == ["memory-load", "register-read"])
   let custom_events = [
     Ok(@traces.TraceEvent::memory_load(test_move())),
     Ok(@traces.TraceEvent::register_read(register_move())),
@@ -561,7 +563,9 @@ test "translated BAP trace protocol registry selects URI providers" {
     supported_tags=["memory-load"],
     probe=fn(uri) { uri.has_prefix("custom://") },
   )
-  @traces.Trace::register_protocol(custom_protocol)
+  assert_true(
+    @traces.Trace::register_proto(custom_protocol) == "custom-provider",
+  )
   @traces.Trace::register_reader("custom-provider", fn(uri) {
     if uri == "custom://trace" {
       Ok({ tool: custom_tool, meta: test_meta(), events: custom_events })

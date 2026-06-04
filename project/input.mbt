@@ -681,7 +681,9 @@ pub fn Project::from_input(input : ProjectInput) -> Project {
     symbols=input.symbols_value,
     libraries=input.libraries_value,
   )
-  (input.finish_fn)(project)
+  let finalized = (input.finish_fn)(project)
+  project_info_emit_input(finalized)
+  finalized
 }
 
 ///|
@@ -913,7 +915,13 @@ pub fn Project::create_from_input(
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  project_input_reconstruct_with_sources(branched, reconstructor)
+  match project_input_reconstruct_with_sources(branched, reconstructor) {
+    Ok(project) => {
+      project_info_emit_reconstructed(project)
+      Ok(project)
+    }
+    Err(reason) => Err(reason)
+  }
 }
 
 ///|

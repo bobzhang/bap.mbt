@@ -4,6 +4,7 @@ package "bobzhang/bap/project"
 import {
   "bobzhang/bap/bitvec",
   "bobzhang/bap/core_theory",
+  "bobzhang/bap/future",
   "bobzhang/bap/graphlib",
   "bobzhang/bap/image",
   "bobzhang/bap/knowledge",
@@ -641,6 +642,16 @@ pub fn ProjectDisassemblySymtab::of_project(Project) -> Self
 pub fn ProjectDisassemblySymtab::owners(Self, UInt64) -> Array[ProjectDisassemblyFunction]
 pub fn ProjectDisassemblySymtab::remove(Self, ProjectDisassemblyFunction) -> Self
 pub fn ProjectDisassemblySymtab::to_sequence(Self) -> Array[ProjectDisassemblyFunction]
+
+type ProjectInfo
+pub fn ProjectInfo::arch() -> @future.Stream[@core_theory.Target]
+pub fn ProjectInfo::cfg() -> @future.Stream[ProjectDisassemblyCfg]
+pub fn ProjectInfo::code() -> @future.Stream[@memory.MemMap[String]]
+pub fn ProjectInfo::data() -> @future.Stream[@memory.MemMap[String]]
+pub fn ProjectInfo::file() -> @future.Stream[String]
+pub fn ProjectInfo::program() -> @future.Stream[@types.Term[@types.Program]]
+pub fn ProjectInfo::spec() -> @future.Stream[@image.OgreDoc]
+pub fn ProjectInfo::symtab() -> @future.Stream[ProjectDisassemblySymtab]
 
 type ProjectInput
 pub fn ProjectInput::available_loaders() -> Array[String]

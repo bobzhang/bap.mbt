@@ -291,14 +291,45 @@ test "project persistent codec round trips metadata and storage" {
       is_debug=true,
     ),
   ]
+  let library_memory = @memory.MemMap::singleton(
+    @memory.Memory::from_bytes(endian=LittleEndian, start=0x9900UL, b"\x11\x22"),
+    "lib:code",
+  )
+  let library_unit = @core_theory.ProgramUnit::for_file(
+    "libdemo.so",
+    target=@core_theory.Target::x86_64(),
+  )
+  let libraries = [
+    @project.Library::create(
+      name="libdemo",
+      target=@core_theory.Target::x86_64(),
+      unit=library_unit,
+      memory=library_memory,
+      symbols=[
+        @image.Symbol::create(
+          name="lib_entry",
+          addr=0x9900UL,
+          size=2,
+          is_function=true,
+        ),
+      ],
+    ),
+  ]
   let project = @project.Project::create(
     target=@core_theory.Target::x86_64(),
     filename="input:one",
     storage~,
     memory~,
     symbols~,
+    libraries~,
   ).set("analysis", "done")
   symbols.push(@image.Symbol::create(name="mutated", addr=0x9000UL))
+  libraries.push(
+    @project.Library::create(
+      name="mutated",
+      target=@core_theory.Target::unknown(),
+    ),
+  )
   storage["loader"] = "mutated"
   let codec = @project.Project::persistent()
   let encoded = codec.encode(project)
@@ -323,7 +354,21 @@ test "project persistent codec round trips metadata and storage" {
       assert_true(decoded_symbols[0].size() == 2)
       assert_true(decoded_symbols[0].is_function())
       assert_true(decoded_symbols[0].is_debug())
-      assert_true(decoded.libraries().is_empty())
+      let decoded_libraries = decoded.libraries()
+      assert_true(decoded_libraries.length() == 1)
+      assert_true(decoded_libraries[0].name() == "libdemo")
+      assert_true(
+        decoded_libraries[0].target().equal(@core_theory.Target::x86_64()),
+      )
+      assert_true(decoded_libraries[0].unit().same(library_unit))
+      let library_entries = decoded_libraries[0].memory().lookup(0x9901UL)
+      assert_true(library_entries.length() == 1)
+      assert_true(library_entries[0].1 == "lib:code")
+      assert_true(library_entries[0].0.to_bytes() == b"\x11\x22")
+      let library_symbols = decoded_libraries[0].symbols()
+      assert_true(library_symbols.length() == 1)
+      assert_true(library_symbols[0].name() == "lib_entry")
+      assert_true(library_symbols[0].is_function())
     }
     Err(reason) => fail(reason)
   }

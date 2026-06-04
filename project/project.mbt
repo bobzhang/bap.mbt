@@ -640,6 +640,48 @@ fn project_symbol_persistent() -> @knowledge.Persistent[@image.Symbol] {
 }
 
 ///|
+fn project_library_persistent() -> @knowledge.Persistent[Library] {
+  let target_codec = @core_theory.Target::persistent()
+  let unit_codec = @core_theory.ProgramUnit::persistent()
+  let memory_codec = project_memory_persistent()
+  let symbols_codec = @knowledge.Persistent::array(project_symbol_persistent())
+  @knowledge.Persistent::convert(
+    to_persistent=library => {
+      [
+        library.name(),
+        target_codec.encode(library.target()),
+        unit_codec.encode(library.unit()),
+        memory_codec.encode(library.memory()),
+        symbols_codec.encode(library.symbols()),
+      ]
+    },
+    of_persistent=fields => {
+      if fields.length() != 5 {
+        return Err("invalid persistent project library")
+      }
+      let target = match target_codec.decode(fields[1]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let unit = match unit_codec.decode(fields[2]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let memory = match memory_codec.decode(fields[3]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let symbols = match symbols_codec.decode(fields[4]) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      Ok(Library::create(name=fields[0], target~, unit~, memory~, symbols~))
+    },
+    @knowledge.Persistent::array(@knowledge.Persistent::string()),
+  )
+}
+
+///|
 pub fn Project::persistent() -> @knowledge.Persistent[Project] {
   let target_codec = @core_theory.Target::persistent()
   let filename_codec = @knowledge.Persistent::optional(
@@ -651,6 +693,9 @@ pub fn Project::persistent() -> @knowledge.Persistent[Project] {
   )
   let memory_codec = project_memory_persistent()
   let symbols_codec = @knowledge.Persistent::array(project_symbol_persistent())
+  let libraries_codec = @knowledge.Persistent::array(
+    project_library_persistent(),
+  )
   @knowledge.Persistent::convert(
     to_persistent=project => {
       [
@@ -659,10 +704,14 @@ pub fn Project::persistent() -> @knowledge.Persistent[Project] {
         storage_codec.encode(project.storage_value),
         memory_codec.encode(project.memory_value),
         symbols_codec.encode(project.symbols_value),
+        libraries_codec.encode(project.libraries_value),
       ]
     },
     of_persistent=fields => {
-      if fields.length() != 3 && fields.length() != 4 && fields.length() != 5 {
+      if fields.length() != 3 &&
+        fields.length() != 4 &&
+        fields.length() != 5 &&
+        fields.length() != 6 {
         return Err("invalid persistent project encoding")
       }
       let target = match target_codec.decode(fields[0]) {
@@ -685,7 +734,7 @@ pub fn Project::persistent() -> @knowledge.Persistent[Project] {
       } else {
         @memory.MemMap::empty()
       }
-      let symbols = if fields.length() == 5 {
+      let symbols = if fields.length() >= 5 {
         match symbols_codec.decode(fields[4]) {
           Ok(value) => value
           Err(reason) => return Err(reason)
@@ -693,7 +742,24 @@ pub fn Project::persistent() -> @knowledge.Persistent[Project] {
       } else {
         []
       }
-      Ok(Project::create(target~, filename?, storage~, memory~, symbols~))
+      let libraries = if fields.length() == 6 {
+        match libraries_codec.decode(fields[5]) {
+          Ok(value) => value
+          Err(reason) => return Err(reason)
+        }
+      } else {
+        []
+      }
+      Ok(
+        Project::create(
+          target~,
+          filename?,
+          storage~,
+          memory~,
+          symbols~,
+          libraries~,
+        ),
+      )
     },
     @knowledge.Persistent::array(@knowledge.Persistent::string()),
   )

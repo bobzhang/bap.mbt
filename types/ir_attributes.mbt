@@ -44,6 +44,18 @@ let arg_restricted_attr = "restricted"
 let arg_nonnull_attr = "nonnull"
 
 ///|
+let term_comment_attr = "comment"
+
+///|
+let term_python_attr = "python"
+
+///|
+let term_shell_attr = "shell"
+
+///|
+let term_weight_attr = "weight"
+
+///|
 let term_color_attr = "color"
 
 ///|
@@ -144,6 +156,21 @@ pub fn Attr::format(format : String) -> Attr {
 ///|
 pub fn Attr::origin(tid : Tid) -> Attr {
   Attr::new(key="origin", value=tid.to_string())
+}
+
+///|
+pub fn Attr::python(script : String) -> Attr {
+  Attr::new(key=term_python_attr, value=script)
+}
+
+///|
+pub fn Attr::shell(script : String) -> Attr {
+  Attr::new(key=term_shell_attr, value=script)
+}
+
+///|
+pub fn Attr::weight(weight : Double) -> Attr {
+  Attr::new(key=term_weight_attr, value=weight.to_string())
 }
 
 ///|
@@ -299,6 +326,79 @@ pub fn[T] Term::without_flag(self : Term[T], key : String) -> Term[T] {
 ///|
 pub fn[T] Term::has_flag(self : Term[T], key : String) -> Bool {
   self.has_attr(key)
+}
+
+///|
+fn[T] term_double(term : Term[T], key : String) -> Double? {
+  match term.get_attr(key) {
+    Some(text) =>
+      try @string.parse_double(text) catch {
+        _ => None
+      } noraise {
+        value => Some(value)
+      }
+    None => None
+  }
+}
+
+///|
+pub fn[T] Term::with_comment(self : Term[T], text : String) -> Term[T] {
+  self.set_attr(Attr::comment(text))
+}
+
+///|
+pub fn[T] Term::without_comment(self : Term[T]) -> Term[T] {
+  self.del_attr(term_comment_attr)
+}
+
+///|
+pub fn[T] Term::comment(self : Term[T]) -> String? {
+  self.get_attr(term_comment_attr)
+}
+
+///|
+pub fn[T] Term::with_python(self : Term[T], script : String) -> Term[T] {
+  self.set_attr(Attr::python(script))
+}
+
+///|
+pub fn[T] Term::without_python(self : Term[T]) -> Term[T] {
+  self.del_attr(term_python_attr)
+}
+
+///|
+pub fn[T] Term::python(self : Term[T]) -> String? {
+  self.get_attr(term_python_attr)
+}
+
+///|
+pub fn[T] Term::with_shell(self : Term[T], script : String) -> Term[T] {
+  self.set_attr(Attr::shell(script))
+}
+
+///|
+pub fn[T] Term::without_shell(self : Term[T]) -> Term[T] {
+  self.del_attr(term_shell_attr)
+}
+
+///|
+pub fn[T] Term::shell(self : Term[T]) -> String? {
+  self.get_attr(term_shell_attr)
+}
+
+///|
+pub fn[T] Term::with_weight(self : Term[T], weight : Double) -> Term[T] {
+  self.set_attr(Attr::weight(weight))
+}
+
+///|
+pub fn[T] Term::without_weight(self : Term[T]) -> Term[T] {
+  self.del_attr(term_weight_attr)
+}
+
+///|
+pub fn[T] Term::weight(self : Term[T]) -> Double? {
+  term_double(self, term_weight_attr)
 }
 
 ///|

@@ -252,6 +252,8 @@ pub fn Attr::new(key~ : String, value~ : String) -> Self
 pub fn Attr::origin(Tid) -> Self
 pub fn Attr::postcondition(Exp) -> Self
 pub fn Attr::precondition(Exp) -> Self
+pub fn Attr::python(String) -> Self
+pub fn Attr::shell(String) -> Self
 pub fn Attr::stub() -> Self
 pub fn Attr::sub_alias(String) -> Self
 pub fn Attr::sub_const() -> Self
@@ -268,6 +270,7 @@ pub fn Attr::synthetic() -> Self
 pub fn Attr::tainted_ptr(Tid) -> Self
 pub fn Attr::tainted_reg(Tid) -> Self
 pub fn Attr::visited() -> Self
+pub fn Attr::weight(Double) -> Self
 
 type BapVector[T]
 pub fn[T] BapVector::append(Self[T], T) -> Unit
@@ -665,6 +668,7 @@ pub fn IrTerm::class(Self) -> IrTermClass
 pub fn IrTerm::class_name(Self) -> String
 pub fn IrTerm::clone(Self) -> Self
 pub fn IrTerm::color(Self) -> IrColor?
+pub fn IrTerm::comment(Self) -> String?
 pub fn IrTerm::concat_map(Self, IrTermClass, (Self) -> Array[Self]) -> Self
 pub fn IrTerm::concat_map_children(Self, IrTermClass, (Self) -> Array[Self]) -> Self
 pub fn IrTerm::def_lhs_name(Self, String) -> Bool
@@ -675,10 +679,14 @@ pub fn IrTerm::defines_var_name(Self, String) -> Bool
 pub fn IrTerm::del_attr(Self, String) -> Self
 pub fn IrTerm::del_background(Self) -> Self
 pub fn IrTerm::del_color(Self) -> Self
+pub fn IrTerm::del_comment(Self) -> Self
 pub fn IrTerm::del_foreground(Self) -> Self
 pub fn IrTerm::del_mark(Self) -> Self
+pub fn IrTerm::del_python(Self) -> Self
+pub fn IrTerm::del_shell(Self) -> Self
 pub fn IrTerm::del_tainted_ptr(Self) -> Self
 pub fn IrTerm::del_tainted_reg(Self) -> Self
+pub fn IrTerm::del_weight(Self) -> Self
 pub fn IrTerm::filter(Self, IrTermClass, (Self) -> Bool) -> Self
 pub fn IrTerm::filter_children(Self, IrTermClass, (Self) -> Bool) -> Self
 pub fn IrTerm::filter_map(Self, IrTermClass, (Self) -> Self?) -> Self
@@ -729,6 +737,7 @@ pub fn IrTerm::prepend_child(Self, Self, before? : Tid) -> Self
 pub fn IrTerm::prev(Self, IrTermClass, Tid) -> Self?
 pub fn IrTerm::prev_child(Self, IrTermClass, Tid) -> Self?
 pub fn[A] IrTerm::proj(Self, program? : (Term[Program]) -> A?, sub? : (Term[Sub]) -> A?, arg? : (Term[Arg]) -> A?, blk? : (Term[Blk]) -> A?, phi? : (Term[Phi]) -> A?, def? : (Term[Def]) -> A?, jmp? : (Term[Jmp]) -> A?) -> A?
+pub fn IrTerm::python(Self) -> String?
 pub fn IrTerm::remove(Self, IrTermClass, Tid) -> Self
 pub fn IrTerm::remove_child(Self, IrTermClass, Tid) -> Self
 pub fn IrTerm::same(Self, Self) -> Bool
@@ -737,10 +746,15 @@ pub fn IrTerm::same_tid(Self, Tid) -> Bool
 pub fn IrTerm::set_attr(Self, Attr) -> Self
 pub fn IrTerm::set_background(Self, IrColor) -> Self
 pub fn IrTerm::set_color(Self, IrColor) -> Self
+pub fn IrTerm::set_comment(Self, String) -> Self
 pub fn IrTerm::set_foreground(Self, IrColor) -> Self
 pub fn IrTerm::set_mark(Self, value? : String) -> Self
+pub fn IrTerm::set_python(Self, String) -> Self
+pub fn IrTerm::set_shell(Self, String) -> Self
 pub fn IrTerm::set_tainted_ptr(Self, Tid) -> Self
 pub fn IrTerm::set_tainted_reg(Self, Tid) -> Self
+pub fn IrTerm::set_weight(Self, Double) -> Self
+pub fn IrTerm::shell(Self) -> String?
 pub fn[A] IrTerm::switch(Self, program~ : (Term[Program]) -> A, sub~ : (Term[Sub]) -> A, arg~ : (Term[Arg]) -> A, blk~ : (Term[Blk]) -> A, phi~ : (Term[Phi]) -> A, def~ : (Term[Def]) -> A, jmp~ : (Term[Jmp]) -> A) -> A
 pub fn IrTerm::tainted_ptr(Self) -> Tid?
 pub fn IrTerm::tainted_ptr_text(Self) -> String?
@@ -757,6 +771,7 @@ pub fn IrTerm::update_child(Self, Self) -> Self
 pub fn IrTerm::uses_var(Self, Var) -> Bool
 pub fn IrTerm::uses_var_name(Self, String) -> Bool
 pub fn IrTerm::visit_events(Self) -> Array[IrVisitEvent]
+pub fn IrTerm::weight(Self) -> Double?
 pub fn IrTerm::with_attrs(Self, Map[String, String]) -> Self
 
 pub(all) enum IrTermClass {
@@ -971,6 +986,7 @@ pub fn Term::change_phi_term(Self[Blk], Tid, (Self[Phi]?) -> Self[Phi]?) -> Self
 pub fn Term::change_sub(Self[Program], Tid, (Self[Sub]?) -> Self[Sub]?) -> Self[Program]
 pub fn[T] Term::clone(Self[T]) -> Self[T]
 pub fn[T] Term::color(Self[T]) -> IrColor?
+pub fn[T] Term::comment(Self[T]) -> String?
 pub fn Term::concat_map_args(Self[Sub], (Self[Arg]) -> Array[Self[Arg]]) -> Self[Sub]
 pub fn Term::concat_map_blks(Self[Sub], (Self[Blk]) -> Array[Self[Blk]]) -> Self[Sub]
 pub fn Term::concat_map_defs(Self[Blk], (Self[Def]) -> Array[Self[Def]]) -> Self[Blk]
@@ -1194,6 +1210,7 @@ pub fn Term::program_to_ssa(Self[Program]) -> Self[Program]
 pub fn Term::program_to_string(Self[Program]) -> String
 pub fn Term::program_to_trivial_condition_form(Self[Program]) -> Self[Program]
 pub fn Term::program_visit_events(Self[Program]) -> Array[IrVisitEvent]
+pub fn[T] Term::python(Self[T]) -> String?
 pub fn Term::remove_arg(Self[Sub], Tid) -> Self[Sub]
 pub fn Term::remove_blk(Self[Sub], Tid) -> Self[Sub]
 pub fn Term::remove_def(Self[Blk], Tid) -> Self[Blk]
@@ -1208,6 +1225,7 @@ pub fn[T] Term::same(Self[T], Self[T]) -> Bool
 pub fn Term::select(Self[Phi], Tid) -> Exp?
 pub fn Term::select_or_unknown(Self[Phi], Tid) -> Exp
 pub fn[T] Term::set_attr(Self[T], Attr) -> Self[T]
+pub fn[T] Term::shell(Self[T]) -> String?
 pub fn Term::split_after_def(Self[Blk], Self[Def]) -> (Self[Blk], Self[Blk])
 pub fn Term::split_before_def(Self[Blk], Self[Def]) -> (Self[Blk], Self[Blk])
 pub fn Term::split_bottom_defs(Self[Blk]) -> (Self[Blk], Self[Blk])
@@ -1283,12 +1301,14 @@ pub fn Term::update_phi_term(Self[Blk], Self[Phi]) -> Self[Blk]
 pub fn Term::update_sub(Self[Program], Self[Sub]) -> Self[Program]
 pub fn Term::uses_var(Self[Blk], Var) -> Bool
 pub fn Term::values(Self[Phi]) -> Array[(Tid, Exp)]
+pub fn[T] Term::weight(Self[T]) -> Double?
 pub fn Term::with_alloc_size(Self[Arg]) -> Self[Arg]
 pub fn Term::with_alt(Self[Jmp], JmpDst?) -> Self[Jmp]
 pub fn Term::with_arg_format(Self[Arg], String) -> Self[Arg]
 pub fn[T] Term::with_attrs(Self[T], Map[String, String]) -> Self[T]
 pub fn[T] Term::with_background(Self[T], IrColor) -> Self[T]
 pub fn[T] Term::with_color(Self[T], IrColor) -> Self[T]
+pub fn[T] Term::with_comment(Self[T], String) -> Self[T]
 pub fn Term::with_cond(Self[Jmp], Exp) -> Self[Jmp]
 pub fn Term::with_const(Self[Sub]) -> Self[Sub]
 pub fn[T] Term::with_dead(Self[T]) -> Self[T]
@@ -1313,9 +1333,11 @@ pub fn[T] Term::with_payload(Self[T], T) -> Self[T]
 pub fn Term::with_phi_lhs(Self[Phi], Var) -> Self[Phi]
 pub fn Term::with_phi_var(Self[Phi], Var) -> Self[Phi]
 pub fn Term::with_pure(Self[Sub]) -> Self[Sub]
+pub fn[T] Term::with_python(Self[T], String) -> Self[T]
 pub fn Term::with_restricted(Self[Arg]) -> Self[Arg]
 pub fn Term::with_returns_twice(Self[Sub]) -> Self[Sub]
 pub fn Term::with_rhs(Self[Def], Exp) -> Self[Def]
+pub fn[T] Term::with_shell(Self[T], String) -> Self[T]
 pub fn Term::with_stub(Self[Sub]) -> Self[Sub]
 pub fn Term::with_sub_alias(Self[Sub], String) -> Self[Sub]
 pub fn Term::with_sub_name(Self[Sub], String) -> Self[Sub]
@@ -1325,10 +1347,12 @@ pub fn[T] Term::with_tainted_reg(Self[T], Tid) -> Self[T]
 pub fn Term::with_unknown_intent(Self[Arg]) -> Self[Arg]
 pub fn[T] Term::with_visited(Self[T]) -> Self[T]
 pub fn Term::with_warn_unused(Self[Arg]) -> Self[Arg]
+pub fn[T] Term::with_weight(Self[T], Double) -> Self[T]
 pub fn Term::without_alloc_size(Self[Arg]) -> Self[Arg]
 pub fn Term::without_arg_format(Self[Arg]) -> Self[Arg]
 pub fn[T] Term::without_background(Self[T]) -> Self[T]
 pub fn[T] Term::without_color(Self[T]) -> Self[T]
+pub fn[T] Term::without_comment(Self[T]) -> Self[T]
 pub fn Term::without_const(Self[Sub]) -> Self[Sub]
 pub fn[T] Term::without_dead(Self[T]) -> Self[T]
 pub fn Term::without_entry_point(Self[Sub]) -> Self[Sub]
@@ -1343,14 +1367,17 @@ pub fn Term::without_nonnull(Self[Arg]) -> Self[Arg]
 pub fn Term::without_noreturn(Self[Sub]) -> Self[Sub]
 pub fn Term::without_nothrow(Self[Sub]) -> Self[Sub]
 pub fn Term::without_pure(Self[Sub]) -> Self[Sub]
+pub fn[T] Term::without_python(Self[T]) -> Self[T]
 pub fn Term::without_restricted(Self[Arg]) -> Self[Arg]
 pub fn Term::without_returns_twice(Self[Sub]) -> Self[Sub]
+pub fn[T] Term::without_shell(Self[T]) -> Self[T]
 pub fn Term::without_stub(Self[Sub]) -> Self[Sub]
 pub fn[T] Term::without_synthetic(Self[T]) -> Self[T]
 pub fn[T] Term::without_tainted_ptr(Self[T]) -> Self[T]
 pub fn[T] Term::without_tainted_reg(Self[T]) -> Self[T]
 pub fn[T] Term::without_visited(Self[T]) -> Self[T]
 pub fn Term::without_warn_unused(Self[Arg]) -> Self[Arg]
+pub fn[T] Term::without_weight(Self[T]) -> Self[T]
 
 pub(all) struct Tid {
   id : Int

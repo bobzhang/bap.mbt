@@ -96,6 +96,79 @@ pub fn IrTerm::has_attr_value(
 }
 
 ///|
+fn ir_term_double(term : IrTerm, key : String) -> Double? {
+  match term.get_attr(key) {
+    Some(text) =>
+      try @string.parse_double(text) catch {
+        _ => None
+      } noraise {
+        value => Some(value)
+      }
+    None => None
+  }
+}
+
+///|
+pub fn IrTerm::comment(self : IrTerm) -> String? {
+  self.get_attr(term_comment_attr)
+}
+
+///|
+pub fn IrTerm::set_comment(self : IrTerm, text : String) -> IrTerm {
+  self.set_attr(Attr::comment(text))
+}
+
+///|
+pub fn IrTerm::del_comment(self : IrTerm) -> IrTerm {
+  self.del_attr(term_comment_attr)
+}
+
+///|
+pub fn IrTerm::python(self : IrTerm) -> String? {
+  self.get_attr(term_python_attr)
+}
+
+///|
+pub fn IrTerm::set_python(self : IrTerm, script : String) -> IrTerm {
+  self.set_attr(Attr::python(script))
+}
+
+///|
+pub fn IrTerm::del_python(self : IrTerm) -> IrTerm {
+  self.del_attr(term_python_attr)
+}
+
+///|
+pub fn IrTerm::shell(self : IrTerm) -> String? {
+  self.get_attr(term_shell_attr)
+}
+
+///|
+pub fn IrTerm::set_shell(self : IrTerm, script : String) -> IrTerm {
+  self.set_attr(Attr::shell(script))
+}
+
+///|
+pub fn IrTerm::del_shell(self : IrTerm) -> IrTerm {
+  self.del_attr(term_shell_attr)
+}
+
+///|
+pub fn IrTerm::weight(self : IrTerm) -> Double? {
+  ir_term_double(self, term_weight_attr)
+}
+
+///|
+pub fn IrTerm::set_weight(self : IrTerm, weight : Double) -> IrTerm {
+  self.set_attr(Attr::weight(weight))
+}
+
+///|
+pub fn IrTerm::del_weight(self : IrTerm) -> IrTerm {
+  self.del_attr(term_weight_attr)
+}
+
+///|
 fn ir_term_color(term : IrTerm, key : String) -> IrColor? {
   match term.get_attr(key) {
     Some(text) => IrColor::of_string(text)

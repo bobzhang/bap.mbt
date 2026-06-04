@@ -176,6 +176,10 @@ test "terms expose common BAP-style attributes and flags" {
     .set_attr(@types.Attr::filename("unit.bin"))
     .set_attr(@types.Attr::format("hex"))
     .set_attr(@types.Attr::origin(origin))
+    .with_comment("root def")
+    .with_python("print('x')")
+    .with_shell("echo x")
+    .with_weight(0.75)
     .with_color(IrRed)
     .with_foreground(IrBlue)
     .with_background(IrGray)
@@ -192,6 +196,14 @@ test "terms expose common BAP-style attributes and flags" {
   assert_true(def.get_attr("filename") == Some("unit.bin"))
   assert_true(def.get_attr("format") == Some("hex"))
   assert_true(def.get_attr("origin") == Some(origin.to_string()))
+  assert_true(def.comment() == Some("root def"))
+  assert_true(def.python() == Some("print('x')"))
+  assert_true(def.shell() == Some("echo x"))
+  assert_true(def.weight() == Some(0.75))
+  assert_true(def.get_attr("comment") == Some("root def"))
+  assert_true(def.get_attr("python") == Some("print('x')"))
+  assert_true(def.get_attr("shell") == Some("echo x"))
+  assert_true(def.get_attr("weight") == Some("0.75"))
   assert_true(def.color() == Some(IrRed))
   assert_true(def.foreground() == Some(IrBlue))
   assert_true(def.background() == Some(IrGray))
@@ -225,6 +237,10 @@ test "terms expose common BAP-style attributes and flags" {
   assert_true(!def.without_color().has_color(IrRed))
   assert_true(!def.without_foreground().has_foreground(IrBlue))
   assert_true(!def.without_background().has_background(IrGray))
+  assert_true(def.without_comment().comment() is None)
+  assert_true(def.without_python().python() is None)
+  assert_true(def.without_shell().shell() is None)
+  assert_true(def.without_weight().weight() is None)
   assert_true(!def.without_tainted_reg().taints_reg())
   assert_true(!def.without_tainted_ptr().taints_ptr())
   assert_true(!def.without_synthetic().is_synthetic())
@@ -239,6 +255,9 @@ test "terms expose common BAP-style attributes and flags" {
   assert_true(@types.IrColor::of_string("cyan") == Some(IrCyan))
   assert_true(@types.IrMagenta.to_string() == "magenta")
   assert_true(@types.IrColor::of_string("orange") is None)
+  assert_true(
+    def.set_attr(@types.Attr::new(key="weight", value="heavy")).weight() is None,
+  )
 }
 
 ///|
@@ -749,6 +768,26 @@ test "ir term query helpers match classes attributes vars and children" {
   assert_true(def_term.has_color(IrRed))
   assert_true(def_term.has_foreground(IrBlue))
   assert_true(def_term.has_background(IrGray))
+  let annotated_def_term = def_term
+    .set_comment("comment")
+    .set_python("print(1)")
+    .set_shell("echo 1")
+    .set_weight(1.25)
+  assert_true(annotated_def_term.comment() == Some("comment"))
+  assert_true(annotated_def_term.python() == Some("print(1)"))
+  assert_true(annotated_def_term.shell() == Some("echo 1"))
+  assert_true(annotated_def_term.weight() == Some(1.25))
+  assert_true(annotated_def_term.get_attr("weight") == Some("1.25"))
+  assert_true(annotated_def_term.del_comment().comment() is None)
+  assert_true(annotated_def_term.del_python().python() is None)
+  assert_true(annotated_def_term.del_shell().shell() is None)
+  assert_true(annotated_def_term.del_weight().weight() is None)
+  assert_true(
+    annotated_def_term
+    .set_attr(@types.Attr::new(key="weight", value="heavy"))
+    .weight()
+    is None,
+  )
   assert_true(def_term.tainted_reg() == Some(arg.tid()))
   assert_true(def_term.tainted_ptr() == Some(phi.tid()))
   assert_true(def_term.has_tainted_reg(arg.tid()))

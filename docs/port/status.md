@@ -33,6 +33,7 @@ This repository is porting `.repos/bap` from OCaml to idiomatic MoonBit.
 - `byteweight`: initial memory-oriented Byteweight classifier with BAP-style positive/negative substring statistics, max-length training over memory views, longest-signature scanning, threshold-based address discovery, Bayes-factor classification helpers, stats accessors, and typed plus legacy signature database lookup/update helpers.
 - `project/builtins`: one idempotent built-in service registration entry point for loaders, branchers, disassembly drivers, reconstructors, and IR transform passes.
 - `project/disassembly`: block-scoped edge lookup helpers for branch facts whose source or target lands at an interior instruction address.
+- `project/disassembly-source`: BAP-style disassembly source context helpers for path applicability and bias-aware address creation from label/unit metadata.
 - `project/disasm`: BAP-style top-level `Disasm` facade over project disassembly services, including checked and raising constructors for project, memory, image, and file inputs, CFG/error/instruction accessors, and state merge helpers.
 - `project/reconstructor`: image-entry reconstructed subroutines are marked with the BAP-style `entry-point` semantic flag.
 - `project/callgraph`: direct and resolver-backed project callgraph wrappers over IR `Call` jumps.

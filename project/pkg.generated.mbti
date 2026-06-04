@@ -522,6 +522,17 @@ pub fn ProjectDisassemblyReconstructor::default((UInt64) -> String, Array[UInt64
 pub fn ProjectDisassemblyReconstructor::of_blocks(Array[(String, UInt64, UInt64)]) -> Self
 pub fn ProjectDisassemblyReconstructor::run(Self, ProjectDisassemblyCfg) -> ProjectDisassemblySymtab
 
+type ProjectDisassemblySourceContext
+pub fn ProjectDisassemblySourceContext::bias(Self) -> @types.Word?
+pub fn ProjectDisassemblySourceContext::create(size? : Int, path? : String, bias? : @types.Word) -> Result[Self, String]
+pub fn ProjectDisassemblySourceContext::create_addr(Self, UInt64, unbiased? : Bool) -> Result[@types.Word, String]
+pub fn ProjectDisassemblySourceContext::create_word_addr(Self, @types.Word, unbiased? : Bool) -> Result[@types.Word, String]
+pub fn ProjectDisassemblySourceContext::for_label(@core_theory.Label) -> Result[Self, String]
+pub fn ProjectDisassemblySourceContext::for_unit(@core_theory.ProgramUnit) -> Result[Self, String]
+pub fn ProjectDisassemblySourceContext::is_applicable(Self, path? : String) -> Bool
+pub fn ProjectDisassemblySourceContext::path(Self) -> String?
+pub fn ProjectDisassemblySourceContext::size(Self) -> Int
+
 type ProjectDisassemblyState
 pub fn ProjectDisassemblyState::add_block(Self, @memory.Memory) -> Self
 pub fn ProjectDisassemblyState::add_edge(Self, ProjectDisassemblyEdge) -> Self

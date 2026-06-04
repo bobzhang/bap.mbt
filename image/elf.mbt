@@ -1026,6 +1026,7 @@ fn image_elf_is_relative_relocation(header : ImageElfHeader, typ : Int) -> Bool 
     0x28 => typ == 23 // R_ARM_RELATIVE
     0xb7 => typ == 1027 // R_AARCH64_RELATIVE
     0xf3 => typ == 3 // R_RISCV_RELATIVE
+    0x102 => typ == 3 // R_LARCH_RELATIVE
     _ => false
   }
 }

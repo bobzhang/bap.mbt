@@ -958,6 +958,9 @@ test "image ELF backend recognizes architecture-relative relocation types" {
     ("powerpc64", 0x15, 22),
     ("systemz", 0x16, 12),
     ("arm", 0x28, 23),
+    ("aarch64", 0xb7, 1027),
+    ("riscv", 0xf3, 3),
+    ("loongarch", 0x102, 3),
   ]
   for case in cases {
     let (name, machine, typ) = case

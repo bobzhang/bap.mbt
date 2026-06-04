@@ -423,6 +423,12 @@ pub fn ProjectDisassemblyRecError::memory(Self) -> @memory.Memory
 pub fn ProjectDisassemblyRecError::reason(Self) -> String?
 pub fn ProjectDisassemblyRecError::to_string(Self) -> String
 
+type ProjectDisassemblyReconstructor
+pub fn ProjectDisassemblyReconstructor::create((ProjectDisassemblyCfg) -> ProjectDisassemblySymtab) -> Self
+pub fn ProjectDisassemblyReconstructor::default((UInt64) -> String, Array[UInt64]) -> Self
+pub fn ProjectDisassemblyReconstructor::of_blocks(Array[(String, UInt64, UInt64)]) -> Self
+pub fn ProjectDisassemblyReconstructor::run(Self, ProjectDisassemblyCfg) -> ProjectDisassemblySymtab
+
 type ProjectDisassemblyState
 pub fn ProjectDisassemblyState::add_block(Self, @memory.Memory) -> Self
 pub fn ProjectDisassemblyState::add_edge(Self, ProjectDisassemblyEdge) -> Self

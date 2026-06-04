@@ -88,7 +88,7 @@ pub fn[T] Promise::fulfill(
 pub fn[T] Future::upon(self : Future[T], action : (T) -> Unit) -> Unit {
   match self.value.val {
     Some(value) => action(value)
-    None => self.waiters.push(action)
+    None => self.waiters.insert(0, action)
   }
 }
 

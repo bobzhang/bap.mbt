@@ -53,6 +53,18 @@ test "translated BAP future upon fires after and after fulfillment" {
 }
 
 ///|
+test "translated BAP future upon callbacks run newest first" {
+  let (future, promise) = @future.Future::create()
+  let seen : Array[String] = []
+  future.upon(fn(value) { seen.push("first:\{value}") })
+  future.upon(fn(value) { seen.push("second:\{value}") })
+  promise.fulfill(future_magic_value)
+  assert_true(
+    seen == ["second:\{future_magic_value}", "first:\{future_magic_value}"],
+  )
+}
+
+///|
 test "translated BAP future bind map and apply propagate decided values" {
   let (future, promise) = @future.Future::create()
   let bound = future.bind(fn(value) { @future.Future::resolved(value + 1) })

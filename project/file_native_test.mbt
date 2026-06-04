@@ -103,6 +103,70 @@ test "project input path loaders receive filenames on native target" {
 }
 
 ///|
+test "project input path loader aliases replace existing loaders" {
+  let name = "unit-project-path-replace-native"
+  match
+    @project.ProjectInput::register_file_loader(
+      name~,
+      description="first filename loader",
+      extensions=["replace-native"],
+      priority=1,
+      load=path => {
+        Ok(
+          @project.ProjectInput::from_bytes(
+            target=@core_theory.Target::unknown(),
+            @utf8.encode(path),
+            endian=LittleEndian,
+            base=0x7800UL,
+            filename="first:" + path,
+          ),
+        )
+      },
+    ) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  match
+    @project.ProjectInput::register_file_loader(
+      name~,
+      description="replacement filename loader",
+      extensions=["replace-native-2"],
+      priority=2,
+      load=path => {
+        Ok(
+          @project.ProjectInput::from_bytes(
+            target=@core_theory.Target::unknown(),
+            @utf8.encode(path),
+            endian=LittleEndian,
+            base=0x7900UL,
+            filename="second:" + path,
+          ),
+        )
+      },
+    ) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  match @project.ProjectInput::find_loader(name) {
+    Some(loader) => {
+      assert_true(loader.description() == "replacement filename loader")
+      assert_true(loader.extensions() == ["replace-native-2"])
+      assert_true(loader.priority() == 2)
+    }
+    None => fail("expected replacement filename loader")
+  }
+  match @project.ProjectInput::load_file("moon.mod", loader=name) {
+    Ok(input) => {
+      let project = @project.Project::from_input(input)
+      assert_true(project.filename() == Some("second:moon.mod"))
+      assert_true(project.memory().lookup(0x7800UL).is_empty())
+      assert_true(project.memory().lookup(0x7900UL).length() == 1)
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project raw file input uses target endian on native target" {
   let target = @core_theory.Target::sparc()
   match

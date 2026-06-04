@@ -735,6 +735,67 @@ test "project input exposes BAP-style loader registry aliases" {
 }
 
 ///|
+test "project input register loader aliases replace existing loaders" {
+  let name = "unit-project-alias-replace"
+  match
+    @project.ProjectInput::register_loader(
+      name~,
+      description="first project input alias",
+      extensions=["pira"],
+      priority=1,
+      load=data => {
+        Ok(
+          @project.ProjectInput::from_bytes(
+            target=@core_theory.Target::unknown(),
+            data,
+            endian=LittleEndian,
+            base=0x150UL,
+          ),
+        )
+      },
+    ) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  match
+    @project.ProjectInput::register_loader(
+      name~,
+      description="replacement project input alias",
+      extensions=["pira2"],
+      priority=2,
+      load=data => {
+        Ok(
+          @project.ProjectInput::from_bytes(
+            target=@core_theory.Target::unknown(),
+            data,
+            endian=LittleEndian,
+            base=0x250UL,
+          ),
+        )
+      },
+    ) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  match @project.ProjectInput::find_loader(name) {
+    Some(loader) => {
+      assert_true(loader.description() == "replacement project input alias")
+      assert_true(loader.extensions() == ["pira2"])
+      assert_true(loader.priority() == 2)
+    }
+    None => fail("expected replacement project input loader")
+  }
+  match @project.ProjectInput::load(b"\x01", loader=name) {
+    Ok(input) => {
+      let project = @project.Project::from_input(input)
+      assert_true(project.memory().lookup(0x150UL).is_empty())
+      assert_true(project.memory().lookup(0x250UL).length() == 1)
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project input available loaders appends image backend names" {
   let name = "unit-project-shared-available-loader"
   match

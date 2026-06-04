@@ -525,6 +525,11 @@ pub fn register_input_loader(
 }
 
 ///|
+fn set_input_loader(loader : ProjectInputLoader) -> Unit {
+  input_loader_registry[loader.name()] = loader
+}
+
+///|
 pub fn ProjectInput::register_loader(
   name~ : String,
   description? : String,
@@ -533,7 +538,7 @@ pub fn ProjectInput::register_loader(
   load~ : (Bytes) -> Result[ProjectInput, String],
   load_file? : (String) -> Result[ProjectInput, String],
 ) -> Result[Unit, String] {
-  register_input_loader(
+  set_input_loader(
     ProjectInputLoader::create(
       name~,
       description?,
@@ -543,6 +548,7 @@ pub fn ProjectInput::register_loader(
       load_file?,
     ),
   )
+  Ok(())
 }
 
 ///|
@@ -553,7 +559,7 @@ pub fn ProjectInput::register_file_loader(
   priority? : Int,
   load~ : (String) -> Result[ProjectInput, String],
 ) -> Result[Unit, String] {
-  register_input_loader(
+  set_input_loader(
     ProjectInputLoader::create_file(
       name~,
       description?,
@@ -562,6 +568,7 @@ pub fn ProjectInput::register_file_loader(
       load~,
     ),
   )
+  Ok(())
 }
 
 ///|

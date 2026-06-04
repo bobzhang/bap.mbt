@@ -94,6 +94,9 @@ pub fn registered_collators() -> Array[ProjectCollatorInfo]
 pub fn resolve_passes(Array[String]) -> Result[Array[ProjectPass], String]
 
 // Errors
+pub(all) suberror ProjectDisassemblyLinearSweepError {
+  LinearSweepFailure(String)
+} derive(Eq, @debug.Debug)
 
 // Types and methods
 type Library
@@ -149,6 +152,8 @@ pub fn Project::image(Self) -> @image.Image?
 pub fn Project::interpreter(Self) -> String?
 pub fn Project::is_executable(Self) -> Bool?
 pub fn Project::libraries(Self) -> Array[Library]
+pub fn Project::linear_sweep(Self, @memory.Memory, backend? : String) -> Result[Array[(@memory.Memory, ProjectDisassemblyInstruction?)], String]
+pub fn Project::linear_sweep_exn(Self, @memory.Memory, backend? : String) -> Array[(@memory.Memory, ProjectDisassemblyInstruction?)] raise ProjectDisassemblyLinearSweepError
 pub fn Project::load(Bytes, loader~ : String) -> Result[Self, String]
 pub fn Project::load_bias(Self) -> Int64?
 pub fn Project::load_file(String, loader~ : String, libraries? : Array[String]) -> Result[Self, String]
@@ -400,6 +405,12 @@ pub fn ProjectDisassemblyInstruction::with_metadata(Self, code? : Int, name? : S
 pub fn ProjectDisassemblyInstruction::with_operands(Self, Array[ProjectInstructionOperand]) -> Self
 pub fn ProjectDisassemblyInstruction::with_subinstructions(Self, Array[Self]) -> Self
 pub fn ProjectDisassemblyInstruction::without_kind(Self, ProjectInstructionKind) -> Self
+
+type ProjectDisassemblyLinearSweep
+pub fn ProjectDisassemblyLinearSweep::backend(Self) -> String
+pub fn ProjectDisassemblyLinearSweep::create(backend? : String) -> Self
+pub fn ProjectDisassemblyLinearSweep::sweep(@core_theory.Target, @memory.Memory, backend? : String) -> Result[Array[(@memory.Memory, ProjectDisassemblyInstruction?)], String]
+pub fn ProjectDisassemblyLinearSweep::sweep_exn(@core_theory.Target, @memory.Memory, backend? : String) -> Array[(@memory.Memory, ProjectDisassemblyInstruction?)] raise ProjectDisassemblyLinearSweepError
 
 type ProjectDisassemblyRec
 pub fn ProjectDisassemblyRec::cfg(Self) -> ProjectDisassemblyCfg

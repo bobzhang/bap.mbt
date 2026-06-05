@@ -181,6 +181,98 @@ test "translated DWARF source-style type aliases construct values" {
 }
 
 ///|
+test "translated DWARF input reader facade exposes primitive readers" {
+  let input = @dwarf.DwarfInput::of_bytes(
+    b"\x7f\x2e\x11\x01hi\x00\x04\x00\x04\x04\x00\x00\x00\x05\x00\x00\x00\x03abc\x05",
+  )
+  let (byte, input) = expect_input_read(
+    @dwarf.DwarfInputReader::char().run(input),
+  )
+  assert_true(byte == 0x7f)
+  let (tag, input) = expect_input_read(
+    @dwarf.DwarfInputReader::tag().run(input),
+  )
+  assert_true(tag == DwarfSubprogram)
+  let (attr, input) = expect_input_read(
+    @dwarf.DwarfInputReader::attr().run(input),
+  )
+  assert_true(attr == DwarfLowPc)
+  let (form, input) = expect_input_read(
+    @dwarf.DwarfInputReader::form().run(input),
+  )
+  assert_true(form == DwarfAddr)
+  let (text, input) = expect_input_read(
+    @dwarf.DwarfInputReader::string().run(input),
+  )
+  assert_true(text == "hi")
+  let (version, input) = expect_input_read(
+    @dwarf.DwarfInputReader::version().run(input),
+  )
+  assert_true(version == 4)
+  let (addr_size, input) = expect_input_read(
+    @dwarf.DwarfInputReader::address_size().run(input),
+  )
+  assert_true(addr_size == W32)
+  let ((word_size, unit_size), input) = expect_input_read(
+    @dwarf.DwarfInputReader::unit_size(endian=LittleEndian).run(input),
+  )
+  assert_true(word_size == W32)
+  assert_true(unit_size == 4)
+  let (offset, input) = expect_input_read(
+    @dwarf.DwarfInputReader::offset(endian=LittleEndian, size=W32).run(input),
+  )
+  assert_true(offset == 5)
+  let (block, input) = expect_input_read(
+    @dwarf.DwarfInputReader::block(lenspec=DwarfOne, endian=LittleEndian).run(
+      input,
+    ),
+  )
+  assert_true(block == b"abc")
+  let (value, input) = expect_input_read(
+    @dwarf.DwarfInputReader::const_(lenspec=DwarfOne, endian=LittleEndian).run(
+      input,
+    ),
+  )
+  assert_true(value == 5L)
+  assert_true(input.remaining() == 0)
+}
+
+///|
+test "translated DWARF input reader facade composes readers" {
+  let input = @dwarf.DwarfInput::of_bytes(b"\x2ehi\x00\x00\x00\x05\x01\x7f")
+  let reader = @dwarf.DwarfInputReader::pair(
+    @dwarf.DwarfInputReader::tag(),
+    @dwarf.DwarfInputReader::string().map(text => text + "!"),
+  )
+  let ((tag, text), input) = expect_input_read(reader.run(input))
+  assert_true(tag == DwarfSubprogram)
+  assert_true(text == "hi!")
+  let (_, input) = expect_input_read(
+    @dwarf.DwarfInputReader::skip_zeros().run(input),
+  )
+  assert_true(input.position() == 6)
+  let (_, input) = expect_input_read(
+    @dwarf.DwarfInputReader::skip(bytes=1).run(input),
+  )
+  assert_true(input.position() == 7)
+  let (dropped, input) = expect_input_read(
+    @dwarf.DwarfInputReader::char().drop().run(input),
+  )
+  assert_true(dropped is None)
+  let (taken, input) = expect_input_read(
+    @dwarf.DwarfInputReader::code().take().run(input),
+  )
+  assert_true(taken == Some(0x7f))
+  assert_true(input.remaining() == 0)
+  let (_, input) = expect_input_read(
+    @dwarf.DwarfInputReader::char()
+    .ignore_()
+    .run(@dwarf.DwarfInput::of_bytes(b"\x01")),
+  )
+  assert_true(input.remaining() == 0)
+}
+
+///|
 test "translated DWARF input reads unit metadata" {
   let short = @dwarf.DwarfInput::of_bytes(b"\x10\x00\x00\x00\x04\x00\x04")
   let ((size_kind, size), short) = expect_input_read(

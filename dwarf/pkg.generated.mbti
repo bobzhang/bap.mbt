@@ -156,6 +156,29 @@ pub fn DwarfInput::remaining(Self) -> Int
 pub fn DwarfInput::skip(Self, bytes~ : Int) -> Result[Self, String]
 pub fn DwarfInput::skip_zeros(Self) -> Result[Self, String]
 
+type DwarfInputReader[T]
+pub fn DwarfInputReader::address(endian~ : @bitvec.Endian, size~ : DwarfWordSize) -> Self[UInt64]
+pub fn DwarfInputReader::address_size() -> Self[DwarfWordSize]
+pub fn DwarfInputReader::attr() -> Self[DwarfAttr]
+pub fn DwarfInputReader::block(lenspec~ : DwarfLenspec, endian~ : @bitvec.Endian) -> Self[Bytes]
+pub fn DwarfInputReader::char() -> Self[Int]
+pub fn DwarfInputReader::code() -> Self[Int]
+pub fn DwarfInputReader::const_(lenspec~ : DwarfLenspec, endian~ : @bitvec.Endian) -> Self[Int64]
+pub fn[T] DwarfInputReader::drop(Self[T]) -> Self[T?]
+pub fn DwarfInputReader::form() -> Self[DwarfForm]
+pub fn[T] DwarfInputReader::ignore_(Self[T]) -> Self[Unit]
+pub fn[A, B] DwarfInputReader::map(Self[A], (A) -> B) -> Self[B]
+pub fn DwarfInputReader::offset(endian~ : @bitvec.Endian, size~ : DwarfWordSize) -> Self[Int]
+pub fn[A, B] DwarfInputReader::pair(Self[A], Self[B]) -> Self[(A, B)]
+pub fn[T] DwarfInputReader::run(Self[T], DwarfInput) -> Result[(T, DwarfInput), String]
+pub fn DwarfInputReader::skip(bytes~ : Int) -> Self[Unit]
+pub fn DwarfInputReader::skip_zeros() -> Self[Unit]
+pub fn DwarfInputReader::string() -> Self[String]
+pub fn DwarfInputReader::tag() -> Self[DwarfTag]
+pub fn[T] DwarfInputReader::take(Self[T]) -> Self[T?]
+pub fn DwarfInputReader::unit_size(endian~ : @bitvec.Endian) -> Self[(DwarfWordSize, Int)]
+pub fn DwarfInputReader::version() -> Self[Int]
+
 pub(all) enum DwarfLenspec {
   DwarfOne
   DwarfTwo

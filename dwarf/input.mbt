@@ -222,8 +222,165 @@ struct DwarfInput {
 }
 
 ///|
+struct DwarfInputReader[T] {
+  read_fn : (DwarfInput) -> Result[(T, DwarfInput), String]
+}
+
+///|
 pub fn DwarfInput::of_bytes(data : Bytes) -> DwarfInput {
   { data, position_value: 0 }
+}
+
+///|
+pub fn[T] DwarfInputReader::run(
+  self : DwarfInputReader[T],
+  input : DwarfInput,
+) -> Result[(T, DwarfInput), String] {
+  (self.read_fn)(input)
+}
+
+///|
+pub fn DwarfInputReader::char() -> DwarfInputReader[Int] {
+  { read_fn: input => input.read_byte() }
+}
+
+///|
+pub fn DwarfInputReader::code() -> DwarfInputReader[Int] {
+  { read_fn: input => input.read_code() }
+}
+
+///|
+pub fn DwarfInputReader::tag() -> DwarfInputReader[DwarfTag] {
+  { read_fn: input => input.read_tag() }
+}
+
+///|
+pub fn DwarfInputReader::form() -> DwarfInputReader[DwarfForm] {
+  { read_fn: input => input.read_form() }
+}
+
+///|
+pub fn DwarfInputReader::attr() -> DwarfInputReader[DwarfAttr] {
+  { read_fn: input => input.read_attr() }
+}
+
+///|
+pub fn DwarfInputReader::string() -> DwarfInputReader[String] {
+  { read_fn: input => input.read_cstring() }
+}
+
+///|
+pub fn DwarfInputReader::address(
+  endian~ : @bitvec.Endian,
+  size~ : DwarfWordSize,
+) -> DwarfInputReader[UInt64] {
+  { read_fn: input => input.read_address(endian~, size~) }
+}
+
+///|
+pub fn DwarfInputReader::version() -> DwarfInputReader[Int] {
+  { read_fn: input => input.read_version() }
+}
+
+///|
+pub fn DwarfInputReader::unit_size(
+  endian~ : @bitvec.Endian,
+) -> DwarfInputReader[(DwarfWordSize, Int)] {
+  { read_fn: input => input.read_unit_size(endian~) }
+}
+
+///|
+pub fn DwarfInputReader::skip(bytes~ : Int) -> DwarfInputReader[Unit] {
+  { read_fn: input => input.skip(bytes~).map(done => ((), done)) }
+}
+
+///|
+pub fn DwarfInputReader::skip_zeros() -> DwarfInputReader[Unit] {
+  { read_fn: input => input.skip_zeros().map(done => ((), done)) }
+}
+
+///|
+pub fn DwarfInputReader::address_size() -> DwarfInputReader[DwarfWordSize] {
+  { read_fn: input => input.read_address_size() }
+}
+
+///|
+pub fn DwarfInputReader::offset(
+  endian~ : @bitvec.Endian,
+  size~ : DwarfWordSize,
+) -> DwarfInputReader[Int] {
+  { read_fn: input => input.read_offset(endian~, size~) }
+}
+
+///|
+pub fn DwarfInputReader::block(
+  lenspec~ : DwarfLenspec,
+  endian~ : @bitvec.Endian,
+) -> DwarfInputReader[Bytes] {
+  { read_fn: input => input.read_block(lenspec~, endian~) }
+}
+
+///|
+pub fn DwarfInputReader::const_(
+  lenspec~ : DwarfLenspec,
+  endian~ : @bitvec.Endian,
+) -> DwarfInputReader[Int64] {
+  { read_fn: input => input.read_const(lenspec~, endian~) }
+}
+
+///|
+pub fn[A, B] DwarfInputReader::map(
+  self : DwarfInputReader[A],
+  f : (A) -> B,
+) -> DwarfInputReader[B] {
+  {
+    read_fn: input => {
+      match self.run(input) {
+        Ok((value, next)) => Ok((f(value), next))
+        Err(reason) => Err(reason)
+      }
+    },
+  }
+}
+
+///|
+pub fn[T] DwarfInputReader::take(
+  self : DwarfInputReader[T],
+) -> DwarfInputReader[T?] {
+  self.map(value => Some(value))
+}
+
+///|
+pub fn[T] DwarfInputReader::drop(
+  self : DwarfInputReader[T],
+) -> DwarfInputReader[T?] {
+  self.map(_ => None)
+}
+
+///|
+pub fn[T] DwarfInputReader::ignore_(
+  self : DwarfInputReader[T],
+) -> DwarfInputReader[Unit] {
+  self.map(_ => ())
+}
+
+///|
+pub fn[A, B] DwarfInputReader::pair(
+  first : DwarfInputReader[A],
+  second : DwarfInputReader[B],
+) -> DwarfInputReader[(A, B)] {
+  {
+    read_fn: input => {
+      match first.run(input) {
+        Err(reason) => Err(reason)
+        Ok((left, input)) =>
+          match second.run(input) {
+            Err(reason) => Err(reason)
+            Ok((right, input)) => Ok(((left, right), input))
+          }
+      }
+    },
+  }
 }
 
 ///|

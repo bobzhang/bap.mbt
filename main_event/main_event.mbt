@@ -35,6 +35,9 @@ struct MainLogReporter {
 }
 
 ///|
+pub(all) struct Log {}
+
+///|
 let main_event_pair : (@future.Stream[MainEvent], @future.Signal[MainEvent]) = @future.Stream::create()
 
 ///|
@@ -231,6 +234,33 @@ pub fn progress(
   total? : Int,
 ) -> Unit {
   send(MainLogProgress(MainProgress::create(task~, note?, stage?, total?)))
+}
+
+///|
+pub fn Log::message(
+  level : MainLogLevel,
+  section~ : String,
+  message~ : String,
+) -> Unit {
+  send(MainLogMessage(MainLogInfo::create(level~, section~, message~)))
+}
+
+///|
+pub fn Log::progress(
+  task : String,
+  note? : String,
+  stage? : Int,
+  total? : Int,
+) -> Unit {
+  progress(task, note?, stage?, total?)
+}
+
+///|
+pub fn Log::create(
+  section~ : String,
+  debug_enabled? : Bool = false,
+) -> MainLogReporter {
+  MainLogReporter::create(section~, debug_enabled~)
 }
 
 ///|

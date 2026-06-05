@@ -2,8 +2,8 @@
 test "main event stream sends log progress and custom events" {
   let observed : Array[@main_event.MainEvent] = []
   let id = @main_event.stream().subscribe(event => observed.push(event))
-  @main_event.message(MainLogInfo, section="loader", message="loaded")
-  @main_event.progress("decode", note="block", stage=1, total=3)
+  @main_event.Log::message(MainLogInfo, section="loader", message="loaded")
+  @main_event.Log::progress("decode", note="block", stage=1, total=3)
   @main_event.send(
     @main_event.MainEvent::custom(name="unit", payload="payload"),
   )
@@ -60,16 +60,13 @@ test "main event printers use last registered precedence" {
 test "main log reporter emits level-specific messages and progress" {
   let events : Array[@main_event.MainEvent] = []
   let id = @main_event.stream().subscribe(event => events.push(event))
-  let quiet = @main_event.MainLogReporter::create(section="quiet")
+  let quiet = @main_event.Log::create(section="quiet")
   quiet.debug(message="hidden")
   quiet.info(message="ready")
   quiet.warning(message="careful")
   quiet.error(message="failed")
   quiet.report_progress(task="phase", note="parse", stage=2, total=4)
-  let noisy = @main_event.MainLogReporter::create(
-    section="noisy",
-    debug_enabled=true,
-  )
+  let noisy = @main_event.Log::create(section="noisy", debug_enabled=true)
   noisy.debug(message="visible")
   @main_event.stream().unsubscribe(id)
   assert_true(events.length() == 5)

@@ -28,6 +28,12 @@ pub fn unsubscribe(Int) -> Unit
 // Errors
 
 // Types and methods
+pub(all) struct Log {
+}
+pub fn Log::create(section~ : String, debug_enabled? : Bool) -> MainLogReporter
+pub fn Log::message(MainLogLevel, section~ : String, message~ : String) -> Unit
+pub fn Log::progress(String, note? : String, stage? : Int, total? : Int) -> Unit
+
 pub(all) enum MainEvent {
   MainLogMessage(MainLogInfo)
   MainLogProgress(MainProgress)

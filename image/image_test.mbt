@@ -100,6 +100,79 @@ test "image address size follows target metadata" {
 }
 
 ///|
+test "image exposes BAP tag and specification facades" {
+  let segment_tag = @image.segment()
+  assert_true(segment_tag.name() == "segment")
+  assert_true(segment_tag.uuid() == "a0eec123-5937-4283-b141-58d579a9b0df")
+  let symbol_tag = @image.symbol()
+  assert_true(symbol_tag.name() == "symbol")
+  assert_true(symbol_tag.uuid() == "768bc13d-d4be-43fc-9f7a-c369ebab9c7e")
+  let section_tag = @image.section()
+  assert_true(section_tag.name() == "section")
+  assert_true(section_tag.uuid() == "4014408d-a3af-488f-865b-5413beaf198e")
+  let code_region_tag = @image.code_region()
+  assert_true(code_region_tag.name() == "code-region")
+  assert_true(code_region_tag.uuid() == "5296b7e9-d5c3-40ce-98ba-7655ec68fad7")
+  let specification_tag = @image.specification()
+  assert_true(specification_tag.name() == "image-specification")
+  assert_true(
+    specification_tag.uuid() == "a0c98f1f-3693-412a-a11a-2b6c3f6935a7",
+  )
+  let spec = @image.Spec::from_arch(@core_theory.Target::x86_64())
+  assert_true(spec.fact_count("arch") == 1)
+  assert_true(spec.fact_count("bits") == 1)
+  assert_true(spec.fact_count("is-little-endian") == 1)
+  assert_true(spec.facts("arch")[0].value("name") == Some("x86_64"))
+  let slot = @image.Spec::slot()
+  assert_true(
+    slot.owner().show() == @core_theory.ProgramUnit::cls().name().show(),
+  )
+  assert_true(slot.name().show() == "bap:unit-spec")
+  assert_true(slot.domain().name().show() == "bap:spec")
+  assert_true(slot.domain().is_empty(@image.OgreDoc::empty()))
+  assert_true(!slot.domain().is_empty(spec))
+  match slot.persistent() {
+    Some(codec) =>
+      match codec.decode(codec.encode(spec)) {
+        Ok(decoded) => {
+          assert_true(decoded.fact_count("arch") == 1)
+          assert_true(decoded.facts("arch")[0].value("name") == Some("x86_64"))
+        }
+        Err(reason) => fail(reason)
+      }
+    None => fail("expected persistent unit-spec slot")
+  }
+  let arm_target = @core_theory.Target::arm()
+  let arm = @image.Spec::from_arch(arm_target)
+  match slot.domain().join(@image.OgreDoc::empty(), arm) {
+    Ok(joined) =>
+      assert_true(
+        joined.facts("arch")[0].value("name") ==
+        Some(arm_target.name().unqualified()),
+      )
+    Err(reason) => fail(reason)
+  }
+  match slot.domain().join(spec, arm) {
+    Ok(joined) => assert_true(joined.fact_count("arch") == 2)
+    Err(reason) => fail(reason)
+  }
+  let lhs = match
+    @image.OgreDoc::from_string("(declare conflict (value str))") {
+    Ok(doc) => doc
+    Err(reason) => fail(reason)
+  }
+  let rhs = match
+    @image.OgreDoc::from_string("(declare conflict (value int))") {
+    Ok(doc) => doc
+    Err(reason) => fail(reason)
+  }
+  match slot.domain().join(lhs, rhs) {
+    Ok(_) => fail("expected conflicting Ogre declarations")
+    Err(reason) => assert_true(reason.contains("conflicting Ogre declaration"))
+  }
+}
+
+///|
 test "image exposes relocation metadata defensively" {
   let segment = @image.Segment::create(
     name=".raw",

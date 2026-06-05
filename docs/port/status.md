@@ -66,6 +66,7 @@ This repository is porting `.repos/bap` from OCaml to idiomatic MoonBit.
 - `project/callgraph`: direct and resolver-backed project callgraph wrappers over IR `Call` jumps.
 - `main_event/log facade`: The main event subsystem exposes a BAP-style `Log` namespace for message/progress emission and section reporter creation over the port's existing event stream.
 - `image/ELF relocations`: MIPS `R_MIPS_REL32` entries, including `EM_MIPS_RS3_LE` objects, are recognized as image-relative relocation metadata alongside the existing architecture-specific relative relocation set.
+- `image/facades`: BAP-style image value tag descriptors expose the source tag names and UUIDs for segments, symbols, sections, code regions, and image specifications, while `Spec::from_arch` and `Spec::slot` mirror the upstream Ogre unit-spec facade with a mergeable, persistent Knowledge domain.
 - `traces/API aliases`: Trace registration exposes BAP-style `Trace::register_tool` and `Trace::register_proto` helpers, with tool name and supported-tag accessors over the port's structured trace tool descriptors.
 - `traces/event payloads`: BAP-style event payload constructor facades now cover `Syscall`, `Exn`, `Call`, `Return`, and `Modload` alongside the existing `Move`, `Chunk`, and `Location` helpers, with `Exn` rendering delegated through the trace exception representation.
 - `types/attributes`: common BAP-style term metadata and subroutine semantic flags over the string-backed MoonBit IR attribute map.

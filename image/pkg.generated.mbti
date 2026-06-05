@@ -4,6 +4,7 @@ package "bobzhang/bap/image"
 import {
   "bobzhang/bap/bitvec",
   "bobzhang/bap/core_theory",
+  "bobzhang/bap/knowledge",
   "bobzhang/bap/memory",
   "bobzhang/bap/types",
   "moonbitlang/core/debug",
@@ -18,6 +19,8 @@ pub fn backend_names_for_extension(String) -> Array[String]
 
 pub fn backends_for_extension(String) -> Array[ImageBackend]
 
+pub fn code_region() -> ImageTag[Unit]
+
 pub fn find_backend(String) -> ImageBackend?
 
 pub fn find_loader(String) -> ImageLoader?
@@ -29,6 +32,14 @@ pub fn register_backend_if_absent(ImageBackend) -> Result[Bool, String]
 pub fn register_builtin_backends() -> Result[Unit, String]
 
 pub fn register_loader(name~ : String, ImageLoader) -> Result[Unit, String]
+
+pub fn section() -> ImageTag[String]
+
+pub fn segment() -> ImageTag[Segment]
+
+pub fn specification() -> ImageTag[OgreDoc]
+
+pub fn symbol() -> ImageTag[String]
 
 // Errors
 
@@ -114,15 +125,27 @@ pub fn ImageLoader::create(from_data~ : (Bytes) -> Result[OgreDoc?, String], fro
 pub fn ImageLoader::from_data(Self, Bytes) -> Result[OgreDoc?, String]
 pub fn ImageLoader::from_file(Self, String) -> Result[OgreDoc?, String]
 
+type ImageTag[T]
+pub fn ImageTag::code_region() -> Self[Unit]
+pub fn[T] ImageTag::name(Self[T]) -> String
+pub fn ImageTag::section() -> Self[String]
+pub fn ImageTag::segment() -> Self[Segment]
+pub fn ImageTag::specification() -> Self[OgreDoc]
+pub fn ImageTag::symbol() -> Self[String]
+pub fn[T] ImageTag::uuid(Self[T]) -> String
+
 type OgreDoc
 pub fn OgreDoc::declaration(Self, String) -> Array[OgreField]?
 pub fn OgreDoc::declaration_count(Self) -> Int
 pub fn OgreDoc::declaration_names(Self) -> Array[String]
+pub fn OgreDoc::domain() -> @knowledge.Domain[Self]
 pub fn OgreDoc::empty() -> Self
 pub fn OgreDoc::fact_count(Self, String) -> Int
 pub fn OgreDoc::facts(Self, String) -> Array[OgreFact]
 pub fn OgreDoc::from_string(String) -> Result[Self, String]
 pub fn OgreDoc::from_target(@core_theory.Target) -> Self
+pub fn OgreDoc::persistent() -> @knowledge.Persistent[Self]
+pub fn OgreDoc::to_string(Self) -> String
 
 type OgreFact
 pub fn OgreFact::attribute(Self) -> String
@@ -175,6 +198,11 @@ pub fn Segment::name(Self) -> String
 pub fn Segment::offset(Self) -> Int
 pub fn Segment::size(Self) -> Int
 pub fn Segment::with_memory(Self, @memory.Memory) -> Self
+
+pub(all) struct Spec {
+}
+pub fn Spec::from_arch(@core_theory.Target) -> OgreDoc
+pub fn Spec::slot() -> @knowledge.Slot[Unit, OgreDoc]
 
 type Symbol
 pub fn Symbol::addr(Self) -> UInt64

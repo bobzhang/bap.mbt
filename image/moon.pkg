@@ -3,6 +3,7 @@ import {
   "moonbitlang/core/encoding/utf8",
   "bobzhang/bap/bitvec",
   "bobzhang/bap/core_theory",
+  "bobzhang/bap/knowledge",
   "bobzhang/bap/memory",
   "bobzhang/bap/native_io",
   "bobzhang/bap/types",

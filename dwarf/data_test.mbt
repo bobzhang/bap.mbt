@@ -59,6 +59,16 @@ fn expect_string_offsets_table(
 }
 
 ///|
+fn expect_string_table(
+  value : Result[@dwarf.DwarfStringTable, String],
+) -> @dwarf.DwarfStringTable raise {
+  match value {
+    Ok(value) => value
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "translated DWARF section data stores buffers by section" {
   let info = expect_section_buffer(@dwarf.DwarfSectionBuffer::create(b"info"))
   let abbrev = expect_section_buffer(
@@ -81,6 +91,56 @@ test "translated DWARF section data stores buffers by section" {
   assert_true(got_abbrev.data() == b"abbrev")
   assert_true(got_abbrev.position() == 2)
   assert_true(data.section(DwarfStr) is Err(_))
+}
+
+///|
+test "translated DWARF section buffers read string tables" {
+  let buffer = expect_section_buffer(
+    @dwarf.DwarfSectionBuffer::create(b"skip\x00name\x00tail\x00"),
+  )
+  let table = expect_string_table(@dwarf.DwarfStringTable::read(buffer))
+  assert_true(table.base_offset() == 0)
+  assert_true(table.data() == b"skip\x00name\x00tail\x00")
+  assert_true(!table.is_empty())
+  assert_true(table.string(5) == Ok("name"))
+  assert_true(table.entries() == Ok([(0, "skip"), (5, "name"), (10, "tail")]))
+  assert_true(table.strings() == Ok(["skip", "name", "tail"]))
+  let suffix = expect_string_table(
+    @dwarf.DwarfStringTable::read(buffer, offset=5),
+  )
+  assert_true(suffix.base_offset() == 5)
+  assert_true(suffix.string(0) == Ok("name"))
+  assert_true(suffix.entries() == Ok([(0, "name"), (5, "tail")]))
+  let broken = expect_string_table(
+    @dwarf.DwarfStringTable::read(
+      expect_section_buffer(@dwarf.DwarfSectionBuffer::create(b"broken")),
+    ),
+  )
+  assert_true(broken.entries() is Err(_))
+}
+
+///|
+test "translated DWARF data exposes debug and line string tables" {
+  let data = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=LittleEndian,
+      str=b"debug\x00other\x00",
+      line_str=b"line\x00file.mbt\x00",
+    ),
+  )
+  let strings = expect_string_table(data.string_table())
+  let line_strings = expect_string_table(data.line_string_table())
+  assert_true(strings.strings() == Ok(["debug", "other"]))
+  assert_true(line_strings.strings() == Ok(["line", "file.mbt"]))
+  assert_true(data.debug_string() == Ok("debug"))
+  assert_true(data.debug_string(offset=6) == Ok("other"))
+  assert_true(data.line_string() == Ok("line"))
+  assert_true(data.line_string(offset=5) == Ok("file.mbt"))
+  let without_strings = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(endian=LittleEndian, info=b"\x00"),
+  )
+  assert_true(without_strings.string_table() is Err(_))
+  assert_true(without_strings.line_string_table() is Err(_))
 }
 
 ///|

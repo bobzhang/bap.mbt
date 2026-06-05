@@ -84,11 +84,14 @@ type DwarfData
 pub fn DwarfData::address_table(Self, offset? : Int, addr_size~ : DwarfWordSize) -> Result[DwarfAddressTable, String]
 pub fn DwarfData::address_table_contribution(Self, offset? : Int) -> Result[DwarfAddressTable, String]
 pub fn DwarfData::create(endian~ : @bitvec.Endian, sections~ : Array[(DwarfSection, DwarfSectionBuffer)]) -> Result[Self, String]
+pub fn DwarfData::debug_string(Self, offset? : Int) -> Result[String, String]
 pub fn DwarfData::endian(Self) -> @bitvec.Endian
 pub fn DwarfData::from_bytes(endian~ : @bitvec.Endian, info? : Bytes, abbrev? : Bytes, str? : Bytes, line_str? : Bytes, str_offsets? : Bytes, addr? : Bytes, ranges? : Bytes, rnglists? : Bytes, loclists? : Bytes) -> Result[Self, String]
 pub fn DwarfData::from_elf_bytes(Bytes) -> Result[Self, String]
 pub fn DwarfData::functions(Self) -> Result[Array[DwarfFunction], String]
 pub fn DwarfData::has_section(Self, DwarfSection) -> Bool
+pub fn DwarfData::line_string(Self, offset? : Int) -> Result[String, String]
+pub fn DwarfData::line_string_table(Self, offset? : Int) -> Result[DwarfStringTable, String]
 pub fn DwarfData::loclist(Self, offset? : Int, addr_size~ : DwarfWordSize) -> Result[DwarfLocationList, String]
 pub fn DwarfData::ranges(Self, offset? : Int, addr_size~ : DwarfWordSize) -> Result[DwarfRangeList, String]
 pub fn DwarfData::rnglist(Self, offset? : Int, addr_size~ : DwarfWordSize) -> Result[DwarfRangeList, String]
@@ -96,6 +99,7 @@ pub fn DwarfData::section(Self, DwarfSection) -> Result[DwarfSectionBuffer, Stri
 pub fn DwarfData::sections(Self) -> Array[(DwarfSection, DwarfSectionBuffer)]
 pub fn DwarfData::string_offsets(Self, offset? : Int, dwarf_size~ : DwarfWordSize) -> Result[DwarfStringOffsetsTable, String]
 pub fn DwarfData::string_offsets_contribution(Self, offset? : Int) -> Result[DwarfStringOffsetsTable, String]
+pub fn DwarfData::string_table(Self, offset? : Int) -> Result[DwarfStringTable, String]
 
 pub(all) enum DwarfForm {
   DwarfAddr
@@ -283,6 +287,15 @@ pub fn DwarfStringOffsetsTable::read_contribution(DwarfSectionBuffer, offset? : 
 pub fn DwarfStringOffsetsTable::string(Self, DwarfSectionBuffer, Int) -> Result[String, String]
 pub fn DwarfStringOffsetsTable::strings(Self, DwarfSectionBuffer) -> Result[Array[String], String]
 pub fn DwarfStringOffsetsTable::version(Self) -> Int?
+
+type DwarfStringTable
+pub fn DwarfStringTable::base_offset(Self) -> Int
+pub fn DwarfStringTable::data(Self) -> Bytes
+pub fn DwarfStringTable::entries(Self) -> Result[Array[(Int, String)], String]
+pub fn DwarfStringTable::is_empty(Self) -> Bool
+pub fn DwarfStringTable::read(DwarfSectionBuffer, offset? : Int) -> Result[Self, String]
+pub fn DwarfStringTable::string(Self, Int) -> Result[String, String]
+pub fn DwarfStringTable::strings(Self) -> Result[Array[String], String]
 
 pub(all) enum DwarfTag {
   DwarfEntryPoint

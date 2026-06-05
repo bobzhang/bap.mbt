@@ -227,6 +227,14 @@ pub fn process_log_events(
 }
 
 ///|
+pub fn process_events(
+  write~ : (String) -> Unit,
+  error? : (String) -> Unit,
+) -> Int {
+  process_log_events(write~, error?)
+}
+
+///|
 pub fn unsubscribe(id : Int) -> Unit {
   stream().unsubscribe(id)
 }

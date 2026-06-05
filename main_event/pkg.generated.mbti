@@ -13,6 +13,8 @@ pub fn observe_log_messages(notify~ : (MainLogInfo) -> Unit) -> Int
 
 pub fn pp(MainEvent) -> String
 
+pub fn process_events(write~ : (String) -> Unit, error? : (String) -> Unit) -> Int
+
 pub fn process_log_events(write~ : (String) -> Unit, error? : (String) -> Unit) -> Int
 
 pub fn progress(String, note? : String, stage? : Int, total? : Int) -> Unit

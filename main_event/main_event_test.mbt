@@ -104,3 +104,20 @@ test "main event log processors filter messages and report errors" {
   )
   assert_true(errors == ["failed"])
 }
+
+///|
+test "main log process_events facade observes message events" {
+  let lines : Array[String] = []
+  let errors : Array[String] = []
+  let process_id = @main_event.process_events(write=line => lines.push(line), error=message => {
+    errors.push(message)
+  })
+  @main_event.send(@main_event.MainEvent::custom(name="ignored"))
+  @main_event.Log::progress("ignored-progress")
+  @main_event.Log::message(MainLogInfo, section="main-log", message="ready")
+  @main_event.Log::message(MainLogError, section="main-log", message="bad")
+  @main_event.unsubscribe(process_id)
+  @main_event.Log::message(MainLogWarning, section="main-log", message="after")
+  assert_true(lines == ["main-log.info> ready", "main-log.error> bad"])
+  assert_true(errors == ["bad"])
+}

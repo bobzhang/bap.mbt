@@ -19,6 +19,20 @@ fn expect_input(
 }
 
 ///|
+fn expect_input_tags(
+  input : @dwarf.DwarfInput,
+  tags : Array[@dwarf.DwarfTag],
+) -> @dwarf.DwarfInput raise {
+  let mut cursor = input
+  for expected in tags {
+    let (tag, next) = expect_input_read(cursor.read_tag())
+    assert_true(tag == expected)
+    cursor = next
+  }
+  cursor
+}
+
+///|
 test "translated DWARF input reads bytes strings and cursor positions" {
   let input = @dwarf.DwarfInput::of_bytes(b"\x01hello\x00z")
   let (byte, input) = expect_input_read(input.read_byte())
@@ -59,14 +73,78 @@ test "translated DWARF input reads endian addresses and signed integers" {
 ///|
 test "translated DWARF input decodes tags attributes forms and LEB128 codes" {
   let input = @dwarf.DwarfInput::of_bytes(
-    b"\x2e\x0b\x3c\x01\x02\x18\x1a\x1d\x55\x6e\x87\x40\x31\x40\x47\x49\x64\x72\x73\xb2\x42\xb3\x42\x74\x8c\x01\x09\x25\x26\x27\x28\x1a\x1b\x81\x3e\x82\x3e\x29\x2a\x2b\x2c\x1e\x1f\x20\x21\x22\x23\x1d\x1c\x24\xa0\x3e\xa1\x3e\x0c\x0d\x0f\x10\x7f",
+    b"\x01\x02\x03\x04\x05\x08\x0a\x0b\x0d\x0f\x10\x11\x12\x13\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f\x20\x21\x22\x23\x24\x25\x26\x27\x28\x29\x2a\x2b\x2c\x2d\x2e\x2f\x30\x31\x32\x33\x34\x35\x36\x37\x38\x39\x3a\x3b\x3c\x3d\x3f\x40\x41\x42\x43\x44\x45\x46\x47\x48\x49\x4a\x4b\x01\x02\x18\x1a\x1d\x55\x6e\x87\x40\x31\x40\x47\x49\x64\x72\x73\xb2\x42\xb3\x42\x74\x8c\x01\x09\x25\x26\x27\x28\x1a\x1b\x81\x3e\x82\x3e\x29\x2a\x2b\x2c\x1e\x1f\x20\x21\x22\x23\x1d\x1c\x24\xa0\x3e\xa1\x3e\x0c\x0d\x0f\x10\x7f",
   )
-  let (tag, input) = expect_input_read(input.read_tag())
-  assert_true(tag == DwarfSubprogram)
-  let (tag, input) = expect_input_read(input.read_tag())
-  assert_true(tag == DwarfLexicalBlock)
-  let (tag, input) = expect_input_read(input.read_tag())
-  assert_true(tag == DwarfPartialUnit)
+  let input = expect_input_tags(input, [
+    DwarfArrayType,
+    DwarfClassType,
+    DwarfEntryPoint,
+    DwarfEnumerationType,
+    DwarfFormalParameter,
+    DwarfImportedDeclaration,
+    DwarfLabel,
+    DwarfLexicalBlock,
+    DwarfMember,
+    DwarfPointerType,
+    DwarfReferenceType,
+    DwarfCompileUnit,
+    DwarfStringType,
+    DwarfStructureType,
+    DwarfSubroutineType,
+    DwarfTypedef,
+    DwarfUnionType,
+    DwarfUnspecifiedParameters,
+    DwarfVariant,
+    DwarfCommonBlock,
+    DwarfCommonInclusion,
+    DwarfInheritance,
+    DwarfInlinedSubroutine,
+    DwarfModule,
+    DwarfPtrToMemberType,
+    DwarfSetType,
+    DwarfSubrangeType,
+    DwarfWithStmt,
+    DwarfAccessDeclaration,
+    DwarfBaseType,
+    DwarfCatchBlock,
+    DwarfConstType,
+    DwarfConstant,
+    DwarfEnumerator,
+    DwarfFileType,
+    DwarfFriend,
+    DwarfNamelist,
+    DwarfNamelistItem,
+    DwarfPackedType,
+    DwarfSubprogram,
+    DwarfTemplateTypeParameter,
+    DwarfTemplateValueParameter,
+    DwarfThrownType,
+    DwarfTryBlock,
+    DwarfVariantPart,
+    DwarfVariable,
+    DwarfVolatileType,
+    DwarfProcedure,
+    DwarfRestrictType,
+    DwarfInterfaceType,
+    DwarfNamespace,
+    DwarfImportedModule,
+    DwarfUnspecifiedType,
+    DwarfPartialUnit,
+    DwarfImportedUnit,
+    DwarfCondition,
+    DwarfSharedType,
+    DwarfTypeUnit,
+    DwarfRvalueReferenceType,
+    DwarfTemplateAlias,
+    DwarfCoarrayType,
+    DwarfGenericSubrange,
+    DwarfDynamicType,
+    DwarfAtomicType,
+    DwarfCallSite,
+    DwarfCallSiteParameter,
+    DwarfSkeletonUnit,
+    DwarfImmutableType,
+  ])
   let (attr, input) = expect_input_read(input.read_attr())
   assert_true(attr == DwarfSibling)
   let (attr, input) = expect_input_read(input.read_attr())
@@ -174,11 +252,24 @@ test "translated DWARF source-style type aliases construct values" {
   assert_true(@dwarf.DwarfLenspec::two() == DwarfTwo)
   assert_true(@dwarf.DwarfLenspec::four() == DwarfFour)
   assert_true(@dwarf.DwarfLenspec::eight() == DwarfEight)
+  assert_true(@dwarf.DwarfTag::array_type() == DwarfArrayType)
+  assert_true(@dwarf.DwarfTag::class_type() == DwarfClassType)
   assert_true(@dwarf.DwarfTag::entry_point() == DwarfEntryPoint)
+  assert_true(@dwarf.DwarfTag::formal_parameter() == DwarfFormalParameter)
   assert_true(@dwarf.DwarfTag::compile_unit() == DwarfCompileUnit)
   assert_true(@dwarf.DwarfTag::partial_unit() == DwarfPartialUnit)
+  assert_true(@dwarf.DwarfTag::lexical_block() == DwarfLexicalBlock)
+  assert_true(@dwarf.DwarfTag::member_() == DwarfMember)
+  assert_true(@dwarf.DwarfTag::structure_type() == DwarfStructureType)
+  assert_true(@dwarf.DwarfTag::typedef_() == DwarfTypedef)
+  assert_true(@dwarf.DwarfTag::base_type() == DwarfBaseType)
   assert_true(@dwarf.DwarfTag::inlined_subroutine() == DwarfInlinedSubroutine)
+  assert_true(@dwarf.DwarfTag::namespace_() == DwarfNamespace)
   assert_true(@dwarf.DwarfTag::subprogram() == DwarfSubprogram)
+  assert_true(@dwarf.DwarfTag::variable() == DwarfVariable)
+  assert_true(@dwarf.DwarfTag::type_unit() == DwarfTypeUnit)
+  assert_true(@dwarf.DwarfTag::call_site() == DwarfCallSite)
+  assert_true(@dwarf.DwarfTag::skeleton_unit() == DwarfSkeletonUnit)
   assert_true(@dwarf.DwarfTag::unknown(7) == DwarfUnknownTag(7))
   assert_true(@dwarf.DwarfAttr::name() == DwarfName)
   assert_true(@dwarf.DwarfAttr::sibling() == DwarfSibling)

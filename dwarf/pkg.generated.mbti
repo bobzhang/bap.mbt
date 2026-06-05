@@ -413,20 +413,145 @@ pub fn DwarfStringTable::string(Self, Int) -> Result[String, String]
 pub fn DwarfStringTable::strings(Self) -> Result[Array[String], String]
 
 pub(all) enum DwarfTag {
+  DwarfArrayType
+  DwarfClassType
   DwarfEntryPoint
+  DwarfEnumerationType
+  DwarfFormalParameter
+  DwarfImportedDeclaration
+  DwarfLabel
   DwarfCompileUnit
   DwarfPartialUnit
   DwarfLexicalBlock
+  DwarfMember
+  DwarfPointerType
+  DwarfReferenceType
+  DwarfStringType
+  DwarfStructureType
+  DwarfSubroutineType
+  DwarfTypedef
+  DwarfUnionType
+  DwarfUnspecifiedParameters
+  DwarfVariant
+  DwarfCommonBlock
+  DwarfCommonInclusion
+  DwarfInheritance
   DwarfInlinedSubroutine
+  DwarfModule
+  DwarfPtrToMemberType
+  DwarfSetType
+  DwarfSubrangeType
+  DwarfWithStmt
+  DwarfAccessDeclaration
+  DwarfBaseType
+  DwarfCatchBlock
+  DwarfConstType
+  DwarfConstant
+  DwarfEnumerator
+  DwarfFileType
+  DwarfFriend
+  DwarfNamelist
+  DwarfNamelistItem
+  DwarfPackedType
   DwarfSubprogram
+  DwarfTemplateTypeParameter
+  DwarfTemplateValueParameter
+  DwarfThrownType
+  DwarfTryBlock
+  DwarfVariantPart
+  DwarfVariable
+  DwarfVolatileType
+  DwarfProcedure
+  DwarfRestrictType
+  DwarfInterfaceType
+  DwarfNamespace
+  DwarfImportedModule
+  DwarfUnspecifiedType
+  DwarfImportedUnit
+  DwarfCondition
+  DwarfSharedType
+  DwarfTypeUnit
+  DwarfRvalueReferenceType
+  DwarfTemplateAlias
+  DwarfCoarrayType
+  DwarfGenericSubrange
+  DwarfDynamicType
+  DwarfAtomicType
+  DwarfCallSite
+  DwarfCallSiteParameter
+  DwarfSkeletonUnit
+  DwarfImmutableType
   DwarfUnknownTag(Int)
 } derive(Eq, @debug.Debug)
+pub fn DwarfTag::access_declaration() -> Self
+pub fn DwarfTag::array_type() -> Self
+pub fn DwarfTag::atomic_type() -> Self
+pub fn DwarfTag::base_type() -> Self
+pub fn DwarfTag::call_site() -> Self
+pub fn DwarfTag::call_site_parameter() -> Self
+pub fn DwarfTag::catch_block() -> Self
+pub fn DwarfTag::class_type() -> Self
+pub fn DwarfTag::coarray_type() -> Self
+pub fn DwarfTag::common_block() -> Self
+pub fn DwarfTag::common_inclusion() -> Self
 pub fn DwarfTag::compile_unit() -> Self
+pub fn DwarfTag::condition() -> Self
+pub fn DwarfTag::const_type() -> Self
+pub fn DwarfTag::constant() -> Self
+pub fn DwarfTag::dynamic_type() -> Self
 pub fn DwarfTag::entry_point() -> Self
+pub fn DwarfTag::enumeration_type() -> Self
+pub fn DwarfTag::enumerator() -> Self
+pub fn DwarfTag::file_type() -> Self
+pub fn DwarfTag::formal_parameter() -> Self
+pub fn DwarfTag::friend() -> Self
+pub fn DwarfTag::generic_subrange() -> Self
+pub fn DwarfTag::immutable_type() -> Self
+pub fn DwarfTag::imported_declaration() -> Self
+pub fn DwarfTag::imported_module() -> Self
+pub fn DwarfTag::imported_unit() -> Self
+pub fn DwarfTag::inheritance() -> Self
 pub fn DwarfTag::inlined_subroutine() -> Self
+pub fn DwarfTag::interface_type() -> Self
+pub fn DwarfTag::label() -> Self
+pub fn DwarfTag::lexical_block() -> Self
+pub fn DwarfTag::member_() -> Self
+pub fn DwarfTag::module_() -> Self
+pub fn DwarfTag::namelist() -> Self
+pub fn DwarfTag::namelist_item() -> Self
+pub fn DwarfTag::namespace_() -> Self
+pub fn DwarfTag::packed_type() -> Self
 pub fn DwarfTag::partial_unit() -> Self
+pub fn DwarfTag::pointer_type() -> Self
+pub fn DwarfTag::procedure() -> Self
+pub fn DwarfTag::ptr_to_member_type() -> Self
+pub fn DwarfTag::reference_type() -> Self
+pub fn DwarfTag::restrict_type() -> Self
+pub fn DwarfTag::rvalue_reference_type() -> Self
+pub fn DwarfTag::set_type() -> Self
+pub fn DwarfTag::shared_type() -> Self
+pub fn DwarfTag::skeleton_unit() -> Self
+pub fn DwarfTag::string_type() -> Self
+pub fn DwarfTag::structure_type() -> Self
 pub fn DwarfTag::subprogram() -> Self
+pub fn DwarfTag::subrange_type() -> Self
+pub fn DwarfTag::subroutine_type() -> Self
+pub fn DwarfTag::template_alias() -> Self
+pub fn DwarfTag::template_type_parameter() -> Self
+pub fn DwarfTag::template_value_parameter() -> Self
+pub fn DwarfTag::thrown_type() -> Self
+pub fn DwarfTag::try_block() -> Self
+pub fn DwarfTag::type_unit() -> Self
+pub fn DwarfTag::typedef_() -> Self
+pub fn DwarfTag::union_type() -> Self
 pub fn DwarfTag::unknown(Int) -> Self
+pub fn DwarfTag::unspecified_parameters() -> Self
+pub fn DwarfTag::unspecified_type() -> Self
+pub fn DwarfTag::variable() -> Self
+pub fn DwarfTag::variant() -> Self
+pub fn DwarfTag::variant_part() -> Self
+pub fn DwarfTag::volatile_type() -> Self
+pub fn DwarfTag::with_stmt() -> Self
 
 pub(all) enum DwarfWordSize {
   W32

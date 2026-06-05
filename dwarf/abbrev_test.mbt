@@ -86,6 +86,20 @@ test "translated DWARF abbreviation parser supports offsets and unknown attrs" {
 }
 
 ///|
+test "translated DWARF abbreviation parser names standard type tags" {
+  let bytes = b"\x06\x13\x01" + b"\x49\x13" + b"\x00\x00" + b"\x00"
+  let table = expect_abbrev_table(@dwarf.DwarfAbbrevTable::of_bytes(bytes))
+  let entry = expect_abbrev_entry(table.lookup(6))
+  assert_true(entry.tag() == DwarfStructureType)
+  assert_true(entry.has_children())
+  assert_true(!entry.captures_values())
+  assert_true(entry.fields().length() == 1)
+  assert_true(entry.fields()[0].attr() == DwarfType)
+  assert_true(entry.fields()[0].form() == DwarfRef(DwarfFour))
+  assert_true(entry.fields()[0].value_kind() == DwarfIgnoredValue)
+}
+
+///|
 test "translated DWARF abbreviation parser reads implicit constants" {
   let bytes = b"\x05\x2e\x00" +
     b"\x12\x21\x7e" +

@@ -49,18 +49,110 @@ pub(all) enum DwarfIndexSpec {
 
 ///|
 pub(all) enum DwarfTag {
+  DwarfArrayType
+  DwarfClassType
   DwarfEntryPoint
+  DwarfEnumerationType
+  DwarfFormalParameter
+  DwarfImportedDeclaration
+  DwarfLabel
   DwarfCompileUnit
   DwarfPartialUnit
   DwarfLexicalBlock
+  DwarfMember
+  DwarfPointerType
+  DwarfReferenceType
+  DwarfStringType
+  DwarfStructureType
+  DwarfSubroutineType
+  DwarfTypedef
+  DwarfUnionType
+  DwarfUnspecifiedParameters
+  DwarfVariant
+  DwarfCommonBlock
+  DwarfCommonInclusion
+  DwarfInheritance
   DwarfInlinedSubroutine
+  DwarfModule
+  DwarfPtrToMemberType
+  DwarfSetType
+  DwarfSubrangeType
+  DwarfWithStmt
+  DwarfAccessDeclaration
+  DwarfBaseType
+  DwarfCatchBlock
+  DwarfConstType
+  DwarfConstant
+  DwarfEnumerator
+  DwarfFileType
+  DwarfFriend
+  DwarfNamelist
+  DwarfNamelistItem
+  DwarfPackedType
   DwarfSubprogram
+  DwarfTemplateTypeParameter
+  DwarfTemplateValueParameter
+  DwarfThrownType
+  DwarfTryBlock
+  DwarfVariantPart
+  DwarfVariable
+  DwarfVolatileType
+  DwarfProcedure
+  DwarfRestrictType
+  DwarfInterfaceType
+  DwarfNamespace
+  DwarfImportedModule
+  DwarfUnspecifiedType
+  DwarfImportedUnit
+  DwarfCondition
+  DwarfSharedType
+  DwarfTypeUnit
+  DwarfRvalueReferenceType
+  DwarfTemplateAlias
+  DwarfCoarrayType
+  DwarfGenericSubrange
+  DwarfDynamicType
+  DwarfAtomicType
+  DwarfCallSite
+  DwarfCallSiteParameter
+  DwarfSkeletonUnit
+  DwarfImmutableType
   DwarfUnknownTag(Int)
 } derive(Eq, Debug)
 
 ///|
+pub fn DwarfTag::array_type() -> DwarfTag {
+  DwarfArrayType
+}
+
+///|
+pub fn DwarfTag::class_type() -> DwarfTag {
+  DwarfClassType
+}
+
+///|
 pub fn DwarfTag::entry_point() -> DwarfTag {
   DwarfEntryPoint
+}
+
+///|
+pub fn DwarfTag::enumeration_type() -> DwarfTag {
+  DwarfEnumerationType
+}
+
+///|
+pub fn DwarfTag::formal_parameter() -> DwarfTag {
+  DwarfFormalParameter
+}
+
+///|
+pub fn DwarfTag::imported_declaration() -> DwarfTag {
+  DwarfImportedDeclaration
+}
+
+///|
+pub fn DwarfTag::label() -> DwarfTag {
+  DwarfLabel
 }
 
 ///|
@@ -74,13 +166,298 @@ pub fn DwarfTag::partial_unit() -> DwarfTag {
 }
 
 ///|
+pub fn DwarfTag::lexical_block() -> DwarfTag {
+  DwarfLexicalBlock
+}
+
+///|
+pub fn DwarfTag::member_() -> DwarfTag {
+  DwarfMember
+}
+
+///|
+pub fn DwarfTag::pointer_type() -> DwarfTag {
+  DwarfPointerType
+}
+
+///|
+pub fn DwarfTag::reference_type() -> DwarfTag {
+  DwarfReferenceType
+}
+
+///|
+pub fn DwarfTag::string_type() -> DwarfTag {
+  DwarfStringType
+}
+
+///|
+pub fn DwarfTag::structure_type() -> DwarfTag {
+  DwarfStructureType
+}
+
+///|
+pub fn DwarfTag::subroutine_type() -> DwarfTag {
+  DwarfSubroutineType
+}
+
+///|
+pub fn DwarfTag::typedef_() -> DwarfTag {
+  DwarfTypedef
+}
+
+///|
+pub fn DwarfTag::union_type() -> DwarfTag {
+  DwarfUnionType
+}
+
+///|
+pub fn DwarfTag::unspecified_parameters() -> DwarfTag {
+  DwarfUnspecifiedParameters
+}
+
+///|
+pub fn DwarfTag::variant() -> DwarfTag {
+  DwarfVariant
+}
+
+///|
+pub fn DwarfTag::common_block() -> DwarfTag {
+  DwarfCommonBlock
+}
+
+///|
+pub fn DwarfTag::common_inclusion() -> DwarfTag {
+  DwarfCommonInclusion
+}
+
+///|
+pub fn DwarfTag::inheritance() -> DwarfTag {
+  DwarfInheritance
+}
+
+///|
 pub fn DwarfTag::inlined_subroutine() -> DwarfTag {
   DwarfInlinedSubroutine
 }
 
 ///|
+pub fn DwarfTag::module_() -> DwarfTag {
+  DwarfModule
+}
+
+///|
+pub fn DwarfTag::ptr_to_member_type() -> DwarfTag {
+  DwarfPtrToMemberType
+}
+
+///|
+pub fn DwarfTag::set_type() -> DwarfTag {
+  DwarfSetType
+}
+
+///|
+pub fn DwarfTag::subrange_type() -> DwarfTag {
+  DwarfSubrangeType
+}
+
+///|
+pub fn DwarfTag::with_stmt() -> DwarfTag {
+  DwarfWithStmt
+}
+
+///|
+pub fn DwarfTag::access_declaration() -> DwarfTag {
+  DwarfAccessDeclaration
+}
+
+///|
+pub fn DwarfTag::base_type() -> DwarfTag {
+  DwarfBaseType
+}
+
+///|
+pub fn DwarfTag::catch_block() -> DwarfTag {
+  DwarfCatchBlock
+}
+
+///|
+pub fn DwarfTag::const_type() -> DwarfTag {
+  DwarfConstType
+}
+
+///|
+pub fn DwarfTag::constant() -> DwarfTag {
+  DwarfConstant
+}
+
+///|
+pub fn DwarfTag::enumerator() -> DwarfTag {
+  DwarfEnumerator
+}
+
+///|
+pub fn DwarfTag::file_type() -> DwarfTag {
+  DwarfFileType
+}
+
+///|
+pub fn DwarfTag::friend() -> DwarfTag {
+  DwarfFriend
+}
+
+///|
+pub fn DwarfTag::namelist() -> DwarfTag {
+  DwarfNamelist
+}
+
+///|
+pub fn DwarfTag::namelist_item() -> DwarfTag {
+  DwarfNamelistItem
+}
+
+///|
+pub fn DwarfTag::packed_type() -> DwarfTag {
+  DwarfPackedType
+}
+
+///|
 pub fn DwarfTag::subprogram() -> DwarfTag {
   DwarfSubprogram
+}
+
+///|
+pub fn DwarfTag::template_type_parameter() -> DwarfTag {
+  DwarfTemplateTypeParameter
+}
+
+///|
+pub fn DwarfTag::template_value_parameter() -> DwarfTag {
+  DwarfTemplateValueParameter
+}
+
+///|
+pub fn DwarfTag::thrown_type() -> DwarfTag {
+  DwarfThrownType
+}
+
+///|
+pub fn DwarfTag::try_block() -> DwarfTag {
+  DwarfTryBlock
+}
+
+///|
+pub fn DwarfTag::variant_part() -> DwarfTag {
+  DwarfVariantPart
+}
+
+///|
+pub fn DwarfTag::variable() -> DwarfTag {
+  DwarfVariable
+}
+
+///|
+pub fn DwarfTag::volatile_type() -> DwarfTag {
+  DwarfVolatileType
+}
+
+///|
+pub fn DwarfTag::procedure() -> DwarfTag {
+  DwarfProcedure
+}
+
+///|
+pub fn DwarfTag::restrict_type() -> DwarfTag {
+  DwarfRestrictType
+}
+
+///|
+pub fn DwarfTag::interface_type() -> DwarfTag {
+  DwarfInterfaceType
+}
+
+///|
+pub fn DwarfTag::namespace_() -> DwarfTag {
+  DwarfNamespace
+}
+
+///|
+pub fn DwarfTag::imported_module() -> DwarfTag {
+  DwarfImportedModule
+}
+
+///|
+pub fn DwarfTag::unspecified_type() -> DwarfTag {
+  DwarfUnspecifiedType
+}
+
+///|
+pub fn DwarfTag::imported_unit() -> DwarfTag {
+  DwarfImportedUnit
+}
+
+///|
+pub fn DwarfTag::condition() -> DwarfTag {
+  DwarfCondition
+}
+
+///|
+pub fn DwarfTag::shared_type() -> DwarfTag {
+  DwarfSharedType
+}
+
+///|
+pub fn DwarfTag::type_unit() -> DwarfTag {
+  DwarfTypeUnit
+}
+
+///|
+pub fn DwarfTag::rvalue_reference_type() -> DwarfTag {
+  DwarfRvalueReferenceType
+}
+
+///|
+pub fn DwarfTag::template_alias() -> DwarfTag {
+  DwarfTemplateAlias
+}
+
+///|
+pub fn DwarfTag::coarray_type() -> DwarfTag {
+  DwarfCoarrayType
+}
+
+///|
+pub fn DwarfTag::generic_subrange() -> DwarfTag {
+  DwarfGenericSubrange
+}
+
+///|
+pub fn DwarfTag::dynamic_type() -> DwarfTag {
+  DwarfDynamicType
+}
+
+///|
+pub fn DwarfTag::atomic_type() -> DwarfTag {
+  DwarfAtomicType
+}
+
+///|
+pub fn DwarfTag::call_site() -> DwarfTag {
+  DwarfCallSite
+}
+
+///|
+pub fn DwarfTag::call_site_parameter() -> DwarfTag {
+  DwarfCallSiteParameter
+}
+
+///|
+pub fn DwarfTag::skeleton_unit() -> DwarfTag {
+  DwarfSkeletonUnit
+}
+
+///|
+pub fn DwarfTag::immutable_type() -> DwarfTag {
+  DwarfImmutableType
 }
 
 ///|
@@ -631,12 +1008,74 @@ fn DwarfInput::read_signed_code(
 ///|
 fn dwarf_tag_of_int(code : Int) -> DwarfTag {
   match code {
+    0x01 => DwarfArrayType
+    0x02 => DwarfClassType
     0x03 => DwarfEntryPoint
+    0x04 => DwarfEnumerationType
+    0x05 => DwarfFormalParameter
+    0x08 => DwarfImportedDeclaration
+    0x0a => DwarfLabel
     0x0b => DwarfLexicalBlock
+    0x0d => DwarfMember
+    0x0f => DwarfPointerType
+    0x10 => DwarfReferenceType
     0x11 => DwarfCompileUnit
+    0x12 => DwarfStringType
+    0x13 => DwarfStructureType
+    0x15 => DwarfSubroutineType
+    0x16 => DwarfTypedef
+    0x17 => DwarfUnionType
+    0x18 => DwarfUnspecifiedParameters
+    0x19 => DwarfVariant
+    0x1a => DwarfCommonBlock
+    0x1b => DwarfCommonInclusion
+    0x1c => DwarfInheritance
     0x1d => DwarfInlinedSubroutine
+    0x1e => DwarfModule
+    0x1f => DwarfPtrToMemberType
+    0x20 => DwarfSetType
+    0x21 => DwarfSubrangeType
+    0x22 => DwarfWithStmt
+    0x23 => DwarfAccessDeclaration
+    0x24 => DwarfBaseType
+    0x25 => DwarfCatchBlock
+    0x26 => DwarfConstType
+    0x27 => DwarfConstant
+    0x28 => DwarfEnumerator
+    0x29 => DwarfFileType
+    0x2a => DwarfFriend
+    0x2b => DwarfNamelist
+    0x2c => DwarfNamelistItem
+    0x2d => DwarfPackedType
     0x2e => DwarfSubprogram
+    0x2f => DwarfTemplateTypeParameter
+    0x30 => DwarfTemplateValueParameter
+    0x31 => DwarfThrownType
+    0x32 => DwarfTryBlock
+    0x33 => DwarfVariantPart
+    0x34 => DwarfVariable
+    0x35 => DwarfVolatileType
+    0x36 => DwarfProcedure
+    0x37 => DwarfRestrictType
+    0x38 => DwarfInterfaceType
+    0x39 => DwarfNamespace
+    0x3a => DwarfImportedModule
+    0x3b => DwarfUnspecifiedType
     0x3c => DwarfPartialUnit
+    0x3d => DwarfImportedUnit
+    0x3f => DwarfCondition
+    0x40 => DwarfSharedType
+    0x41 => DwarfTypeUnit
+    0x42 => DwarfRvalueReferenceType
+    0x43 => DwarfTemplateAlias
+    0x44 => DwarfCoarrayType
+    0x45 => DwarfGenericSubrange
+    0x46 => DwarfDynamicType
+    0x47 => DwarfAtomicType
+    0x48 => DwarfCallSite
+    0x49 => DwarfCallSiteParameter
+    0x4a => DwarfSkeletonUnit
+    0x4b => DwarfImmutableType
     other => DwarfUnknownTag(other)
   }
 }

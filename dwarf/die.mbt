@@ -139,6 +139,11 @@ fn dwarf_die_attribute_finish_uint_reference(
 }
 
 ///|
+fn dwarf_die_index(dies : Array[DwarfDie], die : DwarfDie) -> Int? {
+  dies.search_by(item => item.section_offset() == die.section_offset())
+}
+
+///|
 fn dwarf_skip_die_attributes(
   input : DwarfInput,
   entry : DwarfAbbrevEntry,
@@ -560,6 +565,89 @@ pub fn DwarfDie::fields(self : DwarfDie) -> Array[DwarfAbbrevField] {
 ///|
 pub fn DwarfDie::attributes(self : DwarfDie) -> Array[DwarfDieAttribute] {
   self.attributes_value.copy()
+}
+
+///|
+pub fn DwarfDie::attribute(
+  self : DwarfDie,
+  attr : DwarfAttr,
+) -> DwarfDieAttribute? {
+  match self.attributes_value.search_by(attribute => attribute.attr() == attr) {
+    Some(index) => Some(self.attributes_value[index])
+    None => None
+  }
+}
+
+///|
+pub fn DwarfDie::attributes_by_attr(
+  self : DwarfDie,
+  attr : DwarfAttr,
+) -> Array[DwarfDieAttribute] {
+  self.attributes_value.filter(attribute => attribute.attr() == attr)
+}
+
+///|
+pub fn DwarfDie::parent(self : DwarfDie, dies : Array[DwarfDie]) -> DwarfDie? {
+  if self.depth_value <= 0 {
+    return None
+  }
+  match dwarf_die_index(dies, self) {
+    Some(index) => {
+      let parent_depth = self.depth_value - 1
+      let mut cursor = index - 1
+      while cursor >= 0 {
+        let candidate = dies[cursor]
+        if candidate.depth() == parent_depth {
+          return Some(candidate)
+        }
+        cursor -= 1
+      }
+      None
+    }
+    None => None
+  }
+}
+
+///|
+pub fn DwarfDie::direct_children(
+  self : DwarfDie,
+  dies : Array[DwarfDie],
+) -> Array[DwarfDie] {
+  let out : Array[DwarfDie] = []
+  match dwarf_die_index(dies, self) {
+    Some(index) => {
+      let child_depth = self.depth_value + 1
+      let mut cursor = index + 1
+      while cursor < dies.length() && dies[cursor].depth() > self.depth_value {
+        let candidate = dies[cursor]
+        if candidate.depth() == child_depth {
+          out.push(candidate)
+        }
+        cursor += 1
+      }
+      out
+    }
+    None => out
+  }
+}
+
+///|
+pub fn DwarfDie::descendants(
+  self : DwarfDie,
+  dies : Array[DwarfDie],
+) -> Array[DwarfDie] {
+  let out : Array[DwarfDie] = []
+  match dwarf_die_index(dies, self) {
+    Some(index) => {
+      let mut cursor = index + 1
+      while cursor < dies.length() && dies[cursor].depth() > self.depth_value {
+        out.push(dies[cursor])
+        cursor += 1
+      }
+      out
+    }
+    None => out
+  }
 }
 
 ///|

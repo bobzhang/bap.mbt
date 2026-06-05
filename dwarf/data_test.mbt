@@ -366,12 +366,18 @@ test "translated DWARF data exposes structural DIE records" {
   let abbrev = b"\x01\x11\x01" +
     b"\x03\x08" +
     b"\x00\x00" +
-    b"\x02\x2e\x00" +
+    b"\x02\x2e\x01" +
     b"\x11\x01" +
     b"\x12\x06" +
     b"\x00\x00" +
+    b"\x03\x0b\x00" +
+    b"\x11\x01" +
+    b"\x00\x00" +
+    b"\x04\x2e\x00" +
+    b"\x03\x08" +
+    b"\x00\x00" +
     b"\x00"
-  let info = b"\x15\x00\x00\x00" +
+  let info = b"\x20\x00\x00\x00" +
     b"\x04\x00" +
     b"\x00\x00\x00\x00" +
     b"\x04" +
@@ -379,12 +385,16 @@ test "translated DWARF data exposes structural DIE records" {
     b"\x02" +
     b"\x10\x00\x00\x00" +
     b"\x05\x00\x00\x00" +
+    b"\x03" +
+    b"\x18\x00\x00\x00" +
+    b"\x00" +
+    b"\x04sib\x00" +
     b"\x00"
   let data = expect_dwarf_data(
     @dwarf.DwarfData::from_bytes(endian=LittleEndian, info~, abbrev~),
   )
   let dies = expect_dies(data.unit_dies())
-  assert_true(dies.length() == 2)
+  assert_true(dies.length() == 4)
   assert_true(dies[0].section_offset() == 11)
   assert_true(dies[0].unit_start_offset() == 0)
   assert_true(dies[0].unit_offset() == 11)
@@ -404,13 +414,19 @@ test "translated DWARF data exposes structural DIE records" {
   assert_true(dies[0].attributes()[0].offset() == 12)
   assert_true(dies[0].attributes()[0].end_offset() == 15)
   assert_true(dies[0].attributes()[0].field().attr() == DwarfName)
+  assert_true(
+    dies[0].attribute(DwarfName).map(attr => attr.offset()) == Some(12),
+  )
+  assert_true(dies[0].attribute(DwarfLowPc) is None)
+  assert_true(dies[0].attributes_by_attr(DwarfName).length() == 1)
+  assert_true(dies[0].attributes_by_attr(DwarfLowPc).length() == 0)
   assert_true(dies[1].section_offset() == 15)
   assert_true(dies[1].unit_start_offset() == 0)
   assert_true(dies[1].unit_offset() == 15)
   assert_true(dies[1].depth() == 1)
   assert_true(dies[1].code() == 2)
   assert_true(dies[1].tag() == DwarfSubprogram)
-  assert_true(!dies[1].has_children())
+  assert_true(dies[1].has_children())
   assert_true(dies[1].attributes_offset() == 16)
   assert_true(dies[1].end_offset() == 24)
   assert_true(dies[1].entry().fields().length() == 2)
@@ -423,7 +439,43 @@ test "translated DWARF data exposes structural DIE records" {
   assert_true(dies[1].attributes()[1].form() == DwarfConst(DwarfFour))
   assert_true(dies[1].attributes()[1].offset() == 20)
   assert_true(dies[1].attributes()[1].end_offset() == 24)
-  assert_true(expect_dies(data.dies()).length() == 2)
+  assert_true(
+    dies[1].attribute(DwarfLowPc).map(attr => attr.offset()) == Some(16),
+  )
+  assert_true(dies[1].attributes_by_attr(DwarfLowPc).length() == 1)
+  assert_true(dies[2].section_offset() == 24)
+  assert_true(dies[2].unit_offset() == 24)
+  assert_true(dies[2].depth() == 2)
+  assert_true(dies[2].tag() == DwarfLexicalBlock)
+  assert_true(dies[2].attributes_offset() == 25)
+  assert_true(dies[2].end_offset() == 29)
+  assert_true(dies[3].section_offset() == 30)
+  assert_true(dies[3].unit_offset() == 30)
+  assert_true(dies[3].depth() == 1)
+  assert_true(dies[3].tag() == DwarfSubprogram)
+  assert_true(
+    dies[3].attribute(DwarfName).map(attr => attr.offset()) == Some(31),
+  )
+  assert_true(
+    dies[0].direct_children(dies).map(die => die.section_offset()) == [15, 30],
+  )
+  assert_true(
+    dies[0].descendants(dies).map(die => die.section_offset()) == [15, 24, 30],
+  )
+  assert_true(dies[0].parent(dies) is None)
+  assert_true(dies[1].parent(dies).map(die => die.section_offset()) == Some(11))
+  assert_true(
+    dies[1].direct_children(dies).map(die => die.section_offset()) == [24],
+  )
+  assert_true(
+    dies[1].descendants(dies).map(die => die.section_offset()) == [24],
+  )
+  assert_true(dies[2].parent(dies).map(die => die.section_offset()) == Some(15))
+  assert_true(dies[2].direct_children(dies).is_empty())
+  assert_true(dies[2].descendants(dies).is_empty())
+  assert_true(dies[3].parent(dies).map(die => die.section_offset()) == Some(11))
+  assert_true(dies[3].direct_children(dies).is_empty())
+  assert_true(expect_dies(data.dies()).length() == 4)
   let broken = b"\x08\x00\x00\x00" +
     b"\x04\x00" +
     b"\x00\x00\x00\x00" +

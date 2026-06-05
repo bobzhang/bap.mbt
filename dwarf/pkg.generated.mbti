@@ -109,14 +109,19 @@ pub fn DwarfData::unit_header(Self, offset? : Int) -> Result[DwarfInfoUnitHeader
 pub fn DwarfData::unit_headers(Self) -> Result[Array[DwarfInfoUnitHeader], String]
 
 type DwarfDie
+pub fn DwarfDie::attribute(Self, DwarfAttr) -> DwarfDieAttribute?
 pub fn DwarfDie::attributes(Self) -> Array[DwarfDieAttribute]
+pub fn DwarfDie::attributes_by_attr(Self, DwarfAttr) -> Array[DwarfDieAttribute]
 pub fn DwarfDie::attributes_offset(Self) -> Int
 pub fn DwarfDie::code(Self) -> Int
 pub fn DwarfDie::depth(Self) -> Int
+pub fn DwarfDie::descendants(Self, Array[Self]) -> Array[Self]
+pub fn DwarfDie::direct_children(Self, Array[Self]) -> Array[Self]
 pub fn DwarfDie::end_offset(Self) -> Int
 pub fn DwarfDie::entry(Self) -> DwarfAbbrevEntry
 pub fn DwarfDie::fields(Self) -> Array[DwarfAbbrevField]
 pub fn DwarfDie::has_children(Self) -> Bool
+pub fn DwarfDie::parent(Self, Array[Self]) -> Self?
 pub fn DwarfDie::section_offset(Self) -> Int
 pub fn DwarfDie::tag(Self) -> DwarfTag
 pub fn DwarfDie::unit_offset(Self) -> Int

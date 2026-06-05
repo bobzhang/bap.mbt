@@ -107,6 +107,7 @@ pub fn DwarfData::unit_header(Self, offset? : Int) -> Result[DwarfInfoUnitHeader
 pub fn DwarfData::unit_headers(Self) -> Result[Array[DwarfInfoUnitHeader], String]
 
 type DwarfDie
+pub fn DwarfDie::attributes(Self) -> Array[DwarfDieAttribute]
 pub fn DwarfDie::attributes_offset(Self) -> Int
 pub fn DwarfDie::code(Self) -> Int
 pub fn DwarfDie::depth(Self) -> Int
@@ -117,6 +118,16 @@ pub fn DwarfDie::has_children(Self) -> Bool
 pub fn DwarfDie::section_offset(Self) -> Int
 pub fn DwarfDie::tag(Self) -> DwarfTag
 pub fn DwarfDie::unit_offset(Self) -> Int
+
+type DwarfDieAttribute
+pub fn DwarfDieAttribute::attr(Self) -> DwarfAttr
+pub fn DwarfDieAttribute::end_offset(Self) -> Int
+pub fn DwarfDieAttribute::field(Self) -> DwarfAbbrevField
+pub fn DwarfDieAttribute::form(Self) -> DwarfForm
+pub fn DwarfDieAttribute::index(Self) -> Int
+pub fn DwarfDieAttribute::is_value_field(Self) -> Bool
+pub fn DwarfDieAttribute::offset(Self) -> Int
+pub fn DwarfDieAttribute::value_kind(Self) -> DwarfAbbrevValueKind
 
 pub(all) enum DwarfForm {
   DwarfAddr

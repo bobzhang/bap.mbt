@@ -5,7 +5,16 @@ struct DwarfDie {
   depth_value : Int
   code_value : Int
   entry_value : DwarfAbbrevEntry
+  attributes_value : Array[DwarfDieAttribute]
   attributes_offset_value : Int
+  end_offset_value : Int
+}
+
+///|
+struct DwarfDieAttribute {
+  index_value : Int
+  field_value : DwarfAbbrevField
+  offset_value : Int
   end_offset_value : Int
 }
 
@@ -16,6 +25,7 @@ fn dwarf_die_create(
   depth~ : Int,
   code~ : Int,
   entry~ : DwarfAbbrevEntry,
+  attributes~ : Array[DwarfDieAttribute],
   attributes_offset~ : Int,
   end_offset~ : Int,
 ) -> DwarfDie {
@@ -25,7 +35,23 @@ fn dwarf_die_create(
     depth_value: depth,
     code_value: code,
     entry_value: entry,
+    attributes_value: attributes.copy(),
     attributes_offset_value: attributes_offset,
+    end_offset_value: end_offset,
+  }
+}
+
+///|
+fn dwarf_die_attribute_create(
+  index~ : Int,
+  field~ : DwarfAbbrevField,
+  offset~ : Int,
+  end_offset~ : Int,
+) -> DwarfDieAttribute {
+  {
+    index_value: index,
+    field_value: field,
+    offset_value: offset,
     end_offset_value: end_offset,
   }
 }
@@ -39,9 +65,12 @@ fn dwarf_skip_die_attributes(
   version : Int,
   dwarf_size : DwarfWordSize,
   addr_size : DwarfWordSize,
-) -> Result[DwarfInput, String] {
+) -> Result[(Array[DwarfDieAttribute], DwarfInput), String] {
+  let out : Array[DwarfDieAttribute] = []
   let mut cursor = input
+  let mut index = 0
   for field in entry.fields() {
+    let offset = cursor.position()
     match
       dwarf_skip_form(
         cursor,
@@ -55,12 +84,63 @@ fn dwarf_skip_die_attributes(
         if next.position() > unit_end {
           return Err("DWARF DIE attribute over-read")
         }
+        out.push(
+          dwarf_die_attribute_create(
+            index~,
+            field~,
+            offset~,
+            end_offset=next.position(),
+          ),
+        )
         cursor = next
+        index += 1
       }
       Err(reason) => return Err(reason)
     }
   }
-  Ok(cursor)
+  Ok((out, cursor))
+}
+
+///|
+pub fn DwarfDieAttribute::index(self : DwarfDieAttribute) -> Int {
+  self.index_value
+}
+
+///|
+pub fn DwarfDieAttribute::field(self : DwarfDieAttribute) -> DwarfAbbrevField {
+  self.field_value
+}
+
+///|
+pub fn DwarfDieAttribute::attr(self : DwarfDieAttribute) -> DwarfAttr {
+  self.field_value.attr()
+}
+
+///|
+pub fn DwarfDieAttribute::form(self : DwarfDieAttribute) -> DwarfForm {
+  self.field_value.form()
+}
+
+///|
+pub fn DwarfDieAttribute::value_kind(
+  self : DwarfDieAttribute,
+) -> DwarfAbbrevValueKind {
+  self.field_value.value_kind()
+}
+
+///|
+pub fn DwarfDieAttribute::is_value_field(self : DwarfDieAttribute) -> Bool {
+  self.field_value.is_value_field()
+}
+
+///|
+pub fn DwarfDieAttribute::offset(self : DwarfDieAttribute) -> Int {
+  self.offset_value
+}
+
+///|
+pub fn DwarfDieAttribute::end_offset(self : DwarfDieAttribute) -> Int {
+  self.end_offset_value
 }
 
 ///|
@@ -101,6 +181,11 @@ pub fn DwarfDie::has_children(self : DwarfDie) -> Bool {
 ///|
 pub fn DwarfDie::fields(self : DwarfDie) -> Array[DwarfAbbrevField] {
   self.entry_value.fields()
+}
+
+///|
+pub fn DwarfDie::attributes(self : DwarfDie) -> Array[DwarfDieAttribute] {
+  self.attributes_value.copy()
 }
 
 ///|
@@ -156,7 +241,7 @@ pub fn DwarfInfoUnitHeader::dies(
                 self.dwarf_size(),
                 self.address_size(),
               ) {
-              Ok(next) => {
+              Ok((attributes, next)) => {
                 out.push(
                   dwarf_die_create(
                     section_offset~,
@@ -164,6 +249,7 @@ pub fn DwarfInfoUnitHeader::dies(
                     depth~,
                     code~,
                     entry~,
+                    attributes~,
                     attributes_offset~,
                     end_offset=next.position(),
                   ),

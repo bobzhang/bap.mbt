@@ -104,6 +104,43 @@ test "translated DWARF section buffers read DWARF5 rnglists entries" {
 }
 
 ///|
+test "translated DWARF section buffers read DWARF4 ranges entries" {
+  let ranges = b"\xff\xff\xff\xff\x00\x10\x00\x00" +
+    b"\x10\x00\x00\x00\x18\x00\x00\x00" +
+    b"\x00\x00\x00\x00\x00\x00\x00\x00"
+  let buffer = expect_section_buffer(@dwarf.DwarfSectionBuffer::create(ranges))
+  let list = expect_range_list(
+    @dwarf.DwarfRangeList::read_ranges(
+      buffer,
+      endian=LittleEndian,
+      addr_size=W32,
+    ),
+  )
+  assert_true(list.length() == 2)
+  assert_true(!list.is_empty())
+  assert_true(
+    list.entries() ==
+    [DwarfRangeBaseAddress(0x1000UL), DwarfRangeOffsetPair(0x10, 0x18)],
+  )
+}
+
+///|
+test "translated DWARF data exposes ranges section reader" {
+  let data = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=BigEndian,
+      ranges=b"\xff\x00\xff\xff\xff\xff\x00\x00\x20\x00\x00\x00\x00\x00\x00\x00\x00\x00",
+    ),
+  )
+  let list = expect_range_list(data.ranges(offset=2, addr_size=W32))
+  assert_true(list.entries() == [DwarfRangeBaseAddress(0x2000UL)])
+  let without_ranges = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(endian=BigEndian, info=b"\x00"),
+  )
+  assert_true(without_ranges.ranges(addr_size=W32) is Err(_))
+}
+
+///|
 test "translated DWARF data exposes rnglists section reader" {
   let data = expect_dwarf_data(
     @dwarf.DwarfData::from_bytes(

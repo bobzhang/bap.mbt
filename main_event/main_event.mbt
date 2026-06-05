@@ -44,6 +44,20 @@ let main_event_pair : (@future.Stream[MainEvent], @future.Signal[MainEvent]) = @
 let main_event_printers : Array[(MainEvent) -> String?] = []
 
 ///|
+let main_progress_last_total : Map[String, Int] = {}
+
+///|
+fn main_progress_total(task : String, total : Int?) -> Int? {
+  match total {
+    Some(total) => {
+      main_progress_last_total[task] = total
+      Some(total)
+    }
+    None => main_progress_last_total.get(task)
+  }
+}
+
+///|
 pub fn stream() -> @future.Stream[MainEvent] {
   main_event_pair.0
 }
@@ -233,6 +247,7 @@ pub fn progress(
   stage? : Int,
   total? : Int,
 ) -> Unit {
+  let total = main_progress_total(task, total)
   send(MainLogProgress(MainProgress::create(task~, note?, stage?, total?)))
 }
 

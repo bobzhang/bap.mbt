@@ -66,15 +66,17 @@ test "main log reporter emits level-specific messages and progress" {
   quiet.warning(message="careful")
   quiet.error(message="failed")
   quiet.report_progress(task="phase", note="parse", stage=2, total=4)
+  quiet.report_progress(task="phase", note="emit", stage=3)
   let noisy = @main_event.Log::create(section="noisy", debug_enabled=true)
   noisy.debug(message="visible")
   @main_event.stream().unsubscribe(id)
-  assert_true(events.length() == 5)
+  assert_true(events.length() == 6)
   assert_true(events[0].to_string() == "quiet.info> ready")
   assert_true(events[1].to_string() == "quiet.warning> careful")
   assert_true(events[2].to_string() == "quiet.error> failed")
   assert_true(events[3].to_string() == "progress.quiet/phase> [2/4] parse")
-  assert_true(events[4].to_string() == "noisy.debug> visible")
+  assert_true(events[4].to_string() == "progress.quiet/phase> [3/4] emit")
+  assert_true(events[5].to_string() == "noisy.debug> visible")
 }
 
 ///|

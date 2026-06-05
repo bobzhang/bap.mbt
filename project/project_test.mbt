@@ -1201,6 +1201,73 @@ test "project maps programs and stores libraries" {
 }
 
 ///|
+test "project top-level BAP facades delegate to methods" {
+  let target = @core_theory.Target::unknown()
+  let base = @project.empty(target)
+  assert_true(@project.target(base).is_unknown())
+  assert_true(@project.arch(base).is_unknown())
+  assert_true(@project.state(base).subroutines().is_empty())
+  assert_true(@project.specification(base).fact_count("arch") == 1)
+  assert_true(@project.program(base).subs().is_empty())
+  assert_true(@project.symbols(base).is_empty())
+  assert_true(@project.storage(base).is_empty())
+  assert_true(@project.memory(base).length() == 0)
+  assert_true(@project.libraries(base).is_empty())
+  assert_true(@project.disasm(base).project().target().is_unknown())
+  let sub = @types.Sub::create(name="facade-entry")
+  let program = @types.Program::create().append_sub(sub)
+  let with_program = @project.with_program(base, program)
+  assert_true(@project.program(with_program).subs().length() == 1)
+  let mapped = @project.map_program(base, _ => program)
+  assert_true(@project.program(mapped).subs()[0].sub_name() == "facade-entry")
+  let symbol = @image.Symbol::create(name="facade", addr=0x1000UL, size=1)
+  let with_symbols = @project.with_symbols(base, [symbol])
+  assert_true(@project.symbols(with_symbols)[0].name() == "facade")
+  let memory = raw_segment().memory()
+  let memory_map = @memory.MemMap::singleton(memory, "code")
+  let with_memory = @project.with_memory(base, memory_map)
+  assert_true(@project.memory(with_memory).length() == 1)
+  let tagged = @project.tag_memory(base, memory, "entry")
+  assert_true(@project.memory(tagged).entries()[0].1 == "entry")
+  let stored = @project.set(base, "kind", "unit")
+  assert_true(@project.has(stored, "kind"))
+  assert_true(@project.get(stored, "kind") == Some("unit"))
+  assert_true(!@project.has(@project.del(stored, "kind"), "kind"))
+  let replacement_storage : Map[String, String] = { "mode": "compat" }
+  let replaced = @project.with_storage(base, replacement_storage)
+  assert_true(@project.get(replaced, "mode") == Some("compat"))
+  let substituted = @project.substitute(stored, memory, "summary", "addr=$addr")
+  assert_true(
+    @project.memory(substituted).entries()[0].1 == "summary=addr=0x1000",
+  )
+  assert_true(@project.restore_state(base) is Err(_))
+}
+
+///|
+test "project top-level create delegates to source-driven input creation" {
+  let target = @core_theory.Target::unknown()
+  let memory = @memory.MemMap::singleton(raw_segment().memory(), "code")
+  let input = @project.ProjectInput::custom(target~, memory~)
+  let reconstructor = @project.ProjectDisassemblySource::single(
+    @project.ProjectReconstructor::create(project => Ok(project)),
+  )
+  match
+    @project.create(
+      input,
+      state=@project.ProjectState::empty(),
+      pkg="facade",
+      reconstructor~,
+    ) {
+    Ok(project) => {
+      assert_true(@project.target(project).is_unknown())
+      assert_true(project.pkg() == Some("facade"))
+      assert_true(@project.memory(project).length() == 1)
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project and libraries carry disassembly state" {
   let target = @core_theory.Target::unknown()
   let block = raw_segment().memory()

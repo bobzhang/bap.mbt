@@ -16,11 +16,19 @@ import {
 // Values
 pub fn apply_analysis(String, Array[String], pkg? : String) -> Result[Unit, String]
 
+pub fn arch(Project) -> @core_theory.Target
+
 pub fn available_input_loaders() -> Array[String]
 
 pub fn brancher_names() -> Array[String]
 
 pub fn brancher_source_names() -> Array[String]
+
+pub fn create(ProjectInput, pkg? : String, state? : ProjectState, disassembler? : String, driver_source? : ProjectDisassemblySource[ProjectDisassemblyDriver], brancher? : ProjectDisassemblySource[ProjectBrancher], symbolizer? : ProjectDisassemblySource[ProjectSymbolizer], rooter? : ProjectDisassemblySource[ProjectRooter], reconstructor? : ProjectDisassemblySource[ProjectReconstructor]) -> Result[Project, String]
+
+pub fn del(Project, String) -> Project
+
+pub fn disasm(Project) -> ProjectDisasm
 
 pub fn disassembly_basic_backends() -> Array[String]
 
@@ -29,6 +37,8 @@ pub fn disassembly_driver_names() -> Array[String]
 pub fn disassembly_driver_source_names() -> Array[String]
 
 pub fn disassembly_drivers() -> Array[ProjectDisassemblyDriver]
+
+pub fn empty(@core_theory.Target) -> Project
 
 pub fn find_analysis(String, pkg? : String) -> ProjectAnalysis?
 
@@ -54,9 +64,19 @@ pub fn find_rooter_source(String) -> ProjectDisassemblySource[ProjectRooter]?
 
 pub fn find_symbolizer_source(String) -> ProjectDisassemblySource[ProjectSymbolizer]?
 
+pub fn get(Project, String) -> String?
+
+pub fn has(Project, String) -> Bool
+
 pub fn input_loader_names_for_extension(String) -> Array[String]
 
 pub fn input_loaders_for_extension(String) -> Array[ProjectInputLoader]
+
+pub fn libraries(Project) -> Array[Library]
+
+pub fn map_program(Project, (@types.Term[@types.Program]) -> @types.Term[@types.Program]) -> Project
+
+pub fn memory(Project) -> @memory.MemMap[String]
 
 pub fn memory_slot() -> @knowledge.Slot[Unit, @memory.MemMap[String]]
 
@@ -67,6 +87,8 @@ pub fn pass_registration_events() -> Array[ProjectPassEvent]
 pub fn pass_registrations() -> @future.Stream[ProjectPass]
 
 pub fn passes() -> Array[ProjectPass]
+
+pub fn program(Project) -> @types.Term[@types.Program]
 
 pub fn project_instruction_operands_same_normalized_prefix(Array[ProjectInstructionOperand], Array[ProjectInstructionOperand]) -> Bool
 
@@ -140,9 +162,35 @@ pub fn registered_collators() -> Array[ProjectCollatorInfo]
 
 pub fn resolve_passes(Array[String]) -> Result[Array[ProjectPass], String]
 
+pub fn restore_state(Project) -> Result[Unit, String]
+
 pub fn rooter_source_names() -> Array[String]
 
+pub fn set(Project, String, String) -> Project
+
+pub fn specification(Project) -> @image.OgreDoc
+
+pub fn state(Project) -> ProjectState
+
+pub fn storage(Project) -> Map[String, String]
+
+pub fn substitute(Project, @memory.Memory, String, String) -> Project
+
 pub fn symbolizer_source_names() -> Array[String]
+
+pub fn symbols(Project) -> Array[@image.Symbol]
+
+pub fn tag_memory(Project, @memory.Memory, String) -> Project
+
+pub fn target(Project) -> @core_theory.Target
+
+pub fn with_memory(Project, @memory.MemMap[String]) -> Project
+
+pub fn with_program(Project, @types.Term[@types.Program]) -> Project
+
+pub fn with_storage(Project, Map[String, String]) -> Project
+
+pub fn with_symbols(Project, Array[@image.Symbol]) -> Project
 
 // Errors
 pub(all) suberror ProjectDisasmError {

@@ -47,6 +47,7 @@ This repository is porting `.repos/bap` from OCaml to idiomatic MoonBit.
 - `project/restore_state`: The deprecated upstream project state-restore hook is exposed as an explicit unsupported compatibility result that directs callers to top-level state persistence.
 - `project/persistent metadata`: Project exposes an initial persistent codec for target, filename, string storage metadata, annotated memory maps, project symbols, library metadata/memory/symbols, and retained MoonBit IR program/disassembly state as a step toward the upstream `Data.S` project surface.
 - `project/disasm accessors`: Project and library values expose BAP-style `disasm` facades over their retained disassembly state.
+- `project/top-level API`: BAP-style top-level project facades delegate to the port's existing methods for state, target/arch/specification, program, symbols, storage, memory, disassembly, libraries, source-driven creation, mutation helpers, mapping, substitution, and restore-state compatibility.
 - `project/pass run_exn`: Project passes expose a BAP-style raising `run_exn` wrapper that preserves checked pass execution, dependency handling, and lifecycle telemetry.
 - `project/pass errors`: Project pass object execution reports BAP-style structured dependency and runtime errors while preserving string-returning project-level convenience runners.
 - `project/memory_slot`: Project exposes the BAP-style public `unit-memory` Knowledge slot on program units with a flat memory-map domain and port-native persistence over retained memory annotations.

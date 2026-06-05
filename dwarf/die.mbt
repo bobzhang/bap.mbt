@@ -28,6 +28,39 @@ pub(all) enum DwarfDieReference {
 } derive(Eq, Debug)
 
 ///|
+pub fn DwarfDieReference::section_offset(
+  self : DwarfDieReference,
+  unit_start~ : Int,
+) -> Result[Int, String] {
+  if unit_start < 0 {
+    return Err("negative DWARF unit start offset")
+  }
+  match self {
+    DwarfUnitReference(offset) =>
+      if offset < 0 {
+        Err("negative DWARF reference offset")
+      } else {
+        let target = unit_start + offset
+        if target < unit_start {
+          Err("DWARF reference offset overflow")
+        } else {
+          Ok(target)
+        }
+      }
+    DwarfSectionReference(offset) =>
+      if offset < 0 {
+        Err("negative DWARF reference offset")
+      } else {
+        Ok(offset)
+      }
+    DwarfSupplementaryReference(_) | DwarfAlternateReference(_) =>
+      Err("DWARF DIE reference targets external debug data")
+    DwarfTypeSignatureReference(_) =>
+      Err("DWARF type-signature reference is not a section offset")
+  }
+}
+
+///|
 fn dwarf_die_create(
   section_offset~ : Int,
   unit_offset~ : Int,
@@ -485,6 +518,11 @@ pub fn DwarfDie::section_offset(self : DwarfDie) -> Int {
 }
 
 ///|
+pub fn DwarfDie::unit_start_offset(self : DwarfDie) -> Int {
+  self.section_offset_value - self.unit_offset_value
+}
+
+///|
 pub fn DwarfDie::unit_offset(self : DwarfDie) -> Int {
   self.unit_offset_value
 }
@@ -631,6 +669,36 @@ pub fn DwarfData::unit_dies(
     Err(reason) => return Err(reason)
   }
   header.dies(info, abbrev_table, endian=self.endian())
+}
+
+///|
+pub fn DwarfData::die_by_section_offset(
+  self : DwarfData,
+  offset : Int,
+) -> Result[DwarfDie?, String] {
+  if offset < 0 {
+    return Err("negative DWARF DIE section offset")
+  }
+  match self.dies() {
+    Ok(dies) =>
+      match dies.search_by(die => die.section_offset() == offset) {
+        Some(index) => Ok(Some(dies[index]))
+        None => Ok(None)
+      }
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+pub fn DwarfData::referenced_die(
+  self : DwarfData,
+  reference : DwarfDieReference,
+  unit_start~ : Int,
+) -> Result[DwarfDie?, String] {
+  match reference.section_offset(unit_start~) {
+    Ok(offset) => self.die_by_section_offset(offset)
+    Err(reason) => Err(reason)
+  }
 }
 
 ///|

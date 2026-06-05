@@ -86,6 +86,7 @@ pub fn DwarfData::address_table(Self, offset? : Int, addr_size~ : DwarfWordSize)
 pub fn DwarfData::address_table_contribution(Self, offset? : Int) -> Result[DwarfAddressTable, String]
 pub fn DwarfData::create(endian~ : @bitvec.Endian, sections~ : Array[(DwarfSection, DwarfSectionBuffer)]) -> Result[Self, String]
 pub fn DwarfData::debug_string(Self, offset? : Int) -> Result[String, String]
+pub fn DwarfData::die_by_section_offset(Self, Int) -> Result[DwarfDie?, String]
 pub fn DwarfData::dies(Self) -> Result[Array[DwarfDie], String]
 pub fn DwarfData::endian(Self) -> @bitvec.Endian
 pub fn DwarfData::from_bytes(endian~ : @bitvec.Endian, info? : Bytes, abbrev? : Bytes, str? : Bytes, line_str? : Bytes, str_offsets? : Bytes, addr? : Bytes, ranges? : Bytes, rnglists? : Bytes, loclists? : Bytes) -> Result[Self, String]
@@ -96,6 +97,7 @@ pub fn DwarfData::line_string(Self, offset? : Int) -> Result[String, String]
 pub fn DwarfData::line_string_table(Self, offset? : Int) -> Result[DwarfStringTable, String]
 pub fn DwarfData::loclist(Self, offset? : Int, addr_size~ : DwarfWordSize) -> Result[DwarfLocationList, String]
 pub fn DwarfData::ranges(Self, offset? : Int, addr_size~ : DwarfWordSize) -> Result[DwarfRangeList, String]
+pub fn DwarfData::referenced_die(Self, DwarfDieReference, unit_start~ : Int) -> Result[DwarfDie?, String]
 pub fn DwarfData::rnglist(Self, offset? : Int, addr_size~ : DwarfWordSize) -> Result[DwarfRangeList, String]
 pub fn DwarfData::section(Self, DwarfSection) -> Result[DwarfSectionBuffer, String]
 pub fn DwarfData::sections(Self) -> Array[(DwarfSection, DwarfSectionBuffer)]
@@ -118,6 +120,7 @@ pub fn DwarfDie::has_children(Self) -> Bool
 pub fn DwarfDie::section_offset(Self) -> Int
 pub fn DwarfDie::tag(Self) -> DwarfTag
 pub fn DwarfDie::unit_offset(Self) -> Int
+pub fn DwarfDie::unit_start_offset(Self) -> Int
 
 type DwarfDieAttribute
 pub fn DwarfDieAttribute::address(Self, DwarfSectionBuffer, endian~ : @bitvec.Endian, addr_size~ : DwarfWordSize) -> Result[UInt64, String]
@@ -146,6 +149,7 @@ pub(all) enum DwarfDieReference {
   DwarfAlternateReference(Int)
   DwarfTypeSignatureReference(UInt64)
 } derive(Eq, @debug.Debug)
+pub fn DwarfDieReference::section_offset(Self, unit_start~ : Int) -> Result[Int, String]
 
 pub(all) enum DwarfForm {
   DwarfAddr

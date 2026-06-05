@@ -177,6 +177,16 @@ fn expect_die_attr_ref(
 }
 
 ///|
+fn expect_optional_die(
+  value : Result[@dwarf.DwarfDie?, String],
+) -> @dwarf.DwarfDie? raise {
+  match value {
+    Ok(value) => value
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "translated DWARF section data stores buffers by section" {
   let info = expect_section_buffer(@dwarf.DwarfSectionBuffer::create(b"info"))
   let abbrev = expect_section_buffer(
@@ -376,6 +386,7 @@ test "translated DWARF data exposes structural DIE records" {
   let dies = expect_dies(data.unit_dies())
   assert_true(dies.length() == 2)
   assert_true(dies[0].section_offset() == 11)
+  assert_true(dies[0].unit_start_offset() == 0)
   assert_true(dies[0].unit_offset() == 11)
   assert_true(dies[0].depth() == 0)
   assert_true(dies[0].code() == 1)
@@ -394,6 +405,7 @@ test "translated DWARF data exposes structural DIE records" {
   assert_true(dies[0].attributes()[0].end_offset() == 15)
   assert_true(dies[0].attributes()[0].field().attr() == DwarfName)
   assert_true(dies[1].section_offset() == 15)
+  assert_true(dies[1].unit_start_offset() == 0)
   assert_true(dies[1].unit_offset() == 15)
   assert_true(dies[1].depth() == 1)
   assert_true(dies[1].code() == 2)
@@ -507,6 +519,33 @@ test "translated DWARF DIE attributes expose index and reference readers" {
   let info_section = expect_section_buffer(data.section(DwarfInfo))
   let attrs = expect_dies(data.unit_dies())[0].attributes()
   assert_true(attrs.length() == 6)
+  let unit_ref = expect_die_attr_ref(
+    attrs[3].reference(
+      info_section,
+      endian=LittleEndian,
+      version=4,
+      dwarf_size=W32,
+      addr_size=W32,
+    ),
+  )
+  let section_ref = expect_die_attr_ref(
+    attrs[4].reference(
+      info_section,
+      endian=LittleEndian,
+      version=4,
+      dwarf_size=W32,
+      addr_size=W32,
+    ),
+  )
+  let signature_ref = expect_die_attr_ref(
+    attrs[5].reference(
+      info_section,
+      endian=LittleEndian,
+      version=4,
+      dwarf_size=W32,
+      addr_size=W32,
+    ),
+  )
   assert_true(
     expect_die_attr_index(
       attrs[0].index_value(info_section, endian=LittleEndian),
@@ -525,42 +564,39 @@ test "translated DWARF DIE attributes expose index and reference readers" {
     ) ==
     4,
   )
+  assert_true(unit_ref == DwarfUnitReference(0x0b))
+  assert_true(section_ref == DwarfSectionReference(0x18))
   assert_true(
-    expect_die_attr_ref(
-      attrs[3].reference(
-        info_section,
-        endian=LittleEndian,
-        version=4,
-        dwarf_size=W32,
-        addr_size=W32,
-      ),
-    ) ==
-    DwarfUnitReference(0x0b),
+    signature_ref == DwarfTypeSignatureReference(0x1122334455667788UL),
+  )
+  assert_true(unit_ref.section_offset(unit_start=0) == Ok(0x0b))
+  assert_true(section_ref.section_offset(unit_start=0) == Ok(0x18))
+  let sup_ref : @dwarf.DwarfDieReference = DwarfSupplementaryReference(1)
+  let alt_ref : @dwarf.DwarfDieReference = DwarfAlternateReference(1)
+  let negative_ref : @dwarf.DwarfDieReference = DwarfUnitReference(-1)
+  let overflowing_ref : @dwarf.DwarfDieReference = DwarfUnitReference(1)
+  assert_true(sup_ref.section_offset(unit_start=0) is Err(_))
+  assert_true(alt_ref.section_offset(unit_start=0) is Err(_))
+  assert_true(signature_ref.section_offset(unit_start=0) is Err(_))
+  assert_true(negative_ref.section_offset(unit_start=0) is Err(_))
+  assert_true(overflowing_ref.section_offset(unit_start=2147483647) is Err(_))
+  assert_true(
+    expect_optional_die(data.referenced_die(unit_ref, unit_start=0)).map(die => {
+      die.section_offset()
+    }) ==
+    Some(0x0b),
   )
   assert_true(
-    expect_die_attr_ref(
-      attrs[4].reference(
-        info_section,
-        endian=LittleEndian,
-        version=4,
-        dwarf_size=W32,
-        addr_size=W32,
-      ),
-    ) ==
-    DwarfSectionReference(0x18),
+    expect_optional_die(
+      data.referenced_die(DwarfSectionReference(0x0b), unit_start=0),
+    ).map(die => die.unit_offset()) ==
+    Some(0x0b),
   )
   assert_true(
-    expect_die_attr_ref(
-      attrs[5].reference(
-        info_section,
-        endian=LittleEndian,
-        version=4,
-        dwarf_size=W32,
-        addr_size=W32,
-      ),
-    ) ==
-    DwarfTypeSignatureReference(0x1122334455667788UL),
+    expect_optional_die(data.referenced_die(section_ref, unit_start=0)) is None,
   )
+  assert_true(data.referenced_die(sup_ref, unit_start=0) is Err(_))
+  assert_true(data.die_by_section_offset(-1) is Err(_))
   assert_true(
     attrs[0].reference(
       info_section,

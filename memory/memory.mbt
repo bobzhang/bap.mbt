@@ -18,6 +18,12 @@ struct Memory {
 }
 
 ///|
+struct MemoryInputReader {
+  width_value : Int
+  signed_value : Bool
+}
+
+///|
 fn u64_from_int(value : Int) -> UInt64 {
   value.to_uint64()
 }
@@ -256,6 +262,74 @@ pub fn Memory::load_exn(
   match self.load(addr, width~, disp~, index~, scale~) {
     Ok(word) => word
     Err(reason) => raise MemoryFailure(reason)
+  }
+}
+
+///|
+pub fn MemoryInputReader::word(word_size~ : Int) -> MemoryInputReader {
+  { width_value: word_size, signed_value: false }
+}
+
+///|
+pub fn MemoryInputReader::int8() -> MemoryInputReader {
+  { width_value: 8, signed_value: true }
+}
+
+///|
+pub fn MemoryInputReader::uint8() -> MemoryInputReader {
+  { width_value: 8, signed_value: false }
+}
+
+///|
+pub fn MemoryInputReader::int16() -> MemoryInputReader {
+  { width_value: 16, signed_value: true }
+}
+
+///|
+pub fn MemoryInputReader::uint16() -> MemoryInputReader {
+  { width_value: 16, signed_value: false }
+}
+
+///|
+pub fn MemoryInputReader::int32() -> MemoryInputReader {
+  { width_value: 32, signed_value: true }
+}
+
+///|
+pub fn MemoryInputReader::int64() -> MemoryInputReader {
+  { width_value: 64, signed_value: true }
+}
+
+///|
+pub fn MemoryInputReader::int128() -> MemoryInputReader {
+  { width_value: 128, signed_value: true }
+}
+
+///|
+pub fn MemoryInputReader::int256() -> MemoryInputReader {
+  { width_value: 256, signed_value: true }
+}
+
+///|
+pub fn MemoryInputReader::run(
+  self : MemoryInputReader,
+  memory : Memory,
+  addr : UInt64,
+) -> Result[(@types.Word, UInt64), String] {
+  if self.width_value <= 0 || self.width_value % 8 != 0 {
+    Err("memory input reader width must be a positive multiple of 8")
+  } else {
+    match memory.load(addr, width=self.width_value) {
+      Ok(word) => {
+        let value = if self.signed_value {
+          word.signed()
+        } else {
+          word.unsigned()
+        }
+        Ok((value, addr + (self.width_value / 8).to_uint64()))
+      }
+      Err(reason) => Err(reason)
+    }
   }
 }
 

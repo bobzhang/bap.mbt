@@ -120,6 +120,18 @@ pub fn Memory::to_string(Self) -> String
 pub fn Memory::view(Self, from? : UInt64, words? : Int, word_size? : Int) -> Result[Self, String]
 pub fn Memory::view_exn(Self, from? : UInt64, words? : Int, word_size? : Int) -> Self raise MemoryError
 
+type MemoryInputReader
+pub fn MemoryInputReader::int128() -> Self
+pub fn MemoryInputReader::int16() -> Self
+pub fn MemoryInputReader::int256() -> Self
+pub fn MemoryInputReader::int32() -> Self
+pub fn MemoryInputReader::int64() -> Self
+pub fn MemoryInputReader::int8() -> Self
+pub fn MemoryInputReader::run(Self, Memory, UInt64) -> Result[(@types.Word, UInt64), String]
+pub fn MemoryInputReader::uint16() -> Self
+pub fn MemoryInputReader::uint8() -> Self
+pub fn MemoryInputReader::word(word_size~ : Int) -> Self
+
 // Type aliases
 
 // Traits

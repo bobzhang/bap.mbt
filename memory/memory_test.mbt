@@ -116,6 +116,83 @@ test "loads honor endian order and stores update bytes" {
 }
 
 ///|
+test "translated BAP memory input readers load words and advance addresses" {
+  let memory = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x1000UL,
+    b"\x80\x01\x02\x03\x04\x05\x06\x07",
+  )
+  match @memory.MemoryInputReader::int8().run(memory, 0x1000UL) {
+    Ok((word, next)) => {
+      assert_true(next == 0x1001UL)
+      assert_true(word.is_signed())
+      assert_true(word.to_int32_exn() == -128)
+    }
+    Err(reason) => fail(reason)
+  }
+  match @memory.MemoryInputReader::uint8().run(memory, 0x1000UL) {
+    Ok((word, next)) => {
+      assert_true(next == 0x1001UL)
+      assert_true(!word.is_signed())
+      assert_true(word.to_int32_exn() == 0x80)
+    }
+    Err(reason) => fail(reason)
+  }
+  match @memory.MemoryInputReader::int16().run(memory, 0x1000UL) {
+    Ok((word, next)) => {
+      assert_true(next == 0x1002UL)
+      assert_true(word.is_signed())
+      assert_true(word.to_hex() == "0x0180")
+    }
+    Err(reason) => fail(reason)
+  }
+  match @memory.MemoryInputReader::uint16().run(memory, 0x1000UL) {
+    Ok((word, next)) => {
+      assert_true(next == 0x1002UL)
+      assert_true(!word.is_signed())
+      assert_true(word.to_hex() == "0x0180")
+    }
+    Err(reason) => fail(reason)
+  }
+  match @memory.MemoryInputReader::int32().run(memory, 0x1000UL) {
+    Ok((word, next)) => {
+      assert_true(next == 0x1004UL)
+      assert_true(word.is_signed())
+      assert_true(word.to_hex() == "0x03020180")
+    }
+    Err(reason) => fail(reason)
+  }
+  match @memory.MemoryInputReader::word(word_size=24).run(memory, 0x1001UL) {
+    Ok((word, next)) => {
+      assert_true(next == 0x1004UL)
+      assert_true(!word.is_signed())
+      assert_true(word.to_hex() == "0x030201")
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    @memory.MemoryInputReader::int64().run(memory, 0x1001UL) is Err(_),
+  )
+}
+
+///|
+test "translated BAP memory input readers honor big endian loads" {
+  let memory = @memory.Memory::from_bytes(
+    endian=BigEndian,
+    start=0x2000UL,
+    b"\x80\x01\x02\x03\x04\x05\x06\x07",
+  )
+  match @memory.MemoryInputReader::int64().run(memory, 0x2000UL) {
+    Ok((word, next)) => {
+      assert_true(next == 0x2008UL)
+      assert_true(word.is_signed())
+      assert_true(word.to_hex() == "0x8001020304050607")
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "memory merge accepts contiguous regions" {
   let left = @memory.Memory::from_bytes(
     endian=LittleEndian,

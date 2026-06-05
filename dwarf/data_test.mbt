@@ -49,6 +49,16 @@ fn expect_address_table(
 }
 
 ///|
+fn expect_string_offsets_table(
+  value : Result[@dwarf.DwarfStringOffsetsTable, String],
+) -> @dwarf.DwarfStringOffsetsTable raise {
+  match value {
+    Ok(value) => value
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "translated DWARF section data stores buffers by section" {
   let info = expect_section_buffer(@dwarf.DwarfSectionBuffer::create(b"info"))
   let abbrev = expect_section_buffer(
@@ -138,6 +148,82 @@ test "translated DWARF data exposes address table readers" {
   )
   assert_true(without_addr.address_table(addr_size=W32) is Err(_))
   assert_true(without_addr.address_table_contribution() is Err(_))
+}
+
+///|
+test "translated DWARF section buffers read raw string-offset tables" {
+  let offsets = b"\xff\x00" + b"\x00\x00\x00\x00" + b"\x05\x00\x00\x00"
+  let buffer = expect_section_buffer(@dwarf.DwarfSectionBuffer::create(offsets))
+  let table = expect_string_offsets_table(
+    @dwarf.DwarfStringOffsetsTable::read(
+      buffer,
+      offset=2,
+      endian=LittleEndian,
+      dwarf_size=W32,
+    ),
+  )
+  let strings = expect_section_buffer(
+    @dwarf.DwarfSectionBuffer::create(b"skip\x00name\x00"),
+  )
+  assert_true(table.version() == None)
+  assert_true(table.dwarf_size() == W32)
+  assert_true(table.base_offset() == 2)
+  assert_true(table.length() == 2)
+  assert_true(!table.is_empty())
+  assert_true(table.offsets() == [0, 5])
+  assert_true(table.offset(1) == Ok(5))
+  assert_true(table.offset(-1) is Err(_))
+  assert_true(table.offset(2) is Err(_))
+  assert_true(table.strings(strings) == Ok(["skip", "name"]))
+  assert_true(table.string(strings, 1) == Ok("name"))
+}
+
+///|
+test "translated DWARF section buffers read DWARF5 string-offset contributions" {
+  let offsets = b"\x0c\x00\x00\x00" +
+    b"\x05\x00" +
+    b"\x00\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x05\x00\x00\x00"
+  let buffer = expect_section_buffer(@dwarf.DwarfSectionBuffer::create(offsets))
+  let table = expect_string_offsets_table(
+    @dwarf.DwarfStringOffsetsTable::read_contribution(
+      buffer,
+      endian=LittleEndian,
+    ),
+  )
+  assert_true(table.version() == Some(5))
+  assert_true(table.dwarf_size() == W32)
+  assert_true(table.base_offset() == 8)
+  assert_true(table.offsets() == [0, 5])
+  assert_true(
+    @dwarf.DwarfStringOffsetsTable::read_contribution(
+      expect_section_buffer(
+        @dwarf.DwarfSectionBuffer::create(b"\x04\x00\x00\x00\x05\x00\x01\x00"),
+      ),
+      endian=LittleEndian,
+    )
+    is Err(_),
+  )
+}
+
+///|
+test "translated DWARF data exposes string-offset table readers" {
+  let data = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=BigEndian,
+      str_offsets=b"\xff\x00\x00\x00\x00\x05",
+    ),
+  )
+  let raw = expect_string_offsets_table(
+    data.string_offsets(offset=2, dwarf_size=W32),
+  )
+  assert_true(raw.offsets() == [5])
+  let without_offsets = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(endian=BigEndian, info=b"\x00"),
+  )
+  assert_true(without_offsets.string_offsets(dwarf_size=W32) is Err(_))
+  assert_true(without_offsets.string_offsets_contribution() is Err(_))
 }
 
 ///|

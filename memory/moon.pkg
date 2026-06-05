@@ -1,4 +1,9 @@
 import {
   "bobzhang/bap/bitvec",
+  "bobzhang/bap/native_io",
   "bobzhang/bap/types",
 }
+
+options(
+  targets: { "file_native_test.mbt": [ "native" ] },
+)

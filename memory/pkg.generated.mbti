@@ -123,6 +123,7 @@ pub fn Memory::load_exn(Self, UInt64, width? : Int, disp? : Int, index? : Int, s
 pub fn Memory::max_addr(Self) -> UInt64
 pub fn Memory::merge(Self, Self) -> Result[Self, String]
 pub fn Memory::min_addr(Self) -> UInt64
+pub fn Memory::of_file(endian~ : @bitvec.Endian, start~ : UInt64, String) -> Result[Self, String]
 pub fn Memory::range(Self, UInt64, UInt64) -> Result[Self, String]
 pub fn Memory::rebase(Self, UInt64) -> Self
 pub fn Memory::store(Self, UInt64, @types.Word) -> Result[Self, String]

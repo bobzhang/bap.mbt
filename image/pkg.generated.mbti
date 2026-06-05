@@ -59,6 +59,8 @@ pub fn register_backend_if_absent(ImageBackend) -> Result[Bool, String]
 
 pub fn register_builtin_backends() -> Result[Unit, String]
 
+pub fn register_legacy_backend(name~ : String, LegacyImageBackend, description? : String, extensions? : Array[String], priority? : Int) -> Result[Unit, String]
+
 pub fn register_loader(name~ : String, ImageLoader) -> Result[Unit, String]
 
 pub fn section() -> ImageTag[String]
@@ -160,12 +162,63 @@ pub fn ImageBackend::create(name~ : String, description? : String, extensions? :
 pub fn ImageBackend::description(Self) -> String
 pub fn ImageBackend::elf() -> Self
 pub fn ImageBackend::extensions(Self) -> Array[String]
+pub fn ImageBackend::from_legacy(name~ : String, LegacyImageBackend, description? : String, extensions? : Array[String], priority? : Int) -> Self
 pub fn ImageBackend::load(Self, Bytes) -> Result[(Image, Array[String]), String]
 pub fn ImageBackend::name(Self) -> String
 pub fn ImageBackend::ogre() -> Self
 pub fn ImageBackend::priority(Self) -> Int
 pub fn ImageBackend::raw() -> Self
 pub fn ImageBackend::supports_extension(Self, String) -> Bool
+
+pub(all) struct ImageBackendImage {
+  target : @core_theory.Target
+  entry : UInt64
+  segments : Array[ImageBackendSegment]
+  symbols : Array[ImageBackendSymbol]
+  sections : Array[ImageBackendSection]
+}
+pub fn ImageBackendImage::create(target~ : @core_theory.Target, entry~ : UInt64, Array[ImageBackendSegment], symbols? : Array[ImageBackendSymbol], sections? : Array[ImageBackendSection]) -> Self
+
+pub(all) struct ImageBackendLocation {
+  addr : UInt64
+  len : Int
+} derive(Eq, @debug.Debug)
+pub fn ImageBackendLocation::create(addr~ : UInt64, len~ : Int) -> Self
+
+pub(all) enum ImageBackendPerm {
+  ImageBackendR
+  ImageBackendW
+  ImageBackendX
+  ImageBackendOr(ImageBackendPerm, ImageBackendPerm)
+} derive(Eq, @debug.Debug)
+pub fn ImageBackendPerm::r() -> Self
+pub fn ImageBackendPerm::union(Self, Self) -> Self
+pub fn ImageBackendPerm::w() -> Self
+pub fn ImageBackendPerm::x() -> Self
+
+pub(all) struct ImageBackendSection {
+  name : String
+  location : ImageBackendLocation
+} derive(Eq, @debug.Debug)
+pub fn ImageBackendSection::create(name~ : String, location~ : ImageBackendLocation) -> Self
+
+pub(all) struct ImageBackendSegment {
+  name : String
+  perm : ImageBackendPerm
+  off : Int
+  location : ImageBackendLocation
+} derive(Eq, @debug.Debug)
+pub fn ImageBackendSegment::create(name~ : String, perm~ : ImageBackendPerm, off~ : Int, location~ : ImageBackendLocation) -> Self
+
+pub(all) struct ImageBackendSymbol {
+  name : String
+  is_function : Bool
+  is_debug : Bool
+  location : ImageBackendLocation
+  extra_locations : Array[ImageBackendLocation]
+} derive(Eq, @debug.Debug)
+pub fn ImageBackendSymbol::create(name~ : String, location~ : ImageBackendLocation, is_function? : Bool, is_debug? : Bool, extra_locations? : Array[ImageBackendLocation]) -> Self
+pub fn ImageBackendSymbol::locations(Self) -> Array[ImageBackendLocation]
 
 type ImageLoader
 pub fn ImageLoader::create(from_data~ : (Bytes) -> Result[OgreDoc?, String], from_file? : (String) -> Result[OgreDoc?, String]) -> Self
@@ -184,6 +237,10 @@ pub fn[T] ImageTag::uuid(Self[T]) -> String
 pub(all) struct KB {
 }
 pub fn KB::register_loader(name~ : String, from_file~ : (String) -> Result[OgreDoc?, String], from_data~ : (Bytes) -> Result[OgreDoc?, String]) -> Result[Unit, String]
+
+type LegacyImageBackend
+pub fn LegacyImageBackend::create(load~ : (Bytes) -> ImageBackendImage?) -> Self
+pub fn LegacyImageBackend::load(Self, Bytes) -> ImageBackendImage?
 
 type OgreAttribute
 pub fn OgreAttribute::declaration(Self) -> String

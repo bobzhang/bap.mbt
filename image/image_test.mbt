@@ -893,6 +893,128 @@ test "image backend discovery returns extension matches by priority" {
 }
 
 ///|
+test "image legacy backend facade materializes backend images" {
+  let segment_location = @image.ImageBackendLocation::create(
+    addr=0x4000UL,
+    len=4,
+  )
+  let section_location = @image.ImageBackendLocation::create(
+    addr=0x4001UL,
+    len=2,
+  )
+  let symbol_location = @image.ImageBackendLocation::create(
+    addr=0x4001UL,
+    len=2,
+  )
+  let segment = @image.ImageBackendSegment::create(
+    name=".legacy",
+    perm=@image.ImageBackendPerm::r().union(@image.ImageBackendPerm::x()),
+    off=1,
+    location=segment_location,
+  )
+  let section = @image.ImageBackendSection::create(
+    name=".legacy.hot",
+    location=section_location,
+  )
+  let symbol = @image.ImageBackendSymbol::create(
+    name="legacy_main",
+    location=symbol_location,
+    is_function=true,
+    is_debug=true,
+  )
+  let legacy = @image.LegacyImageBackend::create(load=data => {
+    if data.length() < 5 {
+      None
+    } else {
+      Some(
+        @image.ImageBackendImage::create(
+          target=@core_theory.Target::x86_64(),
+          entry=0x4001UL,
+          [segment],
+          symbols=[symbol],
+          sections=[section],
+        ),
+      )
+    }
+  })
+  match
+    @image.register_legacy_backend(
+      name="unit-legacy-image-backend",
+      legacy,
+      description="legacy image backend",
+      extensions=["ulegacy"],
+      priority=30,
+    ) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    @image.available_backend_names().contains("unit-legacy-image-backend"),
+  )
+  assert_true(
+    @image.backend_names_for_extension("ulegacy").contains(
+      "unit-legacy-image-backend",
+    ),
+  )
+  match
+    @image.Image::of_bytes(
+      b"\x00\xaa\xbb\xcc\xdd",
+      backend="unit-legacy-image-backend",
+    ) {
+    Ok((image, warnings)) => {
+      assert_true(warnings.is_empty())
+      assert_true(image.data() == b"\x00\xaa\xbb\xcc\xdd")
+      assert_true(image.entry_point() == 0x4001UL)
+      assert_true(image.addr_size() == 64)
+      assert_true(image.arch().matches("x86_64"))
+      let loaded_segment = image.segments()[0]
+      assert_true(loaded_segment.name() == ".legacy")
+      assert_true(loaded_segment.offset() == 1)
+      assert_true(loaded_segment.is_readable())
+      assert_true(!loaded_segment.is_writable())
+      assert_true(loaded_segment.is_executable())
+      inspect(loaded_segment.memory().hexdump(), content="aa bb cc dd")
+      let loaded_symbol = image.symbols()[0]
+      assert_true(loaded_symbol.name() == "legacy_main")
+      assert_true(loaded_symbol.is_function())
+      assert_true(loaded_symbol.is_debug())
+      match image.memory_of_section(image.sections()[0]) {
+        Some(memory) => inspect(memory.hexdump(), content="bb cc")
+        None => fail("expected legacy section memory")
+      }
+      match image.memory_of_symbol(loaded_symbol) {
+        Some((memory, rest)) => {
+          assert_true(rest.is_empty())
+          inspect(memory.hexdump(), content="bb cc")
+        }
+        None => fail("expected legacy symbol memory")
+      }
+      let spec = image.spec()
+      assert_true(spec.fact_count("mapped") == 1)
+      assert_true(spec.fact_count("segment") == 1)
+      assert_true(spec.fact_count("section") == 1)
+      assert_true(spec.fact_count("named-symbol") == 1)
+      assert_true(spec.fact_count("symbol-chunk") == 1)
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+test "image legacy backend reports unsupported inputs" {
+  let legacy = @image.LegacyImageBackend::create(load=_ => None)
+  match
+    @image.register_legacy_backend(name="unit-empty-legacy-backend", legacy) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    @image.Image::of_bytes(b"\x00", backend="unit-empty-legacy-backend")
+    is Err(_),
+  )
+}
+
+///|
 test "image loader registry builds images from Ogre documents" {
   let spec = "(declare entry-point (addr int))" +
     " (declare mapped (addr int) (size int) (off int))" +

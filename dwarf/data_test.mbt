@@ -958,9 +958,9 @@ test "translated DWARF DIE attributes expose index and reference readers" {
     b"\x03\x25" +
     b"\x11\x1b" +
     b"\x55\x23" +
-    b"\x31\x13" +
+    b"\x01\x13" +
     b"\x47\x10" +
-    b"\x7f\x20" +
+    b"\x49\x20" +
     b"\x00\x00" +
     b"\x00"
   let info = b"\x1b\x00\x00\x00" +
@@ -980,6 +980,8 @@ test "translated DWARF DIE attributes expose index and reference readers" {
   let info_section = expect_section_buffer(data.section(DwarfInfo))
   let attrs = expect_dies(data.unit_dies())[0].attributes()
   assert_true(attrs.length() == 6)
+  assert_true(attrs[3].attr() == DwarfSibling)
+  assert_true(attrs[5].attr() == DwarfType)
   let unit_ref = expect_die_attr_ref(
     attrs[3].reference(
       info_section,

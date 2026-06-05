@@ -61,6 +61,7 @@ pub fn DwarfAddressTable::read_contribution(DwarfSectionBuffer, offset? : Int, e
 pub fn DwarfAddressTable::version(Self) -> Int?
 
 pub(all) enum DwarfAttr {
+  DwarfSibling
   DwarfLocation
   DwarfName
   DwarfLinkageName
@@ -71,6 +72,7 @@ pub(all) enum DwarfAttr {
   DwarfRanges
   DwarfAbstractOrigin
   DwarfSpecification
+  DwarfType
   DwarfStrOffsetsBase
   DwarfAddrBase
   DwarfRangesBase
@@ -85,6 +87,8 @@ pub fn DwarfAttr::location() -> Self
 pub fn DwarfAttr::loclists_base() -> Self
 pub fn DwarfAttr::low_pc() -> Self
 pub fn DwarfAttr::name() -> Self
+pub fn DwarfAttr::sibling() -> Self
+pub fn DwarfAttr::type_() -> Self
 pub fn DwarfAttr::unknown(Int) -> Self
 
 type DwarfData

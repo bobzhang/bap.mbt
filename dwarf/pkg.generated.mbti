@@ -64,6 +64,9 @@ pub(all) enum DwarfAttr {
   DwarfSibling
   DwarfLocation
   DwarfName
+  DwarfImport
+  DwarfCommonReference
+  DwarfContainingType
   DwarfLinkageName
   DwarfFrameBase
   DwarfLowPc
@@ -73,6 +76,7 @@ pub(all) enum DwarfAttr {
   DwarfAbstractOrigin
   DwarfSpecification
   DwarfType
+  DwarfObjectPointer
   DwarfStrOffsetsBase
   DwarfAddrBase
   DwarfRangesBase
@@ -80,13 +84,17 @@ pub(all) enum DwarfAttr {
   DwarfLoclistsBase
   DwarfUnknownAttr(Int)
 } derive(Eq, @debug.Debug)
+pub fn DwarfAttr::common_reference() -> Self
+pub fn DwarfAttr::containing_type() -> Self
 pub fn DwarfAttr::entry_pc() -> Self
 pub fn DwarfAttr::frame_base() -> Self
 pub fn DwarfAttr::high_pc() -> Self
+pub fn DwarfAttr::import_() -> Self
 pub fn DwarfAttr::location() -> Self
 pub fn DwarfAttr::loclists_base() -> Self
 pub fn DwarfAttr::low_pc() -> Self
 pub fn DwarfAttr::name() -> Self
+pub fn DwarfAttr::object_pointer() -> Self
 pub fn DwarfAttr::sibling() -> Self
 pub fn DwarfAttr::type_() -> Self
 pub fn DwarfAttr::unknown(Int) -> Self

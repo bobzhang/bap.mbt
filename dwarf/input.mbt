@@ -93,6 +93,9 @@ pub(all) enum DwarfAttr {
   DwarfSibling
   DwarfLocation
   DwarfName
+  DwarfImport
+  DwarfCommonReference
+  DwarfContainingType
   DwarfLinkageName
   DwarfFrameBase
   DwarfLowPc
@@ -102,6 +105,7 @@ pub(all) enum DwarfAttr {
   DwarfAbstractOrigin
   DwarfSpecification
   DwarfType
+  DwarfObjectPointer
   DwarfStrOffsetsBase
   DwarfAddrBase
   DwarfRangesBase
@@ -113,6 +117,21 @@ pub(all) enum DwarfAttr {
 ///|
 pub fn DwarfAttr::name() -> DwarfAttr {
   DwarfName
+}
+
+///|
+pub fn DwarfAttr::import_() -> DwarfAttr {
+  DwarfImport
+}
+
+///|
+pub fn DwarfAttr::common_reference() -> DwarfAttr {
+  DwarfCommonReference
+}
+
+///|
+pub fn DwarfAttr::containing_type() -> DwarfAttr {
+  DwarfContainingType
 }
 
 ///|
@@ -153,6 +172,11 @@ pub fn DwarfAttr::loclists_base() -> DwarfAttr {
 ///|
 pub fn DwarfAttr::type_() -> DwarfAttr {
   DwarfType
+}
+
+///|
+pub fn DwarfAttr::object_pointer() -> DwarfAttr {
+  DwarfObjectPointer
 }
 
 ///|
@@ -623,6 +647,9 @@ fn dwarf_attr_of_int(code : Int) -> DwarfAttr {
     0x01 => DwarfSibling
     0x02 => DwarfLocation
     0x03 => DwarfName
+    0x18 => DwarfImport
+    0x1a => DwarfCommonReference
+    0x1d => DwarfContainingType
     0x11 => DwarfLowPc
     0x12 => DwarfHighPc
     0x31 => DwarfAbstractOrigin
@@ -631,6 +658,7 @@ fn dwarf_attr_of_int(code : Int) -> DwarfAttr {
     0x49 => DwarfType
     0x52 => DwarfEntryPc
     0x55 => DwarfRanges
+    0x64 => DwarfObjectPointer
     0x6e => DwarfLinkageName
     0x2007 => DwarfLinkageName
     0x72 => DwarfStrOffsetsBase

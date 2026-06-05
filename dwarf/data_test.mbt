@@ -961,9 +961,10 @@ test "translated DWARF DIE attributes expose index and reference readers" {
     b"\x01\x13" +
     b"\x47\x10" +
     b"\x49\x20" +
+    b"\x64\x11" +
     b"\x00\x00" +
     b"\x00"
-  let info = b"\x1b\x00\x00\x00" +
+  let info = b"\x1c\x00\x00\x00" +
     b"\x04\x00" +
     b"\x00\x00\x00\x00" +
     b"\x04" +
@@ -973,15 +974,17 @@ test "translated DWARF DIE attributes expose index and reference readers" {
     b"\x04" +
     b"\x0b\x00\x00\x00" +
     b"\x18\x00\x00\x00" +
-    b"\x88\x77\x66\x55\x44\x33\x22\x11"
+    b"\x88\x77\x66\x55\x44\x33\x22\x11" +
+    b"\x0c"
   let data = expect_dwarf_data(
     @dwarf.DwarfData::from_bytes(endian=LittleEndian, info~, abbrev~),
   )
   let info_section = expect_section_buffer(data.section(DwarfInfo))
   let attrs = expect_dies(data.unit_dies())[0].attributes()
-  assert_true(attrs.length() == 6)
+  assert_true(attrs.length() == 7)
   assert_true(attrs[3].attr() == DwarfSibling)
   assert_true(attrs[5].attr() == DwarfType)
+  assert_true(attrs[6].attr() == DwarfObjectPointer)
   let unit_ref = expect_die_attr_ref(
     attrs[3].reference(
       info_section,
@@ -1002,6 +1005,15 @@ test "translated DWARF DIE attributes expose index and reference readers" {
   )
   let signature_ref = expect_die_attr_ref(
     attrs[5].reference(
+      info_section,
+      endian=LittleEndian,
+      version=4,
+      dwarf_size=W32,
+      addr_size=W32,
+    ),
+  )
+  let object_ref = expect_die_attr_ref(
+    attrs[6].reference(
       info_section,
       endian=LittleEndian,
       version=4,
@@ -1032,6 +1044,7 @@ test "translated DWARF DIE attributes expose index and reference readers" {
   assert_true(
     signature_ref == DwarfTypeSignatureReference(0x1122334455667788UL),
   )
+  assert_true(object_ref == DwarfUnitReference(0x0c))
   assert_true(unit_ref.section_offset(unit_start=0) == Ok(0x0b))
   assert_true(section_ref.section_offset(unit_start=0) == Ok(0x18))
   let sup_ref : @dwarf.DwarfDieReference = DwarfSupplementaryReference(1)

@@ -59,7 +59,7 @@ test "translated DWARF input reads endian addresses and signed integers" {
 ///|
 test "translated DWARF input decodes tags attributes forms and LEB128 codes" {
   let input = @dwarf.DwarfInput::of_bytes(
-    b"\x2e\x0b\x3c\x01\x02\x55\x6e\x87\x40\x31\x40\x47\x49\x72\x73\xb2\x42\xb3\x42\x74\x8c\x01\x09\x25\x26\x27\x28\x1a\x1b\x81\x3e\x82\x3e\x29\x2a\x2b\x2c\x1e\x1f\x20\x21\x22\x23\x1d\x1c\x24\xa0\x3e\xa1\x3e\x0c\x0d\x0f\x10\x7f",
+    b"\x2e\x0b\x3c\x01\x02\x18\x1a\x1d\x55\x6e\x87\x40\x31\x40\x47\x49\x64\x72\x73\xb2\x42\xb3\x42\x74\x8c\x01\x09\x25\x26\x27\x28\x1a\x1b\x81\x3e\x82\x3e\x29\x2a\x2b\x2c\x1e\x1f\x20\x21\x22\x23\x1d\x1c\x24\xa0\x3e\xa1\x3e\x0c\x0d\x0f\x10\x7f",
   )
   let (tag, input) = expect_input_read(input.read_tag())
   assert_true(tag == DwarfSubprogram)
@@ -71,6 +71,12 @@ test "translated DWARF input decodes tags attributes forms and LEB128 codes" {
   assert_true(attr == DwarfSibling)
   let (attr, input) = expect_input_read(input.read_attr())
   assert_true(attr == DwarfLocation)
+  let (attr, input) = expect_input_read(input.read_attr())
+  assert_true(attr == DwarfImport)
+  let (attr, input) = expect_input_read(input.read_attr())
+  assert_true(attr == DwarfCommonReference)
+  let (attr, input) = expect_input_read(input.read_attr())
+  assert_true(attr == DwarfContainingType)
   let (attr, input) = expect_input_read(input.read_attr())
   assert_true(attr == DwarfRanges)
   let (attr, input) = expect_input_read(input.read_attr())
@@ -85,6 +91,8 @@ test "translated DWARF input decodes tags attributes forms and LEB128 codes" {
   assert_true(attr == DwarfSpecification)
   let (attr, input) = expect_input_read(input.read_attr())
   assert_true(attr == DwarfType)
+  let (attr, input) = expect_input_read(input.read_attr())
+  assert_true(attr == DwarfObjectPointer)
   let (attr, input) = expect_input_read(input.read_attr())
   assert_true(attr == DwarfStrOffsetsBase)
   let (attr, input) = expect_input_read(input.read_attr())
@@ -175,12 +183,16 @@ test "translated DWARF source-style type aliases construct values" {
   assert_true(@dwarf.DwarfAttr::name() == DwarfName)
   assert_true(@dwarf.DwarfAttr::sibling() == DwarfSibling)
   assert_true(@dwarf.DwarfAttr::location() == DwarfLocation)
+  assert_true(@dwarf.DwarfAttr::import_() == DwarfImport)
+  assert_true(@dwarf.DwarfAttr::common_reference() == DwarfCommonReference)
+  assert_true(@dwarf.DwarfAttr::containing_type() == DwarfContainingType)
   assert_true(@dwarf.DwarfAttr::frame_base() == DwarfFrameBase)
   assert_true(@dwarf.DwarfAttr::low_pc() == DwarfLowPc)
   assert_true(@dwarf.DwarfAttr::high_pc() == DwarfHighPc)
   assert_true(@dwarf.DwarfAttr::entry_pc() == DwarfEntryPc)
   assert_true(@dwarf.DwarfAttr::loclists_base() == DwarfLoclistsBase)
   assert_true(@dwarf.DwarfAttr::type_() == DwarfType)
+  assert_true(@dwarf.DwarfAttr::object_pointer() == DwarfObjectPointer)
   assert_true(@dwarf.DwarfAttr::unknown(9) == DwarfUnknownAttr(9))
   assert_true(@dwarf.DwarfForm::addr() == DwarfAddr)
   assert_true(@dwarf.DwarfForm::block(DwarfTwo) == DwarfBlock(DwarfTwo))

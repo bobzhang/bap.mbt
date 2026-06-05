@@ -430,6 +430,60 @@ pub fn DwarfDieAttribute::range_list_value(
 }
 
 ///|
+pub fn DwarfDieAttribute::location_list_value(
+  self : DwarfDieAttribute,
+  data : DwarfData,
+  version~ : Int,
+  dwarf_size~ : DwarfWordSize,
+  addr_size~ : DwarfWordSize,
+  loclists_base? : Int,
+) -> Result[DwarfLocationList, String] {
+  let info = match data.section(DwarfInfo) {
+    Ok(section) => section
+    Err(reason) => return Err(reason)
+  }
+  match self.form() {
+    DwarfOffset =>
+      if version < 5 {
+        Err("DWARF4 location-list attributes are not supported")
+      } else {
+        match
+          self.section_offset_value(info, endian=data.endian(), dwarf_size~) {
+          Ok(offset) => data.loclist(offset~, addr_size~)
+          Err(reason) => Err(reason)
+        }
+      }
+    DwarfLoclistx => {
+      let base = match loclists_base {
+        Some(value) => value
+        None => return Err("DW_AT_loclists_base is not available")
+      }
+      match self.index_value(info, endian=data.endian()) {
+        Ok(index) => {
+          let section = match data.section(DwarfLoclists) {
+            Ok(section) => section
+            Err(reason) => return Err(reason)
+          }
+          let entry_offset = base + index * dwarf_word_bytes(dwarf_size)
+          match section.offset(entry_offset) {
+            Ok(entry) =>
+              match
+                entry.input().read_offset(endian=data.endian(), size=dwarf_size) {
+                Ok((relative, _)) =>
+                  data.loclist(offset=base + relative, addr_size~)
+                Err(reason) => Err(reason)
+              }
+            Err(reason) => Err(reason)
+          }
+        }
+        Err(reason) => Err(reason)
+      }
+    }
+    _ => Err("DWARF DIE attribute is not a location-list value")
+  }
+}
+
+///|
 pub fn DwarfDieAttribute::section_offset_value(
   self : DwarfDieAttribute,
   info : DwarfSectionBuffer,

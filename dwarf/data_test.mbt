@@ -704,6 +704,98 @@ test "translated DWARF DIE attributes resolve range-list forms through data" {
 }
 
 ///|
+test "translated DWARF DIE attributes resolve location-list forms through data" {
+  let abbrev_direct = b"\x01\x2e\x00" +
+    b"\x02\x17" +
+    b"\x03\x08" +
+    b"\x00\x00" +
+    b"\x00"
+  let info_direct = b"\x10\x00\x00\x00" +
+    b"\x05\x00" +
+    b"\x01" +
+    b"\x04" +
+    b"\x00\x00\x00\x00" +
+    b"\x01" +
+    b"\x00\x00\x00\x00" +
+    b"no\x00"
+  let data_direct = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=LittleEndian,
+      info=info_direct,
+      abbrev=abbrev_direct,
+      loclists=b"\x04\x20\x28\x01\x50\x00",
+    ),
+  )
+  let direct_attrs = expect_dies(data_direct.unit_dies())[0].attributes()
+  let direct = expect_location_list(
+    direct_attrs[0].location_list_value(
+      data_direct,
+      version=5,
+      dwarf_size=W32,
+      addr_size=W32,
+    ),
+  )
+  assert_true(direct.entries() == [DwarfLocOffsetPair(0x20, 0x28, b"\x50")])
+  assert_true(
+    direct_attrs[0].location_list_value(
+      data_direct,
+      version=4,
+      dwarf_size=W32,
+      addr_size=W32,
+    )
+    is Err(_),
+  )
+  assert_true(
+    direct_attrs[1].location_list_value(
+      data_direct,
+      version=5,
+      dwarf_size=W32,
+      addr_size=W32,
+    )
+    is Err(_),
+  )
+  let abbrev_index = b"\x01\x2e\x00" + b"\x02\x22" + b"\x00\x00" + b"\x00"
+  let info_index = b"\x0a\x00\x00\x00" +
+    b"\x05\x00" +
+    b"\x01" +
+    b"\x04" +
+    b"\x00\x00\x00\x00" +
+    b"\x01" +
+    b"\x01"
+  let data_index = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=LittleEndian,
+      info=info_index,
+      abbrev=abbrev_index,
+      loclists=b"\xff\x00" +
+        b"\x08\x00\x00\x00\x0d\x00\x00\x00" +
+        b"\x04\x01\x02\x00\x00" +
+        b"\x05\x01\x9f\x00",
+    ),
+  )
+  let index_attrs = expect_dies(data_index.unit_dies())[0].attributes()
+  let indexed = expect_location_list(
+    index_attrs[0].location_list_value(
+      data_index,
+      version=5,
+      dwarf_size=W32,
+      addr_size=W32,
+      loclists_base=2,
+    ),
+  )
+  assert_true(indexed.entries() == [DwarfLocDefaultLocation(b"\x9f")])
+  assert_true(
+    index_attrs[0].location_list_value(
+      data_index,
+      version=5,
+      dwarf_size=W32,
+      addr_size=W32,
+    )
+    is Err(_),
+  )
+}
+
+///|
 test "translated DWARF DIE attributes resolve string forms through data" {
   let abbrev = b"\x01\x2e\x00" +
     b"\x03\x08" +

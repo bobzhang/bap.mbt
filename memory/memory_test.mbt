@@ -50,6 +50,25 @@ test "memory views preserve address ranges" {
 }
 
 ///|
+test "translated BAP memory to_buffer exposes selected bytes" {
+  let memory = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x1000UL,
+    bytes_0_to_15(),
+  )
+  let chunk = match memory.view(from=0x1004UL, words=4) {
+    Ok(chunk) => chunk
+    Err(reason) => fail(reason)
+  }
+  assert_true(chunk.to_buffer().to_owned() == b"\x04\x05\x06\x07")
+  assert_true(
+    chunk.rebase(0x2000UL).to_buffer().to_owned() == b"\x04\x05\x06\x07",
+  )
+  assert_true(memory.first_byte().to_buffer().to_owned() == b"\x00")
+  assert_true(memory.last_byte().to_buffer().to_owned() == b"\x0f")
+}
+
+///|
 test "memory raising accessors mirror checked view and load errors" {
   let memory = @memory.Memory::from_bytes(
     endian=LittleEndian,

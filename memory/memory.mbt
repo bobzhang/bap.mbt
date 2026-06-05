@@ -121,6 +121,11 @@ pub fn Memory::to_bytes(self : Memory) -> Bytes {
 }
 
 ///|
+pub fn Memory::to_buffer(self : Memory) -> BytesView {
+  self.data_value[:]
+}
+
+///|
 pub fn Memory::contains(self : Memory, addr : UInt64) -> Bool {
   self.length() > 0 && addr >= self.min_addr() && addr <= self.max_addr()
 }

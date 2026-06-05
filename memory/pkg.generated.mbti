@@ -138,6 +138,7 @@ pub fn Memory::of_file(endian~ : @bitvec.Endian, start~ : UInt64, String) -> Res
 pub fn Memory::range(Self, UInt64, UInt64) -> Result[Self, String]
 pub fn Memory::rebase(Self, UInt64) -> Self
 pub fn Memory::store(Self, UInt64, @types.Word) -> Result[Self, String]
+pub fn Memory::to_buffer(Self) -> BytesView
 pub fn Memory::to_bytes(Self) -> Bytes
 pub fn Memory::to_string(Self) -> String
 pub fn Memory::view(Self, from? : UInt64, words? : Int, word_size? : Int) -> Result[Self, String]

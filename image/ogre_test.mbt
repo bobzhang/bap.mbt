@@ -12,6 +12,17 @@ fn assert_ogre_error(text : String) -> Unit raise {
 }
 
 ///|
+fn expect_scheme_fact(
+  attribute : @image.OgreAttribute,
+  values : Array[String],
+) -> String raise {
+  match attribute.fact(values) {
+    Ok(fact) => fact
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "ogre documents parse named and positional facts" {
   let doc = expect_ogre_doc(
     "(declare student (name str) (gpa float) (active bool) (id int))" +
@@ -55,4 +66,86 @@ test "ogre documents validate declarations and facts" {
     "(declare student (name str) (id int))" + " (student (name Joe) (name Ann))",
   )
   assert_ogre_error("(declare student str)" + " (declare student int)")
+}
+
+///|
+test "ogre scheme facades render BAP image declarations and facts" {
+  assert_true(@image.Scheme::off().name() == "off")
+  assert_true(@image.Scheme::off().typ() == OgreInt)
+  assert_true(@image.Scheme::readable().name() == "r")
+  assert_true(@image.Scheme::readable().typ() == OgreBool)
+  let segment = @image.Scheme::segment()
+  assert_true(segment.name() == "segment")
+  assert_true(segment.field_names() == ["addr", "size", "r", "w", "x"])
+  inspect(
+    segment.declaration(),
+    content="(declare segment (addr int) (size int) (r bool) (w bool) (x bool))",
+  )
+  match segment.fact(["4096", "4", "true", "false", "true"]) {
+    Ok(fact) => inspect(fact, content="(segment 4096 4 true false true)")
+    Err(reason) => fail(reason)
+  }
+  let named_values : Map[String, String] = {
+    "addr": "4096",
+    "size": "4",
+    "r": "true",
+    "w": "false",
+    "x": "true",
+  }
+  match segment.named_fact(named_values) {
+    Ok(fact) =>
+      inspect(
+        fact,
+        content="(segment (addr 4096) (size 4) (r true) (w false) (x true))",
+      )
+    Err(reason) => fail(reason)
+  }
+  assert_true(segment.fact(["4096"]) is Err(_))
+  assert_true(segment.fact(["4096", "4", "yes", "false", "true"]) is Err(_))
+  let mapped = @image.Scheme::mapped()
+  let attrs = [
+    @image.Scheme::arch(),
+    @image.Scheme::bits(),
+    @image.Scheme::is_little_endian(),
+    @image.Scheme::entry_point(),
+    mapped,
+    @image.Scheme::named_region(),
+    segment,
+    @image.Scheme::section(),
+    @image.Scheme::code_start(),
+    @image.Scheme::named_symbol(),
+    @image.Scheme::symbol_chunk(),
+  ]
+  let facts = [
+    expect_scheme_fact(@image.Scheme::arch(), ["x86-64"]),
+    expect_scheme_fact(@image.Scheme::bits(), ["64"]),
+    expect_scheme_fact(@image.Scheme::is_little_endian(), ["true"]),
+    expect_scheme_fact(@image.Scheme::entry_point(), ["4098"]),
+    expect_scheme_fact(mapped, ["4096", "4", "1"]),
+    expect_scheme_fact(@image.Scheme::named_region(), ["4096", "4", "code"]),
+    expect_scheme_fact(segment, ["4096", "4", "true", "false", "true"]),
+    expect_scheme_fact(@image.Scheme::section(), ["4096", "4"]),
+    expect_scheme_fact(@image.Scheme::code_start(), ["4097"]),
+    expect_scheme_fact(@image.Scheme::named_symbol(), ["4097", "main"]),
+    expect_scheme_fact(@image.Scheme::symbol_chunk(), ["4097", "2", "4097"]),
+  ]
+  match @image.OgreDoc::from_scheme(attrs, facts~) {
+    Ok(doc) => {
+      assert_true(doc.declaration_count() == attrs.length())
+      assert_true(doc.fact_count("segment") == 1)
+      assert_true(doc.facts("arch")[0].value("name") == Some("x86-64"))
+      match @image.Image::from_spec(b"\x00\xaa\xbb\xcc\xdd", doc) {
+        Ok((image, warnings)) => {
+          assert_true(warnings.is_empty())
+          assert_true(image.entry_point() == 4098UL)
+          assert_true(image.segments().length() == 1)
+          assert_true(image.segments()[0].name() == "code")
+          assert_true(image.symbols()[0].name() == "main")
+          inspect(image.segments()[0].memory().hexdump(), content="aa bb cc dd")
+        }
+        Err(reason) => fail(reason)
+      }
+    }
+    Err(reason) => fail(reason)
+  }
 }

@@ -134,6 +134,14 @@ pub fn ImageTag::specification() -> Self[OgreDoc]
 pub fn ImageTag::symbol() -> Self[String]
 pub fn[T] ImageTag::uuid(Self[T]) -> String
 
+type OgreAttribute
+pub fn OgreAttribute::declaration(Self) -> String
+pub fn OgreAttribute::fact(Self, Array[String]) -> Result[String, String]
+pub fn OgreAttribute::field_names(Self) -> Array[String]
+pub fn OgreAttribute::fields(Self) -> Array[OgreField]
+pub fn OgreAttribute::name(Self) -> String
+pub fn OgreAttribute::named_fact(Self, Map[String, String]) -> Result[String, String]
+
 type OgreDoc
 pub fn OgreDoc::declaration(Self, String) -> Array[OgreField]?
 pub fn OgreDoc::declaration_count(Self) -> Int
@@ -142,6 +150,7 @@ pub fn OgreDoc::domain() -> @knowledge.Domain[Self]
 pub fn OgreDoc::empty() -> Self
 pub fn OgreDoc::fact_count(Self, String) -> Int
 pub fn OgreDoc::facts(Self, String) -> Array[OgreFact]
+pub fn OgreDoc::from_scheme(Array[OgreAttribute], facts? : Array[String]) -> Result[Self, String]
 pub fn OgreDoc::from_string(String) -> Result[Self, String]
 pub fn OgreDoc::from_target(@core_theory.Target) -> Self
 pub fn OgreDoc::persistent() -> @knowledge.Persistent[Self]
@@ -175,6 +184,43 @@ pub fn Relocation::fixup(Self) -> UInt64
 pub fn Relocation::is_relative(Self) -> Bool
 pub fn Relocation::target(Self) -> UInt64?
 pub fn Relocation::uses_memory_addend(Self) -> Bool
+
+pub(all) struct Scheme {
+}
+pub fn Scheme::abi() -> OgreAttribute
+pub fn Scheme::addr() -> OgreField
+pub fn Scheme::arch() -> OgreAttribute
+pub fn Scheme::base_address() -> OgreAttribute
+pub fn Scheme::bias() -> OgreAttribute
+pub fn Scheme::bits() -> OgreAttribute
+pub fn Scheme::code_region() -> OgreAttribute
+pub fn Scheme::code_start() -> OgreAttribute
+pub fn Scheme::entry_point() -> OgreAttribute
+pub fn Scheme::executable() -> OgreField
+pub fn Scheme::external_reference() -> OgreAttribute
+pub fn Scheme::fixup() -> OgreField
+pub fn Scheme::format() -> OgreAttribute
+pub fn Scheme::is_executable() -> OgreAttribute
+pub fn Scheme::is_little_endian() -> OgreAttribute
+pub fn Scheme::mapped() -> OgreAttribute
+pub fn Scheme::name() -> OgreField
+pub fn Scheme::named_region() -> OgreAttribute
+pub fn Scheme::named_symbol() -> OgreAttribute
+pub fn Scheme::off() -> OgreField
+pub fn Scheme::readable() -> OgreField
+pub fn Scheme::relative_relocation() -> OgreAttribute
+pub fn Scheme::relocation() -> OgreAttribute
+pub fn Scheme::require() -> OgreAttribute
+pub fn Scheme::root() -> OgreField
+pub fn Scheme::section() -> OgreAttribute
+pub fn Scheme::segment() -> OgreAttribute
+pub fn Scheme::size() -> OgreField
+pub fn Scheme::subarch() -> OgreAttribute
+pub fn Scheme::symbol_chunk() -> OgreAttribute
+pub fn Scheme::symbol_value() -> OgreAttribute
+pub fn Scheme::system() -> OgreAttribute
+pub fn Scheme::vendor() -> OgreAttribute
+pub fn Scheme::writable() -> OgreField
 
 type Section
 pub fn Section::addr(Self) -> UInt64

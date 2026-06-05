@@ -19,6 +19,16 @@ fn expect_dwarf_data(
 }
 
 ///|
+fn expect_location_list(
+  value : Result[@dwarf.DwarfLocationList, String],
+) -> @dwarf.DwarfLocationList raise {
+  match value {
+    Ok(value) => value
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "translated DWARF section data stores buffers by section" {
   let info = expect_section_buffer(@dwarf.DwarfSectionBuffer::create(b"info"))
   let abbrev = expect_section_buffer(
@@ -41,6 +51,64 @@ test "translated DWARF section data stores buffers by section" {
   assert_true(got_abbrev.data() == b"abbrev")
   assert_true(got_abbrev.position() == 2)
   assert_true(data.section(DwarfStr) is Err(_))
+}
+
+///|
+test "translated DWARF section buffers read DWARF5 loclists entries" {
+  let loclists = b"\x06\x00\x10\x00\x00" +
+    b"\x04\x10\x18\x02\x91\x01" +
+    b"\x07\x00\x20\x00\x00\x04\x20\x00\x00\x01\x50" +
+    b"\x08\x00\x30\x00\x00\x05\x00" +
+    b"\x05\x01\x9f" +
+    b"\x01\x03" +
+    b"\x02\x01\x02\x01\xaa" +
+    b"\x03\x04\x06\x01\xbb" +
+    b"\x00"
+  let buffer = expect_section_buffer(
+    @dwarf.DwarfSectionBuffer::create(loclists),
+  )
+  let list = expect_location_list(
+    @dwarf.DwarfLocationList::read(buffer, endian=LittleEndian, addr_size=W32),
+  )
+  assert_true(list.length() == 8)
+  assert_true(!list.is_empty())
+  assert_true(
+    list.entries() ==
+    [
+      DwarfLocBaseAddress(0x1000UL),
+      DwarfLocOffsetPair(0x10, 0x18, b"\x91\x01"),
+      DwarfLocStartEnd(0x2000UL, 0x2004UL, b"\x50"),
+      DwarfLocStartLength(0x3000UL, 5, b""),
+      DwarfLocDefaultLocation(b"\x9f"),
+      DwarfLocBaseAddressx(3),
+      DwarfLocStartxEndx(1, 2, b"\xaa"),
+      DwarfLocStartxLength(4, 6, b"\xbb"),
+    ],
+  )
+  assert_true(
+    @dwarf.DwarfLocationList::read(
+      expect_section_buffer(@dwarf.DwarfSectionBuffer::create(b"\x09")),
+      endian=LittleEndian,
+      addr_size=W32,
+    )
+    is Err(_),
+  )
+}
+
+///|
+test "translated DWARF data exposes loclists section reader" {
+  let data = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=BigEndian,
+      loclists=b"\xff\x00\x06\x00\x00\x20\x00\x00",
+    ),
+  )
+  let list = expect_location_list(data.loclist(offset=2, addr_size=W32))
+  assert_true(list.entries() == [DwarfLocBaseAddress(0x2000UL)])
+  let without_loclists = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(endian=BigEndian, info=b"\x00"),
+  )
+  assert_true(without_loclists.loclist(addr_size=W32) is Err(_))
 }
 
 ///|

@@ -76,6 +76,7 @@ pub fn DwarfData::from_bytes(endian~ : @bitvec.Endian, info? : Bytes, abbrev? : 
 pub fn DwarfData::from_elf_bytes(Bytes) -> Result[Self, String]
 pub fn DwarfData::functions(Self) -> Result[Array[DwarfFunction], String]
 pub fn DwarfData::has_section(Self, DwarfSection) -> Bool
+pub fn DwarfData::loclist(Self, offset? : Int, addr_size~ : DwarfWordSize) -> Result[DwarfLocationList, String]
 pub fn DwarfData::section(Self, DwarfSection) -> Result[DwarfSectionBuffer, String]
 pub fn DwarfData::sections(Self) -> Array[(DwarfSection, DwarfSectionBuffer)]
 
@@ -191,6 +192,23 @@ pub fn DwarfLenspec::four() -> Self
 pub fn DwarfLenspec::leb128() -> Self
 pub fn DwarfLenspec::one() -> Self
 pub fn DwarfLenspec::two() -> Self
+
+type DwarfLocationList
+pub fn DwarfLocationList::entries(Self) -> Array[DwarfLocationListEntry]
+pub fn DwarfLocationList::is_empty(Self) -> Bool
+pub fn DwarfLocationList::length(Self) -> Int
+pub fn DwarfLocationList::read(DwarfSectionBuffer, offset? : Int, endian~ : @bitvec.Endian, addr_size~ : DwarfWordSize) -> Result[Self, String]
+
+pub(all) enum DwarfLocationListEntry {
+  DwarfLocBaseAddressx(Int)
+  DwarfLocStartxEndx(Int, Int, Bytes)
+  DwarfLocStartxLength(Int, Int, Bytes)
+  DwarfLocOffsetPair(Int, Int, Bytes)
+  DwarfLocDefaultLocation(Bytes)
+  DwarfLocBaseAddress(UInt64)
+  DwarfLocStartEnd(UInt64, UInt64, Bytes)
+  DwarfLocStartLength(UInt64, Int, Bytes)
+} derive(Eq, @debug.Debug)
 
 pub(all) enum DwarfSection {
   DwarfInfo

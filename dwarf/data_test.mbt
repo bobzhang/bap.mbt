@@ -44,6 +44,26 @@ test "translated DWARF section data stores buffers by section" {
 }
 
 ///|
+test "translated DWARF section source aliases select core sections" {
+  let info = expect_section_buffer(@dwarf.DwarfSectionBuffer::create(b"i"))
+  let abbrev = expect_section_buffer(@dwarf.DwarfSectionBuffer::create(b"a"))
+  let str = expect_section_buffer(@dwarf.DwarfSectionBuffer::create(b"s"))
+  let data = expect_dwarf_data(
+    @dwarf.DwarfData::create(endian=LittleEndian, sections=[
+      (@dwarf.DwarfSection::info(), info),
+      (@dwarf.DwarfSection::abbrev(), abbrev),
+      (@dwarf.DwarfSection::str(), str),
+    ]),
+  )
+  assert_true(@dwarf.DwarfSection::info() == DwarfInfo)
+  assert_true(@dwarf.DwarfSection::abbrev() == DwarfAbbrev)
+  assert_true(@dwarf.DwarfSection::str() == DwarfStr)
+  assert_true(expect_section_buffer(data.section(DwarfInfo)).data() == b"i")
+  assert_true(expect_section_buffer(data.section(DwarfAbbrev)).data() == b"a")
+  assert_true(expect_section_buffer(data.section(DwarfStr)).data() == b"s")
+}
+
+///|
 test "translated DWARF section buffers create inputs at stored positions" {
   let buffer = expect_section_buffer(
     @dwarf.DwarfSectionBuffer::create(b"\x00\x00\x2e", position=2),

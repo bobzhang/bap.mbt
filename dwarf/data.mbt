@@ -39,6 +39,21 @@ pub fn DwarfSection::to_string(self : DwarfSection) -> String {
 }
 
 ///|
+pub fn DwarfSection::info() -> DwarfSection {
+  DwarfInfo
+}
+
+///|
+pub fn DwarfSection::abbrev() -> DwarfSection {
+  DwarfAbbrev
+}
+
+///|
+pub fn DwarfSection::str() -> DwarfSection {
+  DwarfStr
+}
+
+///|
 pub fn DwarfSectionBuffer::create(
   data : Bytes,
   position? : Int = 0,

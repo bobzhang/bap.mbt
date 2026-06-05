@@ -159,6 +159,9 @@ pub(all) enum DwarfSection {
   DwarfRnglists
   DwarfLoclists
 } derive(Eq, @debug.Debug)
+pub fn DwarfSection::abbrev() -> Self
+pub fn DwarfSection::info() -> Self
+pub fn DwarfSection::str() -> Self
 pub fn DwarfSection::to_string(Self) -> String
 
 type DwarfSectionBuffer

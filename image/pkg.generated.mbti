@@ -219,6 +219,7 @@ pub fn Scheme::subarch() -> OgreAttribute
 pub fn Scheme::symbol_chunk() -> OgreAttribute
 pub fn Scheme::symbol_value() -> OgreAttribute
 pub fn Scheme::system() -> OgreAttribute
+pub fn Scheme::value() -> OgreField
 pub fn Scheme::vendor() -> OgreAttribute
 pub fn Scheme::writable() -> OgreField
 

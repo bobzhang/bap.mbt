@@ -47,6 +47,11 @@ pub fn Scheme::addr() -> OgreField {
 }
 
 ///|
+pub fn Scheme::value() -> OgreField {
+  scheme_field("value", OgreInt)
+}
+
+///|
 pub fn Scheme::name() -> OgreField {
   scheme_field("name", OgreStr)
 }
@@ -209,10 +214,7 @@ pub fn Scheme::code_region() -> OgreAttribute {
 
 ///|
 pub fn Scheme::symbol_value() -> OgreAttribute {
-  scheme_attribute("symbol-value", [
-    Scheme::addr(),
-    scheme_field("value", OgreInt),
-  ])
+  scheme_attribute("symbol-value", [Scheme::addr(), Scheme::value()])
 }
 
 ///|

@@ -72,6 +72,8 @@ test "ogre documents validate declarations and facts" {
 test "ogre scheme facades render BAP image declarations and facts" {
   assert_true(@image.Scheme::off().name() == "off")
   assert_true(@image.Scheme::off().typ() == OgreInt)
+  assert_true(@image.Scheme::value().name() == "value")
+  assert_true(@image.Scheme::value().typ() == OgreInt)
   assert_true(@image.Scheme::readable().name() == "r")
   assert_true(@image.Scheme::readable().typ() == OgreBool)
   let segment = @image.Scheme::segment()
@@ -83,6 +85,12 @@ test "ogre scheme facades render BAP image declarations and facts" {
   )
   match segment.fact(["4096", "4", "true", "false", "true"]) {
     Ok(fact) => inspect(fact, content="(segment 4096 4 true false true)")
+    Err(reason) => fail(reason)
+  }
+  let symbol_value = @image.Scheme::symbol_value()
+  assert_true(symbol_value.field_names() == ["addr", "value"])
+  match symbol_value.fact(["4097", "128"]) {
+    Ok(fact) => inspect(fact, content="(symbol-value 4097 128)")
     Err(reason) => fail(reason)
   }
   let named_values : Map[String, String] = {

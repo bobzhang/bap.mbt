@@ -347,6 +347,80 @@ test "translated BAP memory predicate iterators stop and search by word" {
 }
 
 ///|
+test "translated BAP memory result iterators propagate errors and stop" {
+  let memory = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x4000UL,
+    b"\x00\x01\x02\x03\x04\x05",
+  )
+  let fold_seen = []
+  let folded : Result[Array[String], String] = memory.foldi_result(
+    [],
+    (addr, word, acc) => {
+      fold_seen.push(addr)
+      if addr == 0x4002UL {
+        Err("fold stop")
+      } else {
+        acc.push(word.to_hex())
+        Ok(acc)
+      }
+    },
+    word_size=16,
+  )
+  assert_true(fold_seen == [0x4000UL, 0x4002UL])
+  assert_true(folded == Err("fold stop"))
+  let iter_seen = []
+  let iterated : Result[Unit, String] = memory.iter_result(word => {
+    iter_seen.push(word.to_hex())
+    if word.to_hex() == "0x03" {
+      Err("iter stop")
+    } else {
+      Ok(())
+    }
+  })
+  assert_true(iter_seen == ["0x00", "0x01", "0x02", "0x03"])
+  assert_true(iterated == Err("iter stop"))
+  let exists_seen = []
+  let exists_result : Result[Bool, String] = memory.exists_result((addr, word) => {
+    exists_seen.push(addr)
+    Ok(word.to_hex() == "0x02")
+  })
+  assert_true(exists_result == Ok(true))
+  assert_true(exists_seen == [0x4000UL, 0x4001UL, 0x4002UL])
+  let forall_seen = []
+  let forall_result : Result[Bool, String] = memory.for_all_result((addr, word) => {
+    forall_seen.push(addr)
+    Ok(word.to_hex() != "0x03")
+  })
+  assert_true(forall_result == Ok(false))
+  assert_true(forall_seen == [0x4000UL, 0x4001UL, 0x4002UL, 0x4003UL])
+  let counted : Result[Int, String] = memory.count_result(
+    (_, word) => Ok(word.to_hex() == "0x0302"),
+    word_size=16,
+  )
+  assert_true(counted == Ok(1))
+  let mapped : Result[UInt64?, String] = memory.find_map_result(
+    (addr, word) => {
+      if word.to_hex() == "0x0504" {
+        Ok(Some(addr))
+      } else {
+        Ok(None)
+      }
+    },
+    word_size=16,
+  )
+  assert_true(mapped == Ok(Some(0x4004UL)))
+  let found : Result[@types.Word?, String] = memory.find_if_result(
+    (addr, _) => Ok(addr == 0x4002UL),
+    word_size=16,
+  )
+  match found {
+    Ok(Some(word)) => assert_true(word.to_hex() == "0x0302")
+    _ => fail("expected find_if_result to return the matching word")
+  }
+}
+
+///|
 test "memory merge accepts contiguous regions" {
   let left = @memory.Memory::from_bytes(
     endian=LittleEndian,

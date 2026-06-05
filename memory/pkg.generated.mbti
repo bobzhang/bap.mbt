@@ -98,15 +98,24 @@ pub(all) enum MemMapChange[V] {
 type Memory
 pub fn Memory::compare_with(Self, UInt64) -> AddressPosition
 pub fn Memory::contains(Self, UInt64) -> Bool
+pub fn Memory::count(Self, (UInt64, @types.Word) -> Bool, word_size? : Int) -> Int
 pub fn Memory::create(endian~ : @bitvec.Endian, start~ : UInt64, Bytes, pos? : Int, len? : Int) -> Result[Self, String]
 pub fn Memory::dominates(Self, Self) -> Bool
 pub fn Memory::endian(Self) -> @bitvec.Endian
+pub fn Memory::exists(Self, (UInt64, @types.Word) -> Bool, word_size? : Int) -> Bool
+pub fn Memory::find_if(Self, (UInt64, @types.Word) -> Bool, word_size? : Int) -> @types.Word?
+pub fn[A] Memory::find_map(Self, (UInt64, @types.Word) -> A?, word_size? : Int) -> A?
 pub fn Memory::first_byte(Self) -> Self
+pub fn[A] Memory::fold(Self, A, (@types.Word, A) -> A, word_size? : Int) -> A
+pub fn[A] Memory::foldi(Self, A, (UInt64, @types.Word, A) -> A, word_size? : Int) -> A
+pub fn Memory::for_all(Self, (UInt64, @types.Word) -> Bool, word_size? : Int) -> Bool
 pub fn Memory::from_bytes(endian~ : @bitvec.Endian, start~ : UInt64, Bytes) -> Self
 pub fn Memory::get(Self, addr? : UInt64, disp? : Int, index? : Int, scale? : Int) -> Result[@types.Word, String]
 pub fn Memory::get_exn(Self, addr? : UInt64, disp? : Int, index? : Int, scale? : Int) -> @types.Word raise MemoryError
 pub fn Memory::hexdump(Self) -> String
 pub fn Memory::intersects(Self, Self) -> Bool
+pub fn Memory::iter(Self, (@types.Word) -> Unit, word_size? : Int) -> Unit
+pub fn Memory::iteri(Self, (UInt64, @types.Word) -> Unit, word_size? : Int) -> Unit
 pub fn Memory::last_byte(Self) -> Self
 pub fn Memory::length(Self) -> Int
 pub fn Memory::load(Self, UInt64, width? : Int, disp? : Int, index? : Int, scale? : Int) -> Result[@types.Word, String]

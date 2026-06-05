@@ -234,6 +234,95 @@ test "translated BAP memory get_exn raises checked load errors" {
 }
 
 ///|
+test "translated BAP memory iterators visit complete words by address" {
+  let memory = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x1000UL,
+    b"\x00\x01\x02\x03\x04\x05\x06\x07",
+  )
+  let byte_words = []
+  memory.iter(word => byte_words.push(word.to_hex()))
+  assert_true(
+    byte_words ==
+    ["0x00", "0x01", "0x02", "0x03", "0x04", "0x05", "0x06", "0x07"],
+  )
+  let indexed_words = []
+  memory.iteri(
+    (addr, word) => indexed_words.push((addr, word.to_hex())),
+    word_size=16,
+  )
+  assert_true(
+    indexed_words ==
+    [
+      (0x1000UL, "0x0100"),
+      (0x1002UL, "0x0302"),
+      (0x1004UL, "0x0504"),
+      (0x1006UL, "0x0706"),
+    ],
+  )
+  let folded = memory.fold(
+    [],
+    (word, acc) => {
+      acc.push(word.to_hex())
+      acc
+    },
+    word_size=32,
+  )
+  assert_true(folded == ["0x03020100", "0x07060504"])
+  let with_trailing = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x2000UL,
+    b"\x0a\x0b\x0c\x0d\x0e",
+  )
+  let complete_pairs = with_trailing.foldi(
+    [],
+    (addr, word, acc) => {
+      acc.push((addr, word.to_hex()))
+      acc
+    },
+    word_size=16,
+  )
+  assert_true(complete_pairs == [(0x2000UL, "0x0b0a"), (0x2002UL, "0x0d0c")])
+}
+
+///|
+test "translated BAP memory predicate iterators stop and search by word" {
+  let memory = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x3000UL,
+    b"\x00\x01\x02\x03\x04\x05",
+  )
+  let exists_seen = []
+  assert_true(
+    memory.exists((addr, word) => {
+      exists_seen.push(addr)
+      word.to_hex() == "0x02"
+    }),
+  )
+  assert_true(exists_seen == [0x3000UL, 0x3001UL, 0x3002UL])
+  let forall_seen = []
+  assert_true(
+    !memory.for_all((addr, word) => {
+      forall_seen.push(addr)
+      word.to_hex() != "0x03"
+    }),
+  )
+  assert_true(forall_seen == [0x3000UL, 0x3001UL, 0x3002UL, 0x3003UL])
+  assert_true(memory.count((_, word) => word.width() == 16, word_size=16) == 3)
+  match memory.find_if((addr, _) => addr == 0x3004UL, word_size=16) {
+    Some(word) => assert_true(word.to_hex() == "0x0504")
+    None => fail("expected find_if to return the matching word")
+  }
+  assert_true(
+    memory.find_map(
+      (addr, word) => if word.to_hex() == "0x0302" { Some(addr) } else { None },
+      word_size=16,
+    ) ==
+    Some(0x3002UL),
+  )
+}
+
+///|
 test "memory merge accepts contiguous regions" {
   let left = @memory.Memory::from_bytes(
     endian=LittleEndian,

@@ -57,7 +57,11 @@ test "translated DWARF section buffers create inputs at stored positions" {
   assert_true(input.position() == 3)
   let moved = expect_section_buffer(buffer.offset(-1))
   assert_true(moved.position() == 1)
+  assert_true(moved.pos() == 1)
+  assert_true(expect_section_buffer(buffer.with_off(-1)).pos() == 1)
+  assert_true(expect_section_buffer(buffer.with_pos(3)).pos() == 3)
   assert_true(buffer.with_position(4) is Err(_))
+  assert_true(buffer.with_pos(4) is Err(_))
   assert_true(@dwarf.DwarfSectionBuffer::create(b"x", position=-1) is Err(_))
 }
 

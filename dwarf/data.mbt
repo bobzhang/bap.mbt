@@ -61,6 +61,11 @@ pub fn DwarfSectionBuffer::position(self : DwarfSectionBuffer) -> Int {
 }
 
 ///|
+pub fn DwarfSectionBuffer::pos(self : DwarfSectionBuffer) -> Int {
+  self.position()
+}
+
+///|
 pub fn DwarfSectionBuffer::with_position(
   self : DwarfSectionBuffer,
   position : Int,
@@ -69,11 +74,27 @@ pub fn DwarfSectionBuffer::with_position(
 }
 
 ///|
+pub fn DwarfSectionBuffer::with_pos(
+  self : DwarfSectionBuffer,
+  position : Int,
+) -> Result[DwarfSectionBuffer, String] {
+  self.with_position(position)
+}
+
+///|
 pub fn DwarfSectionBuffer::offset(
   self : DwarfSectionBuffer,
   offset : Int,
 ) -> Result[DwarfSectionBuffer, String] {
   self.with_position(self.position_value + offset)
+}
+
+///|
+pub fn DwarfSectionBuffer::with_off(
+  self : DwarfSectionBuffer,
+  offset : Int,
+) -> Result[DwarfSectionBuffer, String] {
+  self.offset(offset)
 }
 
 ///|

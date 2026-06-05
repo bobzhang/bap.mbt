@@ -166,7 +166,10 @@ pub fn DwarfSectionBuffer::create(Bytes, position? : Int) -> Result[Self, String
 pub fn DwarfSectionBuffer::data(Self) -> Bytes
 pub fn DwarfSectionBuffer::input(Self) -> DwarfInput
 pub fn DwarfSectionBuffer::offset(Self, Int) -> Result[Self, String]
+pub fn DwarfSectionBuffer::pos(Self) -> Int
 pub fn DwarfSectionBuffer::position(Self) -> Int
+pub fn DwarfSectionBuffer::with_off(Self, Int) -> Result[Self, String]
+pub fn DwarfSectionBuffer::with_pos(Self, Int) -> Result[Self, String]
 pub fn DwarfSectionBuffer::with_position(Self, Int) -> Result[Self, String]
 
 pub(all) enum DwarfTag {

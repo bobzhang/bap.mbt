@@ -134,6 +134,10 @@ pub fn ImageTag::specification() -> Self[OgreDoc]
 pub fn ImageTag::symbol() -> Self[String]
 pub fn[T] ImageTag::uuid(Self[T]) -> String
 
+pub(all) struct KB {
+}
+pub fn KB::register_loader(name~ : String, from_file~ : (String) -> Result[OgreDoc?, String], from_data~ : (Bytes) -> Result[OgreDoc?, String]) -> Result[Unit, String]
+
 type OgreAttribute
 pub fn OgreAttribute::declaration(Self) -> String
 pub fn OgreAttribute::fact(Self, Array[String]) -> Result[String, String]

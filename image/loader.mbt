@@ -8,6 +8,9 @@ struct ImageLoader {
 let image_loader_registry : Map[String, ImageLoader] = {}
 
 ///|
+pub(all) struct KB {}
+
+///|
 pub fn ImageLoader::create(
   from_data~ : (Bytes) -> Result[OgreDoc?, String],
   from_file? : (String) -> Result[OgreDoc?, String],
@@ -49,6 +52,15 @@ pub fn register_loader(
     image_loader_registry[name] = loader
     Ok(())
   }
+}
+
+///|
+pub fn KB::register_loader(
+  name~ : String,
+  from_file~ : (String) -> Result[OgreDoc?, String],
+  from_data~ : (Bytes) -> Result[OgreDoc?, String],
+) -> Result[Unit, String] {
+  register_loader(name~, ImageLoader::create(from_data~, from_file~))
 }
 
 ///|

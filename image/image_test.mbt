@@ -822,6 +822,51 @@ test "image loader registry builds images from Ogre documents" {
 }
 
 ///|
+test "image exposes BAP KB loader registration facade" {
+  let spec = "(declare entry-point (addr int))" +
+    " (declare mapped (addr int) (size int) (off int))" +
+    " (declare named-region (addr int) (size int) (name str))" +
+    " (declare segment (addr int) (size int) (r bool) (w bool) (x bool))" +
+    " (entry-point 48)" +
+    " (mapped 48 2 0)" +
+    " (named-region 48 2 kb-loaded)" +
+    " (segment 48 2 true false true)"
+  match
+    @image.KB::register_loader(
+      name="unit-kb-ogre-doc-loader",
+      from_file=_ => Ok(None),
+      from_data=_ => {
+        match @image.OgreDoc::from_string(spec) {
+          Ok(doc) => Ok(Some(doc))
+          Err(reason) => Err(reason)
+        }
+      },
+    ) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  assert_true(@image.find_loader("unit-kb-ogre-doc-loader") is Some(_))
+  match @image.Image::of_bytes(b"\x11\x22", backend="unit-kb-ogre-doc-loader") {
+    Ok((img, warnings)) => {
+      assert_true(warnings.is_empty())
+      assert_true(img.entry_point() == 48UL)
+      assert_true(img.segments().length() == 1)
+      assert_true(img.segments()[0].name() == "kb-loaded")
+      inspect(img.segments()[0].memory().hexdump(), content="11 22")
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    @image.KB::register_loader(
+      name="unit-kb-ogre-doc-loader",
+      from_file=_ => Ok(None),
+      from_data=_ => Ok(None),
+    )
+    is Err(_),
+  )
+}
+
+///|
 test "image registers built-in raw and Ogre backends idempotently" {
   match @image.register_builtin_backends() {
     Ok(_) => ()

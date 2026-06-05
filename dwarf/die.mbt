@@ -19,6 +19,15 @@ struct DwarfDieAttribute {
 }
 
 ///|
+pub(all) enum DwarfDieReference {
+  DwarfUnitReference(Int)
+  DwarfSectionReference(Int)
+  DwarfSupplementaryReference(Int)
+  DwarfAlternateReference(Int)
+  DwarfTypeSignatureReference(UInt64)
+} derive(Eq, Debug)
+
+///|
 fn dwarf_die_create(
   section_offset~ : Int,
   unit_offset~ : Int,
@@ -80,6 +89,19 @@ fn[T] dwarf_die_attribute_finish(
     Ok(value)
   } else {
     Err("DWARF DIE attribute reader did not consume payload")
+  }
+}
+
+///|
+fn dwarf_die_attribute_finish_uint_reference(
+  attribute : DwarfDieAttribute,
+  offset : UInt64,
+  next : DwarfInput,
+  make : (Int) -> DwarfDieReference,
+) -> Result[DwarfDieReference, String] {
+  match dwarf_ref_uint_offset_to_int(offset) {
+    Ok(value) => dwarf_die_attribute_finish(attribute, make(value), next)
+    Err(reason) => Err(reason)
   }
 }
 
@@ -259,6 +281,128 @@ pub fn DwarfDieAttribute::section_offset_value(
         Err(reason) => Err(reason)
       }
     _ => Err("DWARF DIE attribute is not a section offset")
+  }
+}
+
+///|
+pub fn DwarfDieAttribute::index_value(
+  self : DwarfDieAttribute,
+  info : DwarfSectionBuffer,
+  endian~ : @bitvec.Endian,
+) -> Result[Int, String] {
+  let read = match self.form() {
+    DwarfStrx(spec) | DwarfAddrx(spec) =>
+      (input : DwarfInput) => input.read_index(spec, endian)
+    DwarfRnglistx | DwarfLoclistx => (input : DwarfInput) => input.read_code()
+    _ => return Err("DWARF DIE attribute is not an index")
+  }
+  match self.input(info) {
+    Ok(input) =>
+      match read(input) {
+        Ok((value, next)) =>
+          if value < 0 {
+            Err("negative DWARF index")
+          } else {
+            dwarf_die_attribute_finish(self, value, next)
+          }
+        Err(reason) => Err(reason)
+      }
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+pub fn DwarfDieAttribute::reference(
+  self : DwarfDieAttribute,
+  info : DwarfSectionBuffer,
+  endian~ : @bitvec.Endian,
+  version~ : Int,
+  dwarf_size~ : DwarfWordSize,
+  addr_size~ : DwarfWordSize,
+) -> Result[DwarfDieReference, String] {
+  match self.form() {
+    DwarfRef(lenspec) =>
+      match self.input(info) {
+        Ok(input) =>
+          match input.read_unsigned_const(lenspec, endian) {
+            Ok((offset, next)) =>
+              dwarf_die_attribute_finish_uint_reference(self, offset, next, value => {
+                DwarfUnitReference(value)
+              })
+            Err(reason) => Err(reason)
+          }
+        Err(reason) => Err(reason)
+      }
+    DwarfRefAddr =>
+      match self.input(info) {
+        Ok(input) =>
+          match
+            dwarf_read_ref_addr_offset(
+              input, endian, version, dwarf_size, addr_size,
+            ) {
+            Ok((value, next)) =>
+              dwarf_die_attribute_finish(
+                self,
+                DwarfSectionReference(value),
+                next,
+              )
+            Err(reason) => Err(reason)
+          }
+        Err(reason) => Err(reason)
+      }
+    DwarfRefSup4 =>
+      match self.input(info) {
+        Ok(input) =>
+          match input.read_unsigned_const(DwarfFour, endian) {
+            Ok((offset, next)) =>
+              dwarf_die_attribute_finish_uint_reference(self, offset, next, value => {
+                DwarfSupplementaryReference(value)
+              })
+            Err(reason) => Err(reason)
+          }
+        Err(reason) => Err(reason)
+      }
+    DwarfRefSup8 =>
+      match self.input(info) {
+        Ok(input) =>
+          match input.read_unsigned_const(DwarfEight, endian) {
+            Ok((offset, next)) =>
+              dwarf_die_attribute_finish_uint_reference(self, offset, next, value => {
+                DwarfSupplementaryReference(value)
+              })
+            Err(reason) => Err(reason)
+          }
+        Err(reason) => Err(reason)
+      }
+    DwarfRefAlt =>
+      match self.input(info) {
+        Ok(input) =>
+          match input.read_offset(endian~, size=dwarf_size) {
+            Ok((value, next)) =>
+              dwarf_die_attribute_finish(
+                self,
+                DwarfAlternateReference(value),
+                next,
+              )
+            Err(reason) => Err(reason)
+          }
+        Err(reason) => Err(reason)
+      }
+    DwarfRefSig8 =>
+      match self.input(info) {
+        Ok(input) =>
+          match input.read_unsigned_const(DwarfEight, endian) {
+            Ok((signature, next)) =>
+              dwarf_die_attribute_finish(
+                self,
+                DwarfTypeSignatureReference(signature),
+                next,
+              )
+            Err(reason) => Err(reason)
+          }
+        Err(reason) => Err(reason)
+      }
+    _ => Err("DWARF DIE attribute is not a reference")
   }
 }
 

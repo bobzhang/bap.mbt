@@ -129,13 +129,23 @@ pub fn DwarfDieAttribute::field(Self) -> DwarfAbbrevField
 pub fn DwarfDieAttribute::flag(Self, DwarfSectionBuffer) -> Result[Bool, String]
 pub fn DwarfDieAttribute::form(Self) -> DwarfForm
 pub fn DwarfDieAttribute::index(Self) -> Int
+pub fn DwarfDieAttribute::index_value(Self, DwarfSectionBuffer, endian~ : @bitvec.Endian) -> Result[Int, String]
 pub fn DwarfDieAttribute::input(Self, DwarfSectionBuffer) -> Result[DwarfInput, String]
 pub fn DwarfDieAttribute::is_value_field(Self) -> Bool
 pub fn DwarfDieAttribute::offset(Self) -> Int
 pub fn DwarfDieAttribute::payload(Self, DwarfSectionBuffer) -> Result[Bytes, String]
+pub fn DwarfDieAttribute::reference(Self, DwarfSectionBuffer, endian~ : @bitvec.Endian, version~ : Int, dwarf_size~ : DwarfWordSize, addr_size~ : DwarfWordSize) -> Result[DwarfDieReference, String]
 pub fn DwarfDieAttribute::section_offset_value(Self, DwarfSectionBuffer, endian~ : @bitvec.Endian, dwarf_size~ : DwarfWordSize) -> Result[Int, String]
 pub fn DwarfDieAttribute::string(Self, DwarfSectionBuffer) -> Result[String, String]
 pub fn DwarfDieAttribute::value_kind(Self) -> DwarfAbbrevValueKind
+
+pub(all) enum DwarfDieReference {
+  DwarfUnitReference(Int)
+  DwarfSectionReference(Int)
+  DwarfSupplementaryReference(Int)
+  DwarfAlternateReference(Int)
+  DwarfTypeSignatureReference(UInt64)
+} derive(Eq, @debug.Debug)
 
 pub(all) enum DwarfForm {
   DwarfAddr

@@ -159,6 +159,24 @@ fn expect_die_attr_flag(value : Result[Bool, String]) -> Bool raise {
 }
 
 ///|
+fn expect_die_attr_index(value : Result[Int, String]) -> Int raise {
+  match value {
+    Ok(value) => value
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+fn expect_die_attr_ref(
+  value : Result[@dwarf.DwarfDieReference, String],
+) -> @dwarf.DwarfDieReference raise {
+  match value {
+    Ok(value) => value
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "translated DWARF section data stores buffers by section" {
   let info = expect_section_buffer(@dwarf.DwarfSectionBuffer::create(b"info"))
   let abbrev = expect_section_buffer(
@@ -458,6 +476,100 @@ test "translated DWARF DIE attributes expose payload readers" {
   assert_true(attrs[5].offset() == attrs[5].end_offset())
   assert_true(
     attrs[0].address(info_section, endian=LittleEndian, addr_size=W32) is Err(_),
+  )
+}
+
+///|
+test "translated DWARF DIE attributes expose index and reference readers" {
+  let abbrev = b"\x01\x2e\x00" +
+    b"\x03\x25" +
+    b"\x11\x1b" +
+    b"\x55\x23" +
+    b"\x31\x13" +
+    b"\x47\x10" +
+    b"\x7f\x20" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x1b\x00\x00\x00" +
+    b"\x04\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x04" +
+    b"\x01" +
+    b"\x02" +
+    b"\x03" +
+    b"\x04" +
+    b"\x0b\x00\x00\x00" +
+    b"\x18\x00\x00\x00" +
+    b"\x88\x77\x66\x55\x44\x33\x22\x11"
+  let data = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(endian=LittleEndian, info~, abbrev~),
+  )
+  let info_section = expect_section_buffer(data.section(DwarfInfo))
+  let attrs = expect_dies(data.unit_dies())[0].attributes()
+  assert_true(attrs.length() == 6)
+  assert_true(
+    expect_die_attr_index(
+      attrs[0].index_value(info_section, endian=LittleEndian),
+    ) ==
+    2,
+  )
+  assert_true(
+    expect_die_attr_index(
+      attrs[1].index_value(info_section, endian=LittleEndian),
+    ) ==
+    3,
+  )
+  assert_true(
+    expect_die_attr_index(
+      attrs[2].index_value(info_section, endian=LittleEndian),
+    ) ==
+    4,
+  )
+  assert_true(
+    expect_die_attr_ref(
+      attrs[3].reference(
+        info_section,
+        endian=LittleEndian,
+        version=4,
+        dwarf_size=W32,
+        addr_size=W32,
+      ),
+    ) ==
+    DwarfUnitReference(0x0b),
+  )
+  assert_true(
+    expect_die_attr_ref(
+      attrs[4].reference(
+        info_section,
+        endian=LittleEndian,
+        version=4,
+        dwarf_size=W32,
+        addr_size=W32,
+      ),
+    ) ==
+    DwarfSectionReference(0x18),
+  )
+  assert_true(
+    expect_die_attr_ref(
+      attrs[5].reference(
+        info_section,
+        endian=LittleEndian,
+        version=4,
+        dwarf_size=W32,
+        addr_size=W32,
+      ),
+    ) ==
+    DwarfTypeSignatureReference(0x1122334455667788UL),
+  )
+  assert_true(
+    attrs[0].reference(
+      info_section,
+      endian=LittleEndian,
+      version=4,
+      dwarf_size=W32,
+      addr_size=W32,
+    )
+    is Err(_),
   )
 }
 

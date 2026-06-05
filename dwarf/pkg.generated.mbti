@@ -129,6 +129,7 @@ pub fn DwarfDie::unit_start_offset(Self) -> Int
 
 type DwarfDieAttribute
 pub fn DwarfDieAttribute::address(Self, DwarfSectionBuffer, endian~ : @bitvec.Endian, addr_size~ : DwarfWordSize) -> Result[UInt64, String]
+pub fn DwarfDieAttribute::address_value(Self, DwarfData, addr_size~ : DwarfWordSize, addr_base? : Int) -> Result[UInt64, String]
 pub fn DwarfDieAttribute::attr(Self) -> DwarfAttr
 pub fn DwarfDieAttribute::block(Self, DwarfSectionBuffer, endian~ : @bitvec.Endian) -> Result[Bytes, String]
 pub fn DwarfDieAttribute::const_value(Self, DwarfSectionBuffer, endian~ : @bitvec.Endian) -> Result[Int64, String]

@@ -544,6 +544,46 @@ test "translated DWARF DIE attributes expose payload readers" {
 }
 
 ///|
+test "translated DWARF DIE attributes resolve address forms through data" {
+  let abbrev = b"\x01\x2e\x00" +
+    b"\x11\x01" +
+    b"\x52\x29" +
+    b"\x03\x08" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x10\x00\x00\x00" +
+    b"\x04\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x04" +
+    b"\x01" +
+    b"\x10\x00\x00\x00" +
+    b"\x01" +
+    b"no\x00"
+  let data = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=LittleEndian,
+      info~,
+      abbrev~,
+      addr=b"\xff\x00\x20\x00\x00\x00\x2c\x00\x00\x00",
+    ),
+  )
+  let attrs = expect_dies(data.unit_dies())[0].attributes()
+  assert_true(attrs.length() == 3)
+  assert_true(
+    expect_die_attr_address(attrs[0].address_value(data, addr_size=W32)) ==
+    0x10UL,
+  )
+  assert_true(
+    expect_die_attr_address(
+      attrs[1].address_value(data, addr_size=W32, addr_base=2),
+    ) ==
+    0x2cUL,
+  )
+  assert_true(attrs[1].address_value(data, addr_size=W32) is Err(_))
+  assert_true(attrs[2].address_value(data, addr_size=W32) is Err(_))
+}
+
+///|
 test "translated DWARF DIE attributes resolve string forms through data" {
   let abbrev = b"\x01\x2e\x00" +
     b"\x03\x08" +

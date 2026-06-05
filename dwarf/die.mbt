@@ -340,6 +340,37 @@ pub fn DwarfDieAttribute::address(
 }
 
 ///|
+pub fn DwarfDieAttribute::address_value(
+  self : DwarfDieAttribute,
+  data : DwarfData,
+  addr_size~ : DwarfWordSize,
+  addr_base? : Int,
+) -> Result[UInt64, String] {
+  let info = match data.section(DwarfInfo) {
+    Ok(section) => section
+    Err(reason) => return Err(reason)
+  }
+  match self.form() {
+    DwarfAddr => self.address(info, endian=data.endian(), addr_size~)
+    DwarfAddrx(_) => {
+      let base = match addr_base {
+        Some(value) => value
+        None => return Err("DW_AT_addr_base is not available")
+      }
+      match self.index_value(info, endian=data.endian()) {
+        Ok(index) =>
+          match data.address_table(offset=base, addr_size~) {
+            Ok(table) => table.address(index)
+            Err(reason) => Err(reason)
+          }
+        Err(reason) => Err(reason)
+      }
+    }
+    _ => Err("DWARF DIE attribute is not an address value")
+  }
+}
+
+///|
 pub fn DwarfDieAttribute::section_offset_value(
   self : DwarfDieAttribute,
   info : DwarfSectionBuffer,

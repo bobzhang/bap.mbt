@@ -6,6 +6,11 @@ pub(all) enum AddressPosition {
 } derive(Eq, Debug)
 
 ///|
+pub(all) suberror MemoryError {
+  MemoryFailure(String)
+} derive(Eq, Debug)
+
+///|
 struct Memory {
   endian_value : @bitvec.Endian
   base_addr : UInt64
@@ -159,6 +164,19 @@ pub fn Memory::view(
 }
 
 ///|
+pub fn Memory::view_exn(
+  self : Memory,
+  from? : UInt64,
+  words? : Int = -1,
+  word_size? : Int = 1,
+) -> Memory raise MemoryError {
+  match self.view(from?, words~, word_size~) {
+    Ok(memory) => memory
+    Err(reason) => raise MemoryFailure(reason)
+  }
+}
+
+///|
 pub fn Memory::range(
   self : Memory,
   lo : UInt64,
@@ -223,6 +241,21 @@ pub fn Memory::load(
         }
       _ => Err("memory load is out of bounds")
     }
+  }
+}
+
+///|
+pub fn Memory::load_exn(
+  self : Memory,
+  addr : UInt64,
+  width? : Int = 8,
+  disp? : Int = 0,
+  index? : Int = 0,
+  scale? : Int = 1,
+) -> @types.Word raise MemoryError {
+  match self.load(addr, width~, disp~, index~, scale~) {
+    Ok(word) => word
+    Err(reason) => raise MemoryFailure(reason)
   }
 }
 

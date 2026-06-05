@@ -40,6 +40,35 @@ test "memory views preserve address ranges" {
 }
 
 ///|
+test "memory raising accessors mirror checked view and load errors" {
+  let memory = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x1000UL,
+    bytes_0_to_15(),
+  )
+  let view = memory.view_exn(from=0x1002UL, words=2)
+  assert_true(view.min_addr() == 0x1002UL)
+  inspect(view.hexdump(), content="02 03")
+  assert_eq(memory.load_exn(0x1002UL, width=16).to_hex(), "0x0302")
+  try {
+    let _ = memory.view_exn(from=0x2000UL)
+    fail("unexpected view_exn success")
+  } catch {
+    @memory.MemoryFailure(reason) =>
+      assert_eq(reason, "memory view starts outside the source region")
+    _ => fail("expected MemoryFailure from view_exn")
+  }
+  try {
+    let _ = memory.load_exn(0x100fUL, width=16)
+    fail("unexpected load_exn success")
+  } catch {
+    @memory.MemoryFailure(reason) =>
+      assert_eq(reason, "memory load is out of bounds")
+    _ => fail("expected MemoryFailure from load_exn")
+  }
+}
+
+///|
 test "translated BAP memory create rejects empty regions" {
   assert_true(
     @memory.Memory::create(endian=LittleEndian, start=0UL, b"") is Err(_),

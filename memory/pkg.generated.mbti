@@ -10,6 +10,9 @@ import {
 // Values
 
 // Errors
+pub(all) suberror MemoryError {
+  MemoryFailure(String)
+} derive(Eq, @debug.Debug)
 
 // Types and methods
 pub(all) enum AddressPosition {
@@ -105,6 +108,7 @@ pub fn Memory::intersects(Self, Self) -> Bool
 pub fn Memory::last_byte(Self) -> Self
 pub fn Memory::length(Self) -> Int
 pub fn Memory::load(Self, UInt64, width? : Int, disp? : Int, index? : Int, scale? : Int) -> Result[@types.Word, String]
+pub fn Memory::load_exn(Self, UInt64, width? : Int, disp? : Int, index? : Int, scale? : Int) -> @types.Word raise MemoryError
 pub fn Memory::max_addr(Self) -> UInt64
 pub fn Memory::merge(Self, Self) -> Result[Self, String]
 pub fn Memory::min_addr(Self) -> UInt64
@@ -114,6 +118,7 @@ pub fn Memory::store(Self, UInt64, @types.Word) -> Result[Self, String]
 pub fn Memory::to_bytes(Self) -> Bytes
 pub fn Memory::to_string(Self) -> String
 pub fn Memory::view(Self, from? : UInt64, words? : Int, word_size? : Int) -> Result[Self, String]
+pub fn Memory::view_exn(Self, from? : UInt64, words? : Int, word_size? : Int) -> Self raise MemoryError
 
 // Type aliases
 

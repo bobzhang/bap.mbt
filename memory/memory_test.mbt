@@ -34,6 +34,16 @@ test "memory views preserve address ranges" {
         }
         Err(reason) => fail(reason)
       }
+      let wide_view = memory.view(from=0x1004UL, words=2, word_size=16)
+      match wide_view {
+        Ok(chunk) => {
+          assert_true(chunk.min_addr() == 0x1004UL)
+          assert_true(chunk.max_addr() == 0x1007UL)
+          inspect(chunk.hexdump(), content="04 05 06 07")
+        }
+        Err(reason) => fail(reason)
+      }
+      assert_true(memory.view(from=0x1004UL, words=2, word_size=12) is Err(_))
     }
     Err(reason) => fail(reason)
   }

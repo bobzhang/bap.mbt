@@ -635,7 +635,7 @@ pub fn Image::words(
       let count = memory.length() / bytes_per_word
       for i in 0..<count {
         let addr = memory.min_addr() + (i * bytes_per_word).to_uint64()
-        match memory.view(from=addr, words=1, word_size=bytes_per_word) {
+        match memory.view(from=addr, words=1, word_size~) {
           Ok(chunk) =>
             match memory.load(addr, width=word_size) {
               Ok(word) => map = map.add(chunk, word)

@@ -50,6 +50,15 @@ fn checked_len(data : Bytes, pos : Int, len : Int) -> Result[Int, String] {
 }
 
 ///|
+fn memory_word_bytes(word_size : Int) -> Int? {
+  if word_size <= 0 || word_size % 8 != 0 {
+    None
+  } else {
+    Some(word_size / 8)
+  }
+}
+
+///|
 pub fn Memory::create(
   endian~ : @bitvec.Endian,
   start~ : UInt64,
@@ -141,31 +150,33 @@ pub fn Memory::view(
   self : Memory,
   from? : UInt64,
   words? : Int = -1,
-  word_size? : Int = 1,
+  word_size? : Int = 8,
 ) -> Result[Memory, String] {
   let start = match from {
     Some(addr) => addr
     None => self.min_addr()
   }
-  match self.offset(start) {
-    Some(pos) => {
-      let available = self.length() - pos
-      let requested = if words < 0 { available } else { words * word_size }
-      if word_size <= 0 {
-        Err("word size must be positive")
-      } else if requested < 0 || requested > available {
-        Err("memory view exceeds the source region")
-      } else {
-        Memory::create(
-          endian=self.endian_value,
-          start~,
-          self.data_value,
-          pos~,
-          len=requested,
-        )
+  match memory_word_bytes(word_size) {
+    None => Err("word size must be a positive multiple of 8")
+    Some(word_bytes) =>
+      match self.offset(start) {
+        Some(pos) => {
+          let available = self.length() - pos
+          let requested = if words < 0 { available } else { words * word_bytes }
+          if requested < 0 || requested > available {
+            Err("memory view exceeds the source region")
+          } else {
+            Memory::create(
+              endian=self.endian_value,
+              start~,
+              self.data_value,
+              pos~,
+              len=requested,
+            )
+          }
+        }
+        None => Err("memory view starts outside the source region")
       }
-    }
-    None => Err("memory view starts outside the source region")
   }
 }
 
@@ -174,7 +185,7 @@ pub fn Memory::view_exn(
   self : Memory,
   from? : UInt64,
   words? : Int = -1,
-  word_size? : Int = 1,
+  word_size? : Int = 8,
 ) -> Memory raise MemoryError {
   match self.view(from?, words~, word_size~) {
     Ok(memory) => memory
@@ -192,7 +203,7 @@ pub fn Memory::range(
     Err("memory range upper bound is below lower bound")
   } else {
     let words = (hi - lo).to_int() + 1
-    self.view(from=lo, words~, word_size=1)
+    self.view(from=lo, words~, word_size=8)
   }
 }
 
@@ -299,22 +310,13 @@ pub fn Memory::get_exn(
 }
 
 ///|
-fn memory_iterator_word_bytes(word_size : Int) -> Int? {
-  if word_size <= 0 || word_size % 8 != 0 {
-    None
-  } else {
-    Some(word_size / 8)
-  }
-}
-
-///|
 pub fn[A] Memory::foldi(
   self : Memory,
   init : A,
   f : (UInt64, @types.Word, A) -> A,
   word_size? : Int = 8,
 ) -> A {
-  match memory_iterator_word_bytes(word_size) {
+  match memory_word_bytes(word_size) {
     None => init
     Some(word_bytes) => {
       let finish = self.length() - word_bytes
@@ -390,7 +392,7 @@ pub fn Memory::for_all(
   f : (UInt64, @types.Word) -> Bool,
   word_size? : Int = 8,
 ) -> Bool {
-  match memory_iterator_word_bytes(word_size) {
+  match memory_word_bytes(word_size) {
     None => true
     Some(word_bytes) => {
       let finish = self.length() - word_bytes
@@ -427,7 +429,7 @@ pub fn[A] Memory::find_map(
   f : (UInt64, @types.Word) -> A?,
   word_size? : Int = 8,
 ) -> A? {
-  match memory_iterator_word_bytes(word_size) {
+  match memory_word_bytes(word_size) {
     None => None
     Some(word_bytes) => {
       let finish = self.length() - word_bytes

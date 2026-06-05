@@ -31,6 +31,7 @@ priv enum DwarfFunctionAttrValue {
   DwarfAttrAddrBase(Int)
   DwarfAttrRangesBase(Int)
   DwarfAttrRnglistsBase(Int)
+  DwarfAttrLoclistsBase(Int)
   DwarfAttrIgnored
 }
 
@@ -974,6 +975,11 @@ fn dwarf_read_attr_value(
         Ok((base, next)) => Ok((DwarfAttrRnglistsBase(base), next))
         Err(reason) => Err(reason)
       }
+    DwarfLoclistsBaseValue =>
+      match input.read_offset(endian~, size=dwarf_size) {
+        Ok((base, next)) => Ok((DwarfAttrLoclistsBase(base), next))
+        Err(reason) => Err(reason)
+      }
     DwarfIgnoredValue =>
       match
         dwarf_skip_form(
@@ -1061,6 +1067,7 @@ fn dwarf_collect_function(
       DwarfAttrAddrBase(_) => ()
       DwarfAttrRangesBase(base) => ranges_offset_base = base
       DwarfAttrRnglistsBase(_) => ()
+      DwarfAttrLoclistsBase(_) => ()
       DwarfAttrIgnored => ()
     }
   }
@@ -1198,6 +1205,17 @@ fn dwarf_collect_rnglists_base(values : Array[DwarfFunctionAttrValue]) -> Int? {
 }
 
 ///|
+fn dwarf_collect_loclists_base(values : Array[DwarfFunctionAttrValue]) -> Int? {
+  for value in values {
+    match value {
+      DwarfAttrLoclistsBase(base) => return Some(base)
+      _ => ()
+    }
+  }
+  None
+}
+
+///|
 fn dwarf_collect_ranges_offset_base(
   values : Array[DwarfFunctionAttrValue],
 ) -> Int? {
@@ -1239,6 +1257,7 @@ fn dwarf_should_read_die_field(
   field.attr() == DwarfAddrBase ||
   field.attr() == DwarfRangesBase ||
   field.attr() == DwarfRnglistsBase ||
+  field.attr() == DwarfLoclistsBase ||
   field.attr() == DwarfLowPc ||
   (
     dwarf_entry_allows_name_capture(entry) &&
@@ -1274,6 +1293,7 @@ fn dwarf_read_die(
     DwarfFunctionCandidate?,
     String?,
     DwarfNameRef?,
+    Int?,
     Int?,
     Int?,
     Int?,
@@ -1330,6 +1350,7 @@ fn dwarf_read_die(
       dwarf_collect_str_offsets_base(values),
       dwarf_collect_addr_base(values),
       dwarf_collect_rnglists_base(values),
+      dwarf_collect_loclists_base(values),
       dwarf_collect_ranges_offset_base(values),
       dwarf_collect_range_base(values),
       cursor,
@@ -1526,6 +1547,7 @@ fn dwarf_parse_unit(
                               str_base,
                               next_addr_base,
                               next_rnglists_base,
+                              _next_loclists_base,
                               next_ranges_offset_base,
                               next_range_base,
                               next,

@@ -102,6 +102,7 @@ pub(all) enum DwarfAttr {
   DwarfAddrBase
   DwarfRangesBase
   DwarfRnglistsBase
+  DwarfLoclistsBase
   DwarfUnknownAttr(Int)
 } derive(Eq, Debug)
 
@@ -123,6 +124,11 @@ pub fn DwarfAttr::high_pc() -> DwarfAttr {
 ///|
 pub fn DwarfAttr::entry_pc() -> DwarfAttr {
   DwarfEntryPc
+}
+
+///|
+pub fn DwarfAttr::loclists_base() -> DwarfAttr {
+  DwarfLoclistsBase
 }
 
 ///|
@@ -602,6 +608,7 @@ fn dwarf_attr_of_int(code : Int) -> DwarfAttr {
     0x72 => DwarfStrOffsetsBase
     0x73 => DwarfAddrBase
     0x74 => DwarfRnglistsBase
+    0x8c => DwarfLoclistsBase
     0x2132 => DwarfRangesBase
     0x2133 => DwarfAddrBase
     other => DwarfUnknownAttr(other)

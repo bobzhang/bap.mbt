@@ -46,6 +46,7 @@ pub(all) enum DwarfAbbrevValueKind {
   DwarfAddrBaseValue
   DwarfRangesBaseValue
   DwarfRnglistsBaseValue
+  DwarfLoclistsBaseValue
 } derive(Eq, @debug.Debug)
 
 type DwarfAddressTable
@@ -72,10 +73,12 @@ pub(all) enum DwarfAttr {
   DwarfAddrBase
   DwarfRangesBase
   DwarfRnglistsBase
+  DwarfLoclistsBase
   DwarfUnknownAttr(Int)
 } derive(Eq, @debug.Debug)
 pub fn DwarfAttr::entry_pc() -> Self
 pub fn DwarfAttr::high_pc() -> Self
+pub fn DwarfAttr::loclists_base() -> Self
 pub fn DwarfAttr::low_pc() -> Self
 pub fn DwarfAttr::name() -> Self
 pub fn DwarfAttr::unknown(Int) -> Self

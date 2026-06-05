@@ -69,6 +69,26 @@ fn expect_string_table(
 }
 
 ///|
+fn expect_unit_header(
+  value : Result[@dwarf.DwarfInfoUnitHeader, String],
+) -> @dwarf.DwarfInfoUnitHeader raise {
+  match value {
+    Ok(value) => value
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+fn expect_unit_headers(
+  value : Result[Array[@dwarf.DwarfInfoUnitHeader], String],
+) -> Array[@dwarf.DwarfInfoUnitHeader] raise {
+  match value {
+    Ok(value) => value
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "translated DWARF section data stores buffers by section" {
   let info = expect_section_buffer(@dwarf.DwarfSectionBuffer::create(b"info"))
   let abbrev = expect_section_buffer(
@@ -91,6 +111,122 @@ test "translated DWARF section data stores buffers by section" {
   assert_true(got_abbrev.data() == b"abbrev")
   assert_true(got_abbrev.position() == 2)
   assert_true(data.section(DwarfStr) is Err(_))
+}
+
+///|
+test "translated DWARF section buffers read DWARF unit headers" {
+  let legacy_info = b"\x08\x00\x00\x00" +
+    b"\x04\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x04" +
+    b"\xaa"
+  let legacy_header = expect_unit_header(
+    @dwarf.DwarfInfoUnitHeader::read(
+      expect_section_buffer(@dwarf.DwarfSectionBuffer::create(legacy_info)),
+      endian=LittleEndian,
+    ),
+  )
+  assert_true(legacy_header.kind() == DwarfInfoUnitLegacy)
+  assert_true(legacy_header.unit_type() == None)
+  assert_true(legacy_header.version() == 4)
+  assert_true(legacy_header.dwarf_size() == W32)
+  assert_true(legacy_header.address_size() == W32)
+  assert_true(legacy_header.abbrev_offset() == 0)
+  assert_true(legacy_header.unit_size() == 8)
+  assert_true(legacy_header.start_offset() == 0)
+  assert_true(legacy_header.header_end_offset() == 11)
+  assert_true(legacy_header.body_offset() == 11)
+  assert_true(legacy_header.end_offset() == 12)
+  assert_true(legacy_header.next_offset() == 12)
+  assert_true(legacy_header.is_supported())
+  let skeleton_info = b"\x11\x00\x00\x00" +
+    b"\x05\x00" +
+    b"\x04" +
+    b"\x04" +
+    b"\x00\x00\x00\x00" +
+    b"\x7f\x06\x05\x04\x03\x02\x01\x00" +
+    b"\x00"
+  let skeleton_header = expect_unit_header(
+    @dwarf.DwarfInfoUnitHeader::read(
+      expect_section_buffer(@dwarf.DwarfSectionBuffer::create(skeleton_info)),
+      endian=LittleEndian,
+    ),
+  )
+  assert_true(skeleton_header.kind() == DwarfInfoUnitSkeleton)
+  assert_true(skeleton_header.unit_type() == Some(4))
+  assert_true(skeleton_header.header_end_offset() == 20)
+  assert_true(skeleton_header.body_offset() == 20)
+  assert_true(skeleton_header.end_offset() == 21)
+  assert_true(skeleton_header.is_supported())
+  let type_info = b"\x15\x00\x00\x00" +
+    b"\x05\x00" +
+    b"\x02" +
+    b"\x04" +
+    b"\x00\x00\x00\x00" +
+    b"\x7f\x06\x05\x04\x03\x02\x01\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x00"
+  let type_header = expect_unit_header(
+    @dwarf.DwarfInfoUnitHeader::read(
+      expect_section_buffer(@dwarf.DwarfSectionBuffer::create(type_info)),
+      endian=LittleEndian,
+    ),
+  )
+  assert_true(type_header.kind() == DwarfInfoUnitType)
+  assert_true(type_header.unit_type() == Some(2))
+  assert_true(type_header.header_end_offset() == 24)
+  assert_true(type_header.body_offset() == 24)
+  assert_true(type_header.end_offset() == 25)
+  let short_skeleton = b"\x0f\x00\x00\x00" +
+    b"\x05\x00" +
+    b"\x04" +
+    b"\x04" +
+    b"\x00\x00\x00\x00" +
+    b"\x7f\x06\x05\x04\x03\x02\x01\x00"
+  assert_true(
+    @dwarf.DwarfInfoUnitHeader::read(
+      expect_section_buffer(@dwarf.DwarfSectionBuffer::create(short_skeleton)),
+      endian=LittleEndian,
+    )
+    is Err(_),
+  )
+}
+
+///|
+test "translated DWARF data enumerates unit headers and padding" {
+  let unsupported = b"\x09\x00\x00\x00" +
+    b"\x05\x00" +
+    b"\x7f" +
+    b"\x04" +
+    b"\x00\x00\x00\x00" +
+    b"\xaa"
+  let legacy = b"\x08\x00\x00\x00" +
+    b"\x04\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x04" +
+    b"\xbb"
+  let data = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=LittleEndian,
+      info=unsupported + legacy + b"\x00\x00\x00",
+    ),
+  )
+  let headers = expect_unit_headers(data.unit_headers())
+  assert_true(headers.length() == 2)
+  assert_true(headers[0].kind() == DwarfInfoUnitUnknown(0x7f))
+  assert_true(headers[0].unit_type() == Some(0x7f))
+  assert_true(!headers[0].is_supported())
+  assert_true(headers[0].header_end_offset() == 12)
+  assert_true(headers[0].end_offset() == 13)
+  assert_true(headers[1].kind() == DwarfInfoUnitLegacy)
+  assert_true(headers[1].start_offset() == 13)
+  assert_true(headers[1].end_offset() == 25)
+  let second = expect_unit_header(data.unit_header(offset=13))
+  assert_true(second.kind() == DwarfInfoUnitLegacy)
+  let without_info = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(endian=LittleEndian, str=b"x\x00"),
+  )
+  assert_true(without_info.unit_headers() is Err(_))
 }
 
 ///|

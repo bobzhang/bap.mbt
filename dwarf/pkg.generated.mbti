@@ -100,6 +100,8 @@ pub fn DwarfData::sections(Self) -> Array[(DwarfSection, DwarfSectionBuffer)]
 pub fn DwarfData::string_offsets(Self, offset? : Int, dwarf_size~ : DwarfWordSize) -> Result[DwarfStringOffsetsTable, String]
 pub fn DwarfData::string_offsets_contribution(Self, offset? : Int) -> Result[DwarfStringOffsetsTable, String]
 pub fn DwarfData::string_table(Self, offset? : Int) -> Result[DwarfStringTable, String]
+pub fn DwarfData::unit_header(Self, offset? : Int) -> Result[DwarfInfoUnitHeader, String]
+pub fn DwarfData::unit_headers(Self) -> Result[Array[DwarfInfoUnitHeader], String]
 
 pub(all) enum DwarfForm {
   DwarfAddr
@@ -154,6 +156,35 @@ pub(all) enum DwarfIndexSpec {
   DwarfIndexThree
   DwarfIndexFour
 } derive(Eq, @debug.Debug)
+
+type DwarfInfoUnitHeader
+pub fn DwarfInfoUnitHeader::abbrev_offset(Self) -> Int
+pub fn DwarfInfoUnitHeader::address_size(Self) -> DwarfWordSize
+pub fn DwarfInfoUnitHeader::body_offset(Self) -> Int
+pub fn DwarfInfoUnitHeader::dwarf_size(Self) -> DwarfWordSize
+pub fn DwarfInfoUnitHeader::end_offset(Self) -> Int
+pub fn DwarfInfoUnitHeader::header_end_offset(Self) -> Int
+pub fn DwarfInfoUnitHeader::is_supported(Self) -> Bool
+pub fn DwarfInfoUnitHeader::kind(Self) -> DwarfInfoUnitKind
+pub fn DwarfInfoUnitHeader::next_offset(Self) -> Int
+pub fn DwarfInfoUnitHeader::read(DwarfSectionBuffer, offset? : Int, endian~ : @bitvec.Endian) -> Result[Self, String]
+pub fn DwarfInfoUnitHeader::start_offset(Self) -> Int
+pub fn DwarfInfoUnitHeader::unit_size(Self) -> Int
+pub fn DwarfInfoUnitHeader::unit_type(Self) -> Int?
+pub fn DwarfInfoUnitHeader::version(Self) -> Int
+
+pub(all) enum DwarfInfoUnitKind {
+  DwarfInfoUnitLegacy
+  DwarfInfoUnitCompile
+  DwarfInfoUnitType
+  DwarfInfoUnitPartial
+  DwarfInfoUnitSkeleton
+  DwarfInfoUnitSplitCompile
+  DwarfInfoUnitSplitType
+  DwarfInfoUnitUnknown(Int)
+} derive(Eq, @debug.Debug)
+pub fn DwarfInfoUnitKind::is_supported(Self) -> Bool
+pub fn DwarfInfoUnitKind::unit_type(Self) -> Int?
 
 type DwarfInput
 pub fn DwarfInput::of_bytes(Bytes) -> Self

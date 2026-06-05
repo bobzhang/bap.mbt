@@ -100,6 +100,81 @@ test "image address size follows target metadata" {
 }
 
 ///|
+test "image segments and symbols expose BAP regular facades" {
+  let text = @image.Segment::create(
+    name=".text",
+    endian=LittleEndian,
+    addr=0x4000UL,
+    bytes_0_to_15(),
+    offset=64,
+    executable=true,
+  )
+  let text_copy = @image.Segment::create(
+    name=".text",
+    endian=LittleEndian,
+    addr=0x4000UL,
+    bytes_from_range(100, 16),
+    offset=64,
+    executable=true,
+  )
+  let later_text = @image.Segment::create(
+    name=".text",
+    endian=LittleEndian,
+    addr=0x4010UL,
+    bytes_0_to_15(),
+    offset=64,
+    executable=true,
+  )
+  let data = @image.Segment::create(
+    name=".data",
+    endian=LittleEndian,
+    addr=0x4000UL,
+    bytes_0_to_15(),
+  )
+  inspect(text.to_string(), content=".text 16384 16")
+  assert_true(@image.Segment::module_name() == Some("Bap.Std.Image.Segment"))
+  assert_true(@image.Segment::version() == "2.0.0")
+  assert_true(text.equal(text_copy))
+  assert_true(!text.equal(later_text))
+  assert_true(text.compare(later_text) < 0)
+  assert_true(data.compare(text) < 0)
+  assert_true(text.hash() == data.hash())
+
+  let main = @image.Symbol::create(
+    name="main",
+    addr=0x4004UL,
+    size=4,
+    is_function=true,
+  )
+  let main_copy = @image.Symbol::create(
+    name="main",
+    addr=0x4004UL,
+    size=4,
+    is_function=true,
+  )
+  let debug_main = @image.Symbol::create(
+    name="main",
+    addr=0x4004UL,
+    size=4,
+    is_debug=true,
+  )
+  let later_main = @image.Symbol::create(
+    name="main",
+    addr=0x4008UL,
+    size=4,
+    is_function=true,
+  )
+  inspect(main.to_string(), content="main 16388 4")
+  assert_true(@image.Symbol::module_name() == Some("Bap.Std.Image.Symbol"))
+  assert_true(@image.Symbol::version() == "2.0.0")
+  assert_true(main.equal(main_copy))
+  assert_true(!main.equal(debug_main))
+  assert_true(main.compare(later_main) < 0)
+  assert_true(debug_main.compare(main) < 0)
+  assert_true(main.hash() == debug_main.hash())
+}
+
+///|
 test "image exposes BAP tag and specification facades" {
   let segment_tag = @image.segment()
   assert_true(segment_tag.name() == "segment")

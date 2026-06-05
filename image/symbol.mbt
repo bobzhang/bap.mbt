@@ -58,3 +58,52 @@ pub fn Symbol::contains(self : Symbol, addr : UInt64) -> Bool {
     addr < self.addr_value + self.size_value.to_uint64()
   }
 }
+
+///|
+pub fn Symbol::to_string(self : Symbol) -> String {
+  "\{self.name()} \{self.addr()} \{self.size()}"
+}
+
+///|
+pub fn Symbol::hash(self : Symbol) -> Int {
+  self.addr().to_string().hash()
+}
+
+///|
+pub fn Symbol::equal(self : Symbol, other : Symbol) -> Bool {
+  self.compare(other) == 0
+}
+
+///|
+pub fn Symbol::compare(self : Symbol, other : Symbol) -> Int {
+  let name_order = self.name_value.compare(other.name_value)
+  if name_order != 0 {
+    return name_order
+  }
+  let addr_order = self.addr_value.compare(other.addr_value)
+  if addr_order != 0 {
+    return addr_order
+  }
+  let size_order = self.size_value.compare(other.size_value)
+  if size_order != 0 {
+    return size_order
+  }
+  let function_order = image_bool_compare(
+    self.function_flag,
+    other.function_flag,
+  )
+  if function_order != 0 {
+    return function_order
+  }
+  image_bool_compare(self.debug_flag, other.debug_flag)
+}
+
+///|
+pub fn Symbol::module_name() -> String? {
+  Some("Bap.Std.Image.Symbol")
+}
+
+///|
+pub fn Symbol::version() -> String {
+  "2.0.0"
+}

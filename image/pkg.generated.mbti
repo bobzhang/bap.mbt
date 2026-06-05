@@ -233,17 +233,23 @@ pub fn Section::size(Self) -> Int
 
 type Segment
 pub fn Segment::addr(Self) -> UInt64
+pub fn Segment::compare(Self, Self) -> Int
 pub fn Segment::contains(Self, UInt64) -> Bool
 pub fn Segment::create(name~ : String, endian~ : @bitvec.Endian, addr~ : UInt64, Bytes, offset? : Int, readable? : Bool, writable? : Bool, executable? : Bool) -> Self
+pub fn Segment::equal(Self, Self) -> Bool
 pub fn Segment::from_memory(name~ : String, memory~ : @memory.Memory, offset? : Int, readable? : Bool, writable? : Bool, executable? : Bool) -> Self
+pub fn Segment::hash(Self) -> Int
 pub fn Segment::is_executable(Self) -> Bool
 pub fn Segment::is_readable(Self) -> Bool
 pub fn Segment::is_writable(Self) -> Bool
 pub fn Segment::max_addr(Self) -> UInt64
 pub fn Segment::memory(Self) -> @memory.Memory
+pub fn Segment::module_name() -> String?
 pub fn Segment::name(Self) -> String
 pub fn Segment::offset(Self) -> Int
 pub fn Segment::size(Self) -> Int
+pub fn Segment::to_string(Self) -> String
+pub fn Segment::version() -> String
 pub fn Segment::with_memory(Self, @memory.Memory) -> Self
 
 pub(all) struct Spec {
@@ -253,12 +259,18 @@ pub fn Spec::slot() -> @knowledge.Slot[Unit, OgreDoc]
 
 type Symbol
 pub fn Symbol::addr(Self) -> UInt64
+pub fn Symbol::compare(Self, Self) -> Int
 pub fn Symbol::contains(Self, UInt64) -> Bool
 pub fn Symbol::create(name~ : String, addr~ : UInt64, size? : Int, is_function? : Bool, is_debug? : Bool) -> Self
+pub fn Symbol::equal(Self, Self) -> Bool
+pub fn Symbol::hash(Self) -> Int
 pub fn Symbol::is_debug(Self) -> Bool
 pub fn Symbol::is_function(Self) -> Bool
+pub fn Symbol::module_name() -> String?
 pub fn Symbol::name(Self) -> String
 pub fn Symbol::size(Self) -> Int
+pub fn Symbol::to_string(Self) -> String
+pub fn Symbol::version() -> String
 
 type SymbolValue
 pub fn SymbolValue::addr(Self) -> UInt64

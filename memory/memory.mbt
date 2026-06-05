@@ -266,6 +266,39 @@ pub fn Memory::load_exn(
 }
 
 ///|
+pub fn Memory::get(
+  self : Memory,
+  addr? : UInt64,
+  disp? : Int = 0,
+  index? : Int = 0,
+  scale? : Int = 8,
+) -> Result[@types.Word, String] {
+  if scale <= 0 || scale % 8 != 0 {
+    Err("memory get scale must be a positive multiple of 8")
+  } else {
+    let base = match addr {
+      Some(value) => value
+      None => self.min_addr()
+    }
+    self.load(base, width=scale, disp~, index~, scale=scale / 8)
+  }
+}
+
+///|
+pub fn Memory::get_exn(
+  self : Memory,
+  addr? : UInt64,
+  disp? : Int = 0,
+  index? : Int = 0,
+  scale? : Int = 8,
+) -> @types.Word raise MemoryError {
+  match self.get(addr?, disp~, index~, scale~) {
+    Ok(word) => word
+    Err(reason) => raise MemoryFailure(reason)
+  }
+}
+
+///|
 pub fn MemoryInputReader::word(word_size~ : Int) -> MemoryInputReader {
   { width_value: word_size, signed_value: false }
 }

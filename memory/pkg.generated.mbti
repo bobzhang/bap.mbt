@@ -103,6 +103,8 @@ pub fn Memory::dominates(Self, Self) -> Bool
 pub fn Memory::endian(Self) -> @bitvec.Endian
 pub fn Memory::first_byte(Self) -> Self
 pub fn Memory::from_bytes(endian~ : @bitvec.Endian, start~ : UInt64, Bytes) -> Self
+pub fn Memory::get(Self, addr? : UInt64, disp? : Int, index? : Int, scale? : Int) -> Result[@types.Word, String]
+pub fn Memory::get_exn(Self, addr? : UInt64, disp? : Int, index? : Int, scale? : Int) -> @types.Word raise MemoryError
 pub fn Memory::hexdump(Self) -> String
 pub fn Memory::intersects(Self, Self) -> Bool
 pub fn Memory::last_byte(Self) -> Self

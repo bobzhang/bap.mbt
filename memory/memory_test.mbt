@@ -193,6 +193,47 @@ test "translated BAP memory input readers honor big endian loads" {
 }
 
 ///|
+test "translated BAP memory get uses source-style address scale" {
+  let memory = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x1000UL,
+    bytes_0_to_15(),
+  )
+  match memory.get() {
+    Ok(word) => assert_true(word.to_hex() == "0x00")
+    Err(reason) => fail(reason)
+  }
+  match memory.get(scale=32, index=1) {
+    Ok(word) => assert_true(word.to_hex() == "0x07060504")
+    Err(reason) => fail(reason)
+  }
+  match memory.get(addr=0x1002UL, disp=1, index=1, scale=16) {
+    Ok(word) => assert_true(word.to_hex() == "0x0605")
+    Err(reason) => fail(reason)
+  }
+  assert_true(memory.get(scale=0) is Err(_))
+  assert_true(memory.get(addr=0x100fUL, scale=16) is Err(_))
+}
+
+///|
+test "translated BAP memory get_exn raises checked load errors" {
+  let memory = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x1000UL,
+    bytes_0_to_15(),
+  )
+  assert_eq(memory.get_exn(scale=16).to_hex(), "0x0100")
+  try {
+    let _ = memory.get_exn(addr=0x100fUL, scale=16)
+    fail("unexpected get_exn success")
+  } catch {
+    @memory.MemoryFailure(reason) =>
+      assert_eq(reason, "memory load is out of bounds")
+    _ => fail("expected MemoryFailure from get_exn")
+  }
+}
+
+///|
 test "memory merge accepts contiguous regions" {
   let left = @memory.Memory::from_bytes(
     endian=LittleEndian,

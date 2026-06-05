@@ -604,9 +604,37 @@ fn project_memory_persistent() -> @knowledge.Persistent[@memory.MemMap[String]] 
 }
 
 ///|
+fn project_symbol_location_encode(location : (UInt64, Int)) -> String {
+  "\{location.0}:\{location.1}"
+}
+
+///|
+fn project_symbol_location_decode(
+  text : String,
+) -> Result[(UInt64, Int), String] {
+  let parts = text.split(":").to_array()
+  if parts.length() != 2 {
+    return Err("invalid persistent project symbol location")
+  }
+  let addr = match project_read_persistent_uint64(parts[0].to_owned()) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let len : Int = try @string.from_str(parts[1].to_owned()) catch {
+    _ => return Err("invalid persistent project symbol location length")
+  } noraise {
+    value => value
+  }
+  Ok((addr, len))
+}
+
+///|
 fn project_symbol_persistent() -> @knowledge.Persistent[@image.Symbol] {
   let int_codec = @knowledge.Persistent::int()
   let bool_codec = @knowledge.Persistent::bool()
+  let locations_codec = @knowledge.Persistent::array(
+    @knowledge.Persistent::string(),
+  )
   @knowledge.Persistent::convert(
     to_persistent=symbol => {
       [
@@ -615,10 +643,13 @@ fn project_symbol_persistent() -> @knowledge.Persistent[@image.Symbol] {
         int_codec.encode(symbol.size()),
         bool_codec.encode(symbol.is_function()),
         bool_codec.encode(symbol.is_debug()),
+        locations_codec.encode(
+          symbol.extra_locations().map(project_symbol_location_encode),
+        ),
       ]
     },
     of_persistent=fields => {
-      if fields.length() != 5 {
+      if fields.length() != 5 && fields.length() != 6 {
         return Err("invalid persistent project symbol")
       }
       let addr = match project_read_persistent_uint64(fields[1]) {
@@ -637,11 +668,29 @@ fn project_symbol_persistent() -> @knowledge.Persistent[@image.Symbol] {
         Ok(value) => value
         Err(reason) => return Err(reason)
       }
+      let extra_locations = if fields.length() == 6 {
+        match locations_codec.decode(fields[5]) {
+          Ok(values) => {
+            let locations = []
+            for value in values {
+              match project_symbol_location_decode(value) {
+                Ok(location) => locations.push(location)
+                Err(reason) => return Err(reason)
+              }
+            }
+            locations
+          }
+          Err(reason) => return Err(reason)
+        }
+      } else {
+        []
+      }
       Ok(
         @image.Symbol::create(
           name=fields[0],
           addr~,
           size~,
+          extra_locations~,
           is_function~,
           is_debug~,
         ),

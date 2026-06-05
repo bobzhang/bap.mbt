@@ -576,6 +576,43 @@ test "image symbol memory can span contiguous segment chunks" {
 }
 
 ///|
+test "image symbol memory can include explicit non-contiguous chunks" {
+  let first = @image.Segment::create(
+    name=".a",
+    endian=LittleEndian,
+    addr=0x1100UL,
+    b"\x00\x01\x02\x03",
+  )
+  let second = @image.Segment::create(
+    name=".b",
+    endian=LittleEndian,
+    addr=0x1110UL,
+    b"\x10\x11\x12",
+  )
+  let symbol = @image.Symbol::create(name="split", addr=0x1101UL, size=2, extra_locations=[
+    (0x1111UL, 2),
+  ])
+  let image = @image.Image::from_segments(
+    entry=0x1100UL,
+    endian=LittleEndian,
+    [first, second],
+    symbols=[symbol],
+  )
+  assert_true(symbol.contains(0x1102UL))
+  assert_true(symbol.contains(0x1112UL))
+  assert_true(!symbol.contains(0x1104UL))
+  assert_true(image.symbols_of_segment(second).length() == 1)
+  match image.memory_of_symbol(symbol) {
+    Some((head, rest)) => {
+      inspect(head.hexdump(), content="01 02")
+      assert_true(rest.length() == 1)
+      inspect(rest[0].hexdump(), content="11 12")
+    }
+    None => fail("expected split symbol memory")
+  }
+}
+
+///|
 test "image symbol memory rejects gaps across segments" {
   let first = @image.Segment::create(
     name=".a",
@@ -896,7 +933,7 @@ test "image backend discovery returns extension matches by priority" {
 test "image legacy backend facade materializes backend images" {
   let segment_location = @image.ImageBackendLocation::create(
     addr=0x4000UL,
-    len=4,
+    len=5,
   )
   let section_location = @image.ImageBackendLocation::create(
     addr=0x4001UL,
@@ -905,6 +942,10 @@ test "image legacy backend facade materializes backend images" {
   let symbol_location = @image.ImageBackendLocation::create(
     addr=0x4001UL,
     len=2,
+  )
+  let symbol_extra_location = @image.ImageBackendLocation::create(
+    addr=0x4004UL,
+    len=1,
   )
   let segment = @image.ImageBackendSegment::create(
     name=".legacy",
@@ -921,9 +962,10 @@ test "image legacy backend facade materializes backend images" {
     location=symbol_location,
     is_function=true,
     is_debug=true,
+    extra_locations=[symbol_extra_location],
   )
   let legacy = @image.LegacyImageBackend::create(load=data => {
-    if data.length() < 5 {
+    if data.length() < 6 {
       None
     } else {
       Some(
@@ -958,12 +1000,12 @@ test "image legacy backend facade materializes backend images" {
   )
   match
     @image.Image::of_bytes(
-      b"\x00\xaa\xbb\xcc\xdd",
+      b"\x00\xaa\xbb\xcc\xdd\xee",
       backend="unit-legacy-image-backend",
     ) {
     Ok((image, warnings)) => {
       assert_true(warnings.is_empty())
-      assert_true(image.data() == b"\x00\xaa\xbb\xcc\xdd")
+      assert_true(image.data() == b"\x00\xaa\xbb\xcc\xdd\xee")
       assert_true(image.entry_point() == 0x4001UL)
       assert_true(image.addr_size() == 64)
       assert_true(image.arch().matches("x86_64"))
@@ -973,19 +1015,21 @@ test "image legacy backend facade materializes backend images" {
       assert_true(loaded_segment.is_readable())
       assert_true(!loaded_segment.is_writable())
       assert_true(loaded_segment.is_executable())
-      inspect(loaded_segment.memory().hexdump(), content="aa bb cc dd")
+      inspect(loaded_segment.memory().hexdump(), content="aa bb cc dd ee")
       let loaded_symbol = image.symbols()[0]
       assert_true(loaded_symbol.name() == "legacy_main")
       assert_true(loaded_symbol.is_function())
       assert_true(loaded_symbol.is_debug())
+      assert_true(loaded_symbol.extra_locations() == [(0x4004UL, 1)])
       match image.memory_of_section(image.sections()[0]) {
         Some(memory) => inspect(memory.hexdump(), content="bb cc")
         None => fail("expected legacy section memory")
       }
       match image.memory_of_symbol(loaded_symbol) {
         Some((memory, rest)) => {
-          assert_true(rest.is_empty())
+          assert_true(rest.length() == 1)
           inspect(memory.hexdump(), content="bb cc")
+          inspect(rest[0].hexdump(), content="ee")
         }
         None => fail("expected legacy symbol memory")
       }
@@ -994,7 +1038,7 @@ test "image legacy backend facade materializes backend images" {
       assert_true(spec.fact_count("segment") == 1)
       assert_true(spec.fact_count("section") == 1)
       assert_true(spec.fact_count("named-symbol") == 1)
-      assert_true(spec.fact_count("symbol-chunk") == 1)
+      assert_true(spec.fact_count("symbol-chunk") == 2)
     }
     Err(reason) => fail(reason)
   }

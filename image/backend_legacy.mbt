@@ -454,20 +454,19 @@ fn ImageBackendImage::to_image(
   let symbols = []
   let warnings = []
   for symbol in self.symbols {
+    let extra_locations = symbol.extra_locations.map(location => {
+      (location.addr, location.len)
+    })
     symbols.push(
       Symbol::create(
         name=symbol.name,
         addr=symbol.location.addr,
         size=symbol.location.len,
+        extra_locations~,
         is_function=symbol.is_function,
         is_debug=symbol.is_debug,
       ),
     )
-    if !symbol.extra_locations.is_empty() {
-      warnings.push(
-        "legacy image backend \{backend_name} symbol \{symbol.name} has extra chunks",
-      )
-    }
   }
   let spec = match self.to_spec() {
     Ok(doc) => doc

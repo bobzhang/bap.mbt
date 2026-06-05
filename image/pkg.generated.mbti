@@ -369,11 +369,13 @@ type Symbol
 pub fn Symbol::addr(Self) -> UInt64
 pub fn Symbol::compare(Self, Self) -> Int
 pub fn Symbol::contains(Self, UInt64) -> Bool
-pub fn Symbol::create(name~ : String, addr~ : UInt64, size? : Int, is_function? : Bool, is_debug? : Bool) -> Self
+pub fn Symbol::create(name~ : String, addr~ : UInt64, size? : Int, extra_locations? : Array[(UInt64, Int)], is_function? : Bool, is_debug? : Bool) -> Self
 pub fn Symbol::equal(Self, Self) -> Bool
+pub fn Symbol::extra_locations(Self) -> Array[(UInt64, Int)]
 pub fn Symbol::hash(Self) -> Int
 pub fn Symbol::is_debug(Self) -> Bool
 pub fn Symbol::is_function(Self) -> Bool
+pub fn Symbol::locations(Self) -> Array[(UInt64, Int)]
 pub fn Symbol::module_name() -> String?
 pub fn Symbol::name(Self) -> String
 pub fn Symbol::size(Self) -> Int

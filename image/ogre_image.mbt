@@ -477,18 +477,33 @@ fn OgreDoc::symbol_name(self : OgreDoc, addr : UInt64) -> String? {
 }
 
 ///|
-fn OgreDoc::symbol_size(self : OgreDoc, root : UInt64) -> Int {
+fn OgreDoc::symbol_locations(
+  self : OgreDoc,
+  root : UInt64,
+) -> Result[(Int, Array[(UInt64, Int)]), String] {
+  let mut root_size = 1
+  let extra_locations = []
   for fact in self.facts("symbol-chunk") {
     match ogre_fact_uint64(fact, "root") {
-      Ok(chunk_root) if chunk_root == root =>
-        match (ogre_fact_uint64(fact, "addr"), ogre_fact_int(fact, "size")) {
-          (Ok(addr), Ok(size)) if addr == root => return size
-          _ => ()
+      Ok(chunk_root) if chunk_root == root => {
+        let addr = match ogre_fact_uint64(fact, "addr") {
+          Ok(value) => value
+          Err(reason) => return Err(reason)
         }
+        let size = match ogre_fact_int(fact, "size") {
+          Ok(value) => value
+          Err(reason) => return Err(reason)
+        }
+        if addr == root {
+          root_size = size
+        } else {
+          extra_locations.push((addr, size))
+        }
+      }
       _ => ()
     }
   }
-  1
+  Ok((root_size, extra_locations))
 }
 
 ///|
@@ -499,15 +514,21 @@ fn OgreDoc::image_symbols(self : OgreDoc) -> Result[Array[Symbol], String] {
       Err(reason) => return Err(reason)
       Ok(addr) =>
         match self.symbol_name(addr) {
-          Some(name) =>
+          Some(name) => {
+            let (size, extra_locations) = match self.symbol_locations(addr) {
+              Ok(value) => value
+              Err(reason) => return Err(reason)
+            }
             symbols.push(
               Symbol::create(
                 name~,
                 addr~,
-                size=self.symbol_size(addr),
+                size~,
+                extra_locations~,
                 is_function=true,
               ),
             )
+          }
           None => ()
         }
     }

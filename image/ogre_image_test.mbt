@@ -78,6 +78,32 @@ test "ogre image specs build image metadata" {
 }
 
 ///|
+test "ogre image specs preserve non-contiguous symbol chunks" {
+  let spec = raw_ogre_spec +
+    " (mapped 4100 1 5)" +
+    " (named-region 4100 1 code-tail)" +
+    " (segment 4100 1 true false true)" +
+    " (symbol-chunk 4100 1 4097)"
+  match @image.Image::of_ogre_string(b"\x00\xaa\xbb\xcc\xdd\xee", spec) {
+    Ok((image, warnings)) => {
+      assert_true(warnings.is_empty())
+      let symbols = image.symbols()
+      assert_true(symbols.length() == 1)
+      assert_true(symbols[0].extra_locations() == [(4100UL, 1)])
+      match image.memory_of_symbol(symbols[0]) {
+        Some((head, rest)) => {
+          inspect(head.hexdump(), content="bb cc")
+          assert_true(rest.length() == 1)
+          inspect(rest[0].hexdump(), content="ee")
+        }
+        None => fail("expected split Ogre symbol memory")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "ogre image from_spec builds image metadata" {
   match @image.OgreDoc::from_string(raw_ogre_spec) {
     Ok(doc) =>

@@ -421,7 +421,9 @@ pub fn Image::symbols_of_segment(
   self : Image,
   segment : Segment,
 ) -> Array[Symbol] {
-  self.symbols_value.filter(symbol => segment.contains(symbol.addr()))
+  self.symbols_value.filter(symbol => {
+    symbol.locations().any(location => segment.contains(location.0))
+  })
 }
 
 ///|
@@ -434,13 +436,14 @@ fn min_int(lhs : Int, rhs : Int) -> Int {
 }
 
 ///|
-fn Image::symbol_memory_chunks(
+fn Image::memory_chunks_at(
   self : Image,
-  symbol : Symbol,
+  addr : UInt64,
+  size : Int,
 ) -> Array[@memory.Memory]? {
-  let size = if symbol.size() <= 0 { 1 } else { symbol.size() }
+  let size = if size <= 0 { 1 } else { size }
   let chunks = []
-  let mut current = symbol.addr()
+  let mut current = addr
   let mut remaining = size
   while remaining > 0 {
     match self.segments_value.search_by(segment => segment.contains(current)) {
@@ -457,6 +460,24 @@ fn Image::symbol_memory_chunks(
           Err(_) => return None
         }
       }
+      None => return None
+    }
+  }
+  Some(chunks)
+}
+
+///|
+fn Image::symbol_memory_chunks(
+  self : Image,
+  symbol : Symbol,
+) -> Array[@memory.Memory]? {
+  let chunks = []
+  for location in symbol.locations() {
+    match self.memory_chunks_at(location.0, location.1) {
+      Some(items) =>
+        for item in items {
+          chunks.push(item)
+        }
       None => return None
     }
   }

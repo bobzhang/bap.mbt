@@ -357,6 +357,7 @@ test "project persistent codec round trips metadata and storage" {
       name="main:entry",
       addr=0x8800UL,
       size=2,
+      extra_locations=[(0x8801UL, 1)],
       is_function=true,
       is_debug=true,
     ),
@@ -474,6 +475,7 @@ test "project persistent codec round trips metadata and storage" {
       assert_true(decoded_symbols[0].name() == "main:entry")
       assert_true(decoded_symbols[0].addr() == 0x8800UL)
       assert_true(decoded_symbols[0].size() == 2)
+      assert_true(decoded_symbols[0].extra_locations() == [(0x8801UL, 1)])
       assert_true(decoded_symbols[0].is_function())
       assert_true(decoded_symbols[0].is_debug())
       assert_true(decoded.program().tid() == program.tid())

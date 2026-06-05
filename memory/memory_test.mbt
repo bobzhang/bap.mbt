@@ -69,6 +69,83 @@ test "translated BAP memory to_buffer exposes selected bytes" {
 }
 
 ///|
+test "translated BAP memory trie matches complete word tokens" {
+  let trie : @memory.MemoryTrie[String] = @memory.MemoryTrie::r16()
+  assert_true(trie.word_size() == 16)
+  assert_true(trie.is_empty())
+  let memory = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x1000UL,
+    b"\x01\x02\x03\x04",
+  )
+  let prefix = match memory.view(words=1, word_size=16) {
+    Ok(chunk) => chunk
+    Err(reason) => fail(reason)
+  }
+  trie.add(prefix, "prefix")
+  trie.add(memory, "full")
+  assert_true(trie.length() == 2)
+  assert_true(trie.find(prefix.rebase(0x2000UL)) == Some("prefix"))
+  let prefix_with_trailing = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x3000UL,
+    b"\x01\x02\xff",
+  )
+  assert_true(trie.find(prefix_with_trailing) == Some("prefix"))
+  let full_with_trailing = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x4000UL,
+    b"\x01\x02\x03\x04\xff",
+  )
+  assert_true(trie.find(full_with_trailing) == Some("full"))
+  let query = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x5000UL,
+    b"\x01\x02\x05\x06",
+  )
+  assert_true(trie.longest_match(query) == Some((1, "prefix")))
+  let same_bytes_big_endian = @memory.Memory::from_bytes(
+    endian=BigEndian,
+    start=0x6000UL,
+    b"\x01\x02",
+  )
+  assert_true(trie.find(same_bytes_big_endian) is None)
+  trie.change(prefix, value => {
+    match value {
+      Some(name) => Some(name + "!")
+      None => None
+    }
+  })
+  assert_true(trie.find(prefix) == Some("prefix!"))
+  trie.remove(memory)
+  assert_true(trie.find(memory) is None)
+  assert_true(trie.longest_match(memory) == Some((1, "prefix!")))
+  let walk_values = trie.walk(memory, init=[], f=fn(acc, value) {
+    match value {
+      Some(name) => acc.push(name)
+      None => acc.push("-")
+    }
+    acc
+  })
+  assert_true(walk_values == ["-", "prefix!", "-"])
+  let entries = trie.fold(init=[], f=fn(acc, tokens, value) {
+    acc.push("\{tokens.length()}:\{value}")
+    acc
+  })
+  entries.sort_by((left, right) => left.compare(right))
+  assert_true(entries == ["1:prefix!"])
+  let iter_entries = []
+  trie.iter(f=fn(tokens, value) {
+    iter_entries.push("\{tokens.length()}:\{value}")
+  })
+  assert_true(iter_entries == ["1:prefix!"])
+  let invalid : Result[@memory.MemoryTrie[Int], String] = @memory.MemoryTrie::create(
+    word_size=12,
+  )
+  assert_true(invalid is Err(_))
+}
+
+///|
 test "memory raising accessors mirror checked view and load errors" {
   let memory = @memory.Memory::from_bytes(
     endian=LittleEndian,

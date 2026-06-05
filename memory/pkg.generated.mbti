@@ -156,6 +156,25 @@ pub fn MemoryInputReader::uint16() -> Self
 pub fn MemoryInputReader::uint8() -> Self
 pub fn MemoryInputReader::word(word_size~ : Int) -> Self
 
+type MemoryTrie[V]
+pub fn[V] MemoryTrie::add(Self[V], Memory, V) -> Unit
+pub fn[V] MemoryTrie::change(Self[V], Memory, (V?) -> V?) -> Unit
+pub fn[V] MemoryTrie::create(word_size? : Int) -> Result[Self[V], String]
+pub fn[V] MemoryTrie::find(Self[V], Memory) -> V?
+pub fn[V, A] MemoryTrie::fold(Self[V], init~ : A, f~ : (A, ArrayView[@types.Word], V) -> A) -> A
+pub fn[V] MemoryTrie::is_empty(Self[V]) -> Bool
+pub fn[V] MemoryTrie::iter(Self[V], f~ : (ArrayView[@types.Word], V) -> Unit) -> Unit
+pub fn[V] MemoryTrie::length(Self[V]) -> Int
+pub fn[V] MemoryTrie::longest_match(Self[V], Memory) -> (Int, V)?
+pub fn[V] MemoryTrie::new() -> Self[V]
+pub fn[V] MemoryTrie::r16() -> Self[V]
+pub fn[V] MemoryTrie::r32() -> Self[V]
+pub fn[V] MemoryTrie::r64() -> Self[V]
+pub fn[V] MemoryTrie::r8() -> Self[V]
+pub fn[V] MemoryTrie::remove(Self[V], Memory) -> Unit
+pub fn[V, A] MemoryTrie::walk(Self[V], Memory, init~ : A, f~ : (A, V?) -> A) -> A
+pub fn[V] MemoryTrie::word_size(Self[V]) -> Int
+
 // Type aliases
 
 // Traits

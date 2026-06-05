@@ -679,6 +679,26 @@ pub fn DwarfDieAttribute::block(
 }
 
 ///|
+pub fn DwarfDieAttribute::data16(
+  self : DwarfDieAttribute,
+  info : DwarfSectionBuffer,
+) -> Result[Bytes, String] {
+  match self.form() {
+    DwarfData16 =>
+      match self.payload(info) {
+        Ok(value) =>
+          if value.length() == 16 {
+            Ok(value)
+          } else {
+            Err("DWARF data16 attribute is not 16 bytes")
+          }
+        Err(reason) => Err(reason)
+      }
+    _ => Err("DWARF DIE attribute is not data16")
+  }
+}
+
+///|
 pub fn DwarfDieAttribute::flag(
   self : DwarfDieAttribute,
   info : DwarfSectionBuffer,

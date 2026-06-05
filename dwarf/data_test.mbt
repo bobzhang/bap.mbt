@@ -496,9 +496,11 @@ test "translated DWARF DIE attributes expose payload readers" {
     b"\x7f\x0a" +
     b"\x7e\x0c" +
     b"\x7d\x19" +
+    b"\x7c\x1e" +
+    b"\x7b\x18" +
     b"\x00\x00" +
     b"\x00"
-  let info = b"\x17\x00\x00\x00" +
+  let info = b"\x2a\x00\x00\x00" +
     b"\x04\x00" +
     b"\x00\x00\x00\x00" +
     b"\x04" +
@@ -506,7 +508,10 @@ test "translated DWARF DIE attributes expose payload readers" {
     b"\x10\x00\x00\x00" +
     b"\x07\x00\x00\x00" +
     b"\x02xy" +
-    b"\x01"
+    b"\x01" +
+    b"\x00\x01\x02\x03\x04\x05\x06\x07" +
+    b"\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f" +
+    b"\x02\xaa\xbb"
   let data = expect_dwarf_data(
     @dwarf.DwarfData::from_bytes(endian=LittleEndian, info~, abbrev~),
   )
@@ -514,7 +519,7 @@ test "translated DWARF DIE attributes expose payload readers" {
   let dies = expect_dies(data.unit_dies())
   assert_true(dies.length() == 1)
   let attrs = dies[0].attributes()
-  assert_true(attrs.length() == 6)
+  assert_true(attrs.length() == 8)
   assert_true(
     expect_die_attr_bytes(attrs[0].payload(info_section)) == b"fn\x00",
   )
@@ -539,8 +544,17 @@ test "translated DWARF DIE attributes expose payload readers" {
   assert_true(expect_die_attr_flag(attrs[5].flag(info_section)))
   assert_true(attrs[5].offset() == attrs[5].end_offset())
   assert_true(
+    expect_die_attr_bytes(attrs[6].data16(info_section)) ==
+    b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
+  )
+  assert_true(
+    expect_die_attr_bytes(attrs[7].block(info_section, endian=LittleEndian)) ==
+    b"\xaa\xbb",
+  )
+  assert_true(
     attrs[0].address(info_section, endian=LittleEndian, addr_size=W32) is Err(_),
   )
+  assert_true(attrs[7].data16(info_section) is Err(_))
 }
 
 ///|

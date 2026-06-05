@@ -133,6 +133,7 @@ pub fn DwarfDieAttribute::address_value(Self, DwarfData, addr_size~ : DwarfWordS
 pub fn DwarfDieAttribute::attr(Self) -> DwarfAttr
 pub fn DwarfDieAttribute::block(Self, DwarfSectionBuffer, endian~ : @bitvec.Endian) -> Result[Bytes, String]
 pub fn DwarfDieAttribute::const_value(Self, DwarfSectionBuffer, endian~ : @bitvec.Endian) -> Result[Int64, String]
+pub fn DwarfDieAttribute::data16(Self, DwarfSectionBuffer) -> Result[Bytes, String]
 pub fn DwarfDieAttribute::end_offset(Self) -> Int
 pub fn DwarfDieAttribute::field(Self) -> DwarfAbbrevField
 pub fn DwarfDieAttribute::flag(Self, DwarfSectionBuffer) -> Result[Bool, String]

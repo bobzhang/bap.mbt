@@ -56,6 +56,11 @@ pub fn Leb128::of_int(value : Int, signed? : Bool = false) -> Leb128 {
 }
 
 ///|
+pub fn Leb128::of_int32(value : Int, signed? : Bool = false) -> Leb128 {
+  Leb128::of_int(value, signed~)
+}
+
+///|
 pub fn Leb128::of_int64(value : Int64, signed? : Bool = false) -> Leb128 {
   if signed {
     leb128_of_int64_signed(value)
@@ -152,4 +157,9 @@ pub fn Leb128::to_int(self : Leb128) -> Result[Int, String] {
       }
     Err(reason) => Err(reason)
   }
+}
+
+///|
+pub fn Leb128::to_int32(self : Leb128) -> Result[Int, String] {
+  self.to_int()
 }

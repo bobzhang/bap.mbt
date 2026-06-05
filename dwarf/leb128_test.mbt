@@ -41,6 +41,18 @@ test "translated BAP LEB128 examples read and write integers" {
 }
 
 ///|
+test "translated BAP LEB128 Int32 aliases mirror Int conversion" {
+  let unsigned = @dwarf.Leb128::of_int32(624485)
+  assert_true(unsigned.write() == b"\xe5\x8e\x26")
+  assert_true(expect_int(unsigned.to_int32()) == 624485)
+  let signed = @dwarf.Leb128::of_int32(-624485, signed=true)
+  assert_true(signed.write() == b"\x9b\xf1\x59")
+  assert_true(expect_int(signed.to_int32()) == -624485)
+  let wide = @dwarf.Leb128::of_int64(0x1_0000_0000L)
+  assert_true(wide.to_int32() is Err(_))
+}
+
+///|
 test "translated BAP LEB128 roundtrips Int values" {
   let unsigned_values = [
     0, 1, 2, 63, 64, 127, 128, 255, 256, 16384, 624485, 2147483647,

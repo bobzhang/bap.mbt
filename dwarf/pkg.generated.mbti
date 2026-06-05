@@ -86,6 +86,7 @@ pub fn DwarfData::address_table(Self, offset? : Int, addr_size~ : DwarfWordSize)
 pub fn DwarfData::address_table_contribution(Self, offset? : Int) -> Result[DwarfAddressTable, String]
 pub fn DwarfData::create(endian~ : @bitvec.Endian, sections~ : Array[(DwarfSection, DwarfSectionBuffer)]) -> Result[Self, String]
 pub fn DwarfData::debug_string(Self, offset? : Int) -> Result[String, String]
+pub fn DwarfData::dies(Self) -> Result[Array[DwarfDie], String]
 pub fn DwarfData::endian(Self) -> @bitvec.Endian
 pub fn DwarfData::from_bytes(endian~ : @bitvec.Endian, info? : Bytes, abbrev? : Bytes, str? : Bytes, line_str? : Bytes, str_offsets? : Bytes, addr? : Bytes, ranges? : Bytes, rnglists? : Bytes, loclists? : Bytes) -> Result[Self, String]
 pub fn DwarfData::from_elf_bytes(Bytes) -> Result[Self, String]
@@ -101,8 +102,21 @@ pub fn DwarfData::sections(Self) -> Array[(DwarfSection, DwarfSectionBuffer)]
 pub fn DwarfData::string_offsets(Self, offset? : Int, dwarf_size~ : DwarfWordSize) -> Result[DwarfStringOffsetsTable, String]
 pub fn DwarfData::string_offsets_contribution(Self, offset? : Int) -> Result[DwarfStringOffsetsTable, String]
 pub fn DwarfData::string_table(Self, offset? : Int) -> Result[DwarfStringTable, String]
+pub fn DwarfData::unit_dies(Self, offset? : Int) -> Result[Array[DwarfDie], String]
 pub fn DwarfData::unit_header(Self, offset? : Int) -> Result[DwarfInfoUnitHeader, String]
 pub fn DwarfData::unit_headers(Self) -> Result[Array[DwarfInfoUnitHeader], String]
+
+type DwarfDie
+pub fn DwarfDie::attributes_offset(Self) -> Int
+pub fn DwarfDie::code(Self) -> Int
+pub fn DwarfDie::depth(Self) -> Int
+pub fn DwarfDie::end_offset(Self) -> Int
+pub fn DwarfDie::entry(Self) -> DwarfAbbrevEntry
+pub fn DwarfDie::fields(Self) -> Array[DwarfAbbrevField]
+pub fn DwarfDie::has_children(Self) -> Bool
+pub fn DwarfDie::section_offset(Self) -> Int
+pub fn DwarfDie::tag(Self) -> DwarfTag
+pub fn DwarfDie::unit_offset(Self) -> Int
 
 pub(all) enum DwarfForm {
   DwarfAddr
@@ -162,6 +176,7 @@ type DwarfInfoUnitHeader
 pub fn DwarfInfoUnitHeader::abbrev_offset(Self) -> Int
 pub fn DwarfInfoUnitHeader::address_size(Self) -> DwarfWordSize
 pub fn DwarfInfoUnitHeader::body_offset(Self) -> Int
+pub fn DwarfInfoUnitHeader::dies(Self, DwarfSectionBuffer, DwarfAbbrevTable, endian~ : @bitvec.Endian) -> Result[Array[DwarfDie], String]
 pub fn DwarfInfoUnitHeader::dwarf_size(Self) -> DwarfWordSize
 pub fn DwarfInfoUnitHeader::end_offset(Self) -> Int
 pub fn DwarfInfoUnitHeader::header_end_offset(Self) -> Int

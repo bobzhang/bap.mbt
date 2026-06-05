@@ -109,6 +109,16 @@ fn expect_unit_headers(
 }
 
 ///|
+fn expect_dies(
+  value : Result[Array[@dwarf.DwarfDie], String],
+) -> Array[@dwarf.DwarfDie] raise {
+  match value {
+    Ok(value) => value
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "translated DWARF section data stores buffers by section" {
   let info = expect_section_buffer(@dwarf.DwarfSectionBuffer::create(b"info"))
   let abbrev = expect_section_buffer(
@@ -281,6 +291,60 @@ test "translated DWARF data enumerates unit headers and padding" {
     @dwarf.DwarfData::from_bytes(endian=LittleEndian, str=b"x\x00"),
   )
   assert_true(without_info.unit_headers() is Err(_))
+}
+
+///|
+test "translated DWARF data exposes structural DIE records" {
+  let abbrev = b"\x01\x11\x01" +
+    b"\x03\x08" +
+    b"\x00\x00" +
+    b"\x02\x2e\x00" +
+    b"\x11\x01" +
+    b"\x12\x06" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x15\x00\x00\x00" +
+    b"\x04\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x04" +
+    b"\x01cu\x00" +
+    b"\x02" +
+    b"\x10\x00\x00\x00" +
+    b"\x05\x00\x00\x00" +
+    b"\x00"
+  let data = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(endian=LittleEndian, info~, abbrev~),
+  )
+  let dies = expect_dies(data.unit_dies())
+  assert_true(dies.length() == 2)
+  assert_true(dies[0].section_offset() == 11)
+  assert_true(dies[0].unit_offset() == 11)
+  assert_true(dies[0].depth() == 0)
+  assert_true(dies[0].code() == 1)
+  assert_true(dies[0].tag() == DwarfCompileUnit)
+  assert_true(dies[0].has_children())
+  assert_true(dies[0].attributes_offset() == 12)
+  assert_true(dies[0].end_offset() == 15)
+  assert_true(dies[0].fields().length() == 1)
+  assert_true(dies[1].section_offset() == 15)
+  assert_true(dies[1].unit_offset() == 15)
+  assert_true(dies[1].depth() == 1)
+  assert_true(dies[1].code() == 2)
+  assert_true(dies[1].tag() == DwarfSubprogram)
+  assert_true(!dies[1].has_children())
+  assert_true(dies[1].attributes_offset() == 16)
+  assert_true(dies[1].end_offset() == 24)
+  assert_true(dies[1].entry().fields().length() == 2)
+  assert_true(expect_dies(data.dies()).length() == 2)
+  let broken = b"\x08\x00\x00\x00" +
+    b"\x04\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x04" +
+    b"\x7f"
+  let broken_data = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(endian=LittleEndian, info=broken, abbrev~),
+  )
+  assert_true(broken_data.unit_dies() is Err(_))
 }
 
 ///|

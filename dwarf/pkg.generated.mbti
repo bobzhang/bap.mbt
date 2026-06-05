@@ -145,6 +145,7 @@ pub fn DwarfDieAttribute::payload(Self, DwarfSectionBuffer) -> Result[Bytes, Str
 pub fn DwarfDieAttribute::reference(Self, DwarfSectionBuffer, endian~ : @bitvec.Endian, version~ : Int, dwarf_size~ : DwarfWordSize, addr_size~ : DwarfWordSize) -> Result[DwarfDieReference, String]
 pub fn DwarfDieAttribute::section_offset_value(Self, DwarfSectionBuffer, endian~ : @bitvec.Endian, dwarf_size~ : DwarfWordSize) -> Result[Int, String]
 pub fn DwarfDieAttribute::string(Self, DwarfSectionBuffer) -> Result[String, String]
+pub fn DwarfDieAttribute::string_value(Self, DwarfData, dwarf_size~ : DwarfWordSize, str_offsets_base? : Int) -> Result[String, String]
 pub fn DwarfDieAttribute::value_kind(Self) -> DwarfAbbrevValueKind
 
 pub(all) enum DwarfDieReference {

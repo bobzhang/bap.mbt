@@ -276,6 +276,49 @@ pub fn DwarfDieAttribute::string(
 }
 
 ///|
+pub fn DwarfDieAttribute::string_value(
+  self : DwarfDieAttribute,
+  data : DwarfData,
+  dwarf_size~ : DwarfWordSize,
+  str_offsets_base? : Int = 0,
+) -> Result[String, String] {
+  let info = match data.section(DwarfInfo) {
+    Ok(section) => section
+    Err(reason) => return Err(reason)
+  }
+  match self.form() {
+    DwarfString => self.string(info)
+    DwarfStrp =>
+      match self.section_offset_value(info, endian=data.endian(), dwarf_size~) {
+        Ok(offset) => data.debug_string(offset~)
+        Err(reason) => Err(reason)
+      }
+    DwarfLineStrp =>
+      match self.section_offset_value(info, endian=data.endian(), dwarf_size~) {
+        Ok(offset) => data.line_string(offset~)
+        Err(reason) => Err(reason)
+      }
+    DwarfStrx(_) =>
+      match self.index_value(info, endian=data.endian()) {
+        Ok(index) => {
+          let str_section = match data.section(DwarfStr) {
+            Ok(section) => section
+            Err(reason) => return Err(reason)
+          }
+          match data.string_offsets(offset=str_offsets_base, dwarf_size~) {
+            Ok(table) => table.string(str_section, index)
+            Err(reason) => Err(reason)
+          }
+        }
+        Err(reason) => Err(reason)
+      }
+    DwarfStrpSup | DwarfStrpAlt =>
+      Err("DWARF string attribute targets external debug data")
+    _ => Err("DWARF DIE attribute is not a string value")
+  }
+}
+
+///|
 pub fn DwarfDieAttribute::address(
   self : DwarfDieAttribute,
   info : DwarfSectionBuffer,

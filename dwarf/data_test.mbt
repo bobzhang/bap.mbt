@@ -544,6 +544,59 @@ test "translated DWARF DIE attributes expose payload readers" {
 }
 
 ///|
+test "translated DWARF DIE attributes resolve string forms through data" {
+  let abbrev = b"\x01\x2e\x00" +
+    b"\x03\x08" +
+    b"\x6e\x0e" +
+    b"\x7f\x1f" +
+    b"\x7e\x25" +
+    b"\x7d\x1d" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x18\x00\x00\x00" +
+    b"\x04\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x04" +
+    b"\x01in\x00" +
+    b"\x05\x00\x00\x00" +
+    b"\x05\x00\x00\x00" +
+    b"\x01" +
+    b"\x00\x00\x00\x00"
+  let data = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=LittleEndian,
+      info~,
+      abbrev~,
+      str=b"zero\x00debug\x00indexed\x00",
+      line_str=b"root\x00line\x00",
+      str_offsets=b"\xff\x00\x05\x00\x00\x00\x0b\x00\x00\x00",
+    ),
+  )
+  let info_section = expect_section_buffer(data.section(DwarfInfo))
+  let attrs = expect_dies(data.unit_dies())[0].attributes()
+  assert_true(attrs.length() == 5)
+  assert_true(
+    expect_die_attr_string(attrs[0].string_value(data, dwarf_size=W32)) == "in",
+  )
+  assert_true(
+    expect_die_attr_string(attrs[1].string_value(data, dwarf_size=W32)) ==
+    "debug",
+  )
+  assert_true(
+    expect_die_attr_string(attrs[2].string_value(data, dwarf_size=W32)) ==
+    "line",
+  )
+  assert_true(
+    expect_die_attr_string(
+      attrs[3].string_value(data, dwarf_size=W32, str_offsets_base=2),
+    ) ==
+    "indexed",
+  )
+  assert_true(attrs[4].string_value(data, dwarf_size=W32) is Err(_))
+  assert_true(attrs[1].string(info_section) is Err(_))
+}
+
+///|
 test "translated DWARF DIE attributes expose index and reference readers" {
   let abbrev = b"\x01\x2e\x00" +
     b"\x03\x25" +

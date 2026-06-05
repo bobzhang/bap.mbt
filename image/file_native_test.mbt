@@ -11,6 +11,18 @@ test "image reads files on native target" {
 }
 
 ///|
+test "image BAP top-level create reads files on native target" {
+  match @image.create("moon.mod") {
+    Ok((image, warnings)) => {
+      assert_true(warnings.is_empty())
+      assert_true(@image.data(image).length() > 0)
+      assert_true(@image.data(image)[0] == (47).to_byte())
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "image named loaders can derive Ogre docs from file paths" {
   let spec = "(declare entry-point (addr int))" +
     " (declare mapped (addr int) (size int) (off int))" +

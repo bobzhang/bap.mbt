@@ -76,6 +76,80 @@ test "image exposes segment memory and symbol membership" {
 }
 
 ///|
+test "image exposes BAP top-level loading and accessors" {
+  let text = @image.Segment::create(
+    name=".text",
+    endian=LittleEndian,
+    addr=0x5000UL,
+    bytes_0_to_15(),
+    executable=true,
+  )
+  let symbol = @image.Symbol::create(
+    name="entry",
+    addr=0x5002UL,
+    size=4,
+    is_function=true,
+  )
+  let image = @image.Image::from_segments(
+    entry=0x5002UL,
+    endian=LittleEndian,
+    [text],
+    symbols=[symbol],
+    filename="top.bin",
+    target=@core_theory.Target::x86_64(),
+  )
+  assert_true(@image.entry_point(image) == 0x5002UL)
+  assert_true(@image.filename(image) == Some("top.bin"))
+  assert_true(@image.addr_size(image) == 64)
+  assert_true(@image.arch(image).matches("x86_64"))
+  assert_true(@image.endian(image) == LittleEndian)
+  assert_true(@image.segments(image).length() == 1)
+  assert_true(@image.symbols(image).length() == 1)
+  assert_true(@image.memory(image).lookup(0x5002UL).length() == 1)
+  inspect(
+    @image.memory_of_segment(image, text).hexdump(),
+    content="00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f",
+  )
+  let (memory, rest) = @image.memory_of_symbol(image, symbol)
+  assert_true(rest.is_empty())
+  inspect(memory.hexdump(), content="02 03 04 05")
+  assert_true(@image.symbols_of_segment(image, text).length() == 1)
+  assert_true(@image.segment_of_symbol(image, symbol).name() == ".text")
+  assert_true(@image.words(image, 16).lookup(0x5002UL).length() == 1)
+  assert_true(@image.spec(image).fact_count("arch") == 1)
+  assert_true(@image.data(image).is_empty())
+
+  match @image.of_bigstring(b"\xaa\xbb") {
+    Ok((loaded, warnings)) => {
+      assert_true(warnings.is_empty())
+      assert_true(@image.data(loaded) == b"\xaa\xbb")
+    }
+    Err(reason) => fail(reason)
+  }
+  match @image.of_string("Aé") {
+    Ok((loaded, warnings)) => {
+      assert_true(warnings.is_empty())
+      assert_true(@image.data(loaded) == @utf8.encode("Aé"))
+    }
+    Err(reason) => fail(reason)
+  }
+  let doc = match
+    @image.OgreDoc::from_string(
+      "(declare entry-point (addr int)) (entry-point 80)",
+    ) {
+    Ok(doc) => doc
+    Err(reason) => fail(reason)
+  }
+  match @image.from_spec(b"\x90", doc) {
+    Ok((loaded, warnings)) => {
+      assert_true(warnings.is_empty())
+      assert_true(@image.entry_point(loaded) == 80UL)
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "image address size follows target metadata" {
   let segment = @image.Segment::create(
     name=".raw",

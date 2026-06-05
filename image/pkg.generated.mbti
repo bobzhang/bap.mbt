@@ -11,6 +11,10 @@ import {
 }
 
 // Values
+pub fn addr_size(Image) -> Int
+
+pub fn arch(Image) -> @core_theory.Target
+
 pub fn available_backends() -> Array[String]
 
 pub fn available_loaders() -> Array[String]
@@ -21,9 +25,31 @@ pub fn backends_for_extension(String) -> Array[ImageBackend]
 
 pub fn code_region() -> ImageTag[Unit]
 
+pub fn create(String, backend? : String) -> Result[(Image, Array[String]), String]
+
+pub fn data(Image) -> Bytes
+
+pub fn endian(Image) -> @bitvec.Endian
+
+pub fn entry_point(Image) -> UInt64
+
+pub fn filename(Image) -> String?
+
 pub fn find_backend(String) -> ImageBackend?
 
 pub fn find_loader(String) -> ImageLoader?
+
+pub fn from_spec(Bytes, OgreDoc, filename? : String, target? : @core_theory.Target) -> Result[(Image, Array[String]), String]
+
+pub fn memory(Image) -> @memory.MemMap[String]
+
+pub fn memory_of_segment(Image, Segment) -> @memory.Memory
+
+pub fn memory_of_symbol(Image, Symbol) -> (@memory.Memory, Array[@memory.Memory]) raise ImageLookupError
+
+pub fn of_bigstring(Bytes, backend? : String) -> Result[(Image, Array[String]), String]
+
+pub fn of_string(String, backend? : String) -> Result[(Image, Array[String]), String]
 
 pub fn register_backend(name~ : String, ImageBackend) -> Result[Unit, String]
 
@@ -37,9 +63,21 @@ pub fn section() -> ImageTag[String]
 
 pub fn segment() -> ImageTag[Segment]
 
+pub fn segment_of_symbol(Image, Symbol) -> Segment raise ImageLookupError
+
+pub fn segments(Image) -> Array[Segment]
+
+pub fn spec(Image) -> OgreDoc
+
 pub fn specification() -> ImageTag[OgreDoc]
 
 pub fn symbol() -> ImageTag[String]
+
+pub fn symbols(Image) -> Array[Symbol]
+
+pub fn symbols_of_segment(Image, Segment) -> Array[Symbol]
+
+pub fn words(Image, Int) -> @memory.MemMap[@types.Word]
 
 // Errors
 pub(all) suberror ImageLookupError {

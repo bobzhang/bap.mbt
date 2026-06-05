@@ -371,6 +371,65 @@ pub fn DwarfDieAttribute::address_value(
 }
 
 ///|
+pub fn DwarfDieAttribute::range_list_value(
+  self : DwarfDieAttribute,
+  data : DwarfData,
+  version~ : Int,
+  dwarf_size~ : DwarfWordSize,
+  addr_size~ : DwarfWordSize,
+  ranges_base? : Int,
+  rnglists_base? : Int,
+) -> Result[DwarfRangeList, String] {
+  let info = match data.section(DwarfInfo) {
+    Ok(section) => section
+    Err(reason) => return Err(reason)
+  }
+  match self.form() {
+    DwarfOffset =>
+      match self.section_offset_value(info, endian=data.endian(), dwarf_size~) {
+        Ok(offset) =>
+          if version < 5 {
+            let base = match ranges_base {
+              Some(value) => value
+              None => 0
+            }
+            data.ranges(offset=base + offset, addr_size~)
+          } else {
+            data.rnglist(offset~, addr_size~)
+          }
+        Err(reason) => Err(reason)
+      }
+    DwarfRnglistx => {
+      let base = match rnglists_base {
+        Some(value) => value
+        None => return Err("DW_AT_rnglists_base is not available")
+      }
+      match self.index_value(info, endian=data.endian()) {
+        Ok(index) => {
+          let section = match data.section(DwarfRnglists) {
+            Ok(section) => section
+            Err(reason) => return Err(reason)
+          }
+          let entry_offset = base + index * dwarf_word_bytes(dwarf_size)
+          match section.offset(entry_offset) {
+            Ok(entry) =>
+              match
+                entry.input().read_offset(endian=data.endian(), size=dwarf_size) {
+                Ok((relative, _)) =>
+                  data.rnglist(offset=base + relative, addr_size~)
+                Err(reason) => Err(reason)
+              }
+            Err(reason) => Err(reason)
+          }
+        }
+        Err(reason) => Err(reason)
+      }
+    }
+    _ => Err("DWARF DIE attribute is not a range-list value")
+  }
+}
+
+///|
 pub fn DwarfDieAttribute::section_offset_value(
   self : DwarfDieAttribute,
   info : DwarfSectionBuffer,

@@ -584,6 +584,126 @@ test "translated DWARF DIE attributes resolve address forms through data" {
 }
 
 ///|
+test "translated DWARF DIE attributes resolve range-list forms through data" {
+  let abbrev_offset = b"\x01\x2e\x00" +
+    b"\x55\x17" +
+    b"\x03\x08" +
+    b"\x00\x00" +
+    b"\x00"
+  let info_offset = b"\x0f\x00\x00\x00" +
+    b"\x04\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x04" +
+    b"\x01" +
+    b"\x00\x00\x00\x00" +
+    b"no\x00"
+  let data_offset = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=LittleEndian,
+      info=info_offset,
+      abbrev=abbrev_offset,
+      ranges=b"\xff\x00" +
+        b"\xff\xff\xff\xff\x00\x10\x00\x00" +
+        b"\x10\x00\x00\x00\x18\x00\x00\x00" +
+        b"\x00\x00\x00\x00\x00\x00\x00\x00",
+    ),
+  )
+  let offset_attrs = expect_dies(data_offset.unit_dies())[0].attributes()
+  let ranges = expect_range_list(
+    offset_attrs[0].range_list_value(
+      data_offset,
+      version=4,
+      dwarf_size=W32,
+      addr_size=W32,
+      ranges_base=2,
+    ),
+  )
+  assert_true(
+    ranges.entries() ==
+    [DwarfRangeBaseAddress(0x1000UL), DwarfRangeOffsetPair(0x10, 0x18)],
+  )
+  assert_true(
+    offset_attrs[1].range_list_value(
+      data_offset,
+      version=4,
+      dwarf_size=W32,
+      addr_size=W32,
+    )
+    is Err(_),
+  )
+  let info_direct = b"\x10\x00\x00\x00" +
+    b"\x05\x00" +
+    b"\x01" +
+    b"\x04" +
+    b"\x00\x00\x00\x00" +
+    b"\x01" +
+    b"\x00\x00\x00\x00" +
+    b"no\x00"
+  let data_direct = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=LittleEndian,
+      info=info_direct,
+      abbrev=abbrev_offset,
+      rnglists=b"\x04\x20\x28\x00",
+    ),
+  )
+  let direct_attrs = expect_dies(data_direct.unit_dies())[0].attributes()
+  let direct_rnglist = expect_range_list(
+    direct_attrs[0].range_list_value(
+      data_direct,
+      version=5,
+      dwarf_size=W32,
+      addr_size=W32,
+    ),
+  )
+  assert_true(direct_rnglist.entries() == [DwarfRangeOffsetPair(0x20, 0x28)])
+  let abbrev_index = b"\x01\x2e\x00" +
+    b"\x55\x23" +
+    b"\x03\x08" +
+    b"\x00\x00" +
+    b"\x00"
+  let info_index = b"\x0d\x00\x00\x00" +
+    b"\x05\x00" +
+    b"\x01" +
+    b"\x04" +
+    b"\x00\x00\x00\x00" +
+    b"\x01" +
+    b"\x01" +
+    b"no\x00"
+  let data_index = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=LittleEndian,
+      info=info_index,
+      abbrev=abbrev_index,
+      rnglists=b"\xff\x00" +
+        b"\x08\x00\x00\x00\x0c\x00\x00\x00" +
+        b"\x04\x01\x02\x00" +
+        b"\x04\x10\x18\x00",
+    ),
+  )
+  let index_attrs = expect_dies(data_index.unit_dies())[0].attributes()
+  let rnglist = expect_range_list(
+    index_attrs[0].range_list_value(
+      data_index,
+      version=5,
+      dwarf_size=W32,
+      addr_size=W32,
+      rnglists_base=2,
+    ),
+  )
+  assert_true(rnglist.entries() == [DwarfRangeOffsetPair(0x10, 0x18)])
+  assert_true(
+    index_attrs[0].range_list_value(
+      data_index,
+      version=5,
+      dwarf_size=W32,
+      addr_size=W32,
+    )
+    is Err(_),
+  )
+}
+
+///|
 test "translated DWARF DIE attributes resolve string forms through data" {
   let abbrev = b"\x01\x2e\x00" +
     b"\x03\x08" +

@@ -23,6 +23,12 @@ struct Image {
 }
 
 ///|
+pub(all) suberror ImageLookupError {
+  MissingImageSegment(String, UInt64)
+  MissingImageSymbolMemory(String, UInt64, Int)
+} derive(Eq, Debug)
+
+///|
 fn empty_bytes() -> Bytes {
   Bytes::new(0)
 }
@@ -400,6 +406,17 @@ pub fn Image::segment_of_symbol(self : Image, symbol : Symbol) -> Segment? {
 }
 
 ///|
+pub fn Image::segment_of_symbol_exn(
+  self : Image,
+  symbol : Symbol,
+) -> Segment raise ImageLookupError {
+  match self.segment_of_symbol(symbol) {
+    Some(segment) => segment
+    None => raise MissingImageSegment(symbol.name(), symbol.addr())
+  }
+}
+
+///|
 pub fn Image::symbols_of_segment(
   self : Image,
   segment : Segment,
@@ -455,6 +472,22 @@ pub fn Image::memories_of_symbol(
 }
 
 ///|
+pub fn Image::memories_of_symbol_exn(
+  self : Image,
+  symbol : Symbol,
+) -> Array[@memory.Memory] raise ImageLookupError {
+  match self.memories_of_symbol(symbol) {
+    Some(memories) => memories
+    None =>
+      raise MissingImageSymbolMemory(
+        symbol.name(),
+        symbol.addr(),
+        symbol.size(),
+      )
+  }
+}
+
+///|
 pub fn Image::memory_of_symbol(
   self : Image,
   symbol : Symbol,
@@ -463,6 +496,22 @@ pub fn Image::memory_of_symbol(
     Some(chunks) if !chunks.is_empty() =>
       Some((chunks[0], chunks[1:].to_owned()))
     _ => None
+  }
+}
+
+///|
+pub fn Image::memory_of_symbol_exn(
+  self : Image,
+  symbol : Symbol,
+) -> (@memory.Memory, Array[@memory.Memory]) raise ImageLookupError {
+  match self.memory_of_symbol(symbol) {
+    Some(memory) => memory
+    None =>
+      raise MissingImageSymbolMemory(
+        symbol.name(),
+        symbol.addr(),
+        symbol.size(),
+      )
   }
 }
 

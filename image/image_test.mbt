@@ -57,6 +57,7 @@ test "image exposes segment memory and symbol membership" {
   assert_true(image.memory().lookup(0x4004UL).length() == 1)
   assert_true(image.sections_of_segment(text).length() == 1)
   assert_true(image.segment_of_symbol(symbol) is Some(_))
+  assert_true(image.segment_of_symbol_exn(symbol).name() == ".text")
   assert_true(image.symbols_of_segment(text).length() == 1)
   match image.memory_of_section(section) {
     Some(mem) => inspect(mem.hexdump(), content="04 05 06 07")
@@ -69,6 +70,9 @@ test "image exposes segment memory and symbol membership" {
     }
     None => fail("expected symbol memory")
   }
+  let (memory, rest) = image.memory_of_symbol_exn(symbol)
+  assert_true(rest.length() == 0)
+  inspect(memory.hexdump(), content="04 05 06 07")
 }
 
 ///|
@@ -479,6 +483,10 @@ test "image symbol memory can span contiguous segment chunks" {
     }
     None => fail("expected symbol chunks")
   }
+  let chunks = image.memories_of_symbol_exn(symbol)
+  assert_true(chunks.length() == 2)
+  inspect(chunks[0].hexdump(), content="02 03")
+  inspect(chunks[1].hexdump(), content="04 05 06")
   match image.memory_of_symbol(symbol) {
     Some((head, rest)) => {
       inspect(head.hexdump(), content="02 03")
@@ -487,6 +495,10 @@ test "image symbol memory can span contiguous segment chunks" {
     }
     None => fail("expected symbol memory tuple")
   }
+  let (head, rest) = image.memory_of_symbol_exn(symbol)
+  inspect(head.hexdump(), content="02 03")
+  assert_true(rest.length() == 1)
+  inspect(rest[0].hexdump(), content="04 05 06")
 }
 
 ///|
@@ -512,6 +524,36 @@ test "image symbol memory rejects gaps across segments" {
   )
   assert_true(image.memories_of_symbol(symbol) is None)
   assert_true(image.memory_of_symbol(symbol) is None)
+  try image.memories_of_symbol_exn(symbol) catch {
+    MissingImageSymbolMemory(name, addr, size) => {
+      assert_true(name == "gap")
+      assert_true(addr == 0x1002UL)
+      assert_true(size == 5)
+    }
+    _ => fail("expected MissingImageSymbolMemory")
+  } noraise {
+    _ => fail("expected memories_of_symbol_exn failure")
+  }
+  try image.memory_of_symbol_exn(symbol) catch {
+    MissingImageSymbolMemory(name, addr, size) => {
+      assert_true(name == "gap")
+      assert_true(addr == 0x1002UL)
+      assert_true(size == 5)
+    }
+    _ => fail("expected MissingImageSymbolMemory")
+  } noraise {
+    _ => fail("expected memory_of_symbol_exn failure")
+  }
+  let missing = @image.Symbol::create(name="outside", addr=0x2000UL, size=1)
+  try image.segment_of_symbol_exn(missing) catch {
+    MissingImageSegment(name, addr) => {
+      assert_true(name == "outside")
+      assert_true(addr == 0x2000UL)
+    }
+    _ => fail("expected MissingImageSegment")
+  } noraise {
+    _ => fail("expected segment_of_symbol_exn failure")
+  }
 }
 
 ///|

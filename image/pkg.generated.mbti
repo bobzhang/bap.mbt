@@ -42,6 +42,10 @@ pub fn specification() -> ImageTag[OgreDoc]
 pub fn symbol() -> ImageTag[String]
 
 // Errors
+pub(all) suberror ImageLookupError {
+  MissingImageSegment(String, UInt64)
+  MissingImageSymbolMemory(String, UInt64, Int)
+} derive(Eq, @debug.Debug)
 
 // Types and methods
 type ExternalReference
@@ -75,10 +79,12 @@ pub fn Image::interpreter(Self) -> String?
 pub fn Image::is_executable(Self) -> Bool?
 pub fn Image::load_bias(Self) -> Int64?
 pub fn Image::memories_of_symbol(Self, Symbol) -> Array[@memory.Memory]?
+pub fn Image::memories_of_symbol_exn(Self, Symbol) -> Array[@memory.Memory] raise ImageLookupError
 pub fn Image::memory(Self) -> @memory.MemMap[String]
 pub fn Image::memory_of_section(Self, Section) -> @memory.Memory?
 pub fn Image::memory_of_segment(Self, Segment) -> @memory.Memory
 pub fn Image::memory_of_symbol(Self, Symbol) -> (@memory.Memory, Array[@memory.Memory])?
+pub fn Image::memory_of_symbol_exn(Self, Symbol) -> (@memory.Memory, Array[@memory.Memory]) raise ImageLookupError
 pub fn Image::of_bigstring(Bytes, backend? : String) -> Result[(Self, Array[String]), String]
 pub fn Image::of_bytes(Bytes, backend? : String) -> Result[(Self, Array[String]), String]
 pub fn Image::of_bytes_for_filename(Bytes, filename~ : String) -> Result[(Self, Array[String]), String]
@@ -93,6 +99,7 @@ pub fn Image::runpaths(Self) -> Array[String]
 pub fn Image::sections(Self) -> Array[Section]
 pub fn Image::sections_of_segment(Self, Segment) -> Array[Section]
 pub fn Image::segment_of_symbol(Self, Symbol) -> Segment?
+pub fn Image::segment_of_symbol_exn(Self, Symbol) -> Segment raise ImageLookupError
 pub fn Image::segments(Self) -> Array[Segment]
 pub fn Image::soname(Self) -> String?
 pub fn Image::spec(Self) -> OgreDoc

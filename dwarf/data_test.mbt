@@ -19,6 +19,26 @@ fn expect_dwarf_data(
 }
 
 ///|
+fn data_expect_abbrev_table(
+  value : Result[@dwarf.DwarfAbbrevTable, String],
+) -> @dwarf.DwarfAbbrevTable raise {
+  match value {
+    Ok(value) => value
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+fn data_expect_abbrev_entry(
+  value : @dwarf.DwarfAbbrevEntry?,
+) -> @dwarf.DwarfAbbrevEntry raise {
+  match value {
+    Some(value) => value
+    None => fail("expected abbreviation entry")
+  }
+}
+
+///|
 fn expect_location_list(
   value : Result[@dwarf.DwarfLocationList, String],
 ) -> @dwarf.DwarfLocationList raise {
@@ -111,6 +131,40 @@ test "translated DWARF section data stores buffers by section" {
   assert_true(got_abbrev.data() == b"abbrev")
   assert_true(got_abbrev.position() == 2)
   assert_true(data.section(DwarfStr) is Err(_))
+}
+
+///|
+test "translated DWARF data exposes abbreviation tables" {
+  let abbrev_bytes = b"pad" +
+    b"\x01\x2e\x00" +
+    b"\x03\x08" +
+    b"\x00\x00" +
+    b"\x00"
+  let section = expect_section_buffer(
+    @dwarf.DwarfSectionBuffer::create(abbrev_bytes, position=3),
+  )
+  let data = expect_dwarf_data(
+    @dwarf.DwarfData::create(endian=LittleEndian, sections=[
+      (DwarfAbbrev, section),
+    ]),
+  )
+  let table = data_expect_abbrev_table(data.abbrev_table())
+  let entry = data_expect_abbrev_entry(table.lookup(1))
+  assert_true(entry.tag() == DwarfSubprogram)
+  assert_true(entry.fields().length() == 1)
+  assert_true(entry.fields()[0].attr() == DwarfName)
+  assert_true(entry.fields()[0].form() == DwarfString)
+  let offset_data = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(endian=LittleEndian, abbrev=abbrev_bytes),
+  )
+  let offset_table = data_expect_abbrev_table(
+    offset_data.abbrev_table(offset=3),
+  )
+  assert_true(offset_table.lookup(1) is Some(_))
+  let without_abbrev = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(endian=LittleEndian, info=b"\x00"),
+  )
+  assert_true(without_abbrev.abbrev_table() is Err(_))
 }
 
 ///|

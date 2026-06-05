@@ -294,6 +294,25 @@ pub fn DwarfAbbrevTable::of_bytes(
 }
 
 ///|
+pub fn DwarfData::abbrev_table(
+  self : DwarfData,
+  offset? : Int = 0,
+) -> Result[DwarfAbbrevTable, String] {
+  match self.section(DwarfAbbrev) {
+    Ok(section) =>
+      match section.offset(offset) {
+        Ok(buffer) =>
+          match DwarfAbbrevTable::read(buffer.input()) {
+            Ok((table, _)) => Ok(table)
+            Err(reason) => Err(reason)
+          }
+        Err(reason) => Err(reason)
+      }
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
 pub fn DwarfAbbrevTable::entries(
   self : DwarfAbbrevTable,
 ) -> Array[DwarfAbbrevEntry] {

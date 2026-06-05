@@ -81,6 +81,7 @@ pub fn DwarfAttr::name() -> Self
 pub fn DwarfAttr::unknown(Int) -> Self
 
 type DwarfData
+pub fn DwarfData::abbrev_table(Self, offset? : Int) -> Result[DwarfAbbrevTable, String]
 pub fn DwarfData::address_table(Self, offset? : Int, addr_size~ : DwarfWordSize) -> Result[DwarfAddressTable, String]
 pub fn DwarfData::address_table_contribution(Self, offset? : Int) -> Result[DwarfAddressTable, String]
 pub fn DwarfData::create(endian~ : @bitvec.Endian, sections~ : Array[(DwarfSection, DwarfSectionBuffer)]) -> Result[Self, String]

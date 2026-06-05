@@ -83,7 +83,8 @@ pub fn[K : Eq, S : Eq] Relation::mem(
   left : K,
   right : S,
 ) -> Bool {
-  self.contains_pair(left, right)
+  self.pairs.any(pair => pair.0 == left) &&
+  self.pairs.any(pair => pair.1 == right)
 }
 
 ///|

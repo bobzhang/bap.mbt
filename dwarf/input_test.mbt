@@ -150,6 +150,37 @@ test "translated DWARF input decodes tags attributes forms and LEB128 codes" {
 }
 
 ///|
+test "translated DWARF source-style type aliases construct values" {
+  assert_true(@dwarf.DwarfLenspec::leb128() == DwarfLeb128)
+  assert_true(@dwarf.DwarfLenspec::one() == DwarfOne)
+  assert_true(@dwarf.DwarfLenspec::two() == DwarfTwo)
+  assert_true(@dwarf.DwarfLenspec::four() == DwarfFour)
+  assert_true(@dwarf.DwarfLenspec::eight() == DwarfEight)
+  assert_true(@dwarf.DwarfTag::entry_point() == DwarfEntryPoint)
+  assert_true(@dwarf.DwarfTag::compile_unit() == DwarfCompileUnit)
+  assert_true(@dwarf.DwarfTag::partial_unit() == DwarfPartialUnit)
+  assert_true(@dwarf.DwarfTag::inlined_subroutine() == DwarfInlinedSubroutine)
+  assert_true(@dwarf.DwarfTag::subprogram() == DwarfSubprogram)
+  assert_true(@dwarf.DwarfTag::unknown(7) == DwarfUnknownTag(7))
+  assert_true(@dwarf.DwarfAttr::name() == DwarfName)
+  assert_true(@dwarf.DwarfAttr::low_pc() == DwarfLowPc)
+  assert_true(@dwarf.DwarfAttr::high_pc() == DwarfHighPc)
+  assert_true(@dwarf.DwarfAttr::entry_pc() == DwarfEntryPc)
+  assert_true(@dwarf.DwarfAttr::unknown(9) == DwarfUnknownAttr(9))
+  assert_true(@dwarf.DwarfForm::addr() == DwarfAddr)
+  assert_true(@dwarf.DwarfForm::block(DwarfTwo) == DwarfBlock(DwarfTwo))
+  assert_true(@dwarf.DwarfForm::const_(DwarfFour) == DwarfConst(DwarfFour))
+  assert_true(@dwarf.DwarfForm::flag_present() == DwarfFlagPresent)
+  assert_true(@dwarf.DwarfForm::string() == DwarfString)
+  assert_true(@dwarf.DwarfForm::strp() == DwarfStrp)
+  assert_true(@dwarf.DwarfForm::ref_(DwarfEight) == DwarfRef(DwarfEight))
+  assert_true(@dwarf.DwarfForm::indirect() == DwarfIndirect)
+  assert_true(@dwarf.DwarfForm::offset() == DwarfOffset)
+  assert_true(@dwarf.DwarfForm::expr() == DwarfExpr)
+  assert_true(@dwarf.DwarfForm::sig_() == DwarfRefSig8)
+}
+
+///|
 test "translated DWARF input reads unit metadata" {
   let short = @dwarf.DwarfInput::of_bytes(b"\x10\x00\x00\x00\x04\x00\x04")
   let ((size_kind, size), short) = expect_input_read(

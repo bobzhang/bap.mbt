@@ -14,6 +14,31 @@ pub(all) enum DwarfLenspec {
 } derive(Eq, Debug)
 
 ///|
+pub fn DwarfLenspec::leb128() -> DwarfLenspec {
+  DwarfLeb128
+}
+
+///|
+pub fn DwarfLenspec::one() -> DwarfLenspec {
+  DwarfOne
+}
+
+///|
+pub fn DwarfLenspec::two() -> DwarfLenspec {
+  DwarfTwo
+}
+
+///|
+pub fn DwarfLenspec::four() -> DwarfLenspec {
+  DwarfFour
+}
+
+///|
+pub fn DwarfLenspec::eight() -> DwarfLenspec {
+  DwarfEight
+}
+
+///|
 pub(all) enum DwarfIndexSpec {
   DwarfIndexLeb128
   DwarfIndexOne
@@ -34,6 +59,36 @@ pub(all) enum DwarfTag {
 } derive(Eq, Debug)
 
 ///|
+pub fn DwarfTag::entry_point() -> DwarfTag {
+  DwarfEntryPoint
+}
+
+///|
+pub fn DwarfTag::compile_unit() -> DwarfTag {
+  DwarfCompileUnit
+}
+
+///|
+pub fn DwarfTag::partial_unit() -> DwarfTag {
+  DwarfPartialUnit
+}
+
+///|
+pub fn DwarfTag::inlined_subroutine() -> DwarfTag {
+  DwarfInlinedSubroutine
+}
+
+///|
+pub fn DwarfTag::subprogram() -> DwarfTag {
+  DwarfSubprogram
+}
+
+///|
+pub fn DwarfTag::unknown(code : Int) -> DwarfTag {
+  DwarfUnknownTag(code)
+}
+
+///|
 pub(all) enum DwarfAttr {
   DwarfName
   DwarfLinkageName
@@ -49,6 +104,31 @@ pub(all) enum DwarfAttr {
   DwarfRnglistsBase
   DwarfUnknownAttr(Int)
 } derive(Eq, Debug)
+
+///|
+pub fn DwarfAttr::name() -> DwarfAttr {
+  DwarfName
+}
+
+///|
+pub fn DwarfAttr::low_pc() -> DwarfAttr {
+  DwarfLowPc
+}
+
+///|
+pub fn DwarfAttr::high_pc() -> DwarfAttr {
+  DwarfHighPc
+}
+
+///|
+pub fn DwarfAttr::entry_pc() -> DwarfAttr {
+  DwarfEntryPc
+}
+
+///|
+pub fn DwarfAttr::unknown(code : Int) -> DwarfAttr {
+  DwarfUnknownAttr(code)
+}
 
 ///|
 pub(all) enum DwarfForm {
@@ -79,6 +159,61 @@ pub(all) enum DwarfForm {
   DwarfExpr
   DwarfFlagPresent
 } derive(Eq, Debug)
+
+///|
+pub fn DwarfForm::addr() -> DwarfForm {
+  DwarfAddr
+}
+
+///|
+pub fn DwarfForm::block(spec : DwarfLenspec) -> DwarfForm {
+  DwarfBlock(spec)
+}
+
+///|
+pub fn DwarfForm::const_(spec : DwarfLenspec) -> DwarfForm {
+  DwarfConst(spec)
+}
+
+///|
+pub fn DwarfForm::flag_present() -> DwarfForm {
+  DwarfFlagPresent
+}
+
+///|
+pub fn DwarfForm::string() -> DwarfForm {
+  DwarfString
+}
+
+///|
+pub fn DwarfForm::strp() -> DwarfForm {
+  DwarfStrp
+}
+
+///|
+pub fn DwarfForm::ref_(spec : DwarfLenspec) -> DwarfForm {
+  DwarfRef(spec)
+}
+
+///|
+pub fn DwarfForm::indirect() -> DwarfForm {
+  DwarfIndirect
+}
+
+///|
+pub fn DwarfForm::offset() -> DwarfForm {
+  DwarfOffset
+}
+
+///|
+pub fn DwarfForm::expr() -> DwarfForm {
+  DwarfExpr
+}
+
+///|
+pub fn DwarfForm::sig_() -> DwarfForm {
+  DwarfRefSig8
+}
 
 ///|
 struct DwarfInput {

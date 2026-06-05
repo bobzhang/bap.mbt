@@ -63,6 +63,11 @@ pub(all) enum DwarfAttr {
   DwarfRnglistsBase
   DwarfUnknownAttr(Int)
 } derive(Eq, @debug.Debug)
+pub fn DwarfAttr::entry_pc() -> Self
+pub fn DwarfAttr::high_pc() -> Self
+pub fn DwarfAttr::low_pc() -> Self
+pub fn DwarfAttr::name() -> Self
+pub fn DwarfAttr::unknown(Int) -> Self
 
 type DwarfData
 pub fn DwarfData::create(endian~ : @bitvec.Endian, sections~ : Array[(DwarfSection, DwarfSectionBuffer)]) -> Result[Self, String]
@@ -102,6 +107,17 @@ pub(all) enum DwarfForm {
   DwarfExpr
   DwarfFlagPresent
 } derive(Eq, @debug.Debug)
+pub fn DwarfForm::addr() -> Self
+pub fn DwarfForm::block(DwarfLenspec) -> Self
+pub fn DwarfForm::const_(DwarfLenspec) -> Self
+pub fn DwarfForm::expr() -> Self
+pub fn DwarfForm::flag_present() -> Self
+pub fn DwarfForm::indirect() -> Self
+pub fn DwarfForm::offset() -> Self
+pub fn DwarfForm::ref_(DwarfLenspec) -> Self
+pub fn DwarfForm::sig_() -> Self
+pub fn DwarfForm::string() -> Self
+pub fn DwarfForm::strp() -> Self
 
 type DwarfFunction
 pub fn DwarfFunction::create(name~ : String, low_pc~ : UInt64, high_pc? : UInt64) -> Self
@@ -147,6 +163,11 @@ pub(all) enum DwarfLenspec {
   DwarfEight
   DwarfLeb128
 } derive(Eq, @debug.Debug)
+pub fn DwarfLenspec::eight() -> Self
+pub fn DwarfLenspec::four() -> Self
+pub fn DwarfLenspec::leb128() -> Self
+pub fn DwarfLenspec::one() -> Self
+pub fn DwarfLenspec::two() -> Self
 
 pub(all) enum DwarfSection {
   DwarfInfo
@@ -184,6 +205,12 @@ pub(all) enum DwarfTag {
   DwarfSubprogram
   DwarfUnknownTag(Int)
 } derive(Eq, @debug.Debug)
+pub fn DwarfTag::compile_unit() -> Self
+pub fn DwarfTag::entry_point() -> Self
+pub fn DwarfTag::inlined_subroutine() -> Self
+pub fn DwarfTag::partial_unit() -> Self
+pub fn DwarfTag::subprogram() -> Self
+pub fn DwarfTag::unknown(Int) -> Self
 
 pub(all) enum DwarfWordSize {
   W32

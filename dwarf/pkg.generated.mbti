@@ -61,8 +61,10 @@ pub fn DwarfAddressTable::read_contribution(DwarfSectionBuffer, offset? : Int, e
 pub fn DwarfAddressTable::version(Self) -> Int?
 
 pub(all) enum DwarfAttr {
+  DwarfLocation
   DwarfName
   DwarfLinkageName
+  DwarfFrameBase
   DwarfLowPc
   DwarfHighPc
   DwarfEntryPc
@@ -77,7 +79,9 @@ pub(all) enum DwarfAttr {
   DwarfUnknownAttr(Int)
 } derive(Eq, @debug.Debug)
 pub fn DwarfAttr::entry_pc() -> Self
+pub fn DwarfAttr::frame_base() -> Self
 pub fn DwarfAttr::high_pc() -> Self
+pub fn DwarfAttr::location() -> Self
 pub fn DwarfAttr::loclists_base() -> Self
 pub fn DwarfAttr::low_pc() -> Self
 pub fn DwarfAttr::name() -> Self
@@ -146,6 +150,7 @@ pub fn DwarfDieAttribute::index_value(Self, DwarfSectionBuffer, endian~ : @bitve
 pub fn DwarfDieAttribute::input(Self, DwarfSectionBuffer) -> Result[DwarfInput, String]
 pub fn DwarfDieAttribute::is_value_field(Self) -> Bool
 pub fn DwarfDieAttribute::location_list_value(Self, DwarfData, version~ : Int, dwarf_size~ : DwarfWordSize, addr_size~ : DwarfWordSize, loclists_base? : Int) -> Result[DwarfLocationList, String]
+pub fn DwarfDieAttribute::location_value(Self, DwarfData, version~ : Int, dwarf_size~ : DwarfWordSize, addr_size~ : DwarfWordSize, loclists_base? : Int) -> Result[DwarfDieLocationValue, String]
 pub fn DwarfDieAttribute::offset(Self) -> Int
 pub fn DwarfDieAttribute::payload(Self, DwarfSectionBuffer) -> Result[Bytes, String]
 pub fn DwarfDieAttribute::range_list_value(Self, DwarfData, version~ : Int, dwarf_size~ : DwarfWordSize, addr_size~ : DwarfWordSize, ranges_base? : Int, rnglists_base? : Int) -> Result[DwarfRangeList, String]
@@ -154,6 +159,11 @@ pub fn DwarfDieAttribute::section_offset_value(Self, DwarfSectionBuffer, endian~
 pub fn DwarfDieAttribute::string(Self, DwarfSectionBuffer) -> Result[String, String]
 pub fn DwarfDieAttribute::string_value(Self, DwarfData, dwarf_size~ : DwarfWordSize, str_offsets_base? : Int) -> Result[String, String]
 pub fn DwarfDieAttribute::value_kind(Self) -> DwarfAbbrevValueKind
+
+pub(all) enum DwarfDieLocationValue {
+  DwarfDieLocationExpression(Bytes)
+  DwarfDieLocationList(DwarfLocationList)
+}
 
 pub(all) enum DwarfDieReference {
   DwarfUnitReference(Int)

@@ -19,6 +19,12 @@ struct DwarfDieAttribute {
 }
 
 ///|
+pub(all) enum DwarfDieLocationValue {
+  DwarfDieLocationExpression(Bytes)
+  DwarfDieLocationList(DwarfLocationList)
+}
+
+///|
 pub(all) enum DwarfDieReference {
   DwarfUnitReference(Int)
   DwarfSectionReference(Int)
@@ -480,6 +486,67 @@ pub fn DwarfDieAttribute::location_list_value(
       }
     }
     _ => Err("DWARF DIE attribute is not a location-list value")
+  }
+}
+
+///|
+pub fn DwarfDieAttribute::location_value(
+  self : DwarfDieAttribute,
+  data : DwarfData,
+  version~ : Int,
+  dwarf_size~ : DwarfWordSize,
+  addr_size~ : DwarfWordSize,
+  loclists_base? : Int,
+) -> Result[DwarfDieLocationValue, String] {
+  let info = match data.section(DwarfInfo) {
+    Ok(section) => section
+    Err(reason) => return Err(reason)
+  }
+  match self.form() {
+    DwarfExpr | DwarfBlock(_) =>
+      match self.block(info, endian=data.endian()) {
+        Ok(expr) => Ok(DwarfDieLocationExpression(expr))
+        Err(reason) => Err(reason)
+      }
+    DwarfOffset | DwarfLoclistx =>
+      match
+        self.location_list_value(
+          data,
+          version~,
+          dwarf_size~,
+          addr_size~,
+          loclists_base?,
+        ) {
+        Ok(list) => Ok(DwarfDieLocationList(list))
+        Err(reason) => Err(reason)
+      }
+    DwarfIndirect =>
+      match self.input(info) {
+        Ok(input) =>
+          match input.read_form() {
+            Ok((actual_form, next)) => {
+              let actual = dwarf_die_attribute_create(
+                index=self.index_value,
+                field=DwarfAbbrevField::create(
+                  attr=self.attr(),
+                  form=actual_form,
+                ),
+                offset=next.position(),
+                end_offset=self.end_offset_value,
+              )
+              actual.location_value(
+                data,
+                version~,
+                dwarf_size~,
+                addr_size~,
+                loclists_base?,
+              )
+            }
+            Err(reason) => Err(reason)
+          }
+        Err(reason) => Err(reason)
+      }
+    _ => Err("DWARF DIE attribute is not a location value")
   }
 }
 

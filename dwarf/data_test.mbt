@@ -49,6 +49,28 @@ fn expect_location_list(
 }
 
 ///|
+fn expect_die_location_expr(
+  value : Result[@dwarf.DwarfDieLocationValue, String],
+) -> Bytes raise {
+  match value {
+    Ok(DwarfDieLocationExpression(expr)) => expr
+    Ok(_) => fail("expected DWARF location expression")
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+fn expect_die_location_list(
+  value : Result[@dwarf.DwarfDieLocationValue, String],
+) -> @dwarf.DwarfLocationList raise {
+  match value {
+    Ok(DwarfDieLocationList(list)) => list
+    Ok(_) => fail("expected DWARF location list")
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 fn expect_range_list(
   value : Result[@dwarf.DwarfRangeList, String],
 ) -> @dwarf.DwarfRangeList raise {
@@ -719,6 +741,51 @@ test "translated DWARF DIE attributes resolve range-list forms through data" {
 
 ///|
 test "translated DWARF DIE attributes resolve location-list forms through data" {
+  let abbrev_expr = b"\x01\x2e\x00" +
+    b"\x02\x18" +
+    b"\x40\x18" +
+    b"\x00\x00" +
+    b"\x00"
+  let info_expr = b"\x0e\x00\x00\x00" +
+    b"\x05\x00" +
+    b"\x01" +
+    b"\x04" +
+    b"\x00\x00\x00\x00" +
+    b"\x01" +
+    b"\x02\x91\x01" +
+    b"\x01\x50"
+  let data_expr = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=LittleEndian,
+      info=info_expr,
+      abbrev=abbrev_expr,
+    ),
+  )
+  let expr_attrs = expect_dies(data_expr.unit_dies())[0].attributes()
+  assert_true(expr_attrs[0].attr() == DwarfLocation)
+  assert_true(expr_attrs[1].attr() == DwarfFrameBase)
+  assert_true(
+    expect_die_location_expr(
+      expr_attrs[0].location_value(
+        data_expr,
+        version=5,
+        dwarf_size=W32,
+        addr_size=W32,
+      ),
+    ) ==
+    b"\x91\x01",
+  )
+  assert_true(
+    expect_die_location_expr(
+      expr_attrs[1].location_value(
+        data_expr,
+        version=5,
+        dwarf_size=W32,
+        addr_size=W32,
+      ),
+    ) ==
+    b"\x50",
+  )
   let abbrev_direct = b"\x01\x2e\x00" +
     b"\x02\x17" +
     b"\x03\x08" +
@@ -741,6 +808,7 @@ test "translated DWARF DIE attributes resolve location-list forms through data" 
     ),
   )
   let direct_attrs = expect_dies(data_direct.unit_dies())[0].attributes()
+  assert_true(direct_attrs[0].attr() == DwarfLocation)
   let direct = expect_location_list(
     direct_attrs[0].location_list_value(
       data_direct,
@@ -750,6 +818,17 @@ test "translated DWARF DIE attributes resolve location-list forms through data" 
     ),
   )
   assert_true(direct.entries() == [DwarfLocOffsetPair(0x20, 0x28, b"\x50")])
+  let direct_value = expect_die_location_list(
+    direct_attrs[0].location_value(
+      data_direct,
+      version=5,
+      dwarf_size=W32,
+      addr_size=W32,
+    ),
+  )
+  assert_true(
+    direct_value.entries() == [DwarfLocOffsetPair(0x20, 0x28, b"\x50")],
+  )
   assert_true(
     direct_attrs[0].location_list_value(
       data_direct,
@@ -788,6 +867,7 @@ test "translated DWARF DIE attributes resolve location-list forms through data" 
     ),
   )
   let index_attrs = expect_dies(data_index.unit_dies())[0].attributes()
+  assert_true(index_attrs[0].attr() == DwarfLocation)
   let indexed = expect_location_list(
     index_attrs[0].location_list_value(
       data_index,
@@ -798,6 +878,16 @@ test "translated DWARF DIE attributes resolve location-list forms through data" 
     ),
   )
   assert_true(indexed.entries() == [DwarfLocDefaultLocation(b"\x9f")])
+  let indexed_value = expect_die_location_list(
+    index_attrs[0].location_value(
+      data_index,
+      version=5,
+      dwarf_size=W32,
+      addr_size=W32,
+      loclists_base=2,
+    ),
+  )
+  assert_true(indexed_value.entries() == [DwarfLocDefaultLocation(b"\x9f")])
   assert_true(
     index_attrs[0].location_list_value(
       data_index,

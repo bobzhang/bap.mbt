@@ -90,8 +90,10 @@ pub fn DwarfTag::unknown(code : Int) -> DwarfTag {
 
 ///|
 pub(all) enum DwarfAttr {
+  DwarfLocation
   DwarfName
   DwarfLinkageName
+  DwarfFrameBase
   DwarfLowPc
   DwarfHighPc
   DwarfEntryPc
@@ -109,6 +111,16 @@ pub(all) enum DwarfAttr {
 ///|
 pub fn DwarfAttr::name() -> DwarfAttr {
   DwarfName
+}
+
+///|
+pub fn DwarfAttr::location() -> DwarfAttr {
+  DwarfLocation
+}
+
+///|
+pub fn DwarfAttr::frame_base() -> DwarfAttr {
+  DwarfFrameBase
 }
 
 ///|
@@ -596,10 +608,12 @@ fn dwarf_tag_of_int(code : Int) -> DwarfTag {
 ///|
 fn dwarf_attr_of_int(code : Int) -> DwarfAttr {
   match code {
+    0x02 => DwarfLocation
     0x03 => DwarfName
     0x11 => DwarfLowPc
     0x12 => DwarfHighPc
     0x31 => DwarfAbstractOrigin
+    0x40 => DwarfFrameBase
     0x47 => DwarfSpecification
     0x52 => DwarfEntryPc
     0x55 => DwarfRanges

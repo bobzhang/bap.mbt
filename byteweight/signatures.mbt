@@ -69,6 +69,15 @@ pub fn[T] ByteweightSignatureData::name(
 }
 
 ///|
+pub fn Byteweight::signature_data() -> ByteweightSignatureData[Byteweight] {
+  {
+    name_value: "byteweight",
+    load_fn: bytes => Byteweight::of_bytes(bytes),
+    save_fn: value => value.to_bytes(),
+  }
+}
+
+///|
 fn byteweight_signature_paths(paths : Array[String]) -> Array[String] {
   let out = paths.copy()
   out.push(byteweight_signature_default_path())

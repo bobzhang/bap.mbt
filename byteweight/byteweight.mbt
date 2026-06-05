@@ -63,6 +63,9 @@ fn byteweight_fixed4(value : Double) -> String {
 }
 
 ///|
+let byteweight_codec_header : String = "bap.mbt.byteweight.v1"
+
+///|
 pub fn Byteweight::create() -> Byteweight {
   { entries_value: [] }
 }
@@ -265,6 +268,78 @@ pub fn Byteweight::to_string(self : Byteweight) -> String {
     out.write_char('\n')
   }
   out.to_string()
+}
+
+///|
+pub fn Byteweight::to_bytes(self : Byteweight) -> Bytes {
+  let out = StringBuilder()
+  out.write_string(byteweight_codec_header)
+  out.write_char('\n')
+  for entry in self.entries_value {
+    out.write_string(@regular.bytes_to_hex(entry.0))
+    out.write_char(' ')
+    out.write_string(entry.1.h1().to_string())
+    out.write_char(' ')
+    out.write_string(entry.1.h0().to_string())
+    out.write_char('\n')
+  }
+  @utf8.encode(out.to_string())
+}
+
+///|
+fn byteweight_parse_count(
+  field : StringView,
+  label : String,
+) -> Result[Int, String] {
+  try @string.parse_int(field) catch {
+    _ => Err("invalid byteweight \{label}: \{field}")
+  } noraise {
+    value =>
+      if value < 0 {
+        Err("invalid negative byteweight \{label}: \{field}")
+      } else {
+        Ok(value)
+      }
+  }
+}
+
+///|
+pub fn Byteweight::of_bytes(data : BytesView) -> Result[Byteweight, String] {
+  let text = try @utf8.decode(data) catch {
+    _ => return Err("byteweight data is not valid UTF-8")
+  } noraise {
+    value => value
+  }
+  let lines = text.split("\n").to_array()
+  match lines {
+    [header, ..] if header == byteweight_codec_header => ()
+    _ => return Err("unsupported byteweight data format")
+  }
+  let entries : Array[(Bytes, ByteweightStats)] = []
+  for i in 1..<lines.length() {
+    let line = lines[i].to_owned()
+    if line.length() > 0 {
+      match line.split(" ").to_array() {
+        [key_field, h1_field, h0_field] => {
+          let key = match @regular.bytes_from_hex(key_field) {
+            Ok(bytes) => bytes
+            Err(reason) => return Err("invalid byteweight signature: \{reason}")
+          }
+          let h1 = match byteweight_parse_count(h1_field, "h1") {
+            Ok(value) => value
+            Err(reason) => return Err(reason)
+          }
+          let h0 = match byteweight_parse_count(h0_field, "h0") {
+            Ok(value) => value
+            Err(reason) => return Err(reason)
+          }
+          entries.push((key, ByteweightStats::create(h1~, h0~)))
+        }
+        _ => return Err("invalid byteweight row: \{line}")
+      }
+    }
+  }
+  Ok({ entries_value: entries })
 }
 
 ///|

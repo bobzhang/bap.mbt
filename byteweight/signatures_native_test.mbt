@@ -31,6 +31,41 @@ test "translated BAP byteweight signatures update and lookup typed entries" {
 }
 
 ///|
+test "translated BAP byteweight exposes typed signature data" {
+  let data = @byteweight.Byteweight::signature_data()
+  let path = "_build/byteweight-signatures-byteweight.db"
+  let target = @core_theory.Target::x86_64()
+  let corpus = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x100UL,
+    b"\xaa\xbb\xaa\xbb",
+  )
+  let decider = @byteweight.Byteweight::create().train(
+    max_length=2,
+    mem => mem.min_addr() == 0x100UL,
+    corpus,
+  )
+  assert_true(data.name() == "byteweight")
+  match data.update(path, target, decider) {
+    Ok(_) => ()
+    Err(err) => fail(err.to_string())
+  }
+  match data.lookup(target, paths=[path]) {
+    Ok(loaded) => {
+      assert_true(loaded.to_string() == decider.to_string())
+      match loaded.find(b"\xaa\xbb") {
+        Some(stats) => {
+          assert_true(stats.h1() == 1)
+          assert_true(stats.h0() == 1)
+        }
+        None => fail("missing loaded byteweight signature")
+      }
+    }
+    Err(err) => fail(err.to_string())
+  }
+}
+
+///|
 test "translated BAP byteweight signatures preserve compiler-specific entries" {
   let data = bw_signature_bytes_data("unit-signatures-compiler")
   let path = "_build/byteweight-signatures-compiler.db"

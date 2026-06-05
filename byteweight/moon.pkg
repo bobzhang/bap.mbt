@@ -4,6 +4,7 @@ import {
   "bobzhang/bap/native_io",
   "bobzhang/bap/regular",
   "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/string",
 }
 
 options(

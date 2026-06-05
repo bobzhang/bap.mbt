@@ -49,6 +49,38 @@ test "translated BAP byteweight printer renders stats and hex signatures" {
 }
 
 ///|
+test "translated BAP byteweight codec round trips trained deciders" {
+  let corpus = bw_memory(0x100UL, b"\xaa\xbb\xaa\xbb")
+  let starts = Set::from_array([0x100UL])
+  let decider = @byteweight.Byteweight::create().train(
+    max_length=2,
+    mem => starts.contains(mem.min_addr()),
+    corpus,
+  )
+  match @byteweight.Byteweight::of_bytes(decider.to_bytes()) {
+    Ok(decoded) => {
+      assert_true(decoded.length() == decider.length())
+      assert_true(decoded.to_string() == decider.to_string())
+      match decoded.find(b"\xaa\xbb") {
+        Some(stats) => {
+          assert_true(stats.h1() == 1)
+          assert_true(stats.h0() == 1)
+        }
+        None => fail("missing decoded two-byte signature")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(@byteweight.Byteweight::of_bytes(b"not-byteweight") is Err(_))
+  assert_true(
+    @byteweight.Byteweight::of_bytes(
+      b"bap.mbt.byteweight.v1\naa not-a-count 0\n",
+    )
+    is Err(_),
+  )
+}
+
+///|
 test "translated BAP byteweight scanning uses longest known signatures" {
   let corpus = bw_memory(0x100UL, b"abcxabcy")
   let decider = @byteweight.Byteweight::create().train(

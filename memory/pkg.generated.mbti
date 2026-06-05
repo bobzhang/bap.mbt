@@ -100,6 +100,8 @@ pub fn Memory::compare_with(Self, UInt64) -> AddressPosition
 pub fn Memory::contains(Self, UInt64) -> Bool
 pub fn Memory::count(Self, (UInt64, @types.Word) -> Bool, word_size? : Int) -> Int
 pub fn Memory::create(endian~ : @bitvec.Endian, start~ : UInt64, Bytes, pos? : Int, len? : Int) -> Result[Self, String]
+pub fn Memory::deref(Self, UInt64) -> Result[@types.Word, String]
+pub fn Memory::deref_exn(Self, UInt64) -> @types.Word raise MemoryError
 pub fn Memory::dominates(Self, Self) -> Bool
 pub fn Memory::endian(Self) -> @bitvec.Endian
 pub fn Memory::exists(Self, (UInt64, @types.Word) -> Bool, word_size? : Int) -> Bool

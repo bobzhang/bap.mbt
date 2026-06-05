@@ -310,6 +310,22 @@ pub fn Memory::get_exn(
 }
 
 ///|
+pub fn Memory::deref(
+  self : Memory,
+  addr : UInt64,
+) -> Result[@types.Word, String] {
+  self.get(addr~)
+}
+
+///|
+pub fn Memory::deref_exn(
+  self : Memory,
+  addr : UInt64,
+) -> @types.Word raise MemoryError {
+  self.get_exn(addr~)
+}
+
+///|
 pub fn[A] Memory::foldi(
   self : Memory,
   init : A,

@@ -221,8 +221,13 @@ test "translated BAP memory get uses source-style address scale" {
     Ok(word) => assert_true(word.to_hex() == "0x0605")
     Err(reason) => fail(reason)
   }
+  match memory.deref(0x1005UL) {
+    Ok(word) => assert_true(word.to_hex() == "0x05")
+    Err(reason) => fail(reason)
+  }
   assert_true(memory.get(scale=0) is Err(_))
   assert_true(memory.get(addr=0x100fUL, scale=16) is Err(_))
+  assert_true(memory.deref(0x2000UL) is Err(_))
 }
 
 ///|
@@ -233,6 +238,7 @@ test "translated BAP memory get_exn raises checked load errors" {
     bytes_0_to_15(),
   )
   assert_eq(memory.get_exn(scale=16).to_hex(), "0x0100")
+  assert_eq(memory.deref_exn(0x1003UL).to_hex(), "0x03")
   try {
     let _ = memory.get_exn(addr=0x100fUL, scale=16)
     fail("unexpected get_exn success")
@@ -240,6 +246,14 @@ test "translated BAP memory get_exn raises checked load errors" {
     @memory.MemoryFailure(reason) =>
       assert_eq(reason, "memory load is out of bounds")
     _ => fail("expected MemoryFailure from get_exn")
+  }
+  try {
+    let _ = memory.deref_exn(0x2000UL)
+    fail("unexpected deref_exn success")
+  } catch {
+    @memory.MemoryFailure(reason) =>
+      assert_eq(reason, "memory load is out of bounds")
+    _ => fail("expected MemoryFailure from deref_exn")
   }
 }
 

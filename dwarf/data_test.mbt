@@ -29,6 +29,16 @@ fn expect_location_list(
 }
 
 ///|
+fn expect_range_list(
+  value : Result[@dwarf.DwarfRangeList, String],
+) -> @dwarf.DwarfRangeList raise {
+  match value {
+    Ok(value) => value
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "translated DWARF section data stores buffers by section" {
   let info = expect_section_buffer(@dwarf.DwarfSectionBuffer::create(b"info"))
   let abbrev = expect_section_buffer(
@@ -51,6 +61,62 @@ test "translated DWARF section data stores buffers by section" {
   assert_true(got_abbrev.data() == b"abbrev")
   assert_true(got_abbrev.position() == 2)
   assert_true(data.section(DwarfStr) is Err(_))
+}
+
+///|
+test "translated DWARF section buffers read DWARF5 rnglists entries" {
+  let rnglists = b"\x05\x00\x10\x00\x00" +
+    b"\x04\x10\x18" +
+    b"\x06\x00\x20\x00\x00\x04\x20\x00\x00" +
+    b"\x07\x00\x30\x00\x00\x05" +
+    b"\x01\x03" +
+    b"\x02\x01\x02" +
+    b"\x03\x04\x06" +
+    b"\x00"
+  let buffer = expect_section_buffer(
+    @dwarf.DwarfSectionBuffer::create(rnglists),
+  )
+  let list = expect_range_list(
+    @dwarf.DwarfRangeList::read(buffer, endian=LittleEndian, addr_size=W32),
+  )
+  assert_true(list.length() == 7)
+  assert_true(!list.is_empty())
+  assert_true(
+    list.entries() ==
+    [
+      DwarfRangeBaseAddress(0x1000UL),
+      DwarfRangeOffsetPair(0x10, 0x18),
+      DwarfRangeStartEnd(0x2000UL, 0x2004UL),
+      DwarfRangeStartLength(0x3000UL, 5),
+      DwarfRangeBaseAddressx(3),
+      DwarfRangeStartxEndx(1, 2),
+      DwarfRangeStartxLength(4, 6),
+    ],
+  )
+  assert_true(
+    @dwarf.DwarfRangeList::read(
+      expect_section_buffer(@dwarf.DwarfSectionBuffer::create(b"\x08")),
+      endian=LittleEndian,
+      addr_size=W32,
+    )
+    is Err(_),
+  )
+}
+
+///|
+test "translated DWARF data exposes rnglists section reader" {
+  let data = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=BigEndian,
+      rnglists=b"\xff\x00\x05\x00\x00\x20\x00\x00",
+    ),
+  )
+  let list = expect_range_list(data.rnglist(offset=2, addr_size=W32))
+  assert_true(list.entries() == [DwarfRangeBaseAddress(0x2000UL)])
+  let without_rnglists = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(endian=BigEndian, info=b"\x00"),
+  )
+  assert_true(without_rnglists.rnglist(addr_size=W32) is Err(_))
 }
 
 ///|

@@ -77,6 +77,7 @@ pub fn DwarfData::from_elf_bytes(Bytes) -> Result[Self, String]
 pub fn DwarfData::functions(Self) -> Result[Array[DwarfFunction], String]
 pub fn DwarfData::has_section(Self, DwarfSection) -> Bool
 pub fn DwarfData::loclist(Self, offset? : Int, addr_size~ : DwarfWordSize) -> Result[DwarfLocationList, String]
+pub fn DwarfData::rnglist(Self, offset? : Int, addr_size~ : DwarfWordSize) -> Result[DwarfRangeList, String]
 pub fn DwarfData::section(Self, DwarfSection) -> Result[DwarfSectionBuffer, String]
 pub fn DwarfData::sections(Self) -> Array[(DwarfSection, DwarfSectionBuffer)]
 
@@ -208,6 +209,22 @@ pub(all) enum DwarfLocationListEntry {
   DwarfLocBaseAddress(UInt64)
   DwarfLocStartEnd(UInt64, UInt64, Bytes)
   DwarfLocStartLength(UInt64, Int, Bytes)
+} derive(Eq, @debug.Debug)
+
+type DwarfRangeList
+pub fn DwarfRangeList::entries(Self) -> Array[DwarfRangeListEntry]
+pub fn DwarfRangeList::is_empty(Self) -> Bool
+pub fn DwarfRangeList::length(Self) -> Int
+pub fn DwarfRangeList::read(DwarfSectionBuffer, offset? : Int, endian~ : @bitvec.Endian, addr_size~ : DwarfWordSize) -> Result[Self, String]
+
+pub(all) enum DwarfRangeListEntry {
+  DwarfRangeBaseAddressx(Int)
+  DwarfRangeStartxEndx(Int, Int)
+  DwarfRangeStartxLength(Int, Int)
+  DwarfRangeOffsetPair(Int, Int)
+  DwarfRangeBaseAddress(UInt64)
+  DwarfRangeStartEnd(UInt64, UInt64)
+  DwarfRangeStartLength(UInt64, Int)
 } derive(Eq, @debug.Debug)
 
 pub(all) enum DwarfSection {

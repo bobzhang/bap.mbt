@@ -119,6 +119,46 @@ fn expect_dies(
 }
 
 ///|
+fn expect_die_attr_bytes(value : Result[Bytes, String]) -> Bytes raise {
+  match value {
+    Ok(value) => value
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+fn expect_die_attr_string(value : Result[String, String]) -> String raise {
+  match value {
+    Ok(value) => value
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+fn expect_die_attr_address(value : Result[UInt64, String]) -> UInt64 raise {
+  match value {
+    Ok(value) => value
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+fn expect_die_attr_const(value : Result[Int64, String]) -> Int64 raise {
+  match value {
+    Ok(value) => value
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+fn expect_die_attr_flag(value : Result[Bool, String]) -> Bool raise {
+  match value {
+    Ok(value) => value
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "translated DWARF section data stores buffers by section" {
   let info = expect_section_buffer(@dwarf.DwarfSectionBuffer::create(b"info"))
   let abbrev = expect_section_buffer(
@@ -363,6 +403,62 @@ test "translated DWARF data exposes structural DIE records" {
     @dwarf.DwarfData::from_bytes(endian=LittleEndian, info=broken, abbrev~),
   )
   assert_true(broken_data.unit_dies() is Err(_))
+}
+
+///|
+test "translated DWARF DIE attributes expose payload readers" {
+  let abbrev = b"\x01\x2e\x00" +
+    b"\x03\x08" +
+    b"\x11\x01" +
+    b"\x12\x06" +
+    b"\x7f\x0a" +
+    b"\x7e\x0c" +
+    b"\x7d\x19" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x17\x00\x00\x00" +
+    b"\x04\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x04" +
+    b"\x01fn\x00" +
+    b"\x10\x00\x00\x00" +
+    b"\x07\x00\x00\x00" +
+    b"\x02xy" +
+    b"\x01"
+  let data = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(endian=LittleEndian, info~, abbrev~),
+  )
+  let info_section = expect_section_buffer(data.section(DwarfInfo))
+  let dies = expect_dies(data.unit_dies())
+  assert_true(dies.length() == 1)
+  let attrs = dies[0].attributes()
+  assert_true(attrs.length() == 6)
+  assert_true(
+    expect_die_attr_bytes(attrs[0].payload(info_section)) == b"fn\x00",
+  )
+  assert_true(expect_die_attr_string(attrs[0].string(info_section)) == "fn")
+  assert_true(
+    expect_die_attr_address(
+      attrs[1].address(info_section, endian=LittleEndian, addr_size=W32),
+    ) ==
+    0x10UL,
+  )
+  assert_true(
+    expect_die_attr_const(
+      attrs[2].const_value(info_section, endian=LittleEndian),
+    ) ==
+    7L,
+  )
+  assert_true(
+    expect_die_attr_bytes(attrs[3].block(info_section, endian=LittleEndian)) ==
+    b"xy",
+  )
+  assert_true(expect_die_attr_flag(attrs[4].flag(info_section)))
+  assert_true(expect_die_attr_flag(attrs[5].flag(info_section)))
+  assert_true(attrs[5].offset() == attrs[5].end_offset())
+  assert_true(
+    attrs[0].address(info_section, endian=LittleEndian, addr_size=W32) is Err(_),
+  )
 }
 
 ///|

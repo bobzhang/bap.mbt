@@ -57,6 +57,33 @@ fn dwarf_die_attribute_create(
 }
 
 ///|
+fn dwarf_die_attribute_check_bounds(
+  attribute : DwarfDieAttribute,
+  info : DwarfSectionBuffer,
+) -> Result[Unit, String] {
+  if attribute.offset_value < 0 ||
+    attribute.end_offset_value < attribute.offset_value ||
+    attribute.end_offset_value > info.data().length() {
+    Err("DWARF DIE attribute span is out of bounds")
+  } else {
+    Ok(())
+  }
+}
+
+///|
+fn[T] dwarf_die_attribute_finish(
+  attribute : DwarfDieAttribute,
+  value : T,
+  next : DwarfInput,
+) -> Result[T, String] {
+  if next.position() == attribute.end_offset_value {
+    Ok(value)
+  } else {
+    Err("DWARF DIE attribute reader did not consume payload")
+  }
+}
+
+///|
 fn dwarf_skip_die_attributes(
   input : DwarfInput,
   entry : DwarfAbbrevEntry,
@@ -141,6 +168,171 @@ pub fn DwarfDieAttribute::offset(self : DwarfDieAttribute) -> Int {
 ///|
 pub fn DwarfDieAttribute::end_offset(self : DwarfDieAttribute) -> Int {
   self.end_offset_value
+}
+
+///|
+pub fn DwarfDieAttribute::payload(
+  self : DwarfDieAttribute,
+  info : DwarfSectionBuffer,
+) -> Result[Bytes, String] {
+  match dwarf_die_attribute_check_bounds(self, info) {
+    Ok(_) => Ok(info.data()[self.offset_value:self.end_offset_value].to_owned())
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+pub fn DwarfDieAttribute::input(
+  self : DwarfDieAttribute,
+  info : DwarfSectionBuffer,
+) -> Result[DwarfInput, String] {
+  match dwarf_die_attribute_check_bounds(self, info) {
+    Ok(_) =>
+      match info.with_position(self.offset_value) {
+        Ok(buffer) => Ok(buffer.input())
+        Err(reason) => Err(reason)
+      }
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+pub fn DwarfDieAttribute::string(
+  self : DwarfDieAttribute,
+  info : DwarfSectionBuffer,
+) -> Result[String, String] {
+  match self.form() {
+    DwarfString =>
+      match self.input(info) {
+        Ok(input) =>
+          match input.read_cstring() {
+            Ok((value, next)) => dwarf_die_attribute_finish(self, value, next)
+            Err(reason) => Err(reason)
+          }
+        Err(reason) => Err(reason)
+      }
+    _ => Err("DWARF DIE attribute is not an inline string")
+  }
+}
+
+///|
+pub fn DwarfDieAttribute::address(
+  self : DwarfDieAttribute,
+  info : DwarfSectionBuffer,
+  endian~ : @bitvec.Endian,
+  addr_size~ : DwarfWordSize,
+) -> Result[UInt64, String] {
+  match self.form() {
+    DwarfAddr =>
+      match self.input(info) {
+        Ok(input) =>
+          match input.read_address(endian~, size=addr_size) {
+            Ok((value, next)) => dwarf_die_attribute_finish(self, value, next)
+            Err(reason) => Err(reason)
+          }
+        Err(reason) => Err(reason)
+      }
+    _ => Err("DWARF DIE attribute is not an address")
+  }
+}
+
+///|
+pub fn DwarfDieAttribute::section_offset_value(
+  self : DwarfDieAttribute,
+  info : DwarfSectionBuffer,
+  endian~ : @bitvec.Endian,
+  dwarf_size~ : DwarfWordSize,
+) -> Result[Int, String] {
+  match self.form() {
+    DwarfStrp
+    | DwarfLineStrp
+    | DwarfStrpSup
+    | DwarfStrpAlt
+    | DwarfOffset
+    | DwarfRefAlt =>
+      match self.input(info) {
+        Ok(input) =>
+          match input.read_offset(endian~, size=dwarf_size) {
+            Ok((value, next)) => dwarf_die_attribute_finish(self, value, next)
+            Err(reason) => Err(reason)
+          }
+        Err(reason) => Err(reason)
+      }
+    _ => Err("DWARF DIE attribute is not a section offset")
+  }
+}
+
+///|
+pub fn DwarfDieAttribute::const_value(
+  self : DwarfDieAttribute,
+  info : DwarfSectionBuffer,
+  endian~ : @bitvec.Endian,
+) -> Result[Int64, String] {
+  match self.form() {
+    DwarfImplicitConst(value) =>
+      if self.offset_value == self.end_offset_value {
+        Ok(value)
+      } else {
+        Err("DWARF implicit const attribute has a payload span")
+      }
+    DwarfConst(lenspec) | DwarfSignedConst(lenspec) =>
+      match self.input(info) {
+        Ok(input) =>
+          match input.read_const(lenspec~, endian~) {
+            Ok((value, next)) => dwarf_die_attribute_finish(self, value, next)
+            Err(reason) => Err(reason)
+          }
+        Err(reason) => Err(reason)
+      }
+    _ => Err("DWARF DIE attribute is not a constant")
+  }
+}
+
+///|
+pub fn DwarfDieAttribute::block(
+  self : DwarfDieAttribute,
+  info : DwarfSectionBuffer,
+  endian~ : @bitvec.Endian,
+) -> Result[Bytes, String] {
+  let lenspec = match self.form() {
+    DwarfBlock(spec) => spec
+    DwarfExpr => DwarfLeb128
+    _ => return Err("DWARF DIE attribute is not a block")
+  }
+  match self.input(info) {
+    Ok(input) =>
+      match input.read_block(lenspec~, endian~) {
+        Ok((value, next)) => dwarf_die_attribute_finish(self, value, next)
+        Err(reason) => Err(reason)
+      }
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+pub fn DwarfDieAttribute::flag(
+  self : DwarfDieAttribute,
+  info : DwarfSectionBuffer,
+) -> Result[Bool, String] {
+  match self.form() {
+    DwarfFlagPresent =>
+      if self.offset_value == self.end_offset_value {
+        Ok(true)
+      } else {
+        Err("DWARF flag-present attribute has a payload span")
+      }
+    DwarfFlag =>
+      match self.input(info) {
+        Ok(input) =>
+          match input.read_byte() {
+            Ok((value, next)) =>
+              dwarf_die_attribute_finish(self, value != 0, next)
+            Err(reason) => Err(reason)
+          }
+        Err(reason) => Err(reason)
+      }
+    _ => Err("DWARF DIE attribute is not a flag")
+  }
 }
 
 ///|

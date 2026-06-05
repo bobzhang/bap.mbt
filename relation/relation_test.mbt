@@ -23,7 +23,7 @@ test "relation add mem find and fold are deterministic" {
   let relation = relation.add(2, "b").add(1, "c").add(1, "a").add(2, "b")
   assert_eq(relation.length(), 3)
   assert_true(relation.mem(1, "a"))
-  assert_true(relation.mem(2, "a"))
+  assert_true(!relation.mem(2, "a"))
   assert_true(!relation.mem(3, "a"))
   assert_true(!relation.mem(2, "missing"))
   assert_true(relation.findl(1) == ["a", "c"])
@@ -45,7 +45,8 @@ test "relation exposes BAP-style top-level functions" {
   assert_true(@relation.is_empty(relation))
   let relation = @relation.add(relation, 2, "b")
   let relation = @relation.add(relation, 1, "a")
-  assert_true(@relation.mem(relation, 2, "a"))
+  assert_true(@relation.mem(relation, 2, "b"))
+  assert_true(!@relation.mem(relation, 2, "a"))
   assert_true(@relation.findl(relation, 1) == ["a"])
   assert_true(@relation.findr(relation, "b") == [2])
   let folded = @relation.fold(relation, init=[], f=fn(left, right, acc) {
@@ -70,11 +71,12 @@ test "relation exposes BAP-style top-level functions" {
 }
 
 ///|
-test "relation add keeps exact edge suppression separate from BAP mem" {
+test "relation add suppresses duplicate exact edges" {
   let relation = int_string_relation().add(1, "a").add(2, "b")
-  assert_true(relation.mem(1, "b"))
+  assert_true(!relation.mem(1, "b"))
   let relation = relation.add(1, "b").add(1, "b")
   assert_eq(relation.length(), 3)
+  assert_true(relation.mem(1, "b"))
   assert_true(relation.pairs() == [(1, "a"), (1, "b"), (2, "b")])
 }
 

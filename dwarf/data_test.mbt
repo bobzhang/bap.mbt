@@ -39,6 +39,16 @@ fn expect_range_list(
 }
 
 ///|
+fn expect_address_table(
+  value : Result[@dwarf.DwarfAddressTable, String],
+) -> @dwarf.DwarfAddressTable raise {
+  match value {
+    Ok(value) => value
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "translated DWARF section data stores buffers by section" {
   let info = expect_section_buffer(@dwarf.DwarfSectionBuffer::create(b"info"))
   let abbrev = expect_section_buffer(
@@ -61,6 +71,73 @@ test "translated DWARF section data stores buffers by section" {
   assert_true(got_abbrev.data() == b"abbrev")
   assert_true(got_abbrev.position() == 2)
   assert_true(data.section(DwarfStr) is Err(_))
+}
+
+///|
+test "translated DWARF section buffers read raw address tables" {
+  let addr = b"\xff\x00" + b"\x20\x00\x00\x00" + b"\x2c\x00\x00\x00"
+  let buffer = expect_section_buffer(@dwarf.DwarfSectionBuffer::create(addr))
+  let table = expect_address_table(
+    @dwarf.DwarfAddressTable::read(
+      buffer,
+      offset=2,
+      endian=LittleEndian,
+      addr_size=W32,
+    ),
+  )
+  assert_true(table.version() == None)
+  assert_true(table.address_size() == W32)
+  assert_true(table.base_offset() == 2)
+  assert_true(table.length() == 2)
+  assert_true(!table.is_empty())
+  assert_true(table.addresses() == [0x20UL, 0x2cUL])
+  assert_true(table.address(1) == Ok(0x2cUL))
+  assert_true(table.address(-1) is Err(_))
+  assert_true(table.address(2) is Err(_))
+}
+
+///|
+test "translated DWARF section buffers read DWARF5 address table contributions" {
+  let addr = b"\x0c\x00\x00\x00" +
+    b"\x05\x00" +
+    b"\x04" +
+    b"\x00" +
+    b"\x20\x00\x00\x00" +
+    b"\x2c\x00\x00\x00"
+  let buffer = expect_section_buffer(@dwarf.DwarfSectionBuffer::create(addr))
+  let table = expect_address_table(
+    @dwarf.DwarfAddressTable::read_contribution(buffer, endian=LittleEndian),
+  )
+  assert_true(table.version() == Some(5))
+  assert_true(table.address_size() == W32)
+  assert_true(table.base_offset() == 8)
+  assert_true(table.addresses() == [0x20UL, 0x2cUL])
+  assert_true(
+    @dwarf.DwarfAddressTable::read_contribution(
+      expect_section_buffer(
+        @dwarf.DwarfSectionBuffer::create(b"\x04\x00\x00\x00\x05\x00\x04\x01"),
+      ),
+      endian=LittleEndian,
+    )
+    is Err(_),
+  )
+}
+
+///|
+test "translated DWARF data exposes address table readers" {
+  let data = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=BigEndian,
+      addr=b"\xff\x00\x00\x00\x00\x20",
+    ),
+  )
+  let raw = expect_address_table(data.address_table(offset=2, addr_size=W32))
+  assert_true(raw.addresses() == [0x20UL])
+  let without_addr = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(endian=BigEndian, info=b"\x00"),
+  )
+  assert_true(without_addr.address_table(addr_size=W32) is Err(_))
+  assert_true(without_addr.address_table_contribution() is Err(_))
 }
 
 ///|

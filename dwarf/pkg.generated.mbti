@@ -48,6 +48,17 @@ pub(all) enum DwarfAbbrevValueKind {
   DwarfRnglistsBaseValue
 } derive(Eq, @debug.Debug)
 
+type DwarfAddressTable
+pub fn DwarfAddressTable::address(Self, Int) -> Result[UInt64, String]
+pub fn DwarfAddressTable::address_size(Self) -> DwarfWordSize
+pub fn DwarfAddressTable::addresses(Self) -> Array[UInt64]
+pub fn DwarfAddressTable::base_offset(Self) -> Int
+pub fn DwarfAddressTable::is_empty(Self) -> Bool
+pub fn DwarfAddressTable::length(Self) -> Int
+pub fn DwarfAddressTable::read(DwarfSectionBuffer, offset? : Int, endian~ : @bitvec.Endian, addr_size~ : DwarfWordSize) -> Result[Self, String]
+pub fn DwarfAddressTable::read_contribution(DwarfSectionBuffer, offset? : Int, endian~ : @bitvec.Endian) -> Result[Self, String]
+pub fn DwarfAddressTable::version(Self) -> Int?
+
 pub(all) enum DwarfAttr {
   DwarfName
   DwarfLinkageName
@@ -70,6 +81,8 @@ pub fn DwarfAttr::name() -> Self
 pub fn DwarfAttr::unknown(Int) -> Self
 
 type DwarfData
+pub fn DwarfData::address_table(Self, offset? : Int, addr_size~ : DwarfWordSize) -> Result[DwarfAddressTable, String]
+pub fn DwarfData::address_table_contribution(Self, offset? : Int) -> Result[DwarfAddressTable, String]
 pub fn DwarfData::create(endian~ : @bitvec.Endian, sections~ : Array[(DwarfSection, DwarfSectionBuffer)]) -> Result[Self, String]
 pub fn DwarfData::endian(Self) -> @bitvec.Endian
 pub fn DwarfData::from_bytes(endian~ : @bitvec.Endian, info? : Bytes, abbrev? : Bytes, str? : Bytes, line_str? : Bytes, str_offsets? : Bytes, addr? : Bytes, ranges? : Bytes, rnglists? : Bytes, loclists? : Bytes) -> Result[Self, String]

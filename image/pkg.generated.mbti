@@ -15,6 +15,8 @@ pub fn addr_size(Image) -> Int
 
 pub fn arch(Image) -> @core_theory.Target
 
+pub fn available_backend_names() -> Array[String]
+
 pub fn available_backends() -> Array[String]
 
 pub fn available_loaders() -> Array[String]

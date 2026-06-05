@@ -46,7 +46,7 @@ pub fn register_loader(
   name~ : String,
   loader : ImageLoader,
 ) -> Result[Unit, String] {
-  if image_loader_registry.contains(name) {
+  if image_loader_registry.contains(name) || find_backend(name) is Some(_) {
     Err("image loader \{name} is already registered")
   } else {
     image_loader_registry[name] = loader

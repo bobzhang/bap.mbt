@@ -834,6 +834,7 @@ test "image backends can be registered and used for byte loading" {
   }
   assert_true(@image.find_backend("unit-raw") is Some(_))
   assert_true(@image.available_backends().contains("unit-raw"))
+  assert_true(@image.available_backend_names().contains("unit-raw"))
   assert_true(backend.description() == "raw bytes")
   assert_true(backend.extensions() == ["raw", "bin"])
   assert_true(backend.priority() == 10)
@@ -913,6 +914,10 @@ test "image loader registry builds images from Ogre documents" {
   }
   assert_true(@image.find_loader("unit-ogre-doc-loader") is Some(_))
   assert_true(@image.available_loaders().contains("unit-ogre-doc-loader"))
+  assert_true(@image.available_backends().contains("unit-ogre-doc-loader"))
+  assert_true(
+    !@image.available_backend_names().contains("unit-ogre-doc-loader"),
+  )
   match @image.Image::of_bytes(b"\xaa\xbb", backend="unit-ogre-doc-loader") {
     Ok((img, warnings)) => {
       assert_true(warnings.is_empty())
@@ -935,6 +940,45 @@ test "image loader registry builds images from Ogre documents" {
     @image.Image::of_bytes(b"\xaa\xbb", backend="unit-empty-doc-loader")
     is Err(_),
   )
+}
+
+///|
+test "image backend and loader names share the BAP registry namespace" {
+  let backend_name = "unit-image-shared-backend-name"
+  let backend = @image.ImageBackend::create(name=backend_name, load=data => {
+    let segment = @image.Segment::create(
+      name=".shared",
+      endian=LittleEndian,
+      addr=0x90UL,
+      data,
+    )
+    Ok(
+      (
+        @image.Image::from_segments(entry=0x90UL, endian=LittleEndian, [segment]),
+        [],
+      ),
+    )
+  })
+  match @image.register_backend(name=backend_name, backend) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let loader = @image.ImageLoader::create(from_data=_ => Ok(None))
+  assert_true(@image.register_loader(name=backend_name, loader) is Err(_))
+
+  let loader_name = "unit-image-shared-loader-name"
+  match @image.register_loader(name=loader_name, loader) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let shadow_backend = @image.ImageBackend::create(name=loader_name, load=_ => {
+    Err("unused")
+  })
+  assert_true(
+    @image.register_backend(name=loader_name, shadow_backend) is Err(_),
+  )
+  assert_true(@image.available_backends().contains(loader_name))
+  assert_true(!@image.available_backend_names().contains(loader_name))
 }
 
 ///|
@@ -962,6 +1006,7 @@ test "image exposes BAP KB loader registration facade" {
     Err(reason) => fail(reason)
   }
   assert_true(@image.find_loader("unit-kb-ogre-doc-loader") is Some(_))
+  assert_true(@image.available_backends().contains("unit-kb-ogre-doc-loader"))
   match @image.Image::of_bytes(b"\x11\x22", backend="unit-kb-ogre-doc-loader") {
     Ok((img, warnings)) => {
       assert_true(warnings.is_empty())

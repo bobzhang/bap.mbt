@@ -77,7 +77,7 @@ pub fn register_backend(
   name~ : String,
   backend : ImageBackend,
 ) -> Result[Unit, String] {
-  if backend_registry.contains(name) {
+  if backend_registry.contains(name) || find_loader(name) is Some(_) {
     Err("image backend \{name} is already registered")
   } else {
     backend_registry[name] = backend
@@ -91,6 +91,8 @@ pub fn register_backend_if_absent(
 ) -> Result[Bool, String] {
   if backend_registry.contains(backend.name()) {
     Ok(false)
+  } else if find_loader(backend.name()) is Some(_) {
+    Err("image backend \{backend.name()} is already registered")
   } else {
     match register_backend(name=backend.name(), backend) {
       Ok(_) => Ok(true)
@@ -167,6 +169,17 @@ pub fn find_backend(name : String) -> ImageBackend? {
 
 ///|
 pub fn available_backends() -> Array[String] {
+  let names = available_backend_names()
+  for name in available_loaders() {
+    if !names.contains(name) {
+      names.push(name)
+    }
+  }
+  names
+}
+
+///|
+pub fn available_backend_names() -> Array[String] {
   let names = []
   backend_registry.each((name, _) => names.push(name))
   names

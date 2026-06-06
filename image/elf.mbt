@@ -2070,6 +2070,12 @@ fn image_elf_target(header : ImageElfHeader) -> @core_theory.Target {
         LittleEndian => @core_theory.Target::aarch64()
         BigEndian => @core_theory.Target::aarch64_be()
       }
+    0xbe =>
+      match header.class {
+        ImageElf64 => @core_theory.Target::nvptx64()
+        ImageElf32 => @core_theory.Target::nvptx()
+      }
+    0xcb => @core_theory.Target::xcore()
     0xf3 =>
       match header.class {
         ImageElf64 => @core_theory.Target::riscv64()

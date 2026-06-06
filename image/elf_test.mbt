@@ -869,6 +869,8 @@ test "image ELF backend refines target system and ABI from OSABI" {
     ("sparc32plus", 0x12, 0, "sparc", "target:sparc", UnknownSystem, SysV),
     ("arm-aeabi", 0x28, 64, "armv7", "target:armv7+le", UnknownSystem, EABI),
     ("hexagon", 0xa4, 0, "hexagon", "target:hexagon", UnknownSystem, SysV),
+    ("cuda64", 0xbe, 0, "nvptx64", "target:nvptx64", UnknownSystem, SysV),
+    ("xcore", 0xcb, 0, "xcore", "target:xcore", UnknownSystem, SysV),
     (
       "loongarch-linux",
       0x102,

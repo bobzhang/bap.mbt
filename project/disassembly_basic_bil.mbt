@@ -1038,6 +1038,42 @@ fn ProjectDisassemblyInstruction::project_basic_bil_setcc(
 }
 
 ///|
+fn project_basic_bil_reverse_bytes(
+  value : @types.Exp,
+  width : Int,
+) -> Result[@types.Exp, String] {
+  if width != 32 && width != 64 {
+    return Err("unsupported BSWAP width \{width}")
+  }
+  let byte_count = width / 8
+  let mut result = @types.Exp::extract(value, hi=7, lo=0)
+  for index in 1..<byte_count {
+    result = @types.Exp::concat(
+      result,
+      @types.Exp::extract(value, hi=index * 8 + 7, lo=index * 8),
+    )
+  }
+  Ok(result)
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_bswap(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let dst = match self.project_basic_bil_register(0, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let value = match
+    project_basic_bil_reverse_bytes(@types.Exp::var_exp(dst), width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  Ok([@types.Stmt::move_stmt(dst, value)])
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_basic_bil_lea(
   self : ProjectDisassemblyInstruction,
   data_width : Int,
@@ -1978,6 +2014,8 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     | "SETGE"
     | "SETLE"
     | "SETG" => self.project_basic_bil_setcc()
+    "BSWAP32R" => self.project_basic_bil_bswap(32)
+    "BSWAP64R" => self.project_basic_bil_bswap(64)
     "PUSH32R" | "PUSH32I8" | "PUSH32I32" => self.project_basic_bil_push(32)
     "PUSH64R" | "PUSH64I8" | "PUSH64I32" => self.project_basic_bil_push(64)
     "PUSH32M" => self.project_basic_bil_push_mem(32)

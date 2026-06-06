@@ -1158,6 +1158,27 @@ test "project Basic BIL lift covers x86 setcc" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 bswap" {
+  let bswap32 = basic_bil_decode("x86", b"\x0f\xc8", start=0x7059UL)
+  match bswap32.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "EAX:imm32 := concat(concat(concat(extract[7:0](EAX:imm32), extract[15:8](EAX:imm32)), extract[23:16](EAX:imm32)), extract[31:24](EAX:imm32))",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let bswap64 = basic_bil_decode("x86_64", b"\x49\x0f\xc8", start=0x705aUL)
+  match bswap64.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "R8:imm64 := concat(concat(concat(concat(concat(concat(concat(extract[7:0](R8:imm64), extract[15:8](R8:imm64)), extract[23:16](R8:imm64)), extract[31:24](R8:imm64)), extract[39:32](R8:imm64)), extract[47:40](R8:imm64)), extract[55:48](R8:imm64)), extract[63:56](R8:imm64))",
+      ])
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86 accumulator sign-extension ops" {
   let cdqe = basic_bil_decode("x86_64", b"\x48\x98", start=0x7056UL)
   match cdqe.lift_basic_bil() {

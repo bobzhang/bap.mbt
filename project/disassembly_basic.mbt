@@ -983,6 +983,38 @@ fn project_disassembly_basic_x86_setcc(
 }
 
 ///|
+fn project_disassembly_basic_x86_bswap(
+  memory : @memory.Memory,
+  address_width : Int,
+) -> (Int, String, String)? {
+  let bytes = memory.to_bytes()
+  let (opcode_index, rex) = if address_width == 64 &&
+    bytes.length() >= 2 &&
+    bytes[0].to_int() >= 0x40 &&
+    bytes[0].to_int() <= 0x4f {
+    (1, bytes[0].to_int())
+  } else {
+    (0, 0)
+  }
+  if bytes.length() < opcode_index + 2 || bytes[opcode_index].to_int() != 0x0f {
+    None
+  } else {
+    let opcode = bytes[opcode_index + 1].to_int()
+    if opcode < 0xc8 || opcode > 0xcf {
+      None
+    } else {
+      let rex_b = if address_width == 64 && (rex & 0x1) != 0 { 8 } else { 0 }
+      let width = if address_width == 64 && (rex & 0x8) != 0 { 64 } else { 32 }
+      let reg = project_disassembly_basic_x86_gpr_name(
+        (opcode & 0x7) + rex_b,
+        width,
+      )
+      Some((opcode_index + 2, "BSWAP\{width}r", reg))
+    }
+  }
+}
+
+///|
 fn project_disassembly_basic_x86_mov32ri(
   memory : @memory.Memory,
 ) -> (String, Int64)? {
@@ -3354,6 +3386,20 @@ fn project_disassembly_basic_decode_x86_llvm(
           memory, 32,
         ).unwrap()
         Some((length, name, "", "", operands, kinds))
+      } else if project_disassembly_basic_x86_bswap(memory, 32) is Some(_) {
+        let (length, name, register) = project_disassembly_basic_x86_bswap(
+          memory, 32,
+        ).unwrap()
+        Some(
+          (
+            length,
+            name,
+            "",
+            "",
+            [ProjectInstructionOperand::register(name=register)],
+            [],
+          ),
+        )
       } else if project_disassembly_basic_x86_sign_extend_accumulator(
           memory, 32,
         )
@@ -3763,6 +3809,13 @@ fn project_disassembly_basic_decode_x86_64_llvm(
       memory, 64,
     ).unwrap()
     Some((length, name, operands, kinds))
+  } else if project_disassembly_basic_x86_bswap(memory, 64) is Some(_) {
+    let (length, name, register) = project_disassembly_basic_x86_bswap(
+      memory, 64,
+    ).unwrap()
+    Some(
+      (length, name, [ProjectInstructionOperand::register(name=register)], []),
+    )
   } else if project_disassembly_basic_x86_simple(memory, 64, 64) is Some(_) {
     let (length, name, operands, kinds) = project_disassembly_basic_x86_simple(
       memory, 64, 64,

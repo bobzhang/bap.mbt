@@ -1050,9 +1050,9 @@ fn project_elf_test_write_symbol64(
 ///|
 fn project_elf_test_make_x86_64() -> Bytes {
   let shstr = b"\x00.shstrtab\x00.text\x00.symtab\x00.strtab\x00.debug_info\x00.debug_abbrev\x00.debug_str\x00.debug_str_offsets\x00"
-  let text = b"\x55\xc3\x90"
+  let text = b"\x55\xc3\x90\x90"
   let strtab = b"\x00project_main\x00"
-  let debug_info = b"\x43\x00\x00\x00" +
+  let debug_info = b"\x5c\x00\x00\x00" +
     b"\x04\x00" +
     b"\x00\x00\x00\x00" +
     b"\x08" +
@@ -1070,6 +1070,12 @@ fn project_elf_test_make_x86_64() -> Bytes {
     b"\x2c\x00\x00\x00" +
     b"\x02\x10\x40\x00\x00\x00\x00\x00" +
     b"\x01" +
+    b"\x03" +
+    b"dwarf_abs\x00" +
+    b"\x05" +
+    b"\x46\x00\x00\x00" +
+    b"\x03\x10\x40\x00\x00\x00\x00\x00" +
+    b"\x01" +
     b"\x00"
   let debug_abbrev = b"\x01\x2e\x00" +
     b"\x03\x25" +
@@ -1086,6 +1092,11 @@ fn project_elf_test_make_x86_64() -> Bytes {
     b"\x00\x00" +
     b"\x04\x2e\x00" +
     b"\x47\x13" +
+    b"\x11\x01" +
+    b"\x12\x0b" +
+    b"\x00\x00" +
+    b"\x05\x2e\x00" +
+    b"\x31\x13" +
     b"\x11\x01" +
     b"\x12\x0b" +
     b"\x00\x00" +
@@ -1332,7 +1343,7 @@ test "project built-in image loaders include ELF input" {
       assert_true(project.target().matches("x86_64"))
       assert_true(project.memory().lookup(0x401000UL).length() == 1)
       let symbols = project.symbols()
-      assert_true(symbols.length() == 4)
+      assert_true(symbols.length() == 5)
       assert_true(symbols[0].name() == "project_main")
       assert_true(symbols[0].addr() == 0x401000UL)
       assert_true(symbols[0].is_function())
@@ -1351,6 +1362,11 @@ test "project built-in image loaders include ELF input" {
       assert_true(symbols[3].size() == 1)
       assert_true(symbols[3].is_function())
       assert_true(symbols[3].is_debug())
+      assert_true(symbols[4].name() == "dwarf_abs")
+      assert_true(symbols[4].addr() == 0x401003UL)
+      assert_true(symbols[4].size() == 1)
+      assert_true(symbols[4].is_function())
+      assert_true(symbols[4].is_debug())
       match project.image() {
         Some(image) => {
           assert_true(image.segments()[0].name() == ".load0")

@@ -46,6 +46,45 @@ test "translated DWARF FBI extracts function with inline name and relative high 
 }
 
 ///|
+test "translated DWARF FBI extracts entry-point and inlined subroutine tags" {
+  let abbrev = b"\x01\x03\x00" +
+    b"\x03\x08" +
+    b"\x11\x01" +
+    b"\x12\x0b" +
+    b"\x00\x00" +
+    b"\x02\x1d\x00" +
+    b"\x03\x08" +
+    b"\x11\x01" +
+    b"\x12\x0b" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x21\x00\x00\x00" +
+    b"\x04\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x04" +
+    b"\x01" +
+    b"entry\x00" +
+    b"\x20\x00\x00\x00" +
+    b"\x05" +
+    b"\x02" +
+    b"inline\x00" +
+    b"\x30\x00\x00\x00" +
+    b"\x04" +
+    b"\x00"
+  let data = expect_fbi_data(
+    @dwarf.DwarfData::from_bytes(endian=LittleEndian, info~, abbrev~),
+  )
+  let functions = expect_functions(data.functions())
+  assert_true(functions.length() == 2)
+  assert_true(functions[0].name() == "entry")
+  assert_true(functions[0].low_pc() == 0x20UL)
+  assert_true(functions[0].high_pc() == Some(0x25UL))
+  assert_true(functions[1].name() == "inline")
+  assert_true(functions[1].low_pc() == 0x30UL)
+  assert_true(functions[1].high_pc() == Some(0x34UL))
+}
+
+///|
 test "translated DWARF FBI ignores zero padding after units" {
   let abbrev = b"\x01\x2e\x00" +
     b"\x03\x08" +

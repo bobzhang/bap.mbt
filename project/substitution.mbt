@@ -14,6 +14,52 @@ fn project_subst_is_ident(c : Char) -> Bool {
 }
 
 ///|
+fn project_subst_find_close(value : String, start : Int, close : Char) -> Int? {
+  let cursor = Ref(start)
+  while cursor.val < value.length() {
+    match value.get_char(cursor.val) {
+      Some(c) if c == close => return Some(cursor.val)
+      Some(c) => cursor.val += c.utf16_len()
+      None => return None
+    }
+  }
+  None
+}
+
+///|
+fn project_subst_name(value : String, start : Int) -> (String, Int)? {
+  match value.get_char(start) {
+    Some('{') =>
+      match project_subst_find_close(value, start + 1, '}') {
+        Some(end) => Some((value[start + 1:end].to_owned(), end + 1))
+        None => None
+      }
+    Some('(') =>
+      match project_subst_find_close(value, start + 1, ')') {
+        Some(end) => Some((value[start + 1:end].to_owned(), end + 1))
+        None => None
+      }
+    Some(c) if project_subst_is_ident(c) => {
+      let end = Ref(start)
+      while end.val < value.length() {
+        let item = match value.get_char(end.val) {
+          Some(item) => item
+          None => break
+        }
+        if project_subst_is_ident(item) {
+          end.val = end.val + item.utf16_len()
+        } else {
+          break
+        }
+      }
+      Some((value[start:end.val].to_owned(), end.val))
+    }
+    Some(c) => Some((c.to_string(), start + c.utf16_len()))
+    None => None
+  }
+}
+
+///|
 fn project_subst_addr(addr : UInt64) -> String {
   "0x" + addr.to_string(radix=16)
 }
@@ -202,26 +248,15 @@ fn Project::substitute_text(
     }
     let next = pos.val + c.utf16_len()
     if c == '$' {
-      let start = next
-      let end = Ref(start)
-      while end.val < value.length() {
-        let item = match value.get_char(end.val) {
-          Some(item) => item
-          None => break
+      match project_subst_name(value, next) {
+        Some((name, next_pos)) => {
+          out.write_string(self.subst_value(memory, name))
+          pos.val = next_pos
         }
-        if project_subst_is_ident(item) {
-          end.val = end.val + item.utf16_len()
-        } else {
-          break
+        None => {
+          out.write_char(c)
+          pos.val = next
         }
-      }
-      if end.val == start {
-        out.write_char(c)
-        pos.val = next
-      } else {
-        let name = value[start:end.val].to_owned()
-        out.write_string(self.subst_value(memory, name))
-        pos.val = end.val
       }
     } else {
       out.write_char(c)

@@ -590,6 +590,36 @@ test "project substitutes memory annotation placeholders" {
 }
 
 ///|
+test "project substitutions accept source-style grouped variable forms" {
+  let target = @core_theory.Target::unknown()
+  let section = @image.Section::create(name=".text", addr=0x1000UL, size=2)
+  let symbol = @image.Symbol::create(name="entry", addr=0x1000UL, size=2)
+  let image = @image.Image::from_segments(
+    entry=0x1000UL,
+    endian=LittleEndian,
+    [raw_segment()],
+    sections=[section],
+    symbols=[symbol],
+    filename="tiny.bin",
+    target~,
+  )
+  let tagged = @project.Project::from_image(image).substitute(
+    raw_segment().memory(),
+    "comment",
+    "${symbol}/$(symbol_name)/${symbol_addr}/$(section_name)/${filename}/" +
+    "$$/$(missing)/${missing}",
+  )
+  assert_true(
+    tagged
+    .memory()
+    .lookup(0x1000UL)
+    .any(entry => {
+      entry.1 == "comment=entry/entry/0x1000/.text/tiny.bin/$/missing/missing"
+    }),
+  )
+}
+
+///|
 test "project substitutes filename placeholders" {
   let target = @core_theory.Target::unknown()
   let image = @image.Image::from_segments(

@@ -403,6 +403,10 @@ pub(all) enum DwarfDieReference {
 } derive(Eq, @debug.Debug)
 pub fn DwarfDieReference::section_offset(Self, unit_start~ : Int) -> Result[Int, String]
 
+type DwarfFbi
+pub fn DwarfFbi::create(DwarfData) -> Result[Self, String]
+pub fn DwarfFbi::functions(Self) -> Array[(String, DwarfFunction)]
+
 pub(all) enum DwarfForm {
   DwarfAddr
   DwarfBlock(DwarfLenspec)
@@ -466,6 +470,8 @@ pub fn DwarfFunction::create(name~ : String, low_pc~ : UInt64, high_pc? : UInt64
 pub fn DwarfFunction::high_pc(Self) -> UInt64?
 pub fn DwarfFunction::low_pc(Self) -> UInt64
 pub fn DwarfFunction::name(Self) -> String
+pub fn DwarfFunction::pc_hi(Self) -> UInt64?
+pub fn DwarfFunction::pc_lo(Self) -> UInt64
 
 pub(all) enum DwarfIndexSpec {
   DwarfIndexLeb128

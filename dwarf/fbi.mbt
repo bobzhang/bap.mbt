@@ -6,6 +6,11 @@ struct DwarfFunction {
 }
 
 ///|
+struct DwarfFbi {
+  functions_value : Array[(String, DwarfFunction)]
+}
+
+///|
 priv enum DwarfRangeListRef {
   DwarfRangeOffset(Int)
   DwarfRnglistsIndex(Int)
@@ -99,6 +104,34 @@ pub fn DwarfFunction::low_pc(self : DwarfFunction) -> UInt64 {
 ///|
 pub fn DwarfFunction::high_pc(self : DwarfFunction) -> UInt64? {
   self.high_pc_value
+}
+
+///|
+pub fn DwarfFunction::pc_lo(self : DwarfFunction) -> UInt64 {
+  self.low_pc()
+}
+
+///|
+pub fn DwarfFunction::pc_hi(self : DwarfFunction) -> UInt64? {
+  self.high_pc()
+}
+
+///|
+pub fn DwarfFbi::create(data : DwarfData) -> Result[DwarfFbi, String] {
+  match data.functions() {
+    Ok(functions) =>
+      Ok({
+        functions_value: functions.map(function_item => {
+          (function_item.name(), function_item)
+        }),
+      })
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+pub fn DwarfFbi::functions(self : DwarfFbi) -> Array[(String, DwarfFunction)] {
+  self.functions_value.copy()
 }
 
 ///|

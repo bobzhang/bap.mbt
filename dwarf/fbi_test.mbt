@@ -19,6 +19,14 @@ fn expect_fbi_data(
 }
 
 ///|
+fn expect_fbi(value : Result[@dwarf.DwarfFbi, String]) -> @dwarf.DwarfFbi raise {
+  match value {
+    Ok(value) => value
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "translated DWARF FBI extracts function with inline name and relative high pc" {
   let abbrev = b"\x01\x2e\x00" +
     b"\x03\x08" +
@@ -43,6 +51,14 @@ test "translated DWARF FBI extracts function with inline name and relative high 
   assert_true(functions[0].name() == "main")
   assert_true(functions[0].low_pc() == 0x10UL)
   assert_true(functions[0].high_pc() == Some(0x15UL))
+  assert_true(functions[0].pc_lo() == 0x10UL)
+  assert_true(functions[0].pc_hi() == Some(0x15UL))
+  let fbi = expect_fbi(@dwarf.DwarfFbi::create(data))
+  let named_functions = fbi.functions()
+  assert_true(named_functions.length() == 1)
+  assert_true(named_functions[0].0 == "main")
+  assert_true(named_functions[0].1.pc_lo() == 0x10UL)
+  assert_true(named_functions[0].1.pc_hi() == Some(0x15UL))
 }
 
 ///|

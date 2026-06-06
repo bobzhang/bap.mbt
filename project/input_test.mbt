@@ -1052,7 +1052,7 @@ fn project_elf_test_make_x86_64() -> Bytes {
   let shstr = b"\x00.shstrtab\x00.text\x00.symtab\x00.strtab\x00.debug_info\x00.debug_abbrev\x00.debug_str\x00.debug_str_offsets\x00"
   let text = b"\x55\xc3"
   let strtab = b"\x00project_main\x00"
-  let debug_info = b"\x13\x00\x00\x00" +
+  let debug_info = b"\x29\x00\x00\x00" +
     b"\x04\x00" +
     b"\x00\x00\x00\x00" +
     b"\x08" +
@@ -1060,9 +1060,18 @@ fn project_elf_test_make_x86_64() -> Bytes {
     b"\x00" +
     b"\x00\x10\x40\x00\x00\x00\x00\x00" +
     b"\x02" +
+    b"\x02" +
+    b"dwarf_entry\x00" +
+    b"\x01\x10\x40\x00\x00\x00\x00\x00" +
+    b"\x01" +
     b"\x00"
   let debug_abbrev = b"\x01\x2e\x00" +
     b"\x03\x25" +
+    b"\x11\x01" +
+    b"\x12\x0b" +
+    b"\x00\x00" +
+    b"\x02\x03\x00" +
+    b"\x03\x08" +
     b"\x11\x01" +
     b"\x12\x0b" +
     b"\x00\x00" +
@@ -1309,7 +1318,7 @@ test "project built-in image loaders include ELF input" {
       assert_true(project.target().matches("x86_64"))
       assert_true(project.memory().lookup(0x401000UL).length() == 1)
       let symbols = project.symbols()
-      assert_true(symbols.length() == 2)
+      assert_true(symbols.length() == 3)
       assert_true(symbols[0].name() == "project_main")
       assert_true(symbols[0].addr() == 0x401000UL)
       assert_true(symbols[0].is_function())
@@ -1318,6 +1327,11 @@ test "project built-in image loaders include ELF input" {
       assert_true(symbols[1].size() == 2)
       assert_true(symbols[1].is_function())
       assert_true(symbols[1].is_debug())
+      assert_true(symbols[2].name() == "dwarf_entry")
+      assert_true(symbols[2].addr() == 0x401001UL)
+      assert_true(symbols[2].size() == 1)
+      assert_true(symbols[2].is_function())
+      assert_true(symbols[2].is_debug())
       match project.image() {
         Some(image) => {
           assert_true(image.segments()[0].name() == ".load0")

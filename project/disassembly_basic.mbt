@@ -2170,6 +2170,105 @@ fn project_disassembly_basic_x86_unop_reg(
 }
 
 ///|
+fn project_disassembly_basic_x86_shift_reg(
+  memory : @memory.Memory,
+  data_width : Int,
+  address_width : Int,
+) -> (
+  Int,
+  String,
+  Array[ProjectInstructionOperand],
+  Array[ProjectInstructionKind],
+)? {
+  let bytes = memory.to_bytes()
+  let (opcode_index, rex) = if address_width == 64 &&
+    bytes.length() >= 3 &&
+    bytes[0].to_int() >= 0x40 &&
+    bytes[0].to_int() <= 0x4f {
+    (1, bytes[0].to_int())
+  } else {
+    (0, 0)
+  }
+  if data_width == 64 && (rex & 0x8) == 0 {
+    return None
+  }
+  if data_width == 32 && (rex & 0x8) != 0 {
+    return None
+  }
+  if data_width != 8 && data_width != 32 && data_width != 64 {
+    return None
+  }
+  if bytes.length() < opcode_index + 2 {
+    None
+  } else {
+    let opcode = bytes[opcode_index].to_int()
+    let modrm = bytes[opcode_index + 1].to_int()
+    let expected_imm_opcode = if data_width == 8 { 0xc0 } else { 0xc1 }
+    let expected_one_opcode = if data_width == 8 { 0xd0 } else { 0xd1 }
+    let expected_cl_opcode = if data_width == 8 { 0xd2 } else { 0xd3 }
+    let suffix = if opcode == expected_imm_opcode {
+      "ri8"
+    } else if opcode == expected_one_opcode {
+      "r1"
+    } else if opcode == expected_cl_opcode {
+      "rCL"
+    } else {
+      ""
+    }
+    if suffix == "" ||
+      ((modrm >> 6) & 0x3) != 0x3 ||
+      (suffix == "ri8" && bytes.length() < opcode_index + 3) {
+      None
+    } else {
+      let group = (modrm >> 3) & 0x7
+      let op = match group {
+        4 => "SHL"
+        5 => "SHR"
+        7 => "SAR"
+        _ => ""
+      }
+      if op == "" {
+        None
+      } else {
+        let rex_b = if address_width == 64 && (rex & 0x1) != 0 { 8 } else { 0 }
+        let index = (modrm & 0x7) + rex_b
+        let register = if data_width == 8 {
+          project_disassembly_basic_x86_gpr8_name(index, rex != 0)
+        } else {
+          project_disassembly_basic_x86_gpr_name(index, data_width)
+        }
+        let count = if suffix == "ri8" {
+          ProjectInstructionOperand::immediate(
+            bytes[opcode_index + 2].to_int().to_int64(),
+          )
+        } else if suffix == "r1" {
+          ProjectInstructionOperand::immediate(1L)
+        } else {
+          ProjectInstructionOperand::register(name="CL")
+        }
+        let length = if suffix == "ri8" {
+          opcode_index + 3
+        } else {
+          opcode_index + 2
+        }
+        Some(
+          (
+            length,
+            op + "\{data_width}\{suffix}",
+            [
+              ProjectInstructionOperand::register(name=register),
+              ProjectInstructionOperand::register(name=register),
+              count,
+            ],
+            [],
+          ),
+        )
+      }
+    }
+  }
+}
+
+///|
 fn project_disassembly_basic_x86_push_reg(
   memory : @memory.Memory,
   width : Int,
@@ -2402,18 +2501,25 @@ fn project_disassembly_basic_x86_simple(
     Some(decoded) => Some(decoded)
     None =>
       match
-        project_disassembly_basic_x86_accumulator_imm(
-          memory, width, address_width,
-        ) {
+        project_disassembly_basic_x86_shift_reg(memory, width, address_width) {
         Some(decoded) => Some(decoded)
         None =>
           match
-            project_disassembly_basic_x86_test_imm(memory, width, address_width) {
+            project_disassembly_basic_x86_accumulator_imm(
+              memory, width, address_width,
+            ) {
             Some(decoded) => Some(decoded)
             None =>
-              project_disassembly_basic_x86_group5_control(
-                memory, width, address_width,
-              )
+              match
+                project_disassembly_basic_x86_test_imm(
+                  memory, width, address_width,
+                ) {
+                Some(decoded) => Some(decoded)
+                None =>
+                  project_disassembly_basic_x86_group5_control(
+                    memory, width, address_width,
+                  )
+              }
           }
       }
   }

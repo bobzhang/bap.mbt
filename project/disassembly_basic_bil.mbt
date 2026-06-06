@@ -415,6 +415,55 @@ fn ProjectDisassemblyInstruction::project_basic_bil_binop_ri(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_basic_bil_shift_count(
+  self : ProjectDisassemblyInstruction,
+  index : Int,
+  width : Int,
+) -> Result[@types.Exp, String] {
+  match self.project_basic_bil_operand(index) {
+    Ok(operand) =>
+      match operand.register_name() {
+        Some(name) => Ok(@types.Exp::var_exp(project_basic_bil_reg(name, 8)))
+        None =>
+          match operand.to_int64() {
+            Some(value) => project_basic_bil_int(value, width)
+            None =>
+              Err(
+                "instruction \{self.name()} operand \{index} is not a shift count",
+              )
+          }
+      }
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_shift_r(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  op : @types.BinOp,
+) -> Result[Array[@types.Stmt], String] {
+  let dst = match self.project_basic_bil_register(0, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let src = match self.project_basic_bil_register(1, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let count = match self.project_basic_bil_shift_count(2, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  Ok([
+    @types.Stmt::move_stmt(
+      dst,
+      @types.Exp::binop(op, @types.Exp::var_exp(src), count),
+    ),
+  ])
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_basic_bil_cmp_rr(
   self : ProjectDisassemblyInstruction,
   width : Int,
@@ -1573,6 +1622,24 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
       self.project_basic_bil_binop_ri(32, @types.BinOp::bit_xor())
     "XOR64RI8" | "XOR64RI32" =>
       self.project_basic_bil_binop_ri(64, @types.BinOp::bit_xor())
+    "SHL8R1" | "SHL8RCL" | "SHL8RI8" =>
+      self.project_basic_bil_shift_r(8, @types.BinOp::lshift())
+    "SHL32R1" | "SHL32RCL" | "SHL32RI8" =>
+      self.project_basic_bil_shift_r(32, @types.BinOp::lshift())
+    "SHL64R1" | "SHL64RCL" | "SHL64RI8" =>
+      self.project_basic_bil_shift_r(64, @types.BinOp::lshift())
+    "SHR8R1" | "SHR8RCL" | "SHR8RI8" =>
+      self.project_basic_bil_shift_r(8, @types.BinOp::rshift())
+    "SHR32R1" | "SHR32RCL" | "SHR32RI8" =>
+      self.project_basic_bil_shift_r(32, @types.BinOp::rshift())
+    "SHR64R1" | "SHR64RCL" | "SHR64RI8" =>
+      self.project_basic_bil_shift_r(64, @types.BinOp::rshift())
+    "SAR8R1" | "SAR8RCL" | "SAR8RI8" =>
+      self.project_basic_bil_shift_r(8, @types.BinOp::arshift())
+    "SAR32R1" | "SAR32RCL" | "SAR32RI8" =>
+      self.project_basic_bil_shift_r(32, @types.BinOp::arshift())
+    "SAR64R1" | "SAR64RCL" | "SAR64RI8" =>
+      self.project_basic_bil_shift_r(64, @types.BinOp::arshift())
     "INC8R" => self.project_basic_bil_incdec(8, @types.BinOp::plus())
     "INC32R" => self.project_basic_bil_incdec(32, @types.BinOp::plus())
     "INC64R" => self.project_basic_bil_incdec(64, @types.BinOp::plus())

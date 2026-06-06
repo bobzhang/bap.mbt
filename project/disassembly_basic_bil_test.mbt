@@ -343,6 +343,42 @@ test "project Basic BIL lift covers x86 register not-neg ops" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 register shift ops" {
+  let shl8_one = basic_bil_decode("x86", b"\xd0\xe0", start=0x703aUL)
+  match shl8_one.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["AL:imm8 := (AL:imm8 << 1:8u)"])
+    Err(reason) => fail(reason)
+  }
+
+  let shr32_cl = basic_bil_decode("x86", b"\xd3\xe8", start=0x703cUL)
+  match shr32_cl.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["EAX:imm32 := (EAX:imm32 >> CL:imm8)"])
+    Err(reason) => fail(reason)
+  }
+
+  let sar8_imm = basic_bil_decode("x86", b"\xc0\xfc\x03", start=0x703eUL)
+  match sar8_imm.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["AH:imm8 := (AH:imm8 a>> 3:8u)"])
+    Err(reason) => fail(reason)
+  }
+
+  let shr64_cl = basic_bil_decode("x86_64", b"\x49\xd3\xe8", start=0x7041UL)
+  match shr64_cl.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["R8:imm64 := (R8:imm64 >> CL:imm8)"])
+    Err(reason) => fail(reason)
+  }
+
+  let shl8_rex = basic_bil_decode("x86_64", b"\x40\xd0\xe4", start=0x7044UL)
+  match shl8_rex.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["SPL:imm8 := (SPL:imm8 << 1:8u)"])
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86 register add-sub rr ops" {
   let add64 = basic_bil_decode("x86_64", b"\x48\x01\xd8", start=0x7017UL)
   match add64.lift_basic_bil() {

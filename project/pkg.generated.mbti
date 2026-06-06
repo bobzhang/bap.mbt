@@ -425,6 +425,7 @@ pub fn ProjectDisasm::errors(Self) -> Array[ProjectDisassemblyRecError]
 pub fn ProjectDisasm::from_project(Project, errors? : Array[ProjectDisassemblyRecError]) -> Self
 pub fn ProjectDisasm::has_errors(Self) -> Bool
 pub fn ProjectDisasm::insns(Self) -> Array[(@memory.Memory, ProjectDisassemblyInstruction)]
+pub fn ProjectDisasm::lift_basic_bil(Self) -> Result[Array[@types.Stmt], String]
 pub fn ProjectDisasm::merge(Self, Self) -> Self
 pub fn ProjectDisasm::of_file(String, backend? : String, brancher? : ProjectBrancher, rooter? : ProjectRooter, loader? : String) -> Result[Self, String]
 pub fn ProjectDisasm::of_file_exn(String, backend? : String, brancher? : ProjectBrancher, rooter? : ProjectRooter, loader? : String) -> Self raise ProjectDisasmError
@@ -498,6 +499,7 @@ pub fn ProjectDisassemblyBlock::insns(Self) -> Array[(@memory.Memory, ProjectDis
 pub fn ProjectDisassemblyBlock::instruction_count(Self) -> Int
 pub fn ProjectDisassemblyBlock::instructions(Self) -> Array[ProjectDisassemblyInstruction]
 pub fn ProjectDisassemblyBlock::leader(Self) -> ProjectDisassemblyInstruction
+pub fn ProjectDisassemblyBlock::lift_basic_bil(Self) -> Result[Array[@types.Stmt], String]
 pub fn ProjectDisassemblyBlock::memory(Self) -> @memory.Memory
 pub fn ProjectDisassemblyBlock::same(Self, Self) -> Bool
 pub fn ProjectDisassemblyBlock::terminator(Self) -> ProjectDisassemblyInstruction

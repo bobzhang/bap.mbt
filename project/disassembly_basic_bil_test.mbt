@@ -135,6 +135,17 @@ test "project Basic BIL lift runs over disassembly state and project" {
     b"\x48\x83\xc4\x08" +
     b"\xc3"
   let disassembly = basic_bil_decode_state(sequence, start=0x7500UL)
+  let blocks = disassembly.blocks_with_instructions()
+  assert_true(blocks.length() == 1)
+  match blocks[0].lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 6)
+      assert_true(stmts[0].to_string().contains("RSP:imm64 - 8:64u"))
+      assert_true(stmts[5].to_string() == "special ret")
+    }
+    Err(reason) => fail(reason)
+  }
+
   match disassembly.lift_basic_bil() {
     Ok(stmts) => {
       assert_true(stmts.length() == 6)
@@ -155,6 +166,12 @@ test "project Basic BIL lift runs over disassembly state and project" {
     Ok(stmts) => assert_true(stmts.length() == 6)
     Err(reason) => fail(reason)
   }
+
+  let disasm = @project.ProjectDisasm::from_project(project)
+  match disasm.lift_basic_bil() {
+    Ok(stmts) => assert_true(stmts.length() == 6)
+    Err(reason) => fail(reason)
+  }
 }
 
 ///|
@@ -166,6 +183,16 @@ test "project Basic BIL lift reports unsupported instruction context" {
   }
 
   let disassembly = basic_bil_decode_state(b"\x90", start=0x7600UL)
+  let blocks = disassembly.blocks_with_instructions()
+  assert_true(blocks.length() == 1)
+  match blocks[0].lift_basic_bil() {
+    Err(reason) => {
+      assert_true(reason.contains(".byte"))
+      assert_true(reason.contains("[0x7600,0x7600]"))
+    }
+    Ok(_) => fail("unsupported disassembly block lifted")
+  }
+
   match disassembly.lift_basic_bil() {
     Err(reason) => {
       assert_true(reason.contains(".byte"))

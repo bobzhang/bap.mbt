@@ -262,6 +262,33 @@ pub fn ProjectDisassemblyState::lift_basic_bil(
 }
 
 ///|
+pub fn ProjectDisassemblyBlock::lift_basic_bil(
+  self : ProjectDisassemblyBlock,
+) -> Result[Array[@types.Stmt], String] {
+  let result : Array[@types.Stmt] = []
+  for instruction in self.instructions() {
+    match instruction.lift_basic_bil() {
+      Ok(stmts) =>
+        for stmt in stmts {
+          result.push(stmt)
+        }
+      Err(reason) =>
+        return Err(
+          "failed to lift Basic BIL for \{instruction.name()} at 0x\{instruction.addr().to_string(radix=16)} in block \{self.to_string()}: \{reason}",
+        )
+    }
+  }
+  Ok(result)
+}
+
+///|
+pub fn ProjectDisasm::lift_basic_bil(
+  self : ProjectDisasm,
+) -> Result[Array[@types.Stmt], String] {
+  self.disassembly().lift_basic_bil()
+}
+
+///|
 pub fn Project::lift_basic_bil(
   self : Project,
 ) -> Result[Array[@types.Stmt], String] {

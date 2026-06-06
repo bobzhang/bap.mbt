@@ -478,6 +478,7 @@ pub fn ProjectDisassemblyBasicRemainder::memory(Self) -> @memory.Memory?
 
 type ProjectDisassemblyBasicState
 pub fn ProjectDisassemblyBasicState::addr(Self) -> UInt64
+pub fn ProjectDisassemblyBasicState::apply_x86_simd(Self, ProjectX86SimdState) -> Result[ProjectX86SimdState, String]
 pub fn ProjectDisassemblyBasicState::create(disasm~ : ProjectDisassemblyBasic, memory~ : @memory.Memory, addr~ : UInt64, preds~ : Array[ProjectDisassemblyBasicPred], insns~ : Array[(@memory.Memory, ProjectDisassemblyInstruction?)]) -> Self
 pub fn ProjectDisassemblyBasicState::disasm(Self) -> ProjectDisassemblyBasic
 pub fn ProjectDisassemblyBasicState::insns(Self) -> Array[(@memory.Memory, ProjectDisassemblyInstruction?)]
@@ -938,6 +939,8 @@ pub fn ProjectSymbolizer::run(Self, UInt64) -> String?
 pub fn ProjectSymbolizer::set_path(Self, String) -> Self
 
 type ProjectX86SimdState
+pub fn ProjectX86SimdState::apply_instruction(Self, ProjectDisassemblyInstruction) -> Result[Self, String]
+pub fn ProjectX86SimdState::apply_instructions(Self, Array[ProjectDisassemblyInstruction]) -> Result[Self, String]
 pub fn ProjectX86SimdState::create(registers? : Array[(String, @types.Word)], vector_memory? : Array[(UInt64, @types.Word)]) -> Self
 pub fn ProjectX86SimdState::empty() -> Self
 pub fn ProjectX86SimdState::get_register(Self, String) -> @types.Word?

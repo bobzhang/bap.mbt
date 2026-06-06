@@ -223,3 +223,52 @@ test "project Basic x86 SIMD semantics checks pshufb memory alignment" {
     Ok(_) => fail("unaligned pshufb memory operand succeeded")
   }
 }
+
+///|
+test "project Basic x86 SIMD semantics runs decoded instruction streams" {
+  let source = semantic_word128("0f0e0d0c0b0a09080706050403020100")
+  let dest = semantic_word128("ff0000000000000000000000000000ff")
+  let bytes = b"\x66\x0f\xda\xc8" + b"\x66\x0f\xde\xc8"
+  let disasm = match
+    @project.ProjectDisassemblyBasic::create("x86", backend="llvm") {
+    Ok(disasm) => disasm
+    Err(reason) => fail(reason)
+  }
+  let memory = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x6100UL,
+    bytes,
+  )
+  let basic_state = disasm.run(memory)
+  assert_true(basic_state.insns().length() == 2)
+  assert_true(basic_state.insns().map(item => item.0.length()) == [4, 4])
+  match basic_state.apply_x86_simd(semantic_xmm_state(source, dest)) {
+    Ok(next) => assert_true(next.get_register("xmm1") == Some(source))
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+test "project Basic x86 SIMD stream errors include instruction address" {
+  let source = semantic_word128("0f0e0d0c0b0a09080706050403020100")
+  let dest = semantic_word128("ff0000000000000000000000000000ff")
+  let disasm = match
+    @project.ProjectDisassemblyBasic::create("x86", backend="llvm") {
+    Ok(disasm) => disasm
+    Err(reason) => fail(reason)
+  }
+  let memory = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x6200UL,
+    b"\x66\x0f\xda\xc8\xeb\xfe",
+  )
+  let basic_state = disasm.run(memory)
+  assert_true(basic_state.insns().length() == 2)
+  match basic_state.apply_x86_simd(semantic_xmm_state(source, dest)) {
+    Err(reason) => {
+      assert_true(reason.contains("JMP_1"))
+      assert_true(reason.contains("0x6204"))
+    }
+    Ok(_) => fail("unsupported instruction stream succeeded")
+  }
+}

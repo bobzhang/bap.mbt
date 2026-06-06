@@ -236,3 +236,44 @@ pub fn ProjectDisassemblyInstruction::apply_x86_simd(
     Err(reason) => Err(reason)
   }
 }
+
+///|
+pub fn ProjectX86SimdState::apply_instruction(
+  self : ProjectX86SimdState,
+  instruction : ProjectDisassemblyInstruction,
+) -> Result[ProjectX86SimdState, String] {
+  instruction.apply_x86_simd(self)
+}
+
+///|
+pub fn ProjectX86SimdState::apply_instructions(
+  self : ProjectX86SimdState,
+  instructions : Array[ProjectDisassemblyInstruction],
+) -> Result[ProjectX86SimdState, String] {
+  let mut state = self
+  for instruction in instructions {
+    match instruction.apply_x86_simd(state) {
+      Ok(next) => state = next
+      Err(reason) =>
+        return Err(
+          "failed to apply x86 SIMD instruction \{instruction.name()} at 0x\{instruction.addr().to_string(radix=16)}: \{reason}",
+        )
+    }
+  }
+  Ok(state)
+}
+
+///|
+pub fn ProjectDisassemblyBasicState::apply_x86_simd(
+  self : ProjectDisassemblyBasicState,
+  state : ProjectX86SimdState,
+) -> Result[ProjectX86SimdState, String] {
+  let instructions : Array[ProjectDisassemblyInstruction] = []
+  for item in self.insns_value {
+    match item.1 {
+      Some(instruction) => instructions.push(instruction)
+      None => ()
+    }
+  }
+  state.apply_instructions(instructions)
+}

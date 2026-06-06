@@ -810,6 +810,11 @@ pub fn TraceEvent::mode(value : String) -> TraceEvent {
 }
 
 ///|
+pub fn TraceEvent::mode_enum(value : TraceMode) -> TraceEvent {
+  Mode(value.to_string())
+}
+
+///|
 pub fn TraceEvent::memory_load_value(self : TraceEvent) -> Move[@types.Word]? {
   match self {
     MemoryLoad(value) => Some(value)
@@ -918,6 +923,20 @@ pub fn TraceEvent::mode_value(self : TraceEvent) -> String? {
   match self {
     Mode(value) => Some(value)
     _ => None
+  }
+}
+
+///|
+pub fn TraceEvent::mode_enum_value(
+  self : TraceEvent,
+) -> Result[TraceMode?, String] {
+  match self {
+    Mode(value) =>
+      match TraceMode::read(value) {
+        Ok(mode) => Ok(Some(mode))
+        Err(reason) => Err(reason)
+      }
+    _ => Ok(None)
   }
 }
 

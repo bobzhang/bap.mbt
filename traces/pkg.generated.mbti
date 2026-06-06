@@ -251,6 +251,8 @@ pub fn TraceEvent::memory_store_tag() -> String
 pub fn TraceEvent::memory_store_uuid() -> String
 pub fn TraceEvent::memory_store_value(Self) -> Move[@types.Word]?
 pub fn TraceEvent::mode(String) -> Self
+pub fn TraceEvent::mode_enum(TraceMode) -> Self
+pub fn TraceEvent::mode_enum_value(Self) -> Result[TraceMode?, String]
 pub fn TraceEvent::mode_tag() -> String
 pub fn TraceEvent::mode_uuid() -> String
 pub fn TraceEvent::mode_value(Self) -> String?

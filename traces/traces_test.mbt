@@ -345,9 +345,17 @@ test "translated BAP trace modes expose Knowledge enum and program slot" {
         Ok(decoded) => assert_true(decoded.equal(mode))
         Err(reason) => fail(reason)
       }
+      let event = @traces.TraceEvent::mode_enum(mode)
+      assert_true(event.mode_value() == Some("bap:unit-thumb"))
+      assert_true(event.mode_enum_value() == Ok(Some(mode)))
+      assert_true(
+        @traces.TraceEvent::memory_load(test_move()).mode_enum_value() ==
+        Ok(None),
+      )
     }
     Err(reason) => fail(reason)
   }
+  assert_true(@traces.TraceEvent::mode("unit-raw").mode_enum_value() is Err(_))
   assert_true(
     @traces.TraceMode::declare_mode("unit-thumb", pkg="bap") is Err(_),
   )

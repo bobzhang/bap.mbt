@@ -2222,6 +2222,8 @@ fn project_disassembly_basic_x86_shift_reg(
     } else {
       let group = (modrm >> 3) & 0x7
       let op = match group {
+        0 => "ROL"
+        1 => "ROR"
         4 => "SHL"
         5 => "SHR"
         7 => "SAR"

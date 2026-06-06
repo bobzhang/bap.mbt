@@ -420,13 +420,30 @@ fn ProjectDisassemblyInstruction::project_basic_bil_shift_count(
   index : Int,
   width : Int,
 ) -> Result[@types.Exp, String] {
+  match self.project_basic_bil_shift_count_with_width(index, width) {
+    Ok((count, _)) => Ok(count)
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_shift_count_with_width(
+  self : ProjectDisassemblyInstruction,
+  index : Int,
+  width : Int,
+) -> Result[(@types.Exp, Int), String] {
   match self.project_basic_bil_operand(index) {
     Ok(operand) =>
       match operand.register_name() {
-        Some(name) => Ok(@types.Exp::var_exp(project_basic_bil_reg(name, 8)))
+        Some(name) =>
+          Ok((@types.Exp::var_exp(project_basic_bil_reg(name, 8)), 8))
         None =>
           match operand.to_int64() {
-            Some(value) => project_basic_bil_int(value, width)
+            Some(value) =>
+              match project_basic_bil_int(value, width) {
+                Ok(count) => Ok((count, width))
+                Err(reason) => Err(reason)
+              }
             None =>
               Err(
                 "instruction \{self.name()} operand \{index} is not a shift count",
@@ -435,6 +452,66 @@ fn ProjectDisassemblyInstruction::project_basic_bil_shift_count(
       }
     Err(reason) => Err(reason)
   }
+}
+
+///|
+fn project_basic_bil_rotate_expr(
+  src : @types.Var,
+  count : @types.Exp,
+  count_width : Int,
+  width : Int,
+  left : Bool,
+) -> Result[@types.Exp, String] {
+  let width_exp = match project_basic_bil_int(width.to_int64(), count_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let remainder = @types.Exp::binop(@types.BinOp::minus(), width_exp, count)
+  let src_exp = @types.Exp::var_exp(src)
+  let left_shift = @types.Exp::binop(@types.BinOp::lshift(), src_exp, count)
+  let right_shift = @types.Exp::binop(@types.BinOp::rshift(), src_exp, count)
+  let complement_left = @types.Exp::binop(
+    @types.BinOp::lshift(),
+    src_exp,
+    remainder,
+  )
+  let complement_right = @types.Exp::binop(
+    @types.BinOp::rshift(),
+    src_exp,
+    remainder,
+  )
+  if left {
+    Ok(@types.Exp::binop(@types.BinOp::bit_or(), left_shift, complement_right))
+  } else {
+    Ok(@types.Exp::binop(@types.BinOp::bit_or(), right_shift, complement_left))
+  }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_rotate_r(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  left : Bool,
+) -> Result[Array[@types.Stmt], String] {
+  let dst = match self.project_basic_bil_register(0, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let src = match self.project_basic_bil_register(1, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let (count, count_width) = match
+    self.project_basic_bil_shift_count_with_width(2, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let rhs = match
+    project_basic_bil_rotate_expr(src, count, count_width, width, left) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  Ok([@types.Stmt::move_stmt(dst, rhs)])
 }
 
 ///|
@@ -1622,6 +1699,17 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
       self.project_basic_bil_binop_ri(32, @types.BinOp::bit_xor())
     "XOR64RI8" | "XOR64RI32" =>
       self.project_basic_bil_binop_ri(64, @types.BinOp::bit_xor())
+    "ROL8R1" | "ROL8RCL" | "ROL8RI8" => self.project_basic_bil_rotate_r(8, true)
+    "ROL32R1" | "ROL32RCL" | "ROL32RI8" =>
+      self.project_basic_bil_rotate_r(32, true)
+    "ROL64R1" | "ROL64RCL" | "ROL64RI8" =>
+      self.project_basic_bil_rotate_r(64, true)
+    "ROR8R1" | "ROR8RCL" | "ROR8RI8" =>
+      self.project_basic_bil_rotate_r(8, false)
+    "ROR32R1" | "ROR32RCL" | "ROR32RI8" =>
+      self.project_basic_bil_rotate_r(32, false)
+    "ROR64R1" | "ROR64RCL" | "ROR64RI8" =>
+      self.project_basic_bil_rotate_r(64, false)
     "SHL8R1" | "SHL8RCL" | "SHL8RI8" =>
       self.project_basic_bil_shift_r(8, @types.BinOp::lshift())
     "SHL32R1" | "SHL32RCL" | "SHL32RI8" =>

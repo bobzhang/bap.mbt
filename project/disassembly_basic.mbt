@@ -2080,7 +2080,7 @@ fn project_disassembly_basic_x86_incdec_reg(
   if data_width == 32 && (rex & 0x8) != 0 {
     return None
   }
-  if data_width != 32 && data_width != 64 {
+  if data_width != 8 && data_width != 32 && data_width != 64 {
     return None
   }
   if bytes.length() < opcode_index + 2 {
@@ -2088,7 +2088,8 @@ fn project_disassembly_basic_x86_incdec_reg(
   } else {
     let opcode = bytes[opcode_index].to_int()
     let modrm = bytes[opcode_index + 1].to_int()
-    if opcode != 0xff || ((modrm >> 6) & 0x3) != 0x3 {
+    let expected_opcode = if data_width == 8 { 0xfe } else { 0xff }
+    if opcode != expected_opcode || ((modrm >> 6) & 0x3) != 0x3 {
       None
     } else {
       let group = (modrm >> 3) & 0x7
@@ -2101,16 +2102,13 @@ fn project_disassembly_basic_x86_incdec_reg(
         None
       } else {
         let rex_b = if address_width == 64 && (rex & 0x1) != 0 { 8 } else { 0 }
-        Some(
-          (
-            opcode_index + 2,
-            op + "\{data_width}r",
-            project_disassembly_basic_x86_gpr_name(
-              (modrm & 0x7) + rex_b,
-              data_width,
-            ),
-          ),
-        )
+        let index = (modrm & 0x7) + rex_b
+        let register = if data_width == 8 {
+          project_disassembly_basic_x86_gpr8_name(index, rex != 0)
+        } else {
+          project_disassembly_basic_x86_gpr_name(index, data_width)
+        }
+        Some((opcode_index + 2, op + "\{data_width}r", register))
       }
     }
   }
@@ -2137,7 +2135,7 @@ fn project_disassembly_basic_x86_unop_reg(
   if data_width == 32 && (rex & 0x8) != 0 {
     return None
   }
-  if data_width != 32 && data_width != 64 {
+  if data_width != 8 && data_width != 32 && data_width != 64 {
     return None
   }
   if bytes.length() < opcode_index + 2 {
@@ -2145,7 +2143,8 @@ fn project_disassembly_basic_x86_unop_reg(
   } else {
     let opcode = bytes[opcode_index].to_int()
     let modrm = bytes[opcode_index + 1].to_int()
-    if opcode != 0xf7 || ((modrm >> 6) & 0x3) != 0x3 {
+    let expected_opcode = if data_width == 8 { 0xf6 } else { 0xf7 }
+    if opcode != expected_opcode || ((modrm >> 6) & 0x3) != 0x3 {
       None
     } else {
       let group = (modrm >> 3) & 0x7
@@ -2158,16 +2157,13 @@ fn project_disassembly_basic_x86_unop_reg(
         None
       } else {
         let rex_b = if address_width == 64 && (rex & 0x1) != 0 { 8 } else { 0 }
-        Some(
-          (
-            opcode_index + 2,
-            op + "\{data_width}r",
-            project_disassembly_basic_x86_gpr_name(
-              (modrm & 0x7) + rex_b,
-              data_width,
-            ),
-          ),
-        )
+        let index = (modrm & 0x7) + rex_b
+        let register = if data_width == 8 {
+          project_disassembly_basic_x86_gpr8_name(index, rex != 0)
+        } else {
+          project_disassembly_basic_x86_gpr_name(index, data_width)
+        }
+        Some((opcode_index + 2, op + "\{data_width}r", register))
       }
     }
   }

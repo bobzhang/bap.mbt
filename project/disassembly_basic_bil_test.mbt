@@ -289,6 +289,18 @@ test "project Basic BIL lift covers x86 register inc-dec ops" {
       assert_basic_bil_text(stmts, ["R8D:imm32 := (R8D:imm32 - 1:32u)"])
     Err(reason) => fail(reason)
   }
+
+  let inc8 = basic_bil_decode("x86", b"\xfe\xc4", start=0x702aUL)
+  match inc8.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["AH:imm8 := (AH:imm8 + 1:8u)"])
+    Err(reason) => fail(reason)
+  }
+
+  let dec8_ext = basic_bil_decode("x86_64", b"\x41\xfe\xc8", start=0x702bUL)
+  match dec8_ext.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["R8B:imm8 := (R8B:imm8 - 1:8u)"])
+    Err(reason) => fail(reason)
+  }
 }
 
 ///|
@@ -314,6 +326,18 @@ test "project Basic BIL lift covers x86 register not-neg ops" {
   let neg32_ext = basic_bil_decode("x86_64", b"\x41\xf7\xd8", start=0x7034UL)
   match neg32_ext.lift_basic_bil() {
     Ok(stmts) => assert_basic_bil_text(stmts, ["R8D:imm32 := (neg R8D:imm32)"])
+    Err(reason) => fail(reason)
+  }
+
+  let not8 = basic_bil_decode("x86", b"\xf6\xd0", start=0x7036UL)
+  match not8.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["AL:imm8 := (not AL:imm8)"])
+    Err(reason) => fail(reason)
+  }
+
+  let neg8_ext = basic_bil_decode("x86_64", b"\x41\xf6\xd8", start=0x7038UL)
+  match neg8_ext.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["R8B:imm8 := (neg R8B:imm8)"])
     Err(reason) => fail(reason)
   }
 }

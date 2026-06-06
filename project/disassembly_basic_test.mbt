@@ -460,6 +460,10 @@ test "translated BAP basic disassembly decodes x86 register inc-dec fixtures" {
     ("x86", b"\x49", 1, ["DEC32r", "ECX"]),
     ("x86", b"\xff\xc0", 2, ["INC32r", "EAX"]),
     ("x86", b"\xff\xc9", 2, ["DEC32r", "ECX"]),
+    ("x86", b"\xfe\xc0", 2, ["INC8r", "AL"]),
+    ("x86", b"\xfe\xc9", 2, ["DEC8r", "CL"]),
+    ("x86", b"\xfe\xc4", 2, ["INC8r", "AH"]),
+    ("x86_64", b"\x41\xfe\xc0", 3, ["INC8r", "R8B"]),
   ]
   for sample in samples {
     let disasm = match
@@ -498,6 +502,9 @@ test "translated BAP basic disassembly decodes x86 register not-neg fixtures" {
     ("x86_64", b"\x41\xf7\xd8", 3, ["NEG32r", "R8D"]),
     ("x86", b"\xf7\xd0", 2, ["NOT32r", "EAX"]),
     ("x86", b"\xf7\xd9", 2, ["NEG32r", "ECX"]),
+    ("x86", b"\xf6\xd0", 2, ["NOT8r", "AL"]),
+    ("x86", b"\xf6\xdc", 2, ["NEG8r", "AH"]),
+    ("x86_64", b"\x41\xf6\xd8", 3, ["NEG8r", "R8B"]),
   ]
   for sample in samples {
     let disasm = match

@@ -1573,12 +1573,16 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
       self.project_basic_bil_binop_ri(32, @types.BinOp::bit_xor())
     "XOR64RI8" | "XOR64RI32" =>
       self.project_basic_bil_binop_ri(64, @types.BinOp::bit_xor())
+    "INC8R" => self.project_basic_bil_incdec(8, @types.BinOp::plus())
     "INC32R" => self.project_basic_bil_incdec(32, @types.BinOp::plus())
     "INC64R" => self.project_basic_bil_incdec(64, @types.BinOp::plus())
+    "DEC8R" => self.project_basic_bil_incdec(8, @types.BinOp::minus())
     "DEC32R" => self.project_basic_bil_incdec(32, @types.BinOp::minus())
     "DEC64R" => self.project_basic_bil_incdec(64, @types.BinOp::minus())
+    "NOT8R" => self.project_basic_bil_unop_r(8, @types.UnOp::not())
     "NOT32R" => self.project_basic_bil_unop_r(32, @types.UnOp::not())
     "NOT64R" => self.project_basic_bil_unop_r(64, @types.UnOp::not())
+    "NEG8R" => self.project_basic_bil_unop_r(8, @types.UnOp::neg())
     "NEG32R" => self.project_basic_bil_unop_r(32, @types.UnOp::neg())
     "NEG64R" => self.project_basic_bil_unop_r(64, @types.UnOp::neg())
     "SUB8RR" | "SUB8RR_REV" =>

@@ -1588,8 +1588,10 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "CMP64RI8" | "CMP64RI32" => self.project_basic_bil_cmp_ri(64)
     "CMP32RR" | "CMP32RR_REV" => self.project_basic_bil_cmp_rr(32)
     "CMP64RR" | "CMP64RR_REV" => self.project_basic_bil_cmp_rr(64)
+    "MOV8RM" => self.project_basic_bil_mov_rm(8)
     "MOV32RM" => self.project_basic_bil_mov_rm(32)
     "MOV64RM" => self.project_basic_bil_mov_rm(64)
+    "MOV8MR" => self.project_basic_bil_mov_mr(8)
     "MOV32MR" => self.project_basic_bil_mov_mr(32)
     "MOV64MR" => self.project_basic_bil_mov_mr(64)
     "MOV8MI" => self.project_basic_bil_mov_mi(8)
@@ -1601,6 +1603,7 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "MOV32RI" => self.project_basic_bil_mov_imm(32)
     "MOV64RI" => self.project_basic_bil_mov_imm(64)
     "MOV64RI32" => self.project_basic_bil_mov_imm(64)
+    "MOV8RR" | "MOV8RR_REV" => self.project_basic_bil_mov_rr(8)
     "MOV32RR" | "MOV32RR_REV" => self.project_basic_bil_mov_rr(32)
     "MOV64RR" | "MOV64RR_REV" => self.project_basic_bil_mov_rr(64)
     "MOVZX32RR8" =>

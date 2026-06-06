@@ -855,8 +855,12 @@ test "translated BAP basic disassembly decodes x86 register mov fixtures" {
     ("x86_64", b"\x48\x8b\xec", 3, ["MOV64rr_REV", "RBP", "RSP"], []),
     ("x86_64", b"\x4c\x89\xc0", 3, ["MOV64rr", "RAX", "R8"], []),
     ("x86_64", b"\x4d\x8b\xc8", 3, ["MOV64rr_REV", "R9", "R8"], []),
+    ("x86_64", b"\x40\x88\xe0", 3, ["MOV8rr", "AL", "SPL"], []),
+    ("x86_64", b"\x44\x8a\xc0", 3, ["MOV8rr_REV", "R8B", "AL"], []),
     ("x86", b"\x89\xe5", 2, ["MOV32rr", "EBP", "ESP"], []),
     ("x86", b"\x8b\xec", 2, ["MOV32rr_REV", "EBP", "ESP"], []),
+    ("x86", b"\x88\xe0", 2, ["MOV8rr", "AL", "AH"], []),
+    ("x86", b"\x8a\xe0", 2, ["MOV8rr_REV", "AH", "AL"], []),
   ]
   for sample in samples {
     let disasm = match
@@ -1118,6 +1122,20 @@ test "translated BAP basic disassembly decodes x86 memory mov fixtures" {
       [ProjectMayLoad],
     ),
     (
+      "x86_64",
+      b"\x44\x8a\x45\xfc",
+      4,
+      ["MOV8rm", "R8B", "RBP", "0x1", "Nil", "-0x4", "Nil"],
+      [ProjectMayLoad],
+    ),
+    (
+      "x86_64",
+      b"\x44\x88\x45\xfc",
+      4,
+      ["MOV8mr", "RBP", "0x1", "Nil", "-0x4", "Nil", "R8B"],
+      [ProjectMayStore],
+    ),
+    (
       "x86",
       b"\x8b\x45\xfc",
       3,
@@ -1129,6 +1147,20 @@ test "translated BAP basic disassembly decodes x86 memory mov fixtures" {
       b"\x89\x45\xfc",
       3,
       ["MOV32mr", "EBP", "0x1", "Nil", "-0x4", "Nil", "EAX"],
+      [ProjectMayStore],
+    ),
+    (
+      "x86",
+      b"\x8a\x45\xfc",
+      3,
+      ["MOV8rm", "AL", "EBP", "0x1", "Nil", "-0x4", "Nil"],
+      [ProjectMayLoad],
+    ),
+    (
+      "x86",
+      b"\x88\x45\xfc",
+      3,
+      ["MOV8mr", "EBP", "0x1", "Nil", "-0x4", "Nil", "AL"],
       [ProjectMayStore],
     ),
   ]

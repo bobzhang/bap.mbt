@@ -621,6 +621,18 @@ test "project Basic BIL lift covers x86 register moves" {
     Ok(stmts) => assert_basic_bil_text(stmts, ["EBP:imm32 := ESP:imm32"])
     Err(reason) => fail(reason)
   }
+
+  let mov_al_ah = basic_bil_decode("x86", b"\x88\xe0", start=0x7037UL)
+  match mov_al_ah.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["AL:imm8 := AH:imm8"])
+    Err(reason) => fail(reason)
+  }
+
+  let mov_r8b_al = basic_bil_decode("x86_64", b"\x44\x8a\xc0", start=0x7038UL)
+  match mov_r8b_al.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["R8B:imm8 := AL:imm8"])
+    Err(reason) => fail(reason)
+  }
 }
 
 ///|
@@ -866,6 +878,15 @@ test "project Basic BIL lift covers x86_64 memory load fixture" {
     Err(reason) => fail(reason)
   }
 
+  let mov8 = basic_bil_decode("x86", b"\x8a\x45\xfc", start=0x7102UL)
+  match mov8.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "AL:imm8 := load(mem:mem32x8, (EBP:imm32 - 4:32u)):imm8",
+      ])
+    Err(reason) => fail(reason)
+  }
+
   let mov64 = basic_bil_decode("x86_64", b"\x48\x8b\x45\xf8", start=0x7104UL)
   match mov64.lift_basic_bil() {
     Ok(stmts) =>
@@ -947,6 +968,15 @@ test "project Basic BIL lift covers x86 memory stores" {
     Ok(stmts) =>
       assert_basic_bil_text(stmts, [
         "mem:mem32x8 := store(mem:mem32x8, (EBP:imm32 - 4:32u), EAX:imm32)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let store8 = basic_bil_decode("x86", b"\x88\x45\xfc", start=0x711aUL)
+  match store8.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "mem:mem32x8 := store(mem:mem32x8, (EBP:imm32 - 4:32u), AL:imm8)",
       ])
     Err(reason) => fail(reason)
   }

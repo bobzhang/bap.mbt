@@ -56,6 +56,41 @@ pub fn DwarfSection::str() -> DwarfSection {
 }
 
 ///|
+pub fn DwarfSection::line_str() -> DwarfSection {
+  DwarfLineStr
+}
+
+///|
+pub fn DwarfSection::str_offsets() -> DwarfSection {
+  DwarfStrOffsets
+}
+
+///|
+pub fn DwarfSection::addr() -> DwarfSection {
+  DwarfAddr
+}
+
+///|
+pub fn DwarfSection::ranges() -> DwarfSection {
+  DwarfRanges
+}
+
+///|
+pub fn DwarfSection::rnglists() -> DwarfSection {
+  DwarfRnglists
+}
+
+///|
+pub fn DwarfSection::loclists() -> DwarfSection {
+  DwarfLoclists
+}
+
+///|
+pub fn DwarfSection::loc() -> DwarfSection {
+  DwarfLoc
+}
+
+///|
 pub fn DwarfSectionBuffer::create(
   data : Bytes,
   position? : Int = 0,

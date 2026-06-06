@@ -596,8 +596,15 @@ pub(all) enum DwarfSection {
   DwarfLoc
 } derive(Eq, @debug.Debug)
 pub fn DwarfSection::abbrev() -> Self
+pub fn DwarfSection::addr() -> Self
 pub fn DwarfSection::info() -> Self
+pub fn DwarfSection::line_str() -> Self
+pub fn DwarfSection::loc() -> Self
+pub fn DwarfSection::loclists() -> Self
+pub fn DwarfSection::ranges() -> Self
+pub fn DwarfSection::rnglists() -> Self
 pub fn DwarfSection::str() -> Self
+pub fn DwarfSection::str_offsets() -> Self
 pub fn DwarfSection::to_string(Self) -> String
 
 type DwarfSectionBuffer

@@ -1662,19 +1662,55 @@ test "translated DWARF section source aliases select core sections" {
   let info = expect_section_buffer(@dwarf.DwarfSectionBuffer::create(b"i"))
   let abbrev = expect_section_buffer(@dwarf.DwarfSectionBuffer::create(b"a"))
   let str = expect_section_buffer(@dwarf.DwarfSectionBuffer::create(b"s"))
+  let line_str = expect_section_buffer(@dwarf.DwarfSectionBuffer::create(b"ls"))
+  let str_offsets = expect_section_buffer(
+    @dwarf.DwarfSectionBuffer::create(b"so"),
+  )
+  let addr = expect_section_buffer(@dwarf.DwarfSectionBuffer::create(b"ad"))
+  let ranges = expect_section_buffer(@dwarf.DwarfSectionBuffer::create(b"ra"))
+  let rnglists = expect_section_buffer(@dwarf.DwarfSectionBuffer::create(b"rl"))
+  let loclists = expect_section_buffer(@dwarf.DwarfSectionBuffer::create(b"ll"))
+  let loc = expect_section_buffer(@dwarf.DwarfSectionBuffer::create(b"lo"))
   let data = expect_dwarf_data(
     @dwarf.DwarfData::create(endian=LittleEndian, sections=[
       (@dwarf.DwarfSection::info(), info),
       (@dwarf.DwarfSection::abbrev(), abbrev),
       (@dwarf.DwarfSection::str(), str),
+      (@dwarf.DwarfSection::line_str(), line_str),
+      (@dwarf.DwarfSection::str_offsets(), str_offsets),
+      (@dwarf.DwarfSection::addr(), addr),
+      (@dwarf.DwarfSection::ranges(), ranges),
+      (@dwarf.DwarfSection::rnglists(), rnglists),
+      (@dwarf.DwarfSection::loclists(), loclists),
+      (@dwarf.DwarfSection::loc(), loc),
     ]),
   )
   assert_true(@dwarf.DwarfSection::info() == DwarfInfo)
   assert_true(@dwarf.DwarfSection::abbrev() == DwarfAbbrev)
   assert_true(@dwarf.DwarfSection::str() == DwarfStr)
+  assert_true(@dwarf.DwarfSection::line_str() == DwarfLineStr)
+  assert_true(@dwarf.DwarfSection::str_offsets() == DwarfStrOffsets)
+  assert_true(@dwarf.DwarfSection::addr() == DwarfAddr)
+  assert_true(@dwarf.DwarfSection::ranges() == DwarfRanges)
+  assert_true(@dwarf.DwarfSection::rnglists() == DwarfRnglists)
+  assert_true(@dwarf.DwarfSection::loclists() == DwarfLoclists)
+  assert_true(@dwarf.DwarfSection::loc() == DwarfLoc)
   assert_true(expect_section_buffer(data.section(DwarfInfo)).data() == b"i")
   assert_true(expect_section_buffer(data.section(DwarfAbbrev)).data() == b"a")
   assert_true(expect_section_buffer(data.section(DwarfStr)).data() == b"s")
+  assert_true(expect_section_buffer(data.section(DwarfLineStr)).data() == b"ls")
+  assert_true(
+    expect_section_buffer(data.section(DwarfStrOffsets)).data() == b"so",
+  )
+  assert_true(expect_section_buffer(data.section(DwarfAddr)).data() == b"ad")
+  assert_true(expect_section_buffer(data.section(DwarfRanges)).data() == b"ra")
+  assert_true(
+    expect_section_buffer(data.section(DwarfRnglists)).data() == b"rl",
+  )
+  assert_true(
+    expect_section_buffer(data.section(DwarfLoclists)).data() == b"ll",
+  )
+  assert_true(expect_section_buffer(data.section(DwarfLoc)).data() == b"lo")
 }
 
 ///|

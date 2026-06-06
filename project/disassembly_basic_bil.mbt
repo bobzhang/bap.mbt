@@ -278,6 +278,20 @@ fn ProjectDisassemblyInstruction::project_basic_bil_call(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_basic_bil_jump(
+  self : ProjectDisassemblyInstruction,
+) -> Result[Array[@types.Stmt], String] {
+  match self.project_basic_bil_immediate(0) {
+    Ok(target) =>
+      project_basic_bil_control(
+        @types.Stmt::goto(),
+        target.reinterpret_as_uint64(),
+      )
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
 fn project_basic_bil_control_with_width(
   attr : @types.StmtAttribute[String],
   target : UInt64,
@@ -526,15 +540,8 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "MOV32RI" => self.project_basic_bil_mov_imm(32)
     "MOV64RI" => self.project_basic_bil_mov_imm(64)
     "NOOP" => Ok([])
-    "JMP_1" =>
-      match self.project_basic_bil_immediate(0) {
-        Ok(target) =>
-          project_basic_bil_control(
-            @types.Stmt::goto(),
-            target.reinterpret_as_uint64(),
-          )
-        Err(reason) => Err(reason)
-      }
+    "JMP_1" => self.project_basic_bil_jump()
+    "JMP_4" => self.project_basic_bil_jump()
     "CALLPCREL32" => self.project_basic_bil_call(32)
     "CALL64PCREL32" => self.project_basic_bil_call(64)
     "B" => self.project_basic_bil_arm_branch(false)

@@ -150,6 +150,24 @@ test "project reconstructor materializes Basic BIL fallback jumps" {
     Err(reason) => fail(reason)
   }
 
+  let near_goto_disassembly = reconstructor_basic_disassembly(
+    "x86",
+    b"\xe9\x01\x00\x00\x00",
+    start=0x7220UL,
+  )
+  let near_goto_project = @project.Project::empty(@core_theory.Target::x86()).with_disassembly(
+    near_goto_disassembly,
+  )
+  match near_goto_project.reconstruct() {
+    Ok(reconstructed) => {
+      let block = reconstructed.program().subs()[0].blks()[0]
+      assert_reconstructor_text(reconstructor_jmp_text(block.jmps()), [
+        "goto @0x0000000000007226",
+      ])
+    }
+    Err(reason) => fail(reason)
+  }
+
   let call_disassembly = reconstructor_basic_disassembly(
     "x86_64",
     b"\xe8\x47\xee\xff\xff",

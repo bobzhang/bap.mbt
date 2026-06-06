@@ -209,6 +209,57 @@ test "project disasm Basic llvm decodes x86 call1 micro fixture" {
 }
 
 ///|
+test "project disasm Basic llvm splits x86 near jump target blocks" {
+  let memory = project_disasm_test_memory(
+    0xe800UL,
+    b"\xe9\x01\x00\x00\x00" + b"\x90" + b"\xc3",
+  )
+  match
+    @project.ProjectDisasm::of_mem(
+      @core_theory.Target::x86(),
+      memory,
+      backend="basic",
+    ) {
+    Ok(disasm) => {
+      let insns = disasm.insns()
+      assert_true(insns.map(item => item.0.length()) == [5, 1, 1])
+      assert_true(
+        project_disasm_test_instruction_strings(insns[0].1) ==
+        ["JMP_4", "0xe806"],
+      )
+      assert_true(insns[0].1.has_kind(ProjectUnconditionalBranch))
+      assert_true(
+        project_disasm_test_instruction_strings(insns[1].1) == ["NOOP"],
+      )
+      assert_true(
+        project_disasm_test_instruction_strings(insns[2].1) == ["RET"],
+      )
+      assert_true(disasm.disassembly().block_count() == 3)
+      let cfg = disasm.cfg()
+      assert_true(cfg.node_count() == 3)
+      assert_true(cfg.edge_count() == 2)
+      let blocks = cfg.nodes()
+      assert_true(
+        blocks.map(block => block.memory().min_addr()) ==
+        [0xe800UL, 0xe805UL, 0xe806UL],
+      )
+      assert_true(blocks.map(block => block.memory().length()) == [5, 1, 1])
+      match cfg.edge(blocks[0], blocks[2]) {
+        Some(edge) => assert_true(edge.kind() == JumpEdge)
+        None => fail("missing x86 near jump target edge")
+      }
+      assert_true(cfg.edge(blocks[0], blocks[1]) is None)
+      match cfg.edge(blocks[1], blocks[2]) {
+        Some(edge) => assert_true(edge.kind() == FallEdge)
+        None => fail("missing x86 near jump fall-through edge")
+      }
+      assert_true(cfg.successors(blocks[2]).is_empty())
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project and library disasm accessors wrap existing state" {
   let memory = project_disasm_test_memory(0xe050UL, b"\xc3")
   let instruction = @project.ProjectDisassemblyInstruction::create(

@@ -510,6 +510,58 @@ test "translated BAP basic disassembly decodes x86 register push fixtures" {
 }
 
 ///|
+test "translated BAP basic disassembly decodes x86 immediate push fixtures" {
+  let samples : Array[
+    (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),
+  ] = [
+    ("x86_64", b"\x6a\x01", 2, ["PUSH64i8", "0x1"], [ProjectMayStore]),
+    ("x86_64", b"\x6a\xff", 2, ["PUSH64i8", "-0x1"], [ProjectMayStore]),
+    (
+      "x86_64",
+      b"\x68\x78\x56\x34\x12",
+      5,
+      ["PUSH64i32", "0x12345678"],
+      [ProjectMayStore],
+    ),
+    ("x86_64", b"\x40\x6a\x7f", 3, ["PUSH64i8", "0x7f"], [ProjectMayStore]),
+    ("x86", b"\x6a\x7f", 2, ["PUSH32i8", "0x7f"], [ProjectMayStore]),
+    (
+      "x86",
+      b"\x68\x78\x56\x34\x12",
+      5,
+      ["PUSH32i32", "0x12345678"],
+      [ProjectMayStore],
+    ),
+  ]
+  for sample in samples {
+    let disasm = match
+      @project.ProjectDisassemblyBasic::create(sample.0, backend="llvm") {
+      Ok(disasm) => disasm
+      Err(reason) => fail(reason)
+    }
+    let memory = @memory.Memory::from_bytes(
+      endian=LittleEndian,
+      start=0xe190UL,
+      sample.1,
+    )
+    match disasm.insn_of_mem(memory) {
+      Ok(result) => {
+        assert_true(result.memory().length() == sample.2)
+        assert_true(result.remainder().is_finished())
+        match result.instruction() {
+          Some(instruction) => {
+            assert_true(basic_instruction_strings(instruction) == sample.3)
+            assert_true(instruction.kinds() == sample.4)
+          }
+          None => fail("missing x86 immediate push instruction")
+        }
+      }
+      Err(reason) => fail(reason)
+    }
+  }
+}
+
+///|
 test "translated BAP basic disassembly decodes x86 register pop fixtures" {
   let samples : Array[
     (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),

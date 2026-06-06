@@ -161,6 +161,30 @@ fn ProjectDisassemblyInstruction::project_basic_bil_immediate(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_basic_bil_value(
+  self : ProjectDisassemblyInstruction,
+  index : Int,
+  width : Int,
+) -> Result[@types.Exp, String] {
+  match self.project_basic_bil_operand(index) {
+    Ok(operand) =>
+      match operand.register_name() {
+        Some(name) =>
+          Ok(@types.Exp::var_exp(project_basic_bil_reg(name, width)))
+        None =>
+          match operand.to_int64() {
+            Some(value) => project_basic_bil_int(value, width)
+            None =>
+              Err(
+                "instruction \{self.name()} operand \{index} is not a register or immediate",
+              )
+          }
+      }
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_basic_bil_binop_ri(
   self : ProjectDisassemblyInstruction,
   width : Int,
@@ -494,7 +518,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_push(
   self : ProjectDisassemblyInstruction,
   width : Int,
 ) -> Result[Array[@types.Stmt], String] {
-  let src = match self.project_basic_bil_register(0, width) {
+  let src = match self.project_basic_bil_value(0, width) {
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
@@ -521,7 +545,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_push(
       @types.Exp::store(
         mem=@types.Exp::var_exp(mem),
         addr~,
-        @types.Exp::var_exp(src),
+        src,
         LittleEndian,
         size,
       ),
@@ -948,8 +972,8 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
       self.project_basic_bil_binop_rr(32, @types.BinOp::bit_xor())
     "XOR64RR" | "XOR64RR_REV" =>
       self.project_basic_bil_binop_rr(64, @types.BinOp::bit_xor())
-    "PUSH32R" => self.project_basic_bil_push(32)
-    "PUSH64R" => self.project_basic_bil_push(64)
+    "PUSH32R" | "PUSH32I8" | "PUSH32I32" => self.project_basic_bil_push(32)
+    "PUSH64R" | "PUSH64I8" | "PUSH64I32" => self.project_basic_bil_push(64)
     "POP32R" => self.project_basic_bil_pop(32)
     "POP64R" => self.project_basic_bil_pop(64)
     "LEAVE" => self.project_basic_bil_leave(32)

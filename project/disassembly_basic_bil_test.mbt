@@ -336,6 +336,29 @@ test "project Basic BIL lift covers x86 register pushes" {
       ])
     Err(reason) => fail(reason)
   }
+
+  let push_imm8 = basic_bil_decode("x86_64", b"\x6a\x01", start=0x7013UL)
+  match push_imm8.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "mem:mem64x8 := store(mem:mem64x8, (RSP:imm64 - 8:64u), 1:64u)", "RSP:imm64 := (RSP:imm64 - 8:64u)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let push_imm32 = basic_bil_decode(
+    "x86",
+    b"\x68\x78\x56\x34\x12",
+    start=0x7015UL,
+  )
+  match push_imm32.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "mem:mem32x8 := store(mem:mem32x8, (ESP:imm32 - 4:32u), 0x12345678:32u)",
+        "ESP:imm32 := (ESP:imm32 - 4:32u)",
+      ])
+    Err(reason) => fail(reason)
+  }
 }
 
 ///|

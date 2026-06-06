@@ -181,6 +181,30 @@ test "project reconstructor materializes Basic BIL x86 register logical immediat
 }
 
 ///|
+test "project reconstructor materializes Basic BIL x86 register inc-dec ops" {
+  let disassembly = reconstructor_basic_disassembly(
+    "x86_64",
+    b"\x48\xff\xc0" + b"\x48\xff\xc8",
+    start=0x781bUL,
+  )
+  let project = @project.Project::empty(@core_theory.Target::x86_64()).with_disassembly(
+    disassembly,
+  )
+  match project.reconstruct() {
+    Ok(reconstructed) => {
+      let subs = reconstructed.program().subs()
+      assert_true(subs.length() == 1)
+      let blks = subs[0].blks()
+      assert_true(blks.length() == 1)
+      assert_reconstructor_text(reconstructor_def_text(blks[0].defs()), [
+        "RAX:imm64 := (RAX:imm64 + 1:64u)", "RAX:imm64 := (RAX:imm64 - 1:64u)",
+      ])
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project reconstructor materializes Basic BIL x86 register rr arithmetic" {
   let disassembly = reconstructor_basic_disassembly(
     "x86_64",

@@ -990,7 +990,7 @@ fn project_disassembly_basic_x86_logic_rr(
 }
 
 ///|
-fn project_disassembly_basic_x86_binop_ri8(
+fn project_disassembly_basic_x86_reg_update(
   memory : @memory.Memory,
   data_width : Int,
   address_width : Int,
@@ -1002,7 +1002,7 @@ fn project_disassembly_basic_x86_binop_ri8(
 )? {
   let bytes = memory.to_bytes()
   let (opcode_index, rex) = if address_width == 64 &&
-    bytes.length() >= 4 &&
+    bytes.length() >= 3 &&
     bytes[0].to_int() >= 0x40 &&
     bytes[0].to_int() <= 0x4f {
     (1, bytes[0].to_int())
@@ -1017,6 +1017,14 @@ fn project_disassembly_basic_x86_binop_ri8(
   }
   if data_width != 32 && data_width != 64 {
     return None
+  }
+  match
+    project_disassembly_basic_x86_incdec_reg(memory, data_width, address_width) {
+    Some((length, name, register)) =>
+      return Some(
+        (length, name, [ProjectInstructionOperand::register(name=register)], []),
+      )
+    None => ()
   }
   if bytes.length() < opcode_index + 3 {
     None
@@ -1057,6 +1065,76 @@ fn project_disassembly_basic_x86_binop_ri8(
               ),
             ],
             [],
+          ),
+        )
+      }
+    }
+  }
+}
+
+///|
+fn project_disassembly_basic_x86_incdec_reg(
+  memory : @memory.Memory,
+  data_width : Int,
+  address_width : Int,
+) -> (Int, String, String)? {
+  let bytes = memory.to_bytes()
+  if address_width == 32 && data_width == 32 && bytes.length() >= 1 {
+    let opcode = bytes[0].to_int()
+    if opcode >= 0x40 && opcode <= 0x47 {
+      return Some(
+        (1, "INC32r", project_disassembly_basic_x86_gpr32_name(opcode & 0x7)),
+      )
+    }
+    if opcode >= 0x48 && opcode <= 0x4f {
+      return Some(
+        (1, "DEC32r", project_disassembly_basic_x86_gpr32_name(opcode & 0x7)),
+      )
+    }
+  }
+  let (opcode_index, rex) = if address_width == 64 &&
+    bytes.length() >= 3 &&
+    bytes[0].to_int() >= 0x40 &&
+    bytes[0].to_int() <= 0x4f {
+    (1, bytes[0].to_int())
+  } else {
+    (0, 0)
+  }
+  if data_width == 64 && (rex & 0x8) == 0 {
+    return None
+  }
+  if data_width == 32 && (rex & 0x8) != 0 {
+    return None
+  }
+  if data_width != 32 && data_width != 64 {
+    return None
+  }
+  if bytes.length() < opcode_index + 2 {
+    None
+  } else {
+    let opcode = bytes[opcode_index].to_int()
+    let modrm = bytes[opcode_index + 1].to_int()
+    if opcode != 0xff || ((modrm >> 6) & 0x3) != 0x3 {
+      None
+    } else {
+      let group = (modrm >> 3) & 0x7
+      let op = match group {
+        0 => "INC"
+        1 => "DEC"
+        _ => ""
+      }
+      if op == "" {
+        None
+      } else {
+        let rex_b = if address_width == 64 && (rex & 0x1) != 0 { 8 } else { 0 }
+        Some(
+          (
+            opcode_index + 2,
+            op + "\{data_width}r",
+            project_disassembly_basic_x86_gpr_name(
+              (modrm & 0x7) + rex_b,
+              data_width,
+            ),
           ),
         )
       }
@@ -1642,7 +1720,7 @@ fn project_disassembly_basic_decode_x86_llvm(
           Err(reason) => Err(reason)
         }
       } else {
-        match project_disassembly_basic_x86_binop_ri8(memory, 32, 32) {
+        match project_disassembly_basic_x86_reg_update(memory, 32, 32) {
           Some((length, name, operands, kinds)) =>
             match memory.view(words=length) {
               Ok(chunk) =>
@@ -2002,13 +2080,13 @@ fn project_disassembly_basic_decode_x86_64_llvm(
     String,
     Array[ProjectInstructionOperand],
     Array[ProjectInstructionKind],
-  )? = if project_disassembly_basic_x86_binop_ri8(memory, 64, 64) is Some(_) {
-    let (length, name, operands, kinds) = project_disassembly_basic_x86_binop_ri8(
+  )? = if project_disassembly_basic_x86_reg_update(memory, 64, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_reg_update(
       memory, 64, 64,
     ).unwrap()
     Some((length, name, operands, kinds))
-  } else if project_disassembly_basic_x86_binop_ri8(memory, 32, 64) is Some(_) {
-    let (length, name, operands, kinds) = project_disassembly_basic_x86_binop_ri8(
+  } else if project_disassembly_basic_x86_reg_update(memory, 32, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_reg_update(
       memory, 32, 64,
     ).unwrap()
     Some((length, name, operands, kinds))

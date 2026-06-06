@@ -190,6 +190,37 @@ test "project Basic BIL lift covers x86 register logical immediates" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 register inc-dec ops" {
+  let inc64 = basic_bil_decode("x86_64", b"\x48\xff\xc0", start=0x7022UL)
+  match inc64.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["RAX:imm64 := (RAX:imm64 + 1:64u)"])
+    Err(reason) => fail(reason)
+  }
+
+  let inc64_ext = basic_bil_decode("x86_64", b"\x49\xff\xc0", start=0x7025UL)
+  match inc64_ext.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["R8:imm64 := (R8:imm64 + 1:64u)"])
+    Err(reason) => fail(reason)
+  }
+
+  let dec32 = basic_bil_decode("x86", b"\x49", start=0x7028UL)
+  match dec32.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["ECX:imm32 := (ECX:imm32 - 1:32u)"])
+    Err(reason) => fail(reason)
+  }
+
+  let dec32_ext = basic_bil_decode("x86_64", b"\x41\xff\xc8", start=0x7029UL)
+  match dec32_ext.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["R8D:imm32 := (R8D:imm32 - 1:32u)"])
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86 register add-sub rr ops" {
   let add64 = basic_bil_decode("x86_64", b"\x48\x01\xd8", start=0x7017UL)
   match add64.lift_basic_bil() {

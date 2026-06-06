@@ -191,6 +191,28 @@ fn ProjectDisassemblyInstruction::project_basic_bil_binop_ri(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_basic_bil_incdec(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  op : @types.BinOp,
+) -> Result[Array[@types.Stmt], String] {
+  match self.project_basic_bil_register(0, width) {
+    Ok(dst) =>
+      match project_basic_bil_int(1L, width) {
+        Ok(one) =>
+          Ok([
+            @types.Stmt::move_stmt(
+              dst,
+              @types.Exp::binop(op, @types.Exp::var_exp(dst), one),
+            ),
+          ])
+        Err(reason) => Err(reason)
+      }
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
 fn project_basic_bil_register_width(name : String) -> Int {
   if name.has_prefix("R") {
     64
@@ -870,6 +892,10 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "AND64RI8" => self.project_basic_bil_binop_ri(64, @types.BinOp::bit_and())
     "XOR32RI8" => self.project_basic_bil_binop_ri(32, @types.BinOp::bit_xor())
     "XOR64RI8" => self.project_basic_bil_binop_ri(64, @types.BinOp::bit_xor())
+    "INC32R" => self.project_basic_bil_incdec(32, @types.BinOp::plus())
+    "INC64R" => self.project_basic_bil_incdec(64, @types.BinOp::plus())
+    "DEC32R" => self.project_basic_bil_incdec(32, @types.BinOp::minus())
+    "DEC64R" => self.project_basic_bil_incdec(64, @types.BinOp::minus())
     "SUB32RR" | "SUB32RR_REV" =>
       self.project_basic_bil_binop_rr(32, @types.BinOp::minus())
     "ADD32RR" | "ADD32RR_REV" =>

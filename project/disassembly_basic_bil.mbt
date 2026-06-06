@@ -864,6 +864,14 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "ADD32RI8" => self.project_basic_bil_addsub(32, @types.BinOp::plus())
     "SUB64RI8" => self.project_basic_bil_addsub(64, @types.BinOp::minus())
     "ADD64RI8" => self.project_basic_bil_addsub(64, @types.BinOp::plus())
+    "SUB32RR" | "SUB32RR_REV" =>
+      self.project_basic_bil_binop_rr(32, @types.BinOp::minus())
+    "ADD32RR" | "ADD32RR_REV" =>
+      self.project_basic_bil_binop_rr(32, @types.BinOp::plus())
+    "SUB64RR" | "SUB64RR_REV" =>
+      self.project_basic_bil_binop_rr(64, @types.BinOp::minus())
+    "ADD64RR" | "ADD64RR_REV" =>
+      self.project_basic_bil_binop_rr(64, @types.BinOp::plus())
     "MOV32RM" => self.project_basic_bil_mov_rm(32)
     "MOV64RM" => self.project_basic_bil_mov_rm(64)
     "MOV32MR" => self.project_basic_bil_mov_mr(32)

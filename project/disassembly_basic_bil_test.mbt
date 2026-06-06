@@ -159,6 +159,17 @@ test "project Basic BIL lift covers x86 register add-sub immediates" {
       assert_basic_bil_text(stmts, ["R8D:imm32 := (R8D:imm32 - 1:32u)"])
     Err(reason) => fail(reason)
   }
+
+  let add64_ri32 = basic_bil_decode(
+    "x86_64",
+    b"\x48\x81\xc0\x78\x56\x34\x12",
+    start=0x7014UL,
+  )
+  match add64_ri32.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["RAX:imm64 := (RAX:imm64 + 0x12345678:64u)"])
+    Err(reason) => fail(reason)
+  }
 }
 
 ///|
@@ -185,6 +196,17 @@ test "project Basic BIL lift covers x86 register logical immediates" {
   match xor32.lift_basic_bil() {
     Ok(stmts) =>
       assert_basic_bil_text(stmts, ["EDX:imm32 := (EDX:imm32 ^ 1:32u)"])
+    Err(reason) => fail(reason)
+  }
+
+  let or64_ri32 = basic_bil_decode(
+    "x86_64",
+    b"\x48\x81\xc8\x78\x56\x34\x12",
+    start=0x7020UL,
+  )
+  match or64_ri32.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["RAX:imm64 := (RAX:imm64 | 0x12345678:64u)"])
     Err(reason) => fail(reason)
   }
 }
@@ -323,6 +345,30 @@ test "project Basic BIL lift covers x86 cmp and test flag ops" {
       assert_true(stmts[3].to_string().contains("AF:imm1 := extract[4:4]"))
       assert_true(stmts[4].to_string().contains("PF:imm1 := (not low:1"))
       assert_string(stmts[5].to_string(), "SF:imm1 := high:1[%cmp_tmp:imm64]")
+      assert_string(
+        stmts[6].to_string(),
+        "ZF:imm1 := (0:64u == %cmp_tmp:imm64)",
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let cmp_imm32 = basic_bil_decode(
+    "x86_64",
+    b"\x48\x81\xf8\x78\x56\x34\x12",
+    start=0x7023UL,
+  )
+  match cmp_imm32.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 7)
+      assert_string(
+        stmts[0].to_string(),
+        "%cmp_tmp:imm64 := (RAX:imm64 - 0x12345678:64u)",
+      )
+      assert_string(
+        stmts[1].to_string(),
+        "CF:imm1 := (RAX:imm64 < 0x12345678:64u)",
+      )
       assert_string(
         stmts[6].to_string(),
         "ZF:imm1 := (0:64u == %cmp_tmp:imm64)",

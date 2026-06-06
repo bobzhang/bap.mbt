@@ -1512,16 +1512,26 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
   self : ProjectDisassemblyInstruction,
 ) -> Result[Array[@types.Stmt], String] {
   match self.name().to_upper() {
-    "SUB32RI8" => self.project_basic_bil_binop_ri(32, @types.BinOp::minus())
-    "ADD32RI8" => self.project_basic_bil_binop_ri(32, @types.BinOp::plus())
-    "SUB64RI8" => self.project_basic_bil_binop_ri(64, @types.BinOp::minus())
-    "ADD64RI8" => self.project_basic_bil_binop_ri(64, @types.BinOp::plus())
-    "OR32RI8" => self.project_basic_bil_binop_ri(32, @types.BinOp::bit_or())
-    "OR64RI8" => self.project_basic_bil_binop_ri(64, @types.BinOp::bit_or())
-    "AND32RI8" => self.project_basic_bil_binop_ri(32, @types.BinOp::bit_and())
-    "AND64RI8" => self.project_basic_bil_binop_ri(64, @types.BinOp::bit_and())
-    "XOR32RI8" => self.project_basic_bil_binop_ri(32, @types.BinOp::bit_xor())
-    "XOR64RI8" => self.project_basic_bil_binop_ri(64, @types.BinOp::bit_xor())
+    "SUB32RI8" | "SUB32RI32" =>
+      self.project_basic_bil_binop_ri(32, @types.BinOp::minus())
+    "ADD32RI8" | "ADD32RI32" =>
+      self.project_basic_bil_binop_ri(32, @types.BinOp::plus())
+    "SUB64RI8" | "SUB64RI32" =>
+      self.project_basic_bil_binop_ri(64, @types.BinOp::minus())
+    "ADD64RI8" | "ADD64RI32" =>
+      self.project_basic_bil_binop_ri(64, @types.BinOp::plus())
+    "OR32RI8" | "OR32RI32" =>
+      self.project_basic_bil_binop_ri(32, @types.BinOp::bit_or())
+    "OR64RI8" | "OR64RI32" =>
+      self.project_basic_bil_binop_ri(64, @types.BinOp::bit_or())
+    "AND32RI8" | "AND32RI32" =>
+      self.project_basic_bil_binop_ri(32, @types.BinOp::bit_and())
+    "AND64RI8" | "AND64RI32" =>
+      self.project_basic_bil_binop_ri(64, @types.BinOp::bit_and())
+    "XOR32RI8" | "XOR32RI32" =>
+      self.project_basic_bil_binop_ri(32, @types.BinOp::bit_xor())
+    "XOR64RI8" | "XOR64RI32" =>
+      self.project_basic_bil_binop_ri(64, @types.BinOp::bit_xor())
     "INC32R" => self.project_basic_bil_incdec(32, @types.BinOp::plus())
     "INC64R" => self.project_basic_bil_incdec(64, @types.BinOp::plus())
     "DEC32R" => self.project_basic_bil_incdec(32, @types.BinOp::minus())
@@ -1538,8 +1548,8 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
       self.project_basic_bil_binop_rr(64, @types.BinOp::minus())
     "ADD64RR" | "ADD64RR_REV" =>
       self.project_basic_bil_binop_rr(64, @types.BinOp::plus())
-    "CMP32RI8" => self.project_basic_bil_cmp_ri(32)
-    "CMP64RI8" => self.project_basic_bil_cmp_ri(64)
+    "CMP32RI8" | "CMP32RI32" => self.project_basic_bil_cmp_ri(32)
+    "CMP64RI8" | "CMP64RI32" => self.project_basic_bil_cmp_ri(64)
     "CMP32RR" | "CMP32RR_REV" => self.project_basic_bil_cmp_rr(32)
     "CMP64RR" | "CMP64RR_REV" => self.project_basic_bil_cmp_rr(64)
     "MOV32RM" => self.project_basic_bil_mov_rm(32)

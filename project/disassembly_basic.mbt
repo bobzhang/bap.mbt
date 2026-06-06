@@ -1608,12 +1608,19 @@ fn project_disassembly_basic_x86_reg_update(
       )
     None => ()
   }
-  if bytes.length() < opcode_index + 3 {
+  if bytes.length() < opcode_index + 2 {
     None
   } else {
     let opcode = bytes[opcode_index].to_int()
     let modrm = bytes[opcode_index + 1].to_int()
-    if opcode != 0x83 || ((modrm >> 6) & 0x3) != 0x3 {
+    let imm_width = match opcode {
+      0x81 => 4
+      0x83 => 1
+      _ => 0
+    }
+    if imm_width == 0 ||
+      bytes.length() < opcode_index + 2 + imm_width ||
+      ((modrm >> 6) & 0x3) != 0x3 {
       None
     } else {
       let group = (modrm >> 3) & 0x7
@@ -1634,28 +1641,29 @@ fn project_disassembly_basic_x86_reg_update(
           (modrm & 0x7) + rex_b,
           data_width,
         )
+        let imm = if opcode == 0x83 {
+          project_disassembly_basic_x86_signed_byte(bytes[opcode_index + 2])
+        } else {
+          match project_disassembly_basic_x86_i32_at(bytes, opcode_index + 2) {
+            Some(value) => value
+            None => return None
+          }
+        }
+        let suffix = if opcode == 0x83 { "ri8" } else { "ri32" }
         Some(
           (
-            opcode_index + 3,
-            op + "\{data_width}ri8",
+            opcode_index + 2 + imm_width,
+            op + "\{data_width}\{suffix}",
             if op == "CMP" {
               [
                 ProjectInstructionOperand::register(name=register),
-                ProjectInstructionOperand::immediate(
-                  project_disassembly_basic_x86_signed_byte(
-                    bytes[opcode_index + 2],
-                  ),
-                ),
+                ProjectInstructionOperand::immediate(imm),
               ]
             } else {
               [
                 ProjectInstructionOperand::register(name=register),
                 ProjectInstructionOperand::register(name=register),
-                ProjectInstructionOperand::immediate(
-                  project_disassembly_basic_x86_signed_byte(
-                    bytes[opcode_index + 2],
-                  ),
-                ),
+                ProjectInstructionOperand::immediate(imm),
               ]
             },
             [],

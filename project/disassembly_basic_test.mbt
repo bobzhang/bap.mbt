@@ -242,6 +242,24 @@ test "translated BAP basic disassembly decodes x86 register add-sub immediates" 
     ("x86_64", b"\x41\x83\xc0\x01", 4, ["ADD32ri8", "R8D", "R8D", "0x1"]),
     ("x86", b"\x83\xe8\x01", 3, ["SUB32ri8", "EAX", "EAX", "0x1"]),
     ("x86", b"\x83\xc0\x7f", 3, ["ADD32ri8", "EAX", "EAX", "0x7f"]),
+    (
+      "x86_64",
+      b"\x48\x81\xc0\x78\x56\x34\x12",
+      7,
+      ["ADD64ri32", "RAX", "RAX", "0x12345678"],
+    ),
+    (
+      "x86_64",
+      b"\x49\x81\xe8\xff\xff\xff\xff",
+      7,
+      ["SUB64ri32", "R8", "R8", "-0x1"],
+    ),
+    (
+      "x86",
+      b"\x81\xe9\x00\x00\x00\x80",
+      6,
+      ["SUB32ri32", "ECX", "ECX", "-0x80000000"],
+    ),
   ]
   for sample in samples {
     let disasm = match
@@ -281,6 +299,19 @@ test "translated BAP basic disassembly decodes x86 register logical immediates" 
     ("x86", b"\x83\xc8\x0f", 3, ["OR32ri8", "EAX", "EAX", "0xf"]),
     ("x86", b"\x83\xe1\x7f", 3, ["AND32ri8", "ECX", "ECX", "0x7f"]),
     ("x86", b"\x83\xf2\xff", 3, ["XOR32ri8", "EDX", "EDX", "-0x1"]),
+    (
+      "x86_64",
+      b"\x48\x81\xc8\x78\x56\x34\x12",
+      7,
+      ["OR64ri32", "RAX", "RAX", "0x12345678"],
+    ),
+    ("x86", b"\x81\xe1\xff\x00\x00\x00", 6, ["AND32ri32", "ECX", "ECX", "0xff"]),
+    (
+      "x86_64",
+      b"\x49\x81\xf0\x00\x01\x00\x00",
+      7,
+      ["XOR64ri32", "R8", "R8", "0x100"],
+    ),
   ]
   for sample in samples {
     let disasm = match
@@ -316,6 +347,13 @@ test "translated BAP basic disassembly decodes x86 cmp and test fixtures" {
     ("x86_64", b"\x48\x83\xf8\x01", 4, ["CMP64ri8", "RAX", "0x1"]),
     ("x86_64", b"\x49\x83\xf8\xff", 4, ["CMP64ri8", "R8", "-0x1"]),
     ("x86", b"\x83\xf9\x00", 3, ["CMP32ri8", "ECX", "0x0"]),
+    (
+      "x86_64",
+      b"\x48\x81\xf8\x78\x56\x34\x12",
+      7,
+      ["CMP64ri32", "RAX", "0x12345678"],
+    ),
+    ("x86", b"\x81\xf9\xff\xff\xff\xff", 6, ["CMP32ri32", "ECX", "-0x1"]),
     ("x86_64", b"\x48\x39\xd8", 3, ["CMP64rr", "RAX", "RBX"]),
     ("x86_64", b"\x48\x3b\xc8", 3, ["CMP64rr_REV", "RCX", "RAX"]),
     ("x86", b"\x39\xd8", 2, ["CMP32rr", "EAX", "EBX"]),

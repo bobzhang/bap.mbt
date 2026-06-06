@@ -1215,6 +1215,14 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
       self.project_basic_bil_movx_rm(32, 16, @types.CastKind::signed())
     "MOVSX64RM16" =>
       self.project_basic_bil_movx_rm(64, 16, @types.CastKind::signed())
+    "MOVSX32RR32" =>
+      self.project_basic_bil_movx_rr(32, 32, @types.CastKind::signed())
+    "MOVSX64RR32" =>
+      self.project_basic_bil_movx_rr(64, 32, @types.CastKind::signed())
+    "MOVSX32RM32" =>
+      self.project_basic_bil_movx_rm(32, 32, @types.CastKind::signed())
+    "MOVSX64RM32" =>
+      self.project_basic_bil_movx_rm(64, 32, @types.CastKind::signed())
     "XCHG32RR" => self.project_basic_bil_xchg_rr(32)
     "XCHG64RR" => self.project_basic_bil_xchg_rr(64)
     "XCHG32RM" => self.project_basic_bil_xchg_rm(32)

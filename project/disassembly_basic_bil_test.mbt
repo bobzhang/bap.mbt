@@ -493,6 +493,33 @@ test "project Basic BIL lift covers x86 movsx movzx" {
     Err(reason) => fail(reason)
   }
 
+  let movsxd = basic_bil_decode("x86_64", b"\x48\x63\xc1", start=0x704bUL)
+  match movsxd.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["RAX:imm64 := extend:64[ECX:imm32]"])
+    Err(reason) => fail(reason)
+  }
+
+  let movsxd_mem = basic_bil_decode(
+    "x86_64",
+    b"\x48\x63\x45\xfc",
+    start=0x704eUL,
+  )
+  match movsxd_mem.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "RAX:imm64 := extend:64[load(mem:mem64x8, (RBP:imm64 - 4:64u)):imm32]",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let movsx_same_width = basic_bil_decode("x86_64", b"\x63\xc1", start=0x7052UL)
+  match movsx_same_width.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["EAX:imm32 := extend:32[ECX:imm32]"])
+    Err(reason) => fail(reason)
+  }
+
   let movsx32 = basic_bil_decode("x86", b"\x0f\xbe\xc4", start=0x704cUL)
   match movsx32.lift_basic_bil() {
     Ok(stmts) =>

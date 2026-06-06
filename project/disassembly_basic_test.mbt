@@ -835,6 +835,16 @@ test "translated BAP basic disassembly decodes x86 movsx movzx fixtures" {
       ["MOVSX64rm8", "RAX", "RBP", "0x1", "Nil", "-0x4", "Nil"],
       [ProjectMayLoad],
     ),
+    ("x86_64", b"\x48\x63\xc1", 3, ["MOVSX64rr32", "RAX", "ECX"], []),
+    ("x86_64", b"\x4d\x63\xc1", 3, ["MOVSX64rr32", "R8", "R9D"], []),
+    ("x86_64", b"\x63\xc1", 2, ["MOVSX32rr32", "EAX", "ECX"], []),
+    (
+      "x86_64",
+      b"\x48\x63\x45\xfc",
+      4,
+      ["MOVSX64rm32", "RAX", "RBP", "0x1", "Nil", "-0x4", "Nil"],
+      [ProjectMayLoad],
+    ),
     ("x86", b"\x0f\xb6\xc1", 3, ["MOVZX32rr8", "EAX", "CL"], []),
     ("x86", b"\x0f\xbe\xc4", 3, ["MOVSX32rr8", "EAX", "AH"], []),
     (

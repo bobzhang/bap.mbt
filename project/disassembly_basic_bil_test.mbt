@@ -128,6 +128,51 @@ test "project Basic BIL lift covers direct control transfers" {
 }
 
 ///|
+test "project Basic BIL lift covers ARM branch and return forms" {
+  let branch = basic_bil_decode("armv7", b"\x05\x00\x00\xea", start=0x8424UL)
+  match branch.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 2)
+      assert_true(
+        @types.Stmt::decode(@types.Stmt::goto(), stmts[0]) == Some("0x8440"),
+      )
+      assert_string(stmts[1].to_string(), "jmp 0x8440:32u")
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let conditional = basic_bil_decode(
+    "armv7",
+    b"\xf6\xff\xff\x1a",
+    start=0x8448UL,
+  )
+  match conditional.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 1)
+      match stmts[0] {
+        If(cond~, yes~, no~) => {
+          assert_string(cond.to_string(), "unknown(ARM.NE:imm1)")
+          assert_true(no.length() == 0)
+          assert_true(yes.length() == 2)
+          assert_true(
+            @types.Stmt::decode(@types.Stmt::goto(), yes[0]) == Some("0x8428"),
+          )
+          assert_string(yes[1].to_string(), "jmp 0x8428:32u")
+        }
+        _ => fail("conditional ARM branch did not lift to BIL if")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let bx = basic_bil_decode("armv7", b"\x1e\xff\x2f\xe1", start=0x845cUL)
+  match bx.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["jmp LR:imm32"])
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift runs over disassembly state and project" {
   let sequence = b"\x48\x83\xec\x08" +
     b"\xe8\x47\xee\xff\xff" +

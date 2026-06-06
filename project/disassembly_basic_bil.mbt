@@ -4,9 +4,12 @@ fn project_basic_bil_addr_text(addr : UInt64) -> String {
 }
 
 ///|
-fn project_basic_bil_word64(value : UInt64) -> Result[@types.Word, String] {
-  try @types.Word::of_uint64(width=64, value) catch {
-    _ => Err("unable to create 64-bit BIL word")
+fn project_basic_bil_word(
+  value : UInt64,
+  width : Int,
+) -> Result[@types.Word, String] {
+  try @types.Word::of_uint64(width~, value) catch {
+    _ => Err("unable to create \{width}-bit BIL word")
   } noraise {
     word => Ok(word)
   }
@@ -25,8 +28,11 @@ fn project_basic_bil_int(
 }
 
 ///|
-fn project_basic_bil_addr(value : UInt64) -> Result[@types.Exp, String] {
-  match project_basic_bil_word64(value) {
+fn project_basic_bil_addr_with_width(
+  value : UInt64,
+  width : Int,
+) -> Result[@types.Exp, String] {
+  match project_basic_bil_word(value, width) {
     Ok(word) => Ok(@types.Exp::int(word))
     Err(reason) => Err(reason)
   }
@@ -200,16 +206,66 @@ fn ProjectDisassemblyInstruction::project_basic_bil_direct_target(
 }
 
 ///|
-fn project_basic_bil_control(
+fn ProjectDisassemblyInstruction::project_basic_bil_absolute_target(
+  self : ProjectDisassemblyInstruction,
+) -> Result[UInt64, String] {
+  match self.project_basic_bil_immediate(0) {
+    Ok(target) => Ok(target.reinterpret_as_uint64())
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+fn project_basic_bil_control_with_width(
   attr : @types.StmtAttribute[String],
   target : UInt64,
+  width : Int,
 ) -> Result[Array[@types.Stmt], String] {
-  match project_basic_bil_addr(target) {
+  match project_basic_bil_addr_with_width(target, width) {
     Ok(addr_exp) =>
       Ok([
         @types.Stmt::encode(attr, project_basic_bil_addr_text(target)),
         @types.Stmt::jmp(addr_exp),
       ])
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+fn project_basic_bil_control(
+  attr : @types.StmtAttribute[String],
+  target : UInt64,
+) -> Result[Array[@types.Stmt], String] {
+  project_basic_bil_control_with_width(attr, target, 64)
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_arm_branch(
+  self : ProjectDisassemblyInstruction,
+  conditional : Bool,
+) -> Result[Array[@types.Stmt], String] {
+  let target = match self.project_basic_bil_absolute_target() {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let branch = match
+    project_basic_bil_control_with_width(@types.Stmt::goto(), target, 32) {
+    Ok(stmts) => stmts
+    Err(reason) => return Err(reason)
+  }
+  if conditional {
+    Ok([@types.Stmt::if_(@types.Exp::unknown("ARM.NE", Imm(1)), branch, [])])
+  } else {
+    Ok(branch)
+  }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_bx(
+  self : ProjectDisassemblyInstruction,
+) -> Result[Array[@types.Stmt], String] {
+  match self.project_basic_bil_register(0, 32) {
+    Ok(target) => Ok([@types.Stmt::jmp(@types.Exp::var_exp(target))])
     Err(reason) => Err(reason)
   }
 }
@@ -236,6 +292,9 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
         Ok(target) => project_basic_bil_control(@types.Stmt::call(), target)
         Err(reason) => Err(reason)
       }
+    "B" => self.project_basic_bil_arm_branch(false)
+    "BNE" => self.project_basic_bil_arm_branch(true)
+    "BX" => self.project_basic_bil_bx()
     "RET" => Ok([@types.Stmt::special("ret")])
     name => Err("unsupported Basic BIL lift for instruction \{name}")
   }

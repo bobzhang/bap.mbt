@@ -591,6 +591,35 @@ test "project disasm Basic llvm decodes x86_64 immediate push prologue" {
 }
 
 ///|
+test "project disasm Basic llvm decodes x86_64 memory push prologue" {
+  let memory = project_disasm_test_memory(0xea0cUL, b"\xff\x70\x10\xc3")
+  match
+    @project.ProjectDisasm::of_mem(
+      @core_theory.Target::x86_64(),
+      memory,
+      backend="basic",
+    ) {
+    Ok(disasm) => {
+      let insns = disasm.insns()
+      assert_true(insns.map(item => item.0.length()) == [3, 1])
+      assert_true(
+        project_disasm_test_instruction_strings(insns[0].1) ==
+        ["PUSH64m", "RAX", "0x1", "Nil", "0x10", "Nil"],
+      )
+      assert_true(insns[0].1.kinds() == [ProjectMayLoad, ProjectMayStore])
+      assert_true(
+        project_disasm_test_instruction_strings(insns[1].1) == ["RET"],
+      )
+      assert_true(disasm.disassembly().block_count() == 1)
+      let cfg = disasm.cfg()
+      assert_true(cfg.node_count() == 1)
+      assert_true(cfg.edge_count() == 0)
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project disasm Basic llvm decodes x86_64 register mov prologue" {
   let memory = project_disasm_test_memory(0xea10UL, b"\x48\x89\xe5\xc3")
   match

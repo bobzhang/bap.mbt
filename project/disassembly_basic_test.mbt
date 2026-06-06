@@ -562,6 +562,56 @@ test "translated BAP basic disassembly decodes x86 immediate push fixtures" {
 }
 
 ///|
+test "translated BAP basic disassembly decodes x86 ModRM push fixtures" {
+  let samples : Array[
+    (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),
+  ] = [
+    ("x86_64", b"\xff\xf0", 2, ["PUSH64r", "RAX"], [ProjectMayStore]),
+    (
+      "x86_64",
+      b"\xff\x70\x10",
+      3,
+      ["PUSH64m", "RAX", "0x1", "Nil", "0x10", "Nil"],
+      [ProjectMayLoad, ProjectMayStore],
+    ),
+    ("x86", b"\xff\xf0", 2, ["PUSH32r", "EAX"], [ProjectMayStore]),
+    (
+      "x86",
+      b"\xff\x75\xfc",
+      3,
+      ["PUSH32m", "EBP", "0x1", "Nil", "-0x4", "Nil"],
+      [ProjectMayLoad, ProjectMayStore],
+    ),
+  ]
+  for sample in samples {
+    let disasm = match
+      @project.ProjectDisassemblyBasic::create(sample.0, backend="llvm") {
+      Ok(disasm) => disasm
+      Err(reason) => fail(reason)
+    }
+    let memory = @memory.Memory::from_bytes(
+      endian=LittleEndian,
+      start=0xe1a0UL,
+      sample.1,
+    )
+    match disasm.insn_of_mem(memory) {
+      Ok(result) => {
+        assert_true(result.memory().length() == sample.2)
+        assert_true(result.remainder().is_finished())
+        match result.instruction() {
+          Some(instruction) => {
+            assert_true(basic_instruction_strings(instruction) == sample.3)
+            assert_true(instruction.kinds() == sample.4)
+          }
+          None => fail("missing x86 ModRM push instruction")
+        }
+      }
+      Err(reason) => fail(reason)
+    }
+  }
+}
+
+///|
 test "translated BAP basic disassembly decodes x86 register pop fixtures" {
   let samples : Array[
     (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),

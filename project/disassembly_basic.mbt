@@ -1261,6 +1261,77 @@ fn project_disassembly_basic_x86_push_imm(
 }
 
 ///|
+fn project_disassembly_basic_x86_push_rm(
+  memory : @memory.Memory,
+  width : Int,
+  address_width : Int,
+) -> (
+  Int,
+  String,
+  Array[ProjectInstructionOperand],
+  Array[ProjectInstructionKind],
+)? {
+  let bytes = memory.to_bytes()
+  let (opcode_index, rex) = if address_width == 64 &&
+    bytes.length() >= 3 &&
+    bytes[0].to_int() >= 0x40 &&
+    bytes[0].to_int() <= 0x4f {
+    (1, bytes[0].to_int())
+  } else {
+    (0, 0)
+  }
+  if width != 32 && width != 64 {
+    return None
+  }
+  if bytes.length() < opcode_index + 2 {
+    None
+  } else {
+    let opcode = bytes[opcode_index].to_int()
+    let modrm = bytes[opcode_index + 1].to_int()
+    if opcode != 0xff || ((modrm >> 3) & 0x7) != 6 {
+      None
+    } else if ((modrm >> 6) & 0x3) == 0x3 {
+      let rex_b = if address_width == 64 && (rex & 0x1) != 0 { 8 } else { 0 }
+      Some(
+        (
+          opcode_index + 2,
+          "PUSH\{width}r",
+          [
+            ProjectInstructionOperand::register(
+              name=project_disassembly_basic_x86_gpr_name(
+                (modrm & 0x7) + rex_b,
+                width,
+              ),
+            ),
+          ],
+          [ProjectMayStore],
+        ),
+      )
+    } else {
+      match
+        project_disassembly_basic_x86_parse_mem_operand(
+          bytes,
+          opcode_index + 2,
+          modrm,
+          address_width,
+          rex,
+        ) {
+        Some((length, memory_operand)) =>
+          Some(
+            (
+              length,
+              "PUSH\{width}m",
+              project_disassembly_basic_x86_mem_operands(memory_operand),
+              [ProjectMayLoad, ProjectMayStore],
+            ),
+          )
+        None => None
+      }
+    }
+  }
+}
+
+///|
 fn project_disassembly_basic_x86_pop_reg(
   memory : @memory.Memory,
   width : Int,
@@ -1847,8 +1918,8 @@ fn project_disassembly_basic_decode_x86_llvm(
               Err(reason) => Err(reason)
             }
           None =>
-            match project_disassembly_basic_x86_push_imm(memory, 32, 32) {
-              Some((length, name, imm)) =>
+            match project_disassembly_basic_x86_push_rm(memory, 32, 32) {
+              Some((length, name, operands, kinds)) =>
                 match memory.view(words=length) {
                   Ok(chunk) =>
                     Ok(
@@ -1856,27 +1927,25 @@ fn project_disassembly_basic_decode_x86_llvm(
                         project_disassembly_basic_instruction(
                           chunk,
                           name,
-                          operands=[ProjectInstructionOperand::immediate(imm)],
-                          kinds=[ProjectMayStore],
+                          operands~,
+                          kinds~,
                         ),
                       ),
                     )
                   Err(reason) => Err(reason)
                 }
               None =>
-                match project_disassembly_basic_x86_push_reg(memory, 32) {
-                  Some((length, register)) =>
+                match project_disassembly_basic_x86_push_imm(memory, 32, 32) {
+                  Some((length, name, imm)) =>
                     match memory.view(words=length) {
                       Ok(chunk) =>
                         Ok(
                           Some(
                             project_disassembly_basic_instruction(
                               chunk,
-                              "PUSH32r",
+                              name,
                               operands=[
-                                ProjectInstructionOperand::register(
-                                  name=register,
-                                ),
+                                ProjectInstructionOperand::immediate(imm),
                               ],
                               kinds=[ProjectMayStore],
                             ),
@@ -1885,7 +1954,7 @@ fn project_disassembly_basic_decode_x86_llvm(
                       Err(reason) => Err(reason)
                     }
                   None =>
-                    match project_disassembly_basic_x86_pop_reg(memory, 32) {
+                    match project_disassembly_basic_x86_push_reg(memory, 32) {
                       Some((length, register)) =>
                         match memory.view(words=length) {
                           Ok(chunk) =>
@@ -1893,36 +1962,35 @@ fn project_disassembly_basic_decode_x86_llvm(
                               Some(
                                 project_disassembly_basic_instruction(
                                   chunk,
-                                  "POP32r",
+                                  "PUSH32r",
                                   operands=[
                                     ProjectInstructionOperand::register(
                                       name=register,
                                     ),
                                   ],
-                                  kinds=[ProjectMayLoad],
+                                  kinds=[ProjectMayStore],
                                 ),
                               ),
                             )
                           Err(reason) => Err(reason)
                         }
                       None =>
-                        match project_disassembly_basic_x86_mov_rr(memory, 32) {
-                          Some((length, name, dst, src)) =>
+                        match
+                          project_disassembly_basic_x86_pop_reg(memory, 32) {
+                          Some((length, register)) =>
                             match memory.view(words=length) {
                               Ok(chunk) =>
                                 Ok(
                                   Some(
                                     project_disassembly_basic_instruction(
                                       chunk,
-                                      name,
+                                      "POP32r",
                                       operands=[
                                         ProjectInstructionOperand::register(
-                                          name=dst,
-                                        ),
-                                        ProjectInstructionOperand::register(
-                                          name=src,
+                                          name=register,
                                         ),
                                       ],
+                                      kinds=[ProjectMayLoad],
                                     ),
                                   ),
                                 )
@@ -1930,9 +1998,7 @@ fn project_disassembly_basic_decode_x86_llvm(
                             }
                           None =>
                             match
-                              project_disassembly_basic_x86_arith_rr(
-                                memory, 32, 32,
-                              ) {
+                              project_disassembly_basic_x86_mov_rr(memory, 32) {
                               Some((length, name, dst, src)) =>
                                 match memory.view(words=length) {
                                   Ok(chunk) =>
@@ -1956,7 +2022,7 @@ fn project_disassembly_basic_decode_x86_llvm(
                                 }
                               None =>
                                 match
-                                  project_disassembly_basic_x86_logic_rr(
+                                  project_disassembly_basic_x86_arith_rr(
                                     memory, 32, 32,
                                   ) {
                                   Some((length, name, dst, src)) =>
@@ -1982,10 +2048,10 @@ fn project_disassembly_basic_decode_x86_llvm(
                                     }
                                   None =>
                                     match
-                                      project_disassembly_basic_x86_lea(
+                                      project_disassembly_basic_x86_logic_rr(
                                         memory, 32, 32,
                                       ) {
-                                      Some((length, name, operands, kinds)) =>
+                                      Some((length, name, dst, src)) =>
                                         match memory.view(words=length) {
                                           Ok(chunk) =>
                                             Ok(
@@ -1993,8 +2059,14 @@ fn project_disassembly_basic_decode_x86_llvm(
                                                 project_disassembly_basic_instruction(
                                                   chunk,
                                                   name,
-                                                  operands~,
-                                                  kinds~,
+                                                  operands=[
+                                                    ProjectInstructionOperand::register(
+                                                      name=dst,
+                                                    ),
+                                                    ProjectInstructionOperand::register(
+                                                      name=src,
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
                                             )
@@ -2002,7 +2074,7 @@ fn project_disassembly_basic_decode_x86_llvm(
                                         }
                                       None =>
                                         match
-                                          project_disassembly_basic_x86_mov_mem(
+                                          project_disassembly_basic_x86_lea(
                                             memory, 32, 32,
                                           ) {
                                           Some((length, name, operands, kinds)) =>
@@ -2022,25 +2094,22 @@ fn project_disassembly_basic_decode_x86_llvm(
                                             }
                                           None =>
                                             match
-                                              project_disassembly_basic_x86_mov32ri(
-                                                memory,
+                                              project_disassembly_basic_x86_mov_mem(
+                                                memory, 32, 32,
                                               ) {
-                                              Some((dst, imm)) =>
-                                                match memory.view(words=5) {
+                                              Some(
+                                                (length, name, operands, kinds)
+                                              ) =>
+                                                match
+                                                  memory.view(words=length) {
                                                   Ok(chunk) =>
                                                     Ok(
                                                       Some(
                                                         project_disassembly_basic_instruction(
                                                           chunk,
-                                                          "MOV32ri",
-                                                          operands=[
-                                                            ProjectInstructionOperand::register(
-                                                              name=dst,
-                                                            ),
-                                                            ProjectInstructionOperand::immediate(
-                                                              imm,
-                                                            ),
-                                                          ],
+                                                          name,
+                                                          operands~,
+                                                          kinds~,
                                                         ),
                                                       ),
                                                     )
@@ -2048,64 +2117,24 @@ fn project_disassembly_basic_decode_x86_llvm(
                                                 }
                                               None =>
                                                 match
-                                                  project_disassembly_basic_x86_call_rel32(
+                                                  project_disassembly_basic_x86_mov32ri(
                                                     memory,
                                                   ) {
-                                                  Some(displacement) =>
+                                                  Some((dst, imm)) =>
                                                     match memory.view(words=5) {
                                                       Ok(chunk) =>
                                                         Ok(
                                                           Some(
                                                             project_disassembly_basic_instruction(
                                                               chunk,
-                                                              "CALLpcrel32",
+                                                              "MOV32ri",
                                                               operands=[
-                                                                ProjectInstructionOperand::immediate(
-                                                                  displacement,
+                                                                ProjectInstructionOperand::register(
+                                                                  name=dst,
                                                                 ),
-                                                              ],
-                                                              kinds=[
-                                                                ProjectCall,
-                                                                ProjectMayAffectControlFlow,
-                                                              ],
-                                                            ),
-                                                          ),
-                                                        )
-                                                      Err(reason) => Err(reason)
-                                                    }
-                                                  None if project_disassembly_basic_has_prefix(
-                                                      memory, b"\xc9",
-                                                    ) =>
-                                                    match memory.view(words=1) {
-                                                      Ok(chunk) =>
-                                                        Ok(
-                                                          Some(
-                                                            project_disassembly_basic_instruction(
-                                                              chunk,
-                                                              "LEAVE",
-                                                              kinds=[
-                                                                ProjectMayLoad,
-                                                              ],
-                                                            ),
-                                                          ),
-                                                        )
-                                                      Err(reason) => Err(reason)
-                                                    }
-                                                  None if project_disassembly_basic_has_prefix(
-                                                      memory, b"\xc3",
-                                                    ) =>
-                                                    match memory.view(words=1) {
-                                                      Ok(chunk) =>
-                                                        Ok(
-                                                          Some(
-                                                            project_disassembly_basic_instruction(
-                                                              chunk,
-                                                              "RET",
-                                                              kinds=[
-                                                                ProjectReturn,
-                                                                ProjectBarrier,
-                                                                ProjectTerminator,
-                                                                ProjectMayAffectControlFlow,
+                                                                ProjectInstructionOperand::immediate(
+                                                                  imm,
+                                                                ),
                                                               ],
                                                             ),
                                                           ),
@@ -2114,12 +2143,10 @@ fn project_disassembly_basic_decode_x86_llvm(
                                                     }
                                                   None =>
                                                     match
-                                                      project_disassembly_basic_x86_jmp_rel32(
+                                                      project_disassembly_basic_x86_call_rel32(
                                                         memory,
                                                       ) {
-                                                      Some(
-                                                        (displacement, target)
-                                                      ) =>
+                                                      Some(displacement) =>
                                                         match
                                                           memory.view(words=5) {
                                                           Ok(chunk) =>
@@ -2127,22 +2154,57 @@ fn project_disassembly_basic_decode_x86_llvm(
                                                               Some(
                                                                 project_disassembly_basic_instruction(
                                                                   chunk,
-                                                                  "JMP_4",
-                                                                  assembly="jmp " +
-                                                                    ProjectInstructionOperand::immediate(
-                                                                      displacement,
-                                                                    ).to_string(),
-                                                                  bil="jmp 0x" +
-                                                                    target.to_string(
-                                                                      radix=16,
-                                                                    ),
+                                                                  "CALLpcrel32",
                                                                   operands=[
                                                                     ProjectInstructionOperand::immediate(
-                                                                      target.reinterpret_as_int64(),
+                                                                      displacement,
                                                                     ),
                                                                   ],
                                                                   kinds=[
-                                                                    ProjectUnconditionalBranch,
+                                                                    ProjectCall,
+                                                                    ProjectMayAffectControlFlow,
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                            )
+                                                          Err(reason) =>
+                                                            Err(reason)
+                                                        }
+                                                      None if project_disassembly_basic_has_prefix(
+                                                          memory, b"\xc9",
+                                                        ) =>
+                                                        match
+                                                          memory.view(words=1) {
+                                                          Ok(chunk) =>
+                                                            Ok(
+                                                              Some(
+                                                                project_disassembly_basic_instruction(
+                                                                  chunk,
+                                                                  "LEAVE",
+                                                                  kinds=[
+                                                                    ProjectMayLoad,
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                            )
+                                                          Err(reason) =>
+                                                            Err(reason)
+                                                        }
+                                                      None if project_disassembly_basic_has_prefix(
+                                                          memory, b"\xc3",
+                                                        ) =>
+                                                        match
+                                                          memory.view(words=1) {
+                                                          Ok(chunk) =>
+                                                            Ok(
+                                                              Some(
+                                                                project_disassembly_basic_instruction(
+                                                                  chunk,
+                                                                  "RET",
+                                                                  kinds=[
+                                                                    ProjectReturn,
+                                                                    ProjectBarrier,
+                                                                    ProjectTerminator,
                                                                     ProjectMayAffectControlFlow,
                                                                   ],
                                                                 ),
@@ -2153,7 +2215,7 @@ fn project_disassembly_basic_decode_x86_llvm(
                                                         }
                                                       None =>
                                                         match
-                                                          project_disassembly_basic_x86_jmp_rel8(
+                                                          project_disassembly_basic_x86_jmp_rel32(
                                                             memory,
                                                           ) {
                                                           Some(
@@ -2164,14 +2226,14 @@ fn project_disassembly_basic_decode_x86_llvm(
                                                           ) =>
                                                             match
                                                               memory.view(
-                                                                words=2,
+                                                                words=5,
                                                               ) {
                                                               Ok(chunk) =>
                                                                 Ok(
                                                                   Some(
                                                                     project_disassembly_basic_instruction(
                                                                       chunk,
-                                                                      "JMP_1",
+                                                                      "JMP_4",
                                                                       assembly="jmp " +
                                                                         ProjectInstructionOperand::immediate(
                                                                           displacement,
@@ -2195,7 +2257,52 @@ fn project_disassembly_basic_decode_x86_llvm(
                                                               Err(reason) =>
                                                                 Err(reason)
                                                             }
-                                                          None => Ok(None)
+                                                          None =>
+                                                            match
+                                                              project_disassembly_basic_x86_jmp_rel8(
+                                                                memory,
+                                                              ) {
+                                                              Some(
+                                                                (
+                                                                  displacement,
+                                                                  target,
+                                                                )
+                                                              ) =>
+                                                                match
+                                                                  memory.view(
+                                                                    words=2,
+                                                                  ) {
+                                                                  Ok(chunk) =>
+                                                                    Ok(
+                                                                      Some(
+                                                                        project_disassembly_basic_instruction(
+                                                                          chunk,
+                                                                          "JMP_1",
+                                                                          assembly="jmp " +
+                                                                            ProjectInstructionOperand::immediate(
+                                                                              displacement,
+                                                                            ).to_string(),
+                                                                          bil="jmp 0x" +
+                                                                            target.to_string(
+                                                                              radix=16,
+                                                                            ),
+                                                                          operands=[
+                                                                            ProjectInstructionOperand::immediate(
+                                                                              target.reinterpret_as_int64(),
+                                                                            ),
+                                                                          ],
+                                                                          kinds=[
+                                                                            ProjectUnconditionalBranch,
+                                                                            ProjectMayAffectControlFlow,
+                                                                          ],
+                                                                        ),
+                                                                      ),
+                                                                    )
+                                                                  Err(reason) =>
+                                                                    Err(reason)
+                                                                }
+                                                              None => Ok(None)
+                                                            }
                                                         }
                                                     }
                                                 }
@@ -2263,6 +2370,11 @@ fn project_disassembly_basic_decode_x86_64_llvm(
         [],
       ),
     )
+  } else if project_disassembly_basic_x86_push_rm(memory, 64, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_push_rm(
+      memory, 64, 64,
+    ).unwrap()
+    Some((length, name, operands, kinds))
   } else if project_disassembly_basic_x86_push_imm(memory, 64, 64) is Some(_) {
     let (length, name, imm) = project_disassembly_basic_x86_push_imm(
       memory, 64, 64,

@@ -514,14 +514,10 @@ fn ProjectDisassemblyInstruction::project_basic_bil_binop_rr(
 }
 
 ///|
-fn ProjectDisassemblyInstruction::project_basic_bil_push(
-  self : ProjectDisassemblyInstruction,
+fn project_basic_bil_push_exp(
+  src : @types.Exp,
   width : Int,
 ) -> Result[Array[@types.Stmt], String] {
-  let src = match self.project_basic_bil_value(0, width) {
-    Ok(value) => value
-    Err(reason) => return Err(reason)
-  }
   let sp = match project_basic_bil_stack_pointer(width) {
     Ok(value) => value
     Err(reason) => return Err(reason)
@@ -552,6 +548,36 @@ fn ProjectDisassemblyInstruction::project_basic_bil_push(
     ),
     @types.Stmt::move_stmt(sp, updated_sp),
   ])
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_push(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  match self.project_basic_bil_value(0, width) {
+    Ok(src) => project_basic_bil_push_exp(src, width)
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_push_mem(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let (addr, mem, _) = match self.project_basic_bil_memory_addr(0) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  project_basic_bil_push_exp(
+    @types.Exp::load(mem=@types.Exp::var_exp(mem), addr~, LittleEndian, size),
+    width,
+  )
 }
 
 ///|
@@ -974,6 +1000,8 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
       self.project_basic_bil_binop_rr(64, @types.BinOp::bit_xor())
     "PUSH32R" | "PUSH32I8" | "PUSH32I32" => self.project_basic_bil_push(32)
     "PUSH64R" | "PUSH64I8" | "PUSH64I32" => self.project_basic_bil_push(64)
+    "PUSH32M" => self.project_basic_bil_push_mem(32)
+    "PUSH64M" => self.project_basic_bil_push_mem(64)
     "POP32R" => self.project_basic_bil_pop(32)
     "POP64R" => self.project_basic_bil_pop(64)
     "LEAVE" => self.project_basic_bil_leave(32)

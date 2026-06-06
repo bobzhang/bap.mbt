@@ -331,6 +331,34 @@ test "project reconstructor materializes Basic BIL immediate push stores" {
 }
 
 ///|
+test "project reconstructor materializes Basic BIL memory push stores" {
+  let disassembly = reconstructor_basic_disassembly(
+    "x86_64",
+    b"\xff\x70\x10",
+    start=0x781cUL,
+  )
+  let project = @project.Project::empty(@core_theory.Target::x86_64()).with_disassembly(
+    disassembly,
+  )
+  match project.reconstruct() {
+    Ok(reconstructed) => {
+      let subs = reconstructed.program().subs()
+      assert_true(subs.length() == 1)
+      let blks = subs[0].blks()
+      assert_true(blks.length() == 1)
+      assert_true(
+        reconstructor_def_text(blks[0].defs()) ==
+        [
+          "mem:mem64x8 := store(mem:mem64x8, (RSP:imm64 - 8:64u), load(mem:mem64x8, (RAX:imm64 + 0x10:64u)):imm64)",
+          "RSP:imm64 := (RSP:imm64 - 8:64u)",
+        ],
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project reconstructor materializes Basic BIL pop loads" {
   let pop_rbp = reconstructor_basic_disassembly(
     "x86_64",

@@ -117,6 +117,18 @@ test "project Basic BIL lift covers x86_64 stack arithmetic fixtures" {
     Err(reason) => fail(reason)
   }
 
+  let endbr64 = basic_bil_decode("x86_64", b"\xf3\x0f\x1e\xfa", start=0x6ffaUL)
+  match endbr64.lift_basic_bil() {
+    Ok(stmts) => assert_true(stmts.is_empty())
+    Err(reason) => fail(reason)
+  }
+
+  let endbr32 = basic_bil_decode("x86", b"\xf3\x0f\x1e\xfb", start=0x6ffeUL)
+  match endbr32.lift_basic_bil() {
+    Ok(stmts) => assert_true(stmts.is_empty())
+    Err(reason) => fail(reason)
+  }
+
   let sub = basic_bil_decode("x86_64", b"\x48\x83\xec\x08", start=0x7000UL)
   match sub.lift_basic_bil() {
     Ok(stmts) =>

@@ -1862,6 +1862,7 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "POP64R" => self.project_basic_bil_pop(64)
     "LEAVE" => self.project_basic_bil_leave(32)
     "LEAVE64" => self.project_basic_bil_leave(64)
+    "ENDBR32" | "ENDBR64" => Ok([])
     "NOOP" => Ok([])
     "JMP_1" => self.project_basic_bil_jump()
     "JMP_4" => self.project_basic_bil_jump()

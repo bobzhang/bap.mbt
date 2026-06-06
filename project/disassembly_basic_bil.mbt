@@ -101,6 +101,60 @@ fn project_basic_bil_arm_ne_flag() -> @types.Var {
 }
 
 ///|
+fn project_basic_bil_x86_flag(name : String) -> @types.Exp {
+  @types.Exp::var_exp(project_basic_bil_reg(name, 1))
+}
+
+///|
+fn project_basic_bil_x86_or(
+  left : @types.Exp,
+  right : @types.Exp,
+) -> @types.Exp {
+  @types.Exp::binop(@types.BinOp::bit_or(), left, right)
+}
+
+///|
+fn project_basic_bil_x86_xor(
+  left : @types.Exp,
+  right : @types.Exp,
+) -> @types.Exp {
+  @types.Exp::binop(@types.BinOp::bit_xor(), left, right)
+}
+
+///|
+fn project_basic_bil_x86_not(exp : @types.Exp) -> @types.Exp {
+  @types.Exp::unop(@types.UnOp::not(), exp)
+}
+
+///|
+fn project_basic_bil_x86_jcc_condition(mnemonic : String) -> @types.Exp {
+  let of = project_basic_bil_x86_flag("OF")
+  let cf = project_basic_bil_x86_flag("CF")
+  let zf = project_basic_bil_x86_flag("ZF")
+  let sf = project_basic_bil_x86_flag("SF")
+  let pf = project_basic_bil_x86_flag("PF")
+  let sf_xor_of = () => project_basic_bil_x86_xor(sf, of)
+  match mnemonic {
+    "JO" => of
+    "JNO" => project_basic_bil_x86_not(of)
+    "JB" => cf
+    "JAE" => project_basic_bil_x86_not(cf)
+    "JE" => zf
+    "JNE" => project_basic_bil_x86_not(zf)
+    "JBE" => project_basic_bil_x86_or(cf, zf)
+    "JA" => project_basic_bil_x86_not(project_basic_bil_x86_or(cf, zf))
+    "JS" => sf
+    "JNS" => project_basic_bil_x86_not(sf)
+    "JP" => pf
+    "JNP" => project_basic_bil_x86_not(pf)
+    "JL" => sf_xor_of()
+    "JGE" => project_basic_bil_x86_not(sf_xor_of())
+    "JLE" => project_basic_bil_x86_or(zf, sf_xor_of())
+    _ => project_basic_bil_x86_not(project_basic_bil_x86_or(zf, sf_xor_of()))
+  }
+}
+
+///|
 fn project_basic_bil_arm_offset_addr(
   base : @types.Var,
   offset : Int64,
@@ -902,6 +956,32 @@ fn ProjectDisassemblyInstruction::project_basic_bil_jump(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_basic_bil_jcc(
+  self : ProjectDisassemblyInstruction,
+  mnemonic : String,
+) -> Result[Array[@types.Stmt], String] {
+  match self.project_basic_bil_immediate(0) {
+    Ok(target) =>
+      match
+        project_basic_bil_control(
+          @types.Stmt::goto(),
+          target.reinterpret_as_uint64(),
+        ) {
+        Ok(branch) =>
+          Ok([
+            @types.Stmt::if_(
+              project_basic_bil_x86_jcc_condition(mnemonic),
+              branch,
+              [],
+            ),
+          ])
+        Err(reason) => Err(reason)
+      }
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
 fn project_basic_bil_indirect_control(
   attr : @types.StmtAttribute[String],
   target : @types.Exp,
@@ -1311,6 +1391,22 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "JMP64R" => self.project_basic_bil_control_reg(64, @types.Stmt::goto())
     "JMP32M" => self.project_basic_bil_control_mem(32, @types.Stmt::goto())
     "JMP64M" => self.project_basic_bil_control_mem(64, @types.Stmt::goto())
+    "JO_1" | "JO_4" => self.project_basic_bil_jcc("JO")
+    "JNO_1" | "JNO_4" => self.project_basic_bil_jcc("JNO")
+    "JB_1" | "JB_4" => self.project_basic_bil_jcc("JB")
+    "JAE_1" | "JAE_4" => self.project_basic_bil_jcc("JAE")
+    "JE_1" | "JE_4" => self.project_basic_bil_jcc("JE")
+    "JNE_1" | "JNE_4" => self.project_basic_bil_jcc("JNE")
+    "JBE_1" | "JBE_4" => self.project_basic_bil_jcc("JBE")
+    "JA_1" | "JA_4" => self.project_basic_bil_jcc("JA")
+    "JS_1" | "JS_4" => self.project_basic_bil_jcc("JS")
+    "JNS_1" | "JNS_4" => self.project_basic_bil_jcc("JNS")
+    "JP_1" | "JP_4" => self.project_basic_bil_jcc("JP")
+    "JNP_1" | "JNP_4" => self.project_basic_bil_jcc("JNP")
+    "JL_1" | "JL_4" => self.project_basic_bil_jcc("JL")
+    "JGE_1" | "JGE_4" => self.project_basic_bil_jcc("JGE")
+    "JLE_1" | "JLE_4" => self.project_basic_bil_jcc("JLE")
+    "JG_1" | "JG_4" => self.project_basic_bil_jcc("JG")
     "B" => self.project_basic_bil_arm_branch(false)
     "BNE" => self.project_basic_bil_arm_branch(true)
     "BX" => self.project_basic_bil_bx()

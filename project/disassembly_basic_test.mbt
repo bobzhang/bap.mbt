@@ -1225,6 +1225,74 @@ test "translated BAP basic disassembly decodes x86 llvm near jump fixture" {
 }
 
 ///|
+test "translated BAP basic disassembly decodes x86 conditional jump fixtures" {
+  let samples : Array[
+    (String, Bytes, UInt64, Int, Array[String], String, String, Int64),
+  ] = [
+    (
+      "x86",
+      b"\x75\xfe",
+      0xaUL,
+      2,
+      ["JNE_1", "0xa"],
+      "jcc -0x2",
+      "if jcc then jmp 0xa",
+      0xaL,
+    ),
+    (
+      "x86",
+      b"\x0f\x8f\x01\x00\x00\x00",
+      0x10UL,
+      6,
+      ["JG_4", "0x17"],
+      "jcc 0x1",
+      "if jcc then jmp 0x17",
+      0x17L,
+    ),
+    (
+      "x86_64",
+      b"\x74\x03",
+      0x20UL,
+      2,
+      ["JE_1", "0x25"],
+      "jcc 0x3",
+      "if jcc then jmp 0x25",
+      0x25L,
+    ),
+  ]
+  for sample in samples {
+    let disasm = match
+      @project.ProjectDisassemblyBasic::create(sample.0, backend="llvm") {
+      Ok(disasm) => disasm
+      Err(reason) => fail(reason)
+    }
+    let memory = @memory.Memory::from_bytes(
+      endian=LittleEndian,
+      start=sample.2,
+      sample.1,
+    )
+    match disasm.insn_of_mem(memory) {
+      Ok(result) => {
+        assert_true(result.memory().length() == sample.3)
+        assert_true(result.remainder().is_finished())
+        match result.instruction() {
+          Some(instruction) => {
+            assert_true(basic_instruction_strings(instruction) == sample.4)
+            assert_true(instruction.assembly() == sample.5)
+            assert_true(instruction.bil() == sample.6)
+            assert_true(instruction.has_kind(ProjectConditionalBranch))
+            assert_true(instruction.has_kind(ProjectMayAffectControlFlow))
+            assert_true(instruction.operands()[0].to_int64() == Some(sample.7))
+          }
+          None => fail("missing x86 conditional jump instruction")
+        }
+      }
+      Err(reason) => fail(reason)
+    }
+  }
+}
+
+///|
 test "translated BAP basic disassembly decodes x86 llvm call and return fixtures" {
   let disasm = match
     @project.ProjectDisassemblyBasic::create("x86", backend="llvm") {

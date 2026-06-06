@@ -477,6 +477,60 @@ test "project disasm Basic llvm splits x86 near jump target blocks" {
 }
 
 ///|
+test "project disasm Basic llvm splits x86 conditional jump target blocks" {
+  let memory = project_disasm_test_memory(
+    0xe880UL,
+    b"\x75\x01" + b"\x90" + b"\xc3",
+  )
+  match
+    @project.ProjectDisasm::of_mem(
+      @core_theory.Target::x86(),
+      memory,
+      backend="basic",
+    ) {
+    Ok(disasm) => {
+      let insns = disasm.insns()
+      assert_true(insns.map(item => item.0.length()) == [2, 1, 1])
+      assert_true(
+        project_disasm_test_instruction_strings(insns[0].1) ==
+        ["JNE_1", "0xe883"],
+      )
+      assert_true(insns[0].1.has_kind(ProjectConditionalBranch))
+      assert_true(
+        project_disasm_test_instruction_strings(insns[1].1) == ["NOOP"],
+      )
+      assert_true(
+        project_disasm_test_instruction_strings(insns[2].1) == ["RET"],
+      )
+      assert_true(disasm.disassembly().block_count() == 3)
+      let cfg = disasm.cfg()
+      assert_true(cfg.node_count() == 3)
+      assert_true(cfg.edge_count() == 3)
+      let blocks = cfg.nodes()
+      assert_true(
+        blocks.map(block => block.memory().min_addr()) ==
+        [0xe880UL, 0xe882UL, 0xe883UL],
+      )
+      assert_true(blocks.map(block => block.memory().length()) == [2, 1, 1])
+      match cfg.edge(blocks[0], blocks[2]) {
+        Some(edge) => assert_true(edge.kind() == CondEdge)
+        None => fail("missing x86 conditional jump target edge")
+      }
+      match cfg.edge(blocks[0], blocks[1]) {
+        Some(edge) => assert_true(edge.kind() == FallEdge)
+        None => fail("missing x86 conditional jump fall-through edge")
+      }
+      match cfg.edge(blocks[1], blocks[2]) {
+        Some(edge) => assert_true(edge.kind() == FallEdge)
+        None => fail("missing x86 conditional jump trailing fall-through edge")
+      }
+      assert_true(cfg.successors(blocks[2]).is_empty())
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project disasm Basic llvm splits x86_64 push and jump blocks" {
   let memory = project_disasm_test_memory(
     0xe900UL,

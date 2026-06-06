@@ -794,6 +794,49 @@ test "project Basic BIL lift covers direct control transfers" {
     Err(reason) => fail(reason)
   }
 
+  let jne = basic_bil_decode("x86", b"\x75\xfe", start=0x7202UL)
+  match jne.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 1)
+      match stmts[0] {
+        If(cond~, yes~, no~) => {
+          assert_string(cond.to_string(), "(not ZF:imm1)")
+          assert_true(no.length() == 0)
+          assert_true(yes.length() == 2)
+          assert_true(
+            @types.Stmt::decode(@types.Stmt::goto(), yes[0]) == Some("0x7202"),
+          )
+          assert_string(yes[1].to_string(), "jmp 0x7202:64u")
+        }
+        _ => fail("conditional x86 branch did not lift to BIL if")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let jg = basic_bil_decode("x86", b"\x0f\x8f\x01\x00\x00\x00", start=0x7209UL)
+  match jg.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 1)
+      match stmts[0] {
+        If(cond~, yes~, no~) => {
+          assert_string(
+            cond.to_string(),
+            "(not (ZF:imm1 | (SF:imm1 ^ OF:imm1)))",
+          )
+          assert_true(no.length() == 0)
+          assert_true(yes.length() == 2)
+          assert_true(
+            @types.Stmt::decode(@types.Stmt::goto(), yes[0]) == Some("0x7210"),
+          )
+          assert_string(yes[1].to_string(), "jmp 0x7210:64u")
+        }
+        _ => fail("near conditional x86 branch did not lift to BIL if")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+
   let call = basic_bil_decode("x86_64", b"\xe8\x47\xee\xff\xff", start=0x7300UL)
   match call.lift_basic_bil() {
     Ok(stmts) => {

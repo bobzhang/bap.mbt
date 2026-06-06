@@ -453,6 +453,101 @@ fn project_disassembly_basic_x86_jmp_rel32(
 }
 
 ///|
+fn project_disassembly_basic_x86_jcc_name(
+  opcode : Int,
+  suffix : String,
+) -> String {
+  let mnemonic = match opcode & 0xf {
+    0x0 => "JO"
+    0x1 => "JNO"
+    0x2 => "JB"
+    0x3 => "JAE"
+    0x4 => "JE"
+    0x5 => "JNE"
+    0x6 => "JBE"
+    0x7 => "JA"
+    0x8 => "JS"
+    0x9 => "JNS"
+    0xa => "JP"
+    0xb => "JNP"
+    0xc => "JL"
+    0xd => "JGE"
+    0xe => "JLE"
+    _ => "JG"
+  }
+  mnemonic + suffix
+}
+
+///|
+fn project_disassembly_basic_x86_jcc_rel8(
+  memory : @memory.Memory,
+) -> (Int, String, Int64, UInt64)? {
+  let bytes = memory.to_bytes()
+  if bytes.length() < 2 {
+    None
+  } else {
+    let opcode = bytes[0].to_int()
+    if opcode < 0x70 || opcode > 0x7f {
+      None
+    } else {
+      let displacement = project_disassembly_basic_x86_signed_byte(bytes[1])
+      match
+        project_disassembly_basic_add_signed_offset(
+          memory.min_addr() + 2UL,
+          displacement,
+        ) {
+        Some(target) =>
+          Some(
+            (
+              2,
+              project_disassembly_basic_x86_jcc_name(opcode, "_1"),
+              displacement,
+              target,
+            ),
+          )
+        None => None
+      }
+    }
+  }
+}
+
+///|
+fn project_disassembly_basic_x86_jcc_rel32(
+  memory : @memory.Memory,
+) -> (Int, String, Int64, UInt64)? {
+  let bytes = memory.to_bytes()
+  if bytes.length() < 6 || bytes[0].to_int() != 0x0f {
+    None
+  } else {
+    let opcode = bytes[1].to_int()
+    if opcode < 0x80 || opcode > 0x8f {
+      None
+    } else {
+      match project_disassembly_basic_x86_i32_at(bytes, 2) {
+        Some(displacement) =>
+          match
+            project_disassembly_basic_add_signed_offset(
+              memory.min_addr() + 6UL,
+              displacement,
+            ) {
+            Some(target) =>
+              Some(
+                (
+                  6,
+                  project_disassembly_basic_x86_jcc_name(opcode, "_4"),
+                  displacement,
+                  target,
+                ),
+              )
+            None => None
+          }
+        None => None
+      }
+    }
+  }
+}
+
+///|
 fn project_disassembly_basic_x86_gpr32_name(code : Int) -> String {
   match code {
     0 => "EAX"
@@ -2666,6 +2761,44 @@ fn project_disassembly_basic_decode_x86_llvm(
               ProjectTerminator,
               ProjectMayAffectControlFlow,
             ],
+          ),
+        )
+      } else if project_disassembly_basic_x86_jcc_rel32(memory) is Some(_) {
+        let (length, name, displacement, target) = project_disassembly_basic_x86_jcc_rel32(
+          memory,
+        ).unwrap()
+        Some(
+          (
+            length,
+            name,
+            "jcc " +
+            ProjectInstructionOperand::immediate(displacement).to_string(),
+            "if jcc then jmp 0x" + target.to_string(radix=16),
+            [
+              ProjectInstructionOperand::immediate(
+                target.reinterpret_as_int64(),
+              ),
+            ],
+            [ProjectConditionalBranch, ProjectMayAffectControlFlow],
+          ),
+        )
+      } else if project_disassembly_basic_x86_jcc_rel8(memory) is Some(_) {
+        let (length, name, displacement, target) = project_disassembly_basic_x86_jcc_rel8(
+          memory,
+        ).unwrap()
+        Some(
+          (
+            length,
+            name,
+            "jcc " +
+            ProjectInstructionOperand::immediate(displacement).to_string(),
+            "if jcc then jmp 0x" + target.to_string(radix=16),
+            [
+              ProjectInstructionOperand::immediate(
+                target.reinterpret_as_int64(),
+              ),
+            ],
+            [ProjectConditionalBranch, ProjectMayAffectControlFlow],
           ),
         )
       } else if project_disassembly_basic_x86_jmp_rel32(memory) is Some(_) {

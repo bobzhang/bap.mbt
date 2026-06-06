@@ -330,6 +330,35 @@ test "project Basic BIL lift covers x86_64 memory load fixture" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 lea" {
+  let lea64 = basic_bil_decode("x86_64", b"\x48\x8d\x00", start=0x710cUL)
+  match lea64.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["RAX:imm64 := RAX:imm64"])
+    Err(reason) => fail(reason)
+  }
+
+  let indexed = basic_bil_decode(
+    "x86_64",
+    b"\x48\x8d\x44\x88\x10",
+    start=0x710fUL,
+  )
+  match indexed.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "RAX:imm64 := ((RAX:imm64 + (RCX:imm64 * 4:64u)) + 0x10:64u)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let lea32 = basic_bil_decode("x86", b"\x8d\x45\xfc", start=0x7114UL)
+  match lea32.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["EAX:imm32 := (EBP:imm32 - 4:32u)"])
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86 memory stores" {
   let store64 = basic_bil_decode("x86_64", b"\x48\x89\x45\xf8", start=0x7110UL)
   match store64.lift_basic_bil() {

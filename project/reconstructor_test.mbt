@@ -304,6 +304,30 @@ test "project reconstructor materializes Basic BIL memory moves" {
 }
 
 ///|
+test "project reconstructor materializes Basic BIL lea assignments" {
+  let disassembly = reconstructor_basic_disassembly(
+    "x86_64",
+    b"\x48\x8d\x44\x88\x10",
+    start=0x7825UL,
+  )
+  let project = @project.Project::empty(@core_theory.Target::x86_64()).with_disassembly(
+    disassembly,
+  )
+  match project.reconstruct() {
+    Ok(reconstructed) => {
+      let subs = reconstructed.program().subs()
+      assert_true(subs.length() == 1)
+      let blks = subs[0].blks()
+      assert_true(blks.length() == 1)
+      assert_reconstructor_text(reconstructor_def_text(blks[0].defs()), [
+        "RAX:imm64 := ((RAX:imm64 + (RCX:imm64 * 4:64u)) + 0x10:64u)",
+      ])
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project reconstructor materializes Basic BIL leave frame teardown" {
   let disassembly = reconstructor_basic_disassembly(
     "x86_64",

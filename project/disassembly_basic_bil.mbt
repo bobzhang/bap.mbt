@@ -365,6 +365,27 @@ fn ProjectDisassemblyInstruction::project_basic_bil_mov_mr(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_basic_bil_lea(
+  self : ProjectDisassemblyInstruction,
+  data_width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let dst = match self.project_basic_bil_register(0, data_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let (addr, _, address_width) = match self.project_basic_bil_memory_addr(1) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let value = if address_width == data_width {
+    addr
+  } else {
+    @types.Exp::cast(@types.CastKind::low(), data_width, addr)
+  }
+  Ok([@types.Stmt::move_stmt(dst, value)])
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_basic_bil_mov_imm(
   self : ProjectDisassemblyInstruction,
   width : Int,
@@ -817,6 +838,8 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "MOV64RM" => self.project_basic_bil_mov_rm(64)
     "MOV32MR" => self.project_basic_bil_mov_mr(32)
     "MOV64MR" => self.project_basic_bil_mov_mr(64)
+    "LEA32R" => self.project_basic_bil_lea(32)
+    "LEA64R" => self.project_basic_bil_lea(64)
     "MOV32RI" => self.project_basic_bil_mov_imm(32)
     "MOV64RI" => self.project_basic_bil_mov_imm(64)
     "MOV32RR" | "MOV32RR_REV" => self.project_basic_bil_mov_rr(32)

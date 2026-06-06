@@ -325,6 +325,22 @@ fn project_disassembly_basic_has_prefix(
 }
 
 ///|
+fn project_disassembly_basic_x86_64_call_rel32(
+  memory : @memory.Memory,
+) -> Int64? {
+  let bytes = memory.to_bytes()
+  if bytes.length() < 5 || bytes[0].to_int() != 0xe8 {
+    None
+  } else {
+    let displacement = bytes[1].to_int() |
+      (bytes[2].to_int() << 8) |
+      (bytes[3].to_int() << 16) |
+      (bytes[4].to_int() << 24)
+    Some(displacement.to_int64())
+  }
+}
+
+///|
 fn project_disassembly_basic_assembly(
   name : String,
   operands : Array[ProjectInstructionOperand],
@@ -378,14 +394,13 @@ fn project_disassembly_basic_decode_x86_64_llvm(
         [],
       ),
     )
-  } else if project_disassembly_basic_has_prefix(
-      memory, b"\xe8\x47\xee\xff\xff",
-    ) {
+  } else if project_disassembly_basic_x86_64_call_rel32(memory) is Some(_) {
+    let displacement = project_disassembly_basic_x86_64_call_rel32(memory).unwrap()
     Some(
       (
         5,
         "CALL64pcrel32",
-        [ProjectInstructionOperand::immediate(-0x11b9L)],
+        [ProjectInstructionOperand::immediate(displacement)],
         [ProjectCall, ProjectMayAffectControlFlow],
       ),
     )

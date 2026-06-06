@@ -4,6 +4,17 @@ fn project_disasm_test_memory(start : UInt64, data : Bytes) -> @memory.Memory {
 }
 
 ///|
+fn project_disasm_test_instruction_strings(
+  instruction : @project.ProjectDisassemblyInstruction,
+) -> Array[String] {
+  let parts = [instruction.name()]
+  for operand in instruction.operands() {
+    parts.push(operand.to_string())
+  }
+  parts
+}
+
+///|
 test "project disasm constructs from cfg and enumerates instructions" {
   let memory = project_disasm_test_memory(0xe000UL, b"\x01")
   let instruction = @project.ProjectDisassemblyInstruction::create(
@@ -20,6 +31,98 @@ test "project disasm constructs from cfg and enumerates instructions" {
       assert_true(disasm.insns()[0].1.code() == 1)
       assert_true(disasm.errors().is_empty())
       assert_true(!disasm.has_errors())
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+test "project disasm of_mem reaches Basic llvm x86_64 fixture decoder" {
+  let samples : Array[
+    (Bytes, Array[String], Array[@project.ProjectInstructionKind]),
+  ] = [
+    (b"\x48\x83\xec\x08", ["SUB64ri8", "RSP", "RSP", "0x8"], []),
+    (
+      b"\xe8\x47\xee\xff\xff",
+      ["CALL64pcrel32", "-0x11b9"],
+      [ProjectCall, ProjectMayAffectControlFlow],
+    ),
+    (
+      b"\x8b\x40\x10",
+      ["MOV32rm", "EAX", "RAX", "0x1", "Nil", "0x10", "Nil"],
+      [ProjectMayLoad],
+    ),
+    (b"\x48\x83\xc4\x08", ["ADD64ri8", "RSP", "RSP", "0x8"], []),
+    (
+      b"\xc3",
+      ["RET"],
+      [
+        ProjectReturn,
+        ProjectBarrier,
+        ProjectTerminator,
+        ProjectMayAffectControlFlow,
+      ],
+    ),
+  ]
+  let sequence = b"\x48\x83\xec\x08" +
+    b"\xe8\x47\xee\xff\xff" +
+    b"\x8b\x40\x10" +
+    b"\x48\x83\xc4\x08" +
+    b"\xc3"
+  let memory = project_disasm_test_memory(0xe500UL, sequence)
+  match
+    @project.ProjectDisasm::of_mem(
+      @core_theory.Target::x86_64(),
+      memory,
+      backend="basic",
+    ) {
+    Ok(disasm) => {
+      assert_true(disasm.project().get("disassembler") == Some("basic"))
+      assert_true(disasm.disassembly().block_count() == 1)
+      assert_true(disasm.disassembly().instruction_count() == samples.length())
+      assert_true(disasm.cfg().node_count() == 1)
+      let insns = disasm.insns()
+      assert_true(insns.length() == samples.length())
+      assert_true(insns.map(item => item.0.length()) == [4, 5, 3, 4, 1])
+      for i in 0..<samples.length() {
+        assert_true(
+          project_disasm_test_instruction_strings(insns[i].1) == samples[i].1,
+        )
+        assert_true(insns[i].1.kinds() == samples[i].2)
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+test "project disasm Basic llvm decodes BAP call1 micro fixture" {
+  let memory = project_disasm_test_memory(
+    0xe600UL,
+    b"\xe8\x01\x00\x00\x00" + b"\xc3" + b"\xc3" + b"\xc3",
+  )
+  match
+    @project.ProjectDisasm::of_mem(
+      @core_theory.Target::x86_64(),
+      memory,
+      backend="basic",
+    ) {
+    Ok(disasm) => {
+      let insns = disasm.insns()
+      assert_true(insns.map(item => item.0.length()) == [5, 1, 1, 1])
+      assert_true(
+        project_disasm_test_instruction_strings(insns[0].1) ==
+        ["CALL64pcrel32", "0x1"],
+      )
+      assert_true(
+        insns[0].1.kinds() == [ProjectCall, ProjectMayAffectControlFlow],
+      )
+      for i in 1..<4 {
+        assert_true(
+          project_disasm_test_instruction_strings(insns[i].1) == ["RET"],
+        )
+        assert_true(insns[i].1.has_kind(ProjectReturn))
+      }
     }
     Err(reason) => fail(reason)
   }

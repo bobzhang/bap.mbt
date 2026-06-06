@@ -273,7 +273,7 @@ pub fn ProjectDisassemblyDriver::linear_sweep(
 
 ///|
 pub fn ProjectDisassemblyDriver::basic(
-  backend? : String = "raw",
+  backend? : String = "llvm",
 ) -> ProjectDisassemblyDriver {
   ProjectDisassemblyDriver::create(
     name="basic",

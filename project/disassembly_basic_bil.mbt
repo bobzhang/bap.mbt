@@ -1654,8 +1654,10 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
       Ok(project_basic_bil_sign_extend_high_register("EAX", 32, "EDX", 32))
     "CQO" =>
       Ok(project_basic_bil_sign_extend_high_register("RAX", 64, "RDX", 64))
+    "XCHG8RR" => self.project_basic_bil_xchg_rr(8)
     "XCHG32RR" => self.project_basic_bil_xchg_rr(32)
     "XCHG64RR" => self.project_basic_bil_xchg_rr(64)
+    "XCHG8RM" => self.project_basic_bil_xchg_rm(8)
     "XCHG32RM" => self.project_basic_bil_xchg_rm(32)
     "XCHG64RM" => self.project_basic_bil_xchg_rm(64)
     "OR32RR" | "OR32RR_REV" =>

@@ -655,12 +655,31 @@ test "project Basic BIL lift covers x86 xchg" {
     Err(reason) => fail(reason)
   }
 
+  let xchg8 = basic_bil_decode("x86", b"\x86\xe0", start=0x703bUL)
+  match xchg8.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%xchg_tmp:imm8 := AH:imm8", "AH:imm8 := AL:imm8", "AL:imm8 := %xchg_tmp:imm8",
+      ])
+    Err(reason) => fail(reason)
+  }
+
   let xchg_mem = basic_bil_decode("x86_64", b"\x48\x87\x45\xf8", start=0x703cUL)
   match xchg_mem.lift_basic_bil() {
     Ok(stmts) =>
       assert_basic_bil_text(stmts, [
         "%xchg_tmp:imm64 := RAX:imm64", "RAX:imm64 := load(mem:mem64x8, (RBP:imm64 - 8:64u)):imm64",
         "mem:mem64x8 := store(mem:mem64x8, (RBP:imm64 - 8:64u), %xchg_tmp:imm64)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let xchg_mem8 = basic_bil_decode("x86", b"\x86\x45\xfc", start=0x703eUL)
+  match xchg_mem8.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%xchg_tmp:imm8 := AL:imm8", "AL:imm8 := load(mem:mem32x8, (EBP:imm32 - 4:32u)):imm8",
+        "mem:mem32x8 := store(mem:mem32x8, (EBP:imm32 - 4:32u), %xchg_tmp:imm8)",
       ])
     Err(reason) => fail(reason)
   }

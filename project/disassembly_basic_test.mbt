@@ -937,6 +937,8 @@ test "translated BAP basic disassembly decodes x86 xchg fixtures" {
     ("x86_64", b"\x48\x91", 2, ["XCHG64rr", "RAX", "RCX"], []),
     ("x86_64", b"\x49\x90", 2, ["XCHG64rr", "RAX", "R8"], []),
     ("x86_64", b"\x48\x87\xd8", 3, ["XCHG64rr", "RBX", "RAX"], []),
+    ("x86_64", b"\x40\x86\xe0", 3, ["XCHG8rr", "SPL", "AL"], []),
+    ("x86_64", b"\x44\x86\xc0", 3, ["XCHG8rr", "R8B", "AL"], []),
     (
       "x86_64",
       b"\x48\x87\x45\xf8",
@@ -944,13 +946,28 @@ test "translated BAP basic disassembly decodes x86 xchg fixtures" {
       ["XCHG64rm", "RAX", "RBP", "0x1", "Nil", "-0x8", "Nil"],
       [ProjectMayLoad, ProjectMayStore],
     ),
+    (
+      "x86_64",
+      b"\x44\x86\x45\xfc",
+      4,
+      ["XCHG8rm", "R8B", "RBP", "0x1", "Nil", "-0x4", "Nil"],
+      [ProjectMayLoad, ProjectMayStore],
+    ),
     ("x86", b"\x91", 1, ["XCHG32rr", "EAX", "ECX"], []),
     ("x86", b"\x87\xd8", 2, ["XCHG32rr", "EBX", "EAX"], []),
+    ("x86", b"\x86\xe0", 2, ["XCHG8rr", "AH", "AL"], []),
     (
       "x86",
       b"\x87\x45\xfc",
       3,
       ["XCHG32rm", "EAX", "EBP", "0x1", "Nil", "-0x4", "Nil"],
+      [ProjectMayLoad, ProjectMayStore],
+    ),
+    (
+      "x86",
+      b"\x86\x45\xfc",
+      3,
+      ["XCHG8rm", "AL", "EBP", "0x1", "Nil", "-0x4", "Nil"],
       [ProjectMayLoad, ProjectMayStore],
     ),
   ]

@@ -1596,6 +1596,7 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "MOV64MI" => self.project_basic_bil_mov_mi(64)
     "LEA32R" => self.project_basic_bil_lea(32)
     "LEA64R" => self.project_basic_bil_lea(64)
+    "MOV8RI" => self.project_basic_bil_mov_imm(8)
     "MOV32RI" => self.project_basic_bil_mov_imm(32)
     "MOV64RI" => self.project_basic_bil_mov_imm(64)
     "MOV64RI32" => self.project_basic_bil_mov_imm(64)

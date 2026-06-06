@@ -887,6 +887,44 @@ test "translated BAP basic disassembly decodes x86 register mov fixtures" {
 }
 
 ///|
+test "translated BAP basic disassembly decodes x86 byte immediate mov fixtures" {
+  let samples : Array[
+    (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),
+  ] = [
+    ("x86", b"\xb0\x7f", 2, ["MOV8ri", "AL", "0x7f"], []),
+    ("x86", b"\xb4\x80", 2, ["MOV8ri", "AH", "0x80"], []),
+    ("x86_64", b"\x40\xb4\x01", 3, ["MOV8ri", "SPL", "0x1"], []),
+    ("x86_64", b"\x41\xb0\xff", 3, ["MOV8ri", "R8B", "0xff"], []),
+  ]
+  for sample in samples {
+    let disasm = match
+      @project.ProjectDisassemblyBasic::create(sample.0, backend="llvm") {
+      Ok(disasm) => disasm
+      Err(reason) => fail(reason)
+    }
+    let memory = @memory.Memory::from_bytes(
+      endian=LittleEndian,
+      start=0xe1b0UL,
+      sample.1,
+    )
+    match disasm.insn_of_mem(memory) {
+      Ok(result) => {
+        assert_true(result.memory().length() == sample.2)
+        assert_true(result.remainder().is_finished())
+        match result.instruction() {
+          Some(instruction) => {
+            assert_true(basic_instruction_strings(instruction) == sample.3)
+            assert_true(instruction.kinds() == sample.4)
+          }
+          None => fail("missing x86 byte immediate mov instruction")
+        }
+      }
+      Err(reason) => fail(reason)
+    }
+  }
+}
+
+///|
 test "translated BAP basic disassembly decodes x86 xchg fixtures" {
   let samples : Array[
     (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),

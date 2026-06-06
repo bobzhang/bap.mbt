@@ -803,6 +803,18 @@ test "project Basic BIL lift covers x86 leave" {
 
 ///|
 test "project Basic BIL lift covers x86_64 memory load fixture" {
+  let mov_imm8 = basic_bil_decode("x86", b"\xb0\x7f", start=0x70eeUL)
+  match mov_imm8.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["AL:imm8 := 0x7F:8u"])
+    Err(reason) => fail(reason)
+  }
+
+  let mov_imm8_ext = basic_bil_decode("x86_64", b"\x41\xb0\xff", start=0x70efUL)
+  match mov_imm8_ext.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["R8B:imm8 := 0xFF:8u"])
+    Err(reason) => fail(reason)
+  }
+
   let mov_imm = basic_bil_decode(
     "x86_64",
     b"\xb8\x78\x56\x34\x12",

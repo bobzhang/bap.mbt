@@ -158,6 +158,55 @@ test "project reconstructor materializes Basic BIL push stores" {
 }
 
 ///|
+test "project reconstructor materializes Basic BIL pop loads" {
+  let pop_rbp = reconstructor_basic_disassembly(
+    "x86_64",
+    b"\x5d",
+    start=0x7818UL,
+  )
+  let pop_rbp_project = @project.Project::empty(@core_theory.Target::x86_64()).with_disassembly(
+    pop_rbp,
+  )
+  match pop_rbp_project.reconstruct() {
+    Ok(reconstructed) => {
+      let subs = reconstructed.program().subs()
+      assert_true(subs.length() == 1)
+      let blks = subs[0].blks()
+      assert_true(blks.length() == 1)
+      assert_true(
+        reconstructor_def_text(blks[0].defs()) ==
+        [
+          "RBP:imm64 := load(mem:mem64x8, RSP:imm64):imm64", "RSP:imm64 := (RSP:imm64 + 8:64u)",
+        ],
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let pop_rsp = reconstructor_basic_disassembly(
+    "x86_64",
+    b"\x5c",
+    start=0x7819UL,
+  )
+  let pop_rsp_project = @project.Project::empty(@core_theory.Target::x86_64()).with_disassembly(
+    pop_rsp,
+  )
+  match pop_rsp_project.reconstruct() {
+    Ok(reconstructed) => {
+      let subs = reconstructed.program().subs()
+      assert_true(subs.length() == 1)
+      let blks = subs[0].blks()
+      assert_true(blks.length() == 1)
+      assert_true(
+        reconstructor_def_text(blks[0].defs()) ==
+        ["RSP:imm64 := load(mem:mem64x8, RSP:imm64):imm64"],
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project reconstructor materializes Basic BIL fallback jumps" {
   let goto_disassembly = reconstructor_basic_disassembly(
     "x86",

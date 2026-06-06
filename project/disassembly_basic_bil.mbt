@@ -58,26 +58,36 @@ fn project_basic_bil_stack_pointer(width : Int) -> Result[@types.Var, String] {
   match width {
     32 => Ok(project_basic_bil_reg("ESP", 32))
     64 => Ok(project_basic_bil_reg("RSP", 64))
-    _ => Err("unsupported PUSH stack width \{width}")
+    _ => Err("unsupported stack width \{width}")
   }
 }
 
 ///|
-fn project_basic_bil_stack_next(
+fn project_basic_bil_stack_offset(
+  sp : @types.Var,
+  width : Int,
+  op : @types.BinOp,
+) -> Result[@types.Exp, String] {
+  match project_basic_bil_int((width / 8).to_int64(), width) {
+    Ok(offset) => Ok(@types.Exp::binop(op, @types.Exp::var_exp(sp), offset))
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+fn project_basic_bil_stack_decrement(
   sp : @types.Var,
   width : Int,
 ) -> Result[@types.Exp, String] {
-  match project_basic_bil_int((width / 8).to_int64(), width) {
-    Ok(offset) =>
-      Ok(
-        @types.Exp::binop(
-          @types.BinOp::minus(),
-          @types.Exp::var_exp(sp),
-          offset,
-        ),
-      )
-    Err(reason) => Err(reason)
-  }
+  project_basic_bil_stack_offset(sp, width, @types.BinOp::minus())
+}
+
+///|
+fn project_basic_bil_stack_increment(
+  sp : @types.Var,
+  width : Int,
+) -> Result[@types.Exp, String] {
+  project_basic_bil_stack_offset(sp, width, @types.BinOp::plus())
 }
 
 ///|
@@ -282,11 +292,11 @@ fn ProjectDisassemblyInstruction::project_basic_bil_push(
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  let addr = match project_basic_bil_stack_next(sp, width) {
+  let addr = match project_basic_bil_stack_decrement(sp, width) {
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  let updated_sp = match project_basic_bil_stack_next(sp, width) {
+  let updated_sp = match project_basic_bil_stack_decrement(sp, width) {
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
@@ -308,6 +318,45 @@ fn ProjectDisassemblyInstruction::project_basic_bil_push(
     ),
     @types.Stmt::move_stmt(sp, updated_sp),
   ])
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_pop(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let dst = match self.project_basic_bil_register(0, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let sp = match project_basic_bil_stack_pointer(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let mem = project_basic_bil_stack_mem(width)
+  let stmts = [
+    @types.Stmt::move_stmt(
+      dst,
+      @types.Exp::load(
+        mem=@types.Exp::var_exp(mem),
+        addr=@types.Exp::var_exp(sp),
+        LittleEndian,
+        size,
+      ),
+    ),
+  ]
+  if dst != sp {
+    let updated_sp = match project_basic_bil_stack_increment(sp, width) {
+      Ok(value) => value
+      Err(reason) => return Err(reason)
+    }
+    stmts.push(@types.Stmt::move_stmt(sp, updated_sp))
+  }
+  Ok(stmts)
 }
 
 ///|
@@ -614,6 +663,8 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "MOV64RI" => self.project_basic_bil_mov_imm(64)
     "PUSH32R" => self.project_basic_bil_push(32)
     "PUSH64R" => self.project_basic_bil_push(64)
+    "POP32R" => self.project_basic_bil_pop(32)
+    "POP64R" => self.project_basic_bil_pop(64)
     "NOOP" => Ok([])
     "JMP_1" => self.project_basic_bil_jump()
     "JMP_4" => self.project_basic_bil_jump()

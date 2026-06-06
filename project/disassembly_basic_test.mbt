@@ -397,8 +397,11 @@ test "translated BAP basic disassembly decodes x86 system instructions" {
     ("x86", b"\x0f\x31", 2, ["RDTSC"]),
     ("x86", b"\x0f\xa2", 2, ["CPUID"]),
     ("x86", b"\x0f\x01\xd0", 3, ["XGETBV"]),
+    ("x86", b"\x0f\x34", 2, ["SYSENTER"]),
     ("x86_64", b"\xf4", 1, ["HLT"]),
+    ("x86_64", b"\x0f\x05", 2, ["SYSCALL"]),
     ("x86_64", b"\x0f\x31", 2, ["RDTSC"]),
+    ("x86_64", b"\x0f\x34", 2, ["SYSENTER"]),
     ("x86_64", b"\x0f\xa2", 2, ["CPUID"]),
     ("x86_64", b"\x0f\x01\xd0", 3, ["XGETBV"]),
   ]

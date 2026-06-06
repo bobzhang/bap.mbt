@@ -233,6 +233,28 @@ test "project Basic BIL lift covers x86 system instructions" {
       ])
     Err(reason) => fail(reason)
   }
+
+  let syscall = basic_bil_decode("x86_64", b"\x0f\x05", start=0x701cUL)
+  match syscall.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 1)
+      assert_true(
+        @types.Stmt::decode(@types.Stmt::call(), stmts[0]) == Some("syscall"),
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let sysenter = basic_bil_decode("x86", b"\x0f\x34", start=0x701eUL)
+  match sysenter.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 1)
+      assert_true(
+        @types.Stmt::decode(@types.Stmt::call(), stmts[0]) == Some("syscall"),
+      )
+    }
+    Err(reason) => fail(reason)
+  }
 }
 
 ///|

@@ -857,6 +857,7 @@ fn project_disassembly_basic_x86_interrupt(
 ///|
 fn project_disassembly_basic_x86_system(
   memory : @memory.Memory,
+  address_width : Int,
 ) -> (Int, String)? {
   let bytes = memory.to_bytes()
   if bytes.length() == 0 {
@@ -869,7 +870,14 @@ fn project_disassembly_basic_x86_system(
           None
         } else {
           match bytes[1].to_int() {
+            0x05 =>
+              if address_width == 64 {
+                Some((2, "SYSCALL"))
+              } else {
+                None
+              }
             0x31 => Some((2, "RDTSC"))
+            0x34 => Some((2, "SYSENTER"))
             0xa2 => Some((2, "CPUID"))
             0x01 =>
               if bytes.length() >= 3 && bytes[2].to_int() == 0xd0 {
@@ -3249,8 +3257,8 @@ fn project_disassembly_basic_decode_x86_llvm(
           memory,
         ).unwrap()
         Some((length, name, "", "", operands, [ProjectMayAffectControlFlow]))
-      } else if project_disassembly_basic_x86_system(memory) is Some(_) {
-        let (length, name) = project_disassembly_basic_x86_system(memory).unwrap()
+      } else if project_disassembly_basic_x86_system(memory, 32) is Some(_) {
+        let (length, name) = project_disassembly_basic_x86_system(memory, 32).unwrap()
         Some((length, name, "", "", [], []))
       } else if project_disassembly_basic_x86_sign_extend_accumulator(
           memory, 32,
@@ -3653,8 +3661,8 @@ fn project_disassembly_basic_decode_x86_64_llvm(
       memory,
     ).unwrap()
     Some((length, name, operands, [ProjectMayAffectControlFlow]))
-  } else if project_disassembly_basic_x86_system(memory) is Some(_) {
-    let (length, name) = project_disassembly_basic_x86_system(memory).unwrap()
+  } else if project_disassembly_basic_x86_system(memory, 64) is Some(_) {
+    let (length, name) = project_disassembly_basic_x86_system(memory, 64).unwrap()
     Some((length, name, [], []))
   } else if project_disassembly_basic_x86_simple(memory, 64, 64) is Some(_) {
     let (length, name, operands, kinds) = project_disassembly_basic_x86_simple(

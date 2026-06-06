@@ -1930,6 +1930,8 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
         project_basic_bil_x86_unknown_regs("cpuid", ["EAX", "EBX", "ECX", "EDX"]),
       )
     "XGETBV" => Ok(project_basic_bil_x86_unknown_regs("xgetbv", ["EAX", "EDX"]))
+    "SYSCALL" | "SYSENTER" =>
+      Ok([@types.Stmt::encode(@types.Stmt::call(), "syscall")])
     "JMP_1" => self.project_basic_bil_jump()
     "JMP_4" => self.project_basic_bil_jump()
     "CALLPCREL32" => self.project_basic_bil_call(32)

@@ -118,6 +118,31 @@ fn basic_instruction_strings(
 }
 
 ///|
+fn basic_arm_strlen_bytes() -> Bytes {
+  b"\x04\xb0\x2d\xe5" +
+  b"\x00\xb0\x8d\xe2" +
+  b"\x14\xd0\x4d\xe2" +
+  b"\x10\x00\x0b\xe5" +
+  b"\x00\x30\xa0\xe3" +
+  b"\x08\x30\x0b\xe5" +
+  b"\x05\x00\x00\xea" +
+  b"\x10\x30\x1b\xe5" +
+  b"\x01\x30\x83\xe2" +
+  b"\x10\x30\x0b\xe5" +
+  b"\x08\x30\x1b\xe5" +
+  b"\x01\x30\x83\xe2" +
+  b"\x08\x30\x0b\xe5" +
+  b"\x10\x30\x1b\xe5" +
+  b"\x00\x00\x53\xe3" +
+  b"\xf6\xff\xff\x1a" +
+  b"\x08\x30\x1b\xe5" +
+  b"\x03\x00\xa0\xe1" +
+  b"\x00\xd0\x4b\xe2" +
+  b"\x04\xb0\x9d\xe4" +
+  b"\x1e\xff\x2f\xe1"
+}
+
+///|
 test "translated BAP basic disassembly decodes x86_64 llvm samples" {
   let disasm = match
     @project.ProjectDisassemblyBasic::create("x86_64", backend="llvm") {
@@ -195,6 +220,54 @@ test "translated BAP basic disassembly decodes x86_64 llvm samples" {
       }
       None => fail("missing run instruction")
     }
+  }
+}
+
+///|
+test "translated BAP basic disassembly decodes ARM llvm strlen fixture" {
+  let disasm = match
+    @project.ProjectDisassemblyBasic::create("armv7", backend="llvm") {
+    Ok(disasm) => disasm
+    Err(reason) => fail(reason)
+  }
+  let bytes = basic_arm_strlen_bytes()
+  let memory = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x840cUL,
+    bytes,
+  )
+  let state = disasm.store_kinds().run(memory)
+  let insns = state.insns()
+  assert_true(insns.length() == 21)
+  assert_true(state.addr() == 0x840cUL + bytes.length().to_uint64())
+  for item in insns {
+    assert_true(item.0.length() == 4)
+  }
+  match insns[6].1 {
+    Some(instruction) => {
+      assert_true(instruction.addr() == 0x8424UL)
+      assert_true(instruction.name() == "B")
+      assert_true(instruction.has_kind(ProjectUnconditionalBranch))
+      assert_true(instruction.operands()[0].to_int64() == Some(0x8440L))
+    }
+    None => fail("missing ARM unconditional branch")
+  }
+  match insns[15].1 {
+    Some(instruction) => {
+      assert_true(instruction.addr() == 0x8448UL)
+      assert_true(instruction.name() == "BNE")
+      assert_true(instruction.has_kind(ProjectConditionalBranch))
+      assert_true(instruction.operands()[0].to_int64() == Some(0x8428L))
+    }
+    None => fail("missing ARM conditional branch")
+  }
+  match insns[20].1 {
+    Some(instruction) => {
+      assert_true(basic_instruction_strings(instruction) == ["BX", "LR"])
+      assert_true(instruction.has_kind(ProjectReturn))
+      assert_true(instruction.has_kind(ProjectTerminator))
+    }
+    None => fail("missing ARM return")
   }
 }
 

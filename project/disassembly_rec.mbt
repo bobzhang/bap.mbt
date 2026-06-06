@@ -97,6 +97,20 @@ fn project_disassembly_rec_call_target(
 }
 
 ///|
+fn project_disassembly_rec_direct_branch_target(
+  instruction : ProjectDisassemblyInstruction,
+) -> UInt64? {
+  if !instruction.is_branch() || instruction.operands().is_empty() {
+    None
+  } else {
+    match instruction.operands()[0].to_int64() {
+      Some(addr) if addr >= 0L => Some(addr.reinterpret_as_uint64())
+      _ => None
+    }
+  }
+}
+
+///|
 fn project_disassembly_rec_splits_after(
   instruction : ProjectDisassemblyInstruction,
 ) -> Bool {
@@ -121,6 +135,11 @@ fn project_disassembly_rec_split_starts(
       )
     }
     match project_disassembly_rec_call_target(instruction) {
+      Some(target) =>
+        project_disassembly_rec_add_start(starts, block, instructions, target)
+      None => ()
+    }
+    match project_disassembly_rec_direct_branch_target(instruction) {
       Some(target) =>
         project_disassembly_rec_add_start(starts, block, instructions, target)
       None => ()
@@ -187,9 +206,71 @@ fn project_disassembly_rec_control_edges(
           )
         _ => ()
       }
+    } else if instruction.has_kind(ProjectConditionalBranch) {
+      match project_disassembly_rec_direct_branch_target(instruction) {
+        Some(target) if block.contains(target) &&
+          project_disassembly_rec_has_instruction_at(instructions, target) =>
+          edges.push(
+            ProjectDisassemblyEdge::create(
+              source=instruction.addr(),
+              target~,
+              kind=CondEdge,
+            ),
+          )
+        _ => ()
+      }
+    } else if instruction.has_kind(ProjectUnconditionalBranch) {
+      match project_disassembly_rec_direct_branch_target(instruction) {
+        Some(target) if block.contains(target) &&
+          project_disassembly_rec_has_instruction_at(instructions, target) =>
+          edges.push(
+            ProjectDisassemblyEdge::create(
+              source=instruction.addr(),
+              target~,
+              kind=JumpEdge,
+            ),
+          )
+        _ => ()
+      }
     }
   }
   edges
+}
+
+///|
+fn project_disassembly_rec_can_fall_through(
+  instruction : ProjectDisassemblyInstruction,
+) -> Bool {
+  !instruction.has_kind(ProjectReturn) &&
+  !instruction.has_kind(ProjectTerminator) &&
+  !instruction.has_kind(ProjectUnconditionalBranch) &&
+  !instruction.has_kind(ProjectIndirectBranch)
+}
+
+///|
+fn project_disassembly_rec_add_fall_edges(
+  state : ProjectDisassemblyState,
+  blocks : Array[@memory.Memory],
+  edges : Array[ProjectDisassemblyEdge],
+) -> Unit {
+  if blocks.length() <= 1 {
+    return
+  }
+  for i in 0..<(blocks.length() - 1) {
+    let instructions = state.instructions_in(blocks[i])
+    if !instructions.is_empty() {
+      let terminator = instructions[instructions.length() - 1]
+      if project_disassembly_rec_can_fall_through(terminator) {
+        edges.push(
+          ProjectDisassemblyEdge::create(
+            source=terminator.addr(),
+            target=blocks[i + 1].min_addr(),
+            kind=FallEdge,
+          ),
+        )
+      }
+    }
+  }
 }
 
 ///|
@@ -201,10 +282,12 @@ fn project_disassembly_rec_refine_state(
   for block in state.blocks() {
     let instructions = state.instructions_in(block)
     match project_disassembly_rec_split_block(block, instructions) {
-      Ok(split) =>
+      Ok(split) => {
         for item in split {
           blocks.push(item)
         }
+        project_disassembly_rec_add_fall_edges(state, split, edges)
+      }
       Err(reason) => return Err(reason)
     }
     for edge in project_disassembly_rec_control_edges(block, instructions) {

@@ -307,6 +307,13 @@ fn ProjectDisassemblyBasic::project_disassembly_basic_is_x86_64_llvm(
 }
 
 ///|
+fn ProjectDisassemblyBasic::project_disassembly_basic_is_arm_llvm(
+  self : ProjectDisassemblyBasic,
+) -> Bool {
+  self.backend_value == "llvm" && self.triple_value.contains("arm")
+}
+
+///|
 fn project_disassembly_basic_has_prefix(
   memory : @memory.Memory,
   prefix : Bytes,
@@ -325,6 +332,23 @@ fn project_disassembly_basic_has_prefix(
 }
 
 ///|
+fn project_disassembly_basic_add_signed_offset(
+  base : UInt64,
+  offset : Int64,
+) -> UInt64? {
+  if offset >= 0L {
+    Some(base + offset.reinterpret_as_uint64())
+  } else {
+    let delta = (0L - offset).reinterpret_as_uint64()
+    if base >= delta {
+      Some(base - delta)
+    } else {
+      None
+    }
+  }
+}
+
+///|
 fn project_disassembly_basic_x86_64_call_rel32(
   memory : @memory.Memory,
 ) -> Int64? {
@@ -337,6 +361,30 @@ fn project_disassembly_basic_x86_64_call_rel32(
       (bytes[3].to_int() << 16) |
       (bytes[4].to_int() << 24)
     Some(displacement.to_int64())
+  }
+}
+
+///|
+fn project_disassembly_basic_arm_branch_target(
+  memory : @memory.Memory,
+) -> (UInt64, Bool)? {
+  let bytes = memory.to_bytes()
+  if bytes.length() < 4 || (bytes[3].to_int() & 0x0e) != 0x0a {
+    None
+  } else {
+    let cond = bytes[3].to_int() >> 4
+    let raw = bytes[0].to_int() |
+      (bytes[1].to_int() << 8) |
+      (bytes[2].to_int() << 16)
+    let signed = if (raw & 0x800000) != 0 { raw - 0x1000000 } else { raw }
+    match
+      project_disassembly_basic_add_signed_offset(
+        memory.min_addr() + 8UL,
+        (signed << 2).to_int64(),
+      ) {
+      Some(target) => Some((target, cond != 0xe))
+      None => None
+    }
   }
 }
 
@@ -370,6 +418,71 @@ fn project_disassembly_basic_instruction(
     kinds~,
     operands~,
   )
+}
+
+///|
+fn project_disassembly_basic_decode_arm_llvm(
+  memory : @memory.Memory,
+) -> Result[ProjectDisassemblyInstruction?, String] {
+  if memory.length() < 4 {
+    Ok(None)
+  } else if project_disassembly_basic_has_prefix(memory, b"\x1e\xff\x2f\xe1") {
+    match memory.view(words=4) {
+      Ok(chunk) =>
+        Ok(
+          Some(
+            project_disassembly_basic_instruction(
+              chunk,
+              "BX",
+              operands=[ProjectInstructionOperand::register(name="LR")],
+              kinds=[
+                ProjectReturn,
+                ProjectBarrier,
+                ProjectTerminator,
+                ProjectMayAffectControlFlow,
+              ],
+            ),
+          ),
+        )
+      Err(reason) => Err(reason)
+    }
+  } else {
+    match project_disassembly_basic_arm_branch_target(memory) {
+      Some((target, conditional)) =>
+        match memory.view(words=4) {
+          Ok(chunk) =>
+            Ok(
+              Some(
+                project_disassembly_basic_instruction(
+                  chunk,
+                  if conditional {
+                    "BNE"
+                  } else {
+                    "B"
+                  },
+                  operands=[
+                    ProjectInstructionOperand::immediate(
+                      target.reinterpret_as_int64(),
+                    ),
+                  ],
+                  kinds=if conditional {
+                    [ProjectConditionalBranch, ProjectMayAffectControlFlow]
+                  } else {
+                    [ProjectUnconditionalBranch, ProjectMayAffectControlFlow]
+                  },
+                ),
+              ),
+            )
+          Err(reason) => Err(reason)
+        }
+      None =>
+        match memory.view(words=4) {
+          Ok(chunk) =>
+            Ok(Some(project_disassembly_basic_instruction(chunk, "ARM")))
+          Err(reason) => Err(reason)
+        }
+    }
+  }
 }
 
 ///|
@@ -477,6 +590,16 @@ fn ProjectDisassemblyBasic::project_disassembly_basic_decode_instruction(
 ) -> Result[ProjectDisassemblyInstruction, String] {
   if self.project_disassembly_basic_is_x86_64_llvm() {
     match project_disassembly_basic_decode_x86_64_llvm(memory) {
+      Ok(Some(instruction)) => Ok(instruction)
+      Ok(None) =>
+        match memory.view(words=1) {
+          Ok(chunk) => Ok(project_raw_byte_instruction(chunk))
+          Err(reason) => Err(reason)
+        }
+      Err(reason) => Err(reason)
+    }
+  } else if self.project_disassembly_basic_is_arm_llvm() {
+    match project_disassembly_basic_decode_arm_llvm(memory) {
       Ok(Some(instruction)) => Ok(instruction)
       Ok(None) =>
         match memory.view(words=1) {

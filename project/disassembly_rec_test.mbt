@@ -37,6 +37,31 @@ fn rec_test_state(
 }
 
 ///|
+fn rec_arm_strlen_bytes() -> Bytes {
+  b"\x04\xb0\x2d\xe5" +
+  b"\x00\xb0\x8d\xe2" +
+  b"\x14\xd0\x4d\xe2" +
+  b"\x10\x00\x0b\xe5" +
+  b"\x00\x30\xa0\xe3" +
+  b"\x08\x30\x0b\xe5" +
+  b"\x05\x00\x00\xea" +
+  b"\x10\x30\x1b\xe5" +
+  b"\x01\x30\x83\xe2" +
+  b"\x10\x30\x0b\xe5" +
+  b"\x08\x30\x1b\xe5" +
+  b"\x01\x30\x83\xe2" +
+  b"\x08\x30\x0b\xe5" +
+  b"\x10\x30\x1b\xe5" +
+  b"\x00\x00\x53\xe3" +
+  b"\xf6\xff\xff\x1a" +
+  b"\x08\x30\x1b\xe5" +
+  b"\x03\x00\xa0\xe1" +
+  b"\x00\xd0\x4b\xe2" +
+  b"\x04\xb0\x9d\xe4" +
+  b"\x1e\xff\x2f\xe1"
+}
+
+///|
 test "project recursive disassembly wraps cfg and errors" {
   let entry = rec_test_block(0xa100UL, b"\x01")
   let exit = rec_test_block(0xa110UL, b"\x02")
@@ -131,6 +156,69 @@ test "project recursive disassembly runs driver and brancher" {
     Ok(state) => {
       assert_true(state.instruction_count() == 2)
       assert_true(state.has_edge(edge))
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+test "project recursive disassembly splits ARM strlen CFG fixture" {
+  match @project.register_builtin_disassembly_drivers() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let memory = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x840cUL,
+    rec_arm_strlen_bytes(),
+  )
+  let project = @project.Project::empty(@core_theory.Target::arm()).with_memory(
+    @memory.MemMap::empty().add(memory, "text"),
+  )
+  match project.disassemble_rec(driver="basic") {
+    Ok(result) => {
+      assert_true(!result.has_errors())
+      assert_true(result.disassembly().instruction_count() == 21)
+      assert_true(result.disassembly().block_count() == 4)
+      let cfg = result.cfg()
+      assert_true(cfg.node_count() == 4)
+      assert_true(cfg.edge_count() == 4)
+      let blocks = cfg.nodes()
+      assert_true(
+        blocks.map(block => block.memory().min_addr()) ==
+        [0x840cUL, 0x8428UL, 0x8440UL, 0x844cUL],
+      )
+      assert_true(
+        blocks.map(block => block.memory().length()) == [28, 24, 12, 20],
+      )
+      match cfg.edge(blocks[0], blocks[2]) {
+        Some(edge) => assert_true(edge.kind() == JumpEdge)
+        None => fail("missing ARM entry jump edge")
+      }
+      match cfg.edge(blocks[1], blocks[2]) {
+        Some(edge) => assert_true(edge.kind() == FallEdge)
+        None => fail("missing ARM loop fall edge")
+      }
+      match cfg.edge(blocks[2], blocks[1]) {
+        Some(edge) => assert_true(edge.kind() == CondEdge)
+        None => fail("missing ARM conditional loop edge")
+      }
+      match cfg.edge(blocks[2], blocks[3]) {
+        Some(edge) => assert_true(edge.kind() == FallEdge)
+        None => fail("missing ARM exit fall edge")
+      }
+      assert_true(cfg.predecessors(blocks[0]).is_empty())
+      assert_true(
+        cfg.predecessors(blocks[1]).map(block => block.addr()) == [0x8440UL],
+      )
+      assert_true(
+        cfg.predecessors(blocks[2]).map(block => block.addr()) ==
+        [0x840cUL, 0x8428UL],
+      )
+      assert_true(
+        cfg.predecessors(blocks[3]).map(block => block.addr()) == [0x8440UL],
+      )
+      assert_true(cfg.successors(blocks[3]).is_empty())
     }
     Err(reason) => fail(reason)
   }

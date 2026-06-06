@@ -456,6 +456,23 @@ test "project Basic BIL lift covers x86 cmp and test flag ops" {
     Err(reason) => fail(reason)
   }
 
+  let test8_rr = basic_bil_decode("x86", b"\x84\xe0", start=0x7028UL)
+  match test8_rr.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 7)
+      assert_string(
+        stmts[0].to_string(),
+        "%test_tmp:imm8 := (AL:imm8 & AH:imm8)",
+      )
+      assert_string(stmts[1].to_string(), "CF:imm1 := 0:1u")
+      assert_string(stmts[2].to_string(), "OF:imm1 := 0:1u")
+      assert_true(stmts[3].to_string().contains("AF undefined after TEST"))
+      assert_true(stmts[4].to_string().contains("PF:imm1 := (not low:1"))
+      assert_string(stmts[6].to_string(), "ZF:imm1 := (0:8u == %test_tmp:imm8)")
+    }
+    Err(reason) => fail(reason)
+  }
+
   let test_imm = basic_bil_decode(
     "x86_64",
     b"\x48\xa9\x78\x56\x34\x12",
@@ -475,6 +492,23 @@ test "project Basic BIL lift covers x86 cmp and test flag ops" {
         stmts[6].to_string(),
         "ZF:imm1 := (0:64u == %test_tmp:imm64)",
       )
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let test8_imm = basic_bil_decode(
+    "x86_64",
+    b"\x41\xf6\xc0\xff",
+    start=0x702fUL,
+  )
+  match test8_imm.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 7)
+      assert_string(
+        stmts[0].to_string(),
+        "%test_tmp:imm8 := (R8B:imm8 & 0xFF:8u)",
+      )
+      assert_string(stmts[6].to_string(), "ZF:imm1 := (0:8u == %test_tmp:imm8)")
     }
     Err(reason) => fail(reason)
   }

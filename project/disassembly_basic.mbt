@@ -1627,7 +1627,7 @@ fn project_disassembly_basic_x86_logic_rr(
   if data_width == 32 && (rex & 0x8) != 0 {
     return None
   }
-  if data_width != 32 && data_width != 64 {
+  if data_width != 8 && data_width != 32 && data_width != 64 {
     return None
   }
   if bytes.length() < opcode_index + 2 {
@@ -1635,12 +1635,19 @@ fn project_disassembly_basic_x86_logic_rr(
   } else {
     let opcode = bytes[opcode_index].to_int()
     let modrm = bytes[opcode_index + 1].to_int()
-    let op = match opcode {
-      0x09 | 0x0b => "OR"
-      0x21 | 0x23 => "AND"
-      0x31 | 0x33 => "XOR"
-      0x85 => "TEST"
-      _ => ""
+    let op = if data_width == 8 {
+      match opcode {
+        0x84 => "TEST"
+        _ => ""
+      }
+    } else {
+      match opcode {
+        0x09 | 0x0b => "OR"
+        0x21 | 0x23 => "AND"
+        0x31 | 0x33 => "XOR"
+        0x85 => "TEST"
+        _ => ""
+      }
     }
     if op == "" || ((modrm >> 6) & 0x3) != 0x3 {
       None
@@ -1657,8 +1664,16 @@ fn project_disassembly_basic_x86_logic_rr(
         (
           opcode_index + 2,
           op + "\{data_width}rr" + suffix,
-          project_disassembly_basic_x86_gpr_name(dst, data_width),
-          project_disassembly_basic_x86_gpr_name(src, data_width),
+          if data_width == 8 {
+            project_disassembly_basic_x86_gpr8_name(dst, rex != 0)
+          } else {
+            project_disassembly_basic_x86_gpr_name(dst, data_width)
+          },
+          if data_width == 8 {
+            project_disassembly_basic_x86_gpr8_name(src, rex != 0)
+          } else {
+            project_disassembly_basic_x86_gpr_name(src, data_width)
+          },
         ),
       )
     }
@@ -1875,14 +1890,31 @@ fn project_disassembly_basic_x86_test_imm(
   if data_width == 32 && (rex & 0x8) != 0 {
     return None
   }
-  if data_width != 32 && data_width != 64 {
+  if data_width != 8 && data_width != 32 && data_width != 64 {
     return None
   }
-  if bytes.length() < opcode_index + 5 {
+  if bytes.length() < opcode_index + 2 {
     return None
   }
   let opcode = bytes[opcode_index].to_int()
-  if opcode == 0xa9 {
+  if data_width == 8 && opcode == 0xa8 {
+    Some(
+      (
+        opcode_index + 2,
+        "TEST8ri8",
+        [
+          ProjectInstructionOperand::register(name="AL"),
+          ProjectInstructionOperand::immediate(
+            bytes[opcode_index + 1].to_int().to_int64(),
+          ),
+        ],
+        [],
+      ),
+    )
+  } else if data_width != 8 && opcode == 0xa9 {
+    if bytes.length() < opcode_index + 5 {
+      return None
+    }
     match project_disassembly_basic_x86_i32_at(bytes, opcode_index + 1) {
       Some(imm) =>
         Some(
@@ -1900,15 +1932,21 @@ fn project_disassembly_basic_x86_test_imm(
         )
       None => None
     }
-  } else if opcode == 0xf7 {
+  } else if opcode == (if data_width == 8 { 0xf6 } else { 0xf7 }) {
     let modrm = bytes[opcode_index + 1].to_int()
     let group = (modrm >> 3) & 0x7
+    let imm_width = if data_width == 8 { 1 } else { 4 }
     if group != 0 ||
       ((modrm >> 6) & 0x3) != 0x3 ||
-      bytes.length() < opcode_index + 6 {
+      bytes.length() < opcode_index + 2 + imm_width {
       None
     } else {
-      match project_disassembly_basic_x86_i32_at(bytes, opcode_index + 2) {
+      match
+        (if data_width == 8 {
+          Some(bytes[opcode_index + 2].to_int().to_int64())
+        } else {
+          project_disassembly_basic_x86_i32_at(bytes, opcode_index + 2)
+        }) {
         Some(imm) => {
           let rex_b = if address_width == 64 && (rex & 0x1) != 0 {
             8
@@ -1917,14 +1955,25 @@ fn project_disassembly_basic_x86_test_imm(
           }
           Some(
             (
-              opcode_index + 6,
-              "TEST\{data_width}ri32",
+              opcode_index + 2 + imm_width,
+              if data_width == 8 {
+                "TEST8ri8"
+              } else {
+                "TEST\{data_width}ri32"
+              },
               [
                 ProjectInstructionOperand::register(
-                  name=project_disassembly_basic_x86_gpr_name(
-                    (modrm & 0x7) + rex_b,
-                    data_width,
-                  ),
+                  name=if data_width == 8 {
+                    project_disassembly_basic_x86_gpr8_name(
+                      (modrm & 0x7) + rex_b,
+                      rex != 0,
+                    )
+                  } else {
+                    project_disassembly_basic_x86_gpr_name(
+                      (modrm & 0x7) + rex_b,
+                      data_width,
+                    )
+                  },
                 ),
                 ProjectInstructionOperand::immediate(imm),
               ],
@@ -2893,6 +2942,11 @@ fn project_disassembly_basic_decode_x86_llvm(
           memory, 32, 32,
         ).unwrap()
         Some((length, name, "", "", operands, kinds))
+      } else if project_disassembly_basic_x86_simple(memory, 8, 32) is Some(_) {
+        let (length, name, operands, kinds) = project_disassembly_basic_x86_simple(
+          memory, 8, 32,
+        ).unwrap()
+        Some((length, name, "", "", operands, kinds))
       } else if project_disassembly_basic_x86_push_rm(memory, 32, 32) is Some(_) {
         let (length, name, operands, kinds) = project_disassembly_basic_x86_push_rm(
           memory, 32, 32,
@@ -3012,6 +3066,23 @@ fn project_disassembly_basic_decode_x86_llvm(
         is Some(_) {
         let (length, name, dst, src) = project_disassembly_basic_x86_logic_rr(
           memory, 32, 32,
+        ).unwrap()
+        Some(
+          (
+            length,
+            name,
+            "",
+            "",
+            [
+              ProjectInstructionOperand::register(name=dst),
+              ProjectInstructionOperand::register(name=src),
+            ],
+            [],
+          ),
+        )
+      } else if project_disassembly_basic_x86_logic_rr(memory, 8, 32) is Some(_) {
+        let (length, name, dst, src) = project_disassembly_basic_x86_logic_rr(
+          memory, 8, 32,
         ).unwrap()
         Some(
           (
@@ -3244,6 +3315,11 @@ fn project_disassembly_basic_decode_x86_64_llvm(
       memory, 32, 64,
     ).unwrap()
     Some((length, name, operands, kinds))
+  } else if project_disassembly_basic_x86_simple(memory, 8, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_simple(
+      memory, 8, 64,
+    ).unwrap()
+    Some((length, name, operands, kinds))
   } else if project_disassembly_basic_x86_arith_rr(memory, 64, 64) is Some(_) {
     let (length, name, dst, src) = project_disassembly_basic_x86_arith_rr(
       memory, 64, 64,
@@ -3394,6 +3470,21 @@ fn project_disassembly_basic_decode_x86_64_llvm(
   } else if project_disassembly_basic_x86_logic_rr(memory, 32, 64) is Some(_) {
     let (length, name, dst, src) = project_disassembly_basic_x86_logic_rr(
       memory, 32, 64,
+    ).unwrap()
+    Some(
+      (
+        length,
+        name,
+        [
+          ProjectInstructionOperand::register(name=dst),
+          ProjectInstructionOperand::register(name=src),
+        ],
+        [],
+      ),
+    )
+  } else if project_disassembly_basic_x86_logic_rr(memory, 8, 64) is Some(_) {
+    let (length, name, dst, src) = project_disassembly_basic_x86_logic_rr(
+      memory, 8, 64,
     ).unwrap()
     Some(
       (

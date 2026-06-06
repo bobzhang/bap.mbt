@@ -386,21 +386,27 @@ test "translated BAP basic disassembly decodes x86 cmp and test fixtures" {
     ("x86", b"\x39\xd8", 2, ["CMP32rr", "EAX", "EBX"]),
     ("x86_64", b"\x48\x85\xc0", 3, ["TEST64rr", "RAX", "RAX"]),
     ("x86_64", b"\x4d\x85\xc8", 3, ["TEST64rr", "R8", "R9"]),
+    ("x86_64", b"\x44\x84\xc0", 3, ["TEST8rr", "AL", "R8B"]),
     ("x86", b"\x85\xc0", 2, ["TEST32rr", "EAX", "EAX"]),
+    ("x86", b"\x84\xe0", 2, ["TEST8rr", "AL", "AH"]),
     (
       "x86_64",
       b"\x48\xa9\x78\x56\x34\x12",
       6,
       ["TEST64ri32", "RAX", "0x12345678"],
     ),
+    ("x86_64", b"\xa8\x80", 2, ["TEST8ri8", "AL", "0x80"]),
     ("x86", b"\xa9\xff\x00\x00\x00", 5, ["TEST32ri32", "EAX", "0xff"]),
+    ("x86", b"\xa8\xff", 2, ["TEST8ri8", "AL", "0xff"]),
     ("x86_64", b"\x49\xf7\xc0\xff\xff\xff\xff", 7, ["TEST64ri32", "R8", "-0x1"]),
+    ("x86_64", b"\x41\xf6\xc0\xff", 4, ["TEST8ri8", "R8B", "0xff"]),
     (
       "x86",
       b"\xf7\xc1\x00\x00\x00\x80",
       6,
       ["TEST32ri32", "ECX", "-0x80000000"],
     ),
+    ("x86", b"\xf6\xc4\x80", 3, ["TEST8ri8", "AH", "0x80"]),
   ]
   for sample in samples {
     let disasm = match

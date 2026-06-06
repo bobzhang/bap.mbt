@@ -1672,8 +1672,10 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
       self.project_basic_bil_binop_rr(32, @types.BinOp::bit_xor())
     "XOR64RR" | "XOR64RR_REV" =>
       self.project_basic_bil_binop_rr(64, @types.BinOp::bit_xor())
+    "TEST8RI8" => self.project_basic_bil_test_ri(8)
     "TEST32RI32" => self.project_basic_bil_test_ri(32)
     "TEST64RI32" => self.project_basic_bil_test_ri(64)
+    "TEST8RR" | "TEST8RR_REV" => self.project_basic_bil_test_rr(8)
     "TEST32RR" | "TEST32RR_REV" => self.project_basic_bil_test_rr(32)
     "TEST64RR" | "TEST64RR_REV" => self.project_basic_bil_test_rr(64)
     "PUSH32R" | "PUSH32I8" | "PUSH32I32" => self.project_basic_bil_push(32)

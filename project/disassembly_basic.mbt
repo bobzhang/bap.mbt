@@ -1675,6 +1675,97 @@ fn project_disassembly_basic_x86_reg_update(
 }
 
 ///|
+fn project_disassembly_basic_x86_test_imm(
+  memory : @memory.Memory,
+  data_width : Int,
+  address_width : Int,
+) -> (
+  Int,
+  String,
+  Array[ProjectInstructionOperand],
+  Array[ProjectInstructionKind],
+)? {
+  let bytes = memory.to_bytes()
+  let (opcode_index, rex) = if address_width == 64 &&
+    bytes.length() >= 2 &&
+    bytes[0].to_int() >= 0x40 &&
+    bytes[0].to_int() <= 0x4f {
+    (1, bytes[0].to_int())
+  } else {
+    (0, 0)
+  }
+  if data_width == 64 && (rex & 0x8) == 0 {
+    return None
+  }
+  if data_width == 32 && (rex & 0x8) != 0 {
+    return None
+  }
+  if data_width != 32 && data_width != 64 {
+    return None
+  }
+  if bytes.length() < opcode_index + 5 {
+    return None
+  }
+  let opcode = bytes[opcode_index].to_int()
+  if opcode == 0xa9 {
+    match project_disassembly_basic_x86_i32_at(bytes, opcode_index + 1) {
+      Some(imm) =>
+        Some(
+          (
+            opcode_index + 5,
+            "TEST\{data_width}ri32",
+            [
+              ProjectInstructionOperand::register(
+                name=project_disassembly_basic_x86_gpr_name(0, data_width),
+              ),
+              ProjectInstructionOperand::immediate(imm),
+            ],
+            [],
+          ),
+        )
+      None => None
+    }
+  } else if opcode == 0xf7 {
+    let modrm = bytes[opcode_index + 1].to_int()
+    let group = (modrm >> 3) & 0x7
+    if group != 0 ||
+      ((modrm >> 6) & 0x3) != 0x3 ||
+      bytes.length() < opcode_index + 6 {
+      None
+    } else {
+      match project_disassembly_basic_x86_i32_at(bytes, opcode_index + 2) {
+        Some(imm) => {
+          let rex_b = if address_width == 64 && (rex & 0x1) != 0 {
+            8
+          } else {
+            0
+          }
+          Some(
+            (
+              opcode_index + 6,
+              "TEST\{data_width}ri32",
+              [
+                ProjectInstructionOperand::register(
+                  name=project_disassembly_basic_x86_gpr_name(
+                    (modrm & 0x7) + rex_b,
+                    data_width,
+                  ),
+                ),
+                ProjectInstructionOperand::immediate(imm),
+              ],
+              [],
+            ),
+          )
+        }
+        None => None
+      }
+    }
+  } else {
+    None
+  }
+}
+
+///|
 fn project_disassembly_basic_x86_incdec_reg(
   memory : @memory.Memory,
   data_width : Int,
@@ -2033,7 +2124,14 @@ fn project_disassembly_basic_x86_simple(
   match project_disassembly_basic_x86_reg_update(memory, width, address_width) {
     Some(decoded) => Some(decoded)
     None =>
-      project_disassembly_basic_x86_group5_control(memory, width, address_width)
+      match
+        project_disassembly_basic_x86_test_imm(memory, width, address_width) {
+        Some(decoded) => Some(decoded)
+        None =>
+          project_disassembly_basic_x86_group5_control(
+            memory, width, address_width,
+          )
+      }
   }
 }
 

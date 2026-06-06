@@ -413,6 +413,49 @@ test "project Basic BIL lift covers x86 cmp and test flag ops" {
     }
     Err(reason) => fail(reason)
   }
+
+  let test_imm = basic_bil_decode(
+    "x86_64",
+    b"\x48\xa9\x78\x56\x34\x12",
+    start=0x702aUL,
+  )
+  match test_imm.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 7)
+      assert_string(
+        stmts[0].to_string(),
+        "%test_tmp:imm64 := (RAX:imm64 & 0x12345678:64u)",
+      )
+      assert_string(stmts[1].to_string(), "CF:imm1 := 0:1u")
+      assert_string(stmts[2].to_string(), "OF:imm1 := 0:1u")
+      assert_true(stmts[3].to_string().contains("AF undefined after TEST"))
+      assert_string(
+        stmts[6].to_string(),
+        "ZF:imm1 := (0:64u == %test_tmp:imm64)",
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let test_ext_imm = basic_bil_decode(
+    "x86_64",
+    b"\x49\xf7\xc0\xff\xff\xff\xff",
+    start=0x7030UL,
+  )
+  match test_ext_imm.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 7)
+      assert_string(
+        stmts[0].to_string(),
+        "%test_tmp:imm64 := (R8:imm64 & 0xFFFFFFFFFFFFFFFF:64u)",
+      )
+      assert_string(
+        stmts[6].to_string(),
+        "ZF:imm1 := (0:64u == %test_tmp:imm64)",
+      )
+    }
+    Err(reason) => fail(reason)
+  }
 }
 
 ///|

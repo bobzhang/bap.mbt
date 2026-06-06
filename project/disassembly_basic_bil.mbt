@@ -519,6 +519,42 @@ fn ProjectDisassemblyInstruction::project_basic_bil_test_rr(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_basic_bil_test_ri(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let lhs = match self.project_basic_bil_register(0, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let imm = match self.project_basic_bil_immediate(1) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let rhs_exp = match project_basic_bil_int(imm, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let tmp = project_basic_bil_virtual("test_tmp", width)
+  let lhs_exp = @types.Exp::var_exp(lhs)
+  let result_exp = @types.Exp::var_exp(tmp)
+  let flags = match project_basic_bil_x86_test_flag_moves(result_exp, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let stmts = [
+    @types.Stmt::move_stmt(
+      tmp,
+      @types.Exp::binop(@types.BinOp::bit_and(), lhs_exp, rhs_exp),
+    ),
+  ]
+  for stmt in flags {
+    stmts.push(stmt)
+  }
+  Ok(stmts)
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_basic_bil_incdec(
   self : ProjectDisassemblyInstruction,
   width : Int,
@@ -1629,6 +1665,8 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
       self.project_basic_bil_binop_rr(32, @types.BinOp::bit_xor())
     "XOR64RR" | "XOR64RR_REV" =>
       self.project_basic_bil_binop_rr(64, @types.BinOp::bit_xor())
+    "TEST32RI32" => self.project_basic_bil_test_ri(32)
+    "TEST64RI32" => self.project_basic_bil_test_ri(64)
     "TEST32RR" | "TEST32RR_REV" => self.project_basic_bil_test_rr(32)
     "TEST64RR" | "TEST64RR_REV" => self.project_basic_bil_test_rr(64)
     "PUSH32R" | "PUSH32I8" | "PUSH32I32" => self.project_basic_bil_push(32)

@@ -360,6 +360,20 @@ test "translated BAP basic disassembly decodes x86 cmp and test fixtures" {
     ("x86_64", b"\x48\x85\xc0", 3, ["TEST64rr", "RAX", "RAX"]),
     ("x86_64", b"\x4d\x85\xc8", 3, ["TEST64rr", "R8", "R9"]),
     ("x86", b"\x85\xc0", 2, ["TEST32rr", "EAX", "EAX"]),
+    (
+      "x86_64",
+      b"\x48\xa9\x78\x56\x34\x12",
+      6,
+      ["TEST64ri32", "RAX", "0x12345678"],
+    ),
+    ("x86", b"\xa9\xff\x00\x00\x00", 5, ["TEST32ri32", "EAX", "0xff"]),
+    ("x86_64", b"\x49\xf7\xc0\xff\xff\xff\xff", 7, ["TEST64ri32", "R8", "-0x1"]),
+    (
+      "x86",
+      b"\xf7\xc1\x00\x00\x00\x80",
+      6,
+      ["TEST32ri32", "ECX", "-0x80000000"],
+    ),
   ]
   for sample in samples {
     let disasm = match

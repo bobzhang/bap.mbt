@@ -580,6 +580,138 @@ test "translated DWARF DIE attributes expose payload readers" {
 }
 
 ///|
+test "translated DWARF DIE attributes resolve indirect value readers" {
+  let abbrev = b"\x01\x2e\x00" +
+    b"\x03\x16" +
+    b"\x11\x16" +
+    b"\x12\x16" +
+    b"\x0c\x16" +
+    b"\x3c\x16" +
+    b"\x69\x16" +
+    b"\x55\x16" +
+    b"\x02\x16" +
+    b"\x47\x16" +
+    b"\x6e\x16" +
+    b"\x52\x16" +
+    b"\x00\x00" +
+    b"\x02\x2e\x00" +
+    b"\x03\x08" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x4b\x00\x00\x00" +
+    b"\x04\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x04" +
+    b"\x01" +
+    b"\x08indirect\x00" +
+    b"\x01\x30\x00\x00\x00" +
+    b"\x0b\x07" +
+    b"\x0a\x02xy" +
+    b"\x19" +
+    b"\x1e" +
+    b"\x00\x01\x02\x03\x04\x05\x06\x07" +
+    b"\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f" +
+    b"\x17\x00\x00\x00\x00" +
+    b"\x18\x01\x50" +
+    b"\x13\x47\x00\x00\x00" +
+    b"\x0e\x00\x00\x00\x00" +
+    b"\x29\x01" +
+    b"\x02target\x00"
+  let data = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=LittleEndian,
+      info~,
+      abbrev~,
+      str=b"linked\x00",
+      addr=b"\x20\x00\x00\x00\x2c\x00\x00\x00",
+      ranges=b"\x10\x00\x00\x00\x18\x00\x00\x00" +
+        b"\x00\x00\x00\x00\x00\x00\x00\x00",
+    ),
+  )
+  let info_section = expect_section_buffer(data.section(DwarfInfo))
+  let dies = expect_dies(data.unit_dies())
+  assert_true(dies.length() == 2)
+  let attrs = dies[0].attributes()
+  assert_true(attrs.length() == 11)
+  assert_true(
+    expect_die_attr_string(attrs[0].string(info_section)) == "indirect",
+  )
+  assert_true(
+    expect_die_attr_string(attrs[0].string_value(data, dwarf_size=W32)) ==
+    "indirect",
+  )
+  assert_true(
+    expect_die_attr_address(
+      attrs[1].address(info_section, endian=LittleEndian, addr_size=W32),
+    ) ==
+    0x30UL,
+  )
+  assert_true(
+    expect_die_attr_address(attrs[1].address_value(data, addr_size=W32)) ==
+    0x30UL,
+  )
+  assert_true(
+    expect_die_attr_const(
+      attrs[2].const_value(info_section, endian=LittleEndian),
+    ) ==
+    7L,
+  )
+  assert_true(
+    expect_die_attr_bytes(attrs[3].block(info_section, endian=LittleEndian)) ==
+    b"xy",
+  )
+  assert_true(expect_die_attr_flag(attrs[4].flag(info_section)))
+  assert_true(
+    expect_die_attr_bytes(attrs[5].data16(info_section)) ==
+    b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f",
+  )
+  let ranges = expect_range_list(
+    attrs[6].range_list_value(data, version=4, dwarf_size=W32, addr_size=W32),
+  )
+  assert_true(ranges.entries() == [DwarfRangeOffsetPair(0x10, 0x18)])
+  assert_true(
+    expect_die_location_expr(
+      attrs[7].location_value(data, version=4, dwarf_size=W32, addr_size=W32),
+    ) ==
+    b"\x50",
+  )
+  assert_true(
+    expect_die_attr_ref(
+      attrs[8].reference(
+        info_section,
+        endian=LittleEndian,
+        version=4,
+        dwarf_size=W32,
+        addr_size=W32,
+      ),
+    ) ==
+    DwarfUnitReference(0x47),
+  )
+  assert_true(
+    expect_optional_die(dies[0].reference_target(data, attrs[8])).map(die => {
+      die.section_offset()
+    }) ==
+    Some(0x47),
+  )
+  assert_true(
+    expect_die_attr_string(attrs[9].string_value(data, dwarf_size=W32)) ==
+    "linked",
+  )
+  assert_true(
+    expect_die_attr_index(
+      attrs[10].index_value(info_section, endian=LittleEndian),
+    ) ==
+    1,
+  )
+  assert_true(
+    expect_die_attr_address(
+      attrs[10].address_value(data, addr_size=W32, addr_base=0),
+    ) ==
+    0x2cUL,
+  )
+}
+
+///|
 test "translated DWARF DIE attributes resolve address forms through data" {
   let abbrev = b"\x01\x2e\x00" +
     b"\x11\x01" +

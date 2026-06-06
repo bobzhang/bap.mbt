@@ -268,6 +268,36 @@ pub fn DwarfDieAttribute::input(
 }
 
 ///|
+fn DwarfDieAttribute::indirect_attribute(
+  self : DwarfDieAttribute,
+  info : DwarfSectionBuffer,
+) -> Result[DwarfDieAttribute, String] {
+  match self.form() {
+    DwarfIndirect =>
+      match self.input(info) {
+        Ok(input) =>
+          match input.read_form() {
+            Ok((actual_form, next)) =>
+              Ok(
+                dwarf_die_attribute_create(
+                  index=self.index_value,
+                  field=DwarfAbbrevField::create(
+                    attr=self.attr(),
+                    form=actual_form,
+                  ),
+                  offset=next.position(),
+                  end_offset=self.end_offset_value,
+                ),
+              )
+            Err(reason) => Err(reason)
+          }
+        Err(reason) => Err(reason)
+      }
+    _ => Ok(self)
+  }
+}
+
+///|
 pub fn DwarfDieAttribute::string(
   self : DwarfDieAttribute,
   info : DwarfSectionBuffer,
@@ -280,6 +310,11 @@ pub fn DwarfDieAttribute::string(
             Ok((value, next)) => dwarf_die_attribute_finish(self, value, next)
             Err(reason) => Err(reason)
           }
+        Err(reason) => Err(reason)
+      }
+    DwarfIndirect =>
+      match self.indirect_attribute(info) {
+        Ok(actual) => actual.string(info)
         Err(reason) => Err(reason)
       }
     _ => Err("DWARF DIE attribute is not an inline string")
@@ -325,6 +360,11 @@ pub fn DwarfDieAttribute::string_value(
       }
     DwarfStrpSup | DwarfStrpAlt =>
       Err("DWARF string attribute targets external debug data")
+    DwarfIndirect =>
+      match self.indirect_attribute(info) {
+        Ok(actual) => actual.string_value(data, dwarf_size~, str_offsets_base~)
+        Err(reason) => Err(reason)
+      }
     _ => Err("DWARF DIE attribute is not a string value")
   }
 }
@@ -344,6 +384,11 @@ pub fn DwarfDieAttribute::address(
             Ok((value, next)) => dwarf_die_attribute_finish(self, value, next)
             Err(reason) => Err(reason)
           }
+        Err(reason) => Err(reason)
+      }
+    DwarfIndirect =>
+      match self.indirect_attribute(info) {
+        Ok(actual) => actual.address(info, endian~, addr_size~)
         Err(reason) => Err(reason)
       }
     _ => Err("DWARF DIE attribute is not an address")
@@ -395,6 +440,11 @@ pub fn DwarfDieAttribute::address_value(
         Err(reason) => Err(reason)
       }
     }
+    DwarfIndirect =>
+      match self.indirect_attribute(info) {
+        Ok(actual) => actual.address_value(data, addr_size~, addr_base?)
+        Err(reason) => Err(reason)
+      }
     _ => Err("DWARF DIE attribute is not an address value")
   }
 }
@@ -454,6 +504,19 @@ pub fn DwarfDieAttribute::range_list_value(
         Err(reason) => Err(reason)
       }
     }
+    DwarfIndirect =>
+      match self.indirect_attribute(info) {
+        Ok(actual) =>
+          actual.range_list_value(
+            data,
+            version~,
+            dwarf_size~,
+            addr_size~,
+            ranges_base?,
+            rnglists_base?,
+          )
+        Err(reason) => Err(reason)
+      }
     _ => Err("DWARF DIE attribute is not a range-list value")
   }
 }
@@ -508,6 +571,18 @@ pub fn DwarfDieAttribute::location_list_value(
         Err(reason) => Err(reason)
       }
     }
+    DwarfIndirect =>
+      match self.indirect_attribute(info) {
+        Ok(actual) =>
+          actual.location_list_value(
+            data,
+            version~,
+            dwarf_size~,
+            addr_size~,
+            loclists_base?,
+          )
+        Err(reason) => Err(reason)
+      }
     _ => Err("DWARF DIE attribute is not a location-list value")
   }
 }
@@ -544,29 +619,15 @@ pub fn DwarfDieAttribute::location_value(
         Err(reason) => Err(reason)
       }
     DwarfIndirect =>
-      match self.input(info) {
-        Ok(input) =>
-          match input.read_form() {
-            Ok((actual_form, next)) => {
-              let actual = dwarf_die_attribute_create(
-                index=self.index_value,
-                field=DwarfAbbrevField::create(
-                  attr=self.attr(),
-                  form=actual_form,
-                ),
-                offset=next.position(),
-                end_offset=self.end_offset_value,
-              )
-              actual.location_value(
-                data,
-                version~,
-                dwarf_size~,
-                addr_size~,
-                loclists_base?,
-              )
-            }
-            Err(reason) => Err(reason)
-          }
+      match self.indirect_attribute(info) {
+        Ok(actual) =>
+          actual.location_value(
+            data,
+            version~,
+            dwarf_size~,
+            addr_size~,
+            loclists_base?,
+          )
         Err(reason) => Err(reason)
       }
     _ => Err("DWARF DIE attribute is not a location value")
@@ -595,6 +656,11 @@ pub fn DwarfDieAttribute::section_offset_value(
           }
         Err(reason) => Err(reason)
       }
+    DwarfIndirect =>
+      match self.indirect_attribute(info) {
+        Ok(actual) => actual.section_offset_value(info, endian~, dwarf_size~)
+        Err(reason) => Err(reason)
+      }
     _ => Err("DWARF DIE attribute is not a section offset")
   }
 }
@@ -609,6 +675,11 @@ pub fn DwarfDieAttribute::index_value(
     DwarfStrx(spec) | DwarfAddrx(spec) =>
       (input : DwarfInput) => input.read_index(spec, endian)
     DwarfRnglistx | DwarfLoclistx => (input : DwarfInput) => input.read_code()
+    DwarfIndirect =>
+      return match self.indirect_attribute(info) {
+        Ok(actual) => actual.index_value(info, endian~)
+        Err(reason) => Err(reason)
+      }
     _ => return Err("DWARF DIE attribute is not an index")
   }
   match self.input(info) {
@@ -742,6 +813,12 @@ pub fn DwarfDieAttribute::reference(
           }
         Err(reason) => Err(reason)
       }
+    DwarfIndirect =>
+      match self.indirect_attribute(info) {
+        Ok(actual) =>
+          actual.reference(info, endian~, version~, dwarf_size~, addr_size~)
+        Err(reason) => Err(reason)
+      }
     _ => Err("DWARF DIE attribute is not a reference")
   }
 }
@@ -768,6 +845,11 @@ pub fn DwarfDieAttribute::const_value(
           }
         Err(reason) => Err(reason)
       }
+    DwarfIndirect =>
+      match self.indirect_attribute(info) {
+        Ok(actual) => actual.const_value(info, endian~)
+        Err(reason) => Err(reason)
+      }
     _ => Err("DWARF DIE attribute is not a constant")
   }
 }
@@ -778,18 +860,31 @@ pub fn DwarfDieAttribute::block(
   info : DwarfSectionBuffer,
   endian~ : @bitvec.Endian,
 ) -> Result[Bytes, String] {
-  let lenspec = match self.form() {
-    DwarfBlock(spec) => spec
-    DwarfExpr => DwarfLeb128
-    _ => return Err("DWARF DIE attribute is not a block")
-  }
-  match self.input(info) {
-    Ok(input) =>
-      match input.read_block(lenspec~, endian~) {
-        Ok((value, next)) => dwarf_die_attribute_finish(self, value, next)
+  match self.form() {
+    DwarfBlock(lenspec) =>
+      match self.input(info) {
+        Ok(input) =>
+          match input.read_block(lenspec~, endian~) {
+            Ok((value, next)) => dwarf_die_attribute_finish(self, value, next)
+            Err(reason) => Err(reason)
+          }
         Err(reason) => Err(reason)
       }
-    Err(reason) => Err(reason)
+    DwarfExpr =>
+      match self.input(info) {
+        Ok(input) =>
+          match input.read_block(lenspec=DwarfLeb128, endian~) {
+            Ok((value, next)) => dwarf_die_attribute_finish(self, value, next)
+            Err(reason) => Err(reason)
+          }
+        Err(reason) => Err(reason)
+      }
+    DwarfIndirect =>
+      match self.indirect_attribute(info) {
+        Ok(actual) => actual.block(info, endian~)
+        Err(reason) => Err(reason)
+      }
+    _ => Err("DWARF DIE attribute is not a block")
   }
 }
 
@@ -807,6 +902,11 @@ pub fn DwarfDieAttribute::data16(
           } else {
             Err("DWARF data16 attribute is not 16 bytes")
           }
+        Err(reason) => Err(reason)
+      }
+    DwarfIndirect =>
+      match self.indirect_attribute(info) {
+        Ok(actual) => actual.data16(info)
         Err(reason) => Err(reason)
       }
     _ => Err("DWARF DIE attribute is not data16")
@@ -833,6 +933,11 @@ pub fn DwarfDieAttribute::flag(
               dwarf_die_attribute_finish(self, value != 0, next)
             Err(reason) => Err(reason)
           }
+        Err(reason) => Err(reason)
+      }
+    DwarfIndirect =>
+      match self.indirect_attribute(info) {
+        Ok(actual) => actual.flag(info)
         Err(reason) => Err(reason)
       }
     _ => Err("DWARF DIE attribute is not a flag")

@@ -990,7 +990,7 @@ fn project_disassembly_basic_x86_logic_rr(
 }
 
 ///|
-fn project_disassembly_basic_x86_addsub_ri8(
+fn project_disassembly_basic_x86_binop_ri8(
   memory : @memory.Memory,
   data_width : Int,
   address_width : Int,
@@ -1027,7 +1027,15 @@ fn project_disassembly_basic_x86_addsub_ri8(
       None
     } else {
       let group = (modrm >> 3) & 0x7
-      if group != 0 && group != 5 {
+      let op = match group {
+        0 => "ADD"
+        1 => "OR"
+        4 => "AND"
+        5 => "SUB"
+        6 => "XOR"
+        _ => ""
+      }
+      if op == "" {
         None
       } else {
         let rex_b = if address_width == 64 && (rex & 0x1) != 0 { 8 } else { 0 }
@@ -1035,15 +1043,10 @@ fn project_disassembly_basic_x86_addsub_ri8(
           (modrm & 0x7) + rex_b,
           data_width,
         )
-        let name = if group == 0 {
-          "ADD\{data_width}ri8"
-        } else {
-          "SUB\{data_width}ri8"
-        }
         Some(
           (
             opcode_index + 3,
-            name,
+            op + "\{data_width}ri8",
             [
               ProjectInstructionOperand::register(name=register),
               ProjectInstructionOperand::register(name=register),
@@ -1639,7 +1642,7 @@ fn project_disassembly_basic_decode_x86_llvm(
           Err(reason) => Err(reason)
         }
       } else {
-        match project_disassembly_basic_x86_addsub_ri8(memory, 32, 32) {
+        match project_disassembly_basic_x86_binop_ri8(memory, 32, 32) {
           Some((length, name, operands, kinds)) =>
             match memory.view(words=length) {
               Ok(chunk) =>
@@ -1999,13 +2002,13 @@ fn project_disassembly_basic_decode_x86_64_llvm(
     String,
     Array[ProjectInstructionOperand],
     Array[ProjectInstructionKind],
-  )? = if project_disassembly_basic_x86_addsub_ri8(memory, 64, 64) is Some(_) {
-    let (length, name, operands, kinds) = project_disassembly_basic_x86_addsub_ri8(
+  )? = if project_disassembly_basic_x86_binop_ri8(memory, 64, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_binop_ri8(
       memory, 64, 64,
     ).unwrap()
     Some((length, name, operands, kinds))
-  } else if project_disassembly_basic_x86_addsub_ri8(memory, 32, 64) is Some(_) {
-    let (length, name, operands, kinds) = project_disassembly_basic_x86_addsub_ri8(
+  } else if project_disassembly_basic_x86_binop_ri8(memory, 32, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_binop_ri8(
       memory, 32, 64,
     ).unwrap()
     Some((length, name, operands, kinds))

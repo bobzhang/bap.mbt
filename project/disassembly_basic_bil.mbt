@@ -161,7 +161,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_immediate(
 }
 
 ///|
-fn ProjectDisassemblyInstruction::project_basic_bil_addsub(
+fn ProjectDisassemblyInstruction::project_basic_bil_binop_ri(
   self : ProjectDisassemblyInstruction,
   width : Int,
   op : @types.BinOp,
@@ -860,10 +860,16 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
   self : ProjectDisassemblyInstruction,
 ) -> Result[Array[@types.Stmt], String] {
   match self.name().to_upper() {
-    "SUB32RI8" => self.project_basic_bil_addsub(32, @types.BinOp::minus())
-    "ADD32RI8" => self.project_basic_bil_addsub(32, @types.BinOp::plus())
-    "SUB64RI8" => self.project_basic_bil_addsub(64, @types.BinOp::minus())
-    "ADD64RI8" => self.project_basic_bil_addsub(64, @types.BinOp::plus())
+    "SUB32RI8" => self.project_basic_bil_binop_ri(32, @types.BinOp::minus())
+    "ADD32RI8" => self.project_basic_bil_binop_ri(32, @types.BinOp::plus())
+    "SUB64RI8" => self.project_basic_bil_binop_ri(64, @types.BinOp::minus())
+    "ADD64RI8" => self.project_basic_bil_binop_ri(64, @types.BinOp::plus())
+    "OR32RI8" => self.project_basic_bil_binop_ri(32, @types.BinOp::bit_or())
+    "OR64RI8" => self.project_basic_bil_binop_ri(64, @types.BinOp::bit_or())
+    "AND32RI8" => self.project_basic_bil_binop_ri(32, @types.BinOp::bit_and())
+    "AND64RI8" => self.project_basic_bil_binop_ri(64, @types.BinOp::bit_and())
+    "XOR32RI8" => self.project_basic_bil_binop_ri(32, @types.BinOp::bit_xor())
+    "XOR64RI8" => self.project_basic_bil_binop_ri(64, @types.BinOp::bit_xor())
     "SUB32RR" | "SUB32RR_REV" =>
       self.project_basic_bil_binop_rr(32, @types.BinOp::minus())
     "ADD32RR" | "ADD32RR_REV" =>

@@ -133,6 +133,38 @@ test "project disasm Basic llvm decodes x86 register arithmetic" {
 }
 
 ///|
+test "project disasm Basic llvm decodes x86 register logical immediates" {
+  let memory = project_disasm_test_memory(
+    0xe5c0UL,
+    b"\x48\x83\xc8\x0f" + b"\x48\x83\xf0\x01" + b"\xc3",
+  )
+  match
+    @project.ProjectDisasm::of_mem(
+      @core_theory.Target::x86_64(),
+      memory,
+      backend="basic",
+    ) {
+    Ok(disasm) => {
+      let insns = disasm.insns()
+      assert_true(insns.map(item => item.0.length()) == [4, 4, 1])
+      assert_true(
+        project_disasm_test_instruction_strings(insns[0].1) ==
+        ["OR64ri8", "RAX", "RAX", "0xf"],
+      )
+      assert_true(
+        project_disasm_test_instruction_strings(insns[1].1) ==
+        ["XOR64ri8", "RAX", "RAX", "0x1"],
+      )
+      assert_true(
+        project_disasm_test_instruction_strings(insns[2].1) == ["RET"],
+      )
+      assert_true(disasm.disassembly().block_count() == 1)
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project disasm Basic llvm decodes x86 register rr arithmetic" {
   let memory = project_disasm_test_memory(
     0xe5b0UL,

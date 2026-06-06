@@ -162,6 +162,34 @@ test "project Basic BIL lift covers x86 register add-sub immediates" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 register logical immediates" {
+  let or64 = basic_bil_decode("x86_64", b"\x48\x83\xc8\x0f", start=0x7016UL)
+  match or64.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["RAX:imm64 := (RAX:imm64 | 0xF:64u)"])
+    Err(reason) => fail(reason)
+  }
+
+  let and64_ext = basic_bil_decode(
+    "x86_64",
+    b"\x49\x83\xe0\x7f",
+    start=0x701aUL,
+  )
+  match and64_ext.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["R8:imm64 := (R8:imm64 & 0x7F:64u)"])
+    Err(reason) => fail(reason)
+  }
+
+  let xor32 = basic_bil_decode("x86", b"\x83\xf2\x01", start=0x701eUL)
+  match xor32.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["EDX:imm32 := (EDX:imm32 ^ 1:32u)"])
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86 register add-sub rr ops" {
   let add64 = basic_bil_decode("x86_64", b"\x48\x01\xd8", start=0x7017UL)
   match add64.lift_basic_bil() {

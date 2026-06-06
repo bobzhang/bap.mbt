@@ -433,17 +433,33 @@ pub(all) enum DwarfForm {
   DwarfFlagPresent
 } derive(Eq, @debug.Debug)
 pub fn DwarfForm::addr() -> Self
+pub fn DwarfForm::addrx(DwarfIndexSpec) -> Self
 pub fn DwarfForm::addrx_offset() -> Self
 pub fn DwarfForm::block(DwarfLenspec) -> Self
 pub fn DwarfForm::const_(DwarfLenspec) -> Self
+pub fn DwarfForm::data16() -> Self
 pub fn DwarfForm::expr() -> Self
+pub fn DwarfForm::flag() -> Self
 pub fn DwarfForm::flag_present() -> Self
+pub fn DwarfForm::implicit_const(Int64) -> Self
 pub fn DwarfForm::indirect() -> Self
+pub fn DwarfForm::line_strp() -> Self
+pub fn DwarfForm::loclistx() -> Self
 pub fn DwarfForm::offset() -> Self
 pub fn DwarfForm::ref_(DwarfLenspec) -> Self
+pub fn DwarfForm::ref_addr() -> Self
+pub fn DwarfForm::ref_alt() -> Self
+pub fn DwarfForm::ref_sig8() -> Self
+pub fn DwarfForm::ref_sup4() -> Self
+pub fn DwarfForm::ref_sup8() -> Self
+pub fn DwarfForm::rnglistx() -> Self
 pub fn DwarfForm::sig_() -> Self
+pub fn DwarfForm::signed_const(DwarfLenspec) -> Self
 pub fn DwarfForm::string() -> Self
 pub fn DwarfForm::strp() -> Self
+pub fn DwarfForm::strp_alt() -> Self
+pub fn DwarfForm::strp_sup() -> Self
+pub fn DwarfForm::strx(DwarfIndexSpec) -> Self
 
 type DwarfFunction
 pub fn DwarfFunction::create(name~ : String, low_pc~ : UInt64, high_pc? : UInt64) -> Self
@@ -458,6 +474,11 @@ pub(all) enum DwarfIndexSpec {
   DwarfIndexThree
   DwarfIndexFour
 } derive(Eq, @debug.Debug)
+pub fn DwarfIndexSpec::four() -> Self
+pub fn DwarfIndexSpec::leb128() -> Self
+pub fn DwarfIndexSpec::one() -> Self
+pub fn DwarfIndexSpec::three() -> Self
+pub fn DwarfIndexSpec::two() -> Self
 
 type DwarfInfoUnitHeader
 pub fn DwarfInfoUnitHeader::abbrev_offset(Self) -> Int

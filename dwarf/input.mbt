@@ -48,6 +48,31 @@ pub(all) enum DwarfIndexSpec {
 } derive(Eq, Debug)
 
 ///|
+pub fn DwarfIndexSpec::leb128() -> DwarfIndexSpec {
+  DwarfIndexLeb128
+}
+
+///|
+pub fn DwarfIndexSpec::one() -> DwarfIndexSpec {
+  DwarfIndexOne
+}
+
+///|
+pub fn DwarfIndexSpec::two() -> DwarfIndexSpec {
+  DwarfIndexTwo
+}
+
+///|
+pub fn DwarfIndexSpec::three() -> DwarfIndexSpec {
+  DwarfIndexThree
+}
+
+///|
+pub fn DwarfIndexSpec::four() -> DwarfIndexSpec {
+  DwarfIndexFour
+}
+
+///|
 pub(all) enum DwarfTag {
   DwarfArrayType
   DwarfClassType
@@ -1260,6 +1285,16 @@ pub fn DwarfForm::const_(spec : DwarfLenspec) -> DwarfForm {
 }
 
 ///|
+pub fn DwarfForm::signed_const(spec : DwarfLenspec) -> DwarfForm {
+  DwarfSignedConst(spec)
+}
+
+///|
+pub fn DwarfForm::flag() -> DwarfForm {
+  DwarfFlag
+}
+
+///|
 pub fn DwarfForm::flag_present() -> DwarfForm {
   DwarfFlagPresent
 }
@@ -1275,8 +1310,78 @@ pub fn DwarfForm::strp() -> DwarfForm {
 }
 
 ///|
+pub fn DwarfForm::strx(spec : DwarfIndexSpec) -> DwarfForm {
+  DwarfStrx(spec)
+}
+
+///|
+pub fn DwarfForm::addrx(spec : DwarfIndexSpec) -> DwarfForm {
+  DwarfAddrx(spec)
+}
+
+///|
 pub fn DwarfForm::addrx_offset() -> DwarfForm {
   DwarfAddrxOffset
+}
+
+///|
+pub fn DwarfForm::data16() -> DwarfForm {
+  DwarfData16
+}
+
+///|
+pub fn DwarfForm::line_strp() -> DwarfForm {
+  DwarfLineStrp
+}
+
+///|
+pub fn DwarfForm::implicit_const(value : Int64) -> DwarfForm {
+  DwarfImplicitConst(value)
+}
+
+///|
+pub fn DwarfForm::loclistx() -> DwarfForm {
+  DwarfLoclistx
+}
+
+///|
+pub fn DwarfForm::rnglistx() -> DwarfForm {
+  DwarfRnglistx
+}
+
+///|
+pub fn DwarfForm::strp_sup() -> DwarfForm {
+  DwarfStrpSup
+}
+
+///|
+pub fn DwarfForm::ref_sup4() -> DwarfForm {
+  DwarfRefSup4
+}
+
+///|
+pub fn DwarfForm::ref_sup8() -> DwarfForm {
+  DwarfRefSup8
+}
+
+///|
+pub fn DwarfForm::ref_alt() -> DwarfForm {
+  DwarfRefAlt
+}
+
+///|
+pub fn DwarfForm::strp_alt() -> DwarfForm {
+  DwarfStrpAlt
+}
+
+///|
+pub fn DwarfForm::ref_addr() -> DwarfForm {
+  DwarfRefAddr
+}
+
+///|
+pub fn DwarfForm::ref_sig8() -> DwarfForm {
+  DwarfRefSig8
 }
 
 ///|

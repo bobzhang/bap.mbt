@@ -944,31 +944,50 @@ fn project_disassembly_basic_x86_mov_imm_rm(
   if data_width == 32 && (rex & 0x8) != 0 {
     return None
   }
-  if data_width != 32 && data_width != 64 {
+  if data_width != 8 && data_width != 32 && data_width != 64 {
     return None
   }
-  if bytes.length() < opcode_index + 6 {
+  if bytes.length() < opcode_index + 2 {
     None
   } else {
+    let expected_opcode = if data_width == 8 { 0xc6 } else { 0xc7 }
     let opcode = bytes[opcode_index].to_int()
     let modrm = bytes[opcode_index + 1].to_int()
     let group = (modrm >> 3) & 0x7
-    if opcode != 0xc7 || group != 0 {
+    if opcode != expected_opcode || group != 0 {
       None
     } else {
       let mode = (modrm >> 6) & 0x3
       let rex_b = if address_width == 64 && (rex & 0x1) != 0 { 8 } else { 0 }
       if mode == 0x3 {
-        match project_disassembly_basic_x86_i32_at(bytes, opcode_index + 2) {
+        match
+          (if data_width == 8 {
+            if bytes.length() <= opcode_index + 2 {
+              None
+            } else {
+              Some(bytes[opcode_index + 2].to_int().to_int64())
+            }
+          } else {
+            project_disassembly_basic_x86_i32_at(bytes, opcode_index + 2)
+          }) {
           Some(imm) => {
-            let register = project_disassembly_basic_x86_gpr_name(
-              (modrm & 0x7) + rex_b,
-              data_width,
-            )
+            let register = if data_width == 8 {
+              project_disassembly_basic_x86_gpr8_name(
+                (modrm & 0x7) + rex_b,
+                rex != 0,
+              )
+            } else {
+              project_disassembly_basic_x86_gpr_name(
+                (modrm & 0x7) + rex_b,
+                data_width,
+              )
+            }
             Some(
               (
-                opcode_index + 6,
-                if data_width == 64 {
+                opcode_index + (if data_width == 8 { 3 } else { 6 }),
+                if data_width == 8 {
+                  "MOV8ri"
+                } else if data_width == 64 {
                   "MOV64ri32"
                 } else {
                   "MOV32ri"
@@ -993,7 +1012,16 @@ fn project_disassembly_basic_x86_mov_imm_rm(
             rex,
           ) {
           Some((imm_offset, memory_operand)) =>
-            match project_disassembly_basic_x86_i32_at(bytes, imm_offset) {
+            match
+              (if data_width == 8 {
+                if bytes.length() <= imm_offset {
+                  None
+                } else {
+                  Some(bytes[imm_offset].to_int().to_int64())
+                }
+              } else {
+                project_disassembly_basic_x86_i32_at(bytes, imm_offset)
+              }) {
               Some(imm) => {
                 let operands = project_disassembly_basic_x86_mem_operands(
                   memory_operand,
@@ -1001,7 +1029,7 @@ fn project_disassembly_basic_x86_mov_imm_rm(
                 operands.push(ProjectInstructionOperand::immediate(imm))
                 Some(
                   (
-                    imm_offset + 4,
+                    imm_offset + (if data_width == 8 { 1 } else { 4 }),
                     "MOV\{data_width}mi",
                     operands,
                     [ProjectMayStore],
@@ -2949,6 +2977,12 @@ fn project_disassembly_basic_decode_x86_llvm(
           memory, 32, 32,
         ).unwrap()
         Some((length, name, "", "", operands, kinds))
+      } else if project_disassembly_basic_x86_mov_imm_rm(memory, 8, 32)
+        is Some(_) {
+        let (length, name, operands, kinds) = project_disassembly_basic_x86_mov_imm_rm(
+          memory, 8, 32,
+        ).unwrap()
+        Some((length, name, "", "", operands, kinds))
       } else if project_disassembly_basic_x86_mov8ri(memory, 32) is Some(_) {
         let (length, dst, imm) = project_disassembly_basic_x86_mov8ri(
           memory, 32,
@@ -3310,6 +3344,11 @@ fn project_disassembly_basic_decode_x86_64_llvm(
   } else if project_disassembly_basic_x86_mov_imm_rm(memory, 32, 64) is Some(_) {
     let (length, name, operands, kinds) = project_disassembly_basic_x86_mov_imm_rm(
       memory, 32, 64,
+    ).unwrap()
+    Some((length, name, operands, kinds))
+  } else if project_disassembly_basic_x86_mov_imm_rm(memory, 8, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_mov_imm_rm(
+      memory, 8, 64,
     ).unwrap()
     Some((length, name, operands, kinds))
   } else if project_disassembly_basic_x86_mov8ri(memory, 64) is Some(_) {

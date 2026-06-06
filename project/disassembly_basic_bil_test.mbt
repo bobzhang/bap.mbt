@@ -815,6 +815,16 @@ test "project Basic BIL lift covers x86_64 memory load fixture" {
     Err(reason) => fail(reason)
   }
 
+  let mov_imm8_rm = basic_bil_decode(
+    "x86_64",
+    b"\x41\xc6\xc0\xff",
+    start=0x70edUL,
+  )
+  match mov_imm8_rm.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["R8B:imm8 := 0xFF:8u"])
+    Err(reason) => fail(reason)
+  }
+
   let mov_imm = basic_bil_decode(
     "x86_64",
     b"\xb8\x78\x56\x34\x12",
@@ -963,6 +973,15 @@ test "project Basic BIL lift covers x86 memory stores" {
     Ok(stmts) =>
       assert_basic_bil_text(stmts, [
         "mem:mem32x8 := store(mem:mem32x8, (EBP:imm32 - 4:32u), 0x12345678:32u)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let store_imm8 = basic_bil_decode("x86", b"\xc6\x45\xfc\x7f", start=0x712cUL)
+  match store_imm8.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "mem:mem32x8 := store(mem:mem32x8, (EBP:imm32 - 4:32u), 0x7F:8u)",
       ])
     Err(reason) => fail(reason)
   }

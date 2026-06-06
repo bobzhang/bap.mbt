@@ -280,6 +280,21 @@ fn ProjectDisassemblyInstruction::project_basic_bil_mov_imm(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_basic_bil_mov_rr(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  match self.project_basic_bil_register(0, width) {
+    Ok(dst) =>
+      match self.project_basic_bil_register(1, width) {
+        Ok(src) => Ok([@types.Stmt::move_stmt(dst, @types.Exp::var_exp(src))])
+        Err(reason) => Err(reason)
+      }
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_basic_bil_push(
   self : ProjectDisassemblyInstruction,
   width : Int,
@@ -661,6 +676,8 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "MOV32RM" => self.project_basic_bil_mov32rm()
     "MOV32RI" => self.project_basic_bil_mov_imm(32)
     "MOV64RI" => self.project_basic_bil_mov_imm(64)
+    "MOV32RR" | "MOV32RR_REV" => self.project_basic_bil_mov_rr(32)
+    "MOV64RR" | "MOV64RR_REV" => self.project_basic_bil_mov_rr(64)
     "PUSH32R" => self.project_basic_bil_push(32)
     "PUSH64R" => self.project_basic_bil_push(64)
     "POP32R" => self.project_basic_bil_pop(32)

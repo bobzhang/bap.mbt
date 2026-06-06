@@ -192,6 +192,27 @@ test "project Basic BIL lift covers x86 register pops" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 register moves" {
+  let mov_rbp_rsp = basic_bil_decode("x86_64", b"\x48\x89\xe5", start=0x7030UL)
+  match mov_rbp_rsp.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["RBP:imm64 := RSP:imm64"])
+    Err(reason) => fail(reason)
+  }
+
+  let mov_rev = basic_bil_decode("x86_64", b"\x48\x8b\xec", start=0x7033UL)
+  match mov_rev.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["RBP:imm64 := RSP:imm64"])
+    Err(reason) => fail(reason)
+  }
+
+  let mov_ebp_esp = basic_bil_decode("x86", b"\x89\xe5", start=0x7036UL)
+  match mov_ebp_esp.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["EBP:imm32 := ESP:imm32"])
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86_64 memory load fixture" {
   let mov_imm = basic_bil_decode(
     "x86_64",

@@ -228,6 +228,41 @@ fn project_reconstructor_edge_jmp(
 }
 
 ///|
+fn project_reconstructor_basic_bil_def(
+  stmt : @types.Stmt,
+) -> @types.Term[@types.Def]? {
+  match stmt {
+    Move(lhs, rhs) => Some(@types.Def::create(lhs, rhs))
+    _ => None
+  }
+}
+
+///|
+fn project_reconstructor_append_basic_bil_defs(
+  project : Project,
+  block : @memory.Memory,
+  ir_block : @types.Term[@types.Blk],
+) -> @types.Term[@types.Blk] {
+  match project.disassembly().block_view(block) {
+    Ok(view) =>
+      match view.lift_basic_bil() {
+        Ok(stmts) => {
+          let mut result = ir_block
+          for stmt in stmts {
+            match project_reconstructor_basic_bil_def(stmt) {
+              Some(def) => result = result.append_def(def)
+              None => ()
+            }
+          }
+          result
+        }
+        Err(_) => ir_block
+      }
+    Err(_) => ir_block
+  }
+}
+
+///|
 fn project_reconstructor_ir_block(
   project : Project,
   block : @memory.Memory,
@@ -235,8 +270,12 @@ fn project_reconstructor_ir_block(
   match project_reconstructor_block_word(project, block) {
     Ok(addr) =>
       Ok(
-        @types.Blk::create(tid=@types.Tid::for_addr(addr, pkg?=project.pkg())).set_attr(
-          @types.Attr::address(addr),
+        project_reconstructor_append_basic_bil_defs(
+          project,
+          block,
+          @types.Blk::create(tid=@types.Tid::for_addr(addr, pkg?=project.pkg())).set_attr(
+            @types.Attr::address(addr),
+          ),
         ),
       )
     Err(reason) => Err(reason)

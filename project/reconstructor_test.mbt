@@ -1,4 +1,34 @@
 ///|
+fn reconstructor_basic_disassembly(
+  triple : String,
+  bytes : Bytes,
+  start~ : UInt64,
+) -> @project.ProjectDisassemblyState raise {
+  let disasm = match
+    @project.ProjectDisassemblyBasic::create(triple, backend="llvm") {
+    Ok(value) => value
+    Err(reason) => fail(reason)
+  }
+  let memory = @memory.Memory::from_bytes(endian=LittleEndian, start~, bytes)
+  let basic_state = disasm.run(memory)
+  let instructions : Array[@project.ProjectDisassemblyInstruction] = []
+  for item in basic_state.insns() {
+    match item.1 {
+      Some(instruction) => instructions.push(instruction)
+      None => ()
+    }
+  }
+  @project.ProjectDisassemblyState::create(blocks=[memory], instructions~)
+}
+
+///|
+fn reconstructor_def_text(
+  defs : Array[@types.Term[@types.Def]],
+) -> Array[String] {
+  defs.map(def => @types.Def::to_string(def))
+}
+
+///|
 test "project default reconstructor turns disassembly blocks into named subroutines" {
   match @project.register_builtin_disassembly_drivers() {
     Ok(_) => ()
@@ -45,6 +75,38 @@ test "project default reconstructor turns disassembly blocks into named subrouti
         }
         Err(reason) => fail(reason)
       }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+test "project reconstructor materializes supported Basic BIL assignments" {
+  let sequence = b"\x48\x83\xec\x08" +
+    b"\x8b\x40\x10" +
+    b"\x48\x83\xc4\x08" +
+    b"\xc3"
+  let disassembly = reconstructor_basic_disassembly(
+    "x86_64",
+    sequence,
+    start=0x7800UL,
+  )
+  let project = @project.Project::empty(@core_theory.Target::x86_64()).with_disassembly(
+    disassembly,
+  )
+  match project.reconstruct() {
+    Ok(reconstructed) => {
+      let subs = reconstructed.program().subs()
+      assert_true(subs.length() == 1)
+      let blks = subs[0].blks()
+      assert_true(blks.length() == 1)
+      assert_true(
+        reconstructor_def_text(blks[0].defs()) ==
+        [
+          "RSP:imm64 := (RSP:imm64 - 8:64u)", "EAX:imm32 := load(mem:mem64x8, (RAX:imm64 + 0x10:64u)):imm32",
+          "RSP:imm64 := (RSP:imm64 + 8:64u)",
+        ],
+      )
+    }
     Err(reason) => fail(reason)
   }
 }

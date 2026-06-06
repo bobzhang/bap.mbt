@@ -1261,6 +1261,22 @@ fn project_disassembly_basic_decode_x86_llvm(
                               Err(reason) => Err(reason)
                             }
                           None if project_disassembly_basic_has_prefix(
+                              memory, b"\xc9",
+                            ) =>
+                            match memory.view(words=1) {
+                              Ok(chunk) =>
+                                Ok(
+                                  Some(
+                                    project_disassembly_basic_instruction(
+                                      chunk,
+                                      "LEAVE",
+                                      kinds=[ProjectMayLoad],
+                                    ),
+                                  ),
+                                )
+                              Err(reason) => Err(reason)
+                            }
+                          None if project_disassembly_basic_has_prefix(
                               memory, b"\xc3",
                             ) =>
                             match memory.view(words=1) {
@@ -1465,6 +1481,8 @@ fn project_disassembly_basic_decode_x86_64_llvm(
         [],
       ),
     )
+  } else if project_disassembly_basic_has_prefix(memory, b"\xc9") {
+    Some((1, "LEAVE64", [], [ProjectMayLoad]))
   } else if project_disassembly_basic_has_prefix(memory, b"\xc3") {
     Some(
       (

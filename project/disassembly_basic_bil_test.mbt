@@ -213,6 +213,29 @@ test "project Basic BIL lift covers x86 register moves" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 leave" {
+  let leave64 = basic_bil_decode("x86_64", b"\xc9", start=0x7040UL)
+  match leave64.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "RSP:imm64 := RBP:imm64", "RBP:imm64 := load(mem:mem64x8, RSP:imm64):imm64",
+        "RSP:imm64 := (RSP:imm64 + 8:64u)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let leave32 = basic_bil_decode("x86", b"\xc9", start=0x7041UL)
+  match leave32.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "ESP:imm32 := EBP:imm32", "EBP:imm32 := load(mem:mem32x8, ESP:imm32):imm32",
+        "ESP:imm32 := (ESP:imm32 + 4:32u)",
+      ])
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86_64 memory load fixture" {
   let mov_imm = basic_bil_decode(
     "x86_64",

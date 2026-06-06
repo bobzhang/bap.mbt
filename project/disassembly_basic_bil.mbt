@@ -375,6 +375,40 @@ fn ProjectDisassemblyInstruction::project_basic_bil_pop(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_basic_bil_leave(
+  _self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let sp = match project_basic_bil_stack_pointer(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let fp = project_basic_bil_reg(if width == 64 { "RBP" } else { "EBP" }, width)
+  let size = match @types.Size::of_int(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let updated_sp = match project_basic_bil_stack_increment(sp, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let mem = project_basic_bil_stack_mem(width)
+  Ok([
+    @types.Stmt::move_stmt(sp, @types.Exp::var_exp(fp)),
+    @types.Stmt::move_stmt(
+      fp,
+      @types.Exp::load(
+        mem=@types.Exp::var_exp(mem),
+        addr=@types.Exp::var_exp(sp),
+        LittleEndian,
+        size,
+      ),
+    ),
+    @types.Stmt::move_stmt(sp, updated_sp),
+  ])
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_basic_bil_direct_target(
   self : ProjectDisassemblyInstruction,
 ) -> Result[UInt64, String] {
@@ -682,6 +716,8 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "PUSH64R" => self.project_basic_bil_push(64)
     "POP32R" => self.project_basic_bil_pop(32)
     "POP64R" => self.project_basic_bil_pop(64)
+    "LEAVE" => self.project_basic_bil_leave(32)
+    "LEAVE64" => self.project_basic_bil_leave(64)
     "NOOP" => Ok([])
     "JMP_1" => self.project_basic_bil_jump()
     "JMP_4" => self.project_basic_bil_jump()

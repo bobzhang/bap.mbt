@@ -268,6 +268,76 @@ test "translated BAP basic disassembly decodes x86 llvm short jump fixture" {
 }
 
 ///|
+test "translated BAP basic disassembly decodes x86 llvm call and return fixtures" {
+  let disasm = match
+    @project.ProjectDisassemblyBasic::create("x86", backend="llvm") {
+    Ok(disasm) => disasm
+    Err(reason) => fail(reason)
+  }
+  let samples : Array[
+    (Bytes, Array[String], Array[@project.ProjectInstructionKind]),
+  ] = [
+    (
+      b"\xe8\x01\x00\x00\x00",
+      ["CALLpcrel32", "0x1"],
+      [ProjectCall, ProjectMayAffectControlFlow],
+    ),
+    (
+      b"\xc3",
+      ["RET"],
+      [
+        ProjectReturn,
+        ProjectBarrier,
+        ProjectTerminator,
+        ProjectMayAffectControlFlow,
+      ],
+    ),
+  ]
+  for sample in samples {
+    let memory = @memory.Memory::from_bytes(
+      endian=LittleEndian,
+      start=0xe200UL,
+      sample.0,
+    )
+    match disasm.insn_of_mem(memory) {
+      Ok(result) => {
+        assert_true(result.memory().length() == sample.0.length())
+        assert_true(result.remainder().is_finished())
+        match result.instruction() {
+          Some(instruction) => {
+            assert_true(basic_instruction_strings(instruction) == sample.1)
+            assert_true(instruction.kinds() == sample.2)
+          }
+          None => fail("missing x86 llvm control-transfer instruction")
+        }
+      }
+      Err(reason) => fail(reason)
+    }
+  }
+
+  let sequence = b"\xe8\x01\x00\x00\x00" + b"\xc3"
+  let run_memory = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0xe210UL,
+    sequence,
+  )
+  let state = disasm.store_kinds().run(run_memory)
+  let insns = state.insns()
+  assert_true(insns.length() == samples.length())
+  assert_true(insns.map(item => item.0.length()) == [5, 1])
+  assert_true(state.addr() == 0xe210UL + sequence.length().to_uint64())
+  for i in 0..<samples.length() {
+    match insns[i].1 {
+      Some(instruction) => {
+        assert_true(basic_instruction_strings(instruction) == samples[i].1)
+        assert_true(instruction.kinds() == samples[i].2)
+      }
+      None => fail("missing x86 run instruction")
+    }
+  }
+}
+
+///|
 test "translated BAP basic disassembly recognizes x86 SIMD fixture opcodes" {
   let disasm = match
     @project.ProjectDisassemblyBasic::create("x86", backend="llvm") {

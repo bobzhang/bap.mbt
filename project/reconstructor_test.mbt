@@ -168,6 +168,24 @@ test "project reconstructor materializes Basic BIL fallback jumps" {
     Err(reason) => fail(reason)
   }
 
+  let call32_disassembly = reconstructor_basic_disassembly(
+    "x86",
+    b"\xe8\x01\x00\x00\x00",
+    start=0x7310UL,
+  )
+  let call32_project = @project.Project::empty(@core_theory.Target::x86()).with_disassembly(
+    call32_disassembly,
+  )
+  match call32_project.reconstruct() {
+    Ok(reconstructed) => {
+      let block = reconstructed.program().subs()[0].blks()[0]
+      assert_reconstructor_text(reconstructor_jmp_text(block.jmps()), [
+        "call @0x00007316 with noreturn",
+      ])
+    }
+    Err(reason) => fail(reason)
+  }
+
   let conditional_disassembly = reconstructor_basic_disassembly(
     "armv7",
     b"\xf6\xff\xff\x1a",

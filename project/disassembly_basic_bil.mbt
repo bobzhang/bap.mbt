@@ -266,6 +266,18 @@ fn ProjectDisassemblyInstruction::project_basic_bil_absolute_target(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_basic_bil_call(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  match self.project_basic_bil_direct_target() {
+    Ok(target) =>
+      project_basic_bil_control_with_width(@types.Stmt::call(), target, width)
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
 fn project_basic_bil_control_with_width(
   attr : @types.StmtAttribute[String],
   target : UInt64,
@@ -523,11 +535,8 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
           )
         Err(reason) => Err(reason)
       }
-    "CALL64PCREL32" =>
-      match self.project_basic_bil_direct_target() {
-        Ok(target) => project_basic_bil_control(@types.Stmt::call(), target)
-        Err(reason) => Err(reason)
-      }
+    "CALLPCREL32" => self.project_basic_bil_call(32)
+    "CALL64PCREL32" => self.project_basic_bil_call(64)
     "B" => self.project_basic_bil_arm_branch(false)
     "BNE" => self.project_basic_bil_arm_branch(true)
     "BX" => self.project_basic_bil_bx()

@@ -181,8 +181,26 @@ test "project Basic BIL lift covers direct control transfers" {
     Err(reason) => fail(reason)
   }
 
+  let call32 = basic_bil_decode("x86", b"\xe8\x01\x00\x00\x00", start=0x7310UL)
+  match call32.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 2)
+      assert_true(
+        @types.Stmt::decode(@types.Stmt::call(), stmts[0]) == Some("0x7316"),
+      )
+      assert_string(stmts[1].to_string(), "jmp 0x7316:32u")
+    }
+    Err(reason) => fail(reason)
+  }
+
   let ret = basic_bil_decode("x86_64", b"\xc3", start=0x7400UL)
   match ret.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["special ret"])
+    Err(reason) => fail(reason)
+  }
+
+  let ret32 = basic_bil_decode("x86", b"\xc3", start=0x7401UL)
+  match ret32.lift_basic_bil() {
     Ok(stmts) => assert_basic_bil_text(stmts, ["special ret"])
     Err(reason) => fail(reason)
   }

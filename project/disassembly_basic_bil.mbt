@@ -577,6 +577,49 @@ fn ProjectDisassemblyInstruction::project_basic_bil_movx_rm(
 }
 
 ///|
+fn project_basic_bil_sign_extend_register(
+  src_name : String,
+  src_width : Int,
+  dst_name : String,
+  dst_width : Int,
+) -> Array[@types.Stmt] {
+  let src = project_basic_bil_reg(src_name, src_width)
+  let dst = project_basic_bil_reg(dst_name, dst_width)
+  [
+    @types.Stmt::move_stmt(
+      dst,
+      @types.Exp::cast(
+        @types.CastKind::signed(),
+        dst_width,
+        @types.Exp::var_exp(src),
+      ),
+    ),
+  ]
+}
+
+///|
+fn project_basic_bil_sign_extend_high_register(
+  src_name : String,
+  src_width : Int,
+  dst_name : String,
+  dst_width : Int,
+) -> Array[@types.Stmt] {
+  let src = project_basic_bil_reg(src_name, src_width)
+  let dst = project_basic_bil_reg(dst_name, dst_width)
+  let extended = @types.Exp::cast(
+    @types.CastKind::signed(),
+    src_width * 2,
+    @types.Exp::var_exp(src),
+  )
+  [
+    @types.Stmt::move_stmt(
+      dst,
+      @types.Exp::cast(@types.CastKind::high(), dst_width, extended),
+    ),
+  ]
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_basic_bil_xchg_rr(
   self : ProjectDisassemblyInstruction,
   width : Int,
@@ -1223,6 +1266,14 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
       self.project_basic_bil_movx_rm(32, 32, @types.CastKind::signed())
     "MOVSX64RM32" =>
       self.project_basic_bil_movx_rm(64, 32, @types.CastKind::signed())
+    "CBW" => Ok(project_basic_bil_sign_extend_register("AL", 8, "AX", 16))
+    "CWDE" => Ok(project_basic_bil_sign_extend_register("AX", 16, "EAX", 32))
+    "CDQE" => Ok(project_basic_bil_sign_extend_register("EAX", 32, "RAX", 64))
+    "CWD" => Ok(project_basic_bil_sign_extend_high_register("AX", 16, "DX", 16))
+    "CDQ" =>
+      Ok(project_basic_bil_sign_extend_high_register("EAX", 32, "EDX", 32))
+    "CQO" =>
+      Ok(project_basic_bil_sign_extend_high_register("RAX", 64, "RDX", 64))
     "XCHG32RR" => self.project_basic_bil_xchg_rr(32)
     "XCHG64RR" => self.project_basic_bil_xchg_rr(64)
     "XCHG32RM" => self.project_basic_bil_xchg_rm(32)

@@ -538,6 +538,55 @@ test "project Basic BIL lift covers x86 movsx movzx" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 accumulator sign-extension ops" {
+  let cdqe = basic_bil_decode("x86_64", b"\x48\x98", start=0x7056UL)
+  match cdqe.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["RAX:imm64 := extend:64[EAX:imm32]"])
+    Err(reason) => fail(reason)
+  }
+
+  let cwde = basic_bil_decode("x86", b"\x98", start=0x7058UL)
+  match cwde.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["EAX:imm32 := extend:32[AX:imm16]"])
+    Err(reason) => fail(reason)
+  }
+
+  let cbw = basic_bil_decode("x86", b"\x66\x98", start=0x7059UL)
+  match cbw.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["AX:imm16 := extend:16[AL:imm8]"])
+    Err(reason) => fail(reason)
+  }
+
+  let cqo = basic_bil_decode("x86_64", b"\x48\x99", start=0x705bUL)
+  match cqo.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "RDX:imm64 := high:64[extend:128[RAX:imm64]]",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let cdq = basic_bil_decode("x86", b"\x99", start=0x705dUL)
+  match cdq.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "EDX:imm32 := high:32[extend:64[EAX:imm32]]",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let cwd = basic_bil_decode("x86", b"\x66\x99", start=0x705eUL)
+  match cwd.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["DX:imm16 := high:16[extend:32[AX:imm16]]"])
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86 leave" {
   let leave64 = basic_bil_decode("x86_64", b"\xc9", start=0x7040UL)
   match leave64.lift_basic_bil() {

@@ -1307,6 +1307,51 @@ fn project_disassembly_basic_x86_movsx32(
 }
 
 ///|
+fn project_disassembly_basic_x86_sign_extend_accumulator(
+  memory : @memory.Memory,
+  address_width : Int,
+) -> (Int, String)? {
+  let bytes = memory.to_bytes()
+  if bytes.length() >= 2 && bytes[0].to_int() == 0x66 {
+    let opcode = bytes[1].to_int()
+    match opcode {
+      0x98 => Some((2, "CBW"))
+      0x99 => Some((2, "CWD"))
+      _ => None
+    }
+  } else {
+    let (opcode_index, rex) = if address_width == 64 &&
+      bytes.length() >= 2 &&
+      bytes[0].to_int() >= 0x40 &&
+      bytes[0].to_int() <= 0x4f {
+      (1, bytes[0].to_int())
+    } else {
+      (0, 0)
+    }
+    if bytes.length() <= opcode_index {
+      None
+    } else {
+      let opcode = bytes[opcode_index].to_int()
+      match opcode {
+        0x98 =>
+          if address_width == 64 && (rex & 0x8) != 0 {
+            Some((opcode_index + 1, "CDQE"))
+          } else {
+            Some((opcode_index + 1, "CWDE"))
+          }
+        0x99 =>
+          if address_width == 64 && (rex & 0x8) != 0 {
+            Some((opcode_index + 1, "CQO"))
+          } else {
+            Some((opcode_index + 1, "CDQ"))
+          }
+        _ => None
+      }
+    }
+  }
+}
+
+///|
 fn project_disassembly_basic_x86_arith_rr(
   memory : @memory.Memory,
   data_width : Int,
@@ -2438,6 +2483,14 @@ fn project_disassembly_basic_decode_x86_llvm(
         Array[ProjectInstructionKind],
       )? = if project_disassembly_basic_has_prefix(memory, b"\x90") {
         Some((1, "NOOP", "nop", "", [], []))
+      } else if project_disassembly_basic_x86_sign_extend_accumulator(
+          memory, 32,
+        )
+        is Some(_) {
+        let (length, name) = project_disassembly_basic_x86_sign_extend_accumulator(
+          memory, 32,
+        ).unwrap()
+        Some((length, name, "", "", [], []))
       } else if project_disassembly_basic_x86_simple(memory, 32, 32) is Some(_) {
         let (length, name, operands, kinds) = project_disassembly_basic_x86_simple(
           memory, 32, 32,
@@ -2695,6 +2748,12 @@ fn project_disassembly_basic_decode_x86_64_llvm(
       memory, 64, 64,
     ).unwrap()
     Some((length, name, operands, kinds))
+  } else if project_disassembly_basic_x86_sign_extend_accumulator(memory, 64)
+    is Some(_) {
+    let (length, name) = project_disassembly_basic_x86_sign_extend_accumulator(
+      memory, 64,
+    ).unwrap()
+    Some((length, name, [], []))
   } else if project_disassembly_basic_x86_simple(memory, 32, 64) is Some(_) {
     let (length, name, operands, kinds) = project_disassembly_basic_x86_simple(
       memory, 32, 64,

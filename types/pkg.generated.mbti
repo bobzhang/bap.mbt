@@ -1754,6 +1754,10 @@ pub fn Word::of_int64(Int64, width? : Int) -> Self raise @bitvec.BitVecError
 pub fn Word::of_uint64(width~ : Int, UInt64) -> Self raise @bitvec.BitVecError
 pub fn Word::one(width~ : Int) -> Self raise @bitvec.BitVecError
 pub fn Word::ones(width~ : Int) -> Self raise @bitvec.BitVecError
+pub fn Word::packed_eq(Self, Self, element_width~ : Int) -> Result[Self, String]
+pub fn Word::packed_gt(Self, Self, element_width~ : Int, signed? : Bool) -> Result[Self, String]
+pub fn Word::packed_max(Self, Self, element_width~ : Int, signed? : Bool) -> Result[Self, String]
+pub fn Word::packed_min(Self, Self, element_width~ : Int, signed? : Bool) -> Result[Self, String]
 pub fn Word::pred(Self) -> Self
 pub fn Word::rem(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::rshift(Self, Int) -> Self
@@ -1782,6 +1786,7 @@ pub fn Word::validate_non_positive(Self) -> Result[Unit, String]
 pub fn Word::validate_positive(Self) -> Result[Unit, String]
 pub fn Word::widen(Self, width~ : Int) -> Self raise @bitvec.BitVecError
 pub fn Word::width(Self) -> Int
+pub fn Word::x86_pshufb(Self, Self) -> Result[Self, String]
 pub fn Word::zero(width~ : Int) -> Self raise @bitvec.BitVecError
 
 pub(all) enum WordLetterCase {

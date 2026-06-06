@@ -943,6 +943,36 @@ fn append_int(acc : Array[Int], value : Int) -> Array[Int] {
 }
 
 ///|
+fn assert_foldw_sum_eq(
+  values : Array[Int],
+  stride~ : Int,
+  width~ : Int,
+  expected : Array[Int],
+) -> Unit raise {
+  let (source, signal, _) = @future.Stream::of_array(values)
+  let folded = source.foldw(
+    width,
+    init=0,
+    f=fn(acc, value) { acc + value },
+    stride~,
+  )
+  assert_stream_before_eq(folded, signal, repeat=values.length() + 1, expected)
+}
+
+///|
+fn assert_foldw_array_eq(
+  values : Array[Int],
+  stride~ : Int,
+  width~ : Int,
+  init~ : Array[Int],
+  expected : Array[Array[Int]],
+) -> Unit raise {
+  let (source, signal, _) = @future.Stream::of_array(values)
+  let folded = source.foldw(width, init~, f=append_int, stride~)
+  assert_stream_before_eq(folded, signal, repeat=values.length() + 1, expected)
+}
+
+///|
 fn run_time_line(
   signal : @future.Signal[Unit],
   clk_signal : @future.Signal[Unit],
@@ -1094,6 +1124,10 @@ test "translated BAP stream foldw frame and sample" {
     repeat=values.length() + 1,
     [3, 9, 15],
   )
+  assert_foldw_sum_eq(values, stride=2, width=1, [0, 2, 4, 6])
+  assert_foldw_sum_eq(values, stride=3, width=1, [0, 3, 6])
+  assert_foldw_sum_eq(values, stride=4, width=2, [1, 9])
+  assert_foldw_sum_eq(values, stride=1, width=1, values)
 
   let (zero_source, zero_signal, _) = @future.Stream::of_array([0, 1, 2])
   let zero_width = zero_source.foldw(
@@ -1103,6 +1137,43 @@ test "translated BAP stream foldw frame and sample" {
     stride=0,
   )
   assert_stream_before_eq(zero_width, zero_signal, repeat=4, [[1], [1], [1]])
+  assert_foldw_array_eq(values, stride=3, width=0, init=[1], [[1], [1], [1]])
+  assert_foldw_array_eq(values, stride=0, width=2, init=[], [
+    [0, 1],
+    [0, 1],
+    [0, 1],
+    [0, 1],
+    [0, 1],
+    [0, 1],
+    [0, 1],
+  ])
+  assert_foldw_array_eq(values, stride=0, width=values.length(), init=[], [
+    values,
+  ])
+  assert_foldw_array_eq(values, stride=0, width=values.length() + 1, init=[1], [])
+  assert_foldw_array_eq(values, stride=2, width=values.length(), init=[], [
+    values,
+  ])
+  assert_foldw_array_eq(values, stride=3, width=3, init=[], [
+    [0, 1, 2],
+    [3, 4, 5],
+  ])
+  assert_foldw_array_eq(values, stride=3, width=2, init=[], [
+    [0, 1],
+    [3, 4],
+    [6, 7],
+  ])
+  assert_foldw_array_eq(values, stride=2, width=4, init=[], [
+    [0, 1, 2, 3],
+    [2, 3, 4, 5],
+    [4, 5, 6, 7],
+  ])
+  assert_foldw_array_eq(values, stride=values.length() + 1, width=2, init=[], [
+    [0, 1],
+  ])
+  assert_foldw_array_eq(values, stride=values.length() + 1, width=0, init=[1], [
+    [1],
+  ])
 
   let (frame_source, frame_signal, _) = @future.Stream::of_array(values)
   let (clock, clock_signal) = @future.Stream::from(fn() { () })
@@ -1112,6 +1183,34 @@ test "translated BAP stream foldw frame and sample" {
   run_time_line(frame_signal, clock_signal, [1, 1, 3])
   assert_true(frames == [[0], [], [1, 2]])
 
+  let (early_frame_source, early_frame_signal, _) = @future.Stream::of_array(
+    values,
+  )
+  let (early_clock, early_clock_signal) = @future.Stream::from(fn() { () })
+  let early_framed = early_frame_source.frame(
+    clk=early_clock,
+    init=[],
+    f=append_int,
+  )
+  let early_frames : Array[Array[Int]] = []
+  early_framed.observe(fn(value) { early_frames.push(value) })
+  run_time_line(early_frame_signal, early_clock_signal, [0, 1, 3])
+  assert_true(early_frames == [[], [0], [1, 2]])
+
+  let (empty_frame_source, empty_frame_signal, _) = @future.Stream::of_array(
+    values,
+  )
+  let (empty_clock, empty_clock_signal) = @future.Stream::from(fn() { () })
+  let empty_framed = empty_frame_source.frame(
+    clk=empty_clock,
+    init=[],
+    f=append_int,
+  )
+  let empty_frames : Array[Array[Int]] = []
+  empty_framed.observe(fn(value) { empty_frames.push(value) })
+  run_time_line(empty_frame_signal, empty_clock_signal, [0, 0, 3, 4])
+  assert_true(empty_frames == [[], [], [0, 1, 2], [3]])
+
   let (sample_source, sample_signal, _) = @future.Stream::of_array(values)
   let (sample_clock, sample_clock_signal) = @future.Stream::from(fn() { () })
   let sampled = sample_source.sample(clk=sample_clock)
@@ -1119,4 +1218,16 @@ test "translated BAP stream foldw frame and sample" {
   sampled.observe(fn(value) { samples.push(value) })
   run_time_line(sample_signal, sample_clock_signal, [0, 0, 1, 2])
   assert_true(samples == [None, None, Some(0), Some(1)])
+
+  let (late_sample_source, late_sample_signal, _) = @future.Stream::of_array(
+    values,
+  )
+  let (late_sample_clock, late_sample_clock_signal) = @future.Stream::from(fn() {
+    ()
+  })
+  let late_sampled = late_sample_source.sample(clk=late_sample_clock)
+  let late_samples : Array[Int?] = []
+  late_sampled.observe(fn(value) { late_samples.push(value) })
+  run_time_line(late_sample_signal, late_sample_clock_signal, [1, 1, 3])
+  assert_true(late_samples == [Some(0), None, Some(1)])
 }

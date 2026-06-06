@@ -890,6 +890,13 @@ pub fn DwarfDie::attributes(self : DwarfDie) -> Array[DwarfDieAttribute] {
 }
 
 ///|
+pub fn DwarfDie::reference_attributes(
+  self : DwarfDie,
+) -> Array[DwarfDieAttribute] {
+  self.attributes_value.filter(attribute => attribute.is_reference_field())
+}
+
+///|
 pub fn DwarfDie::attribute(
   self : DwarfDie,
   attr : DwarfAttr,

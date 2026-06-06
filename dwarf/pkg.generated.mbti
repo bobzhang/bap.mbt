@@ -354,6 +354,7 @@ pub fn DwarfDie::entry(Self) -> DwarfAbbrevEntry
 pub fn DwarfDie::fields(Self) -> Array[DwarfAbbrevField]
 pub fn DwarfDie::has_children(Self) -> Bool
 pub fn DwarfDie::parent(Self, Array[Self]) -> Self?
+pub fn DwarfDie::reference_attributes(Self) -> Array[DwarfDieAttribute]
 pub fn DwarfDie::section_offset(Self) -> Int
 pub fn DwarfDie::tag(Self) -> DwarfTag
 pub fn DwarfDie::unit_offset(Self) -> Int

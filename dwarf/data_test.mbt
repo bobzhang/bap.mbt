@@ -988,8 +988,14 @@ test "translated DWARF DIE attributes expose index and reference readers" {
     @dwarf.DwarfData::from_bytes(endian=LittleEndian, info~, abbrev~),
   )
   let info_section = expect_section_buffer(data.section(DwarfInfo))
-  let attrs = expect_dies(data.unit_dies())[0].attributes()
+  let die = expect_dies(data.unit_dies())[0]
+  let attrs = die.attributes()
+  let refs = die.reference_attributes()
   assert_true(attrs.length() == 7)
+  assert_true(
+    refs.map(attr => attr.attr()) ==
+    [DwarfSibling, DwarfSpecification, DwarfType, DwarfObjectPointer],
+  )
   assert_true(!attrs[0].is_reference_field())
   assert_true(attrs[3].attr() == DwarfSibling)
   assert_true(attrs[3].is_reference_field())

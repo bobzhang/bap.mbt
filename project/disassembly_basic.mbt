@@ -974,6 +974,118 @@ fn project_disassembly_basic_x86_mov_rr(
 }
 
 ///|
+fn project_disassembly_basic_x86_xchg(
+  memory : @memory.Memory,
+  data_width : Int,
+  address_width : Int,
+) -> (
+  Int,
+  String,
+  Array[ProjectInstructionOperand],
+  Array[ProjectInstructionKind],
+)? {
+  let bytes = memory.to_bytes()
+  let (opcode_index, rex) = if address_width == 64 &&
+    bytes.length() >= 2 &&
+    bytes[0].to_int() >= 0x40 &&
+    bytes[0].to_int() <= 0x4f {
+    (1, bytes[0].to_int())
+  } else {
+    (0, 0)
+  }
+  if data_width == 64 && (rex & 0x8) == 0 {
+    return None
+  }
+  if data_width == 32 && (rex & 0x8) != 0 {
+    return None
+  }
+  if data_width != 32 && data_width != 64 {
+    return None
+  }
+  if bytes.length() <= opcode_index {
+    None
+  } else {
+    let opcode = bytes[opcode_index].to_int()
+    let rex_b = if address_width == 64 && (rex & 0x1) != 0 { 8 } else { 0 }
+    if opcode >= 0x90 && opcode <= 0x97 {
+      let reg_code = (opcode & 0x7) + rex_b
+      if reg_code == 0 && rex == 0 {
+        None
+      } else {
+        Some(
+          (
+            opcode_index + 1,
+            "XCHG\{data_width}rr",
+            [
+              ProjectInstructionOperand::register(
+                name=project_disassembly_basic_x86_gpr_name(0, data_width),
+              ),
+              ProjectInstructionOperand::register(
+                name=project_disassembly_basic_x86_gpr_name(
+                  reg_code, data_width,
+                ),
+              ),
+            ],
+            [],
+          ),
+        )
+      }
+    } else if bytes.length() < opcode_index + 2 || opcode != 0x87 {
+      None
+    } else {
+      let modrm = bytes[opcode_index + 1].to_int()
+      let reg_ext = if address_width == 64 && (rex & 0x4) != 0 { 8 } else { 0 }
+      let reg = project_disassembly_basic_x86_gpr_name(
+        ((modrm >> 3) & 0x7) + reg_ext,
+        data_width,
+      )
+      if ((modrm >> 6) & 0x3) == 0x3 {
+        let rm = project_disassembly_basic_x86_gpr_name(
+          (modrm & 0x7) + rex_b,
+          data_width,
+        )
+        Some(
+          (
+            opcode_index + 2,
+            "XCHG\{data_width}rr",
+            [
+              ProjectInstructionOperand::register(name=reg),
+              ProjectInstructionOperand::register(name=rm),
+            ],
+            [],
+          ),
+        )
+      } else {
+        match
+          project_disassembly_basic_x86_parse_mem_operand(
+            bytes,
+            opcode_index + 2,
+            modrm,
+            address_width,
+            rex,
+          ) {
+          Some((length, memory_operand)) => {
+            let operands = [ProjectInstructionOperand::register(name=reg)]
+            operands.append(
+              project_disassembly_basic_x86_mem_operands(memory_operand),
+            )
+            Some(
+              (
+                length,
+                "XCHG\{data_width}rm",
+                operands,
+                [ProjectMayLoad, ProjectMayStore],
+              ),
+            )
+          }
+          None => None
+        }
+      }
+    }
+  }
+}
+
+///|
 fn project_disassembly_basic_x86_arith_rr(
   memory : @memory.Memory,
   data_width : Int,
@@ -2175,6 +2287,11 @@ fn project_disassembly_basic_decode_x86_llvm(
             [],
           ),
         )
+      } else if project_disassembly_basic_x86_xchg(memory, 32, 32) is Some(_) {
+        let (length, name, operands, kinds) = project_disassembly_basic_x86_xchg(
+          memory, 32, 32,
+        ).unwrap()
+        Some((length, name, "", "", operands, kinds))
       } else if project_disassembly_basic_x86_arith_rr(memory, 32, 32)
         is Some(_) {
         let (length, name, dst, src) = project_disassembly_basic_x86_arith_rr(
@@ -2439,6 +2556,16 @@ fn project_disassembly_basic_decode_x86_64_llvm(
         [],
       ),
     )
+  } else if project_disassembly_basic_x86_xchg(memory, 64, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_xchg(
+      memory, 64, 64,
+    ).unwrap()
+    Some((length, name, operands, kinds))
+  } else if project_disassembly_basic_x86_xchg(memory, 32, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_xchg(
+      memory, 32, 64,
+    ).unwrap()
+    Some((length, name, operands, kinds))
   } else if project_disassembly_basic_x86_logic_rr(memory, 64, 64) is Some(_) {
     let (length, name, dst, src) = project_disassembly_basic_x86_logic_rr(
       memory, 64, 64,

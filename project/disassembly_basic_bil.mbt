@@ -44,6 +44,11 @@ fn project_basic_bil_reg(name : String, width : Int) -> @types.Var {
 }
 
 ///|
+fn project_basic_bil_virtual(name : String, width : Int) -> @types.Var {
+  @types.Var::new(name~, typ=Imm(width), is_virtual=true)
+}
+
+///|
 fn project_basic_bil_arm_mem() -> @types.Var {
   @types.Var::new(name="mem", typ=Mem(addr_width=32, value_width=8))
 }
@@ -516,6 +521,64 @@ fn ProjectDisassemblyInstruction::project_basic_bil_mov_rr(
       }
     Err(reason) => Err(reason)
   }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_xchg_rr(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let left = match self.project_basic_bil_register(0, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let right = match self.project_basic_bil_register(1, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let tmp = project_basic_bil_virtual("xchg_tmp", width)
+  Ok([
+    @types.Stmt::move_stmt(tmp, @types.Exp::var_exp(left)),
+    @types.Stmt::move_stmt(left, @types.Exp::var_exp(right)),
+    @types.Stmt::move_stmt(right, @types.Exp::var_exp(tmp)),
+  ])
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_xchg_rm(
+  self : ProjectDisassemblyInstruction,
+  data_width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let register = match self.project_basic_bil_register(0, data_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let (addr, mem, _) = match self.project_basic_bil_memory_addr(1) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(data_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let tmp = project_basic_bil_virtual("xchg_tmp", data_width)
+  Ok([
+    @types.Stmt::move_stmt(tmp, @types.Exp::var_exp(register)),
+    @types.Stmt::move_stmt(
+      register,
+      @types.Exp::load(mem=@types.Exp::var_exp(mem), addr~, LittleEndian, size),
+    ),
+    @types.Stmt::move_stmt(
+      mem,
+      @types.Exp::store(
+        mem=@types.Exp::var_exp(mem),
+        addr~,
+        @types.Exp::var_exp(tmp),
+        LittleEndian,
+        size,
+      ),
+    ),
+  ])
 }
 
 ///|
@@ -1067,6 +1130,10 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "MOV64RI32" => self.project_basic_bil_mov_imm(64)
     "MOV32RR" | "MOV32RR_REV" => self.project_basic_bil_mov_rr(32)
     "MOV64RR" | "MOV64RR_REV" => self.project_basic_bil_mov_rr(64)
+    "XCHG32RR" => self.project_basic_bil_xchg_rr(32)
+    "XCHG64RR" => self.project_basic_bil_xchg_rr(64)
+    "XCHG32RM" => self.project_basic_bil_xchg_rm(32)
+    "XCHG64RM" => self.project_basic_bil_xchg_rm(64)
     "OR32RR" | "OR32RR_REV" =>
       self.project_basic_bil_binop_rr(32, @types.BinOp::bit_or())
     "OR64RR" | "OR64RR_REV" =>

@@ -767,6 +767,60 @@ test "translated BAP basic disassembly decodes x86 register mov fixtures" {
 }
 
 ///|
+test "translated BAP basic disassembly decodes x86 xchg fixtures" {
+  let samples : Array[
+    (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),
+  ] = [
+    ("x86_64", b"\x48\x90", 2, ["XCHG64rr", "RAX", "RAX"], []),
+    ("x86_64", b"\x48\x91", 2, ["XCHG64rr", "RAX", "RCX"], []),
+    ("x86_64", b"\x49\x90", 2, ["XCHG64rr", "RAX", "R8"], []),
+    ("x86_64", b"\x48\x87\xd8", 3, ["XCHG64rr", "RBX", "RAX"], []),
+    (
+      "x86_64",
+      b"\x48\x87\x45\xf8",
+      4,
+      ["XCHG64rm", "RAX", "RBP", "0x1", "Nil", "-0x8", "Nil"],
+      [ProjectMayLoad, ProjectMayStore],
+    ),
+    ("x86", b"\x91", 1, ["XCHG32rr", "EAX", "ECX"], []),
+    ("x86", b"\x87\xd8", 2, ["XCHG32rr", "EBX", "EAX"], []),
+    (
+      "x86",
+      b"\x87\x45\xfc",
+      3,
+      ["XCHG32rm", "EAX", "EBP", "0x1", "Nil", "-0x4", "Nil"],
+      [ProjectMayLoad, ProjectMayStore],
+    ),
+  ]
+  for sample in samples {
+    let disasm = match
+      @project.ProjectDisassemblyBasic::create(sample.0, backend="llvm") {
+      Ok(disasm) => disasm
+      Err(reason) => fail(reason)
+    }
+    let memory = @memory.Memory::from_bytes(
+      endian=LittleEndian,
+      start=0xe1b8UL,
+      sample.1,
+    )
+    match disasm.insn_of_mem(memory) {
+      Ok(result) => {
+        assert_true(result.memory().length() == sample.2)
+        assert_true(result.remainder().is_finished())
+        match result.instruction() {
+          Some(instruction) => {
+            assert_true(basic_instruction_strings(instruction) == sample.3)
+            assert_true(instruction.kinds() == sample.4)
+          }
+          None => fail("missing x86 xchg instruction")
+        }
+      }
+      Err(reason) => fail(reason)
+    }
+  }
+}
+
+///|
 test "translated BAP basic disassembly decodes x86 memory mov fixtures" {
   let samples : Array[
     (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),

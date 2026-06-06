@@ -432,6 +432,37 @@ test "project Basic BIL lift covers x86 register moves" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 xchg" {
+  let xchg64 = basic_bil_decode("x86_64", b"\x48\x91", start=0x7038UL)
+  match xchg64.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%xchg_tmp:imm64 := RAX:imm64", "RAX:imm64 := RCX:imm64", "RCX:imm64 := %xchg_tmp:imm64",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let xchg32 = basic_bil_decode("x86", b"\x87\xd8", start=0x703aUL)
+  match xchg32.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%xchg_tmp:imm32 := EBX:imm32", "EBX:imm32 := EAX:imm32", "EAX:imm32 := %xchg_tmp:imm32",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let xchg_mem = basic_bil_decode("x86_64", b"\x48\x87\x45\xf8", start=0x703cUL)
+  match xchg_mem.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%xchg_tmp:imm64 := RAX:imm64", "RAX:imm64 := load(mem:mem64x8, (RBP:imm64 - 8:64u)):imm64",
+        "mem:mem64x8 := store(mem:mem64x8, (RBP:imm64 - 8:64u), %xchg_tmp:imm64)",
+      ])
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86 leave" {
   let leave64 = basic_bil_decode("x86_64", b"\xc9", start=0x7040UL)
   match leave64.lift_basic_bil() {

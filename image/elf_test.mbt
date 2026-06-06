@@ -964,6 +964,7 @@ test "image ELF backend recognizes architecture-relative relocation types" {
     ("systemz", 0x16, 12),
     ("arm", 0x28, 23),
     ("aarch64", 0xb7, 1027),
+    ("aarch64-p32", 0xb7, 183),
     ("riscv", 0xf3, 3),
     ("loongarch", 0x102, 3),
   ]

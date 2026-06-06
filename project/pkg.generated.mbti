@@ -142,6 +142,8 @@ pub fn register_pass_prime(name~ : String, autorun? : Bool, run_once? : Bool, de
 
 pub fn register_pass_transform(name~ : String, autorun? : Bool, run_once? : Bool, deps? : Array[String], run~ : (Project) -> Result[Project, String]) -> Result[Unit, String]
 
+pub fn[S] register_project_collator(name~ : String, pkg? : String, description? : String, prepare~ : (Project) -> S, collate~ : (Int, S, Project) -> S, summary~ : (S) -> Unit) -> Result[Unit, String]
+
 pub fn register_reconstructor(name~ : String, ProjectReconstructor) -> Result[Unit, String]
 
 pub fn register_reconstructor_if_absent(name~ : String, ProjectReconstructor) -> Result[Bool, String]

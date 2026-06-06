@@ -89,6 +89,52 @@ test "registered project collators can be discovered and applied" {
 }
 
 ///|
+test "register_project_collator registers callback collators" {
+  let summary : Ref[String] = Ref("")
+  match
+    @project.register_project_collator(
+      name="unit-callback-collator",
+      pkg="unit",
+      description="callback collator",
+      prepare=project => project_value(project),
+      collate=(version, state, project) => {
+        state + "|v\{version}:" + project_value(project)
+      },
+      summary=state => summary.val = state,
+    ) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  match @project.find_collator("unit-callback-collator", pkg="unit") {
+    Some(found) => {
+      assert_true(found.name() == "unit-callback-collator")
+      assert_true(found.pkg() == "unit")
+      assert_true(
+        found.qualified_name().show() == "unit:unit-callback-collator",
+      )
+      assert_true(found.description() == "callback collator")
+      found.apply([
+        project_with_value("base"),
+        project_with_value("left"),
+        project_with_value("right"),
+      ])
+      assert_true(summary.val == "base|v0:left|v1:right")
+    }
+    None => fail("callback collator was not registered")
+  }
+  assert_true(
+    @project.register_project_collator(
+      name="unit-callback-collator",
+      pkg="unit",
+      prepare=project => project_value(project),
+      collate=(_, state, _) => state,
+      summary=_ => (),
+    )
+    is Err(_),
+  )
+}
+
+///|
 test "registered project collators support package-qualified lookup" {
   let left_summary : Ref[String] = Ref("")
   let right_summary : Ref[String] = Ref("")

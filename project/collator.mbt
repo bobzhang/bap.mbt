@@ -249,6 +249,27 @@ pub fn register_collator(
 }
 
 ///|
+pub fn[S] register_project_collator(
+  name~ : String,
+  pkg? : String,
+  description? : String,
+  prepare~ : (Project) -> S,
+  collate~ : (Int, S, Project) -> S,
+  summary~ : (S) -> Unit,
+) -> Result[Unit, String] {
+  register_collator(
+    RegisteredProjectCollator::create(
+      name~,
+      pkg?,
+      description?,
+      prepare~,
+      collate~,
+      summary~,
+    ),
+  )
+}
+
+///|
 pub fn find_collator(
   name : String,
   pkg? : String,

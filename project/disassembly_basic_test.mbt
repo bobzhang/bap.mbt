@@ -583,6 +583,13 @@ test "translated BAP basic disassembly decodes x86 register rotate fixtures" {
     ("x86_64", b"\x49\xd3\xc8", 3, ["ROR64rCL", "R8", "R8", "CL"]),
     ("x86_64", b"\x41\xc0\xc8\x04", 4, ["ROR8ri8", "R8B", "R8B", "0x4"]),
     ("x86_64", b"\x40\xd0\xc4", 3, ["ROL8r1", "SPL", "SPL", "0x1"]),
+    ("x86", b"\xd0\xd0", 2, ["RCL8r1", "AL", "AL", "0x1"]),
+    ("x86", b"\xd1\xd8", 2, ["RCR32r1", "EAX", "EAX", "0x1"]),
+    ("x86", b"\xd3\xd8", 2, ["RCR32rCL", "EAX", "EAX", "CL"]),
+    ("x86", b"\xc0\xd4\x03", 3, ["RCL8ri8", "AH", "AH", "0x3"]),
+    ("x86_64", b"\x49\xd3\xd8", 3, ["RCR64rCL", "R8", "R8", "CL"]),
+    ("x86_64", b"\x41\xc0\xd8\x04", 4, ["RCR8ri8", "R8B", "R8B", "0x4"]),
+    ("x86_64", b"\x40\xd0\xd4", 3, ["RCL8r1", "SPL", "SPL", "0x1"]),
   ]
   for sample in samples {
     let disasm = match

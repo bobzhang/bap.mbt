@@ -2224,6 +2224,8 @@ fn project_disassembly_basic_x86_shift_reg(
       let op = match group {
         0 => "ROL"
         1 => "ROR"
+        2 => "RCL"
+        3 => "RCR"
         4 => "SHL"
         5 => "SHR"
         7 => "SAR"

@@ -173,6 +173,16 @@ fn expect_die_attr_const(value : Result[Int64, String]) -> Int64 raise {
 }
 
 ///|
+fn expect_die_attr_unsigned_const(
+  value : Result[UInt64, String],
+) -> UInt64 raise {
+  match value {
+    Ok(value) => value
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 fn expect_die_attr_flag(value : Result[Bool, String]) -> Bool raise {
   match value {
     Ok(value) => value
@@ -577,6 +587,66 @@ test "translated DWARF DIE attributes expose payload readers" {
     attrs[0].address(info_section, endian=LittleEndian, addr_size=W32) is Err(_),
   )
   assert_true(attrs[7].data16(info_section) is Err(_))
+}
+
+///|
+test "translated DWARF DIE attributes expose unsigned constants" {
+  let abbrev = b"\x01\x2e\x00" +
+    b"\x1c\x07" +
+    b"\x1c\x0f" +
+    b"\x1c\x0d" +
+    b"\x1c\x21\x07" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x14\x00\x00\x00" +
+    b"\x04\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x04" +
+    b"\x01" +
+    b"\x00\x00\x00\x00\x00\x00\x00\x80" +
+    b"\xe5\x8e\x26" +
+    b"\x7e"
+  let data = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(endian=LittleEndian, info~, abbrev~),
+  )
+  let info_section = expect_section_buffer(data.section(DwarfInfo))
+  let dies = expect_dies(data.unit_dies())
+  assert_true(dies.length() == 1)
+  let attrs = dies[0].attributes()
+  assert_true(attrs.length() == 4)
+  assert_true(
+    expect_die_attr_const(
+      attrs[0].const_value(info_section, endian=LittleEndian),
+    ) ==
+    -9223372036854775808L,
+  )
+  assert_true(
+    expect_die_attr_unsigned_const(
+      attrs[0].unsigned_const_value(info_section, endian=LittleEndian),
+    ).to_string() ==
+    "9223372036854775808",
+  )
+  assert_true(
+    expect_die_attr_unsigned_const(
+      attrs[1].unsigned_const_value(info_section, endian=LittleEndian),
+    ) ==
+    624485UL,
+  )
+  assert_true(
+    expect_die_attr_const(
+      attrs[2].const_value(info_section, endian=LittleEndian),
+    ) ==
+    -2L,
+  )
+  assert_true(
+    attrs[2].unsigned_const_value(info_section, endian=LittleEndian) is Err(_),
+  )
+  assert_true(
+    expect_die_attr_unsigned_const(
+      attrs[3].unsigned_const_value(info_section, endian=LittleEndian),
+    ) ==
+    7UL,
+  )
 }
 
 ///|

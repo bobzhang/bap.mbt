@@ -840,10 +840,19 @@ pub fn DwarfDieAttribute::const_value(
       } else {
         Err("DWARF implicit const attribute has a payload span")
       }
-    DwarfConst(lenspec) | DwarfSignedConst(lenspec) =>
+    DwarfConst(lenspec) =>
       match self.input(info) {
         Ok(input) =>
           match input.read_const(lenspec~, endian~) {
+            Ok((value, next)) => dwarf_die_attribute_finish(self, value, next)
+            Err(reason) => Err(reason)
+          }
+        Err(reason) => Err(reason)
+      }
+    DwarfSignedConst(lenspec) =>
+      match self.input(info) {
+        Ok(input) =>
+          match input.read_signed_const(lenspec, endian) {
             Ok((value, next)) => dwarf_die_attribute_finish(self, value, next)
             Err(reason) => Err(reason)
           }
@@ -855,6 +864,39 @@ pub fn DwarfDieAttribute::const_value(
         Err(reason) => Err(reason)
       }
     _ => Err("DWARF DIE attribute is not a constant")
+  }
+}
+
+///|
+pub fn DwarfDieAttribute::unsigned_const_value(
+  self : DwarfDieAttribute,
+  info : DwarfSectionBuffer,
+  endian~ : @bitvec.Endian,
+) -> Result[UInt64, String] {
+  match self.form() {
+    DwarfImplicitConst(value) =>
+      if self.offset_value != self.end_offset_value {
+        Err("DWARF implicit const attribute has a payload span")
+      } else if value < 0L {
+        Err("negative DWARF implicit const")
+      } else {
+        Ok(value.reinterpret_as_uint64())
+      }
+    DwarfConst(lenspec) =>
+      match self.input(info) {
+        Ok(input) =>
+          match input.read_unsigned_const(lenspec, endian) {
+            Ok((value, next)) => dwarf_die_attribute_finish(self, value, next)
+            Err(reason) => Err(reason)
+          }
+        Err(reason) => Err(reason)
+      }
+    DwarfIndirect =>
+      match self.indirect_attribute(info) {
+        Ok(actual) => actual.unsigned_const_value(info, endian~)
+        Err(reason) => Err(reason)
+      }
+    _ => Err("DWARF DIE attribute is not an unsigned constant")
   }
 }
 

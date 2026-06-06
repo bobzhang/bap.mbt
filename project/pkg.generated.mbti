@@ -587,6 +587,7 @@ pub fn ProjectDisassemblyFunction::span(Self) -> @memory.MemMap[Unit]
 type ProjectDisassemblyInstruction
 pub fn ProjectDisassemblyInstruction::addr(Self) -> UInt64
 pub fn ProjectDisassemblyInstruction::affects_control_flow(Self) -> Bool
+pub fn ProjectDisassemblyInstruction::apply_x86_simd(Self, ProjectX86SimdState) -> Result[ProjectX86SimdState, String]
 pub fn ProjectDisassemblyInstruction::assembly(Self) -> String
 pub fn ProjectDisassemblyInstruction::bil(Self) -> String
 pub fn ProjectDisassemblyInstruction::code(Self) -> Int
@@ -935,6 +936,16 @@ pub fn ProjectSymbolizer::path(Self) -> String?
 pub fn ProjectSymbolizer::resolve(Self, UInt64) -> String
 pub fn ProjectSymbolizer::run(Self, UInt64) -> String?
 pub fn ProjectSymbolizer::set_path(Self, String) -> Self
+
+type ProjectX86SimdState
+pub fn ProjectX86SimdState::create(registers? : Array[(String, @types.Word)], vector_memory? : Array[(UInt64, @types.Word)]) -> Self
+pub fn ProjectX86SimdState::empty() -> Self
+pub fn ProjectX86SimdState::get_register(Self, String) -> @types.Word?
+pub fn ProjectX86SimdState::get_vector_memory(Self, UInt64) -> @types.Word?
+pub fn ProjectX86SimdState::registers(Self) -> Map[String, @types.Word]
+pub fn ProjectX86SimdState::vector_memory(Self) -> Map[UInt64, @types.Word]
+pub fn ProjectX86SimdState::with_register(Self, name~ : String, @types.Word) -> Self
+pub fn ProjectX86SimdState::with_vector_memory(Self, addr~ : UInt64, @types.Word) -> Self
 
 type RegisteredProjectCollator
 pub fn RegisteredProjectCollator::apply(Self, Array[Project]) -> Unit

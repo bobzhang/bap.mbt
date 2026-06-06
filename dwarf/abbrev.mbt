@@ -6,6 +6,7 @@ pub(all) enum DwarfAbbrevValueKind {
   DwarfEntryPcValue
   DwarfHighPcAddressValue
   DwarfHighPcOffsetValue
+  DwarfHighPcIndirectValue
   DwarfRangesValue
   DwarfNameRefValue
   DwarfStrOffsetsBaseValue
@@ -143,6 +144,7 @@ pub fn DwarfAbbrevField::value_kind(
     (DwarfHighPc, DwarfConst(_))
     | (DwarfHighPc, DwarfSignedConst(_))
     | (DwarfHighPc, DwarfImplicitConst(_)) => DwarfHighPcOffsetValue
+    (DwarfHighPc, DwarfIndirect) => DwarfHighPcIndirectValue
     (DwarfRanges, DwarfOffset)
     | (DwarfRanges, DwarfRnglistx)
     | (DwarfRanges, DwarfIndirect) => DwarfRangesValue

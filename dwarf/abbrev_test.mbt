@@ -121,6 +121,27 @@ test "translated DWARF abbreviation parser reads implicit constants" {
 }
 
 ///|
+test "translated DWARF abbreviation parser keeps indirect high pc fields" {
+  let bytes = b"\x01\x2e\x00" +
+    b"\x03\x08" +
+    b"\x11\x01" +
+    b"\x12\x16" +
+    b"\x00\x00" +
+    b"\x00"
+  let table = expect_abbrev_table(@dwarf.DwarfAbbrevTable::of_bytes(bytes))
+  let entry = expect_abbrev_entry(table.lookup(1))
+  assert_true(entry.tag() == DwarfSubprogram)
+  assert_true(entry.fields().length() == 3)
+  assert_true(entry.fields()[2].attr() == DwarfHighPc)
+  assert_true(entry.fields()[2].form() == DwarfIndirect)
+  assert_true(entry.fields()[2].value_kind() == DwarfHighPcIndirectValue)
+  assert_true(
+    entry.value_fields().map(field => field.value_kind()) ==
+    [DwarfNameValue, DwarfLowPcValue, DwarfHighPcIndirectValue],
+  )
+}
+
+///|
 test "translated DWARF abbreviation parser rejects duplicates and malformed fields" {
   let duplicate = b"\x01\x2e\x00\x00\x00" + b"\x01\x11\x00\x00\x00" + b"\x00"
   assert_true(
@@ -347,7 +368,7 @@ test "translated DWARF abbreviation value classification follows BAP FBI inputs"
   )
   assert_true(
     @dwarf.DwarfAbbrevField::create(attr=DwarfHighPc, form=DwarfIndirect).value_kind() ==
-    DwarfIgnoredValue,
+    DwarfHighPcIndirectValue,
   )
   assert_true(
     @dwarf.DwarfAbbrevField::create(attr=DwarfLowPc, form=DwarfConst(DwarfFour)).value_kind() ==

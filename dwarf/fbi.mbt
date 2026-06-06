@@ -1027,6 +1027,8 @@ fn dwarf_read_attr_value(
             Err(reason) => Err(reason)
           }
       }
+    DwarfHighPcIndirectValue =>
+      Err("DWARF indirect high_pc form was not resolved")
     DwarfRangesValue =>
       match field.form() {
         DwarfRnglistx =>

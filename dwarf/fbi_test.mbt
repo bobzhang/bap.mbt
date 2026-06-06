@@ -83,6 +83,34 @@ test "translated DWARF FBI extracts function with inline name and relative high 
 }
 
 ///|
+test "translated DWARF FBI resolves indirect high pc offset" {
+  let abbrev = b"\x01\x2e\x00" +
+    b"\x03\x08" +
+    b"\x11\x01" +
+    b"\x12\x16" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x15\x00\x00\x00" +
+    b"\x04\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x04" +
+    b"\x01" +
+    b"indhi\x00" +
+    b"\x10\x00\x00\x00" +
+    b"\x0b" +
+    b"\x05" +
+    b"\x00"
+  let data = expect_fbi_data(
+    @dwarf.DwarfData::from_bytes(endian=LittleEndian, info~, abbrev~),
+  )
+  let functions = expect_functions(data.functions())
+  assert_true(functions.length() == 1)
+  assert_true(functions[0].name() == "indhi")
+  assert_true(functions[0].low_pc() == 0x10UL)
+  assert_true(functions[0].high_pc() == Some(0x15UL))
+}
+
+///|
 test "translated DWARF FBI extracts entry-point and inlined subroutine tags" {
   let abbrev = b"\x01\x03\x00" +
     b"\x03\x08" +

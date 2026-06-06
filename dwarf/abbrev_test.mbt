@@ -256,11 +256,38 @@ test "translated DWARF abbreviation value classification follows BAP FBI inputs"
       form=DwarfRef(DwarfFour),
     ).is_reference_field(),
   )
+  let reference_capable_attrs : Array[@dwarf.DwarfAttr] = [
+    DwarfByteSize,
+    DwarfBitSize,
+    DwarfStringLength,
+    DwarfDefaultValue,
+    DwarfLowerBound,
+    DwarfBitStride,
+    DwarfUpperBound,
+    DwarfCount,
+    DwarfPriority,
+    DwarfAllocated,
+    DwarfAssociated,
+    DwarfByteStride,
+    DwarfTrampoline,
+    DwarfSmall,
+  ]
+  for attr in reference_capable_attrs {
+    let field = @dwarf.DwarfAbbrevField::create(attr~, form=DwarfRef(DwarfFour))
+    assert_true(field.value_kind() == DwarfIgnoredValue)
+    assert_true(field.is_reference_field())
+  }
   assert_true(
     !@dwarf.DwarfAbbrevField::create(attr=DwarfType, form=DwarfString).is_reference_field(),
   )
   assert_true(
     !@dwarf.DwarfAbbrevField::create(attr=DwarfName, form=DwarfRef(DwarfFour)).is_reference_field(),
+  )
+  assert_true(
+    !@dwarf.DwarfAbbrevField::create(
+      attr=DwarfDataLocation,
+      form=DwarfRef(DwarfFour),
+    ).is_reference_field(),
   )
   assert_true(
     @dwarf.DwarfAbbrevField::create(

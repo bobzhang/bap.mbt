@@ -1362,6 +1362,71 @@ test "translated DWARF DIE attributes expose index and reference readers" {
 }
 
 ///|
+test "translated DWARF DIE attributes expose DWARF5 reference-class metadata" {
+  let abbrev = b"\x01\x2e\x00" +
+    b"\x0b\x11" +
+    b"\x0d\x11" +
+    b"\x19\x11" +
+    b"\x1e\x11" +
+    b"\x22\x11" +
+    b"\x2e\x11" +
+    b"\x2f\x11" +
+    b"\x37\x11" +
+    b"\x45\x11" +
+    b"\x4e\x11" +
+    b"\x4f\x11" +
+    b"\x51\x11" +
+    b"\x56\x11" +
+    b"\x5d\x11" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x16\x00\x00\x00" +
+    b"\x04\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x04" +
+    b"\x01" +
+    b"\x0b\x0c\x0d\x0e\x0f\x10\x11" +
+    b"\x12\x13\x14\x15\x16\x17\x18"
+  let data = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(endian=LittleEndian, info~, abbrev~),
+  )
+  let info_section = expect_section_buffer(data.section(DwarfInfo))
+  let die = expect_dies(data.unit_dies())[0]
+  let refs = die.reference_attributes()
+  assert_true(
+    refs.map(attr => attr.attr()) ==
+    [
+      DwarfByteSize,
+      DwarfBitSize,
+      DwarfStringLength,
+      DwarfDefaultValue,
+      DwarfLowerBound,
+      DwarfBitStride,
+      DwarfUpperBound,
+      DwarfCount,
+      DwarfPriority,
+      DwarfAllocated,
+      DwarfAssociated,
+      DwarfByteStride,
+      DwarfTrampoline,
+      DwarfSmall,
+    ],
+  )
+  assert_true(
+    expect_die_attr_ref(
+      refs[0].reference(
+        info_section,
+        endian=LittleEndian,
+        version=4,
+        dwarf_size=W32,
+        addr_size=W32,
+      ),
+    ) ==
+    DwarfUnitReference(0x0b),
+  )
+}
+
+///|
 test "translated DWARF section buffers read string tables" {
   let buffer = expect_section_buffer(
     @dwarf.DwarfSectionBuffer::create(b"skip\x00name\x00tail\x00"),

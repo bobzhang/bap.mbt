@@ -70,17 +70,31 @@ fn dwarf_form_is_reference(form : DwarfForm) -> Bool {
 fn dwarf_attr_accepts_reference(attr : DwarfAttr) -> Bool {
   match attr {
     DwarfSibling
+    | DwarfByteSize
+    | DwarfBitSize
     | DwarfDiscr
     | DwarfImport
+    | DwarfStringLength
     | DwarfCommonReference
     | DwarfContainingType
+    | DwarfDefaultValue
+    | DwarfLowerBound
+    | DwarfBitStride
+    | DwarfUpperBound
     | DwarfAbstractOrigin
     | DwarfBaseTypes
+    | DwarfCount
     | DwarfFriend
     | DwarfNamelistItem
+    | DwarfPriority
     | DwarfSpecification
     | DwarfType
+    | DwarfAllocated
+    | DwarfAssociated
+    | DwarfByteStride
     | DwarfExtension
+    | DwarfTrampoline
+    | DwarfSmall
     | DwarfObjectPointer
     | DwarfSignature
     | DwarfCallOrigin

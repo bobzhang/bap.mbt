@@ -29,6 +29,23 @@ fn reconstructor_def_text(
 }
 
 ///|
+fn reconstructor_jmp_text(
+  jmps : Array[@types.Term[@types.Jmp]],
+) -> Array[String] {
+  jmps.map(jmp => @types.Jmp::to_string(jmp))
+}
+
+///|
+fn assert_reconstructor_text(
+  actual : Array[String],
+  expected : Array[String],
+) -> Unit raise {
+  if actual != expected {
+    fail("expected " + expected.join(" | ") + ", got " + actual.join(" | "))
+  }
+}
+
+///|
 test "project default reconstructor turns disassembly blocks into named subroutines" {
   match @project.register_builtin_disassembly_drivers() {
     Ok(_) => ()
@@ -106,6 +123,63 @@ test "project reconstructor materializes supported Basic BIL assignments" {
           "RSP:imm64 := (RSP:imm64 + 8:64u)",
         ],
       )
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+test "project reconstructor materializes Basic BIL fallback jumps" {
+  let goto_disassembly = reconstructor_basic_disassembly(
+    "x86",
+    b"\xeb\xfe",
+    start=0x7200UL,
+  )
+  let goto_project = @project.Project::empty(@core_theory.Target::x86()).with_disassembly(
+    goto_disassembly,
+  )
+  match goto_project.reconstruct() {
+    Ok(reconstructed) => {
+      let block = reconstructed.program().subs()[0].blks()[0]
+      assert_reconstructor_text(reconstructor_jmp_text(block.jmps()), [
+        "goto @0x0000000000007200",
+      ])
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let call_disassembly = reconstructor_basic_disassembly(
+    "x86_64",
+    b"\xe8\x47\xee\xff\xff",
+    start=0x7300UL,
+  )
+  let call_project = @project.Project::empty(@core_theory.Target::x86_64()).with_disassembly(
+    call_disassembly,
+  )
+  match call_project.reconstruct() {
+    Ok(reconstructed) => {
+      let block = reconstructed.program().subs()[0].blks()[0]
+      assert_reconstructor_text(reconstructor_jmp_text(block.jmps()), [
+        "call @0x000000000000614c with noreturn",
+      ])
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let conditional_disassembly = reconstructor_basic_disassembly(
+    "armv7",
+    b"\xf6\xff\xff\x1a",
+    start=0x8448UL,
+  )
+  let conditional_project = @project.Project::empty(@core_theory.Target::arm()).with_disassembly(
+    conditional_disassembly,
+  )
+  match conditional_project.reconstruct() {
+    Ok(reconstructed) => {
+      let block = reconstructed.program().subs()[0].blks()[0]
+      assert_reconstructor_text(reconstructor_jmp_text(block.jmps()), [
+        "when ARM.NE:imm1 goto @0x00008428",
+      ])
     }
     Err(reason) => fail(reason)
   }

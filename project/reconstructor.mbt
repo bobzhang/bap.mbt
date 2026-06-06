@@ -238,6 +238,88 @@ fn project_reconstructor_basic_bil_def(
 }
 
 ///|
+priv enum ProjectReconstructorBasicBilControl {
+  BasicBilGoto
+  BasicBilCall
+}
+
+///|
+fn project_reconstructor_basic_bil_control(
+  stmt : @types.Stmt,
+) -> ProjectReconstructorBasicBilControl? {
+  if @types.Stmt::decode(@types.Stmt::call(), stmt) is Some(_) {
+    Some(BasicBilCall)
+  } else if @types.Stmt::decode(@types.Stmt::goto(), stmt) is Some(_) {
+    Some(BasicBilGoto)
+  } else {
+    None
+  }
+}
+
+///|
+fn project_reconstructor_basic_bil_label(
+  exp : @types.Exp,
+  pkg? : String,
+) -> @types.Label {
+  match exp {
+    Int(word) => @types.Label::direct(@types.Tid::for_addr(word, pkg?))
+    _ => @types.Label::indirect(exp)
+  }
+}
+
+///|
+fn project_reconstructor_basic_bil_jmp(
+  exp : @types.Exp,
+  control : ProjectReconstructorBasicBilControl?,
+  cond? : @types.Exp,
+  pkg? : String,
+) -> @types.Term[@types.Jmp] {
+  let label = project_reconstructor_basic_bil_label(exp, pkg?)
+  match control {
+    Some(BasicBilCall) =>
+      @types.Jmp::create_call(@types.Call::create(target=label), cond?)
+    _ => @types.Jmp::create_goto(label, cond?)
+  }
+}
+
+///|
+fn project_reconstructor_basic_bil_jmps_from_stmts(
+  stmts : Array[@types.Stmt],
+  cond? : @types.Exp,
+  pkg? : String,
+) -> Array[@types.Term[@types.Jmp]] {
+  let result : Array[@types.Term[@types.Jmp]] = []
+  let mut control : ProjectReconstructorBasicBilControl? = None
+  for stmt in stmts {
+    match project_reconstructor_basic_bil_control(stmt) {
+      Some(value) => control = Some(value)
+      None => ()
+    }
+    match stmt {
+      Jmp(exp) => {
+        result.push(
+          project_reconstructor_basic_bil_jmp(exp, control, cond?, pkg?),
+        )
+        control = None
+      }
+      If(cond=branch_cond, yes~, no=[]) => {
+        for
+          jmp in project_reconstructor_basic_bil_jmps_from_stmts(
+            yes,
+            cond=branch_cond,
+            pkg?,
+          ) {
+          result.push(jmp)
+        }
+        control = None
+      }
+      _ => ()
+    }
+  }
+  result
+}
+
+///|
 fn project_reconstructor_append_basic_bil_defs(
   project : Project,
   block : @memory.Memory,
@@ -263,6 +345,36 @@ fn project_reconstructor_append_basic_bil_defs(
 }
 
 ///|
+fn project_reconstructor_append_basic_bil_jmps(
+  project : Project,
+  block : @memory.Memory,
+  ir_block : @types.Term[@types.Blk],
+) -> @types.Term[@types.Blk] {
+  if !project.disassembly().edges_from_block(block).is_empty() {
+    ir_block
+  } else {
+    match project.disassembly().block_view(block) {
+      Ok(view) =>
+        match view.lift_basic_bil() {
+          Ok(stmts) => {
+            let mut result = ir_block
+            for
+              jmp in project_reconstructor_basic_bil_jmps_from_stmts(
+                stmts,
+                pkg?=project.pkg(),
+              ) {
+              result = result.append_jmp(jmp)
+            }
+            result
+          }
+          Err(_) => ir_block
+        }
+      Err(_) => ir_block
+    }
+  }
+}
+
+///|
 fn project_reconstructor_ir_block(
   project : Project,
   block : @memory.Memory,
@@ -270,11 +382,15 @@ fn project_reconstructor_ir_block(
   match project_reconstructor_block_word(project, block) {
     Ok(addr) =>
       Ok(
-        project_reconstructor_append_basic_bil_defs(
+        project_reconstructor_append_basic_bil_jmps(
           project,
           block,
-          @types.Blk::create(tid=@types.Tid::for_addr(addr, pkg?=project.pkg())).set_attr(
-            @types.Attr::address(addr),
+          project_reconstructor_append_basic_bil_defs(
+            project,
+            block,
+            @types.Blk::create(
+              tid=@types.Tid::for_addr(addr, pkg?=project.pkg()),
+            ).set_attr(@types.Attr::address(addr)),
           ),
         ),
       )

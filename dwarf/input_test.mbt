@@ -33,6 +33,20 @@ fn expect_input_tags(
 }
 
 ///|
+fn expect_input_attrs(
+  input : @dwarf.DwarfInput,
+  attrs : Array[@dwarf.DwarfAttr],
+) -> @dwarf.DwarfInput raise {
+  let mut cursor = input
+  for expected in attrs {
+    let (attr, next) = expect_input_read(cursor.read_attr())
+    assert_true(attr == expected)
+    cursor = next
+  }
+  cursor
+}
+
+///|
 test "translated DWARF input reads bytes strings and cursor positions" {
   let input = @dwarf.DwarfInput::of_bytes(b"\x01hello\x00z")
   let (byte, input) = expect_input_read(input.read_byte())
@@ -248,6 +262,146 @@ test "translated DWARF input decodes tags attributes forms and LEB128 codes" {
 }
 
 ///|
+test "translated DWARF input decodes standard attribute names" {
+  let input = @dwarf.DwarfInput::of_bytes(
+    b"\x01\x02\x03\x09\x0b\x0c\x0d\x10\x11\x12\x13\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x20\x21\x22\x25\x27\x2a\x2c\x2e\x2f\x31\x32\x33\x34\x35\x36\x37\x38\x39\x3a\x3b\x3c\x3d\x3e\x3f\x40\x41\x42\x43\x44\x45\x46\x47\x48\x49\x4a\x4b\x4c\x4d\x4e\x4f\x50\x51\x52\x53\x54\x55\x56\x57\x58\x59\x5a\x5b\x5c\x5d\x5e\x5f\x60\x61\x62\x63\x64\x65\x66\x67\x68\x69\x6a\x6b\x6c\x6d\x6e\x6f\x70\x71\x72\x73\x74\x75\x76\x77\x78\x79\x7a\x7b\x7c\x7d\x7e\x7f\x80\x01\x81\x01\x82\x01\x83\x01\x84\x01\x85\x01\x86\x01\x87\x01\x88\x01\x89\x01\x8a\x01\x8b\x01\x8c\x01\x87\x40\xb2\x42\xb3\x42",
+  )
+  let input = expect_input_attrs(input, [
+    DwarfSibling,
+    DwarfLocation,
+    DwarfName,
+    DwarfOrdering,
+    DwarfByteSize,
+    DwarfBitOffset,
+    DwarfBitSize,
+    DwarfStmtList,
+    DwarfLowPc,
+    DwarfHighPc,
+    DwarfLanguage,
+    DwarfDiscr,
+    DwarfDiscrValue,
+    DwarfVisibility,
+    DwarfImport,
+    DwarfStringLength,
+    DwarfCommonReference,
+    DwarfCompDir,
+    DwarfConstValue,
+    DwarfContainingType,
+    DwarfDefaultValue,
+    DwarfInline,
+    DwarfIsOptional,
+    DwarfLowerBound,
+    DwarfProducer,
+    DwarfPrototyped,
+    DwarfReturnAddr,
+    DwarfStartScope,
+    DwarfBitStride,
+    DwarfUpperBound,
+    DwarfAbstractOrigin,
+    DwarfAccessibility,
+    DwarfAddressClass,
+    DwarfArtificial,
+    DwarfBaseTypes,
+    DwarfCallingConvention,
+    DwarfCount,
+    DwarfDataMemberLocation,
+    DwarfDeclColumn,
+    DwarfDeclFile,
+    DwarfDeclLine,
+    DwarfDeclaration,
+    DwarfDiscrList,
+    DwarfEncoding,
+    DwarfExternal,
+    DwarfFrameBase,
+    DwarfFriend,
+    DwarfIdentifierCase,
+    DwarfMacroInfo,
+    DwarfNamelistItem,
+    DwarfPriority,
+    DwarfSegment,
+    DwarfSpecification,
+    DwarfStaticLink,
+    DwarfType,
+    DwarfUseLocation,
+    DwarfVariableParameter,
+    DwarfVirtuality,
+    DwarfVtableElemLocation,
+    DwarfAllocated,
+    DwarfAssociated,
+    DwarfDataLocation,
+    DwarfByteStride,
+    DwarfEntryPc,
+    DwarfUseUtf8,
+    DwarfExtension,
+    DwarfRanges,
+    DwarfTrampoline,
+    DwarfCallColumn,
+    DwarfCallFile,
+    DwarfCallLine,
+    DwarfDescription,
+    DwarfBinaryScale,
+    DwarfDecimalScale,
+    DwarfSmall,
+    DwarfDecimalSign,
+    DwarfDigitCount,
+    DwarfPictureString,
+    DwarfMutable,
+    DwarfThreadsScaled,
+    DwarfExplicit,
+    DwarfObjectPointer,
+    DwarfEndianity,
+    DwarfElemental,
+    DwarfPure,
+    DwarfRecursive,
+    DwarfSignature,
+    DwarfMainSubprogram,
+    DwarfDataBitOffset,
+    DwarfConstExpr,
+    DwarfEnumClass,
+    DwarfLinkageName,
+    DwarfStringLengthBitSize,
+    DwarfStringLengthByteSize,
+    DwarfRank,
+    DwarfStrOffsetsBase,
+    DwarfAddrBase,
+    DwarfRnglistsBase,
+    DwarfDwoId,
+    DwarfDwoName,
+    DwarfReference,
+    DwarfRvalueReference,
+    DwarfMacros,
+    DwarfCallAllCalls,
+    DwarfCallAllSourceCalls,
+    DwarfCallAllTailCalls,
+    DwarfCallReturnPc,
+    DwarfCallValue,
+    DwarfCallOrigin,
+    DwarfCallParameter,
+    DwarfCallPc,
+    DwarfCallTailCall,
+    DwarfCallTarget,
+    DwarfCallTargetClobbered,
+    DwarfCallDataLocation,
+    DwarfCallDataValue,
+    DwarfNoreturn,
+    DwarfAlignment,
+    DwarfExportSymbols,
+    DwarfDeleted,
+    DwarfDefaulted,
+    DwarfLoclistsBase,
+    DwarfLinkageName,
+    DwarfRangesBase,
+    DwarfAddrBase,
+  ])
+  assert_true(input.remaining() == 0)
+  let (unknown, done) = expect_input_read(
+    @dwarf.DwarfInput::of_bytes(b"\x90\x01").read_attr(),
+  )
+  assert_true(unknown == DwarfUnknownAttr(0x90))
+  assert_true(done.remaining() == 0)
+}
+
+///|
 test "translated DWARF source-style type aliases construct values" {
   assert_true(@dwarf.DwarfLenspec::leb128() == DwarfLeb128)
   assert_true(@dwarf.DwarfLenspec::one() == DwarfOne)
@@ -276,14 +430,25 @@ test "translated DWARF source-style type aliases construct values" {
   assert_true(@dwarf.DwarfAttr::name() == DwarfName)
   assert_true(@dwarf.DwarfAttr::sibling() == DwarfSibling)
   assert_true(@dwarf.DwarfAttr::location() == DwarfLocation)
+  assert_true(@dwarf.DwarfAttr::byte_size() == DwarfByteSize)
+  assert_true(@dwarf.DwarfAttr::producer() == DwarfProducer)
+  assert_true(@dwarf.DwarfAttr::comp_dir() == DwarfCompDir)
   assert_true(@dwarf.DwarfAttr::import_() == DwarfImport)
   assert_true(@dwarf.DwarfAttr::common_reference() == DwarfCommonReference)
   assert_true(@dwarf.DwarfAttr::containing_type() == DwarfContainingType)
+  assert_true(@dwarf.DwarfAttr::decl_file() == DwarfDeclFile)
+  assert_true(@dwarf.DwarfAttr::encoding() == DwarfEncoding)
   assert_true(@dwarf.DwarfAttr::frame_base() == DwarfFrameBase)
   assert_true(@dwarf.DwarfAttr::low_pc() == DwarfLowPc)
   assert_true(@dwarf.DwarfAttr::high_pc() == DwarfHighPc)
   assert_true(@dwarf.DwarfAttr::entry_pc() == DwarfEntryPc)
+  assert_true(@dwarf.DwarfAttr::linkage_name() == DwarfLinkageName)
+  assert_true(@dwarf.DwarfAttr::str_offsets_base() == DwarfStrOffsetsBase)
+  assert_true(@dwarf.DwarfAttr::addr_base() == DwarfAddrBase)
+  assert_true(@dwarf.DwarfAttr::rnglists_base() == DwarfRnglistsBase)
+  assert_true(@dwarf.DwarfAttr::ranges_base() == DwarfRangesBase)
   assert_true(@dwarf.DwarfAttr::loclists_base() == DwarfLoclistsBase)
+  assert_true(@dwarf.DwarfAttr::call_pc() == DwarfCallPc)
   assert_true(@dwarf.DwarfAttr::type_() == DwarfType)
   assert_true(@dwarf.DwarfAttr::object_pointer() == DwarfObjectPointer)
   assert_true(@dwarf.DwarfAttr::unknown(9) == DwarfUnknownAttr(9))

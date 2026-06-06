@@ -71,7 +71,7 @@ test "translated DWARF abbreviation tables parse entries and terminators" {
 
 ///|
 test "translated DWARF abbreviation parser supports offsets and unknown attrs" {
-  let bytes = b"pad" + b"\x04\x03\x00" + b"\x7f\x08" + b"\x00\x00" + b"\x00"
+  let bytes = b"pad" + b"\x04\x03\x00" + b"\x90\x01\x08" + b"\x00\x00" + b"\x00"
   let table = expect_abbrev_table(
     @dwarf.DwarfAbbrevTable::of_bytes(bytes, offset=3),
   )
@@ -79,7 +79,7 @@ test "translated DWARF abbreviation parser supports offsets and unknown attrs" {
   assert_true(entry.tag() == DwarfEntryPoint)
   assert_true(!entry.has_children())
   assert_true(entry.fields().length() == 1)
-  assert_true(entry.fields()[0].attr() == DwarfUnknownAttr(0x7f))
+  assert_true(entry.fields()[0].attr() == DwarfUnknownAttr(0x90))
   assert_true(entry.fields()[0].form() == DwarfString)
   assert_true(entry.fields()[0].value_kind() == DwarfIgnoredValue)
   assert_true(entry.value_fields().is_empty())
@@ -103,8 +103,8 @@ test "translated DWARF abbreviation parser names standard type tags" {
 test "translated DWARF abbreviation parser reads implicit constants" {
   let bytes = b"\x05\x2e\x00" +
     b"\x12\x21\x7e" +
-    b"\x7f\x1e" +
-    b"\x7e\x24" +
+    b"\x90\x01\x1e" +
+    b"\x91\x01\x24" +
     b"\x00\x00" +
     b"\x00"
   let table = expect_abbrev_table(@dwarf.DwarfAbbrevTable::of_bytes(bytes))
@@ -114,9 +114,9 @@ test "translated DWARF abbreviation parser reads implicit constants" {
   assert_true(entry.fields()[0].attr() == DwarfHighPc)
   assert_true(entry.fields()[0].form() == DwarfImplicitConst(-2L))
   assert_true(entry.fields()[0].value_kind() == DwarfHighPcOffsetValue)
-  assert_true(entry.fields()[1].attr() == DwarfUnknownAttr(0x7f))
+  assert_true(entry.fields()[1].attr() == DwarfUnknownAttr(0x90))
   assert_true(entry.fields()[1].form() == DwarfData16)
-  assert_true(entry.fields()[2].attr() == DwarfUnknownAttr(0x7e))
+  assert_true(entry.fields()[2].attr() == DwarfUnknownAttr(0x91))
   assert_true(entry.fields()[2].form() == DwarfRefSup8)
 }
 

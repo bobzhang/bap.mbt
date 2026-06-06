@@ -470,46 +470,128 @@ pub(all) enum DwarfAttr {
   DwarfSibling
   DwarfLocation
   DwarfName
-  DwarfImport
-  DwarfCommonReference
-  DwarfContainingType
-  DwarfLinkageName
-  DwarfFrameBase
+  DwarfOrdering
+  DwarfByteSize
+  DwarfBitOffset
+  DwarfBitSize
+  DwarfStmtList
   DwarfLowPc
   DwarfHighPc
-  DwarfEntryPc
-  DwarfRanges
+  DwarfLanguage
+  DwarfDiscr
+  DwarfDiscrValue
+  DwarfVisibility
+  DwarfImport
+  DwarfStringLength
+  DwarfCommonReference
+  DwarfCompDir
+  DwarfConstValue
+  DwarfContainingType
+  DwarfDefaultValue
+  DwarfInline
+  DwarfIsOptional
+  DwarfLowerBound
+  DwarfProducer
+  DwarfPrototyped
+  DwarfReturnAddr
+  DwarfStartScope
+  DwarfBitStride
+  DwarfUpperBound
   DwarfAbstractOrigin
+  DwarfAccessibility
+  DwarfAddressClass
+  DwarfArtificial
+  DwarfBaseTypes
+  DwarfCallingConvention
+  DwarfCount
+  DwarfDataMemberLocation
+  DwarfDeclColumn
+  DwarfDeclFile
+  DwarfDeclLine
+  DwarfDeclaration
+  DwarfDiscrList
+  DwarfEncoding
+  DwarfExternal
+  DwarfFrameBase
+  DwarfFriend
+  DwarfIdentifierCase
+  DwarfMacroInfo
+  DwarfNamelistItem
+  DwarfPriority
+  DwarfSegment
   DwarfSpecification
+  DwarfStaticLink
   DwarfType
+  DwarfUseLocation
+  DwarfVariableParameter
+  DwarfVirtuality
+  DwarfVtableElemLocation
+  DwarfAllocated
+  DwarfAssociated
+  DwarfDataLocation
+  DwarfByteStride
+  DwarfEntryPc
+  DwarfUseUtf8
+  DwarfExtension
+  DwarfRanges
+  DwarfTrampoline
+  DwarfCallColumn
+  DwarfCallFile
+  DwarfCallLine
+  DwarfDescription
+  DwarfBinaryScale
+  DwarfDecimalScale
+  DwarfSmall
+  DwarfDecimalSign
+  DwarfDigitCount
+  DwarfPictureString
+  DwarfMutable
+  DwarfThreadsScaled
+  DwarfExplicit
   DwarfObjectPointer
+  DwarfEndianity
+  DwarfElemental
+  DwarfPure
+  DwarfRecursive
+  DwarfSignature
+  DwarfMainSubprogram
+  DwarfDataBitOffset
+  DwarfConstExpr
+  DwarfEnumClass
+  DwarfLinkageName
+  DwarfStringLengthBitSize
+  DwarfStringLengthByteSize
+  DwarfRank
   DwarfStrOffsetsBase
   DwarfAddrBase
-  DwarfRangesBase
   DwarfRnglistsBase
+  DwarfDwoId
+  DwarfDwoName
+  DwarfReference
+  DwarfRvalueReference
+  DwarfMacros
+  DwarfCallAllCalls
+  DwarfCallAllSourceCalls
+  DwarfCallAllTailCalls
+  DwarfCallReturnPc
+  DwarfCallValue
+  DwarfCallOrigin
+  DwarfCallParameter
+  DwarfCallPc
+  DwarfCallTailCall
+  DwarfCallTarget
+  DwarfCallTargetClobbered
+  DwarfCallDataLocation
+  DwarfCallDataValue
+  DwarfNoreturn
+  DwarfAlignment
+  DwarfExportSymbols
+  DwarfDeleted
+  DwarfDefaulted
   DwarfLoclistsBase
+  DwarfRangesBase
   DwarfUnknownAttr(Int)
 } derive(Eq, Debug)
-
-///|
-pub fn DwarfAttr::name() -> DwarfAttr {
-  DwarfName
-}
-
-///|
-pub fn DwarfAttr::import_() -> DwarfAttr {
-  DwarfImport
-}
-
-///|
-pub fn DwarfAttr::common_reference() -> DwarfAttr {
-  DwarfCommonReference
-}
-
-///|
-pub fn DwarfAttr::containing_type() -> DwarfAttr {
-  DwarfContainingType
-}
 
 ///|
 pub fn DwarfAttr::sibling() -> DwarfAttr {
@@ -522,8 +604,33 @@ pub fn DwarfAttr::location() -> DwarfAttr {
 }
 
 ///|
-pub fn DwarfAttr::frame_base() -> DwarfAttr {
-  DwarfFrameBase
+pub fn DwarfAttr::name() -> DwarfAttr {
+  DwarfName
+}
+
+///|
+pub fn DwarfAttr::ordering() -> DwarfAttr {
+  DwarfOrdering
+}
+
+///|
+pub fn DwarfAttr::byte_size() -> DwarfAttr {
+  DwarfByteSize
+}
+
+///|
+pub fn DwarfAttr::bit_offset() -> DwarfAttr {
+  DwarfBitOffset
+}
+
+///|
+pub fn DwarfAttr::bit_size() -> DwarfAttr {
+  DwarfBitSize
+}
+
+///|
+pub fn DwarfAttr::stmt_list() -> DwarfAttr {
+  DwarfStmtList
 }
 
 ///|
@@ -537,13 +644,223 @@ pub fn DwarfAttr::high_pc() -> DwarfAttr {
 }
 
 ///|
-pub fn DwarfAttr::entry_pc() -> DwarfAttr {
-  DwarfEntryPc
+pub fn DwarfAttr::language() -> DwarfAttr {
+  DwarfLanguage
 }
 
 ///|
-pub fn DwarfAttr::loclists_base() -> DwarfAttr {
-  DwarfLoclistsBase
+pub fn DwarfAttr::discr() -> DwarfAttr {
+  DwarfDiscr
+}
+
+///|
+pub fn DwarfAttr::discr_value() -> DwarfAttr {
+  DwarfDiscrValue
+}
+
+///|
+pub fn DwarfAttr::visibility() -> DwarfAttr {
+  DwarfVisibility
+}
+
+///|
+pub fn DwarfAttr::import_() -> DwarfAttr {
+  DwarfImport
+}
+
+///|
+pub fn DwarfAttr::string_length() -> DwarfAttr {
+  DwarfStringLength
+}
+
+///|
+pub fn DwarfAttr::common_reference() -> DwarfAttr {
+  DwarfCommonReference
+}
+
+///|
+pub fn DwarfAttr::comp_dir() -> DwarfAttr {
+  DwarfCompDir
+}
+
+///|
+pub fn DwarfAttr::const_value() -> DwarfAttr {
+  DwarfConstValue
+}
+
+///|
+pub fn DwarfAttr::containing_type() -> DwarfAttr {
+  DwarfContainingType
+}
+
+///|
+pub fn DwarfAttr::default_value() -> DwarfAttr {
+  DwarfDefaultValue
+}
+
+///|
+pub fn DwarfAttr::inline_() -> DwarfAttr {
+  DwarfInline
+}
+
+///|
+pub fn DwarfAttr::is_optional() -> DwarfAttr {
+  DwarfIsOptional
+}
+
+///|
+pub fn DwarfAttr::lower_bound() -> DwarfAttr {
+  DwarfLowerBound
+}
+
+///|
+pub fn DwarfAttr::producer() -> DwarfAttr {
+  DwarfProducer
+}
+
+///|
+pub fn DwarfAttr::prototyped() -> DwarfAttr {
+  DwarfPrototyped
+}
+
+///|
+pub fn DwarfAttr::return_addr() -> DwarfAttr {
+  DwarfReturnAddr
+}
+
+///|
+pub fn DwarfAttr::start_scope() -> DwarfAttr {
+  DwarfStartScope
+}
+
+///|
+pub fn DwarfAttr::bit_stride() -> DwarfAttr {
+  DwarfBitStride
+}
+
+///|
+pub fn DwarfAttr::upper_bound() -> DwarfAttr {
+  DwarfUpperBound
+}
+
+///|
+pub fn DwarfAttr::abstract_origin() -> DwarfAttr {
+  DwarfAbstractOrigin
+}
+
+///|
+pub fn DwarfAttr::accessibility() -> DwarfAttr {
+  DwarfAccessibility
+}
+
+///|
+pub fn DwarfAttr::address_class() -> DwarfAttr {
+  DwarfAddressClass
+}
+
+///|
+pub fn DwarfAttr::artificial() -> DwarfAttr {
+  DwarfArtificial
+}
+
+///|
+pub fn DwarfAttr::base_types() -> DwarfAttr {
+  DwarfBaseTypes
+}
+
+///|
+pub fn DwarfAttr::calling_convention() -> DwarfAttr {
+  DwarfCallingConvention
+}
+
+///|
+pub fn DwarfAttr::count() -> DwarfAttr {
+  DwarfCount
+}
+
+///|
+pub fn DwarfAttr::data_member_location() -> DwarfAttr {
+  DwarfDataMemberLocation
+}
+
+///|
+pub fn DwarfAttr::decl_column() -> DwarfAttr {
+  DwarfDeclColumn
+}
+
+///|
+pub fn DwarfAttr::decl_file() -> DwarfAttr {
+  DwarfDeclFile
+}
+
+///|
+pub fn DwarfAttr::decl_line() -> DwarfAttr {
+  DwarfDeclLine
+}
+
+///|
+pub fn DwarfAttr::declaration() -> DwarfAttr {
+  DwarfDeclaration
+}
+
+///|
+pub fn DwarfAttr::discr_list() -> DwarfAttr {
+  DwarfDiscrList
+}
+
+///|
+pub fn DwarfAttr::encoding() -> DwarfAttr {
+  DwarfEncoding
+}
+
+///|
+pub fn DwarfAttr::external() -> DwarfAttr {
+  DwarfExternal
+}
+
+///|
+pub fn DwarfAttr::frame_base() -> DwarfAttr {
+  DwarfFrameBase
+}
+
+///|
+pub fn DwarfAttr::friend() -> DwarfAttr {
+  DwarfFriend
+}
+
+///|
+pub fn DwarfAttr::identifier_case() -> DwarfAttr {
+  DwarfIdentifierCase
+}
+
+///|
+pub fn DwarfAttr::macro_info() -> DwarfAttr {
+  DwarfMacroInfo
+}
+
+///|
+pub fn DwarfAttr::namelist_item() -> DwarfAttr {
+  DwarfNamelistItem
+}
+
+///|
+pub fn DwarfAttr::priority() -> DwarfAttr {
+  DwarfPriority
+}
+
+///|
+pub fn DwarfAttr::segment() -> DwarfAttr {
+  DwarfSegment
+}
+
+///|
+pub fn DwarfAttr::specification() -> DwarfAttr {
+  DwarfSpecification
+}
+
+///|
+pub fn DwarfAttr::static_link() -> DwarfAttr {
+  DwarfStaticLink
 }
 
 ///|
@@ -552,8 +869,343 @@ pub fn DwarfAttr::type_() -> DwarfAttr {
 }
 
 ///|
+pub fn DwarfAttr::use_location() -> DwarfAttr {
+  DwarfUseLocation
+}
+
+///|
+pub fn DwarfAttr::variable_parameter() -> DwarfAttr {
+  DwarfVariableParameter
+}
+
+///|
+pub fn DwarfAttr::virtuality() -> DwarfAttr {
+  DwarfVirtuality
+}
+
+///|
+pub fn DwarfAttr::vtable_elem_location() -> DwarfAttr {
+  DwarfVtableElemLocation
+}
+
+///|
+pub fn DwarfAttr::allocated() -> DwarfAttr {
+  DwarfAllocated
+}
+
+///|
+pub fn DwarfAttr::associated() -> DwarfAttr {
+  DwarfAssociated
+}
+
+///|
+pub fn DwarfAttr::data_location() -> DwarfAttr {
+  DwarfDataLocation
+}
+
+///|
+pub fn DwarfAttr::byte_stride() -> DwarfAttr {
+  DwarfByteStride
+}
+
+///|
+pub fn DwarfAttr::entry_pc() -> DwarfAttr {
+  DwarfEntryPc
+}
+
+///|
+pub fn DwarfAttr::use_utf8() -> DwarfAttr {
+  DwarfUseUtf8
+}
+
+///|
+pub fn DwarfAttr::extension() -> DwarfAttr {
+  DwarfExtension
+}
+
+///|
+pub fn DwarfAttr::ranges() -> DwarfAttr {
+  DwarfRanges
+}
+
+///|
+pub fn DwarfAttr::trampoline() -> DwarfAttr {
+  DwarfTrampoline
+}
+
+///|
+pub fn DwarfAttr::call_column() -> DwarfAttr {
+  DwarfCallColumn
+}
+
+///|
+pub fn DwarfAttr::call_file() -> DwarfAttr {
+  DwarfCallFile
+}
+
+///|
+pub fn DwarfAttr::call_line() -> DwarfAttr {
+  DwarfCallLine
+}
+
+///|
+pub fn DwarfAttr::description() -> DwarfAttr {
+  DwarfDescription
+}
+
+///|
+pub fn DwarfAttr::binary_scale() -> DwarfAttr {
+  DwarfBinaryScale
+}
+
+///|
+pub fn DwarfAttr::decimal_scale() -> DwarfAttr {
+  DwarfDecimalScale
+}
+
+///|
+pub fn DwarfAttr::small() -> DwarfAttr {
+  DwarfSmall
+}
+
+///|
+pub fn DwarfAttr::decimal_sign() -> DwarfAttr {
+  DwarfDecimalSign
+}
+
+///|
+pub fn DwarfAttr::digit_count() -> DwarfAttr {
+  DwarfDigitCount
+}
+
+///|
+pub fn DwarfAttr::picture_string() -> DwarfAttr {
+  DwarfPictureString
+}
+
+///|
+pub fn DwarfAttr::mutable_() -> DwarfAttr {
+  DwarfMutable
+}
+
+///|
+pub fn DwarfAttr::threads_scaled() -> DwarfAttr {
+  DwarfThreadsScaled
+}
+
+///|
+pub fn DwarfAttr::explicit_() -> DwarfAttr {
+  DwarfExplicit
+}
+
+///|
 pub fn DwarfAttr::object_pointer() -> DwarfAttr {
   DwarfObjectPointer
+}
+
+///|
+pub fn DwarfAttr::endianity() -> DwarfAttr {
+  DwarfEndianity
+}
+
+///|
+pub fn DwarfAttr::elemental() -> DwarfAttr {
+  DwarfElemental
+}
+
+///|
+pub fn DwarfAttr::pure() -> DwarfAttr {
+  DwarfPure
+}
+
+///|
+pub fn DwarfAttr::recursive() -> DwarfAttr {
+  DwarfRecursive
+}
+
+///|
+pub fn DwarfAttr::signature() -> DwarfAttr {
+  DwarfSignature
+}
+
+///|
+pub fn DwarfAttr::main_subprogram() -> DwarfAttr {
+  DwarfMainSubprogram
+}
+
+///|
+pub fn DwarfAttr::data_bit_offset() -> DwarfAttr {
+  DwarfDataBitOffset
+}
+
+///|
+pub fn DwarfAttr::const_expr() -> DwarfAttr {
+  DwarfConstExpr
+}
+
+///|
+pub fn DwarfAttr::enum_class() -> DwarfAttr {
+  DwarfEnumClass
+}
+
+///|
+pub fn DwarfAttr::linkage_name() -> DwarfAttr {
+  DwarfLinkageName
+}
+
+///|
+pub fn DwarfAttr::string_length_bit_size() -> DwarfAttr {
+  DwarfStringLengthBitSize
+}
+
+///|
+pub fn DwarfAttr::string_length_byte_size() -> DwarfAttr {
+  DwarfStringLengthByteSize
+}
+
+///|
+pub fn DwarfAttr::rank() -> DwarfAttr {
+  DwarfRank
+}
+
+///|
+pub fn DwarfAttr::str_offsets_base() -> DwarfAttr {
+  DwarfStrOffsetsBase
+}
+
+///|
+pub fn DwarfAttr::addr_base() -> DwarfAttr {
+  DwarfAddrBase
+}
+
+///|
+pub fn DwarfAttr::rnglists_base() -> DwarfAttr {
+  DwarfRnglistsBase
+}
+
+///|
+pub fn DwarfAttr::dwo_id() -> DwarfAttr {
+  DwarfDwoId
+}
+
+///|
+pub fn DwarfAttr::dwo_name() -> DwarfAttr {
+  DwarfDwoName
+}
+
+///|
+pub fn DwarfAttr::reference() -> DwarfAttr {
+  DwarfReference
+}
+
+///|
+pub fn DwarfAttr::rvalue_reference() -> DwarfAttr {
+  DwarfRvalueReference
+}
+
+///|
+pub fn DwarfAttr::macros() -> DwarfAttr {
+  DwarfMacros
+}
+
+///|
+pub fn DwarfAttr::call_all_calls() -> DwarfAttr {
+  DwarfCallAllCalls
+}
+
+///|
+pub fn DwarfAttr::call_all_source_calls() -> DwarfAttr {
+  DwarfCallAllSourceCalls
+}
+
+///|
+pub fn DwarfAttr::call_all_tail_calls() -> DwarfAttr {
+  DwarfCallAllTailCalls
+}
+
+///|
+pub fn DwarfAttr::call_return_pc() -> DwarfAttr {
+  DwarfCallReturnPc
+}
+
+///|
+pub fn DwarfAttr::call_value() -> DwarfAttr {
+  DwarfCallValue
+}
+
+///|
+pub fn DwarfAttr::call_origin() -> DwarfAttr {
+  DwarfCallOrigin
+}
+
+///|
+pub fn DwarfAttr::call_parameter() -> DwarfAttr {
+  DwarfCallParameter
+}
+
+///|
+pub fn DwarfAttr::call_pc() -> DwarfAttr {
+  DwarfCallPc
+}
+
+///|
+pub fn DwarfAttr::call_tail_call() -> DwarfAttr {
+  DwarfCallTailCall
+}
+
+///|
+pub fn DwarfAttr::call_target() -> DwarfAttr {
+  DwarfCallTarget
+}
+
+///|
+pub fn DwarfAttr::call_target_clobbered() -> DwarfAttr {
+  DwarfCallTargetClobbered
+}
+
+///|
+pub fn DwarfAttr::call_data_location() -> DwarfAttr {
+  DwarfCallDataLocation
+}
+
+///|
+pub fn DwarfAttr::call_data_value() -> DwarfAttr {
+  DwarfCallDataValue
+}
+
+///|
+pub fn DwarfAttr::noreturn() -> DwarfAttr {
+  DwarfNoreturn
+}
+
+///|
+pub fn DwarfAttr::alignment() -> DwarfAttr {
+  DwarfAlignment
+}
+
+///|
+pub fn DwarfAttr::export_symbols() -> DwarfAttr {
+  DwarfExportSymbols
+}
+
+///|
+pub fn DwarfAttr::deleted() -> DwarfAttr {
+  DwarfDeleted
+}
+
+///|
+pub fn DwarfAttr::defaulted() -> DwarfAttr {
+  DwarfDefaulted
+}
+
+///|
+pub fn DwarfAttr::loclists_base() -> DwarfAttr {
+  DwarfLoclistsBase
+}
+
+///|
+pub fn DwarfAttr::ranges_base() -> DwarfAttr {
+  DwarfRangesBase
 }
 
 ///|
@@ -1092,24 +1744,126 @@ fn dwarf_attr_of_int(code : Int) -> DwarfAttr {
     0x01 => DwarfSibling
     0x02 => DwarfLocation
     0x03 => DwarfName
-    0x18 => DwarfImport
-    0x1a => DwarfCommonReference
-    0x1d => DwarfContainingType
+    0x09 => DwarfOrdering
+    0x0b => DwarfByteSize
+    0x0c => DwarfBitOffset
+    0x0d => DwarfBitSize
+    0x10 => DwarfStmtList
     0x11 => DwarfLowPc
     0x12 => DwarfHighPc
+    0x13 => DwarfLanguage
+    0x15 => DwarfDiscr
+    0x16 => DwarfDiscrValue
+    0x17 => DwarfVisibility
+    0x18 => DwarfImport
+    0x19 => DwarfStringLength
+    0x1a => DwarfCommonReference
+    0x1b => DwarfCompDir
+    0x1c => DwarfConstValue
+    0x1d => DwarfContainingType
+    0x1e => DwarfDefaultValue
+    0x20 => DwarfInline
+    0x21 => DwarfIsOptional
+    0x22 => DwarfLowerBound
+    0x25 => DwarfProducer
+    0x27 => DwarfPrototyped
+    0x2a => DwarfReturnAddr
+    0x2c => DwarfStartScope
+    0x2e => DwarfBitStride
+    0x2f => DwarfUpperBound
     0x31 => DwarfAbstractOrigin
+    0x32 => DwarfAccessibility
+    0x33 => DwarfAddressClass
+    0x34 => DwarfArtificial
+    0x35 => DwarfBaseTypes
+    0x36 => DwarfCallingConvention
+    0x37 => DwarfCount
+    0x38 => DwarfDataMemberLocation
+    0x39 => DwarfDeclColumn
+    0x3a => DwarfDeclFile
+    0x3b => DwarfDeclLine
+    0x3c => DwarfDeclaration
+    0x3d => DwarfDiscrList
+    0x3e => DwarfEncoding
+    0x3f => DwarfExternal
     0x40 => DwarfFrameBase
+    0x41 => DwarfFriend
+    0x42 => DwarfIdentifierCase
+    0x43 => DwarfMacroInfo
+    0x44 => DwarfNamelistItem
+    0x45 => DwarfPriority
+    0x46 => DwarfSegment
     0x47 => DwarfSpecification
+    0x48 => DwarfStaticLink
     0x49 => DwarfType
+    0x4a => DwarfUseLocation
+    0x4b => DwarfVariableParameter
+    0x4c => DwarfVirtuality
+    0x4d => DwarfVtableElemLocation
+    0x4e => DwarfAllocated
+    0x4f => DwarfAssociated
+    0x50 => DwarfDataLocation
+    0x51 => DwarfByteStride
     0x52 => DwarfEntryPc
+    0x53 => DwarfUseUtf8
+    0x54 => DwarfExtension
     0x55 => DwarfRanges
+    0x56 => DwarfTrampoline
+    0x57 => DwarfCallColumn
+    0x58 => DwarfCallFile
+    0x59 => DwarfCallLine
+    0x5a => DwarfDescription
+    0x5b => DwarfBinaryScale
+    0x5c => DwarfDecimalScale
+    0x5d => DwarfSmall
+    0x5e => DwarfDecimalSign
+    0x5f => DwarfDigitCount
+    0x60 => DwarfPictureString
+    0x61 => DwarfMutable
+    0x62 => DwarfThreadsScaled
+    0x63 => DwarfExplicit
     0x64 => DwarfObjectPointer
+    0x65 => DwarfEndianity
+    0x66 => DwarfElemental
+    0x67 => DwarfPure
+    0x68 => DwarfRecursive
+    0x69 => DwarfSignature
+    0x6a => DwarfMainSubprogram
+    0x6b => DwarfDataBitOffset
+    0x6c => DwarfConstExpr
+    0x6d => DwarfEnumClass
     0x6e => DwarfLinkageName
-    0x2007 => DwarfLinkageName
+    0x6f => DwarfStringLengthBitSize
+    0x70 => DwarfStringLengthByteSize
+    0x71 => DwarfRank
     0x72 => DwarfStrOffsetsBase
     0x73 => DwarfAddrBase
     0x74 => DwarfRnglistsBase
+    0x75 => DwarfDwoId
+    0x76 => DwarfDwoName
+    0x77 => DwarfReference
+    0x78 => DwarfRvalueReference
+    0x79 => DwarfMacros
+    0x7a => DwarfCallAllCalls
+    0x7b => DwarfCallAllSourceCalls
+    0x7c => DwarfCallAllTailCalls
+    0x7d => DwarfCallReturnPc
+    0x7e => DwarfCallValue
+    0x7f => DwarfCallOrigin
+    0x80 => DwarfCallParameter
+    0x81 => DwarfCallPc
+    0x82 => DwarfCallTailCall
+    0x83 => DwarfCallTarget
+    0x84 => DwarfCallTargetClobbered
+    0x85 => DwarfCallDataLocation
+    0x86 => DwarfCallDataValue
+    0x87 => DwarfNoreturn
+    0x88 => DwarfAlignment
+    0x89 => DwarfExportSymbols
+    0x8a => DwarfDeleted
+    0x8b => DwarfDefaulted
     0x8c => DwarfLoclistsBase
+    0x2007 => DwarfLinkageName
     0x2132 => DwarfRangesBase
     0x2133 => DwarfAddrBase
     other => DwarfUnknownAttr(other)

@@ -64,40 +64,252 @@ pub(all) enum DwarfAttr {
   DwarfSibling
   DwarfLocation
   DwarfName
-  DwarfImport
-  DwarfCommonReference
-  DwarfContainingType
-  DwarfLinkageName
-  DwarfFrameBase
+  DwarfOrdering
+  DwarfByteSize
+  DwarfBitOffset
+  DwarfBitSize
+  DwarfStmtList
   DwarfLowPc
   DwarfHighPc
-  DwarfEntryPc
-  DwarfRanges
+  DwarfLanguage
+  DwarfDiscr
+  DwarfDiscrValue
+  DwarfVisibility
+  DwarfImport
+  DwarfStringLength
+  DwarfCommonReference
+  DwarfCompDir
+  DwarfConstValue
+  DwarfContainingType
+  DwarfDefaultValue
+  DwarfInline
+  DwarfIsOptional
+  DwarfLowerBound
+  DwarfProducer
+  DwarfPrototyped
+  DwarfReturnAddr
+  DwarfStartScope
+  DwarfBitStride
+  DwarfUpperBound
   DwarfAbstractOrigin
+  DwarfAccessibility
+  DwarfAddressClass
+  DwarfArtificial
+  DwarfBaseTypes
+  DwarfCallingConvention
+  DwarfCount
+  DwarfDataMemberLocation
+  DwarfDeclColumn
+  DwarfDeclFile
+  DwarfDeclLine
+  DwarfDeclaration
+  DwarfDiscrList
+  DwarfEncoding
+  DwarfExternal
+  DwarfFrameBase
+  DwarfFriend
+  DwarfIdentifierCase
+  DwarfMacroInfo
+  DwarfNamelistItem
+  DwarfPriority
+  DwarfSegment
   DwarfSpecification
+  DwarfStaticLink
   DwarfType
+  DwarfUseLocation
+  DwarfVariableParameter
+  DwarfVirtuality
+  DwarfVtableElemLocation
+  DwarfAllocated
+  DwarfAssociated
+  DwarfDataLocation
+  DwarfByteStride
+  DwarfEntryPc
+  DwarfUseUtf8
+  DwarfExtension
+  DwarfRanges
+  DwarfTrampoline
+  DwarfCallColumn
+  DwarfCallFile
+  DwarfCallLine
+  DwarfDescription
+  DwarfBinaryScale
+  DwarfDecimalScale
+  DwarfSmall
+  DwarfDecimalSign
+  DwarfDigitCount
+  DwarfPictureString
+  DwarfMutable
+  DwarfThreadsScaled
+  DwarfExplicit
   DwarfObjectPointer
+  DwarfEndianity
+  DwarfElemental
+  DwarfPure
+  DwarfRecursive
+  DwarfSignature
+  DwarfMainSubprogram
+  DwarfDataBitOffset
+  DwarfConstExpr
+  DwarfEnumClass
+  DwarfLinkageName
+  DwarfStringLengthBitSize
+  DwarfStringLengthByteSize
+  DwarfRank
   DwarfStrOffsetsBase
   DwarfAddrBase
-  DwarfRangesBase
   DwarfRnglistsBase
+  DwarfDwoId
+  DwarfDwoName
+  DwarfReference
+  DwarfRvalueReference
+  DwarfMacros
+  DwarfCallAllCalls
+  DwarfCallAllSourceCalls
+  DwarfCallAllTailCalls
+  DwarfCallReturnPc
+  DwarfCallValue
+  DwarfCallOrigin
+  DwarfCallParameter
+  DwarfCallPc
+  DwarfCallTailCall
+  DwarfCallTarget
+  DwarfCallTargetClobbered
+  DwarfCallDataLocation
+  DwarfCallDataValue
+  DwarfNoreturn
+  DwarfAlignment
+  DwarfExportSymbols
+  DwarfDeleted
+  DwarfDefaulted
   DwarfLoclistsBase
+  DwarfRangesBase
   DwarfUnknownAttr(Int)
 } derive(Eq, @debug.Debug)
+pub fn DwarfAttr::abstract_origin() -> Self
+pub fn DwarfAttr::accessibility() -> Self
+pub fn DwarfAttr::addr_base() -> Self
+pub fn DwarfAttr::address_class() -> Self
+pub fn DwarfAttr::alignment() -> Self
+pub fn DwarfAttr::allocated() -> Self
+pub fn DwarfAttr::artificial() -> Self
+pub fn DwarfAttr::associated() -> Self
+pub fn DwarfAttr::base_types() -> Self
+pub fn DwarfAttr::binary_scale() -> Self
+pub fn DwarfAttr::bit_offset() -> Self
+pub fn DwarfAttr::bit_size() -> Self
+pub fn DwarfAttr::bit_stride() -> Self
+pub fn DwarfAttr::byte_size() -> Self
+pub fn DwarfAttr::byte_stride() -> Self
+pub fn DwarfAttr::call_all_calls() -> Self
+pub fn DwarfAttr::call_all_source_calls() -> Self
+pub fn DwarfAttr::call_all_tail_calls() -> Self
+pub fn DwarfAttr::call_column() -> Self
+pub fn DwarfAttr::call_data_location() -> Self
+pub fn DwarfAttr::call_data_value() -> Self
+pub fn DwarfAttr::call_file() -> Self
+pub fn DwarfAttr::call_line() -> Self
+pub fn DwarfAttr::call_origin() -> Self
+pub fn DwarfAttr::call_parameter() -> Self
+pub fn DwarfAttr::call_pc() -> Self
+pub fn DwarfAttr::call_return_pc() -> Self
+pub fn DwarfAttr::call_tail_call() -> Self
+pub fn DwarfAttr::call_target() -> Self
+pub fn DwarfAttr::call_target_clobbered() -> Self
+pub fn DwarfAttr::call_value() -> Self
+pub fn DwarfAttr::calling_convention() -> Self
 pub fn DwarfAttr::common_reference() -> Self
+pub fn DwarfAttr::comp_dir() -> Self
+pub fn DwarfAttr::const_expr() -> Self
+pub fn DwarfAttr::const_value() -> Self
 pub fn DwarfAttr::containing_type() -> Self
+pub fn DwarfAttr::count() -> Self
+pub fn DwarfAttr::data_bit_offset() -> Self
+pub fn DwarfAttr::data_location() -> Self
+pub fn DwarfAttr::data_member_location() -> Self
+pub fn DwarfAttr::decimal_scale() -> Self
+pub fn DwarfAttr::decimal_sign() -> Self
+pub fn DwarfAttr::decl_column() -> Self
+pub fn DwarfAttr::decl_file() -> Self
+pub fn DwarfAttr::decl_line() -> Self
+pub fn DwarfAttr::declaration() -> Self
+pub fn DwarfAttr::default_value() -> Self
+pub fn DwarfAttr::defaulted() -> Self
+pub fn DwarfAttr::deleted() -> Self
+pub fn DwarfAttr::description() -> Self
+pub fn DwarfAttr::digit_count() -> Self
+pub fn DwarfAttr::discr() -> Self
+pub fn DwarfAttr::discr_list() -> Self
+pub fn DwarfAttr::discr_value() -> Self
+pub fn DwarfAttr::dwo_id() -> Self
+pub fn DwarfAttr::dwo_name() -> Self
+pub fn DwarfAttr::elemental() -> Self
+pub fn DwarfAttr::encoding() -> Self
+pub fn DwarfAttr::endianity() -> Self
 pub fn DwarfAttr::entry_pc() -> Self
+pub fn DwarfAttr::enum_class() -> Self
+pub fn DwarfAttr::explicit_() -> Self
+pub fn DwarfAttr::export_symbols() -> Self
+pub fn DwarfAttr::extension() -> Self
+pub fn DwarfAttr::external() -> Self
 pub fn DwarfAttr::frame_base() -> Self
+pub fn DwarfAttr::friend() -> Self
 pub fn DwarfAttr::high_pc() -> Self
+pub fn DwarfAttr::identifier_case() -> Self
 pub fn DwarfAttr::import_() -> Self
+pub fn DwarfAttr::inline_() -> Self
+pub fn DwarfAttr::is_optional() -> Self
+pub fn DwarfAttr::language() -> Self
+pub fn DwarfAttr::linkage_name() -> Self
 pub fn DwarfAttr::location() -> Self
 pub fn DwarfAttr::loclists_base() -> Self
 pub fn DwarfAttr::low_pc() -> Self
+pub fn DwarfAttr::lower_bound() -> Self
+pub fn DwarfAttr::macro_info() -> Self
+pub fn DwarfAttr::macros() -> Self
+pub fn DwarfAttr::main_subprogram() -> Self
+pub fn DwarfAttr::mutable_() -> Self
 pub fn DwarfAttr::name() -> Self
+pub fn DwarfAttr::namelist_item() -> Self
+pub fn DwarfAttr::noreturn() -> Self
 pub fn DwarfAttr::object_pointer() -> Self
+pub fn DwarfAttr::ordering() -> Self
+pub fn DwarfAttr::picture_string() -> Self
+pub fn DwarfAttr::priority() -> Self
+pub fn DwarfAttr::producer() -> Self
+pub fn DwarfAttr::prototyped() -> Self
+pub fn DwarfAttr::pure() -> Self
+pub fn DwarfAttr::ranges() -> Self
+pub fn DwarfAttr::ranges_base() -> Self
+pub fn DwarfAttr::rank() -> Self
+pub fn DwarfAttr::recursive() -> Self
+pub fn DwarfAttr::reference() -> Self
+pub fn DwarfAttr::return_addr() -> Self
+pub fn DwarfAttr::rnglists_base() -> Self
+pub fn DwarfAttr::rvalue_reference() -> Self
+pub fn DwarfAttr::segment() -> Self
 pub fn DwarfAttr::sibling() -> Self
+pub fn DwarfAttr::signature() -> Self
+pub fn DwarfAttr::small() -> Self
+pub fn DwarfAttr::specification() -> Self
+pub fn DwarfAttr::start_scope() -> Self
+pub fn DwarfAttr::static_link() -> Self
+pub fn DwarfAttr::stmt_list() -> Self
+pub fn DwarfAttr::str_offsets_base() -> Self
+pub fn DwarfAttr::string_length() -> Self
+pub fn DwarfAttr::string_length_bit_size() -> Self
+pub fn DwarfAttr::string_length_byte_size() -> Self
+pub fn DwarfAttr::threads_scaled() -> Self
+pub fn DwarfAttr::trampoline() -> Self
 pub fn DwarfAttr::type_() -> Self
 pub fn DwarfAttr::unknown(Int) -> Self
+pub fn DwarfAttr::upper_bound() -> Self
+pub fn DwarfAttr::use_location() -> Self
+pub fn DwarfAttr::use_utf8() -> Self
+pub fn DwarfAttr::variable_parameter() -> Self
+pub fn DwarfAttr::virtuality() -> Self
+pub fn DwarfAttr::visibility() -> Self
+pub fn DwarfAttr::vtable_elem_location() -> Self
 
 type DwarfData
 pub fn DwarfData::abbrev_table(Self, offset? : Int) -> Result[DwarfAbbrevTable, String]

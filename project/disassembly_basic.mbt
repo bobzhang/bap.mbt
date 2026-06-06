@@ -424,6 +424,245 @@ fn project_disassembly_basic_arm_branch_target(
 }
 
 ///|
+fn project_disassembly_basic_arm_word(memory : @memory.Memory) -> Int {
+  let bytes = memory.to_bytes()
+  bytes[0].to_int() |
+  (bytes[1].to_int() << 8) |
+  (bytes[2].to_int() << 16) |
+  (bytes[3].to_int() << 24)
+}
+
+///|
+fn project_disassembly_basic_arm_reg_name(code : Int) -> String {
+  match code {
+    0 => "R0"
+    1 => "R1"
+    2 => "R2"
+    3 => "R3"
+    4 => "R4"
+    5 => "R5"
+    6 => "R6"
+    7 => "R7"
+    8 => "R8"
+    9 => "R9"
+    10 => "R10"
+    11 => "FP"
+    12 => "R12"
+    13 => "SP"
+    14 => "LR"
+    15 => "PC"
+    _ => "R\{code}"
+  }
+}
+
+///|
+fn project_disassembly_basic_arm_reg(code : Int) -> ProjectInstructionOperand {
+  ProjectInstructionOperand::register(
+    name=project_disassembly_basic_arm_reg_name(code),
+    code~,
+  )
+}
+
+///|
+fn project_disassembly_basic_arm_reg_text(code : Int) -> String {
+  project_disassembly_basic_arm_reg_name(code).to_lower()
+}
+
+///|
+fn project_disassembly_basic_arm_imm_text(value : Int64) -> String {
+  if value < 0L {
+    "#-" + (-value).to_string()
+  } else {
+    "#" + value.to_string()
+  }
+}
+
+///|
+fn project_disassembly_basic_arm_decode_data(
+  word : Int,
+) -> (
+  String,
+  String,
+  Array[ProjectInstructionOperand],
+  Array[ProjectInstructionKind],
+)? {
+  if ((word >> 28) & 0xf) != 0xe || (word & 0x0c000000) != 0 {
+    None
+  } else {
+    let immediate = ((word >> 25) & 1) == 1
+    let opcode = (word >> 21) & 0xf
+    let rn = (word >> 16) & 0xf
+    let rd = (word >> 12) & 0xf
+    let rotate = (word >> 8) & 0xf
+    let imm = word & 0xff
+    let rm = word & 0xf
+    let shift = (word >> 4) & 0xff
+    if immediate && rotate == 0 {
+      match opcode {
+        4 =>
+          Some(
+            (
+              "ADDri",
+              "add \{project_disassembly_basic_arm_reg_text(rd)}, \{project_disassembly_basic_arm_reg_text(rn)}, \{project_disassembly_basic_arm_imm_text(imm.to_int64())}",
+              [
+                project_disassembly_basic_arm_reg(rd),
+                project_disassembly_basic_arm_reg(rn),
+                ProjectInstructionOperand::immediate(imm.to_int64()),
+              ],
+              [],
+            ),
+          )
+        2 =>
+          Some(
+            (
+              "SUBri",
+              "sub \{project_disassembly_basic_arm_reg_text(rd)}, \{project_disassembly_basic_arm_reg_text(rn)}, \{project_disassembly_basic_arm_imm_text(imm.to_int64())}",
+              [
+                project_disassembly_basic_arm_reg(rd),
+                project_disassembly_basic_arm_reg(rn),
+                ProjectInstructionOperand::immediate(imm.to_int64()),
+              ],
+              [],
+            ),
+          )
+        13 =>
+          Some(
+            (
+              "MOVi",
+              "mov \{project_disassembly_basic_arm_reg_text(rd)}, \{project_disassembly_basic_arm_imm_text(imm.to_int64())}",
+              [
+                project_disassembly_basic_arm_reg(rd),
+                ProjectInstructionOperand::immediate(imm.to_int64()),
+              ],
+              [],
+            ),
+          )
+        10 =>
+          Some(
+            (
+              "CMPri",
+              "cmp \{project_disassembly_basic_arm_reg_text(rn)}, \{project_disassembly_basic_arm_imm_text(imm.to_int64())}",
+              [
+                project_disassembly_basic_arm_reg(rn),
+                ProjectInstructionOperand::immediate(imm.to_int64()),
+              ],
+              [],
+            ),
+          )
+        _ => None
+      }
+    } else if !immediate && shift == 0 && opcode == 13 {
+      Some(
+        (
+          "MOVr",
+          "mov \{project_disassembly_basic_arm_reg_text(rd)}, \{project_disassembly_basic_arm_reg_text(rm)}",
+          [
+            project_disassembly_basic_arm_reg(rd),
+            project_disassembly_basic_arm_reg(rm),
+          ],
+          [],
+        ),
+      )
+    } else {
+      None
+    }
+  }
+}
+
+///|
+fn project_disassembly_basic_arm_decode_load_store(
+  word : Int,
+) -> (
+  String,
+  String,
+  Array[ProjectInstructionOperand],
+  Array[ProjectInstructionKind],
+)? {
+  if ((word >> 28) & 0xf) != 0xe || (word & 0x0c000000) != 0x04000000 {
+    None
+  } else {
+    let register_offset = ((word >> 25) & 1) == 1
+    let pre_index = ((word >> 24) & 1) == 1
+    let up = ((word >> 23) & 1) == 1
+    let byte_transfer = ((word >> 22) & 1) == 1
+    let writeback = ((word >> 21) & 1) == 1
+    let load = ((word >> 20) & 1) == 1
+    let rn = (word >> 16) & 0xf
+    let rd = (word >> 12) & 0xf
+    let unsigned_offset = word & 0xfff
+    let offset = if up {
+      unsigned_offset.to_int64()
+    } else {
+      -unsigned_offset.to_int64()
+    }
+    if register_offset || byte_transfer {
+      None
+    } else {
+      let operands = [
+        project_disassembly_basic_arm_reg(rd),
+        project_disassembly_basic_arm_reg(rn),
+        ProjectInstructionOperand::immediate(offset),
+      ]
+      if load && pre_index && !writeback {
+        Some(
+          (
+            "LDRi12",
+            "ldr \{project_disassembly_basic_arm_reg_text(rd)}, [\{project_disassembly_basic_arm_reg_text(rn)}, \{project_disassembly_basic_arm_imm_text(offset)}]",
+            operands,
+            [ProjectMayLoad],
+          ),
+        )
+      } else if !load && pre_index && !writeback {
+        Some(
+          (
+            "STRi12",
+            "str \{project_disassembly_basic_arm_reg_text(rd)}, [\{project_disassembly_basic_arm_reg_text(rn)}, \{project_disassembly_basic_arm_imm_text(offset)}]",
+            operands,
+            [ProjectMayStore],
+          ),
+        )
+      } else if !load && pre_index && writeback {
+        Some(
+          (
+            "STR_PRE_IMM",
+            "str \{project_disassembly_basic_arm_reg_text(rd)}, [\{project_disassembly_basic_arm_reg_text(rn)}, \{project_disassembly_basic_arm_imm_text(offset)}]!",
+            operands,
+            [ProjectMayStore],
+          ),
+        )
+      } else if load && !pre_index && !writeback {
+        Some(
+          (
+            "LDR_POST_IMM",
+            "ldr \{project_disassembly_basic_arm_reg_text(rd)}, [\{project_disassembly_basic_arm_reg_text(rn)}], \{project_disassembly_basic_arm_imm_text(offset)}",
+            operands,
+            [ProjectMayLoad],
+          ),
+        )
+      } else {
+        None
+      }
+    }
+  }
+}
+
+///|
+fn project_disassembly_basic_arm_decode_known(
+  memory : @memory.Memory,
+) -> (
+  String,
+  String,
+  Array[ProjectInstructionOperand],
+  Array[ProjectInstructionKind],
+)? {
+  let word = project_disassembly_basic_arm_word(memory)
+  match project_disassembly_basic_arm_decode_data(word) {
+    Some(decoded) => Some(decoded)
+    None => project_disassembly_basic_arm_decode_load_store(word)
+  }
+}
+
+///|
 fn project_disassembly_basic_assembly(
   name : String,
   operands : Array[ProjectInstructionOperand],
@@ -615,10 +854,29 @@ fn project_disassembly_basic_decode_arm_llvm(
           Err(reason) => Err(reason)
         }
       None =>
-        match memory.view(words=4) {
-          Ok(chunk) =>
-            Ok(Some(project_disassembly_basic_instruction(chunk, "ARM")))
-          Err(reason) => Err(reason)
+        match project_disassembly_basic_arm_decode_known(memory) {
+          Some((name, assembly, operands, kinds)) =>
+            match memory.view(words=4) {
+              Ok(chunk) =>
+                Ok(
+                  Some(
+                    project_disassembly_basic_instruction(
+                      chunk,
+                      name,
+                      assembly~,
+                      operands~,
+                      kinds~,
+                    ),
+                  ),
+                )
+              Err(reason) => Err(reason)
+            }
+          None =>
+            match memory.view(words=4) {
+              Ok(chunk) =>
+                Ok(Some(project_disassembly_basic_instruction(chunk, "ARM")))
+              Err(reason) => Err(reason)
+            }
         }
     }
   }

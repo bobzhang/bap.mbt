@@ -25,8 +25,17 @@ fn basic_bil_decode_state(
   bytes : Bytes,
   start~ : UInt64,
 ) -> @project.ProjectDisassemblyState raise {
+  basic_bil_decode_state_with_triple("x86_64", bytes, start~)
+}
+
+///|
+fn basic_bil_decode_state_with_triple(
+  triple : String,
+  bytes : Bytes,
+  start~ : UInt64,
+) -> @project.ProjectDisassemblyState raise {
   let disasm = match
-    @project.ProjectDisassemblyBasic::create("x86_64", backend="llvm") {
+    @project.ProjectDisassemblyBasic::create(triple, backend="llvm") {
     Ok(disasm) => disasm
     Err(reason) => fail(reason)
   }
@@ -40,6 +49,31 @@ fn basic_bil_decode_state(
     }
   }
   @project.ProjectDisassemblyState::create(blocks=[memory], instructions~)
+}
+
+///|
+fn basic_bil_arm_strlen_bytes() -> Bytes {
+  b"\x04\xb0\x2d\xe5" +
+  b"\x00\xb0\x8d\xe2" +
+  b"\x14\xd0\x4d\xe2" +
+  b"\x10\x00\x0b\xe5" +
+  b"\x00\x30\xa0\xe3" +
+  b"\x08\x30\x0b\xe5" +
+  b"\x05\x00\x00\xea" +
+  b"\x10\x30\x1b\xe5" +
+  b"\x01\x30\x83\xe2" +
+  b"\x10\x30\x0b\xe5" +
+  b"\x08\x30\x1b\xe5" +
+  b"\x01\x30\x83\xe2" +
+  b"\x08\x30\x0b\xe5" +
+  b"\x10\x30\x1b\xe5" +
+  b"\x00\x00\x53\xe3" +
+  b"\xf6\xff\xff\x1a" +
+  b"\x08\x30\x1b\xe5" +
+  b"\x03\x00\xa0\xe1" +
+  b"\x00\xd0\x4b\xe2" +
+  b"\x04\xb0\x9d\xe4" +
+  b"\x1e\xff\x2f\xe1"
 }
 
 ///|
@@ -151,7 +185,7 @@ test "project Basic BIL lift covers ARM branch and return forms" {
       assert_true(stmts.length() == 1)
       match stmts[0] {
         If(cond~, yes~, no~) => {
-          assert_string(cond.to_string(), "unknown(ARM.NE:imm1)")
+          assert_string(cond.to_string(), "ARM.NE:imm1")
           assert_true(no.length() == 0)
           assert_true(yes.length() == 2)
           assert_true(
@@ -168,6 +202,33 @@ test "project Basic BIL lift covers ARM branch and return forms" {
   let bx = basic_bil_decode("armv7", b"\x1e\xff\x2f\xe1", start=0x845cUL)
   match bx.lift_basic_bil() {
     Ok(stmts) => assert_basic_bil_text(stmts, ["jmp LR:imm32"])
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+test "project Basic BIL lift runs over ARM strlen fixture" {
+  let disassembly = basic_bil_decode_state_with_triple(
+    "armv7",
+    basic_bil_arm_strlen_bytes(),
+    start=0x840cUL,
+  )
+  match disassembly.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 24)
+      assert_string(stmts[0].to_string(), "SP:imm32 := (SP:imm32 - 4:32u)")
+      assert_string(
+        stmts[1].to_string(),
+        "mem:mem32x8 := store(mem:mem32x8, SP:imm32, FP:imm32)",
+      )
+      assert_true(
+        stmts.any(stmt => {
+          stmt.to_string() == "ARM.NE:imm1 := (R3:imm32 != 0:32u)"
+        }),
+      )
+      assert_true(stmts[17].to_string().has_prefix("if ARM.NE:imm1 then"))
+      assert_string(stmts[23].to_string(), "jmp LR:imm32")
+    }
     Err(reason) => fail(reason)
   }
 }

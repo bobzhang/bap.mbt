@@ -44,6 +44,37 @@ fn project_basic_bil_reg(name : String, width : Int) -> @types.Var {
 }
 
 ///|
+fn project_basic_bil_arm_mem() -> @types.Var {
+  @types.Var::new(name="mem", typ=Mem(addr_width=32, value_width=8))
+}
+
+///|
+fn project_basic_bil_arm_ne_flag() -> @types.Var {
+  @types.Var::new(name="ARM.NE", typ=Imm(1))
+}
+
+///|
+fn project_basic_bil_arm_offset_addr(
+  base : @types.Var,
+  offset : Int64,
+) -> Result[@types.Exp, String] {
+  let base_exp = @types.Exp::var_exp(base)
+  if offset == 0L {
+    Ok(base_exp)
+  } else if offset > 0L {
+    match project_basic_bil_int(offset, 32) {
+      Ok(rhs) => Ok(@types.Exp::binop(@types.BinOp::plus(), base_exp, rhs))
+      Err(reason) => Err(reason)
+    }
+  } else {
+    match project_basic_bil_int(-offset, 32) {
+      Ok(rhs) => Ok(@types.Exp::binop(@types.BinOp::minus(), base_exp, rhs))
+      Err(reason) => Err(reason)
+    }
+  }
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_basic_bil_operand(
   self : ProjectDisassemblyInstruction,
   index : Int,
@@ -254,7 +285,13 @@ fn ProjectDisassemblyInstruction::project_basic_bil_arm_branch(
     Err(reason) => return Err(reason)
   }
   if conditional {
-    Ok([@types.Stmt::if_(@types.Exp::unknown("ARM.NE", Imm(1)), branch, [])])
+    Ok([
+      @types.Stmt::if_(
+        @types.Exp::var_exp(project_basic_bil_arm_ne_flag()),
+        branch,
+        [],
+      ),
+    ])
   } else {
     Ok(branch)
   }
@@ -268,6 +305,183 @@ fn ProjectDisassemblyInstruction::project_basic_bil_bx(
     Ok(target) => Ok([@types.Stmt::jmp(@types.Exp::var_exp(target))])
     Err(reason) => Err(reason)
   }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_arm_addsub(
+  self : ProjectDisassemblyInstruction,
+  op : @types.BinOp,
+) -> Result[Array[@types.Stmt], String] {
+  let dst = match self.project_basic_bil_register(0, 32) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let src = match self.project_basic_bil_register(1, 32) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let imm = match self.project_basic_bil_immediate(2) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let rhs = if imm == 0L {
+    @types.Exp::var_exp(src)
+  } else {
+    match project_basic_bil_int(imm, 32) {
+      Ok(value) => @types.Exp::binop(op, @types.Exp::var_exp(src), value)
+      Err(reason) => return Err(reason)
+    }
+  }
+  Ok([@types.Stmt::move_stmt(dst, rhs)])
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_arm_movi(
+  self : ProjectDisassemblyInstruction,
+) -> Result[Array[@types.Stmt], String] {
+  let dst = match self.project_basic_bil_register(0, 32) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  match self.project_basic_bil_immediate(1) {
+    Ok(imm) =>
+      match project_basic_bil_int(imm, 32) {
+        Ok(value) => Ok([@types.Stmt::move_stmt(dst, value)])
+        Err(reason) => Err(reason)
+      }
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_arm_movr(
+  self : ProjectDisassemblyInstruction,
+) -> Result[Array[@types.Stmt], String] {
+  let dst = match self.project_basic_bil_register(0, 32) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  match self.project_basic_bil_register(1, 32) {
+    Ok(src) => Ok([@types.Stmt::move_stmt(dst, @types.Exp::var_exp(src))])
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_arm_cmp(
+  self : ProjectDisassemblyInstruction,
+) -> Result[Array[@types.Stmt], String] {
+  let lhs = match self.project_basic_bil_register(0, 32) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  match self.project_basic_bil_immediate(1) {
+    Ok(imm) =>
+      match project_basic_bil_int(imm, 32) {
+        Ok(rhs) =>
+          Ok([
+            @types.Stmt::move_stmt(
+              project_basic_bil_arm_ne_flag(),
+              @types.Exp::binop(
+                @types.BinOp::neq(),
+                @types.Exp::var_exp(lhs),
+                rhs,
+              ),
+            ),
+          ])
+        Err(reason) => Err(reason)
+      }
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_arm_load(
+  self : ProjectDisassemblyInstruction,
+  post_index : Bool,
+) -> Result[Array[@types.Stmt], String] {
+  let dst = match self.project_basic_bil_register(0, 32) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let base = match self.project_basic_bil_register(1, 32) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let offset = match self.project_basic_bil_immediate(2) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let mem = project_basic_bil_arm_mem()
+  let addr = if post_index {
+    @types.Exp::var_exp(base)
+  } else {
+    match project_basic_bil_arm_offset_addr(base, offset) {
+      Ok(value) => value
+      Err(reason) => return Err(reason)
+    }
+  }
+  let stmts = [
+    @types.Stmt::move_stmt(
+      dst,
+      @types.Exp::load(mem=@types.Exp::var_exp(mem), addr~, LittleEndian, R32),
+    ),
+  ]
+  if post_index && offset != 0L {
+    match project_basic_bil_arm_offset_addr(base, offset) {
+      Ok(updated) => stmts.push(@types.Stmt::move_stmt(base, updated))
+      Err(reason) => return Err(reason)
+    }
+  }
+  Ok(stmts)
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_arm_store(
+  self : ProjectDisassemblyInstruction,
+  pre_writeback : Bool,
+) -> Result[Array[@types.Stmt], String] {
+  let src = match self.project_basic_bil_register(0, 32) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let base = match self.project_basic_bil_register(1, 32) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let offset = match self.project_basic_bil_immediate(2) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let mem = project_basic_bil_arm_mem()
+  let stmts : Array[@types.Stmt] = []
+  let addr = if pre_writeback {
+    if offset != 0L {
+      match project_basic_bil_arm_offset_addr(base, offset) {
+        Ok(updated) => stmts.push(@types.Stmt::move_stmt(base, updated))
+        Err(reason) => return Err(reason)
+      }
+    }
+    @types.Exp::var_exp(base)
+  } else {
+    match project_basic_bil_arm_offset_addr(base, offset) {
+      Ok(value) => value
+      Err(reason) => return Err(reason)
+    }
+  }
+  stmts.push(
+    @types.Stmt::move_stmt(
+      mem,
+      @types.Exp::store(
+        mem=@types.Exp::var_exp(mem),
+        addr~,
+        @types.Exp::var_exp(src),
+        LittleEndian,
+        R32,
+      ),
+    ),
+  )
+  Ok(stmts)
 }
 
 ///|
@@ -295,6 +509,15 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "B" => self.project_basic_bil_arm_branch(false)
     "BNE" => self.project_basic_bil_arm_branch(true)
     "BX" => self.project_basic_bil_bx()
+    "ADDRI" => self.project_basic_bil_arm_addsub(@types.BinOp::plus())
+    "SUBRI" => self.project_basic_bil_arm_addsub(@types.BinOp::minus())
+    "MOVI" => self.project_basic_bil_arm_movi()
+    "MOVR" => self.project_basic_bil_arm_movr()
+    "CMPRI" => self.project_basic_bil_arm_cmp()
+    "LDRI12" => self.project_basic_bil_arm_load(false)
+    "LDR_POST_IMM" => self.project_basic_bil_arm_load(true)
+    "STRI12" => self.project_basic_bil_arm_store(false)
+    "STR_PRE_IMM" => self.project_basic_bil_arm_store(true)
     "RET" => Ok([@types.Stmt::special("ret")])
     name => Err("unsupported Basic BIL lift for instruction \{name}")
   }

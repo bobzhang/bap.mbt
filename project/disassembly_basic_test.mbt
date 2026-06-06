@@ -347,6 +347,23 @@ test "translated BAP basic disassembly decodes ARM llvm strlen fixture" {
   for item in insns {
     assert_true(item.0.length() == 4)
   }
+  match insns[0].1 {
+    Some(instruction) => {
+      assert_true(
+        basic_instruction_strings(instruction) ==
+        ["STR_PRE_IMM", "FP", "SP", "-0x4"],
+      )
+      assert_true(instruction.has_kind(ProjectMayStore))
+    }
+    None => fail("missing ARM pre-index store")
+  }
+  match insns[1].1 {
+    Some(instruction) =>
+      assert_true(
+        basic_instruction_strings(instruction) == ["ADDri", "FP", "SP", "0x0"],
+      )
+    None => fail("missing ARM add immediate")
+  }
   match insns[6].1 {
     Some(instruction) => {
       assert_true(instruction.addr() == 0x8424UL)
@@ -364,6 +381,23 @@ test "translated BAP basic disassembly decodes ARM llvm strlen fixture" {
       assert_true(instruction.operands()[0].to_int64() == Some(0x8428L))
     }
     None => fail("missing ARM conditional branch")
+  }
+  match insns[14].1 {
+    Some(instruction) =>
+      assert_true(
+        basic_instruction_strings(instruction) == ["CMPri", "R3", "0x0"],
+      )
+    None => fail("missing ARM compare immediate")
+  }
+  match insns[19].1 {
+    Some(instruction) => {
+      assert_true(
+        basic_instruction_strings(instruction) ==
+        ["LDR_POST_IMM", "FP", "SP", "0x4"],
+      )
+      assert_true(instruction.has_kind(ProjectMayLoad))
+    }
+    None => fail("missing ARM post-index load")
   }
   match insns[20].1 {
     Some(instruction) => {

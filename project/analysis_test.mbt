@@ -207,6 +207,59 @@ test "project analyses register find and apply typed callbacks" {
 }
 
 ///|
+test "register_project_analysis registers callback analyses" {
+  let seen : Ref[String] = Ref("")
+  let args = @project.ProjectAnalysisArgs::pair(
+    @project.ProjectAnalysisArg::string(),
+    @project.ProjectAnalysisArg::flag("force"),
+  )
+  match
+    @project.register_project_analysis(
+      name="unit-callback-analysis",
+      pkg="unit",
+      description="callback analysis",
+      args~,
+      run=value => {
+        seen.val = "\{value.0}:\{value.1}"
+        Ok(())
+      },
+    ) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  match @project.find_analysis("unit-callback-analysis", pkg="unit") {
+    Some(found) => {
+      assert_true(found.name() == "unit-callback-analysis")
+      assert_true(found.pkg() == "unit")
+      assert_true(
+        found.qualified_name().show() == "unit:unit-callback-analysis",
+      )
+      assert_true(found.description() == "callback analysis")
+      assert_true(found.grammar_string() == "<string> [:force]")
+    }
+    None => fail("callback analysis was not registered")
+  }
+  match
+    @project.apply_analysis(
+      "unit-callback-analysis",
+      ["target", ":force"],
+      pkg="unit",
+    ) {
+    Ok(_) => assert_true(seen.val == "target:true")
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    @project.register_project_analysis(
+      name="unit-callback-analysis",
+      pkg="unit",
+      args~,
+      run=_ => Ok(()),
+    )
+    is Err(_),
+  )
+}
+
+///|
 test "project analyses support package-qualified lookup and apply" {
   let left_seen : Ref[String] = Ref("")
   let right_seen : Ref[String] = Ref("")

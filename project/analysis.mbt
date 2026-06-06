@@ -731,6 +731,19 @@ pub fn register_analysis(analysis : ProjectAnalysis) -> Result[Unit, String] {
 }
 
 ///|
+pub fn[T] register_project_analysis(
+  name~ : String,
+  pkg? : String,
+  description? : String,
+  args~ : ProjectAnalysisArgs[T],
+  run~ : (T) -> Result[Unit, String],
+) -> Result[Unit, String] {
+  register_analysis(
+    ProjectAnalysis::create(name~, pkg?, description?, args~, run~),
+  )
+}
+
+///|
 pub fn find_analysis(name : String, pkg? : String) -> ProjectAnalysis? {
   project_analysis_registry.get(@knowledge.Name::read(name, pkg?).show())
 }

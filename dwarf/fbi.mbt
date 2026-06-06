@@ -6,6 +6,9 @@ struct DwarfFunction {
 }
 
 ///|
+pub type DwarfFn = DwarfFunction
+
+///|
 struct DwarfFbi {
   functions_value : Array[(String, DwarfFunction)]
 }

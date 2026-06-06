@@ -465,6 +465,7 @@ pub fn DwarfForm::strp_alt() -> Self
 pub fn DwarfForm::strp_sup() -> Self
 pub fn DwarfForm::strx(DwarfIndexSpec) -> Self
 
+#alias(DwarfFn)
 type DwarfFunction
 pub fn DwarfFunction::compare(Self, Self) -> Int
 pub fn DwarfFunction::create(name~ : String, low_pc~ : UInt64, high_pc? : UInt64) -> Self

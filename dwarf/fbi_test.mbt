@@ -54,6 +54,9 @@ test "translated DWARF FBI extracts function with inline name and relative high 
   assert_true(functions[0].pc_lo() == 0x10UL)
   assert_true(functions[0].pc_hi() == Some(0x15UL))
   assert_true(functions[0].to_string() == "16-21")
+  let fn_alias : @dwarf.DwarfFn = functions[0]
+  assert_true(fn_alias.pc_lo() == 0x10UL)
+  assert_true(@dwarf.DwarfFn::version() == "1.0.0")
   assert_true(@dwarf.DwarfFunction::module_name() == Some("Bap_Dwarf.Std.Fn"))
   assert_true(@dwarf.DwarfFunction::version() == "1.0.0")
   let same_range = @dwarf.DwarfFunction::create(

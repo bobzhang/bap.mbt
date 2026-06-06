@@ -854,23 +854,31 @@ test "image ELF backend refines target system and ABI from OSABI" {
     Err(reason) => fail(reason)
   }
   let cases : Array[
-    (String, Int, Int, String, @core_theory.System, @core_theory.Abi),
+    (String, Int, Int, String, String, @core_theory.System, @core_theory.Abi),
   ] = [
-    ("sysv", 0x3e, 0, "x86_64", UnknownSystem, SysV),
-    ("hpux", 0x3e, 1, "x86_64", HPUX, UnknownAbi),
-    ("netbsd", 0x3e, 2, "x86_64", NetBSD, UnknownAbi),
-    ("linux", 0x3e, 3, "x86_64", Linux, GNU),
-    ("solaris", 0x3e, 6, "x86_64", Solaris, UnknownAbi),
-    ("aix", 0x3e, 7, "x86_64", AIX, UnknownAbi),
-    ("irix", 0x3e, 8, "x86_64", IRIX, UnknownAbi),
-    ("tru64", 0x3e, 10, "x86_64", Tru64, UnknownAbi),
-    ("modesto", 0x3e, 11, "x86_64", Modesto, UnknownAbi),
-    ("mips-rs3-le", 0x0a, 0, "mipsel", UnknownSystem, SysV),
-    ("arm-aeabi", 0x28, 64, "arm", UnknownSystem, EABI),
-    ("loongarch-linux", 0x102, 3, "loongarch64", Linux, GNU),
+    ("sysv", 0x3e, 0, "x86_64", "target:x86_64", UnknownSystem, SysV),
+    ("hpux", 0x3e, 1, "x86_64", "target:x86_64", HPUX, UnknownAbi),
+    ("netbsd", 0x3e, 2, "x86_64", "target:x86_64", NetBSD, UnknownAbi),
+    ("linux", 0x3e, 3, "x86_64", "target:x86_64", Linux, GNU),
+    ("solaris", 0x3e, 6, "x86_64", "target:x86_64", Solaris, UnknownAbi),
+    ("aix", 0x3e, 7, "x86_64", "target:x86_64", AIX, UnknownAbi),
+    ("irix", 0x3e, 8, "x86_64", "target:x86_64", IRIX, UnknownAbi),
+    ("tru64", 0x3e, 10, "x86_64", "target:x86_64", Tru64, UnknownAbi),
+    ("modesto", 0x3e, 11, "x86_64", "target:x86_64", Modesto, UnknownAbi),
+    ("mips-rs3-le", 0x0a, 0, "mipsel", "target:mipsel", UnknownSystem, SysV),
+    ("arm-aeabi", 0x28, 64, "armv7", "target:armv7+le", UnknownSystem, EABI),
+    (
+      "loongarch-linux",
+      0x102,
+      3,
+      "loongarch64",
+      "target:loongarch64",
+      Linux,
+      GNU,
+    ),
   ]
   for case in cases {
-    let (name, machine, osabi, arch, system, abi) = case
+    let (name, machine, osabi, arch, target_name, system, abi) = case
     let (image, warnings) = expect_elf_image(
       @image.Image::of_bytes(
         image_elf_test_rewrite_machine_osabi(
@@ -885,6 +893,7 @@ test "image ELF backend refines target system and ABI from OSABI" {
     match image.target() {
       Some(target) => {
         assert_true(target.matches(arch))
+        assert_eq(target.name().show(), target_name)
         assert_true(target.filetype() == Elf)
         assert_true(target.system() == system)
         assert_true(target.abi() == abi)

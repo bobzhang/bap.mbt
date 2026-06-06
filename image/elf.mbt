@@ -2016,6 +2016,17 @@ fn image_elf_target_abi(osabi : Int) -> @core_theory.Abi? {
 }
 
 ///|
+fn image_elf_known_target(
+  name : String,
+  fallback : @core_theory.Target,
+) -> @core_theory.Target {
+  match @core_theory.lookup_target(name) {
+    Some(target) => target
+    None => fallback
+  }
+}
+
+///|
 fn image_elf_target(header : ImageElfHeader) -> @core_theory.Target {
   let base = match header.machine {
     0x02 =>
@@ -2045,8 +2056,10 @@ fn image_elf_target(header : ImageElfHeader) -> @core_theory.Target {
     0x16 => @core_theory.Target::systemz()
     0x28 =>
       match header.endian {
-        LittleEndian => @core_theory.Target::arm()
-        BigEndian => @core_theory.Target::armeb()
+        LittleEndian =>
+          image_elf_known_target("armv7", @core_theory.Target::arm())
+        BigEndian =>
+          image_elf_known_target("armv7eb", @core_theory.Target::armeb())
       }
     0x2b => @core_theory.Target::sparcv9()
     0x3e => @core_theory.Target::x86_64()

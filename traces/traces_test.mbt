@@ -93,9 +93,9 @@ fn extended_meta() -> @traces.TraceMeta {
   .set_trace_stats(
     @traces.Trace_stats::create(user="me", host="host", time=4.5),
   )
-  .set("comment", Text("snapshot"))
-  .set("pid", Int(-1))
-  .set("complete", Bool(true))
+  .set_text("comment", "snapshot")
+  .set_int("pid", -1)
+  .set_bool("complete", true)
 }
 
 ///|
@@ -550,6 +550,12 @@ test "translated BAP trace metadata dictionaries expose sorted entries and remov
   assert_true(
     meta.trace_stats() == Some({ user: "me", host: "host", time: 4.5 }),
   )
+  assert_true(meta.get_text("comment") == Some("snapshot"))
+  assert_true(meta.get_int("pid") == Some(-1))
+  assert_true(meta.get_bool("complete") == Some(true))
+  assert_true(meta.get_text("pid") == None)
+  assert_true(meta.get_int("complete") == None)
+  assert_true(meta.get_bool("comment") == None)
   assert_true(
     meta.keys() ==
     [

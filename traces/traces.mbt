@@ -1473,6 +1473,57 @@ pub fn TraceMeta::keys(self : TraceMeta) -> Array[String] {
 }
 
 ///|
+pub fn TraceMeta::set_text(
+  self : TraceMeta,
+  key : String,
+  value : String,
+) -> TraceMeta {
+  self.set(key, Text(value))
+}
+
+///|
+pub fn TraceMeta::get_text(self : TraceMeta, key : String) -> String? {
+  match self.get(key) {
+    Some(Text(value)) => Some(value)
+    _ => None
+  }
+}
+
+///|
+pub fn TraceMeta::set_int(
+  self : TraceMeta,
+  key : String,
+  value : Int,
+) -> TraceMeta {
+  self.set(key, Int(value))
+}
+
+///|
+pub fn TraceMeta::get_int(self : TraceMeta, key : String) -> Int? {
+  match self.get(key) {
+    Some(Int(value)) => Some(value)
+    _ => None
+  }
+}
+
+///|
+pub fn TraceMeta::set_bool(
+  self : TraceMeta,
+  key : String,
+  value : Bool,
+) -> TraceMeta {
+  self.set(key, Bool(value))
+}
+
+///|
+pub fn TraceMeta::get_bool(self : TraceMeta, key : String) -> Bool? {
+  match self.get(key) {
+    Some(Bool(value)) => Some(value)
+    _ => None
+  }
+}
+
+///|
 pub fn TraceMeta::set_binary(self : TraceMeta, value : BinaryInfo) -> TraceMeta {
   self.set(trace_meta_binary_key, Binary(value))
 }

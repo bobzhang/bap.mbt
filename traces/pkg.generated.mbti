@@ -331,6 +331,9 @@ pub fn TraceMeta::common_tag_infos() -> Array[TraceMetaTagInfo]
 pub fn TraceMeta::empty() -> Self
 pub fn TraceMeta::entries(Self) -> Array[(String, TraceAttrValue)]
 pub fn TraceMeta::get(Self, String) -> TraceAttrValue?
+pub fn TraceMeta::get_bool(Self, String) -> Bool?
+pub fn TraceMeta::get_int(Self, String) -> Int?
+pub fn TraceMeta::get_text(Self, String) -> String?
 pub fn TraceMeta::has(Self, String) -> Bool
 pub fn TraceMeta::is_empty(Self) -> Bool
 pub fn TraceMeta::keys(Self) -> Array[String]
@@ -340,6 +343,9 @@ pub fn TraceMeta::set(Self, String, TraceAttrValue) -> Self
 pub fn TraceMeta::set_arch(Self, @types.Arch) -> Self
 pub fn TraceMeta::set_binary(Self, BinaryInfo) -> Self
 pub fn TraceMeta::set_binary_file_stats(Self, FileStatsInfo) -> Self
+pub fn TraceMeta::set_bool(Self, String, Bool) -> Self
+pub fn TraceMeta::set_int(Self, String, Int) -> Self
+pub fn TraceMeta::set_text(Self, String, String) -> Self
 pub fn TraceMeta::set_trace_stats(Self, TraceStatsInfo) -> Self
 pub fn TraceMeta::set_tracer(Self, TracerInfo) -> Self
 pub fn TraceMeta::tag_info_for_name(String) -> TraceMetaTagInfo?

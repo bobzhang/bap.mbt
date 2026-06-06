@@ -190,74 +190,177 @@ fn ProjectDisassemblyInstruction::project_basic_bil_addsub(
 }
 
 ///|
-fn ProjectDisassemblyInstruction::project_basic_bil_mov32rm(
+fn project_basic_bil_register_width(name : String) -> Int {
+  if name.has_prefix("R") {
+    64
+  } else {
+    32
+  }
+}
+
+///|
+fn project_basic_bil_offset_addr(
+  base : @types.Exp,
+  offset : Int64,
+  width : Int,
+) -> Result[@types.Exp, String] {
+  if offset == 0L {
+    Ok(base)
+  } else if offset > 0L {
+    match project_basic_bil_int(offset, width) {
+      Ok(rhs) => Ok(@types.Exp::binop(@types.BinOp::plus(), base, rhs))
+      Err(reason) => Err(reason)
+    }
+  } else {
+    match project_basic_bil_int(-offset, width) {
+      Ok(rhs) => Ok(@types.Exp::binop(@types.BinOp::minus(), base, rhs))
+      Err(reason) => Err(reason)
+    }
+  }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_memory_addr(
   self : ProjectDisassemblyInstruction,
-) -> Result[Array[@types.Stmt], String] {
-  match self.project_basic_bil_register(0, 32) {
-    Ok(dst) =>
-      match self.project_basic_bil_register(1, 64) {
-        Ok(base) => {
-          let scale = match self.project_basic_bil_immediate(2) {
-            Ok(value) => value
-            Err(reason) => return Err(reason)
+  base_index : Int,
+) -> Result[(@types.Exp, @types.Var, Int), String] {
+  let base_name = match self.project_basic_bil_operand(base_index) {
+    Ok(operand) =>
+      match operand.register_name() {
+        Some(name) if name != "Nil" => name
+        Some(_) => return Err("instruction \{self.name()} memory base is Nil")
+        None =>
+          return Err("instruction \{self.name()} memory base is not a register")
+      }
+    Err(reason) => return Err(reason)
+  }
+  let address_width = project_basic_bil_register_width(base_name)
+  let base = project_basic_bil_reg(base_name, address_width)
+  let scale = match self.project_basic_bil_immediate(base_index + 1) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  if scale != 1L && scale != 2L && scale != 4L && scale != 8L {
+    return Err("unsupported \{self.name()} memory scale \{scale}")
+  }
+  let mut addr = @types.Exp::var_exp(base)
+  match self.project_basic_bil_operand(base_index + 2) {
+    Ok(index_operand) =>
+      match index_operand.register_name() {
+        Some(index_name) if index_name == "Nil" => ()
+        Some(index_name) => {
+          let index_width = project_basic_bil_register_width(index_name)
+          if index_width != address_width {
+            return Err("unsupported \{self.name()} mixed-width memory index")
           }
-          if scale != 1L {
-            return Err("unsupported MOV32rm scale \{scale}")
-          }
-          match self.project_basic_bil_operand(3) {
-            Ok(index_operand) =>
-              match index_operand.register_name() {
-                Some(index) if index == "Nil" => ()
-                Some(index) =>
-                  return Err("unsupported MOV32rm index register \{index}")
-                None => return Err("MOV32rm index operand is not a register")
-              }
-            Err(reason) => return Err(reason)
-          }
-          let displacement = match self.project_basic_bil_immediate(4) {
-            Ok(value) => value
-            Err(reason) => return Err(reason)
-          }
-          match self.project_basic_bil_operand(5) {
-            Ok(segment_operand) =>
-              match segment_operand.register_name() {
-                Some(segment) if segment == "Nil" => ()
-                Some(segment) =>
-                  return Err("unsupported MOV32rm segment register \{segment}")
-                None => return Err("MOV32rm segment operand is not a register")
-              }
-            Err(reason) => return Err(reason)
-          }
-          let base_exp = @types.Exp::var_exp(base)
-          let addr_exp = if displacement == 0L {
-            base_exp
+          let index = project_basic_bil_reg(index_name, address_width)
+          let index_exp = @types.Exp::var_exp(index)
+          let scaled = if scale == 1L {
+            index_exp
           } else {
-            match project_basic_bil_int(displacement, 64) {
-              Ok(offset) =>
-                @types.Exp::binop(@types.BinOp::plus(), base_exp, offset)
+            match project_basic_bil_int(scale, address_width) {
+              Ok(scale_exp) =>
+                @types.Exp::binop(@types.BinOp::times(), index_exp, scale_exp)
               Err(reason) => return Err(reason)
             }
           }
-          let mem = @types.Var::new(
-            name="mem",
-            typ=Mem(addr_width=64, value_width=8),
-          )
-          Ok([
-            @types.Stmt::move_stmt(
-              dst,
-              @types.Exp::load(
-                mem=@types.Exp::var_exp(mem),
-                addr=addr_exp,
-                LittleEndian,
-                R32,
-              ),
-            ),
-          ])
+          addr = @types.Exp::binop(@types.BinOp::plus(), addr, scaled)
         }
-        Err(reason) => Err(reason)
+        None =>
+          return Err(
+            "instruction \{self.name()} memory index is not a register",
+          )
       }
-    Err(reason) => Err(reason)
+    Err(reason) => return Err(reason)
   }
+  let displacement = match self.project_basic_bil_immediate(base_index + 3) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  match self.project_basic_bil_operand(base_index + 4) {
+    Ok(segment_operand) =>
+      match segment_operand.register_name() {
+        Some(segment) if segment == "Nil" => ()
+        Some(segment) =>
+          return Err("unsupported \{self.name()} segment register \{segment}")
+        None =>
+          return Err(
+            "instruction \{self.name()} segment operand is not a register",
+          )
+      }
+    Err(reason) => return Err(reason)
+  }
+  let addr = match
+    project_basic_bil_offset_addr(addr, displacement, address_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  Ok(
+    (
+      addr,
+      @types.Var::new(
+        name="mem",
+        typ=Mem(addr_width=address_width, value_width=8),
+      ),
+      address_width,
+    ),
+  )
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_mov_rm(
+  self : ProjectDisassemblyInstruction,
+  data_width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let dst = match self.project_basic_bil_register(0, data_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let (addr, mem, _) = match self.project_basic_bil_memory_addr(1) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(data_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  Ok([
+    @types.Stmt::move_stmt(
+      dst,
+      @types.Exp::load(mem=@types.Exp::var_exp(mem), addr~, LittleEndian, size),
+    ),
+  ])
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_mov_mr(
+  self : ProjectDisassemblyInstruction,
+  data_width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let (addr, mem, _) = match self.project_basic_bil_memory_addr(0) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let src = match self.project_basic_bil_register(5, data_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(data_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  Ok([
+    @types.Stmt::move_stmt(
+      mem,
+      @types.Exp::store(
+        mem=@types.Exp::var_exp(mem),
+        addr~,
+        @types.Exp::var_exp(src),
+        LittleEndian,
+        size,
+      ),
+    ),
+  ])
 }
 
 ///|
@@ -707,7 +810,10 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
   match self.name().to_upper() {
     "SUB64RI8" => self.project_basic_bil_addsub(@types.BinOp::minus())
     "ADD64RI8" => self.project_basic_bil_addsub(@types.BinOp::plus())
-    "MOV32RM" => self.project_basic_bil_mov32rm()
+    "MOV32RM" => self.project_basic_bil_mov_rm(32)
+    "MOV64RM" => self.project_basic_bil_mov_rm(64)
+    "MOV32MR" => self.project_basic_bil_mov_mr(32)
+    "MOV64MR" => self.project_basic_bil_mov_mr(64)
     "MOV32RI" => self.project_basic_bil_mov_imm(32)
     "MOV64RI" => self.project_basic_bil_mov_imm(64)
     "MOV32RR" | "MOV32RR_REV" => self.project_basic_bil_mov_rr(32)

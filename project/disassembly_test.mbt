@@ -378,6 +378,39 @@ test "project disasm Basic llvm decodes x86_64 register mov prologue" {
 }
 
 ///|
+test "project disasm Basic llvm decodes x86_64 memory mov store" {
+  let memory = project_disasm_test_memory(0xea18UL, b"\x48\x89\x45\xf8\xc3")
+  match
+    @project.ProjectDisasm::of_mem(
+      @core_theory.Target::x86_64(),
+      memory,
+      backend="basic",
+    ) {
+    Ok(disasm) => {
+      let insns = disasm.insns()
+      assert_true(insns.map(item => item.0.length()) == [4, 1])
+      assert_true(
+        project_disasm_test_instruction_strings(insns[0].1) ==
+        ["MOV64mr", "RBP", "0x1", "Nil", "-0x8", "Nil", "RAX"],
+      )
+      assert_true(insns[0].1.kinds() == [ProjectMayStore])
+      assert_true(
+        project_disasm_test_instruction_strings(insns[1].1) == ["RET"],
+      )
+      assert_true(insns[1].1.has_kind(ProjectReturn))
+      assert_true(disasm.disassembly().block_count() == 1)
+      let cfg = disasm.cfg()
+      assert_true(cfg.node_count() == 1)
+      assert_true(cfg.edge_count() == 0)
+      let blocks = cfg.nodes()
+      assert_true(blocks.map(block => block.memory().min_addr()) == [0xea18UL])
+      assert_true(blocks.map(block => block.memory().length()) == [5])
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project disasm Basic llvm decodes x86_64 leave epilogue" {
   let memory = project_disasm_test_memory(0xea20UL, b"\xc9\xc3")
   match

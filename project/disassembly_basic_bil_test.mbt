@@ -266,6 +266,62 @@ test "project Basic BIL lift covers x86_64 memory load fixture" {
       ])
     Err(reason) => fail(reason)
   }
+
+  let mov64 = basic_bil_decode("x86_64", b"\x48\x8b\x45\xf8", start=0x7104UL)
+  match mov64.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "RAX:imm64 := load(mem:mem64x8, (RBP:imm64 - 8:64u)):imm64",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let indexed = basic_bil_decode(
+    "x86_64",
+    b"\x48\x8b\x44\x88\x10",
+    start=0x7108UL,
+  )
+  match indexed.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "RAX:imm64 := load(mem:mem64x8, ((RAX:imm64 + (RCX:imm64 * 4:64u)) + 0x10:64u)):imm64",
+      ])
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+test "project Basic BIL lift covers x86 memory stores" {
+  let store64 = basic_bil_decode("x86_64", b"\x48\x89\x45\xf8", start=0x7110UL)
+  match store64.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "mem:mem64x8 := store(mem:mem64x8, (RBP:imm64 - 8:64u), RAX:imm64)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let stack_store = basic_bil_decode(
+    "x86_64",
+    b"\x48\x89\x04\x24",
+    start=0x7114UL,
+  )
+  match stack_store.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "mem:mem64x8 := store(mem:mem64x8, RSP:imm64, RAX:imm64)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let store32 = basic_bil_decode("x86", b"\x89\x45\xfc", start=0x7118UL)
+  match store32.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "mem:mem32x8 := store(mem:mem32x8, (EBP:imm32 - 4:32u), EAX:imm32)",
+      ])
+    Err(reason) => fail(reason)
+  }
 }
 
 ///|

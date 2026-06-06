@@ -231,6 +231,53 @@ test "project reconstructor materializes Basic BIL register moves" {
 }
 
 ///|
+test "project reconstructor materializes Basic BIL memory moves" {
+  let store_disassembly = reconstructor_basic_disassembly(
+    "x86_64",
+    b"\x48\x89\x45\xf8",
+    start=0x781dUL,
+  )
+  let store_project = @project.Project::empty(@core_theory.Target::x86_64()).with_disassembly(
+    store_disassembly,
+  )
+  match store_project.reconstruct() {
+    Ok(reconstructed) => {
+      let subs = reconstructed.program().subs()
+      assert_true(subs.length() == 1)
+      let blks = subs[0].blks()
+      assert_true(blks.length() == 1)
+      assert_true(
+        reconstructor_def_text(blks[0].defs()) ==
+        ["mem:mem64x8 := store(mem:mem64x8, (RBP:imm64 - 8:64u), RAX:imm64)"],
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let load_disassembly = reconstructor_basic_disassembly(
+    "x86_64",
+    b"\x48\x8b\x45\xf8",
+    start=0x7821UL,
+  )
+  let load_project = @project.Project::empty(@core_theory.Target::x86_64()).with_disassembly(
+    load_disassembly,
+  )
+  match load_project.reconstruct() {
+    Ok(reconstructed) => {
+      let subs = reconstructed.program().subs()
+      assert_true(subs.length() == 1)
+      let blks = subs[0].blks()
+      assert_true(blks.length() == 1)
+      assert_true(
+        reconstructor_def_text(blks[0].defs()) ==
+        ["RAX:imm64 := load(mem:mem64x8, (RBP:imm64 - 8:64u)):imm64"],
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project reconstructor materializes Basic BIL leave frame teardown" {
   let disassembly = reconstructor_basic_disassembly(
     "x86_64",

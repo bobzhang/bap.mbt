@@ -1651,6 +1651,26 @@ test "translated DWARF data exposes DWARF4 loc section reader" {
     list.entries() ==
     [DwarfLocBaseAddress(0x2000UL), DwarfLocOffsetPair(0x10, 0x18, b"\x50")],
   )
+  let data64 = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=LittleEndian,
+      loc=b"\xff\xff\xff\xff\xff\xff\xff\xff" +
+        b"\xf0\xde\xbc\x9a\x78\x56\x34\x12" +
+        b"\x10\x00\x00\x00\x00\x00\x00\x00" +
+        b"\x18\x00\x00\x00\x00\x00\x00\x00" +
+        b"\x02\x00\x91\x01" +
+        b"\x00\x00\x00\x00\x00\x00\x00\x00" +
+        b"\x00\x00\x00\x00\x00\x00\x00\x00",
+    ),
+  )
+  let list64 = expect_location_list(data64.loc(addr_size=W64))
+  assert_true(
+    list64.entries() ==
+    [
+      DwarfLocBaseAddress(0x123456789abcdef0UL),
+      DwarfLocOffsetPair(0x10, 0x18, b"\x91\x01"),
+    ],
+  )
   let without_loc = expect_dwarf_data(
     @dwarf.DwarfData::from_bytes(endian=BigEndian, info=b"\x00"),
   )

@@ -157,6 +157,30 @@ test "project reconstructor materializes Basic BIL x86 register arithmetic" {
 }
 
 ///|
+test "project reconstructor materializes Basic BIL x86 register logical ops" {
+  let disassembly = reconstructor_basic_disassembly(
+    "x86_64",
+    b"\x48\x31\xc0" + b"\x48\x09\xd8",
+    start=0x780dUL,
+  )
+  let project = @project.Project::empty(@core_theory.Target::x86_64()).with_disassembly(
+    disassembly,
+  )
+  match project.reconstruct() {
+    Ok(reconstructed) => {
+      let subs = reconstructed.program().subs()
+      assert_true(subs.length() == 1)
+      let blks = subs[0].blks()
+      assert_true(blks.length() == 1)
+      assert_reconstructor_text(reconstructor_def_text(blks[0].defs()), [
+        "RAX:imm64 := 0:64u", "RAX:imm64 := (RAX:imm64 | RBX:imm64)",
+      ])
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project reconstructor materializes Basic BIL push stores" {
   let disassembly = reconstructor_basic_disassembly(
     "x86_64",

@@ -420,6 +420,36 @@ fn ProjectDisassemblyInstruction::project_basic_bil_mov_rr(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_basic_bil_binop_rr(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  op : @types.BinOp,
+) -> Result[Array[@types.Stmt], String] {
+  match self.project_basic_bil_register(0, width) {
+    Ok(dst) =>
+      match self.project_basic_bil_register(1, width) {
+        Ok(src) => {
+          let rhs = if op == @types.BinOp::bit_xor() && dst == src {
+            match project_basic_bil_int(0L, width) {
+              Ok(zero) => zero
+              Err(reason) => return Err(reason)
+            }
+          } else {
+            @types.Exp::binop(
+              op,
+              @types.Exp::var_exp(dst),
+              @types.Exp::var_exp(src),
+            )
+          }
+          Ok([@types.Stmt::move_stmt(dst, rhs)])
+        }
+        Err(reason) => Err(reason)
+      }
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_basic_bil_push(
   self : ProjectDisassemblyInstruction,
   width : Int,
@@ -844,6 +874,18 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "MOV64RI" => self.project_basic_bil_mov_imm(64)
     "MOV32RR" | "MOV32RR_REV" => self.project_basic_bil_mov_rr(32)
     "MOV64RR" | "MOV64RR_REV" => self.project_basic_bil_mov_rr(64)
+    "OR32RR" | "OR32RR_REV" =>
+      self.project_basic_bil_binop_rr(32, @types.BinOp::bit_or())
+    "OR64RR" | "OR64RR_REV" =>
+      self.project_basic_bil_binop_rr(64, @types.BinOp::bit_or())
+    "AND32RR" | "AND32RR_REV" =>
+      self.project_basic_bil_binop_rr(32, @types.BinOp::bit_and())
+    "AND64RR" | "AND64RR_REV" =>
+      self.project_basic_bil_binop_rr(64, @types.BinOp::bit_and())
+    "XOR32RR" | "XOR32RR_REV" =>
+      self.project_basic_bil_binop_rr(32, @types.BinOp::bit_xor())
+    "XOR64RR" | "XOR64RR_REV" =>
+      self.project_basic_bil_binop_rr(64, @types.BinOp::bit_xor())
     "PUSH32R" => self.project_basic_bil_push(32)
     "PUSH64R" => self.project_basic_bil_push(64)
     "POP32R" => self.project_basic_bil_pop(32)

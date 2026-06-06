@@ -162,6 +162,36 @@ test "project Basic BIL lift covers x86 register add-sub immediates" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 register logical ops" {
+  let xor_zero = basic_bil_decode("x86_64", b"\x48\x31\xc0", start=0x7017UL)
+  match xor_zero.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["RAX:imm64 := 0:64u"])
+    Err(reason) => fail(reason)
+  }
+
+  let xor_ext = basic_bil_decode("x86_64", b"\x4d\x31\xc8", start=0x701aUL)
+  match xor_ext.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["R8:imm64 := (R8:imm64 ^ R9:imm64)"])
+    Err(reason) => fail(reason)
+  }
+
+  let or32 = basic_bil_decode("x86", b"\x09\xd8", start=0x701dUL)
+  match or32.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["EAX:imm32 := (EAX:imm32 | EBX:imm32)"])
+    Err(reason) => fail(reason)
+  }
+
+  let and64_rev = basic_bil_decode("x86_64", b"\x48\x23\xc8", start=0x701fUL)
+  match and64_rev.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["RCX:imm64 := (RCX:imm64 & RAX:imm64)"])
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86 register pushes" {
   let push_rbp = basic_bil_decode("x86_64", b"\x55", start=0x7010UL)
   match push_rbp.lift_basic_bil() {

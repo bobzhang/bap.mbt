@@ -415,6 +415,29 @@ fn project_disassembly_basic_x86_gpr32_name(code : Int) -> String {
 }
 
 ///|
+fn project_disassembly_basic_x86_gpr64_name(code : Int) -> String {
+  match code {
+    0 => "RAX"
+    1 => "RCX"
+    2 => "RDX"
+    3 => "RBX"
+    4 => "RSP"
+    5 => "RBP"
+    6 => "RSI"
+    7 => "RDI"
+    8 => "R8"
+    9 => "R9"
+    10 => "R10"
+    11 => "R11"
+    12 => "R12"
+    13 => "R13"
+    14 => "R14"
+    15 => "R15"
+    _ => "R64_\{code}"
+  }
+}
+
+///|
 fn project_disassembly_basic_x86_mov32ri(
   memory : @memory.Memory,
 ) -> (String, Int64)? {
@@ -434,6 +457,38 @@ fn project_disassembly_basic_x86_mov32ri(
         (
           project_disassembly_basic_x86_gpr32_name(opcode - 0xb8),
           imm.to_int64(),
+        ),
+      )
+    }
+  }
+}
+
+///|
+fn project_disassembly_basic_x86_64_mov64ri(
+  memory : @memory.Memory,
+) -> (String, Int64)? {
+  let bytes = memory.to_bytes()
+  if bytes.length() < 10 {
+    None
+  } else {
+    let rex = bytes[0].to_int()
+    let opcode = bytes[1].to_int()
+    if (rex != 0x48 && rex != 0x49) || opcode < 0xb8 || opcode > 0xbf {
+      None
+    } else {
+      let reg = opcode - 0xb8 + (if (rex & 1) == 1 { 8 } else { 0 })
+      let imm = bytes[2].to_uint64() |
+        (bytes[3].to_uint64() << 8) |
+        (bytes[4].to_uint64() << 16) |
+        (bytes[5].to_uint64() << 24) |
+        (bytes[6].to_uint64() << 32) |
+        (bytes[7].to_uint64() << 40) |
+        (bytes[8].to_uint64() << 48) |
+        (bytes[9].to_uint64() << 56)
+      Some(
+        (
+          project_disassembly_basic_x86_gpr64_name(reg),
+          imm.reinterpret_as_int64(),
         ),
       )
     }
@@ -1008,6 +1063,19 @@ fn project_disassembly_basic_decode_x86_64_llvm(
         "CALL64pcrel32",
         [ProjectInstructionOperand::immediate(displacement)],
         [ProjectCall, ProjectMayAffectControlFlow],
+      ),
+    )
+  } else if project_disassembly_basic_x86_64_mov64ri(memory) is Some(_) {
+    let (dst, imm) = project_disassembly_basic_x86_64_mov64ri(memory).unwrap()
+    Some(
+      (
+        10,
+        "MOV64ri",
+        [
+          ProjectInstructionOperand::register(name=dst),
+          ProjectInstructionOperand::immediate(imm),
+        ],
+        [],
       ),
     )
   } else if project_disassembly_basic_has_prefix(memory, b"\x8b\x40\x10") {

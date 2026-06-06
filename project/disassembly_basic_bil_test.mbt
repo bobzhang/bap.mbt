@@ -128,6 +128,17 @@ test "project Basic BIL lift covers x86_64 memory load fixture" {
     Err(reason) => fail(reason)
   }
 
+  let mov_imm64 = basic_bil_decode(
+    "x86_64",
+    b"\x48\xb8\x88\x77\x66\x55\x44\x33\x22\x11",
+    start=0x70f8UL,
+  )
+  match mov_imm64.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["RAX:imm64 := 0x1122334455667788:64u"])
+    Err(reason) => fail(reason)
+  }
+
   let mov = basic_bil_decode("x86_64", b"\x8b\x40\x10", start=0x7100UL)
   match mov.lift_basic_bil() {
     Ok(stmts) =>

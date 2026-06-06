@@ -1726,7 +1726,7 @@ fn project_disassembly_basic_x86_reg_update(
   if data_width == 32 && (rex & 0x8) != 0 {
     return None
   }
-  if data_width != 32 && data_width != 64 {
+  if data_width != 8 && data_width != 32 && data_width != 64 {
     return None
   }
   match
@@ -1751,8 +1751,9 @@ fn project_disassembly_basic_x86_reg_update(
     let opcode = bytes[opcode_index].to_int()
     let modrm = bytes[opcode_index + 1].to_int()
     let imm_width = match opcode {
-      0x81 => 4
-      0x83 => 1
+      0x80 if data_width == 8 => 1
+      0x81 if data_width != 8 => 4
+      0x83 if data_width != 8 => 1
       _ => 0
     }
     if imm_width == 0 ||
@@ -1774,11 +1775,20 @@ fn project_disassembly_basic_x86_reg_update(
         None
       } else {
         let rex_b = if address_width == 64 && (rex & 0x1) != 0 { 8 } else { 0 }
-        let register = project_disassembly_basic_x86_gpr_name(
-          (modrm & 0x7) + rex_b,
-          data_width,
-        )
-        let imm = if opcode == 0x83 {
+        let register = if data_width == 8 {
+          project_disassembly_basic_x86_gpr8_name(
+            (modrm & 0x7) + rex_b,
+            rex != 0,
+          )
+        } else {
+          project_disassembly_basic_x86_gpr_name(
+            (modrm & 0x7) + rex_b,
+            data_width,
+          )
+        }
+        let imm = if opcode == 0x80 {
+          bytes[opcode_index + 2].to_int().to_int64()
+        } else if opcode == 0x83 {
           project_disassembly_basic_x86_signed_byte(bytes[opcode_index + 2])
         } else {
           match project_disassembly_basic_x86_i32_at(bytes, opcode_index + 2) {
@@ -1786,7 +1796,11 @@ fn project_disassembly_basic_x86_reg_update(
             None => return None
           }
         }
-        let suffix = if opcode == 0x83 { "ri8" } else { "ri32" }
+        let suffix = if opcode == 0x80 || opcode == 0x83 {
+          "ri8"
+        } else {
+          "ri32"
+        }
         Some(
           (
             opcode_index + 2 + imm_width,
@@ -1837,32 +1851,55 @@ fn project_disassembly_basic_x86_accumulator_imm(
   if data_width == 32 && (rex & 0x8) != 0 {
     return None
   }
-  if data_width != 32 && data_width != 64 {
+  if data_width != 8 && data_width != 32 && data_width != 64 {
     return None
   }
-  if bytes.length() < opcode_index + 5 {
+  let imm_width = if data_width == 8 { 1 } else { 4 }
+  if bytes.length() < opcode_index + 1 + imm_width {
     return None
   }
   let opcode = bytes[opcode_index].to_int()
-  let op = match opcode {
-    0x05 => "ADD"
-    0x0d => "OR"
-    0x25 => "AND"
-    0x2d => "SUB"
-    0x35 => "XOR"
-    0x3d => "CMP"
-    _ => ""
+  let op = if data_width == 8 {
+    match opcode {
+      0x04 => "ADD"
+      0x0c => "OR"
+      0x24 => "AND"
+      0x2c => "SUB"
+      0x34 => "XOR"
+      0x3c => "CMP"
+      _ => ""
+    }
+  } else {
+    match opcode {
+      0x05 => "ADD"
+      0x0d => "OR"
+      0x25 => "AND"
+      0x2d => "SUB"
+      0x35 => "XOR"
+      0x3d => "CMP"
+      _ => ""
+    }
   }
   if op == "" {
     None
   } else {
-    match project_disassembly_basic_x86_i32_at(bytes, opcode_index + 1) {
+    match
+      (if data_width == 8 {
+        Some(bytes[opcode_index + 1].to_int().to_int64())
+      } else {
+        project_disassembly_basic_x86_i32_at(bytes, opcode_index + 1)
+      }) {
       Some(imm) => {
-        let register = project_disassembly_basic_x86_gpr_name(0, data_width)
+        let register = if data_width == 8 {
+          "AL"
+        } else {
+          project_disassembly_basic_x86_gpr_name(0, data_width)
+        }
+        let suffix = if data_width == 8 { "ri8" } else { "ri32" }
         Some(
           (
-            opcode_index + 5,
-            op + "\{data_width}ri32",
+            opcode_index + 1 + imm_width,
+            op + "\{data_width}\{suffix}",
             if op == "CMP" {
               [
                 ProjectInstructionOperand::register(name=register),

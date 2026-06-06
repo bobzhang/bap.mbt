@@ -240,8 +240,11 @@ test "translated BAP basic disassembly decodes x86 register add-sub immediates" 
     ("x86_64", b"\x49\x83\xc0\x7f", 4, ["ADD64ri8", "R8", "R8", "0x7f"]),
     ("x86_64", b"\x48\x83\xc0\xff", 4, ["ADD64ri8", "RAX", "RAX", "-0x1"]),
     ("x86_64", b"\x41\x83\xc0\x01", 4, ["ADD32ri8", "R8D", "R8D", "0x1"]),
+    ("x86_64", b"\x41\x80\xc0\xff", 4, ["ADD8ri8", "R8B", "R8B", "0xff"]),
     ("x86", b"\x83\xe8\x01", 3, ["SUB32ri8", "EAX", "EAX", "0x1"]),
     ("x86", b"\x83\xc0\x7f", 3, ["ADD32ri8", "EAX", "EAX", "0x7f"]),
+    ("x86", b"\x80\xe8\x80", 3, ["SUB8ri8", "AL", "AL", "0x80"]),
+    ("x86", b"\x04\xff", 2, ["ADD8ri8", "AL", "AL", "0xff"]),
     (
       "x86_64",
       b"\x48\x81\xc0\x78\x56\x34\x12",
@@ -303,9 +306,13 @@ test "translated BAP basic disassembly decodes x86 register logical immediates" 
     ("x86_64", b"\x49\x83\xe0\x7f", 4, ["AND64ri8", "R8", "R8", "0x7f"]),
     ("x86_64", b"\x49\x83\xf0\x01", 4, ["XOR64ri8", "R8", "R8", "0x1"]),
     ("x86_64", b"\x41\x83\xc8\x01", 4, ["OR32ri8", "R8D", "R8D", "0x1"]),
+    ("x86_64", b"\x41\x80\xf0\x01", 4, ["XOR8ri8", "R8B", "R8B", "0x1"]),
     ("x86", b"\x83\xc8\x0f", 3, ["OR32ri8", "EAX", "EAX", "0xf"]),
     ("x86", b"\x83\xe1\x7f", 3, ["AND32ri8", "ECX", "ECX", "0x7f"]),
     ("x86", b"\x83\xf2\xff", 3, ["XOR32ri8", "EDX", "EDX", "-0x1"]),
+    ("x86", b"\x80\xc8\x0f", 3, ["OR8ri8", "AL", "AL", "0xf"]),
+    ("x86", b"\x80\xe1\x7f", 3, ["AND8ri8", "CL", "CL", "0x7f"]),
+    ("x86", b"\x34\x80", 2, ["XOR8ri8", "AL", "AL", "0x80"]),
     (
       "x86_64",
       b"\x48\x81\xc8\x78\x56\x34\x12",
@@ -366,7 +373,10 @@ test "translated BAP basic disassembly decodes x86 cmp and test fixtures" {
   let samples : Array[(String, Bytes, Int, Array[String])] = [
     ("x86_64", b"\x48\x83\xf8\x01", 4, ["CMP64ri8", "RAX", "0x1"]),
     ("x86_64", b"\x49\x83\xf8\xff", 4, ["CMP64ri8", "R8", "-0x1"]),
+    ("x86_64", b"\x41\x80\xf8\xff", 4, ["CMP8ri8", "R8B", "0xff"]),
     ("x86", b"\x83\xf9\x00", 3, ["CMP32ri8", "ECX", "0x0"]),
+    ("x86", b"\x80\xf8\x80", 3, ["CMP8ri8", "AL", "0x80"]),
+    ("x86", b"\x3c\xff", 2, ["CMP8ri8", "AL", "0xff"]),
     (
       "x86_64",
       b"\x48\x81\xf8\x78\x56\x34\x12",

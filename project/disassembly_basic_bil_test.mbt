@@ -160,6 +160,20 @@ test "project Basic BIL lift covers x86 register add-sub immediates" {
     Err(reason) => fail(reason)
   }
 
+  let add8_ext = basic_bil_decode("x86_64", b"\x41\x80\xc0\xff", start=0x7014UL)
+  match add8_ext.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["R8B:imm8 := (R8B:imm8 + 0xFF:8u)"])
+    Err(reason) => fail(reason)
+  }
+
+  let sub8_acc = basic_bil_decode("x86", b"\x2c\x80", start=0x7015UL)
+  match sub8_acc.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["AL:imm8 := (AL:imm8 - 0x80:8u)"])
+    Err(reason) => fail(reason)
+  }
+
   let add64_ri32 = basic_bil_decode(
     "x86_64",
     b"\x48\x81\xc0\x78\x56\x34\x12",
@@ -207,6 +221,19 @@ test "project Basic BIL lift covers x86 register logical immediates" {
   match xor32.lift_basic_bil() {
     Ok(stmts) =>
       assert_basic_bil_text(stmts, ["EDX:imm32 := (EDX:imm32 ^ 1:32u)"])
+    Err(reason) => fail(reason)
+  }
+
+  let or8 = basic_bil_decode("x86", b"\x80\xc8\x0f", start=0x701fUL)
+  match or8.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["AL:imm8 := (AL:imm8 | 0xF:8u)"])
+    Err(reason) => fail(reason)
+  }
+
+  let xor8_acc = basic_bil_decode("x86", b"\x34\x80", start=0x7020UL)
+  match xor8_acc.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["AL:imm8 := (AL:imm8 ^ 0x80:8u)"])
     Err(reason) => fail(reason)
   }
 
@@ -429,6 +456,20 @@ test "project Basic BIL lift covers x86 cmp and test flag ops" {
         stmts[6].to_string(),
         "ZF:imm1 := (0:64u == %cmp_tmp:imm64)",
       )
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let cmp8_imm = basic_bil_decode("x86", b"\x80\xf8\x80", start=0x7024UL)
+  match cmp8_imm.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 7)
+      assert_string(
+        stmts[0].to_string(),
+        "%cmp_tmp:imm8 := (AL:imm8 - 0x80:8u)",
+      )
+      assert_string(stmts[1].to_string(), "CF:imm1 := (AL:imm8 < 0x80:8u)")
+      assert_string(stmts[6].to_string(), "ZF:imm1 := (0:8u == %cmp_tmp:imm8)")
     }
     Err(reason) => fail(reason)
   }

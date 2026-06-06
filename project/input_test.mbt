@@ -1051,7 +1051,7 @@ fn project_elf_test_write_symbol64(
 fn project_elf_test_make_x86_64() -> Bytes {
   let shstr = b"\x00.shstrtab\x00.text\x00.symtab\x00.strtab\x00.debug_info\x00.debug_abbrev\x00.debug_str\x00.debug_str_offsets\x00"
   let text = b"\x55\xc3\x90\x90"
-  let strtab = b"\x00project_main\x00"
+  let strtab = b"\x00project_main\x00dwarf_main\x00"
   let debug_info = b"\x5c\x00\x00\x00" +
     b"\x04\x00" +
     b"\x00\x00\x00\x00" +
@@ -1106,7 +1106,7 @@ fn project_elf_test_make_x86_64() -> Bytes {
   let shstr_offset = 120 + 9 * 64
   let text_offset = shstr_offset + shstr.length()
   let symtab_offset = text_offset + text.length()
-  let strtab_offset = symtab_offset + 48
+  let strtab_offset = symtab_offset + 72
   let debug_info_offset = strtab_offset + strtab.length()
   let debug_abbrev_offset = debug_info_offset + debug_info.length()
   let debug_str_offset = debug_abbrev_offset + debug_abbrev.length()
@@ -1160,7 +1160,7 @@ fn project_elf_test_make_x86_64() -> Bytes {
     0,
   )
   project_elf_test_write_section64(
-    buffer, 3, 17, 2, 0UL, 0UL, symtab_offset, 48, 4, 24,
+    buffer, 3, 17, 2, 0UL, 0UL, symtab_offset, 72, 4, 24,
   )
   project_elf_test_write_section64(
     buffer,
@@ -1232,6 +1232,15 @@ fn project_elf_test_make_x86_64() -> Bytes {
     2,
     0x401000UL,
     2UL,
+  )
+  project_elf_test_write_symbol64(
+    buffer,
+    symtab_offset + 48,
+    14,
+    0x12,
+    2,
+    0x401000UL,
+    0UL,
   )
   project_elf_test_write_bytes(buffer, strtab_offset, strtab)
   project_elf_test_write_bytes(buffer, debug_info_offset, debug_info)
@@ -1377,6 +1386,10 @@ test "project built-in image loaders include ELF input" {
             image.sections().any(section => section.name() == ".debug_info"),
           )
           assert_true(image.symbols()[0].name() == "project_main")
+          assert_true(image.symbols().length() == 2)
+          assert_true(image.symbols()[1].name() == "dwarf_main")
+          assert_true(image.symbols()[1].size() == 0)
+          assert_true(!image.symbols()[1].is_debug())
         }
         None => fail("expected ELF image")
       }

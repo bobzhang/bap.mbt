@@ -676,6 +676,27 @@ fn project_input_dwarf_symbols(data : Bytes) -> Array[@image.Symbol] {
 }
 
 ///|
+fn project_input_merge_symbol(
+  current : @image.Symbol,
+  candidate : @image.Symbol,
+) -> @image.Symbol {
+  let extra_locations = current.extra_locations()
+  for location in candidate.extra_locations() {
+    if !extra_locations.contains(location) {
+      extra_locations.push(location)
+    }
+  }
+  @image.Symbol::create(
+    name=current.name(),
+    addr=current.addr(),
+    size=if current.size() > 0 { current.size() } else { candidate.size() },
+    extra_locations~,
+    is_function=current.is_function() || candidate.is_function(),
+    is_debug=current.is_debug() || candidate.is_debug(),
+  )
+}
+
+///|
 fn project_input_has_symbol(
   symbols : Array[@image.Symbol],
   candidate : @image.Symbol,
@@ -686,15 +707,28 @@ fn project_input_has_symbol(
 }
 
 ///|
+fn project_input_add_or_merge_symbol(
+  symbols : Array[@image.Symbol],
+  candidate : @image.Symbol,
+) -> Unit {
+  match
+    symbols.search_by(symbol => {
+      symbol.addr() == candidate.addr() && symbol.name() == candidate.name()
+    }) {
+    Some(index) =>
+      symbols[index] = project_input_merge_symbol(symbols[index], candidate)
+    None => symbols.push(candidate)
+  }
+}
+
+///|
 fn ProjectInput::with_dwarf_symbols(
   self : ProjectInput,
   data : Bytes,
 ) -> ProjectInput {
   let symbols = self.symbols_value.copy()
   for symbol in project_input_dwarf_symbols(data) {
-    if !project_input_has_symbol(symbols, symbol) {
-      symbols.push(symbol)
-    }
+    project_input_add_or_merge_symbol(symbols, symbol)
   }
   { ..self, symbols_value: symbols }
 }

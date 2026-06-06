@@ -545,6 +545,7 @@ pub fn ProjectDisassemblyCfgEdge::same(Self, Self) -> Bool
 pub fn ProjectDisassemblyCfgEdge::src(Self) -> ProjectDisassemblyBlock
 
 type ProjectDisassemblyDriver
+pub fn ProjectDisassemblyDriver::basic(backend? : String) -> Self
 pub fn ProjectDisassemblyDriver::create(name~ : String, description? : String, priority? : Int, run~ : (Project) -> Result[Project, String]) -> Self
 pub fn ProjectDisassemblyDriver::description(Self) -> String
 pub fn ProjectDisassemblyDriver::entry_point() -> Self

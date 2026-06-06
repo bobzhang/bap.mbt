@@ -56,6 +56,7 @@ test "project registers built-in memory block disassembly driver" {
   assert_true(@project.disassembly_driver_names().contains("project-roots"))
   assert_true(@project.disassembly_driver_names().contains("raw-bytes"))
   assert_true(@project.disassembly_driver_names().contains("linear-sweep"))
+  assert_true(@project.disassembly_driver_names().contains("basic"))
   match @project.find_disassembly_driver("image-roots") {
     Some(driver) => {
       assert_true(driver.priority() == -25)
@@ -98,6 +99,13 @@ test "project registers built-in memory block disassembly driver" {
     }
     None => fail("missing linear-sweep driver")
   }
+  match @project.find_disassembly_driver("basic") {
+    Some(driver) => {
+      assert_true(driver.priority() == -97)
+      assert_true(driver.description().contains("Basic disassembler"))
+    }
+    None => fail("missing basic driver")
+  }
   match @project.find_disassembly_driver("memory-blocks") {
     Some(driver) => {
       assert_true(driver.priority() == -100)
@@ -134,6 +142,53 @@ test "project registers built-in memory block disassembly driver" {
     )
     is Err(_),
   )
+}
+
+///|
+test "project basic disassembly driver materializes Basic instructions" {
+  match @project.register_builtin_disassembly_drivers() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let block = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x7300UL,
+    b"\x41\x42\x43",
+  )
+  let memory = @memory.MemMap::singleton(block, "code")
+  let project = @project.Project::empty(@core_theory.Target::unknown()).with_memory(
+    memory,
+  )
+  match project.disassemble(driver="basic") {
+    Ok(disassembled) => {
+      assert_true(disassembled.get("disassembler") == Some("basic"))
+      assert_true(disassembled.disassembly().block_count() == 1)
+      assert_true(disassembled.disassembly().instruction_count() == 3)
+      let instructions = disassembled.disassembly().instructions_in(block)
+      assert_true(instructions.length() == 3)
+      assert_true(instructions[0].addr() == 0x7300UL)
+      assert_true(instructions[0].code() == 0x41)
+      assert_true(instructions[0].assembly() == ".byte 0x41")
+      assert_true(instructions[0].encoding() == "raw")
+      assert_true(instructions[1].addr() == 0x7301UL)
+      assert_true(instructions[1].code() == 0x42)
+      assert_true(instructions[2].addr() == 0x7302UL)
+      assert_true(instructions[2].code() == 0x43)
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    @project.Project::empty(@core_theory.Target::unknown()).disassemble(
+      driver="basic",
+    )
+    is Err(_),
+  )
+  match
+    @project.ProjectDisassemblyDriver::basic(backend="missing").run(project) {
+    Err(reason) =>
+      assert_true(reason == "unknown project disassembly basic backend missing")
+    Ok(_) => fail("unknown Basic backend driver succeeded")
+  }
 }
 
 ///|

@@ -219,6 +219,25 @@ fn ProjectDisassemblyInstruction::project_basic_bil_mov32rm(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_basic_bil_mov_imm(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  match self.project_basic_bil_register(0, width) {
+    Ok(dst) =>
+      match self.project_basic_bil_immediate(1) {
+        Ok(imm) =>
+          match project_basic_bil_int(imm, width) {
+            Ok(value) => Ok([@types.Stmt::move_stmt(dst, value)])
+            Err(reason) => Err(reason)
+          }
+        Err(reason) => Err(reason)
+      }
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_basic_bil_direct_target(
   self : ProjectDisassemblyInstruction,
 ) -> Result[UInt64, String] {
@@ -492,6 +511,7 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "SUB64RI8" => self.project_basic_bil_addsub(@types.BinOp::minus())
     "ADD64RI8" => self.project_basic_bil_addsub(@types.BinOp::plus())
     "MOV32RM" => self.project_basic_bil_mov32rm()
+    "MOV32RI" => self.project_basic_bil_mov_imm(32)
     "JMP_1" =>
       match self.project_basic_bil_immediate(0) {
         Ok(target) =>

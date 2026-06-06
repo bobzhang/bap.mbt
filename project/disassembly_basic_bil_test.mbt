@@ -118,6 +118,16 @@ test "project Basic BIL lift covers x86_64 stack arithmetic fixtures" {
 
 ///|
 test "project Basic BIL lift covers x86_64 memory load fixture" {
+  let mov_imm = basic_bil_decode(
+    "x86_64",
+    b"\xb8\x78\x56\x34\x12",
+    start=0x70f0UL,
+  )
+  match mov_imm.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["EAX:imm32 := 0x12345678:32u"])
+    Err(reason) => fail(reason)
+  }
+
   let mov = basic_bil_decode("x86_64", b"\x8b\x40\x10", start=0x7100UL)
   match mov.lift_basic_bil() {
     Ok(stmts) =>

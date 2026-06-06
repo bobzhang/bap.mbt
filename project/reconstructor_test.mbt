@@ -99,6 +99,7 @@ test "project default reconstructor turns disassembly blocks into named subrouti
 ///|
 test "project reconstructor materializes supported Basic BIL assignments" {
   let sequence = b"\x48\x83\xec\x08" +
+    b"\xb8\x78\x56\x34\x12" +
     b"\x8b\x40\x10" +
     b"\x48\x83\xc4\x08" +
     b"\xc3"
@@ -119,7 +120,7 @@ test "project reconstructor materializes supported Basic BIL assignments" {
       assert_true(
         reconstructor_def_text(blks[0].defs()) ==
         [
-          "RSP:imm64 := (RSP:imm64 - 8:64u)", "EAX:imm32 := load(mem:mem64x8, (RAX:imm64 + 0x10:64u)):imm32",
+          "RSP:imm64 := (RSP:imm64 - 8:64u)", "EAX:imm32 := 0x12345678:32u", "EAX:imm32 := load(mem:mem64x8, (RAX:imm64 + 0x10:64u)):imm32",
           "RSP:imm64 := (RSP:imm64 + 8:64u)",
         ],
       )

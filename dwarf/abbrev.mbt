@@ -53,6 +53,49 @@ pub fn DwarfAbbrevField::form(self : DwarfAbbrevField) -> DwarfForm {
 }
 
 ///|
+fn dwarf_form_is_reference(form : DwarfForm) -> Bool {
+  match form {
+    DwarfRef(_)
+    | DwarfRefAddr
+    | DwarfRefSup4
+    | DwarfRefSup8
+    | DwarfRefAlt
+    | DwarfRefSig8
+    | DwarfIndirect => true
+    _ => false
+  }
+}
+
+///|
+fn dwarf_attr_accepts_reference(attr : DwarfAttr) -> Bool {
+  match attr {
+    DwarfSibling
+    | DwarfDiscr
+    | DwarfImport
+    | DwarfCommonReference
+    | DwarfContainingType
+    | DwarfAbstractOrigin
+    | DwarfBaseTypes
+    | DwarfFriend
+    | DwarfNamelistItem
+    | DwarfSpecification
+    | DwarfType
+    | DwarfExtension
+    | DwarfObjectPointer
+    | DwarfSignature
+    | DwarfCallOrigin
+    | DwarfCallParameter => true
+    _ => false
+  }
+}
+
+///|
+pub fn DwarfAbbrevField::is_reference_field(self : DwarfAbbrevField) -> Bool {
+  dwarf_attr_accepts_reference(self.attr_value) &&
+  dwarf_form_is_reference(self.form_value)
+}
+
+///|
 pub fn DwarfAbbrevField::value_kind(
   self : DwarfAbbrevField,
 ) -> DwarfAbbrevValueKind {

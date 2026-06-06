@@ -990,9 +990,14 @@ test "translated DWARF DIE attributes expose index and reference readers" {
   let info_section = expect_section_buffer(data.section(DwarfInfo))
   let attrs = expect_dies(data.unit_dies())[0].attributes()
   assert_true(attrs.length() == 7)
+  assert_true(!attrs[0].is_reference_field())
   assert_true(attrs[3].attr() == DwarfSibling)
+  assert_true(attrs[3].is_reference_field())
+  assert_true(attrs[4].is_reference_field())
   assert_true(attrs[5].attr() == DwarfType)
+  assert_true(attrs[5].is_reference_field())
   assert_true(attrs[6].attr() == DwarfObjectPointer)
+  assert_true(attrs[6].is_reference_field())
   let unit_ref = expect_die_attr_ref(
     attrs[3].reference(
       info_section,

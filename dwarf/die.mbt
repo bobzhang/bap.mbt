@@ -227,6 +227,11 @@ pub fn DwarfDieAttribute::is_value_field(self : DwarfDieAttribute) -> Bool {
 }
 
 ///|
+pub fn DwarfDieAttribute::is_reference_field(self : DwarfDieAttribute) -> Bool {
+  self.field_value.is_reference_field()
+}
+
+///|
 pub fn DwarfDieAttribute::offset(self : DwarfDieAttribute) -> Int {
   self.offset_value
 }

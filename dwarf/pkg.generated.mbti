@@ -24,6 +24,7 @@ type DwarfAbbrevField
 pub fn DwarfAbbrevField::attr(Self) -> DwarfAttr
 pub fn DwarfAbbrevField::create(attr~ : DwarfAttr, form~ : DwarfForm) -> Self
 pub fn DwarfAbbrevField::form(Self) -> DwarfForm
+pub fn DwarfAbbrevField::is_reference_field(Self) -> Bool
 pub fn DwarfAbbrevField::is_value_field(Self) -> Bool
 pub fn DwarfAbbrevField::value_kind(Self) -> DwarfAbbrevValueKind
 
@@ -372,6 +373,7 @@ pub fn DwarfDieAttribute::form(Self) -> DwarfForm
 pub fn DwarfDieAttribute::index(Self) -> Int
 pub fn DwarfDieAttribute::index_value(Self, DwarfSectionBuffer, endian~ : @bitvec.Endian) -> Result[Int, String]
 pub fn DwarfDieAttribute::input(Self, DwarfSectionBuffer) -> Result[DwarfInput, String]
+pub fn DwarfDieAttribute::is_reference_field(Self) -> Bool
 pub fn DwarfDieAttribute::is_value_field(Self) -> Bool
 pub fn DwarfDieAttribute::location_list_value(Self, DwarfData, version~ : Int, dwarf_size~ : DwarfWordSize, addr_size~ : DwarfWordSize, loclists_base? : Int) -> Result[DwarfLocationList, String]
 pub fn DwarfDieAttribute::location_value(Self, DwarfData, version~ : Int, dwarf_size~ : DwarfWordSize, addr_size~ : DwarfWordSize, loclists_base? : Int) -> Result[DwarfDieLocationValue, String]

@@ -216,12 +216,21 @@ test "translated DWARF abbreviation value classification follows BAP FBI inputs"
     DwarfIgnoredValue,
   )
   assert_true(
+    @dwarf.DwarfAbbrevField::create(attr=DwarfSibling, form=DwarfRef(DwarfFour)).is_reference_field(),
+  )
+  assert_true(
     @dwarf.DwarfAbbrevField::create(attr=DwarfType, form=DwarfRefSig8).value_kind() ==
     DwarfIgnoredValue,
   )
   assert_true(
+    @dwarf.DwarfAbbrevField::create(attr=DwarfType, form=DwarfRefSig8).is_reference_field(),
+  )
+  assert_true(
     @dwarf.DwarfAbbrevField::create(attr=DwarfImport, form=DwarfRef(DwarfFour)).value_kind() ==
     DwarfIgnoredValue,
+  )
+  assert_true(
+    @dwarf.DwarfAbbrevField::create(attr=DwarfImport, form=DwarfRef(DwarfFour)).is_reference_field(),
   )
   assert_true(
     @dwarf.DwarfAbbrevField::create(
@@ -237,6 +246,21 @@ test "translated DWARF abbreviation value classification follows BAP FBI inputs"
   assert_true(
     @dwarf.DwarfAbbrevField::create(attr=DwarfObjectPointer, form=DwarfRefAddr).value_kind() ==
     DwarfIgnoredValue,
+  )
+  assert_true(
+    @dwarf.DwarfAbbrevField::create(attr=DwarfObjectPointer, form=DwarfRefAddr).is_reference_field(),
+  )
+  assert_true(
+    @dwarf.DwarfAbbrevField::create(
+      attr=DwarfCallOrigin,
+      form=DwarfRef(DwarfFour),
+    ).is_reference_field(),
+  )
+  assert_true(
+    !@dwarf.DwarfAbbrevField::create(attr=DwarfType, form=DwarfString).is_reference_field(),
+  )
+  assert_true(
+    !@dwarf.DwarfAbbrevField::create(attr=DwarfName, form=DwarfRef(DwarfFour)).is_reference_field(),
   )
   assert_true(
     @dwarf.DwarfAbbrevField::create(

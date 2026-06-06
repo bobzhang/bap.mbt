@@ -1019,14 +1019,21 @@ fn image_elf_parse_relocation_entry_at(
 ///|
 fn image_elf_is_relative_relocation(header : ImageElfHeader, typ : Int) -> Bool {
   match header.machine {
+    0x04 => typ == 22 // R_68K_RELATIVE
     0x02 | 0x2b => typ == 22 // R_SPARC_RELATIVE
     0x03 | 0x3e => typ == 8 // R_386_RELATIVE / R_X86_64_RELATIVE
     0x08 | 0x0a => typ == 3 // R_MIPS_REL32
     0x14 | 0x15 => typ == 22 // R_PPC_RELATIVE / R_PPC64_RELATIVE
     0x16 => typ == 12 // R_390_RELATIVE
     0x28 => typ == 23 // R_ARM_RELATIVE
+    0x2d | 0x5d | 0xc3 => typ == 56 // R_ARC_RELATIVE
+    0x5e => typ == 5 // R_XTENSA_RELATIVE
+    0xa4 => typ == 35 // R_HEX_RELATIVE
     0xb7 => typ == 1027 || typ == 183 // R_AARCH64_RELATIVE / R_AARCH64_P32_RELATIVE
+    0xe0 => typ == 13 // R_AMDGPU_RELATIVE64
     0xf3 => typ == 3 // R_RISCV_RELATIVE
+    0xfb => typ == 17 // R_VE_RELATIVE
+    0xfc => typ == 9 // R_CKCORE_RELATIVE
     0x102 => typ == 3 // R_LARCH_RELATIVE
     _ => false
   }

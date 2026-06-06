@@ -124,6 +124,10 @@ test "project recursive disassembly carries BAP-style errors" {
 
 ///|
 test "project recursive disassembly runs driver and brancher" {
+  match @project.register_builtin_disassembly_drivers() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
   let memory = @memory.Memory::from_bytes(
     endian=LittleEndian,
     start=0xa300UL,

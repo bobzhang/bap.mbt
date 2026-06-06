@@ -843,6 +843,62 @@ test "translated BAP basic disassembly decodes x86 memory mov fixtures" {
 }
 
 ///|
+test "translated BAP basic disassembly decodes x86 immediate mov r/m fixtures" {
+  let samples : Array[
+    (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),
+  ] = [
+    (
+      "x86_64",
+      b"\x49\xc7\xc0\xff\xff\xff\xff",
+      7,
+      ["MOV64ri32", "R8", "-0x1"],
+      [],
+    ),
+    (
+      "x86_64",
+      b"\x48\xc7\x45\xf8\x01\x00\x00\x00",
+      8,
+      ["MOV64mi", "RBP", "0x1", "Nil", "-0x8", "Nil", "0x1"],
+      [ProjectMayStore],
+    ),
+    ("x86", b"\xc7\xc0\xff\xff\xff\xff", 6, ["MOV32ri", "EAX", "-0x1"], []),
+    (
+      "x86",
+      b"\xc7\x45\xfc\x78\x56\x34\x12",
+      7,
+      ["MOV32mi", "EBP", "0x1", "Nil", "-0x4", "Nil", "0x12345678"],
+      [ProjectMayStore],
+    ),
+  ]
+  for sample in samples {
+    let disasm = match
+      @project.ProjectDisassemblyBasic::create(sample.0, backend="llvm") {
+      Ok(disasm) => disasm
+      Err(reason) => fail(reason)
+    }
+    let memory = @memory.Memory::from_bytes(
+      endian=LittleEndian,
+      start=0xe1c8UL,
+      sample.1,
+    )
+    match disasm.insn_of_mem(memory) {
+      Ok(result) => {
+        assert_true(result.memory().length() == sample.2)
+        assert_true(result.remainder().is_finished())
+        match result.instruction() {
+          Some(instruction) => {
+            assert_true(basic_instruction_strings(instruction) == sample.3)
+            assert_true(instruction.kinds() == sample.4)
+          }
+          None => fail("missing x86 immediate mov r/m instruction")
+        }
+      }
+      Err(reason) => fail(reason)
+    }
+  }
+}
+
+///|
 test "translated BAP basic disassembly decodes x86 lea fixtures" {
   let samples : Array[
     (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),

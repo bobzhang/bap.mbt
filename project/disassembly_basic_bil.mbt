@@ -429,6 +429,41 @@ fn ProjectDisassemblyInstruction::project_basic_bil_mov_mr(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_basic_bil_mov_mi(
+  self : ProjectDisassemblyInstruction,
+  data_width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let (addr, mem, _) = match self.project_basic_bil_memory_addr(0) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let imm = match self.project_basic_bil_immediate(5) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let value = match project_basic_bil_int(imm, data_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(data_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  Ok([
+    @types.Stmt::move_stmt(
+      mem,
+      @types.Exp::store(
+        mem=@types.Exp::var_exp(mem),
+        addr~,
+        value,
+        LittleEndian,
+        size,
+      ),
+    ),
+  ])
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_basic_bil_lea(
   self : ProjectDisassemblyInstruction,
   data_width : Int,
@@ -1023,10 +1058,13 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "MOV64RM" => self.project_basic_bil_mov_rm(64)
     "MOV32MR" => self.project_basic_bil_mov_mr(32)
     "MOV64MR" => self.project_basic_bil_mov_mr(64)
+    "MOV32MI" => self.project_basic_bil_mov_mi(32)
+    "MOV64MI" => self.project_basic_bil_mov_mi(64)
     "LEA32R" => self.project_basic_bil_lea(32)
     "LEA64R" => self.project_basic_bil_lea(64)
     "MOV32RI" => self.project_basic_bil_mov_imm(32)
     "MOV64RI" => self.project_basic_bil_mov_imm(64)
+    "MOV64RI32" => self.project_basic_bil_mov_imm(64)
     "MOV32RR" | "MOV32RR_REV" => self.project_basic_bil_mov_rr(32)
     "MOV64RR" | "MOV64RR_REV" => self.project_basic_bil_mov_rr(64)
     "OR32RR" | "OR32RR_REV" =>

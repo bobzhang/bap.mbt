@@ -151,6 +151,7 @@ fn dwarf_elf_section_of_name(name : String) -> DwarfSection? {
     ".debug_ranges" => Some(DwarfRanges)
     ".debug_rnglists" => Some(DwarfRnglists)
     ".debug_loclists" => Some(DwarfLoclists)
+    ".debug_loc" => Some(DwarfLoc)
     _ => None
   }
 }
@@ -383,6 +384,7 @@ pub fn DwarfData::from_elf_bytes(data : Bytes) -> Result[DwarfData, String] {
       let mut ranges : Bytes? = None
       let mut rnglists : Bytes? = None
       let mut loclists : Bytes? = None
+      let mut loc : Bytes? = None
       for section_header in section_headers {
         match dwarf_elf_section_name(names, section_header.name_offset) {
           Ok(name) =>
@@ -432,6 +434,11 @@ pub fn DwarfData::from_elf_bytes(data : Bytes) -> Result[DwarfData, String] {
                   Ok(bytes) => loclists = Some(bytes)
                   Err(reason) => return Err(reason)
                 }
+              Some(DwarfLoc) =>
+                match dwarf_elf_section_data(data, section_header) {
+                  Ok(bytes) => loc = Some(bytes)
+                  Err(reason) => return Err(reason)
+                }
               None => ()
             }
           Err(reason) => return Err(reason)
@@ -448,6 +455,7 @@ pub fn DwarfData::from_elf_bytes(data : Bytes) -> Result[DwarfData, String] {
         ranges?,
         rnglists?,
         loclists?,
+        loc?,
       )
     }
     Err(reason) => Err(reason)

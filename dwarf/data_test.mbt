@@ -881,6 +881,54 @@ test "translated DWARF DIE attributes resolve range-list forms through data" {
 
 ///|
 test "translated DWARF DIE attributes resolve location-list forms through data" {
+  let abbrev_legacy = b"\x01\x2e\x00" +
+    b"\x02\x17" +
+    b"\x03\x08" +
+    b"\x00\x00" +
+    b"\x00"
+  let info_legacy = b"\x0f\x00\x00\x00" +
+    b"\x04\x00" +
+    b"\x00\x00\x00\x00" +
+    b"\x04" +
+    b"\x01" +
+    b"\x02\x00\x00\x00" +
+    b"no\x00"
+  let data_legacy = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=LittleEndian,
+      info=info_legacy,
+      abbrev=abbrev_legacy,
+      loc=b"\xff\x00" +
+        b"\xff\xff\xff\xff\x00\x20\x00\x00" +
+        b"\x10\x00\x00\x00\x18\x00\x00\x00\x01\x00\x50" +
+        b"\x00\x00\x00\x00\x00\x00\x00\x00",
+    ),
+  )
+  let legacy_attrs = expect_dies(data_legacy.unit_dies())[0].attributes()
+  let legacy = expect_location_list(
+    legacy_attrs[0].location_list_value(
+      data_legacy,
+      version=4,
+      dwarf_size=W32,
+      addr_size=W32,
+    ),
+  )
+  assert_true(
+    legacy.entries() ==
+    [DwarfLocBaseAddress(0x2000UL), DwarfLocOffsetPair(0x10, 0x18, b"\x50")],
+  )
+  let legacy_value = expect_die_location_list(
+    legacy_attrs[0].location_value(
+      data_legacy,
+      version=4,
+      dwarf_size=W32,
+      addr_size=W32,
+    ),
+  )
+  assert_true(
+    legacy_value.entries() ==
+    [DwarfLocBaseAddress(0x2000UL), DwarfLocOffsetPair(0x10, 0x18, b"\x50")],
+  )
   let abbrev_expr = b"\x01\x2e\x00" +
     b"\x02\x18" +
     b"\x40\x18" +
@@ -1588,6 +1636,28 @@ test "translated DWARF data exposes loclists section reader" {
 }
 
 ///|
+test "translated DWARF data exposes DWARF4 loc section reader" {
+  let data = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=BigEndian,
+      loc=b"\xff\x00" +
+        b"\xff\xff\xff\xff\x00\x00\x20\x00" +
+        b"\x00\x00\x00\x10\x00\x00\x00\x18\x00\x01\x50" +
+        b"\x00\x00\x00\x00\x00\x00\x00\x00",
+    ),
+  )
+  let list = expect_location_list(data.loc(offset=2, addr_size=W32))
+  assert_true(
+    list.entries() ==
+    [DwarfLocBaseAddress(0x2000UL), DwarfLocOffsetPair(0x10, 0x18, b"\x50")],
+  )
+  let without_loc = expect_dwarf_data(
+    @dwarf.DwarfData::from_bytes(endian=BigEndian, info=b"\x00"),
+  )
+  assert_true(without_loc.loc(addr_size=W32) is Err(_))
+}
+
+///|
 test "translated DWARF section source aliases select core sections" {
   let info = expect_section_buffer(@dwarf.DwarfSectionBuffer::create(b"i"))
   let abbrev = expect_section_buffer(@dwarf.DwarfSectionBuffer::create(b"a"))
@@ -1651,6 +1721,7 @@ test "translated DWARF section data rejects duplicates and builds from bytes" {
       ranges=b"\x00\x00\x00\x00\x00\x00\x00\x00",
       rnglists=b"\x00",
       loclists=b"\x01\x00",
+      loc=b"\x00\x00\x00\x00\x00\x00\x00\x00",
     ),
   )
   assert_true(data.has_section(DwarfInfo))
@@ -1662,6 +1733,7 @@ test "translated DWARF section data rejects duplicates and builds from bytes" {
   assert_true(data.has_section(DwarfRanges))
   assert_true(data.has_section(DwarfRnglists))
   assert_true(data.has_section(DwarfLoclists))
+  assert_true(data.has_section(DwarfLoc))
   assert_true(
     expect_section_buffer(data.section(DwarfStr)).data() == b"names\x00",
   )
@@ -1686,5 +1758,9 @@ test "translated DWARF section data rejects duplicates and builds from bytes" {
   )
   assert_true(
     expect_section_buffer(data.section(DwarfLoclists)).data() == b"\x01\x00",
+  )
+  assert_true(
+    expect_section_buffer(data.section(DwarfLoc)).data() ==
+    b"\x00\x00\x00\x00\x00\x00\x00\x00",
   )
 }

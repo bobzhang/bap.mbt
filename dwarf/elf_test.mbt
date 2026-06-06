@@ -413,6 +413,47 @@ fn elf_test_make_elf64_debug_with_loclists(
 }
 
 ///|
+fn elf_test_make_elf64_debug_with_loc(
+  info : Bytes,
+  abbrev : Bytes,
+  str : Bytes,
+  loc : Bytes,
+) -> Bytes {
+  let shstr = b"\x00.shstrtab\x00.debug_info\x00.debug_abbrev\x00.debug_str\x00.debug_loc\x00"
+  let data_offset = 64 + 6 * 64
+  let shstr_offset = data_offset
+  let info_offset = shstr_offset + shstr.length()
+  let abbrev_offset = info_offset + info.length()
+  let str_offset = abbrev_offset + abbrev.length()
+  let loc_offset = str_offset + str.length()
+  let total = loc_offset + loc.length()
+  let buffer = Array::make(total, b'\x00')
+  elf_test_write_bytes(buffer, 0, b"\x7fELF")
+  buffer[4] = b'\x02'
+  buffer[5] = b'\x01'
+  buffer[6] = b'\x01'
+  elf_test_set_u16_le(buffer, 16, 1)
+  elf_test_set_u16_le(buffer, 18, 0x3e)
+  elf_test_set_u32_le(buffer, 20, 1)
+  elf_test_set_u64_le(buffer, 40, 64UL)
+  elf_test_set_u16_le(buffer, 52, 64)
+  elf_test_set_u16_le(buffer, 58, 64)
+  elf_test_set_u16_le(buffer, 60, 6)
+  elf_test_set_u16_le(buffer, 62, 1)
+  elf_test_write_section64(buffer, 1, 1, 3, shstr_offset, shstr.length())
+  elf_test_write_section64(buffer, 2, 11, 1, info_offset, info.length())
+  elf_test_write_section64(buffer, 3, 23, 1, abbrev_offset, abbrev.length())
+  elf_test_write_section64(buffer, 4, 37, 1, str_offset, str.length())
+  elf_test_write_section64(buffer, 5, 48, 1, loc_offset, loc.length())
+  elf_test_write_bytes(buffer, shstr_offset, shstr)
+  elf_test_write_bytes(buffer, info_offset, info)
+  elf_test_write_bytes(buffer, abbrev_offset, abbrev)
+  elf_test_write_bytes(buffer, str_offset, str)
+  elf_test_write_bytes(buffer, loc_offset, loc)
+  Bytes::from_array(buffer)
+}
+
+///|
 fn elf_test_make_elf64_debug_with_addr(
   info : Bytes,
   abbrev : Bytes,
@@ -593,6 +634,24 @@ test "translated DWARF data extracts loclists from ELF debug sections" {
   assert_true(
     expect_elf_section(data.section(DwarfLoclists)).data() == loclists,
   )
+}
+
+///|
+test "translated DWARF data extracts DWARF4 loc from ELF debug sections" {
+  let info = b"info"
+  let abbrev = b"abbrev"
+  let loc = b"\x10\x00\x00\x00\x18\x00\x00\x00\x01\x00\x50" +
+    b"\x00\x00\x00\x00\x00\x00\x00\x00"
+  let data = expect_elf_data(
+    @dwarf.DwarfData::from_elf_bytes(
+      elf_test_make_elf64_debug_with_loc(info, abbrev, b"", loc),
+    ),
+  )
+  assert_true(expect_elf_section(data.section(DwarfInfo)).data() == info)
+  assert_true(expect_elf_section(data.section(DwarfAbbrev)).data() == abbrev)
+  assert_true(expect_elf_section(data.section(DwarfLoc)).data() == loc)
+  let list = expect_location_list(data.loc(addr_size=W32))
+  assert_true(list.entries() == [DwarfLocOffsetPair(0x10, 0x18, b"\x50")])
 }
 
 ///|

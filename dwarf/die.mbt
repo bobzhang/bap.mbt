@@ -537,7 +537,11 @@ pub fn DwarfDieAttribute::location_list_value(
   match self.form() {
     DwarfOffset =>
       if version < 5 {
-        Err("DWARF4 location-list attributes are not supported")
+        match
+          self.section_offset_value(info, endian=data.endian(), dwarf_size~) {
+          Ok(offset) => data.loc(offset~, addr_size~)
+          Err(reason) => Err(reason)
+        }
       } else {
         match
           self.section_offset_value(info, endian=data.endian(), dwarf_size~) {

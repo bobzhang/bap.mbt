@@ -24,6 +24,31 @@ fn dwarf_read_location_expr(
 }
 
 ///|
+fn dwarf_read_legacy_location_expr(
+  input : DwarfInput,
+  endian : @bitvec.Endian,
+) -> Result[(Bytes, DwarfInput), String] {
+  input.read_block(lenspec=DwarfTwo, endian~)
+}
+
+///|
+fn dwarf_legacy_location_base_marker(addr_size : DwarfWordSize) -> UInt64 {
+  match addr_size {
+    W32 => 0xffffffffUL
+    W64 => UInt64::lnot(0UL)
+  }
+}
+
+///|
+fn dwarf_location_offset_to_int(value : UInt64) -> Result[Int, String] {
+  if value > 2147483647UL {
+    Err("DWARF location-list offset does not fit in Int")
+  } else {
+    Ok(value.to_int())
+  }
+}
+
+///|
 pub fn DwarfLocationList::read(
   buffer : DwarfSectionBuffer,
   offset? : Int = 0,
@@ -159,6 +184,56 @@ pub fn DwarfLocationList::read(
 }
 
 ///|
+pub fn DwarfLocationList::read_loc(
+  buffer : DwarfSectionBuffer,
+  offset? : Int = 0,
+  endian~ : @bitvec.Endian,
+  addr_size~ : DwarfWordSize,
+) -> Result[DwarfLocationList, String] {
+  let mut cursor = match buffer.offset(offset) {
+    Ok(section) => section.input()
+    Err(reason) => return Err(reason)
+  }
+  let entries : Array[DwarfLocationListEntry] = []
+  let base_marker = dwarf_legacy_location_base_marker(addr_size)
+  let mut done = false
+  while !done {
+    match cursor.read_address(endian~, size=addr_size) {
+      Ok((start, after_start)) =>
+        match after_start.read_address(endian~, size=addr_size) {
+          Ok((end, after_end)) =>
+            if start == 0UL && end == 0UL {
+              cursor = after_end
+              done = true
+            } else if start == base_marker {
+              entries.push(DwarfLocBaseAddress(end))
+              cursor = after_end
+            } else {
+              let start = match dwarf_location_offset_to_int(start) {
+                Ok(value) => value
+                Err(reason) => return Err(reason)
+              }
+              let end = match dwarf_location_offset_to_int(end) {
+                Ok(value) => value
+                Err(reason) => return Err(reason)
+              }
+              match dwarf_read_legacy_location_expr(after_end, endian) {
+                Ok((expr, after_expr)) => {
+                  entries.push(DwarfLocOffsetPair(start, end, expr))
+                  cursor = after_expr
+                }
+                Err(reason) => return Err(reason)
+              }
+            }
+          Err(reason) => return Err(reason)
+        }
+      Err(reason) => return Err(reason)
+    }
+  }
+  Ok({ entries_value: entries })
+}
+
+///|
 pub fn DwarfLocationList::entries(
   self : DwarfLocationList,
 ) -> Array[DwarfLocationListEntry] {
@@ -184,6 +259,24 @@ pub fn DwarfData::loclist(
   match self.section(DwarfLoclists) {
     Ok(section) =>
       DwarfLocationList::read(
+        section,
+        offset~,
+        endian=self.endian(),
+        addr_size~,
+      )
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+pub fn DwarfData::loc(
+  self : DwarfData,
+  offset? : Int = 0,
+  addr_size~ : DwarfWordSize,
+) -> Result[DwarfLocationList, String] {
+  match self.section(DwarfLoc) {
+    Ok(section) =>
+      DwarfLocationList::read_loc(
         section,
         offset~,
         endian=self.endian(),

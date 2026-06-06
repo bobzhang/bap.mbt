@@ -1365,6 +1365,7 @@ test "translated DWARF DIE attributes expose index and reference readers" {
 test "translated DWARF DIE attributes expose DWARF5 reference-class metadata" {
   let abbrev = b"\x01\x2e\x00" +
     b"\x0b\x11" +
+    b"\x0c\x11" +
     b"\x0d\x11" +
     b"\x19\x11" +
     b"\x1e\x11" +
@@ -1380,13 +1381,13 @@ test "translated DWARF DIE attributes expose DWARF5 reference-class metadata" {
     b"\x5d\x11" +
     b"\x00\x00" +
     b"\x00"
-  let info = b"\x16\x00\x00\x00" +
+  let info = b"\x17\x00\x00\x00" +
     b"\x04\x00" +
     b"\x00\x00\x00\x00" +
     b"\x04" +
     b"\x01" +
     b"\x0b\x0c\x0d\x0e\x0f\x10\x11" +
-    b"\x12\x13\x14\x15\x16\x17\x18"
+    b"\x12\x13\x14\x15\x16\x17\x18\x19"
   let data = expect_dwarf_data(
     @dwarf.DwarfData::from_bytes(endian=LittleEndian, info~, abbrev~),
   )
@@ -1397,6 +1398,7 @@ test "translated DWARF DIE attributes expose DWARF5 reference-class metadata" {
     refs.map(attr => attr.attr()) ==
     [
       DwarfByteSize,
+      DwarfBitOffset,
       DwarfBitSize,
       DwarfStringLength,
       DwarfDefaultValue,

@@ -258,6 +258,7 @@ test "translated DWARF abbreviation value classification follows BAP FBI inputs"
   )
   let reference_capable_attrs : Array[@dwarf.DwarfAttr] = [
     DwarfByteSize,
+    DwarfBitOffset,
     DwarfBitSize,
     DwarfStringLength,
     DwarfDefaultValue,

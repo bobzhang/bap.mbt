@@ -71,6 +71,7 @@ fn dwarf_attr_accepts_reference(attr : DwarfAttr) -> Bool {
   match attr {
     DwarfSibling
     | DwarfByteSize
+    | DwarfBitOffset
     | DwarfBitSize
     | DwarfDiscr
     | DwarfImport

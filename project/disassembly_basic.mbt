@@ -809,6 +809,25 @@ fn project_disassembly_basic_x86_endbr(
 }
 
 ///|
+fn project_disassembly_basic_x86_flag_control(
+  memory : @memory.Memory,
+) -> (Int, String)? {
+  let bytes = memory.to_bytes()
+  if bytes.length() == 0 {
+    None
+  } else {
+    match bytes[0].to_int() {
+      0xf5 => Some((1, "CMC"))
+      0xf8 => Some((1, "CLC"))
+      0xf9 => Some((1, "STC"))
+      0xfc => Some((1, "CLD"))
+      0xfd => Some((1, "STD"))
+      _ => None
+    }
+  }
+}
+
+///|
 fn project_disassembly_basic_x86_mov32ri(
   memory : @memory.Memory,
 ) -> (String, Int64)? {
@@ -3164,6 +3183,9 @@ fn project_disassembly_basic_decode_x86_llvm(
       } else if project_disassembly_basic_x86_noop(memory, 32) is Some(_) {
         let length = project_disassembly_basic_x86_noop(memory, 32).unwrap()
         Some((length, "NOOP", "nop", "", [], []))
+      } else if project_disassembly_basic_x86_flag_control(memory) is Some(_) {
+        let (length, name) = project_disassembly_basic_x86_flag_control(memory).unwrap()
+        Some((length, name, "", "", [], []))
       } else if project_disassembly_basic_x86_sign_extend_accumulator(
           memory, 32,
         )
@@ -3557,6 +3579,9 @@ fn project_disassembly_basic_decode_x86_64_llvm(
   } else if project_disassembly_basic_x86_noop(memory, 64) is Some(_) {
     let length = project_disassembly_basic_x86_noop(memory, 64).unwrap()
     Some((length, "NOOP", [], []))
+  } else if project_disassembly_basic_x86_flag_control(memory) is Some(_) {
+    let (length, name) = project_disassembly_basic_x86_flag_control(memory).unwrap()
+    Some((length, name, [], []))
   } else if project_disassembly_basic_x86_simple(memory, 64, 64) is Some(_) {
     let (length, name, operands, kinds) = project_disassembly_basic_x86_simple(
       memory, 64, 64,

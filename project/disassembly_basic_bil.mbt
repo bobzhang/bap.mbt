@@ -119,6 +119,17 @@ fn project_basic_bil_x86_flag_move(
 }
 
 ///|
+fn project_basic_bil_x86_flag_assign(
+  name : String,
+  value : Int64,
+) -> Result[Array[@types.Stmt], String] {
+  match project_basic_bil_int(value, 1) {
+    Ok(imm) => Ok([project_basic_bil_x86_flag_move(name, imm)])
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
 fn project_basic_bil_x86_or(
   left : @types.Exp,
   right : @types.Exp,
@@ -1864,6 +1875,17 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "LEAVE64" => self.project_basic_bil_leave(64)
     "ENDBR32" | "ENDBR64" => Ok([])
     "NOOP" => Ok([])
+    "CLC" => project_basic_bil_x86_flag_assign("CF", 0L)
+    "STC" => project_basic_bil_x86_flag_assign("CF", 1L)
+    "CMC" =>
+      Ok([
+        project_basic_bil_x86_flag_move(
+          "CF",
+          project_basic_bil_x86_not(project_basic_bil_x86_flag("CF")),
+        ),
+      ])
+    "CLD" => project_basic_bil_x86_flag_assign("DF", 0L)
+    "STD" => project_basic_bil_x86_flag_assign("DF", 1L)
     "JMP_1" => self.project_basic_bil_jump()
     "JMP_4" => self.project_basic_bil_jump()
     "CALLPCREL32" => self.project_basic_bil_call(32)

@@ -145,6 +145,39 @@ test "project Basic BIL lift covers x86_64 stack arithmetic fixtures" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 flag controls" {
+  let clc = basic_bil_decode("x86", b"\xf8", start=0x7008UL)
+  match clc.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["CF:imm1 := 0:1u"])
+    Err(reason) => fail(reason)
+  }
+
+  let stc = basic_bil_decode("x86", b"\xf9", start=0x7009UL)
+  match stc.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["CF:imm1 := 1:1u"])
+    Err(reason) => fail(reason)
+  }
+
+  let cmc = basic_bil_decode("x86_64", b"\xf5", start=0x700aUL)
+  match cmc.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["CF:imm1 := (not CF:imm1)"])
+    Err(reason) => fail(reason)
+  }
+
+  let cld = basic_bil_decode("x86_64", b"\xfc", start=0x700bUL)
+  match cld.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["DF:imm1 := 0:1u"])
+    Err(reason) => fail(reason)
+  }
+
+  let std = basic_bil_decode("x86_64", b"\xfd", start=0x700cUL)
+  match std.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["DF:imm1 := 1:1u"])
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86 register add-sub immediates" {
   let sub64 = basic_bil_decode("x86_64", b"\x48\x83\xe8\x01", start=0x7008UL)
   match sub64.lift_basic_bil() {

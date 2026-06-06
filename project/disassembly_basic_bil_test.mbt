@@ -309,6 +309,67 @@ test "project Basic BIL lift covers x86 register logical ops" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 cmp and test flag ops" {
+  let cmp_imm = basic_bil_decode("x86_64", b"\x48\x83\xf8\x01", start=0x7021UL)
+  match cmp_imm.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 7)
+      assert_string(
+        stmts[0].to_string(),
+        "%cmp_tmp:imm64 := (RAX:imm64 - 1:64u)",
+      )
+      assert_string(stmts[1].to_string(), "CF:imm1 := (RAX:imm64 < 1:64u)")
+      assert_true(stmts[2].to_string().contains("OF:imm1 := high:1"))
+      assert_true(stmts[3].to_string().contains("AF:imm1 := extract[4:4]"))
+      assert_true(stmts[4].to_string().contains("PF:imm1 := (not low:1"))
+      assert_string(stmts[5].to_string(), "SF:imm1 := high:1[%cmp_tmp:imm64]")
+      assert_string(
+        stmts[6].to_string(),
+        "ZF:imm1 := (0:64u == %cmp_tmp:imm64)",
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let cmp_rr = basic_bil_decode("x86", b"\x39\xd1", start=0x7025UL)
+  match cmp_rr.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 7)
+      assert_string(
+        stmts[0].to_string(),
+        "%cmp_tmp:imm32 := (ECX:imm32 - EDX:imm32)",
+      )
+      assert_string(stmts[1].to_string(), "CF:imm1 := (ECX:imm32 < EDX:imm32)")
+      assert_string(
+        stmts[6].to_string(),
+        "ZF:imm1 := (0:32u == %cmp_tmp:imm32)",
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let test_rr = basic_bil_decode("x86_64", b"\x48\x85\xc0", start=0x7027UL)
+  match test_rr.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 7)
+      assert_string(
+        stmts[0].to_string(),
+        "%test_tmp:imm64 := (RAX:imm64 & RAX:imm64)",
+      )
+      assert_string(stmts[1].to_string(), "CF:imm1 := 0:1u")
+      assert_string(stmts[2].to_string(), "OF:imm1 := 0:1u")
+      assert_true(stmts[3].to_string().contains("AF undefined after TEST"))
+      assert_true(stmts[4].to_string().contains("PF:imm1 := (not low:1"))
+      assert_string(
+        stmts[6].to_string(),
+        "ZF:imm1 := (0:64u == %test_tmp:imm64)",
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86 register pushes" {
   let push_rbp = basic_bil_decode("x86_64", b"\x55", start=0x7010UL)
   match push_rbp.lift_basic_bil() {

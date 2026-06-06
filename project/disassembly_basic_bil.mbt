@@ -101,8 +101,21 @@ fn project_basic_bil_arm_ne_flag() -> @types.Var {
 }
 
 ///|
+fn project_basic_bil_x86_flag_var(name : String) -> @types.Var {
+  project_basic_bil_reg(name, 1)
+}
+
+///|
 fn project_basic_bil_x86_flag(name : String) -> @types.Exp {
-  @types.Exp::var_exp(project_basic_bil_reg(name, 1))
+  @types.Exp::var_exp(project_basic_bil_x86_flag_var(name))
+}
+
+///|
+fn project_basic_bil_x86_flag_move(
+  name : String,
+  value : @types.Exp,
+) -> @types.Stmt {
+  @types.Stmt::move_stmt(project_basic_bil_x86_flag_var(name), value)
 }
 
 ///|
@@ -124,6 +137,134 @@ fn project_basic_bil_x86_xor(
 ///|
 fn project_basic_bil_x86_not(exp : @types.Exp) -> @types.Exp {
   @types.Exp::unop(@types.UnOp::not(), exp)
+}
+
+///|
+fn project_basic_bil_x86_parity(
+  result : @types.Exp,
+  width : Int,
+) -> Result[@types.Exp, String] {
+  let four = match project_basic_bil_int(4L, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let two = match project_basic_bil_int(2L, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let one = match project_basic_bil_int(1L, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let tmp1 = project_basic_bil_virtual("parity_tmp1", width)
+  let tmp2 = project_basic_bil_virtual("parity_tmp2", width)
+  let first = project_basic_bil_x86_xor(
+    @types.Exp::binop(@types.BinOp::rshift(), result, four),
+    result,
+  )
+  let second = project_basic_bil_x86_xor(
+    @types.Exp::binop(@types.BinOp::rshift(), @types.Exp::var_exp(tmp1), two),
+    @types.Exp::var_exp(tmp1),
+  )
+  let third = project_basic_bil_x86_xor(
+    @types.Exp::binop(@types.BinOp::rshift(), @types.Exp::var_exp(tmp2), one),
+    @types.Exp::var_exp(tmp2),
+  )
+  Ok(
+    project_basic_bil_x86_not(
+      @types.Exp::cast(
+        @types.CastKind::low(),
+        1,
+        @types.Exp::let_(tmp1, first, @types.Exp::let_(tmp2, second, third)),
+      ),
+    ),
+  )
+}
+
+///|
+fn project_basic_bil_x86_sub_flag_moves(
+  lhs : @types.Exp,
+  rhs : @types.Exp,
+  result : @types.Exp,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let zero = match project_basic_bil_int(0L, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let parity = match project_basic_bil_x86_parity(result, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let lhs_xor_rhs = project_basic_bil_x86_xor(lhs, rhs)
+  let lhs_xor_result = project_basic_bil_x86_xor(lhs, result)
+  Ok([
+    project_basic_bil_x86_flag_move(
+      "CF",
+      @types.Exp::binop(@types.BinOp::lt(), lhs, rhs),
+    ),
+    project_basic_bil_x86_flag_move(
+      "OF",
+      @types.Exp::cast(
+        @types.CastKind::high(),
+        1,
+        @types.Exp::binop(@types.BinOp::bit_and(), lhs_xor_rhs, lhs_xor_result),
+      ),
+    ),
+    project_basic_bil_x86_flag_move(
+      "AF",
+      @types.Exp::extract(
+        project_basic_bil_x86_xor(project_basic_bil_x86_xor(result, lhs), rhs),
+        hi=4,
+        lo=4,
+      ),
+    ),
+    project_basic_bil_x86_flag_move("PF", parity),
+    project_basic_bil_x86_flag_move(
+      "SF",
+      @types.Exp::cast(@types.CastKind::high(), 1, result),
+    ),
+    project_basic_bil_x86_flag_move(
+      "ZF",
+      @types.Exp::binop(@types.BinOp::eq(), zero, result),
+    ),
+  ])
+}
+
+///|
+fn project_basic_bil_x86_test_flag_moves(
+  result : @types.Exp,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let zero = match project_basic_bil_int(0L, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let zero_flag = match project_basic_bil_int(0L, 1) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let parity = match project_basic_bil_x86_parity(result, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  Ok([
+    project_basic_bil_x86_flag_move("CF", zero_flag),
+    project_basic_bil_x86_flag_move("OF", zero_flag),
+    project_basic_bil_x86_flag_move(
+      "AF",
+      @types.Exp::unknown("AF undefined after TEST", Imm(1)),
+    ),
+    project_basic_bil_x86_flag_move("PF", parity),
+    project_basic_bil_x86_flag_move(
+      "SF",
+      @types.Exp::cast(@types.CastKind::high(), 1, result),
+    ),
+    project_basic_bil_x86_flag_move(
+      "ZF",
+      @types.Exp::binop(@types.BinOp::eq(), zero, result),
+    ),
+  ])
 }
 
 ///|
@@ -271,6 +412,110 @@ fn ProjectDisassemblyInstruction::project_basic_bil_binop_ri(
       }
     Err(reason) => Err(reason)
   }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_cmp_rr(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let lhs = match self.project_basic_bil_register(0, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let rhs = match self.project_basic_bil_register(1, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let tmp = project_basic_bil_virtual("cmp_tmp", width)
+  let lhs_exp = @types.Exp::var_exp(lhs)
+  let rhs_exp = @types.Exp::var_exp(rhs)
+  let result_exp = @types.Exp::var_exp(tmp)
+  let flags = match
+    project_basic_bil_x86_sub_flag_moves(lhs_exp, rhs_exp, result_exp, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let stmts = [
+    @types.Stmt::move_stmt(
+      tmp,
+      @types.Exp::binop(@types.BinOp::minus(), lhs_exp, rhs_exp),
+    ),
+  ]
+  for stmt in flags {
+    stmts.push(stmt)
+  }
+  Ok(stmts)
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_cmp_ri(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let lhs = match self.project_basic_bil_register(0, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let imm = match self.project_basic_bil_immediate(1) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let rhs_exp = match project_basic_bil_int(imm, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let tmp = project_basic_bil_virtual("cmp_tmp", width)
+  let lhs_exp = @types.Exp::var_exp(lhs)
+  let result_exp = @types.Exp::var_exp(tmp)
+  let flags = match
+    project_basic_bil_x86_sub_flag_moves(lhs_exp, rhs_exp, result_exp, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let stmts = [
+    @types.Stmt::move_stmt(
+      tmp,
+      @types.Exp::binop(@types.BinOp::minus(), lhs_exp, rhs_exp),
+    ),
+  ]
+  for stmt in flags {
+    stmts.push(stmt)
+  }
+  Ok(stmts)
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_test_rr(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let lhs = match self.project_basic_bil_register(0, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let rhs = match self.project_basic_bil_register(1, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let tmp = project_basic_bil_virtual("test_tmp", width)
+  let lhs_exp = @types.Exp::var_exp(lhs)
+  let rhs_exp = @types.Exp::var_exp(rhs)
+  let result_exp = @types.Exp::var_exp(tmp)
+  let flags = match project_basic_bil_x86_test_flag_moves(result_exp, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let stmts = [
+    @types.Stmt::move_stmt(
+      tmp,
+      @types.Exp::binop(@types.BinOp::bit_and(), lhs_exp, rhs_exp),
+    ),
+  ]
+  for stmt in flags {
+    stmts.push(stmt)
+  }
+  Ok(stmts)
 }
 
 ///|
@@ -1293,6 +1538,10 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
       self.project_basic_bil_binop_rr(64, @types.BinOp::minus())
     "ADD64RR" | "ADD64RR_REV" =>
       self.project_basic_bil_binop_rr(64, @types.BinOp::plus())
+    "CMP32RI8" => self.project_basic_bil_cmp_ri(32)
+    "CMP64RI8" => self.project_basic_bil_cmp_ri(64)
+    "CMP32RR" | "CMP32RR_REV" => self.project_basic_bil_cmp_rr(32)
+    "CMP64RR" | "CMP64RR_REV" => self.project_basic_bil_cmp_rr(64)
     "MOV32RM" => self.project_basic_bil_mov_rm(32)
     "MOV64RM" => self.project_basic_bil_mov_rm(64)
     "MOV32MR" => self.project_basic_bil_mov_mr(32)
@@ -1370,6 +1619,8 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
       self.project_basic_bil_binop_rr(32, @types.BinOp::bit_xor())
     "XOR64RR" | "XOR64RR_REV" =>
       self.project_basic_bil_binop_rr(64, @types.BinOp::bit_xor())
+    "TEST32RR" | "TEST32RR_REV" => self.project_basic_bil_test_rr(32)
+    "TEST64RR" | "TEST64RR_REV" => self.project_basic_bil_test_rr(64)
     "PUSH32R" | "PUSH32I8" | "PUSH32I32" => self.project_basic_bil_push(32)
     "PUSH64R" | "PUSH64I8" | "PUSH64I32" => self.project_basic_bil_push(64)
     "PUSH32M" => self.project_basic_bil_push_mem(32)

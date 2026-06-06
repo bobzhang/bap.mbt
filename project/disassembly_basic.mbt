@@ -1478,6 +1478,7 @@ fn project_disassembly_basic_x86_arith_rr(
     let op = match opcode {
       0x01 | 0x03 => "ADD"
       0x29 | 0x2b => "SUB"
+      0x39 | 0x3b => "CMP"
       _ => ""
     }
     if op == "" || ((modrm >> 6) & 0x3) != 0x3 {
@@ -1536,6 +1537,7 @@ fn project_disassembly_basic_x86_logic_rr(
       0x09 | 0x0b => "OR"
       0x21 | 0x23 => "AND"
       0x31 | 0x33 => "XOR"
+      0x85 => "TEST"
       _ => ""
     }
     if op == "" || ((modrm >> 6) & 0x3) != 0x3 {
@@ -1621,6 +1623,7 @@ fn project_disassembly_basic_x86_reg_update(
         4 => "AND"
         5 => "SUB"
         6 => "XOR"
+        7 => "CMP"
         _ => ""
       }
       if op == "" {
@@ -1635,15 +1638,26 @@ fn project_disassembly_basic_x86_reg_update(
           (
             opcode_index + 3,
             op + "\{data_width}ri8",
-            [
-              ProjectInstructionOperand::register(name=register),
-              ProjectInstructionOperand::register(name=register),
-              ProjectInstructionOperand::immediate(
-                project_disassembly_basic_x86_signed_byte(
-                  bytes[opcode_index + 2],
+            if op == "CMP" {
+              [
+                ProjectInstructionOperand::register(name=register),
+                ProjectInstructionOperand::immediate(
+                  project_disassembly_basic_x86_signed_byte(
+                    bytes[opcode_index + 2],
+                  ),
                 ),
-              ),
-            ],
+              ]
+            } else {
+              [
+                ProjectInstructionOperand::register(name=register),
+                ProjectInstructionOperand::register(name=register),
+                ProjectInstructionOperand::immediate(
+                  project_disassembly_basic_x86_signed_byte(
+                    bytes[opcode_index + 2],
+                  ),
+                ),
+              ]
+            },
             [],
           ),
         )

@@ -644,6 +644,52 @@ test "translated DWARF FBI resolves DWARF5 addrx function bounds" {
 }
 
 ///|
+test "translated DWARF FBI resolves LLVM addrx-offset function bounds" {
+  let abbrev = b"\x01\x11\x01" +
+    b"\x73\x17" +
+    b"\x00\x00" +
+    b"\x02\x2e\x00" +
+    b"\x03\x08" +
+    b"\x11\x81\x40" +
+    b"\x12\x81\x40" +
+    b"\x00\x00" +
+    b"\x00"
+  let info = b"\x23\x00\x00\x00" +
+    b"\x05\x00" +
+    b"\x01" +
+    b"\x04" +
+    b"\x00\x00\x00\x00" +
+    b"\x01" +
+    b"\x08\x00\x00\x00" +
+    b"\x02" +
+    b"addrxoff\x00" +
+    b"\x00\x04\x00\x00\x00" +
+    b"\x01\x03\x00\x00\x00" +
+    b"\x00" +
+    b"\x00"
+  let addr = b"\x0c\x00\x00\x00" +
+    b"\x05\x00" +
+    b"\x04" +
+    b"\x00" +
+    b"\x20\x00\x00\x00" +
+    b"\x30\x00\x00\x00"
+  let data = expect_fbi_data(
+    @dwarf.DwarfData::from_bytes(
+      endian=LittleEndian,
+      info~,
+      abbrev~,
+      str=b"",
+      addr~,
+    ),
+  )
+  let functions = expect_functions(data.functions())
+  assert_true(functions.length() == 1)
+  assert_true(functions[0].name() == "addrxoff")
+  assert_true(functions[0].low_pc() == 0x24UL)
+  assert_true(functions[0].high_pc() == Some(0x33UL))
+}
+
+///|
 test "translated DWARF FBI resolves GNU addr index with GNU addr base" {
   let abbrev = b"\x01\x11\x01" +
     b"\xb3\x42\x17" +

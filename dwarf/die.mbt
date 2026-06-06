@@ -372,6 +372,24 @@ pub fn DwarfDieAttribute::address_value(
         Err(reason) => Err(reason)
       }
     }
+    DwarfAddrxOffset => {
+      let base = match addr_base {
+        Some(value) => value
+        None => return Err("DW_AT_addr_base is not available")
+      }
+      match self.addrx_offset_value(info, endian=data.endian()) {
+        Ok((index, offset)) =>
+          match data.address_table(offset=base, addr_size~) {
+            Ok(table) =>
+              match table.address(index) {
+                Ok(addr) => dwarf_add_address_offset(addr, offset, addr_size)
+                Err(reason) => Err(reason)
+              }
+            Err(reason) => Err(reason)
+          }
+        Err(reason) => Err(reason)
+      }
+    }
     _ => Err("DWARF DIE attribute is not an address value")
   }
 }
@@ -600,6 +618,31 @@ pub fn DwarfDieAttribute::index_value(
         Err(reason) => Err(reason)
       }
     Err(reason) => Err(reason)
+  }
+}
+
+///|
+fn DwarfDieAttribute::addrx_offset_value(
+  self : DwarfDieAttribute,
+  info : DwarfSectionBuffer,
+  endian~ : @bitvec.Endian,
+) -> Result[(Int, UInt64), String] {
+  match self.form() {
+    DwarfAddrxOffset =>
+      match self.input(info) {
+        Ok(input) =>
+          match input.read_addrx_offset(endian) {
+            Ok(((index, offset), next)) =>
+              if index < 0 {
+                Err("negative DWARF address index")
+              } else {
+                dwarf_die_attribute_finish(self, (index, offset), next)
+              }
+            Err(reason) => Err(reason)
+          }
+        Err(reason) => Err(reason)
+      }
+    _ => Err("DWARF DIE attribute is not an address-index offset")
   }
 }
 

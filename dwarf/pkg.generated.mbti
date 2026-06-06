@@ -196,6 +196,7 @@ pub(all) enum DwarfForm {
   DwarfStrp
   DwarfStrx(DwarfIndexSpec)
   DwarfAddrx(DwarfIndexSpec)
+  DwarfAddrxOffset
   DwarfData16
   DwarfLineStrp
   DwarfImplicitConst(Int64)
@@ -215,6 +216,7 @@ pub(all) enum DwarfForm {
   DwarfFlagPresent
 } derive(Eq, @debug.Debug)
 pub fn DwarfForm::addr() -> Self
+pub fn DwarfForm::addrx_offset() -> Self
 pub fn DwarfForm::block(DwarfLenspec) -> Self
 pub fn DwarfForm::const_(DwarfLenspec) -> Self
 pub fn DwarfForm::expr() -> Self

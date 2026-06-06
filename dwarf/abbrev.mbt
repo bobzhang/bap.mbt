@@ -73,12 +73,15 @@ pub fn DwarfAbbrevField::value_kind(
     | (DwarfLinkageName, DwarfIndirect) => DwarfNameValue
     (DwarfLowPc, DwarfAddr)
     | (DwarfLowPc, DwarfAddrx(_))
+    | (DwarfLowPc, DwarfAddrxOffset)
     | (DwarfLowPc, DwarfIndirect) => DwarfLowPcValue
     (DwarfEntryPc, DwarfAddr)
     | (DwarfEntryPc, DwarfAddrx(_))
+    | (DwarfEntryPc, DwarfAddrxOffset)
     | (DwarfEntryPc, DwarfIndirect) => DwarfEntryPcValue
-    (DwarfHighPc, DwarfAddr) | (DwarfHighPc, DwarfAddrx(_)) =>
-      DwarfHighPcAddressValue
+    (DwarfHighPc, DwarfAddr)
+    | (DwarfHighPc, DwarfAddrx(_))
+    | (DwarfHighPc, DwarfAddrxOffset) => DwarfHighPcAddressValue
     (DwarfHighPc, DwarfConst(_))
     | (DwarfHighPc, DwarfSignedConst(_))
     | (DwarfHighPc, DwarfImplicitConst(_)) => DwarfHighPcOffsetValue

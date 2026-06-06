@@ -572,6 +572,7 @@ pub(all) enum DwarfForm {
   DwarfStrp
   DwarfStrx(DwarfIndexSpec)
   DwarfAddrx(DwarfIndexSpec)
+  DwarfAddrxOffset
   DwarfData16
   DwarfLineStrp
   DwarfImplicitConst(Int64)
@@ -619,6 +620,11 @@ pub fn DwarfForm::string() -> DwarfForm {
 ///|
 pub fn DwarfForm::strp() -> DwarfForm {
   DwarfStrp
+}
+
+///|
+pub fn DwarfForm::addrx_offset() -> DwarfForm {
+  DwarfAddrxOffset
 }
 
 ///|
@@ -1160,6 +1166,7 @@ fn dwarf_form_of_int(code : Int) -> Result[DwarfForm, String] {
     0x1f02 => Ok(DwarfStrx(DwarfIndexLeb128))
     0x1f20 => Ok(DwarfRefAlt)
     0x1f21 => Ok(DwarfStrpAlt)
+    0x2001 => Ok(DwarfAddrxOffset)
     other => Err("unknown DWARF form code: \{other}")
   }
 }
@@ -1411,6 +1418,21 @@ fn DwarfInput::read_index(
     DwarfIndexTwo => self.read_unsigned_bytes(2, endian)
     DwarfIndexThree => self.read_unsigned_bytes(3, endian)
     DwarfIndexFour => self.read_unsigned_bytes(4, endian)
+  }
+}
+
+///|
+fn DwarfInput::read_addrx_offset(
+  self : DwarfInput,
+  endian : @bitvec.Endian,
+) -> Result[((Int, UInt64), DwarfInput), String] {
+  match self.read_code() {
+    Ok((index, after_index)) =>
+      match after_index.read_uint(4, endian) {
+        Ok((offset, next)) => Ok(((index, offset), next))
+        Err(reason) => Err(reason)
+      }
+    Err(reason) => Err(reason)
   }
 }
 

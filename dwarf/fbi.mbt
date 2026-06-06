@@ -287,6 +287,11 @@ fn dwarf_skip_form(
         Ok((_, next)) => Ok(next)
         Err(reason) => Err(reason)
       }
+    DwarfAddrxOffset =>
+      match input.read_addrx_offset(endian) {
+        Ok((_, next)) => Ok(next)
+        Err(reason) => Err(reason)
+      }
     DwarfRnglistx =>
       match input.read_code() {
         Ok((_, next)) => Ok(next)
@@ -466,6 +471,20 @@ fn dwarf_lookup_addrx(
 }
 
 ///|
+fn dwarf_add_address_offset(
+  addr : UInt64,
+  offset : UInt64,
+  addr_size : DwarfWordSize,
+) -> Result[UInt64, String] {
+  let max = dwarf_max_address(addr_size)
+  if addr > max || offset > max || addr > max - offset {
+    Err("DWARF address offset overflow")
+  } else {
+    Ok(addr + offset)
+  }
+}
+
+///|
 fn dwarf_read_address_value(
   input : DwarfInput,
   form : DwarfForm,
@@ -484,6 +503,22 @@ fn dwarf_read_address_value(
               addr_section, index, addr_base, endian, addr_size,
             ) {
             Ok(addr) => Ok((addr, next))
+            Err(reason) => Err(reason)
+          }
+        Err(reason) => Err(reason)
+      }
+    DwarfAddrxOffset =>
+      match input.read_addrx_offset(endian) {
+        Ok(((index, offset), next)) =>
+          match
+            dwarf_lookup_addrx(
+              addr_section, index, addr_base, endian, addr_size,
+            ) {
+            Ok(addr) =>
+              match dwarf_add_address_offset(addr, offset, addr_size) {
+                Ok(value) => Ok((value, next))
+                Err(reason) => Err(reason)
+              }
             Err(reason) => Err(reason)
           }
         Err(reason) => Err(reason)

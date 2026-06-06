@@ -221,6 +221,33 @@ test "project Basic BIL lift covers x86 register inc-dec ops" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 register not-neg ops" {
+  let not64 = basic_bil_decode("x86_64", b"\x48\xf7\xd0", start=0x702cUL)
+  match not64.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["RAX:imm64 := (not RAX:imm64)"])
+    Err(reason) => fail(reason)
+  }
+
+  let not64_ext = basic_bil_decode("x86_64", b"\x49\xf7\xd0", start=0x702fUL)
+  match not64_ext.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["R8:imm64 := (not R8:imm64)"])
+    Err(reason) => fail(reason)
+  }
+
+  let neg32 = basic_bil_decode("x86", b"\xf7\xd9", start=0x7032UL)
+  match neg32.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["ECX:imm32 := (neg ECX:imm32)"])
+    Err(reason) => fail(reason)
+  }
+
+  let neg32_ext = basic_bil_decode("x86_64", b"\x41\xf7\xd8", start=0x7034UL)
+  match neg32_ext.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["R8D:imm32 := (neg R8D:imm32)"])
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86 register add-sub rr ops" {
   let add64 = basic_bil_decode("x86_64", b"\x48\x01\xd8", start=0x7017UL)
   match add64.lift_basic_bil() {

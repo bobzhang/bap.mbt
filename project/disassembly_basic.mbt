@@ -1026,6 +1026,14 @@ fn project_disassembly_basic_x86_reg_update(
       )
     None => ()
   }
+  match
+    project_disassembly_basic_x86_unop_reg(memory, data_width, address_width) {
+    Some((length, name, register)) =>
+      return Some(
+        (length, name, [ProjectInstructionOperand::register(name=register)], []),
+      )
+    None => ()
+  }
   if bytes.length() < opcode_index + 3 {
     None
   } else {
@@ -1121,6 +1129,63 @@ fn project_disassembly_basic_x86_incdec_reg(
       let op = match group {
         0 => "INC"
         1 => "DEC"
+        _ => ""
+      }
+      if op == "" {
+        None
+      } else {
+        let rex_b = if address_width == 64 && (rex & 0x1) != 0 { 8 } else { 0 }
+        Some(
+          (
+            opcode_index + 2,
+            op + "\{data_width}r",
+            project_disassembly_basic_x86_gpr_name(
+              (modrm & 0x7) + rex_b,
+              data_width,
+            ),
+          ),
+        )
+      }
+    }
+  }
+}
+
+///|
+fn project_disassembly_basic_x86_unop_reg(
+  memory : @memory.Memory,
+  data_width : Int,
+  address_width : Int,
+) -> (Int, String, String)? {
+  let bytes = memory.to_bytes()
+  let (opcode_index, rex) = if address_width == 64 &&
+    bytes.length() >= 3 &&
+    bytes[0].to_int() >= 0x40 &&
+    bytes[0].to_int() <= 0x4f {
+    (1, bytes[0].to_int())
+  } else {
+    (0, 0)
+  }
+  if data_width == 64 && (rex & 0x8) == 0 {
+    return None
+  }
+  if data_width == 32 && (rex & 0x8) != 0 {
+    return None
+  }
+  if data_width != 32 && data_width != 64 {
+    return None
+  }
+  if bytes.length() < opcode_index + 2 {
+    None
+  } else {
+    let opcode = bytes[opcode_index].to_int()
+    let modrm = bytes[opcode_index + 1].to_int()
+    if opcode != 0xf7 || ((modrm >> 6) & 0x3) != 0x3 {
+      None
+    } else {
+      let group = (modrm >> 3) & 0x7
+      let op = match group {
+        2 => "NOT"
+        3 => "NEG"
         _ => ""
       }
       if op == "" {

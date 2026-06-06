@@ -855,6 +855,37 @@ fn project_disassembly_basic_x86_interrupt(
 }
 
 ///|
+fn project_disassembly_basic_x86_system(
+  memory : @memory.Memory,
+) -> (Int, String)? {
+  let bytes = memory.to_bytes()
+  if bytes.length() == 0 {
+    None
+  } else {
+    match bytes[0].to_int() {
+      0xf4 => Some((1, "HLT"))
+      0x0f =>
+        if bytes.length() < 2 {
+          None
+        } else {
+          match bytes[1].to_int() {
+            0x31 => Some((2, "RDTSC"))
+            0xa2 => Some((2, "CPUID"))
+            0x01 =>
+              if bytes.length() >= 3 && bytes[2].to_int() == 0xd0 {
+                Some((3, "XGETBV"))
+              } else {
+                None
+              }
+            _ => None
+          }
+        }
+      _ => None
+    }
+  }
+}
+
+///|
 fn project_disassembly_basic_x86_mov32ri(
   memory : @memory.Memory,
 ) -> (String, Int64)? {
@@ -3218,6 +3249,9 @@ fn project_disassembly_basic_decode_x86_llvm(
           memory,
         ).unwrap()
         Some((length, name, "", "", operands, [ProjectMayAffectControlFlow]))
+      } else if project_disassembly_basic_x86_system(memory) is Some(_) {
+        let (length, name) = project_disassembly_basic_x86_system(memory).unwrap()
+        Some((length, name, "", "", [], []))
       } else if project_disassembly_basic_x86_sign_extend_accumulator(
           memory, 32,
         )
@@ -3619,6 +3653,9 @@ fn project_disassembly_basic_decode_x86_64_llvm(
       memory,
     ).unwrap()
     Some((length, name, operands, [ProjectMayAffectControlFlow]))
+  } else if project_disassembly_basic_x86_system(memory) is Some(_) {
+    let (length, name) = project_disassembly_basic_x86_system(memory).unwrap()
+    Some((length, name, [], []))
   } else if project_disassembly_basic_x86_simple(memory, 64, 64) is Some(_) {
     let (length, name, operands, kinds) = project_disassembly_basic_x86_simple(
       memory, 64, 64,

@@ -149,6 +149,23 @@ fn ProjectDisassemblyInstruction::project_basic_bil_cpuexn(
 }
 
 ///|
+fn project_basic_bil_x86_unknown_regs(
+  source : String,
+  registers : Array[String],
+) -> Array[@types.Stmt] {
+  let stmts : Array[@types.Stmt] = []
+  for register in registers {
+    stmts.push(
+      @types.Stmt::move_stmt(
+        project_basic_bil_reg(register, 32),
+        @types.Exp::unknown(source, Imm(32)),
+      ),
+    )
+  }
+  stmts
+}
+
+///|
 fn project_basic_bil_x86_or(
   left : @types.Exp,
   right : @types.Exp,
@@ -1906,6 +1923,13 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "CLD" => project_basic_bil_x86_flag_assign("DF", 0L)
     "STD" => project_basic_bil_x86_flag_assign("DF", 1L)
     "INT3" | "INT" => self.project_basic_bil_cpuexn()
+    "HLT" => Ok([])
+    "RDTSC" => Ok(project_basic_bil_x86_unknown_regs("rdtsc", ["EAX", "EDX"]))
+    "CPUID" =>
+      Ok(
+        project_basic_bil_x86_unknown_regs("cpuid", ["EAX", "EBX", "ECX", "EDX"]),
+      )
+    "XGETBV" => Ok(project_basic_bil_x86_unknown_regs("xgetbv", ["EAX", "EDX"]))
     "JMP_1" => self.project_basic_bil_jump()
     "JMP_4" => self.project_basic_bil_jump()
     "CALLPCREL32" => self.project_basic_bil_call(32)

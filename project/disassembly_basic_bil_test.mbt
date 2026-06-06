@@ -199,6 +199,43 @@ test "project Basic BIL lift covers x86 interrupts" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 system instructions" {
+  let hlt = basic_bil_decode("x86", b"\xf4", start=0x7014UL)
+  match hlt.lift_basic_bil() {
+    Ok(stmts) => assert_true(stmts.is_empty())
+    Err(reason) => fail(reason)
+  }
+
+  let rdtsc = basic_bil_decode("x86_64", b"\x0f\x31", start=0x7015UL)
+  match rdtsc.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "EAX:imm32 := unknown(rdtsc:imm32)", "EDX:imm32 := unknown(rdtsc:imm32)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let cpuid = basic_bil_decode("x86_64", b"\x0f\xa2", start=0x7017UL)
+  match cpuid.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "EAX:imm32 := unknown(cpuid:imm32)", "EBX:imm32 := unknown(cpuid:imm32)",
+        "ECX:imm32 := unknown(cpuid:imm32)", "EDX:imm32 := unknown(cpuid:imm32)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let xgetbv = basic_bil_decode("x86", b"\x0f\x01\xd0", start=0x7019UL)
+  match xgetbv.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "EAX:imm32 := unknown(xgetbv:imm32)", "EDX:imm32 := unknown(xgetbv:imm32)",
+      ])
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86 register add-sub immediates" {
   let sub64 = basic_bil_decode("x86_64", b"\x48\x83\xe8\x01", start=0x7008UL)
   match sub64.lift_basic_bil() {

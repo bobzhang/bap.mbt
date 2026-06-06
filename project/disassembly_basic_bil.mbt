@@ -524,6 +524,59 @@ fn ProjectDisassemblyInstruction::project_basic_bil_mov_rr(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_basic_bil_movx_rr(
+  self : ProjectDisassemblyInstruction,
+  dst_width : Int,
+  src_width : Int,
+  cast_kind : @types.CastKind,
+) -> Result[Array[@types.Stmt], String] {
+  let dst = match self.project_basic_bil_register(0, dst_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let src = match self.project_basic_bil_register(1, src_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  Ok([
+    @types.Stmt::move_stmt(
+      dst,
+      @types.Exp::cast(cast_kind, dst_width, @types.Exp::var_exp(src)),
+    ),
+  ])
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_movx_rm(
+  self : ProjectDisassemblyInstruction,
+  dst_width : Int,
+  src_width : Int,
+  cast_kind : @types.CastKind,
+) -> Result[Array[@types.Stmt], String] {
+  let dst = match self.project_basic_bil_register(0, dst_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let (addr, mem, _) = match self.project_basic_bil_memory_addr(1) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(src_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let source = @types.Exp::load(
+    mem=@types.Exp::var_exp(mem),
+    addr~,
+    LittleEndian,
+    size,
+  )
+  Ok([
+    @types.Stmt::move_stmt(dst, @types.Exp::cast(cast_kind, dst_width, source)),
+  ])
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_basic_bil_xchg_rr(
   self : ProjectDisassemblyInstruction,
   width : Int,
@@ -1130,6 +1183,38 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "MOV64RI32" => self.project_basic_bil_mov_imm(64)
     "MOV32RR" | "MOV32RR_REV" => self.project_basic_bil_mov_rr(32)
     "MOV64RR" | "MOV64RR_REV" => self.project_basic_bil_mov_rr(64)
+    "MOVZX32RR8" =>
+      self.project_basic_bil_movx_rr(32, 8, @types.CastKind::unsigned())
+    "MOVZX64RR8" =>
+      self.project_basic_bil_movx_rr(64, 8, @types.CastKind::unsigned())
+    "MOVZX32RM8" =>
+      self.project_basic_bil_movx_rm(32, 8, @types.CastKind::unsigned())
+    "MOVZX64RM8" =>
+      self.project_basic_bil_movx_rm(64, 8, @types.CastKind::unsigned())
+    "MOVZX32RR16" =>
+      self.project_basic_bil_movx_rr(32, 16, @types.CastKind::unsigned())
+    "MOVZX64RR16" =>
+      self.project_basic_bil_movx_rr(64, 16, @types.CastKind::unsigned())
+    "MOVZX32RM16" =>
+      self.project_basic_bil_movx_rm(32, 16, @types.CastKind::unsigned())
+    "MOVZX64RM16" =>
+      self.project_basic_bil_movx_rm(64, 16, @types.CastKind::unsigned())
+    "MOVSX32RR8" =>
+      self.project_basic_bil_movx_rr(32, 8, @types.CastKind::signed())
+    "MOVSX64RR8" =>
+      self.project_basic_bil_movx_rr(64, 8, @types.CastKind::signed())
+    "MOVSX32RM8" =>
+      self.project_basic_bil_movx_rm(32, 8, @types.CastKind::signed())
+    "MOVSX64RM8" =>
+      self.project_basic_bil_movx_rm(64, 8, @types.CastKind::signed())
+    "MOVSX32RR16" =>
+      self.project_basic_bil_movx_rr(32, 16, @types.CastKind::signed())
+    "MOVSX64RR16" =>
+      self.project_basic_bil_movx_rr(64, 16, @types.CastKind::signed())
+    "MOVSX32RM16" =>
+      self.project_basic_bil_movx_rm(32, 16, @types.CastKind::signed())
+    "MOVSX64RM16" =>
+      self.project_basic_bil_movx_rm(64, 16, @types.CastKind::signed())
     "XCHG32RR" => self.project_basic_bil_xchg_rr(32)
     "XCHG64RR" => self.project_basic_bil_xchg_rr(64)
     "XCHG32RM" => self.project_basic_bil_xchg_rm(32)

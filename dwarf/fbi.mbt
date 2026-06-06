@@ -117,6 +117,59 @@ pub fn DwarfFunction::pc_hi(self : DwarfFunction) -> UInt64? {
 }
 
 ///|
+pub fn DwarfFunction::to_string(self : DwarfFunction) -> String {
+  match self.high_pc() {
+    Some(high) => "\{self.low_pc()}-\{high}"
+    None => "\{self.low_pc()}-?"
+  }
+}
+
+///|
+pub fn DwarfFunction::hash(self : DwarfFunction) -> Int {
+  self.to_string().hash()
+}
+
+///|
+fn dwarf_option_uint64_compare(left : UInt64?, right : UInt64?) -> Int {
+  match (left, right) {
+    (None, None) => 0
+    (None, Some(_)) => -1
+    (Some(_), None) => 1
+    (Some(left), Some(right)) => left.compare(right)
+  }
+}
+
+///|
+pub fn DwarfFunction::compare(
+  self : DwarfFunction,
+  other : DwarfFunction,
+) -> Int {
+  let low_order = self.low_pc().compare(other.low_pc())
+  if low_order != 0 {
+    return low_order
+  }
+  dwarf_option_uint64_compare(self.high_pc(), other.high_pc())
+}
+
+///|
+pub fn DwarfFunction::equal(
+  self : DwarfFunction,
+  other : DwarfFunction,
+) -> Bool {
+  self.compare(other) == 0
+}
+
+///|
+pub fn DwarfFunction::module_name() -> String? {
+  Some("Bap_Dwarf.Std.Fn")
+}
+
+///|
+pub fn DwarfFunction::version() -> String {
+  "1.0.0"
+}
+
+///|
 pub fn DwarfFbi::create(data : DwarfData) -> Result[DwarfFbi, String] {
   match data.functions() {
     Ok(functions) =>

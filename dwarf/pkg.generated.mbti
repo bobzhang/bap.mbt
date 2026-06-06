@@ -466,12 +466,18 @@ pub fn DwarfForm::strp_sup() -> Self
 pub fn DwarfForm::strx(DwarfIndexSpec) -> Self
 
 type DwarfFunction
+pub fn DwarfFunction::compare(Self, Self) -> Int
 pub fn DwarfFunction::create(name~ : String, low_pc~ : UInt64, high_pc? : UInt64) -> Self
+pub fn DwarfFunction::equal(Self, Self) -> Bool
+pub fn DwarfFunction::hash(Self) -> Int
 pub fn DwarfFunction::high_pc(Self) -> UInt64?
 pub fn DwarfFunction::low_pc(Self) -> UInt64
+pub fn DwarfFunction::module_name() -> String?
 pub fn DwarfFunction::name(Self) -> String
 pub fn DwarfFunction::pc_hi(Self) -> UInt64?
 pub fn DwarfFunction::pc_lo(Self) -> UInt64
+pub fn DwarfFunction::to_string(Self) -> String
+pub fn DwarfFunction::version() -> String
 
 pub(all) enum DwarfIndexSpec {
   DwarfIndexLeb128

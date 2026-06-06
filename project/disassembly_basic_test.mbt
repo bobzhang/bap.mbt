@@ -258,6 +258,76 @@ test "translated BAP basic disassembly decodes x86 llvm short jump fixture" {
 }
 
 ///|
+test "translated BAP basic disassembly recognizes x86 SIMD fixture opcodes" {
+  let disasm = match
+    @project.ProjectDisassemblyBasic::create("x86", backend="llvm") {
+    Ok(disasm) => disasm
+    Err(reason) => fail(reason)
+  }
+  let samples : Array[
+    (Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),
+  ] = [
+    (b"\x66\x0f\x74\xc8", 4, ["PCMPEQB", "XMM1", "XMM0"], []),
+    (b"\x66\x0f\x64\xc8", 4, ["PCMPGTB", "XMM1", "XMM0"], []),
+    (b"\x66\x0f\xda\xc8", 4, ["PMINUB", "XMM1", "XMM0"], []),
+    (b"\x66\x0f\x38\x38\xc8", 5, ["PMINSB", "XMM1", "XMM0"], []),
+    (b"\x66\x0f\xde\xc8", 4, ["PMAXUB", "XMM1", "XMM0"], []),
+    (b"\x66\x0f\x38\x3c\xc8", 5, ["PMAXSB", "XMM1", "XMM0"], []),
+    (b"\x66\x0f\x38\x3e\xc8", 5, ["PMAXUW", "XMM1", "XMM0"], []),
+    (b"\x66\x0f\xee\xc8", 4, ["PMAXSW", "XMM1", "XMM0"], []),
+    (b"\x66\x0f\x38\x3a\xc8", 5, ["PMINUW", "XMM1", "XMM0"], []),
+    (b"\x66\x0f\xea\xc8", 4, ["PMINSW", "XMM1", "XMM0"], []),
+    (b"\x66\x0f\x38\x3b\xc8", 5, ["PMINUD", "XMM1", "XMM0"], []),
+    (b"\x66\x0f\x38\x39\xc8", 5, ["PMINSD", "XMM1", "XMM0"], []),
+    (b"\x66\x0f\x38\x3f\xc8", 5, ["PMAXUD", "XMM1", "XMM0"], []),
+    (b"\x66\x0f\x38\x3d\xc8", 5, ["PMAXSD", "XMM1", "XMM0"], []),
+    (b"\x66\x0f\x38\x00\xc1", 5, ["PSHUFB", "XMM0", "XMM1"], []),
+    (b"\x66\x0f\x38\x00\x00", 5, ["PSHUFB", "XMM0", "EAX"], [ProjectMayLoad]),
+  ]
+  for sample in samples {
+    let memory = @memory.Memory::from_bytes(
+      endian=LittleEndian,
+      start=0xf000UL,
+      sample.0,
+    )
+    match disasm.insn_of_mem(memory) {
+      Ok(result) => {
+        assert_true(result.memory().length() == sample.1)
+        assert_true(result.remainder().is_finished())
+        match result.instruction() {
+          Some(instruction) => {
+            assert_true(basic_instruction_strings(instruction) == sample.2)
+            assert_true(instruction.kinds() == sample.3)
+          }
+          None => fail("missing x86 SIMD fixture instruction")
+        }
+      }
+      Err(reason) => fail(reason)
+    }
+  }
+  let sequence = samples.fold(init=b"", (bytes, sample) => bytes + sample.0)
+  let run_memory = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0xf100UL,
+    sequence,
+  )
+  let state = disasm.store_kinds().run(run_memory)
+  let insns = state.insns()
+  assert_true(insns.length() == samples.length())
+  assert_true(state.addr() == 0xf100UL + sequence.length().to_uint64())
+  for i in 0..<samples.length() {
+    match insns[i].1 {
+      Some(instruction) => {
+        assert_true(insns[i].0.length() == samples[i].1)
+        assert_true(basic_instruction_strings(instruction) == samples[i].2)
+        assert_true(instruction.kinds() == samples[i].3)
+      }
+      None => fail("missing x86 SIMD run instruction")
+    }
+  }
+}
+
+///|
 test "translated BAP basic disassembly decodes ARM llvm strlen fixture" {
   let disasm = match
     @project.ProjectDisassemblyBasic::create("armv7", backend="llvm") {

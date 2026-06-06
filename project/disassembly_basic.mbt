@@ -464,6 +464,100 @@ fn project_disassembly_basic_instruction(
 }
 
 ///|
+fn project_disassembly_basic_decode_x86_simd_llvm(
+  memory : @memory.Memory,
+) -> Result[ProjectDisassemblyInstruction?, String] {
+  let xmm0 = ProjectInstructionOperand::register(name="XMM0")
+  let xmm1 = ProjectInstructionOperand::register(name="XMM1")
+  let xmm1_xmm0 = [xmm1, xmm0]
+  let decoded : (
+    Int,
+    String,
+    Array[ProjectInstructionOperand],
+    Array[ProjectInstructionKind],
+  )? = if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\x74\xc8") {
+    Some((4, "PCMPEQB", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\x64\xc8") {
+    Some((4, "PCMPGTB", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xda\xc8") {
+    Some((4, "PMINUB", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(
+      memory, b"\x66\x0f\x38\x38\xc8",
+    ) {
+    Some((5, "PMINSB", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xde\xc8") {
+    Some((4, "PMAXUB", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(
+      memory, b"\x66\x0f\x38\x3c\xc8",
+    ) {
+    Some((5, "PMAXSB", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(
+      memory, b"\x66\x0f\x38\x3e\xc8",
+    ) {
+    Some((5, "PMAXUW", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xee\xc8") {
+    Some((4, "PMAXSW", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(
+      memory, b"\x66\x0f\x38\x3a\xc8",
+    ) {
+    Some((5, "PMINUW", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xea\xc8") {
+    Some((4, "PMINSW", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(
+      memory, b"\x66\x0f\x38\x3b\xc8",
+    ) {
+    Some((5, "PMINUD", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(
+      memory, b"\x66\x0f\x38\x39\xc8",
+    ) {
+    Some((5, "PMINSD", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(
+      memory, b"\x66\x0f\x38\x3f\xc8",
+    ) {
+    Some((5, "PMAXUD", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(
+      memory, b"\x66\x0f\x38\x3d\xc8",
+    ) {
+    Some((5, "PMAXSD", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(
+      memory, b"\x66\x0f\x38\x00\xc1",
+    ) {
+    Some((5, "PSHUFB", [xmm0, xmm1], []))
+  } else if project_disassembly_basic_has_prefix(
+      memory, b"\x66\x0f\x38\x00\x00",
+    ) {
+    Some(
+      (
+        5,
+        "PSHUFB",
+        [xmm0, ProjectInstructionOperand::register(name="EAX")],
+        [ProjectMayLoad],
+      ),
+    )
+  } else {
+    None
+  }
+  match decoded {
+    Some((length, name, operands, kinds)) =>
+      match memory.view(words=length) {
+        Ok(chunk) =>
+          Ok(
+            Some(
+              project_disassembly_basic_instruction(
+                chunk,
+                name,
+                operands~,
+                kinds~,
+              ),
+            ),
+          )
+        Err(reason) => Err(reason)
+      }
+    None => Ok(None)
+  }
+}
+
+///|
 fn project_disassembly_basic_decode_arm_llvm(
   memory : @memory.Memory,
 ) -> Result[ProjectDisassemblyInstruction?, String] {
@@ -534,30 +628,38 @@ fn project_disassembly_basic_decode_arm_llvm(
 fn project_disassembly_basic_decode_x86_llvm(
   memory : @memory.Memory,
 ) -> Result[ProjectDisassemblyInstruction?, String] {
-  match project_disassembly_basic_x86_jmp_rel8(memory) {
-    Some((displacement, target)) =>
-      match memory.view(words=2) {
-        Ok(chunk) =>
-          Ok(
-            Some(
-              project_disassembly_basic_instruction(
-                chunk,
-                "JMP_1",
-                assembly="jmp " +
-                  ProjectInstructionOperand::immediate(displacement).to_string(),
-                bil="jmp 0x" + target.to_string(radix=16),
-                operands=[
-                  ProjectInstructionOperand::immediate(
-                    target.reinterpret_as_int64(),
+  match project_disassembly_basic_decode_x86_simd_llvm(memory) {
+    Ok(Some(instruction)) => Ok(Some(instruction))
+    Ok(None) =>
+      match project_disassembly_basic_x86_jmp_rel8(memory) {
+        Some((displacement, target)) =>
+          match memory.view(words=2) {
+            Ok(chunk) =>
+              Ok(
+                Some(
+                  project_disassembly_basic_instruction(
+                    chunk,
+                    "JMP_1",
+                    assembly="jmp " +
+                      ProjectInstructionOperand::immediate(displacement).to_string(),
+                    bil="jmp 0x" + target.to_string(radix=16),
+                    operands=[
+                      ProjectInstructionOperand::immediate(
+                        target.reinterpret_as_int64(),
+                      ),
+                    ],
+                    kinds=[
+                      ProjectUnconditionalBranch,
+                      ProjectMayAffectControlFlow,
+                    ],
                   ),
-                ],
-                kinds=[ProjectUnconditionalBranch, ProjectMayAffectControlFlow],
-              ),
-            ),
-          )
-        Err(reason) => Err(reason)
+                ),
+              )
+            Err(reason) => Err(reason)
+          }
+        None => Ok(None)
       }
-    None => Ok(None)
+    Err(reason) => Err(reason)
   }
 }
 

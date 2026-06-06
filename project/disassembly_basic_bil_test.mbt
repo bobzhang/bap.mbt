@@ -178,6 +178,27 @@ test "project Basic BIL lift covers x86 flag controls" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 interrupts" {
+  let int3 = basic_bil_decode("x86", b"\xcc", start=0x7010UL)
+  match int3.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["cpuexn 3"])
+    Err(reason) => fail(reason)
+  }
+
+  let int80 = basic_bil_decode("x86", b"\xcd\x80", start=0x7011UL)
+  match int80.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["cpuexn 128"])
+    Err(reason) => fail(reason)
+  }
+
+  let int64 = basic_bil_decode("x86_64", b"\xcd\x03", start=0x7013UL)
+  match int64.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["cpuexn 3"])
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86 register add-sub immediates" {
   let sub64 = basic_bil_decode("x86_64", b"\x48\x83\xe8\x01", start=0x7008UL)
   match sub64.lift_basic_bil() {

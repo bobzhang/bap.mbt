@@ -130,6 +130,25 @@ fn project_basic_bil_x86_flag_assign(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_basic_bil_cpuexn(
+  self : ProjectDisassemblyInstruction,
+) -> Result[Array[@types.Stmt], String] {
+  let code = if self.name().to_upper() == "INT3" {
+    3
+  } else {
+    match self.project_basic_bil_immediate(0) {
+      Ok(value) =>
+        match @types.int_of_int64(value) {
+          Ok(code) => code
+          Err(reason) => return Err(reason)
+        }
+      Err(reason) => return Err(reason)
+    }
+  }
+  Ok([@types.Stmt::cpuexn(code)])
+}
+
+///|
 fn project_basic_bil_x86_or(
   left : @types.Exp,
   right : @types.Exp,
@@ -1886,6 +1905,7 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
       ])
     "CLD" => project_basic_bil_x86_flag_assign("DF", 0L)
     "STD" => project_basic_bil_x86_flag_assign("DF", 1L)
+    "INT3" | "INT" => self.project_basic_bil_cpuexn()
     "JMP_1" => self.project_basic_bil_jump()
     "JMP_4" => self.project_basic_bil_jump()
     "CALLPCREL32" => self.project_basic_bil_call(32)

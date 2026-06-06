@@ -828,6 +828,33 @@ fn project_disassembly_basic_x86_flag_control(
 }
 
 ///|
+fn project_disassembly_basic_x86_interrupt(
+  memory : @memory.Memory,
+) -> (Int, String, Array[ProjectInstructionOperand])? {
+  let bytes = memory.to_bytes()
+  if bytes.length() == 0 {
+    None
+  } else {
+    match bytes[0].to_int() {
+      0xcc => Some((1, "INT3", []))
+      0xcd =>
+        if bytes.length() < 2 {
+          None
+        } else {
+          Some(
+            (
+              2,
+              "INT",
+              [ProjectInstructionOperand::immediate(bytes[1].to_int64())],
+            ),
+          )
+        }
+      _ => None
+    }
+  }
+}
+
+///|
 fn project_disassembly_basic_x86_mov32ri(
   memory : @memory.Memory,
 ) -> (String, Int64)? {
@@ -3186,6 +3213,11 @@ fn project_disassembly_basic_decode_x86_llvm(
       } else if project_disassembly_basic_x86_flag_control(memory) is Some(_) {
         let (length, name) = project_disassembly_basic_x86_flag_control(memory).unwrap()
         Some((length, name, "", "", [], []))
+      } else if project_disassembly_basic_x86_interrupt(memory) is Some(_) {
+        let (length, name, operands) = project_disassembly_basic_x86_interrupt(
+          memory,
+        ).unwrap()
+        Some((length, name, "", "", operands, [ProjectMayAffectControlFlow]))
       } else if project_disassembly_basic_x86_sign_extend_accumulator(
           memory, 32,
         )
@@ -3582,6 +3614,11 @@ fn project_disassembly_basic_decode_x86_64_llvm(
   } else if project_disassembly_basic_x86_flag_control(memory) is Some(_) {
     let (length, name) = project_disassembly_basic_x86_flag_control(memory).unwrap()
     Some((length, name, [], []))
+  } else if project_disassembly_basic_x86_interrupt(memory) is Some(_) {
+    let (length, name, operands) = project_disassembly_basic_x86_interrupt(
+      memory,
+    ).unwrap()
+    Some((length, name, operands, [ProjectMayAffectControlFlow]))
   } else if project_disassembly_basic_x86_simple(memory, 64, 64) is Some(_) {
     let (length, name, operands, kinds) = project_disassembly_basic_x86_simple(
       memory, 64, 64,

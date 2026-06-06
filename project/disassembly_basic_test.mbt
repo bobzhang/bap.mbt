@@ -348,6 +348,49 @@ test "translated BAP basic disassembly decodes x86 flag controls" {
 }
 
 ///|
+test "translated BAP basic disassembly decodes x86 interrupts" {
+  let samples : Array[(String, Bytes, Int, Array[String], Int?)] = [
+    ("x86", b"\xcc", 1, ["INT3"], None),
+    ("x86", b"\xcd\x80", 2, ["INT", "0x80"], Some(0x80)),
+    ("x86_64", b"\xcc", 1, ["INT3"], None),
+    ("x86_64", b"\xcd\x03", 2, ["INT", "0x3"], Some(3)),
+  ]
+  for sample in samples {
+    let disasm = match
+      @project.ProjectDisassemblyBasic::create(sample.0, backend="llvm") {
+      Ok(disasm) => disasm
+      Err(reason) => fail(reason)
+    }
+    let memory = @memory.Memory::from_bytes(
+      endian=LittleEndian,
+      start=0xe150UL,
+      sample.1,
+    )
+    match disasm.insn_of_mem(memory) {
+      Ok(result) => {
+        assert_true(result.memory().length() == sample.2)
+        assert_true(result.remainder().is_finished())
+        match result.instruction() {
+          Some(instruction) => {
+            assert_true(basic_instruction_strings(instruction) == sample.3)
+            assert_true(
+              instruction.kinds().contains(ProjectMayAffectControlFlow),
+            )
+            match sample.4 {
+              Some(value) =>
+                assert_true(instruction.operands()[0].to_int() == Some(value))
+              None => assert_true(instruction.operands().is_empty())
+            }
+          }
+          None => fail("missing x86 interrupt instruction")
+        }
+      }
+      Err(reason) => fail(reason)
+    }
+  }
+}
+
+///|
 test "translated BAP basic disassembly decodes x86 register add-sub immediates" {
   let samples : Array[(String, Bytes, Int, Array[String])] = [
     ("x86_64", b"\x48\x83\xe8\x01", 4, ["SUB64ri8", "RAX", "RAX", "0x1"]),

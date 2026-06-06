@@ -365,6 +365,43 @@ fn project_basic_bil_x86_setcc_condition(mnemonic : String) -> @types.Exp {
 }
 
 ///|
+fn project_basic_bil_x86_cmov_condition(mnemonic : String) -> @types.Exp {
+  if mnemonic.has_prefix("CMOVNO") {
+    project_basic_bil_x86_jcc_condition("JNO")
+  } else if mnemonic.has_prefix("CMOVAE") {
+    project_basic_bil_x86_jcc_condition("JAE")
+  } else if mnemonic.has_prefix("CMOVNE") {
+    project_basic_bil_x86_jcc_condition("JNE")
+  } else if mnemonic.has_prefix("CMOVBE") {
+    project_basic_bil_x86_jcc_condition("JBE")
+  } else if mnemonic.has_prefix("CMOVNS") {
+    project_basic_bil_x86_jcc_condition("JNS")
+  } else if mnemonic.has_prefix("CMOVNP") {
+    project_basic_bil_x86_jcc_condition("JNP")
+  } else if mnemonic.has_prefix("CMOVGE") {
+    project_basic_bil_x86_jcc_condition("JGE")
+  } else if mnemonic.has_prefix("CMOVLE") {
+    project_basic_bil_x86_jcc_condition("JLE")
+  } else if mnemonic.has_prefix("CMOVO") {
+    project_basic_bil_x86_jcc_condition("JO")
+  } else if mnemonic.has_prefix("CMOVB") {
+    project_basic_bil_x86_jcc_condition("JB")
+  } else if mnemonic.has_prefix("CMOVE") {
+    project_basic_bil_x86_jcc_condition("JE")
+  } else if mnemonic.has_prefix("CMOVA") {
+    project_basic_bil_x86_jcc_condition("JA")
+  } else if mnemonic.has_prefix("CMOVS") {
+    project_basic_bil_x86_jcc_condition("JS")
+  } else if mnemonic.has_prefix("CMOVP") {
+    project_basic_bil_x86_jcc_condition("JP")
+  } else if mnemonic.has_prefix("CMOVL") {
+    project_basic_bil_x86_jcc_condition("JL")
+  } else {
+    project_basic_bil_x86_jcc_condition("JG")
+  }
+}
+
+///|
 fn project_basic_bil_concat_bits(bits : Array[@types.Exp]) -> @types.Exp {
   let mut result = bits[0]
   for index in 1..<bits.length() {
@@ -1072,6 +1109,47 @@ fn ProjectDisassemblyInstruction::project_basic_bil_setcc(
     }
     count => Err("unsupported \{self.name()} operand count \{count}")
   }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_cmov(
+  self : ProjectDisassemblyInstruction,
+  data_width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let dst = match self.project_basic_bil_register(0, data_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let src = match self.operands().length() {
+    2 =>
+      match self.project_basic_bil_register(1, data_width) {
+        Ok(value) => @types.Exp::var_exp(value)
+        Err(reason) => return Err(reason)
+      }
+    6 => {
+      let (addr, mem, _) = match self.project_basic_bil_memory_addr(1) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let size = match @types.Size::of_int(data_width) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      @types.Exp::load(mem=@types.Exp::var_exp(mem), addr~, LittleEndian, size)
+    }
+    count => return Err("unsupported \{self.name()} operand count \{count}")
+  }
+  let dst_exp = @types.Exp::var_exp(dst)
+  Ok([
+    @types.Stmt::move_stmt(
+      dst,
+      @types.Exp::ite(
+        if_=project_basic_bil_x86_cmov_condition(self.name().to_upper()),
+        then_=src,
+        else_=dst_exp,
+      ),
+    ),
+  ])
 }
 
 ///|
@@ -1854,7 +1932,12 @@ fn ProjectDisassemblyInstruction::project_basic_bil_arm_store(
 pub fn ProjectDisassemblyInstruction::lift_basic_bil(
   self : ProjectDisassemblyInstruction,
 ) -> Result[Array[@types.Stmt], String] {
-  match self.name().to_upper() {
+  let name = self.name().to_upper()
+  if name.has_prefix("CMOV") {
+    let width = if name.contains("64") { 64 } else { 32 }
+    return self.project_basic_bil_cmov(width)
+  }
+  match name {
     "SUB8RI8" => self.project_basic_bil_binop_ri(8, @types.BinOp::minus())
     "SUB32RI8" | "SUB32RI32" =>
       self.project_basic_bil_binop_ri(32, @types.BinOp::minus())

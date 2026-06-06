@@ -1177,6 +1177,49 @@ test "project Basic BIL lift covers x86 setcc" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 cmovcc" {
+  let cmove = basic_bil_decode("x86", b"\x0f\x44\xc1", start=0x7058UL)
+  match cmove.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "EAX:imm32 := ite(ZF:imm1, ECX:imm32, EAX:imm32)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let cmovne_mem = basic_bil_decode("x86", b"\x0f\x45\x45\xfc", start=0x7059UL)
+  match cmovne_mem.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "EAX:imm32 := ite((not ZF:imm1), load(mem:mem32x8, (EBP:imm32 - 4:32u)):imm32, EAX:imm32)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let cmova64 = basic_bil_decode("x86_64", b"\x48\x0f\x47\xc1", start=0x705aUL)
+  match cmova64.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "RAX:imm64 := ite((not (CF:imm1 | ZF:imm1)), RCX:imm64, RAX:imm64)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let cmovg_mem = basic_bil_decode(
+    "x86_64",
+    b"\x4c\x0f\x4f\x45\xf8",
+    start=0x705bUL,
+  )
+  match cmovg_mem.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "R8:imm64 := ite((not (ZF:imm1 | (SF:imm1 ^ OF:imm1))), load(mem:mem64x8, (RBP:imm64 - 8:64u)):imm64, R8:imm64)",
+      ])
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86 bswap" {
   let bswap32 = basic_bil_decode("x86", b"\x0f\xc8", start=0x7059UL)
   match bswap32.lift_basic_bil() {

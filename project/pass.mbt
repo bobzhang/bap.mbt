@@ -339,6 +339,17 @@ pub fn register_pass(pass : ProjectPass) -> Result[Unit, String] {
 }
 
 ///|
+pub fn register_pass_transform(
+  name~ : String,
+  autorun? : Bool,
+  run_once? : Bool,
+  deps? : Array[String],
+  run~ : (Project) -> Result[Project, String],
+) -> Result[Unit, String] {
+  register_pass(ProjectPass::create(name~, autorun?, run_once?, deps?, run~))
+}
+
+///|
 pub fn register_pass_prime(
   name~ : String,
   autorun? : Bool,

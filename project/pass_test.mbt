@@ -122,6 +122,57 @@ test "register_pass_prime registers side-effect-only passes" {
 }
 
 ///|
+test "register_pass_transform registers project-updating passes" {
+  match
+    @project.register_pass_transform(
+      name="unit-pass-transform-dep",
+      run_once=true,
+      run=project => Ok(project.set("transform-dep", "yes")),
+    ) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  match
+    @project.register_pass_transform(
+      name="unit-pass-transform-main",
+      autorun=true,
+      deps=["unit-pass-transform-dep"],
+      run=project => {
+        if project.get("transform-dep") == Some("yes") {
+          Ok(project.set("transform-main", "yes"))
+        } else {
+          Err("dependency did not run")
+        }
+      },
+    ) {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let pass = match @project.find_pass("unit-pass-transform-main") {
+    Some(pass) => pass
+    None => fail("expected transform pass registration")
+  }
+  assert_true(pass.autorun())
+  assert_true(pass.run_once())
+  assert_true(pass.deps() == ["unit-pass-transform-dep"])
+  let project = @project.Project::empty(@core_theory.Target::unknown())
+  let next = match project.run_autorun_passes() {
+    Ok(next) => next
+    Err(reason) => fail(reason)
+  }
+  assert_true(next.get("transform-dep") == Some("yes"))
+  assert_true(next.get("transform-main") == Some("yes"))
+  assert_true(next.pass_run_count("unit-pass-transform-dep") == 1)
+  assert_true(next.pass_run_count("unit-pass-transform-main") == 1)
+  assert_true(
+    @project.register_pass_transform(name="unit-pass-transform-main", run=project => {
+      Ok(project)
+    })
+    is Err(_),
+  )
+}
+
+///|
 test "autorun passes update projects" {
   let pass = @project.ProjectPass::create(name="unit-autorun", autorun=true, run=project => {
     Ok(project.set("autorun", "yes"))

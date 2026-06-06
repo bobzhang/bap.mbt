@@ -551,6 +551,95 @@ test "project restore_state reports unsupported compatibility hook" {
 }
 
 ///|
+fn project_test_addr(addr : UInt64) -> String {
+  "0x" + addr.to_string(radix=16)
+}
+
+///|
+fn project_test_disasm_substitution_case(
+  target : @core_theory.Target,
+  start : UInt64,
+  code : Bytes,
+  name : String,
+  expect_asm : String,
+  expect_bil : String,
+) -> Unit raise {
+  let memory = @memory.Memory::from_bytes(endian=LittleEndian, start~, code)
+  let input = @project.ProjectInput::custom(
+    target~,
+    filename="/dev/null",
+    code=@memory.MemMap::singleton(memory, "bap.test"),
+    symbols=[
+      @image.Symbol::create(
+        name~,
+        addr=start,
+        size=code.length(),
+        is_function=true,
+      ),
+    ],
+  )
+  let rooter_source : @project.ProjectDisassemblySource[@project.ProjectRooter] = @project.ProjectDisassemblySource::single(
+    @project.ProjectRooter::create([start]),
+  )
+  let symbolizer_source : @project.ProjectDisassemblySource[
+    @project.ProjectSymbolizer,
+  ] = @project.ProjectDisassemblySource::single(
+    @project.ProjectSymbolizer::create(addr => {
+      if addr == start {
+        Some(name)
+      } else {
+        None
+      }
+    }),
+  )
+  match
+    @project.Project::create_from_input(
+      input,
+      disassembler="basic",
+      rooter=rooter_source,
+      symbolizer=symbolizer_source,
+    ) {
+    Ok(project) => {
+      let max_addr = start + code.length().to_uint64() - 1UL
+      let tagged = project.substitute(
+        memory,
+        "summary",
+        "$asm|$bil|$symbol|$symbol_name|$symbol_min_addr|$symbol_max_addr|" +
+        "$symbol_addr|$block_addr|$block_max_addr|$addr|$min_addr|$max_addr|" +
+        "$filename",
+      )
+      let expect = "summary=\{expect_asm}|\{expect_bil}|\{name}|\{name}|" +
+        "\{project_test_addr(start)}|\{project_test_addr(max_addr)}|" +
+        "\{project_test_addr(start)}|\{project_test_addr(start)}|" +
+        "\{project_test_addr(max_addr)}|\{project_test_addr(start)}|" +
+        "\{project_test_addr(start)}|\{project_test_addr(max_addr)}|/dev/null"
+      assert_true(tagged.memory().lookup(start).any(entry => entry.1 == expect))
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+test "translated BAP project substitution reaches Basic decoder text" {
+  project_test_disasm_substitution_case(
+    @core_theory.Target::arm(),
+    0x10UL,
+    b"\x1e\xff\x2f\xe1",
+    "test_arm",
+    "bx lr",
+    "jmp LR",
+  )
+  project_test_disasm_substitution_case(
+    @core_theory.Target::x86(),
+    0xaUL,
+    b"\xeb\xfe",
+    "test_x86",
+    "jmp -0x2",
+    "jmp 0xa",
+  )
+}
+
+///|
 test "project substitutes memory annotation placeholders" {
   let target = @core_theory.Target::unknown()
   let section = @image.Section::create(name=".text", addr=0x1000UL, size=2)

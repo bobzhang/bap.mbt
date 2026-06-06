@@ -224,6 +224,40 @@ test "translated BAP basic disassembly decodes x86_64 llvm samples" {
 }
 
 ///|
+test "translated BAP basic disassembly decodes x86 llvm short jump fixture" {
+  let disasm = match
+    @project.ProjectDisassemblyBasic::create("x86", backend="llvm") {
+    Ok(disasm) => disasm
+    Err(reason) => fail(reason)
+  }
+  let memory = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0xaUL,
+    b"\xeb\xfe",
+  )
+  match disasm.insn_of_mem(memory) {
+    Ok(result) => {
+      assert_true(result.memory().length() == 2)
+      assert_true(result.remainder().is_finished())
+      match result.instruction() {
+        Some(instruction) => {
+          assert_true(
+            basic_instruction_strings(instruction) == ["JMP_1", "0xa"],
+          )
+          assert_true(instruction.assembly() == "jmp -0x2")
+          assert_true(instruction.bil() == "jmp 0xa")
+          assert_true(instruction.has_kind(ProjectUnconditionalBranch))
+          assert_true(instruction.has_kind(ProjectMayAffectControlFlow))
+          assert_true(instruction.operands()[0].to_int64() == Some(0xaL))
+        }
+        None => fail("missing x86 short jump instruction")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "translated BAP basic disassembly decodes ARM llvm strlen fixture" {
   let disasm = match
     @project.ProjectDisassemblyBasic::create("armv7", backend="llvm") {

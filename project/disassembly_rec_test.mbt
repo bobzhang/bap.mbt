@@ -162,6 +162,39 @@ test "project recursive disassembly runs driver and brancher" {
 }
 
 ///|
+test "project recursive disassembly keeps BAP one-instruction micro CFGs" {
+  match @project.register_builtin_disassembly_drivers() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let samples = [b"\xc3", b"\xe8\x47\xee\xff\xff"]
+  for bytes in samples {
+    let memory = @memory.Memory::from_bytes(
+      endian=LittleEndian,
+      start=0UL,
+      bytes,
+    )
+    let project = @project.Project::empty(@core_theory.Target::x86_64()).with_memory(
+      @memory.MemMap::empty().add(memory, "text"),
+    )
+    match project.disassemble_rec(driver="basic") {
+      Ok(result) => {
+        assert_true(!result.has_errors())
+        assert_true(result.disassembly().instruction_count() == 1)
+        assert_true(result.disassembly().block_count() == 1)
+        let cfg = result.cfg()
+        assert_true(cfg.node_count() == 1)
+        assert_true(cfg.edge_count() == 0)
+        let block = cfg.nodes()[0].memory()
+        assert_true(block.min_addr() == 0UL)
+        assert_true(block.max_addr() == bytes.length().to_uint64() - 1UL)
+      }
+      Err(reason) => fail(reason)
+    }
+  }
+}
+
+///|
 test "project recursive disassembly splits ARM strlen CFG fixture" {
   match @project.register_builtin_disassembly_drivers() {
     Ok(_) => ()

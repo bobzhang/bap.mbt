@@ -314,6 +314,20 @@ fn ProjectDisassemblyBasic::project_disassembly_basic_is_arm_llvm(
 }
 
 ///|
+fn ProjectDisassemblyBasic::project_disassembly_basic_is_x86_llvm(
+  self : ProjectDisassemblyBasic,
+) -> Bool {
+  self.backend_value == "llvm" &&
+  (
+    self.triple_value.contains("x86") ||
+    self.triple_value.contains("i386") ||
+    self.triple_value.contains("i486") ||
+    self.triple_value.contains("i586") ||
+    self.triple_value.contains("i686")
+  )
+}
+
+///|
 fn project_disassembly_basic_has_prefix(
   memory : @memory.Memory,
   prefix : Bytes,
@@ -365,6 +379,27 @@ fn project_disassembly_basic_x86_64_call_rel32(
 }
 
 ///|
+fn project_disassembly_basic_x86_jmp_rel8(
+  memory : @memory.Memory,
+) -> (Int64, UInt64)? {
+  let bytes = memory.to_bytes()
+  if bytes.length() < 2 || bytes[0].to_int() != 0xeb {
+    None
+  } else {
+    let raw = bytes[1].to_int()
+    let displacement = if raw >= 0x80 { raw - 0x100 } else { raw }
+    match
+      project_disassembly_basic_add_signed_offset(
+        memory.min_addr() + 2UL,
+        displacement.to_int64(),
+      ) {
+      Some(target) => Some((displacement.to_int64(), target))
+      None => None
+    }
+  }
+}
+
+///|
 fn project_disassembly_basic_arm_branch_target(
   memory : @memory.Memory,
 ) -> (UInt64, Bool)? {
@@ -404,14 +439,22 @@ fn project_disassembly_basic_assembly(
 fn project_disassembly_basic_instruction(
   memory : @memory.Memory,
   name : String,
+  assembly? : String,
+  bil? : String,
   operands? : Array[ProjectInstructionOperand] = [],
   kinds? : Array[ProjectInstructionKind] = [],
 ) -> ProjectDisassemblyInstruction {
   let bytes = memory.to_bytes()
   ProjectDisassemblyInstruction::create(
     memory,
-    assembly=project_disassembly_basic_assembly(name, operands),
-    bil=project_raw_byte_bil(memory),
+    assembly=match assembly {
+      Some(text) => text
+      None => project_disassembly_basic_assembly(name, operands)
+    },
+    bil=match bil {
+      Some(text) => text
+      None => project_raw_byte_bil(memory)
+    },
     code=bytes[0].to_int(),
     name~,
     encoding="llvm",
@@ -434,6 +477,8 @@ fn project_disassembly_basic_decode_arm_llvm(
             project_disassembly_basic_instruction(
               chunk,
               "BX",
+              assembly="bx lr",
+              bil="jmp LR",
               operands=[ProjectInstructionOperand::register(name="LR")],
               kinds=[
                 ProjectReturn,
@@ -482,6 +527,37 @@ fn project_disassembly_basic_decode_arm_llvm(
           Err(reason) => Err(reason)
         }
     }
+  }
+}
+
+///|
+fn project_disassembly_basic_decode_x86_llvm(
+  memory : @memory.Memory,
+) -> Result[ProjectDisassemblyInstruction?, String] {
+  match project_disassembly_basic_x86_jmp_rel8(memory) {
+    Some((displacement, target)) =>
+      match memory.view(words=2) {
+        Ok(chunk) =>
+          Ok(
+            Some(
+              project_disassembly_basic_instruction(
+                chunk,
+                "JMP_1",
+                assembly="jmp " +
+                  ProjectInstructionOperand::immediate(displacement).to_string(),
+                bil="jmp 0x" + target.to_string(radix=16),
+                operands=[
+                  ProjectInstructionOperand::immediate(
+                    target.reinterpret_as_int64(),
+                  ),
+                ],
+                kinds=[ProjectUnconditionalBranch, ProjectMayAffectControlFlow],
+              ),
+            ),
+          )
+        Err(reason) => Err(reason)
+      }
+    None => Ok(None)
   }
 }
 
@@ -590,6 +666,21 @@ fn ProjectDisassemblyBasic::project_disassembly_basic_decode_instruction(
 ) -> Result[ProjectDisassemblyInstruction, String] {
   if self.project_disassembly_basic_is_x86_64_llvm() {
     match project_disassembly_basic_decode_x86_64_llvm(memory) {
+      Ok(Some(instruction)) => Ok(instruction)
+      Ok(None) =>
+        match project_disassembly_basic_decode_x86_llvm(memory) {
+          Ok(Some(instruction)) => Ok(instruction)
+          Ok(None) =>
+            match memory.view(words=1) {
+              Ok(chunk) => Ok(project_raw_byte_instruction(chunk))
+              Err(reason) => Err(reason)
+            }
+          Err(reason) => Err(reason)
+        }
+      Err(reason) => Err(reason)
+    }
+  } else if self.project_disassembly_basic_is_x86_llvm() {
+    match project_disassembly_basic_decode_x86_llvm(memory) {
       Ok(Some(instruction)) => Ok(instruction)
       Ok(None) =>
         match memory.view(words=1) {

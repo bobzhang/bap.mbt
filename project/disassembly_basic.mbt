@@ -828,6 +828,22 @@ fn project_disassembly_basic_x86_flag_control(
 }
 
 ///|
+fn project_disassembly_basic_x86_flag_transfer(
+  memory : @memory.Memory,
+) -> (Int, String)? {
+  let bytes = memory.to_bytes()
+  if bytes.length() == 0 {
+    None
+  } else {
+    match bytes[0].to_int() {
+      0x9e => Some((1, "SAHF"))
+      0x9f => Some((1, "LAHF"))
+      _ => None
+    }
+  }
+}
+
+///|
 fn project_disassembly_basic_x86_interrupt(
   memory : @memory.Memory,
 ) -> (Int, String, Array[ProjectInstructionOperand])? {
@@ -3373,6 +3389,9 @@ fn project_disassembly_basic_decode_x86_llvm(
       } else if project_disassembly_basic_x86_flag_control(memory) is Some(_) {
         let (length, name) = project_disassembly_basic_x86_flag_control(memory).unwrap()
         Some((length, name, "", "", [], []))
+      } else if project_disassembly_basic_x86_flag_transfer(memory) is Some(_) {
+        let (length, name) = project_disassembly_basic_x86_flag_transfer(memory).unwrap()
+        Some((length, name, "", "", [], []))
       } else if project_disassembly_basic_x86_interrupt(memory) is Some(_) {
         let (length, name, operands) = project_disassembly_basic_x86_interrupt(
           memory,
@@ -3795,6 +3814,9 @@ fn project_disassembly_basic_decode_x86_64_llvm(
     Some((length, "NOOP", [], []))
   } else if project_disassembly_basic_x86_flag_control(memory) is Some(_) {
     let (length, name) = project_disassembly_basic_x86_flag_control(memory).unwrap()
+    Some((length, name, [], []))
+  } else if project_disassembly_basic_x86_flag_transfer(memory) is Some(_) {
+    let (length, name) = project_disassembly_basic_x86_flag_transfer(memory).unwrap()
     Some((length, name, [], []))
   } else if project_disassembly_basic_x86_interrupt(memory) is Some(_) {
     let (length, name, operands) = project_disassembly_basic_x86_interrupt(

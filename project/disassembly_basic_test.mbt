@@ -316,8 +316,12 @@ test "translated BAP basic disassembly decodes x86 flag controls" {
     ("x86", b"\xf5", 1, ["CMC"]),
     ("x86", b"\xfc", 1, ["CLD"]),
     ("x86", b"\xfd", 1, ["STD"]),
+    ("x86", b"\x9e", 1, ["SAHF"]),
+    ("x86", b"\x9f", 1, ["LAHF"]),
     ("x86_64", b"\xf8", 1, ["CLC"]),
     ("x86_64", b"\xfd", 1, ["STD"]),
+    ("x86_64", b"\x9e", 1, ["SAHF"]),
+    ("x86_64", b"\x9f", 1, ["LAHF"]),
   ]
   for sample in samples {
     let disasm = match

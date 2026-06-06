@@ -365,6 +365,43 @@ fn project_basic_bil_x86_setcc_condition(mnemonic : String) -> @types.Exp {
 }
 
 ///|
+fn project_basic_bil_concat_bits(bits : Array[@types.Exp]) -> @types.Exp {
+  let mut result = bits[0]
+  for index in 1..<bits.length() {
+    result = @types.Exp::concat(result, bits[index])
+  }
+  result
+}
+
+///|
+fn project_basic_bil_x86_lahf() -> Array[@types.Stmt] {
+  let ah = project_basic_bil_reg("AH", 8)
+  let value = project_basic_bil_concat_bits([
+    project_basic_bil_x86_flag("SF"),
+    project_basic_bil_x86_flag("ZF"),
+    @types.Exp::unknown("LAHF bit 5", Imm(1)),
+    project_basic_bil_x86_flag("AF"),
+    @types.Exp::unknown("LAHF bit 3", Imm(1)),
+    project_basic_bil_x86_flag("PF"),
+    @types.Exp::unknown("LAHF bit 1", Imm(1)),
+    project_basic_bil_x86_flag("CF"),
+  ])
+  [@types.Stmt::move_stmt(ah, value)]
+}
+
+///|
+fn project_basic_bil_x86_sahf() -> Array[@types.Stmt] {
+  let ah = @types.Exp::var_exp(project_basic_bil_reg("AH", 8))
+  [
+    project_basic_bil_x86_flag_move("SF", @types.Exp::extract(ah, hi=7, lo=7)),
+    project_basic_bil_x86_flag_move("ZF", @types.Exp::extract(ah, hi=6, lo=6)),
+    project_basic_bil_x86_flag_move("AF", @types.Exp::extract(ah, hi=4, lo=4)),
+    project_basic_bil_x86_flag_move("PF", @types.Exp::extract(ah, hi=2, lo=2)),
+    project_basic_bil_x86_flag_move("CF", @types.Exp::extract(ah, hi=0, lo=0)),
+  ]
+}
+
+///|
 fn project_basic_bil_arm_offset_addr(
   base : @types.Var,
   offset : Int64,
@@ -2037,6 +2074,8 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
       ])
     "CLD" => project_basic_bil_x86_flag_assign("DF", 0L)
     "STD" => project_basic_bil_x86_flag_assign("DF", 1L)
+    "LAHF" => Ok(project_basic_bil_x86_lahf())
+    "SAHF" => Ok(project_basic_bil_x86_sahf())
     "INT3" | "INT" => self.project_basic_bil_cpuexn()
     "HLT" => Ok([])
     "RDTSC" => Ok(project_basic_bil_x86_unknown_regs("rdtsc", ["EAX", "EDX"]))

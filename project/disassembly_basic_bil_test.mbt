@@ -175,6 +175,25 @@ test "project Basic BIL lift covers x86 flag controls" {
     Ok(stmts) => assert_basic_bil_text(stmts, ["DF:imm1 := 1:1u"])
     Err(reason) => fail(reason)
   }
+
+  let sahf = basic_bil_decode("x86", b"\x9e", start=0x700dUL)
+  match sahf.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "SF:imm1 := extract[7:7](AH:imm8)", "ZF:imm1 := extract[6:6](AH:imm8)", "AF:imm1 := extract[4:4](AH:imm8)",
+        "PF:imm1 := extract[2:2](AH:imm8)", "CF:imm1 := extract[0:0](AH:imm8)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let lahf = basic_bil_decode("x86_64", b"\x9f", start=0x700eUL)
+  match lahf.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "AH:imm8 := concat(concat(concat(concat(concat(concat(concat(SF:imm1, ZF:imm1), unknown(LAHF bit 5:imm1)), AF:imm1), unknown(LAHF bit 3:imm1)), PF:imm1), unknown(LAHF bit 1:imm1)), CF:imm1)",
+      ])
+    Err(reason) => fail(reason)
+  }
 }
 
 ///|

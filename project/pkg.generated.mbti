@@ -550,6 +550,7 @@ pub fn ProjectDisassemblyDriver::description(Self) -> String
 pub fn ProjectDisassemblyDriver::entry_point() -> Self
 pub fn ProjectDisassemblyDriver::function_symbols() -> Self
 pub fn ProjectDisassemblyDriver::image_roots() -> Self
+pub fn ProjectDisassemblyDriver::linear_sweep(backend? : String) -> Self
 pub fn ProjectDisassemblyDriver::memory_blocks() -> Self
 pub fn ProjectDisassemblyDriver::name(Self) -> String
 pub fn ProjectDisassemblyDriver::priority(Self) -> Int

@@ -195,6 +195,66 @@ pub fn ProjectDisassemblyDriver::raw_bytes() -> ProjectDisassemblyDriver {
 }
 
 ///|
+fn project_disassembly_add_linear_sweep_instructions(
+  state : ProjectDisassemblyState,
+  target : @core_theory.Target,
+  block : @memory.Memory,
+  backend : String,
+) -> Result[ProjectDisassemblyState, String] {
+  let mut next = state.add_block(block)
+  match ProjectDisassemblyLinearSweep::sweep(target, block, backend~) {
+    Ok(items) => {
+      for item in items {
+        match item.1 {
+          Some(instruction) => next = next.add_instruction(instruction)
+          None => ()
+        }
+      }
+      Ok(next)
+    }
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+pub fn ProjectDisassemblyDriver::linear_sweep(
+  backend? : String = "raw",
+) -> ProjectDisassemblyDriver {
+  ProjectDisassemblyDriver::create(
+    name="linear-sweep",
+    description="materialize project memory regions with the linear sweep disassembler",
+    priority=-96,
+    run=project => {
+      let mut state = project.disassembly()
+      let mut added = 0
+      for entry in project.memory().entries() {
+        let block = entry.0
+        if block.length() > 0 {
+          match
+            project_disassembly_add_linear_sweep_instructions(
+              state,
+              project.target(),
+              block,
+              backend,
+            ) {
+            Ok(next) => {
+              state = next
+              added = added + 1
+            }
+            Err(reason) => return Err(reason)
+          }
+        }
+      }
+      if added == 0 {
+        Err("project has no memory blocks to disassemble")
+      } else {
+        Ok(project.with_disassembly(state).set("disassembler", "linear-sweep"))
+      }
+    },
+  )
+}
+
+///|
 pub fn ProjectDisassemblyDriver::function_symbols() -> ProjectDisassemblyDriver {
   ProjectDisassemblyDriver::create(
     name="function-symbols",
@@ -347,6 +407,7 @@ pub fn register_builtin_disassembly_drivers() -> Result[Unit, String] {
       ProjectDisassemblyDriver::entry_point(),
       ProjectDisassemblyDriver::project_roots(),
       ProjectDisassemblyDriver::raw_bytes(),
+      ProjectDisassemblyDriver::linear_sweep(),
       ProjectDisassemblyDriver::memory_blocks(),
     ] {
     match register_disassembly_driver_if_absent(driver) {

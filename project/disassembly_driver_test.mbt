@@ -55,6 +55,7 @@ test "project registers built-in memory block disassembly driver" {
   assert_true(@project.disassembly_driver_names().contains("entry-point"))
   assert_true(@project.disassembly_driver_names().contains("project-roots"))
   assert_true(@project.disassembly_driver_names().contains("raw-bytes"))
+  assert_true(@project.disassembly_driver_names().contains("linear-sweep"))
   match @project.find_disassembly_driver("image-roots") {
     Some(driver) => {
       assert_true(driver.priority() == -25)
@@ -90,6 +91,13 @@ test "project registers built-in memory block disassembly driver" {
     }
     None => fail("missing raw-byte driver")
   }
+  match @project.find_disassembly_driver("linear-sweep") {
+    Some(driver) => {
+      assert_true(driver.priority() == -96)
+      assert_true(driver.description().contains("linear sweep"))
+    }
+    None => fail("missing linear-sweep driver")
+  }
   match @project.find_disassembly_driver("memory-blocks") {
     Some(driver) => {
       assert_true(driver.priority() == -100)
@@ -123,6 +131,46 @@ test "project registers built-in memory block disassembly driver" {
   assert_true(
     @project.Project::empty(@core_theory.Target::unknown()).disassemble(
       driver="memory-blocks",
+    )
+    is Err(_),
+  )
+}
+
+///|
+test "project linear-sweep disassembly driver materializes sweep instructions" {
+  match @project.register_builtin_disassembly_drivers() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let block = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x7200UL,
+    b"\x55\xc3",
+  )
+  let memory = @memory.MemMap::singleton(block, "code")
+  let project = @project.Project::empty(@core_theory.Target::unknown()).with_memory(
+    memory,
+  )
+  match project.disassemble(driver="linear-sweep") {
+    Ok(disassembled) => {
+      assert_true(disassembled.get("disassembler") == Some("linear-sweep"))
+      assert_true(disassembled.disassembly().block_count() == 1)
+      assert_true(disassembled.disassembly().instruction_count() == 2)
+      let instructions = disassembled.disassembly().instructions_in(block)
+      assert_true(instructions.length() == 2)
+      assert_true(instructions[0].addr() == 0x7200UL)
+      assert_true(instructions[0].code() == 0x55)
+      assert_true(instructions[0].name() == ".byte")
+      assert_true(instructions[0].encoding() == "raw")
+      assert_true(instructions[1].addr() == 0x7201UL)
+      assert_true(instructions[1].code() == 0xc3)
+      assert_true(instructions[1].assembly() == ".byte 0xc3")
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    @project.Project::empty(@core_theory.Target::unknown()).disassemble(
+      driver="linear-sweep",
     )
     is Err(_),
   )

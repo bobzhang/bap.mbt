@@ -101,6 +101,12 @@ fn assert_string(actual : String, expected : String) -> Unit raise {
 
 ///|
 test "project Basic BIL lift covers x86_64 stack arithmetic fixtures" {
+  let noop = basic_bil_decode("x86_64", b"\x90", start=0x6ff0UL)
+  match noop.lift_basic_bil() {
+    Ok(stmts) => assert_true(stmts.is_empty())
+    Err(reason) => fail(reason)
+  }
+
   let sub = basic_bil_decode("x86_64", b"\x48\x83\xec\x08", start=0x7000UL)
   match sub.lift_basic_bil() {
     Ok(stmts) =>
@@ -303,13 +309,13 @@ test "project Basic BIL lift runs over disassembly state and project" {
 
 ///|
 test "project Basic BIL lift reports unsupported instruction context" {
-  let raw = basic_bil_decode("x86_64", b"\x90", start=0x7600UL)
+  let raw = basic_bil_decode("x86_64", b"\x0f", start=0x7600UL)
   match raw.lift_basic_bil() {
     Err(reason) => assert_true(reason.contains("unsupported Basic BIL lift"))
     Ok(_) => fail("raw byte instruction lifted")
   }
 
-  let disassembly = basic_bil_decode_state(b"\x90", start=0x7600UL)
+  let disassembly = basic_bil_decode_state(b"\x0f", start=0x7600UL)
   let blocks = disassembly.blocks_with_instructions()
   assert_true(blocks.length() == 1)
   match blocks[0].lift_basic_bil() {

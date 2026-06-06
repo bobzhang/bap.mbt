@@ -152,6 +152,7 @@ test "translated BAP basic disassembly decodes x86_64 llvm samples" {
   let samples : Array[
     (Bytes, Array[String], Array[@project.ProjectInstructionKind]),
   ] = [
+    (b"\x90", ["NOOP"], []),
     (b"\x48\x83\xec\x08", ["SUB64ri8", "RSP", "RSP", "0x8"], []),
     (b"\xb8\x78\x56\x34\x12", ["MOV32ri", "EAX", "0x12345678"], []),
     (
@@ -203,7 +204,8 @@ test "translated BAP basic disassembly decodes x86_64 llvm samples" {
     }
   }
 
-  let sequence = b"\x48\x83\xec\x08" +
+  let sequence = b"\x90" +
+    b"\x48\x83\xec\x08" +
     b"\xb8\x78\x56\x34\x12" +
     b"\x48\xb8\x88\x77\x66\x55\x44\x33\x22\x11" +
     b"\xe8\x47\xee\xff\xff" +
@@ -218,7 +220,7 @@ test "translated BAP basic disassembly decodes x86_64 llvm samples" {
   let state = disasm.store_kinds().run(run_memory)
   let insns = state.insns()
   assert_true(insns.length() == samples.length())
-  assert_true(insns.map(item => item.0.length()) == [4, 5, 10, 5, 3, 4, 1])
+  assert_true(insns.map(item => item.0.length()) == [1, 4, 5, 10, 5, 3, 4, 1])
   assert_true(state.addr() == 0xe100UL + sequence.length().to_uint64())
   for i in 0..<samples.length() {
     match insns[i].1 {

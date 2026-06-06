@@ -985,49 +985,66 @@ fn project_disassembly_basic_decode_x86_llvm(
   match project_disassembly_basic_decode_x86_simd_llvm(memory) {
     Ok(Some(instruction)) => Ok(Some(instruction))
     Ok(None) =>
-      match project_disassembly_basic_x86_mov32ri(memory) {
-        Some((dst, imm)) =>
-          match memory.view(words=5) {
-            Ok(chunk) =>
-              Ok(
-                Some(
-                  project_disassembly_basic_instruction(chunk, "MOV32ri", operands=[
-                    ProjectInstructionOperand::register(name=dst),
-                    ProjectInstructionOperand::immediate(imm),
-                  ]),
+      if project_disassembly_basic_has_prefix(memory, b"\x90") {
+        match memory.view(words=1) {
+          Ok(chunk) =>
+            Ok(
+              Some(
+                project_disassembly_basic_instruction(
+                  chunk,
+                  "NOOP",
+                  assembly="nop",
+                  bil="",
                 ),
-              )
-            Err(reason) => Err(reason)
-          }
-        None =>
-          match project_disassembly_basic_x86_jmp_rel8(memory) {
-            Some((displacement, target)) =>
-              match memory.view(words=2) {
-                Ok(chunk) =>
-                  Ok(
-                    Some(
-                      project_disassembly_basic_instruction(
-                        chunk,
-                        "JMP_1",
-                        assembly="jmp " +
-                          ProjectInstructionOperand::immediate(displacement).to_string(),
-                        bil="jmp 0x" + target.to_string(radix=16),
-                        operands=[
-                          ProjectInstructionOperand::immediate(
-                            target.reinterpret_as_int64(),
-                          ),
-                        ],
-                        kinds=[
-                          ProjectUnconditionalBranch,
-                          ProjectMayAffectControlFlow,
-                        ],
+              ),
+            )
+          Err(reason) => Err(reason)
+        }
+      } else {
+        match project_disassembly_basic_x86_mov32ri(memory) {
+          Some((dst, imm)) =>
+            match memory.view(words=5) {
+              Ok(chunk) =>
+                Ok(
+                  Some(
+                    project_disassembly_basic_instruction(chunk, "MOV32ri", operands=[
+                      ProjectInstructionOperand::register(name=dst),
+                      ProjectInstructionOperand::immediate(imm),
+                    ]),
+                  ),
+                )
+              Err(reason) => Err(reason)
+            }
+          None =>
+            match project_disassembly_basic_x86_jmp_rel8(memory) {
+              Some((displacement, target)) =>
+                match memory.view(words=2) {
+                  Ok(chunk) =>
+                    Ok(
+                      Some(
+                        project_disassembly_basic_instruction(
+                          chunk,
+                          "JMP_1",
+                          assembly="jmp " +
+                            ProjectInstructionOperand::immediate(displacement).to_string(),
+                          bil="jmp 0x" + target.to_string(radix=16),
+                          operands=[
+                            ProjectInstructionOperand::immediate(
+                              target.reinterpret_as_int64(),
+                            ),
+                          ],
+                          kinds=[
+                            ProjectUnconditionalBranch,
+                            ProjectMayAffectControlFlow,
+                          ],
+                        ),
                       ),
-                    ),
-                  )
-                Err(reason) => Err(reason)
-              }
-            None => Ok(None)
-          }
+                    )
+                  Err(reason) => Err(reason)
+                }
+              None => Ok(None)
+            }
+        }
       }
     Err(reason) => Err(reason)
   }

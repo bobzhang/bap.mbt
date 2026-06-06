@@ -513,6 +513,7 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "MOV32RM" => self.project_basic_bil_mov32rm()
     "MOV32RI" => self.project_basic_bil_mov_imm(32)
     "MOV64RI" => self.project_basic_bil_mov_imm(64)
+    "NOOP" => Ok([])
     "JMP_1" =>
       match self.project_basic_bil_immediate(0) {
         Ok(target) =>

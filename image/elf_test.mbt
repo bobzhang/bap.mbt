@@ -866,7 +866,9 @@ test "image ELF backend refines target system and ABI from OSABI" {
     ("tru64", 0x3e, 10, "x86_64", "target:x86_64", Tru64, UnknownAbi),
     ("modesto", 0x3e, 11, "x86_64", "target:x86_64", Modesto, UnknownAbi),
     ("mips-rs3-le", 0x0a, 0, "mipsel", "target:mipsel", UnknownSystem, SysV),
+    ("sparc32plus", 0x12, 0, "sparc", "target:sparc", UnknownSystem, SysV),
     ("arm-aeabi", 0x28, 64, "armv7", "target:armv7+le", UnknownSystem, EABI),
+    ("hexagon", 0xa4, 0, "hexagon", "target:hexagon", UnknownSystem, SysV),
     (
       "loongarch-linux",
       0x102,

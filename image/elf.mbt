@@ -2043,6 +2043,7 @@ fn image_elf_target(header : ImageElfHeader) -> @core_theory.Target {
         (ImageElf32, BigEndian) => @core_theory.Target::mips()
       }
     0x0a => @core_theory.Target::mipsel()
+    0x12 => @core_theory.Target::sparc()
     0x14 =>
       match header.endian {
         LittleEndian => @core_theory.Target::powerpcle()
@@ -2063,6 +2064,7 @@ fn image_elf_target(header : ImageElfHeader) -> @core_theory.Target {
       }
     0x2b => @core_theory.Target::sparcv9()
     0x3e => @core_theory.Target::x86_64()
+    0xa4 => @core_theory.Target::hexagon()
     0xb7 =>
       match header.endian {
         LittleEndian => @core_theory.Target::aarch64()

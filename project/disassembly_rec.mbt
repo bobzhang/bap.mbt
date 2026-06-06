@@ -33,6 +33,204 @@ fn project_disassembly_rec_apply_brancher(
 }
 
 ///|
+fn project_disassembly_rec_has_instruction_at(
+  instructions : Array[ProjectDisassemblyInstruction],
+  addr : UInt64,
+) -> Bool {
+  instructions.any(instruction => instruction.addr() == addr)
+}
+
+///|
+fn project_disassembly_rec_add_start(
+  starts : Array[UInt64],
+  block : @memory.Memory,
+  instructions : Array[ProjectDisassemblyInstruction],
+  addr : UInt64,
+) -> Unit {
+  if block.contains(addr) &&
+    project_disassembly_rec_has_instruction_at(instructions, addr) &&
+    !starts.contains(addr) {
+    starts.push(addr)
+  }
+}
+
+///|
+fn project_disassembly_rec_next_addr(
+  instruction : ProjectDisassemblyInstruction,
+) -> UInt64 {
+  instruction.memory().max_addr() + 1UL
+}
+
+///|
+fn project_disassembly_rec_add_signed_offset(
+  base : UInt64,
+  offset : Int64,
+) -> UInt64? {
+  if offset >= 0L {
+    Some(base + offset.reinterpret_as_uint64())
+  } else {
+    let delta = (0L - offset).reinterpret_as_uint64()
+    if base >= delta {
+      Some(base - delta)
+    } else {
+      None
+    }
+  }
+}
+
+///|
+fn project_disassembly_rec_call_target(
+  instruction : ProjectDisassemblyInstruction,
+) -> UInt64? {
+  if !instruction.has_kind(ProjectCall) || instruction.operands().is_empty() {
+    None
+  } else {
+    match instruction.operands()[0].to_int64() {
+      Some(offset) =>
+        project_disassembly_rec_add_signed_offset(
+          project_disassembly_rec_next_addr(instruction),
+          offset,
+        )
+      None => None
+    }
+  }
+}
+
+///|
+fn project_disassembly_rec_splits_after(
+  instruction : ProjectDisassemblyInstruction,
+) -> Bool {
+  instruction.has_kind(ProjectCall) ||
+  instruction.has_kind(ProjectTerminator) ||
+  instruction.is_branch()
+}
+
+///|
+fn project_disassembly_rec_split_starts(
+  block : @memory.Memory,
+  instructions : Array[ProjectDisassemblyInstruction],
+) -> Array[UInt64] {
+  let starts = [block.min_addr()]
+  for instruction in instructions {
+    if project_disassembly_rec_splits_after(instruction) {
+      project_disassembly_rec_add_start(
+        starts,
+        block,
+        instructions,
+        project_disassembly_rec_next_addr(instruction),
+      )
+    }
+    match project_disassembly_rec_call_target(instruction) {
+      Some(target) =>
+        project_disassembly_rec_add_start(starts, block, instructions, target)
+      None => ()
+    }
+  }
+  starts.sort_by((left, right) => left.compare(right))
+  starts
+}
+
+///|
+fn project_disassembly_rec_split_block(
+  block : @memory.Memory,
+  instructions : Array[ProjectDisassemblyInstruction],
+) -> Result[Array[@memory.Memory], String] {
+  if instructions.is_empty() {
+    Ok([block])
+  } else {
+    let starts = project_disassembly_rec_split_starts(block, instructions)
+    let result : Array[@memory.Memory] = []
+    for i in 0..<starts.length() {
+      let start = starts[i]
+      let end = if i + 1 < starts.length() {
+        starts[i + 1] - 1UL
+      } else {
+        block.max_addr()
+      }
+      match block.view(from=start, words=(end - start + 1UL).to_int()) {
+        Ok(slice) => result.push(slice)
+        Err(reason) => return Err(reason)
+      }
+    }
+    Ok(result)
+  }
+}
+
+///|
+fn project_disassembly_rec_control_edges(
+  block : @memory.Memory,
+  instructions : Array[ProjectDisassemblyInstruction],
+) -> Array[ProjectDisassemblyEdge] {
+  let edges : Array[ProjectDisassemblyEdge] = []
+  for instruction in instructions {
+    if instruction.has_kind(ProjectCall) {
+      let fall = project_disassembly_rec_next_addr(instruction)
+      if block.contains(fall) &&
+        project_disassembly_rec_has_instruction_at(instructions, fall) {
+        edges.push(
+          ProjectDisassemblyEdge::create(
+            source=instruction.addr(),
+            target=fall,
+            kind=FallEdge,
+          ),
+        )
+      }
+      match project_disassembly_rec_call_target(instruction) {
+        Some(target) if block.contains(target) &&
+          project_disassembly_rec_has_instruction_at(instructions, target) =>
+          edges.push(
+            ProjectDisassemblyEdge::create(
+              source=instruction.addr(),
+              target~,
+              kind=JumpEdge,
+            ),
+          )
+        _ => ()
+      }
+    }
+  }
+  edges
+}
+
+///|
+fn project_disassembly_rec_refine_state(
+  state : ProjectDisassemblyState,
+) -> Result[ProjectDisassemblyState, String] {
+  let blocks : Array[@memory.Memory] = []
+  let edges = state.edges()
+  for block in state.blocks() {
+    let instructions = state.instructions_in(block)
+    match project_disassembly_rec_split_block(block, instructions) {
+      Ok(split) =>
+        for item in split {
+          blocks.push(item)
+        }
+      Err(reason) => return Err(reason)
+    }
+    for edge in project_disassembly_rec_control_edges(block, instructions) {
+      edges.push(edge)
+    }
+  }
+  Ok(
+    ProjectDisassemblyState::create(
+      blocks~,
+      instructions=state.instructions(),
+      edges~,
+    ),
+  )
+}
+
+///|
+fn project_disassembly_rec_refine_project(
+  project : Project,
+) -> Result[Project, String] {
+  match project_disassembly_rec_refine_state(project.disassembly()) {
+    Ok(state) => Ok(project.with_disassembly(state))
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
 pub fn ProjectDisassemblyRecError::failed_to_disasm(
   memory : @memory.Memory,
 ) -> ProjectDisassemblyRecError {
@@ -145,7 +343,11 @@ pub fn ProjectDisassemblyRec::run(
   match project_disassembly_rec_driver(project, driver) {
     Ok(disassembled) =>
       match project_disassembly_rec_apply_brancher(disassembled, brancher) {
-        Ok(branched) => Ok(ProjectDisassemblyRec::create(branched))
+        Ok(branched) =>
+          match project_disassembly_rec_refine_project(branched) {
+            Ok(refined) => Ok(ProjectDisassemblyRec::create(refined))
+            Err(reason) => Err(reason)
+          }
         Err(reason) => Err(reason)
       }
     Err(reason) => Err(reason)

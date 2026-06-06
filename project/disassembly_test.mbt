@@ -78,9 +78,14 @@ test "project disasm of_mem reaches Basic llvm x86_64 fixture decoder" {
     ) {
     Ok(disasm) => {
       assert_true(disasm.project().get("disassembler") == Some("basic"))
-      assert_true(disasm.disassembly().block_count() == 1)
+      assert_true(disasm.disassembly().block_count() == 2)
       assert_true(disasm.disassembly().instruction_count() == samples.length())
-      assert_true(disasm.cfg().node_count() == 1)
+      assert_true(disasm.cfg().node_count() == 2)
+      assert_true(disasm.cfg().edge_count() == 1)
+      assert_true(
+        disasm.disassembly().blocks().map(block => block.min_addr()) ==
+        [0xe500UL, 0xe509UL],
+      )
       let insns = disasm.insns()
       assert_true(insns.length() == samples.length())
       assert_true(insns.map(item => item.0.length()) == [4, 5, 3, 4, 1])
@@ -123,6 +128,27 @@ test "project disasm Basic llvm decodes BAP call1 micro fixture" {
         )
         assert_true(insns[i].1.has_kind(ProjectReturn))
       }
+      assert_true(disasm.disassembly().block_count() == 4)
+      let cfg = disasm.cfg()
+      assert_true(cfg.node_count() == 4)
+      assert_true(cfg.edge_count() == 2)
+      let blocks = cfg.nodes()
+      assert_true(
+        blocks.map(block => block.memory().min_addr()) ==
+        [0xe600UL, 0xe605UL, 0xe606UL, 0xe607UL],
+      )
+      assert_true(blocks.map(block => block.memory().length()) == [5, 1, 1, 1])
+      match cfg.edge(blocks[0], blocks[2]) {
+        Some(edge) => assert_true(edge.kind() == JumpEdge)
+        None => fail("missing call target edge")
+      }
+      match cfg.edge(blocks[0], blocks[1]) {
+        Some(edge) => assert_true(edge.kind() == FallEdge)
+        None => fail("missing call fall-through edge")
+      }
+      assert_true(cfg.successors(blocks[1]).is_empty())
+      assert_true(cfg.successors(blocks[2]).is_empty())
+      assert_true(cfg.successors(blocks[3]).is_empty())
     }
     Err(reason) => fail(reason)
   }

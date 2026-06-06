@@ -135,3 +135,47 @@ test "project recursive disassembly runs driver and brancher" {
     Err(reason) => fail(reason)
   }
 }
+
+///|
+test "project recursive disassembly splits BAP call1 micro CFG" {
+  match @project.register_builtin_disassembly_drivers() {
+    Ok(_) => ()
+    Err(reason) => fail(reason)
+  }
+  let memory = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0xa400UL,
+    b"\xe8\x01\x00\x00\x00" + b"\xc3" + b"\xc3" + b"\xc3",
+  )
+  let project = @project.Project::empty(@core_theory.Target::x86_64()).with_memory(
+    @memory.MemMap::empty().add(memory, "text"),
+  )
+  match project.disassemble_rec(driver="basic") {
+    Ok(result) => {
+      assert_true(!result.has_errors())
+      assert_true(result.disassembly().instruction_count() == 4)
+      assert_true(result.disassembly().block_count() == 4)
+      let cfg = result.cfg()
+      assert_true(cfg.node_count() == 4)
+      assert_true(cfg.edge_count() == 2)
+      let blocks = cfg.nodes()
+      assert_true(
+        blocks.map(block => block.memory().min_addr()) ==
+        [0xa400UL, 0xa405UL, 0xa406UL, 0xa407UL],
+      )
+      assert_true(blocks.map(block => block.memory().length()) == [5, 1, 1, 1])
+      match cfg.edge(blocks[0], blocks[2]) {
+        Some(edge) => assert_true(edge.kind() == JumpEdge)
+        None => fail("missing call target edge")
+      }
+      match cfg.edge(blocks[0], blocks[1]) {
+        Some(edge) => assert_true(edge.kind() == FallEdge)
+        None => fail("missing call fall-through edge")
+      }
+      assert_true(cfg.successors(blocks[1]).is_empty())
+      assert_true(cfg.successors(blocks[2]).is_empty())
+      assert_true(cfg.successors(blocks[3]).is_empty())
+    }
+    Err(reason) => fail(reason)
+  }
+}

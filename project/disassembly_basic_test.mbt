@@ -234,6 +234,44 @@ test "translated BAP basic disassembly decodes x86_64 llvm samples" {
 }
 
 ///|
+test "translated BAP basic disassembly decodes x86 register add-sub immediates" {
+  let samples : Array[(String, Bytes, Int, Array[String])] = [
+    ("x86_64", b"\x48\x83\xe8\x01", 4, ["SUB64ri8", "RAX", "RAX", "0x1"]),
+    ("x86_64", b"\x49\x83\xc0\x7f", 4, ["ADD64ri8", "R8", "R8", "0x7f"]),
+    ("x86_64", b"\x48\x83\xc0\xff", 4, ["ADD64ri8", "RAX", "RAX", "-0x1"]),
+    ("x86_64", b"\x41\x83\xc0\x01", 4, ["ADD32ri8", "R8D", "R8D", "0x1"]),
+    ("x86", b"\x83\xe8\x01", 3, ["SUB32ri8", "EAX", "EAX", "0x1"]),
+    ("x86", b"\x83\xc0\x7f", 3, ["ADD32ri8", "EAX", "EAX", "0x7f"]),
+  ]
+  for sample in samples {
+    let disasm = match
+      @project.ProjectDisassemblyBasic::create(sample.0, backend="llvm") {
+      Ok(disasm) => disasm
+      Err(reason) => fail(reason)
+    }
+    let memory = @memory.Memory::from_bytes(
+      endian=LittleEndian,
+      start=0xe200UL,
+      sample.1,
+    )
+    match disasm.insn_of_mem(memory) {
+      Ok(result) => {
+        assert_true(result.memory().length() == sample.2)
+        assert_true(result.remainder().is_finished())
+        match result.instruction() {
+          Some(instruction) => {
+            assert_true(basic_instruction_strings(instruction) == sample.3)
+            assert_true(instruction.kinds().is_empty())
+          }
+          None => fail("missing x86 add-sub instruction")
+        }
+      }
+      Err(reason) => fail(reason)
+    }
+  }
+}
+
+///|
 test "translated BAP basic disassembly decodes x86 register push fixtures" {
   let samples : Array[
     (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),

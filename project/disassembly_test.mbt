@@ -101,6 +101,38 @@ test "project disasm of_mem reaches Basic llvm x86_64 fixture decoder" {
 }
 
 ///|
+test "project disasm Basic llvm decodes x86 register arithmetic" {
+  let memory = project_disasm_test_memory(
+    0xe580UL,
+    b"\x48\x83\xe8\x01" + b"\x41\x83\xc0\x01" + b"\xc3",
+  )
+  match
+    @project.ProjectDisasm::of_mem(
+      @core_theory.Target::x86_64(),
+      memory,
+      backend="basic",
+    ) {
+    Ok(disasm) => {
+      let insns = disasm.insns()
+      assert_true(insns.map(item => item.0.length()) == [4, 4, 1])
+      assert_true(
+        project_disasm_test_instruction_strings(insns[0].1) ==
+        ["SUB64ri8", "RAX", "RAX", "0x1"],
+      )
+      assert_true(
+        project_disasm_test_instruction_strings(insns[1].1) ==
+        ["ADD32ri8", "R8D", "R8D", "0x1"],
+      )
+      assert_true(
+        project_disasm_test_instruction_strings(insns[2].1) == ["RET"],
+      )
+      assert_true(disasm.disassembly().block_count() == 1)
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project disasm Basic llvm decodes BAP call1 micro fixture" {
   let memory = project_disasm_test_memory(
     0xe600UL,

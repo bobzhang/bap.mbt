@@ -163,15 +163,16 @@ fn ProjectDisassemblyInstruction::project_basic_bil_immediate(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_addsub(
   self : ProjectDisassemblyInstruction,
+  width : Int,
   op : @types.BinOp,
 ) -> Result[Array[@types.Stmt], String] {
-  match self.project_basic_bil_register(0, 64) {
+  match self.project_basic_bil_register(0, width) {
     Ok(dst) =>
-      match self.project_basic_bil_register(1, 64) {
+      match self.project_basic_bil_register(1, width) {
         Ok(src) =>
           match self.project_basic_bil_immediate(2) {
             Ok(imm) =>
-              match project_basic_bil_int(imm, 64) {
+              match project_basic_bil_int(imm, width) {
                 Ok(rhs) =>
                   Ok([
                     @types.Stmt::move_stmt(
@@ -808,8 +809,10 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
   self : ProjectDisassemblyInstruction,
 ) -> Result[Array[@types.Stmt], String] {
   match self.name().to_upper() {
-    "SUB64RI8" => self.project_basic_bil_addsub(@types.BinOp::minus())
-    "ADD64RI8" => self.project_basic_bil_addsub(@types.BinOp::plus())
+    "SUB32RI8" => self.project_basic_bil_addsub(32, @types.BinOp::minus())
+    "ADD32RI8" => self.project_basic_bil_addsub(32, @types.BinOp::plus())
+    "SUB64RI8" => self.project_basic_bil_addsub(64, @types.BinOp::minus())
+    "ADD64RI8" => self.project_basic_bil_addsub(64, @types.BinOp::plus())
     "MOV32RM" => self.project_basic_bil_mov_rm(32)
     "MOV64RM" => self.project_basic_bil_mov_rm(64)
     "MOV32MR" => self.project_basic_bil_mov_mr(32)

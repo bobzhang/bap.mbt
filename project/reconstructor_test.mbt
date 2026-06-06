@@ -102,6 +102,7 @@ test "project reconstructor materializes supported Basic BIL assignments" {
     b"\xb8\x78\x56\x34\x12" +
     b"\x48\xb8\x88\x77\x66\x55\x44\x33\x22\x11" +
     b"\x8b\x40\x10" +
+    b"\x48\x83\xe8\x01" +
     b"\x48\x83\xc4\x08" +
     b"\xc3"
   let disassembly = reconstructor_basic_disassembly(
@@ -122,9 +123,34 @@ test "project reconstructor materializes supported Basic BIL assignments" {
         reconstructor_def_text(blks[0].defs()) ==
         [
           "RSP:imm64 := (RSP:imm64 - 8:64u)", "EAX:imm32 := 0x12345678:32u", "RAX:imm64 := 0x1122334455667788:64u",
-          "EAX:imm32 := load(mem:mem64x8, (RAX:imm64 + 0x10:64u)):imm32", "RSP:imm64 := (RSP:imm64 + 8:64u)",
+          "EAX:imm32 := load(mem:mem64x8, (RAX:imm64 + 0x10:64u)):imm32", "RAX:imm64 := (RAX:imm64 - 1:64u)",
+          "RSP:imm64 := (RSP:imm64 + 8:64u)",
         ],
       )
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+test "project reconstructor materializes Basic BIL x86 register arithmetic" {
+  let disassembly = reconstructor_basic_disassembly(
+    "x86",
+    b"\x83\xc0\x01" + b"\xc3",
+    start=0x7808UL,
+  )
+  let project = @project.Project::empty(@core_theory.Target::x86()).with_disassembly(
+    disassembly,
+  )
+  match project.reconstruct() {
+    Ok(reconstructed) => {
+      let subs = reconstructed.program().subs()
+      assert_true(subs.length() == 1)
+      let blks = subs[0].blks()
+      assert_true(blks.length() == 1)
+      assert_reconstructor_text(reconstructor_def_text(blks[0].defs()), [
+        "EAX:imm32 := (EAX:imm32 + 1:32u)",
+      ])
     }
     Err(reason) => fail(reason)
   }

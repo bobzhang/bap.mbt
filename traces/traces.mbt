@@ -1751,6 +1751,7 @@ pub(all) suberror TraceError {
   NoProvider(String)
   AmbiguousUri(String)
   ProtocolError(String)
+  DuplicateRegistration(String)
 } derive(Eq, Debug)
 
 ///|
@@ -1918,6 +1919,9 @@ let trace_next_id : Ref[Int] = Ref(0)
 let trace_loaded_registry : Map[TraceId, Trace] = {}
 
 ///|
+let trace_tool_registry : Map[String, TraceTool] = {}
+
+///|
 let trace_store : Map[String, Bytes] = {}
 
 ///|
@@ -2061,12 +2065,101 @@ pub fn Traces::enum_() -> Iter[Trace] {
 }
 
 ///|
-pub fn Trace::register_protocol(protocol : TraceProtocol) -> Unit {
+fn trace_duplicate_registration(kind : String, name : String) -> TraceError {
+  DuplicateRegistration("\{kind} \{name} is already registered")
+}
+
+///|
+fn trace_install_protocol(protocol : TraceProtocol) -> Unit {
   trace_protocol_registry[protocol.name()] = protocol
 }
 
 ///|
-pub fn Trace::register_proto(protocol : TraceProtocol) -> String {
+fn trace_install_reader(
+  protocol_name : String,
+  reader : (String) -> Result[TraceReader, TraceError],
+) -> Unit {
+  trace_reader_registry[protocol_name] = reader
+}
+
+///|
+fn trace_install_reader_with_id(
+  protocol_name : String,
+  reader : (String, TraceId) -> Result[TraceReader, TraceError],
+) -> Unit {
+  trace_reader_with_id_registry[protocol_name] = reader
+}
+
+///|
+fn trace_install_stream_reader(
+  protocol_name : String,
+  reader : (String) -> Result[TraceStreamReader, TraceError],
+) -> Unit {
+  trace_stream_reader_registry[protocol_name] = reader
+}
+
+///|
+fn trace_install_stream_reader_with_id(
+  protocol_name : String,
+  reader : (String, TraceId) -> Result[TraceStreamReader, TraceError],
+) -> Unit {
+  trace_stream_reader_with_id_registry[protocol_name] = reader
+}
+
+///|
+fn trace_install_writer(
+  protocol_name : String,
+  writer : (String, Trace) -> Result[Unit, TraceError],
+) -> Unit {
+  trace_writer_registry[protocol_name] = writer
+}
+
+///|
+fn trace_reader_registered(protocol_name : String) -> Bool {
+  trace_reader_registry.contains(protocol_name) ||
+  trace_reader_with_id_registry.contains(protocol_name) ||
+  trace_stream_reader_registry.contains(protocol_name) ||
+  trace_stream_reader_with_id_registry.contains(protocol_name)
+}
+
+///|
+pub fn Trace::try_register_protocol(
+  protocol : TraceProtocol,
+) -> Result[Unit, TraceError] {
+  ensure_builtin_providers()
+  let name = protocol.name()
+  if trace_protocol_registry.contains(name) {
+    Err(trace_duplicate_registration("trace protocol", name))
+  } else {
+    trace_install_protocol(protocol)
+    Ok(())
+  }
+}
+
+///|
+pub fn Trace::register_protocol(
+  protocol : TraceProtocol,
+) -> Unit raise TraceError {
+  match Trace::try_register_protocol(protocol) {
+    Ok(_) => ()
+    Err(error) => raise error
+  }
+}
+
+///|
+pub fn Trace::try_register_proto(
+  protocol : TraceProtocol,
+) -> Result[String, TraceError] {
+  match Trace::try_register_protocol(protocol) {
+    Ok(_) => Ok(protocol.name())
+    Err(error) => Err(error)
+  }
+}
+
+///|
+pub fn Trace::register_proto(
+  protocol : TraceProtocol,
+) -> String raise TraceError {
   Trace::register_protocol(protocol)
   protocol.name()
 }
@@ -2075,48 +2168,150 @@ pub fn Trace::register_proto(protocol : TraceProtocol) -> String {
 pub fn Trace::register_tool(
   name~ : String,
   supported_tags~ : Array[String],
-) -> TraceTool {
-  TraceTool::register(name~, supported_tags~)
+) -> TraceTool raise TraceError {
+  match Trace::try_register_tool(name~, supported_tags~) {
+    Ok(tool) => tool
+    Err(error) => raise error
+  }
+}
+
+///|
+pub fn Trace::try_register_tool(
+  name~ : String,
+  supported_tags~ : Array[String],
+) -> Result[TraceTool, TraceError] {
+  if trace_tool_registry.contains(name) {
+    Err(trace_duplicate_registration("trace tool", name))
+  } else {
+    let tool = TraceTool::register(name~, supported_tags~)
+    trace_tool_registry[name] = tool
+    Ok(tool)
+  }
 }
 
 ///|
 pub fn Trace::register_reader(
   protocol_name : String,
   reader : (String) -> Result[TraceReader, TraceError],
-) -> Unit {
-  trace_reader_registry[protocol_name] = reader
+) -> Unit raise TraceError {
+  match Trace::try_register_reader(protocol_name, reader) {
+    Ok(_) => ()
+    Err(error) => raise error
+  }
+}
+
+///|
+pub fn Trace::try_register_reader(
+  protocol_name : String,
+  reader : (String) -> Result[TraceReader, TraceError],
+) -> Result[Unit, TraceError] {
+  ensure_builtin_providers()
+  if trace_reader_registered(protocol_name) {
+    Err(trace_duplicate_registration("trace reader", protocol_name))
+  } else {
+    trace_install_reader(protocol_name, reader)
+    Ok(())
+  }
 }
 
 ///|
 pub fn Trace::register_reader_with_id(
   protocol_name : String,
   reader : (String, TraceId) -> Result[TraceReader, TraceError],
-) -> Unit {
-  trace_reader_with_id_registry[protocol_name] = reader
+) -> Unit raise TraceError {
+  match Trace::try_register_reader_with_id(protocol_name, reader) {
+    Ok(_) => ()
+    Err(error) => raise error
+  }
+}
+
+///|
+pub fn Trace::try_register_reader_with_id(
+  protocol_name : String,
+  reader : (String, TraceId) -> Result[TraceReader, TraceError],
+) -> Result[Unit, TraceError] {
+  ensure_builtin_providers()
+  if trace_reader_registered(protocol_name) {
+    Err(trace_duplicate_registration("trace reader", protocol_name))
+  } else {
+    trace_install_reader_with_id(protocol_name, reader)
+    Ok(())
+  }
 }
 
 ///|
 pub fn Trace::register_stream_reader(
   protocol_name : String,
   reader : (String) -> Result[TraceStreamReader, TraceError],
-) -> Unit {
-  trace_stream_reader_registry[protocol_name] = reader
+) -> Unit raise TraceError {
+  match Trace::try_register_stream_reader(protocol_name, reader) {
+    Ok(_) => ()
+    Err(error) => raise error
+  }
+}
+
+///|
+pub fn Trace::try_register_stream_reader(
+  protocol_name : String,
+  reader : (String) -> Result[TraceStreamReader, TraceError],
+) -> Result[Unit, TraceError] {
+  ensure_builtin_providers()
+  if trace_reader_registered(protocol_name) {
+    Err(trace_duplicate_registration("trace reader", protocol_name))
+  } else {
+    trace_install_stream_reader(protocol_name, reader)
+    Ok(())
+  }
 }
 
 ///|
 pub fn Trace::register_stream_reader_with_id(
   protocol_name : String,
   reader : (String, TraceId) -> Result[TraceStreamReader, TraceError],
-) -> Unit {
-  trace_stream_reader_with_id_registry[protocol_name] = reader
+) -> Unit raise TraceError {
+  match Trace::try_register_stream_reader_with_id(protocol_name, reader) {
+    Ok(_) => ()
+    Err(error) => raise error
+  }
+}
+
+///|
+pub fn Trace::try_register_stream_reader_with_id(
+  protocol_name : String,
+  reader : (String, TraceId) -> Result[TraceStreamReader, TraceError],
+) -> Result[Unit, TraceError] {
+  ensure_builtin_providers()
+  if trace_reader_registered(protocol_name) {
+    Err(trace_duplicate_registration("trace reader", protocol_name))
+  } else {
+    trace_install_stream_reader_with_id(protocol_name, reader)
+    Ok(())
+  }
 }
 
 ///|
 pub fn Trace::register_writer(
   protocol_name : String,
   writer : (String, Trace) -> Result[Unit, TraceError],
-) -> Unit {
-  trace_writer_registry[protocol_name] = writer
+) -> Unit raise TraceError {
+  match Trace::try_register_writer(protocol_name, writer) {
+    Ok(_) => ()
+    Err(error) => raise error
+  }
+}
+
+///|
+pub fn Trace::try_register_writer(
+  protocol_name : String,
+  writer : (String, Trace) -> Result[Unit, TraceError],
+) -> Result[Unit, TraceError] {
+  ensure_builtin_providers()
+  if trace_writer_registry.contains(protocol_name) {
+    Err(trace_duplicate_registration("trace writer", protocol_name))
+  } else {
+    trace_install_writer(protocol_name, writer)
+    Ok(())
+  }
 }
 
 ///|
@@ -2130,8 +2325,8 @@ fn ensure_builtin_providers() -> Unit {
     let memory_protocol = TraceProtocol::create(name="memory", probe=fn(uri) {
       uri.has_prefix("memory://")
     })
-    Trace::register_protocol(memory_protocol)
-    Trace::register_reader("memory", fn(uri) {
+    trace_install_protocol(memory_protocol)
+    trace_install_reader("memory", fn(uri) {
       match trace_store.get(uri) {
         Some(bytes) =>
           match trace_snapshot_from_bytes(bytes) {
@@ -2141,7 +2336,7 @@ fn ensure_builtin_providers() -> Unit {
         None => Err(NoProvider(uri))
       }
     })
-    Trace::register_writer("memory", fn(uri, trace) {
+    trace_install_writer("memory", fn(uri, trace) {
       match trace.to_bytes() {
         Ok(bytes) => {
           trace_store[uri] = bytes
@@ -2156,8 +2351,8 @@ fn ensure_builtin_providers() -> Unit {
     ) {
       uri.has_prefix(trace_file_uri_prefix) && uri.has_suffix(".binprot")
     })
-    Trace::register_protocol(binprot_protocol)
-    Trace::register_reader("trace.binprot", fn(uri) {
+    trace_install_protocol(binprot_protocol)
+    trace_install_reader("trace.binprot", fn(uri) {
       let path = trace_file_uri_path(uri)
       match @native_io.read_file(path) {
         Ok(bytes) =>
@@ -2168,7 +2363,7 @@ fn ensure_builtin_providers() -> Unit {
         Err(reason) => Err(ProtocolError(reason))
       }
     })
-    Trace::register_writer("trace.binprot", fn(uri, trace) {
+    trace_install_writer("trace.binprot", fn(uri, trace) {
       let path = trace_file_uri_path(uri)
       match trace.to_bytes() {
         Ok(bytes) =>

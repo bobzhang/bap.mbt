@@ -821,6 +821,124 @@ test "translated BAP trace protocol registry selects URI providers" {
 }
 
 ///|
+test "translated BAP trace registries reject duplicate providers" {
+  match
+    @traces.Trace::try_register_tool(name="duplicate_tool", supported_tags=[
+      "memory-load",
+    ]) {
+    Ok(tool) => assert_true(tool.supports("memory-load"))
+    Err(_) => fail("unexpected duplicate trace tool")
+  }
+  match
+    @traces.Trace::try_register_tool(name="duplicate_tool", supported_tags=[
+      "memory-store",
+    ]) {
+    Err(DuplicateRegistration(reason)) =>
+      assert_true(reason.contains("trace tool duplicate_tool"))
+    _ => fail("expected duplicate trace tool")
+  }
+
+  let protocol = @traces.TraceProtocol::create(name="duplicate-provider", probe=fn(
+    uri,
+  ) {
+    uri.has_prefix("duplicate://")
+  })
+  match @traces.Trace::try_register_proto(protocol) {
+    Ok(name) => assert_true(name == "duplicate-provider")
+    Err(_) => fail("unexpected duplicate trace protocol")
+  }
+  match @traces.Trace::try_register_proto(protocol) {
+    Err(DuplicateRegistration(reason)) =>
+      assert_true(reason.contains("trace protocol duplicate-provider"))
+    _ => fail("expected duplicate trace protocol")
+  }
+  try {
+    let _ = @traces.Trace::register_proto(protocol)
+    fail("duplicate trace protocol did not raise")
+  } catch {
+    @traces.DuplicateRegistration(reason) =>
+      assert_true(reason.contains("trace protocol duplicate-provider"))
+    _ => fail("unexpected trace protocol registration failure")
+  }
+
+  let original_events = [Ok(@traces.TraceEvent::memory_load(test_move()))]
+  let replacement_events = [Ok(@traces.TraceEvent::memory_store(test_move()))]
+  match
+    @traces.Trace::try_register_reader("duplicate-provider", fn(uri) {
+      if uri == "duplicate://trace" {
+        Ok({ tool: test_tool(), meta: test_meta(), events: original_events })
+      } else {
+        Err(NoProvider(uri))
+      }
+    }) {
+    Ok(_) => ()
+    Err(_) => fail("unexpected duplicate trace reader")
+  }
+  match
+    @traces.Trace::try_register_reader("duplicate-provider", fn(_) {
+      Ok({ tool: test_tool(), meta: test_meta(), events: replacement_events })
+    }) {
+    Err(DuplicateRegistration(reason)) =>
+      assert_true(reason.contains("trace reader duplicate-provider"))
+    _ => fail("expected duplicate trace reader")
+  }
+  match
+    @traces.Trace::try_register_reader_with_id("duplicate-provider", fn(_, _) {
+      Ok({ tool: test_tool(), meta: test_meta(), events: replacement_events })
+    }) {
+    Err(DuplicateRegistration(reason)) =>
+      assert_true(reason.contains("trace reader duplicate-provider"))
+    _ => fail("expected duplicate id-aware trace reader")
+  }
+  match
+    @traces.Trace::try_register_stream_reader("duplicate-provider", fn(_) {
+      Ok(
+        @traces.Reader::from_results(
+          test_tool(),
+          replacement_events,
+          meta=test_meta(),
+        ),
+      )
+    }) {
+    Err(DuplicateRegistration(reason)) =>
+      assert_true(reason.contains("trace reader duplicate-provider"))
+    _ => fail("expected duplicate stream trace reader")
+  }
+
+  let saved_uri : Ref[String?] = Ref(None)
+  match
+    @traces.Trace::try_register_writer("duplicate-provider", fn(uri, trace) {
+      saved_uri.val = Some(uri)
+      trace.read_events().map(_ => ())
+    }) {
+    Ok(_) => ()
+    Err(_) => fail("unexpected duplicate trace writer")
+  }
+  match
+    @traces.Trace::try_register_writer("duplicate-provider", fn(_, _) {
+      saved_uri.val = Some("replacement")
+      Ok(())
+    }) {
+    Err(DuplicateRegistration(reason)) =>
+      assert_true(reason.contains("trace writer duplicate-provider"))
+    _ => fail("expected duplicate trace writer")
+  }
+
+  match @traces.Trace::load("duplicate://trace") {
+    Ok(trace) =>
+      assert_true(
+        unwrap_events(trace.read_events()) ==
+        [@traces.TraceEvent::memory_load(test_move())],
+      )
+    Err(_) => fail("unexpected duplicate trace load failure")
+  }
+  match @traces.Trace::save("duplicate://saved", new_trace()) {
+    Ok(_) => assert_true(saved_uri.val == Some("duplicate://saved"))
+    Err(_) => fail("unexpected duplicate trace save failure")
+  }
+}
+
+///|
 test "translated BAP trace readers receive generated ids" {
   let custom_tool = @traces.TraceTool::register(name="id_tool", supported_tags=[
     "memory-load",

@@ -16,6 +16,7 @@ pub(all) suberror TraceError {
   NoProvider(String)
   AmbiguousUri(String)
   ProtocolError(String)
+  DuplicateRegistration(String)
 } derive(Eq, @debug.Debug)
 
 // Types and methods
@@ -181,14 +182,14 @@ pub fn Trace::protocol(Self) -> String?
 pub fn Trace::read_all(Self, String) -> Result[Array[TraceEvent], TraceError]
 pub fn[T] Trace::read_all_matching(Self, (TraceEvent) -> T?) -> Result[Array[T], TraceError]
 pub fn Trace::read_events(Self, limit? : Int) -> Result[Array[TraceEvent], TraceError]
-pub fn Trace::register_proto(TraceProtocol) -> String
-pub fn Trace::register_protocol(TraceProtocol) -> Unit
-pub fn Trace::register_reader(String, (String) -> Result[TraceReader, TraceError]) -> Unit
-pub fn Trace::register_reader_with_id(String, (String, TraceId) -> Result[TraceReader, TraceError]) -> Unit
-pub fn Trace::register_stream_reader(String, (String) -> Result[TraceStreamReader, TraceError]) -> Unit
-pub fn Trace::register_stream_reader_with_id(String, (String, TraceId) -> Result[TraceStreamReader, TraceError]) -> Unit
-pub fn Trace::register_tool(name~ : String, supported_tags~ : Array[String]) -> TraceTool
-pub fn Trace::register_writer(String, (String, Self) -> Result[Unit, TraceError]) -> Unit
+pub fn Trace::register_proto(TraceProtocol) -> String raise TraceError
+pub fn Trace::register_protocol(TraceProtocol) -> Unit raise TraceError
+pub fn Trace::register_reader(String, (String) -> Result[TraceReader, TraceError]) -> Unit raise TraceError
+pub fn Trace::register_reader_with_id(String, (String, TraceId) -> Result[TraceReader, TraceError]) -> Unit raise TraceError
+pub fn Trace::register_stream_reader(String, (String) -> Result[TraceStreamReader, TraceError]) -> Unit raise TraceError
+pub fn Trace::register_stream_reader_with_id(String, (String, TraceId) -> Result[TraceStreamReader, TraceError]) -> Unit raise TraceError
+pub fn Trace::register_tool(name~ : String, supported_tags~ : Array[String]) -> TraceTool raise TraceError
+pub fn Trace::register_writer(String, (String, Self) -> Result[Unit, TraceError]) -> Unit raise TraceError
 pub fn Trace::remove_loaded(Self) -> Unit
 pub fn Trace::save(String, Self) -> Result[Unit, TraceError]
 pub fn Trace::set_attr(Self, String, TraceAttrValue) -> Self
@@ -196,6 +197,14 @@ pub fn Trace::set_meta(Self, TraceMeta) -> Self
 pub fn Trace::supports(Self, String) -> Bool
 pub fn Trace::to_bytes(Self) -> Result[Bytes, TraceError]
 pub fn Trace::tool(Self) -> TraceTool
+pub fn Trace::try_register_proto(TraceProtocol) -> Result[String, TraceError]
+pub fn Trace::try_register_protocol(TraceProtocol) -> Result[Unit, TraceError]
+pub fn Trace::try_register_reader(String, (String) -> Result[TraceReader, TraceError]) -> Result[Unit, TraceError]
+pub fn Trace::try_register_reader_with_id(String, (String, TraceId) -> Result[TraceReader, TraceError]) -> Result[Unit, TraceError]
+pub fn Trace::try_register_stream_reader(String, (String) -> Result[TraceStreamReader, TraceError]) -> Result[Unit, TraceError]
+pub fn Trace::try_register_stream_reader_with_id(String, (String, TraceId) -> Result[TraceStreamReader, TraceError]) -> Result[Unit, TraceError]
+pub fn Trace::try_register_tool(name~ : String, supported_tags~ : Array[String]) -> Result[TraceTool, TraceError]
+pub fn Trace::try_register_writer(String, (String, Self) -> Result[Unit, TraceError]) -> Result[Unit, TraceError]
 
 pub(all) enum TraceAttrValue {
   Binary(BinaryInfo)

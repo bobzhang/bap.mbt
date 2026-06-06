@@ -107,6 +107,98 @@ test "project disassembly basic decodes one instruction and remainder" {
 }
 
 ///|
+fn basic_instruction_strings(
+  instruction : @project.ProjectDisassemblyInstruction,
+) -> Array[String] {
+  let parts = [instruction.name()]
+  for operand in instruction.operands() {
+    parts.push(operand.to_string())
+  }
+  parts
+}
+
+///|
+test "translated BAP basic disassembly decodes x86_64 llvm samples" {
+  let disasm = match
+    @project.ProjectDisassemblyBasic::create("x86_64", backend="llvm") {
+    Ok(disasm) => disasm
+    Err(reason) => fail(reason)
+  }
+  let samples : Array[
+    (Bytes, Array[String], Array[@project.ProjectInstructionKind]),
+  ] = [
+    (b"\x48\x83\xec\x08", ["SUB64ri8", "RSP", "RSP", "0x8"], []),
+    (
+      b"\xe8\x47\xee\xff\xff",
+      ["CALL64pcrel32", "-0x11b9"],
+      [ProjectCall, ProjectMayAffectControlFlow],
+    ),
+    (
+      b"\x8b\x40\x10",
+      ["MOV32rm", "EAX", "RAX", "0x1", "Nil", "0x10", "Nil"],
+      [ProjectMayLoad],
+    ),
+    (b"\x48\x83\xc4\x08", ["ADD64ri8", "RSP", "RSP", "0x8"], []),
+    (
+      b"\xc3",
+      ["RET"],
+      [
+        ProjectReturn,
+        ProjectBarrier,
+        ProjectTerminator,
+        ProjectMayAffectControlFlow,
+      ],
+    ),
+  ]
+  for sample in samples {
+    let memory = @memory.Memory::from_bytes(
+      endian=LittleEndian,
+      start=0xe000UL,
+      sample.0,
+    )
+    match disasm.insn_of_mem(memory) {
+      Ok(result) => {
+        assert_true(result.memory().length() == sample.0.length())
+        assert_true(result.remainder().is_finished())
+        match result.instruction() {
+          Some(instruction) => {
+            assert_true(basic_instruction_strings(instruction) == sample.1)
+            assert_true(instruction.kinds() == sample.2)
+          }
+          None => fail("missing x86_64 llvm instruction")
+        }
+      }
+      Err(reason) => fail(reason)
+    }
+  }
+
+  let sequence = b"\x48\x83\xec\x08" +
+    b"\xe8\x47\xee\xff\xff" +
+    b"\x8b\x40\x10" +
+    b"\x48\x83\xc4\x08" +
+    b"\xc3"
+  let run_memory = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0xe100UL,
+    sequence,
+  )
+  let state = disasm.store_kinds().run(run_memory)
+  let insns = state.insns()
+  assert_true(insns.length() == samples.length())
+  assert_true(insns.map(item => item.0.length()) == [4, 5, 3, 4, 1])
+  assert_true(state.addr() == 0xe100UL + sequence.length().to_uint64())
+  for i in 0..<samples.length() {
+    match insns[i].1 {
+      Some(instruction) => {
+        assert_true(basic_instruction_strings(instruction) == samples[i].1)
+        assert_true(instruction.kinds() == samples[i].2)
+      }
+      None => fail("missing run instruction")
+    }
+  }
+}
+
+///|
 test "project disassembly basic run exposes state helpers and stop predicates" {
   let memory = @memory.Memory::from_bytes(
     endian=LittleEndian,

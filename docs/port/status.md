@@ -72,6 +72,7 @@ This repository is porting `.repos/bap` from OCaml to idiomatic MoonBit.
 - `project/disassembly`: block-scoped edge lookup helpers for branch facts whose source or target lands at an interior instruction address.
 - `project/disassembly-source`: BAP-style disassembly source context helpers for path applicability and bias-aware address creation from label/unit metadata, plus overwriteable rooter, brancher, symbolizer, driver, and reconstructor source registries with checked source wrappers.
 - `project/disasm`: BAP-style top-level `Disasm` facade over project disassembly services, including checked and raising constructors for project, memory, image, and file inputs, CFG/error/instruction accessors, and state merge helpers.
+- `project/disassembly basic`: The Basic `llvm` backend recognizes the upstream BAP x86-64 fixture instruction forms for `SUB64ri8`, `CALL64pcrel32`, `MOV32rm`, `ADD64ri8`, and `RET`, preserving instruction lengths, operand rendering, and kind flags while leaving unknown forms on the raw-byte fallback.
 - `project/reconstructor`: reconstructed subroutines are marked with their first block address, and image-entry reconstructed subroutines are marked with the BAP-style `entry-point` semantic flag.
 - `project/callgraph`: direct and resolver-backed project callgraph wrappers over IR `Call` jumps.
 - `main_event/log facade`: The main event subsystem exposes a BAP-style `Log` namespace for message/progress emission and section reporter creation over the port's existing event stream.

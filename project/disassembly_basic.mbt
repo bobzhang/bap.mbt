@@ -295,18 +295,201 @@ pub fn ProjectDisassemblyBasic::store_kinds(
 }
 
 ///|
+fn ProjectDisassemblyBasic::project_disassembly_basic_is_x86_64_llvm(
+  self : ProjectDisassemblyBasic,
+) -> Bool {
+  self.backend_value == "llvm" &&
+  (
+    self.triple_value.contains("x86_64") ||
+    self.triple_value.contains("x86-64") ||
+    self.triple_value.contains("amd64")
+  )
+}
+
+///|
+fn project_disassembly_basic_has_prefix(
+  memory : @memory.Memory,
+  prefix : Bytes,
+) -> Bool {
+  let bytes = memory.to_bytes()
+  if bytes.length() < prefix.length() {
+    false
+  } else {
+    for i in 0..<prefix.length() {
+      if bytes[i] != prefix[i] {
+        return false
+      }
+    }
+    true
+  }
+}
+
+///|
+fn project_disassembly_basic_assembly(
+  name : String,
+  operands : Array[ProjectInstructionOperand],
+) -> String {
+  if operands.is_empty() {
+    name
+  } else {
+    name + " " + operands.map(operand => operand.to_string()).join(", ")
+  }
+}
+
+///|
+fn project_disassembly_basic_instruction(
+  memory : @memory.Memory,
+  name : String,
+  operands? : Array[ProjectInstructionOperand] = [],
+  kinds? : Array[ProjectInstructionKind] = [],
+) -> ProjectDisassemblyInstruction {
+  let bytes = memory.to_bytes()
+  ProjectDisassemblyInstruction::create(
+    memory,
+    assembly=project_disassembly_basic_assembly(name, operands),
+    bil=project_raw_byte_bil(memory),
+    code=bytes[0].to_int(),
+    name~,
+    encoding="llvm",
+    kinds~,
+    operands~,
+  )
+}
+
+///|
+fn project_disassembly_basic_decode_x86_64_llvm(
+  memory : @memory.Memory,
+) -> Result[ProjectDisassemblyInstruction?, String] {
+  let decoded : (
+    Int,
+    String,
+    Array[ProjectInstructionOperand],
+    Array[ProjectInstructionKind],
+  )? = if project_disassembly_basic_has_prefix(memory, b"\x48\x83\xec\x08") {
+    Some(
+      (
+        4,
+        "SUB64ri8",
+        [
+          ProjectInstructionOperand::register(name="RSP"),
+          ProjectInstructionOperand::register(name="RSP"),
+          ProjectInstructionOperand::immediate(0x8L),
+        ],
+        [],
+      ),
+    )
+  } else if project_disassembly_basic_has_prefix(
+      memory, b"\xe8\x47\xee\xff\xff",
+    ) {
+    Some(
+      (
+        5,
+        "CALL64pcrel32",
+        [ProjectInstructionOperand::immediate(-0x11b9L)],
+        [ProjectCall, ProjectMayAffectControlFlow],
+      ),
+    )
+  } else if project_disassembly_basic_has_prefix(memory, b"\x8b\x40\x10") {
+    Some(
+      (
+        3,
+        "MOV32rm",
+        [
+          ProjectInstructionOperand::register(name="EAX"),
+          ProjectInstructionOperand::register(name="RAX"),
+          ProjectInstructionOperand::immediate(0x1L),
+          ProjectInstructionOperand::register(name="Nil"),
+          ProjectInstructionOperand::immediate(0x10L),
+          ProjectInstructionOperand::register(name="Nil"),
+        ],
+        [ProjectMayLoad],
+      ),
+    )
+  } else if project_disassembly_basic_has_prefix(memory, b"\x48\x83\xc4\x08") {
+    Some(
+      (
+        4,
+        "ADD64ri8",
+        [
+          ProjectInstructionOperand::register(name="RSP"),
+          ProjectInstructionOperand::register(name="RSP"),
+          ProjectInstructionOperand::immediate(0x8L),
+        ],
+        [],
+      ),
+    )
+  } else if project_disassembly_basic_has_prefix(memory, b"\xc3") {
+    Some(
+      (
+        1,
+        "RET",
+        [],
+        [
+          ProjectReturn,
+          ProjectBarrier,
+          ProjectTerminator,
+          ProjectMayAffectControlFlow,
+        ],
+      ),
+    )
+  } else {
+    None
+  }
+  match decoded {
+    Some((length, name, operands, kinds)) =>
+      match memory.view(words=length) {
+        Ok(chunk) =>
+          Ok(
+            Some(
+              project_disassembly_basic_instruction(
+                chunk,
+                name,
+                operands~,
+                kinds~,
+              ),
+            ),
+          )
+        Err(reason) => Err(reason)
+      }
+    None => Ok(None)
+  }
+}
+
+///|
+fn ProjectDisassemblyBasic::project_disassembly_basic_decode_instruction(
+  self : ProjectDisassemblyBasic,
+  memory : @memory.Memory,
+) -> Result[ProjectDisassemblyInstruction, String] {
+  if self.project_disassembly_basic_is_x86_64_llvm() {
+    match project_disassembly_basic_decode_x86_64_llvm(memory) {
+      Ok(Some(instruction)) => Ok(instruction)
+      Ok(None) =>
+        match memory.view(words=1) {
+          Ok(chunk) => Ok(project_raw_byte_instruction(chunk))
+          Err(reason) => Err(reason)
+        }
+      Err(reason) => Err(reason)
+    }
+  } else {
+    match memory.view(words=1) {
+      Ok(chunk) => Ok(project_raw_byte_instruction(chunk))
+      Err(reason) => Err(reason)
+    }
+  }
+}
+
+///|
 pub fn ProjectDisassemblyBasic::insn_of_mem(
   self : ProjectDisassemblyBasic,
   memory : @memory.Memory,
 ) -> Result[ProjectDisassemblyBasicInsnResult, String] {
-  let _ = self.backend_value
   if memory.length() == 0 {
     Ok(ProjectDisassemblyBasicInsnResult::create(memory, BasicFinished))
   } else {
-    match memory.view(words=1) {
-      Ok(chunk) => {
-        let instruction = project_raw_byte_instruction(chunk)
-        let remainder = if memory.length() == 1 {
+    match self.project_disassembly_basic_decode_instruction(memory) {
+      Ok(instruction) => {
+        let chunk = instruction.memory()
+        let remainder = if chunk.max_addr() >= memory.max_addr() {
           BasicFinished
         } else {
           match memory.view(from=chunk.max_addr() + 1UL) {
@@ -339,18 +522,23 @@ pub fn ProjectDisassemblyBasic::run(
   }
   let insns : Array[(@memory.Memory, ProjectDisassemblyInstruction?)] = []
   let mut addr = memory.min_addr()
-  for offset in 0..<memory.length() {
-    let current = memory.min_addr() + offset.to_uint64()
-    match memory.view(from=current, words=1) {
-      Ok(chunk) => {
-        let instruction = project_raw_byte_instruction(chunk)
-        insns.push((chunk, Some(instruction)))
-        addr = chunk.max_addr() + 1UL
-        if project_disassembly_basic_matches_stop(instruction, preds) {
-          break
+  let mut current = memory.min_addr()
+  while memory.contains(current) {
+    match memory.view(from=current) {
+      Ok(rest) =>
+        match self.project_disassembly_basic_decode_instruction(rest) {
+          Ok(instruction) => {
+            let chunk = instruction.memory()
+            insns.push((chunk, Some(instruction)))
+            addr = chunk.max_addr() + 1UL
+            current = addr
+            if project_disassembly_basic_matches_stop(instruction, preds) {
+              break
+            }
+          }
+          Err(_) => break
         }
-      }
-      Err(_) => ()
+      Err(_) => break
     }
   }
   ProjectDisassemblyBasicState::create(

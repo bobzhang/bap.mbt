@@ -1332,6 +1332,118 @@ fn project_disassembly_basic_x86_push_rm(
 }
 
 ///|
+fn project_disassembly_basic_x86_group5_control(
+  memory : @memory.Memory,
+  width : Int,
+  address_width : Int,
+) -> (
+  Int,
+  String,
+  Array[ProjectInstructionOperand],
+  Array[ProjectInstructionKind],
+)? {
+  let bytes = memory.to_bytes()
+  let (opcode_index, rex) = if address_width == 64 &&
+    bytes.length() >= 3 &&
+    bytes[0].to_int() >= 0x40 &&
+    bytes[0].to_int() <= 0x4f {
+    (1, bytes[0].to_int())
+  } else {
+    (0, 0)
+  }
+  if width != address_width || (width != 32 && width != 64) {
+    return None
+  }
+  if bytes.length() < opcode_index + 2 {
+    None
+  } else {
+    let opcode = bytes[opcode_index].to_int()
+    let modrm = bytes[opcode_index + 1].to_int()
+    let group = (modrm >> 3) & 0x7
+    let prefix = match group {
+      2 => "CALL"
+      4 => "JMP"
+      _ => ""
+    }
+    if opcode != 0xff || prefix == "" {
+      None
+    } else {
+      let control_kinds = if group == 2 {
+        [ProjectCall, ProjectMayAffectControlFlow]
+      } else {
+        [ProjectUnconditionalBranch, ProjectMayAffectControlFlow]
+      }
+      if ((modrm >> 6) & 0x3) == 0x3 {
+        let rex_b = if address_width == 64 && (rex & 0x1) != 0 { 8 } else { 0 }
+        Some(
+          (
+            opcode_index + 2,
+            "\{prefix}\{width}r",
+            [
+              ProjectInstructionOperand::register(
+                name=project_disassembly_basic_x86_gpr_name(
+                  (modrm & 0x7) + rex_b,
+                  width,
+                ),
+              ),
+            ],
+            control_kinds,
+          ),
+        )
+      } else {
+        match
+          project_disassembly_basic_x86_parse_mem_operand(
+            bytes,
+            opcode_index + 2,
+            modrm,
+            address_width,
+            rex,
+          ) {
+          Some((length, memory_operand)) => {
+            let kinds = if group == 2 {
+              [ProjectCall, ProjectMayLoad, ProjectMayAffectControlFlow]
+            } else {
+              [
+                ProjectUnconditionalBranch,
+                ProjectMayLoad,
+                ProjectMayAffectControlFlow,
+              ]
+            }
+            Some(
+              (
+                length,
+                "\{prefix}\{width}m",
+                project_disassembly_basic_x86_mem_operands(memory_operand),
+                kinds,
+              ),
+            )
+          }
+          None => None
+        }
+      }
+    }
+  }
+}
+
+///|
+fn project_disassembly_basic_x86_simple(
+  memory : @memory.Memory,
+  width : Int,
+  address_width : Int,
+) -> (
+  Int,
+  String,
+  Array[ProjectInstructionOperand],
+  Array[ProjectInstructionKind],
+)? {
+  match project_disassembly_basic_x86_reg_update(memory, width, address_width) {
+    Some(decoded) => Some(decoded)
+    None =>
+      project_disassembly_basic_x86_group5_control(memory, width, address_width)
+  }
+}
+
+///|
 fn project_disassembly_basic_x86_pop_reg(
   memory : @memory.Memory,
   width : Int,
@@ -1901,7 +2013,7 @@ fn project_disassembly_basic_decode_x86_llvm(
           Err(reason) => Err(reason)
         }
       } else {
-        match project_disassembly_basic_x86_reg_update(memory, 32, 32) {
+        match project_disassembly_basic_x86_simple(memory, 32, 32) {
           Some((length, name, operands, kinds)) =>
             match memory.view(words=length) {
               Ok(chunk) =>
@@ -2330,13 +2442,13 @@ fn project_disassembly_basic_decode_x86_64_llvm(
     String,
     Array[ProjectInstructionOperand],
     Array[ProjectInstructionKind],
-  )? = if project_disassembly_basic_x86_reg_update(memory, 64, 64) is Some(_) {
-    let (length, name, operands, kinds) = project_disassembly_basic_x86_reg_update(
+  )? = if project_disassembly_basic_x86_simple(memory, 64, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_simple(
       memory, 64, 64,
     ).unwrap()
     Some((length, name, operands, kinds))
-  } else if project_disassembly_basic_x86_reg_update(memory, 32, 64) is Some(_) {
-    let (length, name, operands, kinds) = project_disassembly_basic_x86_reg_update(
+  } else if project_disassembly_basic_x86_simple(memory, 32, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_simple(
       memory, 32, 64,
     ).unwrap()
     Some((length, name, operands, kinds))

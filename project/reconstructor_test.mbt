@@ -604,6 +604,42 @@ test "project reconstructor materializes Basic BIL fallback jumps" {
     Err(reason) => fail(reason)
   }
 
+  let indirect_call_disassembly = reconstructor_basic_disassembly(
+    "x86_64",
+    b"\xff\xd0",
+    start=0x7320UL,
+  )
+  let indirect_call_project = @project.Project::empty(
+    @core_theory.Target::x86_64(),
+  ).with_disassembly(indirect_call_disassembly)
+  match indirect_call_project.reconstruct() {
+    Ok(reconstructed) => {
+      let block = reconstructed.program().subs()[0].blks()[0]
+      assert_reconstructor_text(reconstructor_jmp_text(block.jmps()), [
+        "call *RAX:imm64 with noreturn",
+      ])
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let indirect_goto_disassembly = reconstructor_basic_disassembly(
+    "x86_64",
+    b"\xff\x60\x10",
+    start=0x7322UL,
+  )
+  let indirect_goto_project = @project.Project::empty(
+    @core_theory.Target::x86_64(),
+  ).with_disassembly(indirect_goto_disassembly)
+  match indirect_goto_project.reconstruct() {
+    Ok(reconstructed) => {
+      let block = reconstructed.program().subs()[0].blks()[0]
+      assert_reconstructor_text(reconstructor_jmp_text(block.jmps()), [
+        "goto *load(mem:mem64x8, (RAX:imm64 + 0x10:64u)):imm64",
+      ])
+    }
+    Err(reason) => fail(reason)
+  }
+
   let conditional_disassembly = reconstructor_basic_disassembly(
     "armv7",
     b"\xf6\xff\xff\x1a",

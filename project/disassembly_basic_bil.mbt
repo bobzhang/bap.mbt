@@ -708,6 +708,49 @@ fn ProjectDisassemblyInstruction::project_basic_bil_jump(
 }
 
 ///|
+fn project_basic_bil_indirect_control(
+  attr : @types.StmtAttribute[String],
+  target : @types.Exp,
+) -> Array[@types.Stmt] {
+  [@types.Stmt::encode(attr, "indirect"), @types.Stmt::jmp(target)]
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_control_reg(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  attr : @types.StmtAttribute[String],
+) -> Result[Array[@types.Stmt], String] {
+  match self.project_basic_bil_register(0, width) {
+    Ok(target) =>
+      Ok(project_basic_bil_indirect_control(attr, @types.Exp::var_exp(target)))
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_control_mem(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  attr : @types.StmtAttribute[String],
+) -> Result[Array[@types.Stmt], String] {
+  let (addr, mem, _) = match self.project_basic_bil_memory_addr(0) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  Ok(
+    project_basic_bil_indirect_control(
+      attr,
+      @types.Exp::load(mem=@types.Exp::var_exp(mem), addr~, LittleEndian, size),
+    ),
+  )
+}
+
+///|
 fn project_basic_bil_control_with_width(
   attr : @types.StmtAttribute[String],
   target : UInt64,
@@ -1011,6 +1054,14 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "JMP_4" => self.project_basic_bil_jump()
     "CALLPCREL32" => self.project_basic_bil_call(32)
     "CALL64PCREL32" => self.project_basic_bil_call(64)
+    "CALL32R" => self.project_basic_bil_control_reg(32, @types.Stmt::call())
+    "CALL64R" => self.project_basic_bil_control_reg(64, @types.Stmt::call())
+    "CALL32M" => self.project_basic_bil_control_mem(32, @types.Stmt::call())
+    "CALL64M" => self.project_basic_bil_control_mem(64, @types.Stmt::call())
+    "JMP32R" => self.project_basic_bil_control_reg(32, @types.Stmt::goto())
+    "JMP64R" => self.project_basic_bil_control_reg(64, @types.Stmt::goto())
+    "JMP32M" => self.project_basic_bil_control_mem(32, @types.Stmt::goto())
+    "JMP64M" => self.project_basic_bil_control_mem(64, @types.Stmt::goto())
     "B" => self.project_basic_bil_arm_branch(false)
     "BNE" => self.project_basic_bil_arm_branch(true)
     "BX" => self.project_basic_bil_bx()

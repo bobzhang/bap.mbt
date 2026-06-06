@@ -612,6 +612,82 @@ test "translated BAP basic disassembly decodes x86 ModRM push fixtures" {
 }
 
 ///|
+test "translated BAP basic disassembly decodes x86 group 5 control fixtures" {
+  let samples : Array[
+    (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),
+  ] = [
+    (
+      "x86_64",
+      b"\xff\xd0",
+      2,
+      ["CALL64r", "RAX"],
+      [ProjectCall, ProjectMayAffectControlFlow],
+    ),
+    (
+      "x86_64",
+      b"\xff\x50\x10",
+      3,
+      ["CALL64m", "RAX", "0x1", "Nil", "0x10", "Nil"],
+      [ProjectCall, ProjectMayAffectControlFlow, ProjectMayLoad],
+    ),
+    (
+      "x86_64",
+      b"\xff\xe0",
+      2,
+      ["JMP64r", "RAX"],
+      [ProjectUnconditionalBranch, ProjectMayAffectControlFlow],
+    ),
+    (
+      "x86_64",
+      b"\xff\x60\x10",
+      3,
+      ["JMP64m", "RAX", "0x1", "Nil", "0x10", "Nil"],
+      [ProjectUnconditionalBranch, ProjectMayAffectControlFlow, ProjectMayLoad],
+    ),
+    (
+      "x86",
+      b"\xff\xd0",
+      2,
+      ["CALL32r", "EAX"],
+      [ProjectCall, ProjectMayAffectControlFlow],
+    ),
+    (
+      "x86",
+      b"\xff\x65\xfc",
+      3,
+      ["JMP32m", "EBP", "0x1", "Nil", "-0x4", "Nil"],
+      [ProjectUnconditionalBranch, ProjectMayAffectControlFlow, ProjectMayLoad],
+    ),
+  ]
+  for sample in samples {
+    let disasm = match
+      @project.ProjectDisassemblyBasic::create(sample.0, backend="llvm") {
+      Ok(disasm) => disasm
+      Err(reason) => fail(reason)
+    }
+    let memory = @memory.Memory::from_bytes(
+      endian=LittleEndian,
+      start=0xe1b0UL,
+      sample.1,
+    )
+    match disasm.insn_of_mem(memory) {
+      Ok(result) => {
+        assert_true(result.memory().length() == sample.2)
+        assert_true(result.remainder().is_finished())
+        match result.instruction() {
+          Some(instruction) => {
+            assert_true(basic_instruction_strings(instruction) == sample.3)
+            assert_true(instruction.kinds() == sample.4)
+          }
+          None => fail("missing x86 group 5 control instruction")
+        }
+      }
+      Err(reason) => fail(reason)
+    }
+  }
+}
+
+///|
 test "translated BAP basic disassembly decodes x86 register pop fixtures" {
   let samples : Array[
     (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),

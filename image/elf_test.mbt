@@ -871,6 +871,7 @@ test "image ELF backend refines target system and ABI from OSABI" {
     ("hexagon", 0xa4, 0, "hexagon", "target:hexagon", UnknownSystem, SysV),
     ("cuda64", 0xbe, 0, "nvptx64", "target:nvptx64", UnknownSystem, SysV),
     ("xcore", 0xcb, 0, "xcore", "target:xcore", UnknownSystem, SysV),
+    ("amdgpu", 0xe0, 0, "r600", "target:r600", UnknownSystem, SysV),
     (
       "loongarch-linux",
       0x102,

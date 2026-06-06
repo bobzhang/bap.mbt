@@ -2076,6 +2076,7 @@ fn image_elf_target(header : ImageElfHeader) -> @core_theory.Target {
         ImageElf32 => @core_theory.Target::nvptx()
       }
     0xcb => @core_theory.Target::xcore()
+    0xe0 => @core_theory.Target::r600()
     0xf3 =>
       match header.class {
         ImageElf64 => @core_theory.Target::riscv64()

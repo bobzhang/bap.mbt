@@ -230,6 +230,7 @@ type Project
 pub fn Project::add_library(Self, Library) -> Self
 pub fn Project::apply_brancher(Self, brancher? : ProjectBrancher) -> Result[Self, String]
 pub fn Project::apply_brancher_named(Self, brancher~ : String) -> Result[Self, String]
+pub fn Project::apply_x86_simd(Self, ProjectX86SimdState) -> Result[ProjectX86SimdState, String]
 pub fn Project::arch(Self) -> @core_theory.Target
 pub fn Project::base_address(Self) -> UInt64?
 pub fn Project::binary(target~ : @core_theory.Target, filename~ : String, base? : UInt64, offset? : Int, length? : Int, entry? : UInt64) -> Result[Self, String]
@@ -679,6 +680,7 @@ type ProjectDisassemblyState
 pub fn ProjectDisassemblyState::add_block(Self, @memory.Memory) -> Self
 pub fn ProjectDisassemblyState::add_edge(Self, ProjectDisassemblyEdge) -> Self
 pub fn ProjectDisassemblyState::add_instruction(Self, ProjectDisassemblyInstruction) -> Self
+pub fn ProjectDisassemblyState::apply_x86_simd(Self, ProjectX86SimdState) -> Result[ProjectX86SimdState, String]
 pub fn ProjectDisassemblyState::block_count(Self) -> Int
 pub fn ProjectDisassemblyState::block_view(Self, @memory.Memory) -> Result[ProjectDisassemblyBlock, String]
 pub fn ProjectDisassemblyState::blocks(Self) -> Array[@memory.Memory]

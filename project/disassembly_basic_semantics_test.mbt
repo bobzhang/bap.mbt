@@ -33,6 +33,28 @@ fn semantic_decode_x86(
 }
 
 ///|
+fn semantic_decode_x86_state(
+  bytes : Bytes,
+  start~ : UInt64,
+) -> @project.ProjectDisassemblyState raise {
+  let disasm = match
+    @project.ProjectDisassemblyBasic::create("x86", backend="llvm") {
+    Ok(disasm) => disasm
+    Err(reason) => fail(reason)
+  }
+  let memory = @memory.Memory::from_bytes(endian=LittleEndian, start~, bytes)
+  let basic_state = disasm.run(memory)
+  let instructions : Array[@project.ProjectDisassemblyInstruction] = []
+  for item in basic_state.insns() {
+    match item.1 {
+      Some(instruction) => instructions.push(instruction)
+      None => ()
+    }
+  }
+  @project.ProjectDisassemblyState::create(blocks=[memory], instructions~)
+}
+
+///|
 fn semantic_xmm_state(
   xmm0 : @types.Word,
   xmm1 : @types.Word,
@@ -270,5 +292,54 @@ test "project Basic x86 SIMD stream errors include instruction address" {
       assert_true(reason.contains("0x6204"))
     }
     Ok(_) => fail("unsupported instruction stream succeeded")
+  }
+}
+
+///|
+test "project disassembly state applies decoded x86 SIMD semantics" {
+  let source = semantic_word128("0f0e0d0c0b0a09080706050403020100")
+  let dest = semantic_word128("ff0000000000000000000000000000ff")
+  let disassembly = semantic_decode_x86_state(
+    b"\x66\x0f\xda\xc8" + b"\x66\x0f\xde\xc8",
+    start=0x6300UL,
+  )
+  assert_true(disassembly.instruction_count() == 2)
+  match disassembly.apply_x86_simd(semantic_xmm_state(source, dest)) {
+    Ok(next) => assert_true(next.get_register("xmm1") == Some(source))
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+test "project facade applies decoded x86 SIMD semantics" {
+  let source = semantic_word128("0f0e0d0c0b0a09080706050403020100")
+  let dest = semantic_word128("ff0000000000000000000000000000ff")
+  let disassembly = semantic_decode_x86_state(
+    b"\x66\x0f\xda\xc8" + b"\x66\x0f\xde\xc8",
+    start=0x6400UL,
+  )
+  let project = @project.Project::empty(@core_theory.Target::unknown()).with_disassembly(
+    disassembly,
+  )
+  match project.apply_x86_simd(semantic_xmm_state(source, dest)) {
+    Ok(next) => assert_true(next.get_register("xmm1") == Some(source))
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+test "project disassembly x86 SIMD facade keeps stream error context" {
+  let source = semantic_word128("0f0e0d0c0b0a09080706050403020100")
+  let dest = semantic_word128("ff0000000000000000000000000000ff")
+  let disassembly = semantic_decode_x86_state(
+    b"\x66\x0f\xda\xc8\xeb\xfe",
+    start=0x6500UL,
+  )
+  match disassembly.apply_x86_simd(semantic_xmm_state(source, dest)) {
+    Err(reason) => {
+      assert_true(reason.contains("JMP_1"))
+      assert_true(reason.contains("0x6504"))
+    }
+    Ok(_) => fail("unsupported project disassembly stream succeeded")
   }
 }

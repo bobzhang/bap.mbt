@@ -277,3 +277,19 @@ pub fn ProjectDisassemblyBasicState::apply_x86_simd(
   }
   state.apply_instructions(instructions)
 }
+
+///|
+pub fn ProjectDisassemblyState::apply_x86_simd(
+  self : ProjectDisassemblyState,
+  state : ProjectX86SimdState,
+) -> Result[ProjectX86SimdState, String] {
+  state.apply_instructions(self.instructions())
+}
+
+///|
+pub fn Project::apply_x86_simd(
+  self : Project,
+  state : ProjectX86SimdState,
+) -> Result[ProjectX86SimdState, String] {
+  self.disassembly().apply_x86_simd(state)
+}

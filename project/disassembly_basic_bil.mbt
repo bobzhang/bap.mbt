@@ -343,6 +343,28 @@ fn project_basic_bil_x86_jcc_condition(mnemonic : String) -> @types.Exp {
 }
 
 ///|
+fn project_basic_bil_x86_setcc_condition(mnemonic : String) -> @types.Exp {
+  match mnemonic {
+    "SETO" => project_basic_bil_x86_jcc_condition("JO")
+    "SETNO" => project_basic_bil_x86_jcc_condition("JNO")
+    "SETB" => project_basic_bil_x86_jcc_condition("JB")
+    "SETAE" => project_basic_bil_x86_jcc_condition("JAE")
+    "SETE" => project_basic_bil_x86_jcc_condition("JE")
+    "SETNE" => project_basic_bil_x86_jcc_condition("JNE")
+    "SETBE" => project_basic_bil_x86_jcc_condition("JBE")
+    "SETA" => project_basic_bil_x86_jcc_condition("JA")
+    "SETS" => project_basic_bil_x86_jcc_condition("JS")
+    "SETNS" => project_basic_bil_x86_jcc_condition("JNS")
+    "SETP" => project_basic_bil_x86_jcc_condition("JP")
+    "SETNP" => project_basic_bil_x86_jcc_condition("JNP")
+    "SETL" => project_basic_bil_x86_jcc_condition("JL")
+    "SETGE" => project_basic_bil_x86_jcc_condition("JGE")
+    "SETLE" => project_basic_bil_x86_jcc_condition("JLE")
+    _ => project_basic_bil_x86_jcc_condition("JG")
+  }
+}
+
+///|
 fn project_basic_bil_arm_offset_addr(
   base : @types.Var,
   offset : Int64,
@@ -974,6 +996,45 @@ fn ProjectDisassemblyInstruction::project_basic_bil_mov_mi(
       ),
     ),
   ])
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_setcc(
+  self : ProjectDisassemblyInstruction,
+) -> Result[Array[@types.Stmt], String] {
+  let value = @types.Exp::cast(
+    @types.CastKind::unsigned(),
+    8,
+    project_basic_bil_x86_setcc_condition(self.name().to_upper()),
+  )
+  match self.operands().length() {
+    1 => {
+      let dst = match self.project_basic_bil_register(0, 8) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      Ok([@types.Stmt::move_stmt(dst, value)])
+    }
+    5 => {
+      let (addr, mem, _) = match self.project_basic_bil_memory_addr(0) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      Ok([
+        @types.Stmt::move_stmt(
+          mem,
+          @types.Exp::store(
+            mem=@types.Exp::var_exp(mem),
+            addr~,
+            value,
+            LittleEndian,
+            R8,
+          ),
+        ),
+      ])
+    }
+    count => Err("unsupported \{self.name()} operand count \{count}")
+  }
 }
 
 ///|
@@ -1901,6 +1962,22 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "TEST8RR" | "TEST8RR_REV" => self.project_basic_bil_test_rr(8)
     "TEST32RR" | "TEST32RR_REV" => self.project_basic_bil_test_rr(32)
     "TEST64RR" | "TEST64RR_REV" => self.project_basic_bil_test_rr(64)
+    "SETO"
+    | "SETNO"
+    | "SETB"
+    | "SETAE"
+    | "SETE"
+    | "SETNE"
+    | "SETBE"
+    | "SETA"
+    | "SETS"
+    | "SETNS"
+    | "SETP"
+    | "SETNP"
+    | "SETL"
+    | "SETGE"
+    | "SETLE"
+    | "SETG" => self.project_basic_bil_setcc()
     "PUSH32R" | "PUSH32I8" | "PUSH32I32" => self.project_basic_bil_push(32)
     "PUSH64R" | "PUSH64I8" | "PUSH64I32" => self.project_basic_bil_push(64)
     "PUSH32M" => self.project_basic_bil_push_mem(32)

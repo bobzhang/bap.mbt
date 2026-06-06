@@ -894,6 +894,95 @@ fn project_disassembly_basic_x86_system(
 }
 
 ///|
+fn project_disassembly_basic_x86_setcc_name(opcode : Int) -> String {
+  match opcode & 0xf {
+    0x0 => "SETO"
+    0x1 => "SETNO"
+    0x2 => "SETB"
+    0x3 => "SETAE"
+    0x4 => "SETE"
+    0x5 => "SETNE"
+    0x6 => "SETBE"
+    0x7 => "SETA"
+    0x8 => "SETS"
+    0x9 => "SETNS"
+    0xa => "SETP"
+    0xb => "SETNP"
+    0xc => "SETL"
+    0xd => "SETGE"
+    0xe => "SETLE"
+    _ => "SETG"
+  }
+}
+
+///|
+fn project_disassembly_basic_x86_setcc(
+  memory : @memory.Memory,
+  address_width : Int,
+) -> (
+  Int,
+  String,
+  Array[ProjectInstructionOperand],
+  Array[ProjectInstructionKind],
+)? {
+  let bytes = memory.to_bytes()
+  let (opcode_index, rex) = if address_width == 64 &&
+    bytes.length() >= 2 &&
+    bytes[0].to_int() >= 0x40 &&
+    bytes[0].to_int() <= 0x4f {
+    (1, bytes[0].to_int())
+  } else {
+    (0, 0)
+  }
+  if bytes.length() < opcode_index + 3 || bytes[opcode_index].to_int() != 0x0f {
+    None
+  } else {
+    let opcode = bytes[opcode_index + 1].to_int()
+    if opcode < 0x90 || opcode > 0x9f {
+      None
+    } else {
+      let name = project_disassembly_basic_x86_setcc_name(opcode)
+      let modrm = bytes[opcode_index + 2].to_int()
+      let rex_b = if address_width == 64 && (rex & 0x1) != 0 { 8 } else { 0 }
+      if ((modrm >> 6) & 0x3) == 0x3 {
+        let dst = project_disassembly_basic_x86_gpr8_name(
+          (modrm & 0x7) + rex_b,
+          rex != 0,
+        )
+        Some(
+          (
+            opcode_index + 3,
+            name,
+            [ProjectInstructionOperand::register(name=dst)],
+            [],
+          ),
+        )
+      } else {
+        match
+          project_disassembly_basic_x86_parse_mem_operand(
+            bytes,
+            opcode_index + 3,
+            modrm,
+            address_width,
+            rex,
+          ) {
+          Some((length, memory_operand)) =>
+            Some(
+              (
+                length,
+                name,
+                project_disassembly_basic_x86_mem_operands(memory_operand),
+                [ProjectMayStore],
+              ),
+            )
+          None => None
+        }
+      }
+    }
+  }
+}
+
+///|
 fn project_disassembly_basic_x86_mov32ri(
   memory : @memory.Memory,
 ) -> (String, Int64)? {
@@ -3260,6 +3349,11 @@ fn project_disassembly_basic_decode_x86_llvm(
       } else if project_disassembly_basic_x86_system(memory, 32) is Some(_) {
         let (length, name) = project_disassembly_basic_x86_system(memory, 32).unwrap()
         Some((length, name, "", "", [], []))
+      } else if project_disassembly_basic_x86_setcc(memory, 32) is Some(_) {
+        let (length, name, operands, kinds) = project_disassembly_basic_x86_setcc(
+          memory, 32,
+        ).unwrap()
+        Some((length, name, "", "", operands, kinds))
       } else if project_disassembly_basic_x86_sign_extend_accumulator(
           memory, 32,
         )
@@ -3664,6 +3758,11 @@ fn project_disassembly_basic_decode_x86_64_llvm(
   } else if project_disassembly_basic_x86_system(memory, 64) is Some(_) {
     let (length, name) = project_disassembly_basic_x86_system(memory, 64).unwrap()
     Some((length, name, [], []))
+  } else if project_disassembly_basic_x86_setcc(memory, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_setcc(
+      memory, 64,
+    ).unwrap()
+    Some((length, name, operands, kinds))
   } else if project_disassembly_basic_x86_simple(memory, 64, 64) is Some(_) {
     let (length, name, operands, kinds) = project_disassembly_basic_x86_simple(
       memory, 64, 64,

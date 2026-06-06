@@ -1127,6 +1127,37 @@ test "project Basic BIL lift covers x86 movsx movzx" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 setcc" {
+  let sete = basic_bil_decode("x86", b"\x0f\x94\xc0", start=0x7053UL)
+  match sete.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["AL:imm8 := pad:8[ZF:imm1]"])
+    Err(reason) => fail(reason)
+  }
+
+  let setne = basic_bil_decode("x86", b"\x0f\x95\xc3", start=0x7054UL)
+  match setne.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["BL:imm8 := pad:8[(not ZF:imm1)]"])
+    Err(reason) => fail(reason)
+  }
+
+  let setb_ext = basic_bil_decode("x86_64", b"\x41\x0f\x92\xc0", start=0x7055UL)
+  match setb_ext.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["R8B:imm8 := pad:8[CF:imm1]"])
+    Err(reason) => fail(reason)
+  }
+
+  let setg_mem = basic_bil_decode("x86_64", b"\x0f\x9f\x45\xf8", start=0x7057UL)
+  match setg_mem.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "mem:mem64x8 := store(mem:mem64x8, (RBP:imm64 - 8:64u), pad:8[(not (ZF:imm1 | (SF:imm1 ^ OF:imm1)))])",
+      ])
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86 accumulator sign-extension ops" {
   let cdqe = basic_bil_decode("x86_64", b"\x48\x98", start=0x7056UL)
   match cdqe.lift_basic_bil() {

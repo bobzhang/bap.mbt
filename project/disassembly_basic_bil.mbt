@@ -1660,14 +1660,20 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "XCHG8RM" => self.project_basic_bil_xchg_rm(8)
     "XCHG32RM" => self.project_basic_bil_xchg_rm(32)
     "XCHG64RM" => self.project_basic_bil_xchg_rm(64)
+    "OR8RR" | "OR8RR_REV" =>
+      self.project_basic_bil_binop_rr(8, @types.BinOp::bit_or())
     "OR32RR" | "OR32RR_REV" =>
       self.project_basic_bil_binop_rr(32, @types.BinOp::bit_or())
     "OR64RR" | "OR64RR_REV" =>
       self.project_basic_bil_binop_rr(64, @types.BinOp::bit_or())
+    "AND8RR" | "AND8RR_REV" =>
+      self.project_basic_bil_binop_rr(8, @types.BinOp::bit_and())
     "AND32RR" | "AND32RR_REV" =>
       self.project_basic_bil_binop_rr(32, @types.BinOp::bit_and())
     "AND64RR" | "AND64RR_REV" =>
       self.project_basic_bil_binop_rr(64, @types.BinOp::bit_and())
+    "XOR8RR" | "XOR8RR_REV" =>
+      self.project_basic_bil_binop_rr(8, @types.BinOp::bit_xor())
     "XOR32RR" | "XOR32RR_REV" =>
       self.project_basic_bil_binop_rr(32, @types.BinOp::bit_xor())
     "XOR64RR" | "XOR64RR_REV" =>

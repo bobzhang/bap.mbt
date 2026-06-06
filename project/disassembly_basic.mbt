@@ -1637,6 +1637,9 @@ fn project_disassembly_basic_x86_logic_rr(
     let modrm = bytes[opcode_index + 1].to_int()
     let op = if data_width == 8 {
       match opcode {
+        0x08 | 0x0a => "OR"
+        0x20 | 0x22 => "AND"
+        0x30 | 0x32 => "XOR"
         0x84 => "TEST"
         _ => ""
       }

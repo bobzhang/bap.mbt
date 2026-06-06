@@ -564,9 +564,14 @@ test "translated BAP basic disassembly decodes x86 register logical fixtures" {
     ("x86_64", b"\x48\x33\xc8", 3, ["XOR64rr_REV", "RCX", "RAX"], []),
     ("x86_64", b"\x48\x09\xd8", 3, ["OR64rr", "RAX", "RBX"], []),
     ("x86_64", b"\x48\x23\xc8", 3, ["AND64rr_REV", "RCX", "RAX"], []),
+    ("x86_64", b"\x44\x08\xc0", 3, ["OR8rr", "AL", "R8B"], []),
+    ("x86_64", b"\x45\x30\xc8", 3, ["XOR8rr", "R8B", "R9B"], []),
     ("x86", b"\x31\xc0", 2, ["XOR32rr", "EAX", "EAX"], []),
     ("x86", b"\x09\xd8", 2, ["OR32rr", "EAX", "EBX"], []),
     ("x86", b"\x23\xc8", 2, ["AND32rr_REV", "ECX", "EAX"], []),
+    ("x86", b"\x08\xd8", 2, ["OR8rr", "AL", "BL"], []),
+    ("x86", b"\x20\xe0", 2, ["AND8rr", "AL", "AH"], []),
+    ("x86", b"\x32\xc8", 2, ["XOR8rr_REV", "CL", "AL"], []),
   ]
   for sample in samples {
     let disasm = match

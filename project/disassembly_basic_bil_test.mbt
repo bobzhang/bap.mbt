@@ -344,10 +344,30 @@ test "project Basic BIL lift covers x86 register logical ops" {
     Err(reason) => fail(reason)
   }
 
+  let or8 = basic_bil_decode("x86", b"\x08\xe0", start=0x701eUL)
+  match or8.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["AL:imm8 := (AL:imm8 | AH:imm8)"])
+    Err(reason) => fail(reason)
+  }
+
+  let xor8_zero = basic_bil_decode("x86", b"\x30\xc0", start=0x701fUL)
+  match xor8_zero.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["AL:imm8 := 0:8u"])
+    Err(reason) => fail(reason)
+  }
+
   let and64_rev = basic_bil_decode("x86_64", b"\x48\x23\xc8", start=0x701fUL)
   match and64_rev.lift_basic_bil() {
     Ok(stmts) =>
       assert_basic_bil_text(stmts, ["RCX:imm64 := (RCX:imm64 & RAX:imm64)"])
+    Err(reason) => fail(reason)
+  }
+
+  let and8_ext = basic_bil_decode("x86_64", b"\x45\x20\xc8", start=0x7020UL)
+  match and8_ext.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["R8B:imm8 := (R8B:imm8 & R9B:imm8)"])
     Err(reason) => fail(reason)
   }
 }

@@ -1,0 +1,176 @@
+///|
+fn basic_bil_decode(
+  triple : String,
+  bytes : Bytes,
+  start~ : UInt64,
+) -> @project.ProjectDisassemblyInstruction raise {
+  let disasm = match
+    @project.ProjectDisassemblyBasic::create(triple, backend="llvm") {
+    Ok(disasm) => disasm
+    Err(reason) => fail(reason)
+  }
+  let memory = @memory.Memory::from_bytes(endian=LittleEndian, start~, bytes)
+  match disasm.insn_of_mem(memory) {
+    Ok(result) =>
+      match result.instruction() {
+        Some(instruction) => instruction
+        None => fail("missing decoded instruction")
+      }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+fn basic_bil_decode_state(
+  bytes : Bytes,
+  start~ : UInt64,
+) -> @project.ProjectDisassemblyState raise {
+  let disasm = match
+    @project.ProjectDisassemblyBasic::create("x86_64", backend="llvm") {
+    Ok(disasm) => disasm
+    Err(reason) => fail(reason)
+  }
+  let memory = @memory.Memory::from_bytes(endian=LittleEndian, start~, bytes)
+  let basic_state = disasm.run(memory)
+  let instructions : Array[@project.ProjectDisassemblyInstruction] = []
+  for item in basic_state.insns() {
+    match item.1 {
+      Some(instruction) => instructions.push(instruction)
+      None => ()
+    }
+  }
+  @project.ProjectDisassemblyState::create(blocks=[memory], instructions~)
+}
+
+///|
+fn basic_bil_text(stmts : Array[@types.Stmt]) -> Array[String] {
+  stmts.map(stmt => stmt.to_string())
+}
+
+///|
+fn assert_basic_bil_text(
+  stmts : Array[@types.Stmt],
+  expected : Array[String],
+) -> Unit raise {
+  let actual = basic_bil_text(stmts)
+  if actual != expected {
+    fail("expected BIL " + expected.join(" | ") + ", got " + actual.join(" | "))
+  }
+}
+
+///|
+fn assert_string(actual : String, expected : String) -> Unit raise {
+  if actual != expected {
+    fail("expected " + expected + ", got " + actual)
+  }
+}
+
+///|
+test "project Basic BIL lift covers x86_64 stack arithmetic fixtures" {
+  let sub = basic_bil_decode("x86_64", b"\x48\x83\xec\x08", start=0x7000UL)
+  match sub.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["RSP:imm64 := (RSP:imm64 - 8:64u)"])
+    Err(reason) => fail(reason)
+  }
+
+  let add = basic_bil_decode("x86_64", b"\x48\x83\xc4\x08", start=0x7004UL)
+  match add.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["RSP:imm64 := (RSP:imm64 + 8:64u)"])
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+test "project Basic BIL lift covers x86_64 memory load fixture" {
+  let mov = basic_bil_decode("x86_64", b"\x8b\x40\x10", start=0x7100UL)
+  match mov.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "EAX:imm32 := load(mem:mem64x8, (RAX:imm64 + 0x10:64u)):imm32",
+      ])
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+test "project Basic BIL lift covers direct control transfers" {
+  let jmp = basic_bil_decode("x86", b"\xeb\xfe", start=0x7200UL)
+  match jmp.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 2)
+      assert_true(
+        @types.Stmt::decode(@types.Stmt::goto(), stmts[0]) == Some("0x7200"),
+      )
+      assert_string(stmts[1].to_string(), "jmp 0x7200:64u")
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let call = basic_bil_decode("x86_64", b"\xe8\x47\xee\xff\xff", start=0x7300UL)
+  match call.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 2)
+      assert_true(
+        @types.Stmt::decode(@types.Stmt::call(), stmts[0]) == Some("0x614c"),
+      )
+      assert_string(stmts[1].to_string(), "jmp 0x614C:64u")
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let ret = basic_bil_decode("x86_64", b"\xc3", start=0x7400UL)
+  match ret.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["special ret"])
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+test "project Basic BIL lift runs over disassembly state and project" {
+  let sequence = b"\x48\x83\xec\x08" +
+    b"\xe8\x47\xee\xff\xff" +
+    b"\x8b\x40\x10" +
+    b"\x48\x83\xc4\x08" +
+    b"\xc3"
+  let disassembly = basic_bil_decode_state(sequence, start=0x7500UL)
+  match disassembly.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 6)
+      assert_true(stmts[0].to_string().contains("RSP:imm64 - 8:64u"))
+      assert_true(
+        @types.Stmt::decode(@types.Stmt::call(), stmts[1]) == Some("0x6350"),
+      )
+      assert_true(stmts[3].to_string().contains("load(mem:mem64x8"))
+      assert_true(stmts[5].to_string() == "special ret")
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let project = @project.Project::empty(@core_theory.Target::unknown()).with_disassembly(
+    disassembly,
+  )
+  match project.lift_basic_bil() {
+    Ok(stmts) => assert_true(stmts.length() == 6)
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+test "project Basic BIL lift reports unsupported instruction context" {
+  let raw = basic_bil_decode("x86_64", b"\x90", start=0x7600UL)
+  match raw.lift_basic_bil() {
+    Err(reason) => assert_true(reason.contains("unsupported Basic BIL lift"))
+    Ok(_) => fail("raw byte instruction lifted")
+  }
+
+  let disassembly = basic_bil_decode_state(b"\x90", start=0x7600UL)
+  match disassembly.lift_basic_bil() {
+    Err(reason) => {
+      assert_true(reason.contains(".byte"))
+      assert_true(reason.contains("0x7600"))
+    }
+    Ok(_) => fail("unsupported disassembly state lifted")
+  }
+}

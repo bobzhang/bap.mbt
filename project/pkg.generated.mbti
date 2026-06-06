@@ -276,6 +276,7 @@ pub fn Project::image(Self) -> @image.Image?
 pub fn Project::interpreter(Self) -> String?
 pub fn Project::is_executable(Self) -> Bool?
 pub fn Project::libraries(Self) -> Array[Library]
+pub fn Project::lift_basic_bil(Self) -> Result[Array[@types.Stmt], String]
 pub fn Project::linear_sweep(Self, @memory.Memory, backend? : String) -> Result[Array[(@memory.Memory, ProjectDisassemblyInstruction?)], String]
 pub fn Project::linear_sweep_exn(Self, @memory.Memory, backend? : String) -> Array[(@memory.Memory, ProjectDisassemblyInstruction?)] raise ProjectDisassemblyLinearSweepError
 pub fn Project::load(Bytes, loader~ : String, target? : @core_theory.Target) -> Result[Self, String]
@@ -601,6 +602,7 @@ pub fn ProjectDisassemblyInstruction::has_side_effect(Self) -> Bool
 pub fn ProjectDisassemblyInstruction::is_branch(Self) -> Bool
 pub fn ProjectDisassemblyInstruction::is_kind(Self, ProjectInstructionKind) -> Bool
 pub fn ProjectDisassemblyInstruction::kinds(Self) -> Array[ProjectInstructionKind]
+pub fn ProjectDisassemblyInstruction::lift_basic_bil(Self) -> Result[Array[@types.Stmt], String]
 pub fn ProjectDisassemblyInstruction::may(Self, ProjectInstructionKind) -> Bool
 pub fn ProjectDisassemblyInstruction::memory(Self) -> @memory.Memory
 pub fn ProjectDisassemblyInstruction::must(Self, ProjectInstructionKind) -> Self
@@ -704,6 +706,7 @@ pub fn ProjectDisassemblyState::instruction_for(Self, @memory.Memory) -> Project
 pub fn ProjectDisassemblyState::instructions(Self) -> Array[ProjectDisassemblyInstruction]
 pub fn ProjectDisassemblyState::instructions_in(Self, @memory.Memory) -> Array[ProjectDisassemblyInstruction]
 pub fn ProjectDisassemblyState::key_of_first_insns(Self, @memory.Memory, len~ : Int) -> ProjectInstructionKey?
+pub fn ProjectDisassemblyState::lift_basic_bil(Self) -> Result[Array[@types.Stmt], String]
 pub fn ProjectDisassemblyState::persistent() -> @knowledge.Persistent[Self]
 pub fn ProjectDisassemblyState::remove_block(Self, @memory.Memory) -> Self
 pub fn ProjectDisassemblyState::remove_edge(Self, ProjectDisassemblyEdge) -> Self

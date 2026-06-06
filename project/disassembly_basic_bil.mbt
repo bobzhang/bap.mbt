@@ -1,0 +1,269 @@
+///|
+fn project_basic_bil_addr_text(addr : UInt64) -> String {
+  "0x" + addr.to_string(radix=16)
+}
+
+///|
+fn project_basic_bil_word64(value : UInt64) -> Result[@types.Word, String] {
+  try @types.Word::of_uint64(width=64, value) catch {
+    _ => Err("unable to create 64-bit BIL word")
+  } noraise {
+    word => Ok(word)
+  }
+}
+
+///|
+fn project_basic_bil_int(
+  value : Int64,
+  width : Int,
+) -> Result[@types.Exp, String] {
+  try @types.Word::of_int64(value, width~) catch {
+    _ => Err("unable to create \{width}-bit BIL immediate")
+  } noraise {
+    word => Ok(@types.Exp::int(word))
+  }
+}
+
+///|
+fn project_basic_bil_addr(value : UInt64) -> Result[@types.Exp, String] {
+  match project_basic_bil_word64(value) {
+    Ok(word) => Ok(@types.Exp::int(word))
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+fn project_basic_bil_reg(name : String, width : Int) -> @types.Var {
+  @types.Var::new(name=name.to_upper(), typ=Imm(width))
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_operand(
+  self : ProjectDisassemblyInstruction,
+  index : Int,
+) -> Result[ProjectInstructionOperand, String] {
+  match self.operands_value.get(index) {
+    Some(operand) => Ok(operand)
+    None => Err("instruction \{self.name()} is missing operand \{index}")
+  }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_register(
+  self : ProjectDisassemblyInstruction,
+  index : Int,
+  width : Int,
+) -> Result[@types.Var, String] {
+  match self.project_basic_bil_operand(index) {
+    Ok(operand) =>
+      match operand.register_name() {
+        Some(name) => Ok(project_basic_bil_reg(name, width))
+        None =>
+          Err("instruction \{self.name()} operand \{index} is not a register")
+      }
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_immediate(
+  self : ProjectDisassemblyInstruction,
+  index : Int,
+) -> Result[Int64, String] {
+  match self.project_basic_bil_operand(index) {
+    Ok(operand) =>
+      match operand.to_int64() {
+        Some(value) => Ok(value)
+        None =>
+          Err("instruction \{self.name()} operand \{index} is not an immediate")
+      }
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_addsub(
+  self : ProjectDisassemblyInstruction,
+  op : @types.BinOp,
+) -> Result[Array[@types.Stmt], String] {
+  match self.project_basic_bil_register(0, 64) {
+    Ok(dst) =>
+      match self.project_basic_bil_register(1, 64) {
+        Ok(src) =>
+          match self.project_basic_bil_immediate(2) {
+            Ok(imm) =>
+              match project_basic_bil_int(imm, 64) {
+                Ok(rhs) =>
+                  Ok([
+                    @types.Stmt::move_stmt(
+                      dst,
+                      @types.Exp::binop(op, @types.Exp::var_exp(src), rhs),
+                    ),
+                  ])
+                Err(reason) => Err(reason)
+              }
+            Err(reason) => Err(reason)
+          }
+        Err(reason) => Err(reason)
+      }
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_mov32rm(
+  self : ProjectDisassemblyInstruction,
+) -> Result[Array[@types.Stmt], String] {
+  match self.project_basic_bil_register(0, 32) {
+    Ok(dst) =>
+      match self.project_basic_bil_register(1, 64) {
+        Ok(base) => {
+          let scale = match self.project_basic_bil_immediate(2) {
+            Ok(value) => value
+            Err(reason) => return Err(reason)
+          }
+          if scale != 1L {
+            return Err("unsupported MOV32rm scale \{scale}")
+          }
+          match self.project_basic_bil_operand(3) {
+            Ok(index_operand) =>
+              match index_operand.register_name() {
+                Some(index) if index == "Nil" => ()
+                Some(index) =>
+                  return Err("unsupported MOV32rm index register \{index}")
+                None => return Err("MOV32rm index operand is not a register")
+              }
+            Err(reason) => return Err(reason)
+          }
+          let displacement = match self.project_basic_bil_immediate(4) {
+            Ok(value) => value
+            Err(reason) => return Err(reason)
+          }
+          match self.project_basic_bil_operand(5) {
+            Ok(segment_operand) =>
+              match segment_operand.register_name() {
+                Some(segment) if segment == "Nil" => ()
+                Some(segment) =>
+                  return Err("unsupported MOV32rm segment register \{segment}")
+                None => return Err("MOV32rm segment operand is not a register")
+              }
+            Err(reason) => return Err(reason)
+          }
+          let base_exp = @types.Exp::var_exp(base)
+          let addr_exp = if displacement == 0L {
+            base_exp
+          } else {
+            match project_basic_bil_int(displacement, 64) {
+              Ok(offset) =>
+                @types.Exp::binop(@types.BinOp::plus(), base_exp, offset)
+              Err(reason) => return Err(reason)
+            }
+          }
+          let mem = @types.Var::new(
+            name="mem",
+            typ=Mem(addr_width=64, value_width=8),
+          )
+          Ok([
+            @types.Stmt::move_stmt(
+              dst,
+              @types.Exp::load(
+                mem=@types.Exp::var_exp(mem),
+                addr=addr_exp,
+                LittleEndian,
+                R32,
+              ),
+            ),
+          ])
+        }
+        Err(reason) => Err(reason)
+      }
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_direct_target(
+  self : ProjectDisassemblyInstruction,
+) -> Result[UInt64, String] {
+  match self.project_basic_bil_immediate(0) {
+    Ok(displacement) =>
+      match
+        project_disassembly_basic_add_signed_offset(
+          self.addr() + self.memory().length().to_uint64(),
+          displacement,
+        ) {
+        Some(target) => Ok(target)
+        None => Err("direct target for \{self.name()} is not representable")
+      }
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+fn project_basic_bil_control(
+  attr : @types.StmtAttribute[String],
+  target : UInt64,
+) -> Result[Array[@types.Stmt], String] {
+  match project_basic_bil_addr(target) {
+    Ok(addr_exp) =>
+      Ok([
+        @types.Stmt::encode(attr, project_basic_bil_addr_text(target)),
+        @types.Stmt::jmp(addr_exp),
+      ])
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+pub fn ProjectDisassemblyInstruction::lift_basic_bil(
+  self : ProjectDisassemblyInstruction,
+) -> Result[Array[@types.Stmt], String] {
+  match self.name().to_upper() {
+    "SUB64RI8" => self.project_basic_bil_addsub(@types.BinOp::minus())
+    "ADD64RI8" => self.project_basic_bil_addsub(@types.BinOp::plus())
+    "MOV32RM" => self.project_basic_bil_mov32rm()
+    "JMP_1" =>
+      match self.project_basic_bil_immediate(0) {
+        Ok(target) =>
+          project_basic_bil_control(
+            @types.Stmt::goto(),
+            target.reinterpret_as_uint64(),
+          )
+        Err(reason) => Err(reason)
+      }
+    "CALL64PCREL32" =>
+      match self.project_basic_bil_direct_target() {
+        Ok(target) => project_basic_bil_control(@types.Stmt::call(), target)
+        Err(reason) => Err(reason)
+      }
+    "RET" => Ok([@types.Stmt::special("ret")])
+    name => Err("unsupported Basic BIL lift for instruction \{name}")
+  }
+}
+
+///|
+pub fn ProjectDisassemblyState::lift_basic_bil(
+  self : ProjectDisassemblyState,
+) -> Result[Array[@types.Stmt], String] {
+  let result : Array[@types.Stmt] = []
+  for instruction in self.instructions() {
+    match instruction.lift_basic_bil() {
+      Ok(stmts) =>
+        for stmt in stmts {
+          result.push(stmt)
+        }
+      Err(reason) =>
+        return Err(
+          "failed to lift Basic BIL for \{instruction.name()} at 0x\{instruction.addr().to_string(radix=16)}: \{reason}",
+        )
+    }
+  }
+  Ok(result)
+}
+
+///|
+pub fn Project::lift_basic_bil(
+  self : Project,
+) -> Result[Array[@types.Stmt], String] {
+  self.disassembly().lift_basic_bil()
+}

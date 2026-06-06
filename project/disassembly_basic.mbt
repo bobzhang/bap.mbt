@@ -741,6 +741,55 @@ fn project_disassembly_basic_x86_parse_mem_operand(
 }
 
 ///|
+fn project_disassembly_basic_x86_noop(
+  memory : @memory.Memory,
+  address_width : Int,
+) -> Int? {
+  let bytes = memory.to_bytes()
+  let prefix_index = if bytes.length() > 0 && bytes[0].to_int() == 0x66 {
+    1
+  } else {
+    0
+  }
+  let (opcode_index, rex) = if address_width == 64 &&
+    bytes.length() > prefix_index &&
+    bytes[prefix_index].to_int() >= 0x40 &&
+    bytes[prefix_index].to_int() <= 0x4f {
+    (prefix_index + 1, bytes[prefix_index].to_int())
+  } else {
+    (prefix_index, 0)
+  }
+  if bytes.length() <= opcode_index {
+    None
+  } else if bytes[opcode_index].to_int() == 0x90 && rex == 0 {
+    Some(opcode_index + 1)
+  } else if bytes.length() < opcode_index + 3 ||
+    bytes[opcode_index].to_int() != 0x0f ||
+    bytes[opcode_index + 1].to_int() != 0x1f {
+    None
+  } else {
+    let modrm = bytes[opcode_index + 2].to_int()
+    if ((modrm >> 3) & 0x7) != 0 {
+      None
+    } else if ((modrm >> 6) & 0x3) == 0x3 {
+      Some(opcode_index + 3)
+    } else {
+      match
+        project_disassembly_basic_x86_parse_mem_operand(
+          bytes,
+          opcode_index + 3,
+          modrm,
+          address_width,
+          rex,
+        ) {
+        Some((length, _)) => Some(length)
+        None => None
+      }
+    }
+  }
+}
+
+///|
 fn project_disassembly_basic_x86_mov32ri(
   memory : @memory.Memory,
 ) -> (String, Int64)? {
@@ -3090,8 +3139,9 @@ fn project_disassembly_basic_decode_x86_llvm(
         String,
         Array[ProjectInstructionOperand],
         Array[ProjectInstructionKind],
-      )? = if project_disassembly_basic_has_prefix(memory, b"\x90") {
-        Some((1, "NOOP", "nop", "", [], []))
+      )? = if project_disassembly_basic_x86_noop(memory, 32) is Some(_) {
+        let length = project_disassembly_basic_x86_noop(memory, 32).unwrap()
+        Some((length, "NOOP", "nop", "", [], []))
       } else if project_disassembly_basic_x86_sign_extend_accumulator(
           memory, 32,
         )
@@ -3479,7 +3529,10 @@ fn project_disassembly_basic_decode_x86_64_llvm(
     String,
     Array[ProjectInstructionOperand],
     Array[ProjectInstructionKind],
-  )? = if project_disassembly_basic_x86_simple(memory, 64, 64) is Some(_) {
+  )? = if project_disassembly_basic_x86_noop(memory, 64) is Some(_) {
+    let length = project_disassembly_basic_x86_noop(memory, 64).unwrap()
+    Some((length, "NOOP", [], []))
+  } else if project_disassembly_basic_x86_simple(memory, 64, 64) is Some(_) {
     let (length, name, operands, kinds) = project_disassembly_basic_x86_simple(
       memory, 64, 64,
     ).unwrap()

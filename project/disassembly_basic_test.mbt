@@ -234,6 +234,46 @@ test "translated BAP basic disassembly decodes x86_64 llvm samples" {
 }
 
 ///|
+test "translated BAP basic disassembly decodes x86 multi-byte noops" {
+  let samples : Array[(String, Bytes, Int)] = [
+    ("x86", b"\x66\x90", 2),
+    ("x86", b"\x0f\x1f\x00", 3),
+    ("x86", b"\x0f\x1f\x40\x00", 4),
+    ("x86", b"\x0f\x1f\x44\x00\x00", 5),
+    ("x86_64", b"\x66\x90", 2),
+    ("x86_64", b"\x0f\x1f\x00", 3),
+    ("x86_64", b"\x66\x0f\x1f\x44\x00\x00", 6),
+    ("x86_64", b"\x48\x0f\x1f\x84\x00\x00\x00\x00\x00", 9),
+  ]
+  for sample in samples {
+    let disasm = match
+      @project.ProjectDisassemblyBasic::create(sample.0, backend="llvm") {
+      Ok(disasm) => disasm
+      Err(reason) => fail(reason)
+    }
+    let memory = @memory.Memory::from_bytes(
+      endian=LittleEndian,
+      start=0xe120UL,
+      sample.1,
+    )
+    match disasm.insn_of_mem(memory) {
+      Ok(result) => {
+        assert_true(result.memory().length() == sample.2)
+        assert_true(result.remainder().is_finished())
+        match result.instruction() {
+          Some(instruction) => {
+            assert_true(basic_instruction_strings(instruction) == ["NOOP"])
+            assert_true(instruction.kinds().is_empty())
+          }
+          None => fail("missing x86 multi-byte noop instruction")
+        }
+      }
+      Err(reason) => fail(reason)
+    }
+  }
+}
+
+///|
 test "translated BAP basic disassembly decodes x86 register add-sub immediates" {
   let samples : Array[(String, Bytes, Int, Array[String])] = [
     ("x86_64", b"\x48\x83\xe8\x01", 4, ["SUB64ri8", "RAX", "RAX", "0x1"]),

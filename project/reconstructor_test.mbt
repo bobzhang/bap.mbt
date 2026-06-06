@@ -131,6 +131,33 @@ test "project reconstructor materializes supported Basic BIL assignments" {
 }
 
 ///|
+test "project reconstructor materializes Basic BIL push stores" {
+  let disassembly = reconstructor_basic_disassembly(
+    "x86_64",
+    b"\x55",
+    start=0x7810UL,
+  )
+  let project = @project.Project::empty(@core_theory.Target::x86_64()).with_disassembly(
+    disassembly,
+  )
+  match project.reconstruct() {
+    Ok(reconstructed) => {
+      let subs = reconstructed.program().subs()
+      assert_true(subs.length() == 1)
+      let blks = subs[0].blks()
+      assert_true(blks.length() == 1)
+      assert_true(
+        reconstructor_def_text(blks[0].defs()) ==
+        [
+          "mem:mem64x8 := store(mem:mem64x8, (RSP:imm64 - 8:64u), RBP:imm64)", "RSP:imm64 := (RSP:imm64 - 8:64u)",
+        ],
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project reconstructor materializes Basic BIL fallback jumps" {
   let goto_disassembly = reconstructor_basic_disassembly(
     "x86",

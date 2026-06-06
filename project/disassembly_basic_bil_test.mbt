@@ -123,6 +123,36 @@ test "project Basic BIL lift covers x86_64 stack arithmetic fixtures" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 register pushes" {
+  let push_rbp = basic_bil_decode("x86_64", b"\x55", start=0x7010UL)
+  match push_rbp.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "mem:mem64x8 := store(mem:mem64x8, (RSP:imm64 - 8:64u), RBP:imm64)", "RSP:imm64 := (RSP:imm64 - 8:64u)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let push_rsp = basic_bil_decode("x86_64", b"\x54", start=0x7011UL)
+  match push_rsp.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "mem:mem64x8 := store(mem:mem64x8, (RSP:imm64 - 8:64u), RSP:imm64)", "RSP:imm64 := (RSP:imm64 - 8:64u)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let push_ebp = basic_bil_decode("x86", b"\x55", start=0x7012UL)
+  match push_ebp.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "mem:mem32x8 := store(mem:mem32x8, (ESP:imm32 - 4:32u), EBP:imm32)", "ESP:imm32 := (ESP:imm32 - 4:32u)",
+      ])
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86_64 memory load fixture" {
   let mov_imm = basic_bil_decode(
     "x86_64",

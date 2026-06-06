@@ -49,6 +49,38 @@ fn project_basic_bil_arm_mem() -> @types.Var {
 }
 
 ///|
+fn project_basic_bil_stack_mem(width : Int) -> @types.Var {
+  @types.Var::new(name="mem", typ=Mem(addr_width=width, value_width=8))
+}
+
+///|
+fn project_basic_bil_stack_pointer(width : Int) -> Result[@types.Var, String] {
+  match width {
+    32 => Ok(project_basic_bil_reg("ESP", 32))
+    64 => Ok(project_basic_bil_reg("RSP", 64))
+    _ => Err("unsupported PUSH stack width \{width}")
+  }
+}
+
+///|
+fn project_basic_bil_stack_next(
+  sp : @types.Var,
+  width : Int,
+) -> Result[@types.Exp, String] {
+  match project_basic_bil_int((width / 8).to_int64(), width) {
+    Ok(offset) =>
+      Ok(
+        @types.Exp::binop(
+          @types.BinOp::minus(),
+          @types.Exp::var_exp(sp),
+          offset,
+        ),
+      )
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
 fn project_basic_bil_arm_ne_flag() -> @types.Var {
   @types.Var::new(name="ARM.NE", typ=Imm(1))
 }
@@ -235,6 +267,47 @@ fn ProjectDisassemblyInstruction::project_basic_bil_mov_imm(
       }
     Err(reason) => Err(reason)
   }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_push(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let src = match self.project_basic_bil_register(0, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let sp = match project_basic_bil_stack_pointer(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let addr = match project_basic_bil_stack_next(sp, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let updated_sp = match project_basic_bil_stack_next(sp, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let mem = project_basic_bil_stack_mem(width)
+  Ok([
+    @types.Stmt::move_stmt(
+      mem,
+      @types.Exp::store(
+        mem=@types.Exp::var_exp(mem),
+        addr~,
+        @types.Exp::var_exp(src),
+        LittleEndian,
+        size,
+      ),
+    ),
+    @types.Stmt::move_stmt(sp, updated_sp),
+  ])
 }
 
 ///|
@@ -539,6 +612,8 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "MOV32RM" => self.project_basic_bil_mov32rm()
     "MOV32RI" => self.project_basic_bil_mov_imm(32)
     "MOV64RI" => self.project_basic_bil_mov_imm(64)
+    "PUSH32R" => self.project_basic_bil_push(32)
+    "PUSH64R" => self.project_basic_bil_push(64)
     "NOOP" => Ok([])
     "JMP_1" => self.project_basic_bil_jump()
     "JMP_4" => self.project_basic_bil_jump()

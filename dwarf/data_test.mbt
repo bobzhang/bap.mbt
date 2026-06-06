@@ -1064,6 +1064,13 @@ test "translated DWARF DIE attributes expose index and reference readers" {
     signature_ref == DwarfTypeSignatureReference(0x1122334455667788UL),
   )
   assert_true(object_ref == DwarfUnitReference(0x0c))
+  assert_true(
+    expect_optional_die(die.reference_target(data, refs[0])).map(target => {
+      target.section_offset()
+    }) ==
+    Some(0x0b),
+  )
+  assert_true(die.reference_target(data, attrs[0]) is Err(_))
   assert_true(unit_ref.section_offset(unit_start=0) == Ok(0x0b))
   assert_true(section_ref.section_offset(unit_start=0) == Ok(0x18))
   let sup_ref : @dwarf.DwarfDieReference = DwarfSupplementaryReference(1)

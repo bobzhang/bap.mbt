@@ -897,6 +897,34 @@ pub fn DwarfDie::reference_attributes(
 }
 
 ///|
+pub fn DwarfDie::reference_target(
+  self : DwarfDie,
+  data : DwarfData,
+  attribute : DwarfDieAttribute,
+) -> Result[DwarfDie?, String] {
+  let info = match data.section(DwarfInfo) {
+    Ok(section) => section
+    Err(reason) => return Err(reason)
+  }
+  let header = match data.unit_header(offset=self.unit_start_offset()) {
+    Ok(header) => header
+    Err(reason) => return Err(reason)
+  }
+  let reference = match
+    attribute.reference(
+      info,
+      endian=data.endian(),
+      version=header.version(),
+      dwarf_size=header.dwarf_size(),
+      addr_size=header.address_size(),
+    ) {
+    Ok(reference) => reference
+    Err(reason) => return Err(reason)
+  }
+  data.referenced_die(reference, unit_start=self.unit_start_offset())
+}
+
+///|
 pub fn DwarfDie::attribute(
   self : DwarfDie,
   attr : DwarfAttr,

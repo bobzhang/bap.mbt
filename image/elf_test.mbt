@@ -558,14 +558,14 @@ fn image_elf_test_make_x86_64_without_sections() -> Bytes {
 ///|
 fn image_elf_test_make_x86_64_dynamic_without_sections() -> Bytes {
   let text = b"\x55\xc3"
-  let dynstr = b"\x00libx.so\x00libstrip.so\x00/strip/lib\x00$ORIGIN/strip\x00puts\x00printf\x00"
+  let dynstr = b"\x00libx.so\x00libstrip.so\x00/strip/lib\x00$ORIGIN/strip\x00puts\x00printf\x00local\x00"
   let dynamic_size = 240
   let text_offset = 64 + 2 * 56
   let dynamic_offset = text_offset + text.length()
   let dynsym_offset = dynamic_offset + dynamic_size
-  let dynstr_offset = dynsym_offset + 72
+  let dynstr_offset = dynsym_offset + 96
   let rela_offset = dynstr_offset + dynstr.length()
-  let jmprel_offset = rela_offset + 48
+  let jmprel_offset = rela_offset + 72
   let base_addr = 0x600000UL
   let dynamic_addr = base_addr + (dynamic_offset - text_offset).to_uint64()
   let dynsym_addr = base_addr + (dynsym_offset - text_offset).to_uint64()
@@ -610,7 +610,7 @@ fn image_elf_test_make_x86_64_dynamic_without_sections() -> Bytes {
   image_elf_test_write_dynamic64(buffer, dynamic_offset + 32, 6UL, dynsym_addr)
   image_elf_test_write_dynamic64(buffer, dynamic_offset + 48, 11UL, 24UL)
   image_elf_test_write_dynamic64(buffer, dynamic_offset + 64, 7UL, rela_addr)
-  image_elf_test_write_dynamic64(buffer, dynamic_offset + 80, 8UL, 48UL)
+  image_elf_test_write_dynamic64(buffer, dynamic_offset + 80, 8UL, 72UL)
   image_elf_test_write_dynamic64(buffer, dynamic_offset + 96, 9UL, 24UL)
   image_elf_test_write_dynamic64(buffer, dynamic_offset + 112, 1UL, 1UL)
   image_elf_test_write_dynamic64(buffer, dynamic_offset + 128, 14UL, 9UL)
@@ -643,6 +643,15 @@ fn image_elf_test_make_x86_64_dynamic_without_sections() -> Bytes {
     0UL,
     0UL,
   )
+  image_elf_test_write_symbol64(
+    buffer,
+    dynsym_offset + 72,
+    58,
+    0x12,
+    1,
+    0x600040UL,
+    8UL,
+  )
   image_elf_test_write_bytes(buffer, dynstr_offset, dynstr)
   image_elf_test_write_rela64(
     buffer,
@@ -653,6 +662,14 @@ fn image_elf_test_make_x86_64_dynamic_without_sections() -> Bytes {
     addend=0x30L,
   )
   image_elf_test_write_rela64(buffer, rela_offset + 24, 0x600008UL, 1, 7)
+  image_elf_test_write_rela64(
+    buffer,
+    rela_offset + 48,
+    0x600018UL,
+    3,
+    7,
+    addend=0x10L,
+  )
   image_elf_test_write_rela64(buffer, jmprel_offset, 0x600010UL, 2, 7)
   Bytes::from_array(buffer)
 }
@@ -1129,11 +1146,24 @@ test "image ELF backend extracts PT_DYNAMIC metadata without section headers" {
   assert_true(image.rpaths() == ["/strip/lib"])
   assert_true(image.runpaths() == ["$ORIGIN/strip"])
   let relocations = image.relocations()
-  assert_true(relocations.length() == 1)
-  assert_true(relocations[0].fixup() == 0x600001UL)
-  assert_true(relocations[0].addend() == Some(0x30L))
-  assert_true(!relocations[0].uses_memory_addend())
-  assert_true(relocations[0].is_relative())
+  assert_true(relocations.length() == 2)
+  let relative = match
+    relocations.search_by(relocation => relocation.fixup() == 0x600001UL) {
+    Some(index) => relocations[index]
+    None => fail("expected relative dynamic relocation")
+  }
+  assert_true(relative.addend() == Some(0x30L))
+  assert_true(!relative.uses_memory_addend())
+  assert_true(relative.is_relative())
+  let targeted = match
+    relocations.search_by(relocation => relocation.fixup() == 0x600018UL) {
+    Some(index) => relocations[index]
+    None => fail("expected dynamic symbol target relocation")
+  }
+  assert_true(targeted.target() == Some(0x600040UL))
+  assert_true(targeted.addend() == Some(0x10L))
+  assert_true(!targeted.uses_memory_addend())
+  assert_true(!targeted.is_relative())
   let references = image.external_references()
   assert_true(references.length() == 2)
   assert_true(references[0].addr() == 0x600008UL)
@@ -1141,11 +1171,16 @@ test "image ELF backend extracts PT_DYNAMIC metadata without section headers" {
   assert_true(references[1].addr() == 0x600010UL)
   assert_true(references[1].name() == "printf")
   match image.with_applied_relocations() {
-    Ok(applied) =>
+    Ok(applied) => {
       match applied.segments()[0].memory().load(0x600001UL, width=64) {
         Ok(word) => assert_true(word.to_uint64() == 0x600030UL)
         Err(reason) => fail(reason)
       }
+      match applied.segments()[0].memory().load(0x600018UL, width=64) {
+        Ok(word) => assert_true(word.to_uint64() == 0x600050UL)
+        Err(reason) => fail(reason)
+      }
+    }
     Err(reason) => fail(reason)
   }
 }
@@ -1186,7 +1221,9 @@ test "image ELF backend extracts DT_RELR relocations without section headers" {
   assert_true(warnings.is_empty())
   let relr = image
     .relocations()
-    .filter(relocation => relocation.fixup() >= 0x600018UL)
+    .filter(relocation => {
+      relocation.is_relative() && relocation.fixup() >= 0x600018UL
+    })
   assert_true(
     relr.map(relocation => relocation.fixup()) ==
     [0x600018UL, 0x600020UL, 0x600030UL],

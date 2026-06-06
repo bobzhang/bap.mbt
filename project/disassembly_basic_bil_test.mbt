@@ -307,6 +307,13 @@ test "project Basic BIL lift covers x86 register add-sub rr ops" {
     Err(reason) => fail(reason)
   }
 
+  let add8 = basic_bil_decode("x86", b"\x00\xe0", start=0x701bUL)
+  match add8.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["AL:imm8 := (AL:imm8 + AH:imm8)"])
+    Err(reason) => fail(reason)
+  }
+
   let sub32 = basic_bil_decode("x86", b"\x29\xd8", start=0x701dUL)
   match sub32.lift_basic_bil() {
     Ok(stmts) =>
@@ -318,6 +325,13 @@ test "project Basic BIL lift covers x86 register add-sub rr ops" {
   match sub64_rev.lift_basic_bil() {
     Ok(stmts) =>
       assert_basic_bil_text(stmts, ["RCX:imm64 := (RCX:imm64 - RAX:imm64)"])
+    Err(reason) => fail(reason)
+  }
+
+  let sub8_ext = basic_bil_decode("x86_64", b"\x45\x28\xc8", start=0x7020UL)
+  match sub8_ext.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["R8B:imm8 := (R8B:imm8 - R9B:imm8)"])
     Err(reason) => fail(reason)
   }
 }
@@ -452,6 +466,20 @@ test "project Basic BIL lift covers x86 cmp and test flag ops" {
         stmts[6].to_string(),
         "ZF:imm1 := (0:32u == %cmp_tmp:imm32)",
       )
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let cmp8_rr = basic_bil_decode("x86", b"\x38\xe0", start=0x7026UL)
+  match cmp8_rr.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 7)
+      assert_string(
+        stmts[0].to_string(),
+        "%cmp_tmp:imm8 := (AL:imm8 - AH:imm8)",
+      )
+      assert_string(stmts[1].to_string(), "CF:imm1 := (AL:imm8 < AH:imm8)")
+      assert_string(stmts[6].to_string(), "ZF:imm1 := (0:8u == %cmp_tmp:imm8)")
     }
     Err(reason) => fail(reason)
   }

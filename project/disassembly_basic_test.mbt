@@ -384,6 +384,9 @@ test "translated BAP basic disassembly decodes x86 cmp and test fixtures" {
     ("x86_64", b"\x48\x39\xd8", 3, ["CMP64rr", "RAX", "RBX"]),
     ("x86_64", b"\x48\x3b\xc8", 3, ["CMP64rr_REV", "RCX", "RAX"]),
     ("x86", b"\x39\xd8", 2, ["CMP32rr", "EAX", "EBX"]),
+    ("x86_64", b"\x44\x38\xc0", 3, ["CMP8rr", "AL", "R8B"]),
+    ("x86", b"\x38\xe0", 2, ["CMP8rr", "AL", "AH"]),
+    ("x86", b"\x3a\xc8", 2, ["CMP8rr_REV", "CL", "AL"]),
     ("x86_64", b"\x48\x85\xc0", 3, ["TEST64rr", "RAX", "RAX"]),
     ("x86_64", b"\x4d\x85\xc8", 3, ["TEST64rr", "R8", "R9"]),
     ("x86_64", b"\x44\x84\xc0", 3, ["TEST8rr", "AL", "R8B"]),
@@ -523,8 +526,12 @@ test "translated BAP basic disassembly decodes x86 register add-sub rr fixtures"
     ("x86_64", b"\x48\x29\xd8", 3, ["SUB64rr", "RAX", "RBX"]),
     ("x86_64", b"\x48\x2b\xc8", 3, ["SUB64rr_REV", "RCX", "RAX"]),
     ("x86_64", b"\x45\x29\xc8", 3, ["SUB32rr", "R8D", "R9D"]),
+    ("x86_64", b"\x44\x00\xc0", 3, ["ADD8rr", "AL", "R8B"]),
+    ("x86_64", b"\x45\x28\xc8", 3, ["SUB8rr", "R8B", "R9B"]),
     ("x86", b"\x01\xd8", 2, ["ADD32rr", "EAX", "EBX"]),
     ("x86", b"\x2b\xc8", 2, ["SUB32rr_REV", "ECX", "EAX"]),
+    ("x86", b"\x00\xd8", 2, ["ADD8rr", "AL", "BL"]),
+    ("x86", b"\x2a\xc8", 2, ["SUB8rr_REV", "CL", "AL"]),
   ]
   for sample in samples {
     let disasm = match

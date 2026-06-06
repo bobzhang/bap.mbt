@@ -1576,8 +1576,12 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "NOT64R" => self.project_basic_bil_unop_r(64, @types.UnOp::not())
     "NEG32R" => self.project_basic_bil_unop_r(32, @types.UnOp::neg())
     "NEG64R" => self.project_basic_bil_unop_r(64, @types.UnOp::neg())
+    "SUB8RR" | "SUB8RR_REV" =>
+      self.project_basic_bil_binop_rr(8, @types.BinOp::minus())
     "SUB32RR" | "SUB32RR_REV" =>
       self.project_basic_bil_binop_rr(32, @types.BinOp::minus())
+    "ADD8RR" | "ADD8RR_REV" =>
+      self.project_basic_bil_binop_rr(8, @types.BinOp::plus())
     "ADD32RR" | "ADD32RR_REV" =>
       self.project_basic_bil_binop_rr(32, @types.BinOp::plus())
     "SUB64RR" | "SUB64RR_REV" =>
@@ -1586,6 +1590,7 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
       self.project_basic_bil_binop_rr(64, @types.BinOp::plus())
     "CMP32RI8" | "CMP32RI32" => self.project_basic_bil_cmp_ri(32)
     "CMP64RI8" | "CMP64RI32" => self.project_basic_bil_cmp_ri(64)
+    "CMP8RR" | "CMP8RR_REV" => self.project_basic_bil_cmp_rr(8)
     "CMP32RR" | "CMP32RR_REV" => self.project_basic_bil_cmp_rr(32)
     "CMP64RR" | "CMP64RR_REV" => self.project_basic_bil_cmp_rr(64)
     "MOV8RM" => self.project_basic_bil_mov_rm(8)

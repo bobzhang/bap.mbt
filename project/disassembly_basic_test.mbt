@@ -250,10 +250,17 @@ test "translated BAP basic disassembly decodes x86 register add-sub immediates" 
     ),
     (
       "x86_64",
+      b"\x48\x05\x78\x56\x34\x12",
+      6,
+      ["ADD64ri32", "RAX", "RAX", "0x12345678"],
+    ),
+    (
+      "x86_64",
       b"\x49\x81\xe8\xff\xff\xff\xff",
       7,
       ["SUB64ri32", "R8", "R8", "-0x1"],
     ),
+    ("x86", b"\x2d\xff\xff\xff\xff", 5, ["SUB32ri32", "EAX", "EAX", "-0x1"]),
     (
       "x86",
       b"\x81\xe9\x00\x00\x00\x80",
@@ -305,12 +312,25 @@ test "translated BAP basic disassembly decodes x86 register logical immediates" 
       7,
       ["OR64ri32", "RAX", "RAX", "0x12345678"],
     ),
+    (
+      "x86_64",
+      b"\x48\x0d\x78\x56\x34\x12",
+      6,
+      ["OR64ri32", "RAX", "RAX", "0x12345678"],
+    ),
     ("x86", b"\x81\xe1\xff\x00\x00\x00", 6, ["AND32ri32", "ECX", "ECX", "0xff"]),
+    ("x86", b"\x25\xff\x00\x00\x00", 5, ["AND32ri32", "EAX", "EAX", "0xff"]),
     (
       "x86_64",
       b"\x49\x81\xf0\x00\x01\x00\x00",
       7,
       ["XOR64ri32", "R8", "R8", "0x100"],
+    ),
+    (
+      "x86_64",
+      b"\x48\x35\x00\x01\x00\x00",
+      6,
+      ["XOR64ri32", "RAX", "RAX", "0x100"],
     ),
   ]
   for sample in samples {
@@ -353,7 +373,14 @@ test "translated BAP basic disassembly decodes x86 cmp and test fixtures" {
       7,
       ["CMP64ri32", "RAX", "0x12345678"],
     ),
+    (
+      "x86_64",
+      b"\x48\x3d\x78\x56\x34\x12",
+      6,
+      ["CMP64ri32", "RAX", "0x12345678"],
+    ),
     ("x86", b"\x81\xf9\xff\xff\xff\xff", 6, ["CMP32ri32", "ECX", "-0x1"]),
+    ("x86", b"\x3d\xff\xff\xff\xff", 5, ["CMP32ri32", "EAX", "-0x1"]),
     ("x86_64", b"\x48\x39\xd8", 3, ["CMP64rr", "RAX", "RBX"]),
     ("x86_64", b"\x48\x3b\xc8", 3, ["CMP64rr_REV", "RCX", "RAX"]),
     ("x86", b"\x39\xd8", 2, ["CMP32rr", "EAX", "EBX"]),

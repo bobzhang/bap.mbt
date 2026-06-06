@@ -1675,6 +1675,79 @@ fn project_disassembly_basic_x86_reg_update(
 }
 
 ///|
+fn project_disassembly_basic_x86_accumulator_imm(
+  memory : @memory.Memory,
+  data_width : Int,
+  address_width : Int,
+) -> (
+  Int,
+  String,
+  Array[ProjectInstructionOperand],
+  Array[ProjectInstructionKind],
+)? {
+  let bytes = memory.to_bytes()
+  let (opcode_index, rex) = if address_width == 64 &&
+    bytes.length() >= 2 &&
+    bytes[0].to_int() >= 0x40 &&
+    bytes[0].to_int() <= 0x4f {
+    (1, bytes[0].to_int())
+  } else {
+    (0, 0)
+  }
+  if data_width == 64 && (rex & 0x8) == 0 {
+    return None
+  }
+  if data_width == 32 && (rex & 0x8) != 0 {
+    return None
+  }
+  if data_width != 32 && data_width != 64 {
+    return None
+  }
+  if bytes.length() < opcode_index + 5 {
+    return None
+  }
+  let opcode = bytes[opcode_index].to_int()
+  let op = match opcode {
+    0x05 => "ADD"
+    0x0d => "OR"
+    0x25 => "AND"
+    0x2d => "SUB"
+    0x35 => "XOR"
+    0x3d => "CMP"
+    _ => ""
+  }
+  if op == "" {
+    None
+  } else {
+    match project_disassembly_basic_x86_i32_at(bytes, opcode_index + 1) {
+      Some(imm) => {
+        let register = project_disassembly_basic_x86_gpr_name(0, data_width)
+        Some(
+          (
+            opcode_index + 5,
+            op + "\{data_width}ri32",
+            if op == "CMP" {
+              [
+                ProjectInstructionOperand::register(name=register),
+                ProjectInstructionOperand::immediate(imm),
+              ]
+            } else {
+              [
+                ProjectInstructionOperand::register(name=register),
+                ProjectInstructionOperand::register(name=register),
+                ProjectInstructionOperand::immediate(imm),
+              ]
+            },
+            [],
+          ),
+        )
+      }
+      None => None
+    }
+  }
+}
+
+///|
 fn project_disassembly_basic_x86_test_imm(
   memory : @memory.Memory,
   data_width : Int,
@@ -2125,12 +2198,19 @@ fn project_disassembly_basic_x86_simple(
     Some(decoded) => Some(decoded)
     None =>
       match
-        project_disassembly_basic_x86_test_imm(memory, width, address_width) {
+        project_disassembly_basic_x86_accumulator_imm(
+          memory, width, address_width,
+        ) {
         Some(decoded) => Some(decoded)
         None =>
-          project_disassembly_basic_x86_group5_control(
-            memory, width, address_width,
-          )
+          match
+            project_disassembly_basic_x86_test_imm(memory, width, address_width) {
+            Some(decoded) => Some(decoded)
+            None =>
+              project_disassembly_basic_x86_group5_control(
+                memory, width, address_width,
+              )
+          }
       }
   }
 }

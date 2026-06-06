@@ -170,6 +170,17 @@ test "project Basic BIL lift covers x86 register add-sub immediates" {
       assert_basic_bil_text(stmts, ["RAX:imm64 := (RAX:imm64 + 0x12345678:64u)"])
     Err(reason) => fail(reason)
   }
+
+  let add64_acc = basic_bil_decode(
+    "x86_64",
+    b"\x48\x05\x78\x56\x34\x12",
+    start=0x7015UL,
+  )
+  match add64_acc.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["RAX:imm64 := (RAX:imm64 + 0x12345678:64u)"])
+    Err(reason) => fail(reason)
+  }
 }
 
 ///|
@@ -205,6 +216,17 @@ test "project Basic BIL lift covers x86 register logical immediates" {
     start=0x7020UL,
   )
   match or64_ri32.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["RAX:imm64 := (RAX:imm64 | 0x12345678:64u)"])
+    Err(reason) => fail(reason)
+  }
+
+  let or64_acc = basic_bil_decode(
+    "x86_64",
+    b"\x48\x0d\x78\x56\x34\x12",
+    start=0x7021UL,
+  )
+  match or64_acc.lift_basic_bil() {
     Ok(stmts) =>
       assert_basic_bil_text(stmts, ["RAX:imm64 := (RAX:imm64 | 0x12345678:64u)"])
     Err(reason) => fail(reason)
@@ -372,6 +394,26 @@ test "project Basic BIL lift covers x86 cmp and test flag ops" {
       assert_string(
         stmts[6].to_string(),
         "ZF:imm1 := (0:64u == %cmp_tmp:imm64)",
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let cmp_acc = basic_bil_decode(
+    "x86_64",
+    b"\x48\x3d\x78\x56\x34\x12",
+    start=0x7024UL,
+  )
+  match cmp_acc.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 7)
+      assert_string(
+        stmts[0].to_string(),
+        "%cmp_tmp:imm64 := (RAX:imm64 - 0x12345678:64u)",
+      )
+      assert_string(
+        stmts[1].to_string(),
+        "CF:imm1 := (RAX:imm64 < 0x12345678:64u)",
       )
     }
     Err(reason) => fail(reason)

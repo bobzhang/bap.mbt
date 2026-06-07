@@ -7299,7 +7299,7 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "LDR_POST_IMM" => self.project_basic_bil_arm_load(true)
     "STRI12" => self.project_basic_bil_arm_store(false)
     "STR_PRE_IMM" => self.project_basic_bil_arm_store(true)
-    "RET" => Ok([@types.Stmt::special("ret")])
+    "RET" | "RETF" => Ok([@types.Stmt::special("ret")])
     name => Err("unsupported Basic BIL lift for instruction \{name}")
   }
 }

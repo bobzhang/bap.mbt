@@ -6827,6 +6827,22 @@ test "project Basic BIL lift covers direct control transfers" {
     Ok(stmts) => assert_basic_bil_text(stmts, ["special ret"])
     Err(reason) => fail(reason)
   }
+
+  let return_variants : Array[(String, Bytes)] = [
+    ("x86", b"\xc2\x08\x00"),
+    ("x86", b"\xcb"),
+    ("x86", b"\xca\x10\x00"),
+    ("x86_64", b"\xc2\x08\x00"),
+    ("x86_64", b"\xcb"),
+    ("x86_64", b"\xca\x10\x00"),
+  ]
+  for sample in return_variants {
+    let decoded = basic_bil_decode(sample.0, sample.1, start=0x7402UL)
+    match decoded.lift_basic_bil() {
+      Ok(stmts) => assert_basic_bil_text(stmts, ["special ret"])
+      Err(reason) => fail(reason)
+    }
+  }
 }
 
 ///|

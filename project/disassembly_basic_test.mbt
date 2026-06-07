@@ -4491,6 +4491,52 @@ test "translated BAP basic disassembly decodes x86 llvm call and return fixtures
 }
 
 ///|
+test "translated BAP basic disassembly decodes x86 return variants" {
+  let return_kinds : Array[@project.ProjectInstructionKind] = [
+    ProjectReturn,
+    ProjectBarrier,
+    ProjectTerminator,
+    ProjectMayAffectControlFlow,
+  ]
+  let samples : Array[(String, Bytes, Int, Array[String])] = [
+    ("x86", b"\xc3", 1, ["RET"]),
+    ("x86", b"\xc2\x08\x00", 3, ["RET", "0x8"]),
+    ("x86", b"\xcb", 1, ["RETF"]),
+    ("x86", b"\xca\x10\x00", 3, ["RETF", "0x10"]),
+    ("x86_64", b"\xc3", 1, ["RET"]),
+    ("x86_64", b"\xc2\x08\x00", 3, ["RET", "0x8"]),
+    ("x86_64", b"\xcb", 1, ["RETF"]),
+    ("x86_64", b"\xca\x10\x00", 3, ["RETF", "0x10"]),
+  ]
+  for sample in samples {
+    let disasm = match
+      @project.ProjectDisassemblyBasic::create(sample.0, backend="llvm") {
+      Ok(disasm) => disasm
+      Err(reason) => fail(reason)
+    }
+    let memory = @memory.Memory::from_bytes(
+      endian=LittleEndian,
+      start=0xe220UL,
+      sample.1,
+    )
+    match disasm.insn_of_mem(memory) {
+      Ok(result) => {
+        assert_true(result.memory().length() == sample.2)
+        assert_true(result.remainder().is_finished())
+        match result.instruction() {
+          Some(instruction) => {
+            assert_true(basic_instruction_strings(instruction) == sample.3)
+            assert_true(instruction.kinds() == return_kinds)
+          }
+          None => fail("missing x86 return instruction")
+        }
+      }
+      Err(reason) => fail(reason)
+    }
+  }
+}
+
+///|
 test "translated BAP basic disassembly recognizes x86 SIMD fixture opcodes" {
   let disasm = match
     @project.ProjectDisassemblyBasic::create("x86", backend="llvm") {

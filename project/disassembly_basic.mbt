@@ -482,6 +482,54 @@ fn project_disassembly_basic_x86_call_rel32(memory : @memory.Memory) -> Int64? {
 }
 
 ///|
+fn project_disassembly_basic_x86_return(
+  memory : @memory.Memory,
+) -> (
+  Int,
+  String,
+  Array[ProjectInstructionOperand],
+  Array[ProjectInstructionKind],
+)? {
+  let bytes = memory.to_bytes()
+  let return_kinds = [
+    ProjectReturn,
+    ProjectBarrier,
+    ProjectTerminator,
+    ProjectMayAffectControlFlow,
+  ]
+  if bytes.length() < 1 {
+    None
+  } else {
+    match bytes[0].to_int() {
+      0xc3 => Some((1, "RET", [], return_kinds))
+      0xcb => Some((1, "RETF", [], return_kinds))
+      0xc2 | 0xca =>
+        match project_disassembly_basic_x86_unsigned_at(bytes, 1, 2) {
+          Some(imm) =>
+            Some(
+              (
+                3,
+                if bytes[0].to_int() == 0xc2 {
+                  "RET"
+                } else {
+                  "RETF"
+                },
+                [
+                  ProjectInstructionOperand::immediate(
+                    imm.reinterpret_as_int64(),
+                  ),
+                ],
+                return_kinds,
+              ),
+            )
+          None => None
+        }
+      _ => None
+    }
+  }
+}
+
+///|
 fn project_disassembly_basic_x86_jmp_rel8(
   memory : @memory.Memory,
 ) -> (Int64, UInt64)? {
@@ -7027,22 +7075,11 @@ fn project_disassembly_basic_decode_x86_llvm(
           memory, 32, 32,
         ).unwrap()
         Some((length, name, "", "", [], kinds))
-      } else if project_disassembly_basic_has_prefix(memory, b"\xc3") {
-        Some(
-          (
-            1,
-            "RET",
-            "",
-            "",
-            [],
-            [
-              ProjectReturn,
-              ProjectBarrier,
-              ProjectTerminator,
-              ProjectMayAffectControlFlow,
-            ],
-          ),
-        )
+      } else if project_disassembly_basic_x86_return(memory) is Some(_) {
+        let (length, name, operands, kinds) = project_disassembly_basic_x86_return(
+          memory,
+        ).unwrap()
+        Some((length, name, "", "", operands, kinds))
       } else if project_disassembly_basic_x86_jcc_rel32(memory) is Some(_) {
         let (length, name, displacement, target) = project_disassembly_basic_x86_jcc_rel32(
           memory,
@@ -8057,20 +8094,8 @@ fn project_disassembly_basic_decode_x86_64_llvm(
       memory, 64, 64,
     ).unwrap()
     Some((length, name, [], kinds))
-  } else if project_disassembly_basic_has_prefix(memory, b"\xc3") {
-    Some(
-      (
-        1,
-        "RET",
-        [],
-        [
-          ProjectReturn,
-          ProjectBarrier,
-          ProjectTerminator,
-          ProjectMayAffectControlFlow,
-        ],
-      ),
-    )
+  } else if project_disassembly_basic_x86_return(memory) is Some(_) {
+    project_disassembly_basic_x86_return(memory)
   } else {
     None
   }

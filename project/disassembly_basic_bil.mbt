@@ -3225,18 +3225,6 @@ fn ProjectDisassemblyInstruction::project_basic_bil_idiv(
 }
 
 ///|
-fn ProjectDisassemblyInstruction::project_basic_bil_shift_count(
-  self : ProjectDisassemblyInstruction,
-  index : Int,
-  width : Int,
-) -> Result[@types.Exp, String] {
-  match self.project_basic_bil_shift_count_with_width(index, width) {
-    Ok((count, _)) => Ok(count)
-    Err(reason) => Err(reason)
-  }
-}
-
-///|
 fn ProjectDisassemblyInstruction::project_basic_bil_shift_count_with_width(
   self : ProjectDisassemblyInstruction,
   index : Int,
@@ -3365,6 +3353,101 @@ fn project_basic_bil_shiftd_flags(
         project_basic_bil_x86_flag_move(
           "ZF",
           @types.Exp::binop(@types.BinOp::eq(), zero_result, result),
+        ),
+        project_basic_bil_x86_flag_move("PF", parity),
+        @types.Stmt::if_(
+          @types.Exp::binop(@types.BinOp::eq(), count, one_count),
+          [project_basic_bil_x86_flag_move("OF", of_defined)],
+          [project_basic_bil_x86_flag_move("OF", of_undefined)],
+        ),
+      ],
+      [],
+    ),
+  )
+}
+
+///|
+fn project_basic_bil_shift_flags(
+  old_dst : @types.Exp,
+  result : @types.Exp,
+  count : @types.Exp,
+  remaining : @types.Exp,
+  count_width : Int,
+  width : Int,
+  op : @types.BinOp,
+) -> Result[@types.Stmt, String] {
+  let zero_count = match project_basic_bil_int(0L, count_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let one_count = match project_basic_bil_int(1L, count_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let zero_result = match project_basic_bil_int(0L, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let zero_flag = match project_basic_bil_int(0L, 1) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let cf = if op == @types.BinOp::lshift() {
+    @types.Exp::cast(
+      @types.CastKind::low(),
+      1,
+      @types.Exp::binop(@types.BinOp::rshift(), old_dst, remaining),
+    )
+  } else if op == @types.BinOp::rshift() || op == @types.BinOp::arshift() {
+    @types.Exp::cast(
+      @types.CastKind::low(),
+      1,
+      @types.Exp::binop(
+        @types.BinOp::rshift(),
+        old_dst,
+        @types.Exp::binop(@types.BinOp::minus(), count, one_count),
+      ),
+    )
+  } else {
+    return Err("unsupported x86 shift operation")
+  }
+  let parity = match project_basic_bil_x86_parity(result, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let of_defined = if op == @types.BinOp::lshift() {
+    @types.Exp::cast(
+      @types.CastKind::high(),
+      1,
+      project_basic_bil_x86_xor(old_dst, result),
+    )
+  } else if op == @types.BinOp::rshift() {
+    @types.Exp::cast(@types.CastKind::high(), 1, old_dst)
+  } else if op == @types.BinOp::arshift() {
+    zero_flag
+  } else {
+    return Err("unsupported x86 shift operation")
+  }
+  let of_undefined = @types.Exp::unknown(
+    "OF undefined after shift of more then 1 bit",
+    Imm(1),
+  )
+  Ok(
+    @types.Stmt::if_(
+      @types.Exp::binop(@types.BinOp::neq(), count, zero_count),
+      [
+        project_basic_bil_x86_flag_move("CF", cf),
+        project_basic_bil_x86_flag_move(
+          "SF",
+          @types.Exp::cast(@types.CastKind::high(), 1, result),
+        ),
+        project_basic_bil_x86_flag_move(
+          "ZF",
+          @types.Exp::binop(@types.BinOp::eq(), zero_result, result),
+        ),
+        project_basic_bil_x86_flag_move(
+          "AF",
+          @types.Exp::unknown("AF undefined after shift", Imm(1)),
         ),
         project_basic_bil_x86_flag_move("PF", parity),
         @types.Stmt::if_(
@@ -3681,15 +3764,30 @@ fn ProjectDisassemblyInstruction::project_basic_bil_shift_r(
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  let count = match self.project_basic_bil_shift_count(2, width) {
+  let (raw_count, count_width) = match
+    self.project_basic_bil_shift_count_with_width(2, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let (count, remaining) = match
+    project_basic_bil_shiftd_count(raw_count, count_width, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let old_dst = project_basic_bil_virtual("shift_was", width)
+  let old_dst_exp = @types.Exp::var_exp(old_dst)
+  let result_exp = @types.Exp::var_exp(dst)
+  let flag_stmt = match
+    project_basic_bil_shift_flags(
+      old_dst_exp, result_exp, count, remaining, count_width, width, op,
+    ) {
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
   Ok([
-    @types.Stmt::move_stmt(
-      dst,
-      @types.Exp::binop(op, @types.Exp::var_exp(src), count),
-    ),
+    @types.Stmt::move_stmt(old_dst, @types.Exp::var_exp(src)),
+    @types.Stmt::move_stmt(dst, @types.Exp::binop(op, old_dst_exp, count)),
+    flag_stmt,
   ])
 }
 
@@ -3703,7 +3801,13 @@ fn ProjectDisassemblyInstruction::project_basic_bil_shift_m(
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  let count = match self.project_basic_bil_shift_count(5, width) {
+  let (raw_count, count_width) = match
+    self.project_basic_bil_shift_count_with_width(5, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let (count, remaining) = match
+    project_basic_bil_shiftd_count(raw_count, count_width, width) {
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
@@ -3713,8 +3817,17 @@ fn ProjectDisassemblyInstruction::project_basic_bil_shift_m(
   }
   let addr_tmp = project_basic_bil_virtual("shift_a", address_width)
   let data_tmp = project_basic_bil_virtual("shift_d", width)
+  let result_tmp = project_basic_bil_virtual("shift_res", width)
   let addr_exp = @types.Exp::var_exp(addr_tmp)
   let data_exp = @types.Exp::var_exp(data_tmp)
+  let result_exp = @types.Exp::var_exp(result_tmp)
+  let flag_stmt = match
+    project_basic_bil_shift_flags(
+      data_exp, result_exp, count, remaining, count_width, width, op,
+    ) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
   Ok([
     @types.Stmt::move_stmt(addr_tmp, addr),
     @types.Stmt::move_stmt(
@@ -3726,16 +3839,18 @@ fn ProjectDisassemblyInstruction::project_basic_bil_shift_m(
         size,
       ),
     ),
+    @types.Stmt::move_stmt(result_tmp, @types.Exp::binop(op, data_exp, count)),
     @types.Stmt::move_stmt(
       mem,
       @types.Exp::store(
         mem=@types.Exp::var_exp(mem),
         addr=addr_exp,
-        @types.Exp::binop(op, data_exp, count),
+        result_exp,
         LittleEndian,
         size,
       ),
     ),
+    flag_stmt,
   ])
 }
 

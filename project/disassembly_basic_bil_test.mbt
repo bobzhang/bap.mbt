@@ -182,6 +182,46 @@ fn assert_incdec_flag_tail(
 }
 
 ///|
+fn assert_shift_flag_update(
+  stmt : @types.Stmt,
+  cond_text : String,
+  cf_text : String,
+  count_text : String,
+  one_text : String,
+  result : String,
+  zero : String,
+  of_text : String,
+) -> Unit raise {
+  match stmt {
+    If(cond~, yes~, no~) => {
+      assert_string(cond.to_string(), cond_text)
+      assert_true(no.is_empty())
+      assert_true(yes.length() == 6)
+      assert_string(yes[0].to_string(), cf_text)
+      assert_string(yes[1].to_string(), "SF:imm1 := high:1[\{result}]")
+      assert_string(yes[2].to_string(), "ZF:imm1 := (\{zero} == \{result})")
+      assert_true(yes[3].to_string().contains("AF undefined after shift"))
+      assert_true(yes[4].to_string().contains("PF:imm1 := (not low:1"))
+      assert_true(yes[4].to_string().contains(result))
+      match yes[5] {
+        If(cond~, yes~, no~) => {
+          assert_string(cond.to_string(), "(\{count_text} == \{one_text})")
+          assert_true(yes.length() == 1)
+          assert_string(yes[0].to_string(), of_text)
+          assert_true(no.length() == 1)
+          assert_string(
+            no[0].to_string(),
+            "OF:imm1 := unknown(OF undefined after shift of more then 1 bit:imm1)",
+          )
+        }
+        _ => fail("shift OF update did not lift to BIL if")
+      }
+    }
+    _ => fail("shift flag update did not lift to BIL if")
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86_64 stack arithmetic fixtures" {
   let noop = basic_bil_decode("x86_64", b"\x90", start=0x6ff0UL)
   match noop.lift_basic_bil() {
@@ -1541,34 +1581,126 @@ test "project Basic BIL lift covers x86 memory not-neg ops" {
 test "project Basic BIL lift covers x86 register shift ops" {
   let shl8_one = basic_bil_decode("x86", b"\xd0\xe0", start=0x703aUL)
   match shl8_one.lift_basic_bil() {
-    Ok(stmts) => assert_basic_bil_text(stmts, ["AL:imm8 := (AL:imm8 << 1:8u)"])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 3)
+      assert_string(stmts[0].to_string(), "%shift_was:imm8 := AL:imm8")
+      let count = "(1:8u & 7:8u)"
+      let result = "AL:imm8"
+      assert_string(
+        stmts[1].to_string(),
+        "AL:imm8 := (%shift_was:imm8 << " + count + ")",
+      )
+      assert_shift_flag_update(
+        stmts[2],
+        "(\{count} != 0:8u)",
+        "CF:imm1 := low:1[(%shift_was:imm8 >> (8:8u - \{count}))]",
+        count,
+        "1:8u",
+        result,
+        "0:8u",
+        "OF:imm1 := high:1[(%shift_was:imm8 ^ AL:imm8)]",
+      )
+    }
     Err(reason) => fail(reason)
   }
 
   let shr32_cl = basic_bil_decode("x86", b"\xd3\xe8", start=0x703cUL)
   match shr32_cl.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, ["EAX:imm32 := (EAX:imm32 >> CL:imm8)"])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 3)
+      assert_string(stmts[0].to_string(), "%shift_was:imm32 := EAX:imm32")
+      let count = "(CL:imm8 & 0x1F:8u)"
+      let result = "EAX:imm32"
+      assert_string(
+        stmts[1].to_string(),
+        "EAX:imm32 := (%shift_was:imm32 >> " + count + ")",
+      )
+      assert_shift_flag_update(
+        stmts[2],
+        "(\{count} != 0:8u)",
+        "CF:imm1 := low:1[(%shift_was:imm32 >> (\{count} - 1:8u))]",
+        count,
+        "1:8u",
+        result,
+        "0:32u",
+        "OF:imm1 := high:1[%shift_was:imm32]",
+      )
+    }
     Err(reason) => fail(reason)
   }
 
   let sar8_imm = basic_bil_decode("x86", b"\xc0\xfc\x03", start=0x703eUL)
   match sar8_imm.lift_basic_bil() {
-    Ok(stmts) => assert_basic_bil_text(stmts, ["AH:imm8 := (AH:imm8 a>> 3:8u)"])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 3)
+      assert_string(stmts[0].to_string(), "%shift_was:imm8 := AH:imm8")
+      let count = "(3:8u & 7:8u)"
+      let result = "AH:imm8"
+      assert_string(
+        stmts[1].to_string(),
+        "AH:imm8 := (%shift_was:imm8 a>> " + count + ")",
+      )
+      assert_shift_flag_update(
+        stmts[2],
+        "(\{count} != 0:8u)",
+        "CF:imm1 := low:1[(%shift_was:imm8 >> (\{count} - 1:8u))]",
+        count,
+        "1:8u",
+        result,
+        "0:8u",
+        "OF:imm1 := 0:1u",
+      )
+    }
     Err(reason) => fail(reason)
   }
 
   let shr64_cl = basic_bil_decode("x86_64", b"\x49\xd3\xe8", start=0x7041UL)
   match shr64_cl.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, ["R8:imm64 := (R8:imm64 >> CL:imm8)"])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 3)
+      assert_string(stmts[0].to_string(), "%shift_was:imm64 := R8:imm64")
+      let count = "(CL:imm8 & 0x3F:8u)"
+      let result = "R8:imm64"
+      assert_string(
+        stmts[1].to_string(),
+        "R8:imm64 := (%shift_was:imm64 >> " + count + ")",
+      )
+      assert_shift_flag_update(
+        stmts[2],
+        "(\{count} != 0:8u)",
+        "CF:imm1 := low:1[(%shift_was:imm64 >> (\{count} - 1:8u))]",
+        count,
+        "1:8u",
+        result,
+        "0:64u",
+        "OF:imm1 := high:1[%shift_was:imm64]",
+      )
+    }
     Err(reason) => fail(reason)
   }
 
   let shl8_rex = basic_bil_decode("x86_64", b"\x40\xd0\xe4", start=0x7044UL)
   match shl8_rex.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, ["SPL:imm8 := (SPL:imm8 << 1:8u)"])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 3)
+      assert_string(stmts[0].to_string(), "%shift_was:imm8 := SPL:imm8")
+      let count = "(1:8u & 7:8u)"
+      let result = "SPL:imm8"
+      assert_string(
+        stmts[1].to_string(),
+        "SPL:imm8 := (%shift_was:imm8 << " + count + ")",
+      )
+      assert_shift_flag_update(
+        stmts[2],
+        "(\{count} != 0:8u)",
+        "CF:imm1 := low:1[(%shift_was:imm8 >> (8:8u - \{count}))]",
+        count,
+        "1:8u",
+        result,
+        "0:8u",
+        "OF:imm1 := high:1[(%shift_was:imm8 ^ SPL:imm8)]",
+      )
+    }
     Err(reason) => fail(reason)
   }
 
@@ -1578,21 +1710,73 @@ test "project Basic BIL lift covers x86 register shift ops" {
     start=0x7045UL,
   )
   match shl64_mem.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, [
-        "%shift_a:imm64 := (RBP:imm64 - 8:64u)", "%shift_d:imm64 := load(mem:mem64x8, %shift_a:imm64):imm64",
-        "mem:mem64x8 := store(mem:mem64x8, %shift_a:imm64, (%shift_d:imm64 << 1:64u))",
-      ])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 5)
+      assert_string(
+        stmts[0].to_string(),
+        "%shift_a:imm64 := (RBP:imm64 - 8:64u)",
+      )
+      assert_string(
+        stmts[1].to_string(),
+        "%shift_d:imm64 := load(mem:mem64x8, %shift_a:imm64):imm64",
+      )
+      let count = "(1:64u & 0x3F:64u)"
+      let result = "%shift_res:imm64"
+      assert_string(
+        stmts[2].to_string(),
+        result + " := (%shift_d:imm64 << " + count + ")",
+      )
+      assert_string(
+        stmts[3].to_string(),
+        "mem:mem64x8 := store(mem:mem64x8, %shift_a:imm64, %shift_res:imm64)",
+      )
+      assert_shift_flag_update(
+        stmts[4],
+        "(\{count} != 0:64u)",
+        "CF:imm1 := low:1[(%shift_d:imm64 >> (0x40:64u - \{count}))]",
+        count,
+        "1:64u",
+        result,
+        "0:64u",
+        "OF:imm1 := high:1[(%shift_d:imm64 ^ %shift_res:imm64)]",
+      )
+    }
     Err(reason) => fail(reason)
   }
 
   let shr32_mem_cl = basic_bil_decode("x86", b"\xd3\x6d\xfc", start=0x7049UL)
   match shr32_mem_cl.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, [
-        "%shift_a:imm32 := (EBP:imm32 - 4:32u)", "%shift_d:imm32 := load(mem:mem32x8, %shift_a:imm32):imm32",
-        "mem:mem32x8 := store(mem:mem32x8, %shift_a:imm32, (%shift_d:imm32 >> CL:imm8))",
-      ])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 5)
+      assert_string(
+        stmts[0].to_string(),
+        "%shift_a:imm32 := (EBP:imm32 - 4:32u)",
+      )
+      assert_string(
+        stmts[1].to_string(),
+        "%shift_d:imm32 := load(mem:mem32x8, %shift_a:imm32):imm32",
+      )
+      let count = "(CL:imm8 & 0x1F:8u)"
+      let result = "%shift_res:imm32"
+      assert_string(
+        stmts[2].to_string(),
+        result + " := (%shift_d:imm32 >> " + count + ")",
+      )
+      assert_string(
+        stmts[3].to_string(),
+        "mem:mem32x8 := store(mem:mem32x8, %shift_a:imm32, %shift_res:imm32)",
+      )
+      assert_shift_flag_update(
+        stmts[4],
+        "(\{count} != 0:8u)",
+        "CF:imm1 := low:1[(%shift_d:imm32 >> (\{count} - 1:8u))]",
+        count,
+        "1:8u",
+        result,
+        "0:32u",
+        "OF:imm1 := high:1[%shift_d:imm32]",
+      )
+    }
     Err(reason) => fail(reason)
   }
 
@@ -1602,11 +1786,37 @@ test "project Basic BIL lift covers x86 register shift ops" {
     start=0x704cUL,
   )
   match sar8_mem_imm.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, [
-        "%shift_a:imm64 := (R8:imm64 + 1:64u)", "%shift_d:imm8 := load(mem:mem64x8, %shift_a:imm64):imm8",
-        "mem:mem64x8 := store(mem:mem64x8, %shift_a:imm64, (%shift_d:imm8 a>> 4:8u))",
-      ])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 5)
+      assert_string(
+        stmts[0].to_string(),
+        "%shift_a:imm64 := (R8:imm64 + 1:64u)",
+      )
+      assert_string(
+        stmts[1].to_string(),
+        "%shift_d:imm8 := load(mem:mem64x8, %shift_a:imm64):imm8",
+      )
+      let count = "(4:8u & 7:8u)"
+      let result = "%shift_res:imm8"
+      assert_string(
+        stmts[2].to_string(),
+        result + " := (%shift_d:imm8 a>> " + count + ")",
+      )
+      assert_string(
+        stmts[3].to_string(),
+        "mem:mem64x8 := store(mem:mem64x8, %shift_a:imm64, %shift_res:imm8)",
+      )
+      assert_shift_flag_update(
+        stmts[4],
+        "(\{count} != 0:8u)",
+        "CF:imm1 := low:1[(%shift_d:imm8 >> (\{count} - 1:8u))]",
+        count,
+        "1:8u",
+        result,
+        "0:8u",
+        "OF:imm1 := 0:1u",
+      )
+    }
     Err(reason) => fail(reason)
   }
 }

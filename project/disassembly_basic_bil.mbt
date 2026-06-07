@@ -651,18 +651,10 @@ fn ProjectDisassemblyInstruction::project_basic_bil_binop_ri(
 fn ProjectDisassemblyInstruction::project_basic_bil_imul_common(
   self : ProjectDisassemblyInstruction,
   width : Int,
-  src : @types.Exp,
-  imm_index : Int,
+  lhs : @types.Exp,
+  rhs : @types.Exp,
 ) -> Result[Array[@types.Stmt], String] {
   let dst = match self.project_basic_bil_register(0, width) {
-    Ok(value) => value
-    Err(reason) => return Err(reason)
-  }
-  let imm = match self.project_basic_bil_immediate(imm_index) {
-    Ok(value) => value
-    Err(reason) => return Err(reason)
-  }
-  let rhs = match project_basic_bil_int(imm, width) {
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
@@ -672,7 +664,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_imul_common(
   let dst_exp = @types.Exp::var_exp(dst)
   let product = @types.Exp::binop(
     @types.BinOp::times(),
-    @types.Exp::cast(@types.CastKind::signed(), product_width, src),
+    @types.Exp::cast(@types.CastKind::signed(), product_width, lhs),
     @types.Exp::cast(@types.CastKind::signed(), product_width, rhs),
   )
   let flag = @types.Exp::binop(
@@ -708,6 +700,24 @@ fn ProjectDisassemblyInstruction::project_basic_bil_imul_common(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_basic_bil_imul_imm_common(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  src : @types.Exp,
+  imm_index : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let imm = match self.project_basic_bil_immediate(imm_index) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let rhs = match project_basic_bil_int(imm, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  self.project_basic_bil_imul_common(width, src, rhs)
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_basic_bil_imul_rr_imm(
   self : ProjectDisassemblyInstruction,
   width : Int,
@@ -716,7 +726,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_imul_rr_imm(
     Ok(value) => @types.Exp::var_exp(value)
     Err(reason) => return Err(reason)
   }
-  self.project_basic_bil_imul_common(width, src, 2)
+  self.project_basic_bil_imul_imm_common(width, src, 2)
 }
 
 ///|
@@ -738,7 +748,49 @@ fn ProjectDisassemblyInstruction::project_basic_bil_imul_rm_imm(
     LittleEndian,
     size,
   )
-  self.project_basic_bil_imul_common(width, src, 6)
+  self.project_basic_bil_imul_imm_common(width, src, 6)
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_imul_rr(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let lhs = match self.project_basic_bil_register(0, width) {
+    Ok(value) => @types.Exp::var_exp(value)
+    Err(reason) => return Err(reason)
+  }
+  let rhs = match self.project_basic_bil_register(1, width) {
+    Ok(value) => @types.Exp::var_exp(value)
+    Err(reason) => return Err(reason)
+  }
+  self.project_basic_bil_imul_common(width, lhs, rhs)
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_imul_rm(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let lhs = match self.project_basic_bil_register(0, width) {
+    Ok(value) => @types.Exp::var_exp(value)
+    Err(reason) => return Err(reason)
+  }
+  let (addr, mem, _) = match self.project_basic_bil_memory_addr(1) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let rhs = @types.Exp::load(
+    mem=@types.Exp::var_exp(mem),
+    addr~,
+    LittleEndian,
+    size,
+  )
+  self.project_basic_bil_imul_common(width, lhs, rhs)
 }
 
 ///|
@@ -2247,6 +2299,12 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "IMUL16RMI8" | "IMUL16RMI16" => self.project_basic_bil_imul_rm_imm(16)
     "IMUL32RMI8" | "IMUL32RMI32" => self.project_basic_bil_imul_rm_imm(32)
     "IMUL64RMI8" | "IMUL64RMI32" => self.project_basic_bil_imul_rm_imm(64)
+    "IMUL16RR" => self.project_basic_bil_imul_rr(16)
+    "IMUL32RR" => self.project_basic_bil_imul_rr(32)
+    "IMUL64RR" => self.project_basic_bil_imul_rr(64)
+    "IMUL16RM" => self.project_basic_bil_imul_rm(16)
+    "IMUL32RM" => self.project_basic_bil_imul_rm(32)
+    "IMUL64RM" => self.project_basic_bil_imul_rm(64)
     "ROL8R1" | "ROL8RCL" | "ROL8RI8" => self.project_basic_bil_rotate_r(8, true)
     "ROL32R1" | "ROL32RCL" | "ROL32RI8" =>
       self.project_basic_bil_rotate_r(32, true)

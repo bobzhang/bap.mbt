@@ -1045,6 +1045,57 @@ fn project_disassembly_basic_x86_flag_stack(
 }
 
 ///|
+fn project_disassembly_basic_x86_leave(
+  memory : @memory.Memory,
+  value_width : Int,
+  address_width : Int,
+) -> (Int, String, Array[ProjectInstructionKind])? {
+  let bytes = memory.to_bytes()
+  if value_width != 16 && value_width != 32 && value_width != 64 {
+    return None
+  }
+  if address_width == 64 && value_width == 32 {
+    return None
+  }
+  if address_width != 64 && value_width == 64 {
+    return None
+  }
+  let prefix_index = if bytes.length() > 0 && bytes[0].to_int() == 0x66 {
+    if value_width != 16 {
+      return None
+    }
+    1
+  } else {
+    if value_width == 16 {
+      return None
+    }
+    0
+  }
+  let opcode_index = if address_width == 64 &&
+    bytes.length() > prefix_index &&
+    bytes[prefix_index].to_int() >= 0x40 &&
+    bytes[prefix_index].to_int() <= 0x4f {
+    prefix_index + 1
+  } else {
+    prefix_index
+  }
+  if bytes.length() <= opcode_index || bytes[opcode_index].to_int() != 0xc9 {
+    None
+  } else {
+    let name = if value_width == 16 && address_width == 64 {
+      "LEAVE16_64"
+    } else if value_width == 16 {
+      "LEAVE16"
+    } else if value_width == 64 {
+      "LEAVE64"
+    } else {
+      "LEAVE"
+    }
+    Some((opcode_index + 1, name, [ProjectMayLoad]))
+  }
+}
+
+///|
 fn project_disassembly_basic_x86_interrupt(
   memory : @memory.Memory,
 ) -> (Int, String, Array[ProjectInstructionOperand])? {
@@ -6384,8 +6435,16 @@ fn project_disassembly_basic_decode_x86_llvm(
             [ProjectCall, ProjectMayAffectControlFlow],
           ),
         )
-      } else if project_disassembly_basic_has_prefix(memory, b"\xc9") {
-        Some((1, "LEAVE", "", "", [], [ProjectMayLoad]))
+      } else if project_disassembly_basic_x86_leave(memory, 16, 32) is Some(_) {
+        let (length, name, kinds) = project_disassembly_basic_x86_leave(
+          memory, 16, 32,
+        ).unwrap()
+        Some((length, name, "", "", [], kinds))
+      } else if project_disassembly_basic_x86_leave(memory, 32, 32) is Some(_) {
+        let (length, name, kinds) = project_disassembly_basic_x86_leave(
+          memory, 32, 32,
+        ).unwrap()
+        Some((length, name, "", "", [], kinds))
       } else if project_disassembly_basic_has_prefix(memory, b"\xc3") {
         Some(
           (
@@ -7330,8 +7389,16 @@ fn project_disassembly_basic_decode_x86_64_llvm(
         [],
       ),
     )
-  } else if project_disassembly_basic_has_prefix(memory, b"\xc9") {
-    Some((1, "LEAVE64", [], [ProjectMayLoad]))
+  } else if project_disassembly_basic_x86_leave(memory, 16, 64) is Some(_) {
+    let (length, name, kinds) = project_disassembly_basic_x86_leave(
+      memory, 16, 64,
+    ).unwrap()
+    Some((length, name, [], kinds))
+  } else if project_disassembly_basic_x86_leave(memory, 64, 64) is Some(_) {
+    let (length, name, kinds) = project_disassembly_basic_x86_leave(
+      memory, 64, 64,
+    ).unwrap()
+    Some((length, name, [], kinds))
   } else if project_disassembly_basic_has_prefix(memory, b"\xc3") {
     Some(
       (

@@ -3806,7 +3806,10 @@ test "translated BAP basic disassembly decodes x86 leave fixtures" {
     (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),
   ] = [
     ("x86_64", b"\xc9", 1, ["LEAVE64"], [ProjectMayLoad]),
+    ("x86_64", b"\x48\xc9", 2, ["LEAVE64"], [ProjectMayLoad]),
+    ("x86_64", b"\x66\xc9", 2, ["LEAVE16_64"], [ProjectMayLoad]),
     ("x86", b"\xc9", 1, ["LEAVE"], [ProjectMayLoad]),
+    ("x86", b"\x66\xc9", 2, ["LEAVE16"], [ProjectMayLoad]),
   ]
   for sample in samples {
     let disasm = match

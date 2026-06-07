@@ -5901,6 +5901,26 @@ test "project Basic BIL lift covers x86 leave" {
       ])
     Err(reason) => fail(reason)
   }
+
+  let leave16 = basic_bil_decode("x86", b"\x66\xc9", start=0x7042UL)
+  match leave16.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "ESP:imm32 := EBP:imm32", "BP:imm16 := load(mem:mem32x8, ESP:imm32):imm16",
+        "ESP:imm32 := (ESP:imm32 + 2:32u)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let leave16_64 = basic_bil_decode("x86_64", b"\x66\xc9", start=0x7043UL)
+  match leave16_64.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "RSP:imm64 := RBP:imm64", "BP:imm16 := load(mem:mem64x8, RSP:imm64):imm16",
+        "RSP:imm64 := (RSP:imm64 + 2:64u)",
+      ])
+    Err(reason) => fail(reason)
+  }
 }
 
 ///|

@@ -762,6 +762,44 @@ test "project Basic BIL lift covers x86 shld-shrd ops" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 mxcsr ops" {
+  let ldmxcsr32 = basic_bil_decode("x86", b"\x0f\xae\x55\xfc", start=0x704aUL)
+  match ldmxcsr32.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "MXCSR:imm32 := load(mem:mem32x8, (EBP:imm32 - 4:32u)):imm32",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let stmxcsr64 = basic_bil_decode(
+    "x86_64",
+    b"\x0f\xae\x5d\xf8",
+    start=0x704eUL,
+  )
+  match stmxcsr64.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "mem:mem64x8 := store(mem:mem64x8, (RBP:imm64 - 8:64u), MXCSR:imm32)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let ldmxcsr64_ext = basic_bil_decode(
+    "x86_64",
+    b"\x41\x0f\xae\x50\x10",
+    start=0x7052UL,
+  )
+  match ldmxcsr64_ext.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "MXCSR:imm32 := load(mem:mem64x8, (R8:imm64 + 0x10:64u)):imm32",
+      ])
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86 register rotate ops" {
   let rol8_one = basic_bil_decode("x86", b"\xd0\xc0", start=0x7046UL)
   match rol8_one.lift_basic_bil() {

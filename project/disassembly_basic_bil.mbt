@@ -3758,6 +3758,48 @@ fn ProjectDisassemblyInstruction::project_basic_bil_control_mem(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_basic_bil_mxcsr_mem(
+  self : ProjectDisassemblyInstruction,
+  load_mxcsr : Bool,
+) -> Result[Array[@types.Stmt], String] {
+  let (addr, mem, _) = match self.project_basic_bil_memory_addr(0) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(32) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let mxcsr = project_basic_bil_reg("MXCSR", 32)
+  if load_mxcsr {
+    Ok([
+      @types.Stmt::move_stmt(
+        mxcsr,
+        @types.Exp::load(
+          mem=@types.Exp::var_exp(mem),
+          addr~,
+          LittleEndian,
+          size,
+        ),
+      ),
+    ])
+  } else {
+    Ok([
+      @types.Stmt::move_stmt(
+        mem,
+        @types.Exp::store(
+          mem=@types.Exp::var_exp(mem),
+          addr~,
+          @types.Exp::var_exp(mxcsr),
+          LittleEndian,
+          size,
+        ),
+      ),
+    ])
+  }
+}
+
+///|
 fn project_basic_bil_control_with_width(
   attr : @types.StmtAttribute[String],
   target : UInt64,
@@ -4142,6 +4184,8 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "SHRD16MRI8" | "SHRD16MRCL" => self.project_basic_bil_shiftd_mr(16, false)
     "SHRD32MRI8" | "SHRD32MRCL" => self.project_basic_bil_shiftd_mr(32, false)
     "SHRD64MRI8" | "SHRD64MRCL" => self.project_basic_bil_shiftd_mr(64, false)
+    "LDMXCSRM" => self.project_basic_bil_mxcsr_mem(true)
+    "STMXCSRM" => self.project_basic_bil_mxcsr_mem(false)
     "ROL8R1" | "ROL8RCL" | "ROL8RI8" => self.project_basic_bil_rotate_r(8, true)
     "ROL32R1" | "ROL32RCL" | "ROL32RI8" =>
       self.project_basic_bil_rotate_r(32, true)

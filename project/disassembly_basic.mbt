@@ -3407,6 +3407,14 @@ fn project_disassembly_basic_x86_reg_update(
       return Some((length, name, operands, kinds))
     None => ()
   }
+  match
+    project_disassembly_basic_x86_group1_imm_mem(
+      memory, data_width, address_width,
+    ) {
+    Some((length, name, operands, kinds)) =>
+      return Some((length, name, operands, kinds))
+    None => ()
+  }
   if bytes.length() < opcode_index + 2 {
     None
   } else {
@@ -3484,6 +3492,114 @@ fn project_disassembly_basic_x86_reg_update(
             [],
           ),
         )
+      }
+    }
+  }
+}
+
+///|
+fn project_disassembly_basic_x86_group1_imm_mem(
+  memory : @memory.Memory,
+  data_width : Int,
+  address_width : Int,
+) -> (
+  Int,
+  String,
+  Array[ProjectInstructionOperand],
+  Array[ProjectInstructionKind],
+)? {
+  let bytes = memory.to_bytes()
+  let (opcode_index, rex) = if address_width == 64 &&
+    bytes.length() >= 3 &&
+    bytes[0].to_int() >= 0x40 &&
+    bytes[0].to_int() <= 0x4f {
+    (1, bytes[0].to_int())
+  } else {
+    (0, 0)
+  }
+  if data_width == 64 && (rex & 0x8) == 0 {
+    return None
+  }
+  if data_width == 32 && (rex & 0x8) != 0 {
+    return None
+  }
+  if data_width != 8 && data_width != 32 && data_width != 64 {
+    return None
+  }
+  if bytes.length() < opcode_index + 2 {
+    None
+  } else {
+    let opcode = bytes[opcode_index].to_int()
+    let modrm = bytes[opcode_index + 1].to_int()
+    let imm_width = match opcode {
+      0x80 if data_width == 8 => 1
+      0x81 if data_width != 8 => 4
+      0x83 if data_width != 8 => 1
+      _ => 0
+    }
+    if imm_width == 0 || ((modrm >> 6) & 0x3) == 0x3 {
+      None
+    } else {
+      let group = (modrm >> 3) & 0x7
+      let op = match group {
+        0 => "ADD"
+        1 => "OR"
+        4 => "AND"
+        5 => "SUB"
+        6 => "XOR"
+        7 => "CMP"
+        _ => ""
+      }
+      if op == "" {
+        None
+      } else {
+        match
+          project_disassembly_basic_x86_parse_mem_operand(
+            bytes,
+            opcode_index + 2,
+            modrm,
+            address_width,
+            rex,
+          ) {
+          Some((length, memory_operand)) => {
+            if bytes.length() < length + imm_width {
+              return None
+            }
+            let imm = if opcode == 0x80 {
+              bytes[length].to_int().to_int64()
+            } else if opcode == 0x83 {
+              project_disassembly_basic_x86_signed_byte(bytes[length])
+            } else {
+              match project_disassembly_basic_x86_i32_at(bytes, length) {
+                Some(value) => value
+                None => return None
+              }
+            }
+            let suffix = if opcode == 0x80 || opcode == 0x83 {
+              "mi8"
+            } else {
+              "mi32"
+            }
+            let operands = project_disassembly_basic_x86_mem_operands(
+              memory_operand,
+            )
+            operands.push(ProjectInstructionOperand::immediate(imm))
+            let kinds = if op == "CMP" {
+              [ProjectMayLoad]
+            } else {
+              [ProjectMayLoad, ProjectMayStore]
+            }
+            Some(
+              (
+                length + imm_width,
+                op + "\{data_width}\{suffix}",
+                operands,
+                kinds,
+              ),
+            )
+          }
+          None => None
+        }
       }
     }
   }

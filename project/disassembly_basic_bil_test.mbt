@@ -525,6 +525,87 @@ test "project Basic BIL lift covers x86 register logical immediates" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 memory add-sub immediates" {
+  let add64_mem = basic_bil_decode(
+    "x86_64",
+    b"\x48\x83\x45\xf8\x01",
+    start=0x7022UL,
+  )
+  match add64_mem.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%binop_a:imm64 := (RBP:imm64 - 8:64u)", "%binop_d:imm64 := load(mem:mem64x8, %binop_a:imm64):imm64",
+        "mem:mem64x8 := store(mem:mem64x8, %binop_a:imm64, (%binop_d:imm64 + 1:64u))",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let sub32_mem = basic_bil_decode(
+    "x86",
+    b"\x81\x6d\xfc\x78\x56\x34\x12",
+    start=0x7027UL,
+  )
+  match sub32_mem.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%binop_a:imm32 := (EBP:imm32 - 4:32u)", "%binop_d:imm32 := load(mem:mem32x8, %binop_a:imm32):imm32",
+        "mem:mem32x8 := store(mem:mem32x8, %binop_a:imm32, (%binop_d:imm32 - 0x12345678:32u))",
+      ])
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+test "project Basic BIL lift covers x86 memory logical and cmp immediates" {
+  let or8_mem = basic_bil_decode(
+    "x86_64",
+    b"\x41\x80\x48\x01\x0f",
+    start=0x702eUL,
+  )
+  match or8_mem.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%binop_a:imm64 := (R8:imm64 + 1:64u)", "%binop_d:imm8 := load(mem:mem64x8, %binop_a:imm64):imm8",
+        "mem:mem64x8 := store(mem:mem64x8, %binop_a:imm64, (%binop_d:imm8 | 0xF:8u))",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let xor32_mem = basic_bil_decode("x86", b"\x83\x75\xfc\xff", start=0x7033UL)
+  match xor32_mem.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%binop_a:imm32 := (EBP:imm32 - 4:32u)", "%binop_d:imm32 := load(mem:mem32x8, %binop_a:imm32):imm32",
+        "mem:mem32x8 := store(mem:mem32x8, %binop_a:imm32, (%binop_d:imm32 ^ 0xFFFFFFFF:32u))",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let cmp32_mem = basic_bil_decode("x86", b"\x83\x7d\xfc\x01", start=0x7037UL)
+  match cmp32_mem.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 9)
+      assert_string(stmts[0].to_string(), "%cmp_a:imm32 := (EBP:imm32 - 4:32u)")
+      assert_string(
+        stmts[1].to_string(),
+        "%cmp_d:imm32 := load(mem:mem32x8, %cmp_a:imm32):imm32",
+      )
+      assert_string(
+        stmts[2].to_string(),
+        "%cmp_tmp:imm32 := (%cmp_d:imm32 - 1:32u)",
+      )
+      assert_string(stmts[3].to_string(), "CF:imm1 := (%cmp_d:imm32 < 1:32u)")
+      assert_true(stmts[4].to_string().contains("OF:imm1 := high:1"))
+      assert_string(
+        stmts[8].to_string(),
+        "ZF:imm1 := (0:32u == %cmp_tmp:imm32)",
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86 register inc-dec ops" {
   let inc64 = basic_bil_decode("x86_64", b"\x48\xff\xc0", start=0x7022UL)
   match inc64.lift_basic_bil() {

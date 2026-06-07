@@ -575,6 +575,20 @@ test "translated BAP basic disassembly decodes x86 memory add-sub immediates" {
       ["SUB32mi32", "EBP", "0x1", "Nil", "-0x4", "Nil", "0x12345678"],
       [ProjectMayLoad, ProjectMayStore],
     ),
+    (
+      "x86_64",
+      b"\x48\x83\x55\xf8\x01",
+      5,
+      ["ADC64mi8", "RBP", "0x1", "Nil", "-0x8", "Nil", "0x1"],
+      [ProjectMayLoad, ProjectMayStore],
+    ),
+    (
+      "x86",
+      b"\x83\x5d\xfc\x01",
+      4,
+      ["SBB32mi8", "EBP", "0x1", "Nil", "-0x4", "Nil", "0x1"],
+      [ProjectMayLoad, ProjectMayStore],
+    ),
   ]
   for sample in samples {
     let disasm = match

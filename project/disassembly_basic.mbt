@@ -3544,6 +3544,8 @@ fn project_disassembly_basic_x86_group1_imm_mem(
       let op = match group {
         0 => "ADD"
         1 => "OR"
+        2 => "ADC"
+        3 => "SBB"
         4 => "AND"
         5 => "SUB"
         6 => "XOR"

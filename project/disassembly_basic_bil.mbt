@@ -150,6 +150,8 @@ fn ProjectDisassemblyInstruction::project_basic_bil_cpuexn(
 ) -> Result[Array[@types.Stmt], String] {
   let code = if self.name().to_upper() == "INT3" {
     3
+  } else if self.name().to_upper() == "UD2" {
+    6
   } else {
     match self.project_basic_bil_immediate(0) {
       Ok(value) =>
@@ -7223,7 +7225,7 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "POPF16_64" => project_basic_bil_x86_popf(16, 64)
     "POPF32" => project_basic_bil_x86_popf(32, 32)
     "POPF64" => project_basic_bil_x86_popf(64, 64)
-    "INT3" | "INT" => self.project_basic_bil_cpuexn()
+    "INT3" | "INT" | "UD2" => self.project_basic_bil_cpuexn()
     "HLT" => Ok([])
     "INVD" | "WBINVD" | "WRMSR" => Ok([])
     "RDTSC" => Ok(project_basic_bil_x86_unknown_regs("rdtsc", ["EAX", "EDX"]))

@@ -540,7 +540,13 @@ test "project Basic BIL lift covers x86 interrupts" {
     Err(reason) => fail(reason)
   }
 
-  let int64 = basic_bil_decode("x86_64", b"\xcd\x03", start=0x7013UL)
+  let ud2 = basic_bil_decode("x86", b"\x0f\x0b", start=0x7013UL)
+  match ud2.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["cpuexn 6"])
+    Err(reason) => fail(reason)
+  }
+
+  let int64 = basic_bil_decode("x86_64", b"\xcd\x03", start=0x7015UL)
   match int64.lift_basic_bil() {
     Ok(stmts) => assert_basic_bil_text(stmts, ["cpuexn 3"])
     Err(reason) => fail(reason)

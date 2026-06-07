@@ -1135,6 +1135,20 @@ fn project_disassembly_basic_x86_interrupt(
 }
 
 ///|
+fn project_disassembly_basic_x86_ud2(
+  memory : @memory.Memory,
+) -> (Int, String, Array[ProjectInstructionKind])? {
+  let bytes = memory.to_bytes()
+  if bytes.length() >= 2 &&
+    bytes[0].to_int() == 0x0f &&
+    bytes[1].to_int() == 0x0b {
+    Some((2, "UD2", [ProjectMayAffectControlFlow]))
+  } else {
+    None
+  }
+}
+
+///|
 fn project_disassembly_basic_x86_system(
   memory : @memory.Memory,
   address_width : Int,
@@ -6159,6 +6173,9 @@ fn project_disassembly_basic_decode_x86_llvm(
           memory,
         ).unwrap()
         Some((length, name, "", "", operands, [ProjectMayAffectControlFlow]))
+      } else if project_disassembly_basic_x86_ud2(memory) is Some(_) {
+        let (length, name, kinds) = project_disassembly_basic_x86_ud2(memory).unwrap()
+        Some((length, name, "", "", [], kinds))
       } else if project_disassembly_basic_x86_system(memory, 32) is Some(_) {
         let (length, name) = project_disassembly_basic_x86_system(memory, 32).unwrap()
         Some((length, name, "", "", [], []))
@@ -7085,6 +7102,9 @@ fn project_disassembly_basic_decode_x86_64_llvm(
       memory,
     ).unwrap()
     Some((length, name, operands, [ProjectMayAffectControlFlow]))
+  } else if project_disassembly_basic_x86_ud2(memory) is Some(_) {
+    let (length, name, kinds) = project_disassembly_basic_x86_ud2(memory).unwrap()
+    Some((length, name, [], kinds))
   } else if project_disassembly_basic_x86_system(memory, 64) is Some(_) {
     let (length, name) = project_disassembly_basic_x86_system(memory, 64).unwrap()
     Some((length, name, [], []))

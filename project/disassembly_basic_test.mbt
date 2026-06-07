@@ -434,8 +434,10 @@ test "translated BAP basic disassembly decodes x86 interrupts" {
   let samples : Array[(String, Bytes, Int, Array[String], Int?)] = [
     ("x86", b"\xcc", 1, ["INT3"], None),
     ("x86", b"\xcd\x80", 2, ["INT", "0x80"], Some(0x80)),
+    ("x86", b"\x0f\x0b", 2, ["UD2"], None),
     ("x86_64", b"\xcc", 1, ["INT3"], None),
     ("x86_64", b"\xcd\x03", 2, ["INT", "0x3"], Some(3)),
+    ("x86_64", b"\x0f\x0b", 2, ["UD2"], None),
   ]
   for sample in samples {
     let disasm = match

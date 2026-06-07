@@ -1824,7 +1824,15 @@ test "translated BAP basic disassembly decodes x86 cmpxchg fixtures" {
     (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),
   ] = [
     ("x86", b"\x0f\xb1\xcb", 3, ["CMPXCHG32rr", "EBX", "EBX", "ECX"], []),
+    ("x86", b"\x0f\xb0\xcb", 3, ["CMPXCHG8rr", "BL", "BL", "CL"], []),
     ("x86", b"\x66\x0f\xb1\xcb", 4, ["CMPXCHG16rr", "BX", "BX", "CX"], []),
+    (
+      "x86",
+      b"\x0f\xb0\x4d\xfc",
+      4,
+      ["CMPXCHG8mr", "EBP", "0x1", "Nil", "-0x4", "Nil", "CL"],
+      [ProjectMayLoad, ProjectMayStore],
+    ),
     (
       "x86",
       b"\x0f\xb1\x4d\xfc",
@@ -1841,6 +1849,14 @@ test "translated BAP basic disassembly decodes x86 cmpxchg fixtures" {
     ),
     ("x86_64", b"\x48\x0f\xb1\xcb", 4, ["CMPXCHG64rr", "RBX", "RBX", "RCX"], []),
     ("x86_64", b"\x4d\x0f\xb1\xc8", 4, ["CMPXCHG64rr", "R8", "R8", "R9"], []),
+    ("x86_64", b"\x45\x0f\xb0\xc1", 4, ["CMPXCHG8rr", "R9B", "R9B", "R8B"], []),
+    (
+      "x86_64",
+      b"\x44\x0f\xb0\x45\xf8",
+      5,
+      ["CMPXCHG8mr", "RBP", "0x1", "Nil", "-0x8", "Nil", "R8B"],
+      [ProjectMayLoad, ProjectMayStore],
+    ),
     (
       "x86_64",
       b"\x48\x0f\xb1\x4d\xf8",
@@ -1883,7 +1899,15 @@ test "translated BAP basic disassembly decodes x86 xadd fixtures" {
     (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),
   ] = [
     ("x86", b"\x0f\xc1\xcb", 3, ["XADD32rr", "EBX", "EBX", "ECX"], []),
+    ("x86", b"\x0f\xc0\xcb", 3, ["XADD8rr", "BL", "BL", "CL"], []),
     ("x86", b"\x66\x0f\xc1\xcb", 4, ["XADD16rr", "BX", "BX", "CX"], []),
+    (
+      "x86",
+      b"\x0f\xc0\x4d\xfc",
+      4,
+      ["XADD8mr", "EBP", "0x1", "Nil", "-0x4", "Nil", "CL"],
+      [ProjectMayLoad, ProjectMayStore],
+    ),
     (
       "x86",
       b"\x0f\xc1\x4d\xfc",
@@ -1900,6 +1924,14 @@ test "translated BAP basic disassembly decodes x86 xadd fixtures" {
     ),
     ("x86_64", b"\x48\x0f\xc1\xcb", 4, ["XADD64rr", "RBX", "RBX", "RCX"], []),
     ("x86_64", b"\x4d\x0f\xc1\xc8", 4, ["XADD64rr", "R8", "R8", "R9"], []),
+    ("x86_64", b"\x45\x0f\xc0\xc1", 4, ["XADD8rr", "R9B", "R9B", "R8B"], []),
+    (
+      "x86_64",
+      b"\x44\x0f\xc0\x45\xf8",
+      5,
+      ["XADD8mr", "RBP", "0x1", "Nil", "-0x8", "Nil", "R8B"],
+      [ProjectMayLoad, ProjectMayStore],
+    ),
     (
       "x86_64",
       b"\x48\x0f\xc1\x4d\xf8",

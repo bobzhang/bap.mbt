@@ -2744,6 +2744,32 @@ test "project Basic BIL lift covers x86 cmpxchg ops" {
     Err(reason) => fail(reason)
   }
 
+  let cmpxchg8 = basic_bil_decode("x86", b"\x0f\xb0\xcb", start=0x7057UL)
+  match cmpxchg8.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 9)
+      assert_string(
+        stmts[0].to_string(),
+        "%cmpxchg_tmp:imm8 := (AL:imm8 - BL:imm8)",
+      )
+      assert_string(stmts[1].to_string(), "CF:imm1 := (AL:imm8 < BL:imm8)")
+      assert_true(stmts[4].to_string().has_prefix("PF:imm1 := "))
+      assert_string(
+        stmts[6].to_string(),
+        "ZF:imm1 := (0:8u == %cmpxchg_tmp:imm8)",
+      )
+      assert_string(
+        stmts[7].to_string(),
+        "BL:imm8 := ite(ZF:imm1, CL:imm8, BL:imm8)",
+      )
+      assert_string(
+        stmts[8].to_string(),
+        "AL:imm8 := ite(ZF:imm1, AL:imm8, BL:imm8)",
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
   let cmpxchg16 = basic_bil_decode("x86", b"\x66\x0f\xb1\xcb", start=0x7058UL)
   match cmpxchg16.lift_basic_bil() {
     Ok(stmts) => {
@@ -2765,6 +2791,42 @@ test "project Basic BIL lift covers x86 cmpxchg ops" {
       assert_string(
         stmts[8].to_string(),
         "AX:imm16 := ite(ZF:imm1, AX:imm16, BX:imm16)",
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let cmpxchg8_mem = basic_bil_decode(
+    "x86_64",
+    b"\x44\x0f\xb0\x45\xf8",
+    start=0x7059UL,
+  )
+  match cmpxchg8_mem.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 11)
+      assert_string(
+        stmts[0].to_string(),
+        "%cmpxchg_a:imm64 := (RBP:imm64 - 8:64u)",
+      )
+      assert_string(
+        stmts[1].to_string(),
+        "%cmpxchg_d:imm8 := load(mem:mem64x8, %cmpxchg_a:imm64):imm8",
+      )
+      assert_string(
+        stmts[2].to_string(),
+        "%cmpxchg_tmp:imm8 := (AL:imm8 - %cmpxchg_d:imm8)",
+      )
+      assert_string(
+        stmts[8].to_string(),
+        "ZF:imm1 := (0:8u == %cmpxchg_tmp:imm8)",
+      )
+      assert_string(
+        stmts[9].to_string(),
+        "mem:mem64x8 := store(mem:mem64x8, %cmpxchg_a:imm64, ite(ZF:imm1, R8B:imm8, %cmpxchg_d:imm8))",
+      )
+      assert_string(
+        stmts[10].to_string(),
+        "AL:imm8 := ite(ZF:imm1, AL:imm8, %cmpxchg_d:imm8)",
       )
     }
     Err(reason) => fail(reason)
@@ -2869,6 +2931,30 @@ test "project Basic BIL lift covers x86 xadd ops" {
     Err(reason) => fail(reason)
   }
 
+  let xadd8 = basic_bil_decode("x86", b"\x0f\xc0\xcb", start=0x705fUL)
+  match xadd8.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 11)
+      assert_string(stmts[0].to_string(), "%xadd_src:imm8 := CL:imm8")
+      assert_string(stmts[1].to_string(), "%xadd_dst:imm8 := BL:imm8")
+      assert_string(
+        stmts[2].to_string(),
+        "%xadd_tmp:imm8 := (%xadd_dst:imm8 + %xadd_src:imm8)",
+      )
+      assert_string(stmts[3].to_string(), "CL:imm8 := %xadd_dst:imm8")
+      assert_string(stmts[4].to_string(), "BL:imm8 := %xadd_tmp:imm8")
+      assert_string(
+        stmts[5].to_string(),
+        "CF:imm1 := (%xadd_tmp:imm8 < %xadd_dst:imm8)",
+      )
+      assert_string(
+        stmts[10].to_string(),
+        "ZF:imm1 := (0:8u == %xadd_tmp:imm8)",
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
   let xadd16 = basic_bil_decode("x86", b"\x66\x0f\xc1\xcb", start=0x7060UL)
   match xadd16.lift_basic_bil() {
     Ok(stmts) => {
@@ -2888,6 +2974,44 @@ test "project Basic BIL lift covers x86 xadd ops" {
       assert_string(
         stmts[10].to_string(),
         "ZF:imm1 := (0:16u == %xadd_tmp:imm16)",
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let xadd8_mem = basic_bil_decode(
+    "x86_64",
+    b"\x44\x0f\xc0\x45\xf8",
+    start=0x7061UL,
+  )
+  match xadd8_mem.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 12)
+      assert_string(
+        stmts[0].to_string(),
+        "%xadd_a:imm64 := (RBP:imm64 - 8:64u)",
+      )
+      assert_string(
+        stmts[1].to_string(),
+        "%xadd_dst:imm8 := load(mem:mem64x8, %xadd_a:imm64):imm8",
+      )
+      assert_string(stmts[2].to_string(), "%xadd_src:imm8 := R8B:imm8")
+      assert_string(
+        stmts[3].to_string(),
+        "%xadd_tmp:imm8 := (%xadd_dst:imm8 + %xadd_src:imm8)",
+      )
+      assert_string(stmts[4].to_string(), "R8B:imm8 := %xadd_dst:imm8")
+      assert_string(
+        stmts[5].to_string(),
+        "mem:mem64x8 := store(mem:mem64x8, %xadd_a:imm64, %xadd_tmp:imm8)",
+      )
+      assert_string(
+        stmts[6].to_string(),
+        "CF:imm1 := (%xadd_tmp:imm8 < %xadd_dst:imm8)",
+      )
+      assert_string(
+        stmts[11].to_string(),
+        "ZF:imm1 := (0:8u == %xadd_tmp:imm8)",
       )
     }
     Err(reason) => fail(reason)

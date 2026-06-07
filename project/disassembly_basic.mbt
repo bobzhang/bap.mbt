@@ -6256,6 +6256,7 @@ fn project_disassembly_basic_decode_x86_simd_llvm(
   let xmm1 = ProjectInstructionOperand::register(name="XMM1")
   let xmm0_imm3 = [xmm0, imm3]
   let xmm0_imm4 = [xmm0, imm4]
+  let xmm0_xmm1 = [xmm0, xmm1]
   let xmm0_xmm1_imm4 = [xmm0, xmm1, imm4]
   let xmm1_xmm0 = [xmm1, xmm0]
   let decoded : (
@@ -6271,6 +6272,22 @@ fn project_disassembly_basic_decode_x86_simd_llvm(
       memory, b"\x66\x0f\x3a\x0f\xc1\x04",
     ) {
     Some((6, "PALIGNR", xmm0_xmm1_imm4, []))
+  } else if project_disassembly_basic_has_prefix(memory, b"\x0f\x10\xc1") {
+    Some((3, "MOVUPS", xmm0_xmm1, []))
+  } else if project_disassembly_basic_has_prefix(memory, b"\x0f\x11\xc8") {
+    Some((3, "MOVUPS", xmm0_xmm1, []))
+  } else if project_disassembly_basic_has_prefix(memory, b"\x0f\x28\xc1") {
+    Some((3, "MOVAPS", xmm0_xmm1, []))
+  } else if project_disassembly_basic_has_prefix(memory, b"\x0f\x29\xc8") {
+    Some((3, "MOVAPS", xmm0_xmm1, []))
+  } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\x6f\xc1") {
+    Some((4, "MOVDQA", xmm0_xmm1, []))
+  } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\x7f\xc8") {
+    Some((4, "MOVDQA", xmm0_xmm1, []))
+  } else if project_disassembly_basic_has_prefix(memory, b"\xf3\x0f\x6f\xc1") {
+    Some((4, "MOVDQU", xmm0_xmm1, []))
+  } else if project_disassembly_basic_has_prefix(memory, b"\xf3\x0f\x7f\xc8") {
+    Some((4, "MOVDQU", xmm0_xmm1, []))
   } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xd4\xc8") {
     Some((4, "PADDQ", xmm1_xmm0, []))
   } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xd1\xc8") {

@@ -493,6 +493,18 @@ fn project_x86_simd_palignr(
 }
 
 ///|
+fn project_x86_simd_movdq(
+  dest : @types.Word,
+  source : @types.Word,
+) -> Result[@types.Word, String] {
+  try @types.Word::create(source.to_bitvec(), dest.width()) catch {
+    _ => Err("x86 SIMD move result construction failed")
+  } noraise {
+    result => Ok(result)
+  }
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_x86_simd_eval_immediate(
   self : ProjectDisassemblyInstruction,
   dest : @types.Word,
@@ -619,6 +631,8 @@ fn ProjectDisassemblyInstruction::project_x86_simd_eval(
   match self.name_value.to_upper() {
     "PCMPEQB" => dest.packed_eq(source, element_width=8)
     "PCMPGTB" => dest.packed_gt(source, element_width=8, signed=true)
+    "MOVUPS" | "MOVAPS" | "MOVDQA" | "MOVDQU" =>
+      project_x86_simd_movdq(dest, source)
     "PADDQ" => project_x86_simd_packed_add_sub(dest, source, element_width=64)
     "PSRLW" =>
       project_x86_simd_packed_shift(

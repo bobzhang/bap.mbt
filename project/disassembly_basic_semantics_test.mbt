@@ -470,6 +470,31 @@ test "project Basic x86 SIMD semantics execute palignr fixtures" {
 }
 
 ///|
+test "project Basic x86 SIMD semantics execute vector move fixtures" {
+  let old_dest = semantic_word128("ffffffffffffffffffffffffffffffff")
+  let source = semantic_word128("0f0e0d0c0b0a09080706050403020100")
+  let samples : Array[(String, Bytes)] = [
+    ("movups load", b"\x0f\x10\xc1"),
+    ("movups store", b"\x0f\x11\xc8"),
+    ("movaps load", b"\x0f\x28\xc1"),
+    ("movaps store", b"\x0f\x29\xc8"),
+    ("movdqa load", b"\x66\x0f\x6f\xc1"),
+    ("movdqa store", b"\x66\x0f\x7f\xc8"),
+    ("movdqu load", b"\xf3\x0f\x6f\xc1"),
+    ("movdqu store", b"\xf3\x0f\x7f\xc8"),
+  ]
+  for sample in samples {
+    assert_x86_simd_result(
+      sample.0,
+      sample.1,
+      semantic_xmm_state(old_dest, source),
+      "xmm0",
+      source,
+    )
+  }
+}
+
+///|
 test "project Basic x86 SIMD semantics execute pshufb register fixtures" {
   let origin = semantic_word128("504f4e4d4c4b4a494847464544434241")
   let samples : Array[(String, @types.Word, @types.Word)] = [

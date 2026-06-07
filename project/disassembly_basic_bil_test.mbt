@@ -155,6 +155,33 @@ fn assert_addsub_flag_tail(
 }
 
 ///|
+fn assert_incdec_flag_tail(
+  stmts : Array[@types.Stmt],
+  offset : Int,
+  lhs : String,
+  rhs : String,
+  result : String,
+  zero : String,
+) -> Unit raise {
+  assert_true(!stmts.any(stmt => stmt.to_string().has_prefix("CF:imm1 :=")))
+  assert_true(stmts[offset].to_string().contains("OF:imm1 :="))
+  assert_true(stmts[offset].to_string().contains(lhs))
+  assert_true(stmts[offset].to_string().contains(rhs))
+  assert_true(stmts[offset].to_string().contains(result))
+  assert_true(stmts[offset + 1].to_string().contains("AF:imm1 := extract[4:4]"))
+  assert_true(stmts[offset + 1].to_string().contains(lhs))
+  assert_true(stmts[offset + 1].to_string().contains(rhs))
+  assert_true(stmts[offset + 1].to_string().contains(result))
+  assert_true(stmts[offset + 2].to_string().contains("PF:imm1 := (not low:1"))
+  assert_true(stmts[offset + 2].to_string().contains(result))
+  assert_string(stmts[offset + 3].to_string(), "SF:imm1 := high:1[\{result}]")
+  assert_string(
+    stmts[offset + 4].to_string(),
+    "ZF:imm1 := (\{zero} == \{result})",
+  )
+}
+
+///|
 test "project Basic BIL lift covers x86_64 stack arithmetic fixtures" {
   let noop = basic_bil_decode("x86_64", b"\x90", start=0x6ff0UL)
   match noop.lift_basic_bil() {
@@ -1196,41 +1223,103 @@ test "project Basic BIL lift covers x86 memory logical and cmp immediates" {
 test "project Basic BIL lift covers x86 register inc-dec ops" {
   let inc64 = basic_bil_decode("x86_64", b"\x48\xff\xc0", start=0x7022UL)
   match inc64.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, ["RAX:imm64 := (RAX:imm64 + 1:64u)"])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 8)
+      assert_string(stmts[0].to_string(), "%inc_dst:imm64 := RAX:imm64")
+      assert_string(stmts[1].to_string(), "%inc_src:imm64 := 1:64u")
+      assert_string(
+        stmts[2].to_string(),
+        "RAX:imm64 := (%inc_dst:imm64 + %inc_src:imm64)",
+      )
+      assert_incdec_flag_tail(
+        stmts, 3, "%inc_dst:imm64", "%inc_src:imm64", "RAX:imm64", "0:64u",
+      )
+    }
     Err(reason) => fail(reason)
   }
 
   let inc64_ext = basic_bil_decode("x86_64", b"\x49\xff\xc0", start=0x7025UL)
   match inc64_ext.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, ["R8:imm64 := (R8:imm64 + 1:64u)"])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 8)
+      assert_string(stmts[0].to_string(), "%inc_dst:imm64 := R8:imm64")
+      assert_string(stmts[1].to_string(), "%inc_src:imm64 := 1:64u")
+      assert_string(
+        stmts[2].to_string(),
+        "R8:imm64 := (%inc_dst:imm64 + %inc_src:imm64)",
+      )
+      assert_incdec_flag_tail(
+        stmts, 3, "%inc_dst:imm64", "%inc_src:imm64", "R8:imm64", "0:64u",
+      )
+    }
     Err(reason) => fail(reason)
   }
 
   let dec32 = basic_bil_decode("x86", b"\x49", start=0x7028UL)
   match dec32.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, ["ECX:imm32 := (ECX:imm32 - 1:32u)"])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 8)
+      assert_string(stmts[0].to_string(), "%dec_dst:imm32 := ECX:imm32")
+      assert_string(stmts[1].to_string(), "%dec_src:imm32 := 1:32u")
+      assert_string(
+        stmts[2].to_string(),
+        "ECX:imm32 := (%dec_dst:imm32 - %dec_src:imm32)",
+      )
+      assert_incdec_flag_tail(
+        stmts, 3, "%dec_dst:imm32", "%dec_src:imm32", "ECX:imm32", "0:32u",
+      )
+    }
     Err(reason) => fail(reason)
   }
 
   let dec32_ext = basic_bil_decode("x86_64", b"\x41\xff\xc8", start=0x7029UL)
   match dec32_ext.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, ["R8D:imm32 := (R8D:imm32 - 1:32u)"])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 8)
+      assert_string(stmts[0].to_string(), "%dec_dst:imm32 := R8D:imm32")
+      assert_string(stmts[1].to_string(), "%dec_src:imm32 := 1:32u")
+      assert_string(
+        stmts[2].to_string(),
+        "R8D:imm32 := (%dec_dst:imm32 - %dec_src:imm32)",
+      )
+      assert_incdec_flag_tail(
+        stmts, 3, "%dec_dst:imm32", "%dec_src:imm32", "R8D:imm32", "0:32u",
+      )
+    }
     Err(reason) => fail(reason)
   }
 
   let inc8 = basic_bil_decode("x86", b"\xfe\xc4", start=0x702aUL)
   match inc8.lift_basic_bil() {
-    Ok(stmts) => assert_basic_bil_text(stmts, ["AH:imm8 := (AH:imm8 + 1:8u)"])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 8)
+      assert_string(stmts[0].to_string(), "%inc_dst:imm8 := AH:imm8")
+      assert_string(stmts[1].to_string(), "%inc_src:imm8 := 1:8u")
+      assert_string(
+        stmts[2].to_string(),
+        "AH:imm8 := (%inc_dst:imm8 + %inc_src:imm8)",
+      )
+      assert_incdec_flag_tail(
+        stmts, 3, "%inc_dst:imm8", "%inc_src:imm8", "AH:imm8", "0:8u",
+      )
+    }
     Err(reason) => fail(reason)
   }
 
   let dec8_ext = basic_bil_decode("x86_64", b"\x41\xfe\xc8", start=0x702bUL)
   match dec8_ext.lift_basic_bil() {
-    Ok(stmts) => assert_basic_bil_text(stmts, ["R8B:imm8 := (R8B:imm8 - 1:8u)"])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 8)
+      assert_string(stmts[0].to_string(), "%dec_dst:imm8 := R8B:imm8")
+      assert_string(stmts[1].to_string(), "%dec_src:imm8 := 1:8u")
+      assert_string(
+        stmts[2].to_string(),
+        "R8B:imm8 := (%dec_dst:imm8 - %dec_src:imm8)",
+      )
+      assert_incdec_flag_tail(
+        stmts, 3, "%dec_dst:imm8", "%dec_src:imm8", "R8B:imm8", "0:8u",
+      )
+    }
     Err(reason) => fail(reason)
   }
 }
@@ -1243,31 +1332,76 @@ test "project Basic BIL lift covers x86 memory inc-dec ops" {
     start=0x702cUL,
   )
   match inc64_mem.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, [
-        "%incdec_a:imm64 := (RBP:imm64 - 8:64u)", "%incdec_d:imm64 := load(mem:mem64x8, %incdec_a:imm64):imm64",
-        "mem:mem64x8 := store(mem:mem64x8, %incdec_a:imm64, (%incdec_d:imm64 + 1:64u))",
-      ])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 10)
+      assert_string(stmts[0].to_string(), "%inc_a:imm64 := (RBP:imm64 - 8:64u)")
+      assert_string(
+        stmts[1].to_string(),
+        "%inc_dst:imm64 := load(mem:mem64x8, %inc_a:imm64):imm64",
+      )
+      assert_string(stmts[2].to_string(), "%inc_src:imm64 := 1:64u")
+      assert_string(
+        stmts[3].to_string(),
+        "%inc_res:imm64 := (%inc_dst:imm64 + %inc_src:imm64)",
+      )
+      assert_string(
+        stmts[4].to_string(),
+        "mem:mem64x8 := store(mem:mem64x8, %inc_a:imm64, %inc_res:imm64)",
+      )
+      assert_incdec_flag_tail(
+        stmts, 5, "%inc_dst:imm64", "%inc_src:imm64", "%inc_res:imm64", "0:64u",
+      )
+    }
     Err(reason) => fail(reason)
   }
 
   let dec32_mem = basic_bil_decode("x86", b"\xff\x4d\xfc", start=0x7030UL)
   match dec32_mem.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, [
-        "%incdec_a:imm32 := (EBP:imm32 - 4:32u)", "%incdec_d:imm32 := load(mem:mem32x8, %incdec_a:imm32):imm32",
-        "mem:mem32x8 := store(mem:mem32x8, %incdec_a:imm32, (%incdec_d:imm32 - 1:32u))",
-      ])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 10)
+      assert_string(stmts[0].to_string(), "%dec_a:imm32 := (EBP:imm32 - 4:32u)")
+      assert_string(
+        stmts[1].to_string(),
+        "%dec_dst:imm32 := load(mem:mem32x8, %dec_a:imm32):imm32",
+      )
+      assert_string(stmts[2].to_string(), "%dec_src:imm32 := 1:32u")
+      assert_string(
+        stmts[3].to_string(),
+        "%dec_res:imm32 := (%dec_dst:imm32 - %dec_src:imm32)",
+      )
+      assert_string(
+        stmts[4].to_string(),
+        "mem:mem32x8 := store(mem:mem32x8, %dec_a:imm32, %dec_res:imm32)",
+      )
+      assert_incdec_flag_tail(
+        stmts, 5, "%dec_dst:imm32", "%dec_src:imm32", "%dec_res:imm32", "0:32u",
+      )
+    }
     Err(reason) => fail(reason)
   }
 
   let inc8_mem = basic_bil_decode("x86_64", b"\x41\xfe\x40\x01", start=0x7033UL)
   match inc8_mem.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, [
-        "%incdec_a:imm64 := (R8:imm64 + 1:64u)", "%incdec_d:imm8 := load(mem:mem64x8, %incdec_a:imm64):imm8",
-        "mem:mem64x8 := store(mem:mem64x8, %incdec_a:imm64, (%incdec_d:imm8 + 1:8u))",
-      ])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 10)
+      assert_string(stmts[0].to_string(), "%inc_a:imm64 := (R8:imm64 + 1:64u)")
+      assert_string(
+        stmts[1].to_string(),
+        "%inc_dst:imm8 := load(mem:mem64x8, %inc_a:imm64):imm8",
+      )
+      assert_string(stmts[2].to_string(), "%inc_src:imm8 := 1:8u")
+      assert_string(
+        stmts[3].to_string(),
+        "%inc_res:imm8 := (%inc_dst:imm8 + %inc_src:imm8)",
+      )
+      assert_string(
+        stmts[4].to_string(),
+        "mem:mem64x8 := store(mem:mem64x8, %inc_a:imm64, %inc_res:imm8)",
+      )
+      assert_incdec_flag_tail(
+        stmts, 5, "%inc_dst:imm8", "%inc_src:imm8", "%inc_res:imm8", "0:8u",
+      )
+    }
     Err(reason) => fail(reason)
   }
 }

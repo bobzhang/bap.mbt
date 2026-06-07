@@ -4414,25 +4414,102 @@ fn ProjectDisassemblyInstruction::project_basic_bil_test_mr(
 }
 
 ///|
+fn project_basic_bil_x86_incdec_prefix(
+  op : @types.BinOp,
+) -> Result[String, String] {
+  if op == @types.BinOp::plus() {
+    Ok("inc")
+  } else if op == @types.BinOp::minus() {
+    Ok("dec")
+  } else {
+    Err("unsupported x86 INC/DEC operation")
+  }
+}
+
+///|
+fn project_basic_bil_x86_incdec_flag_moves(
+  lhs : @types.Exp,
+  rhs : @types.Exp,
+  result : @types.Exp,
+  width : Int,
+  op : @types.BinOp,
+) -> Result[Array[@types.Stmt], String] {
+  if op == @types.BinOp::plus() {
+    project_basic_bil_x86_add_carryless_flag_moves(lhs, rhs, result, width)
+  } else if op == @types.BinOp::minus() {
+    let flags = match
+      project_basic_bil_x86_sub_flag_moves(lhs, rhs, result, width) {
+      Ok(value) => value
+      Err(reason) => return Err(reason)
+    }
+    let stmts : Array[@types.Stmt] = []
+    for index in 1..<flags.length() {
+      stmts.push(flags[index])
+    }
+    Ok(stmts)
+  } else {
+    Err("unsupported x86 INC/DEC flag operation")
+  }
+}
+
+///|
+fn project_basic_bil_x86_append_incdec_flags(
+  stmts : Array[@types.Stmt],
+  lhs : @types.Exp,
+  rhs : @types.Exp,
+  result : @types.Exp,
+  width : Int,
+  op : @types.BinOp,
+) -> Result[Array[@types.Stmt], String] {
+  let flags = match
+    project_basic_bil_x86_incdec_flag_moves(lhs, rhs, result, width, op) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  for stmt in flags {
+    stmts.push(stmt)
+  }
+  Ok(stmts)
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_basic_bil_incdec(
   self : ProjectDisassemblyInstruction,
   width : Int,
   op : @types.BinOp,
 ) -> Result[Array[@types.Stmt], String] {
-  match self.project_basic_bil_register(0, width) {
-    Ok(dst) =>
-      match project_basic_bil_int(1L, width) {
-        Ok(one) =>
-          Ok([
-            @types.Stmt::move_stmt(
-              dst,
-              @types.Exp::binop(op, @types.Exp::var_exp(dst), one),
-            ),
-          ])
-        Err(reason) => Err(reason)
-      }
-    Err(reason) => Err(reason)
+  let prefix = match project_basic_bil_x86_incdec_prefix(op) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
   }
+  let dst = match self.project_basic_bil_register(0, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let one = match project_basic_bil_int(1L, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let orig_dst = project_basic_bil_virtual("\{prefix}_dst", width)
+  let orig_src = project_basic_bil_virtual("\{prefix}_src", width)
+  let orig_dst_exp = @types.Exp::var_exp(orig_dst)
+  let orig_src_exp = @types.Exp::var_exp(orig_src)
+  let result_exp = @types.Exp::var_exp(dst)
+  project_basic_bil_x86_append_incdec_flags(
+    [
+      @types.Stmt::move_stmt(orig_dst, result_exp),
+      @types.Stmt::move_stmt(orig_src, one),
+      @types.Stmt::move_stmt(
+        dst,
+        @types.Exp::binop(op, orig_dst_exp, orig_src_exp),
+      ),
+    ],
+    orig_dst_exp,
+    orig_src_exp,
+    result_exp,
+    width,
+    op,
+  )
 }
 
 ///|
@@ -4441,6 +4518,10 @@ fn ProjectDisassemblyInstruction::project_basic_bil_incdec_m(
   width : Int,
   op : @types.BinOp,
 ) -> Result[Array[@types.Stmt], String] {
+  let prefix = match project_basic_bil_x86_incdec_prefix(op) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
   let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
     Ok(value) => value
     Err(reason) => return Err(reason)
@@ -4453,32 +4534,48 @@ fn ProjectDisassemblyInstruction::project_basic_bil_incdec_m(
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  let addr_tmp = project_basic_bil_virtual("incdec_a", address_width)
-  let data_tmp = project_basic_bil_virtual("incdec_d", width)
+  let addr_tmp = project_basic_bil_virtual("\{prefix}_a", address_width)
+  let orig_dst = project_basic_bil_virtual("\{prefix}_dst", width)
+  let orig_src = project_basic_bil_virtual("\{prefix}_src", width)
+  let result = project_basic_bil_virtual("\{prefix}_res", width)
   let addr_exp = @types.Exp::var_exp(addr_tmp)
-  let data_exp = @types.Exp::var_exp(data_tmp)
-  Ok([
-    @types.Stmt::move_stmt(addr_tmp, addr),
-    @types.Stmt::move_stmt(
-      data_tmp,
-      @types.Exp::load(
-        mem=@types.Exp::var_exp(mem),
-        addr=addr_exp,
-        LittleEndian,
-        size,
+  let orig_dst_exp = @types.Exp::var_exp(orig_dst)
+  let orig_src_exp = @types.Exp::var_exp(orig_src)
+  let result_exp = @types.Exp::var_exp(result)
+  project_basic_bil_x86_append_incdec_flags(
+    [
+      @types.Stmt::move_stmt(addr_tmp, addr),
+      @types.Stmt::move_stmt(
+        orig_dst,
+        @types.Exp::load(
+          mem=@types.Exp::var_exp(mem),
+          addr=addr_exp,
+          LittleEndian,
+          size,
+        ),
       ),
-    ),
-    @types.Stmt::move_stmt(
-      mem,
-      @types.Exp::store(
-        mem=@types.Exp::var_exp(mem),
-        addr=addr_exp,
-        @types.Exp::binop(op, data_exp, one),
-        LittleEndian,
-        size,
+      @types.Stmt::move_stmt(orig_src, one),
+      @types.Stmt::move_stmt(
+        result,
+        @types.Exp::binop(op, orig_dst_exp, orig_src_exp),
       ),
-    ),
-  ])
+      @types.Stmt::move_stmt(
+        mem,
+        @types.Exp::store(
+          mem=@types.Exp::var_exp(mem),
+          addr=addr_exp,
+          result_exp,
+          LittleEndian,
+          size,
+        ),
+      ),
+    ],
+    orig_dst_exp,
+    orig_src_exp,
+    result_exp,
+    width,
+    op,
+  )
 }
 
 ///|

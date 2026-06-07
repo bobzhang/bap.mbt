@@ -91,6 +91,30 @@ fn assert_reconstructor_addsub_flags(
 }
 
 ///|
+fn assert_reconstructor_incdec_flags(
+  defs : Array[String],
+  offset : Int,
+  lhs : String,
+  rhs : String,
+  result : String,
+  zero : String,
+) -> Unit raise {
+  assert_true(!defs.any(def => def.has_prefix("CF:imm1 :=")))
+  assert_true(defs[offset].contains("OF:imm1 :="))
+  assert_true(defs[offset].contains(lhs))
+  assert_true(defs[offset].contains(rhs))
+  assert_true(defs[offset].contains(result))
+  assert_true(defs[offset + 1].contains("AF:imm1 := extract[4:4]"))
+  assert_true(defs[offset + 1].contains(lhs))
+  assert_true(defs[offset + 1].contains(rhs))
+  assert_true(defs[offset + 1].contains(result))
+  assert_true(defs[offset + 2].contains("PF:imm1 := (not low:1"))
+  assert_true(defs[offset + 2].contains(result))
+  assert_true(defs[offset + 3] == "SF:imm1 := high:1[\{result}]")
+  assert_true(defs[offset + 4] == "ZF:imm1 := (\{zero} == \{result})")
+}
+
+///|
 test "project default reconstructor turns disassembly blocks into named subroutines" {
   match @project.register_builtin_disassembly_drivers() {
     Ok(_) => ()
@@ -273,9 +297,20 @@ test "project reconstructor materializes Basic BIL x86 register inc-dec ops" {
       assert_true(subs.length() == 1)
       let blks = subs[0].blks()
       assert_true(blks.length() == 1)
-      assert_reconstructor_text(reconstructor_def_text(blks[0].defs()), [
-        "RAX:imm64 := (RAX:imm64 + 1:64u)", "RAX:imm64 := (RAX:imm64 - 1:64u)",
-      ])
+      let defs = reconstructor_def_text(blks[0].defs())
+      assert_true(defs.length() == 16)
+      assert_true(defs[0] == "%inc_dst:imm64 := RAX:imm64")
+      assert_true(defs[1] == "%inc_src:imm64 := 1:64u")
+      assert_true(defs[2] == "RAX:imm64 := (%inc_dst:imm64 + %inc_src:imm64)")
+      assert_reconstructor_incdec_flags(
+        defs, 3, "%inc_dst:imm64", "%inc_src:imm64", "RAX:imm64", "0:64u",
+      )
+      assert_true(defs[8] == "%dec_dst:imm64 := RAX:imm64")
+      assert_true(defs[9] == "%dec_src:imm64 := 1:64u")
+      assert_true(defs[10] == "RAX:imm64 := (%dec_dst:imm64 - %dec_src:imm64)")
+      assert_reconstructor_incdec_flags(
+        defs, 11, "%dec_dst:imm64", "%dec_src:imm64", "RAX:imm64", "0:64u",
+      )
     }
     Err(reason) => fail(reason)
   }

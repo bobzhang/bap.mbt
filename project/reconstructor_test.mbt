@@ -62,6 +62,35 @@ fn assert_reconstructor_logical_flags(
 }
 
 ///|
+fn assert_reconstructor_addsub_flags(
+  defs : Array[String],
+  offset : Int,
+  lhs : String,
+  rhs : String,
+  result : String,
+  zero : String,
+  is_add : Bool,
+) -> Unit raise {
+  if is_add {
+    assert_true(defs[offset] == "CF:imm1 := (\{result} < \{lhs})")
+  } else {
+    assert_true(defs[offset] == "CF:imm1 := (\{lhs} < \{rhs})")
+  }
+  assert_true(defs[offset + 1].contains("OF:imm1 :="))
+  assert_true(defs[offset + 1].contains(lhs))
+  assert_true(defs[offset + 1].contains(rhs))
+  assert_true(defs[offset + 1].contains(result))
+  assert_true(defs[offset + 2].contains("AF:imm1 := extract[4:4]"))
+  assert_true(defs[offset + 2].contains(lhs))
+  assert_true(defs[offset + 2].contains(rhs))
+  assert_true(defs[offset + 2].contains(result))
+  assert_true(defs[offset + 3].contains("PF:imm1 := (not low:1"))
+  assert_true(defs[offset + 3].contains(result))
+  assert_true(defs[offset + 4] == "SF:imm1 := high:1[\{result}]")
+  assert_true(defs[offset + 5] == "ZF:imm1 := (\{zero} == \{result})")
+}
+
+///|
 test "project default reconstructor turns disassembly blocks into named subroutines" {
   match @project.register_builtin_disassembly_drivers() {
     Ok(_) => ()
@@ -135,13 +164,31 @@ test "project reconstructor materializes supported Basic BIL assignments" {
       assert_true(subs.length() == 1)
       let blks = subs[0].blks()
       assert_true(blks.length() == 1)
+      let defs = reconstructor_def_text(blks[0].defs())
+      assert_true(defs.length() == 30)
+      assert_true(defs[0] == "%sub_dst:imm64 := RSP:imm64")
+      assert_true(defs[1] == "%sub_src:imm64 := 8:64u")
+      assert_true(defs[2] == "RSP:imm64 := (%sub_dst:imm64 - %sub_src:imm64)")
+      assert_reconstructor_addsub_flags(
+        defs, 3, "%sub_dst:imm64", "%sub_src:imm64", "RSP:imm64", "0:64u", false,
+      )
+      assert_true(defs[9] == "EAX:imm32 := 0x12345678:32u")
+      assert_true(defs[10] == "RAX:imm64 := 0x1122334455667788:64u")
       assert_true(
-        reconstructor_def_text(blks[0].defs()) ==
-        [
-          "RSP:imm64 := (RSP:imm64 - 8:64u)", "EAX:imm32 := 0x12345678:32u", "RAX:imm64 := 0x1122334455667788:64u",
-          "EAX:imm32 := load(mem:mem64x8, (RAX:imm64 + 0x10:64u)):imm32", "RAX:imm64 := (RAX:imm64 - 1:64u)",
-          "RSP:imm64 := (RSP:imm64 + 8:64u)",
-        ],
+        defs[11] ==
+        "EAX:imm32 := load(mem:mem64x8, (RAX:imm64 + 0x10:64u)):imm32",
+      )
+      assert_true(defs[12] == "%sub_dst:imm64 := RAX:imm64")
+      assert_true(defs[13] == "%sub_src:imm64 := 1:64u")
+      assert_true(defs[14] == "RAX:imm64 := (%sub_dst:imm64 - %sub_src:imm64)")
+      assert_reconstructor_addsub_flags(
+        defs, 15, "%sub_dst:imm64", "%sub_src:imm64", "RAX:imm64", "0:64u", false,
+      )
+      assert_true(defs[21] == "%add_dst:imm64 := RSP:imm64")
+      assert_true(defs[22] == "%add_src:imm64 := 8:64u")
+      assert_true(defs[23] == "RSP:imm64 := (%add_dst:imm64 + %add_src:imm64)")
+      assert_reconstructor_addsub_flags(
+        defs, 24, "%add_dst:imm64", "%add_src:imm64", "RSP:imm64", "0:64u", true,
       )
     }
     Err(reason) => fail(reason)
@@ -164,9 +211,20 @@ test "project reconstructor materializes Basic BIL x86 register arithmetic" {
       assert_true(subs.length() == 1)
       let blks = subs[0].blks()
       assert_true(blks.length() == 1)
-      assert_reconstructor_text(reconstructor_def_text(blks[0].defs()), [
-        "EAX:imm32 := (EAX:imm32 + 1:32u)", "EAX:imm32 := (EAX:imm32 - 0x12345678:32u)",
-      ])
+      let defs = reconstructor_def_text(blks[0].defs())
+      assert_true(defs.length() == 18)
+      assert_true(defs[0] == "%add_dst:imm32 := EAX:imm32")
+      assert_true(defs[1] == "%add_src:imm32 := 1:32u")
+      assert_true(defs[2] == "EAX:imm32 := (%add_dst:imm32 + %add_src:imm32)")
+      assert_reconstructor_addsub_flags(
+        defs, 3, "%add_dst:imm32", "%add_src:imm32", "EAX:imm32", "0:32u", true,
+      )
+      assert_true(defs[9] == "%sub_dst:imm32 := EAX:imm32")
+      assert_true(defs[10] == "%sub_src:imm32 := 0x12345678:32u")
+      assert_true(defs[11] == "EAX:imm32 := (%sub_dst:imm32 - %sub_src:imm32)")
+      assert_reconstructor_addsub_flags(
+        defs, 12, "%sub_dst:imm32", "%sub_src:imm32", "EAX:imm32", "0:32u", false,
+      )
     }
     Err(reason) => fail(reason)
   }
@@ -263,9 +321,20 @@ test "project reconstructor materializes Basic BIL x86 register rr arithmetic" {
       assert_true(subs.length() == 1)
       let blks = subs[0].blks()
       assert_true(blks.length() == 1)
-      assert_reconstructor_text(reconstructor_def_text(blks[0].defs()), [
-        "RAX:imm64 := (RAX:imm64 + RBX:imm64)", "RAX:imm64 := (RAX:imm64 - RCX:imm64)",
-      ])
+      let defs = reconstructor_def_text(blks[0].defs())
+      assert_true(defs.length() == 18)
+      assert_true(defs[0] == "%add_dst:imm64 := RAX:imm64")
+      assert_true(defs[1] == "%add_src:imm64 := RBX:imm64")
+      assert_true(defs[2] == "RAX:imm64 := (%add_dst:imm64 + %add_src:imm64)")
+      assert_reconstructor_addsub_flags(
+        defs, 3, "%add_dst:imm64", "%add_src:imm64", "RAX:imm64", "0:64u", true,
+      )
+      assert_true(defs[9] == "%sub_dst:imm64 := RAX:imm64")
+      assert_true(defs[10] == "%sub_src:imm64 := RCX:imm64")
+      assert_true(defs[11] == "RAX:imm64 := (%sub_dst:imm64 - %sub_src:imm64)")
+      assert_reconstructor_addsub_flags(
+        defs, 12, "%sub_dst:imm64", "%sub_src:imm64", "RAX:imm64", "0:64u", false,
+      )
     }
     Err(reason) => fail(reason)
   }

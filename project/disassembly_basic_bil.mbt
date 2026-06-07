@@ -1469,41 +1469,124 @@ fn ProjectDisassemblyInstruction::project_basic_bil_value(
 }
 
 ///|
-fn ProjectDisassemblyInstruction::project_basic_bil_binop_ri(
-  self : ProjectDisassemblyInstruction,
-  width : Int,
+fn project_basic_bil_x86_addsub_prefix(
   op : @types.BinOp,
-) -> Result[Array[@types.Stmt], String] {
-  match self.project_basic_bil_register(0, width) {
-    Ok(dst) =>
-      match self.project_basic_bil_register(1, width) {
-        Ok(src) =>
-          match self.project_basic_bil_immediate(2) {
-            Ok(imm) =>
-              match project_basic_bil_int(imm, width) {
-                Ok(rhs) =>
-                  Ok([
-                    @types.Stmt::move_stmt(
-                      dst,
-                      @types.Exp::binop(op, @types.Exp::var_exp(src), rhs),
-                    ),
-                  ])
-                Err(reason) => Err(reason)
-              }
-            Err(reason) => Err(reason)
-          }
-        Err(reason) => Err(reason)
-      }
-    Err(reason) => Err(reason)
+) -> Result[String, String] {
+  if op == @types.BinOp::plus() {
+    Ok("add")
+  } else if op == @types.BinOp::minus() {
+    Ok("sub")
+  } else {
+    Err("unsupported x86 ADD/SUB operation")
   }
 }
 
 ///|
-fn ProjectDisassemblyInstruction::project_basic_bil_binop_mi(
+fn project_basic_bil_x86_addsub_flag_moves(
+  lhs : @types.Exp,
+  rhs : @types.Exp,
+  result : @types.Exp,
+  width : Int,
+  op : @types.BinOp,
+) -> Result[Array[@types.Stmt], String] {
+  if op == @types.BinOp::plus() {
+    project_basic_bil_x86_add_flag_moves(lhs, rhs, result, width)
+  } else if op == @types.BinOp::minus() {
+    project_basic_bil_x86_sub_flag_moves(lhs, rhs, result, width)
+  } else {
+    Err("unsupported x86 ADD/SUB flag operation")
+  }
+}
+
+///|
+fn project_basic_bil_x86_append_addsub_flags(
+  stmts : Array[@types.Stmt],
+  lhs : @types.Exp,
+  rhs : @types.Exp,
+  result : @types.Exp,
+  width : Int,
+  op : @types.BinOp,
+) -> Result[Array[@types.Stmt], String] {
+  let flags = match
+    project_basic_bil_x86_addsub_flag_moves(lhs, rhs, result, width, op) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  for stmt in flags {
+    stmts.push(stmt)
+  }
+  Ok(stmts)
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_addsub_common(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  lhs : @types.Exp,
+  rhs : @types.Exp,
+  op : @types.BinOp,
+) -> Result[Array[@types.Stmt], String] {
+  let prefix = match project_basic_bil_x86_addsub_prefix(op) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let dst = match self.project_basic_bil_register(0, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let orig_dst = project_basic_bil_virtual("\{prefix}_dst", width)
+  let orig_src = project_basic_bil_virtual("\{prefix}_src", width)
+  let orig_dst_exp = @types.Exp::var_exp(orig_dst)
+  let orig_src_exp = @types.Exp::var_exp(orig_src)
+  let result_exp = @types.Exp::var_exp(dst)
+  project_basic_bil_x86_append_addsub_flags(
+    [
+      @types.Stmt::move_stmt(orig_dst, lhs),
+      @types.Stmt::move_stmt(orig_src, rhs),
+      @types.Stmt::move_stmt(
+        dst,
+        @types.Exp::binop(op, orig_dst_exp, orig_src_exp),
+      ),
+    ],
+    orig_dst_exp,
+    orig_src_exp,
+    result_exp,
+    width,
+    op,
+  )
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_addsub_ri(
   self : ProjectDisassemblyInstruction,
   width : Int,
   op : @types.BinOp,
 ) -> Result[Array[@types.Stmt], String] {
+  let src = match self.project_basic_bil_register(1, width) {
+    Ok(value) => @types.Exp::var_exp(value)
+    Err(reason) => return Err(reason)
+  }
+  let imm = match self.project_basic_bil_immediate(2) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let rhs = match project_basic_bil_int(imm, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  self.project_basic_bil_addsub_common(width, src, rhs, op)
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_addsub_mi(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  op : @types.BinOp,
+) -> Result[Array[@types.Stmt], String] {
+  let prefix = match project_basic_bil_x86_addsub_prefix(op) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
   let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
     Ok(value) => value
     Err(reason) => return Err(reason)
@@ -1520,36 +1603,52 @@ fn ProjectDisassemblyInstruction::project_basic_bil_binop_mi(
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  let addr_tmp = project_basic_bil_virtual("binop_a", address_width)
-  let data_tmp = project_basic_bil_virtual("binop_d", width)
+  let addr_tmp = project_basic_bil_virtual("\{prefix}_a", address_width)
+  let orig_dst = project_basic_bil_virtual("\{prefix}_dst", width)
+  let orig_src = project_basic_bil_virtual("\{prefix}_src", width)
+  let result = project_basic_bil_virtual("\{prefix}_res", width)
   let addr_exp = @types.Exp::var_exp(addr_tmp)
-  let data_exp = @types.Exp::var_exp(data_tmp)
-  Ok([
-    @types.Stmt::move_stmt(addr_tmp, addr),
-    @types.Stmt::move_stmt(
-      data_tmp,
-      @types.Exp::load(
-        mem=@types.Exp::var_exp(mem),
-        addr=addr_exp,
-        LittleEndian,
-        size,
+  let orig_dst_exp = @types.Exp::var_exp(orig_dst)
+  let orig_src_exp = @types.Exp::var_exp(orig_src)
+  let result_exp = @types.Exp::var_exp(result)
+  project_basic_bil_x86_append_addsub_flags(
+    [
+      @types.Stmt::move_stmt(addr_tmp, addr),
+      @types.Stmt::move_stmt(
+        orig_dst,
+        @types.Exp::load(
+          mem=@types.Exp::var_exp(mem),
+          addr=addr_exp,
+          LittleEndian,
+          size,
+        ),
       ),
-    ),
-    @types.Stmt::move_stmt(
-      mem,
-      @types.Exp::store(
-        mem=@types.Exp::var_exp(mem),
-        addr=addr_exp,
-        @types.Exp::binop(op, data_exp, rhs),
-        LittleEndian,
-        size,
+      @types.Stmt::move_stmt(orig_src, rhs),
+      @types.Stmt::move_stmt(
+        result,
+        @types.Exp::binop(op, orig_dst_exp, orig_src_exp),
       ),
-    ),
-  ])
+      @types.Stmt::move_stmt(
+        mem,
+        @types.Exp::store(
+          mem=@types.Exp::var_exp(mem),
+          addr=addr_exp,
+          result_exp,
+          LittleEndian,
+          size,
+        ),
+      ),
+    ],
+    orig_dst_exp,
+    orig_src_exp,
+    result_exp,
+    width,
+    op,
+  )
 }
 
 ///|
-fn ProjectDisassemblyInstruction::project_basic_bil_binop_rm(
+fn ProjectDisassemblyInstruction::project_basic_bil_addsub_rm(
   self : ProjectDisassemblyInstruction,
   width : Int,
   op : @types.BinOp,
@@ -1566,29 +1665,24 @@ fn ProjectDisassemblyInstruction::project_basic_bil_binop_rm(
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  Ok([
-    @types.Stmt::move_stmt(
-      dst,
-      @types.Exp::binop(
-        op,
-        @types.Exp::var_exp(dst),
-        @types.Exp::load(
-          mem=@types.Exp::var_exp(mem),
-          addr~,
-          LittleEndian,
-          size,
-        ),
-      ),
-    ),
-  ])
+  self.project_basic_bil_addsub_common(
+    width,
+    @types.Exp::var_exp(dst),
+    @types.Exp::load(mem=@types.Exp::var_exp(mem), addr~, LittleEndian, size),
+    op,
+  )
 }
 
 ///|
-fn ProjectDisassemblyInstruction::project_basic_bil_binop_mr(
+fn ProjectDisassemblyInstruction::project_basic_bil_addsub_mr(
   self : ProjectDisassemblyInstruction,
   width : Int,
   op : @types.BinOp,
 ) -> Result[Array[@types.Stmt], String] {
+  let prefix = match project_basic_bil_x86_addsub_prefix(op) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
   let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
     Ok(value) => value
     Err(reason) => return Err(reason)
@@ -1601,32 +1695,70 @@ fn ProjectDisassemblyInstruction::project_basic_bil_binop_mr(
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  let addr_tmp = project_basic_bil_virtual("binop_a", address_width)
-  let data_tmp = project_basic_bil_virtual("binop_d", width)
+  let addr_tmp = project_basic_bil_virtual("\{prefix}_a", address_width)
+  let orig_dst = project_basic_bil_virtual("\{prefix}_dst", width)
+  let orig_src = project_basic_bil_virtual("\{prefix}_src", width)
+  let result = project_basic_bil_virtual("\{prefix}_res", width)
   let addr_exp = @types.Exp::var_exp(addr_tmp)
-  let data_exp = @types.Exp::var_exp(data_tmp)
-  Ok([
-    @types.Stmt::move_stmt(addr_tmp, addr),
-    @types.Stmt::move_stmt(
-      data_tmp,
-      @types.Exp::load(
-        mem=@types.Exp::var_exp(mem),
-        addr=addr_exp,
-        LittleEndian,
-        size,
+  let orig_dst_exp = @types.Exp::var_exp(orig_dst)
+  let orig_src_exp = @types.Exp::var_exp(orig_src)
+  let result_exp = @types.Exp::var_exp(result)
+  project_basic_bil_x86_append_addsub_flags(
+    [
+      @types.Stmt::move_stmt(addr_tmp, addr),
+      @types.Stmt::move_stmt(
+        orig_dst,
+        @types.Exp::load(
+          mem=@types.Exp::var_exp(mem),
+          addr=addr_exp,
+          LittleEndian,
+          size,
+        ),
       ),
-    ),
-    @types.Stmt::move_stmt(
-      mem,
-      @types.Exp::store(
-        mem=@types.Exp::var_exp(mem),
-        addr=addr_exp,
-        @types.Exp::binop(op, data_exp, @types.Exp::var_exp(src)),
-        LittleEndian,
-        size,
+      @types.Stmt::move_stmt(orig_src, @types.Exp::var_exp(src)),
+      @types.Stmt::move_stmt(
+        result,
+        @types.Exp::binop(op, orig_dst_exp, orig_src_exp),
       ),
-    ),
-  ])
+      @types.Stmt::move_stmt(
+        mem,
+        @types.Exp::store(
+          mem=@types.Exp::var_exp(mem),
+          addr=addr_exp,
+          result_exp,
+          LittleEndian,
+          size,
+        ),
+      ),
+    ],
+    orig_dst_exp,
+    orig_src_exp,
+    result_exp,
+    width,
+    op,
+  )
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_addsub_rr(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  op : @types.BinOp,
+) -> Result[Array[@types.Stmt], String] {
+  let dst = match self.project_basic_bil_register(0, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let src = match self.project_basic_bil_register(1, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  self.project_basic_bil_addsub_common(
+    width,
+    @types.Exp::var_exp(dst),
+    @types.Exp::var_exp(src),
+    op,
+  )
 }
 
 ///|
@@ -5038,36 +5170,6 @@ fn ProjectDisassemblyInstruction::project_basic_bil_xchg_rm(
 }
 
 ///|
-fn ProjectDisassemblyInstruction::project_basic_bil_binop_rr(
-  self : ProjectDisassemblyInstruction,
-  width : Int,
-  op : @types.BinOp,
-) -> Result[Array[@types.Stmt], String] {
-  match self.project_basic_bil_register(0, width) {
-    Ok(dst) =>
-      match self.project_basic_bil_register(1, width) {
-        Ok(src) => {
-          let rhs = if op == @types.BinOp::bit_xor() && dst == src {
-            match project_basic_bil_int(0L, width) {
-              Ok(zero) => zero
-              Err(reason) => return Err(reason)
-            }
-          } else {
-            @types.Exp::binop(
-              op,
-              @types.Exp::var_exp(dst),
-              @types.Exp::var_exp(src),
-            )
-          }
-          Ok([@types.Stmt::move_stmt(dst, rhs)])
-        }
-        Err(reason) => Err(reason)
-      }
-    Err(reason) => Err(reason)
-  }
-}
-
-///|
 fn project_basic_bil_push_exp(
   src : @types.Exp,
   width : Int,
@@ -5662,38 +5764,38 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     return self.project_basic_bil_cmov(width)
   }
   match name {
-    "SUB8RI8" => self.project_basic_bil_binop_ri(8, @types.BinOp::minus())
+    "SUB8RI8" => self.project_basic_bil_addsub_ri(8, @types.BinOp::minus())
     "SUB32RI8" | "SUB32RI32" =>
-      self.project_basic_bil_binop_ri(32, @types.BinOp::minus())
-    "SUB8MI8" => self.project_basic_bil_binop_mi(8, @types.BinOp::minus())
+      self.project_basic_bil_addsub_ri(32, @types.BinOp::minus())
+    "SUB8MI8" => self.project_basic_bil_addsub_mi(8, @types.BinOp::minus())
     "SUB32MI8" | "SUB32MI32" =>
-      self.project_basic_bil_binop_mi(32, @types.BinOp::minus())
+      self.project_basic_bil_addsub_mi(32, @types.BinOp::minus())
     "SUB64MI8" | "SUB64MI32" =>
-      self.project_basic_bil_binop_mi(64, @types.BinOp::minus())
-    "SUB8RM" => self.project_basic_bil_binop_rm(8, @types.BinOp::minus())
-    "SUB32RM" => self.project_basic_bil_binop_rm(32, @types.BinOp::minus())
-    "SUB64RM" => self.project_basic_bil_binop_rm(64, @types.BinOp::minus())
-    "SUB8MR" => self.project_basic_bil_binop_mr(8, @types.BinOp::minus())
-    "SUB32MR" => self.project_basic_bil_binop_mr(32, @types.BinOp::minus())
-    "SUB64MR" => self.project_basic_bil_binop_mr(64, @types.BinOp::minus())
-    "ADD8RI8" => self.project_basic_bil_binop_ri(8, @types.BinOp::plus())
+      self.project_basic_bil_addsub_mi(64, @types.BinOp::minus())
+    "SUB8RM" => self.project_basic_bil_addsub_rm(8, @types.BinOp::minus())
+    "SUB32RM" => self.project_basic_bil_addsub_rm(32, @types.BinOp::minus())
+    "SUB64RM" => self.project_basic_bil_addsub_rm(64, @types.BinOp::minus())
+    "SUB8MR" => self.project_basic_bil_addsub_mr(8, @types.BinOp::minus())
+    "SUB32MR" => self.project_basic_bil_addsub_mr(32, @types.BinOp::minus())
+    "SUB64MR" => self.project_basic_bil_addsub_mr(64, @types.BinOp::minus())
+    "ADD8RI8" => self.project_basic_bil_addsub_ri(8, @types.BinOp::plus())
     "ADD32RI8" | "ADD32RI32" =>
-      self.project_basic_bil_binop_ri(32, @types.BinOp::plus())
+      self.project_basic_bil_addsub_ri(32, @types.BinOp::plus())
     "SUB64RI8" | "SUB64RI32" =>
-      self.project_basic_bil_binop_ri(64, @types.BinOp::minus())
+      self.project_basic_bil_addsub_ri(64, @types.BinOp::minus())
     "ADD64RI8" | "ADD64RI32" =>
-      self.project_basic_bil_binop_ri(64, @types.BinOp::plus())
-    "ADD8MI8" => self.project_basic_bil_binop_mi(8, @types.BinOp::plus())
+      self.project_basic_bil_addsub_ri(64, @types.BinOp::plus())
+    "ADD8MI8" => self.project_basic_bil_addsub_mi(8, @types.BinOp::plus())
     "ADD32MI8" | "ADD32MI32" =>
-      self.project_basic_bil_binop_mi(32, @types.BinOp::plus())
+      self.project_basic_bil_addsub_mi(32, @types.BinOp::plus())
     "ADD64MI8" | "ADD64MI32" =>
-      self.project_basic_bil_binop_mi(64, @types.BinOp::plus())
-    "ADD8RM" => self.project_basic_bil_binop_rm(8, @types.BinOp::plus())
-    "ADD32RM" => self.project_basic_bil_binop_rm(32, @types.BinOp::plus())
-    "ADD64RM" => self.project_basic_bil_binop_rm(64, @types.BinOp::plus())
-    "ADD8MR" => self.project_basic_bil_binop_mr(8, @types.BinOp::plus())
-    "ADD32MR" => self.project_basic_bil_binop_mr(32, @types.BinOp::plus())
-    "ADD64MR" => self.project_basic_bil_binop_mr(64, @types.BinOp::plus())
+      self.project_basic_bil_addsub_mi(64, @types.BinOp::plus())
+    "ADD8RM" => self.project_basic_bil_addsub_rm(8, @types.BinOp::plus())
+    "ADD32RM" => self.project_basic_bil_addsub_rm(32, @types.BinOp::plus())
+    "ADD64RM" => self.project_basic_bil_addsub_rm(64, @types.BinOp::plus())
+    "ADD8MR" => self.project_basic_bil_addsub_mr(8, @types.BinOp::plus())
+    "ADD32MR" => self.project_basic_bil_addsub_mr(32, @types.BinOp::plus())
+    "ADD64MR" => self.project_basic_bil_addsub_mr(64, @types.BinOp::plus())
     "ADC8RI8" => self.project_basic_bil_adc_ri(8)
     "ADC32RI8" | "ADC32RI32" => self.project_basic_bil_adc_ri(32)
     "ADC64RI8" | "ADC64RI32" => self.project_basic_bil_adc_ri(64)
@@ -5939,17 +6041,17 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "NEG32M" => self.project_basic_bil_unop_m(32, @types.UnOp::neg())
     "NEG64M" => self.project_basic_bil_unop_m(64, @types.UnOp::neg())
     "SUB8RR" | "SUB8RR_REV" =>
-      self.project_basic_bil_binop_rr(8, @types.BinOp::minus())
+      self.project_basic_bil_addsub_rr(8, @types.BinOp::minus())
     "SUB32RR" | "SUB32RR_REV" =>
-      self.project_basic_bil_binop_rr(32, @types.BinOp::minus())
+      self.project_basic_bil_addsub_rr(32, @types.BinOp::minus())
     "ADD8RR" | "ADD8RR_REV" =>
-      self.project_basic_bil_binop_rr(8, @types.BinOp::plus())
+      self.project_basic_bil_addsub_rr(8, @types.BinOp::plus())
     "ADD32RR" | "ADD32RR_REV" =>
-      self.project_basic_bil_binop_rr(32, @types.BinOp::plus())
+      self.project_basic_bil_addsub_rr(32, @types.BinOp::plus())
     "SUB64RR" | "SUB64RR_REV" =>
-      self.project_basic_bil_binop_rr(64, @types.BinOp::minus())
+      self.project_basic_bil_addsub_rr(64, @types.BinOp::minus())
     "ADD64RR" | "ADD64RR_REV" =>
-      self.project_basic_bil_binop_rr(64, @types.BinOp::plus())
+      self.project_basic_bil_addsub_rr(64, @types.BinOp::plus())
     "CMP8RI8" => self.project_basic_bil_cmp_ri(8)
     "CMP32RI8" | "CMP32RI32" => self.project_basic_bil_cmp_ri(32)
     "CMP64RI8" | "CMP64RI32" => self.project_basic_bil_cmp_ri(64)

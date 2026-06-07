@@ -1359,6 +1359,87 @@ test "project Basic BIL lift covers x86 accumulator sign-extension ops" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 accumulator absolute mov" {
+  let mov8_load = basic_bil_decode(
+    "x86",
+    b"\xa0\x04\x03\x02\x01",
+    start=0x705fUL,
+  )
+  match mov8_load.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "AL:imm8 := load(mem:mem32x8, 0x1020304:32u):imm8",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let mov32_load = basic_bil_decode(
+    "x86",
+    b"\xa1\x78\x56\x34\x12",
+    start=0x7060UL,
+  )
+  match mov32_load.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "EAX:imm32 := load(mem:mem32x8, 0x12345678:32u):imm32",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let mov32_store = basic_bil_decode(
+    "x86",
+    b"\xa3\x78\x56\x34\x12",
+    start=0x7061UL,
+  )
+  match mov32_store.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "mem:mem32x8 := store(mem:mem32x8, 0x12345678:32u, EAX:imm32)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let mov32_load_64 = basic_bil_decode(
+    "x86_64",
+    b"\xa1\x78\x56\x34\x12\x00\x00\x00\x00",
+    start=0x7062UL,
+  )
+  match mov32_load_64.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "EAX:imm32 := load(mem:mem64x8, 0x12345678:64u):imm32",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let mov64_load = basic_bil_decode(
+    "x86_64",
+    b"\x48\xa1\x88\x77\x66\x55\x44\x33\x22\x11",
+    start=0x7063UL,
+  )
+  match mov64_load.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "RAX:imm64 := load(mem:mem64x8, 0x1122334455667788:64u):imm64",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let mov64_store = basic_bil_decode(
+    "x86_64",
+    b"\x48\xa3\x88\x77\x66\x55\x44\x33\x22\x11",
+    start=0x7064UL,
+  )
+  match mov64_store.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "mem:mem64x8 := store(mem:mem64x8, 0x1122334455667788:64u, RAX:imm64)",
+      ])
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86 leave" {
   let leave64 = basic_bil_decode("x86_64", b"\xc9", start=0x7040UL)
   match leave64.lift_basic_bil() {

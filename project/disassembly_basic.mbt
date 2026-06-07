@@ -395,6 +395,23 @@ fn project_disassembly_basic_x86_i32_at(bytes : Bytes, offset : Int) -> Int64? {
 }
 
 ///|
+fn project_disassembly_basic_x86_unsigned_at(
+  bytes : Bytes,
+  offset : Int,
+  byte_count : Int,
+) -> UInt64? {
+  if bytes.length() < offset + byte_count {
+    None
+  } else {
+    let mut value = 0UL
+    for index in 0..<byte_count {
+      value = value | (bytes[offset + index].to_uint64() << (index * 8))
+    }
+    Some(value)
+  }
+}
+
+///|
 fn project_disassembly_basic_x86_call_rel32(memory : @memory.Memory) -> Int64? {
   let bytes = memory.to_bytes()
   if bytes.length() < 5 || bytes[0].to_int() != 0xe8 {
@@ -1239,6 +1256,85 @@ fn project_disassembly_basic_x86_64_mov64ri(
           imm.reinterpret_as_int64(),
         ),
       )
+    }
+  }
+}
+
+///|
+fn project_disassembly_basic_x86_mov_abs(
+  memory : @memory.Memory,
+  address_width : Int,
+) -> (
+  Int,
+  String,
+  Array[ProjectInstructionOperand],
+  Array[ProjectInstructionKind],
+)? {
+  let bytes = memory.to_bytes()
+  let (opcode_index, rex) = if address_width == 64 &&
+    bytes.length() >= 2 &&
+    bytes[0].to_int() >= 0x40 &&
+    bytes[0].to_int() <= 0x4f {
+    (1, bytes[0].to_int())
+  } else {
+    (0, 0)
+  }
+  if bytes.length() <= opcode_index {
+    None
+  } else {
+    let opcode = bytes[opcode_index].to_int()
+    if opcode < 0xa0 || opcode > 0xa3 {
+      None
+    } else {
+      let address_bytes = address_width / 8
+      match
+        project_disassembly_basic_x86_unsigned_at(
+          bytes,
+          opcode_index + 1,
+          address_bytes,
+        ) {
+        Some(address) => {
+          let data_width = if opcode == 0xa0 || opcode == 0xa2 {
+            8
+          } else if address_width == 64 && (rex & 0x8) != 0 {
+            64
+          } else {
+            32
+          }
+          let accumulator = project_disassembly_basic_x86_gpr_name(
+            0, data_width,
+          )
+          let address_operand = ProjectInstructionOperand::immediate(
+            address.reinterpret_as_int64(),
+          )
+          if opcode == 0xa0 || opcode == 0xa1 {
+            Some(
+              (
+                opcode_index + 1 + address_bytes,
+                "MOV\{data_width}ra",
+                [
+                  ProjectInstructionOperand::register(name=accumulator),
+                  address_operand,
+                ],
+                [ProjectMayLoad],
+              ),
+            )
+          } else {
+            Some(
+              (
+                opcode_index + 1 + address_bytes,
+                "MOV\{data_width}ar",
+                [
+                  address_operand,
+                  ProjectInstructionOperand::register(name=accumulator),
+                ],
+                [ProjectMayStore],
+              ),
+            )
+          }
+        }
+        None => None
+      }
     }
   }
 }
@@ -3765,6 +3861,11 @@ fn project_disassembly_basic_decode_x86_llvm(
           memory, 8, 32,
         ).unwrap()
         Some((length, name, "", "", operands, kinds))
+      } else if project_disassembly_basic_x86_mov_abs(memory, 32) is Some(_) {
+        let (length, name, operands, kinds) = project_disassembly_basic_x86_mov_abs(
+          memory, 32,
+        ).unwrap()
+        Some((length, name, "", "", operands, kinds))
       } else if project_disassembly_basic_x86_mov8ri(memory, 32) is Some(_) {
         let (length, dst, imm) = project_disassembly_basic_x86_mov8ri(
           memory, 32,
@@ -4233,6 +4334,11 @@ fn project_disassembly_basic_decode_x86_64_llvm(
   } else if project_disassembly_basic_x86_mov_imm_rm(memory, 8, 64) is Some(_) {
     let (length, name, operands, kinds) = project_disassembly_basic_x86_mov_imm_rm(
       memory, 8, 64,
+    ).unwrap()
+    Some((length, name, operands, kinds))
+  } else if project_disassembly_basic_x86_mov_abs(memory, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_mov_abs(
+      memory, 64,
     ).unwrap()
     Some((length, name, operands, kinds))
   } else if project_disassembly_basic_x86_mov8ri(memory, 64) is Some(_) {

@@ -1163,6 +1163,100 @@ fn ProjectDisassemblyInstruction::project_basic_bil_mov_mi(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_basic_bil_absolute_address_width(
+  self : ProjectDisassemblyInstruction,
+) -> Int {
+  if self.memory().length() >= 9 {
+    64
+  } else {
+    32
+  }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_absolute_addr(
+  self : ProjectDisassemblyInstruction,
+  index : Int,
+  address_width : Int,
+) -> Result[@types.Exp, String] {
+  let immediate = match self.project_basic_bil_immediate(index) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  match
+    project_basic_bil_word(immediate.reinterpret_as_uint64(), address_width) {
+    Ok(word) => Ok(@types.Exp::int(word))
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_mov_abs_load(
+  self : ProjectDisassemblyInstruction,
+  data_width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let address_width = self.project_basic_bil_absolute_address_width()
+  let dst = match self.project_basic_bil_register(0, data_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let addr = match self.project_basic_bil_absolute_addr(1, address_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(data_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let mem = @types.Var::new(
+    name="mem",
+    typ=Mem(addr_width=address_width, value_width=8),
+  )
+  Ok([
+    @types.Stmt::move_stmt(
+      dst,
+      @types.Exp::load(mem=@types.Exp::var_exp(mem), addr~, LittleEndian, size),
+    ),
+  ])
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_mov_abs_store(
+  self : ProjectDisassemblyInstruction,
+  data_width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let address_width = self.project_basic_bil_absolute_address_width()
+  let addr = match self.project_basic_bil_absolute_addr(0, address_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let src = match self.project_basic_bil_register(1, data_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(data_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let mem = @types.Var::new(
+    name="mem",
+    typ=Mem(addr_width=address_width, value_width=8),
+  )
+  Ok([
+    @types.Stmt::move_stmt(
+      mem,
+      @types.Exp::store(
+        mem=@types.Exp::var_exp(mem),
+        addr~,
+        @types.Exp::var_exp(src),
+        LittleEndian,
+        size,
+      ),
+    ),
+  ])
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_basic_bil_setcc(
   self : ProjectDisassemblyInstruction,
 ) -> Result[Array[@types.Stmt], String] {
@@ -2121,6 +2215,12 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "MOV8MI" => self.project_basic_bil_mov_mi(8)
     "MOV32MI" => self.project_basic_bil_mov_mi(32)
     "MOV64MI" => self.project_basic_bil_mov_mi(64)
+    "MOV8RA" => self.project_basic_bil_mov_abs_load(8)
+    "MOV32RA" => self.project_basic_bil_mov_abs_load(32)
+    "MOV64RA" => self.project_basic_bil_mov_abs_load(64)
+    "MOV8AR" => self.project_basic_bil_mov_abs_store(8)
+    "MOV32AR" => self.project_basic_bil_mov_abs_store(32)
+    "MOV64AR" => self.project_basic_bil_mov_abs_store(64)
     "LEA32R" => self.project_basic_bil_lea(32)
     "LEA64R" => self.project_basic_bil_lea(64)
     "MOV8RI" => self.project_basic_bil_mov_imm(8)

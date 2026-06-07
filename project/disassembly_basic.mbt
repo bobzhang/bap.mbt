@@ -2924,17 +2924,25 @@ fn project_disassembly_basic_x86_prefetch(
   } else {
     (0, 0)
   }
+  let prefetch_opcode = if bytes.length() > opcode_index + 1 {
+    bytes[opcode_index + 1].to_int()
+  } else {
+    0
+  }
   if bytes.length() < opcode_index + 3 ||
     bytes[opcode_index].to_int() != 0x0f ||
-    bytes[opcode_index + 1].to_int() != 0x18 {
+    (prefetch_opcode != 0x18 && prefetch_opcode != 0x0d) {
     None
   } else {
     let modrm = bytes[opcode_index + 2].to_int()
-    let name = match (modrm >> 3) & 0x7 {
-      0 => "PREFETCHNTA"
-      1 => "PREFETCHT0"
-      2 => "PREFETCHT1"
-      3 => "PREFETCHT2"
+    let name = match (prefetch_opcode, (modrm >> 3) & 0x7) {
+      (0x18, 0) => "PREFETCHNTA"
+      (0x18, 1) => "PREFETCHT0"
+      (0x18, 2) => "PREFETCHT1"
+      (0x18, 3) => "PREFETCHT2"
+      (0x0d, 0) => "PREFETCH"
+      (0x0d, 1) => "PREFETCHW"
+      (0x0d, 2) => "PREFETCHWT1"
       _ => return None
     }
     if ((modrm >> 6) & 0x3) == 0x3 {

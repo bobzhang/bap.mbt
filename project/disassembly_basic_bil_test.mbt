@@ -2817,6 +2817,16 @@ test "project Basic BIL lift covers x86 mxcsr ops" {
     Ok(stmts) => assert_true(stmts.is_empty())
     Err(reason) => fail(reason)
   }
+
+  let prefetchw = basic_bil_decode(
+    "x86_64",
+    b"\x41\x0f\x0d\x48\x10",
+    start=0x706aUL,
+  )
+  match prefetchw.lift_basic_bil() {
+    Ok(stmts) => assert_true(stmts.is_empty())
+    Err(reason) => fail(reason)
+  }
 }
 
 ///|

@@ -1944,6 +1944,34 @@ test "translated BAP basic disassembly decodes x86 mxcsr fixtures" {
       ["PREFETCHT0", "R8", "0x1", "Nil", "0x10", "Nil"],
       [ProjectMayLoad],
     ),
+    (
+      "x86",
+      b"\x0f\x0d\x45\xfc",
+      4,
+      ["PREFETCH", "EBP", "0x1", "Nil", "-0x4", "Nil"],
+      [ProjectMayLoad],
+    ),
+    (
+      "x86",
+      b"\x0f\x0d\x4d\xfc",
+      4,
+      ["PREFETCHW", "EBP", "0x1", "Nil", "-0x4", "Nil"],
+      [ProjectMayLoad],
+    ),
+    (
+      "x86",
+      b"\x0f\x0d\x55\xfc",
+      4,
+      ["PREFETCHWT1", "EBP", "0x1", "Nil", "-0x4", "Nil"],
+      [ProjectMayLoad],
+    ),
+    (
+      "x86_64",
+      b"\x41\x0f\x0d\x48\x10",
+      5,
+      ["PREFETCHW", "R8", "0x1", "Nil", "0x10", "Nil"],
+      [ProjectMayLoad],
+    ),
   ]
   for sample in samples {
     let disasm = match

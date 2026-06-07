@@ -6250,8 +6250,12 @@ fn project_disassembly_basic_decode_x86_simd_llvm(
   memory : @memory.Memory,
 ) -> Result[ProjectDisassemblyInstruction?, String] {
   let ecx = ProjectInstructionOperand::register(name="ECX")
+  let imm3 = ProjectInstructionOperand::immediate(3L)
+  let imm4 = ProjectInstructionOperand::immediate(4L)
   let xmm0 = ProjectInstructionOperand::register(name="XMM0")
   let xmm1 = ProjectInstructionOperand::register(name="XMM1")
+  let xmm0_imm3 = [xmm0, imm3]
+  let xmm0_imm4 = [xmm0, imm4]
   let xmm1_xmm0 = [xmm1, xmm0]
   let decoded : (
     Int,
@@ -6266,10 +6270,26 @@ fn project_disassembly_basic_decode_x86_simd_llvm(
     Some((4, "PADDQ", xmm1_xmm0, []))
   } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xd1\xc8") {
     Some((4, "PSRLW", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(
+      memory, b"\x66\x0f\x71\xd0\x04",
+    ) {
+    Some((5, "PSRLW", xmm0_imm4, []))
   } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xd2\xc8") {
     Some((4, "PSRLD", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(
+      memory, b"\x66\x0f\x72\xd0\x04",
+    ) {
+    Some((5, "PSRLD", xmm0_imm4, []))
   } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xd3\xc8") {
     Some((4, "PSRLQ", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(
+      memory, b"\x66\x0f\x73\xd0\x04",
+    ) {
+    Some((5, "PSRLQ", xmm0_imm4, []))
+  } else if project_disassembly_basic_has_prefix(
+      memory, b"\x66\x0f\x73\xd8\x03",
+    ) {
+    Some((5, "PSRLDQ", xmm0_imm3, []))
   } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xda\xc8") {
     Some((4, "PMINUB", xmm1_xmm0, []))
   } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xdb\xc8") {
@@ -6290,8 +6310,16 @@ fn project_disassembly_basic_decode_x86_simd_llvm(
     Some((4, "PAVGW", xmm1_xmm0, []))
   } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xe1\xc8") {
     Some((4, "PSRAW", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(
+      memory, b"\x66\x0f\x71\xe0\x04",
+    ) {
+    Some((5, "PSRAW", xmm0_imm4, []))
   } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xe2\xc8") {
     Some((4, "PSRAD", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(
+      memory, b"\x66\x0f\x72\xe0\x04",
+    ) {
+    Some((5, "PSRAD", xmm0_imm4, []))
   } else if project_disassembly_basic_has_prefix(
       memory, b"\x66\x0f\x38\x3c\xc8",
     ) {
@@ -6330,10 +6358,26 @@ fn project_disassembly_basic_decode_x86_simd_llvm(
     Some((4, "PXOR", xmm1_xmm0, []))
   } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xf1\xc8") {
     Some((4, "PSLLW", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(
+      memory, b"\x66\x0f\x71\xf0\x04",
+    ) {
+    Some((5, "PSLLW", xmm0_imm4, []))
   } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xf2\xc8") {
     Some((4, "PSLLD", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(
+      memory, b"\x66\x0f\x72\xf0\x04",
+    ) {
+    Some((5, "PSLLD", xmm0_imm4, []))
   } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xf3\xc8") {
     Some((4, "PSLLQ", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(
+      memory, b"\x66\x0f\x73\xf0\x04",
+    ) {
+    Some((5, "PSLLQ", xmm0_imm4, []))
+  } else if project_disassembly_basic_has_prefix(
+      memory, b"\x66\x0f\x73\xf8\x03",
+    ) {
+    Some((5, "PSLLDQ", xmm0_imm3, []))
   } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xf8\xc8") {
     Some((4, "PSUBB", xmm1_xmm0, []))
   } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xf9\xc8") {

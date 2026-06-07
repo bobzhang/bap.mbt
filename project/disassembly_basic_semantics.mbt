@@ -63,6 +63,21 @@ fn ProjectDisassemblyInstruction::project_x86_simd_register_operand(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_x86_simd_immediate_operand(
+  self : ProjectDisassemblyInstruction,
+  index : Int,
+) -> Result[Int, String] {
+  match self.operands_value.get(index) {
+    Some(operand) =>
+      match operand.to_int() {
+        Some(value) => Ok(value)
+        None => Err("x86 SIMD instruction operand \{index} is not an immediate")
+      }
+    None => Err("x86 SIMD instruction is missing operand \{index}")
+  }
+}
+
+///|
 fn ProjectX86SimdState::project_x86_simd_require_register(
   self : ProjectX86SimdState,
   name : String,
@@ -402,6 +417,135 @@ fn project_x86_simd_packed_shift(
 }
 
 ///|
+fn project_x86_simd_packed_shift_immediate(
+  dest : @types.Word,
+  count : Int,
+  element_width~ : Int,
+  kind : ProjectX86SimdShiftKind,
+) -> Result[@types.Word, String] {
+  if count < 0 || count > 255 {
+    Err("packed shift immediate must fit in 8 bits")
+  } else if element_width != 16 && element_width != 32 && element_width != 64 {
+    Err("packed shift supports word, dword, and qword elements")
+  } else if dest.width() % element_width != 0 {
+    Err("packed shift element width must divide the operand width")
+  } else {
+    let elements : Array[@types.Word] = []
+    let count_value = count.to_uint64()
+    for index in 0..<(dest.width() / element_width) {
+      let left = match project_x86_simd_element_at(dest, index, element_width) {
+        Ok(word) => word
+        Err(reason) => return Err(reason)
+      }
+      match
+        project_x86_simd_shift_element(left, count_value, element_width, kind) {
+        Ok(word) => elements.push(word)
+        Err(reason) => return Err(reason)
+      }
+    }
+    project_x86_simd_from_little_elements(elements)
+  }
+}
+
+///|
+fn project_x86_simd_byte_shift_immediate(
+  dest : @types.Word,
+  count : Int,
+  kind : ProjectX86SimdShiftKind,
+) -> Result[@types.Word, String] {
+  if count < 0 || count > 255 {
+    Err("packed byte shift immediate must fit in 8 bits")
+  } else {
+    let bits = count * 8
+    match kind {
+      ProjectX86SimdShiftLeft => Ok(dest.lshift(bits))
+      ProjectX86SimdShiftRight => Ok(dest.rshift(bits))
+      ProjectX86SimdShiftArithmeticRight =>
+        Err("packed byte shift does not support arithmetic right shift")
+    }
+  }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_x86_simd_eval_immediate(
+  self : ProjectDisassemblyInstruction,
+  dest : @types.Word,
+  immediate : Int,
+) -> Result[@types.Word, String] {
+  match self.name_value.to_upper() {
+    "PSRLW" =>
+      project_x86_simd_packed_shift_immediate(
+        dest,
+        immediate,
+        element_width=16,
+        ProjectX86SimdShiftRight,
+      )
+    "PSRLD" =>
+      project_x86_simd_packed_shift_immediate(
+        dest,
+        immediate,
+        element_width=32,
+        ProjectX86SimdShiftRight,
+      )
+    "PSRLQ" =>
+      project_x86_simd_packed_shift_immediate(
+        dest,
+        immediate,
+        element_width=64,
+        ProjectX86SimdShiftRight,
+      )
+    "PSRLDQ" =>
+      project_x86_simd_byte_shift_immediate(
+        dest,
+        immediate,
+        ProjectX86SimdShiftRight,
+      )
+    "PSRAW" =>
+      project_x86_simd_packed_shift_immediate(
+        dest,
+        immediate,
+        element_width=16,
+        ProjectX86SimdShiftArithmeticRight,
+      )
+    "PSRAD" =>
+      project_x86_simd_packed_shift_immediate(
+        dest,
+        immediate,
+        element_width=32,
+        ProjectX86SimdShiftArithmeticRight,
+      )
+    "PSLLW" =>
+      project_x86_simd_packed_shift_immediate(
+        dest,
+        immediate,
+        element_width=16,
+        ProjectX86SimdShiftLeft,
+      )
+    "PSLLD" =>
+      project_x86_simd_packed_shift_immediate(
+        dest,
+        immediate,
+        element_width=32,
+        ProjectX86SimdShiftLeft,
+      )
+    "PSLLQ" =>
+      project_x86_simd_packed_shift_immediate(
+        dest,
+        immediate,
+        element_width=64,
+        ProjectX86SimdShiftLeft,
+      )
+    "PSLLDQ" =>
+      project_x86_simd_byte_shift_immediate(
+        dest,
+        immediate,
+        ProjectX86SimdShiftLeft,
+      )
+    name => Err("unsupported x86 SIMD immediate instruction \{name}")
+  }
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_x86_simd_eval(
   self : ProjectDisassemblyInstruction,
   dest : @types.Word,
@@ -627,10 +771,21 @@ pub fn ProjectDisassemblyInstruction::apply_x86_simd(
   }
   match self.project_x86_simd_register_operand(0) {
     Ok(dest_name) =>
-      match self.project_x86_simd_register_operand(1) {
-        Ok(source_name) =>
-          match state.project_x86_simd_require_register(dest_name) {
-            Ok(dest_word) =>
+      match state.project_x86_simd_require_register(dest_name) {
+        Ok(dest_word) =>
+          match self.operands_value.get(1) {
+            Some(ProjectImmediateOperand(_)) =>
+              match self.project_x86_simd_immediate_operand(1) {
+                Ok(immediate) =>
+                  match
+                    self.project_x86_simd_eval_immediate(dest_word, immediate) {
+                    Ok(result) =>
+                      Ok(state.with_register(name=dest_name, result))
+                    Err(reason) => Err(reason)
+                  }
+                Err(reason) => Err(reason)
+              }
+            Some(ProjectRegisterOperand(_, source_name)) =>
               match
                 state.project_x86_simd_source_word(
                   source_name,
@@ -644,7 +799,11 @@ pub fn ProjectDisassemblyInstruction::apply_x86_simd(
                   }
                 Err(reason) => Err(reason)
               }
-            Err(reason) => Err(reason)
+            Some(_) =>
+              Err(
+                "x86 SIMD instruction operand 1 is not a register or immediate",
+              )
+            None => Err("x86 SIMD instruction is missing operand 1")
           }
         Err(reason) => Err(reason)
       }

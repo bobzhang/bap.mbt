@@ -377,6 +377,85 @@ test "project Basic x86 SIMD semantics execute packed shift fixtures" {
 }
 
 ///|
+test "project Basic x86 SIMD semantics execute packed immediate shift fixtures" {
+  let word_source = semantic_word128("8001800100100010ffff000f00f000f0")
+  let dword_source = semantic_word128("8000001000000010ffffffff00f00000")
+  let qword_source = semantic_word128("80000000000000100000000000f00000")
+  let vector_source = semantic_word128("0f0e0d0c0b0a09080706050403020100")
+  let samples : Array[(String, Bytes, @types.Word, @types.Word)] = [
+    (
+      "psrlw imm",
+      b"\x66\x0f\x71\xd0\x04",
+      word_source,
+      semantic_word128("08000800000100010fff0000000f000f"),
+    ),
+    (
+      "psrld imm",
+      b"\x66\x0f\x72\xd0\x04",
+      dword_source,
+      semantic_word128("08000001000000010fffffff000f0000"),
+    ),
+    (
+      "psrlq imm",
+      b"\x66\x0f\x73\xd0\x04",
+      qword_source,
+      semantic_word128("080000000000000100000000000f0000"),
+    ),
+    (
+      "psrldq imm",
+      b"\x66\x0f\x73\xd8\x03",
+      vector_source,
+      semantic_word128("0000000f0e0d0c0b0a09080706050403"),
+    ),
+    (
+      "psraw imm",
+      b"\x66\x0f\x71\xe0\x04",
+      word_source,
+      semantic_word128("f800f80000010001ffff0000000f000f"),
+    ),
+    (
+      "psrad imm",
+      b"\x66\x0f\x72\xe0\x04",
+      dword_source,
+      semantic_word128("f800000100000001ffffffff000f0000"),
+    ),
+    (
+      "psllw imm",
+      b"\x66\x0f\x71\xf0\x04",
+      word_source,
+      semantic_word128("0010001001000100fff000f00f000f00"),
+    ),
+    (
+      "pslld imm",
+      b"\x66\x0f\x72\xf0\x04",
+      dword_source,
+      semantic_word128("0000010000000100fffffff00f000000"),
+    ),
+    (
+      "psllq imm",
+      b"\x66\x0f\x73\xf0\x04",
+      qword_source,
+      semantic_word128("0000000000000100000000000f000000"),
+    ),
+    (
+      "pslldq imm",
+      b"\x66\x0f\x73\xf8\x03",
+      vector_source,
+      semantic_word128("0c0b0a09080706050403020100000000"),
+    ),
+  ]
+  for sample in samples {
+    assert_x86_simd_result(
+      sample.0,
+      sample.1,
+      @project.ProjectX86SimdState::create(registers=[("xmm0", sample.2)]),
+      "xmm0",
+      sample.3,
+    )
+  }
+}
+
+///|
 test "project Basic x86 SIMD semantics execute pshufb register fixtures" {
   let origin = semantic_word128("504f4e4d4c4b4a494847464544434241")
   let samples : Array[(String, @types.Word, @types.Word)] = [

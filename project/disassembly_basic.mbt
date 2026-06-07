@@ -6264,6 +6264,12 @@ fn project_disassembly_basic_decode_x86_simd_llvm(
     Some((4, "PCMPGTB", xmm1_xmm0, []))
   } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xd4\xc8") {
     Some((4, "PADDQ", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xd1\xc8") {
+    Some((4, "PSRLW", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xd2\xc8") {
+    Some((4, "PSRLD", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xd3\xc8") {
+    Some((4, "PSRLQ", xmm1_xmm0, []))
   } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xda\xc8") {
     Some((4, "PMINUB", xmm1_xmm0, []))
   } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xdb\xc8") {
@@ -6282,6 +6288,10 @@ fn project_disassembly_basic_decode_x86_simd_llvm(
     Some((4, "PAVGB", xmm1_xmm0, []))
   } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xe3\xc8") {
     Some((4, "PAVGW", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xe1\xc8") {
+    Some((4, "PSRAW", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xe2\xc8") {
+    Some((4, "PSRAD", xmm1_xmm0, []))
   } else if project_disassembly_basic_has_prefix(
       memory, b"\x66\x0f\x38\x3c\xc8",
     ) {
@@ -6318,6 +6328,12 @@ fn project_disassembly_basic_decode_x86_simd_llvm(
     Some((5, "PMAXSD", xmm1_xmm0, []))
   } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xef\xc8") {
     Some((4, "PXOR", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xf1\xc8") {
+    Some((4, "PSLLW", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xf2\xc8") {
+    Some((4, "PSLLD", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xf3\xc8") {
+    Some((4, "PSLLQ", xmm1_xmm0, []))
   } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xf8\xc8") {
     Some((4, "PSUBB", xmm1_xmm0, []))
   } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xf9\xc8") {

@@ -75,7 +75,19 @@ fn assert_x86_simd_result(
 ) -> Unit raise {
   let instruction = semantic_decode_x86(bytes)
   match instruction.apply_x86_simd(state) {
-    Ok(next) => assert_true(next.get_register(register) == Some(expected))
+    Ok(next) =>
+      match next.get_register(register) {
+        Some(actual) if actual == expected => ()
+        Some(actual) =>
+          fail(
+            label +
+            ": expected " +
+            expected.to_hex() +
+            ", got " +
+            actual.to_hex(),
+          )
+        None => fail(label + ": missing register " + register)
+      }
     Err(reason) => fail(label + ": " + reason)
   }
 }
@@ -275,6 +287,83 @@ test "project Basic x86 SIMD semantics execute packed add subtract fixtures" {
     ("paddw", b"\x66\x0f\xfd\xc8", ones16, ones, zero),
     ("paddd", b"\x66\x0f\xfe\xc8", ones32, ones, zero),
     ("paddq", b"\x66\x0f\xd4\xc8", ones64, ones, zero),
+  ]
+  for sample in samples {
+    assert_x86_simd_result(
+      sample.0,
+      sample.1,
+      semantic_xmm_state(sample.2, sample.3),
+      "xmm1",
+      sample.4,
+    )
+  }
+}
+
+///|
+test "project Basic x86 SIMD semantics execute packed shift fixtures" {
+  let word_source = semantic_word128("8001800100100010ffff000f00f000f0")
+  let word_counts = semantic_word128("00100001000400010002000100010004")
+  let dword_source = semantic_word128("8000001000000010ffffffff00f00000")
+  let dword_counts = semantic_word128("00000020000000010000000400000004")
+  let qword_source = semantic_word128("80000000000000100000000000f00000")
+  let qword_counts = semantic_word128("00000000000000400000000000000004")
+  let samples : Array[(String, Bytes, @types.Word, @types.Word, @types.Word)] = [
+    (
+      "psrlw",
+      b"\x66\x0f\xd1\xc8",
+      word_counts,
+      word_source,
+      semantic_word128("00004000000100083fff00070078000f"),
+    ),
+    (
+      "psrld",
+      b"\x66\x0f\xd2\xc8",
+      dword_counts,
+      dword_source,
+      semantic_word128("00000000000000080fffffff000f0000"),
+    ),
+    (
+      "psrlq",
+      b"\x66\x0f\xd3\xc8",
+      qword_counts,
+      qword_source,
+      semantic_word128("000000000000000000000000000f0000"),
+    ),
+    (
+      "psraw",
+      b"\x66\x0f\xe1\xc8",
+      word_counts,
+      word_source,
+      semantic_word128("ffffc00000010008ffff00070078000f"),
+    ),
+    (
+      "psrad",
+      b"\x66\x0f\xe2\xc8",
+      dword_counts,
+      dword_source,
+      semantic_word128("ffffffff00000008ffffffff000f0000"),
+    ),
+    (
+      "psllw",
+      b"\x66\x0f\xf1\xc8",
+      word_counts,
+      word_source,
+      semantic_word128("0000000201000020fffc001e01e00f00"),
+    ),
+    (
+      "pslld",
+      b"\x66\x0f\xf2\xc8",
+      dword_counts,
+      dword_source,
+      semantic_word128("0000000000000020fffffff00f000000"),
+    ),
+    (
+      "psllq",
+      b"\x66\x0f\xf3\xc8",
+      qword_counts,
+      qword_source,
+      semantic_word128("0000000000000000000000000f000000"),
+    ),
   ]
   for sample in samples {
     assert_x86_simd_result(

@@ -5866,6 +5866,19 @@ test "project Basic BIL lift covers x86 accumulator absolute mov" {
     Err(reason) => fail(reason)
   }
 
+  let mov16_load_64 = basic_bil_decode(
+    "x86_64",
+    b"\x66\xa1\x88\x77\x66\x55\x44\x33\x22\x11",
+    start=0x7067UL,
+  )
+  match mov16_load_64.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "AX:imm16 := load(mem:mem64x8, 0x1122334455667788:64u):imm16",
+      ])
+    Err(reason) => fail(reason)
+  }
+
   let mov64_store = basic_bil_decode(
     "x86_64",
     b"\x48\xa3\x88\x77\x66\x55\x44\x33\x22\x11",
@@ -5875,6 +5888,19 @@ test "project Basic BIL lift covers x86 accumulator absolute mov" {
     Ok(stmts) =>
       assert_basic_bil_text(stmts, [
         "mem:mem64x8 := store(mem:mem64x8, 0x1122334455667788:64u, RAX:imm64)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let mov16_store_64 = basic_bil_decode(
+    "x86_64",
+    b"\x66\xa3\x88\x77\x66\x55\x44\x33\x22\x11",
+    start=0x7068UL,
+  )
+  match mov16_store_64.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "mem:mem64x8 := store(mem:mem64x8, 0x1122334455667788:64u, AX:imm16)",
       ])
     Err(reason) => fail(reason)
   }

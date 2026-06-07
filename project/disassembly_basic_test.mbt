@@ -3483,9 +3483,23 @@ test "translated BAP basic disassembly decodes x86 accumulator absolute mov fixt
     ),
     (
       "x86_64",
+      b"\x66\xa1\x88\x77\x66\x55\x44\x33\x22\x11",
+      10,
+      ["MOV16ra", "AX", "0x1122334455667788"],
+      [ProjectMayLoad],
+    ),
+    (
+      "x86_64",
       b"\x48\xa3\x88\x77\x66\x55\x44\x33\x22\x11",
       10,
       ["MOV64ar", "0x1122334455667788", "RAX"],
+      [ProjectMayStore],
+    ),
+    (
+      "x86_64",
+      b"\x66\xa3\x88\x77\x66\x55\x44\x33\x22\x11",
+      10,
+      ["MOV16ar", "0x1122334455667788", "AX"],
       [ProjectMayStore],
     ),
   ]

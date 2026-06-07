@@ -821,6 +821,32 @@ fn project_basic_bil_x86_mul_flag_moves(
 }
 
 ///|
+fn project_basic_bil_x86_imul_acc_flag_moves(
+  flag : @types.Exp,
+) -> Array[@types.Stmt] {
+  [
+    project_basic_bil_x86_flag_move("OF", flag),
+    project_basic_bil_x86_flag_move("CF", flag),
+    project_basic_bil_x86_flag_move(
+      "PF",
+      @types.Exp::unknown("PF is undefined after imul", Imm(1)),
+    ),
+    project_basic_bil_x86_flag_move(
+      "SF",
+      @types.Exp::unknown("SF is undefined after imul", Imm(1)),
+    ),
+    project_basic_bil_x86_flag_move(
+      "ZF",
+      @types.Exp::unknown("ZF is undefined after imul", Imm(1)),
+    ),
+    project_basic_bil_x86_flag_move(
+      "AF",
+      @types.Exp::unknown("AF is undefined after imul", Imm(1)),
+    ),
+  ]
+}
+
+///|
 fn project_basic_bil_x86_accumulator(width : Int) -> Result[@types.Var, String] {
   match width {
     8 => Ok(project_basic_bil_reg("AL", 8))
@@ -949,6 +975,85 @@ fn ProjectDisassemblyInstruction::project_basic_bil_mul(
       ),
     ]
     for stmt in project_basic_bil_x86_mul_flag_moves(flag, "Mul") {
+      stmts.push(stmt)
+    }
+    Ok(stmts)
+  }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_imul_acc(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let src = match self.project_basic_bil_mul_source(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let acc = match project_basic_bil_x86_accumulator(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let product_width = width * 2
+  let product = @types.Exp::binop(
+    @types.BinOp::times(),
+    @types.Exp::cast(
+      @types.CastKind::signed(),
+      product_width,
+      @types.Exp::var_exp(acc),
+    ),
+    @types.Exp::cast(@types.CastKind::signed(), product_width, src),
+  )
+  if width == 8 {
+    let ax = project_basic_bil_reg("AX", 16)
+    let high = @types.Exp::cast(
+      @types.CastKind::high(),
+      width,
+      @types.Exp::var_exp(ax),
+    )
+    let zero = match project_basic_bil_int(0L, width) {
+      Ok(value) => value
+      Err(reason) => return Err(reason)
+    }
+    let flag = @types.Exp::binop(@types.BinOp::neq(), high, zero)
+    let stmts = [@types.Stmt::move_stmt(ax, product)]
+    for stmt in project_basic_bil_x86_imul_acc_flag_moves(flag) {
+      stmts.push(stmt)
+    }
+    Ok(stmts)
+  } else {
+    let high_acc = match project_basic_bil_x86_high_accumulator(width) {
+      Ok(value) => value
+      Err(reason) => return Err(reason)
+    }
+    let tmp = project_basic_bil_virtual("imul_tmp", product_width)
+    let tmp_exp = @types.Exp::var_exp(tmp)
+    let high = @types.Exp::cast(@types.CastKind::high(), width, tmp_exp)
+    let zero = match project_basic_bil_int(0L, width) {
+      Ok(value) => value
+      Err(reason) => return Err(reason)
+    }
+    let flag = @types.Exp::binop(@types.BinOp::neq(), high, zero)
+    let stmts = [
+      @types.Stmt::move_stmt(tmp, product),
+      @types.Stmt::move_stmt(
+        acc,
+        @types.Exp::cast(
+          @types.CastKind::low(),
+          width,
+          @types.Exp::var_exp(tmp),
+        ),
+      ),
+      @types.Stmt::move_stmt(
+        high_acc,
+        @types.Exp::cast(
+          @types.CastKind::high(),
+          width,
+          @types.Exp::var_exp(tmp),
+        ),
+      ),
+    ]
+    for stmt in project_basic_bil_x86_imul_acc_flag_moves(flag) {
       stmts.push(stmt)
     }
     Ok(stmts)
@@ -2467,6 +2572,10 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "IMUL16RM" => self.project_basic_bil_imul_rm(16)
     "IMUL32RM" => self.project_basic_bil_imul_rm(32)
     "IMUL64RM" => self.project_basic_bil_imul_rm(64)
+    "IMUL8R" | "IMUL8M" => self.project_basic_bil_imul_acc(8)
+    "IMUL16R" | "IMUL16M" => self.project_basic_bil_imul_acc(16)
+    "IMUL32R" | "IMUL32M" => self.project_basic_bil_imul_acc(32)
+    "IMUL64R" | "IMUL64M" => self.project_basic_bil_imul_acc(64)
     "MUL8R" | "MUL8M" => self.project_basic_bil_mul(8)
     "MUL16R" | "MUL16M" => self.project_basic_bil_mul(16)
     "MUL32R" | "MUL32M" => self.project_basic_bil_mul(32)

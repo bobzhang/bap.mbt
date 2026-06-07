@@ -2678,10 +2678,12 @@ fn project_disassembly_basic_x86_accumulator_imm(
 }
 
 ///|
-fn project_disassembly_basic_x86_mul(
+fn project_disassembly_basic_x86_group3_accumulator(
   memory : @memory.Memory,
   data_width : Int,
   address_width : Int,
+  expected_group : Int,
+  mnemonic : String,
 ) -> (
   Int,
   String,
@@ -2727,7 +2729,7 @@ fn project_disassembly_basic_x86_mul(
   } else {
     let modrm = bytes[opcode_index + 1].to_int()
     let group = (modrm >> 3) & 0x7
-    if group != 4 {
+    if group != expected_group {
       None
     } else {
       let rm_ext = if address_width == 64 && (rex & 0x1) != 0 { 8 } else { 0 }
@@ -2746,7 +2748,7 @@ fn project_disassembly_basic_x86_mul(
         Some(
           (
             opcode_index + 2,
-            "MUL\{data_width}r",
+            "\{mnemonic}\{data_width}r",
             [ProjectInstructionOperand::register(name=src)],
             [],
           ),
@@ -2764,7 +2766,7 @@ fn project_disassembly_basic_x86_mul(
             Some(
               (
                 length,
-                "MUL\{data_width}m",
+                "\{mnemonic}\{data_width}m",
                 project_disassembly_basic_x86_mem_operands(memory_operand),
                 [ProjectMayLoad],
               ),
@@ -2774,6 +2776,38 @@ fn project_disassembly_basic_x86_mul(
       }
     }
   }
+}
+
+///|
+fn project_disassembly_basic_x86_mul(
+  memory : @memory.Memory,
+  data_width : Int,
+  address_width : Int,
+) -> (
+  Int,
+  String,
+  Array[ProjectInstructionOperand],
+  Array[ProjectInstructionKind],
+)? {
+  project_disassembly_basic_x86_group3_accumulator(
+    memory, data_width, address_width, 4, "MUL",
+  )
+}
+
+///|
+fn project_disassembly_basic_x86_imul_acc(
+  memory : @memory.Memory,
+  data_width : Int,
+  address_width : Int,
+) -> (
+  Int,
+  String,
+  Array[ProjectInstructionOperand],
+  Array[ProjectInstructionKind],
+)? {
+  project_disassembly_basic_x86_group3_accumulator(
+    memory, data_width, address_width, 5, "IMUL",
+  )
 }
 
 ///|
@@ -4146,6 +4180,23 @@ fn project_disassembly_basic_decode_x86_llvm(
           memory, 32, 32,
         ).unwrap()
         Some((length, name, "", "", operands, kinds))
+      } else if project_disassembly_basic_x86_imul_acc(memory, 8, 32) is Some(_) {
+        let (length, name, operands, kinds) = project_disassembly_basic_x86_imul_acc(
+          memory, 8, 32,
+        ).unwrap()
+        Some((length, name, "", "", operands, kinds))
+      } else if project_disassembly_basic_x86_imul_acc(memory, 16, 32)
+        is Some(_) {
+        let (length, name, operands, kinds) = project_disassembly_basic_x86_imul_acc(
+          memory, 16, 32,
+        ).unwrap()
+        Some((length, name, "", "", operands, kinds))
+      } else if project_disassembly_basic_x86_imul_acc(memory, 32, 32)
+        is Some(_) {
+        let (length, name, operands, kinds) = project_disassembly_basic_x86_imul_acc(
+          memory, 32, 32,
+        ).unwrap()
+        Some((length, name, "", "", operands, kinds))
       } else if project_disassembly_basic_x86_arith_rr(memory, 32, 32)
         is Some(_) {
         let (length, name, dst, src) = project_disassembly_basic_x86_arith_rr(
@@ -4670,6 +4721,26 @@ fn project_disassembly_basic_decode_x86_64_llvm(
     Some((length, name, operands, kinds))
   } else if project_disassembly_basic_x86_mul(memory, 32, 64) is Some(_) {
     let (length, name, operands, kinds) = project_disassembly_basic_x86_mul(
+      memory, 32, 64,
+    ).unwrap()
+    Some((length, name, operands, kinds))
+  } else if project_disassembly_basic_x86_imul_acc(memory, 8, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_imul_acc(
+      memory, 8, 64,
+    ).unwrap()
+    Some((length, name, operands, kinds))
+  } else if project_disassembly_basic_x86_imul_acc(memory, 64, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_imul_acc(
+      memory, 64, 64,
+    ).unwrap()
+    Some((length, name, operands, kinds))
+  } else if project_disassembly_basic_x86_imul_acc(memory, 16, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_imul_acc(
+      memory, 16, 64,
+    ).unwrap()
+    Some((length, name, operands, kinds))
+  } else if project_disassembly_basic_x86_imul_acc(memory, 32, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_imul_acc(
       memory, 32, 64,
     ).unwrap()
     Some((length, name, operands, kinds))

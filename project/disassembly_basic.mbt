@@ -4027,18 +4027,17 @@ fn project_disassembly_basic_x86_shift_reg(
     let expected_imm_opcode = if data_width == 8 { 0xc0 } else { 0xc1 }
     let expected_one_opcode = if data_width == 8 { 0xd0 } else { 0xd1 }
     let expected_cl_opcode = if data_width == 8 { 0xd2 } else { 0xd3 }
-    let suffix = if opcode == expected_imm_opcode {
-      "ri8"
+    let count_suffix = if opcode == expected_imm_opcode {
+      "i8"
     } else if opcode == expected_one_opcode {
-      "r1"
+      "1"
     } else if opcode == expected_cl_opcode {
-      "rCL"
+      "CL"
     } else {
       ""
     }
-    if suffix == "" ||
-      ((modrm >> 6) & 0x3) != 0x3 ||
-      (suffix == "ri8" && bytes.length() < opcode_index + 3) {
+    if count_suffix == "" ||
+      (count_suffix == "i8" && bytes.length() < opcode_index + 3) {
       None
     } else {
       let group = (modrm >> 3) & 0x7
@@ -4055,39 +4054,85 @@ fn project_disassembly_basic_x86_shift_reg(
       if op == "" {
         None
       } else {
-        let rex_b = if address_width == 64 && (rex & 0x1) != 0 { 8 } else { 0 }
-        let index = (modrm & 0x7) + rex_b
-        let register = if data_width == 8 {
-          project_disassembly_basic_x86_gpr8_name(index, rex != 0)
-        } else {
-          project_disassembly_basic_x86_gpr_name(index, data_width)
-        }
-        let count = if suffix == "ri8" {
+        let count = if count_suffix == "i8" {
           ProjectInstructionOperand::immediate(
             bytes[opcode_index + 2].to_int().to_int64(),
           )
-        } else if suffix == "r1" {
+        } else if count_suffix == "1" {
           ProjectInstructionOperand::immediate(1L)
         } else {
           ProjectInstructionOperand::register(name="CL")
         }
-        let length = if suffix == "ri8" {
-          opcode_index + 3
+        if ((modrm >> 6) & 0x3) == 0x3 {
+          let rex_b = if address_width == 64 && (rex & 0x1) != 0 {
+            8
+          } else {
+            0
+          }
+          let index = (modrm & 0x7) + rex_b
+          let register = if data_width == 8 {
+            project_disassembly_basic_x86_gpr8_name(index, rex != 0)
+          } else {
+            project_disassembly_basic_x86_gpr_name(index, data_width)
+          }
+          let length = if count_suffix == "i8" {
+            opcode_index + 3
+          } else {
+            opcode_index + 2
+          }
+          Some(
+            (
+              length,
+              op + "\{data_width}r\{count_suffix}",
+              [
+                ProjectInstructionOperand::register(name=register),
+                ProjectInstructionOperand::register(name=register),
+                count,
+              ],
+              [],
+            ),
+          )
+        } else if op != "SHL" && op != "SHR" && op != "SAR" {
+          None
         } else {
-          opcode_index + 2
+          match
+            project_disassembly_basic_x86_parse_mem_operand(
+              bytes,
+              opcode_index + 2,
+              modrm,
+              address_width,
+              rex,
+            ) {
+            Some((length, memory_operand)) => {
+              let operands = project_disassembly_basic_x86_mem_operands(
+                memory_operand,
+              )
+              let (length, count) = if count_suffix == "i8" {
+                if bytes.length() <= length {
+                  return None
+                }
+                (
+                  length + 1,
+                  ProjectInstructionOperand::immediate(
+                    bytes[length].to_int().to_int64(),
+                  ),
+                )
+              } else {
+                (length, count)
+              }
+              operands.push(count)
+              Some(
+                (
+                  length,
+                  op + "\{data_width}m\{count_suffix}",
+                  operands,
+                  [ProjectMayLoad, ProjectMayStore],
+                ),
+              )
+            }
+            None => None
+          }
         }
-        Some(
-          (
-            length,
-            op + "\{data_width}\{suffix}",
-            [
-              ProjectInstructionOperand::register(name=register),
-              ProjectInstructionOperand::register(name=register),
-              count,
-            ],
-            [],
-          ),
-        )
       }
     }
   }

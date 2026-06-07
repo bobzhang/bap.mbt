@@ -2737,6 +2737,52 @@ fn ProjectDisassemblyInstruction::project_basic_bil_shift_r(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_basic_bil_shift_m(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  op : @types.BinOp,
+) -> Result[Array[@types.Stmt], String] {
+  let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let count = match self.project_basic_bil_shift_count(5, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let addr_tmp = project_basic_bil_virtual("shift_a", address_width)
+  let data_tmp = project_basic_bil_virtual("shift_d", width)
+  let addr_exp = @types.Exp::var_exp(addr_tmp)
+  let data_exp = @types.Exp::var_exp(data_tmp)
+  Ok([
+    @types.Stmt::move_stmt(addr_tmp, addr),
+    @types.Stmt::move_stmt(
+      data_tmp,
+      @types.Exp::load(
+        mem=@types.Exp::var_exp(mem),
+        addr=addr_exp,
+        LittleEndian,
+        size,
+      ),
+    ),
+    @types.Stmt::move_stmt(
+      mem,
+      @types.Exp::store(
+        mem=@types.Exp::var_exp(mem),
+        addr=addr_exp,
+        @types.Exp::binop(op, data_exp, count),
+        LittleEndian,
+        size,
+      ),
+    ),
+  ])
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_basic_bil_cmp_rr(
   self : ProjectDisassemblyInstruction,
   width : Int,
@@ -4673,18 +4719,36 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
       self.project_basic_bil_shift_r(32, @types.BinOp::lshift())
     "SHL64R1" | "SHL64RCL" | "SHL64RI8" =>
       self.project_basic_bil_shift_r(64, @types.BinOp::lshift())
+    "SHL8M1" | "SHL8MCL" | "SHL8MI8" =>
+      self.project_basic_bil_shift_m(8, @types.BinOp::lshift())
+    "SHL32M1" | "SHL32MCL" | "SHL32MI8" =>
+      self.project_basic_bil_shift_m(32, @types.BinOp::lshift())
+    "SHL64M1" | "SHL64MCL" | "SHL64MI8" =>
+      self.project_basic_bil_shift_m(64, @types.BinOp::lshift())
     "SHR8R1" | "SHR8RCL" | "SHR8RI8" =>
       self.project_basic_bil_shift_r(8, @types.BinOp::rshift())
     "SHR32R1" | "SHR32RCL" | "SHR32RI8" =>
       self.project_basic_bil_shift_r(32, @types.BinOp::rshift())
     "SHR64R1" | "SHR64RCL" | "SHR64RI8" =>
       self.project_basic_bil_shift_r(64, @types.BinOp::rshift())
+    "SHR8M1" | "SHR8MCL" | "SHR8MI8" =>
+      self.project_basic_bil_shift_m(8, @types.BinOp::rshift())
+    "SHR32M1" | "SHR32MCL" | "SHR32MI8" =>
+      self.project_basic_bil_shift_m(32, @types.BinOp::rshift())
+    "SHR64M1" | "SHR64MCL" | "SHR64MI8" =>
+      self.project_basic_bil_shift_m(64, @types.BinOp::rshift())
     "SAR8R1" | "SAR8RCL" | "SAR8RI8" =>
       self.project_basic_bil_shift_r(8, @types.BinOp::arshift())
     "SAR32R1" | "SAR32RCL" | "SAR32RI8" =>
       self.project_basic_bil_shift_r(32, @types.BinOp::arshift())
     "SAR64R1" | "SAR64RCL" | "SAR64RI8" =>
       self.project_basic_bil_shift_r(64, @types.BinOp::arshift())
+    "SAR8M1" | "SAR8MCL" | "SAR8MI8" =>
+      self.project_basic_bil_shift_m(8, @types.BinOp::arshift())
+    "SAR32M1" | "SAR32MCL" | "SAR32MI8" =>
+      self.project_basic_bil_shift_m(32, @types.BinOp::arshift())
+    "SAR64M1" | "SAR64MCL" | "SAR64MI8" =>
+      self.project_basic_bil_shift_m(64, @types.BinOp::arshift())
     "INC8R" => self.project_basic_bil_incdec(8, @types.BinOp::plus())
     "INC32R" => self.project_basic_bil_incdec(32, @types.BinOp::plus())
     "INC64R" => self.project_basic_bil_incdec(64, @types.BinOp::plus())

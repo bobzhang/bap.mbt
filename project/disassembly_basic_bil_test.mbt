@@ -640,6 +640,44 @@ test "project Basic BIL lift covers x86 register shift ops" {
       assert_basic_bil_text(stmts, ["SPL:imm8 := (SPL:imm8 << 1:8u)"])
     Err(reason) => fail(reason)
   }
+
+  let shl64_mem = basic_bil_decode(
+    "x86_64",
+    b"\x48\xd1\x65\xf8",
+    start=0x7045UL,
+  )
+  match shl64_mem.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%shift_a:imm64 := (RBP:imm64 - 8:64u)", "%shift_d:imm64 := load(mem:mem64x8, %shift_a:imm64):imm64",
+        "mem:mem64x8 := store(mem:mem64x8, %shift_a:imm64, (%shift_d:imm64 << 1:64u))",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let shr32_mem_cl = basic_bil_decode("x86", b"\xd3\x6d\xfc", start=0x7049UL)
+  match shr32_mem_cl.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%shift_a:imm32 := (EBP:imm32 - 4:32u)", "%shift_d:imm32 := load(mem:mem32x8, %shift_a:imm32):imm32",
+        "mem:mem32x8 := store(mem:mem32x8, %shift_a:imm32, (%shift_d:imm32 >> CL:imm8))",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let sar8_mem_imm = basic_bil_decode(
+    "x86_64",
+    b"\x41\xc0\x78\x01\x04",
+    start=0x704cUL,
+  )
+  match sar8_mem_imm.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%shift_a:imm64 := (R8:imm64 + 1:64u)", "%shift_d:imm8 := load(mem:mem64x8, %shift_a:imm64):imm8",
+        "mem:mem64x8 := store(mem:mem64x8, %shift_a:imm64, (%shift_d:imm8 a>> 4:8u))",
+      ])
+    Err(reason) => fail(reason)
+  }
 }
 
 ///|

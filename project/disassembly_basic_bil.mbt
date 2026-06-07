@@ -7193,7 +7193,7 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "LEAVE" => self.project_basic_bil_leave(32, 32)
     "LEAVE64" => self.project_basic_bil_leave(64, 64)
     "ENDBR32" | "ENDBR64" => Ok([])
-    "NOOP" | "PAUSE" => Ok([])
+    "NOOP" | "PAUSE" | "LFENCE" | "MFENCE" | "SFENCE" => Ok([])
     "CLC" => project_basic_bil_x86_flag_assign("CF", 0L)
     "STC" => project_basic_bil_x86_flag_assign("CF", 1L)
     "CMC" =>

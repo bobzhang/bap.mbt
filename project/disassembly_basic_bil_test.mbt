@@ -268,6 +268,24 @@ test "project Basic BIL lift covers x86_64 stack arithmetic fixtures" {
     Err(reason) => fail(reason)
   }
 
+  let lfence = basic_bil_decode("x86_64", b"\x0f\xae\xe8", start=0x6ff3UL)
+  match lfence.lift_basic_bil() {
+    Ok(stmts) => assert_true(stmts.is_empty())
+    Err(reason) => fail(reason)
+  }
+
+  let mfence = basic_bil_decode("x86_64", b"\x0f\xae\xf0", start=0x6ff6UL)
+  match mfence.lift_basic_bil() {
+    Ok(stmts) => assert_true(stmts.is_empty())
+    Err(reason) => fail(reason)
+  }
+
+  let sfence = basic_bil_decode("x86_64", b"\x0f\xae\xf8", start=0x6ff9UL)
+  match sfence.lift_basic_bil() {
+    Ok(stmts) => assert_true(stmts.is_empty())
+    Err(reason) => fail(reason)
+  }
+
   let multi_noop = basic_bil_decode(
     "x86_64",
     b"\x48\x0f\x1f\x84\x00\x00\x00\x00\x00",

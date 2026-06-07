@@ -480,12 +480,18 @@ test "translated BAP basic disassembly decodes x86 system instructions" {
     ("x86", b"\x0f\xa2", 2, ["CPUID"]),
     ("x86", b"\x0f\x01\xd0", 3, ["XGETBV"]),
     ("x86", b"\x0f\x34", 2, ["SYSENTER"]),
+    ("x86", b"\x0f\xae\xe8", 3, ["LFENCE"]),
+    ("x86", b"\x0f\xae\xf0", 3, ["MFENCE"]),
+    ("x86", b"\x0f\xae\xf8", 3, ["SFENCE"]),
     ("x86_64", b"\xf4", 1, ["HLT"]),
     ("x86_64", b"\x0f\x05", 2, ["SYSCALL"]),
     ("x86_64", b"\x0f\x31", 2, ["RDTSC"]),
     ("x86_64", b"\x0f\x34", 2, ["SYSENTER"]),
     ("x86_64", b"\x0f\xa2", 2, ["CPUID"]),
     ("x86_64", b"\x0f\x01\xd0", 3, ["XGETBV"]),
+    ("x86_64", b"\x0f\xae\xe8", 3, ["LFENCE"]),
+    ("x86_64", b"\x0f\xae\xf0", 3, ["MFENCE"]),
+    ("x86_64", b"\x0f\xae\xf8", 3, ["SFENCE"]),
   ]
   for sample in samples {
     let disasm = match

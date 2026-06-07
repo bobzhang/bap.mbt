@@ -1159,6 +1159,17 @@ fn project_disassembly_basic_x86_system(
             0x31 => Some((2, "RDTSC"))
             0x34 => Some((2, "SYSENTER"))
             0xa2 => Some((2, "CPUID"))
+            0xae =>
+              if bytes.length() < 3 {
+                None
+              } else {
+                match bytes[2].to_int() {
+                  0xe8 => Some((3, "LFENCE"))
+                  0xf0 => Some((3, "MFENCE"))
+                  0xf8 => Some((3, "SFENCE"))
+                  _ => None
+                }
+              }
             0x01 =>
               if bytes.length() >= 3 && bytes[2].to_int() == 0xd0 {
                 Some((3, "XGETBV"))

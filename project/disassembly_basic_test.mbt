@@ -4660,6 +4660,8 @@ test "translated BAP basic disassembly recognizes x86 SIMD fixture opcodes" {
     (b"\x66\x0f\x38\x38\xc8", 5, ["PMINSB", "XMM1", "XMM0"], []),
     (b"\x66\x0f\xde\xc8", 4, ["PMAXUB", "XMM1", "XMM0"], []),
     (b"\x66\x0f\xdf\xc8", 4, ["PANDN", "XMM1", "XMM0"], []),
+    (b"\x66\x0f\xe0\xc8", 4, ["PAVGB", "XMM1", "XMM0"], []),
+    (b"\x66\x0f\xe3\xc8", 4, ["PAVGW", "XMM1", "XMM0"], []),
     (b"\x66\x0f\x38\x3c\xc8", 5, ["PMAXSB", "XMM1", "XMM0"], []),
     (b"\x66\x0f\x38\x3e\xc8", 5, ["PMAXUW", "XMM1", "XMM0"], []),
     (b"\x66\x0f\xee\xc8", 4, ["PMAXSW", "XMM1", "XMM0"], []),

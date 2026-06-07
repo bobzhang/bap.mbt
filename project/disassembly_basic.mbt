@@ -6276,6 +6276,10 @@ fn project_disassembly_basic_decode_x86_simd_llvm(
     Some((4, "PMAXUB", xmm1_xmm0, []))
   } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xdf\xc8") {
     Some((4, "PANDN", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xe0\xc8") {
+    Some((4, "PAVGB", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xe3\xc8") {
+    Some((4, "PAVGW", xmm1_xmm0, []))
   } else if project_disassembly_basic_has_prefix(
       memory, b"\x66\x0f\x38\x3c\xc8",
     ) {

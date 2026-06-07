@@ -235,6 +235,30 @@ test "project Basic x86 SIMD semantics execute pmovmskb fixtures" {
 }
 
 ///|
+test "project Basic x86 SIMD semantics execute packed average fixtures" {
+  assert_x86_simd_result(
+    "pavgb",
+    b"\x66\x0f\xe0\xc8",
+    semantic_xmm_state(
+      semantic_word128("01010101010101010101010101010101"),
+      semantic_word128("ff00ff00ff00ff00ff00ff00ff00ff00"),
+    ),
+    "xmm1",
+    semantic_word128("80018001800180018001800180018001"),
+  )
+  assert_x86_simd_result(
+    "pavgw",
+    b"\x66\x0f\xe3\xc8",
+    semantic_xmm_state(
+      semantic_word128("00010001000100010001000100010001"),
+      semantic_word128("ffff0000ffff0000ffff0000ffff0000"),
+    ),
+    "xmm1",
+    semantic_word128("80000001800000018000000180000001"),
+  )
+}
+
+///|
 test "project Basic x86 SIMD semantics execute pshufb register fixtures" {
   let origin = semantic_word128("504f4e4d4c4b4a494847464544434241")
   let samples : Array[(String, @types.Word, @types.Word)] = [

@@ -155,6 +155,99 @@ fn project_x86_simd_pmovmskb(
 }
 
 ///|
+fn project_x86_simd_element_at(
+  word : @types.Word,
+  index : Int,
+  element_width : Int,
+) -> Result[@types.Word, String] {
+  if index < 0 || element_width <= 0 {
+    Err("x86 SIMD element extraction failed")
+  } else {
+    try
+      word.extract(hi=(index + 1) * element_width - 1, lo=index * element_width)
+    catch {
+      _ => Err("x86 SIMD element extraction failed")
+    } noraise {
+      result => Ok(result)
+    }
+  }
+}
+
+///|
+fn project_x86_simd_from_little_elements(
+  elements : Array[@types.Word],
+) -> Result[@types.Word, String] {
+  if elements.is_empty() {
+    Err("x86 SIMD packed operation requires at least one element")
+  } else {
+    let mut result = elements[elements.length() - 1]
+    for offset in 1..<elements.length() {
+      let index = elements.length() - offset - 1
+      try result.concat(elements[index]) catch {
+        _ => return Err("x86 SIMD packed result construction failed")
+      } noraise {
+        next => result = next
+      }
+    }
+    Ok(result)
+  }
+}
+
+///|
+fn project_x86_simd_unsigned_element_value(
+  word : @types.Word,
+) -> Result[UInt64, String] {
+  try word.to_uint64() catch {
+    _ => Err("x86 SIMD element is not representable")
+  } noraise {
+    value => Ok(value)
+  }
+}
+
+///|
+fn project_x86_simd_pavg(
+  dest : @types.Word,
+  source : @types.Word,
+  element_width~ : Int,
+) -> Result[@types.Word, String] {
+  if dest.width() != source.width() {
+    Err("pavg requires matching operand widths")
+  } else if element_width != 8 && element_width != 16 {
+    Err("pavg supports byte and word elements")
+  } else if dest.width() % element_width != 0 {
+    Err("pavg element width must divide the operand width")
+  } else {
+    let elements : Array[@types.Word] = []
+    for index in 0..<(dest.width() / element_width) {
+      let left = match project_x86_simd_element_at(dest, index, element_width) {
+        Ok(word) => word
+        Err(reason) => return Err(reason)
+      }
+      let right = match
+        project_x86_simd_element_at(source, index, element_width) {
+        Ok(word) => word
+        Err(reason) => return Err(reason)
+      }
+      let left_value = match project_x86_simd_unsigned_element_value(left) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let right_value = match project_x86_simd_unsigned_element_value(right) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let average = (left_value + right_value + 1) >> 1
+      try @types.Word::of_uint64(width=element_width, average) catch {
+        _ => return Err("pavg element construction failed")
+      } noraise {
+        word => elements.push(word)
+      }
+    }
+    project_x86_simd_from_little_elements(elements)
+  }
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_x86_simd_eval(
   self : ProjectDisassemblyInstruction,
   dest : @types.Word,
@@ -168,6 +261,8 @@ fn ProjectDisassemblyInstruction::project_x86_simd_eval(
     "PMINSB" => dest.packed_min(source, element_width=8, signed=true)
     "PMAXUB" => dest.packed_max(source, element_width=8)
     "PANDN" => project_x86_simd_bitop(dest.lnot(), source, @types.Word::bit_and)
+    "PAVGB" => project_x86_simd_pavg(dest, source, element_width=8)
+    "PAVGW" => project_x86_simd_pavg(dest, source, element_width=16)
     "PMAXSB" => dest.packed_max(source, element_width=8, signed=true)
     "PMAXUW" => dest.packed_max(source, element_width=16)
     "PMAXSW" => dest.packed_max(source, element_width=16, signed=true)

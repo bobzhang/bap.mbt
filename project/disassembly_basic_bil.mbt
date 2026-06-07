@@ -595,6 +595,105 @@ fn ProjectDisassemblyInstruction::project_basic_bil_popcnt_rm(
 }
 
 ///|
+fn project_basic_bil_count_zero_undefined_flags(
+  op : String,
+) -> Array[@types.Stmt] {
+  [
+    project_basic_bil_x86_flag_move("OF", @types.Exp::unknown(op, Imm(1))),
+    project_basic_bil_x86_flag_move("SF", @types.Exp::unknown(op, Imm(1))),
+    project_basic_bil_x86_flag_move("AF", @types.Exp::unknown(op, Imm(1))),
+    project_basic_bil_x86_flag_move("PF", @types.Exp::unknown(op, Imm(1))),
+  ]
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_count_zero_common(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  source : @types.Exp,
+  trailing : Bool,
+) -> Result[Array[@types.Stmt], String] {
+  let dst = match self.project_basic_bil_register(0, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let zero = match project_basic_bil_int(0L, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let tmp = project_basic_bil_virtual("cntzero", width)
+  let scan = if trailing {
+    match project_basic_bil_bitscan_ctz(tmp, width) {
+      Ok(value) => value
+      Err(reason) => return Err(reason)
+    }
+  } else {
+    match project_basic_bil_bitscan_clz(tmp, width) {
+      Ok(value) => value
+      Err(reason) => return Err(reason)
+    }
+  }
+  let op = if trailing { "tzcnt" } else { "lzcnt" }
+  let stmts = [@types.Stmt::move_stmt(tmp, source)]
+  for stmt in scan {
+    stmts.push(stmt)
+  }
+  stmts.push(@types.Stmt::move_stmt(dst, @types.Exp::var_exp(tmp)))
+  stmts.push(
+    project_basic_bil_x86_flag_move(
+      "CF",
+      @types.Exp::binop(@types.BinOp::eq(), source, zero),
+    ),
+  )
+  stmts.push(
+    project_basic_bil_x86_flag_move(
+      "ZF",
+      @types.Exp::binop(@types.BinOp::eq(), @types.Exp::var_exp(tmp), zero),
+    ),
+  )
+  for stmt in project_basic_bil_count_zero_undefined_flags(op) {
+    stmts.push(stmt)
+  }
+  Ok(stmts)
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_count_zero_rr(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  trailing : Bool,
+) -> Result[Array[@types.Stmt], String] {
+  let source = match self.project_basic_bil_register(1, width) {
+    Ok(value) => @types.Exp::var_exp(value)
+    Err(reason) => return Err(reason)
+  }
+  self.project_basic_bil_count_zero_common(width, source, trailing)
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_count_zero_rm(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  trailing : Bool,
+) -> Result[Array[@types.Stmt], String] {
+  let (addr, mem, _) = match self.project_basic_bil_memory_addr(1) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let source = @types.Exp::load(
+    mem=@types.Exp::var_exp(mem),
+    addr~,
+    LittleEndian,
+    size,
+  )
+  self.project_basic_bil_count_zero_common(width, source, trailing)
+}
+
+///|
 fn project_basic_bil_btx_offset_width(width : Int) -> Result[Int, String] {
   match width {
     16 => Ok(4)
@@ -6554,6 +6653,18 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "POPCNT16RM" => self.project_basic_bil_popcnt_rm(16)
     "POPCNT32RM" => self.project_basic_bil_popcnt_rm(32)
     "POPCNT64RM" => self.project_basic_bil_popcnt_rm(64)
+    "TZCNT16RR" => self.project_basic_bil_count_zero_rr(16, true)
+    "TZCNT32RR" => self.project_basic_bil_count_zero_rr(32, true)
+    "TZCNT64RR" => self.project_basic_bil_count_zero_rr(64, true)
+    "TZCNT16RM" => self.project_basic_bil_count_zero_rm(16, true)
+    "TZCNT32RM" => self.project_basic_bil_count_zero_rm(32, true)
+    "TZCNT64RM" => self.project_basic_bil_count_zero_rm(64, true)
+    "LZCNT16RR" => self.project_basic_bil_count_zero_rr(16, false)
+    "LZCNT32RR" => self.project_basic_bil_count_zero_rr(32, false)
+    "LZCNT64RR" => self.project_basic_bil_count_zero_rr(64, false)
+    "LZCNT16RM" => self.project_basic_bil_count_zero_rm(16, false)
+    "LZCNT32RM" => self.project_basic_bil_count_zero_rm(32, false)
+    "LZCNT64RM" => self.project_basic_bil_count_zero_rm(64, false)
     "BT16RR" => self.project_basic_bil_btx_rr(16, "BT")
     "BT32RR" => self.project_basic_bil_btx_rr(32, "BT")
     "BT64RR" => self.project_basic_bil_btx_rr(64, "BT")

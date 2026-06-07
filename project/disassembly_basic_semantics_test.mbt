@@ -456,6 +456,20 @@ test "project Basic x86 SIMD semantics execute packed immediate shift fixtures" 
 }
 
 ///|
+test "project Basic x86 SIMD semantics execute palignr fixtures" {
+  assert_x86_simd_result(
+    "palignr",
+    b"\x66\x0f\x3a\x0f\xc1\x04",
+    semantic_xmm_state(
+      semantic_word128("1f1e1d1c1b1a19181716151413121110"),
+      semantic_word128("0f0e0d0c0b0a09080706050403020100"),
+    ),
+    "xmm0",
+    semantic_word128("131211100f0e0d0c0b0a090807060504"),
+  )
+}
+
+///|
 test "project Basic x86 SIMD semantics execute pshufb register fixtures" {
   let origin = semantic_word128("504f4e4d4c4b4a494847464544434241")
   let samples : Array[(String, @types.Word, @types.Word)] = [

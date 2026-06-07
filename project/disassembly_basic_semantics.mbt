@@ -467,6 +467,32 @@ fn project_x86_simd_byte_shift_immediate(
 }
 
 ///|
+fn project_x86_simd_palignr(
+  dest : @types.Word,
+  source : @types.Word,
+  immediate : Int,
+) -> Result[@types.Word, String] {
+  if dest.width() != source.width() {
+    Err("palignr requires matching operand widths")
+  } else if immediate < 0 || immediate > 255 {
+    Err("palignr immediate must fit in 8 bits")
+  } else {
+    try dest.concat(source) catch {
+      _ => Err("palignr concat failed")
+    } noraise {
+      combined => {
+        let shifted = combined.rshift(immediate * 8)
+        try shifted.extract(hi=dest.width() - 1, lo=0) catch {
+          _ => Err("palignr result extraction failed")
+        } noraise {
+          result => Ok(result)
+        }
+      }
+    }
+  }
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_x86_simd_eval_immediate(
   self : ProjectDisassemblyInstruction,
   dest : @types.Word,
@@ -542,6 +568,45 @@ fn ProjectDisassemblyInstruction::project_x86_simd_eval_immediate(
         ProjectX86SimdShiftLeft,
       )
     name => Err("unsupported x86 SIMD immediate instruction \{name}")
+  }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_x86_simd_apply_palignr(
+  self : ProjectDisassemblyInstruction,
+  state : ProjectX86SimdState,
+) -> Result[ProjectX86SimdState, String] {
+  match self.project_x86_simd_register_operand(0) {
+    Ok(dest_name) =>
+      match self.project_x86_simd_register_operand(1) {
+        Ok(source_name) =>
+          match self.project_x86_simd_immediate_operand(2) {
+            Ok(immediate) =>
+              match state.project_x86_simd_require_register(dest_name) {
+                Ok(dest_word) =>
+                  match
+                    state.project_x86_simd_source_word(
+                      source_name,
+                      dest_word.width(),
+                    ) {
+                    Ok(source_word) =>
+                      match
+                        project_x86_simd_palignr(
+                          dest_word, source_word, immediate,
+                        ) {
+                        Ok(result) =>
+                          Ok(state.with_register(name=dest_name, result))
+                        Err(reason) => Err(reason)
+                      }
+                    Err(reason) => Err(reason)
+                  }
+                Err(reason) => Err(reason)
+              }
+            Err(reason) => Err(reason)
+          }
+        Err(reason) => Err(reason)
+      }
+    Err(reason) => Err(reason)
   }
 }
 
@@ -768,6 +833,8 @@ pub fn ProjectDisassemblyInstruction::apply_x86_simd(
 ) -> Result[ProjectX86SimdState, String] {
   if self.name_value.to_upper() == "PMOVMSKB" {
     return self.project_x86_simd_apply_pmovmskb(state)
+  } else if self.name_value.to_upper() == "PALIGNR" {
+    return self.project_x86_simd_apply_palignr(state)
   }
   match self.project_x86_simd_register_operand(0) {
     Ok(dest_name) =>

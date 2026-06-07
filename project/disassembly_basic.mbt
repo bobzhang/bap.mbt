@@ -1659,6 +1659,73 @@ fn project_disassembly_basic_x86_mov_mem(
 }
 
 ///|
+fn project_disassembly_basic_x86_movbe(
+  memory : @memory.Memory,
+  data_width : Int,
+  address_width : Int,
+) -> (
+  Int,
+  String,
+  Array[ProjectInstructionOperand],
+  Array[ProjectInstructionKind],
+)? {
+  if data_width != 16 && data_width != 32 && data_width != 64 {
+    return None
+  }
+  let bytes = memory.to_bytes()
+  let (opcode_index, rex) = match
+    project_disassembly_basic_x86_data_opcode_index(
+      bytes, data_width, address_width,
+    ) {
+    Some(value) => value
+    None => return None
+  }
+  if bytes.length() < opcode_index + 4 ||
+    bytes[opcode_index].to_int() != 0x0f ||
+    bytes[opcode_index + 1].to_int() != 0x38 {
+    None
+  } else {
+    let opcode = bytes[opcode_index + 2].to_int()
+    if opcode != 0xf0 && opcode != 0xf1 {
+      return None
+    }
+    let modrm = bytes[opcode_index + 3].to_int()
+    if ((modrm >> 6) & 0x3) == 0x3 {
+      return None
+    }
+    let reg_ext = if address_width == 64 && (rex & 0x4) != 0 { 8 } else { 0 }
+    let reg = project_disassembly_basic_x86_gpr_name(
+      ((modrm >> 3) & 0x7) + reg_ext,
+      data_width,
+    )
+    match
+      project_disassembly_basic_x86_parse_mem_operand(
+        bytes,
+        opcode_index + 4,
+        modrm,
+        address_width,
+        rex,
+      ) {
+      Some((length, memory_operand)) => {
+        let mem_operands = project_disassembly_basic_x86_mem_operands(
+          memory_operand,
+        )
+        if opcode == 0xf0 {
+          let operands = [ProjectInstructionOperand::register(name=reg)]
+          operands.append(mem_operands)
+          Some((length, "MOVBE\{data_width}rm", operands, [ProjectMayLoad]))
+        } else {
+          let operands = mem_operands
+          operands.push(ProjectInstructionOperand::register(name=reg))
+          Some((length, "MOVBE\{data_width}mr", operands, [ProjectMayStore]))
+        }
+      }
+      None => None
+    }
+  }
+}
+
+///|
 fn project_disassembly_basic_x86_mov_imm_rm(
   memory : @memory.Memory,
   data_width : Int,
@@ -6466,6 +6533,16 @@ fn project_disassembly_basic_decode_x86_llvm(
           memory, 16, 32,
         ).unwrap()
         Some((length, name, "", "", operands, kinds))
+      } else if project_disassembly_basic_x86_movbe(memory, 16, 32) is Some(_) {
+        let (length, name, operands, kinds) = project_disassembly_basic_x86_movbe(
+          memory, 16, 32,
+        ).unwrap()
+        Some((length, name, "", "", operands, kinds))
+      } else if project_disassembly_basic_x86_movbe(memory, 32, 32) is Some(_) {
+        let (length, name, operands, kinds) = project_disassembly_basic_x86_movbe(
+          memory, 32, 32,
+        ).unwrap()
+        Some((length, name, "", "", operands, kinds))
       } else if project_disassembly_basic_x86_mov_mem(memory, 32, 32) is Some(_) {
         let (length, name, operands, kinds) = project_disassembly_basic_x86_mov_mem(
           memory, 32, 32,
@@ -7447,6 +7524,21 @@ fn project_disassembly_basic_decode_x86_64_llvm(
     Some((length, name, operands, kinds))
   } else if project_disassembly_basic_x86_lea(memory, 32, 64) is Some(_) {
     let (length, name, operands, kinds) = project_disassembly_basic_x86_lea(
+      memory, 32, 64,
+    ).unwrap()
+    Some((length, name, operands, kinds))
+  } else if project_disassembly_basic_x86_movbe(memory, 64, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_movbe(
+      memory, 64, 64,
+    ).unwrap()
+    Some((length, name, operands, kinds))
+  } else if project_disassembly_basic_x86_movbe(memory, 16, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_movbe(
+      memory, 16, 64,
+    ).unwrap()
+    Some((length, name, operands, kinds))
+  } else if project_disassembly_basic_x86_movbe(memory, 32, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_movbe(
       memory, 32, 64,
     ).unwrap()
     Some((length, name, operands, kinds))

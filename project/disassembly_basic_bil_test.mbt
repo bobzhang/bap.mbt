@@ -5151,6 +5151,42 @@ test "project Basic BIL lift covers x86 register moves" {
     Ok(stmts) => assert_basic_bil_text(stmts, ["R8B:imm8 := AL:imm8"])
     Err(reason) => fail(reason)
   }
+
+  let movbe64 = basic_bil_decode(
+    "x86_64",
+    b"\x48\x0f\x38\xf0\x45\xf8",
+    start=0x703aUL,
+  )
+  match movbe64.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_basic_bil_text(stmts, [
+        "RAX:imm64 := load(mem:mem64x8, (RBP:imm64 - 8:64u)):imm64",
+      ])
+      match stmts[0] {
+        Move(_, Load(endian~, ..)) => assert_true(endian == BigEndian)
+        _ => fail("MOVBE64rm did not lift as a big-endian load")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let movbe16_store = basic_bil_decode(
+    "x86",
+    b"\x66\x0f\x38\xf1\x4d\xfc",
+    start=0x703bUL,
+  )
+  match movbe16_store.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_basic_bil_text(stmts, [
+        "mem:mem32x8 := store(mem:mem32x8, (EBP:imm32 - 4:32u), CX:imm16)",
+      ])
+      match stmts[0] {
+        Move(_, Store(endian~, ..)) => assert_true(endian == BigEndian)
+        _ => fail("MOVBE16mr did not lift as a big-endian store")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
 }
 
 ///|

@@ -5368,9 +5368,10 @@ fn ProjectDisassemblyInstruction::project_basic_bil_memory_addr(
 }
 
 ///|
-fn ProjectDisassemblyInstruction::project_basic_bil_mov_rm(
+fn ProjectDisassemblyInstruction::project_basic_bil_mov_rm_endian(
   self : ProjectDisassemblyInstruction,
   data_width : Int,
+  endian : @bitvec.Endian,
 ) -> Result[Array[@types.Stmt], String] {
   let dst = match self.project_basic_bil_register(0, data_width) {
     Ok(value) => value
@@ -5387,15 +5388,24 @@ fn ProjectDisassemblyInstruction::project_basic_bil_mov_rm(
   Ok([
     @types.Stmt::move_stmt(
       dst,
-      @types.Exp::load(mem=@types.Exp::var_exp(mem), addr~, LittleEndian, size),
+      @types.Exp::load(mem=@types.Exp::var_exp(mem), addr~, endian, size),
     ),
   ])
 }
 
 ///|
-fn ProjectDisassemblyInstruction::project_basic_bil_mov_mr(
+fn ProjectDisassemblyInstruction::project_basic_bil_mov_rm(
   self : ProjectDisassemblyInstruction,
   data_width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  self.project_basic_bil_mov_rm_endian(data_width, LittleEndian)
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_mov_mr_endian(
+  self : ProjectDisassemblyInstruction,
+  data_width : Int,
+  endian : @bitvec.Endian,
 ) -> Result[Array[@types.Stmt], String] {
   let (addr, mem, _) = match self.project_basic_bil_memory_addr(0) {
     Ok(value) => value
@@ -5416,11 +5426,19 @@ fn ProjectDisassemblyInstruction::project_basic_bil_mov_mr(
         mem=@types.Exp::var_exp(mem),
         addr~,
         @types.Exp::var_exp(src),
-        LittleEndian,
+        endian,
         size,
       ),
     ),
   ])
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_mov_mr(
+  self : ProjectDisassemblyInstruction,
+  data_width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  self.project_basic_bil_mov_mr_endian(data_width, LittleEndian)
 }
 
 ///|
@@ -6922,6 +6940,12 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "XADD32MR" => self.project_basic_bil_xadd_mr(32)
     "XADD64MR" => self.project_basic_bil_xadd_mr(64)
     "CMPXCHG8BM" => self.project_basic_bil_cmpxchg8b()
+    "MOVBE16RM" => self.project_basic_bil_mov_rm_endian(16, BigEndian)
+    "MOVBE32RM" => self.project_basic_bil_mov_rm_endian(32, BigEndian)
+    "MOVBE64RM" => self.project_basic_bil_mov_rm_endian(64, BigEndian)
+    "MOVBE16MR" => self.project_basic_bil_mov_mr_endian(16, BigEndian)
+    "MOVBE32MR" => self.project_basic_bil_mov_mr_endian(32, BigEndian)
+    "MOVBE64MR" => self.project_basic_bil_mov_mr_endian(64, BigEndian)
     "MOV8RM" => self.project_basic_bil_mov_rm(8)
     "MOV16RM" => self.project_basic_bil_mov_rm(16)
     "MOV32RM" => self.project_basic_bil_mov_rm(32)

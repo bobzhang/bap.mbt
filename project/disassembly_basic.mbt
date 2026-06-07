@@ -1193,6 +1193,7 @@ fn project_disassembly_basic_x86_cmov_name(opcode : Int) -> String {
 ///|
 fn project_disassembly_basic_x86_cmov(
   memory : @memory.Memory,
+  data_width : Int,
   address_width : Int,
 ) -> (
   Int,
@@ -1201,13 +1202,12 @@ fn project_disassembly_basic_x86_cmov(
   Array[ProjectInstructionKind],
 )? {
   let bytes = memory.to_bytes()
-  let (opcode_index, rex) = if address_width == 64 &&
-    bytes.length() >= 2 &&
-    bytes[0].to_int() >= 0x40 &&
-    bytes[0].to_int() <= 0x4f {
-    (1, bytes[0].to_int())
-  } else {
-    (0, 0)
+  let (opcode_index, rex) = match
+    project_disassembly_basic_x86_data_opcode_index(
+      bytes, data_width, address_width,
+    ) {
+    Some(value) => value
+    None => return None
   }
   if bytes.length() < opcode_index + 3 || bytes[opcode_index].to_int() != 0x0f {
     None
@@ -1217,23 +1217,22 @@ fn project_disassembly_basic_x86_cmov(
       None
     } else {
       let name = project_disassembly_basic_x86_cmov_name(opcode)
-      let width = if address_width == 64 && (rex & 0x8) != 0 { 64 } else { 32 }
       let modrm = bytes[opcode_index + 2].to_int()
       let rex_r = if address_width == 64 && (rex & 0x4) != 0 { 8 } else { 0 }
       let rex_b = if address_width == 64 && (rex & 0x1) != 0 { 8 } else { 0 }
       let dst = project_disassembly_basic_x86_gpr_name(
         ((modrm >> 3) & 0x7) + rex_r,
-        width,
+        data_width,
       )
       if ((modrm >> 6) & 0x3) == 0x3 {
         let src = project_disassembly_basic_x86_gpr_name(
           (modrm & 0x7) + rex_b,
-          width,
+          data_width,
         )
         Some(
           (
             opcode_index + 3,
-            "\{name}\{width}rr",
+            "\{name}\{data_width}rr",
             [
               ProjectInstructionOperand::register(name=dst),
               ProjectInstructionOperand::register(name=src),
@@ -1257,7 +1256,7 @@ fn project_disassembly_basic_x86_cmov(
             operands.append(
               project_disassembly_basic_x86_mem_operands(memory_operand),
             )
-            Some((length, "\{name}\{width}rm", operands, [ProjectMayLoad]))
+            Some((length, "\{name}\{data_width}rm", operands, [ProjectMayLoad]))
           }
           None => None
         }
@@ -5671,9 +5670,14 @@ fn project_disassembly_basic_decode_x86_llvm(
           memory, 32,
         ).unwrap()
         Some((length, name, "", "", operands, kinds))
-      } else if project_disassembly_basic_x86_cmov(memory, 32) is Some(_) {
+      } else if project_disassembly_basic_x86_cmov(memory, 16, 32) is Some(_) {
         let (length, name, operands, kinds) = project_disassembly_basic_x86_cmov(
-          memory, 32,
+          memory, 16, 32,
+        ).unwrap()
+        Some((length, name, "", "", operands, kinds))
+      } else if project_disassembly_basic_x86_cmov(memory, 32, 32) is Some(_) {
+        let (length, name, operands, kinds) = project_disassembly_basic_x86_cmov(
+          memory, 32, 32,
         ).unwrap()
         Some((length, name, "", "", operands, kinds))
       } else if project_disassembly_basic_x86_bswap(memory, 32) is Some(_) {
@@ -6524,9 +6528,19 @@ fn project_disassembly_basic_decode_x86_64_llvm(
       memory, 64,
     ).unwrap()
     Some((length, name, operands, kinds))
-  } else if project_disassembly_basic_x86_cmov(memory, 64) is Some(_) {
+  } else if project_disassembly_basic_x86_cmov(memory, 64, 64) is Some(_) {
     let (length, name, operands, kinds) = project_disassembly_basic_x86_cmov(
-      memory, 64,
+      memory, 64, 64,
+    ).unwrap()
+    Some((length, name, operands, kinds))
+  } else if project_disassembly_basic_x86_cmov(memory, 16, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_cmov(
+      memory, 16, 64,
+    ).unwrap()
+    Some((length, name, operands, kinds))
+  } else if project_disassembly_basic_x86_cmov(memory, 32, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_cmov(
+      memory, 32, 64,
     ).unwrap()
     Some((length, name, operands, kinds))
   } else if project_disassembly_basic_x86_bswap(memory, 64) is Some(_) {

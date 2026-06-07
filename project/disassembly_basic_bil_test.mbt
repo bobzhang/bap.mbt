@@ -5561,11 +5561,33 @@ test "project Basic BIL lift covers x86 cmovcc" {
     Err(reason) => fail(reason)
   }
 
+  let cmove16 = basic_bil_decode("x86", b"\x66\x0f\x44\xc1", start=0x7058UL)
+  match cmove16.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "AX:imm16 := ite(ZF:imm1, CX:imm16, AX:imm16)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
   let cmovne_mem = basic_bil_decode("x86", b"\x0f\x45\x45\xfc", start=0x7059UL)
   match cmovne_mem.lift_basic_bil() {
     Ok(stmts) =>
       assert_basic_bil_text(stmts, [
         "EAX:imm32 := ite((not ZF:imm1), load(mem:mem32x8, (EBP:imm32 - 4:32u)):imm32, EAX:imm32)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let cmovne_mem16 = basic_bil_decode(
+    "x86",
+    b"\x66\x0f\x45\x45\xfc",
+    start=0x7059UL,
+  )
+  match cmovne_mem16.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "AX:imm16 := ite((not ZF:imm1), load(mem:mem32x8, (EBP:imm32 - 4:32u)):imm16, AX:imm16)",
       ])
     Err(reason) => fail(reason)
   }
@@ -5579,6 +5601,19 @@ test "project Basic BIL lift covers x86 cmovcc" {
     Err(reason) => fail(reason)
   }
 
+  let cmovl16 = basic_bil_decode(
+    "x86_64",
+    b"\x66\x45\x0f\x4c\xc1",
+    start=0x705aUL,
+  )
+  match cmovl16.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "R8W:imm16 := ite((SF:imm1 ^ OF:imm1), R9W:imm16, R8W:imm16)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
   let cmovg_mem = basic_bil_decode(
     "x86_64",
     b"\x4c\x0f\x4f\x45\xf8",
@@ -5588,6 +5623,19 @@ test "project Basic BIL lift covers x86 cmovcc" {
     Ok(stmts) =>
       assert_basic_bil_text(stmts, [
         "R8:imm64 := ite((not (ZF:imm1 | (SF:imm1 ^ OF:imm1))), load(mem:mem64x8, (RBP:imm64 - 8:64u)):imm64, R8:imm64)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let cmovg_mem16 = basic_bil_decode(
+    "x86_64",
+    b"\x66\x44\x0f\x4f\x45\xf8",
+    start=0x705bUL,
+  )
+  match cmovg_mem16.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "R8W:imm16 := ite((not (ZF:imm1 | (SF:imm1 ^ OF:imm1))), load(mem:mem64x8, (RBP:imm64 - 8:64u)):imm16, R8W:imm16)",
       ])
     Err(reason) => fail(reason)
   }

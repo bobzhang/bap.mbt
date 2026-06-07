@@ -6374,7 +6374,13 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
 ) -> Result[Array[@types.Stmt], String] {
   let name = self.name().to_upper()
   if name.has_prefix("CMOV") {
-    let width = if name.contains("64") { 64 } else { 32 }
+    let width = if name.contains("64") {
+      64
+    } else if name.contains("16") {
+      16
+    } else {
+      32
+    }
     return self.project_basic_bil_cmov(width)
   }
   match name {

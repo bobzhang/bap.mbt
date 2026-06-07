@@ -3280,6 +3280,7 @@ test "translated BAP basic disassembly decodes x86 cmovcc fixtures" {
     (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),
   ] = [
     ("x86", b"\x0f\x44\xc1", 3, ["CMOVE32rr", "EAX", "ECX"], []),
+    ("x86", b"\x66\x0f\x44\xc1", 4, ["CMOVE16rr", "AX", "CX"], []),
     (
       "x86",
       b"\x0f\x45\x45\xfc",
@@ -3287,13 +3288,28 @@ test "translated BAP basic disassembly decodes x86 cmovcc fixtures" {
       ["CMOVNE32rm", "EAX", "EBP", "0x1", "Nil", "-0x4", "Nil"],
       [ProjectMayLoad],
     ),
+    (
+      "x86",
+      b"\x66\x0f\x45\x45\xfc",
+      5,
+      ["CMOVNE16rm", "AX", "EBP", "0x1", "Nil", "-0x4", "Nil"],
+      [ProjectMayLoad],
+    ),
     ("x86_64", b"\x48\x0f\x47\xc1", 4, ["CMOVA64rr", "RAX", "RCX"], []),
     ("x86_64", b"\x4d\x0f\x4c\xc1", 4, ["CMOVL64rr", "R8", "R9"], []),
+    ("x86_64", b"\x66\x45\x0f\x4c\xc1", 5, ["CMOVL16rr", "R8W", "R9W"], []),
     (
       "x86_64",
       b"\x4c\x0f\x4f\x45\xf8",
       5,
       ["CMOVG64rm", "R8", "RBP", "0x1", "Nil", "-0x8", "Nil"],
+      [ProjectMayLoad],
+    ),
+    (
+      "x86_64",
+      b"\x66\x44\x0f\x4f\x45\xf8",
+      6,
+      ["CMOVG16rm", "R8W", "RBP", "0x1", "Nil", "-0x8", "Nil"],
       [ProjectMayLoad],
     ),
   ]

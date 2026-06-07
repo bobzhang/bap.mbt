@@ -783,6 +783,64 @@ test "project Basic BIL lift covers x86 imul register-memory ops" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 mul ops" {
+  let mul8 = basic_bil_decode("x86", b"\xf6\xe1", start=0x7039UL)
+  match mul8.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "AX:imm16 := (pad:16[AL:imm8] * pad:16[CL:imm8])", "OF:imm1 := (high:8[AX:imm16] != 0:8u)",
+        "CF:imm1 := (high:8[AX:imm16] != 0:8u)", "SF:imm1 := unknown(SF is undefined after Mul:imm1)",
+        "ZF:imm1 := unknown(ZF is undefined after Mul:imm1)", "AF:imm1 := unknown(AF is undefined after Mul:imm1)",
+        "PF:imm1 := unknown(PF is undefined after Mul:imm1)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let mul16 = basic_bil_decode("x86", b"\x66\xf7\xe1", start=0x703bUL)
+  match mul16.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%mul_tmp:imm32 := (pad:32[AX:imm16] * pad:32[CX:imm16])", "AX:imm16 := low:16[%mul_tmp:imm32]",
+        "DX:imm16 := high:16[%mul_tmp:imm32]", "OF:imm1 := (high:16[%mul_tmp:imm32] != 0:16u)",
+        "CF:imm1 := (high:16[%mul_tmp:imm32] != 0:16u)", "SF:imm1 := unknown(SF is undefined after Mul:imm1)",
+        "ZF:imm1 := unknown(ZF is undefined after Mul:imm1)", "AF:imm1 := unknown(AF is undefined after Mul:imm1)",
+        "PF:imm1 := unknown(PF is undefined after Mul:imm1)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let mul32 = basic_bil_decode("x86", b"\xf7\xe1", start=0x703eUL)
+  match mul32.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%mul_tmp:imm64 := (pad:64[EAX:imm32] * pad:64[ECX:imm32])", "EAX:imm32 := low:32[%mul_tmp:imm64]",
+        "EDX:imm32 := high:32[%mul_tmp:imm64]", "OF:imm1 := (high:32[%mul_tmp:imm64] != 0:32u)",
+        "CF:imm1 := (high:32[%mul_tmp:imm64] != 0:32u)", "SF:imm1 := unknown(SF is undefined after Mul:imm1)",
+        "ZF:imm1 := unknown(ZF is undefined after Mul:imm1)", "AF:imm1 := unknown(AF is undefined after Mul:imm1)",
+        "PF:imm1 := unknown(PF is undefined after Mul:imm1)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let mul64_mem = basic_bil_decode(
+    "x86_64",
+    b"\x48\xf7\x65\xf8",
+    start=0x7040UL,
+  )
+  match mul64_mem.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%mul_tmp:imm128 := (pad:128[RAX:imm64] * pad:128[load(mem:mem64x8, (RBP:imm64 - 8:64u)):imm64])",
+        "RAX:imm64 := low:64[%mul_tmp:imm128]", "RDX:imm64 := high:64[%mul_tmp:imm128]",
+        "OF:imm1 := (high:64[%mul_tmp:imm128] != 0:64u)", "CF:imm1 := (high:64[%mul_tmp:imm128] != 0:64u)",
+        "SF:imm1 := unknown(SF is undefined after Mul:imm1)", "ZF:imm1 := unknown(ZF is undefined after Mul:imm1)",
+        "AF:imm1 := unknown(AF is undefined after Mul:imm1)", "PF:imm1 := unknown(PF is undefined after Mul:imm1)",
+      ])
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86 register logical ops" {
   let xor_zero = basic_bil_decode("x86_64", b"\x48\x31\xc0", start=0x7017UL)
   match xor_zero.lift_basic_bil() {

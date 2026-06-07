@@ -794,6 +794,168 @@ fn ProjectDisassemblyInstruction::project_basic_bil_imul_rm(
 }
 
 ///|
+fn project_basic_bil_x86_mul_flag_moves(
+  flag : @types.Exp,
+  mnemonic : String,
+) -> Array[@types.Stmt] {
+  [
+    project_basic_bil_x86_flag_move("OF", flag),
+    project_basic_bil_x86_flag_move("CF", flag),
+    project_basic_bil_x86_flag_move(
+      "SF",
+      @types.Exp::unknown("SF is undefined after \{mnemonic}", Imm(1)),
+    ),
+    project_basic_bil_x86_flag_move(
+      "ZF",
+      @types.Exp::unknown("ZF is undefined after \{mnemonic}", Imm(1)),
+    ),
+    project_basic_bil_x86_flag_move(
+      "AF",
+      @types.Exp::unknown("AF is undefined after \{mnemonic}", Imm(1)),
+    ),
+    project_basic_bil_x86_flag_move(
+      "PF",
+      @types.Exp::unknown("PF is undefined after \{mnemonic}", Imm(1)),
+    ),
+  ]
+}
+
+///|
+fn project_basic_bil_x86_accumulator(width : Int) -> Result[@types.Var, String] {
+  match width {
+    8 => Ok(project_basic_bil_reg("AL", 8))
+    16 => Ok(project_basic_bil_reg("AX", 16))
+    32 => Ok(project_basic_bil_reg("EAX", 32))
+    64 => Ok(project_basic_bil_reg("RAX", 64))
+    _ => Err("unsupported x86 accumulator width \{width}")
+  }
+}
+
+///|
+fn project_basic_bil_x86_high_accumulator(
+  width : Int,
+) -> Result[@types.Var, String] {
+  match width {
+    16 => Ok(project_basic_bil_reg("DX", 16))
+    32 => Ok(project_basic_bil_reg("EDX", 32))
+    64 => Ok(project_basic_bil_reg("RDX", 64))
+    _ => Err("unsupported x86 high accumulator width \{width}")
+  }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_mul_source(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[@types.Exp, String] {
+  match self.operands().length() {
+    1 =>
+      match self.project_basic_bil_register(0, width) {
+        Ok(src) => Ok(@types.Exp::var_exp(src))
+        Err(reason) => Err(reason)
+      }
+    5 => {
+      let (addr, mem, _) = match self.project_basic_bil_memory_addr(0) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let size = match @types.Size::of_int(width) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      Ok(
+        @types.Exp::load(
+          mem=@types.Exp::var_exp(mem),
+          addr~,
+          LittleEndian,
+          size,
+        ),
+      )
+    }
+    count => Err("unsupported \{self.name()} operand count \{count}")
+  }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_mul(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let src = match self.project_basic_bil_mul_source(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let acc = match project_basic_bil_x86_accumulator(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let product_width = width * 2
+  let product = @types.Exp::binop(
+    @types.BinOp::times(),
+    @types.Exp::cast(
+      @types.CastKind::unsigned(),
+      product_width,
+      @types.Exp::var_exp(acc),
+    ),
+    @types.Exp::cast(@types.CastKind::unsigned(), product_width, src),
+  )
+  if width == 8 {
+    let ax = project_basic_bil_reg("AX", 16)
+    let high = @types.Exp::cast(
+      @types.CastKind::high(),
+      width,
+      @types.Exp::var_exp(ax),
+    )
+    let zero = match project_basic_bil_int(0L, width) {
+      Ok(value) => value
+      Err(reason) => return Err(reason)
+    }
+    let flag = @types.Exp::binop(@types.BinOp::neq(), high, zero)
+    let stmts = [@types.Stmt::move_stmt(ax, product)]
+    for stmt in project_basic_bil_x86_mul_flag_moves(flag, "Mul") {
+      stmts.push(stmt)
+    }
+    Ok(stmts)
+  } else {
+    let high_acc = match project_basic_bil_x86_high_accumulator(width) {
+      Ok(value) => value
+      Err(reason) => return Err(reason)
+    }
+    let tmp = project_basic_bil_virtual("mul_tmp", product_width)
+    let tmp_exp = @types.Exp::var_exp(tmp)
+    let high = @types.Exp::cast(@types.CastKind::high(), width, tmp_exp)
+    let zero = match project_basic_bil_int(0L, width) {
+      Ok(value) => value
+      Err(reason) => return Err(reason)
+    }
+    let flag = @types.Exp::binop(@types.BinOp::neq(), high, zero)
+    let stmts = [
+      @types.Stmt::move_stmt(tmp, product),
+      @types.Stmt::move_stmt(
+        acc,
+        @types.Exp::cast(
+          @types.CastKind::low(),
+          width,
+          @types.Exp::var_exp(tmp),
+        ),
+      ),
+      @types.Stmt::move_stmt(
+        high_acc,
+        @types.Exp::cast(
+          @types.CastKind::high(),
+          width,
+          @types.Exp::var_exp(tmp),
+        ),
+      ),
+    ]
+    for stmt in project_basic_bil_x86_mul_flag_moves(flag, "Mul") {
+      stmts.push(stmt)
+    }
+    Ok(stmts)
+  }
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_basic_bil_shift_count(
   self : ProjectDisassemblyInstruction,
   index : Int,
@@ -2305,6 +2467,10 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "IMUL16RM" => self.project_basic_bil_imul_rm(16)
     "IMUL32RM" => self.project_basic_bil_imul_rm(32)
     "IMUL64RM" => self.project_basic_bil_imul_rm(64)
+    "MUL8R" | "MUL8M" => self.project_basic_bil_mul(8)
+    "MUL16R" | "MUL16M" => self.project_basic_bil_mul(16)
+    "MUL32R" | "MUL32M" => self.project_basic_bil_mul(32)
+    "MUL64R" | "MUL64M" => self.project_basic_bil_mul(64)
     "ROL8R1" | "ROL8RCL" | "ROL8RI8" => self.project_basic_bil_rotate_r(8, true)
     "ROL32R1" | "ROL32RCL" | "ROL32RI8" =>
       self.project_basic_bil_rotate_r(32, true)

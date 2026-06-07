@@ -844,6 +844,32 @@ fn project_disassembly_basic_x86_flag_transfer(
 }
 
 ///|
+fn project_disassembly_basic_x86_flag_stack(
+  memory : @memory.Memory,
+  address_width : Int,
+) -> (Int, String, Array[ProjectInstructionKind])? {
+  let bytes = memory.to_bytes()
+  let opcode_index = if address_width == 64 &&
+    bytes.length() >= 2 &&
+    bytes[0].to_int() >= 0x40 &&
+    bytes[0].to_int() <= 0x4f {
+    1
+  } else {
+    0
+  }
+  if bytes.length() <= opcode_index {
+    None
+  } else {
+    let width = if address_width == 64 { 64 } else { 32 }
+    match bytes[opcode_index].to_int() {
+      0x9c => Some((opcode_index + 1, "PUSHF\{width}", [ProjectMayStore]))
+      0x9d => Some((opcode_index + 1, "POPF\{width}", [ProjectMayLoad]))
+      _ => None
+    }
+  }
+}
+
+///|
 fn project_disassembly_basic_x86_interrupt(
   memory : @memory.Memory,
 ) -> (Int, String, Array[ProjectInstructionOperand])? {
@@ -3490,6 +3516,11 @@ fn project_disassembly_basic_decode_x86_llvm(
       } else if project_disassembly_basic_x86_flag_transfer(memory) is Some(_) {
         let (length, name) = project_disassembly_basic_x86_flag_transfer(memory).unwrap()
         Some((length, name, "", "", [], []))
+      } else if project_disassembly_basic_x86_flag_stack(memory, 32) is Some(_) {
+        let (length, name, kinds) = project_disassembly_basic_x86_flag_stack(
+          memory, 32,
+        ).unwrap()
+        Some((length, name, "", "", [], kinds))
       } else if project_disassembly_basic_x86_interrupt(memory) is Some(_) {
         let (length, name, operands) = project_disassembly_basic_x86_interrupt(
           memory,
@@ -3921,6 +3952,11 @@ fn project_disassembly_basic_decode_x86_64_llvm(
   } else if project_disassembly_basic_x86_flag_transfer(memory) is Some(_) {
     let (length, name) = project_disassembly_basic_x86_flag_transfer(memory).unwrap()
     Some((length, name, [], []))
+  } else if project_disassembly_basic_x86_flag_stack(memory, 64) is Some(_) {
+    let (length, name, kinds) = project_disassembly_basic_x86_flag_stack(
+      memory, 64,
+    ).unwrap()
+    Some((length, name, [], kinds))
   } else if project_disassembly_basic_x86_interrupt(memory) is Some(_) {
     let (length, name, operands) = project_disassembly_basic_x86_interrupt(
       memory,

@@ -439,6 +439,96 @@ fn project_basic_bil_x86_sahf() -> Array[@types.Stmt] {
 }
 
 ///|
+fn project_basic_bil_x86_flags_bit(index : Int) -> @types.Exp {
+  match index {
+    0 => project_basic_bil_x86_flag("CF")
+    2 => project_basic_bil_x86_flag("PF")
+    4 => project_basic_bil_x86_flag("AF")
+    6 => project_basic_bil_x86_flag("ZF")
+    7 => project_basic_bil_x86_flag("SF")
+    10 => project_basic_bil_x86_flag("DF")
+    11 => project_basic_bil_x86_flag("OF")
+    _ => @types.Exp::unknown("RFLAGS bit \{index}", Imm(1))
+  }
+}
+
+///|
+fn project_basic_bil_x86_flags_image(width : Int) -> Result[@types.Exp, String] {
+  if width != 32 && width != 64 {
+    return Err("unsupported PUSHF width \{width}")
+  }
+  let bits : Array[@types.Exp] = []
+  for offset in 0..<width {
+    bits.push(project_basic_bil_x86_flags_bit(width - offset - 1))
+  }
+  Ok(project_basic_bil_concat_bits(bits))
+}
+
+///|
+fn project_basic_bil_x86_pushf(
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  match project_basic_bil_x86_flags_image(width) {
+    Ok(flags) => project_basic_bil_push_exp(flags, width)
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+fn project_basic_bil_x86_popf(
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  if width != 32 && width != 64 {
+    return Err("unsupported POPF width \{width}")
+  }
+  let sp = match project_basic_bil_stack_pointer(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let updated_sp = match project_basic_bil_stack_increment(sp, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let mem = project_basic_bil_stack_mem(width)
+  let flags = project_basic_bil_virtual("popf_flags", width)
+  let flags_exp = @types.Exp::var_exp(flags)
+  let stmts = [
+    @types.Stmt::move_stmt(
+      flags,
+      @types.Exp::load(
+        mem=@types.Exp::var_exp(mem),
+        addr=@types.Exp::var_exp(sp),
+        LittleEndian,
+        size,
+      ),
+    ),
+    @types.Stmt::move_stmt(sp, updated_sp),
+  ]
+  let flag_bits : Array[(Int, String)] = [
+    (11, "OF"),
+    (10, "DF"),
+    (7, "SF"),
+    (6, "ZF"),
+    (4, "AF"),
+    (2, "PF"),
+    (0, "CF"),
+  ]
+  for entry in flag_bits {
+    stmts.push(
+      project_basic_bil_x86_flag_move(
+        entry.1,
+        @types.Exp::extract(flags_exp, hi=entry.0, lo=entry.0),
+      ),
+    )
+  }
+  Ok(stmts)
+}
+
+///|
 fn project_basic_bil_arm_offset_addr(
   base : @types.Var,
   offset : Int64,
@@ -2159,6 +2249,10 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "STD" => project_basic_bil_x86_flag_assign("DF", 1L)
     "LAHF" => Ok(project_basic_bil_x86_lahf())
     "SAHF" => Ok(project_basic_bil_x86_sahf())
+    "PUSHF32" => project_basic_bil_x86_pushf(32)
+    "PUSHF64" => project_basic_bil_x86_pushf(64)
+    "POPF32" => project_basic_bil_x86_popf(32)
+    "POPF64" => project_basic_bil_x86_popf(64)
     "INT3" | "INT" => self.project_basic_bil_cpuexn()
     "HLT" => Ok([])
     "RDTSC" => Ok(project_basic_bil_x86_unknown_regs("rdtsc", ["EAX", "EDX"]))

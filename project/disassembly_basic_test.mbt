@@ -515,6 +515,10 @@ test "translated BAP basic disassembly decodes x86 register add-sub immediates" 
       ["ADD64ri32", "RAX", "RAX", "0x12345678"],
     ),
     ("x86", b"\x66\x05\x34\x12", 4, ["ADD16ri16", "AX", "AX", "0x1234"]),
+    ("x86", b"\x66\x15\x34\x12", 4, ["ADC16ri16", "AX", "AX", "0x1234"]),
+    ("x86", b"\x66\x83\xd8\xff", 4, ["SBB16ri8", "AX", "AX", "-0x1"]),
+    ("x86", b"\x66\x81\xd8\x34\x12", 5, ["SBB16ri16", "AX", "AX", "0x1234"]),
+    ("x86_64", b"\x66\x41\x83\xd0\x01", 5, ["ADC16ri8", "R8W", "R8W", "0x1"]),
     (
       "x86_64",
       b"\x49\x81\xe8\xff\xff\xff\xff",
@@ -610,6 +614,13 @@ test "translated BAP basic disassembly decodes x86 memory add-sub immediates" {
       b"\x66\x83\x55\xfc\x01",
       5,
       ["ADC16mi8", "EBP", "0x1", "Nil", "-0x4", "Nil", "0x1"],
+      [ProjectMayLoad, ProjectMayStore],
+    ),
+    (
+      "x86",
+      b"\x66\x81\x5d\xfc\x34\x12",
+      6,
+      ["SBB16mi16", "EBP", "0x1", "Nil", "-0x4", "Nil", "0x1234"],
       [ProjectMayLoad, ProjectMayStore],
     ),
   ]

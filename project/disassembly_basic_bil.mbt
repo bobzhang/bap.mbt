@@ -6771,6 +6771,7 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "LDMXCSRM" => self.project_basic_bil_mxcsr_mem(true)
     "STMXCSRM" => self.project_basic_bil_mxcsr_mem(false)
     "CLFLUSH" | "CLFLUSHOPT" | "CLWB" => Ok([])
+    "PREFETCHNTA" | "PREFETCHT0" | "PREFETCHT1" | "PREFETCHT2" => Ok([])
     "ROL8R1" | "ROL8RCL" | "ROL8RI8" => self.project_basic_bil_rotate_r(8, true)
     "ROL16R1" | "ROL16RCL" | "ROL16RI8" =>
       self.project_basic_bil_rotate_r(16, true)

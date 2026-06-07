@@ -2906,6 +2906,64 @@ fn project_disassembly_basic_x86_cache_flush(
 }
 
 ///|
+fn project_disassembly_basic_x86_prefetch(
+  memory : @memory.Memory,
+  address_width : Int,
+) -> (
+  Int,
+  String,
+  Array[ProjectInstructionOperand],
+  Array[ProjectInstructionKind],
+)? {
+  let bytes = memory.to_bytes()
+  let (opcode_index, rex) = if address_width == 64 &&
+    bytes.length() > 0 &&
+    bytes[0].to_int() >= 0x40 &&
+    bytes[0].to_int() <= 0x4f {
+    (1, bytes[0].to_int())
+  } else {
+    (0, 0)
+  }
+  if bytes.length() < opcode_index + 3 ||
+    bytes[opcode_index].to_int() != 0x0f ||
+    bytes[opcode_index + 1].to_int() != 0x18 {
+    None
+  } else {
+    let modrm = bytes[opcode_index + 2].to_int()
+    let name = match (modrm >> 3) & 0x7 {
+      0 => "PREFETCHNTA"
+      1 => "PREFETCHT0"
+      2 => "PREFETCHT1"
+      3 => "PREFETCHT2"
+      _ => return None
+    }
+    if ((modrm >> 6) & 0x3) == 0x3 {
+      None
+    } else {
+      match
+        project_disassembly_basic_x86_parse_mem_operand(
+          bytes,
+          opcode_index + 3,
+          modrm,
+          address_width,
+          rex,
+        ) {
+        Some((length, memory_operand)) =>
+          Some(
+            (
+              length,
+              name,
+              project_disassembly_basic_x86_mem_operands(memory_operand),
+              [ProjectMayLoad],
+            ),
+          )
+        None => None
+      }
+    }
+  }
+}
+
+///|
 fn project_disassembly_basic_x86_cmpxchg(
   memory : @memory.Memory,
   data_width : Int,
@@ -6372,6 +6430,11 @@ fn project_disassembly_basic_decode_x86_llvm(
           memory, 32,
         ).unwrap()
         Some((length, name, "", "", operands, kinds))
+      } else if project_disassembly_basic_x86_prefetch(memory, 32) is Some(_) {
+        let (length, name, operands, kinds) = project_disassembly_basic_x86_prefetch(
+          memory, 32,
+        ).unwrap()
+        Some((length, name, "", "", operands, kinds))
       } else if project_disassembly_basic_x86_cmpxchg(memory, 8, 32) is Some(_) {
         let (length, name, operands, kinds) = project_disassembly_basic_x86_cmpxchg(
           memory, 8, 32,
@@ -7462,6 +7525,11 @@ fn project_disassembly_basic_decode_x86_64_llvm(
     Some((length, name, operands, kinds))
   } else if project_disassembly_basic_x86_cache_flush(memory, 64) is Some(_) {
     let (length, name, operands, kinds) = project_disassembly_basic_x86_cache_flush(
+      memory, 64,
+    ).unwrap()
+    Some((length, name, operands, kinds))
+  } else if project_disassembly_basic_x86_prefetch(memory, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_prefetch(
       memory, 64,
     ).unwrap()
     Some((length, name, operands, kinds))

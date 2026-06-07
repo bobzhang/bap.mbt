@@ -3014,6 +3014,81 @@ fn ProjectDisassemblyInstruction::project_basic_bil_xadd_mr(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_basic_bil_cmpxchg8b(
+  self : ProjectDisassemblyInstruction,
+) -> Result[Array[@types.Stmt], String] {
+  let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(64) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let addr_tmp = project_basic_bil_virtual("cmpxchg8b_a", address_width)
+  let dst_tmp = project_basic_bil_virtual("cmpxchg8b_d", 64)
+  let equal = project_basic_bil_virtual("cmpxchg8b_eq", 1)
+  let eax = project_basic_bil_reg("EAX", 32)
+  let ebx = project_basic_bil_reg("EBX", 32)
+  let ecx = project_basic_bil_reg("ECX", 32)
+  let edx = project_basic_bil_reg("EDX", 32)
+  let addr_exp = @types.Exp::var_exp(addr_tmp)
+  let dst_exp = @types.Exp::var_exp(dst_tmp)
+  let equal_exp = @types.Exp::var_exp(equal)
+  let accumulator = @types.Exp::concat(
+    @types.Exp::var_exp(edx),
+    @types.Exp::var_exp(eax),
+  )
+  let source = @types.Exp::concat(
+    @types.Exp::var_exp(ecx),
+    @types.Exp::var_exp(ebx),
+  )
+  Ok([
+    @types.Stmt::move_stmt(addr_tmp, addr),
+    @types.Stmt::move_stmt(
+      dst_tmp,
+      @types.Exp::load(
+        mem=@types.Exp::var_exp(mem),
+        addr=addr_exp,
+        LittleEndian,
+        size,
+      ),
+    ),
+    @types.Stmt::move_stmt(
+      equal,
+      @types.Exp::binop(@types.BinOp::eq(), accumulator, dst_exp),
+    ),
+    project_basic_bil_x86_flag_move("ZF", equal_exp),
+    @types.Stmt::move_stmt(
+      mem,
+      @types.Exp::store(
+        mem=@types.Exp::var_exp(mem),
+        addr=addr_exp,
+        @types.Exp::ite(if_=equal_exp, then_=source, else_=dst_exp),
+        LittleEndian,
+        size,
+      ),
+    ),
+    @types.Stmt::move_stmt(
+      eax,
+      @types.Exp::ite(
+        if_=equal_exp,
+        then_=@types.Exp::var_exp(eax),
+        else_=@types.Exp::extract(dst_exp, hi=31, lo=0),
+      ),
+    ),
+    @types.Stmt::move_stmt(
+      edx,
+      @types.Exp::ite(
+        if_=equal_exp,
+        then_=@types.Exp::var_exp(edx),
+        else_=@types.Exp::extract(dst_exp, hi=63, lo=32),
+      ),
+    ),
+  ])
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_basic_bil_test_rr(
   self : ProjectDisassemblyInstruction,
   width : Int,
@@ -4543,6 +4618,7 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "XADD16MR" => self.project_basic_bil_xadd_mr(16)
     "XADD32MR" => self.project_basic_bil_xadd_mr(32)
     "XADD64MR" => self.project_basic_bil_xadd_mr(64)
+    "CMPXCHG8BM" => self.project_basic_bil_cmpxchg8b()
     "MOV8RM" => self.project_basic_bil_mov_rm(8)
     "MOV32RM" => self.project_basic_bil_mov_rm(32)
     "MOV64RM" => self.project_basic_bil_mov_rm(64)

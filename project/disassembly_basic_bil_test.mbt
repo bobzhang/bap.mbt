@@ -765,6 +765,47 @@ test "project Basic BIL lift covers x86 memory adc-sbb rr operands" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 memory logical rr operands" {
+  let or64_mr = basic_bil_decode("x86_64", b"\x48\x09\x4d\xf8", start=0x7040UL)
+  match or64_mr.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%binop_a:imm64 := (RBP:imm64 - 8:64u)", "%binop_d:imm64 := load(mem:mem64x8, %binop_a:imm64):imm64",
+        "mem:mem64x8 := store(mem:mem64x8, %binop_a:imm64, (%binop_d:imm64 | RCX:imm64))",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let and64_rm = basic_bil_decode("x86_64", b"\x48\x23\x45\xf8", start=0x7044UL)
+  match and64_rm.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "RAX:imm64 := (RAX:imm64 & load(mem:mem64x8, (RBP:imm64 - 8:64u)):imm64)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let xor32_mr = basic_bil_decode("x86", b"\x31\x4d\xfc", start=0x7048UL)
+  match xor32_mr.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%binop_a:imm32 := (EBP:imm32 - 4:32u)", "%binop_d:imm32 := load(mem:mem32x8, %binop_a:imm32):imm32",
+        "mem:mem32x8 := store(mem:mem32x8, %binop_a:imm32, (%binop_d:imm32 ^ ECX:imm32))",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let or8_rm = basic_bil_decode("x86", b"\x0a\x4d\xfc", start=0x704cUL)
+  match or8_rm.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "CL:imm8 := (CL:imm8 | load(mem:mem32x8, (EBP:imm32 - 4:32u)):imm8)",
+      ])
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86 memory logical and cmp immediates" {
   let or8_mem = basic_bil_decode(
     "x86_64",

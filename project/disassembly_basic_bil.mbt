@@ -5664,18 +5664,36 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
       self.project_basic_bil_binop_rr(32, @types.BinOp::bit_or())
     "OR64RR" | "OR64RR_REV" =>
       self.project_basic_bil_binop_rr(64, @types.BinOp::bit_or())
+    "OR8RM" => self.project_basic_bil_binop_rm(8, @types.BinOp::bit_or())
+    "OR32RM" => self.project_basic_bil_binop_rm(32, @types.BinOp::bit_or())
+    "OR64RM" => self.project_basic_bil_binop_rm(64, @types.BinOp::bit_or())
+    "OR8MR" => self.project_basic_bil_binop_mr(8, @types.BinOp::bit_or())
+    "OR32MR" => self.project_basic_bil_binop_mr(32, @types.BinOp::bit_or())
+    "OR64MR" => self.project_basic_bil_binop_mr(64, @types.BinOp::bit_or())
     "AND8RR" | "AND8RR_REV" =>
       self.project_basic_bil_binop_rr(8, @types.BinOp::bit_and())
     "AND32RR" | "AND32RR_REV" =>
       self.project_basic_bil_binop_rr(32, @types.BinOp::bit_and())
     "AND64RR" | "AND64RR_REV" =>
       self.project_basic_bil_binop_rr(64, @types.BinOp::bit_and())
+    "AND8RM" => self.project_basic_bil_binop_rm(8, @types.BinOp::bit_and())
+    "AND32RM" => self.project_basic_bil_binop_rm(32, @types.BinOp::bit_and())
+    "AND64RM" => self.project_basic_bil_binop_rm(64, @types.BinOp::bit_and())
+    "AND8MR" => self.project_basic_bil_binop_mr(8, @types.BinOp::bit_and())
+    "AND32MR" => self.project_basic_bil_binop_mr(32, @types.BinOp::bit_and())
+    "AND64MR" => self.project_basic_bil_binop_mr(64, @types.BinOp::bit_and())
     "XOR8RR" | "XOR8RR_REV" =>
       self.project_basic_bil_binop_rr(8, @types.BinOp::bit_xor())
     "XOR32RR" | "XOR32RR_REV" =>
       self.project_basic_bil_binop_rr(32, @types.BinOp::bit_xor())
     "XOR64RR" | "XOR64RR_REV" =>
       self.project_basic_bil_binop_rr(64, @types.BinOp::bit_xor())
+    "XOR8RM" => self.project_basic_bil_binop_rm(8, @types.BinOp::bit_xor())
+    "XOR32RM" => self.project_basic_bil_binop_rm(32, @types.BinOp::bit_xor())
+    "XOR64RM" => self.project_basic_bil_binop_rm(64, @types.BinOp::bit_xor())
+    "XOR8MR" => self.project_basic_bil_binop_mr(8, @types.BinOp::bit_xor())
+    "XOR32MR" => self.project_basic_bil_binop_mr(32, @types.BinOp::bit_xor())
+    "XOR64MR" => self.project_basic_bil_binop_mr(64, @types.BinOp::bit_xor())
     "ADC8RR" | "ADC8RR_REV" => self.project_basic_bil_adc_rr(8)
     "ADC32RR" | "ADC32RR_REV" => self.project_basic_bil_adc_rr(32)
     "ADC64RR" | "ADC64RR_REV" => self.project_basic_bil_adc_rr(64)

@@ -1024,8 +1024,8 @@ fn project_disassembly_basic_x86_string_move_store(
   } else {
     let opcode = bytes[opcode_index].to_int()
     let data_width = match opcode {
-      0xa4 | 0xaa => 8
-      0xa5 | 0xab =>
+      0xa4 | 0xa6 | 0xaa | 0xae => 8
+      0xa5 | 0xa7 | 0xab | 0xaf =>
         if has_66 {
           16
         } else if address_width == 64 && (rex & 0x8) != 0 {
@@ -1037,7 +1037,9 @@ fn project_disassembly_basic_x86_string_move_store(
     }
     let prefix = match opcode {
       0xa4 | 0xa5 => "MOVS"
+      0xa6 | 0xa7 => "CMPS"
       0xaa | 0xab => "STOS"
+      0xae | 0xaf => "SCAS"
       _ => return None
     }
     let name = if address_width == 64 && data_width != 64 {
@@ -1047,7 +1049,9 @@ fn project_disassembly_basic_x86_string_move_store(
     }
     let kinds = match opcode {
       0xa4 | 0xa5 => [ProjectMayLoad, ProjectMayStore]
+      0xa6 | 0xa7 => [ProjectMayLoad]
       0xaa | 0xab => [ProjectMayStore]
+      0xae | 0xaf => [ProjectMayLoad]
       _ => return None
     }
     Some((opcode_index + 1, name, kinds))

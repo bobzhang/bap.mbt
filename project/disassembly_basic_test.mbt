@@ -315,6 +315,7 @@ test "translated BAP basic disassembly decodes x86 string move/store forms" {
     ProjectMayLoad,
     ProjectMayStore,
   ]
+  let load : Array[@project.ProjectInstructionKind] = [ProjectMayLoad]
   let store : Array[@project.ProjectInstructionKind] = [ProjectMayStore]
   let samples : Array[
     (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),
@@ -322,17 +323,31 @@ test "translated BAP basic disassembly decodes x86 string move/store forms" {
     ("x86", b"\xa4", 1, ["MOVS8"], load_store),
     ("x86", b"\x66\xa5", 2, ["MOVS16"], load_store),
     ("x86", b"\xa5", 1, ["MOVS32"], load_store),
+    ("x86", b"\xa6", 1, ["CMPS8"], load),
+    ("x86", b"\x66\xa7", 2, ["CMPS16"], load),
+    ("x86", b"\xa7", 1, ["CMPS32"], load),
     ("x86", b"\xaa", 1, ["STOS8"], store),
     ("x86", b"\x66\xab", 2, ["STOS16"], store),
     ("x86", b"\xab", 1, ["STOS32"], store),
+    ("x86", b"\xae", 1, ["SCAS8"], load),
+    ("x86", b"\x66\xaf", 2, ["SCAS16"], load),
+    ("x86", b"\xaf", 1, ["SCAS32"], load),
     ("x86_64", b"\xa4", 1, ["MOVS8_64"], load_store),
     ("x86_64", b"\x66\xa5", 2, ["MOVS16_64"], load_store),
     ("x86_64", b"\xa5", 1, ["MOVS32_64"], load_store),
     ("x86_64", b"\x48\xa5", 2, ["MOVS64"], load_store),
+    ("x86_64", b"\xa6", 1, ["CMPS8_64"], load),
+    ("x86_64", b"\x66\xa7", 2, ["CMPS16_64"], load),
+    ("x86_64", b"\xa7", 1, ["CMPS32_64"], load),
+    ("x86_64", b"\x48\xa7", 2, ["CMPS64"], load),
     ("x86_64", b"\xaa", 1, ["STOS8_64"], store),
     ("x86_64", b"\x66\xab", 2, ["STOS16_64"], store),
     ("x86_64", b"\xab", 1, ["STOS32_64"], store),
     ("x86_64", b"\x48\xab", 2, ["STOS64"], store),
+    ("x86_64", b"\xae", 1, ["SCAS8_64"], load),
+    ("x86_64", b"\x66\xaf", 2, ["SCAS16_64"], load),
+    ("x86_64", b"\xaf", 1, ["SCAS32_64"], load),
+    ("x86_64", b"\x48\xaf", 2, ["SCAS64"], load),
   ]
   for sample in samples {
     let disasm = match

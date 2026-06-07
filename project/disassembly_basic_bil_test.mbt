@@ -345,6 +345,63 @@ test "project Basic BIL lift covers x86_64 stack arithmetic fixtures" {
     Err(reason) => fail(reason)
   }
 
+  let cmpsb = basic_bil_decode("x86_64", b"\xa6", start=0x7003UL)
+  match cmpsb.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 11)
+      assert_string(
+        stmts[0].to_string(),
+        "%cmps_src1:imm8 := load(mem:mem64x8, RSI:imm64):imm8",
+      )
+      assert_string(
+        stmts[1].to_string(),
+        "%cmps_src2:imm8 := load(mem:mem64x8, RDI:imm64):imm8",
+      )
+      assert_string(
+        stmts[2].to_string(),
+        "%cmps_tmp:imm8 := (%cmps_src1:imm8 - %cmps_src2:imm8)",
+      )
+      assert_string(
+        stmts[3].to_string(),
+        "RSI:imm64 := ite((DF:imm1 == 0:1u), (RSI:imm64 + 1:64u), (RSI:imm64 - 1:64u))",
+      )
+      assert_string(
+        stmts[4].to_string(),
+        "RDI:imm64 := ite((DF:imm1 == 0:1u), (RDI:imm64 + 1:64u), (RDI:imm64 - 1:64u))",
+      )
+      assert_addsub_flag_tail(
+        stmts, 5, "%cmps_src1:imm8", "%cmps_src2:imm8", "%cmps_tmp:imm8", "0:8u",
+        false,
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let scasw = basic_bil_decode("x86", b"\x66\xaf", start=0x7004UL)
+  match scasw.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 10)
+      assert_string(stmts[0].to_string(), "%scas_src1:imm16 := AX:imm16")
+      assert_string(
+        stmts[1].to_string(),
+        "%scas_src2:imm16 := load(mem:mem32x8, EDI:imm32):imm16",
+      )
+      assert_string(
+        stmts[2].to_string(),
+        "%scas_tmp:imm16 := (%scas_src1:imm16 - %scas_src2:imm16)",
+      )
+      assert_string(
+        stmts[3].to_string(),
+        "EDI:imm32 := ite((DF:imm1 == 0:1u), (EDI:imm32 + 2:32u), (EDI:imm32 - 2:32u))",
+      )
+      assert_addsub_flag_tail(
+        stmts, 4, "%scas_src1:imm16", "%scas_src2:imm16", "%scas_tmp:imm16", "0:16u",
+        false,
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
   let sub = basic_bil_decode("x86_64", b"\x48\x83\xec\x08", start=0x7000UL)
   match sub.lift_basic_bil() {
     Ok(stmts) => {

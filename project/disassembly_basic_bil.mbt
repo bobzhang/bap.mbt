@@ -5653,6 +5653,140 @@ fn ProjectDisassemblyInstruction::project_basic_bil_stos(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_basic_bil_cmps(
+  _self : ProjectDisassemblyInstruction,
+  data_width : Int,
+  address_width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let src_index = match project_basic_bil_string_index(address_width, true) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let dst_index = match project_basic_bil_string_index(address_width, false) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(data_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let mem = project_basic_bil_stack_mem(address_width)
+  let src1 = project_basic_bil_virtual("cmps_src1", data_width)
+  let src2 = project_basic_bil_virtual("cmps_src2", data_width)
+  let result = project_basic_bil_virtual("cmps_tmp", data_width)
+  let src1_exp = @types.Exp::var_exp(src1)
+  let src2_exp = @types.Exp::var_exp(src2)
+  let result_exp = @types.Exp::var_exp(result)
+  let flags = match
+    project_basic_bil_x86_sub_flag_moves(
+      src1_exp, src2_exp, result_exp, data_width,
+    ) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let src_next = match
+    project_basic_bil_string_next(src_index, data_width, address_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let dst_next = match
+    project_basic_bil_string_next(dst_index, data_width, address_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let stmts = [
+    @types.Stmt::move_stmt(
+      src1,
+      @types.Exp::load(
+        mem=@types.Exp::var_exp(mem),
+        addr=@types.Exp::var_exp(src_index),
+        LittleEndian,
+        size,
+      ),
+    ),
+    @types.Stmt::move_stmt(
+      src2,
+      @types.Exp::load(
+        mem=@types.Exp::var_exp(mem),
+        addr=@types.Exp::var_exp(dst_index),
+        LittleEndian,
+        size,
+      ),
+    ),
+    @types.Stmt::move_stmt(
+      result,
+      @types.Exp::binop(@types.BinOp::minus(), src1_exp, src2_exp),
+    ),
+    @types.Stmt::move_stmt(src_index, src_next),
+    @types.Stmt::move_stmt(dst_index, dst_next),
+  ]
+  for stmt in flags {
+    stmts.push(stmt)
+  }
+  Ok(stmts)
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_scas(
+  _self : ProjectDisassemblyInstruction,
+  data_width : Int,
+  address_width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let dst_index = match project_basic_bil_string_index(address_width, false) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let acc = match project_basic_bil_x86_accumulator(data_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(data_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let mem = project_basic_bil_stack_mem(address_width)
+  let src1 = project_basic_bil_virtual("scas_src1", data_width)
+  let src2 = project_basic_bil_virtual("scas_src2", data_width)
+  let result = project_basic_bil_virtual("scas_tmp", data_width)
+  let src1_exp = @types.Exp::var_exp(src1)
+  let src2_exp = @types.Exp::var_exp(src2)
+  let result_exp = @types.Exp::var_exp(result)
+  let flags = match
+    project_basic_bil_x86_sub_flag_moves(
+      src1_exp, src2_exp, result_exp, data_width,
+    ) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let dst_next = match
+    project_basic_bil_string_next(dst_index, data_width, address_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let stmts = [
+    @types.Stmt::move_stmt(src1, @types.Exp::var_exp(acc)),
+    @types.Stmt::move_stmt(
+      src2,
+      @types.Exp::load(
+        mem=@types.Exp::var_exp(mem),
+        addr=@types.Exp::var_exp(dst_index),
+        LittleEndian,
+        size,
+      ),
+    ),
+    @types.Stmt::move_stmt(
+      result,
+      @types.Exp::binop(@types.BinOp::minus(), src1_exp, src2_exp),
+    ),
+    @types.Stmt::move_stmt(dst_index, dst_next),
+  ]
+  for stmt in flags {
+    stmts.push(stmt)
+  }
+  Ok(stmts)
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_basic_bil_absolute_address_width(
   self : ProjectDisassemblyInstruction,
 ) -> Int {
@@ -7155,6 +7289,13 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "MOVS16_64" => self.project_basic_bil_movs(16, 64)
     "MOVS32_64" => self.project_basic_bil_movs(32, 64)
     "MOVS64" => self.project_basic_bil_movs(64, 64)
+    "CMPS8" => self.project_basic_bil_cmps(8, 32)
+    "CMPS16" => self.project_basic_bil_cmps(16, 32)
+    "CMPS32" => self.project_basic_bil_cmps(32, 32)
+    "CMPS8_64" => self.project_basic_bil_cmps(8, 64)
+    "CMPS16_64" => self.project_basic_bil_cmps(16, 64)
+    "CMPS32_64" => self.project_basic_bil_cmps(32, 64)
+    "CMPS64" => self.project_basic_bil_cmps(64, 64)
     "STOS8" => self.project_basic_bil_stos(8, 32)
     "STOS16" => self.project_basic_bil_stos(16, 32)
     "STOS32" => self.project_basic_bil_stos(32, 32)
@@ -7162,6 +7303,13 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "STOS16_64" => self.project_basic_bil_stos(16, 64)
     "STOS32_64" => self.project_basic_bil_stos(32, 64)
     "STOS64" => self.project_basic_bil_stos(64, 64)
+    "SCAS8" => self.project_basic_bil_scas(8, 32)
+    "SCAS16" => self.project_basic_bil_scas(16, 32)
+    "SCAS32" => self.project_basic_bil_scas(32, 32)
+    "SCAS8_64" => self.project_basic_bil_scas(8, 64)
+    "SCAS16_64" => self.project_basic_bil_scas(16, 64)
+    "SCAS32_64" => self.project_basic_bil_scas(32, 64)
+    "SCAS64" => self.project_basic_bil_scas(64, 64)
     "MOV8RA" => self.project_basic_bil_mov_abs_load(8)
     "MOV16RA" => self.project_basic_bil_mov_abs_load(16)
     "MOV32RA" => self.project_basic_bil_mov_abs_load(32)

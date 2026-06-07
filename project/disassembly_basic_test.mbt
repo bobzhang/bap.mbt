@@ -1867,6 +1867,20 @@ test "translated BAP basic disassembly decodes x86 mxcsr fixtures" {
       ["STMXCSRm", "RBP", "0x1", "Nil", "-0x8", "Nil"],
       [ProjectMayStore],
     ),
+    (
+      "x86",
+      b"\x0f\xae\x7d\xfc",
+      4,
+      ["CLFLUSH", "EBP", "0x1", "Nil", "-0x4", "Nil"],
+      [ProjectMayLoad],
+    ),
+    (
+      "x86_64",
+      b"\x41\x0f\xae\x78\x10",
+      5,
+      ["CLFLUSH", "R8", "0x1", "Nil", "0x10", "Nil"],
+      [ProjectMayLoad],
+    ),
   ]
   for sample in samples {
     let disasm = match

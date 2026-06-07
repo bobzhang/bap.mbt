@@ -1875,10 +1875,38 @@ test "translated BAP basic disassembly decodes x86 mxcsr fixtures" {
       [ProjectMayLoad],
     ),
     (
+      "x86",
+      b"\x66\x0f\xae\x7d\xfc",
+      5,
+      ["CLFLUSHOPT", "EBP", "0x1", "Nil", "-0x4", "Nil"],
+      [ProjectMayLoad],
+    ),
+    (
+      "x86",
+      b"\x66\x0f\xae\x75\xfc",
+      5,
+      ["CLWB", "EBP", "0x1", "Nil", "-0x4", "Nil"],
+      [ProjectMayLoad],
+    ),
+    (
       "x86_64",
       b"\x41\x0f\xae\x78\x10",
       5,
       ["CLFLUSH", "R8", "0x1", "Nil", "0x10", "Nil"],
+      [ProjectMayLoad],
+    ),
+    (
+      "x86_64",
+      b"\x66\x41\x0f\xae\x78\x10",
+      6,
+      ["CLFLUSHOPT", "R8", "0x1", "Nil", "0x10", "Nil"],
+      [ProjectMayLoad],
+    ),
+    (
+      "x86_64",
+      b"\x66\x41\x0f\xae\x70\x10",
+      6,
+      ["CLWB", "R8", "0x1", "Nil", "0x10", "Nil"],
       [ProjectMayLoad],
     ),
   ]

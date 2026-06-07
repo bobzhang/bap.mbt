@@ -6770,7 +6770,7 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "SHRD64MRI8" | "SHRD64MRCL" => self.project_basic_bil_shiftd_mr(64, false)
     "LDMXCSRM" => self.project_basic_bil_mxcsr_mem(true)
     "STMXCSRM" => self.project_basic_bil_mxcsr_mem(false)
-    "CLFLUSH" => Ok([])
+    "CLFLUSH" | "CLFLUSHOPT" | "CLWB" => Ok([])
     "ROL8R1" | "ROL8RCL" | "ROL8RI8" => self.project_basic_bil_rotate_r(8, true)
     "ROL16R1" | "ROL16RCL" | "ROL16RI8" =>
       self.project_basic_bil_rotate_r(16, true)

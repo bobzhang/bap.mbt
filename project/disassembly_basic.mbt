@@ -2847,7 +2847,7 @@ fn project_disassembly_basic_x86_mxcsr(
 }
 
 ///|
-fn project_disassembly_basic_x86_clflush(
+fn project_disassembly_basic_x86_cache_flush(
   memory : @memory.Memory,
   address_width : Int,
 ) -> (
@@ -2857,11 +2857,8 @@ fn project_disassembly_basic_x86_clflush(
   Array[ProjectInstructionKind],
 )? {
   let bytes = memory.to_bytes()
-  let prefix_index = if bytes.length() > 0 && bytes[0].to_int() == 0x66 {
-    1
-  } else {
-    0
-  }
+  let has_66_prefix = bytes.length() > 0 && bytes[0].to_int() == 0x66
+  let prefix_index = if has_66_prefix { 1 } else { 0 }
   let (opcode_index, rex) = if address_width == 64 &&
     bytes.length() > prefix_index &&
     bytes[prefix_index].to_int() >= 0x40 &&
@@ -2876,7 +2873,13 @@ fn project_disassembly_basic_x86_clflush(
     None
   } else {
     let modrm = bytes[opcode_index + 2].to_int()
-    if ((modrm >> 3) & 0x7) != 7 || ((modrm >> 6) & 0x3) == 0x3 {
+    let name = match ((modrm >> 3) & 0x7, has_66_prefix) {
+      (7, false) => "CLFLUSH"
+      (7, true) => "CLFLUSHOPT"
+      (6, true) => "CLWB"
+      _ => return None
+    }
+    if ((modrm >> 6) & 0x3) == 0x3 {
       None
     } else {
       match
@@ -2891,7 +2894,7 @@ fn project_disassembly_basic_x86_clflush(
           Some(
             (
               length,
-              "CLFLUSH",
+              name,
               project_disassembly_basic_x86_mem_operands(memory_operand),
               [ProjectMayLoad],
             ),
@@ -6364,8 +6367,8 @@ fn project_disassembly_basic_decode_x86_llvm(
           memory, 32,
         ).unwrap()
         Some((length, name, "", "", operands, kinds))
-      } else if project_disassembly_basic_x86_clflush(memory, 32) is Some(_) {
-        let (length, name, operands, kinds) = project_disassembly_basic_x86_clflush(
+      } else if project_disassembly_basic_x86_cache_flush(memory, 32) is Some(_) {
+        let (length, name, operands, kinds) = project_disassembly_basic_x86_cache_flush(
           memory, 32,
         ).unwrap()
         Some((length, name, "", "", operands, kinds))
@@ -7457,8 +7460,8 @@ fn project_disassembly_basic_decode_x86_64_llvm(
       memory, 64,
     ).unwrap()
     Some((length, name, operands, kinds))
-  } else if project_disassembly_basic_x86_clflush(memory, 64) is Some(_) {
-    let (length, name, operands, kinds) = project_disassembly_basic_x86_clflush(
+  } else if project_disassembly_basic_x86_cache_flush(memory, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_cache_flush(
       memory, 64,
     ).unwrap()
     Some((length, name, operands, kinds))

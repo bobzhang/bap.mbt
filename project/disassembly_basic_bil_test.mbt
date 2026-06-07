@@ -2787,6 +2787,26 @@ test "project Basic BIL lift covers x86 mxcsr ops" {
     Ok(stmts) => assert_true(stmts.is_empty())
     Err(reason) => fail(reason)
   }
+
+  let clflushopt = basic_bil_decode(
+    "x86_64",
+    b"\x66\x41\x0f\xae\x78\x10",
+    start=0x7059UL,
+  )
+  match clflushopt.lift_basic_bil() {
+    Ok(stmts) => assert_true(stmts.is_empty())
+    Err(reason) => fail(reason)
+  }
+
+  let clwb = basic_bil_decode(
+    "x86_64",
+    b"\x66\x41\x0f\xae\x70\x10",
+    start=0x705fUL,
+  )
+  match clwb.lift_basic_bil() {
+    Ok(stmts) => assert_true(stmts.is_empty())
+    Err(reason) => fail(reason)
+  }
 }
 
 ///|

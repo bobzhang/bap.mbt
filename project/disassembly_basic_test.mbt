@@ -1694,6 +1694,13 @@ test "translated BAP basic disassembly decodes x86 cmpxchg fixtures" {
       ["CMPXCHG32mr", "EBP", "0x1", "Nil", "-0x4", "Nil", "ECX"],
       [ProjectMayLoad, ProjectMayStore],
     ),
+    (
+      "x86",
+      b"\x66\x0f\xb1\x4d\xfc",
+      5,
+      ["CMPXCHG16mr", "EBP", "0x1", "Nil", "-0x4", "Nil", "CX"],
+      [ProjectMayLoad, ProjectMayStore],
+    ),
     ("x86_64", b"\x48\x0f\xb1\xcb", 4, ["CMPXCHG64rr", "RBX", "RBX", "RCX"], []),
     ("x86_64", b"\x4d\x0f\xb1\xc8", 4, ["CMPXCHG64rr", "R8", "R8", "R9"], []),
     (
@@ -1744,6 +1751,13 @@ test "translated BAP basic disassembly decodes x86 xadd fixtures" {
       b"\x0f\xc1\x4d\xfc",
       4,
       ["XADD32mr", "EBP", "0x1", "Nil", "-0x4", "Nil", "ECX"],
+      [ProjectMayLoad, ProjectMayStore],
+    ),
+    (
+      "x86",
+      b"\x66\x0f\xc1\x4d\xfc",
+      5,
+      ["XADD16mr", "EBP", "0x1", "Nil", "-0x4", "Nil", "CX"],
       [ProjectMayLoad, ProjectMayStore],
     ),
     ("x86_64", b"\x48\x0f\xc1\xcb", 4, ["XADD64rr", "RBX", "RBX", "RCX"], []),

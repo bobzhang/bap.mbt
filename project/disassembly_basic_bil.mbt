@@ -182,8 +182,312 @@ fn project_basic_bil_x86_xor(
 }
 
 ///|
+fn project_basic_bil_x86_and(
+  left : @types.Exp,
+  right : @types.Exp,
+) -> @types.Exp {
+  @types.Exp::binop(@types.BinOp::bit_and(), left, right)
+}
+
+///|
 fn project_basic_bil_x86_not(exp : @types.Exp) -> @types.Exp {
   @types.Exp::unop(@types.UnOp::not(), exp)
+}
+
+///|
+fn project_basic_bil_bitscan_popcount(
+  tmp : @types.Var,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let (
+    one_value,
+    two_value,
+    four_value,
+    sh_value,
+    m1_value,
+    m2_value,
+    m4_value,
+    h01_value,
+  ) = match width {
+    16 => (1L, 2L, 4L, 8L, 0x5555L, 0x3333L, 0x0f0fL, 0x0101L)
+    32 => (1L, 2L, 4L, 24L, 0x55555555L, 0x33333333L, 0x0f0f0f0fL, 0x01010101L)
+    64 =>
+      (
+        1L, 2L, 4L, 56L, 0x5555555555555555L, 0x3333333333333333L, 0x0f0f0f0f0f0f0f0fL,
+        0x0101010101010101L,
+      )
+    _ => return Err("unsupported bitscan width \{width}")
+  }
+  let one = match project_basic_bil_int(one_value, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let two = match project_basic_bil_int(two_value, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let four = match project_basic_bil_int(four_value, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let sh = match project_basic_bil_int(sh_value, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let m1 = match project_basic_bil_int(m1_value, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let m2 = match project_basic_bil_int(m2_value, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let m4 = match project_basic_bil_int(m4_value, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let h01 = match project_basic_bil_int(h01_value, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let tmp_exp = fn() { @types.Exp::var_exp(tmp) }
+  Ok([
+    @types.Stmt::move_stmt(
+      tmp,
+      @types.Exp::binop(
+        @types.BinOp::minus(),
+        tmp_exp(),
+        project_basic_bil_x86_and(
+          @types.Exp::binop(@types.BinOp::rshift(), tmp_exp(), one),
+          m1,
+        ),
+      ),
+    ),
+    @types.Stmt::move_stmt(
+      tmp,
+      @types.Exp::binop(
+        @types.BinOp::plus(),
+        project_basic_bil_x86_and(tmp_exp(), m2),
+        project_basic_bil_x86_and(
+          @types.Exp::binop(@types.BinOp::rshift(), tmp_exp(), two),
+          m2,
+        ),
+      ),
+    ),
+    @types.Stmt::move_stmt(
+      tmp,
+      project_basic_bil_x86_and(
+        @types.Exp::binop(
+          @types.BinOp::plus(),
+          tmp_exp(),
+          @types.Exp::binop(@types.BinOp::rshift(), tmp_exp(), four),
+        ),
+        m4,
+      ),
+    ),
+    @types.Stmt::move_stmt(
+      tmp,
+      @types.Exp::binop(
+        @types.BinOp::rshift(),
+        @types.Exp::binop(@types.BinOp::times(), tmp_exp(), h01),
+        sh,
+      ),
+    ),
+  ])
+}
+
+///|
+fn project_basic_bil_bitscan_ctz(
+  tmp : @types.Var,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let one = match project_basic_bil_int(1L, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let tmp_exp = @types.Exp::var_exp(tmp)
+  let isolated_low = project_basic_bil_x86_and(
+    tmp_exp,
+    @types.Exp::unop(@types.UnOp::neg(), @types.Exp::var_exp(tmp)),
+  )
+  let stmts = [
+    @types.Stmt::move_stmt(
+      tmp,
+      @types.Exp::binop(@types.BinOp::minus(), isolated_low, one),
+    ),
+  ]
+  match project_basic_bil_bitscan_popcount(tmp, width) {
+    Ok(popcount) => {
+      for stmt in popcount {
+        stmts.push(stmt)
+      }
+      Ok(stmts)
+    }
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+fn project_basic_bil_bitscan_clz(
+  tmp : @types.Var,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let shifts : Array[Int64] = match width {
+    16 => [1L, 2L, 4L, 8L]
+    32 => [1L, 2L, 4L, 8L, 16L]
+    64 => [1L, 2L, 4L, 8L, 16L, 32L]
+    _ => return Err("unsupported bitscan width \{width}")
+  }
+  let stmts : Array[@types.Stmt] = []
+  for shift_value in shifts {
+    let shift = match project_basic_bil_int(shift_value, width) {
+      Ok(value) => value
+      Err(reason) => return Err(reason)
+    }
+    let tmp_exp = @types.Exp::var_exp(tmp)
+    stmts.push(
+      @types.Stmt::move_stmt(
+        tmp,
+        project_basic_bil_x86_or(
+          tmp_exp,
+          @types.Exp::binop(
+            @types.BinOp::rshift(),
+            @types.Exp::var_exp(tmp),
+            shift,
+          ),
+        ),
+      ),
+    )
+  }
+  stmts.push(
+    @types.Stmt::move_stmt(
+      tmp,
+      project_basic_bil_x86_not(@types.Exp::var_exp(tmp)),
+    ),
+  )
+  match project_basic_bil_bitscan_popcount(tmp, width) {
+    Ok(popcount) => {
+      for stmt in popcount {
+        stmts.push(stmt)
+      }
+      Ok(stmts)
+    }
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+fn project_basic_bil_bitscan_flags() -> Array[@types.Stmt] {
+  [
+    project_basic_bil_x86_flag_move("CF", @types.Exp::unknown("bits", Imm(1))),
+    project_basic_bil_x86_flag_move("OF", @types.Exp::unknown("bits", Imm(1))),
+    project_basic_bil_x86_flag_move("SF", @types.Exp::unknown("bits", Imm(1))),
+    project_basic_bil_x86_flag_move("AF", @types.Exp::unknown("bits", Imm(1))),
+    project_basic_bil_x86_flag_move("PF", @types.Exp::unknown("bits", Imm(1))),
+  ]
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_bitscan_common(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  source : @types.Exp,
+  forward : Bool,
+) -> Result[Array[@types.Stmt], String] {
+  let dst = match self.project_basic_bil_register(0, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let zero_word = match project_basic_bil_int(0L, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let zero_flag = match project_basic_bil_int(0L, 1) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let one = match project_basic_bil_int(1L, 1) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let width_minus_one = match
+    project_basic_bil_int((width - 1).to_int64(), width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let tmp = project_basic_bil_virtual("bitscan", width)
+  let scan = if forward {
+    match project_basic_bil_bitscan_ctz(tmp, width) {
+      Ok(value) => value
+      Err(reason) => return Err(reason)
+    }
+  } else {
+    match project_basic_bil_bitscan_clz(tmp, width) {
+      Ok(value) => value
+      Err(reason) => return Err(reason)
+    }
+  }
+  let result = if forward {
+    @types.Exp::var_exp(tmp)
+  } else {
+    project_basic_bil_x86_xor(@types.Exp::var_exp(tmp), width_minus_one)
+  }
+  let no_branch = [@types.Stmt::move_stmt(tmp, source)]
+  for stmt in scan {
+    no_branch.push(stmt)
+  }
+  no_branch.push(@types.Stmt::move_stmt(dst, result))
+  no_branch.push(project_basic_bil_x86_flag_move("ZF", zero_flag))
+  let stmts = [
+    @types.Stmt::if_(
+      @types.Exp::binop(@types.BinOp::eq(), source, zero_word),
+      [
+        project_basic_bil_x86_flag_move("ZF", one),
+        @types.Stmt::move_stmt(dst, @types.Exp::unknown("bits", Imm(width))),
+      ],
+      no_branch,
+    ),
+  ]
+  for stmt in project_basic_bil_bitscan_flags() {
+    stmts.push(stmt)
+  }
+  Ok(stmts)
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_bitscan_rr(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  forward : Bool,
+) -> Result[Array[@types.Stmt], String] {
+  let source = match self.project_basic_bil_register(1, width) {
+    Ok(value) => @types.Exp::var_exp(value)
+    Err(reason) => return Err(reason)
+  }
+  self.project_basic_bil_bitscan_common(width, source, forward)
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_bitscan_rm(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  forward : Bool,
+) -> Result[Array[@types.Stmt], String] {
+  let (addr, mem, _) = match self.project_basic_bil_memory_addr(1) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let source = @types.Exp::load(
+    mem=@types.Exp::var_exp(mem),
+    addr~,
+    LittleEndian,
+    size,
+  )
+  self.project_basic_bil_bitscan_common(width, source, forward)
 }
 
 ///|
@@ -3080,6 +3384,18 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "IDIV16R" | "IDIV16M" => self.project_basic_bil_idiv(16)
     "IDIV32R" | "IDIV32M" => self.project_basic_bil_idiv(32)
     "IDIV64R" | "IDIV64M" => self.project_basic_bil_idiv(64)
+    "BSF16RR" => self.project_basic_bil_bitscan_rr(16, true)
+    "BSF32RR" => self.project_basic_bil_bitscan_rr(32, true)
+    "BSF64RR" => self.project_basic_bil_bitscan_rr(64, true)
+    "BSF16RM" => self.project_basic_bil_bitscan_rm(16, true)
+    "BSF32RM" => self.project_basic_bil_bitscan_rm(32, true)
+    "BSF64RM" => self.project_basic_bil_bitscan_rm(64, true)
+    "BSR16RR" => self.project_basic_bil_bitscan_rr(16, false)
+    "BSR32RR" => self.project_basic_bil_bitscan_rr(32, false)
+    "BSR64RR" => self.project_basic_bil_bitscan_rr(64, false)
+    "BSR16RM" => self.project_basic_bil_bitscan_rm(16, false)
+    "BSR32RM" => self.project_basic_bil_bitscan_rm(32, false)
+    "BSR64RM" => self.project_basic_bil_bitscan_rm(64, false)
     "ROL8R1" | "ROL8RCL" | "ROL8RI8" => self.project_basic_bil_rotate_r(8, true)
     "ROL32R1" | "ROL32RCL" | "ROL32RI8" =>
       self.project_basic_bil_rotate_r(32, true)

@@ -5516,6 +5516,143 @@ fn ProjectDisassemblyInstruction::project_basic_bil_mov_mi(
 }
 
 ///|
+fn project_basic_bil_string_index(
+  address_width : Int,
+  source : Bool,
+) -> Result[@types.Var, String] {
+  match (address_width, source) {
+    (32, true) => Ok(project_basic_bil_reg("ESI", 32))
+    (32, false) => Ok(project_basic_bil_reg("EDI", 32))
+    (64, true) => Ok(project_basic_bil_reg("RSI", 64))
+    (64, false) => Ok(project_basic_bil_reg("RDI", 64))
+    _ => Err("unsupported string instruction address width \{address_width}")
+  }
+}
+
+///|
+fn project_basic_bil_string_next(
+  register : @types.Var,
+  data_width : Int,
+  address_width : Int,
+) -> Result[@types.Exp, String] {
+  let step = match
+    project_basic_bil_int((data_width / 8).to_int64(), address_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let zero = match project_basic_bil_int(0L, 1) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let register_exp = @types.Exp::var_exp(register)
+  let forward = @types.Exp::binop(@types.BinOp::plus(), register_exp, step)
+  let backward = @types.Exp::binop(@types.BinOp::minus(), register_exp, step)
+  Ok(
+    @types.Exp::ite(
+      if_=@types.Exp::binop(
+        @types.BinOp::eq(),
+        project_basic_bil_x86_flag("DF"),
+        zero,
+      ),
+      then_=forward,
+      else_=backward,
+    ),
+  )
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_movs(
+  _self : ProjectDisassemblyInstruction,
+  data_width : Int,
+  address_width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let src = match project_basic_bil_string_index(address_width, true) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let dst = match project_basic_bil_string_index(address_width, false) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(data_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let mem = project_basic_bil_stack_mem(address_width)
+  let src_addr = @types.Exp::var_exp(src)
+  let dst_addr = @types.Exp::var_exp(dst)
+  let value = @types.Exp::load(
+    mem=@types.Exp::var_exp(mem),
+    addr=src_addr,
+    LittleEndian,
+    size,
+  )
+  let src_next = match
+    project_basic_bil_string_next(src, data_width, address_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let dst_next = match
+    project_basic_bil_string_next(dst, data_width, address_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  Ok([
+    @types.Stmt::move_stmt(
+      mem,
+      @types.Exp::store(
+        mem=@types.Exp::var_exp(mem),
+        addr=dst_addr,
+        value,
+        LittleEndian,
+        size,
+      ),
+    ),
+    @types.Stmt::move_stmt(src, src_next),
+    @types.Stmt::move_stmt(dst, dst_next),
+  ])
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_stos(
+  _self : ProjectDisassemblyInstruction,
+  data_width : Int,
+  address_width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let dst = match project_basic_bil_string_index(address_width, false) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let src = match project_basic_bil_x86_accumulator(data_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(data_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let mem = project_basic_bil_stack_mem(address_width)
+  let dst_next = match
+    project_basic_bil_string_next(dst, data_width, address_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  Ok([
+    @types.Stmt::move_stmt(
+      mem,
+      @types.Exp::store(
+        mem=@types.Exp::var_exp(mem),
+        addr=@types.Exp::var_exp(dst),
+        @types.Exp::var_exp(src),
+        LittleEndian,
+        size,
+      ),
+    ),
+    @types.Stmt::move_stmt(dst, dst_next),
+  ])
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_basic_bil_absolute_address_width(
   self : ProjectDisassemblyInstruction,
 ) -> Int {
@@ -7011,6 +7148,20 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "MOV16MI" => self.project_basic_bil_mov_mi(16)
     "MOV32MI" => self.project_basic_bil_mov_mi(32)
     "MOV64MI" => self.project_basic_bil_mov_mi(64)
+    "MOVS8" => self.project_basic_bil_movs(8, 32)
+    "MOVS16" => self.project_basic_bil_movs(16, 32)
+    "MOVS32" => self.project_basic_bil_movs(32, 32)
+    "MOVS8_64" => self.project_basic_bil_movs(8, 64)
+    "MOVS16_64" => self.project_basic_bil_movs(16, 64)
+    "MOVS32_64" => self.project_basic_bil_movs(32, 64)
+    "MOVS64" => self.project_basic_bil_movs(64, 64)
+    "STOS8" => self.project_basic_bil_stos(8, 32)
+    "STOS16" => self.project_basic_bil_stos(16, 32)
+    "STOS32" => self.project_basic_bil_stos(32, 32)
+    "STOS8_64" => self.project_basic_bil_stos(8, 64)
+    "STOS16_64" => self.project_basic_bil_stos(16, 64)
+    "STOS32_64" => self.project_basic_bil_stos(32, 64)
+    "STOS64" => self.project_basic_bil_stos(64, 64)
     "MOV8RA" => self.project_basic_bil_mov_abs_load(8)
     "MOV16RA" => self.project_basic_bil_mov_abs_load(16)
     "MOV32RA" => self.project_basic_bil_mov_abs_load(32)

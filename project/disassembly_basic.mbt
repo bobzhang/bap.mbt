@@ -1004,6 +1004,57 @@ fn project_disassembly_basic_x86_fwait(memory : @memory.Memory) -> Int? {
 }
 
 ///|
+fn project_disassembly_basic_x86_string_move_store(
+  memory : @memory.Memory,
+  address_width : Int,
+) -> (Int, String, Array[ProjectInstructionKind])? {
+  let bytes = memory.to_bytes()
+  let has_66 = bytes.length() > 0 && bytes[0].to_int() == 0x66
+  let prefix_index = if has_66 { 1 } else { 0 }
+  let (opcode_index, rex) = if address_width == 64 &&
+    bytes.length() > prefix_index &&
+    bytes[prefix_index].to_int() >= 0x40 &&
+    bytes[prefix_index].to_int() <= 0x4f {
+    (prefix_index + 1, bytes[prefix_index].to_int())
+  } else {
+    (prefix_index, 0)
+  }
+  if bytes.length() <= opcode_index {
+    None
+  } else {
+    let opcode = bytes[opcode_index].to_int()
+    let data_width = match opcode {
+      0xa4 | 0xaa => 8
+      0xa5 | 0xab =>
+        if has_66 {
+          16
+        } else if address_width == 64 && (rex & 0x8) != 0 {
+          64
+        } else {
+          32
+        }
+      _ => return None
+    }
+    let prefix = match opcode {
+      0xa4 | 0xa5 => "MOVS"
+      0xaa | 0xab => "STOS"
+      _ => return None
+    }
+    let name = if address_width == 64 && data_width != 64 {
+      "\{prefix}\{data_width}_64"
+    } else {
+      "\{prefix}\{data_width}"
+    }
+    let kinds = match opcode {
+      0xa4 | 0xa5 => [ProjectMayLoad, ProjectMayStore]
+      0xaa | 0xab => [ProjectMayStore]
+      _ => return None
+    }
+    Some((opcode_index + 1, name, kinds))
+  }
+}
+
+///|
 fn project_disassembly_basic_x86_endbr(
   memory : @memory.Memory,
 ) -> (Int, String)? {
@@ -6308,6 +6359,12 @@ fn project_disassembly_basic_decode_x86_llvm(
       } else if project_disassembly_basic_x86_fwait(memory) is Some(_) {
         let length = project_disassembly_basic_x86_fwait(memory).unwrap()
         Some((length, "FWAIT", "fwait", "", [], []))
+      } else if project_disassembly_basic_x86_string_move_store(memory, 32)
+        is Some(_) {
+        let (length, name, kinds) = project_disassembly_basic_x86_string_move_store(
+          memory, 32,
+        ).unwrap()
+        Some((length, name, "", "", [], kinds))
       } else if project_disassembly_basic_x86_noop(memory, 32) is Some(_) {
         let length = project_disassembly_basic_x86_noop(memory, 32).unwrap()
         Some((length, "NOOP", "nop", "", [], []))
@@ -7236,6 +7293,12 @@ fn project_disassembly_basic_decode_x86_64_llvm(
   } else if project_disassembly_basic_x86_fwait(memory) is Some(_) {
     let length = project_disassembly_basic_x86_fwait(memory).unwrap()
     Some((length, "FWAIT", [], []))
+  } else if project_disassembly_basic_x86_string_move_store(memory, 64)
+    is Some(_) {
+    let (length, name, kinds) = project_disassembly_basic_x86_string_move_store(
+      memory, 64,
+    ).unwrap()
+    Some((length, name, [], kinds))
   } else if project_disassembly_basic_x86_noop(memory, 64) is Some(_) {
     let length = project_disassembly_basic_x86_noop(memory, 64).unwrap()
     Some((length, "NOOP", [], []))

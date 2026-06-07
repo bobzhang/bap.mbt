@@ -310,6 +310,59 @@ test "translated BAP basic disassembly decodes x86 pause and wait hints" {
 }
 
 ///|
+test "translated BAP basic disassembly decodes x86 string move/store forms" {
+  let load_store : Array[@project.ProjectInstructionKind] = [
+    ProjectMayLoad,
+    ProjectMayStore,
+  ]
+  let store : Array[@project.ProjectInstructionKind] = [ProjectMayStore]
+  let samples : Array[
+    (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),
+  ] = [
+    ("x86", b"\xa4", 1, ["MOVS8"], load_store),
+    ("x86", b"\x66\xa5", 2, ["MOVS16"], load_store),
+    ("x86", b"\xa5", 1, ["MOVS32"], load_store),
+    ("x86", b"\xaa", 1, ["STOS8"], store),
+    ("x86", b"\x66\xab", 2, ["STOS16"], store),
+    ("x86", b"\xab", 1, ["STOS32"], store),
+    ("x86_64", b"\xa4", 1, ["MOVS8_64"], load_store),
+    ("x86_64", b"\x66\xa5", 2, ["MOVS16_64"], load_store),
+    ("x86_64", b"\xa5", 1, ["MOVS32_64"], load_store),
+    ("x86_64", b"\x48\xa5", 2, ["MOVS64"], load_store),
+    ("x86_64", b"\xaa", 1, ["STOS8_64"], store),
+    ("x86_64", b"\x66\xab", 2, ["STOS16_64"], store),
+    ("x86_64", b"\xab", 1, ["STOS32_64"], store),
+    ("x86_64", b"\x48\xab", 2, ["STOS64"], store),
+  ]
+  for sample in samples {
+    let disasm = match
+      @project.ProjectDisassemblyBasic::create(sample.0, backend="llvm") {
+      Ok(disasm) => disasm
+      Err(reason) => fail(reason)
+    }
+    let memory = @memory.Memory::from_bytes(
+      endian=LittleEndian,
+      start=0xe12cUL,
+      sample.1,
+    )
+    match disasm.insn_of_mem(memory) {
+      Ok(result) => {
+        assert_true(result.memory().length() == sample.2)
+        assert_true(result.remainder().is_finished())
+        match result.instruction() {
+          Some(instruction) => {
+            assert_true(basic_instruction_strings(instruction) == sample.3)
+            assert_true(instruction.kinds() == sample.4)
+          }
+          None => fail("missing x86 string move/store instruction")
+        }
+      }
+      Err(reason) => fail(reason)
+    }
+  }
+}
+
+///|
 test "translated BAP basic disassembly decodes x86 ENDBR noops" {
   let samples : Array[(String, Bytes, Int, Array[String])] = [
     ("x86", b"\xf3\x0f\x1e\xfb", 4, ["ENDBR32"]),

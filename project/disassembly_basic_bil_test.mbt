@@ -314,6 +314,37 @@ test "project Basic BIL lift covers x86_64 stack arithmetic fixtures" {
     Err(reason) => fail(reason)
   }
 
+  let movsb = basic_bil_decode("x86_64", b"\xa4", start=0x6fffUL)
+  match movsb.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "mem:mem64x8 := store(mem:mem64x8, RDI:imm64, load(mem:mem64x8, RSI:imm64):imm8)",
+        "RSI:imm64 := ite((DF:imm1 == 0:1u), (RSI:imm64 + 1:64u), (RSI:imm64 - 1:64u))",
+        "RDI:imm64 := ite((DF:imm1 == 0:1u), (RDI:imm64 + 1:64u), (RDI:imm64 - 1:64u))",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let movsw = basic_bil_decode("x86", b"\x66\xa5", start=0x7000UL)
+  match movsw.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "mem:mem32x8 := store(mem:mem32x8, EDI:imm32, load(mem:mem32x8, ESI:imm32):imm16)",
+        "ESI:imm32 := ite((DF:imm1 == 0:1u), (ESI:imm32 + 2:32u), (ESI:imm32 - 2:32u))",
+        "EDI:imm32 := ite((DF:imm1 == 0:1u), (EDI:imm32 + 2:32u), (EDI:imm32 - 2:32u))",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let stosq = basic_bil_decode("x86_64", b"\x48\xab", start=0x7002UL)
+  match stosq.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "mem:mem64x8 := store(mem:mem64x8, RDI:imm64, RAX:imm64)", "RDI:imm64 := ite((DF:imm1 == 0:1u), (RDI:imm64 + 8:64u), (RDI:imm64 - 8:64u))",
+      ])
+    Err(reason) => fail(reason)
+  }
+
   let sub = basic_bil_decode("x86_64", b"\x48\x83\xec\x08", start=0x7000UL)
   match sub.lift_basic_bil() {
     Ok(stmts) => {

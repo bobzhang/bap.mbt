@@ -2191,6 +2191,126 @@ test "project Basic BIL lift covers x86 cmp and test flag ops" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 memory cmp-test rr operands" {
+  let cmp64_mr = basic_bil_decode("x86_64", b"\x48\x39\x4d\xf8", start=0x7032UL)
+  match cmp64_mr.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 9)
+      assert_string(stmts[0].to_string(), "%cmp_a:imm64 := (RBP:imm64 - 8:64u)")
+      assert_string(
+        stmts[1].to_string(),
+        "%cmp_d:imm64 := load(mem:mem64x8, %cmp_a:imm64):imm64",
+      )
+      assert_string(
+        stmts[2].to_string(),
+        "%cmp_tmp:imm64 := (%cmp_d:imm64 - RCX:imm64)",
+      )
+      assert_string(
+        stmts[3].to_string(),
+        "CF:imm1 := (%cmp_d:imm64 < RCX:imm64)",
+      )
+      assert_string(
+        stmts[8].to_string(),
+        "ZF:imm1 := (0:64u == %cmp_tmp:imm64)",
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let cmp64_rm = basic_bil_decode("x86_64", b"\x48\x3b\x45\xf8", start=0x7036UL)
+  match cmp64_rm.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 8)
+      assert_string(
+        stmts[0].to_string(),
+        "%cmp_src:imm64 := load(mem:mem64x8, (RBP:imm64 - 8:64u)):imm64",
+      )
+      assert_string(
+        stmts[1].to_string(),
+        "%cmp_tmp:imm64 := (RAX:imm64 - %cmp_src:imm64)",
+      )
+      assert_string(
+        stmts[2].to_string(),
+        "CF:imm1 := (RAX:imm64 < %cmp_src:imm64)",
+      )
+      assert_string(
+        stmts[7].to_string(),
+        "ZF:imm1 := (0:64u == %cmp_tmp:imm64)",
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let cmp8_rm = basic_bil_decode("x86", b"\x3a\x4d\xfc", start=0x703aUL)
+  match cmp8_rm.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 8)
+      assert_string(
+        stmts[0].to_string(),
+        "%cmp_src:imm8 := load(mem:mem32x8, (EBP:imm32 - 4:32u)):imm8",
+      )
+      assert_string(
+        stmts[1].to_string(),
+        "%cmp_tmp:imm8 := (CL:imm8 - %cmp_src:imm8)",
+      )
+      assert_string(stmts[7].to_string(), "ZF:imm1 := (0:8u == %cmp_tmp:imm8)")
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let test64_mr = basic_bil_decode(
+    "x86_64",
+    b"\x48\x85\x4d\xf8",
+    start=0x703eUL,
+  )
+  match test64_mr.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 9)
+      assert_string(
+        stmts[0].to_string(),
+        "%test_a:imm64 := (RBP:imm64 - 8:64u)",
+      )
+      assert_string(
+        stmts[1].to_string(),
+        "%test_d:imm64 := load(mem:mem64x8, %test_a:imm64):imm64",
+      )
+      assert_string(
+        stmts[2].to_string(),
+        "%test_tmp:imm64 := (%test_d:imm64 & RCX:imm64)",
+      )
+      assert_string(stmts[3].to_string(), "CF:imm1 := 0:1u")
+      assert_string(stmts[4].to_string(), "OF:imm1 := 0:1u")
+      assert_string(
+        stmts[8].to_string(),
+        "ZF:imm1 := (0:64u == %test_tmp:imm64)",
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let test8_mr = basic_bil_decode("x86", b"\x84\x4d\xfc", start=0x7042UL)
+  match test8_mr.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 9)
+      assert_string(
+        stmts[0].to_string(),
+        "%test_a:imm32 := (EBP:imm32 - 4:32u)",
+      )
+      assert_string(
+        stmts[1].to_string(),
+        "%test_d:imm8 := load(mem:mem32x8, %test_a:imm32):imm8",
+      )
+      assert_string(
+        stmts[2].to_string(),
+        "%test_tmp:imm8 := (%test_d:imm8 & CL:imm8)",
+      )
+      assert_string(stmts[8].to_string(), "ZF:imm1 := (0:8u == %test_tmp:imm8)")
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86 register pushes" {
   let push_rbp = basic_bil_decode("x86_64", b"\x55", start=0x7010UL)
   match push_rbp.lift_basic_bil() {

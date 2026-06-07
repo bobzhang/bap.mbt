@@ -769,6 +769,82 @@ test "translated BAP basic disassembly decodes x86 cmp and test fixtures" {
 }
 
 ///|
+test "translated BAP basic disassembly decodes x86 memory cmp-test rr fixtures" {
+  let samples : Array[
+    (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),
+  ] = [
+    (
+      "x86_64",
+      b"\x48\x39\x4d\xf8",
+      4,
+      ["CMP64mr", "RBP", "0x1", "Nil", "-0x8", "Nil", "RCX"],
+      [ProjectMayLoad],
+    ),
+    (
+      "x86_64",
+      b"\x48\x3b\x45\xf8",
+      4,
+      ["CMP64rm", "RAX", "RBP", "0x1", "Nil", "-0x8", "Nil"],
+      [ProjectMayLoad],
+    ),
+    (
+      "x86",
+      b"\x39\x4d\xfc",
+      3,
+      ["CMP32mr", "EBP", "0x1", "Nil", "-0x4", "Nil", "ECX"],
+      [ProjectMayLoad],
+    ),
+    (
+      "x86",
+      b"\x3a\x4d\xfc",
+      3,
+      ["CMP8rm", "CL", "EBP", "0x1", "Nil", "-0x4", "Nil"],
+      [ProjectMayLoad],
+    ),
+    (
+      "x86_64",
+      b"\x48\x85\x4d\xf8",
+      4,
+      ["TEST64mr", "RBP", "0x1", "Nil", "-0x8", "Nil", "RCX"],
+      [ProjectMayLoad],
+    ),
+    (
+      "x86",
+      b"\x84\x4d\xfc",
+      3,
+      ["TEST8mr", "EBP", "0x1", "Nil", "-0x4", "Nil", "CL"],
+      [ProjectMayLoad],
+    ),
+  ]
+  for sample in samples {
+    let disasm = match
+      @project.ProjectDisassemblyBasic::create(sample.0, backend="llvm") {
+      Ok(disasm) => disasm
+      Err(reason) => fail(reason)
+    }
+    let memory = @memory.Memory::from_bytes(
+      endian=LittleEndian,
+      start=0xe288UL,
+      sample.1,
+    )
+    match disasm.insn_of_mem(memory) {
+      Ok(result) => {
+        assert_true(result.memory().length() == sample.2)
+        assert_true(result.remainder().is_finished())
+        match result.instruction() {
+          Some(instruction) => {
+            assert_true(basic_instruction_strings(instruction) == sample.3)
+            assert_true(instruction.kinds() == sample.4)
+          }
+          None => fail("missing x86 memory cmp/test instruction")
+        }
+      }
+      Err(reason) => fail(reason)
+    }
+  }
+}
+
+///|
 test "translated BAP basic disassembly decodes x86 imul immediate fixtures" {
   let samples : Array[
     (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),

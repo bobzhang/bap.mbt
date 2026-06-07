@@ -3485,6 +3485,100 @@ fn ProjectDisassemblyInstruction::project_basic_bil_cmp_mi(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_basic_bil_cmp_rm(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let lhs = match self.project_basic_bil_register(0, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let (addr, mem, _) = match self.project_basic_bil_memory_addr(1) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let rhs_tmp = project_basic_bil_virtual("cmp_src", width)
+  let result_tmp = project_basic_bil_virtual("cmp_tmp", width)
+  let lhs_exp = @types.Exp::var_exp(lhs)
+  let rhs_exp = @types.Exp::var_exp(rhs_tmp)
+  let result_exp = @types.Exp::var_exp(result_tmp)
+  let flags = match
+    project_basic_bil_x86_sub_flag_moves(lhs_exp, rhs_exp, result_exp, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let stmts = [
+    @types.Stmt::move_stmt(
+      rhs_tmp,
+      @types.Exp::load(mem=@types.Exp::var_exp(mem), addr~, LittleEndian, size),
+    ),
+    @types.Stmt::move_stmt(
+      result_tmp,
+      @types.Exp::binop(@types.BinOp::minus(), lhs_exp, rhs_exp),
+    ),
+  ]
+  for stmt in flags {
+    stmts.push(stmt)
+  }
+  Ok(stmts)
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_cmp_mr(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let rhs = match self.project_basic_bil_register(5, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let addr_tmp = project_basic_bil_virtual("cmp_a", address_width)
+  let lhs_tmp = project_basic_bil_virtual("cmp_d", width)
+  let result_tmp = project_basic_bil_virtual("cmp_tmp", width)
+  let addr_exp = @types.Exp::var_exp(addr_tmp)
+  let lhs_exp = @types.Exp::var_exp(lhs_tmp)
+  let rhs_exp = @types.Exp::var_exp(rhs)
+  let result_exp = @types.Exp::var_exp(result_tmp)
+  let flags = match
+    project_basic_bil_x86_sub_flag_moves(lhs_exp, rhs_exp, result_exp, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let stmts = [
+    @types.Stmt::move_stmt(addr_tmp, addr),
+    @types.Stmt::move_stmt(
+      lhs_tmp,
+      @types.Exp::load(
+        mem=@types.Exp::var_exp(mem),
+        addr=addr_exp,
+        LittleEndian,
+        size,
+      ),
+    ),
+    @types.Stmt::move_stmt(
+      result_tmp,
+      @types.Exp::binop(@types.BinOp::minus(), lhs_exp, rhs_exp),
+    ),
+  ]
+  for stmt in flags {
+    stmts.push(stmt)
+  }
+  Ok(stmts)
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_basic_bil_cmpxchg_rr(
   self : ProjectDisassemblyInstruction,
   width : Int,
@@ -3880,6 +3974,56 @@ fn ProjectDisassemblyInstruction::project_basic_bil_test_ri(
   let stmts = [
     @types.Stmt::move_stmt(
       tmp,
+      @types.Exp::binop(@types.BinOp::bit_and(), lhs_exp, rhs_exp),
+    ),
+  ]
+  for stmt in flags {
+    stmts.push(stmt)
+  }
+  Ok(stmts)
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_test_mr(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let rhs = match self.project_basic_bil_register(5, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let addr_tmp = project_basic_bil_virtual("test_a", address_width)
+  let lhs_tmp = project_basic_bil_virtual("test_d", width)
+  let result_tmp = project_basic_bil_virtual("test_tmp", width)
+  let addr_exp = @types.Exp::var_exp(addr_tmp)
+  let lhs_exp = @types.Exp::var_exp(lhs_tmp)
+  let rhs_exp = @types.Exp::var_exp(rhs)
+  let result_exp = @types.Exp::var_exp(result_tmp)
+  let flags = match project_basic_bil_x86_test_flag_moves(result_exp, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let stmts = [
+    @types.Stmt::move_stmt(addr_tmp, addr),
+    @types.Stmt::move_stmt(
+      lhs_tmp,
+      @types.Exp::load(
+        mem=@types.Exp::var_exp(mem),
+        addr=addr_exp,
+        LittleEndian,
+        size,
+      ),
+    ),
+    @types.Stmt::move_stmt(
+      result_tmp,
       @types.Exp::binop(@types.BinOp::bit_and(), lhs_exp, rhs_exp),
     ),
   ]
@@ -5567,6 +5711,12 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "CMP8RR" | "CMP8RR_REV" => self.project_basic_bil_cmp_rr(8)
     "CMP32RR" | "CMP32RR_REV" => self.project_basic_bil_cmp_rr(32)
     "CMP64RR" | "CMP64RR_REV" => self.project_basic_bil_cmp_rr(64)
+    "CMP8RM" => self.project_basic_bil_cmp_rm(8)
+    "CMP32RM" => self.project_basic_bil_cmp_rm(32)
+    "CMP64RM" => self.project_basic_bil_cmp_rm(64)
+    "CMP8MR" => self.project_basic_bil_cmp_mr(8)
+    "CMP32MR" => self.project_basic_bil_cmp_mr(32)
+    "CMP64MR" => self.project_basic_bil_cmp_mr(64)
     "CMPXCHG16RR" => self.project_basic_bil_cmpxchg_rr(16)
     "CMPXCHG32RR" => self.project_basic_bil_cmpxchg_rr(32)
     "CMPXCHG64RR" => self.project_basic_bil_cmpxchg_rr(64)
@@ -5718,6 +5868,9 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "TEST8RR" | "TEST8RR_REV" => self.project_basic_bil_test_rr(8)
     "TEST32RR" | "TEST32RR_REV" => self.project_basic_bil_test_rr(32)
     "TEST64RR" | "TEST64RR_REV" => self.project_basic_bil_test_rr(64)
+    "TEST8MR" => self.project_basic_bil_test_mr(8)
+    "TEST32MR" => self.project_basic_bil_test_mr(32)
+    "TEST64MR" => self.project_basic_bil_test_mr(64)
     "SETO"
     | "SETNO"
     | "SETB"

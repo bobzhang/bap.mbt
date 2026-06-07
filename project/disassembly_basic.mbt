@@ -2123,6 +2123,8 @@ fn project_disassembly_basic_x86_arith_rr(
     let op = if data_width == 8 {
       match opcode {
         0x00 | 0x02 => "ADD"
+        0x10 | 0x12 => "ADC"
+        0x18 | 0x1a => "SBB"
         0x28 | 0x2a => "SUB"
         0x38 | 0x3a => "CMP"
         _ => ""
@@ -2130,6 +2132,8 @@ fn project_disassembly_basic_x86_arith_rr(
     } else {
       match opcode {
         0x01 | 0x03 => "ADD"
+        0x11 | 0x13 => "ADC"
+        0x19 | 0x1b => "SBB"
         0x29 | 0x2b => "SUB"
         0x39 | 0x3b => "CMP"
         _ => ""
@@ -2521,6 +2525,8 @@ fn project_disassembly_basic_x86_reg_update(
       let op = match group {
         0 => "ADD"
         1 => "OR"
+        2 => "ADC"
+        3 => "SBB"
         4 => "AND"
         5 => "SUB"
         6 => "XOR"
@@ -2619,6 +2625,8 @@ fn project_disassembly_basic_x86_accumulator_imm(
     match opcode {
       0x04 => "ADD"
       0x0c => "OR"
+      0x14 => "ADC"
+      0x1c => "SBB"
       0x24 => "AND"
       0x2c => "SUB"
       0x34 => "XOR"
@@ -2629,6 +2637,8 @@ fn project_disassembly_basic_x86_accumulator_imm(
     match opcode {
       0x05 => "ADD"
       0x0d => "OR"
+      0x15 => "ADC"
+      0x1d => "SBB"
       0x25 => "AND"
       0x2d => "SUB"
       0x35 => "XOR"

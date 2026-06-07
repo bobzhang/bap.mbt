@@ -418,6 +418,47 @@ test "project Basic BIL lift covers x86 register add-sub immediates" {
       assert_basic_bil_text(stmts, ["RAX:imm64 := (RAX:imm64 + 0x12345678:64u)"])
     Err(reason) => fail(reason)
   }
+
+  let adc64 = basic_bil_decode("x86_64", b"\x48\x83\xd0\x01", start=0x7016UL)
+  match adc64.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 9)
+      assert_string(stmts[0].to_string(), "%adc_dst:imm64 := RAX:imm64")
+      assert_string(stmts[1].to_string(), "%adc_src:imm64 := 1:64u")
+      assert_string(
+        stmts[2].to_string(),
+        "RAX:imm64 := ((%adc_dst:imm64 + %adc_src:imm64) + pad:64[CF:imm1])",
+      )
+      assert_true(stmts[3].to_string().contains("CF:imm1 := extract[64:64]"))
+      assert_true(stmts[3].to_string().contains("pad:65[%adc_dst:imm64]"))
+      assert_true(stmts[4].to_string().contains("OF:imm1 :="))
+      assert_true(stmts[5].to_string().contains("AF:imm1 := extract[4:4]"))
+      assert_true(stmts[6].to_string().contains("PF:imm1 := (not low:1"))
+      assert_string(stmts[7].to_string(), "SF:imm1 := high:1[RAX:imm64]")
+      assert_string(stmts[8].to_string(), "ZF:imm1 := (0:64u == RAX:imm64)")
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let sbb8 = basic_bil_decode("x86", b"\x80\xd8\x80", start=0x7018UL)
+  match sbb8.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 9)
+      assert_string(stmts[0].to_string(), "%sbb_src:imm8 := 0x80:8u")
+      assert_string(stmts[1].to_string(), "%sbb_dst:imm8 := AL:imm8")
+      assert_string(
+        stmts[2].to_string(),
+        "AL:imm8 := (%sbb_dst:imm8 - (%sbb_src:imm8 + pad:8[CF:imm1]))",
+      )
+      assert_true(stmts[3].to_string().contains("OF:imm1 := high:1"))
+      assert_true(stmts[4].to_string().contains("CF:imm1 := ("))
+      assert_true(stmts[4].to_string().contains("%sbb_dst:imm8 <"))
+      assert_true(stmts[5].to_string().contains("AF:imm1 := extract[4:4]"))
+      assert_string(stmts[7].to_string(), "SF:imm1 := high:1[AL:imm8]")
+      assert_string(stmts[8].to_string(), "ZF:imm1 := (0:8u == AL:imm8)")
+    }
+    Err(reason) => fail(reason)
+  }
 }
 
 ///|
@@ -690,6 +731,38 @@ test "project Basic BIL lift covers x86 register add-sub rr ops" {
   match sub8_ext.lift_basic_bil() {
     Ok(stmts) =>
       assert_basic_bil_text(stmts, ["R8B:imm8 := (R8B:imm8 - R9B:imm8)"])
+    Err(reason) => fail(reason)
+  }
+
+  let adc64_rr = basic_bil_decode("x86_64", b"\x48\x11\xd8", start=0x7021UL)
+  match adc64_rr.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 9)
+      assert_string(stmts[0].to_string(), "%adc_dst:imm64 := RAX:imm64")
+      assert_string(stmts[1].to_string(), "%adc_src:imm64 := RBX:imm64")
+      assert_string(
+        stmts[2].to_string(),
+        "RAX:imm64 := ((%adc_dst:imm64 + %adc_src:imm64) + pad:64[CF:imm1])",
+      )
+      assert_true(stmts[3].to_string().contains("CF:imm1 := extract[64:64]"))
+      assert_string(stmts[8].to_string(), "ZF:imm1 := (0:64u == RAX:imm64)")
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let sbb32_rev = basic_bil_decode("x86", b"\x1b\xc8", start=0x7024UL)
+  match sbb32_rev.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 9)
+      assert_string(stmts[0].to_string(), "%sbb_src:imm32 := EAX:imm32")
+      assert_string(stmts[1].to_string(), "%sbb_dst:imm32 := ECX:imm32")
+      assert_string(
+        stmts[2].to_string(),
+        "ECX:imm32 := (%sbb_dst:imm32 - (%sbb_src:imm32 + pad:32[CF:imm1]))",
+      )
+      assert_true(stmts[4].to_string().contains("CF:imm1 := ("))
+      assert_string(stmts[8].to_string(), "ZF:imm1 := (0:32u == ECX:imm32)")
+    }
     Err(reason) => fail(reason)
   }
 }

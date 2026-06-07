@@ -2848,6 +2848,26 @@ test "translated BAP basic disassembly decodes x86 conditional jump fixtures" {
       "if jcc then jmp 0x25",
       0x25L,
     ),
+    (
+      "x86",
+      b"\xe3\xfe",
+      0x30UL,
+      2,
+      ["JECXZ_1", "0x30"],
+      "jecxz -0x2",
+      "if jecxz then jmp 0x30",
+      0x30L,
+    ),
+    (
+      "x86_64",
+      b"\xe3\x03",
+      0x40UL,
+      2,
+      ["JRCXZ_1", "0x45"],
+      "jrcxz 0x3",
+      "if jrcxz then jmp 0x45",
+      0x45L,
+    ),
   ]
   for sample in samples {
     let disasm = match

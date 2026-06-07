@@ -4076,6 +4076,48 @@ fn ProjectDisassemblyInstruction::project_basic_bil_jcc(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_basic_bil_jcxz(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let target = match self.project_basic_bil_immediate(0) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let zero = match project_basic_bil_int(0L, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let register = project_basic_bil_reg(
+    if width == 64 {
+      "RCX"
+    } else {
+      "ECX"
+    },
+    width,
+  )
+  match
+    project_basic_bil_control(
+      @types.Stmt::goto(),
+      target.reinterpret_as_uint64(),
+    ) {
+    Ok(branch) =>
+      Ok([
+        @types.Stmt::if_(
+          @types.Exp::binop(
+            @types.BinOp::eq(),
+            @types.Exp::var_exp(register),
+            zero,
+          ),
+          branch,
+          [],
+        ),
+      ])
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
 fn project_basic_bil_indirect_control(
   attr : @types.StmtAttribute[String],
   target : @types.Exp,
@@ -4810,6 +4852,8 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "JGE_1" | "JGE_4" => self.project_basic_bil_jcc("JGE")
     "JLE_1" | "JLE_4" => self.project_basic_bil_jcc("JLE")
     "JG_1" | "JG_4" => self.project_basic_bil_jcc("JG")
+    "JECXZ_1" => self.project_basic_bil_jcxz(32)
+    "JRCXZ_1" => self.project_basic_bil_jcxz(64)
     "B" => self.project_basic_bil_arm_branch(false)
     "BNE" => self.project_basic_bil_arm_branch(true)
     "BX" => self.project_basic_bil_bx()

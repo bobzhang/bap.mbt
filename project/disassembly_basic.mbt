@@ -562,6 +562,77 @@ fn project_disassembly_basic_x86_jcc_rel8(
 }
 
 ///|
+fn project_disassembly_basic_x86_jcxz_rel8(
+  memory : @memory.Memory,
+  address_width : Int,
+) -> (Int, String, Int64, UInt64)? {
+  let bytes = memory.to_bytes()
+  if bytes.length() < 2 || bytes[0].to_int() != 0xe3 {
+    None
+  } else {
+    let displacement = project_disassembly_basic_x86_signed_byte(bytes[1])
+    match
+      project_disassembly_basic_add_signed_offset(
+        memory.min_addr() + 2UL,
+        displacement,
+      ) {
+      Some(target) =>
+        Some(
+          (
+            2,
+            if address_width == 64 {
+              "JRCXZ_1"
+            } else {
+              "JECXZ_1"
+            },
+            displacement,
+            target,
+          ),
+        )
+      None => None
+    }
+  }
+}
+
+///|
+fn project_disassembly_basic_x86_jcxz_instruction(
+  memory : @memory.Memory,
+  address_width : Int,
+) -> Result[ProjectDisassemblyInstruction?, String] {
+  match project_disassembly_basic_x86_jcxz_rel8(memory, address_width) {
+    Some((length, name, displacement, target)) =>
+      match memory.view(words=length) {
+        Ok(chunk) => {
+          let mnemonic = if address_width == 64 { "jrcxz" } else { "jecxz" }
+          Ok(
+            Some(
+              project_disassembly_basic_instruction(
+                chunk,
+                name,
+                assembly=mnemonic +
+                  " " +
+                  ProjectInstructionOperand::immediate(displacement).to_string(),
+                bil="if " +
+                  mnemonic +
+                  " then jmp 0x" +
+                  target.to_string(radix=16),
+                operands=[
+                  ProjectInstructionOperand::immediate(
+                    target.reinterpret_as_int64(),
+                  ),
+                ],
+                kinds=[ProjectConditionalBranch, ProjectMayAffectControlFlow],
+              ),
+            ),
+          )
+        }
+        Err(reason) => Err(reason)
+      }
+    None => Ok(None)
+  }
+}
+
+///|
 fn project_disassembly_basic_x86_jcc_rel32(
   memory : @memory.Memory,
 ) -> (Int, String, Int64, UInt64)? {
@@ -5360,6 +5431,27 @@ fn project_disassembly_basic_decode_x86_llvm(
             [ProjectConditionalBranch, ProjectMayAffectControlFlow],
           ),
         )
+      } else if project_disassembly_basic_x86_jcxz_rel8(memory, 32) is Some(_) {
+        let (length, name, displacement, target) = project_disassembly_basic_x86_jcxz_rel8(
+          memory, 32,
+        ).unwrap()
+        let mnemonic = "jecxz"
+        Some(
+          (
+            length,
+            name,
+            mnemonic +
+            " " +
+            ProjectInstructionOperand::immediate(displacement).to_string(),
+            "if " + mnemonic + " then jmp 0x" + target.to_string(radix=16),
+            [
+              ProjectInstructionOperand::immediate(
+                target.reinterpret_as_int64(),
+              ),
+            ],
+            [ProjectConditionalBranch, ProjectMayAffectControlFlow],
+          ),
+        )
       } else if project_disassembly_basic_x86_jmp_rel32(memory) is Some(_) {
         let (displacement, target) = project_disassembly_basic_x86_jmp_rel32(
           memory,
@@ -6026,14 +6118,19 @@ fn ProjectDisassemblyBasic::project_disassembly_basic_decode_instruction(
   memory : @memory.Memory,
 ) -> Result[ProjectDisassemblyInstruction, String] {
   if self.project_disassembly_basic_is_x86_64_llvm() {
-    match project_disassembly_basic_decode_x86_64_llvm(memory) {
+    match project_disassembly_basic_x86_jcxz_instruction(memory, 64) {
       Ok(Some(instruction)) => Ok(instruction)
       Ok(None) =>
-        match project_disassembly_basic_decode_x86_llvm(memory) {
+        match project_disassembly_basic_decode_x86_64_llvm(memory) {
           Ok(Some(instruction)) => Ok(instruction)
           Ok(None) =>
-            match memory.view(words=1) {
-              Ok(chunk) => Ok(project_raw_byte_instruction(chunk))
+            match project_disassembly_basic_decode_x86_llvm(memory) {
+              Ok(Some(instruction)) => Ok(instruction)
+              Ok(None) =>
+                match memory.view(words=1) {
+                  Ok(chunk) => Ok(project_raw_byte_instruction(chunk))
+                  Err(reason) => Err(reason)
+                }
               Err(reason) => Err(reason)
             }
           Err(reason) => Err(reason)

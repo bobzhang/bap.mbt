@@ -2653,6 +2653,46 @@ test "project Basic BIL lift covers direct control transfers" {
     Err(reason) => fail(reason)
   }
 
+  let jecxz = basic_bil_decode("x86", b"\xe3\xfe", start=0x7211UL)
+  match jecxz.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 1)
+      match stmts[0] {
+        If(cond~, yes~, no~) => {
+          assert_string(cond.to_string(), "(ECX:imm32 == 0:32u)")
+          assert_true(no.length() == 0)
+          assert_true(yes.length() == 2)
+          assert_true(
+            @types.Stmt::decode(@types.Stmt::goto(), yes[0]) == Some("0x7211"),
+          )
+          assert_string(yes[1].to_string(), "jmp 0x7211:64u")
+        }
+        _ => fail("x86 jecxz branch did not lift to BIL if")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let jrcxz = basic_bil_decode("x86_64", b"\xe3\x03", start=0x7220UL)
+  match jrcxz.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 1)
+      match stmts[0] {
+        If(cond~, yes~, no~) => {
+          assert_string(cond.to_string(), "(RCX:imm64 == 0:64u)")
+          assert_true(no.length() == 0)
+          assert_true(yes.length() == 2)
+          assert_true(
+            @types.Stmt::decode(@types.Stmt::goto(), yes[0]) == Some("0x7225"),
+          )
+          assert_string(yes[1].to_string(), "jmp 0x7225:64u")
+        }
+        _ => fail("x86_64 jrcxz branch did not lift to BIL if")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+
   let call = basic_bil_decode("x86_64", b"\xe8\x47\xee\xff\xff", start=0x7300UL)
   match call.lift_basic_bil() {
     Ok(stmts) => {

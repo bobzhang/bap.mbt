@@ -4092,7 +4092,11 @@ fn project_disassembly_basic_x86_shift_reg(
               [],
             ),
           )
-        } else if op != "SHL" && op != "SHR" && op != "SAR" {
+        } else if op != "ROL" &&
+          op != "ROR" &&
+          op != "SHL" &&
+          op != "SHR" &&
+          op != "SAR" {
           None
         } else {
           match

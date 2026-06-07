@@ -988,7 +988,7 @@ test "project Basic BIL lift covers x86 cmpxchg8b ops" {
 }
 
 ///|
-test "project Basic BIL lift covers x86 register rotate ops" {
+test "project Basic BIL lift covers x86 rotate ops" {
   let rol8_one = basic_bil_decode("x86", b"\xd0\xc0", start=0x7046UL)
   match rol8_one.lift_basic_bil() {
     Ok(stmts) =>
@@ -1075,6 +1075,44 @@ test "project Basic BIL lift covers x86 register rotate ops" {
     Ok(stmts) =>
       assert_basic_bil_text(stmts, [
         "SPL:imm8 := extract[8:1](((concat(SPL:imm8, CF:imm1) << 1:8u) | (concat(SPL:imm8, CF:imm1) >> (9:8u - 1:8u))))",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let rol64_mem = basic_bil_decode(
+    "x86_64",
+    b"\x48\xd1\x45\xf8",
+    start=0x705cUL,
+  )
+  match rol64_mem.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%rotate_a:imm64 := (RBP:imm64 - 8:64u)", "%rotate_d:imm64 := load(mem:mem64x8, %rotate_a:imm64):imm64",
+        "mem:mem64x8 := store(mem:mem64x8, %rotate_a:imm64, ((%rotate_d:imm64 << 1:64u) | (%rotate_d:imm64 >> (0x40:64u - 1:64u))))",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let ror32_mem_cl = basic_bil_decode("x86", b"\xd3\x4d\xfc", start=0x7060UL)
+  match ror32_mem_cl.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%rotate_a:imm32 := (EBP:imm32 - 4:32u)", "%rotate_d:imm32 := load(mem:mem32x8, %rotate_a:imm32):imm32",
+        "mem:mem32x8 := store(mem:mem32x8, %rotate_a:imm32, ((%rotate_d:imm32 >> CL:imm8) | (%rotate_d:imm32 << (0x20:8u - CL:imm8))))",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let rol8_mem_imm = basic_bil_decode(
+    "x86_64",
+    b"\x41\xc0\x40\x01\x04",
+    start=0x7063UL,
+  )
+  match rol8_mem_imm.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%rotate_a:imm64 := (R8:imm64 + 1:64u)", "%rotate_d:imm8 := load(mem:mem64x8, %rotate_a:imm64):imm8",
+        "mem:mem64x8 := store(mem:mem64x8, %rotate_a:imm64, ((%rotate_d:imm8 << 4:8u) | (%rotate_d:imm8 >> (8:8u - 4:8u))))",
       ])
     Err(reason) => fail(reason)
   }

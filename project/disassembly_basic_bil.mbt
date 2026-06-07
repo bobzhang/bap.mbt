@@ -2711,6 +2711,58 @@ fn ProjectDisassemblyInstruction::project_basic_bil_rotate_carry_r(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_basic_bil_rotate_m(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  left : Bool,
+) -> Result[Array[@types.Stmt], String] {
+  let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let (count, count_width) = match
+    self.project_basic_bil_shift_count_with_width(5, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let addr_tmp = project_basic_bil_virtual("rotate_a", address_width)
+  let data_tmp = project_basic_bil_virtual("rotate_d", width)
+  let addr_exp = @types.Exp::var_exp(addr_tmp)
+  let data_exp = @types.Exp::var_exp(data_tmp)
+  let rotated = match
+    project_basic_bil_rotate_exp(data_exp, count, count_width, width, left) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  Ok([
+    @types.Stmt::move_stmt(addr_tmp, addr),
+    @types.Stmt::move_stmt(
+      data_tmp,
+      @types.Exp::load(
+        mem=@types.Exp::var_exp(mem),
+        addr=addr_exp,
+        LittleEndian,
+        size,
+      ),
+    ),
+    @types.Stmt::move_stmt(
+      mem,
+      @types.Exp::store(
+        mem=@types.Exp::var_exp(mem),
+        addr=addr_exp,
+        rotated,
+        LittleEndian,
+        size,
+      ),
+    ),
+  ])
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_basic_bil_shift_r(
   self : ProjectDisassemblyInstruction,
   width : Int,
@@ -4695,12 +4747,23 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
       self.project_basic_bil_rotate_r(32, true)
     "ROL64R1" | "ROL64RCL" | "ROL64RI8" =>
       self.project_basic_bil_rotate_r(64, true)
+    "ROL8M1" | "ROL8MCL" | "ROL8MI8" => self.project_basic_bil_rotate_m(8, true)
+    "ROL32M1" | "ROL32MCL" | "ROL32MI8" =>
+      self.project_basic_bil_rotate_m(32, true)
+    "ROL64M1" | "ROL64MCL" | "ROL64MI8" =>
+      self.project_basic_bil_rotate_m(64, true)
     "ROR8R1" | "ROR8RCL" | "ROR8RI8" =>
       self.project_basic_bil_rotate_r(8, false)
     "ROR32R1" | "ROR32RCL" | "ROR32RI8" =>
       self.project_basic_bil_rotate_r(32, false)
     "ROR64R1" | "ROR64RCL" | "ROR64RI8" =>
       self.project_basic_bil_rotate_r(64, false)
+    "ROR8M1" | "ROR8MCL" | "ROR8MI8" =>
+      self.project_basic_bil_rotate_m(8, false)
+    "ROR32M1" | "ROR32MCL" | "ROR32MI8" =>
+      self.project_basic_bil_rotate_m(32, false)
+    "ROR64M1" | "ROR64MCL" | "ROR64MI8" =>
+      self.project_basic_bil_rotate_m(64, false)
     "RCL8R1" | "RCL8RCL" | "RCL8RI8" =>
       self.project_basic_bil_rotate_carry_r(8, true)
     "RCL32R1" | "RCL32RCL" | "RCL32RI8" =>

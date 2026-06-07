@@ -2728,6 +2728,155 @@ fn ProjectDisassemblyInstruction::project_basic_bil_cmp_ri(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_basic_bil_cmpxchg_rr(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let dst = match self.project_basic_bil_register(0, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let old_dst = match self.project_basic_bil_register(1, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let src = match self.project_basic_bil_register(2, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let acc = match project_basic_bil_x86_accumulator(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let tmp = project_basic_bil_virtual("cmpxchg_tmp", width)
+  let acc_exp = @types.Exp::var_exp(acc)
+  let old_dst_exp = @types.Exp::var_exp(old_dst)
+  let src_exp = @types.Exp::var_exp(src)
+  let result_exp = @types.Exp::var_exp(tmp)
+  let flags = match
+    project_basic_bil_x86_sub_flag_moves(
+      acc_exp, old_dst_exp, result_exp, width,
+    ) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let stmts = [
+    @types.Stmt::move_stmt(
+      tmp,
+      @types.Exp::binop(@types.BinOp::minus(), acc_exp, old_dst_exp),
+    ),
+  ]
+  for stmt in flags {
+    stmts.push(stmt)
+  }
+  stmts.push(
+    @types.Stmt::move_stmt(
+      dst,
+      @types.Exp::ite(
+        if_=project_basic_bil_x86_flag("ZF"),
+        then_=src_exp,
+        else_=old_dst_exp,
+      ),
+    ),
+  )
+  stmts.push(
+    @types.Stmt::move_stmt(
+      acc,
+      @types.Exp::ite(
+        if_=project_basic_bil_x86_flag("ZF"),
+        then_=acc_exp,
+        else_=old_dst_exp,
+      ),
+    ),
+  )
+  Ok(stmts)
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_cmpxchg_mr(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let src = match self.project_basic_bil_register(5, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let acc = match project_basic_bil_x86_accumulator(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let addr_tmp = project_basic_bil_virtual("cmpxchg_a", address_width)
+  let old_dst = project_basic_bil_virtual("cmpxchg_d", width)
+  let tmp = project_basic_bil_virtual("cmpxchg_tmp", width)
+  let addr_exp = @types.Exp::var_exp(addr_tmp)
+  let old_dst_exp = @types.Exp::var_exp(old_dst)
+  let acc_exp = @types.Exp::var_exp(acc)
+  let src_exp = @types.Exp::var_exp(src)
+  let result_exp = @types.Exp::var_exp(tmp)
+  let flags = match
+    project_basic_bil_x86_sub_flag_moves(
+      acc_exp, old_dst_exp, result_exp, width,
+    ) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let stmts = [
+    @types.Stmt::move_stmt(addr_tmp, addr),
+    @types.Stmt::move_stmt(
+      old_dst,
+      @types.Exp::load(
+        mem=@types.Exp::var_exp(mem),
+        addr=addr_exp,
+        LittleEndian,
+        size,
+      ),
+    ),
+    @types.Stmt::move_stmt(
+      tmp,
+      @types.Exp::binop(@types.BinOp::minus(), acc_exp, old_dst_exp),
+    ),
+  ]
+  for stmt in flags {
+    stmts.push(stmt)
+  }
+  stmts.push(
+    @types.Stmt::move_stmt(
+      mem,
+      @types.Exp::store(
+        mem=@types.Exp::var_exp(mem),
+        addr=addr_exp,
+        @types.Exp::ite(
+          if_=project_basic_bil_x86_flag("ZF"),
+          then_=src_exp,
+          else_=old_dst_exp,
+        ),
+        LittleEndian,
+        size,
+      ),
+    ),
+  )
+  stmts.push(
+    @types.Stmt::move_stmt(
+      acc,
+      @types.Exp::ite(
+        if_=project_basic_bil_x86_flag("ZF"),
+        then_=acc_exp,
+        else_=old_dst_exp,
+      ),
+    ),
+  )
+  Ok(stmts)
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_basic_bil_test_rr(
   self : ProjectDisassemblyInstruction,
   width : Int,
@@ -4245,6 +4394,12 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "CMP8RR" | "CMP8RR_REV" => self.project_basic_bil_cmp_rr(8)
     "CMP32RR" | "CMP32RR_REV" => self.project_basic_bil_cmp_rr(32)
     "CMP64RR" | "CMP64RR_REV" => self.project_basic_bil_cmp_rr(64)
+    "CMPXCHG16RR" => self.project_basic_bil_cmpxchg_rr(16)
+    "CMPXCHG32RR" => self.project_basic_bil_cmpxchg_rr(32)
+    "CMPXCHG64RR" => self.project_basic_bil_cmpxchg_rr(64)
+    "CMPXCHG16MR" => self.project_basic_bil_cmpxchg_mr(16)
+    "CMPXCHG32MR" => self.project_basic_bil_cmpxchg_mr(32)
+    "CMPXCHG64MR" => self.project_basic_bil_cmpxchg_mr(64)
     "MOV8RM" => self.project_basic_bil_mov_rm(8)
     "MOV32RM" => self.project_basic_bil_mov_rm(32)
     "MOV64RM" => self.project_basic_bil_mov_rm(64)

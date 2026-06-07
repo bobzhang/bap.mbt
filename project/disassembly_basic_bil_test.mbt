@@ -800,6 +800,71 @@ test "project Basic BIL lift covers x86 mxcsr ops" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 cmpxchg ops" {
+  let cmpxchg32 = basic_bil_decode("x86", b"\x0f\xb1\xcb", start=0x7056UL)
+  match cmpxchg32.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 9)
+      assert_string(
+        stmts[0].to_string(),
+        "%cmpxchg_tmp:imm32 := (EAX:imm32 - EBX:imm32)",
+      )
+      assert_string(stmts[1].to_string(), "CF:imm1 := (EAX:imm32 < EBX:imm32)")
+      assert_true(stmts[4].to_string().has_prefix("PF:imm1 := "))
+      assert_string(
+        stmts[6].to_string(),
+        "ZF:imm1 := (0:32u == %cmpxchg_tmp:imm32)",
+      )
+      assert_string(
+        stmts[7].to_string(),
+        "EBX:imm32 := ite(ZF:imm1, ECX:imm32, EBX:imm32)",
+      )
+      assert_string(
+        stmts[8].to_string(),
+        "EAX:imm32 := ite(ZF:imm1, EAX:imm32, EBX:imm32)",
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let cmpxchg64_mem = basic_bil_decode(
+    "x86_64",
+    b"\x48\x0f\xb1\x4d\xf8",
+    start=0x7059UL,
+  )
+  match cmpxchg64_mem.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 11)
+      assert_string(
+        stmts[0].to_string(),
+        "%cmpxchg_a:imm64 := (RBP:imm64 - 8:64u)",
+      )
+      assert_string(
+        stmts[1].to_string(),
+        "%cmpxchg_d:imm64 := load(mem:mem64x8, %cmpxchg_a:imm64):imm64",
+      )
+      assert_string(
+        stmts[2].to_string(),
+        "%cmpxchg_tmp:imm64 := (RAX:imm64 - %cmpxchg_d:imm64)",
+      )
+      assert_string(
+        stmts[8].to_string(),
+        "ZF:imm1 := (0:64u == %cmpxchg_tmp:imm64)",
+      )
+      assert_string(
+        stmts[9].to_string(),
+        "mem:mem64x8 := store(mem:mem64x8, %cmpxchg_a:imm64, ite(ZF:imm1, RCX:imm64, %cmpxchg_d:imm64))",
+      )
+      assert_string(
+        stmts[10].to_string(),
+        "RAX:imm64 := ite(ZF:imm1, RAX:imm64, %cmpxchg_d:imm64)",
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86 register rotate ops" {
   let rol8_one = basic_bil_decode("x86", b"\xd0\xc0", start=0x7046UL)
   match rol8_one.lift_basic_bil() {

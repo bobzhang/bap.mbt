@@ -3633,6 +3633,66 @@ fn project_basic_bil_rotate_expr(
 }
 
 ///|
+fn project_basic_bil_rotate_flags(
+  result : @types.Exp,
+  count : @types.Exp,
+  count_width : Int,
+  width : Int,
+  left : Bool,
+) -> Result[@types.Stmt, String] {
+  let zero_count = match project_basic_bil_int(0L, count_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let one_count = match project_basic_bil_int(1L, count_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let one = match project_basic_bil_int(1L, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let cf = if left {
+    @types.Exp::cast(@types.CastKind::low(), 1, result)
+  } else {
+    @types.Exp::cast(@types.CastKind::high(), 1, result)
+  }
+  let of_defined = if left {
+    project_basic_bil_x86_xor(
+      @types.Exp::cast(@types.CastKind::high(), 1, result),
+      @types.Exp::cast(@types.CastKind::low(), 1, result),
+    )
+  } else {
+    project_basic_bil_x86_xor(
+      @types.Exp::cast(@types.CastKind::high(), 1, result),
+      @types.Exp::cast(
+        @types.CastKind::high(),
+        1,
+        @types.Exp::binop(@types.BinOp::lshift(), result, one),
+      ),
+    )
+  }
+  let of_undefined = @types.Exp::unknown(
+    "OF undefined after rotate of more then 1 bit",
+    Imm(1),
+  )
+  Ok(
+    @types.Stmt::if_(
+      @types.Exp::binop(@types.BinOp::neq(), count, zero_count),
+      [
+        project_basic_bil_x86_flag_move("CF", cf),
+        @types.Stmt::if_(
+          @types.Exp::binop(@types.BinOp::eq(), count, one_count),
+          [project_basic_bil_x86_flag_move("OF", of_defined)],
+          [project_basic_bil_x86_flag_move("OF", of_undefined)],
+        ),
+      ],
+      [],
+    ),
+  )
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_basic_bil_rotate_r(
   self : ProjectDisassemblyInstruction,
   width : Int,
@@ -3646,8 +3706,13 @@ fn ProjectDisassemblyInstruction::project_basic_bil_rotate_r(
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  let (count, count_width) = match
+  let (raw_count, count_width) = match
     self.project_basic_bil_shift_count_with_width(2, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let (count, _) = match
+    project_basic_bil_shiftd_count(raw_count, count_width, width) {
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
@@ -3656,7 +3721,18 @@ fn ProjectDisassemblyInstruction::project_basic_bil_rotate_r(
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  Ok([@types.Stmt::move_stmt(dst, rhs)])
+  let flags = match
+    project_basic_bil_rotate_flags(
+      @types.Exp::var_exp(dst),
+      count,
+      count_width,
+      width,
+      left,
+    ) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  Ok([@types.Stmt::move_stmt(dst, rhs), flags])
 }
 
 ///|
@@ -3708,8 +3784,13 @@ fn ProjectDisassemblyInstruction::project_basic_bil_rotate_m(
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  let (count, count_width) = match
+  let (raw_count, count_width) = match
     self.project_basic_bil_shift_count_with_width(5, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let (count, _) = match
+    project_basic_bil_shiftd_count(raw_count, count_width, width) {
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
@@ -3719,10 +3800,17 @@ fn ProjectDisassemblyInstruction::project_basic_bil_rotate_m(
   }
   let addr_tmp = project_basic_bil_virtual("rotate_a", address_width)
   let data_tmp = project_basic_bil_virtual("rotate_d", width)
+  let result_tmp = project_basic_bil_virtual("rotate_res", width)
   let addr_exp = @types.Exp::var_exp(addr_tmp)
   let data_exp = @types.Exp::var_exp(data_tmp)
+  let result_exp = @types.Exp::var_exp(result_tmp)
   let rotated = match
     project_basic_bil_rotate_exp(data_exp, count, count_width, width, left) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let flags = match
+    project_basic_bil_rotate_flags(result_exp, count, count_width, width, left) {
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
@@ -3737,16 +3825,18 @@ fn ProjectDisassemblyInstruction::project_basic_bil_rotate_m(
         size,
       ),
     ),
+    @types.Stmt::move_stmt(result_tmp, rotated),
     @types.Stmt::move_stmt(
       mem,
       @types.Exp::store(
         mem=@types.Exp::var_exp(mem),
         addr=addr_exp,
-        rotated,
+        result_exp,
         LittleEndian,
         size,
       ),
     ),
+    flags,
   ])
 }
 

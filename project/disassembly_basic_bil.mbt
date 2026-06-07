@@ -6356,20 +6356,28 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
   }
   match name {
     "SUB8RI8" => self.project_basic_bil_addsub_ri(8, @types.BinOp::minus())
+    "SUB16RI8" | "SUB16RI16" =>
+      self.project_basic_bil_addsub_ri(16, @types.BinOp::minus())
     "SUB32RI8" | "SUB32RI32" =>
       self.project_basic_bil_addsub_ri(32, @types.BinOp::minus())
     "SUB8MI8" => self.project_basic_bil_addsub_mi(8, @types.BinOp::minus())
+    "SUB16MI8" | "SUB16MI16" =>
+      self.project_basic_bil_addsub_mi(16, @types.BinOp::minus())
     "SUB32MI8" | "SUB32MI32" =>
       self.project_basic_bil_addsub_mi(32, @types.BinOp::minus())
     "SUB64MI8" | "SUB64MI32" =>
       self.project_basic_bil_addsub_mi(64, @types.BinOp::minus())
     "SUB8RM" => self.project_basic_bil_addsub_rm(8, @types.BinOp::minus())
+    "SUB16RM" => self.project_basic_bil_addsub_rm(16, @types.BinOp::minus())
     "SUB32RM" => self.project_basic_bil_addsub_rm(32, @types.BinOp::minus())
     "SUB64RM" => self.project_basic_bil_addsub_rm(64, @types.BinOp::minus())
     "SUB8MR" => self.project_basic_bil_addsub_mr(8, @types.BinOp::minus())
+    "SUB16MR" => self.project_basic_bil_addsub_mr(16, @types.BinOp::minus())
     "SUB32MR" => self.project_basic_bil_addsub_mr(32, @types.BinOp::minus())
     "SUB64MR" => self.project_basic_bil_addsub_mr(64, @types.BinOp::minus())
     "ADD8RI8" => self.project_basic_bil_addsub_ri(8, @types.BinOp::plus())
+    "ADD16RI8" | "ADD16RI16" =>
+      self.project_basic_bil_addsub_ri(16, @types.BinOp::plus())
     "ADD32RI8" | "ADD32RI32" =>
       self.project_basic_bil_addsub_ri(32, @types.BinOp::plus())
     "SUB64RI8" | "SUB64RI32" =>
@@ -6377,54 +6385,74 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "ADD64RI8" | "ADD64RI32" =>
       self.project_basic_bil_addsub_ri(64, @types.BinOp::plus())
     "ADD8MI8" => self.project_basic_bil_addsub_mi(8, @types.BinOp::plus())
+    "ADD16MI8" | "ADD16MI16" =>
+      self.project_basic_bil_addsub_mi(16, @types.BinOp::plus())
     "ADD32MI8" | "ADD32MI32" =>
       self.project_basic_bil_addsub_mi(32, @types.BinOp::plus())
     "ADD64MI8" | "ADD64MI32" =>
       self.project_basic_bil_addsub_mi(64, @types.BinOp::plus())
     "ADD8RM" => self.project_basic_bil_addsub_rm(8, @types.BinOp::plus())
+    "ADD16RM" => self.project_basic_bil_addsub_rm(16, @types.BinOp::plus())
     "ADD32RM" => self.project_basic_bil_addsub_rm(32, @types.BinOp::plus())
     "ADD64RM" => self.project_basic_bil_addsub_rm(64, @types.BinOp::plus())
     "ADD8MR" => self.project_basic_bil_addsub_mr(8, @types.BinOp::plus())
+    "ADD16MR" => self.project_basic_bil_addsub_mr(16, @types.BinOp::plus())
     "ADD32MR" => self.project_basic_bil_addsub_mr(32, @types.BinOp::plus())
     "ADD64MR" => self.project_basic_bil_addsub_mr(64, @types.BinOp::plus())
     "ADC8RI8" => self.project_basic_bil_adc_ri(8)
+    "ADC16RI8" | "ADC16RI16" => self.project_basic_bil_adc_ri(16)
     "ADC32RI8" | "ADC32RI32" => self.project_basic_bil_adc_ri(32)
     "ADC64RI8" | "ADC64RI32" => self.project_basic_bil_adc_ri(64)
     "ADC8MI8" => self.project_basic_bil_adc_mi(8)
+    "ADC16MI8" | "ADC16MI16" => self.project_basic_bil_adc_mi(16)
     "ADC32MI8" | "ADC32MI32" => self.project_basic_bil_adc_mi(32)
     "ADC64MI8" | "ADC64MI32" => self.project_basic_bil_adc_mi(64)
     "SBB8RI8" => self.project_basic_bil_sbb_ri(8)
+    "SBB16RI8" | "SBB16RI16" => self.project_basic_bil_sbb_ri(16)
     "SBB32RI8" | "SBB32RI32" => self.project_basic_bil_sbb_ri(32)
     "SBB64RI8" | "SBB64RI32" => self.project_basic_bil_sbb_ri(64)
     "SBB8MI8" => self.project_basic_bil_sbb_mi(8)
+    "SBB16MI8" | "SBB16MI16" => self.project_basic_bil_sbb_mi(16)
     "SBB32MI8" | "SBB32MI32" => self.project_basic_bil_sbb_mi(32)
     "SBB64MI8" | "SBB64MI32" => self.project_basic_bil_sbb_mi(64)
     "OR8RI8" => self.project_basic_bil_logic_ri(8, @types.BinOp::bit_or())
+    "OR16RI8" | "OR16RI16" =>
+      self.project_basic_bil_logic_ri(16, @types.BinOp::bit_or())
     "OR32RI8" | "OR32RI32" =>
       self.project_basic_bil_logic_ri(32, @types.BinOp::bit_or())
     "OR64RI8" | "OR64RI32" =>
       self.project_basic_bil_logic_ri(64, @types.BinOp::bit_or())
     "OR8MI8" => self.project_basic_bil_logic_mi(8, @types.BinOp::bit_or())
+    "OR16MI8" | "OR16MI16" =>
+      self.project_basic_bil_logic_mi(16, @types.BinOp::bit_or())
     "OR32MI8" | "OR32MI32" =>
       self.project_basic_bil_logic_mi(32, @types.BinOp::bit_or())
     "OR64MI8" | "OR64MI32" =>
       self.project_basic_bil_logic_mi(64, @types.BinOp::bit_or())
     "AND8RI8" => self.project_basic_bil_logic_ri(8, @types.BinOp::bit_and())
+    "AND16RI8" | "AND16RI16" =>
+      self.project_basic_bil_logic_ri(16, @types.BinOp::bit_and())
     "AND32RI8" | "AND32RI32" =>
       self.project_basic_bil_logic_ri(32, @types.BinOp::bit_and())
     "AND64RI8" | "AND64RI32" =>
       self.project_basic_bil_logic_ri(64, @types.BinOp::bit_and())
     "AND8MI8" => self.project_basic_bil_logic_mi(8, @types.BinOp::bit_and())
+    "AND16MI8" | "AND16MI16" =>
+      self.project_basic_bil_logic_mi(16, @types.BinOp::bit_and())
     "AND32MI8" | "AND32MI32" =>
       self.project_basic_bil_logic_mi(32, @types.BinOp::bit_and())
     "AND64MI8" | "AND64MI32" =>
       self.project_basic_bil_logic_mi(64, @types.BinOp::bit_and())
     "XOR8RI8" => self.project_basic_bil_logic_ri(8, @types.BinOp::bit_xor())
+    "XOR16RI8" | "XOR16RI16" =>
+      self.project_basic_bil_logic_ri(16, @types.BinOp::bit_xor())
     "XOR32RI8" | "XOR32RI32" =>
       self.project_basic_bil_logic_ri(32, @types.BinOp::bit_xor())
     "XOR64RI8" | "XOR64RI32" =>
       self.project_basic_bil_logic_ri(64, @types.BinOp::bit_xor())
     "XOR8MI8" => self.project_basic_bil_logic_mi(8, @types.BinOp::bit_xor())
+    "XOR16MI8" | "XOR16MI16" =>
+      self.project_basic_bil_logic_mi(16, @types.BinOp::bit_xor())
     "XOR32MI8" | "XOR32MI32" =>
       self.project_basic_bil_logic_mi(32, @types.BinOp::bit_xor())
     "XOR64MI8" | "XOR64MI32" =>
@@ -6645,10 +6673,14 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "NEG64M" => self.project_basic_bil_neg_m(64)
     "SUB8RR" | "SUB8RR_REV" =>
       self.project_basic_bil_addsub_rr(8, @types.BinOp::minus())
+    "SUB16RR" | "SUB16RR_REV" =>
+      self.project_basic_bil_addsub_rr(16, @types.BinOp::minus())
     "SUB32RR" | "SUB32RR_REV" =>
       self.project_basic_bil_addsub_rr(32, @types.BinOp::minus())
     "ADD8RR" | "ADD8RR_REV" =>
       self.project_basic_bil_addsub_rr(8, @types.BinOp::plus())
+    "ADD16RR" | "ADD16RR_REV" =>
+      self.project_basic_bil_addsub_rr(16, @types.BinOp::plus())
     "ADD32RR" | "ADD32RR_REV" =>
       self.project_basic_bil_addsub_rr(32, @types.BinOp::plus())
     "SUB64RR" | "SUB64RR_REV" =>
@@ -6656,18 +6688,23 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "ADD64RR" | "ADD64RR_REV" =>
       self.project_basic_bil_addsub_rr(64, @types.BinOp::plus())
     "CMP8RI8" => self.project_basic_bil_cmp_ri(8)
+    "CMP16RI8" | "CMP16RI16" => self.project_basic_bil_cmp_ri(16)
     "CMP32RI8" | "CMP32RI32" => self.project_basic_bil_cmp_ri(32)
     "CMP64RI8" | "CMP64RI32" => self.project_basic_bil_cmp_ri(64)
     "CMP8MI8" => self.project_basic_bil_cmp_mi(8)
+    "CMP16MI8" | "CMP16MI16" => self.project_basic_bil_cmp_mi(16)
     "CMP32MI8" | "CMP32MI32" => self.project_basic_bil_cmp_mi(32)
     "CMP64MI8" | "CMP64MI32" => self.project_basic_bil_cmp_mi(64)
     "CMP8RR" | "CMP8RR_REV" => self.project_basic_bil_cmp_rr(8)
+    "CMP16RR" | "CMP16RR_REV" => self.project_basic_bil_cmp_rr(16)
     "CMP32RR" | "CMP32RR_REV" => self.project_basic_bil_cmp_rr(32)
     "CMP64RR" | "CMP64RR_REV" => self.project_basic_bil_cmp_rr(64)
     "CMP8RM" => self.project_basic_bil_cmp_rm(8)
+    "CMP16RM" => self.project_basic_bil_cmp_rm(16)
     "CMP32RM" => self.project_basic_bil_cmp_rm(32)
     "CMP64RM" => self.project_basic_bil_cmp_rm(64)
     "CMP8MR" => self.project_basic_bil_cmp_mr(8)
+    "CMP16MR" => self.project_basic_bil_cmp_mr(16)
     "CMP32MR" => self.project_basic_bil_cmp_mr(32)
     "CMP64MR" => self.project_basic_bil_cmp_mr(64)
     "CMPXCHG16RR" => self.project_basic_bil_cmpxchg_rr(16)
@@ -6763,65 +6800,86 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "XCHG64RM" => self.project_basic_bil_xchg_rm(64)
     "OR8RR" | "OR8RR_REV" =>
       self.project_basic_bil_logic_rr(8, @types.BinOp::bit_or())
+    "OR16RR" | "OR16RR_REV" =>
+      self.project_basic_bil_logic_rr(16, @types.BinOp::bit_or())
     "OR32RR" | "OR32RR_REV" =>
       self.project_basic_bil_logic_rr(32, @types.BinOp::bit_or())
     "OR64RR" | "OR64RR_REV" =>
       self.project_basic_bil_logic_rr(64, @types.BinOp::bit_or())
     "OR8RM" => self.project_basic_bil_logic_rm(8, @types.BinOp::bit_or())
+    "OR16RM" => self.project_basic_bil_logic_rm(16, @types.BinOp::bit_or())
     "OR32RM" => self.project_basic_bil_logic_rm(32, @types.BinOp::bit_or())
     "OR64RM" => self.project_basic_bil_logic_rm(64, @types.BinOp::bit_or())
     "OR8MR" => self.project_basic_bil_logic_mr(8, @types.BinOp::bit_or())
+    "OR16MR" => self.project_basic_bil_logic_mr(16, @types.BinOp::bit_or())
     "OR32MR" => self.project_basic_bil_logic_mr(32, @types.BinOp::bit_or())
     "OR64MR" => self.project_basic_bil_logic_mr(64, @types.BinOp::bit_or())
     "AND8RR" | "AND8RR_REV" =>
       self.project_basic_bil_logic_rr(8, @types.BinOp::bit_and())
+    "AND16RR" | "AND16RR_REV" =>
+      self.project_basic_bil_logic_rr(16, @types.BinOp::bit_and())
     "AND32RR" | "AND32RR_REV" =>
       self.project_basic_bil_logic_rr(32, @types.BinOp::bit_and())
     "AND64RR" | "AND64RR_REV" =>
       self.project_basic_bil_logic_rr(64, @types.BinOp::bit_and())
     "AND8RM" => self.project_basic_bil_logic_rm(8, @types.BinOp::bit_and())
+    "AND16RM" => self.project_basic_bil_logic_rm(16, @types.BinOp::bit_and())
     "AND32RM" => self.project_basic_bil_logic_rm(32, @types.BinOp::bit_and())
     "AND64RM" => self.project_basic_bil_logic_rm(64, @types.BinOp::bit_and())
     "AND8MR" => self.project_basic_bil_logic_mr(8, @types.BinOp::bit_and())
+    "AND16MR" => self.project_basic_bil_logic_mr(16, @types.BinOp::bit_and())
     "AND32MR" => self.project_basic_bil_logic_mr(32, @types.BinOp::bit_and())
     "AND64MR" => self.project_basic_bil_logic_mr(64, @types.BinOp::bit_and())
     "XOR8RR" | "XOR8RR_REV" =>
       self.project_basic_bil_logic_rr(8, @types.BinOp::bit_xor())
+    "XOR16RR" | "XOR16RR_REV" =>
+      self.project_basic_bil_logic_rr(16, @types.BinOp::bit_xor())
     "XOR32RR" | "XOR32RR_REV" =>
       self.project_basic_bil_logic_rr(32, @types.BinOp::bit_xor())
     "XOR64RR" | "XOR64RR_REV" =>
       self.project_basic_bil_logic_rr(64, @types.BinOp::bit_xor())
     "XOR8RM" => self.project_basic_bil_logic_rm(8, @types.BinOp::bit_xor())
+    "XOR16RM" => self.project_basic_bil_logic_rm(16, @types.BinOp::bit_xor())
     "XOR32RM" => self.project_basic_bil_logic_rm(32, @types.BinOp::bit_xor())
     "XOR64RM" => self.project_basic_bil_logic_rm(64, @types.BinOp::bit_xor())
     "XOR8MR" => self.project_basic_bil_logic_mr(8, @types.BinOp::bit_xor())
+    "XOR16MR" => self.project_basic_bil_logic_mr(16, @types.BinOp::bit_xor())
     "XOR32MR" => self.project_basic_bil_logic_mr(32, @types.BinOp::bit_xor())
     "XOR64MR" => self.project_basic_bil_logic_mr(64, @types.BinOp::bit_xor())
     "ADC8RR" | "ADC8RR_REV" => self.project_basic_bil_adc_rr(8)
+    "ADC16RR" | "ADC16RR_REV" => self.project_basic_bil_adc_rr(16)
     "ADC32RR" | "ADC32RR_REV" => self.project_basic_bil_adc_rr(32)
     "ADC64RR" | "ADC64RR_REV" => self.project_basic_bil_adc_rr(64)
     "ADC8RM" => self.project_basic_bil_adc_rm(8)
+    "ADC16RM" => self.project_basic_bil_adc_rm(16)
     "ADC32RM" => self.project_basic_bil_adc_rm(32)
     "ADC64RM" => self.project_basic_bil_adc_rm(64)
     "ADC8MR" => self.project_basic_bil_adc_mr(8)
+    "ADC16MR" => self.project_basic_bil_adc_mr(16)
     "ADC32MR" => self.project_basic_bil_adc_mr(32)
     "ADC64MR" => self.project_basic_bil_adc_mr(64)
     "SBB8RR" | "SBB8RR_REV" => self.project_basic_bil_sbb_rr(8)
+    "SBB16RR" | "SBB16RR_REV" => self.project_basic_bil_sbb_rr(16)
     "SBB32RR" | "SBB32RR_REV" => self.project_basic_bil_sbb_rr(32)
     "SBB64RR" | "SBB64RR_REV" => self.project_basic_bil_sbb_rr(64)
     "SBB8RM" => self.project_basic_bil_sbb_rm(8)
+    "SBB16RM" => self.project_basic_bil_sbb_rm(16)
     "SBB32RM" => self.project_basic_bil_sbb_rm(32)
     "SBB64RM" => self.project_basic_bil_sbb_rm(64)
     "SBB8MR" => self.project_basic_bil_sbb_mr(8)
+    "SBB16MR" => self.project_basic_bil_sbb_mr(16)
     "SBB32MR" => self.project_basic_bil_sbb_mr(32)
     "SBB64MR" => self.project_basic_bil_sbb_mr(64)
+    "TEST16RI16" => self.project_basic_bil_test_ri(16)
     "TEST8RI8" => self.project_basic_bil_test_ri(8)
     "TEST32RI32" => self.project_basic_bil_test_ri(32)
     "TEST64RI32" => self.project_basic_bil_test_ri(64)
     "TEST8RR" | "TEST8RR_REV" => self.project_basic_bil_test_rr(8)
+    "TEST16RR" | "TEST16RR_REV" => self.project_basic_bil_test_rr(16)
     "TEST32RR" | "TEST32RR_REV" => self.project_basic_bil_test_rr(32)
     "TEST64RR" | "TEST64RR_REV" => self.project_basic_bil_test_rr(64)
     "TEST8MR" => self.project_basic_bil_test_mr(8)
+    "TEST16MR" => self.project_basic_bil_test_mr(16)
     "TEST32MR" => self.project_basic_bil_test_mr(32)
     "TEST64MR" => self.project_basic_bil_test_mr(64)
     "SETO"

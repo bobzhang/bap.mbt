@@ -577,6 +577,23 @@ test "project Basic BIL lift covers x86 register add-sub immediates" {
     Err(reason) => fail(reason)
   }
 
+  let add16 = basic_bil_decode("x86", b"\x66\x83\xc0\x01", start=0x7011UL)
+  match add16.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 9)
+      assert_string(stmts[0].to_string(), "%add_dst:imm16 := AX:imm16")
+      assert_string(stmts[1].to_string(), "%add_src:imm16 := 1:16u")
+      assert_string(
+        stmts[2].to_string(),
+        "AX:imm16 := (%add_dst:imm16 + %add_src:imm16)",
+      )
+      assert_addsub_flag_tail(
+        stmts, 3, "%add_dst:imm16", "%add_src:imm16", "AX:imm16", "0:16u", true,
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
   let sub32_ext = basic_bil_decode(
     "x86_64",
     b"\x41\x83\xe8\x01",
@@ -762,6 +779,16 @@ test "project Basic BIL lift covers x86 register logical immediates" {
     Err(reason) => fail(reason)
   }
 
+  let and16_acc = basic_bil_decode("x86", b"\x66\x25\xff\x00", start=0x701fUL)
+  match and16_acc.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 7)
+      assert_string(stmts[0].to_string(), "AX:imm16 := (AX:imm16 & 0xFF:16u)")
+      assert_logical_flag_tail(stmts, 1, "AX:imm16", "0:16u")
+    }
+    Err(reason) => fail(reason)
+  }
+
   let xor8_acc = basic_bil_decode("x86", b"\x34\x80", start=0x7020UL)
   match xor8_acc.lift_basic_bil() {
     Ok(stmts) => {
@@ -868,6 +895,36 @@ test "project Basic BIL lift covers x86 memory add-sub immediates" {
     }
     Err(reason) => fail(reason)
   }
+
+  let add16_mem = basic_bil_decode(
+    "x86",
+    b"\x66\x83\x45\xfc\x01",
+    start=0x7029UL,
+  )
+  match add16_mem.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 11)
+      assert_string(stmts[0].to_string(), "%add_a:imm32 := (EBP:imm32 - 4:32u)")
+      assert_string(
+        stmts[1].to_string(),
+        "%add_dst:imm16 := load(mem:mem32x8, %add_a:imm32):imm16",
+      )
+      assert_string(stmts[2].to_string(), "%add_src:imm16 := 1:16u")
+      assert_string(
+        stmts[3].to_string(),
+        "%add_res:imm16 := (%add_dst:imm16 + %add_src:imm16)",
+      )
+      assert_string(
+        stmts[4].to_string(),
+        "mem:mem32x8 := store(mem:mem32x8, %add_a:imm32, %add_res:imm16)",
+      )
+      assert_addsub_flag_tail(
+        stmts, 5, "%add_dst:imm16", "%add_src:imm16", "%add_res:imm16", "0:16u",
+        true,
+      )
+    }
+    Err(reason) => fail(reason)
+  }
 }
 
 ///|
@@ -938,6 +995,32 @@ test "project Basic BIL lift covers x86 memory add-sub rr operands" {
       )
       assert_addsub_flag_tail(
         stmts, 5, "%sub_dst:imm32", "%sub_src:imm32", "%sub_res:imm32", "0:32u",
+        false,
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let sub16_mr = basic_bil_decode("x86", b"\x66\x29\x4d\xfc", start=0x7030UL)
+  match sub16_mr.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 11)
+      assert_string(stmts[0].to_string(), "%sub_a:imm32 := (EBP:imm32 - 4:32u)")
+      assert_string(
+        stmts[1].to_string(),
+        "%sub_dst:imm16 := load(mem:mem32x8, %sub_a:imm32):imm16",
+      )
+      assert_string(stmts[2].to_string(), "%sub_src:imm16 := CX:imm16")
+      assert_string(
+        stmts[3].to_string(),
+        "%sub_res:imm16 := (%sub_dst:imm16 - %sub_src:imm16)",
+      )
+      assert_string(
+        stmts[4].to_string(),
+        "mem:mem32x8 := store(mem:mem32x8, %sub_a:imm32, %sub_res:imm16)",
+      )
+      assert_addsub_flag_tail(
+        stmts, 5, "%sub_dst:imm16", "%sub_src:imm16", "%sub_res:imm16", "0:16u",
         false,
       )
     }
@@ -1028,6 +1111,39 @@ test "project Basic BIL lift covers x86 memory adc-sbb immediates" {
     }
     Err(reason) => fail(reason)
   }
+
+  let adc16_mem = basic_bil_decode(
+    "x86",
+    b"\x66\x83\x55\xfc\x01",
+    start=0x7034UL,
+  )
+  match adc16_mem.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 11)
+      assert_string(stmts[0].to_string(), "%adc_a:imm32 := (EBP:imm32 - 4:32u)")
+      assert_string(
+        stmts[1].to_string(),
+        "%adc_dst:imm16 := load(mem:mem32x8, %adc_a:imm32):imm16",
+      )
+      assert_string(stmts[2].to_string(), "%adc_src:imm16 := 1:16u")
+      assert_string(
+        stmts[3].to_string(),
+        "%adc_res:imm16 := ((%adc_dst:imm16 + %adc_src:imm16) + pad:16[CF:imm1])",
+      )
+      assert_string(
+        stmts[4].to_string(),
+        "mem:mem32x8 := store(mem:mem32x8, %adc_a:imm32, %adc_res:imm16)",
+      )
+      assert_true(stmts[5].to_string().contains("CF:imm1 := extract[16:16]"))
+      assert_true(stmts[6].to_string().contains("OF:imm1 :="))
+      assert_string(stmts[9].to_string(), "SF:imm1 := high:1[%adc_res:imm16]")
+      assert_string(
+        stmts[10].to_string(),
+        "ZF:imm1 := (0:16u == %adc_res:imm16)",
+      )
+    }
+    Err(reason) => fail(reason)
+  }
 }
 
 ///|
@@ -1099,6 +1215,34 @@ test "project Basic BIL lift covers x86 memory adc-sbb rr operands" {
       assert_true(stmts[4].to_string().contains("CF:imm1 := ("))
       assert_string(stmts[7].to_string(), "SF:imm1 := high:1[EAX:imm32]")
       assert_string(stmts[8].to_string(), "ZF:imm1 := (0:32u == EAX:imm32)")
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let adc16_mr = basic_bil_decode("x86", b"\x66\x11\x4d\xfc", start=0x703dUL)
+  match adc16_mr.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 11)
+      assert_string(stmts[0].to_string(), "%adc_a:imm32 := (EBP:imm32 - 4:32u)")
+      assert_string(
+        stmts[1].to_string(),
+        "%adc_dst:imm16 := load(mem:mem32x8, %adc_a:imm32):imm16",
+      )
+      assert_string(stmts[2].to_string(), "%adc_src:imm16 := CX:imm16")
+      assert_string(
+        stmts[3].to_string(),
+        "%adc_res:imm16 := ((%adc_dst:imm16 + %adc_src:imm16) + pad:16[CF:imm1])",
+      )
+      assert_string(
+        stmts[4].to_string(),
+        "mem:mem32x8 := store(mem:mem32x8, %adc_a:imm32, %adc_res:imm16)",
+      )
+      assert_true(stmts[5].to_string().contains("CF:imm1 := extract[16:16]"))
+      assert_string(stmts[9].to_string(), "SF:imm1 := high:1[%adc_res:imm16]")
+      assert_string(
+        stmts[10].to_string(),
+        "ZF:imm1 := (0:16u == %adc_res:imm16)",
+      )
     }
     Err(reason) => fail(reason)
   }
@@ -1198,6 +1342,31 @@ test "project Basic BIL lift covers x86 memory logical rr operands" {
     Err(reason) => fail(reason)
   }
 
+  let xor16_mr = basic_bil_decode("x86", b"\x66\x31\x4d\xfc", start=0x704aUL)
+  match xor16_mr.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 10)
+      assert_string(
+        stmts[0].to_string(),
+        "%logic_a:imm32 := (EBP:imm32 - 4:32u)",
+      )
+      assert_string(
+        stmts[1].to_string(),
+        "%logic_d:imm16 := load(mem:mem32x8, %logic_a:imm32):imm16",
+      )
+      assert_string(
+        stmts[2].to_string(),
+        "%logic_r:imm16 := (%logic_d:imm16 ^ CX:imm16)",
+      )
+      assert_string(
+        stmts[3].to_string(),
+        "mem:mem32x8 := store(mem:mem32x8, %logic_a:imm32, %logic_r:imm16)",
+      )
+      assert_logical_flag_tail(stmts, 4, "%logic_r:imm16", "0:16u")
+    }
+    Err(reason) => fail(reason)
+  }
+
   let or8_rm = basic_bil_decode("x86", b"\x0a\x4d\xfc", start=0x704cUL)
   match or8_rm.lift_basic_bil() {
     Ok(stmts) => {
@@ -1268,6 +1437,35 @@ test "project Basic BIL lift covers x86 memory logical and cmp immediates" {
     Err(reason) => fail(reason)
   }
 
+  let xor16_mem = basic_bil_decode(
+    "x86",
+    b"\x66\x83\x75\xfc\xff",
+    start=0x7035UL,
+  )
+  match xor16_mem.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 10)
+      assert_string(
+        stmts[0].to_string(),
+        "%logic_a:imm32 := (EBP:imm32 - 4:32u)",
+      )
+      assert_string(
+        stmts[1].to_string(),
+        "%logic_d:imm16 := load(mem:mem32x8, %logic_a:imm32):imm16",
+      )
+      assert_string(
+        stmts[2].to_string(),
+        "%logic_r:imm16 := (%logic_d:imm16 ^ 0xFFFF:16u)",
+      )
+      assert_string(
+        stmts[3].to_string(),
+        "mem:mem32x8 := store(mem:mem32x8, %logic_a:imm32, %logic_r:imm16)",
+      )
+      assert_logical_flag_tail(stmts, 4, "%logic_r:imm16", "0:16u")
+    }
+    Err(reason) => fail(reason)
+  }
+
   let cmp32_mem = basic_bil_decode("x86", b"\x83\x7d\xfc\x01", start=0x7037UL)
   match cmp32_mem.lift_basic_bil() {
     Ok(stmts) => {
@@ -1286,6 +1484,34 @@ test "project Basic BIL lift covers x86 memory logical and cmp immediates" {
       assert_string(
         stmts[8].to_string(),
         "ZF:imm1 := (0:32u == %cmp_tmp:imm32)",
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let cmp16_mem = basic_bil_decode(
+    "x86",
+    b"\x66\x83\x7d\xfc\x01",
+    start=0x7039UL,
+  )
+  match cmp16_mem.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 9)
+      assert_string(stmts[0].to_string(), "%cmp_a:imm32 := (EBP:imm32 - 4:32u)")
+      assert_string(
+        stmts[1].to_string(),
+        "%cmp_d:imm16 := load(mem:mem32x8, %cmp_a:imm32):imm16",
+      )
+      assert_string(
+        stmts[2].to_string(),
+        "%cmp_tmp:imm16 := (%cmp_d:imm16 - 1:16u)",
+      )
+      assert_string(stmts[3].to_string(), "CF:imm1 := (%cmp_d:imm16 < 1:16u)")
+      assert_true(stmts[4].to_string().contains("OF:imm1 := high:1"))
+      assert_string(stmts[7].to_string(), "SF:imm1 := high:1[%cmp_tmp:imm16]")
+      assert_string(
+        stmts[8].to_string(),
+        "ZF:imm1 := (0:16u == %cmp_tmp:imm16)",
       )
     }
     Err(reason) => fail(reason)
@@ -3022,6 +3248,23 @@ test "project Basic BIL lift covers x86 register add-sub rr ops" {
     Err(reason) => fail(reason)
   }
 
+  let add16 = basic_bil_decode("x86", b"\x66\x01\xd8", start=0x701cUL)
+  match add16.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 9)
+      assert_string(stmts[0].to_string(), "%add_dst:imm16 := AX:imm16")
+      assert_string(stmts[1].to_string(), "%add_src:imm16 := BX:imm16")
+      assert_string(
+        stmts[2].to_string(),
+        "AX:imm16 := (%add_dst:imm16 + %add_src:imm16)",
+      )
+      assert_addsub_flag_tail(
+        stmts, 3, "%add_dst:imm16", "%add_src:imm16", "AX:imm16", "0:16u", true,
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
   let sub32 = basic_bil_decode("x86", b"\x29\xd8", start=0x701dUL)
   match sub32.lift_basic_bil() {
     Ok(stmts) => {
@@ -3654,6 +3897,16 @@ test "project Basic BIL lift covers x86 register logical ops" {
     Err(reason) => fail(reason)
   }
 
+  let xor16_zero = basic_bil_decode("x86", b"\x66\x31\xc0", start=0x7020UL)
+  match xor16_zero.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 7)
+      assert_string(stmts[0].to_string(), "AX:imm16 := 0:16u")
+      assert_logical_flag_tail(stmts, 1, "AX:imm16", "0:16u")
+    }
+    Err(reason) => fail(reason)
+  }
+
   let and64_rev = basic_bil_decode("x86_64", b"\x48\x23\xc8", start=0x701fUL)
   match and64_rev.lift_basic_bil() {
     Ok(stmts) => {
@@ -3790,6 +4043,23 @@ test "project Basic BIL lift covers x86 cmp and test flag ops" {
     Err(reason) => fail(reason)
   }
 
+  let cmp16_rr = basic_bil_decode("x86", b"\x66\x39\xd8", start=0x7027UL)
+  match cmp16_rr.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 7)
+      assert_string(
+        stmts[0].to_string(),
+        "%cmp_tmp:imm16 := (AX:imm16 - BX:imm16)",
+      )
+      assert_string(stmts[1].to_string(), "CF:imm1 := (AX:imm16 < BX:imm16)")
+      assert_string(
+        stmts[6].to_string(),
+        "ZF:imm1 := (0:16u == %cmp_tmp:imm16)",
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
   let test_rr = basic_bil_decode("x86_64", b"\x48\x85\xc0", start=0x7027UL)
   match test_rr.lift_basic_bil() {
     Ok(stmts) => {
@@ -3827,6 +4097,26 @@ test "project Basic BIL lift covers x86 cmp and test flag ops" {
     Err(reason) => fail(reason)
   }
 
+  let test16_rr = basic_bil_decode("x86", b"\x66\x85\xc0", start=0x7029UL)
+  match test16_rr.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 7)
+      assert_string(
+        stmts[0].to_string(),
+        "%test_tmp:imm16 := (AX:imm16 & AX:imm16)",
+      )
+      assert_string(stmts[1].to_string(), "CF:imm1 := 0:1u")
+      assert_string(stmts[2].to_string(), "OF:imm1 := 0:1u")
+      assert_true(stmts[3].to_string().contains("AF undefined after TEST"))
+      assert_true(stmts[4].to_string().contains("PF:imm1 := (not low:1"))
+      assert_string(
+        stmts[6].to_string(),
+        "ZF:imm1 := (0:16u == %test_tmp:imm16)",
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
   let test_imm = basic_bil_decode(
     "x86_64",
     b"\x48\xa9\x78\x56\x34\x12",
@@ -3845,6 +4135,25 @@ test "project Basic BIL lift covers x86 cmp and test flag ops" {
       assert_string(
         stmts[6].to_string(),
         "ZF:imm1 := (0:64u == %test_tmp:imm64)",
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let test16_imm = basic_bil_decode("x86", b"\x66\xa9\xff\x00", start=0x702dUL)
+  match test16_imm.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 7)
+      assert_string(
+        stmts[0].to_string(),
+        "%test_tmp:imm16 := (AX:imm16 & 0xFF:16u)",
+      )
+      assert_string(stmts[1].to_string(), "CF:imm1 := 0:1u")
+      assert_string(stmts[2].to_string(), "OF:imm1 := 0:1u")
+      assert_true(stmts[3].to_string().contains("AF undefined after TEST"))
+      assert_string(
+        stmts[6].to_string(),
+        "ZF:imm1 := (0:16u == %test_tmp:imm16)",
       )
     }
     Err(reason) => fail(reason)

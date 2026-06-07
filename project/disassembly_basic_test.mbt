@@ -274,10 +274,12 @@ test "translated BAP basic disassembly decodes x86 multi-byte noops" {
 }
 
 ///|
-test "translated BAP basic disassembly decodes x86 pause hints" {
+test "translated BAP basic disassembly decodes x86 pause and wait hints" {
   let samples : Array[(String, Bytes, Int, Array[String])] = [
     ("x86", b"\xf3\x90", 2, ["PAUSE"]),
     ("x86_64", b"\xf3\x90", 2, ["PAUSE"]),
+    ("x86", b"\x9b", 1, ["FWAIT"]),
+    ("x86_64", b"\x9b", 1, ["FWAIT"]),
   ]
   for sample in samples {
     let disasm = match
@@ -299,7 +301,7 @@ test "translated BAP basic disassembly decodes x86 pause hints" {
             assert_true(basic_instruction_strings(instruction) == sample.3)
             assert_true(instruction.kinds().is_empty())
           }
-          None => fail("missing x86 pause instruction")
+          None => fail("missing x86 pause/wait instruction")
         }
       }
       Err(reason) => fail(reason)

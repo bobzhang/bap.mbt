@@ -46,6 +46,22 @@ fn assert_reconstructor_text(
 }
 
 ///|
+fn assert_reconstructor_logical_flags(
+  defs : Array[String],
+  offset : Int,
+  result : String,
+  zero : String,
+) -> Unit raise {
+  assert_true(defs[offset] == "CF:imm1 := 0:1u")
+  assert_true(defs[offset + 1] == "OF:imm1 := 0:1u")
+  assert_true(defs[offset + 2].contains("AF undefined after logical operation"))
+  assert_true(defs[offset + 3].contains("PF:imm1 := (not low:1"))
+  assert_true(defs[offset + 3].contains(result))
+  assert_true(defs[offset + 4] == "SF:imm1 := high:1[\{result}]")
+  assert_true(defs[offset + 5] == "ZF:imm1 := (\{zero} == \{result})")
+}
+
+///|
 test "project default reconstructor turns disassembly blocks into named subroutines" {
   match @project.register_builtin_disassembly_drivers() {
     Ok(_) => ()
@@ -172,9 +188,12 @@ test "project reconstructor materializes Basic BIL x86 register logical immediat
       assert_true(subs.length() == 1)
       let blks = subs[0].blks()
       assert_true(blks.length() == 1)
-      assert_reconstructor_text(reconstructor_def_text(blks[0].defs()), [
-        "RAX:imm64 := (RAX:imm64 | 0xF:64u)", "RAX:imm64 := (RAX:imm64 & 0x7F:64u)",
-      ])
+      let defs = reconstructor_def_text(blks[0].defs())
+      assert_true(defs.length() == 14)
+      assert_true(defs[0] == "RAX:imm64 := (RAX:imm64 | 0xF:64u)")
+      assert_reconstructor_logical_flags(defs, 1, "RAX:imm64", "0:64u")
+      assert_true(defs[7] == "RAX:imm64 := (RAX:imm64 & 0x7F:64u)")
+      assert_reconstructor_logical_flags(defs, 8, "RAX:imm64", "0:64u")
     }
     Err(reason) => fail(reason)
   }
@@ -268,9 +287,12 @@ test "project reconstructor materializes Basic BIL x86 register logical ops" {
       assert_true(subs.length() == 1)
       let blks = subs[0].blks()
       assert_true(blks.length() == 1)
-      assert_reconstructor_text(reconstructor_def_text(blks[0].defs()), [
-        "RAX:imm64 := 0:64u", "RAX:imm64 := (RAX:imm64 | RBX:imm64)",
-      ])
+      let defs = reconstructor_def_text(blks[0].defs())
+      assert_true(defs.length() == 14)
+      assert_true(defs[0] == "RAX:imm64 := 0:64u")
+      assert_reconstructor_logical_flags(defs, 1, "RAX:imm64", "0:64u")
+      assert_true(defs[7] == "RAX:imm64 := (RAX:imm64 | RBX:imm64)")
+      assert_reconstructor_logical_flags(defs, 8, "RAX:imm64", "0:64u")
     }
     Err(reason) => fail(reason)
   }

@@ -100,6 +100,29 @@ fn assert_string(actual : String, expected : String) -> Unit raise {
 }
 
 ///|
+fn assert_logical_flag_tail(
+  stmts : Array[@types.Stmt],
+  offset : Int,
+  result : String,
+  zero : String,
+) -> Unit raise {
+  assert_string(stmts[offset].to_string(), "CF:imm1 := 0:1u")
+  assert_string(stmts[offset + 1].to_string(), "OF:imm1 := 0:1u")
+  assert_true(
+    stmts[offset + 2]
+    .to_string()
+    .contains("AF undefined after logical operation"),
+  )
+  assert_true(stmts[offset + 3].to_string().contains("PF:imm1 := (not low:1"))
+  assert_true(stmts[offset + 3].to_string().contains(result))
+  assert_string(stmts[offset + 4].to_string(), "SF:imm1 := high:1[\{result}]")
+  assert_string(
+    stmts[offset + 5].to_string(),
+    "ZF:imm1 := (\{zero} == \{result})",
+  )
+}
+
+///|
 test "project Basic BIL lift covers x86_64 stack arithmetic fixtures" {
   let noop = basic_bil_decode("x86_64", b"\x90", start=0x6ff0UL)
   match noop.lift_basic_bil() {
@@ -465,8 +488,11 @@ test "project Basic BIL lift covers x86 register add-sub immediates" {
 test "project Basic BIL lift covers x86 register logical immediates" {
   let or64 = basic_bil_decode("x86_64", b"\x48\x83\xc8\x0f", start=0x7016UL)
   match or64.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, ["RAX:imm64 := (RAX:imm64 | 0xF:64u)"])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 7)
+      assert_string(stmts[0].to_string(), "RAX:imm64 := (RAX:imm64 | 0xF:64u)")
+      assert_logical_flag_tail(stmts, 1, "RAX:imm64", "0:64u")
+    }
     Err(reason) => fail(reason)
   }
 
@@ -476,28 +502,41 @@ test "project Basic BIL lift covers x86 register logical immediates" {
     start=0x701aUL,
   )
   match and64_ext.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, ["R8:imm64 := (R8:imm64 & 0x7F:64u)"])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 7)
+      assert_string(stmts[0].to_string(), "R8:imm64 := (R8:imm64 & 0x7F:64u)")
+      assert_logical_flag_tail(stmts, 1, "R8:imm64", "0:64u")
+    }
     Err(reason) => fail(reason)
   }
 
   let xor32 = basic_bil_decode("x86", b"\x83\xf2\x01", start=0x701eUL)
   match xor32.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, ["EDX:imm32 := (EDX:imm32 ^ 1:32u)"])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 7)
+      assert_string(stmts[0].to_string(), "EDX:imm32 := (EDX:imm32 ^ 1:32u)")
+      assert_logical_flag_tail(stmts, 1, "EDX:imm32", "0:32u")
+    }
     Err(reason) => fail(reason)
   }
 
   let or8 = basic_bil_decode("x86", b"\x80\xc8\x0f", start=0x701fUL)
   match or8.lift_basic_bil() {
-    Ok(stmts) => assert_basic_bil_text(stmts, ["AL:imm8 := (AL:imm8 | 0xF:8u)"])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 7)
+      assert_string(stmts[0].to_string(), "AL:imm8 := (AL:imm8 | 0xF:8u)")
+      assert_logical_flag_tail(stmts, 1, "AL:imm8", "0:8u")
+    }
     Err(reason) => fail(reason)
   }
 
   let xor8_acc = basic_bil_decode("x86", b"\x34\x80", start=0x7020UL)
   match xor8_acc.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, ["AL:imm8 := (AL:imm8 ^ 0x80:8u)"])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 7)
+      assert_string(stmts[0].to_string(), "AL:imm8 := (AL:imm8 ^ 0x80:8u)")
+      assert_logical_flag_tail(stmts, 1, "AL:imm8", "0:8u")
+    }
     Err(reason) => fail(reason)
   }
 
@@ -507,8 +546,14 @@ test "project Basic BIL lift covers x86 register logical immediates" {
     start=0x7020UL,
   )
   match or64_ri32.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, ["RAX:imm64 := (RAX:imm64 | 0x12345678:64u)"])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 7)
+      assert_string(
+        stmts[0].to_string(),
+        "RAX:imm64 := (RAX:imm64 | 0x12345678:64u)",
+      )
+      assert_logical_flag_tail(stmts, 1, "RAX:imm64", "0:64u")
+    }
     Err(reason) => fail(reason)
   }
 
@@ -518,8 +563,14 @@ test "project Basic BIL lift covers x86 register logical immediates" {
     start=0x7021UL,
   )
   match or64_acc.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, ["RAX:imm64 := (RAX:imm64 | 0x12345678:64u)"])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 7)
+      assert_string(
+        stmts[0].to_string(),
+        "RAX:imm64 := (RAX:imm64 | 0x12345678:64u)",
+      )
+      assert_logical_flag_tail(stmts, 1, "RAX:imm64", "0:64u")
+    }
     Err(reason) => fail(reason)
   }
 }
@@ -768,39 +819,77 @@ test "project Basic BIL lift covers x86 memory adc-sbb rr operands" {
 test "project Basic BIL lift covers x86 memory logical rr operands" {
   let or64_mr = basic_bil_decode("x86_64", b"\x48\x09\x4d\xf8", start=0x7040UL)
   match or64_mr.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, [
-        "%binop_a:imm64 := (RBP:imm64 - 8:64u)", "%binop_d:imm64 := load(mem:mem64x8, %binop_a:imm64):imm64",
-        "mem:mem64x8 := store(mem:mem64x8, %binop_a:imm64, (%binop_d:imm64 | RCX:imm64))",
-      ])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 10)
+      assert_string(
+        stmts[0].to_string(),
+        "%logic_a:imm64 := (RBP:imm64 - 8:64u)",
+      )
+      assert_string(
+        stmts[1].to_string(),
+        "%logic_d:imm64 := load(mem:mem64x8, %logic_a:imm64):imm64",
+      )
+      assert_string(
+        stmts[2].to_string(),
+        "%logic_r:imm64 := (%logic_d:imm64 | RCX:imm64)",
+      )
+      assert_string(
+        stmts[3].to_string(),
+        "mem:mem64x8 := store(mem:mem64x8, %logic_a:imm64, %logic_r:imm64)",
+      )
+      assert_logical_flag_tail(stmts, 4, "%logic_r:imm64", "0:64u")
+    }
     Err(reason) => fail(reason)
   }
 
   let and64_rm = basic_bil_decode("x86_64", b"\x48\x23\x45\xf8", start=0x7044UL)
   match and64_rm.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, [
+    Ok(stmts) => {
+      assert_true(stmts.length() == 7)
+      assert_string(
+        stmts[0].to_string(),
         "RAX:imm64 := (RAX:imm64 & load(mem:mem64x8, (RBP:imm64 - 8:64u)):imm64)",
-      ])
+      )
+      assert_logical_flag_tail(stmts, 1, "RAX:imm64", "0:64u")
+    }
     Err(reason) => fail(reason)
   }
 
   let xor32_mr = basic_bil_decode("x86", b"\x31\x4d\xfc", start=0x7048UL)
   match xor32_mr.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, [
-        "%binop_a:imm32 := (EBP:imm32 - 4:32u)", "%binop_d:imm32 := load(mem:mem32x8, %binop_a:imm32):imm32",
-        "mem:mem32x8 := store(mem:mem32x8, %binop_a:imm32, (%binop_d:imm32 ^ ECX:imm32))",
-      ])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 10)
+      assert_string(
+        stmts[0].to_string(),
+        "%logic_a:imm32 := (EBP:imm32 - 4:32u)",
+      )
+      assert_string(
+        stmts[1].to_string(),
+        "%logic_d:imm32 := load(mem:mem32x8, %logic_a:imm32):imm32",
+      )
+      assert_string(
+        stmts[2].to_string(),
+        "%logic_r:imm32 := (%logic_d:imm32 ^ ECX:imm32)",
+      )
+      assert_string(
+        stmts[3].to_string(),
+        "mem:mem32x8 := store(mem:mem32x8, %logic_a:imm32, %logic_r:imm32)",
+      )
+      assert_logical_flag_tail(stmts, 4, "%logic_r:imm32", "0:32u")
+    }
     Err(reason) => fail(reason)
   }
 
   let or8_rm = basic_bil_decode("x86", b"\x0a\x4d\xfc", start=0x704cUL)
   match or8_rm.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, [
+    Ok(stmts) => {
+      assert_true(stmts.length() == 7)
+      assert_string(
+        stmts[0].to_string(),
         "CL:imm8 := (CL:imm8 | load(mem:mem32x8, (EBP:imm32 - 4:32u)):imm8)",
-      ])
+      )
+      assert_logical_flag_tail(stmts, 1, "CL:imm8", "0:8u")
+    }
     Err(reason) => fail(reason)
   }
 }
@@ -813,21 +902,51 @@ test "project Basic BIL lift covers x86 memory logical and cmp immediates" {
     start=0x702eUL,
   )
   match or8_mem.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, [
-        "%binop_a:imm64 := (R8:imm64 + 1:64u)", "%binop_d:imm8 := load(mem:mem64x8, %binop_a:imm64):imm8",
-        "mem:mem64x8 := store(mem:mem64x8, %binop_a:imm64, (%binop_d:imm8 | 0xF:8u))",
-      ])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 10)
+      assert_string(
+        stmts[0].to_string(),
+        "%logic_a:imm64 := (R8:imm64 + 1:64u)",
+      )
+      assert_string(
+        stmts[1].to_string(),
+        "%logic_d:imm8 := load(mem:mem64x8, %logic_a:imm64):imm8",
+      )
+      assert_string(
+        stmts[2].to_string(),
+        "%logic_r:imm8 := (%logic_d:imm8 | 0xF:8u)",
+      )
+      assert_string(
+        stmts[3].to_string(),
+        "mem:mem64x8 := store(mem:mem64x8, %logic_a:imm64, %logic_r:imm8)",
+      )
+      assert_logical_flag_tail(stmts, 4, "%logic_r:imm8", "0:8u")
+    }
     Err(reason) => fail(reason)
   }
 
   let xor32_mem = basic_bil_decode("x86", b"\x83\x75\xfc\xff", start=0x7033UL)
   match xor32_mem.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, [
-        "%binop_a:imm32 := (EBP:imm32 - 4:32u)", "%binop_d:imm32 := load(mem:mem32x8, %binop_a:imm32):imm32",
-        "mem:mem32x8 := store(mem:mem32x8, %binop_a:imm32, (%binop_d:imm32 ^ 0xFFFFFFFF:32u))",
-      ])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 10)
+      assert_string(
+        stmts[0].to_string(),
+        "%logic_a:imm32 := (EBP:imm32 - 4:32u)",
+      )
+      assert_string(
+        stmts[1].to_string(),
+        "%logic_d:imm32 := load(mem:mem32x8, %logic_a:imm32):imm32",
+      )
+      assert_string(
+        stmts[2].to_string(),
+        "%logic_r:imm32 := (%logic_d:imm32 ^ 0xFFFFFFFF:32u)",
+      )
+      assert_string(
+        stmts[3].to_string(),
+        "mem:mem32x8 := store(mem:mem32x8, %logic_a:imm32, %logic_r:imm32)",
+      )
+      assert_logical_flag_tail(stmts, 4, "%logic_r:imm32", "0:32u")
+    }
     Err(reason) => fail(reason)
   }
 
@@ -1934,48 +2053,77 @@ test "project Basic BIL lift covers x86 div-idiv ops" {
 test "project Basic BIL lift covers x86 register logical ops" {
   let xor_zero = basic_bil_decode("x86_64", b"\x48\x31\xc0", start=0x7017UL)
   match xor_zero.lift_basic_bil() {
-    Ok(stmts) => assert_basic_bil_text(stmts, ["RAX:imm64 := 0:64u"])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 7)
+      assert_string(stmts[0].to_string(), "RAX:imm64 := 0:64u")
+      assert_logical_flag_tail(stmts, 1, "RAX:imm64", "0:64u")
+    }
     Err(reason) => fail(reason)
   }
 
   let xor_ext = basic_bil_decode("x86_64", b"\x4d\x31\xc8", start=0x701aUL)
   match xor_ext.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, ["R8:imm64 := (R8:imm64 ^ R9:imm64)"])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 7)
+      assert_string(stmts[0].to_string(), "R8:imm64 := (R8:imm64 ^ R9:imm64)")
+      assert_logical_flag_tail(stmts, 1, "R8:imm64", "0:64u")
+    }
     Err(reason) => fail(reason)
   }
 
   let or32 = basic_bil_decode("x86", b"\x09\xd8", start=0x701dUL)
   match or32.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, ["EAX:imm32 := (EAX:imm32 | EBX:imm32)"])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 7)
+      assert_string(
+        stmts[0].to_string(),
+        "EAX:imm32 := (EAX:imm32 | EBX:imm32)",
+      )
+      assert_logical_flag_tail(stmts, 1, "EAX:imm32", "0:32u")
+    }
     Err(reason) => fail(reason)
   }
 
   let or8 = basic_bil_decode("x86", b"\x08\xe0", start=0x701eUL)
   match or8.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, ["AL:imm8 := (AL:imm8 | AH:imm8)"])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 7)
+      assert_string(stmts[0].to_string(), "AL:imm8 := (AL:imm8 | AH:imm8)")
+      assert_logical_flag_tail(stmts, 1, "AL:imm8", "0:8u")
+    }
     Err(reason) => fail(reason)
   }
 
   let xor8_zero = basic_bil_decode("x86", b"\x30\xc0", start=0x701fUL)
   match xor8_zero.lift_basic_bil() {
-    Ok(stmts) => assert_basic_bil_text(stmts, ["AL:imm8 := 0:8u"])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 7)
+      assert_string(stmts[0].to_string(), "AL:imm8 := 0:8u")
+      assert_logical_flag_tail(stmts, 1, "AL:imm8", "0:8u")
+    }
     Err(reason) => fail(reason)
   }
 
   let and64_rev = basic_bil_decode("x86_64", b"\x48\x23\xc8", start=0x701fUL)
   match and64_rev.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, ["RCX:imm64 := (RCX:imm64 & RAX:imm64)"])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 7)
+      assert_string(
+        stmts[0].to_string(),
+        "RCX:imm64 := (RCX:imm64 & RAX:imm64)",
+      )
+      assert_logical_flag_tail(stmts, 1, "RCX:imm64", "0:64u")
+    }
     Err(reason) => fail(reason)
   }
 
   let and8_ext = basic_bil_decode("x86_64", b"\x45\x20\xc8", start=0x7020UL)
   match and8_ext.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, ["R8B:imm8 := (R8B:imm8 & R9B:imm8)"])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 7)
+      assert_string(stmts[0].to_string(), "R8B:imm8 := (R8B:imm8 & R9B:imm8)")
+      assert_logical_flag_tail(stmts, 1, "R8B:imm8", "0:8u")
+    }
     Err(reason) => fail(reason)
   }
 }

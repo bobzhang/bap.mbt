@@ -3333,6 +3333,52 @@ fn ProjectDisassemblyInstruction::project_basic_bil_incdec(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_basic_bil_incdec_m(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  op : @types.BinOp,
+) -> Result[Array[@types.Stmt], String] {
+  let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let one = match project_basic_bil_int(1L, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let addr_tmp = project_basic_bil_virtual("incdec_a", address_width)
+  let data_tmp = project_basic_bil_virtual("incdec_d", width)
+  let addr_exp = @types.Exp::var_exp(addr_tmp)
+  let data_exp = @types.Exp::var_exp(data_tmp)
+  Ok([
+    @types.Stmt::move_stmt(addr_tmp, addr),
+    @types.Stmt::move_stmt(
+      data_tmp,
+      @types.Exp::load(
+        mem=@types.Exp::var_exp(mem),
+        addr=addr_exp,
+        LittleEndian,
+        size,
+      ),
+    ),
+    @types.Stmt::move_stmt(
+      mem,
+      @types.Exp::store(
+        mem=@types.Exp::var_exp(mem),
+        addr=addr_exp,
+        @types.Exp::binop(op, data_exp, one),
+        LittleEndian,
+        size,
+      ),
+    ),
+  ])
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_basic_bil_unop_r(
   self : ProjectDisassemblyInstruction,
   width : Int,
@@ -3348,6 +3394,48 @@ fn ProjectDisassemblyInstruction::project_basic_bil_unop_r(
       ])
     Err(reason) => Err(reason)
   }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_unop_m(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  op : @types.UnOp,
+) -> Result[Array[@types.Stmt], String] {
+  let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let addr_tmp = project_basic_bil_virtual("unop_a", address_width)
+  let data_tmp = project_basic_bil_virtual("unop_d", width)
+  let addr_exp = @types.Exp::var_exp(addr_tmp)
+  let data_exp = @types.Exp::var_exp(data_tmp)
+  Ok([
+    @types.Stmt::move_stmt(addr_tmp, addr),
+    @types.Stmt::move_stmt(
+      data_tmp,
+      @types.Exp::load(
+        mem=@types.Exp::var_exp(mem),
+        addr=addr_exp,
+        LittleEndian,
+        size,
+      ),
+    ),
+    @types.Stmt::move_stmt(
+      mem,
+      @types.Exp::store(
+        mem=@types.Exp::var_exp(mem),
+        addr=addr_exp,
+        @types.Exp::unop(op, data_exp),
+        LittleEndian,
+        size,
+      ),
+    ),
+  ])
 }
 
 ///|
@@ -4815,15 +4903,27 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "INC8R" => self.project_basic_bil_incdec(8, @types.BinOp::plus())
     "INC32R" => self.project_basic_bil_incdec(32, @types.BinOp::plus())
     "INC64R" => self.project_basic_bil_incdec(64, @types.BinOp::plus())
+    "INC8M" => self.project_basic_bil_incdec_m(8, @types.BinOp::plus())
+    "INC32M" => self.project_basic_bil_incdec_m(32, @types.BinOp::plus())
+    "INC64M" => self.project_basic_bil_incdec_m(64, @types.BinOp::plus())
     "DEC8R" => self.project_basic_bil_incdec(8, @types.BinOp::minus())
     "DEC32R" => self.project_basic_bil_incdec(32, @types.BinOp::minus())
     "DEC64R" => self.project_basic_bil_incdec(64, @types.BinOp::minus())
+    "DEC8M" => self.project_basic_bil_incdec_m(8, @types.BinOp::minus())
+    "DEC32M" => self.project_basic_bil_incdec_m(32, @types.BinOp::minus())
+    "DEC64M" => self.project_basic_bil_incdec_m(64, @types.BinOp::minus())
     "NOT8R" => self.project_basic_bil_unop_r(8, @types.UnOp::not())
     "NOT32R" => self.project_basic_bil_unop_r(32, @types.UnOp::not())
     "NOT64R" => self.project_basic_bil_unop_r(64, @types.UnOp::not())
+    "NOT8M" => self.project_basic_bil_unop_m(8, @types.UnOp::not())
+    "NOT32M" => self.project_basic_bil_unop_m(32, @types.UnOp::not())
+    "NOT64M" => self.project_basic_bil_unop_m(64, @types.UnOp::not())
     "NEG8R" => self.project_basic_bil_unop_r(8, @types.UnOp::neg())
     "NEG32R" => self.project_basic_bil_unop_r(32, @types.UnOp::neg())
     "NEG64R" => self.project_basic_bil_unop_r(64, @types.UnOp::neg())
+    "NEG8M" => self.project_basic_bil_unop_m(8, @types.UnOp::neg())
+    "NEG32M" => self.project_basic_bil_unop_m(32, @types.UnOp::neg())
+    "NEG64M" => self.project_basic_bil_unop_m(64, @types.UnOp::neg())
     "SUB8RR" | "SUB8RR_REV" =>
       self.project_basic_bil_binop_rr(8, @types.BinOp::minus())
     "SUB32RR" | "SUB32RR_REV" =>

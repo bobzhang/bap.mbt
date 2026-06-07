@@ -568,6 +568,43 @@ test "project Basic BIL lift covers x86 register inc-dec ops" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 memory inc-dec ops" {
+  let inc64_mem = basic_bil_decode(
+    "x86_64",
+    b"\x48\xff\x45\xf8",
+    start=0x702cUL,
+  )
+  match inc64_mem.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%incdec_a:imm64 := (RBP:imm64 - 8:64u)", "%incdec_d:imm64 := load(mem:mem64x8, %incdec_a:imm64):imm64",
+        "mem:mem64x8 := store(mem:mem64x8, %incdec_a:imm64, (%incdec_d:imm64 + 1:64u))",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let dec32_mem = basic_bil_decode("x86", b"\xff\x4d\xfc", start=0x7030UL)
+  match dec32_mem.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%incdec_a:imm32 := (EBP:imm32 - 4:32u)", "%incdec_d:imm32 := load(mem:mem32x8, %incdec_a:imm32):imm32",
+        "mem:mem32x8 := store(mem:mem32x8, %incdec_a:imm32, (%incdec_d:imm32 - 1:32u))",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let inc8_mem = basic_bil_decode("x86_64", b"\x41\xfe\x40\x01", start=0x7033UL)
+  match inc8_mem.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%incdec_a:imm64 := (R8:imm64 + 1:64u)", "%incdec_d:imm8 := load(mem:mem64x8, %incdec_a:imm64):imm8",
+        "mem:mem64x8 := store(mem:mem64x8, %incdec_a:imm64, (%incdec_d:imm8 + 1:8u))",
+      ])
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86 register not-neg ops" {
   let not64 = basic_bil_decode("x86_64", b"\x48\xf7\xd0", start=0x702cUL)
   match not64.lift_basic_bil() {
@@ -602,6 +639,43 @@ test "project Basic BIL lift covers x86 register not-neg ops" {
   let neg8_ext = basic_bil_decode("x86_64", b"\x41\xf6\xd8", start=0x7038UL)
   match neg8_ext.lift_basic_bil() {
     Ok(stmts) => assert_basic_bil_text(stmts, ["R8B:imm8 := (neg R8B:imm8)"])
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
+test "project Basic BIL lift covers x86 memory not-neg ops" {
+  let not64_mem = basic_bil_decode(
+    "x86_64",
+    b"\x48\xf7\x55\xf8",
+    start=0x7039UL,
+  )
+  match not64_mem.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%unop_a:imm64 := (RBP:imm64 - 8:64u)", "%unop_d:imm64 := load(mem:mem64x8, %unop_a:imm64):imm64",
+        "mem:mem64x8 := store(mem:mem64x8, %unop_a:imm64, (not %unop_d:imm64))",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let neg32_mem = basic_bil_decode("x86", b"\xf7\x5d\xfc", start=0x703dUL)
+  match neg32_mem.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%unop_a:imm32 := (EBP:imm32 - 4:32u)", "%unop_d:imm32 := load(mem:mem32x8, %unop_a:imm32):imm32",
+        "mem:mem32x8 := store(mem:mem32x8, %unop_a:imm32, (neg %unop_d:imm32))",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let neg8_mem = basic_bil_decode("x86_64", b"\x41\xf6\x58\x01", start=0x7040UL)
+  match neg8_mem.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%unop_a:imm64 := (R8:imm64 + 1:64u)", "%unop_d:imm8 := load(mem:mem64x8, %unop_a:imm64):imm8",
+        "mem:mem64x8 := store(mem:mem64x8, %unop_a:imm64, (neg %unop_d:imm8))",
+      ])
     Err(reason) => fail(reason)
   }
 }

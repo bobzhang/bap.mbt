@@ -865,6 +865,71 @@ test "project Basic BIL lift covers x86 cmpxchg ops" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 xadd ops" {
+  let xadd32 = basic_bil_decode("x86", b"\x0f\xc1\xcb", start=0x705eUL)
+  match xadd32.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 11)
+      assert_string(stmts[0].to_string(), "%xadd_src:imm32 := ECX:imm32")
+      assert_string(stmts[1].to_string(), "%xadd_dst:imm32 := EBX:imm32")
+      assert_string(
+        stmts[2].to_string(),
+        "%xadd_tmp:imm32 := (%xadd_dst:imm32 + %xadd_src:imm32)",
+      )
+      assert_string(stmts[3].to_string(), "ECX:imm32 := %xadd_dst:imm32")
+      assert_string(stmts[4].to_string(), "EBX:imm32 := %xadd_tmp:imm32")
+      assert_string(
+        stmts[5].to_string(),
+        "CF:imm1 := (%xadd_tmp:imm32 < %xadd_dst:imm32)",
+      )
+      assert_string(
+        stmts[10].to_string(),
+        "ZF:imm1 := (0:32u == %xadd_tmp:imm32)",
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let xadd64_mem = basic_bil_decode(
+    "x86_64",
+    b"\x48\x0f\xc1\x4d\xf8",
+    start=0x7061UL,
+  )
+  match xadd64_mem.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 12)
+      assert_string(
+        stmts[0].to_string(),
+        "%xadd_a:imm64 := (RBP:imm64 - 8:64u)",
+      )
+      assert_string(
+        stmts[1].to_string(),
+        "%xadd_dst:imm64 := load(mem:mem64x8, %xadd_a:imm64):imm64",
+      )
+      assert_string(stmts[2].to_string(), "%xadd_src:imm64 := RCX:imm64")
+      assert_string(
+        stmts[3].to_string(),
+        "%xadd_tmp:imm64 := (%xadd_dst:imm64 + %xadd_src:imm64)",
+      )
+      assert_string(stmts[4].to_string(), "RCX:imm64 := %xadd_dst:imm64")
+      assert_string(
+        stmts[5].to_string(),
+        "mem:mem64x8 := store(mem:mem64x8, %xadd_a:imm64, %xadd_tmp:imm64)",
+      )
+      assert_string(
+        stmts[6].to_string(),
+        "CF:imm1 := (%xadd_tmp:imm64 < %xadd_dst:imm64)",
+      )
+      assert_string(
+        stmts[11].to_string(),
+        "ZF:imm1 := (0:64u == %xadd_tmp:imm64)",
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86 register rotate ops" {
   let rol8_one = basic_bil_decode("x86", b"\xd0\xc0", start=0x7046UL)
   match rol8_one.lift_basic_bil() {

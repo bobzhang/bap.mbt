@@ -2290,46 +2290,146 @@ test "project Basic BIL lift covers x86 rotate ops" {
 
   let rcl8_one = basic_bil_decode("x86", b"\xd0\xd0", start=0x7051UL)
   match rcl8_one.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, [
-        "AL:imm8 := extract[8:1](((concat(AL:imm8, CF:imm1) << 1:8u) | (concat(AL:imm8, CF:imm1) >> (9:8u - 1:8u))))",
-      ])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 3)
+      let count = "((1:8u & 0x1F:8u) % 9:8u)"
+      assert_string(
+        stmts[0].to_string(),
+        "%rotate_carry_res:imm9 := ((concat(AL:imm8, CF:imm1) << " +
+        count +
+        ") | (concat(AL:imm8, CF:imm1) >> (9:8u - " +
+        count +
+        ")))",
+      )
+      assert_string(
+        stmts[1].to_string(),
+        "AL:imm8 := extract[8:1](%rotate_carry_res:imm9)",
+      )
+      assert_rotate_flag_update(
+        stmts[2],
+        "(\{count} != 0:8u)",
+        "CF:imm1 := low:1[%rotate_carry_res:imm9]",
+        count,
+        "1:8u",
+        "OF:imm1 := (high:1[AL:imm8] ^ low:1[%rotate_carry_res:imm9])",
+      )
+    }
     Err(reason) => fail(reason)
   }
 
   let rcr32_cl = basic_bil_decode("x86", b"\xd3\xd8", start=0x7053UL)
   match rcr32_cl.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, [
-        "EAX:imm32 := extract[31:0](((concat(CF:imm1, EAX:imm32) >> CL:imm8) | (concat(CF:imm1, EAX:imm32) << (0x21:8u - CL:imm8))))",
-      ])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 3)
+      let count = "(CL:imm8 & 0x1F:8u)"
+      assert_string(
+        stmts[0].to_string(),
+        "%rotate_carry_res:imm33 := ((concat(CF:imm1, EAX:imm32) >> " +
+        count +
+        ") | (concat(CF:imm1, EAX:imm32) << (0x21:8u - " +
+        count +
+        ")))",
+      )
+      assert_string(
+        stmts[1].to_string(),
+        "EAX:imm32 := extract[31:0](%rotate_carry_res:imm33)",
+      )
+      assert_rotate_flag_update(
+        stmts[2],
+        "(\{count} != 0:8u)",
+        "CF:imm1 := high:1[%rotate_carry_res:imm33]",
+        count,
+        "1:8u",
+        "OF:imm1 := (high:1[EAX:imm32] ^ extract[30:30](EAX:imm32))",
+      )
+    }
     Err(reason) => fail(reason)
   }
 
   let rcl8_imm = basic_bil_decode("x86", b"\xc0\xd4\x03", start=0x7055UL)
   match rcl8_imm.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, [
-        "AH:imm8 := extract[8:1](((concat(AH:imm8, CF:imm1) << 3:8u) | (concat(AH:imm8, CF:imm1) >> (9:8u - 3:8u))))",
-      ])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 3)
+      let count = "((3:8u & 0x1F:8u) % 9:8u)"
+      assert_string(
+        stmts[0].to_string(),
+        "%rotate_carry_res:imm9 := ((concat(AH:imm8, CF:imm1) << " +
+        count +
+        ") | (concat(AH:imm8, CF:imm1) >> (9:8u - " +
+        count +
+        ")))",
+      )
+      assert_string(
+        stmts[1].to_string(),
+        "AH:imm8 := extract[8:1](%rotate_carry_res:imm9)",
+      )
+      assert_rotate_flag_update(
+        stmts[2],
+        "(\{count} != 0:8u)",
+        "CF:imm1 := low:1[%rotate_carry_res:imm9]",
+        count,
+        "1:8u",
+        "OF:imm1 := (high:1[AH:imm8] ^ low:1[%rotate_carry_res:imm9])",
+      )
+    }
     Err(reason) => fail(reason)
   }
 
   let rcr64_cl = basic_bil_decode("x86_64", b"\x49\xd3\xd8", start=0x7058UL)
   match rcr64_cl.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, [
-        "R8:imm64 := extract[63:0](((concat(CF:imm1, R8:imm64) >> CL:imm8) | (concat(CF:imm1, R8:imm64) << (0x41:8u - CL:imm8))))",
-      ])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 3)
+      let count = "(CL:imm8 & 0x3F:8u)"
+      assert_string(
+        stmts[0].to_string(),
+        "%rotate_carry_res:imm65 := ((concat(CF:imm1, R8:imm64) >> " +
+        count +
+        ") | (concat(CF:imm1, R8:imm64) << (0x41:8u - " +
+        count +
+        ")))",
+      )
+      assert_string(
+        stmts[1].to_string(),
+        "R8:imm64 := extract[63:0](%rotate_carry_res:imm65)",
+      )
+      assert_rotate_flag_update(
+        stmts[2],
+        "(\{count} != 0:8u)",
+        "CF:imm1 := high:1[%rotate_carry_res:imm65]",
+        count,
+        "1:8u",
+        "OF:imm1 := (high:1[R8:imm64] ^ extract[62:62](R8:imm64))",
+      )
+    }
     Err(reason) => fail(reason)
   }
 
   let rcl8_rex = basic_bil_decode("x86_64", b"\x40\xd0\xd4", start=0x705bUL)
   match rcl8_rex.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, [
-        "SPL:imm8 := extract[8:1](((concat(SPL:imm8, CF:imm1) << 1:8u) | (concat(SPL:imm8, CF:imm1) >> (9:8u - 1:8u))))",
-      ])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 3)
+      let count = "((1:8u & 0x1F:8u) % 9:8u)"
+      assert_string(
+        stmts[0].to_string(),
+        "%rotate_carry_res:imm9 := ((concat(SPL:imm8, CF:imm1) << " +
+        count +
+        ") | (concat(SPL:imm8, CF:imm1) >> (9:8u - " +
+        count +
+        ")))",
+      )
+      assert_string(
+        stmts[1].to_string(),
+        "SPL:imm8 := extract[8:1](%rotate_carry_res:imm9)",
+      )
+      assert_rotate_flag_update(
+        stmts[2],
+        "(\{count} != 0:8u)",
+        "CF:imm1 := low:1[%rotate_carry_res:imm9]",
+        count,
+        "1:8u",
+        "OF:imm1 := (high:1[SPL:imm8] ^ low:1[%rotate_carry_res:imm9])",
+      )
+    }
     Err(reason) => fail(reason)
   }
 

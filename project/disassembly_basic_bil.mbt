@@ -3693,6 +3693,83 @@ fn project_basic_bil_rotate_flags(
 }
 
 ///|
+fn project_basic_bil_rotate_carry_count(
+  raw_count : @types.Exp,
+  count_width : Int,
+  width : Int,
+) -> Result[@types.Exp, String] {
+  let mask_value = if width == 64 { 0x3FL } else { 0x1FL }
+  let count_mask = match project_basic_bil_int(mask_value, count_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let masked = @types.Exp::binop(@types.BinOp::bit_and(), raw_count, count_mask)
+  if width == 8 || width == 16 {
+    let rotate_width = match
+      project_basic_bil_int((width + 1).to_int64(), count_width) {
+      Ok(value) => value
+      Err(reason) => return Err(reason)
+    }
+    Ok(@types.Exp::binop(@types.BinOp::modulo(), masked, rotate_width))
+  } else {
+    Ok(masked)
+  }
+}
+
+///|
+fn project_basic_bil_rotate_carry_flags(
+  rotated : @types.Exp,
+  result : @types.Exp,
+  count : @types.Exp,
+  count_width : Int,
+  width : Int,
+  left : Bool,
+) -> Result[@types.Stmt, String] {
+  let zero_count = match project_basic_bil_int(0L, count_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let one_count = match project_basic_bil_int(1L, count_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let cf = if left {
+    @types.Exp::cast(@types.CastKind::low(), 1, rotated)
+  } else {
+    @types.Exp::cast(@types.CastKind::high(), 1, rotated)
+  }
+  let of_defined = if left {
+    project_basic_bil_x86_xor(
+      @types.Exp::cast(@types.CastKind::high(), 1, result),
+      cf,
+    )
+  } else {
+    project_basic_bil_x86_xor(
+      @types.Exp::cast(@types.CastKind::high(), 1, result),
+      @types.Exp::extract(result, hi=width - 2, lo=width - 2),
+    )
+  }
+  let of_undefined = @types.Exp::unknown(
+    "OF undefined after rotate of more then 1 bit",
+    Imm(1),
+  )
+  Ok(
+    @types.Stmt::if_(
+      @types.Exp::binop(@types.BinOp::neq(), count, zero_count),
+      [
+        project_basic_bil_x86_flag_move("CF", cf),
+        @types.Stmt::if_(
+          @types.Exp::binop(@types.BinOp::eq(), count, one_count),
+          [project_basic_bil_x86_flag_move("OF", of_defined)],
+          [project_basic_bil_x86_flag_move("OF", of_undefined)],
+        ),
+      ],
+      [],
+    ),
+  )
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_basic_bil_rotate_r(
   self : ProjectDisassemblyInstruction,
   width : Int,
@@ -3749,8 +3826,13 @@ fn ProjectDisassemblyInstruction::project_basic_bil_rotate_carry_r(
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  let (count, count_width) = match
+  let (raw_count, count_width) = match
     self.project_basic_bil_shift_count_with_width(2, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let count = match
+    project_basic_bil_rotate_carry_count(raw_count, count_width, width) {
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
@@ -3761,17 +3843,35 @@ fn ProjectDisassemblyInstruction::project_basic_bil_rotate_carry_r(
   } else {
     @types.Exp::concat(carry, src_exp)
   }
-  let rotated = match
+  let rotated_exp = match
     project_basic_bil_rotate_exp(combined, count, count_width, width + 1, left) {
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
+  let rotated = project_basic_bil_virtual("rotate_carry_res", width + 1)
+  let rotated_var = @types.Exp::var_exp(rotated)
   let result = if left {
-    @types.Exp::extract(rotated, hi=width, lo=1)
+    @types.Exp::extract(rotated_var, hi=width, lo=1)
   } else {
-    @types.Exp::extract(rotated, hi=width - 1, lo=0)
+    @types.Exp::extract(rotated_var, hi=width - 1, lo=0)
   }
-  Ok([@types.Stmt::move_stmt(dst, result)])
+  let flags = match
+    project_basic_bil_rotate_carry_flags(
+      rotated_var,
+      @types.Exp::var_exp(dst),
+      count,
+      count_width,
+      width,
+      left,
+    ) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  Ok([
+    @types.Stmt::move_stmt(rotated, rotated_exp),
+    @types.Stmt::move_stmt(dst, result),
+    flags,
+  ])
 }
 
 ///|

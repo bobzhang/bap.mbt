@@ -6811,10 +6811,14 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "MOV16RR" | "MOV16RR_REV" => self.project_basic_bil_mov_rr(16)
     "MOV32RR" | "MOV32RR_REV" => self.project_basic_bil_mov_rr(32)
     "MOV64RR" | "MOV64RR_REV" => self.project_basic_bil_mov_rr(64)
+    "MOVZX16RR8" =>
+      self.project_basic_bil_movx_rr(16, 8, @types.CastKind::unsigned())
     "MOVZX32RR8" =>
       self.project_basic_bil_movx_rr(32, 8, @types.CastKind::unsigned())
     "MOVZX64RR8" =>
       self.project_basic_bil_movx_rr(64, 8, @types.CastKind::unsigned())
+    "MOVZX16RM8" =>
+      self.project_basic_bil_movx_rm(16, 8, @types.CastKind::unsigned())
     "MOVZX32RM8" =>
       self.project_basic_bil_movx_rm(32, 8, @types.CastKind::unsigned())
     "MOVZX64RM8" =>
@@ -6827,10 +6831,14 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
       self.project_basic_bil_movx_rm(32, 16, @types.CastKind::unsigned())
     "MOVZX64RM16" =>
       self.project_basic_bil_movx_rm(64, 16, @types.CastKind::unsigned())
+    "MOVSX16RR8" =>
+      self.project_basic_bil_movx_rr(16, 8, @types.CastKind::signed())
     "MOVSX32RR8" =>
       self.project_basic_bil_movx_rr(32, 8, @types.CastKind::signed())
     "MOVSX64RR8" =>
       self.project_basic_bil_movx_rr(64, 8, @types.CastKind::signed())
+    "MOVSX16RM8" =>
+      self.project_basic_bil_movx_rm(16, 8, @types.CastKind::signed())
     "MOVSX32RM8" =>
       self.project_basic_bil_movx_rm(32, 8, @types.CastKind::signed())
     "MOVSX64RM8" =>

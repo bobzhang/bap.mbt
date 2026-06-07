@@ -4983,6 +4983,19 @@ test "project Basic BIL lift covers x86 movsx movzx" {
     Err(reason) => fail(reason)
   }
 
+  let movzx16 = basic_bil_decode("x86", b"\x66\x0f\xb6\xc1", start=0x7045UL)
+  match movzx16.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["AX:imm16 := pad:16[CL:imm8]"])
+    Err(reason) => fail(reason)
+  }
+
+  let movsx16 = basic_bil_decode("x86", b"\x66\x0f\xbe\xc4", start=0x7046UL)
+  match movsx16.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["AX:imm16 := extend:16[AH:imm8]"])
+    Err(reason) => fail(reason)
+  }
+
   let movsx_mem = basic_bil_decode(
     "x86_64",
     b"\x48\x0f\xbe\x45\xfc",
@@ -4992,6 +5005,19 @@ test "project Basic BIL lift covers x86 movsx movzx" {
     Ok(stmts) =>
       assert_basic_bil_text(stmts, [
         "RAX:imm64 := extend:64[load(mem:mem64x8, (RBP:imm64 - 4:64u)):imm8]",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let movsx_mem16 = basic_bil_decode(
+    "x86",
+    b"\x66\x0f\xbe\x45\xfc",
+    start=0x7048UL,
+  )
+  match movsx_mem16.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "AX:imm16 := extend:16[load(mem:mem32x8, (EBP:imm32 - 4:32u)):imm8]",
       ])
     Err(reason) => fail(reason)
   }

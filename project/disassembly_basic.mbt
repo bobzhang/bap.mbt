@@ -1934,22 +1934,12 @@ fn project_disassembly_basic_x86_movx(
   Array[ProjectInstructionKind],
 )? {
   let bytes = memory.to_bytes()
-  let (opcode_index, rex) = if address_width == 64 &&
-    bytes.length() >= 2 &&
-    bytes[0].to_int() >= 0x40 &&
-    bytes[0].to_int() <= 0x4f {
-    (1, bytes[0].to_int())
-  } else {
-    (0, 0)
-  }
-  if dst_width == 64 && (rex & 0x8) == 0 {
-    return None
-  }
-  if dst_width == 32 && (rex & 0x8) != 0 {
-    return None
-  }
-  if dst_width != 32 && dst_width != 64 {
-    return None
+  let (opcode_index, rex) = match
+    project_disassembly_basic_x86_data_opcode_index(
+      bytes, dst_width, address_width,
+    ) {
+    Some(value) => value
+    None => return None
   }
   if bytes.length() < opcode_index + 3 || bytes[opcode_index].to_int() != 0x0f {
     None
@@ -1959,6 +1949,9 @@ fn project_disassembly_basic_x86_movx(
       0xb6 | 0xbe => 8
       0xb7 | 0xbf => 16
       _ => return None
+    }
+    if dst_width == 16 && src_width != 8 {
+      return None
     }
     let family = match opcode {
       0xb6 | 0xb7 => "MOVZX"
@@ -5884,6 +5877,11 @@ fn project_disassembly_basic_decode_x86_llvm(
           memory, 8, 32,
         ).unwrap()
         Some((length, name, "", "", operands, kinds))
+      } else if project_disassembly_basic_x86_movx(memory, 16, 32) is Some(_) {
+        let (length, name, operands, kinds) = project_disassembly_basic_x86_movx(
+          memory, 16, 32,
+        ).unwrap()
+        Some((length, name, "", "", operands, kinds))
       } else if project_disassembly_basic_x86_movx(memory, 32, 32) is Some(_) {
         let (length, name, operands, kinds) = project_disassembly_basic_x86_movx(
           memory, 32, 32,
@@ -6874,6 +6872,11 @@ fn project_disassembly_basic_decode_x86_64_llvm(
   } else if project_disassembly_basic_x86_movx(memory, 64, 64) is Some(_) {
     let (length, name, operands, kinds) = project_disassembly_basic_x86_movx(
       memory, 64, 64,
+    ).unwrap()
+    Some((length, name, operands, kinds))
+  } else if project_disassembly_basic_x86_movx(memory, 16, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_movx(
+      memory, 16, 64,
     ).unwrap()
     Some((length, name, operands, kinds))
   } else if project_disassembly_basic_x86_movx(memory, 32, 64) is Some(_) {

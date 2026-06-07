@@ -6698,6 +6698,48 @@ fn ProjectDisassemblyInstruction::project_basic_bil_mxcsr_mem(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_basic_bil_fpu_control_mem(
+  self : ProjectDisassemblyInstruction,
+  load_control : Bool,
+) -> Result[Array[@types.Stmt], String] {
+  let (addr, mem, _) = match self.project_basic_bil_memory_addr(0) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(16) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let control = project_basic_bil_reg("FPU_CONTROL", 16)
+  if load_control {
+    Ok([
+      @types.Stmt::move_stmt(
+        control,
+        @types.Exp::load(
+          mem=@types.Exp::var_exp(mem),
+          addr~,
+          LittleEndian,
+          size,
+        ),
+      ),
+    ])
+  } else {
+    Ok([
+      @types.Stmt::move_stmt(
+        mem,
+        @types.Exp::store(
+          mem=@types.Exp::var_exp(mem),
+          addr~,
+          @types.Exp::var_exp(control),
+          LittleEndian,
+          size,
+        ),
+      ),
+    ])
+  }
+}
+
+///|
 fn project_basic_bil_control_with_width(
   attr : @types.StmtAttribute[String],
   target : UInt64,
@@ -7696,6 +7738,8 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "POPF16_64" => project_basic_bil_x86_popf(16, 64)
     "POPF32" => project_basic_bil_x86_popf(32, 32)
     "POPF64" => project_basic_bil_x86_popf(64, 64)
+    "FLDCWM" => self.project_basic_bil_fpu_control_mem(true)
+    "FNSTCWM" => self.project_basic_bil_fpu_control_mem(false)
     "INT3" | "INT" | "UD2" => self.project_basic_bil_cpuexn()
     "HLT" => Ok([])
     "INVD" | "WBINVD" | "WRMSR" => Ok([])

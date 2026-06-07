@@ -3116,6 +3116,61 @@ fn project_disassembly_basic_x86_mxcsr(
 }
 
 ///|
+fn project_disassembly_basic_x86_fpu_control(
+  memory : @memory.Memory,
+  address_width : Int,
+) -> (
+  Int,
+  String,
+  Array[ProjectInstructionOperand],
+  Array[ProjectInstructionKind],
+)? {
+  let bytes = memory.to_bytes()
+  let (opcode_index, rex) = if address_width == 64 &&
+    bytes.length() > 0 &&
+    bytes[0].to_int() >= 0x40 &&
+    bytes[0].to_int() <= 0x4f {
+    (1, bytes[0].to_int())
+  } else {
+    (0, 0)
+  }
+  if bytes.length() < opcode_index + 2 || bytes[opcode_index].to_int() != 0xd9 {
+    None
+  } else {
+    let modrm = bytes[opcode_index + 1].to_int()
+    let ext = (modrm >> 3) & 0x7
+    let (name, kinds) = match ext {
+      5 => ("FLDCWm", [ProjectMayLoad])
+      7 => ("FNSTCWm", [ProjectMayStore])
+      _ => return None
+    }
+    if ((modrm >> 6) & 0x3) == 0x3 {
+      None
+    } else {
+      match
+        project_disassembly_basic_x86_parse_mem_operand(
+          bytes,
+          opcode_index + 2,
+          modrm,
+          address_width,
+          rex,
+        ) {
+        Some((length, memory_operand)) =>
+          Some(
+            (
+              length,
+              name,
+              project_disassembly_basic_x86_mem_operands(memory_operand),
+              kinds,
+            ),
+          )
+        None => None
+      }
+    }
+  }
+}
+
+///|
 fn project_disassembly_basic_x86_cache_flush(
   memory : @memory.Memory,
   address_width : Int,
@@ -6719,6 +6774,11 @@ fn project_disassembly_basic_decode_x86_llvm(
           memory, 32,
         ).unwrap()
         Some((length, name, "", "", operands, kinds))
+      } else if project_disassembly_basic_x86_fpu_control(memory, 32) is Some(_) {
+        let (length, name, operands, kinds) = project_disassembly_basic_x86_fpu_control(
+          memory, 32,
+        ).unwrap()
+        Some((length, name, "", "", operands, kinds))
       } else if project_disassembly_basic_x86_cache_flush(memory, 32) is Some(_) {
         let (length, name, operands, kinds) = project_disassembly_basic_x86_cache_flush(
           memory, 32,
@@ -7820,6 +7880,11 @@ fn project_disassembly_basic_decode_x86_64_llvm(
     Some((length, name, operands, kinds))
   } else if project_disassembly_basic_x86_mxcsr(memory, 64) is Some(_) {
     let (length, name, operands, kinds) = project_disassembly_basic_x86_mxcsr(
+      memory, 64,
+    ).unwrap()
+    Some((length, name, operands, kinds))
+  } else if project_disassembly_basic_x86_fpu_control(memory, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_fpu_control(
       memory, 64,
     ).unwrap()
     Some((length, name, operands, kinds))

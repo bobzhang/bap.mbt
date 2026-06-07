@@ -3054,6 +3054,37 @@ test "project Basic BIL lift covers x86 mxcsr ops" {
     Err(reason) => fail(reason)
   }
 
+  let fldcw32 = basic_bil_decode("x86", b"\xd9\x6d\xfc", start=0x7053UL)
+  match fldcw32.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "FPU_CONTROL:imm16 := load(mem:mem32x8, (EBP:imm32 - 4:32u)):imm16",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let fnstcw64 = basic_bil_decode("x86_64", b"\xd9\x7d\xf8", start=0x7054UL)
+  match fnstcw64.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "mem:mem64x8 := store(mem:mem64x8, (RBP:imm64 - 8:64u), FPU_CONTROL:imm16)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let fldcw64_ext = basic_bil_decode(
+    "x86_64",
+    b"\x41\xd9\x68\x10",
+    start=0x7055UL,
+  )
+  match fldcw64_ext.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "FPU_CONTROL:imm16 := load(mem:mem64x8, (R8:imm64 + 0x10:64u)):imm16",
+      ])
+    Err(reason) => fail(reason)
+  }
+
   let clflush = basic_bil_decode(
     "x86_64",
     b"\x41\x0f\xae\x78\x10",

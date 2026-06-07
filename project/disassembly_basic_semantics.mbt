@@ -248,6 +248,68 @@ fn project_x86_simd_pavg(
 }
 
 ///|
+fn project_x86_simd_element_mask(element_width : Int) -> UInt64 {
+  if element_width >= 64 {
+    UInt64::lnot(0)
+  } else {
+    ((1 : UInt64) << element_width) - 1
+  }
+}
+
+///|
+fn project_x86_simd_packed_add_sub(
+  dest : @types.Word,
+  source : @types.Word,
+  element_width~ : Int,
+  subtract? : Bool = false,
+) -> Result[@types.Word, String] {
+  if dest.width() != source.width() {
+    Err("packed add/sub requires matching operand widths")
+  } else if element_width != 8 &&
+    element_width != 16 &&
+    element_width != 32 &&
+    element_width != 64 {
+    Err("packed add/sub supports byte, word, dword, and qword elements")
+  } else if dest.width() % element_width != 0 {
+    Err("packed add/sub element width must divide the operand width")
+  } else {
+    let mask = project_x86_simd_element_mask(element_width)
+    let elements : Array[@types.Word] = []
+    for index in 0..<(dest.width() / element_width) {
+      let left = match project_x86_simd_element_at(dest, index, element_width) {
+        Ok(word) => word
+        Err(reason) => return Err(reason)
+      }
+      let right = match
+        project_x86_simd_element_at(source, index, element_width) {
+        Ok(word) => word
+        Err(reason) => return Err(reason)
+      }
+      let left_value = match project_x86_simd_unsigned_element_value(left) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let right_value = match project_x86_simd_unsigned_element_value(right) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+      let result = (if subtract {
+          left_value - right_value
+        } else {
+          left_value + right_value
+        }) &
+        mask
+      try @types.Word::of_uint64(width=element_width, result) catch {
+        _ => return Err("packed add/sub element construction failed")
+      } noraise {
+        word => elements.push(word)
+      }
+    }
+    project_x86_simd_from_little_elements(elements)
+  }
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_x86_simd_eval(
   self : ProjectDisassemblyInstruction,
   dest : @types.Word,
@@ -256,6 +318,7 @@ fn ProjectDisassemblyInstruction::project_x86_simd_eval(
   match self.name_value.to_upper() {
     "PCMPEQB" => dest.packed_eq(source, element_width=8)
     "PCMPGTB" => dest.packed_gt(source, element_width=8, signed=true)
+    "PADDQ" => project_x86_simd_packed_add_sub(dest, source, element_width=64)
     "PMINUB" => dest.packed_min(source, element_width=8)
     "PAND" => project_x86_simd_bitop(dest, source, @types.Word::bit_and)
     "PMINSB" => dest.packed_min(source, element_width=8, signed=true)
@@ -274,6 +337,37 @@ fn ProjectDisassemblyInstruction::project_x86_simd_eval(
     "PMAXUD" => dest.packed_max(source, element_width=32)
     "PMAXSD" => dest.packed_max(source, element_width=32, signed=true)
     "PXOR" => project_x86_simd_bitop(dest, source, @types.Word::bit_xor)
+    "PSUBB" =>
+      project_x86_simd_packed_add_sub(
+        dest,
+        source,
+        element_width=8,
+        subtract=true,
+      )
+    "PSUBW" =>
+      project_x86_simd_packed_add_sub(
+        dest,
+        source,
+        element_width=16,
+        subtract=true,
+      )
+    "PSUBD" =>
+      project_x86_simd_packed_add_sub(
+        dest,
+        source,
+        element_width=32,
+        subtract=true,
+      )
+    "PSUBQ" =>
+      project_x86_simd_packed_add_sub(
+        dest,
+        source,
+        element_width=64,
+        subtract=true,
+      )
+    "PADDB" => project_x86_simd_packed_add_sub(dest, source, element_width=8)
+    "PADDW" => project_x86_simd_packed_add_sub(dest, source, element_width=16)
+    "PADDD" => project_x86_simd_packed_add_sub(dest, source, element_width=32)
     "PSHUFB" => dest.x86_pshufb(source)
     name => Err("unsupported x86 SIMD instruction \{name}")
   }

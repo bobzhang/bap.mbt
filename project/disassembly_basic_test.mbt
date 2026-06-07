@@ -4654,6 +4654,7 @@ test "translated BAP basic disassembly recognizes x86 SIMD fixture opcodes" {
   ] = [
     (b"\x66\x0f\x74\xc8", 4, ["PCMPEQB", "XMM1", "XMM0"], []),
     (b"\x66\x0f\x64\xc8", 4, ["PCMPGTB", "XMM1", "XMM0"], []),
+    (b"\x66\x0f\xd4\xc8", 4, ["PADDQ", "XMM1", "XMM0"], []),
     (b"\x66\x0f\xda\xc8", 4, ["PMINUB", "XMM1", "XMM0"], []),
     (b"\x66\x0f\xdb\xc8", 4, ["PAND", "XMM1", "XMM0"], []),
     (b"\x66\x0f\xd7\xc8", 4, ["PMOVMSKB", "ECX", "XMM0"], []),
@@ -4673,6 +4674,13 @@ test "translated BAP basic disassembly recognizes x86 SIMD fixture opcodes" {
     (b"\x66\x0f\x38\x3f\xc8", 5, ["PMAXUD", "XMM1", "XMM0"], []),
     (b"\x66\x0f\x38\x3d\xc8", 5, ["PMAXSD", "XMM1", "XMM0"], []),
     (b"\x66\x0f\xef\xc8", 4, ["PXOR", "XMM1", "XMM0"], []),
+    (b"\x66\x0f\xf8\xc8", 4, ["PSUBB", "XMM1", "XMM0"], []),
+    (b"\x66\x0f\xf9\xc8", 4, ["PSUBW", "XMM1", "XMM0"], []),
+    (b"\x66\x0f\xfa\xc8", 4, ["PSUBD", "XMM1", "XMM0"], []),
+    (b"\x66\x0f\xfb\xc8", 4, ["PSUBQ", "XMM1", "XMM0"], []),
+    (b"\x66\x0f\xfc\xc8", 4, ["PADDB", "XMM1", "XMM0"], []),
+    (b"\x66\x0f\xfd\xc8", 4, ["PADDW", "XMM1", "XMM0"], []),
+    (b"\x66\x0f\xfe\xc8", 4, ["PADDD", "XMM1", "XMM0"], []),
     (b"\x66\x0f\x38\x00\xc1", 5, ["PSHUFB", "XMM0", "XMM1"], []),
     (b"\x66\x0f\x38\x00\x00", 5, ["PSHUFB", "XMM0", "EAX"], [ProjectMayLoad]),
   ]

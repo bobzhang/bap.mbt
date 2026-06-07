@@ -259,6 +259,35 @@ test "project Basic x86 SIMD semantics execute packed average fixtures" {
 }
 
 ///|
+test "project Basic x86 SIMD semantics execute packed add subtract fixtures" {
+  let ones8 = semantic_word128("01010101010101010101010101010101")
+  let ones16 = semantic_word128("00010001000100010001000100010001")
+  let ones32 = semantic_word128("00000001000000010000000100000001")
+  let ones64 = semantic_word128("00000000000000010000000000000001")
+  let zero = semantic_word128("00000000000000000000000000000000")
+  let ones = semantic_word128("ffffffffffffffffffffffffffffffff")
+  let samples : Array[(String, Bytes, @types.Word, @types.Word, @types.Word)] = [
+    ("psubb", b"\x66\x0f\xf8\xc8", ones8, zero, ones),
+    ("psubw", b"\x66\x0f\xf9\xc8", ones16, zero, ones),
+    ("psubd", b"\x66\x0f\xfa\xc8", ones32, zero, ones),
+    ("psubq", b"\x66\x0f\xfb\xc8", ones64, zero, ones),
+    ("paddb", b"\x66\x0f\xfc\xc8", ones8, ones, zero),
+    ("paddw", b"\x66\x0f\xfd\xc8", ones16, ones, zero),
+    ("paddd", b"\x66\x0f\xfe\xc8", ones32, ones, zero),
+    ("paddq", b"\x66\x0f\xd4\xc8", ones64, ones, zero),
+  ]
+  for sample in samples {
+    assert_x86_simd_result(
+      sample.0,
+      sample.1,
+      semantic_xmm_state(sample.2, sample.3),
+      "xmm1",
+      sample.4,
+    )
+  }
+}
+
+///|
 test "project Basic x86 SIMD semantics execute pshufb register fixtures" {
   let origin = semantic_word128("504f4e4d4c4b4a494847464544434241")
   let samples : Array[(String, @types.Word, @types.Word)] = [

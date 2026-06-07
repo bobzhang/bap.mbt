@@ -1538,6 +1538,87 @@ fn ProjectDisassemblyInstruction::project_basic_bil_binop_mi(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_basic_bil_binop_rm(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  op : @types.BinOp,
+) -> Result[Array[@types.Stmt], String] {
+  let dst = match self.project_basic_bil_register(0, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let (addr, mem, _) = match self.project_basic_bil_memory_addr(1) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  Ok([
+    @types.Stmt::move_stmt(
+      dst,
+      @types.Exp::binop(
+        op,
+        @types.Exp::var_exp(dst),
+        @types.Exp::load(
+          mem=@types.Exp::var_exp(mem),
+          addr~,
+          LittleEndian,
+          size,
+        ),
+      ),
+    ),
+  ])
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_binop_mr(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  op : @types.BinOp,
+) -> Result[Array[@types.Stmt], String] {
+  let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let src = match self.project_basic_bil_register(5, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let addr_tmp = project_basic_bil_virtual("binop_a", address_width)
+  let data_tmp = project_basic_bil_virtual("binop_d", width)
+  let addr_exp = @types.Exp::var_exp(addr_tmp)
+  let data_exp = @types.Exp::var_exp(data_tmp)
+  Ok([
+    @types.Stmt::move_stmt(addr_tmp, addr),
+    @types.Stmt::move_stmt(
+      data_tmp,
+      @types.Exp::load(
+        mem=@types.Exp::var_exp(mem),
+        addr=addr_exp,
+        LittleEndian,
+        size,
+      ),
+    ),
+    @types.Stmt::move_stmt(
+      mem,
+      @types.Exp::store(
+        mem=@types.Exp::var_exp(mem),
+        addr=addr_exp,
+        @types.Exp::binop(op, data_exp, @types.Exp::var_exp(src)),
+        LittleEndian,
+        size,
+      ),
+    ),
+  ])
+}
+
+///|
 fn project_basic_bil_x86_carry(width : Int) -> @types.Exp {
   @types.Exp::cast(
     @types.CastKind::unsigned(),
@@ -5197,6 +5278,12 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
       self.project_basic_bil_binop_mi(32, @types.BinOp::minus())
     "SUB64MI8" | "SUB64MI32" =>
       self.project_basic_bil_binop_mi(64, @types.BinOp::minus())
+    "SUB8RM" => self.project_basic_bil_binop_rm(8, @types.BinOp::minus())
+    "SUB32RM" => self.project_basic_bil_binop_rm(32, @types.BinOp::minus())
+    "SUB64RM" => self.project_basic_bil_binop_rm(64, @types.BinOp::minus())
+    "SUB8MR" => self.project_basic_bil_binop_mr(8, @types.BinOp::minus())
+    "SUB32MR" => self.project_basic_bil_binop_mr(32, @types.BinOp::minus())
+    "SUB64MR" => self.project_basic_bil_binop_mr(64, @types.BinOp::minus())
     "ADD8RI8" => self.project_basic_bil_binop_ri(8, @types.BinOp::plus())
     "ADD32RI8" | "ADD32RI32" =>
       self.project_basic_bil_binop_ri(32, @types.BinOp::plus())
@@ -5209,6 +5296,12 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
       self.project_basic_bil_binop_mi(32, @types.BinOp::plus())
     "ADD64MI8" | "ADD64MI32" =>
       self.project_basic_bil_binop_mi(64, @types.BinOp::plus())
+    "ADD8RM" => self.project_basic_bil_binop_rm(8, @types.BinOp::plus())
+    "ADD32RM" => self.project_basic_bil_binop_rm(32, @types.BinOp::plus())
+    "ADD64RM" => self.project_basic_bil_binop_rm(64, @types.BinOp::plus())
+    "ADD8MR" => self.project_basic_bil_binop_mr(8, @types.BinOp::plus())
+    "ADD32MR" => self.project_basic_bil_binop_mr(32, @types.BinOp::plus())
+    "ADD64MR" => self.project_basic_bil_binop_mr(64, @types.BinOp::plus())
     "ADC8RI8" => self.project_basic_bil_adc_ri(8)
     "ADC32RI8" | "ADC32RI32" => self.project_basic_bil_adc_ri(32)
     "ADC64RI8" | "ADC64RI32" => self.project_basic_bil_adc_ri(64)

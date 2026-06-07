@@ -556,6 +556,47 @@ test "project Basic BIL lift covers x86 memory add-sub immediates" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 memory add-sub rr operands" {
+  let add64_mr = basic_bil_decode("x86_64", b"\x48\x01\x4d\xf8", start=0x702cUL)
+  match add64_mr.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%binop_a:imm64 := (RBP:imm64 - 8:64u)", "%binop_d:imm64 := load(mem:mem64x8, %binop_a:imm64):imm64",
+        "mem:mem64x8 := store(mem:mem64x8, %binop_a:imm64, (%binop_d:imm64 + RCX:imm64))",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let add64_rm = basic_bil_decode("x86_64", b"\x48\x03\x45\xf8", start=0x702dUL)
+  match add64_rm.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "RAX:imm64 := (RAX:imm64 + load(mem:mem64x8, (RBP:imm64 - 8:64u)):imm64)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let sub32_mr = basic_bil_decode("x86", b"\x29\x4d\xfc", start=0x702fUL)
+  match sub32_mr.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%binop_a:imm32 := (EBP:imm32 - 4:32u)", "%binop_d:imm32 := load(mem:mem32x8, %binop_a:imm32):imm32",
+        "mem:mem32x8 := store(mem:mem32x8, %binop_a:imm32, (%binop_d:imm32 - ECX:imm32))",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let sub8_rm = basic_bil_decode("x86", b"\x2a\x4d\xfc", start=0x7031UL)
+  match sub8_rm.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "CL:imm8 := (CL:imm8 - load(mem:mem32x8, (EBP:imm32 - 4:32u)):imm8)",
+      ])
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86 memory adc-sbb immediates" {
   let adc64_mem = basic_bil_decode(
     "x86_64",

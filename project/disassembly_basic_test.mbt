@@ -1127,6 +1127,83 @@ test "translated BAP basic disassembly decodes x86 register shift fixtures" {
 }
 
 ///|
+test "translated BAP basic disassembly decodes x86 shld-shrd fixtures" {
+  let samples : Array[
+    (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),
+  ] = [
+    (
+      "x86",
+      b"\x0f\xa4\xc8\x04",
+      4,
+      ["SHLD32rri8", "EAX", "EAX", "ECX", "0x4"],
+      [],
+    ),
+    ("x86", b"\x0f\xad\xd0", 3, ["SHRD32rrCL", "EAX", "EAX", "EDX", "CL"], []),
+    (
+      "x86",
+      b"\x66\x0f\xac\xd0\x03",
+      5,
+      ["SHRD16rri8", "AX", "AX", "DX", "0x3"],
+      [],
+    ),
+    (
+      "x86",
+      b"\x0f\xa5\x4d\xfc",
+      4,
+      ["SHLD32mrCL", "EBP", "0x1", "Nil", "-0x4", "Nil", "ECX", "CL"],
+      [ProjectMayLoad, ProjectMayStore],
+    ),
+    (
+      "x86_64",
+      b"\x48\x0f\xa4\xc8\x04",
+      5,
+      ["SHLD64rri8", "RAX", "RAX", "RCX", "0x4"],
+      [],
+    ),
+    (
+      "x86_64",
+      b"\x4d\x0f\xad\xc8",
+      4,
+      ["SHRD64rrCL", "R8", "R8", "R9", "CL"],
+      [],
+    ),
+    (
+      "x86_64",
+      b"\x48\x0f\xac\x55\xf8\x05",
+      6,
+      ["SHRD64mri8", "RBP", "0x1", "Nil", "-0x8", "Nil", "RDX", "0x5"],
+      [ProjectMayLoad, ProjectMayStore],
+    ),
+  ]
+  for sample in samples {
+    let disasm = match
+      @project.ProjectDisassemblyBasic::create(sample.0, backend="llvm") {
+      Ok(disasm) => disasm
+      Err(reason) => fail(reason)
+    }
+    let memory = @memory.Memory::from_bytes(
+      endian=LittleEndian,
+      start=0xe2a4UL,
+      sample.1,
+    )
+    match disasm.insn_of_mem(memory) {
+      Ok(result) => {
+        assert_true(result.memory().length() == sample.2)
+        assert_true(result.remainder().is_finished())
+        match result.instruction() {
+          Some(instruction) => {
+            assert_true(basic_instruction_strings(instruction) == sample.3)
+            assert_true(instruction.kinds() == sample.4)
+          }
+          None => fail("missing x86 shld-shrd instruction")
+        }
+      }
+      Err(reason) => fail(reason)
+    }
+  }
+}
+
+///|
 test "translated BAP basic disassembly decodes x86 register rotate fixtures" {
   let samples : Array[(String, Bytes, Int, Array[String])] = [
     ("x86", b"\xd0\xc0", 2, ["ROL8r1", "AL", "AL", "0x1"]),

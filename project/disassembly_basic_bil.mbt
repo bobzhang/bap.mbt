@@ -2335,6 +2335,242 @@ fn ProjectDisassemblyInstruction::project_basic_bil_shift_count_with_width(
 }
 
 ///|
+fn project_basic_bil_shiftd_count(
+  raw_count : @types.Exp,
+  count_width : Int,
+  width : Int,
+) -> Result[(@types.Exp, @types.Exp), String] {
+  let size = match project_basic_bil_int(width.to_int64(), count_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let count_mask = match
+    project_basic_bil_int((width - 1).to_int64(), count_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let count = @types.Exp::binop(@types.BinOp::bit_and(), raw_count, count_mask)
+  let remaining = @types.Exp::binop(@types.BinOp::minus(), size, count)
+  Ok((count, remaining))
+}
+
+///|
+fn project_basic_bil_shiftd_result(
+  old_dst : @types.Exp,
+  fill : @types.Exp,
+  count : @types.Exp,
+  remaining : @types.Exp,
+  left : Bool,
+) -> @types.Exp {
+  let ret1 = if left {
+    @types.Exp::binop(@types.BinOp::rshift(), fill, remaining)
+  } else {
+    @types.Exp::binop(@types.BinOp::lshift(), fill, remaining)
+  }
+  let ret2 = if left {
+    @types.Exp::binop(@types.BinOp::lshift(), old_dst, count)
+  } else {
+    @types.Exp::binop(@types.BinOp::rshift(), old_dst, count)
+  }
+  @types.Exp::binop(@types.BinOp::bit_or(), ret1, ret2)
+}
+
+///|
+fn project_basic_bil_shiftd_flags(
+  old_dst : @types.Exp,
+  result : @types.Exp,
+  count : @types.Exp,
+  remaining : @types.Exp,
+  count_width : Int,
+  width : Int,
+  left : Bool,
+) -> Result[@types.Stmt, String] {
+  let zero_count = match project_basic_bil_int(0L, count_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let one_count = match project_basic_bil_int(1L, count_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let zero_result = match project_basic_bil_int(0L, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let cf = if left {
+    @types.Exp::cast(
+      @types.CastKind::low(),
+      1,
+      @types.Exp::binop(@types.BinOp::rshift(), old_dst, remaining),
+    )
+  } else {
+    @types.Exp::cast(
+      @types.CastKind::high(),
+      1,
+      @types.Exp::binop(@types.BinOp::lshift(), old_dst, remaining),
+    )
+  }
+  let parity = match project_basic_bil_x86_parity(result, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let of_defined = @types.Exp::cast(
+    @types.CastKind::high(),
+    1,
+    project_basic_bil_x86_xor(old_dst, result),
+  )
+  let of_undefined = @types.Exp::unknown(
+    "OF undefined after shiftd of more then 1 bit",
+    Imm(1),
+  )
+  Ok(
+    @types.Stmt::if_(
+      @types.Exp::binop(@types.BinOp::neq(), count, zero_count),
+      [
+        project_basic_bil_x86_flag_move("CF", cf),
+        project_basic_bil_x86_flag_move(
+          "SF",
+          @types.Exp::cast(@types.CastKind::high(), 1, result),
+        ),
+        project_basic_bil_x86_flag_move(
+          "ZF",
+          @types.Exp::binop(@types.BinOp::eq(), zero_result, result),
+        ),
+        project_basic_bil_x86_flag_move("PF", parity),
+        @types.Stmt::if_(
+          @types.Exp::binop(@types.BinOp::eq(), count, one_count),
+          [project_basic_bil_x86_flag_move("OF", of_defined)],
+          [project_basic_bil_x86_flag_move("OF", of_undefined)],
+        ),
+      ],
+      [],
+    ),
+  )
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_shiftd_rr(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  left : Bool,
+) -> Result[Array[@types.Stmt], String] {
+  let dst = match self.project_basic_bil_register(0, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let old_src = match self.project_basic_bil_register(1, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let fill = match self.project_basic_bil_register(2, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let (raw_count, count_width) = match
+    self.project_basic_bil_shift_count_with_width(3, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let (count, remaining) = match
+    project_basic_bil_shiftd_count(raw_count, count_width, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let was = project_basic_bil_virtual("shiftd_was", width)
+  let old_dst = @types.Exp::var_exp(was)
+  let result = project_basic_bil_shiftd_result(
+    old_dst,
+    @types.Exp::var_exp(fill),
+    count,
+    remaining,
+    left,
+  )
+  let flags = match
+    project_basic_bil_shiftd_flags(
+      old_dst, result, count, remaining, count_width, width, left,
+    ) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  Ok([
+    @types.Stmt::move_stmt(was, @types.Exp::var_exp(old_src)),
+    @types.Stmt::move_stmt(dst, result),
+    flags,
+  ])
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_shiftd_mr(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  left : Bool,
+) -> Result[Array[@types.Stmt], String] {
+  let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let fill = match self.project_basic_bil_register(5, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let (raw_count, count_width) = match
+    self.project_basic_bil_shift_count_with_width(6, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let (count, remaining) = match
+    project_basic_bil_shiftd_count(raw_count, count_width, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let addr_tmp = project_basic_bil_virtual("shiftd_a", address_width)
+  let was = project_basic_bil_virtual("shiftd_was", width)
+  let old_dst = @types.Exp::var_exp(was)
+  let addr_exp = @types.Exp::var_exp(addr_tmp)
+  let result = project_basic_bil_shiftd_result(
+    old_dst,
+    @types.Exp::var_exp(fill),
+    count,
+    remaining,
+    left,
+  )
+  let flags = match
+    project_basic_bil_shiftd_flags(
+      old_dst, result, count, remaining, count_width, width, left,
+    ) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  Ok([
+    @types.Stmt::move_stmt(addr_tmp, addr),
+    @types.Stmt::move_stmt(
+      was,
+      @types.Exp::load(
+        mem=@types.Exp::var_exp(mem),
+        addr=addr_exp,
+        LittleEndian,
+        size,
+      ),
+    ),
+    @types.Stmt::move_stmt(
+      mem,
+      @types.Exp::store(
+        mem=@types.Exp::var_exp(mem),
+        addr=addr_exp,
+        result,
+        LittleEndian,
+        size,
+      ),
+    ),
+    flags,
+  ])
+}
+
+///|
 fn project_basic_bil_rotate_expr(
   src : @types.Var,
   count : @types.Exp,
@@ -3894,6 +4130,18 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "BTS16MI8" => self.project_basic_bil_btx_mi(16, "BTS")
     "BTS32MI8" => self.project_basic_bil_btx_mi(32, "BTS")
     "BTS64MI8" => self.project_basic_bil_btx_mi(64, "BTS")
+    "SHLD16RRI8" | "SHLD16RRCL" => self.project_basic_bil_shiftd_rr(16, true)
+    "SHLD32RRI8" | "SHLD32RRCL" => self.project_basic_bil_shiftd_rr(32, true)
+    "SHLD64RRI8" | "SHLD64RRCL" => self.project_basic_bil_shiftd_rr(64, true)
+    "SHLD16MRI8" | "SHLD16MRCL" => self.project_basic_bil_shiftd_mr(16, true)
+    "SHLD32MRI8" | "SHLD32MRCL" => self.project_basic_bil_shiftd_mr(32, true)
+    "SHLD64MRI8" | "SHLD64MRCL" => self.project_basic_bil_shiftd_mr(64, true)
+    "SHRD16RRI8" | "SHRD16RRCL" => self.project_basic_bil_shiftd_rr(16, false)
+    "SHRD32RRI8" | "SHRD32RRCL" => self.project_basic_bil_shiftd_rr(32, false)
+    "SHRD64RRI8" | "SHRD64RRCL" => self.project_basic_bil_shiftd_rr(64, false)
+    "SHRD16MRI8" | "SHRD16MRCL" => self.project_basic_bil_shiftd_mr(16, false)
+    "SHRD32MRI8" | "SHRD32MRCL" => self.project_basic_bil_shiftd_mr(32, false)
+    "SHRD64MRI8" | "SHRD64MRCL" => self.project_basic_bil_shiftd_mr(64, false)
     "ROL8R1" | "ROL8RCL" | "ROL8RI8" => self.project_basic_bil_rotate_r(8, true)
     "ROL32R1" | "ROL32RCL" | "ROL32RI8" =>
       self.project_basic_bil_rotate_r(32, true)

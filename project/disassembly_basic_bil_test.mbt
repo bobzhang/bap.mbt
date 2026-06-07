@@ -643,6 +643,125 @@ test "project Basic BIL lift covers x86 register shift ops" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 shld-shrd ops" {
+  let shld32 = basic_bil_decode("x86", b"\x0f\xa4\xc8\x04", start=0x7045UL)
+  match shld32.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 3)
+      assert_string(stmts[0].to_string(), "%shiftd_was:imm32 := EAX:imm32")
+      let result = "((ECX:imm32 >> (0x20:32u - (4:32u & 0x1F:32u))) | (%shiftd_was:imm32 << (4:32u & 0x1F:32u)))"
+      assert_string(stmts[1].to_string(), "EAX:imm32 := " + result)
+      match stmts[2] {
+        If(cond~, yes~, no~) => {
+          assert_string(cond.to_string(), "((4:32u & 0x1F:32u) != 0:32u)")
+          assert_true(no.is_empty())
+          assert_true(yes.length() == 5)
+          assert_string(
+            yes[0].to_string(),
+            "CF:imm1 := low:1[(%shiftd_was:imm32 >> (0x20:32u - (4:32u & 0x1F:32u)))]",
+          )
+          assert_string(yes[1].to_string(), "SF:imm1 := high:1[" + result + "]")
+          assert_string(
+            yes[2].to_string(),
+            "ZF:imm1 := (0:32u == " + result + ")",
+          )
+          assert_true(yes[3].to_string().has_prefix("PF:imm1 := "))
+          match yes[4] {
+            If(cond~, yes~, no~) => {
+              assert_string(cond.to_string(), "((4:32u & 0x1F:32u) == 1:32u)")
+              assert_true(yes.length() == 1)
+              assert_string(
+                yes[0].to_string(),
+                "OF:imm1 := high:1[(%shiftd_was:imm32 ^ " + result + ")]",
+              )
+              assert_true(no.length() == 1)
+              assert_string(
+                no[0].to_string(),
+                "OF:imm1 := unknown(OF undefined after shiftd of more then 1 bit:imm1)",
+              )
+            }
+            _ => fail("SHLD32 OF update did not lift to BIL if")
+          }
+        }
+        _ => fail("SHLD32 flag update did not lift to BIL if")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let shrd64 = basic_bil_decode("x86_64", b"\x4d\x0f\xad\xc8", start=0x7047UL)
+  match shrd64.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 3)
+      assert_string(stmts[0].to_string(), "%shiftd_was:imm64 := R8:imm64")
+      assert_true(
+        stmts[1]
+        .to_string()
+        .contains(
+          "R8:imm64 := ((R9:imm64 << (0x40:8u - (CL:imm8 & 0x3F:8u))) | (%shiftd_was:imm64 >> (CL:imm8 & 0x3F:8u)))",
+        ),
+      )
+      match stmts[2] {
+        If(cond~, yes~, no~) => {
+          assert_string(cond.to_string(), "((CL:imm8 & 0x3F:8u) != 0:8u)")
+          assert_true(no.is_empty())
+          assert_true(yes.length() == 5)
+          assert_string(
+            yes[0].to_string(),
+            "CF:imm1 := high:1[(%shiftd_was:imm64 << (0x40:8u - (CL:imm8 & 0x3F:8u)))]",
+          )
+          match yes[4] {
+            If(cond~, yes~, no~) => {
+              assert_string(cond.to_string(), "((CL:imm8 & 0x3F:8u) == 1:8u)")
+              assert_true(yes.length() == 1)
+              assert_true(no.length() == 1)
+            }
+            _ => fail("SHRD64 OF update did not lift to BIL if")
+          }
+        }
+        _ => fail("SHRD64 flag update did not lift to BIL if")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let shrd64_mem = basic_bil_decode(
+    "x86_64",
+    b"\x48\x0f\xac\x55\xf8\x05",
+    start=0x7049UL,
+  )
+  match shrd64_mem.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 4)
+      assert_string(
+        stmts[0].to_string(),
+        "%shiftd_a:imm64 := (RBP:imm64 - 8:64u)",
+      )
+      assert_string(
+        stmts[1].to_string(),
+        "%shiftd_was:imm64 := load(mem:mem64x8, %shiftd_a:imm64):imm64",
+      )
+      assert_true(
+        stmts[2]
+        .to_string()
+        .contains(
+          "mem:mem64x8 := store(mem:mem64x8, %shiftd_a:imm64, ((RDX:imm64 << (0x40:64u - (5:64u & 0x3F:64u))) | (%shiftd_was:imm64 >> (5:64u & 0x3F:64u))))",
+        ),
+      )
+      match stmts[3] {
+        If(cond~, yes~, no~) => {
+          assert_string(cond.to_string(), "((5:64u & 0x3F:64u) != 0:64u)")
+          assert_true(no.is_empty())
+          assert_true(yes.length() == 5)
+        }
+        _ => fail("SHRD64 memory flag update did not lift to BIL if")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86 register rotate ops" {
   let rol8_one = basic_bil_decode("x86", b"\xd0\xc0", start=0x7046UL)
   match rol8_one.lift_basic_bil() {

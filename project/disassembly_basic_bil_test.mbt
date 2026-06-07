@@ -1901,6 +1901,83 @@ test "project Basic BIL lift covers x86 shld-shrd ops" {
     Err(reason) => fail(reason)
   }
 
+  let shld16 = basic_bil_decode("x86", b"\x66\x0f\xa4\xc8\x04", start=0x7046UL)
+  match shld16.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 3)
+      assert_string(stmts[0].to_string(), "%shiftd_was:imm16 := AX:imm16")
+      let result = "((CX:imm16 >> (0x10:16u - (4:16u & 0xF:16u))) | (%shiftd_was:imm16 << (4:16u & 0xF:16u)))"
+      assert_string(stmts[1].to_string(), "AX:imm16 := " + result)
+      match stmts[2] {
+        If(cond~, yes~, no~) => {
+          assert_string(cond.to_string(), "((4:16u & 0xF:16u) != 0:16u)")
+          assert_true(no.is_empty())
+          assert_true(yes.length() == 5)
+          assert_string(
+            yes[0].to_string(),
+            "CF:imm1 := low:1[(%shiftd_was:imm16 >> (0x10:16u - (4:16u & 0xF:16u)))]",
+          )
+          assert_string(yes[1].to_string(), "SF:imm1 := high:1[" + result + "]")
+          assert_string(
+            yes[2].to_string(),
+            "ZF:imm1 := (0:16u == " + result + ")",
+          )
+          assert_true(yes[3].to_string().has_prefix("PF:imm1 := "))
+          match yes[4] {
+            If(cond~, yes~, no~) => {
+              assert_string(cond.to_string(), "((4:16u & 0xF:16u) == 1:16u)")
+              assert_true(yes.length() == 1)
+              assert_string(
+                yes[0].to_string(),
+                "OF:imm1 := high:1[(%shiftd_was:imm16 ^ " + result + ")]",
+              )
+              assert_true(no.length() == 1)
+              assert_string(
+                no[0].to_string(),
+                "OF:imm1 := unknown(OF undefined after shiftd of more then 1 bit:imm1)",
+              )
+            }
+            _ => fail("SHLD16 OF update did not lift to BIL if")
+          }
+        }
+        _ => fail("SHLD16 flag update did not lift to BIL if")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let shrd16 = basic_bil_decode("x86", b"\x66\x0f\xac\xd0\x03", start=0x7047UL)
+  match shrd16.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 3)
+      assert_string(stmts[0].to_string(), "%shiftd_was:imm16 := AX:imm16")
+      let result = "((DX:imm16 << (0x10:16u - (3:16u & 0xF:16u))) | (%shiftd_was:imm16 >> (3:16u & 0xF:16u)))"
+      assert_string(stmts[1].to_string(), "AX:imm16 := " + result)
+      match stmts[2] {
+        If(cond~, yes~, no~) => {
+          assert_string(cond.to_string(), "((3:16u & 0xF:16u) != 0:16u)")
+          assert_true(no.is_empty())
+          assert_true(yes.length() == 5)
+          assert_string(
+            yes[0].to_string(),
+            "CF:imm1 := high:1[(%shiftd_was:imm16 << (0x10:16u - (3:16u & 0xF:16u)))]",
+          )
+          assert_string(yes[1].to_string(), "SF:imm1 := high:1[" + result + "]")
+          match yes[4] {
+            If(cond~, yes~, no~) => {
+              assert_string(cond.to_string(), "((3:16u & 0xF:16u) == 1:16u)")
+              assert_true(yes.length() == 1)
+              assert_true(no.length() == 1)
+            }
+            _ => fail("SHRD16 OF update did not lift to BIL if")
+          }
+        }
+        _ => fail("SHRD16 flag update did not lift to BIL if")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+
   let shrd64 = basic_bil_decode("x86_64", b"\x4d\x0f\xad\xc8", start=0x7047UL)
   match shrd64.lift_basic_bil() {
     Ok(stmts) => {
@@ -1932,6 +2009,84 @@ test "project Basic BIL lift covers x86 shld-shrd ops" {
           }
         }
         _ => fail("SHRD64 flag update did not lift to BIL if")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let shld16_mem = basic_bil_decode(
+    "x86",
+    b"\x66\x0f\xa5\x4d\xfc",
+    start=0x7048UL,
+  )
+  match shld16_mem.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 4)
+      assert_string(
+        stmts[0].to_string(),
+        "%shiftd_a:imm32 := (EBP:imm32 - 4:32u)",
+      )
+      assert_string(
+        stmts[1].to_string(),
+        "%shiftd_was:imm16 := load(mem:mem32x8, %shiftd_a:imm32):imm16",
+      )
+      assert_true(
+        stmts[2]
+        .to_string()
+        .contains(
+          "mem:mem32x8 := store(mem:mem32x8, %shiftd_a:imm32, ((CX:imm16 >> (0x10:8u - (CL:imm8 & 0xF:8u))) | (%shiftd_was:imm16 << (CL:imm8 & 0xF:8u))))",
+        ),
+      )
+      match stmts[3] {
+        If(cond~, yes~, no~) => {
+          assert_string(cond.to_string(), "((CL:imm8 & 0xF:8u) != 0:8u)")
+          assert_true(no.is_empty())
+          assert_true(yes.length() == 5)
+          assert_string(
+            yes[0].to_string(),
+            "CF:imm1 := low:1[(%shiftd_was:imm16 >> (0x10:8u - (CL:imm8 & 0xF:8u)))]",
+          )
+        }
+        _ => fail("SHLD16 memory flag update did not lift to BIL if")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let shrd16_mem = basic_bil_decode(
+    "x86",
+    b"\x66\x0f\xac\x55\xfc\x05",
+    start=0x7049UL,
+  )
+  match shrd16_mem.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 4)
+      assert_string(
+        stmts[0].to_string(),
+        "%shiftd_a:imm32 := (EBP:imm32 - 4:32u)",
+      )
+      assert_string(
+        stmts[1].to_string(),
+        "%shiftd_was:imm16 := load(mem:mem32x8, %shiftd_a:imm32):imm16",
+      )
+      assert_true(
+        stmts[2]
+        .to_string()
+        .contains(
+          "mem:mem32x8 := store(mem:mem32x8, %shiftd_a:imm32, ((DX:imm16 << (0x10:16u - (5:16u & 0xF:16u))) | (%shiftd_was:imm16 >> (5:16u & 0xF:16u))))",
+        ),
+      )
+      match stmts[3] {
+        If(cond~, yes~, no~) => {
+          assert_string(cond.to_string(), "((5:16u & 0xF:16u) != 0:16u)")
+          assert_true(no.is_empty())
+          assert_true(yes.length() == 5)
+          assert_string(
+            yes[0].to_string(),
+            "CF:imm1 := high:1[(%shiftd_was:imm16 << (0x10:16u - (5:16u & 0xF:16u)))]",
+          )
+        }
+        _ => fail("SHRD16 memory flag update did not lift to BIL if")
       }
     }
     Err(reason) => fail(reason)

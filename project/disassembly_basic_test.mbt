@@ -1531,7 +1531,15 @@ test "translated BAP basic disassembly decodes x86 shld-shrd fixtures" {
       ["SHLD32rri8", "EAX", "EAX", "ECX", "0x4"],
       [],
     ),
+    (
+      "x86",
+      b"\x66\x0f\xa4\xc8\x04",
+      5,
+      ["SHLD16rri8", "AX", "AX", "CX", "0x4"],
+      [],
+    ),
     ("x86", b"\x0f\xad\xd0", 3, ["SHRD32rrCL", "EAX", "EAX", "EDX", "CL"], []),
+    ("x86", b"\x66\x0f\xad\xd0", 4, ["SHRD16rrCL", "AX", "AX", "DX", "CL"], []),
     (
       "x86",
       b"\x66\x0f\xac\xd0\x03",
@@ -1544,6 +1552,20 @@ test "translated BAP basic disassembly decodes x86 shld-shrd fixtures" {
       b"\x0f\xa5\x4d\xfc",
       4,
       ["SHLD32mrCL", "EBP", "0x1", "Nil", "-0x4", "Nil", "ECX", "CL"],
+      [ProjectMayLoad, ProjectMayStore],
+    ),
+    (
+      "x86",
+      b"\x66\x0f\xa5\x4d\xfc",
+      5,
+      ["SHLD16mrCL", "EBP", "0x1", "Nil", "-0x4", "Nil", "CX", "CL"],
+      [ProjectMayLoad, ProjectMayStore],
+    ),
+    (
+      "x86",
+      b"\x66\x0f\xac\x55\xfc\x05",
+      6,
+      ["SHRD16mri8", "EBP", "0x1", "Nil", "-0x4", "Nil", "DX", "0x5"],
       [ProjectMayLoad, ProjectMayStore],
     ),
     (

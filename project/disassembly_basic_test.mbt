@@ -933,6 +933,13 @@ test "translated BAP basic disassembly decodes x86 imul register-memory fixtures
       ["IMUL32rm", "EAX", "EBP", "0x1", "Nil", "-0x4", "Nil"],
       [ProjectMayLoad],
     ),
+    (
+      "x86",
+      b"\x66\x0f\xaf\x45\xfc",
+      5,
+      ["IMUL16rm", "AX", "EBP", "0x1", "Nil", "-0x4", "Nil"],
+      [ProjectMayLoad],
+    ),
   ]
   for sample in samples {
     let disasm = match
@@ -984,6 +991,13 @@ test "translated BAP basic disassembly decodes x86 mul fixtures" {
       b"\xf7\x65\xfc",
       3,
       ["MUL32m", "EBP", "0x1", "Nil", "-0x4", "Nil"],
+      [ProjectMayLoad],
+    ),
+    (
+      "x86",
+      b"\x66\xf7\x65\xfc",
+      4,
+      ["MUL16m", "EBP", "0x1", "Nil", "-0x4", "Nil"],
       [ProjectMayLoad],
     ),
   ]
@@ -1039,6 +1053,13 @@ test "translated BAP basic disassembly decodes x86 one-operand imul fixtures" {
       ["IMUL32m", "EBP", "0x1", "Nil", "-0x4", "Nil"],
       [ProjectMayLoad],
     ),
+    (
+      "x86",
+      b"\x66\xf7\x6d\xfc",
+      4,
+      ["IMUL16m", "EBP", "0x1", "Nil", "-0x4", "Nil"],
+      [ProjectMayLoad],
+    ),
   ]
   for sample in samples {
     let disasm = match
@@ -1092,6 +1113,13 @@ test "translated BAP basic disassembly decodes x86 div-idiv fixtures" {
       ["DIV32m", "EBP", "0x1", "Nil", "-0x4", "Nil"],
       [ProjectMayLoad],
     ),
+    (
+      "x86",
+      b"\x66\xf7\x75\xfc",
+      4,
+      ["DIV16m", "EBP", "0x1", "Nil", "-0x4", "Nil"],
+      [ProjectMayLoad],
+    ),
     ("x86", b"\xf6\xf9", 2, ["IDIV8r", "CL"], []),
     ("x86", b"\xf7\xf9", 2, ["IDIV32r", "ECX"], []),
     ("x86", b"\x66\xf7\xf9", 3, ["IDIV16r", "CX"], []),
@@ -1109,6 +1137,13 @@ test "translated BAP basic disassembly decodes x86 div-idiv fixtures" {
       b"\xf7\x7d\xfc",
       3,
       ["IDIV32m", "EBP", "0x1", "Nil", "-0x4", "Nil"],
+      [ProjectMayLoad],
+    ),
+    (
+      "x86",
+      b"\x66\xf7\x7d\xfc",
+      4,
+      ["IDIV16m", "EBP", "0x1", "Nil", "-0x4", "Nil"],
       [ProjectMayLoad],
     ),
   ]

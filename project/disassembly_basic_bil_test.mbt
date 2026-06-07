@@ -2853,6 +2853,23 @@ test "project Basic BIL lift covers x86 imul immediate ops" {
     Err(reason) => fail(reason)
   }
 
+  let imul16_mem = basic_bil_decode(
+    "x86",
+    b"\x66\x69\x45\xfc\x34\x12",
+    start=0x7026UL,
+  )
+  match imul16_mem.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%imul_tmp:imm32 := (extend:32[load(mem:mem32x8, (EBP:imm32 - 4:32u)):imm16] * extend:32[0x1234:16u])",
+        "AX:imm16 := low:16[%imul_tmp:imm32]", "OF:imm1 := (%imul_tmp:imm32 != extend:32[AX:imm16])",
+        "CF:imm1 := (%imul_tmp:imm32 != extend:32[AX:imm16])", "PF:imm1 := unknown(PF is undefined after imul:imm1)",
+        "SF:imm1 := unknown(SF is undefined after imul:imm1)", "ZF:imm1 := unknown(ZF is undefined after imul:imm1)",
+        "AF:imm1 := unknown(AF is undefined after imul:imm1)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
   let imul64_mem = basic_bil_decode(
     "x86_64",
     b"\x48\x6b\x45\xf8\x03",
@@ -2893,6 +2910,23 @@ test "project Basic BIL lift covers x86 imul register-memory ops" {
         "OF:imm1 := (%imul_tmp:imm32 != extend:32[AX:imm16])", "CF:imm1 := (%imul_tmp:imm32 != extend:32[AX:imm16])",
         "PF:imm1 := unknown(PF is undefined after imul:imm1)", "SF:imm1 := unknown(SF is undefined after imul:imm1)",
         "ZF:imm1 := unknown(ZF is undefined after imul:imm1)", "AF:imm1 := unknown(AF is undefined after imul:imm1)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let imul16_mem = basic_bil_decode(
+    "x86",
+    b"\x66\x0f\xaf\x45\xfc",
+    start=0x7032UL,
+  )
+  match imul16_mem.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%imul_tmp:imm32 := (extend:32[AX:imm16] * extend:32[load(mem:mem32x8, (EBP:imm32 - 4:32u)):imm16])",
+        "AX:imm16 := low:16[%imul_tmp:imm32]", "OF:imm1 := (%imul_tmp:imm32 != extend:32[AX:imm16])",
+        "CF:imm1 := (%imul_tmp:imm32 != extend:32[AX:imm16])", "PF:imm1 := unknown(PF is undefined after imul:imm1)",
+        "SF:imm1 := unknown(SF is undefined after imul:imm1)", "ZF:imm1 := unknown(ZF is undefined after imul:imm1)",
+        "AF:imm1 := unknown(AF is undefined after imul:imm1)",
       ])
     Err(reason) => fail(reason)
   }
@@ -2938,6 +2972,19 @@ test "project Basic BIL lift covers x86 mul ops" {
         "CF:imm1 := (high:16[%mul_tmp:imm32] != 0:16u)", "SF:imm1 := unknown(SF is undefined after Mul:imm1)",
         "ZF:imm1 := unknown(ZF is undefined after Mul:imm1)", "AF:imm1 := unknown(AF is undefined after Mul:imm1)",
         "PF:imm1 := unknown(PF is undefined after Mul:imm1)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let mul16_mem = basic_bil_decode("x86", b"\x66\xf7\x65\xfc", start=0x703dUL)
+  match mul16_mem.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%mul_tmp:imm32 := (pad:32[AX:imm16] * pad:32[load(mem:mem32x8, (EBP:imm32 - 4:32u)):imm16])",
+        "AX:imm16 := low:16[%mul_tmp:imm32]", "DX:imm16 := high:16[%mul_tmp:imm32]",
+        "OF:imm1 := (high:16[%mul_tmp:imm32] != 0:16u)", "CF:imm1 := (high:16[%mul_tmp:imm32] != 0:16u)",
+        "SF:imm1 := unknown(SF is undefined after Mul:imm1)", "ZF:imm1 := unknown(ZF is undefined after Mul:imm1)",
+        "AF:imm1 := unknown(AF is undefined after Mul:imm1)", "PF:imm1 := unknown(PF is undefined after Mul:imm1)",
       ])
     Err(reason) => fail(reason)
   }
@@ -2996,6 +3043,19 @@ test "project Basic BIL lift covers x86 one-operand imul ops" {
         "CF:imm1 := (high:32[%imul_tmp:imm64] != 0:32u)", "PF:imm1 := unknown(PF is undefined after imul:imm1)",
         "SF:imm1 := unknown(SF is undefined after imul:imm1)", "ZF:imm1 := unknown(ZF is undefined after imul:imm1)",
         "AF:imm1 := unknown(AF is undefined after imul:imm1)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let imul16_mem = basic_bil_decode("x86", b"\x66\xf7\x6d\xfc", start=0x7047UL)
+  match imul16_mem.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%imul_tmp:imm32 := (extend:32[AX:imm16] * extend:32[load(mem:mem32x8, (EBP:imm32 - 4:32u)):imm16])",
+        "AX:imm16 := low:16[%imul_tmp:imm32]", "DX:imm16 := high:16[%imul_tmp:imm32]",
+        "OF:imm1 := (high:16[%imul_tmp:imm32] != 0:16u)", "CF:imm1 := (high:16[%imul_tmp:imm32] != 0:16u)",
+        "PF:imm1 := unknown(PF is undefined after imul:imm1)", "SF:imm1 := unknown(SF is undefined after imul:imm1)",
+        "ZF:imm1 := unknown(ZF is undefined after imul:imm1)", "AF:imm1 := unknown(AF is undefined after imul:imm1)",
       ])
     Err(reason) => fail(reason)
   }
@@ -3094,6 +3154,109 @@ test "project Basic BIL lift covers x86 div-idiv ops" {
             _ => fail("DIV32 overflow check did not lift to BIL if")
           }
         _ => fail("DIV32 zero-divisor check did not lift to BIL if")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let div16_mem = basic_bil_decode("x86", b"\x66\xf7\x75\xfc", start=0x704fUL)
+  match div16_mem.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_basic_bil_text(stmts, [
+        "%divisor:imm32 := pad:32[load(mem:mem32x8, (EBP:imm32 - 4:32u)):imm16]",
+        "%dividend:imm32 := concat(DX:imm16, AX:imm16)", "if (%divisor:imm32 == 0:32u) then 1 stmts else 3 stmts",
+        "CF:imm1 := unknown(CF is undefined after div:imm1)", "OF:imm1 := unknown(OF is undefined after div:imm1)",
+        "SF:imm1 := unknown(SF is undefined after div:imm1)", "ZF:imm1 := unknown(ZF is undefined after div:imm1)",
+        "AF:imm1 := unknown(AF is undefined after div:imm1)", "PF:imm1 := unknown(PF is undefined after div:imm1)",
+      ])
+      match stmts[2] {
+        If(yes~, no~, ..) => {
+          assert_true(yes.length() == 1)
+          assert_string(yes[0].to_string(), "cpuexn 0")
+          assert_string(
+            no[0].to_string(),
+            "%div:imm32 := (%dividend:imm32 / %divisor:imm32)",
+          )
+          assert_string(
+            no[1].to_string(),
+            "%rem:imm32 := (%dividend:imm32 % %divisor:imm32)",
+          )
+          match no[2] {
+            If(cond~, yes~, no~) => {
+              assert_string(cond.to_string(), "(high:16[%div:imm32] == 0:16u)")
+              assert_true(yes.length() == 3)
+              assert_string(
+                yes[0].to_string(),
+                "%div_result:imm32 := concat(low:16[%rem:imm32], low:16[%div:imm32])",
+              )
+              assert_string(
+                yes[1].to_string(),
+                "AX:imm16 := low:16[%div_result:imm32]",
+              )
+              assert_string(
+                yes[2].to_string(),
+                "DX:imm16 := high:16[%div_result:imm32]",
+              )
+              assert_true(no.length() == 1)
+              assert_string(no[0].to_string(), "cpuexn 0")
+            }
+            _ => fail("DIV16 memory overflow check did not lift to BIL if")
+          }
+        }
+        _ => fail("DIV16 memory zero-divisor check did not lift to BIL if")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let idiv16_mem = basic_bil_decode("x86", b"\x66\xf7\x7d\xfc", start=0x7050UL)
+  match idiv16_mem.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_basic_bil_text(stmts, [
+        "%divisor:imm32 := extend:32[load(mem:mem32x8, (EBP:imm32 - 4:32u)):imm16]",
+        "%dividend:imm32 := concat(DX:imm16, AX:imm16)", "if (%divisor:imm32 == 0:32u) then 1 stmts else 3 stmts",
+        "CF:imm1 := unknown(CF is undefined after idiv:imm1)", "OF:imm1 := unknown(OF is undefined after idiv:imm1)",
+        "SF:imm1 := unknown(SF is undefined after idiv:imm1)", "ZF:imm1 := unknown(ZF is undefined after idiv:imm1)",
+        "AF:imm1 := unknown(AF is undefined after idiv:imm1)", "PF:imm1 := unknown(PF is undefined after idiv:imm1)",
+      ])
+      match stmts[2] {
+        If(yes~, no~, ..) => {
+          assert_true(yes.length() == 1)
+          assert_string(yes[0].to_string(), "cpuexn 0")
+          assert_string(
+            no[0].to_string(),
+            "%div:imm32 := (%dividend:imm32 s/ %divisor:imm32)",
+          )
+          assert_string(
+            no[1].to_string(),
+            "%rem:imm32 := (%dividend:imm32 s% %divisor:imm32)",
+          )
+          match no[2] {
+            If(cond~, yes~, no~) => {
+              assert_string(
+                cond.to_string(),
+                "((((1:32u << 0x1F:32u) - 1:32u) s< %div:imm32) | (%div:imm32 s< (1:32u << 0x1F:32u)))",
+              )
+              assert_true(yes.length() == 1)
+              assert_string(yes[0].to_string(), "cpuexn 0")
+              assert_true(no.length() == 3)
+              assert_string(
+                no[0].to_string(),
+                "%div_result:imm32 := concat(low:16[%rem:imm32], low:16[%div:imm32])",
+              )
+              assert_string(
+                no[1].to_string(),
+                "AX:imm16 := low:16[%div_result:imm32]",
+              )
+              assert_string(
+                no[2].to_string(),
+                "DX:imm16 := high:16[%div_result:imm32]",
+              )
+            }
+            _ => fail("IDIV16 memory overflow check did not lift to BIL if")
+          }
+        }
+        _ => fail("IDIV16 memory zero-divisor check did not lift to BIL if")
       }
     }
     Err(reason) => fail(reason)

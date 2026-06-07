@@ -1156,7 +1156,12 @@ fn project_disassembly_basic_x86_system(
               } else {
                 None
               }
+            0x08 => Some((2, "INVD"))
+            0x09 => Some((2, "WBINVD"))
+            0x30 => Some((2, "WRMSR"))
             0x31 => Some((2, "RDTSC"))
+            0x32 => Some((2, "RDMSR"))
+            0x33 => Some((2, "RDPMC"))
             0x34 => Some((2, "SYSENTER"))
             0xa2 => Some((2, "CPUID"))
             0xae =>

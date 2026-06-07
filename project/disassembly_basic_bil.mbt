@@ -7225,7 +7225,10 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "POPF64" => project_basic_bil_x86_popf(64, 64)
     "INT3" | "INT" => self.project_basic_bil_cpuexn()
     "HLT" => Ok([])
+    "INVD" | "WBINVD" | "WRMSR" => Ok([])
     "RDTSC" => Ok(project_basic_bil_x86_unknown_regs("rdtsc", ["EAX", "EDX"]))
+    "RDMSR" => Ok(project_basic_bil_x86_unknown_regs("rdmsr", ["EAX", "EDX"]))
+    "RDPMC" => Ok(project_basic_bil_x86_unknown_regs("rdpmc", ["EAX", "EDX"]))
     "RDTSCP" =>
       Ok(project_basic_bil_x86_unknown_regs("rdtscp", ["EAX", "EDX", "ECX"]))
     "CPUID" =>

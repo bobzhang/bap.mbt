@@ -555,7 +555,25 @@ test "project Basic BIL lift covers x86 system instructions" {
     Err(reason) => fail(reason)
   }
 
-  let rdtsc = basic_bil_decode("x86_64", b"\x0f\x31", start=0x7015UL)
+  let invd = basic_bil_decode("x86", b"\x0f\x08", start=0x7015UL)
+  match invd.lift_basic_bil() {
+    Ok(stmts) => assert_true(stmts.is_empty())
+    Err(reason) => fail(reason)
+  }
+
+  let wbinvd = basic_bil_decode("x86", b"\x0f\x09", start=0x7017UL)
+  match wbinvd.lift_basic_bil() {
+    Ok(stmts) => assert_true(stmts.is_empty())
+    Err(reason) => fail(reason)
+  }
+
+  let wrmsr = basic_bil_decode("x86", b"\x0f\x30", start=0x7019UL)
+  match wrmsr.lift_basic_bil() {
+    Ok(stmts) => assert_true(stmts.is_empty())
+    Err(reason) => fail(reason)
+  }
+
+  let rdtsc = basic_bil_decode("x86_64", b"\x0f\x31", start=0x701bUL)
   match rdtsc.lift_basic_bil() {
     Ok(stmts) =>
       assert_basic_bil_text(stmts, [
@@ -564,7 +582,25 @@ test "project Basic BIL lift covers x86 system instructions" {
     Err(reason) => fail(reason)
   }
 
-  let rdtscp = basic_bil_decode("x86_64", b"\x0f\x01\xf9", start=0x7017UL)
+  let rdmsr = basic_bil_decode("x86_64", b"\x0f\x32", start=0x701dUL)
+  match rdmsr.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "EAX:imm32 := unknown(rdmsr:imm32)", "EDX:imm32 := unknown(rdmsr:imm32)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let rdpmc = basic_bil_decode("x86_64", b"\x0f\x33", start=0x701fUL)
+  match rdpmc.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "EAX:imm32 := unknown(rdpmc:imm32)", "EDX:imm32 := unknown(rdpmc:imm32)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let rdtscp = basic_bil_decode("x86_64", b"\x0f\x01\xf9", start=0x7021UL)
   match rdtscp.lift_basic_bil() {
     Ok(stmts) =>
       assert_basic_bil_text(stmts, [
@@ -574,7 +610,7 @@ test "project Basic BIL lift covers x86 system instructions" {
     Err(reason) => fail(reason)
   }
 
-  let cpuid = basic_bil_decode("x86_64", b"\x0f\xa2", start=0x701aUL)
+  let cpuid = basic_bil_decode("x86_64", b"\x0f\xa2", start=0x7024UL)
   match cpuid.lift_basic_bil() {
     Ok(stmts) =>
       assert_basic_bil_text(stmts, [
@@ -584,7 +620,7 @@ test "project Basic BIL lift covers x86 system instructions" {
     Err(reason) => fail(reason)
   }
 
-  let xgetbv = basic_bil_decode("x86", b"\x0f\x01\xd0", start=0x701cUL)
+  let xgetbv = basic_bil_decode("x86", b"\x0f\x01\xd0", start=0x7026UL)
   match xgetbv.lift_basic_bil() {
     Ok(stmts) =>
       assert_basic_bil_text(stmts, [
@@ -593,25 +629,25 @@ test "project Basic BIL lift covers x86 system instructions" {
     Err(reason) => fail(reason)
   }
 
-  let monitor = basic_bil_decode("x86_64", b"\x0f\x01\xc8", start=0x701fUL)
+  let monitor = basic_bil_decode("x86_64", b"\x0f\x01\xc8", start=0x7029UL)
   match monitor.lift_basic_bil() {
     Ok(stmts) => assert_true(stmts.is_empty())
     Err(reason) => fail(reason)
   }
 
-  let mwait = basic_bil_decode("x86_64", b"\x0f\x01\xc9", start=0x7022UL)
+  let mwait = basic_bil_decode("x86_64", b"\x0f\x01\xc9", start=0x702cUL)
   match mwait.lift_basic_bil() {
     Ok(stmts) => assert_true(stmts.is_empty())
     Err(reason) => fail(reason)
   }
 
-  let mwaitx = basic_bil_decode("x86_64", b"\x0f\x01\xfb", start=0x7025UL)
+  let mwaitx = basic_bil_decode("x86_64", b"\x0f\x01\xfb", start=0x702fUL)
   match mwaitx.lift_basic_bil() {
     Ok(stmts) => assert_true(stmts.is_empty())
     Err(reason) => fail(reason)
   }
 
-  let syscall = basic_bil_decode("x86_64", b"\x0f\x05", start=0x7028UL)
+  let syscall = basic_bil_decode("x86_64", b"\x0f\x05", start=0x7032UL)
   match syscall.lift_basic_bil() {
     Ok(stmts) => {
       assert_true(stmts.length() == 1)
@@ -622,7 +658,7 @@ test "project Basic BIL lift covers x86 system instructions" {
     Err(reason) => fail(reason)
   }
 
-  let sysenter = basic_bil_decode("x86", b"\x0f\x34", start=0x702aUL)
+  let sysenter = basic_bil_decode("x86", b"\x0f\x34", start=0x7034UL)
   match sysenter.lift_basic_bil() {
     Ok(stmts) => {
       assert_true(stmts.length() == 1)

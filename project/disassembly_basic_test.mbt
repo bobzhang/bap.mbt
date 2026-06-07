@@ -2487,8 +2487,11 @@ test "translated BAP basic disassembly decodes x86 register push fixtures" {
     ("x86_64", b"\x55", 1, ["PUSH64r", "RBP"], [ProjectMayStore]),
     ("x86_64", b"\x54", 1, ["PUSH64r", "RSP"], [ProjectMayStore]),
     ("x86_64", b"\x41\x50", 2, ["PUSH64r", "R8"], [ProjectMayStore]),
+    ("x86_64", b"\x66\x55", 2, ["PUSH16r_64", "BP"], [ProjectMayStore]),
+    ("x86_64", b"\x66\x41\x50", 3, ["PUSH16r_64", "R8W"], [ProjectMayStore]),
     ("x86", b"\x55", 1, ["PUSH32r", "EBP"], [ProjectMayStore]),
     ("x86", b"\x54", 1, ["PUSH32r", "ESP"], [ProjectMayStore]),
+    ("x86", b"\x66\x55", 2, ["PUSH16r", "BP"], [ProjectMayStore]),
   ]
   for sample in samples {
     let disasm = match
@@ -2533,7 +2536,16 @@ test "translated BAP basic disassembly decodes x86 immediate push fixtures" {
       [ProjectMayStore],
     ),
     ("x86_64", b"\x40\x6a\x7f", 3, ["PUSH64i8", "0x7f"], [ProjectMayStore]),
+    ("x86_64", b"\x66\x6a\xff", 3, ["PUSH16i8_64", "-0x1"], [ProjectMayStore]),
+    (
+      "x86_64",
+      b"\x66\x68\x34\x12",
+      4,
+      ["PUSH16i16_64", "0x1234"],
+      [ProjectMayStore],
+    ),
     ("x86", b"\x6a\x7f", 2, ["PUSH32i8", "0x7f"], [ProjectMayStore]),
+    ("x86", b"\x66\x6a\xff", 3, ["PUSH16i8", "-0x1"], [ProjectMayStore]),
     (
       "x86",
       b"\x68\x78\x56\x34\x12",
@@ -2541,6 +2553,7 @@ test "translated BAP basic disassembly decodes x86 immediate push fixtures" {
       ["PUSH32i32", "0x12345678"],
       [ProjectMayStore],
     ),
+    ("x86", b"\x66\x68\x34\x12", 4, ["PUSH16i16", "0x1234"], [ProjectMayStore]),
   ]
   for sample in samples {
     let disasm = match
@@ -2584,11 +2597,27 @@ test "translated BAP basic disassembly decodes x86 ModRM push fixtures" {
       [ProjectMayLoad, ProjectMayStore],
     ),
     ("x86", b"\xff\xf0", 2, ["PUSH32r", "EAX"], [ProjectMayStore]),
+    ("x86", b"\x66\xff\xf0", 3, ["PUSH16r", "AX"], [ProjectMayStore]),
     (
       "x86",
       b"\xff\x75\xfc",
       3,
       ["PUSH32m", "EBP", "0x1", "Nil", "-0x4", "Nil"],
+      [ProjectMayLoad, ProjectMayStore],
+    ),
+    (
+      "x86",
+      b"\x66\xff\x75\xfc",
+      4,
+      ["PUSH16m", "EBP", "0x1", "Nil", "-0x4", "Nil"],
+      [ProjectMayLoad, ProjectMayStore],
+    ),
+    ("x86_64", b"\x66\x41\xff\xf0", 4, ["PUSH16r_64", "R8W"], [ProjectMayStore]),
+    (
+      "x86_64",
+      b"\x66\xff\x70\x10",
+      4,
+      ["PUSH16m_64", "RAX", "0x1", "Nil", "0x10", "Nil"],
       [ProjectMayLoad, ProjectMayStore],
     ),
   ]
@@ -2704,8 +2733,11 @@ test "translated BAP basic disassembly decodes x86 register pop fixtures" {
     ("x86_64", b"\x5d", 1, ["POP64r", "RBP"], [ProjectMayLoad]),
     ("x86_64", b"\x5c", 1, ["POP64r", "RSP"], [ProjectMayLoad]),
     ("x86_64", b"\x41\x58", 2, ["POP64r", "R8"], [ProjectMayLoad]),
+    ("x86_64", b"\x66\x5d", 2, ["POP16r_64", "BP"], [ProjectMayLoad]),
+    ("x86_64", b"\x66\x41\x58", 3, ["POP16r_64", "R8W"], [ProjectMayLoad]),
     ("x86", b"\x5d", 1, ["POP32r", "EBP"], [ProjectMayLoad]),
     ("x86", b"\x5c", 1, ["POP32r", "ESP"], [ProjectMayLoad]),
+    ("x86", b"\x66\x5d", 2, ["POP16r", "BP"], [ProjectMayLoad]),
   ]
   for sample in samples {
     let disasm = match

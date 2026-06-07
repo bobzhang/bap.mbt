@@ -54,26 +54,29 @@ fn project_basic_bil_arm_mem() -> @types.Var {
 }
 
 ///|
-fn project_basic_bil_stack_mem(width : Int) -> @types.Var {
-  @types.Var::new(name="mem", typ=Mem(addr_width=width, value_width=8))
+fn project_basic_bil_stack_mem(address_width : Int) -> @types.Var {
+  @types.Var::new(name="mem", typ=Mem(addr_width=address_width, value_width=8))
 }
 
 ///|
-fn project_basic_bil_stack_pointer(width : Int) -> Result[@types.Var, String] {
-  match width {
+fn project_basic_bil_stack_pointer(
+  address_width : Int,
+) -> Result[@types.Var, String] {
+  match address_width {
     32 => Ok(project_basic_bil_reg("ESP", 32))
     64 => Ok(project_basic_bil_reg("RSP", 64))
-    _ => Err("unsupported stack width \{width}")
+    _ => Err("unsupported stack address width \{address_width}")
   }
 }
 
 ///|
 fn project_basic_bil_stack_offset(
   sp : @types.Var,
-  width : Int,
+  value_width : Int,
+  address_width : Int,
   op : @types.BinOp,
 ) -> Result[@types.Exp, String] {
-  match project_basic_bil_int((width / 8).to_int64(), width) {
+  match project_basic_bil_int((value_width / 8).to_int64(), address_width) {
     Ok(offset) => Ok(@types.Exp::binop(op, @types.Exp::var_exp(sp), offset))
     Err(reason) => Err(reason)
   }
@@ -82,17 +85,29 @@ fn project_basic_bil_stack_offset(
 ///|
 fn project_basic_bil_stack_decrement(
   sp : @types.Var,
-  width : Int,
+  value_width : Int,
+  address_width : Int,
 ) -> Result[@types.Exp, String] {
-  project_basic_bil_stack_offset(sp, width, @types.BinOp::minus())
+  project_basic_bil_stack_offset(
+    sp,
+    value_width,
+    address_width,
+    @types.BinOp::minus(),
+  )
 }
 
 ///|
 fn project_basic_bil_stack_increment(
   sp : @types.Var,
-  width : Int,
+  value_width : Int,
+  address_width : Int,
 ) -> Result[@types.Exp, String] {
-  project_basic_bil_stack_offset(sp, width, @types.BinOp::plus())
+  project_basic_bil_stack_offset(
+    sp,
+    value_width,
+    address_width,
+    @types.BinOp::plus(),
+  )
 }
 
 ///|
@@ -1320,7 +1335,7 @@ fn project_basic_bil_x86_pushf(
   width : Int,
 ) -> Result[Array[@types.Stmt], String] {
   match project_basic_bil_x86_flags_image(width) {
-    Ok(flags) => project_basic_bil_push_exp(flags, width)
+    Ok(flags) => project_basic_bil_push_exp(flags, width, width)
     Err(reason) => Err(reason)
   }
 }
@@ -1336,7 +1351,7 @@ fn project_basic_bil_x86_popf(
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  let updated_sp = match project_basic_bil_stack_increment(sp, width) {
+  let updated_sp = match project_basic_bil_stack_increment(sp, width, width) {
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
@@ -5763,25 +5778,28 @@ fn ProjectDisassemblyInstruction::project_basic_bil_xchg_rm(
 ///|
 fn project_basic_bil_push_exp(
   src : @types.Exp,
-  width : Int,
+  value_width : Int,
+  address_width : Int,
 ) -> Result[Array[@types.Stmt], String] {
-  let sp = match project_basic_bil_stack_pointer(width) {
+  let sp = match project_basic_bil_stack_pointer(address_width) {
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  let addr = match project_basic_bil_stack_decrement(sp, width) {
+  let addr = match
+    project_basic_bil_stack_decrement(sp, value_width, address_width) {
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  let updated_sp = match project_basic_bil_stack_decrement(sp, width) {
+  let updated_sp = match
+    project_basic_bil_stack_decrement(sp, value_width, address_width) {
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  let size = match @types.Size::of_int(width) {
+  let size = match @types.Size::of_int(value_width) {
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  let mem = project_basic_bil_stack_mem(width)
+  let mem = project_basic_bil_stack_mem(address_width)
   Ok([
     @types.Stmt::move_stmt(
       mem,
@@ -5800,10 +5818,11 @@ fn project_basic_bil_push_exp(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_push(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  value_width : Int,
+  address_width : Int,
 ) -> Result[Array[@types.Stmt], String] {
-  match self.project_basic_bil_value(0, width) {
-    Ok(src) => project_basic_bil_push_exp(src, width)
+  match self.project_basic_bil_value(0, value_width) {
+    Ok(src) => project_basic_bil_push_exp(src, value_width, address_width)
     Err(reason) => Err(reason)
   }
 }
@@ -5811,40 +5830,43 @@ fn ProjectDisassemblyInstruction::project_basic_bil_push(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_push_mem(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  value_width : Int,
+  address_width : Int,
 ) -> Result[Array[@types.Stmt], String] {
   let (addr, mem, _) = match self.project_basic_bil_memory_addr(0) {
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  let size = match @types.Size::of_int(width) {
+  let size = match @types.Size::of_int(value_width) {
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
   project_basic_bil_push_exp(
     @types.Exp::load(mem=@types.Exp::var_exp(mem), addr~, LittleEndian, size),
-    width,
+    value_width,
+    address_width,
   )
 }
 
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_pop(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  value_width : Int,
+  address_width : Int,
 ) -> Result[Array[@types.Stmt], String] {
-  let dst = match self.project_basic_bil_register(0, width) {
+  let dst = match self.project_basic_bil_register(0, value_width) {
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  let sp = match project_basic_bil_stack_pointer(width) {
+  let sp = match project_basic_bil_stack_pointer(address_width) {
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  let size = match @types.Size::of_int(width) {
+  let size = match @types.Size::of_int(value_width) {
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  let mem = project_basic_bil_stack_mem(width)
+  let mem = project_basic_bil_stack_mem(address_width)
   let stmts = [
     @types.Stmt::move_stmt(
       dst,
@@ -5857,7 +5879,8 @@ fn ProjectDisassemblyInstruction::project_basic_bil_pop(
     ),
   ]
   if dst != sp {
-    let updated_sp = match project_basic_bil_stack_increment(sp, width) {
+    let updated_sp = match
+      project_basic_bil_stack_increment(sp, value_width, address_width) {
       Ok(value) => value
       Err(reason) => return Err(reason)
     }
@@ -5880,7 +5903,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_leave(
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  let updated_sp = match project_basic_bil_stack_increment(sp, width) {
+  let updated_sp = match project_basic_bil_stack_increment(sp, width, width) {
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
@@ -6946,12 +6969,19 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     | "SETG" => self.project_basic_bil_setcc()
     "BSWAP32R" => self.project_basic_bil_bswap(32)
     "BSWAP64R" => self.project_basic_bil_bswap(64)
-    "PUSH32R" | "PUSH32I8" | "PUSH32I32" => self.project_basic_bil_push(32)
-    "PUSH64R" | "PUSH64I8" | "PUSH64I32" => self.project_basic_bil_push(64)
-    "PUSH32M" => self.project_basic_bil_push_mem(32)
-    "PUSH64M" => self.project_basic_bil_push_mem(64)
-    "POP32R" => self.project_basic_bil_pop(32)
-    "POP64R" => self.project_basic_bil_pop(64)
+    "PUSH16R" | "PUSH16I8" | "PUSH16I16" => self.project_basic_bil_push(16, 32)
+    "PUSH16R_64" | "PUSH16I8_64" | "PUSH16I16_64" =>
+      self.project_basic_bil_push(16, 64)
+    "PUSH32R" | "PUSH32I8" | "PUSH32I32" => self.project_basic_bil_push(32, 32)
+    "PUSH64R" | "PUSH64I8" | "PUSH64I32" => self.project_basic_bil_push(64, 64)
+    "PUSH16M" => self.project_basic_bil_push_mem(16, 32)
+    "PUSH16M_64" => self.project_basic_bil_push_mem(16, 64)
+    "PUSH32M" => self.project_basic_bil_push_mem(32, 32)
+    "PUSH64M" => self.project_basic_bil_push_mem(64, 64)
+    "POP16R" => self.project_basic_bil_pop(16, 32)
+    "POP16R_64" => self.project_basic_bil_pop(16, 64)
+    "POP32R" => self.project_basic_bil_pop(32, 32)
+    "POP64R" => self.project_basic_bil_pop(64, 64)
     "LEAVE" => self.project_basic_bil_leave(32)
     "LEAVE64" => self.project_basic_bil_leave(64)
     "ENDBR32" | "ENDBR64" => Ok([])

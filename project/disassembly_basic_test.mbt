@@ -1854,6 +1854,27 @@ test "translated BAP basic disassembly decodes x86 memory rotate fixtures" {
       ["ROL8mi8", "R8", "0x1", "Nil", "0x1", "Nil", "0x4"],
       [ProjectMayLoad, ProjectMayStore],
     ),
+    (
+      "x86_64",
+      b"\x48\xd1\x55\xf8",
+      4,
+      ["RCL64m1", "RBP", "0x1", "Nil", "-0x8", "Nil", "0x1"],
+      [ProjectMayLoad, ProjectMayStore],
+    ),
+    (
+      "x86",
+      b"\xd3\x5d\xfc",
+      3,
+      ["RCR32mCL", "EBP", "0x1", "Nil", "-0x4", "Nil", "CL"],
+      [ProjectMayLoad, ProjectMayStore],
+    ),
+    (
+      "x86_64",
+      b"\x41\xc0\x50\x01\x04",
+      5,
+      ["RCL8mi8", "R8", "0x1", "Nil", "0x1", "Nil", "0x4"],
+      [ProjectMayLoad, ProjectMayStore],
+    ),
   ]
   for sample in samples {
     let disasm = match

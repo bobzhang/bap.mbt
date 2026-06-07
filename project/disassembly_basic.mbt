@@ -4812,6 +4812,8 @@ fn project_disassembly_basic_x86_shift_reg(
           )
         } else if op != "ROL" &&
           op != "ROR" &&
+          op != "RCL" &&
+          op != "RCR" &&
           op != "SHL" &&
           op != "SHR" &&
           op != "SAR" {

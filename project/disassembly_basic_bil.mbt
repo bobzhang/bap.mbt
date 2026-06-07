@@ -3875,6 +3875,88 @@ fn ProjectDisassemblyInstruction::project_basic_bil_rotate_carry_r(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_basic_bil_rotate_carry_m(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  left : Bool,
+) -> Result[Array[@types.Stmt], String] {
+  let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let (raw_count, count_width) = match
+    self.project_basic_bil_shift_count_with_width(5, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let count = match
+    project_basic_bil_rotate_carry_count(raw_count, count_width, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let addr_tmp = project_basic_bil_virtual("rotate_carry_a", address_width)
+  let data_tmp = project_basic_bil_virtual("rotate_carry_d", width)
+  let rotated_tmp = project_basic_bil_virtual("rotate_carry_res", width + 1)
+  let result_tmp = project_basic_bil_virtual("rotate_carry_dst", width)
+  let addr_exp = @types.Exp::var_exp(addr_tmp)
+  let data_exp = @types.Exp::var_exp(data_tmp)
+  let rotated_exp = @types.Exp::var_exp(rotated_tmp)
+  let result_exp = @types.Exp::var_exp(result_tmp)
+  let carry = project_basic_bil_x86_flag("CF")
+  let combined = if left {
+    @types.Exp::concat(data_exp, carry)
+  } else {
+    @types.Exp::concat(carry, data_exp)
+  }
+  let rotated = match
+    project_basic_bil_rotate_exp(combined, count, count_width, width + 1, left) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let result = if left {
+    @types.Exp::extract(rotated_exp, hi=width, lo=1)
+  } else {
+    @types.Exp::extract(rotated_exp, hi=width - 1, lo=0)
+  }
+  let flags = match
+    project_basic_bil_rotate_carry_flags(
+      rotated_exp, result_exp, count, count_width, width, left,
+    ) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  Ok([
+    @types.Stmt::move_stmt(addr_tmp, addr),
+    @types.Stmt::move_stmt(
+      data_tmp,
+      @types.Exp::load(
+        mem=@types.Exp::var_exp(mem),
+        addr=addr_exp,
+        LittleEndian,
+        size,
+      ),
+    ),
+    @types.Stmt::move_stmt(rotated_tmp, rotated),
+    @types.Stmt::move_stmt(result_tmp, result),
+    @types.Stmt::move_stmt(
+      mem,
+      @types.Exp::store(
+        mem=@types.Exp::var_exp(mem),
+        addr=addr_exp,
+        result_exp,
+        LittleEndian,
+        size,
+      ),
+    ),
+    flags,
+  ])
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_basic_bil_rotate_m(
   self : ProjectDisassemblyInstruction,
   width : Int,
@@ -6489,6 +6571,18 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
       self.project_basic_bil_rotate_carry_r(32, false)
     "RCR64R1" | "RCR64RCL" | "RCR64RI8" =>
       self.project_basic_bil_rotate_carry_r(64, false)
+    "RCL8M1" | "RCL8MCL" | "RCL8MI8" =>
+      self.project_basic_bil_rotate_carry_m(8, true)
+    "RCL32M1" | "RCL32MCL" | "RCL32MI8" =>
+      self.project_basic_bil_rotate_carry_m(32, true)
+    "RCL64M1" | "RCL64MCL" | "RCL64MI8" =>
+      self.project_basic_bil_rotate_carry_m(64, true)
+    "RCR8M1" | "RCR8MCL" | "RCR8MI8" =>
+      self.project_basic_bil_rotate_carry_m(8, false)
+    "RCR32M1" | "RCR32MCL" | "RCR32MI8" =>
+      self.project_basic_bil_rotate_carry_m(32, false)
+    "RCR64M1" | "RCR64MCL" | "RCR64MI8" =>
+      self.project_basic_bil_rotate_carry_m(64, false)
     "SHL8R1" | "SHL8RCL" | "SHL8RI8" =>
       self.project_basic_bil_shift_r(8, @types.BinOp::lshift())
     "SHL32R1" | "SHL32RCL" | "SHL32RI8" =>

@@ -2557,6 +2557,137 @@ test "project Basic BIL lift covers x86 rotate ops" {
     }
     Err(reason) => fail(reason)
   }
+
+  let rcl64_mem = basic_bil_decode(
+    "x86_64",
+    b"\x48\xd1\x55\xf8",
+    start=0x7068UL,
+  )
+  match rcl64_mem.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 6)
+      assert_string(
+        stmts[0].to_string(),
+        "%rotate_carry_a:imm64 := (RBP:imm64 - 8:64u)",
+      )
+      assert_string(
+        stmts[1].to_string(),
+        "%rotate_carry_d:imm64 := load(mem:mem64x8, %rotate_carry_a:imm64):imm64",
+      )
+      let count = "(1:64u & 0x3F:64u)"
+      assert_string(
+        stmts[2].to_string(),
+        "%rotate_carry_res:imm65 := ((concat(%rotate_carry_d:imm64, CF:imm1) << " +
+        count +
+        ") | (concat(%rotate_carry_d:imm64, CF:imm1) >> (0x41:64u - " +
+        count +
+        ")))",
+      )
+      assert_string(
+        stmts[3].to_string(),
+        "%rotate_carry_dst:imm64 := extract[64:1](%rotate_carry_res:imm65)",
+      )
+      assert_string(
+        stmts[4].to_string(),
+        "mem:mem64x8 := store(mem:mem64x8, %rotate_carry_a:imm64, %rotate_carry_dst:imm64)",
+      )
+      assert_rotate_flag_update(
+        stmts[5],
+        "(\{count} != 0:64u)",
+        "CF:imm1 := low:1[%rotate_carry_res:imm65]",
+        count,
+        "1:64u",
+        "OF:imm1 := (high:1[%rotate_carry_dst:imm64] ^ low:1[%rotate_carry_res:imm65])",
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let rcr32_mem_cl = basic_bil_decode("x86", b"\xd3\x5d\xfc", start=0x706cUL)
+  match rcr32_mem_cl.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 6)
+      assert_string(
+        stmts[0].to_string(),
+        "%rotate_carry_a:imm32 := (EBP:imm32 - 4:32u)",
+      )
+      assert_string(
+        stmts[1].to_string(),
+        "%rotate_carry_d:imm32 := load(mem:mem32x8, %rotate_carry_a:imm32):imm32",
+      )
+      let count = "(CL:imm8 & 0x1F:8u)"
+      assert_string(
+        stmts[2].to_string(),
+        "%rotate_carry_res:imm33 := ((concat(CF:imm1, %rotate_carry_d:imm32) >> " +
+        count +
+        ") | (concat(CF:imm1, %rotate_carry_d:imm32) << (0x21:8u - " +
+        count +
+        ")))",
+      )
+      assert_string(
+        stmts[3].to_string(),
+        "%rotate_carry_dst:imm32 := extract[31:0](%rotate_carry_res:imm33)",
+      )
+      assert_string(
+        stmts[4].to_string(),
+        "mem:mem32x8 := store(mem:mem32x8, %rotate_carry_a:imm32, %rotate_carry_dst:imm32)",
+      )
+      assert_rotate_flag_update(
+        stmts[5],
+        "(\{count} != 0:8u)",
+        "CF:imm1 := high:1[%rotate_carry_res:imm33]",
+        count,
+        "1:8u",
+        "OF:imm1 := (high:1[%rotate_carry_dst:imm32] ^ extract[30:30](%rotate_carry_dst:imm32))",
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let rcl8_mem_imm = basic_bil_decode(
+    "x86_64",
+    b"\x41\xc0\x50\x01\x04",
+    start=0x706fUL,
+  )
+  match rcl8_mem_imm.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 6)
+      assert_string(
+        stmts[0].to_string(),
+        "%rotate_carry_a:imm64 := (R8:imm64 + 1:64u)",
+      )
+      assert_string(
+        stmts[1].to_string(),
+        "%rotate_carry_d:imm8 := load(mem:mem64x8, %rotate_carry_a:imm64):imm8",
+      )
+      let count = "((4:8u & 0x1F:8u) % 9:8u)"
+      assert_string(
+        stmts[2].to_string(),
+        "%rotate_carry_res:imm9 := ((concat(%rotate_carry_d:imm8, CF:imm1) << " +
+        count +
+        ") | (concat(%rotate_carry_d:imm8, CF:imm1) >> (9:8u - " +
+        count +
+        ")))",
+      )
+      assert_string(
+        stmts[3].to_string(),
+        "%rotate_carry_dst:imm8 := extract[8:1](%rotate_carry_res:imm9)",
+      )
+      assert_string(
+        stmts[4].to_string(),
+        "mem:mem64x8 := store(mem:mem64x8, %rotate_carry_a:imm64, %rotate_carry_dst:imm8)",
+      )
+      assert_rotate_flag_update(
+        stmts[5],
+        "(\{count} != 0:8u)",
+        "CF:imm1 := low:1[%rotate_carry_res:imm9]",
+        count,
+        "1:8u",
+        "OF:imm1 := (high:1[%rotate_carry_dst:imm8] ^ low:1[%rotate_carry_res:imm9])",
+      )
+    }
+    Err(reason) => fail(reason)
+  }
 }
 
 ///|

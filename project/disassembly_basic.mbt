@@ -2811,6 +2811,38 @@ fn project_disassembly_basic_x86_imul_acc(
 }
 
 ///|
+fn project_disassembly_basic_x86_div(
+  memory : @memory.Memory,
+  data_width : Int,
+  address_width : Int,
+) -> (
+  Int,
+  String,
+  Array[ProjectInstructionOperand],
+  Array[ProjectInstructionKind],
+)? {
+  project_disassembly_basic_x86_group3_accumulator(
+    memory, data_width, address_width, 6, "DIV",
+  )
+}
+
+///|
+fn project_disassembly_basic_x86_idiv(
+  memory : @memory.Memory,
+  data_width : Int,
+  address_width : Int,
+) -> (
+  Int,
+  String,
+  Array[ProjectInstructionOperand],
+  Array[ProjectInstructionKind],
+)? {
+  project_disassembly_basic_x86_group3_accumulator(
+    memory, data_width, address_width, 7, "IDIV",
+  )
+}
+
+///|
 fn project_disassembly_basic_x86_test_imm(
   memory : @memory.Memory,
   data_width : Int,
@@ -4197,6 +4229,36 @@ fn project_disassembly_basic_decode_x86_llvm(
           memory, 32, 32,
         ).unwrap()
         Some((length, name, "", "", operands, kinds))
+      } else if project_disassembly_basic_x86_div(memory, 8, 32) is Some(_) {
+        let (length, name, operands, kinds) = project_disassembly_basic_x86_div(
+          memory, 8, 32,
+        ).unwrap()
+        Some((length, name, "", "", operands, kinds))
+      } else if project_disassembly_basic_x86_div(memory, 16, 32) is Some(_) {
+        let (length, name, operands, kinds) = project_disassembly_basic_x86_div(
+          memory, 16, 32,
+        ).unwrap()
+        Some((length, name, "", "", operands, kinds))
+      } else if project_disassembly_basic_x86_div(memory, 32, 32) is Some(_) {
+        let (length, name, operands, kinds) = project_disassembly_basic_x86_div(
+          memory, 32, 32,
+        ).unwrap()
+        Some((length, name, "", "", operands, kinds))
+      } else if project_disassembly_basic_x86_idiv(memory, 8, 32) is Some(_) {
+        let (length, name, operands, kinds) = project_disassembly_basic_x86_idiv(
+          memory, 8, 32,
+        ).unwrap()
+        Some((length, name, "", "", operands, kinds))
+      } else if project_disassembly_basic_x86_idiv(memory, 16, 32) is Some(_) {
+        let (length, name, operands, kinds) = project_disassembly_basic_x86_idiv(
+          memory, 16, 32,
+        ).unwrap()
+        Some((length, name, "", "", operands, kinds))
+      } else if project_disassembly_basic_x86_idiv(memory, 32, 32) is Some(_) {
+        let (length, name, operands, kinds) = project_disassembly_basic_x86_idiv(
+          memory, 32, 32,
+        ).unwrap()
+        Some((length, name, "", "", operands, kinds))
       } else if project_disassembly_basic_x86_arith_rr(memory, 32, 32)
         is Some(_) {
         let (length, name, dst, src) = project_disassembly_basic_x86_arith_rr(
@@ -4741,6 +4803,46 @@ fn project_disassembly_basic_decode_x86_64_llvm(
     Some((length, name, operands, kinds))
   } else if project_disassembly_basic_x86_imul_acc(memory, 32, 64) is Some(_) {
     let (length, name, operands, kinds) = project_disassembly_basic_x86_imul_acc(
+      memory, 32, 64,
+    ).unwrap()
+    Some((length, name, operands, kinds))
+  } else if project_disassembly_basic_x86_div(memory, 8, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_div(
+      memory, 8, 64,
+    ).unwrap()
+    Some((length, name, operands, kinds))
+  } else if project_disassembly_basic_x86_div(memory, 64, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_div(
+      memory, 64, 64,
+    ).unwrap()
+    Some((length, name, operands, kinds))
+  } else if project_disassembly_basic_x86_div(memory, 16, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_div(
+      memory, 16, 64,
+    ).unwrap()
+    Some((length, name, operands, kinds))
+  } else if project_disassembly_basic_x86_div(memory, 32, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_div(
+      memory, 32, 64,
+    ).unwrap()
+    Some((length, name, operands, kinds))
+  } else if project_disassembly_basic_x86_idiv(memory, 8, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_idiv(
+      memory, 8, 64,
+    ).unwrap()
+    Some((length, name, operands, kinds))
+  } else if project_disassembly_basic_x86_idiv(memory, 64, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_idiv(
+      memory, 64, 64,
+    ).unwrap()
+    Some((length, name, operands, kinds))
+  } else if project_disassembly_basic_x86_idiv(memory, 16, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_idiv(
+      memory, 16, 64,
+    ).unwrap()
+    Some((length, name, operands, kinds))
+  } else if project_disassembly_basic_x86_idiv(memory, 32, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_idiv(
       memory, 32, 64,
     ).unwrap()
     Some((length, name, operands, kinds))

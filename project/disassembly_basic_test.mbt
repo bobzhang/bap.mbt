@@ -918,6 +918,78 @@ test "translated BAP basic disassembly decodes x86 one-operand imul fixtures" {
 }
 
 ///|
+test "translated BAP basic disassembly decodes x86 div-idiv fixtures" {
+  let samples : Array[
+    (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),
+  ] = [
+    ("x86", b"\xf6\xf1", 2, ["DIV8r", "CL"], []),
+    ("x86", b"\xf7\xf1", 2, ["DIV32r", "ECX"], []),
+    ("x86", b"\x66\xf7\xf1", 3, ["DIV16r", "CX"], []),
+    ("x86_64", b"\x48\xf7\xf1", 3, ["DIV64r", "RCX"], []),
+    ("x86_64", b"\x49\xf7\xf0", 3, ["DIV64r", "R8"], []),
+    (
+      "x86_64",
+      b"\x48\xf7\x75\xf8",
+      4,
+      ["DIV64m", "RBP", "0x1", "Nil", "-0x8", "Nil"],
+      [ProjectMayLoad],
+    ),
+    (
+      "x86",
+      b"\xf7\x75\xfc",
+      3,
+      ["DIV32m", "EBP", "0x1", "Nil", "-0x4", "Nil"],
+      [ProjectMayLoad],
+    ),
+    ("x86", b"\xf6\xf9", 2, ["IDIV8r", "CL"], []),
+    ("x86", b"\xf7\xf9", 2, ["IDIV32r", "ECX"], []),
+    ("x86", b"\x66\xf7\xf9", 3, ["IDIV16r", "CX"], []),
+    ("x86_64", b"\x48\xf7\xf9", 3, ["IDIV64r", "RCX"], []),
+    ("x86_64", b"\x49\xf7\xf8", 3, ["IDIV64r", "R8"], []),
+    (
+      "x86_64",
+      b"\x48\xf7\x7d\xf8",
+      4,
+      ["IDIV64m", "RBP", "0x1", "Nil", "-0x8", "Nil"],
+      [ProjectMayLoad],
+    ),
+    (
+      "x86",
+      b"\xf7\x7d\xfc",
+      3,
+      ["IDIV32m", "EBP", "0x1", "Nil", "-0x4", "Nil"],
+      [ProjectMayLoad],
+    ),
+  ]
+  for sample in samples {
+    let disasm = match
+      @project.ProjectDisassemblyBasic::create(sample.0, backend="llvm") {
+      Ok(disasm) => disasm
+      Err(reason) => fail(reason)
+    }
+    let memory = @memory.Memory::from_bytes(
+      endian=LittleEndian,
+      start=0xe2c0UL,
+      sample.1,
+    )
+    match disasm.insn_of_mem(memory) {
+      Ok(result) => {
+        assert_true(result.memory().length() == sample.2)
+        assert_true(result.remainder().is_finished())
+        match result.instruction() {
+          Some(instruction) => {
+            assert_true(basic_instruction_strings(instruction) == sample.3)
+            assert_true(instruction.kinds() == sample.4)
+          }
+          None => fail("missing x86 div/idiv instruction")
+        }
+      }
+      Err(reason) => fail(reason)
+    }
+  }
+}
+
+///|
 test "translated BAP basic disassembly decodes x86 register inc-dec fixtures" {
   let samples : Array[(String, Bytes, Int, Array[String])] = [
     ("x86_64", b"\x48\xff\xc0", 3, ["INC64r", "RAX"]),

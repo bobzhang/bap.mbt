@@ -886,6 +886,145 @@ test "project Basic BIL lift covers x86 one-operand imul ops" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 div-idiv ops" {
+  let div8 = basic_bil_decode("x86", b"\xf6\xf1", start=0x704cUL)
+  match div8.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_basic_bil_text(stmts, [
+        "%divisor:imm16 := pad:16[CL:imm8]", "%dividend:imm16 := AX:imm16", "if (%divisor:imm16 == 0:16u) then 1 stmts else 3 stmts",
+        "CF:imm1 := unknown(CF is undefined after div:imm1)", "OF:imm1 := unknown(OF is undefined after div:imm1)",
+        "SF:imm1 := unknown(SF is undefined after div:imm1)", "ZF:imm1 := unknown(ZF is undefined after div:imm1)",
+        "AF:imm1 := unknown(AF is undefined after div:imm1)", "PF:imm1 := unknown(PF is undefined after div:imm1)",
+      ])
+      match stmts[2] {
+        If(cond~, yes~, no~) => {
+          assert_string(cond.to_string(), "(%divisor:imm16 == 0:16u)")
+          assert_true(yes.length() == 1)
+          assert_string(yes[0].to_string(), "cpuexn 0")
+          assert_string(
+            no[0].to_string(),
+            "%div:imm16 := (%dividend:imm16 / %divisor:imm16)",
+          )
+          assert_string(
+            no[1].to_string(),
+            "%rem:imm16 := (%dividend:imm16 % %divisor:imm16)",
+          )
+          match no[2] {
+            If(cond~, yes~, no~) => {
+              assert_string(cond.to_string(), "(high:8[%div:imm16] == 0:8u)")
+              assert_true(yes.length() == 1)
+              assert_string(
+                yes[0].to_string(),
+                "AX:imm16 := concat(low:8[%rem:imm16], low:8[%div:imm16])",
+              )
+              assert_true(no.length() == 1)
+              assert_string(no[0].to_string(), "cpuexn 0")
+            }
+            _ => fail("DIV8 overflow check did not lift to BIL if")
+          }
+        }
+        _ => fail("DIV8 zero-divisor check did not lift to BIL if")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let div32 = basic_bil_decode("x86", b"\xf7\xf1", start=0x704eUL)
+  match div32.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_basic_bil_text(stmts, [
+        "%divisor:imm64 := pad:64[ECX:imm32]", "%dividend:imm64 := concat(EDX:imm32, EAX:imm32)",
+        "if (%divisor:imm64 == 0:64u) then 1 stmts else 3 stmts", "CF:imm1 := unknown(CF is undefined after div:imm1)",
+        "OF:imm1 := unknown(OF is undefined after div:imm1)", "SF:imm1 := unknown(SF is undefined after div:imm1)",
+        "ZF:imm1 := unknown(ZF is undefined after div:imm1)", "AF:imm1 := unknown(AF is undefined after div:imm1)",
+        "PF:imm1 := unknown(PF is undefined after div:imm1)",
+      ])
+      match stmts[2] {
+        If(yes=_, no~, ..) =>
+          match no[2] {
+            If(yes~, no~, ..) => {
+              assert_true(yes.length() == 3)
+              assert_string(
+                yes[0].to_string(),
+                "%div_result:imm64 := concat(low:32[%rem:imm64], low:32[%div:imm64])",
+              )
+              assert_string(
+                yes[1].to_string(),
+                "EAX:imm32 := low:32[%div_result:imm64]",
+              )
+              assert_string(
+                yes[2].to_string(),
+                "EDX:imm32 := high:32[%div_result:imm64]",
+              )
+              assert_true(no.length() == 1)
+            }
+            _ => fail("DIV32 overflow check did not lift to BIL if")
+          }
+        _ => fail("DIV32 zero-divisor check did not lift to BIL if")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let idiv64_mem = basic_bil_decode(
+    "x86_64",
+    b"\x48\xf7\x7d\xf8",
+    start=0x7050UL,
+  )
+  match idiv64_mem.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_basic_bil_text(stmts, [
+        "%divisor:imm128 := extend:128[load(mem:mem64x8, (RBP:imm64 - 8:64u)):imm64]",
+        "%dividend:imm128 := concat(RDX:imm64, RAX:imm64)", "if (%divisor:imm128 == 0:128u) then 1 stmts else 3 stmts",
+        "CF:imm1 := unknown(CF is undefined after idiv:imm1)", "OF:imm1 := unknown(OF is undefined after idiv:imm1)",
+        "SF:imm1 := unknown(SF is undefined after idiv:imm1)", "ZF:imm1 := unknown(ZF is undefined after idiv:imm1)",
+        "AF:imm1 := unknown(AF is undefined after idiv:imm1)", "PF:imm1 := unknown(PF is undefined after idiv:imm1)",
+      ])
+      match stmts[2] {
+        If(yes~, no~, ..) => {
+          assert_true(yes.length() == 1)
+          assert_string(yes[0].to_string(), "cpuexn 0")
+          assert_string(
+            no[0].to_string(),
+            "%div:imm128 := (%dividend:imm128 s/ %divisor:imm128)",
+          )
+          assert_string(
+            no[1].to_string(),
+            "%rem:imm128 := (%dividend:imm128 s% %divisor:imm128)",
+          )
+          match no[2] {
+            If(cond~, yes~, no~) => {
+              assert_string(
+                cond.to_string(),
+                "((((1:128u << 0x7F:128u) - 1:128u) s< %div:imm128) | (%div:imm128 s< (1:128u << 0x7F:128u)))",
+              )
+              assert_true(yes.length() == 1)
+              assert_string(yes[0].to_string(), "cpuexn 0")
+              assert_true(no.length() == 3)
+              assert_string(
+                no[0].to_string(),
+                "%div_result:imm128 := concat(low:64[%rem:imm128], low:64[%div:imm128])",
+              )
+              assert_string(
+                no[1].to_string(),
+                "RAX:imm64 := low:64[%div_result:imm128]",
+              )
+              assert_string(
+                no[2].to_string(),
+                "RDX:imm64 := high:64[%div_result:imm128]",
+              )
+            }
+            _ => fail("IDIV64 overflow check did not lift to BIL if")
+          }
+        }
+        _ => fail("IDIV64 zero-divisor check did not lift to BIL if")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86 register logical ops" {
   let xor_zero = basic_bil_decode("x86_64", b"\x48\x31\xc0", start=0x7017UL)
   match xor_zero.lift_basic_bil() {

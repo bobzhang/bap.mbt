@@ -1061,6 +1061,247 @@ fn ProjectDisassemblyInstruction::project_basic_bil_imul_acc(
 }
 
 ///|
+fn project_basic_bil_x86_div_undefined_flag_moves(
+  mnemonic : String,
+) -> Array[@types.Stmt] {
+  [
+    project_basic_bil_x86_flag_move(
+      "CF",
+      @types.Exp::unknown("CF is undefined after \{mnemonic}", Imm(1)),
+    ),
+    project_basic_bil_x86_flag_move(
+      "OF",
+      @types.Exp::unknown("OF is undefined after \{mnemonic}", Imm(1)),
+    ),
+    project_basic_bil_x86_flag_move(
+      "SF",
+      @types.Exp::unknown("SF is undefined after \{mnemonic}", Imm(1)),
+    ),
+    project_basic_bil_x86_flag_move(
+      "ZF",
+      @types.Exp::unknown("ZF is undefined after \{mnemonic}", Imm(1)),
+    ),
+    project_basic_bil_x86_flag_move(
+      "AF",
+      @types.Exp::unknown("AF is undefined after \{mnemonic}", Imm(1)),
+    ),
+    project_basic_bil_x86_flag_move(
+      "PF",
+      @types.Exp::unknown("PF is undefined after \{mnemonic}", Imm(1)),
+    ),
+  ]
+}
+
+///|
+fn project_basic_bil_x86_double_accumulator_exp(
+  width : Int,
+) -> Result[@types.Exp, String] {
+  if width == 8 {
+    Ok(@types.Exp::var_exp(project_basic_bil_reg("AX", 16)))
+  } else {
+    let high = match project_basic_bil_x86_high_accumulator(width) {
+      Ok(value) => value
+      Err(reason) => return Err(reason)
+    }
+    let low = match project_basic_bil_x86_accumulator(width) {
+      Ok(value) => value
+      Err(reason) => return Err(reason)
+    }
+    Ok(@types.Exp::concat(@types.Exp::var_exp(high), @types.Exp::var_exp(low)))
+  }
+}
+
+///|
+fn project_basic_bil_x86_apply_double_result(
+  width : Int,
+  result : @types.Exp,
+  tmp_name : String,
+) -> Result[Array[@types.Stmt], String] {
+  if width == 8 {
+    Ok([@types.Stmt::move_stmt(project_basic_bil_reg("AX", 16), result)])
+  } else {
+    let acc = match project_basic_bil_x86_accumulator(width) {
+      Ok(value) => value
+      Err(reason) => return Err(reason)
+    }
+    let high_acc = match project_basic_bil_x86_high_accumulator(width) {
+      Ok(value) => value
+      Err(reason) => return Err(reason)
+    }
+    let product_width = width * 2
+    let tmp = project_basic_bil_virtual(tmp_name, product_width)
+    Ok([
+      @types.Stmt::move_stmt(tmp, result),
+      @types.Stmt::move_stmt(
+        acc,
+        @types.Exp::cast(
+          @types.CastKind::low(),
+          width,
+          @types.Exp::var_exp(tmp),
+        ),
+      ),
+      @types.Stmt::move_stmt(
+        high_acc,
+        @types.Exp::cast(
+          @types.CastKind::high(),
+          width,
+          @types.Exp::var_exp(tmp),
+        ),
+      ),
+    ])
+  }
+}
+
+///|
+fn project_basic_bil_x86_div_bound(
+  product_width : Int,
+  signed_min : Bool,
+) -> Result[@types.Exp, String] {
+  let one = match project_basic_bil_int(1L, product_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let shift = match
+    project_basic_bil_int((product_width - 1).to_int64(), product_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let lbound = @types.Exp::binop(@types.BinOp::lshift(), one, shift)
+  if signed_min {
+    Ok(lbound)
+  } else {
+    Ok(@types.Exp::binop(@types.BinOp::minus(), lbound, one))
+  }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_div_common(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  signed : Bool,
+) -> Result[Array[@types.Stmt], String] {
+  let src = match self.project_basic_bil_mul_source(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let product_width = width * 2
+  let divisor = project_basic_bil_virtual("divisor", product_width)
+  let dividend = project_basic_bil_virtual("dividend", product_width)
+  let quotient = project_basic_bil_virtual("div", product_width)
+  let remainder = project_basic_bil_virtual("rem", product_width)
+  let divisor_exp = @types.Exp::var_exp(divisor)
+  let dividend_exp = @types.Exp::var_exp(dividend)
+  let quotient_exp = @types.Exp::var_exp(quotient)
+  let remainder_exp = @types.Exp::var_exp(remainder)
+  let zero_product = match project_basic_bil_int(0L, product_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let zero_width = match project_basic_bil_int(0L, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let source_cast = @types.Exp::cast(
+    if signed {
+      @types.CastKind::signed()
+    } else {
+      @types.CastKind::unsigned()
+    },
+    product_width,
+    src,
+  )
+  let dividend_value = match
+    project_basic_bil_x86_double_accumulator_exp(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let quotient_op = if signed {
+    @types.BinOp::sdivide()
+  } else {
+    @types.BinOp::divide()
+  }
+  let remainder_op = if signed {
+    @types.BinOp::smodulo()
+  } else {
+    @types.BinOp::modulo()
+  }
+  let result = @types.Exp::concat(
+    @types.Exp::cast(@types.CastKind::low(), width, remainder_exp),
+    @types.Exp::cast(@types.CastKind::low(), width, quotient_exp),
+  )
+  let apply_result = match
+    project_basic_bil_x86_apply_double_result(width, result, "div_result") {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let failure_branch = [@types.Stmt::cpuexn(0)]
+  let checked_result = if signed {
+    let lbound = match project_basic_bil_x86_div_bound(product_width, true) {
+      Ok(value) => value
+      Err(reason) => return Err(reason)
+    }
+    let ubound = match project_basic_bil_x86_div_bound(product_width, false) {
+      Ok(value) => value
+      Err(reason) => return Err(reason)
+    }
+    let overflow = @types.Exp::binop(
+      @types.BinOp::bit_or(),
+      @types.Exp::binop(@types.BinOp::slt(), ubound, quotient_exp),
+      @types.Exp::binop(@types.BinOp::slt(), quotient_exp, lbound),
+    )
+    @types.Stmt::if_(overflow, failure_branch, apply_result)
+  } else {
+    let quotient_fits = @types.Exp::binop(
+      @types.BinOp::eq(),
+      @types.Exp::cast(@types.CastKind::high(), width, quotient_exp),
+      zero_width,
+    )
+    @types.Stmt::if_(quotient_fits, apply_result, failure_branch)
+  }
+  let else_branch = [
+    @types.Stmt::move_stmt(
+      quotient,
+      @types.Exp::binop(quotient_op, dividend_exp, divisor_exp),
+    ),
+    @types.Stmt::move_stmt(
+      remainder,
+      @types.Exp::binop(remainder_op, dividend_exp, divisor_exp),
+    ),
+    checked_result,
+  ]
+  let mnemonic = if signed { "idiv" } else { "div" }
+  let stmts = [
+    @types.Stmt::move_stmt(divisor, source_cast),
+    @types.Stmt::move_stmt(dividend, dividend_value),
+    @types.Stmt::if_(
+      @types.Exp::binop(@types.BinOp::eq(), divisor_exp, zero_product),
+      [@types.Stmt::cpuexn(0)],
+      else_branch,
+    ),
+  ]
+  for stmt in project_basic_bil_x86_div_undefined_flag_moves(mnemonic) {
+    stmts.push(stmt)
+  }
+  Ok(stmts)
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_div(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  self.project_basic_bil_div_common(width, false)
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_idiv(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  self.project_basic_bil_div_common(width, true)
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_basic_bil_shift_count(
   self : ProjectDisassemblyInstruction,
   index : Int,
@@ -2580,6 +2821,14 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "MUL16R" | "MUL16M" => self.project_basic_bil_mul(16)
     "MUL32R" | "MUL32M" => self.project_basic_bil_mul(32)
     "MUL64R" | "MUL64M" => self.project_basic_bil_mul(64)
+    "DIV8R" | "DIV8M" => self.project_basic_bil_div(8)
+    "DIV16R" | "DIV16M" => self.project_basic_bil_div(16)
+    "DIV32R" | "DIV32M" => self.project_basic_bil_div(32)
+    "DIV64R" | "DIV64M" => self.project_basic_bil_div(64)
+    "IDIV8R" | "IDIV8M" => self.project_basic_bil_idiv(8)
+    "IDIV16R" | "IDIV16M" => self.project_basic_bil_idiv(16)
+    "IDIV32R" | "IDIV32M" => self.project_basic_bil_idiv(32)
+    "IDIV64R" | "IDIV64M" => self.project_basic_bil_idiv(64)
     "ROL8R1" | "ROL8RCL" | "ROL8RI8" => self.project_basic_bil_rotate_r(8, true)
     "ROL32R1" | "ROL32RCL" | "ROL32RI8" =>
       self.project_basic_bil_rotate_r(32, true)

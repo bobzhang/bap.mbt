@@ -2704,6 +2704,14 @@ test "translated BAP basic disassembly decodes x86 bsf bsr fixtures" {
   ] = [
     ("x86", b"\x0f\xbc\xc1", 3, ["BSF32rr", "EAX", "ECX"], []),
     ("x86", b"\x66\x0f\xbc\xc1", 4, ["BSF16rr", "AX", "CX"], []),
+    ("x86", b"\x66\x0f\xbd\xc1", 4, ["BSR16rr", "AX", "CX"], []),
+    (
+      "x86",
+      b"\x66\x0f\xbc\x45\xfc",
+      5,
+      ["BSF16rm", "AX", "EBP", "0x1", "Nil", "-0x4", "Nil"],
+      [ProjectMayLoad],
+    ),
     (
       "x86",
       b"\x0f\xbd\x45\xfc",
@@ -2758,6 +2766,13 @@ test "translated BAP basic disassembly decodes x86 popcnt fixtures" {
     ("x86", b"\x66\xf3\x0f\xb8\xc1", 5, ["POPCNT16rr", "AX", "CX"], []),
     (
       "x86",
+      b"\x66\xf3\x0f\xb8\x45\xfc",
+      6,
+      ["POPCNT16rm", "AX", "EBP", "0x1", "Nil", "-0x4", "Nil"],
+      [ProjectMayLoad],
+    ),
+    (
+      "x86",
       b"\xf3\x0f\xb8\x45\xfc",
       5,
       ["POPCNT32rm", "EAX", "EBP", "0x1", "Nil", "-0x4", "Nil"],
@@ -2807,7 +2822,29 @@ test "translated BAP basic disassembly decodes x86 bt-family fixtures" {
     (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),
   ] = [
     ("x86", b"\x0f\xa3\xc8", 3, ["BT32rr", "EAX", "ECX"], []),
+    ("x86", b"\x66\x0f\xa3\xc8", 4, ["BT16rr", "AX", "CX"], []),
     ("x86", b"\x66\x0f\xba\xe8\x03", 5, ["BTS16ri8", "AX", "0x3"], []),
+    (
+      "x86",
+      b"\x66\x0f\xba\x65\xfc\x05",
+      6,
+      ["BT16mi8", "EBP", "0x1", "Nil", "-0x4", "Nil", "0x5"],
+      [ProjectMayLoad],
+    ),
+    (
+      "x86",
+      b"\x66\x0f\xba\x75\xfc\x05",
+      6,
+      ["BTR16mi8", "EBP", "0x1", "Nil", "-0x4", "Nil", "0x5"],
+      [ProjectMayLoad, ProjectMayStore],
+    ),
+    (
+      "x86",
+      b"\x66\x0f\xbb\x4d\xfc",
+      5,
+      ["BTC16mr", "EBP", "0x1", "Nil", "-0x4", "Nil", "CX"],
+      [ProjectMayLoad, ProjectMayStore],
+    ),
     (
       "x86",
       b"\x0f\xba\x65\xfc\x05",

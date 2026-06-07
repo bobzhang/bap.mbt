@@ -4071,6 +4071,89 @@ test "project Basic BIL lift covers x86 bsf bsr" {
     }
     Err(reason) => fail(reason)
   }
+
+  let bsf16_mem = basic_bil_decode(
+    "x86",
+    b"\x66\x0f\xbc\x45\xfc",
+    start=0x7052UL,
+  )
+  match bsf16_mem.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_basic_bil_text(stmts, [
+        "if (load(mem:mem32x8, (EBP:imm32 - 4:32u)):imm16 == 0:16u) then 2 stmts else 8 stmts",
+        "CF:imm1 := unknown(bits:imm1)", "OF:imm1 := unknown(bits:imm1)", "SF:imm1 := unknown(bits:imm1)",
+        "AF:imm1 := unknown(bits:imm1)", "PF:imm1 := unknown(bits:imm1)",
+      ])
+      match stmts[0] {
+        If(cond~, yes~, no~) => {
+          assert_string(
+            cond.to_string(),
+            "(load(mem:mem32x8, (EBP:imm32 - 4:32u)):imm16 == 0:16u)",
+          )
+          assert_true(yes.length() == 2)
+          assert_string(yes[0].to_string(), "ZF:imm1 := 1:1u")
+          assert_string(yes[1].to_string(), "AX:imm16 := unknown(bits:imm16)")
+          assert_true(no.length() == 8)
+          assert_string(
+            no[0].to_string(),
+            "%bitscan:imm16 := load(mem:mem32x8, (EBP:imm32 - 4:32u)):imm16",
+          )
+          assert_string(
+            no[1].to_string(),
+            "%bitscan:imm16 := ((%bitscan:imm16 & (neg %bitscan:imm16)) - 1:16u)",
+          )
+          assert_true(no[2].to_string().contains("0x5555:16u"))
+          assert_true(no[3].to_string().contains("0x3333:16u"))
+          assert_true(no[4].to_string().contains("0xF0F:16u"))
+          assert_true(no[5].to_string().contains("0x101:16u"))
+          assert_string(no[6].to_string(), "AX:imm16 := %bitscan:imm16")
+          assert_string(no[7].to_string(), "ZF:imm1 := 0:1u")
+        }
+        _ => fail("BSF16 memory did not lift to BIL if")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let bsr16 = basic_bil_decode("x86", b"\x66\x0f\xbd\xc1", start=0x7053UL)
+  match bsr16.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_basic_bil_text(stmts, [
+        "if (CX:imm16 == 0:16u) then 2 stmts else 12 stmts", "CF:imm1 := unknown(bits:imm1)",
+        "OF:imm1 := unknown(bits:imm1)", "SF:imm1 := unknown(bits:imm1)", "AF:imm1 := unknown(bits:imm1)",
+        "PF:imm1 := unknown(bits:imm1)",
+      ])
+      match stmts[0] {
+        If(cond~, yes~, no~) => {
+          assert_string(cond.to_string(), "(CX:imm16 == 0:16u)")
+          assert_true(yes.length() == 2)
+          assert_string(yes[1].to_string(), "AX:imm16 := unknown(bits:imm16)")
+          assert_true(no.length() == 12)
+          assert_string(no[0].to_string(), "%bitscan:imm16 := CX:imm16")
+          assert_string(
+            no[1].to_string(),
+            "%bitscan:imm16 := (%bitscan:imm16 | (%bitscan:imm16 >> 1:16u))",
+          )
+          assert_string(
+            no[4].to_string(),
+            "%bitscan:imm16 := (%bitscan:imm16 | (%bitscan:imm16 >> 8:16u))",
+          )
+          assert_string(
+            no[5].to_string(),
+            "%bitscan:imm16 := (not %bitscan:imm16)",
+          )
+          assert_true(no[6].to_string().contains("0x5555:16u"))
+          assert_string(
+            no[10].to_string(),
+            "AX:imm16 := (%bitscan:imm16 ^ 0xF:16u)",
+          )
+          assert_string(no[11].to_string(), "ZF:imm1 := 0:1u")
+        }
+        _ => fail("BSR16 did not lift to BIL if")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
 }
 
 ///|
@@ -4112,6 +4195,25 @@ test "project Basic BIL lift covers x86 popcnt" {
     }
     Err(reason) => fail(reason)
   }
+
+  let popcnt16_mem = basic_bil_decode(
+    "x86",
+    b"\x66\xf3\x0f\xb8\x45\xfc",
+    start=0x7055UL,
+  )
+  match popcnt16_mem.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "ZF:imm1 := (0:16u == load(mem:mem32x8, (EBP:imm32 - 4:32u)):imm16)", "%popcnt:imm16 := load(mem:mem32x8, (EBP:imm32 - 4:32u)):imm16",
+        "%popcnt:imm16 := (%popcnt:imm16 - ((%popcnt:imm16 >> 1:16u) & 0x5555:16u))",
+        "%popcnt:imm16 := ((%popcnt:imm16 & 0x3333:16u) + ((%popcnt:imm16 >> 2:16u) & 0x3333:16u))",
+        "%popcnt:imm16 := ((%popcnt:imm16 + (%popcnt:imm16 >> 4:16u)) & 0xF0F:16u)",
+        "%popcnt:imm16 := ((%popcnt:imm16 * 0x101:16u) >> 8:16u)", "AX:imm16 := %popcnt:imm16",
+        "CF:imm1 := 0:1u", "OF:imm1 := 0:1u", "SF:imm1 := 0:1u", "AF:imm1 := 0:1u",
+        "PF:imm1 := 0:1u",
+      ])
+    Err(reason) => fail(reason)
+  }
 }
 
 ///|
@@ -4123,6 +4225,28 @@ test "project Basic BIL lift covers x86 bt-family" {
         "%btx_o:imm5 := low:5[ECX:imm32]", "CF:imm1 := low:1[(EAX:imm32 >> %btx_o:imm5)]",
         "OF:imm1 := unknown(bt:imm1)", "SF:imm1 := unknown(bt:imm1)", "ZF:imm1 := unknown(bt:imm1)",
         "AF:imm1 := unknown(bt:imm1)", "PF:imm1 := unknown(bt:imm1)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let bt16 = basic_bil_decode("x86", b"\x66\x0f\xa3\xc8", start=0x7055UL)
+  match bt16.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%btx_o:imm4 := low:4[CX:imm16]", "CF:imm1 := low:1[(AX:imm16 >> %btx_o:imm4)]",
+        "OF:imm1 := unknown(bt:imm1)", "SF:imm1 := unknown(bt:imm1)", "ZF:imm1 := unknown(bt:imm1)",
+        "AF:imm1 := unknown(bt:imm1)", "PF:imm1 := unknown(bt:imm1)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let bts16 = basic_bil_decode("x86", b"\x66\x0f\xba\xe8\x03", start=0x7056UL)
+  match bts16.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "CF:imm1 := low:1[(AX:imm16 >> 3:4u)]", "OF:imm1 := unknown(bts:imm1)", "SF:imm1 := unknown(bts:imm1)",
+        "ZF:imm1 := unknown(bts:imm1)", "AF:imm1 := unknown(bts:imm1)", "PF:imm1 := unknown(bts:imm1)",
+        "AX:imm16 := (AX:imm16 | 8:16u)",
       ])
     Err(reason) => fail(reason)
   }
@@ -4164,6 +4288,32 @@ test "project Basic BIL lift covers x86 bt-family" {
     Err(reason) => fail(reason)
   }
 
+  let btr16_mem = basic_bil_decode(
+    "x86",
+    b"\x66\x0f\xba\x75\xfc\x05",
+    start=0x7057UL,
+  )
+  match btr16_mem.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 9)
+      assert_string(stmts[0].to_string(), "%btx_a:imm32 := (EBP:imm32 - 4:32u)")
+      assert_string(
+        stmts[1].to_string(),
+        "%btx_d:imm16 := load(mem:mem32x8, %btx_a:imm32):imm16",
+      )
+      assert_string(
+        stmts[2].to_string(),
+        "CF:imm1 := low:1[(%btx_d:imm16 >> 5:4u)]",
+      )
+      assert_string(stmts[7].to_string(), "PF:imm1 := unknown(btr:imm1)")
+      assert_string(
+        stmts[8].to_string(),
+        "mem:mem32x8 := store(mem:mem32x8, %btx_a:imm32, (%btx_d:imm16 & (not 0x20:16u)))",
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
   let btc64_mem = basic_bil_decode(
     "x86_64",
     b"\x48\x0f\xbb\x4d\xf8",
@@ -4187,6 +4337,34 @@ test "project Basic BIL lift covers x86 bt-family" {
       assert_string(
         stmts[10].to_string(),
         "mem:mem64x8 := store(mem:mem64x8, (%btx_a:imm64 + %btx_b:imm64), (%btx_d:imm64 ^ (1:64u << %btx_o:imm6)))",
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let btc16_mem = basic_bil_decode(
+    "x86",
+    b"\x66\x0f\xbb\x4d\xfc",
+    start=0x7058UL,
+  )
+  match btc16_mem.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 11)
+      assert_string(stmts[0].to_string(), "%btx_a:imm32 := (EBP:imm32 - 4:32u)")
+      assert_true(stmts[1].to_string().contains("CX:imm16 s/ 0x10:16u"))
+      assert_string(
+        stmts[2].to_string(),
+        "%btx_d:imm16 := load(mem:mem32x8, (%btx_a:imm32 + %btx_b:imm32)):imm16",
+      )
+      assert_string(stmts[3].to_string(), "%btx_o:imm4 := low:4[CX:imm16]")
+      assert_string(
+        stmts[4].to_string(),
+        "CF:imm1 := low:1[(%btx_d:imm16 >> %btx_o:imm4)]",
+      )
+      assert_string(stmts[9].to_string(), "PF:imm1 := unknown(btc:imm1)")
+      assert_string(
+        stmts[10].to_string(),
+        "mem:mem32x8 := store(mem:mem32x8, (%btx_a:imm32 + %btx_b:imm32), (%btx_d:imm16 ^ (1:16u << %btx_o:imm4)))",
       )
     }
     Err(reason) => fail(reason)

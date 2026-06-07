@@ -332,6 +332,11 @@ test "translated BAP basic disassembly decodes x86 string move/store forms" {
     ("x86", b"\xae", 1, ["SCAS8"], load),
     ("x86", b"\x66\xaf", 2, ["SCAS16"], load),
     ("x86", b"\xaf", 1, ["SCAS32"], load),
+    ("x86", b"\xf3\xa4", 2, ["REP_MOVS8"], load_store),
+    ("x86", b"\xf2\xa5", 2, ["REP_MOVS32"], load_store),
+    ("x86", b"\xf3\xaa", 2, ["REP_STOS8"], store),
+    ("x86", b"\xf3\xa6", 2, ["REPE_CMPS8"], load),
+    ("x86", b"\xf2\xaf", 2, ["REPNE_SCAS32"], load),
     ("x86_64", b"\xa4", 1, ["MOVS8_64"], load_store),
     ("x86_64", b"\x66\xa5", 2, ["MOVS16_64"], load_store),
     ("x86_64", b"\xa5", 1, ["MOVS32_64"], load_store),
@@ -348,6 +353,9 @@ test "translated BAP basic disassembly decodes x86 string move/store forms" {
     ("x86_64", b"\x66\xaf", 2, ["SCAS16_64"], load),
     ("x86_64", b"\xaf", 1, ["SCAS32_64"], load),
     ("x86_64", b"\x48\xaf", 2, ["SCAS64"], load),
+    ("x86_64", b"\xf3\x48\xab", 3, ["REP_STOS64"], store),
+    ("x86_64", b"\xf2\x66\xa7", 3, ["REPNE_CMPS16_64"], load),
+    ("x86_64", b"\xf3\xae", 2, ["REPE_SCAS8_64"], load),
   ]
   for sample in samples {
     let disasm = match

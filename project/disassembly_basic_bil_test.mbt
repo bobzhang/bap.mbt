@@ -402,6 +402,84 @@ test "project Basic BIL lift covers x86_64 stack arithmetic fixtures" {
     Err(reason) => fail(reason)
   }
 
+  let rep_movsb = basic_bil_decode("x86_64", b"\xf3\xa4", start=0x7005UL)
+  match rep_movsb.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 2)
+      assert_string(stmts[0].to_string(), "%rep_continue:imm1 := 1:1u")
+      match stmts[1] {
+        While(cond~, body~) => {
+          assert_string(
+            cond.to_string(),
+            "((RCX:imm64 != 0:64u) & %rep_continue:imm1)",
+          )
+          assert_true(body.length() == 4)
+          assert_string(
+            body[0].to_string(),
+            "mem:mem64x8 := store(mem:mem64x8, RDI:imm64, load(mem:mem64x8, RSI:imm64):imm8)",
+          )
+          assert_string(body[3].to_string(), "RCX:imm64 := (RCX:imm64 - 1:64u)")
+        }
+        _ => fail("REP MOVS did not lift to BIL while")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let repe_cmpsb = basic_bil_decode("x86_64", b"\xf3\xa6", start=0x7007UL)
+  match repe_cmpsb.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 2)
+      match stmts[1] {
+        While(cond~, body~) => {
+          assert_string(
+            cond.to_string(),
+            "((RCX:imm64 != 0:64u) & %rep_continue:imm1)",
+          )
+          assert_true(body.length() == 13)
+          assert_string(
+            body[0].to_string(),
+            "%cmps_src1:imm8 := load(mem:mem64x8, RSI:imm64):imm8",
+          )
+          assert_string(
+            body[11].to_string(),
+            "RCX:imm64 := (RCX:imm64 - 1:64u)",
+          )
+          assert_string(body[12].to_string(), "%rep_continue:imm1 := ZF:imm1")
+        }
+        _ => fail("REPE CMPS did not lift to BIL while")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let repne_scasw = basic_bil_decode("x86", b"\xf2\x66\xaf", start=0x7009UL)
+  match repne_scasw.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 2)
+      match stmts[1] {
+        While(cond~, body~) => {
+          assert_string(
+            cond.to_string(),
+            "((ECX:imm32 != 0:32u) & %rep_continue:imm1)",
+          )
+          assert_true(body.length() == 12)
+          assert_string(body[0].to_string(), "%scas_src1:imm16 := AX:imm16")
+          assert_string(
+            body[10].to_string(),
+            "ECX:imm32 := (ECX:imm32 - 1:32u)",
+          )
+          assert_string(
+            body[11].to_string(),
+            "%rep_continue:imm1 := (not ZF:imm1)",
+          )
+        }
+        _ => fail("REPNE SCAS did not lift to BIL while")
+      }
+    }
+    Err(reason) => fail(reason)
+  }
+
   let sub = basic_bil_decode("x86_64", b"\x48\x83\xec\x08", start=0x7000UL)
   match sub.lift_basic_bil() {
     Ok(stmts) => {

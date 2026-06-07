@@ -1009,8 +1009,21 @@ fn project_disassembly_basic_x86_string_move_store(
   address_width : Int,
 ) -> (Int, String, Array[ProjectInstructionKind])? {
   let bytes = memory.to_bytes()
-  let has_66 = bytes.length() > 0 && bytes[0].to_int() == 0x66
-  let prefix_index = if has_66 { 1 } else { 0 }
+  let mut prefix_index = 0
+  let mut has_66 = false
+  let mut repeat = ""
+  while prefix_index < bytes.length() {
+    let byte = bytes[prefix_index].to_int()
+    if byte == 0x66 && !has_66 {
+      has_66 = true
+      prefix_index += 1
+    } else if (byte == 0xf2 || byte == 0xf3) && repeat == "" {
+      repeat = if byte == 0xf2 { "REPNE" } else { "REPE" }
+      prefix_index += 1
+    } else {
+      break
+    }
+  }
   let (opcode_index, rex) = if address_width == 64 &&
     bytes.length() > prefix_index &&
     bytes[prefix_index].to_int() >= 0x40 &&
@@ -1042,11 +1055,28 @@ fn project_disassembly_basic_x86_string_move_store(
       0xae | 0xaf => "SCAS"
       _ => return None
     }
-    let name = if address_width == 64 && data_width != 64 {
+    let repeat_prefix = match repeat {
+      "" => ""
+      "REPE" =>
+        match prefix {
+          "MOVS" | "STOS" => "REP_"
+          "CMPS" | "SCAS" => "REPE_"
+          _ => return None
+        }
+      "REPNE" =>
+        match prefix {
+          "MOVS" => "REP_"
+          "CMPS" | "SCAS" => "REPNE_"
+          _ => return None
+        }
+      _ => return None
+    }
+    let base_name = if address_width == 64 && data_width != 64 {
       "\{prefix}\{data_width}_64"
     } else {
       "\{prefix}\{data_width}"
     }
+    let name = repeat_prefix + base_name
     let kinds = match opcode {
       0xa4 | 0xa5 => [ProjectMayLoad, ProjectMayStore]
       0xa6 | 0xa7 => [ProjectMayLoad]

@@ -5561,6 +5561,74 @@ fn project_basic_bil_string_next(
 }
 
 ///|
+fn project_basic_bil_string_count(
+  address_width : Int,
+) -> Result[@types.Var, String] {
+  match address_width {
+    32 => Ok(project_basic_bil_reg("ECX", 32))
+    64 => Ok(project_basic_bil_reg("RCX", 64))
+    _ => Err("unsupported string instruction address width \{address_width}")
+  }
+}
+
+///|
+fn project_basic_bil_string_rep_wrap(
+  body : Array[@types.Stmt],
+  address_width : Int,
+  zf_mode : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let count = match project_basic_bil_string_count(address_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let zero_count = match project_basic_bil_int(0L, address_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let one_count = match project_basic_bil_int(1L, address_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let one_flag = match project_basic_bil_int(1L, 1) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let flag = project_basic_bil_virtual("rep_continue", 1)
+  let count_exp = @types.Exp::var_exp(count)
+  let flag_exp = @types.Exp::var_exp(flag)
+  let cond = @types.Exp::binop(
+    @types.BinOp::bit_and(),
+    @types.Exp::binop(@types.BinOp::neq(), count_exp, zero_count),
+    flag_exp,
+  )
+  let loop_body = body.copy()
+  loop_body.push(
+    @types.Stmt::move_stmt(
+      count,
+      @types.Exp::binop(@types.BinOp::minus(), count_exp, one_count),
+    ),
+  )
+  if zf_mode == 1 {
+    loop_body.push(
+      @types.Stmt::move_stmt(flag, project_basic_bil_x86_flag("ZF")),
+    )
+  } else if zf_mode == -1 {
+    loop_body.push(
+      @types.Stmt::move_stmt(
+        flag,
+        @types.Exp::unop(@types.UnOp::not(), project_basic_bil_x86_flag("ZF")),
+      ),
+    )
+  } else if zf_mode != 0 {
+    return Err("unsupported REP ZF mode \{zf_mode}")
+  }
+  Ok([
+    @types.Stmt::move_stmt(flag, one_flag),
+    @types.Stmt::while_(cond, loop_body),
+  ])
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_basic_bil_movs(
   _self : ProjectDisassemblyInstruction,
   data_width : Int,
@@ -5784,6 +5852,56 @@ fn ProjectDisassemblyInstruction::project_basic_bil_scas(
     stmts.push(stmt)
   }
   Ok(stmts)
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_rep_movs(
+  self : ProjectDisassemblyInstruction,
+  data_width : Int,
+  address_width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  match self.project_basic_bil_movs(data_width, address_width) {
+    Ok(body) => project_basic_bil_string_rep_wrap(body, address_width, 0)
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_rep_stos(
+  self : ProjectDisassemblyInstruction,
+  data_width : Int,
+  address_width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  match self.project_basic_bil_stos(data_width, address_width) {
+    Ok(body) => project_basic_bil_string_rep_wrap(body, address_width, 0)
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_rep_cmps(
+  self : ProjectDisassemblyInstruction,
+  data_width : Int,
+  address_width : Int,
+  zf_mode : Int,
+) -> Result[Array[@types.Stmt], String] {
+  match self.project_basic_bil_cmps(data_width, address_width) {
+    Ok(body) => project_basic_bil_string_rep_wrap(body, address_width, zf_mode)
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_rep_scas(
+  self : ProjectDisassemblyInstruction,
+  data_width : Int,
+  address_width : Int,
+  zf_mode : Int,
+) -> Result[Array[@types.Stmt], String] {
+  match self.project_basic_bil_scas(data_width, address_width) {
+    Ok(body) => project_basic_bil_string_rep_wrap(body, address_width, zf_mode)
+    Err(reason) => Err(reason)
+  }
 }
 
 ///|
@@ -7310,6 +7428,48 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "SCAS16_64" => self.project_basic_bil_scas(16, 64)
     "SCAS32_64" => self.project_basic_bil_scas(32, 64)
     "SCAS64" => self.project_basic_bil_scas(64, 64)
+    "REP_MOVS8" => self.project_basic_bil_rep_movs(8, 32)
+    "REP_MOVS16" => self.project_basic_bil_rep_movs(16, 32)
+    "REP_MOVS32" => self.project_basic_bil_rep_movs(32, 32)
+    "REP_MOVS8_64" => self.project_basic_bil_rep_movs(8, 64)
+    "REP_MOVS16_64" => self.project_basic_bil_rep_movs(16, 64)
+    "REP_MOVS32_64" => self.project_basic_bil_rep_movs(32, 64)
+    "REP_MOVS64" => self.project_basic_bil_rep_movs(64, 64)
+    "REP_STOS8" => self.project_basic_bil_rep_stos(8, 32)
+    "REP_STOS16" => self.project_basic_bil_rep_stos(16, 32)
+    "REP_STOS32" => self.project_basic_bil_rep_stos(32, 32)
+    "REP_STOS8_64" => self.project_basic_bil_rep_stos(8, 64)
+    "REP_STOS16_64" => self.project_basic_bil_rep_stos(16, 64)
+    "REP_STOS32_64" => self.project_basic_bil_rep_stos(32, 64)
+    "REP_STOS64" => self.project_basic_bil_rep_stos(64, 64)
+    "REPE_CMPS8" => self.project_basic_bil_rep_cmps(8, 32, 1)
+    "REPE_CMPS16" => self.project_basic_bil_rep_cmps(16, 32, 1)
+    "REPE_CMPS32" => self.project_basic_bil_rep_cmps(32, 32, 1)
+    "REPE_CMPS8_64" => self.project_basic_bil_rep_cmps(8, 64, 1)
+    "REPE_CMPS16_64" => self.project_basic_bil_rep_cmps(16, 64, 1)
+    "REPE_CMPS32_64" => self.project_basic_bil_rep_cmps(32, 64, 1)
+    "REPE_CMPS64" => self.project_basic_bil_rep_cmps(64, 64, 1)
+    "REPNE_CMPS8" => self.project_basic_bil_rep_cmps(8, 32, -1)
+    "REPNE_CMPS16" => self.project_basic_bil_rep_cmps(16, 32, -1)
+    "REPNE_CMPS32" => self.project_basic_bil_rep_cmps(32, 32, -1)
+    "REPNE_CMPS8_64" => self.project_basic_bil_rep_cmps(8, 64, -1)
+    "REPNE_CMPS16_64" => self.project_basic_bil_rep_cmps(16, 64, -1)
+    "REPNE_CMPS32_64" => self.project_basic_bil_rep_cmps(32, 64, -1)
+    "REPNE_CMPS64" => self.project_basic_bil_rep_cmps(64, 64, -1)
+    "REPE_SCAS8" => self.project_basic_bil_rep_scas(8, 32, 1)
+    "REPE_SCAS16" => self.project_basic_bil_rep_scas(16, 32, 1)
+    "REPE_SCAS32" => self.project_basic_bil_rep_scas(32, 32, 1)
+    "REPE_SCAS8_64" => self.project_basic_bil_rep_scas(8, 64, 1)
+    "REPE_SCAS16_64" => self.project_basic_bil_rep_scas(16, 64, 1)
+    "REPE_SCAS32_64" => self.project_basic_bil_rep_scas(32, 64, 1)
+    "REPE_SCAS64" => self.project_basic_bil_rep_scas(64, 64, 1)
+    "REPNE_SCAS8" => self.project_basic_bil_rep_scas(8, 32, -1)
+    "REPNE_SCAS16" => self.project_basic_bil_rep_scas(16, 32, -1)
+    "REPNE_SCAS32" => self.project_basic_bil_rep_scas(32, 32, -1)
+    "REPNE_SCAS8_64" => self.project_basic_bil_rep_scas(8, 64, -1)
+    "REPNE_SCAS16_64" => self.project_basic_bil_rep_scas(16, 64, -1)
+    "REPNE_SCAS32_64" => self.project_basic_bil_rep_scas(32, 64, -1)
+    "REPNE_SCAS64" => self.project_basic_bil_rep_scas(64, 64, -1)
     "MOV8RA" => self.project_basic_bil_mov_abs_load(8)
     "MOV16RA" => self.project_basic_bil_mov_abs_load(16)
     "MOV32RA" => self.project_basic_bil_mov_abs_load(32)

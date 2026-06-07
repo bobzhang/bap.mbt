@@ -2596,8 +2596,8 @@ fn ProjectDisassemblyInstruction::project_basic_bil_shiftd_mr(
 }
 
 ///|
-fn project_basic_bil_rotate_expr(
-  src : @types.Var,
+fn project_basic_bil_rotate_exp(
+  src_exp : @types.Exp,
   count : @types.Exp,
   count_width : Int,
   width : Int,
@@ -2608,7 +2608,6 @@ fn project_basic_bil_rotate_expr(
     Err(reason) => return Err(reason)
   }
   let remainder = @types.Exp::binop(@types.BinOp::minus(), width_exp, count)
-  let src_exp = @types.Exp::var_exp(src)
   let left_shift = @types.Exp::binop(@types.BinOp::lshift(), src_exp, count)
   let right_shift = @types.Exp::binop(@types.BinOp::rshift(), src_exp, count)
   let complement_left = @types.Exp::binop(
@@ -2626,6 +2625,23 @@ fn project_basic_bil_rotate_expr(
   } else {
     Ok(@types.Exp::binop(@types.BinOp::bit_or(), right_shift, complement_left))
   }
+}
+
+///|
+fn project_basic_bil_rotate_expr(
+  src : @types.Var,
+  count : @types.Exp,
+  count_width : Int,
+  width : Int,
+  left : Bool,
+) -> Result[@types.Exp, String] {
+  project_basic_bil_rotate_exp(
+    @types.Exp::var_exp(src),
+    count,
+    count_width,
+    width,
+    left,
+  )
 }
 
 ///|
@@ -2653,6 +2669,45 @@ fn ProjectDisassemblyInstruction::project_basic_bil_rotate_r(
     Err(reason) => return Err(reason)
   }
   Ok([@types.Stmt::move_stmt(dst, rhs)])
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_rotate_carry_r(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  left : Bool,
+) -> Result[Array[@types.Stmt], String] {
+  let dst = match self.project_basic_bil_register(0, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let src = match self.project_basic_bil_register(1, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let (count, count_width) = match
+    self.project_basic_bil_shift_count_with_width(2, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let src_exp = @types.Exp::var_exp(src)
+  let carry = project_basic_bil_x86_flag("CF")
+  let combined = if left {
+    @types.Exp::concat(src_exp, carry)
+  } else {
+    @types.Exp::concat(carry, src_exp)
+  }
+  let rotated = match
+    project_basic_bil_rotate_exp(combined, count, count_width, width + 1, left) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let result = if left {
+    @types.Exp::extract(rotated, hi=width, lo=1)
+  } else {
+    @types.Exp::extract(rotated, hi=width - 1, lo=0)
+  }
+  Ok([@types.Stmt::move_stmt(dst, result)])
 }
 
 ///|
@@ -4600,6 +4655,18 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
       self.project_basic_bil_rotate_r(32, false)
     "ROR64R1" | "ROR64RCL" | "ROR64RI8" =>
       self.project_basic_bil_rotate_r(64, false)
+    "RCL8R1" | "RCL8RCL" | "RCL8RI8" =>
+      self.project_basic_bil_rotate_carry_r(8, true)
+    "RCL32R1" | "RCL32RCL" | "RCL32RI8" =>
+      self.project_basic_bil_rotate_carry_r(32, true)
+    "RCL64R1" | "RCL64RCL" | "RCL64RI8" =>
+      self.project_basic_bil_rotate_carry_r(64, true)
+    "RCR8R1" | "RCR8RCL" | "RCR8RI8" =>
+      self.project_basic_bil_rotate_carry_r(8, false)
+    "RCR32R1" | "RCR32RCL" | "RCR32RI8" =>
+      self.project_basic_bil_rotate_carry_r(32, false)
+    "RCR64R1" | "RCR64RCL" | "RCR64RI8" =>
+      self.project_basic_bil_rotate_carry_r(64, false)
     "SHL8R1" | "SHL8RCL" | "SHL8RI8" =>
       self.project_basic_bil_shift_r(8, @types.BinOp::lshift())
     "SHL32R1" | "SHL32RCL" | "SHL32RI8" =>

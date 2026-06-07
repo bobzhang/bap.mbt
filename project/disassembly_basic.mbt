@@ -4441,22 +4441,28 @@ fn project_disassembly_basic_x86_incdec_reg(
       )
     }
   }
-  let (opcode_index, rex) = if address_width == 64 &&
-    bytes.length() >= 3 &&
-    bytes[0].to_int() >= 0x40 &&
-    bytes[0].to_int() <= 0x4f {
-    (1, bytes[0].to_int())
-  } else {
-    (0, 0)
+  if address_width == 32 &&
+    data_width == 16 &&
+    bytes.length() >= 2 &&
+    bytes[0].to_int() == 0x66 {
+    let opcode = bytes[1].to_int()
+    if opcode >= 0x40 && opcode <= 0x47 {
+      return Some(
+        (2, "INC16r", project_disassembly_basic_x86_gpr16_name(opcode & 0x7)),
+      )
+    }
+    if opcode >= 0x48 && opcode <= 0x4f {
+      return Some(
+        (2, "DEC16r", project_disassembly_basic_x86_gpr16_name(opcode & 0x7)),
+      )
+    }
   }
-  if data_width == 64 && (rex & 0x8) == 0 {
-    return None
-  }
-  if data_width == 32 && (rex & 0x8) != 0 {
-    return None
-  }
-  if data_width != 8 && data_width != 32 && data_width != 64 {
-    return None
+  let (opcode_index, rex) = match
+    project_disassembly_basic_x86_data_opcode_index(
+      bytes, data_width, address_width,
+    ) {
+    Some(value) => value
+    None => return None
   }
   if bytes.length() < opcode_index + 2 {
     None
@@ -4501,22 +4507,12 @@ fn project_disassembly_basic_x86_incdec_mem(
   Array[ProjectInstructionKind],
 )? {
   let bytes = memory.to_bytes()
-  let (opcode_index, rex) = if address_width == 64 &&
-    bytes.length() >= 3 &&
-    bytes[0].to_int() >= 0x40 &&
-    bytes[0].to_int() <= 0x4f {
-    (1, bytes[0].to_int())
-  } else {
-    (0, 0)
-  }
-  if data_width == 64 && (rex & 0x8) == 0 {
-    return None
-  }
-  if data_width == 32 && (rex & 0x8) != 0 {
-    return None
-  }
-  if data_width != 8 && data_width != 32 && data_width != 64 {
-    return None
+  let (opcode_index, rex) = match
+    project_disassembly_basic_x86_data_opcode_index(
+      bytes, data_width, address_width,
+    ) {
+    Some(value) => value
+    None => return None
   }
   if bytes.length() < opcode_index + 2 {
     None
@@ -4567,22 +4563,12 @@ fn project_disassembly_basic_x86_unop_reg(
   address_width : Int,
 ) -> (Int, String, String)? {
   let bytes = memory.to_bytes()
-  let (opcode_index, rex) = if address_width == 64 &&
-    bytes.length() >= 3 &&
-    bytes[0].to_int() >= 0x40 &&
-    bytes[0].to_int() <= 0x4f {
-    (1, bytes[0].to_int())
-  } else {
-    (0, 0)
-  }
-  if data_width == 64 && (rex & 0x8) == 0 {
-    return None
-  }
-  if data_width == 32 && (rex & 0x8) != 0 {
-    return None
-  }
-  if data_width != 8 && data_width != 32 && data_width != 64 {
-    return None
+  let (opcode_index, rex) = match
+    project_disassembly_basic_x86_data_opcode_index(
+      bytes, data_width, address_width,
+    ) {
+    Some(value) => value
+    None => return None
   }
   if bytes.length() < opcode_index + 2 {
     None
@@ -4627,22 +4613,12 @@ fn project_disassembly_basic_x86_unop_mem(
   Array[ProjectInstructionKind],
 )? {
   let bytes = memory.to_bytes()
-  let (opcode_index, rex) = if address_width == 64 &&
-    bytes.length() >= 3 &&
-    bytes[0].to_int() >= 0x40 &&
-    bytes[0].to_int() <= 0x4f {
-    (1, bytes[0].to_int())
-  } else {
-    (0, 0)
-  }
-  if data_width == 64 && (rex & 0x8) == 0 {
-    return None
-  }
-  if data_width == 32 && (rex & 0x8) != 0 {
-    return None
-  }
-  if data_width != 8 && data_width != 32 && data_width != 64 {
-    return None
+  let (opcode_index, rex) = match
+    project_disassembly_basic_x86_data_opcode_index(
+      bytes, data_width, address_width,
+    ) {
+    Some(value) => value
+    None => return None
   }
   if bytes.length() < opcode_index + 2 {
     None
@@ -4698,22 +4674,12 @@ fn project_disassembly_basic_x86_shift_reg(
   Array[ProjectInstructionKind],
 )? {
   let bytes = memory.to_bytes()
-  let (opcode_index, rex) = if address_width == 64 &&
-    bytes.length() >= 3 &&
-    bytes[0].to_int() >= 0x40 &&
-    bytes[0].to_int() <= 0x4f {
-    (1, bytes[0].to_int())
-  } else {
-    (0, 0)
-  }
-  if data_width == 64 && (rex & 0x8) == 0 {
-    return None
-  }
-  if data_width == 32 && (rex & 0x8) != 0 {
-    return None
-  }
-  if data_width != 8 && data_width != 32 && data_width != 64 {
-    return None
+  let (opcode_index, rex) = match
+    project_disassembly_basic_x86_data_opcode_index(
+      bytes, data_width, address_width,
+    ) {
+    Some(value) => value
+    None => return None
   }
   if bytes.length() < opcode_index + 2 {
     None

@@ -6566,109 +6566,145 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "LDMXCSRM" => self.project_basic_bil_mxcsr_mem(true)
     "STMXCSRM" => self.project_basic_bil_mxcsr_mem(false)
     "ROL8R1" | "ROL8RCL" | "ROL8RI8" => self.project_basic_bil_rotate_r(8, true)
+    "ROL16R1" | "ROL16RCL" | "ROL16RI8" =>
+      self.project_basic_bil_rotate_r(16, true)
     "ROL32R1" | "ROL32RCL" | "ROL32RI8" =>
       self.project_basic_bil_rotate_r(32, true)
     "ROL64R1" | "ROL64RCL" | "ROL64RI8" =>
       self.project_basic_bil_rotate_r(64, true)
     "ROL8M1" | "ROL8MCL" | "ROL8MI8" => self.project_basic_bil_rotate_m(8, true)
+    "ROL16M1" | "ROL16MCL" | "ROL16MI8" =>
+      self.project_basic_bil_rotate_m(16, true)
     "ROL32M1" | "ROL32MCL" | "ROL32MI8" =>
       self.project_basic_bil_rotate_m(32, true)
     "ROL64M1" | "ROL64MCL" | "ROL64MI8" =>
       self.project_basic_bil_rotate_m(64, true)
     "ROR8R1" | "ROR8RCL" | "ROR8RI8" =>
       self.project_basic_bil_rotate_r(8, false)
+    "ROR16R1" | "ROR16RCL" | "ROR16RI8" =>
+      self.project_basic_bil_rotate_r(16, false)
     "ROR32R1" | "ROR32RCL" | "ROR32RI8" =>
       self.project_basic_bil_rotate_r(32, false)
     "ROR64R1" | "ROR64RCL" | "ROR64RI8" =>
       self.project_basic_bil_rotate_r(64, false)
     "ROR8M1" | "ROR8MCL" | "ROR8MI8" =>
       self.project_basic_bil_rotate_m(8, false)
+    "ROR16M1" | "ROR16MCL" | "ROR16MI8" =>
+      self.project_basic_bil_rotate_m(16, false)
     "ROR32M1" | "ROR32MCL" | "ROR32MI8" =>
       self.project_basic_bil_rotate_m(32, false)
     "ROR64M1" | "ROR64MCL" | "ROR64MI8" =>
       self.project_basic_bil_rotate_m(64, false)
     "RCL8R1" | "RCL8RCL" | "RCL8RI8" =>
       self.project_basic_bil_rotate_carry_r(8, true)
+    "RCL16R1" | "RCL16RCL" | "RCL16RI8" =>
+      self.project_basic_bil_rotate_carry_r(16, true)
     "RCL32R1" | "RCL32RCL" | "RCL32RI8" =>
       self.project_basic_bil_rotate_carry_r(32, true)
     "RCL64R1" | "RCL64RCL" | "RCL64RI8" =>
       self.project_basic_bil_rotate_carry_r(64, true)
     "RCR8R1" | "RCR8RCL" | "RCR8RI8" =>
       self.project_basic_bil_rotate_carry_r(8, false)
+    "RCR16R1" | "RCR16RCL" | "RCR16RI8" =>
+      self.project_basic_bil_rotate_carry_r(16, false)
     "RCR32R1" | "RCR32RCL" | "RCR32RI8" =>
       self.project_basic_bil_rotate_carry_r(32, false)
     "RCR64R1" | "RCR64RCL" | "RCR64RI8" =>
       self.project_basic_bil_rotate_carry_r(64, false)
     "RCL8M1" | "RCL8MCL" | "RCL8MI8" =>
       self.project_basic_bil_rotate_carry_m(8, true)
+    "RCL16M1" | "RCL16MCL" | "RCL16MI8" =>
+      self.project_basic_bil_rotate_carry_m(16, true)
     "RCL32M1" | "RCL32MCL" | "RCL32MI8" =>
       self.project_basic_bil_rotate_carry_m(32, true)
     "RCL64M1" | "RCL64MCL" | "RCL64MI8" =>
       self.project_basic_bil_rotate_carry_m(64, true)
     "RCR8M1" | "RCR8MCL" | "RCR8MI8" =>
       self.project_basic_bil_rotate_carry_m(8, false)
+    "RCR16M1" | "RCR16MCL" | "RCR16MI8" =>
+      self.project_basic_bil_rotate_carry_m(16, false)
     "RCR32M1" | "RCR32MCL" | "RCR32MI8" =>
       self.project_basic_bil_rotate_carry_m(32, false)
     "RCR64M1" | "RCR64MCL" | "RCR64MI8" =>
       self.project_basic_bil_rotate_carry_m(64, false)
     "SHL8R1" | "SHL8RCL" | "SHL8RI8" =>
       self.project_basic_bil_shift_r(8, @types.BinOp::lshift())
+    "SHL16R1" | "SHL16RCL" | "SHL16RI8" =>
+      self.project_basic_bil_shift_r(16, @types.BinOp::lshift())
     "SHL32R1" | "SHL32RCL" | "SHL32RI8" =>
       self.project_basic_bil_shift_r(32, @types.BinOp::lshift())
     "SHL64R1" | "SHL64RCL" | "SHL64RI8" =>
       self.project_basic_bil_shift_r(64, @types.BinOp::lshift())
     "SHL8M1" | "SHL8MCL" | "SHL8MI8" =>
       self.project_basic_bil_shift_m(8, @types.BinOp::lshift())
+    "SHL16M1" | "SHL16MCL" | "SHL16MI8" =>
+      self.project_basic_bil_shift_m(16, @types.BinOp::lshift())
     "SHL32M1" | "SHL32MCL" | "SHL32MI8" =>
       self.project_basic_bil_shift_m(32, @types.BinOp::lshift())
     "SHL64M1" | "SHL64MCL" | "SHL64MI8" =>
       self.project_basic_bil_shift_m(64, @types.BinOp::lshift())
     "SHR8R1" | "SHR8RCL" | "SHR8RI8" =>
       self.project_basic_bil_shift_r(8, @types.BinOp::rshift())
+    "SHR16R1" | "SHR16RCL" | "SHR16RI8" =>
+      self.project_basic_bil_shift_r(16, @types.BinOp::rshift())
     "SHR32R1" | "SHR32RCL" | "SHR32RI8" =>
       self.project_basic_bil_shift_r(32, @types.BinOp::rshift())
     "SHR64R1" | "SHR64RCL" | "SHR64RI8" =>
       self.project_basic_bil_shift_r(64, @types.BinOp::rshift())
     "SHR8M1" | "SHR8MCL" | "SHR8MI8" =>
       self.project_basic_bil_shift_m(8, @types.BinOp::rshift())
+    "SHR16M1" | "SHR16MCL" | "SHR16MI8" =>
+      self.project_basic_bil_shift_m(16, @types.BinOp::rshift())
     "SHR32M1" | "SHR32MCL" | "SHR32MI8" =>
       self.project_basic_bil_shift_m(32, @types.BinOp::rshift())
     "SHR64M1" | "SHR64MCL" | "SHR64MI8" =>
       self.project_basic_bil_shift_m(64, @types.BinOp::rshift())
     "SAR8R1" | "SAR8RCL" | "SAR8RI8" =>
       self.project_basic_bil_shift_r(8, @types.BinOp::arshift())
+    "SAR16R1" | "SAR16RCL" | "SAR16RI8" =>
+      self.project_basic_bil_shift_r(16, @types.BinOp::arshift())
     "SAR32R1" | "SAR32RCL" | "SAR32RI8" =>
       self.project_basic_bil_shift_r(32, @types.BinOp::arshift())
     "SAR64R1" | "SAR64RCL" | "SAR64RI8" =>
       self.project_basic_bil_shift_r(64, @types.BinOp::arshift())
     "SAR8M1" | "SAR8MCL" | "SAR8MI8" =>
       self.project_basic_bil_shift_m(8, @types.BinOp::arshift())
+    "SAR16M1" | "SAR16MCL" | "SAR16MI8" =>
+      self.project_basic_bil_shift_m(16, @types.BinOp::arshift())
     "SAR32M1" | "SAR32MCL" | "SAR32MI8" =>
       self.project_basic_bil_shift_m(32, @types.BinOp::arshift())
     "SAR64M1" | "SAR64MCL" | "SAR64MI8" =>
       self.project_basic_bil_shift_m(64, @types.BinOp::arshift())
     "INC8R" => self.project_basic_bil_incdec(8, @types.BinOp::plus())
+    "INC16R" => self.project_basic_bil_incdec(16, @types.BinOp::plus())
     "INC32R" => self.project_basic_bil_incdec(32, @types.BinOp::plus())
     "INC64R" => self.project_basic_bil_incdec(64, @types.BinOp::plus())
     "INC8M" => self.project_basic_bil_incdec_m(8, @types.BinOp::plus())
+    "INC16M" => self.project_basic_bil_incdec_m(16, @types.BinOp::plus())
     "INC32M" => self.project_basic_bil_incdec_m(32, @types.BinOp::plus())
     "INC64M" => self.project_basic_bil_incdec_m(64, @types.BinOp::plus())
     "DEC8R" => self.project_basic_bil_incdec(8, @types.BinOp::minus())
+    "DEC16R" => self.project_basic_bil_incdec(16, @types.BinOp::minus())
     "DEC32R" => self.project_basic_bil_incdec(32, @types.BinOp::minus())
     "DEC64R" => self.project_basic_bil_incdec(64, @types.BinOp::minus())
     "DEC8M" => self.project_basic_bil_incdec_m(8, @types.BinOp::minus())
+    "DEC16M" => self.project_basic_bil_incdec_m(16, @types.BinOp::minus())
     "DEC32M" => self.project_basic_bil_incdec_m(32, @types.BinOp::minus())
     "DEC64M" => self.project_basic_bil_incdec_m(64, @types.BinOp::minus())
     "NOT8R" => self.project_basic_bil_unop_r(8, @types.UnOp::not())
+    "NOT16R" => self.project_basic_bil_unop_r(16, @types.UnOp::not())
     "NOT32R" => self.project_basic_bil_unop_r(32, @types.UnOp::not())
     "NOT64R" => self.project_basic_bil_unop_r(64, @types.UnOp::not())
     "NOT8M" => self.project_basic_bil_unop_m(8, @types.UnOp::not())
+    "NOT16M" => self.project_basic_bil_unop_m(16, @types.UnOp::not())
     "NOT32M" => self.project_basic_bil_unop_m(32, @types.UnOp::not())
     "NOT64M" => self.project_basic_bil_unop_m(64, @types.UnOp::not())
     "NEG8R" => self.project_basic_bil_neg_r(8)
+    "NEG16R" => self.project_basic_bil_neg_r(16)
     "NEG32R" => self.project_basic_bil_neg_r(32)
     "NEG64R" => self.project_basic_bil_neg_r(64)
     "NEG8M" => self.project_basic_bil_neg_m(8)
+    "NEG16M" => self.project_basic_bil_neg_m(16)
     "NEG32M" => self.project_basic_bil_neg_m(32)
     "NEG64M" => self.project_basic_bil_neg_m(64)
     "SUB8RR" | "SUB8RR_REV" =>

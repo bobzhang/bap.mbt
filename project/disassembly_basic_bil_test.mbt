@@ -1743,6 +1743,85 @@ test "project Basic BIL lift covers x86 popcnt" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 bt-family" {
+  let bt32 = basic_bil_decode("x86", b"\x0f\xa3\xc8", start=0x7054UL)
+  match bt32.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%btx_o:imm5 := low:5[ECX:imm32]", "CF:imm1 := low:1[(EAX:imm32 >> %btx_o:imm5)]",
+        "OF:imm1 := unknown(bt:imm1)", "SF:imm1 := unknown(bt:imm1)", "ZF:imm1 := unknown(bt:imm1)",
+        "AF:imm1 := unknown(bt:imm1)", "PF:imm1 := unknown(bt:imm1)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let bts32 = basic_bil_decode("x86", b"\x0f\xba\xe8\x05", start=0x7055UL)
+  match bts32.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "CF:imm1 := low:1[(EAX:imm32 >> 5:5u)]", "OF:imm1 := unknown(bts:imm1)",
+        "SF:imm1 := unknown(bts:imm1)", "ZF:imm1 := unknown(bts:imm1)", "AF:imm1 := unknown(bts:imm1)",
+        "PF:imm1 := unknown(bts:imm1)", "EAX:imm32 := (EAX:imm32 | 0x20:32u)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let btr32_mem = basic_bil_decode(
+    "x86",
+    b"\x0f\xba\x75\xfc\x05",
+    start=0x7056UL,
+  )
+  match btr32_mem.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 9)
+      assert_string(stmts[0].to_string(), "%btx_a:imm32 := (EBP:imm32 - 4:32u)")
+      assert_string(
+        stmts[1].to_string(),
+        "%btx_d:imm32 := load(mem:mem32x8, %btx_a:imm32):imm32",
+      )
+      assert_string(
+        stmts[2].to_string(),
+        "CF:imm1 := low:1[(%btx_d:imm32 >> 5:5u)]",
+      )
+      assert_string(stmts[7].to_string(), "PF:imm1 := unknown(btr:imm1)")
+      assert_string(
+        stmts[8].to_string(),
+        "mem:mem32x8 := store(mem:mem32x8, %btx_a:imm32, (%btx_d:imm32 & (not 0x20:32u)))",
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let btc64_mem = basic_bil_decode(
+    "x86_64",
+    b"\x48\x0f\xbb\x4d\xf8",
+    start=0x7057UL,
+  )
+  match btc64_mem.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_true(stmts.length() == 11)
+      assert_string(stmts[0].to_string(), "%btx_a:imm64 := (RBP:imm64 - 8:64u)")
+      assert_true(stmts[1].to_string().contains("RCX:imm64 s/ 0x40:64u"))
+      assert_string(
+        stmts[2].to_string(),
+        "%btx_d:imm64 := load(mem:mem64x8, (%btx_a:imm64 + %btx_b:imm64)):imm64",
+      )
+      assert_string(stmts[3].to_string(), "%btx_o:imm6 := low:6[RCX:imm64]")
+      assert_string(
+        stmts[4].to_string(),
+        "CF:imm1 := low:1[(%btx_d:imm64 >> %btx_o:imm6)]",
+      )
+      assert_string(stmts[9].to_string(), "PF:imm1 := unknown(btc:imm1)")
+      assert_string(
+        stmts[10].to_string(),
+        "mem:mem64x8 := store(mem:mem64x8, (%btx_a:imm64 + %btx_b:imm64), (%btx_d:imm64 ^ (1:64u << %btx_o:imm6)))",
+      )
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86 setcc" {
   let sete = basic_bil_decode("x86", b"\x0f\x94\xc0", start=0x7053UL)
   match sete.lift_basic_bil() {

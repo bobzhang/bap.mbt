@@ -580,6 +580,361 @@ fn ProjectDisassemblyInstruction::project_basic_bil_popcnt_rm(
 }
 
 ///|
+fn project_basic_bil_btx_offset_width(width : Int) -> Result[Int, String] {
+  match width {
+    16 => Ok(4)
+    32 => Ok(5)
+    64 => Ok(6)
+    _ => Err("unsupported btx width \{width}")
+  }
+}
+
+///|
+fn project_basic_bil_btx_truncated_offset(
+  offset : Int64,
+  offset_width : Int,
+) -> Result[(Int, @types.Exp), String] {
+  let raw = match @types.int_of_int64(offset) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let truncated = raw & ((1 << offset_width) - 1)
+  match project_basic_bil_int(truncated.to_int64(), offset_width) {
+    Ok(exp) => Ok((truncated, exp))
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+fn project_basic_bil_btx_mask_reg(
+  width : Int,
+  offset : @types.Exp,
+) -> Result[@types.Exp, String] {
+  match project_basic_bil_int(1L, width) {
+    Ok(one) => Ok(@types.Exp::binop(@types.BinOp::lshift(), one, offset))
+    Err(reason) => Err(reason)
+  }
+}
+
+///|
+fn project_basic_bil_btx_mask_imm(
+  width : Int,
+  offset : Int,
+) -> Result[@types.Exp, String] {
+  project_basic_bil_addr_with_width(1UL << offset, width)
+}
+
+///|
+fn project_basic_bil_btx_flags(
+  op : String,
+  data : @types.Exp,
+  offset : @types.Exp,
+) -> Array[@types.Stmt] {
+  let selected = @types.Exp::cast(
+    @types.CastKind::low(),
+    1,
+    @types.Exp::binop(@types.BinOp::rshift(), data, offset),
+  )
+  let unknown = fn() { @types.Exp::unknown(op.to_lower(), Imm(1)) }
+  [
+    project_basic_bil_x86_flag_move("CF", selected),
+    project_basic_bil_x86_flag_move("OF", unknown()),
+    project_basic_bil_x86_flag_move("SF", unknown()),
+    project_basic_bil_x86_flag_move("ZF", unknown()),
+    project_basic_bil_x86_flag_move("AF", unknown()),
+    project_basic_bil_x86_flag_move("PF", unknown()),
+  ]
+}
+
+///|
+fn project_basic_bil_btx_side_effect(
+  op : String,
+  data : @types.Exp,
+  mask : @types.Exp,
+) -> Result[@types.Exp?, String] {
+  match op {
+    "BT" => Ok(None)
+    "BTC" => Ok(Some(project_basic_bil_x86_xor(data, mask)))
+    "BTR" =>
+      Ok(Some(project_basic_bil_x86_and(data, project_basic_bil_x86_not(mask))))
+    "BTS" => Ok(Some(project_basic_bil_x86_or(data, mask)))
+    _ => Err("unsupported btx operation \{op}")
+  }
+}
+
+///|
+fn project_basic_bil_btx_store(
+  mem : @types.Var,
+  addr : @types.Exp,
+  width : Int,
+  value : @types.Exp,
+) -> Result[@types.Stmt, String] {
+  let size = match @types.Size::of_int(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  Ok(
+    @types.Stmt::move_stmt(
+      mem,
+      @types.Exp::store(
+        mem=@types.Exp::var_exp(mem),
+        addr~,
+        value,
+        LittleEndian,
+        size,
+      ),
+    ),
+  )
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_btx_rr(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  op : String,
+) -> Result[Array[@types.Stmt], String] {
+  let offset_width = match project_basic_bil_btx_offset_width(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let base = match self.project_basic_bil_register(0, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let offset = match self.project_basic_bil_register(1, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let offset_tmp = project_basic_bil_virtual("btx_o", offset_width)
+  let offset_tmp_exp = @types.Exp::var_exp(offset_tmp)
+  let data = @types.Exp::var_exp(base)
+  let mask = match project_basic_bil_btx_mask_reg(width, offset_tmp_exp) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let stmts = [
+    @types.Stmt::move_stmt(
+      offset_tmp,
+      @types.Exp::cast(
+        @types.CastKind::low(),
+        offset_width,
+        @types.Exp::var_exp(offset),
+      ),
+    ),
+  ]
+  for stmt in project_basic_bil_btx_flags(op, data, offset_tmp_exp) {
+    stmts.push(stmt)
+  }
+  match project_basic_bil_btx_side_effect(op, @types.Exp::var_exp(base), mask) {
+    Ok(Some(updated)) => stmts.push(@types.Stmt::move_stmt(base, updated))
+    Ok(None) => ()
+    Err(reason) => return Err(reason)
+  }
+  Ok(stmts)
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_btx_ri(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  op : String,
+) -> Result[Array[@types.Stmt], String] {
+  let offset_width = match project_basic_bil_btx_offset_width(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let base = match self.project_basic_bil_register(0, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let raw_offset = match self.project_basic_bil_immediate(1) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let (offset_value, offset) = match
+    project_basic_bil_btx_truncated_offset(raw_offset, offset_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let mask = match project_basic_bil_btx_mask_imm(width, offset_value) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let stmts = project_basic_bil_btx_flags(op, @types.Exp::var_exp(base), offset)
+  match project_basic_bil_btx_side_effect(op, @types.Exp::var_exp(base), mask) {
+    Ok(Some(updated)) => stmts.push(@types.Stmt::move_stmt(base, updated))
+    Ok(None) => ()
+    Err(reason) => return Err(reason)
+  }
+  Ok(stmts)
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_btx_mi(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  op : String,
+) -> Result[Array[@types.Stmt], String] {
+  let offset_width = match project_basic_bil_btx_offset_width(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let raw_offset = match self.project_basic_bil_immediate(5) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let (offset_value, offset) = match
+    project_basic_bil_btx_truncated_offset(raw_offset, offset_width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let mask = match project_basic_bil_btx_mask_imm(width, offset_value) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let addr_tmp = project_basic_bil_virtual("btx_a", address_width)
+  let data_tmp = project_basic_bil_virtual("btx_d", width)
+  let stmts = [
+    @types.Stmt::move_stmt(addr_tmp, addr),
+    @types.Stmt::move_stmt(
+      data_tmp,
+      @types.Exp::load(
+        mem=@types.Exp::var_exp(mem),
+        addr=@types.Exp::var_exp(addr_tmp),
+        LittleEndian,
+        size,
+      ),
+    ),
+  ]
+  for
+    stmt in project_basic_bil_btx_flags(
+      op,
+      @types.Exp::var_exp(data_tmp),
+      offset,
+    ) {
+    stmts.push(stmt)
+  }
+  match
+    project_basic_bil_btx_side_effect(op, @types.Exp::var_exp(data_tmp), mask) {
+    Ok(Some(updated)) =>
+      match
+        project_basic_bil_btx_store(
+          mem,
+          @types.Exp::var_exp(addr_tmp),
+          width,
+          updated,
+        ) {
+        Ok(stmt) => stmts.push(stmt)
+        Err(reason) => return Err(reason)
+      }
+    Ok(None) => ()
+    Err(reason) => return Err(reason)
+  }
+  Ok(stmts)
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_btx_mr(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  op : String,
+) -> Result[Array[@types.Stmt], String] {
+  let offset_width = match project_basic_bil_btx_offset_width(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let offset = match self.project_basic_bil_register(5, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size_bytes = match project_basic_bil_int((width / 8).to_int64(), width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let bits_per_word = match project_basic_bil_int(width.to_int64(), width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let offset_tmp = project_basic_bil_virtual("btx_o", offset_width)
+  let addr_tmp = project_basic_bil_virtual("btx_a", address_width)
+  let byte_tmp = project_basic_bil_virtual("btx_b", address_width)
+  let data_tmp = project_basic_bil_virtual("btx_d", width)
+  let offset_exp = @types.Exp::var_exp(offset)
+  let byte_offset = @types.Exp::binop(
+    @types.BinOp::times(),
+    size_bytes,
+    @types.Exp::binop(@types.BinOp::sdivide(), offset_exp, bits_per_word),
+  )
+  let byte_offset = if address_width == width {
+    byte_offset
+  } else {
+    @types.Exp::cast(@types.CastKind::signed(), address_width, byte_offset)
+  }
+  let effective_addr = @types.Exp::binop(
+    @types.BinOp::plus(),
+    @types.Exp::var_exp(addr_tmp),
+    @types.Exp::var_exp(byte_tmp),
+  )
+  let size = match @types.Size::of_int(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let mask = match
+    project_basic_bil_btx_mask_reg(width, @types.Exp::var_exp(offset_tmp)) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let stmts = [
+    @types.Stmt::move_stmt(addr_tmp, addr),
+    @types.Stmt::move_stmt(byte_tmp, byte_offset),
+    @types.Stmt::move_stmt(
+      data_tmp,
+      @types.Exp::load(
+        mem=@types.Exp::var_exp(mem),
+        addr=effective_addr,
+        LittleEndian,
+        size,
+      ),
+    ),
+    @types.Stmt::move_stmt(
+      offset_tmp,
+      @types.Exp::cast(@types.CastKind::low(), offset_width, offset_exp),
+    ),
+  ]
+  for
+    stmt in project_basic_bil_btx_flags(
+      op,
+      @types.Exp::var_exp(data_tmp),
+      @types.Exp::var_exp(offset_tmp),
+    ) {
+    stmts.push(stmt)
+  }
+  match
+    project_basic_bil_btx_side_effect(op, @types.Exp::var_exp(data_tmp), mask) {
+    Ok(Some(updated)) =>
+      match project_basic_bil_btx_store(mem, effective_addr, width, updated) {
+        Ok(stmt) => stmts.push(stmt)
+        Err(reason) => return Err(reason)
+      }
+    Ok(None) => ()
+    Err(reason) => return Err(reason)
+  }
+  Ok(stmts)
+}
+
+///|
 fn project_basic_bil_x86_parity(
   result : @types.Exp,
   width : Int,
@@ -3491,6 +3846,54 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "POPCNT16RM" => self.project_basic_bil_popcnt_rm(16)
     "POPCNT32RM" => self.project_basic_bil_popcnt_rm(32)
     "POPCNT64RM" => self.project_basic_bil_popcnt_rm(64)
+    "BT16RR" => self.project_basic_bil_btx_rr(16, "BT")
+    "BT32RR" => self.project_basic_bil_btx_rr(32, "BT")
+    "BT64RR" => self.project_basic_bil_btx_rr(64, "BT")
+    "BT16RI8" => self.project_basic_bil_btx_ri(16, "BT")
+    "BT32RI8" => self.project_basic_bil_btx_ri(32, "BT")
+    "BT64RI8" => self.project_basic_bil_btx_ri(64, "BT")
+    "BT16MR" => self.project_basic_bil_btx_mr(16, "BT")
+    "BT32MR" => self.project_basic_bil_btx_mr(32, "BT")
+    "BT64MR" => self.project_basic_bil_btx_mr(64, "BT")
+    "BT16MI8" => self.project_basic_bil_btx_mi(16, "BT")
+    "BT32MI8" => self.project_basic_bil_btx_mi(32, "BT")
+    "BT64MI8" => self.project_basic_bil_btx_mi(64, "BT")
+    "BTC16RR" => self.project_basic_bil_btx_rr(16, "BTC")
+    "BTC32RR" => self.project_basic_bil_btx_rr(32, "BTC")
+    "BTC64RR" => self.project_basic_bil_btx_rr(64, "BTC")
+    "BTC16RI8" => self.project_basic_bil_btx_ri(16, "BTC")
+    "BTC32RI8" => self.project_basic_bil_btx_ri(32, "BTC")
+    "BTC64RI8" => self.project_basic_bil_btx_ri(64, "BTC")
+    "BTC16MR" => self.project_basic_bil_btx_mr(16, "BTC")
+    "BTC32MR" => self.project_basic_bil_btx_mr(32, "BTC")
+    "BTC64MR" => self.project_basic_bil_btx_mr(64, "BTC")
+    "BTC16MI8" => self.project_basic_bil_btx_mi(16, "BTC")
+    "BTC32MI8" => self.project_basic_bil_btx_mi(32, "BTC")
+    "BTC64MI8" => self.project_basic_bil_btx_mi(64, "BTC")
+    "BTR16RR" => self.project_basic_bil_btx_rr(16, "BTR")
+    "BTR32RR" => self.project_basic_bil_btx_rr(32, "BTR")
+    "BTR64RR" => self.project_basic_bil_btx_rr(64, "BTR")
+    "BTR16RI8" => self.project_basic_bil_btx_ri(16, "BTR")
+    "BTR32RI8" => self.project_basic_bil_btx_ri(32, "BTR")
+    "BTR64RI8" => self.project_basic_bil_btx_ri(64, "BTR")
+    "BTR16MR" => self.project_basic_bil_btx_mr(16, "BTR")
+    "BTR32MR" => self.project_basic_bil_btx_mr(32, "BTR")
+    "BTR64MR" => self.project_basic_bil_btx_mr(64, "BTR")
+    "BTR16MI8" => self.project_basic_bil_btx_mi(16, "BTR")
+    "BTR32MI8" => self.project_basic_bil_btx_mi(32, "BTR")
+    "BTR64MI8" => self.project_basic_bil_btx_mi(64, "BTR")
+    "BTS16RR" => self.project_basic_bil_btx_rr(16, "BTS")
+    "BTS32RR" => self.project_basic_bil_btx_rr(32, "BTS")
+    "BTS64RR" => self.project_basic_bil_btx_rr(64, "BTS")
+    "BTS16RI8" => self.project_basic_bil_btx_ri(16, "BTS")
+    "BTS32RI8" => self.project_basic_bil_btx_ri(32, "BTS")
+    "BTS64RI8" => self.project_basic_bil_btx_ri(64, "BTS")
+    "BTS16MR" => self.project_basic_bil_btx_mr(16, "BTS")
+    "BTS32MR" => self.project_basic_bil_btx_mr(32, "BTS")
+    "BTS64MR" => self.project_basic_bil_btx_mr(64, "BTS")
+    "BTS16MI8" => self.project_basic_bil_btx_mi(16, "BTS")
+    "BTS32MI8" => self.project_basic_bil_btx_mi(32, "BTS")
+    "BTS64MI8" => self.project_basic_bil_btx_mi(64, "BTS")
     "ROL8R1" | "ROL8RCL" | "ROL8RI8" => self.project_basic_bil_rotate_r(8, true)
     "ROL32R1" | "ROL32RCL" | "ROL32RI8" =>
       self.project_basic_bil_rotate_r(32, true)

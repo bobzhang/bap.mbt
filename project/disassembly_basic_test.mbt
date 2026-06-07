@@ -1849,6 +1849,77 @@ test "translated BAP basic disassembly decodes x86 popcnt fixtures" {
 }
 
 ///|
+test "translated BAP basic disassembly decodes x86 bt-family fixtures" {
+  let samples : Array[
+    (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),
+  ] = [
+    ("x86", b"\x0f\xa3\xc8", 3, ["BT32rr", "EAX", "ECX"], []),
+    ("x86", b"\x66\x0f\xba\xe8\x03", 5, ["BTS16ri8", "AX", "0x3"], []),
+    (
+      "x86",
+      b"\x0f\xba\x65\xfc\x05",
+      5,
+      ["BT32mi8", "EBP", "0x1", "Nil", "-0x4", "Nil", "0x5"],
+      [ProjectMayLoad],
+    ),
+    (
+      "x86",
+      b"\x0f\xba\x75\xfc\x05",
+      5,
+      ["BTR32mi8", "EBP", "0x1", "Nil", "-0x4", "Nil", "0x5"],
+      [ProjectMayLoad, ProjectMayStore],
+    ),
+    (
+      "x86_64",
+      b"\x48\x0f\xbb\x4d\xf8",
+      5,
+      ["BTC64mr", "RBP", "0x1", "Nil", "-0x8", "Nil", "RCX"],
+      [ProjectMayLoad, ProjectMayStore],
+    ),
+    ("x86_64", b"\x4d\x0f\xab\xc8", 4, ["BTS64rr", "R8", "R9"], []),
+    ("x86_64", b"\x48\x0f\xba\xe0\x3f", 5, ["BT64ri8", "RAX", "0x3f"], []),
+  ]
+  for sample in samples {
+    let disasm = match
+      @project.ProjectDisassemblyBasic::create(sample.0, backend="llvm") {
+      Ok(disasm) => disasm
+      Err(reason) => fail(reason)
+    }
+    let memory = @memory.Memory::from_bytes(
+      endian=LittleEndian,
+      start=0xe1f0UL,
+      sample.1,
+    )
+    match disasm.insn_of_mem(memory) {
+      Ok(result) => {
+        assert_true(result.memory().length() == sample.2)
+        assert_true(result.remainder().is_finished())
+        match result.instruction() {
+          Some(instruction) => {
+            let actual = basic_instruction_strings(instruction)
+            if actual != sample.3 {
+              fail(
+                "expected " + sample.3.join(" ") + ", got " + actual.join(" "),
+              )
+            }
+            if instruction.kinds() != sample.4 {
+              fail(
+                "expected kinds " +
+                sample.4.map(kind => kind.to_string()).join(" ") +
+                ", got " +
+                instruction.kinds().map(kind => kind.to_string()).join(" "),
+              )
+            }
+          }
+          None => fail("missing x86 bt-family instruction")
+        }
+      }
+      Err(reason) => fail(reason)
+    }
+  }
+}
+
+///|
 test "translated BAP basic disassembly decodes x86 setcc fixtures" {
   let samples : Array[
     (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),

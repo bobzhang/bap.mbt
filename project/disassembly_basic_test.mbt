@@ -2744,10 +2744,13 @@ test "translated BAP basic disassembly decodes x86 register mov fixtures" {
     ("x86_64", b"\x48\x8b\xec", 3, ["MOV64rr_REV", "RBP", "RSP"], []),
     ("x86_64", b"\x4c\x89\xc0", 3, ["MOV64rr", "RAX", "R8"], []),
     ("x86_64", b"\x4d\x8b\xc8", 3, ["MOV64rr_REV", "R9", "R8"], []),
+    ("x86_64", b"\x66\x41\x8b\xc0", 4, ["MOV16rr_REV", "AX", "R8W"], []),
     ("x86_64", b"\x40\x88\xe0", 3, ["MOV8rr", "AL", "SPL"], []),
     ("x86_64", b"\x44\x8a\xc0", 3, ["MOV8rr_REV", "R8B", "AL"], []),
     ("x86", b"\x89\xe5", 2, ["MOV32rr", "EBP", "ESP"], []),
     ("x86", b"\x8b\xec", 2, ["MOV32rr_REV", "EBP", "ESP"], []),
+    ("x86", b"\x66\x89\xd8", 3, ["MOV16rr", "AX", "BX"], []),
+    ("x86", b"\x66\x8b\xc1", 3, ["MOV16rr_REV", "AX", "CX"], []),
     ("x86", b"\x88\xe0", 2, ["MOV8rr", "AL", "AH"], []),
     ("x86", b"\x8a\xe0", 2, ["MOV8rr_REV", "AH", "AL"], []),
   ]
@@ -2786,8 +2789,10 @@ test "translated BAP basic disassembly decodes x86 byte immediate mov fixtures" 
   ] = [
     ("x86", b"\xb0\x7f", 2, ["MOV8ri", "AL", "0x7f"], []),
     ("x86", b"\xb4\x80", 2, ["MOV8ri", "AH", "0x80"], []),
+    ("x86", b"\x66\xb8\x34\x12", 4, ["MOV16ri", "AX", "0x1234"], []),
     ("x86_64", b"\x40\xb4\x01", 3, ["MOV8ri", "SPL", "0x1"], []),
     ("x86_64", b"\x41\xb0\xff", 3, ["MOV8ri", "R8B", "0xff"], []),
+    ("x86_64", b"\x66\x41\xb8\x34\x12", 5, ["MOV16ri", "R8W", "0x1234"], []),
   ]
   for sample in samples {
     let disasm = match
@@ -2844,12 +2849,21 @@ test "translated BAP basic disassembly decodes x86 xchg fixtures" {
     ),
     ("x86", b"\x91", 1, ["XCHG32rr", "EAX", "ECX"], []),
     ("x86", b"\x87\xd8", 2, ["XCHG32rr", "EBX", "EAX"], []),
+    ("x86", b"\x66\x91", 2, ["XCHG16rr", "AX", "CX"], []),
+    ("x86", b"\x66\x87\xc8", 3, ["XCHG16rr", "CX", "AX"], []),
     ("x86", b"\x86\xe0", 2, ["XCHG8rr", "AH", "AL"], []),
     (
       "x86",
       b"\x87\x45\xfc",
       3,
       ["XCHG32rm", "EAX", "EBP", "0x1", "Nil", "-0x4", "Nil"],
+      [ProjectMayLoad, ProjectMayStore],
+    ),
+    (
+      "x86",
+      b"\x66\x87\x4d\xfc",
+      4,
+      ["XCHG16rm", "CX", "EBP", "0x1", "Nil", "-0x4", "Nil"],
       [ProjectMayLoad, ProjectMayStore],
     ),
     (
@@ -3361,9 +3375,23 @@ test "translated BAP basic disassembly decodes x86 accumulator absolute mov fixt
     ),
     (
       "x86",
+      b"\x66\xa1\x78\x56\x34\x12",
+      6,
+      ["MOV16ra", "AX", "0x12345678"],
+      [ProjectMayLoad],
+    ),
+    (
+      "x86",
       b"\xa3\x78\x56\x34\x12",
       5,
       ["MOV32ar", "0x12345678", "EAX"],
+      [ProjectMayStore],
+    ),
+    (
+      "x86",
+      b"\x66\xa3\x78\x56\x34\x12",
+      6,
+      ["MOV16ar", "0x12345678", "AX"],
       [ProjectMayStore],
     ),
     (
@@ -3458,6 +3486,13 @@ test "translated BAP basic disassembly decodes x86 memory mov fixtures" {
     ),
     (
       "x86_64",
+      b"\x66\x8b\x45\xfc",
+      4,
+      ["MOV16rm", "AX", "RBP", "0x1", "Nil", "-0x4", "Nil"],
+      [ProjectMayLoad],
+    ),
+    (
+      "x86_64",
       b"\x44\x88\x45\xfc",
       4,
       ["MOV8mr", "RBP", "0x1", "Nil", "-0x4", "Nil", "R8B"],
@@ -3472,9 +3507,23 @@ test "translated BAP basic disassembly decodes x86 memory mov fixtures" {
     ),
     (
       "x86",
+      b"\x66\x8b\x45\xfc",
+      4,
+      ["MOV16rm", "AX", "EBP", "0x1", "Nil", "-0x4", "Nil"],
+      [ProjectMayLoad],
+    ),
+    (
+      "x86",
       b"\x89\x45\xfc",
       3,
       ["MOV32mr", "EBP", "0x1", "Nil", "-0x4", "Nil", "EAX"],
+      [ProjectMayStore],
+    ),
+    (
+      "x86",
+      b"\x66\x89\x4d\xfc",
+      4,
+      ["MOV16mr", "EBP", "0x1", "Nil", "-0x4", "Nil", "CX"],
       [ProjectMayStore],
     ),
     (
@@ -3533,6 +3582,7 @@ test "translated BAP basic disassembly decodes x86 immediate mov r/m fixtures" {
       [],
     ),
     ("x86_64", b"\x41\xc6\xc0\xff", 4, ["MOV8ri", "R8B", "0xff"], []),
+    ("x86_64", b"\x66\x41\xc7\xc0\x34\x12", 6, ["MOV16ri", "R8W", "0x1234"], []),
     ("x86_64", b"\x40\xc6\xc4\x01", 4, ["MOV8ri", "SPL", "0x1"], []),
     ("x86", b"\xc6\xc4\x80", 3, ["MOV8ri", "AH", "0x80"], []),
     (
@@ -3550,11 +3600,19 @@ test "translated BAP basic disassembly decodes x86 immediate mov r/m fixtures" {
       [ProjectMayStore],
     ),
     ("x86", b"\xc7\xc0\xff\xff\xff\xff", 6, ["MOV32ri", "EAX", "-0x1"], []),
+    ("x86", b"\x66\xc7\xc0\x34\x12", 5, ["MOV16ri", "AX", "0x1234"], []),
     (
       "x86",
       b"\xc7\x45\xfc\x78\x56\x34\x12",
       7,
       ["MOV32mi", "EBP", "0x1", "Nil", "-0x4", "Nil", "0x12345678"],
+      [ProjectMayStore],
+    ),
+    (
+      "x86",
+      b"\x66\xc7\x45\xfc\x34\x12",
+      6,
+      ["MOV16mi", "EBP", "0x1", "Nil", "-0x4", "Nil", "0x1234"],
       [ProjectMayStore],
     ),
     (
@@ -3620,10 +3678,24 @@ test "translated BAP basic disassembly decodes x86 lea fixtures" {
       [],
     ),
     (
+      "x86_64",
+      b"\x66\x8d\x45\xfc",
+      4,
+      ["LEA16r", "AX", "RBP", "0x1", "Nil", "-0x4", "Nil"],
+      [],
+    ),
+    (
       "x86",
       b"\x8d\x45\xfc",
       3,
       ["LEA32r", "EAX", "EBP", "0x1", "Nil", "-0x4", "Nil"],
+      [],
+    ),
+    (
+      "x86",
+      b"\x66\x8d\x45\xfc",
+      4,
+      ["LEA16r", "AX", "EBP", "0x1", "Nil", "-0x4", "Nil"],
       [],
     ),
   ]

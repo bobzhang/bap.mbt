@@ -1171,10 +1171,17 @@ fn project_disassembly_basic_x86_system(
                 }
               }
             0x01 =>
-              if bytes.length() >= 3 && bytes[2].to_int() == 0xd0 {
-                Some((3, "XGETBV"))
-              } else {
+              if bytes.length() < 3 {
                 None
+              } else {
+                match bytes[2].to_int() {
+                  0xc8 => Some((3, "MONITOR"))
+                  0xc9 => Some((3, "MWAIT"))
+                  0xd0 => Some((3, "XGETBV"))
+                  0xf9 => Some((3, "RDTSCP"))
+                  0xfb => Some((3, "MWAITX"))
+                  _ => None
+                }
               }
             _ => None
           }

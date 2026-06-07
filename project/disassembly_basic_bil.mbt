@@ -7226,11 +7226,14 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "INT3" | "INT" => self.project_basic_bil_cpuexn()
     "HLT" => Ok([])
     "RDTSC" => Ok(project_basic_bil_x86_unknown_regs("rdtsc", ["EAX", "EDX"]))
+    "RDTSCP" =>
+      Ok(project_basic_bil_x86_unknown_regs("rdtscp", ["EAX", "EDX", "ECX"]))
     "CPUID" =>
       Ok(
         project_basic_bil_x86_unknown_regs("cpuid", ["EAX", "EBX", "ECX", "EDX"]),
       )
     "XGETBV" => Ok(project_basic_bil_x86_unknown_regs("xgetbv", ["EAX", "EDX"]))
+    "MONITOR" | "MWAIT" | "MWAITX" => Ok([])
     "SYSCALL" | "SYSENTER" =>
       Ok([@types.Stmt::encode(@types.Stmt::call(), "syscall")])
     "JMP_1" => self.project_basic_bil_jump()

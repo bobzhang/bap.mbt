@@ -564,7 +564,17 @@ test "project Basic BIL lift covers x86 system instructions" {
     Err(reason) => fail(reason)
   }
 
-  let cpuid = basic_bil_decode("x86_64", b"\x0f\xa2", start=0x7017UL)
+  let rdtscp = basic_bil_decode("x86_64", b"\x0f\x01\xf9", start=0x7017UL)
+  match rdtscp.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "EAX:imm32 := unknown(rdtscp:imm32)", "EDX:imm32 := unknown(rdtscp:imm32)",
+        "ECX:imm32 := unknown(rdtscp:imm32)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let cpuid = basic_bil_decode("x86_64", b"\x0f\xa2", start=0x701aUL)
   match cpuid.lift_basic_bil() {
     Ok(stmts) =>
       assert_basic_bil_text(stmts, [
@@ -574,7 +584,7 @@ test "project Basic BIL lift covers x86 system instructions" {
     Err(reason) => fail(reason)
   }
 
-  let xgetbv = basic_bil_decode("x86", b"\x0f\x01\xd0", start=0x7019UL)
+  let xgetbv = basic_bil_decode("x86", b"\x0f\x01\xd0", start=0x701cUL)
   match xgetbv.lift_basic_bil() {
     Ok(stmts) =>
       assert_basic_bil_text(stmts, [
@@ -583,7 +593,25 @@ test "project Basic BIL lift covers x86 system instructions" {
     Err(reason) => fail(reason)
   }
 
-  let syscall = basic_bil_decode("x86_64", b"\x0f\x05", start=0x701cUL)
+  let monitor = basic_bil_decode("x86_64", b"\x0f\x01\xc8", start=0x701fUL)
+  match monitor.lift_basic_bil() {
+    Ok(stmts) => assert_true(stmts.is_empty())
+    Err(reason) => fail(reason)
+  }
+
+  let mwait = basic_bil_decode("x86_64", b"\x0f\x01\xc9", start=0x7022UL)
+  match mwait.lift_basic_bil() {
+    Ok(stmts) => assert_true(stmts.is_empty())
+    Err(reason) => fail(reason)
+  }
+
+  let mwaitx = basic_bil_decode("x86_64", b"\x0f\x01\xfb", start=0x7025UL)
+  match mwaitx.lift_basic_bil() {
+    Ok(stmts) => assert_true(stmts.is_empty())
+    Err(reason) => fail(reason)
+  }
+
+  let syscall = basic_bil_decode("x86_64", b"\x0f\x05", start=0x7028UL)
   match syscall.lift_basic_bil() {
     Ok(stmts) => {
       assert_true(stmts.length() == 1)
@@ -594,7 +622,7 @@ test "project Basic BIL lift covers x86 system instructions" {
     Err(reason) => fail(reason)
   }
 
-  let sysenter = basic_bil_decode("x86", b"\x0f\x34", start=0x701eUL)
+  let sysenter = basic_bil_decode("x86", b"\x0f\x34", start=0x702aUL)
   match sysenter.lift_basic_bil() {
     Ok(stmts) => {
       assert_true(stmts.length() == 1)

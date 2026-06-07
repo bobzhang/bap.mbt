@@ -542,6 +542,53 @@ test "translated BAP basic disassembly decodes x86 system instructions" {
 }
 
 ///|
+test "translated BAP basic disassembly decodes x86 port I/O instructions" {
+  let samples : Array[(String, Bytes, Int, Array[String])] = [
+    ("x86", b"\xe4\x80", 2, ["IN8", "AL", "0x80"]),
+    ("x86", b"\xe5\x81", 2, ["IN32", "EAX", "0x81"]),
+    ("x86", b"\x66\xe5\x82", 3, ["IN16", "AX", "0x82"]),
+    ("x86", b"\xec", 1, ["IN8", "AL", "DX"]),
+    ("x86", b"\xed", 1, ["IN32", "EAX", "DX"]),
+    ("x86", b"\x66\xed", 2, ["IN16", "AX", "DX"]),
+    ("x86", b"\xe6\x83", 2, ["OUT8", "0x83", "AL"]),
+    ("x86", b"\xe7\x84", 2, ["OUT32", "0x84", "EAX"]),
+    ("x86", b"\x66\xe7\x85", 3, ["OUT16", "0x85", "AX"]),
+    ("x86", b"\xee", 1, ["OUT8", "DX", "AL"]),
+    ("x86", b"\xef", 1, ["OUT32", "DX", "EAX"]),
+    ("x86", b"\x66\xef", 2, ["OUT16", "DX", "AX"]),
+    ("x86_64", b"\x40\xed", 2, ["IN32", "EAX", "DX"]),
+    ("x86_64", b"\x66\x40\xed", 3, ["IN16", "AX", "DX"]),
+    ("x86_64", b"\x40\xef", 2, ["OUT32", "DX", "EAX"]),
+  ]
+  for sample in samples {
+    let disasm = match
+      @project.ProjectDisassemblyBasic::create(sample.0, backend="llvm") {
+      Ok(disasm) => disasm
+      Err(reason) => fail(reason)
+    }
+    let memory = @memory.Memory::from_bytes(
+      endian=LittleEndian,
+      start=0xe168UL,
+      sample.1,
+    )
+    match disasm.insn_of_mem(memory) {
+      Ok(result) => {
+        assert_true(result.memory().length() == sample.2)
+        assert_true(result.remainder().is_finished())
+        match result.instruction() {
+          Some(instruction) => {
+            assert_true(basic_instruction_strings(instruction) == sample.3)
+            assert_true(instruction.kinds().is_empty())
+          }
+          None => fail("missing x86 port I/O instruction")
+        }
+      }
+      Err(reason) => fail(reason)
+    }
+  }
+}
+
+///|
 test "translated BAP basic disassembly decodes x86 random instructions" {
   let samples : Array[(String, Bytes, Int, Array[String])] = [
     ("x86", b"\x0f\xc7\xf1", 3, ["RDRAND32r", "ECX"]),

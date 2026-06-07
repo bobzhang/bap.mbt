@@ -1149,6 +1149,106 @@ fn project_disassembly_basic_x86_ud2(
 }
 
 ///|
+fn project_disassembly_basic_x86_port_io(
+  memory : @memory.Memory,
+  address_width : Int,
+) -> (
+  Int,
+  String,
+  Array[ProjectInstructionOperand],
+  Array[ProjectInstructionKind],
+)? {
+  let bytes = memory.to_bytes()
+  let has_66_prefix = bytes.length() > 0 && bytes[0].to_int() == 0x66
+  let prefix_index = if has_66_prefix { 1 } else { 0 }
+  let (opcode_index, rex) = if address_width == 64 &&
+    bytes.length() > prefix_index &&
+    bytes[prefix_index].to_int() >= 0x40 &&
+    bytes[prefix_index].to_int() <= 0x4f {
+    (prefix_index + 1, bytes[prefix_index].to_int())
+  } else {
+    (prefix_index, 0)
+  }
+  if bytes.length() <= opcode_index {
+    return None
+  }
+  let opcode = bytes[opcode_index].to_int()
+  if opcode < 0xe4 || opcode > 0xef || (opcode >= 0xe8 && opcode <= 0xeb) {
+    return None
+  }
+  let data_width = match opcode {
+    0xe4 | 0xe6 | 0xec | 0xee => 8
+    _ => if has_66_prefix && (rex & 0x8) == 0 { 16 } else { 32 }
+  }
+  let accumulator = match data_width {
+    8 => "AL"
+    16 => "AX"
+    _ => "EAX"
+  }
+  let accumulator_operand = ProjectInstructionOperand::register(
+    name=accumulator,
+  )
+  let dx_operand = ProjectInstructionOperand::register(name="DX")
+  match opcode {
+    0xe4 | 0xe5 =>
+      if bytes.length() < opcode_index + 2 {
+        None
+      } else {
+        Some(
+          (
+            opcode_index + 2,
+            "IN\{data_width}",
+            [
+              accumulator_operand,
+              ProjectInstructionOperand::immediate(
+                bytes[opcode_index + 1].to_int64(),
+              ),
+            ],
+            [],
+          ),
+        )
+      }
+    0xec | 0xed =>
+      Some(
+        (
+          opcode_index + 1,
+          "IN\{data_width}",
+          [accumulator_operand, dx_operand],
+          [],
+        ),
+      )
+    0xe6 | 0xe7 =>
+      if bytes.length() < opcode_index + 2 {
+        None
+      } else {
+        Some(
+          (
+            opcode_index + 2,
+            "OUT\{data_width}",
+            [
+              ProjectInstructionOperand::immediate(
+                bytes[opcode_index + 1].to_int64(),
+              ),
+              accumulator_operand,
+            ],
+            [],
+          ),
+        )
+      }
+    0xee | 0xef =>
+      Some(
+        (
+          opcode_index + 1,
+          "OUT\{data_width}",
+          [dx_operand, accumulator_operand],
+          [],
+        ),
+      )
+    _ => None
+  }
+}
+
+///|
 fn project_disassembly_basic_x86_system(
   memory : @memory.Memory,
   address_width : Int,
@@ -6176,6 +6276,11 @@ fn project_disassembly_basic_decode_x86_llvm(
       } else if project_disassembly_basic_x86_ud2(memory) is Some(_) {
         let (length, name, kinds) = project_disassembly_basic_x86_ud2(memory).unwrap()
         Some((length, name, "", "", [], kinds))
+      } else if project_disassembly_basic_x86_port_io(memory, 32) is Some(_) {
+        let (length, name, operands, kinds) = project_disassembly_basic_x86_port_io(
+          memory, 32,
+        ).unwrap()
+        Some((length, name, "", "", operands, kinds))
       } else if project_disassembly_basic_x86_system(memory, 32) is Some(_) {
         let (length, name) = project_disassembly_basic_x86_system(memory, 32).unwrap()
         Some((length, name, "", "", [], []))
@@ -7105,6 +7210,11 @@ fn project_disassembly_basic_decode_x86_64_llvm(
   } else if project_disassembly_basic_x86_ud2(memory) is Some(_) {
     let (length, name, kinds) = project_disassembly_basic_x86_ud2(memory).unwrap()
     Some((length, name, [], kinds))
+  } else if project_disassembly_basic_x86_port_io(memory, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_port_io(
+      memory, 64,
+    ).unwrap()
+    Some((length, name, operands, kinds))
   } else if project_disassembly_basic_x86_system(memory, 64) is Some(_) {
     let (length, name) = project_disassembly_basic_x86_system(memory, 64).unwrap()
     Some((length, name, [], []))

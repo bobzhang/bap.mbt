@@ -183,6 +183,18 @@ fn project_basic_bil_x86_unknown_regs(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_basic_bil_port_in(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let dst = match self.project_basic_bil_register(0, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  Ok([@types.Stmt::move_stmt(dst, @types.Exp::unknown("in", Imm(width)))])
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_basic_bil_random(
   self : ProjectDisassemblyInstruction,
   width : Int,
@@ -7239,6 +7251,10 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
       )
     "XGETBV" => Ok(project_basic_bil_x86_unknown_regs("xgetbv", ["EAX", "EDX"]))
     "MONITOR" | "MWAIT" | "MWAITX" => Ok([])
+    "IN8" => self.project_basic_bil_port_in(8)
+    "IN16" => self.project_basic_bil_port_in(16)
+    "IN32" => self.project_basic_bil_port_in(32)
+    "OUT8" | "OUT16" | "OUT32" => Ok([])
     "SYSCALL" | "SYSENTER" =>
       Ok([@types.Stmt::encode(@types.Stmt::call(), "syscall")])
     "JMP_1" => self.project_basic_bil_jump()

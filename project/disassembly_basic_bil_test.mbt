@@ -677,6 +677,40 @@ test "project Basic BIL lift covers x86 system instructions" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 port I/O instructions" {
+  let in8 = basic_bil_decode("x86", b"\xe4\x80", start=0x7036UL)
+  match in8.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["AL:imm8 := unknown(in:imm8)"])
+    Err(reason) => fail(reason)
+  }
+
+  let in16 = basic_bil_decode("x86", b"\x66\xed", start=0x7038UL)
+  match in16.lift_basic_bil() {
+    Ok(stmts) => assert_basic_bil_text(stmts, ["AX:imm16 := unknown(in:imm16)"])
+    Err(reason) => fail(reason)
+  }
+
+  let in32 = basic_bil_decode("x86_64", b"\x40\xed", start=0x703aUL)
+  match in32.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, ["EAX:imm32 := unknown(in:imm32)"])
+    Err(reason) => fail(reason)
+  }
+
+  let out8 = basic_bil_decode("x86", b"\xe6\x80", start=0x703cUL)
+  match out8.lift_basic_bil() {
+    Ok(stmts) => assert_true(stmts.is_empty())
+    Err(reason) => fail(reason)
+  }
+
+  let out16 = basic_bil_decode("x86", b"\x66\xef", start=0x703eUL)
+  match out16.lift_basic_bil() {
+    Ok(stmts) => assert_true(stmts.is_empty())
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86 random instructions" {
   let rdrand32 = basic_bil_decode("x86", b"\x0f\xc7\xf0", start=0x7020UL)
   match rdrand32.lift_basic_bil() {

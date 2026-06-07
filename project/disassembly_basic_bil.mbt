@@ -648,6 +648,100 @@ fn ProjectDisassemblyInstruction::project_basic_bil_binop_ri(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_basic_bil_imul_common(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  src : @types.Exp,
+  imm_index : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let dst = match self.project_basic_bil_register(0, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let imm = match self.project_basic_bil_immediate(imm_index) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let rhs = match project_basic_bil_int(imm, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let product_width = width * 2
+  let tmp = project_basic_bil_virtual("imul_tmp", product_width)
+  let tmp_exp = @types.Exp::var_exp(tmp)
+  let dst_exp = @types.Exp::var_exp(dst)
+  let product = @types.Exp::binop(
+    @types.BinOp::times(),
+    @types.Exp::cast(@types.CastKind::signed(), product_width, src),
+    @types.Exp::cast(@types.CastKind::signed(), product_width, rhs),
+  )
+  let flag = @types.Exp::binop(
+    @types.BinOp::neq(),
+    tmp_exp,
+    @types.Exp::cast(@types.CastKind::signed(), product_width, dst_exp),
+  )
+  Ok([
+    @types.Stmt::move_stmt(tmp, product),
+    @types.Stmt::move_stmt(
+      dst,
+      @types.Exp::cast(@types.CastKind::low(), width, @types.Exp::var_exp(tmp)),
+    ),
+    project_basic_bil_x86_flag_move("OF", flag),
+    project_basic_bil_x86_flag_move("CF", flag),
+    project_basic_bil_x86_flag_move(
+      "PF",
+      @types.Exp::unknown("PF is undefined after imul", Imm(1)),
+    ),
+    project_basic_bil_x86_flag_move(
+      "SF",
+      @types.Exp::unknown("SF is undefined after imul", Imm(1)),
+    ),
+    project_basic_bil_x86_flag_move(
+      "ZF",
+      @types.Exp::unknown("ZF is undefined after imul", Imm(1)),
+    ),
+    project_basic_bil_x86_flag_move(
+      "AF",
+      @types.Exp::unknown("AF is undefined after imul", Imm(1)),
+    ),
+  ])
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_imul_rr_imm(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let src = match self.project_basic_bil_register(1, width) {
+    Ok(value) => @types.Exp::var_exp(value)
+    Err(reason) => return Err(reason)
+  }
+  self.project_basic_bil_imul_common(width, src, 2)
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_imul_rm_imm(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let (addr, mem, _) = match self.project_basic_bil_memory_addr(1) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let src = @types.Exp::load(
+    mem=@types.Exp::var_exp(mem),
+    addr~,
+    LittleEndian,
+    size,
+  )
+  self.project_basic_bil_imul_common(width, src, 6)
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_basic_bil_shift_count(
   self : ProjectDisassemblyInstruction,
   index : Int,
@@ -2147,6 +2241,12 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
       self.project_basic_bil_binop_ri(32, @types.BinOp::bit_xor())
     "XOR64RI8" | "XOR64RI32" =>
       self.project_basic_bil_binop_ri(64, @types.BinOp::bit_xor())
+    "IMUL16RRI8" | "IMUL16RRI16" => self.project_basic_bil_imul_rr_imm(16)
+    "IMUL32RRI8" | "IMUL32RRI32" => self.project_basic_bil_imul_rr_imm(32)
+    "IMUL64RRI8" | "IMUL64RRI32" => self.project_basic_bil_imul_rr_imm(64)
+    "IMUL16RMI8" | "IMUL16RMI16" => self.project_basic_bil_imul_rm_imm(16)
+    "IMUL32RMI8" | "IMUL32RMI32" => self.project_basic_bil_imul_rm_imm(32)
+    "IMUL64RMI8" | "IMUL64RMI32" => self.project_basic_bil_imul_rm_imm(64)
     "ROL8R1" | "ROL8RCL" | "ROL8RI8" => self.project_basic_bil_rotate_r(8, true)
     "ROL32R1" | "ROL32RCL" | "ROL32RI8" =>
       self.project_basic_bil_rotate_r(32, true)

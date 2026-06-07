@@ -583,6 +583,45 @@ test "project Basic BIL lift covers x86 system instructions" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 random instructions" {
+  let rdrand32 = basic_bil_decode("x86", b"\x0f\xc7\xf0", start=0x7020UL)
+  match rdrand32.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "EAX:imm32 := unknown(rdrand:imm32)", "CF:imm1 := unknown(rdrand:imm1)",
+        "OF:imm1 := 0:1u", "SF:imm1 := 0:1u", "ZF:imm1 := 0:1u", "AF:imm1 := 0:1u",
+        "PF:imm1 := 0:1u",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let rdrand64 = basic_bil_decode("x86_64", b"\x49\x0f\xc7\xf1", start=0x7023UL)
+  match rdrand64.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "R9:imm64 := unknown(rdrand:imm64)", "CF:imm1 := unknown(rdrand:imm1)", "OF:imm1 := 0:1u",
+        "SF:imm1 := 0:1u", "ZF:imm1 := 0:1u", "AF:imm1 := 0:1u", "PF:imm1 := 0:1u",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let rdseed16 = basic_bil_decode(
+    "x86_64",
+    b"\x66\x41\x0f\xc7\xf8",
+    start=0x7027UL,
+  )
+  match rdseed16.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "R8W:imm16 := unknown(rdseed:imm16)", "CF:imm1 := unknown(rdseed:imm1)",
+        "OF:imm1 := 0:1u", "SF:imm1 := 0:1u", "ZF:imm1 := 0:1u", "AF:imm1 := 0:1u",
+        "PF:imm1 := 0:1u",
+      ])
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86 register add-sub immediates" {
   let sub64 = basic_bil_decode("x86_64", b"\x48\x83\xe8\x01", start=0x7008UL)
   match sub64.lift_basic_bil() {

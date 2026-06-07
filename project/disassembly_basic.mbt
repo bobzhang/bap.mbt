@@ -3090,6 +3090,76 @@ fn project_disassembly_basic_x86_cmpxchg8b(
 }
 
 ///|
+fn project_disassembly_basic_x86_random(
+  memory : @memory.Memory,
+  data_width : Int,
+  address_width : Int,
+) -> (
+  Int,
+  String,
+  Array[ProjectInstructionOperand],
+  Array[ProjectInstructionKind],
+)? {
+  let bytes = memory.to_bytes()
+  let prefix_index = if bytes.length() > 0 && bytes[0].to_int() == 0x66 {
+    if data_width != 16 {
+      return None
+    }
+    1
+  } else {
+    if data_width == 16 {
+      return None
+    }
+    0
+  }
+  let (opcode_index, rex) = if address_width == 64 &&
+    bytes.length() > prefix_index &&
+    bytes[prefix_index].to_int() >= 0x40 &&
+    bytes[prefix_index].to_int() <= 0x4f {
+    (prefix_index + 1, bytes[prefix_index].to_int())
+  } else {
+    (prefix_index, 0)
+  }
+  if data_width == 64 && (rex & 0x8) == 0 {
+    return None
+  }
+  if data_width != 64 && (rex & 0x8) != 0 {
+    return None
+  }
+  if data_width != 16 && data_width != 32 && data_width != 64 {
+    return None
+  }
+  if bytes.length() < opcode_index + 3 ||
+    bytes[opcode_index].to_int() != 0x0f ||
+    bytes[opcode_index + 1].to_int() != 0xc7 {
+    None
+  } else {
+    let modrm = bytes[opcode_index + 2].to_int()
+    if ((modrm >> 6) & 0x3) != 0x3 {
+      return None
+    }
+    let name = match (modrm >> 3) & 0x7 {
+      6 => "RDRAND"
+      7 => "RDSEED"
+      _ => return None
+    }
+    let rm_ext = if address_width == 64 && (rex & 0x1) != 0 { 8 } else { 0 }
+    let dst = project_disassembly_basic_x86_gpr_name(
+      (modrm & 0x7) + rm_ext,
+      data_width,
+    )
+    Some(
+      (
+        opcode_index + 3,
+        "\{name}\{data_width}r",
+        [ProjectInstructionOperand::register(name=dst)],
+        [],
+      ),
+    )
+  }
+}
+
+///|
 fn project_disassembly_basic_x86_movsx32(
   memory : @memory.Memory,
   dst_width : Int,
@@ -5929,6 +5999,16 @@ fn project_disassembly_basic_decode_x86_llvm(
       } else if project_disassembly_basic_x86_system(memory, 32) is Some(_) {
         let (length, name) = project_disassembly_basic_x86_system(memory, 32).unwrap()
         Some((length, name, "", "", [], []))
+      } else if project_disassembly_basic_x86_random(memory, 16, 32) is Some(_) {
+        let (length, name, operands, kinds) = project_disassembly_basic_x86_random(
+          memory, 16, 32,
+        ).unwrap()
+        Some((length, name, "", "", operands, kinds))
+      } else if project_disassembly_basic_x86_random(memory, 32, 32) is Some(_) {
+        let (length, name, operands, kinds) = project_disassembly_basic_x86_random(
+          memory, 32, 32,
+        ).unwrap()
+        Some((length, name, "", "", operands, kinds))
       } else if project_disassembly_basic_x86_setcc(memory, 32) is Some(_) {
         let (length, name, operands, kinds) = project_disassembly_basic_x86_setcc(
           memory, 32,
@@ -6832,6 +6912,21 @@ fn project_disassembly_basic_decode_x86_64_llvm(
   } else if project_disassembly_basic_x86_system(memory, 64) is Some(_) {
     let (length, name) = project_disassembly_basic_x86_system(memory, 64).unwrap()
     Some((length, name, [], []))
+  } else if project_disassembly_basic_x86_random(memory, 64, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_random(
+      memory, 64, 64,
+    ).unwrap()
+    Some((length, name, operands, kinds))
+  } else if project_disassembly_basic_x86_random(memory, 16, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_random(
+      memory, 16, 64,
+    ).unwrap()
+    Some((length, name, operands, kinds))
+  } else if project_disassembly_basic_x86_random(memory, 32, 64) is Some(_) {
+    let (length, name, operands, kinds) = project_disassembly_basic_x86_random(
+      memory, 32, 64,
+    ).unwrap()
+    Some((length, name, operands, kinds))
   } else if project_disassembly_basic_x86_setcc(memory, 64) is Some(_) {
     let (length, name, operands, kinds) = project_disassembly_basic_x86_setcc(
       memory, 64,

@@ -181,6 +181,31 @@ fn project_basic_bil_x86_unknown_regs(
 }
 
 ///|
+fn ProjectDisassemblyInstruction::project_basic_bil_random(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  source : String,
+) -> Result[Array[@types.Stmt], String] {
+  let dst = match self.project_basic_bil_register(0, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let zero_flag = match project_basic_bil_int(0L, 1) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  Ok([
+    @types.Stmt::move_stmt(dst, @types.Exp::unknown(source, Imm(width))),
+    project_basic_bil_x86_flag_move("CF", @types.Exp::unknown(source, Imm(1))),
+    project_basic_bil_x86_flag_move("OF", zero_flag),
+    project_basic_bil_x86_flag_move("SF", zero_flag),
+    project_basic_bil_x86_flag_move("ZF", zero_flag),
+    project_basic_bil_x86_flag_move("AF", zero_flag),
+    project_basic_bil_x86_flag_move("PF", zero_flag),
+  ])
+}
+
+///|
 fn project_basic_bil_x86_or(
   left : @types.Exp,
   right : @types.Exp,
@@ -6940,6 +6965,12 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "XADD32MR" => self.project_basic_bil_xadd_mr(32)
     "XADD64MR" => self.project_basic_bil_xadd_mr(64)
     "CMPXCHG8BM" => self.project_basic_bil_cmpxchg8b()
+    "RDRAND16R" => self.project_basic_bil_random(16, "rdrand")
+    "RDRAND32R" => self.project_basic_bil_random(32, "rdrand")
+    "RDRAND64R" => self.project_basic_bil_random(64, "rdrand")
+    "RDSEED16R" => self.project_basic_bil_random(16, "rdseed")
+    "RDSEED32R" => self.project_basic_bil_random(32, "rdseed")
+    "RDSEED64R" => self.project_basic_bil_random(64, "rdseed")
     "MOVBE16RM" => self.project_basic_bil_mov_rm_endian(16, BigEndian)
     "MOVBE32RM" => self.project_basic_bil_mov_rm_endian(32, BigEndian)
     "MOVBE64RM" => self.project_basic_bil_mov_rm_endian(64, BigEndian)

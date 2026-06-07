@@ -189,6 +189,52 @@ test "project Basic x86 SIMD semantics execute packed min max fixtures" {
 }
 
 ///|
+test "project Basic x86 SIMD semantics execute packed bit fixtures" {
+  let source = semantic_word128("0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f0f")
+  let dest = semantic_word128("00ff00ff00ff00ff00ff00ff00ff00ff")
+  assert_x86_simd_result(
+    "pand",
+    b"\x66\x0f\xdb\xc8",
+    semantic_xmm_state(source, dest),
+    "xmm1",
+    semantic_word128("000f000f000f000f000f000f000f000f"),
+  )
+  assert_x86_simd_result(
+    "pandn",
+    b"\x66\x0f\xdf\xc8",
+    semantic_xmm_state(source, dest),
+    "xmm1",
+    semantic_word128("0f000f000f000f000f000f000f000f00"),
+  )
+  assert_x86_simd_result(
+    "por",
+    b"\x66\x0f\xeb\xc8",
+    semantic_xmm_state(source, dest),
+    "xmm1",
+    semantic_word128("0fff0fff0fff0fff0fff0fff0fff0fff"),
+  )
+  assert_x86_simd_result(
+    "pxor",
+    b"\x66\x0f\xef\xc8",
+    semantic_xmm_state(source, dest),
+    "xmm1",
+    semantic_word128("0ff00ff00ff00ff00ff00ff00ff00ff0"),
+  )
+}
+
+///|
+test "project Basic x86 SIMD semantics execute pmovmskb fixtures" {
+  let source = semantic_word128("807f8001800080807f7f000000008080")
+  let instruction = semantic_decode_x86(b"\x66\x0f\xd7\xc8")
+  let state = @project.ProjectX86SimdState::create(registers=[("xmm0", source)])
+  match instruction.apply_x86_simd(state) {
+    Ok(next) =>
+      assert_true(next.get_register("ecx") == Some(semantic_word32(0xab03UL)))
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic x86 SIMD semantics execute pshufb register fixtures" {
   let origin = semantic_word128("504f4e4d4c4b4a494847464544434241")
   let samples : Array[(String, @types.Word, @types.Word)] = [

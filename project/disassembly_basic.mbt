@@ -6249,6 +6249,7 @@ fn project_disassembly_basic_instruction(
 fn project_disassembly_basic_decode_x86_simd_llvm(
   memory : @memory.Memory,
 ) -> Result[ProjectDisassemblyInstruction?, String] {
+  let ecx = ProjectInstructionOperand::register(name="ECX")
   let xmm0 = ProjectInstructionOperand::register(name="XMM0")
   let xmm1 = ProjectInstructionOperand::register(name="XMM1")
   let xmm1_xmm0 = [xmm1, xmm0]
@@ -6263,12 +6264,18 @@ fn project_disassembly_basic_decode_x86_simd_llvm(
     Some((4, "PCMPGTB", xmm1_xmm0, []))
   } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xda\xc8") {
     Some((4, "PMINUB", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xdb\xc8") {
+    Some((4, "PAND", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xd7\xc8") {
+    Some((4, "PMOVMSKB", [ecx, xmm0], []))
   } else if project_disassembly_basic_has_prefix(
       memory, b"\x66\x0f\x38\x38\xc8",
     ) {
     Some((5, "PMINSB", xmm1_xmm0, []))
   } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xde\xc8") {
     Some((4, "PMAXUB", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xdf\xc8") {
+    Some((4, "PANDN", xmm1_xmm0, []))
   } else if project_disassembly_basic_has_prefix(
       memory, b"\x66\x0f\x38\x3c\xc8",
     ) {
@@ -6285,6 +6292,8 @@ fn project_disassembly_basic_decode_x86_simd_llvm(
     Some((5, "PMINUW", xmm1_xmm0, []))
   } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xea\xc8") {
     Some((4, "PMINSW", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xeb\xc8") {
+    Some((4, "POR", xmm1_xmm0, []))
   } else if project_disassembly_basic_has_prefix(
       memory, b"\x66\x0f\x38\x3b\xc8",
     ) {
@@ -6301,6 +6310,8 @@ fn project_disassembly_basic_decode_x86_simd_llvm(
       memory, b"\x66\x0f\x38\x3d\xc8",
     ) {
     Some((5, "PMAXSD", xmm1_xmm0, []))
+  } else if project_disassembly_basic_has_prefix(memory, b"\x66\x0f\xef\xc8") {
+    Some((4, "PXOR", xmm1_xmm0, []))
   } else if project_disassembly_basic_has_prefix(
       memory, b"\x66\x0f\x38\x00\xc1",
     ) {

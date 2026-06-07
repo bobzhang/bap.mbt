@@ -107,6 +107,54 @@ fn ProjectX86SimdState::project_x86_simd_source_word(
 }
 
 ///|
+fn project_x86_simd_bitop(
+  left : @types.Word,
+  right : @types.Word,
+  apply : (@types.Word, @types.Word) -> @types.Word raise @bitvec.BitVecError,
+) -> Result[@types.Word, String] {
+  try apply(left, right) catch {
+    _ => Err("x86 SIMD packed bit operation failed")
+  } noraise {
+    result => Ok(result)
+  }
+}
+
+///|
+fn project_x86_simd_pmovmskb(
+  source : @types.Word,
+) -> Result[@types.Word, String] {
+  let width = source.width()
+  if width % 8 != 0 || width > 256 {
+    Err("pmovmskb supports byte-addressable operands up to 256 bits")
+  } else {
+    let byte_count = width / 8
+    let mut mask : UInt64 = 0
+    for index in 0..<byte_count {
+      let bit_word = try
+        source.extract(hi=index * 8 + 7, lo=index * 8 + 7)
+      catch {
+        _ => return Err("pmovmskb source bit extraction failed")
+      } noraise {
+        word => word
+      }
+      let bit = try bit_word.to_uint64() catch {
+        _ => return Err("pmovmskb source bit is not representable")
+      } noraise {
+        value => value
+      }
+      if bit != 0 {
+        mask = mask | ((1 : UInt64) << index)
+      }
+    }
+    try @types.Word::of_uint64(width=32, mask) catch {
+      _ => Err("pmovmskb result construction failed")
+    } noraise {
+      result => Ok(result)
+    }
+  }
+}
+
+///|
 fn ProjectDisassemblyInstruction::project_x86_simd_eval(
   self : ProjectDisassemblyInstruction,
   dest : @types.Word,
@@ -116,19 +164,46 @@ fn ProjectDisassemblyInstruction::project_x86_simd_eval(
     "PCMPEQB" => dest.packed_eq(source, element_width=8)
     "PCMPGTB" => dest.packed_gt(source, element_width=8, signed=true)
     "PMINUB" => dest.packed_min(source, element_width=8)
+    "PAND" => project_x86_simd_bitop(dest, source, @types.Word::bit_and)
     "PMINSB" => dest.packed_min(source, element_width=8, signed=true)
     "PMAXUB" => dest.packed_max(source, element_width=8)
+    "PANDN" => project_x86_simd_bitop(dest.lnot(), source, @types.Word::bit_and)
     "PMAXSB" => dest.packed_max(source, element_width=8, signed=true)
     "PMAXUW" => dest.packed_max(source, element_width=16)
     "PMAXSW" => dest.packed_max(source, element_width=16, signed=true)
     "PMINUW" => dest.packed_min(source, element_width=16)
     "PMINSW" => dest.packed_min(source, element_width=16, signed=true)
+    "POR" => project_x86_simd_bitop(dest, source, @types.Word::bit_or)
     "PMINUD" => dest.packed_min(source, element_width=32)
     "PMINSD" => dest.packed_min(source, element_width=32, signed=true)
     "PMAXUD" => dest.packed_max(source, element_width=32)
     "PMAXSD" => dest.packed_max(source, element_width=32, signed=true)
+    "PXOR" => project_x86_simd_bitop(dest, source, @types.Word::bit_xor)
     "PSHUFB" => dest.x86_pshufb(source)
     name => Err("unsupported x86 SIMD instruction \{name}")
+  }
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_x86_simd_apply_pmovmskb(
+  self : ProjectDisassemblyInstruction,
+  state : ProjectX86SimdState,
+) -> Result[ProjectX86SimdState, String] {
+  match self.project_x86_simd_register_operand(0) {
+    Ok(dest_name) =>
+      match self.project_x86_simd_register_operand(1) {
+        Ok(source_name) =>
+          match state.project_x86_simd_require_register(source_name) {
+            Ok(source_word) =>
+              match project_x86_simd_pmovmskb(source_word) {
+                Ok(result) => Ok(state.with_register(name=dest_name, result))
+                Err(reason) => Err(reason)
+              }
+            Err(reason) => Err(reason)
+          }
+        Err(reason) => Err(reason)
+      }
+    Err(reason) => Err(reason)
   }
 }
 
@@ -210,6 +285,9 @@ pub fn ProjectDisassemblyInstruction::apply_x86_simd(
   self : ProjectDisassemblyInstruction,
   state : ProjectX86SimdState,
 ) -> Result[ProjectX86SimdState, String] {
+  if self.name_value.to_upper() == "PMOVMSKB" {
+    return self.project_x86_simd_apply_pmovmskb(state)
+  }
   match self.project_x86_simd_register_operand(0) {
     Ok(dest_name) =>
       match self.project_x86_simd_register_operand(1) {

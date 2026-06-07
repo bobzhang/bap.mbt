@@ -990,24 +990,55 @@ fn project_disassembly_basic_x86_flag_transfer(
 ///|
 fn project_disassembly_basic_x86_flag_stack(
   memory : @memory.Memory,
+  value_width : Int,
   address_width : Int,
 ) -> (Int, String, Array[ProjectInstructionKind])? {
   let bytes = memory.to_bytes()
-  let opcode_index = if address_width == 64 &&
-    bytes.length() >= 2 &&
-    bytes[0].to_int() >= 0x40 &&
-    bytes[0].to_int() <= 0x4f {
+  if value_width != 16 && value_width != 32 && value_width != 64 {
+    return None
+  }
+  if address_width == 64 && value_width == 32 {
+    return None
+  }
+  if address_width != 64 && value_width == 64 {
+    return None
+  }
+  let prefix_index = if bytes.length() > 0 && bytes[0].to_int() == 0x66 {
+    if value_width != 16 {
+      return None
+    }
     1
   } else {
+    if value_width == 16 {
+      return None
+    }
     0
+  }
+  let opcode_index = if address_width == 64 &&
+    bytes.length() > prefix_index &&
+    bytes[prefix_index].to_int() >= 0x40 &&
+    bytes[prefix_index].to_int() <= 0x4f {
+    prefix_index + 1
+  } else {
+    prefix_index
   }
   if bytes.length() <= opcode_index {
     None
   } else {
-    let width = if address_width == 64 { 64 } else { 32 }
+    let suffix = if value_width == 16 && address_width == 64 {
+      "_64"
+    } else {
+      ""
+    }
     match bytes[opcode_index].to_int() {
-      0x9c => Some((opcode_index + 1, "PUSHF\{width}", [ProjectMayStore]))
-      0x9d => Some((opcode_index + 1, "POPF\{width}", [ProjectMayLoad]))
+      0x9c =>
+        Some(
+          (opcode_index + 1, "PUSHF\{value_width}\{suffix}", [ProjectMayStore]),
+        )
+      0x9d =>
+        Some(
+          (opcode_index + 1, "POPF\{value_width}\{suffix}", [ProjectMayLoad]),
+        )
       _ => None
     }
   }
@@ -5652,9 +5683,16 @@ fn project_disassembly_basic_decode_x86_llvm(
       } else if project_disassembly_basic_x86_flag_transfer(memory) is Some(_) {
         let (length, name) = project_disassembly_basic_x86_flag_transfer(memory).unwrap()
         Some((length, name, "", "", [], []))
-      } else if project_disassembly_basic_x86_flag_stack(memory, 32) is Some(_) {
+      } else if project_disassembly_basic_x86_flag_stack(memory, 16, 32)
+        is Some(_) {
         let (length, name, kinds) = project_disassembly_basic_x86_flag_stack(
-          memory, 32,
+          memory, 16, 32,
+        ).unwrap()
+        Some((length, name, "", "", [], kinds))
+      } else if project_disassembly_basic_x86_flag_stack(memory, 32, 32)
+        is Some(_) {
+        let (length, name, kinds) = project_disassembly_basic_x86_flag_stack(
+          memory, 32, 32,
         ).unwrap()
         Some((length, name, "", "", [], kinds))
       } else if project_disassembly_basic_x86_interrupt(memory) is Some(_) {
@@ -6510,9 +6548,14 @@ fn project_disassembly_basic_decode_x86_64_llvm(
   } else if project_disassembly_basic_x86_flag_transfer(memory) is Some(_) {
     let (length, name) = project_disassembly_basic_x86_flag_transfer(memory).unwrap()
     Some((length, name, [], []))
-  } else if project_disassembly_basic_x86_flag_stack(memory, 64) is Some(_) {
+  } else if project_disassembly_basic_x86_flag_stack(memory, 16, 64) is Some(_) {
     let (length, name, kinds) = project_disassembly_basic_x86_flag_stack(
-      memory, 64,
+      memory, 16, 64,
+    ).unwrap()
+    Some((length, name, [], kinds))
+  } else if project_disassembly_basic_x86_flag_stack(memory, 64, 64) is Some(_) {
+    let (length, name, kinds) = project_disassembly_basic_x86_flag_stack(
+      memory, 64, 64,
     ).unwrap()
     Some((length, name, [], kinds))
   } else if project_disassembly_basic_x86_interrupt(memory) is Some(_) {

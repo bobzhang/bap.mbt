@@ -1320,7 +1320,7 @@ fn project_basic_bil_x86_flags_bit(index : Int) -> @types.Exp {
 
 ///|
 fn project_basic_bil_x86_flags_image(width : Int) -> Result[@types.Exp, String] {
-  if width != 32 && width != 64 {
+  if width != 16 && width != 32 && width != 64 {
     return Err("unsupported PUSHF width \{width}")
   }
   let bits : Array[@types.Exp] = []
@@ -1332,35 +1332,38 @@ fn project_basic_bil_x86_flags_image(width : Int) -> Result[@types.Exp, String] 
 
 ///|
 fn project_basic_bil_x86_pushf(
-  width : Int,
+  value_width : Int,
+  address_width : Int,
 ) -> Result[Array[@types.Stmt], String] {
-  match project_basic_bil_x86_flags_image(width) {
-    Ok(flags) => project_basic_bil_push_exp(flags, width, width)
+  match project_basic_bil_x86_flags_image(value_width) {
+    Ok(flags) => project_basic_bil_push_exp(flags, value_width, address_width)
     Err(reason) => Err(reason)
   }
 }
 
 ///|
 fn project_basic_bil_x86_popf(
-  width : Int,
+  value_width : Int,
+  address_width : Int,
 ) -> Result[Array[@types.Stmt], String] {
-  if width != 32 && width != 64 {
-    return Err("unsupported POPF width \{width}")
+  if value_width != 16 && value_width != 32 && value_width != 64 {
+    return Err("unsupported POPF width \{value_width}")
   }
-  let sp = match project_basic_bil_stack_pointer(width) {
+  let sp = match project_basic_bil_stack_pointer(address_width) {
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  let updated_sp = match project_basic_bil_stack_increment(sp, width, width) {
+  let updated_sp = match
+    project_basic_bil_stack_increment(sp, value_width, address_width) {
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  let size = match @types.Size::of_int(width) {
+  let size = match @types.Size::of_int(value_width) {
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  let mem = project_basic_bil_stack_mem(width)
-  let flags = project_basic_bil_virtual("popf_flags", width)
+  let mem = project_basic_bil_stack_mem(address_width)
+  let flags = project_basic_bil_virtual("popf_flags", value_width)
   let flags_exp = @types.Exp::var_exp(flags)
   let stmts = [
     @types.Stmt::move_stmt(
@@ -7013,10 +7016,14 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "STD" => project_basic_bil_x86_flag_assign("DF", 1L)
     "LAHF" => Ok(project_basic_bil_x86_lahf())
     "SAHF" => Ok(project_basic_bil_x86_sahf())
-    "PUSHF32" => project_basic_bil_x86_pushf(32)
-    "PUSHF64" => project_basic_bil_x86_pushf(64)
-    "POPF32" => project_basic_bil_x86_popf(32)
-    "POPF64" => project_basic_bil_x86_popf(64)
+    "PUSHF16" => project_basic_bil_x86_pushf(16, 32)
+    "PUSHF16_64" => project_basic_bil_x86_pushf(16, 64)
+    "PUSHF32" => project_basic_bil_x86_pushf(32, 32)
+    "PUSHF64" => project_basic_bil_x86_pushf(64, 64)
+    "POPF16" => project_basic_bil_x86_popf(16, 32)
+    "POPF16_64" => project_basic_bil_x86_popf(16, 64)
+    "POPF32" => project_basic_bil_x86_popf(32, 32)
+    "POPF64" => project_basic_bil_x86_popf(64, 64)
     "INT3" | "INT" => self.project_basic_bil_cpuexn()
     "HLT" => Ok([])
     "RDTSC" => Ok(project_basic_bil_x86_unknown_regs("rdtsc", ["EAX", "EDX"]))

@@ -413,6 +413,42 @@ test "project Basic BIL lift covers x86 flag stack transfers" {
     Err(reason) => fail(reason)
   }
 
+  let pushf16 = basic_bil_decode("x86", b"\x66\x9c", start=0x7011UL)
+  match pushf16.lift_basic_bil() {
+    Ok(stmts) => {
+      let text = basic_bil_text(stmts)
+      assert_true(text.length() == 2)
+      assert_true(
+        text[0].contains(
+          "mem:mem32x8 := store(mem:mem32x8, (ESP:imm32 - 2:32u), concat(",
+        ),
+      )
+      assert_true(text[0].contains("OF:imm1"))
+      assert_true(text[0].contains("DF:imm1"))
+      assert_true(text[0].contains("CF:imm1"))
+      assert_string(text[1], "ESP:imm32 := (ESP:imm32 - 2:32u)")
+    }
+    Err(reason) => fail(reason)
+  }
+
+  let pushf16_64 = basic_bil_decode("x86_64", b"\x66\x9c", start=0x7012UL)
+  match pushf16_64.lift_basic_bil() {
+    Ok(stmts) => {
+      let text = basic_bil_text(stmts)
+      assert_true(text.length() == 2)
+      assert_true(
+        text[0].contains(
+          "mem:mem64x8 := store(mem:mem64x8, (RSP:imm64 - 2:64u), concat(",
+        ),
+      )
+      assert_true(text[0].contains("OF:imm1"))
+      assert_true(text[0].contains("DF:imm1"))
+      assert_true(text[0].contains("CF:imm1"))
+      assert_string(text[1], "RSP:imm64 := (RSP:imm64 - 2:64u)")
+    }
+    Err(reason) => fail(reason)
+  }
+
   let popf32 = basic_bil_decode("x86", b"\x9d", start=0x7011UL)
   match popf32.lift_basic_bil() {
     Ok(stmts) =>
@@ -422,6 +458,32 @@ test "project Basic BIL lift covers x86 flag stack transfers" {
         "SF:imm1 := extract[7:7](%popf_flags:imm32)", "ZF:imm1 := extract[6:6](%popf_flags:imm32)",
         "AF:imm1 := extract[4:4](%popf_flags:imm32)", "PF:imm1 := extract[2:2](%popf_flags:imm32)",
         "CF:imm1 := extract[0:0](%popf_flags:imm32)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let popf16 = basic_bil_decode("x86", b"\x66\x9d", start=0x7013UL)
+  match popf16.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%popf_flags:imm16 := load(mem:mem32x8, ESP:imm32):imm16", "ESP:imm32 := (ESP:imm32 + 2:32u)",
+        "OF:imm1 := extract[11:11](%popf_flags:imm16)", "DF:imm1 := extract[10:10](%popf_flags:imm16)",
+        "SF:imm1 := extract[7:7](%popf_flags:imm16)", "ZF:imm1 := extract[6:6](%popf_flags:imm16)",
+        "AF:imm1 := extract[4:4](%popf_flags:imm16)", "PF:imm1 := extract[2:2](%popf_flags:imm16)",
+        "CF:imm1 := extract[0:0](%popf_flags:imm16)",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let popf16_64 = basic_bil_decode("x86_64", b"\x66\x9d", start=0x7014UL)
+  match popf16_64.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "%popf_flags:imm16 := load(mem:mem64x8, RSP:imm64):imm16", "RSP:imm64 := (RSP:imm64 + 2:64u)",
+        "OF:imm1 := extract[11:11](%popf_flags:imm16)", "DF:imm1 := extract[10:10](%popf_flags:imm16)",
+        "SF:imm1 := extract[7:7](%popf_flags:imm16)", "ZF:imm1 := extract[6:6](%popf_flags:imm16)",
+        "AF:imm1 := extract[4:4](%popf_flags:imm16)", "PF:imm1 := extract[2:2](%popf_flags:imm16)",
+        "CF:imm1 := extract[0:0](%popf_flags:imm16)",
       ])
     Err(reason) => fail(reason)
   }

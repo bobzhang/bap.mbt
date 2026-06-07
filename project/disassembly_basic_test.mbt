@@ -358,10 +358,14 @@ test "translated BAP basic disassembly decodes x86 flag stack transfers" {
   ] = [
     ("x86", b"\x9c", 1, ["PUSHF32"], [ProjectMayStore]),
     ("x86", b"\x9d", 1, ["POPF32"], [ProjectMayLoad]),
+    ("x86", b"\x66\x9c", 2, ["PUSHF16"], [ProjectMayStore]),
+    ("x86", b"\x66\x9d", 2, ["POPF16"], [ProjectMayLoad]),
     ("x86_64", b"\x9c", 1, ["PUSHF64"], [ProjectMayStore]),
     ("x86_64", b"\x9d", 1, ["POPF64"], [ProjectMayLoad]),
     ("x86_64", b"\x48\x9c", 2, ["PUSHF64"], [ProjectMayStore]),
     ("x86_64", b"\x48\x9d", 2, ["POPF64"], [ProjectMayLoad]),
+    ("x86_64", b"\x66\x9c", 2, ["PUSHF16_64"], [ProjectMayStore]),
+    ("x86_64", b"\x66\x9d", 2, ["POPF16_64"], [ProjectMayLoad]),
   ]
   for sample in samples {
     let disasm = match

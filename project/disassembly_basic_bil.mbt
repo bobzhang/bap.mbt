@@ -491,6 +491,95 @@ fn ProjectDisassemblyInstruction::project_basic_bil_bitscan_rm(
 }
 
 ///|
+fn project_basic_bil_popcnt_clear_flags() -> Result[Array[@types.Stmt], String] {
+  let zero = match project_basic_bil_int(0L, 1) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  Ok([
+    project_basic_bil_x86_flag_move("CF", zero),
+    project_basic_bil_x86_flag_move("OF", zero),
+    project_basic_bil_x86_flag_move("SF", zero),
+    project_basic_bil_x86_flag_move("AF", zero),
+    project_basic_bil_x86_flag_move("PF", zero),
+  ])
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_popcnt_common(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+  source : @types.Exp,
+) -> Result[Array[@types.Stmt], String] {
+  let dst = match self.project_basic_bil_register(0, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let zero = match project_basic_bil_int(0L, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let tmp = project_basic_bil_virtual("popcnt", width)
+  let stmts = [
+    project_basic_bil_x86_flag_move(
+      "ZF",
+      @types.Exp::binop(@types.BinOp::eq(), zero, source),
+    ),
+    @types.Stmt::move_stmt(tmp, source),
+  ]
+  match project_basic_bil_bitscan_popcount(tmp, width) {
+    Ok(popcount) =>
+      for stmt in popcount {
+        stmts.push(stmt)
+      }
+    Err(reason) => return Err(reason)
+  }
+  stmts.push(@types.Stmt::move_stmt(dst, @types.Exp::var_exp(tmp)))
+  match project_basic_bil_popcnt_clear_flags() {
+    Ok(flags) =>
+      for stmt in flags {
+        stmts.push(stmt)
+      }
+    Err(reason) => return Err(reason)
+  }
+  Ok(stmts)
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_popcnt_rr(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let source = match self.project_basic_bil_register(1, width) {
+    Ok(value) => @types.Exp::var_exp(value)
+    Err(reason) => return Err(reason)
+  }
+  self.project_basic_bil_popcnt_common(width, source)
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_popcnt_rm(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let (addr, mem, _) = match self.project_basic_bil_memory_addr(1) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let source = @types.Exp::load(
+    mem=@types.Exp::var_exp(mem),
+    addr~,
+    LittleEndian,
+    size,
+  )
+  self.project_basic_bil_popcnt_common(width, source)
+}
+
+///|
 fn project_basic_bil_x86_parity(
   result : @types.Exp,
   width : Int,
@@ -3396,6 +3485,12 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "BSR16RM" => self.project_basic_bil_bitscan_rm(16, false)
     "BSR32RM" => self.project_basic_bil_bitscan_rm(32, false)
     "BSR64RM" => self.project_basic_bil_bitscan_rm(64, false)
+    "POPCNT16RR" => self.project_basic_bil_popcnt_rr(16)
+    "POPCNT32RR" => self.project_basic_bil_popcnt_rr(32)
+    "POPCNT64RR" => self.project_basic_bil_popcnt_rr(64)
+    "POPCNT16RM" => self.project_basic_bil_popcnt_rm(16)
+    "POPCNT32RM" => self.project_basic_bil_popcnt_rm(32)
+    "POPCNT64RM" => self.project_basic_bil_popcnt_rm(64)
     "ROL8R1" | "ROL8RCL" | "ROL8RI8" => self.project_basic_bil_rotate_r(8, true)
     "ROL32R1" | "ROL32RCL" | "ROL32RI8" =>
       self.project_basic_bil_rotate_r(32, true)

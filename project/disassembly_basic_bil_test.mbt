@@ -1702,6 +1702,47 @@ test "project Basic BIL lift covers x86 bsf bsr" {
 }
 
 ///|
+test "project Basic BIL lift covers x86 popcnt" {
+  let popcnt32 = basic_bil_decode("x86", b"\xf3\x0f\xb8\xc1", start=0x7052UL)
+  match popcnt32.lift_basic_bil() {
+    Ok(stmts) =>
+      assert_basic_bil_text(stmts, [
+        "ZF:imm1 := (0:32u == ECX:imm32)", "%popcnt:imm32 := ECX:imm32", "%popcnt:imm32 := (%popcnt:imm32 - ((%popcnt:imm32 >> 1:32u) & 0x55555555:32u))",
+        "%popcnt:imm32 := ((%popcnt:imm32 & 0x33333333:32u) + ((%popcnt:imm32 >> 2:32u) & 0x33333333:32u))",
+        "%popcnt:imm32 := ((%popcnt:imm32 + (%popcnt:imm32 >> 4:32u)) & 0xF0F0F0F:32u)",
+        "%popcnt:imm32 := ((%popcnt:imm32 * 0x1010101:32u) >> 0x18:32u)", "EAX:imm32 := %popcnt:imm32",
+        "CF:imm1 := 0:1u", "OF:imm1 := 0:1u", "SF:imm1 := 0:1u", "AF:imm1 := 0:1u",
+        "PF:imm1 := 0:1u",
+      ])
+    Err(reason) => fail(reason)
+  }
+
+  let popcnt64_mem = basic_bil_decode(
+    "x86_64",
+    b"\xf3\x48\x0f\xb8\x45\xf8",
+    start=0x7053UL,
+  )
+  match popcnt64_mem.lift_basic_bil() {
+    Ok(stmts) => {
+      assert_string(
+        stmts[0].to_string(),
+        "ZF:imm1 := (0:64u == load(mem:mem64x8, (RBP:imm64 - 8:64u)):imm64)",
+      )
+      assert_string(
+        stmts[1].to_string(),
+        "%popcnt:imm64 := load(mem:mem64x8, (RBP:imm64 - 8:64u)):imm64",
+      )
+      assert_true(stmts[2].to_string().contains("0x5555555555555555:64u"))
+      assert_true(stmts[5].to_string().contains("0x101010101010101:64u"))
+      assert_string(stmts[6].to_string(), "RAX:imm64 := %popcnt:imm64")
+      assert_string(stmts[7].to_string(), "CF:imm1 := 0:1u")
+      assert_string(stmts[11].to_string(), "PF:imm1 := 0:1u")
+    }
+    Err(reason) => fail(reason)
+  }
+}
+
+///|
 test "project Basic BIL lift covers x86 setcc" {
   let sete = basic_bil_decode("x86", b"\x0f\x94\xc0", start=0x7053UL)
   match sete.lift_basic_bil() {

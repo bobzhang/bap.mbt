@@ -1422,13 +1422,33 @@ test "project Basic BIL lift covers x86 register not-neg ops" {
 
   let neg32 = basic_bil_decode("x86", b"\xf7\xd9", start=0x7032UL)
   match neg32.lift_basic_bil() {
-    Ok(stmts) => assert_basic_bil_text(stmts, ["ECX:imm32 := (neg ECX:imm32)"])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 8)
+      assert_string(stmts[0].to_string(), "%neg_dst:imm32 := ECX:imm32")
+      assert_string(
+        stmts[1].to_string(),
+        "ECX:imm32 := (0:32u - %neg_dst:imm32)",
+      )
+      assert_addsub_flag_tail(
+        stmts, 2, "0:32u", "%neg_dst:imm32", "ECX:imm32", "0:32u", false,
+      )
+    }
     Err(reason) => fail(reason)
   }
 
   let neg32_ext = basic_bil_decode("x86_64", b"\x41\xf7\xd8", start=0x7034UL)
   match neg32_ext.lift_basic_bil() {
-    Ok(stmts) => assert_basic_bil_text(stmts, ["R8D:imm32 := (neg R8D:imm32)"])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 8)
+      assert_string(stmts[0].to_string(), "%neg_dst:imm32 := R8D:imm32")
+      assert_string(
+        stmts[1].to_string(),
+        "R8D:imm32 := (0:32u - %neg_dst:imm32)",
+      )
+      assert_addsub_flag_tail(
+        stmts, 2, "0:32u", "%neg_dst:imm32", "R8D:imm32", "0:32u", false,
+      )
+    }
     Err(reason) => fail(reason)
   }
 
@@ -1440,7 +1460,14 @@ test "project Basic BIL lift covers x86 register not-neg ops" {
 
   let neg8_ext = basic_bil_decode("x86_64", b"\x41\xf6\xd8", start=0x7038UL)
   match neg8_ext.lift_basic_bil() {
-    Ok(stmts) => assert_basic_bil_text(stmts, ["R8B:imm8 := (neg R8B:imm8)"])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 8)
+      assert_string(stmts[0].to_string(), "%neg_dst:imm8 := R8B:imm8")
+      assert_string(stmts[1].to_string(), "R8B:imm8 := (0:8u - %neg_dst:imm8)")
+      assert_addsub_flag_tail(
+        stmts, 2, "0:8u", "%neg_dst:imm8", "R8B:imm8", "0:8u", false,
+      )
+    }
     Err(reason) => fail(reason)
   }
 }
@@ -1463,21 +1490,49 @@ test "project Basic BIL lift covers x86 memory not-neg ops" {
 
   let neg32_mem = basic_bil_decode("x86", b"\xf7\x5d\xfc", start=0x703dUL)
   match neg32_mem.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, [
-        "%unop_a:imm32 := (EBP:imm32 - 4:32u)", "%unop_d:imm32 := load(mem:mem32x8, %unop_a:imm32):imm32",
-        "mem:mem32x8 := store(mem:mem32x8, %unop_a:imm32, (neg %unop_d:imm32))",
-      ])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 10)
+      assert_string(stmts[0].to_string(), "%neg_a:imm32 := (EBP:imm32 - 4:32u)")
+      assert_string(
+        stmts[1].to_string(),
+        "%neg_dst:imm32 := load(mem:mem32x8, %neg_a:imm32):imm32",
+      )
+      assert_string(
+        stmts[2].to_string(),
+        "%neg_res:imm32 := (0:32u - %neg_dst:imm32)",
+      )
+      assert_string(
+        stmts[3].to_string(),
+        "mem:mem32x8 := store(mem:mem32x8, %neg_a:imm32, %neg_res:imm32)",
+      )
+      assert_addsub_flag_tail(
+        stmts, 4, "0:32u", "%neg_dst:imm32", "%neg_res:imm32", "0:32u", false,
+      )
+    }
     Err(reason) => fail(reason)
   }
 
   let neg8_mem = basic_bil_decode("x86_64", b"\x41\xf6\x58\x01", start=0x7040UL)
   match neg8_mem.lift_basic_bil() {
-    Ok(stmts) =>
-      assert_basic_bil_text(stmts, [
-        "%unop_a:imm64 := (R8:imm64 + 1:64u)", "%unop_d:imm8 := load(mem:mem64x8, %unop_a:imm64):imm8",
-        "mem:mem64x8 := store(mem:mem64x8, %unop_a:imm64, (neg %unop_d:imm8))",
-      ])
+    Ok(stmts) => {
+      assert_true(stmts.length() == 10)
+      assert_string(stmts[0].to_string(), "%neg_a:imm64 := (R8:imm64 + 1:64u)")
+      assert_string(
+        stmts[1].to_string(),
+        "%neg_dst:imm8 := load(mem:mem64x8, %neg_a:imm64):imm8",
+      )
+      assert_string(
+        stmts[2].to_string(),
+        "%neg_res:imm8 := (0:8u - %neg_dst:imm8)",
+      )
+      assert_string(
+        stmts[3].to_string(),
+        "mem:mem64x8 := store(mem:mem64x8, %neg_a:imm64, %neg_res:imm8)",
+      )
+      assert_addsub_flag_tail(
+        stmts, 4, "0:8u", "%neg_dst:imm8", "%neg_res:imm8", "0:8u", false,
+      )
+    }
     Err(reason) => fail(reason)
   }
 }

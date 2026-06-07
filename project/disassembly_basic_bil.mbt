@@ -4639,6 +4639,113 @@ fn ProjectDisassemblyInstruction::project_basic_bil_unop_m(
 }
 
 ///|
+fn project_basic_bil_x86_append_neg_flags(
+  stmts : Array[@types.Stmt],
+  zero : @types.Exp,
+  operand : @types.Exp,
+  result : @types.Exp,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let flags = match
+    project_basic_bil_x86_sub_flag_moves(zero, operand, result, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  for stmt in flags {
+    stmts.push(stmt)
+  }
+  Ok(stmts)
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_neg_r(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let dst = match self.project_basic_bil_register(0, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let zero = match project_basic_bil_int(0L, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let orig_dst = project_basic_bil_virtual("neg_dst", width)
+  let orig_dst_exp = @types.Exp::var_exp(orig_dst)
+  let result_exp = @types.Exp::var_exp(dst)
+  project_basic_bil_x86_append_neg_flags(
+    [
+      @types.Stmt::move_stmt(orig_dst, result_exp),
+      @types.Stmt::move_stmt(
+        dst,
+        @types.Exp::binop(@types.BinOp::minus(), zero, orig_dst_exp),
+      ),
+    ],
+    zero,
+    orig_dst_exp,
+    result_exp,
+    width,
+  )
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_neg_m(
+  self : ProjectDisassemblyInstruction,
+  width : Int,
+) -> Result[Array[@types.Stmt], String] {
+  let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let zero = match project_basic_bil_int(0L, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let size = match @types.Size::of_int(width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let addr_tmp = project_basic_bil_virtual("neg_a", address_width)
+  let orig_dst = project_basic_bil_virtual("neg_dst", width)
+  let result = project_basic_bil_virtual("neg_res", width)
+  let addr_exp = @types.Exp::var_exp(addr_tmp)
+  let orig_dst_exp = @types.Exp::var_exp(orig_dst)
+  let result_exp = @types.Exp::var_exp(result)
+  project_basic_bil_x86_append_neg_flags(
+    [
+      @types.Stmt::move_stmt(addr_tmp, addr),
+      @types.Stmt::move_stmt(
+        orig_dst,
+        @types.Exp::load(
+          mem=@types.Exp::var_exp(mem),
+          addr=addr_exp,
+          LittleEndian,
+          size,
+        ),
+      ),
+      @types.Stmt::move_stmt(
+        result,
+        @types.Exp::binop(@types.BinOp::minus(), zero, orig_dst_exp),
+      ),
+      @types.Stmt::move_stmt(
+        mem,
+        @types.Exp::store(
+          mem=@types.Exp::var_exp(mem),
+          addr=addr_exp,
+          result_exp,
+          LittleEndian,
+          size,
+        ),
+      ),
+    ],
+    zero,
+    orig_dst_exp,
+    result_exp,
+    width,
+  )
+}
+
+///|
 fn project_basic_bil_register_width(name : String) -> Int {
   if name.has_prefix("R") {
     64
@@ -6131,12 +6238,12 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "NOT8M" => self.project_basic_bil_unop_m(8, @types.UnOp::not())
     "NOT32M" => self.project_basic_bil_unop_m(32, @types.UnOp::not())
     "NOT64M" => self.project_basic_bil_unop_m(64, @types.UnOp::not())
-    "NEG8R" => self.project_basic_bil_unop_r(8, @types.UnOp::neg())
-    "NEG32R" => self.project_basic_bil_unop_r(32, @types.UnOp::neg())
-    "NEG64R" => self.project_basic_bil_unop_r(64, @types.UnOp::neg())
-    "NEG8M" => self.project_basic_bil_unop_m(8, @types.UnOp::neg())
-    "NEG32M" => self.project_basic_bil_unop_m(32, @types.UnOp::neg())
-    "NEG64M" => self.project_basic_bil_unop_m(64, @types.UnOp::neg())
+    "NEG8R" => self.project_basic_bil_neg_r(8)
+    "NEG32R" => self.project_basic_bil_neg_r(32)
+    "NEG64R" => self.project_basic_bil_neg_r(64)
+    "NEG8M" => self.project_basic_bil_neg_m(8)
+    "NEG32M" => self.project_basic_bil_neg_m(32)
+    "NEG64M" => self.project_basic_bil_neg_m(64)
     "SUB8RR" | "SUB8RR_REV" =>
       self.project_basic_bil_addsub_rr(8, @types.BinOp::minus())
     "SUB32RR" | "SUB32RR_REV" =>

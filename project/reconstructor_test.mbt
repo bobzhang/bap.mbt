@@ -332,9 +332,14 @@ test "project reconstructor materializes Basic BIL x86 register not-neg ops" {
       assert_true(subs.length() == 1)
       let blks = subs[0].blks()
       assert_true(blks.length() == 1)
-      assert_reconstructor_text(reconstructor_def_text(blks[0].defs()), [
-        "RAX:imm64 := (not RAX:imm64)", "RAX:imm64 := (neg RAX:imm64)",
-      ])
+      let defs = reconstructor_def_text(blks[0].defs())
+      assert_true(defs.length() == 9)
+      assert_true(defs[0] == "RAX:imm64 := (not RAX:imm64)")
+      assert_true(defs[1] == "%neg_dst:imm64 := RAX:imm64")
+      assert_true(defs[2] == "RAX:imm64 := (0:64u - %neg_dst:imm64)")
+      assert_reconstructor_addsub_flags(
+        defs, 3, "0:64u", "%neg_dst:imm64", "RAX:imm64", "0:64u", false,
+      )
     }
     Err(reason) => fail(reason)
   }

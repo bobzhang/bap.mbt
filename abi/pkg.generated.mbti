@@ -25,4 +25,3 @@ pub fn register_project_pass_if_absent() -> Result[Bool, String]
 // Type aliases
 
 // Traits
-

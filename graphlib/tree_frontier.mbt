@@ -6,6 +6,9 @@ struct Tree[N] {
 } derive(Debug)
 
 ///|
+pub extend Tree with Debug::{to_repr}
+
+///|
 fn[N] graph_set_elements(elements : Set[N]) -> Array[N] {
   let out : Array[N] = []
   for element in elements {
@@ -19,7 +22,7 @@ fn[N : Hash + Eq] graph_tree_new(
   nodes : ArrayView[N],
   parents : Map[N, N],
 ) -> Tree[N] {
-  let children : Map[N, Set[N]] = {}
+  let children : Map[N, Set[N]] = Map([])
   for node in nodes {
     children[node] = Set([])
   }
@@ -140,18 +143,21 @@ struct Frontier[N] {
 } derive(Debug)
 
 ///|
+pub extend Frontier with Debug::{to_repr}
+
+///|
 fn[N : Hash + Eq] graph_frontier_new(
   nodes : ArrayView[N],
   frontiers : Map[N, Set[N]],
 ) -> Frontier[N] {
-  let copied : Map[N, Set[N]] = {}
+  let copied : Map[N, Set[N]] = Map([])
   for node in nodes {
     match frontiers.get(node) {
       Some(frontier) => copied[node] = frontier.copy()
       None => ()
     }
   }
-  { all_value: nodes.to_owned(), map_value: copied }
+  { all_value: nodes.to_owned(), map_value: copied, }
 }
 
 ///|
@@ -198,7 +204,7 @@ pub fn[N : Hash + Eq, E] Graph::dominator_tree(
 ) -> Tree[N] {
   let idoms = self.immediate_dominators(entry, rev~)
   let reachable = self.reachable(entry, rev~)
-  let parents : Map[N, N] = {}
+  let parents : Map[N, N] = Map([])
   for node in self.nodes {
     if node != entry {
       match idoms.get(node) {
@@ -221,7 +227,7 @@ pub fn[N : Hash + Eq, E] Graph::dom_frontier(
 ) -> Frontier[N] {
   let raw = self.dominance_frontiers(entry, rev~)
   let nodes : Array[N] = []
-  let frontiers : Map[N, Set[N]] = {}
+  let frontiers : Map[N, Set[N]] = Map([])
   for node in self.nodes {
     match raw.get(node) {
       Some(frontier) if !frontier.is_empty() => {
@@ -240,7 +246,7 @@ pub fn[N : Hash + Eq, E] Graph::dom_frontier_of_tree(
   tree : Tree[N],
   rev? : Bool = false,
 ) -> Frontier[N] {
-  let frontiers : Map[N, Set[N]] = {}
+  let frontiers : Map[N, Set[N]] = Map([])
   for node in self.nodes {
     let adjacent = if rev {
       self.successors(node)

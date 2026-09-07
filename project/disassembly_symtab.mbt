@@ -234,7 +234,7 @@ pub fn ProjectDisassemblyFunction::span(
 
 ///|
 pub fn ProjectDisassemblySymtab::empty() -> ProjectDisassemblySymtab {
-  { functions_value: [], explicit_calls_value: [], implicit_calls_value: [] }
+  { functions_value: [], explicit_calls_value: [], implicit_calls_value: [], }
 }
 
 ///|

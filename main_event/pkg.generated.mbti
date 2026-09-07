@@ -42,15 +42,21 @@ pub(all) enum MainEvent {
   MainCustomEvent(String, String?)
 } derive(Eq, @debug.Debug)
 pub fn MainEvent::custom(name~ : String, payload? : String) -> Self
+pub fn MainEvent::equal(Self, Self) -> Bool
 pub fn MainEvent::log(MainLogInfo) -> Self
+pub fn MainEvent::not_equal(Self, Self) -> Bool
 pub fn MainEvent::progress(MainProgress) -> Self
+pub fn MainEvent::to_repr(Self) -> @debug.Repr
 pub fn MainEvent::to_string(Self) -> String
 
 type MainLogInfo derive(Eq, @debug.Debug)
 pub fn MainLogInfo::create(level~ : MainLogLevel, section~ : String, message~ : String) -> Self
+pub fn MainLogInfo::equal(Self, Self) -> Bool
 pub fn MainLogInfo::level(Self) -> MainLogLevel
 pub fn MainLogInfo::message(Self) -> String
+pub fn MainLogInfo::not_equal(Self, Self) -> Bool
 pub fn MainLogInfo::section(Self) -> String
+pub fn MainLogInfo::to_repr(Self) -> @debug.Repr
 pub fn MainLogInfo::to_string(Self) -> String
 
 pub(all) enum MainLogLevel {
@@ -59,6 +65,9 @@ pub(all) enum MainLogLevel {
   MainLogWarning
   MainLogError
 } derive(Eq, @debug.Debug)
+pub fn MainLogLevel::equal(Self, Self) -> Bool
+pub fn MainLogLevel::not_equal(Self, Self) -> Bool
+pub fn MainLogLevel::to_repr(Self) -> @debug.Repr
 pub fn MainLogLevel::to_string(Self) -> String
 
 type MainLogReporter
@@ -74,9 +83,12 @@ pub fn MainLogReporter::warning(Self, message~ : String) -> Unit
 
 type MainProgress derive(Eq, @debug.Debug)
 pub fn MainProgress::create(task~ : String, note? : String, stage? : Int, total? : Int) -> Self
+pub fn MainProgress::equal(Self, Self) -> Bool
+pub fn MainProgress::not_equal(Self, Self) -> Bool
 pub fn MainProgress::note(Self) -> String?
 pub fn MainProgress::stage(Self) -> Int?
 pub fn MainProgress::task(Self) -> String
+pub fn MainProgress::to_repr(Self) -> @debug.Repr
 pub fn MainProgress::to_string(Self) -> String
 pub fn MainProgress::total(Self) -> Int?
 

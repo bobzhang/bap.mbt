@@ -8,9 +8,21 @@ pub(all) enum AgentReliability {
 } derive(Eq, Debug)
 
 ///|
+pub extend AgentReliability with Eq::{not_equal, equal}
+
+///|
+pub extend AgentReliability with Debug::{to_repr}
+
+///|
 struct Agent {
   id_value : String
 } derive(Eq, Debug)
+
+///|
+pub extend Agent with Eq::{not_equal, equal}
+
+///|
+pub extend Agent with Debug::{to_repr}
 
 ///|
 priv struct AgentInfo {
@@ -20,7 +32,7 @@ priv struct AgentInfo {
 }
 
 ///|
-let agent_registry : Map[String, AgentInfo] = {}
+let agent_registry : Map[String, AgentInfo] = Map([])
 
 ///|
 fn agent_id_of_name(name : Name) -> String {
@@ -80,7 +92,7 @@ pub fn Agent::register(
       desc_value: desc,
       reliability_value: reliability,
     }
-    Ok({ id_value: id })
+    Ok({ id_value: id, })
   }
 }
 
@@ -92,7 +104,7 @@ pub fn Agent::id(self : Agent) -> String {
 ///|
 pub fn Agent::read(id : String, pkg? : String) -> Agent {
   ignore(pkg)
-  { id_value: id }
+  { id_value: id, }
 }
 
 ///|
@@ -107,7 +119,7 @@ pub fn Agent::persistent() -> Persistent[Agent] {
 ///|
 pub fn Agent::registry() -> Array[Agent] {
   let agents = []
-  agent_registry.each((id, _) => agents.push({ id_value: id }))
+  agent_registry.each((id, _) => agents.push({ id_value: id, }))
   agents.sort_by((left, right) => left.id().compare(right.id()))
   agents
 }
@@ -143,7 +155,10 @@ pub fn Agent::set_reliability(
 ) -> Result[Unit, String] {
   match agent_registry.get(self.id_value) {
     Some(info) => {
-      agent_registry[self.id_value] = { ..info, reliability_value: reliability }
+      agent_registry[self.id_value] = {
+        ..info,
+        reliability_value: reliability,
+      }
       Ok(())
     }
     None => Err("unknown agent \{self.id_value}")

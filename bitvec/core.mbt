@@ -61,12 +61,12 @@ fn normalize_limbs(width : Int, limbs : ArrayView[UInt64]) -> Array[UInt64] {
 ///|
 fn make(width : Int, limbs : ArrayView[UInt64]) -> BitVec raise BitVecError {
   check_width(width)
-  { width, limbs: normalize_limbs(width, limbs) }
+  { width, limbs: normalize_limbs(width, limbs), }
 }
 
 ///|
 fn make_unchecked(width : Int, limbs : ArrayView[UInt64]) -> BitVec {
-  { width, limbs: normalize_limbs(width, limbs) }
+  { width, limbs: normalize_limbs(width, limbs), }
 }
 
 ///|

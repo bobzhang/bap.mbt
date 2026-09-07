@@ -205,7 +205,7 @@ pub fn Phi::substitute(
 
 ///|
 pub fn Term::map_jmp_exp(self : Term[Jmp], f : (Exp) -> Exp) -> Term[Jmp] {
-  self.with_payload({ kind: self.kind().map_exp(f), cond: f(self.cond()) })
+  self.with_payload({ kind: self.kind().map_exp(f), cond: f(self.cond()), })
 }
 
 ///|
@@ -265,7 +265,7 @@ pub fn Jmp::substitute(
 
 ///|
 pub fn Term::map_arg_exp(self : Term[Arg], f : (Exp) -> Exp) -> Term[Arg] {
-  self.with_payload({ ..self.payload_value, rhs: f(self.arg_rhs()) })
+  self.with_payload({ ..self.payload_value, rhs: f(self.arg_rhs()), })
 }
 
 ///|

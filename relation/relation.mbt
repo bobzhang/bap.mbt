@@ -5,6 +5,9 @@ pub(all) enum NonInjective[K, S] {
 } derive(Debug)
 
 ///|
+pub extend NonInjective with Debug::{to_repr}
+
+///|
 struct Relation[K, S] {
   left_compare : (K, K) -> Int
   right_compare : (S, S) -> Int
@@ -16,7 +19,7 @@ pub fn[K, S] Relation::empty(
   compare_left~ : (K, K) -> Int,
   compare_right~ : (S, S) -> Int,
 ) -> Relation[K, S] {
-  { left_compare: compare_left, right_compare: compare_right, pairs: [] }
+  { left_compare: compare_left, right_compare: compare_right, pairs: [], }
 }
 
 ///|

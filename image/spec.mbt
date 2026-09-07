@@ -15,7 +15,7 @@ fn image_name(text : String) -> @knowledge.Name {
 
 ///|
 fn[T] image_tag(name : String, uuid : String) -> ImageTag[T] {
-  { name_value: name, uuid_value: uuid, _phantom: None }
+  { name_value: name, uuid_value: uuid, _phantom: None, }
 }
 
 ///|
@@ -182,7 +182,7 @@ fn ogre_fact_array_copy(facts : Array[OgreFact]) -> Array[OgreFact] {
 fn ogre_doc_copy_declarations(
   declarations : Map[String, Array[OgreField]],
 ) -> Map[String, Array[OgreField]] {
-  let result : Map[String, Array[OgreField]] = {}
+  let result : Map[String, Array[OgreField]] = Map([])
   for entry in declarations {
     result[entry.0] = ogre_field_array_copy(entry.1)
   }
@@ -193,7 +193,7 @@ fn ogre_doc_copy_declarations(
 fn ogre_doc_copy_facts(
   facts : Map[String, Array[OgreFact]],
 ) -> Map[String, Array[OgreFact]] {
-  let result : Map[String, Array[OgreFact]] = {}
+  let result : Map[String, Array[OgreFact]] = Map([])
   for entry in facts {
     result[entry.0] = ogre_fact_array_copy(entry.1)
   }
@@ -229,7 +229,7 @@ fn ogre_doc_merge(lhs : OgreDoc, rhs : OgreDoc) -> Result[OgreDoc, String] {
     }
     facts[entry.0] = merged
   }
-  Ok({ declarations_value: declarations, facts_value: facts })
+  Ok({ declarations_value: declarations, facts_value: facts, })
 }
 
 ///|

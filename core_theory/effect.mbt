@@ -9,6 +9,12 @@ pub(all) enum EffectSort {
 } derive(Eq, Debug)
 
 ///|
+pub extend EffectSort with Eq::{not_equal, equal}
+
+///|
+pub extend EffectSort with Debug::{to_repr}
+
+///|
 struct Effect {
   sort_value : EffectSort
   name_value : String
@@ -285,12 +291,12 @@ fn EffectSort::rank(self : EffectSort) -> Int {
 
 ///|
 pub fn Effect::empty(sort : EffectSort) -> Effect {
-  { sort_value: sort, name_value: sort.to_string() }
+  { sort_value: sort, name_value: sort.to_string(), }
 }
 
 ///|
 pub fn Effect::named(name : String, sort : EffectSort) -> Effect {
-  { sort_value: sort, name_value: name }
+  { sort_value: sort, name_value: name, }
 }
 
 ///|

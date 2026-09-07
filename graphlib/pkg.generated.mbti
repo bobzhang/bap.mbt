@@ -17,10 +17,14 @@ pub(all) struct DfsNodeInfo {
   pre : Int
   rpost : Int
 } derive(Eq, @debug.Debug)
+pub fn DfsNodeInfo::equal(Self, Self) -> Bool
+pub fn DfsNodeInfo::not_equal(Self, Self) -> Bool
+pub fn DfsNodeInfo::to_repr(Self) -> @debug.Repr
 
 type DfsVisitor[N, E, A] derive(@debug.Debug)
 pub fn[N, E, A] DfsVisitor::identity() -> Self[N, E, A]
 pub fn[N, E, A] DfsVisitor::new(start_tree? : (N, A) -> A, enter_node? : (Int, N, A) -> A, leave_node? : (Int, N, A) -> A, enter_edge? : (EdgeKind, Edge[N, E], A) -> A, leave_edge? : (EdgeKind, Edge[N, E], A) -> A) -> Self[N, E, A]
+pub fn[N : @debug.Debug, E : @debug.Debug, A : @debug.Debug] DfsVisitor::to_repr(Self[N, E, A]) -> @debug.Repr
 
 pub(all) struct Edge[N, E] {
   src : N
@@ -29,9 +33,12 @@ pub(all) struct Edge[N, E] {
 } derive(Eq, @debug.Debug)
 pub fn[N, E] Edge::create(N, N, E) -> Self[N, E]
 pub fn[N, E] Edge::dst(Self[N, E]) -> N
+pub fn[N : Eq, E : Eq] Edge::equal(Self[N, E], Self[N, E]) -> Bool
 pub fn[N, E] Edge::label(Self[N, E]) -> E
 pub fn[N, E] Edge::new(src~ : N, dst~ : N, label~ : E) -> Self[N, E]
+pub fn[N : Eq, E : Eq] Edge::not_equal(Self[N, E], Self[N, E]) -> Bool
 pub fn[N, E] Edge::src(Self[N, E]) -> N
+pub fn[N : @debug.Debug, E : @debug.Debug] Edge::to_repr(Self[N, E]) -> @debug.Repr
 
 pub(all) enum EdgeKind {
   Tree
@@ -39,9 +46,15 @@ pub(all) enum EdgeKind {
   Cross
   Forward
 } derive(Eq, @debug.Debug)
+pub fn EdgeKind::equal(Self, Self) -> Bool
+pub fn EdgeKind::not_equal(Self, Self) -> Bool
+pub fn EdgeKind::to_repr(Self) -> @debug.Repr
 
 type Equiv derive(Eq, @debug.Debug)
+pub fn Equiv::equal(Self, Self) -> Bool
+pub fn Equiv::not_equal(Self, Self) -> Bool
 pub fn Equiv::to_int(Self) -> Int
+pub fn Equiv::to_repr(Self) -> @debug.Repr
 
 type Fixpoint[N, D] derive(@debug.Debug)
 pub fn[N, D] Fixpoint::create(Map[N, D], D) -> Self[N, D]
@@ -53,11 +66,13 @@ pub fn[N : Hash + Eq, D] Fixpoint::equal(Self[N, D], Self[N, D], equal~ : (D, D)
 pub fn[N : Hash + Eq, D] Fixpoint::get(Self[N, D], N) -> D
 pub fn[N, D] Fixpoint::is_fixpoint(Self[N, D]) -> Bool
 pub fn[N, D] Fixpoint::iterations(Self[N, D]) -> Int
+pub fn[N : @debug.Debug, D : @debug.Debug] Fixpoint::to_repr(Self[N, D]) -> @debug.Repr
 
 type Frontier[N] derive(@debug.Debug)
 pub fn[N : Hash + Eq] Frontier::elements(Self[N], N) -> Array[N]
 pub fn[N : Hash + Eq] Frontier::enumerate(Self[N], N) -> Array[N]
 pub fn[N : Hash + Eq] Frontier::mem(Self[N], N, N) -> Bool
+pub fn[N : @debug.Debug] Frontier::to_repr(Self[N]) -> @debug.Repr
 pub fn[N] Frontier::to_sequence(Self[N]) -> Array[N]
 pub fn[N : Hash + Eq] Frontier::to_string(Self[N], node_to_string~ : (N) -> String) -> String
 
@@ -114,6 +129,7 @@ pub fn[N : Hash + Eq, E] Graph::strong_components(Self[N, E]) -> Array[@set.Set[
 pub fn[N : Eq, E] Graph::successors(Self[N, E], N) -> Array[N]
 pub fn[N : Eq, E] Graph::succs(Self[N, E], N) -> Array[N]
 pub fn[N : Hash + Eq, E] Graph::to_dot(Self[N, E], name? : String, graph_attrs? : ArrayView[(String, String)], node_attrs? : (N) -> Array[(String, String)], edge_attrs? : (Edge[N, E]) -> Array[(String, String)], string_of_node? : ((N) -> String)?, string_of_edge? : ((Edge[N, E]) -> String)?) -> String
+pub fn[N : @debug.Debug, E : @debug.Debug] Graph::to_repr(Self[N, E]) -> @debug.Repr
 pub fn[N : Eq, E] Graph::union(Self[N, E], Self[N, E]) -> Self[N, E]
 pub fn[N : Eq, E] Graph::update_edge(Self[N, E], N, N, label~ : E) -> Self[N, E]
 pub fn[N, M : Eq, E, F] Graph::view(Self[N, E], node~ : (N) -> M, edge~ : (Edge[N, E]) -> F) -> Self[M, F]
@@ -121,14 +137,17 @@ pub fn[N, M : Eq, E, F] Graph::view(Self[N, E], node~ : (N) -> M, edge~ : (Edge[
 type GraphPath[E] derive(Eq, @debug.Debug)
 pub fn[E] GraphPath::edges(Self[E]) -> Array[E]
 pub fn[E] GraphPath::edges_rev(Self[E]) -> Array[E]
+pub fn[E : Eq] GraphPath::equal(Self[E], Self[E]) -> Bool
 pub fn[E] GraphPath::finish(Self[E]) -> E
 pub fn[E] GraphPath::finish_exn(Self[E]) -> E
 pub fn[E] GraphPath::finish_opt(Self[E]) -> E?
 pub fn[E] GraphPath::length(Self[E]) -> Int
 pub fn[E] GraphPath::new(ArrayView[E], weight~ : Int) -> Self[E]
+pub fn[E : Eq] GraphPath::not_equal(Self[E], Self[E]) -> Bool
 pub fn[E] GraphPath::start(Self[E]) -> E
 pub fn[E] GraphPath::start_exn(Self[E]) -> E
 pub fn[E] GraphPath::start_opt(Self[E]) -> E?
+pub fn[E : @debug.Debug] GraphPath::to_repr(Self[E]) -> @debug.Repr
 pub fn[E] GraphPath::to_string(Self[E], edge_to_string~ : (E) -> String) -> String
 pub fn[E] GraphPath::weight(Self[E]) -> Int
 
@@ -138,6 +157,7 @@ pub fn[N] Group::enumerate(Self[N]) -> Array[N]
 pub fn[N : Hash + Eq] Group::mem(Self[N], N) -> Bool
 pub fn[N] Group::members(Self[N]) -> @set.Set[N]
 pub fn[N] Group::to_equiv(Self[N]) -> Equiv
+pub fn[N : @debug.Debug] Group::to_repr(Self[N]) -> @debug.Repr
 pub fn[N] Group::to_string(Self[N], element_to_string~ : (N) -> String) -> String
 pub fn[N] Group::top(Self[N]) -> N
 
@@ -151,6 +171,7 @@ pub fn[N] Partition::groups(Self[N]) -> Array[Group[N]]
 pub fn[N] Partition::number_of_groups(Self[N]) -> Int
 pub fn[N] Partition::of_equiv(Self[N], Equiv) -> Group[N]?
 pub fn[N : Hash + Eq] Partition::refine(Self[N], (N, N) -> Bool) -> Self[N]
+pub fn[N : @debug.Debug] Partition::to_repr(Self[N]) -> @debug.Repr
 pub fn[N] Partition::to_string(Self[N], element_to_string~ : (N) -> String) -> String
 pub fn[N : Hash + Eq] Partition::trivial(ArrayView[N]) -> Self[N]
 pub fn[N : Hash + Eq] Partition::union(Self[N], N, N) -> Self[N]
@@ -163,10 +184,10 @@ pub fn[N : Hash + Eq] Tree::is_ancestor_of(Self[N], N, child~ : N) -> Bool
 pub fn[N : Hash + Eq] Tree::is_child_of(Self[N], N, parent~ : N) -> Bool
 pub fn[N : Hash + Eq] Tree::is_descendant_of(Self[N], N, parent~ : N) -> Bool
 pub fn[N : Hash + Eq] Tree::parent(Self[N], N) -> N?
+pub fn[N : @debug.Debug] Tree::to_repr(Self[N]) -> @debug.Repr
 pub fn[N] Tree::to_sequence(Self[N]) -> Array[N]
 pub fn[N : Hash + Eq] Tree::to_string(Self[N], node_to_string~ : (N) -> String) -> String
 
 // Type aliases
 
 // Traits
-

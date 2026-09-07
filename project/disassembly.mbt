@@ -4,6 +4,12 @@ pub(all) suberror ProjectDisasmError {
 } derive(Eq, Debug)
 
 ///|
+pub extend ProjectDisasmError with Eq::{not_equal, equal}
+
+///|
+pub extend ProjectDisasmError with Debug::{to_repr}
+
+///|
 struct ProjectDisasm {
   project_value : Project
   errors_value : Array[ProjectDisassemblyRecError]

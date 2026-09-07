@@ -5,6 +5,12 @@ pub(all) enum ProjectDisassemblyBasicPred {
 } derive(Eq, Debug)
 
 ///|
+pub extend ProjectDisassemblyBasicPred with Eq::{not_equal, equal}
+
+///|
+pub extend ProjectDisassemblyBasicPred with Debug::{to_repr}
+
+///|
 pub(all) enum ProjectDisassemblyBasicRemainder {
   BasicLeft(@memory.Memory)
   BasicFinished
@@ -293,14 +299,14 @@ pub fn ProjectDisassemblyBasic::stores_kinds(
 pub fn ProjectDisassemblyBasic::store_asm(
   self : ProjectDisassemblyBasic,
 ) -> ProjectDisassemblyBasic {
-  { ..self, store_asm_value: true }
+  { ..self, store_asm_value: true, }
 }
 
 ///|
 pub fn ProjectDisassemblyBasic::store_kinds(
   self : ProjectDisassemblyBasic,
 ) -> ProjectDisassemblyBasic {
-  { ..self, store_kinds_value: true }
+  { ..self, store_kinds_value: true, }
 }
 
 ///|
@@ -929,7 +935,7 @@ fn project_disassembly_basic_x86_parse_mem_operand(
       }
     _ => return None
   }
-  Some((next, { base, scale, index, displacement, segment: "Nil" }))
+  Some((next, { base, scale, index, displacement, segment: "Nil", }))
 }
 
 ///|
@@ -8612,7 +8618,7 @@ pub fn ProjectDisassemblyBasicState::with_preds(
   self : ProjectDisassemblyBasicState,
   preds : Array[ProjectDisassemblyBasicPred],
 ) -> ProjectDisassemblyBasicState {
-  { ..self, preds_value: preds.copy() }
+  { ..self, preds_value: preds.copy(), }
 }
 
 ///|
@@ -8648,5 +8654,5 @@ pub fn ProjectDisassemblyBasicState::switch(
   self : ProjectDisassemblyBasicState,
   disasm : ProjectDisassemblyBasic,
 ) -> ProjectDisassemblyBasicState {
-  { ..self, disasm_value: disasm }
+  { ..self, disasm_value: disasm, }
 }

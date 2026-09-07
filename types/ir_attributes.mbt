@@ -117,6 +117,12 @@ pub(all) enum IrColor {
 } derive(Eq, Debug)
 
 ///|
+pub extend IrColor with Eq::{not_equal, equal}
+
+///|
+pub extend IrColor with Debug::{to_repr}
+
+///|
 pub fn IrColor::to_string(self : IrColor) -> String {
   match self {
     IrBlack => "black"

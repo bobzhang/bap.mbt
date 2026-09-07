@@ -19,6 +19,12 @@ pub(all) enum ProjectInstructionOperand {
 } derive(Eq, Debug)
 
 ///|
+pub extend ProjectInstructionOperand with Eq::{not_equal, equal}
+
+///|
+pub extend ProjectInstructionOperand with Debug::{to_repr}
+
+///|
 pub(all) enum ProjectInstructionKind {
   ProjectConditionalBranch
   ProjectUnconditionalBranch
@@ -31,6 +37,12 @@ pub(all) enum ProjectInstructionKind {
   ProjectMayLoad
   ProjectMayStore
 } derive(Eq, Debug)
+
+///|
+pub extend ProjectInstructionKind with Eq::{not_equal, equal}
+
+///|
+pub extend ProjectInstructionKind with Debug::{to_repr}
 
 ///|
 struct ProjectInstructionToken {
@@ -49,6 +61,9 @@ pub(all) enum ProjectDisassemblyEdgeKind {
   CondEdge
   FallEdge
 } derive(Eq)
+
+///|
+pub extend ProjectDisassemblyEdgeKind with Eq::{not_equal, equal}
 
 ///|
 struct ProjectDisassemblyEdge {
@@ -515,7 +530,7 @@ pub fn ProjectInstructionToken::same_normalized(
 pub fn ProjectInstructionKey::create(
   tokens : Array[ProjectInstructionToken],
 ) -> ProjectInstructionKey {
-  { tokens_value: tokens.copy() }
+  { tokens_value: tokens.copy(), }
 }
 
 ///|
@@ -670,7 +685,7 @@ pub fn ProjectDisassemblyEdge::create(
   target? : UInt64,
   kind? : ProjectDisassemblyEdgeKind = JumpEdge,
 ) -> ProjectDisassemblyEdge {
-  { source_value: source, target_value: target, kind_value: kind }
+  { source_value: source, target_value: target, kind_value: kind, }
 }
 
 ///|
@@ -837,7 +852,7 @@ pub fn ProjectDisassemblyInstruction::with_operands(
   self : ProjectDisassemblyInstruction,
   operands : Array[ProjectInstructionOperand],
 ) -> ProjectDisassemblyInstruction {
-  { ..self, operands_value: operands.copy() }
+  { ..self, operands_value: operands.copy(), }
 }
 
 ///|
@@ -845,7 +860,7 @@ pub fn ProjectDisassemblyInstruction::with_subinstructions(
   self : ProjectDisassemblyInstruction,
   subinstructions : Array[ProjectDisassemblyInstruction],
 ) -> ProjectDisassemblyInstruction {
-  { ..self, subinstructions_value: subinstructions.copy() }
+  { ..self, subinstructions_value: subinstructions.copy(), }
 }
 
 ///|
@@ -888,7 +903,7 @@ pub fn ProjectDisassemblyInstruction::with_kinds(
   self : ProjectDisassemblyInstruction,
   kinds : Array[ProjectInstructionKind],
 ) -> ProjectDisassemblyInstruction {
-  { ..self, kinds_value: project_instruction_kinds_normalize(kinds) }
+  { ..self, kinds_value: project_instruction_kinds_normalize(kinds), }
 }
 
 ///|
@@ -979,7 +994,7 @@ pub fn ProjectDisassemblyInstruction::contains(
 
 ///|
 pub fn ProjectDisassemblyState::empty() -> ProjectDisassemblyState {
-  { blocks_value: [], instructions_value: [], edges_value: [] }
+  { blocks_value: [], instructions_value: [], edges_value: [], }
 }
 
 ///|
@@ -1173,7 +1188,7 @@ pub fn ProjectDisassemblyState::with_blocks(
   self : ProjectDisassemblyState,
   blocks : Array[@memory.Memory],
 ) -> ProjectDisassemblyState {
-  { ..self, blocks_value: project_disassembly_dedup_blocks(blocks) }
+  { ..self, blocks_value: project_disassembly_dedup_blocks(blocks), }
 }
 
 ///|
@@ -1186,7 +1201,7 @@ pub fn ProjectDisassemblyState::add_block(
   }
   let blocks = self.blocks_value.copy()
   blocks.push(block)
-  { ..self, blocks_value: blocks }
+  { ..self, blocks_value: blocks, }
 }
 
 ///|
@@ -1223,7 +1238,7 @@ pub fn ProjectDisassemblyState::with_edges(
   self : ProjectDisassemblyState,
   edges : Array[ProjectDisassemblyEdge],
 ) -> ProjectDisassemblyState {
-  { ..self, edges_value: project_disassembly_dedup_edges(edges) }
+  { ..self, edges_value: project_disassembly_dedup_edges(edges), }
 }
 
 ///|
@@ -1263,7 +1278,7 @@ pub fn ProjectDisassemblyState::add_edge(
   }
   let edges = self.edges_value.copy()
   edges.push(edge)
-  { ..self, edges_value: edges }
+  { ..self, edges_value: edges, }
 }
 
 ///|
@@ -1281,7 +1296,10 @@ pub fn ProjectDisassemblyState::remove_edge(
 
 ///|
 pub fn ProjectState::empty() -> ProjectState {
-  { disassembly_value: ProjectDisassemblyState::empty(), subroutines_value: [] }
+  {
+    disassembly_value: ProjectDisassemblyState::empty(),
+    subroutines_value: [],
+  }
 }
 
 ///|
@@ -1322,7 +1340,7 @@ pub fn ProjectState::with_disassembly(
   self : ProjectState,
   disassembly : ProjectDisassemblyState,
 ) -> ProjectState {
-  { ..self, disassembly_value: disassembly }
+  { ..self, disassembly_value: disassembly, }
 }
 
 ///|
@@ -1337,7 +1355,7 @@ pub fn ProjectState::with_subroutines(
   self : ProjectState,
   subroutines : Array[@types.Term[@types.Sub]],
 ) -> ProjectState {
-  { ..self, subroutines_value: subroutines.copy() }
+  { ..self, subroutines_value: subroutines.copy(), }
 }
 
 ///|
@@ -1347,5 +1365,5 @@ pub fn ProjectState::add_subroutine(
 ) -> ProjectState {
   let subroutines = self.subroutines_value.copy()
   subroutines.push(subroutine)
-  { ..self, subroutines_value: subroutines }
+  { ..self, subroutines_value: subroutines, }
 }

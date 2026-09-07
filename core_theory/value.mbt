@@ -16,7 +16,7 @@ pub fn Value::cls() -> @knowledge.Class[Unit, Unit] {
 
 ///|
 pub fn Value::empty(sort : Sort) -> Value {
-  { sort_value: sort, facts: {} }
+  { sort_value: sort, facts: {}, }
 }
 
 ///|
@@ -27,7 +27,7 @@ pub fn Value::sort(self : Value) -> Sort {
 ///|
 pub fn Value::resort(self : Value, refine : (Sort) -> Sort?) -> Value? {
   match refine(self.sort_value.forget()) {
-    Some(sort) => Some({ sort_value: sort, facts: self.facts.copy() })
+    Some(sort) => Some({ sort_value: sort, facts: self.facts.copy(), })
     None => None
   }
 }
@@ -172,7 +172,7 @@ pub fn Value::domain() -> @knowledge.Domain[Value] {
         Ok(lhs)
       } else {
         match value_join_facts(lhs, rhs) {
-          Ok(facts) => Ok({ sort_value: lhs.sort_value, facts })
+          Ok(facts) => Ok({ sort_value: lhs.sort_value, facts, })
           Err(reason) => Err(reason)
         }
       }
@@ -185,7 +185,7 @@ pub fn Value::domain() -> @knowledge.Domain[Value] {
 pub fn Value::with_fact(self : Value, key : String, value : String) -> Value {
   let facts = self.facts.copy()
   facts[key] = value
-  { sort_value: self.sort_value, facts }
+  { sort_value: self.sort_value, facts, }
 }
 
 ///|
@@ -215,7 +215,7 @@ pub fn Value::persistent() -> @knowledge.Persistent[Value] {
         Ok(value) => value
         Err(reason) => return Err(reason)
       }
-      Ok({ sort_value: sort, facts })
+      Ok({ sort_value: sort, facts, })
     },
     persistent_string_fields(),
   )
@@ -223,5 +223,5 @@ pub fn Value::persistent() -> @knowledge.Persistent[Value] {
 
 ///|
 pub fn Value::forget(self : Value) -> Value {
-  { sort_value: self.sort_value.forget(), facts: self.facts.copy() }
+  { sort_value: self.sort_value.forget(), facts: self.facts.copy(), }
 }

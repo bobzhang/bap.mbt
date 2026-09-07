@@ -13,12 +13,12 @@ pub(all) enum MemMapChange[V] {
 
 ///|
 pub fn[V] MemMap::empty() -> MemMap[V] {
-  { entries: [] }
+  { entries: [], }
 }
 
 ///|
 pub fn[V] MemMap::singleton(memory : Memory, value : V) -> MemMap[V] {
-  { entries: [(memory, value)] }
+  { entries: [(memory, value)], }
 }
 
 ///|
@@ -213,7 +213,7 @@ pub fn[V : Hash + Eq, U] MemMap::link_one_to_one(
   self : MemMap[V],
   other : MemMap[U],
 ) -> Map[V, U] {
-  let links : Map[V, U] = {}
+  let links : Map[V, U] = Map([])
   for entry in self.entries {
     let matches = other.find(entry.0)
     if matches.length() == 1 {
@@ -228,7 +228,7 @@ pub fn[V : Hash + Eq, U] MemMap::link_maybe_one(
   self : MemMap[V],
   other : MemMap[U],
 ) -> Map[V, U?] {
-  let links : Map[V, U?] = {}
+  let links : Map[V, U?] = Map([])
   for entry in self.entries {
     let matches = other.find(entry.0)
     links[entry.1] = match matches {
@@ -244,7 +244,7 @@ pub fn[V : Hash + Eq, U] MemMap::link_many(
   self : MemMap[V],
   other : MemMap[U],
 ) -> Map[V, Array[U]] {
-  let links : Map[V, Array[U]] = {}
+  let links : Map[V, Array[U]] = Map([])
   for entry in self.entries {
     links[entry.1] = other.intersections(entry.0).map(item => item.1)
   }
@@ -256,7 +256,7 @@ pub fn[V : Hash + Eq, U] MemMap::link_at_least_one(
   self : MemMap[V],
   other : MemMap[U],
 ) -> Map[V, (U, Array[U])] {
-  let links : Map[V, (U, Array[U])] = {}
+  let links : Map[V, (U, Array[U])] = Map([])
   for entry in self.entries {
     let matches = other.intersections(entry.0).map(item => item.1)
     if !matches.is_empty() {
@@ -271,7 +271,7 @@ pub fn[V : Hash + Eq, U] MemMap::link_maybe_one_checked(
   self : MemMap[V],
   other : MemMap[U],
 ) -> Result[Map[V, U?], String] {
-  let links : Map[V, U?] = {}
+  let links : Map[V, U?] = Map([])
   for entry in self.ordered_entries() {
     if links.get(entry.1) is Some(_) {
       return Err("mapping is non-injective")
@@ -290,7 +290,7 @@ pub fn[V : Hash + Eq, U] MemMap::link_one_checked(
   self : MemMap[V],
   other : MemMap[U],
 ) -> Result[Map[V, U], String] {
-  let links : Map[V, U] = {}
+  let links : Map[V, U] = Map([])
   for entry in self.ordered_entries() {
     if links.get(entry.1) is Some(_) {
       return Err("mapping is non-injective")
@@ -308,7 +308,7 @@ pub fn[V : Hash + Eq, U] MemMap::link_many_checked(
   self : MemMap[V],
   other : MemMap[U],
 ) -> Result[Map[V, Array[U]], String] {
-  let links : Map[V, Array[U]] = {}
+  let links : Map[V, Array[U]] = Map([])
   for entry in self.ordered_entries() {
     if links.get(entry.1) is Some(_) {
       return Err("mapping is non-injective")
@@ -323,7 +323,7 @@ pub fn[V : Hash + Eq, U] MemMap::link_at_least_one_checked(
   self : MemMap[V],
   other : MemMap[U],
 ) -> Result[Map[V, (U, Array[U])], String] {
-  let links : Map[V, (U, Array[U])] = {}
+  let links : Map[V, (U, Array[U])] = Map([])
   for entry in self.ordered_entries() {
     if links.get(entry.1) is Some(_) {
       return Err("mapping is non-injective")
@@ -341,7 +341,7 @@ pub fn[V : Hash + Eq, U] MemMap::link_at_least_one_checked(
 fn[V : Hash + Eq] MemMap::rev_map_injective(
   self : MemMap[V],
 ) -> Result[Map[V, Memory], String] {
-  let result : Map[V, Memory] = {}
+  let result : Map[V, Memory] = Map([])
   for entry in self.ordered_entries() {
     if result.get(entry.1) is Some(_) {
       return Err("mapping is non-injective")
@@ -369,7 +369,7 @@ pub fn[V : Hash + Eq] MemMap::rev_map_maybe_one(
 pub fn[V : Hash + Eq] MemMap::rev_map_many(
   self : MemMap[V],
 ) -> Map[V, Array[Memory]] {
-  let result : Map[V, Array[Memory]] = {}
+  let result : Map[V, Array[Memory]] = Map([])
   for entry in self.ordered_entries() {
     match result.get(entry.1) {
       Some(memories) => {
@@ -387,7 +387,7 @@ pub fn[V : Hash + Eq] MemMap::rev_map_many(
 pub fn[V : Hash + Eq] MemMap::rev_map_at_least_one(
   self : MemMap[V],
 ) -> Map[V, (Memory, Array[Memory])] {
-  let result : Map[V, (Memory, Array[Memory])] = {}
+  let result : Map[V, (Memory, Array[Memory])] = Map([])
   self
   .rev_map_many()
   .each((value, memories) => {
@@ -666,7 +666,7 @@ pub fn[V] MemMap::remove_intersections(
   self : MemMap[V],
   memory : Memory,
 ) -> MemMap[V] {
-  { entries: self.entries.filter(entry => !entry.0.intersects(memory)) }
+  { entries: self.entries.filter(entry => !entry.0.intersects(memory)), }
 }
 
 ///|
@@ -674,7 +674,7 @@ pub fn[V] MemMap::remove_dominators(
   self : MemMap[V],
   memory : Memory,
 ) -> MemMap[V] {
-  { entries: self.entries.filter(entry => !entry.0.dominates(memory)) }
+  { entries: self.entries.filter(entry => !entry.0.dominates(memory)), }
 }
 
 ///|

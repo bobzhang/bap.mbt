@@ -5,6 +5,12 @@ pub(all) enum BareTerm {
 } derive(Eq, Debug)
 
 ///|
+pub extend BareTerm with Eq::{not_equal, equal}
+
+///|
+pub extend BareTerm with Debug::{to_repr}
+
+///|
 pub type BareTuple = BareTerm
 
 ///|
@@ -17,6 +23,12 @@ pub(all) enum BareError {
   BareParseError(String)
   BareNotASexp(String)
 } derive(Eq, Debug)
+
+///|
+pub extend BareError with Eq::{not_equal, equal}
+
+///|
+pub extend BareError with Debug::{to_repr}
 
 ///|
 pub fn BareTerm::atom(value : String) -> BareTerm {

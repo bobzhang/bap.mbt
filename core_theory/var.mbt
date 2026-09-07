@@ -219,7 +219,7 @@ pub fn Var::of_ident(sort : Sort, ident : String) -> Result[Var, String] {
 
 ///|
 pub fn Var::resort(self : Var, sort : Sort) -> Var {
-  { ..self, sort_value: sort }
+  { ..self, sort_value: sort, }
 }
 
 ///|
@@ -229,7 +229,7 @@ pub fn Var::forget(self : Var) -> Var {
 
 ///|
 pub fn Var::versioned(self : Var, version : Int) -> Var {
-  { ..self, version_value: version }
+  { ..self, version_value: version, }
 }
 
 ///|

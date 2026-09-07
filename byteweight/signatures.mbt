@@ -7,6 +7,12 @@ pub(all) enum ByteweightSignatureError {
 } derive(Eq, Debug)
 
 ///|
+pub extend ByteweightSignatureError with Eq::{not_equal, equal}
+
+///|
+pub extend ByteweightSignatureError with Debug::{to_repr}
+
+///|
 struct ByteweightSignatureData[T] {
   name_value : String
   load_fn : (Bytes) -> Result[T, String]
@@ -22,7 +28,7 @@ priv struct ByteweightSignatureEntry {
 }
 
 ///|
-let byteweight_signature_data_registry : Map[String, Bool] = {}
+let byteweight_signature_data_registry : Map[String, Bool] = Map([])
 
 ///|
 pub fn ByteweightSignatureError::to_string(
@@ -57,7 +63,7 @@ pub fn[T] ByteweightSignatureData::register(
     Err("data entry already exists: \{name}")
   } else {
     byteweight_signature_data_registry[name] = true
-    Ok({ name_value: name, load_fn: load, save_fn: save })
+    Ok({ name_value: name, load_fn: load, save_fn: save, })
   }
 }
 
@@ -182,7 +188,7 @@ fn byteweight_signature_parse_line(
         Ok(bytes) => bytes
         Err(err) => return Err(err)
       }
-      Ok({ target_name, compiler_name, data_name, payload })
+      Ok({ target_name, compiler_name, data_name, payload, })
     }
     _ => Err(ByteweightSignatureCorrupted("entry doesn't have four fields"))
   }
@@ -259,7 +265,7 @@ fn byteweight_signature_update_raw(
 ) -> Result[Unit, ByteweightSignatureError] {
   byteweight_signature_update_entries(
     path,
-    { target_name, compiler_name, data_name, payload: payload.to_owned() },
+    { target_name, compiler_name, data_name, payload: payload.to_owned(), },
     entry => {
       entry.target_name == target_name &&
       entry.compiler_name == compiler_name &&
@@ -345,7 +351,7 @@ pub fn[T] ByteweightSignatureData::update(
   let data_name = self.name_value
   byteweight_signature_update_entries(
     path,
-    { target_name, compiler_name, data_name, payload: (self.save_fn)(value) },
+    { target_name, compiler_name, data_name, payload: (self.save_fn)(value), },
     entry => {
       entry.compiler_name == compiler_name &&
       entry.data_name == data_name &&

@@ -136,7 +136,7 @@ fn Term::flatten_call_into(self : Term[Blk], call : Call) -> (Call, Term[Blk]) {
     }
     None => (None, blk)
   }
-  ({ target, return_label }, blk)
+  ({ target, return_label, }, blk)
 }
 
 ///|
@@ -191,5 +191,5 @@ pub fn Term::flatten_sub(self : Term[Sub]) -> Term[Sub] {
 
 ///|
 pub fn Term::flatten_program(self : Term[Program]) -> Term[Program] {
-  self.with_payload({ subs: self.subs().map(sub => sub.flatten_sub()) })
+  self.with_payload({ subs: self.subs().map(sub => sub.flatten_sub()), })
 }

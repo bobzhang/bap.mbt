@@ -5,6 +5,12 @@ pub(all) enum UnOp {
 } derive(Eq, Debug)
 
 ///|
+pub extend UnOp with Eq::{not_equal}
+
+///|
+pub extend UnOp with Debug::{to_repr}
+
+///|
 pub fn UnOp::not() -> UnOp {
   Not
 }
@@ -52,6 +58,12 @@ pub(all) enum BinOp {
   SignedLt
   SignedLe
 } derive(Eq, Debug)
+
+///|
+pub extend BinOp with Eq::{not_equal}
+
+///|
+pub extend BinOp with Debug::{to_repr}
 
 ///|
 pub fn BinOp::plus() -> BinOp {
@@ -223,6 +235,12 @@ pub(all) enum CastKind {
 } derive(Eq, Debug)
 
 ///|
+pub extend CastKind with Eq::{not_equal}
+
+///|
+pub extend CastKind with Debug::{to_repr}
+
+///|
 pub fn CastKind::unsigned() -> CastKind {
   Unsigned
 }
@@ -274,6 +292,12 @@ pub(all) enum Exp {
 } derive(Eq, Debug)
 
 ///|
+pub extend Exp with Eq::{not_equal}
+
+///|
+pub extend Exp with Debug::{to_repr}
+
+///|
 pub fn Exp::load(
   mem~ : Exp,
   addr~ : Exp,
@@ -316,7 +340,6 @@ pub fn Exp::unop(op : UnOp, exp : Exp) -> Exp {
 }
 
 ///|
-#alias(var)
 pub fn Exp::var_exp(variable : Var) -> Exp {
   Var(variable)
 }
@@ -425,6 +448,12 @@ pub(all) enum Stmt {
 } derive(Eq, Debug)
 
 ///|
+pub extend Stmt with Eq::{not_equal}
+
+///|
+pub extend Stmt with Debug::{to_repr}
+
+///|
 struct StmtAttribute[T] {
   key : String
   encode_value : (T) -> String
@@ -435,6 +464,12 @@ struct StmtAttribute[T] {
 pub(all) suberror StmtAttributeError {
   DuplicateStmtAttribute(String)
 } derive(Eq, Debug)
+
+///|
+pub extend StmtAttributeError with Eq::{not_equal, equal}
+
+///|
+pub extend StmtAttributeError with Debug::{to_repr}
 
 ///|
 let stmt_attribute_prefix = "@attribute:"
@@ -473,7 +508,7 @@ pub fn[T] StmtAttribute::register(
     raise DuplicateStmtAttribute(key)
   }
   stmt_attribute_registry.push(key)
-  { key, encode_value: encode, decode_value: decode }
+  { key, encode_value: encode, decode_value: decode, }
 }
 
 ///|

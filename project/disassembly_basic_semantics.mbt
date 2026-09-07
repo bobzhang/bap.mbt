@@ -26,7 +26,7 @@ fn project_x86_simd_is_vector_register(name : String) -> Bool {
 fn project_x86_simd_copy_registers(
   registers : Map[String, @types.Word],
 ) -> Map[String, @types.Word] {
-  let copy : Map[String, @types.Word] = {}
+  let copy : Map[String, @types.Word] = Map([])
   registers.each((name, value) => copy[name] = value)
   copy
 }
@@ -35,7 +35,7 @@ fn project_x86_simd_copy_registers(
 fn project_x86_simd_copy_vector_memory(
   memory : Map[UInt64, @types.Word],
 ) -> Map[UInt64, @types.Word] {
-  let copy : Map[UInt64, @types.Word] = {}
+  let copy : Map[UInt64, @types.Word] = Map([])
   memory.each((addr, value) => copy[addr] = value)
   copy
 }
@@ -769,7 +769,7 @@ fn ProjectDisassemblyInstruction::project_x86_simd_apply_pmovmskb(
 
 ///|
 pub fn ProjectX86SimdState::empty() -> ProjectX86SimdState {
-  { registers_value: {}, vector_memory_value: {} }
+  { registers_value: {}, vector_memory_value: {}, }
 }
 
 ///|
@@ -777,15 +777,15 @@ pub fn ProjectX86SimdState::create(
   registers? : Array[(String, @types.Word)] = [],
   vector_memory? : Array[(UInt64, @types.Word)] = [],
 ) -> ProjectX86SimdState {
-  let registers_map : Map[String, @types.Word] = {}
+  let registers_map : Map[String, @types.Word] = Map([])
   for item in registers {
     registers_map[project_x86_simd_register_key(item.0)] = item.1
   }
-  let memory_map : Map[UInt64, @types.Word] = {}
+  let memory_map : Map[UInt64, @types.Word] = Map([])
   for item in vector_memory {
     memory_map[item.0] = item.1
   }
-  { registers_value: registers_map, vector_memory_value: memory_map }
+  { registers_value: registers_map, vector_memory_value: memory_map, }
 }
 
 ///|
@@ -818,7 +818,7 @@ pub fn ProjectX86SimdState::with_register(
 ) -> ProjectX86SimdState {
   let registers = project_x86_simd_copy_registers(self.registers_value)
   registers[project_x86_simd_register_key(name)] = value
-  { ..self, registers_value: registers }
+  { ..self, registers_value: registers, }
 }
 
 ///|
@@ -837,7 +837,7 @@ pub fn ProjectX86SimdState::with_vector_memory(
 ) -> ProjectX86SimdState {
   let memory = project_x86_simd_copy_vector_memory(self.vector_memory_value)
   memory[addr] = value
-  { ..self, vector_memory_value: memory }
+  { ..self, vector_memory_value: memory, }
 }
 
 ///|

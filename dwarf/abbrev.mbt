@@ -17,6 +17,12 @@ pub(all) enum DwarfAbbrevValueKind {
 } derive(Eq, Debug)
 
 ///|
+pub extend DwarfAbbrevValueKind with Eq::{not_equal, equal}
+
+///|
+pub extend DwarfAbbrevValueKind with Debug::{to_repr}
+
+///|
 struct DwarfAbbrevField {
   attr_value : DwarfAttr
   form_value : DwarfForm
@@ -40,7 +46,7 @@ pub fn DwarfAbbrevField::create(
   attr~ : DwarfAttr,
   form~ : DwarfForm,
 ) -> DwarfAbbrevField {
-  { attr_value: attr, form_value: form }
+  { attr_value: attr, form_value: form, }
 }
 
 ///|
@@ -344,7 +350,7 @@ pub fn DwarfAbbrevTable::read(
       Err(reason) => return Err(reason)
     }
   }
-  Ok(({ entries_value: entries }, cursor))
+  Ok(({ entries_value: entries, }, cursor))
 }
 
 ///|

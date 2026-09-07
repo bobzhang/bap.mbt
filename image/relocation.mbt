@@ -60,7 +60,7 @@ pub fn ExternalReference::create(
   addr~ : UInt64,
   name~ : String,
 ) -> ExternalReference {
-  { addr_value: addr, name_value: name }
+  { addr_value: addr, name_value: name, }
 }
 
 ///|
@@ -81,7 +81,7 @@ struct SymbolValue {
 
 ///|
 pub fn SymbolValue::create(addr~ : UInt64, value~ : UInt64) -> SymbolValue {
-  { addr_value: addr, value_value: value }
+  { addr_value: addr, value_value: value, }
 }
 
 ///|

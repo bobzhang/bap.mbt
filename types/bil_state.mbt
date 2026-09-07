@@ -4,13 +4,19 @@ struct BilState {
 } derive(Eq, Debug)
 
 ///|
+pub extend BilState with Eq::{not_equal, equal}
+
+///|
+pub extend BilState with Debug::{to_repr}
+
+///|
 pub fn BilState::new() -> BilState {
-  { values_value: Map([]) }
+  { values_value: Map([]), }
 }
 
 ///|
 pub fn BilState::from_values(values : Map[String, BilValue]) -> BilState {
-  { values_value: values.copy() }
+  { values_value: values.copy(), }
 }
 
 ///|
@@ -52,7 +58,7 @@ pub fn BilState::set(
 ) -> BilState {
   let values = self.values_value.copy()
   values[name] = value
-  { values_value: values }
+  { values_value: values, }
 }
 
 ///|

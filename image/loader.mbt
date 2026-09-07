@@ -5,7 +5,7 @@ struct ImageLoader {
 }
 
 ///|
-let image_loader_registry : Map[String, ImageLoader] = {}
+let image_loader_registry : Map[String, ImageLoader] = Map([])
 
 ///|
 pub(all) struct KB {}
@@ -15,7 +15,7 @@ pub fn ImageLoader::create(
   from_data~ : (Bytes) -> Result[OgreDoc?, String],
   from_file? : (String) -> Result[OgreDoc?, String],
 ) -> ImageLoader {
-  { from_data_fn: from_data, from_file_fn: from_file }
+  { from_data_fn: from_data, from_file_fn: from_file, }
 }
 
 ///|

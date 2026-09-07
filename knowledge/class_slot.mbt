@@ -29,10 +29,10 @@ struct DocumentationProperty {
 }
 
 ///|
-let documented_classes : Map[String, DocumentationClass] = {}
+let documented_classes : Map[String, DocumentationClass] = Map([])
 
 ///|
-let documented_properties : Map[String, Array[DocumentationProperty]] = {}
+let documented_properties : Map[String, Array[DocumentationProperty]] = Map([])
 
 ///|
 fn documentation_desc(desc : String?) -> String {
@@ -69,7 +69,7 @@ pub fn[K, S] Class::create(
       documented_properties[name.show()] = []
     }
   }
-  { name, sort_value: sort, desc, _phantom: None }
+  { name, sort_value: sort, desc, _phantom: None, }
 }
 
 ///|
@@ -146,7 +146,7 @@ pub fn[K, P] Slot::owner(self : Slot[K, P]) -> Name {
 
 ///|
 pub fn[K, P] Slot::cls(self : Slot[K, P]) -> Class[K, Unit] {
-  { name: self.owner, sort_value: (), desc: None, _phantom: None }
+  { name: self.owner, sort_value: (), desc: None, _phantom: None, }
 }
 
 ///|

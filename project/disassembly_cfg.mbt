@@ -99,7 +99,7 @@ pub fn ProjectDisassemblyCfgEdge::create(
   dst~ : ProjectDisassemblyBlock,
   kind? : ProjectDisassemblyEdgeKind = JumpEdge,
 ) -> ProjectDisassemblyCfgEdge {
-  { src_value: src, dst_value: dst, kind_value: kind }
+  { src_value: src, dst_value: dst, kind_value: kind, }
 }
 
 ///|
@@ -133,7 +133,7 @@ pub fn ProjectDisassemblyCfgEdge::same(
 
 ///|
 pub fn ProjectDisassemblyCfg::empty() -> ProjectDisassemblyCfg {
-  { nodes_value: [], edges_value: [] }
+  { nodes_value: [], edges_value: [], }
 }
 
 ///|
@@ -149,7 +149,7 @@ pub fn ProjectDisassemblyCfg::create(
     Some(items) => project_disassembly_cfg_sort_edges(items)
     None => []
   }
-  let mut cfg = { nodes_value: clean_nodes, edges_value: [] }
+  let mut cfg = { nodes_value: clean_nodes, edges_value: [], }
   for edge in clean_edges {
     cfg = cfg.insert_edge(edge)
   }
@@ -234,7 +234,7 @@ pub fn ProjectDisassemblyCfg::insert_node(
   } else {
     let nodes = self.nodes_value.copy()
     nodes.push(node)
-    { ..self, nodes_value: project_disassembly_cfg_sort_nodes(nodes) }
+    { ..self, nodes_value: project_disassembly_cfg_sort_nodes(nodes), }
   }
 }
 
@@ -273,7 +273,7 @@ pub fn ProjectDisassemblyCfg::insert_edge(
   } else {
     let edges = with_dst.edges_value.copy()
     edges.push(edge)
-    { ..with_dst, edges_value: project_disassembly_cfg_sort_edges(edges) }
+    { ..with_dst, edges_value: project_disassembly_cfg_sort_edges(edges), }
   }
 }
 

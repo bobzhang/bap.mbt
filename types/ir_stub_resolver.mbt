@@ -124,7 +124,7 @@ fn stub_graph_add_edge(
 
 ///|
 fn stub_alias_graph(subs : Array[Term[Sub]]) -> Map[String, Array[String]] {
-  let graph : Map[String, Array[String]] = {}
+  let graph : Map[String, Array[String]] = Map([])
   for sub in subs {
     let name = sub.sub_name()
     stub_graph_add_node(graph, name)
@@ -162,7 +162,7 @@ fn linkable_stub_subs(
 
 ///|
 fn stub_components(graph : Map[String, Array[String]]) -> Array[Array[String]] {
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   let components = []
   graph.each((start, _) => {
     if !seen.contains(start) {
@@ -246,7 +246,7 @@ pub fn Term::program_stub_links(
     },
   )
   let graph = stub_alias_graph(subs)
-  let links : Map[Tid, Tid] = {}
+  let links : Map[Tid, Tid] = Map([])
   for component in stub_components(graph) {
     link_stub_component(links, component, subs)
   }

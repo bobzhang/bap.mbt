@@ -8,7 +8,7 @@ struct ImageBackend {
 }
 
 ///|
-let backend_registry : Map[String, ImageBackend] = {}
+let backend_registry : Map[String, ImageBackend] = Map([])
 
 ///|
 pub fn ImageBackend::create(

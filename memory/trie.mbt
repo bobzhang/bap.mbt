@@ -12,7 +12,7 @@ fn memory_trie_valid_word_size(word_size : Int) -> Bool {
 
 ///|
 fn[V] memory_trie_make(word_size : Int) -> MemoryTrie[V] {
-  { word_size_value: word_size, value: None, children: [] }
+  { word_size_value: word_size, value: None, children: [], }
 }
 
 ///|

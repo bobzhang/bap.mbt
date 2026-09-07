@@ -256,7 +256,7 @@ test "BAP-style future collection helpers preserve input order" {
 
 ///|
 test "BAP-style future list helpers preserve input order" {
-  let empty_inputs : @list.List[@future.Future[Int]] = @list.from_array([])
+  let empty_inputs : @list.List[@future.Future[Int]] = @list.List([])
   let empty = @future.Future::all_list(empty_inputs)
   assert_true(empty.is_decided())
   assert_true(empty.peek_exn().to_array() == [])
@@ -264,7 +264,7 @@ test "BAP-style future list helpers preserve input order" {
   let (first, first_promise) = @future.Future::create()
   let (second, second_promise) = @future.Future::create()
   let (third, third_promise) = @future.Future::create()
-  let all = @future.Future::all_list(@list.from_array([first, second, third]))
+  let all = @future.Future::all_list(@list.List([first, second, third]))
   third_promise.fulfill(3)
   first_promise.fulfill(1)
   assert_true(!all.is_decided())
@@ -274,7 +274,7 @@ test "BAP-style future list helpers preserve input order" {
   let (unit_first, unit_first_promise) = @future.Future::create()
   let (unit_second, unit_second_promise) = @future.Future::create()
   let all_unit = @future.Future::all_unit_list(
-    @list.from_array([unit_first, unit_second]),
+    @list.List([unit_first, unit_second]),
   )
   unit_second_promise.fulfill(())
   assert_true(!all_unit.is_decided())
@@ -1043,7 +1043,7 @@ test "translated BAP stream batched unfold either concat and concat merge" {
 
 ///|
 test "BAP-style stream list adapters mirror list-facing OCaml APIs" {
-  let values = @list.from_array([0, 1, 2, 3])
+  let values = @list.List([0, 1, 2, 3])
   let (list_stream, list_signal, list_finished) = @future.Stream::of_list(
     values,
   )
@@ -1069,15 +1069,9 @@ test "BAP-style stream list adapters mirror list-facing OCaml APIs" {
   take_signal.repeat(times=4, ())
   assert_true(taken.peek_exn().to_array() == [0, 1, 2])
 
-  let (first, first_signal, _) = @future.Stream::of_list(
-    @list.from_array([1, 2]),
-  )
-  let (second, second_signal, _) = @future.Stream::of_list(
-    @list.from_array([10]),
-  )
-  let concatenated = @future.Stream::concat_list(
-    @list.from_array([first, second]),
-  )
+  let (first, first_signal, _) = @future.Stream::of_list(@list.List([1, 2]))
+  let (second, second_signal, _) = @future.Stream::of_list(@list.List([10]))
+  let concatenated = @future.Stream::concat_list(@list.List([first, second]))
   let concatenated_values : Array[Int] = []
   concatenated.observe(fn(value) { concatenated_values.push(value) })
   first_signal.repeat(times=2, ())
@@ -1085,13 +1079,13 @@ test "BAP-style stream list adapters mirror list-facing OCaml APIs" {
   assert_true(concatenated_values == [1, 2, 10])
 
   let (merge_first, merge_first_signal, _) = @future.Stream::of_list(
-    @list.from_array([1, 2]),
+    @list.List([1, 2]),
   )
   let (merge_second, merge_second_signal, _) = @future.Stream::of_list(
-    @list.from_array([10]),
+    @list.List([10]),
   )
   let merged = @future.Stream::concat_merge_list(
-    @list.from_array([merge_first, merge_second]),
+    @list.List([merge_first, merge_second]),
     fn(value, previous) { value + previous },
   )
   let merged_values : Array[Int] = []

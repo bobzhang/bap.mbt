@@ -106,7 +106,7 @@ fn ir_cfg_edge_of_jmp(
   match jmp.succ_tid_of_jmp() {
     Some(tid) =>
       match sub.find_blk(tid) {
-        Some(dst) => Some({ src_value: src, dst_value: dst, pos_value: pos })
+        Some(dst) => Some({ src_value: src, dst_value: dst, pos_value: pos, })
         None => None
       }
     None => None

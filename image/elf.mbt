@@ -223,7 +223,7 @@ fn image_elf_parse_section_zero(
   }
   match (section_count, section_name_index, program_count) {
     (Ok(section_count), Ok(section_name_index), Ok(program_count)) =>
-      Ok({ section_count, section_name_index, program_count })
+      Ok({ section_count, section_name_index, program_count, })
     (Err(reason), _, _) | (_, Err(reason), _) | (_, _, Err(reason)) =>
       Err(reason)
   }
@@ -503,7 +503,7 @@ fn image_elf_parse_program_header(
   }
   match (typ, flags, offset, vaddr, filesz, memsz) {
     (Ok(typ), Ok(flags), Ok(offset), Ok(vaddr), Ok(filesz), Ok(memsz)) =>
-      Ok({ typ, flags, offset, vaddr, filesz, memsz })
+      Ok({ typ, flags, offset, vaddr, filesz, memsz, })
     (Err(reason), _, _, _, _, _)
     | (_, Err(reason), _, _, _, _)
     | (_, _, Err(reason), _, _, _)
@@ -615,7 +615,7 @@ fn image_elf_parse_section_header(
       Ok(offset),
       Ok(size),
       Ok(entsize),
-    ) => Ok({ name_offset, typ, flags, link, addr, offset, size, entsize })
+    ) => Ok({ name_offset, typ, flags, link, addr, offset, size, entsize, })
     (Err(reason), _, _, _, _, _, _, _)
     | (_, Err(reason), _, _, _, _, _, _)
     | (_, _, Err(reason), _, _, _, _, _)
@@ -792,7 +792,7 @@ fn image_elf_parse_symbol_entry_at(
           Err(reason) => return Err(reason)
         }
       }
-      Ok({ name, shndx, value, size, info })
+      Ok({ name, shndx, value, size, info, })
     }
     (Err(reason), _, _, _, _)
     | (_, Err(reason), _, _, _)
@@ -1144,7 +1144,7 @@ fn image_elf_relocation_entry_size(
 
 ///|
 fn image_elf_dynamic_relocation_table_empty() -> ImageElfDynamicRelocationTable {
-  { addr: None, size: None, entry_size: None }
+  { addr: None, size: None, entry_size: None, }
 }
 
 ///|
@@ -1342,7 +1342,7 @@ fn image_elf_parse_dynamic_entry(
 
 ///|
 fn image_elf_dynamic_metadata_empty() -> ImageElfDynamicMetadata {
-  { required_libraries: [], rpaths: [], runpaths: [], soname: None }
+  { required_libraries: [], rpaths: [], runpaths: [], soname: None, }
 }
 
 ///|
@@ -1366,7 +1366,7 @@ fn ImageElfDynamicMetadata::merge(
     Some(_) => self.soname
     None => other.soname
   }
-  { required_libraries: libraries, rpaths, runpaths, soname }
+  { required_libraries: libraries, rpaths, runpaths, soname, }
 }
 
 ///|
@@ -1414,7 +1414,7 @@ fn image_elf_dynamic_metadata_from_entries(
       _ => ()
     }
   }
-  Ok({ required_libraries: libraries, rpaths, runpaths, soname })
+  Ok({ required_libraries: libraries, rpaths, runpaths, soname, })
 }
 
 ///|
@@ -1643,14 +1643,14 @@ fn image_elf_dynamic_plt_table(
     (Some(addr), Some(size), Some(7UL)) =>
       Ok(
         (
-          { addr: Some(addr), size: Some(size), entry_size: rela_entry_size },
+          { addr: Some(addr), size: Some(size), entry_size: rela_entry_size, },
           true,
         ),
       )
     (Some(addr), Some(size), Some(17UL)) =>
       Ok(
         (
-          { addr: Some(addr), size: Some(size), entry_size: rel_entry_size },
+          { addr: Some(addr), size: Some(size), entry_size: rel_entry_size, },
           false,
         ),
       )
@@ -1695,15 +1695,15 @@ fn image_elf_dynamic_relocations_from_programs(
             }
           (5UL, value) => string_table_addr = Some(value)
           (6UL, value) => symbol_table_addr = Some(value)
-          (7UL, value) => rela = { ..rela, addr: Some(value) }
+          (7UL, value) => rela = { ..rela, addr: Some(value), }
           (8UL, value) =>
             match image_elf_uint_to_dynamic_size(value, "ELF RELA size") {
-              Ok(size) => rela = { ..rela, size: Some(size) }
+              Ok(size) => rela = { ..rela, size: Some(size), }
               Err(reason) => return Err(reason)
             }
           (9UL, value) =>
             match image_elf_uint_to_dynamic_size(value, "ELF RELA entry size") {
-              Ok(size) => rela = { ..rela, entry_size: Some(size) }
+              Ok(size) => rela = { ..rela, entry_size: Some(size), }
               Err(reason) => return Err(reason)
             }
           (10UL, value) =>
@@ -1722,28 +1722,28 @@ fn image_elf_dynamic_relocations_from_programs(
               Ok(size) => symbol_entry_size = Some(size)
               Err(reason) => return Err(reason)
             }
-          (17UL, value) => rel = { ..rel, addr: Some(value) }
+          (17UL, value) => rel = { ..rel, addr: Some(value), }
           (18UL, value) =>
             match image_elf_uint_to_dynamic_size(value, "ELF REL size") {
-              Ok(size) => rel = { ..rel, size: Some(size) }
+              Ok(size) => rel = { ..rel, size: Some(size), }
               Err(reason) => return Err(reason)
             }
           (19UL, value) =>
             match image_elf_uint_to_dynamic_size(value, "ELF REL entry size") {
-              Ok(size) => rel = { ..rel, entry_size: Some(size) }
+              Ok(size) => rel = { ..rel, entry_size: Some(size), }
               Err(reason) => return Err(reason)
             }
           (20UL, value) => plt_type = Some(value)
           (23UL, value) => plt_addr = Some(value)
           (35UL, value) =>
             match image_elf_uint_to_dynamic_size(value, "ELF RELR size") {
-              Ok(size) => relr = { ..relr, size: Some(size) }
+              Ok(size) => relr = { ..relr, size: Some(size), }
               Err(reason) => return Err(reason)
             }
-          (36UL, value) => relr = { ..relr, addr: Some(value) }
+          (36UL, value) => relr = { ..relr, addr: Some(value), }
           (37UL, value) =>
             match image_elf_uint_to_dynamic_size(value, "ELF RELR entry size") {
-              Ok(size) => relr = { ..relr, entry_size: Some(size) }
+              Ok(size) => relr = { ..relr, entry_size: Some(size), }
               Err(reason) => return Err(reason)
             }
           _ => ()

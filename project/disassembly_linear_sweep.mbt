@@ -4,6 +4,12 @@ pub(all) suberror ProjectDisassemblyLinearSweepError {
 } derive(Eq, Debug)
 
 ///|
+pub extend ProjectDisassemblyLinearSweepError with Eq::{not_equal, equal}
+
+///|
+pub extend ProjectDisassemblyLinearSweepError with Debug::{to_repr}
+
+///|
 struct ProjectDisassemblyLinearSweep {
   backend_value : String
 }
@@ -12,7 +18,7 @@ struct ProjectDisassemblyLinearSweep {
 pub fn ProjectDisassemblyLinearSweep::create(
   backend? : String = "raw",
 ) -> ProjectDisassemblyLinearSweep {
-  { backend_value: backend }
+  { backend_value: backend, }
 }
 
 ///|

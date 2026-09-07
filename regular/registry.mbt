@@ -6,12 +6,18 @@ pub(all) struct FormatInfo {
 } derive(Eq, Debug)
 
 ///|
+pub extend FormatInfo with Eq::{not_equal, equal}
+
+///|
+pub extend FormatInfo with Debug::{to_repr}
+
+///|
 pub fn FormatInfo::new(
   name~ : String,
   version~ : String,
   description? : String,
 ) -> FormatInfo {
-  { name, version, description }
+  { name, version, description, }
 }
 
 ///|
@@ -34,8 +40,11 @@ struct FormatRegistry {
 } derive(Debug)
 
 ///|
+pub extend FormatRegistry with Debug::{to_repr}
+
+///|
 pub fn FormatRegistry::new() -> FormatRegistry {
-  { readers: [], writers: [] }
+  { readers: [], writers: [], }
 }
 
 ///|

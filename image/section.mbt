@@ -7,7 +7,7 @@ struct Section {
 
 ///|
 pub fn Section::create(name~ : String, addr~ : UInt64, size~ : Int) -> Section {
-  { name_value: name, addr_value: addr, size_value: size }
+  { name_value: name, addr_value: addr, size_value: size, }
 }
 
 ///|

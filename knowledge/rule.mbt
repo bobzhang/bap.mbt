@@ -28,11 +28,11 @@ struct Documentation {
 }
 
 ///|
-let rule_registry : Map[String, Rule] = {}
+let rule_registry : Map[String, Rule] = Map([])
 
 ///|
 pub fn Documentation::new() -> Documentation {
-  { _unit: () }
+  { _unit: (), }
 }
 
 ///|
@@ -86,7 +86,11 @@ pub fn Rule::parameters(self : Rule) -> Array[Array[String]] {
 pub fn RuleDef::dynamic(self : RuleDef, parameters : Array[String]) -> RuleDef {
   let next = clone_string_groups(self.parameters_value)
   next.push(parameters.copy())
-  { ..self, requires_value: self.requires_value.copy(), parameters_value: next }
+  {
+    ..self,
+    requires_value: self.requires_value.copy(),
+    parameters_value: next,
+  }
 }
 
 ///|

@@ -255,12 +255,18 @@ pub fn[A, B, S] seq_unfold_with(ArrayView[A], init~ : S, f~ : (S, A) -> SeqStep[
 pub(all) suberror SeqError {
   EmptySeq
 } derive(Eq, @debug.Debug)
+pub fn SeqError::equal(Self, Self) -> Bool
+pub fn SeqError::not_equal(Self, Self) -> Bool
+pub fn SeqError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
 pub(all) enum BytesFoldStep[A, R] {
   BytesContinue(A)
   BytesStop(R)
 } derive(Eq, @debug.Debug)
+pub fn[A : Eq, R : Eq] BytesFoldStep::equal(Self[A, R], Self[A, R]) -> Bool
+pub fn[A : Eq, R : Eq] BytesFoldStep::not_equal(Self[A, R], Self[A, R]) -> Bool
+pub fn[A : @debug.Debug, R : @debug.Debug] BytesFoldStep::to_repr(Self[A, R]) -> @debug.Repr
 
 type Cache[T]
 pub fn[T] Cache::create(load~ : (Digest) -> T?, save~ : (Digest, T) -> Unit) -> Self[T]
@@ -273,6 +279,11 @@ pub fn Digest::add(Self, StringView) -> Self
 pub fn Digest::add_bytes(Self, BytesView) -> Self
 pub fn Digest::compare(Self, Self) -> Int
 pub fn Digest::create(namespace_name~ : StringView) -> Self
+pub fn Digest::equal(Self, Self) -> Bool
+pub fn Digest::hash(Self) -> Int
+pub fn Digest::hash_combine(Self, Hasher) -> Unit
+pub fn Digest::not_equal(Self, Self) -> Bool
+pub fn Digest::to_repr(Self) -> @debug.Repr
 pub fn Digest::to_string(Self) -> String
 pub impl Printable for Digest
 
@@ -281,7 +292,10 @@ pub(all) struct FormatInfo {
   version : String
   description : String?
 } derive(Eq, @debug.Debug)
+pub fn FormatInfo::equal(Self, Self) -> Bool
 pub fn FormatInfo::new(name~ : String, version~ : String, description? : String) -> Self
+pub fn FormatInfo::not_equal(Self, Self) -> Bool
+pub fn FormatInfo::to_repr(Self) -> @debug.Repr
 pub fn FormatInfo::to_string(Self) -> String
 pub impl Printable for FormatInfo
 
@@ -294,6 +308,7 @@ pub fn FormatRegistry::find_reader(Self, StringView, version? : String) -> Forma
 pub fn FormatRegistry::find_writer(Self, StringView, version? : String) -> FormatInfo?
 pub fn FormatRegistry::new() -> Self
 pub fn FormatRegistry::readers(Self) -> Array[FormatInfo]
+pub fn FormatRegistry::to_repr(Self) -> @debug.Repr
 pub fn FormatRegistry::writers(Self) -> Array[FormatInfo]
 
 type PrefixTrie[V]
@@ -317,6 +332,9 @@ pub(all) enum SeqStep[T, S] {
   SeqSkip(S)
   SeqDone
 } derive(Eq, @debug.Debug)
+pub fn[T : Eq, S : Eq] SeqStep::equal(Self[T, S], Self[T, S]) -> Bool
+pub fn[T : Eq, S : Eq] SeqStep::not_equal(Self[T, S], Self[T, S]) -> Bool
+pub fn[T : @debug.Debug, S : @debug.Debug] SeqStep::to_repr(Self[T, S]) -> @debug.Repr
 
 type SuffixTrie[V]
 pub fn[V] SuffixTrie::add(Self[V], StringView, V) -> Unit
@@ -339,4 +357,3 @@ pub(open) trait Printable {
 pub impl Printable for Int
 pub impl Printable for UInt64
 pub impl Printable for String
-

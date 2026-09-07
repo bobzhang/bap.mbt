@@ -68,7 +68,7 @@ pub fn Segment::memory(self : Segment) -> @memory.Memory {
 
 ///|
 pub fn Segment::with_memory(self : Segment, memory : @memory.Memory) -> Segment {
-  { ..self, memory_value: memory }
+  { ..self, memory_value: memory, }
 }
 
 ///|

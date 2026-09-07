@@ -12,7 +12,7 @@ pub fn ProjectDisassemblyBlock::create(
   if instructions.is_empty() {
     Err("project disassembly block requires at least one instruction")
   } else {
-    Ok({ memory_value: memory, instructions_value: instructions.copy() })
+    Ok({ memory_value: memory, instructions_value: instructions.copy(), })
   }
 }
 

@@ -5,6 +5,12 @@ pub(all) suberror IrTermLookupError {
 } derive(Eq, Debug)
 
 ///|
+pub extend IrTermLookupError with Eq::{not_equal, equal}
+
+///|
+pub extend IrTermLookupError with Debug::{to_repr}
+
+///|
 fn[T] unwrap_ir_term(
   kind : String,
   tid : Tid,

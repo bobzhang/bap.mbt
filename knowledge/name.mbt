@@ -5,6 +5,15 @@ pub(all) struct Name {
 } derive(Eq, Hash, Debug)
 
 ///|
+pub extend Name with Eq::{not_equal}
+
+///|
+pub extend Name with Hash::{hash_combine}
+
+///|
+pub extend Name with Debug::{to_repr}
+
+///|
 fn default_pkg(pkg : String?) -> String {
   match pkg {
     Some("") => "user"
@@ -101,22 +110,22 @@ fn fnv1a_hash_parts(pkg : String, text : String) -> Int {
 pub fn Name::create(text : String, pkg? : String) -> Name {
   let pkg = default_pkg(pkg)
   let text = if pkg == "keyword" { keyword_name_text(text) } else { text }
-  { pkg, text }
+  { pkg, text, }
 }
 
 ///|
 pub fn Name::read(input : String, pkg? : String) -> Name {
   match split_qualified(input) {
-    (Some(""), text) => { pkg: "keyword", text: keyword_name_text(text) }
+    (Some(""), text) => { pkg: "keyword", text: keyword_name_text(text), }
     (Some(found_pkg), text) => {
       let pkg = default_pkg(Some(found_pkg))
       let text = if pkg == "keyword" { keyword_name_text(text) } else { text }
-      { pkg, text }
+      { pkg, text, }
     }
     (None, text) => {
       let pkg = default_pkg(pkg)
       let text = if pkg == "keyword" { keyword_name_text(text) } else { text }
-      { pkg, text }
+      { pkg, text, }
     }
   }
 }

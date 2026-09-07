@@ -2,7 +2,7 @@
 let fresh_label_counter : Ref[Int] = Ref(0)
 
 ///|
-let interned_label_ids : Map[String, Int] = {}
+let interned_label_ids : Map[String, Int] = Map([])
 
 ///|
 struct Label {
@@ -208,7 +208,7 @@ pub fn Label::with_alias(self : Label, alias_name : String) -> Label {
   if !aliases.contains(alias_name) {
     aliases.push(alias_name)
   }
-  { ..self, aliases_value: aliases }
+  { ..self, aliases_value: aliases, }
 }
 
 ///|
@@ -225,22 +225,22 @@ pub fn Label::with_possible_name(
 
 ///|
 pub fn Label::with_unit(self : Label, unit : ProgramUnit) -> Label {
-  { ..self, unit_value: Some(unit) }
+  { ..self, unit_value: Some(unit), }
 }
 
 ///|
 pub fn Label::with_encoding(self : Label, language : Language) -> Label {
-  { ..self, encoding_value: Some(language) }
+  { ..self, encoding_value: Some(language), }
 }
 
 ///|
 pub fn Label::with_semantics(self : Label, semantics : Semantics) -> Label {
-  { ..self, semantics_value: Some(semantics) }
+  { ..self, semantics_value: Some(semantics), }
 }
 
 ///|
 pub fn Label::with_valid(self : Label, is_valid? : Bool = true) -> Label {
-  { ..self, valid_flag: is_valid }
+  { ..self, valid_flag: is_valid, }
 }
 
 ///|
@@ -248,7 +248,7 @@ pub fn Label::with_subroutine(
   self : Label,
   is_subroutine? : Bool = true,
 ) -> Label {
-  { ..self, subroutine_flag: is_subroutine }
+  { ..self, subroutine_flag: is_subroutine, }
 }
 
 ///|

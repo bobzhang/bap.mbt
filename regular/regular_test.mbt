@@ -47,7 +47,7 @@ test "digest helpers are deterministic and byte-oriented" {
 
 ///|
 test "regular cache delegates load and save by digest" {
-  let store : Map[@regular.Digest, String] = {}
+  let store : Map[@regular.Digest, String] = Map([])
   let cache = @regular.Cache::create(load=key => store.get(key), save=(
     key,
     value,
@@ -68,7 +68,7 @@ test "regular sequence helpers mirror BAP sequence wrappers" {
   assert_true(copied == source)
   source[0] = 9
   assert_true(copied == [1, 2, 3])
-  assert_true(@regular.seq_of_list(@list.from_array([1, 2, 3])) == [1, 2, 3])
+  assert_true(@regular.seq_of_list(@list.List([1, 2, 3])) == [1, 2, 3])
   let helper_empty : Array[Int] = @regular.seq_empty()
   assert_true(helper_empty == [])
   assert_true(@regular.seq_singleton(4) == [4])

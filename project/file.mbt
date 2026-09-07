@@ -5,7 +5,7 @@ fn ProjectInput::with_default_filename(
 ) -> ProjectInput {
   match self.filename_value {
     Some(_) => self
-    None => { ..self, filename_value: Some(filename) }
+    None => { ..self, filename_value: Some(filename), }
   }
 }
 
@@ -45,7 +45,7 @@ fn ProjectInput::with_extra_libraries(
     for library in libraries {
       next.push(library)
     }
-    { ..self, libraries_value: next }
+    { ..self, libraries_value: next, }
   }
 }
 

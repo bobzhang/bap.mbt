@@ -6,6 +6,15 @@ pub(all) enum Sort {
 } derive(Eq, Hash, Debug)
 
 ///|
+pub extend Sort with Eq::{not_equal, equal}
+
+///|
+pub extend Sort with Hash::{hash, hash_combine}
+
+///|
+pub extend Sort with Debug::{to_repr}
+
+///|
 pub fn Sort::sym(name : @knowledge.Name) -> Sort {
   Sym(name)
 }

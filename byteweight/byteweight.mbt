@@ -11,7 +11,7 @@ struct Byteweight {
 
 ///|
 pub fn ByteweightStats::create(h1? : Int = 0, h0? : Int = 0) -> ByteweightStats {
-  { h1_value: h1, h0_value: h0 }
+  { h1_value: h1, h0_value: h0, }
 }
 
 ///|
@@ -67,7 +67,7 @@ let byteweight_codec_header : String = "bap.mbt.byteweight.v1"
 
 ///|
 pub fn Byteweight::create() -> Byteweight {
-  { entries_value: [] }
+  { entries_value: [], }
 }
 
 ///|
@@ -138,13 +138,13 @@ fn Byteweight::change(
         Some(stats) => entries[i] = (entries[i].0, stats)
         None => ignore(entries.remove(i))
       }
-      return { entries_value: entries }
+      return { entries_value: entries, }
     }
   }
   match f(None) {
     Some(stats) => {
       entries.push((owned, stats))
-      { entries_value: entries }
+      { entries_value: entries, }
     }
     None => self
   }
@@ -339,7 +339,7 @@ pub fn Byteweight::of_bytes(data : BytesView) -> Result[Byteweight, String] {
       }
     }
   }
-  Ok({ entries_value: entries })
+  Ok({ entries_value: entries, })
 }
 
 ///|

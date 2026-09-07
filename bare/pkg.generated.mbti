@@ -16,6 +16,9 @@ pub(all) enum BareError {
   BareParseError(String)
   BareNotASexp(String)
 } derive(Eq, @debug.Debug)
+pub fn BareError::equal(Self, Self) -> Bool
+pub fn BareError::not_equal(Self, Self) -> Bool
+pub fn BareError::to_repr(Self) -> @debug.Repr
 pub fn BareError::to_string(Self) -> String
 
 #alias(BareFact)
@@ -25,9 +28,12 @@ pub(all) enum BareTerm {
   BareList(Array[BareTerm])
 } derive(Eq, @debug.Debug)
 pub fn BareTerm::atom(String) -> Self
+pub fn BareTerm::equal(Self, Self) -> Bool
 pub fn BareTerm::list(Array[Self]) -> Self
+pub fn BareTerm::not_equal(Self, Self) -> Bool
 pub fn BareTerm::parse(String) -> Result[Self, BareError]
 pub fn BareTerm::parse_many(String) -> Result[Array[Self], BareError]
+pub fn BareTerm::to_repr(Self) -> @debug.Repr
 pub fn BareTerm::to_string(Self) -> String
 
 type Rule

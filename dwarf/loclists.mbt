@@ -11,6 +11,12 @@ pub(all) enum DwarfLocationListEntry {
 } derive(Eq, Debug)
 
 ///|
+pub extend DwarfLocationListEntry with Eq::{not_equal, equal}
+
+///|
+pub extend DwarfLocationListEntry with Debug::{to_repr}
+
+///|
 struct DwarfLocationList {
   entries_value : Array[DwarfLocationListEntry]
 }
@@ -180,7 +186,7 @@ pub fn DwarfLocationList::read(
       Err(reason) => return Err(reason)
     }
   }
-  Ok({ entries_value: entries })
+  Ok({ entries_value: entries, })
 }
 
 ///|
@@ -230,7 +236,7 @@ pub fn DwarfLocationList::read_loc(
       Err(reason) => return Err(reason)
     }
   }
-  Ok({ entries_value: entries })
+  Ok({ entries_value: entries, })
 }
 
 ///|

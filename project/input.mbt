@@ -25,7 +25,7 @@ struct ProjectInputLoader {
 }
 
 ///|
-let input_loader_registry : Map[String, ProjectInputLoader] = {}
+let input_loader_registry : Map[String, ProjectInputLoader] = Map([])
 
 ///|
 let project_input_address_attr = "address"
@@ -730,7 +730,7 @@ fn ProjectInput::with_dwarf_symbols(
   for symbol in project_input_dwarf_symbols(data) {
     project_input_add_or_merge_symbol(symbols, symbol)
   }
-  { ..self, symbols_value: symbols }
+  { ..self, symbols_value: symbols, }
 }
 
 ///|

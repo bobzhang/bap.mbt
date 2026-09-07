@@ -103,11 +103,11 @@ fn[T] Opinions::add_entry(
           merged.push(agent)
         }
       }
-      next.entries_value[i] = { value: entry.value, votes: merged }
+      next.entries_value[i] = { value: entry.value, votes: merged, }
       return next
     }
   }
-  next.entries_value.push({ value, votes: votes.copy() })
+  next.entries_value.push({ value, votes: votes.copy(), })
   next
 }
 

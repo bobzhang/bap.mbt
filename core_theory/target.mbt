@@ -7,6 +7,12 @@ pub(all) enum Endianness {
 } derive(Eq, Debug)
 
 ///|
+pub extend Endianness with Eq::{not_equal}
+
+///|
+pub extend Endianness with Debug::{to_repr}
+
+///|
 pub fn Endianness::unknown() -> Endianness {
   UnknownEndianness
 }
@@ -48,6 +54,12 @@ pub(all) enum System {
 } derive(Eq, Debug)
 
 ///|
+pub extend System with Eq::{not_equal}
+
+///|
+pub extend System with Debug::{to_repr}
+
+///|
 pub(all) enum Abi {
   UnknownAbi
   SysV
@@ -68,11 +80,23 @@ pub(all) enum Abi {
 } derive(Eq, Debug)
 
 ///|
+pub extend Abi with Eq::{not_equal}
+
+///|
+pub extend Abi with Debug::{to_repr}
+
+///|
 pub(all) enum Fabi {
   UnknownFabi
   Soft
   Hard
 } derive(Eq, Debug)
+
+///|
+pub extend Fabi with Eq::{not_equal}
+
+///|
+pub extend Fabi with Debug::{to_repr}
 
 ///|
 pub(all) enum Filetype {
@@ -84,6 +108,12 @@ pub(all) enum Filetype {
   AOut
   Raw
 } derive(Eq, Debug)
+
+///|
+pub extend Filetype with Eq::{not_equal}
+
+///|
+pub extend Filetype with Debug::{to_repr}
 
 ///|
 fn core_target_enum_name(text : String) -> @knowledge.Name {
@@ -924,12 +954,12 @@ pub fn Filetype::domain() -> @knowledge.Domain[Filetype] {
 
 ///|
 pub fn TargetOptions::empty() -> TargetOptions {
-  { values_value: {} }
+  { values_value: {}, }
 }
 
 ///|
 pub fn TargetOptions::of_map(values : Map[String, String]) -> TargetOptions {
-  { values_value: values.copy() }
+  { values_value: values.copy(), }
 }
 
 ///|
@@ -966,9 +996,9 @@ pub fn TargetOptions::cls() -> @knowledge.Class[Unit, Unit] {
 
 ///|
 pub fn TargetOptions::singleton(key : String, value : String) -> TargetOptions {
-  let values : Map[String, String] = {}
+  let values : Map[String, String] = Map([])
   values[key] = value
-  { values_value: values }
+  { values_value: values, }
 }
 
 ///|
@@ -1038,7 +1068,7 @@ pub fn TargetOptions::with_value(
 ) -> TargetOptions {
   let values = self.values_value.copy()
   values[key] = value
-  { values_value: values }
+  { values_value: values, }
 }
 
 ///|
@@ -1141,6 +1171,12 @@ pub(all) enum Role {
   ParityFlag
   ThumbMode
 } derive(Eq, Debug)
+
+///|
+pub extend Role with Eq::{not_equal}
+
+///|
+pub extend Role with Debug::{to_repr}
 
 ///|
 pub fn Role::unknown() -> Role {
@@ -1564,7 +1600,7 @@ struct Target {
 }
 
 ///|
-let target_registry : Map[String, Target] = {}
+let target_registry : Map[String, Target] = Map([])
 
 ///|
 fn same_target_name(lhs : String, rhs : String) -> Bool {
@@ -3403,17 +3439,17 @@ fn var_arrays_same(lhs : Array[Var], rhs : Array[Var]) -> Bool {
 
 ///|
 pub fn Alias::reg(variable : Var) -> AliasPart {
-  { variable: Some(variable) }
+  { variable: Some(variable), }
 }
 
 ///|
 pub fn Alias::bit(variable : Var) -> AliasPart {
-  { variable: Some(variable) }
+  { variable: Some(variable), }
 }
 
 ///|
 pub fn Alias::unk() -> AliasPart {
-  { variable: None }
+  { variable: None, }
 }
 
 ///|
@@ -3447,7 +3483,7 @@ pub fn Alias::def(
       None => ()
     }
   }
-  Ok({ aliased_value: variable, parts_value: parts.copy() })
+  Ok({ aliased_value: variable, parts_value: parts.copy(), })
 }
 
 ///|
@@ -4260,7 +4296,7 @@ pub fn Target::alias_origins(self : Target) -> Array[AliasOrigin] {
 pub fn Target::with_var(self : Target, item : Var) -> Target {
   let items = self.vars_value.copy()
   append_var_unique(items, item)
-  { ..self, vars_value: items }
+  { ..self, vars_value: items, }
 }
 
 ///|
@@ -4269,7 +4305,7 @@ pub fn Target::with_vars(self : Target, more : Array[Var]) -> Target {
   for item in more {
     append_var_unique(items, item)
   }
-  { ..self, vars_value: items }
+  { ..self, vars_value: items, }
 }
 
 ///|
@@ -4307,32 +4343,32 @@ pub fn Target::with_endianness(
   self : Target,
   endianness : Endianness,
 ) -> Target {
-  { ..self, endianness_value: endianness }
+  { ..self, endianness_value: endianness, }
 }
 
 ///|
 pub fn Target::with_system(self : Target, system : System) -> Target {
-  { ..self, system_value: system }
+  { ..self, system_value: system, }
 }
 
 ///|
 pub fn Target::with_abi(self : Target, abi : Abi) -> Target {
-  { ..self, abi_value: abi }
+  { ..self, abi_value: abi, }
 }
 
 ///|
 pub fn Target::with_fabi(self : Target, fabi : Fabi) -> Target {
-  { ..self, fabi_value: fabi }
+  { ..self, fabi_value: fabi, }
 }
 
 ///|
 pub fn Target::with_filetype(self : Target, filetype : Filetype) -> Target {
-  { ..self, filetype_value: filetype }
+  { ..self, filetype_value: filetype, }
 }
 
 ///|
 pub fn Target::with_options(self : Target, options : TargetOptions) -> Target {
-  { ..self, options_value: options }
+  { ..self, options_value: options, }
 }
 
 ///|
@@ -4341,18 +4377,17 @@ pub fn Target::with_option(
   key : String,
   value : String,
 ) -> Target {
-  { ..self, options_value: self.options_value.with_value(key, value) }
+  { ..self, options_value: self.options_value.with_value(key, value), }
 }
 
 ///|
 pub fn Target::with_alias_origin(self : Target, origin : AliasOrigin) -> Target {
   let items = self.alias_origins_value.copy()
   items.push(origin)
-  { ..self, alias_origins_value: items }
+  { ..self, alias_origins_value: items, }
 }
 
 ///|
-#alias(var)
 pub fn Target::find_var(self : Target, name : String) -> Var? {
   self.vars_value
   .search_by(item => {

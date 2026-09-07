@@ -2,7 +2,7 @@
 let program_unit_counter : Ref[Int] = Ref(0)
 
 ///|
-let interned_program_unit_ids : Map[String, Int] = {}
+let interned_program_unit_ids : Map[String, Int] = Map([])
 
 ///|
 pub(all) enum Language {
@@ -15,7 +15,13 @@ pub(all) enum Language {
 } derive(Eq, Debug)
 
 ///|
-let declared_languages : Map[String, Language] = {}
+pub extend Language with Eq::{not_equal}
+
+///|
+pub extend Language with Debug::{to_repr}
+
+///|
+let declared_languages : Map[String, Language] = Map([])
 
 ///|
 fn core_language_name(text : String) -> @knowledge.Name {
@@ -530,17 +536,17 @@ pub fn Source::domain() -> @knowledge.Domain[Source] {
 
 ///|
 pub fn Source::with_language(self : Source, language : Language) -> Source {
-  { ..self, language_value: language }
+  { ..self, language_value: language, }
 }
 
 ///|
 pub fn Source::with_code(self : Source, code : String) -> Source {
-  { ..self, code_value: code }
+  { ..self, code_value: code, }
 }
 
 ///|
 pub fn Source::with_file(self : Source, file : String) -> Source {
-  { ..self, file_value: Some(file) }
+  { ..self, file_value: Some(file), }
 }
 
 ///|
@@ -628,7 +634,7 @@ pub fn Compiler::create_from_specs(
   version? : Array[String],
   options? : Array[String],
 ) -> Result[Compiler, String] {
-  let spec_map : Map[String, String] = {}
+  let spec_map : Map[String, String] = Map([])
   for entry in specs {
     if spec_map.get(entry.0) is Some(_) {
       return Err("duplicate compiler spec \{entry.0}")
@@ -981,7 +987,7 @@ pub fn ProgramUnit::with_target(
   self : ProgramUnit,
   target : Target,
 ) -> ProgramUnit {
-  { ..self, target_value: target }
+  { ..self, target_value: target, }
 }
 
 ///|
@@ -989,7 +995,7 @@ pub fn ProgramUnit::with_bias(
   self : ProgramUnit,
   bias : @types.Word,
 ) -> ProgramUnit {
-  { ..self, bias_value: Some(bias) }
+  { ..self, bias_value: Some(bias), }
 }
 
 ///|
@@ -997,7 +1003,7 @@ pub fn ProgramUnit::with_source(
   self : ProgramUnit,
   source : Source,
 ) -> ProgramUnit {
-  { ..self, source_value: source }
+  { ..self, source_value: source, }
 }
 
 ///|
@@ -1005,7 +1011,7 @@ pub fn ProgramUnit::with_compiler(
   self : ProgramUnit,
   compiler : Compiler,
 ) -> ProgramUnit {
-  { ..self, compiler_value: Some(compiler) }
+  { ..self, compiler_value: Some(compiler), }
 }
 
 ///|
@@ -1394,12 +1400,12 @@ pub fn Program::persistent() -> @knowledge.Persistent[Program] {
 pub fn Program::add_unit(self : Program, unit : ProgramUnit) -> Program {
   let units = self.units_value.copy()
   units.push(unit)
-  { ..self, units_value: units }
+  { ..self, units_value: units, }
 }
 
 ///|
 pub fn Program::add_label(self : Program, label : Label) -> Program {
   let labels = self.labels_value.copy()
   labels.push(label)
-  { ..self, labels_value: labels }
+  { ..self, labels_value: labels, }
 }

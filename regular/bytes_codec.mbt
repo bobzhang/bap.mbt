@@ -27,6 +27,12 @@ pub(all) enum BytesFoldStep[A, R] {
 } derive(Eq, Debug)
 
 ///|
+pub extend BytesFoldStep with Eq::{not_equal, equal}
+
+///|
+pub extend BytesFoldStep with Debug::{to_repr}
+
+///|
 pub fn bytes_empty() -> Bytes {
   Bytes::new(0)
 }
@@ -246,7 +252,7 @@ pub fn bytes_to_array(bytes : BytesView) -> Array[Byte] {
 
 ///|
 pub fn bytes_to_list(bytes : BytesView) -> @list.List[Byte] {
-  @list.from_array(bytes_to_array(bytes))
+  @list.List(bytes_to_array(bytes))
 }
 
 ///|

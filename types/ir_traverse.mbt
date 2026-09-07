@@ -12,6 +12,12 @@ pub(all) enum IrTermClass {
 } derive(Eq, Debug)
 
 ///|
+pub extend IrTermClass with Eq::{not_equal, equal}
+
+///|
+pub extend IrTermClass with Debug::{to_repr}
+
+///|
 pub fn program_t() -> IrTermClass {
   ProgramTermClass
 }

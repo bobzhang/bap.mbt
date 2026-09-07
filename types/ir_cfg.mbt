@@ -10,7 +10,7 @@ pub fn IrCfg::create(tid? : Tid, name? : String) -> IrCfg {
 
 ///|
 pub fn IrCfg::of_sub(sub : Term[Sub]) -> IrCfg {
-  { sub_value: sub }
+  { sub_value: sub, }
 }
 
 ///|
@@ -56,7 +56,7 @@ pub fn IrCfg::nodes(self : IrCfg) -> Array[Term[Blk]] {
 ///|
 fn IrCfg::with_nodes(self : IrCfg, nodes : Array[Term[Blk]]) -> IrCfg {
   IrCfg::of_sub(
-    self.sub_value.with_payload({ ..self.sub_value.payload_value, blks: nodes }),
+    self.sub_value.with_payload({ ..self.sub_value.payload_value, blks: nodes, }),
   )
 }
 

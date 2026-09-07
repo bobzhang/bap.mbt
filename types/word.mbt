@@ -5,6 +5,12 @@ struct Word {
 } derive(Eq, Debug)
 
 ///|
+pub extend Word with Eq::{not_equal}
+
+///|
+pub extend Word with Debug::{to_repr}
+
+///|
 pub(all) enum WordValueFormat {
   WordHex
   WordDec
@@ -13,10 +19,22 @@ pub(all) enum WordValueFormat {
 } derive(Eq, Debug)
 
 ///|
+pub extend WordValueFormat with Eq::{not_equal, equal}
+
+///|
+pub extend WordValueFormat with Debug::{to_repr}
+
+///|
 pub(all) enum WordLetterCase {
   WordUpperCase
   WordLowerCase
 } derive(Eq, Debug)
+
+///|
+pub extend WordLetterCase with Eq::{not_equal, equal}
+
+///|
+pub extend WordLetterCase with Debug::{to_repr}
 
 ///|
 pub(all) enum WordPrefix {
@@ -27,6 +45,12 @@ pub(all) enum WordPrefix {
 } derive(Eq, Debug)
 
 ///|
+pub extend WordPrefix with Eq::{not_equal, equal}
+
+///|
+pub extend WordPrefix with Debug::{to_repr}
+
+///|
 pub(all) enum WordSuffix {
   WordNoSuffix
   WordFullSuffix
@@ -34,11 +58,17 @@ pub(all) enum WordSuffix {
 } derive(Eq, Debug)
 
 ///|
+pub extend WordSuffix with Eq::{not_equal, equal}
+
+///|
+pub extend WordSuffix with Debug::{to_repr}
+
+///|
 pub fn Word::from_bitvec(
   value : @bitvec.BitVec,
   signed? : Bool = false,
 ) -> Word {
-  { bits_value: value, signed_value: signed }
+  { bits_value: value, signed_value: signed, }
 }
 
 ///|
@@ -71,12 +101,12 @@ pub fn Word::bitwidth(self : Word) -> Int {
 
 ///|
 pub fn Word::signed(self : Word) -> Word {
-  { ..self, signed_value: true }
+  { ..self, signed_value: true, }
 }
 
 ///|
 pub fn Word::unsigned(self : Word) -> Word {
-  { ..self, signed_value: false }
+  { ..self, signed_value: false, }
 }
 
 ///|

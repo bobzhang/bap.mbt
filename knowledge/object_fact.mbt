@@ -41,7 +41,7 @@ fn[K, S] State::allocate(self : State, cls : Class[K, S]) -> Object[K] {
     Some(ids) => ids.push(id)
     None => self.objects_by_class[class_name] = [id]
   }
-  { id, class_name, _phantom: None }
+  { id, class_name, _phantom: None, }
 }
 
 ///|
@@ -106,7 +106,7 @@ pub fn[K, S] State::intern(
   match self.symbols_by_class.get(class_name) {
     Some(symbols) =>
       match symbols.get(name) {
-        Some(id) => { id, class_name, _phantom: None }
+        Some(id) => { id, class_name, _phantom: None, }
         None => {
           let object = self.allocate(cls)
           symbols[name] = object.id()
@@ -115,7 +115,7 @@ pub fn[K, S] State::intern(
       }
     None => {
       let object = self.allocate(cls)
-      let symbols : Map[Name, Int] = {}
+      let symbols : Map[Name, Int] = Map([])
       symbols[name] = object.id()
       self.symbols_by_class[class_name] = symbols
       object
@@ -162,7 +162,7 @@ pub fn[K, S] State::objects(
 ) -> Array[Object[K]] {
   let class_name = cls.name()
   match self.objects_by_class.get(class_name) {
-    Some(ids) => ids.map(id => { id, class_name, _phantom: None })
+    Some(ids) => ids.map(id => { id, class_name, _phantom: None, })
     None => []
   }
 }
@@ -197,7 +197,7 @@ pub fn[K] State::repr(self : State, object : Object[K]) -> String {
 
 ///|
 pub fn[K, S] Object::null(cls : Class[K, S]) -> Object[K] {
-  { id: 0, class_name: cls.name(), _phantom: None }
+  { id: 0, class_name: cls.name(), _phantom: None, }
 }
 
 ///|
@@ -271,7 +271,7 @@ pub fn[K, S] Object::read(
     Ok(Object::null(cls))
   } else {
     match object_read_id(input) {
-      Ok(id) => Ok({ id, class_name: cls.name(), _phantom: None })
+      Ok(id) => Ok({ id, class_name: cls.name(), _phantom: None, })
       Err(reason) => Err(reason)
     }
   }
@@ -279,7 +279,7 @@ pub fn[K, S] Object::read(
 
 ///|
 pub fn[K, P] FactTable::new(slot : Slot[K, P]) -> FactTable[K, P] {
-  { slot, facts: {}, observers: [], promises: [], _phantom: None }
+  { slot, facts: {}, observers: [], promises: [], _phantom: None, }
 }
 
 ///|

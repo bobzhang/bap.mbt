@@ -202,14 +202,23 @@ pub fn with_symbols(Project, Array[@image.Symbol]) -> Project
 pub(all) suberror ProjectDisasmError {
   ProjectDisasmFailure(String)
 } derive(Eq, @debug.Debug)
+pub fn ProjectDisasmError::equal(Self, Self) -> Bool
+pub fn ProjectDisasmError::not_equal(Self, Self) -> Bool
+pub fn ProjectDisasmError::to_repr(Self) -> @debug.Repr
 
 pub(all) suberror ProjectDisassemblyLinearSweepError {
   LinearSweepFailure(String)
 } derive(Eq, @debug.Debug)
+pub fn ProjectDisassemblyLinearSweepError::equal(Self, Self) -> Bool
+pub fn ProjectDisassemblyLinearSweepError::not_equal(Self, Self) -> Bool
+pub fn ProjectDisassemblyLinearSweepError::to_repr(Self) -> @debug.Repr
 
 pub(all) suberror ProjectPassError {
   ProjectPassFailure(String)
 } derive(Eq, @debug.Debug)
+pub fn ProjectPassError::equal(Self, Self) -> Bool
+pub fn ProjectPassError::not_equal(Self, Self) -> Bool
+pub fn ProjectPassError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
 type Library
@@ -466,7 +475,10 @@ pub(all) enum ProjectDisassemblyBasicPred {
   BasicValid
   BasicKind(ProjectInstructionKind)
 } derive(Eq, @debug.Debug)
+pub fn ProjectDisassemblyBasicPred::equal(Self, Self) -> Bool
 pub fn ProjectDisassemblyBasicPred::kind(ProjectInstructionKind) -> Self
+pub fn ProjectDisassemblyBasicPred::not_equal(Self, Self) -> Bool
+pub fn ProjectDisassemblyBasicPred::to_repr(Self) -> @debug.Repr
 pub fn ProjectDisassemblyBasicPred::to_string(Self) -> String
 pub fn ProjectDisassemblyBasicPred::valid() -> Self
 
@@ -575,6 +587,8 @@ pub(all) enum ProjectDisassemblyEdgeKind {
   CondEdge
   FallEdge
 } derive(Eq)
+pub fn ProjectDisassemblyEdgeKind::equal(Self, Self) -> Bool
+pub fn ProjectDisassemblyEdgeKind::not_equal(Self, Self) -> Bool
 pub fn ProjectDisassemblyEdgeKind::to_string(Self) -> String
 
 type ProjectDisassemblyFunction
@@ -806,9 +820,12 @@ pub(all) enum ProjectInstructionKind {
   ProjectMayStore
 } derive(Eq, @debug.Debug)
 pub fn ProjectInstructionKind::affects_control_flow(Self) -> Bool
+pub fn ProjectInstructionKind::equal(Self, Self) -> Bool
 pub fn ProjectInstructionKind::has_side_effect(Self) -> Bool
 pub fn ProjectInstructionKind::is_branch(Self) -> Bool
 pub fn ProjectInstructionKind::members() -> Array[Self]
+pub fn ProjectInstructionKind::not_equal(Self, Self) -> Bool
+pub fn ProjectInstructionKind::to_repr(Self) -> @debug.Repr
 pub fn ProjectInstructionKind::to_string(Self) -> String
 
 pub(all) enum ProjectInstructionOperand {
@@ -816,8 +833,10 @@ pub(all) enum ProjectInstructionOperand {
   ProjectImmediateOperand(Int64)
   ProjectFloatingOperand(Double)
 } derive(Eq, @debug.Debug)
+pub fn ProjectInstructionOperand::equal(Self, Self) -> Bool
 pub fn ProjectInstructionOperand::floating(Double) -> Self
 pub fn ProjectInstructionOperand::immediate(Int64) -> Self
+pub fn ProjectInstructionOperand::not_equal(Self, Self) -> Bool
 pub fn ProjectInstructionOperand::register(name~ : String, code? : Int) -> Self
 pub fn ProjectInstructionOperand::register_code(Self) -> Int?
 pub fn ProjectInstructionOperand::register_name(Self) -> String?
@@ -825,6 +844,7 @@ pub fn ProjectInstructionOperand::same_normalized(Self, Self) -> Bool
 pub fn ProjectInstructionOperand::to_float(Self) -> Double?
 pub fn ProjectInstructionOperand::to_int(Self) -> Int?
 pub fn ProjectInstructionOperand::to_int64(Self) -> Int64?
+pub fn ProjectInstructionOperand::to_repr(Self) -> @debug.Repr
 pub fn ProjectInstructionOperand::to_string(Self) -> String
 pub fn ProjectInstructionOperand::to_word(Self, width~ : Int) -> @types.Word?
 
@@ -871,6 +891,8 @@ pub(all) enum ProjectPassEventKind {
   PassFailed
   PassFinished
 } derive(Eq)
+pub fn ProjectPassEventKind::equal(Self, Self) -> Bool
+pub fn ProjectPassEventKind::not_equal(Self, Self) -> Bool
 pub fn ProjectPassEventKind::to_string(Self) -> String
 
 pub(all) enum ProjectPassRunError {
@@ -971,4 +993,3 @@ pub fn RegisteredProjectCollator::qualified_name(Self) -> @knowledge.Name
 // Type aliases
 
 // Traits
-

@@ -64,7 +64,7 @@ pub fn ProjectSymbolizer::create(
   path? : String,
   biased? : Bool = false,
 ) -> ProjectSymbolizer {
-  { path_value: path, biased_flag: biased, find_fn: find }
+  { path_value: path, biased_flag: biased, find_fn: find, }
 }
 
 ///|
@@ -114,7 +114,7 @@ pub fn ProjectSymbolizer::set_path(
   self : ProjectSymbolizer,
   path : String,
 ) -> ProjectSymbolizer {
-  { ..self, path_value: Some(path) }
+  { ..self, path_value: Some(path), }
 }
 
 ///|

@@ -4,10 +4,22 @@ struct BilResultId {
 } derive(Eq, Debug)
 
 ///|
+pub extend BilResultId with Eq::{not_equal, equal}
+
+///|
+pub extend BilResultId with Debug::{to_repr}
+
+///|
 struct BilResultStorage {
   sparse : Bool
   entries : Array[(Word, Word)]
 } derive(Eq, Debug)
+
+///|
+pub extend BilResultStorage with Eq::{not_equal, equal}
+
+///|
+pub extend BilResultStorage with Debug::{to_repr}
 
 ///|
 pub(all) enum BilResultValue {
@@ -17,14 +29,26 @@ pub(all) enum BilResultValue {
 } derive(Eq, Debug)
 
 ///|
+pub extend BilResultValue with Eq::{not_equal, equal}
+
+///|
+pub extend BilResultValue with Debug::{to_repr}
+
+///|
 struct BilResult {
   id_value : BilResultId
   value_value : BilResultValue
 } derive(Eq, Debug)
 
 ///|
+pub extend BilResult with Eq::{not_equal, equal}
+
+///|
+pub extend BilResult with Debug::{to_repr}
+
+///|
 pub fn BilResultId::zero() -> BilResultId {
-  { value: 0UL }
+  { value: 0UL, }
 }
 
 ///|
@@ -39,7 +63,7 @@ pub fn BilResultId::to_uint64(self : BilResultId) -> UInt64 {
 
 ///|
 pub fn BilResultId::succ(self : BilResultId) -> BilResultId {
-  { value: self.value + 1UL }
+  { value: self.value + 1UL, }
 }
 
 ///|
@@ -49,12 +73,12 @@ pub fn BilResultId::to_string(self : BilResultId) -> String {
 
 ///|
 pub fn BilResultStorage::linear() -> BilResultStorage {
-  { sparse: false, entries: [] }
+  { sparse: false, entries: [], }
 }
 
 ///|
 pub fn BilResultStorage::sparse() -> BilResultStorage {
-  { sparse: true, entries: [] }
+  { sparse: true, entries: [], }
 }
 
 ///|
@@ -106,7 +130,7 @@ pub fn BilResultValue::to_string(self : BilResultValue) -> String {
 
 ///|
 pub fn BilResult::undefined(id : BilResultId) -> BilResult {
-  { id_value: id, value_value: BilResultBot }
+  { id_value: id, value_value: BilResultBot, }
 }
 
 ///|
@@ -114,12 +138,12 @@ pub fn BilResult::storage(
   storage : BilResultStorage,
   id : BilResultId,
 ) -> BilResult {
-  { id_value: id, value_value: BilResultMem(storage) }
+  { id_value: id, value_value: BilResultMem(storage), }
 }
 
 ///|
 pub fn BilResult::word(word : Word, id : BilResultId) -> BilResult {
-  { id_value: id, value_value: BilResultImm(word) }
+  { id_value: id, value_value: BilResultImm(word), }
 }
 
 ///|

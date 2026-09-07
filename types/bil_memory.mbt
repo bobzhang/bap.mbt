@@ -6,10 +6,22 @@ struct BilMemory {
 } derive(Eq, Debug)
 
 ///|
+pub extend BilMemory with Eq::{not_equal, equal}
+
+///|
+pub extend BilMemory with Debug::{to_repr}
+
+///|
 pub(all) enum BilValue {
   BilWord(Word)
   BilMem(BilMemory)
 } derive(Eq, Debug)
+
+///|
+pub extend BilValue with Eq::{not_equal, equal}
+
+///|
+pub extend BilValue with Debug::{to_repr}
 
 ///|
 fn byte_offset(i : Int) -> UInt64 {
@@ -97,7 +109,7 @@ pub fn BilMemory::from_bytes(
   for i in 0..<data.length() {
     cells[start + byte_offset(i)] = data[i]
   }
-  { addr_width_value: addr_width, value_width_value: 8, cells_value: cells }
+  { addr_width_value: addr_width, value_width_value: 8, cells_value: cells, }
 }
 
 ///|
@@ -158,7 +170,7 @@ pub fn BilMemory::store(
       for i in 0..<bytes.length() {
         cells[base + byte_offset(i)] = bytes[i]
       }
-      Ok({ ..self, cells_value: cells })
+      Ok({ ..self, cells_value: cells, })
     }
     (Err(reason), _) | (_, Err(reason)) => Err(reason)
   }

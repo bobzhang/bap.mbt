@@ -7,13 +7,19 @@ struct ExpEffect {
 } derive(Eq, Debug)
 
 ///|
+pub extend ExpEffect with Eq::{not_equal, equal}
+
+///|
+pub extend ExpEffect with Debug::{to_repr}
+
+///|
 fn ExpEffect::new(
   reads_value? : Bool = false,
   loads_value? : Bool = false,
   stores_value? : Bool = false,
   raises_value? : Bool = false,
 ) -> ExpEffect {
-  { reads_value, loads_value, stores_value, raises_value }
+  { reads_value, loads_value, stores_value, raises_value, }
 }
 
 ///|

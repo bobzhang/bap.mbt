@@ -12,6 +12,12 @@ pub(all) enum ContinueOrStop[A, R] {
 } derive(Eq, Debug)
 
 ///|
+pub extend ContinueOrStop with Eq::{not_equal, equal}
+
+///|
+pub extend ContinueOrStop with Debug::{to_repr}
+
+///|
 pub fn[T] BapVector::create(default : T, capacity? : Int = 16) -> BapVector[T] {
   let actual_capacity = if capacity < 1 { 1 } else { capacity }
   {
@@ -67,7 +73,7 @@ pub fn[T] BapVector::to_array(self : BapVector[T]) -> Array[T] {
 
 ///|
 pub fn[T] BapVector::to_list(self : BapVector[T]) -> @list.List[T] {
-  @list.from_array(self.to_array())
+  @list.List(self.to_array())
 }
 
 ///|

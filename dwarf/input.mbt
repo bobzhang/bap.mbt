@@ -5,6 +5,12 @@ pub(all) enum DwarfWordSize {
 } derive(Eq, Debug)
 
 ///|
+pub extend DwarfWordSize with Eq::{not_equal, equal}
+
+///|
+pub extend DwarfWordSize with Debug::{to_repr}
+
+///|
 pub(all) enum DwarfLenspec {
   DwarfOne
   DwarfTwo
@@ -12,6 +18,12 @@ pub(all) enum DwarfLenspec {
   DwarfEight
   DwarfLeb128
 } derive(Eq, Debug)
+
+///|
+pub extend DwarfLenspec with Eq::{not_equal, equal}
+
+///|
+pub extend DwarfLenspec with Debug::{to_repr}
 
 ///|
 pub fn DwarfLenspec::leb128() -> DwarfLenspec {
@@ -46,6 +58,12 @@ pub(all) enum DwarfIndexSpec {
   DwarfIndexThree
   DwarfIndexFour
 } derive(Eq, Debug)
+
+///|
+pub extend DwarfIndexSpec with Eq::{not_equal, equal}
+
+///|
+pub extend DwarfIndexSpec with Debug::{to_repr}
 
 ///|
 pub fn DwarfIndexSpec::leb128() -> DwarfIndexSpec {
@@ -144,6 +162,12 @@ pub(all) enum DwarfTag {
   DwarfImmutableType
   DwarfUnknownTag(Int)
 } derive(Eq, Debug)
+
+///|
+pub extend DwarfTag with Eq::{not_equal, equal}
+
+///|
+pub extend DwarfTag with Debug::{to_repr}
 
 ///|
 pub fn DwarfTag::array_type() -> DwarfTag {
@@ -617,6 +641,12 @@ pub(all) enum DwarfAttr {
   DwarfRangesBase
   DwarfUnknownAttr(Int)
 } derive(Eq, Debug)
+
+///|
+pub extend DwarfAttr with Eq::{not_equal, equal}
+
+///|
+pub extend DwarfAttr with Debug::{to_repr}
 
 ///|
 pub fn DwarfAttr::sibling() -> DwarfAttr {
@@ -1270,6 +1300,12 @@ pub(all) enum DwarfForm {
 } derive(Eq, Debug)
 
 ///|
+pub extend DwarfForm with Eq::{not_equal, equal}
+
+///|
+pub extend DwarfForm with Debug::{to_repr}
+
+///|
 pub fn DwarfForm::addr() -> DwarfForm {
   DwarfAddr
 }
@@ -1422,7 +1458,7 @@ struct DwarfInputReader[T] {
 
 ///|
 pub fn DwarfInput::of_bytes(data : Bytes) -> DwarfInput {
-  { data, position_value: 0 }
+  { data, position_value: 0, }
 }
 
 ///|
@@ -1435,32 +1471,32 @@ pub fn[T] DwarfInputReader::run(
 
 ///|
 pub fn DwarfInputReader::char() -> DwarfInputReader[Int] {
-  { read_fn: input => input.read_byte() }
+  { read_fn: input => input.read_byte(), }
 }
 
 ///|
 pub fn DwarfInputReader::code() -> DwarfInputReader[Int] {
-  { read_fn: input => input.read_code() }
+  { read_fn: input => input.read_code(), }
 }
 
 ///|
 pub fn DwarfInputReader::tag() -> DwarfInputReader[DwarfTag] {
-  { read_fn: input => input.read_tag() }
+  { read_fn: input => input.read_tag(), }
 }
 
 ///|
 pub fn DwarfInputReader::form() -> DwarfInputReader[DwarfForm] {
-  { read_fn: input => input.read_form() }
+  { read_fn: input => input.read_form(), }
 }
 
 ///|
 pub fn DwarfInputReader::attr() -> DwarfInputReader[DwarfAttr] {
-  { read_fn: input => input.read_attr() }
+  { read_fn: input => input.read_attr(), }
 }
 
 ///|
 pub fn DwarfInputReader::string() -> DwarfInputReader[String] {
-  { read_fn: input => input.read_cstring() }
+  { read_fn: input => input.read_cstring(), }
 }
 
 ///|
@@ -1468,34 +1504,34 @@ pub fn DwarfInputReader::address(
   endian~ : @bitvec.Endian,
   size~ : DwarfWordSize,
 ) -> DwarfInputReader[UInt64] {
-  { read_fn: input => input.read_address(endian~, size~) }
+  { read_fn: input => input.read_address(endian~, size~), }
 }
 
 ///|
 pub fn DwarfInputReader::version() -> DwarfInputReader[Int] {
-  { read_fn: input => input.read_version() }
+  { read_fn: input => input.read_version(), }
 }
 
 ///|
 pub fn DwarfInputReader::unit_size(
   endian~ : @bitvec.Endian,
 ) -> DwarfInputReader[(DwarfWordSize, Int)] {
-  { read_fn: input => input.read_unit_size(endian~) }
+  { read_fn: input => input.read_unit_size(endian~), }
 }
 
 ///|
 pub fn DwarfInputReader::skip(bytes~ : Int) -> DwarfInputReader[Unit] {
-  { read_fn: input => input.skip(bytes~).map(done => ((), done)) }
+  { read_fn: input => input.skip(bytes~).map(done => ((), done)), }
 }
 
 ///|
 pub fn DwarfInputReader::skip_zeros() -> DwarfInputReader[Unit] {
-  { read_fn: input => input.skip_zeros().map(done => ((), done)) }
+  { read_fn: input => input.skip_zeros().map(done => ((), done)), }
 }
 
 ///|
 pub fn DwarfInputReader::address_size() -> DwarfInputReader[DwarfWordSize] {
-  { read_fn: input => input.read_address_size() }
+  { read_fn: input => input.read_address_size(), }
 }
 
 ///|
@@ -1503,7 +1539,7 @@ pub fn DwarfInputReader::offset(
   endian~ : @bitvec.Endian,
   size~ : DwarfWordSize,
 ) -> DwarfInputReader[Int] {
-  { read_fn: input => input.read_offset(endian~, size~) }
+  { read_fn: input => input.read_offset(endian~, size~), }
 }
 
 ///|
@@ -1511,7 +1547,7 @@ pub fn DwarfInputReader::block(
   lenspec~ : DwarfLenspec,
   endian~ : @bitvec.Endian,
 ) -> DwarfInputReader[Bytes] {
-  { read_fn: input => input.read_block(lenspec~, endian~) }
+  { read_fn: input => input.read_block(lenspec~, endian~), }
 }
 
 ///|
@@ -1519,7 +1555,7 @@ pub fn DwarfInputReader::const_(
   lenspec~ : DwarfLenspec,
   endian~ : @bitvec.Endian,
 ) -> DwarfInputReader[Int64] {
-  { read_fn: input => input.read_const(lenspec~, endian~) }
+  { read_fn: input => input.read_const(lenspec~, endian~), }
 }
 
 ///|
@@ -1589,7 +1625,7 @@ pub fn DwarfInput::remaining(self : DwarfInput) -> Int {
 
 ///|
 fn DwarfInput::with_position(self : DwarfInput, position : Int) -> DwarfInput {
-  { ..self, position_value: position }
+  { ..self, position_value: position, }
 }
 
 ///|

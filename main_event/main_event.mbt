@@ -7,11 +7,23 @@ pub(all) enum MainLogLevel {
 } derive(Eq, Debug)
 
 ///|
+pub extend MainLogLevel with Eq::{not_equal, equal}
+
+///|
+pub extend MainLogLevel with Debug::{to_repr}
+
+///|
 struct MainLogInfo {
   level_value : MainLogLevel
   section_value : String
   message_value : String
 } derive(Eq, Debug)
+
+///|
+pub extend MainLogInfo with Eq::{not_equal, equal}
+
+///|
+pub extend MainLogInfo with Debug::{to_repr}
 
 ///|
 struct MainProgress {
@@ -22,11 +34,23 @@ struct MainProgress {
 } derive(Eq, Debug)
 
 ///|
+pub extend MainProgress with Eq::{not_equal, equal}
+
+///|
+pub extend MainProgress with Debug::{to_repr}
+
+///|
 pub(all) enum MainEvent {
   MainLogMessage(MainLogInfo)
   MainLogProgress(MainProgress)
   MainCustomEvent(String, String?)
 } derive(Eq, Debug)
+
+///|
+pub extend MainEvent with Eq::{not_equal, equal}
+
+///|
+pub extend MainEvent with Debug::{to_repr}
 
 ///|
 struct MainLogReporter {
@@ -44,7 +68,7 @@ let main_event_pair : (@future.Stream[MainEvent], @future.Signal[MainEvent]) = @
 let main_event_printers : Array[(MainEvent) -> String?] = []
 
 ///|
-let main_progress_last_total : Map[String, Int] = {}
+let main_progress_last_total : Map[String, Int] = Map([])
 
 ///|
 fn main_progress_total(task : String, total : Int?) -> Int? {
@@ -88,7 +112,7 @@ pub fn MainLogInfo::create(
   section~ : String,
   message~ : String,
 ) -> MainLogInfo {
-  { level_value: level, section_value: section, message_value: message }
+  { level_value: level, section_value: section, message_value: message, }
 }
 
 ///|
@@ -118,7 +142,12 @@ pub fn MainProgress::create(
   stage? : Int,
   total? : Int,
 ) -> MainProgress {
-  { task_value: task, note_value: note, stage_value: stage, total_value: total }
+  {
+    task_value: task,
+    note_value: note,
+    stage_value: stage,
+    total_value: total,
+  }
 }
 
 ///|
@@ -291,7 +320,7 @@ pub fn MainLogReporter::create(
   section~ : String,
   debug_enabled? : Bool = false,
 ) -> MainLogReporter {
-  { section_value: section, debug_enabled_value: debug_enabled }
+  { section_value: section, debug_enabled_value: debug_enabled, }
 }
 
 ///|

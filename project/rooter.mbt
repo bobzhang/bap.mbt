@@ -64,7 +64,7 @@ pub fn ProjectRooter::set_path(
   self : ProjectRooter,
   path : String,
 ) -> ProjectRooter {
-  { ..self, path_value: Some(path) }
+  { ..self, path_value: Some(path), }
 }
 
 ///|

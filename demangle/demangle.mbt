@@ -8,10 +8,10 @@ struct Demangler {
 pub(all) struct Demanglers {}
 
 ///|
-let demangler_registry : Map[String, (String) -> String] = {}
+let demangler_registry : Map[String, (String) -> String] = Map([])
 
 ///|
-let demangler_selected : Map[String, Demangler] = {}
+let demangler_selected : Map[String, Demangler] = Map([])
 
 ///|
 let demangler_builtins_registered : Ref[Bool] = Ref(false)
@@ -32,7 +32,7 @@ fn demangler_value(
   pkg~ : String,
   run~ : (String) -> String,
 ) -> Demangler {
-  { fullname_value: @knowledge.Name::create(name, pkg~), run_fn: run }
+  { fullname_value: @knowledge.Name::create(name, pkg~), run_fn: run, }
 }
 
 ///|
@@ -152,7 +152,7 @@ pub fn Demanglers::lookup(name : String, pkg? : String) -> Demangler? {
   demangler_ensure_builtins()
   let fullname = @knowledge.Name::create(name, pkg?)
   match demangler_registry.get(demangler_key(fullname)) {
-    Some(run) => Some({ fullname_value: fullname, run_fn: run })
+    Some(run) => Some({ fullname_value: fullname, run_fn: run, })
     None => None
   }
 }

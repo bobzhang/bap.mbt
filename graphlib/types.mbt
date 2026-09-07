@@ -7,12 +7,24 @@ pub(all) enum EdgeKind {
 } derive(Eq, Debug)
 
 ///|
+pub extend EdgeKind with Eq::{not_equal, equal}
+
+///|
+pub extend EdgeKind with Debug::{to_repr}
+
+///|
 pub(all) struct DfsNodeInfo {
   enter : Int
   leave : Int
   pre : Int
   rpost : Int
 } derive(Eq, Debug)
+
+///|
+pub extend DfsNodeInfo with Eq::{not_equal, equal}
+
+///|
+pub extend DfsNodeInfo with Debug::{to_repr}
 
 ///|
 pub(all) struct Edge[N, E] {
@@ -22,8 +34,14 @@ pub(all) struct Edge[N, E] {
 } derive(Eq, Debug)
 
 ///|
+pub extend Edge with Eq::{not_equal, equal}
+
+///|
+pub extend Edge with Debug::{to_repr}
+
+///|
 pub fn[N, E] Edge::new(src~ : N, dst~ : N, label~ : E) -> Edge[N, E] {
-  { src, dst, label }
+  { src, dst, label, }
 }
 
 ///|
@@ -53,8 +71,14 @@ struct GraphPath[E] {
 } derive(Eq, Debug)
 
 ///|
+pub extend GraphPath with Eq::{not_equal, equal}
+
+///|
+pub extend GraphPath with Debug::{to_repr}
+
+///|
 pub fn[E] GraphPath::new(edges : ArrayView[E], weight~ : Int) -> GraphPath[E] {
-  { edges_value: edges.to_owned(), weight_value: weight }
+  { edges_value: edges.to_owned(), weight_value: weight, }
 }
 
 ///|
@@ -129,8 +153,11 @@ struct Graph[N, E] {
 } derive(Debug)
 
 ///|
+pub extend Graph with Debug::{to_repr}
+
+///|
 pub fn[N, E] Graph::new() -> Graph[N, E] {
-  { nodes: [], edges: [] }
+  { nodes: [], edges: [], }
 }
 
 ///|

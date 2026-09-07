@@ -147,7 +147,7 @@ fn project_disassembly_calls_entries_for_block(
 
 ///|
 pub fn ProjectDisassemblyCalls::empty() -> ProjectDisassemblyCalls {
-  { entries_value: [], memberships_value: [] }
+  { entries_value: [], memberships_value: [], }
 }
 
 ///|
@@ -165,7 +165,7 @@ pub fn ProjectDisassemblyCalls::of_disassembly(
       memberships, blocks, edges, entries, entry_block,
     )
   }
-  { entries_value: entries, memberships_value: memberships }
+  { entries_value: entries, memberships_value: memberships, }
 }
 
 ///|

@@ -6,7 +6,7 @@ struct BilPass {
 }
 
 ///|
-let bil_pass_registry : Map[String, BilPass] = {}
+let bil_pass_registry : Map[String, BilPass] = Map([])
 
 ///|
 let bil_selected_passes : Array[(Array[Stmt]) -> Array[Stmt]] = []
@@ -17,7 +17,7 @@ pub fn register_pass(
   body : (Array[Stmt]) -> Array[Stmt],
   desc? : String = "No description provided",
 ) -> BilPass {
-  let pass = { name_value: name, desc_value: desc, body_value: body }
+  let pass = { name_value: name, desc_value: desc, body_value: body, }
   bil_pass_registry[name] = pass
   pass
 }

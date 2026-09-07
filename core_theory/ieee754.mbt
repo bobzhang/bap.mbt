@@ -9,6 +9,15 @@ pub(all) struct Ieee754Parameters {
 } derive(Eq, Hash, Debug)
 
 ///|
+pub extend Ieee754Parameters with Eq::{not_equal, equal}
+
+///|
+pub extend Ieee754Parameters with Hash::{hash, hash_combine}
+
+///|
+pub extend Ieee754Parameters with Debug::{to_repr}
+
+///|
 fn ieee754_parameters(
   base~ : Int,
   bias~ : Int,
@@ -17,7 +26,7 @@ fn ieee754_parameters(
   w~ : Int,
   t~ : Int,
 ) -> Ieee754Parameters {
-  { base, bias, k, p, w, t }
+  { base, bias, k, p, w, t, }
 }
 
 ///|

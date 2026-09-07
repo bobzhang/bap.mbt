@@ -7,7 +7,7 @@ struct ProjectDisassemblyDriver {
 }
 
 ///|
-let disassembly_driver_registry : Map[String, ProjectDisassemblyDriver] = {}
+let disassembly_driver_registry : Map[String, ProjectDisassemblyDriver] = Map([])
 
 ///|
 pub fn ProjectDisassemblyDriver::create(

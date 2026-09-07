@@ -9,10 +9,22 @@ pub(all) enum Size {
 } derive(Eq, Debug)
 
 ///|
+pub extend Size with Eq::{not_equal, equal}
+
+///|
+pub extend Size with Debug::{to_repr}
+
+///|
 pub(all) enum AddrSize {
   Addr32
   Addr64
 } derive(Eq, Debug)
+
+///|
+pub extend AddrSize with Eq::{not_equal, equal}
+
+///|
+pub extend AddrSize with Debug::{to_repr}
 
 ///|
 pub(all) enum WordSize {
@@ -21,11 +33,23 @@ pub(all) enum WordSize {
 } derive(Eq, Debug)
 
 ///|
+pub extend WordSize with Eq::{not_equal, equal}
+
+///|
+pub extend WordSize with Debug::{to_repr}
+
+///|
 pub(all) suberror SizeError {
   UnsupportedWordSize(Int)
   UnsupportedAddressSize(Int)
   UnsupportedAddressSizeValue(Size)
 } derive(Eq, Debug)
+
+///|
+pub extend SizeError with Eq::{not_equal, equal}
+
+///|
+pub extend SizeError with Debug::{to_repr}
 
 ///|
 pub fn Size::in_bits(self : Size) -> Int {

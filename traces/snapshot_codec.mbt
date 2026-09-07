@@ -9,7 +9,7 @@ priv struct TraceSnapshotInput {
 
 ///|
 fn TraceSnapshotInput::create(data : BytesView) -> TraceSnapshotInput {
-  { data, pos: Ref(0) }
+  { data, pos: Ref(0), }
 }
 
 ///|
@@ -547,14 +547,14 @@ fn TraceSnapshotInput::read_chunk(
 fn TraceSnapshotInput::read_location(
   self : TraceSnapshotInput,
 ) -> Location raise TraceError {
-  { name: self.read_string_option("location name"), addr: self.read_word() }
+  { name: self.read_string_option("location name"), addr: self.read_word(), }
 }
 
 ///|
 fn TraceSnapshotInput::read_syscall(
   self : TraceSnapshotInput,
 ) -> Syscall raise TraceError {
-  { number: self.read_i32(), args: self.read_word_array("syscall args") }
+  { number: self.read_i32(), args: self.read_word_array("syscall args"), }
 }
 
 ///|
@@ -724,7 +724,7 @@ fn trace_decode_snapshot(data : BytesView) -> TraceSnapshot raise TraceError {
   let meta = input.read_meta()
   let events = input.read_array("events", input => input.read_event())
   input.expect_eof()
-  { tool, meta, events }
+  { tool, meta, events, }
 }
 
 ///|

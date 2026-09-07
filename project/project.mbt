@@ -324,7 +324,7 @@ pub fn Project::state(self : Project) -> ProjectState {
 
 ///|
 pub fn Project::with_state(self : Project, state : ProjectState) -> Project {
-  { ..self, state_value: state }
+  { ..self, state_value: state, }
 }
 
 ///|
@@ -353,7 +353,7 @@ pub fn Project::with_program(
   self : Project,
   program : @types.Term[@types.Program],
 ) -> Project {
-  { ..self, program_value: program }
+  { ..self, program_value: program, }
 }
 
 ///|
@@ -488,7 +488,7 @@ pub fn Project::with_symbols(
   self : Project,
   symbols : Array[@image.Symbol],
 ) -> Project {
-  { ..self, symbols_value: symbols.copy() }
+  { ..self, symbols_value: symbols.copy(), }
 }
 
 ///|
@@ -496,7 +496,7 @@ pub fn Project::with_memory(
   self : Project,
   memory : @memory.MemMap[String],
 ) -> Project {
-  { ..self, memory_value: memory }
+  { ..self, memory_value: memory, }
 }
 
 ///|
@@ -518,7 +518,7 @@ pub fn Project::with_storage(
   self : Project,
   storage : Map[String, String],
 ) -> Project {
-  { ..self, storage_value: storage.copy() }
+  { ..self, storage_value: storage.copy(), }
 }
 
 ///|
@@ -902,7 +902,7 @@ pub fn Project::persistent() -> @knowledge.Persistent[Project] {
 pub fn Project::set(self : Project, key : String, value : String) -> Project {
   let storage = self.storage_value.copy()
   storage[key] = value
-  { ..self, storage_value: storage }
+  { ..self, storage_value: storage, }
 }
 
 ///|
@@ -923,7 +923,7 @@ pub fn Project::has(self : Project, key : String) -> Bool {
 pub fn Project::del(self : Project, key : String) -> Project {
   let storage = self.storage_value.copy()
   storage.remove(key)
-  { ..self, storage_value: storage }
+  { ..self, storage_value: storage, }
 }
 
 ///|
@@ -935,5 +935,5 @@ pub fn Project::libraries(self : Project) -> Array[Library] {
 pub fn Project::add_library(self : Project, library : Library) -> Project {
   let libraries = self.libraries_value.copy()
   libraries.push(library)
-  { ..self, libraries_value: libraries }
+  { ..self, libraries_value: libraries, }
 }

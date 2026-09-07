@@ -65,17 +65,17 @@ pub fn Semantics::code(self : Semantics) -> Bytes? {
 
 ///|
 pub fn Semantics::with_effect(self : Semantics, effect : Effect) -> Semantics {
-  { ..self, effect_value: effect }
+  { ..self, effect_value: effect, }
 }
 
 ///|
 pub fn Semantics::with_value(self : Semantics, value : Value) -> Semantics {
-  { ..self, value_value: value }
+  { ..self, value_value: value, }
 }
 
 ///|
 pub fn Semantics::with_code(self : Semantics, code : Bytes) -> Semantics {
-  { ..self, code_value: Some(code) }
+  { ..self, code_value: Some(code), }
 }
 
 ///|

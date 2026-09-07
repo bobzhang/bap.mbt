@@ -14,7 +14,7 @@ fn scheme_field(name : String, typ : OgreFieldType) -> OgreField {
 
 ///|
 fn scheme_attribute(name : String, fields : Array[OgreField]) -> OgreAttribute {
-  { name_value: name, fields_value: fields.copy() }
+  { name_value: name, fields_value: fields.copy(), }
 }
 
 ///|

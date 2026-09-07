@@ -4,9 +4,21 @@ struct AddrR32 {
 } derive(Eq, Debug)
 
 ///|
+pub extend AddrR32 with Eq::{not_equal, equal}
+
+///|
+pub extend AddrR32 with Debug::{to_repr}
+
+///|
 struct AddrR64 {
   value : Int64
 } derive(Eq, Debug)
+
+///|
+pub extend AddrR64 with Eq::{not_equal, equal}
+
+///|
+pub extend AddrR64 with Debug::{to_repr}
 
 ///|
 fn addr_r32_shift_amount(amount : Int) -> Int {
@@ -54,94 +66,94 @@ pub fn AddrR32::to_word(self : AddrR32) -> Word raise @bitvec.BitVecError {
 
 ///|
 pub fn AddrR32::zero() -> AddrR32 {
-  { value: 0 }
+  { value: 0, }
 }
 
 ///|
 pub fn AddrR32::one() -> AddrR32 {
-  { value: 1 }
+  { value: 1, }
 }
 
 ///|
 pub fn AddrR32::succ(self : AddrR32) -> AddrR32 {
-  { value: self.value + 1 }
+  { value: self.value + 1, }
 }
 
 ///|
 pub fn AddrR32::pred(self : AddrR32) -> AddrR32 {
-  { value: self.value - 1 }
+  { value: self.value - 1, }
 }
 
 ///|
 pub fn AddrR32::abs(self : AddrR32) -> AddrR32 {
-  { value: self.value.abs() }
+  { value: self.value.abs(), }
 }
 
 ///|
 pub fn AddrR32::neg(self : AddrR32) -> AddrR32 {
-  { value: -self.value }
+  { value: -self.value, }
 }
 
 ///|
 pub fn AddrR32::add(self : AddrR32, other : AddrR32) -> AddrR32 {
-  { value: self.value + other.value }
+  { value: self.value + other.value, }
 }
 
 ///|
 pub fn AddrR32::sub(self : AddrR32, other : AddrR32) -> AddrR32 {
-  { value: self.value - other.value }
+  { value: self.value - other.value, }
 }
 
 ///|
 pub fn AddrR32::mul(self : AddrR32, other : AddrR32) -> AddrR32 {
-  { value: self.value * other.value }
+  { value: self.value * other.value, }
 }
 
 ///|
 pub fn AddrR32::div(self : AddrR32, other : AddrR32) -> AddrR32 {
-  { value: self.value / other.value }
+  { value: self.value / other.value, }
 }
 
 ///|
 pub fn AddrR32::modulo(self : AddrR32, other : AddrR32) -> AddrR32 {
-  { value: self.value % other.value }
+  { value: self.value % other.value, }
 }
 
 ///|
 pub fn AddrR32::lnot(self : AddrR32) -> AddrR32 {
-  { value: self.value.lnot() }
+  { value: self.value.lnot(), }
 }
 
 ///|
 pub fn AddrR32::logand(self : AddrR32, other : AddrR32) -> AddrR32 {
-  { value: self.value & other.value }
+  { value: self.value & other.value, }
 }
 
 ///|
 pub fn AddrR32::logor(self : AddrR32, other : AddrR32) -> AddrR32 {
-  { value: self.value | other.value }
+  { value: self.value | other.value, }
 }
 
 ///|
 pub fn AddrR32::logxor(self : AddrR32, other : AddrR32) -> AddrR32 {
-  { value: self.value ^ other.value }
+  { value: self.value ^ other.value, }
 }
 
 ///|
 pub fn AddrR32::lshift(self : AddrR32, amount : AddrR32) -> AddrR32 {
-  { value: self.value << addr_r32_shift_amount(amount.value) }
+  { value: self.value << addr_r32_shift_amount(amount.value), }
 }
 
 ///|
 pub fn AddrR32::rshift(self : AddrR32, amount : AddrR32) -> AddrR32 {
   let shifted = self.value.reinterpret_as_uint() >>
     addr_r32_shift_amount(amount.value)
-  { value: shifted.reinterpret_as_int() }
+  { value: shifted.reinterpret_as_int(), }
 }
 
 ///|
 pub fn AddrR32::arshift(self : AddrR32, amount : AddrR32) -> AddrR32 {
-  { value: self.value >> addr_r32_shift_amount(amount.value) }
+  { value: self.value >> addr_r32_shift_amount(amount.value), }
 }
 
 ///|
@@ -180,92 +192,92 @@ pub fn AddrR64::to_word(self : AddrR64) -> Word raise @bitvec.BitVecError {
 
 ///|
 pub fn AddrR64::zero() -> AddrR64 {
-  { value: 0L }
+  { value: 0L, }
 }
 
 ///|
 pub fn AddrR64::one() -> AddrR64 {
-  { value: 1L }
+  { value: 1L, }
 }
 
 ///|
 pub fn AddrR64::succ(self : AddrR64) -> AddrR64 {
-  { value: self.value + 1L }
+  { value: self.value + 1L, }
 }
 
 ///|
 pub fn AddrR64::pred(self : AddrR64) -> AddrR64 {
-  { value: self.value - 1L }
+  { value: self.value - 1L, }
 }
 
 ///|
 pub fn AddrR64::abs(self : AddrR64) -> AddrR64 {
-  { value: self.value.abs() }
+  { value: self.value.abs(), }
 }
 
 ///|
 pub fn AddrR64::neg(self : AddrR64) -> AddrR64 {
-  { value: -self.value }
+  { value: -self.value, }
 }
 
 ///|
 pub fn AddrR64::add(self : AddrR64, other : AddrR64) -> AddrR64 {
-  { value: self.value + other.value }
+  { value: self.value + other.value, }
 }
 
 ///|
 pub fn AddrR64::sub(self : AddrR64, other : AddrR64) -> AddrR64 {
-  { value: self.value - other.value }
+  { value: self.value - other.value, }
 }
 
 ///|
 pub fn AddrR64::mul(self : AddrR64, other : AddrR64) -> AddrR64 {
-  { value: self.value * other.value }
+  { value: self.value * other.value, }
 }
 
 ///|
 pub fn AddrR64::div(self : AddrR64, other : AddrR64) -> AddrR64 {
-  { value: self.value / other.value }
+  { value: self.value / other.value, }
 }
 
 ///|
 pub fn AddrR64::modulo(self : AddrR64, other : AddrR64) -> AddrR64 {
-  { value: self.value % other.value }
+  { value: self.value % other.value, }
 }
 
 ///|
 pub fn AddrR64::lnot(self : AddrR64) -> AddrR64 {
-  { value: Int64::lnot(self.value) }
+  { value: Int64::lnot(self.value), }
 }
 
 ///|
 pub fn AddrR64::logand(self : AddrR64, other : AddrR64) -> AddrR64 {
-  { value: self.value & other.value }
+  { value: self.value & other.value, }
 }
 
 ///|
 pub fn AddrR64::logor(self : AddrR64, other : AddrR64) -> AddrR64 {
-  { value: self.value | other.value }
+  { value: self.value | other.value, }
 }
 
 ///|
 pub fn AddrR64::logxor(self : AddrR64, other : AddrR64) -> AddrR64 {
-  { value: self.value ^ other.value }
+  { value: self.value ^ other.value, }
 }
 
 ///|
 pub fn AddrR64::lshift(self : AddrR64, amount : AddrR64) -> AddrR64 {
-  { value: self.value << addr_r64_shift_amount(amount.value) }
+  { value: self.value << addr_r64_shift_amount(amount.value), }
 }
 
 ///|
 pub fn AddrR64::rshift(self : AddrR64, amount : AddrR64) -> AddrR64 {
   let shifted = self.value.reinterpret_as_uint64() >>
     addr_r64_shift_amount(amount.value)
-  { value: shifted.reinterpret_as_int64() }
+  { value: shifted.reinterpret_as_int64(), }
 }
 
 ///|
 pub fn AddrR64::arshift(self : AddrR64, amount : AddrR64) -> AddrR64 {
-  { value: self.value >> addr_r64_shift_amount(amount.value) }
+  { value: self.value >> addr_r64_shift_amount(amount.value), }
 }

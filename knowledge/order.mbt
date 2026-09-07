@@ -7,6 +7,12 @@ pub(all) enum PartialOrder {
 } derive(Eq, Debug)
 
 ///|
+pub extend PartialOrder with Eq::{not_equal, equal}
+
+///|
+pub extend PartialOrder with Debug::{to_repr}
+
+///|
 pub fn PartialOrder::invert(self : PartialOrder) -> PartialOrder {
   match self {
     Less => Greater

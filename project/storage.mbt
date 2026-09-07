@@ -11,7 +11,7 @@ pub fn[T] ProjectStorageTag::create(
   encode~ : (T) -> String,
   decode~ : (String) -> Result[T, String],
 ) -> ProjectStorageTag[T] {
-  { name_value: name, encode_fn: encode, decode_fn: decode }
+  { name_value: name, encode_fn: encode, decode_fn: decode, }
 }
 
 ///|

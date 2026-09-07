@@ -17,6 +17,12 @@ pub(all) suberror ProjectPassError {
 } derive(Eq, Debug)
 
 ///|
+pub extend ProjectPassError with Eq::{not_equal, equal}
+
+///|
+pub extend ProjectPassError with Debug::{to_repr}
+
+///|
 pub(all) enum ProjectPassRunError {
   ProjectPassUnsatDep(ProjectPass, String)
   ProjectPassRuntimeError(ProjectPass, String)
@@ -32,6 +38,9 @@ pub(all) enum ProjectPassEventKind {
 } derive(Eq)
 
 ///|
+pub extend ProjectPassEventKind with Eq::{not_equal, equal}
+
+///|
 struct ProjectPassEvent {
   pass_name_value : String
   kind_value : ProjectPassEventKind
@@ -39,7 +48,7 @@ struct ProjectPassEvent {
 }
 
 ///|
-let pass_registry : Map[String, ProjectPass] = {}
+let pass_registry : Map[String, ProjectPass] = Map([])
 
 ///|
 let pass_registry_order : Array[String] = []

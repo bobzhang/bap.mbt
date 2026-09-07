@@ -91,7 +91,7 @@ pub fn DwarfFunction::create(
   low_pc~ : UInt64,
   high_pc? : UInt64,
 ) -> DwarfFunction {
-  { name_value: name, low_pc_value: low_pc, high_pc_value: high_pc }
+  { name_value: name, low_pc_value: low_pc, high_pc_value: high_pc, }
 }
 
 ///|
@@ -670,7 +670,7 @@ fn dwarf_read_ranges_summary(
     }
   }
   match (low, high) {
-    (Some(lo), Some(hi)) => Ok(Some({ low: lo, high: hi }))
+    (Some(lo), Some(hi)) => Ok(Some({ low: lo, high: hi, }))
     _ => Ok(None)
   }
 }
@@ -859,7 +859,7 @@ fn dwarf_read_rnglists_summary(
     }
   }
   match (low, high) {
-    (Some(lo), Some(hi)) => Ok(Some({ low: lo, high: hi }))
+    (Some(lo), Some(hi)) => Ok(Some({ low: lo, high: hi, }))
     _ => Ok(None)
   }
 }
@@ -1614,7 +1614,8 @@ fn dwarf_parse_unit(
             dwarf_read_unit_header(after_version, version, endian, dwarf_size) {
             Ok(DwarfUnsupportedUnit) =>
               match dwarf_skip_to_unit_end(after_size, cu_end) {
-                Ok(next) => Ok({ function_candidates: [], die_names: [], next })
+                Ok(next) =>
+                  Ok({ function_candidates: [], die_names: [], next, })
                 Err(reason) => Err(reason)
               }
             Ok(DwarfSupportedUnit(abbrev_offset, addr_size, after_header)) => {
@@ -1633,7 +1634,7 @@ fn dwarf_parse_unit(
               let mut addr_base : Int? = None
               let mut ranges_offset_base = 0
               let mut rnglists_base : Int? = None
-              let scopes : Array[DwarfScope] = [{ range_base: 0UL }]
+              let scopes : Array[DwarfScope] = [{ range_base: 0UL, }]
               while cursor.position() < cu_end {
                 let die_offset = cursor.position() - info.position()
                 match cursor.read_code() {
@@ -1714,7 +1715,7 @@ fn dwarf_parse_unit(
                                 Some(value) => value
                                 None => dwarf_current_range_base(scopes)
                               }
-                              scopes.push({ range_base: child_range_base })
+                              scopes.push({ range_base: child_range_base, })
                             }
                             cursor = next
                           }

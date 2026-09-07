@@ -9,7 +9,7 @@ pub fn DwarfStringTable::read(
   offset? : Int = 0,
 ) -> Result[DwarfStringTable, String] {
   match buffer.offset(offset) {
-    Ok(section) => Ok({ buffer_value: section })
+    Ok(section) => Ok({ buffer_value: section, })
     Err(reason) => Err(reason)
   }
 }

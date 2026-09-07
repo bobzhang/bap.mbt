@@ -11,6 +11,12 @@ pub(all) enum DwarfInfoUnitKind {
 } derive(Eq, Debug)
 
 ///|
+pub extend DwarfInfoUnitKind with Eq::{not_equal, equal}
+
+///|
+pub extend DwarfInfoUnitKind with Debug::{to_repr}
+
+///|
 struct DwarfInfoUnitHeader {
   start_offset_value : Int
   end_offset_value : Int

@@ -335,7 +335,7 @@ fn project_disassembly_reconstructor_find_group(
 pub fn ProjectDisassemblyReconstructor::create(
   run : (ProjectDisassemblyCfg) -> ProjectDisassemblySymtab,
 ) -> ProjectDisassemblyReconstructor {
-  { run_fn: run }
+  { run_fn: run, }
 }
 
 ///|

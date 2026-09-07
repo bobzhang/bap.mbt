@@ -6,7 +6,7 @@ struct ProjectBrancher {
 }
 
 ///|
-let project_brancher_registry : Map[String, ProjectBrancher] = {}
+let project_brancher_registry : Map[String, ProjectBrancher] = Map([])
 
 ///|
 fn project_brancher_applies_to_project(
@@ -115,7 +115,7 @@ fn project_brancher_translate_edge(
 pub fn ProjectBrancher::create(
   resolve : (@memory.Memory) -> Array[ProjectDisassemblyEdge],
 ) -> ProjectBrancher {
-  { path_value: None, biased_value: false, resolve_fn: resolve }
+  { path_value: None, biased_value: false, resolve_fn: resolve, }
 }
 
 ///|
@@ -138,7 +138,7 @@ pub fn ProjectBrancher::set_path(
   self : ProjectBrancher,
   path : String,
 ) -> ProjectBrancher {
-  { ..self, path_value: Some(path) }
+  { ..self, path_value: Some(path), }
 }
 
 ///|
@@ -151,7 +151,7 @@ pub fn ProjectBrancher::with_biased(
   self : ProjectBrancher,
   biased : Bool,
 ) -> ProjectBrancher {
-  { ..self, biased_value: biased }
+  { ..self, biased_value: biased, }
 }
 
 ///|

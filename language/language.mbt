@@ -21,7 +21,7 @@ fn language_fresh_id() -> Int {
 
 ///|
 pub fn Language::create(name~ : String) -> Language {
-  { id_value: language_fresh_id(), name_value: name }
+  { id_value: language_fresh_id(), name_value: name, }
 }
 
 ///|
@@ -46,7 +46,7 @@ pub fn Language::equal(self : Language, other : Language) -> Bool {
 
 ///|
 pub fn[T] LanguageProperty::create() -> LanguageProperty[T] {
-  { values: {} }
+  { values: {}, }
 }
 
 ///|

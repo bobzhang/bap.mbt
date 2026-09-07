@@ -106,29 +106,47 @@ pub fn tid_graph_start() -> Tid
 pub(all) suberror BilApplyError {
   InvalidWordApply(String)
 } derive(Eq, @debug.Debug)
+pub fn BilApplyError::equal(Self, Self) -> Bool
+pub fn BilApplyError::not_equal(Self, Self) -> Bool
+pub fn BilApplyError::to_repr(Self) -> @debug.Repr
 
 pub(all) suberror IrTermLookupError {
   MissingIrTerm(String, Tid)
   MissingIrTermIndex(String, Int)
 } derive(Eq, @debug.Debug)
+pub fn IrTermLookupError::equal(Self, Self) -> Bool
+pub fn IrTermLookupError::not_equal(Self, Self) -> Bool
+pub fn IrTermLookupError::to_repr(Self) -> @debug.Repr
 
 pub(all) suberror SizeError {
   UnsupportedWordSize(Int)
   UnsupportedAddressSize(Int)
   UnsupportedAddressSizeValue(Size)
 } derive(Eq, @debug.Debug)
+pub fn SizeError::equal(Self, Self) -> Bool
+pub fn SizeError::not_equal(Self, Self) -> Bool
+pub fn SizeError::to_repr(Self) -> @debug.Repr
 
 pub(all) suberror StmtAttributeError {
   DuplicateStmtAttribute(String)
 } derive(Eq, @debug.Debug)
+pub fn StmtAttributeError::equal(Self, Self) -> Bool
+pub fn StmtAttributeError::not_equal(Self, Self) -> Bool
+pub fn StmtAttributeError::to_repr(Self) -> @debug.Repr
 
 pub(all) suberror TidParseError {
   InvalidTid(String)
 } derive(Eq, @debug.Debug)
+pub fn TidParseError::equal(Self, Self) -> Bool
+pub fn TidParseError::not_equal(Self, Self) -> Bool
+pub fn TidParseError::to_repr(Self) -> @debug.Repr
 
 pub(all) suberror TypeInferenceError {
   InvalidExpType(TypeError)
 } derive(Eq, @debug.Debug)
+pub fn TypeInferenceError::equal(Self, Self) -> Bool
+pub fn TypeInferenceError::not_equal(Self, Self) -> Bool
+pub fn TypeInferenceError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
 type AddrR32 derive(Eq, @debug.Debug)
@@ -138,6 +156,7 @@ pub fn AddrR32::arshift(Self, Self) -> Self
 pub fn AddrR32::create(Word) -> Result[Self, String]
 pub fn AddrR32::create_exn(Word) -> Self raise @bitvec.BitVecError
 pub fn AddrR32::div(Self, Self) -> Self
+pub fn AddrR32::equal(Self, Self) -> Bool
 pub fn AddrR32::lnot(Self) -> Self
 pub fn AddrR32::logand(Self, Self) -> Self
 pub fn AddrR32::logor(Self, Self) -> Self
@@ -146,6 +165,7 @@ pub fn AddrR32::lshift(Self, Self) -> Self
 pub fn AddrR32::modulo(Self, Self) -> Self
 pub fn AddrR32::mul(Self, Self) -> Self
 pub fn AddrR32::neg(Self) -> Self
+pub fn AddrR32::not_equal(Self, Self) -> Bool
 pub fn AddrR32::of_int32(Int) -> Self
 pub fn AddrR32::one() -> Self
 pub fn AddrR32::pred(Self) -> Self
@@ -153,6 +173,7 @@ pub fn AddrR32::rshift(Self, Self) -> Self
 pub fn AddrR32::sub(Self, Self) -> Self
 pub fn AddrR32::succ(Self) -> Self
 pub fn AddrR32::to_int32(Self) -> Int
+pub fn AddrR32::to_repr(Self) -> @debug.Repr
 pub fn AddrR32::to_uint(Self) -> UInt
 pub fn AddrR32::to_word(Self) -> Word raise @bitvec.BitVecError
 pub fn AddrR32::zero() -> Self
@@ -164,6 +185,7 @@ pub fn AddrR64::arshift(Self, Self) -> Self
 pub fn AddrR64::create(Word) -> Result[Self, String]
 pub fn AddrR64::create_exn(Word) -> Self raise @bitvec.BitVecError
 pub fn AddrR64::div(Self, Self) -> Self
+pub fn AddrR64::equal(Self, Self) -> Bool
 pub fn AddrR64::lnot(Self) -> Self
 pub fn AddrR64::logand(Self, Self) -> Self
 pub fn AddrR64::logor(Self, Self) -> Self
@@ -172,6 +194,7 @@ pub fn AddrR64::lshift(Self, Self) -> Self
 pub fn AddrR64::modulo(Self, Self) -> Self
 pub fn AddrR64::mul(Self, Self) -> Self
 pub fn AddrR64::neg(Self) -> Self
+pub fn AddrR64::not_equal(Self, Self) -> Bool
 pub fn AddrR64::of_int64(Int64) -> Self
 pub fn AddrR64::one() -> Self
 pub fn AddrR64::pred(Self) -> Self
@@ -179,6 +202,7 @@ pub fn AddrR64::rshift(Self, Self) -> Self
 pub fn AddrR64::sub(Self, Self) -> Self
 pub fn AddrR64::succ(Self) -> Self
 pub fn AddrR64::to_int64(Self) -> Int64
+pub fn AddrR64::to_repr(Self) -> @debug.Repr
 pub fn AddrR64::to_uint64(Self) -> UInt64
 pub fn AddrR64::to_word(Self) -> Word raise @bitvec.BitVecError
 pub fn AddrR64::zero() -> Self
@@ -187,8 +211,11 @@ pub(all) enum AddrSize {
   Addr32
   Addr64
 } derive(Eq, @debug.Debug)
+pub fn AddrSize::equal(Self, Self) -> Bool
 pub fn AddrSize::in_bits(Self) -> Int
 pub fn AddrSize::in_bytes(Self) -> Int
+pub fn AddrSize::not_equal(Self, Self) -> Bool
+pub fn AddrSize::to_repr(Self) -> @debug.Repr
 pub fn AddrSize::to_size(Self) -> Size
 pub fn AddrSize::to_string(Self) -> String
 
@@ -235,7 +262,9 @@ pub fn Arch::compare(Self, Self) -> Int
 pub fn Arch::endian(Self) -> @bitvec.Endian
 pub fn Arch::equal(Self, Self) -> Bool
 pub fn Arch::from_string(String) -> Self
+pub fn Arch::not_equal(Self, Self) -> Bool
 pub fn Arch::of_string(String) -> Self?
+pub fn Arch::to_repr(Self) -> @debug.Repr
 pub fn Arch::to_string(Self) -> String
 
 pub(all) struct Arg {
@@ -245,12 +274,15 @@ pub(all) struct Arg {
 } derive(Eq, @debug.Debug)
 pub fn Arg::alloc_size() -> Attr
 pub fn Arg::create(Var, Exp, intent? : Intent, tid? : Tid) -> Term[Self]
+pub fn Arg::equal(Self, Self) -> Bool
 pub fn Arg::format(String) -> Attr
 pub fn Arg::intent(Term[Self]) -> Intent?
 pub fn Arg::lhs(Term[Self]) -> Var
 pub fn Arg::nonnull() -> Attr
+pub fn Arg::not_equal(Self, Self) -> Bool
 pub fn Arg::restricted() -> Attr
 pub fn Arg::rhs(Term[Self]) -> Exp
+pub fn Arg::to_repr(Self) -> @debug.Repr
 pub fn Arg::to_string(Term[Self]) -> String
 pub fn Arg::value(Term[Self]) -> Exp
 pub fn Arg::var_(Term[Self]) -> Var
@@ -267,6 +299,7 @@ pub fn Attr::background(IrColor) -> Self
 pub fn Attr::color(IrColor) -> Self
 pub fn Attr::comment(String) -> Self
 pub fn Attr::dead() -> Self
+pub fn Attr::equal(Self, Self) -> Bool
 pub fn Attr::filename(String) -> Self
 pub fn Attr::flag(String) -> Self
 pub fn Attr::foreground(IrColor) -> Self
@@ -275,6 +308,7 @@ pub fn Attr::invariant(Exp) -> Self
 pub fn Attr::live() -> Self
 pub fn Attr::mark(value? : String) -> Self
 pub fn Attr::new(key~ : String, value~ : String) -> Self
+pub fn Attr::not_equal(Self, Self) -> Bool
 pub fn Attr::origin(Tid) -> Self
 pub fn Attr::postcondition(Exp) -> Self
 pub fn Attr::precondition(Exp) -> Self
@@ -295,6 +329,7 @@ pub fn Attr::sub_returns_twice() -> Self
 pub fn Attr::synthetic() -> Self
 pub fn Attr::tainted_ptr(Tid) -> Self
 pub fn Attr::tainted_reg(Tid) -> Self
+pub fn Attr::to_repr(Self) -> @debug.Repr
 pub fn Attr::visited() -> Self
 pub fn Attr::weight(Double) -> Self
 
@@ -340,17 +375,23 @@ pub fn[T] BapVector::to_string(Self[T], (T) -> String) -> String
 
 type BilContext derive(Eq, @debug.Debug)
 pub fn BilContext::bindings(Self) -> Array[(Var, BilResult)]
+pub fn BilContext::equal(Self, Self) -> Bool
 pub fn BilContext::lookup(Self, Var) -> BilResult?
 pub fn BilContext::new() -> Self
+pub fn BilContext::not_equal(Self, Self) -> Bool
+pub fn BilContext::to_repr(Self) -> @debug.Repr
 pub fn BilContext::update(Self, Var, BilResult) -> Self
 
 type BilMemory derive(Eq, @debug.Debug)
 pub fn BilMemory::addr_width(Self) -> Int
 pub fn BilMemory::cell(Self, UInt64) -> Byte?
 pub fn BilMemory::empty(addr_width~ : Int, value_width? : Int) -> Self
+pub fn BilMemory::equal(Self, Self) -> Bool
 pub fn BilMemory::from_bytes(addr_width~ : Int, start? : UInt64, Bytes) -> Self
 pub fn BilMemory::load(Self, Word, endian~ : @bitvec.Endian, width~ : Int) -> Result[Word, String]
+pub fn BilMemory::not_equal(Self, Self) -> Bool
 pub fn BilMemory::store(Self, Word, Word, endian~ : @bitvec.Endian) -> Result[Self, String]
+pub fn BilMemory::to_repr(Self) -> @debug.Repr
 pub fn BilMemory::value_width(Self) -> Int
 
 type BilPass
@@ -360,50 +401,68 @@ pub fn BilPass::run(Self, Array[Stmt]) -> Array[Stmt]
 pub fn BilPass::to_string(Self) -> String
 
 type BilResult derive(Eq, @debug.Debug)
+pub fn BilResult::equal(Self, Self) -> Bool
 pub fn BilResult::id(Self) -> BilResultId
+pub fn BilResult::not_equal(Self, Self) -> Bool
 pub fn BilResult::storage(BilResultStorage, BilResultId) -> Self
+pub fn BilResult::to_repr(Self) -> @debug.Repr
 pub fn BilResult::to_string(Self) -> String
 pub fn BilResult::undefined(BilResultId) -> Self
 pub fn BilResult::value(Self) -> BilResultValue
 pub fn BilResult::word(Word, BilResultId) -> Self
 
 type BilResultId derive(Eq, @debug.Debug)
+pub fn BilResultId::equal(Self, Self) -> Bool
+pub fn BilResultId::not_equal(Self, Self) -> Bool
 pub fn BilResultId::of_uint64(UInt64) -> Self
 pub fn BilResultId::succ(Self) -> Self
+pub fn BilResultId::to_repr(Self) -> @debug.Repr
 pub fn BilResultId::to_string(Self) -> String
 pub fn BilResultId::to_uint64(Self) -> UInt64
 pub fn BilResultId::zero() -> Self
 
 type BilResultStorage derive(Eq, @debug.Debug)
+pub fn BilResultStorage::equal(Self, Self) -> Bool
 pub fn BilResultStorage::is_sparse(Self) -> Bool
 pub fn BilResultStorage::linear() -> Self
 pub fn BilResultStorage::load(Self, Word) -> Word?
+pub fn BilResultStorage::not_equal(Self, Self) -> Bool
 pub fn BilResultStorage::save(Self, Word, Word) -> Self
 pub fn BilResultStorage::sparse() -> Self
+pub fn BilResultStorage::to_repr(Self) -> @debug.Repr
 
 pub(all) enum BilResultValue {
   BilResultImm(Word)
   BilResultMem(BilResultStorage)
   BilResultBot
 } derive(Eq, @debug.Debug)
+pub fn BilResultValue::equal(Self, Self) -> Bool
+pub fn BilResultValue::not_equal(Self, Self) -> Bool
+pub fn BilResultValue::to_repr(Self) -> @debug.Repr
 pub fn BilResultValue::to_string(Self) -> String
 
 type BilState derive(Eq, @debug.Debug)
+pub fn BilState::equal(Self, Self) -> Bool
 pub fn BilState::from_values(Map[String, BilValue]) -> Self
 pub fn BilState::get(Self, String) -> BilValue?
 pub fn BilState::get_memory(Self, String) -> BilMemory?
 pub fn BilState::get_var(Self, Var) -> BilValue?
 pub fn BilState::get_word(Self, String) -> Word?
 pub fn BilState::new() -> Self
+pub fn BilState::not_equal(Self, Self) -> Bool
 pub fn BilState::set(Self, String, BilValue) -> Self
 pub fn BilState::set_var(Self, Var, BilValue) -> Result[Self, String]
+pub fn BilState::to_repr(Self) -> @debug.Repr
 pub fn BilState::values(Self) -> Map[String, BilValue]
 
 pub(all) enum BilValue {
   BilWord(Word)
   BilMem(BilMemory)
 } derive(Eq, @debug.Debug)
+pub fn BilValue::equal(Self, Self) -> Bool
 pub fn BilValue::memory(Self) -> BilMemory?
+pub fn BilValue::not_equal(Self, Self) -> Bool
+pub fn BilValue::to_repr(Self) -> @debug.Repr
 pub fn BilValue::word(Self) -> Word?
 
 pub(all) enum BinOp {
@@ -445,6 +504,7 @@ pub fn BinOp::lt() -> Self
 pub fn BinOp::minus() -> Self
 pub fn BinOp::modulo() -> Self
 pub fn BinOp::neq() -> Self
+pub fn BinOp::not_equal(Self, Self) -> Bool
 pub fn BinOp::plus() -> Self
 pub fn BinOp::rshift() -> Self
 pub fn BinOp::sdivide() -> Self
@@ -453,6 +513,7 @@ pub fn BinOp::slt() -> Self
 pub fn BinOp::smodulo() -> Self
 pub fn BinOp::string_of_binop(Self) -> String
 pub fn BinOp::times() -> Self
+pub fn BinOp::to_repr(Self) -> @debug.Repr
 pub fn BinOp::to_string(Self) -> String
 
 pub(all) struct Blk {
@@ -503,12 +564,15 @@ pub(all) struct Call {
   return_label : Label?
 } derive(Eq, @debug.Debug)
 pub fn Call::create(target~ : Label, return_label? : Label) -> Self
+pub fn Call::equal(Self, Self) -> Bool
 pub fn Call::free_vars(Self) -> Array[Var]
 pub fn Call::map_exp(Self, (Exp) -> Exp) -> Self
+pub fn Call::not_equal(Self, Self) -> Bool
 pub fn Call::return_(Self) -> Label?
 pub fn Call::return_label(Self) -> Label?
 pub fn Call::substitute_var(Self, Var, Exp) -> Self
 pub fn Call::target(Self) -> Label
+pub fn Call::to_repr(Self) -> @debug.Repr
 pub fn Call::to_string(Self) -> String
 pub fn Call::with_noreturn(Self) -> Self
 pub fn Call::with_return(Self, Label) -> Self
@@ -526,8 +590,10 @@ pub fn CastKind::compare(Self, Self) -> Int
 pub fn CastKind::equal(Self, Self) -> Bool
 pub fn CastKind::high() -> Self
 pub fn CastKind::low() -> Self
+pub fn CastKind::not_equal(Self, Self) -> Bool
 pub fn CastKind::signed() -> Self
 pub fn CastKind::string_of_cast(Self) -> String
+pub fn CastKind::to_repr(Self) -> @debug.Repr
 pub fn CastKind::to_string(Self) -> String
 pub fn CastKind::unsigned() -> Self
 
@@ -535,17 +601,23 @@ pub(all) enum ContinueOrStop[A, R] {
   Continue(A)
   Stop(R)
 } derive(Eq, @debug.Debug)
+pub fn[A : Eq, R : Eq] ContinueOrStop::equal(Self[A, R], Self[A, R]) -> Bool
+pub fn[A : Eq, R : Eq] ContinueOrStop::not_equal(Self[A, R], Self[A, R]) -> Bool
+pub fn[A : @debug.Debug, R : @debug.Debug] ContinueOrStop::to_repr(Self[A, R]) -> @debug.Repr
 
 pub(all) struct Def {
   lhs : Var
   rhs : Exp
 } derive(Eq, @debug.Debug)
 pub fn Def::create(Var, Exp, tid? : Tid) -> Term[Self]
+pub fn Def::equal(Self, Self) -> Bool
 pub fn Def::free_vars(Term[Self]) -> Array[Var]
 pub fn Def::lhs(Term[Self]) -> Var
 pub fn Def::map_exp(Term[Self], (Exp) -> Exp) -> Term[Self]
+pub fn Def::not_equal(Self, Self) -> Bool
 pub fn Def::rhs(Term[Self]) -> Exp
 pub fn Def::substitute(Term[Self], Exp, Exp) -> Term[Self]
+pub fn Def::to_repr(Self) -> @debug.Repr
 pub fn Def::to_string(Term[Self]) -> String
 pub fn Def::value(Term[Self]) -> Exp
 pub fn Def::var_(Term[Self]) -> Var
@@ -594,6 +666,7 @@ pub fn Exp::load_byte(mem~ : Self, addr~ : Self) -> Self
 pub fn Exp::map(Self, (Self) -> Self) -> Self
 pub fn Exp::normalize(Self) -> Self
 pub fn Exp::normalize_negatives(Self) -> Self
+pub fn Exp::not_equal(Self, Self) -> Bool
 pub fn Exp::simplify(Self) -> Self
 pub fn Exp::smart_binop(BinOp, Self, Self) -> Self
 pub fn Exp::smart_cast(CastKind, Int, Self) -> Self
@@ -605,15 +678,16 @@ pub fn Exp::store(mem~ : Self, addr~ : Self, Self, @bitvec.Endian, Size) -> Self
 pub fn Exp::store_byte(mem~ : Self, addr~ : Self, Self) -> Self
 pub fn Exp::substitute(Self, Self, Self) -> Self
 pub fn Exp::substitute_var(Self, Var, Self) -> Self
+pub fn Exp::to_repr(Self) -> @debug.Repr
 pub fn Exp::to_string(Self) -> String
 pub fn Exp::type_of(Self) -> ValueType
 pub fn Exp::unknown(String, ValueType) -> Self
 pub fn Exp::unop(UnOp, Self) -> Self
-#alias(var)
 pub fn Exp::var_exp(Var) -> Self
 
 type ExpEffect derive(Eq, @debug.Debug)
 pub fn ExpEffect::compute(Exp) -> Self
+pub fn ExpEffect::equal(Self, Self) -> Bool
 pub fn ExpEffect::has_coeffects(Self) -> Bool
 pub fn ExpEffect::has_effects(Self) -> Bool
 pub fn ExpEffect::idempotent(Self) -> Bool
@@ -621,6 +695,7 @@ pub fn ExpEffect::join(Self, Self) -> Self
 pub fn ExpEffect::load() -> Self
 pub fn ExpEffect::loads(Self) -> Bool
 pub fn ExpEffect::none() -> Self
+pub fn ExpEffect::not_equal(Self, Self) -> Bool
 pub fn ExpEffect::of_list(Array[Self]) -> Self
 pub fn ExpEffect::raise_() -> Self
 pub fn ExpEffect::raises(Self) -> Bool
@@ -628,12 +703,16 @@ pub fn ExpEffect::read() -> Self
 pub fn ExpEffect::reads(Self) -> Bool
 pub fn ExpEffect::store() -> Self
 pub fn ExpEffect::stores(Self) -> Bool
+pub fn ExpEffect::to_repr(Self) -> @debug.Repr
 
 pub(all) enum Intent {
   In
   Out
   Both
 } derive(Eq, @debug.Debug)
+pub fn Intent::equal(Self, Self) -> Bool
+pub fn Intent::not_equal(Self, Self) -> Bool
+pub fn Intent::to_repr(Self) -> @debug.Repr
 
 type IrCfg
 pub fn IrCfg::create(tid? : Tid, name? : String) -> Self
@@ -695,7 +774,10 @@ pub(all) enum IrColor {
   IrWhite
   IrGray
 } derive(Eq, @debug.Debug)
+pub fn IrColor::equal(Self, Self) -> Bool
+pub fn IrColor::not_equal(Self, Self) -> Bool
 pub fn IrColor::of_string(String) -> Self?
+pub fn IrColor::to_repr(Self) -> @debug.Repr
 pub fn IrColor::to_string(Self) -> String
 
 pub(all) enum IrTerm {
@@ -928,6 +1010,9 @@ pub(all) enum IrTermClass {
   DefTermClass
   JmpTermClass
 } derive(Eq, @debug.Debug)
+pub fn IrTermClass::equal(Self, Self) -> Bool
+pub fn IrTermClass::not_equal(Self, Self) -> Bool
+pub fn IrTermClass::to_repr(Self) -> @debug.Repr
 pub fn IrTermClass::to_string(Self) -> String
 
 pub(all) enum IrVisitEvent {
@@ -950,15 +1035,18 @@ pub fn Jmp::create_goto(Label, cond? : Exp, tid? : Tid) -> Term[Self]
 pub fn Jmp::create_int(Int, Tid, cond? : Exp, term_tid? : Tid) -> Term[Self]
 pub fn Jmp::create_ret(Label, cond? : Exp, tid? : Tid) -> Term[Self]
 pub fn Jmp::dst(Term[Self]) -> JmpDst?
+pub fn Jmp::equal(Self, Self) -> Bool
 pub fn Jmp::exps(Term[Self]) -> Array[Exp]
 pub fn Jmp::free_vars(Term[Self]) -> Array[Var]
 pub fn Jmp::guard_(Term[Self]) -> Exp?
 pub fn Jmp::indirect(Exp) -> JmpDst
 pub fn Jmp::kind(Term[Self]) -> JmpKind
 pub fn Jmp::map_exp(Term[Self], (Exp) -> Exp) -> Term[Self]
+pub fn Jmp::not_equal(Self, Self) -> Bool
 pub fn Jmp::resolve(JmpDst) -> JmpResolution
 pub fn Jmp::resolved(Tid) -> JmpDst
 pub fn Jmp::substitute(Term[Self], Exp, Exp) -> Term[Self]
+pub fn Jmp::to_repr(Self) -> @debug.Repr
 pub fn Jmp::to_string(Term[Self]) -> String
 pub fn Jmp::with_alt(Term[Self], JmpDst?) -> Term[Self]
 pub fn Jmp::with_cond(Term[Self], Exp) -> Term[Self]
@@ -970,6 +1058,9 @@ pub(all) enum JmpDst {
   ResolvedDst(Tid)
   IndirectDst(Exp)
 } derive(Eq, @debug.Debug)
+pub fn JmpDst::equal(Self, Self) -> Bool
+pub fn JmpDst::not_equal(Self, Self) -> Bool
+pub fn JmpDst::to_repr(Self) -> @debug.Repr
 
 pub(all) enum JmpKind {
   JmpCall(Call)
@@ -977,15 +1068,21 @@ pub(all) enum JmpKind {
   Ret(Label)
   Interrupt(Int, Tid)
 } derive(Eq, @debug.Debug)
+pub fn JmpKind::equal(Self, Self) -> Bool
 pub fn JmpKind::free_vars(Self) -> Array[Var]
 pub fn JmpKind::map_exp(Self, (Exp) -> Exp) -> Self
+pub fn JmpKind::not_equal(Self, Self) -> Bool
 pub fn JmpKind::substitute_var(Self, Var, Exp) -> Self
+pub fn JmpKind::to_repr(Self) -> @debug.Repr
 pub fn JmpKind::to_string(Self) -> String
 
 pub(all) enum JmpResolution {
   ResolvedTarget(Tid)
   IndirectTarget(Exp)
 } derive(Eq, @debug.Debug)
+pub fn JmpResolution::equal(Self, Self) -> Bool
+pub fn JmpResolution::not_equal(Self, Self) -> Bool
+pub fn JmpResolution::to_repr(Self) -> @debug.Repr
 
 pub(all) enum Label {
   Direct(Tid)
@@ -994,10 +1091,13 @@ pub(all) enum Label {
 pub fn Label::change(Self, direct? : (Tid) -> Tid, indirect? : (Exp) -> Exp) -> Self
 pub fn Label::create() -> Self
 pub fn Label::direct(Tid) -> Self
+pub fn Label::equal(Self, Self) -> Bool
 pub fn Label::free_vars(Self) -> Array[Var]
 pub fn Label::indirect(Exp) -> Self
 pub fn Label::map_exp(Self, (Exp) -> Exp) -> Self
+pub fn Label::not_equal(Self, Self) -> Bool
 pub fn Label::substitute_var(Self, Var, Exp) -> Self
+pub fn Label::to_repr(Self) -> @debug.Repr
 pub fn Label::to_string(Self) -> String
 
 pub(all) struct Phi {
@@ -1005,15 +1105,18 @@ pub(all) struct Phi {
   values : Array[(Tid, Exp)]
 } derive(Eq, @debug.Debug)
 pub fn Phi::create(Var, Tid, Exp, tid? : Tid) -> Term[Self]
+pub fn Phi::equal(Self, Self) -> Bool
 pub fn Phi::free_vars(Term[Self]) -> Array[Var]
 pub fn Phi::lhs(Term[Self]) -> Var
 pub fn Phi::map_exp(Term[Self], (Exp) -> Exp) -> Term[Self]
+pub fn Phi::not_equal(Self, Self) -> Bool
 pub fn Phi::of_list(Var, Array[(Tid, Exp)], tid? : Tid) -> Term[Self]
 pub fn Phi::options(Term[Self]) -> Array[(Tid, Exp)]
 pub fn Phi::remove(Term[Self], Tid) -> Term[Self]
 pub fn Phi::select(Term[Self], Tid) -> Exp?
 pub fn Phi::select_or_unknown(Term[Self], Tid) -> Exp
 pub fn Phi::substitute(Term[Self], Exp, Exp) -> Term[Self]
+pub fn Phi::to_repr(Self) -> @debug.Repr
 pub fn Phi::to_string(Term[Self]) -> String
 pub fn Phi::update(Term[Self], Tid, Exp) -> Term[Self]
 pub fn Phi::values(Term[Self]) -> Array[(Tid, Exp)]
@@ -1046,14 +1149,17 @@ pub fn Size::addr_of_int(Int) -> Result[AddrSize, String]
 pub fn Size::addr_of_int_exn(Int) -> AddrSize raise SizeError
 pub fn Size::addr_of_int_opt(Int) -> AddrSize?
 pub fn Size::addr_of_word_size(WordSize) -> AddrSize
+pub fn Size::equal(Self, Self) -> Bool
 pub fn Size::in_bits(Self) -> Int
 pub fn Size::in_bytes(Self) -> Int
+pub fn Size::not_equal(Self, Self) -> Bool
 pub fn Size::of_int(Int) -> Result[Self, String]
 pub fn Size::of_int_exn(Int) -> Self raise SizeError
 pub fn Size::of_int_opt(Int) -> Self?
 pub fn Size::to_addr_size(Self) -> Result[AddrSize, String]
 pub fn Size::to_addr_size_exn(Self) -> AddrSize raise SizeError
 pub fn Size::to_addr_size_opt(Self) -> AddrSize?
+pub fn Size::to_repr(Self) -> @debug.Repr
 pub fn Size::to_string(Self) -> String
 pub fn Size::word_of_addr_size(AddrSize) -> WordSize
 
@@ -1095,11 +1201,13 @@ pub fn Stmt::map_exps(Self, (Exp) -> Exp) -> Self
 pub fn Stmt::move_stmt(Var, Exp) -> Self
 pub fn Stmt::normalize(Self, normalize_exp? : Bool) -> Array[Self]
 pub fn Stmt::normalize_negatives(Self) -> Self
+pub fn Stmt::not_equal(Self, Self) -> Bool
 pub fn Stmt::simplify(Self) -> Self
 pub fn Stmt::simplify_to_list(Self) -> Array[Self]
 pub fn Stmt::special(String) -> Self
 pub fn Stmt::substitute(Self, Exp, Exp) -> Self
 pub fn Stmt::substitute_var(Self, Var, Exp) -> Self
+pub fn Stmt::to_repr(Self) -> @debug.Repr
 pub fn Stmt::to_string(Self) -> String
 pub fn Stmt::while_(Exp, Array[Self]) -> Self
 
@@ -1600,17 +1708,22 @@ pub(all) struct Tid {
   ivec_value : Int?
 } derive(Eq, Hash, @debug.Debug)
 pub fn Tid::create() -> Self
+pub fn Tid::equal(Self, Self) -> Bool
 pub fn Tid::for_addr(Word, pkg? : String) -> Self
 pub fn Tid::for_ivec(Int, pkg? : String) -> Self
 pub fn Tid::for_name(String, pkg? : String) -> Self
 pub fn Tid::fresh() -> Self
 pub fn Tid::from_string(String) -> Result[Self, String]
 pub fn Tid::from_string_exn(String) -> Self raise TidParseError
+pub fn Tid::hash(Self) -> Int
+pub fn Tid::hash_combine(Self, Hasher) -> Unit
 pub fn Tid::id(Self) -> Int
 pub fn Tid::ivec(Self) -> Int?
 pub fn Tid::name(Self) -> String?
+pub fn Tid::not_equal(Self, Self) -> Bool
 pub fn Tid::pkg(Self) -> String
 pub fn Tid::restore(id~ : Int, pkg? : String, name? : String, ivec? : Int) -> Self
+pub fn Tid::to_repr(Self) -> @debug.Repr
 pub fn Tid::to_string(Self) -> String
 
 pub(all) enum TypeError {
@@ -1625,6 +1738,8 @@ pub fn TypeError::bad_mem() -> Self
 pub fn TypeError::bad_type(expected~ : ValueType, got~ : ValueType) -> Self
 pub fn TypeError::compare(Self, Self) -> Int
 pub fn TypeError::equal(Self, Self) -> Bool
+pub fn TypeError::not_equal(Self, Self) -> Bool
+pub fn TypeError::to_repr(Self) -> @debug.Repr
 pub fn TypeError::to_string(Self) -> String
 pub fn TypeError::unknown() -> Self
 
@@ -1632,6 +1747,9 @@ pub(all) enum TypeKind {
   MemKind
   ImmKind
 } derive(Eq, @debug.Debug)
+pub fn TypeKind::equal(Self, Self) -> Bool
+pub fn TypeKind::not_equal(Self, Self) -> Bool
+pub fn TypeKind::to_repr(Self) -> @debug.Repr
 
 pub(all) enum UnOp {
   Not
@@ -1643,7 +1761,9 @@ pub fn UnOp::compare(Self, Self) -> Int
 pub fn UnOp::equal(Self, Self) -> Bool
 pub fn UnOp::neg() -> Self
 pub fn UnOp::not() -> Self
+pub fn UnOp::not_equal(Self, Self) -> Bool
 pub fn UnOp::string_of_unop(Self) -> String
+pub fn UnOp::to_repr(Self) -> @debug.Repr
 pub fn UnOp::to_string(Self) -> String
 
 pub(all) enum ValueType {
@@ -1658,6 +1778,7 @@ pub fn ValueType::equal(Self, Self) -> Bool
 pub fn ValueType::mem(AddrSize, Size) -> Self
 pub fn ValueType::mem32_t(Size) -> Self
 pub fn ValueType::mem64_t(Size) -> Self
+pub fn ValueType::not_equal(Self, Self) -> Bool
 pub fn ValueType::reg(Size) -> Self
 pub fn ValueType::reg128_t() -> Self
 pub fn ValueType::reg16_t() -> Self
@@ -1665,6 +1786,7 @@ pub fn ValueType::reg256_t() -> Self
 pub fn ValueType::reg32_t() -> Self
 pub fn ValueType::reg64_t() -> Self
 pub fn ValueType::reg8_t() -> Self
+pub fn ValueType::to_repr(Self) -> @debug.Repr
 pub fn ValueType::to_string(Self) -> String
 pub fn ValueType::value_size(Self) -> Size?
 
@@ -1682,7 +1804,9 @@ pub fn Var::is_physical(Self) -> Bool
 pub fn Var::is_virtual(Self) -> Bool
 pub fn Var::name(Self) -> String
 pub fn Var::new(name~ : String, typ~ : ValueType, is_virtual? : Bool) -> Self
+pub fn Var::not_equal(Self, Self) -> Bool
 pub fn Var::same(Self, Self) -> Bool
+pub fn Var::to_repr(Self) -> @debug.Repr
 pub fn Var::to_string(Self) -> String
 pub fn Var::typ(Self) -> ValueType
 pub fn Var::with_index(Self, Int) -> Self
@@ -1744,6 +1868,7 @@ pub fn Word::modulo(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::msb(Self) -> Bool
 pub fn Word::mul(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::neg(Self) -> Self
+pub fn Word::not_equal(Self, Self) -> Bool
 pub fn Word::npred(Self, Int) -> Self
 pub fn Word::nsucc(Self, Int) -> Self
 pub fn Word::of_binary(@bitvec.Endian, BytesView, width? : Int) -> Self raise @bitvec.BitVecError
@@ -1776,6 +1901,7 @@ pub fn Word::to_int32_exn(Self) -> Int raise @bitvec.BitVecError
 pub fn Word::to_int64(Self) -> Int64 raise @bitvec.BitVecError
 pub fn Word::to_int64_exn(Self) -> Int64 raise @bitvec.BitVecError
 pub fn Word::to_int_exn(Self) -> Int raise @bitvec.BitVecError
+pub fn Word::to_repr(Self) -> @debug.Repr
 pub fn Word::to_string(Self) -> String
 pub fn Word::to_uint64(Self) -> UInt64 raise @bitvec.BitVecError
 pub fn Word::truncate(Self, width~ : Int) -> Self raise @bitvec.BitVecError
@@ -1793,6 +1919,9 @@ pub(all) enum WordLetterCase {
   WordUpperCase
   WordLowerCase
 } derive(Eq, @debug.Debug)
+pub fn WordLetterCase::equal(Self, Self) -> Bool
+pub fn WordLetterCase::not_equal(Self, Self) -> Bool
+pub fn WordLetterCase::to_repr(Self) -> @debug.Repr
 
 pub(all) enum WordPrefix {
   WordAutoPrefix
@@ -1800,13 +1929,19 @@ pub(all) enum WordPrefix {
   WordNoPrefix
   WordCustomPrefix(String)
 } derive(Eq, @debug.Debug)
+pub fn WordPrefix::equal(Self, Self) -> Bool
+pub fn WordPrefix::not_equal(Self, Self) -> Bool
+pub fn WordPrefix::to_repr(Self) -> @debug.Repr
 
 pub(all) enum WordSize {
   W32
   W64
 } derive(Eq, @debug.Debug)
+pub fn WordSize::equal(Self, Self) -> Bool
 pub fn WordSize::in_bits(Self) -> Int
 pub fn WordSize::in_bytes(Self) -> Int
+pub fn WordSize::not_equal(Self, Self) -> Bool
+pub fn WordSize::to_repr(Self) -> @debug.Repr
 pub fn WordSize::to_size(Self) -> Size
 pub fn WordSize::to_string(Self) -> String
 
@@ -1815,6 +1950,9 @@ pub(all) enum WordSuffix {
   WordFullSuffix
   WordSizeSuffix
 } derive(Eq, @debug.Debug)
+pub fn WordSuffix::equal(Self, Self) -> Bool
+pub fn WordSuffix::not_equal(Self, Self) -> Bool
+pub fn WordSuffix::to_repr(Self) -> @debug.Repr
 
 pub(all) enum WordValueFormat {
   WordHex
@@ -1822,9 +1960,11 @@ pub(all) enum WordValueFormat {
   WordOct
   WordBin
 } derive(Eq, @debug.Debug)
+pub fn WordValueFormat::equal(Self, Self) -> Bool
+pub fn WordValueFormat::not_equal(Self, Self) -> Bool
+pub fn WordValueFormat::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 pub type Callgraph = @graphlib.Graph[Tid, Array[Term[Jmp]]]
 
 // Traits
-

@@ -545,10 +545,10 @@ test "translated BAP trace metadata dictionaries expose sorted entries and remov
   assert_true(meta.arch() == Some(X86_64))
   assert_true(
     meta.binary_file_stats() ==
-    Some({ size: 42, atime: 1.25, mtime: 2.5, ctime: 3.75 }),
+    Some({ size: 42, atime: 1.25, mtime: 2.5, ctime: 3.75, }),
   )
   assert_true(
-    meta.trace_stats() == Some({ user: "me", host: "host", time: 4.5 }),
+    meta.trace_stats() == Some({ user: "me", host: "host", time: 4.5, }),
   )
   assert_true(meta.get_text("comment") == Some("snapshot"))
   assert_true(meta.get_int("pid") == Some(-1))
@@ -725,7 +725,7 @@ test "translated BAP trace protocol registry selects URI providers" {
   )
   @traces.Trace::register_reader("custom-provider", fn(uri) {
     if uri == "custom://trace" {
-      Ok({ tool: custom_tool, meta: test_meta(), events: custom_events })
+      Ok({ tool: custom_tool, meta: test_meta(), events: custom_events, })
     } else {
       Err(NoProvider(uri))
     }
@@ -866,7 +866,7 @@ test "translated BAP trace registries reject duplicate providers" {
   match
     @traces.Trace::try_register_reader("duplicate-provider", fn(uri) {
       if uri == "duplicate://trace" {
-        Ok({ tool: test_tool(), meta: test_meta(), events: original_events })
+        Ok({ tool: test_tool(), meta: test_meta(), events: original_events, })
       } else {
         Err(NoProvider(uri))
       }
@@ -876,7 +876,7 @@ test "translated BAP trace registries reject duplicate providers" {
   }
   match
     @traces.Trace::try_register_reader("duplicate-provider", fn(_) {
-      Ok({ tool: test_tool(), meta: test_meta(), events: replacement_events })
+      Ok({ tool: test_tool(), meta: test_meta(), events: replacement_events, })
     }) {
     Err(DuplicateRegistration(reason)) =>
       assert_true(reason.contains("trace reader duplicate-provider"))
@@ -884,7 +884,7 @@ test "translated BAP trace registries reject duplicate providers" {
   }
   match
     @traces.Trace::try_register_reader_with_id("duplicate-provider", fn(_, _) {
-      Ok({ tool: test_tool(), meta: test_meta(), events: replacement_events })
+      Ok({ tool: test_tool(), meta: test_meta(), events: replacement_events, })
     }) {
     Err(DuplicateRegistration(reason)) =>
       assert_true(reason.contains("trace reader duplicate-provider"))
@@ -955,7 +955,7 @@ test "translated BAP trace readers receive generated ids" {
       Err(NoProvider(uri))
     } else {
       seen_reader_id.val = Some(id)
-      Ok({ tool: custom_tool, meta: test_meta(), events: custom_events })
+      Ok({ tool: custom_tool, meta: test_meta(), events: custom_events, })
     }
   })
   match @traces.Trace::load("id-reader://trace") {

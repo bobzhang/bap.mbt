@@ -123,10 +123,10 @@ struct LabeledNode {
 
 ///|
 test "translated BAP graph node update preserves incident edges" {
-  let n1 = { id: 1, name: "1" }
-  let n2 = { id: 2, name: "2" }
-  let s1 = { id: 1, name: "one" }
-  let s2 = { id: 2, name: "two" }
+  let n1 = { id: 1, name: "1", }
+  let n2 = { id: 2, name: "2", }
+  let s1 = { id: 1, name: "one", }
+  let s2 = { id: 2, name: "two", }
   let graph : @graphlib.Graph[LabeledNode, Unit] = @graphlib.Graph::new()
     .add_edge(src=n1, dst=n2, label=())
     .replace_node(n1, s1)
@@ -255,8 +255,8 @@ test "translated BAP graph view maps nodes and edge labels" {
   assert_true(
     view.edges() ==
     [
-      { src: "n1", dst: "n2", label: "1->2:a" },
-      { src: "n2", dst: "n3", label: "2->3:b" },
+      { src: "n1", dst: "n2", label: "1->2:a", },
+      { src: "n2", dst: "n3", label: "2->3:b", },
     ],
   )
   assert_true(view.has_edge("n1", "n2"))
@@ -662,7 +662,7 @@ fn dfs_tree_parents(
   graph : @graphlib.Graph[Int, String],
   start : Int,
 ) -> Map[Int, Int] {
-  let parents : Map[Int, Int] = {}
+  let parents : Map[Int, Int] = Map([])
   for event in graph.dfs_edges(start) {
     match event.0 {
       Tree => parents[event.1.dst] = event.1.src

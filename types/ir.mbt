@@ -2,7 +2,7 @@
 let tid_counter : Ref[Int] = Ref(0)
 
 ///|
-let interned_tid_ids : Map[String, Int] = {}
+let interned_tid_ids : Map[String, Int] = Map([])
 
 ///|
 pub(all) struct Tid {
@@ -13,9 +13,24 @@ pub(all) struct Tid {
 } derive(Eq, Hash, Debug)
 
 ///|
+pub extend Tid with Eq::{not_equal, equal}
+
+///|
+pub extend Tid with Hash::{hash, hash_combine}
+
+///|
+pub extend Tid with Debug::{to_repr}
+
+///|
 pub(all) suberror TidParseError {
   InvalidTid(String)
 } derive(Eq, Debug)
+
+///|
+pub extend TidParseError with Eq::{not_equal, equal}
+
+///|
+pub extend TidParseError with Debug::{to_repr}
 
 ///|
 fn next_tid_id() -> Int {
@@ -129,7 +144,7 @@ pub fn Tid::create() -> Tid {
 
 ///|
 pub fn Tid::fresh() -> Tid {
-  { id: next_tid_id(), pkg_value: "user", name: None, ivec_value: None }
+  { id: next_tid_id(), pkg_value: "user", name: None, ivec_value: None, }
 }
 
 ///|
@@ -146,7 +161,7 @@ pub fn Tid::restore(
       register_interned_tid_id("ivec", tid_pkg, value.to_string(), id)
     _ => ensure_tid_counter_at_least(id)
   }
-  { id, pkg_value: tid_pkg, name, ivec_value: ivec }
+  { id, pkg_value: tid_pkg, name, ivec_value: ivec, }
 }
 
 ///|
@@ -281,8 +296,14 @@ pub(all) struct Attr {
 } derive(Eq, Debug)
 
 ///|
+pub extend Attr with Eq::{not_equal, equal}
+
+///|
+pub extend Attr with Debug::{to_repr}
+
+///|
 pub fn Attr::new(key~ : String, value~ : String) -> Attr {
-  { key, value }
+  { key, value, }
 }
 
 ///|
@@ -403,6 +424,12 @@ pub(all) enum Label {
 } derive(Eq, Debug)
 
 ///|
+pub extend Label with Eq::{not_equal, equal}
+
+///|
+pub extend Label with Debug::{to_repr}
+
+///|
 pub fn Label::create() -> Label {
   Direct(Tid::fresh())
 }
@@ -452,10 +479,22 @@ pub(all) enum JmpDst {
 } derive(Eq, Debug)
 
 ///|
+pub extend JmpDst with Eq::{not_equal, equal}
+
+///|
+pub extend JmpDst with Debug::{to_repr}
+
+///|
 pub(all) enum JmpResolution {
   ResolvedTarget(Tid)
   IndirectTarget(Exp)
 } derive(Eq, Debug)
+
+///|
+pub extend JmpResolution with Eq::{not_equal, equal}
+
+///|
+pub extend JmpResolution with Debug::{to_repr}
 
 ///|
 pub fn Jmp::resolved(tid : Tid) -> JmpDst {
@@ -531,23 +570,29 @@ pub(all) struct Call {
 } derive(Eq, Debug)
 
 ///|
+pub extend Call with Eq::{not_equal, equal}
+
+///|
+pub extend Call with Debug::{to_repr}
+
+///|
 pub fn Call::create(target~ : Label, return_label? : Label) -> Call {
-  { target, return_label }
+  { target, return_label, }
 }
 
 ///|
 pub fn Call::with_target(self : Call, target : Label) -> Call {
-  { target, return_label: self.return_label }
+  { target, return_label: self.return_label, }
 }
 
 ///|
 pub fn Call::with_return(self : Call, return_label : Label) -> Call {
-  { target: self.target, return_label: Some(return_label) }
+  { target: self.target, return_label: Some(return_label), }
 }
 
 ///|
 pub fn Call::with_noreturn(self : Call) -> Call {
-  { target: self.target, return_label: None }
+  { target: self.target, return_label: None, }
 }
 
 ///|
@@ -568,6 +613,12 @@ pub(all) enum JmpKind {
 } derive(Eq, Debug)
 
 ///|
+pub extend JmpKind with Eq::{not_equal, equal}
+
+///|
+pub extend JmpKind with Debug::{to_repr}
+
+///|
 pub fn JmpKind::to_string(self : JmpKind) -> String {
   match self {
     JmpCall(call) => "call \{call.target.to_string()}"
@@ -583,6 +634,12 @@ pub(all) enum Intent {
   Out
   Both
 } derive(Eq, Debug)
+
+///|
+pub extend Intent with Eq::{not_equal, equal}
+
+///|
+pub extend Intent with Debug::{to_repr}
 
 ///|
 pub(all) struct Program {
@@ -610,10 +667,22 @@ pub(all) struct Def {
 } derive(Eq, Debug)
 
 ///|
+pub extend Def with Eq::{not_equal, equal}
+
+///|
+pub extend Def with Debug::{to_repr}
+
+///|
 pub(all) struct Phi {
   lhs : Var
   values : Array[(Tid, Exp)]
 } derive(Eq, Debug)
+
+///|
+pub extend Phi with Eq::{not_equal, equal}
+
+///|
+pub extend Phi with Debug::{to_repr}
 
 ///|
 pub(all) struct Jmp {
@@ -622,11 +691,23 @@ pub(all) struct Jmp {
 } derive(Eq, Debug)
 
 ///|
+pub extend Jmp with Eq::{not_equal, equal}
+
+///|
+pub extend Jmp with Debug::{to_repr}
+
+///|
 pub(all) struct Arg {
   lhs : Var
   rhs : Exp
   intent : Intent?
 } derive(Eq, Debug)
+
+///|
+pub extend Arg with Eq::{not_equal, equal}
+
+///|
+pub extend Arg with Debug::{to_repr}
 
 ///|
 pub(all) enum BlkElt {
@@ -673,7 +754,7 @@ pub fn Program::create(subs? : Array[Term[Sub]], tid? : Tid) -> Term[Program] {
 ///|
 pub fn ProgramBuilder::create(tid? : Tid, subs? : Int) -> ProgramBuilder {
   ignore(subs)
-  { tid_value: tid, subs_value: [] }
+  { tid_value: tid, subs_value: [], }
 }
 
 ///|
@@ -863,7 +944,7 @@ pub fn BlkBuilder::create(
   ignore(phis)
   ignore(defs)
   ignore(jmps)
-  { tid_value: tid, phis_value: [], defs_value: [], jmps_value: [] }
+  { tid_value: tid, phis_value: [], defs_value: [], jmps_value: [], }
 }
 
 ///|
@@ -1012,7 +1093,7 @@ pub fn Blk::defines_var(blk : Term[Blk], variable : Var) -> Bool {
 
 ///|
 pub fn Def::create(lhs : Var, rhs : Exp, tid? : Tid) -> Term[Def] {
-  Term::create({ lhs, rhs }, tid?)
+  Term::create({ lhs, rhs, }, tid?)
 }
 
 ///|
@@ -1081,7 +1162,7 @@ pub fn Phi::of_list(
   values : Array[(Tid, Exp)],
   tid? : Tid,
 ) -> Term[Phi] {
-  Term::create({ lhs, values: values.copy() }, tid?)
+  Term::create({ lhs, values: values.copy(), }, tid?)
 }
 
 ///|
@@ -1367,7 +1448,7 @@ pub fn Arg::create(
   intent? : Intent,
   tid? : Tid,
 ) -> Term[Arg] {
-  Term::create({ lhs, rhs, intent }, tid?)
+  Term::create({ lhs, rhs, intent, }, tid?)
 }
 
 ///|
@@ -1422,7 +1503,7 @@ pub fn Arg::intent(arg : Term[Arg]) -> Intent? {
 
 ///|
 pub fn Term::with_intent(self : Term[Arg], intent : Intent) -> Term[Arg] {
-  self.with_payload({ ..self.payload_value, intent: Some(intent) })
+  self.with_payload({ ..self.payload_value, intent: Some(intent), })
 }
 
 ///|
@@ -1432,7 +1513,7 @@ pub fn Arg::with_intent(arg : Term[Arg], intent : Intent) -> Term[Arg] {
 
 ///|
 pub fn Term::with_unknown_intent(self : Term[Arg]) -> Term[Arg] {
-  self.with_payload({ ..self.payload_value, intent: None })
+  self.with_payload({ ..self.payload_value, intent: None, })
 }
 
 ///|

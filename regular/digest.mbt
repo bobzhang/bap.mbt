@@ -2,6 +2,15 @@
 pub(all) struct Digest(String) derive(Eq, Hash, Debug)
 
 ///|
+pub extend Digest with Eq::{not_equal, equal}
+
+///|
+pub extend Digest with Hash::{hash, hash_combine}
+
+///|
+pub extend Digest with Debug::{to_repr}
+
+///|
 pub fn Digest::to_string(self : Digest) -> String {
   self.0
 }

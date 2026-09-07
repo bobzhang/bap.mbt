@@ -4,6 +4,12 @@ struct Equiv {
 } derive(Eq, Debug)
 
 ///|
+pub extend Equiv with Eq::{not_equal, equal}
+
+///|
+pub extend Equiv with Debug::{to_repr}
+
+///|
 pub fn Equiv::to_int(self : Equiv) -> Int {
   self.index
 }
@@ -16,8 +22,11 @@ struct Group[N] {
 } derive(Debug)
 
 ///|
+pub extend Group with Debug::{to_repr}
+
+///|
 fn[N] graph_group_new(root : N, members : Set[N], index : Int) -> Group[N] {
-  { top_value: root, members_value: members.copy(), equiv_value: { index, } }
+  { top_value: root, members_value: members.copy(), equiv_value: { index, }, }
 }
 
 ///|
@@ -61,6 +70,9 @@ struct Partition[N] {
 } derive(Debug)
 
 ///|
+pub extend Partition with Debug::{to_repr}
+
+///|
 pub fn[N] Partition::group_sets(self : Partition[N]) -> Array[Set[N]] {
   self.groups_value.map(group => group.copy())
 }
@@ -89,9 +101,9 @@ pub fn[N : Hash + Eq] Partition::trivial(
   elements : ArrayView[N],
 ) -> Partition[N] {
   if elements.is_empty() {
-    { roots_value: [], groups_value: [] }
+    { roots_value: [], groups_value: [], }
   } else {
-    { roots_value: [elements[0]], groups_value: [Set::from_array(elements)] }
+    { roots_value: [elements[0]], groups_value: [Set::from_array(elements)], }
   }
 }
 
@@ -176,7 +188,7 @@ pub fn[N : Hash + Eq] Partition::union(
     }
     (Some(_), None) | (None, Some(_)) | (None, None) => ()
   }
-  { roots_value: roots, groups_value: groups }
+  { roots_value: roots, groups_value: groups, }
 }
 
 ///|
@@ -219,5 +231,5 @@ pub fn[N : Hash + Eq] Partition::refine(
       }
     }
   }
-  { roots_value: roots, groups_value: refined }
+  { roots_value: roots, groups_value: refined, }
 }

@@ -56,7 +56,7 @@ pub fn[N : Eq, E] Graph::add_node(self : Graph[N, E], node : N) -> Graph[N, E] {
   } else {
     let nodes = self.nodes.copy()
     nodes.push(node)
-    { nodes, edges: self.edges.copy() }
+    { nodes, edges: self.edges.copy(), }
   }
 }
 
@@ -74,7 +74,7 @@ pub fn[N : Eq, E] Graph::add_edge(
     Some(i) => edges[i] = Edge::new(src~, dst~, label~)
     None => edges.push(Edge::new(src~, dst~, label~))
   }
-  { nodes: with_nodes.nodes.copy(), edges }
+  { nodes: with_nodes.nodes.copy(), edges, }
 }
 
 ///|
@@ -88,7 +88,7 @@ pub fn[N : Eq, E] Graph::update_edge(
   match edge_index(edges, src, dst) {
     Some(i) => {
       edges[i] = Edge::new(src~, dst~, label~)
-      { nodes: self.nodes.copy(), edges }
+      { nodes: self.nodes.copy(), edges, }
     }
     None => self
   }
@@ -101,7 +101,7 @@ pub fn[N : Eq, E] Graph::remove_edge(
   dst : N,
 ) -> Graph[N, E] {
   let edges = self.edges.filter(edge => !(edge.src == src && edge.dst == dst))
-  { nodes: self.nodes.copy(), edges }
+  { nodes: self.nodes.copy(), edges, }
 }
 
 ///|
@@ -134,7 +134,7 @@ pub fn[N : Eq, E] Graph::replace_node(
         nodes.push(node)
       }
     }
-    let mut out = { nodes, edges: [] }
+    let mut out = { nodes, edges: [], }
     for edge in self.edges {
       let src = if edge.src == old { replacement } else { edge.src }
       let dst = if edge.dst == old { replacement } else { edge.dst }
@@ -269,7 +269,7 @@ pub fn[N : Eq, E] Graph::intersect(
 ) -> Graph[N, E] {
   let nodes = self.nodes.filter(node => other.has_node(node))
   let edges = self.edges.filter(edge => other.has_edge(edge.src, edge.dst))
-  { nodes, edges }
+  { nodes, edges, }
 }
 
 ///|

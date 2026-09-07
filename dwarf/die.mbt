@@ -34,6 +34,12 @@ pub(all) enum DwarfDieReference {
 } derive(Eq, Debug)
 
 ///|
+pub extend DwarfDieReference with Eq::{not_equal, equal}
+
+///|
+pub extend DwarfDieReference with Debug::{to_repr}
+
+///|
 pub fn DwarfDieReference::section_offset(
   self : DwarfDieReference,
   unit_start~ : Int,

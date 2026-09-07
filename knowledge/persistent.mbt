@@ -9,7 +9,7 @@ pub fn[T] Persistent::create(
   to_string~ : (T) -> String,
   of_string~ : (String) -> Result[T, String],
 ) -> Persistent[T] {
-  { encode_fn: to_string, decode_fn: of_string }
+  { encode_fn: to_string, decode_fn: of_string, }
 }
 
 ///|
@@ -202,7 +202,7 @@ pub fn[T] Persistent::list(
 ) -> Persistent[@list.List[T]] {
   Persistent::convert(
     to_persistent=(values : @list.List[T]) => values.to_array(),
-    of_persistent=(values : Array[T]) => Ok(@list.from_array(values)),
+    of_persistent=(values : Array[T]) => Ok(@list.List(values)),
     Persistent::array(element),
   )
 }
@@ -228,7 +228,7 @@ pub fn[K : Eq + Hash, V] Persistent::map(
       parts.join("")
     },
     of_string=input => {
-      let result : Map[K, V] = {}
+      let result : Map[K, V] = Map([])
       let mut offset = 0
       while offset < input.length() {
         let (encoded_key, after_key) = match

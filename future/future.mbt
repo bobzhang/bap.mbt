@@ -5,10 +5,22 @@ pub(all) suberror FutureError {
 } derive(Eq, Debug)
 
 ///|
+pub extend FutureError with Eq::{not_equal, equal}
+
+///|
+pub extend FutureError with Debug::{to_repr}
+
+///|
 pub(all) enum Either[A, B] {
   Left(A)
   Right(B)
 } derive(Eq, Debug)
+
+///|
+pub extend Either with Eq::{not_equal, equal}
+
+///|
+pub extend Either with Debug::{to_repr}
 
 ///|
 struct Future[T] {
@@ -23,13 +35,13 @@ struct Promise[T] {
 
 ///|
 pub fn[T] Future::create() -> (Future[T], Promise[T]) {
-  let future = { value: Ref(None), waiters: [] }
+  let future = { value: Ref(None), waiters: [], }
   (future, { future, })
 }
 
 ///|
 pub fn[T] Future::resolved(value : T) -> Future[T] {
-  { value: Ref(Some(value)), waiters: [] }
+  { value: Ref(Some(value)), waiters: [], }
 }
 
 ///|
@@ -222,7 +234,7 @@ struct FutureArgs[F, R] {
 
 ///|
 pub fn[R] FutureArgs::nil() -> FutureArgs[R, R] {
-  { run: fn(functions) { functions } }
+  { run: fn(functions) { functions }, }
 }
 
 ///|
@@ -230,7 +242,7 @@ pub fn[A, F, R] FutureArgs::cons(
   arg : Future[A],
   args : FutureArgs[F, R],
 ) -> FutureArgs[(A) -> F, R] {
-  { run: fn(functions) { (args.run)(Future::apply(functions, arg)) } }
+  { run: fn(functions) { (args.run)(Future::apply(functions, arg)) }, }
 }
 
 ///|
@@ -238,7 +250,7 @@ pub fn[F1, F2, R] FutureArgs::step(
   args : FutureArgs[F1, R],
   f : (F2) -> F1,
 ) -> FutureArgs[F2, R] {
-  { run: fn(functions) { (args.run)(functions.map(f)) } }
+  { run: fn(functions) { (args.run)(functions.map(f)) }, }
 }
 
 ///|
@@ -300,7 +312,7 @@ pub fn[T] Future::all(futures : Array[Future[T]]) -> Future[Array[T]] {
 pub fn[T] Future::all_list(
   futures : @list.List[Future[T]],
 ) -> Future[@list.List[T]] {
-  Future::all(futures.to_array()).map(fn(values) { @list.from_array(values) })
+  Future::all(futures.to_array()).map(fn(values) { @list.List(values) })
 }
 
 ///|
@@ -362,7 +374,7 @@ pub fn[T] Stream::create() -> (Stream[T], Signal[T]) {
     on_unsubscribe_callbacks: [],
     waiters: [],
   }
-  let signal = { send_fn: fn(value) { stream.publish(value) } }
+  let signal = { send_fn: fn(value) { stream.publish(value) }, }
   (stream, signal)
 }
 
@@ -441,7 +453,7 @@ pub fn[T] Stream::on_unsubscribe(
 ///|
 pub fn[T] Stream::from(generator : () -> T) -> (Stream[T], Signal[Unit]) {
   let (stream, signal) = Stream::create()
-  let signal = { send_fn: fn(_) { signal.send(generator()) } }
+  let signal = { send_fn: fn(_) { signal.send(generator()) }, }
   (stream, signal)
 }
 
@@ -578,7 +590,7 @@ pub fn[T, E] Stream::before_list(
   self : Stream[T],
   event : Future[E],
 ) -> Future[@list.List[T]] {
-  self.before(event).map(fn(values) { @list.from_array(values) })
+  self.before(event).map(fn(values) { @list.List(values) })
 }
 
 ///|
@@ -826,7 +838,7 @@ struct StreamArgs[F, R] {
 
 ///|
 pub fn[A, R] StreamArgs::args(arg : Stream[A]) -> StreamArgs[(A) -> R, R] {
-  { run: fn(f) { arg.map(f) } }
+  { run: fn(f) { arg.map(f) }, }
 }
 
 ///|
@@ -834,7 +846,7 @@ pub fn[F, A, R] StreamArgs::add(
   self : StreamArgs[F, (A) -> R],
   arg : Stream[A],
 ) -> StreamArgs[F, R] {
-  { run: fn(f) { Stream::apply((self.run)(f), arg) } }
+  { run: fn(f) { Stream::apply((self.run)(f), arg) }, }
 }
 
 ///|
@@ -842,7 +854,7 @@ pub fn[F1, F2, R] StreamArgs::step(
   self : StreamArgs[F1, R],
   f : (F2) -> F1,
 ) -> StreamArgs[F2, R] {
-  { run: fn(function) { (self.run)(f(function)) } }
+  { run: fn(function) { (self.run)(f(function)) }, }
 }
 
 ///|
@@ -973,7 +985,7 @@ pub fn[T, E] Stream::last_before_list(
   event : Future[E],
   count : Int,
 ) -> Future[@list.List[T]] {
-  self.last_before(event, count).map(fn(values) { @list.from_array(values) })
+  self.last_before(event, count).map(fn(values) { @list.List(values) })
 }
 
 ///|
@@ -998,7 +1010,7 @@ pub fn[T] Stream::take_list(
   self : Stream[T],
   count : Int,
 ) -> Future[@list.List[T]] {
-  self.take(count).map(fn(values) { @list.from_array(values) })
+  self.take(count).map(fn(values) { @list.List(values) })
 }
 
 ///|

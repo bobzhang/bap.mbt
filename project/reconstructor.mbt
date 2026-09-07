@@ -4,7 +4,7 @@ struct ProjectReconstructor {
 }
 
 ///|
-let project_reconstructor_registry : Map[String, ProjectReconstructor] = {}
+let project_reconstructor_registry : Map[String, ProjectReconstructor] = Map([])
 
 ///|
 fn project_reconstructor_find_name(
@@ -464,7 +464,7 @@ fn project_reconstructor_apply(
 pub fn ProjectReconstructor::create(
   run : (Project) -> Result[Project, String],
 ) -> ProjectReconstructor {
-  { run_fn: run }
+  { run_fn: run, }
 }
 
 ///|

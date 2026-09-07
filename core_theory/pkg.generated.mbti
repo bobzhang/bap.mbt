@@ -77,6 +77,7 @@ pub fn Abi::members() -> Array[Self]
 pub fn Abi::ms() -> Self
 pub fn Abi::msvc() -> Self
 pub fn Abi::name(Self) -> @knowledge.Name
+pub fn Abi::not_equal(Self, Self) -> Bool
 pub fn Abi::of_string(String) -> Self?
 pub fn Abi::pascal() -> Self
 pub fn Abi::persistent() -> @knowledge.Persistent[Self]
@@ -85,6 +86,7 @@ pub fn Abi::smc() -> Self
 pub fn Abi::stdcall() -> Self
 pub fn Abi::sysv() -> Self
 pub fn Abi::thiscall() -> Self
+pub fn Abi::to_repr(Self) -> @debug.Repr
 pub fn Abi::to_string(Self) -> String
 pub fn Abi::unknown() -> Self
 pub fn Abi::vectorcall() -> Self
@@ -174,13 +176,16 @@ pub fn EffectSort::ctrl() -> Self
 pub fn EffectSort::ctrl_named(String) -> Self
 pub fn EffectSort::data() -> Self
 pub fn EffectSort::data_named(String) -> Self
+pub fn EffectSort::equal(Self, Self) -> Bool
 pub fn EffectSort::fall() -> Self
 pub fn EffectSort::join(Array[Self], Array[Self]) -> Self
 pub fn EffectSort::jump() -> Self
+pub fn EffectSort::not_equal(Self, Self) -> Bool
 pub fn EffectSort::order(Self, Self) -> @knowledge.PartialOrder
 pub fn EffectSort::persistent() -> @knowledge.Persistent[Self]
 pub fn EffectSort::rmem() -> Self
 pub fn EffectSort::rreg() -> Self
+pub fn EffectSort::to_repr(Self) -> @debug.Repr
 pub fn EffectSort::to_string(Self) -> String
 pub fn EffectSort::top() -> Self
 pub fn EffectSort::union(Self, Self) -> Self
@@ -249,9 +254,11 @@ pub fn Endianness::is_unknown(Self) -> Bool
 pub fn Endianness::le() -> Self
 pub fn Endianness::members() -> Array[Self]
 pub fn Endianness::name(Self) -> @knowledge.Name
+pub fn Endianness::not_equal(Self, Self) -> Bool
 pub fn Endianness::of_string(String) -> Self?
 pub fn Endianness::persistent() -> @knowledge.Persistent[Self]
 pub fn Endianness::read(String, pkg? : String) -> Result[Self, String]
+pub fn Endianness::to_repr(Self) -> @debug.Repr
 pub fn Endianness::to_string(Self) -> String
 pub fn Endianness::unknown() -> Self
 
@@ -268,10 +275,12 @@ pub fn Fabi::hash(Self) -> Int
 pub fn Fabi::is_unknown(Self) -> Bool
 pub fn Fabi::members() -> Array[Self]
 pub fn Fabi::name(Self) -> @knowledge.Name
+pub fn Fabi::not_equal(Self, Self) -> Bool
 pub fn Fabi::of_string(String) -> Self?
 pub fn Fabi::persistent() -> @knowledge.Persistent[Self]
 pub fn Fabi::read(String, pkg? : String) -> Result[Self, String]
 pub fn Fabi::soft() -> Self
+pub fn Fabi::to_repr(Self) -> @debug.Repr
 pub fn Fabi::to_string(Self) -> String
 pub fn Fabi::unknown() -> Self
 
@@ -295,11 +304,13 @@ pub fn Filetype::is_unknown(Self) -> Bool
 pub fn Filetype::macho() -> Self
 pub fn Filetype::members() -> Array[Self]
 pub fn Filetype::name(Self) -> @knowledge.Name
+pub fn Filetype::not_equal(Self, Self) -> Bool
 pub fn Filetype::of_string(String) -> Self?
 pub fn Filetype::pe() -> Self
 pub fn Filetype::persistent() -> @knowledge.Persistent[Self]
 pub fn Filetype::raw() -> Self
 pub fn Filetype::read(String, pkg? : String) -> Result[Self, String]
+pub fn Filetype::to_repr(Self) -> @debug.Repr
 pub fn Filetype::to_string(Self) -> String
 pub fn Filetype::unknown() -> Self
 
@@ -321,6 +332,11 @@ pub fn Ieee754Parameters::decimal(Int) -> Self?
 pub fn Ieee754Parameters::decimal128() -> Self
 pub fn Ieee754Parameters::decimal32() -> Self
 pub fn Ieee754Parameters::decimal64() -> Self
+pub fn Ieee754Parameters::equal(Self, Self) -> Bool
+pub fn Ieee754Parameters::hash(Self) -> Int
+pub fn Ieee754Parameters::hash_combine(Self, Hasher) -> Unit
+pub fn Ieee754Parameters::not_equal(Self, Self) -> Bool
+pub fn Ieee754Parameters::to_repr(Self) -> @debug.Repr
 
 type Label
 pub fn Label::addr(Self) -> @types.Word?
@@ -427,6 +443,7 @@ pub fn Language::llvm_x86() -> Self
 pub fn Language::llvm_x86_64() -> Self
 pub fn Language::members() -> Array[Self]
 pub fn Language::name(Self) -> @knowledge.Name
+pub fn Language::not_equal(Self, Self) -> Bool
 pub fn Language::of_string(String) -> Self
 pub fn Language::pascal() -> Self
 pub fn Language::pcode_arm() -> Self
@@ -435,6 +452,7 @@ pub fn Language::pcode_powerpc() -> Self
 pub fn Language::pcode_x86() -> Self
 pub fn Language::persistent() -> @knowledge.Persistent[Self]
 pub fn Language::read(String, pkg? : String) -> Result[Self, String]
+pub fn Language::to_repr(Self) -> @debug.Repr
 pub fn Language::to_string(Self) -> String
 pub fn Language::unknown() -> Self
 
@@ -557,6 +575,7 @@ pub fn Role::is_unknown(Self) -> Bool
 pub fn Role::link() -> Self
 pub fn Role::members() -> Array[Self]
 pub fn Role::name(Self) -> @knowledge.Name
+pub fn Role::not_equal(Self, Self) -> Bool
 pub fn Role::of_string(String) -> Self?
 pub fn Role::one() -> Self
 pub fn Role::overflow_flag() -> Self
@@ -575,6 +594,7 @@ pub fn Role::status() -> Self
 pub fn Role::system() -> Self
 pub fn Role::thread() -> Self
 pub fn Role::thumb() -> Self
+pub fn Role::to_repr(Self) -> @debug.Repr
 pub fn Role::to_string(Self) -> String
 pub fn Role::unknown() -> Self
 pub fn Role::vector() -> Self
@@ -625,6 +645,7 @@ pub fn Sort::arrow(Self, Self) -> Self
 pub fn Sort::bitv(Int) -> Self
 pub fn Sort::bitv_size(Self) -> Int?
 pub fn Sort::bool() -> Self
+pub fn Sort::equal(Self, Self) -> Bool
 pub fn Sort::float(Int) -> Self
 pub fn Sort::float_bits(Self) -> Self?
 pub fn Sort::float_format(Self, Self) -> Self
@@ -634,6 +655,8 @@ pub fn Sort::float_format_of(Self) -> Self?
 pub fn Sort::float_width(Self) -> Int?
 pub fn Sort::float_with_format(Self) -> Self
 pub fn Sort::forget(Self) -> Self
+pub fn Sort::hash(Self) -> Int
+pub fn Sort::hash_combine(Self, Hasher) -> Unit
 pub fn Sort::hd(Self) -> Self?
 pub fn Sort::head(Self) -> Self
 pub fn Sort::ieee754(Ieee754Parameters) -> Self
@@ -646,6 +669,7 @@ pub fn Sort::mem(Self, Self) -> Self
 pub fn Sort::mem_keys(Self) -> Self?
 pub fn Sort::mem_values(Self) -> Self?
 pub fn Sort::name(Self) -> @knowledge.Name?
+pub fn Sort::not_equal(Self, Self) -> Bool
 pub fn Sort::persistent() -> @knowledge.Persistent[Self]
 pub fn Sort::refine(Self, @knowledge.Name) -> Self?
 pub fn Sort::refine_bitv(Self) -> Self?
@@ -658,6 +682,7 @@ pub fn Sort::same(Self, Self) -> Bool
 pub fn Sort::sym(@knowledge.Name) -> Self
 pub fn Sort::tail(Self) -> Array[Self]
 pub fn Sort::tl(Self) -> Self?
+pub fn Sort::to_repr(Self) -> @debug.Repr
 pub fn Sort::to_string(Self) -> String
 pub fn Sort::top() -> Self
 pub fn Sort::value(Self) -> Int?
@@ -730,11 +755,13 @@ pub fn System::msdos() -> Self
 pub fn System::name(Self) -> @knowledge.Name
 pub fn System::netbsd() -> Self
 pub fn System::none() -> Self
+pub fn System::not_equal(Self, Self) -> Bool
 pub fn System::of_string(String) -> Self?
 pub fn System::openbsd() -> Self
 pub fn System::persistent() -> @knowledge.Persistent[Self]
 pub fn System::read(String, pkg? : String) -> Result[Self, String]
 pub fn System::solaris() -> Self
+pub fn System::to_repr(Self) -> @debug.Repr
 pub fn System::to_string(Self) -> String
 pub fn System::tru64() -> Self
 pub fn System::uefi() -> Self
@@ -775,7 +802,6 @@ pub fn Target::family(Self) -> Array[Self]
 pub fn Target::filetype(Self) -> Filetype
 pub fn Target::filter(parent? : Self, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, options? : TargetOptions, strict? : Bool) -> Array[Self]
 pub fn Target::find_role(Self, Role) -> Var?
-#alias(var)
 pub fn Target::find_var(Self, String) -> Var?
 pub fn Target::get(String, pkg? : String) -> Result[Self, String]
 pub fn Target::has_roles(Self, Array[Role], Var) -> Bool
@@ -918,4 +944,3 @@ pub fn Var::versioned(Self, Int) -> Self
 // Type aliases
 
 // Traits
-

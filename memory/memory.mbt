@@ -6,9 +6,21 @@ pub(all) enum AddressPosition {
 } derive(Eq, Debug)
 
 ///|
+pub extend AddressPosition with Eq::{not_equal, equal}
+
+///|
+pub extend AddressPosition with Debug::{to_repr}
+
+///|
 pub(all) suberror MemoryError {
   MemoryFailure(String)
 } derive(Eq, Debug)
+
+///|
+pub extend MemoryError with Eq::{not_equal, equal}
+
+///|
+pub extend MemoryError with Debug::{to_repr}
 
 ///|
 struct Memory {
@@ -83,12 +95,12 @@ pub fn Memory::from_bytes(
   start~ : UInt64,
   data : Bytes,
 ) -> Memory {
-  { endian_value: endian, base_addr: start, data_value: data }
+  { endian_value: endian, base_addr: start, data_value: data, }
 }
 
 ///|
 pub fn Memory::rebase(self : Memory, start : UInt64) -> Memory {
-  { ..self, base_addr: start }
+  { ..self, base_addr: start, }
 }
 
 ///|
@@ -668,47 +680,47 @@ pub fn[E] Memory::find_if_result(
 
 ///|
 pub fn MemoryInputReader::word(word_size~ : Int) -> MemoryInputReader {
-  { width_value: word_size, signed_value: false }
+  { width_value: word_size, signed_value: false, }
 }
 
 ///|
 pub fn MemoryInputReader::int8() -> MemoryInputReader {
-  { width_value: 8, signed_value: true }
+  { width_value: 8, signed_value: true, }
 }
 
 ///|
 pub fn MemoryInputReader::uint8() -> MemoryInputReader {
-  { width_value: 8, signed_value: false }
+  { width_value: 8, signed_value: false, }
 }
 
 ///|
 pub fn MemoryInputReader::int16() -> MemoryInputReader {
-  { width_value: 16, signed_value: true }
+  { width_value: 16, signed_value: true, }
 }
 
 ///|
 pub fn MemoryInputReader::uint16() -> MemoryInputReader {
-  { width_value: 16, signed_value: false }
+  { width_value: 16, signed_value: false, }
 }
 
 ///|
 pub fn MemoryInputReader::int32() -> MemoryInputReader {
-  { width_value: 32, signed_value: true }
+  { width_value: 32, signed_value: true, }
 }
 
 ///|
 pub fn MemoryInputReader::int64() -> MemoryInputReader {
-  { width_value: 64, signed_value: true }
+  { width_value: 64, signed_value: true, }
 }
 
 ///|
 pub fn MemoryInputReader::int128() -> MemoryInputReader {
-  { width_value: 128, signed_value: true }
+  { width_value: 128, signed_value: true, }
 }
 
 ///|
 pub fn MemoryInputReader::int256() -> MemoryInputReader {
-  { width_value: 256, signed_value: true }
+  { width_value: 256, signed_value: true, }
 }
 
 ///|
@@ -747,7 +759,7 @@ pub fn Memory::store(
       for i in 0..<bytes.length() {
         data[pos + i] = bytes[i]
       }
-      Ok({ ..self, data_value: Bytes::from_array(data) })
+      Ok({ ..self, data_value: Bytes::from_array(data), })
     }
     _ => Err("memory store is out of bounds")
   }

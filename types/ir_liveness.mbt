@@ -118,8 +118,8 @@ pub fn Term::sub_liveness(
   entry? : Tid,
 ) -> Array[BlockLiveness] {
   let blocks = self.sub_reverse_postorder(entry?)
-  let live_in : Map[Tid, Array[Var]] = {}
-  let live_out : Map[Tid, Array[Var]] = {}
+  let live_in : Map[Tid, Array[Var]] = Map([])
+  let live_out : Map[Tid, Array[Var]] = Map([])
   for block in blocks {
     live_in[block.tid()] = []
     live_out[block.tid()] = []

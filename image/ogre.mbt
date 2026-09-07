@@ -7,10 +7,22 @@ pub(all) enum OgreFieldType {
 } derive(Eq, Debug)
 
 ///|
+pub extend OgreFieldType with Eq::{not_equal, equal}
+
+///|
+pub extend OgreFieldType with Debug::{to_repr}
+
+///|
 pub(all) struct OgreField {
   name : String
   typ : OgreFieldType
 } derive(Eq, Debug)
+
+///|
+pub extend OgreField with Eq::{not_equal, equal}
+
+///|
+pub extend OgreField with Debug::{to_repr}
 
 ///|
 struct OgreFact {
@@ -53,7 +65,7 @@ fn ogre_field_type_of_string(text : String) -> OgreFieldType? {
 
 ///|
 pub fn OgreField::create(name~ : String, typ~ : OgreFieldType) -> OgreField {
-  { name, typ }
+  { name, typ, }
 }
 
 ///|
@@ -83,7 +95,7 @@ pub fn OgreFact::value(self : OgreFact, field : String) -> String? {
 
 ///|
 pub fn OgreDoc::empty() -> OgreDoc {
-  { declarations_value: {}, facts_value: {} }
+  { declarations_value: {}, facts_value: {}, }
 }
 
 ///|
@@ -135,7 +147,7 @@ fn ogre_field_array(
 fn ogre_declaration_map(
   declarations : Array[(String, Array[OgreField])],
 ) -> Map[String, Array[OgreField]] {
-  let result : Map[String, Array[OgreField]] = {}
+  let result : Map[String, Array[OgreField]] = Map([])
   for declaration in declarations {
     result[declaration.0] = declaration.1.copy()
   }
@@ -144,16 +156,16 @@ fn ogre_declaration_map(
 
 ///|
 fn ogre_fact(attribute : String, fields : Array[(String, String)]) -> OgreFact {
-  let values : Map[String, String] = {}
+  let values : Map[String, String] = Map([])
   for field in fields {
     values[field.0] = field.1
   }
-  { attribute_value: attribute, fields_value: values }
+  { attribute_value: attribute, fields_value: values, }
 }
 
 ///|
 fn ogre_fact_map(facts : Array[OgreFact]) -> Map[String, Array[OgreFact]] {
-  let result : Map[String, Array[OgreFact]] = {}
+  let result : Map[String, Array[OgreFact]] = Map([])
   for fact in facts {
     let values = match result.get(fact.attribute_value) {
       Some(items) => items.copy()
@@ -194,7 +206,7 @@ pub fn OgreDoc::from_target(target : @core_theory.Target) -> OgreDoc {
   if target.filetype() != UnknownFiletype {
     facts.push(ogre_fact("format", [("name", target.filetype().to_string())]))
   }
-  { declarations_value: declarations, facts_value: ogre_fact_map(facts) }
+  { declarations_value: declarations, facts_value: ogre_fact_map(facts), }
 }
 
 ///|
@@ -469,7 +481,7 @@ fn ogre_parse_fact(
       match doc.declarations_value.get(attribute) {
         None => Err("Ogre attribute \{attribute} is not declared")
         Some(schema) => {
-          let mut fields : Map[String, String] = {}
+          let mut fields : Map[String, String] = Map([])
           if values.length() != schema.length() {
             return Err("wrong arity for Ogre attribute \{attribute}")
           }
@@ -496,7 +508,7 @@ fn ogre_parse_fact(
               }
             }
           }
-          Ok({ attribute_value: attribute, fields_value: fields })
+          Ok({ attribute_value: attribute, fields_value: fields, })
         }
       }
     _ => Err("expected Ogre fact")
@@ -515,7 +527,7 @@ fn ogre_update_declaration(
     _ => {
       let declarations = doc.declarations_value.copy()
       declarations[attribute] = fields.copy()
-      Ok({ ..doc, declarations_value: declarations })
+      Ok({ ..doc, declarations_value: declarations, })
     }
   }
 }
@@ -531,7 +543,7 @@ fn ogre_update_fact(doc : OgreDoc, fact : OgreFact) -> OgreDoc {
     values.push(fact)
   }
   facts[fact.attribute_value] = values
-  { ..doc, facts_value: facts }
+  { ..doc, facts_value: facts, }
 }
 
 ///|

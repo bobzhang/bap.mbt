@@ -5,8 +5,14 @@ pub(all) struct Move[T] {
 } derive(Eq, Debug)
 
 ///|
+pub extend Move with Eq::{not_equal, equal}
+
+///|
+pub extend Move with Debug::{to_repr}
+
+///|
 pub fn[T] Move::create(cell~ : T, data~ : @types.Word) -> Move[T] {
-  { cell, data }
+  { cell, data, }
 }
 
 ///|
@@ -16,8 +22,14 @@ pub(all) struct Chunk {
 } derive(Eq, Debug)
 
 ///|
+pub extend Chunk with Eq::{not_equal, equal}
+
+///|
+pub extend Chunk with Debug::{to_repr}
+
+///|
 pub fn Chunk::create(addr~ : @types.Word, data~ : Bytes) -> Chunk {
-  { addr, data }
+  { addr, data, }
 }
 
 ///|
@@ -27,8 +39,14 @@ pub(all) struct Syscall {
 } derive(Eq, Debug)
 
 ///|
+pub extend Syscall with Eq::{not_equal, equal}
+
+///|
+pub extend Syscall with Debug::{to_repr}
+
+///|
 pub fn Syscall::create(number~ : Int, args~ : Array[@types.Word]) -> Syscall {
-  { number, args }
+  { number, args, }
 }
 
 ///|
@@ -39,6 +57,12 @@ pub(all) struct TraceException {
 } derive(Eq, Debug)
 
 ///|
+pub extend TraceException with Eq::{not_equal, equal}
+
+///|
+pub extend TraceException with Debug::{to_repr}
+
+///|
 pub(all) struct Exn {}
 
 ///|
@@ -47,7 +71,7 @@ pub fn Exn::create(
   src? : @types.Word? = None,
   dst? : @types.Word? = None,
 ) -> TraceException {
-  { number, src, dst }
+  { number, src, dst, }
 }
 
 ///|
@@ -57,11 +81,17 @@ pub(all) struct Location {
 } derive(Eq, Debug)
 
 ///|
+pub extend Location with Eq::{not_equal, equal}
+
+///|
+pub extend Location with Debug::{to_repr}
+
+///|
 pub fn Location::create(
   name? : String? = None,
   addr~ : @types.Word,
 ) -> Location {
-  { name, addr }
+  { name, addr, }
 }
 
 ///|
@@ -72,12 +102,18 @@ pub(all) struct Call {
 } derive(Eq, Debug)
 
 ///|
+pub extend Call with Eq::{not_equal, equal}
+
+///|
+pub extend Call with Debug::{to_repr}
+
+///|
 pub fn Call::create(
   caller~ : Location,
   callee~ : Location,
   args~ : Array[@types.Word],
 ) -> Call {
-  { caller, callee, args }
+  { caller, callee, args, }
 }
 
 ///|
@@ -87,8 +123,14 @@ pub(all) struct Return {
 } derive(Eq, Debug)
 
 ///|
+pub extend Return with Eq::{not_equal, equal}
+
+///|
+pub extend Return with Debug::{to_repr}
+
+///|
 pub fn Return::create(caller~ : String, callee~ : String) -> Return {
-  { caller, callee }
+  { caller, callee, }
 }
 
 ///|
@@ -99,12 +141,18 @@ pub(all) struct Modload {
 } derive(Eq, Debug)
 
 ///|
+pub extend Modload with Eq::{not_equal, equal}
+
+///|
+pub extend Modload with Debug::{to_repr}
+
+///|
 pub fn Modload::create(
   name~ : String,
   low~ : @types.Word,
   high~ : @types.Word,
 ) -> Modload {
-  { name, low, high }
+  { name, low, high, }
 }
 
 ///|
@@ -113,10 +161,16 @@ pub(all) struct TraceMode {
 } derive(Eq, Debug)
 
 ///|
+pub extend TraceMode with Eq::{not_equal}
+
+///|
+pub extend TraceMode with Debug::{to_repr}
+
+///|
 pub(all) struct Mode {}
 
 ///|
-let trace_mode_members : Map[String, TraceMode] = {}
+let trace_mode_members : Map[String, TraceMode] = Map([])
 
 ///|
 fn trace_mode_domain_name() -> @knowledge.Name {
@@ -130,7 +184,7 @@ fn trace_mode_slot_name() -> @knowledge.Name {
 
 ///|
 pub fn TraceMode::unknown() -> TraceMode {
-  { name_value: @knowledge.Name::read(":unknown") }
+  { name_value: @knowledge.Name::read(":unknown"), }
 }
 
 ///|
@@ -144,7 +198,7 @@ pub fn TraceMode::declare_mode(
     trace_mode_members.contains(key) {
     Err("trace mode \{key} is already declared")
   } else {
-    let mode = { name_value: full_name }
+    let mode = { name_value: full_name, }
     trace_mode_members[key] = mode
     Ok(mode)
   }
@@ -292,10 +346,22 @@ pub(all) enum TraceEvent {
 } derive(Eq, Debug)
 
 ///|
+pub extend TraceEvent with Eq::{not_equal, equal}
+
+///|
+pub extend TraceEvent with Debug::{to_repr}
+
+///|
 pub(all) struct TraceEventTagInfo {
   name : String
   uuid : String
 } derive(Eq, Debug)
+
+///|
+pub extend TraceEventTagInfo with Eq::{not_equal, equal}
+
+///|
+pub extend TraceEventTagInfo with Debug::{to_repr}
 
 ///|
 let trace_event_memory_load_tag : String = "memory-load"
@@ -383,7 +449,7 @@ let trace_event_mode_uuid : String = "f7ba0979-c3a9-4509-ba14-01faf577d478"
 
 ///|
 fn trace_event_tag_info(name : String, uuid : String) -> TraceEventTagInfo {
-  { name, uuid }
+  { name, uuid, }
 }
 
 ///|
@@ -1045,12 +1111,24 @@ pub(all) struct BinaryInfo {
 } derive(Eq, Debug)
 
 ///|
+pub extend BinaryInfo with Eq::{not_equal, equal}
+
+///|
+pub extend BinaryInfo with Debug::{to_repr}
+
+///|
 pub(all) struct TracerInfo {
   name : String
   args : Array[String]
   envp : Array[String]
   version : String
 } derive(Eq, Debug)
+
+///|
+pub extend TracerInfo with Eq::{not_equal, equal}
+
+///|
+pub extend TracerInfo with Debug::{to_repr}
 
 ///|
 pub(all) struct FileStatsInfo {
@@ -1061,11 +1139,23 @@ pub(all) struct FileStatsInfo {
 } derive(Eq, Debug)
 
 ///|
+pub extend FileStatsInfo with Eq::{not_equal, equal}
+
+///|
+pub extend FileStatsInfo with Debug::{to_repr}
+
+///|
 pub(all) struct TraceStatsInfo {
   user : String
   host : String
   time : Double
 } derive(Eq, Debug)
+
+///|
+pub extend TraceStatsInfo with Eq::{not_equal, equal}
+
+///|
+pub extend TraceStatsInfo with Debug::{to_repr}
 
 ///|
 pub(all) struct Tracer {}
@@ -1192,7 +1282,7 @@ pub fn Tracer::create(
   envp~ : Array[String],
   version~ : String,
 ) -> TracerInfo {
-  { name, args, envp, version }
+  { name, args, envp, version, }
 }
 
 ///|
@@ -1207,7 +1297,7 @@ pub fn Binary::create(
   envp~ : Array[String],
   md5sum~ : String,
 ) -> BinaryInfo {
-  { path, args, envp, md5sum }
+  { path, args, envp, md5sum, }
 }
 
 ///|
@@ -1222,7 +1312,7 @@ pub fn File_stats::create(
   mtime~ : Double,
   ctime~ : Double,
 ) -> FileStatsInfo {
-  { size, atime, mtime, ctime }
+  { size, atime, mtime, ctime, }
 }
 
 ///|
@@ -1236,7 +1326,7 @@ pub fn Trace_stats::create(
   host~ : String,
   time~ : Double,
 ) -> TraceStatsInfo {
-  { user, host, time }
+  { user, host, time, }
 }
 
 ///|
@@ -1257,15 +1347,33 @@ pub(all) enum TraceAttrValue {
 } derive(Eq, Debug)
 
 ///|
+pub extend TraceAttrValue with Eq::{not_equal, equal}
+
+///|
+pub extend TraceAttrValue with Debug::{to_repr}
+
+///|
 pub(all) struct TraceMeta {
   attrs : Map[String, TraceAttrValue]
 } derive(Eq, Debug)
+
+///|
+pub extend TraceMeta with Eq::{not_equal, equal}
+
+///|
+pub extend TraceMeta with Debug::{to_repr}
 
 ///|
 pub(all) struct TraceMetaTagInfo {
   name : String
   uuid : String
 } derive(Eq, Debug)
+
+///|
+pub extend TraceMetaTagInfo with Eq::{not_equal, equal}
+
+///|
+pub extend TraceMetaTagInfo with Debug::{to_repr}
 
 ///|
 let trace_meta_binary_key : String = "binary"
@@ -1299,12 +1407,12 @@ let trace_meta_trace_stats_uuid : String = "c33eea1b-bca3-4cfe-91b5-52949e8f3c6b
 
 ///|
 fn trace_meta_tag_info(name : String, uuid : String) -> TraceMetaTagInfo {
-  { name, uuid }
+  { name, uuid, }
 }
 
 ///|
 pub fn TraceMeta::empty() -> TraceMeta {
-  { attrs: {} }
+  { attrs: {}, }
 }
 
 ///|
@@ -1601,11 +1709,17 @@ pub(all) struct TraceTool {
 } derive(Eq, Debug)
 
 ///|
+pub extend TraceTool with Eq::{not_equal, equal}
+
+///|
+pub extend TraceTool with Debug::{to_repr}
+
+///|
 pub fn TraceTool::create(
   name~ : String,
   supported_tags~ : Array[String],
 ) -> TraceTool {
-  { name, supported_tags: Set::from_array(supported_tags) }
+  { name, supported_tags: Set::from_array(supported_tags), }
 }
 
 ///|
@@ -1646,7 +1760,7 @@ pub fn TraceProtocol::create(
   supported_tags? : Array[String] = [],
   probe~ : (String) -> Bool,
 ) -> TraceProtocol {
-  { name, supported_tags: Set::from_array(supported_tags), probe_fn: probe }
+  { name, supported_tags: Set::from_array(supported_tags), probe_fn: probe, }
 }
 
 ///|
@@ -1673,6 +1787,12 @@ pub(all) enum TraceStep {
 } derive(Eq, Debug)
 
 ///|
+pub extend TraceStep with Eq::{not_equal, equal}
+
+///|
+pub extend TraceStep with Debug::{to_repr}
+
+///|
 struct TraceMonitor {
   handle : (String) -> TraceStep
 }
@@ -1682,22 +1802,22 @@ pub(all) struct Monitor {}
 
 ///|
 pub fn TraceMonitor::ignore_errors() -> TraceMonitor {
-  { handle: fn(_) { Skip } }
+  { handle: fn(_) { Skip }, }
 }
 
 ///|
 pub fn TraceMonitor::stop_on_error() -> TraceMonitor {
-  { handle: fn(_) { Stop } }
+  { handle: fn(_) { Stop }, }
 }
 
 ///|
 pub fn TraceMonitor::fail_on_error() -> TraceMonitor {
-  { handle: fn(_) { Fail } }
+  { handle: fn(_) { Fail }, }
 }
 
 ///|
 pub fn TraceMonitor::pack_errors(pack : (String) -> TraceEvent) -> TraceMonitor {
-  { handle: fn(reason) { Make(pack(reason)) } }
+  { handle: fn(reason) { Make(pack(reason)) }, }
 }
 
 ///|
@@ -1712,7 +1832,7 @@ pub fn TraceMonitor::warn_on_error(warn : (String) -> Unit) -> TraceMonitor {
 
 ///|
 pub fn TraceMonitor::create(filter : (String) -> TraceStep) -> TraceMonitor {
-  { handle: filter }
+  { handle: filter, }
 }
 
 ///|
@@ -1755,9 +1875,24 @@ pub(all) suberror TraceError {
 } derive(Eq, Debug)
 
 ///|
+pub extend TraceError with Eq::{not_equal, equal}
+
+///|
+pub extend TraceError with Debug::{to_repr}
+
+///|
 pub(all) struct TraceId {
   value : String
 } derive(Eq, Hash, Debug)
+
+///|
+pub extend TraceId with Eq::{not_equal}
+
+///|
+pub extend TraceId with Hash::{hash_combine}
+
+///|
+pub extend TraceId with Debug::{to_repr}
 
 ///|
 pub(all) struct Id {}
@@ -1800,13 +1935,13 @@ fn trace_id_counter_tail(value : Int) -> String {
 
 ///|
 fn trace_id_from_counter(value : Int) -> TraceId {
-  { value: "00000000-0000-4000-8000-\{trace_id_counter_tail(value)}" }
+  { value: "00000000-0000-4000-8000-\{trace_id_counter_tail(value)}", }
 }
 
 ///|
 pub fn TraceId::create(value : String) -> Result[TraceId, String] {
   if trace_id_is_uuid_text(value) {
-    Ok({ value: value.to_lower() })
+    Ok({ value: value.to_lower(), })
   } else {
     Err("invalid trace UUID: \{value}")
   }
@@ -1903,6 +2038,12 @@ pub(all) struct TraceReader {
 } derive(Eq, Debug)
 
 ///|
+pub extend TraceReader with Eq::{not_equal, equal}
+
+///|
+pub extend TraceReader with Debug::{to_repr}
+
+///|
 pub(all) struct TraceStreamReader {
   tool : TraceTool
   meta : TraceMeta
@@ -1916,46 +2057,46 @@ pub(all) struct Reader {}
 let trace_next_id : Ref[Int] = Ref(0)
 
 ///|
-let trace_loaded_registry : Map[TraceId, Trace] = {}
+let trace_loaded_registry : Map[TraceId, Trace] = Map([])
 
 ///|
-let trace_tool_registry : Map[String, TraceTool] = {}
+let trace_tool_registry : Map[String, TraceTool] = Map([])
 
 ///|
-let trace_store : Map[String, Bytes] = {}
+let trace_store : Map[String, Bytes] = Map([])
 
 ///|
-let trace_protocol_registry : Map[String, TraceProtocol] = {}
+let trace_protocol_registry : Map[String, TraceProtocol] = Map([])
 
 ///|
 let trace_reader_registry : Map[
   String,
   (String) -> Result[TraceReader, TraceError],
-] = {}
+] = Map([])
 
 ///|
 let trace_reader_with_id_registry : Map[
   String,
   (String, TraceId) -> Result[TraceReader, TraceError],
-] = {}
+] = Map([])
 
 ///|
 let trace_stream_reader_registry : Map[
   String,
   (String) -> Result[TraceStreamReader, TraceError],
-] = {}
+] = Map([])
 
 ///|
 let trace_stream_reader_with_id_registry : Map[
   String,
   (String, TraceId) -> Result[TraceStreamReader, TraceError],
-] = {}
+] = Map([])
 
 ///|
 let trace_writer_registry : Map[
   String,
   (String, Trace) -> Result[Unit, TraceError],
-] = {}
+] = Map([])
 
 ///|
 let trace_builtin_providers_registered : Ref[Bool] = Ref(false)
@@ -2461,7 +2602,7 @@ pub fn TraceStreamReader::create(
   next : () -> Result[TraceEvent, String]?,
   meta? : TraceMeta = TraceMeta::empty(),
 ) -> TraceStreamReader {
-  { tool, meta, next: trace_source_once(next) }
+  { tool, meta, next: trace_source_once(next), }
 }
 
 ///|
@@ -2513,7 +2654,7 @@ pub fn Trace::meta(self : Trace) -> TraceMeta {
 
 ///|
 pub fn Trace::set_meta(self : Trace, meta : TraceMeta) -> Trace {
-  { ..self, meta_value: meta }
+  { ..self, meta_value: meta, }
 }
 
 ///|
@@ -2522,7 +2663,7 @@ pub fn Trace::set_attr(
   key : String,
   value : TraceAttrValue,
 ) -> Trace {
-  { ..self, meta_value: self.meta_value.set(key, value) }
+  { ..self, meta_value: self.meta_value.set(key, value), }
 }
 
 ///|

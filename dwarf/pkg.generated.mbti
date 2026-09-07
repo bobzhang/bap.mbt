@@ -50,6 +50,9 @@ pub(all) enum DwarfAbbrevValueKind {
   DwarfRnglistsBaseValue
   DwarfLoclistsBaseValue
 } derive(Eq, @debug.Debug)
+pub fn DwarfAbbrevValueKind::equal(Self, Self) -> Bool
+pub fn DwarfAbbrevValueKind::not_equal(Self, Self) -> Bool
+pub fn DwarfAbbrevValueKind::to_repr(Self) -> @debug.Repr
 
 type DwarfAddressTable
 pub fn DwarfAddressTable::address(Self, Int) -> Result[UInt64, String]
@@ -250,6 +253,7 @@ pub fn DwarfAttr::encoding() -> Self
 pub fn DwarfAttr::endianity() -> Self
 pub fn DwarfAttr::entry_pc() -> Self
 pub fn DwarfAttr::enum_class() -> Self
+pub fn DwarfAttr::equal(Self, Self) -> Bool
 pub fn DwarfAttr::explicit_() -> Self
 pub fn DwarfAttr::export_symbols() -> Self
 pub fn DwarfAttr::extension() -> Self
@@ -274,6 +278,7 @@ pub fn DwarfAttr::mutable_() -> Self
 pub fn DwarfAttr::name() -> Self
 pub fn DwarfAttr::namelist_item() -> Self
 pub fn DwarfAttr::noreturn() -> Self
+pub fn DwarfAttr::not_equal(Self, Self) -> Bool
 pub fn DwarfAttr::object_pointer() -> Self
 pub fn DwarfAttr::ordering() -> Self
 pub fn DwarfAttr::picture_string() -> Self
@@ -302,6 +307,7 @@ pub fn DwarfAttr::string_length() -> Self
 pub fn DwarfAttr::string_length_bit_size() -> Self
 pub fn DwarfAttr::string_length_byte_size() -> Self
 pub fn DwarfAttr::threads_scaled() -> Self
+pub fn DwarfAttr::to_repr(Self) -> @debug.Repr
 pub fn DwarfAttr::trampoline() -> Self
 pub fn DwarfAttr::type_() -> Self
 pub fn DwarfAttr::unknown(Int) -> Self
@@ -403,7 +409,10 @@ pub(all) enum DwarfDieReference {
   DwarfAlternateReference(Int)
   DwarfTypeSignatureReference(UInt64)
 } derive(Eq, @debug.Debug)
+pub fn DwarfDieReference::equal(Self, Self) -> Bool
+pub fn DwarfDieReference::not_equal(Self, Self) -> Bool
 pub fn DwarfDieReference::section_offset(Self, unit_start~ : Int) -> Result[Int, String]
+pub fn DwarfDieReference::to_repr(Self) -> @debug.Repr
 
 type DwarfFbi
 pub fn DwarfFbi::create(DwarfData) -> Result[Self, String]
@@ -444,6 +453,7 @@ pub fn DwarfForm::addrx_offset() -> Self
 pub fn DwarfForm::block(DwarfLenspec) -> Self
 pub fn DwarfForm::const_(DwarfLenspec) -> Self
 pub fn DwarfForm::data16() -> Self
+pub fn DwarfForm::equal(Self, Self) -> Bool
 pub fn DwarfForm::expr() -> Self
 pub fn DwarfForm::flag() -> Self
 pub fn DwarfForm::flag_present() -> Self
@@ -451,6 +461,7 @@ pub fn DwarfForm::implicit_const(Int64) -> Self
 pub fn DwarfForm::indirect() -> Self
 pub fn DwarfForm::line_strp() -> Self
 pub fn DwarfForm::loclistx() -> Self
+pub fn DwarfForm::not_equal(Self, Self) -> Bool
 pub fn DwarfForm::offset() -> Self
 pub fn DwarfForm::ref_(DwarfLenspec) -> Self
 pub fn DwarfForm::ref_addr() -> Self
@@ -466,6 +477,7 @@ pub fn DwarfForm::strp() -> Self
 pub fn DwarfForm::strp_alt() -> Self
 pub fn DwarfForm::strp_sup() -> Self
 pub fn DwarfForm::strx(DwarfIndexSpec) -> Self
+pub fn DwarfForm::to_repr(Self) -> @debug.Repr
 
 #alias(DwarfFn)
 type DwarfFunction
@@ -489,10 +501,13 @@ pub(all) enum DwarfIndexSpec {
   DwarfIndexThree
   DwarfIndexFour
 } derive(Eq, @debug.Debug)
+pub fn DwarfIndexSpec::equal(Self, Self) -> Bool
 pub fn DwarfIndexSpec::four() -> Self
 pub fn DwarfIndexSpec::leb128() -> Self
+pub fn DwarfIndexSpec::not_equal(Self, Self) -> Bool
 pub fn DwarfIndexSpec::one() -> Self
 pub fn DwarfIndexSpec::three() -> Self
+pub fn DwarfIndexSpec::to_repr(Self) -> @debug.Repr
 pub fn DwarfIndexSpec::two() -> Self
 
 type DwarfInfoUnitHeader
@@ -522,7 +537,10 @@ pub(all) enum DwarfInfoUnitKind {
   DwarfInfoUnitSplitType
   DwarfInfoUnitUnknown(Int)
 } derive(Eq, @debug.Debug)
+pub fn DwarfInfoUnitKind::equal(Self, Self) -> Bool
 pub fn DwarfInfoUnitKind::is_supported(Self) -> Bool
+pub fn DwarfInfoUnitKind::not_equal(Self, Self) -> Bool
+pub fn DwarfInfoUnitKind::to_repr(Self) -> @debug.Repr
 pub fn DwarfInfoUnitKind::unit_type(Self) -> Int?
 
 type DwarfInput
@@ -579,9 +597,12 @@ pub(all) enum DwarfLenspec {
   DwarfLeb128
 } derive(Eq, @debug.Debug)
 pub fn DwarfLenspec::eight() -> Self
+pub fn DwarfLenspec::equal(Self, Self) -> Bool
 pub fn DwarfLenspec::four() -> Self
 pub fn DwarfLenspec::leb128() -> Self
+pub fn DwarfLenspec::not_equal(Self, Self) -> Bool
 pub fn DwarfLenspec::one() -> Self
+pub fn DwarfLenspec::to_repr(Self) -> @debug.Repr
 pub fn DwarfLenspec::two() -> Self
 
 type DwarfLocationList
@@ -601,6 +622,9 @@ pub(all) enum DwarfLocationListEntry {
   DwarfLocStartEnd(UInt64, UInt64, Bytes)
   DwarfLocStartLength(UInt64, Int, Bytes)
 } derive(Eq, @debug.Debug)
+pub fn DwarfLocationListEntry::equal(Self, Self) -> Bool
+pub fn DwarfLocationListEntry::not_equal(Self, Self) -> Bool
+pub fn DwarfLocationListEntry::to_repr(Self) -> @debug.Repr
 
 type DwarfRangeList
 pub fn DwarfRangeList::entries(Self) -> Array[DwarfRangeListEntry]
@@ -618,6 +642,9 @@ pub(all) enum DwarfRangeListEntry {
   DwarfRangeStartEnd(UInt64, UInt64)
   DwarfRangeStartLength(UInt64, Int)
 } derive(Eq, @debug.Debug)
+pub fn DwarfRangeListEntry::equal(Self, Self) -> Bool
+pub fn DwarfRangeListEntry::not_equal(Self, Self) -> Bool
+pub fn DwarfRangeListEntry::to_repr(Self) -> @debug.Repr
 
 pub(all) enum DwarfSection {
   DwarfInfo
@@ -633,14 +660,17 @@ pub(all) enum DwarfSection {
 } derive(Eq, @debug.Debug)
 pub fn DwarfSection::abbrev() -> Self
 pub fn DwarfSection::addr() -> Self
+pub fn DwarfSection::equal(Self, Self) -> Bool
 pub fn DwarfSection::info() -> Self
 pub fn DwarfSection::line_str() -> Self
 pub fn DwarfSection::loc() -> Self
 pub fn DwarfSection::loclists() -> Self
+pub fn DwarfSection::not_equal(Self, Self) -> Bool
 pub fn DwarfSection::ranges() -> Self
 pub fn DwarfSection::rnglists() -> Self
 pub fn DwarfSection::str() -> Self
 pub fn DwarfSection::str_offsets() -> Self
+pub fn DwarfSection::to_repr(Self) -> @debug.Repr
 pub fn DwarfSection::to_string(Self) -> String
 
 type DwarfSectionBuffer
@@ -766,6 +796,7 @@ pub fn DwarfTag::dynamic_type() -> Self
 pub fn DwarfTag::entry_point() -> Self
 pub fn DwarfTag::enumeration_type() -> Self
 pub fn DwarfTag::enumerator() -> Self
+pub fn DwarfTag::equal(Self, Self) -> Bool
 pub fn DwarfTag::file_type() -> Self
 pub fn DwarfTag::formal_parameter() -> Self
 pub fn DwarfTag::friend() -> Self
@@ -784,6 +815,7 @@ pub fn DwarfTag::module_() -> Self
 pub fn DwarfTag::namelist() -> Self
 pub fn DwarfTag::namelist_item() -> Self
 pub fn DwarfTag::namespace_() -> Self
+pub fn DwarfTag::not_equal(Self, Self) -> Bool
 pub fn DwarfTag::packed_type() -> Self
 pub fn DwarfTag::partial_unit() -> Self
 pub fn DwarfTag::pointer_type() -> Self
@@ -804,6 +836,7 @@ pub fn DwarfTag::template_alias() -> Self
 pub fn DwarfTag::template_type_parameter() -> Self
 pub fn DwarfTag::template_value_parameter() -> Self
 pub fn DwarfTag::thrown_type() -> Self
+pub fn DwarfTag::to_repr(Self) -> @debug.Repr
 pub fn DwarfTag::try_block() -> Self
 pub fn DwarfTag::type_unit() -> Self
 pub fn DwarfTag::typedef_() -> Self
@@ -821,10 +854,15 @@ pub(all) enum DwarfWordSize {
   W32
   W64
 } derive(Eq, @debug.Debug)
+pub fn DwarfWordSize::equal(Self, Self) -> Bool
+pub fn DwarfWordSize::not_equal(Self, Self) -> Bool
+pub fn DwarfWordSize::to_repr(Self) -> @debug.Repr
 
 type Leb128 derive(Eq, @debug.Debug)
 pub fn Leb128::bytes(Self) -> Bytes
+pub fn Leb128::equal(Self, Self) -> Bool
 pub fn Leb128::is_negative(Self) -> Bool
+pub fn Leb128::not_equal(Self, Self) -> Bool
 pub fn Leb128::of_int(Int, signed? : Bool) -> Self
 pub fn Leb128::of_int32(Int, signed? : Bool) -> Self
 pub fn Leb128::of_int64(Int64, signed? : Bool) -> Self
@@ -833,9 +871,9 @@ pub fn Leb128::size(Self) -> Int
 pub fn Leb128::to_int(Self) -> Result[Int, String]
 pub fn Leb128::to_int32(Self) -> Result[Int, String]
 pub fn Leb128::to_int64(Self) -> Result[Int64, String]
+pub fn Leb128::to_repr(Self) -> @debug.Repr
 pub fn Leb128::write(Self) -> Bytes
 
 // Type aliases
 
 // Traits
-

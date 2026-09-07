@@ -151,6 +151,12 @@ pub(all) suberror BilApplyError {
 } derive(Eq, Debug)
 
 ///|
+pub extend BilApplyError with Eq::{not_equal, equal}
+
+///|
+pub extend BilApplyError with Debug::{to_repr}
+
+///|
 fn unwrap_word_apply(result : Result[Word, String]) -> Word raise BilApplyError {
   match result {
     Ok(word) => word

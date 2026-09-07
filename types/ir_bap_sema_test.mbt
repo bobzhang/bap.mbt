@@ -85,7 +85,7 @@ fn make_bap_sema_fixture() -> BapSemaFixture raise @bitvec.BitVecError {
   let sub = @types.Sub::create(name="example", blks=[
     entry, b1, b2, b3, b4, b5, b6, exit,
   ])
-  { entry, b1, b2, b3, b4, b5, b6, exit, i, j, k, sub }
+  { entry, b1, b2, b3, b4, b5, b6, exit, i, j, k, sub, }
 }
 
 ///|

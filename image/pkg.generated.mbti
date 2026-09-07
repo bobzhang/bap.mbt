@@ -88,6 +88,9 @@ pub(all) suberror ImageLookupError {
   MissingImageSegment(String, UInt64)
   MissingImageSymbolMemory(String, UInt64, Int)
 } derive(Eq, @debug.Debug)
+pub fn ImageLookupError::equal(Self, Self) -> Bool
+pub fn ImageLookupError::not_equal(Self, Self) -> Bool
+pub fn ImageLookupError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
 type ExternalReference
@@ -184,6 +187,9 @@ pub(all) struct ImageBackendLocation {
   len : Int
 } derive(Eq, @debug.Debug)
 pub fn ImageBackendLocation::create(addr~ : UInt64, len~ : Int) -> Self
+pub fn ImageBackendLocation::equal(Self, Self) -> Bool
+pub fn ImageBackendLocation::not_equal(Self, Self) -> Bool
+pub fn ImageBackendLocation::to_repr(Self) -> @debug.Repr
 
 pub(all) enum ImageBackendPerm {
   ImageBackendR
@@ -191,7 +197,10 @@ pub(all) enum ImageBackendPerm {
   ImageBackendX
   ImageBackendOr(ImageBackendPerm, ImageBackendPerm)
 } derive(Eq, @debug.Debug)
+pub fn ImageBackendPerm::equal(Self, Self) -> Bool
+pub fn ImageBackendPerm::not_equal(Self, Self) -> Bool
 pub fn ImageBackendPerm::r() -> Self
+pub fn ImageBackendPerm::to_repr(Self) -> @debug.Repr
 pub fn ImageBackendPerm::union(Self, Self) -> Self
 pub fn ImageBackendPerm::w() -> Self
 pub fn ImageBackendPerm::x() -> Self
@@ -201,6 +210,9 @@ pub(all) struct ImageBackendSection {
   location : ImageBackendLocation
 } derive(Eq, @debug.Debug)
 pub fn ImageBackendSection::create(name~ : String, location~ : ImageBackendLocation) -> Self
+pub fn ImageBackendSection::equal(Self, Self) -> Bool
+pub fn ImageBackendSection::not_equal(Self, Self) -> Bool
+pub fn ImageBackendSection::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ImageBackendSegment {
   name : String
@@ -209,6 +221,9 @@ pub(all) struct ImageBackendSegment {
   location : ImageBackendLocation
 } derive(Eq, @debug.Debug)
 pub fn ImageBackendSegment::create(name~ : String, perm~ : ImageBackendPerm, off~ : Int, location~ : ImageBackendLocation) -> Self
+pub fn ImageBackendSegment::equal(Self, Self) -> Bool
+pub fn ImageBackendSegment::not_equal(Self, Self) -> Bool
+pub fn ImageBackendSegment::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ImageBackendSymbol {
   name : String
@@ -218,7 +233,10 @@ pub(all) struct ImageBackendSymbol {
   extra_locations : Array[ImageBackendLocation]
 } derive(Eq, @debug.Debug)
 pub fn ImageBackendSymbol::create(name~ : String, location~ : ImageBackendLocation, is_function? : Bool, is_debug? : Bool, extra_locations? : Array[ImageBackendLocation]) -> Self
+pub fn ImageBackendSymbol::equal(Self, Self) -> Bool
 pub fn ImageBackendSymbol::locations(Self) -> Array[ImageBackendLocation]
+pub fn ImageBackendSymbol::not_equal(Self, Self) -> Bool
+pub fn ImageBackendSymbol::to_repr(Self) -> @debug.Repr
 
 type ImageLoader
 pub fn ImageLoader::create(from_data~ : (Bytes) -> Result[OgreDoc?, String], from_file? : (String) -> Result[OgreDoc?, String]) -> Self
@@ -274,7 +292,10 @@ pub(all) struct OgreField {
   typ : OgreFieldType
 } derive(Eq, @debug.Debug)
 pub fn OgreField::create(name~ : String, typ~ : OgreFieldType) -> Self
+pub fn OgreField::equal(Self, Self) -> Bool
 pub fn OgreField::name(Self) -> String
+pub fn OgreField::not_equal(Self, Self) -> Bool
+pub fn OgreField::to_repr(Self) -> @debug.Repr
 pub fn OgreField::typ(Self) -> OgreFieldType
 
 pub(all) enum OgreFieldType {
@@ -283,6 +304,9 @@ pub(all) enum OgreFieldType {
   OgreBool
   OgreFloat
 } derive(Eq, @debug.Debug)
+pub fn OgreFieldType::equal(Self, Self) -> Bool
+pub fn OgreFieldType::not_equal(Self, Self) -> Bool
+pub fn OgreFieldType::to_repr(Self) -> @debug.Repr
 pub fn OgreFieldType::to_string(Self) -> String
 
 type Relocation
@@ -390,4 +414,3 @@ pub fn SymbolValue::value(Self) -> UInt64
 // Type aliases
 
 // Traits
-

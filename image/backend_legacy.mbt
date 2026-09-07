@@ -7,10 +7,22 @@ pub(all) enum ImageBackendPerm {
 } derive(Eq, Debug)
 
 ///|
+pub extend ImageBackendPerm with Eq::{not_equal, equal}
+
+///|
+pub extend ImageBackendPerm with Debug::{to_repr}
+
+///|
 pub(all) struct ImageBackendLocation {
   addr : UInt64
   len : Int
 } derive(Eq, Debug)
+
+///|
+pub extend ImageBackendLocation with Eq::{not_equal, equal}
+
+///|
+pub extend ImageBackendLocation with Debug::{to_repr}
 
 ///|
 pub(all) struct ImageBackendSegment {
@@ -19,6 +31,12 @@ pub(all) struct ImageBackendSegment {
   off : Int
   location : ImageBackendLocation
 } derive(Eq, Debug)
+
+///|
+pub extend ImageBackendSegment with Eq::{not_equal, equal}
+
+///|
+pub extend ImageBackendSegment with Debug::{to_repr}
 
 ///|
 pub(all) struct ImageBackendSymbol {
@@ -30,10 +48,22 @@ pub(all) struct ImageBackendSymbol {
 } derive(Eq, Debug)
 
 ///|
+pub extend ImageBackendSymbol with Eq::{not_equal, equal}
+
+///|
+pub extend ImageBackendSymbol with Debug::{to_repr}
+
+///|
 pub(all) struct ImageBackendSection {
   name : String
   location : ImageBackendLocation
 } derive(Eq, Debug)
+
+///|
+pub extend ImageBackendSection with Eq::{not_equal, equal}
+
+///|
+pub extend ImageBackendSection with Debug::{to_repr}
 
 ///|
 pub(all) struct ImageBackendImage {
@@ -104,7 +134,7 @@ pub fn ImageBackendLocation::create(
   addr~ : UInt64,
   len~ : Int,
 ) -> ImageBackendLocation {
-  { addr, len }
+  { addr, len, }
 }
 
 ///|
@@ -114,7 +144,7 @@ pub fn ImageBackendSegment::create(
   off~ : Int,
   location~ : ImageBackendLocation,
 ) -> ImageBackendSegment {
-  { name, perm, off, location }
+  { name, perm, off, location, }
 }
 
 ///|
@@ -150,7 +180,7 @@ pub fn ImageBackendSection::create(
   name~ : String,
   location~ : ImageBackendLocation,
 ) -> ImageBackendSection {
-  { name, location }
+  { name, location, }
 }
 
 ///|
@@ -174,7 +204,7 @@ pub fn ImageBackendImage::create(
 pub fn LegacyImageBackend::create(
   load~ : (Bytes) -> ImageBackendImage?,
 ) -> LegacyImageBackend {
-  { load_fn: load }
+  { load_fn: load, }
 }
 
 ///|

@@ -4,8 +4,14 @@ struct BilContext {
 } derive(Eq, Debug)
 
 ///|
+pub extend BilContext with Eq::{not_equal, equal}
+
+///|
+pub extend BilContext with Debug::{to_repr}
+
+///|
 pub fn BilContext::new() -> BilContext {
-  { entries: [] }
+  { entries: [], }
 }
 
 ///|

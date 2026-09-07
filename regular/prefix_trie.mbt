@@ -30,7 +30,7 @@ fn decode_trie_bytes(key : BytesView) -> String {
 
 ///|
 pub fn[V] PrefixTrie::new() -> PrefixTrie[V] {
-  { value: None, children: {} }
+  { value: None, children: {}, }
 }
 
 ///|
@@ -194,7 +194,7 @@ fn[V] PrefixTrie::longest_match_bytes(
 
 ///|
 pub fn[V] SuffixTrie::new() -> SuffixTrie[V] {
-  { trie: PrefixTrie::new() }
+  { trie: PrefixTrie::new(), }
 }
 
 ///|

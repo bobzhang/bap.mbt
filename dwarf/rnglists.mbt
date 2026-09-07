@@ -10,6 +10,12 @@ pub(all) enum DwarfRangeListEntry {
 } derive(Eq, Debug)
 
 ///|
+pub extend DwarfRangeListEntry with Eq::{not_equal, equal}
+
+///|
+pub extend DwarfRangeListEntry with Debug::{to_repr}
+
+///|
 struct DwarfRangeList {
   entries_value : Array[DwarfRangeListEntry]
 }
@@ -113,7 +119,7 @@ pub fn DwarfRangeList::read(
       Err(reason) => return Err(reason)
     }
   }
-  Ok({ entries_value: entries })
+  Ok({ entries_value: entries, })
 }
 
 ///|
@@ -151,7 +157,7 @@ pub fn DwarfRangeList::read_ranges(
       Err(reason) => return Err(reason)
     }
   }
-  Ok({ entries_value: entries })
+  Ok({ entries_value: entries, })
 }
 
 ///|

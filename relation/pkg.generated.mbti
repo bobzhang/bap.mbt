@@ -31,6 +31,7 @@ pub(all) enum NonInjective[K, S] {
   NonInjectiveFwd(Array[K], S)
   NonInjectiveBwd(Array[S], K)
 } derive(@debug.Debug)
+pub fn[K : @debug.Debug, S : @debug.Debug] NonInjective::to_repr(Self[K, S]) -> @debug.Repr
 
 type Relation[K, S]
 pub fn[K : Eq, S : Eq] Relation::add(Self[K, S], K, S) -> Self[K, S]

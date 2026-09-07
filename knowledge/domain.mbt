@@ -345,7 +345,7 @@ fn[K : Eq + Hash, T] map_join_values(
   rhs : Map[K, T],
   join : (T, T) -> Result[T, String],
 ) -> Result[Map[K, T], String] {
-  let result : Map[K, T] = {}
+  let result : Map[K, T] = Map([])
   for entry in lhs {
     result[entry.0] = entry.1
   }
@@ -378,7 +378,7 @@ pub fn[K : Eq + Hash, T] Domain::mapping(
     }
   },
 ) -> Domain[Map[K, T]] {
-  let empty : Map[K, T] = {}
+  let empty : Map[K, T] = Map([])
   Domain::new(
     name~,
     empty=Some(empty),

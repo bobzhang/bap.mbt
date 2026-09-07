@@ -29,6 +29,12 @@ pub(all) suberror ImageLookupError {
 } derive(Eq, Debug)
 
 ///|
+pub extend ImageLookupError with Eq::{not_equal, equal}
+
+///|
+pub extend ImageLookupError with Debug::{to_repr}
+
+///|
 fn empty_bytes() -> Bytes {
   Bytes::new(0)
 }
@@ -689,7 +695,7 @@ pub fn Image::with_applied_relocations(self : Image) -> Result[Image, String] {
       Err(reason) => return Err(reason)
     }
   }
-  Ok({ ..self, segments_value: segments })
+  Ok({ ..self, segments_value: segments, })
 }
 
 ///|
@@ -723,28 +729,28 @@ pub fn Image::words(
 pub fn Image::add_segment(self : Image, segment : Segment) -> Image {
   let segments = self.segments_value.copy()
   segments.push(segment)
-  { ..self, segments_value: segments }
+  { ..self, segments_value: segments, }
 }
 
 ///|
 pub fn Image::add_section(self : Image, section : Section) -> Image {
   let sections = self.sections_value.copy()
   sections.push(section)
-  { ..self, sections_value: sections }
+  { ..self, sections_value: sections, }
 }
 
 ///|
 pub fn Image::add_symbol(self : Image, symbol : Symbol) -> Image {
   let symbols = self.symbols_value.copy()
   symbols.push(symbol)
-  { ..self, symbols_value: symbols }
+  { ..self, symbols_value: symbols, }
 }
 
 ///|
 pub fn Image::add_relocation(self : Image, relocation : Relocation) -> Image {
   let relocations = self.relocations_value.copy()
   relocations.push(relocation)
-  { ..self, relocations_value: relocations }
+  { ..self, relocations_value: relocations, }
 }
 
 ///|
@@ -754,28 +760,28 @@ pub fn Image::add_external_reference(
 ) -> Image {
   let references = self.external_references_value.copy()
   references.push(reference)
-  { ..self, external_references_value: references }
+  { ..self, external_references_value: references, }
 }
 
 ///|
 pub fn Image::add_required_library(self : Image, name : String) -> Image {
   let libraries = self.required_libraries_value.copy()
   libraries.push(name)
-  { ..self, required_libraries_value: libraries }
+  { ..self, required_libraries_value: libraries, }
 }
 
 ///|
 pub fn Image::add_rpath(self : Image, path : String) -> Image {
   let paths = self.rpaths_value.copy()
   paths.push(path)
-  { ..self, rpaths_value: paths }
+  { ..self, rpaths_value: paths, }
 }
 
 ///|
 pub fn Image::add_runpath(self : Image, path : String) -> Image {
   let paths = self.runpaths_value.copy()
   paths.push(path)
-  { ..self, runpaths_value: paths }
+  { ..self, runpaths_value: paths, }
 }
 
 ///|
@@ -785,30 +791,30 @@ pub fn Image::add_symbol_value(
 ) -> Image {
   let values = self.symbol_values_value.copy()
   values.push(symbol_value)
-  { ..self, symbol_values_value: values }
+  { ..self, symbol_values_value: values, }
 }
 
 ///|
 pub fn Image::with_load_bias(self : Image, load_bias : Int64) -> Image {
-  { ..self, load_bias_value: Some(load_bias) }
+  { ..self, load_bias_value: Some(load_bias), }
 }
 
 ///|
 pub fn Image::with_interpreter(self : Image, interpreter : String) -> Image {
-  { ..self, interpreter_value: Some(interpreter) }
+  { ..self, interpreter_value: Some(interpreter), }
 }
 
 ///|
 pub fn Image::with_soname(self : Image, soname : String) -> Image {
-  { ..self, soname_value: Some(soname) }
+  { ..self, soname_value: Some(soname), }
 }
 
 ///|
 pub fn Image::with_is_executable(self : Image, is_executable : Bool) -> Image {
-  { ..self, is_executable_value: Some(is_executable) }
+  { ..self, is_executable_value: Some(is_executable), }
 }
 
 ///|
 pub fn Image::with_base_address(self : Image, base_address : UInt64) -> Image {
-  { ..self, base_address_value: Some(base_address) }
+  { ..self, base_address_value: Some(base_address), }
 }

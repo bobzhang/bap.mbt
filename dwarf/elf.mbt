@@ -134,7 +134,7 @@ fn dwarf_elf_parse_section_zero(
   }
   match (section_count, section_name_index) {
     (Ok(section_count), Ok(section_name_index)) =>
-      Ok({ section_count, section_name_index })
+      Ok({ section_count, section_name_index, })
     (Err(reason), _) | (_, Err(reason)) => Err(reason)
   }
 }
@@ -314,7 +314,7 @@ fn dwarf_elf_parse_section_header(
   }
   match (name_offset, file_offset, size) {
     (Ok(name_offset), Ok(file_offset), Ok(size)) =>
-      Ok({ name_offset, file_offset, size })
+      Ok({ name_offset, file_offset, size, })
     (Err(reason), _, _) | (_, Err(reason), _) | (_, _, Err(reason)) =>
       Err(reason)
   }

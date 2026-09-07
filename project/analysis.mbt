@@ -41,7 +41,7 @@ struct ProjectAnalysis {
 }
 
 ///|
-let project_analysis_registry : Map[String, ProjectAnalysis] = {}
+let project_analysis_registry : Map[String, ProjectAnalysis] = Map([])
 
 ///|
 let project_analysis_registry_order : Array[String] = []
@@ -152,7 +152,7 @@ fn[T] project_analysis_parse_arg(
   arg : ProjectAnalysisArg[T],
   ctxt : ProjectAnalysisContext,
 ) -> Result[(T, ProjectAnalysisContext), String] {
-  (arg.parse_fn)({ ..ctxt, rule_value: arg.rule_value })
+  (arg.parse_fn)({ ..ctxt, rule_value: arg.rule_value, })
 }
 
 ///|
@@ -171,7 +171,7 @@ fn project_analysis_join_grammar(grammar : Array[String]) -> String {
 fn project_analysis_grammar_from_rules(
   rules : Array[String],
 ) -> ProjectAnalysisGrammar {
-  { rules_value: rules.copy() }
+  { rules_value: rules.copy(), }
 }
 
 ///|
@@ -323,7 +323,7 @@ pub fn[T] ProjectAnalysisArg::keyword(
         None => Ok((None, ctxt))
         Some(inputs) =>
           match
-            project_analysis_parse_arg(arg, { ..ctxt, inputs_value: inputs }) {
+            project_analysis_parse_arg(arg, { ..ctxt, inputs_value: inputs, }) {
             Err(reason) => Err(reason)
             Ok((value, next)) => Ok((Some(value), next))
           }
@@ -341,7 +341,7 @@ pub fn ProjectAnalysisArg::flag(key : String) -> ProjectAnalysisArg[Bool] {
     parse_fn: ctxt => {
       match project_analysis_filter_flag(key, ctxt.inputs_value) {
         None => Ok((false, ctxt))
-        Some(inputs) => Ok((true, { ..ctxt, inputs_value: inputs }))
+        Some(inputs) => Ok((true, { ..ctxt, inputs_value: inputs, }))
       }
     },
   }

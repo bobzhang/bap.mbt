@@ -2,6 +2,4 @@
 //   "bobzhang/bap" @lib,
 // }
 
-options(
-  "is-main": true,
-)
+pkgtype(kind: "executable")

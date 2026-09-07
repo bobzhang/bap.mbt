@@ -14,31 +14,31 @@ struct ProjectDisassemblySource[T] {
 let project_rooter_source_registry : Map[
   String,
   ProjectDisassemblySource[ProjectRooter],
-] = {}
+] = Map([])
 
 ///|
 let project_brancher_source_registry : Map[
   String,
   ProjectDisassemblySource[ProjectBrancher],
-] = {}
+] = Map([])
 
 ///|
 let project_symbolizer_source_registry : Map[
   String,
   ProjectDisassemblySource[ProjectSymbolizer],
-] = {}
+] = Map([])
 
 ///|
 let project_disassembly_driver_source_registry : Map[
   String,
   ProjectDisassemblySource[ProjectDisassemblyDriver],
-] = {}
+] = Map([])
 
 ///|
 let project_reconstructor_source_registry : Map[
   String,
   ProjectDisassemblySource[ProjectReconstructor],
-] = {}
+] = Map([])
 
 ///|
 fn[T] project_disassembly_source_registry_names(
@@ -120,7 +120,7 @@ fn project_disassembly_source_context_sub_bias(
 pub fn[T] ProjectDisassemblySource::create(
   items : Array[Result[T, String]],
 ) -> ProjectDisassemblySource[T] {
-  { items_value: items.copy() }
+  { items_value: items.copy(), }
 }
 
 ///|
@@ -205,7 +205,7 @@ pub fn ProjectDisassemblySourceContext::create(
       }
     None => None
   }
-  Ok({ path_value: path, bias_value: normalized_bias, size_value: size })
+  Ok({ path_value: path, bias_value: normalized_bias, size_value: size, })
 }
 
 ///|

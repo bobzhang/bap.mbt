@@ -39,6 +39,12 @@ pub(all) enum Arch {
 } derive(Eq, Debug)
 
 ///|
+pub extend Arch with Eq::{not_equal}
+
+///|
+pub extend Arch with Debug::{to_repr}
+
+///|
 fn normalize_arch_name(text : String) -> String {
   match text.trim().to_lower() {
     "x86"

@@ -6,9 +6,21 @@ pub(all) enum SeqStep[T, S] {
 } derive(Eq, @debug.Debug)
 
 ///|
+pub extend SeqStep with Eq::{not_equal, equal}
+
+///|
+pub extend SeqStep with Debug::{to_repr}
+
+///|
 pub(all) suberror SeqError {
   EmptySeq
 } derive(Eq, @debug.Debug)
+
+///|
+pub extend SeqError with Eq::{not_equal, equal}
+
+///|
+pub extend SeqError with Debug::{to_repr}
 
 ///|
 struct SeqGenerator[R, T] {
@@ -17,12 +29,12 @@ struct SeqGenerator[R, T] {
 
 ///|
 pub fn[R, T] seq_generator_return(value : R) -> SeqGenerator[R, T] {
-  { run_into: _ => value }
+  { run_into: _ => value, }
 }
 
 ///|
 pub fn[T] seq_generator_yield(value : T) -> SeqGenerator[Unit, T] {
-  { run_into: out => out.push(value) }
+  { run_into: out => out.push(value), }
 }
 
 ///|
@@ -557,7 +569,7 @@ pub fn[T] seq_all(values : ArrayView[T], f : (T) -> Bool) -> Bool {
 
 ///|
 pub fn[T] seq_to_list(values : ArrayView[T]) -> @list.List[T] {
-  @list.from_array(seq_of_array(values))
+  @list.List(seq_of_array(values))
 }
 
 ///|
@@ -581,7 +593,7 @@ pub fn[T] seq_rev(values : ArrayView[T]) -> Array[T] {
 
 ///|
 pub fn[T] seq_to_list_rev(values : ArrayView[T]) -> @list.List[T] {
-  @list.from_array(seq_rev(values))
+  @list.List(seq_rev(values))
 }
 
 ///|

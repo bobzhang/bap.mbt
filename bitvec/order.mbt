@@ -5,6 +5,12 @@ pub(all) enum BitVecOrder {
 } derive(Eq, Debug)
 
 ///|
+pub extend BitVecOrder with Eq::{not_equal, equal}
+
+///|
+pub extend BitVecOrder with Debug::{to_repr}
+
+///|
 pub fn BitVec::compare(self : BitVec, other : BitVec) -> Int {
   let count = Int::max(self.limbs.length(), other.limbs.length())
   let mut result = 0

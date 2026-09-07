@@ -18,7 +18,7 @@ pub fn[K] StringsIndexKey::create(
   succ~ : (K) -> K,
   compare~ : (K, K) -> Int,
 ) -> StringsIndexKey[K] {
-  { null_value: null, succ_fn: succ, compare_fn: compare }
+  { null_value: null, succ_fn: succ, compare_fn: compare, }
 }
 
 ///|
@@ -30,7 +30,7 @@ pub fn StringsIndexKey::int() -> StringsIndexKey[Int] {
 
 ///|
 pub fn[K] StringsIndex::empty(key~ : StringsIndexKey[K]) -> StringsIndex[K] {
-  { key_spec: key, strings_value: [], keys_value: [] }
+  { key_spec: key, strings_value: [], keys_value: [], }
 }
 
 ///|
@@ -96,6 +96,6 @@ pub fn[K] StringsIndex::register(
     let keys = self.keys_value.copy()
     strings.push((key, owned))
     keys.push((owned, key))
-    { key_spec: self.key_spec, strings_value: strings, keys_value: keys }
+    { key_spec: self.key_spec, strings_value: strings, keys_value: keys, }
   }
 }

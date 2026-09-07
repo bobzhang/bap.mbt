@@ -5,6 +5,12 @@ pub(all) enum TypeKind {
 } derive(Eq, Debug)
 
 ///|
+pub extend TypeKind with Eq::{not_equal, equal}
+
+///|
+pub extend TypeKind with Debug::{to_repr}
+
+///|
 fn TypeKind::rank(self : TypeKind) -> Int {
   match self {
     MemKind => 0
@@ -26,9 +32,21 @@ pub(all) enum TypeError {
 } derive(Eq, Debug)
 
 ///|
+pub extend TypeError with Eq::{not_equal}
+
+///|
+pub extend TypeError with Debug::{to_repr}
+
+///|
 pub(all) suberror TypeInferenceError {
   InvalidExpType(TypeError)
 } derive(Eq, Debug)
+
+///|
+pub extend TypeInferenceError with Eq::{not_equal, equal}
+
+///|
+pub extend TypeInferenceError with Debug::{to_repr}
 
 ///|
 fn TypeError::rank(self : TypeError) -> Int {

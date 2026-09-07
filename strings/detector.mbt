@@ -131,7 +131,7 @@ fn[T] StringsDetector::update(
     stage_value: self.hypothesis.stage_value,
   }
   let h = if in_alphabet { h.push(data, byte) } else { h }
-  { ..self, hypothesis: h }
+  { ..self, hypothesis: h, }
 }
 
 ///|
@@ -179,12 +179,12 @@ fn[T] StringsDetector::step_byte(
       }
     (StringsDetectorWorking, StringsDetectorUndecided) =>
       if updated.hypothesis.n_value == 0 {
-        { ..updated, hypothesis: strings_empty_decision() }
+        { ..updated, hypothesis: strings_empty_decision(), }
       } else {
         updated
       }
     (StringsDetectorWorking, StringsDetectorDecline) =>
-      { ..updated, hypothesis: strings_empty_decision() }
+      { ..updated, hypothesis: strings_empty_decision(), }
     (StringsDetectorFinished, _) => updated
   }
 }
@@ -218,7 +218,7 @@ pub fn[T] StringsDetector::step(
   byte : Byte,
 ) -> StringsDetector[T] {
   if self.hypothesis.stage_value == StringsDetectorFinished {
-    { ..self, hypothesis: strings_empty_decision() }.step_byte(data, byte)
+    { ..self, hypothesis: strings_empty_decision(), }.step_byte(data, byte)
   } else {
     self.step_byte(data, byte)
   }
@@ -240,7 +240,7 @@ pub fn[T] StringsDetector::abort(
   self : StringsDetector[T],
 ) -> StringsDecision[T]? {
   if self.hypothesis.stage_value == StringsDetectorAccepted {
-    Some({ ..self.hypothesis, cut_value: 0 })
+    Some({ ..self.hypothesis, cut_value: 0, })
   } else {
     None
   }

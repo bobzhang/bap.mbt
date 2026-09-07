@@ -9,12 +9,12 @@ pub fn[T] Cache::create(
   load~ : (Digest) -> T?,
   save~ : (Digest, T) -> Unit,
 ) -> Cache[T] {
-  { load_fn: load, save_fn: save }
+  { load_fn: load, save_fn: save, }
 }
 
 ///|
 pub fn[T] Cache::oblivion() -> Cache[T] {
-  { load_fn: _ => None, save_fn: (_, _) => () }
+  { load_fn: _ => None, save_fn: (_, _) => (), }
 }
 
 ///|

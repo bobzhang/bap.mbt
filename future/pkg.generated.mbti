@@ -13,12 +13,18 @@ pub(all) suberror FutureError {
   AlreadyDecided
   EmptyFuture
 } derive(Eq, @debug.Debug)
+pub fn FutureError::equal(Self, Self) -> Bool
+pub fn FutureError::not_equal(Self, Self) -> Bool
+pub fn FutureError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
 pub(all) enum Either[A, B] {
   Left(A)
   Right(B)
 } derive(Eq, @debug.Debug)
+pub fn[A : Eq, B : Eq] Either::equal(Self[A, B], Self[A, B]) -> Bool
+pub fn[A : Eq, B : Eq] Either::not_equal(Self[A, B], Self[A, B]) -> Bool
+pub fn[A : @debug.Debug, B : @debug.Debug] Either::to_repr(Self[A, B]) -> @debug.Repr
 
 type Future[T]
 pub fn[T] Future::all(Array[Self[T]]) -> Self[Array[T]]
@@ -133,4 +139,3 @@ pub fn[F1, F2, R] StreamArgs::step(Self[F1, R], (F2) -> F1) -> Self[F2, R]
 // Type aliases
 
 // Traits
-

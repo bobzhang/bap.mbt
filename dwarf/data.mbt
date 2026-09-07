@@ -13,6 +13,12 @@ pub(all) enum DwarfSection {
 } derive(Eq, Debug)
 
 ///|
+pub extend DwarfSection with Eq::{not_equal, equal}
+
+///|
+pub extend DwarfSection with Debug::{to_repr}
+
+///|
 struct DwarfSectionBuffer {
   data_value : Bytes
   position_value : Int
@@ -98,7 +104,7 @@ pub fn DwarfSectionBuffer::create(
   if position < 0 || position > data.length() {
     Err("DWARF section buffer position is out of bounds")
   } else {
-    Ok({ data_value: data, position_value: position })
+    Ok({ data_value: data, position_value: position, })
   }
 }
 
@@ -174,7 +180,7 @@ pub fn DwarfData::create(
     }
     out.push(entry)
   }
-  Ok({ endian_value: endian, sections_value: out })
+  Ok({ endian_value: endian, sections_value: out, })
 }
 
 ///|

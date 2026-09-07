@@ -63,7 +63,7 @@ pub fn StringsAlphabet::create(
   length~ : Int,
   index~ : (Byte) -> Int,
 ) -> StringsAlphabet {
-  { length_value: length, index_fn: index }
+  { length_value: length, index_fn: index, }
 }
 
 ///|
@@ -184,7 +184,7 @@ fn strings_compare_spectrum(lhs : ArrayView[Int], rhs : ArrayView[Int]) -> Int {
 pub fn StringsUnscrambler::empty(
   alphabet~ : StringsAlphabet,
 ) -> StringsUnscrambler {
-  { alphabet_value: alphabet, words_value: [] }
+  { alphabet_value: alphabet, words_value: [], }
 }
 
 ///|
@@ -211,7 +211,7 @@ pub fn StringsUnscrambler::add_word(
 ) -> StringsUnscrambler {
   let words = self.words_value.copy()
   words.push(word.to_owned())
-  { alphabet_value: self.alphabet_value, words_value: words }
+  { alphabet_value: self.alphabet_value, words_value: words, }
 }
 
 ///|

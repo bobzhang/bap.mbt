@@ -385,8 +385,8 @@ fn Term::ssa_rename(self : Term[Sub], entry : Tid) -> Term[Sub] {
   let graph = self.sub_cfg()
   let blocks = self.payload_value.blks.copy()
   let idoms = graph.immediate_dominators(entry)
-  let stacks : Map[String, Array[Var]] = {}
-  let counters : Map[String, Int] = {}
+  let stacks : Map[String, Array[Var]] = Map([])
+  let counters : Map[String, Int] = Map([])
   ssa_rename_block(self, graph, blocks, idoms, entry, stacks, counters)
 }
 
@@ -417,7 +417,7 @@ pub fn Term::to_ssa(self : Term[Sub], entry? : Tid) -> Term[Sub] {
 
 ///|
 pub fn Term::program_to_ssa(self : Term[Program]) -> Term[Program] {
-  self.with_payload({ subs: self.payload_value.subs.map(sub => sub.to_ssa()) })
+  self.with_payload({ subs: self.payload_value.subs.map(sub => sub.to_ssa()), })
 }
 
 ///|
@@ -569,7 +569,7 @@ fn ssa_destroy_block(
 ///|
 pub fn Term::destroy_ssa(self : Term[Sub]) -> Term[Sub] {
   let graph = self.sub_cfg()
-  let redirects : Map[(Tid, Tid), Tid] = {}
+  let redirects : Map[(Tid, Tid), Tid] = Map([])
   let copy_blocks = []
   for target in self.payload_value.blks {
     if !target.payload_value.phis.is_empty() {

@@ -32,7 +32,7 @@ fn bare_collect_vars(term : BareTerm, vars : Map[String, Bool]) -> Unit {
 
 ///|
 fn bare_collect_free_vars(terms : Array[BareTerm]) -> Map[String, Bool] {
-  let vars : Map[String, Bool] = {}
+  let vars : Map[String, Bool] = Map([])
   for term in terms {
     bare_collect_vars(term, vars)
   }
@@ -77,7 +77,7 @@ fn bare_rule_of_pair(
         template: template.copy(),
         bindings: {},
       }
-      Ok({ rule_value: state, work_value: [state] })
+      Ok({ rule_value: state, work_value: [state], })
     }
   }
 }
@@ -157,7 +157,7 @@ pub fn Rule::rhs(self : Rule) -> Array[BareFact] {
 
 ///|
 pub fn Rule::reset(self : Rule) -> Rule {
-  { rule_value: self.rule_value, work_value: [self.rule_value] }
+  { rule_value: self.rule_value, work_value: [self.rule_value], }
 }
 
 ///|
@@ -311,5 +311,5 @@ pub fn Rule::apply(self : Rule, fact : BareFact) -> (Rule, Array[BareFact]) {
       None => ()
     }
   }
-  ({ rule_value: self.rule_value, work_value: work }, acts)
+  ({ rule_value: self.rule_value, work_value: work, }, acts)
 }

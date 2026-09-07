@@ -60,6 +60,9 @@ struct DfsVisitor[N, E, A] {
 } derive(Debug)
 
 ///|
+pub extend DfsVisitor with Debug::{to_repr}
+
+///|
 pub fn[N, E, A] DfsVisitor::new(
   start_tree? : (N, A) -> A = dfs_start_tree_identity,
   enter_node? : (Int, N, A) -> A = dfs_node_identity,
@@ -140,8 +143,8 @@ pub fn[N : Hash + Eq, E, A] Graph::depth_first_search(
   enter_edge? : (EdgeKind, Edge[N, E], A) -> A = dfs_edge_identity,
   leave_edge? : (EdgeKind, Edge[N, E], A) -> A = dfs_edge_identity,
 ) -> A {
-  let colors : Map[N, Int] = {}
-  let entered : Map[N, Int] = {}
+  let colors : Map[N, Int] = Map([])
+  let entered : Map[N, Int] = Map([])
   let nodes_left = Ref::Ref(self.node_count())
   let next_pre = Ref::Ref(0)
   let mut state = init
@@ -211,8 +214,8 @@ pub fn[N : Hash + Eq, E] Graph::dfs_edges(
   self : Graph[N, E],
   start : N,
 ) -> Array[(EdgeKind, Edge[N, E])] {
-  let colors : Map[N, Int] = {}
-  let entered : Map[N, Int] = {}
+  let colors : Map[N, Int] = Map([])
+  let entered : Map[N, Int] = Map([])
   let time = Ref::Ref(0)
   let events = []
   if self.has_node(start) {
@@ -236,7 +239,7 @@ fn[N : Hash + Eq, E] dfs_numbering_visit(
   time.val += 1
   let pre = next_pre.val
   next_pre.val += 1
-  numbering[node] = { enter, leave: -1, pre, rpost: -1 }
+  numbering[node] = { enter, leave: -1, pre, rpost: -1, }
   for edge in graph.out_edges(node) {
     if !colors.contains(edge.dst) {
       dfs_numbering_visit(
@@ -265,8 +268,8 @@ pub fn[N : Hash + Eq, E] Graph::dfs_numbering(
   self : Graph[N, E],
   start : N,
 ) -> Map[N, DfsNodeInfo] {
-  let colors : Map[N, Int] = {}
-  let numbering : Map[N, DfsNodeInfo] = {}
+  let colors : Map[N, Int] = Map([])
+  let numbering : Map[N, DfsNodeInfo] = Map([])
   let time = Ref::Ref(0)
   let next_pre = Ref::Ref(0)
   let leave_order : Array[N] = []
@@ -278,7 +281,7 @@ pub fn[N : Hash + Eq, E] Graph::dfs_numbering(
   let rpo = leave_order.rev()
   for i, node in rpo {
     match numbering.get(node) {
-      Some(info) => numbering[node] = { ..info, rpost: i }
+      Some(info) => numbering[node] = { ..info, rpost: i, }
       None => ()
     }
   }
@@ -433,9 +436,9 @@ pub fn[N : Hash + Eq, E] Graph::shortest_path(
   rev? : Bool = false,
 ) -> GraphPath[Edge[N, E]]? {
   let visited : Set[N] = Set([])
-  let distances : Map[N, Int] = {}
+  let distances : Map[N, Int] = Map([])
   let queue : Array[ShortestPathItem[N, E]] = [
-    { total: 0, node: start, path: [] },
+    { total: 0, node: start, path: [], },
   ]
   distances[start] = 0
   let mut result : GraphPath[Edge[N, E]]? = None
@@ -464,7 +467,7 @@ pub fn[N : Hash + Eq, E] Graph::shortest_path(
                   distances[next] = total
                   let path = item.path.copy()
                   path.push(edge)
-                  queue.push({ total, node: next, path })
+                  queue.push({ total, node: next, path, })
                 }
               }
             }
@@ -526,8 +529,8 @@ pub fn[N : Hash + Eq, E] Graph::strong_components(
   self : Graph[N, E],
 ) -> Array[Set[N]] {
   let index = Ref::Ref(0)
-  let indexes : Map[N, Int] = {}
-  let lowlinks : Map[N, Int] = {}
+  let indexes : Map[N, Int] = Map([])
+  let lowlinks : Map[N, Int] = Map([])
   let stack : Array[N] = []
   let on_stack : Set[N] = Set([])
   let components : Array[Set[N]] = []
@@ -556,7 +559,7 @@ pub fn[N : Hash + Eq, E] Graph::strong_component_partition(
       None => ()
     }
   }
-  { roots_value: roots, groups_value: groups }
+  { roots_value: roots, groups_value: groups, }
 }
 
 ///|
@@ -567,7 +570,7 @@ pub fn[N : Hash + Eq, E] Graph::dominators(
 ) -> Map[N, Set[N]] {
   let all_nodes : Set[N] = Set::from_array(self.nodes)
   let reachable = self.reachable(entry, rev~)
-  let doms : Map[N, Set[N]] = {}
+  let doms : Map[N, Set[N]] = Map([])
   for node in self.nodes {
     if node == entry {
       doms[node] = Set::from_array([node])
@@ -655,7 +658,7 @@ pub fn[N : Hash + Eq, E] Graph::immediate_dominators(
 ) -> Map[N, N] {
   let doms = self.dominators(entry, rev~)
   let reachable = self.reachable(entry, rev~)
-  let idoms : Map[N, N] = {}
+  let idoms : Map[N, N] = Map([])
   for node in self.nodes {
     if node != entry && reachable.contains(node) {
       match immediate_dominator_of(doms, node) {
@@ -675,7 +678,7 @@ pub fn[N : Hash + Eq, E] Graph::dominance_frontiers(
 ) -> Map[N, Set[N]] {
   let reachable = self.reachable(entry, rev~)
   let idoms = self.immediate_dominators(entry, rev~)
-  let frontiers : Map[N, Set[N]] = {}
+  let frontiers : Map[N, Set[N]] = Map([])
   for node in self.nodes {
     frontiers[node] = Set([])
   }

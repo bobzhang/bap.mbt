@@ -13,6 +13,9 @@ import {
 pub(all) suberror MemoryError {
   MemoryFailure(String)
 } derive(Eq, @debug.Debug)
+pub fn MemoryError::equal(Self, Self) -> Bool
+pub fn MemoryError::not_equal(Self, Self) -> Bool
+pub fn MemoryError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
 pub(all) enum AddressPosition {
@@ -20,6 +23,9 @@ pub(all) enum AddressPosition {
   AddrBelow
   AddrAbove
 } derive(Eq, @debug.Debug)
+pub fn AddressPosition::equal(Self, Self) -> Bool
+pub fn AddressPosition::not_equal(Self, Self) -> Bool
+pub fn AddressPosition::to_repr(Self) -> @debug.Repr
 
 type MemMap[V]
 pub fn[V] MemMap::add(Self[V], Memory, V) -> Self[V]
@@ -178,4 +184,3 @@ pub fn[V] MemoryTrie::word_size(Self[V]) -> Int
 // Type aliases
 
 // Traits
-

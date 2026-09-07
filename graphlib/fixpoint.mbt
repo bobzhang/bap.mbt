@@ -7,6 +7,9 @@ struct Fixpoint[N, D] {
 } derive(Debug)
 
 ///|
+pub extend Fixpoint with Debug::{to_repr}
+
+///|
 pub fn[N, D] Fixpoint::create(
   constraints : Map[N, D],
   default : D,
@@ -91,7 +94,7 @@ pub fn[N : Hash + Eq, D, A] Fixpoint::derive_values(
   f : (N, D) -> A?,
   default : A,
 ) -> Fixpoint[N, A] {
-  let out : Map[N, A] = {}
+  let out : Map[N, A] = Map([])
   for entry in self.approx_value {
     match f(entry.0, entry.1) {
       Some(value) => out[entry.0] = value
@@ -168,7 +171,7 @@ pub fn[N : Hash + Eq, E, D] Graph::fixpoint(
   step? : ((Int, N, D, D) -> D)? = None,
 ) -> Fixpoint[N, D] {
   let nodes = self.reverse_postorder_traverse(rev~, start~)
-  let rnodes : Map[N, Int] = {}
+  let rnodes : Map[N, Int] = Map([])
   for i in 0..<nodes.length() {
     rnodes[nodes[i]] = i
   }
@@ -188,14 +191,14 @@ pub fn[N : Hash + Eq, E, D] Graph::fixpoint(
     }
     successors.push(ranked)
   }
-  let approx : Map[Int, D] = {}
+  let approx : Map[Int, D] = Map([])
   for entry in init.approx_value {
     match rnodes.get(entry.0) {
       Some(index) => approx[index] = entry.1
       None => ()
     }
   }
-  let visits : Map[Int, Int] = {}
+  let visits : Map[Int, Int] = Map([])
   let worklist : Set[Int] = Set([])
   for i in 0..<nodes.length() {
     worklist.add(i)

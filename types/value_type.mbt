@@ -5,6 +5,12 @@ pub(all) enum ValueType {
 } derive(Eq, Debug)
 
 ///|
+pub extend ValueType with Eq::{not_equal}
+
+///|
+pub extend ValueType with Debug::{to_repr}
+
+///|
 fn ValueType::rank(self : ValueType) -> Int {
   match self {
     Imm(_) => 0
@@ -134,6 +140,12 @@ pub(all) struct Var {
 } derive(Eq, Debug)
 
 ///|
+pub extend Var with Eq::{not_equal}
+
+///|
+pub extend Var with Debug::{to_repr}
+
+///|
 let var_create_fresh_counter : Ref[Int] = Ref(0xC00000)
 
 ///|
@@ -148,7 +160,7 @@ pub fn Var::new(
   typ~ : ValueType,
   is_virtual? : Bool = false,
 ) -> Var {
-  { name, typ, is_virtual }
+  { name, typ, is_virtual, }
 }
 
 ///|
@@ -245,7 +257,7 @@ pub fn Var::with_index(self : Var, index : Int) -> Var {
   if index <= 0 {
     base
   } else {
-    { ..base, name: "\{base.name}#\{index}" }
+    { ..base, name: "\{base.name}#\{index}", }
   }
 }
 

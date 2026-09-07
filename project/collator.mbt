@@ -20,7 +20,7 @@ struct RegisteredProjectCollator {
 }
 
 ///|
-let project_collator_registry : Map[String, RegisteredProjectCollator] = {}
+let project_collator_registry : Map[String, RegisteredProjectCollator] = Map([])
 
 ///|
 let project_collator_registry_order : Array[String] = []
@@ -109,7 +109,7 @@ pub fn[S, R] ProjectCollator::desc(self : ProjectCollator[S, R]) -> String {
 pub fn[S, R] ProjectCollator::info(
   self : ProjectCollator[S, R],
 ) -> ProjectCollatorInfo {
-  { name_value: self.qualified_name(), description_value: self.description() }
+  { name_value: self.qualified_name(), description_value: self.description(), }
 }
 
 ///|

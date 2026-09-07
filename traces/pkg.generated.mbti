@@ -18,6 +18,9 @@ pub(all) suberror TraceError {
   ProtocolError(String)
   DuplicateRegistration(String)
 } derive(Eq, @debug.Debug)
+pub fn TraceError::equal(Self, Self) -> Bool
+pub fn TraceError::not_equal(Self, Self) -> Bool
+pub fn TraceError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
 pub(all) struct Binary {
@@ -31,6 +34,9 @@ pub(all) struct BinaryInfo {
   envp : Array[String]
   md5sum : String
 } derive(Eq, @debug.Debug)
+pub fn BinaryInfo::equal(Self, Self) -> Bool
+pub fn BinaryInfo::not_equal(Self, Self) -> Bool
+pub fn BinaryInfo::to_repr(Self) -> @debug.Repr
 pub fn BinaryInfo::to_string(Self) -> String
 
 pub(all) struct Call {
@@ -39,6 +45,9 @@ pub(all) struct Call {
   args : Array[@types.Word]
 } derive(Eq, @debug.Debug)
 pub fn Call::create(caller~ : Location, callee~ : Location, args~ : Array[@types.Word]) -> Self
+pub fn Call::equal(Self, Self) -> Bool
+pub fn Call::not_equal(Self, Self) -> Bool
+pub fn Call::to_repr(Self) -> @debug.Repr
 pub fn Call::to_string(Self) -> String
 
 pub(all) struct Chunk {
@@ -46,6 +55,9 @@ pub(all) struct Chunk {
   data : Bytes
 } derive(Eq, @debug.Debug)
 pub fn Chunk::create(addr~ : @types.Word, data~ : Bytes) -> Self
+pub fn Chunk::equal(Self, Self) -> Bool
+pub fn Chunk::not_equal(Self, Self) -> Bool
+pub fn Chunk::to_repr(Self) -> @debug.Repr
 pub fn Chunk::to_string(Self) -> String
 
 pub(all) struct Event {
@@ -76,6 +88,9 @@ pub(all) struct FileStatsInfo {
   mtime : Double
   ctime : Double
 } derive(Eq, @debug.Debug)
+pub fn FileStatsInfo::equal(Self, Self) -> Bool
+pub fn FileStatsInfo::not_equal(Self, Self) -> Bool
+pub fn FileStatsInfo::to_repr(Self) -> @debug.Repr
 pub fn FileStatsInfo::to_string(Self) -> String
 
 pub(all) struct File_stats {
@@ -98,6 +113,9 @@ pub(all) struct Location {
   addr : @types.Word
 } derive(Eq, @debug.Debug)
 pub fn Location::create(name? : String?, addr~ : @types.Word) -> Self
+pub fn Location::equal(Self, Self) -> Bool
+pub fn Location::not_equal(Self, Self) -> Bool
+pub fn Location::to_repr(Self) -> @debug.Repr
 pub fn Location::to_string(Self) -> String
 
 pub(all) struct Meta {
@@ -124,6 +142,9 @@ pub(all) struct Modload {
   high : @types.Word
 } derive(Eq, @debug.Debug)
 pub fn Modload::create(name~ : String, low~ : @types.Word, high~ : @types.Word) -> Self
+pub fn Modload::equal(Self, Self) -> Bool
+pub fn Modload::not_equal(Self, Self) -> Bool
+pub fn Modload::to_repr(Self) -> @debug.Repr
 pub fn Modload::to_string(Self) -> String
 
 pub(all) struct Monitor {
@@ -140,6 +161,9 @@ pub(all) struct Move[T] {
   data : @types.Word
 } derive(Eq, @debug.Debug)
 pub fn[T] Move::create(cell~ : T, data~ : @types.Word) -> Self[T]
+pub fn[T : Eq] Move::equal(Self[T], Self[T]) -> Bool
+pub fn[T : Eq] Move::not_equal(Self[T], Self[T]) -> Bool
+pub fn[T : @debug.Debug] Move::to_repr(Self[T]) -> @debug.Repr
 pub fn[T] Move::to_string(Self[T], (T) -> String, arrow~ : String) -> String
 
 pub(all) struct Reader {
@@ -152,6 +176,9 @@ pub(all) struct Return {
   callee : String
 } derive(Eq, @debug.Debug)
 pub fn Return::create(caller~ : String, callee~ : String) -> Self
+pub fn Return::equal(Self, Self) -> Bool
+pub fn Return::not_equal(Self, Self) -> Bool
+pub fn Return::to_repr(Self) -> @debug.Repr
 pub fn Return::to_string(Self) -> String
 
 pub(all) struct Syscall {
@@ -159,6 +186,9 @@ pub(all) struct Syscall {
   args : Array[@types.Word]
 } derive(Eq, @debug.Debug)
 pub fn Syscall::create(number~ : Int, args~ : Array[@types.Word]) -> Self
+pub fn Syscall::equal(Self, Self) -> Bool
+pub fn Syscall::not_equal(Self, Self) -> Bool
+pub fn Syscall::to_repr(Self) -> @debug.Repr
 pub fn Syscall::to_string(Self) -> String
 
 type Trace
@@ -216,6 +246,9 @@ pub(all) enum TraceAttrValue {
   Int(Int)
   Bool(Bool)
 } derive(Eq, @debug.Debug)
+pub fn TraceAttrValue::equal(Self, Self) -> Bool
+pub fn TraceAttrValue::not_equal(Self, Self) -> Bool
+pub fn TraceAttrValue::to_repr(Self) -> @debug.Repr
 
 pub(all) enum TraceEvent {
   MemoryLoad(Move[@types.Word])
@@ -247,6 +280,7 @@ pub fn TraceEvent::context_switch(Int) -> Self
 pub fn TraceEvent::context_switch_tag() -> String
 pub fn TraceEvent::context_switch_uuid() -> String
 pub fn TraceEvent::context_switch_value(Self) -> Int?
+pub fn TraceEvent::equal(Self, Self) -> Bool
 pub fn TraceEvent::exn(TraceException) -> Self
 pub fn TraceEvent::exn_tag() -> String
 pub fn TraceEvent::exn_uuid() -> String
@@ -269,6 +303,7 @@ pub fn TraceEvent::modload(Modload) -> Self
 pub fn TraceEvent::modload_tag() -> String
 pub fn TraceEvent::modload_uuid() -> String
 pub fn TraceEvent::modload_value(Self) -> Modload?
+pub fn TraceEvent::not_equal(Self, Self) -> Bool
 pub fn TraceEvent::pc_update(@types.Word) -> Self
 pub fn TraceEvent::pc_update_tag() -> String
 pub fn TraceEvent::pc_update_uuid() -> String
@@ -299,18 +334,25 @@ pub fn TraceEvent::timestamp(Int64) -> Self
 pub fn TraceEvent::timestamp_tag() -> String
 pub fn TraceEvent::timestamp_uuid() -> String
 pub fn TraceEvent::timestamp_value(Self) -> Int64?
+pub fn TraceEvent::to_repr(Self) -> @debug.Repr
 pub fn TraceEvent::to_string(Self) -> String
 
 pub(all) struct TraceEventTagInfo {
   name : String
   uuid : String
 } derive(Eq, @debug.Debug)
+pub fn TraceEventTagInfo::equal(Self, Self) -> Bool
+pub fn TraceEventTagInfo::not_equal(Self, Self) -> Bool
+pub fn TraceEventTagInfo::to_repr(Self) -> @debug.Repr
 
 pub(all) struct TraceException {
   number : Int
   src : @types.Word?
   dst : @types.Word?
 } derive(Eq, @debug.Debug)
+pub fn TraceException::equal(Self, Self) -> Bool
+pub fn TraceException::not_equal(Self, Self) -> Bool
+pub fn TraceException::to_repr(Self) -> @debug.Repr
 pub fn TraceException::to_string(Self) -> String
 
 pub(all) struct TraceId {
@@ -321,7 +363,10 @@ pub fn TraceId::create(String) -> Result[Self, String]
 pub fn TraceId::equal(Self, Self) -> Bool
 pub fn TraceId::fresh() -> Self
 pub fn TraceId::hash(Self) -> Int
+pub fn TraceId::hash_combine(Self, Hasher) -> Unit
+pub fn TraceId::not_equal(Self, Self) -> Bool
 pub fn TraceId::of_string(String) -> Result[Self, String]
+pub fn TraceId::to_repr(Self) -> @debug.Repr
 pub fn TraceId::to_string(Self) -> String
 
 pub(all) struct TraceMeta {
@@ -339,6 +384,7 @@ pub fn TraceMeta::binary_uuid() -> String
 pub fn TraceMeta::common_tag_infos() -> Array[TraceMetaTagInfo]
 pub fn TraceMeta::empty() -> Self
 pub fn TraceMeta::entries(Self) -> Array[(String, TraceAttrValue)]
+pub fn TraceMeta::equal(Self, Self) -> Bool
 pub fn TraceMeta::get(Self, String) -> TraceAttrValue?
 pub fn TraceMeta::get_bool(Self, String) -> Bool?
 pub fn TraceMeta::get_int(Self, String) -> Int?
@@ -347,6 +393,7 @@ pub fn TraceMeta::has(Self, String) -> Bool
 pub fn TraceMeta::is_empty(Self) -> Bool
 pub fn TraceMeta::keys(Self) -> Array[String]
 pub fn TraceMeta::length(Self) -> Int
+pub fn TraceMeta::not_equal(Self, Self) -> Bool
 pub fn TraceMeta::remove(Self, String) -> Self
 pub fn TraceMeta::set(Self, String, TraceAttrValue) -> Self
 pub fn TraceMeta::set_arch(Self, @types.Arch) -> Self
@@ -359,6 +406,7 @@ pub fn TraceMeta::set_trace_stats(Self, TraceStatsInfo) -> Self
 pub fn TraceMeta::set_tracer(Self, TracerInfo) -> Self
 pub fn TraceMeta::tag_info_for_name(String) -> TraceMetaTagInfo?
 pub fn TraceMeta::tag_info_for_uuid(String) -> TraceMetaTagInfo?
+pub fn TraceMeta::to_repr(Self) -> @debug.Repr
 pub fn TraceMeta::trace_stats(Self) -> TraceStatsInfo?
 pub fn TraceMeta::trace_stats_key() -> String
 pub fn TraceMeta::trace_stats_uuid() -> String
@@ -370,6 +418,9 @@ pub(all) struct TraceMetaTagInfo {
   name : String
   uuid : String
 } derive(Eq, @debug.Debug)
+pub fn TraceMetaTagInfo::equal(Self, Self) -> Bool
+pub fn TraceMetaTagInfo::not_equal(Self, Self) -> Bool
+pub fn TraceMetaTagInfo::to_repr(Self) -> @debug.Repr
 
 pub(all) struct TraceMode {
   name_value : @knowledge.Name
@@ -382,9 +433,11 @@ pub fn TraceMode::hash(Self) -> Int
 pub fn TraceMode::is_unknown(Self) -> Bool
 pub fn TraceMode::members() -> Array[Self]
 pub fn TraceMode::name(Self) -> @knowledge.Name
+pub fn TraceMode::not_equal(Self, Self) -> Bool
 pub fn TraceMode::persistent() -> @knowledge.Persistent[Self]
 pub fn TraceMode::read(String, pkg? : String) -> Result[Self, String]
 pub fn TraceMode::slot() -> @knowledge.Slot[Unit, Self]
+pub fn TraceMode::to_repr(Self) -> @debug.Repr
 pub fn TraceMode::to_string(Self) -> String
 pub fn TraceMode::unknown() -> Self
 
@@ -407,12 +460,18 @@ pub(all) struct TraceReader {
   meta : TraceMeta
   events : Array[Result[TraceEvent, String]]
 } derive(Eq, @debug.Debug)
+pub fn TraceReader::equal(Self, Self) -> Bool
+pub fn TraceReader::not_equal(Self, Self) -> Bool
+pub fn TraceReader::to_repr(Self) -> @debug.Repr
 
 pub(all) struct TraceStatsInfo {
   user : String
   host : String
   time : Double
 } derive(Eq, @debug.Debug)
+pub fn TraceStatsInfo::equal(Self, Self) -> Bool
+pub fn TraceStatsInfo::not_equal(Self, Self) -> Bool
+pub fn TraceStatsInfo::to_repr(Self) -> @debug.Repr
 pub fn TraceStatsInfo::to_string(Self) -> String
 
 pub(all) enum TraceStep {
@@ -421,6 +480,9 @@ pub(all) enum TraceStep {
   Fail
   Make(TraceEvent)
 } derive(Eq, @debug.Debug)
+pub fn TraceStep::equal(Self, Self) -> Bool
+pub fn TraceStep::not_equal(Self, Self) -> Bool
+pub fn TraceStep::to_repr(Self) -> @debug.Repr
 
 pub(all) struct TraceStreamReader {
   tool : TraceTool
@@ -435,10 +497,13 @@ pub(all) struct TraceTool {
   supported_tags : @set.Set[String]
 } derive(Eq, @debug.Debug)
 pub fn TraceTool::create(name~ : String, supported_tags~ : Array[String]) -> Self
+pub fn TraceTool::equal(Self, Self) -> Bool
 pub fn TraceTool::name(Self) -> String
+pub fn TraceTool::not_equal(Self, Self) -> Bool
 pub fn TraceTool::register(name~ : String, supported_tags~ : Array[String]) -> Self
 pub fn TraceTool::supported_tags(Self) -> Array[String]
 pub fn TraceTool::supports(Self, String) -> Bool
+pub fn TraceTool::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Trace_stats {
 }
@@ -456,6 +521,9 @@ pub(all) struct TracerInfo {
   envp : Array[String]
   version : String
 } derive(Eq, @debug.Debug)
+pub fn TracerInfo::equal(Self, Self) -> Bool
+pub fn TracerInfo::not_equal(Self, Self) -> Bool
+pub fn TracerInfo::to_repr(Self) -> @debug.Repr
 pub fn TracerInfo::to_string(Self) -> String
 
 pub(all) struct Traces {
@@ -469,4 +537,3 @@ pub fn Traces::to_list() -> Array[Trace]
 // Type aliases
 
 // Traits
-

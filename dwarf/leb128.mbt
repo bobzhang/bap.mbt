@@ -5,8 +5,14 @@ struct Leb128 {
 } derive(Eq, Debug)
 
 ///|
+pub extend Leb128 with Eq::{not_equal, equal}
+
+///|
+pub extend Leb128 with Debug::{to_repr}
+
+///|
 fn leb128_from_data(data : Array[Byte], negative : Bool) -> Leb128 {
-  { negative, data: data.copy() }
+  { negative, data: data.copy(), }
 }
 
 ///|

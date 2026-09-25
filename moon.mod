@@ -15,7 +15,7 @@ version = "0.2.1"
 
 readme = "README.mbt.md"
 
-repository = ""
+repository = "https://github.com/bobzhang/bap.mbt"
 
 license = "Apache-2.0"
 

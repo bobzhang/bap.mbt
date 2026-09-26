@@ -1,81 +1,183 @@
 ///|
-struct Semantics {
-  effect_value : Effect
-  value_value : Value
-  code_value : Bytes?
+/// The semantics of a program (`Theory.Semantics.t`).
+///
+/// Upstream the semantics is an effect refined to the top effect sort: a
+/// knowledge value of the `core:effect` class. It shares all properties of
+/// the effect class (e.g., the BIL statements), plus the `value` of the
+/// program (for expressions) and the `insn-code` (the program memory
+/// contents). The whole semantics is itself a property of programs
+/// (`Semantics::slot`), so that different lifters and theories can provide
+/// different properties of the same semantics, which are joined.
+struct Semantics(@knowledge.Value[EffectCls, EffectSort])
+
+///|
+let semantics_cls : @knowledge.Class[EffectCls, EffectSort] = Effect::sorted_cls(
+  EffectTop,
+)
+
+///|
+/// `Semantics.cls`: the effect class refined to the top sort.
+pub fn Semantics::cls() -> @knowledge.Class[EffectCls, EffectSort] {
+  semantics_cls
 }
 
 ///|
-fn semantics_default_value() -> Value {
-  Value::empty(Sort::top())
-}
-
-///|
+/// The empty semantics.
 pub fn Semantics::empty() -> Semantics {
-  {
-    effect_value: Effect::empty(EffectTop),
-    value_value: semantics_default_value(),
-    code_value: None,
-  }
+  Semantics(@knowledge.Value::empty(semantics_cls))
 }
 
 ///|
+/// Views an effect as a program semantics (refining its sort to top).
+pub fn Semantics::of_effect(effect : Effect) -> Semantics {
+  Semantics(effect.kb().refine(EffectTop))
+}
+
+///|
+/// The semantics viewed as an effect (of the top sort).
+pub fn Semantics::effect(self : Semantics) -> Effect {
+  Effect::of_kb(self.0)
+}
+
+///|
+/// Wraps a knowledge value of the semantics class.
+pub fn Semantics::of_kb(
+  value : @knowledge.Value[EffectCls, EffectSort],
+) -> Semantics {
+  Semantics(value.refine(EffectTop))
+}
+
+///|
+/// The underlying knowledge value.
+pub fn Semantics::kb(
+  self : Semantics,
+) -> @knowledge.Value[EffectCls, EffectSort] {
+  self.0
+}
+
+///|
+/// Creates a semantics from the properties of `effect`, with the `value`
+/// and `code` properties set.
 pub fn Semantics::create(
   effect? : Effect,
   value? : Value,
   code? : Bytes,
 ) -> Semantics {
-  {
-    effect_value: match effect {
-      Some(item) => item
-      None => Effect::empty(EffectTop)
-    },
-    value_value: match value {
-      Some(item) => item
-      None => semantics_default_value()
-    },
-    code_value: code,
+  let base = match effect {
+    Some(effect) => Semantics::of_effect(effect)
+    None => Semantics::empty()
+  }
+  let base = match value {
+    Some(value) => base.with_value(value)
+    None => base
+  }
+  match code {
+    Some(code) => base.with_code(code)
+    None => base
   }
 }
 
 ///|
-pub fn Semantics::cls() -> @knowledge.Class[Unit, EffectSort] {
-  @knowledge.Class::create(
-    name=core_name("semantics"),
-    sort=EffectTop,
-    desc="program semantics values",
-    public=true,
-  )
+/// `KB.Value.get p s`.
+pub fn[P] Semantics::get(
+  self : Semantics,
+  slot : @knowledge.Slot[EffectCls, P],
+) -> P {
+  self.0.get(slot)
 }
 
 ///|
-pub fn Semantics::effect(self : Semantics) -> Effect {
-  self.effect_value
+/// The property `p` of the semantics, if it was set.
+pub fn[P] Semantics::find(
+  self : Semantics,
+  slot : @knowledge.Slot[EffectCls, P],
+) -> P? {
+  self.0.find(slot)
 }
 
 ///|
+/// `KB.Value.put p s x`.
+pub fn[P] Semantics::put(
+  self : Semantics,
+  slot : @knowledge.Slot[EffectCls, P],
+  value : P,
+) -> Semantics {
+  Semantics(self.0.put(slot, value))
+}
+
+///|
+/// `KB.Value.has p s`.
+pub fn[P] Semantics::has(
+  self : Semantics,
+  slot : @knowledge.Slot[EffectCls, P],
+) -> Bool {
+  self.0.has(slot)
+}
+
+///|
+/// All properties of the semantics are empty.
+pub fn Semantics::is_empty(self : Semantics) -> Bool {
+  self.0.is_empty()
+}
+
+///|
+/// `Semantics.value`: the value of the program (for expressions).
 pub fn Semantics::value(self : Semantics) -> Value {
-  self.value_value
+  self.0.get(semantics_value_slot)
 }
 
 ///|
+/// `Semantics.code`: the program memory contents, if known.
 pub fn Semantics::code(self : Semantics) -> Bytes? {
-  self.code_value
+  self.0.get(semantics_code_slot)
 }
 
 ///|
+/// Merges the properties of `effect` into the semantics (the properties
+/// of `effect` win on conflicts).
 pub fn Semantics::with_effect(self : Semantics, effect : Effect) -> Semantics {
-  { ..self, effect_value: effect, }
+  Semantics(self.0.merge(effect.kb().refine(EffectTop), on_conflict=DropLeft))
 }
 
 ///|
+/// Sets the `value` property.
 pub fn Semantics::with_value(self : Semantics, value : Value) -> Semantics {
-  { ..self, value_value: value, }
+  self.put(semantics_value_slot, value)
 }
 
 ///|
+/// Sets the `insn-code` property.
 pub fn Semantics::with_code(self : Semantics, code : Bytes) -> Semantics {
-  { ..self, code_value: Some(code), }
+  self.put(semantics_code_slot, Some(code))
+}
+
+///|
+/// Joins the properties of two semantics.
+pub fn Semantics::join(
+  self : Semantics,
+  other : Semantics,
+) -> Semantics raise @knowledge.Conflict {
+  Semantics(self.0.join(other.0))
+}
+
+///|
+/// Merges the properties of two semantics (the newer property wins on a
+/// conflict by default).
+pub fn Semantics::merge(
+  self : Semantics,
+  other : Semantics,
+  on_conflict? : @knowledge.MergeStrategy = DropOld,
+) -> Semantics {
+  Semantics(self.0.merge(other.0, on_conflict~))
+}
+
+///|
+/// Orders semantics by their information content.
+pub fn Semantics::order(
+  self : Semantics,
+  other : Semantics,
+) -> @knowledge.PartialOrder {
+  self.0.order(other.0)
 }
 
 ///|
@@ -99,178 +201,139 @@ fn semantics_bytes_hex(bytes : BytesView) -> String {
 }
 
 ///|
+/// The program memory contents as a hexadecimal string.
 pub fn Semantics::code_hex(self : Semantics) -> String? {
-  self.code_value.map(bytes => semantics_bytes_hex(bytes))
+  self.code().map(bytes => semantics_bytes_hex(bytes))
 }
 
 ///|
-pub fn Semantics::persistent() -> @knowledge.Persistent[Semantics] {
-  let effect_codec = Effect::persistent()
-  let value_codec = Value::persistent()
-  let code_codec = @knowledge.Persistent::optional(
-    @knowledge.Persistent::bytes(),
-  )
-  @knowledge.Persistent::convert(
-    to_persistent=semantics => {
-      [
-        effect_codec.encode(semantics.effect()),
-        value_codec.encode(semantics.value()),
-        code_codec.encode(semantics.code()),
-      ]
-    },
-    of_persistent=fields => {
-      match persistent_decode_fields(fields, 3, "semantics") {
-        Ok(_) => ()
-        Err(reason) => return Err(reason)
-      }
-      let effect = match effect_codec.decode(fields[0]) {
-        Ok(value) => value
-        Err(reason) => return Err(reason)
-      }
-      let value = match value_codec.decode(fields[1]) {
-        Ok(value) => value
-        Err(reason) => return Err(reason)
-      }
-      let code = match code_codec.decode(fields[2]) {
-        Ok(value) => value
-        Err(reason) => return Err(reason)
-      }
-      Ok(Semantics::create(effect~, value~, code?))
-    },
-    persistent_string_fields(),
-  )
-}
-
-///|
-fn effect_equal(lhs : Effect, rhs : Effect) -> Bool {
-  lhs.equal(rhs)
-}
-
-///|
-fn value_equal(lhs : Value, rhs : Value) -> Bool {
-  lhs.equal(rhs)
-}
-
-///|
-fn semantics_equal(lhs : Semantics, rhs : Semantics) -> Bool {
-  effect_equal(lhs.effect_value, rhs.effect_value) &&
-  value_equal(lhs.value_value, rhs.value_value) &&
-  lhs.code_value == rhs.code_value
-}
-
-///|
+/// Semantics with equal properties are equal.
 pub fn Semantics::equal(self : Semantics, other : Semantics) -> Bool {
-  semantics_equal(self, other)
+  self.0.equal(other.0)
 }
 
 ///|
-fn optional_bytes_compare(lhs : Bytes?, rhs : Bytes?) -> Int {
-  match (lhs, rhs) {
-    (None, None) => 0
-    (None, Some(_)) => -1
-    (Some(_), None) => 1
-    (Some(left), Some(right)) => bytes_compare(left, right)
-  }
-}
-
-///|
-fn bytes_compare(lhs : BytesView, rhs : BytesView) -> Int {
-  let limit = if lhs.length() < rhs.length() {
-    lhs.length()
-  } else {
-    rhs.length()
-  }
-  for i in 0..<limit {
-    let order = lhs[i].to_int().compare(rhs[i].to_int())
-    if order != 0 {
-      return order
-    }
-  }
-  lhs.length().compare(rhs.length())
-}
-
-///|
+/// A total order on semantics (by information, then by age).
 pub fn Semantics::compare(self : Semantics, other : Semantics) -> Int {
-  let effect_order = self.effect_value.compare(other.effect_value)
-  if effect_order != 0 {
-    return effect_order
-  }
-  let value_order = self.value_value.compare(other.value_value)
-  if value_order != 0 {
-    return value_order
-  }
-  optional_bytes_compare(self.code_value, other.code_value)
+  self.0.compare(other.0)
 }
 
 ///|
-fn semantics_is_empty(value : Semantics) -> Bool {
-  semantics_equal(value, Semantics::empty())
+/// Renders all properties of the semantics.
+pub fn Semantics::to_string(self : Semantics) -> String {
+  self.0.inspect()
 }
 
 ///|
-fn semantics_inspect(value : Semantics) -> String {
-  let code = match value.code_hex() {
-    Some(hex) => hex
-    None => "none"
-  }
-  "semantics(effect=\{value.effect().to_string()}, code=\{code})"
+/// Renders only the named properties (`KB.Value.pp_slots`).
+pub fn Semantics::inspect_slots(
+  self : Semantics,
+  slots : Array[String],
+) -> String {
+  self.0.inspect_slots(slots)
 }
 
 ///|
-fn bytes_domain(name : String) -> @knowledge.Domain[Bytes] {
-  @knowledge.Domain::new(
-    name=core_name(name),
-    empty=None,
-    is_empty=(_ : Bytes) => false,
-    order=(lhs : Bytes, rhs : Bytes) => {
-      if lhs == rhs {
-        Equal
-      } else {
-        Incomparable
-      }
-    },
-    join=(lhs : Bytes, rhs : Bytes) => {
-      if lhs == rhs {
-        Ok(lhs)
-      } else {
-        Err("conflicting byte facts")
-      }
-    },
-    inspect=(bytes : Bytes) => semantics_bytes_hex(bytes),
-  )
-}
-
-///|
-fn semantics_domain() -> @knowledge.Domain[Semantics] {
+let semantics_domain : @knowledge.Domain[Semantics] = {
+  let empty = Semantics::empty()
   @knowledge.Domain::new(
     name=core_name("semantics"),
-    empty=Some(Semantics::empty()),
-    is_empty=semantics_is_empty,
-    order=(lhs : Semantics, rhs : Semantics) => {
-      if semantics_equal(lhs, rhs) {
-        Equal
-      } else if semantics_is_empty(lhs) {
-        Less
-      } else if semantics_is_empty(rhs) {
-        Greater
-      } else {
-        Incomparable
+    empty=Some(empty),
+    is_empty=semantics => semantics.is_empty(),
+    order=(lhs, rhs) => lhs.order(rhs),
+    join=(lhs, rhs) => {
+      try lhs.join(rhs) catch {
+        error => Err(@knowledge.Conflict::to_string(error))
+      } noraise {
+        semantics => Ok(semantics)
       }
     },
-    join=(lhs : Semantics, rhs : Semantics) => {
-      if semantics_equal(lhs, rhs) || semantics_is_empty(rhs) {
-        Ok(lhs)
-      } else if semantics_is_empty(lhs) {
-        Ok(rhs)
-      } else {
-        Err("conflicting program semantics")
-      }
-    },
-    inspect=semantics_inspect,
+    inspect=semantics => semantics.to_string(),
   )
 }
 
 ///|
+/// The domain of semantics (`Semantics.domain`).
 pub fn Semantics::domain() -> @knowledge.Domain[Semantics] {
-  semantics_domain()
+  semantics_domain
+}
+
+///|
+let semantics_persistent : @knowledge.Persistent[Semantics] = @knowledge.Persistent::convert(
+  to_persistent=(semantics : Semantics) => semantics.0,
+  of_persistent=value => Ok(Semantics(value)),
+  @knowledge.Value::persistent(semantics_cls),
+)
+
+///|
+/// Persists the persistent properties of a semantics.
+pub fn Semantics::persistent() -> @knowledge.Persistent[Semantics] {
+  semantics_persistent
+}
+
+///|
+let bytes_domain : @knowledge.Domain[Bytes] = @knowledge.Domain::new(
+  name=core_name("insn-code"),
+  empty=None,
+  is_empty=(_ : Bytes) => false,
+  order=(lhs : Bytes, rhs : Bytes) => {
+    if lhs == rhs {
+      Equal
+    } else {
+      Incomparable
+    }
+  },
+  join=(lhs : Bytes, rhs : Bytes) => {
+    if lhs == rhs {
+      Ok(lhs)
+    } else {
+      Err("conflicting byte facts")
+    }
+  },
+  inspect=(bytes : Bytes) => semantics_bytes_hex(bytes),
+)
+
+///|
+let semantics_code_slot : @knowledge.Slot[EffectCls, Bytes?] = semantics_cls.property(
+  name=core_name("insn-code"),
+  domain=@knowledge.Domain::optional(bytes_domain),
+  desc="the program memory contents",
+  persistent=@knowledge.Persistent::optional(@knowledge.Persistent::bytes()),
+  public=true,
+)
+
+///|
+let semantics_value_slot : @knowledge.Slot[EffectCls, Value] = semantics_cls.property(
+  name=core_name("value"),
+  domain=Value::domain(),
+  desc="the program semantics",
+  persistent=Value::persistent(),
+  public=true,
+)
+
+///|
+let program_semantics_slot : @knowledge.Slot[Unit, Semantics] = Program::cls().property(
+  name=core_name("semantics"),
+  domain=Semantics::domain(),
+  desc="the program semantics",
+  persistent=Semantics::persistent(),
+  public=true,
+)
+
+///|
+/// `Semantics.slot`: the semantics of a program.
+pub fn Semantics::slot() -> @knowledge.Slot[Unit, Semantics] {
+  program_semantics_slot
+}
+
+///|
+/// `Semantics.value`: the value property of a semantics.
+pub fn Semantics::value_slot() -> @knowledge.Slot[EffectCls, Value] {
+  semantics_value_slot
+}
+
+///|
+/// `Semantics.code`: the program memory contents.
+pub fn Semantics::code_slot() -> @knowledge.Slot[EffectCls, Bytes?] {
+  semantics_code_slot
 }

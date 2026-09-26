@@ -59,11 +59,41 @@ fn add(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
 }
 
 ///|
-/// Carry flags after `rt := tm + ...`, where `tm` holds the old `ra`.
-fn add_carry(cpu : Cpu, rt : RtlExp, tm : RtlExp) -> Array[Rtl] {
+/// `x` as a `width + 1`-bit unsigned value: the low `width` bits of a
+/// wider register, or a narrower operand extended by its sign.
+fn widen(x : RtlExp, width : Int) -> RtlExp {
+  let x = if x.width() > width { x.low(width) } else { x.cast(width, x.sign()) }
+  x.unsigned().cast(width + 1, Unsigned)
+}
+
+///|
+/// The carry out of the `width`-bit sum `a + b + c`.
+fn carry_out(width : Int, a : RtlExp, b : RtlExp, c : RtlExp) -> RtlExp {
+  (widen(a, width) + widen(b, width) + widen(c, width)).msb()
+}
+
+///|
+/// `rt := a + b + c`, setting `CA`/`CA32` to the carries out of the
+/// doubleword (or word, on 32-bit targets) and of the low word.
+///
+/// port: upstream compares the result with the first operand, which is
+/// wrong when `b + c` wraps (`adde`/`addme`/`subfe`/`subfme` with a carry
+/// in), and sets the carry of `subfze`/`subfme` unconditionally.
+fn add_carrying(
+  cpu : Cpu,
+  rt : RtlExp,
+  a : RtlExp,
+  b : RtlExp,
+  c : RtlExp,
+) -> Array[Rtl] {
+  let ca = uvar(bit)
+  let ca32 = uvar(bit)
   [
-    cpu.ca.set(rt.lt(tm.low(cpu.word_width))),
-    cpu.ca32.set(rt.low(word).lt(tm.low(word))),
+    ca.set(carry_out(cpu.word_width, a, b, c)),
+    ca32.set(carry_out(word, a, b, c)),
+    rt.set(a + b + c),
+    cpu.ca.set(ca),
+    cpu.ca32.set(ca32),
   ]
 }
 
@@ -74,8 +104,7 @@ fn addic(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
   let rt = cpu.ureg(ops, 0)
   let ra = cpu.ureg(ops, 1)
   let im = ops.simm(2)
-  let tm = uvar(cpu.word_width)
-  [tm.set(ra), rt.set(ra + im), ..add_carry(cpu, rt, tm)]
+  add_carrying(cpu, rt, ra, im, zero)
 }
 
 ///|
@@ -85,8 +114,7 @@ fn addc(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
   let rt = cpu.ureg(ops, 0)
   let ra = cpu.ureg(ops, 1)
   let rb = cpu.ureg(ops, 2)
-  let tm = uvar(cpu.word_width)
-  [tm.set(ra), rt.set(ra + rb), ..add_carry(cpu, rt, tm)]
+  add_carrying(cpu, rt, ra, rb, zero)
 }
 
 ///|
@@ -96,8 +124,7 @@ fn adde(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
   let rt = cpu.ureg(ops, 0)
   let ra = cpu.ureg(ops, 1)
   let rb = cpu.ureg(ops, 2)
-  let tm = uvar(cpu.word_width)
-  [tm.set(ra), rt.set(ra + rb + cpu.ca), ..add_carry(cpu, rt, tm)]
+  add_carrying(cpu, rt, ra, rb, cpu.ca)
 }
 
 ///|
@@ -106,8 +133,7 @@ fn adde(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
 fn addme(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
   let rt = cpu.ureg(ops, 0)
   let ra = cpu.ureg(ops, 1)
-  let tm = uvar(cpu.word_width)
-  [tm.set(ra), rt.set(ra + cpu.ca - one), ..add_carry(cpu, rt, tm)]
+  add_carrying(cpu, rt, ra, ones(cpu.word_width), cpu.ca)
 }
 
 ///|
@@ -116,8 +142,7 @@ fn addme(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
 fn addze(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
   let rt = cpu.ureg(ops, 0)
   let ra = cpu.ureg(ops, 1)
-  let tm = uvar(cpu.word_width)
-  [tm.set(ra), rt.set(ra + cpu.ca), ..add_carry(cpu, rt, tm)]
+  add_carrying(cpu, rt, ra, zero, cpu.ca)
 }
 
 ///|

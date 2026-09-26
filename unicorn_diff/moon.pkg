@@ -1,0 +1,10 @@
+import {
+  "bobzhang/bap/bitvec",
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/mc",
+  "bobzhang/bap/mips",
+  "bobzhang/bap/powerpc",
+  "bobzhang/bap/primus_lisp",
+  "bobzhang/bap/systemz",
+  "bobzhang/bap/types",
+} for "test"

@@ -9,6 +9,9 @@
 /// Compute the rotate-word mask for `mb`/`me` into `mask`, following the
 /// upstream formulation (bit numbers are relative to the low word on 64-bit
 /// targets).
+///
+/// port: when `mb > me` the mask is `MASK(mb, last) | MASK(0, me)`;
+/// upstream leaves out bits `mb` and `me`.
 fn word_rotate_mask(
   cpu : Cpu,
   ra : RtlExp,
@@ -30,7 +33,7 @@ fn word_rotate_mask(
     if_(
       mb.le(me),
       [mask.set(mask.shr(start) & mask.shl(width_ra - stop - one))],
-      [mask.set(mask.shl(width_ra - stop) | mask.shr(start + one))],
+      [mask.set(mask.shl(width_ra - stop - one) | mask.shr(start))],
     ),
   ]
 }
@@ -136,6 +139,27 @@ fn rldicr(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
 }
 
 ///|
+/// `mask := MASK(mb, 63 - sh)` given `mask1 = MASK(mb, 63)` and
+/// `mask2 = MASK(0, 63 - sh)`: their intersection, or their union when the
+/// mask wraps around (`mb > 63 - sh`).
+///
+/// port: upstream always takes the intersection, which clears the result of
+/// a wrapping mask.
+fn rotate_mask(
+  mask : RtlExp,
+  mask1 : RtlExp,
+  mask2 : RtlExp,
+  mb : RtlExp,
+  sh : RtlExp,
+) -> Array[Rtl] {
+  [
+    if_((mb + sh).le(uconst(word, 63)), [mask.set(mask1 & mask2)], [
+      mask.set(mask1 | mask2),
+    ]),
+  ]
+}
+
+///|
 /// Rotate Left Doubleword Immediate then Clear (page 105).
 /// `79 2a 26 48  rldic r10,r9,4,25`
 fn rldic(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
@@ -151,7 +175,7 @@ fn rldic(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
     mask.set(all_ones),
     mask1.set(mask.shr(mb)),
     mask2.set(mask.shl(sh)),
-    mask.set(mask1 & mask2),
+    ..rotate_mask(mask, mask1, mask2, mb, sh),
     ra.set(rotl64(rs, sh) & mask),
   ]
 }
@@ -206,7 +230,7 @@ fn rldimi(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
     mask.set(all_ones),
     mask1.set(mask.shr(mb)),
     mask2.set(mask.shl(sh)),
-    mask.set(mask1 & mask2),
+    ..rotate_mask(mask, mask1, mask2, mb, sh),
     tmp.set(rotl64(rs, sh)),
     ra.set((tmp & mask) | (ra & mask.lnot())),
   ]

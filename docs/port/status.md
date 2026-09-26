@@ -215,6 +215,26 @@ decoders (which the port's native decoders reproduce) or for the ISA, the
 port follows the ISA. Each fix has a regression test that decodes real
 bytes (checked with `llvm-mc`), lifts them and executes the BIL
 (`mips/isa_semantics_test.mbt`, `plugins/riscv/riscv_isa_test.mbt`).
+The `unicorn_diff` package differentially tests the lifters against
+Unicorn 2.1.4: tables of single instructions assembled by `llvm-mc` 22
+with random initial states (registers, flags, memory) and the states
+Unicorn computed are decoded with the native decoders, lifted with the
+registered providers and executed with `@types.exec_stmts`, comparing the
+whole register file, the next PC and the touched memory. Unicorn's
+PowerPC core is a 32-bit CPU in a 64-bit build (no 64-bit mode, no
+ISA 2.06+ opcodes, `XER` not readable directly), so the tables use its
+full-width registers in 32-bit mode for the common opcodes, recompute the
+64-bit `CR0`/`CA` of record/carrying forms, and take the 64-bit-only and
+ISA 2.06+ opcodes from a Python model of Power ISA 3.0B.
+
+- PowerPC (`powerpc/`):
+  - Record forms copy `XER[SO]` into `CR0[SO]` (upstream leaves it unchanged).
+  - `addc`/`adde`/`addme`/`addze`/`addic[.]`/`subfc`/`subfe`/`subfme`/`subfze`/`subfic` set `CA`/`CA32` to the carries out of the (word) sum; upstream compares the result with an operand, which inverts the carries of subtractions, misses carries when the other addend and the carry-in wrap, and sets `subfme`/`subfze` carries unconditionally.
+  - `cmpw`/`cmplw` compare the low words of both operands (upstream compares the low word of `ra` with the whole `rb`).
+  - `mullw` produces the doubleword product of the signed low words (upstream multiplies the zero-extended words: the upper half is wrong on 64-bit targets).
+  - Wrapping masks (`mb > me`) of `rlwinm`/`rlwnm`/`rlwimi` include bits `mb` and `me`, and those of `rldic`/`rldimi` are the union of the two halves (upstream leaves out the boundary bits, resp. clears the result).
+  - `sld`/`srd` by 64 to 127 produce zero (upstream shifts by the low six bits).
+  - `powerpc.lisp` defines `NOP` in the `powerpc` package, so that `llvm-powerpc32` instructions resolve to it (upstream defines it in the default package, where no instruction name resolves).
 
 - MIPS (`mips/`):
   - `CLO`/`CLZ` read `rs` and write `rd` (LLVM's `[rd, rs]`) and count from the most significant bit.

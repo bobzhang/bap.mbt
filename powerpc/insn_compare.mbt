@@ -23,7 +23,7 @@ fn cmpwi(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
   let bf = cpu.ureg(ops, 0)
   let ra = cpu.sreg(ops, 1)
   let si = ops.simm(2)
-  compare_into(cpu, bf, ra.low(word), si)
+  compare_into(cpu, bf, ra.low(word).signed(), si)
 }
 
 ///|
@@ -39,11 +39,15 @@ fn cmpdi(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
 ///|
 /// Compare, word (page 85).
 /// `7f 86 38 00  cmpw cr7,r6,r7`
+///
+/// port: compares the low words of both operands (upstream compares the
+/// low word of `ra` with the whole `rb`, and unsigned on 32-bit targets
+/// when `ra` is a register).
 fn cmpw(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
   let bf = cpu.ureg(ops, 0)
   let ra = cpu.sreg(ops, 1)
   let rb = cpu.sreg(ops, 2)
-  compare_into(cpu, bf, ra.low(word), rb)
+  compare_into(cpu, bf, ra.low(word).signed(), rb.low(word).signed())
 }
 
 ///|
@@ -79,11 +83,14 @@ fn cmpldi(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
 ///|
 /// Compare Logical, word (page 86).
 /// `7f 86 38 40  cmplw cr7,r6,r7`
+///
+/// port: compares the low words of both operands (upstream compares the
+/// low word of `ra` with the whole `rb`).
 fn cmplw(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
   let bf = cpu.ureg(ops, 0)
   let ra = cpu.ureg(ops, 1)
   let rb = cpu.ureg(ops, 2)
-  compare_into(cpu, bf, ra.low(word), rb)
+  compare_into(cpu, bf, ra.low(word), rb.low(word))
 }
 
 ///|

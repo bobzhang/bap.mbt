@@ -2,7 +2,8 @@
 // `plugins/systemz/systemz_main.ml`.
 //
 // Upstream is a tutorial-sized lifter that only models `LR` (load
-// register). Semantics are emitted as BIL instead of Core Theory
+// register); the port adds the other general-register moves without
+// condition codes (`LGR`, `LGFR`, `LLGFR`). Semantics are emitted as BIL instead of Core Theory
 // denotations. The rest of `systemz_main` (target, encoding, loader and
 // `Arch.t` mapping) is covered by `@core_theory.Target::systemz`/`systemz9`
 // and the `llvm-systemz` encoding (`@core_theory.Language::llvm_systemz`)
@@ -83,10 +84,37 @@ fn lr(insn : @mc.Insn) -> Array[@types.Stmt] raise @mc.LiftError {
 }
 
 ///|
+/// `LGR rd, rs`: copy the 64-bit `rs` into `rd`.
+///
+/// port: not modeled upstream.
+fn lgr(insn : @mc.Insn) -> Array[@types.Stmt] raise @mc.LiftError {
+  let rd = require_gpr(insn, 0)
+  let rs = require_gpr(insn, 1)
+  [Move(rd, Var(rs))]
+}
+
+///|
+/// `LGFR rd, rs` / `LLGFR rd, rs`: load the low 32 bits of `rs` into `rd`,
+/// sign- (`kind=Signed`) or zero-extended (`kind=Unsigned`).
+///
+/// port: not modeled upstream.
+fn load_extended(
+  insn : @mc.Insn,
+  kind : @types.CastKind,
+) -> Array[@types.Stmt] raise @mc.LiftError {
+  let rd = require_gpr(insn, 0)
+  let rs = require_gpr(insn, 1)
+  [Move(rd, Cast(kind~, width=64, exp=Cast(kind=Low, width=32, exp=Var(rs))))]
+}
+
+///|
 /// Lift a decoded SystemZ instruction to BIL.
 pub fn lift(insn : @mc.Insn) -> Array[@types.Stmt] raise @mc.LiftError {
   match insn.name {
     "LR" => lr(insn)
+    "LGR" => lgr(insn)
+    "LGFR" => load_extended(insn, Signed)
+    "LLGFR" => load_extended(insn, Unsigned)
     _ => raise @mc.Unsupported(opcode=insn.name, target="systemz")
   }
 }

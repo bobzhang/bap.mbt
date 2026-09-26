@@ -17,11 +17,7 @@ fn subfic(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
   let rt = cpu.ureg(ops, 0)
   let ra = cpu.ureg(ops, 1)
   let si = ops.simm(2)
-  [
-    rt.set(ra.lnot() + si + one),
-    cpu.ca.set(si.low(cpu.word_width).lt(ra)),
-    cpu.ca32.set(si.low(word).lt(ra.low(word))),
-  ]
+  add_carrying(cpu, rt, ra.lnot(), si, one)
 }
 
 ///|
@@ -31,11 +27,7 @@ fn subfc(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
   let rt = cpu.ureg(ops, 0)
   let ra = cpu.ureg(ops, 1)
   let rb = cpu.ureg(ops, 2)
-  [
-    rt.set(ra.lnot() + rb + one),
-    cpu.ca.set(rb.low(cpu.word_width).lt(ra.low(cpu.word_width))),
-    cpu.ca32.set(rb.low(word).lt(ra.low(word))),
-  ]
+  add_carrying(cpu, rt, ra.lnot(), rb, one)
 }
 
 ///|
@@ -45,11 +37,7 @@ fn subfe(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
   let rt = cpu.ureg(ops, 0)
   let ra = cpu.ureg(ops, 1)
   let rb = cpu.ureg(ops, 2)
-  [
-    rt.set(ra.lnot() + rb + cpu.ca),
-    cpu.ca32.set(rb.low(word).lt((ra + one - cpu.ca).low(word))),
-    cpu.ca.set(rb.lt(ra + one - cpu.ca)),
-  ]
+  add_carrying(cpu, rt, ra.lnot(), rb, cpu.ca)
 }
 
 ///|
@@ -58,7 +46,7 @@ fn subfe(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
 fn subfme(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
   let rt = cpu.ureg(ops, 0)
   let ra = cpu.ureg(ops, 1)
-  [rt.set(ra.lnot() + cpu.ca - one), cpu.ca32.set(one), cpu.ca.set(one)]
+  add_carrying(cpu, rt, ra.lnot(), ones(cpu.word_width), cpu.ca)
 }
 
 ///|
@@ -67,7 +55,7 @@ fn subfme(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
 fn subfze(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
   let rt = cpu.ureg(ops, 0)
   let ra = cpu.ureg(ops, 1)
-  [rt.set(ra.lnot() + cpu.ca), cpu.ca32.set(one), cpu.ca.set(one)]
+  add_carrying(cpu, rt, ra.lnot(), zero, cpu.ca)
 }
 
 ///|

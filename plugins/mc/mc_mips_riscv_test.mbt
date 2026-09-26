@@ -73,7 +73,7 @@ test "mc decodes and lifts RISC-V code" {
       #|}
       #|ret
       #|{
-      #|  jmp X1
+      #|  jmp (X1 & 0xFFFFFFFFFFFFFFFE)
       #|}
       #|
     ),

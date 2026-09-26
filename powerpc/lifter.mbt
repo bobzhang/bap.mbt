@@ -19,7 +19,10 @@ pub fn concat(f : InsnLift, g : InsnLift) -> InsnLift {
 
 ///|
 /// Extend the code of `f` with a signed comparison of the result (the first
-/// operand) against zero, recorded in the `CR0` field (the `Rc=1` forms).
+/// operand) against zero, recorded in the `CR0` field (the `Rc=1` forms),
+/// whose fourth bit receives a copy of `XER[SO]`.
+///
+/// port: upstream leaves `CR0[SO]` unchanged.
 pub fn dot(f : InsnLift) -> InsnLift {
   (cpu, ops) => {
     let res = cpu.sreg(ops, 0)
@@ -30,6 +33,7 @@ pub fn dot(f : InsnLift) -> InsnLift {
       cpu.cr.nth(bit, 0).set(x.lt(zero)),
       cpu.cr.nth(bit, 1).set(x.gt(zero)),
       cpu.cr.nth(bit, 2).set(x.eq(zero)),
+      cpu.cr.nth(bit, 3).set(cpu.so),
     ]
   }
 }

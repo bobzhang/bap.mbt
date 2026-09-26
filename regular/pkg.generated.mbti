@@ -125,11 +125,15 @@ pub fn bytes_uncapitalize(BytesView) -> Bytes
 
 pub fn bytes_uppercase(BytesView) -> Bytes
 
+pub fn current_cache_service() -> CacheService
+
 pub fn digest(namespace_name~ : StringView, StringView) -> Digest
 
 pub fn digest_bytes(BytesView) -> Digest
 
 pub fn digest_string(StringView) -> Digest
+
+pub fn provide_cache_service(CacheService) -> Unit
 
 pub fn[T : Printable] render(T) -> String
 
@@ -272,7 +276,14 @@ type Cache[T]
 pub fn[T] Cache::create(load~ : (Digest) -> T?, save~ : (Digest, T) -> Unit) -> Self[T]
 pub fn[T] Cache::load(Self[T], Digest) -> T?
 pub fn[T] Cache::oblivion() -> Self[T]
+pub fn[T] Cache::request(of_bytes~ : (Bytes) -> T?, to_bytes~ : (T) -> Bytes) -> Self[T]
 pub fn[T] Cache::save(Self[T], Digest, T) -> Unit
+
+pub(all) struct CacheService {
+  load : (Digest) -> Bytes?
+  save : (Digest, Bytes) -> Unit
+}
+pub fn CacheService::oblivion() -> Self
 
 pub(all) struct Digest(String) derive(Eq, Hash, @debug.Debug)
 pub fn Digest::add(Self, StringView) -> Self

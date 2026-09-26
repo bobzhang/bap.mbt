@@ -305,6 +305,17 @@ pub fn pp_stmt(fmt : @text_tags.Formatter, stmt : @types.Stmt) -> Unit {
 }
 
 ///|
+/// The character denoted by the escape sequence `\c`.
+fn unescape_char(c : Char) -> Char {
+  match c {
+    'n' => '\n'
+    't' => '\t'
+    'r' => '\r'
+    _ => c
+  }
+}
+
+///|
 /// Decodes a BIL attribute encoded in a special statement as
 /// `@attribute:(<constr> <data>)` (upstream `Special.pp`), returning the
 /// constructor name without the `bap:` package and the payload atoms.
@@ -329,7 +340,7 @@ fn special_attribute(s : String) -> (String, Array[String])? {
       while i < last && chars[i] != '"' {
         if chars[i] == '\\' && i + 1 < last {
           i += 1
-          buf.write_char(re_escaped_char(chars[i]))
+          buf.write_char(unescape_char(chars[i]))
         } else {
           buf.write_char(chars[i])
         }

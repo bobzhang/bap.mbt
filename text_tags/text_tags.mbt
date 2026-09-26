@@ -29,8 +29,8 @@ fn expect_arg() -> Unit {
 
 ///|
 fn parse_tag(tag : String) -> Sexp {
-  Sexp::of_string(tag) catch {
-    SexpError(msg) => abort("Text_tags: malformed tag \{tag}: \{msg}")
+  @sexp.Sexp::of_string(tag) catch {
+    err => abort("Text_tags: malformed tag \{tag}: \{err.message()}")
   }
 }
 

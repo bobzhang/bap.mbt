@@ -1,4 +1,5 @@
 import {
+  "bobzhang/bap/digest",
   "bobzhang/bap/future",
   "bobzhang/bap/main_event",
   "bobzhang/bap/native_io",
@@ -7,3 +8,7 @@ import {
   "moonbitlang/core/math",
   "moonbitlang/core/string",
 }
+
+options(
+  targets: { "fs_native_test.mbt": [ "native" ] },
+)

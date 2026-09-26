@@ -301,7 +301,7 @@ pub fn Attrs::parse(
       for v in values {
         names.push(parse_attr_name(v))
       }
-      { ..empty, externals: @sorted_set.SortedSet(names), }
+      { ..empty, externals: @sorted_set.SortedSet::from_iter(names.iter()), }
     }
     "core:global" => { ..empty, globals: parse_attr_vars(pkg, values), }
     "core:static" => { ..empty, statics: parse_attr_vars(pkg, values), }

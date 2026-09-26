@@ -1,8 +1,8 @@
 ///|
-test "regular expressions search anywhere in the input" {
+test "ignore-matching expressions search anywhere in the name" {
   let matches = (pattern : String, input : String) => {
-    match @callgraph_collator.Regex::compile(pattern) {
-      Ok(regex) => regex.execp(input)
+    match @callgraph_collator.CallgraphFilter::new(ignore_matching=pattern) {
+      Ok(filter) => !filter.accepts(input)
       Err(_) => false
     }
   }
@@ -10,50 +10,22 @@ test "regular expressions search anywhere in the input" {
     [
       matches("mem", "__memcpy"),
       matches("^mem", "__memcpy"),
-      matches("^_+mem", "__memcpy"),
-      matches("cpy$", "__memcpy"),
       matches("^(str|mem)cpy$", "strcpy"),
       matches("^(str|mem)cpy$", "wcscpy"),
-      matches("[a-c]{3}", "xxabcxx"),
-      matches("[^a-z]", "abc"),
-      matches("\\d+_\\w", "sub_12_a"),
-      matches("a.c", "abc"),
-      matches("a.c", "ac"),
-      matches("x*", ""),
       matches("\\bfoo\\b", "a foo b"),
-      matches("\\bfoo\\b", "afoob"),
-      matches("colou?r", "color"),
-      matches("(?:ab)+c", "ababc"),
     ],
     content=(
-      #|[
-      #|  true,
-      #|  false,
-      #|  true,
-      #|  true,
-      #|  true,
-      #|  false,
-      #|  true,
-      #|  false,
-      #|  true,
-      #|  true,
-      #|  false,
-      #|  true,
-      #|  true,
-      #|  false,
-      #|  true,
-      #|  true,
-      #|]
+      #|[true, false, true, false, true]
     ),
   )
   debug_inspect(
-    @callgraph_collator.Regex::compile("(ab").map(_ => ()),
+    @callgraph_collator.CallgraphFilter::new(ignore_matching="(ab").map(_ => ()),
     content=(
       #|Err("invalid regular expression (ab: unexpected end of regular expression")
     ),
   )
   debug_inspect(
-    @callgraph_collator.Regex::compile("*a").map(_ => ()),
+    @callgraph_collator.CallgraphFilter::new(ignore_matching="*a").map(_ => ()),
     content=(
       #|Err("invalid regular expression *a: nothing to repeat")
     ),

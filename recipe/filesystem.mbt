@@ -24,6 +24,18 @@ fn host_read_file(path : String) -> Result[String, String] {
 }
 
 ///|
+/// The file system of the host, backed by `native_io` (on the native
+/// target; on other targets it is empty).
+pub fn FileSystem::native() -> FileSystem {
+  {
+    file_exists: @native_io.file_exists,
+    is_directory: @native_io.is_directory,
+    read_dir: path => @native_io.read_dir(path).unwrap_or([]),
+    read_file: host_read_file,
+  }
+}
+
+///|
 /// A read-only file system that contains the given files (path to
 /// contents). Directories are all the proper prefixes of the file paths.
 pub fn FileSystem::in_memory(files : Map[String, String]) -> FileSystem {

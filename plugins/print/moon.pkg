@@ -4,6 +4,7 @@ import {
   "bobzhang/bap/demangle",
   "bobzhang/bap/memory",
   "bobzhang/bap/project",
+  "bobzhang/bap/regex",
   "bobzhang/bap/text_tags",
   "bobzhang/bap/types",
 }

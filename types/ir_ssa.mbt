@@ -130,12 +130,39 @@ fn ssa_insert_phi_for_var(
 }
 
 ///|
-fn Term::ssa_insert_phi_nodes(self : Term[Sub], entry : Tid) -> Term[Sub] {
-  let graph = self.sub_cfg()
-  let frontiers = graph.dominance_frontiers(entry)
+/// The graph used by the SSA transformation: upstream `Bap_tid_graph.create`
+/// (the subroutine CFG extended with the pseudo `start` and `exit` nodes,
+/// where every block with no predecessors and every block that is not
+/// reachable otherwise is connected to `start`). An explicitly requested
+/// `entry` block is additionally connected to `start`.
+fn Term::ssa_graph(self : Term[Sub], entry : Tid?) -> @graphlib.Graph[Tid, Tid] {
+  let graph = self.sub_tid_graph()
+  match entry {
+    Some(tid) if self.find_blk(tid) is Some(_) &&
+      !graph.has_edge(tid_graph_start_node, tid) =>
+      graph.add_edge(
+        src=tid_graph_start_node,
+        dst=tid,
+        label=tid_graph_start_node,
+      )
+    _ => graph
+  }
+}
+
+///|
+/// Upstream `insert_phi_nodes`: for every candidate variable compute the
+/// iterated dominance frontier of the pseudo start node plus the blocks
+/// that define the variable, and insert `x <- phi(x,...,x)` in each block of
+/// it, with one operand per predecessor block (the pseudo start node is not
+/// an operand).
+fn Term::ssa_insert_phi_nodes(
+  self : Term[Sub],
+  graph : @graphlib.Graph[Tid, Tid],
+) -> Term[Sub] {
+  let frontiers = graph.dominance_frontiers(tid_graph_start_node)
   let mut sub = self
   for variable in self.ssa_candidate_vars() {
-    let seeds = [entry]
+    let seeds = [tid_graph_start_node]
     for blk in ssa_blocks_that_define_var(sub, variable) {
       if !seeds.contains(blk.tid()) {
         seeds.push(blk.tid())
@@ -381,13 +408,20 @@ fn ssa_rename_block(
 }
 
 ///|
-fn Term::ssa_rename(self : Term[Sub], entry : Tid) -> Term[Sub] {
-  let graph = self.sub_cfg()
+/// Upstream `rename`: a preorder walk of the dominator tree rooted at the
+/// pseudo start node, so every block (including blocks of components that
+/// are disconnected from the first block) is renamed.
+fn Term::ssa_rename(
+  self : Term[Sub],
+  graph : @graphlib.Graph[Tid, Tid],
+) -> Term[Sub] {
   let blocks = self.payload_value.blks.copy()
-  let idoms = graph.immediate_dominators(entry)
+  let idoms = graph.immediate_dominators(tid_graph_start_node)
   let stacks : Map[String, Array[Var]] = Map([])
   let counters : Map[String, Int] = Map([])
-  ssa_rename_block(self, graph, blocks, idoms, entry, stacks, counters)
+  ssa_rename_block(
+    self, graph, blocks, idoms, tid_graph_start_node, stacks, counters,
+  )
 }
 
 ///|
@@ -396,22 +430,20 @@ pub fn Term::is_ssa(self : Term[Sub]) -> Bool {
 }
 
 ///|
+/// Transforms the subroutine into semi-pruned SSA form (upstream
+/// `Sub.ssa`). The transformation is rooted at the pseudo start node of the
+/// subroutine tid graph, so back-edges into the first block produce phi
+/// nodes there and disconnected components are renamed as well. When
+/// `entry` is given, that block is additionally treated as a root.
 pub fn Term::to_ssa(self : Term[Sub], entry? : Tid) -> Term[Sub] {
   if self.is_ssa() {
     self
   } else {
-    let start = match entry {
-      Some(tid) => Some(tid)
-      None => self.entry_blk().map(term => term.tid())
-    }
-    match start {
-      Some(tid) if self.find_blk(tid) is Some(_) =>
-        self
-        .ssa_insert_phi_nodes(tid)
-        .ssa_rename(tid)
-        .set_attr(Attr::new(key=ssa_form_attr, value="true"))
-      _ => self.set_attr(Attr::new(key=ssa_form_attr, value="true"))
-    }
+    let graph = self.ssa_graph(entry)
+    self
+    .ssa_insert_phi_nodes(graph)
+    .ssa_rename(graph)
+    .set_attr(Attr::new(key=ssa_form_attr, value="true"))
   }
 }
 

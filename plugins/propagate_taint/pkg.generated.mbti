@@ -1,0 +1,96 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/propagate_taint"
+
+import {
+  "bobzhang/bap/microx",
+  "bobzhang/bap/project",
+  "bobzhang/bap/taint",
+  "bobzhang/bap/types",
+  "moonbitlang/core/debug",
+  "moonbitlang/core/immut/hashmap",
+  "moonbitlang/core/immut/hashset",
+}
+
+// Values
+pub fn analyze(Args, @project.Project) -> Analysis
+
+pub fn mark(PropagationResult, @types.Term[@types.Program]) -> @types.Term[@types.Program]
+
+pub let name : String
+
+pub fn parse_policy(String) -> Result[@microx.Policy, String]
+
+pub fn pass(args? : Args) -> @project.ProjectPass
+
+pub fn policy_to_string(@microx.Policy) -> String
+
+pub fn propagate(Args, @project.Project) -> @project.Project
+
+pub fn register(args? : Args) -> Result[Bool, String]
+
+pub fn run(max_steps~ : Int, max_loop~ : Int, deterministic~ : Bool, random_seed? : Int, reg_policy~ : @microx.Policy, mem_policy~ : @microx.Policy, @project.Project, Point) -> PropagationResult raise PropagatorError
+
+pub fn sorted_taints(@hashset.HashSet[@types.Tid]) -> Array[@types.Tid]
+
+// Errors
+pub(all) suberror PropagatorError {
+  EntryPointNotFound
+} derive(Eq, @debug.Debug)
+pub fn PropagatorError::equal(Self, Self) -> Bool
+pub fn PropagatorError::not_equal(Self, Self) -> Bool
+pub fn PropagatorError::to_repr(Self) -> @debug.Repr
+
+// Types and methods
+pub struct Analysis {
+  subs : Int
+  result : PropagationResult
+  // private fields
+}
+pub fn Analysis::coverage(Self) -> (Int, Int)
+pub fn Analysis::coverage_to_string(Self) -> String
+
+pub(all) struct Args {
+  max_trace : Int
+  max_loop : Int
+  deterministic : Bool
+  random_seed : Int?
+  reg_policy : @microx.Policy
+  mem_policy : @microx.Policy
+  interesting : Array[String]
+  print_coverage : Bool
+}
+pub fn Args::new(max_trace? : Int, max_loop? : Int, deterministic? : Bool, random_seed? : Int, reg_policy? : @microx.Policy, mem_policy? : @microx.Policy, interesting? : Array[String], print_coverage? : Bool) -> Self
+
+pub(all) enum Point {
+  Term(@types.Tid)
+  Name(String)
+}
+
+pub struct PropagationResult {
+  // private fields
+}
+pub fn PropagationResult::empty() -> Self
+pub fn PropagationResult::is_tainted(Self, @types.Tid) -> Bool
+pub fn PropagationResult::is_visited(Self, @types.Tid) -> Bool
+pub fn PropagationResult::tainted_ptrs(Self, @types.Tid) -> @taint.TaintMap
+pub fn PropagationResult::tainted_regs(Self, @types.Tid) -> @taint.TaintMap
+pub fn PropagationResult::tainted_terms(Self) -> Array[@types.Tid]
+pub fn PropagationResult::union(Self, Self) -> Self
+pub fn PropagationResult::visited(Self) -> Map[@types.Tid, Int]
+
+pub struct TaintContext {
+  // private fields
+}
+pub fn TaintContext::all_taints(Self) -> @hashset.HashSet[@types.Tid]
+pub fn TaintContext::empty() -> Self
+pub fn TaintContext::ptr_taints(Self, @types.Word) -> @hashset.HashSet[@types.Tid]
+pub fn TaintContext::reg_taints(Self, @types.BilResult) -> @hashset.HashSet[@types.Tid]
+pub fn TaintContext::taint_ptr(Self, @types.Word, @types.Size, @hashset.HashSet[@types.Tid]) -> Self
+pub fn TaintContext::taint_reg(Self, @types.BilResult, @hashset.HashSet[@types.Tid]) -> Self
+
+// Type aliases
+pub type TaintSet = @hashset.HashSet[@types.Tid]
+
+pub type TermTaints = @hashmap.HashMap[@types.Tid, @taint.TaintMap]
+
+// Traits

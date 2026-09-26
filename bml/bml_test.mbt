@@ -236,5 +236,10 @@ test "patterns files" {
     ),
   )
   let sexp : @bml.Sexp = List([Atom("a b"), List([]), Atom("")])
-  inspect(sexp.to_string(), content="(\"a b\" () \"\")")
+  inspect(
+    sexp.to_string(),
+    content=(
+      #|("a b"()"")
+    ),
+  )
 }

@@ -224,3 +224,6 @@ pub extend Operand with Debug::{to_repr}
 
 ///|
 pub extend SemanticsError with Show::{to_string, output}
+
+///|
+pub extend LispRuntimeError with Show::{to_string, output}

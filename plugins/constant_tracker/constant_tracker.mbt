@@ -209,8 +209,10 @@ let enabled : Ref[Bool] = Ref(false)
 let registered : Ref[Bool] = Ref(false)
 
 ///|
-/// Records the plugin configuration: the primitives are always available and
-/// the tracker component is added to the machine when `enable` is set.
+/// Records the plugin configuration: the `constant-tracker` component is
+/// registered in the Primus component registry, the primitives are always
+/// available (see `primitives`), and the tracker component is added to the
+/// legacy main Primus system when `enable` is set (upstream `--enable`).
 /// Returns `false` if the plugin was already registered.
 pub fn register(enable? : Bool = false) -> Bool {
   if registered.val {
@@ -218,6 +220,10 @@ pub fn register(enable? : Bool = false) -> Bool {
   }
   registered.val = true
   enabled.val = enable
+  register_components()
+  if enable {
+    @primus.Machine::add_component(m => tracker_component(m))
+  }
   true
 }
 

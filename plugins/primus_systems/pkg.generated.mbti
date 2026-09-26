@@ -1,0 +1,31 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/primus_systems"
+
+import {
+  "bobzhang/bap/primus",
+}
+
+// Values
+pub let core_systems : String
+
+pub fn declare_plugin() -> Unit raise
+
+pub fn info_listing(Array[@primus.Info], Array[String]) -> String
+
+pub fn load_core_systems() -> Array[@primus.System] raise @primus.SystemError
+
+pub fn load_directory(String) -> Array[@primus.System]
+
+pub fn load_systems(user? : Array[String]) -> Array[@primus.System]
+
+pub let name : String
+
+pub fn search_paths(user? : Array[String]) -> Array[String]
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

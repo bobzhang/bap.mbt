@@ -1,0 +1,56 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/primus_print"
+
+import {
+  "bobzhang/bap/bare",
+  "bobzhang/bap/primus",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub let component_name : String
+
+pub fn declare_plugin() -> Unit raise
+
+pub fn install(@primus.Machine, traceback? : Int, out? : (String) -> Unit) -> Unit
+
+pub fn monitor(Array[@primus.Provider], (String) -> Unit) -> Unit
+
+pub let name : String
+
+pub fn parse_monitors(Array[String]) -> Array[@primus.Provider] raise PrintError
+
+pub fn pos_to_string(@primus.Pos) -> String
+
+pub fn process_rule(@bare.Rule, (String) -> Unit) -> Unit
+
+pub fn setup_rules(Array[String], (String) -> Unit) -> Unit raise PrintError
+
+pub fn start_monitoring(observations? : Array[String], output? : String, rules? : Array[String], traceback? : Int, out? : (String) -> Unit) -> Unit raise PrintError
+
+pub fn stdout_sink(String) -> Unit
+
+pub fn trace(@primus.Machine) -> Array[@primus.Pos]
+
+// Errors
+pub suberror PrintError {
+  UnknownProvider(String)
+  BadRules(String)
+} derive(@debug.Debug)
+pub fn PrintError::output(Self, &Logger) -> Unit
+pub fn PrintError::to_repr(Self) -> @debug.Repr
+pub fn PrintError::to_string(Self) -> String
+pub impl Show for PrintError
+
+// Types and methods
+pub struct FileSink {
+  path : String
+  // private fields
+}
+pub fn FileSink::flush(Self) -> Unit
+pub fn FileSink::new(String) -> Self
+pub fn FileSink::write(Self, String) -> Unit
+
+// Type aliases
+
+// Traits

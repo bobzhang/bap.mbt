@@ -18,8 +18,10 @@ let doc : String =
 
 ///|
 /// The attribute key of `Taint.regs`: the taints of registers that a term
-/// reads, as computed by the taint propagation analysis.
-pub let tainted_regs_attr : String = "tainted-regs"
+/// reads, as computed by the taint propagation analysis (the
+/// `propagate_taint` plugin). The value is a taint map in the format of
+/// `@taint.TaintMap`, shared with BML and the Primus taint framework.
+pub let tainted_regs_attr : String = @taint.tainted_regs_attr
 
 ///|
 /// Attaches the register taint map (`Taint.regs`) to a term. Each entry maps
@@ -28,48 +30,20 @@ pub fn[T] with_tainted_regs(
   term : @types.Term[T],
   regs : Array[(@types.Var, Array[@types.Tid])],
 ) -> @types.Term[T] {
-  let entries = regs.map(entry => {
-    let tids = entry.1.map(tid => tid.to_string()).join(",")
-    "\{entry.0.to_string()}=\{tids}"
+  let map = regs.fold(init=@taint.TaintMap::empty(), (map, entry) => {
+    map.add(entry.0.name(), entry.1)
   })
-  term.set_attr(
-    @types.Attr::new(key=tainted_regs_attr, value=entries.join(";")),
-  )
+  @taint.set_term_taint_map(term, tainted_regs_attr, map)
 }
 
 ///|
 /// Reads the register taint map (`Taint.regs`) of a term, keyed by the
-/// printed variable.
+/// variable name; `None` if the term has no such attribute.
 pub fn[T] tainted_regs(
   term : @types.Term[T],
 ) -> Array[(String, Array[@types.Tid])]? {
-  match term.get_attr(tainted_regs_attr) {
-    None => None
-    Some(text) => {
-      let result = []
-      for entry in text.split(";") {
-        if entry.is_empty() {
-          continue
-        }
-        let (reg, tids) = match entry.rev_split_once("=") {
-          Some((v, t)) => (v.to_owned(), t.to_owned())
-          None => (entry.to_owned(), "")
-        }
-        let parsed = []
-        for tid in tids.split(",") {
-          if tid.is_empty() {
-            continue
-          }
-          match @types.Tid::from_string(tid.to_owned()) {
-            Ok(t) => parsed.push(t)
-            Err(_) => ()
-          }
-        }
-        result.push((reg, parsed))
-      }
-      Some(result)
-    }
-  }
+  guard term.has_attr(tainted_regs_attr) else { None }
+  Some(@taint.term_taint_map(term, tainted_regs_attr).bindings())
 }
 
 ///|
@@ -262,10 +236,16 @@ pub fn passes(
 }
 
 ///|
-/// Registers the plugin passes (and the `callsites` pass they depend on).
-/// Idempotent: returns `false` if the passes were already registered.
+/// Registers the plugin passes and the passes they depend on: `callsites`
+/// and the legacy taint propagation (`propagate-taint`, registered with its
+/// default options if absent). Idempotent: returns `false` if the passes of
+/// the plugin were already registered.
 pub fn register(out? : (String) -> Unit) -> Result[Bool, String] {
   match @callsites.register() {
+    Err(reason) => return Err(reason)
+    Ok(_) => ()
+  }
+  match @propagate_taint.register() {
     Err(reason) => return Err(reason)
     Ok(_) => ()
   }

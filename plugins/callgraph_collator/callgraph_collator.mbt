@@ -19,7 +19,7 @@ let doc : String =
 pub struct CallgraphFilter {
   ignore_reserved : Bool
   ignore_unresolved : Bool
-  ignore_matching : Regex?
+  ignore_matching : @regex.Regex?
 }
 
 ///|
@@ -33,9 +33,10 @@ pub fn CallgraphFilter::new(
   let regex = match ignore_matching {
     None => None
     Some(pattern) =>
-      match Regex::compile(pattern) {
+      match @regex.Regex::compile(pattern) {
         Ok(regex) => Some(regex)
-        Err(reason) => return Err(reason)
+        Err(reason) =>
+          return Err("invalid regular expression \{pattern}: \{reason}")
       }
   }
   Ok({ ignore_reserved, ignore_unresolved, ignore_matching: regex, })

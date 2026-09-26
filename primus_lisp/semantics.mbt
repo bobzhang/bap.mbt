@@ -78,6 +78,7 @@ pub struct SemCtx {
   target : @core_theory.Target
   priv lifter : Lifter
   priv binds : Map[String, SValue]
+  priv bvars : Map[String, @types.Var]
   priv scope : Map[String, Array[@types.Var]]
   priv out : StringBuilder
   /// the address of the instruction, if known
@@ -423,6 +424,7 @@ pub fn Lifter::lift(
     target: self.target,
     lifter: self,
     binds: Map([]),
+    bvars: Map([]),
     scope: Map([]),
     out,
     pc,
@@ -450,6 +452,7 @@ pub fn Lifter::apply(
     target: self.target,
     lifter: self,
     binds: Map([]),
+    bvars: Map([]),
     scope: Map([]),
     out,
     pc,
@@ -612,6 +615,7 @@ fn SemCtx::assign(
   let x = eff.value
   if x.static_value is Some(_) && (is_local || !self.is_machine_var(v)) {
     self.binds[v.name] = x
+    self.bvars[v.name] = v
     eff
   } else {
     self.binds.remove(v.name)
@@ -720,16 +724,34 @@ fn SemCtx::ite(
         self.binds[k] = v
       }
       let n = self.eval(nay)
-      // keep only the static bindings that agree in both branches
       let nbinds = self.binds.copy()
+      // keep the static bindings that agree in both branches, the others
+      // are materialized at the end of the branches that have them
+      let ystmts = y.stmts.copy()
+      let nstmts = n.stmts.copy()
       self.binds.clear()
-      for k, v in nbinds {
-        if ybinds.get(k) is Some(yv) &&
-          yv.static_value == v.static_value &&
-          yv.width == v.width {
-          self.binds[k] = v
+      let keys = ybinds.keys().collect()
+      for k in nbinds.keys() {
+        if !ybinds.contains(k) {
+          keys.push(k)
         }
       }
+      for k in keys {
+        match (ybinds.get(k), nbinds.get(k)) {
+          (Some(yv), Some(nv)) if yv.static_value == nv.static_value &&
+            yv.width == nv.width => self.binds[k] = yv
+          (yv, nv) => {
+            if yv is Some(v) {
+              ystmts.push(self.materialize(k, v))
+            }
+            if nv is Some(v) {
+              nstmts.push(self.materialize(k, v))
+            }
+          }
+        }
+      }
+      let y = { ..y, stmts: ystmts, }
+      let n = { ..n, stmts: nstmts, }
       let width = @cmp.maximum(y.value.width, n.value.width)
       let yv = coerce_unsigned(width, y.value)
       let nv = coerce_unsigned(width, n.value)
@@ -748,6 +770,8 @@ fn SemCtx::rep(
   body : Ast,
   n : Int,
 ) -> SEff raise SemanticsError {
+  let saved = self.binds.copy()
+  let saved_scope = self.scope.copy()
   let r = self.eval(c)
   match r.value.static_value {
     Some(x) =>
@@ -761,15 +785,28 @@ fn SemCtx::rep(
         self.full([r, b, rest], rest.value)
       }
     None => {
+      // the condition is re-evaluated below, after the flush
+      self.binds.clear()
+      for k, v in saved {
+        self.binds[k] = v
+      }
+      ignore(saved_scope)
+      // the variables assigned in the loop are not static
+      let assigned = self.assigned_vars([c, body])
+      let pre = self.flush(assigned)
+      let r = self.eval(c)
       let b = self.eval(body)
+      let post = self.flush(assigned)
       // re-evaluate the condition at the end of each iteration
       let r2 = self.eval(c)
       let cres = to_bool(r.value)
       let cres2 = to_bool(r2.value)
       let cv = fresh_var(1)
-      let stmts = r.stmts.copy()
+      let stmts = pre
+      stmts.append(r.stmts)
       stmts.push(Move(cv, cres.exp))
       let body_stmts = b.stmts.copy()
+      body_stmts.append(post)
       body_stmts.append(r2.stmts)
       body_stmts.push(Move(cv, cres2.exp))
       stmts.push(While(cond=Var(cv), body=body_stmts))
@@ -984,4 +1021,79 @@ fn SemCtx::call_primitive(
     Some(Err(r)) => raise unresolved(name, r.to_string())
     None => raise unresolved(name, "no such function or primitive")
   }
+}
+
+///|
+/// A move that materializes a static binding.
+fn SemCtx::materialize(self : SemCtx, name : String, v : SValue) -> @types.Stmt {
+  let bvar = match self.bvars.get(name) {
+    Some(x) => x
+    None => @types.Var::create(name, Imm(@cmp.maximum(1, v.width)))
+  }
+  let w = var_width(bvar)
+  Move(
+    bvar,
+    if w > 0 && w != v.width {
+      coerce_unsigned(w, v).exp
+    } else {
+      v.exp
+    },
+  )
+}
+
+///|
+/// Materializes and forgets the static bindings of the given variables.
+fn SemCtx::flush(self : SemCtx, names : Array[String]) -> Array[@types.Stmt] {
+  let out = []
+  for n in names {
+    if self.binds.get(n) is Some(v) {
+      out.push(self.materialize(n, v))
+      self.binds.remove(n)
+    }
+  }
+  out
+}
+
+///|
+fn collect_sets(e : Ast, out : Array[LVar]) -> Unit {
+  match e.data {
+    Set(v, x) => {
+      out.push(v)
+      collect_sets(x, out)
+    }
+    Int(_) | Var(_) | Sym(_) | Err(_) => ()
+    Ite(x, y, z) => {
+      collect_sets(x, out)
+      collect_sets(y, out)
+      collect_sets(z, out)
+    }
+    Let(_, x, y) | Rep(x, y) => {
+      collect_sets(x, out)
+      collect_sets(y, out)
+    }
+    App(_, xs) | Seq(xs) | Msg(_, xs) =>
+      for x in xs {
+        collect_sets(x, out)
+      }
+  }
+}
+
+///|
+/// The names (after the resolution of the local scopes) of the variables
+/// that are assigned in the expressions.
+fn SemCtx::assigned_vars(self : SemCtx, es : Array[Ast]) -> Array[String] {
+  let vs = []
+  for e in es {
+    collect_sets(e, vs)
+  }
+  vs.map(v => {
+    let bvar = match v.typ {
+      Type(t) => self.make_var(v.name, t~)
+      _ => self.make_var(v.name)
+    }
+    match self.scope.get(bvar.name) {
+      Some([t, ..]) => t.name
+      _ => bvar.name
+    }
+  })
 }

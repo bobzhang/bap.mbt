@@ -10,9 +10,11 @@ fn reconstructor_basic_disassembly(
     Err(reason) => fail(reason)
   }
   let memory = @memory.Memory::from_bytes(endian=LittleEndian, start~, bytes)
-  let basic_state = disasm.run(memory)
+  let insns = disasm.run(memory, init=(), return_=_ => [], stopped=(s, _) => {
+    s.insns()
+  })
   let instructions : Array[@project.ProjectDisassemblyInstruction] = []
-  for item in basic_state.insns() {
+  for item in insns {
     match item.1 {
       Some(instruction) => instructions.push(instruction)
       None => ()

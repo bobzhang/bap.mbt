@@ -1,0 +1,74 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/recipe"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn basename(String) -> String
+
+pub fn concat(String, String) -> String
+
+pub fn dirname(String) -> String
+
+pub fn load(paths? : Array[String], env? : Array[(String, String)], fs? : FileSystem, String) -> Result[Recipe, RecipeError]
+
+pub fn search(Array[String], fs? : FileSystem) -> Array[String]
+
+// Errors
+pub(all) suberror RecipeError {
+  ExpectAtom(String)
+  ExpectVar(String)
+  BadItem(String)
+  BadParam(String)
+  MissingEntry(String)
+  BadSexp(String)
+  NoRecipe(String)
+  BadSubst(String)
+  UnboundParam(String)
+  DuplicateVar(String)
+  MalformedRecipe(String, String, String)
+  SystemError(String)
+} derive(Eq, @debug.Debug)
+pub fn RecipeError::equal(Self, Self) -> Bool
+pub fn RecipeError::not_equal(Self, Self) -> Bool
+pub fn RecipeError::to_repr(Self) -> @debug.Repr
+pub fn RecipeError::to_string(Self) -> String
+
+// Types and methods
+pub(all) struct FileSystem {
+  file_exists : (String) -> Bool
+  is_directory : (String) -> Bool
+  read_dir : (String) -> Array[String]
+  read_file : (String) -> Result[String, String]
+}
+pub fn FileSystem::in_memory(Map[String, String]) -> Self
+pub fn FileSystem::native() -> Self
+
+pub struct Param {
+  // private fields
+} derive(Eq, @debug.Debug)
+pub fn Param::default(Self) -> String
+pub fn Param::doc(Self) -> String
+pub fn Param::equal(Self, Self) -> Bool
+pub fn Param::name(Self) -> String
+pub fn Param::not_equal(Self, Self) -> Bool
+pub fn Param::to_repr(Self) -> @debug.Repr
+pub fn Param::to_string(Self) -> String
+
+pub struct Recipe {
+  // private fields
+}
+pub fn Recipe::args(Self) -> Array[String]
+pub fn Recipe::argv(Self, argv? : Array[String]) -> Array[String]
+pub fn Recipe::close(Self) -> Unit
+pub fn Recipe::command(Self) -> String?
+pub fn Recipe::doc(Self) -> String
+pub fn Recipe::loads(Self) -> Array[Self]
+pub fn Recipe::params(Self) -> Array[Param]
+pub fn Recipe::prefix(Self) -> String
+
+// Type aliases
+
+// Traits

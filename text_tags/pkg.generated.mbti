@@ -1,0 +1,105 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/text_tags"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn attr_hide(String) -> Unit
+
+pub fn attr_print_colors(Bool) -> Unit
+
+pub fn attr_show(String) -> Unit
+
+pub fn available_modes() -> Array[String]
+
+pub fn install(Formatter, String) -> Unit raise UnknownMode
+
+pub fn register_mode(String, (Formatter) -> Unit) -> Unit
+
+pub fn[A] with_mode(Formatter, String, () -> A raise) -> A raise
+
+// Errors
+pub(all) suberror UnknownMode {
+  UnknownMode(String)
+} derive(Eq, @debug.Debug)
+pub fn UnknownMode::equal(Self, Self) -> Bool
+pub fn UnknownMode::not_equal(Self, Self) -> Bool
+pub fn UnknownMode::to_repr(Self) -> @debug.Repr
+
+// Types and methods
+pub struct Formatter {
+  // private fields
+}
+pub fn Formatter::close_box(Self) -> Unit
+pub fn Formatter::close_tag(Self) -> Unit
+pub fn Formatter::contents(Self) -> String
+pub fn Formatter::flush_str(Self) -> String
+pub fn Formatter::force_newline(Self) -> Unit
+pub fn Formatter::get_margin(Self) -> Int
+pub fn Formatter::get_mark_tags(Self) -> Bool
+pub fn Formatter::get_max_indent(Self) -> Int
+pub fn Formatter::get_out_functions(Self) -> OutFunctions
+pub fn Formatter::get_print_tags(Self) -> Bool
+pub fn Formatter::get_tag_functions(Self) -> TagFunctions
+pub fn Formatter::new() -> Self
+pub fn Formatter::of_logger(&Logger) -> Self
+pub fn Formatter::of_out_functions(OutFunctions) -> Self
+pub fn Formatter::open_box(Self, Int) -> Unit
+pub fn Formatter::open_hbox(Self) -> Unit
+pub fn Formatter::open_hovbox(Self, Int) -> Unit
+pub fn Formatter::open_hvbox(Self, Int) -> Unit
+pub fn Formatter::open_tag(Self, String) -> Unit
+pub fn Formatter::open_vbox(Self, Int) -> Unit
+pub fn Formatter::print_as(Self, Int, String) -> Unit
+pub fn Formatter::print_break(Self, Int, Int) -> Unit
+pub fn Formatter::print_char(Self, Char) -> Unit
+pub fn Formatter::print_custom_break(Self, fits~ : (String, Int, String), breaks~ : (String, Int, String)) -> Unit
+pub fn Formatter::print_cut(Self) -> Unit
+pub fn Formatter::print_flush(Self) -> Unit
+pub fn Formatter::print_format(Self, String) -> Unit
+pub fn Formatter::print_if_newline(Self) -> Unit
+pub fn Formatter::print_int(Self, Int) -> Unit
+pub fn Formatter::print_newline(Self) -> Unit
+pub fn Formatter::print_space(Self) -> Unit
+pub fn Formatter::print_string(Self, String) -> Unit
+pub fn Formatter::set_ellipsis_text(Self, String) -> Unit
+pub fn Formatter::set_margin(Self, Int) -> Unit
+pub fn Formatter::set_mark_tags(Self, Bool) -> Unit
+pub fn Formatter::set_max_boxes(Self, Int) -> Unit
+pub fn Formatter::set_max_indent(Self, Int) -> Unit
+pub fn Formatter::set_out_functions(Self, OutFunctions) -> Unit
+pub fn Formatter::set_print_tags(Self, Bool) -> Unit
+pub fn Formatter::set_tag_functions(Self, TagFunctions) -> Unit
+pub fn Formatter::set_tags(Self, Bool) -> Unit
+pub fn Formatter::write(Self, &Show) -> Unit
+pub fn Formatter::write_char(Self, Char) -> Unit
+pub fn Formatter::write_string(Self, String) -> Unit
+pub fn Formatter::write_string_interpolation(Self, &Show) -> Unit
+#deprecated
+pub fn Formatter::write_substring(Self, String, Int, Int) -> Unit
+pub fn Formatter::write_view(Self, StringView) -> Unit
+pub impl Logger for Formatter
+
+pub(all) struct OutFunctions {
+  out_string : (String) -> Unit
+  out_flush : () -> Unit
+  out_newline : () -> Unit
+  out_spaces : (Int) -> Unit
+  out_indent : (Int) -> Unit
+}
+pub fn OutFunctions::of_logger(&Logger) -> Self
+
+pub(all) struct TagFunctions {
+  mark_open_tag : (String) -> String
+  mark_close_tag : (String) -> String
+  print_open_tag : (String) -> Unit
+  print_close_tag : (String) -> Unit
+}
+pub fn TagFunctions::default() -> Self
+
+// Type aliases
+pub type Mode = String
+
+// Traits

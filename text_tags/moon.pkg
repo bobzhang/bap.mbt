@@ -1,4 +1,5 @@
 import {
+  "bobzhang/bap/sexp",
   "moonbitlang/core/deque",
   "moonbitlang/core/encoding/utf8",
 }

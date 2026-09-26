@@ -22,7 +22,7 @@ test "sexp reader handles comments, strings, and lists" {
   debug_inspect(
     @read_symbols.parse_sexps("(a (b)"),
     content=(
-      #|Err("unclosed parenthesis")
+      #|Err("line 1, column 6: unclosed parentheses at end of input")
     ),
   )
 }

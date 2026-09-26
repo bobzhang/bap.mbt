@@ -168,11 +168,17 @@ test "AArch64 conditional branches fall through, returns are barriers" {
     result => Ok(result)
   }
   ignore(registry.unregister("a64-regression"))
-  guard result is Ok((blocks, jumps, _)) else { fail("disassembly failed") }
+  guard result is Ok((blocks, jumps, ir)) else { fail("disassembly failed") }
   inspect(
     blocks,
     content=(
       #|1000 1008 100c 1014
+    ),
+  )
+  inspect(
+    ir,
+    content=(
+      #|when C:imm1 goto @0x0000000000001014; goto @0x0000000000001008 | when Z:imm1 goto @0x0000000000001014; goto @0x000000000000100c | call *X30:imm64 with noreturn | call *X30:imm64 with noreturn
     ),
   )
   inspect(
@@ -210,6 +216,55 @@ test "a PowerPC conditional return falls through" {
     ir,
     content=(
       #|goto %_ | when (extract[2:2](%_#_:imm5) == 0:1u) goto %_; goto %_ | goto %_ | when (%_#_:imm1 & %_#_:imm1) call *(LR:imm32 & 0xFFFFFFFC:32u) with noreturn; goto @0x00002008 | call *(LR:imm32 & 0xFFFFFFFC:32u) with noreturn
+    ),
+  )
+}
+
+///|
+test "AArch64 conditional branches (LLVM terminators) get fall edges" {
+  guard @project.register_builtin_disassembly_drivers() is Ok(_) else {
+    fail("registration failed")
+  }
+  let before = @mc.decoders().map(d => d.name())
+  @aarch64.register_decoder()
+  let registry = @mc.Registry::global()
+  registry.register(regression_a64_lifter())
+  // subs w8, w0, #1; b.lt +16; cbz w0, +12; mov w0, #1; ret; mov w0, wzr; ret
+  let code = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x1000UL,
+    b"\x08\x04\x00\x71\x8b\x00\x00\x54\x60\x00\x00\x34\x20\x00\x80\x52\xc0\x03\x5f\xd6\xe0\x03\x1f\x2a\xc0\x03\x5f\xd6",
+  )
+  let result = @project.Project::empty(@core_theory.Target::aarch64())
+    .with_memory(@memory.MemMap::singleton(code, "code"))
+    .with_symbols([
+      @image.Symbol::create(name="f", addr=0x1000UL, is_function=true),
+    ])
+    .disassemble_rec(driver="recursive")
+  ignore(registry.unregister("a64-regression"))
+  if !before.contains(@aarch64.a64_decoder_name) {
+    ignore(@mc.unregister_decoder(@aarch64.a64_decoder_name))
+  }
+  let result = match result {
+    Ok(result) => result
+    Err(e) => fail(e)
+  }
+  let falls = result
+    .disassembly()
+    .edges()
+    .filter(e => e.kind() is FallEdge)
+    .map(e => {
+      let target = match e.target() {
+        Some(t) => t.to_string(radix=16)
+        None => "?"
+      }
+      "\{e.source().to_string(radix=16)}->\{target}"
+    })
+  falls.sort()
+  inspect(
+    falls.join(" "),
+    content=(
+      #|1004->1008 1008->100c
     ),
   )
 }

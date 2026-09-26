@@ -71,7 +71,7 @@ test "bap disassembles an arm64 Mach-O executable" {
       #|
       #|100000410: <_foo>
       #|100000410:
-      #|100000410: 00 00 80 52                            movz w0, #0
+      #|100000410: 00 00 80 52                            mov w0, #0
       #|100000414: c0 03 5f d6                            ret
       #|
     ),
@@ -96,7 +96,7 @@ test "bap disassembles the architecture of the target of a universal binary" {
       #|
       #|100000410: <_foo>
       #|100000410:
-      #|100000410: 00 00 80 52                            movz w0, #0
+      #|100000410: 00 00 80 52                            mov w0, #0
       #|100000414: c0 03 5f d6                            ret
       #|
     ),

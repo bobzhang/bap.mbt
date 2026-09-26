@@ -311,7 +311,8 @@ fn available_deps(deps : Array[String]) -> Array[String] {
 
 ///|
 /// Creates the autorun `glibc-runtime` pass. Upstream depends on the `api`
-/// pass, which is kept only when it is registered.
+/// pass (`plugins/api`); the dependency is kept only when the `api` plugin
+/// has registered it (the frontend loads the `api` plugin first).
 pub fn pass(
   enable? : Bool = false,
   main_abi? : (@project.Project, @types.Term[@types.Sub]) -> @types.Term[

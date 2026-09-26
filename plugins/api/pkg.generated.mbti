@@ -1,0 +1,70 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/api"
+
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/project",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn all_paths(Array[String], getenv? : (String) -> String?) -> Array[String]
+
+pub fn api_of_path(String) -> Api?
+
+pub fn apply(Array[String], @project.Project) -> Result[@project.Project, String]
+
+pub fn bundled_api_files() -> Array[(String, String)]
+
+pub fn bundled_file_system() -> @bap_main.FileSystem
+
+pub fn declare_plugin(out? : (String) -> Unit) -> Unit raise
+
+pub fn files(Array[String], String) -> Array[String]
+
+pub fn find_apis(String, lang? : String) -> Array[Api]
+
+pub fn list_paths(Array[String]) -> String
+
+pub let name : String
+
+pub fn overlay(@bap_main.FileSystem, @bap_main.FileSystem) -> @bap_main.FileSystem
+
+pub fn pass(api_paths? : Array[String], getenv? : (String) -> String?) -> @project.ProjectPass
+
+pub fn path_of_string(String, getenv? : (String) -> String?) -> String
+
+pub let provides : Array[String]
+
+pub fn reduce(String) -> String
+
+pub fn register(api_paths? : Array[String], getenv? : (String) -> String?) -> Result[Bool, String]
+
+pub fn show_apis(Array[String]) -> String
+
+pub fn site_dir() -> String
+
+pub fn[T] with_bundled_files(() -> T) -> T
+
+// Errors
+
+// Types and methods
+pub(all) struct Api {
+  desc : ApiDescr
+  path : String
+} derive(Eq, @debug.Debug)
+pub fn Api::equal(Self, Self) -> Bool
+pub fn Api::not_equal(Self, Self) -> Bool
+pub fn Api::to_repr(Self) -> @debug.Repr
+
+pub(all) struct ApiDescr {
+  lang : String
+  name : String
+} derive(Eq, @debug.Debug)
+pub fn ApiDescr::equal(Self, Self) -> Bool
+pub fn ApiDescr::not_equal(Self, Self) -> Bool
+pub fn ApiDescr::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

@@ -1,0 +1,15 @@
+import {
+  "bobzhang/bap/abi",
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/c",
+  "bobzhang/bap/project",
+  "moonbitlang/core/env",
+}
+
+import {
+  "bobzhang/bap/c_parser",
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/plugins/arm_gnueabi",
+  "bobzhang/bap/plugins/x86_abi",
+  "bobzhang/bap/types",
+} for "test"

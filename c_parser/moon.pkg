@@ -1,0 +1,6 @@
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/c",
+  "bobzhang/bap/types",
+  "moonbitlang/core/encoding/utf8",
+}

@@ -403,7 +403,9 @@ test "conditional execution" {
   inspect(
     lift_str("MOVr", [r("PC"), r("LR"), ..cc(11), r("Nil")]),
     content=(
-      #|if (NF:imm1 != VF:imm1) then 1 stmts else 0 stmts
+      #|if (NF:imm1 != VF:imm1) {
+      #|  jmp LR:imm32
+      #|}
     ),
   )
   let conds = [

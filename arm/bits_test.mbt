@@ -102,7 +102,12 @@ test "bit reversal" {
       #|%v1:imm32 := (R1:imm32 >> 1:32u)
       #|%r2:imm32 := R1:imm32
       #|%s3:imm32 := 0x1F:32u
-      #|while (%v1:imm32 != 0:32u) do 4 stmts
+      #|while (%v1:imm32 != 0:32u) {
+      #|  %r2:imm32 := (%r2:imm32 << 1:32u)
+      #|  %r2:imm32 := (%r2:imm32 | (%v1:imm32 & 1:32u))
+      #|  %v1:imm32 := (%v1:imm32 >> 1:32u)
+      #|  %s3:imm32 := (%s3:imm32 - 1:32u)
+      #|}
       #|R0:imm32 := (%r2:imm32 << %s3:imm32)
     ),
   )

@@ -22,7 +22,40 @@ fn cc(code : Int) -> Array[@mc.Op] {
 
 ///|
 fn render(stmts : Array[@types.Stmt]) -> String {
-  stmts.map(s => s.to_string()).join("\n")
+  let buf = StringBuilder()
+  render_to(buf, stmts, "")
+  buf.to_string()
+}
+
+///|
+/// Render statements one per line, expanding nested blocks.
+fn render_to(
+  buf : StringBuilder,
+  stmts : Array[@types.Stmt],
+  indent : String,
+) -> Unit {
+  for s in stmts {
+    if buf.to_string() != "" {
+      buf.write_string("\n")
+    }
+    match s {
+      If(cond~, yes~, no~) => {
+        buf.write_string("\{indent}if \{cond.to_string()} {")
+        render_to(buf, yes, indent + "  ")
+        if no.length() > 0 {
+          buf.write_string("\n\{indent}} else {")
+          render_to(buf, no, indent + "  ")
+        }
+        buf.write_string("\n\{indent}}")
+      }
+      While(cond~, body~) => {
+        buf.write_string("\{indent}while \{cond.to_string()} {")
+        render_to(buf, body, indent + "  ")
+        buf.write_string("\n\{indent}}")
+      }
+      _ => buf.write_string(indent + s.to_string())
+    }
+  }
 }
 
 ///|

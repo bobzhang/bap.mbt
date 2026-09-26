@@ -1,10 +1,7 @@
 import {
+  "bobzhang/bap/arm",
   "bobzhang/bap/bitvec",
   "bobzhang/bap/core_theory",
   "bobzhang/bap/mc",
   "bobzhang/bap/types",
 }
-
-import {
-  "bobzhang/bap/arm",
-} for "test"

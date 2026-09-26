@@ -200,7 +200,9 @@ fn lift_branch(
   match (opcode, insn.ops) {
     (TB, [Imm(dst), _, _]) => b(pc, imm(dst))
     (TBcc, [Imm(dst), Imm(c), _]) => bcc(pc, cnd(insn, c), imm(dst))
-    (TBL, [_, _, Imm(dst), _])
+    // LLVM's `tBL` has three operands (the predicate and the target);
+    // upstream matches a fourth one
+    (TBL, [_, _, Imm(dst)] | [_, _, Imm(dst), _])
     | (TBLXi, [_, _, Imm(dst)] | [_, _, Imm(dst), _]) => bli(pc, imm(dst))
     // blx pc is unpredictable in all versions of ARM
     (TBLXr, [_, _, Reg(name=dst, ..)]) if is_pc(reg(dst)) => unpredictable()

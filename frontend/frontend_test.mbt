@@ -96,6 +96,7 @@ test "bap without arguments prints the usage" {
       #|  primus-random            provides components for Primus state randomization and controls their
       #|  primus-region            provides Primus Lisp library for manipulating program regions
       #|  primus-round-robin       schedules Primus machines in the BFS order
+      #|  primus-symbolic-executor provides a Primus symbolic executor
       #|  primus-systems           loads Primus systems and registers them in the system repository
       #|  primus-taint             a taint analysis control interface
       #|  primus-test              provides primitives for Primus Tesing and Verification Framework

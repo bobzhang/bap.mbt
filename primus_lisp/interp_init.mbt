@@ -350,9 +350,11 @@ pub fn refine_from_system(m : @primus.Machine) -> Unit raise {
 ///|
 /// The embedded directories of the Primus Lisp library: the core library,
 /// the site library, and the libraries of the analysis plugins (taint,
-/// constant tracker, testing framework, approximations).
+/// constant tracker, testing framework, approximations, symbolic
+/// executor).
 pub let library_dirs : Array[String] = [
   "lisp", "site-lisp", "taint", "constant-tracker", "primus-test", "approximation",
+  "symbolic-executor",
 ]
 
 ///|

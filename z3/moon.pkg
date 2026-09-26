@@ -4,6 +4,10 @@ import {
   "moonbitlang/core/encoding/utf8",
 }
 
+// Z3 is loaded with dlopen at run time (see z3_stub.c): no Z3 headers or
+// link flags are needed. The dynamic loader is part of libc on macOS and
+// glibc >= 2.34; older glibc needs `-ldl` in the final link.
+
 options(
   "native-stub": [ "z3_stub.c" ],
   targets: {
@@ -11,8 +15,4 @@ options(
     "ffi_stub.mbt": [ "wasm", "wasm-gc", "js", "llvm" ],
     "z3_native_test.mbt": [ "native" ],
   },
-  // Z3 is loaded with dlopen at run time (see z3_stub.c): no Z3 headers
-  // or link flags are needed, only the dynamic loader (libdl on older
-  // glibc).
-  link: { "native": { "cc-link-flags": "-ldl" } },
 )

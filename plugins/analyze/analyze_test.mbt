@@ -73,16 +73,16 @@ test "analyze runs the core commands" {
       #|((bap:insn (XOR32rr(EAX,EAX)))
       #| (bap:asm "XOR32rr EAX, EAX")
       #| (bap:bil "{
-      #|  EAX := 0
+      #|  RAX := 0
       #|  CF := 0
       #|  OF := 0
       #|  AF := unknown[AF undefined after logical operation]:u1
       #|  PF :=
-      #|    ~low:1[let parity_tmp1 = EAX >> 4 ^ EAX in
+      #|    ~low:1[let parity_tmp1 = low:32[RAX] >> 4 ^ low:32[RAX] in
       #|           let parity_tmp2 = parity_tmp1 >> 2 ^ parity_tmp1 in parity_tmp2 >>
       #|           1 ^ parity_tmp2]
-      #|  SF := high:1[EAX]
-      #|  ZF := 0 = EAX
+      #|  SF := high:1[low:32[RAX]]
+      #|  ZF := 0 = low:32[RAX]
       #|}")
       #| (bap:insn-code "40100e: 31 c0 "))
       #|bin/true:0x401000

@@ -46,16 +46,16 @@ test "mc prints the BIL of x86-64 instructions" {
     content=(
       #|XOR32rr(EDX,EDX)
       #|{
-      #|  EDX := 0
+      #|  RDX := 0
       #|  CF := 0
       #|  OF := 0
       #|  AF := unknown[AF undefined after logical operation]:u1
       #|  PF :=
-      #|    ~low:1[let parity_tmp1 = EDX >> 4 ^ EDX in
+      #|    ~low:1[let parity_tmp1 = low:32[RDX] >> 4 ^ low:32[RDX] in
       #|           let parity_tmp2 = parity_tmp1 >> 2 ^ parity_tmp1 in parity_tmp2 >>
       #|           1 ^ parity_tmp2]
-      #|  SF := high:1[EDX]
-      #|  ZF := 0 = EDX
+      #|  SF := high:1[low:32[RDX]]
+      #|  ZF := 0 = low:32[RDX]
       #|}
       #|
     ),

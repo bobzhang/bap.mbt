@@ -2,9 +2,9 @@
 // of instructions supported by both lifters, the semantics are executed on
 // the same concrete initial states and the resulting registers, flags,
 // memory, jump targets and CPU exceptions are compared. Values left
-// undefined by either lifter are not compared. The Basic lifter's
-// sub-register variables (EAX, AL, XMM0, ...) are mapped onto the full
-// registers first (`normalize_basic`).
+// undefined by either lifter are not compared. Both lifters write the
+// full registers (the Basic lifter resolves its sub-registers with
+// `@mc.resolve_x86_subregisters`).
 //
 // The lifters agree on every instruction both of them lift: the upstream
 // deviations from the Intel SDM this test used to report (ROL/ROR flags,
@@ -17,129 +17,6 @@
 // CALL/RET agree: like upstream, the Basic lifter pushes the return address
 // on calls and pops it (and the immediate byte count) on returns, jumping to
 // it.
-
-///|
-/// The sub-register variables of the Basic lifter, which models `EAX`,
-/// `AL`, `XMM0`, ... as separate variables: name -> (full register, lo,
-/// hi), following the Core Theory alias table of the target.
-fn subregisters(mode : @x86.Mode) -> Map[String, (@types.Var, Int, Int)] {
-  let table : Map[String, (@types.Var, Int, Int)] = Map([])
-  let gprs = @x86.gprs(mode)
-  let names : Array[(String, String, String, String)] = [
-    ("EAX", "AX", "AL", "AH"),
-    ("ECX", "CX", "CL", "CH"),
-    ("EDX", "DX", "DL", "DH"),
-    ("EBX", "BX", "BL", "BH"),
-    ("ESP", "SP", "SPL", ""),
-    ("EBP", "BP", "BPL", ""),
-    ("ESI", "SI", "SIL", ""),
-    ("EDI", "DI", "DIL", ""),
-  ]
-  for i, base in gprs {
-    let (d, w, b, h) = if i < 8 {
-      names[i]
-    } else {
-      ("R\{i}D", "R\{i}W", "R\{i}B", "")
-    }
-    if mode == X8664 {
-      table[d] = (base, 0, 31)
-    }
-    table[w] = (base, 0, 15)
-    if mode == X8664 || i < 4 {
-      table[b] = (base, 0, 7)
-    }
-    if h != "" {
-      table[h] = (base, 8, 15)
-    }
-  }
-  for i, v in @x86.vector_registers(mode) {
-    table["XMM\{i}"] = (v, 0, 127)
-  }
-  table
-}
-
-///|
-fn norm_exp(
-  table : Map[String, (@types.Var, Int, Int)],
-  e : @types.Exp,
-) -> @types.Exp {
-  let n = x => norm_exp(table, x)
-  match e {
-    Var(v) =>
-      match table.get(v.name) {
-        Some((base, lo, hi)) => Extract(hi~, lo~, exp=Var(base))
-        None => e
-      }
-    Int(_) | Unknown(_) => e
-    Load(mem~, addr~, endian~, typ~) =>
-      Load(mem=n(mem), addr=n(addr), endian~, typ~)
-    Store(mem~, addr~, value~, endian~) =>
-      Store(mem=n(mem), addr=n(addr), value=n(value), endian~)
-    Let(v, x, y) => Let(v, n(x), n(y))
-    Cast(kind~, width~, exp~) => Cast(kind~, width~, exp=n(exp))
-    Extract(hi~, lo~, exp~) => Extract(hi~, lo~, exp=n(exp))
-    Concat(high~, low~) => Concat(high=n(high), low=n(low))
-    UnOp(op, x) => UnOp(op, n(x))
-    BinOp(op, x, y) => BinOp(op, n(x), n(y))
-    Ite(cond~, yes~, no~) => Ite(cond=n(cond), yes=n(yes), no=n(no))
-  }
-}
-
-///|
-/// Rewrite the Basic lifter's BIL onto the full registers: sub-register
-/// reads extract the bits of the full register; writes merge into it,
-/// except that 32-bit writes zero-extend into the 64-bit register in
-/// 64-bit mode (Intel SDM 3.4.1.1).
-fn normalize_basic(
-  mode : @x86.Mode,
-  stmts : Array[@types.Stmt],
-) -> Array[@types.Stmt] {
-  let table = subregisters(mode)
-  let n = x => norm_exp(table, x)
-  stmts.map(s => {
-    match s {
-      Move(v, e) =>
-        match table.get(v.name) {
-          None => Move(v, n(e))
-          Some((base, lo, hi)) => {
-            let width = match base.typ {
-              Imm(w) => w
-              Mem(..) => 0
-            }
-            let e = n(e)
-            if mode == X8664 && lo == 0 && hi == 31 && width == 64 {
-              Move(base, Cast(kind=Unsigned, width=64, exp=e))
-            } else {
-              let mut value = e
-              if lo > 0 {
-                value = Concat(
-                  high=value,
-                  low=Extract(hi=lo - 1, lo=0, exp=Var(base)),
-                )
-              }
-              if hi < width - 1 {
-                value = Concat(
-                  high=Extract(hi=width - 1, lo=hi + 1, exp=Var(base)),
-                  low=value,
-                )
-              }
-              Move(base, value)
-            }
-          }
-        }
-      Jmp(e) => Jmp(n(e))
-      If(cond~, yes~, no~) =>
-        If(
-          cond=n(cond),
-          yes=normalize_basic(mode, yes),
-          no=normalize_basic(mode, no),
-        )
-      While(cond~, body~) =>
-        While(cond=n(cond), body=normalize_basic(mode, body))
-      s => s
-    }
-  })
-}
 
 ///|
 /// Initial states of the differential test: pointer registers point into
@@ -299,7 +176,7 @@ fn diff_one(
   let label = "\{hex_bytes(bytes)} (\{insn.name()})"
   let decoded_len = insn.memory().length()
   let basic_bil = match insn.lift_basic_bil() {
-    Ok(bil) if decoded_len == bytes.length() => Some(normalize_basic(mode, bil))
+    Ok(bil) if decoded_len == bytes.length() => Some(bil)
     _ => None
   }
   let ours = try lift(insn.to_mc_insn()) catch {

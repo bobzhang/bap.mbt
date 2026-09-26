@@ -214,7 +214,7 @@ test "project linear-sweep disassembly driver materializes sweep instructions" {
       assert_true(instructions.length() == 2)
       assert_true(instructions[0].addr() == 0x7200UL)
       assert_true(instructions[0].code() == 0x55)
-      assert_true(instructions[0].encoding() == "llvm")
+      assert_true(instructions[0].encoding() == "llvm-x86_64")
       assert_true(instructions[1].addr() == 0x7201UL)
       assert_true(instructions[1].code() == 0xc3)
       assert_true(instructions[1].has_kind(ProjectReturn))

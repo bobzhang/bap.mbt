@@ -1,0 +1,25 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/fixtures/objects"
+
+// Values
+pub fn arm64_macho(arm64e? : Bool) -> Bytes
+
+pub let arm64_macho_code : Bytes
+
+pub fn fat_macho() -> Bytes
+
+pub fn i386_macho() -> Bytes
+
+pub fn x86_64_macho() -> Bytes
+
+pub let x86_64_macho_code : Bytes
+
+pub fn x86_64_macho_object() -> Bytes
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

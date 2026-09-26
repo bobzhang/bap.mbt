@@ -48,6 +48,10 @@ pub fn from_spec(Bytes, @ogre.Doc, filename? : String, target? : @core_theory.Ta
 
 pub fn function_start() -> @types.Tag[Unit]
 
+pub fn macho_llvm_spec(Bytes) -> Result[@ogre.Doc, String]
+
+pub fn macho_spec(Bytes, target? : @core_theory.Target) -> Result[@ogre.Doc, String]
+
 pub fn memory(Image) -> @memory.MemMap[@types.Value]
 
 pub fn memory_of_segment(Image, Segment) -> @memory.Memory
@@ -87,6 +91,8 @@ pub fn symbol_info() -> @types.Tag[Symbol]
 pub fn symbols(Image) -> Array[Symbol]
 
 pub fn symbols_of_segment(Image, Segment) -> Array[Symbol]
+
+pub fn thin_binary(Bytes, target? : @core_theory.Target) -> Result[Bytes, String]
 
 pub fn words(Image, Int) -> @memory.MemMap[@types.Word]
 
@@ -175,6 +181,7 @@ pub fn ImageBackend::elf() -> Self
 pub fn ImageBackend::extensions(Self) -> Array[String]
 pub fn ImageBackend::from_legacy(name~ : String, LegacyImageBackend, description? : String, extensions? : Array[String], priority? : Int) -> Self
 pub fn ImageBackend::load(Self, Bytes) -> Result[(Image, Array[String]), String]
+pub fn ImageBackend::macho() -> Self
 pub fn ImageBackend::name(Self) -> String
 pub fn ImageBackend::ogre() -> Self
 pub fn ImageBackend::priority(Self) -> Int

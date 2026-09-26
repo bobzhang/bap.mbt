@@ -561,6 +561,12 @@ test "translated DWARF FBI resolves absolute function name references" {
   assert_true(functions[0].name() == "declared")
   assert_true(functions[0].low_pc() == 0xa0UL)
   assert_true(functions[0].high_pc() == Some(0xa6UL))
+  // The lazy enumeration defers the forward cross-unit reference until the
+  // referenced unit has been read.
+  let streamed = data.iter_functions().to_array()
+  assert_true(streamed.length() == 1)
+  assert_true(streamed[0].equal(functions[0]))
+  assert_true(streamed[0].name() == "declared")
 }
 
 ///|

@@ -123,7 +123,7 @@ pub let semantics : Item[Sema] = {
 
 ///|
 /// Signals.
-pub let signal : Item[Signal] = {
+pub let signal_item : Item[Signal] = {
   name: "signal",
   get: p => p.sigs,
   set: (p, x) => { ..p, sigs: x, },

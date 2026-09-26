@@ -86,17 +86,45 @@ pub(all) struct Para {
 }
 
 ///|
-/// A host function that implements a primitive: takes the machine, the
-/// name of the primitive (as it was called), and the arguments.
+/// A host function that implements a primitive (upstream `Def.closure`).
+///
+/// The implementation is written in the continuation-passing style over the
+/// Primus frame stack: it receives the machine, the name of the primitive
+/// (as it was called, upstream `Closure.name`), the arguments, and the
+/// continuation that must eventually be called with the result. The
+/// continuation must be called at most once, in the current step or in a
+/// later step (e.g., after a resumable `Machine::call`).
 pub struct Closure {
-  run : (@primus.Machine, String, Array[@primus.Value]) -> @primus.Value raise
+  run : (
+    @primus.Machine,
+    String,
+    Array[@primus.Value],
+    (@primus.Machine, @primus.Value) -> Unit raise,
+  ) -> Unit raise
 }
 
 ///|
+/// Creates a closure from a CPS implementation.
 pub fn Closure::new(
-  run : (@primus.Machine, String, Array[@primus.Value]) -> @primus.Value raise,
+  run : (
+    @primus.Machine,
+    String,
+    Array[@primus.Value],
+    (@primus.Machine, @primus.Value) -> Unit raise,
+  ) -> Unit raise,
 ) -> Closure {
   { run, }
+}
+
+///|
+/// Creates a closure from a direct implementation: the function is run as
+/// one step of the machine and the result is passed to the rest of the
+/// Lisp program in the next step (so a fork requested by the function
+/// happens between the two).
+pub fn Closure::sync(
+  f : (@primus.Machine, String, Array[@primus.Value]) -> @primus.Value raise,
+) -> Closure {
+  { run: (m, name, args, k) => step(m, m => f(m, name, args), k), }
 }
 
 ///|

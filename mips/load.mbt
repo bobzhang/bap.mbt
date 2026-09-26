@@ -9,17 +9,26 @@ fn load_base_offset(rt_sign : Sign, width : Int) -> Semantics {
     let rt = cpu.reg(0, rt_sign)
     let base = cpu.sreg(1)
     let off = cpu.simm(2)
-    [rt.assign(cpu.load(base + off, width))]
+    [rt.assign(apply_sign(rt_sign, cpu.load(base + off, width)))]
   }
 }
 
 ///|
-/// PC-relative load: `rt := load (cia + (off << shift)) width`.
-fn load_pc_relative(rt_sign : Sign, shift : Int, width : Int) -> Semantics {
+/// PC-relative load: `rt := load (base + off) width`, where LLVM's `off`
+/// operand is already scaled and `base` is the address of the instruction,
+/// aligned to `width` bytes for `LDPC`. Deliberate deviation from
+/// upstream, which scales the offset again (and does not align `LDPC`).
+fn load_pc_relative(rt_sign : Sign, width : Int) -> Semantics {
   cpu => {
     let rt = cpu.reg(0, rt_sign)
     let off = cpu.simm(1)
-    [rt.assign(cpu.load(cpu.cia + off.lsl(uconst(byte, shift)), width))]
+    let base = if width == doubleword {
+      let mask = Exp::of_word(make_word(cpu.arch.addr_bitwidth(), -8L))
+      (cpu.cia & mask).signed()
+    } else {
+      cpu.cia
+    }
+    [rt.assign(apply_sign(rt_sign, cpu.load(base + off, width)))]
   }
 }
 
@@ -31,7 +40,7 @@ let load_semantics : ReadOnlyArray[(String, Semantics)] = [
   ("LBu", load_base_offset(Unsigned, byte)),
   ("LBue", load_base_offset(Unsigned, byte)),
   ("LD", load_base_offset(Signed, doubleword)),
-  ("LDPC", load_pc_relative(Signed, 3, doubleword)),
+  ("LDPC", load_pc_relative(Signed, doubleword)),
   ("LH", load_base_offset(Signed, halfword)),
   ("LHE", load_base_offset(Signed, halfword)),
   ("LHu", load_base_offset(Unsigned, halfword)),
@@ -44,7 +53,7 @@ let load_semantics : ReadOnlyArray[(String, Semantics)] = [
   ("LLXE", load_base_offset(Signed, word)),
   ("LW", load_base_offset(Signed, word)),
   ("LWE", load_base_offset(Signed, word)),
-  ("LWPC", load_pc_relative(Signed, 2, word)),
+  ("LWPC", load_pc_relative(Signed, word)),
   ("LWu", load_base_offset(Unsigned, word)),
-  ("LWupc", load_pc_relative(Unsigned, 2, word)),
+  ("LWupc", load_pc_relative(Unsigned, word)),
 ]

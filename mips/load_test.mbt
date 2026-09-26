@@ -52,9 +52,9 @@ test "load: mips32 big-endian semantics" {
       #|LWu T0, SP, 0x8
       #|  T0 := mem[(SP + 8:32u), be]:u32
       #|LWPC T0, 0x4
-      #|  T0 := mem[(0x1000:32u + (4:32u << pad:32[2:8u])), be]:u32
+      #|  T0 := mem[(0x1000:32u + 4:32u), be]:u32
       #|LWupc T0, 0x4
-      #|  T0 := mem[(0x1000:32u + (4:32u << pad:32[2:8u])), be]:u32
+      #|  T0 := mem[(0x1000:32u + 4:32u), be]:u32
       #|
     ),
   )
@@ -86,7 +86,7 @@ test "load: mips64 semantics" {
       #|LLDX T0_64, SP_64, 0x10
       #|  T0 := mem[(SP + extend:64[0x10:32u]), el]:u64
       #|LDPC T0_64, 0x2
-      #|  T0 := mem[(0x1000:64u + extend:64[(2:32u << pad:32[3:8u])]), el]:u64
+      #|  T0 := mem[((0x1000:64u & 0xFFFFFFFFFFFFFFF8:64u) + extend:64[2:32u]), el]:u64
       #|
     ),
   )

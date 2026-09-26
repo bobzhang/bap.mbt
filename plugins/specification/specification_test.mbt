@@ -241,7 +241,7 @@ test "specification reports problems" {
   inspect(
     run_bap(["specification", "--loader=nope", "bin/true"]),
     content=(
-      #|The loader `nope' is not registers, known loaders are: raw, ogre, elf.
+      #|The loader `nope' is not registers, known loaders are: raw, ogre, elf, macho, coff, llvm.
     ),
   )
 }

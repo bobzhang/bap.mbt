@@ -180,8 +180,9 @@ fn is_explicit_path(path : String) -> Bool {
 ///|
 /// Loads the input file (upstream `Project.Input.load`).
 ///
-/// The default loader `llvm` of upstream BAP is not available; it selects
-/// the port's loaders by the file name and contents instead.
+/// The default loader `llvm` selects the port's loaders by the file name
+/// and contents (ELF, Mach-O and PE/COFF files); a universal Mach-O binary
+/// is loaded as its slice of the `target` (or of the host).
 pub fn load_input(
   input : String,
   loader~ : String,
@@ -206,6 +207,16 @@ pub fn load_input(
     Some(data) => data
     None => raise Fail(ExpectsARegularFile(input))
   }
+  // the architecture of a universal binary: the target's, or the host's
+  // (other explicit loaders, e.g. `raw`, get the file as it is)
+  let data = if explicit_loader && loader != "macho" {
+    data
+  } else {
+    match @image.thin_binary(data, target?) {
+      Ok(thin) => thin
+      Err(reason) => raise Fail(ProjectFailure(reason))
+    }
+  }
   let result = if explicit_loader {
     match @project.ProjectInput::load(data, loader~, target?) {
       Ok(input) => Ok(input)
@@ -216,8 +227,9 @@ pub fn load_input(
       @project.ProjectInput::load_for_filename(data, filename=input, target?) {
       Ok(r) => Ok(r)
       Err(e) =>
-        // no extension (or an unknown one): try the loaders in order
-        match @project.ProjectInput::load(data, loader="elf", target?) {
+        // no extension (or an unknown one): select the loader by the
+        // contents
+        match @project.ProjectInput::load(data, loader="llvm", target?) {
           Ok(r) => Ok(r)
           Err(_) => Err(e)
         }

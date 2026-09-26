@@ -1,71 +1,83 @@
 // Port of BAP `plugins/mips/mips_divide.ml`.
 //
-// Upstream registers the pre-R6 two-operand `DIV`/`DIVU` semantics under
-// the LLVM names `SDIV`/`UDIV`; the R6 three-operand `DIV`/`DIVU` lifters
-// are defined but not registered, which is mirrored here.
+// LLVM names the pre-R6 two-operand `DIV`/`DIVU` (`HI`/`LO` results)
+// `SDIV`/`UDIV`, and the MIPS64 ones `DSDIV`/`DUDIV`; the Release 6
+// three-operand forms are `DIV`/`DIVU`/`MOD`/`MODU` and their `D` variants.
+//
+// Deliberate deviations from upstream: the 32-bit divisions divide the low
+// words and sign-extend their results into MIPS64 registers; the R6
+// `DIV`/`DIVU` (defined but not registered upstream) and the pre-R6
+// `DSDIV`/`DUDIV` are registered.
 
 ///|
 /// DIV rs, rt - Divide Word, MIPS32 (removed in R6); LLVM `SDIV`.
 fn sem_div(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
-  let rs = cpu.sreg(0)
-  let rt = cpu.sreg(1)
-  let x = cpu.svar(doubleword)
-  [x.assign(zero), cpu.lo().assign(rs.sdiv(rt)), cpu.hi().assign(rs.smod(rt))]
+  let rs = cpu.wreg(0, Signed)
+  let rt = cpu.wreg(1, Signed)
+  [cpu.lo().assign(sword(rs.sdiv(rt))), cpu.hi().assign(sword(rs.smod(rt)))]
 }
 
 ///|
 /// DIVU rs, rt - Divide Unsigned Word, MIPS32 (removed in R6); LLVM `UDIV`.
 fn sem_divu(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
+  let rs = cpu.wreg(0, Unsigned)
+  let rt = cpu.wreg(1, Unsigned)
+  [cpu.lo().assign(sword(rs / rt)), cpu.hi().assign(sword(rs % rt))]
+}
+
+///|
+/// DDIV rs, rt - Doubleword Divide, MIPS64 (removed in R6); LLVM `DSDIV`.
+fn sem_dsdiv(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
+  let rs = cpu.sreg(0)
+  let rt = cpu.sreg(1)
+  [cpu.lo().assign(rs.sdiv(rt)), cpu.hi().assign(rs.smod(rt))]
+}
+
+///|
+/// DDIVU rs, rt - Doubleword Divide Unsigned, MIPS64 (removed in R6); LLVM
+/// `DUDIV`.
+fn sem_dudiv(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
   let rs = cpu.ureg(0)
   let rt = cpu.ureg(1)
-  let x = cpu.uvar(doubleword)
-  [x.assign(zero), cpu.lo().assign(rs / rt), cpu.hi().assign(rs % rt)]
+  [cpu.lo().assign(rs / rt), cpu.hi().assign(rs % rt)]
 }
 
 ///|
-/// MOD rd, rs, rt - Modulo Words Signed, MIPS32 R6 (also DMOD).
-fn sem_mod(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
-  let rd = cpu.sreg(0)
-  let rs = cpu.sreg(1)
-  let rt = cpu.sreg(2)
-  [rd.assign(rs.smod(rt))]
+/// Release 6 `op rd, rs, rt` over the low words (`DIV`, `DIVU`, `MOD`,
+/// `MODU`), with the result sign-extended.
+fn word_op(sign : Sign, op : (Exp, Exp) -> Exp) -> Semantics {
+  cpu => {
+    let rd = cpu.sreg(0)
+    let rs = cpu.wreg(1, sign)
+    let rt = cpu.wreg(2, sign)
+    [rd.assign(sword(op(rs, rt)))]
+  }
 }
 
 ///|
-/// MODU rd, rs, rt - Modulo Words Unsigned, MIPS32 R6 (also DMODU).
-fn sem_modu(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
-  let rd = cpu.ureg(0)
-  let rs = cpu.ureg(1)
-  let rt = cpu.ureg(2)
-  [rd.assign(rs % rt)]
-}
-
-///|
-/// DDIV rd, rs, rt - Divide Doublewords Signed, MIPS64 R6.
-fn sem_ddiv(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
-  let rd = cpu.sreg(0)
-  let rs = cpu.sreg(1)
-  let rt = cpu.sreg(2)
-  [rd.assign(rs.sdiv(rt))]
-}
-
-///|
-/// DDIVU rd, rs, rt - Divide Doublewords Unsigned, MIPS64 R6.
-fn sem_ddivu(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
-  let rd = cpu.ureg(0)
-  let rs = cpu.ureg(1)
-  let rt = cpu.ureg(2)
-  [rd.assign(rs / rt)]
+/// Release 6 `op rd, rs, rt` over doublewords (`DDIV`, `DDIVU`, `DMOD`,
+/// `DMODU`).
+fn doubleword_op(sign : Sign, op : (Exp, Exp) -> Exp) -> Semantics {
+  cpu => {
+    let rd = cpu.reg(0, sign)
+    let rs = cpu.reg(1, sign)
+    let rt = cpu.reg(2, sign)
+    [rd.assign(op(rs, rt))]
+  }
 }
 
 ///|
 let divide_semantics : ReadOnlyArray[(String, Semantics)] = [
   ("SDIV", sem_div),
-  ("MOD", sem_mod),
   ("UDIV", sem_divu),
-  ("MODu", sem_modu),
-  ("DDIV", sem_ddiv),
-  ("DMOD", sem_mod),
-  ("DDIVu", sem_ddivu),
-  ("DMODu", sem_modu),
+  ("DSDIV", sem_dsdiv),
+  ("DUDIV", sem_dudiv),
+  ("DIV", word_op(Signed, Exp::sdiv)),
+  ("DIVU", word_op(Unsigned, (x, y) => x / y)),
+  ("MOD", word_op(Signed, Exp::smod)),
+  ("MODu", word_op(Unsigned, (x, y) => x % y)),
+  ("DDIV", doubleword_op(Signed, Exp::sdiv)),
+  ("DDIVu", doubleword_op(Unsigned, (x, y) => x / y)),
+  ("DMOD", doubleword_op(Signed, Exp::smod)),
+  ("DMODu", doubleword_op(Unsigned, (x, y) => x % y)),
 ]

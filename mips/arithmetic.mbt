@@ -1,27 +1,42 @@
 // Port of BAP `plugins/mips/mips_arithmetic.ml`.
+//
+// Deliberate deviations from upstream (for the operands produced by LLVM's
+// decoder and the ISA semantics):
+// - the 32-bit operations (`ADD`, `ADDIU`, `SUBU`, `LUI`, ...) compute on
+//   the low words and sign-extend the result into MIPS64 registers
+//   (upstream computes at the full register width);
+// - `CLO`/`CLZ` read `rs` and write `rd` (LLVM's `[rd, rs]`; upstream swaps
+//   them) and count from the most significant bit (upstream counts from
+//   the least significant one);
+// - `LSA`/`DLSA` shift by the operand (LLVM's operand is already the
+//   encoded amount plus one; upstream adds one again);
+// - `SEB`/`SEH` sign-extend the least significant byte/halfword of `rt`
+//   into `rd` (upstream takes the most significant one, and swaps the
+//   operands);
+// - `ALUIPC` computes at the address width;
+// - `AUI` and `AUIPC` are modeled (not in upstream).
 
 ///|
-/// ADD rd, rs, rt - Add Word, MIPS32.
+/// ADD rd, rs, rt - Add Word, MIPS32 (overflow traps are not modeled).
 fn sem_add(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
   let rd = cpu.sreg(0)
-  let rs = cpu.sreg(1)
-  let rt = cpu.sreg(2)
-  [rd.assign(rs + rt)]
+  let rs = cpu.wreg(1, Signed)
+  let rt = cpu.wreg(2, Signed)
+  [rd.assign(sword(rs + rt))]
 }
 
 ///|
-/// ADDI rt, rs, immediate - Add Immediate Word, MIPS32 (removed in R6).
-fn sem_addi(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
-  let rt = cpu.sreg(0)
-  let rs = cpu.sreg(1)
-  let im = cpu.simm(2)
-  [rt.assign(rs + im)]
-}
-
-///|
-/// ADDIU rt, rs, immediate - Add Immediate Unsigned Word, MIPS32.
-/// Also used for DADDIU (MIPS64).
+/// ADDI/ADDIU rt, rs, immediate - Add Immediate (Unsigned) Word, MIPS32.
 fn sem_addiu(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
+  let rt = cpu.sreg(0)
+  let rs = cpu.wreg(1, Signed)
+  let im = cpu.simm(2)
+  [rt.assign(sword(rs + im))]
+}
+
+///|
+/// DADDI/DADDIU rt, rs, immediate - Doubleword Add Immediate, MIPS64.
+fn sem_daddiu(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
   let rt = cpu.ureg(0)
   let rs = cpu.ureg(1)
   let im = cpu.simm(2)
@@ -29,7 +44,8 @@ fn sem_addiu(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
 }
 
 ///|
-/// ADDIUPC rs, immediate - Add Immediate to PC, MIPS32 Release 6.
+/// ADDIUPC rs, immediate - Add Immediate to PC, MIPS32 Release 6 (LLVM's
+/// operand is the scaled offset).
 fn sem_addiupc(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
   let rs = cpu.ureg(0)
   let im = cpu.simm(1)
@@ -37,9 +53,17 @@ fn sem_addiupc(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
 }
 
 ///|
-/// ADDU rd, rs, rt - Add Unsigned Word, MIPS32. Also used for SUBU-like
-/// three-register unsigned forms (DADDU).
+/// ADDU rd, rs, rt - Add Unsigned Word, MIPS32.
 fn sem_addu(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
+  let rd = cpu.sreg(0)
+  let rs = cpu.wreg(1, Unsigned)
+  let rt = cpu.wreg(2, Unsigned)
+  [rd.assign(sword(rs + rt))]
+}
+
+///|
+/// DADD/DADDU rd, rs, rt - Doubleword Add, MIPS64.
+fn sem_daddu(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
   let rd = cpu.ureg(0)
   let rs = cpu.ureg(1)
   let rt = cpu.ureg(2)
@@ -47,55 +71,36 @@ fn sem_addu(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
 }
 
 ///|
-/// CLO rd, rs - Count Leading Ones in Word, MIPS32.
-fn sem_clo(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
-  let rs = cpu.ureg(0)
-  let rd = cpu.ureg(1)
-  let xv = cpu.uvar(word)
-  let cnt = cpu.uvar(byte)
-  let has_no_zeroes = cpu.uvar(bit)
-  let biti = cpu.uvar(bit)
-  [
-    xv.assign(low(word, rs)),
-    cnt.assign(zero),
-    has_no_zeroes.assign(one),
-    foreach(biti, xv, [
-      if_(has_no_zeroes & biti.eq(one), [cnt.assign(cnt + one)], [
-        has_no_zeroes.assign(zero),
+/// Count the leading bits of the low word of `rs` equal to `value`, from
+/// the most significant one, into `rd` (`CLO`/`CLZ rd, rs`).
+fn count_leading(value : Exp) -> Semantics {
+  cpu => {
+    let rd = cpu.ureg(0)
+    let rs = cpu.wreg(1, Unsigned)
+    let xv = cpu.uvar(word)
+    let cnt = cpu.uvar(byte)
+    let counting = cpu.uvar(bit)
+    let biti = cpu.uvar(bit)
+    [
+      xv.assign(rs),
+      cnt.assign(zero),
+      counting.assign(one),
+      Foreach(true, biti, xv, [
+        if_(counting & biti.eq(value), [cnt.assign(cnt + one)], [
+          counting.assign(zero),
+        ]),
       ]),
-    ]),
-    rd.assign(cnt),
-  ]
-}
-
-///|
-/// CLZ rd, rs - Count Leading Zeroes in Word, MIPS32.
-fn sem_clz(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
-  let rs = cpu.ureg(0)
-  let rd = cpu.ureg(1)
-  let xv = cpu.uvar(word)
-  let cnt = cpu.uvar(byte)
-  let has_no_ones = cpu.uvar(bit)
-  let biti = cpu.uvar(bit)
-  [
-    xv.assign(low(word, rs)),
-    cnt.assign(zero),
-    has_no_ones.assign(one),
-    foreach(biti, xv, [
-      if_(has_no_ones & biti.eq(zero), [cnt.assign(cnt + one)], [
-        has_no_ones.assign(zero),
-      ]),
-    ]),
-    rd.assign(cnt),
-  ]
+      rd.assign(cnt),
+    ]
+  }
 }
 
 ///|
 /// LUi rt, imm - Load Upper Immediate, MIPS32.
 fn sem_lui(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
-  let rt = cpu.ureg(0)
-  let im = cpu.simm(1)
-  [rt.assign(im.lsl(uconst(byte, 16)))]
+  let rt = cpu.sreg(0)
+  let im = cpu.uimm(1)
+  [rt.assign(sword(im.lsl(uconst(byte, 16))))]
 }
 
 ///|
@@ -103,68 +108,83 @@ fn sem_lui(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
 /// with `rs` zero). Not modeled upstream.
 fn sem_aui(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
   let rt = cpu.sreg(0)
-  let rs = cpu.sreg(1)
+  let rs = cpu.wreg(1, Unsigned)
   let im = cpu.uimm(2)
-  let x = cpu.svar(word)
-  [x.assign(im.lsl(uconst(byte, 16))), rt.assign(rs + x)]
+  [rt.assign(sword(rs + im.lsl(uconst(byte, 16))))]
+}
+
+///|
+/// AUIPC rs, imm - Add Upper Immediate to PC, MIPS32 Release 6. Not
+/// modeled upstream.
+fn sem_auipc(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
+  let rs = cpu.ureg(0)
+  let im = cpu.uimm(1)
+  [rs.assign(cpu.cia + im.lsl(uconst(byte, 16)).signed())]
 }
 
 ///|
 /// ALUIPC rs, imm - Aligned Add Upper Immediate to PC, MIPS32 Release 6.
 fn sem_aluipc(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
-  let rs = cpu.sreg(0)
-  let im = cpu.simm(1)
-  let x = cpu.uvar(word)
-  let mask = cpu.uvar(word)
-  [
-    mask.assign(uconst(word, 0xFFFF)),
-    x.assign(cpu.cia + im.lsl(uconst(byte, 16))),
-    rs.assign(lnot(mask) & x),
-  ]
+  let rs = cpu.ureg(0)
+  let im = cpu.uimm(1)
+  let width = cpu.arch.addr_bitwidth()
+  let mask = Exp::of_word(make_word(width, -0x10000L))
+  [rs.assign((cpu.cia + im.lsl(uconst(byte, 16)).signed()) & mask)]
 }
 
 ///|
-/// LSA rd, rs, rt, sa - Load Scaled Address, MIPS32 Release 6 (also DLSA).
+/// LSA rd, rs, rt, sa - Load Scaled Address, MIPS32 Release 6 (LLVM's `sa`
+/// operand is the shift amount).
 fn sem_lsa(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
+  let rd = cpu.sreg(0)
+  let rs = cpu.wreg(1, Unsigned)
+  let rt = cpu.wreg(2, Unsigned)
+  let sa = cpu.uimm(3)
+  [rd.assign(sword(rs.lsl(sa) + rt))]
+}
+
+///|
+/// DLSA rd, rs, rt, sa - Doubleword Load Scaled Address, MIPS64 Release 6.
+fn sem_dlsa(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
   let rd = cpu.ureg(0)
   let rs = cpu.ureg(1)
   let rt = cpu.ureg(2)
   let sa = cpu.uimm(3)
-  [rd.assign(rs.lsl(sa + uconst(byte, 1)) + rt)]
+  [rd.assign(rs.lsl(sa) + rt)]
 }
 
 ///|
-/// SEB rd, rt - Sign-Extend Byte, MIPS32 Release 2.
-///
-/// Mirrors upstream, which (despite the manual) takes the *most*
-/// significant byte of the source operand (`last rt 8`).
-fn sem_seb(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
-  let rt = cpu.ureg(0)
-  let rs = cpu.sreg(1)
-  [rs.assign(last(rt, 8))]
+/// SEB/SEH rd, rt - Sign-Extend Byte/Halfword, MIPS32 Release 2.
+fn sign_extend(width : Int) -> Semantics {
+  cpu => {
+    let rd = cpu.sreg(0)
+    let rt = cpu.ureg(1)
+    [rd.assign(low(width, rt).signed())]
+  }
 }
 
 ///|
-/// SEH rd, rt - Sign-Extend Halfword, MIPS32 Release 2 (upstream uses the
-/// most significant halfword, see `sem_seb`).
-fn sem_seh(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
-  let rt = cpu.ureg(0)
-  let rs = cpu.sreg(1)
-  [rs.assign(last(rt, 16))]
-}
-
-///|
-/// SUB rd, rs, rt - Subtract Word, MIPS32 (also DSUB).
+/// SUB rd, rs, rt - Subtract Word, MIPS32 (overflow traps are not
+/// modeled).
 fn sem_sub(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
   let rd = cpu.sreg(0)
-  let rs = cpu.sreg(1)
-  let rt = cpu.sreg(2)
-  [rd.assign(rs - rt)]
+  let rs = cpu.wreg(1, Signed)
+  let rt = cpu.wreg(2, Signed)
+  [rd.assign(sword(rs - rt))]
 }
 
 ///|
-/// SUBU rd, rs, rt - Subtract Unsigned Word, MIPS32 (also DSUBU).
+/// SUBU rd, rs, rt - Subtract Unsigned Word, MIPS32.
 fn sem_subu(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
+  let rd = cpu.sreg(0)
+  let rs = cpu.wreg(1, Unsigned)
+  let rt = cpu.wreg(2, Unsigned)
+  [rd.assign(sword(rs - rt))]
+}
+
+///|
+/// DSUB/DSUBU rd, rs, rt - Doubleword Subtract, MIPS64.
+fn sem_dsubu(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
   let rd = cpu.ureg(0)
   let rs = cpu.ureg(1)
   let rt = cpu.ureg(2)
@@ -174,23 +194,26 @@ fn sem_subu(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
 ///|
 let arithmetic_semantics : ReadOnlyArray[(String, Semantics)] = [
   ("ADD", sem_add),
-  ("ADDi", sem_addi),
+  ("ADDi", sem_addiu),
   ("ADDiu", sem_addiu),
   ("ADDiupc", sem_addiupc),
   ("ADDu", sem_addu),
-  ("CLO", sem_clo),
-  ("CLZ", sem_clz),
+  ("CLO", count_leading(one)),
+  ("CLZ", count_leading(zero)),
   ("LSA", sem_lsa),
-  ("DLSA", sem_lsa),
+  ("DLSA", sem_dlsa),
   ("LUi", sem_lui),
   ("AUI", sem_aui),
+  ("AUIPC", sem_auipc),
   ("ALUipc", sem_aluipc),
-  ("SEB", sem_seb),
-  ("SEH", sem_seh),
+  ("SEB", sign_extend(byte)),
+  ("SEH", sign_extend(halfword)),
   ("SUB", sem_sub),
   ("SUBu", sem_subu),
-  ("DSUB", sem_sub),
-  ("DSUBu", sem_subu),
-  ("DADDu", sem_addu),
-  ("DADDiu", sem_addiu),
+  ("DSUB", sem_dsubu),
+  ("DSUBu", sem_dsubu),
+  ("DADD", sem_daddu),
+  ("DADDu", sem_daddu),
+  ("DADDi", sem_daddiu),
+  ("DADDiu", sem_daddiu),
 ]

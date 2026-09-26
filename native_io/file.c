@@ -106,3 +106,27 @@ moonbit_bytes_t bap_mbt_write_file(moonbit_bytes_t path, moonbit_bytes_t data) {
   }
   return bap_mbt_file_response(0, NULL, 0);
 }
+
+/* The architecture of the host (the one the program is compiled for):
+   0 - unknown, 1 - x86_64, 2 - i386, 3 - aarch64, 4 - arm,
+   5 - powerpc64, 6 - powerpc, 7 - riscv64. */
+MOONBIT_FFI_EXPORT
+int32_t bap_mbt_host_arch(void) {
+#if defined(__x86_64__) || defined(_M_X64)
+  return 1;
+#elif defined(__i386__) || defined(_M_IX86)
+  return 2;
+#elif defined(__aarch64__) || defined(__arm64__) || defined(_M_ARM64)
+  return 3;
+#elif defined(__arm__) || defined(_M_ARM)
+  return 4;
+#elif defined(__powerpc64__)
+  return 5;
+#elif defined(__powerpc__)
+  return 6;
+#elif defined(__riscv) && __riscv_xlen == 64
+  return 7;
+#else
+  return 0;
+#endif
+}

@@ -1,0 +1,213 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/ogre"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn[T] collect(Query[T]) -> Ogre[Array[T]]
+
+pub fn[T] def(String, Type[T]) -> Field[T]
+
+pub fn[A] eval(Ogre[A], Doc) -> A raise OgreError
+
+pub fn[A] exec(Ogre[A], Doc) -> Doc raise OgreError
+
+pub fn[T] field(Field[T]) -> Join
+
+pub fn[A, K, T] field_of(Attribute[A, K], Field[T]) -> Join
+
+pub fn[T, B] foreach(Query[T], (T) -> B) -> Ogre[Array[B]]
+
+pub fn[A, K] from(Attribute[A, K]) -> Tables[A]
+
+pub fn[A, KA, B, KB] from2(Attribute[A, KA], Attribute[B, KB]) -> Tables[(A, B)]
+
+pub fn[A, KA, B, KB, C, KC] from3(Attribute[A, KA], Attribute[B, KB], Attribute[C, KC]) -> Tables[(A, B, C)]
+
+pub fn[A, K] provide(Attribute[A, K], K) -> Ogre[Unit]
+
+pub fn[A, K] request(Attribute[A, K], that? : (A) -> Bool) -> Ogre[A?]
+
+pub fn[A, K] require(Attribute[A, K], that? : (A) -> Bool) -> Ogre[A]
+
+pub fn[A] run(Ogre[A], Doc) -> (A, Doc) raise OgreError
+
+pub fn[T] scheme(Field[T]) -> Scheme[T]
+
+pub fn[A, B] scheme2(Field[A], Field[B]) -> Scheme[(A, B)]
+
+pub fn[A, B, C] scheme3(Field[A], Field[B], Field[C]) -> Scheme[(A, B, C)]
+
+pub fn[A, B, C, D] scheme4(Field[A], Field[B], Field[C], Field[D]) -> Scheme[(A, B, C, D)]
+
+pub fn[A, B, C, D, E] scheme5(Field[A], Field[B], Field[C], Field[D], Field[E]) -> Scheme[(A, B, C, D, E)]
+
+pub fn[T] select(where_? : Exp, join? : Array[Array[Join]], Tables[T]) -> Query[T]
+
+// Errors
+pub(all) suberror OgreError {
+  OgreError(String)
+} derive(Eq, @debug.Debug)
+pub fn OgreError::equal(Self, Self) -> Bool
+pub fn OgreError::message(Self) -> String
+pub fn OgreError::not_equal(Self, Self) -> Bool
+pub fn OgreError::output(Self, &Logger) -> Unit
+pub fn OgreError::to_repr(Self) -> @debug.Repr
+pub fn OgreError::to_string(Self) -> String
+pub impl Show for OgreError
+
+// Types and methods
+type Attribute[A, K]
+#alias("_[_]")
+pub fn[A, K, T] Attribute::get(Self[A, K], Field[T]) -> Exp
+pub fn[A, K] Attribute::name(Self[A, K]) -> String
+pub fn[A, K] Attribute::new(name~ : String, Scheme[K], (K) -> A) -> Self[A, K]
+pub fn[A, K] Attribute::pack(Self[A, K], K) -> Entry
+pub fn[A, K] Attribute::read(Self[A, K], Entry) -> A?
+pub fn[A, K] Attribute::signature(Self[A, K]) -> Array[Header]
+
+type Context
+pub fn[T] Context::collect(Self, Query[T]) -> Array[T] raise OgreError
+pub fn Context::doc(Self) -> Doc
+pub fn[T, B] Context::foreach(Self, Query[T], (T) -> B) -> Array[B] raise OgreError
+pub fn Context::new(Doc) -> Self
+pub fn[A, K] Context::provide(Self, Attribute[A, K], K) -> Unit raise OgreError
+pub fn[A, K] Context::request(Self, Attribute[A, K], that? : (A) -> Bool) -> A? raise OgreError
+pub fn[A, K] Context::require(Self, Attribute[A, K], that? : (A) -> Bool) -> A raise OgreError
+
+type Doc
+pub fn Doc::attributes(Self) -> Array[String]
+pub fn Doc::clear(Self) -> Self
+pub fn Doc::compare(Self, Self) -> Int
+pub fn Doc::declaration(Self, String) -> Array[Header]?
+pub fn Doc::declarations(Self) -> Int
+pub fn Doc::definitions(Self) -> Int
+pub fn Doc::empty() -> Self
+pub fn Doc::equal(Self, Self) -> Bool
+pub fn Doc::facts(Self, String) -> Array[Entry]
+pub fn Doc::from_string(String) -> Self raise OgreError
+pub fn[A, K] Doc::get(Self, Attribute[A, K]) -> Array[A]
+pub fn Doc::is_empty(Self) -> Bool
+pub fn Doc::merge(Self, Self) -> Self raise OgreError
+pub fn Doc::not_equal(Self, Self) -> Bool
+pub fn Doc::output(Self, &Logger) -> Unit
+pub fn[A, K] Doc::put(Self, Attribute[A, K], K) -> Self raise OgreError
+pub fn Doc::to_string(Self) -> String
+pub fn Doc::to_yaml(Self) -> String
+pub impl Eq for Doc
+pub impl Show for Doc
+
+type Entry derive(Eq, Hash, @debug.Debug)
+pub fn Entry::equal(Self, Self) -> Bool
+pub fn Entry::fields(Self) -> Array[(String, String)]
+pub fn Entry::get(Self, String) -> String?
+pub fn Entry::hash(Self) -> Int
+pub fn Entry::hash_combine(Self, Hasher) -> Unit
+pub fn Entry::length(Self) -> Int
+pub fn Entry::not_equal(Self, Self) -> Bool
+pub fn Entry::to_repr(Self) -> @debug.Repr
+
+type Exp
+pub fn Exp::add(Self, Self) -> Self
+pub fn Exp::bool(Bool) -> Self
+pub fn Exp::conj(Self, Self) -> Self
+pub fn Exp::disj(Self, Self) -> Self
+pub fn Exp::eq(Self, Self) -> Self
+pub fn Exp::float(Double) -> Self
+pub fn Exp::ge(Self, Self) -> Self
+pub fn Exp::gt(Self, Self) -> Self
+pub fn Exp::implies(Self, Self) -> Self
+pub fn Exp::int(Int64) -> Self
+pub fn Exp::le(Self, Self) -> Self
+pub fn Exp::lt(Self, Self) -> Self
+pub fn Exp::ne(Self, Self) -> Self
+pub fn Exp::negate(Self) -> Self
+pub fn Exp::str(String) -> Self
+pub fn Exp::sub(Self, Self) -> Self
+pub fn Exp::to_repr(Self) -> @debug.Repr
+pub impl Add for Exp
+pub impl Sub for Exp
+pub impl @debug.Debug for Exp
+
+type Field[T]
+pub fn[T] Field::at(Self[T], Int) -> Exp
+pub fn[T] Field::header(Self[T]) -> Header
+pub fn[T] Field::name(Self[T]) -> String
+pub fn[T] Field::typ(Self[T]) -> Type[T]
+
+pub(all) struct Header {
+  name : String
+  typ : Typ
+} derive(Eq, @debug.Debug)
+pub fn Header::equal(Self, Self) -> Bool
+pub fn Header::new(String, Typ) -> Self
+pub fn Header::not_equal(Self, Self) -> Bool
+pub fn Header::to_repr(Self) -> @debug.Repr
+
+type Join derive(Eq, @debug.Debug)
+pub fn Join::equal(Self, Self) -> Bool
+pub fn Join::not_equal(Self, Self) -> Bool
+pub fn Join::to_repr(Self) -> @debug.Repr
+
+type Ogre[A]
+pub fn[A] Ogre::all(Array[Self[A]]) -> Self[Array[A]]
+pub fn Ogre::all_unit(Array[Self[Unit]]) -> Self[Unit]
+pub fn[A, B] Ogre::bind(Self[A], (A) -> Self[B]) -> Self[B]
+pub fn[A, B] Ogre::both(Self[A], Self[B]) -> Self[(A, B)]
+pub fn[A] Ogre::fail(OgreError) -> Self[A]
+pub fn[A] Ogre::failf(String) -> Self[A]
+pub fn[A, B] Ogre::fold(Array[A], init~ : B, (B, A) -> Self[B]) -> Self[B]
+pub fn[A] Ogre::ignore(Self[A]) -> Self[Unit]
+pub fn[A] Ogre::iter(Array[A], (A) -> Self[Unit]) -> Self[Unit]
+pub fn[A] Ogre::join(Self[Self[A]]) -> Self[A]
+pub fn[A] Ogre::lift(A) -> Self[A]
+pub fn[A] Ogre::make((Context) -> A raise OgreError) -> Self[A]
+pub fn[A, B] Ogre::map(Self[A], (A) -> B) -> Self[B]
+pub fn[A, B] Ogre::map_array(Array[A], (A) -> Self[B]) -> Self[Array[B]]
+pub fn[A] Ogre::perform(Self[A], Context) -> A raise OgreError
+pub fn[A] Ogre::pure(A) -> Self[A]
+pub fn[A, B] Ogre::then(Self[A], Self[B]) -> Self[B]
+
+type Query[T]
+pub fn[T, B] Query::eval(Self[T], Doc, (T) -> B) -> Array[B] raise OgreError
+
+type Scheme[T]
+pub fn[A, B] Scheme::add(Self[A], Field[B]) -> Self[(A, B)]
+pub fn[A, B] Scheme::iso(Self[A], (A) -> B, (B) -> A) -> Self[B]
+pub fn[T] Scheme::signature(Self[T]) -> Array[Header]
+
+type Tables[T]
+pub fn[T, B, K] Tables::add(Self[T], Attribute[B, K]) -> Self[(T, B)]
+pub fn[T] Tables::names(Self[T]) -> Array[String]
+
+pub(all) enum Typ {
+  Int
+  Str
+  Bool
+  Float
+} derive(Eq, @debug.Debug)
+pub fn Typ::all() -> Array[Self]
+pub fn Typ::check(Self, String) -> Bool
+pub fn Typ::equal(Self, Self) -> Bool
+pub fn Typ::normalize(Self, String) -> String?
+pub fn Typ::not_equal(Self, Self) -> Bool
+pub fn Typ::of_string(String) -> Self?
+pub fn Typ::output(Self, &Logger) -> Unit
+pub fn Typ::to_repr(Self) -> @debug.Repr
+pub fn Typ::to_string(Self) -> String
+pub impl Show for Typ
+
+type Type[T]
+pub fn Type::bool() -> Self[Bool]
+pub fn Type::float() -> Self[Double]
+pub fn Type::int() -> Self[Int64]
+pub fn[T] Type::pack(Self[T], T) -> String
+pub fn[T] Type::parse(Self[T], String) -> T?
+pub fn Type::str() -> Self[String]
+pub fn[T] Type::typ(Self[T]) -> Typ
+
+// Type aliases
+
+// Traits

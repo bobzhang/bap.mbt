@@ -36,8 +36,6 @@ pub fn embedded_features(Array[String]) -> Array[String]
 
 pub fn embedded_lisp_files() -> Array[(String, String)]
 
-pub fn encoding_package(@core_theory.Language, @core_theory.Target) -> String
-
 pub fn eval(@primus.Machine, Ast, (@primus.Machine, @primus.Value) -> Unit raise) -> Unit raise
 
 pub fn eval_fun(@primus.Machine, String, Array[@primus.Value], then? : (@primus.Machine, @primus.Value) -> Unit raise) -> Unit raise

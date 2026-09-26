@@ -30,6 +30,7 @@ LAYOUT = [
     ("constant-tracker", "plugins/constant_tracker/lisp"),
     ("primus-test", "plugins/primus_test/lisp"),
     ("approximation", "plugins/primus_approximation/lisp"),
+    ("symbolic-executor", "plugins/primus_symbolic_executor/lisp"),
 ]
 
 

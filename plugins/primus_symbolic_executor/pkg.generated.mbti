@@ -1,0 +1,90 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/primus_symbolic_executor"
+
+import {
+  "bobzhang/bap/primus",
+  "bobzhang/bap/types",
+  "bobzhang/bap/z3",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub let assert_failure : @primus.Observation[AssertFailure]
+
+pub let components : Array[String]
+
+pub fn constraints(@primus.Machine, Scope) -> Array[@z3.Expr]
+
+pub fn declare_plugin() -> Unit raise
+
+pub let executor_debug : @primus.Observation[String]
+
+pub fn inputs(@primus.Machine) -> Array[Input]
+
+pub fn install_computer(@primus.Machine) -> Unit raise
+
+pub fn install_lisp_primitives(@primus.Machine) -> Unit
+
+pub fn install_path_constraints(@primus.Machine) -> Unit
+
+pub fn install_path_explorer(@primus.Machine) -> Unit
+
+pub fn is_solver_available() -> Bool
+
+pub let name : String
+
+pub fn pending_tasks(@primus.Machine) -> Int
+
+pub fn primitive_names() -> Array[String]
+
+pub fn register() -> Bool
+
+pub fn set_cutoff(Int) -> Unit
+
+pub fn set_input(@primus.Machine, Input, @primus.Value) -> Unit
+
+pub fn set_timeout(Int) -> Unit
+
+pub fn value_formula(@primus.Machine, @primus.Value) -> @z3.Expr?
+
+// Errors
+
+// Types and methods
+pub struct AssertFailure {
+  name : String
+  model : @z3.Model
+  inputs : Array[Input]
+}
+pub fn AssertFailure::values(Self) -> Array[(String, String)]
+
+pub(all) enum Input {
+  Var(@types.Var)
+  Ptr(bank~ : @primus.Descriptor, addr~ : @types.Word)
+}
+pub fn Input::compare(Self, Self) -> Int
+pub fn Input::equal(Self, Self) -> Bool
+pub fn Input::not_equal(Self, Self) -> Bool
+pub fn Input::op_ge(Self, Self) -> Bool
+pub fn Input::op_gt(Self, Self) -> Bool
+pub fn Input::op_le(Self, Self) -> Bool
+pub fn Input::op_lt(Self, Self) -> Bool
+pub fn Input::output(Self, &Logger) -> Unit
+pub fn Input::set(Self, @primus.Machine, @primus.Value) -> Unit raise
+pub fn Input::size(Self) -> Int
+pub fn Input::to_string(Self) -> String
+pub fn Input::to_symbol(Self) -> String
+pub impl Compare for Input
+pub impl Eq for Input
+pub impl Show for Input
+
+pub(all) enum Scope {
+  User
+  Path
+} derive(Eq, @debug.Debug)
+pub fn Scope::equal(Self, Self) -> Bool
+pub fn Scope::not_equal(Self, Self) -> Bool
+pub fn Scope::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

@@ -49,6 +49,7 @@ import {
   "bobzhang/bap/plugins/primus_random",
   "bobzhang/bap/plugins/primus_region",
   "bobzhang/bap/plugins/primus_round_robin",
+  "bobzhang/bap/plugins/primus_symbolic_executor",
   "bobzhang/bap/plugins/primus_systems",
   "bobzhang/bap/plugins/primus_taint",
   "bobzhang/bap/plugins/primus_wandering",

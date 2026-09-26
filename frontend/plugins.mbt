@@ -128,6 +128,10 @@ pub fn plugin_table() -> Array[StaticPlugin] {
       name: "primus-round-robin",
       load: _ => @primus_round_robin.declare_plugin(),
     },
+    {
+      name: "primus-symbolic-executor",
+      load: _ => @primus_symbolic_executor.declare_plugin(),
+    },
     { name: "primus-systems", load: _ => @primus_systems.declare_plugin(), },
     { name: "primus-wandering", load: _ => @primus_wandering.declare_plugin(), },
     { name: "primus-x86", load: _ => @primus_x86.declare_plugin(), },

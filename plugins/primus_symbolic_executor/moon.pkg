@@ -1,0 +1,19 @@
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/main_event",
+  "bobzhang/bap/primus",
+  "bobzhang/bap/primus_lisp",
+  "bobzhang/bap/primus_track_visited",
+  "bobzhang/bap/types",
+  "bobzhang/bap/z3",
+  "moonbitlang/core/immut/hashmap" @immut_hashmap,
+  "moonbitlang/core/immut/sorted_map",
+  "moonbitlang/core/immut/sorted_set",
+}
+
+import {
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/plugins/primus_dictionary",
+  "bobzhang/bap/plugins/primus_greedy",
+  "bobzhang/bap/project",
+} for "test"

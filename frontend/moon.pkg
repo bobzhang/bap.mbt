@@ -62,6 +62,7 @@ import {
   "bobzhang/bap/plugins/recipe_command",
   "bobzhang/bap/plugins/relocatable",
   "bobzhang/bap/plugins/report",
+  "bobzhang/bap/plugins/resolve_indirects",
   "bobzhang/bap/plugins/run",
   "bobzhang/bap/plugins/specification",
   "bobzhang/bap/plugins/strings",

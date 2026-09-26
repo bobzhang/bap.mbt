@@ -109,6 +109,7 @@ test "bap without arguments prints the usage" {
       #|  recipe-command           provides the recipe command
       #|  relocatable              extracts symbolic information from the program relocations
       #|  report                   reports program status using progress bars
+      #|  resolve-indirects        substitutes loads from constant addresses with the memory contents
       #|  riscv                    provides RISCV semantics
       #|  run                      emulates the program using Primus
       #|  specification            provides the specification command
@@ -330,6 +331,7 @@ test "bap list and config" {
       #|  phoenix
       #|  propagate-taint
       #|  relocatable
+      #|  resolve-indirects
       #|  run
       #|  strings-collect
       #|  strings

@@ -1,0 +1,29 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/resolve_indirects"
+
+import {
+  "bobzhang/bap/memory",
+  "bobzhang/bap/project",
+  "bobzhang/bap/types",
+}
+
+// Values
+pub fn declare_plugin() -> Unit raise
+
+pub let name : String
+
+pub fn pass() -> @project.ProjectPass
+
+pub fn register() -> Result[Bool, String]
+
+pub fn resolve_exp(@memory.MemMap[String], @types.Exp) -> @types.Exp
+
+pub fn run(@project.Project) -> @project.Project
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

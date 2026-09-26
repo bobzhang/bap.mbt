@@ -123,3 +123,13 @@ test "passes that upstream makes depend on api" {
     ),
   )
 }
+
+///|
+test "bap --pass=resolve-indirects" {
+  let out = bap_with(
+    ["bin/true", "--pass=resolve-indirects", "-dbir"],
+    fixture_fs(),
+  )
+  inspect(out.contains("sub main("), content="true")
+  inspect(out.contains("[exit"), content="false")
+}

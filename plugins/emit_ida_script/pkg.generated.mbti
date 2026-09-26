@@ -1,0 +1,39 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/emit_ida_script"
+
+import {
+  "bobzhang/bap/memory",
+  "bobzhang/bap/project",
+  "bobzhang/bap/types",
+}
+
+// Values
+pub fn add_substitute(StringBuilder, (String) -> String, String) -> Unit
+
+pub fn declare_plugin() -> Unit raise
+
+pub fn emit(@project.Project, attrs~ : Array[String], file? : String, out? : (String) -> Unit) -> Result[Unit, String]
+
+pub let epilogue : String
+
+pub fn extract_script(@memory.MemMap[String], @types.Term[@types.Program], Array[String]) -> String
+
+pub fn idacode_of_color(@types.IrColor) -> Int
+
+pub let pass_name : String
+
+pub fn project_script(@project.Project, Array[String]) -> String
+
+pub let prologue : String
+
+pub fn python_of_attr(String, String) -> String
+
+pub fn register(file? : String, attrs? : Array[String], out? : (String) -> Unit) -> Result[Unit, String]
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

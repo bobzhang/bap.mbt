@@ -292,10 +292,26 @@ test "reconstruction uses registered lifters and delay slots on MIPS" {
           #|A0:imm32 := (A0:imm32 + 1:32u)
         ),
       )
+      // the branch target lies outside of the reconstructed code, so the
+      // jump may leave the subroutine and is relinked as a call (upstream
+      // `alternate_nonlocal`); it keeps the attributes of the branch
+      let jmps = blk.jmps()
       inspect(
-        blk.jmps().map(jmp => @types.Jmp::to_string(jmp)).join("\n"),
+        jmps.map(jmp => @types.Jmp::to_string(jmp)).join("\n"),
         content=(
-          #|when %delay_slot_1004_0:imm1 goto @0x00001024
+          #|when %delay_slot_1004_0:imm1 call @0x00001024 with noreturn
+        ),
+      )
+      inspect(
+        jmps[0].get_attr("address").unwrap_or("-"),
+        content=(
+          #|0x1004:32u
+        ),
+      )
+      inspect(
+        jmps[0].get_attr("insn").unwrap_or("-"),
+        content=(
+          #|BEQ(A0,V0,0x20)
         ),
       )
       assert_eq(reconstructed.lift_errors(), [])

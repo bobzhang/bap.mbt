@@ -673,9 +673,13 @@ test "project reconstructor materializes Basic BIL fallback jumps" {
   )
   match goto_project.reconstruct() {
     Ok(reconstructed) => {
+      // `jmp .` loops to the entry of its subroutine, which upstream
+      // relinks into a (self-recursive) tail call (`link_call`), so that
+      // the entry block has no local predecessors; the 64-bit jump target
+      // resolves to the 32-bit block label (labels are width-independent)
       let block = reconstructed.program().subs()[0].blks()[0]
       assert_reconstructor_text(reconstructor_jmp_text(block.jmps()), [
-        "goto @0x0000000000007200",
+        "call @sub_0x7200 with noreturn",
       ])
     }
     Err(reason) => fail(reason)
@@ -692,8 +696,10 @@ test "project reconstructor materializes Basic BIL fallback jumps" {
   match near_goto_project.reconstruct() {
     Ok(reconstructed) => {
       let block = reconstructed.program().subs()[0].blks()[0]
+      // the target is outside of the reconstructed code: the jump may
+      // leave the subroutine and becomes a call (`alternate_nonlocal`)
       assert_reconstructor_text(reconstructor_jmp_text(block.jmps()), [
-        "goto @0x0000000000007226",
+        "call @0x00007226 with noreturn",
       ])
     }
     Err(reason) => fail(reason)
@@ -764,8 +770,10 @@ test "project reconstructor materializes Basic BIL fallback jumps" {
   match indirect_goto_project.reconstruct() {
     Ok(reconstructed) => {
       let block = reconstructed.program().subs()[0].blks()[0]
+      // unresolved jumps may leave the subroutine and become calls
+      // (`alternate_nonlocal`)
       assert_reconstructor_text(reconstructor_jmp_text(block.jmps()), [
-        "goto *load(mem:mem64x8, (RAX:imm64 + 0x10:64u)):imm64",
+        "call *load(mem:mem64x8, (RAX:imm64 + 0x10:64u)):imm64 with noreturn",
       ])
     }
     Err(reason) => fail(reason)
@@ -782,8 +790,9 @@ test "project reconstructor materializes Basic BIL fallback jumps" {
   match conditional_project.reconstruct() {
     Ok(reconstructed) => {
       let block = reconstructed.program().subs()[0].blks()[0]
+      // the branch leaves the reconstructed code (`alternate_nonlocal`)
       assert_reconstructor_text(reconstructor_jmp_text(block.jmps()), [
-        "when ARM.NE:imm1 goto @0x00008428",
+        "when ARM.NE:imm1 call @0x00008428 with noreturn",
       ])
     }
     Err(reason) => fail(reason)
@@ -1061,11 +1070,19 @@ test "project default reconstructor groups unrooted cyclic components" {
       assert_true(subs[0].sub_name() == "sub_0x5300")
       assert_true(subs[0].blks().length() == 2)
       assert_true(subs[0].sub_has_edge(subs[0].blks()[0], subs[0].blks()[1]))
-      assert_true(subs[0].sub_has_edge(subs[0].blks()[1], subs[0].blks()[0]))
+      // the back edges to the entries are relinked into self-recursive tail
+      // calls (upstream `link_call`)
+      assert_reconstructor_text(
+        reconstructor_jmp_text(subs[0].blks()[1].jmps()),
+        ["call @sub_0x5300 with noreturn"],
+      )
       assert_true(subs[1].sub_name() == "sub_0x5400")
       assert_true(subs[1].blks().length() == 2)
       assert_true(subs[1].sub_has_edge(subs[1].blks()[0], subs[1].blks()[1]))
-      assert_true(subs[1].sub_has_edge(subs[1].blks()[1], subs[1].blks()[0]))
+      assert_reconstructor_text(
+        reconstructor_jmp_text(subs[1].blks()[1].jmps()),
+        ["call @sub_0x5400 with noreturn"],
+      )
     }
     Err(reason) => fail(reason)
   }

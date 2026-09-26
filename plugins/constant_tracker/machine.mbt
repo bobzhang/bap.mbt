@@ -203,10 +203,20 @@ fn is_registered(name : String) -> Bool {
 
 ///|
 /// Registers the `constant-tracker` component in the Primus component
-/// registry (idempotent). The `constant-tracker-primitives` component of
-/// upstream only defines Lisp primitives; here they are bound by the Lisp
-/// runtime through `install_primitives`.
+/// registry (idempotent): `constant-tracker-primitives` defines the Lisp
+/// primitives, `constant-tracker` tracks the constants.
 pub fn register_components() -> Unit {
+  let prims = components()[0]
+  if !is_registered(prims.name) {
+    @primus.Components::register_generic(
+      prims.name,
+      install_lisp_primitives,
+      pkg=prims.pkg,
+      desc=prims.desc,
+    ) catch {
+      _ => ()
+    }
+  }
   let tracker = components()[1]
   if !is_registered(tracker.name) {
     @primus.Components::register_generic(

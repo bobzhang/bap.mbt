@@ -6,7 +6,7 @@ fn lifter_for(
   dir : String,
 ) -> ((String, Array[@primus_lisp.Operand]) -> String raise) raise {
   let lifter = @primus_lisp.load_semantics(target, [dir])
-  let pkg = @primus_lisp.encoding_package(@mc.default_encoding(target), target)
+  let pkg = @mc.default_encoding(target).to_string()
   (name, ops) => {
     show_bil(
       lifter.lift(

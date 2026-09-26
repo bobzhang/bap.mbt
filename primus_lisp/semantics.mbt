@@ -367,11 +367,16 @@ fn find_target_var(t : @core_theory.Target, name : String) -> @types.Var? {
 pub fn load_semantics(
   target : @core_theory.Target,
   dirs : Array[String],
+  paths? : Array[String] = [],
   strict? : Bool = true,
 ) -> Lifter raise Error {
+  check_folders(paths)
   let sdirs = ["semantics/primus"] + dirs
-  let features = ["core"] + embedded_features(sdirs)
-  let loader = Loader::embedded(sdirs + ["lisp"])
+  let features = ["core"] + folder_features(paths) + embedded_features(sdirs)
+  let loader = Loader::chain([
+    Loader::paths(paths),
+    Loader::embedded(sdirs + ["lisp"]),
+  ])
   let prog = load_program(loader, features)
   Lifter::create(prog, target, strict~)
 }
@@ -461,31 +466,6 @@ pub fn Lifter::apply(
 }
 
 ///|
-/// The Lisp package of the instructions of the encoding (e.g.,
-/// `llvm-riscv64`). An unknown encoding is derived from the target.
-pub fn encoding_package(
-  encoding : @core_theory.Language,
-  target : @core_theory.Target,
-) -> String {
-  let name = encoding.to_string()
-  let name = match name.rev_find(":") {
-    Some(i) => name.unsafe_substring(start=i + 1, end=name.length())
-    None => name
-  }
-  if name != "unknown" && name != "" {
-    name
-  } else if target.belongs(@core_theory.Target::riscv()) {
-    if target.bits() == 32 {
-      "llvm-riscv32"
-    } else {
-      "llvm-riscv64"
-    }
-  } else {
-    @mc.default_encoding(target).to_string()
-  }
-}
-
-///|
 /// The `mc` lifter provider (upstream `Semantics.enable_lifter`): the name
 /// of an instruction is looked up in the package named after its encoding
 /// (e.g., `llvm-riscv64:ADDI`), register operands are passed as their
@@ -500,7 +480,7 @@ pub fn Lifter::provider(
       ctx.target().belongs(self.target) || self.target.belongs(ctx.target())
     },
     lift=(ctx, insn) => {
-      let pkg = encoding_package(insn.encoding(), ctx.target())
+      let pkg = insn.encoding().to_string()
       let lname = @knowledge.Name::create(insn.name(), pkg~)
       let ops = insn
         .ops()

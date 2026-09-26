@@ -55,8 +55,6 @@ priv struct LState {
   ret : @primus.Value?
   /// the error message that is passed through handler frames
   failure : String?
-  /// one-shot signals that were already delivered in this machine
-  fired : @sorted_set.SortedSet[String]
 }
 
 ///|
@@ -92,7 +90,6 @@ let lisp_state : @primus.State[LState] = {
       cur: 0,
       ret: None,
       failure: None,
-      fired: @sorted_set.SortedSet::new(),
     },
   )
 }

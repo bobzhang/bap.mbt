@@ -9,11 +9,6 @@ struct DwarfFunction {
 pub type DwarfFn = DwarfFunction
 
 ///|
-struct DwarfFbi {
-  functions_value : Array[(String, DwarfFunction)]
-}
-
-///|
 priv enum DwarfRangeListRef {
   DwarfRangeOffset(Int)
   DwarfRnglistsIndex(Int)
@@ -66,6 +61,9 @@ priv struct DwarfParsedUnit {
   function_candidates : Array[DwarfFunctionCandidate]
   die_names : Array[DwarfDieName]
   next : DwarfInput
+  /// A DIE-level failure that stopped the unit early; the candidates and
+  /// names read before it are kept (upstream `read_function` errors).
+  error : String?
 }
 
 ///|
@@ -170,24 +168,6 @@ pub fn DwarfFunction::module_name() -> String? {
 ///|
 pub fn DwarfFunction::version() -> String {
   "1.0.0"
-}
-
-///|
-pub fn DwarfFbi::create(data : DwarfData) -> Result[DwarfFbi, String] {
-  match data.functions() {
-    Ok(functions) =>
-      Ok({
-        functions_value: functions.map(function_item => {
-          (function_item.name(), function_item)
-        }),
-      })
-    Err(reason) => Err(reason)
-  }
-}
-
-///|
-pub fn DwarfFbi::functions(self : DwarfFbi) -> Array[(String, DwarfFunction)] {
-  self.functions_value.copy()
 }
 
 ///|
@@ -1615,7 +1595,12 @@ fn dwarf_parse_unit(
             Ok(DwarfUnsupportedUnit) =>
               match dwarf_skip_to_unit_end(after_size, cu_end) {
                 Ok(next) =>
-                  Ok({ function_candidates: [], die_names: [], next, })
+                  Ok({
+                    function_candidates: [],
+                    die_names: [],
+                    next,
+                    error: None,
+                  })
                 Err(reason) => Err(reason)
               }
             Ok(DwarfSupportedUnit(abbrev_offset, addr_size, after_header)) => {
@@ -1635,6 +1620,7 @@ fn dwarf_parse_unit(
               let mut ranges_offset_base = 0
               let mut rnglists_base : Int? = None
               let scopes : Array[DwarfScope] = [{ range_base: 0UL, }]
+              let mut stop : String? = None
               while cursor.position() < cu_end {
                 let die_offset = cursor.position() - info.position()
                 match cursor.read_code() {
@@ -1719,23 +1705,38 @@ fn dwarf_parse_unit(
                             }
                             cursor = next
                           }
-                          Err(reason) => return Err(reason)
+                          Err(reason) => {
+                            stop = Some(reason)
+                            break
+                          }
                         }
-                      None =>
-                        return Err("unknown DWARF abbreviation code: \{code}")
+                      None => {
+                        stop = Some("unknown DWARF abbreviation code: \{code}")
+                        break
+                      }
                     }
-                  Err(reason) => return Err(reason)
+                  Err(reason) => {
+                    stop = Some(reason)
+                    break
+                  }
                 }
               }
-              if cursor.position() > cu_end {
-                Err("DWARF compilation unit over-read")
-              } else {
-                Ok({
-                  function_candidates,
-                  die_names,
-                  next: cursor.with_position(cu_end),
-                })
+              let error = match stop {
+                Some(_) => stop
+                None if cursor.position() > cu_end =>
+                  Some("DWARF compilation unit over-read")
+                None => None
               }
+              Ok({
+                function_candidates,
+                die_names,
+                next: if error is Some(_) {
+                  cursor
+                } else {
+                  cursor.with_position(cu_end)
+                },
+                error,
+              })
             }
             Err(reason) => Err(reason)
           }
@@ -1771,76 +1772,4 @@ fn dwarf_resolve_function_candidates(
     }
   }
   functions
-}
-
-///|
-pub fn DwarfData::functions(
-  self : DwarfData,
-) -> Result[Array[DwarfFunction], String] {
-  let info_section = match self.section(DwarfInfo) {
-    Ok(section) => section
-    Err(reason) => return Err(reason)
-  }
-  let abbrev_section = match self.section(DwarfAbbrev) {
-    Ok(section) => section
-    Err(reason) => return Err(reason)
-  }
-  let str_section = match self.section(DwarfStr) {
-    Ok(section) => Some(section)
-    Err(_) => None
-  }
-  let str_offsets_section = match self.section(DwarfStrOffsets) {
-    Ok(section) => Some(section)
-    Err(_) => None
-  }
-  let line_str_section = match self.section(DwarfLineStr) {
-    Ok(section) => Some(section)
-    Err(_) => None
-  }
-  let addr_section = match self.section(DwarfAddr) {
-    Ok(section) => Some(section)
-    Err(_) => None
-  }
-  let ranges_section = match self.section(DwarfRanges) {
-    Ok(section) => Some(section)
-    Err(_) => None
-  }
-  let rnglists_section = match self.section(DwarfRnglists) {
-    Ok(section) => Some(section)
-    Err(_) => None
-  }
-  let function_candidates : Array[DwarfFunctionCandidate] = []
-  let die_names : Array[DwarfDieName] = []
-  let mut cursor = info_section.input()
-  while cursor.remaining() > 0 {
-    if dwarf_remaining_is_zero_padding(cursor) {
-      return Ok(
-        dwarf_resolve_function_candidates(function_candidates, die_names),
-      )
-    }
-    match
-      dwarf_parse_unit(
-        cursor,
-        abbrev_section,
-        str_section,
-        line_str_section,
-        str_offsets_section,
-        addr_section,
-        ranges_section,
-        rnglists_section,
-        self.endian(),
-      ) {
-      Ok(unit) => {
-        for function_item in unit.function_candidates {
-          function_candidates.push(function_item)
-        }
-        for die_name in unit.die_names {
-          die_names.push(die_name)
-        }
-        cursor = unit.next
-      }
-      Err(reason) => return Err(reason)
-    }
-  }
-  Ok(dwarf_resolve_function_candidates(function_candidates, die_names))
 }

@@ -50,6 +50,10 @@ test "default encodings" {
   assert_eq(enc(@core_theory.Target::systemz()), "llvm-systemz")
   assert_eq(enc(@core_theory.Target::x86_64()), "llvm-x86_64")
   assert_eq(enc(@core_theory.Target::i386()), "llvm-x86")
+  assert_eq(enc(@core_theory.Target::riscv64()), "llvm-riscv64")
+  assert_eq(enc(@core_theory.Target::riscv32()), "llvm-riscv32")
+  assert_eq(enc(@core_theory.Target::powerpc64()), "llvm-powerpc64")
+  assert_eq(enc(@core_theory.Target::aarch64_be()), "llvm-aarch64")
   assert_true(@mc.default_encoding(@core_theory.Target::unknown()).is_unknown())
   let ctx = @mc.Context::create(
     @core_theory.Target::arm(),

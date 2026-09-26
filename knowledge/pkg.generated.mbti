@@ -8,8 +8,37 @@ import {
 }
 
 // Values
+pub const KEYWORD_PACKAGE : String = "keyword"
+
+pub const USER_PACKAGE : String = "user"
+
+pub fn[R] eval((State) -> R raise, State) -> Result[(R, State), Error]
+
+pub fn guard_(Bool) -> Unit raise Conflict
+
+pub fn on(Bool, () -> Unit raise) -> Unit raise
+
+pub fn proceed(unless~ : Bool) -> Unit raise Conflict
+
+pub fn[T] reject() -> T raise Conflict
+
+pub fn[K, S] run(Class[K, S], (State) -> Object[K] raise, State) -> Result[(Value[K, S], State), Error]
+
+pub fn unless(Bool, () -> Unit raise) -> Unit raise
 
 // Errors
+pub(all) suberror Conflict {
+  Empty(Name)
+  Reject
+  NonMonotonicUpdate(slot~ : Name, repr~ : String, error~ : String)
+  NotAPackage(String)
+  NotASymbol(Name)
+  ImportConflict(Name, Name)
+  JoinConflict(String)
+  Failure(String)
+} derive(@debug.Debug)
+pub fn Conflict::to_repr(Self) -> @debug.Repr
+pub fn Conflict::to_string(Error) -> String
 
 // Types and methods
 type Agent derive(Eq, @debug.Debug)
@@ -44,13 +73,18 @@ pub fn AgentReliability::trustworthy() -> Self
 pub fn AgentReliability::unreliable() -> Self
 
 type Class[K, S]
+pub fn[A, S, B, T] Class::assert_equal(Self[A, S], Self[B, T]) -> ClassEq[A, B]
 pub fn[K, S] Class::create(name~ : Name, sort~ : S, desc? : String, public? : Bool) -> Self[K, S]
 pub fn[K, S] Class::desc(Self[K, S]) -> String?
+pub fn[A, S, B, T] Class::equal(Self[A, S], Self[B, T]) -> ClassEq[A, B]?
 pub fn[K, S] Class::name(Self[K, S]) -> Name
 pub fn[K, S, P] Class::property(Self[K, S], name~ : Name, domain~ : Domain[P], desc? : String, persistent? : Persistent[P], public? : Bool) -> Slot[K, P]
-pub fn[K, S, T] Class::refine(Self[K, S], name~ : Name, sort~ : T, desc? : String) -> Self[K, T]
+pub fn[K, S, T] Class::refine(Self[K, S], name? : Name, sort~ : T, desc? : String) -> Self[K, T]
 pub fn[K, S, T] Class::same(Self[K, S], Self[K, T]) -> Bool
 pub fn[K, S] Class::sort(Self[K, S]) -> S
+
+type ClassEq[A, B]
+pub fn[A, B] ClassEq::invert(Self[A, B]) -> Self[B, A]
 
 type Documentation
 pub fn Documentation::agents() -> Array[Agent]
@@ -87,11 +121,21 @@ pub fn Domain::string(Name) -> Self[String]
 pub fn[T] Domain::total(Name, (T) -> String, empty~ : T, compare~ : (T, T) -> Int, join? : (T, T) -> Result[T, String]) -> Self[T]
 pub fn Domain::tribool(name? : Name) -> Self[Bool?]
 
+type Enum
+pub fn Enum::declare_element(Self, String, pkg? : String) -> Name raise Conflict
+pub fn Enum::domain(Self) -> Domain[Name]
+pub fn Enum::is_unknown(Self, Name) -> Bool
+pub fn Enum::members(Self) -> Array[Name]
+pub fn Enum::new() -> Self
+pub fn Enum::persistent(Self) -> Persistent[Name]
+pub fn Enum::read(Self, String, pkg? : String) -> Name raise Conflict
+pub fn Enum::unknown(Self) -> Name
+
 type FactTable[K, P]
 pub fn[K, P] FactTable::collect(Self[K, P], Object[K]) -> P?
 pub fn[K, P] FactTable::collect_promised(Self[K, P], Object[K]) -> Result[P?, String]
 pub fn[K, P] FactTable::has(Self[K, P], Object[K]) -> Bool
-pub fn[K, P] FactTable::new(Slot[K, P]) -> Self[K, P]
+pub fn[K, P] FactTable::new(Slot[K, P], state? : State) -> Self[K, P]
 pub fn[K, P] FactTable::observe(Self[K, P], (Object[K], P) -> Result[Unit, String]) -> Unit
 pub fn[K, P] FactTable::observer_count(Self[K, P]) -> Int
 pub fn[K, P, R] FactTable::observing(Self[K, P], (Object[K], P) -> Result[Unit, String], () -> R) -> R
@@ -105,7 +149,18 @@ pub fn[K, P] FactTable::require(Self[K, P], Object[K]) -> Result[P, String]
 pub fn[K, P] FactTable::require_cached(Self[K, P], Object[K]) -> Result[P, String]
 pub fn[K, P] FactTable::resolve(Self[K, Opinions[P]], Object[K]) -> Result[P, String]
 pub fn[K, P] FactTable::slot(Self[K, P]) -> Slot[K, P]
+pub fn[K, P] FactTable::state(Self[K, P]) -> State
 pub fn[K, P] FactTable::suggest(Self[K, Opinions[P]], Agent, Object[K], P) -> Result[Opinions[P], String]
+
+pub(all) enum MergeStrategy {
+  DropOld
+  DropNew
+  DropRight
+  DropLeft
+} derive(Eq, @debug.Debug)
+pub fn MergeStrategy::equal(Self, Self) -> Bool
+pub fn MergeStrategy::not_equal(Self, Self) -> Bool
+pub fn MergeStrategy::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Name {
   pkg : String
@@ -127,14 +182,26 @@ pub fn Name::to_string(Self) -> String
 pub fn Name::unqualified(Self) -> String
 
 type Object[K]
+pub fn[A, B] Object::cast(ClassEq[A, B], Self[A]) -> Self[B]
 pub fn[K] Object::class_name(Self[K]) -> Name
 pub fn[K] Object::compare(Self[K], Self[K]) -> Int
 pub fn[K] Object::equal(Self[K], Self[K]) -> Bool
+pub fn[K] Object::hash(Self[K]) -> Int
+pub fn[K] Object::hash_combine(Self[K], Hasher) -> Unit
 pub fn[K] Object::id(Self[K]) -> Int
 pub fn[K] Object::is_null(Self[K]) -> Bool
+pub fn[K] Object::not_equal(Self[K], Self[K]) -> Bool
 pub fn[K, S] Object::null(Class[K, S]) -> Self[K]
+pub fn[K] Object::op_ge(Self[K], Self[K]) -> Bool
+pub fn[K] Object::op_gt(Self[K], Self[K]) -> Bool
+pub fn[K] Object::op_le(Self[K], Self[K]) -> Bool
+pub fn[K] Object::op_lt(Self[K], Self[K]) -> Bool
+pub fn[K, S] Object::persistent(Class[K, S]) -> Persistent[Self[K]]
 pub fn[K, S] Object::read(Class[K, S], String) -> Result[Self[K], String]
 pub fn[K] Object::repr(Self[K]) -> String
+pub impl[K] Compare for Object[K]
+pub impl[K] Eq for Object[K]
+pub impl[K] Hash for Object[K]
 
 type Opinions[T]
 pub fn[T] Opinions::add(Self[T], Agent, T) -> Self[T]
@@ -201,22 +268,87 @@ pub fn[K, P] Slot::cls(Self[K, P]) -> Class[K, Unit]
 pub fn[K, P] Slot::desc(Self[K, P]) -> String
 pub fn[K, P] Slot::domain(Self[K, P]) -> Domain[P]
 pub fn[K, P] Slot::name(Self[K, P]) -> Name
+pub fn[K, P] Slot::observe(Self[K, P], (State, Object[K], P) -> Unit raise) -> Int
+pub fn[K, P] Slot::observer_count(Self[K, P]) -> Int
+pub fn[K, P, R] Slot::observing(Self[K, P], observe~ : (State, Object[K], P) -> Unit raise, () -> R raise?) -> R raise?
 pub fn[K, P] Slot::owner(Self[K, P]) -> Name
 pub fn[K, P] Slot::persistent(Self[K, P]) -> Persistent[P]?
+pub fn[K, P] Slot::promise(Self[K, P], (State, Object[K]) -> P raise) -> Int
+pub fn[K, P] Slot::promise_count(Self[K, P]) -> Int
+pub fn[K, P, R] Slot::promising(Self[K, P], promise~ : (State, Object[K]) -> P raise, () -> R raise?) -> R raise?
+pub fn[K, P] Slot::propose(Self[K, Opinions[P]], Agent, (State, Object[K]) -> P raise) -> Int
+pub fn[K, P, R] Slot::proposing(Self[K, Opinions[P]], Agent, propose~ : (State, Object[K]) -> P raise, () -> R raise?) -> R raise?
+pub fn[K, P] Slot::retract(Self[K, P], Int) -> Unit
+pub fn[K, P] Slot::unobserve(Self[K, P], Int) -> Unit
 
 type State
+pub fn State::assign(Self, Self) -> Unit
+pub fn[R] State::catch_(Self, () -> R raise, (Error) -> R raise) -> R raise
+pub fn[K, P] State::collect(Self, Slot[K, P], Object[K]) -> P raise
 pub fn[K, S] State::create(Self, Class[K, S]) -> Object[K]
+pub fn[K, P] State::current(Self, Slot[K, P], Object[K]) -> P raise Conflict
 pub fn State::current_pkg(Self) -> String
+pub fn[K, S] State::delete(Self, Class[K, S], Object[K]) -> Unit
+pub fn State::deserialize(String) -> Self raise Conflict
+pub fn State::empty() -> Self
+pub fn State::fork(Self) -> Self
+pub fn State::import_(Self, Array[String], strict? : Bool, pkg? : String) -> Unit raise Conflict
+pub fn[R] State::in_package(Self, String, () -> R raise?) -> R raise?
 pub fn[K, S] State::intern(Self, Class[K, S], name~ : Name) -> Object[K]
 pub fn[K, S] State::intern_named(Self, Class[K, S], String, pkg? : String) -> Object[K]
+pub fn[K, S] State::intern_symbol(Self, String, Class[K, S], public? : Bool, desc? : String, pkg? : String) -> Object[K]
 pub fn[K] State::interned_name(Self, Object[K]) -> Name?
 pub fn State::new() -> Self
 pub fn[K, S] State::objects(Self, Class[K, S]) -> Array[Object[K]]
+pub fn State::of_bytes(Bytes) -> Self raise Conflict
+pub fn State::pp(Self) -> String
+pub fn[K, P] State::provide(Self, Slot[K, P], Object[K], P) -> Unit raise
 pub fn[K, S] State::read(Self, Class[K, S], String, pkg? : String) -> Result[Object[K], String]
 pub fn[K] State::repr(Self, Object[K]) -> String
-pub fn[K, S, R] State::scoped(Self, Class[K, S], (Object[K]) -> R) -> R
+pub fn[K, P] State::require(Self, Slot[K, P], Object[K]) -> P raise
+pub fn[K, P] State::require_some(Self, Slot[K, P?], Object[K]) -> P raise
+pub fn[K, P] State::resolve(Self, Slot[K, Opinions[P]], Object[K]) -> P raise
+pub fn[K, S, R] State::scoped(Self, Class[K, S], (Object[K]) -> R raise?) -> R raise?
+pub fn State::serialize(Self) -> String
 pub fn State::set_current_pkg(Self, String) -> Unit
+pub fn[K, P] State::suggest(Self, Agent, Slot[K, Opinions[P]], Object[K], P) -> Unit raise
+pub fn State::to_bytes(Self) -> Bytes
+pub fn[R] State::transaction(Self, () -> R raise) -> Result[R, Error]
+pub fn[K, S] State::value(Self, Class[K, S], Object[K]) -> Value[K, S] raise
+pub fn[R] State::with_empty(Self, missing~ : R, () -> R raise) -> R raise
 pub fn[R] State::with_pkg(Self, String, () -> R) -> R
+
+type Value[K, S]
+pub fn[K, S] Value::cls(Self[K, S]) -> Class[K, S]
+pub fn[K, S] Value::compare(Self[K, S], Self[K, S]) -> Int
+pub fn[K, S] Value::domain(Class[K, S]) -> Domain[Self[K, S]]
+pub fn[K, S] Value::empty(Class[K, S]) -> Self[K, S]
+pub fn[K, S] Value::equal(Self[K, S], Self[K, S]) -> Bool
+pub fn[K, S, P] Value::find(Self[K, S], Slot[K, P]) -> P?
+pub fn[K, S, P] Value::get(Self[K, S], Slot[K, P]) -> P
+pub fn[K, S, P] Value::has(Self[K, S], Slot[K, P]) -> Bool
+pub fn[K, S] Value::inspect(Self[K, S]) -> String
+pub fn[K, S] Value::inspect_slots(Self[K, S], Array[String]) -> String
+pub fn[K, S] Value::is_empty(Self[K, S]) -> Bool
+pub fn[K, S] Value::join(Self[K, S], Self[K, S]) -> Self[K, S] raise Conflict
+pub fn[K, S] Value::merge(Self[K, S], Self[K, S], on_conflict? : MergeStrategy) -> Self[K, S]
+pub fn[K, S] Value::order(Self[K, S], Self[K, S]) -> PartialOrder
+pub fn[K, S] Value::persistent(Class[K, S]) -> Persistent[Self[K, S]]
+pub fn[K, S, P] Value::put(Self[K, S], Slot[K, P], P) -> Self[K, S]
+pub fn[K, S, T] Value::refine(Self[K, S], T) -> Self[K, T]
+pub fn[K, S, P] Value::require(Self[K, S], Slot[K, P]) -> P raise Conflict
+pub fn[K, S, P] Value::require_some(Self[K, S], Slot[K, P?]) -> P raise Conflict
+pub fn[K, S] Value::serialize(Self[K, S]) -> Array[(Name, String)]
+pub fn[K, S] Value::to_string(Self[K, S]) -> String
+
+type Var[T]
+pub fn[T] Var::get(Self[T], State) -> T raise
+pub fn[T] Var::inspect(Self[T], T) -> String
+pub fn[T] Var::name(Self[T]) -> Name
+pub fn[T] Var::new(String, (State) -> T raise, pkg? : String, inspect? : (T) -> String) -> Self[T]
+pub fn[T] Var::set(Self[T], State, T) -> Unit
+pub fn[T] Var::update(Self[T], State, (T) -> T) -> Unit raise
+pub fn[T, R] Var::with_(Self[T], State, T, () -> R raise) -> R raise
 
 // Type aliases
 

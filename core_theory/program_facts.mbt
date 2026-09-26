@@ -274,12 +274,13 @@ pub fn SourceFacts::new() -> SourceFacts {
   let language = Source::language_slot()
   let code = Source::code_slot()
   let file = Source::file_slot()
+  let state = @knowledge.State::new()
   {
-    state_value: @knowledge.State::new(),
+    state_value: state,
     class_value: cls,
-    language_value: @knowledge.FactTable::new(language),
-    code_value: @knowledge.FactTable::new(code),
-    file_value: @knowledge.FactTable::new(file),
+    language_value: @knowledge.FactTable::new(language, state~),
+    code_value: @knowledge.FactTable::new(code, state~),
+    file_value: @knowledge.FactTable::new(file, state~),
   }
 }
 
@@ -434,14 +435,15 @@ pub fn ProgramUnitFacts::new() -> ProgramUnitFacts {
   let target = ProgramUnit::target_slot()
   let source = ProgramUnit::source_slot()
   let compiler = ProgramUnit::compiler_slot()
+  let state = @knowledge.State::new()
   {
-    state_value: @knowledge.State::new(),
+    state_value: state,
     class_value: cls,
-    path_value: @knowledge.FactTable::new(path),
-    bias_value: @knowledge.FactTable::new(bias),
-    target_value: @knowledge.FactTable::new(target),
-    source_value: @knowledge.FactTable::new(source),
-    compiler_value: @knowledge.FactTable::new(compiler),
+    path_value: @knowledge.FactTable::new(path, state~),
+    bias_value: @knowledge.FactTable::new(bias, state~),
+    target_value: @knowledge.FactTable::new(target, state~),
+    source_value: @knowledge.FactTable::new(source, state~),
+    compiler_value: @knowledge.FactTable::new(compiler, state~),
   }
 }
 

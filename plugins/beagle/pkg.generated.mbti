@@ -1,0 +1,61 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/beagle"
+
+import {
+  "bobzhang/bap/primus",
+  "bobzhang/bap/project",
+  "bobzhang/bap/strings",
+  "bobzhang/bap/types",
+}
+
+// Values
+pub fn alphabet_of_name(String) -> @strings.StringsAlphabet?
+
+pub let alphabets : Array[String]
+
+pub let component_name : String
+
+pub fn configure(Params) -> Unit
+
+pub fn current_params() -> Params
+
+pub fn declare_plugin() -> Unit raise
+
+pub fn enable(p? : Params) -> Unit
+
+pub fn gohome(@primus.Machine) -> Unit raise
+
+pub fn install(@primus.Machine) -> Unit
+
+pub fn loaded_addresses(@primus.Machine) -> Array[@types.Word]
+
+pub fn make_hunter(Params) -> (BytesView) -> @bobzhang/bap/beagle.Words
+
+pub let name : String
+
+pub fn pass() -> @project.ProjectPass
+
+pub fn process_word(@primus.Machine, @types.Word) -> Unit raise
+
+pub fn register() -> Bool
+
+// Errors
+
+// Types and methods
+pub(all) struct Params {
+  dicts : Array[String]
+  words : Array[String]
+  print_words : Bool
+  print_chars : Bool
+  noise : Double
+  alpha : Double
+  beta : Double
+  p1 : Double
+  alphabet : String
+  output : (String) -> Unit
+}
+pub fn Params::default() -> Self
+
+// Type aliases
+
+// Traits

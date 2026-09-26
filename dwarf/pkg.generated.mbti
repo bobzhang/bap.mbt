@@ -332,6 +332,7 @@ pub fn DwarfData::from_bytes(endian~ : @bitvec.Endian, info? : Bytes, abbrev? : 
 pub fn DwarfData::from_elf_bytes(Bytes) -> Result[Self, String]
 pub fn DwarfData::functions(Self) -> Result[Array[DwarfFunction], String]
 pub fn DwarfData::has_section(Self, DwarfSection) -> Bool
+pub fn DwarfData::iter_functions(Self, on_warning? : (String) -> Unit) -> Iter[DwarfFunction]
 pub fn DwarfData::line_string(Self, offset? : Int) -> Result[String, String]
 pub fn DwarfData::line_string_table(Self, offset? : Int) -> Result[DwarfStringTable, String]
 pub fn DwarfData::loc(Self, offset? : Int, addr_size~ : DwarfWordSize) -> Result[DwarfLocationList, String]
@@ -339,6 +340,7 @@ pub fn DwarfData::loclist(Self, offset? : Int, addr_size~ : DwarfWordSize) -> Re
 pub fn DwarfData::ranges(Self, offset? : Int, addr_size~ : DwarfWordSize) -> Result[DwarfRangeList, String]
 pub fn DwarfData::referenced_die(Self, DwarfDieReference, unit_start~ : Int) -> Result[DwarfDie?, String]
 pub fn DwarfData::rnglist(Self, offset? : Int, addr_size~ : DwarfWordSize) -> Result[DwarfRangeList, String]
+pub fn DwarfData::scan_functions(Self) -> DwarfFunctionScan
 pub fn DwarfData::section(Self, DwarfSection) -> Result[DwarfSectionBuffer, String]
 pub fn DwarfData::sections(Self) -> Array[(DwarfSection, DwarfSectionBuffer)]
 pub fn DwarfData::string_offsets(Self, offset? : Int, dwarf_size~ : DwarfWordSize) -> Result[DwarfStringOffsetsTable, String]
@@ -416,7 +418,9 @@ pub fn DwarfDieReference::to_repr(Self) -> @debug.Repr
 
 type DwarfFbi
 pub fn DwarfFbi::create(DwarfData) -> Result[Self, String]
+pub fn DwarfFbi::diagnostics(Self) -> Array[String]
 pub fn DwarfFbi::functions(Self) -> Array[(String, DwarfFunction)]
+pub fn DwarfFbi::iter(Self, on_warning? : (String) -> Unit) -> Iter[(String, DwarfFunction)]
 
 pub(all) enum DwarfForm {
   DwarfAddr
@@ -493,6 +497,11 @@ pub fn DwarfFunction::pc_hi(Self) -> UInt64?
 pub fn DwarfFunction::pc_lo(Self) -> UInt64
 pub fn DwarfFunction::to_string(Self) -> String
 pub fn DwarfFunction::version() -> String
+
+type DwarfFunctionScan
+pub fn DwarfFunctionScan::diagnostics(Self) -> Array[String]
+pub fn DwarfFunctionScan::functions(Self) -> Array[DwarfFunction]
+pub fn DwarfFunctionScan::is_complete(Self) -> Bool
 
 pub(all) enum DwarfIndexSpec {
   DwarfIndexLeb128

@@ -308,22 +308,29 @@ pub fn define_primitive(
 /// when the observation occurs, all Lisp methods named after the
 /// observation are evaluated with the arguments computed by `proj`. The
 /// methods are evaluated as frames of the machine (a resumable
-/// subscription), so they may fork. With `once=true` the methods are run at
-/// most once per machine (for observations like `system-fini` that are
-/// posted after the machine finished). Returns the subscription.
+/// subscription), so they may fork, and run right after the step that
+/// posted the observation. With `sync=true` the methods run synchronously,
+/// before the observed operation continues (in a nested run of the
+/// machine, so forks requested by them are deferred until the step ends);
+/// this is used for the pre-operation signals `loading` and `storing`,
+/// whose methods must run before the memory access. Returns the
+/// subscription.
 pub fn[T] signal(
   m : @primus.Machine,
   obs : @primus.Observation[T],
   params? : Signature,
   docs? : String = "undocumented",
-  once? : Bool = false,
+  sync? : Bool = false,
   proj : (@primus.Machine, T) -> Array[@primus.Value] raise,
 ) -> @primus.Subscription {
   let types = match params {
     Some(p) => { ..p, ret: Any, }
     None => { args: [], rest: Some(Any), ret: Any, }
   }
-  let name = @knowledge.Name::read(obs.name(), pkg="primus")
+  let name = @knowledge.Name::create(
+    @knowledge.Name::read(obs.name()).unqualified(),
+    pkg="primus",
+  )
   update_state(m, s => {
     ..s,
     program: s.program.add(
@@ -331,23 +338,29 @@ pub fn[T] signal(
       Def::new(name.show(), docs~, { types, }),
     ),
   })
+  // synchronous methods are run by a linked host code, called in a nested
+  // run of the machine
+  let trampoline = "primus-lisp:signal:" + name.show()
+  if sync {
+    @primus.Linker::link(
+      m,
+      name=trampoline,
+      Host(m => eval_signal(m, name, m.call_args(), _ => ())),
+    )
+  }
   // the methods are scheduled (as a resumable observer would) only if
-  // the program has methods for the signal. Observations posted outside of
-  // the scheduler loop (e.g., `fini`) are delivered at most once per
-  // machine with `once`, otherwise the scheduled methods would keep the
-  // machine running
-  let key = name.show()
+  // the program has methods for the signal
   m.subscribe(obs, x => {
-    let s = get_state(m)
-    let has_methods = !s.program
+    let has_methods = !get_state(m).program
       .with_package(name.pkg())
       .get(meth, name=name.unqualified())
       .is_empty()
-    if has_methods && !(once && s.fired.contains(key)) {
-      if once {
-        put_state(m, { ..s, fired: s.fired.add(key), })
+    if has_methods {
+      if sync {
+        ignore(@primus.Linker::call(m, Symbol(trampoline), args=proj(m, x)))
+      } else {
+        m.schedule(m => eval_signal(m, name, proj(m, x), _ => ()))
       }
-      m.schedule(m => eval_signal(m, name, proj(m, x), _ => ()))
     }
   })
 }

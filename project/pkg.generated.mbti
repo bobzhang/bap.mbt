@@ -18,6 +18,8 @@ import {
 // Values
 pub fn apply_analysis(String, Array[String], pkg? : String) -> Result[Unit, String]
 
+pub fn apply_lift_hooks(Array[@types.Stmt]) -> Result[Array[@types.Stmt], String]
+
 pub fn arch(Project) -> @core_theory.Target
 
 pub fn available_input_loaders() -> Array[String]
@@ -75,6 +77,8 @@ pub fn input_loader_names_for_extension(String) -> Array[String]
 pub fn input_loaders_for_extension(String) -> Array[ProjectInputLoader]
 
 pub fn libraries(Project) -> Array[Library]
+
+pub fn lift_hooks() -> Array[String]
 
 pub fn map_program(Project, (@types.Term[@types.Program]) -> @types.Term[@types.Program]) -> Project
 
@@ -138,6 +142,8 @@ pub fn register_input_loader(ProjectInputLoader) -> Result[Unit, String]
 
 pub fn register_ir_transform_passes() -> Result[Unit, String]
 
+pub fn register_lift_hook(name~ : String, (Array[@types.Stmt]) -> Result[Array[@types.Stmt], String]) -> Unit
+
 pub fn register_pass(ProjectPass) -> Result[Unit, String]
 
 pub fn register_pass_if_absent(ProjectPass) -> Result[Bool, String]
@@ -193,6 +199,8 @@ pub fn symbols(Project) -> Array[@image.Symbol]
 pub fn tag_memory(Project, @memory.Memory, String) -> Project
 
 pub fn target(Project) -> @core_theory.Target
+
+pub fn unregister_lift_hook(String) -> Bool
 
 pub fn with_memory(Project, @memory.MemMap[String]) -> Project
 
@@ -292,6 +300,7 @@ pub fn Project::libraries(Self) -> Array[Library]
 pub fn Project::lift(Self, registry? : @mc.Registry) -> Result[Array[@types.Stmt], String]
 pub fn Project::lift_basic_bil(Self) -> Result[Array[@types.Stmt], String]
 pub fn Project::lift_errors(Self) -> Array[ProjectLiftError]
+pub fn Project::lift_ir(Self, registry? : @mc.Registry) -> Result[(@types.Term[@types.Program], Array[ProjectLiftError]), String]
 pub fn Project::linear_sweep(Self, @memory.Memory, backend? : String) -> Result[Array[(@memory.Memory, ProjectDisassemblyInstruction?)], String]
 pub fn Project::linear_sweep_exn(Self, @memory.Memory, backend? : String) -> Array[(@memory.Memory, ProjectDisassemblyInstruction?)] raise ProjectDisassemblyLinearSweepError
 pub fn Project::load(Bytes, loader~ : String, target? : @core_theory.Target) -> Result[Self, String]
@@ -521,6 +530,7 @@ pub fn ProjectDisassemblyBlock::instructions(Self) -> Array[ProjectDisassemblyIn
 pub fn ProjectDisassemblyBlock::leader(Self) -> ProjectDisassemblyInstruction
 pub fn ProjectDisassemblyBlock::lift(Self, target~ : @core_theory.Target, registry? : @mc.Registry) -> Result[Array[@types.Stmt], String]
 pub fn ProjectDisassemblyBlock::lift_basic_bil(Self) -> Result[Array[@types.Stmt], String]
+pub fn ProjectDisassemblyBlock::lift_ir(Self, target~ : @core_theory.Target, cfg? : ProjectDisassemblyCfg, symtab? : ProjectDisassemblySymtab, registry? : @mc.Registry, pkg? : String) -> Result[(Array[@types.Term[@types.Blk]], Array[ProjectLiftError]), String]
 pub fn ProjectDisassemblyBlock::lift_partial(Self, target~ : @core_theory.Target, registry? : @mc.Registry) -> (Array[@types.Stmt], Array[ProjectLiftError])
 pub fn ProjectDisassemblyBlock::memory(Self) -> @memory.Memory
 pub fn ProjectDisassemblyBlock::same(Self, Self) -> Bool
@@ -610,6 +620,7 @@ pub fn ProjectDisassemblyFunction::create(name~ : String, entry~ : ProjectDisass
 pub fn ProjectDisassemblyFunction::dominates(Self, @memory.Memory) -> Bool
 pub fn ProjectDisassemblyFunction::entry(Self) -> ProjectDisassemblyBlock
 pub fn ProjectDisassemblyFunction::intersects(Self, @memory.Memory) -> Bool
+pub fn ProjectDisassemblyFunction::lift_ir(Self, target~ : @core_theory.Target, cfg~ : ProjectDisassemblyCfg, symtab? : ProjectDisassemblySymtab, registry? : @mc.Registry, pkg? : String) -> Result[(@types.Term[@types.Sub], Array[ProjectLiftError]), String]
 pub fn ProjectDisassemblyFunction::name(Self) -> String
 pub fn ProjectDisassemblyFunction::span(Self) -> @memory.MemMap[Unit]
 
@@ -759,6 +770,7 @@ pub fn ProjectDisassemblySymtab::find_by_start(Self, UInt64) -> ProjectDisassemb
 pub fn ProjectDisassemblySymtab::implicit_callee(Self, UInt64) -> String?
 pub fn ProjectDisassemblySymtab::insert_call(Self, ProjectDisassemblyBlock, String, implicit? : Bool) -> Self
 pub fn ProjectDisassemblySymtab::intersecting(Self, @memory.Memory) -> Array[ProjectDisassemblyFunction]
+pub fn ProjectDisassemblySymtab::lift_ir(Self, target~ : @core_theory.Target, cfg~ : ProjectDisassemblyCfg, registry? : @mc.Registry, pkg? : String) -> Result[(@types.Term[@types.Program], Array[ProjectLiftError]), String]
 pub fn ProjectDisassemblySymtab::of_project(Project) -> Self
 pub fn ProjectDisassemblySymtab::owners(Self, UInt64) -> Array[ProjectDisassemblyFunction]
 pub fn ProjectDisassemblySymtab::remove(Self, ProjectDisassemblyFunction) -> Self

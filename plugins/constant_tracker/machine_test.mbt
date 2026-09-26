@@ -228,7 +228,7 @@ test "the registered component works in a Primus system" {
   debug_inspect(
     names,
     content=(
-      #|["bap:constant-tracker"]
+      #|["bap:constant-tracker-primitives", "bap:constant-tracker"]
     ),
   )
   let sys = @primus.System::define_("constant-tracker-test", pkg="test", components=[

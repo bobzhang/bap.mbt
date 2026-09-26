@@ -1,0 +1,43 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/primus_test"
+
+import {
+  "bobzhang/bap/primus",
+}
+
+// Values
+pub fn declare_plugin() -> Unit raise
+
+pub fn enable() -> Unit
+
+pub fn features() -> Array[String]
+
+pub let incident : @primus.Observation[(String, Array[Int])]
+
+pub let incident_location : @primus.Observation[(Int, Array[String])]
+
+pub let incident_new_class : @primus.Observation[(String, Int, Array[Int])]
+
+pub let incident_new_instance : @primus.Observation[(String, Int, Array[Int])]
+
+pub let incident_new_representative : @primus.Observation[(String, Int, Array[Int])]
+
+pub fn install_lisp(@primus.Machine) -> Unit
+
+pub let name : String
+
+pub fn new_location(@primus.Machine) -> Int raise
+
+pub fn record_locations(@primus.Machine) -> Unit
+
+pub fn register() -> Int
+
+pub fn report(@primus.Machine, String, Array[Int]) -> Unit raise
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

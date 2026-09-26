@@ -61,7 +61,7 @@ pub fn Context::encoded_as(
 /// else is known (upstream: the default `Theory.Label.encoding` provided by
 /// the target plugins): `llvm-thumb` for Thumb targets, `llvm-armv7` for
 /// other 32-bit ARM targets, `llvm-aarch64` for 64-bit ARM, the LLVM MIPS,
-/// PowerPC, SystemZ and x86 encodings for those families, and
+/// PowerPC, SystemZ, x86 and RISC-V encodings for those families, and
 /// `Language::unknown()` otherwise.
 pub fn default_encoding(target : @core_theory.Target) -> @core_theory.Language {
   let little = target.endianness() is LittleEndian
@@ -94,6 +94,12 @@ pub fn default_encoding(target : @core_theory.Target) -> @core_theory.Language {
   } else if target.belongs(@core_theory.Target::i86()) ||
     target.belongs(@core_theory.Target::x86()) {
     @core_theory.Language::llvm_x86()
+  } else if target.belongs(@core_theory.Target::riscv()) {
+    if target.bits() == 32 {
+      @core_theory.Language::llvm_riscv32()
+    } else {
+      @core_theory.Language::llvm_riscv64()
+    }
   } else {
     @core_theory.Language::unknown()
   }

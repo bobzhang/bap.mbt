@@ -1,0 +1,12 @@
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/image",
+  "bobzhang/bap/mc",
+  "bobzhang/bap/project",
+  "bobzhang/bap/types",
+}
+
+import {
+  "bobzhang/bap/memory",
+} for "test"

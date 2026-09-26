@@ -1,6 +1,7 @@
 import {
   "bobzhang/bap/bap_main",
   "bobzhang/bap/primus",
+  "bobzhang/bap/primus_lisp",
   "bobzhang/bap/types",
   "moonbitlang/core/immut/sorted_map",
 }

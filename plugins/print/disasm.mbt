@@ -27,21 +27,23 @@ pub fn SymbolFormat::parse(s : String) -> SymbolFormat? {
 }
 
 ///|
-/// Resolves a demangler by name (upstream `create_demangler`); no name
-/// means the identity.
+/// Resolves a demangler by its unqualified name among the available ones
+/// (upstream `create_demangler`); no name means the identity.
 pub fn create_demangler(name : String?) -> Result[(String) -> String, String] {
   match name {
     None => Ok(s => s)
-    Some(name) =>
-      match @demangle.Demanglers::lookup(name) {
+    Some(name) => {
+      let available = @demangle.Demanglers::available()
+      match available.iter().find_first(d => d.name() == name) {
         Some(d) => Ok(s => d.run(s))
         None => {
-          let names = @demangle.Demanglers::available().map(d => d.name())
+          let names = available.map(d => d.name())
           Err(
             "Unknown demangler \{name}. Available demanglers are: \{names.join(", ")}",
           )
         }
       }
+    }
   }
 }
 

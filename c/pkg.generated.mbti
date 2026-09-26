@@ -1,0 +1,623 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/c"
+
+import {
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/types",
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+}
+
+// Values
+pub fn api_processors() -> Array[ApiProcessor]
+
+pub fn apply(AbiProcessor, &Ruler, Array[Attr], Proto, @types.Term[@types.Sub]) -> @types.Term[@types.Sub]
+
+pub fn apply_attr(Attr, @types.Term[@types.Sub]) -> @types.Term[@types.Sub]
+
+pub fn arg_intent(CType) -> @types.Intent
+
+pub fn create_api_processor(&Ruler, AbiProcessor) -> ApiProcessor
+
+pub fn data(&Ruler, CType) -> Datum[Value, @types.Size]
+
+pub fn data_tag() -> TermTag[Datum[Value, @types.Size]]
+
+pub fn data_to_string(Datum[Value, @types.Size]) -> String
+
+pub fn decay_arrays(Proto) -> Proto
+
+pub fn[M : TypeMapper] default_map_array(M, ArrayType) -> ArrayType raise
+
+pub fn[M : TypeMapper] default_map_attrs(M, Array[Attr]) -> Array[Attr] raise
+
+pub fn[M : TypeMapper] default_map_basic(M, Basic) -> Basic raise
+
+pub fn[M : TypeMapper] default_map_floating(M, Basic) -> Basic raise
+
+pub fn[M : TypeMapper] default_map_function(M, Proto) -> Proto raise
+
+pub fn[M : TypeMapper] default_map_integer(M, Basic) -> Basic raise
+
+pub fn[M : TypeMapper] default_map_pointer(M, CType) -> CType raise
+
+pub fn[M : TypeMapper] default_map_structure(M, Compound) -> Compound raise
+
+pub fn[M : TypeMapper] default_map_type(M, CType) -> CType raise
+
+pub fn[M : TypeMapper] default_map_union(M, Compound) -> Compound raise
+
+pub fn define_abi(@core_theory.Target, &Ruler, (Array[Attr], Proto) -> Arg[Unit]) -> Unit raise AbiError
+
+pub fn get_processor(String) -> AbiProcessor?
+
+pub fn layout(&Ruler, CType) -> Layout
+
+pub fn layout_tag() -> TermTag[Layout]
+
+pub fn lookup(@core_theory.Target) -> AbiProcessor?
+
+pub fn max_enum_elt(ArrayView[(String, Int64?)]) -> Int64
+
+pub fn model(@core_theory.Target) -> &Ruler
+
+pub fn next_multitude_of(n~ : Int, Int) -> Int
+
+pub fn padding(@types.Size, Int) -> Int
+
+pub fn process_api(ApiProcessor) -> Unit
+
+pub fn proto_tag() -> TermTag[Proto]
+
+pub fn provide_parser((&Ruler, String) -> Result[Array[(String, CType)], String]) -> Unit
+
+pub fn register_abi(String, AbiProcessor) -> Unit raise AbiError
+
+pub fn register_attr_pass((Attr, @types.Term[@types.Sub]) -> @types.Term[@types.Sub]) -> Unit
+
+pub fn register_model(@core_theory.Target, &Ruler) -> Unit raise AbiError
+
+pub fn reify_var(@core_theory.Var) -> @types.Var
+
+pub fn run_parser(&Ruler, String) -> Result[Array[(String, CType)], String]
+
+pub fn size_of_data(&Ruler, Datum[Value, @types.Size]) -> Int
+
+pub fn size_of_layout(&Ruler, Layout) -> Int
+
+pub fn stack_slot(@core_theory.Target, growsup? : Bool, Int) -> @types.Exp?
+
+pub fn stack_slot_of_arch(@types.Arch, growsup? : Bool, Int) -> @types.Exp?
+
+pub fn type_tag() -> TermTag[CType]
+
+// Errors
+pub(all) suberror AbiError {
+  InvalidAbiName(String)
+  DuplicateAbi(String)
+  DuplicateModel(String)
+} derive(Eq, @debug.Debug)
+pub fn AbiError::equal(Self, Self) -> Bool
+pub fn AbiError::not_equal(Self, Self) -> Bool
+pub fn AbiError::to_repr(Self) -> @debug.Repr
+
+pub suberror SearchFinished derive(@debug.Debug)
+pub fn SearchFinished::to_repr(Self) -> @debug.Repr
+
+// Types and methods
+pub(all) struct AbiProcessor {
+  insert_args : (@types.Term[@types.Sub], Array[Attr], Proto) -> Args?
+  apply_attrs : (Array[Attr], @types.Term[@types.Sub]) -> @types.Term[@types.Sub]
+}
+
+pub struct ApiProcessor {
+  language : String
+  parse : ((String) -> String?, Array[String]) -> Result[(@types.Term[@types.Program]) -> @types.Term[@types.Program], String]
+}
+
+pub struct Arena {
+  // private fields
+} derive(Eq, @debug.Debug)
+pub fn Arena::create(Array[@core_theory.Var]) -> Arg[Self]
+pub fn Arena::equal(Self, Self) -> Bool
+pub fn Arena::fargs(@core_theory.Target) -> Arg[Self]
+pub fn Arena::frets(@core_theory.Target) -> Arg[Self]
+pub fn Arena::iargs(@core_theory.Target) -> Arg[Self]
+pub fn Arena::irets(@core_theory.Target) -> Arg[Self]
+pub fn Arena::not_equal(Self, Self) -> Bool
+pub fn Arena::of_exps(Array[@types.Exp]) -> Arg[Self]
+pub fn Arena::of_roles(Array[@core_theory.Role], @core_theory.Target) -> Arg[Self]
+pub fn Arena::to_repr(Self) -> @debug.Repr
+
+pub struct Arg[A] {
+  // private fields
+}
+pub fn Arg::align_even(Arena) -> Self[Unit]
+pub fn Arg::alignment(CType) -> Self[Int]
+pub fn[A] Arg::all(Array[Self[A]]) -> Self[Array[A]]
+pub fn[A, B] Arg::bind(Self[A], (A) -> Self[B]) -> Self[B]
+pub fn[A] Arg::choice(Array[Self[A]]) -> Self[A]
+pub fn Arg::count(Arena, CType) -> Self[Int?]
+pub fn Arg::define_semantics(return_? : Self[Unit], Self[Unit]) -> Self[Unit]
+pub fn Arg::deplet(Arena) -> Self[Unit]
+pub fn Arg::discard(n? : Int, Arena) -> Self[Unit]
+pub fn[A] Arg::either(Self[A], Self[A]) -> Self[A]
+pub fn Arg::hidden(CType) -> Self[Unit]
+pub fn[T] Arg::iter(Array[T], (T) -> Self[Unit]) -> Self[Unit]
+pub fn[A, B] Arg::map(Self[A], (A) -> B) -> Self[B]
+pub fn Arg::memory(CType) -> Self[Unit]
+pub fn Arg::pointer(Arena, CType) -> Self[Unit]
+pub fn[A] Arg::pure(A) -> Self[A]
+pub fn Arg::push(CType) -> Self[Unit]
+pub fn Arg::rebase(Int) -> Self[Unit]
+pub fn Arg::reference(Arena, CType) -> Self[Unit]
+pub fn Arg::register(Arena, CType) -> Self[Unit]
+pub fn Arg::registers(rev? : Bool, limit? : Int, Arena, CType) -> Self[Unit]
+pub fn Arg::reify(@core_theory.Target, &Ruler, Self[Unit]) -> Args?
+pub fn[A] Arg::reject() -> Self[A]
+pub fn Arg::require(Bool) -> Self[Unit]
+pub fn Arg::sequence(Array[Self[Unit]]) -> Self[Unit]
+pub fn Arg::size(CType) -> Self[Int]
+pub fn Arg::split(Arena, Arena, CType) -> Self[Unit]
+pub fn Arg::split_with_memory(rev? : Bool, limit? : Int, Arena, CType) -> Self[Unit]
+pub fn[A, B] Arg::then(Self[A], Self[B]) -> Self[B]
+
+pub(all) struct Args {
+  return_ : (Datum[Value, @types.Size], @types.Exp)?
+  hidden : Array[(CType, (Datum[Value, @types.Size], @types.Exp))]
+  params : Array[(Datum[Value, @types.Size], @types.Exp)]
+}
+
+pub(all) struct ArrayType {
+  element : CType
+  size : Int?
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn ArrayType::equal(Self, Self) -> Bool
+pub fn ArrayType::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ArrayType::not_equal(Self, Self) -> Bool
+pub fn ArrayType::to_json(Self) -> Json
+pub fn ArrayType::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Attr {
+  name : String
+  args : Array[String]
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn Attr::equal(Self, Self) -> Bool
+pub fn Attr::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Attr::new(String, args? : Array[String]) -> Self
+pub fn Attr::not_equal(Self, Self) -> Bool
+pub fn Attr::output(Self, &Logger) -> Unit
+pub fn Attr::to_json(Self) -> Json
+pub fn Attr::to_repr(Self) -> @debug.Repr
+pub fn Attr::to_string(Self) -> String
+pub impl Show for Attr
+
+pub(all) enum Basic {
+  SChar
+  Char
+  UChar
+  SShort
+  UShort
+  SInt
+  UInt
+  SLong
+  ULong
+  SLongLong
+  ULongLong
+  Bool
+  Enum(Array[(String, Int64?)])
+  Float
+  Double
+  LongDouble
+  CFloat
+  CDouble
+  CLongDouble
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn Basic::all_chars() -> Array[Self]
+pub fn Basic::all_cints() -> Array[Self]
+pub fn Basic::all_complex() -> Array[Self]
+pub fn Basic::all_floating() -> Array[Self]
+pub fn Basic::all_long_longs() -> Array[Self]
+pub fn Basic::all_longs() -> Array[Self]
+pub fn Basic::all_reals() -> Array[Self]
+pub fn Basic::all_shorts() -> Array[Self]
+pub fn Basic::all_signed() -> Array[Self]
+pub fn Basic::all_unsigned() -> Array[Self]
+pub fn Basic::equal(Self, Self) -> Bool
+pub fn Basic::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Basic::is_char(Self) -> Bool
+pub fn Basic::is_cint(Self) -> Bool
+pub fn Basic::is_complex(Self) -> Bool
+pub fn Basic::is_enum(Self) -> Bool
+pub fn Basic::is_floating(Self) -> Bool
+pub fn Basic::is_integer(Self) -> Bool
+pub fn Basic::is_long(Self) -> Bool
+pub fn Basic::is_long_long(Self) -> Bool
+pub fn Basic::is_real(Self) -> Bool
+pub fn Basic::is_short(Self) -> Bool
+pub fn Basic::is_signed(Self) -> Bool
+pub fn Basic::is_unsigned(Self) -> Bool
+pub fn Basic::not_equal(Self, Self) -> Bool
+pub fn Basic::output(Self, &Logger) -> Unit
+pub fn Basic::to_json(Self) -> Json
+pub fn Basic::to_repr(Self) -> @debug.Repr
+pub fn Basic::to_string(Self) -> String
+pub impl Show for Basic
+
+pub(all) enum CType {
+  Void
+  Basic(Spec[Qualifier[Unit], Basic])
+  Pointer(Spec[Qualifier[Bool], CType])
+  Array(Spec[Qualifier[Bool], ArrayType])
+  Structure(Spec[Unit, Compound])
+  Union(Spec[Unit, Compound])
+  Function(Spec[Unit, Proto])
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn CType::array(attrs? : Array[Attr], const_? : Bool, volatile_? : Bool, restrict? : Bool, size? : Int, Self) -> Self
+pub fn CType::attrs(Self) -> Array[Attr]
+pub fn CType::basic(attrs? : Array[Attr], const_? : Bool, volatile_? : Bool, Basic) -> Self
+pub fn CType::equal(Self, Self) -> Bool
+pub fn CType::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn CType::function_(attrs? : Array[Attr], variadic? : Bool, return_? : Self, Array[(String, Self)]) -> Self
+pub fn CType::is_array(Self) -> Bool
+pub fn CType::is_basic(Self) -> Bool
+pub fn CType::is_char(Self) -> Bool
+pub fn CType::is_cint(Self) -> Bool
+pub fn CType::is_complex(Self) -> Bool
+pub fn CType::is_const(Self) -> Bool
+pub fn CType::is_enum(Self) -> Bool
+pub fn CType::is_floating(Self) -> Bool
+pub fn CType::is_function(Self) -> Bool
+pub fn CType::is_integer(Self) -> Bool
+pub fn CType::is_pointer(Self) -> Bool
+pub fn CType::is_real(Self) -> Bool
+pub fn CType::is_restrict(Self) -> Bool
+pub fn CType::is_short(Self) -> Bool
+pub fn CType::is_signed(Self) -> Bool
+pub fn CType::is_structure(Self) -> Bool
+pub fn CType::is_union(Self) -> Bool
+pub fn CType::is_unsigned(Self) -> Bool
+pub fn CType::is_void(Self) -> Bool
+pub fn CType::is_volatile(Self) -> Bool
+pub fn CType::not_equal(Self, Self) -> Bool
+pub fn CType::output(Self, &Logger) -> Unit
+pub fn CType::pointer(attrs? : Array[Attr], const_? : Bool, volatile_? : Bool, restrict? : Bool, Self) -> Self
+pub fn CType::structure(attrs? : Array[Attr], String, Array[(String, Self)]) -> Self
+pub fn CType::to_json(Self) -> Json
+pub fn CType::to_repr(Self) -> @debug.Repr
+pub fn CType::to_string(Self) -> String
+pub fn CType::union(attrs? : Array[Attr], String, Array[(String, Self)]) -> Self
+pub impl Show for CType
+
+pub(all) struct Compound {
+  name : String
+  fields : Array[(String, CType)]
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn Compound::equal(Self, Self) -> Bool
+pub fn Compound::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Compound::not_equal(Self, Self) -> Bool
+pub fn Compound::to_json(Self) -> Json
+pub fn Compound::to_repr(Self) -> @debug.Repr
+
+pub(all) enum Datum[D, S] {
+  Imm(S, D)
+  Seq(Array[Datum[D, S]])
+  Ptr(Datum[D, S])
+} derive(Eq, @debug.Debug)
+pub fn[D : Eq, S : Eq] Datum::equal(Self[D, S], Self[D, S]) -> Bool
+pub fn[D : Eq, S : Eq] Datum::not_equal(Self[D, S], Self[D, S]) -> Bool
+pub fn[D : @debug.Debug, S : @debug.Debug] Datum::to_repr(Self[D, S]) -> @debug.Repr
+
+pub struct Describer {
+  // private fields
+}
+pub fn Describer::describe(Self, finish? : Arg[Unit], return_~ : (Int, Int) -> (CType) -> Arg[Unit], (Int, Int) -> (CType) -> Arg[Unit]) -> Arg[Unit]
+pub fn Describer::new(Proto) -> Self
+
+pub(all) struct IdentityMapper {
+}
+pub fn IdentityMapper::enter_array(Self, ArrayType) -> Unit raise
+pub fn IdentityMapper::enter_attr(Self, Attr) -> Unit raise
+pub fn IdentityMapper::enter_attrs(Self, Array[Attr]) -> Unit raise
+pub fn IdentityMapper::enter_basic(Self, Basic) -> Unit raise
+pub fn IdentityMapper::enter_char(Self, Basic) -> Unit raise
+pub fn IdentityMapper::enter_complex(Self, Basic) -> Unit raise
+pub fn IdentityMapper::enter_cv_qualifier(Self, Qualifier[Unit]) -> Unit raise
+pub fn IdentityMapper::enter_cvr_qualifier(Self, Qualifier[Bool]) -> Unit raise
+pub fn IdentityMapper::enter_enum(Self, Array[(String, Int64?)]) -> Unit raise
+pub fn IdentityMapper::enter_floating(Self, Basic) -> Unit raise
+pub fn IdentityMapper::enter_function(Self, Proto) -> Unit raise
+pub fn IdentityMapper::enter_integer(Self, Basic) -> Unit raise
+pub fn IdentityMapper::enter_name(Self, String) -> Unit raise
+pub fn IdentityMapper::enter_pointer(Self, CType) -> Unit raise
+pub fn IdentityMapper::enter_real(Self, Basic) -> Unit raise
+pub fn IdentityMapper::enter_signed(Self, Basic) -> Unit raise
+pub fn IdentityMapper::enter_structure(Self, Compound) -> Unit raise
+pub fn IdentityMapper::enter_type(Self, CType) -> Unit raise
+pub fn IdentityMapper::enter_union(Self, Compound) -> Unit raise
+pub fn IdentityMapper::enter_unsigned(Self, Basic) -> Unit raise
+pub fn IdentityMapper::enter_void(Self, CType) -> Unit raise
+pub fn IdentityMapper::leave_array(Self, ArrayType) -> Unit raise
+pub fn IdentityMapper::leave_attr(Self, Attr) -> Unit raise
+pub fn IdentityMapper::leave_attrs(Self, Array[Attr]) -> Unit raise
+pub fn IdentityMapper::leave_basic(Self, Basic) -> Unit raise
+pub fn IdentityMapper::leave_char(Self, Basic) -> Unit raise
+pub fn IdentityMapper::leave_complex(Self, Basic) -> Unit raise
+pub fn IdentityMapper::leave_cv_qualifier(Self, Qualifier[Unit]) -> Unit raise
+pub fn IdentityMapper::leave_cvr_qualifier(Self, Qualifier[Bool]) -> Unit raise
+pub fn IdentityMapper::leave_enum(Self, Array[(String, Int64?)]) -> Unit raise
+pub fn IdentityMapper::leave_floating(Self, Basic) -> Unit raise
+pub fn IdentityMapper::leave_function(Self, Proto) -> Unit raise
+pub fn IdentityMapper::leave_integer(Self, Basic) -> Unit raise
+pub fn IdentityMapper::leave_name(Self, String) -> Unit raise
+pub fn IdentityMapper::leave_pointer(Self, CType) -> Unit raise
+pub fn IdentityMapper::leave_real(Self, Basic) -> Unit raise
+pub fn IdentityMapper::leave_signed(Self, Basic) -> Unit raise
+pub fn IdentityMapper::leave_structure(Self, Compound) -> Unit raise
+pub fn IdentityMapper::leave_type(Self, CType) -> Unit raise
+pub fn IdentityMapper::leave_union(Self, Compound) -> Unit raise
+pub fn IdentityMapper::leave_unsigned(Self, Basic) -> Unit raise
+pub fn IdentityMapper::leave_void(Self, CType) -> Unit raise
+pub fn IdentityMapper::map_array(Self, ArrayType) -> ArrayType raise
+pub fn IdentityMapper::map_attr(Self, Attr) -> Attr raise
+pub fn IdentityMapper::map_attrs(Self, Array[Attr]) -> Array[Attr] raise
+pub fn IdentityMapper::map_basic(Self, Basic) -> Basic raise
+pub fn IdentityMapper::map_char(Self, Basic) -> Basic raise
+pub fn IdentityMapper::map_complex(Self, Basic) -> Basic raise
+pub fn IdentityMapper::map_cv_qualifier(Self, Qualifier[Unit]) -> Qualifier[Unit] raise
+pub fn IdentityMapper::map_cvr_qualifier(Self, Qualifier[Bool]) -> Qualifier[Bool] raise
+pub fn IdentityMapper::map_enum(Self, Array[(String, Int64?)]) -> Array[(String, Int64?)] raise
+pub fn IdentityMapper::map_floating(Self, Basic) -> Basic raise
+pub fn IdentityMapper::map_function(Self, Proto) -> Proto raise
+pub fn IdentityMapper::map_integer(Self, Basic) -> Basic raise
+pub fn IdentityMapper::map_name(Self, String) -> String raise
+pub fn IdentityMapper::map_pointer(Self, CType) -> CType raise
+pub fn IdentityMapper::map_real(Self, Basic) -> Basic raise
+pub fn IdentityMapper::map_signed(Self, Basic) -> Basic raise
+pub fn IdentityMapper::map_structure(Self, Compound) -> Compound raise
+pub fn IdentityMapper::map_type(Self, CType) -> CType raise
+pub fn IdentityMapper::map_union(Self, Compound) -> Compound raise
+pub fn IdentityMapper::map_unsigned(Self, Basic) -> Basic raise
+pub fn IdentityMapper::map_void(Self, CType) -> CType raise
+pub fn IdentityMapper::run(Self, CType) -> CType raise
+pub impl TypeMapper for IdentityMapper
+
+pub(all) struct Language {
+}
+pub fn Language::all(Array[(CType) -> Bool]) -> (CType) -> Bool
+pub fn Language::always() -> (CType) -> Bool
+pub fn Language::any(Array[(CType) -> Bool]) -> (CType) -> Bool
+pub fn[K : Eq] Language::case((CType) -> Arg[K], Array[(K, (CType) -> Arg[Unit])]) -> (CType) -> Arg[Unit]
+pub fn Language::choose(Array[(CType) -> Arg[Unit]]) -> (CType) -> Arg[Unit]
+pub fn Language::combine(Array[(CType) -> Arg[Unit]]) -> (CType) -> Arg[Unit]
+pub fn Language::install(@core_theory.Target, &Ruler, (Describer) -> Arg[Unit]) -> Unit raise AbiError
+pub fn Language::is_(Bool) -> (CType) -> Bool
+pub fn Language::neither(Array[(CType) -> Bool]) -> (CType) -> Bool
+pub fn Language::never() -> (CType) -> Bool
+pub fn Language::otherwise() -> (CType) -> Bool
+pub fn Language::select(Array[((CType) -> Bool, (CType) -> Arg[Unit])]) -> (CType) -> Arg[Unit]
+pub fn Language::sequence(Array[((CType) -> Bool, (CType) -> Arg[Unit])]) -> (CType) -> Arg[Unit]
+
+pub(all) struct Layout {
+  layout : Datum[Obj[Layout], Int]
+} derive(Eq, @debug.Debug)
+pub fn Layout::equal(Self, Self) -> Bool
+pub fn Layout::not_equal(Self, Self) -> Bool
+pub fn Layout::output(Self, &Logger) -> Unit
+pub fn Layout::to_repr(Self) -> @debug.Repr
+pub fn Layout::to_string(Self) -> String
+pub impl Show for Layout
+
+pub(all) enum Model {
+  LP32
+  ILP32
+  ILP64
+  LLP64
+  LP64
+} derive(Eq, @debug.Debug)
+pub fn Model::equal(Self, Self) -> Bool
+pub fn Model::is_model32(Self) -> Bool
+pub fn Model::is_model64(Self) -> Bool
+pub fn Model::not_equal(Self, Self) -> Bool
+pub fn Model::to_repr(Self) -> @debug.Repr
+pub fn Model::to_string(Self) -> String
+
+pub(all) enum Obj[D] {
+  Basic(Basic)
+  Field(String, D)
+  Undef
+  Union(Array[D])
+} derive(Eq, @debug.Debug)
+pub fn[D : Eq] Obj::equal(Self[D], Self[D]) -> Bool
+pub fn[D : Eq] Obj::not_equal(Self[D], Self[D]) -> Bool
+pub fn[D : @debug.Debug] Obj::to_repr(Self[D]) -> @debug.Repr
+
+pub(all) struct Proto {
+  return_ : CType
+  args : Array[(String, CType)]
+  variadic : Bool
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn Proto::equal(Self, Self) -> Bool
+pub fn Proto::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Proto::not_equal(Self, Self) -> Bool
+pub fn Proto::output(Self, &Logger) -> Unit
+pub fn Proto::to_json(Self) -> Json
+pub fn Proto::to_repr(Self) -> @debug.Repr
+pub fn Proto::to_string(Self) -> String
+pub impl Show for Proto
+
+pub(all) struct Qualifier[R] {
+  const_ : Bool
+  volatile_ : Bool
+  restrict : R
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn[R : Eq] Qualifier::equal(Self[R], Self[R]) -> Bool
+pub fn[R : @json.FromJson] Qualifier::from_json(Json, @json.JsonPath) -> Self[R] raise @json.JsonDecodeError
+pub fn[R : Eq] Qualifier::not_equal(Self[R], Self[R]) -> Bool
+pub fn[R : ToJson] Qualifier::to_json(Self[R]) -> Json
+pub fn[R : @debug.Debug] Qualifier::to_repr(Self[R]) -> @debug.Repr
+
+pub struct Search[E] {
+  mut found : E?
+}
+pub fn[E, M : TypeMapper] Search::find(Self[E], M, CType) -> E? raise
+pub fn[E] Search::finished(Self[E], E) -> Unit raise
+pub fn[E] Search::new() -> Self[E]
+pub fn[E] Search::result(Self[E]) -> E?
+
+pub(all) struct SizeBase {
+  model : Model
+} derive(Eq, @debug.Debug)
+pub fn SizeBase::alignment(Self, CType) -> @types.Size
+pub fn SizeBase::array(Self, Spec[Qualifier[Bool], ArrayType]) -> Int?
+pub fn SizeBase::basic(Self, Basic) -> @types.Size
+pub fn SizeBase::bits(Self, CType) -> Int?
+pub fn SizeBase::complex(Self, Basic) -> @types.Size
+pub fn SizeBase::enum_(Self, Array[(String, Int64?)]) -> @types.Size
+pub fn SizeBase::equal(Self, Self) -> Bool
+pub fn SizeBase::floating(Self, Basic) -> @types.Size
+pub fn SizeBase::integer(Self, Basic) -> @types.Size
+pub fn SizeBase::model(Self) -> Model
+pub fn SizeBase::new(Model) -> Self
+pub fn SizeBase::not_equal(Self, Self) -> Bool
+pub fn SizeBase::pointer(Self) -> @types.AddrSize
+pub fn SizeBase::real(Self, Basic) -> @types.Size
+pub fn SizeBase::scalar(Self, CType) -> @types.Size
+pub fn SizeBase::structure(Self, Spec[Unit, Compound]) -> Int?
+pub fn SizeBase::to_repr(Self) -> @debug.Repr
+pub fn SizeBase::union(Self, Spec[Unit, Compound]) -> Int?
+pub impl Ruler for SizeBase
+
+pub(all) struct Spec[Q, T] {
+  qualifier : Q
+  t : T
+  attrs : Array[Attr]
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn[Q : Eq, T : Eq] Spec::equal(Self[Q, T], Self[Q, T]) -> Bool
+pub fn[Q : @json.FromJson, T : @json.FromJson] Spec::from_json(Json, @json.JsonPath) -> Self[Q, T] raise @json.JsonDecodeError
+pub fn[Q : Eq, T : Eq] Spec::not_equal(Self[Q, T], Self[Q, T]) -> Bool
+pub fn[Q : ToJson, T : ToJson] Spec::to_json(Self[Q, T]) -> Json
+pub fn[Q : @debug.Debug, T : @debug.Debug] Spec::to_repr(Self[Q, T]) -> @debug.Repr
+
+pub struct TermTag[A] {
+  name : String
+  // private fields
+}
+pub fn[A] TermTag::attr(Self[A], A) -> @types.Attr
+pub fn[A] TermTag::decode(Self[A], String) -> A?
+pub fn[T, A] TermTag::get(Self[A], @types.Term[T]) -> A?
+pub fn[T, A] TermTag::has(Self[A], @types.Term[T]) -> Bool
+pub fn[A] TermTag::name(Self[A]) -> String
+pub fn[T, A] TermTag::set(Self[A], @types.Term[T], A) -> @types.Term[T]
+
+pub(all) enum Value {
+  Top
+  Set(Array[@types.Word])
+} derive(Eq, @debug.Debug)
+pub fn Value::equal(Self, Self) -> Bool
+pub fn Value::not_equal(Self, Self) -> Bool
+pub fn Value::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+pub type AttrPass = (Attr, @types.Term[@types.Sub]) -> @types.Term[@types.Sub]
+
+pub type CParser = (&Ruler, String) -> Result[Array[(String, CType)], String]
+
+pub type Command = ((CType) -> Bool, (CType) -> Arg[Unit])
+
+pub type Data = Datum[Value, @types.Size]
+
+pub type Decls = Array[(String, CType)]
+
+pub type Param = (Datum[Value, @types.Size], @types.Exp)
+
+pub type Predicate = (CType) -> Bool
+
+pub type SizedStatement = (Int, Int) -> (CType) -> Arg[Unit]
+
+pub type Statement = (CType) -> Arg[Unit]
+
+// Traits
+pub(open) trait Ruler {
+  fn model(Self) -> Model
+  fn bits(Self, CType) -> Int? = _
+  fn alignment(Self, CType) -> @types.Size = _
+  fn array(Self, Spec[Qualifier[Bool], ArrayType]) -> Int? = _
+  fn union(Self, Spec[Unit, Compound]) -> Int? = _
+  fn structure(Self, Spec[Unit, Compound]) -> Int? = _
+  fn integer(Self, Basic) -> @types.Size = _
+  fn pointer(Self) -> @types.AddrSize = _
+  fn enum_(Self, Array[(String, Int64?)]) -> @types.Size = _
+  fn real(Self, Basic) -> @types.Size = _
+  fn complex(Self, Basic) -> @types.Size = _
+  fn floating(Self, Basic) -> @types.Size = _
+  fn basic(Self, Basic) -> @types.Size = _
+  fn scalar(Self, CType) -> @types.Size = _
+}
+
+pub(open) trait TypeMapper {
+  fn run(Self, CType) -> CType raise = _
+  fn enter_type(Self, CType) -> Unit raise = _
+  fn map_type(Self, CType) -> CType raise = _
+  fn leave_type(Self, CType) -> Unit raise = _
+  fn enter_void(Self, CType) -> Unit raise = _
+  fn map_void(Self, CType) -> CType raise = _
+  fn leave_void(Self, CType) -> Unit raise = _
+  fn enter_array(Self, ArrayType) -> Unit raise = _
+  fn map_array(Self, ArrayType) -> ArrayType raise = _
+  fn leave_array(Self, ArrayType) -> Unit raise = _
+  fn enter_pointer(Self, CType) -> Unit raise = _
+  fn map_pointer(Self, CType) -> CType raise = _
+  fn leave_pointer(Self, CType) -> Unit raise = _
+  fn enter_function(Self, Proto) -> Unit raise = _
+  fn map_function(Self, Proto) -> Proto raise = _
+  fn leave_function(Self, Proto) -> Unit raise = _
+  fn enter_union(Self, Compound) -> Unit raise = _
+  fn map_union(Self, Compound) -> Compound raise = _
+  fn leave_union(Self, Compound) -> Unit raise = _
+  fn enter_structure(Self, Compound) -> Unit raise = _
+  fn map_structure(Self, Compound) -> Compound raise = _
+  fn leave_structure(Self, Compound) -> Unit raise = _
+  fn enter_cv_qualifier(Self, Qualifier[Unit]) -> Unit raise = _
+  fn map_cv_qualifier(Self, Qualifier[Unit]) -> Qualifier[Unit] raise = _
+  fn leave_cv_qualifier(Self, Qualifier[Unit]) -> Unit raise = _
+  fn enter_cvr_qualifier(Self, Qualifier[Bool]) -> Unit raise = _
+  fn map_cvr_qualifier(Self, Qualifier[Bool]) -> Qualifier[Bool] raise = _
+  fn leave_cvr_qualifier(Self, Qualifier[Bool]) -> Unit raise = _
+  fn enter_basic(Self, Basic) -> Unit raise = _
+  fn map_basic(Self, Basic) -> Basic raise = _
+  fn leave_basic(Self, Basic) -> Unit raise = _
+  fn enter_integer(Self, Basic) -> Unit raise = _
+  fn map_integer(Self, Basic) -> Basic raise = _
+  fn leave_integer(Self, Basic) -> Unit raise = _
+  fn enter_char(Self, Basic) -> Unit raise = _
+  fn map_char(Self, Basic) -> Basic raise = _
+  fn leave_char(Self, Basic) -> Unit raise = _
+  fn enter_signed(Self, Basic) -> Unit raise = _
+  fn map_signed(Self, Basic) -> Basic raise = _
+  fn leave_signed(Self, Basic) -> Unit raise = _
+  fn enter_unsigned(Self, Basic) -> Unit raise = _
+  fn map_unsigned(Self, Basic) -> Basic raise = _
+  fn leave_unsigned(Self, Basic) -> Unit raise = _
+  fn enter_enum(Self, Array[(String, Int64?)]) -> Unit raise = _
+  fn map_enum(Self, Array[(String, Int64?)]) -> Array[(String, Int64?)] raise = _
+  fn leave_enum(Self, Array[(String, Int64?)]) -> Unit raise = _
+  fn enter_floating(Self, Basic) -> Unit raise = _
+  fn map_floating(Self, Basic) -> Basic raise = _
+  fn leave_floating(Self, Basic) -> Unit raise = _
+  fn enter_real(Self, Basic) -> Unit raise = _
+  fn map_real(Self, Basic) -> Basic raise = _
+  fn leave_real(Self, Basic) -> Unit raise = _
+  fn enter_complex(Self, Basic) -> Unit raise = _
+  fn map_complex(Self, Basic) -> Basic raise = _
+  fn leave_complex(Self, Basic) -> Unit raise = _
+  fn enter_attrs(Self, Array[Attr]) -> Unit raise = _
+  fn map_attrs(Self, Array[Attr]) -> Array[Attr] raise = _
+  fn leave_attrs(Self, Array[Attr]) -> Unit raise = _
+  fn enter_attr(Self, Attr) -> Unit raise = _
+  fn map_attr(Self, Attr) -> Attr raise = _
+  fn leave_attr(Self, Attr) -> Unit raise = _
+  fn enter_name(Self, String) -> Unit raise = _
+  fn map_name(Self, String) -> String raise = _
+  fn leave_name(Self, String) -> Unit raise = _
+}

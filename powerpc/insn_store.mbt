@@ -14,7 +14,7 @@ fn store_d(
   width : Int,
 ) -> Array[Rtl] raise @mc.LiftError {
   let rs = cpu.ureg(ops, 0)
-  let im = ops.simm(1)
+  let im = ops.disp(1)
   let ra = cpu.sreg(ops, 2)
   [cpu.store(ra + im, rs, width)]
 }
@@ -38,7 +38,7 @@ fn store_du(
   width : Int,
 ) -> Array[Rtl] raise @mc.LiftError {
   let rs = cpu.ureg(ops, 1)
-  let im = ops.simm(2)
+  let im = ops.disp(2)
   let ra = cpu.sreg(ops, 3)
   [cpu.store(ra + im, rs, width), ra.set(ra + im)]
 }
@@ -149,7 +149,7 @@ fn std(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
 /// Store Doubleword with Update (page 57). `f8 29 00 09  stdu r1,8(r9)`
 fn stdu(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
   let rs = cpu.ureg(ops, 1)
-  let im = ops.simm(2)
+  let im = ops.disp(2)
   let ra = cpu.sreg(ops, 3)
   let ea = uvar(doubleword)
   [ea.set(ra + im), cpu.store(ea, rs, doubleword), ra.set(ea)]

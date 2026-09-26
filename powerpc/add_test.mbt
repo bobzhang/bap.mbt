@@ -11,10 +11,9 @@ test "addi" {
       init=[("R1", 26)],
       word=0x38210010,
     ).check("R1", 42)
-    // 38 20 00 10  addi r1, 0, 16 (li r1, 16)
-    run(a, "ADDI", [reg("R1"), reg("ZERO"), imm(16)], word=0x38200010).check(
-      "R1", 16,
-    )
+    // 38 20 00 10  addi r1, 0, 16 is decoded as li r1, 16
+    run(a, "LI", [reg("R1"), imm(16)], word=0x38200010).check("R1", 16)
+    run(a, "ADDI", [reg("R1"), reg("ZERO"), imm(16)]).check("R1", 16)
     // the 64-bit `ZERO8` denotes zero as well
     run(a, "ADDI", [reg("R1"), reg("ZERO8"), imm(16)]).check("R1", 16)
     // la is an alias of addi
@@ -35,11 +34,9 @@ test "addis" {
       init=[("R30", 42)],
       word=0x3fde0002,
     ).check("R30", 42 + (2 << 16))
-    // 3f c0 00 02  addis r30, 0, 2 (lis r30, 2)
-    run(a, "ADDIS", [reg("R30"), reg("ZERO"), imm(2)], word=0x3fc00002).check(
-      "R30",
-      2 << 16,
-    )
+    // 3f c0 00 02  addis r30, 0, 2 is decoded as lis r30, 2
+    run(a, "LIS", [reg("R30"), imm(2)], word=0x3fc00002).check("R30", 2 << 16)
+    run(a, "ADDIS", [reg("R30"), reg("ZERO"), imm(2)]).check("R30", 2 << 16)
     // 3d 6b f0 00  addis r11, r11, -4096
     run(
       a,
@@ -56,9 +53,16 @@ test "li and lis" {
   for a in archs {
     run(a, "LI", [reg("R3"), imm(42)]).check("R3", 42)
     run(a, "LIS", [reg("R3"), imm(2)]).check("R3", 0x20000)
-    // as upstream, the 32-bit shifted immediate is assigned to an unsigned
-    // register, so it is zero-extended on 64-bit targets
-    run(a, "LIS", [reg("R3"), imm(-1)]).check("R3", 0xFFFF_0000)
+    // negative immediates are sign-extended on 64-bit targets, as with
+    // `addi`/`addis` (upstream zero-extends them)
+    run(a, "LIS", [reg("R3"), imm(-1)], word=0x3c60ffff).check(
+      "R3",
+      trunc(a, 0xFFFF_FFFF_FFFF_0000),
+    )
+    run(a, "LI", [reg("R3"), imm(-2)], word=0x3860fffe).check(
+      "R3",
+      trunc(a, 0xFFFF_FFFF_FFFF_FFFE),
+    )
   }
 }
 

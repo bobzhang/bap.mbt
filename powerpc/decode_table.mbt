@@ -8,7 +8,10 @@
 // ...; the `ADDI8`-style variants are code-generation only); 64-bit only
 // instructions (`LD`, `STD`, `RLDICL`, `MULLD`, `EXTSW`, `CMPD`, ...) use
 // `X` registers. Record (`Rc=1`) forms are named with the `_rec` suffix of
-// LLVM 10 and later. Reserved fields must be zero.
+// LLVM 10 and later. Reserved fields must be zero. `addi`/`addis` with
+// `ra = 0` decode as `LI`/`LIS` (as LLVM 22 does), and the assembly uses
+// the extended mnemonics chosen by the LLVM instruction printer (`bt`,
+// `slwi`, `clrldi`, `sub`, `mfxer`, `crnot`, ...). LLVM has no `bctar`.
 
 ///|
 /// Bits `from..to` (inclusive, numbered from the most significant bit as in
@@ -106,6 +109,8 @@ fn decode_spec(w : UInt) -> Spec? {
   let ra = field(w, 11, 15)
   let d = sext(field(w, 16, 31), 16)
   let ui = field(w, 16, 31).to_int64()
+  // D-form memory displacement: the raw 16-bit field (see `Arg::Mem`)
+  let disp = ui
   match field(w, 0, 5) {
     7 => Some(spec("MULLI", "mulli", [Gpr(rt), Gpr(ra), Imm(d)]))
     8 => Some(spec("SUBFIC", "subfic", [Gpr(rt), Gpr(ra), Imm(d)]))
@@ -116,7 +121,7 @@ fn decode_spec(w : UInt) -> Spec? {
     14 =>
       Some(
         if ra == 0 {
-          spec("ADDI", "li", [Gpr(rt), Silent(Gpr0(0)), Imm(d)])
+          spec("LI", "li", [Gpr(rt), Imm(d)])
         } else {
           spec("ADDI", "addi", [Gpr(rt), Gpr0(ra), Imm(d)])
         },
@@ -124,7 +129,7 @@ fn decode_spec(w : UInt) -> Spec? {
     15 =>
       Some(
         if ra == 0 {
-          spec("ADDIS", "lis", [Gpr(rt), Silent(Gpr0(0)), Imm(d)])
+          spec("LIS", "lis", [Gpr(rt), Imm(d)])
         } else {
           spec("ADDIS", "addis", [Gpr(rt), Gpr0(ra), Imm(d)])
         },
@@ -136,32 +141,39 @@ fn decode_spec(w : UInt) -> Spec? {
     24 =>
       Some(
         if w == 0x60000000 {
-          spec("NOP", "nop", [])
+          spec("NOP", "nop", [], kinds=[MayLoad, MayStore])
         } else {
           spec("ORI", "ori", [Gpr(ra), Gpr(rt), Imm(ui)])
         },
       )
     25 => Some(spec("ORIS", "oris", [Gpr(ra), Gpr(rt), Imm(ui)]))
-    26 => Some(spec("XORI", "xori", [Gpr(ra), Gpr(rt), Imm(ui)]))
+    26 =>
+      Some(
+        if w == 0x68000000 {
+          spec("XORI", "xori", [Gpr(0), Gpr(0), Imm(0)]).printed_as("xnop", [])
+        } else {
+          spec("XORI", "xori", [Gpr(ra), Gpr(rt), Imm(ui)])
+        },
+      )
     27 => Some(spec("XORIS", "xoris", [Gpr(ra), Gpr(rt), Imm(ui)]))
     28 => Some(spec("ANDI_rec", "andi.", [Gpr(ra), Gpr(rt), Imm(ui)]))
     29 => Some(spec("ANDIS_rec", "andis.", [Gpr(ra), Gpr(rt), Imm(ui)]))
     30 => decode_md(w)
     31 => decode_x31(w)
-    32 => Some(dec_load_d("LWZ", "lwz", false, rt, ra, d))
-    33 => Some(dec_load_d("LWZU", "lwzu", true, rt, ra, d))
-    34 => Some(dec_load_d("LBZ", "lbz", false, rt, ra, d))
-    35 => Some(dec_load_d("LBZU", "lbzu", true, rt, ra, d))
-    36 => Some(dec_store_d("STW", "stw", false, W, rt, ra, d))
-    37 => Some(dec_store_d("STWU", "stwu", true, W, rt, ra, d))
-    38 => Some(dec_store_d("STB", "stb", false, W, rt, ra, d))
-    39 => Some(dec_store_d("STBU", "stbu", true, W, rt, ra, d))
-    40 => Some(dec_load_d("LHZ", "lhz", false, rt, ra, d))
-    41 => Some(dec_load_d("LHZU", "lhzu", true, rt, ra, d))
-    42 => Some(dec_load_d("LHA", "lha", false, rt, ra, d))
-    43 => Some(dec_load_d("LHAU", "lhau", true, rt, ra, d))
-    44 => Some(dec_store_d("STH", "sth", false, W, rt, ra, d))
-    45 => Some(dec_store_d("STHU", "sthu", true, W, rt, ra, d))
+    32 => Some(dec_load_d("LWZ", "lwz", false, rt, ra, disp))
+    33 => Some(dec_load_d("LWZU", "lwzu", true, rt, ra, disp))
+    34 => Some(dec_load_d("LBZ", "lbz", false, rt, ra, disp))
+    35 => Some(dec_load_d("LBZU", "lbzu", true, rt, ra, disp))
+    36 => Some(dec_store_d("STW", "stw", false, W, rt, ra, disp))
+    37 => Some(dec_store_d("STWU", "stwu", true, W, rt, ra, disp))
+    38 => Some(dec_store_d("STB", "stb", false, W, rt, ra, disp))
+    39 => Some(dec_store_d("STBU", "stbu", true, W, rt, ra, disp))
+    40 => Some(dec_load_d("LHZ", "lhz", false, rt, ra, disp))
+    41 => Some(dec_load_d("LHZU", "lhzu", true, rt, ra, disp))
+    42 => Some(dec_load_d("LHA", "lha", false, rt, ra, disp))
+    43 => Some(dec_load_d("LHAU", "lhau", true, rt, ra, disp))
+    44 => Some(dec_store_d("STH", "sth", false, W, rt, ra, disp))
+    45 => Some(dec_store_d("STHU", "sthu", true, W, rt, ra, disp))
     58 => {
       let ds = sext(field(w, 16, 29) << 2, 16)
       match field(w, 30, 31) {
@@ -246,7 +258,17 @@ fn decode_cmpi(w : UInt, logical~ : Bool) -> Spec? {
     (true, false) => ("CMPLWI", "cmplwi", W)
     (true, true) => ("CMPLDI", "cmpldi", D)
   }
-  Some(spec(name, mnemonic, [Crf(bf), reg_arg(cls, ra), Imm(imm)]))
+  Some(omit_cr0(spec(name, mnemonic, [Crf(bf), reg_arg(cls, ra), Imm(imm)])))
+}
+
+///|
+/// Compares into `cr0` are printed without the field (`cmpwi 3, 0`).
+fn omit_cr0(spec : Spec) -> Spec {
+  if spec.args is [Crf(0), .. rest] {
+    spec.printed_as(spec.mnemonic, rest.to_owned())
+  } else {
+    spec
+  }
 }
 
 ///|
@@ -281,6 +303,27 @@ fn ctr_branch(bo : Int) -> (String, String, String, String)? {
 }
 
 ///|
+/// The extended mnemonic (and branch prediction hint) of `bc` with the
+/// branch options `bo` testing a condition register bit, as printed by LLVM:
+/// `bt`/`bf` (with the `-`/`+` hints) and the CTR-decrementing `bdnzt`,
+/// `bdnzf`, `bdzt`, `bdzf`.
+fn bc_mnemonic(bo : Int) -> (String, String)? {
+  match bo {
+    0 => Some(("bdnzf", ""))
+    2 => Some(("bdzf", ""))
+    4 => Some(("bf", ""))
+    6 => Some(("bf", "-"))
+    7 => Some(("bf", "+"))
+    8 => Some(("bdnzt", ""))
+    10 => Some(("bdzt", ""))
+    12 => Some(("bt", ""))
+    14 => Some(("bt", "-"))
+    15 => Some(("bt", "+"))
+    _ => None
+  }
+}
+
+///|
 /// B-form conditional branches: `gBC`, `gBCA`, `gBCL`, `gBCLA` with the
 /// operands `bo, bi, target`; the CTR forms with `bi = 0` decode as
 /// `BDNZ`, `BDZ`, ... with the target only.
@@ -292,20 +335,27 @@ fn decode_bform(w : UInt) -> Spec {
   let link = field(w, 31, 31) == 1
   let a = if absolute { "A" } else { "" }
   let l = if link { "L" } else { "" }
+  let suffix = l.to_lower() + a.to_lower()
+  let target = Target(bd, absolute~)
   if bi == 0 && ctr_branch(bo) is Some((base, hint, mnemonic, sign)) {
     spec(
       base + l + a + hint,
-      mnemonic + l.to_lower() + a.to_lower() + sign,
-      [Target(bd, absolute~)],
+      mnemonic + suffix + sign,
+      [target],
       kinds=if link { call_kinds } else { cond_term_kinds },
     )
   } else {
-    spec(
+    let generic = spec(
       "gBC" + l + a,
-      "bc" + l.to_lower() + a.to_lower(),
-      [Imm(bo.to_int64()), Crb(bi), Target(bd, absolute~)],
+      "bc" + suffix,
+      [Imm(bo.to_int64()), Crb(bi), target],
       kinds=cond_kinds,
     )
+    match bc_mnemonic(bo) {
+      Some((mnemonic, hint)) =>
+        generic.printed_as(mnemonic + suffix + hint, [Crb(bi), target])
+      None => generic
+    }
   }
 }
 
@@ -318,7 +368,15 @@ fn decode_xl(w : UInt) -> Spec? {
   let bb = field(w, 16, 20)
   let link = field(w, 31, 31) == 1
   let crlogic = (name : String, mnemonic : String) => {
-    plain(name, mnemonic, link, [Crb(bt), Crb(ba), Crb(bb)])
+    plain(name, mnemonic, link, [Crb(bt), Crb(ba), Crb(bb)]).map(spec => {
+      match (name, bt == ba && ba == bb, ba == bb) {
+        ("CREQV", true, _) => spec.printed_as("crset", [Crb(bt)])
+        ("CRXOR", true, _) => spec.printed_as("crclr", [Crb(bt)])
+        ("CROR", _, true) => spec.printed_as("crmove", [Crb(bt), Crb(ba)])
+        ("CRNOR", _, true) => spec.printed_as("crnot", [Crb(bt), Crb(ba)])
+        _ => spec
+      }
+    })
   }
   match field(w, 21, 30) {
     0 =>
@@ -327,7 +385,7 @@ fn decode_xl(w : UInt) -> Spec? {
       } else {
         None
       }
-    16 | 528 | 560 as xo => {
+    16 | 528 as xo => {
       guard field(w, 16, 18) == 0 else { None }
       Some(decode_branch_to_reg(xo, bt, ba, field(w, 19, 20), link))
     }
@@ -344,7 +402,8 @@ fn decode_xl(w : UInt) -> Spec? {
 }
 
 ///|
-/// `bclr` (xo 16), `bcctr` (528) and `bctar` (560) with their link forms.
+/// `bclr` (xo 16) and `bcctr` (528) with their link forms (LLVM has no
+/// `bctar`).
 fn decode_branch_to_reg(
   xo : Int,
   bo : Int,
@@ -353,13 +412,9 @@ fn decode_branch_to_reg(
   link : Bool,
 ) -> Spec {
   let l = if link { "L" } else { "" }
-  let (reg, mnemonic_reg) = match xo {
-    16 => ("LR", "lr")
-    528 => ("CTR", "ctr")
-    _ => ("TAR", "tar")
-  }
+  let (reg, mnemonic_reg) = if xo == 16 { ("LR", "lr") } else { ("CTR", "ctr") }
   let simple = bi == 0 && bh == 0
-  if simple && bo == 20 && xo != 560 {
+  if simple && bo == 20 {
     // blr, blrl, bctr, bctrl
     let kinds = match (link, xo) {
       (true, _) => call_kinds
@@ -381,73 +436,129 @@ fn decode_branch_to_reg(
       },
     )
   } else {
-    let name = match xo {
-      16 => "gBCLR"
-      528 => "gBCCTR"
-      _ => "gBCTAR"
-    }
-    spec(
-      name + l,
+    let generic = spec(
+      "gBC" + reg + l,
       "bc" + mnemonic_reg + l.to_lower(),
       [Imm(bo.to_int64()), Crb(bi), Imm(bh.to_int64())],
       kinds=cond_kinds,
     )
+    // the branch hint is printed only when not zero
+    if bh == 0 {
+      generic.printed_as(generic.mnemonic, [Imm(bo.to_int64()), Crb(bi)])
+    } else {
+      generic
+    }
   }
 }
 
 ///|
-/// M-form rotates: `rlwimi` (20), `rlwinm` (21), `rlwnm` (23).
+/// M-form rotates: `rlwimi` (20), `rlwinm` (21), `rlwnm` (23), printed with
+/// the extended mnemonics chosen by LLVM (`slwi`, `srwi`, `rotlwi`,
+/// `clrlwi`, `rotlw`; `slwi` and `srwi` only for the non-record `rlwinm`).
 fn decode_mform(w : UInt) -> Spec {
   let rs = field(w, 6, 10)
   let ra = field(w, 11, 15)
   let sh = field(w, 16, 20)
-  let mb = Imm(field(w, 21, 25).to_int64())
-  let me = Imm(field(w, 26, 30).to_int64())
+  let mb = field(w, 21, 25)
+  let me = field(w, 26, 30)
   let rc = field(w, 31, 31) == 1
+  let dot = if rc { "." } else { "" }
+  let masks = [Imm(mb.to_int64()), Imm(me.to_int64())]
   match field(w, 0, 5) {
     20 =>
-      record("RLWIMI", "rlwimi", rc, [
-        Gpr(ra),
-        Silent(Gpr(ra)),
-        Gpr(rs),
-        Imm(sh.to_int64()),
-        mb,
-        me,
-      ])
-    21 =>
-      record("RLWINM", "rlwinm", rc, [
-        Gpr(ra),
-        Gpr(rs),
-        Imm(sh.to_int64()),
-        mb,
-        me,
-      ])
-    _ => record("RLWNM", "rlwnm", rc, [Gpr(ra), Gpr(rs), Gpr(sh), mb, me])
+      record(
+        "RLWIMI",
+        "rlwimi",
+        rc,
+        [Gpr(ra), Silent(Gpr(ra)), Gpr(rs), Imm(sh.to_int64()), ..masks],
+      )
+    21 => {
+      let generic = record(
+        "RLWINM",
+        "rlwinm",
+        rc,
+        [Gpr(ra), Gpr(rs), Imm(sh.to_int64()), ..masks],
+      )
+      let regs = [Gpr(ra), Gpr(rs)]
+      if !rc && mb == 0 && me == 31 - sh {
+        generic.printed_as("slwi", [..regs, Imm(sh.to_int64())])
+      } else if !rc && sh != 0 && mb == 32 - sh && me == 31 {
+        generic.printed_as("srwi", [..regs, Imm(mb.to_int64())])
+      } else if mb == 0 && me == 31 {
+        generic.printed_as("rotlwi" + dot, [..regs, Imm(sh.to_int64())])
+      } else if sh == 0 && me == 31 {
+        generic.printed_as("clrlwi" + dot, [..regs, Imm(mb.to_int64())])
+      } else {
+        generic
+      }
+    }
+    _ => {
+      let generic = record(
+        "RLWNM",
+        "rlwnm",
+        rc,
+        [Gpr(ra), Gpr(rs), Gpr(sh), ..masks],
+      )
+      if mb == 0 && me == 31 {
+        generic.printed_as("rotlw" + dot, [Gpr(ra), Gpr(rs), Gpr(sh)])
+      } else {
+        generic
+      }
+    }
   }
 }
 
 ///|
 /// MD/MDS-form 64-bit rotates (primary opcode 30). The 6-bit shift and mask
-/// fields are split: `sh = sh[5] || sh[0:4]`, `mb = mb[5] || mb[0:4]`.
+/// fields are split: `sh = sh[5] || sh[0:4]`, `mb = mb[5] || mb[0:4]`. The
+/// extended mnemonics are those printed by LLVM: `rotldi`, `clrldi`,
+/// `rotld` and (non-record only) `sldi`.
 fn decode_md(w : UInt) -> Spec? {
   let rs = field(w, 6, 10)
   let ra = field(w, 11, 15)
   let rb = field(w, 16, 20)
-  let sh = Imm((field(w, 16, 20) | (field(w, 30, 30) << 5)).to_int64())
-  let mb = Imm((field(w, 21, 25) | (field(w, 26, 26) << 5)).to_int64())
+  let shv = field(w, 16, 20) | (field(w, 30, 30) << 5)
+  let mbv = field(w, 21, 25) | (field(w, 26, 26) << 5)
+  let sh = Imm(shv.to_int64())
+  let mb = Imm(mbv.to_int64())
   let rc = field(w, 31, 31) == 1
+  let dot = if rc { "." } else { "" }
+  let regs = [G8(ra), G8(rs)]
   match field(w, 27, 29) {
-    0 => Some(record("RLDICL", "rldicl", rc, [G8(ra), G8(rs), sh, mb]))
-    1 => Some(record("RLDICR", "rldicr", rc, [G8(ra), G8(rs), sh, mb]))
-    2 => Some(record("RLDIC", "rldic", rc, [G8(ra), G8(rs), sh, mb]))
+    0 => {
+      let generic = record("RLDICL", "rldicl", rc, [..regs, sh, mb])
+      if mbv == 0 {
+        Some(generic.printed_as("rotldi" + dot, [..regs, sh]))
+      } else if shv == 0 {
+        Some(generic.printed_as("clrldi" + dot, [..regs, mb]))
+      } else {
+        Some(generic)
+      }
+    }
+    1 => {
+      let generic = record("RLDICR", "rldicr", rc, [..regs, sh, mb])
+      if !rc && mbv == 63 - shv {
+        Some(generic.printed_as("sldi", [..regs, sh]))
+      } else {
+        Some(generic)
+      }
+    }
+    2 => Some(record("RLDIC", "rldic", rc, [..regs, sh, mb]))
     3 =>
       Some(
         record("RLDIMI", "rldimi", rc, [G8(ra), Silent(G8(ra)), G8(rs), sh, mb]),
       )
     4 =>
       match field(w, 30, 30) {
-        0 => Some(record("RLDCL", "rldcl", rc, [G8(ra), G8(rs), Gpr(rb), mb]))
-        _ => Some(record("RLDCR", "rldcr", rc, [G8(ra), G8(rs), Gpr(rb), mb]))
+        0 => {
+          let generic = record("RLDCL", "rldcl", rc, [..regs, Gpr(rb), mb])
+          if mbv == 0 {
+            Some(generic.printed_as("rotld" + dot, [..regs, Gpr(rb)]))
+          } else {
+            Some(generic)
+          }
+        }
+        _ => Some(record("RLDCR", "rldcr", rc, [..regs, Gpr(rb), mb]))
       }
     _ => None
   }

@@ -197,6 +197,22 @@ pub fn Operands::simm(self : Operands, i : Int) -> RtlExp raise @mc.LiftError {
 }
 
 ///|
+/// Memory displacement operand `i` of a D- or DS-form load or store, as a
+/// signed 32-bit constant: LLVM (since version 17) leaves the D-form
+/// displacement as the raw 16-bit field, so the low 16 bits are
+/// sign-extended (a no-op for the already sign-extended DS-form values).
+pub fn Operands::disp(self : Operands, i : Int) -> RtlExp raise @mc.LiftError {
+  match self.get(i) {
+    Imm(value) => {
+      let disp = (value.to_int() & 0xffff) << 16 >> 16
+      RtlExp::of_word(make_word(32, disp.to_int64())).with_sign(Signed)
+    }
+    Reg(..) | Fmm(_) =>
+      raise Failure("PowerPC lifter fail: imm operand expected")
+  }
+}
+
+///|
 /// Unsigned immediate operand `i`.
 pub fn Operands::uimm(self : Operands, i : Int) -> RtlExp raise @mc.LiftError {
   self.imm(i, Unsigned)

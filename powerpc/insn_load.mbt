@@ -16,7 +16,7 @@ fn load_d(
   sign : Sign,
 ) -> Array[Rtl] raise @mc.LiftError {
   let rt = cpu.reg(ops, 0, sign)
-  let im = ops.simm(1)
+  let im = ops.disp(1)
   let ra = cpu.sreg(ops, 2)
   [rt.set(cpu.load(ra + im, width))]
 }
@@ -44,7 +44,7 @@ fn load_du(
   sign : Sign,
 ) -> Array[Rtl] raise @mc.LiftError {
   let rt = cpu.reg(ops, 0, sign)
-  let im = ops.simm(2)
+  let im = ops.disp(2)
   let ra = cpu.sreg(ops, 3)
   [rt.set(cpu.load(ra + im, width)), ra.set(ra + im)]
 }
@@ -167,7 +167,7 @@ fn lwax(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
 fn lhau(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
   let rt = cpu.sreg(ops, 0)
   let ra = cpu.sreg(ops, 1)
-  let im = ops.simm(2)
+  let im = ops.disp(2)
   [rt.set(cpu.load(ra + im, halfword)), ra.set(ra + im)]
 }
 
@@ -198,12 +198,13 @@ fn ldx(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
 ///|
 /// Load Doubleword with Update. `e8 29 00 09  ldu r1,8(r9)`
 ///
-/// As upstream, the displacement is treated as unsigned and the base is read
-/// from operand 1.
+/// As upstream, the base is read from operand 1. Upstream reads the DS
+/// displacement as unsigned, which turns negative displacements into large
+/// offsets in 64-bit mode; it is sign-extended here (as in `ld`).
 fn ldu(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
   let rt = cpu.ureg(ops, 0)
   let ra = cpu.sreg(ops, 1)
-  let im = ops.uimm(2)
+  let im = ops.disp(2)
   [rt.set(cpu.load(ra + im, doubleword)), ra.set(ra + im)]
 }
 

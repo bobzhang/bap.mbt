@@ -215,7 +215,9 @@ fn bc_to_reg(
     "CTR" => 528
     _ => 560
   }
-  let word = if name.has_prefix("g") {
+  // LLVM has no `bctar` instructions: the `gBCTAR` forms are lifted from
+  // hand-made instructions only
+  let word = if name.has_prefix("g") && xo != 560 {
     Some(
       enc([
         (19, 6),

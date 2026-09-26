@@ -20,7 +20,7 @@ test "logic: mips32 semantics" {
       #|  V0 := (A0 & 0xFF:32u)
       #|NOP 
       #|NOR V0, A0, ZERO
-      #|  V0 := ~(A0 | ZERO)
+      #|  V0 := ~(A0 | 0:32u)
       #|NOT V0, A0
       #|  V0 := ~A0
       #|OR V0, A0, A1
@@ -53,7 +53,7 @@ test "logic: mips64 semantics" {
       #|ORi V0_64, A0_64, 0x8000
       #|  V0 := (A0 | pad:64[0x8000:32u])
       #|WSBH V0_64, A0_64
-      #|  V0 := pad:64[(extract:23:16[A0] . (extract:31:24[A0] . (extract:7:0[A0] . extract:15:8[A0])))]
+      #|  V0 := extend:64[(extract:23:16[extract:31:0[A0]] . (extract:31:24[extract:31:0[A0]] . (extract:7:0[extract:31:0[A0]] . extract:15:8[extract:31:0[A0]])))]
       #|DSBH V0_64, A0_64
       #|  V0 := (extract:55:48[A0] . (extract:63:56[A0] . (extract:39:32[A0] . (extract:47:40[A0] . (extract:23:16[A0] . (extract:31:24[A0] . (extract:7:0[A0] . extract:15:8[A0])))))))
       #|
@@ -67,19 +67,13 @@ test "logic: bitswap" {
   inspect(
     bil.length(),
     content=(
-      #|193
+      #|1
     ),
   )
   inspect(
     render(bil[:7].to_owned()),
     content=(
-      #|tmp1 := pad:8[0:1u]
-      #|tmp2 := extract:0:0[V0]
-      #|tmp4 := (tmp1 / 8:8u)
-      #|tmp3 := ((tmp4 * 8:8u) + (7:8u - (tmp1 % 8:8u)))
-      #|tmp2 := extract:0:0[(A0 >> pad:32[tmp3])]
-      #|tmp1 := (tmp1 + pad:8[1:1u])
-      #|V0 := (extract:31:1[V0] . tmp2)
+      #|V0 := (((((((((((((((((((((((((((((((extract:24:24[A0] . extract:25:25[A0]) . extract:26:26[A0]) . extract:27:27[A0]) . extract:28:28[A0]) . extract:29:29[A0]) . extract:30:30[A0]) . extract:31:31[A0]) . extract:16:16[A0]) . extract:17:17[A0]) . extract:18:18[A0]) . extract:19:19[A0]) . extract:20:20[A0]) . extract:21:21[A0]) . extract:22:22[A0]) . extract:23:23[A0]) . extract:8:8[A0]) . extract:9:9[A0]) . extract:10:10[A0]) . extract:11:11[A0]) . extract:12:12[A0]) . extract:13:13[A0]) . extract:14:14[A0]) . extract:15:15[A0]) . extract:0:0[A0]) . extract:1:1[A0]) . extract:2:2[A0]) . extract:3:3[A0]) . extract:4:4[A0]) . extract:5:5[A0]) . extract:6:6[A0]) . extract:7:7[A0])
       #|
     ),
   )

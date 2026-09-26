@@ -95,7 +95,9 @@ test "rtl: casts and foreach" {
 
 ///|
 test "rtl: invalid left-hand side" {
-  try wb_render([one.assign(zero)]) catch {
+  // writes to constants (the zero register) are discarded
+  assert_eq(wb_render([one.assign(zero)]), "")
+  try wb_render([(one + one).assign(zero)]) catch {
     err =>
       inspect(
         err.message(),

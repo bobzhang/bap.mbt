@@ -13,27 +13,21 @@ test "shift: mips32 semantics" {
     ]),
     content=(
       #|ROTR V0, A0, 0x8
-      #|  tmp1 := A0
-      #|  tmp2 := (tmp1 >> 8:32u)
-      #|  tmp1 := (tmp1 << (pad:32[0x20:8u] - 8:32u))
-      #|  V0 := (tmp1 | tmp2)
+      #|  V0 := ((A0 >> 8:32u) | (A0 << (pad:32[0x20:8u] - 8:32u)))
       #|ROTRV V0, A0, A1
-      #|  tmp1 := A0
-      #|  tmp2 := (tmp1 >> A1)
-      #|  tmp1 := (tmp1 << (pad:32[0x20:8u] - A1))
-      #|  V0 := (tmp1 | tmp2)
+      #|  V0 := ((A0 >> pad:32[extract:4:0[A1]]) | (A0 << (pad:32[0x20:8u] - pad:32[extract:4:0[A1]])))
       #|SLL V0, A0, 0x2
       #|  V0 := (A0 << 2:32u)
       #|SLLV V0, A0, A1
-      #|  V0 := (A0 << A1)
+      #|  V0 := (A0 << pad:32[extract:4:0[A1]])
       #|SRA V0, A0, 0x2
       #|  V0 := (A0 a>> 2:32u)
       #|SRAV V0, A0, A1
-      #|  V0 := (A0 a>> pad:32[extract:31:27[A1]])
+      #|  V0 := (A0 a>> pad:32[extract:4:0[A1]])
       #|SRL V0, A0, 0x2
       #|  V0 := (A0 >> 2:32u)
       #|SRLV V0, A0, A1
-      #|  V0 := (A0 >> A1)
+      #|  V0 := (A0 >> pad:32[extract:4:0[A1]])
       #|
     ),
   )
@@ -62,19 +56,19 @@ test "shift: mips64 semantics" {
       #|DSLL32 V0_64, A0_64, 0x2
       #|  V0 := (A0 << pad:64[(2:32u + pad:32[0x20:8u])])
       #|DSLLV V0_64, A0_64, A1_64
-      #|  V0 := (A0 << A1)
+      #|  V0 := (A0 << pad:64[extract:5:0[A1]])
       #|DSRA V0_64, A0_64, 0x2
       #|  V0 := (A0 a>> pad:64[2:32u])
       #|DSRA32 V0_64, A0_64, 0x2
       #|  V0 := (A0 a>> pad:64[(2:32u + pad:32[0x20:8u])])
       #|DSRAV V0_64, A0_64, A1_64
-      #|  V0 := (A0 a>> A1)
+      #|  V0 := (A0 a>> pad:64[extract:5:0[A1]])
       #|DSRL V0_64, A0_64, 0x2
       #|  V0 := (A0 >> pad:64[2:32u])
       #|DSRL32 V0_64, A0_64, 0x2
       #|  V0 := (A0 >> pad:64[(2:32u + pad:32[0x20:8u])])
       #|DSRLV V0_64, A0_64, A1_64
-      #|  V0 := (A0 >> A1)
+      #|  V0 := (A0 >> pad:64[extract:5:0[A1]])
       #|
     ),
   )

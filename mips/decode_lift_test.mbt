@@ -50,6 +50,7 @@ fn run_program(
   state : @types.BilState,
   arch? : @mips.Arch = Mips32,
   endian? : @bitvec.Endian = BigEndian,
+  r6? : Bool = false,
 ) -> (@types.BilState, UInt64) raise {
   let code = Bytes::makei(program.length() * 4, i => {
     let word = program[i / 4]
@@ -61,7 +62,7 @@ fn run_program(
   })
   let lift = (pc : UInt64) => {
     let offset = (pc - base).to_int()
-    guard @mips.decode(code[offset:offset + 4], pc, arch~, endian~)
+    guard @mips.decode(code[offset:offset + 4], pc, arch~, endian~, r6~)
       is Some(insn) else {
       fail("invalid instruction at 0x\{pc.to_string(radix=16)}")
     }
@@ -210,7 +211,11 @@ test "every decoded sample of a modeled opcode lifts to well-typed BIL" {
       fail("not decoded")
     }
     if @mips.is_supported(insn.name) {
-      @mips.lift_checked(insn, arch~, endian=BigEndian) |> ignore
+      // bit fields beyond the register are UNPREDICTABLE and rejected
+      (@mips.lift_checked(insn, arch~, endian=BigEndian) |> ignore) catch {
+        Failure(msg) if msg.contains("invalid bit field") => continue
+        err => fail("\{insn.assembly}: \{err.message()}")
+      }
       lifted[insn.name] = ()
     }
   }
@@ -224,7 +229,7 @@ test "every decoded sample of a modeled opcode lifts to well-typed BIL" {
   inspect(
     @mips.opcodes().filter(name => !reached(name)).join(" "),
     content=(
-      #|LBE LHE LLE LLX LWE NOP NOT SBE SCE SCX SHE SWE LBue LHue LLDX LLXE SCDX SCXE JALR64
+      #|EHB INS LBE LHE LLE LLX LWE NOP NOT SBE SCE SCX SHE SWE DSHD LBue LHue LLDX LLXE MADD MSUB MTHI MTLO SCDX SCXE DSDIV PAUSE SSNOP DMULTu DROTRV JALR64
     ),
   )
   let names = lifted.keys().collect()
@@ -232,13 +237,13 @@ test "every decoded sample of a modeled opcode lifts to well-typed BIL" {
   inspect(
     names.length(),
     content=(
-      #|141
+      #|174
     ),
   )
   inspect(
     names.join(" "),
     content=(
-      #|J JR LB LD LH LL LW OR SB SC SD SH SW ADD AND AUI BAL BEQ BNE CLO CLZ JAL JIC LBu LHu LLD LUi LWu MOD MUH MUL NAL NOR ORi SCD SEB SEH SLL SLT SRA SRL SUB XOR ADDi ADDu ANDi BEQC BEQL BGEC BGEZ BGTZ BLEZ BLTC BNEC DDIV DMOD DMUH DSBH DSLL DSRA DSRL DSUB JALR LDPC LWPC MODU MUHU MULT MULU ROTR SDIV SLLV SLTi SLTu SRAV SRLV SUBu UDIV WSBH XORi ADDiu BEQZC BGEUC BGEZC BGTZC BGTZL BLEZC BLTUC BLTZC BNEZC DADDu DDIVU DMODU DMUHU DMULU DSLLV DSRAV DSRLV DSUBu JIALC JIC64 LL_R6 LWUPC MULTu ROTRV SC_R6 SLTiu ALUIPC BGEZAL CLO_R6 CLZ_R6 DADDiu DSLL32 DSRA32 DSRL32 LLD_R6 LSA_R6 MUL_R6 SCD_R6 SELEQZ SELNEZ ADDIUPC BEQZALC BEQZC64 BGEZALC BGTZALC BITSWAP BLEZALC BLTZALC BNEZALC BNEZC64 DLSA_R6 DMUL_R6 JALR_HB JIALC64 DBITSWAP JR_HB_R6 SELEQZ64 SELNEZ64 JALR_HB64 JR_HB64_R6
+      #|J BC JR LB LD LH LL LW OR SB SC SD SH SW ADD AND AUI BAL BEQ BNE CLO CLZ DIV EXT JAL JIC LBu LHu LLD LUi LWu MOD MUH MUL NAL NOR ORi SCD SEB SEH SLL SLT SRA SRL SUB XOR ADDi ADDu ANDi BALC BEQC BEQL BGEC BGEZ BGTZ BLEZ BLTC BLTZ BNEC BNEL DADD DDIV DEXT DINS DIVU DMOD DMUH DSBH DSLL DSRA DSRL DSUB JALR JALX LDPC LWPC MFHI MFLO MODU MUHU MULT MULU PREF ROTR SDIV SLLV SLTi SLTu SRAV SRLV SUBu SYNC UDIV WSBH XORi ADDiu AUIPC BEQZC BGEUC BGEZC BGEZL BGTZC BGTZL BLEZC BLEZL BLTUC BLTZC BLTZL BNEZC DADDi DADDu DDIVU DMODU DMUHU DMULT DMULU DROTR DSLLV DSRAV DSRLV DSUBu DUDIV JIALC JIC64 LL_R6 LWUPC MADDU MSUBU MULTu ROTRV SC_R6 SLTiu SYNCI ALUIPC BGEZAL BLTZAL CLO_R6 CLZ_R6 DADDiu DSLL32 DSRA32 DSRL32 LLD_R6 LSA_R6 MUL_R6 SCD_R6 SELEQZ SELNEZ ADDIUPC BEQZALC BEQZC64 BGEZALC BGEZALL BGTZALC BITSWAP BLEZALC BLTZALC BLTZALL BNEZALC BNEZC64 DLSA_R6 DMUL_R6 DROTR32 JALR_HB JIALC64 PREF_R6 DBITSWAP JR_HB_R6 MOVN_I_I MOVZ_I_I SELEQZ64 SELNEZ64 JALR_HB64 JR_HB64_R6
     ),
   )
 }

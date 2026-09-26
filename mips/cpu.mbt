@@ -39,13 +39,35 @@ fn Cpu::op(self : Cpu, index : Int) -> @mc.Op raise @mc.LiftError {
 ///|
 /// Upstream `Mips_cpu.find`: GPRs are looked up first, then FPRs; unknown
 /// register names denote a zero constant of GPR width.
+///
+/// Deliberate deviation from upstream: the hardwired zero register (`ZERO`,
+/// `ZERO_64`, `R0`) reads as the constant zero (upstream reads a `ZERO`
+/// variable), and writes to it are discarded (see `translate_move`).
 fn Cpu::find_reg(self : Cpu, name : String) -> Exp raise @mc.LiftError {
+  if name is ("ZERO" | "ZERO_64" | "R0") {
+    return Exp::of_word(make_word(self.arch.gpr_bitwidth(), 0L))
+  }
   match (self.arch.find_gpr(name), self.arch.find_fpr(name)) {
     (Some(v), None) | (None, Some(v)) => Exp::of_var(v)
     (None, None) => Exp::of_word(make_word(self.arch.gpr_bitwidth(), 0L))
     (Some(_), Some(_)) =>
       raise mips_fail("Register name \{name} is ambiguous!!!")
   }
+}
+
+///|
+/// The low word of `e`, as a signed value: the result of a 32-bit
+/// operation, which is sign-extended when assigned to a MIPS64 register
+/// (and assigned unchanged on MIPS32).
+fn sword(e : Exp) -> Exp raise @mc.LiftError {
+  low(word, e).signed()
+}
+
+///|
+/// The low word of the register operand `index`, with the signedness
+/// `sign` (the source operand of a 32-bit operation).
+fn Cpu::wreg(self : Cpu, index : Int, sign : Sign) -> Exp raise @mc.LiftError {
+  apply_sign(sign, low(word, self.reg(index, sign)))
 }
 
 ///|
@@ -154,11 +176,14 @@ fn Cpu::gpr(self : Cpu, index : Int) -> Exp raise @mc.LiftError {
 }
 
 ///|
+/// `HI`, as a signed register: the 32-bit results assigned to it are
+/// sign-extended on MIPS64.
 fn Cpu::hi(self : Cpu) -> Exp raise @mc.LiftError {
-  Exp::of_var(self.arch.hi())
+  Exp::of_var(self.arch.hi()).signed()
 }
 
 ///|
+/// `LO`, as a signed register (see `Cpu::hi`).
 fn Cpu::lo(self : Cpu) -> Exp raise @mc.LiftError {
-  Exp::of_var(self.arch.lo())
+  Exp::of_var(self.arch.lo()).signed()
 }

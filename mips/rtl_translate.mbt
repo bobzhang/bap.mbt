@@ -111,6 +111,8 @@ fn translate_move(
       assign_vars(vars, rhs)
     }
     Extract(hi, lo, x) => assign_vars(expand_vars(x), hi~, lo~, rhs)
+    // writes to the hardwired zero register (a constant) are discarded
+    Word(_) => []
     _ => raise mips_fail("unexpected left side of :=")
   }
 }

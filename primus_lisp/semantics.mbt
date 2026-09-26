@@ -418,6 +418,7 @@ pub fn Lifter::lift(
   pc? : @types.Word,
   out? : StringBuilder = StringBuilder(),
 ) -> Array[@types.Stmt]? raise SemanticsError {
+  fresh_counter.val = 0
   let ctx : SemCtx = {
     target: self.target,
     lifter: self,
@@ -444,6 +445,7 @@ pub fn Lifter::apply(
   pc? : @types.Word,
   out? : StringBuilder = StringBuilder(),
 ) -> SEff raise SemanticsError {
+  fresh_counter.val = 0
   let ctx : SemCtx = {
     target: self.target,
     lifter: self,
@@ -453,6 +455,31 @@ pub fn Lifter::apply(
     pc,
   }
   ctx.call(name, args)
+}
+
+///|
+/// The Lisp package of the instructions of the encoding (e.g.,
+/// `llvm-riscv64`). An unknown encoding is derived from the target.
+pub fn encoding_package(
+  encoding : @core_theory.Language,
+  target : @core_theory.Target,
+) -> String {
+  let name = encoding.to_string()
+  let name = match name.rev_find(":") {
+    Some(i) => name.unsafe_substring(start=i + 1, end=name.length())
+    None => name
+  }
+  if name != "unknown" && name != "" {
+    name
+  } else if target.belongs(@core_theory.Target::riscv()) {
+    if target.bits() == 32 {
+      "llvm-riscv32"
+    } else {
+      "llvm-riscv64"
+    }
+  } else {
+    @mc.default_encoding(target).to_string()
+  }
 }
 
 ///|
@@ -470,7 +497,7 @@ pub fn Lifter::provider(
       ctx.target().belongs(self.target) || self.target.belongs(ctx.target())
     },
     lift=(ctx, insn) => {
-      let pkg = insn.encoding().name().unqualified()
+      let pkg = encoding_package(insn.encoding(), ctx.target())
       let lname = @knowledge.Name::create(insn.name(), pkg~)
       let ops = insn
         .ops()
@@ -562,13 +589,18 @@ fn SemCtx::full(_self : SemCtx, effs : Array[SEff], v : SValue) -> SEff {
 
 ///|
 fn fresh_var(width : Int) -> @types.Var {
-  @types.Var::create(
-    "t",
-    Imm(@cmp.maximum(1, width)),
+  fresh_counter.val += 1
+  @types.Var::new(
+    name="#\{fresh_counter.val}",
+    typ=Imm(@cmp.maximum(1, width)),
     is_virtual=true,
-    fresh=true,
   )
 }
+
+///|
+/// The counter of temporary variables, reset for every lifted
+/// instruction, so that the temporaries are named `#1`, `#2`, ...
+let fresh_counter : Ref[Int] = Ref(0)
 
 ///|
 fn SemCtx::assign(

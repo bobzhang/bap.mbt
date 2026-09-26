@@ -322,9 +322,20 @@ test "A32 branches, system and hint instructions" {
     ),
   )
   inspect(show_a32(0xF10C0080), content="CPS2p 3, 2 | cpsid i")
-  // coprocessor and VFP instructions are not decoded
-  inspect(show_a32(0xEE070F15), content="invalid")
-  inspect(show_a32(0xEE300A01), content="invalid")
+  // coprocessor and VFP instructions (the tables of `decode_ext.mbt`)
+  inspect(
+    show_a32(0xEE070F15),
+    content=(
+      #|MCR 15, 0, R0, 7, 5, 0, 14, Nil | mcr p15, #0, r0, c7, c5, #0
+    ),
+  )
+  inspect(
+    show_a32(0xEE300A01),
+    content=(
+      #|VADDS S0, S0, S2, 14, Nil | vadd.f32 s0, s0, s2
+    ),
+  )
+  inspect(show_a32(0xFFFFFFFF), content="invalid")
 }
 
 ///|
@@ -348,7 +359,7 @@ test "A32 kinds, raw bytes and the decoder interface" {
     ),
   )
   assert_true(@arm.decode_a32(bytes[8:]) is Truncated)
-  assert_true(@arm.decode_a32(b"\x15\x0f\x07\xee"[:]) is Invalid(size=4))
+  assert_true(@arm.decode_a32(b"\x00\x00\x10\xf1"[:]) is Invalid(size=4))
   // big-endian words
   guard @arm.decode_a32(b"\xe0\x80\x00\x01"[:], big_endian=true) is Decoded(add) else {
     fail("no big-endian add")

@@ -242,8 +242,16 @@ upstream BAP, LLVM's `SoftFail` encodings are valid instructions.
   unpredicated `BL`, `SMLAL<x><y>` tied sources, `ADDri`/`SUBri` rather
   than `ADR`, Thumb shifts by 32 as 0, unscaled `t2LDREX`/`t2STREX`
   offsets, `t2ADDspImm`, `MOVr_TC`, nested IT blocks resuming the outer
-  block. Not decoded: coprocessor, VFP/NEON, saturating/parallel
-  arithmetic (`SDIV`/`UDIV` in Thumb are decoded; LLVM needs `+hwdiv`).
+  block. A32 VFP, NEON, coprocessor, media, saturating and parallel
+  arithmetic instructions are decoded by tables learned per ARM ARM
+  encoding class from libLLVM (`arm/decode_ext.mbt`,
+  `arm/decode_llvm_ext_test.mbt`: 1536 samples, 1256 opcodes; `VLDM`/`VSTM`
+  and `sysLDM`/`sysSTM` by hand): llvm-only words go from 2115 to 0 on
+  clang -O2/-O3 FP/NEON code (armv7 hard-float), 1617 to 0 and 56 to 0 on
+  the two compiled corpora, 124,385 to 232 on 500k random words (`MSR`
+  immediates with non-canonical rotations, a few `PLI`/`PLD`/`CPS` forms).
+  Not decoded yet: T32 VFP/NEON/coprocessor (`SDIV`/`UDIV` in Thumb are
+  decoded; LLVM needs `+hwdiv`).
   The Basic `llvm` backend's built-in ARM decoder (used only by
   `Basic.create "armv7"` with the `llvm` backend) is not validated.
 - A64 (`aarch64/decode_llvm_test.mbt`, 994 samples, 549 opcodes, and

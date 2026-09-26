@@ -29,10 +29,11 @@
 //
 // The decoder covers the instructions of the ARM lifter (`Insn::all`) and
 // a few related ones LLVM decodes in the same encoding space (e.g. `CLZ`,
-// `PKHBT`, the halfword multiplies, `SWP`, the barriers, `CPS`); other
-// encodings (coprocessor, VFP/NEON, saturating and parallel arithmetic,
-// ...) are reported as invalid. `decode_llvm_test.mbt` holds samples
-// verified against LLVM 22.
+// `PKHBT`, the halfword multiplies, `SWP`, the barriers, `CPS`, the
+// `sysLDM`/`sysSTM` forms); the other encodings LLVM decodes (VFP, NEON,
+// coprocessor, media, saturating and parallel arithmetic, ...) are decoded
+// by the tables of `decode_ext.mbt`. `decode_llvm_test.mbt` and
+// `decode_llvm_ext_test.mbt` hold samples verified against LLVM 22.
 
 ///|
 fn a32_field(w : UInt, lo : Int, len : Int) -> Int {
@@ -150,6 +151,10 @@ pub fn decode_a32_word(
         )
       _ => None
     }
+  }
+  let decoded = match decoded {
+    None => a32_ext(word)
+    d => d
   }
   let raw = match raw {
     Some(raw) => raw
@@ -1038,8 +1043,8 @@ fn a32_media(w : UInt, cond : Int) -> A32Insn? {
 ///|
 /// Load and store multiple.
 fn a32_ldm_stm(w : UInt, cond : Int) -> A32Insn? {
-  // the user-mode and exception-return variants (`^`) are not supported
-  guard !a32_bit(w, 22) else { return None }
+  // the user-mode and exception-return variants (`^`) are `sysLDM...`
+  let sys = a32_bit(w, 22)
   let mode = match (a32_bit(w, 24), a32_bit(w, 23)) {
     (false, false) => "DA"
     (false, true) => "IA"
@@ -1051,20 +1056,21 @@ fn a32_ldm_stm(w : UInt, cond : Int) -> A32Insn? {
   let rn = a32_field(w, 16, 4)
   let mask = a32_field(w, 0, 16)
   guard mask != 0 else { return None }
-  let name = (if load { "LDM" } else { "STM" }) +
+  let name = (if sys { "sys" } else { "" }) +
+    (if load { "LDM" } else { "STM" }) +
     mode +
     (if wb { "_UPD" } else { "" })
   let base = if wb { [mc_gpr(rn), mc_gpr(rn)] } else { [mc_gpr(rn)] }
   let c = cond_asm(cond)
   let text = match (load, mode, rn, wb) {
-    (true, "IA", 13, true) if mask.popcnt() > 1 =>
+    (true, "IA", 13, true) if !sys && mask.popcnt() > 1 =>
       "pop\{c} \{reglist_asm(mask)}"
-    (false, "DB", 13, true) if mask.popcnt() > 1 =>
+    (false, "DB", 13, true) if !sys && mask.popcnt() > 1 =>
       "push\{c} \{reglist_asm(mask)}"
     _ => {
       let m = if mode == "IA" { "" } else { mode.to_lower() }
       let bang = if wb { "!" } else { "" }
-      "\{if load { "ldm" } else { "stm" }}\{m}\{c} \{gpr_asm(rn)}\{bang}, \{reglist_asm(mask)}"
+      "\{if load { "ldm" } else { "stm" }}\{m}\{c} \{gpr_asm(rn)}\{bang}, \{reglist_asm(mask)}\{if sys { " ^" } else { "" }}"
     }
   }
   decoded(name, [..base, ..mc_pred(cond), ..mc_reglist(mask)], text)

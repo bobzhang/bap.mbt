@@ -73,13 +73,18 @@ pub fn AgentReliability::trustworthy() -> Self
 pub fn AgentReliability::unreliable() -> Self
 
 type Class[K, S]
+pub fn[A, S, B, T] Class::assert_equal(Self[A, S], Self[B, T]) -> ClassEq[A, B]
 pub fn[K, S] Class::create(name~ : Name, sort~ : S, desc? : String, public? : Bool) -> Self[K, S]
 pub fn[K, S] Class::desc(Self[K, S]) -> String?
+pub fn[A, S, B, T] Class::equal(Self[A, S], Self[B, T]) -> ClassEq[A, B]?
 pub fn[K, S] Class::name(Self[K, S]) -> Name
 pub fn[K, S, P] Class::property(Self[K, S], name~ : Name, domain~ : Domain[P], desc? : String, persistent? : Persistent[P], public? : Bool) -> Slot[K, P]
 pub fn[K, S, T] Class::refine(Self[K, S], name? : Name, sort~ : T, desc? : String) -> Self[K, T]
 pub fn[K, S, T] Class::same(Self[K, S], Self[K, T]) -> Bool
 pub fn[K, S] Class::sort(Self[K, S]) -> S
+
+type ClassEq[A, B]
+pub fn[A, B] ClassEq::invert(Self[A, B]) -> Self[B, A]
 
 type Documentation
 pub fn Documentation::agents() -> Array[Agent]
@@ -177,14 +182,26 @@ pub fn Name::to_string(Self) -> String
 pub fn Name::unqualified(Self) -> String
 
 type Object[K]
+pub fn[A, B] Object::cast(ClassEq[A, B], Self[A]) -> Self[B]
 pub fn[K] Object::class_name(Self[K]) -> Name
 pub fn[K] Object::compare(Self[K], Self[K]) -> Int
 pub fn[K] Object::equal(Self[K], Self[K]) -> Bool
+pub fn[K] Object::hash(Self[K]) -> Int
+pub fn[K] Object::hash_combine(Self[K], Hasher) -> Unit
 pub fn[K] Object::id(Self[K]) -> Int
 pub fn[K] Object::is_null(Self[K]) -> Bool
+pub fn[K] Object::not_equal(Self[K], Self[K]) -> Bool
 pub fn[K, S] Object::null(Class[K, S]) -> Self[K]
+pub fn[K] Object::op_ge(Self[K], Self[K]) -> Bool
+pub fn[K] Object::op_gt(Self[K], Self[K]) -> Bool
+pub fn[K] Object::op_le(Self[K], Self[K]) -> Bool
+pub fn[K] Object::op_lt(Self[K], Self[K]) -> Bool
+pub fn[K, S] Object::persistent(Class[K, S]) -> Persistent[Self[K]]
 pub fn[K, S] Object::read(Class[K, S], String) -> Result[Self[K], String]
 pub fn[K] Object::repr(Self[K]) -> String
+pub impl[K] Compare for Object[K]
+pub impl[K] Eq for Object[K]
+pub impl[K] Hash for Object[K]
 
 type Opinions[T]
 pub fn[T] Opinions::add(Self[T], Agent, T) -> Self[T]

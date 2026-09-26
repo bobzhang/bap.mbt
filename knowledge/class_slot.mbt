@@ -12,14 +12,24 @@ struct Slot[K, P] {
   name : Name
   domain_value : Domain[P]
   desc : String?
-  persistent_value : Persistent[P]?
+  core : SlotCore[P]
+  _phantom : K?
+}
+
+///|
+/// The identity of a slot: its record key and the rules registered for
+/// it. Every declaration of the same property (same class, same name, same
+/// domain) shares one core. The class index is erased from the rules
+/// (objects are passed as identifier and class name).
+priv struct SlotCore[P] {
   key : Key[P]
   ops : EntryOps
+  persistent : Persistent[P]?
   /// promises registered for this slot (`Slot.promises`), keyed by pid in
   /// registration order
-  promises : Map[Int, (State, Object[K]) -> Unit raise]
+  promises : Map[Int, (State, Int, Name) -> Unit raise]
   /// observers registered for this slot (`Slot.watchers`)
-  watchers : Map[Int, (State, Object[K], P) -> Unit raise]
+  watchers : Map[Int, (State, Int, Name, P) -> Unit raise]
 }
 
 ///|
@@ -28,6 +38,10 @@ struct Slot[K, P] {
 /// base loader to find persistent readers.
 priv struct SlotPack {
   uid : Int
+  /// writes the slot core into the exchange cell of its domain
+  publish : () -> Unit
+  /// clears the exchange cell of its domain
+  unpublish : () -> Unit
   has_promises : () -> Bool
   collect : (State, Int) -> Unit raise
   decode : ((String) -> Result[Entry, String])?
@@ -164,23 +178,49 @@ pub fn[K, S, P] Class::property(
       None => ()
     }
   }
+  let owner = self.name
+  // A redeclaration of the property with the same domain denotes the same
+  // slot. The typed core of the previous declaration is recovered through
+  // the exchange cell of the (physically same) domain, so no unsafe cast
+  // is needed; with a different domain object the types cannot be proven
+  // equal and a new slot shadows the previous declaration.
+  let previous = match class_slots.get(owner) {
+    Some(slots) =>
+      match slots.get(name) {
+        Some(pack) => {
+          domain.exchange.val = None
+          (pack.publish)()
+          let core = domain.exchange.val
+          domain.exchange.val = None
+          (pack.unpublish)()
+          core
+        }
+        None => None
+      }
+    None => None
+  }
+  match previous {
+    Some(core) =>
+      return { owner, name, domain_value: domain, desc, core, _phantom: None, }
+    None => ()
+  }
   let key : Key[P] = Key::fresh(name)
   let ops = entry_ops(key, domain, persistent)
+  let core : SlotCore[P] = { key, ops, persistent, promises: {}, watchers: {}, }
   let slot : Slot[K, P] = {
-    owner: self.name,
+    owner,
     name,
     domain_value: domain,
     desc,
-    persistent_value: persistent,
-    key,
-    ops,
-    promises: {},
-    watchers: {},
+    core,
+    _phantom: None,
   }
-  let owner = self.name
+  let exchange = domain.exchange
   let pack : SlotPack = {
     uid: key.uid,
-    has_promises: () => !slot.promises.is_empty(),
+    publish: () => exchange.val = Some(core),
+    unpublish: () => exchange.val = None,
+    has_promises: () => !core.promises.is_empty(),
     collect: (state, id) => {
       ignore(state.collect(slot, { id, class_name: owner, _phantom: None, }))
     },
@@ -234,18 +274,18 @@ pub fn[K, P] Slot::desc(self : Slot[K, P]) -> String {
 ///|
 /// The number of promises currently registered for the slot.
 pub fn[K, P] Slot::promise_count(self : Slot[K, P]) -> Int {
-  self.promises.length()
+  self.core.promises.length()
 }
 
 ///|
 /// The number of observers currently registered for the slot.
 pub fn[K, P] Slot::observer_count(self : Slot[K, P]) -> Int {
-  self.watchers.length()
+  self.core.watchers.length()
 }
 
 ///|
 pub fn[K, P] Slot::persistent(self : Slot[K, P]) -> Persistent[P]? {
-  self.persistent_value
+  self.core.persistent
 }
 
 ///|

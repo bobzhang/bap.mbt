@@ -1,0 +1,45 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/primus_region"
+
+import {
+  "bobzhang/bap/primus",
+}
+
+// Values
+pub let component_name : String
+
+pub fn count(@primus.Machine, @primus.Value) -> @primus.Value raise
+
+pub fn create(@primus.Machine, @primus.Value, @primus.Value, @primus.Value) -> @primus.Value
+
+pub fn declare_plugin() -> Unit raise
+
+pub fn enable() -> Unit
+
+pub fn install(@primus.Machine) -> Unit
+
+pub fn lower(@primus.Machine, @primus.Value, @primus.Value) -> @primus.Value raise
+
+pub fn move_regions(@primus.Machine, @primus.Value, @primus.Value, @primus.Value) -> @primus.Value raise
+
+pub let name : String
+
+pub fn primitives() -> Array[Primitive]
+
+pub fn register() -> Bool
+
+pub fn upper(@primus.Machine, @primus.Value, @primus.Value) -> @primus.Value raise
+
+// Errors
+
+// Types and methods
+pub struct Primitive {
+  name : String
+  types : String
+  docs : String
+  run : (@primus.Machine, Array[@primus.Value]) -> @primus.Value raise
+}
+
+// Type aliases
+
+// Traits

@@ -295,7 +295,7 @@ test "reconstruction uses registered lifters and delay slots on MIPS" {
       inspect(
         blk.jmps().map(jmp => @types.Jmp::to_string(jmp)).join("\n"),
         content=(
-          #|when %delay_slot_1004_0:imm1 goto *(0x1004:32u + 0x20:32u)
+          #|when %delay_slot_1004_0:imm1 goto @0x00001024
         ),
       )
       assert_eq(reconstructed.lift_errors(), [])

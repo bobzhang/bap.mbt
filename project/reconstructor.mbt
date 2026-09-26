@@ -261,7 +261,9 @@ fn project_reconstructor_basic_bil_label(
   exp : @types.Exp,
   pkg? : String,
 ) -> @types.Label {
-  match exp {
+  // Lifters such as MIPS express pc-relative targets as `addr + off`; fold
+  // constant arithmetic so such branches become direct labels.
+  match exp.fold_consts() {
     Int(word) => @types.Label::direct(@types.Tid::for_addr(word, pkg?))
     _ => @types.Label::indirect(exp)
   }

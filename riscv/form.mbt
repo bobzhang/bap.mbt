@@ -124,9 +124,23 @@ let indirect_branch : Array[@mc.Kind] = [
 ]
 
 ///|
-/// Kinds of calls (`isCall`): LLVM marks `JAL` and `JALR` as calls
-/// whatever their link register.
+/// Kinds of calls (`isCall`).
 let call_kinds : Array[@mc.Kind] = [Call, MayAffectControlFlow]
+
+///|
+/// The kinds of a jump-and-link (`JAL`, `JALR`) that links `rd`: a call,
+/// unless it links no register (`rd` is `zero`), when it is a plain jump
+/// of the `jump` kinds (e.g., `j` and `ret`), as its compressed forms
+/// (`C_J`, `C_JR`) are. Deviation: LLVM marks `JAL` and `JALR` as calls
+/// whatever their link register, which makes every `ret` a call that
+/// falls through into the next function.
+fn link_kinds(rd : Int, jump : Array[@mc.Kind]) -> Array[@mc.Kind] {
+  if rd == 0 {
+    jump
+  } else {
+    call_kinds
+  }
+}
 
 ///|
 /// Kinds of returns from traps (`isReturn`, `isBarrier`, `isTerminator`).

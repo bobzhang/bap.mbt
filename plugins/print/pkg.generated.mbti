@@ -2,6 +2,7 @@
 package "bobzhang/bap/plugins/print"
 
 import {
+  "bobzhang/bap/core_theory",
   "bobzhang/bap/memory",
   "bobzhang/bap/project",
   "bobzhang/bap/text_tags",
@@ -30,7 +31,7 @@ pub fn adt_project(@text_tags.Formatter, @project.Project) -> Unit
 
 pub fn adt_sub(@text_tags.Formatter, @types.Term[@types.Sub]) -> Unit
 
-pub fn bil_printer(String) -> (@text_tags.Formatter, @project.ProjectDisassemblySymtab, @project.ProjectDisassemblyBlock, @memory.Memory, @project.ProjectDisassemblyInstruction) -> Unit
+pub fn bil_printer(String, target? : @core_theory.Target) -> (@text_tags.Formatter, @project.ProjectDisassemblySymtab, @project.ProjectDisassemblyBlock, @memory.Memory, @project.ProjectDisassemblyInstruction) -> Unit
 
 pub fn bil_to_adt(ArrayView[@types.Stmt]) -> String
 
@@ -54,7 +55,7 @@ pub fn extract_program(Array[Pattern], @project.Project) -> @types.Term[@types.P
 
 pub fn find_writer(String) -> Writer?
 
-pub fn insn_printer(String) -> (@text_tags.Formatter, @project.ProjectDisassemblySymtab, @project.ProjectDisassemblyBlock, @memory.Memory, @project.ProjectDisassemblyInstruction) -> Unit
+pub fn insn_printer(String, target? : @core_theory.Target) -> (@text_tags.Formatter, @project.ProjectDisassemblySymtab, @project.ProjectDisassemblyBlock, @memory.Memory, @project.ProjectDisassemblyInstruction) -> Unit
 
 pub fn insn_to_string(@project.ProjectDisassemblyInstruction, String) -> String
 

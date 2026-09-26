@@ -2,6 +2,14 @@
 package "bobzhang/bap/fixtures/objects"
 
 // Values
+pub fn aarch64_elf_object() -> Bytes
+
+pub let aarch64_object_code : Bytes
+
+pub fn aarch64_pauth_elf_object() -> Bytes
+
+pub let aarch64_pauth_object_code : Bytes
+
 pub fn arm64_macho(arm64e? : Bool) -> Bytes
 
 pub let arm64_macho_code : Bytes
@@ -12,15 +20,27 @@ pub fn i386_coff_object() -> Bytes
 
 pub fn i386_macho() -> Bytes
 
+pub fn riscv64_elf_object() -> Bytes
+
+pub let riscv64_object_code : Bytes
+
+pub fn x86_64_elf_object() -> Bytes
+
+pub fn x86_64_elf_tail_object() -> Bytes
+
 pub fn x86_64_macho() -> Bytes
 
 pub let x86_64_macho_code : Bytes
 
 pub fn x86_64_macho_object() -> Bytes
 
+pub let x86_64_object_code : Bytes
+
 pub fn x86_64_pe() -> Bytes
 
 pub let x86_64_pe_code : Bytes
+
+pub let x86_64_tail_object_code : Bytes
 
 // Errors
 

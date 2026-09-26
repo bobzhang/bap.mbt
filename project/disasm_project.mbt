@@ -62,6 +62,15 @@ pub fn[R] Project::with_disasm_providers(
 ) -> R raise? {
   project_disasm_knowledge_init()
   let unit = self.program_unit()
+  let relocations = self.relocation_info()
+  project_unit_relocations.set(
+    self.knowledge(),
+    if relocations.is_empty() {
+      None
+    } else {
+      Some((unit, relocations))
+    },
+  )
   let memory = self.memory()
   let regions = self.disassembly_code_regions()
   let in_project = (addr : UInt64) => {

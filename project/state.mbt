@@ -9,6 +9,9 @@ struct ProjectDisassemblyInstruction {
   kinds_value : Array[ProjectInstructionKind]
   operands_value : Array[ProjectInstructionOperand]
   subinstructions_value : Array[ProjectDisassemblyInstruction]
+  /// the relocations of the unit of the instruction, applied to its lifted
+  /// semantics (see `ProjectRelocations::fixup`)
+  relocations_value : ProjectRelocations?
 }
 
 ///|
@@ -740,6 +743,7 @@ pub fn ProjectDisassemblyInstruction::create(
       Some(items) => items.copy()
       None => []
     },
+    relocations_value: None,
   }
 }
 
@@ -865,6 +869,33 @@ pub fn ProjectDisassemblyInstruction::with_subinstructions(
   subinstructions : Array[ProjectDisassemblyInstruction],
 ) -> ProjectDisassemblyInstruction {
   { ..self, subinstructions_value: subinstructions.copy(), }
+}
+
+///|
+/// The instruction with the relocations of its unit: the jumps of its
+/// lifted semantics are fixed up with them (see `ProjectRelocations::fixup`
+/// and `ProjectDisassemblyInstruction::lift`). Empty relocations are the
+/// same as no relocations.
+pub fn ProjectDisassemblyInstruction::with_relocations(
+  self : ProjectDisassemblyInstruction,
+  relocations : ProjectRelocations,
+) -> ProjectDisassemblyInstruction {
+  {
+    ..self,
+    relocations_value: if relocations.is_empty() {
+      None
+    } else {
+      Some(relocations)
+    },
+  }
+}
+
+///|
+/// The relocations of the unit of the instruction, if any.
+pub fn ProjectDisassemblyInstruction::relocations(
+  self : ProjectDisassemblyInstruction,
+) -> ProjectRelocations? {
+  self.relocations_value
 }
 
 ///|

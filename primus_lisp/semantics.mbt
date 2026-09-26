@@ -367,11 +367,16 @@ fn find_target_var(t : @core_theory.Target, name : String) -> @types.Var? {
 pub fn load_semantics(
   target : @core_theory.Target,
   dirs : Array[String],
+  paths? : Array[String] = [],
   strict? : Bool = true,
 ) -> Lifter raise Error {
+  check_folders(paths)
   let sdirs = ["semantics/primus"] + dirs
-  let features = ["core"] + embedded_features(sdirs)
-  let loader = Loader::embedded(sdirs + ["lisp"])
+  let features = ["core"] + folder_features(paths) + embedded_features(sdirs)
+  let loader = Loader::chain([
+    Loader::paths(paths),
+    Loader::embedded(sdirs + ["lisp"]),
+  ])
   let prog = load_program(loader, features)
   Lifter::create(prog, target, strict~)
 }

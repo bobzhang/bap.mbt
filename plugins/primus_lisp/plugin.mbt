@@ -45,7 +45,7 @@ pub fn Config::default() -> Config {
 ///|
 /// The standard channels that can be redirected (upstream
 /// `Primus_lisp_io.standard_channels`).
-pub let standard_channels : Array[String] = ["<stdin>", "<stdout>", "<stderr>"]
+pub let standard_channels : Array[String] = @lisp.standard_channels
 
 ///|
 /// Parses a channel redirection `<old>:<new>` (upstream
@@ -84,39 +84,14 @@ pub fn Config::all_features(self : Config) -> Array[String] {
 }
 
 ///|
-fn fd_of_channel(name : String) -> Int? {
-  match name {
-    "<stdin>" => Some(0)
-    "<stdout>" => Some(1)
-    "<stderr>" => Some(2)
-    _ => None
-  }
-}
-
-///|
-/// Applies the channel redirections: the input of `<stdin>` is read from
-/// the host file, the output of `<stdout>` and `<stderr>` is written to the
-/// host files when the machine finishes (native backend only).
+/// Applies the channel redirections (see `@primus_lisp.set_redirections`):
+/// the standard channels are associated with host files, other emulated
+/// paths can be opened with `channel-open` (native backend only).
 pub fn redirect_channels(
   m : @primus.Machine,
   redirects : Array[(String, String)],
 ) -> Unit {
-  for r in redirects {
-    match fd_of_channel(r.0) {
-      Some(0) =>
-        if @native_io.read_file(r.1) is Ok(bytes) {
-          @lisp.set_channel_input(m, 0, bytes)
-        }
-      Some(fd) => {
-        let file = r.1
-        m.observe(@primus.system_stop, _ => {
-          let text = @lisp.channel_output(m, fd)
-          ignore(@native_io.write_file(file, @utf8.encode(text)))
-        })
-      }
-      None => ()
-    }
-  }
+  @lisp.set_redirections(m, redirects)
 }
 
 ///|
@@ -248,7 +223,8 @@ pub fn enable(config? : Config = Config::default()) -> Unit raise {
     }
   }
   if config.semantics != ["disable"] {
-    @lisp.register_semantics_providers()
+    @lisp.check_folders(config.semantics)
+    @lisp.register_semantics_providers(paths=config.semantics)
   }
 }
 

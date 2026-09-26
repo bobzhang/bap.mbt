@@ -29,13 +29,14 @@ let lifter_cache : Map[String, Result[Lifter, String]] = Map([])
 fn cached_lifter(
   target : @core_theory.Target,
   dirs : Array[String],
+  paths : Array[String],
 ) -> Lifter raise @mc.LiftError {
-  let key = target.to_string()
+  let key = target.to_string() + "|" + paths.join("|")
   let r = match lifter_cache.get(key) {
     Some(r) => r
     None => {
       let r : Result[Lifter, String] = try
-        load_semantics(target, dirs, strict=false)
+        load_semantics(target, dirs, paths~, strict=false)
       catch {
         e => Err(e.to_string())
       } noraise {
@@ -60,29 +61,33 @@ pub fn semantics_provider(
   name : String,
   family : @core_theory.Target,
   dirs : Array[String],
+  paths? : Array[String] = [],
 ) -> @mc.Provider {
   @mc.Provider::create(name, accepts=ctx => ctx.target().belongs(family), lift=(
     ctx,
     insn,
   ) => {
-    let lifter = cached_lifter(ctx.target(), dirs)
+    let lifter = cached_lifter(ctx.target(), dirs, paths)
     (lifter.provider(name~).lift)(ctx, insn)
   })
 }
 
 ///|
 /// Registers the Lisp semantics providers (for RISC-V, ARM/Thumb/AArch64,
-/// PowerPC and x86) in the registry (the global one by default). The
+/// PowerPC and x86) in the registry. All `*.lisp` files of the user
+/// folders `paths` (native backend only) are loaded too, before the
+/// embedded definitions, so they may override them (the global one by default). The
 /// providers are appended, so they are tried after the providers that are
 /// already registered (e.g., the native lifters). The function is
 /// idempotent.
 pub fn register_semantics_providers(
   registry? : @mc.Registry = @mc.Registry::global(),
+  paths? : Array[String] = [],
 ) -> Unit {
   for f in semantic_families() {
     let (name, family) = f
     if registry.find(name) is None {
-      registry.register(semantics_provider(name, family, semantic_dirs))
+      registry.register(semantics_provider(name, family, semantic_dirs, paths~))
     }
   }
 }

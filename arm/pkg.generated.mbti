@@ -1,0 +1,498 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/arm"
+
+import {
+  "bobzhang/bap/mc",
+  "bobzhang/bap/types",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn aapcs32_layout(CType?, ArrayView[CType]) -> ArgLayout?
+
+pub fn aapcs64_layout(CType?, ArrayView[CType]) -> ArgLayout?
+
+pub fn addr_of_pc(UInt64) -> UInt64
+
+pub let cf : @types.Var
+
+pub let cpsr : @types.Var
+
+pub fn cpu_flags() -> Array[@types.Var]
+
+pub fn cpu_gpr() -> Array[@types.Var]
+
+pub fn cpu_perms() -> Array[@types.Var]
+
+pub fn cpu_regs() -> Array[@types.Var]
+
+pub fn decode_modified_imm(UInt) -> UInt
+
+pub fn encoding_of_name(StringView) -> Encoding
+
+pub let ge : ReadOnlyArray[@types.Var]
+
+pub fn is_bp(@types.Var) -> Bool
+
+pub fn is_cf(@types.Var) -> Bool
+
+pub fn is_flag(@types.Var) -> Bool
+
+pub fn is_mem(@types.Var) -> Bool
+
+pub fn is_nf(@types.Var) -> Bool
+
+pub fn is_pc(@types.Var) -> Bool
+
+pub fn is_reg(@types.Var) -> Bool
+
+pub fn is_sp(@types.Var) -> Bool
+
+pub fn is_thumb2(StringView) -> Bool
+
+pub fn is_vf(@types.Var) -> Bool
+
+pub fn is_zf(@types.Var) -> Bool
+
+pub let itstate : @types.Var
+
+pub fn lift(@mc.Insn, encoding? : Encoding, raw? : UInt) -> Array[@types.Stmt] raise @mc.LiftError
+
+pub fn lift_typed(Insn, ArrayView[Op], addr? : UInt, encoding? : Encoding, raw? : UInt) -> Array[@types.Stmt] raise @mc.LiftError
+
+pub let lr : @types.Var
+
+pub let mem : @types.Var
+
+pub let nf : @types.Var
+
+pub let nil : @types.Var
+
+pub fn ops_of_mc(ArrayView[@mc.Op]) -> Array[Op] raise @mc.LiftError
+
+pub let pc : @types.Var
+
+pub let qf : @types.Var
+
+pub let r0 : @types.Var
+
+pub let r1 : @types.Var
+
+pub let r10 : @types.Var
+
+pub let r11 : @types.Var
+
+pub let r12 : @types.Var
+
+pub let r2 : @types.Var
+
+pub let r3 : @types.Var
+
+pub let r4 : @types.Var
+
+pub let r5 : @types.Var
+
+pub let r6 : @types.Var
+
+pub let r7 : @types.Var
+
+pub let r8 : @types.Var
+
+pub let r9 : @types.Var
+
+pub fn register() -> Unit
+
+pub fn resolve_pc(ArrayView[@types.Stmt], UInt) -> Array[@types.Stmt]
+
+pub let sp : @types.Var
+
+pub let spsr : @types.Var
+
+pub let target_names : ReadOnlyArray[String]
+
+pub let vf : @types.Var
+
+pub let zf : @types.Var
+
+// Errors
+
+// Types and methods
+pub(all) struct ArgLayout {
+  return_value : ArgLocation?
+  params : Array[ArgLocation]
+  hidden : Array[ArgLocation]
+} derive(Eq, @debug.Debug)
+pub fn ArgLayout::equal(Self, Self) -> Bool
+pub fn ArgLayout::not_equal(Self, Self) -> Bool
+pub fn ArgLayout::to_repr(Self) -> @debug.Repr
+
+pub(all) enum ArgLocation {
+  Registers(Array[String])
+  Stack(offset~ : Int, bits~ : Int)
+  Split(regs~ : Array[String], bits~ : Int)
+} derive(Eq, @debug.Debug)
+pub fn ArgLocation::equal(Self, Self) -> Bool
+pub fn ArgLocation::not_equal(Self, Self) -> Bool
+pub fn ArgLocation::to_repr(Self) -> @debug.Repr
+
+pub(all) enum BitsInsn {
+  BFC
+  BFI
+  PKHTB
+  RBIT
+  SBFX
+  SWPB
+  SXTAB
+  SXTAH
+  SXTB
+  SXTH
+  UBFX
+  UXTAB
+  UXTAH
+  UXTB
+  UXTH
+  REV
+  REV16
+} derive(Eq, @debug.Debug)
+pub fn BitsInsn::all() -> Array[Self]
+pub fn BitsInsn::equal(Self, Self) -> Bool
+pub fn BitsInsn::name(Self) -> String
+pub fn BitsInsn::not_equal(Self, Self) -> Bool
+pub fn BitsInsn::to_repr(Self) -> @debug.Repr
+
+pub(all) enum BranchInsn {
+  BL
+  BLX
+  BLX_pred
+  BLXi
+  BL_pred
+  BX
+  BX_RET
+  BX_pred
+  Bcc
+} derive(Eq, @debug.Debug)
+pub fn BranchInsn::all() -> Array[Self]
+pub fn BranchInsn::equal(Self, Self) -> Bool
+pub fn BranchInsn::name(Self) -> String
+pub fn BranchInsn::not_equal(Self, Self) -> Bool
+pub fn BranchInsn::to_repr(Self) -> @debug.Repr
+
+pub(all) struct CType {
+  kind : CTypeKind
+  bits : Int
+  alignment : Int
+} derive(Eq, @debug.Debug)
+pub fn CType::arm_basic(String, lp64? : Bool) -> Self?
+pub fn CType::equal(Self, Self) -> Bool
+pub fn CType::new(CTypeKind, bits~ : Int, alignment? : Int) -> Self
+pub fn CType::not_equal(Self, Self) -> Bool
+pub fn CType::to_repr(Self) -> @debug.Repr
+
+pub(all) enum CTypeKind {
+  Integer
+  Floating
+  Pointer
+  Structure
+  Union
+  Array
+} derive(Eq, @debug.Debug)
+pub fn CTypeKind::equal(Self, Self) -> Bool
+pub fn CTypeKind::not_equal(Self, Self) -> Bool
+pub fn CTypeKind::to_repr(Self) -> @debug.Repr
+
+pub(all) enum Cond {
+  EQ
+  NE
+  CS
+  CC
+  MI
+  PL
+  VS
+  VC
+  HI
+  LS
+  GE
+  LT
+  GT
+  LE
+  AL
+} derive(Eq, @debug.Debug)
+pub fn Cond::equal(Self, Self) -> Bool
+pub fn Cond::not_equal(Self, Self) -> Bool
+pub fn Cond::of_int(Int) -> Self?
+pub fn Cond::to_repr(Self) -> @debug.Repr
+
+pub(all) enum Encoding {
+  A32
+  T32
+} derive(Eq, @debug.Debug)
+pub fn Encoding::equal(Self, Self) -> Bool
+pub fn Encoding::not_equal(Self, Self) -> Bool
+pub fn Encoding::to_repr(Self) -> @debug.Repr
+
+pub(all) enum Insn {
+  Move(MoveInsn)
+  Bits(BitsInsn)
+  Mult(MultInsn)
+  Mem(MemInsn)
+  MemMulti(MemMultiInsn)
+  Branch(BranchInsn)
+  Special(SpecialInsn)
+} derive(Eq, @debug.Debug)
+pub fn Insn::all() -> Array[Self]
+pub fn Insn::equal(Self, Self) -> Bool
+pub fn Insn::name(Self) -> String
+pub fn Insn::not_equal(Self, Self) -> Bool
+pub fn Insn::of_name(StringView) -> Self?
+pub fn Insn::to_repr(Self) -> @debug.Repr
+
+pub(all) enum MemInsn {
+  LDRBT_POST_IMM
+  LDRBT_POST_REG
+  LDRB_POST_IMM
+  LDRB_POST_REG
+  LDRB_PRE_IMM
+  LDRB_PRE_REG
+  LDRBi12
+  LDRBrs
+  LDRD
+  LDRD_POST
+  LDRD_PRE
+  LDREX
+  LDREXB
+  LDREXD
+  LDREXH
+  LDRH
+  LDRHTr
+  LDRH_POST
+  LDRH_PRE
+  LDRSB
+  LDRSBTr
+  LDRSB_POST
+  LDRSB_PRE
+  LDRSH
+  LDRSHTi
+  LDRSHTr
+  LDRSH_POST
+  LDRSH_PRE
+  LDRT_POST_REG
+  LDR_POST_IMM
+  LDR_POST_REG
+  LDR_PRE_IMM
+  LDR_PRE_REG
+  LDRi12
+  LDRrs
+  STRBT_POST_IMM
+  STRBT_POST_REG
+  STRB_POST_IMM
+  STRB_POST_REG
+  STRB_PRE_IMM
+  STRB_PRE_REG
+  STRBi12
+  STRBrs
+  STRD
+  STRD_POST
+  STRD_PRE
+  STREX
+  STREXB
+  STREXD
+  STREXH
+  STRH
+  STRHTr
+  STRH_POST
+  STRH_PRE
+  STRT_POST_REG
+  STR_POST_IMM
+  STR_POST_REG
+  STR_PRE_IMM
+  STR_PRE_REG
+  STRi12
+  STRrs
+} derive(Eq, @debug.Debug)
+pub fn MemInsn::all() -> Array[Self]
+pub fn MemInsn::equal(Self, Self) -> Bool
+pub fn MemInsn::name(Self) -> String
+pub fn MemInsn::not_equal(Self, Self) -> Bool
+pub fn MemInsn::to_repr(Self) -> @debug.Repr
+
+pub(all) enum MemMultiInsn {
+  LDMDA
+  LDMDA_UPD
+  LDMDB
+  LDMDB_UPD
+  LDMIA
+  LDMIA_UPD
+  LDMIB
+  LDMIB_UPD
+  STMDA
+  STMDA_UPD
+  STMDB
+  STMDB_UPD
+  STMIA
+  STMIA_UPD
+  STMIB
+  STMIB_UPD
+} derive(Eq, @debug.Debug)
+pub fn MemMultiInsn::all() -> Array[Self]
+pub fn MemMultiInsn::equal(Self, Self) -> Bool
+pub fn MemMultiInsn::name(Self) -> String
+pub fn MemMultiInsn::not_equal(Self, Self) -> Bool
+pub fn MemMultiInsn::to_repr(Self) -> @debug.Repr
+
+pub(all) enum MoveInsn {
+  ADCri
+  ADCrr
+  ADCrsi
+  ADCrsr
+  ADDri
+  ADDrr
+  ADDrsi
+  ADDrsr
+  ANDri
+  ANDrr
+  ANDrsi
+  ANDrsr
+  BICri
+  BICrr
+  BICrsi
+  BICrsr
+  CMNri
+  CMNzrr
+  CMNzrsi
+  CMNzrsr
+  CMPri
+  CMPrr
+  CMPrsi
+  CMPrsr
+  EORri
+  EORrr
+  EORrsi
+  EORrsr
+  MOVTi16
+  MOVi
+  MOVi16
+  MOVr
+  MOVsi
+  MOVsr
+  MOVPCLR
+  MVNi
+  MVNr
+  MVNsi
+  MVNsr
+  ORRri
+  ORRrr
+  ORRrsi
+  ORRrsr
+  RSBri
+  RSBrr
+  RSBrsi
+  RSBrsr
+  RSCri
+  RSCrr
+  RSCrsi
+  RSCrsr
+  SBCri
+  SBCrr
+  SBCrsi
+  SBCrsr
+  SUBri
+  SUBrr
+  SUBrsi
+  SUBrsr
+  TEQri
+  TEQrr
+  TEQrsi
+  TEQrsr
+  TSTri
+  TSTrr
+  TSTrsi
+  TSTrsr
+} derive(Eq, @debug.Debug)
+pub fn MoveInsn::all() -> Array[Self]
+pub fn MoveInsn::equal(Self, Self) -> Bool
+pub fn MoveInsn::name(Self) -> String
+pub fn MoveInsn::not_equal(Self, Self) -> Bool
+pub fn MoveInsn::to_repr(Self) -> @debug.Repr
+
+pub(all) enum MultInsn {
+  MLA
+  MLS
+  MUL
+  SMLABB
+  SMLAD
+  SMLAL
+  SMLALBT
+  SMLAWB
+  SMUAD
+  SMULBB
+  SMULL
+  SMULTB
+  UMLAL
+  UMULL
+} derive(Eq, @debug.Debug)
+pub fn MultInsn::all() -> Array[Self]
+pub fn MultInsn::equal(Self, Self) -> Bool
+pub fn MultInsn::name(Self) -> String
+pub fn MultInsn::not_equal(Self, Self) -> Bool
+pub fn MultInsn::to_repr(Self) -> @debug.Repr
+
+pub(all) enum Op {
+  Reg(Reg)
+  Imm(UInt)
+} derive(Eq, @debug.Debug)
+pub fn Op::equal(Self, Self) -> Bool
+pub fn Op::not_equal(Self, Self) -> Bool
+pub fn Op::of_mc(@mc.Op) -> Self?
+pub fn Op::to_repr(Self) -> @debug.Repr
+pub fn Op::to_string(Self) -> String
+
+pub(all) enum Reg {
+  Nil
+  R0
+  R1
+  R2
+  R3
+  R4
+  R5
+  R6
+  R7
+  R8
+  R9
+  R10
+  R11
+  R12
+  LR
+  PC
+  SP
+  CPSR
+  SPSR
+  ITSTATE
+} derive(Eq, @debug.Debug)
+pub fn Reg::all() -> Array[Self]
+pub fn Reg::equal(Self, Self) -> Bool
+pub fn Reg::is_gpr(Self) -> Bool
+pub fn Reg::name(Self) -> String
+pub fn Reg::not_equal(Self, Self) -> Bool
+pub fn Reg::of_name(StringView) -> Self?
+pub fn Reg::to_repr(Self) -> @debug.Repr
+pub fn Reg::to_var(Self) -> @types.Var
+
+pub(all) enum SpecialInsn {
+  CPS2p
+  DMB
+  DSB
+  HINT
+  MRS
+  MSR
+  PLDi12
+  SVC
+} derive(Eq, @debug.Debug)
+pub fn SpecialInsn::all() -> Array[Self]
+pub fn SpecialInsn::equal(Self, Self) -> Bool
+pub fn SpecialInsn::name(Self) -> String
+pub fn SpecialInsn::not_equal(Self, Self) -> Bool
+pub fn SpecialInsn::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

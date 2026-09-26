@@ -69,6 +69,7 @@ test "bap without arguments prints the usage" {
       #|  beagle                   beagle is an obfuscated string solver that uses CPU emulation for
       #|  bil                      defines the semantics of BAP Instruction Language (BIL) and makes old
       #|  byteweight               identifies function starts using byteweight signatures
+      #|  c-parser                 provides a C parser for the API specifications
       #|  callgraph-collator       compares projects by their callgraphs
       #|  callsites                annotates callsites with subroutines arguments
       #|  constant-tracker         a constant tracking analysis based on Primus
@@ -127,6 +128,7 @@ test "bap without arguments prints the usage" {
       #|Run 'bap --<PLUGIN>-help for more information about a plugin.
       #|Run 'bap --help' for the detailed manual.
       #|
+
     ),
   )
 }

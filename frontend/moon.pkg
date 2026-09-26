@@ -1,5 +1,6 @@
 import {
   "bobzhang/bap/bap_main",
+  "bobzhang/bap/c_parser",
   "bobzhang/bap/core_theory",
   "bobzhang/bap/image",
   "bobzhang/bap/knowledge",

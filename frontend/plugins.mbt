@@ -64,6 +64,7 @@ pub fn plugin_table() -> Array[StaticPlugin] {
       name: "callgraph-collator",
       load: _ => @callgraph_collator.declare_plugin(),
     },
+    { name: "c-parser", load: _ => @c_parser.declare_plugin(), },
     { name: "callsites", load: _ => @callsites.declare_plugin(), },
     { name: "constant-tracker", load: _ => @constant_tracker.declare_plugin(), },
     { name: "dump-symbols", load: _ => @dump_symbols.declare_plugin(), },

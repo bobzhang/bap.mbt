@@ -93,10 +93,9 @@ fn make_model(addr_size : AddrSize) -> Model {
   let gpr_bitwidth = addr_size.in_bits()
   let fpr_bitwidth = 64
   let vr_bitwidth = 128
-  let reg = (prefix : String, width : Int, i : Int) => @types.Var::new(
-    name="\{prefix}\{i}",
-    typ=Imm(width),
-  )
+  let reg = (prefix : String, width : Int, i : Int) => {
+    @types.Var::new(name="\{prefix}\{i}", typ=Imm(width))
+  }
   let gpri = Array::makei(32, i => reg("R", gpr_bitwidth, i))
   let gpr : Map[String, @types.Var] = Map([])
   for i, v in gpri {

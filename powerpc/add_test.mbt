@@ -222,10 +222,7 @@ test "adde." {
 test "addme." {
   for a in archs {
     // 7c 22 01 d5  addme. r1, r2
-    let r = run(a, "ADDMEo", [reg("R1"), reg("R2")], init=[
-      ("R2", 1),
-      ("CA", 0),
-    ])
+    let r = run(a, "ADDMEo", [reg("R1"), reg("R2")], init=[("R2", 1), ("CA", 0)])
     r.check("R1", 0)
     r.check("CA32", 1)
     r.check("CA", 1)
@@ -252,6 +249,10 @@ test "add renders as BIL" {
   let bil = @powerpc.lift32(
     @mc.Insn::create("ADD4", [reg("R11"), reg("R2"), reg("R11")]),
   )
-  inspect(bil.map(s => s.to_string()).join("\n"), content=(#|R11:imm32 := (R2:imm32 + R11:imm32)
-  ))
+  inspect(
+    bil.map(s => s.to_string()).join("\n"),
+    content=(
+      #|R11:imm32 := (R2:imm32 + R11:imm32)
+    ),
+  )
 }

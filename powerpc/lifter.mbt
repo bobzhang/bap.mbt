@@ -128,9 +128,7 @@ pub fn lift(
   match @types.check_stmt_types(bil) {
     Ok(_) => bil
     Err(err) =>
-      raise Failure(
-        "BIL doesn't type check \{insn.name}: \{err.to_string()}",
-      )
+      raise Failure("BIL doesn't type check \{insn.name}: \{err.to_string()}")
   }
 }
 

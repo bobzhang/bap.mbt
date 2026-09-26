@@ -69,9 +69,7 @@ fn rlwnm(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
   [
     ..word_rotate_mask(cpu, ra, mb, me, mask, w32),
     tmp.set(rs.nth(word, 1)),
-    ra.set(
-      triple(tmp).shl(rb.last(5)).nth(cpu.word_width, 0) & mask,
-    ),
+    ra.set(triple(tmp).shl(rb.last(5)).nth(cpu.word_width, 0) & mask),
   ]
 }
 
@@ -117,11 +115,7 @@ fn rldicl(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
   let sh = ops.uimm(2)
   let mb = ops.uimm(3)
   let mask = uvar(doubleword)
-  [
-    mask.set(zero),
-    mask.set(mask.lnot().shr(mb)),
-    ra.set(rotl64(rs, sh) & mask),
-  ]
+  [mask.set(zero), mask.set(mask.lnot().shr(mb)), ra.set(rotl64(rs, sh) & mask)]
 }
 
 ///|

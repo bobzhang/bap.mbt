@@ -4,15 +4,10 @@
 fn bil_exp(body : RtlBody) -> @types.Exp {
   match body {
     Vars(v, vars) =>
-      vars.fold(init=@types.Exp::Var(v), (e, v) => Concat(high=e, low=Var(v)))
+      vars.fold(init=Var(v), (e, v) => Concat(high=e, low=Var(v)))
     Word(w) => Int(w)
     Load(mem, addr, endian, size) =>
-      Load(
-        mem=Var(mem),
-        addr=bil_exp(addr),
-        endian~,
-        typ=Imm(size.in_bits()),
-      )
+      Load(mem=Var(mem), addr=bil_exp(addr), endian~, typ=Imm(size.in_bits()))
     Concat(x, y) => Concat(high=bil_exp(x), low=bil_exp(y))
     Binop(op, x, y) => BinOp(op, bil_exp(x), bil_exp(y))
     Extract(hi, lo, x) => Extract(hi~, lo~, exp=bil_exp(x))
@@ -121,7 +116,10 @@ fn assign_vars(
 /// 2. `var1 ^ var2 ... varN := exp`
 /// 3. `extract hi lo var := exp` - change only certain bits of `var`
 /// 4. `extract hi lo (var1 ^ var2 ... varN) := exp`
-fn lower_move(lhs : RtlExp, rhs : RtlExp) -> Array[@types.Stmt] raise @mc.LiftError {
+fn lower_move(
+  lhs : RtlExp,
+  rhs : RtlExp,
+) -> Array[@types.Stmt] raise @mc.LiftError {
   match lhs.body {
     Vars(v, []) => {
       let rhs = rhs.cast(lhs.width, lhs.sign)
@@ -201,7 +199,9 @@ fn lower_stmt(rtl : Rtl, out : Array[@types.Stmt]) -> Unit raise @mc.LiftError {
 
 ///|
 /// Lower an RTL program to BIL.
-pub fn bil_of_rtl(rtl : ArrayView[Rtl]) -> Array[@types.Stmt] raise @mc.LiftError {
+pub fn bil_of_rtl(
+  rtl : ArrayView[Rtl],
+) -> Array[@types.Stmt] raise @mc.LiftError {
   let out = []
   for stmt in rtl {
     lower_stmt(stmt, out)

@@ -102,7 +102,7 @@ fn make_word(width : Int, value : Int64) -> @types.Word {
 ///|
 /// Expression denoting variable `v` (unsigned).
 pub fn RtlExp::of_var(v : @types.Var) -> RtlExp {
-  { sign: Unsigned, width: var_bitwidth(v), body: Vars(v, []) }
+  { sign: Unsigned, width: var_bitwidth(v), body: Vars(v, []), }
 }
 
 ///|
@@ -123,7 +123,7 @@ pub fn RtlExp::of_vars(vars : ArrayView[@types.Var]) -> RtlExp {
 ///|
 /// Unsigned constant expression.
 pub fn RtlExp::of_word(w : @types.Word) -> RtlExp {
-  { sign: Unsigned, width: w.width(), body: Word(w) }
+  { sign: Unsigned, width: w.width(), body: Word(w), }
 }
 
 ///|
@@ -142,7 +142,11 @@ pub fn RtlExp::load(
   endian : @bitvec.Endian,
   size : @types.Size,
 ) -> RtlExp {
-  { sign: Unsigned, width: size.in_bits(), body: Load(mem, addr.body, endian, size) }
+  {
+    sign: Unsigned,
+    width: size.in_bits(),
+    body: Load(mem, addr.body, endian, size),
+  }
 }
 
 ///|
@@ -154,21 +158,21 @@ pub fn RtlExp::cast(self : RtlExp, width : Int, sign : Sign) -> RtlExp {
     (false, true) => { ..self, sign, }
     _ =>
       if self.width == 1 {
-        { width, sign, body: Cast(self.sign, width, self.body) }
+        { width, sign, body: Cast(self.sign, width, self.body), }
       } else {
-        { width, sign, body: Cast(sign, width, self.body) }
+        { width, sign, body: Cast(sign, width, self.body), }
       }
   }
 }
 
 ///|
 pub fn RtlExp::signed(self : RtlExp) -> RtlExp {
-  { ..self, sign: Signed }
+  { ..self, sign: Signed, }
 }
 
 ///|
 pub fn RtlExp::unsigned(self : RtlExp) -> RtlExp {
-  { ..self, sign: Unsigned }
+  { ..self, sign: Unsigned, }
 }
 
 ///|
@@ -209,7 +213,7 @@ fn binop_with_signedness(
   let width = Int::max(lhs.width, rhs.width)
   let lhs = lhs.cast(width, sign)
   let rhs = rhs.cast(width, sign)
-  { sign, width, body: Binop(op, lhs.body, rhs.body) }
+  { sign, width, body: Binop(op, lhs.body, rhs.body), }
 }
 
 ///|
@@ -219,7 +223,7 @@ fn binop_with_cast(op : @types.BinOp, lhs : RtlExp, rhs : RtlExp) -> RtlExp {
 
 ///|
 fn logop_with_cast(op : @types.BinOp, lhs : RtlExp, rhs : RtlExp) -> RtlExp {
-  { ..binop_with_cast(op, lhs, rhs), width: 1 }
+  { ..binop_with_cast(op, lhs, rhs), width: 1, }
 }
 
 ///|
@@ -239,7 +243,7 @@ fn derive_op(
 pub extend RtlExp with Add::{add}
 
 ///|
-pub impl Add for RtlExp with add(x, y) {
+pub impl Add for RtlExp with fn add(x, y) {
   binop_with_cast(Plus, x, y)
 }
 
@@ -247,7 +251,7 @@ pub impl Add for RtlExp with add(x, y) {
 pub extend RtlExp with Sub::{sub}
 
 ///|
-pub impl Sub for RtlExp with sub(x, y) {
+pub impl Sub for RtlExp with fn sub(x, y) {
   binop_with_cast(Minus, x, y)
 }
 
@@ -255,7 +259,7 @@ pub impl Sub for RtlExp with sub(x, y) {
 pub extend RtlExp with Mul::{mul}
 
 ///|
-pub impl Mul for RtlExp with mul(x, y) {
+pub impl Mul for RtlExp with fn mul(x, y) {
   binop_with_cast(Times, x, y)
 }
 
@@ -264,7 +268,7 @@ pub impl Mul for RtlExp with mul(x, y) {
 pub extend RtlExp with Div::{div}
 
 ///|
-pub impl Div for RtlExp with div(x, y) {
+pub impl Div for RtlExp with fn div(x, y) {
   binop_with_cast(derive_op(x, y, Div, SignedDiv), x, y)
 }
 
@@ -273,7 +277,7 @@ pub impl Div for RtlExp with div(x, y) {
 pub extend RtlExp with Mod::{mod}
 
 ///|
-pub impl Mod for RtlExp with mod(x, y) {
+pub impl Mod for RtlExp with fn mod(x, y) {
   binop_with_cast(derive_op(x, y, Mod, SignedMod), x, y)
 }
 
@@ -282,7 +286,7 @@ pub impl Mod for RtlExp with mod(x, y) {
 pub extend RtlExp with BitAnd::{land}
 
 ///|
-pub impl BitAnd for RtlExp with land(x, y) {
+pub impl BitAnd for RtlExp with fn land(x, y) {
   binop_with_signedness(Unsigned, And, x, y)
 }
 
@@ -291,7 +295,7 @@ pub impl BitAnd for RtlExp with land(x, y) {
 pub extend RtlExp with BitOr::{lor}
 
 ///|
-pub impl BitOr for RtlExp with lor(x, y) {
+pub impl BitOr for RtlExp with fn lor(x, y) {
   binop_with_signedness(Unsigned, Or, x, y)
 }
 
@@ -300,14 +304,14 @@ pub impl BitOr for RtlExp with lor(x, y) {
 pub extend RtlExp with BitXOr::{lxor}
 
 ///|
-pub impl BitXOr for RtlExp with lxor(x, y) {
+pub impl BitXOr for RtlExp with fn lxor(x, y) {
   binop_with_signedness(Unsigned, Xor, x, y)
 }
 
 ///|
 /// Bitwise complement.
 pub fn RtlExp::lnot(self : RtlExp) -> RtlExp {
-  { ..self, body: Unop(Not, self.body) }
+  { ..self, body: Unop(Not, self.body), }
 }
 
 ///|
@@ -394,11 +398,11 @@ fn extract_of_vars(
       }
     }
     match selected {
-      [v, .. rest] => { sign: Unsigned, width, body: Vars(v, rest.to_owned()) }
-      [] => { sign: Unsigned, width, body: Extract(hi, lo, e.body) }
+      [v, .. rest] => { sign: Unsigned, width, body: Vars(v, rest.to_owned()), }
+      [] => { sign: Unsigned, width, body: Extract(hi, lo, e.body), }
     }
   } else {
-    { sign: Unsigned, width, body: Extract(hi, lo, e.body) }
+    { sign: Unsigned, width, body: Extract(hi, lo, e.body), }
   }
 }
 
@@ -410,12 +414,12 @@ fn extract_of_vars(
 pub fn RtlExp::extract(self : RtlExp, hi : Int, lo : Int) -> RtlExp {
   let width = hi - lo + 1
   if width == self.width {
-    { ..self, sign: Unsigned }
+    { ..self, sign: Unsigned, }
   } else {
     match self.body {
       Vars(v, vars) if vars.length() > 0 =>
         extract_of_vars(self, hi, lo, [v, ..vars])
-      _ => { sign: Unsigned, width, body: Extract(hi, lo, self.body) }
+      _ => { sign: Unsigned, width, body: Extract(hi, lo, self.body), }
     }
   }
 }

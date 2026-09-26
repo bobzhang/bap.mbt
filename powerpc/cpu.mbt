@@ -164,7 +164,7 @@ pub struct Operands {
 
 ///|
 pub fn Operands::of_insn(insn : @mc.Insn) -> Operands {
-  { name: insn.name, ops: insn.ops }
+  { name: insn.name, ops: insn.ops, }
 }
 
 ///|

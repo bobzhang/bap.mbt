@@ -16,7 +16,7 @@ fn reg(name : String) -> @mc.Op {
 
 ///|
 fn imm(value : Int64) -> @mc.Op {
-  @mc.Imm(value)
+  Imm(value)
 }
 
 ///|
@@ -136,7 +136,7 @@ fn run(
     guard stored is Ok(memory) else { fail("store failed") }
     env["mem"] = BilMem(memory)
   }
-  let result = { env, jumped: None }
+  let result = { env, jumped: None, }
   ignore(exec(result, bil))
   result
 }
@@ -168,7 +168,12 @@ fn Run::check(self : Run, name : String, expected : UInt64) -> Unit raise {
 
 ///|
 /// Assert the `CR0` LT/GT/EQ bits.
-fn Run::check_cr0(self : Run, lt : UInt64, gt : UInt64, eq : UInt64) -> Unit raise {
+fn Run::check_cr0(
+  self : Run,
+  lt : UInt64,
+  gt : UInt64,
+  eq : UInt64,
+) -> Unit raise {
   self.check("CR0LT", lt)
   self.check("CR0GT", gt)
   self.check("CR0EQ", eq)
@@ -176,7 +181,12 @@ fn Run::check_cr0(self : Run, lt : UInt64, gt : UInt64, eq : UInt64) -> Unit rai
 
 ///|
 /// Load `size` bytes (big endian) from memory at `at`.
-fn Run::load(self : Run, a : @powerpc.AddrSize, at : UInt64, size : Int) -> UInt64 raise {
+fn Run::load(
+  self : Run,
+  a : @powerpc.AddrSize,
+  at : UInt64,
+  size : Int,
+) -> UInt64 raise {
   guard self.env.get("mem") is Some(BilMem(memory)) else { fail("no memory") }
   match memory.load(word_of(bits(a), at), endian=BigEndian, width=size * 8) {
     Ok(w) => w.to_uint64()

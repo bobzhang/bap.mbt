@@ -301,9 +301,7 @@ fn bpermd(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
     tmp.set(zero),
     ind.set(max),
     foreach(bit_index, rs, [
-      if_(bit_index.lt(max_ind), [x.set(rb.shl(bit_index).msb())], [
-        x.set(zero),
-      ]),
+      if_(bit_index.lt(max_ind), [x.set(rb.shl(bit_index).msb())], [x.set(zero)]),
       tmp.set(tmp | x.shl(ind)),
       ind.set(ind - one),
     ]),

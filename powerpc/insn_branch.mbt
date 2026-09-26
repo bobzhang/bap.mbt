@@ -1,10 +1,7 @@
 // Port of BAP `plugins/powerpc/powerpc_branch.ml`.
 
 ///|
-fn update_link_register(
-  cpu : Cpu,
-  _ops : Operands,
-) -> Array[Rtl] {
+fn update_link_register(cpu : Cpu, _ops : Operands) -> Array[Rtl] {
   [cpu.lr.set(cpu.pc + uconst(byte, 4))]
 }
 
@@ -60,10 +57,7 @@ fn bc(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
   let tm = svar(cpu.word_width)
   [
     ..branch_conditions(cpu, bo, bi, ctr_ok, cond_ok),
-    when_(ctr_ok & cond_ok, [
-      tm.set(bd.shl(sh).last(16)),
-      cpu.jmp(cpu.pc + tm),
-    ]),
+    when_(ctr_ok & cond_ok, [tm.set(bd.shl(sh).last(16)), cpu.jmp(cpu.pc + tm)]),
   ]
 }
 
@@ -164,11 +158,7 @@ fn blr(cpu : Cpu, _ops : Operands) -> Array[Rtl] {
 fn blrl(cpu : Cpu, _ops : Operands) -> Array[Rtl] {
   let tm = uvar(cpu.word_width)
   let step = uconst(byte, 4)
-  [
-    tm.set(word_aligned(cpu, cpu.lr)),
-    cpu.lr.set(cpu.pc + step),
-    cpu.jmp(tm),
-  ]
+  [tm.set(word_aligned(cpu, cpu.lr)), cpu.lr.set(cpu.pc + step), cpu.jmp(tm)]
 }
 
 ///|

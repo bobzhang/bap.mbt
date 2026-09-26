@@ -116,7 +116,13 @@ pub fn Sysv32Abi::layout(
 ) -> AbiLayout {
   let next_int = Ref(0)
   let next_float = Ref(0)
-  let order = (regs : Array[String]) => if little_endian { regs.rev() } else { regs }
+  let order = (regs : Array[String]) => {
+    if little_endian {
+      regs.rev()
+    } else {
+      regs
+    }
+  }
   // Return values are decided first: a hidden reference consumes the first
   // integer argument register.
   let ret_loc = match ret {
@@ -159,5 +165,5 @@ pub fn Sysv32Abi::layout(
     }
     locs.push(loc)
   }
-  { args: locs, ret: ret_loc }
+  { args: locs, ret: ret_loc, }
 }

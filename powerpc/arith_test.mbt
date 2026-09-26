@@ -121,17 +121,11 @@ test "subfe" {
 test "subfme and subfze" {
   for a in archs {
     let x = trunc(a, 0xABCD_EF42_1234_5678)
-    let r = run(a, "SUBFME", [reg("R1"), reg("R2")], init=[
-      ("R2", x),
-      ("CA", 1),
-    ])
+    let r = run(a, "SUBFME", [reg("R1"), reg("R2")], init=[("R2", x), ("CA", 1)])
     r.check("R1", trunc(a, x.lnot()))
     r.check("CA", 1)
     r.check("CA32", 1)
-    let r = run(a, "SUBFZE", [reg("R1"), reg("R2")], init=[
-      ("R2", x),
-      ("CA", 1),
-    ])
+    let r = run(a, "SUBFZE", [reg("R1"), reg("R2")], init=[("R2", x), ("CA", 1)])
     r.check("R1", trunc(a, x.lnot() + 1))
     r.check("CA", 1)
     let r = run(a, "SUBFMEo", [reg("R1"), reg("R2")], init=[

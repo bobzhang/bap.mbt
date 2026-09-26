@@ -86,9 +86,9 @@ fn parse_digits(
   base : Int,
   width : Int,
 ) -> @types.Word raise @mc.LiftError {
-  let fail_parse = () => @mc.LiftError::Failure(
-    "PowerPC lifter fail: bad numeral \{digits}",
-  )
+  let fail_parse = () => {
+    @mc.LiftError::Failure("PowerPC lifter fail: bad numeral \{digits}")
+  }
   if digits.is_empty() {
     raise fail_parse()
   }
@@ -249,7 +249,10 @@ pub fn default(code : Array[Rtl]) -> Clause {
 ///|
 /// Chain of `if`s comparing `exp` against each case; the first `default`
 /// clause (if any) handles the remaining values.
-pub fn switch_(exp : RtlExp, clauses : Array[Clause]) -> Rtl raise @mc.LiftError {
+pub fn switch_(
+  exp : RtlExp,
+  clauses : Array[Clause],
+) -> Rtl raise @mc.LiftError {
   let default_code = for clause in clauses {
     if clause is Default(code) {
       break code

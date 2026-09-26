@@ -288,8 +288,9 @@ pub fn branch_dest_encoding(
 }
 
 ///|
-/// Lift in a context. Opcodes outside the Thumb-1 set (including all
-/// Thumb-2 `t2*` opcodes except `t2LDRpci`) raise `Unsupported`, so that a
+/// Lift in a context. `t2IT` lifts to an empty program. Other opcodes
+/// outside the Thumb-1 set (including all Thumb-2 `t2*` opcodes except
+/// `t2LDRpci`) raise `Unsupported`, so that a
 /// registry falls through to the ARM provider. The result records the
 /// destination encoding of interworking branches (see
 /// `branch_dest_encoding`).
@@ -297,6 +298,11 @@ pub fn lift_in_context(
   ctx : @mc.Context,
   insn : @mc.Insn,
 ) -> @mc.Lifted raise @mc.LiftError {
+  // `t2IT` itself has no effect: the decoder predicates the instructions
+  // of the block with its conditions
+  if insn.name == "t2IT" {
+    return @mc.Lifted::create([])
+  }
   guard Opcode::of_name(insn.name) is Some(opcode) else {
     raise @mc.Unsupported(opcode=insn.name, target=ctx.target.to_string())
   }

@@ -76,7 +76,9 @@ pub fn Var::scoped_pure(sort : Sort, f : (Var) -> Pure) -> Pure {
       mutable_flag: false,
       virtual_flag: true,
     }
-    scoped_pure_depth.with_(state, depth + 1, () => f(variable)(state))
+    scoped_pure_depth.set(state, depth + 1)
+    defer scoped_pure_depth.set(state, depth)
+    f(variable)(state)
   }
 }
 

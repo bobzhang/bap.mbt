@@ -9,6 +9,12 @@ pub fn ops_of_mc(ops : ArrayView[@mc.Op]) -> Array[Op] raise @mc.LiftError {
   for op in ops {
     match Op::of_mc(op) {
       Some(op) => result.push(op)
+      // port: a register pair (`R0_R1`, LLVM's `GPRPair` operand of
+      // `LDREXD`/`STREXD`) stands for its two registers
+      None if op is Reg(name~, ..) && register_pair(name) is Some((lo, hi)) => {
+        result.push(Reg(lo))
+        result.push(Reg(hi))
+      }
       None =>
         raise BadOperands(
           opcode="",
@@ -17,6 +23,20 @@ pub fn ops_of_mc(ops : ArrayView[@mc.Op]) -> Array[Op] raise @mc.LiftError {
     }
   }
   result
+}
+
+///|
+/// The registers of a register pair name (`R0_R1`).
+fn register_pair(name : String) -> (Reg, Reg)? {
+  let parts : Array[StringView] = name.split("_").collect()
+  match parts {
+    [lo, hi] =>
+      match (Reg::of_name(lo), Reg::of_name(hi)) {
+        (Some(lo), Some(hi)) => Some((lo, hi))
+        _ => None
+      }
+    _ => None
+  }
 }
 
 ///|
@@ -37,36 +57,13 @@ pub fn lift_typed(
 ) -> Array[@types.Stmt] raise @mc.LiftError {
   tmp_counter.val = 0
   match insn {
-    Move(op) => lift_move(encoding, raw_or_operand_word(raw, op, ops), ops, op)
+    Move(op) => lift_move(encoding, ops, op)
     Bits(op) => lift_bits(raw, ops, op)
     Mult(op) => lift_mult(ops, op)
     Mem(op) => lift_mem(ops, op)
     MemMulti(op) => lift_mem_multi(ops, op)
     Branch(op) => lift_branch(addr, ops, op)
     Special(op) => lift_special(ops, op)
-  }
-}
-
-///|
-/// The instruction word used by `set_cf_data`. For A32 modified-immediate
-/// forms the rotation field (bits 11..8) of the instruction word coincides
-/// with the one of the undecoded immediate operand, which is all that
-/// `set_cf_data` inspects.
-fn raw_or_operand_word(
-  raw : UInt?,
-  insn : MoveInsn,
-  ops : ArrayView[Op],
-) -> UInt {
-  match raw {
-    Some(raw) => raw
-    None => {
-      let imm = match (insn, ops) {
-        (MOVi | MVNi, [_, Imm(imm), ..]) => imm
-        (ANDri | BICri | EORri | ORRri, [_, _, Imm(imm), ..]) => imm
-        _ => 0
-      }
-      imm & 0xFFF
-    }
   }
 }
 

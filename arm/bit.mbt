@@ -24,7 +24,12 @@ fn bit_extend(
   let rotated = if amount == 0 {
     exp_of_op(src)
   } else {
-    shift_c(exp_of_op(src), ROR, int32(amount), @types.ValueType::reg32_t()).0
+    shift_imm_c(
+      exp_of_op(src),
+      ROR,
+      amount.reinterpret_as_int(),
+      @types.ValueType::reg32_t(),
+    ).0
   }
   let extracted = cast(Low, bits, rotated)
   let extent = cast_of_sign(sign, 32, extracted)

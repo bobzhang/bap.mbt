@@ -12,10 +12,10 @@ fn riscv(xlen : @rv.Xlen) -> Isa {
     target,
     addr_width: bits,
     pc: 0x1000_0000,
-    encode: code => {
+    encode: word_encoding(code => {
       let size = if (code & 3) == 3 { 4 } else { 2 }
       Bytes::makei(size, i => (code >> (8 * i)).to_byte())
-    },
+    }),
     decode: (bytes, addr) => @rv.decode(bytes, addr, xlen~),
     regs: Array::makei(31, i => "R\{i + 1}"),
     write: (state, name, v) => {
@@ -26,6 +26,7 @@ fn riscv(xlen : @rv.Xlen) -> Isa {
     },
     fallthrough: insn => insn.addr() + insn.size().to_uint64(),
     care: default_care,
+    pc_care: 0xFFFF_FFFF_FFFF_FFFF,
   }
 }
 

@@ -28,7 +28,7 @@ fn mic_decode(encoding : Encoding, op : Op) -> @types.Exp {
 /// `Arm_mov.lift`: data-processing instruction `itype` computing
 /// `src1 op src2` (with the second, or for moves the first, operand
 /// optionally shifted by `sreg`/`simm`) into `dest`, setting the flags when
-/// `wflag` is `CPSR`. `raw` is the instruction word.
+/// `wflag` is `CPSR`.
 fn mov_lift(
   encoding~ : Encoding,
   dest? : Op,
@@ -37,7 +37,6 @@ fn mov_lift(
   itype : DataOper,
   sreg? : Op,
   simm? : Op,
-  raw : UInt,
   wflag~ : Op,
   cond : Op,
 ) -> Array[@types.Stmt] raise @mc.LiftError {
@@ -57,11 +56,14 @@ fn mov_lift(
   // register or immediate shift of the second (first for moves) operand
   let (s1, s2, stmts, carry) = match (sreg, simm) {
     (Some(sreg), Some(simm)) => {
-      let (shifted, carry) = shift_r(v(unshifted), simm, exp_of_op(sreg), r32)
+      // the shift register is read before the destination is written
+      let amount = tmp(r32)
+      let (shifted, carry) = shift_r(v(unshifted), simm, v(amount), r32)
+      let read = assign(amount, shift_amount(exp_of_op(sreg), r32))
       if is_mov {
-        (shifted, s2, [assign(unshifted, s1)], carry)
+        (shifted, s2, [assign(unshifted, s1), read], carry)
       } else {
-        (s1, shifted, [assign(unshifted, s2)], carry)
+        (s1, shifted, [assign(unshifted, s2), read], carry)
       }
     }
     (None, Some(simm)) => {
@@ -77,7 +79,7 @@ fn mov_lift(
   let vd = v(dest)
   let (stmts, flags) = match (itype, src1, src2) {
     (MOV | MVN, Imm(imm), _) | (AND | BIC | EOR | ORR, _, Some(Imm(imm))) =>
-      (stmts, [set_cf_data(imm~, data=raw), ..set_nzf(vd, r32)])
+      (stmts, [set_cf_data(encoding, imm), ..set_nzf(vd, r32)])
     (AND | BIC | EOR | MOV | MVN | ORR, _, _) =>
       (stmts, [assign(cf, carry), ..set_nzf(vd, r32)])
     (arith, _, _) => {

@@ -24,7 +24,7 @@ fn mips(bits : Int, endian : @bitvec.Endian, r6? : Bool = false) -> Isa {
     target,
     addr_width: bits,
     pc: 0x1000_0000,
-    encode: code => {
+    encode: word_encoding(code => {
       Bytes::makei(4, i => {
         let shift = match endian {
           LittleEndian => 8 * i
@@ -32,7 +32,7 @@ fn mips(bits : Int, endian : @bitvec.Endian, r6? : Bool = false) -> Isa {
         }
         (code >> shift).to_byte()
       })
-    },
+    }),
     decode: (bytes, addr) => @mips.decode(bytes, addr, arch~, endian~, r6~),
     regs,
     write: (state, name, v) => state.set(names[name], word(bits, v)),
@@ -45,6 +45,7 @@ fn mips(bits : Int, endian : @bitvec.Endian, r6? : Bool = false) -> Isa {
       insn.addr() + 4 + slot
     },
     care: default_care,
+    pc_care: 0xFFFF_FFFF_FFFF_FFFF,
   }
 }
 

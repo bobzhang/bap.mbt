@@ -19,7 +19,8 @@
 /// `CR0`: the `LT`/`GT`/`EQ` bits of `CR0`).
 struct Case {
   text : String
-  code : UInt
+  /// the encoding, as written in the table (see `Isa::encode`)
+  code : String
   init : Array[(String, UInt64)]
   out : Array[(String, UInt64)]
   mem : Array[(UInt64, Bytes)]
@@ -85,7 +86,7 @@ fn parse_cases(table : String) -> Array[Case] raise {
     guard fields.length() >= 2 else { fail("bad case: \{line}") }
     cases.push({
       text: field(0).to_owned(),
-      code: parse_hex(field(1)).to_uint(),
+      code: field(1).to_owned(),
       init: regs(field(2)),
       out: regs(field(3)),
       mem: mems(field(4)),
@@ -103,8 +104,9 @@ struct Isa {
   addr_width : Int
   /// address of the tested instruction
   pc : UInt64
-  /// the instruction bytes of an encoding
-  encode : (UInt) -> Bytes
+  /// the instruction bytes of an encoding (see `word_encoding`)
+  encode : (String) -> Bytes
+  /// the instruction at the start of the bytes
   decode : (Bytes, UInt64) -> @mc.Insn?
   /// the register file compared by the tables (all set initially)
   regs : Array[String]
@@ -114,6 +116,15 @@ struct Isa {
   fallthrough : (@mc.Insn) -> UInt64
   /// bits of a register that are compared given the skip list
   care : (String, Array[String]) -> UInt64
+  /// bits of the next PC that are compared (ARM leaves out the
+  /// interworking bit 0, which selects the Thumb encoding)
+  pc_care : UInt64
+}
+
+///|
+/// An encoding written as one hexadecimal instruction word.
+fn word_encoding(encode : (UInt) -> Bytes) -> (String) -> Bytes {
+  code => encode(parse_hex(code).to_uint())
 }
 
 ///|
@@ -209,13 +220,23 @@ fn run_case(
   registry : @mc.Registry,
 ) -> Array[String] raise {
   let bytes = (isa.encode)(c.code)
-  guard (isa.decode)(bytes, isa.pc) is Some(insn) else {
-    return ["undecodable"]
-  }
-  let ctx = @mc.Context::create(isa.target)
-  let bil = registry.lift(ctx, insn).bil() catch {
-      e => fail("\{insn.name()}: \{e.message()}")
+  // a sequence of instructions (e.g. a Thumb IT block and its instructions)
+  // runs until it is exhausted or jumps
+  let program = []
+  for off = 0; off < bytes.length(); {
+    let addr = isa.pc + off.to_uint64()
+    guard (isa.decode)(bytes[off:].to_owned(), addr) is Some(insn) else {
+      return ["undecodable at \{hex(addr)}"]
     }
+    let ctx = @mc.Context::create(isa.target, encoding=insn.encoding())
+    let bil = registry.lift(ctx, insn).bil() catch {
+        // IT instructions only set up the predicates of the next ones
+        Unsupported(..) if insn.name() == "t2IT" => []
+        e => fail("\{insn.name()}: \{e.message()}")
+      }
+    program.push((insn, bil))
+    continue off + insn.size()
+  }
   let mut state = @types.BilState::new()
   for r in isa.regs {
     state = (isa.write)(state, r, lookup(c.init, r).unwrap_or(0))
@@ -240,7 +261,19 @@ fn run_case(
     }
   }
   state = state.set("mem", BilMem(mem))
-  let (after, target) = step(bil, state)
+  let mut after = state
+  let mut target = None
+  let mut last = program[0].0
+  for item in program {
+    let (insn, bil) = item
+    let (next, jump) = step(bil, after)
+    after = next
+    last = insn
+    if jump is Some(_) {
+      target = jump
+      break
+    }
+  }
   let diffs = []
   for r in isa.regs {
     let care = (isa.care)(r, c.skip)
@@ -250,11 +283,11 @@ fn run_case(
       diffs.push("\{r}=\{hex(actual)} (expected \{hex(expected)})")
     }
   }
-  let next = target.unwrap_or((isa.fallthrough)(insn))
+  let next = target.unwrap_or((isa.fallthrough)(last))
   let expected_pc = lookup(c.out, "PC").unwrap_or(
     isa.pc + bytes.length().to_uint64(),
   )
-  if next != expected_pc {
+  if (next & isa.pc_care) != (expected_pc & isa.pc_care) {
     diffs.push("PC=\{hex(next)} (expected \{hex(expected_pc)})")
   }
   guard after.get_memory("mem") is Some(mem) else { fail("memory lost") }
@@ -288,9 +321,7 @@ fn check(
   for c in cases {
     let diffs = run_case(isa, c, registry) catch { err => [err.to_string()] }
     if !diffs.is_empty() {
-      failures.push(
-        "\{c.text} [\{hex(c.code.to_uint64())}]: \{diffs.join(", ")}",
-      )
+      failures.push("\{c.text} [\{c.code}]: \{diffs.join(", ")}")
     }
   }
   if !failures.is_empty() {

@@ -28,7 +28,7 @@ fn ppc(bits : Int, endian : @bitvec.Endian) -> Isa {
     target,
     addr_width: bits,
     pc: 0x1000_0000,
-    encode: code => {
+    encode: word_encoding(code => {
       Bytes::makei(4, i => {
         let shift = match endian {
           LittleEndian => 8 * i
@@ -36,7 +36,7 @@ fn ppc(bits : Int, endian : @bitvec.Endian) -> Isa {
         }
         (code >> shift).to_byte()
       })
-    },
+    }),
     decode: (bytes, addr) => @powerpc.decode(bytes, addr, mode~, endian~),
     regs,
     write: (state, name, v) => {
@@ -92,6 +92,7 @@ fn ppc(bits : Int, endian : @bitvec.Endian) -> Isa {
         default_care(name, skip)
       }
     },
+    pc_care: 0xFFFF_FFFF_FFFF_FFFF,
   }
 }
 

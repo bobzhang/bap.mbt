@@ -35,16 +35,17 @@ fn systemz() -> Isa {
     target: @core_theory.Target::systemz(),
     addr_width: 64,
     pc: 0x10000,
-    encode: code => {
+    encode: word_encoding(code => {
       let size = if code < 0x10000 { 2 } else { 4 }
       Bytes::makei(size, i => (code >> (8 * (size - 1 - i))).to_byte())
-    },
+    }),
     decode: systemz_insn,
     regs: Array::makei(16, i => "R\{i}"),
     write: (state, name, v) => state.set(name, word(64, v)),
     read: read_word,
     fallthrough: insn => insn.addr() + insn.size().to_uint64(),
     care: default_care,
+    pc_care: 0xFFFF_FFFF_FFFF_FFFF,
   }
 }
 

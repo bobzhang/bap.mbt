@@ -14,6 +14,19 @@ fn mem_lift_r(
   operation : Operation,
 ) -> Array[@types.Stmt] raise @mc.LiftError {
   let o_base = tmp(@types.ValueType::reg32_t())
+  // port: a register offset is read before the load writes its
+  // destination (which may be the offset register), and the address of a
+  // dual load before its first destination (which may be the base) is
+  // written
+  let loaded = (x : @types.Var) => x == dst1 || (dst2 is Some(d) && x == d)
+  let (offset, read_offset) = match offset {
+    _ if operation is St || !offset.free_vars().iter().any(loaded) =>
+      (offset, [])
+    _ => {
+      let saved = tmp(@types.ValueType::reg32_t())
+      (v(saved), [assign(saved, offset)])
+    }
+  }
   // A word load into PC is a jump; the write-back must then happen before
   // the load, so the original base is saved in a temporary.
   let pc_load = operation is Ld && size is W && dst1 == pc
@@ -56,14 +69,16 @@ fn mem_lift_r(
         guard dst2 is Some(dst2) else {
           fail("dual load requires a second destination")
         }
+        let first = tmp(@types.ValueType::reg32_t())
         [
-          assign(dst1, load(m, address, typ)),
+          assign(first, load(m, address, typ)),
           assign(dst2, load(m, bin(Plus, address, four), typ)),
+          assign(dst1, v(first)),
         ]
       } else {
         [assn(temp, load(m, address, typ))]
       }
-      [..pre_write_back, ..loads, ..extension, ..write_back]
+      [..read_offset, ..pre_write_back, ..loads, ..extension, ..write_back]
     }
     St => {
       let trunc = match size {
@@ -83,7 +98,7 @@ fn mem_lift_r(
         }
         B | H | W => [assign(mem, store(m, address, v(temp), typ))]
       }
-      [..trunc, ..stores, ..write_back]
+      [..read_offset, ..trunc, ..stores, ..write_back]
     }
   }
 }

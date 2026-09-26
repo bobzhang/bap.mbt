@@ -31,6 +31,9 @@ struct ProjectDisassemblyBasic {
   store_kinds_value : Bool
   name_value : String
   encoding_value : String
+  /// the `@mc` decoder and the decoding context, for the disassemblers of
+  /// the encodings provided by the registered `@mc` decoders
+  mc_value : (@mc.Decoder, @mc.Context)?
 }
 
 ///|
@@ -98,6 +101,11 @@ let project_disassembly_basic_constructors : Map[
 let project_disassembly_basic_builtins_registered : Ref[Bool] = { val: false, }
 
 ///|
+/// The encodings whose constructors are the built-in `llvm` ones: the
+/// registered `@mc` decoders take precedence over them.
+let project_disassembly_basic_builtin_encodings : Map[String, Unit] = Map([])
+
+///|
 /// The triples the built-in `llvm` backend decodes.
 fn project_disassembly_basic_llvm_supports(triple : String) -> Bool {
   triple.contains("x86") ||
@@ -120,11 +128,13 @@ fn project_disassembly_basic_register_builtins() -> Unit {
   let builtin = (language : @core_theory.Language, triple : String) => {
     let key = language.to_string()
     if !project_disassembly_basic_constructors.contains(key) {
+      project_disassembly_basic_builtin_encodings[key] = ()
       project_disassembly_basic_constructors[key] = _ => {
         ProjectDisassemblyBasic::create(triple, backend="llvm")
       }
     }
   }
+  project_disassembly_basic_builtin_encodings.clear()
   builtin(@core_theory.Language::llvm_x86(), "i386")
   builtin(@core_theory.Language::llvm_x86_64(), "x86_64")
   builtin(@core_theory.Language::llvm_a32(), "armv7")
@@ -135,6 +145,10 @@ fn project_disassembly_basic_register_builtins() -> Unit {
 /// disassemblers of `encoding`, used by `lookup`. It is an error to register
 /// a second constructor for an encoding (the built-in `llvm` encodings
 /// included).
+///
+/// Decoders that produce `@mc.Insn` values are better registered with
+/// `@mc.register_decoder`, which `lookup` consults for the encodings
+/// without a registered constructor (see `ProjectDisassemblyBasic::lookup`).
 pub fn ProjectDisassemblyBasic::register(
   encoding : @core_theory.Language,
   create : (@core_theory.Target) -> Result[ProjectDisassemblyBasic, String],
@@ -162,8 +176,15 @@ pub fn ProjectDisassemblyBasic::registered_encodings() -> Array[String] {
 
 ///|
 /// `Basic.create ?debug_level ?cpu ?attrs ?backend triple`: a disassembler
-/// of the `backend` for the target `triple`. Fails for unknown backends and,
-/// for the built-in `llvm` backend, for targets it cannot decode.
+/// of the `backend` for the target `triple`. Fails for unknown backends and
+/// for targets the backend cannot decode.
+///
+/// The backends are the registered Basic backends (the built-in `llvm`,
+/// which decodes x86, x86-64 and ARM, and `raw`) and the registered `@mc`
+/// decoders, named by their names: with an `@mc` decoder, `triple` names a
+/// Core Theory target (see `@core_theory.Target::lookup`) whose default
+/// encoding the decoder must accept. The `llvm` backend also defers to the
+/// `@mc` decoders for the targets it cannot decode itself.
 pub fn ProjectDisassemblyBasic::create(
   triple : String,
   backend? : String = "llvm",
@@ -171,13 +192,55 @@ pub fn ProjectDisassemblyBasic::create(
   attrs? : String = "",
   debug_level? : Int = 0,
 ) -> Result[ProjectDisassemblyBasic, String] {
+  let name = [backend, triple, cpu].filter(part => part != "").join("-") + attrs
+  let mc_decoder = if backend != "llvm" &&
+    project_disassembly_basic_known_backend(backend) {
+    None
+  } else {
+    @mc.decoders().iter().find_first(decoder => decoder.name() == backend)
+  }
+  let from_mc = (decoder : @mc.Decoder?) => {
+    guard @core_theory.Target::lookup(triple) is Some(target) else {
+      return None
+    }
+    let ctx = @mc.Context::create(target, encoding=@mc.default_encoding(target))
+    let decoder = match decoder {
+      Some(decoder) => if decoder.accepts(ctx) { Some(decoder) } else { None }
+      None => @mc.find_decoder(ctx)
+    }
+    decoder.map(decoder => {
+      let dis : ProjectDisassemblyBasic = {
+        backend_value: decoder.name(),
+        triple_value: triple,
+        cpu_value: cpu,
+        attrs_value: attrs,
+        debug_level_value: debug_level,
+        store_asm_value: false,
+        store_kinds_value: false,
+        name_value: name,
+        encoding_value: name,
+        mc_value: Some((decoder, ctx)),
+      }
+      dis
+    })
+  }
+  match mc_decoder {
+    Some(decoder) =>
+      return match from_mc(Some(decoder)) {
+        Some(dis) => Ok(dis)
+        None => Err("Unsupported target: \{triple} \{cpu}")
+      }
+    None => ()
+  }
   if !project_disassembly_basic_known_backend(backend) {
     return Err("Unknown backend: \{backend}")
   }
   if backend == "llvm" && !project_disassembly_basic_llvm_supports(triple) {
-    return Err("Unsupported target: \{triple} \{cpu}")
+    return match from_mc(None) {
+      Some(dis) => Ok(dis)
+      None => Err("Unsupported target: \{triple} \{cpu}")
+    }
   }
-  let name = [backend, triple, cpu].filter(part => part != "").join("-") + attrs
   Ok({
     backend_value: backend,
     triple_value: triple,
@@ -188,6 +251,7 @@ pub fn ProjectDisassemblyBasic::create(
     store_kinds_value: false,
     name_value: name,
     encoding_value: name,
+    mc_value: None,
   })
 }
 
@@ -203,20 +267,48 @@ fn project_disassembly_basic_make_name(
 
 ///|
 /// `Basic.lookup target encoding`: the disassembler of `encoding` for
-/// `target`, made by the constructor registered for the encoding.
+/// `target`. The disassembler is made by the constructor registered for the
+/// encoding with `ProjectDisassemblyBasic::register`; otherwise it decodes
+/// with the first `@mc` decoder accepting the context (`target`, `encoding`)
+/// (see `@mc.register_decoder`); otherwise with the built-in `llvm` decoder
+/// of the encoding (x86, x86-64 and ARM).
 pub fn ProjectDisassemblyBasic::lookup(
   target : @core_theory.Target,
   encoding : @core_theory.Language,
 ) -> Result[ProjectDisassemblyBasic, String] {
   project_disassembly_basic_register_builtins()
-  match project_disassembly_basic_constructors.get(encoding.to_string()) {
-    None => Err("no disassembler for encoding \{encoding.to_string()}")
-    Some(create) =>
-      create(target).map(dis => {
-        ..dis,
-        name_value: project_disassembly_basic_make_name(target, encoding),
-        encoding_value: encoding.name().unqualified(),
-      })
+  let key = encoding.to_string()
+  let finish = (dis : ProjectDisassemblyBasic) => {
+    ..dis,
+    name_value: project_disassembly_basic_make_name(target, encoding),
+    encoding_value: encoding.name().unqualified(),
+  }
+  if project_disassembly_basic_constructors.get(key) is Some(create) &&
+    !project_disassembly_basic_builtin_encodings.contains(key) {
+    return create(target).map(finish)
+  }
+  let ctx = @mc.Context::create(target, encoding~)
+  match @mc.find_decoder(ctx) {
+    Some(decoder) =>
+      Ok(
+        finish({
+          backend_value: decoder.name(),
+          triple_value: target.to_string() + "-" + key,
+          cpu_value: "",
+          attrs_value: "",
+          debug_level_value: 0,
+          store_asm_value: false,
+          store_kinds_value: false,
+          name_value: "",
+          encoding_value: "",
+          mc_value: Some((decoder, ctx)),
+        }),
+      )
+    None =>
+      match project_disassembly_basic_constructors.get(key) {
+        Some(create) => create(target).map(finish)
+        None => Err("no disassembler for encoding \{key}")
+      }
   }
 }
 
@@ -238,6 +330,7 @@ pub fn ProjectDisassemblyBasic::custom(
     store_kinds_value: false,
     name_value: project_disassembly_basic_make_name(target, encoding),
     encoding_value: encoding.name().unqualified(),
+    mc_value: None,
   }
 }
 
@@ -313,6 +406,9 @@ fn ProjectDisassemblyBasic::project_disassembly_basic_decode(
 ) -> Result[ProjectDisassemblyBasicDecoded, String] {
   if memory.length() == 0 {
     return Ok(BasicDecodedEnd)
+  }
+  if self.mc_value is Some((decoder, ctx)) {
+    return project_disassembly_basic_decode_mc(decoder, ctx, memory)
   }
   let decoded = if self.project_disassembly_basic_is_x86_64_llvm() {
     match project_disassembly_basic_x86_jcxz_instruction(memory, 64) {
@@ -698,5 +794,56 @@ fn project_disassembly_basic_for_target(
     ProjectDisassemblyBasic::lookup(target, @mc.default_encoding(target))
   } else {
     ProjectDisassemblyBasic::create(target.to_string(), backend~)
+  }
+}
+
+///|
+/// The longest instruction the `@mc` decoders are given the bytes of.
+const PROJECT_DISASSEMBLY_BASIC_MC_WINDOW : Int = 16
+
+///|
+/// Decodes the instruction at the start of `memory` with the `@mc`
+/// decoder.
+fn project_disassembly_basic_decode_mc(
+  decoder : @mc.Decoder,
+  ctx : @mc.Context,
+  memory : @memory.Memory,
+) -> Result[ProjectDisassemblyBasicDecoded, String] {
+  let window = if memory.length() < PROJECT_DISASSEMBLY_BASIC_MC_WINDOW {
+    memory.length()
+  } else {
+    PROJECT_DISASSEMBLY_BASIC_MC_WINDOW
+  }
+  let bytes = match memory.view(words=window) {
+    Ok(view) => view.to_bytes()
+    Err(reason) => return Err(reason)
+  }
+  let chunk = (size : Int) => {
+    if size <= 0 || size > memory.length() {
+      Ok(None)
+    } else {
+      memory.view(words=size).map(chunk => Some(chunk))
+    }
+  }
+  match decoder.decode(ctx, bytes[:], memory.min_addr()) {
+    Truncated => Ok(BasicDecodedEnd)
+    Invalid(size~) =>
+      chunk(size).map(chunk => {
+        match chunk {
+          Some(chunk) => BasicDecodedInvalid(chunk)
+          None => BasicDecodedEnd
+        }
+      })
+    Decoded(insn) =>
+      chunk(insn.size()).map(chunk => {
+        match chunk {
+          Some(chunk) =>
+            BasicDecodedValid(
+              chunk,
+              ProjectDisassemblyInstruction::of_mc_insn(insn, chunk),
+            )
+          None => BasicDecodedEnd
+        }
+      })
   }
 }

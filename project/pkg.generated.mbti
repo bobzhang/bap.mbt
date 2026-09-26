@@ -655,6 +655,7 @@ pub fn ProjectDisassemblyInstruction::memory(Self) -> @memory.Memory
 pub fn ProjectDisassemblyInstruction::must(Self, ProjectInstructionKind) -> Self
 pub fn ProjectDisassemblyInstruction::must_not(Self, ProjectInstructionKind) -> Self
 pub fn ProjectDisassemblyInstruction::name(Self) -> String
+pub fn ProjectDisassemblyInstruction::of_mc_insn(@mc.Insn, @memory.Memory) -> Self
 pub fn ProjectDisassemblyInstruction::operand_count(Self) -> Int
 pub fn ProjectDisassemblyInstruction::operands(Self) -> Array[ProjectInstructionOperand]
 pub fn ProjectDisassemblyInstruction::same_normalized_operands(Self, Self) -> Bool

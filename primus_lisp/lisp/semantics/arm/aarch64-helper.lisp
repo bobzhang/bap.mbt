@@ -100,3 +100,85 @@
     0b0010 :oshst
     0b0001 :oshld
     :unknown))
+
+;; port: added helpers of the semantics added or fixed by the port
+
+(defun adc64 (rd x y c)
+  "(adc64 rd x y c) sets the X register rd to x + y + c and the flags."
+  (adc64/ rd (cast-low 64 x) (cast-low 64 y) (cast-unsigned 64 c)))
+
+(defun adc64/ (rd x y c)
+  (let ((r (+ x y c)))
+    (set-nzcv-from-registers r x y)
+    (set$ rd r)))
+
+(defun adc32 (rd x y c)
+  "(adc32 rd x y c) sets the W register rd to x + y + c (low words) and
+   the flags."
+  (adc32/ rd (cast-low 32 x) (cast-low 32 y) (cast-unsigned 32 c)))
+
+(defun adc32/ (rd x y c)
+  (let ((r (+ x y c)))
+    (set-nzcv-from-registers r x y)
+    (setw rd r)))
+
+(defun set-nzcv-of-sum (x y c)
+  "sets the flags of x + y + c computed at the width of x"
+  (set-nzcv-of-sum/ x (cast-low (word-width x) y) (cast-unsigned (word-width x) c)))
+
+(defun set-nzcv-of-sum/ (x y c)
+  (set-nzcv-from-registers (+ x y c) x y))
+
+(defun set-nz-cv0 (r)
+  "sets N and Z from r and clears C and V (logical flag-setting forms)"
+  (set NF (msb r))
+  (set ZF (is-zero r))
+  (set CF 0:1)
+  (set VF 0:1))
+
+(defun extended32 (rm bits)
+  "(extended32 rm bits) is the extended register operand of a W form"
+  (cast-low 32 (extended rm bits)))
+
+(defun mem-extend (rm signed shift scale)
+  "(mem-extend rm signed shift scale) is the register offset of the
+   register-offset loads and stores: rm (a W register is sign- or
+   zero-extended to 64 bits) shifted left by scale when shift is set."
+  (lshift (if signed (cast-signed 64 rm) (cast-unsigned 64 rm))
+          (if (= shift 1) scale 0)))
+
+(defun reverse-bits64 (x)
+  (let ((x (logor (rshift (logand x 0xAAAAAAAAAAAAAAAA) 1)
+                  (lshift (logand x 0x5555555555555555) 1)))
+        (x (logor (rshift (logand x 0xCCCCCCCCCCCCCCCC) 2)
+                  (lshift (logand x 0x3333333333333333) 2)))
+        (x (logor (rshift (logand x 0xF0F0F0F0F0F0F0F0) 4)
+                  (lshift (logand x 0x0F0F0F0F0F0F0F0F) 4))))
+    (reverse-bytes64 x)))
+
+(defun reverse-bits32 (x)
+  (let ((x (logor (rshift (logand x 0xAAAAAAAA) 1)
+                  (lshift (logand x 0x55555555) 1)))
+        (x (logor (rshift (logand x 0xCCCCCCCC) 2)
+                  (lshift (logand x 0x33333333) 2)))
+        (x (logor (rshift (logand x 0xF0F0F0F0) 4)
+                  (lshift (logand x 0x0F0F0F0F) 4))))
+    (reverse-bytes32 x)))
+
+(defun reverse-bytes64 (x)
+  (concat (extract 7 0 x) (extract 15 8 x) (extract 23 16 x) (extract 31 24 x)
+          (extract 39 32 x) (extract 47 40 x) (extract 55 48 x) (extract 63 56 x)))
+
+(defun reverse-bytes32 (x)
+  (concat (extract 7 0 x) (extract 15 8 x) (extract 23 16 x) (extract 31 24 x)))
+
+(defun reverse-halfword-bytes (x)
+  "swaps the bytes of each halfword of x (32 or 64 bits)"
+  (if (= (word-width x) 64)
+      (concat (extract 55 48 x) (extract 63 56 x) (extract 39 32 x) (extract 47 40 x)
+              (extract 23 16 x) (extract 31 24 x) (extract 7 0 x) (extract 15 8 x))
+    (concat (extract 23 16 x) (extract 31 24 x) (extract 7 0 x) (extract 15 8 x))))
+
+(defun count-leading-sign-bits (x)
+  "the number of bits below the most significant one equal to it"
+  (- (clz (rshift (logxor x (lshift x 1)) 1)) 1))

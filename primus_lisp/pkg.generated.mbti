@@ -11,6 +11,7 @@ import {
   "moonbitlang/core/debug",
   "moonbitlang/core/immut/sorted_map",
   "moonbitlang/core/immut/sorted_set",
+  "moonbitlang/core/ref",
 }
 
 // Values
@@ -135,6 +136,8 @@ pub fn[T] resolve_simple(Program, Item[T], @knowledge.Name) -> Result[Def[T], Re
 pub let semantic_dirs : Array[String]
 
 pub let semantics : Item[Sema]
+
+pub let semantics_context : @ref.Ref[Array[(String, Array[String])]]
 
 pub fn semantics_provider(String, @core_theory.Target, Array[String], paths? : Array[String]) -> @mc.Provider
 

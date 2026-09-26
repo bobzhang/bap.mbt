@@ -31,7 +31,11 @@ fn cached_lifter(
   dirs : Array[String],
   paths : Array[String],
 ) -> Lifter raise @mc.LiftError {
-  let key = target.to_string() + "|" + paths.join("|")
+  let key = target.to_string() +
+    "|" +
+    paths.join("|") +
+    "|" +
+    semantics_context.val.map(c => c.0 + "=" + c.1.join(",")).join(";")
   let r = match lifter_cache.get(key) {
     Some(r) => r
     None => {
@@ -78,6 +82,15 @@ pub fn semantics_provider(
       (target.bits() == 32 || target.bits() == 64) {
       @mc.Lifted::create(
         @mc.resolve_x86_subregisters(lifted.bil(), bits=target.bits()),
+        delay=lifted.delay(),
+        dest_encoding?=lifted.dest_encoding,
+      )
+    } else if target.belongs(@core_theory.Target::arm_family()) &&
+      target.bits() == 64 {
+      // the AArch64 semantics name registers by their aliases (`W0`, `LR`,
+      // `FP`, ...); resolve them onto `X0`..`X30` and `SP`
+      @mc.Lifted::create(
+        @mc.resolve_aarch64_registers(lifted.bil()),
         delay=lifted.delay(),
         dest_encoding?=lifted.dest_encoding,
       )

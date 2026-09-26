@@ -20,8 +20,11 @@
   (relative-jump off))
 
 (defun BLR (reg)
-  (set LR (+ (get-program-counter) 4))
-  (exec-addr reg))
+  ;; port: the target is read before the link register (which may be the
+  ;; target, as in `blr x30`) is written
+  (let ((dst reg))
+    (set LR (+ (get-program-counter) 4))
+    (exec-addr dst)))
 
 (defun BR (reg)
   (exec-addr reg))

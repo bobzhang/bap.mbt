@@ -85,7 +85,9 @@
 
 (defmacro setw (reg val)
   "(set Wx V) sets a Wx register clearing the upper 32 bits."
-  (set$ (alias-base-register reg) val))
+  ;; port: the low word of V is written (V is often computed at 64 bits
+  ;; from sign-extended W operands, whose upper half upstream writes too)
+  (set$ (alias-base-register reg) (cast-low 32 (cast-unsigned 64 val))))
 
 (defun replicate-to-fill (bitv n)
   "(replicate-to-fill bitv n) returns the result of repeating bitv

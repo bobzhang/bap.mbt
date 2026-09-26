@@ -387,7 +387,9 @@ fn mk_cast(
       }
     None =>
       if r == x.width && kind is (Signed | Unsigned | Low) {
-        x
+        // the value of a register, not the register: a symbol would be
+        // reified into a constant by `call_primitive`
+        { ..x, symbol: None, }
       } else {
         dynv(Cast(kind~, width=r, exp=x.exp), r)
       }

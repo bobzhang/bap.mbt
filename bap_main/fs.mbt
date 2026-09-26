@@ -4,10 +4,10 @@
 // OCaml BAP calls `Sys.file_exists`, `Sys.is_directory`, `Sys.readdir`, and
 // `Unix.stat` directly. MoonBit's portable core has no such primitives, so
 // the framework goes through a replaceable `FileSystem` record. The default
-// implementation is backed by `native_io.read_file`: it can recognize and
-// read regular files on the native target but knows nothing about
-// directories. Hosts that need directory support (and tests that need
-// determinism) install their own implementation with `set_file_system`.
+// implementation is backed by `native_io` (`stat`, `read_dir`, `read_file`)
+// and sees the host file system on the native target. Tests that need
+// determinism (and hosts without a file system) install their own
+// implementation with `set_file_system`.
 
 ///|
 /// The kind of an existing file-system entry.
@@ -35,12 +35,15 @@ pub(all) struct FileSystem {
 }
 
 ///|
-/// The default file system, backed by `native_io`.
+/// The default file system, backed by `native_io` (the host file system on
+/// the native target; empty on the other targets).
 pub fn FileSystem::native() -> FileSystem {
   {
     kind: path => {
-      match @native_io.read_file(path) {
-        Ok(_) => Some(RegularFile)
+      match @native_io.stat(path) {
+        Ok({ kind: RegularFile, .. }) => Some(RegularFile)
+        Ok({ kind: Directory, .. }) => Some(Directory)
+        Ok(_) => Some(OtherFile)
         Err(_) => None
       }
     },
@@ -50,7 +53,12 @@ pub fn FileSystem::native() -> FileSystem {
         Err(_) => None
       }
     },
-    read_dir: _ => None,
+    read_dir: path => {
+      match @native_io.read_dir(path) {
+        Ok(names) => Some(names)
+        Err(_) => None
+      }
+    },
   }
 }
 

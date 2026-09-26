@@ -4,10 +4,5 @@ import {
 }
 
 options(
-  "native-stub": [ "recipe_fs.c" ],
-  targets: {
-    "fs_native.mbt": [ "native" ],
-    "fs_stub.mbt": [ "wasm", "wasm-gc", "js", "llvm" ],
-    "recipe_native_test.mbt": [ "native" ],
-  },
+  targets: { "recipe_native_test.mbt": [ "native" ] },
 )

@@ -34,9 +34,28 @@ fn cmpi(
 ) -> Unit raise {
   let field = value & 0xFFFF
   let decoded = if signed && field >= 0x8000 { field - 0x10000 } else { field }
-  let r = run(a, name, [reg("CR7"), reg("R6"), imm(decoded)], init=[
-    ("R6", trunc(a, reg_value.reinterpret_as_uint64())),
+  // upstream encoding: `opcode; 7 (3 bits); 0; l; 6; value (16 bits)`
+  let (opcode, l, r6) = match name {
+    "CMPWI" => (11, 0, "R6")
+    "CMPLWI" => (10, 0, "R6")
+    "CMPDI" => (11, 1, "X6")
+    _ => (10, 1, "X6")
+  }
+  let word = enc([
+    (opcode, 6),
+    (7, 3),
+    (0, 1),
+    (l, 1),
+    (6, 5),
+    (field.to_int(), 16),
   ])
+  let r = run(
+    a,
+    name,
+    [reg("CR7"), reg(r6), imm(decoded)],
+    init=[("R6", trunc(a, reg_value.reinterpret_as_uint64()))],
+    word~,
+  )
   check_cr7(r, expected)
 }
 
@@ -48,10 +67,33 @@ fn cmp(
   reg2 : Int64,
   expected : Order,
 ) -> Unit raise {
-  let r = run(a, name, [reg("CR7"), reg("R6"), reg("R7")], init=[
-    ("R6", trunc(a, reg1.reinterpret_as_uint64())),
-    ("R7", trunc(a, reg2.reinterpret_as_uint64())),
+  // upstream encoding: `31; 7 (3 bits); 0; l; 6; 7; xo (10 bits); 0`
+  let (xo, l, r6, r7) = match name {
+    "CMPW" => (0, 0, "R6", "R7")
+    "CMPLW" => (32, 0, "R6", "R7")
+    "CMPD" => (0, 1, "X6", "X7")
+    _ => (32, 1, "X6", "X7")
+  }
+  let word = enc([
+    (31, 6),
+    (7, 3),
+    (0, 1),
+    (l, 1),
+    (6, 5),
+    (7, 5),
+    (xo, 10),
+    (0, 1),
   ])
+  let r = run(
+    a,
+    name,
+    [reg("CR7"), reg(r6), reg(r7)],
+    init=[
+      ("R6", trunc(a, reg1.reinterpret_as_uint64())),
+      ("R7", trunc(a, reg2.reinterpret_as_uint64())),
+    ],
+    word~,
+  )
   check_cr7(r, expected)
 }
 
@@ -146,10 +188,25 @@ fn cr_logic(
   bb : UInt64,
   expected : UInt64,
 ) -> Unit raise {
-  let r = run(a, name, [reg("CR0GT"), reg("CR0EQ"), reg("CR0UN")], init=[
-    ("CR0EQ", ba),
-    ("CR0UN", bb),
-  ])
+  // upstream encoding: `XL [19; 1; 2; 3; xo; 0]`
+  let xo = match name {
+    "CRAND" => 257
+    "CRNAND" => 225
+    "CROR" => 449
+    "CRXOR" => 193
+    "CRNOR" => 33
+    "CREQV" => 289
+    "CRANDC" => 129
+    _ => 417
+  }
+  let word = enc([(19, 6), (1, 5), (2, 5), (3, 5), (xo, 10), (0, 1)])
+  let r = run(
+    a,
+    name,
+    [reg("CR0GT"), reg("CR0EQ"), reg("CR0UN")],
+    init=[("CR0EQ", ba), ("CR0UN", bb)],
+    word~,
+  )
   r.check("CR0GT", expected)
 }
 
@@ -177,12 +234,24 @@ test "cr logical" {
 test "mcrf" {
   for a in archs {
     // mcrf cr1, cr3
-    let r = run(a, "MCRF", [reg("CR1"), reg("CR3")], init=[
-      ("CR3LT", 1),
-      ("CR3GT", 0),
-      ("CR3EQ", 1),
-      ("CR3UN", 0),
+    // XL [19; 1; 0; 3; 0; 0; 0; 0]
+    let word = enc([
+      (19, 6),
+      (1, 3),
+      (0, 2),
+      (3, 3),
+      (0, 2),
+      (0, 5),
+      (0, 10),
+      (0, 1),
     ])
+    let r = run(
+      a,
+      "MCRF",
+      [reg("CR1"), reg("CR3")],
+      init=[("CR3LT", 1), ("CR3GT", 0), ("CR3EQ", 1), ("CR3UN", 0)],
+      word~,
+    )
     r.check("CR1LT", 1)
     r.check("CR1GT", 0)
     r.check("CR1EQ", 1)
@@ -199,23 +268,52 @@ fn spr_operand(n : Int64) -> @mc.Op {
 }
 
 ///|
+/// Upstream encoding `XFX [31; 1; n; xo; 0]` (the 10-bit SPR field holds
+/// `n`).
+fn xfx_word(n : Int, xo : Int) -> UInt {
+  enc([(31, 6), (1, 5), (n, 10), (xo, 10), (0, 1)])
+}
+
+///|
 test "mtspr and mfspr" {
   for a in archs {
     let x = trunc(a, 0xABCDEFAB_12345678)
-    run(a, "MTSPR", [spr_operand(9), reg("R1")], init=[("R1", x)]).check(
-      "CTR", x,
-    )
-    run(a, "MTSPR", [spr_operand(8), reg("R1")], init=[("R1", x)]).check(
-      "LR", x,
-    )
-    run(a, "MFSPR", [reg("R1"), spr_operand(8)], init=[("LR", x)]).check(
-      "R1", x,
-    )
-    run(a, "MFSPR", [reg("R1"), spr_operand(9)], init=[("CTR", x)]).check(
-      "R1", x,
-    )
+    run(
+      a,
+      "MTSPR",
+      [spr_operand(9), reg("R1")],
+      init=[("R1", x)],
+      word=xfx_word(9, 467),
+    ).check("CTR", x)
+    run(
+      a,
+      "MTSPR",
+      [spr_operand(8), reg("R1")],
+      init=[("R1", x)],
+      word=xfx_word(8, 467),
+    ).check("LR", x)
+    run(
+      a,
+      "MFSPR",
+      [reg("R1"), spr_operand(8)],
+      init=[("LR", x)],
+      word=xfx_word(8, 339),
+    ).check("R1", x)
+    run(
+      a,
+      "MFSPR",
+      [reg("R1"), spr_operand(9)],
+      init=[("CTR", x)],
+      word=xfx_word(9, 339),
+    ).check("R1", x)
     // unknown SPRs only produce a special statement
-    let r = run(a, "MFSPR", [reg("R1"), spr_operand(1)], init=[("R1", 7)])
+    let r = run(
+      a,
+      "MFSPR",
+      [reg("R1"), spr_operand(1)],
+      init=[("R1", 7)],
+      word=xfx_word(1, 339),
+    )
     r.check("R1", 7)
   }
 }
@@ -224,7 +322,23 @@ test "mtspr and mfspr" {
 test "mtcrf" {
   for a in archs {
     let x = trunc(a, 0xABCDEFAB_12345678)
-    let r = run(a, "MTCRF", [imm(0b01101001), reg("R1")], init=[("R1", x)])
+    // XFX [31; 1; 0; mask; 0; 144; 0]
+    let word = enc([
+      (31, 6),
+      (1, 5),
+      (0, 1),
+      (0b01101001, 8),
+      (0, 1),
+      (144, 10),
+      (0, 1),
+    ])
+    let r = run(
+      a,
+      "MTCRF",
+      [imm(0b01101001), reg("R1")],
+      init=[("R1", x)],
+      word~,
+    )
     let low = x & 0xFFFF_FFFF
     let model = @powerpc.Model::of_addr_size(a)
     for i in 0..<32 {
@@ -245,7 +359,9 @@ test "mfcr" {
     for i in 0..<32 {
       init.push((model.cri[i].name, (x >> (31 - i)) & 1))
     }
-    run(a, "MFCR", [reg("R1")], init~).check("R1", x)
+    // XFX [31; 1; 0; 0; 0; 19; 0]
+    let word = enc([(31, 6), (1, 5), (0, 1), (0, 8), (0, 1), (19, 10), (0, 1)])
+    run(a, "MFCR", [reg("R1")], init~, word~).check("R1", x)
   }
 }
 
@@ -253,9 +369,17 @@ test "mfcr" {
 test "mtctr, mtlr, mfctr, mflr" {
   for a in archs {
     let x = trunc(a, 0xABCDEFAB_12345678)
-    run(a, "MTCTR", [reg("R0")], init=[("R0", x)]).check("CTR", x)
-    run(a, "MTLR", [reg("R0")], init=[("R0", x)]).check("LR", x)
-    run(a, "MFCTR", [reg("R0")], init=[("CTR", x)]).check("R0", x)
-    run(a, "MFLR", [reg("R0")], init=[("LR", x)]).check("R0", x)
+    run(a, "MTCTR", [reg("R0")], init=[("R0", x)], word=0x7c0903a6).check(
+      "CTR", x,
+    )
+    run(a, "MTLR", [reg("R0")], init=[("R0", x)], word=0x7c0803a6).check(
+      "LR", x,
+    )
+    run(a, "MFCTR", [reg("R0")], init=[("CTR", x)], word=0x7c0902a6).check(
+      "R0", x,
+    )
+    run(a, "MFLR", [reg("R0")], init=[("LR", x)], word=0x7c0802a6).check(
+      "R0", x,
+    )
   }
 }

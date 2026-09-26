@@ -114,8 +114,108 @@ fn run(
   init? : Array[(String, UInt64)] = [],
   mem? : Array[(UInt64, UInt64, Int)] = [],
   addr? : UInt64 = 0,
+  word? : UInt,
 ) -> Run raise {
-  let insn = @mc.Insn::create(name, ops, addr~, size=4)
+  let insn = match word {
+    None => @mc.Insn::create(name, ops, addr~, size=4)
+    Some(word) => decode_as(a, word, name, ops, addr~)
+  }
+  run_insn(a, insn, init~, mem~)
+}
+
+///|
+/// Record forms are named `XXXo` by LLVM before version 10 and `XXX_rec`
+/// since; the lifter accepts both.
+fn canonical_name(name : String) -> String {
+  match name.strip_suffix("o") {
+    Some(base) if base.length() > 0 => base.to_owned() + "_rec"
+    _ => name
+  }
+}
+
+///|
+fn show_op(op : @mc.Op) -> String {
+  match op {
+    Reg(name~, ..) => name
+    Imm(v) => v.to_string()
+    Fmm(v) => v.to_string()
+  }
+}
+
+///|
+/// `NAME op1, op2, ...` (immediates in decimal).
+fn show_insn(name : String, ops : ArrayView[@mc.Op]) -> String {
+  "\{name} \{ops.iter().map(show_op).collect().join(", ")}"
+}
+
+///|
+/// Big-endian encoding of an instruction word.
+fn word_bytes(word : UInt) -> Bytes {
+  [
+    (word >> 24).to_byte(),
+    (word >> 16).to_byte(),
+    (word >> 8).to_byte(),
+    word.to_byte(),
+  ]
+}
+
+///|
+/// Decode the big-endian `word` at `addr` in the mode of `a`.
+fn decode_at(
+  a : @powerpc.AddrSize,
+  word : UInt,
+  addr? : UInt64 = 0,
+) -> @mc.Insn raise {
+  match @powerpc.decode(word_bytes(word), addr, mode=a) {
+    Some(insn) => insn
+    None => fail("0x\{word.to_string(radix=16)} is not decoded")
+  }
+}
+
+///|
+/// Decode `word` (an encoding from the upstream tests) and check that the
+/// decoder yields the instruction `name ops` constructed by hand.
+fn decode_as(
+  a : @powerpc.AddrSize,
+  word : UInt,
+  name : String,
+  ops : Array[@mc.Op],
+  addr? : UInt64 = 0,
+) -> @mc.Insn raise {
+  let insn = decode_at(a, word, addr~)
+  assert_eq(
+    show_insn(canonical_name(insn.name()), insn.ops()[:]),
+    show_insn(canonical_name(name), ops[:]),
+  )
+  assert_eq(insn.size(), 4)
+  assert_eq(insn.addr(), addr)
+  insn
+}
+
+///|
+/// Concatenate `(value, width)` fields, the most significant first, into an
+/// instruction word (upstream `make_insn`/`make_bytes`).
+fn enc(fields : Array[(Int, Int)]) -> UInt {
+  let mut word = 0U
+  let mut total = 0
+  for f in fields {
+    let (value, width) = f
+    word = (word << width) | (value.reinterpret_as_uint() & ((1U << width) - 1))
+    total += width
+  }
+  guard total == 32 else { abort("enc: \{total} bits") }
+  word
+}
+
+///|
+/// Lift the decoded `insn` for `a` (big endian) and run it after the
+/// initial register values `init` and memory contents `mem` (see `run`).
+fn run_insn(
+  a : @powerpc.AddrSize,
+  insn : @mc.Insn,
+  init? : Array[(String, UInt64)] = [],
+  mem? : Array[(UInt64, UInt64, Int)] = [],
+) -> Run raise {
   let bil = @powerpc.lift(a, BigEndian, insn)
   let env = initial_env(a)
   for entry in init {

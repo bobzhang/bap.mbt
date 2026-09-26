@@ -31,12 +31,20 @@ test "the approximate primitive and math.lisp" {
       @primus_lisp.link_program(m, prog)
       m.observe(@primus_lisp.message, s => log.push(s))
     },
-    start=m => @primus_lisp.eval_fun(m, "test", [
-      @primus.Value::of_word(m, @types.Word::of_int64(0.0.reinterpret_as_int64(), width=64)),
-    ]),
+    start=m => {
+      @primus_lisp.eval_fun(m, "test", [
+        @primus.Value::of_word(
+          m,
+          @types.Word::of_int64(0.0.reinterpret_as_int64(), width=64),
+        ),
+      ])
+    },
   )
   inspect(status, content="Normal")
-  debug_inspect(log, content=(
-    #|["0xBDEE0FB43EF080F5:64u 0x3FEFFFFFFFE1F06E:64u"]
-  ))
+  debug_inspect(
+    log,
+    content=(
+      #|["0xBDEE0FB43EF080F5:64u 0x3FEFFFFFFFE1F06E:64u"]
+    ),
+  )
 }

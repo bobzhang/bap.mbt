@@ -59,8 +59,19 @@ pub fn lift_typed(
   match insn {
     Move(op) => lift_move(encoding, ops, op)
     Bits(op) => lift_bits(raw, ops, op)
-    Mult(op) => lift_mult(ops, op)
-    Mem(op) => lift_mem(ops, op)
+    Mult(op) =>
+      lift_mult(
+        match encoding {
+          T32 => t32_mult_ops(ops, op)
+          A32 => ops
+        },
+        op,
+      )
+    Mem(op) =>
+      match encoding {
+        T32 => lift_mem_t32(ops, op)
+        A32 => lift_mem(ops, op)
+      }
     MemMulti(op) => lift_mem_multi(ops, op)
     Branch(op) => lift_branch(addr, ops, op)
     Special(op) => lift_special(ops, op)

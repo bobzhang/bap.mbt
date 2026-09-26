@@ -130,7 +130,7 @@ test "mov group: additions" {
       #|%t:imm32 := ((R0:imm32 + R1:imm32) + pad:32[CF:imm1])
       #|NF:imm1 := extract[31:31](%t:imm32)
       #|ZF:imm1 := (%t:imm32 == 0:32u)
-      #|CF:imm1 := (%t:imm32 < R0:imm32)
+      #|CF:imm1 := extract[31:31](((R0:imm32 & R1:imm32) | ((R0:imm32 | R1:imm32) & (not %t:imm32))))
       #|VF:imm1 := extract[31:31](((R0:imm32 ^ (not R1:imm32)) & (R0:imm32 ^ %t:imm32)))
       #|R0:imm32 := %t:imm32
     ),
@@ -213,7 +213,7 @@ test "mov group: moves, shifts and orr" {
     lift("tMOVi8", [r("R0"), r("CPSR"), i(0x80), ..al()]),
     content=(
       #|%t:imm32 := 0x80:32u
-      #|NF:imm1 := 1:1u
+      #|NF:imm1 := 0:1u
       #|ZF:imm1 := 0:1u
       #|R0:imm32 := %t:imm32
     ),
@@ -472,16 +472,18 @@ test "mem group: multi-register transfers" {
     lift("tPOP", [..al(), r("R4"), r("PC")]),
     content=(
       #|R4:imm32 := load(mem:mem32x8, (SP:imm32 + 0:32u)):imm32
-      #|SP:imm32 := (SP:imm32 + 4:32u)
-      #|jmp load(mem:mem32x8, SP:imm32):imm32
+      #|%t:imm32 := load(mem:mem32x8, (SP:imm32 + 4:32u)):imm32
+      #|SP:imm32 := (SP:imm32 + 8:32u)
+      #|jmp %t:imm32
     ),
   )
   inspect(
     lift("tPOP", [..pred(VC), r("PC")]),
     content=(
       #|if (not VF:imm1) {
-      #|  SP:imm32 := (SP:imm32 + 0:32u)
-      #|  jmp load(mem:mem32x8, SP:imm32):imm32
+      #|  %t:imm32 := load(mem:mem32x8, (SP:imm32 + 0:32u)):imm32
+      #|  SP:imm32 := (SP:imm32 + 4:32u)
+      #|  jmp %t:imm32
       #|}
     ),
   )
@@ -519,28 +521,28 @@ test "branch group" {
   inspect(
     lift("tBL", [..al(), i(0x101), r("CPSR")]),
     content=(
-      #|LR:imm32 := 0x1004:32u
+      #|LR:imm32 := 0x1005:32u
       #|jmp 0x1104:32u
     ),
   )
   inspect(
     lift("tBLXi", [..al(), i(0x200)]),
     content=(
-      #|LR:imm32 := 0x1004:32u
+      #|LR:imm32 := 0x1005:32u
       #|jmp 0x1204:32u
     ),
   )
   inspect(
     lift("tBLXi", [..al(), i(0x200), r("CPSR")]),
     content=(
-      #|LR:imm32 := 0x1004:32u
+      #|LR:imm32 := 0x1005:32u
       #|jmp 0x1204:32u
     ),
   )
   inspect(
     lift("tBLXr", [..al(), r("R3")]),
     content=(
-      #|LR:imm32 := 0x1004:32u
+      #|LR:imm32 := 0x1003:32u
       #|jmp (R3:imm32 & 0xFFFFFFFE:32u)
     ),
   )

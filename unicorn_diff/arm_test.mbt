@@ -106,3 +106,38 @@ test "a32: loads and stores" {
 test "a32: branches and hints" {
   check(arm(false), a32_branch_cases, registry=arm_providers)
 }
+
+///|
+test "t16: 16-bit Thumb data processing" {
+  check(arm(true), t16_dp_cases, registry=arm_providers)
+}
+
+///|
+test "t16: 16-bit Thumb loads and stores" {
+  check(arm(true), t16_mem_cases, registry=arm_providers)
+}
+
+///|
+test "t16: 16-bit Thumb branches and hints" {
+  check(arm(true), t16_branch_cases, registry=arm_providers)
+}
+
+///|
+test "t2: Thumb-2 data processing, bit field, extend and multiply instructions" {
+  check(arm(true), t2_dp_cases, registry=arm_providers)
+}
+
+///|
+test "t2: Thumb-2 loads and stores" {
+  check(arm(true), t2_mem_cases, registry=arm_providers)
+}
+
+///|
+test "t2: Thumb-2 branches and barriers" {
+  check(arm(true), t2_branch_cases, registry=arm_providers)
+}
+
+///|
+test "t32: IT blocks" {
+  check(arm(true), t_it_cases, registry=arm_providers)
+}

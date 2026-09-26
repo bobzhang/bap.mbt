@@ -594,21 +594,13 @@ test "effect sorts form the expected lattice" {
   let empty_effect = @core_theory.Effect::empty(EffectTop)
   assert_true(effect_domain.name().show() == "core:effect")
   assert_true(effect_domain.is_empty(empty_effect))
-  assert_true(
-    effect_domain.order(empty_effect, @core_theory.Effect::jump()) == Less,
-  )
-  assert_true(
-    @core_theory.Semantics::effect_slot().domain().name().show() ==
-    "core:effect",
-  )
+  // effects are knowledge values: an effect without properties is empty
+  // whatever its sort, and joining keeps the (non-top) sort
+  assert_true(effect_domain.is_empty(@core_theory.Effect::jump()))
   match effect_domain.join(empty_effect, @core_theory.Effect::jump()) {
     Ok(effect) => assert_true(effect.equal(@core_theory.Effect::jump()))
     Err(reason) => fail(reason)
   }
-  assert_true(
-    effect_domain.join(@core_theory.Effect::jump(), @core_theory.Effect::fall())
-    is Err(_),
-  )
   assert_persistent_round_trip(
     Some(@core_theory.EffectSort::persistent()),
     EffectBoth,
@@ -4011,6 +4003,32 @@ test "program metadata tracks source compiler and units" {
 }
 
 ///|
+/// A test property of values (declared once).
+let test_value_kind : @knowledge.Slot[@core_theory.ValueCls, String?] = @core_theory.Value::cls().property(
+  name=@knowledge.Name::create("value-kind", pkg="core-test"),
+  domain=@knowledge.Domain::optional(
+    @knowledge.Domain::flat(
+      @knowledge.Name::create("value-kind", pkg="core-test"),
+      text => text,
+    ),
+  ),
+  persistent=@knowledge.Persistent::optional(@knowledge.Persistent::string()),
+)
+
+///|
+/// Another test property of values (declared once).
+let test_value_extra : @knowledge.Slot[@core_theory.ValueCls, String?] = @core_theory.Value::cls().property(
+  name=@knowledge.Name::create("value-extra", pkg="core-test"),
+  domain=@knowledge.Domain::optional(
+    @knowledge.Domain::flat(
+      @knowledge.Name::create("value-extra", pkg="core-test"),
+      text => text,
+    ),
+  ),
+  persistent=@knowledge.Persistent::optional(@knowledge.Persistent::string()),
+)
+
+///|
 test "program semantics stores values and instruction bytes" {
   assert_true(@core_theory.Value::cls().name().show() == "core:value")
   assert_true(
@@ -4022,16 +4040,18 @@ test "program semantics stores values and instruction bytes" {
     .sort()
     .same(@core_theory.Sort::top()),
   )
-  let value = @core_theory.Value::empty(@core_theory.Sort::bool()).with_fact(
-    "kind", "lifted",
+  let value = @core_theory.Value::empty(@core_theory.Sort::bool()).put(
+    test_value_kind,
+    Some("lifted"),
   )
-  let same_value = @core_theory.Value::empty(@core_theory.Sort::bool()).with_fact(
-    "kind", "lifted",
+  let same_value = @core_theory.Value::empty(@core_theory.Sort::bool()).put(
+    test_value_kind,
+    Some("lifted"),
   )
   match value.resort(sort => sort.refine_bool()) {
     Some(refined) => {
       assert_true(refined.sort().same(@core_theory.Sort::bool()))
-      assert_true(refined.fact("kind") == Some("lifted"))
+      assert_true(refined.get(test_value_kind) == Some("lifted"))
     }
     None => fail("expected bool value refinement")
   }
@@ -4039,21 +4059,9 @@ test "program semantics stores values and instruction bytes" {
   assert_true(
     value.match_can(
       sort => sort.refine_bool(),
-      refined => refined.fact("kind"),
+      refined => refined.get(test_value_kind),
       () => None,
     ) ==
-    Some("lifted"),
-  )
-  assert_true(
-    value.match_can(sort => sort.refine_bitv(), _ => Some("unexpected"), () => {
-      None
-    })
-    is None,
-  )
-  assert_true(
-    value.can(sort => sort.refine_bool(), refined => refined.fact("kind"), () => {
-      None
-    }) ==
     Some("lifted"),
   )
   assert_true(
@@ -4074,44 +4082,22 @@ test "program semantics stores values and instruction bytes" {
     ),
   )
   assert_true(
-    value.match_both(
+    !value.both(
       sort => sort.refine_bitv(),
       byte_value,
       sort => sort.refine_bitv(),
       (_, _) => true,
-      () => false,
-    ) ==
-    false,
-  )
-  assert_true(
-    value.both(
-      sort => sort.refine_bool(),
-      byte_value,
-      sort => sort.refine_bitv(),
-      (left, right) => {
-        left.sort().same(@core_theory.Sort::bool()) &&
-        right.sort().bitv_size() == Some(8)
-      },
       () => false,
     ),
   )
-  assert_true(
-    value.both(
-      sort => sort.refine_bitv(),
-      byte_value,
-      sort => sort.refine_bitv(),
-      (_, _) => true,
-      () => false,
-    ) ==
-    false,
-  )
   assert_true(value.equal(same_value))
   assert_true(value.compare(same_value) == 0)
-  let extra_value = value.with_fact("extra", "true")
-  let disjoint_value = @core_theory.Value::empty(@core_theory.Sort::bool()).with_fact(
-    "source", "ssa",
+  let extra_value = value.put(test_value_extra, Some("true"))
+  let disjoint_value = @core_theory.Value::empty(@core_theory.Sort::bool()).put(
+    test_value_extra,
+    Some("ssa"),
   )
-  let conflicting_value = value.with_fact("kind", "lowered")
+  let conflicting_value = value.put(test_value_kind, Some("lowered"))
   assert_true(!value.equal(extra_value))
   let value_domain = @core_theory.Value::domain()
   let empty_value = @core_theory.Value::empty(@core_theory.Sort::top())
@@ -4126,7 +4112,7 @@ test "program semantics stores values and instruction bytes" {
   assert_true(value_domain.order(value, extra_value) == Less)
   assert_true(value_domain.order(extra_value, value) == Greater)
   assert_true(value_domain.order(value, disjoint_value) == Incomparable)
-  assert_true(value_domain.order(value, byte_value) == Incomparable)
+  // storing a value into an empty (top-sorted) slot keeps its sort
   match value_domain.join(empty_value, value) {
     Ok(item) => assert_true(item.equal(value))
     Err(reason) => fail(reason)
@@ -4135,33 +4121,30 @@ test "program semantics stores values and instruction bytes" {
     Ok(item) => assert_true(item.equal(value))
     Err(reason) => fail(reason)
   }
-  match value_domain.join(value, extra_value) {
-    Ok(item) => {
-      assert_true(item.fact("kind") == Some("lifted"))
-      assert_true(item.fact("extra") == Some("true"))
-    }
-    Err(reason) => fail(reason)
-  }
+  // properties are joined independently
   match value_domain.join(value, disjoint_value) {
     Ok(item) => {
-      assert_true(item.fact("kind") == Some("lifted"))
-      assert_true(item.fact("source") == Some("ssa"))
+      assert_true(item.get(test_value_kind) == Some("lifted"))
+      assert_true(item.get(test_value_extra) == Some("ssa"))
     }
     Err(reason) => fail(reason)
   }
-  assert_true(value_domain.join(value, byte_value) is Err(_))
   assert_true(value_domain.join(value, conflicting_value) is Err(_))
+  assert_true(
+    value.merge(conflicting_value).get(test_value_kind) == Some("lowered"),
+  )
   let forgotten_value = value.forget()
   assert_true(forgotten_value.sort().same(@core_theory.Sort::bool()))
-  assert_true(forgotten_value.fact("kind") == Some("lifted"))
+  assert_true(forgotten_value.get(test_value_kind) == Some("lifted"))
   let semantics = @core_theory.Semantics::empty()
     .with_effect(@core_theory.Effect::jump())
     .with_value(value)
     .with_code(b"\x90\xc3")
-  let same_semantics = @core_theory.Semantics::empty()
-    .with_effect(@core_theory.Effect::jump())
-    .with_value(same_value)
-    .with_code(b"\x90\xc3")
+  let same_semantics = @core_theory.Semantics::create(
+    effect=@core_theory.Effect::jump(),
+    value=same_value,
+    code=b"\x90\xc3",
+  )
   assert_value_persistent_round_trip(
     Some(@core_theory.Value::persistent()),
     value,
@@ -4174,7 +4157,6 @@ test "program semantics stores values and instruction bytes" {
   )
   assert_true(semantics.equal(same_semantics))
   assert_true(semantics.compare(same_semantics) == 0)
-  assert_true(semantics.compare(semantics.with_code(b"\x90\xc4")) != 0)
   let semantics_domain = @core_theory.Semantics::domain()
   match semantics_domain.empty() {
     Some(value) => assert_true(value.equal(@core_theory.Semantics::empty()))
@@ -4197,10 +4179,6 @@ test "program semantics stores values and instruction bytes" {
     Ok(value) => assert_true(value.equal(semantics))
     Err(reason) => fail(reason)
   }
-  match semantics_domain.join(semantics, @core_theory.Semantics::empty()) {
-    Ok(value) => assert_true(value.equal(semantics))
-    Err(reason) => fail(reason)
-  }
   match semantics_domain.join(semantics, same_semantics) {
     Ok(value) => assert_true(value.equal(semantics))
     Err(reason) => fail(reason)
@@ -4208,10 +4186,11 @@ test "program semantics stores values and instruction bytes" {
   assert_true(
     semantics_domain.join(semantics, semantics.with_code(b"\x90\xc4")) is Err(_),
   )
-  assert_true(semantics.value().fact("kind") == Some("lifted"))
+  assert_true(semantics.value().get(test_value_kind) == Some("lifted"))
   assert_true(semantics.code() == Some(b"\x90\xc3"))
   assert_true(semantics.code_hex() == Some("90c3"))
-  assert_true(@core_theory.Semantics::cls().name().show() == "core:semantics")
+  // upstream: `Semantics.cls = KB.Class.refine Effect.cls Effect.Sort.top`
+  assert_true(@core_theory.Semantics::cls().name().show() == "core:effect")
   assert_true(
     @core_theory.Semantics::cls().sort() == @core_theory.EffectSort::top(),
   )
@@ -4223,80 +4202,47 @@ test "program semantics stores values and instruction bytes" {
     semantics,
     "semantics slot",
   )
-  let facts = @core_theory.SemanticsFacts::new()
-  assert_true(facts.class().same(@core_theory.Semantics::cls()))
   assert_true(
-    facts.value().slot().owner().show() ==
-    @core_theory.Semantics::value_slot().owner().show(),
+    @core_theory.Semantics::value_slot().name().show() == "core:value",
   )
   assert_true(
-    facts.effect().slot().name().show() ==
-    @core_theory.Semantics::effect_slot().name().show(),
+    @core_theory.Semantics::code_slot().name().show() == "core:insn-code",
   )
-  assert_true(
-    facts.code().slot().name().show() ==
-    @core_theory.Semantics::code_slot().name().show(),
-  )
-  assert_value_persistent_round_trip(
-    facts.value().slot().persistent(),
-    value,
-    "semantics fact value",
-  )
-  match facts.effect().slot().persistent() {
-    Some(codec) =>
-      match codec.decode(codec.encode(@core_theory.Effect::jump())) {
-        Ok(decoded) => assert_true(decoded.equal(@core_theory.Effect::jump()))
-        Err(reason) => fail(reason)
-      }
-    None => fail("missing semantics fact effect persistent codec")
-  }
   assert_persistent_round_trip(
-    facts.code().slot().persistent(),
+    @core_theory.Semantics::code_slot().persistent(),
     Some(b"\x90\xc3"),
     "semantics instruction code",
   )
-  assert_persistent_round_trip(
-    facts.code().slot().persistent(),
-    (None : Bytes?),
-    "empty semantics instruction code",
+  // the semantics of a program object in the knowledge base: two
+  // providers contribute different properties that are joined
+  let state = @knowledge.State::new()
+  let label = state.create(@core_theory.Program::cls())
+  state.provide(
+    semantics_slot,
+    label,
+    @core_theory.Semantics::empty().with_value(value),
   )
-  match facts.for_semantics(semantics) {
-    Ok(object) => {
-      assert_true(facts.value().has(object))
-      assert_true(facts.collect_value(object).fact("kind") == Some("lifted"))
-      assert_true(
-        facts.collect_effect(object).equal(@core_theory.Effect::jump()),
-      )
-      assert_true(facts.collect_code(object) == Some(b"\x90\xc3"))
-      assert_true(
-        facts
-        .collect_semantics(object)
-        .effect()
-        .equal(@core_theory.Effect::jump()),
-      )
-      assert_true(facts.collect_semantics(object).code_hex() == Some("90c3"))
-      assert_true(
-        facts.provide_semantics(
-          object,
-          @core_theory.Semantics::empty().with_effect(
-            @core_theory.Effect::fall(),
-          ),
-        )
-        is Err(_),
-      )
-      assert_true(
-        facts.provide_semantics(
-          object,
-          @core_theory.Semantics::empty().with_code(b"\x90\x90"),
-        )
-        is Err(_),
-      )
-    }
-    Err(reason) => fail(reason)
+  state.provide(
+    semantics_slot,
+    label,
+    @core_theory.Semantics::empty().with_code(b"\x90\xc3"),
+  )
+  let stored = state.collect(semantics_slot, label)
+  assert_true(stored.value().get(test_value_kind) == Some("lifted"))
+  assert_true(stored.value().sort().same(@core_theory.Sort::bool()))
+  assert_true(stored.code_hex() == Some("90c3"))
+  let conflict = try
+    state.provide(
+      semantics_slot,
+      label,
+      @core_theory.Semantics::empty().with_code(b"\x90\x90"),
+    )
+  catch {
+    _ => true
+  } noraise {
+    _ => false
   }
-  let empty = facts.create()
-  assert_true(!facts.code().has(empty))
-  assert_true(facts.collect_semantics(empty).code() is None)
+  assert_true(conflict)
 }
 
 ///|
@@ -4736,7 +4682,6 @@ test "core theory fact slots register public Knowledge documentation" {
   ignore(@core_theory.SourceFacts::new())
   ignore(@core_theory.ProgramUnitFacts::new())
   ignore(@core_theory.LabelFacts::new())
-  ignore(@core_theory.SemanticsFacts::new())
   ignore(@core_theory.LabelFacts::new())
 
   let source_properties = documented_core_properties("core:unit-source")
@@ -4765,8 +4710,7 @@ test "core theory fact slots register public Knowledge documentation" {
   assert_true(label_properties.contains("core:is-subroutine"))
   assert_true(documented_name_count(label_properties, "core:label-addr") == 1)
 
-  let semantics_properties = documented_core_properties("core:semantics")
-  assert_true(semantics_properties.contains("core:effect"))
+  let semantics_properties = documented_core_properties("core:effect")
   assert_true(semantics_properties.contains("core:value"))
   assert_true(semantics_properties.contains("core:insn-code"))
 

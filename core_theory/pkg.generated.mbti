@@ -143,22 +143,35 @@ type Effect
 pub fn Effect::barr() -> Self
 pub fn Effect::cjmp() -> Self
 pub fn Effect::cjump() -> Self
-pub fn Effect::cls() -> @knowledge.Class[Unit, Unit]
+pub fn Effect::cls() -> @knowledge.Class[EffectCls, Unit]
 pub fn Effect::compare(Self, Self) -> Int
 pub fn Effect::domain() -> @knowledge.Domain[Self]
 pub fn Effect::empty(EffectSort) -> Self
 pub fn Effect::equal(Self, Self) -> Bool
 pub fn Effect::fall() -> Self
+pub fn[P] Effect::find(Self, @knowledge.Slot[EffectCls, P]) -> P?
+pub fn[P] Effect::get(Self, @knowledge.Slot[EffectCls, P]) -> P
+pub fn[P] Effect::has(Self, @knowledge.Slot[EffectCls, P]) -> Bool
+pub fn Effect::is_empty(Self) -> Bool
+pub fn Effect::join(Self, Self) -> Self raise @knowledge.Conflict
 pub fn Effect::jump() -> Self
-pub fn Effect::name(Self) -> String
-pub fn Effect::named(String, EffectSort) -> Self
+pub fn Effect::kb(Self) -> @knowledge.Value[EffectCls, EffectSort]
+pub fn Effect::merge(Self, Self, on_conflict? : @knowledge.MergeStrategy) -> Self
+pub fn Effect::of_kb(@knowledge.Value[EffectCls, EffectSort]) -> Self
+pub fn Effect::order(Self, Self) -> @knowledge.PartialOrder
 pub fn Effect::persistent() -> @knowledge.Persistent[Self]
+pub fn[P] Effect::put(Self, @knowledge.Slot[EffectCls, P], P) -> Self
+pub fn Effect::refine(Self, EffectSort) -> Self
 pub fn Effect::rmem() -> Self
 pub fn Effect::rreg() -> Self
 pub fn Effect::sort(Self) -> EffectSort
+pub fn Effect::sorted_cls(EffectSort) -> @knowledge.Class[EffectCls, EffectSort]
 pub fn Effect::to_string(Self) -> String
 pub fn Effect::wmem() -> Self
 pub fn Effect::wreg() -> Self
+
+pub enum EffectCls {
+}
 
 pub(all) enum EffectSort {
   EffectBot
@@ -602,38 +615,36 @@ pub fn Role::zero() -> Self
 pub fn Role::zero_flag() -> Self
 
 type Semantics
-pub fn Semantics::cls() -> @knowledge.Class[Unit, EffectSort]
+pub fn Semantics::cls() -> @knowledge.Class[EffectCls, EffectSort]
 pub fn Semantics::code(Self) -> Bytes?
 pub fn Semantics::code_hex(Self) -> String?
-pub fn Semantics::code_slot() -> @knowledge.Slot[Unit, Bytes?]
+pub fn Semantics::code_slot() -> @knowledge.Slot[EffectCls, Bytes?]
 pub fn Semantics::compare(Self, Self) -> Int
 pub fn Semantics::create(effect? : Effect, value? : Value, code? : Bytes) -> Self
 pub fn Semantics::domain() -> @knowledge.Domain[Self]
 pub fn Semantics::effect(Self) -> Effect
-pub fn Semantics::effect_slot() -> @knowledge.Slot[Unit, Effect]
 pub fn Semantics::empty() -> Self
 pub fn Semantics::equal(Self, Self) -> Bool
+pub fn[P] Semantics::find(Self, @knowledge.Slot[EffectCls, P]) -> P?
+pub fn[P] Semantics::get(Self, @knowledge.Slot[EffectCls, P]) -> P
+pub fn[P] Semantics::has(Self, @knowledge.Slot[EffectCls, P]) -> Bool
+pub fn Semantics::inspect_slots(Self, Array[String]) -> String
+pub fn Semantics::is_empty(Self) -> Bool
+pub fn Semantics::join(Self, Self) -> Self raise @knowledge.Conflict
+pub fn Semantics::kb(Self) -> @knowledge.Value[EffectCls, EffectSort]
+pub fn Semantics::merge(Self, Self, on_conflict? : @knowledge.MergeStrategy) -> Self
+pub fn Semantics::of_effect(Effect) -> Self
+pub fn Semantics::of_kb(@knowledge.Value[EffectCls, EffectSort]) -> Self
+pub fn Semantics::order(Self, Self) -> @knowledge.PartialOrder
 pub fn Semantics::persistent() -> @knowledge.Persistent[Self]
+pub fn[P] Semantics::put(Self, @knowledge.Slot[EffectCls, P], P) -> Self
 pub fn Semantics::slot() -> @knowledge.Slot[Unit, Self]
+pub fn Semantics::to_string(Self) -> String
 pub fn Semantics::value(Self) -> Value
-pub fn Semantics::value_slot() -> @knowledge.Slot[Unit, Value]
+pub fn Semantics::value_slot() -> @knowledge.Slot[EffectCls, Value]
 pub fn Semantics::with_code(Self, Bytes) -> Self
 pub fn Semantics::with_effect(Self, Effect) -> Self
 pub fn Semantics::with_value(Self, Value) -> Self
-
-type SemanticsFacts
-pub fn SemanticsFacts::class(Self) -> @knowledge.Class[Unit, EffectSort]
-pub fn SemanticsFacts::code(Self) -> @knowledge.FactTable[Unit, Bytes?]
-pub fn SemanticsFacts::collect_code(Self, @knowledge.Object[Unit]) -> Bytes?
-pub fn SemanticsFacts::collect_effect(Self, @knowledge.Object[Unit]) -> Effect
-pub fn SemanticsFacts::collect_semantics(Self, @knowledge.Object[Unit]) -> Semantics
-pub fn SemanticsFacts::collect_value(Self, @knowledge.Object[Unit]) -> Value
-pub fn SemanticsFacts::create(Self) -> @knowledge.Object[Unit]
-pub fn SemanticsFacts::effect(Self) -> @knowledge.FactTable[Unit, Effect]
-pub fn SemanticsFacts::for_semantics(Self, Semantics) -> Result[@knowledge.Object[Unit], String]
-pub fn SemanticsFacts::new() -> Self
-pub fn SemanticsFacts::provide_semantics(Self, @knowledge.Object[Unit], Semantics) -> Result[Unit, String]
-pub fn SemanticsFacts::value(Self) -> @knowledge.FactTable[Unit, Value]
 
 pub(all) enum Sort {
   Sym(@knowledge.Name)
@@ -905,19 +916,35 @@ pub fn TargetOptions::with_value(Self, String, String) -> Self
 type Value
 pub fn[A] Value::both(Self, (Sort) -> Sort?, Self, (Sort) -> Sort?, (Self, Self) -> A, () -> A) -> A
 pub fn[A] Value::can(Self, (Sort) -> Sort?, (Self) -> A, () -> A) -> A
-pub fn Value::cls() -> @knowledge.Class[Unit, Unit]
+pub fn Value::cls() -> @knowledge.Class[ValueCls, Unit]
 pub fn Value::compare(Self, Self) -> Int
 pub fn Value::domain() -> @knowledge.Domain[Self]
 pub fn Value::empty(Sort) -> Self
 pub fn Value::equal(Self, Self) -> Bool
-pub fn Value::fact(Self, String) -> String?
+pub fn[P] Value::find(Self, @knowledge.Slot[ValueCls, P]) -> P?
 pub fn Value::forget(Self) -> Self
+pub fn[P] Value::get(Self, @knowledge.Slot[ValueCls, P]) -> P
+pub fn[P] Value::has(Self, @knowledge.Slot[ValueCls, P]) -> Bool
+pub fn Value::is_empty(Self) -> Bool
+pub fn Value::join(Self, Self) -> Self raise @knowledge.Conflict
+pub fn Value::kb(Self) -> @knowledge.Value[ValueCls, Sort]
 pub fn[A] Value::match_both(Self, (Sort) -> Sort?, Self, (Sort) -> Sort?, (Self, Self) -> A, () -> A) -> A
 pub fn[A] Value::match_can(Self, (Sort) -> Sort?, (Self) -> A, () -> A) -> A
+pub fn Value::merge(Self, Self, on_conflict? : @knowledge.MergeStrategy) -> Self
+pub fn Value::of_kb(@knowledge.Value[ValueCls, Sort]) -> Self
+pub fn Value::order(Self, Self) -> @knowledge.PartialOrder
 pub fn Value::persistent() -> @knowledge.Persistent[Self]
+pub fn[P] Value::put(Self, @knowledge.Slot[ValueCls, P], P) -> Self
+pub fn Value::refine(Self, Sort) -> Self
+pub fn[P] Value::require(Self, @knowledge.Slot[ValueCls, P]) -> P raise @knowledge.Conflict
+pub fn[P] Value::require_some(Self, @knowledge.Slot[ValueCls, P?]) -> P raise @knowledge.Conflict
 pub fn Value::resort(Self, (Sort) -> Sort?) -> Self?
 pub fn Value::sort(Self) -> Sort
-pub fn Value::with_fact(Self, String, String) -> Self
+pub fn Value::sorted_cls(Sort) -> @knowledge.Class[ValueCls, Sort]
+pub fn Value::to_string(Self) -> String
+
+pub enum ValueCls {
+}
 
 type Var
 pub fn Var::compare(Self, Self) -> Int

@@ -36,6 +36,8 @@ pub fn create(String, backend? : String) -> Result[(Image, Array[String]), Strin
 
 pub fn data(Image) -> Bytes
 
+pub fn detect_format(BytesView) -> String?
+
 pub fn endian(Image) -> @bitvec.Endian
 
 pub fn entry_point(Image) -> UInt64
@@ -152,6 +154,7 @@ pub fn Image::of_bytes(Bytes, backend? : String) -> Result[(Self, Array[String])
 pub fn Image::of_bytes_for_filename(Bytes, filename~ : String) -> Result[(Self, Array[String]), String]
 pub fn Image::of_file(String, backend? : String) -> Result[(Self, Array[String]), String]
 pub fn Image::of_file_for_filename(String, filename? : String) -> Result[(Self, Array[String]), String]
+pub fn Image::of_object(Bytes, target? : @core_theory.Target) -> Result[(Self, Array[String]), String]
 pub fn Image::of_ogre_string(Bytes, String, filename? : String, target? : @core_theory.Target) -> Result[(Self, Array[String]), String]
 pub fn Image::of_string(String, backend? : String) -> Result[(Self, Array[String]), String]
 pub fn Image::relocations(Self) -> Array[Relocation]
@@ -185,6 +188,7 @@ pub fn ImageBackend::description(Self) -> String
 pub fn ImageBackend::elf() -> Self
 pub fn ImageBackend::extensions(Self) -> Array[String]
 pub fn ImageBackend::from_legacy(name~ : String, LegacyImageBackend, description? : String, extensions? : Array[String], priority? : Int) -> Self
+pub fn ImageBackend::llvm() -> Self
 pub fn ImageBackend::load(Self, Bytes) -> Result[(Image, Array[String]), String]
 pub fn ImageBackend::macho() -> Self
 pub fn ImageBackend::name(Self) -> String

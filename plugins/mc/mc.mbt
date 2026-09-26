@@ -582,7 +582,7 @@ pub fn objdump(
   let loaded = if loader == "llvm" {
     match @image.Image::of_bytes_for_filename(data, filename=file) {
       Ok(r) => Ok(r)
-      Err(_) => @image.Image::of_bytes(data, backend="elf")
+      Err(_) => @image.Image::of_bytes(data, backend="llvm")
     }
   } else {
     @image.Image::of_bytes(data, backend=loader)

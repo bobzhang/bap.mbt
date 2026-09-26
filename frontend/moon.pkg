@@ -67,6 +67,7 @@ import {
 
 import {
   "bobzhang/bap/fixtures",
+  "bobzhang/bap/fixtures/objects",
 } for "test"
 
 options(

@@ -1,0 +1,189 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/patterns"
+
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/image",
+  "bobzhang/bap/knowledge",
+  "bobzhang/bap/memory",
+  "bobzhang/bap/project",
+  "bobzhang/bap/xml",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn analyze(Rules, ArrayView[@memory.Memory], handlers? : ArrayView[(ActionContext, Action, UInt64) -> Unit]) -> Outcome
+
+pub fn analyze_image(@image.Image, Rules, handlers? : ArrayView[(ActionContext, Action, UInt64) -> Unit]) -> Outcome
+
+pub fn bap_action(String) -> @knowledge.Name
+
+pub fn code_regions(@image.Image) -> Array[@memory.Memory]
+
+pub fn collect(ArrayView[String], fs? : @bap_main.FileSystem) -> Array[(TargetSpec, String)]
+
+pub fn collect_actions(Rules, @memory.Memory, Map[UInt64, ActionSet]) -> Unit
+
+pub fn declare_plugin() -> Unit raise
+
+pub fn default_action_handler(ActionContext, Action, UInt64) -> Unit
+
+pub fn default_roots(paths? : ArrayView[String]) -> Array[String]
+
+pub fn enable(paths? : ArrayView[String]) -> Unit
+
+pub fn enabled_roots() -> Array[String]
+
+pub fn find_patternconstraints(String, fs? : @bap_main.FileSystem) -> Array[String]
+
+pub fn load(ArrayView[String], @core_theory.Target, fs? : @bap_main.FileSystem) -> Rules
+
+pub fn match_actions(Rules, ArrayView[@memory.Memory]) -> Array[(UInt64, ActionSet)]
+
+pub fn match_patterns(spec~ : String, binary~ : String, out~ : (String) -> Unit, fs? : @bap_main.FileSystem) -> Unit
+
+pub fn matches(Rules, @memory.Memory) -> Array[String]
+
+pub let name : String
+
+pub fn parse_constraints(String) -> Result[Array[(String, String)], String]
+
+pub fn parse_patterns(String) -> Result[Array[Rule], String]
+
+pub let pattern_actions_lisp : String
+
+pub let patternconstraints : String
+
+pub let provides : Array[String]
+
+pub fn register_action_handler((ActionContext, Action, UInt64) -> Unit) -> Unit
+
+pub fn register_for_image(@image.Image, path? : String, target? : @core_theory.Target, fs? : @bap_main.FileSystem) -> Outcome
+
+pub fn select(ArrayView[String], @core_theory.Target, fs? : @bap_main.FileSystem) -> Array[String]
+
+// Errors
+pub(all) suberror PatternError {
+  PatternError(String)
+} derive(Eq, @debug.Debug)
+pub fn PatternError::equal(Self, Self) -> Bool
+pub fn PatternError::not_equal(Self, Self) -> Bool
+pub fn PatternError::to_repr(Self) -> @debug.Repr
+
+pub(all) suberror TargetSpecError {
+  WrongEndianness(String)
+  UnrecognizedTarget(String)
+} derive(Eq, @debug.Debug)
+pub fn TargetSpecError::equal(Self, Self) -> Bool
+pub fn TargetSpecError::not_equal(Self, Self) -> Bool
+pub fn TargetSpecError::output(Self, &Logger) -> Unit
+pub fn TargetSpecError::to_repr(Self) -> @debug.Repr
+pub fn TargetSpecError::to_string(Self) -> String
+pub impl Show for TargetSpecError
+
+// Types and methods
+pub struct Action {
+  // private fields
+}
+pub fn Action::args(Self) -> Array[(@knowledge.Name, String)]
+pub fn Action::attribute(Self, String) -> String?
+pub fn Action::compare(Self, Self) -> Int
+pub fn Action::create(@knowledge.Name, args? : Array[(@knowledge.Name, String)]) -> Self
+pub fn Action::equal(Self, Self) -> Bool
+pub fn Action::name(Self) -> @knowledge.Name
+pub fn Action::not_equal(Self, Self) -> Bool
+pub fn Action::of_tag(@xml.Tag) -> Self
+pub fn Action::output(Self, &Logger) -> Unit
+pub fn Action::to_repr(Self) -> @debug.Repr
+pub fn Action::to_string(Self) -> String
+pub impl Eq for Action
+pub impl Show for Action
+pub impl @debug.Debug for Action
+
+pub struct ActionContext {
+  // private fields
+}
+pub fn ActionContext::promise_function_start(Self, UInt64) -> Bool
+pub fn ActionContext::promise_name(Self, UInt64, String) -> Bool
+
+pub struct ActionSet {
+  // private fields
+}
+pub fn ActionSet::diff(Self, Self) -> Self
+pub fn ActionSet::empty() -> Self
+pub fn ActionSet::is_empty(Self) -> Bool
+pub fn ActionSet::mem(Self, Action) -> Bool
+pub fn ActionSet::of_array(ArrayView[Action]) -> Self
+pub fn ActionSet::to_array(Self) -> Array[Action]
+pub fn ActionSet::union(Self, Self) -> Self
+
+pub struct Case {
+  pattern : Pattern
+  actions : ActionSet
+  shifted : Int
+}
+
+pub struct Outcome {
+  roots : Array[UInt64]
+  names : Array[(UInt64, String)]
+} derive(Eq, @debug.Debug)
+pub fn Outcome::equal(Self, Self) -> Bool
+pub fn Outcome::not_equal(Self, Self) -> Bool
+pub fn Outcome::rooter(Self, path? : String) -> @project.ProjectRooter
+pub fn Outcome::symbolizer(Self, path? : String) -> @project.ProjectSymbolizer
+pub fn Outcome::to_repr(Self) -> @debug.Repr
+
+pub struct Pattern {
+  // private fields
+}
+pub fn Pattern::concat(Self, Self) -> Self
+pub fn Pattern::create(String) -> Self raise PatternError
+pub fn Pattern::empty() -> Self
+pub fn Pattern::length(Self) -> Int
+pub fn Pattern::matches(Self, pos~ : Int, Int) -> Bool
+pub fn Pattern::output(Self, &Logger) -> Unit
+pub fn Pattern::to_string(Self) -> String
+pub fn Pattern::weight(Self) -> Int
+pub impl Show for Pattern
+
+pub(all) struct Rule {
+  sizes : Sizes?
+  prepatterns : Array[Pattern]
+  postpatterns : Array[Pattern]
+  actions : Array[Action]
+}
+pub fn Rule::collapse(Array[Self]) -> Self
+pub fn Rule::empty() -> Self
+pub fn Rule::to_string(Self) -> String
+
+pub struct Rules {
+  // private fields
+}
+pub fn Rules::cases(Self) -> Array[Case]
+pub fn Rules::concat(Self, Self) -> Self
+pub fn Rules::create(ArrayView[Rule]) -> Self
+pub fn Rules::empty() -> Self
+pub fn Rules::known(Self) -> ActionSet
+pub fn[X] Rules::search(Self, @memory.Memory, (UInt64, Action, X) -> X, X) -> X
+pub fn Rules::to_string(Self) -> String
+
+pub(all) struct Sizes {
+  total : Int
+  post : Int
+} derive(Eq, @debug.Debug)
+pub fn Sizes::equal(Self, Self) -> Bool
+pub fn Sizes::not_equal(Self, Self) -> Bool
+pub fn Sizes::to_repr(Self) -> @debug.Repr
+
+pub(all) enum TargetSpec {
+  Named(@core_theory.Target)
+  Spec(arch~ : String, order~ : @core_theory.Endianness?, bits~ : Int?, variant~ : String?, compiler~ : String?)
+}
+pub fn TargetSpec::matches(Self, @core_theory.Target) -> Bool
+pub fn TargetSpec::parse(String) -> Self raise TargetSpecError
+
+// Type aliases
+pub type ActionHandler = (ActionContext, Action, UInt64) -> Unit
+
+// Traits

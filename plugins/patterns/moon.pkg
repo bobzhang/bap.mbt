@@ -1,0 +1,16 @@
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/digest",
+  "bobzhang/bap/image",
+  "bobzhang/bap/knowledge",
+  "bobzhang/bap/main_event",
+  "bobzhang/bap/memory",
+  "bobzhang/bap/project",
+  "bobzhang/bap/xml",
+  "moonbitlang/core/cmp",
+  "moonbitlang/core/debug",
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/list",
+  "moonbitlang/core/string",
+}

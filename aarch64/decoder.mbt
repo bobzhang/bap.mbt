@@ -68,11 +68,7 @@ fn imm(v : Int) -> @mc.Op {
 ///|
 /// A signed decimal immediate (`#-8`, `#16`).
 fn imm_text(v : Int64) -> String {
-  if v < 0L {
-    "#-\{-v}"
-  } else {
-    "#\{v}"
-  }
+  "#\{v}"
 }
 
 ///|

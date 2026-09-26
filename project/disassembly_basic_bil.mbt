@@ -6969,6 +6969,15 @@ fn ProjectDisassemblyInstruction::project_basic_bil_arm_store(
 pub fn ProjectDisassemblyInstruction::lift_basic_bil(
   self : ProjectDisassemblyInstruction,
 ) -> Result[Array[@types.Stmt], String] {
+  // the Basic lifter keys on opcode names only; the names of AArch64
+  // instructions (`B`, `RET`, ...) collide with the x86/ARM fixture forms
+  // below, whose semantics would be wrong (AArch64 is lifted by the Lisp
+  // semantics)
+  if self.encoding_language() == @core_theory.Language::llvm_a64() {
+    return Err(
+      "unsupported Basic BIL lift for AArch64 instruction \{self.name()}",
+    )
+  }
   let name = self.name().to_upper()
   if name.has_prefix("CMOV") {
     let width = if name.contains("64") {

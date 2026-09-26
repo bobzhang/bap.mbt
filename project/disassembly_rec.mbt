@@ -238,11 +238,15 @@ fn project_disassembly_rec_control_edges(
 }
 
 ///|
+/// Whether control can fall through the instruction. Like upstream's
+/// driver this is decided by the barrier kind, not by `Terminator`: LLVM
+/// marks conditional branches (AArch64 `Bcc`/`CBZ`/`TBZ`, MIPS, RISC-V)
+/// as terminators, and they do fall through.
 fn project_disassembly_rec_can_fall_through(
   instruction : ProjectDisassemblyInstruction,
 ) -> Bool {
   !instruction.has_kind(ProjectReturn) &&
-  !instruction.has_kind(ProjectTerminator) &&
+  !instruction.has_kind(ProjectBarrier) &&
   !instruction.has_kind(ProjectUnconditionalBranch) &&
   !instruction.has_kind(ProjectIndirectBranch)
 }

@@ -36,7 +36,7 @@ test "image named loaders can derive Ogre docs from file paths" {
     if path != "moon.mod" {
       Err("unexpected loader path")
     } else {
-      match @image.OgreDoc::from_string(spec) {
+      match parse_spec(spec) {
         Ok(doc) => Ok(Some(doc))
         Err(reason) => Err(reason)
       }
@@ -77,7 +77,7 @@ test "image KB loaders can derive Ogre docs from file paths" {
         if path != "moon.mod" {
           Err("unexpected loader path")
         } else {
-          match @image.OgreDoc::from_string(spec) {
+          match parse_spec(spec) {
             Ok(doc) => Ok(Some(doc))
             Err(reason) => Err(reason)
           }

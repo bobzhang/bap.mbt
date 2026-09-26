@@ -146,13 +146,13 @@ test "project can be created from image memory" {
   assert_true(project.memory().lookup(0x1000UL).length() == 1)
   assert_true(project.symbols().length() == 1)
   assert_true(project.symbols()[0].name() == "entry")
-  assert_true(project.specification().fact_count("arch") == 1)
+  assert_true(project.specification().facts("arch").length() == 1)
 }
 
 ///|
 test "project preserves image loader specifications" {
   let target = @core_theory.Target::unknown()
-  let spec = @image.OgreDoc::from_target(@core_theory.Target::x86_64())
+  let spec = @image.Spec::from_arch(@core_theory.Target::x86_64())
   let image = @image.Image::from_segments(
     entry=0x1000UL,
     endian=LittleEndian,
@@ -161,9 +161,9 @@ test "project preserves image loader specifications" {
     spec~,
   )
   let project = @project.Project::from_image(image)
-  assert_true(project.specification().fact_count("bits") == 1)
+  assert_true(project.specification().facts("bits").length() == 1)
   assert_true(
-    project.specification().facts("bits")[0].value("size") == Some("64"),
+    project.specification().facts("bits")[0].get("size") == Some("64"),
   )
 }
 
@@ -1305,7 +1305,7 @@ test "project maps programs and stores libraries" {
   assert_true(with_library.libraries()[0].symbols().length() == 1)
   assert_true(with_library.libraries()[0].arch().is_unknown())
   assert_true(
-    with_library.libraries()[0].specification().fact_count("arch") == 1,
+    with_library.libraries()[0].specification().facts("arch").length() == 1,
   )
   let explicit_unit = @core_theory.ProgramUnit::for_file(
     "libexplicit.so",
@@ -1326,7 +1326,7 @@ test "project top-level BAP facades delegate to methods" {
   assert_true(@project.target(base).is_unknown())
   assert_true(@project.arch(base).is_unknown())
   assert_true(@project.state(base).subroutines().is_empty())
-  assert_true(@project.specification(base).fact_count("arch") == 1)
+  assert_true(@project.specification(base).facts("arch").length() == 1)
   assert_true(@project.program(base).subs().is_empty())
   assert_true(@project.symbols(base).is_empty())
   assert_true(@project.storage(base).is_empty())

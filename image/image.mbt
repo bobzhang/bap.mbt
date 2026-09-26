@@ -257,13 +257,18 @@ pub fn Image::arch(self : Image) -> @core_theory.Target {
 }
 
 ///|
+///
+/// Images created from an Ogre document return that document. Images built
+/// directly from metadata (ELF, raw and legacy backends, `Image::create`)
+/// describe themselves with the facts upstream's legacy loaders provide:
+/// target, entry point, segments, sections and function symbols.
 pub fn Image::spec(self : Image) -> OgreDoc {
   match self.spec_value {
     Some(doc) => doc
     None =>
-      match self.target_value {
-        Some(target) => OgreDoc::from_target(target)
-        None => OgreDoc::from_target(@core_theory.Target::unknown())
+      match Spec::of_image(self) {
+        Ok(doc) => doc
+        Err(_) => Spec::from_arch(self.arch())
       }
   }
 }

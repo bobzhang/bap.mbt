@@ -177,7 +177,7 @@ pub fn ProjectInput::create(
   let spec = if target.is_unknown() {
     @image.OgreDoc::empty()
   } else {
-    @image.OgreDoc::from_target(target)
+    @image.Spec::from_arch(target)
   }
   {
     ..ProjectInput::custom(target~, filename~, code?, data?, finish?),

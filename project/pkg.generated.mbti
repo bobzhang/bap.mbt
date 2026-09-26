@@ -10,6 +10,7 @@ import {
   "bobzhang/bap/knowledge",
   "bobzhang/bap/mc",
   "bobzhang/bap/memory",
+  "bobzhang/bap/ogre",
   "bobzhang/bap/types",
   "moonbitlang/core/debug",
 }
@@ -175,7 +176,7 @@ pub fn rooter_source_names() -> Array[String]
 
 pub fn set(Project, String, String) -> Project
 
-pub fn specification(Project) -> @image.OgreDoc
+pub fn specification(Project) -> @ogre.Doc
 
 pub fn state(Project) -> ProjectState
 
@@ -230,7 +231,7 @@ pub fn Library::disassembly(Self) -> ProjectDisassemblyState
 pub fn Library::memory(Self) -> @memory.MemMap[String]
 pub fn Library::name(Self) -> String
 pub fn Library::program(Self) -> @types.Term[@types.Program]
-pub fn Library::specification(Self) -> @image.OgreDoc
+pub fn Library::specification(Self) -> @ogre.Doc
 pub fn Library::state(Self) -> ProjectState
 pub fn Library::symbols(Self) -> Array[@image.Symbol]
 pub fn Library::target(Self) -> @core_theory.Target
@@ -322,7 +323,7 @@ pub fn Project::runpaths(Self) -> Array[String]
 pub fn Project::set(Self, String, String) -> Self
 pub fn[T] Project::set_tag(Self, ProjectStorageTag[T], T) -> Self
 pub fn Project::soname(Self) -> String?
-pub fn Project::specification(Self) -> @image.OgreDoc
+pub fn Project::specification(Self) -> @ogre.Doc
 pub fn Project::state(Self) -> ProjectState
 pub fn Project::storage(Self) -> Map[String, String]
 pub fn Project::substitute(Self, @memory.Memory, String, String) -> Self
@@ -758,7 +759,7 @@ pub fn ProjectInfo::code() -> @future.Stream[@memory.MemMap[String]]
 pub fn ProjectInfo::data() -> @future.Stream[@memory.MemMap[String]]
 pub fn ProjectInfo::file() -> @future.Stream[String]
 pub fn ProjectInfo::program() -> @future.Stream[@types.Term[@types.Program]]
-pub fn ProjectInfo::spec() -> @future.Stream[@image.OgreDoc]
+pub fn ProjectInfo::spec() -> @future.Stream[@ogre.Doc]
 pub fn ProjectInfo::symtab() -> @future.Stream[ProjectDisassemblySymtab]
 
 type ProjectInput
@@ -787,7 +788,7 @@ pub fn ProjectInput::raw_bytes(target~ : @core_theory.Target, Bytes, base? : UIn
 pub fn ProjectInput::raw_file(String, target~ : @core_theory.Target, base? : UInt64, offset? : Int, length? : Int, entry? : UInt64, filename? : String) -> Result[Self, String]
 pub fn ProjectInput::register_file_loader(name~ : String, description? : String, extensions? : Array[String], priority? : Int, load~ : (String) -> Result[Self, String]) -> Result[Unit, String]
 pub fn ProjectInput::register_loader(name~ : String, description? : String, extensions? : Array[String], priority? : Int, load~ : (Bytes) -> Result[Self, String], load_file? : (String) -> Result[Self, String]) -> Result[Unit, String]
-pub fn ProjectInput::specification(Self) -> @image.OgreDoc
+pub fn ProjectInput::specification(Self) -> @ogre.Doc
 pub fn ProjectInput::symbols(Self) -> Array[@image.Symbol]
 pub fn ProjectInput::target(Self) -> @core_theory.Target
 

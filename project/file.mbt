@@ -235,7 +235,7 @@ pub fn ProjectInput::binary(
         spec_value: if target.is_unknown() {
           @image.OgreDoc::empty()
         } else {
-          @image.OgreDoc::from_target(target)
+          @image.Spec::from_arch(target)
         },
       })
     Err(reason) => Err(reason)

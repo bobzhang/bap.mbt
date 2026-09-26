@@ -40,7 +40,7 @@ test "project raw bytes reject empty input and use target metadata" {
     Ok(input) => {
       assert_true(input.target().matches("sparc"))
       assert_true(input.arch().is_unknown())
-      assert_true(input.specification().fact_count("arch") == 0)
+      assert_true(input.specification().facts("arch").length() == 0)
       let project = @project.Project::from_input(input)
       assert_true(project.filename() == Some("raw.bin"))
       assert_true(project.memory().lookup(0x300UL).length() == 1)
@@ -85,7 +85,7 @@ test "project input create combines code and data memory" {
     data~,
   )
   assert_true(input.arch().is_unknown())
-  assert_true(input.specification().fact_count("arch") == 0)
+  assert_true(input.specification().facts("arch").length() == 0)
   assert_true(input.code().lookup(0x400UL).any(entry => entry.1 == "code"))
   assert_true(input.data().lookup(0x501UL).any(entry => entry.1 == "data"))
   let project = @project.Project::from_input(input)
@@ -119,8 +119,8 @@ test "project input from image retains executable code and data splits" {
   let input = @project.ProjectInput::from_image(image)
   assert_true(input.target().matches("x86_64"))
   assert_true(input.arch().matches("x86_64"))
-  assert_true(input.specification().fact_count("arch") == 1)
-  assert_true(input.specification().fact_count("bits") == 1)
+  assert_true(input.specification().facts("arch").length() == 1)
+  assert_true(input.specification().facts("bits").length() == 1)
   assert_true(input.code().lookup(0x900UL).any(entry => entry.1 == ".text"))
   assert_true(input.code().lookup(0x980UL).is_empty())
   assert_true(input.data().lookup(0x981UL).any(entry => entry.1 == ".rodata"))
@@ -149,7 +149,9 @@ test "project input from image retains executable code and data splits" {
   )
   assert_true(concrete_override_input.target().matches("sparc"))
   assert_true(concrete_override_input.arch().matches("x86_64"))
-  assert_true(concrete_override_input.specification().fact_count("arch") == 1)
+  assert_true(
+    concrete_override_input.specification().facts("arch").length() == 1,
+  )
 }
 
 ///|
@@ -181,7 +183,7 @@ test "project input custom accepts code and data memory" {
     data~,
   )
   assert_true(input.arch().is_unknown())
-  assert_true(input.specification().fact_count("arch") == 0)
+  assert_true(input.specification().facts("arch").length() == 0)
   let project = @project.Project::from_input(input)
   assert_true(project.filename() == Some("custom.bin"))
   assert_true(

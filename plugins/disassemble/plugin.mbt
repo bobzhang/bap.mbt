@@ -90,10 +90,17 @@ pub fn target_type() -> @bap_main.Type[@core_theory.Target] {
   @bap_main.Type::create(
     name="NAME",
     parse=s => {
-      match @core_theory.Target::lookup(s, pkg="bap") {
+      // Upstream declares architecture targets in the `bap` package; the
+      // port's built-in targets live in their own package, so fall back to an
+      // unqualified lookup (which also accepts nicknames such as `x86_64`).
+      let found = match @core_theory.Target::lookup(s, pkg="bap") {
+        Some(t) => Some(t)
+        None => @core_theory.Target::lookup(s)
+      }
+      match found {
         Some(t) => t
         None =>
-          fail(
+          raise @bap_main.Invalid(
             "unknown target \{quote(s)}, please see `bap list targets' for the full list of targets",
           )
       }

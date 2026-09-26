@@ -13,15 +13,26 @@
 //   shifted register operands are packed as `ARM_AM::getSORegOpc`
 //   (`shift | amount << 3`); addressing mode 2 offsets as
 //   `ARM_AM::getAM2Opc` (`amount | sub << 12 | shift << 13 | index << 16`),
-//   addressing mode 3 offsets as `ARM_AM::getAM3Opc` (`imm8 | sub << 8`),
-//   12-bit offsets as signed values (`#-0` is `INT32_MIN`); branch targets
-//   are byte offsets relative to the `PC` (the address plus 8).
+//   addressing mode 3 offsets as `ARM_AM::getAM3Opc` (`imm8 | sub << 8 |
+//   index << 9`, the index mode 1 for pre- and 2 for post-indexing), 12-bit
+//   offsets and bit field masks as the 32-bit patterns LLVM computes in
+//   unsigned arithmetic (`#-4` is `4294967292`, `#-0` is `2147483648`);
+//   branch targets are byte offsets relative to the `PC` (the address plus
+//   8); `BL` has no predicate operands (`BL_pred` has);
+// - the kinds are LLVM's `MCInstrDesc` properties of the opcode (see
+//   `llvm_kinds`);
+// - the assembly is LLVM's (`printInstruction` with its aliases, e.g.
+//   `lsl r0, r1, #2` for `MOVsi`, `pop`/`push`, `#bits, #rot` modified
+//   immediates);
+// - the encodings LLVM reports as `SoftFail` (should-be-zero/one fields
+//   set) are valid instructions, as for upstream BAP.
 //
 // The decoder covers the instructions of the ARM lifter (`Insn::all`) and
-// a few related ones LLVM decodes in the same encoding space (e.g. `ADR`,
-// `CLZ`, `PKHBT`, the halfword multiplies, `SWP`, `ISB`); other encodings
-// (coprocessor, VFP/NEON, saturating and parallel arithmetic, ...) are
-// reported as invalid.
+// a few related ones LLVM decodes in the same encoding space (e.g. `CLZ`,
+// `PKHBT`, the halfword multiplies, `SWP`, the barriers, `CPS`); other
+// encodings (coprocessor, VFP/NEON, saturating and parallel arithmetic,
+// ...) are reported as invalid. `decode_llvm_test.mbt` holds samples
+// verified against LLVM 22.
 
 ///|
 fn a32_field(w : UInt, lo : Int, len : Int) -> Int {
@@ -39,17 +50,11 @@ priv struct A32Insn {
   name : String
   ops : Array[@mc.Op]
   text : String
-  kinds : Array[@mc.Kind]
 }
 
 ///|
-fn decoded(
-  name : String,
-  ops : Array[@mc.Op],
-  text : String,
-  kinds? : Array[@mc.Kind] = [],
-) -> A32Insn? {
-  Some({ name, ops, text, kinds, })
+fn decoded(name : String, ops : Array[@mc.Op], text : String) -> A32Insn? {
+  Some({ name, ops, text, })
 }
 
 ///|
@@ -75,15 +80,32 @@ fn a32_offset_asm(offset : Int) -> String {
 }
 
 ///|
+/// The address `[rn, #offset]` of a 12-bit offset, as LLVM's
+/// `printAddrModeImm12Operand`: a zero offset is only printed for the
+/// pre-indexed forms.
+fn a32_offset12_addr(
+  rn : Int,
+  offset : Int,
+  always_imm0? : Bool = false,
+) -> String {
+  if offset == 0 && !always_imm0 {
+    "[\{gpr_asm(rn)}]"
+  } else {
+    "[\{gpr_asm(rn)}, \{a32_offset_asm(offset)}]"
+  }
+}
+
+///|
 /// `ARM_AM::getAM2Opc`.
 fn am2_opc(add : Bool, amount : Int, shift : Int, index : Int) -> Int {
   amount | ((if add { 0 } else { 1 }) << 12) | (shift << 13) | (index << 16)
 }
 
 ///|
-/// `ARM_AM::getAM3Opc` (without an index mode, as LLVM's decoder).
-fn am3_opc(add : Bool, imm8 : Int) -> Int {
-  imm8 | ((if add { 0 } else { 1 }) << 8)
+/// `ARM_AM::getAM3Opc`: the index mode `index` is 0 for the offset
+/// forms, 1 for the pre-indexed and 2 for the post-indexed ones.
+fn am3_opc(add : Bool, imm8 : Int, index? : Int = 0) -> Int {
+  imm8 | ((if add { 0 } else { 1 }) << 8) | (index << 9)
 }
 
 ///|
@@ -125,7 +147,6 @@ pub fn decode_a32_word(
           "SVC",
           [mc_imm(a32_field(word, 0, 24)), ..mc_pred(cond)],
           "svc\{cond_asm(cond)} #\{a32_field(word, 0, 24)}",
-          kinds=[MayAffectControlFlow],
         )
       _ => None
     }
@@ -142,7 +163,7 @@ pub fn decode_a32_word(
       size=4,
       assembly=d.text,
       encoding=@core_theory.Language::llvm_a32(),
-      kinds=d.kinds,
+      kinds=llvm_kinds(d.name, d.ops),
       raw~,
     )
   })
@@ -176,33 +197,33 @@ fn a32_unconditional(w : UInt) -> A32Insn? {
       (a32_field(w, 0, 24) << 2) | (a32_field(w, 24, 1) << 1),
       26,
     )
-    decoded("BLXi", [mc_imm(offset)], "blx \{imm_asm(offset)}", kinds=[
-      Call,
-      MayAffectControlFlow,
-    ])
+    decoded("BLXi", [mc_imm(offset)], "blx \{imm_asm(offset)}")
   } else if (w & 0xFF70F000) == 0xF550F000 {
     let rn = a32_field(w, 16, 4)
     let offset = a32_offset12(a32_bit(w, 23), a32_field(w, 0, 12))
     decoded(
       "PLDi12",
-      [mc_gpr(rn), mc_imm(offset)],
-      "pld [\{gpr_asm(rn)}, \{a32_offset_asm(offset)}]",
+      [mc_gpr(rn), mc_imm_u32(offset)],
+      "pld \{a32_offset12_addr(rn, offset)}",
     )
   } else if (w & 0xFFFFFF00) == 0xF57FF000 {
     let opt = a32_field(w, 0, 4)
-    let (name, text) = match a32_field(w, 4, 4) {
-      4 => ("DSB", "dsb")
-      5 => ("DMB", "dmb")
-      6 => ("ISB", "isb")
+    let kind = a32_field(w, 4, 4)
+    let name = match kind {
+      4 => "DSB"
+      5 => "DMB"
+      6 => "ISB"
       _ => return None
     }
-    decoded(name, [mc_imm(opt)], "\{text} #\{opt}")
+    decoded(name, [mc_imm(opt)], barrier_asm(kind, opt, ""))
   } else if (w & 0xFFF1FE20) == 0xF1000000 &&
-    a32_field(w, 18, 2) >= 2 &&
-    !a32_bit(w, 17) {
-    // CPS with an interrupt mask effect and no mode change
+    a32_field(w, 18, 2) != 1 &&
+    (a32_bit(w, 17) || a32_field(w, 0, 5) == 0) {
+    // `CPS` in its canonical encodings (LLVM's decoder table accepts some
+    // other encodings, as `SoftFail`s, depending on unrelated bits)
     let imod = a32_field(w, 18, 2)
     let iflags = a32_field(w, 6, 3)
+    let mode = a32_field(w, 0, 5)
     let flags = StringBuilder()
     if (iflags & 4) != 0 {
       flags.write_char('a')
@@ -213,12 +234,25 @@ fn a32_unconditional(w : UInt) -> A32Insn? {
     if (iflags & 1) != 0 {
       flags.write_char('f')
     }
+    if iflags == 0 {
+      flags.write_string("none")
+    }
     let effect = if imod == 2 { "ie" } else { "id" }
-    decoded(
-      "CPS2p",
-      [mc_imm(imod), mc_imm(iflags)],
-      "cps\{effect} \{flags.to_string()}",
-    )
+    match (imod, a32_bit(w, 17)) {
+      (0, _) => decoded("CPS1p", [mc_imm(mode)], "cps #\{mode}")
+      (_, true) =>
+        decoded(
+          "CPS3p",
+          [mc_imm(imod), mc_imm(iflags), mc_imm(mode)],
+          "cps\{effect} \{flags.to_string()}, #\{mode}",
+        )
+      _ =>
+        decoded(
+          "CPS2p",
+          [mc_imm(imod), mc_imm(iflags)],
+          "cps\{effect} \{flags.to_string()}",
+        )
+    }
   } else {
     None
   }
@@ -280,6 +314,7 @@ fn a32_dp(
   form : Int,
   shifter : Array[@mc.Op],
   shifter_asm : String,
+  mov_alias? : (String, String),
 ) -> A32Insn? {
   let s = a32_bit(w, 20)
   let rn = a32_field(w, 16, 4)
@@ -287,8 +322,8 @@ fn a32_dp(
   let name = a32_dp_name(opc, form)
   let mnemonic = a32_dp_mnemonics[opc].to_lower()
   if opc >= 8 && opc <= 11 {
-    // comparisons and tests: no destination, always set the flags
-    guard rd == 0 else { return None }
+    // comparisons and tests: no destination, always set the flags (a
+    // non-zero `Rd` field is a `SoftFail`, a valid instruction for BAP)
     decoded(
       name,
       [mc_gpr(rn), ..shifter, ..mc_pred(cond)],
@@ -296,21 +331,32 @@ fn a32_dp(
     )
   } else {
     let flags = if s { "s" } else { "" }
-    let kinds = if rd == 15 { pc_write_kinds(cond) } else { [] }
     if opc == 13 || opc == 15 {
-      guard rn == 0 else { return None }
+      // a non-zero `Rn` field: LLVM rejects the moves (but decodes the
+      // register form as `MOVr_TC` when the registers are in its `tcGPR`
+      // class: `R0`..`R3`, `R12`) and accepts the `MVN` register forms
+      let tc_gpr = (n : Int) => n <= 3 || n == 12
+      let name = match (opc, form) {
+        _ if rn == 0 => name
+        (13, 1) if tc_gpr(rd) && tc_gpr(a32_field(w, 0, 4)) => "MOVr_TC"
+        (13, _) | (15, 0) => return None
+        _ => name
+      }
+      // LLVM prints the shifted moves as shifts: `lsl rd, rm, #2`
+      let (mnemonic, shifter_asm) = match (opc, mov_alias) {
+        (13, Some(shift_alias)) => shift_alias
+        _ => (mnemonic, shifter_asm)
+      }
       decoded(
         name,
         [mc_gpr(rd), ..shifter, ..mc_pred(cond), mc_cc_out(s)],
         "\{mnemonic}\{flags}\{cond_asm(cond)} \{gpr_asm(rd)}, \{shifter_asm}",
-        kinds~,
       )
     } else {
       decoded(
         name,
         [mc_gpr(rd), mc_gpr(rn), ..shifter, ..mc_pred(cond), mc_cc_out(s)],
         "\{mnemonic}\{flags}\{cond_asm(cond)} \{gpr_asm(rd)}, \{gpr_asm(rn)}, \{shifter_asm}",
-        kinds~,
       )
     }
   }
@@ -334,6 +380,7 @@ fn a32_dp_reg(w : UInt, cond : Int) -> A32Insn? {
       3,
       [mc_gpr(rm), mc_gpr(rs), mc_imm(shift)],
       "\{gpr_asm(rm)}, \{shift_opc_asm(shift)} \{gpr_asm(rs)}",
+      mov_alias=(shift_opc_asm(shift), "\{gpr_asm(rm)}, \{gpr_asm(rs)}"),
     )
   } else {
     let imm5 = a32_field(w, 7, 5)
@@ -348,6 +395,14 @@ fn a32_dp_reg(w : UInt, cond : Int) -> A32Insn? {
         2,
         [mc_gpr(rm), mc_imm(shift | (imm5 << 3))],
         gpr_asm(rm) + shift_imm_asm(shift, imm5),
+        mov_alias=(
+          shift_opc_asm(shift),
+          if shift == 5 {
+            gpr_asm(rm)
+          } else {
+            "\{gpr_asm(rm)}, #\{if imm5 == 0 { 32 } else { imm5 }}"
+          },
+        ),
       )
     }
   }
@@ -386,47 +441,21 @@ fn a32_dp_imm(w : UInt, cond : Int) -> A32Insn? {
         4 => "sev"
         _ => "hint #\{hint}"
       }
-      decoded("HINT", [mc_imm(hint), ..mc_pred(cond)], text + cond_asm(cond))
+      let text = if hint < 5 {
+        text + cond_asm(cond)
+      } else {
+        "hint\{cond_asm(cond)} #\{hint}"
+      }
+      decoded("HINT", [mc_imm(hint), ..mc_pred(cond)], text)
     }
     0b10010 | 0b10110 => None
     _ => {
       let opc = a32_field(w, 21, 4)
-      let rn = a32_field(w, 16, 4)
       let imm12 = a32_field(w, 0, 12)
-      let value = decode_modified_imm(imm12.reinterpret_as_uint())
-      if (opc == 4 || opc == 2) && rn == 15 && !a32_bit(w, 20) {
-        // `add rd, pc, #imm` and `sub rd, pc, #imm` are decoded as ADR;
-        // the label operand is the raw 14-bit field (the add/sub code in
-        // bits 13..12 and the modified immediate)
-        let label = (a32_field(w, 22, 2) << 12) | imm12
-        let offset = if opc == 4 {
-          value.reinterpret_as_int()
-        } else {
-          -value.reinterpret_as_int()
-        }
-        decoded(
-          "ADR",
-          [mc_gpr(rd), mc_imm(label), ..mc_pred(cond)],
-          "adr\{cond_asm(cond)} \{gpr_asm(rd)}, \{imm_asm(offset)}",
-        )
-      } else {
-        a32_dp(w, cond, opc, 0, [mc_imm(imm12)], "#\{value}")
-      }
+      // `MOVi` to `PC` and `MSRi` print the value unsigned
+      let unsigned = opc == 13 && rd == 15
+      a32_dp(w, cond, opc, 0, [mc_imm(imm12)], mod_imm_asm(imm12, unsigned~))
     }
-  }
-}
-
-///|
-/// The kinds of a load or store of `rt`: loads to `PC` are jumps.
-fn a32_mem_kinds(load : Bool, rt : Int, cond : Int) -> Array[@mc.Kind] {
-  if load {
-    if rt == 15 {
-      [MayLoad, ..pc_write_kinds(cond)]
-    } else {
-      [MayLoad]
-    }
-  } else {
-    [MayStore]
   }
 }
 
@@ -443,28 +472,25 @@ fn a32_ldst_imm(w : UInt, cond : Int) -> A32Insn? {
   let imm12 = a32_field(w, 0, 12)
   let base = (if load { "LDR" } else { "STR" }) + (if byte { "B" } else { "" })
   let mnemonic = base.to_lower()
-  let kinds = a32_mem_kinds(load, rt, cond)
   let c = cond_asm(cond)
   if p && !wb {
     let offset = a32_offset12(add, imm12)
     decoded(
       base + "i12",
-      [mc_gpr(rt), mc_gpr(rn), mc_imm(offset), ..mc_pred(cond)],
-      "\{mnemonic}\{c} \{gpr_asm(rt)}, [\{gpr_asm(rn)}, \{a32_offset_asm(offset)}]",
-      kinds~,
+      [mc_gpr(rt), mc_gpr(rn), mc_imm_u32(offset), ..mc_pred(cond)],
+      "\{mnemonic}\{c} \{gpr_asm(rt)}, \{a32_offset12_addr(rn, offset)}",
     )
   } else if p {
     let offset = a32_offset12(add, imm12)
     let ops = if load {
-      [mc_gpr(rt), mc_gpr(rn), mc_gpr(rn), mc_imm(offset), ..mc_pred(cond)]
+      [mc_gpr(rt), mc_gpr(rn), mc_gpr(rn), mc_imm_u32(offset), ..mc_pred(cond)]
     } else {
-      [mc_gpr(rn), mc_gpr(rt), mc_gpr(rn), mc_imm(offset), ..mc_pred(cond)]
+      [mc_gpr(rn), mc_gpr(rt), mc_gpr(rn), mc_imm_u32(offset), ..mc_pred(cond)]
     }
     decoded(
       base + "_PRE_IMM",
       ops,
-      "\{mnemonic}\{c} \{gpr_asm(rt)}, [\{gpr_asm(rn)}, \{a32_offset_asm(offset)}]!",
-      kinds~,
+      "\{mnemonic}\{c} \{gpr_asm(rt)}, \{a32_offset12_addr(rn, offset, always_imm0=true)}!",
     )
   } else {
     // post-indexed; with W set, the unprivileged (`T`) variants
@@ -494,7 +520,6 @@ fn a32_ldst_imm(w : UInt, cond : Int) -> A32Insn? {
       name,
       ops,
       "\{mnemonic}\{t}\{c} \{gpr_asm(rt)}, [\{gpr_asm(rn)}], #\{a32_sign(add)}\{imm12}",
-      kinds~,
     )
   }
 }
@@ -514,7 +539,6 @@ fn a32_ldst_reg(w : UInt, cond : Int) -> A32Insn? {
   let shift = shift_opc_of_type(a32_field(w, 5, 2), imm5)
   let base = (if load { "LDR" } else { "STR" }) + (if byte { "B" } else { "" })
   let mnemonic = base.to_lower()
-  let kinds = a32_mem_kinds(load, rt, cond)
   let c = cond_asm(cond)
   let offset_asm = "\{a32_sign(add)}\{gpr_asm(rm)}\{shift_imm_asm(shift, imm5)}"
   if p && !wb {
@@ -528,7 +552,6 @@ fn a32_ldst_reg(w : UInt, cond : Int) -> A32Insn? {
         ..mc_pred(cond),
       ],
       "\{mnemonic}\{c} \{gpr_asm(rt)}, [\{gpr_asm(rn)}, \{offset_asm}]",
-      kinds~,
     )
   } else {
     let (name, index, text) = if p {
@@ -551,7 +574,7 @@ fn a32_ldst_reg(w : UInt, cond : Int) -> A32Insn? {
     } else {
       [mc_gpr(rn), mc_gpr(rt), mc_gpr(rn), mc_gpr(rm), offset, ..mc_pred(cond)]
     }
-    decoded(name, ops, text, kinds~)
+    decoded(name, ops, text)
   }
 }
 
@@ -577,9 +600,9 @@ fn a32_extra_ldst(w : UInt, cond : Int) -> A32Insn? {
     (3, false) => ("STRD", false, true)
     _ => ("LDRSH", true, false)
   }
+  guard !dual || rt != 15 else { return None }
   let mnemonic = base.to_lower()
   let c = cond_asm(cond)
-  let kinds : Array[@mc.Kind] = if load { [MayLoad] } else { [MayStore] }
   let t_asm = if dual {
     "\{gpr_asm(rt)}, \{gpr_asm(rt + 1)}"
   } else {
@@ -590,12 +613,19 @@ fn a32_extra_ldst(w : UInt, cond : Int) -> A32Insn? {
   } else {
     "\{a32_sign(add)}\{gpr_asm(rm)}"
   }
+  // `printAddrMode3Operand`: a zero offset is omitted (not `#-0`)
+  let offset_addr = if imm_form && add && imm8 == 0 {
+    "[\{gpr_asm(rn)}]"
+  } else {
+    "[\{gpr_asm(rn)}, \{offset_asm}]"
+  }
   if !p && wb {
     // the unprivileged variants of the halfword and signed byte accesses
     guard !dual else { return None }
     let (name, offset) = if imm_form {
       (base + "Ti", [mc_imm(imm8 | ((if add { 1 } else { 0 }) << 8))])
     } else {
+      guard load || a32_field(w, 8, 4) == 0 else { return None }
       (base + "Tr", [mc_gpr(rm), mc_imm(if add { 1 } else { 0 })])
     }
     let t = if load {
@@ -607,21 +637,20 @@ fn a32_extra_ldst(w : UInt, cond : Int) -> A32Insn? {
       name,
       [..t, mc_gpr(rn), ..offset, ..mc_pred(cond)],
       "\{mnemonic}t\{c} \{t_asm}, [\{gpr_asm(rn)}], \{offset_asm}",
-      kinds~,
     )
   }
+  let index = if p && !wb { 0 } else if p { 1 } else { 2 }
   let offset = if imm_form {
-    [mc_nil(), mc_imm(am3_opc(add, imm8))]
+    [mc_nil(), mc_imm(am3_opc(add, imm8, index~))]
   } else {
-    [mc_gpr(rm), mc_imm(am3_opc(add, 0))]
+    [mc_gpr(rm), mc_imm(am3_opc(add, 0, index~))]
   }
   let ts = if dual { [mc_gpr(rt), mc_gpr(rt + 1)] } else { [mc_gpr(rt)] }
   if p && !wb {
     decoded(
       base,
       [..ts, mc_gpr(rn), ..offset, ..mc_pred(cond)],
-      "\{mnemonic}\{c} \{t_asm}, [\{gpr_asm(rn)}, \{offset_asm}]",
-      kinds~,
+      "\{mnemonic}\{c} \{t_asm}, \{offset_addr}",
     )
   } else {
     let (suffix, text) = if p {
@@ -634,7 +663,6 @@ fn a32_extra_ldst(w : UInt, cond : Int) -> A32Insn? {
       base + suffix,
       [..front, mc_gpr(rn), ..offset, ..mc_pred(cond)],
       text,
-      kinds~,
     )
   }
 }
@@ -651,14 +679,12 @@ fn a32_multiply(w : UInt, cond : Int) -> A32Insn? {
   let c = cond_asm(cond)
   let flags = if s { "s" } else { "" }
   match a32_field(w, 21, 3) {
-    0 => {
-      guard lo == 0 else { return None }
+    0 =>
       decoded(
         "MUL",
         [mc_gpr(hi), mc_gpr(rn), mc_gpr(rm), ..mc_pred(cond), mc_cc_out(s)],
         "mul\{flags}\{c} \{gpr_asm(hi)}, \{gpr_asm(rn)}, \{gpr_asm(rm)}",
       )
-    }
     1 =>
       decoded(
         "MLA",
@@ -732,25 +758,24 @@ fn a32_halfword_multiply(w : UInt, cond : Int) -> A32Insn? {
   }
   match a32_field(w, 21, 2) {
     0 => four("SMLA" + x + y)
-    1 =>
-      if a32_bit(w, 5) {
-        guard ra == 0 else { return None }
-        three("SMULW" + y)
-      } else {
-        four("SMLAW" + y)
-      }
+    1 => if a32_bit(w, 5) { three("SMULW" + y) } else { four("SMLAW" + y) }
     2 => {
       let name = "SMLAL" + x + y
       decoded(
         name,
-        [mc_gpr(ra), mc_gpr(rd), mc_gpr(rn), mc_gpr(rm), ..mc_pred(cond)],
+        [
+          mc_gpr(ra),
+          mc_gpr(rd),
+          mc_gpr(rn),
+          mc_gpr(rm),
+          mc_gpr(ra),
+          mc_gpr(rd),
+          ..mc_pred(cond),
+        ],
         "\{name.to_lower()}\{c} \{gpr_asm(ra)}, \{gpr_asm(rd)}, \{gpr_asm(rn)}, \{gpr_asm(rm)}",
       )
     }
-    _ => {
-      guard ra == 0 else { return None }
-      three("SMUL" + x + y)
-    }
+    _ => three("SMUL" + x + y)
   }
 }
 
@@ -764,15 +789,12 @@ fn a32_sync(w : UInt, cond : Int) -> A32Insn? {
   let c = cond_asm(cond)
   if !a32_bit(w, 23) {
     // SWP/SWPB
-    guard a32_field(w, 20, 2) == 0 && a32_field(w, 8, 4) == 0 else {
-      return None
-    }
+    guard a32_field(w, 20, 2) == 0 else { return None }
     let name = if a32_bit(w, 22) { "SWPB" } else { "SWP" }
     return decoded(
       name,
       [mc_gpr(rt), mc_gpr(low), mc_gpr(rn), ..mc_pred(cond)],
       "\{name.to_lower()}\{c} \{gpr_asm(rt)}, \{gpr_asm(low)}, [\{gpr_asm(rn)}]",
-      kinds=[MayLoad, MayStore],
     )
   }
   guard a32_field(w, 8, 4) == 15 else { return None }
@@ -782,8 +804,15 @@ fn a32_sync(w : UInt, cond : Int) -> A32Insn? {
     2 => "B"
     _ => "H"
   }
+  // `DecodeGPRPairRegisterClass`: registers above `R13` are invalid, an
+  // odd register names the pair of the even one below it (a `SoftFail`)
+  guard size != "D" || (if a32_bit(w, 20) { rt } else { low }) <= 13 else {
+    return None
+  }
+  let rt = if size == "D" && a32_bit(w, 20) { rt & -2 } else { rt }
+  let low = if size == "D" && !a32_bit(w, 20) { low & -2 } else { low }
   if a32_bit(w, 20) {
-    guard low == 15 else { return None }
+    guard a32_field(w, 0, 4) == 15 else { return None }
     let t = if size == "D" { mc_gpr_pair(rt) } else { mc_gpr(rt) }
     let t_asm = if size == "D" {
       "\{gpr_asm(rt)}, \{gpr_asm(rt + 1)}"
@@ -795,7 +824,6 @@ fn a32_sync(w : UInt, cond : Int) -> A32Insn? {
       name,
       [t, mc_gpr(rn), ..mc_pred(cond)],
       "\{name.to_lower()}\{c} \{t_asm}, [\{gpr_asm(rn)}]",
-      kinds=[MayLoad],
     )
   } else {
     let t = if size == "D" { mc_gpr_pair(low) } else { mc_gpr(low) }
@@ -809,7 +837,6 @@ fn a32_sync(w : UInt, cond : Int) -> A32Insn? {
       name,
       [mc_gpr(rt), t, mc_gpr(rn), ..mc_pred(cond)],
       "\{name.to_lower()}\{c} \{gpr_asm(rt)}, \{t_asm}, [\{gpr_asm(rn)}]",
-      kinds=[MayStore],
     )
   }
 }
@@ -825,7 +852,8 @@ fn a32_misc(w : UInt, cond : Int) -> A32Insn? {
   match a32_field(w, 4, 3) {
     0 =>
       if (op & 1) == 0 {
-        guard (w & 0x000F0FFF) == 0x000F0000 else { return None }
+        // (bit 9 set: the banked register form; LLVM also requires bit 16)
+        guard !a32_bit(w, 9) && a32_bit(w, 16) else { return None }
         let (name, reg) = if a32_bit(w, 22) {
           ("MRSsys", "spsr")
         } else {
@@ -840,41 +868,23 @@ fn a32_misc(w : UInt, cond : Int) -> A32Insn? {
         guard (w & 0x0000FFF0) == 0x0000F000 else { return None }
         let mask = (a32_field(w, 22, 1) << 4) | a32_field(w, 16, 4)
         guard mask != 0 else { return None }
-        let fields = StringBuilder()
-        for pair in [(8, 'f'), (4, 's'), (2, 'x'), (1, 'c')] {
-          if (mask & pair.0) != 0 {
-            fields.write_char(pair.1)
-          }
-        }
-        let reg = if a32_bit(w, 22) { "spsr" } else { "cpsr" }
         decoded(
           "MSR",
           [mc_imm(mask), mc_gpr(rm), ..mc_pred(cond)],
-          "msr\{c} \{reg}_\{fields.to_string()}, \{gpr_asm(rm)}",
+          "msr\{c} \{msr_mask_asm(mask)}, \{gpr_asm(rm)}",
         )
       }
     1 if op == 1 => {
       guard (w & 0x000FFF00) == 0x000FFF00 else { return None }
       if rm == 14 {
-        decoded("BX_RET", mc_pred(cond), "bx\{c} lr", kinds=[
-          Return,
-          Barrier,
-          Terminator,
-          MayAffectControlFlow,
-        ])
+        decoded("BX_RET", mc_pred(cond), "bx\{c} lr")
       } else if cond == 14 {
-        decoded(
-          "BX",
-          [mc_gpr(rm)],
-          "bx \{gpr_asm(rm)}",
-          kinds=pc_write_kinds(cond),
-        )
+        decoded("BX", [mc_gpr(rm)], "bx \{gpr_asm(rm)}")
       } else {
         decoded(
           "BX_pred",
           [mc_gpr(rm), ..mc_pred(cond)],
           "bx\{c} \{gpr_asm(rm)}",
-          kinds=pc_write_kinds(cond),
         )
       }
     }
@@ -888,15 +898,13 @@ fn a32_misc(w : UInt, cond : Int) -> A32Insn? {
     }
     3 if op == 1 => {
       guard (w & 0x000FFF00) == 0x000FFF00 else { return None }
-      let kinds : Array[@mc.Kind] = [Call, MayAffectControlFlow]
       if cond == 14 {
-        decoded("BLX", [mc_gpr(rm)], "blx \{gpr_asm(rm)}", kinds~)
+        decoded("BLX", [mc_gpr(rm)], "blx \{gpr_asm(rm)}")
       } else {
         decoded(
           "BLX_pred",
           [mc_gpr(rm), ..mc_pred(cond)],
           "blx\{c} \{gpr_asm(rm)}",
-          kinds~,
         )
       }
     }
@@ -937,7 +945,6 @@ fn a32_media(w : UInt, cond : Int) -> A32Insn? {
       )
     }
     (0b01010 | 0b01011 | 0b01110 | 0b01111, 3) => {
-      guard a32_field(w, 8, 2) == 0 else { return None }
       let rot = a32_field(w, 10, 2)
       let (sign, size) = match op1 {
         0b01010 => ("S", "B")
@@ -991,7 +998,6 @@ fn a32_media(w : UInt, cond : Int) -> A32Insn? {
     (0b11010 | 0b11011 | 0b11110 | 0b11111, 2 | 6) => {
       let lsb = a32_field(w, 7, 5)
       let widthm1 = a32_field(w, 16, 5)
-      guard lsb + widthm1 <= 31 else { return None }
       let name = if op1 >= 0b11110 { "UBFX" } else { "SBFX" }
       decoded(
         name,
@@ -1002,28 +1008,25 @@ fn a32_media(w : UInt, cond : Int) -> A32Insn? {
     (0b11100 | 0b11101, 0 | 4) => {
       let lsb = a32_field(w, 7, 5)
       let msb = a32_field(w, 16, 5)
-      guard msb >= lsb else { return None }
+      // `DecodeBitfieldMaskOperand`: `lsb > msb` is a `SoftFail`, the
+      // field is then the bit `msb`
+      let lsb = if lsb > msb { msb } else { lsb }
       // `DecodeBitfieldMaskOperand`: the inverted mask of the field
       let msb_mask = if msb == 31 { 0xFFFFFFFFU } else { (1U << (msb + 1)) - 1 }
       let lsb_mask = (1U << lsb) - 1
       let inv_mask = (msb_mask ^ lsb_mask).lnot().reinterpret_as_int()
+      let inv_mask_op = mc_imm_u32(inv_mask)
       let width = msb - lsb + 1
       if rm == 15 {
         decoded(
           "BFC",
-          [mc_gpr(rd), mc_gpr(rd), mc_imm(inv_mask), ..mc_pred(cond)],
+          [mc_gpr(rd), mc_gpr(rd), inv_mask_op, ..mc_pred(cond)],
           "bfc\{c} \{gpr_asm(rd)}, #\{lsb}, #\{width}",
         )
       } else {
         decoded(
           "BFI",
-          [
-            mc_gpr(rd),
-            mc_gpr(rd),
-            mc_gpr(rm),
-            mc_imm(inv_mask),
-            ..mc_pred(cond),
-          ],
+          [mc_gpr(rd), mc_gpr(rd), mc_gpr(rm), inv_mask_op, ..mc_pred(cond)],
           "bfi\{c} \{gpr_asm(rd)}, \{gpr_asm(rm)}, #\{lsb}, #\{width}",
         )
       }
@@ -1052,26 +1055,19 @@ fn a32_ldm_stm(w : UInt, cond : Int) -> A32Insn? {
     mode +
     (if wb { "_UPD" } else { "" })
   let base = if wb { [mc_gpr(rn), mc_gpr(rn)] } else { [mc_gpr(rn)] }
-  let kinds : Array[@mc.Kind] = if load {
-    if (mask & 0x8000) != 0 {
-      [MayLoad, ..pc_write_kinds(cond)]
-    } else {
-      [MayLoad]
-    }
-  } else {
-    [MayStore]
-  }
   let c = cond_asm(cond)
   let text = match (load, mode, rn, wb) {
-    (true, "IA", 13, true) => "pop\{c} \{reglist_asm(mask)}"
-    (false, "DB", 13, true) => "push\{c} \{reglist_asm(mask)}"
+    (true, "IA", 13, true) if mask.popcnt() > 1 =>
+      "pop\{c} \{reglist_asm(mask)}"
+    (false, "DB", 13, true) if mask.popcnt() > 1 =>
+      "push\{c} \{reglist_asm(mask)}"
     _ => {
       let m = if mode == "IA" { "" } else { mode.to_lower() }
       let bang = if wb { "!" } else { "" }
       "\{if load { "ldm" } else { "stm" }}\{m}\{c} \{gpr_asm(rn)}\{bang}, \{reglist_asm(mask)}"
     }
   }
-  decoded(name, [..base, ..mc_pred(cond), ..mc_reglist(mask)], text, kinds~)
+  decoded(name, [..base, ..mc_pred(cond), ..mc_reglist(mask)], text)
 }
 
 ///|
@@ -1080,24 +1076,21 @@ fn a32_branch(w : UInt, cond : Int) -> A32Insn? {
   let offset = sign_extend(a32_field(w, 0, 24) << 2, 26)
   let c = cond_asm(cond)
   if a32_bit(w, 24) {
-    let name = if cond == 14 { "BL" } else { "BL_pred" }
-    decoded(
-      name,
-      [mc_imm(offset), ..mc_pred(cond)],
-      "bl\{c} \{imm_asm(offset)}",
-      kinds=[Call, MayAffectControlFlow],
-    )
-  } else {
-    let kinds : Array[@mc.Kind] = if cond == 14 {
-      [UnconditionalBranch, Barrier, Terminator, MayAffectControlFlow]
+    // LLVM's `BL` has no predicate operands, `BL_pred` has them
+    if cond == 14 {
+      decoded("BL", [mc_imm(offset)], "bl \{imm_asm(offset)}")
     } else {
-      [ConditionalBranch, MayAffectControlFlow]
+      decoded(
+        "BL_pred",
+        [mc_imm(offset), ..mc_pred(cond)],
+        "bl\{c} \{imm_asm(offset)}",
+      )
     }
+  } else {
     decoded(
       "Bcc",
       [mc_imm(offset), ..mc_pred(cond)],
       "b\{c} \{imm_asm(offset)}",
-      kinds~,
     )
   }
 }

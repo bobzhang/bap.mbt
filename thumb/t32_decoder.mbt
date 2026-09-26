@@ -12,7 +12,13 @@
 //   8-bit offsets are signed (`#-0` is `INT32_MIN`), branch targets are
 //   byte offsets relative to the `PC` (the address plus 4);
 // - `t2IT` has the first condition and the mask operands, the mask in
-//   LLVM's condition-independent form (a set bit means "else").
+//   LLVM's condition-independent form (a set bit means "else");
+// - the immediate shifts by 32 (`lsrs r0, r1, #32`) have the encoded 0;
+//   the exclusive accesses have the unscaled 8-bit offset field;
+// - the kinds are LLVM's `MCInstrDesc` properties (`@arm.llvm_kinds`), the
+//   assembly LLVM's (with the `.w` qualifier exactly when LLVM prints it),
+//   and the `SoftFail` encodings are valid instructions, as for upstream
+//   BAP. `SDIV`/`UDIV` are decoded (LLVM needs the `hwdiv` feature).
 //
 // The IT state is carried from an IT instruction to the instructions it
 // predicates by an `ItBlock` value (the decoder made by `t32_decoder`
@@ -76,17 +82,11 @@ priv struct T32Insn {
   name : String
   ops : Array[@mc.Op]
   text : String
-  kinds : Array[@mc.Kind]
 }
 
 ///|
-fn t32(
-  name : String,
-  ops : Array[@mc.Op],
-  text : String,
-  kinds? : Array[@mc.Kind] = [],
-) -> T32Insn? {
-  Some({ name, ops, text, kinds, })
+fn t32(name : String, ops : Array[@mc.Op], text : String) -> T32Insn? {
+  Some({ name, ops, text, })
 }
 
 ///|
@@ -118,30 +118,21 @@ fn t_imm(v : Int) -> @mc.Op {
 }
 
 ///|
+/// The address `[rn, #offset]`, with the zero offset omitted (LLVM's
+/// `printThumbAddrModeImm5SOperand` and `printThumbAddrModeSPOperand`).
+fn t_addr_imm(rn : Int, offset : Int) -> String {
+  if offset == 0 {
+    "[\{t_rn(rn)}]"
+  } else {
+    "[\{t_rn(rn)}, #\{offset}]"
+  }
+}
+
+///|
 /// A 32-bit value as an unsigned immediate (as LLVM stores decoded
 /// Thumb-2 modified immediates).
 fn uimm(v : UInt) -> @mc.Op {
   Imm(v.to_uint64().reinterpret_as_int64())
-}
-
-///|
-/// The kinds of a branch with the condition `cond`.
-fn branch_kinds(cond : Int) -> Array[@mc.Kind] {
-  if cond == 14 {
-    [UnconditionalBranch, Barrier, Terminator, MayAffectControlFlow]
-  } else {
-    [ConditionalBranch, MayAffectControlFlow]
-  }
-}
-
-///|
-/// The kinds of a return (`bx lr`) with the condition `cond`.
-fn return_kinds(cond : Int) -> Array[@mc.Kind] {
-  if cond == 14 {
-    [Return, Barrier, Terminator, MayAffectControlFlow]
-  } else {
-    [ConditionalBranch, MayAffectControlFlow]
-  }
 }
 
 ///|
@@ -154,6 +145,16 @@ fn t2_offset(add : Bool, v : Int) -> Int {
     -2147483648
   } else {
     -v
+  }
+}
+
+///|
+/// The address `[rn, #offset]` of an offset form, the zero offset omitted.
+fn t2_addr(rn : Int, offset : Int) -> String {
+  if offset == 0 {
+    "[\{t_rn(rn)}]"
+  } else {
+    "[\{t_rn(rn)}, \{t2_offset_text(offset)}]"
   }
 }
 
@@ -209,14 +210,16 @@ fn t16_decode(h : Int, cond : Int, in_it : Bool) -> T32Insn? {
           "movs \{t_rn(r0)}, \{t_rn(r3)}",
         )
       }
-      let (name, mnemonic, amount) = match op {
-        0 => ("tLSLri", "lsl", imm5)
-        1 => ("tLSRri", "lsr", if imm5 == 0 { 32 } else { imm5 })
-        _ => ("tASRri", "asr", if imm5 == 0 { 32 } else { imm5 })
+      // (the operand of a shift by 32 is 0, as the encoded field)
+      let (name, mnemonic) = match op {
+        0 => ("tLSLri", "lsl")
+        1 => ("tLSRri", "lsr")
+        _ => ("tASRri", "asr")
       }
+      let amount = if op != 0 && imm5 == 0 { 32 } else { imm5 }
       t32(
         name,
-        [t_gpr(r0), s, t_gpr(r3), t_imm(amount), ..p],
+        [t_gpr(r0), s, t_gpr(r3), t_imm(imm5), ..p],
         "\{mnemonic}\{sx}\{c} \{t_rn(r0)}, \{t_rn(r3)}, #\{amount}",
       )
     }
@@ -271,7 +274,7 @@ fn t16_decode(h : Int, cond : Int, in_it : Bool) -> T32Insn? {
     }
     8 =>
       if t32_bit(h, 10) {
-        t16_special(h, cond, p, c)
+        t16_special(h, p, c)
       } else {
         t16_data(h, s, sx, p, c)
       }
@@ -280,24 +283,22 @@ fn t16_decode(h : Int, cond : Int, in_it : Bool) -> T32Insn? {
         "tLDRpci",
         [t_gpr(r8), t_imm(imm8 * 4), ..p],
         "ldr\{c} \{t_rn(r8)}, [pc, #\{imm8 * 4}]",
-        kinds=[MayLoad],
       )
     10 | 11 => {
-      let (name, mnemonic, load) = match t32_bits(h, 9, 3) {
-        0 => ("tSTRr", "str", false)
-        1 => ("tSTRHr", "strh", false)
-        2 => ("tSTRBr", "strb", false)
-        3 => ("tLDRSB", "ldrsb", true)
-        4 => ("tLDRr", "ldr", true)
-        5 => ("tLDRHr", "ldrh", true)
-        6 => ("tLDRBr", "ldrb", true)
-        _ => ("tLDRSH", "ldrsh", true)
+      let (name, mnemonic) = match t32_bits(h, 9, 3) {
+        0 => ("tSTRr", "str")
+        1 => ("tSTRHr", "strh")
+        2 => ("tSTRBr", "strb")
+        3 => ("tLDRSB", "ldrsb")
+        4 => ("tLDRr", "ldr")
+        5 => ("tLDRHr", "ldrh")
+        6 => ("tLDRBr", "ldrb")
+        _ => ("tLDRSH", "ldrsh")
       }
       t32(
         name,
         [t_gpr(r0), t_gpr(r3), t_gpr(r6), ..p],
         "\{mnemonic}\{c} \{t_rn(r0)}, [\{t_rn(r3)}, \{t_rn(r6)}]",
-        kinds=if load { [MayLoad] } else { [MayStore] },
       )
     }
     12 | 13 | 14 | 15 | 16 | 17 => {
@@ -311,8 +312,7 @@ fn t16_decode(h : Int, cond : Int, in_it : Bool) -> T32Insn? {
       t32(
         name,
         [t_gpr(r0), t_gpr(r3), t_imm(imm5), ..p],
-        "\{if load { "ldr" } else { "str" }}\{size.to_lower()}\{c} \{t_rn(r0)}, [\{t_rn(r3)}, #\{imm5 * scale}]",
-        kinds=if load { [MayLoad] } else { [MayStore] },
+        "\{if load { "ldr" } else { "str" }}\{size.to_lower()}\{c} \{t_rn(r0)}, \{t_addr_imm(r3, imm5 * scale)}",
       )
     }
     18 | 19 => {
@@ -324,8 +324,7 @@ fn t16_decode(h : Int, cond : Int, in_it : Bool) -> T32Insn? {
           "tSTRspi"
         },
         [t_gpr(r8), t_gpr(13), t_imm(imm8), ..p],
-        "\{if load { "ldr" } else { "str" }}\{c} \{t_rn(r8)}, [sp, #\{imm8 * 4}]",
-        kinds=if load { [MayLoad] } else { [MayStore] },
+        "\{if load { "ldr" } else { "str" }}\{c} \{t_rn(r8)}, \{t_addr_imm(13, imm8 * 4)}",
       )
     }
     20 =>
@@ -340,7 +339,7 @@ fn t16_decode(h : Int, cond : Int, in_it : Bool) -> T32Insn? {
         [t_gpr(r8), t_gpr(13), t_imm(imm8), ..p],
         "add\{c} \{t_rn(r8)}, sp, #\{imm8 * 4}",
       )
-    22 | 23 => t16_misc(h, cond, in_it, p, c)
+    22 | 23 => t16_misc(h, in_it, p, c)
     24 | 25 => {
       let mask = imm8
       guard mask != 0 else { return None }
@@ -349,25 +348,23 @@ fn t16_decode(h : Int, cond : Int, in_it : Bool) -> T32Insn? {
           "tLDMIA",
           [t_gpr(r8), ..p, ..@arm.mc_reglist(mask)],
           "ldm\{c} \{t_rn(r8)}\{if ((mask >> r8) & 1) == 0 { "!" } else { "" }}, \{@arm.reglist_asm(mask)}",
-          kinds=[MayLoad],
         )
       } else {
         t32(
           "tSTMIA_UPD",
           [t_gpr(r8), t_gpr(r8), ..p, ..@arm.mc_reglist(mask)],
           "stm\{c} \{t_rn(r8)}!, \{@arm.reglist_asm(mask)}",
-          kinds=[MayStore],
         )
       }
     }
     26 | 27 => {
       let bcond = t32_bits(h, 8, 4)
       match bcond {
+        // LLVM's pseudo instructions with a fixed encoding
+        14 if imm8 == 0xF9 => t32("t__brkdiv0", [], "__brkdiv0")
+        14 if imm8 == 0xFE => t32("tTRAP", [], "trap")
         14 => t32("tUDF", [t_imm(imm8)], "udf #\{imm8}")
-        15 =>
-          t32("tSVC", [t_imm(imm8), ..p], "svc\{c} #\{imm8}", kinds=[
-            MayAffectControlFlow,
-          ])
+        15 => t32("tSVC", [t_imm(imm8), ..p], "svc\{c} #\{imm8}")
         _ => {
           // conditional branches are not permitted in IT blocks
           guard !in_it else { return None }
@@ -376,19 +373,13 @@ fn t16_decode(h : Int, cond : Int, in_it : Bool) -> T32Insn? {
             "tBcc",
             [t_imm(offset), ..@arm.mc_pred(bcond)],
             "b\{@arm.cond_asm(bcond)} #\{offset}",
-            kinds=branch_kinds(bcond),
           )
         }
       }
     }
     28 => {
       let offset = @arm.sign_extend(t32_bits(h, 0, 11) << 1, 12)
-      t32(
-        "tB",
-        [t_imm(offset), ..p],
-        "b\{c} #\{offset}",
-        kinds=branch_kinds(cond),
-      )
+      t32("tB", [t_imm(offset), ..p], "b\{c} #\{offset}")
     }
     _ => None
   }
@@ -407,7 +398,7 @@ fn t16_data(
   let rm = t32_bits(h, 3, 3)
   let op = t32_bits(h, 6, 4)
   let names = [
-    "tAND", "tEOR", "tLSLrr", "tLSRrr", "tASRrr", "tADC", "tSBC", "tRORrr", "tTST",
+    "tAND", "tEOR", "tLSLrr", "tLSRrr", "tASRrr", "tADC", "tSBC", "tROR", "tTST",
     "tRSB", "tCMPr", "tCMNz", "tORR", "tMUL", "tBIC", "tMVN",
   ]
   let mnemonics = [
@@ -452,10 +443,9 @@ fn t16_data(
 
 ///|
 /// Special data instructions and branch and exchange (`010001 op ...`).
-fn t16_special(h : Int, cond : Int, p : Array[@mc.Op], c : String) -> T32Insn? {
+fn t16_special(h : Int, p : Array[@mc.Op], c : String) -> T32Insn? {
   let rdn = (t32_bits(h, 7, 1) << 3) | t32_bits(h, 0, 3)
   let rm = t32_bits(h, 3, 4)
-  let pc_kinds = if rdn == 15 { @arm.pc_write_kinds(cond) } else { [] }
   match t32_bits(h, 8, 2) {
     0 =>
       if rm == 13 {
@@ -463,7 +453,6 @@ fn t16_special(h : Int, cond : Int, p : Array[@mc.Op], c : String) -> T32Insn? {
           "tADDrSP",
           [t_gpr(rdn), t_gpr(13), t_gpr(rdn), ..p],
           "add\{c} \{t_rn(rdn)}, sp, \{t_rn(rdn)}",
-          kinds=pc_kinds,
         )
       } else if rdn == 13 {
         t32(
@@ -476,7 +465,6 @@ fn t16_special(h : Int, cond : Int, p : Array[@mc.Op], c : String) -> T32Insn? {
           "tADDhirr",
           [t_gpr(rdn), t_gpr(rdn), t_gpr(rm), ..p],
           "add\{c} \{t_rn(rdn)}, \{t_rn(rm)}",
-          kinds=pc_kinds,
         )
       }
     1 =>
@@ -490,36 +478,21 @@ fn t16_special(h : Int, cond : Int, p : Array[@mc.Op], c : String) -> T32Insn? {
         "tMOVr",
         [t_gpr(rdn), t_gpr(rm), ..p],
         "mov\{c} \{t_rn(rdn)}, \{t_rn(rm)}",
-        kinds=pc_kinds,
       )
-    _ => {
-      guard t32_bits(h, 0, 3) == 0 else { return None }
+    _ =>
       if t32_bit(h, 7) {
-        t32("tBLXr", [..p, t_gpr(rm)], "blx\{c} \{t_rn(rm)}", kinds=[
-          Call,
-          MayAffectControlFlow,
-        ])
+        guard t32_bits(h, 0, 3) == 0 else { return None }
+        t32("tBLXr", [..p, t_gpr(rm)], "blx\{c} \{t_rn(rm)}")
       } else {
-        let kinds = if rm == 14 {
-          return_kinds(cond)
-        } else {
-          @arm.pc_write_kinds(cond)
-        }
-        t32("tBX", [t_gpr(rm), ..p], "bx\{c} \{t_rn(rm)}", kinds~)
+        // (non-zero low bits: a `SoftFail`)
+        t32("tBX", [t_gpr(rm), ..p], "bx\{c} \{t_rn(rm)}")
       }
-    }
   }
 }
 
 ///|
 /// Miscellaneous 16-bit instructions (`1011 ...`).
-fn t16_misc(
-  h : Int,
-  cond : Int,
-  in_it : Bool,
-  p : Array[@mc.Op],
-  c : String,
-) -> T32Insn? {
+fn t16_misc(h : Int, in_it : Bool, p : Array[@mc.Op], c : String) -> T32Insn? {
   let r0 = t32_bits(h, 0, 3)
   let r3 = t32_bits(h, 3, 3)
   let op = t32_bits(h, 5, 7)
@@ -536,8 +509,7 @@ fn t16_misc(
       "\{if sub { "sub" } else { "add" }}\{c} sp, #\{imm7 * 4}",
     )
   } else if (h & 0x0500) == 0x0100 {
-    // CBZ/CBNZ: not permitted in IT blocks
-    guard !in_it else { return None }
+    // CBZ/CBNZ (unpredictable in IT blocks, but LLVM decodes them there)
     let offset = (t32_bits(h, 9, 1) << 6) | (t32_bits(h, 3, 5) << 1)
     let nz = t32_bit(h, 11)
     t32(
@@ -548,7 +520,6 @@ fn t16_misc(
       },
       [t_gpr(r0), t_imm(offset)],
       "\{if nz { "cbnz" } else { "cbz" }} \{t_rn(r0)}, #\{offset}",
-      kinds=[ConditionalBranch, MayAffectControlFlow],
     )
   } else if op >> 3 == 0b0010 {
     let (name, m) = match t32_bits(h, 6, 2) {
@@ -571,15 +542,6 @@ fn t16_misc(
     }
     let mask = t32_bits(h, 0, 8) | extra
     guard mask != 0 else { return None }
-    let kinds : Array[@mc.Kind] = if pop {
-      if (mask & 0x8000) != 0 {
-        [MayLoad, ..@arm.pc_write_kinds(cond)]
-      } else {
-        [MayLoad]
-      }
-    } else {
-      [MayStore]
-    }
     t32(
       if pop {
         "tPOP"
@@ -588,7 +550,6 @@ fn t16_misc(
       },
       [..p, ..@arm.mc_reglist(mask)],
       "\{if pop { "pop" } else { "push" }}\{c} \{@arm.reglist_asm(mask)}",
-      kinds~,
     )
   } else if op >> 1 == 0b101000 || op >> 1 == 0b101001 || op >> 1 == 0b101011 {
     let (name, m) = match t32_bits(h, 6, 2) {
@@ -597,6 +558,30 @@ fn t16_misc(
       _ => ("tREVSH", "revsh")
     }
     t32(name, [t_gpr(r0), t_gpr(r3), ..p], "\{m}\{c} \{t_rn(r0)}, \{t_rn(r3)}")
+  } else if (h & 0xFFE8) == 0xB660 {
+    let iflags = t32_bits(h, 0, 3)
+    let imod = if t32_bit(h, 4) { 3 } else { 2 }
+    let flags = StringBuilder()
+    for pair in [(4, 'a'), (2, 'i'), (1, 'f')] {
+      if (iflags & pair.0) != 0 {
+        flags.write_char(pair.1)
+      }
+    }
+    if iflags == 0 {
+      flags.write_string("none")
+    }
+    t32(
+      "tCPS",
+      [t_imm(imod), t_imm(iflags)],
+      "cps\{if imod == 2 { "ie" } else { "id" }} \{flags.to_string()}",
+    )
+  } else if (h & 0xFFF7) == 0xB650 {
+    let big = t32_bit(h, 3)
+    t32(
+      "tSETEND",
+      [t_imm(if big { 1 } else { 0 })],
+      "setend \{if big { "be" } else { "le" }}",
+    )
   } else if op >> 3 == 0b1110 {
     t32("tBKPT", [t_imm(t32_bits(h, 0, 8))], "bkpt #\{t32_bits(h, 0, 8)}")
   } else if op >> 3 == 0b1111 {
@@ -604,11 +589,16 @@ fn t16_misc(
     let mask = t32_bits(h, 0, 4)
     if mask == 0 {
       let hint = firstcond
-      guard hint <= 4 else { return None }
-      let m = ["nop", "yield", "wfe", "wfi", "sev"][hint]
-      t32("tHINT", [t_imm(hint), ..p], m + c)
+      let text = if hint <= 4 {
+        ["nop", "yield", "wfe", "wfi", "sev"][hint] + c
+      } else {
+        "hint\{c} #\{hint}"
+      }
+      t32("tHINT", [t_imm(hint), ..p], text)
     } else {
-      guard !in_it && firstcond != 15 else { return None }
+      guard !in_it else { return None }
+      // `DecodeIT`: the first condition `0b1111` is a `SoftFail` for `AL`
+      let firstcond = if firstcond == 15 { 14 } else { firstcond }
       // LLVM's `DecodeIT`: flip the mask bits above the terminating bit
       // when the low bit of the first condition is set
       let llvm_mask = if (firstcond & 1) == 1 {
@@ -625,7 +615,7 @@ fn t16_misc(
       t32(
         "t2IT",
         [t_imm(firstcond), t_imm(llvm_mask)],
-        "it\{suffix.to_string()} \{@arm.cond_asm(firstcond)}",
+        "it\{suffix.to_string()} \{if firstcond == 14 { "al" } else { @arm.cond_asm(firstcond) }}",
       )
     }
   } else {
@@ -731,8 +721,14 @@ fn t2_modified_imm(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
       "\{mov.to_lower()}\{sx}\{c}.w \{t_rn(rd)}, #\{value}",
     )
   }
+  // LLVM's `t2ADDspImm`/`t2SUBspImm` when both are `SP`
+  let form = if rd == 13 && rn_ == 13 && (base == "ADD" || base == "SUB") {
+    "spImm"
+  } else {
+    "ri"
+  }
   t32(
-    "t2" + base + "ri",
+    "t2" + base + form,
     [t_gpr(rd), t_gpr(rn_), uimm(value), ..p, @arm.mc_cc_out(s)],
     "\{base.to_lower()}\{sx}\{c}.w \{t_rn(rd)}, \{t_rn(rn_)}, #\{value}",
   )
@@ -753,20 +749,19 @@ fn t2_plain_imm(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
   match op {
     0 | 10 => {
       let sub = op == 10
-      if rn_ == 15 {
+      // (LLVM decodes `subw rd, pc, #0` as `t2SUBri12`)
+      if rn_ == 15 && !(sub && imm12 == 0) {
         let offset = t2_offset(!sub, imm12)
         t32(
           "t2ADR",
-          [t_gpr(rd), t_imm(offset), ..p],
+          [t_gpr(rd), @arm.mc_imm_u32(offset), ..p],
           "adr\{c}.w \{t_rn(rd)}, \{t2_offset_text(offset)}",
         )
       } else {
+        // LLVM's `t2ADDspImm12`/`t2SUBspImm12` when both are `SP`
+        let sp = if rd == 13 && rn_ == 13 { "spImm12" } else { "ri12" }
         t32(
-          if sub {
-            "t2SUBri12"
-          } else {
-            "t2ADDri12"
-          },
+          (if sub { "t2SUB" } else { "t2ADD" }) + sp,
           [t_gpr(rd), t_gpr(rn_), t_imm(imm12), ..p],
           "\{if sub { "subw" } else { "addw" }}\{c} \{t_rn(rd)}, \{t_rn(rn_)}, #\{imm12}",
         )
@@ -789,10 +784,9 @@ fn t2_plain_imm(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
       }
     }
     20 | 28 => {
-      guard !t32_bit(h2, 5) else { return None }
+      guard !t32_bit(h2, 5) && !t32_bit(h1, 10) else { return None }
       let lsb = (t32_bits(h2, 12, 3) << 2) | t32_bits(h2, 6, 2)
       let widthm1 = t32_bits(h2, 0, 5)
-      guard lsb + widthm1 <= 31 else { return None }
       let name = if op == 20 { "t2SBFX" } else { "t2UBFX" }
       t32(
         name,
@@ -801,24 +795,27 @@ fn t2_plain_imm(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
       )
     }
     22 => {
-      guard !t32_bit(h2, 5) else { return None }
+      guard !t32_bit(h2, 5) && !t32_bit(h1, 10) else { return None }
       let lsb = (t32_bits(h2, 12, 3) << 2) | t32_bits(h2, 6, 2)
       let msb = t32_bits(h2, 0, 5)
-      guard msb >= lsb else { return None }
+      // `lsb > msb` is a `SoftFail`, the field is then the bit `msb`
+      let lsb = if lsb > msb { msb } else { lsb }
       let msb_mask = if msb == 31 { 0xFFFFFFFFU } else { (1U << (msb + 1)) - 1 }
       let lsb_mask = (1U << lsb) - 1
-      let inv_mask = (msb_mask ^ lsb_mask).lnot().reinterpret_as_int()
+      let inv_mask = @arm.mc_imm_u32(
+        (msb_mask ^ lsb_mask).lnot().reinterpret_as_int(),
+      )
       let width = msb - lsb + 1
       if rn_ == 15 {
         t32(
           "t2BFC",
-          [t_gpr(rd), t_gpr(rd), t_imm(inv_mask), ..p],
+          [t_gpr(rd), t_gpr(rd), inv_mask, ..p],
           "bfc\{c} \{t_rn(rd)}, #\{lsb}, #\{width}",
         )
       } else {
         t32(
           "t2BFI",
-          [t_gpr(rd), t_gpr(rd), t_gpr(rn_), t_imm(inv_mask), ..p],
+          [t_gpr(rd), t_gpr(rd), t_gpr(rn_), inv_mask, ..p],
           "bfi\{c} \{t_rn(rd)}, \{t_rn(rn_)}, #\{lsb}, #\{width}",
         )
       }
@@ -830,8 +827,10 @@ fn t2_plain_imm(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
 ///|
 /// Data processing (shifted register).
 fn t2_dp_shifted(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
-  guard !t32_bit(h2, 15) else { return None }
   let op = t32_bits(h1, 5, 4)
+  // bit 15 of the second halfword set: a `SoftFail`, except for `ORR` (and
+  // the moves and shifts in its encoding space), which LLVM rejects
+  guard !t32_bit(h2, 15) || op != 2 else { return None }
   let s = t32_bit(h1, 4)
   let rn_ = t32_bits(h1, 0, 4)
   let rd = t32_bits(h2, 8, 4)
@@ -874,7 +873,6 @@ fn t2_dp_shifted(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
       )
     }
   }
-  let pc_kinds = if rd == 15 { @arm.pc_write_kinds(cond) } else { [] }
   if rn_ == 15 && op == 2 {
     // MOV (register) and the shifts by an immediate
     if plain {
@@ -882,7 +880,6 @@ fn t2_dp_shifted(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
         "t2MOVr",
         [t_gpr(rd), t_gpr(rm), ..p, cc],
         "mov\{sx}\{c}.w \{t_rn(rd)}, \{t_rn(rm)}",
-        kinds=pc_kinds,
       )
     }
     if shift == 5 {
@@ -924,14 +921,12 @@ fn t2_dp_shifted(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
       "t2" + base + "rr",
       [t_gpr(rd), t_gpr(rn_), t_gpr(rm), ..p, cc],
       "\{base.to_lower()}\{sx}\{c}.w \{t_rn(rd)}, \{t_rn(rn_)}, \{t_rn(rm)}",
-      kinds=pc_kinds,
     )
   } else {
     t32(
       "t2" + base + "rs",
       [t_gpr(rd), t_gpr(rn_), t_gpr(rm), so, ..p, cc],
       "\{base.to_lower()}\{sx}\{c}.w \{t_rn(rd)}, \{t_rn(rn_)}, \{t_rn(rm)}\{shift_text}",
-      kinds=pc_kinds,
     )
   }
 }
@@ -970,7 +965,6 @@ fn t2_branch_misc(h1 : Int, h2 : Int, cond : Int, in_it : Bool) -> T32Insn? {
           "t2Bcc",
           [t_imm(offset), ..@arm.mc_pred(bcond)],
           "b\{@arm.cond_asm(bcond)}.w #\{offset}",
-          kinds=branch_kinds(bcond),
         )
       } else {
         t2_misc_control(h1, h2, p, c)
@@ -978,27 +972,16 @@ fn t2_branch_misc(h1 : Int, h2 : Int, cond : Int, in_it : Bool) -> T32Insn? {
     }
     (false, true) => {
       let offset = long_offset(t32_bits(h2, 0, 11) << 1)
-      t32(
-        "t2B",
-        [t_imm(offset), ..p],
-        "b\{c}.w #\{offset}",
-        kinds=branch_kinds(cond),
-      )
+      t32("t2B", [t_imm(offset), ..p], "b\{c}.w #\{offset}")
     }
     (true, true) => {
       let offset = long_offset(t32_bits(h2, 0, 11) << 1)
-      t32("tBL", [..p, t_imm(offset)], "bl\{c} #\{offset}", kinds=[
-        Call,
-        MayAffectControlFlow,
-      ])
+      t32("tBL", [..p, t_imm(offset)], "bl\{c} #\{offset}")
     }
     (true, false) => {
       guard !t32_bit(h2, 0) else { return None }
       let offset = long_offset(t32_bits(h2, 1, 10) << 2)
-      t32("tBLXi", [..p, t_imm(offset)], "blx\{c} #\{offset}", kinds=[
-        Call,
-        MayAffectControlFlow,
-      ])
+      t32("tBLXi", [..p, t_imm(offset)], "blx\{c} #\{offset}")
     }
   }
 }
@@ -1022,40 +1005,45 @@ fn t2_misc_control(
       t32(
         "t2MSR_AR",
         [t_imm(mask), t_gpr(t32_bits(h1, 0, 4)), ..p],
-        "msr\{c} apsr, \{t_rn(t32_bits(h1, 0, 4))}",
+        "msr\{c} \{@arm.msr_mask_asm(mask)}, \{t_rn(t32_bits(h1, 0, 4))}",
       )
     }
     0b0111010 => {
-      guard t32_bits(h2, 8, 3) == 0 && t32_bits(h2, 12, 3) == 0 else {
-        return None
-      }
+      guard (h1 & 0xF) == 0xF && t32_bits(h2, 8, 7) == 0 else { return None }
       let hint = t32_bits(h2, 0, 8)
       let text = match hint {
-        0 => "nop.w"
-        1 => "yield.w"
-        2 => "wfe.w"
-        3 => "wfi.w"
-        4 => "sev.w"
-        _ => "hint.w #\{hint}"
+        0 => "nop\{c}"
+        1 => "yield\{c}"
+        2 => "wfe\{c}"
+        3 => "wfi\{c}"
+        4 => "sev\{c}"
+        _ => "hint\{c} #\{hint}"
       }
-      t32("t2HINT", [t_imm(hint), ..p], text + c)
+      t32("t2HINT", [t_imm(hint), ..p], text)
     }
     0b0111011 => {
+      guard (h1 & 0xF) == 0xF && t32_bits(h2, 8, 7) == 0xF else { return None }
       let opt = t32_bits(h2, 0, 4)
-      let (name, m) = match t32_bits(h2, 4, 4) {
-        4 => ("t2DSB", "dsb")
-        5 => ("t2DMB", "dmb")
-        6 => ("t2ISB", "isb")
+      let (name, kind) = match t32_bits(h2, 4, 4) {
+        4 => ("t2DSB", 4)
+        5 => ("t2DMB", 5)
+        6 => ("t2ISB", 6)
         _ => return None
       }
-      t32(name, [t_imm(opt), ..p], "\{m}\{c} #\{opt}")
+      t32(name, [t_imm(opt), ..p], @arm.barrier_asm(kind, opt, c))
     }
     0b0111110 | 0b0111111 => {
-      guard t32_bits(h2, 0, 8) == 0 && t32_bits(h2, 12, 3) == 0 else {
+      guard (h1 & 0xF) == 0xF &&
+        t32_bits(h2, 0, 8) == 0 &&
+        t32_bits(h2, 12, 3) == 0 else {
         return None
       }
       let rd = t32_bits(h2, 8, 4)
-      t32("t2MRS_AR", [t_gpr(rd), ..p], "mrs\{c} \{t_rn(rd)}, apsr")
+      if op == 0b0111111 {
+        t32("t2MRSsys_AR", [t_gpr(rd), ..p], "mrs\{c} \{t_rn(rd)}, spsr")
+      } else {
+        t32("t2MRS_AR", [t_gpr(rd), ..p], "mrs\{c} \{t_rn(rd)}, apsr")
+      }
     }
     _ => None
   }
@@ -1074,6 +1062,7 @@ fn t2_ldm_stm(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
   let rn_ = t32_bits(h1, 0, 4)
   let mask = h2 & 0xFFFF
   guard mask != 0 else { return None }
+  guard load || (mask & 0xA000) == 0 else { return None }
   let name = "t2" +
     (if load { "LDM" } else { "STM" }) +
     mode +
@@ -1086,21 +1075,7 @@ fn t2_ldm_stm(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
     _ =>
       "\{if load { "ldm" } else { "stm" }}\{if mode == "IA" { "" } else { "db" }}\{c}.w \{t_rn(rn_)}\{if wb { "!" } else { "" }}, \{@arm.reglist_asm(mask)}"
   }
-  let kinds : Array[@mc.Kind] = if load {
-    if (mask & 0x8000) != 0 {
-      [MayLoad, ..@arm.pc_write_kinds(cond)]
-    } else {
-      [MayLoad]
-    }
-  } else {
-    [MayStore]
-  }
-  t32(
-    name,
-    [..base, ..@arm.mc_pred(cond), ..@arm.mc_reglist(mask)],
-    text,
-    kinds~,
-  )
+  t32(name, [..base, ..@arm.mc_pred(cond), ..@arm.mc_reglist(mask)], text)
 }
 
 ///|
@@ -1121,7 +1096,6 @@ fn t2_dual_exclusive(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
     let offset = t2_offset(add, imm8 * 4)
     let otext = t2_offset_text(offset)
     let m = if load { "ldrd" } else { "strd" }
-    let kinds : Array[@mc.Kind] = if load { [MayLoad] } else { [MayStore] }
     let regs = "\{t_rn(rt)}, \{t_rn(rt2)}"
     if p_bit && !wb {
       t32(
@@ -1131,8 +1105,7 @@ fn t2_dual_exclusive(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
           "t2STRDi8"
         },
         [t_gpr(rt), t_gpr(rt2), t_gpr(rn_), t_imm(offset), ..p],
-        "\{m}\{c} \{regs}, [\{t_rn(rn_)}, \{otext}]",
-        kinds~,
+        "\{m}\{c} \{regs}, \{t2_addr(rn_, offset)}",
       )
     } else {
       let suffix = if p_bit { "_PRE" } else { "_POST" }
@@ -1146,7 +1119,7 @@ fn t2_dual_exclusive(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
       } else {
         [t_gpr(rn_), t_gpr(rt), t_gpr(rt2), t_gpr(rn_), t_imm(offset), ..p]
       }
-      t32((if load { "t2LDRD" } else { "t2STRD" }) + suffix, ops, text, kinds~)
+      t32((if load { "t2LDRD" } else { "t2STRD" }) + suffix, ops, text)
     }
   } else if !add {
     // LDREX/STREX (word, with an offset)
@@ -1154,16 +1127,14 @@ fn t2_dual_exclusive(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
       guard rt2 == 15 else { return None }
       t32(
         "t2LDREX",
-        [t_gpr(rt), t_gpr(rn_), t_imm(imm8 * 4), ..p],
-        "ldrex\{c} \{t_rn(rt)}, [\{t_rn(rn_)}, #\{imm8 * 4}]",
-        kinds=[MayLoad],
+        [t_gpr(rt), t_gpr(rn_), t_imm(imm8), ..p],
+        "ldrex\{c} \{t_rn(rt)}, \{t2_addr(rn_, imm8 * 4)}",
       )
     } else {
       t32(
         "t2STREX",
-        [t_gpr(rt2), t_gpr(rt), t_gpr(rn_), t_imm(imm8 * 4), ..p],
-        "strex\{c} \{t_rn(rt2)}, \{t_rn(rt)}, [\{t_rn(rn_)}, #\{imm8 * 4}]",
-        kinds=[MayStore],
+        [t_gpr(rt2), t_gpr(rt), t_gpr(rn_), t_imm(imm8), ..p],
+        "strex\{c} \{t_rn(rt2)}, \{t_rn(rt)}, \{t2_addr(rn_, imm8 * 4)}",
       )
     }
   } else {
@@ -1185,7 +1156,6 @@ fn t2_dual_exclusive(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
         } else {
           "tbb\{c} [\{t_rn(rn_)}, \{t_rn(rd)}]"
         },
-        kinds=[MayLoad, ..@arm.pc_write_kinds(cond)],
       )
     } else {
       let size = match op3 {
@@ -1201,7 +1171,6 @@ fn t2_dual_exclusive(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
             "t2LDREXD",
             [t_gpr(rt), t_gpr(rt2), t_gpr(rn_), ..p],
             "ldrexd\{c} \{t_rn(rt)}, \{t_rn(rt2)}, [\{t_rn(rn_)}]",
-            kinds=[MayLoad],
           )
         } else {
           guard rt2 == 15 else { return None }
@@ -1209,7 +1178,6 @@ fn t2_dual_exclusive(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
             "t2LDREX" + size,
             [t_gpr(rt), t_gpr(rn_), ..p],
             "ldrex\{size.to_lower()}\{c} \{t_rn(rt)}, [\{t_rn(rn_)}]",
-            kinds=[MayLoad],
           )
         }
       } else if size == "D" {
@@ -1217,7 +1185,6 @@ fn t2_dual_exclusive(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
           "t2STREXD",
           [t_gpr(rd), t_gpr(rt), t_gpr(rt2), t_gpr(rn_), ..p],
           "strexd\{c} \{t_rn(rd)}, \{t_rn(rt)}, \{t_rn(rt2)}, [\{t_rn(rn_)}]",
-          kinds=[MayStore],
         )
       } else {
         guard rt2 == 15 else { return None }
@@ -1225,7 +1192,6 @@ fn t2_dual_exclusive(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
           "t2STREX" + size,
           [t_gpr(rd), t_gpr(rt), t_gpr(rn_), ..p],
           "strex\{size.to_lower()}\{c} \{t_rn(rd)}, \{t_rn(rt)}, [\{t_rn(rn_)}]",
-          kinds=[MayStore],
         )
       }
     }
@@ -1262,15 +1228,6 @@ fn t2_single(
   let sz = t2_size_name(size, signed)
   let base = (if load { "t2LDR" } else { "t2STR" }) + sz
   let m = (if load { "ldr" } else { "str" }) + sz.to_lower()
-  let kinds : Array[@mc.Kind] = if load {
-    if rt == 15 {
-      [MayLoad, ..@arm.pc_write_kinds(cond)]
-    } else {
-      [MayLoad]
-    }
-  } else {
-    [MayStore]
-  }
   if load && rn_ == 15 {
     // literal
     let offset = t2_offset(t32_bit(h1, 7), t32_bits(h2, 0, 12))
@@ -1278,7 +1235,6 @@ fn t2_single(
       base + "pci",
       [t_gpr(rt), t_imm(offset), ..p],
       "\{m}\{c}.w \{t_rn(rt)}, [pc, \{t2_offset_text(offset)}]",
-      kinds~,
     )
   }
   if t32_bit(h1, 7) {
@@ -1286,8 +1242,7 @@ fn t2_single(
     t32(
       base + "i12",
       [t_gpr(rt), t_gpr(rn_), t_imm(imm12), ..p],
-      "\{m}\{c}.w \{t_rn(rt)}, [\{t_rn(rn_)}, #\{imm12}]",
-      kinds~,
+      "\{m}\{c}.w \{t_rn(rt)}, \{t2_addr(rn_, imm12)}",
     )
   } else if t32_bit(h2, 11) {
     let imm8 = t32_bits(h2, 0, 8)
@@ -1302,7 +1257,6 @@ fn t2_single(
           base + "i8",
           [t_gpr(rt), t_gpr(rn_), t_imm(offset), ..p],
           "\{m}\{c} \{t_rn(rt)}, [\{t_rn(rn_)}, \{otext}]",
-          kinds~,
         )
       }
       (pre, true) => {
@@ -1316,7 +1270,7 @@ fn t2_single(
         } else {
           "\{m}\{c} \{t_rn(rt)}, [\{t_rn(rn_)}], \{otext}"
         }
-        t32(base + (if pre { "_PRE" } else { "_POST" }), ops, text, kinds~)
+        t32(base + (if pre { "_PRE" } else { "_POST" }), ops, text)
       }
       _ => None
     }
@@ -1328,7 +1282,6 @@ fn t2_single(
       base + "s",
       [t_gpr(rt), t_gpr(rn_), t_gpr(rm), t_imm(amount), ..p],
       "\{m}\{c}.w \{t_rn(rt)}, [\{t_rn(rn_)}, \{t_rn(rm)}\{shift}]",
-      kinds~,
     )
   } else {
     None
@@ -1349,9 +1302,58 @@ fn t2_load(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
   let size = t32_bits(h1, 5, 2)
   let signed = t32_bit(h1, 8)
   guard size != 3 && !(size == 2 && signed) else { return None }
-  // loads of bytes and halfwords to PC are the preload hints
-  guard size == 2 || t32_bits(h2, 12, 4) != 15 else { return None }
+  // loads of bytes and halfwords to PC, other than the pre- and
+  // post-indexed ones, are the preload hints
+  let writeback = !t32_bit(h1, 7) &&
+    t32_bits(h1, 0, 4) != 15 &&
+    t32_bit(h2, 11) &&
+    t32_bit(h2, 8)
+  if size != 2 && t32_bits(h2, 12, 4) == 15 && !writeback {
+    guard size == 0 else { return None }
+    return t2_preload(h1, h2, cond, signed)
+  }
   t2_single(h1, h2, cond, true, size, signed)
+}
+
+///|
+/// The preload hints `PLD` and (`signed`) `PLI`.
+fn t2_preload(h1 : Int, h2 : Int, cond : Int, signed : Bool) -> T32Insn? {
+  let rn_ = t32_bits(h1, 0, 4)
+  let p = @arm.mc_pred(cond)
+  let (base, m) = if signed { ("t2PLI", "pli") } else { ("t2PLD", "pld") }
+  if rn_ == 15 {
+    let offset = t2_offset(t32_bit(h1, 7), t32_bits(h2, 0, 12))
+    t32(
+      base + "pci",
+      [t_imm(offset), ..p],
+      "\{m} [pc, \{t2_offset_text(offset)}]",
+    )
+  } else if t32_bit(h1, 7) {
+    let imm12 = t32_bits(h2, 0, 12)
+    t32(
+      base + "i12",
+      [t_gpr(rn_), t_imm(imm12), ..p],
+      "\{m} \{t2_addr(rn_, imm12)}",
+    )
+  } else if t32_bits(h2, 8, 4) == 0b1100 {
+    let offset = t2_offset(false, t32_bits(h2, 0, 8))
+    t32(
+      base + "i8",
+      [t_gpr(rn_), t_imm(offset), ..p],
+      "\{m} [\{t_rn(rn_)}, \{t2_offset_text(offset)}]",
+    )
+  } else if t32_bits(h2, 6, 6) == 0 {
+    let rm = t32_bits(h2, 0, 4)
+    let amount = t32_bits(h2, 4, 2)
+    let shift = if amount == 0 { "" } else { ", lsl #\{amount}" }
+    t32(
+      base + "s",
+      [t_gpr(rn_), t_gpr(rm), t_imm(amount), ..p],
+      "\{m} [\{t_rn(rn_)}, \{t_rn(rm)}\{shift}]",
+    )
+  } else {
+    None
+  }
 }
 
 ///|
@@ -1514,6 +1516,112 @@ fn t2_long_multiply(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
 }
 
 ///|
+/// The Thumb-2 opcodes printed with the `.w` width qualifier by LLVM
+/// (those with a 16-bit counterpart; observed from LLVM 22).
+let t2_wide_names : Map[String, Unit] = {
+  "t2ADCrr": (),
+  "t2ADCrs": (),
+  "t2ADDri": (),
+  "t2ADDrr": (),
+  "t2ADDrs": (),
+  "t2ADDspImm": (),
+  "t2ADR": (),
+  "t2ANDrr": (),
+  "t2ANDrs": (),
+  "t2ASRri": (),
+  "t2ASRrr": (),
+  "t2B": (),
+  "t2BICrr": (),
+  "t2BICrs": (),
+  "t2Bcc": (),
+  "t2CMNri": (),
+  "t2CMNzrr": (),
+  "t2CMNzrs": (),
+  "t2CMPri": (),
+  "t2CMPrr": (),
+  "t2CMPrs": (),
+  "t2EORrr": (),
+  "t2EORrs": (),
+  "t2HINT": (),
+  "t2LDMIA": (),
+  "t2LDMIA_UPD": (),
+  "t2LDRBi12": (),
+  "t2LDRBpci": (),
+  "t2LDRBs": (),
+  "t2LDRHi12": (),
+  "t2LDRHpci": (),
+  "t2LDRHs": (),
+  "t2LDRSBi12": (),
+  "t2LDRSBpci": (),
+  "t2LDRSBs": (),
+  "t2LDRSHi12": (),
+  "t2LDRSHpci": (),
+  "t2LDRSHs": (),
+  "t2LDRi12": (),
+  "t2LDRpci": (),
+  "t2LDRs": (),
+  "t2LSLri": (),
+  "t2LSLrr": (),
+  "t2LSRri": (),
+  "t2LSRrr": (),
+  "t2MOVi": (),
+  "t2MOVr": (),
+  "t2MVNr": (),
+  "t2MVNs": (),
+  "t2ORRrr": (),
+  "t2ORRrs": (),
+  "t2REV": (),
+  "t2REV16": (),
+  "t2REVSH": (),
+  "t2RORri": (),
+  "t2RORrr": (),
+  "t2RSBri": (),
+  "t2SBCrr": (),
+  "t2SBCrs": (),
+  "t2STMIA": (),
+  "t2STMIA_UPD": (),
+  "t2STRBi12": (),
+  "t2STRBs": (),
+  "t2STRHi12": (),
+  "t2STRHs": (),
+  "t2STRi12": (),
+  "t2STRs": (),
+  "t2SUBri": (),
+  "t2SUBrr": (),
+  "t2SUBrs": (),
+  "t2SXTB": (),
+  "t2SXTH": (),
+  "t2TEQri": (),
+  "t2TEQrr": (),
+  "t2TEQrs": (),
+  "t2TSTri": (),
+  "t2TSTrr": (),
+  "t2TSTrs": (),
+  "t2UDF": (),
+  "t2UXTB": (),
+  "t2UXTH": (),
+}
+
+///|
+/// The assembly of a Thumb-2 instruction with the `.w` qualifier on its
+/// mnemonic exactly when LLVM prints one: for the opcodes of
+/// `t2_wide_names`, and for `push.w` (`t2STMDB_UPD` of `SP`).
+fn t2_width(d : T32Insn) -> T32Insn {
+  let (mnemonic, rest) = match d.text.find(" ") {
+    Some(i) => (d.text[:i].to_owned(), d.text[i:].to_owned())
+    None => (d.text, "")
+  }
+  let base = if mnemonic.has_suffix(".w") {
+    mnemonic[:mnemonic.length() - 2].to_owned()
+  } else {
+    mnemonic
+  }
+  let wide = t2_wide_names.contains(d.name) ||
+    (d.name == "t2STMDB_UPD" && base.has_prefix("push"))
+  { ..d, text: (if wide { base + ".w" } else { base }) + rest, }
+}
+
+///|
 /// Decodes the Thumb instruction at the start of `bytes` loaded at `addr`.
 /// Halfwords are little-endian unless `big_endian` is set. With `it`, the
 /// IT state is used for (and updated by) the instruction: instructions in
@@ -1551,7 +1659,7 @@ pub fn decode_t32(
     None => (14, false)
   }
   let decoded = if wide {
-    t32_decode(h1, half(2), cond, in_it)
+    t32_decode(h1, half(2), cond, in_it).map(t2_width)
   } else {
     t16_decode(h1, cond, in_it)
   }
@@ -1580,7 +1688,7 @@ pub fn decode_t32(
           size~,
           assembly=d.text,
           encoding=@core_theory.Language::llvm_t32(),
-          kinds=d.kinds,
+          kinds=@arm.llvm_kinds(d.name, d.ops),
           raw=bytes[:size].to_owned(),
         ),
       )

@@ -41,15 +41,21 @@ test "A32 data processing" {
   // the modified immediate stays encoded: 0xFF ror 8
   inspect(
     show_a32(0xE3A004FF),
-    content="MOVi R0, 1279, 14, Nil, Nil | mov r0, #4278190080",
+    content=(
+      #|MOVi R0, 1279, 14, Nil, Nil | mov r0, #-16777216
+    ),
   )
   inspect(
     show_a32(0xE1A00101),
-    content="MOVsi R0, R1, 18, 14, Nil, Nil | mov r0, r1, lsl #2",
+    content=(
+      #|MOVsi R0, R1, 18, 14, Nil, Nil | lsl r0, r1, #2
+    ),
   )
   inspect(
     show_a32(0xE1A00061),
-    content="MOVsi R0, R1, 5, 14, Nil, Nil | mov r0, r1, rrx",
+    content=(
+      #|MOVsi R0, R1, 5, 14, Nil, Nil | rrx r0, r1
+    ),
   )
   inspect(
     show_a32(0xE1A0F00E),
@@ -76,9 +82,19 @@ test "A32 data processing" {
     content="MOVTi16 R0, R0, 22136, 14, Nil | movt r0, #22136",
   )
   // `add r0, pc, #8` is ADR; the label is the raw 14-bit field
-  inspect(show_a32(0xE28F0008), content="ADR R0, 8200, 14, Nil | adr r0, #8")
+  inspect(
+    show_a32(0xE28F0008),
+    content=(
+      #|ADDri R0, PC, 8, 14, Nil, Nil | add r0, pc, #8
+    ),
+  )
   // compares with a non-zero destination field are not decoded
-  inspect(show_a32(0xE3511000), content="invalid")
+  inspect(
+    show_a32(0xE3511000),
+    content=(
+      #|CMPri R1, 0, 14, Nil | cmp r1, #0
+    ),
+  )
 }
 
 ///|
@@ -90,11 +106,15 @@ test "A32 loads and stores" {
   // #-0 is INT32_MIN
   inspect(
     show_a32(0xE5110000),
-    content="LDRi12 R0, R1, -2147483648, 14, Nil | ldr r0, [r1, #-0]",
+    content=(
+      #|LDRi12 R0, R1, 2147483648, 14, Nil | ldr r0, [r1, #-0]
+    ),
   )
   inspect(
     show_a32(0xE5210004),
-    content="STR_PRE_IMM R1, R0, R1, -4, 14, Nil | str r0, [r1, #-4]!",
+    content=(
+      #|STR_PRE_IMM R1, R0, R1, 4294967292, 14, Nil | str r0, [r1, #-4]!
+    ),
   )
   inspect(
     show_a32(0xE4910004),
@@ -130,15 +150,21 @@ test "A32 loads and stores" {
   )
   inspect(
     show_a32(0xE1C200D0),
-    content="LDRD R0, R1, R2, Nil, 0, 14, Nil | ldrd r0, r1, [r2, #0]",
+    content=(
+      #|LDRD R0, R1, R2, Nil, 0, 14, Nil | ldrd r0, r1, [r2]
+    ),
   )
   inspect(
     show_a32(0xE16D20F8),
-    content="STRD_PRE SP, R2, R3, SP, Nil, 264, 14, Nil | strd r2, r3, [sp, #-8]!",
+    content=(
+      #|STRD_PRE SP, R2, R3, SP, Nil, 776, 14, Nil | strd r2, r3, [sp, #-8]!
+    ),
   )
   inspect(
     show_a32(0xE0C120F8),
-    content="STRD_POST R1, R2, R3, R1, Nil, 8, 14, Nil | strd r2, r3, [r1], #8",
+    content=(
+      #|STRD_POST R1, R2, R3, R1, Nil, 1032, 14, Nil | strd r2, r3, [r1], #8
+    ),
   )
   inspect(
     show_a32(0xE0F100B2),
@@ -211,7 +237,9 @@ test "A32 multiplies, bit manipulation and extensions" {
   )
   inspect(
     show_a32(0xE14100C2),
-    content="SMLALBT R0, R1, R2, R0, 14, Nil | smlalbt r0, r1, r2, r0",
+    content=(
+      #|SMLALBT R0, R1, R2, R0, R0, R1, 14, Nil | smlalbt r0, r1, r2, r0
+    ),
   )
   inspect(
     show_a32(0xE7003211),
@@ -236,11 +264,15 @@ test "A32 multiplies, bit manipulation and extensions" {
   )
   inspect(
     show_a32(0xE7CB0411),
-    content="BFI R0, R0, R1, -3841, 14, Nil | bfi r0, r1, #8, #4",
+    content=(
+      #|BFI R0, R0, R1, 4294963455, 14, Nil | bfi r0, r1, #8, #4
+    ),
   )
   inspect(
     show_a32(0xE7CB041F),
-    content="BFC R0, R0, -3841, 14, Nil | bfc r0, #8, #4",
+    content=(
+      #|BFC R0, R0, 4294963455, 14, Nil | bfc r0, #8, #4
+    ),
   )
   inspect(show_a32(0xE6BF0F31), content="REV R0, R1, 14, Nil | rev r0, r1")
   inspect(show_a32(0xE6BF0FB1), content="REV16 R0, R1, 14, Nil | rev16 r0, r1")
@@ -258,17 +290,37 @@ test "A32 branches, system and hint instructions" {
   inspect(show_a32(0xE12FFF13), content="BX R3 | bx r3")
   inspect(show_a32(0x112FFF13), content="BX_pred R3, 1, CPSR | bxne r3")
   inspect(show_a32(0xE12FFF33), content="BLX R3 | blx r3")
-  inspect(show_a32(0xEBFFFFFE), content="BL -8, 14, Nil | bl #-8")
+  inspect(
+    show_a32(0xEBFFFFFE),
+    content=(
+      #|BL -8 | bl #-8
+    ),
+  )
   inspect(show_a32(0x0B000001), content="BL_pred 4, 0, CPSR | bleq #4")
   inspect(show_a32(0x0A000001), content="Bcc 4, 0, CPSR | beq #4")
   inspect(show_a32(0xEAFFFFFE), content="Bcc -8, 14, Nil | b #-8")
   inspect(show_a32(0xFB000000), content="BLXi 2 | blx #2")
   inspect(show_a32(0xEF000000), content="SVC 0, 14, Nil | svc #0")
   inspect(show_a32(0xE320F000), content="HINT 0, 14, Nil | nop")
-  inspect(show_a32(0xF57FF05B), content="DMB 11 | dmb #11")
-  inspect(show_a32(0xF57FF04F), content="DSB 15 | dsb #15")
+  inspect(
+    show_a32(0xF57FF05B),
+    content=(
+      #|DMB 11 | dmb ish
+    ),
+  )
+  inspect(
+    show_a32(0xF57FF04F),
+    content=(
+      #|DSB 15 | dsb sy
+    ),
+  )
   inspect(show_a32(0xE10F0000), content="MRS R0, 14, Nil | mrs r0, apsr")
-  inspect(show_a32(0xE128F000), content="MSR 8, R0, 14, Nil | msr cpsr_f, r0")
+  inspect(
+    show_a32(0xE128F000),
+    content=(
+      #|MSR 8, R0, 14, Nil | msr APSR_nzcvq, r0
+    ),
+  )
   inspect(show_a32(0xF10C0080), content="CPS2p 3, 2 | cpsid i")
   // coprocessor and VFP instructions are not decoded
   inspect(show_a32(0xEE070F15), content="invalid")
@@ -320,8 +372,7 @@ test "A32 kinds, raw bytes and the decoder interface" {
   debug_inspect(
     kinds(0xE8BD8010),
     content=(
-      #|<ReadOnlyArray:
-      #|  [MayLoad, IndirectBranch, Barrier, Terminator, MayAffectControlFlow]>
+      #|<ReadOnlyArray: [MayAffectControlFlow, MayLoad]>
     ),
   )
   debug_inspect(
@@ -333,7 +384,7 @@ test "A32 kinds, raw bytes and the decoder interface" {
   debug_inspect(
     kinds(0x0A000001),
     content=(
-      #|<ReadOnlyArray: [ConditionalBranch, MayAffectControlFlow]>
+      #|<ReadOnlyArray: [ConditionalBranch, Terminator, MayAffectControlFlow]>
     ),
   )
   // the decoder is selected for ARM targets decoded as A32

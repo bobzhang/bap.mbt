@@ -221,12 +221,127 @@ pub fn sign_extend(value : Int, bits : Int) -> Int {
 }
 
 ///|
-/// The kinds of an instruction that writes `PC` (other than a branch):
-/// an indirect jump when it is unconditional.
-pub fn pc_write_kinds(cond : Int) -> Array[@mc.Kind] {
-  if cond == 14 {
-    [IndirectBranch, Barrier, Terminator, MayAffectControlFlow]
+/// An immediate operand holding the 32-bit pattern of `value`, as LLVM
+/// builds the operands it computes in `unsigned` arithmetic (negated
+/// offsets, bit field masks): `-4` is `4294967292`, and LLVM's `#-0`
+/// marker `INT32_MIN` is `2147483648`.
+pub fn mc_imm_u32(value : Int) -> @mc.Op {
+  Imm(value.reinterpret_as_uint().to_int64())
+}
+
+///|
+/// Rotates `x` right by `n` (`0..=31`) bits.
+fn rotr32(x : UInt, n : Int) -> UInt {
+  if n == 0 {
+    x
   } else {
-    [ConditionalBranch, MayAffectControlFlow]
+    (x >> n) | (x << (32 - n))
+  }
+}
+
+///|
+/// `ARM_AM::getSOImmValRotate`: the rotation (a right rotation, even) of
+/// the modified immediate that best covers `imm`.
+fn so_imm_val_rotate(imm : UInt) -> Int {
+  if (imm & 0xFFFFFF00U) == 0 {
+    return 0
+  }
+  let rot_amt = imm.ctz() & -2
+  if (rotr32(imm, rot_amt) & 0xFFFFFF00U) == 0 {
+    return (32 - rot_amt) & 31
+  }
+  if (imm & 63) != 0 {
+    let rot_amt2 = (imm & 0xFFFFFFC0U).ctz() & -2
+    if (rotr32(imm, rot_amt2) & 0xFFFFFF00U) == 0 {
+      return (32 - rot_amt2) & 31
+    }
+  }
+  (32 - rot_amt) & 31
+}
+
+///|
+/// `ARM_AM::getSOImmVal`: the canonical (least rotation) 12-bit encoding
+/// of `value` as a modified immediate, `-1` when there is none.
+fn so_imm_val(value : UInt) -> Int {
+  if (value & 0xFFFFFF00U) == 0 {
+    return value.reinterpret_as_int()
+  }
+  let rot = so_imm_val_rotate(value)
+  if (rotr32(0xFFFFFF00U, rot) & value) != 0 {
+    return -1
+  }
+  (rotr32(value, (32 - rot) & 31) | ((rot >> 1).reinterpret_as_uint() << 8)).reinterpret_as_int()
+}
+
+///|
+/// The assembly of an A32 modified immediate operand (the undecoded 12-bit
+/// field), as LLVM's `printModImmOperand`: the decoded value when the
+/// encoding is the canonical one, printed signed unless `unsigned`,
+/// otherwise the explicit `#bits, #rot` form.
+fn mod_imm_asm(field : Int, unsigned? : Bool = false) -> String {
+  let bits = field & 0xFF
+  let rot = (field & 0xF00) >> 7
+  let rotated = rotr32(bits.reinterpret_as_uint(), rot)
+  if so_imm_val(rotated) == field {
+    if unsigned {
+      "#\{rotated}"
+    } else {
+      "#\{rotated.reinterpret_as_int()}"
+    }
+  } else {
+    "#\{bits}, #\{rot}"
+  }
+}
+
+///|
+/// The assembly of a barrier (`kind` 4 `DSB`, 5 `DMB`, 6 `ISB`) with the
+/// option `opt` and the condition suffix `cond`, as LLVM prints them
+/// (`ARM_MB::MemBOptToString` without the ARMv8 options, `ssbb` and
+/// `pssbb` for the `DSB` options 0 and 4).
+pub fn barrier_asm(kind : Int, opt : Int, cond : String) -> String {
+  let hex = "#0x\{opt.to_string(radix=16)}"
+  match kind {
+    4 if opt == 0 => "ssbb\{cond}"
+    4 if opt == 4 => "pssbb\{cond}"
+    6 => "isb\{cond} \{if opt == 15 { "sy" } else { hex }}"
+    _ => {
+      let option = match opt {
+        2 => "oshst"
+        3 => "osh"
+        6 => "nshst"
+        7 => "nsh"
+        10 => "ishst"
+        11 => "ish"
+        14 => "st"
+        15 => "sy"
+        _ => hex
+      }
+      "\{if kind == 4 { "dsb" } else { "dmb" }}\{cond} \{option}"
+    }
+  }
+}
+
+///|
+/// The special register of an `MSR` with the mask operand `mask` (the
+/// `R` bit, `SPSR`, in bit 4), as LLVM's `printMSRMaskOperand`.
+pub fn msr_mask_asm(mask : Int) -> String {
+  match mask {
+    8 => "APSR_nzcvq"
+    4 => "APSR_g"
+    12 => "APSR_nzcvqg"
+    _ => {
+      let fields = StringBuilder()
+      for pair in [(8, 'f'), (4, 's'), (2, 'x'), (1, 'c')] {
+        if (mask & pair.0) != 0 {
+          fields.write_char(pair.1)
+        }
+      }
+      let reg = if (mask & 16) != 0 { "SPSR" } else { "CPSR" }
+      if (mask & 15) == 0 {
+        reg
+      } else {
+        reg + "_" + fields.to_string()
+      }
+    }
   }
 }

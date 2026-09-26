@@ -94,7 +94,9 @@ test "Thumb data processing" {
   )
   inspect(
     show_t32([0x0808]),
-    content="tLSRri R0, CPSR, R1, 32, 14, Nil | lsrs r0, r1, #32",
+    content=(
+      #|tLSRri R0, CPSR, R1, 0, 14, Nil | lsrs r0, r1, #32
+    ),
   )
   inspect(show_t32([0x0008]), content="tMOVSr R0, R1 | movs r0, r1")
   inspect(
@@ -251,7 +253,9 @@ test "Thumb-2 data processing" {
   )
   inspect(
     show_t32([0xFAB1, 0xF081]),
-    content="t2CLZ R0, R1, 14, Nil | clz.w r0, r1",
+    content=(
+      #|t2CLZ R0, R1, 14, Nil | clz r0, r1
+    ),
   )
   inspect(
     show_t32([0xF3C1, 0x1007]),
@@ -307,7 +311,9 @@ test "Thumb-2 loads, stores and branches" {
   )
   inspect(
     show_t32([0xE851, 0x0F00]),
-    content="t2LDREX R0, R1, 0, 14, Nil | ldrex r0, [r1, #0]",
+    content=(
+      #|t2LDREX R0, R1, 0, 14, Nil | ldrex r0, [r1]
+    ),
   )
   inspect(
     show_t32([0xE8D0, 0xF001]),
@@ -317,7 +323,12 @@ test "Thumb-2 loads, stores and branches" {
   inspect(show_t32([0xF000, 0x8004]), content="t2Bcc 8, 0, CPSR | beq.w #8")
   inspect(show_t32([0xF7FF, 0xFFFE]), content="tBL 14, Nil, -4 | bl #-4")
   inspect(show_t32([0xF000, 0xE804]), content="tBLXi 14, Nil, 8 | blx #8")
-  inspect(show_t32([0xF3BF, 0x8F5B]), content="t2DMB 11, 14, Nil | dmb #11")
+  inspect(
+    show_t32([0xF3BF, 0x8F5B]),
+    content=(
+      #|t2DMB 11, 14, Nil | dmb ish
+    ),
+  )
   // coprocessor and VFP instructions are not decoded
   inspect(show_t32([0xEE07, 0x0F15]), content="invalid")
 }

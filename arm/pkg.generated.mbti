@@ -22,6 +22,8 @@ pub fn accepts(@mc.Context) -> Bool
 
 pub fn addr_of_pc(UInt64) -> UInt64
 
+pub fn barrier_asm(Int, Int, String) -> String
+
 pub let cf : @types.Var
 
 pub fn cond_asm(Int) -> String
@@ -82,6 +84,8 @@ pub fn lift_in_context(@mc.Context, @mc.Insn) -> @mc.Lifted raise @mc.LiftError
 
 pub fn lift_typed(Insn, ArrayView[Op], addr? : UInt, encoding? : Encoding, raw? : UInt) -> Array[@types.Stmt] raise @mc.LiftError
 
+pub fn llvm_kinds(String, ArrayView[@mc.Op]) -> Array[@mc.Kind]
+
 pub let lr : @types.Var
 
 pub fn mc_cc_out(Bool) -> @mc.Op
@@ -92,6 +96,8 @@ pub fn mc_gpr_pair(Int) -> @mc.Op
 
 pub fn mc_imm(Int) -> @mc.Op
 
+pub fn mc_imm_u32(Int) -> @mc.Op
+
 pub fn mc_nil() -> @mc.Op
 
 pub fn mc_pred(Int) -> Array[@mc.Op]
@@ -100,6 +106,8 @@ pub fn mc_reglist(Int) -> Array[@mc.Op]
 
 pub let mem : @types.Var
 
+pub fn msr_mask_asm(Int) -> String
+
 pub let nf : @types.Var
 
 pub let nil : @types.Var
@@ -107,8 +115,6 @@ pub let nil : @types.Var
 pub fn ops_of_mc(ArrayView[@mc.Op]) -> Array[Op] raise @mc.LiftError
 
 pub let pc : @types.Var
-
-pub fn pc_write_kinds(Int) -> Array[@mc.Kind]
 
 pub fn provider() -> @mc.Provider
 

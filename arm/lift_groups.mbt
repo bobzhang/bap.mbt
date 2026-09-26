@@ -238,8 +238,10 @@ fn lift_mult(
     // signed 16bit mul
     (SMULTB, [dest, src1, src2, cond, _wflag]) =>
       lift_smul(dest~, src1~, src2~, TB, cond)
-    // signed 16bit mul plus 64bit accum
-    (SMLALBT, [dest, hidest, src1, src2, cond, _wflag]) =>
+    // signed 16bit mul plus 64bit accum (LLVM also lists the accumulator
+    // halves, tied to the destinations, as sources)
+    (SMLALBT, [dest, hidest, src1, src2, _, _, cond, _wflag])
+    | (SMLALBT, [dest, hidest, src1, src2, cond, _wflag]) =>
       lift_smul(
         dest~,
         hidest~,

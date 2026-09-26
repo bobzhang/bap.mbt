@@ -10,6 +10,63 @@ fn spr_field(w : UInt) -> Int {
 }
 
 ///|
+/// `mfspr`/`mtspr` access all the special purpose registers: LLVM marks
+/// them as loading and storing.
+let spr_kinds : Array[@mc.Kind] = [MayLoad, MayStore]
+
+///|
+/// The extended `mfspr`/`mtspr` mnemonic suffix printed by LLVM for the
+/// special purpose register `spr` (`mfxer`, `mtsrr0`, ...), with the index
+/// operand of the BAT registers (`mfibatu 3, 0`). Some registers are
+/// only named in reads (`from`, `mfspr`) or only in writes (`mtspr`).
+fn spr_mnemonic(spr : Int, from~ : Bool) -> (String, Int?)? {
+  match spr {
+    1 => Some(("xer", None))
+    4 if from => Some(("rtcu", None))
+    5 if from => Some(("rtcl", None))
+    13 => Some(("uamr", None))
+    17 => Some(("dscr", None))
+    18 => Some(("dsisr", None))
+    19 => Some(("dar", None))
+    22 => Some(("dec", None))
+    25 => Some(("sdr1", None))
+    26 => Some(("srr0", None))
+    27 => Some(("srr1", None))
+    28 => Some(("cfar", None))
+    29 => Some(("amr", None))
+    280 => Some(("asr", None))
+    284 if !from => Some(("tbl", None))
+    285 if !from => Some(("tbu", None))
+    287 if from => Some(("pvr", None))
+    512 => Some(("spefscr", None))
+    528..=543 => {
+      let n = spr - 528
+      let kind = if n < 8 { "ibat" } else { "dbat" }
+      let half = if n % 2 == 0 { "u" } else { "l" }
+      Some((kind + half, Some(n % 8 / 2)))
+    }
+    896 => Some(("ppr", None))
+    980 => Some(("esr", None))
+    981 => Some(("dear", None))
+    986 => Some(("tcr", None))
+    988 => Some(("tbhi", None))
+    989 => Some(("tblo", None))
+    990 => Some(("srr2", None))
+    991 => Some(("srr3", None))
+    1018 => Some(("dccr", None))
+    1019 => Some(("iccr", None))
+    _ => None
+  }
+}
+
+///|
+/// `sub`/`subc` print `subf rt, ra, rb` as `sub rt, rb, ra`.
+fn sub_alias(spec : Spec, mnemonic : String, rc : Bool) -> Spec {
+  guard spec.args is [rt, ra, rb] else { spec }
+  spec.printed_as(if rc { mnemonic + "." } else { mnemonic }, [rt, rb, ra])
+}
+
+///|
 fn decode_x31(w : UInt) -> Spec? {
   let rt = field(w, 6, 10)
   let ra = field(w, 11, 15)
@@ -80,11 +137,13 @@ fn decode_x31(w : UInt) -> Spec? {
         (true, true) => ("CMPLD", "cmpld", D)
       }
       Some(
-        spec(name, mnemonic, [
-          Crf(field(w, 6, 8)),
-          reg_arg(cls, ra),
-          reg_arg(cls, rb),
-        ]),
+        omit_cr0(
+          spec(name, mnemonic, [
+            Crf(field(w, 6, 8)),
+            reg_arg(cls, ra),
+            reg_arg(cls, rb),
+          ]),
+        ),
       )
     }
   }
@@ -118,8 +177,9 @@ fn decode_x31(w : UInt) -> Spec? {
     138 => arith("ADDE", "adde", W)
     234 => arith2("ADDME", "addme")
     202 => arith2("ADDZE", "addze")
-    40 => arith("SUBF", "subf", W)
-    8 => arith("SUBFC", "subfc", W)
+    // `subf rt, ra, rb` is printed as `sub rt, rb, ra`
+    40 => arith("SUBF", "subf", W).map(s => sub_alias(s, "sub", rc))
+    8 => arith("SUBFC", "subfc", W).map(s => sub_alias(s, "subc", rc))
     136 => arith("SUBFE", "subfe", W)
     232 => arith2("SUBFME", "subfme")
     200 => arith2("SUBFZE", "subfze")
@@ -156,7 +216,15 @@ fn decode_x31(w : UInt) -> Spec? {
     412 => logical("ORC", "orc", W, W)
     316 => logical("XOR", "xor", W, W)
     476 => logical("NAND", "nand", W, W)
-    124 => logical("NOR", "nor", W, W)
+    124 =>
+      logical("NOR", "nor", W, W).map(spec => {
+        if rt == rb {
+          // `nor ra, rs, rs` is printed as `not ra, rs`
+          spec.printed_as(if rc { "not." } else { "not" }, [Gpr(ra), Gpr(rt)])
+        } else {
+          spec
+        }
+      })
     284 => logical("EQV", "eqv", W, W)
     508 => logical_plain("CMPB", "cmpb", W)
     252 => logical_plain("BPERMD", "bpermd", D)
@@ -213,19 +281,57 @@ fn decode_x31(w : UInt) -> Spec? {
     // moves to and from special purpose and condition registers
     339 =>
       match spr_field(w) {
+        3 => plain("MFUDSCR", "mfudscr", rc, [Gpr(rt)])
         8 => plain("MFLR", "mflr", rc, [Gpr(rt)])
         9 => plain("MFCTR", "mfctr", rc, [Gpr(rt)])
-        spr => plain("MFSPR", "mfspr", rc, [Gpr(rt), Imm(spr.to_int64())])
+        spr =>
+          plain(
+            "MFSPR",
+            "mfspr",
+            rc,
+            [Gpr(rt), Imm(spr.to_int64())],
+            kinds=spr_kinds,
+          ).map(spec => {
+            match spr_mnemonic(spr, from=true) {
+              Some((name, None)) => spec.printed_as("mf" + name, [Gpr(rt)])
+              Some((name, Some(n))) =>
+                spec.printed_as("mf" + name, [Gpr(rt), Imm(n.to_int64())])
+              None => spec
+            }
+          })
       }
     467 =>
       match spr_field(w) {
+        3 => plain("MTUDSCR", "mtudscr", rc, [Gpr(rt)])
         8 => plain("MTLR", "mtlr", rc, [Gpr(rt)])
         9 => plain("MTCTR", "mtctr", rc, [Gpr(rt)])
-        spr => plain("MTSPR", "mtspr", rc, [Imm(spr.to_int64()), Gpr(rt)])
+        spr =>
+          plain(
+            "MTSPR",
+            "mtspr",
+            rc,
+            [Imm(spr.to_int64()), Gpr(rt)],
+            kinds=spr_kinds,
+          ).map(spec => {
+            match spr_mnemonic(spr, from=false) {
+              Some((name, None)) => spec.printed_as("mt" + name, [Gpr(rt)])
+              Some((name, Some(n))) =>
+                spec.printed_as("mt" + name, [Imm(n.to_int64()), Gpr(rt)])
+              None => spec
+            }
+          })
       }
     144 =>
       if field(w, 11, 11) == 0 && field(w, 20, 20) == 0 {
-        plain("MTCRF", "mtcrf", rc, [Imm(field(w, 12, 19).to_int64()), Gpr(rt)])
+        plain("MTCRF", "mtcrf", rc, [Imm(field(w, 12, 19).to_int64()), Gpr(rt)]).map(spec => {
+            // all fields: `mtcr rs`
+            if field(w, 12, 19) == 255 {
+              spec.printed_as("mtcr", [Gpr(rt)])
+            } else {
+              spec
+            }
+          },
+        )
       } else {
         None
       }

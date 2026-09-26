@@ -72,6 +72,13 @@ fn x_word(name : String, rt : Int, ra : Int, rb : Int) -> UInt {
 }
 
 ///|
+/// The D-form displacement operand `d` as decoded by LLVM 22: the raw
+/// 16-bit field (the lifter sign-extends it).
+fn disp16(d : Int) -> Int64 {
+  (d & 0xFFFF).to_int64()
+}
+
+///|
 let all_ones : UInt64 = 0xFFFF_FFFF_FFFF_FFFF
 
 ///|
@@ -86,7 +93,7 @@ test "lbz, lhz, lwz" {
         let r = run(
           a,
           name,
-          [reg("R9"), imm(d.to_int64()), reg("R28")],
+          [reg("R9"), imm(disp16(d)), reg("R28")],
           init=[("R28", base), ("R9", trunc(a, all_ones))],
           mem=[(ea, value, size)],
           word=d_word(name, 9, 28, d),
@@ -158,7 +165,7 @@ test "lbzu, lhzu, lwzu" {
         let r = run(
           a,
           name,
-          [reg("R9"), reg("R28"), imm(d.to_int64()), reg("R28")],
+          [reg("R9"), reg("R28"), imm(disp16(d)), reg("R28")],
           init=[("R28", base), ("R9", trunc(a, all_ones))],
           mem=[(ea, value, size)],
           word=d_word(name, 9, 28, d),
@@ -382,7 +389,7 @@ test "stb, sth, stw" {
         let r = run(
           a,
           name,
-          [reg("R9"), imm(d.to_int64()), reg("R28")],
+          [reg("R9"), imm(disp16(d)), reg("R28")],
           init=[("R9", trunc(a, store_data)), ("R28", base)],
           word=d_word(name, 9, 28, d),
         )
@@ -444,7 +451,7 @@ test "stbu, sthu, stwu" {
         let r = run(
           a,
           name,
-          [reg("R29"), reg("R4"), imm(d.to_int64()), reg("R29")],
+          [reg("R29"), reg("R4"), imm(disp16(d)), reg("R29")],
           init=[("R4", trunc(a, store_data)), ("R29", base)],
           word=d_word(name, 4, 29, d),
         )

@@ -254,6 +254,7 @@ pub struct Operands {
   name : String
   ops : ReadOnlyArray[@mc.Op]
 }
+pub fn Operands::disp(Self, Int) -> RtlExp raise @mc.LiftError
 pub fn Operands::get(Self, Int) -> @mc.Op raise @mc.LiftError
 pub fn Operands::imm(Self, Int, Sign) -> RtlExp raise @mc.LiftError
 pub fn Operands::of_insn(@mc.Insn) -> Self

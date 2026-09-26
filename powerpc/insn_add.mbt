@@ -23,9 +23,13 @@ fn addi(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
 }
 
 ///|
+/// Load Immediate (`addi rt, 0, si`, decoded as `LI` by LLVM). Upstream
+/// assigns the immediate to an unsigned register, which zero-extends
+/// negative values in 64-bit mode; since LLVM decodes every `addi rt, 0, si`
+/// as `LI`, the value is sign-extended here, as `addi` does.
 fn li(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
-  let rt = cpu.ureg(ops, 0)
-  let im = ops.uimm(1)
+  let rt = cpu.sreg(ops, 0)
+  let im = ops.simm(1)
   [rt.set(im)]
 }
 
@@ -41,8 +45,10 @@ fn addis(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
 }
 
 ///|
+/// Load Immediate Shifted (`addis rt, 0, si`, decoded as `LIS` by LLVM):
+/// sign-extended in 64-bit mode as `addis` (see `li`).
 fn lis(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
-  let rt = cpu.ureg(ops, 0)
+  let rt = cpu.sreg(ops, 0)
   let im = ops.simm(1)
   let sh = uconst(word, 16)
   [rt.set(im.shl(sh))]

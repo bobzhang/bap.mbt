@@ -135,6 +135,8 @@ let opcode_samples : Array[(String, UInt)] = [
   ("ADDIC_rec", d_form(13, 3, 4, 1)),
   ("ADDI", d_form(14, 3, 4, 0x7FFF)),
   ("ADDIS", d_form(15, 3, 4, 0x8000)),
+  ("LI", d_form(14, 3, 0, 0xFFF0)),
+  ("LIS", d_form(15, 3, 0, 0x1234)),
   // D form logical
   ("NOP", d_form(24, 0, 0, 0)),
   ("ORI", d_form(24, 3, 4, 0xFFFF)),
@@ -367,8 +369,6 @@ let opcode_samples : Array[(String, UInt)] = [
   ("gBCLRL", xl_branch(4, 2, 0, 16, 1)),
   ("gBCCTR", xl_branch(12, 30, 0, 528, 0)),
   ("gBCCTRL", xl_branch(20, 0, 1, 528, 1)),
-  ("gBCTAR", xl_branch(20, 0, 0, 560, 0)),
-  ("gBCTARL", xl_branch(12, 1, 0, 560, 1)),
   ("BDNZLR", xl_branch(16, 0, 0, 16, 0)),
   ("BLR", xl_branch(20, 0, 0, 16, 0)),
   ("BLRL", xl_branch(20, 0, 0, 16, 1)),
@@ -378,12 +378,13 @@ let opcode_samples : Array[(String, UInt)] = [
 
 ///|
 /// Lifter opcodes that the LLVM disassembler never produces: extended
-/// mnemonics and code generation only instructions (`LI`, `LIS`, `LA`,
-/// `BCC...`), and the pre-LLVM 10 spelling of the record forms (`XXXo`,
-/// decoded as `XXX_rec`).
+/// mnemonics and code generation only instructions (`LA`, `BCC...`), the
+/// `bctar` branches (absent from LLVM), and the pre-LLVM 10 spelling of the
+/// record forms (`XXXo`, decoded as `XXX_rec`).
 fn never_decoded(name : String) -> Bool {
   [
-    "LI", "LIS", "LA", "BCC", "BCCL", "BCCLA", "BCCLR", "BCCLRL", "BCCCTR", "BCCCTRL",
+    "LA", "BCC", "BCCL", "BCCLA", "BCCLR", "BCCLRL", "BCCCTR", "BCCCTRL", "gBCTAR",
+    "gBCTARL",
   ].contains(name) ||
   (name.has_suffix("o") && name != "NOP")
 }
@@ -441,13 +442,15 @@ test "decoded operands and assembly" {
       #|20640064  SUBFIC R3, R4, 100  | subfic 3, 4, 100
       #|2a84ffff  CMPLWI CR5, R4, 65535  | cmplwi 5, 4, 65535
       #|2aa40007  CMPLDI CR5, X4, 7  | cmpldi 5, 4, 7
-      #|2c048000  CMPWI CR0, R4, -32768  | cmpwi 0, 4, -32768
+      #|2c048000  CMPWI CR0, R4, -32768  | cmpwi 4, -32768
       #|2ca40001  CMPDI CR1, X4, 1  | cmpdi 1, 4, 1
       #|3064ffff  ADDIC R3, R4, -1  | addic 3, 4, -1
       #|34640001  ADDIC_rec R3, R4, 1  | addic. 3, 4, 1
       #|38647fff  ADDI R3, R4, 32767  | addi 3, 4, 32767
       #|3c648000  ADDIS R3, R4, -32768  | addis 3, 4, -32768
-      #|60000000  NOP  | nop
+      #|3860fff0  LI R3, -16  | li 3, -16
+      #|3c601234  LIS R3, 4660  | lis 3, 4660
+      #|60000000  NOP  | nop  | load,store
       #|6064ffff  ORI R4, R3, 65535  | ori 4, 3, 65535
       #|64640001  ORIS R4, R3, 1  | oris 4, 3, 1
       #|68640002  XORI R4, R3, 2  | xori 4, 3, 2
@@ -455,11 +458,11 @@ test "decoded operands and assembly" {
       #|70640004  ANDI_rec R4, R3, 4  | andi. 4, 3, 4
       #|74640005  ANDIS_rec R4, R3, 5  | andis. 4, 3, 5
       #|80610008  LWZ R3, 8, R1  | lwz 3, 8(1)  | load
-      #|8461fff8  LWZU R3, R1, -8, R1  | lwzu 3, -8(1)  | load
+      #|8461fff8  LWZU R3, R1, 65528, R1  | lwzu 3, -8(1)  | load
       #|88600008  LBZ R3, 8, ZERO  | lbz 3, 8(0)  | load
       #|8c610008  LBZU R3, R1, 8, R1  | lbzu 3, 8(1)  | load
       #|90610008  STW R3, 8, R1  | stw 3, 8(1)  | store
-      #|9421ffe0  STWU R1, R1, -32, R1  | stwu 1, -32(1)  | store
+      #|9421ffe0  STWU R1, R1, 65504, R1  | stwu 1, -32(1)  | store
       #|98610008  STB R3, 8, R1  | stb 3, 8(1)  | store
       #|9c610008  STBU R1, R3, 8, R1  | stbu 3, 8(1)  | store
       #|a0610008  LHZ R3, 8, R1  | lhz 3, 8(1)  | load
@@ -509,10 +512,10 @@ test "decoded operands and assembly" {
       #|7c6401d5  ADDME_rec R3, R4  | addme. 3, 4
       #|7c640194  ADDZE R3, R4  | addze 3, 4
       #|7c640195  ADDZE_rec R3, R4  | addze. 3, 4
-      #|7c642850  SUBF R3, R4, R5  | subf 3, 4, 5
-      #|7c642851  SUBF_rec R3, R4, R5  | subf. 3, 4, 5
-      #|7c642810  SUBFC R3, R4, R5  | subfc 3, 4, 5
-      #|7c642811  SUBFC_rec R3, R4, R5  | subfc. 3, 4, 5
+      #|7c642850  SUBF R3, R4, R5  | sub 3, 5, 4
+      #|7c642851  SUBF_rec R3, R4, R5  | sub. 3, 5, 4
+      #|7c642810  SUBFC R3, R4, R5  | subc 3, 5, 4
+      #|7c642811  SUBFC_rec R3, R4, R5  | subc. 3, 5, 4
       #|7c642910  SUBFE R3, R4, R5  | subfe 3, 4, 5
       #|7c642911  SUBFE_rec R3, R4, R5  | subfe. 3, 4, 5
       #|7c6401d0  SUBFME R3, R4  | subfme 3, 4
@@ -608,25 +611,25 @@ test "decoded operands and assembly" {
       #|7c83fe76  SRADI X3, X4, 63  | sradi 3, 4, 63
       #|7c830e75  SRADI_rec X3, X4, 1  | sradi. 3, 4, 1
       #|5483f87c  RLWINM R3, R4, 31, 1, 30  | rlwinm 3, 4, 31, 1, 30
-      #|5483083f  RLWINM_rec R3, R4, 1, 0, 31  | rlwinm. 3, 4, 1, 0, 31
-      #|5c83283e  RLWNM R3, R4, R5, 0, 31  | rlwnm 3, 4, 5, 0, 31
-      #|5c83283f  RLWNM_rec R3, R4, R5, 0, 31  | rlwnm. 3, 4, 5, 0, 31
+      #|5483083f  RLWINM_rec R3, R4, 1, 0, 31  | rotlwi. 3, 4, 1
+      #|5c83283e  RLWNM R3, R4, R5, 0, 31  | rotlw 3, 4, 5
+      #|5c83283f  RLWNM_rec R3, R4, R5, 0, 31  | rotlw. 3, 4, 5
       #|5083442e  RLWIMI R3, R3, R4, 8, 16, 23  | rlwimi 3, 4, 8, 16, 23
       #|5083442f  RLWIMI_rec R3, R3, R4, 8, 16, 23  | rlwimi. 3, 4, 8, 16, 23
       #|7883f862  RLDICL X3, X4, 63, 33  | rldicl 3, 4, 63, 33
-      #|78830801  RLDICL_rec X3, X4, 1, 0  | rldicl. 3, 4, 1, 0
-      #|788307c6  RLDICR X3, X4, 32, 31  | rldicr 3, 4, 32, 31
+      #|78830801  RLDICL_rec X3, X4, 1, 0  | rotldi. 3, 4, 1
+      #|788307c6  RLDICR X3, X4, 32, 31  | sldi 3, 4, 32
       #|78830fa5  RLDICR_rec X3, X4, 1, 62  | rldicr. 3, 4, 1, 62
       #|7883084a  RLDIC X3, X4, 33, 1  | rldic 3, 4, 33, 1
       #|78830849  RLDIC_rec X3, X4, 1, 1  | rldic. 3, 4, 1, 1
       #|7883000e  RLDIMI X3, X3, X4, 32, 0  | rldimi 3, 4, 32, 0
       #|7883000f  RLDIMI_rec X3, X3, X4, 32, 0  | rldimi. 3, 4, 32, 0
       #|78832c30  RLDCL X3, X4, R5, 48  | rldcl 3, 4, 5, 48
-      #|78832811  RLDCL_rec X3, X4, R5, 0  | rldcl. 3, 4, 5, 0
+      #|78832811  RLDCL_rec X3, X4, R5, 0  | rotld. 3, 4, 5
       #|78832bd2  RLDCR X3, X4, R5, 15  | rldcr 3, 4, 5, 15
       #|78832ff3  RLDCR_rec X3, X4, R5, 63  | rldcr. 3, 4, 5, 63
-      #|7c6043a6  MTSPR 256, R3  | mtspr 256, 3
-      #|7c6102a6  MFSPR R3, 1  | mfspr 3, 1
+      #|7c6043a6  MTSPR 256, R3  | mtspr 256, 3  | load,store
+      #|7c6102a6  MFSPR R3, 1  | mfxer 3  | load,store
       #|7c6803a6  MTLR R3  | mtlr 3
       #|7c6802a6  MFLR R3  | mflr 3
       #|7c6903a6  MTCTR R3  | mtctr 3
@@ -643,21 +646,19 @@ test "decoded operands and assembly" {
       #|4c221b42  CRORC CR0GT, CR0EQ, CR0UN  | crorc 1, 2, 3
       #|4f800000  MCRF CR7, CR0  | mcrf 7, 0
       #|4a000000  B -8388608  | b .-33554432  | jump,barrier,term,flow
-      #|48000402  BA 256  | ba 1024  | jump,barrier,term,flow
+      #|48000402  BA 256  | ba 0x400  | jump,barrier,term,flow
       #|48000005  BL 1  | bl .+4  | call,flow
-      #|49ffffff  BLA 8388607  | bla 33554428  | call,flow
-      #|41828000  gBC 12, CR0EQ, -8192  | bc 12, 2, .-32768  | cond,flow
-      #|409d0042  gBCA 4, CR7GT, 16  | bca 4, 29, 64  | cond,flow
+      #|49ffffff  BLA 8388607  | bla 0x1fffffc  | call,flow
+      #|41828000  gBC 12, CR0EQ, -8192  | bt 2, .-32768  | cond,flow
+      #|409d0042  gBCA 4, CR7GT, 16  | bfa 29, 0x40  | cond,flow
       #|429f0005  gBCL 20, CR7UN, 1  | bcl 20, 31, .+4  | cond,flow
-      #|42800007  gBCLA 20, CR0LT, 1  | bcla 20, 0, 4  | cond,flow
+      #|42800007  gBCLA 20, CR0LT, 1  | bcla 20, 0, 0x4  | cond,flow
       #|4200fffc  BDNZ -1  | bdnz .-4  | cond,term,flow
       #|4240000c  BDZ 3  | bdz .+12  | cond,term,flow
-      #|4d820020  gBCLR 12, CR0EQ, 0  | bclr 12, 2, 0  | cond,flow
-      #|4c820021  gBCLRL 4, CR0EQ, 0  | bclrl 4, 2, 0  | cond,flow
-      #|4d9e0420  gBCCTR 12, CR7EQ, 0  | bcctr 12, 30, 0  | cond,flow
+      #|4d820020  gBCLR 12, CR0EQ, 0  | bclr 12, 2  | cond,flow
+      #|4c820021  gBCLRL 4, CR0EQ, 0  | bclrl 4, 2  | cond,flow
+      #|4d9e0420  gBCCTR 12, CR7EQ, 0  | bcctr 12, 30  | cond,flow
       #|4e800c21  gBCCTRL 20, CR0LT, 1  | bcctrl 20, 0, 1  | cond,flow
-      #|4e800460  gBCTAR 20, CR0LT, 0  | bctar 20, 0, 0  | cond,flow
-      #|4d810461  gBCTARL 12, CR0GT, 0  | bctarl 12, 1, 0  | cond,flow
       #|4e000020  BDNZLR  | bdnzlr  | cond,return,term,flow
       #|4e800020  BLR  | blr  | return,barrier,term,flow
       #|4e800021  BLRL  | blrl  | call,flow

@@ -46,7 +46,7 @@ test "invalid encodings" {
       #|7c700026  invalid
       #|e8610003  invalid
       #|f8610002  invalid
-      #|78830010  RLDCL X3, X4, R0, 0  | rldcl 3, 4, 0, 0
+      #|78830010  RLDCL X3, X4, R0, 0  | rotld 3, 4, 0
       #|7883001c  invalid
     ),
   )
@@ -76,8 +76,8 @@ test "CTR decrementing and hinted branches" {
       #|4360fff8  BDZp -2  | bdz+ .-8  | cond,term,flow
       #|4340fff8  BDZm -2  | bdz- .-8  | cond,term,flow
       #|4200fff9  BDNZL -2  | bdnzl .-8  | call,flow
-      #|4200fffa  BDNZA -2  | bdnza -8  | cond,term,flow
-      #|4240fffb  BDZLA -2  | bdzla -8  | call,flow
+      #|4200fffa  BDNZA -2  | bdnza 0xfffffff8  | cond,term,flow
+      #|4240fffb  BDZLA -2  | bdzla 0xfffffff8  | call,flow
       #|4201fff8  gBC 16, CR0GT, -2  | bc 16, 1, .-8  | cond,flow
       #|4e400020  BDZLR  | bdzlr  | cond,return,term,flow
       #|4e000021  BDNZLRL  | bdnzlrl  | call,flow

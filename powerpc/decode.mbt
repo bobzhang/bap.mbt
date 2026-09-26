@@ -21,7 +21,8 @@ fn mode_encoding(mode : AddrSize) -> @core_theory.Language {
 ///
 /// The decoded instructions are the same in 32- and 64-bit modes (as with
 /// LLVM, which decodes the 64-bit only instructions in both modes); `mode`
-/// selects the default `encoding` (`llvm-powerpc32` or `llvm-powerpc64`).
+/// selects the default `encoding` (`llvm-powerpc32` or `llvm-powerpc64`)
+/// and the printing of absolute branch targets (32- or 64-bit addresses).
 /// `raw` defaults to the big-endian encoding of `word`.
 pub fn decode_word(
   word : UInt,
@@ -47,7 +48,7 @@ pub fn decode_word(
       spec.ops(),
       addr~,
       size=4,
-      assembly=spec.assembly(),
+      assembly=spec.assembly(wide=mode is R64),
       encoding~,
       kinds=spec.kinds,
       raw~,

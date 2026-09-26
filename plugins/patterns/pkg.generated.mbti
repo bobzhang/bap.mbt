@@ -7,6 +7,7 @@ import {
   "bobzhang/bap/image",
   "bobzhang/bap/knowledge",
   "bobzhang/bap/memory",
+  "bobzhang/bap/primus_lisp",
   "bobzhang/bap/project",
   "bobzhang/bap/xml",
   "moonbitlang/core/debug",
@@ -16,6 +17,8 @@ import {
 pub fn analyze(Rules, ArrayView[@memory.Memory], handlers? : ArrayView[(ActionContext, Action, UInt64) -> Unit]) -> Outcome
 
 pub fn analyze_image(@image.Image, Rules, handlers? : ArrayView[(ActionContext, Action, UInt64) -> Unit]) -> Outcome
+
+pub fn analyze_lisp(Rules, ArrayView[@memory.Memory], @primus_lisp.Program, target? : @core_theory.Target) -> Outcome raise
 
 pub fn bap_action(String) -> @knowledge.Name
 
@@ -39,6 +42,8 @@ pub fn find_patternconstraints(String, fs? : @bap_main.FileSystem) -> Array[Stri
 
 pub fn load(ArrayView[String], @core_theory.Target, fs? : @bap_main.FileSystem) -> Rules
 
+pub fn load_actions_program(@core_theory.Target, extra? : ArrayView[(String, String)]) -> @primus_lisp.Program raise
+
 pub fn match_actions(Rules, ArrayView[@memory.Memory]) -> Array[(UInt64, ActionSet)]
 
 pub fn match_patterns(spec~ : String, binary~ : String, out~ : (String) -> Unit, fs? : @bap_main.FileSystem) -> Unit
@@ -51,9 +56,13 @@ pub fn parse_constraints(String) -> Result[Array[(String, String)], String]
 
 pub fn parse_patterns(String) -> Result[Array[Rule], String]
 
+pub let pattern_actions_file : String
+
 pub let pattern_actions_lisp : String
 
 pub let patternconstraints : String
+
+pub let patterns_action_signal : String
 
 pub let provides : Array[String]
 
@@ -62,6 +71,8 @@ pub fn register_action_handler((ActionContext, Action, UInt64) -> Unit) -> Unit
 pub fn register_for_image(@image.Image, path? : String, target? : @core_theory.Target, fs? : @bap_main.FileSystem) -> Outcome
 
 pub fn select(ArrayView[String], @core_theory.Target, fs? : @bap_main.FileSystem) -> Array[String]
+
+pub fn set_action_semantics(lisp? : Bool, extra? : ArrayView[(String, String)]) -> Unit
 
 // Errors
 pub(all) suberror PatternError {

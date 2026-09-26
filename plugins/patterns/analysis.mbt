@@ -187,13 +187,54 @@ pub fn code_regions(image : @image.Image) -> Array[@memory.Memory] {
 }
 
 ///|
-/// Analyzes the code of an image with the rules.
+let lisp_sources : Ref[Array[(String, String)]] = { val: [], }
+
+///|
+let use_lisp : Ref[Bool] = { val: true, }
+
+///|
+/// Selects how the actions are interpreted by `analyze_image`: with the
+/// Primus Lisp methods of `bap:patterns-action` (the default, as upstream),
+/// with `extra` Lisp sources loaded after `pattern-actions.lisp`; or, when
+/// `lisp` is false, with the native action handlers.
+pub fn set_action_semantics(
+  lisp? : Bool = true,
+  extra? : ArrayView[(String, String)] = [],
+) -> Unit {
+  use_lisp.val = lisp
+  lisp_sources.val = extra.to_owned()
+}
+
+///|
+/// Analyzes the code of an image with the rules. The actions are
+/// interpreted by the Lisp methods (see `set_action_semantics`); if the
+/// Lisp program can't be loaded or run, the native handlers are used
+/// instead.
 pub fn analyze_image(
   image : @image.Image,
   rules : Rules,
   handlers? : ArrayView[ActionHandler] = action_handlers,
 ) -> Outcome {
-  analyze(rules, code_regions(image), handlers~)
+  let code = code_regions(image)
+  if use_lisp.val {
+    let target = image.target().unwrap_or(image.arch())
+    let result = try {
+      let program = load_actions_program(target, extra=lisp_sources.val)
+      analyze_lisp(rules, code, program, target~)
+    } catch {
+      e => {
+        log.warning(message="falling back to the native actions: \{e}")
+        None
+      }
+    } noraise {
+      outcome => Some(outcome)
+    }
+    match result {
+      Some(outcome) => return outcome
+      None => ()
+    }
+  }
+  analyze(rules, code, handlers~)
 }
 
 ///|

@@ -1,0 +1,16 @@
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/bitvec",
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/image",
+  "bobzhang/bap/main_event",
+  "bobzhang/bap/memory",
+  "bobzhang/bap/primus",
+  "bobzhang/bap/project",
+  "bobzhang/bap/types",
+  "moonbitlang/core/encoding/utf8",
+}
+
+import {
+  "bobzhang/bap/ogre",
+} for "test"

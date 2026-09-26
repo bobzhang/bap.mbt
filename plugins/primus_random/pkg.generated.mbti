@@ -1,0 +1,98 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/primus_random"
+
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/primus",
+  "bobzhang/bap/types",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub let arg_randomizer : String
+
+pub let debug_msg : @primus.Observation[String]
+
+pub fn declare_plugin() -> Unit raise
+
+pub let default_spec : Spec
+
+pub fn first_match(Array[Spec], seed? : Int, width? : Int, (Predicate) -> Bool) -> @primus.Generator? raise SpecError
+
+pub fn for_var(Array[Spec], seed? : Int, width? : Int, @types.Var) -> @primus.Generator? raise SpecError
+
+pub fn initialize_regions(@primus.Machine, Array[Spec], seed? : Int) -> Unit raise
+
+pub fn install_arg_randomizer(@primus.Machine, specs? : Array[Spec], seed? : Int) -> Unit
+
+pub fn install_mem_randomizer(@primus.Machine, specs? : Array[Spec], seed? : Int, keep_protected? : Bool) -> Unit raise
+
+pub fn install_var_randomizer(@primus.Machine, specs? : Array[Spec], seed? : Int) -> Unit
+
+pub let mem_randomizer : String
+
+pub let name : String
+
+pub fn randomize_vars(@primus.Machine, Array[Spec], seed? : Int) -> Unit raise
+
+pub fn register(specs? : Array[Spec], seed? : Int, keep_protected? : Bool) -> Bool
+
+pub fn spec_type() -> @bap_main.Type[Spec]
+
+pub let var_randomizer : String
+
+// Errors
+pub suberror SpecError {
+  SpecError(String)
+} derive(@debug.Debug)
+pub fn SpecError::output(Self, &Logger) -> Unit
+pub fn SpecError::to_repr(Self) -> @debug.Repr
+pub fn SpecError::to_string(Self) -> String
+pub impl Show for SpecError
+
+// Types and methods
+pub(all) enum Distribution {
+  Static
+  Random
+} derive(Eq, @debug.Debug)
+pub fn Distribution::equal(Self, Self) -> Bool
+pub fn Distribution::not_equal(Self, Self) -> Bool
+pub fn Distribution::to_repr(Self) -> @debug.Repr
+
+pub(all) enum MemRegion {
+  Default
+  Address(String)
+  Section(String)
+  Interval(String, String)
+} derive(Eq, @debug.Debug)
+pub fn MemRegion::equal(Self, Self) -> Bool
+pub fn MemRegion::not_equal(Self, Self) -> Bool
+pub fn MemRegion::to_repr(Self) -> @debug.Repr
+
+pub(all) enum Predicate {
+  Any
+  Vars(Array[String])
+  Mem(MemRegion)
+} derive(Eq, @debug.Debug)
+pub fn Predicate::equal(Self, Self) -> Bool
+pub fn Predicate::not_equal(Self, Self) -> Bool
+pub fn Predicate::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Spec {
+  predicate : Predicate
+  distribution : Distribution
+  parameters : Array[String]
+} derive(Eq, @debug.Debug)
+pub fn Spec::create(Self, seed? : Int, width? : Int) -> @primus.Generator raise SpecError
+pub fn Spec::equal(Self, Self) -> Bool
+pub fn Spec::from_file(String) -> Array[Self] raise SpecError
+pub fn Spec::not_equal(Self, Self) -> Bool
+pub fn Spec::of_sexp(@primus.Sexp) -> Self raise SpecError
+pub fn Spec::parse(String) -> Self raise SpecError
+pub fn Spec::parse_many(String) -> Array[Self] raise SpecError
+pub fn Spec::to_repr(Self) -> @debug.Repr
+pub fn Spec::to_string(Self) -> String
+
+// Type aliases
+
+// Traits

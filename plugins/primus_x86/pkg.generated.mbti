@@ -1,0 +1,51 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/primus_x86"
+
+import {
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/primus",
+  "bobzhang/bap/types",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn declare_plugin() -> Unit raise
+
+pub fn enable() -> Unit
+
+pub fn flags() -> Array[@types.Var]
+
+pub fn install_plt(@primus.Machine) -> Unit
+
+pub fn install_registers(@primus.Machine) -> Unit
+
+pub fn mode_of_target(@core_theory.Target) -> Mode?
+
+pub let name : String
+
+pub let plt_component : String
+
+pub fn register() -> Bool
+
+pub fn registers(Mode) -> Array[@types.Var]
+
+pub let registers_component : String
+
+pub fn stack_pointer(Mode) -> @types.Var
+
+pub fn unresolve(@primus.Machine) -> Unit
+
+// Errors
+
+// Types and methods
+pub(all) enum Mode {
+  IA32
+  AMD64
+} derive(Eq, @debug.Debug)
+pub fn Mode::equal(Self, Self) -> Bool
+pub fn Mode::not_equal(Self, Self) -> Bool
+pub fn Mode::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

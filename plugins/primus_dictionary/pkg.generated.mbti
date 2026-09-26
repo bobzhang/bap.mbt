@@ -1,0 +1,49 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/primus_dictionary"
+
+import {
+  "bobzhang/bap/primus",
+}
+
+// Values
+pub fn add(@primus.Machine, @primus.Value, @primus.Value, @primus.Value) -> @primus.Value
+
+pub let component_name : String
+
+pub fn declare_plugin() -> Unit raise
+
+pub fn del(@primus.Machine, @primus.Value, key? : @primus.Value) -> @primus.Value
+
+pub fn enable() -> Unit
+
+pub fn first(@primus.Machine, @primus.Value) -> @primus.Value
+
+pub fn get(@primus.Machine, @primus.Value, @primus.Value) -> @primus.Value
+
+pub fn has(@primus.Machine, @primus.Value, @primus.Value) -> @primus.Value
+
+pub fn install(@primus.Machine) -> Unit
+
+pub fn length(@primus.Machine, @primus.Value) -> @primus.Value raise
+
+pub let name : String
+
+pub fn next(@primus.Machine, @primus.Value, @primus.Value) -> @primus.Value
+
+pub fn primitives() -> Array[Primitive]
+
+pub fn register() -> Bool
+
+// Errors
+
+// Types and methods
+pub struct Primitive {
+  name : String
+  types : String
+  docs : String
+  run : (@primus.Machine, Array[@primus.Value]) -> @primus.Value raise
+}
+
+// Type aliases
+
+// Traits

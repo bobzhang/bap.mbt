@@ -1,0 +1,29 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/primus_wandering"
+
+import {
+  "bobzhang/bap/primus",
+}
+
+// Values
+pub let component_name : String
+
+pub fn declare_plugin() -> Unit raise
+
+pub fn enable(seed? : Int) -> Unit
+
+pub fn install(@primus.Machine, seed? : Int) -> Unit
+
+pub let name : String
+
+pub fn pending(@primus.Machine) -> Array[(Int, @primus.Id)]
+
+pub fn register(seed? : Int) -> Bool
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

@@ -1,0 +1,43 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/primus_track_visited"
+
+import {
+  "bobzhang/bap/primus",
+  "bobzhang/bap/project",
+  "bobzhang/bap/types",
+}
+
+// Values
+pub fn add(@primus.Machine, @types.Tid) -> Unit
+
+pub fn all(@primus.Machine) -> Array[@types.Tid]
+
+pub fn clear_marks(@project.Project) -> @project.Project
+
+pub let component_name : String
+
+pub fn del(@primus.Machine, @types.Tid) -> Unit
+
+pub fn init_tracker() -> Unit
+
+pub fn install(@primus.Machine) -> Unit
+
+pub fn mark_dead(@primus.Machine) -> Unit
+
+pub fn mark_live(@primus.Machine) -> Unit
+
+pub fn mem(@primus.Machine, @types.Tid) -> Bool
+
+pub let progress : @primus.Observation[(Int, Int)]
+
+pub fn register() -> Bool
+
+pub fn total(@primus.Machine) -> Int
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

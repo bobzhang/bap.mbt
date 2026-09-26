@@ -75,5 +75,8 @@ import {
 } for "test"
 
 options(
-  targets: { "frontend_native_test.mbt": [ "native" ] },
+  targets: {
+    "frontend_native_test.mbt": [ "native" ],
+    "primus_run_native_test.mbt": [ "native" ],
+  },
 )

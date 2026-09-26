@@ -9,7 +9,9 @@ fn[T] is_term_linked(m : Machine, name : String, t : @types.Term[T]) -> Bool {
 /// Links every subroutine and block of the project program into the
 /// machine (upstream `Interpreter.LinkBinaryProgram`, the `load-binary`
 /// component). Terms are linked weakly: if a term is already linked under
-/// its tid, name or address it is left untouched. Subroutines are linked
+/// its tid, name or address it is left untouched. As upstream, a
+/// subroutine is linked before its blocks, so an address shared by a
+/// subroutine and its entry block resolves to the block. Subroutines are linked
 /// under their names, blocks under their term names; both also under their
 /// tids and addresses.
 pub fn Interpreter::link_program(m : Machine) -> Unit {
@@ -29,7 +31,20 @@ pub fn Interpreter::link_program(m : Machine) -> Unit {
     }
     acc
   }
+  // upstream links in the order of the term visitor: a subroutine before
+  // its blocks, so an address shared by a subroutine and its entry block
+  // resolves to the block (e.g. when a return address points to the start
+  // of a function)
   for sub in subs {
+    if linked.get(sub.tid()) is None {
+      Linker::link(
+        m,
+        name=@types.Sub::name(sub),
+        tid=sub.tid(),
+        addr?=term_address(sub),
+        Subroutine(sub),
+      )
+    }
     for blk in sub.payload().blks {
       if linked.get(blk.tid()) is None {
         Linker::link(
@@ -40,15 +55,6 @@ pub fn Interpreter::link_program(m : Machine) -> Unit {
           Block(blk),
         )
       }
-    }
-    if linked.get(sub.tid()) is None {
-      Linker::link(
-        m,
-        name=@types.Sub::name(sub),
-        tid=sub.tid(),
-        addr?=term_address(sub),
-        Subroutine(sub),
-      )
     }
   }
 }

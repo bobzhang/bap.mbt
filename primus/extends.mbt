@@ -92,3 +92,6 @@ pub extend JobAction with Debug::{to_repr}
 
 ///|
 pub extend ForkStatus with Show::{output, to_string}
+
+///|
+pub extend SystemError with Show::{output}

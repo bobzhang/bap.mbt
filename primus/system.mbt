@@ -14,6 +14,36 @@ pub(all) suberror SystemError {
 } derive(Debug)
 
 ///|
+/// Renders a system error as a human readable message.
+pub fn SystemError::to_string(self : SystemError) -> String {
+  match self {
+    UnknownSystem(name) => "unknown Primus system \{name}"
+    UnknownComponent(component~, system~) =>
+      "failed to find a component \{component} required for system \{system}"
+    DuplicateSystem(name) =>
+      "a system named \{name} is already present in the repository"
+    DuplicateComponent(name) =>
+      "a component named \{name} is already registered, please choose a unique name"
+    SystemParseError(file~, system~, msg~) =>
+      "in file \"\{file}\", in the definition of the system \"\{system}\", \{msg}"
+  }
+}
+
+///|
+pub impl Show for SystemError with fn output(self, logger) {
+  logger.write_string(self.to_string())
+}
+
+///|
+/// Checks that every component of the system (and of the systems it
+/// depends on) is registered, raising `UnknownSystem` or `UnknownComponent`
+/// otherwise. `System::run` performs the same check before starting the
+/// machine; callers use this to report a misconfigured system early.
+pub fn System::validate(self : System) -> Unit raise SystemError {
+  ignore(self.component_inits())
+}
+
+///|
 /// A Primus system: a named set of components, possibly depending on other
 /// systems (upstream `Primus.System.t`).
 pub struct System {

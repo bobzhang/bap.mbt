@@ -563,7 +563,7 @@ test "project Basic BIL lift covers x86 flag controls" {
   match lahf.lift_basic_bil() {
     Ok(stmts) =>
       assert_basic_bil_text(stmts, [
-        "AH:imm8 := concat(concat(concat(concat(concat(concat(concat(SF:imm1, ZF:imm1), unknown(LAHF bit 5:imm1)), AF:imm1), unknown(LAHF bit 3:imm1)), PF:imm1), unknown(LAHF bit 1:imm1)), CF:imm1)",
+        "AH:imm8 := concat(concat(concat(concat(concat(concat(concat(SF:imm1, ZF:imm1), 0:1u), AF:imm1), 0:1u), PF:imm1), 1:1u), CF:imm1)",
       ])
     Err(reason) => fail(reason)
   }
@@ -2422,7 +2422,7 @@ test "project Basic BIL lift covers x86 register shift ops" {
     Ok(stmts) => {
       assert_true(stmts.length() == 3)
       assert_string(stmts[0].to_string(), "%shift_was:imm8 := AL:imm8")
-      let count = "(1:8u & 7:8u)"
+      let count = "(1:8u & 0x1F:8u)"
       let result = "AL:imm8"
       assert_string(
         stmts[1].to_string(),
@@ -2472,7 +2472,7 @@ test "project Basic BIL lift covers x86 register shift ops" {
     Ok(stmts) => {
       assert_true(stmts.length() == 3)
       assert_string(stmts[0].to_string(), "%shift_was:imm16 := AX:imm16")
-      let count = "(1:16u & 0xF:16u)"
+      let count = "(1:16u & 0x1F:16u)"
       let result = "AX:imm16"
       assert_string(
         stmts[1].to_string(),
@@ -2497,7 +2497,7 @@ test "project Basic BIL lift covers x86 register shift ops" {
     Ok(stmts) => {
       assert_true(stmts.length() == 3)
       assert_string(stmts[0].to_string(), "%shift_was:imm16 := AX:imm16")
-      let count = "(CL:imm8 & 0xF:8u)"
+      let count = "(CL:imm8 & 0x1F:8u)"
       let result = "AX:imm16"
       assert_string(
         stmts[1].to_string(),
@@ -2522,7 +2522,7 @@ test "project Basic BIL lift covers x86 register shift ops" {
     Ok(stmts) => {
       assert_true(stmts.length() == 3)
       assert_string(stmts[0].to_string(), "%shift_was:imm8 := AH:imm8")
-      let count = "(3:8u & 7:8u)"
+      let count = "(3:8u & 0x1F:8u)"
       let result = "AH:imm8"
       assert_string(
         stmts[1].to_string(),
@@ -2531,7 +2531,7 @@ test "project Basic BIL lift covers x86 register shift ops" {
       assert_shift_flag_update(
         stmts[2],
         "(\{count} != 0:8u)",
-        "CF:imm1 := low:1[(%shift_was:imm8 >> (\{count} - 1:8u))]",
+        "CF:imm1 := low:1[(%shift_was:imm8 a>> (\{count} - 1:8u))]",
         count,
         "1:8u",
         result,
@@ -2572,7 +2572,7 @@ test "project Basic BIL lift covers x86 register shift ops" {
     Ok(stmts) => {
       assert_true(stmts.length() == 3)
       assert_string(stmts[0].to_string(), "%shift_was:imm8 := SPL:imm8")
-      let count = "(1:8u & 7:8u)"
+      let count = "(1:8u & 0x1F:8u)"
       let result = "SPL:imm8"
       assert_string(
         stmts[1].to_string(),
@@ -2680,7 +2680,7 @@ test "project Basic BIL lift covers x86 register shift ops" {
         stmts[1].to_string(),
         "%shift_d:imm16 := load(mem:mem32x8, %shift_a:imm32):imm16",
       )
-      let count = "(1:16u & 0xF:16u)"
+      let count = "(1:16u & 0x1F:16u)"
       let result = "%shift_res:imm16"
       assert_string(
         stmts[2].to_string(),
@@ -2720,7 +2720,7 @@ test "project Basic BIL lift covers x86 register shift ops" {
         stmts[1].to_string(),
         "%shift_d:imm8 := load(mem:mem64x8, %shift_a:imm64):imm8",
       )
-      let count = "(4:8u & 7:8u)"
+      let count = "(4:8u & 0x1F:8u)"
       let result = "%shift_res:imm8"
       assert_string(
         stmts[2].to_string(),
@@ -2733,7 +2733,7 @@ test "project Basic BIL lift covers x86 register shift ops" {
       assert_shift_flag_update(
         stmts[4],
         "(\{count} != 0:8u)",
-        "CF:imm1 := low:1[(%shift_d:imm8 >> (\{count} - 1:8u))]",
+        "CF:imm1 := low:1[(%shift_d:imm8 a>> (\{count} - 1:8u))]",
         count,
         "1:8u",
         result,
@@ -2797,16 +2797,16 @@ test "project Basic BIL lift covers x86 shld-shrd ops" {
     Ok(stmts) => {
       assert_true(stmts.length() == 3)
       assert_string(stmts[0].to_string(), "%shiftd_was:imm16 := AX:imm16")
-      let result = "((CX:imm16 >> (0x10:16u - (4:16u & 0xF:16u))) | (%shiftd_was:imm16 << (4:16u & 0xF:16u)))"
+      let result = "((CX:imm16 >> (0x10:16u - (4:16u & 0x1F:16u))) | (%shiftd_was:imm16 << (4:16u & 0x1F:16u)))"
       assert_string(stmts[1].to_string(), "AX:imm16 := " + result)
       match stmts[2] {
         If(cond~, yes~, no~) => {
-          assert_string(cond.to_string(), "((4:16u & 0xF:16u) != 0:16u)")
+          assert_string(cond.to_string(), "((4:16u & 0x1F:16u) != 0:16u)")
           assert_true(no.is_empty())
           assert_true(yes.length() == 5)
           assert_string(
             yes[0].to_string(),
-            "CF:imm1 := low:1[(%shiftd_was:imm16 >> (0x10:16u - (4:16u & 0xF:16u)))]",
+            "CF:imm1 := low:1[(%shiftd_was:imm16 >> (0x10:16u - (4:16u & 0x1F:16u)))]",
           )
           assert_string(yes[1].to_string(), "SF:imm1 := high:1[" + result + "]")
           assert_string(
@@ -2816,7 +2816,7 @@ test "project Basic BIL lift covers x86 shld-shrd ops" {
           assert_true(yes[3].to_string().has_prefix("PF:imm1 := "))
           match yes[4] {
             If(cond~, yes~, no~) => {
-              assert_string(cond.to_string(), "((4:16u & 0xF:16u) == 1:16u)")
+              assert_string(cond.to_string(), "((4:16u & 0x1F:16u) == 1:16u)")
               assert_true(yes.length() == 1)
               assert_string(
                 yes[0].to_string(),
@@ -2842,21 +2842,21 @@ test "project Basic BIL lift covers x86 shld-shrd ops" {
     Ok(stmts) => {
       assert_true(stmts.length() == 3)
       assert_string(stmts[0].to_string(), "%shiftd_was:imm16 := AX:imm16")
-      let result = "((DX:imm16 << (0x10:16u - (3:16u & 0xF:16u))) | (%shiftd_was:imm16 >> (3:16u & 0xF:16u)))"
+      let result = "((DX:imm16 << (0x10:16u - (3:16u & 0x1F:16u))) | (%shiftd_was:imm16 >> (3:16u & 0x1F:16u)))"
       assert_string(stmts[1].to_string(), "AX:imm16 := " + result)
       match stmts[2] {
         If(cond~, yes~, no~) => {
-          assert_string(cond.to_string(), "((3:16u & 0xF:16u) != 0:16u)")
+          assert_string(cond.to_string(), "((3:16u & 0x1F:16u) != 0:16u)")
           assert_true(no.is_empty())
           assert_true(yes.length() == 5)
           assert_string(
             yes[0].to_string(),
-            "CF:imm1 := high:1[(%shiftd_was:imm16 << (0x10:16u - (3:16u & 0xF:16u)))]",
+            "CF:imm1 := high:1[(%shiftd_was:imm16 << (0x10:16u - (3:16u & 0x1F:16u)))]",
           )
           assert_string(yes[1].to_string(), "SF:imm1 := high:1[" + result + "]")
           match yes[4] {
             If(cond~, yes~, no~) => {
-              assert_string(cond.to_string(), "((3:16u & 0xF:16u) == 1:16u)")
+              assert_string(cond.to_string(), "((3:16u & 0x1F:16u) == 1:16u)")
               assert_true(yes.length() == 1)
               assert_true(no.length() == 1)
             }
@@ -2925,17 +2925,17 @@ test "project Basic BIL lift covers x86 shld-shrd ops" {
         stmts[2]
         .to_string()
         .contains(
-          "mem:mem32x8 := store(mem:mem32x8, %shiftd_a:imm32, ((CX:imm16 >> (0x10:8u - (CL:imm8 & 0xF:8u))) | (%shiftd_was:imm16 << (CL:imm8 & 0xF:8u))))",
+          "mem:mem32x8 := store(mem:mem32x8, %shiftd_a:imm32, ((CX:imm16 >> (0x10:8u - (CL:imm8 & 0x1F:8u))) | (%shiftd_was:imm16 << (CL:imm8 & 0x1F:8u))))",
         ),
       )
       match stmts[3] {
         If(cond~, yes~, no~) => {
-          assert_string(cond.to_string(), "((CL:imm8 & 0xF:8u) != 0:8u)")
+          assert_string(cond.to_string(), "((CL:imm8 & 0x1F:8u) != 0:8u)")
           assert_true(no.is_empty())
           assert_true(yes.length() == 5)
           assert_string(
             yes[0].to_string(),
-            "CF:imm1 := low:1[(%shiftd_was:imm16 >> (0x10:8u - (CL:imm8 & 0xF:8u)))]",
+            "CF:imm1 := low:1[(%shiftd_was:imm16 >> (0x10:8u - (CL:imm8 & 0x1F:8u)))]",
           )
         }
         _ => fail("SHLD16 memory flag update did not lift to BIL if")
@@ -2964,17 +2964,17 @@ test "project Basic BIL lift covers x86 shld-shrd ops" {
         stmts[2]
         .to_string()
         .contains(
-          "mem:mem32x8 := store(mem:mem32x8, %shiftd_a:imm32, ((DX:imm16 << (0x10:16u - (5:16u & 0xF:16u))) | (%shiftd_was:imm16 >> (5:16u & 0xF:16u))))",
+          "mem:mem32x8 := store(mem:mem32x8, %shiftd_a:imm32, ((DX:imm16 << (0x10:16u - (5:16u & 0x1F:16u))) | (%shiftd_was:imm16 >> (5:16u & 0x1F:16u))))",
         ),
       )
       match stmts[3] {
         If(cond~, yes~, no~) => {
-          assert_string(cond.to_string(), "((5:16u & 0xF:16u) != 0:16u)")
+          assert_string(cond.to_string(), "((5:16u & 0x1F:16u) != 0:16u)")
           assert_true(no.is_empty())
           assert_true(yes.length() == 5)
           assert_string(
             yes[0].to_string(),
-            "CF:imm1 := high:1[(%shiftd_was:imm16 << (0x10:16u - (5:16u & 0xF:16u)))]",
+            "CF:imm1 := high:1[(%shiftd_was:imm16 << (0x10:16u - (5:16u & 0x1F:16u)))]",
           )
         }
         _ => fail("SHRD16 memory flag update did not lift to BIL if")
@@ -3529,8 +3529,7 @@ test "project Basic BIL lift covers x86 cmpxchg8b ops" {
         "%cmpxchg8b_a:imm64 := (RBP:imm64 - 8:64u)", "%cmpxchg8b_d:imm64 := load(mem:mem64x8, %cmpxchg8b_a:imm64):imm64",
         "%cmpxchg8b_eq:imm1 := (concat(EDX:imm32, EAX:imm32) == %cmpxchg8b_d:imm64)",
         "ZF:imm1 := %cmpxchg8b_eq:imm1", "mem:mem64x8 := store(mem:mem64x8, %cmpxchg8b_a:imm64, ite(%cmpxchg8b_eq:imm1, concat(ECX:imm32, EBX:imm32), %cmpxchg8b_d:imm64))",
-        "EAX:imm32 := ite(%cmpxchg8b_eq:imm1, EAX:imm32, extract[31:0](%cmpxchg8b_d:imm64))",
-        "EDX:imm32 := ite(%cmpxchg8b_eq:imm1, EDX:imm32, extract[63:32](%cmpxchg8b_d:imm64))",
+        "if %cmpxchg8b_eq:imm1 then 0 stmts else 2 stmts",
       ])
     Err(reason) => fail(reason)
   }
@@ -3542,7 +3541,8 @@ test "project Basic BIL lift covers x86 rotate ops" {
   match rol8_one.lift_basic_bil() {
     Ok(stmts) => {
       assert_true(stmts.length() == 2)
-      let count = "(1:8u & 7:8u)"
+      let masked = "(1:8u & 0x1F:8u)"
+      let count = "(\{masked} % 8:8u)"
       assert_string(
         stmts[0].to_string(),
         "AL:imm8 := ((AL:imm8 << " +
@@ -3553,9 +3553,9 @@ test "project Basic BIL lift covers x86 rotate ops" {
       )
       assert_rotate_flag_update(
         stmts[1],
-        "(\{count} != 0:8u)",
+        "(\{masked} != 0:8u)",
         "CF:imm1 := low:1[AL:imm8]",
-        count,
+        masked,
         "1:8u",
         "OF:imm1 := (high:1[AL:imm8] ^ low:1[AL:imm8])",
       )
@@ -3592,7 +3592,8 @@ test "project Basic BIL lift covers x86 rotate ops" {
   match rol16_one.lift_basic_bil() {
     Ok(stmts) => {
       assert_true(stmts.length() == 2)
-      let count = "(1:16u & 0xF:16u)"
+      let masked = "(1:16u & 0x1F:16u)"
+      let count = "(\{masked} % 0x10:16u)"
       assert_string(
         stmts[0].to_string(),
         "AX:imm16 := ((AX:imm16 << " +
@@ -3603,9 +3604,9 @@ test "project Basic BIL lift covers x86 rotate ops" {
       )
       assert_rotate_flag_update(
         stmts[1],
-        "(\{count} != 0:16u)",
+        "(\{masked} != 0:16u)",
         "CF:imm1 := low:1[AX:imm16]",
-        count,
+        masked,
         "1:16u",
         "OF:imm1 := (high:1[AX:imm16] ^ low:1[AX:imm16])",
       )
@@ -3617,7 +3618,8 @@ test "project Basic BIL lift covers x86 rotate ops" {
   match ror16_cl.lift_basic_bil() {
     Ok(stmts) => {
       assert_true(stmts.length() == 2)
-      let count = "(CL:imm8 & 0xF:8u)"
+      let masked = "(CL:imm8 & 0x1F:8u)"
+      let count = "(\{masked} % 0x10:8u)"
       assert_string(
         stmts[0].to_string(),
         "AX:imm16 := ((AX:imm16 >> " +
@@ -3628,9 +3630,9 @@ test "project Basic BIL lift covers x86 rotate ops" {
       )
       assert_rotate_flag_update(
         stmts[1],
-        "(\{count} != 0:8u)",
+        "(\{masked} != 0:8u)",
         "CF:imm1 := high:1[AX:imm16]",
-        count,
+        masked,
         "1:8u",
         "OF:imm1 := (high:1[AX:imm16] ^ high:1[(AX:imm16 << 1:16u)])",
       )
@@ -3642,7 +3644,8 @@ test "project Basic BIL lift covers x86 rotate ops" {
   match ror8_imm.lift_basic_bil() {
     Ok(stmts) => {
       assert_true(stmts.length() == 2)
-      let count = "(3:8u & 7:8u)"
+      let masked = "(3:8u & 0x1F:8u)"
+      let count = "(\{masked} % 8:8u)"
       assert_string(
         stmts[0].to_string(),
         "AH:imm8 := ((AH:imm8 >> " +
@@ -3653,9 +3656,9 @@ test "project Basic BIL lift covers x86 rotate ops" {
       )
       assert_rotate_flag_update(
         stmts[1],
-        "(\{count} != 0:8u)",
+        "(\{masked} != 0:8u)",
         "CF:imm1 := high:1[AH:imm8]",
-        count,
+        masked,
         "1:8u",
         "OF:imm1 := (high:1[AH:imm8] ^ high:1[(AH:imm8 << 1:8u)])",
       )
@@ -3692,7 +3695,8 @@ test "project Basic BIL lift covers x86 rotate ops" {
   match rol8_rex.lift_basic_bil() {
     Ok(stmts) => {
       assert_true(stmts.length() == 2)
-      let count = "(1:8u & 7:8u)"
+      let masked = "(1:8u & 0x1F:8u)"
+      let count = "(\{masked} % 8:8u)"
       assert_string(
         stmts[0].to_string(),
         "SPL:imm8 := ((SPL:imm8 << " +
@@ -3703,9 +3707,9 @@ test "project Basic BIL lift covers x86 rotate ops" {
       )
       assert_rotate_flag_update(
         stmts[1],
-        "(\{count} != 0:8u)",
+        "(\{masked} != 0:8u)",
         "CF:imm1 := low:1[SPL:imm8]",
-        count,
+        masked,
         "1:8u",
         "OF:imm1 := (high:1[SPL:imm8] ^ low:1[SPL:imm8])",
       )
@@ -4010,7 +4014,8 @@ test "project Basic BIL lift covers x86 rotate ops" {
         stmts[1].to_string(),
         "%rotate_d:imm16 := load(mem:mem32x8, %rotate_a:imm32):imm16",
       )
-      let count = "(1:16u & 0xF:16u)"
+      let masked = "(1:16u & 0x1F:16u)"
+      let count = "(\{masked} % 0x10:16u)"
       let result = "%rotate_res:imm16"
       assert_string(
         stmts[2].to_string(),
@@ -4027,9 +4032,9 @@ test "project Basic BIL lift covers x86 rotate ops" {
       )
       assert_rotate_flag_update(
         stmts[4],
-        "(\{count} != 0:16u)",
+        "(\{masked} != 0:16u)",
         "CF:imm1 := low:1[%rotate_res:imm16]",
-        count,
+        masked,
         "1:16u",
         "OF:imm1 := (high:1[%rotate_res:imm16] ^ low:1[%rotate_res:imm16])",
       )
@@ -4053,7 +4058,8 @@ test "project Basic BIL lift covers x86 rotate ops" {
         stmts[1].to_string(),
         "%rotate_d:imm8 := load(mem:mem64x8, %rotate_a:imm64):imm8",
       )
-      let count = "(4:8u & 7:8u)"
+      let masked = "(4:8u & 0x1F:8u)"
+      let count = "(\{masked} % 8:8u)"
       let result = "%rotate_res:imm8"
       assert_string(
         stmts[2].to_string(),
@@ -4070,9 +4076,9 @@ test "project Basic BIL lift covers x86 rotate ops" {
       )
       assert_rotate_flag_update(
         stmts[4],
-        "(\{count} != 0:8u)",
+        "(\{masked} != 0:8u)",
         "CF:imm1 := low:1[%rotate_res:imm8]",
-        count,
+        masked,
         "1:8u",
         "OF:imm1 := (high:1[%rotate_res:imm8] ^ low:1[%rotate_res:imm8])",
       )
@@ -4606,8 +4612,8 @@ test "project Basic BIL lift covers x86 one-operand imul ops" {
   match imul8.lift_basic_bil() {
     Ok(stmts) =>
       assert_basic_bil_text(stmts, [
-        "AX:imm16 := (extend:16[AL:imm8] * extend:16[CL:imm8])", "OF:imm1 := (high:8[AX:imm16] != 0:8u)",
-        "CF:imm1 := (high:8[AX:imm16] != 0:8u)", "PF:imm1 := unknown(PF is undefined after imul:imm1)",
+        "AX:imm16 := (extend:16[AL:imm8] * extend:16[CL:imm8])", "OF:imm1 := (AX:imm16 != extend:16[low:8[AX:imm16]])",
+        "CF:imm1 := (AX:imm16 != extend:16[low:8[AX:imm16]])", "PF:imm1 := unknown(PF is undefined after imul:imm1)",
         "SF:imm1 := unknown(SF is undefined after imul:imm1)", "ZF:imm1 := unknown(ZF is undefined after imul:imm1)",
         "AF:imm1 := unknown(AF is undefined after imul:imm1)",
       ])
@@ -4619,8 +4625,8 @@ test "project Basic BIL lift covers x86 one-operand imul ops" {
     Ok(stmts) =>
       assert_basic_bil_text(stmts, [
         "%imul_tmp:imm64 := (extend:64[EAX:imm32] * extend:64[ECX:imm32])", "EAX:imm32 := low:32[%imul_tmp:imm64]",
-        "EDX:imm32 := high:32[%imul_tmp:imm64]", "OF:imm1 := (high:32[%imul_tmp:imm64] != 0:32u)",
-        "CF:imm1 := (high:32[%imul_tmp:imm64] != 0:32u)", "PF:imm1 := unknown(PF is undefined after imul:imm1)",
+        "EDX:imm32 := high:32[%imul_tmp:imm64]", "OF:imm1 := (%imul_tmp:imm64 != extend:64[low:32[%imul_tmp:imm64]])",
+        "CF:imm1 := (%imul_tmp:imm64 != extend:64[low:32[%imul_tmp:imm64]])", "PF:imm1 := unknown(PF is undefined after imul:imm1)",
         "SF:imm1 := unknown(SF is undefined after imul:imm1)", "ZF:imm1 := unknown(ZF is undefined after imul:imm1)",
         "AF:imm1 := unknown(AF is undefined after imul:imm1)",
       ])
@@ -4633,7 +4639,7 @@ test "project Basic BIL lift covers x86 one-operand imul ops" {
       assert_basic_bil_text(stmts, [
         "%imul_tmp:imm32 := (extend:32[AX:imm16] * extend:32[load(mem:mem32x8, (EBP:imm32 - 4:32u)):imm16])",
         "AX:imm16 := low:16[%imul_tmp:imm32]", "DX:imm16 := high:16[%imul_tmp:imm32]",
-        "OF:imm1 := (high:16[%imul_tmp:imm32] != 0:16u)", "CF:imm1 := (high:16[%imul_tmp:imm32] != 0:16u)",
+        "OF:imm1 := (%imul_tmp:imm32 != extend:32[low:16[%imul_tmp:imm32]])", "CF:imm1 := (%imul_tmp:imm32 != extend:32[low:16[%imul_tmp:imm32]])",
         "PF:imm1 := unknown(PF is undefined after imul:imm1)", "SF:imm1 := unknown(SF is undefined after imul:imm1)",
         "ZF:imm1 := unknown(ZF is undefined after imul:imm1)", "AF:imm1 := unknown(AF is undefined after imul:imm1)",
       ])
@@ -4650,7 +4656,8 @@ test "project Basic BIL lift covers x86 one-operand imul ops" {
       assert_basic_bil_text(stmts, [
         "%imul_tmp:imm128 := (extend:128[RAX:imm64] * extend:128[load(mem:mem64x8, (RBP:imm64 - 8:64u)):imm64])",
         "RAX:imm64 := low:64[%imul_tmp:imm128]", "RDX:imm64 := high:64[%imul_tmp:imm128]",
-        "OF:imm1 := (high:64[%imul_tmp:imm128] != 0:64u)", "CF:imm1 := (high:64[%imul_tmp:imm128] != 0:64u)",
+        "OF:imm1 := (%imul_tmp:imm128 != extend:128[low:64[%imul_tmp:imm128]])",
+        "CF:imm1 := (%imul_tmp:imm128 != extend:128[low:64[%imul_tmp:imm128]])",
         "PF:imm1 := unknown(PF is undefined after imul:imm1)", "SF:imm1 := unknown(SF is undefined after imul:imm1)",
         "ZF:imm1 := unknown(ZF is undefined after imul:imm1)", "AF:imm1 := unknown(AF is undefined after imul:imm1)",
       ])
@@ -4815,7 +4822,7 @@ test "project Basic BIL lift covers x86 div-idiv ops" {
             If(cond~, yes~, no~) => {
               assert_string(
                 cond.to_string(),
-                "((((1:32u << 0x1F:32u) - 1:32u) s< %div:imm32) | (%div:imm32 s< (1:32u << 0x1F:32u)))",
+                "(%div:imm32 != extend:32[low:16[%div:imm32]])",
               )
               assert_true(yes.length() == 1)
               assert_string(yes[0].to_string(), "cpuexn 0")
@@ -4872,7 +4879,7 @@ test "project Basic BIL lift covers x86 div-idiv ops" {
             If(cond~, yes~, no~) => {
               assert_string(
                 cond.to_string(),
-                "((((1:128u << 0x7F:128u) - 1:128u) s< %div:imm128) | (%div:imm128 s< (1:128u << 0x7F:128u)))",
+                "(%div:imm128 != extend:128[low:64[%div:imm128]])",
               )
               assert_true(yes.length() == 1)
               assert_string(yes[0].to_string(), "cpuexn 0")
@@ -6093,8 +6100,8 @@ test "project Basic BIL lift covers x86 bt-family" {
     Ok(stmts) =>
       assert_basic_bil_text(stmts, [
         "%btx_o:imm5 := low:5[ECX:imm32]", "CF:imm1 := low:1[(EAX:imm32 >> %btx_o:imm5)]",
-        "OF:imm1 := unknown(bt:imm1)", "SF:imm1 := unknown(bt:imm1)", "ZF:imm1 := unknown(bt:imm1)",
-        "AF:imm1 := unknown(bt:imm1)", "PF:imm1 := unknown(bt:imm1)",
+        "OF:imm1 := unknown(bt:imm1)", "SF:imm1 := unknown(bt:imm1)", "AF:imm1 := unknown(bt:imm1)",
+        "PF:imm1 := unknown(bt:imm1)",
       ])
     Err(reason) => fail(reason)
   }
@@ -6104,8 +6111,8 @@ test "project Basic BIL lift covers x86 bt-family" {
     Ok(stmts) =>
       assert_basic_bil_text(stmts, [
         "%btx_o:imm4 := low:4[CX:imm16]", "CF:imm1 := low:1[(AX:imm16 >> %btx_o:imm4)]",
-        "OF:imm1 := unknown(bt:imm1)", "SF:imm1 := unknown(bt:imm1)", "ZF:imm1 := unknown(bt:imm1)",
-        "AF:imm1 := unknown(bt:imm1)", "PF:imm1 := unknown(bt:imm1)",
+        "OF:imm1 := unknown(bt:imm1)", "SF:imm1 := unknown(bt:imm1)", "AF:imm1 := unknown(bt:imm1)",
+        "PF:imm1 := unknown(bt:imm1)",
       ])
     Err(reason) => fail(reason)
   }
@@ -6115,8 +6122,7 @@ test "project Basic BIL lift covers x86 bt-family" {
     Ok(stmts) =>
       assert_basic_bil_text(stmts, [
         "CF:imm1 := low:1[(AX:imm16 >> 3:4u)]", "OF:imm1 := unknown(bts:imm1)", "SF:imm1 := unknown(bts:imm1)",
-        "ZF:imm1 := unknown(bts:imm1)", "AF:imm1 := unknown(bts:imm1)", "PF:imm1 := unknown(bts:imm1)",
-        "AX:imm16 := (AX:imm16 | 8:16u)",
+        "AF:imm1 := unknown(bts:imm1)", "PF:imm1 := unknown(bts:imm1)", "AX:imm16 := (AX:imm16 | 8:16u)",
       ])
     Err(reason) => fail(reason)
   }
@@ -6126,8 +6132,8 @@ test "project Basic BIL lift covers x86 bt-family" {
     Ok(stmts) =>
       assert_basic_bil_text(stmts, [
         "CF:imm1 := low:1[(EAX:imm32 >> 5:5u)]", "OF:imm1 := unknown(bts:imm1)",
-        "SF:imm1 := unknown(bts:imm1)", "ZF:imm1 := unknown(bts:imm1)", "AF:imm1 := unknown(bts:imm1)",
-        "PF:imm1 := unknown(bts:imm1)", "EAX:imm32 := (EAX:imm32 | 0x20:32u)",
+        "SF:imm1 := unknown(bts:imm1)", "AF:imm1 := unknown(bts:imm1)", "PF:imm1 := unknown(bts:imm1)",
+        "EAX:imm32 := (EAX:imm32 | 0x20:32u)",
       ])
     Err(reason) => fail(reason)
   }
@@ -6139,7 +6145,7 @@ test "project Basic BIL lift covers x86 bt-family" {
   )
   match btr32_mem.lift_basic_bil() {
     Ok(stmts) => {
-      assert_true(stmts.length() == 9)
+      assert_true(stmts.length() == 8)
       assert_string(stmts[0].to_string(), "%btx_a:imm32 := (EBP:imm32 - 4:32u)")
       assert_string(
         stmts[1].to_string(),
@@ -6149,9 +6155,9 @@ test "project Basic BIL lift covers x86 bt-family" {
         stmts[2].to_string(),
         "CF:imm1 := low:1[(%btx_d:imm32 >> 5:5u)]",
       )
-      assert_string(stmts[7].to_string(), "PF:imm1 := unknown(btr:imm1)")
+      assert_string(stmts[6].to_string(), "PF:imm1 := unknown(btr:imm1)")
       assert_string(
-        stmts[8].to_string(),
+        stmts[7].to_string(),
         "mem:mem32x8 := store(mem:mem32x8, %btx_a:imm32, (%btx_d:imm32 & (not 0x20:32u)))",
       )
     }
@@ -6165,7 +6171,7 @@ test "project Basic BIL lift covers x86 bt-family" {
   )
   match btr16_mem.lift_basic_bil() {
     Ok(stmts) => {
-      assert_true(stmts.length() == 9)
+      assert_true(stmts.length() == 8)
       assert_string(stmts[0].to_string(), "%btx_a:imm32 := (EBP:imm32 - 4:32u)")
       assert_string(
         stmts[1].to_string(),
@@ -6175,9 +6181,9 @@ test "project Basic BIL lift covers x86 bt-family" {
         stmts[2].to_string(),
         "CF:imm1 := low:1[(%btx_d:imm16 >> 5:4u)]",
       )
-      assert_string(stmts[7].to_string(), "PF:imm1 := unknown(btr:imm1)")
+      assert_string(stmts[6].to_string(), "PF:imm1 := unknown(btr:imm1)")
       assert_string(
-        stmts[8].to_string(),
+        stmts[7].to_string(),
         "mem:mem32x8 := store(mem:mem32x8, %btx_a:imm32, (%btx_d:imm16 & (not 0x20:16u)))",
       )
     }
@@ -6191,9 +6197,9 @@ test "project Basic BIL lift covers x86 bt-family" {
   )
   match btc64_mem.lift_basic_bil() {
     Ok(stmts) => {
-      assert_true(stmts.length() == 11)
+      assert_true(stmts.length() == 10)
       assert_string(stmts[0].to_string(), "%btx_a:imm64 := (RBP:imm64 - 8:64u)")
-      assert_true(stmts[1].to_string().contains("RCX:imm64 s/ 0x40:64u"))
+      assert_true(stmts[1].to_string().contains("RCX:imm64 a>> 6:64u"))
       assert_string(
         stmts[2].to_string(),
         "%btx_d:imm64 := load(mem:mem64x8, (%btx_a:imm64 + %btx_b:imm64)):imm64",
@@ -6203,9 +6209,9 @@ test "project Basic BIL lift covers x86 bt-family" {
         stmts[4].to_string(),
         "CF:imm1 := low:1[(%btx_d:imm64 >> %btx_o:imm6)]",
       )
-      assert_string(stmts[9].to_string(), "PF:imm1 := unknown(btc:imm1)")
+      assert_string(stmts[8].to_string(), "PF:imm1 := unknown(btc:imm1)")
       assert_string(
-        stmts[10].to_string(),
+        stmts[9].to_string(),
         "mem:mem64x8 := store(mem:mem64x8, (%btx_a:imm64 + %btx_b:imm64), (%btx_d:imm64 ^ (1:64u << %btx_o:imm6)))",
       )
     }
@@ -6219,9 +6225,9 @@ test "project Basic BIL lift covers x86 bt-family" {
   )
   match btc16_mem.lift_basic_bil() {
     Ok(stmts) => {
-      assert_true(stmts.length() == 11)
+      assert_true(stmts.length() == 10)
       assert_string(stmts[0].to_string(), "%btx_a:imm32 := (EBP:imm32 - 4:32u)")
-      assert_true(stmts[1].to_string().contains("CX:imm16 s/ 0x10:16u"))
+      assert_true(stmts[1].to_string().contains("CX:imm16 a>> 4:16u"))
       assert_string(
         stmts[2].to_string(),
         "%btx_d:imm16 := load(mem:mem32x8, (%btx_a:imm32 + %btx_b:imm32)):imm16",
@@ -6231,9 +6237,9 @@ test "project Basic BIL lift covers x86 bt-family" {
         stmts[4].to_string(),
         "CF:imm1 := low:1[(%btx_d:imm16 >> %btx_o:imm4)]",
       )
-      assert_string(stmts[9].to_string(), "PF:imm1 := unknown(btc:imm1)")
+      assert_string(stmts[8].to_string(), "PF:imm1 := unknown(btc:imm1)")
       assert_string(
-        stmts[10].to_string(),
+        stmts[9].to_string(),
         "mem:mem32x8 := store(mem:mem32x8, (%btx_a:imm32 + %btx_b:imm32), (%btx_d:imm16 ^ (1:16u << %btx_o:imm4)))",
       )
     }

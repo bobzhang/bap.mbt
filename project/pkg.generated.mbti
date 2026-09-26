@@ -113,6 +113,8 @@ pub fn register_builtin_disassembly_drivers() -> Result[Unit, String]
 
 pub fn register_builtin_input_loaders() -> Result[Unit, String]
 
+pub fn register_builtin_lifters(registry? : @mc.Registry) -> Unit
+
 pub fn register_builtin_reconstructors() -> Result[Unit, String]
 
 pub fn register_builtin_services() -> Result[Unit, String]
@@ -286,7 +288,9 @@ pub fn Project::image(Self) -> @image.Image?
 pub fn Project::interpreter(Self) -> String?
 pub fn Project::is_executable(Self) -> Bool?
 pub fn Project::libraries(Self) -> Array[Library]
+pub fn Project::lift(Self, registry? : @mc.Registry) -> Result[Array[@types.Stmt], String]
 pub fn Project::lift_basic_bil(Self) -> Result[Array[@types.Stmt], String]
+pub fn Project::lift_errors(Self) -> Array[ProjectLiftError]
 pub fn Project::linear_sweep(Self, @memory.Memory, backend? : String) -> Result[Array[(@memory.Memory, ProjectDisassemblyInstruction?)], String]
 pub fn Project::linear_sweep_exn(Self, @memory.Memory, backend? : String) -> Array[(@memory.Memory, ProjectDisassemblyInstruction?)] raise ProjectDisassemblyLinearSweepError
 pub fn Project::load(Bytes, loader~ : String, target? : @core_theory.Target) -> Result[Self, String]
@@ -336,6 +340,7 @@ pub fn Project::to_trivial_condition_form(Self) -> Self
 pub fn Project::unmark_program_terms(Self, String) -> Self
 pub fn Project::with_applied_relocations(Self) -> Result[Self, String]
 pub fn Project::with_disassembly(Self, ProjectDisassemblyState) -> Self
+pub fn Project::with_lift_errors(Self, Array[ProjectLiftError]) -> Self
 pub fn Project::with_memory(Self, @memory.MemMap[String]) -> Self
 pub fn Project::with_program(Self, @types.Term[@types.Program]) -> Self
 pub fn Project::with_state(Self, ProjectState) -> Self
@@ -435,6 +440,7 @@ pub fn ProjectDisasm::errors(Self) -> Array[ProjectDisassemblyRecError]
 pub fn ProjectDisasm::from_project(Project, errors? : Array[ProjectDisassemblyRecError]) -> Self
 pub fn ProjectDisasm::has_errors(Self) -> Bool
 pub fn ProjectDisasm::insns(Self) -> Array[(@memory.Memory, ProjectDisassemblyInstruction)]
+pub fn ProjectDisasm::lift(Self, registry? : @mc.Registry) -> Result[Array[@types.Stmt], String]
 pub fn ProjectDisasm::lift_basic_bil(Self) -> Result[Array[@types.Stmt], String]
 pub fn ProjectDisasm::merge(Self, Self) -> Self
 pub fn ProjectDisasm::of_file(String, backend? : String, brancher? : ProjectBrancher, rooter? : ProjectRooter, loader? : String) -> Result[Self, String]
@@ -512,7 +518,9 @@ pub fn ProjectDisassemblyBlock::insns(Self) -> Array[(@memory.Memory, ProjectDis
 pub fn ProjectDisassemblyBlock::instruction_count(Self) -> Int
 pub fn ProjectDisassemblyBlock::instructions(Self) -> Array[ProjectDisassemblyInstruction]
 pub fn ProjectDisassemblyBlock::leader(Self) -> ProjectDisassemblyInstruction
+pub fn ProjectDisassemblyBlock::lift(Self, target~ : @core_theory.Target, registry? : @mc.Registry) -> Result[Array[@types.Stmt], String]
 pub fn ProjectDisassemblyBlock::lift_basic_bil(Self) -> Result[Array[@types.Stmt], String]
+pub fn ProjectDisassemblyBlock::lift_partial(Self, target~ : @core_theory.Target, registry? : @mc.Registry) -> (Array[@types.Stmt], Array[ProjectLiftError])
 pub fn ProjectDisassemblyBlock::memory(Self) -> @memory.Memory
 pub fn ProjectDisassemblyBlock::same(Self, Self) -> Bool
 pub fn ProjectDisassemblyBlock::terminator(Self) -> ProjectDisassemblyInstruction
@@ -614,13 +622,15 @@ pub fn ProjectDisassemblyInstruction::code(Self) -> Int
 pub fn ProjectDisassemblyInstruction::contains(Self, UInt64) -> Bool
 pub fn ProjectDisassemblyInstruction::create(@memory.Memory, assembly? : String, bil? : String, code? : Int, name? : String, encoding? : String, kinds? : Array[ProjectInstructionKind], operands? : Array[ProjectInstructionOperand], subinstructions? : Array[Self]) -> Self
 pub fn ProjectDisassemblyInstruction::encoding(Self) -> String
+pub fn ProjectDisassemblyInstruction::encoding_language(Self) -> @core_theory.Language
 pub fn ProjectDisassemblyInstruction::has_kind(Self, ProjectInstructionKind) -> Bool
 pub fn ProjectDisassemblyInstruction::has_side_effect(Self) -> Bool
 pub fn ProjectDisassemblyInstruction::is_branch(Self) -> Bool
 pub fn ProjectDisassemblyInstruction::is_kind(Self, ProjectInstructionKind) -> Bool
 pub fn ProjectDisassemblyInstruction::kinds(Self) -> Array[ProjectInstructionKind]
+pub fn ProjectDisassemblyInstruction::lift(Self, target~ : @core_theory.Target, registry? : @mc.Registry) -> Result[@mc.Lifted, String]
 pub fn ProjectDisassemblyInstruction::lift_basic_bil(Self) -> Result[Array[@types.Stmt], String]
-pub fn ProjectDisassemblyInstruction::lift_registered_bil(Self, target~ : String) -> Result[Array[@types.Stmt], String]
+pub fn ProjectDisassemblyInstruction::lift_context(Self, @core_theory.Target) -> @mc.Context
 pub fn ProjectDisassemblyInstruction::may(Self, ProjectInstructionKind) -> Bool
 pub fn ProjectDisassemblyInstruction::memory(Self) -> @memory.Memory
 pub fn ProjectDisassemblyInstruction::must(Self, ProjectInstructionKind) -> Self
@@ -634,7 +644,7 @@ pub fn ProjectDisassemblyInstruction::should_not(Self, ProjectInstructionKind) -
 pub fn ProjectDisassemblyInstruction::subinstruction_count(Self) -> Int
 pub fn ProjectDisassemblyInstruction::subinstructions(Self) -> Array[Self]
 pub fn ProjectDisassemblyInstruction::subs(Self) -> Array[Self]
-pub fn ProjectDisassemblyInstruction::to_mc_insn(Self) -> @mc.Insn
+pub fn ProjectDisassemblyInstruction::to_mc_insn(Self, encoding? : @core_theory.Language) -> @mc.Insn
 pub fn ProjectDisassemblyInstruction::with_kind(Self, ProjectInstructionKind) -> Self
 pub fn ProjectDisassemblyInstruction::with_kinds(Self, Array[ProjectInstructionKind]) -> Self
 pub fn ProjectDisassemblyInstruction::with_metadata(Self, code? : Int, name? : String, encoding? : String) -> Self
@@ -725,7 +735,9 @@ pub fn ProjectDisassemblyState::instruction_for(Self, @memory.Memory) -> Project
 pub fn ProjectDisassemblyState::instructions(Self) -> Array[ProjectDisassemblyInstruction]
 pub fn ProjectDisassemblyState::instructions_in(Self, @memory.Memory) -> Array[ProjectDisassemblyInstruction]
 pub fn ProjectDisassemblyState::key_of_first_insns(Self, @memory.Memory, len~ : Int) -> ProjectInstructionKey?
+pub fn ProjectDisassemblyState::lift(Self, target~ : @core_theory.Target, registry? : @mc.Registry) -> Result[Array[@types.Stmt], String]
 pub fn ProjectDisassemblyState::lift_basic_bil(Self) -> Result[Array[@types.Stmt], String]
+pub fn ProjectDisassemblyState::lift_errors(Self, target~ : @core_theory.Target, registry? : @mc.Registry) -> Array[ProjectLiftError]
 pub fn ProjectDisassemblyState::persistent() -> @knowledge.Persistent[Self]
 pub fn ProjectDisassemblyState::remove_block(Self, @memory.Memory) -> Self
 pub fn ProjectDisassemblyState::remove_edge(Self, ProjectDisassemblyEdge) -> Self
@@ -828,6 +840,8 @@ pub fn ProjectInstructionKind::has_side_effect(Self) -> Bool
 pub fn ProjectInstructionKind::is_branch(Self) -> Bool
 pub fn ProjectInstructionKind::members() -> Array[Self]
 pub fn ProjectInstructionKind::not_equal(Self, Self) -> Bool
+pub fn ProjectInstructionKind::of_mc_kind(@mc.Kind) -> Self
+pub fn ProjectInstructionKind::to_mc_kind(Self) -> @mc.Kind
 pub fn ProjectInstructionKind::to_repr(Self) -> @debug.Repr
 pub fn ProjectInstructionKind::to_string(Self) -> String
 
@@ -858,6 +872,20 @@ pub fn ProjectInstructionToken::of_instruction(ProjectDisassemblyInstruction) ->
 pub fn ProjectInstructionToken::operand_count(Self) -> Int
 pub fn ProjectInstructionToken::operands(Self) -> Array[ProjectInstructionOperand]
 pub fn ProjectInstructionToken::same_normalized(Self, Self) -> Bool
+
+pub struct ProjectLiftError {
+  addr : UInt64
+  opcode : String
+  message : String
+} derive(Eq, @debug.Debug)
+pub fn ProjectLiftError::addr(Self) -> UInt64
+pub fn ProjectLiftError::create(addr~ : UInt64, opcode~ : String, message~ : String) -> Self
+pub fn ProjectLiftError::equal(Self, Self) -> Bool
+pub fn ProjectLiftError::message(Self) -> String
+pub fn ProjectLiftError::not_equal(Self, Self) -> Bool
+pub fn ProjectLiftError::opcode(Self) -> String
+pub fn ProjectLiftError::to_repr(Self) -> @debug.Repr
+pub fn ProjectLiftError::to_string(Self) -> String
 
 type ProjectPass
 pub fn ProjectPass::autorun(Self) -> Bool
@@ -909,8 +937,8 @@ pub fn ProjectPassRunError::to_string(Self) -> String
 
 type ProjectReconstructor
 pub fn ProjectReconstructor::create((Project) -> Result[Project, String]) -> Self
-pub fn ProjectReconstructor::default() -> Self
-pub fn ProjectReconstructor::of_blocks(Array[(String, UInt64, UInt64)]) -> Self
+pub fn ProjectReconstructor::default(registry? : @mc.Registry) -> Self
+pub fn ProjectReconstructor::of_blocks(Array[(String, UInt64, UInt64)], registry? : @mc.Registry) -> Self
 pub fn ProjectReconstructor::run(Self, Project) -> Result[Project, String]
 
 type ProjectRooter

@@ -209,6 +209,8 @@ test "lifted BIL is well typed and little-endian" {
     @mc.Insn::create(
       "tLDRHi",
       [@mc.Op::reg("R0"), @mc.Op::reg("R1"), @mc.Imm(1), ..al_ops],
+      addr=0,
+      size=2,
     ),
   )
   assert_true(@types.check_stmt_types(stmts) is Ok(_))

@@ -97,7 +97,7 @@ test "ori, oris, or, orc" {
 test "nop" {
   for a in archs {
     inspect(
-      @powerpc.lift(a, BigEndian, @mc.Insn::create("NOP", [])).length(),
+      @powerpc.lift(a, BigEndian, @mc.Insn::create("NOP", [], addr=0, size=4)).length(),
       content="0",
     )
   }

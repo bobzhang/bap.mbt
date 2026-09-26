@@ -4,21 +4,21 @@
 // encoding (`llvm-thumb` when bit 0 of the target is set, `llvm-armv7`
 // otherwise) to the instruction's `dests` slot. That is knowledge-base
 // metadata with no BIL counterpart; `dest_encoding` exposes the same
-// decision so callers can record it.
+// decision, and the provider records it in `@mc.Lifted::dest_encoding`.
 
 ///|
 /// Thumb interworking mask (`0xffff_fffe`).
 let mask : Int = 0xfffffffe
 
 ///|
-/// Encoding name of an interworking branch destination: `llvm-thumb` when
+/// Encoding of an interworking branch destination: `llvm-thumb` when
 /// bit 0 of the target address is set, `llvm-armv7` otherwise (upstream
 /// `Thumb_branch.make_dests`).
-pub fn dest_encoding(dst : UInt64) -> String {
+pub fn dest_encoding(dst : UInt64) -> @core_theory.Language {
   if (dst & 1UL) == 1UL {
-    "llvm-thumb"
+    @core_theory.Language::llvm_t32()
   } else {
-    "llvm-armv7"
+    @core_theory.Language::llvm_a32()
   }
 }
 

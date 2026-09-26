@@ -115,7 +115,7 @@ fn run(
   mem? : Array[(UInt64, UInt64, Int)] = [],
   addr? : UInt64 = 0,
 ) -> Run raise {
-  let insn = @mc.Insn::create(name, ops, addr~)
+  let insn = @mc.Insn::create(name, ops, addr~, size=4)
   let bil = @powerpc.lift(a, BigEndian, insn)
   let env = initial_env(a)
   for entry in init {

@@ -9,6 +9,8 @@ import {
 }
 
 // Values
+pub fn accepts(@mc.Context) -> Bool
+
 pub fn delay_slot(String) -> Int?
 
 pub fn is_supported(String) -> Bool
@@ -16,6 +18,8 @@ pub fn is_supported(String) -> Bool
 pub fn lift(@mc.Insn, arch~ : Arch, endian~ : @bitvec.Endian) -> Array[@types.Stmt] raise @mc.LiftError
 
 pub fn lift_checked(@mc.Insn, arch~ : Arch, endian~ : @bitvec.Endian) -> Array[@types.Stmt] raise @mc.LiftError
+
+pub fn lift_in_context(@mc.Context, @mc.Insn) -> @mc.Lifted raise @mc.LiftError
 
 pub fn lift_mips(@mc.Insn) -> Array[@types.Stmt] raise @mc.LiftError
 
@@ -25,9 +29,15 @@ pub fn lift_mips64el(@mc.Insn) -> Array[@types.Stmt] raise @mc.LiftError
 
 pub fn lift_mipsel(@mc.Insn) -> Array[@types.Stmt] raise @mc.LiftError
 
+pub fn mode_of_context(@mc.Context) -> (Arch, @bitvec.Endian)
+
 pub fn opcodes() -> Array[String]
 
-pub fn register() -> Unit
+pub fn provider() -> @mc.Provider
+
+pub let provider_name : String
+
+pub fn register(registry? : @mc.Registry) -> Unit
 
 pub let targets : ReadOnlyArray[String]
 

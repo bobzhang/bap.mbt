@@ -247,7 +247,12 @@ test "addze." {
 ///|
 test "add renders as BIL" {
   let bil = @powerpc.lift32(
-    @mc.Insn::create("ADD4", [reg("R11"), reg("R2"), reg("R11")]),
+    @mc.Insn::create(
+      "ADD4",
+      [reg("R11"), reg("R2"), reg("R11")],
+      addr=0,
+      size=4,
+    ),
   )
   inspect(
     bil.map(s => s.to_string()).join("\n"),

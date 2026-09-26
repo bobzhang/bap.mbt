@@ -55,10 +55,14 @@ test "ir liveness accounts for phi edge operands" {
   assert_has_var(phi.phi_edge_free_vars(entry.tid()), x)
   assert_lacks_var(phi.phi_edge_free_vars(entry.tid()), y)
   assert_has_var(header.blk_phi_edge_free_vars(body.tid()), y)
+  // Upstream `Live` semantics: the phi left-hand side is defined at the end
+  // of each predecessor (so it is live-out there) and the phi operand is a
+  // use of the predecessor (killed by its own definition).
   let liveness = sub.sub_liveness()
   match liveness_for(liveness, entry) {
     Some(info) => {
-      assert_has_var(info.live_out(), x)
+      assert_has_var(info.live_out(), p)
+      assert_lacks_var(info.live_out(), x)
       assert_lacks_var(info.live_in(), x)
       assert_lacks_var(info.live_in(), p)
     }
@@ -66,7 +70,8 @@ test "ir liveness accounts for phi edge operands" {
   }
   match liveness_for(liveness, body) {
     Some(info) => {
-      assert_has_var(info.live_out(), y)
+      assert_has_var(info.live_out(), p)
+      assert_lacks_var(info.live_out(), y)
       assert_lacks_var(info.live_in(), y)
       assert_lacks_var(info.live_in(), p)
     }

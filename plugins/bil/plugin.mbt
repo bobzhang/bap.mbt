@@ -18,7 +18,8 @@ let doc : String =
 ///|
 /// Configures the plugin (the body of the extension): selects the pipeline,
 /// configures the lifter and installs the post-lift hook that applies the
-/// pipeline in project lifting. Returns the lines to print when
+/// pipeline in project lifting, and installs the theories and knowledge
+/// base rules (`install_rules`). Returns the lines to print when
 /// `list` is set (upstream prints them and exits), `None`
 /// otherwise.
 pub fn enable(
@@ -38,6 +39,9 @@ pub fn enable(
   }
   configure({ with_fp, enable_intrinsics: enable_intrinsics.to_owned(), })
   install_lift_hook()
+  install_rules(with_fp~) catch {
+    e => raise Failure("bil: \{e}")
+  }
   None
 }
 

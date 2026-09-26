@@ -67,6 +67,30 @@ test "regular cache delegates load and save by digest" {
 }
 
 ///|
+test "requested caches go through the provided service" {
+  let cache = @regular.Cache::request(
+    of_bytes=b => if b.length() == 1 { Some(b[0].to_int()) } else { None },
+    to_bytes=n => Bytes::make(1, n.to_byte()),
+  )
+  let key = @regular.digest(namespace_name="test", "service")
+  // the default service stores nothing
+  cache.save(key, 7)
+  assert_true(cache.load(key) is None)
+  let store : Map[@regular.Digest, Bytes] = Map([])
+  @regular.provide_cache_service({
+    load: k => store.get(k),
+    save: (k, v) => store[k] = v,
+  })
+  // the service is looked up when the cache is used
+  cache.save(key, 7)
+  debug_inspect(cache.load(key), content="Some(7)")
+  store[key] = b"bad"
+  assert_true(cache.load(key) is None)
+  @regular.provide_cache_service(@regular.CacheService::oblivion())
+  assert_true(cache.load(key) is None)
+}
+
+///|
 test "regular sequence helpers mirror BAP sequence wrappers" {
   let source = [1, 2, 3]
   let copied = @regular.seq_of_array(source)

@@ -1,0 +1,12 @@
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/main_event",
+  "bobzhang/bap/native_io",
+  "bobzhang/bap/regular",
+  "moonbitlang/core/env",
+  "moonbitlang/core/random",
+}
+
+options(
+  targets: { "cache_native_test.mbt": [ "native" ] },
+)

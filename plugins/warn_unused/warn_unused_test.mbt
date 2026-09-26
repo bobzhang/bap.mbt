@@ -116,14 +116,53 @@ test "tainted register maps round trip" {
       entries.map(e => (e.0, e.1.map(t => t.to_string())))
     }),
     content=(
-      #|Some([("R0:imm32", ["@a", "@b"])])
+      #|Some([("R0", ["@a", "@b"])])
     ),
   )
   debug_inspect(@warn_unused.tainted_regs(def), content="None")
 }
 
 ///|
-test "registered passes run through propagate-taint" {
+/// Like `program`, but `malloc` has a body that returns to its caller, so
+/// that the microexecution of the taint propagation reaches `ret`.
+fn program_with_body(uses_result : Bool) -> @types.Term[@types.Program] {
+  let prog = program(uses_result)
+  prog.map_subs(sub => {
+    if sub.sub_name() != "malloc" {
+      return sub
+    }
+    let body = @types.Blk::create(
+      tid=@types.Tid::for_name("malloc_body"),
+      defs=[
+        @types.Def::create(
+          r0(),
+          @types.Exp::Unknown("heap", Imm(32)),
+          tid=@types.Tid::for_name("alloc"),
+        ),
+      ],
+      jmps=[
+        @types.Jmp::create_ret(
+          Indirect(@types.Exp::var_exp(@types.Var::new(name="LR", typ=Imm(32)))),
+          tid=@types.Tid::for_name("malloc_ret"),
+        ),
+      ],
+    )
+    @types.Sub::create(
+      name=sub.sub_name(),
+      args=sub.args(),
+      blks=[body],
+      tid=sub.tid(),
+    )
+  })
+}
+
+///|
+fn project_of(prog : @types.Term[@types.Program]) -> @project.Project {
+  @project.Project::empty(@core_theory.Target::unknown()).with_program(prog)
+}
+
+///|
+test "end to end: the real propagate-taint pass finds unchecked calls" {
   let out = StringBuilder()
   debug_inspect(
     @warn_unused.register(out=s => out.write_string(s)),
@@ -139,17 +178,10 @@ test "registered passes run through propagate-taint" {
       #|["warn-unused-taint", "propagate-taint", "warn-unused-print"]
     ),
   )
-  ignore(
-    @project.register_pass_if_absent(
-      @project.ProjectPass::create(name="propagate-taint", run=project => {
-        Ok(project.map_program(propagate))
-      }),
-    ),
-  )
-  let project = @project.Project::empty(@core_theory.Target::unknown()).with_program(
-    program(false),
-  )
-  guard project.run_pass("warn-unused") is Ok(_) else {
+  // the real taint propagation pass is registered as a dependency
+  assert_true(@project.find_pass(@propagate_taint.name) is Some(_))
+  // the result of malloc is not used: the call is reported
+  guard project_of(program_with_body(false)).run_pass("warn-unused") is Ok(proj) else {
     fail("warn-unused failed")
   }
   inspect(
@@ -159,4 +191,49 @@ test "registered passes run through propagate-taint" {
       #|
     ),
   )
+  let seed_def = proj.program().subs()[0].blks()[1].defs()[0]
+  inspect(
+    seed_def.is_visited(),
+    content=(
+      #|true
+    ),
+  )
+  // the result is used: nothing is reported
+  out.reset()
+  guard project_of(program_with_body(true)).run_pass("warn-unused") is Ok(proj) else {
+    fail("warn-unused failed")
+  }
+  inspect(out.to_string(), content="")
+  let use_def = proj.program().subs()[0].blks()[1].defs()
+  debug_inspect(
+    use_def.map(d => {
+      (
+        d.tid().name().unwrap_or("<synthetic>"),
+        d.get_attr(@warn_unused.tainted_regs_attr),
+      )
+    }),
+    content=(
+      #|[
+      #|  ("<synthetic>", Some("((R0 (@call)))")),
+      #|  ("use", Some("((R0 (@call)))")),
+      #|]
+    ),
+  )
+}
+
+///|
+test "end to end: unchecked calls are marked dead" {
+  ignore(@warn_unused.register())
+  let passes = ["warn-unused-taint", "propagate-taint", "warn-unused-mark"]
+  let dead = (uses_result : Bool) => {
+    match project_of(program_with_body(uses_result)).run_passes(passes) {
+      Ok(proj) => proj.program().subs()[0].blks()[0].jmps()[0].is_dead()
+      Err(e) => {
+        println(e)
+        false
+      }
+    }
+  }
+  inspect(dead(false), content="true")
+  inspect(dead(true), content="false")
 }

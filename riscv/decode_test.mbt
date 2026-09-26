@@ -70,6 +70,8 @@ test "decode: every sample decodes like llvm-mc" {
 
 ///|
 test "decode: control transfers and memory accesses carry LLVM's kinds" {
+  // (except that the jumps that link no register, `j` and `ret`, are
+  // jumps, not calls, as their compressed forms)
   let lines = [
     show(0x0080006f), // jal zero, 8
     show(0x008000ef), // jal ra, 8
@@ -90,9 +92,9 @@ test "decode: control transfers and memory accesses carry LLVM's kinds" {
   inspect(
     lines.join("\n"),
     content=(
-      #|JAL Reg:X0 Imm:8 | j 8 [Call, MayAffectControlFlow]
+      #|JAL Reg:X0 Imm:8 | j 8 [UnconditionalBranch, Barrier, Terminator, MayAffectControlFlow]
       #|JAL Reg:X1 Imm:8 | jal 8 [Call, MayAffectControlFlow]
-      #|JALR Reg:X0 Reg:X1 Imm:0 | ret [Call, MayAffectControlFlow]
+      #|JALR Reg:X0 Reg:X1 Imm:0 | ret [IndirectBranch, Barrier, Terminator, MayAffectControlFlow]
       #|JALR Reg:X1 Reg:X15 Imm:0 | jalr a5 [Call, MayAffectControlFlow]
       #|BEQ Reg:X2 Reg:X0 Imm:-4 | beqz sp, -4 [ConditionalBranch, Terminator, MayAffectControlFlow]
       #|C_JR Reg:X1 | ret [IndirectBranch, Barrier, Terminator, MayAffectControlFlow]

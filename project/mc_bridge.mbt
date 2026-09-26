@@ -105,7 +105,10 @@ pub fn ProjectDisassemblyInstruction::lift_context(
 /// of them report `Unsupported`, the built-in Basic lifter
 /// (`lift_basic_bil`) is used instead. Other lifter errors (bad operands,
 /// ill-typed semantics, failures) are returned as `Err`. The registered
-/// post-lift transformations (`register_lift_hook`) are then applied.
+/// post-lift transformations (`register_lift_hook`) are then applied, and
+/// finally the relocation fixups of the instruction, when it carries the
+/// relocations of its unit (see `with_relocations` and
+/// `ProjectRelocations::fixup`; upstream `bil-fixup-relocator`).
 pub fn ProjectDisassemblyInstruction::lift(
   self : ProjectDisassemblyInstruction,
   target~ : @core_theory.Target,
@@ -123,7 +126,7 @@ pub fn ProjectDisassemblyInstruction::lift(
   } noraise {
     lifted => Ok(lifted)
   }
-  match lifted {
+  let lifted = match lifted {
     Ok(lifted) if !project_lift_hooks.is_empty() =>
       match apply_lift_hooks(lifted.bil()) {
         Ok(bil) =>
@@ -137,6 +140,28 @@ pub fn ProjectDisassemblyInstruction::lift(
         Err(reason) => Err(reason)
       }
     other => other
+  }
+  match (lifted, self.relocations_value) {
+    (Ok(lifted), Some(relocations)) => {
+      let width = match target.code_addr_size() {
+        w if w > 0 => w
+        _ => if target.bits() > 0 { target.bits() } else { 64 }
+      }
+      let bil = relocations.fixup(
+        lifted.bil(),
+        addr=self.addr(),
+        size=self.memory().length(),
+        width~,
+      )
+      Ok(
+        @mc.Lifted::create(
+          bil,
+          delay=lifted.delay(),
+          dest_encoding?=lifted.dest_encoding(),
+        ),
+      )
+    }
+    (other, _) => other
   }
 }
 

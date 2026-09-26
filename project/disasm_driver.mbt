@@ -590,7 +590,8 @@ fn driver_machine_start(
 
 ///|
 /// `new_insn mem insn`: the label of the instruction decoded from `mem`,
-/// with its memory, instruction and unit.
+/// with its memory, instruction (carrying the relocations of its unit) and
+/// unit.
 fn driver_new_insn(
   kb : @knowledge.State,
   mem : @memory.Memory,
@@ -598,6 +599,7 @@ fn driver_new_insn(
   unit : @core_theory.ProgramUnit?,
 ) -> @knowledge.Object[Unit] raise {
   let label = project_label_for_addr(kb, mem.min_addr())
+  let insn = project_insn_with_unit_relocations(kb, insn, unit)
   kb.provide(project_label_unit, label, unit)
   kb.provide(project_insn_memory_slot, label, Some(mem))
   kb.provide(project_insn_slot, label, Some(insn))

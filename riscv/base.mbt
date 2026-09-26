@@ -149,7 +149,7 @@ fn jal(rd : Int, offset : Int64) -> Form {
     1 => "jal \{offset}"
     _ => plain("jal", ops)
   }
-  form("JAL", "jal", ops, kinds=call_kinds, assembly=text)
+  form("JAL", "jal", ops, kinds=link_kinds(rd, uncond_branch), assembly=text)
 }
 
 ///|
@@ -165,7 +165,13 @@ fn jalr(rd : Int, rs1 : Int, offset : Int64) -> Form {
     (1, _, _) => "jalr \{offset}(\{base})"
     _ => "jalr \{ops[0].text}, \{offset}(\{base})"
   }
-  form("JALR", "jalr", ops, kinds=call_kinds, assembly=text)
+  form(
+    "JALR",
+    "jalr",
+    ops,
+    kinds=link_kinds(rd, indirect_branch),
+    assembly=text,
+  )
 }
 
 ///|

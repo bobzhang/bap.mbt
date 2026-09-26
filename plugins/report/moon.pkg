@@ -1,0 +1,5 @@
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/main_event",
+  "moonbitlang/core/env",
+}

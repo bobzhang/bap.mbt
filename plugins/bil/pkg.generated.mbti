@@ -14,6 +14,10 @@ pub fn apply_passes(Array[@types.Stmt]) -> Result[Array[@types.Stmt], String]
 
 pub fn bil_algebra() -> EffAlgebra[Array[@types.Stmt]]
 
+pub fn bil_fp_theory() -> @core_theory.Core
+
+pub fn bil_theory() -> @core_theory.Core
+
 pub let bnf1 : @types.BilPass
 
 pub let bnf2 : @types.BilPass
@@ -30,9 +34,13 @@ pub fn current_config() -> Config
 
 pub fn declare_plugin(exit? : () -> Unit) -> Unit raise
 
+pub fn declare_theories(with_fp? : Bool) -> Unit raise
+
 pub fn enable(list? : Bool, normalization? : String, optimization? : String, passes? : ArrayView[String], with_fp? : Bool, enable_intrinsics? : ArrayView[ISpec]) -> Array[String]? raise Failure
 
 pub let fold_consts : @types.BilPass
+
+pub fn fp_emulation(@core_theory.Core) -> @core_theory.Core
 
 pub fn has_special(ArrayView[@types.Stmt]) -> Bool
 

@@ -5,6 +5,10 @@ import {
   "bobzhang/bap/mc",
   "bobzhang/bap/project",
   "bobzhang/bap/types",
+  "bobzhang/bap/bitvec",
+  "bobzhang/bap/knowledge",
+  "moonbitlang/core/list",
+  "moonbitlang/core/math",
 }
 
 import {

@@ -159,7 +159,7 @@ pub fn Cpu::find_reg(self : Cpu, name : String) -> RtlExp {
 /// Instruction operands together with the opcode name (for diagnostics).
 pub struct Operands {
   name : String
-  ops : Array[@mc.Op]
+  ops : ReadOnlyArray[@mc.Op]
 }
 
 ///|
@@ -172,7 +172,7 @@ pub fn Operands::of_insn(insn : @mc.Insn) -> Operands {
 pub fn Operands::get(self : Operands, i : Int) -> @mc.Op raise @mc.LiftError {
   match self.ops.get(i) {
     Some(op) => op
-    None => raise BadOperands(self.name)
+    None => raise BadOperands(opcode=self.name, detail="missing operand \{i}")
   }
 }
 

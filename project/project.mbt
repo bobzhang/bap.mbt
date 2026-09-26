@@ -21,6 +21,7 @@ struct Project {
   storage_value : Map[String, String]
   libraries_value : Array[Library]
   state_value : ProjectState
+  lift_errors_value : Array[ProjectLiftError]
 }
 
 ///|
@@ -202,6 +203,7 @@ pub fn Project::empty(target : @core_theory.Target) -> Project {
     storage_value: {},
     libraries_value: [],
     state_value: ProjectState::empty(),
+    lift_errors_value: [],
   }
 }
 
@@ -251,6 +253,7 @@ pub fn Project::create(
       Some(value) => value
       None => ProjectState::empty()
     },
+    lift_errors_value: [],
   }
 }
 

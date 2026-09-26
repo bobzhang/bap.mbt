@@ -261,7 +261,9 @@ fn project_reconstructor_basic_bil_label(
   exp : @types.Exp,
   pkg? : String,
 ) -> @types.Label {
-  match exp {
+  // Lifters such as MIPS express pc-relative targets as `addr + off`; fold
+  // constant arithmetic so such branches become direct labels.
+  match exp.fold_consts() {
     Int(word) => @types.Label::direct(@types.Tid::for_addr(word, pkg?))
     _ => @types.Label::indirect(exp)
   }
@@ -320,57 +322,66 @@ fn project_reconstructor_basic_bil_jmps_from_stmts(
 }
 
 ///|
-fn project_reconstructor_append_basic_bil_defs(
+/// Lift the instructions of `block` on the project target through
+/// `registry` (see `ProjectDisassemblyBlock::lift_partial`), recording the
+/// instructions that cannot be lifted in `errors`. Blocks without
+/// instructions have no semantics.
+fn project_reconstructor_lift_block(
   project : Project,
   block : @memory.Memory,
-  ir_block : @types.Term[@types.Blk],
-) -> @types.Term[@types.Blk] {
+  registry : @mc.Registry,
+  errors : Array[ProjectLiftError],
+) -> Array[@types.Stmt] {
   match project.disassembly().block_view(block) {
-    Ok(view) =>
-      match view.lift_basic_bil() {
-        Ok(stmts) => {
-          let mut result = ir_block
-          for stmt in stmts {
-            match project_reconstructor_basic_bil_def(stmt) {
-              Some(def) => result = result.append_def(def)
-              None => ()
-            }
-          }
-          result
-        }
-        Err(_) => ir_block
-      }
-    Err(_) => ir_block
+    Ok(view) => {
+      let (stmts, failures) = view.lift_partial(
+        target=project.target(),
+        registry~,
+      )
+      errors.push_iter(failures.iter())
+      stmts
+    }
+    Err(_) => []
   }
 }
 
 ///|
-fn project_reconstructor_append_basic_bil_jmps(
+/// Append the assignments of `stmts` to `ir_block` as definitions.
+fn project_reconstructor_append_lifted_defs(
+  stmts : Array[@types.Stmt],
+  ir_block : @types.Term[@types.Blk],
+) -> @types.Term[@types.Blk] {
+  let mut result = ir_block
+  for stmt in stmts {
+    match project_reconstructor_basic_bil_def(stmt) {
+      Some(def) => result = result.append_def(def)
+      None => ()
+    }
+  }
+  result
+}
+
+///|
+/// Append the jumps of `stmts` to `ir_block`, unless the disassembly has
+/// edges out of `block` (which then define its jumps).
+fn project_reconstructor_append_lifted_jmps(
   project : Project,
   block : @memory.Memory,
+  stmts : Array[@types.Stmt],
   ir_block : @types.Term[@types.Blk],
 ) -> @types.Term[@types.Blk] {
   if !project.disassembly().edges_from_block(block).is_empty() {
     ir_block
   } else {
-    match project.disassembly().block_view(block) {
-      Ok(view) =>
-        match view.lift_basic_bil() {
-          Ok(stmts) => {
-            let mut result = ir_block
-            for
-              jmp in project_reconstructor_basic_bil_jmps_from_stmts(
-                stmts,
-                pkg?=project.pkg(),
-              ) {
-              result = result.append_jmp(jmp)
-            }
-            result
-          }
-          Err(_) => ir_block
-        }
-      Err(_) => ir_block
+    let mut result = ir_block
+    for
+      jmp in project_reconstructor_basic_bil_jmps_from_stmts(
+        stmts,
+        pkg?=project.pkg(),
+      ) {
+      result = result.append_jmp(jmp)
     }
+    result
   }
 }
 
@@ -378,22 +389,26 @@ fn project_reconstructor_append_basic_bil_jmps(
 fn project_reconstructor_ir_block(
   project : Project,
   block : @memory.Memory,
+  registry : @mc.Registry,
+  errors : Array[ProjectLiftError],
 ) -> Result[@types.Term[@types.Blk], String] {
   match project_reconstructor_block_word(project, block) {
-    Ok(addr) =>
+    Ok(addr) => {
+      let stmts = project_reconstructor_lift_block(
+        project, block, registry, errors,
+      )
+      let ir_block = @types.Blk::create(
+        tid=@types.Tid::for_addr(addr, pkg?=project.pkg()),
+      ).set_attr(@types.Attr::address(addr))
       Ok(
-        project_reconstructor_append_basic_bil_jmps(
+        project_reconstructor_append_lifted_jmps(
           project,
           block,
-          project_reconstructor_append_basic_bil_defs(
-            project,
-            block,
-            @types.Blk::create(
-              tid=@types.Tid::for_addr(addr, pkg?=project.pkg()),
-            ).set_attr(@types.Attr::address(addr)),
-          ),
+          stmts,
+          project_reconstructor_append_lifted_defs(stmts, ir_block),
         ),
       )
+    }
     Err(reason) => Err(reason)
   }
 }
@@ -403,10 +418,12 @@ fn project_reconstructor_subroutine(
   project : Project,
   name : String,
   blocks : Array[@memory.Memory],
+  registry : @mc.Registry,
+  errors : Array[ProjectLiftError],
 ) -> Result[@types.Term[@types.Sub], String] {
   let ir_blocks : Array[@types.Term[@types.Blk]] = []
   for block in blocks {
-    match project_reconstructor_ir_block(project, block) {
+    match project_reconstructor_ir_block(project, block, registry, errors) {
       Ok(ir_block) => ir_blocks.push(ir_block)
       Err(reason) => return Err(reason)
     }
@@ -453,11 +470,13 @@ fn project_reconstructor_subroutine(
 fn project_reconstructor_apply(
   project : Project,
   subroutines : Array[@types.Term[@types.Sub]],
+  errors : Array[ProjectLiftError],
 ) -> Project {
   let program = @types.Program::create(subs=subroutines)
   project
   .with_program(program)
   .with_state(project.state().with_subroutines(subroutines))
+  .with_lift_errors(errors)
 }
 
 ///|
@@ -476,7 +495,15 @@ pub fn ProjectReconstructor::run(
 }
 
 ///|
-pub fn ProjectReconstructor::default() -> ProjectReconstructor {
+/// The default reconstructor: groups the disassembled blocks into
+/// subroutines and lifts their instructions on the project target through
+/// `registry` (the global registry with the built-in lifters by default),
+/// falling back to the Basic lifter (see
+/// `ProjectDisassemblyInstruction::lift`). Instructions that cannot be
+/// lifted are skipped and reported by `Project::lift_errors`.
+pub fn ProjectReconstructor::default(
+  registry? : @mc.Registry = project_lift_registry(),
+) -> ProjectReconstructor {
   ProjectReconstructor::create(project => {
     let blocks = project.disassembly().blocks()
     if blocks.is_empty() {
@@ -489,20 +516,26 @@ pub fn ProjectReconstructor::default() -> ProjectReconstructor {
       project.rooter().roots(),
     )
     let subroutines : Array[@types.Term[@types.Sub]] = []
+    let errors : Array[ProjectLiftError] = []
     for group in groups {
       let name = symbolizer.resolve(group[0].min_addr())
-      match project_reconstructor_subroutine(project, name, group) {
+      match
+        project_reconstructor_subroutine(project, name, group, registry, errors) {
         Ok(subroutine) => subroutines.push(subroutine)
         Err(reason) => return Err(reason)
       }
     }
-    Ok(project_reconstructor_apply(project, subroutines))
+    Ok(project_reconstructor_apply(project, subroutines, errors))
   })
 }
 
 ///|
+/// A reconstructor building the subroutines named in `blocks` (name,
+/// block start, block end) from the disassembled blocks, lifting them like
+/// `ProjectReconstructor::default`.
 pub fn ProjectReconstructor::of_blocks(
   blocks : Array[(String, UInt64, UInt64)],
+  registry? : @mc.Registry = project_lift_registry(),
 ) -> ProjectReconstructor {
   ProjectReconstructor::create(project => {
     let disassembly_blocks = project.disassembly().blocks()
@@ -529,10 +562,18 @@ pub fn ProjectReconstructor::of_blocks(
       }
     }
     let subroutines : Array[@types.Term[@types.Sub]] = []
+    let errors : Array[ProjectLiftError] = []
     for i in 0..<names.length() {
       let group = groups[i]
       group.sort_by((left, right) => left.min_addr().compare(right.min_addr()))
-      match project_reconstructor_subroutine(project, names[i], group) {
+      match
+        project_reconstructor_subroutine(
+          project,
+          names[i],
+          group,
+          registry,
+          errors,
+        ) {
         Ok(subroutine) => subroutines.push(subroutine)
         Err(reason) => return Err(reason)
       }
@@ -540,7 +581,7 @@ pub fn ProjectReconstructor::of_blocks(
     if subroutines.is_empty() {
       Err("project block reconstructor matched no disassembly blocks")
     } else {
-      Ok(project_reconstructor_apply(project, subroutines))
+      Ok(project_reconstructor_apply(project, subroutines, errors))
     }
   })
 }

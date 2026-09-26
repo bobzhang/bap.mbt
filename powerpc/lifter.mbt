@@ -110,7 +110,7 @@ pub fn lift_rtl(
   insn : @mc.Insn,
 ) -> Array[Rtl] raise @mc.LiftError {
   match find_insn_lifter(insn.name) {
-    None => raise Unsupported(insn.name)
+    None => raise Unsupported(opcode=insn.name, target="powerpc")
     Some(lifter) =>
       lifter(Cpu::create(addr_size, endian, insn.addr), Operands::of_insn(insn))
   }
@@ -118,7 +118,7 @@ pub fn lift_rtl(
 
 ///|
 /// Lift `insn` to BIL. Raises `Unsupported` for unknown opcodes and
-/// `Failure` when the produced BIL is not well typed.
+/// `IllTyped` when the produced BIL is not well typed.
 pub fn lift(
   addr_size : AddrSize,
   endian : @bitvec.Endian,
@@ -127,8 +127,7 @@ pub fn lift(
   let bil = bil_of_rtl(lift_rtl(addr_size, endian, insn))
   match @types.check_stmt_types(bil) {
     Ok(_) => bil
-    Err(err) =>
-      raise Failure("BIL doesn't type check \{insn.name}: \{err.to_string()}")
+    Err(err) => raise IllTyped(opcode=insn.name, detail=err.to_string())
   }
 }
 
@@ -151,11 +150,61 @@ pub fn lift64le(insn : @mc.Insn) -> Array[@types.Stmt] raise @mc.LiftError {
 }
 
 ///|
-/// Register the PowerPC lifters with `@mc` under the target names `ppc`,
-/// `ppc64` and `ppc64le`. Idempotent.
-pub fn register() -> Unit {
+/// Name of the provider installed by `register`.
+pub let provider_name : String = "powerpc"
+
+///|
+/// Whether the provider applies to `ctx`: targets of the PowerPC family
+/// decoded with an LLVM PowerPC encoding.
+pub fn accepts(ctx : @mc.Context) -> Bool {
+  ctx.belongs(@core_theory.Target::powerpc_family()) &&
+  (
+    ctx.encoding.is_unknown() ||
+    ctx.encoding == @core_theory.Language::llvm_powerpc32() ||
+    ctx.encoding == @core_theory.Language::llvm_powerpc64()
+  )
+}
+
+///|
+/// The address size and byte order implied by `ctx`: 64-bit targets use
+/// `R64`, others `R32`; little-endian targets lift little-endian memory
+/// accesses, all others (including bi-endian ones) big-endian ones.
+pub fn mode_of_context(ctx : @mc.Context) -> (AddrSize, @bitvec.Endian) {
+  let addr_size = if ctx.target.bits() == 64 { R64 } else { R32 }
+  let endian : @bitvec.Endian = if ctx.target.endianness() is LittleEndian {
+    LittleEndian
+  } else {
+    BigEndian
+  }
+  (addr_size, endian)
+}
+
+///|
+/// Lift in a context (see `mode_of_context`). Unknown opcodes raise
+/// `Unsupported`; type checking is left to the registry.
+pub fn lift_in_context(
+  ctx : @mc.Context,
+  insn : @mc.Insn,
+) -> @mc.Lifted raise @mc.LiftError {
+  let (addr_size, endian) = mode_of_context(ctx)
+  let rtl = lift_rtl(addr_size, endian, insn) catch {
+    Unsupported(opcode~, ..) =>
+      raise Unsupported(opcode~, target=ctx.target.to_string())
+    err => raise err
+  }
+  @mc.Lifted::of_bil(bil_of_rtl(rtl))
+}
+
+///|
+/// The PowerPC lifter provider (see `accepts` and `lift_in_context`).
+pub fn provider() -> @mc.Provider {
+  @mc.Provider::create(provider_name, accepts~, lift=lift_in_context)
+}
+
+///|
+/// Register the PowerPC provider with `registry` (the global `@mc` registry
+/// by default). Idempotent: the provider is replaced by name.
+pub fn register(registry? : @mc.Registry = @mc.Registry::global()) -> Unit {
   init_builtin_lifters()
-  @mc.register_lifter("ppc", lift32)
-  @mc.register_lifter("ppc64", lift64)
-  @mc.register_lifter("ppc64le", lift64le)
+  registry.register(provider())
 }

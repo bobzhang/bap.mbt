@@ -136,7 +136,7 @@ test "every supported instruction lifts" {
   let empty = []
   for insn in @arm.Insn::all() {
     let name = insn.name()
-    let mc = @mc.Insn::create(name, fixture(insn), addr=0x1000)
+    let mc = @mc.Insn::create(name, fixture(insn), addr=0x1000, size=4)
     try @arm.lift(mc) catch {
       err => failed.push("\{name}: \{err.message()}")
     } noraise {
@@ -164,8 +164,8 @@ test "every supported instruction lifts" {
     failed,
     content=(
       #|[
-      #|  "LDREXD: bad operands for instruction: unsupported operand: R0_R1",
-      #|  "STREXD: bad operands for instruction: unsupported operand: R0_R1",
+      #|  "LDREXD: bad operands for instruction: LDREXD: unsupported operand: R0_R1",
+      #|  "STREXD: bad operands for instruction: STREXD: unsupported operand: R0_R1",
       #|]
     ),
   )

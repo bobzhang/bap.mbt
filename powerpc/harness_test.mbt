@@ -145,7 +145,11 @@ fn show_op(op : @mc.Op) -> String {
 ///|
 /// `NAME op1, op2, ...` (immediates in decimal).
 fn show_insn(name : String, ops : ArrayView[@mc.Op]) -> String {
-  "\{name} \{ops.iter().map(show_op).collect().join(", ")}"
+  if ops.is_empty() {
+    name
+  } else {
+    "\{name} \{ops.iter().map(show_op).collect().join(", ")}"
+  }
 }
 
 ///|

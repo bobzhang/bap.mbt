@@ -178,26 +178,20 @@ test "bap disassemble" {
       #|00000015: RSP := RSP + 8
       #|00000016: call v_1 with noreturn
       #|
-      #|00000017: sub sub_0x40100b()
+      #|00000017: sub foo()
       #|
       #|
       #|00000018:
-      #|00000019: call @foo with noreturn
-      #|
-      #|00000020: sub foo()
-      #|
-      #|
-      #|00000021:
-      #|00000022: RAX := 0
-      #|00000023: AF := unknown[AF is undefined after xor]:u1
-      #|00000024: ZF := 1
-      #|00000025: PF := 1
-      #|00000026: OF := 0
-      #|00000027: CF := 0
-      #|00000028: SF := 0
-      #|00000029: v_1 := mem[RSP, el]:u64
-      #|00000030: RSP := RSP + 8
-      #|00000031: call v_1 with noreturn
+      #|00000019: RAX := 0
+      #|00000020: AF := unknown[AF is undefined after xor]:u1
+      #|00000021: ZF := 1
+      #|00000022: PF := 1
+      #|00000023: OF := 0
+      #|00000024: CF := 0
+      #|00000025: SF := 0
+      #|00000026: v_1 := mem[RSP, el]:u64
+      #|00000027: RSP := RSP + 8
+      #|00000028: call v_1 with noreturn
       #|
     ),
   )

@@ -229,12 +229,18 @@ pub fn ProjectReconstructor::run(
 }
 
 ///|
-/// The default reconstructor: groups the disassembled blocks into
-/// subroutines and lifts their instructions on the project target through
-/// `registry` (the global registry with the built-in lifters by default),
-/// falling back to the Basic lifter (see
+/// The default reconstructor: lifts the program of the project on its
+/// target through `registry` (the global registry with the built-in
+/// lifters by default), falling back to the Basic lifter (see
 /// `ProjectDisassemblyInstruction::lift`). Instructions that cannot be
 /// lifted are skipped and reported by `Project::lift_errors`.
+///
+/// When the project was disassembled by the incremental disassembler (see
+/// `ProjectDisassemblyDriver::recursive`), the program is lifted from its
+/// symbol table as upstream (`Program.lift symtab`, see
+/// `ProjectDisassemblySymtab::lift_ir`). Otherwise the disassembled blocks
+/// are grouped into subroutines by their reachability from the rooter
+/// roots and the blocks without predecessors.
 pub fn ProjectReconstructor::default(
   registry? : @mc.Registry = project_lift_registry(),
 ) -> ProjectReconstructor {
@@ -242,6 +248,9 @@ pub fn ProjectReconstructor::default(
     let blocks = project.disassembly().blocks()
     if blocks.is_empty() {
       return Err("project has no disassembly blocks to reconstruct")
+    }
+    if project.disassembly_driver_state() is Some(_) {
+      return project_reconstructor_lift_symtab(project, registry)
     }
     let symbolizer = project.symbolizer()
     let groups = project_reconstructor_default_groups(
@@ -430,4 +439,46 @@ pub fn Project::disassemble_and_reconstruct_named(
     brancher?=selected_brancher,
     reconstructor?=selected_reconstructor,
   )
+}
+
+///|
+/// The program of the project lifted from its symbol table (upstream
+/// `Program.lift (Symtab.create disasm calls)`).
+fn project_reconstructor_lift_symtab(
+  project : Project,
+  registry : @mc.Registry,
+) -> Result[Project, String] {
+  let symtab = project.disassembly_symtab()
+  match
+    symtab.lift_ir(
+      target=project.target(),
+      cfg=project.disassembly_cfg(),
+      registry~,
+      pkg?=project.pkg(),
+    ) {
+    Ok((program, errors)) => {
+      let program = match project.image() {
+        Some(image) => {
+          let entries = symtab
+            .owners(image.entry_point())
+            .map(function => function.name())
+          program.map_subs(sub => {
+            if entries.contains(sub.sub_name()) {
+              sub.with_entry_point()
+            } else {
+              sub
+            }
+          })
+        }
+        None => program
+      }
+      Ok(
+        project
+        .with_program(program)
+        .with_state(project.state().with_subroutines(program.subs()))
+        .with_lift_errors(errors),
+      )
+    }
+    Err(reason) => Err(reason)
+  }
 }

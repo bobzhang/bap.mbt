@@ -10,6 +10,9 @@ struct ProjectDisassemblySymtab {
   functions_value : Array[ProjectDisassemblyFunction]
   explicit_calls_value : Array[(UInt64, String)]
   implicit_calls_value : Array[(UInt64, String)]
+  /// the names of the external functions called by the program (upstream
+  /// `Symtab.externals`, the labels without addresses)
+  externals_value : Array[String]
 }
 
 ///|
@@ -234,7 +237,12 @@ pub fn ProjectDisassemblyFunction::span(
 
 ///|
 pub fn ProjectDisassemblySymtab::empty() -> ProjectDisassemblySymtab {
-  { functions_value: [], explicit_calls_value: [], implicit_calls_value: [], }
+  {
+    functions_value: [],
+    explicit_calls_value: [],
+    implicit_calls_value: [],
+    externals_value: [],
+  }
 }
 
 ///|
@@ -248,6 +256,7 @@ pub fn ProjectDisassemblySymtab::create(
     },
     explicit_calls_value: [],
     implicit_calls_value: [],
+    externals_value: [],
   }
 }
 
@@ -281,6 +290,7 @@ pub fn ProjectDisassemblySymtab::remove(
     implicit_calls_value: self.implicit_calls_value.filter(call => {
       call.1 != function.name() && !function.contains_addr(call.0)
     }),
+    externals_value: self.externals_value,
   }
 }
 
@@ -399,6 +409,28 @@ pub fn ProjectDisassemblySymtab::callee(
 
 ///|
 pub fn ProjectDisassemblySymtab::of_project(
+  project : Project,
+) -> ProjectDisassemblySymtab {
+  match project.disassembly_driver_state() {
+    Some(driver) => {
+      let kb = project.knowledge()
+      project.with_disasm_providers(() => {
+        let calls = ProjectDisassemblyCalls::empty().update(driver, kb)
+        ProjectDisassemblySymtab::create_from_driver(driver, calls, kb)
+      }) catch {
+        _ => project_disassembly_symtab_of_state(project)
+      }
+    }
+    None => project_disassembly_symtab_of_state(project)
+  }
+}
+
+///|
+/// The symbol table of the disassembly state of the project: the functions
+/// are the subroutines of the partition of the blocks (see
+/// `Project::disassembly_calls`), named by the project symbolizer, and the
+/// edges between different functions are calls.
+fn project_disassembly_symtab_of_state(
   project : Project,
 ) -> ProjectDisassemblySymtab {
   let blocks = project.disassembly().blocks_with_instructions()

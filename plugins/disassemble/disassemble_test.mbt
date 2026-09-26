@@ -42,29 +42,23 @@ test "disassemble dumps the program in the bir format" {
       #|00000014: RSP := RSP + 8
       #|00000015: call ret_addr with noreturn
       #|
-      #|00000016: sub sub_0x40100b()
+      #|00000016: sub foo()
       #|
       #|
       #|00000017:
-      #|00000018: call @foo with noreturn
-      #|
-      #|00000019: sub foo()
-      #|
-      #|
-      #|00000020:
-      #|00000021: EAX := 0
-      #|00000022: CF := 0
-      #|00000023: OF := 0
-      #|00000024: AF := unknown[AF undefined after logical operation]:u1
-      #|00000025: PF :=
+      #|00000018: EAX := 0
+      #|00000019: CF := 0
+      #|00000020: OF := 0
+      #|00000021: AF := unknown[AF undefined after logical operation]:u1
+      #|00000022: PF :=
       #|          ~low:1[let parity_tmp1 = EAX >> 4 ^ EAX in
       #|                 let parity_tmp2 = parity_tmp1 >> 2 ^ parity_tmp1 in
       #|                 parity_tmp2 >> 1 ^ parity_tmp2]
-      #|00000026: SF := high:1[EAX]
-      #|00000027: ZF := 0 = EAX
-      #|00000028: ret_addr := mem[RSP, el]:u64
-      #|00000029: RSP := RSP + 8
-      #|00000030: call ret_addr with noreturn
+      #|00000023: SF := high:1[EAX]
+      #|00000024: ZF := 0 = EAX
+      #|00000025: ret_addr := mem[RSP, el]:u64
+      #|00000026: RSP := RSP + 8
+      #|00000027: call ret_addr with noreturn
       #|
     ),
   )
@@ -199,38 +193,32 @@ test "disassemble runs passes" {
       #|00000023: RSP := flat_9
       #|00000024: call ret_addr with noreturn
       #|
-      #|00000025: sub sub_0x40100b()
+      #|00000025: sub foo()
       #|
       #|
       #|00000026:
-      #|00000027: call @foo with noreturn
-      #|
-      #|00000028: sub foo()
-      #|
-      #|
-      #|00000029:
-      #|00000030: EAX := 0
-      #|00000031: CF := 0
-      #|00000032: OF := 0
-      #|00000033: AF := unknown[AF undefined after logical operation]:u1
-      #|00000034: flat_10 := EAX >> 4
-      #|00000035: flat_11 := flat_10 ^ EAX
-      #|00000036: flat_12 := flat_11 >> 2
-      #|00000037: flat_13 := flat_12 ^ flat_11
-      #|00000038: flat_14 := flat_13 >> 1
-      #|00000039: flat_15 := flat_14 ^ flat_13
-      #|00000040: flat_16 := low:1[flat_15]
-      #|00000041: flat_17 := ~flat_16
-      #|00000042: PF := flat_17
-      #|00000043: flat_18 := high:1[EAX]
-      #|00000044: SF := flat_18
-      #|00000045: flat_19 := 0 = EAX
-      #|00000046: ZF := flat_19
-      #|00000047: flat_20 := mem[RSP, el]:u64
-      #|00000048: ret_addr := flat_20
-      #|00000049: flat_21 := RSP + 8
-      #|00000050: RSP := flat_21
-      #|00000051: call ret_addr with noreturn
+      #|00000027: EAX := 0
+      #|00000028: CF := 0
+      #|00000029: OF := 0
+      #|00000030: AF := unknown[AF undefined after logical operation]:u1
+      #|00000031: flat_10 := EAX >> 4
+      #|00000032: flat_11 := flat_10 ^ EAX
+      #|00000033: flat_12 := flat_11 >> 2
+      #|00000034: flat_13 := flat_12 ^ flat_11
+      #|00000035: flat_14 := flat_13 >> 1
+      #|00000036: flat_15 := flat_14 ^ flat_13
+      #|00000037: flat_16 := low:1[flat_15]
+      #|00000038: flat_17 := ~flat_16
+      #|00000039: PF := flat_17
+      #|00000040: flat_18 := high:1[EAX]
+      #|00000041: SF := flat_18
+      #|00000042: flat_19 := 0 = EAX
+      #|00000043: ZF := flat_19
+      #|00000044: flat_20 := mem[RSP, el]:u64
+      #|00000045: ret_addr := flat_20
+      #|00000046: flat_21 := RSP + 8
+      #|00000047: RSP := flat_21
+      #|00000048: call ret_addr with noreturn
       #|
     ),
   )

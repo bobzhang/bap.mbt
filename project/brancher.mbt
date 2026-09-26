@@ -2,7 +2,12 @@
 struct ProjectBrancher {
   path_value : String?
   biased_value : Bool
-  resolve_fn : (@memory.Memory) -> Array[ProjectDisassemblyEdge]
+  /// the destinations of the instruction occupying the memory (the
+  /// instruction is `None` when the brancher is applied to memory only, see
+  /// `ProjectBrancher::resolve`)
+  resolve_fn : (@memory.Memory, ProjectDisassemblyInstruction?) -> Array[
+    ProjectDisassemblyEdge,
+  ]
 }
 
 ///|
@@ -115,7 +120,11 @@ fn project_brancher_translate_edge(
 pub fn ProjectBrancher::create(
   resolve : (@memory.Memory) -> Array[ProjectDisassemblyEdge],
 ) -> ProjectBrancher {
-  { path_value: None, biased_value: false, resolve_fn: resolve, }
+  {
+    path_value: None,
+    biased_value: false,
+    resolve_fn: (mem, _) => resolve(mem),
+  }
 }
 
 ///|
@@ -164,7 +173,7 @@ pub fn ProjectBrancher::resolve(
   self : ProjectBrancher,
   block : @memory.Memory,
 ) -> Array[ProjectDisassemblyEdge] {
-  (self.resolve_fn)(block)
+  (self.resolve_fn)(block, None)
 }
 
 ///|

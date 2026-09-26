@@ -3078,14 +3078,27 @@ test "translated BAP basic disassembly decodes x86 group 5 control fixtures" {
       b"\xff\xe0",
       2,
       ["JMP64r", "RAX"],
-      [ProjectUnconditionalBranch, ProjectMayAffectControlFlow],
+      [
+        ProjectUnconditionalBranch,
+        ProjectIndirectBranch,
+        ProjectBarrier,
+        ProjectTerminator,
+        ProjectMayAffectControlFlow,
+      ],
     ),
     (
       "x86_64",
       b"\xff\x60\x10",
       3,
       ["JMP64m", "RAX", "0x1", "Nil", "0x10", "Nil"],
-      [ProjectUnconditionalBranch, ProjectMayAffectControlFlow, ProjectMayLoad],
+      [
+        ProjectUnconditionalBranch,
+        ProjectIndirectBranch,
+        ProjectBarrier,
+        ProjectTerminator,
+        ProjectMayAffectControlFlow,
+        ProjectMayLoad,
+      ],
     ),
     (
       "x86",
@@ -3099,7 +3112,14 @@ test "translated BAP basic disassembly decodes x86 group 5 control fixtures" {
       b"\xff\x65\xfc",
       3,
       ["JMP32m", "EBP", "0x1", "Nil", "-0x4", "Nil"],
-      [ProjectUnconditionalBranch, ProjectMayAffectControlFlow, ProjectMayLoad],
+      [
+        ProjectUnconditionalBranch,
+        ProjectIndirectBranch,
+        ProjectBarrier,
+        ProjectTerminator,
+        ProjectMayAffectControlFlow,
+        ProjectMayLoad,
+      ],
     ),
   ]
   for sample in samples {

@@ -44,7 +44,9 @@ test "parse entry points" {
   )
   inspect(
     @run.parse_entry_points(proj, ["all-subroutines"]).length(),
-    content="3",
+    content=(
+      #|2
+    ),
   )
 }
 

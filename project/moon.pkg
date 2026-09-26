@@ -16,6 +16,9 @@ import {
   "bobzhang/bap/thumb",
   "bobzhang/bap/types",
   "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/immut/sorted_map",
+  "moonbitlang/core/immut/sorted_set",
+  "moonbitlang/core/list",
   "moonbitlang/core/string",
 }
 

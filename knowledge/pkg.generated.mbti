@@ -8,6 +8,10 @@ import {
 }
 
 // Values
+pub const KEYWORD_PACKAGE : String = "keyword"
+
+pub const USER_PACKAGE : String = "user"
+
 pub fn[R] eval((State) -> R raise, State) -> Result[(R, State), Error]
 
 pub fn guard_(Bool) -> Unit raise Conflict
@@ -73,7 +77,7 @@ pub fn[K, S] Class::create(name~ : Name, sort~ : S, desc? : String, public? : Bo
 pub fn[K, S] Class::desc(Self[K, S]) -> String?
 pub fn[K, S] Class::name(Self[K, S]) -> Name
 pub fn[K, S, P] Class::property(Self[K, S], name~ : Name, domain~ : Domain[P], desc? : String, persistent? : Persistent[P], public? : Bool) -> Slot[K, P]
-pub fn[K, S, T] Class::refine(Self[K, S], name~ : Name, sort~ : T, desc? : String) -> Self[K, T]
+pub fn[K, S, T] Class::refine(Self[K, S], name? : Name, sort~ : T, desc? : String) -> Self[K, T]
 pub fn[K, S, T] Class::same(Self[K, S], Self[K, T]) -> Bool
 pub fn[K, S] Class::sort(Self[K, S]) -> S
 
@@ -111,6 +115,16 @@ pub fn[T : Eq + Hash] Domain::set(Name, (T) -> String) -> Self[@set.Set[T]]
 pub fn Domain::string(Name) -> Self[String]
 pub fn[T] Domain::total(Name, (T) -> String, empty~ : T, compare~ : (T, T) -> Int, join? : (T, T) -> Result[T, String]) -> Self[T]
 pub fn Domain::tribool(name? : Name) -> Self[Bool?]
+
+type Enum
+pub fn Enum::declare_element(Self, String, pkg? : String) -> Name raise Conflict
+pub fn Enum::domain(Self) -> Domain[Name]
+pub fn Enum::is_unknown(Self, Name) -> Bool
+pub fn Enum::members(Self) -> Array[Name]
+pub fn Enum::new() -> Self
+pub fn Enum::persistent(Self) -> Persistent[Name]
+pub fn Enum::read(Self, String, pkg? : String) -> Name raise Conflict
+pub fn Enum::unknown(Self) -> Name
 
 type FactTable[K, P]
 pub fn[K, P] FactTable::collect(Self[K, P], Object[K]) -> P?

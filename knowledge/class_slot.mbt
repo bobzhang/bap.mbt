@@ -99,14 +99,23 @@ pub fn[K, S] Class::create(
 }
 
 ///|
+/// `Class.refine cls s`: the same class with the sort refined to `s`.
+///
+/// Upstream a refinement always denotes the same class (same name, same
+/// slots and objects). The optional `name` is a port extension that
+/// declares a *different* class sharing the sort description; objects of
+/// such a class do not share the slots of `cls`.
 pub fn[K, S, T] Class::refine(
   self : Class[K, S],
-  name~ : Name,
+  name? : Name,
   sort~ : T,
   desc? : String,
 ) -> Class[K, T] {
   {
-    name,
+    name: match name {
+      Some(name) => name
+      None => self.name
+    },
     sort_value: sort,
     desc: match desc {
       Some(text) => Some(text)

@@ -214,8 +214,10 @@ fn[K, P] State::dequeue_waiting(
   self.working(slot, object, (_, _) => {
     Working(@sorted_set.SortedSet::new(), @sorted_set.SortedSet::new())
   })
+  // upstream folds the pid tree into a list, i.e., the waiting promises
+  // are re-run newest first
   let result = []
-  for pid in waiting {
+  for pid in waiting.rev_iter() {
     match slot.promises.get(pid) {
       Some(run) => result.push((pid, run))
       None => ()

@@ -441,12 +441,13 @@ test "object domains use null as bottom" {
   assert_true(domain.is_empty(null))
   assert_true(!domain.is_empty(object))
   assert_true(domain.order(null, object) == Less)
-  assert_true(domain.order(object, other) == Incomparable)
+  // upstream: a total domain ordered by object identifiers
+  assert_true(domain.order(object, other) == Less)
   match domain.join(null, object) {
     Ok(joined) => assert_true(joined.equal(object))
     Err(reason) => fail(reason)
   }
-  assert_true(domain.join(object, other) is Err(_))
+  assert_true(domain.join(object, other) is Ok(joined) && joined.equal(other))
   assert_eq(domain.inspect(object), "#<test:object-domain 1>")
 }
 

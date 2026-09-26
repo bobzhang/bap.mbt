@@ -295,7 +295,7 @@ test "reconstruction uses registered lifters and delay slots on MIPS" {
       inspect(
         blk.defs().map(def => @types.Def::to_string(def)).join("\n"),
         content=(
-          #|A0:imm32 := (ZERO:imm32 + 5:32u)
+          #|A0:imm32 := (0:32u + 5:32u)
           #|%delay_slot_1004_0:imm1 := (A0:imm32 == V0:imm32)
           #|A0:imm32 := (A0:imm32 + 1:32u)
         ),
@@ -339,8 +339,8 @@ test "reconstruction uses registered lifters and delay slots on MIPS" {
         bridge_stmts(stmts),
         content=(
           #|RA:imm32 := (0x2000:32u + extend:32[8:8u])
-          #|A0:imm32 := (ZERO:imm32 + 5:32u)
-          #|jmp 0x400000:32u
+          #|A0:imm32 := (0:32u + 5:32u)
+          #|jmp (((0x2000:32u + extend:32[4:8u]) & (not 0xFFFFFFF:32u)) | 0x400000:32u)
         ),
       )
     Err(reason) => fail(reason)

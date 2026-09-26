@@ -28,9 +28,15 @@ pub fn backends_for_extension(String) -> Array[ImageBackend]
 
 pub fn code_region() -> @types.Tag[Unit]
 
+pub fn coff_llvm_spec(Bytes) -> Result[@ogre.Doc, String]
+
+pub fn coff_spec(Bytes) -> Result[@ogre.Doc, String]
+
 pub fn create(String, backend? : String) -> Result[(Image, Array[String]), String]
 
 pub fn data(Image) -> Bytes
+
+pub fn detect_format(BytesView) -> String?
 
 pub fn endian(Image) -> @bitvec.Endian
 
@@ -47,6 +53,10 @@ pub fn find_loader(String) -> ImageLoader?
 pub fn from_spec(Bytes, @ogre.Doc, filename? : String, target? : @core_theory.Target) -> Result[(Image, Array[String]), String]
 
 pub fn function_start() -> @types.Tag[Unit]
+
+pub fn macho_llvm_spec(Bytes) -> Result[@ogre.Doc, String]
+
+pub fn macho_spec(Bytes, target? : @core_theory.Target) -> Result[@ogre.Doc, String]
 
 pub fn memory(Image) -> @memory.MemMap[@types.Value]
 
@@ -87,6 +97,8 @@ pub fn symbol_info() -> @types.Tag[Symbol]
 pub fn symbols(Image) -> Array[Symbol]
 
 pub fn symbols_of_segment(Image, Segment) -> Array[Symbol]
+
+pub fn thin_binary(Bytes, target? : @core_theory.Target) -> Result[Bytes, String]
 
 pub fn words(Image, Int) -> @memory.MemMap[@types.Word]
 
@@ -142,6 +154,7 @@ pub fn Image::of_bytes(Bytes, backend? : String) -> Result[(Self, Array[String])
 pub fn Image::of_bytes_for_filename(Bytes, filename~ : String) -> Result[(Self, Array[String]), String]
 pub fn Image::of_file(String, backend? : String) -> Result[(Self, Array[String]), String]
 pub fn Image::of_file_for_filename(String, filename? : String) -> Result[(Self, Array[String]), String]
+pub fn Image::of_object(Bytes, target? : @core_theory.Target) -> Result[(Self, Array[String]), String]
 pub fn Image::of_ogre_string(Bytes, String, filename? : String, target? : @core_theory.Target) -> Result[(Self, Array[String]), String]
 pub fn Image::of_string(String, backend? : String) -> Result[(Self, Array[String]), String]
 pub fn Image::relocations(Self) -> Array[Relocation]
@@ -169,12 +182,15 @@ pub fn Image::with_soname(Self, String) -> Self
 pub fn Image::words(Self, word_size~ : Int) -> @memory.MemMap[@types.Word]
 
 type ImageBackend
+pub fn ImageBackend::coff() -> Self
 pub fn ImageBackend::create(name~ : String, description? : String, extensions? : Array[String], priority? : Int, load~ : (Bytes) -> Result[(Image, Array[String]), String]) -> Self
 pub fn ImageBackend::description(Self) -> String
 pub fn ImageBackend::elf() -> Self
 pub fn ImageBackend::extensions(Self) -> Array[String]
 pub fn ImageBackend::from_legacy(name~ : String, LegacyImageBackend, description? : String, extensions? : Array[String], priority? : Int) -> Self
+pub fn ImageBackend::llvm() -> Self
 pub fn ImageBackend::load(Self, Bytes) -> Result[(Image, Array[String]), String]
+pub fn ImageBackend::macho() -> Self
 pub fn ImageBackend::name(Self) -> String
 pub fn ImageBackend::ogre() -> Self
 pub fn ImageBackend::priority(Self) -> Int

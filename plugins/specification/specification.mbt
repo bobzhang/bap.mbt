@@ -81,7 +81,7 @@ pub fn load(
         match @image.Image::of_bytes_for_filename(data, filename=input) {
           Ok(r) => Ok(r)
           Err(_) =>
-            match @image.Image::of_bytes(data, backend="elf") {
+            match @image.Image::of_bytes(data, backend="llvm") {
               Ok(r) => Ok(r)
               Err(_) => @image.Image::of_bytes(data)
             }

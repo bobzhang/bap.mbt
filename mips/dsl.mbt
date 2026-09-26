@@ -71,12 +71,6 @@ fn low(width : Int, e : Exp) -> Exp raise @mc.LiftError {
 }
 
 ///|
-/// `lsb e` - the least significant bit of `e`.
-fn lsb(e : Exp) -> Exp raise @mc.LiftError {
-  e.extract(0, 0)
-}
-
-///|
 /// `nth width e index` - the `index`-th `width`-sized chunk of `e`,
 /// counting from the least significant chunk.
 fn nth(width : Int, e : Exp, index : Int) -> Exp raise @mc.LiftError {

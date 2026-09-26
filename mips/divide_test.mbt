@@ -9,11 +9,9 @@ test "divide: mips32 semantics" {
     ]),
     content=(
       #|SDIV A0, A1
-      #|  tmp1 := pad:64[0:1u]
       #|  LO := (A0 s/ A1)
       #|  HI := (A0 s% A1)
       #|UDIV A0, A1
-      #|  tmp1 := pad:64[0:1u]
       #|  LO := (A0 / A1)
       #|  HI := (A0 % A1)
       #|MOD V0, A0, A1
@@ -37,9 +35,8 @@ test "divide: mips64 semantics" {
     ]),
     content=(
       #|SDIV A0_64, A1_64
-      #|  tmp1 := pad:64[0:1u]
-      #|  LO := (A0 s/ A1)
-      #|  HI := (A0 s% A1)
+      #|  LO := extend:64[(extract:31:0[A0] s/ extract:31:0[A1])]
+      #|  HI := extend:64[(extract:31:0[A0] s% extract:31:0[A1])]
       #|DDIV V0_64, A0_64, A1_64
       #|  V0 := (A0 s/ A1)
       #|DMOD V0_64, A0_64, A1_64

@@ -14,6 +14,8 @@ pub fn file_kind(String) -> FileKind?
 
 pub fn getcwd() -> Result[String, String]
 
+pub fn host_architecture() -> String
+
 pub fn is_directory(String) -> Bool
 
 pub fn lock_file(String, exclusive? : Bool, blocking? : Bool) -> Result[FileLock, String]

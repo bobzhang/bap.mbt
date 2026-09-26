@@ -50,8 +50,9 @@ test "lift aarch64 instructions" {
   inspect(
     lift("MADDXrrr", [Reg("X0"), Reg("X1"), Reg("X2"), Reg("XZR")]),
     content=(
-      #|X0:imm64 := (XZR:imm64 + (X1:imm64 * X2:imm64))
+      #|X0:imm64 := (0:64u + (X1:imm64 * X2:imm64))
       #|
+
     ),
   )
 }

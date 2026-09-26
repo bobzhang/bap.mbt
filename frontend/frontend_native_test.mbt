@@ -100,3 +100,25 @@ test "bap stores and analyzes the knowledge base" {
   )
   @fixtures.host_remove_dir(dir)
 }
+
+///|
+/// Disassembles the host `/usr/bin/true` when it is a Mach-O executable
+/// (macOS hosts; a universal binary is loaded as its slice of the host):
+/// its function is found with `LC_FUNCTION_STARTS` at the `LC_MAIN` entry.
+test "bap disassembles the host /usr/bin/true (Mach-O hosts)" {
+  let data = @fixtures.host_read_file("/usr/bin/true") catch { _ => return }
+  guard @image.detect_format(data) is Some("macho") else { return }
+  let dir = @fixtures.host_temp_dir_with_elf()
+  let buf = StringBuilder()
+  let code = @frontend.run(
+    ["bap", "/usr/bin/true", "-dasm", "--cache-dir=" + dir + "/cache"],
+    out=s => buf.write_string(s),
+    err=s => buf.write_string("[err] " + s),
+  )
+  @fixtures.host_remove_dir(dir)
+  inspect(code, content="0")
+  let out = buf.to_string()
+  assert_true(out.contains("Disassembly of section __text"))
+  assert_true(out.contains(": <sub_0x"))
+  assert_true(!out.contains("[err]"))
+}

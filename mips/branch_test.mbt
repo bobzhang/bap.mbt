@@ -22,15 +22,15 @@ test "branch: mips32 compare-and-branch semantics" {
       #|    jmp (0x1000:32u + 0x20:32u)
       #|  }
       #|BNE T0, ZERO, 0x-8
-      #|  if ~(T0 == ZERO) {
+      #|  if (T0 != 0:32u) {
       #|    jmp (0x1000:32u + 0xFFFFFFF8:32u)
       #|  }
       #|BLTC A0, A1, 0x10
-      #|  if (A0 < A1) {
+      #|  if (A0 s< A1) {
       #|    jmp (0x1000:32u + 0x10:32u)
       #|  }
       #|BGEC A0, A1, 0x10
-      #|  if (A1 <= A0) {
+      #|  if (A1 s<= A0) {
       #|    jmp (0x1000:32u + 0x10:32u)
       #|  }
       #|BEQC A0, A1, 0x10
@@ -77,59 +77,71 @@ test "branch: mips32 compare-with-zero semantics" {
     ]),
     content=(
       #|BGEZ S0, 0x40
-      #|  if (pad:32[0:1u] <= S0) {
+      #|  if (extend:32[0:1u] s<= S0) {
       #|    jmp (0x1000:32u + 0x40:32u)
       #|  }
       #|BLEZ S0, 0x40
-      #|  if (S0 <= pad:32[0:1u]) {
+      #|  if (S0 s<= extend:32[0:1u]) {
       #|    jmp (0x1000:32u + 0x40:32u)
       #|  }
       #|BGTZ S0, 0x40
-      #|  if (pad:32[0:1u] <= S0) {
+      #|  if (extend:32[0:1u] s< S0) {
       #|    jmp (0x1000:32u + 0x40:32u)
       #|  }
       #|BGTZL S0, 0x40
-      #|  if (pad:32[0:1u] <= S0) {
+      #|  if (extend:32[0:1u] s< S0) {
       #|    jmp (0x1000:32u + 0x40:32u)
       #|  }
       #|BLTZALC S0, 0x40
-      #|  if (S0 < pad:32[0:1u]) {
+      #|  tmp1 := (S0 s< extend:32[0:1u])
+      #|  RA := (0x1000:32u + extend:32[4:8u])
+      #|  if tmp1 {
       #|    jmp (0x1000:32u + 0x40:32u)
       #|  }
       #|BLEZALC S0, 0x40
-      #|  if (S0 <= pad:32[0:1u]) {
+      #|  tmp1 := (S0 s<= extend:32[0:1u])
+      #|  RA := (0x1000:32u + extend:32[4:8u])
+      #|  if tmp1 {
       #|    jmp (0x1000:32u + 0x40:32u)
       #|  }
       #|BGEZALC S0, 0x40
-      #|  if (pad:32[0:1u] <= S0) {
+      #|  tmp1 := (extend:32[0:1u] s<= S0)
+      #|  RA := (0x1000:32u + extend:32[4:8u])
+      #|  if tmp1 {
       #|    jmp (0x1000:32u + 0x40:32u)
       #|  }
       #|BGTZALC S0, 0x40
-      #|  if (pad:32[0:1u] < S0) {
+      #|  tmp1 := (extend:32[0:1u] s< S0)
+      #|  RA := (0x1000:32u + extend:32[4:8u])
+      #|  if tmp1 {
       #|    jmp (0x1000:32u + 0x40:32u)
       #|  }
       #|BEQZALC S0, 0x40
-      #|  if (S0 == pad:32[0:1u]) {
+      #|  tmp1 := (S0 == pad:32[0:1u])
+      #|  RA := (0x1000:32u + extend:32[4:8u])
+      #|  if tmp1 {
       #|    jmp (0x1000:32u + 0x40:32u)
       #|  }
       #|BNEZALC S0, 0x40
-      #|  if (S0 != pad:32[0:1u]) {
+      #|  tmp1 := (S0 != pad:32[0:1u])
+      #|  RA := (0x1000:32u + extend:32[4:8u])
+      #|  if tmp1 {
       #|    jmp (0x1000:32u + 0x40:32u)
       #|  }
       #|BLTZC S0, 0x40
-      #|  if (S0 < pad:32[0:1u]) {
+      #|  if (S0 s< extend:32[0:1u]) {
       #|    jmp (0x1000:32u + 0x40:32u)
       #|  }
       #|BLEZC S0, 0x40
-      #|  if (S0 <= pad:32[0:1u]) {
+      #|  if (S0 s<= extend:32[0:1u]) {
       #|    jmp (0x1000:32u + 0x40:32u)
       #|  }
       #|BGEZC S0, 0x40
-      #|  if (pad:32[0:1u] <= S0) {
+      #|  if (extend:32[0:1u] s<= S0) {
       #|    jmp (0x1000:32u + 0x40:32u)
       #|  }
       #|BGTZC S0, 0x40
-      #|  if (pad:32[0:1u] < S0) {
+      #|  if (extend:32[0:1u] s< S0) {
       #|    jmp (0x1000:32u + 0x40:32u)
       #|  }
       #|BEQZC S0, 0x40
@@ -166,29 +178,35 @@ test "branch: mips32 jumps and links" {
       #|  RA := (0x1000:32u + extend:32[8:8u])
       #|  jmp (0x1000:32u + 0x100:32u)
       #|BGEZAL A0, 0x100
-      #|  if (pad:32[0:1u] <= A0) {
-      #|    RA := (0x1000:32u + extend:32[8:8u])
+      #|  tmp1 := (extend:32[0:1u] s<= A0)
+      #|  RA := (0x1000:32u + extend:32[8:8u])
+      #|  if tmp1 {
       #|    jmp (0x1000:32u + 0x100:32u)
       #|  }
       #|J 0x400000
-      #|  jmp 0x400000:32u
+      #|  jmp (((0x1000:32u + extend:32[4:8u]) & ~0xFFFFFFF:32u) | 0x400000:32u)
       #|JAL 0x400000
       #|  RA := (0x1000:32u + extend:32[8:8u])
-      #|  jmp 0x400000:32u
+      #|  jmp (((0x1000:32u + extend:32[4:8u]) & ~0xFFFFFFF:32u) | 0x400000:32u)
       #|JALR RA, T9
+      #|  tmp1 := T9
       #|  RA := (0x1000:32u + extend:32[8:8u])
-      #|  jmp T9
+      #|  jmp tmp1
       #|JALR.HB RA, T9
+      #|  tmp1 := T9
       #|  RA := (0x1000:32u + extend:32[8:8u])
-      #|  jmp T9
+      #|  jmp tmp1
       #|JALR64 RA, T9
+      #|  tmp1 := T9
       #|  RA := (0x1000:32u + extend:32[8:8u])
-      #|  jmp T9
+      #|  jmp tmp1
       #|JIALC T9, 0x8
-      #|  RA := (0x1000:32u + extend:32[8:8u])
-      #|  jmp (T9 + 8:32u)
+      #|  tmp1 := (T9 + extend:32[extract:15:0[8:32u]])
+      #|  RA := (0x1000:32u + extend:32[4:8u])
+      #|  jmp tmp1
       #|JIC T9, 0x8
-      #|  jmp (T9 + 8:32u)
+      #|  tmp1 := (T9 + extend:32[extract:15:0[8:32u]])
+      #|  jmp tmp1
       #|JR RA
       #|  jmp RA
       #|NAL 
@@ -214,32 +232,43 @@ test "branch: mips64 semantics" {
       #|    jmp (0x1000:64u + extend:64[0x20:32u])
       #|  }
       #|BGEZAL A0_64, 0x100
-      #|  if (pad:64[0:1u] <= A0) {
-      #|    RA := (0x1000:64u + extend:64[8:8u])
+      #|  tmp1 := (extend:64[0:1u] s<= A0)
+      #|  RA := (0x1000:64u + extend:64[8:8u])
+      #|  if tmp1 {
       #|    jmp (0x1000:64u + extend:64[0x100:32u])
       #|  }
       #|JALR64 RA_64, T9_64
+      #|  tmp1 := T9
       #|  RA := (0x1000:64u + extend:64[8:8u])
-      #|  jmp T9
+      #|  jmp tmp1
       #|JR RA_64
       #|  jmp RA
       #|J 0x400000
-      #|  jmp 0x400000:32u
+      #|  jmp (((0x1000:64u + extend:64[4:8u]) & ~0xFFFFFFF:64u) | pad:64[0x400000:32u])
       #|
     ),
   )
 }
 
 ///|
-test "branch: every branch has a one-instruction delay slot" {
+test "branch: delayed branches have a one-instruction delay slot" {
   let branches = [
-    "BAL", "BEQ", "BEQL", "BNE", "BGEZ", "BLEZ", "BGEZAL", "BLTZALC", "BLEZALC",
-    "BGEZALC", "BGTZALC", "BEQZALC", "BNEZALC", "BLTC", "BGEC", "BEQC", "BNEC", "BLTUC",
-    "BGEUC", "BLTZC", "BLEZC", "BGEZC", "BGTZC", "BEQZC", "BNEZC", "BGTZ", "BGTZL",
-    "J", "JAL", "JALR", "JALR.HB", "JIALC", "JIC", "JR", "NAL", "JALR64",
+    "BAL", "BEQ", "BEQL", "BNE", "BNEL", "BGEZ", "BGEZL", "BLEZ", "BLEZL", "BGTZ",
+    "BGTZL", "BLTZ", "BLTZL", "BGEZAL", "BGEZALL", "BLTZAL", "BLTZALL", "J", "JAL",
+    "JALX", "JALR", "JALR.HB", "JR", "NAL", "JALR64",
   ]
   for name in branches {
     assert_eq(@mips.delay_slot(name), Some(1))
+  }
+  // the Release 6 compact branches have none (deliberately unlike upstream)
+  let compact = [
+    "BLTZALC", "BLEZALC", "BGEZALC", "BGTZALC", "BEQZALC", "BNEZALC", "BLTC", "BGEC",
+    "BEQC", "BNEC", "BLTUC", "BGEUC", "BLTZC", "BLEZC", "BGEZC", "BGTZC", "BEQZC",
+    "BNEZC", "BC", "BALC", "JIC", "JIALC",
+  ]
+  for name in compact {
+    assert_true(@mips.is_supported(name))
+    assert_eq(@mips.delay_slot(name), None)
   }
   let delayed = @mips.opcodes().filter(name => @mips.delay_slot(name) is Some(_))
   assert_eq(delayed.length(), branches.length())

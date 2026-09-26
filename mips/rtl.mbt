@@ -213,18 +213,8 @@ fn Exp::lt(x : Exp, y : Exp) -> Exp {
 }
 
 ///|
-fn Exp::gt(x : Exp, y : Exp) -> Exp {
-  logop_with_cast(Lt, y, x)
-}
-
-///|
 fn Exp::eq(x : Exp, y : Exp) -> Exp {
   logop_with_cast(Eq, x, y)
-}
-
-///|
-fn Exp::le(x : Exp, y : Exp) -> Exp {
-  logop_with_cast(Le, x, y)
 }
 
 ///|
@@ -239,7 +229,26 @@ fn Exp::neq(x : Exp, y : Exp) -> Exp {
 
 ///|
 fn Exp::slt(x : Exp, y : Exp) -> Exp {
-  logop_with_cast(SignedLt, x, y)
+  logop_with_cast(SignedLt, x.signed(), y.signed())
+}
+
+///|
+/// Signed `x <= y` (not in upstream, whose comparisons other than `slt`
+/// are unsigned).
+fn Exp::sle(x : Exp, y : Exp) -> Exp {
+  logop_with_cast(SignedLe, x.signed(), y.signed())
+}
+
+///|
+/// Signed `x > y`.
+fn Exp::sgt(x : Exp, y : Exp) -> Exp {
+  Exp::slt(y, x)
+}
+
+///|
+/// Signed `x >= y`.
+fn Exp::sge(x : Exp, y : Exp) -> Exp {
+  Exp::sle(y, x)
 }
 
 ///|
@@ -377,9 +386,4 @@ fn jmp(addr : Exp) -> Rtl {
 ///|
 fn if_(cond : Exp, then_ : Array[Rtl], else_ : Array[Rtl]) -> Rtl {
   If(cond, then_, else_)
-}
-
-///|
-fn foreach(step : Exp, e : Exp, code : Array[Rtl]) -> Rtl {
-  Foreach(false, step, e, code)
 }

@@ -83,11 +83,13 @@ test "lift riscv instructions" {
       #|
     ),
   )
+  // `pc + (imm << 12)` (deliberately unlike upstream, see riscv.lisp)
   inspect(
     lift("AUIPC", [Reg("X1"), Imm(1)]),
     content=(
-      #|X1:imm64 := 0x1001:64u
+      #|X1:imm64 := 0x2000:64u
       #|
+
     ),
   )
   inspect(

@@ -179,8 +179,9 @@ pub fn search(
 }
 
 ///|
-/// Loads an image, detecting ELF files by their magic number (upstream uses
-/// the format-detecting LLVM backend) and other formats by file extension.
+/// Loads an image, detecting ELF, Mach-O and PE/COFF files by their
+/// contents (as the upstream format-detecting LLVM backend does) and other
+/// formats by file extension.
 fn load_image(
   bytes : Bytes,
   path : String,
@@ -189,8 +190,8 @@ fn load_image(
     Err(reason) => return Err(reason)
     Ok(_) => ()
   }
-  if bytes is [0x7f, b'E', b'L', b'F', ..] {
-    @image.Image::of_bytes(bytes, backend="elf")
+  if @image.detect_format(bytes) is Some(_) {
+    @image.Image::of_bytes(bytes, backend="llvm")
   } else {
     @image.Image::of_bytes_for_filename(bytes, filename=path)
   }

@@ -21,6 +21,10 @@ pub let finalize_signal_doc : String
 
 pub fn find_primitive(String) -> Primitive?
 
+pub fn install_lisp_primitives(@primus.Machine) -> Unit raise
+
+pub fn install_lisp_signals(@primus.Machine) -> Unit
+
 pub fn install_primitives((Primitive) -> Unit raise) -> Unit raise
 
 pub fn install_signals(@primus.Machine, (String, Array[@primus.Value]) -> Unit raise) -> Unit

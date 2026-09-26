@@ -56,3 +56,39 @@ test "type check semantics" {
     ),
   )
 }
+
+///|
+test "type check all semantic files together for each target" {
+  let out = []
+  for
+    t in [
+      @core_theory.Target::riscv64(),
+      @core_theory.Target::riscv32(),
+      @core_theory.Target::x86_64(),
+      @core_theory.Target::i386(),
+      @core_theory.Target::arm(),
+      @core_theory.Target::thumb(),
+      @core_theory.Target::aarch64(),
+      @core_theory.Target::powerpc(),
+      @core_theory.Target::powerpc64(),
+    ] {
+    let errs = semantic_errors(t, @primus_lisp.semantic_dirs)
+    out.push("\{t.name().unqualified()}: \{errs.length()}")
+  }
+  debug_inspect(
+    out,
+    content=(
+      #|[
+      #|  "riscv64: 0",
+      #|  "riscv32: 0",
+      #|  "x86_64: 0",
+      #|  "i386: 0",
+      #|  "arm: 0",
+      #|  "thumb: 0",
+      #|  "aarch64: 0",
+      #|  "powerpc: 0",
+      #|  "powerpc64: 0",
+      #|]
+    ),
+  )
+}

@@ -20,11 +20,15 @@ pub fn channel_output(@primus.Machine, Int) -> String
 
 pub fn compare_names(@knowledge.Name, @knowledge.Name) -> Int
 
+pub fn configure_library(features? : Array[String], loader? : Loader) -> Unit
+
 pub let const_item : Item[Const]
 
 pub fn declare_attribute(String, check? : (String, Array[Tree]) -> Unit raise AttributeError) -> Unit
 
 pub let default_package : String
+
+pub fn define_host_primitive(@primus.Machine, String, types~ : String, docs? : String, pkg? : String, (@primus.Machine, Array[@primus.Value]) -> @primus.Value raise) -> Unit
 
 pub fn define_primitive(@primus.Machine, String, types? : Signature, docs? : String, pkg? : String, Closure) -> Unit
 
@@ -35,8 +39,6 @@ pub fn documentation_to_org(Array[(String, Array[(@knowledge.Name, DocEntry)])])
 pub fn embedded_features(Array[String]) -> Array[String]
 
 pub fn embedded_lisp_files() -> Array[(String, String)]
-
-pub fn encoding_package(@core_theory.Language, @core_theory.Target) -> String
 
 pub fn eval(@primus.Machine, Ast, (@primus.Machine, @primus.Value) -> Unit raise) -> Unit raise
 
@@ -64,6 +66,8 @@ pub fn init_signals(@primus.Machine) -> Unit
 
 pub fn legacy_arch_name(@core_theory.Target) -> String
 
+pub let library_dirs : Array[String]
+
 pub fn link_places(@primus.Machine) -> Unit raise
 
 pub fn link_program(@primus.Machine, Program) -> Unit raise
@@ -89,6 +93,8 @@ pub let para : Item[Para]
 pub fn parse_bigint(String) -> @bigint.BigInt?
 
 pub fn parse_source(Context, Source) -> Program raise LoadError
+
+pub fn parse_type_spec(String, Int) -> Signature?
 
 pub let place : Item[Place]
 
@@ -120,13 +126,15 @@ pub fn[X] resolve_meth(Program, (Typ, X) -> Bool, @knowledge.Name, Array[X]) -> 
 
 pub fn[T] resolve_simple(Program, Item[T], @knowledge.Name) -> Result[Def[T], Resolution]?
 
+pub let semantic_dirs : Array[String]
+
 pub let semantics : Item[Sema]
 
 pub fn semantics_provider(String, @core_theory.Target, Array[String]) -> @mc.Provider
 
 pub fn set_channel_input(@primus.Machine, Int, Bytes) -> Unit
 
-pub fn[T] signal(@primus.Machine, @primus.Observation[T], params? : Signature, docs? : String, once? : Bool, (@primus.Machine, T) -> Array[@primus.Value] raise) -> @primus.Subscription
+pub fn[T] signal(@primus.Machine, @primus.Observation[T], params? : Signature, docs? : String, sync? : Bool, (@primus.Machine, T) -> Array[@primus.Value] raise) -> @primus.Subscription
 
 pub let signal_item : Item[Signal]
 

@@ -18,6 +18,15 @@ fn components(
 ) -> Array[(String, String, (@primus.Machine) -> Unit raise)] {
   [
     (
+      "taint-primitives", "Exposes Primus Lisp primitives that controls the Primus Taint Engine.",
+      install_lisp_primitives,
+    ),
+    (
+      "taint-signals",
+      "Reflects Primus Taint observations to Lisp signals.",
+      m => install_lisp_signals(m),
+    ),
+    (
       "propagate-taint-exact",
       "Enables the exact taint propagation policy. In this policy, a taint is only propagated between values when one value is derived from another using some transparent (not changing the value computation), e.g., store, load, cast, concat, extract.",
       m => @taint.propagate_exactly(m),

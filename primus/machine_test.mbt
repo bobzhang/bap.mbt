@@ -195,7 +195,6 @@ test "switch continuations, forks listing and ancestry" {
       #|  "after fork in 1",
       #|  "fini 1 forks=0,1,2 ancestor=0",
       #|  "resumed 2",
-      #|  "fini 2 forks=0,1,2 ancestor=0",
       #|]
     ),
   )

@@ -2,18 +2,22 @@
 // `Primus_lisp_main.Semantics.enable_lifter`).
 
 ///|
-/// The semantic directories of the embedded library and the target
-/// families they describe.
-fn semantic_families() -> Array[(String, @core_theory.Target, Array[String])] {
+/// The embedded directories with the target semantics. As upstream, the
+/// Lisp lifter loads all of them for every target; the definitions are
+/// selected by their context declarations (e.g., `(declare (context
+/// (target arm-family) (bits 64)))` for AArch64).
+pub let semantic_dirs : Array[String] = [
+  "semantics/riscv", "semantics/arm", "semantics/powerpc", "semantics/x86",
+]
+
+///|
+/// The Lisp semantics providers and the target families they accept.
+fn semantic_families() -> Array[(String, @core_theory.Target)] {
   [
-    ("primus-lisp-riscv", @core_theory.Target::riscv(), ["semantics/riscv"]),
-    ("primus-lisp-arm", @core_theory.Target::arm_family(), ["semantics/arm"]),
-    (
-      "primus-lisp-powerpc",
-      @core_theory.Target::powerpc_family(),
-      ["semantics/powerpc"],
-    ),
-    ("primus-lisp-x86", @core_theory.Target::i86(), ["semantics/x86"]),
+    ("primus-lisp-riscv", @core_theory.Target::riscv()),
+    ("primus-lisp-arm", @core_theory.Target::arm_family()),
+    ("primus-lisp-powerpc", @core_theory.Target::powerpc_family()),
+    ("primus-lisp-x86", @core_theory.Target::i86()),
   ]
 }
 
@@ -76,9 +80,9 @@ pub fn register_semantics_providers(
   registry? : @mc.Registry = @mc.Registry::global(),
 ) -> Unit {
   for f in semantic_families() {
-    let (name, family, dirs) = f
+    let (name, family) = f
     if registry.find(name) is None {
-      registry.register(semantics_provider(name, family, dirs))
+      registry.register(semantics_provider(name, family, semantic_dirs))
     }
   }
 }

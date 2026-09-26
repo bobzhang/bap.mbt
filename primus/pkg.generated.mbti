@@ -345,7 +345,9 @@ pub fn Interpreter::ite(Machine, Value, Value, Value) -> Value raise
 pub fn Interpreter::link_program(Machine) -> Unit
 pub fn Interpreter::load(Machine, Value, @bitvec.Endian, @types.Size) -> Value raise
 pub fn Interpreter::pc(Machine) -> @types.Word
+pub fn Interpreter::pc_of(Machine, Id) -> @types.Word raise
 pub fn Interpreter::pos(Machine) -> Pos
+pub fn Interpreter::pos_of(Machine, Id) -> Pos raise
 pub fn Interpreter::repeat(Machine, () -> Value raise, () -> Unit raise) -> Value raise
 pub fn Interpreter::schedule_blk(Machine, @types.Term[@types.Blk]) -> Unit
 pub fn Interpreter::schedule_sub(Machine, @types.Term[@types.Sub]) -> Unit
@@ -410,6 +412,7 @@ pub struct Level1[T] {
 pub struct Linker {
   // private fields
 }
+pub fn Linker::call(Machine, Name, args? : Array[Value]) -> Value? raise
 pub fn Linker::exec(Machine, Name) -> Unit raise
 pub fn Linker::is_linked(Machine, Name) -> Bool
 pub fn Linker::link(Machine, addr? : @types.Word, name? : String, tid? : @types.Tid, Code) -> Unit
@@ -426,6 +429,9 @@ pub struct Machine {
 pub fn Machine::add_component((Self) -> Unit raise) -> Unit
 pub fn Machine::ancestor(Self, Array[Id]) -> Id
 pub fn Machine::args(Self) -> Array[String]
+pub fn Machine::call(Self, Name, args? : Array[Value], then~ : (Self, Value?) -> Unit raise) -> Unit
+pub fn Machine::call_args(Self) -> Array[Value]
+pub fn Machine::call_code(Self, Code, args? : Array[Value], then~ : (Self, Value?) -> Unit raise) -> Unit
 pub fn Machine::cancel(Self, Subscription) -> Unit
 pub fn Machine::current(Self) -> Id
 pub fn Machine::envp(Self) -> Array[String]
@@ -443,17 +449,23 @@ pub fn Machine::parent(Self) -> Id
 pub fn[T] Machine::post(Self, Statement[T], () -> T raise) -> Unit raise
 pub fn Machine::program(Self) -> @types.Term[@types.Program]
 pub fn Machine::project(Self) -> @project.Project
+pub fn Machine::push_cleanup(Self, (Self) -> Unit raise) -> Unit
+pub fn Machine::push_handler(Self, (Self, Error) -> Unit raise) -> Unit
 pub fn[T] Machine::put_global(Self, State[T], T) -> Unit
 pub fn[T] Machine::put_local(Self, State[T], T) -> Unit
 pub fn[T] Machine::put_other(Self, Id, State[T], T) -> Unit raise
 pub fn[T] Machine::raise_exn(Self, Error) -> T raise
+pub fn Machine::result(Self) -> Value?
 pub fn Machine::run(@project.Project, start? : (Self) -> Unit raise, boot? : (Self) -> Unit raise, init? : (Self) -> Unit raise, fini? : (Self) -> Unit raise, system? : String, args? : Array[String], envp? : Array[String]) -> (ExitStatus, @project.Project)
 pub fn Machine::run_main(envp? : Array[String], args? : Array[String], @project.Project, (Self) -> Unit raise) -> (ExitStatus, @project.Project) raise SystemError
 pub fn Machine::run_with(Self, start? : (Self) -> Unit raise, boot? : (Self) -> Unit raise, init? : (Self) -> Unit raise, fini? : (Self) -> Unit raise, system? : String) -> (ExitStatus, @project.Project)
 pub fn Machine::schedule(Self, (Self) -> Unit raise) -> Unit
 pub fn Machine::set_project(Self, @project.Project) -> Unit
+pub fn Machine::set_result(Self, Value?) -> Unit
+pub fn Machine::stack_depth(Self) -> Int
 pub fn Machine::status(Self, Id) -> ForkStatus
 pub fn[T] Machine::subscribe(Self, Observation[T], (T) -> Unit raise) -> Subscription
+pub fn[T] Machine::subscribe_resumable(Self, Observation[T], (Self, T) -> Unit raise) -> Subscription
 pub fn Machine::switch(Self, Id, then? : (Self) -> Unit raise) -> Unit raise
 pub fn Machine::target(Self) -> @core_theory.Target
 pub fn[T] Machine::update_global(Self, State[T], (T) -> T) -> Unit
@@ -519,6 +531,17 @@ pub fn[T] Observation::of_statement(Statement[T]) -> Self[T]
 pub fn[T] Observation::provide(String, desc? : String, inspect? : (T) -> Sexp, pkg? : String) -> (Self[T], Statement[T])
 pub fn[T] Observation::provider(Self[T]) -> Provider
 
+pub struct PersistentMap[K, V] {
+  // private fields
+}
+pub fn[K : Compare, V] PersistentMap::add(Self[K, V], K, V) -> Self[K, V]
+pub fn[K : Compare, V] PersistentMap::contains(Self[K, V], K) -> Bool
+pub fn[K, V] PersistentMap::empty() -> Self[K, V]
+pub fn[K : Compare, V] PersistentMap::get(Self[K, V], K) -> V?
+pub fn[K, V] PersistentMap::length(Self[K, V]) -> Int
+pub fn[K : Compare, V] PersistentMap::remove(Self[K, V], K) -> Self[K, V]
+pub fn[K, V] PersistentMap::to_array(Self[K, V]) -> Array[(K, V)]
+
 pub enum Pos {
   Top(TopLevel)
   Sub(SubLevel)
@@ -573,7 +596,7 @@ pub impl Show for Sexp
 pub struct State[T] {
   // private fields
 }
-pub fn[T] State::declare_(uuid~ : String, name~ : String, inspect? : (T) -> Sexp, (@project.Project) -> T) -> Self[T]
+pub fn[T] State::declare_(uuid~ : String, name~ : String, inspect? : (T) -> Sexp, clone? : (T) -> T, (@project.Project) -> T) -> Self[T]
 pub fn[T] State::inspect(Self[T], T) -> Sexp
 pub fn[T] State::name(Self[T]) -> String
 pub fn[T] State::uuid(Self[T]) -> String

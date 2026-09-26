@@ -10,46 +10,29 @@ priv enum Constr {
 }
 
 ///|
-/// A frame of the control stack: a defunctionalized continuation of the
-/// upstream interpreter.
-priv enum Frame {
-  /// Host code (scheduled tasks and `then` continuations).
-  Task((Machine) -> Unit raise)
-  /// Marks the bottom of a nested (synchronous) run.
-  Barrier(Int)
-  /// Executes a linked name (scheduled with `Linker::schedule_exec`).
-  Exec(Name)
-  /// Enters a subroutine: binds its input arguments and schedules its
-  /// entry block.
-  SubEnter(@types.Term[@types.Sub])
-  /// Returns from a subroutine: binds output arguments and leaves it.
-  SubLeave(@types.Term[@types.Sub], Pos, Array[Value])
-  /// Enters a block.
-  BlkEnter(@types.Term[@types.Blk])
-  /// Evaluates the i-th phi node or definition of a block (phis first).
-  BlkElt(@types.Term[@types.Blk], Pos, Int)
-  /// Evaluates the i-th jump of a block with the accumulated constraint;
-  /// after the last jump the block is left and the taken jump performed.
-  BlkJmp(@types.Term[@types.Blk], Pos, Int, Constr)
-  /// Continues after a call returns: pops the call prompt and jumps to
-  /// the return destination.
-  CallReturn(Value, @types.Tid?, @types.Word)
+/// The interpreter context of a caller, saved when a subroutine is entered
+/// (and around nested runs) and restored when it returns: the current
+/// position and the block bookkeeping used to select phi-node options.
+priv struct Ctx {
+  curr : Pos
+  last_blk : @types.Tid?
+  prev_blk : @types.Tid?
 }
 
 ///|
-fn Machine::exec_frame(self : Machine, frame : Frame) -> Unit raise {
-  match frame {
-    Task(f) => f(self)
-    Barrier(_) => ()
-    Exec(name) => exec_tail(self, name)
-    SubEnter(sub) => step_sub_enter(self, sub)
-    SubLeave(sub, pos, inputs) => step_sub_leave(self, sub, pos, inputs)
-    BlkEnter(blk) => step_blk_enter(self, blk)
-    BlkElt(blk, pos, i) => step_blk_elt(self, blk, pos, i)
-    BlkJmp(blk, pos, i, constr) => step_blk_jmp(self, blk, pos, i, constr)
-    CallReturn(cond, ret, callsite) =>
-      step_call_return(self, cond, ret, callsite)
-  }
+fn save_ctx(m : Machine) -> Ctx {
+  let s = m.get_local(interpreter_state)
+  { curr: s.curr, last_blk: s.last_blk, prev_blk: s.prev_blk, }
+}
+
+///|
+fn restore_ctx(m : Machine, ctx : Ctx) -> Unit {
+  m.update_local(interpreter_state, s => {
+    ..s,
+    curr: ctx.curr,
+    last_blk: ctx.last_blk,
+    prev_blk: ctx.prev_blk,
+  })
 }
 
 ///|
@@ -73,7 +56,9 @@ fn curr_pos(m : Machine) -> Pos {
 }
 
 ///|
-fn[T] do_enter(
+/// Moves to the term and posts `enter-pos`, `enter-term` and `enter-<kind>`
+/// as a resumable boundary (must be the last action of a step).
+fn[T] enter_boundary(
   m : Machine,
   pos : Pos,
   t : @types.Term[T],
@@ -81,36 +66,50 @@ fn[T] do_enter(
 ) -> Unit raise {
   update_pc(m, t)
   set_curr(m, pos)
-  m.make(enter_pos_stmt, pos)
-  m.make(enter_term_stmt, t.tid())
-  m.make(stmt, t)
+  let b = m.boundary()
+  b.add(enter_pos_stmt, pos)
+  b.add(enter_term_stmt, t.tid())
+  b.add(stmt, t)
+  b.dispatch()
 }
 
 ///|
-fn[T] do_leave(
+/// Posts `leave-<kind>`, `leave-term` and `leave-pos` as a resumable
+/// boundary (must be the last action of a step).
+fn[T] leave_boundary(
   m : Machine,
   pos : Pos,
   t : @types.Term[T],
   stmt : Statement[@types.Term[T]],
 ) -> Unit raise {
-  m.make(stmt, t)
-  m.make(leave_term_stmt, t.tid())
-  m.make(leave_pos_stmt, pos)
+  let b = m.boundary()
+  b.add(stmt, t)
+  b.add(leave_term_stmt, t.tid())
+  b.add(leave_pos_stmt, pos)
+  b.dispatch()
 }
 
 ///|
+/// Evaluates an argument term synchronously (inside the subroutine entry
+/// and return steps).
 fn eval_arg(
   m : Machine,
   arg : @types.Term[@types.Arg],
   when_ : (@types.Intent?) -> Bool,
 ) -> Unit raise {
   let pos = curr_pos(m).next_arg(arg)
-  do_enter(m, pos, arg, enter_arg_stmt)
+  update_pc(m, arg)
+  set_curr(m, pos)
+  m.make(enter_pos_stmt, pos)
+  m.make(enter_term_stmt, arg.tid())
+  m.make(enter_arg_stmt, arg)
   if when_(arg.intent()) {
     let x = Interpreter::exp(m, arg.arg_rhs())
     Interpreter::set(m, arg.arg_lhs(), x)
   }
-  do_leave(m, pos, arg, leave_arg_stmt)
+  m.make(leave_arg_stmt, arg)
+  m.make(leave_term_stmt, arg.tid())
+  m.make(leave_pos_stmt, pos)
 }
 
 ///|
@@ -120,10 +119,24 @@ fn is_out_intent(i : @types.Intent?) -> Bool {
 
 ///|
 fn step_sub_enter(m : Machine, sub : @types.Term[@types.Sub]) -> Unit raise {
+  let ctx = save_ctx(m)
   let pos = curr_pos(m).next_sub(sub)
-  do_enter(m, pos, sub, enter_sub_stmt)
+  m.push(SubStart(sub, pos, ctx))
+  enter_boundary(m, pos, sub, enter_sub_stmt)
+}
+
+///|
+fn step_sub_start(
+  m : Machine,
+  sub : @types.Term[@types.Sub],
+  pos : Pos,
+  ctx : Ctx,
+) -> Unit raise {
   match sub.first_blk() {
-    None => do_leave(m, pos, sub, leave_sub_stmt)
+    None => {
+      restore_ctx(m, ctx)
+      leave_boundary(m, pos, sub, leave_sub_stmt)
+    }
     Some(entry) => {
       let args = sub.args()
       for arg in args {
@@ -135,8 +148,8 @@ fn step_sub_enter(m : Machine, sub : @types.Term[@types.Sub]) -> Unit raise {
           inputs.push(Interpreter::exp(m, arg.arg_rhs()))
         }
       }
-      m.post(call_entered, () => (@types.Sub::name(sub), inputs))
-      m.push(SubLeave(sub, pos, inputs))
+      m.post(call_entered, () => (@types.Sub::name(sub), inputs.copy()))
+      m.push(SubLeave(sub, pos, inputs, ctx))
       m.push(BlkEnter(entry))
     }
   }
@@ -148,10 +161,18 @@ fn step_sub_leave(
   sub : @types.Term[@types.Sub],
   pos : Pos,
   inputs : Array[Value],
+  ctx : Ctx,
 ) -> Unit raise {
   let args = sub.args()
   for arg in args {
     eval_arg(m, arg, is_out_intent)
+  }
+  let mut result : Value? = None
+  for arg in args {
+    if is_out_intent(arg.intent()) && Env::is_set(m, arg.arg_lhs()) {
+      result = Some(Env::get(m, arg.arg_lhs()))
+      break
+    }
   }
   m.post(call_returned, () => {
     let all = inputs.copy()
@@ -162,7 +183,9 @@ fn step_sub_leave(
     }
     (@types.Sub::name(sub), all)
   })
-  do_leave(m, pos, sub, leave_sub_stmt)
+  restore_ctx(m, ctx)
+  m.current.result = result
+  leave_boundary(m, pos, sub, leave_sub_stmt)
 }
 
 ///|
@@ -174,40 +197,13 @@ fn step_blk_enter(m : Machine, blk : @types.Term[@types.Blk]) -> Unit raise {
     prev_blk: s.last_blk,
     last_blk: Some(blk.tid()),
   })
-  do_enter(m, pos, blk, enter_blk_stmt)
   m.push(BlkElt(blk, pos, 0))
+  enter_boundary(m, pos, blk, enter_blk_stmt)
 }
 
 ///|
-fn eval_phi(m : Machine, phi : @types.Term[@types.Phi]) -> Unit raise {
-  let pos = curr_pos(m).next_phi(phi)
-  do_enter(m, pos, phi, enter_phi_stmt)
-  match m.get_local(interpreter_state).prev_blk {
-    Some(pred) =>
-      for option in phi.payload().values {
-        if option.0 == pred {
-          let x = Interpreter::exp(m, option.1)
-          Interpreter::set(m, phi.phi_lhs(), x)
-          break
-        }
-      }
-    None => ()
-  }
-  do_leave(m, pos, phi, leave_phi_stmt)
-}
-
-///|
-fn eval_def(m : Machine, def : @types.Term[@types.Def]) -> Unit raise {
-  let pos = curr_pos(m).next_def(def)
-  do_enter(m, pos, def, enter_def_stmt)
-  let x = Interpreter::exp(m, def.def_value())
-  Interpreter::set(m, def.def_var(), x)
-  do_leave(m, pos, def, leave_def_stmt)
-}
-
-///|
-/// Evaluates one phi node or definition per step; the step after the last
-/// definition evaluates the first jump.
+/// Enters the i-th phi node or definition of the block; after the last
+/// one, enters the first jump.
 fn step_blk_elt(
   m : Machine,
   blk : @types.Term[@types.Blk],
@@ -218,24 +214,88 @@ fn step_blk_elt(
   let nphis = b.phis.length()
   let ndefs = b.defs.length()
   if i < nphis {
-    eval_phi(m, b.phis[i])
-    m.push(BlkElt(blk, pos, i + 1))
+    let phi = b.phis[i]
+    let epos = curr_pos(m).next_phi(phi)
+    m.push(BlkEltBody(blk, pos, i, epos))
+    enter_boundary(m, epos, phi, enter_phi_stmt)
   } else if i < nphis + ndefs {
-    eval_def(m, b.defs[i - nphis])
-    m.push(BlkElt(blk, pos, i + 1))
+    let def = b.defs[i - nphis]
+    let epos = curr_pos(m).next_def(def)
+    m.push(BlkEltBody(blk, pos, i, epos))
+    enter_boundary(m, epos, def, enter_def_stmt)
   } else {
     step_blk_jmp(m, blk, pos, 0, Init)
   }
 }
 
 ///|
-fn eval_jmp(
+/// Evaluates and leaves the i-th phi node or definition of the block.
+fn step_blk_elt_body(
   m : Machine,
+  blk : @types.Term[@types.Blk],
+  pos : Pos,
+  i : Int,
+  epos : Pos,
+) -> Unit raise {
+  let b = blk.payload()
+  let nphis = b.phis.length()
+  m.push(BlkElt(blk, pos, i + 1))
+  if i < nphis {
+    let phi = b.phis[i]
+    if m.get_local(interpreter_state).prev_blk is Some(pred) {
+      for option in phi.payload().values {
+        if option.0 == pred {
+          let x = Interpreter::exp(m, option.1)
+          Interpreter::set(m, phi.phi_lhs(), x)
+          break
+        }
+      }
+    }
+    leave_boundary(m, epos, phi, leave_phi_stmt)
+  } else {
+    let def = b.defs[i - nphis]
+    let x = Interpreter::exp(m, def.def_value())
+    Interpreter::set(m, def.def_var(), x)
+    leave_boundary(m, epos, def, leave_def_stmt)
+  }
+}
+
+///|
+/// Enters the i-th jump of the block; after the last one, leaves the block.
+fn step_blk_jmp(
+  m : Machine,
+  blk : @types.Term[@types.Blk],
+  pos : Pos,
+  i : Int,
   constr : Constr,
-  t : @types.Term[@types.Jmp],
-) -> Constr raise {
-  let pos = curr_pos(m).next_jmp(t)
-  do_enter(m, pos, t, enter_jmp_stmt)
+) -> Unit raise {
+  let jmps = blk.payload().jmps
+  if i < jmps.length() {
+    let t = jmps[i]
+    let jpos = curr_pos(m).next_jmp(t)
+    m.push(BlkJmpBody(blk, pos, i, constr, jpos))
+    enter_boundary(m, jpos, t, enter_jmp_stmt)
+  } else {
+    // the taken jump is performed by its own step, after `leave-blk`
+    if constr is Disj(cond, t) {
+      m.push(Jump(cond, t))
+    }
+    leave_boundary(m, pos, blk, leave_blk_stmt)
+  }
+}
+
+///|
+/// Evaluates the condition of the i-th jump (upstream `jmp constr t`) and
+/// leaves the jump.
+fn step_blk_jmp_body(
+  m : Machine,
+  blk : @types.Term[@types.Blk],
+  pos : Pos,
+  i : Int,
+  constr : Constr,
+  jpos : Pos,
+) -> Unit raise {
+  let t = blk.payload().jmps[i]
   let v = Interpreter::exp(m, t.cond())
   let r = match (constr, v.value.is_one()) {
     (Init, true) => {
@@ -264,29 +324,8 @@ fn eval_jmp(
       Disj(Interpreter::binop(m, Or, u, v), taken)
     }
   }
-  do_leave(m, pos, t, leave_jmp_stmt)
-  r
-}
-
-///|
-fn step_blk_jmp(
-  m : Machine,
-  blk : @types.Term[@types.Blk],
-  pos : Pos,
-  i : Int,
-  constr : Constr,
-) -> Unit raise {
-  let jmps = blk.payload().jmps
-  if i < jmps.length() {
-    let constr = eval_jmp(m, constr, jmps[i])
-    m.push(BlkJmp(blk, pos, i + 1, constr))
-  } else {
-    do_leave(m, pos, blk, leave_blk_stmt)
-    match constr {
-      Init | Conj(_) => () // return from the subroutine
-      Disj(cond, t) => jump(m, cond, t)
-    }
-  }
+  m.push(BlkJmp(blk, pos, i + 1, r))
+  leave_boundary(m, jpos, t, leave_jmp_stmt)
 }
 
 ///|

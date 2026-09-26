@@ -9,6 +9,8 @@ import {
 }
 
 // Values
+pub fn accepts(@mc.Context) -> Bool
+
 pub fn bil_of_rtl(ArrayView[Rtl]) -> Array[@types.Stmt] raise @mc.LiftError
 
 pub let bit : Int
@@ -51,9 +53,13 @@ pub fn lift64(@mc.Insn) -> Array[@types.Stmt] raise @mc.LiftError
 
 pub fn lift64le(@mc.Insn) -> Array[@types.Stmt] raise @mc.LiftError
 
+pub fn lift_in_context(@mc.Context, @mc.Insn) -> @mc.Lifted raise @mc.LiftError
+
 pub fn lift_rtl(AddrSize, @bitvec.Endian, @mc.Insn) -> Array[Rtl] raise @mc.LiftError
 
 pub fn message(String) -> Rtl
+
+pub fn mode_of_context(@mc.Context) -> (AddrSize, @bitvec.Endian)
 
 pub fn of_string(String, Sign) -> RtlExp raise @mc.LiftError
 
@@ -61,9 +67,13 @@ pub let one : RtlExp
 
 pub fn ones(Int) -> RtlExp
 
+pub fn provider() -> @mc.Provider
+
+pub let provider_name : String
+
 pub let quadword : Int
 
-pub fn register() -> Unit
+pub fn register(registry? : @mc.Registry) -> Unit
 
 pub fn register_dot_insn(String, (Cpu, Operands) -> Array[Rtl] raise @mc.LiftError) -> Unit
 
@@ -227,7 +237,7 @@ pub fn Model::zf(Self) -> @types.Var
 
 pub struct Operands {
   name : String
-  ops : Array[@mc.Op]
+  ops : ReadOnlyArray[@mc.Op]
 }
 pub fn Operands::get(Self, Int) -> @mc.Op raise @mc.LiftError
 pub fn Operands::imm(Self, Int, Sign) -> RtlExp raise @mc.LiftError

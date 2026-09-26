@@ -3388,16 +3388,102 @@ fn target_specific_role_names(target : Target, role : Role) -> Array[String]? {
 
 ///|
 fn target_role_names_for(target : Target, role : Role) -> Array[String] {
-  match target_specific_role_names(target, role) {
+  let key = target_role_cache_key(target, Some(role))
+  match target_role_names_cache.get(key) {
     Some(names) => names
-    None => target_role_names(role)
+    None => {
+      let names = match target_specific_role_names(target, role) {
+        Some(names) => names
+        None => target_role_names(role)
+      }
+      target_role_names_cache[key] = names
+      names
+    }
   }
 }
 
 ///|
-fn target_name_has_role(target : Target, name : String, role : Role) -> Bool {
-  let lower = name.to_lower()
-  target_role_names_for(target, role).contains(lower)
+let target_role_table_roles : ReadOnlyArray[Role] = [
+  General,
+  StackPointer,
+  IntegerRegister,
+  FloatingRegister,
+  VectorRegister,
+  IndexRegister,
+  SegmentRegister,
+  FramePointer,
+  ProgramCounter,
+  PseudoRegister,
+  Status,
+  ControlRegister,
+  SystemRegister,
+  HardwareRegister,
+  Constant,
+  ZeroRegister,
+  OneRegister,
+  LinkRegister,
+  ThreadPointer,
+  PrivilegedRegister,
+  Argument,
+  ResultRegister,
+  CallerSaved,
+  CalleeSaved,
+  Reserved,
+  ZeroFlag,
+  CarryFlag,
+  SignFlag,
+  OverflowFlag,
+  ParityFlag,
+  ThumbMode,
+]
+
+///|
+/// Lower-cased register name to the roles its name carries on `target`, in
+/// the canonical role order used by `Target::roles_of_var`.
+fn target_role_table(target : Target) -> Map[String, Array[Role]] {
+  let key = target_role_cache_key(target, None)
+  match target_role_tables.get(key) {
+    Some(table) => table
+    None => {
+      let table : Map[String, Array[Role]] = Map([])
+      for role in target_role_table_roles {
+        for name in target_role_names_for(target, role) {
+          match table.get(name) {
+            Some(roles) => add_role(roles, role)
+            None => table[name] = [role]
+          }
+        }
+      }
+      target_role_tables[key] = table
+      table
+    }
+  }
+}
+
+///|
+let target_role_tables : Map[String, Map[String, Array[Role]]] = Map([])
+
+///|
+/// Role-name tables are pure functions of the target's identity (name, bit
+/// width, and ancestry), but computing them requires constructing whole
+/// architecture families, so they are memoized per target and role.
+let target_role_names_cache : Map[String, Array[String]] = Map([])
+
+///|
+fn target_role_cache_key(target : Target, role : Role?) -> String {
+  let buf = StringBuilder()
+  if role is Some(role) {
+    buf.write_string(role.to_string())
+  }
+  buf.write_char('|')
+  buf.write_string(target.bits().to_string())
+  let mut current = Some(target)
+  while current is Some(item) {
+    buf.write_char('|')
+    buf.write_string(item.name_value.to_string())
+    current = item.parent_value
+  }
+  buf.to_string()
 }
 
 ///|
@@ -4418,44 +4504,13 @@ pub fn Target::origin_of_name(self : Target, name : String) -> AliasOrigin? {
 
 ///|
 pub fn Target::roles_of_var(self : Target, variable : Var) -> Array[Role] {
+  let table = target_role_table(self)
+  let by_ident = table.get(variable.ident().to_lower()).unwrap_or([])
+  let by_name = table.get(variable.name().to_lower()).unwrap_or([])
   let roles = []
-  for
-    role in [
-      General,
-      StackPointer,
-      IntegerRegister,
-      FloatingRegister,
-      VectorRegister,
-      IndexRegister,
-      SegmentRegister,
-      FramePointer,
-      ProgramCounter,
-      PseudoRegister,
-      Status,
-      ControlRegister,
-      SystemRegister,
-      HardwareRegister,
-      Constant,
-      ZeroRegister,
-      OneRegister,
-      LinkRegister,
-      ThreadPointer,
-      PrivilegedRegister,
-      Argument,
-      ResultRegister,
-      CallerSaved,
-      CalleeSaved,
-      Reserved,
-      ZeroFlag,
-      CarryFlag,
-      SignFlag,
-      OverflowFlag,
-      ParityFlag,
-      ThumbMode,
-    ] {
-    if target_name_has_role(self, variable.ident(), role) ||
-      target_name_has_role(self, variable.name(), role) {
-      add_role(roles, role)
+  for role in target_role_table_roles {
+    if by_ident.contains(role) || by_name.contains(role) {
+      roles.push(role)
     }
   }
   if self.origin_of_var(variable) is Some(_) {
@@ -4555,7 +4610,7 @@ pub fn Target::role_aliases(self : Target, role : Role) -> Array[String] {
     }
     names
   } else {
-    target_role_names_for(self, role)
+    target_role_names_for(self, role).copy()
   }
 }
 

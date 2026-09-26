@@ -311,8 +311,10 @@ pub fn Linker::resolve_tid(m : Machine, name : Name) -> @types.Tid? {
 ///|
 /// Runs code: host code runs immediately; interpreted code is pushed onto
 /// the control stack (tail position).
-fn run_code(m : Machine, name : Name, code : Code) -> Unit raise {
-  m.make(will_exec, name)
+fn run_code(m : Machine, name : Name?, code : Code) -> Unit raise {
+  if name is Some(n) {
+    m.make(will_exec, n)
+  }
   match code {
     Host(f) => f(m)
     Subroutine(sub) => m.push(SubEnter(sub))
@@ -325,7 +327,7 @@ fn exec_unresolved(m : Machine, name : Name) -> Unit raise {
   m.make(will_fail, name)
   let s = m.get_local(linker_state)
   match s.code_of_name(Symbol(unresolved_handler)) {
-    Some(code) => run_code(m, name, code)
+    Some(code) => run_code(m, Some(name), code)
     None =>
       match s.resolve_name(name) {
         Some(sym) => m.raise_exn(UnboundName(Symbol(sym)))
@@ -340,7 +342,57 @@ fn exec_unresolved(m : Machine, name : Name) -> Unit raise {
 fn exec_tail(m : Machine, name : Name) -> Unit raise {
   match Linker::lookup(m, name) {
     None => exec_unresolved(m, name)
-    Some(code) => run_code(m, name, code)
+    Some(code) => run_code(m, Some(name), code)
+  }
+}
+
+///|
+/// Binds call arguments to the input arguments of a subroutine: each
+/// argument value is assigned to the expression of the corresponding
+/// input (`in` or `in/out`) argument term.
+fn bind_sub_args(
+  m : Machine,
+  sub : @types.Term[@types.Sub],
+  args : Array[Value],
+) -> Unit raise {
+  let mut i = 0
+  for arg in sub.args() {
+    if i >= args.length() {
+      break
+    }
+    if !(arg.intent() is Some(Out)) {
+      Interpreter::assign(m, arg.arg_rhs(), args[i])
+      i += 1
+    }
+  }
+}
+
+///|
+/// Starts a call: resets the result register, publishes the arguments and
+/// runs the code (the `CallName`/`CallCode` frames).
+fn call_code_now(
+  m : Machine,
+  name : Name?,
+  code : Code,
+  args : Array[Value],
+) -> Unit raise {
+  m.current.result = None
+  m.current.call_args = args
+  if code is Subroutine(sub) && !args.is_empty() {
+    bind_sub_args(m, sub, args)
+  }
+  run_code(m, name, code)
+}
+
+///|
+fn call_name(m : Machine, name : Name, args : Array[Value]) -> Unit raise {
+  match Linker::lookup(m, name) {
+    Some(code) => call_code_now(m, Some(name), code, args)
+    None => {
+      m.current.result = None
+      m.current.call_args = args
+      exec_unresolved(m, name)
+    }
   }
 }
 
@@ -348,9 +400,25 @@ fn exec_tail(m : Machine, name : Name) -> Unit raise {
 /// Executes the code bound to the name and waits for it to finish
 /// (`Linker.exec`). If nothing is bound, `linker_unresolved` is posted and
 /// the `unresolved_handler` is called if linked, otherwise `UnboundName` is
-/// raised.
+/// raised. This is a synchronous (nested) run: forks requested by the
+/// callee take effect only when the enclosing step ends; use
+/// `Machine::call` for a forkable call.
 pub fn Linker::exec(m : Machine, name : Name) -> Unit raise {
-  m.run_nested(() => exec_tail(m, name))
+  m.run_nested(() => m.push(Exec(name)))
+}
+
+///|
+/// Calls the code bound to the name with the arguments, waits for it to
+/// finish and returns its result (see `Machine::call` for the protocol).
+/// This is a synchronous (nested) run; use `Machine::call` for a forkable
+/// call.
+pub fn Linker::call(
+  m : Machine,
+  name : Name,
+  args? : Array[Value] = [],
+) -> Value? raise {
+  m.run_nested(() => m.push(CallName(name, args)))
+  m.current.result
 }
 
 ///|
@@ -358,5 +426,5 @@ pub fn Linker::exec(m : Machine, name : Name) -> Unit raise {
 /// machine (see `Machine::schedule`). Use it (e.g. in the `start` code of
 /// a run) to execute a program at the top level, where it can be forked.
 pub fn Linker::schedule_exec(m : Machine, name : Name) -> Unit {
-  m.push(Exec(name))
+  m.push_user(Exec(name))
 }

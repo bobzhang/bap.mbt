@@ -17,7 +17,7 @@ fn insn(
   ops : Array[@mc.Op],
   addr? : UInt64 = 0x1000,
 ) -> @mc.Insn {
-  @mc.Insn::create(name, ops, addr~)
+  @mc.Insn::create(name, ops, addr~, size=4)
 }
 
 ///|
@@ -87,17 +87,37 @@ fn render(stmts : Array[@types.Stmt]) -> String {
 }
 
 ///|
+/// The core-theory target named `name` (one of `@mips.targets`).
+fn target_of(name : String) -> @core_theory.Target {
+  match name {
+    "mips" => @core_theory.Target::mips()
+    "mipsel" => @core_theory.Target::mipsel()
+    "mips64" => @core_theory.Target::mips64()
+    "mips64el" => @core_theory.Target::mips64el()
+    _ => @core_theory.Target::unknown()
+  }
+}
+
+///|
+/// Lift `insn` through a registry holding the MIPS provider, in the context
+/// of the target named `target`.
+fn lift_on(target : String, insn : @mc.Insn) -> Array[@types.Stmt] raise {
+  let registry = @mc.Registry::new()
+  @mips.register(registry~)
+  registry.lift(@mc.Context::create(target_of(target)), insn).bil
+}
+
+///|
 /// Lift every sample through the `@mc` registry for `target` and render
 /// each as a header line (`NAME op, op`) followed by its indented BIL.
 fn show(
   target : String,
   samples : Array[(String, Array[@mc.Op])],
 ) -> String raise {
-  @mips.register()
   let buf = StringBuilder()
   for sample in samples {
     let (name, ops) = sample
-    let bil = @mc.lift(target, insn(name, ops))
+    let bil = lift_on(target, insn(name, ops))
     buf <+ "\{name} \{ops.map(op => op.to_string()).join(", ")}\n"
     render_stmts(buf, bil, "  ")
   }

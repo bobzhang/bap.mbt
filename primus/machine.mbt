@@ -12,34 +12,39 @@
 /// - `Machine` is the whole world: the project, the table of forks, the
 ///   global state bag, the observers and the scheduler.
 /// - every fork (`Id`) owns a persistent local state bag (env, memory,
-///   linker table, interpreter registers, user states) and a persistent
-///   *control stack* of frames. Interpreter frames describe the remaining
-///   work of the BIR interpreter (enter a sub, evaluate the next def of a
-///   block, return from a call, ...); `Task` frames hold host closures.
+///   linker table, interpreter registers, user states), a *result
+///   register* and a persistent *control stack* of frames. Interpreter
+///   frames describe the remaining work of the BIR interpreter; host frames
+///   (tasks, continuations, exception handlers, cleanups, observer
+///   dispatch) are closures. See `scheduler.mbt` for the frame protocol and
+///   the resumable call API (`Machine::call`) that lets host code such as
+///   a Lisp evaluator be written as frames.
 /// - the scheduler loop pops frames of the current fork and executes them.
-///   Executing one frame is a *step*. The interpreter steps are: entering
-///   a subroutine (including binding its input arguments), entering a
-///   block, evaluating one phi node or definition, evaluating one jump
-///   condition (the step of the last jump also leaves the block and
-///   performs the taken jump), returning from a subroutine (binding output
-///   arguments), and continuing after a call returns. A `Task` frame (host
-///   code) is one step too.
-/// - `fork()`, `switch(id)` are requests that take effect at the end of the
-///   current step (a safe point): the control stack and the state bag are
-///   persistent, so cloning a fork is O(1). When no step is running (for
-///   example in `init` code before the scheduler starts) they take effect
-///   immediately. `kill(id)` is immediate for other forks and deferred (the
-///   upstream "death row") for the current one.
-/// - consequently the host code that follows a `fork()`/`switch()` call in
-///   the same callback runs once, in the machine that issued the request
-///   (upstream would run it in the child, and later again in the parent).
-///   This is the main behavioral divergence from upstream.
-/// - host code that must run "after" a fork or a switch in both/one of the
-///   resulting machines is passed as the `then` continuation: it is pushed
-///   onto the control stack *before* cloning, so after `fork(then=k)` both
-///   the parent and the child run `k` when they are resumed (compare
-///   `Machine.current` with the parent id inside `k`), exactly as the
-///   upstream `fork () >>= k`.
+///   Executing one frame is a *step*. The interpreter steps are: entering a
+///   term (subroutine, block, phi, def, jump), evaluating its body and
+///   leaving it, performing the taken jump of a block, returning from a
+///   subroutine and continuing after a call returns. Every `enter-*` and
+///   `leave-*` observation (including `enter-pos`/`leave-pos`) is posted at
+///   the end of a step, so it is an exact suspension point.
+/// - `fork()` and `switch(id)` are requests that take effect at the end of
+///   the current step (a safe point); when no step is running they take
+///   effect immediately. The control stack and the state bag are
+///   persistent, so cloning a fork is O(1) (states with a `clone` policy
+///   are copied, see `State`). `kill(id)` is immediate for other forks and
+///   deferred (the upstream "death row") for the current one.
+/// - when an observer of a term-boundary observation requests a fork or a
+///   switch, the remaining observers of that event are saved in a dispatch
+///   frame and run when the machine is resumed (in both machines after a
+///   fork), exactly like the upstream continuation of the observation.
+/// - host code that follows a `fork()`/`switch()` call *in the same
+///   callback* still runs once, in the machine that issued the request.
+///   Code that must run "after" the fork or the switch is passed as the
+///   `then` continuation (or pushed as frames): it is pushed onto the
+///   control stack *before* cloning, so after `fork(then=k)` both the
+///   parent and the child run `k` when they are resumed (compare
+///   `Machine::current` with the parent id inside `k`), exactly as the
+///   upstream `fork () >>= k`. Requests issued after a transferring
+///   request by the same machine are re-issued when that machine resumes.
 ///
 /// Mapping of the upstream API (`Machine.S`) to MoonBit:
 ///
@@ -58,21 +63,22 @@
 /// | `Machine.Global.get s`           | `m.get_global(s)`                    |
 /// | `Machine.Other.get id s`         | `m.get_other(id, s)`                 |
 /// | `Machine.raise exn`              | `m.raise_exn(exn)`                   |
-/// | `Machine.catch x h`              | MoonBit `try ... catch`              |
+/// | `Machine.catch x h`              | `try ... catch`, or `m.push_handler` |
 /// | `Machine.Observation.observe`    | `m.observe(obs, f)`                  |
 /// | `Machine.Observation.make`       | `m.make(stmt, x)`                    |
 /// | `Machine.Observation.post`       | `m.post(stmt, () => x)`              |
 /// | `Machine.project`/`put`/`update` | `m.project()`/`set_project`/`update_project` |
 /// | `Machine.args` / `envp`          | `m.args()` / `m.envp()`              |
 /// | `Machine.lift`                   | not needed (host code is direct)     |
+/// | `x >>= k` (in host code)         | `m.call(..., then=k)`, `m.schedule`  |
 ///
 /// Synchronous helpers such as `Linker::exec`, `Interpreter::sub` or
 /// `Interpreter::exp` run interpreted code to completion in a *nested*
 /// scheduler loop; fork/switch requests issued inside a nested run are
-/// deferred until the enclosing top-level step completes. Use the
-/// `schedule*` functions (`Machine::schedule`, `Linker::schedule_exec`,
-/// `Interpreter::schedule_sub`) to run code at the top level, where it can
-/// be forked at every step.
+/// deferred until the enclosing top-level step completes. Code that must
+/// be forkable at every step uses the frame API instead (`Machine::call`,
+/// `Machine::schedule`, `Linker::schedule_exec`,
+/// `Interpreter::schedule_sub`).
 pub struct Machine {
   priv mut proj : @project.Project
   priv args : Array[String]
@@ -88,27 +94,34 @@ pub struct Machine {
   priv mut restricted : Bool
   priv deathrow : Array[Int]
   priv pending : Array[Pending]
+  priv mut applying : Bool
   priv mut depth : Int
+  priv mut nested : Int
+  priv deferred : Array[Frame]
   priv mut last_value : Int64
   priv mut last_barrier : Int
 }
 
 ///|
-/// A fork: its identifier, its local state bag and its control stack.
+/// A fork: its identifier, its local state bag, its result register, the
+/// arguments of the innermost call and its control stack.
 priv struct Proc {
   id : Int
   mut locals : Bag
   mut stack : Stack
+  mut result : Value?
+  mut call_args : Array[Value]
 }
 
 ///|
-priv enum Stack {
-  Nil
-  Cons(Frame, Stack)
+/// A fork or switch request together with the machine that issued it.
+priv struct Pending {
+  issuer : Int
+  op : PendingOp
 }
 
 ///|
-priv enum Pending {
+priv enum PendingOp {
   Fork(((Machine) -> Unit raise)?)
   Switch(Id, ((Machine) -> Unit raise)?)
 }
@@ -145,7 +158,13 @@ pub fn Machine::new(
     proj,
     args,
     envp,
-    current: { id: 0, locals: Bag::empty(), stack: Nil, },
+    current: {
+      id: 0,
+      locals: Bag::empty(),
+      stack: Nil,
+      result: None,
+      call_args: [],
+    },
     procs: {},
     parents: {},
     global: Bag::empty(),
@@ -156,7 +175,10 @@ pub fn Machine::new(
     restricted: true,
     deathrow: [],
     pending: [],
+    applying: false,
     depth: 0,
+    nested: 0,
+    deferred: [],
     last_value: 0L,
     last_barrier: 0,
   }
@@ -268,7 +290,9 @@ fn Machine::find_proc(self : Machine, id : Id) -> Proc? {
 }
 
 ///|
-/// Reads the locals state of another (live) machine (`Machine.Other.get`).
+/// Reads the local state of another (live) machine (`Machine.Other.get`).
+/// Schedulers use it to inspect suspended forks, e.g. their position with
+/// `Interpreter::pos_of`.
 pub fn[T] Machine::get_other(
   self : Machine,
   id : Id,
@@ -282,7 +306,7 @@ pub fn[T] Machine::get_other(
 }
 
 ///|
-/// Writes the locals state of another (live) machine (`Machine.Other.put`).
+/// Writes the local state of another (live) machine (`Machine.Other.put`).
 pub fn[T] Machine::put_other(
   self : Machine,
   id : Id,
@@ -301,162 +325,6 @@ pub fn[T] Machine::update_other(
   f : (T) -> T,
 ) -> Unit raise {
   self.put_other(id, state, f(self.get_other(id, state)))
-}
-
-// ---------------------------------------------------------------------------
-// Observations
-
-///|
-/// Subscribes to an observation and returns the subscription handle
-/// (`Machine.Observation.subscribe`). Observers subscribed later are called
-/// earlier, as upstream.
-pub fn[T] Machine::subscribe(
-  self : Machine,
-  obs : Observation[T],
-  f : (T) -> Unit raise,
-) -> Subscription {
-  self.last_sub += 1
-  let id = self.last_sub
-  let slot = obs.slot
-  let run = fn() raise {
-    guard slot.val is Some(x) else { return }
-    f(x)
-  }
-  let subs = match self.observers.get(obs.key) {
-    Some(xs) => [..xs, (id, run)]
-    None => [(id, run)]
-  }
-  self.observers[obs.key] = subs
-  obs.provider.observers += 1
-  { key: obs.key, id, watcher: false, }
-}
-
-///|
-/// Subscribes to an observation (`Machine.Observation.observe`, `>>>`).
-pub fn[T] Machine::observe(
-  self : Machine,
-  obs : Observation[T],
-  f : (T) -> Unit raise,
-) -> Unit {
-  ignore(self.subscribe(obs, f))
-}
-
-///|
-/// Watches a provider: the observer receives the inspected (S-expression)
-/// representation of every observed value (`Machine.Observation.watch`).
-/// Watchers are called after the typed observers.
-pub fn Machine::watch(
-  self : Machine,
-  provider : Provider,
-  f : (Sexp) -> Unit raise,
-) -> Subscription {
-  self.last_sub += 1
-  let id = self.last_sub
-  let subs = match self.watchers.get(provider.key) {
-    Some(xs) => [..xs, (id, f)]
-    None => [(id, f)]
-  }
-  self.watchers[provider.key] = subs
-  provider.observers += 1
-  { key: provider.key, id, watcher: true, }
-}
-
-///|
-/// Cancels a subscription (`Machine.Observation.cancel`).
-pub fn Machine::cancel(self : Machine, sub : Subscription) -> Unit {
-  if sub.watcher {
-    if self.watchers.get(sub.key) is Some(xs) {
-      self.watchers[sub.key] = xs.filter(x => x.0 != sub.id)
-    }
-  } else if self.observers.get(sub.key) is Some(xs) {
-    self.observers[sub.key] = xs.filter(x => x.0 != sub.id)
-  }
-}
-
-///|
-fn[T] Machine::has_observers(self : Machine, obs : Observation[T]) -> Bool {
-  (self.observers.get(obs.key) is Some(xs) && !xs.is_empty()) ||
-  (self.watchers.get(obs.key) is Some(ws) && !ws.is_empty()) ||
-  !obs.provider.listeners.is_empty()
-}
-
-///|
-fn[T] Machine::notify(
-  self : Machine,
-  obs : Observation[T],
-  x : T,
-) -> Unit raise {
-  let p = obs.provider
-  p.triggers += 1
-  let os = self.observers.get(obs.key).unwrap_or([])
-  let ws = self.watchers.get(obs.key).unwrap_or([])
-  if !ws.is_empty() || !p.listeners.is_empty() {
-    let sexp = (obs.inspect)(x)
-    for l in p.listeners {
-      l(sexp)
-    }
-    for i = os.length() - 1; i >= 0; i = i - 1 {
-      obs.slot.val = Some(x)
-      (os[i].1)()
-    }
-    for i = ws.length() - 1; i >= 0; i = i - 1 {
-      (ws[i].1)(sexp)
-    }
-  } else {
-    for i = os.length() - 1; i >= 0; i = i - 1 {
-      obs.slot.val = Some(x)
-      (os[i].1)()
-    }
-  }
-  obs.slot.val = None
-}
-
-///|
-/// Posts an observation (`Machine.Observation.make`). Observations are
-/// suppressed in the restricted mode.
-pub fn[T] Machine::make(
-  self : Machine,
-  stmt : Statement[T],
-  x : T,
-) -> Unit raise {
-  if !self.restricted {
-    self.notify(stmt.obs, x)
-  }
-}
-
-///|
-/// Posts an observation whose value is computed only when somebody
-/// observes it (`Machine.Observation.post`).
-pub fn[T] Machine::post(
-  self : Machine,
-  stmt : Statement[T],
-  f : () -> T raise,
-) -> Unit raise {
-  if self.restricted {
-    return
-  }
-  let obs = stmt.obs
-  if self.has_observers(obs) {
-    self.notify(obs, f())
-  } else {
-    obs.provider.triggers += 1
-  }
-}
-
-///|
-fn[T] Machine::make_even_if_restricted(
-  self : Machine,
-  stmt : Statement[T],
-  x : T,
-) -> Unit raise {
-  self.notify(stmt.obs, x)
-}
-
-///|
-/// Notifies `exn_raised` and raises the exception (`Machine.raise`).
-pub fn[T] Machine::raise_exn(self : Machine, exn : Error) -> T raise {
-  self.make(exn_raised_stmt, exn)
-  raise exn
 }
 
 // ---------------------------------------------------------------------------
@@ -534,20 +402,11 @@ pub fn Machine::parent(self : Machine) -> Id {
 }
 
 ///|
-fn Machine::push(self : Machine, frame : Frame) -> Unit {
-  self.current.stack = Cons(frame, self.current.stack)
-}
-
-///|
-/// Pushes a host task onto the control stack of the current machine. The
-/// task is executed as a separate step by the scheduler, after the current
-/// step; tasks follow the stack discipline (the last scheduled task runs
-/// first).
-pub fn Machine::schedule(
-  self : Machine,
-  task : (Machine) -> Unit raise,
-) -> Unit {
-  self.push(Task(task))
+fn Machine::request(self : Machine, op : PendingOp) -> Unit raise {
+  self.pending.push({ issuer: self.current.id, op, })
+  if self.depth == 0 {
+    self.apply_pending()
+  }
 }
 
 ///|
@@ -566,17 +425,15 @@ pub fn Machine::fork(
   if self.restricted {
     raise Restricted("fork")
   }
-  self.pending.push(Fork(then))
-  if self.depth == 0 {
-    self.apply_pending()
-  }
+  self.request(Fork(then))
 }
 
 ///|
 /// Switches to the machine `id` (`Machine.switch`). The switch happens at
 /// the end of the current step (immediately if no step is running). The
 /// optional `then` continuation is pushed onto the control stack of the
-/// machine being suspended and runs when it is resumed.
+/// machine being suspended and runs when it is resumed. Switching to a
+/// machine that is not alive raises `DeadMachine` in the issuing machine.
 pub fn Machine::switch(
   self : Machine,
   id : Id,
@@ -585,10 +442,7 @@ pub fn Machine::switch(
   if self.restricted {
     raise Restricted("switch")
   }
-  self.pending.push(Switch(id, then))
-  if self.depth == 0 {
-    self.apply_pending()
-  }
+  self.request(Switch(id, then))
 }
 
 ///|
@@ -657,6 +511,46 @@ fn Machine::snapshot(self : Machine) -> Proc {
     id: self.current.id,
     locals: self.current.locals,
     stack: self.current.stack,
+    result: self.current.result,
+    call_args: self.current.call_args,
+  }
+}
+
+///|
+/// Pushes the continuation of the issuer of a transferring request: the
+/// requests it issued after this one (re-issued when it is resumed) and
+/// the `then` continuation of the request itself (on top).
+fn Machine::push_continuation(
+  self : Machine,
+  issuer : Int,
+  then : ((Machine) -> Unit raise)?,
+) -> Unit {
+  let rest = []
+  let keep = []
+  for r in self.pending {
+    if r.issuer == issuer {
+      rest.push(r.op)
+    } else {
+      keep.push(r)
+    }
+  }
+  if !rest.is_empty() {
+    self.pending.clear()
+    self.pending.append(keep)
+    self.push(Task(m => reissue(m, rest)))
+  }
+  if then is Some(k) {
+    self.push(Task(k))
+  }
+}
+
+///|
+fn reissue(m : Machine, ops : Array[PendingOp]) -> Unit raise {
+  for op in ops {
+    match op {
+      Fork(then) => m.fork(then?)
+      Switch(id, then) => m.switch(id, then?)
+    }
   }
 }
 
@@ -665,17 +559,15 @@ fn Machine::do_fork(
   self : Machine,
   then : ((Machine) -> Unit raise)?,
 ) -> Unit raise {
-  if then is Some(k) {
-    self.push(Task(k))
-  }
   let pid = self.current.id
+  self.push_continuation(pid, then)
   self.last_id += 1
   let child = self.last_id
   self.procs[pid] = self.snapshot()
   self.current = {
+    ..self.snapshot(),
     id: child,
-    locals: self.current.locals,
-    stack: self.current.stack,
+    locals: self.current.locals.fork(),
   }
   self.parents[child] = pid
   self.execute_sentenced()
@@ -692,9 +584,7 @@ fn Machine::do_switch(
   if id.0 != pid && !self.procs.contains(id.0) {
     raise DeadMachine(id)
   }
-  if then is Some(k) {
-    self.push(Task(k))
-  }
+  self.push_continuation(pid, then)
   if id.0 != pid {
     let next = self.procs.get(id.0).unwrap()
     self.procs[pid] = self.snapshot()
@@ -706,182 +596,29 @@ fn Machine::do_switch(
 }
 
 ///|
+/// Applies the pending requests in order. Each request is applied on
+/// behalf of the machine that issued it: requests of a suspended issuer
+/// are re-issued when it resumes, requests of dead machines are dropped.
+/// The function is not reentrant: requests issued by `machine_fork` and
+/// `machine_switch` observers are appended and handled by the same loop.
 fn Machine::apply_pending(self : Machine) -> Unit raise {
+  if self.applying {
+    return
+  }
+  self.applying = true
+  defer {
+    self.applying = false
+  }
   while !self.pending.is_empty() {
-    match self.pending.remove(0) {
-      Fork(then) => self.do_fork(then)
-      Switch(id, then) => self.do_switch(id, then)
-    }
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Scheduler
-
-///|
-/// Runs the top-level scheduler loop: executes steps of the current
-/// machine until its control stack is empty. Pending fork/switch requests
-/// are applied after each step. If a step raises, the fork/switch requests
-/// issued during that step are dropped, the control stack of the current
-/// machine is discarded (its continuation is aborted, as upstream) and the
-/// exception is propagated.
-fn Machine::drive(self : Machine) -> Unit raise {
-  while self.current.stack is Cons(frame, rest) {
-    self.current.stack = rest
-    self.depth += 1
-    {
-      errdefer {
-        self.depth -= 1
-        self.pending.clear()
-        self.current.stack = Nil
+    let req = self.pending.remove(0)
+    if req.issuer == self.current.id {
+      match req.op {
+        Fork(then) => self.do_fork(then)
+        Switch(id, then) => self.do_switch(id, then)
       }
-      self.exec_frame(frame)
+    } else if self.procs.get(req.issuer) is Some(p) {
+      p.stack = Cons(Task(m => reissue(m, [req.op])), p.stack)
     }
-    self.depth -= 1
-    if self.depth == 0 {
-      self.apply_pending()
-    }
-  }
-}
-
-///|
-/// Runs frames pushed by `push` until they are consumed (a nested,
-/// synchronous run). Used by synchronous APIs like `Linker::exec`.
-fn Machine::run_nested(self : Machine, push : () -> Unit raise) -> Unit raise {
-  self.last_barrier += 1
-  let marker = self.last_barrier
-  self.push(Barrier(marker))
-  self.depth += 1
-  let unwind = fn() {
-    for ;; {
-      match self.current.stack {
-        Cons(Barrier(k), rest) if k == marker => {
-          self.current.stack = rest
-          break
-        }
-        Cons(_, rest) => self.current.stack = rest
-        Nil => break
-      }
-    }
-    self.depth -= 1
-  }
-  errdefer unwind()
-  push()
-  for ;; {
-    match self.current.stack {
-      Cons(Barrier(k), rest) if k == marker => {
-        self.current.stack = rest
-        break
-      }
-      Cons(frame, rest) => {
-        self.current.stack = rest
-        self.exec_frame(frame)
-      }
-      Nil => break
-    }
-  }
-  self.depth -= 1
-  if self.depth == 0 {
-    self.apply_pending()
-  }
-}
-
-///|
-/// Runs host code as a step (used for `init` and `fini`).
-fn Machine::host_step(
-  self : Machine,
-  f : (Machine) -> Unit raise,
-) -> Unit raise {
-  self.depth += 1
-  {
-    errdefer {
-      self.depth -= 1
-      if self.depth == 0 {
-        self.pending.clear()
-      }
-    }
-    f(self)
-  }
-  self.depth -= 1
-  if self.depth == 0 {
-    self.apply_pending()
-  }
-}
-
-///|
-/// Runs a machine (upstream `Machine.run`).
-///
-/// - `boot` is run in the restricted mode (observations are dropped);
-/// - `init` is run after the restriction is lifted;
-/// - `start` is scheduled as the first task of the global machine, after
-///   `system_start` is posted with `system`;
-/// - the scheduler runs the current machine to completion; when it
-///   finishes (normally or with an exception) `fini` is run; if `fini` (for
-///   example a scheduler component observing `system_fini`) switched to
-///   another live machine with a non-empty control stack, the scheduler
-///   continues with that machine, otherwise `system_stop` is posted in the
-///   restricted mode and the result is returned.
-///
-/// Returns the exit status of the last finished machine and the (possibly
-/// updated) project.
-pub fn Machine::run(
-  proj : @project.Project,
-  start? : (Machine) -> Unit raise = _ => (),
-  boot? : (Machine) -> Unit raise = _ => (),
-  init? : (Machine) -> Unit raise = _ => (),
-  fini? : (Machine) -> Unit raise = _ => (),
-  system? : String = "primus",
-  args? : Array[String] = [],
-  envp? : Array[String] = [],
-) -> (ExitStatus, @project.Project) {
-  let m = Machine::new(proj, args~, envp~)
-  m.run_with(start~, boot~, init~, fini~, system~)
-}
-
-///|
-/// Runs an already created machine (see `Machine::run`).
-pub fn Machine::run_with(
-  self : Machine,
-  start? : (Machine) -> Unit raise = _ => (),
-  boot? : (Machine) -> Unit raise = _ => (),
-  init? : (Machine) -> Unit raise = _ => (),
-  fini? : (Machine) -> Unit raise = _ => (),
-  system? : String = "primus",
-) -> (ExitStatus, @project.Project) {
-  let m = self
-  m.restricted = true
-  try {
-    m.host_step(boot)
-    m.restricted = false
-    m.host_step(init)
-  } catch {
-    e => return (Exn(e), m.proj)
-  }
-  m.push(
-    Task(m => {
-      m.make(started_stmt, system)
-      start(m)
-    }),
-  )
-  for ;; {
-    let status : ExitStatus = try m.drive() catch {
-      e => Exn(e)
-    } noraise {
-      _ => Normal
-    }
-    let final_status = try m.host_step(fini) catch {
-      e => Exn(e)
-    } noraise {
-      _ => status
-    }
-    if m.current.stack is Cons(_, _) {
-      continue
-    }
-    m.restricted = true
-    m.make_even_if_restricted(stopped_stmt, system) catch {
-      e => return (Exn(e), m.proj)
-    }
-    return (final_status, m.proj)
   }
 }
 

@@ -65,7 +65,7 @@ fn lift_insn(
   addr? : UInt64 = 0,
   raw? : UInt,
 ) -> Array[@types.Stmt] raise {
-  @arm.lift(@mc.Insn::create(name, ops, addr~), raw?)
+  @arm.lift(@mc.Insn::create(name, ops, addr~, size=4), raw?)
 }
 
 ///|
@@ -82,8 +82,8 @@ fn lift_str(
 fn lift_error(name : String, ops : Array[@mc.Op]) -> String {
   try lift_insn(name, ops) catch {
     @mc.LiftError::Failure(msg) => "Failure: " + msg
-    @mc.LiftError::BadOperands(msg) => "BadOperands: " + msg
-    @mc.LiftError::Unsupported(msg) => "Unsupported: " + msg
+    @mc.LiftError::BadOperands(detail~, ..) => "BadOperands: " + detail
+    @mc.LiftError::Unsupported(opcode~, ..) => "Unsupported: " + opcode
     err => "other: \{err}"
   } noraise {
     stmts => "unexpected success:\n" + render(stmts)

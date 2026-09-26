@@ -49,7 +49,12 @@ test "T32 immediates are not re-decoded" {
       #|R0:imm32 := 0x4FF:32u
     ),
   )
-  let insn = @mc.Insn::create("MOVi", [r("R0"), i(0x4FF), ..al, r("Nil")])
+  let insn = @mc.Insn::create(
+    "MOVi",
+    [r("R0"), i(0x4FF), ..al, r("Nil")],
+    addr=0,
+    size=4,
+  )
   inspect(
     render(@arm.lift(insn, encoding=T32)),
     content=(

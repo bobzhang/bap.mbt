@@ -1,5 +1,6 @@
 import {
   "bobzhang/bap/bitvec",
+  "bobzhang/bap/core_theory",
   "bobzhang/bap/mc",
   "bobzhang/bap/types",
 }

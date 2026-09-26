@@ -2,44 +2,91 @@
 
 ///|
 test "register with mc" {
-  @powerpc.register()
-  @powerpc.register()
-  let targets = @mc.lifter_targets()
-  assert_true(targets.contains("ppc"))
-  assert_true(targets.contains("ppc64"))
-  assert_true(targets.contains("ppc64le"))
-  let insn = @mc.Insn::create("ADD4", [reg("R11"), reg("R2"), reg("R11")])
+  let registry = @mc.Registry::new()
+  @powerpc.register(registry~)
+  @powerpc.register(registry~)
+  assert_eq(registry.names(), [@powerpc.provider_name])
+  let insn = @mc.Insn::create(
+    "ADD4",
+    [reg("R11"), reg("R2"), reg("R11")],
+    addr=0,
+    size=4,
+  )
+  let lift = (target : @core_theory.Target) => {
+    registry.lift(@mc.Context::create(target), insn).bil
+    .map(s => s.to_string())
+    .join("\n")
+  }
   inspect(
-    @mc.lift("ppc", insn).map(s => s.to_string()).join("\n"),
+    lift(@core_theory.Target::powerpc()),
     content="R11:imm32 := (R2:imm32 + R11:imm32)",
   )
   inspect(
-    @mc.lift("ppc64", insn).map(s => s.to_string()).join("\n"),
+    lift(@core_theory.Target::powerpc64()),
     content="R11:imm64 := (R2:imm64 + R11:imm64)",
   )
+  inspect(
+    lift(@core_theory.Target::powerpc64le()),
+    content="R11:imm64 := (R2:imm64 + R11:imm64)",
+  )
+  assert_true(
+    @powerpc.mode_of_context(
+      @mc.Context::create(@core_theory.Target::powerpc64le()),
+    )
+    is (R64, LittleEndian),
+  )
+  assert_true(
+    @powerpc.mode_of_context(
+      @mc.Context::create(@core_theory.Target::powerpc()),
+    )
+    is (R32, BigEndian),
+  )
+  // other families are rejected, unknown opcodes are `Unsupported`
+  assert_false(
+    @powerpc.accepts(@mc.Context::create(@core_theory.Target::mips())),
+  )
+  let ctx = @mc.Context::create(@core_theory.Target::powerpc())
+  try
+    @powerpc.provider().lift(ctx, @mc.Insn::create("FADD", [], addr=0, size=4))
+  catch {
+    err => assert_true(err is Unsupported(opcode="FADD", ..))
+  } noraise {
+    _ => fail("expected an unsupported instruction")
+  }
 }
 
 ///|
 test "unsupported and malformed instructions" {
-  try @powerpc.lift32(@mc.Insn::create("FADD", [])) catch {
-    err => assert_true(err is Unsupported("FADD"))
+  try @powerpc.lift32(@mc.Insn::create("FADD", [], addr=0, size=4)) catch {
+    err => assert_true(err is Unsupported(opcode="FADD", ..))
   } noraise {
     _ => fail("expected an unsupported instruction")
   }
-  try @powerpc.lift32(@mc.Insn::create("ADD4", [reg("R1")])) catch {
-    err => assert_true(err is BadOperands("ADD4"))
+  try
+    @powerpc.lift32(@mc.Insn::create("ADD4", [reg("R1")], addr=0, size=4))
+  catch {
+    err => assert_true(err is BadOperands(opcode="ADD4", ..))
   } noraise {
     _ => fail("expected bad operands")
   }
   try
-    @powerpc.lift32(@mc.Insn::create("ADDI", [reg("R1"), reg("R1"), reg("R2")]))
+    @powerpc.lift32(
+      @mc.Insn::create(
+        "ADDI",
+        [reg("R1"), reg("R1"), reg("R2")],
+        addr=0,
+        size=4,
+      ),
+    )
   catch {
     err => assert_true(err is Failure(_))
   } noraise {
     _ => fail("expected an imm operand failure")
   }
   try
-    @powerpc.lift32(@mc.Insn::create("ADD4", [imm(1), reg("R1"), reg("R2")]))
+    @powerpc.lift32(
+      @mc.Insn::create("ADD4", [imm(1), reg("R1"), reg("R2")], addr=0, size=4),
+    )
   catch {
     err => assert_true(err is Failure(_))
   } noraise {
@@ -69,7 +116,9 @@ test "custom lifters can be registered" {
     "TEST_NOP_PPC",
     @powerpc.infallible((_, _) => [@powerpc.message("test")]),
   )
-  let bil = @powerpc.lift32(@mc.Insn::create("TEST_NOP_PPC", []))
+  let bil = @powerpc.lift32(
+    @mc.Insn::create("TEST_NOP_PPC", [], addr=0, size=4),
+  )
   inspect(
     bil.map(s => s.to_string()).join("\n"),
     content=(
@@ -148,7 +197,12 @@ test "cpu view" {
 
 ///|
 test "little endian loads" {
-  let insn = @mc.Insn::create("LWZ", [reg("R9"), imm(4), reg("R1")])
+  let insn = @mc.Insn::create(
+    "LWZ",
+    [reg("R9"), imm(4), reg("R1")],
+    addr=0,
+    size=4,
+  )
   let endian_of = (bil : Array[@types.Stmt]) => {
     match @types.find_exp(bil, e => e is Load(..)) {
       Some(Load(endian~, ..)) => Some(endian)

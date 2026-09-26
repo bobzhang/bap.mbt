@@ -1,0 +1,13 @@
+import {
+  "bobzhang/bap/native_io",
+  "moonbitlang/core/encoding/utf8",
+}
+
+options(
+  "native-stub": [ "recipe_fs.c" ],
+  targets: {
+    "fs_native.mbt": [ "native" ],
+    "fs_stub.mbt": [ "wasm", "wasm-gc", "js", "llvm" ],
+    "recipe_native_test.mbt": [ "native" ],
+  },
+)

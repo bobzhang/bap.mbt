@@ -290,7 +290,6 @@ test "bap specification" {
       #|(symbol-chunk 4198414 3 4198414)
       #|
       #|
-
     ),
   )
 }

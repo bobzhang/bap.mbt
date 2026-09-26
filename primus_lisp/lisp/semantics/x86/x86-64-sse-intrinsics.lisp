@@ -5,6 +5,10 @@
 
 (in-package x86-64)
 
+;; port: the memory operands (base, scale, index, displacement, segment)
+;; address `base + scale * index + displacement` (upstream ignores the
+;; index register); a missing index register reads as zero.
+
 (defconstant +rne+ 0)
 (defconstant +rtn+ 1)
 (defconstant +rtp+ 2)
@@ -16,59 +20,69 @@
 
 (defparameter *sse-format* 'ieee754_binary)
 
-(defun ADDSDrm_Int (rd rn ptr _ _ off _)
-  (fp-binary 'fadd 64 rd rn ptr off))
+(defun ADDSDrm_Int (rd rn ptr scale index disp _)
+  (let ((off (+ disp (* scale index))))
+    (fp-binary 'fadd 64 rd rn ptr off)))
 
 (defun ADDSDrr_Int (rd rn rm)
   (fp-binary 'fadd 64 rd rn rm))
 
-(defun ADDSSrm_Int (rd rn ptr _ _ off _)
-  (fp-binary 'fadd 32 rd rn ptr off))
+(defun ADDSSrm_Int (rd rn ptr scale index disp _)
+  (let ((off (+ disp (* scale index))))
+    (fp-binary 'fadd 32 rd rn ptr off)))
 
 (defun ADDSSrr_Int (rd rn rm)
   (fp-binary 'fadd 32 rd rn rm))
 
-(defun SUBSDrm_Int (rd rn ptr _ _ off _)
-  (fp-binary 'fsub 64 rd rn ptr off))
+(defun SUBSDrm_Int (rd rn ptr scale index disp _)
+  (let ((off (+ disp (* scale index))))
+    (fp-binary 'fsub 64 rd rn ptr off)))
 
 (defun SUBSDrr_Int (rd rn rm)
   (fp-binary 'fsub 64 rd rn rm))
 
-(defun SUBSSrm_Int (rd rn ptr _ _ off _)
-  (fp-binary 'fsub 32 rd rn ptr off))
+(defun SUBSSrm_Int (rd rn ptr scale index disp _)
+  (let ((off (+ disp (* scale index))))
+    (fp-binary 'fsub 32 rd rn ptr off)))
 
 (defun SUBSSrr_Int (rd rn rm)
   (fp-binary 'fsub 32 rd rn rm))
 
-(defun MULSDrm_Int (rd rn ptr _ _ off _)
-  (fp-binary 'fmul 64 rd rn ptr off))
+(defun MULSDrm_Int (rd rn ptr scale index disp _)
+  (let ((off (+ disp (* scale index))))
+    (fp-binary 'fmul 64 rd rn ptr off)))
 
 (defun MULSDrr_Int (rd rn rm)
   (fp-binary 'fmul 64 rd rn rm))
 
-(defun MULSSrm_Int (rd rn ptr _ _ off _)
-  (fp-binary 'fmul 32 rd rn ptr off))
+(defun MULSSrm_Int (rd rn ptr scale index disp _)
+  (let ((off (+ disp (* scale index))))
+    (fp-binary 'fmul 32 rd rn ptr off)))
 
 (defun MULSSrr_Int (rd rn rm)
   (fp-binary 'fmul 32 rd rn rm))
 
-(defun DIVSDrm_Int (rd rn ptr _ _ off _)
-  (fp-binary 'fdiv 64 rd rn ptr off))
+(defun DIVSDrm_Int (rd rn ptr scale index disp _)
+  (let ((off (+ disp (* scale index))))
+    (fp-binary 'fdiv 64 rd rn ptr off)))
 
 (defun DIVSDrr_Int (rd rn rm)
   (fp-binary 'fdiv 64 rd rn rm))
 
-(defun DIVSSrm_Int (rd rn ptr _ _ off _)
-  (fp-binary 'fdiv 32 rd rn ptr off))
+(defun DIVSSrm_Int (rd rn ptr scale index disp _)
+  (let ((off (+ disp (* scale index))))
+    (fp-binary 'fdiv 32 rd rn ptr off)))
 
 (defun DIVSSrr_Int (rd rn rm)
   (fp-binary 'fdiv 32 rd rn rm))
 
-(defun UCOMISDrm (rn ptr _ _ off _)
-  (fp-compare 64 rn ptr off))
+(defun UCOMISDrm (rn ptr scale index disp _)
+  (let ((off (+ disp (* scale index))))
+    (fp-compare 64 rn ptr off)))
 
-(defun UCOMISSrm (rn ptr _ _ off _)
-  (fp-compare 32 rn ptr off))
+(defun UCOMISSrm (rn ptr scale index disp _)
+  (let ((off (+ disp (* scale index))))
+    (fp-compare 32 rn ptr off)))
 
 (defun UCOMISDrr (rn rm)
   (fp-compare 64 rn rm))
@@ -79,76 +93,89 @@
 (defun CVTSI642SDrr_Int (dst _ src)
   (set-sse dst (sse-convert 'cast_sfloat 64 64 src)))
 
-(defun CVTSI642SDrm_Int (dst _ ptr _ _ off _)
-  (set-sse dst (sse-convert 'cast_sfloat 64 64 (load-mem ptr off))))
+(defun CVTSI642SDrm_Int (dst _ ptr scale index disp _)
+  (let ((off (+ disp (* scale index))))
+    (set-sse dst (sse-convert 'cast_sfloat 64 64 (load-mem ptr off)))))
 
 (defun CVTSI642SSrr_Int (dst _ src)
   (set-sse dst (sse-convert 'cast_sfloat 64 32 src)))
 
-(defun CVTSI642SSrm_Int (dst _ ptr _ _ off _)
-  (set-sse dst (sse-convert 'cast_sfloat 64 32 (load-mem ptr off))))
+(defun CVTSI642SSrm_Int (dst _ ptr scale index disp _)
+  (let ((off (+ disp (* scale index))))
+    (set-sse dst (sse-convert 'cast_sfloat 64 32 (load-mem ptr off)))))
 
 (defun CVTTSS2SI64rr_Int (dst src)
   (set-sse dst (sse-convert 'cast_sint 64 32 src)))
 
-(defun CVTTSS2SI64rm_Int (dst _ ptr _ _ off _)
-  (set-sse dst (sse-convert 'cast_sint 64 32 (load-mem ptr off))))
+(defun CVTTSS2SI64rm_Int (dst _ ptr scale index disp _)
+  (let ((off (+ disp (* scale index))))
+    (set-sse dst (sse-convert 'cast_sint 64 32 (load-mem ptr off)))))
 
 (defun CVTTSS2SIrr_Int (dst src)
   (set-sse dst (sse-convert 'cast_sint 32 32 src)))
 
-(defun CVTTSS2SIrm_Int (dst _ ptr _ _ off _)
-  (set-sse dst (sse-convert 'cast_sint 32 32 (load-mem ptr off))))
+(defun CVTTSS2SIrm_Int (dst _ ptr scale index disp _)
+  (let ((off (+ disp (* scale index))))
+    (set-sse dst (sse-convert 'cast_sint 32 32 (load-mem ptr off)))))
 
 (defun CVTSS2SI64rr_Int (dst src)
   (set-sse dst (sse-convert 'cast_sint 64 32 src)))
 
-(defun CVTSS2SI64rm_Int (dst _ ptr _ _ off _)
-  (set-sse dst (sse-convert 'cast_sint 64 32 (load-mem ptr off))))
+(defun CVTSS2SI64rm_Int (dst _ ptr scale index disp _)
+  (let ((off (+ disp (* scale index))))
+    (set-sse dst (sse-convert 'cast_sint 64 32 (load-mem ptr off)))))
 
 (defun CVTSS2SIrr_Int (dst src)
   (set-sse dst (sse-convert 'cast_sint 32 32 src)))
 
-(defun CVTSS2SIrm_Int (dst _ ptr _ _ off _)
-  (set-sse dst (sse-convert 'cast_sint 32 32 (load-mem ptr off))))
+(defun CVTSS2SIrm_Int (dst _ ptr scale index disp _)
+  (let ((off (+ disp (* scale index))))
+    (set-sse dst (sse-convert 'cast_sint 32 32 (load-mem ptr off)))))
 
 (defun CVTTSD2SI64rr_Int (dst src)
   (set-sse dst (sse-convert 'cast_sint 64 64 src)))
 
-(defun CVTTSD2SI64rm_Int (dst _ ptr _ _ off _)
-  (set-sse dst (sse-convert 'cast_sint 64 64 (load-mem ptr off))))
+(defun CVTTSD2SI64rm_Int (dst _ ptr scale index disp _)
+  (let ((off (+ disp (* scale index))))
+    (set-sse dst (sse-convert 'cast_sint 64 64 (load-mem ptr off)))))
 
 (defun CVTTSD2SIrr_Int (dst src)
   (set-sse dst (sse-convert 'cast_sint 32 64 src)))
 
-(defun CVTTSD2SIrm_Int (dst _ ptr _ _ off _)
-  (set-sse dst (sse-convert 'cast_sint 32 64 (load-mem ptr off))))
+(defun CVTTSD2SIrm_Int (dst _ ptr scale index disp _)
+  (let ((off (+ disp (* scale index))))
+    (set-sse dst (sse-convert 'cast_sint 32 64 (load-mem ptr off)))))
 
 (defun CVTSD2SI64rr_Int (dst src)
   (set-sse dst (sse-convert 'cast_sint 64 64 src)))
 
-(defun CVTSD2SI64rm_Int (dst _ ptr _ _ off _)
-  (set-sse dst (sse-convert 'cast_sint 64 64 (load-mem ptr off))))
+(defun CVTSD2SI64rm_Int (dst _ ptr scale index disp _)
+  (let ((off (+ disp (* scale index))))
+    (set-sse dst (sse-convert 'cast_sint 64 64 (load-mem ptr off)))))
 
 (defun CVTSD2SIrr_Int (dst src)
   (set-sse dst (sse-convert 'cast_sint 32 64 src)))
 
-(defun CVTSD2SIrm_Int (dst _ ptr _ _ off _)
-  (set-sse dst (sse-convert 'cast_sint 32 64 (load-mem ptr off))))
+(defun CVTSD2SIrm_Int (dst _ ptr scale index disp _)
+  (let ((off (+ disp (* scale index))))
+    (set-sse dst (sse-convert 'cast_sint 32 64 (load-mem ptr off)))))
 
 (defun CVTPS2PDrr (dst src)
   (let ((lo (sse-convert 'fconvert 64 32 (extract 31  0 src)))
         (hi (sse-convert 'fconvert 64 32 (extract 63 32 src))))
     (set-sse dst (concat hi lo))))
 
-(defun CVTSI2SSrm_Int (dst _ ptr _ _ off _)
-  (set-sse dst (sse-convert 'cast_sfloat 32 64 (load-mem ptr off))))
+(defun CVTSI2SSrm_Int (dst _ ptr scale index disp _)
+  (let ((off (+ disp (* scale index))))
+    (set-sse dst (sse-convert 'cast_sfloat 32 64 (load-mem ptr off)))))
 
-(defun CVTSI2SDrm_Int (dst _ ptr _ _ off _)
-  (set-sse dst (sse-convert 'cast_sfloat 64 64 (load-mem ptr off))))
+(defun CVTSI2SDrm_Int (dst _ ptr scale index disp _)
+  (let ((off (+ disp (* scale index))))
+    (set-sse dst (sse-convert 'cast_sfloat 64 64 (load-mem ptr off)))))
 
-(defun CVTSI2SSrr_Int (dst _ ptr _ _ off _)
-  (set-sse dst (sse-convert 'cast_sfloat 32 64 (load-mem ptr off))))
+(defun CVTSI2SSrr_Int (dst _ ptr scale index disp _)
+  (let ((off (+ disp (* scale index))))
+    (set-sse dst (sse-convert 'cast_sfloat 32 64 (load-mem ptr off)))))
 
 (defun CVTSI2SSrr_Int (dst _ src)
   (set-sse dst (sse-convert 'cast_sfloat 32 64 src)))
@@ -163,8 +190,9 @@
 (defun CVTSS2SDrr_Int (dst _ src)
   (set-sse dst (sse-convert 'fconvert 32 64 src)))
 
-(defun CVTSS2SDrm_Int (dst _ ptr _ _ off _)
-  (set-sse dst (sse-convert 'fconvert 32 64 (load-mem ptr off))))
+(defun CVTSS2SDrm_Int (dst _ ptr scale index disp _)
+  (let ((off (+ disp (* scale index))))
+    (set-sse dst (sse-convert 'fconvert 32 64 (load-mem ptr off)))))
 
 (defun MINSDrr_Int (rd rm rn)
   (set-sse rd (if (ieee754-forder 64 rm rn) rn rm)))

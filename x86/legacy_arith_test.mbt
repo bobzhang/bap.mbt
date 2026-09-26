@@ -155,9 +155,12 @@ test "legacy mul/imul/div/idiv" {
   // one-operand imul ebx: edx:eax = eax * ebx (signed)
   let o = exec32(b"\xf7\xeb", regs=[("EAX", 0xfffffffe), ("EBX", 3)])
   assert_eq((get_word(o, "EDX"), get_word(o, "EAX")), (0xffffffff, 0xfffffffa))
-  // upstream checks the high half against zero, so a negative result that
-  // fits in 32 bits still sets CF/OF (Intel: CF = OF = 0)
-  assert_eq((get_flag(o, "CF"), get_flag(o, "OF")), (1, 1))
+  // a negative result that fits in 32 bits clears CF/OF (upstream checked
+  // the high half against zero)
+  assert_eq((get_flag(o, "CF"), get_flag(o, "OF")), (0, 0))
+  // idiv ebx with a quotient beyond the signed range raises #DE
+  let o = exec32(b"\xf7\xfb", regs=[("EDX", 0), ("EAX", 0x80000000), ("EBX", 1)])
+  assert_eq(o.exn, Some(0))
   // div ebx: edx:eax / ebx
   let o = exec32(b"\xf7\xf3", regs=[("EDX", 1), ("EAX", 5), ("EBX", 2)])
   assert_eq((get_word(o, "EAX"), get_word(o, "EDX")), (0x80000002, 1))
@@ -185,11 +188,12 @@ test "legacy flag instructions" {
   // cld
   let o = exec64(b"\xfc", flag_bits=0b1000000)
   assert_eq(get_flag(o, "DF"), 0)
-  // lahf: AH = SF:ZF:0:AF:0:PF:1:CF with bits 5, 3 and 1 undefined upstream
+  // lahf: AH = SF:ZF:0:AF:0:PF:1:CF (upstream leaves bits 5, 3 and 1
+  // undefined)
   inspect(
     bil_text(lift32(b"\x9f")),
     content=(
-      #|EAX:imm32 := concat(extract[31:16](EAX:imm32), concat(concat(concat(concat(concat(concat(concat(concat(SF:imm1, ZF:imm1), unknown(Undefined RFLAGS bit 5:imm1)), AF:imm1), unknown(Undefined RFLAGS bit 3:imm1)), PF:imm1), unknown(Undefined RFLAGS bit 1:imm1)), CF:imm1), extract[7:0](EAX:imm32)))
+      #|EAX:imm32 := concat(extract[31:16](EAX:imm32), concat(concat(concat(concat(concat(concat(concat(concat(SF:imm1, ZF:imm1), 0:1u), AF:imm1), 0:1u), PF:imm1), 1:1u), CF:imm1), extract[7:0](EAX:imm32)))
     ),
   )
   // sahf: flags from AH

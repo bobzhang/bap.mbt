@@ -8,6 +8,10 @@
 
 (in-package x86-common)
 
+;; port: the memory operands (base, scale, index, displacement, segment)
+;; address `base + scale * index + displacement` (upstream ignores the
+;; index register); a missing index register reads as zero.
+
 (defun HLT ()
   (intrinsic 'hlt))
 
@@ -23,11 +27,12 @@
 ;; xchgb reg, off(base)
 ;; Reference: Vol. 2D 6-32
 
-(defun XCHG8rm (_ reg base _ _ off _)
-  (let ((p (+ base off))
-        (x (load-byte p)))
-    (store-byte p reg)
-    (set$ reg x)))
+(defun XCHG8rm (_ reg base scale index disp _)
+  (let ((off (+ disp (* scale index))))
+    (let ((p (+ base off))
+          (x (load-byte p)))
+      (store-byte p reg)
+      (set$ reg x))))
 
 (defun XCHG8rr (dst src _ _)
   (let ((x dst))

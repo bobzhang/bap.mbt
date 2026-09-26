@@ -217,7 +217,8 @@ Where upstream semantics are wrong for the operands of the current LLVM
 decoders (which the port's native decoders reproduce) or for the ISA, the
 port follows the ISA. Each fix has a regression test that decodes real
 bytes (checked with `llvm-mc`), lifts them and executes the BIL
-(`mips/isa_semantics_test.mbt`, `plugins/riscv/riscv_isa_test.mbt`).
+(`mips/isa_semantics_test.mbt`, `plugins/riscv/riscv_isa_test.mbt`; for
+x86, the Unicorn differential tables of `x86/semantics`).
 The `unicorn_diff` package differentially tests the PowerPC, MIPS, RISC-V
 and SystemZ lifters against Unicorn 2.1.4: about 4900 single
 instructions assembled by `llvm-mc` 22 with random initial states
@@ -268,6 +269,12 @@ only.
   - Added: `ADD`, `AND`, `OR`, `XOR`, `SLT`, `SLTU`, `SLTIU`, `SLL`/`SRL`/`SRA` (amounts masked to XLEN), `SUBW`, the `*W` shifts, `BLTU`/`BGEU`, the M extension (`MUL`, `MULH[S][U]`, `DIV[U]`, `REM[U]`, `MULW`, `DIV[U]W`, `REM[U]W`, with the ISA's division-by-zero results), `C_AND`/`C_OR`/`C_XOR`/`C_ANDI`/`C_SUBW`/`C_SW`/`C_SWSP`/`C_LWSP`/`C_JAL`, and the fences.
 - SystemZ (`systemz/`): besides upstream's `LR`, the other general-register moves without condition codes are modeled (`LGR`, `LGFR`, `LLGFR`).
 - Primus Lisp lifter (`primus_lisp`): hardwired zero registers (registers with the `zero` role: RISC-V `X0`/`ZERO`, AArch64 `XZR`/`WZR`) read as zero and writes to them are discarded (RISC-V `j`/`ret` write `X0`).
+- Primus Lisp lifter (`primus_lisp`): hardwired zero registers (registers with the `zero` role: RISC-V `X0`/`ZERO`, AArch64 `XZR`/`WZR`) read as zero and writes to them are discarded (RISC-V `j`/`ret` write `X0`); a missing register operand (LLVM's `NoRegister`, an empty name) reads as zero.
+- x86 (`x86/semantics`: ~5000 single-instruction cases assembled with `llvm-mc` and executed in Unicorn 2.1.4, the flags the Intel SDM leaves undefined masked; the Basic lifter, the `x86`/`x86-legacy` providers and the x86 Lisp semantics agree on every case they lift). Where Unicorn (QEMU 5) contradicts the SDM the tables follow the SDM: CMPXCHG does not write the accumulator back when the comparison succeeds (fixed in QEMU 8.1). Fixes:
+  - Basic lifter (`project/disassembly_basic_bil.mbt`): shift/rotate/SHLD/SHRD counts are masked to 5 bits (6 for 64-bit operands), not to the operand width; ROL/ROR set CF whenever the masked count is not zero; SAR's CF is the sign for counts beyond the width; the one-operand IMUL sets CF/OF when the product is not the sign extension of its low half; IDIV raises #DE on signed quotient overflow; BTx leave ZF unchanged and the memory forms floor negative bit offsets; CMPXCHG/CMPXCHG8B only write the accumulator when the comparison fails; LAHF stores the constant reserved bits.
+  - `x86` providers (`x86/`, marked `port:`, listed in `x86/README.mbt.md`): the same shift/rotate, IMUL, IDIV, BTx and LAHF/PUSHF fixes; BTx zero-extend 32-bit registers in 64-bit mode (per-opcode lifter); the legacy lifter decodes BTS/BTR/BTC (upstream lifts `0f ba /5 /6 /7` as BT) and CMPXCHG16B; CMPXCHG8B loads EDX:EAX in order; XADD stores the sum in r/m (upstream swaps the operands); PAVGB/PAVGW keep the carry; packed shifts by a register/memory count use the low quadword of the source; PSHUFB uses 4 index bits; MOVQ `66 0f d6` zero-extends a register destination.
+  - Lisp semantics (`primus_lisp/lisp/semantics/x86`, marked `port:`): memory operands include the scaled index; POP64rmm stores to the full effective address; SHUFPS takes its low words from the destination; ANDNPS/ANDNPD compute `(not src1) & src2`.
+  - Remaining: the Basic lifter models sub-registers (`EAX`, `AL`, `XMM0`) as separate variables; the tests read 32-bit register writes in 64-bit mode as zero-extending (as the SDM requires), but `Core::desugar` merges sub-register writes into the full register. Not lifted: the Basic lifter's SSE integer instructions (its decoder only recognizes fixture encodings, and none is lifted), RCL/RCR by the legacy lifter; not decoded by the Basic decoder: `TEST m, imm`, `82 /r` (32-bit), `D3 /6`, `LODS`, `LOOP*`, `ENTER`, `POP m`, `CMPXCHG16B`, RIP-relative/absolute/32-bit-address `LEA` and some REX-prefixed `MOV` forms.
 
 ## Fidelity Gaps (audit, 2026-09-26; several since addressed: knowledge KB evaluator, Core Theory algebra, BIL-to-IR lowering, liveness/SSA, DWARF prefix recovery, typed image memory and raw ELF reader)
 

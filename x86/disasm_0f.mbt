@@ -165,8 +165,9 @@ fn Decoder::get_opcode_0f(
           }
           (s, d, size, size, prefix.opsize_override)
         }
-        // MOVQ
-        _ => (r, rm, 64, 64, false)
+        // MOVQ xmm2/m64, xmm1: port: a register destination is
+        // zero-extended to 128 bits (Intel SDM MOVQ)
+        _ => (r, rm, 64, if rm is Ovec(_) { 128 } else { 64 }, false)
       }
       (Movdq(tsrc, src, tdst, dst, align), na)
     }
@@ -320,11 +321,25 @@ fn Decoder::get_opcode_0f(
       (Setcc(8, rm, cc_to_exp(b2)), na)
     }
     0xa2 => (Cpuid, na)
-    0xa3 | 0xba => {
-      let it = if b2 == 0xba { Some(8) } else { None }
-      let (r, rm, na) = self.modrm(prefix, it, na)
-      let (r, na) = if b2 == 0xba { self.parse_immz(8, na) } else { (r, na) }
-      (Bt(prefix.opsize, r, rm), na)
+    // port: BTS/BTR/BTC (`0f ab`, `0f b3`, `0f bb` and `0f ba /5 /6 /7`)
+    // are decoded with their kind (upstream lifts `0f ba /5 /6 /7` as BT)
+    0xa3 | 0xab | 0xb3 | 0xbb => {
+      let (r, rm, na) = self.modrm(prefix, None, na)
+      let kind = match b2 {
+        0xab => 5
+        0xb3 => 6
+        0xbb => 7
+        _ => 4
+      }
+      (Bt(kind, prefix.opsize, r, rm), na)
+    }
+    0xba => {
+      let (kind, rm, na) = self.modrm_ext(prefix, Some(8), na)
+      if kind < 4 {
+        raise NoSemantics("unsupported opcode: 0f ba/\{kind}")
+      }
+      let (i, na) = self.parse_immz(8, na)
+      (Bt(kind, prefix.opsize, i, rm), na)
     }
     0xa4 => {
       // shld
@@ -388,7 +403,7 @@ fn Decoder::get_opcode_0f(
     0xc7 => {
       let (r, rm, na) = self.modrm_ext(prefix, None, na)
       match r {
-        1 => (Cmpxchg8b(rm), na)
+        1 => (Cmpxchg8b(if prefix.opsize == 64 { 128 } else { 64 }, rm), na)
         _ => raise NoSemantics("unsupported opcode: 0f c7/\{r}")
       }
     }

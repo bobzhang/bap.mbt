@@ -88,3 +88,19 @@ test "relocation fixups redirect the jumps of relocated instructions" {
   }
   assert_eq(dst.to_uint64(), 0x40UL)
 }
+
+///|
+test "stubs are named after the external symbols they refer to" {
+  let rels = @project.ProjectRelocations::create(
+    exts=[(0x100UL, "_getenv"), (0x200UL, "_exit")],
+    stubs=[(0x100UL, 0x10)],
+  )
+  let none : (UInt64) -> @project.ProjectDisassemblyInstruction? = _ => None
+  let target = @core_theory.Target::unknown()
+  // the reference at the stub address (Mach-O stubs)
+  assert_eq(rels.stub_name(0x100, none, target~), Some("_getenv"))
+  // not a stub
+  assert_eq(rels.stub_name(0x200, none, target~), None)
+  // a stub without a reference, nor instructions
+  assert_eq(rels.stub_name(0x104, none, target~), None)
+}

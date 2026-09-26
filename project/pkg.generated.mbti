@@ -1027,6 +1027,7 @@ pub fn ProjectRelocations::not_equal(Self, Self) -> Bool
 pub fn ProjectRelocations::of_image(@image.Image) -> Self
 pub fn ProjectRelocations::references(ArrayView[@types.Stmt]) -> Array[UInt64]
 pub fn ProjectRelocations::relocation(Self, UInt64) -> UInt64?
+pub fn ProjectRelocations::stub_name(Self, UInt64, (UInt64) -> ProjectDisassemblyInstruction?, target~ : @core_theory.Target) -> String?
 pub impl Eq for ProjectRelocations
 
 type ProjectRooter

@@ -203,6 +203,7 @@ fn bap_elf_objects(argv : Array[String]) -> String {
       ("obj/arm64.o", @objects.aarch64_elf_object()),
       ("obj/riscv.o", @objects.riscv64_elf_object()),
       ("obj/pauth.o", @objects.aarch64_pauth_elf_object()),
+      ("obj/tail.o", @objects.x86_64_elf_tail_object()),
     ]),
     out=s => buf.write_string(s),
     err=s => buf.write_string("[err] " + s),
@@ -341,6 +342,19 @@ test "bap keeps the blocks that lead to a return without semantics" {
       #|10: 40 00 80 52                                   mov w0, #2
       #|14: ff 0f 5f d6                                   retab
       #|
+    ),
+  )
+}
+
+///|
+test "bap: a relocated tail call of an external symbol does not fall through" {
+  inspect(
+    bap_elf_object_calls("obj/tail.o"),
+    content=(
+      #|00000002: sub t1(t1_result)
+      #|00000006: call @ext with noreturn
+      #|00000007: sub t2(t2_result)
+      #|00000014: sub ext(ext_result)
     ),
   )
 }

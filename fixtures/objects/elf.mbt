@@ -236,6 +236,33 @@ pub fn x86_64_elf_object() -> Bytes {
 }
 
 ///|
+/// The code of `x86_64_elf_tail_object`, at address 0 of its `.text`:
+///
+/// ```text
+///  0 <t1>: lea eax, [rdi + 1]; jmp ext
+///  8 <t2>: lea eax, [rdi + rdi*2]; ret
+/// ```
+pub let x86_64_tail_object_code : Bytes = b"\x8d\x47\x01\xe9\x00\x00\x00\x00\x8d\x04\x7f\xc3"
+
+///|
+/// An x86-64 ELF relocatable object where `t1` tail calls the undefined
+/// `ext` (a `jmp` with a `R_X86_64_PLT32` relocation), followed by `t2`.
+pub fn x86_64_elf_tail_object() -> Bytes {
+  elf64_object(
+    machine=0x3e,
+    code=x86_64_tail_object_code,
+    locals=[],
+    globals=[
+      elf_object_function("t1", 0x0, 8), // 1
+      elf_object_function("t2", 0x8, 4), // 2
+      elf_object_undefined("ext"), // 3
+    ],
+    text_relocs=[{ offset: 0x4, sym: 3, typ: 4, addend: -4, }],
+    frame_relocs=[],
+  )
+}
+
+///|
 /// The code of `riscv64_elf_object`, at address 0 of its `.text`:
 ///
 /// ```text

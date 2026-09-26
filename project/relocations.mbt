@@ -394,3 +394,101 @@ pub fn Project::relocation_info(self : Project) -> ProjectRelocations {
     None => ProjectRelocations::empty()
   }
 }
+
+///|
+/// The number of instructions of a stub that are searched for the
+/// reference to the external symbol (upstream `plt_sizes`: 4 on ARM and
+/// PowerPC, 1 on x86; the port also searches the 4 instructions of the
+/// AArch64 and RISC-V stubs).
+let project_stub_size : Int = 4
+
+///|
+/// The name of the external symbol a stub at `addr` refers to (upstream
+/// `resolve_stubs` of the `relocatable` plugin): the external reference at
+/// the stub address, or else the external symbol called by the first
+/// instructions of the stub, following its direct jumps (upstream
+/// `collect_insns`; the relocation fixups turn the jumps of the stub
+/// through a referenced slot into calls of `name:external`). The
+/// instructions are looked up with `insn_at`.
+pub fn ProjectRelocations::stub_name(
+  self : ProjectRelocations,
+  addr : UInt64,
+  insn_at : (UInt64) -> ProjectDisassemblyInstruction?,
+  target~ : @core_theory.Target,
+) -> String? {
+  guard self.is_stub(addr) else { None }
+  match self.exts.get(addr) {
+    Some(name) => return Some(name)
+    None => ()
+  }
+  for i = 0, pc = addr; i < project_stub_size; {
+    guard insn_at(pc) is Some(insn) else { break None }
+    let bil = match insn.with_relocations(self).lift(target~) {
+      Ok(lifted) => lifted.bil()
+      Err(_) => []
+    }
+    for stmt in bil {
+      match @types.Stmt::decode(@types.Stmt::call(), stmt) {
+        Some(name) if name.has_suffix(":external") =>
+          return Some(
+            name
+            .view(end_offset=name.length() - ":external".length())
+            .to_owned(),
+          )
+        _ => ()
+      }
+    }
+    let next = match bil {
+      [Jmp(Int(dst))] | [Special(_), Jmp(Int(dst))] =>
+        match project_relocation_const(dst) {
+          Some(dst) => dst
+          None => break None
+        }
+      _ => insn.memory().max_addr() + 1UL
+    }
+    continue i + 1, next
+  } nobreak {
+    None
+  }
+}
+
+///|
+/// Names the stubs of the disassembly after the external symbols they
+/// refer to (see `ProjectRelocations::stub_name`; upstream: the
+/// `plt-symbolizer` agent of the `relocatable` plugin), unless they have a
+/// name.
+fn Project::name_stubs(self : Project) -> Project {
+  let relocations = self.relocation_info()
+  if relocations.stubs.is_empty() || relocations.is_empty() {
+    return self
+  }
+  let symbols = self.symbols()
+  let named : Map[UInt64, Unit] = Map([])
+  for symbol in symbols {
+    named[symbol.addr()] = ()
+  }
+  let insns : Map[UInt64, ProjectDisassemblyInstruction] = Map([])
+  for insn in self.disassembly().instructions() {
+    insns[insn.addr()] = insn
+  }
+  let mut changed = false
+  for block in self.disassembly().blocks() {
+    let addr = block.min_addr()
+    if named.contains(addr) || !relocations.is_stub(addr) {
+      continue
+    }
+    match relocations.stub_name(addr, a => insns.get(a), target=self.target()) {
+      Some(name) => {
+        symbols.push(@image.Symbol::create(name~, addr~, is_function=true))
+        named[addr] = ()
+        changed = true
+      }
+      None => ()
+    }
+  }
+  if changed {
+    self.with_symbols(symbols)
+  } else {
+    self
+  }
+}

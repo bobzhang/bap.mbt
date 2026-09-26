@@ -713,6 +713,8 @@ priv struct DriverBilJumps {
   mut jump : Bool
   mut cond : Bool
   mut call : Bool
+  /// whether it calls unconditionally
+  mut top_call : Bool
 }
 
 ///|
@@ -737,6 +739,9 @@ fn DriverBilJumps::visit(
       Special(_) =>
         if @types.Stmt::decode(@types.Stmt::call(), stmt) is Some(_) {
           self.call = true
+          if !under_condition {
+            self.top_call = true
+          }
         }
       _ => ()
     }
@@ -762,10 +767,28 @@ fn project_insn_derived_props(
   }
   match bil {
     Some(bil) if !bil.is_empty() => {
-      let jumps : DriverBilJumps = { jump: false, cond: false, call: false, }
+      let jumps : DriverBilJumps = {
+        jump: false,
+        cond: false,
+        call: false,
+        top_call: false,
+      }
       jumps.visit(bil, false)
       let call = jumps.call || insn_is(ProjectCall)
-      (call, jumps.jump && !call && !jumps.cond)
+      // a branch (that is not a call instruction) that the relocation
+      // fixups made an unconditional call of an external symbol (e.g., the
+      // jump of a stub through its slot, or the tail call `jmp printf` of
+      // an object) is still a barrier
+      let tail_call = jumps.top_call &&
+        !jumps.jump &&
+        !insn_is(ProjectCall) &&
+        (
+          insn_is(ProjectUnconditionalBranch) ||
+          insn_is(ProjectIndirectBranch) ||
+          insn_is(ProjectConditionalBranch) ||
+          insn_is(ProjectBarrier)
+        )
+      (call, (jumps.jump && !call && !jumps.cond) || tail_call)
     }
     // no (or empty) semantics, e.g., an instruction the lifters do not
     // know: from the kinds; a return or a barrier (e.g., the arm64e

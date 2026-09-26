@@ -238,6 +238,8 @@ test "bil listing in the pretty, adt, and sexp formats" {
       #|}
       #|1001: call 0x1006
       #|{
+      #|  RSP := RSP - 8
+      #|  mem := mem with [RSP, el]:u64 <- 0x1006
       #|  call(0x1000)
       #|  jmp 0x1000
       #|}
@@ -256,7 +258,7 @@ test "bil listing in the pretty, adt, and sexp formats" {
       #|1000: push rbp
       #|(Move(Var("mem",Mem(64,8)),Store(Var("mem",Mem(64,8)),MINUS(Var("RSP",Imm(64)),Int(8,64)),Var("RBP",Imm(64)),LittleEndian(),64)), Move(Var("RSP",Imm(64)),MINUS(Var("RSP",Imm(64)),Int(8,64))))
       #|1001: call 0x1006
-      #|(Special("@attribute:(bap:call 0x1000)"), Jmp(Int(4096,64)))
+      #|(Move(Var("RSP",Imm(64)),MINUS(Var("RSP",Imm(64)),Int(8,64))), Move(Var("mem",Mem(64,8)),Store(Var("mem",Mem(64,8)),Var("RSP",Imm(64)),Int(4102,64),LittleEndian(),64)), Special("@attribute:(bap:call 0x1000)"), Jmp(Int(4096,64)))
       #|
     ),
   )

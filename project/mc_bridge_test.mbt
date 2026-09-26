@@ -141,10 +141,18 @@ test "project instruction lift dispatches to providers and falls back to Basic" 
   )
   // an opcode the MIPS provider does not model falls back to Basic too
   let ret = bridge_insn(0x1004, "RET", [])
-  assert_eq(
-    ret.lift(target=mips),
-    Ok(@mc.Lifted::of_bil([@types.Stmt::special("ret")])),
-  )
+  match ret.lift(target=mips) {
+    Ok(lifted) =>
+      inspect(
+        bridge_stmts(lifted.bil()),
+        content=(
+          #|%ret_addr:imm32 := load(mem:mem32x8, ESP:imm32):imm32
+          #|ESP:imm32 := (ESP:imm32 + 4:32u)
+          #|jmp %ret_addr:imm32
+        ),
+      )
+    Err(reason) => fail(reason)
+  }
   // errors other than `Unsupported` are reported, not replaced by Basic
   let broken = bridge_insn(0x1008, "ADDu", [bridge_reg("T0"), bridge_reg("T1")])
   assert_eq(

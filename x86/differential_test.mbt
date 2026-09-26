@@ -21,8 +21,10 @@
 // - XADD: upstream swaps the operands (the register receives the sum and
 //   r/m the old register value); Intel (and Basic) store the sum in r/m and
 //   the old r/m value in the register. Upstream kept.
-// - CALL/RET: Basic does not model the return address push/pop (it emits
-//   `call`/`ret` specials); upstream follows Intel.
+//
+// CALL/RET agree: like upstream, the Basic lifter pushes the return address
+// on calls and pops it (and the immediate byte count) on returns, jumping to
+// it.
 
 ///|
 /// The sub-register variables of the Basic lifter, which models `EAX`,
@@ -516,7 +518,7 @@ test "differential: x86-64, combined providers vs Basic" {
   inspect(
     report_text(report),
     content=(
-      #|both=227 agree=205 only_ours=5 only_basic=7 neither=52 basic_undecoded=52
+      #|both=227 agree=210 only_ours=5 only_basic=7 neither=52 basic_undecoded=52
       #|86 d8 (XCHG8rr): only Basic lifts
       #|d1 c0 (ROL32r1): CF: ours 0x0x0 basic 0x0x1; OF: ours 0x0x1 basic 0x0x0; OF: ours 0x0x0 basic 0x0x1
       #|c1 c0 04 (ROL32ri8): CF: ours 0x0x1 basic 0x0x0; CF: ours 0x0x0 basic 0x0x1
@@ -533,11 +535,6 @@ test "differential: x86-64, combined providers vs Basic" {
       #|0f ba e8 03 (BTS32ri8): RAX: ours 0x0xffffffffffffffff basic 0x0x00000000ffffffff; RAX: ours 0x0x7fffffffffffffff basic 0x0x00000000ffffffff; RAX: ours 0x0x123456789abcdef8 basic 0x0x000000009abcdef8
       #|0f ba f0 03 (BTR32ri8): RAX: ours 0x0xfffffffffffffff7 basic 0x0x00000000fffffff7; RAX: ours 0x0x7ffffffffffffff7 basic 0x0x00000000fffffff7; RAX: ours 0x0x123456789abcdef0 basic 0x0x000000009abcdef0
       #|0f ba f8 03 (BTC32ri8): RAX: ours 0x0xfffffffffffffff7 basic 0x0x00000000fffffff7; RAX: ours 0x0x7ffffffffffffff7 basic 0x0x00000000fffffff7; RAX: ours 0x0x123456789abcdef8 basic 0x0x000000009abcdef8
-      #|e8 00 01 00 00 (CALL64pcrel32): RSP: ours 0x0x00000000000200f8 basic 0x0x0000000000020100; mem[0x200f8] differs
-      #|ff d0 (CALL64r): RSP: ours 0x0x00000000000200f8 basic 0x0x0000000000020100; mem[0x200f8] differs
-      #|ff 13 (CALL64m): RSP: ours 0x0x00000000000200f8 basic 0x0x0000000000020100; mem[0x200f8] differs
-      #|c3 (RET): RSP: ours 0x0x0000000000020108 basic 0x0x0000000000020100; jump: ours 8429ce7318bd6207 basic none; jump: ours 8b30d57a1fc4690e basic none
-      #|c2 10 00 (RET): RSP: ours 0x0x0000000000020118 basic 0x0x0000000000020100; jump: ours 8429ce7318bd6207 basic none; jump: ours 8b30d57a1fc4690e basic none
       #|f8 (CLC): only Basic lifts
       #|f9 (STC): only Basic lifts
       #|f5 (CMC): only Basic lifts
@@ -572,7 +569,7 @@ test "differential: x86-64, legacy lifter vs Basic" {
   inspect(
     report_text(report),
     content=(
-      #|both=219 agree=200 only_ours=5 only_basic=15 neither=52 basic_undecoded=52
+      #|both=219 agree=205 only_ours=5 only_basic=15 neither=52 basic_undecoded=52
       #|86 d8 (XCHG8rr): only Basic lifts
       #|d1 c0 (ROL32r1): CF: ours 0x0x0 basic 0x0x1; OF: ours 0x0x1 basic 0x0x0; OF: ours 0x0x0 basic 0x0x1
       #|c1 c0 04 (ROL32ri8): CF: ours 0x0x1 basic 0x0x0; CF: ours 0x0x0 basic 0x0x1
@@ -590,11 +587,6 @@ test "differential: x86-64, legacy lifter vs Basic" {
       #|0f ba f0 03 (BTR32ri8): RAX: ours 0x0xffffffffffffffff basic 0x0x00000000fffffff7; RAX: ours 0x0x7fffffffffffffff basic 0x0x00000000fffffff7; RAX: ours 0x0x00000000000000ff basic 0x0x00000000000000f7
       #|0f ba f8 03 (BTC32ri8): RAX: ours 0x0x0000000000000000 basic 0x0x0000000000000008; RAX: ours 0x0xffffffffffffffff basic 0x0x00000000fffffff7; RAX: ours 0x0x0000000080000000 basic 0x0x0000000080000008
       #|0f ab 03 (BTS32mr): only Basic lifts
-      #|e8 00 01 00 00 (CALL64pcrel32): RSP: ours 0x0x00000000000200f8 basic 0x0x0000000000020100; mem[0x200f8] differs
-      #|ff d0 (CALL64r): RSP: ours 0x0x00000000000200f8 basic 0x0x0000000000020100; mem[0x200f8] differs
-      #|ff 13 (CALL64m): RSP: ours 0x0x00000000000200f8 basic 0x0x0000000000020100; mem[0x200f8] differs
-      #|c3 (RET): RSP: ours 0x0x0000000000020108 basic 0x0x0000000000020100; jump: ours 8429ce7318bd6207 basic none; jump: ours 8b30d57a1fc4690e basic none
-      #|c2 10 00 (RET): RSP: ours 0x0x0000000000020118 basic 0x0x0000000000020100; jump: ours 8429ce7318bd6207 basic none; jump: ours 8b30d57a1fc4690e basic none
       #|f8 (CLC): only Basic lifts
       #|f9 (STC): only Basic lifts
       #|f5 (CMC): only Basic lifts
@@ -633,13 +625,8 @@ test "differential: x86, combined providers vs Basic" {
   inspect(
     report_text(report),
     content=(
-      #|both=66 agree=58 only_ours=0 only_basic=0 neither=2 basic_undecoded=2
+      #|both=66 agree=63 only_ours=0 only_basic=0 neither=2 basic_undecoded=2
       #|d1 c0 (ROL32r1): CF: ours 0x0x0 basic 0x0x1; OF: ours 0x0x1 basic 0x0x0; OF: ours 0x0x0 basic 0x0x1
-      #|e8 00 01 00 00 (CALLpcrel32): ESP: ours 0x0x000200fc basic 0x0x00020100; mem[0x200fc] differs
-      #|ff d0 (CALL32r): ESP: ours 0x0x000200fc basic 0x0x00020100; mem[0x200fc] differs
-      #|ff 54 24 04 (CALL32m): ESP: ours 0x0x000200fc basic 0x0x00020100; mem[0x200fc] differs
-      #|c3 (RET): ESP: ours 0x0x00020104 basic 0x0x00020100; jump: ours 18bd6207 basic none; jump: ours 1fc4690e basic none
-      #|c2 08 00 (RET): ESP: ours 0x0x0002010c basic 0x0x00020100; jump: ours 18bd6207 basic none; jump: ours 1fc4690e basic none
       #|0f c7 0b (CMPXCHG8Bm): EAX: ours 0x0x4e2904df basic 0x0xba95704b; EDX: ours 0x0xba95704b basic 0x0x4e2904df; EAX: ours 0x0x59340fea basic 0x0xc5a07b56
       #|0f c1 d8 (XADD32rr): EBX: ours 0x0x00010040 basic 0x0x00000000; EAX: ours 0x0x00010040 basic 0x0x0001003f; EBX: ours 0x0x0001003f basic 0x0xffffffff
     ),

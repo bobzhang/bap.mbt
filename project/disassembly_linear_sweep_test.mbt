@@ -126,7 +126,7 @@ test "project linear sweep lists the invalid instructions of the llvm backend" {
     })
     .join(" "),
     content=(
-      #|c300:PUSH64r c301:invalid c302:RET
+      #|c300:PUSH64r c301:invalid c302:RET64
     ),
   )
   // an encoding without a disassembler is an error

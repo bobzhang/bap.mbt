@@ -171,7 +171,7 @@ test "project basic disassembly driver materializes Basic instructions" {
         .map(insn => "\{insn.addr().to_string(radix=16)}:\{insn.name()}")
         .join(" "),
         content=(
-          #|7300:PUSH64r 7302:RET
+          #|7300:PUSH64r 7302:RET64
         ),
       )
     }

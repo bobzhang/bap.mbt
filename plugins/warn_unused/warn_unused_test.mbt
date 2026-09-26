@@ -123,30 +123,23 @@ test "tainted register maps round trip" {
 }
 
 ///|
-/// Like `program`, but `malloc` has a body that returns to its caller, so
-/// that the microexecution of the taint propagation reaches `ret`.
-fn program_with_body(uses_result : Bool) -> @types.Term[@types.Program] {
+/// Like `program`, but `malloc` is a PLT-like stub: a single block that
+/// leaves through an indirect jump. As in upstream `Microx_conqueror`, the
+/// indirect jump pops the return label, so the microexecution of the taint
+/// propagation reaches `ret`. (A callee without blocks never evaluates a
+/// jump and ends the path, see `blockless_test.mbt`.)
+fn program_with_plt_stub(uses_result : Bool) -> @types.Term[@types.Program] {
   let prog = program(uses_result)
   prog.map_subs(sub => {
     if sub.sub_name() != "malloc" {
       return sub
     }
-    let body = @types.Blk::create(
-      tid=@types.Tid::for_name("malloc_body"),
-      defs=[
-        @types.Def::create(
-          r0(),
-          @types.Exp::Unknown("heap", Imm(32)),
-          tid=@types.Tid::for_name("alloc"),
-        ),
-      ],
-      jmps=[
-        @types.Jmp::create_ret(
-          Indirect(@types.Exp::var_exp(@types.Var::new(name="LR", typ=Imm(32)))),
-          tid=@types.Tid::for_name("malloc_ret"),
-        ),
-      ],
-    )
+    let body = @types.Blk::create(tid=@types.Tid::for_name("malloc_body"), jmps=[
+      @types.Jmp::create_ret(
+        Indirect(@types.Exp::var_exp(@types.Var::new(name="LR", typ=Imm(32)))),
+        tid=@types.Tid::for_name("malloc_ret"),
+      ),
+    ])
     @types.Sub::create(
       name=sub.sub_name(),
       args=sub.args(),
@@ -181,7 +174,8 @@ test "end to end: the real propagate-taint pass finds unchecked calls" {
   // the real taint propagation pass is registered as a dependency
   assert_true(@project.find_pass(@propagate_taint.name) is Some(_))
   // the result of malloc is not used: the call is reported
-  guard project_of(program_with_body(false)).run_pass("warn-unused") is Ok(proj) else {
+  guard project_of(program_with_plt_stub(false)).run_pass("warn-unused")
+    is Ok(proj) else {
     fail("warn-unused failed")
   }
   inspect(
@@ -200,7 +194,8 @@ test "end to end: the real propagate-taint pass finds unchecked calls" {
   )
   // the result is used: nothing is reported
   out.reset()
-  guard project_of(program_with_body(true)).run_pass("warn-unused") is Ok(proj) else {
+  guard project_of(program_with_plt_stub(true)).run_pass("warn-unused")
+    is Ok(proj) else {
     fail("warn-unused failed")
   }
   inspect(out.to_string(), content="")
@@ -226,7 +221,7 @@ test "end to end: unchecked calls are marked dead" {
   ignore(@warn_unused.register())
   let passes = ["warn-unused-taint", "propagate-taint", "warn-unused-mark"]
   let dead = (uses_result : Bool) => {
-    match project_of(program_with_body(uses_result)).run_passes(passes) {
+    match project_of(program_with_plt_stub(uses_result)).run_passes(passes) {
       Ok(proj) => proj.program().subs()[0].blks()[0].jmps()[0].is_dead()
       Err(e) => {
         println(e)

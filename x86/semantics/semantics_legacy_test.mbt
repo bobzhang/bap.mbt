@@ -100,3 +100,14 @@ test "legacy: ssebasic" {
     ),
   )
 }
+
+///|
+test "legacy: lisp" {
+  inspect(
+    family_report(c => lift_legacy(c), "lisp"),
+    content=(
+      #|x86-64: cases=131 lifted=0 agree=0 mismatch=0 failed=0
+      #|x86: cases=19 lifted=0 agree=0 mismatch=0 failed=0
+    ),
+  )
+}

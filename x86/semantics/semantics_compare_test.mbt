@@ -175,7 +175,7 @@ fn target_of(mode : Int) -> @core_theory.Target {
   if mode == 64 {
     @core_theory.Target::x86_64()
   } else {
-    @core_theory.Target::x86()
+    @core_theory.Target::i386()
   }
 }
 
@@ -374,6 +374,7 @@ let families : Array[(String, String, String)] = [
   ("string", string64_cases, string32_cases),
   ("sse", sse64_cases, sse32_cases),
   ("ssebasic", ssebasic64_cases, ssebasic32_cases),
+  ("lisp", lisp64_cases, lisp32_cases),
 ]
 
 ///|

@@ -3495,6 +3495,10 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|
         #|(in-package x86-64)
         #|
+        #|;; port: the memory operands (base, scale, index, displacement, segment)
+        #|;; address `base + scale * index + displacement` (upstream ignores the
+        #|;; index register); a missing index register reads as zero.
+        #|
         #|(defconstant +rne+ 0)
         #|(defconstant +rtn+ 1)
         #|(defconstant +rtp+ 2)
@@ -3506,59 +3510,69 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|
         #|(defparameter *sse-format* 'ieee754_binary)
         #|
-        #|(defun ADDSDrm_Int (rd rn ptr _ _ off _)
-        #|  (fp-binary 'fadd 64 rd rn ptr off))
+        #|(defun ADDSDrm_Int (rd rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (fp-binary 'fadd 64 rd rn ptr off)))
         #|
         #|(defun ADDSDrr_Int (rd rn rm)
         #|  (fp-binary 'fadd 64 rd rn rm))
         #|
-        #|(defun ADDSSrm_Int (rd rn ptr _ _ off _)
-        #|  (fp-binary 'fadd 32 rd rn ptr off))
+        #|(defun ADDSSrm_Int (rd rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (fp-binary 'fadd 32 rd rn ptr off)))
         #|
         #|(defun ADDSSrr_Int (rd rn rm)
         #|  (fp-binary 'fadd 32 rd rn rm))
         #|
-        #|(defun SUBSDrm_Int (rd rn ptr _ _ off _)
-        #|  (fp-binary 'fsub 64 rd rn ptr off))
+        #|(defun SUBSDrm_Int (rd rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (fp-binary 'fsub 64 rd rn ptr off)))
         #|
         #|(defun SUBSDrr_Int (rd rn rm)
         #|  (fp-binary 'fsub 64 rd rn rm))
         #|
-        #|(defun SUBSSrm_Int (rd rn ptr _ _ off _)
-        #|  (fp-binary 'fsub 32 rd rn ptr off))
+        #|(defun SUBSSrm_Int (rd rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (fp-binary 'fsub 32 rd rn ptr off)))
         #|
         #|(defun SUBSSrr_Int (rd rn rm)
         #|  (fp-binary 'fsub 32 rd rn rm))
         #|
-        #|(defun MULSDrm_Int (rd rn ptr _ _ off _)
-        #|  (fp-binary 'fmul 64 rd rn ptr off))
+        #|(defun MULSDrm_Int (rd rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (fp-binary 'fmul 64 rd rn ptr off)))
         #|
         #|(defun MULSDrr_Int (rd rn rm)
         #|  (fp-binary 'fmul 64 rd rn rm))
         #|
-        #|(defun MULSSrm_Int (rd rn ptr _ _ off _)
-        #|  (fp-binary 'fmul 32 rd rn ptr off))
+        #|(defun MULSSrm_Int (rd rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (fp-binary 'fmul 32 rd rn ptr off)))
         #|
         #|(defun MULSSrr_Int (rd rn rm)
         #|  (fp-binary 'fmul 32 rd rn rm))
         #|
-        #|(defun DIVSDrm_Int (rd rn ptr _ _ off _)
-        #|  (fp-binary 'fdiv 64 rd rn ptr off))
+        #|(defun DIVSDrm_Int (rd rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (fp-binary 'fdiv 64 rd rn ptr off)))
         #|
         #|(defun DIVSDrr_Int (rd rn rm)
         #|  (fp-binary 'fdiv 64 rd rn rm))
         #|
-        #|(defun DIVSSrm_Int (rd rn ptr _ _ off _)
-        #|  (fp-binary 'fdiv 32 rd rn ptr off))
+        #|(defun DIVSSrm_Int (rd rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (fp-binary 'fdiv 32 rd rn ptr off)))
         #|
         #|(defun DIVSSrr_Int (rd rn rm)
         #|  (fp-binary 'fdiv 32 rd rn rm))
         #|
-        #|(defun UCOMISDrm (rn ptr _ _ off _)
-        #|  (fp-compare 64 rn ptr off))
+        #|(defun UCOMISDrm (rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (fp-compare 64 rn ptr off)))
         #|
-        #|(defun UCOMISSrm (rn ptr _ _ off _)
-        #|  (fp-compare 32 rn ptr off))
+        #|(defun UCOMISSrm (rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (fp-compare 32 rn ptr off)))
         #|
         #|(defun UCOMISDrr (rn rm)
         #|  (fp-compare 64 rn rm))
@@ -3569,76 +3583,89 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|(defun CVTSI642SDrr_Int (dst _ src)
         #|  (set-sse dst (sse-convert 'cast_sfloat 64 64 src)))
         #|
-        #|(defun CVTSI642SDrm_Int (dst _ ptr _ _ off _)
-        #|  (set-sse dst (sse-convert 'cast_sfloat 64 64 (load-mem ptr off))))
+        #|(defun CVTSI642SDrm_Int (dst _ ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (set-sse dst (sse-convert 'cast_sfloat 64 64 (load-mem ptr off)))))
         #|
         #|(defun CVTSI642SSrr_Int (dst _ src)
         #|  (set-sse dst (sse-convert 'cast_sfloat 64 32 src)))
         #|
-        #|(defun CVTSI642SSrm_Int (dst _ ptr _ _ off _)
-        #|  (set-sse dst (sse-convert 'cast_sfloat 64 32 (load-mem ptr off))))
+        #|(defun CVTSI642SSrm_Int (dst _ ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (set-sse dst (sse-convert 'cast_sfloat 64 32 (load-mem ptr off)))))
         #|
         #|(defun CVTTSS2SI64rr_Int (dst src)
         #|  (set-sse dst (sse-convert 'cast_sint 64 32 src)))
         #|
-        #|(defun CVTTSS2SI64rm_Int (dst _ ptr _ _ off _)
-        #|  (set-sse dst (sse-convert 'cast_sint 64 32 (load-mem ptr off))))
+        #|(defun CVTTSS2SI64rm_Int (dst _ ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (set-sse dst (sse-convert 'cast_sint 64 32 (load-mem ptr off)))))
         #|
         #|(defun CVTTSS2SIrr_Int (dst src)
         #|  (set-sse dst (sse-convert 'cast_sint 32 32 src)))
         #|
-        #|(defun CVTTSS2SIrm_Int (dst _ ptr _ _ off _)
-        #|  (set-sse dst (sse-convert 'cast_sint 32 32 (load-mem ptr off))))
+        #|(defun CVTTSS2SIrm_Int (dst _ ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (set-sse dst (sse-convert 'cast_sint 32 32 (load-mem ptr off)))))
         #|
         #|(defun CVTSS2SI64rr_Int (dst src)
         #|  (set-sse dst (sse-convert 'cast_sint 64 32 src)))
         #|
-        #|(defun CVTSS2SI64rm_Int (dst _ ptr _ _ off _)
-        #|  (set-sse dst (sse-convert 'cast_sint 64 32 (load-mem ptr off))))
+        #|(defun CVTSS2SI64rm_Int (dst _ ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (set-sse dst (sse-convert 'cast_sint 64 32 (load-mem ptr off)))))
         #|
         #|(defun CVTSS2SIrr_Int (dst src)
         #|  (set-sse dst (sse-convert 'cast_sint 32 32 src)))
         #|
-        #|(defun CVTSS2SIrm_Int (dst _ ptr _ _ off _)
-        #|  (set-sse dst (sse-convert 'cast_sint 32 32 (load-mem ptr off))))
+        #|(defun CVTSS2SIrm_Int (dst _ ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (set-sse dst (sse-convert 'cast_sint 32 32 (load-mem ptr off)))))
         #|
         #|(defun CVTTSD2SI64rr_Int (dst src)
         #|  (set-sse dst (sse-convert 'cast_sint 64 64 src)))
         #|
-        #|(defun CVTTSD2SI64rm_Int (dst _ ptr _ _ off _)
-        #|  (set-sse dst (sse-convert 'cast_sint 64 64 (load-mem ptr off))))
+        #|(defun CVTTSD2SI64rm_Int (dst _ ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (set-sse dst (sse-convert 'cast_sint 64 64 (load-mem ptr off)))))
         #|
         #|(defun CVTTSD2SIrr_Int (dst src)
         #|  (set-sse dst (sse-convert 'cast_sint 32 64 src)))
         #|
-        #|(defun CVTTSD2SIrm_Int (dst _ ptr _ _ off _)
-        #|  (set-sse dst (sse-convert 'cast_sint 32 64 (load-mem ptr off))))
+        #|(defun CVTTSD2SIrm_Int (dst _ ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (set-sse dst (sse-convert 'cast_sint 32 64 (load-mem ptr off)))))
         #|
         #|(defun CVTSD2SI64rr_Int (dst src)
         #|  (set-sse dst (sse-convert 'cast_sint 64 64 src)))
         #|
-        #|(defun CVTSD2SI64rm_Int (dst _ ptr _ _ off _)
-        #|  (set-sse dst (sse-convert 'cast_sint 64 64 (load-mem ptr off))))
+        #|(defun CVTSD2SI64rm_Int (dst _ ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (set-sse dst (sse-convert 'cast_sint 64 64 (load-mem ptr off)))))
         #|
         #|(defun CVTSD2SIrr_Int (dst src)
         #|  (set-sse dst (sse-convert 'cast_sint 32 64 src)))
         #|
-        #|(defun CVTSD2SIrm_Int (dst _ ptr _ _ off _)
-        #|  (set-sse dst (sse-convert 'cast_sint 32 64 (load-mem ptr off))))
+        #|(defun CVTSD2SIrm_Int (dst _ ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (set-sse dst (sse-convert 'cast_sint 32 64 (load-mem ptr off)))))
         #|
         #|(defun CVTPS2PDrr (dst src)
         #|  (let ((lo (sse-convert 'fconvert 64 32 (extract 31  0 src)))
         #|        (hi (sse-convert 'fconvert 64 32 (extract 63 32 src))))
         #|    (set-sse dst (concat hi lo))))
         #|
-        #|(defun CVTSI2SSrm_Int (dst _ ptr _ _ off _)
-        #|  (set-sse dst (sse-convert 'cast_sfloat 32 64 (load-mem ptr off))))
+        #|(defun CVTSI2SSrm_Int (dst _ ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (set-sse dst (sse-convert 'cast_sfloat 32 64 (load-mem ptr off)))))
         #|
-        #|(defun CVTSI2SDrm_Int (dst _ ptr _ _ off _)
-        #|  (set-sse dst (sse-convert 'cast_sfloat 64 64 (load-mem ptr off))))
+        #|(defun CVTSI2SDrm_Int (dst _ ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (set-sse dst (sse-convert 'cast_sfloat 64 64 (load-mem ptr off)))))
         #|
-        #|(defun CVTSI2SSrr_Int (dst _ ptr _ _ off _)
-        #|  (set-sse dst (sse-convert 'cast_sfloat 32 64 (load-mem ptr off))))
+        #|(defun CVTSI2SSrr_Int (dst _ ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (set-sse dst (sse-convert 'cast_sfloat 32 64 (load-mem ptr off)))))
         #|
         #|(defun CVTSI2SSrr_Int (dst _ src)
         #|  (set-sse dst (sse-convert 'cast_sfloat 32 64 src)))
@@ -3653,8 +3680,9 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|(defun CVTSS2SDrr_Int (dst _ src)
         #|  (set-sse dst (sse-convert 'fconvert 32 64 src)))
         #|
-        #|(defun CVTSS2SDrm_Int (dst _ ptr _ _ off _)
-        #|  (set-sse dst (sse-convert 'fconvert 32 64 (load-mem ptr off))))
+        #|(defun CVTSS2SDrm_Int (dst _ ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (set-sse dst (sse-convert 'fconvert 32 64 (load-mem ptr off)))))
         #|
         #|(defun MINSDrr_Int (rd rm rn)
         #|  (set-sse rd (if (ieee754-forder 64 rm rn) rn rm)))
@@ -3789,6 +3817,10 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|
         #|(in-package x86-64)
         #|
+        #|;; port: the memory operands (base, scale, index, displacement, segment)
+        #|;; address `base + scale * index + displacement` (upstream ignores the
+        #|;; index register); a missing index register reads as zero.
+        #|
         #|
         #|(defun TRAP ()
         #|  (intrinsic '__ud2 :aborts))
@@ -3798,9 +3830,11 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|;; effective address of the operand after it increments the ESP register.
         #|;; The POP ESP instruction increments the stack pointer (ESP) before data
         #|;; at the old top of stack is written into the destination.
-        #|(defun POP64rmm (ptr _ _ _ _)
+        #|;; port: the address includes the scaled index and the displacement
+        #|;; (upstream stores to the base register), computed after the increment
+        #|(defun POP64rmm (base scale index disp _)
         #|  (+= RSP 8)
-        #|  (store-word ptr (load-word (- RSP 8))))
+        #|  (store-word (+ base (* scale index) disp) (load-word (- RSP 8))))
         #|
         #|(defun is-rip (reg)
         #|  (= (symbol reg) 'RIP))
@@ -3820,17 +3854,20 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|(defun SHUFPSrri (dst _ src ctl)
         #|  (shufps dst src ctl))
         #|
-        #|(defun SHUFPSrmi (dst _ base _  _ off _ ctl)
-        #|  (let ((src (load-dword (+ base off))))
-        #|    (shufps dst src ctl)))
+        #|(defun SHUFPSrmi (dst _ base scale index disp _ ctl)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (let ((src (load-dword (+ base off))))
+        #|      (shufps dst src ctl))))
         #|
+        #|;; port: the two low words are selected from the destination and the two
+        #|;; high words from the source (upstream selects all four from the source)
         #|(defun shufps (dst src ctl)
         #|  (declare (visibility :private))
         #|  (set$ dst (concat
         #|             (select4 src (extract 7 6 ctl))
         #|             (select4 src (extract 5 4 ctl))
-        #|             (select4 src (extract 3 2 ctl))
-        #|             (select4 src (extract 1 0 ctl)))))
+        #|             (select4 dst (extract 3 2 ctl))
+        #|             (select4 dst (extract 1 0 ctl)))))
         #|
         #|;; (select4 R N) selects an Nth 32-bit word from R.
         #|;; Reference: Vol. 2B 4-648
@@ -3848,44 +3885,50 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|(defun PMULDQrr (dst _ src)
         #|  (pmul set$ cast-signed dst src))
         #|
-        #|(defun PMULDQrm (dst _ base _ _ off _)
-        #|  (let ((src (load-dword (+ base off))))
-        #|    (pmul set$ cast-signed dst src)))
+        #|(defun PMULDQrm (dst _ base scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (let ((src (load-dword (+ base off))))
+        #|      (pmul set$ cast-signed dst src))))
         #|
         #|(defun PMULUDQrr (dst _ src)
         #|  (pmul set$ cast-unsigned dst src))
         #|
-        #|(defun PMULUDQrm (dst _ base _ _ off _)
-        #|  (let ((src (load-dword (+ base off))))
-        #|    (pmul set$ cast-unsigned dst src)))
+        #|(defun PMULUDQrm (dst _ base scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (let ((src (load-dword (+ base off))))
+        #|      (pmul set$ cast-unsigned dst src))))
         #|
         #|(defun VPMULDQrr (dst _ src)
         #|  (pmul setv cast-signed dst src))
         #|
-        #|(defun VPMULDQrm (dst _ base _ _ off _)
-        #|  (let ((src (load-dword (+ base off))))
-        #|    (pmul setv cast-signed dst src)))
+        #|(defun VPMULDQrm (dst _ base scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (let ((src (load-dword (+ base off))))
+        #|      (pmul setv cast-signed dst src))))
         #|
         #|(defun VPMULUDQrr (dst _ src)
         #|  (pmul setv cast-unsigned dst src))
         #|
-        #|(defun VPMULUDQrm (dst _ base _ _ off _)
-        #|  (let ((src (load-dword (+ base off))))
-        #|    (pmul setv cast-unsigned dst src)))
+        #|(defun VPMULUDQrm (dst _ base scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (let ((src (load-dword (+ base off))))
+        #|      (pmul setv cast-unsigned dst src))))
         #|
         #|(defun VPMULDQYrr (dst _ src)
         #|  (pmuly cast-signed dst src))
         #|
-        #|(defun VPMULDQYrm (dst _ base _ _ off _)
-        #|  (let ((src (load-dword (+ base off))))
-        #|    (pmuly cast-signed dst src)))
+        #|(defun VPMULDQYrm (dst _ base scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (let ((src (load-dword (+ base off))))
+        #|      (pmuly cast-signed dst src))))
         #|
         #|(defun VPMULUDQYrr (dst _ src)
         #|  (pmuly cast-unsigned dst src))
         #|
-        #|(defun VPMULUDQYrm (dst _ base _ _ off _)
-        #|  (let ((src (load-dword (+ base off))))
-        #|    (pmuly cast-unsigned dst src)))
+        #|(defun VPMULUDQYrm (dst _ base scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (let ((src (load-dword (+ base off))))
+        #|      (pmuly cast-unsigned dst src))))
         #|
         #|(defmacro pmul (set cast dst src)
         #|  (declare (visibility :private))
@@ -3913,9 +3956,10 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|(defun PACKSSDWrr (dst _ src)
         #|  (packsdw/128 :signed dst dst src))
         #|
-        #|(defun PACKSSDWrm (dst _ base _ _ off _)
-        #|  (let ((src (load-dword (+ base off))))
-        #|    (packsdw/128 :signed dst dst src)))
+        #|(defun PACKSSDWrm (dst _ base scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (let ((src (load-dword (+ base off))))
+        #|      (packsdw/128 :signed dst dst src))))
         #|
         #|(defun VPACKSSDWrr (dst src1 src2)
         #|  (packsdw/128 :signed dst src1 src2))
@@ -3923,21 +3967,24 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|(defun VPACKSSDWYrr (dst src1 src2)
         #|  (packsdw/256 :signed dst src1 src2))
         #|
-        #|(defun VPACKSSDWrm (dst src1 base _ _ off _)
-        #|  (let ((src2 (load-dword (+ base off))))
-        #|    (packsdw/128 :signed dst src1 src2)))
+        #|(defun VPACKSSDWrm (dst src1 base scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (let ((src2 (load-dword (+ base off))))
+        #|      (packsdw/128 :signed dst src1 src2))))
         #|
-        #|(defun VPACKSSDWYrm (dst src1 base _ _ off _)
-        #|  (let ((src2 (load-qword (+ base off))))
-        #|    (packsdw/256 :signed dst src1 src2)))
+        #|(defun VPACKSSDWYrm (dst src1 base scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (let ((src2 (load-qword (+ base off))))
+        #|      (packsdw/256 :signed dst src1 src2))))
         #|
         #|
         #|(defun PACKUSDWrr (dst _ src)
         #|  (packsdw/128 :unsigned dst dst src))
         #|
-        #|(defun PACKUSDWrm (dst _ base _ _ off _)
-        #|  (let ((src (load-dword (+ base off))))
-        #|    (packsdw/128 :unsigned dst dst src)))
+        #|(defun PACKUSDWrm (dst _ base scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (let ((src (load-dword (+ base off))))
+        #|      (packsdw/128 :unsigned dst dst src))))
         #|
         #|(defun VPACKUSDWrr (dst src1 src2)
         #|  (packsdw/128 :unsigned dst src1 src2))
@@ -3945,13 +3992,15 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|(defun VPACKUSDWYrr (dst src1 src2)
         #|  (packsdw/256 :unsigned dst src1 src2))
         #|
-        #|(defun VPACKUSDWrm (dst src1 base _ _ off _)
-        #|  (let ((src2 (load-dword (+ base off))))
-        #|    (packsdw/128 :unsigned dst src1 src2)))
+        #|(defun VPACKUSDWrm (dst src1 base scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (let ((src2 (load-dword (+ base off))))
+        #|      (packsdw/128 :unsigned dst src1 src2))))
         #|
-        #|(defun VPACKUSDWYrm (dst src1 base _ _ off _)
-        #|  (let ((src2 (load-qword (+ base off))))
-        #|    (packsdw/256 :unsigned dst src1 src2)))
+        #|(defun VPACKUSDWYrm (dst src1 base scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (let ((src2 (load-qword (+ base off))))
+        #|      (packsdw/256 :unsigned dst src1 src2))))
         #|
         #|(defun packsdw/128 (kind dst src1 src2)
         #|  (let ((w0 (extract-saturate kind 16  31  0 src1))
@@ -3994,17 +4043,20 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|(defun VPACKSSWBYrr (dst src1 src2)
         #|  (packswb/256 :signed dst src1 src2))
         #|
-        #|(defun PACKSSWBrm (dst _ base _ _ off _)
-        #|  (let ((src (load-dword (+ base off))))
-        #|    (packswb/128 :signed dst dst src)))
+        #|(defun PACKSSWBrm (dst _ base scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (let ((src (load-dword (+ base off))))
+        #|      (packswb/128 :signed dst dst src))))
         #|
-        #|(defun VPACKSSWBrm (dst src1 base _ _ off _)
-        #|  (let ((src2 (load-dword (+ base off))))
-        #|    (packswb/128 :signed dst src1 src2)))
+        #|(defun VPACKSSWBrm (dst src1 base scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (let ((src2 (load-dword (+ base off))))
+        #|      (packswb/128 :signed dst src1 src2))))
         #|
-        #|(defun VPACKSSWBYrm (dst src1 base _ _ off _)
-        #|  (let ((src2 (load-qword (+ base off))))
-        #|    (packswb/128 :signed dst src1 src2)))
+        #|(defun VPACKSSWBYrm (dst src1 base scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (let ((src2 (load-qword (+ base off))))
+        #|      (packswb/128 :signed dst src1 src2))))
         #|
         #|
         #|(defun PACKUSWBrr (dst _ src)
@@ -4016,17 +4068,20 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|(defun VPACKUSWBYrr (dst src1 src2)
         #|  (packswb/256 :unsigned dst src1 src2))
         #|
-        #|(defun PACKUSWBrm (dst _ base _ _ off _)
-        #|  (let ((src (load-dword (+ base off))))
-        #|    (packswb/128 :unsigned dst dst src)))
+        #|(defun PACKUSWBrm (dst _ base scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (let ((src (load-dword (+ base off))))
+        #|      (packswb/128 :unsigned dst dst src))))
         #|
-        #|(defun VPACKUSWBrm (dst src1 base _ _ off _)
-        #|  (let ((src2 (load-dword (+ base off))))
-        #|    (packswb/128 :unsigned dst src1 src2)))
+        #|(defun VPACKUSWBrm (dst src1 base scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (let ((src2 (load-dword (+ base off))))
+        #|      (packswb/128 :unsigned dst src1 src2))))
         #|
-        #|(defun VPACKUSWBYrm (dst src1 base _ _ off _)
-        #|  (let ((src2 (load-qword (+ base off))))
-        #|    (packswb/128 :unsigned dst src1 src2)))
+        #|(defun VPACKUSWBYrm (dst src1 base scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (let ((src2 (load-qword (+ base off))))
+        #|      (packswb/128 :unsigned dst src1 src2))))
         #|
         #|(defun packswb/128 (kind dst src1 src2)
         #|  (let ((b0  (extract-saturate kind 8  15   0 src1))
@@ -4101,14 +4156,17 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|  (set$ reg (concat 0:128 (cast-low 128 (unquote reg)))))
         #|
         #|;; MOVNTDQ - Store packed Integers Using Non-Temporal Hint
-        #|(defun MOVNTDQmr (base _ _ off _ src)
-        #|  (non-temporal-store-word base off src))
+        #|(defun MOVNTDQmr (base scale index disp _ src)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (non-temporal-store-word base off src)))
         #|
-        #|(defun VMOVNTDQmr (base _ _ off _ src)
-        #|  (non-temporal-store-word base off src))
+        #|(defun VMOVNTDQmr (base scale index disp _ src)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (non-temporal-store-word base off src)))
         #|
-        #|(defun VMOVNTDQYmr (base _ _ off _ src)
-        #|  (non-temporal-store-word base off src))
+        #|(defun VMOVNTDQYmr (base scale index disp _ src)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (non-temporal-store-word base off src)))
         #|
         #|;; to be overriden by specialized analyses
         #|(defun non-temporal-store-word (base off src)
@@ -4130,23 +4188,29 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|(defun VANDPDYrr (rd rn rm)
         #|  (bitwise-rrr set$ ident logand rd rn rm))
         #|
-        #|(defun ANDPSrm (rd rn ptr _ _ off _)
-        #|  (bitwise-rrm set$ ident logand rd rn ptr off))
+        #|(defun ANDPSrm (rd rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (bitwise-rrm set$ ident logand rd rn ptr off)))
         #|
-        #|(defun ANDPDrm (rd rn ptr _ _ off _)
-        #|  (bitwise-rrm set$ ident logand rd rn ptr off))
+        #|(defun ANDPDrm (rd rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (bitwise-rrm set$ ident logand rd rn ptr off)))
         #|
-        #|(defun VANDPSrm (rd rn ptr _ _ off _)
-        #|  (bitwise-rrm setv ident logand rd rn ptr off))
+        #|(defun VANDPSrm (rd rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (bitwise-rrm setv ident logand rd rn ptr off)))
         #|
-        #|(defun VANDPDrm (rd rn ptr _ _ off _)
-        #|  (bitwise-rrm setv ident logand rd rn ptr off))
+        #|(defun VANDPDrm (rd rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (bitwise-rrm setv ident logand rd rn ptr off)))
         #|
-        #|(defun VANDPSYrm (rd rn ptr _ _ off _)
-        #|  (bitwise-rrm set$ ident logand rd rn ptr off))
+        #|(defun VANDPSYrm (rd rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (bitwise-rrm set$ ident logand rd rn ptr off)))
         #|
-        #|(defun VANDPDYrm (rd rn ptr _ _ off _)
-        #|  (bitwise-rrm set$ ident logand rd rn ptr off))
+        #|(defun VANDPDYrm (rd rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (bitwise-rrm set$ ident logand rd rn ptr off)))
         #|
         #|;; [v]orp{s,d}
         #|(defun ORPSrr (rd rn rm)
@@ -4164,23 +4228,29 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|(defun VORPDYrr (rd rn rm)
         #|  (bitwise-rrr set$ ident logor rd rn rm))
         #|
-        #|(defun ORPSrm (rd rn ptr _ _ off _)
-        #|  (bitwise-rrm set$ ident logor rd rn ptr off))
+        #|(defun ORPSrm (rd rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (bitwise-rrm set$ ident logor rd rn ptr off)))
         #|
-        #|(defun ORPDrm (rd rn ptr _ _ off _)
-        #|  (bitwise-rrm set$ ident logor rd rn ptr off))
+        #|(defun ORPDrm (rd rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (bitwise-rrm set$ ident logor rd rn ptr off)))
         #|
-        #|(defun VORPSrm (rd rn ptr _ _ off _)
-        #|  (bitwise-rrm setv ident logor rd rn ptr off))
+        #|(defun VORPSrm (rd rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (bitwise-rrm setv ident logor rd rn ptr off)))
         #|
-        #|(defun VORPDrm (rd rn ptr _ _ off _)
-        #|  (bitwise-rrm setv ident logor rd rn ptr off))
+        #|(defun VORPDrm (rd rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (bitwise-rrm setv ident logor rd rn ptr off)))
         #|
-        #|(defun VORPSYrm (rd rn ptr _ _ off _)
-        #|  (bitwise-rrm set$ ident logor rd rn ptr off))
+        #|(defun VORPSYrm (rd rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (bitwise-rrm set$ ident logor rd rn ptr off)))
         #|
-        #|(defun VORPDYrm (rd rn ptr _ _ off _)
-        #|  (bitwise-rrm set$ ident logor rd rn ptr off))
+        #|(defun VORPDYrm (rd rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (bitwise-rrm set$ ident logor rd rn ptr off)))
         #|
         #|;; [v]xorp{s,d}
         #|(defun XORPSrr (rd rn rm)
@@ -4198,23 +4268,29 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|(defun VXORPDYrr (rd rn rm)
         #|  (bitwise-rrr set$ ident logxor rd rn rm))
         #|
-        #|(defun XORPSrm (rd rn ptr _ _ off _)
-        #|  (bitwise-rrm set$ ident logxor rd rn ptr off))
+        #|(defun XORPSrm (rd rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (bitwise-rrm set$ ident logxor rd rn ptr off)))
         #|
-        #|(defun XORPDrm (rd rn ptr _ _ off _)
-        #|  (bitwise-rrm set$ ident logxor rd rn ptr off))
+        #|(defun XORPDrm (rd rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (bitwise-rrm set$ ident logxor rd rn ptr off)))
         #|
-        #|(defun VXORPSrm (rd rn ptr _ _ off _)
-        #|  (bitwise-rrm setv ident logxor rd rn ptr off))
+        #|(defun VXORPSrm (rd rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (bitwise-rrm setv ident logxor rd rn ptr off)))
         #|
-        #|(defun VXORPDrm (rd rn ptr _ _ off _)
-        #|  (bitwise-rrm setv ident logxor rd rn ptr off))
+        #|(defun VXORPDrm (rd rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (bitwise-rrm setv ident logxor rd rn ptr off)))
         #|
-        #|(defun VXORPSYrm (rd rn ptr _ _ off _)
-        #|  (bitwise-rrm set$ ident logxor rd rn ptr off))
+        #|(defun VXORPSYrm (rd rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (bitwise-rrm set$ ident logxor rd rn ptr off)))
         #|
-        #|(defun VXORPDYrm (rd rn ptr _ _ off _)
-        #|  (bitwise-rrm set$ ident logxor rd rn ptr off))
+        #|(defun VXORPDYrm (rd rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (bitwise-rrm set$ ident logxor rd rn ptr off)))
         #|
         #|
         #|;; [v]andnp{s,d}
@@ -4233,23 +4309,29 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|(defun VANDNPDYrr (rd rn rm)
         #|  (bitwise-rrr set$ lnot logand rd rn rm))
         #|
-        #|(defun ANDNPSrm (rd rn ptr _ _ off _)
-        #|  (bitwise-rrm set$ lnot logand rd rn ptr off))
+        #|(defun ANDNPSrm (rd rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (bitwise-rrm set$ lnot logand rd rn ptr off)))
         #|
-        #|(defun ANDNPDrm (rd rn ptr _ _ off _)
-        #|  (bitwise-rrm set$ lnot logand rd rn ptr off))
+        #|(defun ANDNPDrm (rd rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (bitwise-rrm set$ lnot logand rd rn ptr off)))
         #|
-        #|(defun VANDNPSrm (rd rn ptr _ _ off _)
-        #|  (bitwise-rrm setv lnot logand rd rn ptr off))
+        #|(defun VANDNPSrm (rd rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (bitwise-rrm setv lnot logand rd rn ptr off)))
         #|
-        #|(defun VANDNPDrm (rd rn ptr _ _ off _)
-        #|  (bitwise-rrm setv lnot logand rd rn ptr off))
+        #|(defun VANDNPDrm (rd rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (bitwise-rrm setv lnot logand rd rn ptr off)))
         #|
-        #|(defun VANDNPSYrm (rd rn ptr _ _ off _)
-        #|  (bitwise-rrm set$ lnot logand rd rn ptr off))
+        #|(defun VANDNPSYrm (rd rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (bitwise-rrm set$ lnot logand rd rn ptr off)))
         #|
-        #|(defun VANDNPDYrm (rd rn ptr _ _ off _)
-        #|  (bitwise-rrm set$ lnot logand rd rn ptr off))
+        #|(defun VANDNPDYrm (rd rn ptr scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (bitwise-rrm set$ lnot logand rd rn ptr off)))
         #|
         #|(defun setv (r x)
         #|  "(setv XMMx X) assigns X to lower bits of XMMx and zeros the upper.
@@ -4257,11 +4339,13 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|  (set$ (alias-base-register r)
         #|        (concat (cast-unsigned (word-width x) 0) x)))
         #|
+        #|;; port: `opo` applies to the first source (ANDNPS/ANDNPD compute
+        #|;; `(not rn) & rm`; upstream negates the conjunction)
         #|(defmacro bitwise-rrr (set opo opi rd rn rm)
-        #|  (set rd (opo (opi rn rm))))
+        #|  (set rd (opi (opo rn) rm)))
         #|
         #|(defmacro bitwise-rrm (set opo opi rd rn ptr off)
-        #|  (set rd (opo (opi rn (load-bits (word-width (unquote rn)) (+ ptr off))))))
+        #|  (set rd (opi (opo rn) (load-bits (word-width (unquote rn)) (+ ptr off)))))
         #|
       ),
     ),
@@ -4278,6 +4362,10 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|
         #|(in-package x86-common)
         #|
+        #|;; port: the memory operands (base, scale, index, displacement, segment)
+        #|;; address `base + scale * index + displacement` (upstream ignores the
+        #|;; index register); a missing index register reads as zero.
+        #|
         #|(defun HLT ()
         #|  (intrinsic 'hlt))
         #|
@@ -4293,11 +4381,12 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|;; xchgb reg, off(base)
         #|;; Reference: Vol. 2D 6-32
         #|
-        #|(defun XCHG8rm (_ reg base _ _ off _)
-        #|  (let ((p (+ base off))
-        #|        (x (load-byte p)))
-        #|    (store-byte p reg)
-        #|    (set$ reg x)))
+        #|(defun XCHG8rm (_ reg base scale index disp _)
+        #|  (let ((off (+ disp (* scale index))))
+        #|    (let ((p (+ base off))
+        #|          (x (load-byte p)))
+        #|      (store-byte p reg)
+        #|      (set$ reg x))))
         #|
         #|(defun XCHG8rr (dst src _ _)
         #|  (let ((x dst))

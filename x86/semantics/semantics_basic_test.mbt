@@ -100,3 +100,14 @@ test "basic: ssebasic" {
     ),
   )
 }
+
+///|
+test "basic: lisp" {
+  inspect(
+    family_report(lift_basic, "lisp"),
+    content=(
+      #|x86-64: cases=131 lifted=20 agree=20 mismatch=0 failed=0
+      #|x86: cases=19 lifted=16 agree=16 mismatch=0 failed=0
+    ),
+  )
+}

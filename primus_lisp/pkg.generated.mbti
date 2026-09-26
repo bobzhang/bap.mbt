@@ -26,6 +26,8 @@ pub fn declare_attribute(String, check? : (String, Array[Tree]) -> Unit raise At
 
 pub let default_package : String
 
+pub fn define_host_primitive(@primus.Machine, String, types~ : String, docs? : String, pkg? : String, (@primus.Machine, Array[@primus.Value]) -> @primus.Value raise) -> Unit
+
 pub fn define_primitive(@primus.Machine, String, types? : Signature, docs? : String, pkg? : String, Closure) -> Unit
 
 pub fn documentation(Program) -> Array[(String, Array[(@knowledge.Name, DocEntry)])]
@@ -87,6 +89,8 @@ pub let para : Item[Para]
 pub fn parse_bigint(String) -> @bigint.BigInt?
 
 pub fn parse_source(Context, Source) -> Program raise LoadError
+
+pub fn parse_type_spec(String, Int) -> Signature?
 
 pub let place : Item[Place]
 

@@ -4072,5 +4072,717 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|
       ),
     ),
+    (
+      "taint/sensitive-sinks.lisp",
+      (
+        #|;; defines arguments to certain functions as sensitive and establishes
+        #|;; a policy that they should either be checked (must/check) if they
+        #|;; are tainted with the untrusted input, or never be tainted at all
+        #|;; (must/trust)
+        #|
+        #|
+        #|;; mark all taints that affected branch control, this gives at least
+        #|;; a hope that the untrusted input was checked and validated.
+        #|
+        #|(require types)
+        #|(require pointers)
+        #|
+        #|(defmethod jumping (c _)
+        #|  (let ((t (taint-get-direct 'untrusted c)))
+        #|    (when t
+        #|      (dict-add 'untrusted/checked t (incident-location)))))
+        #|
+        #|(defun must/check (v)
+        #|  (let ((t (taint-get-direct 'untrusted v))
+        #|        (c (dict-get 'untrusted/checked t)))
+        #|    (when (and t (not c))
+        #|      (incident-report 'unchecked-untrusted-argument
+        #|                       (incident-location)
+        #|                       (dict-get 'taint-sources/untrusted t)))))
+        #|
+        #|(defun must/trust (v)
+        #|  (let ((t (taint-get-direct 'untrusted v)))
+        #|    (when t
+        #|      (incident-report 'untrusted-argument
+        #|                       (incident-location)
+        #|                       (dict-get 'taint-sources/untrusted t)))))
+        #|
+        #|(defun must/trust-string (s)
+        #|  (while (not (points-to-null s))
+        #|    (must/trust (memory-read s))
+        #|    (incr s)))
+        #|
+        #|(defmethod call (name m n)
+        #|  (when (= name 'calloc)
+        #|    (must/check m)
+        #|    (must/check n)))
+        #|
+        #|(defmethod call (name n)
+        #|  (when (is-in name 'malloc)
+        #|    (must/check n)))
+        #|
+        #|(defmethod call (name _ n)
+        #|  (when (is-in name 'div 'ldiv 'lldiv)
+        #|    (must/check n)))
+        #|
+        #|(defmethod call (name ptr aln len)
+        #|  (when (= name 'posix_memalign)
+        #|    (must/check len)))
+        #|
+        #|(defmethod call (name ptr len)
+        #|  (when (= name 'realloc)
+        #|    (must/check len)))
+        #|
+        #|(defmethod call (name x y len)
+        #|  (when (is-in name
+        #|               'memchr 'memcmp 'memcpy 'memmove 'memset
+        #|               'strncasecmp 'strpcpy)
+        #|    (must/check len)))
+        #|
+        #|(defmethod call (name cmd)
+        #|  (when (is-in name 'system 'popen)
+        #|    (must/trust-string cmd)))
+        #|
+        #|
+        #|(defmethod call (name path arg)
+        #|  (when (is-in name 'execl 'execle 'execlp 'execv 'execve 'execvp)
+        #|    (must/trust-string path)
+        #|    (must/trust-string arg)))
+        #|
+        #|(defun must/trust-args (args)
+        #|  (while args
+        #|    (must/trust-string (read-word ptr_t args))
+        #|    (ptr+1 ptr_t args)))
+        #|
+        #|(defmethod call (name pid path fa attr args envp)
+        #|  (must/trust-string path)
+        #|  (must/trust-args args)
+        #|  (must/trust-args envp))
+        #|
+      ),
+    ),
+    (
+      "taint/taint-sources.lisp",
+      (
+        #|(require incident)
+        #|
+        #|(defun untrust/value (v)
+        #|  "taints V with as 'untrusted unless it is already 'untrusted"
+        #|  (when (not (taint-get-direct 'untrusted v))
+        #|    (dict-add 'taint-sources/untrusted
+        #|              (taint-introduce-directly 'untrusted v)
+        #|              (incident-location))))
+        #|
+        #|(defun untrust/region (p n)
+        #|  "taints a memory region that is pointed by P and has the length N if
+        #|   it wasn't tainted yet"
+        #|  (when (not (taint-get-indirect 'untrusted p))
+        #|    (dict-add 'taint-sources/untrusted
+        #|              (taint-introduce-indirectly 'untrusted p n)
+        #|              (incident-location))))
+        #|
+        #|(defun untrust/string (p)
+        #|  "taints a string pointed by P (except the terminating null)"
+        #|  (untrust/region p (strlen p)))
+        #|
+        #|;; Rule:
+        #|;; r = atoi(a), r = atol(a), r = atoll(a) |- T(r), T(a,strlen(a))
+        #|;;
+        #|;; Motivation:
+        #|;; The textual representation of numeric data as an
+        #|;; indicative of some text based communication protocol.
+        #|(defmethod call-return (name arg ret)
+        #|  (when (is-in name 'atoi 'atol 'atoll)
+        #|    (untrust/region arg (strlen arg))
+        #|    (untrust/value ret)))
+        #|
+        #|;; same as above but for strtod, strtol, and strtold
+        #|(defmethod call-return (name arg _ ret)
+        #|  (when (is-in name 'strtod 'strtol 'strtold)
+        #|    (untrust/string arg)
+        #|    (untrust/value ret)))
+        #|
+        #|;; Rule:
+        #|;; r = getenv(_) |- T(r,strlen(r))
+        #|;;
+        #|;; Motivation:
+        #|;; though in many contexts environment variables could be considered
+        #|;; trusted, in some they are not, in particular in CGI, when
+        #|;; environment is used to pass user data.
+        #|(defmethod call-return (name _ ret)
+        #|  (when (= name 'getenv)
+        #|    (untrust/string ret)))
+        #|
+        #|;; Rule:
+        #|;; realpath(x,y,n) |- T(x,strlen(x)), T(y,strlen(x))
+        #|;;
+        #|;; Motivation:
+        #|;; If a program sanitizes a path, then it indicates that the program
+        #|;; itself doesn't trust it, so it came from an untrusted input.
+        #|(defmethod call-return (name input output)
+        #|  (when (= name 'realpath)
+        #|    (untrust/string output)
+        #|    (untrust/region input (strlen input))))
+        #|
+        #|;; Rule:
+        #|;; r = system(x) |- T(r)
+        #|;;
+        #|;; Motivation:
+        #|;; An adversary may affect the program environment and control the
+        #|;; exit code of trusted programs
+        #|(defmethod call-return (name cmd ret)
+        #|  (when (= name 'system) (untrust/value ret)))
+        #|
+        #|;; Rule:
+        #|;; r = read(_,p,n) |- T(p,n), T(r)
+        #|;;
+        #|;; Motivation:
+        #|;; Data came from the IO operation
+        #|(defmethod call-return (name _ buf len res)
+        #|  (when (= name 'read)
+        #|    (untrust/region buf len)
+        #|    (untrust/value res)))
+        #|
+        #|;; Rule:
+        #|;; r = pread(_,p,n,_) |- T(p,n), T(r)
+        #|;;
+        #|;; Motivation:
+        #|;; Same as with read
+        #|(defmethod call-return (name _ buf len off res)
+        #|  (when (= name 'pread)
+        #|    (untrust/region buf len)
+        #|    (untrust/value res)))
+        #|
+        #|;; Rule:
+        #|;; fgets(p,n,_) |- T(p,n)
+        #|;;
+        #|;; Motivation:
+        #|;; Same as with read.
+        #|(defmethod call (name buf len)
+        #|  (when (= name 'fgets)
+        #|    (untrust/region buf len)))
+        #|
+        #|;; Rule:
+        #|;; r = fread(p,n,m,_) |- T(p, n*m), T(r)
+        #|;; Motivation:
+        #|;; Same as with read
+        #|(defmethod call-return (name p n m ret)
+        #|  (when (= name 'fread)
+        #|    (untrust/region p (* n m))
+        #|    (untrust/value ret)))
+        #|
+        #|;; Rule:
+        #|;; m = recv(_,p,n) |- T(p,n), T(m)
+        #|(defmethod call-return (name fd buf len flgs ret)
+        #|  (when (= name 'recv)
+        #|    (untrust/region buf len)
+        #|    (untrust/value ret)))
+        #|
+        #|;; Rule:
+        #|;; recvfrom(_,p,n,...)
+        #|(defmethod call (name fd buf len flg src slen res)
+        #|  (when (= name 'recvfrom)
+        #|    (untrust/region buf len)
+        #|    (untrust/value res)))
+        #|
+        #|;; Rule:
+        #|;; x = fgetc(_), x = getc(_) |- T(c)
+        #|;; Motivation:
+        #|;; User input
+        #|(defmethod call-return (name _ ret)
+        #|  (when (is-in name 'fgetc 'getc)
+        #|    (untrust/value ret)))
+        #|
+        #|
+        #|;; Rule:
+        #|;; str?cmp(x,y), strcoll(x,y), str?casecmp(x,y) |- T(x,strlen(x)), T(y,strlen(y))
+        #|;; Motivation:
+        #|;; A comparison of two strings indicates that at least one of the strings is not statically
+        #|;; known, thus it should come from source, external to the program.
+        #|(defmethod call (name s1 s2)
+        #|  (when (is-in name 'strcmp 'strcasecmp 'strcoll 'strncasecmp 'strncmp)
+        #|    (untrust/string s1)
+        #|    (untrust/string s2)))
+        #|
+        #|;; Rule:
+        #|;; r=str?cmp(x,y), r=strcoll(x,y), r=str?casecmp(x,y) |- T(r)
+        #|;; Motivation:
+        #|;; The result of string comparison is also controlled by untrusted input.
+        #|(defmethod call-return (name s1 s2 res)
+        #|  (when (is-in name 'strcmp 'strcasecmp 'strcoll)
+        #|    (untrust/value res)))
+        #|
+        #|;; Rule:
+        #|;; r = crypt(x,_) |- T(r), T(x,strlen(x))
+        #|;; Motivation:
+        #|;; Crypt is often used for checking the authentication token that comes
+        #|;; from the untrusted party (otherwise why would we check it)
+        #|(defmethod call-return (name key)
+        #|  (when (= name 'crypt)
+        #|    (untrust/region key (strlen key))))
+        #|
+        #|;; Rule:
+        #|;; r = readlink(p,q,n) |- T(p,strlen(p)), T(q,n), T(r)
+        #|;; Motivation:
+        #|;; Readlink reads a contents of a link, that could be arbitrary,
+        #|;; as well as having arbitrary size
+        #|(defmethod call-return (name path buf len res)
+        #|  (when (= name 'readlink)
+        #|    (untrust/region path (strlen path))
+        #|    (untrust/region buf len)))
+        #|
+        #|;; Rule:
+        #|;; swab(x,y,n) |- T(x,n), T(y,n)
+        #|;; Motivation:
+        #|;; Changin byteorder often indicates that data is in the network ordering,
+        #|;; thus it came from an untrusted source (it could also indicate the opposite,
+        #|;; that data is sent to network).
+        #|(defmethod call (name src dst len)
+        #|  (when (= name 'swab)
+        #|    (untrust/region src len)
+        #|    (untrust/region dst len)))
+        #|
+        #|
+        #|;; Rule:
+        #|;; sscanf(s,_, ...) |- T(s,strlen(s))
+        #|;; Motivation:
+        #|;; Do not trust data that require parsing
+        #|(defmethod call (name str)
+        #|  (when (= name 'sscanf)
+        #|    (untrust/string str)))
+        #|
+      ),
+    ),
+    (
+      "taint/taint.lisp",
+      (
+        #|;;; Taint Analysis Framework
+        #|;;;
+        #|
+        #|(defparameter *indirect-taint-size* nil)
+        #|
+        #|(defun taint-introduce (r k v)
+        #|  "(taint-introduce REL KIND VAL) associates a fresh new taint with
+        #|   the value VAL using the specified relation REL, that must be either
+        #|   'directly or 'indirectly. If taint is introduced indirectly, then
+        #|   *indirect-taint-size* number of bytes are tainted."
+        #|  (if (= r 'directly)
+        #|      (taint-introduce-directly k v)
+        #|    (let ((n (or *indirect-taint-size* (/ (word-width) 8))))
+        #|      (taint-introduce-indirectly k v n))))
+        #|
+      ),
+    ),
+    (
+      "constant-tracker/check-hardcoded-values.lisp",
+      (
+        #|(defun check-hardcoded-socket-address (sockaddr-ptr)
+        #|  (when (points-to-static-data sockaddr-ptr 16)
+        #|    (incident-report 'hardcoded-socket-address (incident-location))))
+        #|
+        #|
+        #|(defmethod call (name fd addr)
+        #|  (when (is-in name 'accept 'bind 'connect)
+        #|    (check-hardcoded-socket-address addr)))
+        #|
+        #|(defmethod call (name fd buf size flags addr len)
+        #|  (when (is-in name 'sendto 'recvfrom)
+        #|    (check-hardcoded-socket-address addr)))
+        #|
+      ),
+    ),
+    (
+      "constant-tracker/check-null-pointers.lisp",
+      (
+        #|(defun check-null-pointer (ptr)
+        #|  (when (and (not ptr) (all-static-constant ptr))
+        #|    (incident-report 'null-pointer-dereference (incident-location))))
+        #|
+        #|(defmethod loading (ptr)
+        #|  (check-null-pointer ptr))
+        #|
+        #|(defmethod storing (ptr)
+        #|  (check-null-pointer ptr))
+        #|
+      ),
+    ),
+    (
+      "primus-test/check-value.lisp",
+      (
+        #|;;; - CWE-476 (NULL pointer dereference)
+        #|;;; - CWE-690 (Unchecked Return Value to NULL Pointer Dereference)
+        #|;;; - CWE-252 (Unchecked Return Value)
+        #|;;;
+        #|;;; The analysis relies on the Taint Analysis Framework and ensures
+        #|;;; that a value, tracked by the module taints a condition of some
+        #|;;; jump. When a pointer is tracked, then the check must occur before
+        #|;;; the pointer is dereferenced.
+        #|;;;
+        #|;;; Interface
+        #|;;; =========
+        #|;;;
+        #|;;; - (check-value VALUE)
+        #|;;; - (check-value-before-dereference VALUE)
+        #|;;;
+        #|;;; Auxiliary Interface
+        #|;;; -------------------
+        #|;;; - (check-value-clear VALUE)
+        #|
+        #|
+        #|(require taint)
+        #|
+        #|(defun check-value (v)
+        #|  "(check-value V) marks V as a value that must be checked"
+        #|  (let ((pc (incident-location))
+        #|        (tid (taint-introduce-directly 'check-value v)))
+        #|    (dict-add 'check-value/required tid pc)))
+        #|
+        #|(defun check-value-clear (v)
+        #|  "(check-value-clear V) marks V as a value that was checked."
+        #|  (let ((taint (taint-get-direct 'check-value v))
+        #|        (pc (dict-get 'check-value/required taint)))
+        #|    (when taint
+        #|      (taint-sanitize-direct 'check-value v)
+        #|      (when pc
+        #|        (check-value/occured pc)
+        #|        (dict-del 'check-value/required taint)))))
+        #|
+        #|;; Observed Signals
+        #|
+        #|
+        #|(defmethod loaded (addr value)
+        #|  (check-value/dereferenced addr value))
+        #|
+        #|(defmethod stored (addr value)
+        #|  (check-value/dereferenced addr value))
+        #|
+        #|(defmethod taint-finalize (taint live)
+        #|  (let ((pc (dict-get 'check-value/required taint)))
+        #|    (when pc
+        #|      (check-value/unchecked pc)
+        #|      (dict-del 'check-value/required taint))))
+        #|
+        #|(defmethod jumping (cnd _)
+        #|  (check-value-clear cnd))
+        #|
+        #|
+        #|;; Private
+        #|
+        #|(defun check-value/dereferenced (addr value)
+        #|  (let ((taint (taint-get-direct 'check-value addr))
+        #|        (pc (dict-get 'check-value/required taint)))
+        #|    (when pc
+        #|      (dict-del 'check-value/required taint)
+        #|      (taint-sanitize-indirect 'check-value addr)
+        #|      (taint-sanitize-direct 'check-value value)
+        #|      (check-value/unchecked-access pc))))
+        #|
+        #|
+        #|(defun check-value/occured (created)
+        #|  (incident-report 'value-was-checked created (incident-location)))
+        #|
+        #|(defun check-value/unchecked (created)
+        #|  (incident-report 'value-was-not-checked-or-used created))
+        #|
+        #|(defun check-value/unchecked-access (created)
+        #|  (incident-report 'value-was-used-before-check created (incident-location)))
+        #|
+      ),
+    ),
+    (
+      "primus-test/incident.lisp",
+      (
+        #|
+        #|(defmacro report-incident (name key d1)
+        #|  (incident-report name
+        #|                   (dict-get d1 key)))
+        #|
+        #|(defmacro report-incident (name key d1 d2)
+        #|  (incident-report name
+        #|                   (dict-get d1 key)
+        #|                   (dict-get d2 key)))
+        #|
+        #|(defmacro report-incident (name key d1 d2 d3)
+        #|  (incident-report name
+        #|                   (dict-get d1 key)
+        #|                   (dict-get d2 key)
+        #|                   (dict-get d3 key)))
+        #|
+        #|(defmacro report-incident (name key d1 d2 d3 d4)
+        #|  (incident-report name
+        #|                   (dict-get d1 key)
+        #|                   (dict-get d2 key)
+        #|                   (dict-get d3 key)
+        #|                   (dict-get d4 key)))
+        #|
+        #|(defmacro report-incident (name key d1 d2 d3 d4 d5)
+        #|  (incident-report name
+        #|                   (dict-get d1 key)
+        #|                   (dict-get d2 key)
+        #|                   (dict-get d3 key)
+        #|                   (dict-get d4 key)
+        #|                   (dict-get d5 key)))
+        #|
+        #|(defmacro report-incident (name key d1 d2 d3 d4 d5 d6)
+        #|  (incident-report name
+        #|                   (dict-get d1 key)
+        #|                   (dict-get d2 key)
+        #|                   (dict-get d3 key)
+        #|                   (dict-get d4 key)
+        #|                   (dict-get d5 key)
+        #|                   (dict-get d6 key)))
+        #|
+        #|(defmacro report-incident (name key d1 d2 d3 d4 d5 d6 d7)
+        #|  (incident-report name
+        #|                   (dict-get d1 key)
+        #|                   (dict-get d2 key)
+        #|                   (dict-get d3 key)
+        #|                   (dict-get d4 key)
+        #|                   (dict-get d5 key)
+        #|                   (dict-get d6 key)
+        #|                   (dict-get d7 key)))
+        #|
+        #|(defmacro report-incident (name key d1 d2 d3 d4 d5 d6 d7 d8)
+        #|  (incident-report name
+        #|                   (dict-get d1 key)
+        #|                   (dict-get d2 key)
+        #|                   (dict-get d3 key)
+        #|                   (dict-get d4 key)
+        #|                   (dict-get d5 key)
+        #|                   (dict-get d6 key)
+        #|                   (dict-get d7 key)
+        #|                   (dict-get d8 key)))
+        #|
+        #|
+        #|(defmacro report-incident (name key d1 d2 d3 d4 d5 d6 d7 d8 d9)
+        #|  (incident-report name
+        #|                   (dict-get d1 key)
+        #|                   (dict-get d2 key)
+        #|                   (dict-get d3 key)
+        #|                   (dict-get d4 key)
+        #|                   (dict-get d5 key)
+        #|                   (dict-get d6 key)
+        #|                   (dict-get d7 key)
+        #|                   (dict-get d8 key)
+        #|                   (dict-get d9 key)))
+        #|
+      ),
+    ),
+    (
+      "primus-test/memcheck-malloc.lisp",
+      (
+        #|(require memcheck)
+        #|
+        #|(defmethod call (name ptr)
+        #|  (when (and ptr (= name 'free)
+        #|             (not (= ptr *malloc-zero-sentinel*)))
+        #|    (memcheck-release 'malloc ptr)))
+        #|
+        #|(defmethod loaded (ptr)
+        #|  (memcheck-access 'malloc ptr))
+        #|
+        #|(defmethod stored (ptr)
+        #|  (memcheck-access 'malloc ptr))
+        #|
+        #|(defmethod call-return (name len ptr)
+        #|  (when (and len ptr (= name 'malloc))
+        #|    (memcheck-acquire 'malloc ptr len)))
+        #|
+        #|
+        #|(defmethod call (name dst src len)
+        #|  (when (is-in name 'memmove 'memcpy 'memcmp)
+        #|    (check/both dst src len)))
+        #|
+        #|(defmethod call (name dst src len)
+        #|  (when (is-in name 'strncpy 'strncmp)
+        #|    (check/strn* dst len)
+        #|    (check/strn* src len)))
+        #|
+        #|(defmethod call (name dst src c len)
+        #|  (when (= name 'memccpy)
+        #|    (check/both dst src len)))
+        #|
+        #|(defmethod call-return (name dst len)
+        #|  (when (= name 'strlen)
+        #|    (memcheck-bounds 'malloc dst len)))
+        #|
+        #|(defmethod call (name ptr c len)
+        #|  (when (is-in name 'memchr 'memrchr)
+        #|    (memcheck-bounds 'malloc ptr len)))
+        #|
+        #|(defun check/both (dst src len)
+        #|  (memcheck-bounds 'malloc src len)
+        #|  (memcheck-bounds 'malloc dst len))
+        #|
+        #|(defun check/strn* (str len)
+        #|  (memcheck-bounds 'malloc str (min len (strlen str))))
+        #|
+      ),
+    ),
+    (
+      "primus-test/memcheck.lisp",
+      (
+        #|;;; Memcheck - memory access monitor kit
+        #|;;;
+        #|;;;
+        #|;;;
+        #|;;; Incidents:
+        #|;;; - (incident double-release acquire release release)
+        #|;;;   reported when the same memory region is released twice;
+        #|;;;   reported when a region that was never acquired is released;
+        #|;;; - (incident use-after-release acquire release use)
+        #|;;;   reported when a memory access operation occurs on a memory
+        #|;;;   region that was released
+        #|;;;
+        #|;;; Attributes:
+        #|;;; - memcheck/site/acquire
+        #|;;; - memcheck/site/release
+        #|;;; - memcheck/site/double-release
+        #|;;; - memcheck/site/use-after-release
+        #|;;;
+        #|;;;
+        #|;;; State:
+        #|;;; - memcheck/dead-heap
+        #|;;; - memcheck/live-heap
+        #|
+        #|(require incident)
+        #|
+        #|;; Public Interface
+        #|
+        #|(defun memcheck-is-tracked (heap ptr)
+        #|  (or
+        #|   (region-contains (symbol-concat 'memcheck/live heap) ptr)
+        #|   (region-contains (symbol-concat 'memcheck/dead heap) ptr)))
+        #|
+        #|(defun memcheck-release (heap ptr)
+        #|  (let ((dead (region-contains (symbol-concat 'memcheck/dead heap) ptr)))
+        #|    (if dead (memcheck/report-double-release ptr)
+        #|      (let ((live (region-contains (symbol-concat 'memcheck/live heap) ptr)))
+        #|        (when (= live ptr)
+        #|          (memcheck/register ptr 'memcheck/site/release)
+        #|          (region-move (symbol-concat 'memcheck/dead heap)
+        #|                       (symbol-concat 'memcheck/live heap) ptr))))))
+        #|
+        #|(defun memcheck-acquire (heap ptr len)
+        #|  (region-create (symbol-concat 'memcheck/live heap) ptr (-1 (+ ptr len)))
+        #|  (memcheck/register ptr 'memcheck/site/acquire))
+        #|
+        #|(defun memcheck-access (heap ptr)
+        #|  (let ((reg (region-contains (symbol-concat 'memcheck/dead heap) ptr)))
+        #|    (when reg (memcheck/report-use-after-release reg))))
+        #|
+        #|(defun memcheck-bounds (heap beg len)
+        #|  (when (and beg len)
+        #|    (let ((end (-1 (+ beg len)))
+        #|          (r1 (region-contains (symbol-concat 'memcheck/live heap) beg))
+        #|          (r2 (region-contains (symbol-concat 'memcheck/live heap) end)))
+        #|      (when (/= r1 r2)
+        #|        (memcheck/report-out-of-bound r1 r2)))))
+        #|
+        #|;; Private
+        #|;; reports
+        #|(defun memcheck/report-use-after-release (ptr)
+        #|  (memcheck/register ptr 'memcheck/site/use-after-release)
+        #|  (report-incident 'memcheck-use-after-release ptr
+        #|                   'memcheck/site/acquire
+        #|                   'memcheck/site/release
+        #|                   'memcheck/site/use-after-release))
+        #|
+        #|(defun memcheck/report-double-release (ptr)
+        #|  (memcheck/register ptr 'memcheck/site/double-release)
+        #|  (report-incident 'memcheck-double-release ptr
+        #|                   'memcheck/site/acquire
+        #|                   'memcheck/site/release
+        #|                   'memcheck/site/double-release))
+        #|
+        #|
+        #|(defun memcheck/report-out-of-bound (r1 r2)
+        #|  (let ((r1 (dict-get 'memcheck/site/acquire r1))
+        #|        (r2 (dict-get 'memcheck/site/acquire r2)))
+        #|    (incident-report 'memcheck-out-of-bound
+        #|                   (or r1 r2)
+        #|                   (or r2 r1)
+        #|                   (incident-location))))
+        #|
+        #|(defun memcheck/register (ptr site)
+        #|  (dict-add site ptr (incident-location)))
+        #|
+      ),
+    ),
+    (
+      "primus-test/warn-unused.lisp",
+      (
+        #|(require check-value)
+        #|
+        #|(defmethod call-return (name _ ret)
+        #|  (when (is-in name
+        #|           'malloc 'getenv 'mkdtemp 'mkstemp
+        #|           'posix_openpt 'system 'gets 'fgets 'feof
+        #|           'ferror 'fileno 'chdir 'pipe 'setuid)
+        #|    (check-value ret)))
+        #|
+        #|(defmethod call-return (name _ _ ret)
+        #|  (when (is-in name 'calloc 'realoc 'fdopen 'fopen
+        #|               'realpath 'listen 'shutdown 'access 'getcwd
+        #|               'symlink 'truncate 'popen)
+        #|    (check-value ret)))
+        #|
+        #|(defmethod call-return (name _ _ _ ret)
+        #|  (when (is-in name
+        #|               'freopen 'strxfrm 'accept 'bind 'connect
+        #|               'recvmsg 'sendmsg 'socket 'chown 'readv
+        #|               'readlink 'write)
+        #|    (check-value ret)))
+        #|
+        #|(defmethod call-return (name _ _ _ _ ret)
+        #|  (when (is-in name 'fread 'fwrite 'recv 'send 'socketpair
+        #|               'pread 'pwrite 'read)
+        #|    (check-value ret)))
+        #|
+        #|(defmethod call-return (name _ _ _ _ _ _ _ ret)
+        #|  (when (is-in name 'recvfrom 'sendto 'setsockopt)
+        #|    (check-value ret)))
+        #|
+        #|
+        #|(defmethod call-return (name _ _ _ _ _ _ ret)
+        #|  (when (is-in name 'recvfrom 'sendto)
+        #|    (check-value ret)))
+        #|
+      ),
+    ),
+    (
+      "approximation/math.lisp",
+      (
+        #|(defun sin (x)
+        #|  (declare (external "sin"))
+        #|  (approximate 'sin 64 x))
+        #|
+        #|(defun cos (x)
+        #|  (declare (external "cos"))
+        #|  (approximate 'cos 64 x))
+        #|
+        #|(defun log (x)
+        #|  (declare (external "log"))
+        #|  (approximate 'log 64 x))
+        #|
+      ),
+    ),
+    (
+      "approximation/test.lisp",
+      (
+        #|(require math)
+        #|
+        #|(defmethod init ()
+        #|  (msg "hello from math $0" (sin 4611686018427387904:64))
+        #|  (msg "hello from math sin(316.159265358979326) = $0" (sin 4644269548807471931:64))
+        #|  (msg "hello from math sin(7853981635.97448254) = $0" (sin 4755029503896426363:64))
+        #|  (msg "hello from math sin(8.28318530717958623) = $0" (sin 4620852636837615244:64))
+        #|)
+        #|
+        #|
+        #|
+        #|
+      ),
+    ),
   ]
 }

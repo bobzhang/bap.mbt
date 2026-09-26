@@ -320,7 +320,10 @@ pub fn[T] signal(
     Some(p) => { ..p, ret: Any, }
     None => { args: [], rest: Some(Any), ret: Any, }
   }
-  let name = @knowledge.Name::read(obs.name(), pkg="primus")
+  let name = @knowledge.Name::create(
+    @knowledge.Name::read(obs.name()).unqualified(),
+    pkg="primus",
+  )
   update_state(m, s => {
     ..s,
     program: s.program.add(

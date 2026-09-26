@@ -26,6 +26,10 @@ LAYOUT = [
     ("semantics/arm", "plugins/arm/semantics"),
     ("semantics/powerpc", "plugins/powerpc/semantics"),
     ("semantics/x86", "plugins/x86/semantics"),
+    ("taint", "plugins/primus_taint/lisp"),
+    ("constant-tracker", "plugins/constant_tracker/lisp"),
+    ("primus-test", "plugins/primus_test/lisp"),
+    ("approximation", "plugins/primus_approximation/lisp"),
 ]
 
 

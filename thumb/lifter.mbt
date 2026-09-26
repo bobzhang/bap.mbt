@@ -2,24 +2,13 @@
 //
 // Upstream answers `Insn.empty` (no semantics) for unknown opcodes, operand
 // shapes it does not recognise, and exceptions raised while decoding
-// operands. The shared `@mc.Lifter` contract reports those cases as errors
-// instead: `Unsupported` for opcodes without upstream semantics and
-// `BadOperands` for operand shapes (or predicate immediates) upstream
-// rejects.
-
-///|
-/// Target and encoding names this lifter is registered for.
-let thumb_targets : ReadOnlyArray[String] = ["thumb", "thumbv7", "llvm-thumb"]
-
-///|
-/// Target names `register` installs the Thumb lifter under.
-pub fn target_names() -> Array[String] {
-  [..thumb_targets]
-}
+// operands. This port reports those cases as errors instead: `Unsupported`
+// for opcodes without upstream semantics and `BadOperands` for operand
+// shapes (or predicate immediates) upstream rejects.
 
 ///|
 fn bad(insn : @mc.Insn) -> @mc.LiftError {
-  @mc.BadOperands(insn.name)
+  @mc.BadOperands(opcode=insn.name, detail="")
 }
 
 ///|
@@ -137,7 +126,8 @@ fn lift_mem_multi(
       }
     }
     // upstream has no semantics for tSTMIA and tLDMIA_UPD
-    (TSTMIA | TLDMIA_UPD, _) => raise @mc.Unsupported(insn.name)
+    (TSTMIA | TLDMIA_UPD, _) =>
+      raise @mc.Unsupported(opcode=insn.name, target="thumb")
     _ => raise bad(insn)
   }
 }
@@ -245,15 +235,88 @@ pub fn lift_opcode(
 pub fn lift(insn : @mc.Insn) -> Array[@types.Stmt] raise @mc.LiftError {
   match Opcode::of_name(insn.name) {
     Some(opcode) => lift_opcode(opcode, insn)
-    None => raise @mc.Unsupported(insn.name)
+    None => raise @mc.Unsupported(opcode=insn.name, target="thumb")
   }
 }
 
 ///|
-/// Register the Thumb lifter with `@mc` for every name in
-/// `target_names()`. Idempotent.
-pub fn register() -> Unit {
-  for target in thumb_targets {
-    @mc.register_lifter(target, lift)
+/// Name of the provider installed by `register`.
+pub let provider_name : String = "thumb"
+
+///|
+/// Whether the provider applies to `ctx`: 32-bit targets of the ARM family
+/// decoded as Thumb (`llvm-thumb`) instructions, as upstream
+/// `thumb_main.ml` guards on `Theory.Label.encoding`. Upstream semantics
+/// always access memory in little-endian order (`loadw b0`), so big-endian
+/// targets are rejected explicitly.
+pub fn accepts(ctx : @mc.Context) -> Bool {
+  ctx.belongs(@core_theory.Target::arm_family()) &&
+  ctx.target.bits() == 32 &&
+  !(ctx.target.endianness() is BigEndian) &&
+  ctx.encoding == @core_theory.Language::llvm_t32()
+}
+
+///|
+/// The encoding of the destination of a branch when it is statically known
+/// and may differ from Thumb (upstream `Thumb_branch.switch_encoding`):
+///
+/// - `tBX pc` jumps to `pc + 4` (see `dest_encoding`: ARM code, since Thumb
+///   instructions are halfword aligned);
+/// - `tBLXi` jumps to `pc + 4 + imm`, whose bit 0 selects the encoding
+///   (as upstream `blxi`; it is clear for well-formed `blx imm`, i.e. ARM);
+/// - `tBL` stays in Thumb.
+///
+/// Register branches (`tBX rm`, `tBLXr rm`) decide the encoding at run
+/// time from bit 0 of the register, so it is not known statically.
+pub fn branch_dest_encoding(
+  opcode : Opcode,
+  insn : @mc.Insn,
+) -> @core_theory.Language? {
+  let pc = addr32(insn)
+  match (opcode, insn.ops) {
+    (TBX, [Reg(name~, ..), ..]) if is_pc(reg(name)) =>
+      Some(dest_encoding(pc_offset(pc, 0).reinterpret_as_uint().to_uint64()))
+    (TBLXi, [_, _, Imm(dst), ..]) =>
+      Some(
+        dest_encoding(pc_offset(pc, imm(dst)).reinterpret_as_uint().to_uint64()),
+      )
+    (TBL, _) => Some(@core_theory.Language::llvm_t32())
+    _ => None
   }
+}
+
+///|
+/// Lift in a context. Opcodes outside the Thumb-1 set (including all
+/// Thumb-2 `t2*` opcodes except `t2LDRpci`) raise `Unsupported`, so that a
+/// registry falls through to the ARM provider. The result records the
+/// destination encoding of interworking branches (see
+/// `branch_dest_encoding`).
+pub fn lift_in_context(
+  ctx : @mc.Context,
+  insn : @mc.Insn,
+) -> @mc.Lifted raise @mc.LiftError {
+  guard Opcode::of_name(insn.name) is Some(opcode) else {
+    raise @mc.Unsupported(opcode=insn.name, target=ctx.target.to_string())
+  }
+  let bil = lift_opcode(opcode, insn) catch {
+    Unsupported(opcode~, ..) =>
+      raise @mc.Unsupported(opcode~, target=ctx.target.to_string())
+    err => raise err
+  }
+  @mc.Lifted::create(bil, dest_encoding?=branch_dest_encoding(opcode, insn))
+}
+
+///|
+/// The Thumb lifter provider (see `accepts` and `lift_in_context`).
+pub fn provider() -> @mc.Provider {
+  @mc.Provider::create(provider_name, accepts~, lift=lift_in_context)
+}
+
+///|
+/// Register the Thumb provider with `registry` (the global `@mc` registry
+/// by default). Idempotent: the provider is replaced by name. Register it
+/// before the ARM provider so that Thumb-1 opcodes are lifted here and
+/// Thumb-2 ones fall through to ARM.
+pub fn register(registry? : @mc.Registry = @mc.Registry::global()) -> Unit {
+  registry.register(provider())
 }

@@ -7,15 +7,21 @@ import {
 }
 
 // Values
+pub fn accepts(@mc.Context) -> Bool
+
 pub fn gpr(Int) -> @types.Var?
 
 pub fn lift(@mc.Insn) -> Array[@types.Stmt] raise @mc.LiftError
 
-pub fn register() -> Unit
+pub fn lift_in_context(@mc.Context, @mc.Insn) -> @mc.Lifted raise @mc.LiftError
+
+pub fn provider() -> @mc.Provider
+
+pub let provider_name : String
+
+pub fn register(registry? : @mc.Registry) -> Unit
 
 pub fn regnum(String) -> Int?
-
-pub fn target_names() -> Array[String]
 
 // Errors
 

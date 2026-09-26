@@ -12,6 +12,8 @@ pub fn aapcs32_layout(CType?, ArrayView[CType]) -> ArgLayout?
 
 pub fn aapcs64_layout(CType?, ArrayView[CType]) -> ArgLayout?
 
+pub fn accepts(@mc.Context) -> Bool
+
 pub fn addr_of_pc(UInt64) -> UInt64
 
 pub let cf : @types.Var
@@ -58,6 +60,8 @@ pub let itstate : @types.Var
 
 pub fn lift(@mc.Insn, encoding? : Encoding, raw? : UInt) -> Array[@types.Stmt] raise @mc.LiftError
 
+pub fn lift_in_context(@mc.Context, @mc.Insn) -> @mc.Lifted raise @mc.LiftError
+
 pub fn lift_typed(Insn, ArrayView[Op], addr? : UInt, encoding? : Encoding, raw? : UInt) -> Array[@types.Stmt] raise @mc.LiftError
 
 pub let lr : @types.Var
@@ -71,6 +75,10 @@ pub let nil : @types.Var
 pub fn ops_of_mc(ArrayView[@mc.Op]) -> Array[Op] raise @mc.LiftError
 
 pub let pc : @types.Var
+
+pub fn provider() -> @mc.Provider
+
+pub let provider_name : String
 
 pub let qf : @types.Var
 
@@ -100,15 +108,13 @@ pub let r8 : @types.Var
 
 pub let r9 : @types.Var
 
-pub fn register() -> Unit
+pub fn register(registry? : @mc.Registry) -> Unit
 
 pub fn resolve_pc(ArrayView[@types.Stmt], UInt) -> Array[@types.Stmt]
 
 pub let sp : @types.Var
 
 pub let spsr : @types.Var
-
-pub let target_names : ReadOnlyArray[String]
 
 pub let vf : @types.Var
 

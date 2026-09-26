@@ -5,27 +5,16 @@
 // register). Semantics are emitted as BIL instead of Core Theory
 // denotations. The rest of `systemz_main` (target, encoding, loader and
 // `Arch.t` mapping) is covered by `@core_theory.Target::systemz`/`systemz9`
-// and the `llvm-systemz` encoding name used for registration here.
+// and the `llvm-systemz` encoding (`@core_theory.Language::llvm_systemz`)
+// the provider accepts.
 //
 // Upstream answers `Insn.empty` for unknown opcodes and for operands that
-// are not registers; the shared `@mc.Lifter` contract reports these as
-// `Unsupported` and `BadOperands` respectively.
+// are not registers; this port reports these as `Unsupported` and
+// `BadOperands` respectively.
 
 ///|
 /// Number of SystemZ general-purpose registers (`R0`..`R15`).
 let gpr_count : Int = 16
-
-///|
-/// Target and encoding names this lifter is registered for.
-let systemz_targets : ReadOnlyArray[String] = [
-  "systemz", "systemz9", "llvm-systemz",
-]
-
-///|
-/// Target names `register` installs the SystemZ lifter under.
-pub fn target_names() -> Array[String] {
-  [..systemz_targets]
-}
 
 ///|
 /// The 64-bit general-purpose register `R<index>` (upstream
@@ -68,7 +57,10 @@ fn require_gpr(insn : @mc.Insn, pos : Int) -> @types.Var raise @mc.LiftError {
   guard insn.op(pos) is Some(Reg(name~, ..)) &&
     regnum(name) is Some(n) &&
     gpr(n) is Some(r) else {
-    raise @mc.BadOperands(insn.name)
+    raise @mc.BadOperands(
+      opcode=insn.name,
+      detail="operand \{pos} is not a general-purpose register",
+    )
   }
   r
 }
@@ -95,15 +87,48 @@ fn lr(insn : @mc.Insn) -> Array[@types.Stmt] raise @mc.LiftError {
 pub fn lift(insn : @mc.Insn) -> Array[@types.Stmt] raise @mc.LiftError {
   match insn.name {
     "LR" => lr(insn)
-    _ => raise @mc.Unsupported(insn.name)
+    _ => raise @mc.Unsupported(opcode=insn.name, target="systemz")
   }
 }
 
 ///|
-/// Register the SystemZ lifter with `@mc` for every name in
-/// `target_names()`. Idempotent.
-pub fn register() -> Unit {
-  for target in systemz_targets {
-    @mc.register_lifter(target, lift)
+/// Name of the provider installed by `register`.
+pub let provider_name : String = "systemz"
+
+///|
+/// Whether the provider applies to `ctx`: SystemZ targets decoded with the
+/// `llvm-systemz` encoding.
+pub fn accepts(ctx : @mc.Context) -> Bool {
+  ctx.belongs(@core_theory.Target::systemz()) &&
+  (
+    ctx.encoding.is_unknown() ||
+    ctx.encoding == @core_theory.Language::llvm_systemz()
+  )
+}
+
+///|
+/// Lift in a context: unknown opcodes raise `Unsupported`.
+pub fn lift_in_context(
+  ctx : @mc.Context,
+  insn : @mc.Insn,
+) -> @mc.Lifted raise @mc.LiftError {
+  let bil = lift(insn) catch {
+    Unsupported(opcode~, ..) =>
+      raise @mc.Unsupported(opcode~, target=ctx.target.to_string())
+    err => raise err
   }
+  @mc.Lifted::of_bil(bil)
+}
+
+///|
+/// The SystemZ lifter provider (see `accepts` and `lift_in_context`).
+pub fn provider() -> @mc.Provider {
+  @mc.Provider::create(provider_name, accepts~, lift=lift_in_context)
+}
+
+///|
+/// Register the SystemZ provider with `registry` (the global `@mc`
+/// registry by default). Idempotent: the provider is replaced by name.
+pub fn register(registry? : @mc.Registry = @mc.Registry::global()) -> Unit {
+  registry.register(provider())
 }

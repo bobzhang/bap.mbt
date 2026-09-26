@@ -2,42 +2,94 @@
 package "bobzhang/bap/mc"
 
 import {
+  "bobzhang/bap/core_theory",
   "bobzhang/bap/types",
   "moonbitlang/core/debug",
 }
 
 // Values
-pub fn find_lifter(String) -> ((Insn) -> Array[@types.Stmt] raise LiftError)?
-
-pub fn lift(String, Insn) -> Array[@types.Stmt] raise LiftError
-
-pub fn lifter_targets() -> Array[String]
-
-pub fn register_lifter(String, (Insn) -> Array[@types.Stmt] raise LiftError) -> Unit
+pub fn default_encoding(@core_theory.Target) -> @core_theory.Language
 
 // Errors
 pub(all) suberror LiftError {
-  Unsupported(String)
-  BadOperands(String)
+  Unsupported(opcode~ : String, target~ : String)
+  BadOperands(opcode~ : String, detail~ : String)
+  IllTyped(opcode~ : String, detail~ : String)
   Failure(String)
 } derive(@debug.Debug)
+pub fn LiftError::is_unsupported(Self) -> Bool
 pub fn LiftError::message(Self) -> String
 pub fn LiftError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
-pub(all) struct Insn {
+pub struct Context {
+  target : @core_theory.Target
+  encoding : @core_theory.Language
+}
+pub fn Context::belongs(Self, @core_theory.Target) -> Bool
+pub fn Context::create(@core_theory.Target, encoding? : @core_theory.Language) -> Self
+pub fn Context::encoded_as(Self, @core_theory.Language) -> Bool
+pub fn Context::encoding(Self) -> @core_theory.Language
+pub fn Context::target(Self) -> @core_theory.Target
+pub fn Context::to_string(Self) -> String
+
+pub struct Insn {
   name : String
+  code : Int
   assembly : String
-  ops : Array[Op]
+  ops : ReadOnlyArray[Op]
   addr : UInt64
   size : Int
+  encoding : @core_theory.Language
+  kinds : ReadOnlyArray[Kind]
+  raw : Bytes
 } derive(Eq, @debug.Debug)
-pub fn Insn::create(String, Array[Op], addr? : UInt64, size? : Int, assembly? : String) -> Self
+pub fn Insn::addr(Self) -> UInt64
+pub fn Insn::assembly(Self) -> String
+pub fn Insn::code(Self) -> Int
+pub fn Insn::create(String, ArrayView[Op], addr~ : UInt64, size~ : Int, assembly? : String, code? : Int, encoding? : @core_theory.Language, kinds? : ArrayView[Kind], raw? : Bytes) -> Self
+pub fn Insn::encoding(Self) -> @core_theory.Language
 pub fn Insn::equal(Self, Self) -> Bool
+pub fn Insn::has_kind(Self, Kind) -> Bool
+pub fn Insn::kinds(Self) -> ReadOnlyArray[Kind]
+pub fn Insn::name(Self) -> String
 pub fn Insn::next_addr(Self) -> UInt64
 pub fn Insn::not_equal(Self, Self) -> Bool
 pub fn Insn::op(Self, Int) -> Op?
+pub fn Insn::ops(Self) -> ReadOnlyArray[Op]
+pub fn Insn::raw(Self) -> Bytes
+pub fn Insn::size(Self) -> Int
 pub fn Insn::to_repr(Self) -> @debug.Repr
+
+pub(all) enum Kind {
+  ConditionalBranch
+  UnconditionalBranch
+  IndirectBranch
+  Return
+  Call
+  Barrier
+  Terminator
+  MayAffectControlFlow
+  MayLoad
+  MayStore
+} derive(Eq, @debug.Debug)
+pub fn Kind::equal(Self, Self) -> Bool
+pub fn Kind::not_equal(Self, Self) -> Bool
+pub fn Kind::to_repr(Self) -> @debug.Repr
+
+pub struct Lifted {
+  bil : Array[@types.Stmt]
+  delay : Int
+  dest_encoding : @core_theory.Language?
+} derive(Eq, @debug.Debug)
+pub fn Lifted::bil(Self) -> Array[@types.Stmt]
+pub fn Lifted::create(Array[@types.Stmt], delay? : Int, dest_encoding? : @core_theory.Language) -> Self
+pub fn Lifted::delay(Self) -> Int
+pub fn Lifted::dest_encoding(Self) -> @core_theory.Language?
+pub fn Lifted::equal(Self, Self) -> Bool
+pub fn Lifted::not_equal(Self, Self) -> Bool
+pub fn Lifted::of_bil(Array[@types.Stmt]) -> Self
+pub fn Lifted::to_repr(Self) -> @debug.Repr
 
 pub(all) enum Op {
   Reg(name~ : String, code~ : Int)
@@ -54,7 +106,27 @@ pub fn Op::to_repr(Self) -> @debug.Repr
 pub fn Op::to_string(Self) -> String
 pub impl Show for Op
 
+pub struct Provider {
+  name : String
+  accepts : (Context) -> Bool
+  lift : (Context, Insn) -> Lifted raise LiftError
+}
+pub fn Provider::accepts(Self, Context) -> Bool
+pub fn Provider::create(String, accepts~ : (Context) -> Bool, lift~ : (Context, Insn) -> Lifted raise LiftError) -> Self
+pub fn Provider::lift(Self, Context, Insn) -> Lifted raise LiftError
+pub fn Provider::name(Self) -> String
+
+type Registry
+pub fn Registry::accepting(Self, Context) -> Array[Provider]
+pub fn Registry::find(Self, String) -> Provider?
+pub fn Registry::global() -> Self
+pub fn Registry::lift(Self, Context, Insn, validate? : Bool) -> Lifted raise LiftError
+pub fn Registry::names(Self) -> Array[String]
+pub fn Registry::new() -> Self
+pub fn Registry::providers(Self) -> Array[Provider]
+pub fn Registry::register(Self, Provider) -> Unit
+pub fn Registry::unregister(Self, String) -> Bool
+
 // Type aliases
-pub type Lifter = (Insn) -> Array[@types.Stmt] raise LiftError
 
 // Traits

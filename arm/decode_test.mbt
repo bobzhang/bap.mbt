@@ -84,15 +84,65 @@ test "malformed instructions are reported" {
 }
 
 ///|
-test "register installs the lifter for all ARM targets" {
-  @arm.register()
-  @arm.register()
-  for name in @arm.target_names {
-    assert_true(@mc.find_lifter(name) is Some(_))
+test "register installs the ARM provider" {
+  let registry = @mc.Registry::new()
+  @arm.register(registry~)
+  @arm.register(registry~)
+  assert_eq(registry.names(), [@arm.provider_name])
+  let insn = @mc.Insn::create(
+    "MOVr",
+    [r("R0"), r("R1"), ..al, r("Nil")],
+    addr=0,
+    size=4,
+  )
+  let arm = @mc.Context::create(@core_theory.Target::arm())
+  inspect(render(registry.lift(arm, insn).bil), content="R0:imm32 := R1:imm32")
+  // context selection: 32-bit little-endian ARM family, A32 or T32
+  assert_true(@arm.accepts(arm))
+  assert_true(@arm.accepts(@mc.Context::create(@core_theory.Target::thumb())))
+  assert_false(@arm.accepts(@mc.Context::create(@core_theory.Target::armeb())))
+  assert_false(
+    @arm.accepts(@mc.Context::create(@core_theory.Target::thumbeb())),
+  )
+  assert_false(
+    @arm.accepts(@mc.Context::create(@core_theory.Target::aarch64())),
+  )
+  assert_false(@arm.accepts(@mc.Context::create(@core_theory.Target::mips())))
+  // Thumb-2 opcodes are only lifted in the Thumb encoding, A32 ones only in
+  // the ARM encoding
+  let thumb = @mc.Context::create(@core_theory.Target::thumb())
+  try registry.lift(thumb, insn) catch {
+    err => assert_true(err is Unsupported(opcode="MOVr", ..))
+  } noraise {
+    _ => fail("expected unsupported instruction")
   }
-  let insn = @mc.Insn::create("MOVr", [r("R0"), r("R1"), ..al, r("Nil")])
-  inspect(render(@mc.lift("armv7", insn)), content="R0:imm32 := R1:imm32")
-  inspect(render(@mc.lift("thumbeb", insn)), content="R0:imm32 := R1:imm32")
+  let t2 = @mc.Insn::create(
+    "t2MOVr",
+    [r("R0"), r("R1"), ..al, r("Nil")],
+    addr=0,
+    size=4,
+  )
+  inspect(render(registry.lift(thumb, t2).bil), content="R0:imm32 := R1:imm32")
+  try registry.lift(arm, t2) catch {
+    err => assert_true(err is Unsupported(opcode="t2MOVr", ..))
+  } noraise {
+    _ => fail("expected unsupported instruction")
+  }
+  // unknown opcodes are `Unsupported` for the provider, empty for `lift`
+  let unknown = @mc.Insn::create("VADDfd", [], addr=0, size=4)
+  assert_eq(@arm.lift(unknown), [])
+  try registry.lift(arm, unknown) catch {
+    err => assert_true(err is Unsupported(opcode="VADDfd", ..))
+  } noraise {
+    _ => fail("expected unsupported instruction")
+  }
+  // BLX with an immediate switches to Thumb
+  let blx = @mc.Insn::create("BLXi", [i(0x10)], addr=0x1000, size=4)
+  let lifted = registry.lift(arm, blx)
+  assert_eq(lifted.dest_encoding, Some(@core_theory.Language::llvm_t32()))
+  assert_eq(lifted.delay, 0)
+  let b = @mc.Insn::create("Bcc", [i(0x10), ..al], addr=0x1000, size=4)
+  assert_eq(registry.lift(arm, b).dest_encoding, None)
 }
 
 ///|

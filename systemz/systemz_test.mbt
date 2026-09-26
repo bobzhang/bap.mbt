@@ -1,6 +1,6 @@
 ///|
 fn lr(rd : String, rs : String) -> @mc.Insn {
-  @mc.Insn::create("LR", [@mc.Op::reg(rd), @mc.Op::reg(rs)], size=2)
+  @mc.Insn::create("LR", [@mc.Op::reg(rd), @mc.Op::reg(rs)], size=2, addr=0)
 }
 
 ///|
@@ -48,8 +48,8 @@ test "register helpers" {
 
 ///|
 test "lift errors" {
-  try @systemz.lift(@mc.Insn::create("AR", [])) catch {
-    err => assert_true(err is @mc.Unsupported("AR"))
+  try @systemz.lift(@mc.Insn::create("AR", [], addr=0, size=4)) catch {
+    err => assert_true(err is @mc.Unsupported(opcode="AR", ..))
   } noraise {
     _ => fail("expected unsupported opcode")
   }
@@ -60,8 +60,8 @@ test "lift errors" {
     [@mc.Op::reg("R16L"), @mc.Op::reg("R2L")],
   ]
   for ops in bad {
-    try @systemz.lift(@mc.Insn::create("LR", ops)) catch {
-      err => assert_true(err is @mc.BadOperands("LR"))
+    try @systemz.lift(@mc.Insn::create("LR", ops, addr=0, size=4)) catch {
+      err => assert_true(err is @mc.BadOperands(opcode="LR", ..))
     } noraise {
       _ => fail("expected bad operands")
     }
@@ -69,12 +69,24 @@ test "lift errors" {
 }
 
 ///|
-test "register installs the lifter for systemz targets" {
-  @systemz.register()
-  @systemz.register()
-  let targets = @mc.lifter_targets()
-  for name in @systemz.target_names() {
-    assert_true(targets.contains(name))
+test "register installs the systemz provider" {
+  let registry = @mc.Registry::new()
+  @systemz.register(registry~)
+  @systemz.register(registry~)
+  assert_eq(registry.names(), [@systemz.provider_name])
+  for
+    target in [@core_theory.Target::systemz(), @core_theory.Target::systemz9()] {
+    let ctx = @mc.Context::create(target)
+    assert_true(@systemz.accepts(ctx))
+    assert_eq(registry.lift(ctx, lr("R1L", "R2L")).bil.length(), 1)
   }
-  assert_eq(@mc.lift("systemz", lr("R1L", "R2L")).length(), 1)
+  assert_false(
+    @systemz.accepts(@mc.Context::create(@core_theory.Target::mips())),
+  )
+  let ctx = @mc.Context::create(@core_theory.Target::systemz())
+  try registry.lift(ctx, @mc.Insn::create("AR", [], addr=0, size=2)) catch {
+    err => assert_true(err is @mc.Unsupported(opcode="AR", ..))
+  } noraise {
+    _ => fail("expected unsupported opcode")
+  }
 }

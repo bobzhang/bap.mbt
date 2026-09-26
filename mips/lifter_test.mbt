@@ -155,7 +155,6 @@ let samples64 : Array[(String, Array[@mc.Op])] = {
 
 ///|
 test "lifter: every opcode lifts to well-typed BIL on every target" {
-  @mips.register()
   let names = samples64.map(sample => sample.0)
   names.sort()
   assert_eq(names, @mips.opcodes())
@@ -176,7 +175,7 @@ test "lifter: every opcode lifts to well-typed BIL on every target" {
     })
     for target in @mips.targets {
       let ops = if target.has_prefix("mips64") { ops } else { ops32 }
-      let bil = @mc.lift(target, insn(name, ops))
+      let bil = lift_on(target, insn(name, ops))
       for stmt in bil {
         assert_true(stmt.check_type() is Ok(_), msg="\{target} \{name}")
       }
@@ -190,33 +189,79 @@ test "lifter: every opcode lifts to well-typed BIL on every target" {
 
 ///|
 test "lifter: registration" {
-  @mips.register()
-  @mips.register()
-  let targets = @mc.lifter_targets()
-  for target in @mips.targets {
-    assert_true(targets.contains(target))
-  }
+  let registry = @mc.Registry::new()
+  @mips.register(registry~)
+  @mips.register(registry~)
+  assert_eq(registry.names(), [@mips.provider_name])
   debug_inspect(
     @mips.targets,
     content=(
       #|<ReadOnlyArray: ["mips", "mipsel", "mips64", "mips64el"]>
     ),
   )
+  for target in @mips.targets {
+    assert_true(@mips.accepts(@mc.Context::create(target_of(target))))
+  }
+  // other families and encodings are rejected
+  assert_false(@mips.accepts(@mc.Context::create(@core_theory.Target::arm())))
+  assert_false(
+    @mips.accepts(
+      @mc.Context::create(
+        @core_theory.Target::mips(),
+        encoding=@core_theory.Language::llvm_t32(),
+      ),
+    ),
+  )
   // big and little endian targets differ only in memory accesses
   let lw = insn("LW", [r("T0"), r("SP"), i(0)])
   inspect(
-    render(@mc.lift("mips", lw)),
+    render(lift_on("mips", lw)),
     content=(
       #|T0 := mem[(SP + 0:32u), be]:u32
       #|
     ),
   )
   inspect(
-    render(@mc.lift("mipsel", lw)),
+    render(lift_on("mipsel", lw)),
     content=(
       #|T0 := mem[(SP + 0:32u), el]:u32
       #|
     ),
+  )
+}
+
+///|
+test "lifter: provider reports unmodeled opcodes and delay slots" {
+  let ctx = @mc.Context::create(@core_theory.Target::mips())
+  // the raw lifter answers an empty program, the provider `Unsupported`
+  let lwl = insn("LWL", [r("T0"), r("SP"), i(0)])
+  assert_eq(@mips.lift_mips(lwl).length(), 0)
+  try @mips.provider().lift(ctx, lwl) catch {
+    err => assert_true(err is Unsupported(opcode="LWL", ..))
+  } noraise {
+    _ => fail("expected unsupported instruction")
+  }
+  // NOP is modeled and lifts to an empty program
+  let nop = @mips.provider().lift(ctx, insn("NOP", []))
+  assert_eq(nop, @mc.Lifted::of_bil([]))
+  // branches have one delay slot, other instructions none
+  let beq = @mips.provider().lift(ctx, insn("BEQ", [r("T0"), r("T1"), i(8)]))
+  assert_eq(beq.delay, 1)
+  assert_eq(beq.dest_encoding, None)
+  let addiu = @mips.provider().lift(
+    ctx,
+    insn("ADDiu", [r("T0"), r("T0"), i(1)]),
+  )
+  assert_eq(addiu.delay, 0)
+  // a bi-endian target takes the byte order from the encoding
+  let bi = @mc.Context::create(
+    @core_theory.Target::mipsbi(),
+    encoding=@core_theory.Language::llvm_mips32le(),
+  )
+  assert_true(@mips.mode_of_context(bi) is (Mips32, LittleEndian))
+  assert_true(
+    @mips.mode_of_context(@mc.Context::create(@core_theory.Target::mips64()))
+    is (Mips64, BigEndian),
   )
 }
 

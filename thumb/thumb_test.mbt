@@ -578,8 +578,8 @@ test "branch group" {
       #|}
     ),
   )
-  assert_eq(@thumb.dest_encoding(0x1001), "llvm-thumb")
-  assert_eq(@thumb.dest_encoding(0x1000), "llvm-armv7")
+  assert_eq(@thumb.dest_encoding(0x1001).to_string(), "llvm-thumb")
+  assert_eq(@thumb.dest_encoding(0x1000).to_string(), "llvm-armv7")
 }
 
 ///|
@@ -646,46 +646,139 @@ test "every condition code" {
 ///|
 test "lift errors" {
   try @thumb.lift(insn("tFOO", [])) catch {
-    err => assert_true(err is @mc.Unsupported("tFOO"))
+    err => assert_true(err is @mc.Unsupported(opcode="tFOO", ..))
   } noraise {
     _ => fail("expected unsupported opcode")
   }
   // modelled opcodes without upstream semantics
   for name in ["tSTMIA", "tLDMIA_UPD"] {
     try @thumb.lift(insn(name, [r("R0"), ..al(), r("R1")])) catch {
-      err => assert_true(err is @mc.Unsupported(_))
+      err => assert_true(err is @mc.Unsupported(..))
     } noraise {
       _ => fail("expected unsupported opcode")
     }
   }
   // wrong operand shape
   try @thumb.lift(insn("tMOVSr", [r("R0")])) catch {
-    err => assert_true(err is @mc.BadOperands("tMOVSr"))
+    err => assert_true(err is @mc.BadOperands(opcode="tMOVSr", ..))
   } noraise {
     _ => fail("expected bad operands")
   }
   // predicate immediate out of range
   try @thumb.lift(insn("tSXTB", [r("R0"), r("R1"), i(15), r("CPSR")])) catch {
-    err => assert_true(err is @mc.BadOperands("tSXTB"))
+    err => assert_true(err is @mc.BadOperands(opcode="tSXTB", ..))
   } noraise {
     _ => fail("expected bad condition")
   }
   // non-register in a register list
   try @thumb.lift(insn("tPUSH", [..al(), r("R4"), i(1)])) catch {
-    err => assert_true(err is @mc.BadOperands("tPUSH"))
+    err => assert_true(err is @mc.BadOperands(opcode="tPUSH", ..))
   } noraise {
     _ => fail("expected bad register list")
   }
 }
 
 ///|
-test "register installs the lifter for thumb targets" {
-  @thumb.register()
-  @thumb.register()
-  let targets = @mc.lifter_targets()
-  for name in @thumb.target_names() {
-    assert_true(targets.contains(name))
+test "register installs the thumb provider" {
+  let registry = @mc.Registry::new()
+  @thumb.register(registry~)
+  @thumb.register(registry~)
+  assert_eq(registry.names(), [@thumb.provider_name])
+  let ctx = @mc.Context::create(@core_theory.Target::thumb())
+  let lifted = registry.lift(ctx, insn("tMOVSr", [r("R1"), r("R2")]))
+  assert_eq(lifted.bil.length(), 3)
+  // Thumb encoding of a little-endian 32-bit ARM target only
+  assert_true(@thumb.accepts(ctx))
+  assert_true(
+    @thumb.accepts(
+      @mc.Context::create(
+        @core_theory.Target::arm(),
+        encoding=@core_theory.Language::llvm_t32(),
+      ),
+    ),
+  )
+  assert_false(@thumb.accepts(@mc.Context::create(@core_theory.Target::arm())))
+  assert_false(
+    @thumb.accepts(@mc.Context::create(@core_theory.Target::thumbeb())),
+  )
+  assert_false(
+    @thumb.accepts(@mc.Context::create(@core_theory.Target::aarch64())),
+  )
+}
+
+///|
+test "thumb and arm providers combine: t* to thumb, t2* to arm" {
+  let registry = @mc.Registry::new()
+  @thumb.register(registry~)
+  @arm.register(registry~)
+  // re-registration keeps the order
+  @thumb.register(registry~)
+  assert_eq(registry.names(), [@thumb.provider_name, @arm.provider_name])
+  let ctx = @mc.Context::create(@core_theory.Target::thumb())
+  // a Thumb-1 opcode is lifted by the thumb provider
+  let t1 = registry.lift(ctx, insn("tMOVSr", [r("R1"), r("R2")]))
+  assert_eq(t1, @thumb.provider().lift(ctx, insn("tMOVSr", [r("R1"), r("R2")])))
+  // a Thumb-2 opcode is unsupported by thumb and falls through to arm
+  let t2 = @mc.Insn::create(
+    "t2MOVr",
+    [r("R0"), r("R1"), ..al(), r("Nil")],
+    addr=0x1000,
+    size=4,
+  )
+  try @thumb.provider().lift(ctx, t2) catch {
+    err => assert_true(err is Unsupported(opcode="t2MOVr", ..))
+  } noraise {
+    _ => fail("thumb should not model t2MOVr")
   }
-  let stmts = @mc.lift("thumbv7", insn("tMOVSr", [r("R1"), r("R2")]))
-  assert_eq(stmts.length(), 3)
+  inspect(
+    registry.lift(ctx, t2).bil.map(s => s.to_string()).join("\n"),
+    content="R0:imm32 := R1:imm32",
+  )
+  // an ARM-encoded instruction never reaches the thumb provider
+  let arm = @mc.Context::create(@core_theory.Target::arm())
+  let movr = @mc.Insn::create(
+    "MOVr",
+    [r("R0"), r("R1"), ..al(), r("Nil")],
+    addr=0x1000,
+    size=4,
+  )
+  assert_eq(registry.accepting(arm).map(p => p.name()), [@arm.provider_name])
+  inspect(
+    registry.lift(arm, movr).bil.map(s => s.to_string()).join("\n"),
+    content="R0:imm32 := R1:imm32",
+  )
+  // opcodes nobody models are unsupported
+  try registry.lift(ctx, insn("tFOO", [])) catch {
+    err => assert_true(err is Unsupported(opcode="tFOO", ..))
+  } noraise {
+    _ => fail("expected unsupported opcode")
+  }
+}
+
+///|
+test "thumb interworking branches record the destination encoding" {
+  let ctx = @mc.Context::create(@core_theory.Target::thumb())
+  let lift = (name : String, ops : Array[@mc.Op]) => {
+    @thumb.provider().lift(ctx, insn(name, ops)).dest_encoding
+  }
+  // bx pc: the destination (pc + 4, word aligned) is ARM code
+  assert_eq(
+    lift("tBX", [r("PC"), ..al()]),
+    Some(@core_theory.Language::llvm_a32()),
+  )
+  // blx imm always switches to ARM, bl stays in Thumb
+  assert_eq(
+    lift("tBLXi", [..al(), i(0x100)]),
+    Some(@core_theory.Language::llvm_a32()),
+  )
+  assert_eq(
+    lift("tBL", [..al(), i(0x100), r("CPSR")]),
+    Some(@core_theory.Language::llvm_t32()),
+  )
+  // register branches decide at run time
+  assert_eq(lift("tBX", [r("LR"), ..al()]), None)
+  assert_eq(lift("tBLXr", [..al(), r("R3")]), None)
+  // ordinary branches do not switch
+  assert_eq(lift("tB", [i(0x10), ..al()]), None)
+  assert_eq(lift("tMOVSr", [r("R1"), r("R2")]), None)
 }

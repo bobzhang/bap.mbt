@@ -2798,6 +2798,10 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|(defun HINT (_)
         #|  (empty))
         #|
+        #|;; recent LLVM versions decode `hint #0` as NOP, an opcode without operands
+        #|(defun NOP ()
+        #|  (empty))
+        #|
         #|(defun UDF (exn)
         #|  (intrinsic 'undefined-instruction))
         #|

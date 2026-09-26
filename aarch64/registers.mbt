@@ -3,7 +3,10 @@
 // (`X29`), `LR` (`X30`), `SP`, `XZR`, `W0`..`W30`, `WSP`, `WZR`.
 //
 // Register codes are port-local: `W<n>` is `n + 1`, `WSP` 32, `WZR` 33,
-// `X<n>` (with `FP` and `LR`) is `n + 34`, `SP` 65 and `XZR` 66.
+// `X<n>` (with `FP` and `LR`) is `n + 34`, `SP` 65 and `XZR` 66; the
+// consecutive register pairs of `CASP` (`W0_W1`, `X28_FP`, `LR_XZR`, ...)
+// are `100 + n` (32-bit) and `132 + n` (64-bit) for the pair starting at
+// register `n`.
 
 ///|
 /// The LLVM name of the 64-bit (`sf`) or 32-bit register `n`; register 31
@@ -34,6 +37,15 @@ fn reg_code(sf : Bool, n : Int, sp : Bool) -> Int {
 /// The register `n` as an `@mc` operand (see `reg_name`).
 pub fn mc_reg(sf : Bool, n : Int, sp? : Bool = false) -> @mc.Op {
   Reg(name=reg_name(sf, n, sp~), code=reg_code(sf, n, sp))
+}
+
+///|
+/// The register pair `n`, `n + 1` (`n` even) as an `@mc` operand.
+fn mc_pair(sf : Bool, n : Int) -> @mc.Op {
+  Reg(
+    name=reg_name(sf, n) + "_" + reg_name(sf, n + 1),
+    code=(if sf { 132 } else { 100 }) + n,
+  )
 }
 
 ///|

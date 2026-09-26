@@ -30,6 +30,80 @@ fn exec64_seq(
 }
 
 ///|
+test "legacy sse: well-typed lifting of the decoded forms" {
+  let ok : Array[Bytes] = [
+    // movlps/movhps/movlhps/movhlps and stores
+    b"\x0f\x12\xc1", b"\x0f\x13\x03", b"\x0f\x17\x03", b"\x66\x0f\x12\x03",
+    // VEX forms with a vvvv operand
+     b"\xc5\xf8\x12\xc1", b"\xc5\xf8\x16\x03", b"\xc5\xfa\x10\xc2", b"\xc5\xf9\x60\xc1",
+    b"\xc5\xf9\x74\xc1", b"\xc5\xf9\x70\xc1\x1b", b"\xc5\xfd\xef\xc1",
+    // movd/movq/movdqa/lddqu
+     b"\x66\x0f\x7e\x03", b"\xf3\x0f\x7e\x03", b"\x66\x0f\xd6\x03", b"\xf2\x0f\xf0\x03",
+    b"\x0f\x29\x03", b"\x0f\x6f\xc1", b"\x0f\x7f\x03",
+    // packed operations
+     b"\x66\x0f\x38\x29\xc1", b"\x66\x0f\x38\x37\xc1", b"\x66\x0f\x38\x38\xc1", b"\x66\x0f\x38\x39\xc1",
+    b"\x66\x0f\x38\x3a\xc1", b"\x66\x0f\x38\x3b\xc1", b"\x66\x0f\x38\x3c\xc1", b"\x66\x0f\x38\x3d\xc1",
+    b"\x66\x0f\x38\x3e\xc1", b"\x66\x0f\x38\x3f\xc1", b"\x66\x0f\x38\x20\xc1", b"\x66\x0f\x38\x21\xc1",
+    b"\x66\x0f\x38\x22\xc1", b"\x66\x0f\x38\x23\xc1", b"\x66\x0f\x38\x24\xc1", b"\x66\x0f\x38\x25\xc1",
+    b"\x66\x0f\x38\x35\xc1", b"\x66\x0f\x69\xc1", b"\x66\x0f\x6a\xc1", b"\x66\x0f\x6d\xc1",
+    b"\x66\x0f\x65\xc1", b"\x66\x0f\x66\xc1", b"\x66\x0f\x71\xd0\x02", b"\x66\x0f\x71\xf0\x02",
+    b"\x66\x0f\x71\xe0\x02", b"\x66\x0f\x73\xd8\x04", b"\x66\x0f\xd1\xc1", b"\x66\x0f\xd2\xc1",
+    b"\x66\x0f\xd3\xc1", b"\x66\x0f\xe1\xc1", b"\x66\x0f\xe2\xc1", b"\x66\x0f\xf1\xc1",
+    b"\x66\x0f\xf2\xc1", b"\x66\x0f\xf3\xc1", b"\x66\x0f\xe3\xc1", b"\x66\x0f\xf9\xc1",
+    b"\x66\x0f\xfb\xc1", b"\x66\x0f\xfd\xc1", b"\x0f\xd7\xc1", b"\x0f\xfc\xc1", b"\x66\x0f\x38\x00\x03",
+    b"\x66\x0f\x74\x03", b"\x66\x0f\x3a\x0f\x03\x04",
+    // pcmpestri/pcmpistri with every aggregation mode
+     b"\x66\x0f\x3a\x61\xc1\x00", b"\x66\x0f\x3a\x61\xc1\x05", b"\x66\x0f\x3a\x61\xc1\x08",
+    b"\x66\x0f\x3a\x63\xc1\x4c", b"\x66\x0f\x3a\x63\xc1\x14", b"\x66\x0f\x3a\x63\xc1\x3a",
+  ]
+  for bytes in ok {
+    let bil = @x86.lift_legacy(X8664, bytes, addr=0x400000) catch {
+      e => fail("\{hex_bytes(bytes)}: \{e.message()}")
+    }
+    ignore(bil)
+  }
+  // explicit-length pcmpestri: upstream folds the element checks in front
+  // of the computation of the (clamped) length, so the checks read the
+  // temporary before it is assigned
+  let bil = lift64(b"\x66\x0f\x3a\x61\xc1\x18")
+  inspect(
+    bil[0].to_string(),
+    content=(
+      #|%is_valid_xmm1_ele0_17:imm1 := (0:64u < %sz_1:imm64)
+    ),
+  )
+  // the mask forms (pcmpestrm/pcmpistrm) assign a 128-bit mask to the
+  // 256-bit YMM0 upstream ("FIXME: ymms should be used instead of xmms"):
+  // the program is ill-typed
+  for bytes in [b"\x66\x0f\x3a\x60\xc1\x08", b"\x66\x0f\x3a\x62\xc1\x40"] {
+    let r = try @x86.lift_legacy(X8664, bytes, addr=0) catch {
+      IllTyped(..) => "ill-typed"
+      e => e.message()
+    } noraise {
+      _ => "lifted"
+    }
+    assert_eq(r, "ill-typed")
+  }
+  // forms rejected by the decoder or the lifter
+  let rejected : Array[Bytes] = [
+    b"\x0f\x38\x29\xc1", b"\x0f\x70\xc1\x00", b"\x66\x0f\x71\xc0\x02", b"\x0f\x38\x10\xc1",
+    b"\x0f\x3a\x44\xc1\x00", b"\xc5\xfd\xd7\xc1", b"\x0f\x01\xc8", b"\x0f\xae\x03",
+    b"\x0f\xc7\x03",
+  ]
+  for bytes in rejected {
+    let failure = @x86.legacy_failure(X8664, bytes, addr=0)
+    if failure is None {
+      let rejected = try lift64(bytes) catch {
+        _ => true
+      } noraise {
+        _ => false
+      }
+      assert_true(rejected, msg=hex_bytes(bytes))
+    }
+  }
+}
+
+///|
 test "legacy sse moves" {
   // movdqu xmm0, [rbx]
   let o = exec64(b"\xf3\x0f\x6f\x03", regs=[("RBX", DATA)])

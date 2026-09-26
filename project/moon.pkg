@@ -22,6 +22,10 @@ import {
   "moonbitlang/core/string",
 }
 
+import {
+  "bobzhang/bap/aarch64",
+} for "test"
+
 options(
   targets: { "file_native_test.mbt": [ "native" ] },
 )

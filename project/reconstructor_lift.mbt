@@ -137,8 +137,15 @@ fn ProjectIrLifter::lift_blk(
   let is_subroutine = (label : @types.Tid) => self.subroutines.contains(label)
   let lifted_terminator = terminator >= 0 && lifted[terminator] is Ok(_)
   guard !lifted_terminator && fallback is Some(fallback) else {
+    // upstream `Insn.derive_props`: from the semantics of the terminator
     let (is_call, is_barrier) = match insns.get(terminator) {
-      Some(insn) => (insn.is_kind(ProjectCall), insn.is_kind(ProjectBarrier))
+      Some(insn) => {
+        let bil = match lifted[terminator] {
+          Ok(value) => Some(value.bil())
+          Err(_) => None
+        }
+        project_insn_derived_props(Some(insn), bil)
+      }
       None => (false, false)
     }
     return Ok(

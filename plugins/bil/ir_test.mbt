@@ -1,8 +1,6 @@
 ///|
 fn bir(bil : Array[@types.Stmt]) -> String {
-  show_bir(@bil.lift_bir(bil)) catch {
-    e => "error: \{e}"
-  }
+  show_bir(@bil.lift_bir(bil))
 }
 
 ///|
@@ -66,8 +64,8 @@ test "jumps" {
     ),
   )
   // a goto to an address label that is a subroutine is a call
-  let blks = @bil.lift_bir([Jmp(Int(w(32, 0x2000)))], is_subroutine=d => {
-    d is Addr(_)
+  let blks = @bil.lift_bir([Jmp(Int(w(32, 0x2000)))], is_subroutine=t => {
+    t.name() is Some(_)
   })
   inspect(
     show_bir(blks),
@@ -172,11 +170,18 @@ test "loops" {
       #|
     ),
   )
-  // control transfers are not allowed in loop bodies
+  // upstream asserts that loop bodies have no control transfers (its
+  // parser fails); the shared lowering keeps the jump
   inspect(
     bir([While(cond=c, body=[Jmp(int(1))])]),
     content=(
-      #|error: a control transfer in a data context
+      #|%0:
+      #|  goto %2
+      #|%1:
+      #|  goto @0x00000001
+      #|%2:
+      #|  when CF:imm1 goto %1
+      #|
     ),
   )
 }

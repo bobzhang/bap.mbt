@@ -38,15 +38,13 @@ pub fn has_special(ArrayView[@types.Stmt]) -> Bool
 
 pub fn insn_encoding(@mc.Insn) -> String
 
-pub fn ir_algebra(is_subroutine? : (Dst) -> Bool, is_subinstruction? : (@types.Tid) -> Bool) -> EffAlgebra[Cfg]
-
 pub fn jump_destinations(ArrayView[@types.Stmt]) -> Array[Dst?] raise ReflectError
 
 pub fn kind_name(@mc.Kind) -> String
 
 pub fn lift(@mc.Registry, @mc.Context, @mc.Insn, cfg? : Config) -> @mc.Lifted raise @mc.LiftError
 
-pub fn lift_bir(ArrayView[@types.Stmt], is_subroutine? : (Dst) -> Bool) -> Array[@types.Term[@types.Blk]] raise ReflectError
+pub fn lift_bir(Array[@types.Stmt], is_subroutine? : (@types.Tid) -> Bool) -> Array[@types.Term[@types.Blk]]
 
 pub fn list_passes() -> Array[String]
 
@@ -90,14 +88,6 @@ pub fn ReflectError::to_string(Self) -> String
 pub impl Show for ReflectError
 
 // Types and methods
-pub struct Cfg {
-  // private fields
-}
-pub fn Cfg::empty() -> Self
-pub fn Cfg::entry(Self) -> @types.Tid?
-pub fn Cfg::is_empty(Self) -> Bool
-pub fn Cfg::reify(Self) -> Array[@types.Term[@types.Blk]]
-
 pub(all) struct Config {
   with_fp : Bool
   enable_intrinsics : Array[ISpec]

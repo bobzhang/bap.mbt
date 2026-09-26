@@ -8,11 +8,6 @@
 /// output of the BIL lifters.
 
 ///|
-let log : @main_event.MainLogReporter = @main_event.MainLogReporter::create(
-  section="bil",
-)
-
-///|
 fn register_norm(
   name : String,
   desc : String,

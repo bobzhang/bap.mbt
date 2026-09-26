@@ -215,6 +215,18 @@ pub fn reflect_bil(
 }
 
 ///|
+/// Builds the IR of a BIL program (the `bap:bir` theory applied to the
+/// reflected BIL and reified, upstream `Bil_ir`). Delegates to the shared
+/// implementation `@types.Blk::of_bil`, which also contracts and orders
+/// the blocks as upstream `BIR.normalize`/`BIR.reify` do.
+pub fn lift_bir(
+  bil : Array[@types.Stmt],
+  is_subroutine? : (@types.Tid) -> Bool,
+) -> Array[@types.Term[@types.Blk]] {
+  @types.Blk::of_bil(bil, is_subroutine?)
+}
+
+///|
 /// The destinations of the jumps of a program (upstream `jump-dests`
 /// theory, `Brancher`): `None` stands for an unknown (indirect)
 /// destination.

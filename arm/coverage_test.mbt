@@ -68,8 +68,8 @@ fn fixture(insn : @arm.Insn) -> Array[@mc.Op] {
     Mem(op) =>
       match op {
         STRD | LDRD => [r("R2"), r("R3"), r("R1"), r("Nil"), i(8), ..al]
-        STRD_POST | LDRD_POST =>
-          [r("R2"), r("R3"), r("R1"), r("R1"), r("Nil"), i(8), ..al]
+        STRD_POST => [r("R1"), r("R2"), r("R3"), r("R1"), r("Nil"), i(8), ..al]
+        LDRD_POST => [r("R2"), r("R3"), r("R1"), r("R1"), r("Nil"), i(8), ..al]
         STRD_PRE => [r("R1"), r("R2"), r("R3"), r("R1"), r("Nil"), i(8), ..al]
         LDRD_PRE => [r("R2"), r("R3"), r("R1"), r("R1"), r("Nil"), i(8), ..al]
         STRH | LDRH | LDRSH | LDRSB => [r("R0"), r("R1"), r("Nil"), i(2), ..al]

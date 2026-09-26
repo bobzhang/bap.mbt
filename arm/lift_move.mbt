@@ -100,6 +100,9 @@ fn lift_move(
       cmp(EOR, src1, src2, None, None, cond)
     (TEQrsr, [src1, src2, shift_reg, shift_imm, cond, _]) =>
       cmp(EOR, src1, src2, Some(shift_reg), Some(shift_imm), cond)
+    // LLVM's form (upstream only matches the six-operand one below)
+    (TEQrsi, [src1, src2, shift_imm, cond, _]) =>
+      cmp(EOR, src1, src2, None, Some(shift_imm), cond)
     (TEQrsi, [_dest, src1, src2, shift_imm, cond, _]) =>
       cmp(EOR, src1, src2, None, Some(shift_imm), cond)
     (TSTri | TSTrr, [src1, src2, cond, _]) =>

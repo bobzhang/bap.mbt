@@ -8,6 +8,12 @@ import {
 }
 
 // Values
+pub fn a32_decoder() -> @mc.Decoder
+
+pub fn a32_decoder_accepts(@mc.Context) -> Bool
+
+pub let a32_decoder_name : String
+
 pub fn aapcs32_layout(CType?, ArrayView[CType]) -> ArgLayout?
 
 pub fn aapcs64_layout(CType?, ArrayView[CType]) -> ArgLayout?
@@ -17,6 +23,8 @@ pub fn accepts(@mc.Context) -> Bool
 pub fn addr_of_pc(UInt64) -> UInt64
 
 pub let cf : @types.Var
+
+pub fn cond_asm(Int) -> String
 
 pub let cpsr : @types.Var
 
@@ -28,11 +36,21 @@ pub fn cpu_perms() -> Array[@types.Var]
 
 pub fn cpu_regs() -> Array[@types.Var]
 
+pub fn decode_a32(BytesView, addr? : UInt64, big_endian? : Bool) -> @mc.Decoded
+
+pub fn decode_a32_word(UInt, addr? : UInt64, raw? : Bytes) -> @mc.Insn?
+
 pub fn decode_modified_imm(UInt) -> UInt
 
 pub fn encoding_of_name(StringView) -> Encoding
 
 pub let ge : ReadOnlyArray[@types.Var]
+
+pub fn gpr(Int) -> Reg
+
+pub fn gpr_asm(Int) -> String
+
+pub fn imm_asm(Int) -> String
 
 pub fn is_bp(@types.Var) -> Bool
 
@@ -66,6 +84,20 @@ pub fn lift_typed(Insn, ArrayView[Op], addr? : UInt, encoding? : Encoding, raw? 
 
 pub let lr : @types.Var
 
+pub fn mc_cc_out(Bool) -> @mc.Op
+
+pub fn mc_gpr(Int) -> @mc.Op
+
+pub fn mc_gpr_pair(Int) -> @mc.Op
+
+pub fn mc_imm(Int) -> @mc.Op
+
+pub fn mc_nil() -> @mc.Op
+
+pub fn mc_pred(Int) -> Array[@mc.Op]
+
+pub fn mc_reglist(Int) -> Array[@mc.Op]
+
 pub let mem : @types.Var
 
 pub let nf : @types.Var
@@ -75,6 +107,8 @@ pub let nil : @types.Var
 pub fn ops_of_mc(ArrayView[@mc.Op]) -> Array[Op] raise @mc.LiftError
 
 pub let pc : @types.Var
+
+pub fn pc_write_kinds(Int) -> Array[@mc.Kind]
 
 pub fn provider() -> @mc.Provider
 
@@ -110,7 +144,19 @@ pub let r9 : @types.Var
 
 pub fn register(registry? : @mc.Registry) -> Unit
 
+pub fn register_decoder() -> Unit
+
+pub fn reglist_asm(Int) -> String
+
 pub fn resolve_pc(ArrayView[@types.Stmt], UInt) -> Array[@types.Stmt]
+
+pub fn shift_imm_asm(Int, Int) -> String
+
+pub fn shift_opc_asm(Int) -> String
+
+pub fn shift_opc_of_type(Int, Int) -> Int
+
+pub fn sign_extend(Int, Int) -> Int
 
 pub let sp : @types.Var
 
@@ -475,11 +521,13 @@ pub(all) enum Reg {
   ITSTATE
 } derive(Eq, @debug.Debug)
 pub fn Reg::all() -> Array[Self]
+pub fn Reg::code(Self) -> Int
 pub fn Reg::equal(Self, Self) -> Bool
 pub fn Reg::is_gpr(Self) -> Bool
 pub fn Reg::name(Self) -> String
 pub fn Reg::not_equal(Self, Self) -> Bool
 pub fn Reg::of_name(StringView) -> Self?
+pub fn Reg::to_mc(Self) -> @mc.Op
 pub fn Reg::to_repr(Self) -> @debug.Repr
 pub fn Reg::to_var(Self) -> @types.Var
 

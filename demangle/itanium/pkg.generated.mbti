@@ -1,0 +1,17 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/demangle/itanium"
+
+// Values
+pub fn cxxfilt(String, params? : Bool, strip_underscore? : Bool, types? : Bool) -> String
+
+pub fn demangle(String, params? : Bool) -> String?
+
+pub fn is_itanium_encoding(StringView) -> Bool
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

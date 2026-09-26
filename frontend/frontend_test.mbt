@@ -72,6 +72,7 @@ test "bap without arguments prints the usage" {
       #|  callgraph-collator       compares projects by their callgraphs
       #|  callsites                annotates callsites with subroutines arguments
       #|  constant-tracker         a constant tracking analysis based on Primus
+      #|  cxxfilt                  provides a native Itanium C++ ABI demangler compatible with c++filt
       #|  dependencies             outputs program dependencies such as libraries and symbols
       #|  disassemble              disassembles and analyzes the input file
       #|  dump-symbols             dumps functions as a sexp-list of blocks

@@ -1,0 +1,9 @@
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/demangle",
+  "bobzhang/bap/demangle/itanium",
+}
+
+import {
+  "bobzhang/bap/plugins/print",
+} for "test"

@@ -27,6 +27,7 @@ import {
   "bobzhang/bap/plugins/callgraph_collator",
   "bobzhang/bap/plugins/callsites",
   "bobzhang/bap/plugins/constant_tracker",
+  "bobzhang/bap/plugins/cxxfilt",
   "bobzhang/bap/plugins/dependencies",
   "bobzhang/bap/plugins/disassemble",
   "bobzhang/bap/plugins/dump_symbols",

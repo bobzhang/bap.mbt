@@ -60,6 +60,7 @@ pub fn plugin_table() -> Array[StaticPlugin] {
     { name: "cache", load: io => @cache.register(out=io.out), },
     // printers and analyses
     { name: "print", load: _ => @print.declare_plugin(), },
+    { name: "cxxfilt", load: _ => @cxxfilt.declare_plugin(), },
     {
       name: "callgraph-collator",
       load: _ => @callgraph_collator.declare_plugin(),

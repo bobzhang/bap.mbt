@@ -1,0 +1,261 @@
+// Ports of `lib_test/powerpc/powerpc_compare_tests.ml`,
+// `powerpc_cr_tests.ml` and `powerpc_move_tests.ml`.
+
+///|
+enum Order {
+  LT
+  GT
+  EQ
+}
+
+///|
+/// Check the LT/GT/EQ bits of field `CR7` (bits 28..30).
+fn check_cr7(r : Run, expected : Order) -> Unit raise {
+  let (lt, gt, eq) : (UInt64, UInt64, UInt64) = match expected {
+    LT => (1, 0, 0)
+    GT => (0, 1, 0)
+    EQ => (0, 0, 1)
+  }
+  r.check("CR7LT", lt)
+  r.check("CR7GT", gt)
+  r.check("CR7EQ", eq)
+}
+
+///|
+/// Compare-immediate forms: `name cr7, r6, value` where `value` is the
+/// 16-bit immediate as decoded by LLVM (sign-extended for signed forms).
+fn cmpi(
+  a : @powerpc.AddrSize,
+  name : String,
+  signed~ : Bool,
+  reg_value : Int64,
+  value : Int64,
+  expected : Order,
+) -> Unit raise {
+  let field = value & 0xFFFF
+  let decoded = if signed && field >= 0x8000 { field - 0x10000 } else { field }
+  let r = run(a, name, [reg("CR7"), reg("R6"), imm(decoded)], init=[
+    ("R6", trunc(a, reg_value.reinterpret_as_uint64())),
+  ])
+  check_cr7(r, expected)
+}
+
+///|
+fn cmp(
+  a : @powerpc.AddrSize,
+  name : String,
+  reg1 : Int64,
+  reg2 : Int64,
+  expected : Order,
+) -> Unit raise {
+  let r = run(a, name, [reg("CR7"), reg("R6"), reg("R7")], init=[
+    ("R6", trunc(a, reg1.reinterpret_as_uint64())),
+    ("R7", trunc(a, reg2.reinterpret_as_uint64())),
+  ])
+  check_cr7(r, expected)
+}
+
+///|
+test "cmpwi and cmpw" {
+  let cases : Array[(Int64, Int64, Order)] = [
+    (42, 44, LT),
+    (44, 42, GT),
+    (42, 42, EQ),
+    (0x0BCDEFAB_00000042, 0x44, LT),
+    (-42, -41, LT),
+    (44, -42, GT),
+    (-42, -42, EQ),
+  ]
+  for a in archs {
+    for c in cases {
+      let (x, y, expected) = c
+      cmpi(a, "CMPWI", signed=true, x, y, expected)
+      cmp(a, "CMPW", x, y, expected)
+    }
+  }
+}
+
+///|
+test "cmplwi and cmplw" {
+  let cases : Array[(Int64, Int64, Order)] = [
+    (42, 44, LT),
+    (44, 42, GT),
+    (42, 42, EQ),
+    (0x0BCDEFAB_00000042, 0x44, LT),
+    (42, 0xFFFFFFFF, LT),
+    (-1, 42, GT),
+  ]
+  for a in archs {
+    for c in cases {
+      let (x, y, expected) = c
+      cmpi(a, "CMPLWI", signed=false, x, y, expected)
+      cmp(a, "CMPLW", x, y, expected)
+    }
+  }
+}
+
+///|
+test "cmpdi and cmpd" {
+  let cases : Array[(Int64, Int64, Order)] = [
+    (42, 44, LT),
+    (44, 42, GT),
+    (42, 42, EQ),
+    (0x0BCDEFAB_00000042, 0x44, GT),
+    (0xFBCDEFAB_00000042, 0x44, LT),
+    (-42, -41, LT),
+    (44, -42, GT),
+    (-42, -42, EQ),
+  ]
+  for c in cases {
+    let (x, y, expected) = c
+    cmpi(R64, "CMPDI", signed=true, x, y, expected)
+    cmp(R64, "CMPD", x, y, expected)
+  }
+}
+
+///|
+test "cmpldi and cmpld" {
+  let cases : Array[(Int64, Int64, Order)] = [
+    (42, 44, LT),
+    (44, 42, GT),
+    (42, 42, EQ),
+    (0x0BCDEFAB_00000042, 0x44, GT),
+    (0xFBCDEFAB_00000042, 0x44, GT),
+    (42, 0xFFFFFFFF, LT),
+    (-1, 42, GT),
+  ]
+  for c in cases {
+    let (x, y, expected) = c
+    cmpi(R64, "CMPLDI", signed=false, x, y, expected)
+    cmp(R64, "CMPLD", x, y, expected)
+  }
+}
+
+///|
+test "compare copies SO into the field" {
+  let r = run(R32, "CMPW", [reg("CR7"), reg("R6"), reg("R7")], init=[("SO", 1)])
+  r.check("CR7UN", 1)
+}
+
+///|
+/// `name 1, 2, 3` on CR bits (`CR0GT`, `CR0EQ`, `CR0UN`).
+fn cr_logic(
+  a : @powerpc.AddrSize,
+  name : String,
+  ba : UInt64,
+  bb : UInt64,
+  expected : UInt64,
+) -> Unit raise {
+  let r = run(a, name, [reg("CR0GT"), reg("CR0EQ"), reg("CR0UN")], init=[
+    ("CR0EQ", ba),
+    ("CR0UN", bb),
+  ])
+  r.check("CR0GT", expected)
+}
+
+///|
+test "cr logical" {
+  for a in archs {
+    cr_logic(a, "CRAND", 1, 1, 1)
+    cr_logic(a, "CRNAND", 1, 1, 0)
+    cr_logic(a, "CROR", 1, 0, 1)
+    cr_logic(a, "CRXOR", 1, 1, 0)
+    cr_logic(a, "CRNOR", 0, 0, 1)
+    cr_logic(a, "CREQV", 1, 1, 1)
+    cr_logic(a, "CRANDC", 1, 0, 1)
+    cr_logic(a, "CRORC", 0, 0, 1)
+    // a few more truth-table rows
+    cr_logic(a, "CRAND", 1, 0, 0)
+    cr_logic(a, "CRNOR", 1, 0, 0)
+    cr_logic(a, "CREQV", 1, 0, 0)
+    cr_logic(a, "CRANDC", 1, 1, 0)
+    cr_logic(a, "CRORC", 0, 1, 0)
+  }
+}
+
+///|
+test "mcrf" {
+  for a in archs {
+    // mcrf cr1, cr3
+    let r = run(a, "MCRF", [reg("CR1"), reg("CR3")], init=[
+      ("CR3LT", 1),
+      ("CR3GT", 0),
+      ("CR3EQ", 1),
+      ("CR3UN", 0),
+    ])
+    r.check("CR1LT", 1)
+    r.check("CR1GT", 0)
+    r.check("CR1EQ", 1)
+    r.check("CR1UN", 0)
+  }
+}
+
+///|
+/// The SPR operand as decoded by LLVM from the split 10-bit field; the
+/// upstream tests encode the field value `n`, which LLVM reports as
+/// `n << 5`.
+fn spr_operand(n : Int64) -> @mc.Op {
+  imm(n << 5)
+}
+
+///|
+test "mtspr and mfspr" {
+  for a in archs {
+    let x = trunc(a, 0xABCDEFAB_12345678)
+    run(a, "MTSPR", [spr_operand(9), reg("R1")], init=[("R1", x)]).check(
+      "CTR", x,
+    )
+    run(a, "MTSPR", [spr_operand(8), reg("R1")], init=[("R1", x)]).check(
+      "LR", x,
+    )
+    run(a, "MFSPR", [reg("R1"), spr_operand(8)], init=[("LR", x)]).check(
+      "R1", x,
+    )
+    run(a, "MFSPR", [reg("R1"), spr_operand(9)], init=[("CTR", x)]).check(
+      "R1", x,
+    )
+    // unknown SPRs only produce a special statement
+    let r = run(a, "MFSPR", [reg("R1"), spr_operand(1)], init=[("R1", 7)])
+    r.check("R1", 7)
+  }
+}
+
+///|
+test "mtcrf" {
+  for a in archs {
+    let x = trunc(a, 0xABCDEFAB_12345678)
+    let r = run(a, "MTCRF", [imm(0b01101001), reg("R1")], init=[("R1", x)])
+    let low = x & 0xFFFF_FFFF
+    let model = @powerpc.Model::of_addr_size(a)
+    for i in 0..<32 {
+      let field = i / 4
+      let selected = [1, 2, 4, 7].contains(field)
+      let expected = if selected { (low >> (31 - i)) & 1 } else { 0 }
+      r.check(model.cri[i].name, expected)
+    }
+  }
+}
+
+///|
+test "mfcr" {
+  for a in archs {
+    let x = 0x12345678UL
+    let model = @powerpc.Model::of_addr_size(a)
+    let init = []
+    for i in 0..<32 {
+      init.push((model.cri[i].name, (x >> (31 - i)) & 1))
+    }
+    run(a, "MFCR", [reg("R1")], init~).check("R1", x)
+  }
+}
+
+///|
+test "mtctr, mtlr, mfctr, mflr" {
+  for a in archs {
+    let x = trunc(a, 0xABCDEFAB_12345678)
+    run(a, "MTCTR", [reg("R0")], init=[("R0", x)]).check("CTR", x)
+    run(a, "MTLR", [reg("R0")], init=[("R0", x)]).check("LR", x)
+    run(a, "MFCTR", [reg("R0")], init=[("CTR", x)]).check("R0", x)
+    run(a, "MFLR", [reg("R0")], init=[("LR", x)]).check("R0", x)
+  }
+}

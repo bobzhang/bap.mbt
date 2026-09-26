@@ -1,0 +1,54 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/read_symbols"
+
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/project",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub let anonymous_prefix : String
+
+pub fn build_functions(Array[(String, UInt64)], report? : (String) -> Unit) -> Map[UInt64, String]
+
+pub fn collect(String, Array[String], when_matches? : String?, fs? : @bap_main.FileSystem, report? : (String) -> Unit) -> Result[Map[UInt64, String], String]
+
+pub fn declare_plugin() -> Unit raise
+
+pub fn is_anonymous(String) -> Bool
+
+pub let name : String
+
+pub fn name_matches(String, String) -> Bool
+
+pub fn normalize(String) -> String
+
+pub fn parse_entry(Sexp) -> Result[(String, UInt64), String]
+
+pub fn parse_sexps(String) -> Result[Array[Sexp], String]
+
+pub fn parse_symbols(String) -> Result[Array[(String, UInt64)], String]
+
+pub fn register(files~ : Array[String], when_matches? : String?, path? : String, fs? : @bap_main.FileSystem) -> Result[Bool, String]
+
+pub fn rooter(Map[UInt64, String], path? : String) -> @project.ProjectRooter
+
+pub fn select_files(String, Array[String], when_matches? : String?, fs? : @bap_main.FileSystem) -> Array[String]
+
+pub fn symbolizer(Map[UInt64, String], path? : String) -> @project.ProjectSymbolizer
+
+// Errors
+
+// Types and methods
+pub(all) enum Sexp {
+  Atom(String)
+  List(Array[Sexp])
+} derive(Eq, @debug.Debug)
+pub fn Sexp::equal(Self, Self) -> Bool
+pub fn Sexp::not_equal(Self, Self) -> Bool
+pub fn Sexp::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

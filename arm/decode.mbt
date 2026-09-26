@@ -89,7 +89,7 @@ pub fn Op::to_string(self : Op) -> String {
 pub fn Op::of_mc(op : @mc.Op) -> Op? {
   match op {
     Fmm(_) => None
-    Reg(name~, ..) => Reg::of_name(name).map(r => Op::Reg(r))
+    Reg(name~, ..) => Reg::of_name(name).map(r => Reg(r))
     Imm(value) => Some(Imm(value.to_int().reinterpret_as_uint()))
   }
 }

@@ -3,7 +3,7 @@
 
 ///|
 fn[T] fail(msg : String) -> T raise @mc.LiftError {
-  raise @mc.LiftError::Failure(msg)
+  raise Failure(msg)
 }
 
 ///|

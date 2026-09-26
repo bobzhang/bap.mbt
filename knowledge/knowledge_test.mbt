@@ -918,9 +918,10 @@ test "translated BAP opinion proposals materialize deferred suggestions" {
     },
   )
   assert_true(scoped_result == Ok(Some("main")))
-  assert_true(count_during.val == 1)
+  // proposals are registered on the slot: the two permanent ones stay
+  assert_true(count_during.val == 3)
   assert_true(scoped_calls.val == 1)
-  assert_true(scoped_facts.promise_count() == 0)
+  assert_true(scoped_facts.promise_count() == 2)
   assert_true(scoped_facts.resolve(after_scope) == Ok(None))
   assert_true(scoped_calls.val == 1)
 }
@@ -969,8 +970,12 @@ test "translated BAP fact observers receive non-empty provides" {
     name=@knowledge.Name::create("observed", pkg="test"),
     domain~,
   )
+  let mirror = cls.property(
+    name=@knowledge.Name::create("observed-mirror", pkg="test"),
+    domain~,
+  )
   let facts = @knowledge.FactTable::new(slot)
-  let mirrored = @knowledge.FactTable::new(slot)
+  let mirrored = @knowledge.FactTable::new(mirror, state=facts.state())
   let calls : Ref[Int] = Ref(0)
   facts.observe((object, value) => {
     calls.val = calls.val + 1

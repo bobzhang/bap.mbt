@@ -1,0 +1,9 @@
+import {
+  "bobzhang/bap/native_io",
+  "bobzhang/bap/types",
+  "moonbitlang/core/encoding/utf8",
+}
+
+options(
+  targets: { "bml_native_test.mbt": [ "native" ] },
+)

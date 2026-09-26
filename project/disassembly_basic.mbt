@@ -8417,6 +8417,23 @@ fn project_disassembly_basic_decode_x86_64_llvm(
 }
 
 ///|
+/// Whether `instruction` is the one-byte INC/DEC form `40+r`/`48+r`
+/// (optionally after `66`). In 64-bit mode these bytes are REX prefixes, so
+/// the 32-bit fallback decoder must not produce them (it would decode, e.g.,
+/// `41 89 c0`, `mov r8d, eax`, as `inc ecx`).
+fn project_disassembly_basic_x86_short_incdec(
+  instruction : ProjectDisassemblyInstruction,
+) -> Bool {
+  let bytes = instruction.memory().to_bytes()
+  let opcode = match bytes {
+    [0x66, op] => op.to_int()
+    [op] => op.to_int()
+    _ => return false
+  }
+  opcode >= 0x40 && opcode <= 0x4f
+}
+
+///|
 fn ProjectDisassemblyBasic::project_disassembly_basic_decode_instruction(
   self : ProjectDisassemblyBasic,
   memory : @memory.Memory,
@@ -8429,8 +8446,10 @@ fn ProjectDisassemblyBasic::project_disassembly_basic_decode_instruction(
           Ok(Some(instruction)) => Ok(instruction)
           Ok(None) =>
             match project_disassembly_basic_decode_x86_llvm(memory) {
-              Ok(Some(instruction)) => Ok(instruction)
-              Ok(None) =>
+              Ok(Some(instruction)) if !project_disassembly_basic_x86_short_incdec(
+                  instruction,
+                ) => Ok(instruction)
+              Ok(_) =>
                 match memory.view(words=1) {
                   Ok(chunk) => Ok(project_raw_byte_instruction(chunk))
                   Err(reason) => Err(reason)

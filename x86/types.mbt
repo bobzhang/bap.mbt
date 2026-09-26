@@ -64,7 +64,7 @@ priv enum JumpTarget {
 priv enum Order {
   Low
   High
-} derive(Eq, Debug)
+} derive(Debug)
 
 ///|
 priv enum Direction {
@@ -117,6 +117,7 @@ priv struct OffsetInfo {
 ///|
 /// Decoded instructions (upstream `X86_types.opcode`). Types are bit
 /// widths.
+#warnings("-unused_value")
 priv enum Opcode {
   Bswap(Int, Operand)
   /// bytes to release, far return
@@ -214,7 +215,7 @@ priv struct Rex {
   r : Bool
   x : Bool
   b : Bool
-} derive(Debug)
+}
 
 ///|
 /// The VEX prefix.
@@ -227,11 +228,12 @@ priv struct Vex {
   v : Int
   l : Bool
   pp : Int
-} derive(Debug)
+}
 
 ///|
 /// Decoded prefix information (upstream `X86_types.prefix`); sizes are bit
 /// widths.
+#warnings("-unused_field")
 priv struct Prefix {
   addrsize : Int
   opsize : Int
@@ -246,7 +248,7 @@ priv struct Prefix {
   r_extend : Int
   rm_extend : Int
   sib_extend : Int
-} derive(Debug)
+}
 
 ///|
 /// Failures of the legacy decoder and lifter: upstream `No_semantics`

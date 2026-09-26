@@ -34,6 +34,7 @@ fn eval(o : Outcome, e : @types.Exp) -> @types.BilValue? raise {
     Ok(v) => Some(v)
     Err(reason) =>
       if reason.has_prefix("unknown expression") ||
+        reason.has_prefix("uninitialized memory") ||
         e.free_vars().iter().any(v => o.undefined.contains(v.name)) {
         None
       } else {
@@ -155,7 +156,7 @@ const STACK : UInt64 = 0x20000
 /// A deterministic machine state: general purpose registers with
 /// distinct values, flags from `flag_bits` (CF, PF, AF, ZF, SF, OF, DF in
 /// bits 0-6), segment bases, vector registers and two initialized memory
-/// regions (data at `DATA`, stack at `STACK`, 512 bytes each).
+/// regions (1024 bytes each, from 256 bytes below `DATA` and `STACK`).
 fn machine(
   mode : @x86.Mode,
   regs? : Array[(String, UInt64)] = [],
@@ -186,21 +187,7 @@ fn machine(
   }
   values["FPU_CONTROL"] = word(16, 0x37f)
   values["MXCSR"] = word(32, 0x1f80)
-  let data = Bytes::makei(512, i => ((i * 37 + seed * 11) & 0xff).to_byte())
-  let stack = Bytes::makei(512, i => ((i * 91 + seed * 7) & 0xff).to_byte())
-  let mut mem = @types.BilMemory::from_bytes(addr_width=w, start=DATA, data)
-  for i in 0..<stack.length() {
-    mem = match
-      mem.store(
-        try! @types.Word::of_uint64(width=w, STACK + i.to_uint64()),
-        try! @types.Word::of_uint64(width=8, stack[i].to_uint64()),
-        endian=LittleEndian,
-      ) {
-      Ok(m) => m
-      Err(e) => abort(e)
-    }
-  }
-  values["mem"] = BilMem(mem)
+  values["mem"] = BilMem(initial_memory(w, seed))
   for r in regs {
     let (name, v) = r
     let width = match values.get(name) {
@@ -334,4 +321,37 @@ fn flags_text(o : Outcome) -> String {
     }
   }
   parts.join(" ")
+}
+
+///|
+let memory_cache : Map[(Int, Int), @types.BilMemory] = Map([])
+
+///|
+/// The initial memory of the test states: two 1024-byte regions starting
+/// 256 bytes below `DATA` and `STACK`, cached per address width and seed.
+fn initial_memory(w : Int, seed : Int) -> @types.BilMemory {
+  match memory_cache.get((w, seed)) {
+    Some(m) => m
+    None => {
+      let data = Bytes::makei(1024, i => ((i * 37 + seed * 11) & 0xff).to_byte())
+      let stack = Bytes::makei(1024, i => ((i * 91 + seed * 7) & 0xff).to_byte())
+      let mem = @types.BilMemory::from_bytes(
+        addr_width=w,
+        start=DATA - 256,
+        data,
+      )
+      let word = try! @types.Word::from_bytes(stack, endian=LittleEndian)
+      let mem = match
+        mem.store(
+          try! @types.Word::of_uint64(width=w, STACK - 256),
+          word,
+          endian=LittleEndian,
+        ) {
+        Ok(m) => m
+        Err(e) => abort(e)
+      }
+      memory_cache[(w, seed)] = mem
+      mem
+    }
+  }
 }

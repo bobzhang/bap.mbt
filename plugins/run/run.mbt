@@ -358,8 +358,8 @@ fn on_failure(
   conflict : Error,
   _result : @primus.JobsResult,
 ) -> @primus.JobAction {
-  reporter.info(
-    message="The job `\{job.name}' failed to converge and exited with conflict: \{conflict}",
+  reporter.error(
+    message="The job `\{job.name}' failed: \{@bap_main.error_to_string(conflict)}",
   )
   Continue
 }
@@ -396,12 +396,21 @@ fn find_first_unvisited_blk(
 ///|
 /// The Primus systems with the given names.
 fn find_systems(names : Array[String]) -> Array[@primus.System] raise {
-  names.map(sys => {
+  let out = []
+  for sys in names {
     match @primus.System::find(@knowledge.Name::read(sys)) {
       None => raise InvalidArgument("Unknown system: \{sys}")
-      Some(s) => s
+      Some(s) => {
+        // a system with unresolved components can not be started: report
+        // it instead of silently failing every job
+        s.validate() catch {
+          e => raise InvalidArgument("Invalid system \{sys}: \{e}")
+        }
+        out.push(s)
+      }
     }
-  })
+  }
+  out
 }
 
 ///|

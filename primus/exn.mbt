@@ -57,6 +57,13 @@ fn primus_error_to_string(err : Error) -> String? {
       "Level transition - broken invariant: No transition is defined from the \{level} level to the \{dst} level"
     Restricted(op) => "\{op} in the restricted mode"
     DeadMachine(id) => "machine \{id} is not alive"
+    UnknownSystem(name) => UnknownSystem(name).to_string()
+    UnknownComponent(component~, system~) =>
+      UnknownComponent(component~, system~).to_string()
+    DuplicateSystem(name) => DuplicateSystem(name).to_string()
+    DuplicateComponent(name) => DuplicateComponent(name).to_string()
+    SystemParseError(file~, system~, msg~) =>
+      SystemParseError(file~, system~, msg~).to_string()
     _ => return None
   }
   Some(s)

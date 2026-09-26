@@ -323,10 +323,34 @@ pub fn init_ieee754(m : @primus.Machine) -> Unit {
 /// `lisp-ieee754`, and `lisp-core`).
 pub fn init_runtime(m : @primus.Machine) -> Unit raise {
   refine_from_system(m)
-  init_primitives(m)
-  init_io(m)
-  init_ieee754(m)
+  init_part(m, "primitives", m => init_primitives(m))
+  init_part(m, "io", init_io)
+  init_part(m, "ieee754", m => init_ieee754(m))
   init_signals(m)
+}
+
+///|
+/// The parts of the runtime installed in the machine.
+let runtime_parts : @primus.State[Array[String]] = @primus.State::declare_(
+  uuid="3f6c2a1e-8d4b-4c7a-9e2f-5b1d0a7c6e34",
+  name="lisp-runtime-parts",
+  clone=xs => xs.copy(),
+  _ => [],
+)
+
+///|
+/// Installs a part of the runtime unless it is already installed.
+fn init_part(
+  m : @primus.Machine,
+  part : String,
+  init : (@primus.Machine) -> Unit raise,
+) -> Unit raise {
+  let parts = m.get_local(runtime_parts)
+  if parts.contains(part) {
+    return
+  }
+  m.put_local(runtime_parts, [..parts, part])
+  init(m)
 }
 
 ///|
@@ -429,6 +453,28 @@ pub fn register_components() -> Unit raise {
     pkg="bap",
     desc="Loads the Primus Lisp library and links external functions.",
     m => load_library(m),
+  )
+  // upstream splits the runtime into several components that systems list
+  // separately (`bap:base-lisp-machine`); `lisp-core` already installs all
+  // of them, so these components only complete a runtime that was not
+  // initialized by `lisp-core` (each part is installed at most once).
+  @primus.Components::register_generic(
+    "lisp-primitives",
+    pkg="bap",
+    desc="Provides the core Primus Lisp primitives.",
+    m => init_part(m, "primitives", m => init_primitives(m)),
+  )
+  @primus.Components::register_generic(
+    "lisp-basic-io",
+    pkg="bap",
+    desc="Provides the basic input/output Primus Lisp primitives.",
+    m => init_part(m, "io", init_io),
+  )
+  @primus.Components::register_generic(
+    "lisp-ieee754",
+    pkg="bap",
+    desc="Provides the IEEE754 floating-point Primus Lisp primitives.",
+    m => init_part(m, "ieee754", m => init_ieee754(m)),
   )
   @primus.Components::register_generic(
     "lisp-type-checker",

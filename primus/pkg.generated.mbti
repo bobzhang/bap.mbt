@@ -200,7 +200,10 @@ pub(all) suberror SystemError {
   DuplicateComponent(String)
   SystemParseError(file~ : String, system~ : String, msg~ : String)
 } derive(@debug.Debug)
+pub fn SystemError::output(Self, &Logger) -> Unit
 pub fn SystemError::to_repr(Self) -> @debug.Repr
+pub fn SystemError::to_string(Self) -> String
+pub impl Show for SystemError
 
 // Types and methods
 pub(all) enum Code {
@@ -642,6 +645,7 @@ pub fn System::register(Self) -> Unit raise SystemError
 pub fn System::run(Self, @project.Project, envp? : Array[String], args? : Array[String], init? : (Machine) -> Unit raise, fini? : (Machine) -> Unit raise, start? : (Machine) -> Unit raise) -> (ExitStatus, @project.Project) raise SystemError
 pub fn System::to_string(Self) -> String
 pub fn System::update(String, pkg? : String, (Self) -> Self) -> Unit raise SystemError
+pub fn System::validate(Self) -> Unit raise SystemError
 
 pub struct TopLevel {
   me : @types.Term[@types.Program]

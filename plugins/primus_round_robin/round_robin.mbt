@@ -50,7 +50,7 @@ fn schedule(m : @primus.Machine, t : RoundRobin) -> Unit raise {
         if fs.is_empty() {
           return
         }
-        continue { ..t, pending: @list.from_array(fs), }
+        continue { ..t, pending: @list.List(fs), }
       }
       More(next, tail=pending) =>
         if m.status(next) is Dead || t.finished.contains(next) {

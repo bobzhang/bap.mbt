@@ -1,6 +1,5 @@
 import {
   "bobzhang/bap/bap_main",
-  "bobzhang/bap/main_event",
   "bobzhang/bap/primus",
   "moonbitlang/core/immut/sorted_set",
   "moonbitlang/core/list",

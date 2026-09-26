@@ -79,3 +79,12 @@ pub fn Var::scoped_pure(sort : Sort, f : (Var) -> Pure) -> Pure {
     scoped_pure_depth.with_(state, depth + 1, () => f(variable)(state))
   }
 }
+
+///|
+/// `int s (n mod 2^size s)`: the bitvector constant `n` of sort `s` (a
+/// negative `n` is taken in two's complement). A convenience for
+/// `Core::int` that defers the construction of the bitvector to the
+/// evaluation of the term.
+pub fn Core::of_int(self : Core, sort : Sort, n : Int) -> Pure {
+  state => self.int(sort, bitvec_of_int(sort_size(sort), n))(state)
+}

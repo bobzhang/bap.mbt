@@ -403,6 +403,7 @@ pub fn Core::non_zero(Self, (@knowledge.State) -> Value raise) -> (@knowledge.St
 pub fn Core::not(Self, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
 pub fn Core::npred(Self, (@knowledge.State) -> Value raise, Int) -> (@knowledge.State) -> Value raise
 pub fn Core::nsucc(Self, (@knowledge.State) -> Value raise, Int) -> (@knowledge.State) -> Value raise
+pub fn Core::of_int(Self, Sort, Int) -> (@knowledge.State) -> Value raise
 pub fn Core::or_(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
 pub fn Core::perform(Self, EffectSort) -> (@knowledge.State) -> Effect raise
 pub fn Core::pow(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise

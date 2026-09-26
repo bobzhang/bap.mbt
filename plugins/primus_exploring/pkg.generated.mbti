@@ -1,0 +1,30 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/primus_exploring"
+
+import {
+  "bobzhang/bap/primus",
+  "bobzhang/bap/types",
+}
+
+// Values
+pub let component_name : String
+
+pub fn declare_plugin() -> Unit raise
+
+pub fn enable() -> Unit
+
+pub fn explored(@primus.Machine, @types.Tid) -> Int
+
+pub fn install(@primus.Machine) -> Unit
+
+pub let name : String
+
+pub fn register() -> Bool
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

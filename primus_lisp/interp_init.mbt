@@ -124,6 +124,7 @@ pub fn init_signals(m : @primus.Machine) -> Unit {
     signal(
       m,
       @primus.system_stop,
+      once=true,
       params=one(sym),
       docs="(system-stop NAME) occurs when the system with the given name finished its execution",
       (m, x) => [sym_arg(m, x)],
@@ -142,6 +143,7 @@ pub fn init_signals(m : @primus.Machine) -> Unit {
     signal(
       m,
       @primus.system_fini,
+      once=true,
       params=unit,
       docs="(fini) occurs when the Primus Machine is finished",
       (_, _) => [],
@@ -511,10 +513,29 @@ pub fn init_ieee754(m : @primus.Machine) -> Unit {
 /// signals (upstream components `lisp-primitives`, `lisp-basic-io`,
 /// `lisp-ieee754`, and `lisp-core`).
 pub fn init_runtime(m : @primus.Machine) -> Unit raise {
+  refine_from_system(m)
   init_primitives(m)
   init_io(m)
   init_ieee754(m)
   init_signals(m)
+}
+
+///|
+/// Refines the context of the Lisp program with the classes `system` and
+/// `component` of the system that runs the machine, if any (upstream
+/// `System.Generic.do_init` refines the Lisp context).
+pub fn refine_from_system(m : @primus.Machine) -> Unit raise {
+  match @primus.System::current(m) {
+    None => ()
+    Some(sys) =>
+      refine(
+        m,
+        Context::create([
+          ("system", [sys.name().show()]),
+          ("component", sys.all_components().map(n => n.show())),
+        ]),
+      )
+  }
 }
 
 ///|

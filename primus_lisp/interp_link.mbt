@@ -308,12 +308,15 @@ pub fn define_primitive(
 /// when the observation occurs, all Lisp methods named after the
 /// observation are evaluated with the arguments computed by `proj`. The
 /// methods are evaluated as frames of the machine (a resumable
-/// subscription), so they may fork. Returns the subscription.
+/// subscription), so they may fork. With `once=true` the methods are run at
+/// most once per machine (for observations like `system-fini` that are
+/// posted after the machine finished). Returns the subscription.
 pub fn[T] signal(
   m : @primus.Machine,
   obs : @primus.Observation[T],
   params? : Signature,
   docs? : String = "undocumented",
+  once? : Bool = false,
   proj : (@primus.Machine, T) -> Array[@primus.Value] raise,
 ) -> @primus.Subscription {
   let types = match params {
@@ -328,5 +331,23 @@ pub fn[T] signal(
       Def::new(name.show(), docs~, { types, }),
     ),
   })
-  m.subscribe_resumable(obs, (m, x) => eval_signal(m, name, proj(m, x), _ => ()))
+  // the methods are scheduled (as a resumable observer would) only if
+  // the program has methods for the signal. Observations posted outside of
+  // the scheduler loop (e.g., `fini`) are delivered at most once per
+  // machine with `once`, otherwise the scheduled methods would keep the
+  // machine running
+  let key = name.show()
+  m.subscribe(obs, x => {
+    let s = get_state(m)
+    let has_methods = !s.program
+      .with_package(name.pkg())
+      .get(meth, name=name.unqualified())
+      .is_empty()
+    if has_methods && !(once && s.fired.contains(key)) {
+      if once {
+        put_state(m, { ..s, fired: s.fired.add(key), })
+      }
+      m.schedule(m => eval_signal(m, name, proj(m, x), _ => ()))
+    }
+  })
 }

@@ -235,9 +235,9 @@ test "signals are reflected into methods" {
       #|[
       #|  "call main()",
       #|  "call strlen(4096)",
-      #|  "method: calling #<strlen 3:63u> with 0x1000:64u",
+      #|  "method: calling #<strlen 2:63u> with 0x1000:64u",
       #|  "return strlen(4096,99)",
-      #|  "method: #<strlen 3:63u> returned 0x63:64u",
+      #|  "method: #<strlen 2:63u> returned 0x63:64u",
       #|  "return main()",
       #|]
     ),

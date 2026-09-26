@@ -83,7 +83,6 @@ test "static and dynamic control flow" {
     exec_bil(lifter, "COUNTDOWN", [Reg("X1"), Reg("X2")], [("X2", 5)], "X1"),
     content=(
       #|0xA:64u
-
     ),
   )
   inspect(

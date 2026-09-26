@@ -7,8 +7,8 @@ test "basic: alu" {
   inspect(
     family_report(lift_basic, "alu"),
     content=(
-      #|x86-64: cases=664 lifted=656 agree=656 mismatch=0 failed=0
-      #|x86: cases=254 lifted=244 agree=244 mismatch=0 failed=0
+      #|x86-64: cases=664 lifted=664 agree=664 mismatch=0 failed=0
+      #|x86: cases=254 lifted=254 agree=254 mismatch=0 failed=0
     ),
   )
 }
@@ -51,8 +51,8 @@ test "basic: move" {
   inspect(
     family_report(lift_basic, "move"),
     content=(
-      #|x86-64: cases=405 lifted=388 agree=388 mismatch=0 failed=0
-      #|x86: cases=174 lifted=172 agree=172 mismatch=0 failed=0
+      #|x86-64: cases=405 lifted=405 agree=405 mismatch=0 failed=0
+      #|x86: cases=174 lifted=174 agree=174 mismatch=0 failed=0
     ),
   )
 }
@@ -62,8 +62,8 @@ test "basic: control" {
   inspect(
     family_report(lift_basic, "control"),
     content=(
-      #|x86-64: cases=201 lifted=188 agree=188 mismatch=0 failed=0
-      #|x86: cases=197 lifted=184 agree=184 mismatch=0 failed=0
+      #|x86-64: cases=201 lifted=201 agree=201 mismatch=0 failed=0
+      #|x86: cases=197 lifted=197 agree=197 mismatch=0 failed=0
     ),
   )
 }
@@ -73,8 +73,8 @@ test "basic: string" {
   inspect(
     family_report(lift_basic, "string"),
     content=(
-      #|x86-64: cases=132 lifted=120 agree=120 mismatch=0 failed=0
-      #|x86: cases=99 lifted=90 agree=90 mismatch=0 failed=0
+      #|x86-64: cases=132 lifted=132 agree=132 mismatch=0 failed=0
+      #|x86: cases=99 lifted=99 agree=99 mismatch=0 failed=0
     ),
   )
 }
@@ -106,7 +106,7 @@ test "basic: lisp" {
   inspect(
     family_report(lift_basic, "lisp"),
     content=(
-      #|x86-64: cases=131 lifted=20 agree=20 mismatch=0 failed=0
+      #|x86-64: cases=131 lifted=30 agree=30 mismatch=0 failed=0
       #|x86: cases=19 lifted=16 agree=16 mismatch=0 failed=0
     ),
   )

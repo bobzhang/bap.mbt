@@ -130,7 +130,7 @@ test "term, position and pc observations" {
       #|  "leave-def",
       #|  "leave-blk",
       #|  "leave-sub main",
-      #|  "pc=16 pos=def",
+      #|  "pc=16 pos=top",
       #|]
     ),
   )

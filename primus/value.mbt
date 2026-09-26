@@ -293,16 +293,28 @@ pub fn Value::logxor(
 
 ///|
 fn shift_amount(y : Value) -> Int {
+  // clamp by numeric magnitude: a wide operand with a small value (e.g.
+  // `1:128`) is a small shift amount
+  let big = 0x7fffffffUL
   let w = y.value
-  let n = if w.bitwidth() > 64 {
-    0x7fffffffUL
+  let low = if w.bitwidth() > 64 {
+    let high = w.extract(hi=w.bitwidth() - 1, lo=64) catch {
+      _ => return 0x7fffffff
+    }
+    if !high.is_zero() {
+      return 0x7fffffff
+    }
+    let l = w.extract(hi=63, lo=0) catch { _ => return 0x7fffffff }
+    l.to_uint64() catch {
+      _ => big
+    }
   } else {
     w.to_uint64() catch {
-      _ => 0x7fffffffUL
+      _ => big
     }
   }
-  if n < 0x7fffffffUL {
-    n.to_int()
+  if low < big {
+    low.to_int()
   } else {
     0x7fffffff
   }

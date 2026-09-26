@@ -153,7 +153,14 @@ pub fn ImageBackend::ogre() -> ImageBackend {
 ///|
 pub fn register_builtin_backends() -> Result[Unit, String] {
   for
-    backend in [ImageBackend::raw(), ImageBackend::ogre(), ImageBackend::elf()] {
+    backend in [
+      ImageBackend::raw(),
+      ImageBackend::ogre(),
+      ImageBackend::elf(),
+      ImageBackend::macho(),
+      ImageBackend::coff(),
+      ImageBackend::llvm(),
+    ] {
     match register_backend_if_absent(backend) {
       Ok(_) => ()
       Err(reason) => return Err(reason)

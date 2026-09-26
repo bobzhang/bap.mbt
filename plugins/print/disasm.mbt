@@ -353,11 +353,24 @@ pub fn bil_printer(format : String) -> InsnPrinter {
 /// The memory regions that contain code.
 fn code_regions(project : @project.Project) -> Array[@memory.Memory] {
   match project.image() {
-    Some(image) =>
+    Some(image) => {
+      // the code regions of the image specification (upstream), e.g. the
+      // `__text` and `__stubs` sections of a Mach-O `__TEXT` segment;
+      // images without them (the port's ELF loader) use their executable
+      // segments
+      let regions = image
+        .memory()
+        .to_sequence()
+        .filter(entry => entry.1.get(@image.code_region()) is Some(_))
+        .map(entry => entry.0)
+      if !regions.is_empty() {
+        return regions
+      }
       image
       .segments()
       .filter(s => s.is_executable())
       .map(s => image.memory_of_segment(s))
+    }
     None => project.memory().to_sequence().map(entry => entry.0)
   }
 }

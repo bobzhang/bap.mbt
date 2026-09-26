@@ -140,15 +140,23 @@ fn OgreDoc::find_mapped_region(
   addr : UInt64,
   size : Int,
 ) -> (Int, Int)? {
+  // upstream joins `segment` and `mapped` by the address only: the mapped
+  // size is the size of the file image, which is smaller than the segment
+  // when its tail is zero filled (e.g. a Mach-O `__DATA` with `__bss`);
+  // a mapped region of the same size is preferred
+  let mut found = None
   for mapped in spec_values(self, Scheme::mapped()) {
     if spec_region(mapped, "mapped") is Ok((a, s)) &&
       a == addr &&
-      s == size &&
       spec_int(mapped.info, "mapped.off") is Ok(off) {
-      return Some((off, size))
+      if s == size {
+        return Some((off, s))
+      } else if found is None {
+        found = Some((off, s))
+      }
     }
   }
-  None
+  found
 }
 
 ///|

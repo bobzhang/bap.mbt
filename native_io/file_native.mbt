@@ -113,3 +113,22 @@ pub fn write_file(path : String, data : BytesView) -> Result[Unit, String] {
     Err(utf8_bytes_to_string(response[1:].to_owned()))
   }
 }
+
+///|
+extern "c" fn host_arch_ffi() -> Int = "bap_mbt_host_arch"
+
+///|
+/// The architecture of the host, as LLVM names it (`x86_64`, `i386`,
+/// `aarch64`, `arm`, `powerpc64`, `powerpc`, `riscv64`), or `unknown`.
+pub fn host_architecture() -> String {
+  match host_arch_ffi() {
+    1 => "x86_64"
+    2 => "i386"
+    3 => "aarch64"
+    4 => "arm"
+    5 => "powerpc64"
+    6 => "powerpc"
+    7 => "riscv64"
+    _ => "unknown"
+  }
+}

@@ -1,0 +1,325 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/macho"
+
+import {
+  "bobzhang/bap/bitvec",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub const CPU_ARCH_ABI64 : Int = 0x01000000
+
+pub const CPU_SUBTYPE_ARM64E : Int = 2
+
+pub const CPU_SUBTYPE_X86_64_H : Int = 8
+
+pub const CPU_TYPE_ARM : Int = 12
+
+pub const CPU_TYPE_ARM64 : Int = 0x0100000c
+
+pub const CPU_TYPE_ARM64_32 : Int = 0x0200000c
+
+pub const CPU_TYPE_POWERPC : Int = 18
+
+pub const CPU_TYPE_POWERPC64 : Int = 0x01000012
+
+pub const CPU_TYPE_X86 : Int = 7
+
+pub const CPU_TYPE_X86_64 : Int = 0x01000007
+
+pub const FAT_MAGIC : UInt = 0xcafebabe
+
+pub const FAT_MAGIC_64 : UInt = 0xcafebabf
+
+pub const INDIRECT_SYMBOL_ABS : UInt = 0x40000000
+
+pub const INDIRECT_SYMBOL_LOCAL : UInt = 0x80000000
+
+pub const LC_DYSYMTAB : UInt = 0xb
+
+pub const LC_FUNCTION_STARTS : UInt = 0x26
+
+pub const LC_ID_DYLIB : UInt = 0xd
+
+pub const LC_LAZY_LOAD_DYLIB : UInt = 0x20
+
+pub const LC_LOAD_DYLIB : UInt = 0xc
+
+pub const LC_LOAD_DYLINKER : UInt = 0xe
+
+pub const LC_LOAD_UPWARD_DYLIB : UInt = 0x80000023
+
+pub const LC_LOAD_WEAK_DYLIB : UInt = 0x80000018
+
+pub const LC_MAIN : UInt = 0x80000028
+
+pub const LC_REEXPORT_DYLIB : UInt = 0x8000001f
+
+pub const LC_REQ_DYLD : UInt = 0x80000000
+
+pub const LC_SEGMENT : UInt = 0x1
+
+pub const LC_SEGMENT_64 : UInt = 0x19
+
+pub const LC_SYMTAB : UInt = 0x2
+
+pub const LC_THREAD : UInt = 0x4
+
+pub const LC_UNIXTHREAD : UInt = 0x5
+
+pub const LC_UUID : UInt = 0x1b
+
+pub const MH_BUNDLE : Int = 0x8
+
+pub const MH_DYLIB : Int = 0x6
+
+pub const MH_EXECUTE : Int = 0x2
+
+pub const MH_MAGIC : UInt = 0xfeedface
+
+pub const MH_MAGIC_64 : UInt = 0xfeedfacf
+
+pub const MH_OBJECT : Int = 0x1
+
+pub const MH_PRELOAD : Int = 0x5
+
+pub const N_ABS : Int = 0x2
+
+pub const N_EXT : Int = 0x01
+
+pub const N_INDR : Int = 0xa
+
+pub const N_SECT : Int = 0xe
+
+pub const N_STAB : Int = 0xe0
+
+pub const N_TYPE : Int = 0x0e
+
+pub const N_UNDF : Int = 0x0
+
+pub const SECTION_TYPE : UInt = 0xff
+
+pub const S_ATTR_PURE_INSTRUCTIONS : UInt = 0x80000000
+
+pub const S_ATTR_SOME_INSTRUCTIONS : UInt = 0x400
+
+pub const S_GB_ZEROFILL : UInt = 0xc
+
+pub const S_LAZY_DYLIB_SYMBOL_POINTERS : UInt = 0x10
+
+pub const S_LAZY_SYMBOL_POINTERS : UInt = 0x7
+
+pub const S_NON_LAZY_SYMBOL_POINTERS : UInt = 0x6
+
+pub const S_SYMBOL_STUBS : UInt = 0x8
+
+pub const S_THREAD_LOCAL_VARIABLE_POINTERS : UInt = 0x14
+
+pub const S_ZEROFILL : UInt = 0x1
+
+pub const VM_PROT_EXECUTE : Int = 0x4
+
+pub const VM_PROT_READ : Int = 0x1
+
+pub const VM_PROT_WRITE : Int = 0x2
+
+pub fn arch_name(Int, Int) -> String
+
+pub fn external_relocations(Bytes, MachO) -> Result[Array[Relocation], String]
+
+pub fn fat_archs(Bytes) -> Result[Array[FatArch], String]
+
+pub fn fat_slice(Bytes, FatArch) -> Result[Bytes, String]
+
+pub fn function_starts(Bytes, MachO) -> Result[Array[UInt64], String]
+
+pub fn indirect_symbols(Bytes, MachO) -> Result[Array[UInt], String]
+
+pub fn is_fat(BytesView) -> Bool
+
+pub fn is_macho(BytesView) -> Bool
+
+pub fn parse(Bytes) -> Result[MachO, String]
+
+pub fn relocations(Bytes, MachO, Section) -> Result[Array[Relocation], String]
+
+pub fn symbols(Bytes, MachO) -> Result[Array[Nlist], String]
+
+// Errors
+
+// Types and methods
+pub(all) struct Dylib {
+  cmd : UInt
+  name : String
+  timestamp : UInt
+  current_version : UInt
+  compatibility_version : UInt
+} derive(Eq, @debug.Debug)
+pub fn Dylib::equal(Self, Self) -> Bool
+pub fn Dylib::not_equal(Self, Self) -> Bool
+pub fn Dylib::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Dysymtab {
+  ilocalsym : UInt
+  nlocalsym : UInt
+  iextdefsym : UInt
+  nextdefsym : UInt
+  iundefsym : UInt
+  nundefsym : UInt
+  tocoff : UInt
+  ntoc : UInt
+  modtaboff : UInt
+  nmodtab : UInt
+  extrefsymoff : UInt
+  nextrefsyms : UInt
+  indirectsymoff : UInt
+  nindirectsyms : UInt
+  extreloff : UInt
+  nextrel : UInt
+  locreloff : UInt
+  nlocrel : UInt
+} derive(Eq, @debug.Debug)
+pub fn Dysymtab::equal(Self, Self) -> Bool
+pub fn Dysymtab::not_equal(Self, Self) -> Bool
+pub fn Dysymtab::to_repr(Self) -> @debug.Repr
+
+pub(all) struct FatArch {
+  cputype : Int
+  cpusubtype : Int
+  offset : UInt64
+  size : UInt64
+  align : UInt
+} derive(Eq, @debug.Debug)
+pub fn FatArch::equal(Self, Self) -> Bool
+pub fn FatArch::not_equal(Self, Self) -> Bool
+pub fn FatArch::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Header {
+  is64 : Bool
+  endian : @bitvec.Endian
+  cputype : Int
+  cpusubtype : Int
+  filetype : Int
+  ncmds : Int
+  sizeofcmds : Int
+  flags : UInt
+} derive(Eq, @debug.Debug)
+pub fn Header::equal(Self, Self) -> Bool
+pub fn Header::not_equal(Self, Self) -> Bool
+pub fn Header::to_repr(Self) -> @debug.Repr
+
+pub(all) enum LoadCommand {
+  SegmentCommand(Segment)
+  SymtabCommand(Symtab)
+  DysymtabCommand(Dysymtab)
+  MainCommand(entryoff~ : UInt64, stacksize~ : UInt64)
+  ThreadCommand(cmd~ : UInt, states~ : Array[(UInt, Bytes)])
+  DylibCommand(Dylib)
+  DylinkerCommand(String)
+  UuidCommand(Bytes)
+  FunctionStartsCommand(dataoff~ : UInt, datasize~ : UInt)
+  OtherCommand(cmd~ : UInt, Bytes)
+} derive(Eq, @debug.Debug)
+pub fn LoadCommand::equal(Self, Self) -> Bool
+pub fn LoadCommand::not_equal(Self, Self) -> Bool
+pub fn LoadCommand::to_repr(Self) -> @debug.Repr
+
+pub(all) struct MachO {
+  header : Header
+  commands : Array[LoadCommand]
+} derive(Eq, @debug.Debug)
+pub fn MachO::address_of_offset(Self, UInt64) -> UInt64?
+pub fn MachO::dylibs(Self) -> Array[Dylib]
+pub fn MachO::dysymtab(Self) -> Dysymtab?
+pub fn MachO::equal(Self, Self) -> Bool
+pub fn MachO::first_segment(Self) -> Segment?
+pub fn MachO::image_base(Self) -> UInt64
+pub fn MachO::is_executable(Self) -> Bool
+pub fn MachO::main_entry_offset(Self) -> UInt64?
+pub fn MachO::not_equal(Self, Self) -> Bool
+pub fn MachO::sections(Self) -> Array[Section]
+pub fn MachO::segments(Self) -> Array[Segment]
+pub fn MachO::symtab(Self) -> Symtab?
+pub fn MachO::thread_entry(Self) -> UInt64?
+pub fn MachO::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Nlist {
+  index : Int
+  name : String
+  n_type : Int
+  n_sect : Int
+  n_desc : Int
+  n_value : UInt64
+} derive(Eq, @debug.Debug)
+pub fn Nlist::equal(Self, Self) -> Bool
+pub fn Nlist::is_external(Self) -> Bool
+pub fn Nlist::is_stab(Self) -> Bool
+pub fn Nlist::not_equal(Self, Self) -> Bool
+pub fn Nlist::to_repr(Self) -> @debug.Repr
+pub fn Nlist::typ(Self) -> Int
+
+pub(all) struct Relocation {
+  r_word0 : UInt
+  r_word1 : UInt
+  r_address : Int
+  r_symbolnum : Int
+  r_pcrel : Bool
+  r_length : Int
+  r_extern : Bool
+  r_type : Int
+  r_scattered : Bool
+} derive(Eq, @debug.Debug)
+pub fn Relocation::equal(Self, Self) -> Bool
+pub fn Relocation::not_equal(Self, Self) -> Bool
+pub fn Relocation::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Section {
+  sectname : String
+  segname : String
+  addr : UInt64
+  size : UInt64
+  offset : UInt
+  align : UInt
+  reloff : UInt
+  nreloc : UInt
+  flags : UInt
+  reserved1 : UInt
+  reserved2 : UInt
+} derive(Eq, @debug.Debug)
+pub fn Section::contains_symbol_stubs(Self) -> Bool
+pub fn Section::equal(Self, Self) -> Bool
+pub fn Section::is_code(Self) -> Bool
+pub fn Section::is_text(Self) -> Bool
+pub fn Section::is_zerofill(Self) -> Bool
+pub fn Section::not_equal(Self, Self) -> Bool
+pub fn Section::to_repr(Self) -> @debug.Repr
+pub fn Section::typ(Self) -> UInt
+
+pub(all) struct Segment {
+  segname : String
+  vmaddr : UInt64
+  vmsize : UInt64
+  fileoff : UInt64
+  filesize : UInt64
+  maxprot : Int
+  initprot : Int
+  flags : UInt
+  sections : Array[Section]
+} derive(Eq, @debug.Debug)
+pub fn Segment::equal(Self, Self) -> Bool
+pub fn Segment::not_equal(Self, Self) -> Bool
+pub fn Segment::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Symtab {
+  symoff : UInt
+  nsyms : UInt
+  stroff : UInt
+  strsize : UInt
+} derive(Eq, @debug.Debug)
+pub fn Symtab::equal(Self, Self) -> Bool
+pub fn Symtab::not_equal(Self, Self) -> Bool
+pub fn Symtab::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

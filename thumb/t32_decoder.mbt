@@ -1660,7 +1660,17 @@ pub fn decode_t32(
     None => (14, false)
   }
   let decoded = if wide {
-    t32_decode(h1, half(2), cond).map(t2_width)
+    let h2 = half(2)
+    match t32_decode(h1, h2, cond) {
+      Some(d) => Some(t2_width(d))
+      None =>
+        // VFP, NEON and coprocessor instructions (the A32 tables)
+        @arm.decode_t32_ext(((h1 << 16) | h2).reinterpret_as_uint(), cond).map(d => {
+          name: d.0,
+          ops: d.1,
+          text: d.2,
+        })
+    }
   } else {
     t16_decode(h1, cond, in_it)
   }

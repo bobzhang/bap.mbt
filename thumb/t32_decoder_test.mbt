@@ -329,8 +329,13 @@ test "Thumb-2 loads, stores and branches" {
       #|t2DMB 11, 14, Nil | dmb ish
     ),
   )
-  // coprocessor and VFP instructions are not decoded
-  inspect(show_t32([0xEE07, 0x0F15]), content="invalid")
+  // coprocessor and VFP instructions (the tables of the `arm` package)
+  inspect(
+    show_t32([0xEE07, 0x0F15]),
+    content=(
+      #|t2MCR 15, 0, R0, 7, 5, 0, 14, Nil | mcr p15, #0, r0, c7, c5, #0
+    ),
+  )
 }
 
 ///|

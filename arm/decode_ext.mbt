@@ -23,6 +23,12 @@
 // are `Imm:%c% Reg:%P:c%` and the condition suffix follows the mnemonic,
 // as LLVM prints it. The tables were learned from, and are checked
 // against, LLVM 22's disassembler (`armv7-linux-gnueabi`).
+//
+// Thumb-2 shares the VFP, NEON and coprocessor encodings (with other
+// leading bits for NEON and the IT condition as predicate), see
+// `decode_t32_ext`; `decode_ext_t32_tables.mbt` holds the Thumb-2 only
+// classes (bit fields, saturation, multiplies, parallel arithmetic, ...),
+// learned from `thumbv7-linux-gnueabi`.
 
 ///|
 priv enum ArmFlag {
@@ -44,6 +50,9 @@ priv enum ArmValid {
   SizeNot3
   /// A NEON shift: `L:imm6` is at least 8.
   ShiftImm
+  /// A Thumb-2 unprivileged load or store: not `PC`-relative and not a NEON
+  /// load or store.
+  T2LdstT
 }
 
 ///|
@@ -91,6 +100,7 @@ fn ArmClass::matches(self : ArmClass, w : UInt) -> Bool {
     NotVfpLdc => not_vfp() && (a32_bit(w, 24) || a32_bit(w, 21))
     SizeNot3 => a32_field(w, 20, 2) != 3
     ShiftImm => a32_bit(w, 7) || a32_field(w, 19, 3) != 0
+    T2LdstT => a32_field(w, 16, 4) != 15 && !(a32_bit(w, 24) && !a32_bit(w, 20))
   }
 }
 
@@ -223,6 +233,11 @@ fn arm_number_slot(w : UInt, name : String) -> Int? {
     "nsr" => Some(if esize == 64 { 64 - imm6 } else { 2 * esize - imm6 })
     "nsl" => Some(if esize == 64 { imm6 } else { imm6 - esize })
     "nme" => Some((f(5, 1) << 12) | (f(8, 4) << 8) | neon_imm8(w))
+    // Thumb-2 bit fields and saturation
+    "tlsb" => Some((f(12, 3) << 2) | f(6, 2))
+    "tw1" => Some(f(0, 5) + 1)
+    "tsh" => Some((f(21, 1) << 5) | (f(12, 3) << 2) | f(6, 2))
+    "ts4" => Some(f(0, 4) + 1)
     _ => None
   }
 }
@@ -261,7 +276,13 @@ fn ArmClass::slot(self : ArmClass, w : UInt, name : String) -> String {
     let arg = parts[1].to_owned()
     return match (parts[0], arg) {
       ("G" | "g" | "GA" | "ga", _) => {
-        let n = self.field(w, arg[0].unsafe_to_char())
+        // `mn`: LLVM merges the two register fields of Thumb-2 `REV`-like
+        // instructions
+        let n = if arg == "mn" {
+          self.field(w, 'm') | self.field(w, 'n')
+        } else {
+          self.field(w, arg[0].unsafe_to_char())
+        }
         match parts[0] {
           "G" => gpr(n).name()
           "g" => gpr_asm(n)
@@ -459,12 +480,88 @@ fn a32_vldm(w : UInt) -> A32Insn? {
 }
 
 ///|
-/// Decodes `w` with the tables.
+/// The coprocessor instructions, whose Thumb-2 opcodes are the A32 ones
+/// with a `t2` prefix.
+fn is_coprocessor(name : String) -> Bool {
+  name.has_prefix("MCR") ||
+  name.has_prefix("MRC") ||
+  name.has_prefix("MRRC") ||
+  name.has_prefix("CDP") ||
+  name.has_prefix("LDC") ||
+  name.has_prefix("STC")
+}
+
+///|
+/// Decodes the Thumb-2 VFP, NEON and coprocessor instruction `word` (the
+/// first halfword in the high bits) predicated by `cond` (the condition of
+/// its IT block, 14 outside IT blocks): the LLVM opcode name, operands and
+/// assembly. These instructions share the A32 encodings, apart from the
+/// leading bits of NEON (`111U1111` for `1111001U`, `11111001` for
+/// `11110100`) and the condition field.
+pub fn decode_t32_ext(
+  word : UInt,
+  cond : Int,
+) -> (String, Array[@mc.Op], String)? {
+  let top = word >> 24
+  let (a32, neon, thumb_only) = if (top & 0xEF) == 0xEF {
+    (0xF2000000U | (((word >> 28) & 1) << 24) | (word & 0xFFFFFF), true, false)
+  } else if top == 0xF9 && ((word >> 20) & 1) == 0 {
+    (0xF4000000U | (word & 0xFFFFFF), true, false)
+  } else if word >> 26 == 0x3B {
+    // 1110 11xx: VFP and coprocessor
+    ((word & 0x0FFFFFFF) | (cond.reinterpret_as_uint() << 28), false, false)
+  } else if word >> 26 == 0x3F {
+    // 1111 11xx: the coprocessor `2` forms (coprocessors 10 and 11 are
+    // only valid in the `LDC2L`/`STC2L` option forms in Thumb-2)
+    guard a32_field(word, 9, 3) != 5 || a32_field(word, 21, 4) == 0b0110 else {
+      return None
+    }
+    (word, true, false)
+  } else {
+    // the other Thumb-2 instructions of the tables (bit fields,
+    // saturation, multiplies, parallel arithmetic, ...)
+    (word, true, true)
+  }
+  let decoded = if thumb_only {
+    table_ext(t32_classes, word)
+  } else {
+    a32_ext(a32)
+  }
+  guard decoded is Some(d) else { return None }
+  let name = if is_coprocessor(d.name) { "t2" + d.name } else { d.name }
+  guard neon else { return Some((name, d.ops, d.text)) }
+  // unconditional in A32: the predicate comes from the IT block, and the
+  // coprocessor `2` forms have predicate operands in Thumb-2
+  let ops = d.ops.copy()
+  let mut last_al = None
+  for i in 0..<(ops.length() - 1) {
+    if ops[i] is Imm(14L) && ops[i + 1] is Reg(name="Nil", ..) {
+      last_al = Some(i)
+    }
+  }
+  match last_al {
+    Some(i) => {
+      ops[i] = Imm(cond.to_int64())
+      ops[i + 1] = (if cond == 14 { Nil } else { CPSR }).to_mc()
+    }
+    None => if !thumb_only { ops.push_iter(mc_pred(cond).iter()) }
+  }
+  Some((name, ops, with_cond_suffix(d.text, cond)))
+}
+
+///|
+/// Decodes `w` with the A32 tables.
 fn a32_ext(w : UInt) -> A32Insn? {
   if a32_vldm(w) is Some(insn) {
     return Some(insn)
   }
-  for cls in arm_classes {
+  table_ext(arm_classes, w)
+}
+
+///|
+/// Decodes `w` with the tables of `classes`.
+fn table_ext(classes : Array[ArmClass], w : UInt) -> A32Insn? {
+  for cls in classes {
     guard cls.matches(w) else { continue }
     guard (cls.table)(cls.key_of(w)) is Some((name, ops, text, zero, max_first)) &&
       (w & zero) == 0 &&

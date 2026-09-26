@@ -250,8 +250,14 @@ upstream BAP, LLVM's `SoftFail` encodings are valid instructions.
   clang -O2/-O3 FP/NEON code (armv7 hard-float), 1617 to 0 and 56 to 0 on
   the two compiled corpora, 124,385 to 232 on 500k random words (`MSR`
   immediates with non-canonical rotations, a few `PLI`/`PLD`/`CPS` forms).
-  Not decoded yet: T32 VFP/NEON/coprocessor (`SDIV`/`UDIV` in Thumb are
-  decoded; LLVM needs `+hwdiv`).
+  The same tables decode the Thumb-2 VFP, NEON and coprocessor encodings
+  (`@arm.decode_t32_ext`, with the IT condition as predicate), and further
+  Thumb-2 tables the bit field, saturation, multiply, parallel arithmetic,
+  `REV`/`CLZ`, unprivileged load/store and `UDF` instructions
+  (`thumb/decode_llvm_ext_test.mbt`: 1074 samples, 856 opcodes, and an
+  IT-block stream): llvm-only words go from 2107 to 0 on clang Thumb-2
+  FP/NEON code, 21,980 to 0 on the Thumb-2 corpus and 121,201 to 9 on
+  600k random 32-bit Thumb words.
   The Basic `llvm` backend's built-in ARM decoder (used only by
   `Basic.create "armv7"` with the `llvm` backend) is not validated.
 - A64 (`aarch64/decode_llvm_test.mbt`, 994 samples, 549 opcodes, and

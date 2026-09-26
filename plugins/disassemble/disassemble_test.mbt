@@ -31,7 +31,7 @@ test "disassemble dumps the program in the bir format" {
       #|00000004: mem := mem with [RSP - 8, el]:u64 <- RBP
       #|00000005: RSP := RSP - 8
       #|00000006: RBP := RSP
-      #|00000007: goto @0x0000000000401009
+      #|00000007: call @foo with return @0x0000000000401009
       #|
       #|00000008:
       #|00000009: RBP := mem[RSP, el]:u64
@@ -41,23 +41,24 @@ test "disassemble dumps the program in the bir format" {
       #|
       #|
       #|00000012:
+      #|00000013: call @foo with noreturn
+      #|
+      #|00000014: sub foo()
       #|
       #|
-      #|00000013: sub foo()
-      #|
-      #|
-      #|00000014:
-      #|00000015: EAX := 0
-      #|00000016: CF := 0
-      #|00000017: OF := 0
-      #|00000018: AF := unknown[AF undefined after logical operation]:u1
-      #|00000019: PF :=
+      #|00000015:
+      #|00000016: EAX := 0
+      #|00000017: CF := 0
+      #|00000018: OF := 0
+      #|00000019: AF := unknown[AF undefined after logical operation]:u1
+      #|00000020: PF :=
       #|          ~low:1[let parity_tmp1 = EAX >> 4 ^ EAX in
       #|                 let parity_tmp2 = parity_tmp1 >> 2 ^ parity_tmp1 in
       #|                 parity_tmp2 >> 1 ^ parity_tmp2]
-      #|00000020: SF := high:1[EAX]
-      #|00000021: ZF := 0 = EAX
+      #|00000021: SF := high:1[EAX]
+      #|00000022: ZF := 0 = EAX
       #|
+
     ),
   )
 }
@@ -174,7 +175,7 @@ test "disassemble runs passes" {
       #|00000007: flat_3 := RSP - 8
       #|00000008: RSP := flat_3
       #|00000009: RBP := RSP
-      #|00000010: goto @0x0000000000401009
+      #|00000010: call @foo with return @0x0000000000401009
       #|
       #|00000011:
       #|00000012: flat_4 := mem[RSP, el]:u64
@@ -186,30 +187,31 @@ test "disassemble runs passes" {
       #|
       #|
       #|00000017:
+      #|00000018: call @foo with noreturn
+      #|
+      #|00000019: sub foo()
       #|
       #|
-      #|00000018: sub foo()
+      #|00000020:
+      #|00000021: EAX := 0
+      #|00000022: CF := 0
+      #|00000023: OF := 0
+      #|00000024: AF := unknown[AF undefined after logical operation]:u1
+      #|00000025: flat_6 := EAX >> 4
+      #|00000026: flat_7 := flat_6 ^ EAX
+      #|00000027: flat_8 := flat_7 >> 2
+      #|00000028: flat_9 := flat_8 ^ flat_7
+      #|00000029: flat_10 := flat_9 >> 1
+      #|00000030: flat_11 := flat_10 ^ flat_9
+      #|00000031: flat_12 := low:1[flat_11]
+      #|00000032: flat_13 := ~flat_12
+      #|00000033: PF := flat_13
+      #|00000034: flat_14 := high:1[EAX]
+      #|00000035: SF := flat_14
+      #|00000036: flat_15 := 0 = EAX
+      #|00000037: ZF := flat_15
       #|
-      #|
-      #|00000019:
-      #|00000020: EAX := 0
-      #|00000021: CF := 0
-      #|00000022: OF := 0
-      #|00000023: AF := unknown[AF undefined after logical operation]:u1
-      #|00000024: flat_6 := EAX >> 4
-      #|00000025: flat_7 := flat_6 ^ EAX
-      #|00000026: flat_8 := flat_7 >> 2
-      #|00000027: flat_9 := flat_8 ^ flat_7
-      #|00000028: flat_10 := flat_9 >> 1
-      #|00000029: flat_11 := flat_10 ^ flat_9
-      #|00000030: flat_12 := low:1[flat_11]
-      #|00000031: flat_13 := ~flat_12
-      #|00000032: PF := flat_13
-      #|00000033: flat_14 := high:1[EAX]
-      #|00000034: SF := flat_14
-      #|00000035: flat_15 := 0 = EAX
-      #|00000036: ZF := flat_15
-      #|
+
     ),
   )
 }

@@ -60,18 +60,16 @@ test "bap mc --show-bir" {
     content=(
       #|SUB64ri8 RSP, RSP, 0x8
       #|00000001:
-      #|00000002: sub_dst := RSP
-      #|00000003: sub_src := 8
-      #|00000004: RSP := sub_dst - sub_src
-      #|00000005: CF := sub_dst < sub_src
-      #|00000006: OF := high:1[(sub_dst ^ sub_src) & (sub_dst ^ RSP)]
-      #|00000007: AF := 4:4[RSP ^ sub_dst ^ sub_src]
-      #|00000008: PF :=
-      #|          ~low:1[let parity_tmp1 = RSP >> 4 ^ RSP in
-      #|                 let parity_tmp2 = parity_tmp1 >> 2 ^ parity_tmp1 in
-      #|                 parity_tmp2 >> 1 ^ parity_tmp2]
-      #|00000009: SF := high:1[RSP]
-      #|00000010: ZF := 0 = RSP
+      #|00000002: v_1 := RSP
+      #|00000003: RSP := RSP - 8
+      #|00000004: CF := v_1 < 8
+      #|00000005: OF := high:1[(v_1 ^ 8) & (v_1 ^ RSP)]
+      #|00000006: AF := 0x10 = (0x10 & (RSP ^ v_1 ^ 8))
+      #|00000007: PF :=
+      #|          ~low:1[let v_3 = RSP >> 4 ^ RSP in
+      #|                 let v_3 = v_3 >> 2 ^ v_3 in v_3 >> 1 ^ v_3]
+      #|00000008: SF := high:1[RSP]
+      #|00000009: ZF := 0 = RSP
       #|
     ),
   )
@@ -178,35 +176,41 @@ test "bap runs passes and Primus" {
       #|
       #|
       #|00000003:
-      #|00000004: mem := mem with [RSP - 8, el]:u64 <- RBP
+      #|00000004: v_1 := RBP
       #|00000005: RSP := RSP - 8
-      #|00000006: RBP := RSP
-      #|00000007: goto @0x0000000000401009
+      #|00000006: mem := mem with [RSP, el]:u64 <- v_1
+      #|00000007: RBP := RSP
+      #|00000008: RSP := RSP - 8
+      #|00000009: mem := mem with [RSP, el]:u64 <- 0x401009
+      #|00000010: call @foo with return @0x0000000000401009
       #|
-      #|00000008:
-      #|00000009: RBP := mem[RSP, el]:u64
-      #|00000010: RSP := RSP + 8
+      #|00000011:
+      #|00000012: RBP := mem[RSP, el]:u64
+      #|00000013: RSP := RSP + 8
+      #|00000014: v_1 := mem[RSP, el]:u64
+      #|00000015: RSP := RSP + 8
+      #|00000016: call v_1 with noreturn
       #|
-      #|00000011: sub sub_0x40100b()
-      #|
-      #|
-      #|00000012:
-      #|
-      #|
-      #|00000013: sub foo()
+      #|00000017: sub sub_0x40100b()
       #|
       #|
-      #|00000014:
-      #|00000015: EAX := 0
-      #|00000016: CF := 0
-      #|00000017: OF := 0
-      #|00000018: AF := unknown[AF undefined after logical operation]:u1
-      #|00000019: PF :=
-      #|          ~low:1[let parity_tmp1 = EAX >> 4 ^ EAX in
-      #|                 let parity_tmp2 = parity_tmp1 >> 2 ^ parity_tmp1 in
-      #|                 parity_tmp2 >> 1 ^ parity_tmp2]
-      #|00000020: SF := high:1[EAX]
-      #|00000021: ZF := 0 = EAX
+      #|00000018:
+      #|00000019: call @foo with noreturn
+      #|
+      #|00000020: sub foo()
+      #|
+      #|
+      #|00000021:
+      #|00000022: RAX := 0
+      #|00000023: AF := unknown[AF is undefined after xor]:u1
+      #|00000024: ZF := 1
+      #|00000025: PF := 1
+      #|00000026: OF := 0
+      #|00000027: CF := 0
+      #|00000028: SF := 0
+      #|00000029: v_1 := mem[RSP, el]:u64
+      #|00000030: RSP := RSP + 8
+      #|00000031: call v_1 with noreturn
       #|
     ),
   )

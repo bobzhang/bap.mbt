@@ -1,14 +1,9 @@
 ///|
 /// Runs `bap` on the host file system (with all plugins, including the
 /// cache) in a fresh temporary directory holding the ELF fixture.
-fn native_bap(argv : (String) -> Array[String]) -> (Int, String, String) {
-  let tmp = match @env.get_env_var("TMPDIR") {
-    Some(dir) if dir != "" => dir
-    _ => "/tmp"
-  }
-  let dir = @native_io.make_temp_dir(dir=tmp, prefix="bap-frontend-").unwrap()
+fn native_bap(argv : (String) -> Array[String]) -> (Int, String, String) raise {
+  let dir = @fixtures.host_temp_dir_with_elf()
   let file = dir + "/true.elf"
-  @native_io.write_file(file, @fixtures.x86_64_elf()).unwrap()
   let buf = StringBuilder()
   let code = @frontend.run(
     ["bap", ..argv(file), "--cache-dir=" + dir + "/cache"],
@@ -47,9 +42,9 @@ test "bap disassembles a file on the host file system" {
       #|
     ),
   )
-  let bir = @native_io.read_file(dir + "/true.elf.bir").unwrap()
+  let bir = @fixtures.host_read_file(dir + "/true.elf.bir")
   inspect(bir.length() > 0, content="true")
-  @native_io.remove_tree(dir) |> ignore
+  @fixtures.host_remove_dir(dir)
 }
 
 ///|
@@ -67,7 +62,7 @@ test "bap specification of a file on the host file system" {
       #|true
     ),
   )
-  @native_io.remove_tree(dir) |> ignore
+  @fixtures.host_remove_dir(dir)
 }
 
 ///|
@@ -103,5 +98,5 @@ test "bap stores and analyzes the knowledge base" {
       #|
     ),
   )
-  @native_io.remove_tree(dir) |> ignore
+  @fixtures.host_remove_dir(dir)
 }

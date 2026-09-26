@@ -8,7 +8,15 @@ import {
   "bobzhang/bap/project",
   "bobzhang/bap/recipe",
   "bobzhang/bap/types",
+  "bobzhang/bap/x86",
   "bobzhang/bap/plugins/analyze",
+  "bobzhang/bap/plugins/beagle",
+  "bobzhang/bap/plugins/bil",
+  "bobzhang/bap/plugins/patterns",
+  "bobzhang/bap/plugins/primus_approximation",
+  "bobzhang/bap/plugins/primus_lisp" @primus_lisp_plugin,
+  "bobzhang/bap/plugins/primus_test",
+  "bobzhang/bap/plugins/riscv",
   "bobzhang/bap/plugins/cache",
   "bobzhang/bap/plugins/callgraph_collator",
   "bobzhang/bap/plugins/callsites",
@@ -55,8 +63,6 @@ import {
 
 import {
   "bobzhang/bap/fixtures",
-  "bobzhang/bap/native_io",
-  "moonbitlang/core/env",
 } for "test"
 
 options(

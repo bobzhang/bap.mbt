@@ -56,6 +56,7 @@ test "bap without arguments prints the usage" {
       #|  disassemble              disassembles and analyzes the input file
       #|  objdump                  disassembles and prints a binary using the linear sweep algorithm
       #|  mc                       disassembles a (human readable) string of bytes
+      #|  match-patterns           run the specified patterns file on the input file and prints the matches
       #|  primus-observations      prints a list of Primus observations
       #|  primus-components        prints a list of Primus components
       #|  primus-systems           prints a list of Primus systems
@@ -65,6 +66,8 @@ test "bap without arguments prints the usage" {
       #|
       #|Plugins:
       #|  analyze                  analyses the knowledge base
+      #|  beagle                   beagle is an obfuscated string solver that uses CPU emulation for
+      #|  bil                      defines the semantics of BAP Instruction Language (BIL) and makes old
       #|  byteweight               identifies function starts using byteweight signatures
       #|  callgraph-collator       compares projects by their callgraphs
       #|  callsites                annotates callsites with subroutines arguments
@@ -76,11 +79,14 @@ test "bap without arguments prints the usage" {
       #|  glibc-runtime            enables ad-hoc support for glibc runtime code
       #|  mc                       provides mc and objdump commands
       #|  optimization             removes dead code and propagates constants
+      #|  patterns                 applies semantic actions to the matching byte patterns
       #|  phoenix                  outputs the project in a phoenix format
+      #|  primus-approximation     provides approximations of elementary functions to Primus Lisp
       #|  primus-dictionary        provides a Primus Lisp key-value storage library
       #|  primus-exploring         evaluates all Primus machines, prioritizing the least visited
       #|  primus-greedy            schedules Primus machines in the DFS order
       #|  primus-limit             ensures termination by limiting Primus machines
+      #|  primus-lisp              loads and manages Primus Lisp sources
       #|  primus-loader            generic Primus dynamic loader
       #|  primus-mark-visited      provides the bap:mark-visited and bap:report-visited components
       #|  primus-powerpc           provides PPC Primus support package
@@ -92,6 +98,7 @@ test "bap without arguments prints the usage" {
       #|  primus-round-robin       schedules Primus machines in the BFS order
       #|  primus-systems           loads Primus systems and registers them in the system repository
       #|  primus-taint             a taint analysis control interface
+      #|  primus-test              provides primitives for Primus Tesing and Verification Framework
       #|  primus-wandering         schedules Primus machines in a random order
       #|  primus-x86               x86 Primus Support package
       #|  print                    prints the project in various formats
@@ -100,6 +107,7 @@ test "bap without arguments prints the usage" {
       #|  recipe-command           provides the recipe command
       #|  relocatable              extracts symbolic information from the program relocations
       #|  report                   reports program status using progress bars
+      #|  riscv                    provides RISCV semantics
       #|  run                      emulates the program using Primus
       #|  specification            provides the specification command
       #|  strings                  searches in binaries for string-like artifacts
@@ -129,16 +137,14 @@ test "bap mc" {
     bap(["mc", "--show-bil", "--", "48 83 ec 08"]),
     content=(
       #|{
-      #|  sub_dst := RSP
-      #|  sub_src := 8
-      #|  RSP := sub_dst - sub_src
-      #|  CF := sub_dst < sub_src
-      #|  OF := high:1[(sub_dst ^ sub_src) & (sub_dst ^ RSP)]
-      #|  AF := 4:4[RSP ^ sub_dst ^ sub_src]
+      #|  v_1 := RSP
+      #|  RSP := RSP - 8
+      #|  CF := v_1 < 8
+      #|  OF := high:1[(v_1 ^ 8) & (v_1 ^ RSP)]
+      #|  AF := 0x10 = (0x10 & (RSP ^ v_1 ^ 8))
       #|  PF :=
-      #|    ~low:1[let parity_tmp1 = RSP >> 4 ^ RSP in
-      #|           let parity_tmp2 = parity_tmp1 >> 2 ^ parity_tmp1 in parity_tmp2 >>
-      #|           1 ^ parity_tmp2]
+      #|    ~low:1[let v_3 = RSP >> 4 ^ RSP in
+      #|           let v_3 = v_3 >> 2 ^ v_3 in v_3 >> 1 ^ v_3]
       #|  SF := high:1[RSP]
       #|  ZF := 0 = RSP
       #|}
@@ -157,35 +163,41 @@ test "bap disassemble" {
       #|
       #|
       #|00000003:
-      #|00000004: mem := mem with [RSP - 8, el]:u64 <- RBP
+      #|00000004: v_1 := RBP
       #|00000005: RSP := RSP - 8
-      #|00000006: RBP := RSP
-      #|00000007: goto @0x0000000000401009
+      #|00000006: mem := mem with [RSP, el]:u64 <- v_1
+      #|00000007: RBP := RSP
+      #|00000008: RSP := RSP - 8
+      #|00000009: mem := mem with [RSP, el]:u64 <- 0x401009
+      #|00000010: call @foo with return @0x0000000000401009
       #|
-      #|00000008:
-      #|00000009: RBP := mem[RSP, el]:u64
-      #|00000010: RSP := RSP + 8
+      #|00000011:
+      #|00000012: RBP := mem[RSP, el]:u64
+      #|00000013: RSP := RSP + 8
+      #|00000014: v_1 := mem[RSP, el]:u64
+      #|00000015: RSP := RSP + 8
+      #|00000016: call v_1 with noreturn
       #|
-      #|00000011: sub sub_0x40100b()
-      #|
-      #|
-      #|00000012:
-      #|
-      #|
-      #|00000013: sub foo()
+      #|00000017: sub sub_0x40100b()
       #|
       #|
-      #|00000014:
-      #|00000015: EAX := 0
-      #|00000016: CF := 0
-      #|00000017: OF := 0
-      #|00000018: AF := unknown[AF undefined after logical operation]:u1
-      #|00000019: PF :=
-      #|          ~low:1[let parity_tmp1 = EAX >> 4 ^ EAX in
-      #|                 let parity_tmp2 = parity_tmp1 >> 2 ^ parity_tmp1 in
-      #|                 parity_tmp2 >> 1 ^ parity_tmp2]
-      #|00000020: SF := high:1[EAX]
-      #|00000021: ZF := 0 = EAX
+      #|00000018:
+      #|00000019: call @foo with noreturn
+      #|
+      #|00000020: sub foo()
+      #|
+      #|
+      #|00000021:
+      #|00000022: RAX := 0
+      #|00000023: AF := unknown[AF is undefined after xor]:u1
+      #|00000024: ZF := 1
+      #|00000025: PF := 1
+      #|00000026: OF := 0
+      #|00000027: CF := 0
+      #|00000028: SF := 0
+      #|00000029: v_1 := mem[RSP, el]:u64
+      #|00000030: RSP := RSP + 8
+      #|00000031: call v_1 with noreturn
       #|
     ),
   )
@@ -289,6 +301,7 @@ test "bap list and config" {
       #|  flatten
       #|  trivial-condition-form
       #|  stub-resolver
+      #|  beagle
       #|  abi
       #|  callsites
       #|  dump-symbols

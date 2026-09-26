@@ -89,6 +89,16 @@ pub fn plugin_table() -> Array[StaticPlugin] {
     { name: "strings", load: io => @strings.declare_plugin(out=io.out), },
     { name: "trace", load: io => @trace.declare_plugin(out=io.out), },
     { name: "byteweight", load: _ => @byteweight.declare_plugin(), },
+    { name: "beagle", load: _ => @beagle.declare_plugin(), },
+    { name: "bil", load: _ => @bil.declare_plugin(), },
+    { name: "patterns", load: _ => @patterns.declare_plugin(), },
+    { name: "riscv", load: _ => @riscv.declare_plugin(), },
+    { name: "primus-lisp", load: _ => @primus_lisp_plugin.declare_plugin(), },
+    {
+      name: "primus-approximation",
+      load: _ => @primus_approximation.declare_plugin(),
+    },
+    { name: "primus-test", load: _ => @primus_test.declare_plugin(), },
     { name: "warn-unused", load: _ => @warn_unused.declare_plugin(), },
     { name: "taint", load: _ => declare_taint(), },
     { name: "propagate-taint", load: _ => declare_propagate_taint(), },
@@ -153,6 +163,7 @@ pub fn register_services() -> Unit raise {
   @primus_track_visited.register() |> ignore
   @primus_lisp.register_components()
   @primus_lisp.register_semantics_providers()
+  @x86.register()
 }
 
 // Declarations of the plugins whose packages expose only the registration

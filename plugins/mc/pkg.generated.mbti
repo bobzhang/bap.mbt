@@ -1,0 +1,97 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/mc"
+
+import {
+  "bobzhang/bap/bitvec",
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/memory",
+  "bobzhang/bap/project",
+  "bobzhang/bap/types",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub let all_outputs : Array[Show]
+
+pub fn blks_of_bil(ArrayView[@types.Stmt]) -> Array[@types.Term[@types.Blk]]
+
+pub fn create_disassembler(McTarget) -> @project.ProjectDisassemblyBasic raise McError
+
+pub fn declare_plugin(out? : (String) -> Unit, read_line? : () -> String?) -> Unit raise
+
+pub fn mc(arch? : String, target? : @core_theory.Target, encoding? : @core_theory.Language, triple? : String, cpu? : String, backend? : String, bits? : Int, order? : @bitvec.Endian, base? : String, only_one? : Bool, stop_on_error? : Bool, input? : Array[String], outputs? : Array[(Show, Array[String])], read_line? : () -> String?, out~ : (String) -> Unit) -> Unit raise McError
+
+pub let mc_man : String
+
+pub fn objdump(loader? : String, stop_on_error? : Bool, String, outputs? : Array[(Show, Array[String])], out~ : (String) -> Unit) -> Unit raise McError
+
+pub let objdump_man : String
+
+pub fn parse_arch(arch? : String, target? : @core_theory.Target, encoding? : @core_theory.Language, triple? : String, cpu? : String, backend? : String, bits? : Int, order? : @bitvec.Endian) -> McTarget raise McError
+
+pub fn parse_base(String) -> UInt64 raise McError
+
+pub let plugin_name : String
+
+pub fn read_input(Array[String], read_line? : () -> String?) -> Bytes raise McError
+
+pub fn run(only_one? : Bool, stop_on_error? : Bool, @project.ProjectDisassemblyBasic, McTarget, @memory.Memory, Array[(Show, Array[String])], out~ : (String) -> Unit) -> Int raise McError
+
+pub fn target_of_arch(String, bits? : Int, order? : @bitvec.Endian) -> McTarget
+
+pub fn validate_formats(Array[(Show, Array[String])]) -> Unit raise McError
+
+// Errors
+pub(all) suberror McError {
+  McFail(McFailure)
+}
+
+// Types and methods
+pub(all) enum McFailure {
+  BadUserInput
+  BadInsn(@memory.Memory, Int, Int)
+  CreateMem(String)
+  NoInput
+  InvalidBase(String)
+  TrailingData(Int)
+  UnknownFormat(String, String, Array[String])
+  NoFormatsExpected(String)
+  DisassemblerFailed(String)
+  LoaderFailed(String)
+  TargetMustBeUnknown
+  EncodingMustBeUnknown
+  TripleMustNotBeSet
+  ArchMustNotBeSet
+  BackendMustNotBeSet
+  CpuMustNotBeSet
+  BitsMustNotBeSet
+  OrderMustNotBeSet
+}
+pub fn McFailure::to_string(Self) -> String
+
+pub(all) enum McTarget {
+  Target(@core_theory.Target, @core_theory.Language)
+  Triple(name~ : String, backend~ : String?, cpu~ : String?, order~ : @bitvec.Endian, bits~ : Int)
+}
+
+pub(all) enum Show {
+  Insn
+  Bil
+  Bir
+  Sema
+  Kinds
+  Size
+  Invalid
+  Addr
+  Memory
+  Knowledge
+} derive(Eq, @debug.Debug)
+pub fn Show::equal(Self, Self) -> Bool
+pub fn Show::name(Self) -> String
+pub fn Show::not_equal(Self, Self) -> Bool
+pub fn Show::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+pub type Outputs = Array[(Show, Array[String])]
+
+// Traits

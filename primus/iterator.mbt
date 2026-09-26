@@ -19,7 +19,7 @@ pub(all) struct Finite[T, D] {
 
 ///|
 /// An iterator (upstream `('a,'e) Primus.Iterator.t`).
-pub enum Iterator[T, D] {
+pub(all) enum Iterator[T, D] {
   Fin(Finite[T, D])
   Inf(Infinite[T, D])
 }

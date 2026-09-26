@@ -112,6 +112,17 @@ pub(all) enum ForkStatus {
 } derive(Eq, Debug)
 
 ///|
+pub impl Show for ForkStatus with fn output(self, logger) {
+  logger.write_string(
+    match self {
+      Current => "Current"
+      Live => "Live"
+      Dead => "Dead"
+    },
+  )
+}
+
+///|
 /// Creates a fresh machine world for the project. The machine starts in
 /// the restricted mode (as upstream `init_state`); `Machine::run` lifts the
 /// restriction after `boot`.

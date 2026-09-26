@@ -89,3 +89,6 @@ pub extend JobAction with Eq::{not_equal, equal}
 
 ///|
 pub extend JobAction with Debug::{to_repr}
+
+///|
+pub extend ForkStatus with Show::{output, to_string}

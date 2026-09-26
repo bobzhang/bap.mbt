@@ -138,6 +138,8 @@ pub fn cond_asm(cond : Int) -> String {
     11 => "lt"
     12 => "gt"
     13 => "le"
+    // the "else" condition of an `AL` IT block, as LLVM prints it
+    15 => "<und>"
     _ => ""
   }
 }

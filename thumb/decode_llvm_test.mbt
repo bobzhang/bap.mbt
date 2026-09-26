@@ -1849,3 +1849,41 @@ test "decode: IT blocks predicate the instructions like llvm-mc" {
     ),
   )
 }
+
+///|
+/// Nested IT blocks (the enclosing block resumes after the inner one), the
+/// `<und>` "else" condition of an `AL` block and an IT instruction as the
+/// last instruction of a block, as LLVM 22 decodes them.
+test "decode: nested IT blocks like llvm-mc" {
+  let code : Bytes = b"\xbf\xbf\x09\xab\x2b\xbf\x8b\x67\x8b\x3f\x24\x09\x01\xf6\xae\x4e\xcd\x3f\x50\x84\xf9\xbf\x63\x62\x1a\x61\xb4\x10\x08\xbf\x00\x00"
+  let it = @thumb.ItBlock::new()
+  let lines = []
+  for off = 0; off < code.length(); {
+    guard @thumb.decode_t32(code[off:], addr=off.to_uint64(), it~)
+      is Decoded(insn) else {
+      fail("offset \{off}: not decoded")
+    }
+    lines.push(render_llvm(insn))
+    continue off + insn.size
+  }
+  inspect(
+    lines.join("\n"),
+    content=(
+      #|t2IT Imm:11 Imm:1 | itttt lt
+      #|tADDrSPi Reg:R3 Reg:SP Imm:9 Imm:11 Reg:CPSR | addlt r3, sp, #36
+      #|t2IT Imm:2 Imm:11 | itete hs
+      #|tSTRi Reg:R3 Reg:R1 Imm:30 Imm:2 Reg:CPSR | strhs r3, [r1, #120] | may_store
+      #|tSUBi8 Reg:R7 Reg:Nil Reg:R7 Imm:139 Imm:3 Reg:CPSR | sublo r7, #139
+      #|tLSRri Reg:R4 Reg:Nil Reg:R4 Imm:4 Imm:2 Reg:CPSR | lsrhs r4, r4, #4
+      #|t2ADDri12 Reg:LR Reg:R1 Imm:3246 Imm:3 Reg:CPSR | addwlo lr, r1, #3246
+      #|tSUBi8 Reg:R7 Reg:Nil Reg:R7 Imm:205 Imm:11 Reg:CPSR | sublt r7, #205
+      #|tSTRHi Reg:R0 Reg:R2 Imm:17 Imm:11 Reg:CPSR | strhlt r0, [r2, #34] | may_store
+      #|t2IT Imm:14 Imm:9 | itett al
+      #|tSTRi Reg:R3 Reg:R4 Imm:9 Imm:14 Reg:Nil | str r3, [r4, #36] | may_store
+      #|tSTRi Reg:R2 Reg:R3 Imm:4 Imm:15 Reg:CPSR | str<und> r2, [r3, #16] | may_store
+      #|tASRri Reg:R4 Reg:Nil Reg:R6 Imm:2 Imm:14 Reg:Nil | asr r4, r6, #2
+      #|t2IT Imm:0 Imm:8 | it eq
+      #|tMOVSr Reg:R0 Reg:R0 | movs r0, r0
+    ),
+  )
+}

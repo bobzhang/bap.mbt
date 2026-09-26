@@ -67,9 +67,10 @@ pub fn ItBlock::in_block(self : ItBlock, addr : UInt64) -> Bool {
 
 ///|
 /// `ITStatus::setITState` of LLVM: the conditions of the instructions of
-/// the block opened by `IT firstcond, mask` (the mask in LLVM's form).
+/// the block opened by `IT firstcond, mask` (the mask in LLVM's form). As
+/// in LLVM, they are pushed on the conditions left of an enclosing block
+/// (for an IT instruction in an IT block), which resume after them.
 fn ItBlock::start(self : ItBlock, firstcond : Int, mask : Int) -> Unit {
-  self.conds.clear()
   let tz = (mask & 0xF).ctz()
   for pos = tz + 1; pos <= 3; pos = pos + 1 {
     self.conds.push(firstcond ^ ((mask >> pos) & 1))
@@ -203,7 +204,8 @@ fn t16_decode(h : Int, cond : Int, in_it : Bool) -> T32Insn? {
     0 | 1 | 2 => {
       // shift by immediate, and MOVS (register)
       let op = h >> 11
-      if op == 0 && imm5 == 0 && !in_it {
+      // (LLVM decodes `movs` also in IT blocks, unpredicated)
+      if op == 0 && imm5 == 0 {
         return t32(
           "tMOVSr",
           [t_gpr(r0), t_gpr(r3)],
@@ -339,7 +341,7 @@ fn t16_decode(h : Int, cond : Int, in_it : Bool) -> T32Insn? {
         [t_gpr(r8), t_gpr(13), t_imm(imm8), ..p],
         "add\{c} \{t_rn(r8)}, sp, #\{imm8 * 4}",
       )
-    22 | 23 => t16_misc(h, in_it, p, c)
+    22 | 23 => t16_misc(h, p, c)
     24 | 25 => {
       let mask = imm8
       guard mask != 0 else { return None }
@@ -366,8 +368,7 @@ fn t16_decode(h : Int, cond : Int, in_it : Bool) -> T32Insn? {
         14 => t32("tUDF", [t_imm(imm8)], "udf #\{imm8}")
         15 => t32("tSVC", [t_imm(imm8), ..p], "svc\{c} #\{imm8}")
         _ => {
-          // conditional branches are not permitted in IT blocks
-          guard !in_it else { return None }
+          // (unpredictable in IT blocks, but LLVM decodes them there)
           let offset = @arm.sign_extend(imm8 << 1, 9)
           t32(
             "tBcc",
@@ -492,7 +493,7 @@ fn t16_special(h : Int, p : Array[@mc.Op], c : String) -> T32Insn? {
 
 ///|
 /// Miscellaneous 16-bit instructions (`1011 ...`).
-fn t16_misc(h : Int, in_it : Bool, p : Array[@mc.Op], c : String) -> T32Insn? {
+fn t16_misc(h : Int, p : Array[@mc.Op], c : String) -> T32Insn? {
   let r0 = t32_bits(h, 0, 3)
   let r3 = t32_bits(h, 3, 3)
   let op = t32_bits(h, 5, 7)
@@ -596,7 +597,7 @@ fn t16_misc(h : Int, in_it : Bool, p : Array[@mc.Op], c : String) -> T32Insn? {
       }
       t32("tHINT", [t_imm(hint), ..p], text)
     } else {
-      guard !in_it else { return None }
+      // (an IT instruction in an IT block starts a new block, as in LLVM)
       // `DecodeIT`: the first condition `0b1111` is a `SoftFail` for `AL`
       let firstcond = if firstcond == 15 { 14 } else { firstcond }
       // LLVM's `DecodeIT`: flip the mask bits above the terminating bit
@@ -626,7 +627,7 @@ fn t16_misc(h : Int, in_it : Bool, p : Array[@mc.Op], c : String) -> T32Insn? {
 ///|
 /// Decodes the 32-bit Thumb-2 instruction made of the halfwords `h1` and
 /// `h2` with the condition `cond`.
-fn t32_decode(h1 : Int, h2 : Int, cond : Int, in_it : Bool) -> T32Insn? {
+fn t32_decode(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
   match t32_bits(h1, 11, 2) {
     1 =>
       if t32_bit(h1, 10) {
@@ -640,7 +641,7 @@ fn t32_decode(h1 : Int, h2 : Int, cond : Int, in_it : Bool) -> T32Insn? {
       }
     2 =>
       if t32_bit(h2, 15) {
-        t2_branch_misc(h1, h2, cond, in_it)
+        t2_branch_misc(h1, h2, cond)
       } else if t32_bit(h1, 9) {
         t2_plain_imm(h1, h2, cond)
       } else {
@@ -933,7 +934,7 @@ fn t2_dp_shifted(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
 
 ///|
 /// Branches and miscellaneous control.
-fn t2_branch_misc(h1 : Int, h2 : Int, cond : Int, in_it : Bool) -> T32Insn? {
+fn t2_branch_misc(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
   let p = @arm.mc_pred(cond)
   let c = @arm.cond_asm(cond)
   let s = t32_bits(h1, 10, 1)
@@ -952,7 +953,6 @@ fn t2_branch_misc(h1 : Int, h2 : Int, cond : Int, in_it : Bool) -> T32Insn? {
     (false, false) => {
       let bcond = t32_bits(h1, 6, 4)
       if bcond < 14 {
-        guard !in_it else { return None }
         let offset = @arm.sign_extend(
           (s << 20) |
           (j2 << 19) |
@@ -1587,6 +1587,7 @@ let t2_wide_names : Map[String, Unit] = {
   "t2STRi12": (),
   "t2STRs": (),
   "t2SUBri": (),
+  "t2SUBspImm": (),
   "t2SUBrr": (),
   "t2SUBrs": (),
   "t2SXTB": (),
@@ -1659,7 +1660,7 @@ pub fn decode_t32(
     None => (14, false)
   }
   let decoded = if wide {
-    t32_decode(h1, half(2), cond, in_it).map(t2_width)
+    t32_decode(h1, half(2), cond).map(t2_width)
   } else {
     t16_decode(h1, cond, in_it)
   }

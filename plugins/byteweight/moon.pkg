@@ -1,0 +1,12 @@
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/byteweight" @bw,
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/main_event",
+  "bobzhang/bap/memory",
+  "bobzhang/bap/plugins/disassemble",
+}
+
+import {
+  "bobzhang/bap/fixtures",
+} for "test"

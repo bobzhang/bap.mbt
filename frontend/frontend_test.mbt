@@ -63,6 +63,7 @@ test "bap without arguments prints the usage" {
       #|  specification            displays information about the binary
       #|
       #|Plugins:
+      #|  byteweight               identifies function starts using byteweight signatures
       #|  callgraph-collator       compares projects by their callgraphs
       #|  callsites                annotates callsites with subroutines arguments
       #|  constant-tracker         a constant tracking analysis based on Primus
@@ -99,7 +100,9 @@ test "bap without arguments prints the usage" {
       #|  report                   reports program status using progress bars
       #|  run                      emulates the program using Primus
       #|  specification            provides the specification command
+      #|  strings                  searches in binaries for string-like artifacts
       #|  taint                    marks terms as taint sources
+      #|  trace                    manages execution traces
       #|  warn-unused              the legacy warn-unused analysis
       #|
       #|If no command line options or arguments are specified, then this
@@ -294,6 +297,8 @@ test "bap list and config" {
       #|  propagate-taint
       #|  relocatable
       #|  run
+      #|  strings-collect
+      #|  strings
       #|  warn-unused-taint
       #|  warn-unused-print
       #|  warn-unused-mark

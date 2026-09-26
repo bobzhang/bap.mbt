@@ -46,10 +46,12 @@ pub let man : String =
   #|
   #|# DISASSEMBLY COMPONENTS
   #|
-  #|The $(b,--disassembler), $(b,--rooter), $(b,--symbolizer),
-  #|$(b,--brancher), and $(b,--reconstructor) options select the
+  #|The $(b,--disassembler), $(b,--rooters), $(b,--symbolizers),
+  #|$(b,--branchers), and $(b,--reconstructor) options select the
   #|registered components that build the project. By default the
-  #|$(b,basic) disassembler (the Basic decoder) is used.
+  #|$(b,recursive) disassembler (the recursive descent over the Basic
+  #|decoder) is used together with all registered rooters, symbolizers,
+  #|and branchers.
   #|
   #|# EXAMPLES
   #|
@@ -106,6 +108,18 @@ fn opt_string(name : String, doc : String) -> @bap_main.CommandParam[String?] {
   @bap_main.Command::parameter(
     doc~,
     @bap_main.Type::some(@bap_main.Type::string()),
+    name,
+  )
+}
+
+///|
+fn opt_list(
+  name : String,
+  doc : String,
+) -> @bap_main.CommandParam[Array[String]?] {
+  @bap_main.Command::parameter(
+    doc~,
+    @bap_main.Type::some(@bap_main.Type::list(@bap_main.Type::string())),
     name,
   )
 }
@@ -205,15 +219,19 @@ fn declare_disassemble(
     "print-missing",
   )
   let disassembler = opt_string(
-    "disassembler", "Use the specified disassembly driver (see `bap list drivers'); defaults to $(b,basic).",
+    "disassembler", "Use the specified disassembly driver; defaults to $(b,recursive).",
   )
-  let rooter = opt_string("rooter", "Use the specified rooter source.")
-  let symbolizer = opt_string(
-    "symbolizer", "Use the specified symbolizer source.",
+  let rooter = opt_list(
+    "rooters", "Use only the specified rooter sources (all registered sources by default).",
   )
-  let brancher = opt_string("brancher", "Use the specified brancher source.")
+  let symbolizer = opt_list(
+    "symbolizers", "Use only the specified symbolizer sources (all registered sources by default).",
+  )
+  let brancher = opt_list(
+    "branchers", "Use only the specified brancher sources (all registered sources by default).",
+  )
   let reconstructor = opt_string(
-    "reconstructor", "Use the specified reconstructor source.",
+    "reconstructor", "Use the specified reconstructor.",
   )
   let grammar = @bap_main.Command::args()
     .add(input)
@@ -271,9 +289,9 @@ fn declare_disassemble(
                                       target~,
                                       components={
                                         disassembler,
-                                        rooter,
-                                        symbolizer,
-                                        brancher,
+                                        rooters: rooter,
+                                        symbolizers: symbolizer,
+                                        branchers: brancher,
                                         reconstructor,
                                       },
                                       update~,

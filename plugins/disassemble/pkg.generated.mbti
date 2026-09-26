@@ -33,6 +33,10 @@ pub let recursive_driver : String
 
 pub fn register_recursive_driver() -> Unit
 
+pub fn register_root_provider(String, (@project.ProjectInput) -> Result[Array[UInt64], String]) -> Unit
+
+pub fn remove_root_provider(String) -> Unit
+
 pub fn target_type() -> @bap_main.Type[@core_theory.Target]
 
 pub fn validate_input(String) -> Unit raise DisassembleError
@@ -52,9 +56,9 @@ pub fn DisassembleError::to_repr(Self) -> @debug.Repr
 // Types and methods
 pub(all) struct Components {
   disassembler : String?
-  rooter : String?
-  symbolizer : String?
-  brancher : String?
+  rooters : Array[String]?
+  symbolizers : Array[String]?
+  branchers : Array[String]?
   reconstructor : String?
 } derive(Eq, @debug.Debug)
 pub fn Components::default() -> Self
@@ -101,5 +105,6 @@ pub fn Output::split(String) -> Self
 pub fn Output::to_repr(Self) -> @debug.Repr
 
 // Type aliases
+pub type RootProvider = (@project.ProjectInput) -> Result[Array[UInt64], String]
 
 // Traits

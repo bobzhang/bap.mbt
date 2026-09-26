@@ -1,0 +1,23 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/byteweight"
+
+import {
+  "bobzhang/bap/memory",
+}
+
+// Values
+pub fn declare_plugin() -> Unit raise
+
+pub fn enable(sigs? : String, min_length? : Int, max_length? : Int, threshold? : Double, compiler? : String) -> Unit
+
+pub fn find_roots(@bobzhang/bap/byteweight.Byteweight, Array[@memory.Memory], min_length? : Int, max_length? : Int, threshold? : Double) -> Array[UInt64]
+
+pub let name : String
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

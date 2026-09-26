@@ -1,0 +1,30 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/trace"
+
+import {
+  "bobzhang/bap/traces",
+}
+
+// Values
+pub fn declare_plugin(out? : (String) -> Unit) -> Unit raise
+
+pub fn dump(@traces.Trace) -> String raise TraceCommandError
+
+pub let name : String
+
+pub fn run(String?, Array[String], out~ : (String) -> Unit) -> Unit raise
+
+pub fn uri_of_string(String) -> String
+
+// Errors
+pub(all) suberror TraceCommandError {
+  IncompatibleArgs
+  LoadFailed(@traces.TraceError)
+}
+pub fn TraceCommandError::to_string(Self) -> String
+
+// Types and methods
+
+// Type aliases
+
+// Traits

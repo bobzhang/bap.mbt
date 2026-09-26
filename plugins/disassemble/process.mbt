@@ -232,13 +232,18 @@ pub fn load_input(
 ///|
 /// The options that select the disassembly components (the port's
 /// counterparts of the disassembler, rooter, symbolizer, brancher, and
-/// reconstructor services of upstream BAP, which are selected there by the
+/// reconstructor services of upstream BAP, which are provided there by the
 /// plugins that implement them).
+///
+/// The rooters, symbolizers, and branchers are the names of the registered
+/// sources (`@project.register_rooter_source`, ...); when not specified,
+/// all registered sources (and root providers) are used, as upstream BAP
+/// combines all providers of the knowledge base.
 pub(all) struct Components {
   disassembler : String?
-  rooter : String?
-  symbolizer : String?
-  brancher : String?
+  rooters : Array[String]?
+  symbolizers : Array[String]?
+  branchers : Array[String]?
   reconstructor : String?
 } derive(Eq, Debug)
 
@@ -246,9 +251,9 @@ pub(all) struct Components {
 pub fn Components::default() -> Components {
   {
     disassembler: None,
-    rooter: None,
-    symbolizer: None,
-    brancher: None,
+    rooters: None,
+    symbolizers: None,
+    branchers: None,
     reconstructor: None,
   }
 }
@@ -278,6 +283,63 @@ pub fn register_recursive_driver() -> Unit {
 }
 
 ///|
+/// A function that computes the roots (function starts) of the loaded
+/// input, e.g., with the byteweight algorithm.
+pub type RootProvider = (@project.ProjectInput) -> Result[Array[UInt64], String]
+
+///|
+let root_providers : Array[(String, RootProvider)] = []
+
+///|
+/// Registers (or replaces) a root provider. The roots of all providers are
+/// added to the rooters of the project unless the rooters are selected
+/// explicitly.
+pub fn register_root_provider(name : String, provider : RootProvider) -> Unit {
+  match root_providers.search_by(p => p.0 == name) {
+    Some(i) => root_providers[i] = (name, provider)
+    None => root_providers.push((name, provider))
+  }
+}
+
+///|
+/// Removes the root provider.
+pub fn remove_root_provider(name : String) -> Unit {
+  match root_providers.search_by(p => p.0 == name) {
+    Some(i) => root_providers.remove(i) |> ignore
+    None => ()
+  }
+}
+
+///|
+/// Combines the named sources (all registered ones when `names` is
+/// `None`); unknown names are errors.
+fn[T] combine(
+  kind : String,
+  names : Array[String]?,
+  all : () -> Array[String],
+  find : (String) -> @project.ProjectDisassemblySource[T]?,
+  extra? : Array[Result[T, String]] = [],
+) -> @project.ProjectDisassemblySource[T]? raise DisassembleError {
+  let names = match names {
+    Some(names) => names
+    None => all()
+  }
+  let items = []
+  for name in names {
+    match find(name) {
+      Some(source) => items.append(source.items())
+      None => raise Fail(ProjectFailure("unknown \{kind} \{name}"))
+    }
+  }
+  items.append(extra)
+  if items.is_empty() {
+    None
+  } else {
+    Some(@project.ProjectDisassemblySource::create(items))
+  }
+}
+
+///|
 /// Creates the project from the loaded input with the selected
 /// components. Without an explicit `disassembler`, the `recursive` driver
 /// (the recursive descent over the port's Basic decoder) is used, falling
@@ -288,31 +350,69 @@ pub fn create_project(
   pkg~ : String,
 ) -> @project.Project raise DisassembleError {
   register_recursive_driver()
-  let disassembler = match components.disassembler {
-    Some(d) => d
-    None => recursive_driver
+  let provided = if components.rooters is None {
+    root_providers.map(p => {
+      match (p.1)(input) {
+        Ok(roots) => Ok(@project.ProjectRooter::create(roots))
+        Err(reason) => Err(reason)
+      }
+    })
+  } else {
+    []
   }
-  let result = @project.Project::create_from_input_named(
-    input,
-    disassembler~,
-    rooter?=components.rooter,
-    symbolizer?=components.symbolizer,
-    brancher?=components.brancher,
-    reconstructor?=components.reconstructor,
-    pkg~,
+  let rooter = combine(
+    "rooter",
+    components.rooters,
+    @project.rooter_source_names,
+    @project.find_rooter_source,
+    extra=provided,
   )
-  let result = match (result, components.disassembler) {
-    // the Basic decoder may not support the target
-    (Err(_), None) =>
-      @project.Project::create_from_input_named(
-        input,
-        rooter?=components.rooter,
-        symbolizer?=components.symbolizer,
-        brancher?=components.brancher,
-        reconstructor?=components.reconstructor,
-        pkg~,
-      )
-    (r, _) => r
+  let symbolizer = combine(
+    "symbolizer",
+    components.symbolizers,
+    @project.symbolizer_source_names,
+    @project.find_symbolizer_source,
+  )
+  let brancher = combine(
+    "brancher",
+    components.branchers,
+    @project.brancher_source_names,
+    @project.find_brancher_source,
+  )
+  let reconstructor = match components.reconstructor {
+    None => None
+    Some(name) =>
+      match @project.find_reconstructor_source(name) {
+        Some(source) => Some(source)
+        None =>
+          match @project.find_reconstructor(name) {
+            Some(r) => Some(@project.ProjectDisassemblySource::single(r))
+            None =>
+              raise Fail(
+                ProjectFailure("unknown project reconstructor \{name}"),
+              )
+          }
+      }
+  }
+  let create = (disassembler : String?) => {
+    @project.Project::create_from_input(
+      input,
+      disassembler?,
+      rooter?,
+      symbolizer?,
+      brancher?,
+      reconstructor?,
+      pkg~,
+    )
+  }
+  let result = match components.disassembler {
+    Some(d) => create(Some(d))
+    None =>
+      match create(Some(recursive_driver)) {
+        Ok(p) => Ok(p)
+        // the Basic decoder may not support the target
+        Err(_) => create(None)
+      }
   }
   match result {
     Ok(p) => p

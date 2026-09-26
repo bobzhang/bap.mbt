@@ -203,17 +203,17 @@ test "bap disassemble" {
       #|
       #|401000: <main>
       #|401000:
-      #|401000: 55                                        PUSH64r RBP
-      #|401001: 48 89 e5                                  MOV64rr RBP, RSP
-      #|401004: e8 05 00 00 00                            CALL64pcrel32 0x5 # 40100e <foo>
+      #|401000: 55                                        pushq %rbp
+      #|401001: 48 89 e5                                  movq %rsp, %rbp
+      #|401004: e8 05 00 00 00                            callq 5 # 40100e <foo>
       #|401009:
-      #|401009: 5d                                        POP64r RBP
-      #|40100a: c3                                        RET
+      #|401009: 5d                                        popq %rbp
+      #|40100a: c3                                        retq
       #|
       #|40100e: <foo>
       #|40100e:
-      #|40100e: 31 c0                                     XOR32rr EAX, EAX
-      #|401010: c3                                        RET
+      #|40100e: 31 c0                                     xorl %eax, %eax
+      #|401010: c3                                        retq
       #|
     ),
   )

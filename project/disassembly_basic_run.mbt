@@ -410,29 +410,13 @@ fn ProjectDisassemblyBasic::project_disassembly_basic_decode(
   if self.mc_value is Some((decoder, ctx)) {
     return project_disassembly_basic_decode_mc(decoder, ctx, memory)
   }
-  let decoded = if self.project_disassembly_basic_is_x86_64_llvm() {
-    let decoded = match
-      project_disassembly_basic_x86_jcxz_instruction(memory, 64) {
-      Ok(Some(instruction)) => Ok(Some(instruction))
-      Ok(None) =>
-        match project_disassembly_basic_decode_x86_64_llvm(memory) {
-          Ok(Some(instruction)) => Ok(Some(instruction))
-          Ok(None) =>
-            match project_disassembly_basic_decode_x86_llvm(memory) {
-              Ok(Some(instruction)) if !project_disassembly_basic_x86_short_incdec(
-                  instruction,
-                ) => Ok(Some(instruction))
-              Ok(_) => Ok(None)
-              Err(reason) => Err(reason)
-            }
-          Err(reason) => Err(reason)
-        }
-      Err(reason) => Err(reason)
-    }
-    decoded.map(insn => insn.map(project_disassembly_basic_x86_64_rename))
-  } else if self.project_disassembly_basic_is_x86_llvm() {
-    project_disassembly_basic_decode_x86_llvm(memory)
-  } else if self.project_disassembly_basic_is_arm_llvm() {
+  if self.project_disassembly_basic_is_x86_64_llvm() {
+    return project_disassembly_basic_decode_x86_mc(memory, mode64=true)
+  }
+  if self.project_disassembly_basic_is_x86_llvm() {
+    return project_disassembly_basic_decode_x86_mc(memory, mode64=false)
+  }
+  let decoded = if self.project_disassembly_basic_is_arm_llvm() {
     project_disassembly_basic_decode_arm_llvm(memory)
   } else if self.backend_value == "llvm" {
     Ok(None)
@@ -847,19 +831,5 @@ fn project_disassembly_basic_decode_mc(
           None => BasicDecodedEnd
         }
       })
-  }
-}
-
-///|
-/// The 64-bit names of the instructions the 64-bit decoder takes from the
-/// 32-bit one whose semantics depend on the address size: the returns
-/// (LLVM `RET64`), which pop 64-bit return addresses.
-fn project_disassembly_basic_x86_64_rename(
-  instruction : ProjectDisassemblyInstruction,
-) -> ProjectDisassemblyInstruction {
-  match instruction.name() {
-    "RET" => instruction.with_metadata(name="RET64")
-    "RETF" => instruction.with_metadata(name="RETF64")
-    _ => instruction
   }
 }

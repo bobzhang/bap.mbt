@@ -33,21 +33,31 @@ test "bap disassembles a Mach-O executable" {
       #|
       #|100000400: <_main>
       #|100000400:
-      #|100000400: 55                                     PUSH64r RBP
-      #|100000401: 48 89 e5                               MOV64rr RBP, RSP
-      #|100000404: e8 05 00 00 00                         CALL64pcrel32 0x5 # 10000040e <_foo>
+      #|100000400: 55                                     pushq %rbp
+      #|100000401: 48 89 e5                               movq %rsp, %rbp
+      #|100000404: e8 05 00 00 00                         callq 5 # 10000040e <_foo>
       #|100000409:
-      #|100000409: 5d                                     POP64r RBP
-      #|10000040a: c3                                     RET
+      #|100000409: 5d                                     popq %rbp
+      #|10000040a: c3                                     retq
       #|
       #|10000040e: <_foo>
       #|10000040e:
-      #|10000040e: 31 c0                                  XOR32rr EAX, EAX
-      #|100000410: c3                                     RET
+      #|10000040e: 31 c0                                  xorl %eax, %eax
+      #|100000410: c3                                     retq
       #|
       #|100000411: <sub_0x100000411>
       #|100000411:
-      #|100000411: e9 02 00 00 00                         jmp 0x2 # 100000418
+      #|100000411: e9 02 00 00 00                         jmp 2 # 100000418
+      #|100000418:
+      #|100000418: ff 25 e2 0b 00 00                      jmpq *3042(%rip)
+      #|
+      #|Disassembly of section __stubs
+      #|
+      #|100000411: <sub_0x100000411>
+      #|100000411:
+      #|100000411: e9 02 00 00 00                         jmp 2 # 100000418
+      #|100000418:
+      #|100000418: ff 25 e2 0b 00 00                      jmpq *3042(%rip)
       #|
     ),
   )
@@ -109,7 +119,7 @@ test "bap disassembles the architecture of the target of a universal binary" {
       #|
       #|100000400: <_main>
       #|100000400:
-      #|100000400: 55                                     PUSH64r RBP
+      #|100000400: 55                                     pushq %rbp
     ),
   )
 }
@@ -124,17 +134,17 @@ test "bap disassembles a PE executable" {
       #|
       #|140001000: <main>
       #|140001000:
-      #|140001000: 55                                     PUSH64r RBP
-      #|140001001: 48 89 e5                               MOV64rr RBP, RSP
-      #|140001004: e8 05 00 00 00                         CALL64pcrel32 0x5 # 14000100e <long_function_foo>
+      #|140001000: 55                                     pushq %rbp
+      #|140001001: 48 89 e5                               movq %rsp, %rbp
+      #|140001004: e8 05 00 00 00                         callq 5 # 14000100e <long_function_foo>
       #|140001009:
-      #|140001009: 5d                                     POP64r RBP
-      #|14000100a: c3                                     RET
+      #|140001009: 5d                                     popq %rbp
+      #|14000100a: c3                                     retq
       #|
       #|14000100e: <long_function_foo>
       #|14000100e:
-      #|14000100e: 31 c0                                  XOR32rr EAX, EAX
-      #|140001010: c3                                     RET
+      #|14000100e: 31 c0                                  xorl %eax, %eax
+      #|140001010: c3                                     retq
       #|
     ),
   )

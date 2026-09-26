@@ -213,10 +213,12 @@ test "project linear-sweep disassembly driver materializes sweep instructions" {
       let instructions = disassembled.disassembly().instructions_in(block)
       assert_true(instructions.length() == 2)
       assert_true(instructions[0].addr() == 0x7200UL)
-      assert_true(instructions[0].code() == 0x55)
-      assert_true(instructions[0].encoding() == "llvm")
+      // the LLVM opcode (LLVM 22's X86::PUSH64r) and the encoding language
+      assert_true(instructions[0].name() == "PUSH64r")
+      assert_true(instructions[0].code() == 3515)
+      assert_true(instructions[0].encoding() == "llvm-x86_64")
       assert_true(instructions[1].addr() == 0x7201UL)
-      assert_true(instructions[1].code() == 0xc3)
+      assert_true(instructions[1].name() == "RET64")
       assert_true(instructions[1].has_kind(ProjectReturn))
     }
     Err(reason) => fail(reason)

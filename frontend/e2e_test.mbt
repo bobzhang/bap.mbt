@@ -58,7 +58,7 @@ test "bap mc --show-bir" {
   inspect(
     bap(["mc", "--show-insn=asm", "--show-bir", "--", "48 83 ec 08"]),
     content=(
-      #|SUB64ri8 RSP, RSP, 0x8
+      #|subq $8, %rsp
       #|00000001:
       #|00000002: v_1 := RSP
       #|00000003: RSP := RSP - 8
@@ -80,7 +80,7 @@ test "bap mc reads the standard input" {
   inspect(
     bap(["mc", "--show-insn=asm"], stdin="0x31 0xd2"),
     content=(
-      #|XOR32rr EDX, EDX
+      #|xorl %edx, %edx
       #|
     ),
   )

@@ -102,6 +102,22 @@ fn project_disassembly_rec_direct_branch_target(
 ) -> UInt64? {
   if !instruction.is_branch() || instruction.operands().is_empty() {
     None
+  } else if instruction.encoding() is ("llvm-x86" | "llvm-x86_64") {
+    // x86 instructions in LLVM's MCInst form: the immediate of a direct
+    // branch is relative to the next instruction; the far branches, whose
+    // immediates are a segment and an offset, are indirect
+    if instruction.has_kind(ProjectIndirectBranch) {
+      None
+    } else {
+      match instruction.operands()[0].to_int64() {
+        Some(offset) =>
+          project_disassembly_rec_add_signed_offset(
+            project_disassembly_rec_next_addr(instruction),
+            offset,
+          )
+        None => None
+      }
+    }
   } else {
     match instruction.operands()[0].to_int64() {
       Some(addr) if addr >= 0L => Some(addr.reinterpret_as_uint64())
@@ -241,8 +257,10 @@ fn project_disassembly_rec_control_edges(
 fn project_disassembly_rec_can_fall_through(
   instruction : ProjectDisassemblyInstruction,
 ) -> Bool {
+  // LLVM marks conditional branches as terminators too: only barriers
+  // (and returns, unconditional and indirect branches) do not fall through
   !instruction.has_kind(ProjectReturn) &&
-  !instruction.has_kind(ProjectTerminator) &&
+  !instruction.has_kind(ProjectBarrier) &&
   !instruction.has_kind(ProjectUnconditionalBranch) &&
   !instruction.has_kind(ProjectIndirectBranch)
 }

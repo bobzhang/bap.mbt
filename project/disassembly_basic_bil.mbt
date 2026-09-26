@@ -6969,6 +6969,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_arm_store(
 pub fn ProjectDisassemblyInstruction::lift_basic_bil(
   self : ProjectDisassemblyInstruction,
 ) -> Result[Array[@types.Stmt], String] {
+  let self = self.project_basic_x86_legacy()
   let name = self.name().to_upper()
   if name.has_prefix("CMOV") {
     let width = if name.contains("64") {

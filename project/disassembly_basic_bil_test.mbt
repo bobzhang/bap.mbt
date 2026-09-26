@@ -7049,34 +7049,34 @@ test "project Basic BIL lift covers direct control transfers" {
       #|  %ret_addr:imm64 := load(mem:mem64x8, RSP:imm64):imm64
       #|  RSP:imm64 := (RSP:imm64 + 8:64u)
       #|  jmp %ret_addr:imm64
-      #|RET:
+      #|RET32:
       #|  %ret_addr:imm32 := load(mem:mem32x8, ESP:imm32):imm32
       #|  ESP:imm32 := (ESP:imm32 + 4:32u)
       #|  jmp %ret_addr:imm32
-      #|RET:
+      #|RETI32:
       #|  %ret_addr:imm32 := load(mem:mem32x8, ESP:imm32):imm32
       #|  ESP:imm32 := (ESP:imm32 + 4:32u)
       #|  ESP:imm32 := (ESP:imm32 + 8:32u)
       #|  jmp %ret_addr:imm32
-      #|RETF:
+      #|LRET32:
       #|  %ret_addr:imm32 := load(mem:mem32x8, ESP:imm32):imm32
       #|  ESP:imm32 := (ESP:imm32 + 8:32u)
       #|  jmp %ret_addr:imm32
-      #|RETF:
+      #|LRETI32:
       #|  %ret_addr:imm32 := load(mem:mem32x8, ESP:imm32):imm32
       #|  ESP:imm32 := (ESP:imm32 + 8:32u)
       #|  ESP:imm32 := (ESP:imm32 + 0x10:32u)
       #|  jmp %ret_addr:imm32
-      #|RET64:
+      #|RETI64:
       #|  %ret_addr:imm64 := load(mem:mem64x8, RSP:imm64):imm64
       #|  RSP:imm64 := (RSP:imm64 + 8:64u)
       #|  RSP:imm64 := (RSP:imm64 + 8:64u)
       #|  jmp %ret_addr:imm64
-      #|RETF64:
+      #|LRET32:
       #|  %ret_addr:imm64 := load(mem:mem64x8, RSP:imm64):imm64
       #|  RSP:imm64 := (RSP:imm64 + 0x10:64u)
       #|  jmp %ret_addr:imm64
-      #|RETF64:
+      #|LRETI32:
       #|  %ret_addr:imm64 := load(mem:mem64x8, RSP:imm64):imm64
       #|  RSP:imm64 := (RSP:imm64 + 0x10:64u)
       #|  RSP:imm64 := (RSP:imm64 + 0x10:64u)

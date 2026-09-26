@@ -44,7 +44,7 @@ test "mc prints the BIL of x86-64 instructions" {
   inspect(
     run_bap(["mc", "--show-insn", "--show-bil", "--", "31d2"]),
     content=(
-      #|XOR32rr(EDX,EDX)
+      #|XOR32rr(EDX,EDX,EDX)
       #|{
       #|  EDX := 0
       #|  CF := 0
@@ -74,12 +74,18 @@ test "mc accepts the input formats" {
     ] {
     inspect(
       run_bap(["mc", "--show-insn=asm", "--", ..input]),
-      content="XOR32rr EDX, EDX\n",
+      content=(
+        #|xorl %edx, %edx
+        #|
+      ),
     )
   }
   inspect(
     run_bap(["mc", "--show-insn=asm"], stdin="31 d2\n"),
-    content="XOR32rr EDX, EDX\n",
+    content=(
+      #|xorl %edx, %edx
+      #|
+    ),
   )
 }
 
@@ -172,25 +178,25 @@ test "objdump disassembles the code segments" {
     run_bap(["objdump", "bin/true", "--show-addr", "--show-insn=asm"]),
     content=(
       #|0x401000:64u:
-      #|PUSH64r RBP
+      #|pushq %rbp
       #|0x401001:64u:
-      #|MOV64rr RBP, RSP
+      #|movq %rsp, %rbp
       #|0x401004:64u:
-      #|CALL64pcrel32 0x5
+      #|callq 5
       #|0x401009:64u:
-      #|POP64r RBP
+      #|popq %rbp
       #|0x40100A:64u:
-      #|RET
+      #|retq
       #|0x40100B:64u:
-      #|NOOP
+      #|nop
       #|0x40100C:64u:
-      #|NOOP
+      #|nop
       #|0x40100D:64u:
-      #|NOOP
+      #|nop
       #|0x40100E:64u:
-      #|XOR32rr EAX, EAX
+      #|xorl %eax, %eax
       #|0x401010:64u:
-      #|RET
+      #|retq
       #|
     ),
   )

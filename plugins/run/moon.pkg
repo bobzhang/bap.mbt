@@ -1,0 +1,13 @@
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/knowledge",
+  "bobzhang/bap/main_event",
+  "bobzhang/bap/primus",
+  "bobzhang/bap/project",
+  "bobzhang/bap/types",
+}
+
+import {
+  "bobzhang/bap/fixtures",
+  "bobzhang/bap/plugins/disassemble",
+} for "test"

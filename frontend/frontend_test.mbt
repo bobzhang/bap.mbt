@@ -97,6 +97,7 @@ test "bap without arguments prints the usage" {
       #|  recipe-command           provides the recipe command
       #|  relocatable              extracts symbolic information from the program relocations
       #|  report                   reports program status using progress bars
+      #|  run                      emulates the program using Primus
       #|  specification            provides the specification command
       #|  taint                    marks terms as taint sources
       #|  warn-unused              the legacy warn-unused analysis
@@ -113,6 +114,7 @@ test "bap without arguments prints the usage" {
       #|Run 'bap --<PLUGIN>-help for more information about a plugin.
       #|Run 'bap --help' for the detailed manual.
       #|
+
     ),
   )
 }
@@ -291,11 +293,13 @@ test "bap list and config" {
       #|  phoenix
       #|  propagate-taint
       #|  relocatable
+      #|  run
       #|  warn-unused-taint
       #|  warn-unused-print
       #|  warn-unused-mark
       #|  warn-unused
       #|
+
     ),
   )
   inspect(

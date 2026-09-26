@@ -74,6 +74,7 @@ pub fn plugin_table() -> Array[StaticPlugin] {
     { name: "read-symbols", load: _ => @read_symbols.declare_plugin(), },
     { name: "relocatable", load: _ => @relocatable.declare_plugin(), },
     { name: "report", load: _ => @report.declare_plugin(), },
+    { name: "run", load: _ => @run.declare_plugin(), },
     { name: "warn-unused", load: _ => @warn_unused.declare_plugin(), },
     { name: "taint", load: _ => declare_taint(), },
     { name: "propagate-taint", load: _ => declare_propagate_taint(), },

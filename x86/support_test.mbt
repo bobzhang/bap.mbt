@@ -277,6 +277,49 @@ fn exec32(
 }
 
 ///|
+/// Decode one instruction with the project's Basic decoder (`x86` or
+/// `x86_64` triple).
+fn basic_decode(
+  triple : String,
+  bytes : Bytes,
+  addr? : UInt64 = 0x400000,
+) -> @project.ProjectDisassemblyInstruction raise {
+  let disasm = match
+    @project.ProjectDisassemblyBasic::create(triple, backend="llvm") {
+    Ok(d) => d
+    Err(r) => fail(r)
+  }
+  let memory = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=addr,
+    bytes,
+  )
+  match disasm.insn_of_mem(memory) {
+    Ok(result) =>
+      match result.instruction() {
+        Some(i) => i
+        None => fail("no instruction decoded")
+      }
+    Err(r) => fail(r)
+  }
+}
+
+///|
+/// Decode with the Basic decoder and convert to an `@mc.Insn`.
+fn mc_insn(
+  triple : String,
+  bytes : Bytes,
+  addr? : UInt64 = 0x400000,
+) -> @mc.Insn raise {
+  basic_decode(triple, bytes, addr~).to_mc_insn()
+}
+
+///|
+fn ops_text(insn : @mc.Insn) -> String {
+  "\{insn.name} [\{insn.ops.map(o => o.to_string()).join(", ")}]"
+}
+
+///|
 fn bil_text(stmts : Array[@types.Stmt]) -> String {
   stmts.map(s => s.to_string()).join("\n")
 }

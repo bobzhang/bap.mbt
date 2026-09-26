@@ -359,6 +359,13 @@ fn find_target_var(t : @core_theory.Target, name : String) -> @types.Var? {
 }
 
 ///|
+/// Whether `name` is a hardwired zero register of `t` (a register with the
+/// `zero` role, e.g. RISC-V `X0`/`ZERO`, AArch64 `XZR`/`WZR`).
+fn is_zero_register(t : @core_theory.Target, name : String) -> Bool {
+  t.vars_with_role(@core_theory.Role::zero()).iter().any(v => v.name() == name)
+}
+
+///|
 /// Loads the Lisp semantics from the embedded upstream library: the core
 /// library (`lisp`), the generic semantic definitions (`semantics/primus`)
 /// and the definitions of the given directories (e.g.,
@@ -405,6 +412,18 @@ fn Lifter::operand(self : Lifter, op : Operand) -> SValue {
       let width = match v.typ {
         Imm(n) => n
         _ => bits
+      }
+      // deliberate deviation from upstream: a hardwired zero register
+      // reads as the constant zero (writes to it are discarded by
+      // `set-symbol-value`)
+      if is_zero_register(self.target, name) {
+        let zero = word_zero(width)
+        return {
+          exp: Int(zero),
+          width,
+          static_value: Some(zero),
+          symbol: Some(name),
+        }
       }
       { exp: Var(v), width, static_value: None, symbol: Some(name), }
     }

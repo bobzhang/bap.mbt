@@ -948,6 +948,11 @@ fn dispatch(
           None => dynv(Unknown("program-counter", Imm(s)), s)
         },
       )
+    ("set-symbol-value", [sym, _]) if sym.symbol is Some(r) &&
+      is_zero_register(ctx.target, r) =>
+      // writes to a hardwired zero register are discarded (see
+      // `Lifter::operand`)
+      pure(args[1])
     ("set-symbol-value", [sym, x]) => {
       let v = ctx.possibly_register(name, sym)
       let w = var_width(v)

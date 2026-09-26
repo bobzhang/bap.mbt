@@ -118,7 +118,7 @@ test "reconstruction lifts branches, falls, calls and returns into IR" {
   inspect(
     jne.get_attr("insn").unwrap_or("-"),
     content=(
-      #|JE_1(0x900a)
+      #|JCC_1(0x5,0x4)
     ),
   )
   inspect(

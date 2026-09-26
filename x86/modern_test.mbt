@@ -197,7 +197,9 @@ test "modern mov segments and moffs" {
 test "modern btx" {
   inspect(
     ops_text(mc_insn("x86_64", b"\x0f\xab\xd8")),
-    content="BTS32rr [EAX, EBX]",
+    content=(
+      #|BTS32rr [EAX, EAX, EBX]
+    ),
   )
   inspect(
     bil_text(modern64(b"\x0f\xab\xd8")),
@@ -256,7 +258,9 @@ test "modern btx" {
 test "modern cmpxchg" {
   inspect(
     ops_text(mc_insn("x86_64", b"\x0f\xb1\xd8")),
-    content="CMPXCHG32rr [EAX, EAX, EBX]",
+    content=(
+      #|CMPXCHG32rr [EAX, EBX]
+    ),
   )
   // cmpxchg ecx, ebx: equal
   let o = mexec32(b"\x0f\xb1\xd9", regs=[("EAX", 5), ("ECX", 5), ("EBX", 9)])

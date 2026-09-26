@@ -484,8 +484,18 @@ test "differential: Basic decoder does not decode REX bytes as inc/dec" {
   let insn = basic_decode_opt("x86_64", b"\x66\x48\x0f\x6e\xc0")
   assert_true(!(insn is Some(insn) && insn.name() == "DEC16r"))
   // the 32-bit forms are unchanged
-  inspect(basic_decode("x86", b"\x41").name(), content="INC32r")
-  inspect(basic_decode("x86", b"\x66\x48").name(), content="DEC16r")
+  inspect(
+    basic_decode("x86", b"\x41").name(),
+    content=(
+      #|INC32r_alt
+    ),
+  )
+  inspect(
+    basic_decode("x86", b"\x66\x48").name(),
+    content=(
+      #|DEC16r_alt
+    ),
+  )
   // the legacy lifter decodes them in 64-bit mode
   inspect(
     bil_text(lift64(b"\x41\x89\xc0")),
@@ -510,7 +520,7 @@ test "differential: x86-64, combined providers vs Basic" {
   inspect(
     report_text(report),
     content=(
-      #|both=227 agree=227 only_ours=5 only_basic=7 neither=52 basic_undecoded=52
+      #|both=227 agree=227 only_ours=55 only_basic=8 neither=1 basic_undecoded=0
       #|86 d8 (XCHG8rr): only Basic lifts
       #|d1 d0 (RCL32r1): only Basic lifts
       #|d1 d8 (RCR32r1): only Basic lifts
@@ -518,11 +528,63 @@ test "differential: x86-64, combined providers vs Basic" {
       #|f9 (STC): only Basic lifts
       #|f5 (CMC): only Basic lifts
       #|fd (STD): only Basic lifts
-      #|0f 28 c1 (MOVAPS): only ours lifts
-      #|66 0f 73 d0 04 (PSRLQ): only ours lifts
-      #|66 0f 72 e0 04 (PSRAD): only ours lifts
-      #|66 0f 38 00 c1 (PSHUFB): only ours lifts
-      #|66 0f 3a 0f c1 04 (PALIGNR): only ours lifts
+      #|ac (LODSB): only Basic lifts
+      #|66 0f ef c0 (PXORrr): only ours lifts
+      #|66 0f ef c1 (PXORrr): only ours lifts
+      #|66 0f 74 c1 (PCMPEQBrr): only ours lifts
+      #|66 0f 75 c1 (PCMPEQWrr): only ours lifts
+      #|66 0f 76 c1 (PCMPEQDrr): only ours lifts
+      #|66 0f 64 c1 (PCMPGTBrr): only ours lifts
+      #|66 0f fe c1 (PADDDrr): only ours lifts
+      #|66 0f fc c1 (PADDBrr): only ours lifts
+      #|66 0f d4 c1 (PADDQrr): only ours lifts
+      #|66 0f fa c1 (PSUBDrr): only ours lifts
+      #|66 0f f8 c1 (PSUBBrr): only ours lifts
+      #|66 0f db c1 (PANDrr): only ours lifts
+      #|66 0f eb c1 (PORrr): only ours lifts
+      #|66 0f df c1 (PANDNrr): only ours lifts
+      #|66 0f d7 c1 (PMOVMSKBrr): only ours lifts
+      #|66 0f 70 c1 1b (PSHUFDri): only ours lifts
+      #|f3 0f 6f 03 (MOVDQUrm): only ours lifts
+      #|66 0f 6f 03 (MOVDQArm): only ours lifts
+      #|66 0f 7f 03 (MOVDQAmr): only ours lifts
+      #|f3 0f 7f 03 (MOVDQUmr): only ours lifts
+      #|0f 10 03 (MOVUPSrm): only ours lifts
+      #|0f 11 03 (MOVUPSmr): only ours lifts
+      #|0f 28 c1 (MOVAPSrr): only ours lifts
+      #|66 0f 6e c0 (MOVDI2PDIrr): only ours lifts
+      #|66 48 0f 6e c0 (MOV64toPQIrr): only ours lifts
+      #|66 0f 7e c0 (MOVPDI2DIrr): only ours lifts
+      #|66 48 0f 7e c0 (MOVPQIto64rr): only ours lifts
+      #|f3 0f 7e c1 (MOVZPQILo2PQIrr): only ours lifts
+      #|66 0f d6 c1 (MOVPQI2QIrr): only ours lifts
+      #|0f 16 03 (MOVHPSrm): only ours lifts
+      #|0f 12 03 (MOVLPSrm): only ours lifts
+      #|66 0f 60 c1 (PUNPCKLBWrr): only ours lifts
+      #|66 0f 61 c1 (PUNPCKLWDrr): only ours lifts
+      #|66 0f 62 c1 (PUNPCKLDQrr): only ours lifts
+      #|66 0f 6c c1 (PUNPCKLQDQrr): only ours lifts
+      #|66 0f 68 c1 (PUNPCKHBWrr): only ours lifts
+      #|66 0f 73 f8 08 (PSLLDQri): only ours lifts
+      #|66 0f 73 d8 08 (PSRLDQri): only ours lifts
+      #|66 0f 73 d0 04 (PSRLQri): only ours lifts
+      #|66 0f 72 e0 04 (PSRADri): only ours lifts
+      #|66 0f 38 00 c1 (PSHUFBrr): only ours lifts
+      #|66 0f 38 17 c1 (PTESTrr): only ours lifts
+      #|66 0f da c1 (PMINUBrr): only ours lifts
+      #|66 0f de c1 (PMAXUBrr): only ours lifts
+      #|66 0f ea c1 (PMINSWrr): only ours lifts
+      #|66 0f ee c1 (PMAXSWrr): only ours lifts
+      #|66 0f e0 c1 (PAVGBrr): only ours lifts
+      #|66 0f 3a 0f c1 04 (PALIGNRrri): only ours lifts
+      #|66 0f 3a 63 c1 0c (PCMPISTRIrri): only ours lifts
+      #|f3 0f 10 c1 (MOVSSrr): only ours lifts
+      #|f2 0f 10 c1 (MOVSDrr): only ours lifts
+      #|f3 0f 10 03 (MOVSSrm): only ours lifts
+      #|c5 f9 ef c1 (VPXORrr): only ours lifts
+      #|c5 fe 6f 03 (VMOVDQUYrm): only ours lifts
+      #|c5 f9 6f c1 (VMOVDQArr): only ours lifts
+
     ),
   )
 }
@@ -544,7 +606,7 @@ test "differential: x86-64, legacy lifter vs Basic" {
   inspect(
     report_text(report),
     content=(
-      #|both=223 agree=223 only_ours=5 only_basic=11 neither=52 basic_undecoded=52
+      #|both=223 agree=223 only_ours=55 only_basic=12 neither=1 basic_undecoded=0
       #|86 d8 (XCHG8rr): only Basic lifts
       #|d1 d0 (RCL32r1): only Basic lifts
       #|d1 d8 (RCR32r1): only Basic lifts
@@ -552,15 +614,67 @@ test "differential: x86-64, legacy lifter vs Basic" {
       #|f9 (STC): only Basic lifts
       #|f5 (CMC): only Basic lifts
       #|fd (STD): only Basic lifts
+      #|ac (LODSB): only Basic lifts
       #|99 (CDQ): only Basic lifts
       #|48 99 (CQO): only Basic lifts
       #|66 99 (CWD): only Basic lifts
       #|f3 0f 1e fa (ENDBR64): only Basic lifts
-      #|0f 28 c1 (MOVAPS): only ours lifts
-      #|66 0f 73 d0 04 (PSRLQ): only ours lifts
-      #|66 0f 72 e0 04 (PSRAD): only ours lifts
-      #|66 0f 38 00 c1 (PSHUFB): only ours lifts
-      #|66 0f 3a 0f c1 04 (PALIGNR): only ours lifts
+      #|66 0f ef c0 (PXORrr): only ours lifts
+      #|66 0f ef c1 (PXORrr): only ours lifts
+      #|66 0f 74 c1 (PCMPEQBrr): only ours lifts
+      #|66 0f 75 c1 (PCMPEQWrr): only ours lifts
+      #|66 0f 76 c1 (PCMPEQDrr): only ours lifts
+      #|66 0f 64 c1 (PCMPGTBrr): only ours lifts
+      #|66 0f fe c1 (PADDDrr): only ours lifts
+      #|66 0f fc c1 (PADDBrr): only ours lifts
+      #|66 0f d4 c1 (PADDQrr): only ours lifts
+      #|66 0f fa c1 (PSUBDrr): only ours lifts
+      #|66 0f f8 c1 (PSUBBrr): only ours lifts
+      #|66 0f db c1 (PANDrr): only ours lifts
+      #|66 0f eb c1 (PORrr): only ours lifts
+      #|66 0f df c1 (PANDNrr): only ours lifts
+      #|66 0f d7 c1 (PMOVMSKBrr): only ours lifts
+      #|66 0f 70 c1 1b (PSHUFDri): only ours lifts
+      #|f3 0f 6f 03 (MOVDQUrm): only ours lifts
+      #|66 0f 6f 03 (MOVDQArm): only ours lifts
+      #|66 0f 7f 03 (MOVDQAmr): only ours lifts
+      #|f3 0f 7f 03 (MOVDQUmr): only ours lifts
+      #|0f 10 03 (MOVUPSrm): only ours lifts
+      #|0f 11 03 (MOVUPSmr): only ours lifts
+      #|0f 28 c1 (MOVAPSrr): only ours lifts
+      #|66 0f 6e c0 (MOVDI2PDIrr): only ours lifts
+      #|66 48 0f 6e c0 (MOV64toPQIrr): only ours lifts
+      #|66 0f 7e c0 (MOVPDI2DIrr): only ours lifts
+      #|66 48 0f 7e c0 (MOVPQIto64rr): only ours lifts
+      #|f3 0f 7e c1 (MOVZPQILo2PQIrr): only ours lifts
+      #|66 0f d6 c1 (MOVPQI2QIrr): only ours lifts
+      #|0f 16 03 (MOVHPSrm): only ours lifts
+      #|0f 12 03 (MOVLPSrm): only ours lifts
+      #|66 0f 60 c1 (PUNPCKLBWrr): only ours lifts
+      #|66 0f 61 c1 (PUNPCKLWDrr): only ours lifts
+      #|66 0f 62 c1 (PUNPCKLDQrr): only ours lifts
+      #|66 0f 6c c1 (PUNPCKLQDQrr): only ours lifts
+      #|66 0f 68 c1 (PUNPCKHBWrr): only ours lifts
+      #|66 0f 73 f8 08 (PSLLDQri): only ours lifts
+      #|66 0f 73 d8 08 (PSRLDQri): only ours lifts
+      #|66 0f 73 d0 04 (PSRLQri): only ours lifts
+      #|66 0f 72 e0 04 (PSRADri): only ours lifts
+      #|66 0f 38 00 c1 (PSHUFBrr): only ours lifts
+      #|66 0f 38 17 c1 (PTESTrr): only ours lifts
+      #|66 0f da c1 (PMINUBrr): only ours lifts
+      #|66 0f de c1 (PMAXUBrr): only ours lifts
+      #|66 0f ea c1 (PMINSWrr): only ours lifts
+      #|66 0f ee c1 (PMAXSWrr): only ours lifts
+      #|66 0f e0 c1 (PAVGBrr): only ours lifts
+      #|66 0f 3a 0f c1 04 (PALIGNRrri): only ours lifts
+      #|66 0f 3a 63 c1 0c (PCMPISTRIrri): only ours lifts
+      #|f3 0f 10 c1 (MOVSSrr): only ours lifts
+      #|f2 0f 10 c1 (MOVSDrr): only ours lifts
+      #|f3 0f 10 03 (MOVSSrm): only ours lifts
+      #|c5 f9 ef c1 (VPXORrr): only ours lifts
+      #|c5 fe 6f 03 (VMOVDQUYrm): only ours lifts
+      #|c5 f9 6f c1 (VMOVDQArr): only ours lifts
+
     ),
   )
 }
@@ -582,7 +696,7 @@ test "differential: x86, combined providers vs Basic" {
   inspect(
     report_text(report),
     content=(
-      #|both=66 agree=66 only_ours=0 only_basic=0 neither=2 basic_undecoded=2
+      #|both=66 agree=66 only_ours=0 only_basic=0 neither=2 basic_undecoded=0
     ),
   )
 }

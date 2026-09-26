@@ -5288,10 +5288,19 @@ fn ProjectDisassemblyInstruction::project_basic_bil_neg_m(
 
 ///|
 fn project_basic_bil_register_width(name : String) -> Int {
-  if name.has_prefix("R") {
-    64
-  } else {
-    32
+  match name {
+    "AX" | "BX" | "CX" | "DX" | "SI" | "DI" | "BP" | "SP" => 16
+    _ =>
+      if name.has_prefix("R") && name.has_suffix("D") {
+        // R8D..R15D
+        32
+      } else if name.has_prefix("R") && name.has_suffix("W") {
+        16
+      } else if name.has_prefix("R") {
+        64
+      } else {
+        32
+      }
   }
 }
 
@@ -5321,18 +5330,44 @@ fn ProjectDisassemblyInstruction::project_basic_bil_memory_addr(
   self : ProjectDisassemblyInstruction,
   base_index : Int,
 ) -> Result[(@types.Exp, @types.Var, Int), String] {
-  let base_name = match self.project_basic_bil_operand(base_index) {
-    Ok(operand) =>
-      match operand.register_name() {
-        Some(name) if name != "Nil" => name
-        Some(_) => return Err("instruction \{self.name()} memory base is Nil")
-        None =>
-          return Err("instruction \{self.name()} memory base is not a register")
-      }
+  let register = (index : Int, what : String) => {
+    match self.project_basic_bil_operand(index) {
+      Ok(operand) =>
+        match operand.register_name() {
+          Some(name) => Ok(name)
+          None =>
+            Err("instruction \{self.name()} memory \{what} is not a register")
+        }
+      Err(reason) => Err(reason)
+    }
+  }
+  let base_name = match register(base_index, "base") {
+    Ok(name) => name
     Err(reason) => return Err(reason)
   }
-  let address_width = project_basic_bil_register_width(base_name)
-  let base = project_basic_bil_reg(base_name, address_width)
+  // EIZ/RIZ, the pseudo index of a SIB byte without index, is no index
+  let index_name = match register(base_index + 2, "index") {
+    Ok("EIZ" | "RIZ") => "Nil"
+    Ok(name) => name
+    Err(reason) => return Err(reason)
+  }
+  // RIP/EIP-relative addresses are absolute (the next instruction plus the
+  // displacement); without base and index the displacement is absolute and
+  // the address has the width of the mode
+  let pc_relative = base_name == "RIP" || base_name == "EIP"
+  let address_width = if base_name == "RIP" {
+    64
+  } else if base_name == "EIP" {
+    32
+  } else if base_name != "Nil" {
+    project_basic_bil_register_width(base_name)
+  } else if index_name != "Nil" {
+    project_basic_bil_register_width(index_name)
+  } else if self.encoding() == "llvm-x86_64" {
+    64
+  } else {
+    32
+  }
   let scale = match self.project_basic_bil_immediate(base_index + 1) {
     Ok(value) => value
     Err(reason) => return Err(reason)
@@ -5340,57 +5375,94 @@ fn ProjectDisassemblyInstruction::project_basic_bil_memory_addr(
   if scale != 1L && scale != 2L && scale != 4L && scale != 8L {
     return Err("unsupported \{self.name()} memory scale \{scale}")
   }
-  let mut addr = @types.Exp::var_exp(base)
-  match self.project_basic_bil_operand(base_index + 2) {
-    Ok(index_operand) =>
-      match index_operand.register_name() {
-        Some(index_name) if index_name == "Nil" => ()
-        Some(index_name) => {
-          let index_width = project_basic_bil_register_width(index_name)
-          if index_width != address_width {
-            return Err("unsupported \{self.name()} mixed-width memory index")
-          }
-          let index = project_basic_bil_reg(index_name, address_width)
-          let index_exp = @types.Exp::var_exp(index)
-          let scaled = if scale == 1L {
-            index_exp
-          } else {
-            match project_basic_bil_int(scale, address_width) {
-              Ok(scale_exp) =>
-                @types.Exp::binop(@types.BinOp::times(), index_exp, scale_exp)
-              Err(reason) => return Err(reason)
-            }
-          }
-          addr = @types.Exp::binop(@types.BinOp::plus(), addr, scaled)
-        }
-        None =>
-          return Err(
-            "instruction \{self.name()} memory index is not a register",
-          )
+  let mut addr : @types.Exp? = if pc_relative || base_name == "Nil" {
+    None
+  } else {
+    Some(@types.Exp::var_exp(project_basic_bil_reg(base_name, address_width)))
+  }
+  if index_name != "Nil" {
+    let index_width = project_basic_bil_register_width(index_name)
+    if index_width != address_width {
+      return Err("unsupported \{self.name()} mixed-width memory index")
+    }
+    let index_exp = @types.Exp::var_exp(
+      project_basic_bil_reg(index_name, address_width),
+    )
+    let scaled = if scale == 1L {
+      index_exp
+    } else {
+      match project_basic_bil_int(scale, address_width) {
+        Ok(scale_exp) =>
+          @types.Exp::binop(@types.BinOp::times(), index_exp, scale_exp)
+        Err(reason) => return Err(reason)
       }
-    Err(reason) => return Err(reason)
+    }
+    addr = Some(
+      match addr {
+        Some(base) => @types.Exp::binop(@types.BinOp::plus(), base, scaled)
+        None => scaled
+      },
+    )
   }
   let displacement = match self.project_basic_bil_immediate(base_index + 3) {
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  match self.project_basic_bil_operand(base_index + 4) {
-    Ok(segment_operand) =>
-      match segment_operand.register_name() {
-        Some(segment) if segment == "Nil" => ()
-        Some(segment) =>
-          return Err("unsupported \{self.name()} segment register \{segment}")
-        None =>
-          return Err(
-            "instruction \{self.name()} segment operand is not a register",
-          )
-      }
+  // FS and GS overrides add the segment base (FS_BASE, GS_BASE); the other
+  // segments are flat
+  let segment_base = match register(base_index + 4, "segment") {
+    Ok("FS") => Some("FS_BASE")
+    Ok("GS") => Some("GS_BASE")
+    Ok(_) => None
     Err(reason) => return Err(reason)
   }
-  let addr = match
-    project_basic_bil_offset_addr(addr, displacement, address_width) {
-    Ok(value) => value
-    Err(reason) => return Err(reason)
+  let addr = match addr {
+    Some(addr) =>
+      match project_basic_bil_offset_addr(addr, displacement, address_width) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+    None => {
+      let absolute = if pc_relative {
+        displacement +
+        (self.addr() + self.memory().length().to_uint64()).reinterpret_as_int64()
+      } else {
+        displacement
+      }
+      let absolute = if address_width == 32 {
+        absolute & 0xFFFFFFFFL
+      } else {
+        absolute
+      }
+      match project_basic_bil_int(absolute, address_width) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+    }
+  }
+  // an address narrower than the mode (address-size prefix) is
+  // zero-extended into the memory of the mode
+  let mode_width = match self.encoding() {
+    "llvm-x86_64" => 64
+    "llvm-x86" => 32
+    _ => address_width
+  }
+  let (addr, address_width) = if address_width < mode_width {
+    (
+      @types.Exp::cast(@types.CastKind::unsigned(), mode_width, addr),
+      mode_width,
+    )
+  } else {
+    (addr, address_width)
+  }
+  let addr = match segment_base {
+    Some(name) =>
+      @types.Exp::binop(
+        @types.BinOp::plus(),
+        @types.Exp::var_exp(project_basic_bil_reg(name, address_width)),
+        addr,
+      )
+    None => addr
   }
   Ok(
     (
@@ -6975,6 +7047,10 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     return Err(
       "unsupported Basic BIL lift for AArch64 instruction \{self.name()}",
     )
+  }
+  let self = self.project_basic_x86_legacy()
+  if self.project_basic_bil_x86_extension() is Some(result) {
+    return result
   }
   let name = self.name().to_upper()
   if name.has_prefix("CMOV") {

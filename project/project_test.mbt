@@ -634,7 +634,7 @@ test "translated BAP project substitution reaches Basic decoder text" {
     0xaUL,
     b"\xeb\xfe",
     "test_x86",
-    "jmp -0x2",
+    "jmp -2",
     "jmp 0xa",
   )
 }

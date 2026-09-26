@@ -70,8 +70,8 @@ test "analyze runs the core commands" {
   inspect(
     run_bap(["analyze", "instruction 0x40100e", "instructions :semantics asm"]),
     content=(
-      #|((bap:insn (XOR32rr(EAX,EAX)))
-      #| (bap:asm "XOR32rr EAX, EAX")
+      #|((bap:insn (XOR32rr(EAX,EAX,EAX)))
+      #| (bap:asm "xorl %eax, %eax")
       #| (bap:bil "{
       #|  EAX := 0
       #|  CF := 0
@@ -86,25 +86,25 @@ test "analyze runs the core commands" {
       #|}")
       #| (bap:insn-code "40100e: 31 c0 "))
       #|bin/true:0x401000
-      #|((bap:asm "PUSH64r RBP"))
+      #|((bap:asm "pushq %rbp"))
       #|bin/true:0x401001
-      #|((bap:asm "MOV64rr RBP, RSP"))
+      #|((bap:asm "movq %rsp, %rbp"))
       #|bin/true:0x401004
-      #|((bap:asm "CALL64pcrel32 0x5"))
+      #|((bap:asm "callq 5"))
       #|bin/true:0x401009
-      #|((bap:asm "POP64r RBP"))
+      #|((bap:asm "popq %rbp"))
       #|bin/true:0x40100a
-      #|((bap:asm "RET"))
+      #|((bap:asm "retq"))
       #|bin/true:0x40100b
-      #|((bap:asm "NOOP"))
+      #|((bap:asm "nop"))
       #|bin/true:0x40100c
-      #|((bap:asm "NOOP"))
+      #|((bap:asm "nop"))
       #|bin/true:0x40100d
-      #|((bap:asm "NOOP"))
+      #|((bap:asm "nop"))
       #|bin/true:0x40100e
-      #|((bap:asm "XOR32rr EAX, EAX"))
+      #|((bap:asm "xorl %eax, %eax"))
       #|bin/true:0x401010
-      #|((bap:asm "RET"))
+      #|((bap:asm "retq"))
       #|
     ),
   )

@@ -82,7 +82,6 @@ test "specification prints the ogre specification" {
       #|(symbol-chunk 4198414 3 4198414)
       #|
       #|
-
     ),
   )
   inspect(
@@ -227,7 +226,6 @@ test "specification prints the ogre specification" {
       #|    "root": 4198414
       #|
       #|
-
     ),
   )
 }

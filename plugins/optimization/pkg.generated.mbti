@@ -1,0 +1,88 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/optimization"
+
+import {
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/project",
+  "bobzhang/bap/types",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn classify((@types.Var) -> Bool, @types.Var) -> VarClass
+
+pub fn declare_plugin() -> Unit raise
+
+pub fn digest_of_sub(@types.Term[@types.Sub], Int) -> String
+
+pub fn is_optimization_allowed((@types.Var) -> Bool, Int, @types.Var) -> Bool
+
+pub fn[T] is_updated(@types.Term[T]) -> Bool
+
+pub fn[T] mark_updated(@types.Term[T]) -> @types.Term[T]
+
+pub let name : String
+
+pub fn optimize_program(@types.Term[@types.Program], level~ : Int, is_flag? : (@types.Var) -> Bool, cache? : OptimizationCache) -> @types.Term[@types.Program]
+
+pub fn pass(level~ : Int, is_flag? : (@types.Var) -> Bool, cache? : OptimizationCache) -> @project.ProjectPass
+
+pub fn register(level~ : Int, is_flag? : (@types.Var) -> Bool, cache? : OptimizationCache) -> Result[Bool, String]
+
+pub fn run(@project.Project, level~ : Int, is_flag? : (@types.Var) -> Bool, cache? : OptimizationCache) -> @project.Project
+
+pub fn substitute_exp(Map[String, @types.Exp], @types.Exp) -> @types.Exp
+
+pub fn target_is_flag(@core_theory.Target) -> (@types.Var) -> Bool
+
+// Errors
+
+// Types and methods
+pub(all) struct JmpUpdate {
+  cond : @types.Exp
+  kind : @types.JmpKind
+} derive(Eq, @debug.Debug)
+pub fn JmpUpdate::equal(Self, Self) -> Bool
+pub fn JmpUpdate::not_equal(Self, Self) -> Bool
+pub fn JmpUpdate::to_repr(Self) -> @debug.Repr
+
+pub struct OptimizationCache {
+  entries : Map[String, OptimizationData]
+}
+pub fn OptimizationCache::length(Self) -> Int
+pub fn OptimizationCache::load(Self, String) -> OptimizationData?
+pub fn OptimizationCache::new() -> Self
+pub fn OptimizationCache::save(Self, String, OptimizationData) -> Unit
+
+pub struct OptimizationData {
+  deads : Array[@types.Tid]
+  updates : Map[@types.Tid, TermUpdate]
+}
+pub fn OptimizationData::apply(Self, @types.Term[@types.Sub]) -> @types.Term[@types.Sub]
+pub fn OptimizationData::create(deads~ : Array[@types.Tid], @types.Term[@types.Sub]) -> Self
+pub fn OptimizationData::deads(Self) -> Array[@types.Tid]
+pub fn OptimizationData::find_unreachable(Self, @types.Term[@types.Sub]) -> Self
+pub fn OptimizationData::remove_dead_code(Self, @types.Term[@types.Sub]) -> @types.Term[@types.Sub]
+pub fn OptimizationData::update(Self, @types.Term[@types.Sub]) -> @types.Term[@types.Sub]
+pub fn OptimizationData::updates(Self) -> Array[(@types.Tid, TermUpdate)]
+
+pub(all) enum TermUpdate {
+  Rhs(@types.Exp)
+  Jmp(JmpUpdate)
+} derive(Eq, @debug.Debug)
+pub fn TermUpdate::equal(Self, Self) -> Bool
+pub fn TermUpdate::not_equal(Self, Self) -> Bool
+pub fn TermUpdate::to_repr(Self) -> @debug.Repr
+
+pub(all) enum VarClass {
+  Phys
+  Virt
+  Flag
+} derive(Eq, @debug.Debug)
+pub fn VarClass::equal(Self, Self) -> Bool
+pub fn VarClass::not_equal(Self, Self) -> Bool
+pub fn VarClass::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

@@ -28,6 +28,10 @@ pub fn backends_for_extension(String) -> Array[ImageBackend]
 
 pub fn code_region() -> @types.Tag[Unit]
 
+pub fn coff_llvm_spec(Bytes) -> Result[@ogre.Doc, String]
+
+pub fn coff_spec(Bytes) -> Result[@ogre.Doc, String]
+
 pub fn create(String, backend? : String) -> Result[(Image, Array[String]), String]
 
 pub fn data(Image) -> Bytes
@@ -175,6 +179,7 @@ pub fn Image::with_soname(Self, String) -> Self
 pub fn Image::words(Self, word_size~ : Int) -> @memory.MemMap[@types.Word]
 
 type ImageBackend
+pub fn ImageBackend::coff() -> Self
 pub fn ImageBackend::create(name~ : String, description? : String, extensions? : Array[String], priority? : Int, load~ : (Bytes) -> Result[(Image, Array[String]), String]) -> Self
 pub fn ImageBackend::description(Self) -> String
 pub fn ImageBackend::elf() -> Self

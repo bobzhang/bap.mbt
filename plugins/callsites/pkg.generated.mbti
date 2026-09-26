@@ -1,0 +1,36 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/callsites"
+
+import {
+  "bobzhang/bap/project",
+  "bobzhang/bap/types",
+}
+
+// Values
+pub fn declare_plugin() -> Unit raise
+
+pub fn def_of_arg(@types.Term[@types.Arg]) -> @types.Term[@types.Def]
+
+pub fn fill_calls(@types.Term[@types.Program]) -> @types.Term[@types.Program]
+
+pub fn insert_defs(@types.Term[@types.Program], @types.Term[@types.Sub]) -> @types.Term[@types.Sub]
+
+pub let insn_attr : String
+
+pub fn intent_matches(@types.Term[@types.Arg], @types.Intent) -> Bool
+
+pub let name : String
+
+pub fn pass() -> @project.ProjectPass
+
+pub fn register() -> Result[Bool, String]
+
+pub fn run(@project.Project) -> @project.Project
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

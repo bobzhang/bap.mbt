@@ -1,0 +1,8 @@
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/main_event",
+  "bobzhang/bap/project",
+  "bobzhang/bap/relation",
+  "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/string",
+}

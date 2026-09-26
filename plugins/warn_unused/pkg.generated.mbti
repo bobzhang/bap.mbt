@@ -1,0 +1,48 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/warn_unused"
+
+import {
+  "bobzhang/bap/project",
+  "bobzhang/bap/types",
+}
+
+// Values
+pub fn collect_seeds(@types.Term[@types.Program]) -> Array[@types.Tid]
+
+pub fn declare_plugin() -> Unit raise
+
+pub fn mark(@project.Project) -> @project.Project
+
+pub fn mark_unchecked(@types.Term[@types.Program], Array[@types.Tid]) -> @types.Term[@types.Program]
+
+pub let name : String
+
+pub fn passes(out? : (String) -> Unit) -> Array[@project.ProjectPass]
+
+pub fn print(@project.Project, out~ : (String) -> Unit) -> Unit
+
+pub fn register(out? : (String) -> Unit) -> Result[Bool, String]
+
+pub fn render_unchecked(@types.Term[@types.Program], Array[@types.Tid]) -> String
+
+pub fn solve(@types.Term[@types.Program], Array[@types.Tid]) -> Array[@types.Tid]
+
+pub fn taint(@project.Project) -> @project.Project
+
+pub fn taint_program(@types.Term[@types.Program]) -> @types.Term[@types.Program]
+
+pub fn[T] tainted_regs(@types.Term[T]) -> Array[(String, Array[@types.Tid])]?
+
+pub let tainted_regs_attr : String
+
+pub fn unchecked(@project.Project) -> Array[@types.Tid]
+
+pub fn[T] with_tainted_regs(@types.Term[T], Array[(@types.Var, Array[@types.Tid])]) -> @types.Term[T]
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

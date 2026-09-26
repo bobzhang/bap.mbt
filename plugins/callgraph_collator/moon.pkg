@@ -1,0 +1,11 @@
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/native_io",
+  "bobzhang/bap/project",
+  "bobzhang/bap/types",
+  "moonbitlang/core/encoding/utf8",
+}
+
+import {
+  "bobzhang/bap/core_theory",
+} for "test"

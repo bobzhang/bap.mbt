@@ -462,10 +462,30 @@ test "state enumerates objects by class in creation order" {
     name=@knowledge.Name::create("other-object", pkg="test"),
     sort="unit",
   )
+  let seen = cls.property(
+    name=@knowledge.Name::create("enumerated-seen", pkg="test"),
+    domain=@knowledge.Domain::bool(@knowledge.Name::create("seen", pkg="test")),
+  )
+  let other_seen = other.property(
+    name=@knowledge.Name::create("other-seen", pkg="test"),
+    domain=@knowledge.Domain::bool(@knowledge.Name::create("seen", pkg="test")),
+  )
   let first = state.create(cls)
-  ignore(state.create(other))
+  let silent = state.create(cls)
+  state.provide(other_seen, state.create(other), true) catch {
+    _ => fail("provide")
+  }
   let second = state.create(cls)
+  // as upstream, objects are listed once something is known about them
+  assert_eq(state.objects(cls).length(), 0)
+  state.provide(seen, second, true) catch {
+    _ => fail("provide")
+  }
+  state.provide(seen, first, true) catch {
+    _ => fail("provide")
+  }
   let objects = state.objects(cls)
+  assert_true(!objects.any(o => o.equal(silent)))
   assert_eq(objects.length(), 2)
   assert_true(objects[0].equal(first))
   assert_true(objects[1].equal(second))
@@ -484,8 +504,18 @@ test "state scoped objects are removed from class enumeration" {
     name=@knowledge.Name::create("scoped-object", pkg="test"),
     sort="unit",
   )
+  let seen = cls.property(
+    name=@knowledge.Name::create("scoped-seen", pkg="test"),
+    domain=@knowledge.Domain::bool(@knowledge.Name::create("seen", pkg="test")),
+  )
   let permanent = state.create(cls)
+  state.provide(seen, permanent, true) catch {
+    _ => fail("provide")
+  }
   let scoped = state.scoped(cls, object => {
+    state.provide(seen, object, true) catch {
+      _ => fail("provide")
+    }
     let objects = state.objects(cls)
     (
       object,

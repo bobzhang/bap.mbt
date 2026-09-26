@@ -39,7 +39,7 @@ fn[K, P] State::current_opt(
   object : Object[K],
 ) -> P? {
   let stored = match self.info(slot.owner, object.id()) {
-    Some(info) => info.data.find(slot.key)
+    Some(info) => info.data.find(slot.core.key)
     None => None
   }
   match stored {
@@ -77,7 +77,7 @@ fn[K, P] State::commit(
     Some(info) => info
     None => noinfo
   }
-  match info.data.commit(slot.key, slot.ops, value) {
+  match info.data.commit(slot.core.key, slot.core.ops, value) {
     Ok(data) =>
       self.set_class_objects(slot.owner, {
         ..objects,
@@ -105,9 +105,9 @@ pub fn[K, P] State::provide(
   slot.check_owner(object)
   self.commit(slot, object, value)
   // snapshot the observers: an observer may register or retract others
-  let watchers = [ for _, run in slot.watchers => run ]
+  let watchers = [ for _, run in slot.core.watchers => run ]
   for run in watchers {
-    run(self, object, value)
+    run(self, object.id(), object.class_name(), value)
   }
 }
 
@@ -155,11 +155,11 @@ fn[K, P] State::status(
   match self.info(slot.owner, object.id()) {
     None => Sleep
     Some(info) =>
-      match info.comp.get(slot.key.uid) {
+      match info.comp.get(slot.core.key.uid) {
         Some(Working(_, _)) => Awoke
         Some(Done) => Ready
         None =>
-          match info.data.find(slot.key) {
+          match info.data.find(slot.core.key) {
             Some(value) if !slot.domain_value.is_empty(value) => Ready
             _ => Sleep
           }
@@ -174,7 +174,7 @@ fn[K, P] State::update_work(
   object : Object[K],
   f : (Work?) -> Work,
 ) -> Unit {
-  let uid = slot.key.uid
+  let uid = slot.core.key.uid
   self.update_info(slot.owner, object.id(), info => {
     ..info,
     comp: info.comp.add(uid, f(info.comp.get(uid))),
@@ -202,10 +202,10 @@ fn[K, P] State::dequeue_waiting(
   self : State,
   slot : Slot[K, P],
   object : Object[K],
-) -> Array[(Int, (State, Object[K]) -> Unit raise)] {
+) -> Array[(Int, (State, Int, Name) -> Unit raise)] {
   let waiting = match self.info(slot.owner, object.id()) {
     Some({ comp, .. }) =>
-      match comp.get(slot.key.uid) {
+      match comp.get(slot.core.key.uid) {
         Some(Working(waiting, _)) => waiting
         _ => @sorted_set.SortedSet::new()
       }
@@ -218,7 +218,7 @@ fn[K, P] State::dequeue_waiting(
   // are re-run newest first
   let result = []
   for pid in waiting.rev_iter() {
-    match slot.promises.get(pid) {
+    match slot.core.promises.get(pid) {
       Some(run) => result.push((pid, run))
       None => ()
     }
@@ -235,7 +235,7 @@ fn[K, P] State::collect_inner(
   self : State,
   slot : Slot[K, P],
   object : Object[K],
-  promises : Array[(Int, (State, Object[K]) -> Unit raise)],
+  promises : Array[(Int, (State, Int, Name) -> Unit raise)],
 ) -> Unit raise {
   let was = self.current_opt(slot, object)
   for promise in promises {
@@ -243,7 +243,7 @@ fn[K, P] State::collect_inner(
     self.working(slot, object, (waiting, current) => {
       Working(waiting, current.add(pid))
     })
-    run(self, object)
+    run(self, object.id(), object.class_name())
     self.working(slot, object, (waiting, current) => {
       Working(waiting, current.remove(pid))
     })
@@ -302,7 +302,7 @@ pub fn[K, P] State::collect(
       self.update_work(slot, object, _ => {
         Working(@sorted_set.SortedSet::new(), @sorted_set.SortedSet::new())
       })
-      let promises = [ for pid, run in slot.promises => (pid, run) ]
+      let promises = [ for pid, run in slot.core.promises => (pid, run) ]
       self.collect_inner(slot, object, promises)
       self.update_work(slot, object, _ => Done)
     }
@@ -368,8 +368,9 @@ pub fn[K, P] State::suggest(
 fn[K, P] Slot::promise_action(
   self : Slot[K, P],
   get : (State, Object[K]) -> P raise,
-) -> (State, Object[K]) -> Unit raise {
-  (state, object) => {
+) -> (State, Int, Name) -> Unit raise {
+  (state, id, class_name) => {
+    let object : Object[K] = { id, class_name, _phantom: None, }
     match state.rejectable(() => get(state, object)) {
       Some(value) =>
         if !self.domain_value.is_empty(value) {
@@ -385,8 +386,9 @@ fn[K, P] Slot::proposal_action(
   self : Slot[K, Opinions[P]],
   agent : Agent,
   get : (State, Object[K]) -> P raise,
-) -> (State, Object[K]) -> Unit raise {
-  (state, object) => {
+) -> (State, Int, Name) -> Unit raise {
+  (state, id, class_name) => {
+    let object : Object[K] = { id, class_name, _phantom: None, }
     match state.rejectable(() => get(state, object)) {
       Some(value) => state.suggest(agent, self, object, value)
       None => ()
@@ -408,20 +410,20 @@ pub fn[K, P] Slot::promise(
   f : (State, Object[K]) -> P raise,
 ) -> Int {
   let pid = next_pid()
-  self.promises[pid] = self.promise_action(f)
+  self.core.promises[pid] = self.promise_action(f)
   pid
 }
 
 ///|
 /// Retracts a promise or proposal registered on the slot.
 pub fn[K, P] Slot::retract(self : Slot[K, P], pid : Int) -> Unit {
-  self.promises.remove(pid)
+  self.core.promises.remove(pid)
 }
 
 ///|
 /// Removes an observer registered on the slot.
 pub fn[K, P] Slot::unobserve(self : Slot[K, P], pid : Int) -> Unit {
-  self.watchers.remove(pid)
+  self.core.watchers.remove(pid)
 }
 
 ///|
@@ -447,7 +449,7 @@ pub fn[K, P] Slot::propose(
   f : (State, Object[K]) -> P raise,
 ) -> Int {
   let pid = next_pid()
-  self.promises[pid] = self.proposal_action(agent, f)
+  self.core.promises[pid] = self.proposal_action(agent, f)
   pid
 }
 
@@ -475,7 +477,9 @@ pub fn[K, P] Slot::observe(
   push : (State, Object[K], P) -> Unit raise,
 ) -> Int {
   let pid = next_pid()
-  self.watchers[pid] = push
+  self.core.watchers[pid] = (state, id, class_name, value) => {
+    push(state, { id, class_name, _phantom: None, }, value)
+  }
   pid
 }
 

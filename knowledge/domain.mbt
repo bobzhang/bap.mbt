@@ -6,6 +6,9 @@ struct Domain[T] {
   order_fn : (T, T) -> PartialOrder
   join_fn : (T, T) -> Result[T, String]
   inspect_fn : (T) -> String
+  /// exchange cell used to recover the typed core of a slot declared
+  /// with this domain (see `Class::property`)
+  exchange : Ref[SlotCore[T]?]
 }
 
 ///|
@@ -24,6 +27,7 @@ pub fn[T] Domain::new(
     order_fn: order,
     join_fn: join,
     inspect_fn: inspect,
+    exchange: { val: None, },
   }
 }
 

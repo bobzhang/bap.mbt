@@ -20,6 +20,8 @@ pub fn channel_output(@primus.Machine, Int) -> String
 
 pub fn compare_names(@knowledge.Name, @knowledge.Name) -> Int
 
+pub fn configure_library(features? : Array[String], loader? : Loader) -> Unit
+
 pub let const_item : Item[Const]
 
 pub fn declare_attribute(String, check? : (String, Array[Tree]) -> Unit raise AttributeError) -> Unit
@@ -63,6 +65,8 @@ pub fn init_runtime(@primus.Machine) -> Unit raise
 pub fn init_signals(@primus.Machine) -> Unit
 
 pub fn legacy_arch_name(@core_theory.Target) -> String
+
+pub let library_dirs : Array[String]
 
 pub fn link_places(@primus.Machine) -> Unit raise
 

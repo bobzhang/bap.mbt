@@ -539,16 +539,57 @@ pub fn refine_from_system(m : @primus.Machine) -> Unit raise {
 }
 
 ///|
-/// Loads the features from the embedded library (by default the standard
-/// library `core` and `posix`, searched in the `lisp` and `site-lisp`
-/// directories) in the context of the machine target, and links them into
+/// The embedded directories of the Primus Lisp library: the core library,
+/// the site library, and the libraries of the analysis plugins (taint,
+/// constant tracker, testing framework, approximations).
+pub let library_dirs : Array[String] = [
+  "lisp", "site-lisp", "taint", "constant-tracker", "primus-test", "approximation",
+]
+
+///|
+/// The features and the loader used by `load_library` by default (set by
+/// the `primus-lisp` plugin options).
+let library_config : Ref[(Array[String], Loader)] = Ref(
+  (["core", "posix"], Loader::embedded(library_dirs)),
+)
+
+///|
+/// Sets the features and the loader that `load_library` (and the
+/// `bap:load-lisp-library` component) uses by default.
+pub fn configure_library(features? : Array[String], loader? : Loader) -> Unit {
+  let (fs, l) = library_config.val
+  library_config.val = (
+    match features {
+      Some(f) => f
+      None => fs
+    },
+    match loader {
+      Some(x) => x
+      None => l
+    },
+  )
+}
+
+///|
+/// Loads the features from the library (by default the standard library
+/// `core` and `posix`, searched in the embedded `library_dirs`, see
+/// `configure_library`) in the context of the machine, and links them into
 /// the machine (upstream component `load-lisp-library`).
 pub fn load_library(
   m : @primus.Machine,
-  features? : Array[String] = ["core", "posix"],
-  loader? : Loader = Loader::embedded(["lisp", "site-lisp"]),
+  features? : Array[String],
+  loader? : Loader,
 ) -> Unit raise {
-  let ctxt = Context::of_target(m.target())
+  let (default_features, default_loader) = library_config.val
+  let features = match features {
+    Some(f) => f
+    None => default_features
+  }
+  let loader = match loader {
+    Some(l) => l
+    None => default_loader
+  }
+  let ctxt = get_state(m).program.context.merge(Context::of_target(m.target()))
   let prog = load_program(loader, features, context=ctxt)
   link_program(m, prog)
 }

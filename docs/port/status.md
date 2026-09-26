@@ -246,11 +246,23 @@ upstream BAP, LLVM's `SoftFail` encodings are valid instructions.
   arithmetic (`SDIV`/`UDIV` in Thumb are decoded; LLVM needs `+hwdiv`).
   The Basic `llvm` backend's built-in ARM decoder (used only by
   `Basic.create "armv7"` with the `llvm` backend) is not validated.
-- A64 (`aarch64/decode_llvm_test.mbt`, 994 samples, 549 opcodes), with
-  upstream's features `+v8.1a,+v8.2a,+v8.3a`: exact on the whole non-SIMD
-  instruction set (LSE, pointer authentication, system registers from an
-  LLVM-generated table, `SYS` aliases); SIMD/FP/SVE are invalid. FlagM
-  (`CFINV`/`RMIF`/`SETF*`) is decoded although LLVM needs `+flagm`.
+- A64 (`aarch64/decode_llvm_test.mbt`, 994 samples, 549 opcodes, and
+  `aarch64/decode_llvm_simd_test.mbt`, 2342 samples, 2009 opcodes), with
+  upstream's features `+v8.1a,+v8.2a,+v8.3a`: exact on the whole
+  instruction set LLVM decodes with them (LSE, pointer authentication,
+  system registers from an LLVM-generated table, `SYS` aliases, scalar
+  floating point and conversions, all AdvSIMD classes, SIMD&FP loads and
+  stores including the structure `LD1`..`LD4R`/`ST1`..`ST4`). The
+  SIMD/FP part is table driven (`aarch64/simd.mbt`): each ARM ARM encoding
+  class maps a key to the LLVM name and operand/assembly templates learned
+  from, and swept against, libLLVM (200k-word class sweeps per class,
+  500k random words, and the 11.4M words of the `__text` of every
+  `/usr/bin` arm64e binary of macOS 26: 256,519 llvm-only words in 509
+  opcodes before, none after). SVE/SME and the extensions upstream does
+  not enable (FP16 arithmetic, dot product, crypto) are invalid, as in
+  LLVM. FlagM (`CFINV`/`RMIF`/`SETF*`) is decoded although LLVM needs
+  `+flagm`. SIMD/FP instructions have no Lisp semantics: they lift as
+  `Unsupported` (empty BIL in a project), which keeps the CFG intact.
 - PowerPC 32/64, both byte orders (`powerpc/decode_llvm_test.mbt`, 576
   samples, 261 opcodes): exact for every opcode the decoder knows (the
   lifter's); LLVM 22 conventions: raw zero-extended D-form displacements,

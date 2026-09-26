@@ -77,8 +77,7 @@ fn a64_ldst_name(size : Int, opc : Int, mode : Int) -> (String, String, Bool)? {
 /// Loads and stores.
 fn a64_load_store(w : UInt) -> A64Insn? {
   if bit(w, 26) {
-    // SIMD and floating point
-    return None
+    return a64_simd(w)
   }
   if fld(w, 24, 6) == 0b001000 {
     return a64_exclusive(w)

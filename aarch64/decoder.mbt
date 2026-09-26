@@ -21,8 +21,8 @@
 // - writeback loads and stores (`pre`/`post`) start with the written back
 //   base register.
 //
-// The decoder covers the whole non-SIMD part of the instruction set that
-// LLVM decodes with those features: data processing (immediate and
+// The decoder covers the whole instruction set that LLVM decodes with
+// those features: data processing (immediate and
 // register, including CRC32 and pointer authentication), loads and stores
 // (all addressing modes, exclusives, load-acquire/store-release, LSE
 // atomics and compare and swap, `LDRAA`/`LDRAB`, prefetches), branches,
@@ -30,8 +30,12 @@
 // `PSTATE` moves, `SYS`/`SYSL` with their `AT`/`DC`/`IC`/`TLBI` aliases and
 // `MRS`/`MSR` with named system registers). The FlagM instructions
 // `CFINV`, `RMIF` and `SETF8`/`SETF16` are decoded too (the Lisp semantics
-// define them) although they need `+flagm`. SIMD/FP, SVE and SME
-// instructions are reported as invalid.
+// define them) although they need `+flagm`. The floating-point and
+// Advanced SIMD instructions (`simd.mbt`) use the same register names
+// (`B0`..`Q31`, and `D0_D1`-style lists for the structure loads and
+// stores). SVE and SME instructions, and the extensions that upstream does
+// not enable (half-precision arithmetic, dot product, cryptography, ...),
+// are reported as invalid, as LLVM does.
 
 ///|
 priv struct A64Insn {
@@ -154,6 +158,7 @@ pub fn decode_a64_word(
     10 | 11 => a64_branch_system(word)
     4 | 6 | 12 | 14 => a64_load_store(word)
     5 | 13 => a64_dp_reg(word)
+    7 | 15 => a64_simd(word)
     _ => None
   }
   let raw = match raw {

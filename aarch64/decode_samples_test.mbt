@@ -57,13 +57,10 @@ test "decode: every sample decodes like llvm-mc, with LLVM's kinds" {
 }
 
 ///|
-test "decode: SIMD/FP and unallocated words are invalid, FlagM is decoded" {
-  // valid for LLVM but outside the decoder: SIMD and floating point
-  for word in [0x1E622820U, 0x4EA11C20U, 0x3D8003E0U] {
-    assert_true(@aarch64.decode_a64_word(word) is None)
-  }
-  // invalid for LLVM too: SVE (not enabled) and unallocated
-  for word in [0x04A00000U, 0x00010000U] {
+test "decode: SVE and unallocated words are invalid, FlagM is decoded" {
+  // invalid for LLVM too: SVE, half-precision arithmetic and AES (not
+  // enabled) and unallocated
+  for word in [0x04A00000U, 0x1EE22820U, 0x4E284800U, 0x00010000U] {
     assert_true(@aarch64.decode_a64_word(word) is None)
   }
   // FlagM needs +flagm in LLVM (upstream does not enable it), but the Lisp

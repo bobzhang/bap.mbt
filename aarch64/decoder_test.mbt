@@ -117,8 +117,8 @@ test "A64 arithmetic and logical instructions" {
   inspect(show(0x3A420024), content="CCMNWr W1, W2, 4, 0 | ccmn w1, w2, #4, eq")
   inspect(show(0x3A00082D), content="SETF8 W1 | setf8 w1")
   inspect(show(0xBA018422), content="RMIF X1, 3, 2 | rmif x1, #3, #2")
-  // SIMD and floating point instructions are not decoded
-  inspect(show(0x1E622820), content="invalid")
+  // floating point
+  inspect(show(0x1E622820), content="FADDDrr D0, D1, D2 | fadd d0, d1, d2")
 }
 
 ///|
@@ -235,7 +235,8 @@ test "A64 kinds, raw bytes and the decoder interface" {
     content="[Return, Barrier, Terminator, MayAffectControlFlow]",
   )
   assert_true(@aarch64.decode_a64(bytes[4:]) is Truncated)
-  assert_true(@aarch64.decode_a64(b"\x20\x28\x62\x1e"[:]) is Invalid(size=4))
+  // SVE is not enabled
+  assert_true(@aarch64.decode_a64(b"\x00\x00\xa0\x04"[:]) is Invalid(size=4))
   fn kinds(w : UInt) -> Array[@mc.Kind] {
     @aarch64.decode_a64_word(w).unwrap().kinds.iter().collect()
   }

@@ -146,3 +146,32 @@ test "the LLVM samples the Lisp semantics define lift without errors" {
     ),
   )
 }
+
+///|
+test "the SIMD/FP samples lift without errors (unsupported without semantics)" {
+  let registry = @mc.Registry::new()
+  @primus_lisp.register_semantics_providers(registry~)
+  let ctx = @mc.Context::create(@core_theory.Target::aarch64())
+  let failed = []
+  for line in llvm_simd_samples.split("\n") {
+    guard !line.is_empty() else { continue }
+    let value = line[2:10].fold(init=0U, (v, c) => {
+      let d = if c >= 'a' {
+        c.to_int() - 'a'.to_int() + 10
+      } else {
+        c.to_int() - '0'.to_int()
+      }
+      (v << 4) | d.reinterpret_as_uint()
+    })
+    guard @aarch64.decode_a64_word(value, addr=0x400000) is Some(insn) else {
+      fail("not decoded")
+    }
+    try registry.lift(ctx, insn) catch {
+      Unsupported(..) => ()
+      err => failed.push("\{insn.name}: \{err.message()}")
+    } noraise {
+      _ => ()
+    }
+  }
+  inspect(failed.join("\n"), content="")
+}

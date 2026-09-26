@@ -17,15 +17,14 @@ test "redeclaring a property with the same domain yields the same slot" {
   let refined : @knowledge.Class[Unit, String] = cls.refine(sort="s")
   let third = refined.property(name=kb_name("ident-v"), domain=dom)
   assert_eq(kb.current(third, obj), 9)
-  // a different domain object cannot be proven to have the same type: the
-  // new declaration shadows the previous one with a fresh slot
-  let shadow = cls.property(
-    name=kb_name("ident-v"),
-    domain=int_domain("ident-v"),
-  )
-  assert_eq(shadow.promise_count(), 0)
-  assert_eq(kb.current(shadow, obj), 0)
-  assert_eq(kb.current(first, obj), 9)
+}
+
+///|
+test "panic redeclaring a property with a different domain" {
+  let cls = kb_class("ident-conflict")
+  ignore(cls.property(name=kb_name("ident-c"), domain=int_domain("ident-c")))
+  // a different domain object cannot be proven to have the same type
+  ignore(cls.property(name=kb_name("ident-c"), domain=int_domain("ident-c")))
 }
 
 ///|

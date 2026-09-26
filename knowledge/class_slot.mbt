@@ -182,9 +182,9 @@ pub fn[K, S, P] Class::property(
   // A redeclaration of the property with the same domain denotes the same
   // slot. The typed core of the previous declaration is recovered through
   // the exchange cell of the (physically same) domain, so no unsafe cast
-  // is needed; with a different domain object the types cannot be proven
-  // equal and a new slot shadows the previous declaration.
-  let previous = match class_slots.get(owner) {
+  // is needed. A redeclaration with a different domain object is an error,
+  // as upstream (`Failed to declare a new property`).
+  match class_slots.get(owner) {
     Some(slots) =>
       match slots.get(name) {
         Some(pack) => {
@@ -193,15 +193,24 @@ pub fn[K, S, P] Class::property(
           let core = domain.exchange.val
           domain.exchange.val = None
           (pack.unpublish)()
-          core
+          match core {
+            Some(core) =>
+              return {
+                owner,
+                name,
+                domain_value: domain,
+                desc,
+                core,
+                _phantom: None,
+              }
+            None =>
+              abort(
+                "Failed to declare a new property, there is already a property named `\{name.show()}' in the class `\{owner.show()}' with a different domain",
+              )
+          }
         }
-        None => None
+        None => ()
       }
-    None => None
-  }
-  match previous {
-    Some(core) =>
-      return { owner, name, domain_value: domain, desc, core, _phantom: None, }
     None => ()
   }
   let key : Key[P] = Key::fresh(name)

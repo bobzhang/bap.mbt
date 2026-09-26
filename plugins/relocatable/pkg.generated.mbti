@@ -1,0 +1,87 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/relocatable"
+
+import {
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/image",
+  "bobzhang/bap/ogre",
+  "bobzhang/bap/project",
+  "bobzhang/bap/types",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn chop_version(String) -> String
+
+pub fn collect_insns(Int, UInt64, (UInt64) -> LiftedInsn?) -> Array[@types.Stmt]
+
+pub fn declare_plugin() -> Unit raise
+
+pub fn find_references(Array[@types.Stmt]) -> Array[RelRef]
+
+pub fn is_stub_section(String) -> Bool
+
+pub fn mips_roots(References, @core_theory.Target) -> Array[UInt64]
+
+pub let name : String
+
+pub fn name_stubs(@project.Project, is_stub? : (UInt64) -> Bool, lift? : (UInt64) -> LiftedInsn?) -> @project.Project
+
+pub fn optimize(Array[@types.Stmt]) -> Array[@types.Stmt]
+
+pub fn pass() -> @project.ProjectPass
+
+pub fn plt_size(@core_theory.Target) -> Int?
+
+pub fn project_is_stub(@project.Project) -> (UInt64) -> Bool
+
+pub fn project_lift(@project.Project) -> (UInt64) -> LiftedInsn?
+
+pub fn register() -> Result[Bool, String]
+
+pub fn register_sources(@image.Image, target? : @core_theory.Target, lift? : (UInt64) -> LiftedInsn?) -> Unit
+
+pub fn resolve_stub(References, @core_theory.Target, UInt64, (UInt64) -> LiftedInsn?) -> String?
+
+pub let rooter_name : String
+
+pub fn symbolizer(References, @core_theory.Target, is_stub~ : (UInt64) -> Bool, lift? : (UInt64) -> LiftedInsn?) -> @project.ProjectSymbolizer
+
+pub let symbolizer_name : String
+
+// Errors
+
+// Types and methods
+pub(all) struct LiftedInsn {
+  bil : Array[@types.Stmt]
+  max_addr : UInt64
+}
+
+pub(all) enum RefValue {
+  Ref(RelRef)
+  Bad
+} derive(Eq, @debug.Debug)
+pub fn RefValue::equal(Self, Self) -> Bool
+pub fn RefValue::not_equal(Self, Self) -> Bool
+pub fn RefValue::to_repr(Self) -> @debug.Repr
+
+pub struct References {
+  refs : Map[UInt64, RefValue]
+}
+pub fn References::create(@core_theory.Target, @ogre.Doc) -> Self
+pub fn References::lookup(Self, UInt64) -> RelRef?
+pub fn References::of_project(@project.Project) -> Self
+pub fn References::search(Self, @types.Word) -> RelRef?
+pub fn References::to_array(Self) -> Array[(UInt64, RefValue)]
+
+pub(all) enum RelRef {
+  Addr(UInt64)
+  Name(String)
+} derive(Eq, @debug.Debug)
+pub fn RelRef::equal(Self, Self) -> Bool
+pub fn RelRef::not_equal(Self, Self) -> Bool
+pub fn RelRef::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

@@ -62,12 +62,13 @@ pub fn SemanticsFacts::new() -> SemanticsFacts {
   let effect = Semantics::effect_slot()
   let value = Semantics::value_slot()
   let code = Semantics::code_slot()
+  let state = @knowledge.State::new()
   {
-    state_value: @knowledge.State::new(),
+    state_value: state,
     class_value: cls,
-    effect_value: @knowledge.FactTable::new(effect),
-    value_value: @knowledge.FactTable::new(value),
-    code_value: @knowledge.FactTable::new(code),
+    effect_value: @knowledge.FactTable::new(effect, state~),
+    value_value: @knowledge.FactTable::new(value, state~),
+    code_value: @knowledge.FactTable::new(code, state~),
   }
 }
 

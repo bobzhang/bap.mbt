@@ -276,34 +276,14 @@ pub fn Domain::string(name : Name) -> Domain[String] {
 }
 
 ///|
+/// `Domain.obj cls`: objects of the class ordered totally by their
+/// identifiers, with the null object as the bottom (upstream derives it
+/// with `Domain.total ~empty:Oid.zero ~order:Oid.compare`).
 pub fn[K, S] Domain::obj(cls : Class[K, S]) -> Domain[Object[K]] {
-  let empty = Object::null(cls)
-  Domain::new(
-    name=cls.name(),
-    empty=Some(empty),
-    is_empty=(value : Object[K]) => value.equal(empty),
-    order=(lhs : Object[K], rhs : Object[K]) => {
-      if lhs.equal(rhs) {
-        Equal
-      } else if lhs.equal(empty) {
-        Less
-      } else if rhs.equal(empty) {
-        Greater
-      } else {
-        Incomparable
-      }
-    },
-    join=(lhs : Object[K], rhs : Object[K]) => {
-      if lhs.equal(rhs) || rhs.equal(empty) {
-        Ok(lhs)
-      } else if lhs.equal(empty) {
-        Ok(rhs)
-      } else {
-        Err("conflicting object facts in domain \{cls.name().show()}")
-      }
-    },
-    inspect=(value : Object[K]) => value.repr(),
-  )
+  Domain::total(cls.name(), value => value.repr(), empty=Object::null(cls), compare=(
+    lhs : Object[K],
+    rhs : Object[K],
+  ) => lhs.id().compare(rhs.id()))
 }
 
 ///|

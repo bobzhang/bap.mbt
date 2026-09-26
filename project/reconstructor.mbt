@@ -249,17 +249,8 @@ pub fn ProjectReconstructor::default(
       project.disassembly().edges(),
       project.rooter().roots(),
     )
-    let subroutines : Array[@types.Term[@types.Sub]] = []
-    let errors : Array[ProjectLiftError] = []
-    for group in groups {
-      let name = symbolizer.resolve(group[0].min_addr())
-      match
-        project_reconstructor_subroutine(project, name, group, registry, errors) {
-        Ok(subroutine) => subroutines.push(subroutine)
-        Err(reason) => return Err(reason)
-      }
-    }
-    Ok(project_reconstructor_apply(project, subroutines, errors))
+    let names = groups.map(group => symbolizer.resolve(group[0].min_addr()))
+    project_reconstructor_lift_groups(project, names, groups, registry)
   })
 }
 
@@ -295,28 +286,13 @@ pub fn ProjectReconstructor::of_blocks(
         None => ()
       }
     }
-    let subroutines : Array[@types.Term[@types.Sub]] = []
-    let errors : Array[ProjectLiftError] = []
-    for i in 0..<names.length() {
-      let group = groups[i]
+    if names.is_empty() {
+      return Err("project block reconstructor matched no disassembly blocks")
+    }
+    for group in groups {
       group.sort_by((left, right) => left.min_addr().compare(right.min_addr()))
-      match
-        project_reconstructor_subroutine(
-          project,
-          names[i],
-          group,
-          registry,
-          errors,
-        ) {
-        Ok(subroutine) => subroutines.push(subroutine)
-        Err(reason) => return Err(reason)
-      }
     }
-    if subroutines.is_empty() {
-      Err("project block reconstructor matched no disassembly blocks")
-    } else {
-      Ok(project_reconstructor_apply(project, subroutines, errors))
-    }
+    project_reconstructor_lift_groups(project, names, groups, registry)
   })
 }
 

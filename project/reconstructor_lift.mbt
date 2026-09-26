@@ -1,41 +1,50 @@
-// Lifting the reconstructed subroutines into IR (upstream
-// `Bap_sema_lift.program`/`lift_sub`/`IrBuilder.blk`): every basic block is
-// lifted instruction by instruction into one or more IR blocks with
-// `Blk::lift_block`, which keeps the structured control flow of the BIL
-// (conditionals, loops), the calls with their returns, the interrupts and
-// the fallthroughs given by the disassembly edges.
+// Lifting disassembled code into IR (upstream `lib/bap_sema/bap_sema_lift.ml`:
+// `IrBuilder.blk`, `lift_sub` and `program`): every basic block is lifted
+// instruction by instruction into one or more IR blocks with
+// `@types.Blk::lift_block`, which keeps the structured control flow of the
+// BIL (conditionals, loops), the calls with their returns, the interrupts
+// and the fallthroughs given by the CFG.
+//
+// Two front ends share the per-block lifting: the default reconstructor,
+// which groups the disassembled blocks itself, and the symbol-table based
+// `lift_ir` functions that mirror upstream `Blk.lift`, `Sub.lift` and
+// `Program.lift`.
 
 ///|
-/// The state of the IR lifting of one reconstruction.
+/// The state of one IR lifting: where the lifted instructions come from,
+/// the failures, and the knowledge upstream takes from the knowledge base.
 priv struct ProjectIrLifter {
-  project : Project
+  target : @core_theory.Target
   registry : @mc.Registry
   errors : Array[ProjectLiftError]
+  pkg : String?
   /// the width of code addresses
   width : Int
   /// the labels of the known subroutine starts (upstream
-  /// `Theory.Label.is_subroutine`, provided by the rooter)
+  /// `Theory.Label.is_subroutine`)
   subroutines : Map[@types.Tid, Unit]
 }
 
 ///|
 fn ProjectIrLifter::new(
-  project : Project,
+  target : @core_theory.Target,
   registry : @mc.Registry,
-  errors : Array[ProjectLiftError],
+  pkg : String?,
+  subroutines : Array[UInt64],
 ) -> ProjectIrLifter {
-  let code_width = project.target().code_addr_size()
+  let code_width = target.code_addr_size()
   let width = if code_width <= 0 { 32 } else { code_width }
   let lifter : ProjectIrLifter = {
-    project,
+    target,
     registry,
-    errors,
+    errors: [],
+    pkg,
     width,
     subroutines: Map([]),
   }
-  for root in project.rooter().roots() {
-    match lifter.word(root) {
-      Some(word) => lifter.subroutines[lifter.label(word)] = ()
+  for addr in subroutines {
+    match lifter.block_label(addr) {
+      Some(label) => lifter.subroutines[label] = ()
       None => ()
     }
   }
@@ -52,20 +61,13 @@ fn ProjectIrLifter::word(self : ProjectIrLifter, addr : UInt64) -> @types.Word? 
 }
 
 ///|
-fn ProjectIrLifter::label(
-  self : ProjectIrLifter,
-  word : @types.Word,
-) -> @types.Tid {
-  @types.Tid::for_addr(word, pkg?=self.project.pkg())
-}
-
-///|
-/// The label of the block starting at `addr`.
+/// The label of the block starting at `addr` (upstream
+/// `Theory.Label.for_addr`).
 fn ProjectIrLifter::block_label(
   self : ProjectIrLifter,
   addr : UInt64,
 ) -> @types.Tid? {
-  self.word(addr).map(word => self.label(word))
+  self.word(addr).map(word => @types.Tid::for_addr(word, pkg?=self.pkg))
 }
 
 ///|
@@ -95,80 +97,29 @@ fn project_ir_terminator(lifted : Array[Result[@mc.Lifted, String]]) -> Int {
 }
 
 ///|
-/// The fallthrough of `block` (upstream `fall_of_block`): the destination
-/// of its fall edge, intraprocedural when the destination is in `group`,
-/// into another subroutine otherwise.
-fn ProjectIrLifter::fall(
+/// The IR blocks of the basic block at `addr` made of `insns` (upstream
+/// `IrBuilder.blk`): the block falls to `fall`, and its jumps become calls
+/// when its terminator is a call or `explicit_call` holds. When the
+/// terminator cannot be lifted, the exit block gets the jumps `fallback`
+/// instead of the lifted control flow.
+fn ProjectIrLifter::lift_blk(
   self : ProjectIrLifter,
-  block : @memory.Memory,
-  group : Array[@memory.Memory],
-) -> @types.IrFall? {
-  let blocks = self.project.disassembly().blocks()
-  for edge in self.project.disassembly().edges_from_block(block) {
-    if edge.kind() == FallEdge && edge.target() is Some(target) {
-      let (inside, index) = match
-        project_reconstructor_find_block_containing(group, target) {
-        Some(index) => (true, Some(index))
-        None =>
-          (false, project_reconstructor_find_block_containing(blocks, target))
-      }
-      guard index is Some(index) else { continue }
-      let dst_block = if inside { group[index] } else { blocks[index] }
-      guard self.block_label(dst_block.min_addr()) is Some(tid) else {
-        continue
-      }
-      let dst = @types.Jmp::resolved(tid)
-      return Some(if inside { IntraFall(dst) } else { InterFall(dst) })
-    }
-  }
-  None
-}
-
-///|
-/// The jumps along the disassembly edges of `block` to blocks of `group`,
-/// the fallthrough last, used for blocks without lifted terminators.
-fn ProjectIrLifter::edge_jmps(
-  self : ProjectIrLifter,
-  block : @memory.Memory,
-  group : Array[@memory.Memory],
-  ir_blocks : Array[@types.Tid],
-) -> Array[@types.Term[@types.Jmp]] {
-  let edges = self.project.disassembly().edges_from_block(block)
-  let ordered = edges.filter(edge => edge.kind() != FallEdge) +
-    edges.filter(edge => edge.kind() == FallEdge)
-  let result : Array[@types.Term[@types.Jmp]] = []
-  for edge in ordered {
-    if edge.target() is Some(target) &&
-      project_reconstructor_find_block_containing(group, target) is Some(index) {
-      result.push(project_reconstructor_edge_jmp(edge, ir_blocks[index]))
-    }
-  }
-  result
-}
-
-///|
-/// The IR blocks of `block` (upstream `IrBuilder.blk`). A block without
-/// instructions, or whose terminator cannot be lifted, gets jumps along its
-/// disassembly edges instead of the lifted control flow.
-fn ProjectIrLifter::blk(
-  self : ProjectIrLifter,
-  block : @memory.Memory,
-  group : Array[@memory.Memory],
-  ir_blocks : Array[@types.Tid],
+  addr : UInt64,
+  insns : Array[ProjectDisassemblyInstruction],
+  fall~ : @types.IrFall?,
+  explicit_call~ : Bool,
+  fallback~ : Array[@types.Term[@types.Jmp]],
 ) -> Result[Array[@types.Term[@types.Blk]], String] {
-  guard self.word(block.min_addr()) is Some(addr) else {
-    return Err(
-      "disassembly block address is not representable by project target",
-    )
+  guard self.word(addr) is Some(word) else {
+    return Err("disassembly block address is not representable by project target")
   }
-  let tid = self.label(addr)
-  let insns = self.project.disassembly().instructions_in(block)
+  let tid = @types.Tid::for_addr(word, pkg?=self.pkg)
   let lifted = insns.map(insn => {
-    insn.lift(target=self.project.target(), registry=self.registry)
+    insn.lift(target=self.target, registry=self.registry)
   })
   for i, insn in insns {
     if lifted[i] is Err(message) {
-      self.errors.push({ addr: insn.addr(), opcode: insn.name(), message, })
+      self.errors.push({ addr: insn.addr(), opcode: insn.name(), message })
     }
   }
   let ir_insns = project_lift_segments(insns, lifted).map(segment => {
@@ -180,7 +131,6 @@ fn ProjectIrLifter::blk(
     )
   })
   let terminator = project_ir_terminator(lifted)
-  let options_pkg = self.project.pkg()
   let is_subroutine = (label : @types.Tid) => self.subroutines.contains(label)
   if terminator >= 0 && lifted[terminator] is Ok(_) {
     let insn = insns[terminator]
@@ -188,11 +138,11 @@ fn ProjectIrLifter::blk(
       @types.Blk::lift_block(
         tid,
         ir_insns,
-        addr~,
-        fall?=self.fall(block, group),
-        is_call=insn.is_kind(ProjectCall),
+        addr=word,
+        fall?,
+        is_call=insn.is_kind(ProjectCall) || explicit_call,
         is_barrier=insn.is_kind(ProjectBarrier),
-        pkg?=options_pkg,
+        pkg?=self.pkg,
         addr_width=self.width,
         is_subroutine~,
       ),
@@ -201,16 +151,16 @@ fn ProjectIrLifter::blk(
     let blks = @types.Blk::lift_block(
       tid,
       ir_insns,
-      addr~,
+      addr=word,
       is_call=false,
       is_barrier=true,
-      pkg?=options_pkg,
+      pkg?=self.pkg,
       addr_width=self.width,
       is_subroutine~,
     )
     let last = blks.length() - 1
     let mut exit = blks[last]
-    for jmp in self.edge_jmps(block, group, ir_blocks) {
+    for jmp in fallback {
       exit = exit.append_jmp(jmp)
     }
     blks[last] = exit
@@ -219,29 +169,14 @@ fn ProjectIrLifter::blk(
 }
 
 ///|
-/// The blocks of `group` in reverse postorder from its first block along
-/// the disassembly edges (upstream `lift_sub` traverses the CFG of a
-/// subroutine in reverse postorder), followed by the unreached blocks in
-/// address order.
-fn ProjectIrLifter::order(
-  self : ProjectIrLifter,
-  group : Array[@memory.Memory],
-) -> Array[Int] {
-  let n = group.length()
-  let succs : Array[Array[Int]] = Array::makei(n, _ => [])
-  for i, block in group {
-    for edge in self.project.disassembly().edges_from_block(block) {
-      if edge.target() is Some(target) &&
-        project_reconstructor_find_block_containing(group, target)
-        is Some(index) &&
-        !succs[i].contains(index) {
-        succs[i].push(index)
-      }
-    }
-  }
+/// The indices of `nodes` in reverse postorder of a depth-first traversal
+/// from `nodes[0]` along `succs` (upstream
+/// `Graphlib.reverse_postorder_traverse`), followed by the unreached
+/// indices in order.
+fn project_ir_reverse_postorder(succs : Array[Array[Int]]) -> Array[Int] {
+  let n = succs.length()
   let visited = Array::make(n, false)
   let postorder : Array[Int] = []
-  // iterative depth-first search
   if n > 0 {
     let stack : Array[(Int, Int)] = [(0, 0)]
     visited[0] = true
@@ -268,36 +203,119 @@ fn ProjectIrLifter::order(
   order
 }
 
+// Lifting the subroutines of the default reconstructor.
+
+///|
+/// The fallthrough of `block` of the reconstructed `group` (upstream
+/// `fall_of_block`): the destination of its fall edge, intraprocedural when
+/// the destination is in `group`, into another subroutine otherwise.
+fn ProjectIrLifter::group_fall(
+  self : ProjectIrLifter,
+  project : Project,
+  block : @memory.Memory,
+  group : Array[@memory.Memory],
+) -> @types.IrFall? {
+  for edge in project.disassembly().edges_from_block(block) {
+    if edge.kind() == FallEdge && edge.target() is Some(target) {
+      let (inside, dst_block) = match
+        project_reconstructor_find_block_containing(group, target) {
+        Some(index) => (true, Some(group[index]))
+        None => {
+          let blocks = project.disassembly().blocks()
+          (
+            false,
+            project_reconstructor_find_block_containing(blocks, target).map(i => {
+              blocks[i]
+            }),
+          )
+        }
+      }
+      guard dst_block is Some(dst_block) &&
+        self.block_label(dst_block.min_addr()) is Some(tid) else {
+        continue
+      }
+      let dst = @types.Jmp::resolved(tid)
+      return Some(if inside { IntraFall(dst) } else { InterFall(dst) })
+    }
+  }
+  None
+}
+
+///|
+/// The jumps along the disassembly edges of `block` to blocks of `group`,
+/// the fallthrough last, used for blocks without lifted terminators.
+fn project_ir_group_edge_jmps(
+  project : Project,
+  block : @memory.Memory,
+  group : Array[@memory.Memory],
+  labels : Array[@types.Tid],
+) -> Array[@types.Term[@types.Jmp]] {
+  let edges = project.disassembly().edges_from_block(block)
+  let ordered = edges.filter(edge => edge.kind() != FallEdge) +
+    edges.filter(edge => edge.kind() == FallEdge)
+  let result : Array[@types.Term[@types.Jmp]] = []
+  for edge in ordered {
+    if edge.target() is Some(target) &&
+      project_reconstructor_find_block_containing(group, target)
+      is Some(index) {
+      result.push(project_reconstructor_edge_jmp(edge, labels[index]))
+    }
+  }
+  result
+}
+
 ///|
 /// The subroutine `name` lifted from the blocks of `group` (upstream
-/// `lift_sub`), with its address and entry-point attributes.
-fn ProjectIrLifter::subroutine(
+/// `lift_sub`): the blocks are lifted in reverse postorder from the first
+/// block along the disassembly edges. Blocks without instructions, or whose
+/// terminator cannot be lifted, get jumps along their disassembly edges.
+fn ProjectIrLifter::group_subroutine(
   self : ProjectIrLifter,
+  project : Project,
   name : String,
   group : Array[@memory.Memory],
 ) -> Result[@types.Term[@types.Sub], String] {
-  let ir_blocks : Array[@types.Tid] = []
+  let labels : Array[@types.Tid] = []
   for block in group {
     match self.block_label(block.min_addr()) {
-      Some(tid) => ir_blocks.push(tid)
+      Some(tid) => labels.push(tid)
       None =>
         return Err(
           "disassembly block address is not representable by project target",
         )
     }
   }
+  let succs : Array[Array[Int]] = group.map(block => {
+    let result : Array[Int] = []
+    for edge in project.disassembly().edges_from_block(block) {
+      if edge.target() is Some(target) &&
+        project_reconstructor_find_block_containing(group, target)
+        is Some(index) &&
+        !result.contains(index) {
+        result.push(index)
+      }
+    }
+    result
+  })
   let blks : Array[@types.Term[@types.Blk]] = []
-  for index in self.order(group) {
-    match self.blk(group[index], group, ir_blocks) {
+  for index in project_ir_reverse_postorder(succs) {
+    let block = group[index]
+    match
+      self.lift_blk(
+        block.min_addr(),
+        project.disassembly().instructions_in(block),
+        fall=self.group_fall(project, block, group),
+        explicit_call=false,
+        fallback=project_ir_group_edge_jmps(project, block, group, labels),
+      ) {
       Ok(items) => blks.push_iter(items.iter())
       Err(reason) => return Err(reason)
     }
   }
-  let project = self.project
   let mut sub = @types.Sub::create(
     name~,
     blks~,
-    tid=@types.Tid::for_name(name, pkg?=project.pkg()),
+    tid=@types.Tid::for_name(name, pkg?=self.pkg),
   )
   if !group.is_empty() {
     match self.word(group[0].min_addr()) {
@@ -313,26 +331,31 @@ fn ProjectIrLifter::subroutine(
 }
 
 ///|
-fn project_reconstructor_subroutine(
+/// The subroutines named `names` lifted from the block `groups` of the
+/// default reconstructors, installed into `project` with their jumps
+/// relinked at the program level (upstream `alternate_nonlocal` and
+/// `link_call`): jumps that may leave their subroutines become calls, and
+/// destinations that are entries of subroutines are relinked to the
+/// subroutines. The rooter roots are the known subroutine starts.
+fn project_reconstructor_lift_groups(
   project : Project,
-  name : String,
-  blocks : Array[@memory.Memory],
+  names : Array[String],
+  groups : Array[Array[@memory.Memory]],
   registry : @mc.Registry,
-  errors : Array[ProjectLiftError],
-) -> Result[@types.Term[@types.Sub], String] {
-  ProjectIrLifter::new(project, registry, errors).subroutine(name, blocks)
-}
-
-///|
-/// Install the reconstructed subroutines, relinking their jumps at the
-/// program level (upstream `alternate_nonlocal` and `link_call`): jumps
-/// that may leave their subroutines become calls, and destinations that are
-/// entries of subroutines are relinked to the subroutines.
-fn project_reconstructor_apply(
-  project : Project,
-  subroutines : Array[@types.Term[@types.Sub]],
-  errors : Array[ProjectLiftError],
-) -> Project {
+) -> Result[Project, String] {
+  let lifter = ProjectIrLifter::new(
+    project.target(),
+    registry,
+    project.pkg(),
+    project.rooter().roots(),
+  )
+  let subroutines : Array[@types.Term[@types.Sub]] = []
+  for i, group in groups {
+    match lifter.group_subroutine(project, names[i], group) {
+      Ok(sub) => subroutines.push(sub)
+      Err(reason) => return Err(reason)
+    }
+  }
   let entries : Map[@types.Tid, @types.Tid] = Map([])
   for sub in subroutines {
     match sub.blks() {
@@ -345,9 +368,10 @@ fn project_reconstructor_apply(
     @types.Program::create(subs=subroutines),
     entries,
   )
-  let subroutines = program.subs()
-  project
-  .with_program(program)
-  .with_state(project.state().with_subroutines(subroutines))
-  .with_lift_errors(errors)
+  Ok(
+    project
+    .with_program(program)
+    .with_state(project.state().with_subroutines(program.subs()))
+    .with_lift_errors(lifter.errors),
+  )
 }

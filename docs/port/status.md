@@ -156,6 +156,31 @@ This repository is porting `.repos/bap` from OCaml to idiomatic MoonBit.
 - `project/lift dispatch`: instruction/block/state/project lifting goes through the registry (built-in thumb, arm, mips, powerpc, systemz providers) with fallback to the Basic x86/ARM lifter; delay-slot branches are moved after their delay-slot instructions with condition/target capture; reconstruction keeps per-instruction successes and records failures in `Project::lift_errors()`.
 - `core_theory/role query performance`: target register-role tables are memoized per target identity, making `Target::regs`/`reg`/`vars_with_role` cheap enough for ABI and lifter code paths.
 
+- `plugins/optimization`: SSA-based constant propagation and dead-code elimination at levels 0–3 (virtuals, flags, physical registers) with cross-subroutine liveness protection and unreachable-branch/block removal, registered as the autorun `optimization` pass.
+- `plugins/callsites`: synthetic argument definitions at call sites (inputs before the call, outputs in the return block) carrying origin/address/insn attributes; pass `callsites` after `abi`.
+- `plugins/warn_unused`: `warn-unused-taint`/`-print`/`-mark` and the chained `warn-unused` pass with a string encoding for the per-register taint map.
+- `plugins/glibc_runtime`: `__libc_start_main` discovery/creation from the entry point and the `glibc-runtime` pass recovering `main` from the start routine's first argument.
+- `plugins/dump_symbols`, `plugins/callgraph_collator`, `plugins/read_symbols`, `plugins/relocatable`, `plugins/report`, `plugins/dependencies`: symbol dumps, callgraph diffs between versions, symbol-file rooters/symbolizers, relocation/PLT-based stub naming and MIPS roots, ANSI progress reporting over `main_event`, and the `dependencies` command (imports/exports/libraries with YAML/sexp/JSON/graph output).
+- `plugins/constant_tracker`: the static-constant tracking policy and primitives, not yet attached to the `primus` machine.
+- `plugins/print`: upstream-faithful BIR/BIL/expression printers (driven through the `text_tags` Format engine), IR/project ADT, BIL ADT/sexp, callgraph and CFG DOT, symbol tables, asm/decoded listings, `--print-matching` filters, demangling, and a project/term writer registry with the `--print-*` options. The `knowledge` writer and `--print-semantics` are not covered.
+- `plugins/phoenix`: phoenix block naming, BIL optimizations, whole-program DOT CFGs, HTML BIL/assembly pages, JSON indexes and site layout rendering, with native-only on-disk storage.
+- `plugins/emit_ida_script`: IDA Python script generation for colors, comments and memory annotations with upstream substitution and escaping.
+- `taint`: port of `lib/bap_taint` on the `primus` machine: kinds/objects, the per-fork persistent tracker (direct relations by value id, indirect by address), `taint-attached`/`taint-finalize` observations, per-kind propagation policies (by-computation and exact), the conservative GC, and the `tainted-regs`/`tainted-ptrs` attribute codec shared with `bml`.
+- `plugins/primus_taint`, `plugins/taint`, `plugins/primus_propagate_taint`, `plugins/propagate_taint`: taint components and a named primitive table for later Lisp binding, strain-based seeding pass, Primus taint intro/mapper/marker components, and the legacy microx-based BIL taint propagator with the `propagate-taint` pass. The `.lisp` taint sources/sinks await Primus Lisp.
+- `plugins/primus_*` (Lisp-free): greedy, round-robin, wandering and exploring schedulers; promiscuous mode (forking at trivial-condition branches and direct-return calls, division-by-zero handler); `max-length`/`max-visited` limits; `primus_track_visited` + `primus_mark_visited`; `primus_region`/`primus_dictionary` primitive tables linked into the machine; `primus_random` generators and randomizers; `primus_loader` (stack, argv/envp, segments, relocations, brk/endp); `primus_print` observation tracing and tracebacks; `primus_systems` (embedded `core.asd`, `.asd` loading, listing commands); `primus_x86` register/PLT setup and `primus_powerpc` initialization. The unreleased `lib/bap_primus_machine` prototype is not ported.
+- `native_io/file system`: stat/lstat, sorted directory listing, mkdir(-p), removal, rename, chmod, getcwd, temporary files/dirs, atomic writes and flock-based locks (native only, error stubs elsewhere); `recipe`, `phoenix` and `bap_main` use it.
+- `regex`, `sexp`, `digest`: shared PCRE-subset regular expressions, sexplib-compatible S-expression reading/compact printing, and MD5 (RFC 1321) backing `regular` digests, replacing per-package copies.
+- `plugins/cache`: upstream on-disk cache (`config.3` in upstream's binary layout, read-only `data/<digest>` entries written by atomic rename, size-based random GC with a GC lock, `bap cache` command) installed as `regular`'s cache service.
+
+## Fidelity Gaps (audit, 2026-09-26)
+
+- `knowledge` (~40%): no least-fixed-point `collect`/promise evaluation, promise rejection or `with_empty`; facts live in per-slot tables instead of one KB state; no KB `run`, context variables, heterogeneous values, symbol imports or whole-state persistence.
+- `core_theory` (~30%): sorts, variables and targets are substantial, but the executable `Theory.Core` algebra, empty/basic instances and the theory instance manager are missing; `Value`/`Effect`/`Semantics` are fixed records rather than extensible KB values.
+- `project` disassembly (~40%): no incremental driver state (scan/merge/debt/explore), KB-backed calls, or callback-driven `Disasm_expert.Basic`; unrecognized bytes become successful `.byte` instructions.
+- `types` IR/BIL (~65%): BIL-to-IR reconstruction keeps only top-level assignments and selected jumps (no multi-block structured lowering); liveness lacks exit seeding and `keep`.
+- `image`/ELF (~70%/~55%): memory annotations are segment-name strings instead of typed tags; no lossless raw ELF reader.
+- `dwarf` (~85%): eager function extraction drops the valid prefix when a later unit is malformed.
+
 ## Next Packages
 
 - Expand `core_theory` with the full BAP knowledge registry, deeper source/compiler/program-unit/label fact integration, remaining alias provenance, and deeper architecture-specific target metadata.

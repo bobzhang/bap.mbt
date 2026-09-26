@@ -1,8 +1,12 @@
 options(
-  "native-stub": [ "file.c" ],
+  "native-stub": [ "file.c", "fs.c" ],
   targets: {
     "file_native.mbt": [ "native" ],
     "file_stub.mbt": [ "wasm", "wasm-gc", "js", "llvm" ],
     "file_native_test.mbt": [ "native" ],
+    "fs_native.mbt": [ "native" ],
+    "fs_stub.mbt": [ "wasm", "wasm-gc", "js", "llvm" ],
+    "fs_native_test.mbt": [ "native" ],
+    "fs_stub_test.mbt": [ "wasm", "wasm-gc", "js", "llvm" ],
   },
 )

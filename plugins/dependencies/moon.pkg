@@ -1,0 +1,6 @@
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/image",
+  "bobzhang/bap/main_event",
+  "bobzhang/bap/ogre",
+}

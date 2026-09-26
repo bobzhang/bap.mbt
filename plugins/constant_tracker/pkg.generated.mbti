@@ -1,0 +1,96 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/constant_tracker"
+
+import {
+  "bobzhang/bap/primus",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn all_static_constant(@primus.Machine, ArrayView[@primus.Value]) -> Bool
+
+pub fn call_primitive(@primus.Machine, String, Array[@primus.Value]) -> @primus.Value raise
+
+pub fn components() -> Array[Component]
+
+pub fn declare_plugin() -> Unit raise
+
+pub fn declare_static_constant(@primus.Machine, @primus.Value) -> Unit
+
+pub fn find_primitive(String) -> Primitive?
+
+pub let hardcoded_socket_address : String
+
+pub fn install_primitives((Primitive) -> Unit raise) -> Unit raise
+
+pub fn is_enabled() -> Bool
+
+pub fn is_static_constant(@primus.Machine, @primus.Value) -> Bool
+
+pub fn lisp_primitives() -> Array[LispPrimitive]
+
+pub let name : String
+
+pub let null_pointer_dereference : String
+
+pub fn points_to_static_data(@primus.Machine, @primus.Value, @primus.Value) -> Bool raise
+
+pub fn primitives() -> Array[Primitive]
+
+pub fn register(enable? : Bool) -> Bool
+
+pub fn register_components() -> Unit
+
+pub fn tracker_component(@primus.Machine) -> Unit
+
+// Errors
+
+// Types and methods
+pub(all) struct Component {
+  name : String
+  pkg : String
+  desc : String
+} derive(Eq, @debug.Debug)
+pub fn Component::equal(Self, Self) -> Bool
+pub fn Component::not_equal(Self, Self) -> Bool
+pub fn Component::to_repr(Self) -> @debug.Repr
+
+pub struct ConstantTracker {
+  // private fields
+}
+pub fn ConstantTracker::all_consts(Self, ArrayView[Int64]) -> Bool
+pub fn ConstantTracker::all_static_constant(Self, ArrayView[Int64]) -> Bool
+pub fn ConstantTracker::check_call(Self, String, ArrayView[UInt64], (UInt64) -> Int64?) -> String?
+pub fn ConstantTracker::check_hardcoded_socket_address(Self, UInt64, (UInt64) -> Int64?) -> String?
+pub fn ConstantTracker::check_null_pointer(Self, UInt64, Int64) -> String?
+pub fn ConstantTracker::intro(Self, Int64) -> Unit
+pub fn ConstantTracker::is_const(Self, Int64) -> Bool
+pub fn ConstantTracker::new() -> Self
+pub fn ConstantTracker::on_binop(Self, Int64, Int64, Int64) -> Unit
+pub fn ConstantTracker::on_cast(Self, Int64, Int64) -> Unit
+pub fn ConstantTracker::on_concat(Self, Int64, Int64, Int64) -> Unit
+pub fn ConstantTracker::on_extract(Self, Int64, Int64) -> Unit
+pub fn ConstantTracker::on_unop(Self, Int64, Int64) -> Unit
+pub fn ConstantTracker::points_to_static_data(Self, UInt64, UInt64, (UInt64) -> Int64?) -> Bool
+pub fn ConstantTracker::propagate(Self, ArrayView[Int64], Int64) -> Unit
+
+pub(all) struct LispPrimitive {
+  name : String
+  types : String
+  docs : String
+} derive(Eq, @debug.Debug)
+pub fn LispPrimitive::equal(Self, Self) -> Bool
+pub fn LispPrimitive::not_equal(Self, Self) -> Bool
+pub fn LispPrimitive::to_repr(Self) -> @debug.Repr
+
+pub struct Primitive {
+  name : String
+  types : String
+  docs : String
+  run : (@primus.Machine, Array[@primus.Value]) -> @primus.Value raise
+}
+pub fn Primitive::call(Self, @primus.Machine, Array[@primus.Value]) -> @primus.Value raise
+
+// Type aliases
+
+// Traits

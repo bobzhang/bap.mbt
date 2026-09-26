@@ -1,0 +1,156 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/taint"
+
+import {
+  "bobzhang/bap/primus",
+  "bobzhang/bap/types",
+  "moonbitlang/core/debug",
+  "moonbitlang/core/immut/sorted_set",
+}
+
+// Values
+pub let attached : @primus.Observation[(Rel, Object, @primus.Value)]
+
+pub let computation_policy_name : String
+
+pub let exact_policy_name : String
+
+pub fn[T] merge_term_taint_map(@types.Term[T], String, TaintMap) -> @types.Term[T]
+
+pub let object_width : Int
+
+pub fn propagate_by_computation(@primus.Machine) -> Unit
+
+pub fn propagate_exactly(@primus.Machine) -> Unit
+
+pub fn[T] set_term_taint_map(@types.Term[T], String, TaintMap) -> @types.Term[T]
+
+pub let taint_finalize : @primus.Observation[(Object, Bool)]
+
+pub let tainted_ptr_attr : String
+
+pub let tainted_ptrs_attr : String
+
+pub let tainted_reg_attr : String
+
+pub let tainted_regs_attr : String
+
+pub fn[T] term_taint_map(@types.Term[T], String) -> TaintMap
+
+// Errors
+pub(all) suberror TaintError {
+  BadObject(@primus.Value)
+  BadCast(@primus.Value)
+}
+
+// Types and methods
+pub struct Gc {
+}
+pub fn Gc::collect(@primus.Machine) -> Unit raise
+pub fn Gc::conservative(@primus.Machine) -> Unit
+
+pub struct Kind {
+  // private fields
+}
+pub fn Kind::compare(Self, Self) -> Int
+pub fn Kind::create(@primus.Machine, String) -> Self raise
+pub fn Kind::equal(Self, Self) -> Bool
+pub fn Kind::name(Self, @primus.Machine) -> String
+pub fn Kind::not_equal(Self, Self) -> Bool
+pub fn Kind::of_value(@primus.Value) -> Self
+pub fn Kind::op_ge(Self, Self) -> Bool
+pub fn Kind::op_gt(Self, Self) -> Bool
+pub fn Kind::op_le(Self, Self) -> Bool
+pub fn Kind::op_lt(Self, Self) -> Bool
+pub fn Kind::output(Self, &Logger) -> Unit
+pub fn Kind::to_string(Self) -> String
+pub fn Kind::to_value(Self) -> @primus.Value
+pub impl Compare for Kind
+pub impl Eq for Kind
+pub impl Show for Kind
+
+pub struct Object {
+  // private fields
+}
+pub fn Object::compare(Self, Self) -> Int
+pub fn Object::create(@primus.Machine, Kind) -> Self raise
+pub fn Object::equal(Self, Self) -> Bool
+pub fn Object::inspect(Self) -> @primus.Sexp
+pub fn Object::kind(Self, @primus.Machine) -> Kind raise
+pub fn Object::not_equal(Self, Self) -> Bool
+pub fn Object::of_value(@primus.Value) -> Self
+pub fn Object::op_ge(Self, Self) -> Bool
+pub fn Object::op_gt(Self, Self) -> Bool
+pub fn Object::op_le(Self, Self) -> Bool
+pub fn Object::op_lt(Self, Self) -> Bool
+pub fn Object::output(Self, &Logger) -> Unit
+pub fn Object::to_string(Self) -> String
+pub fn Object::to_value(Self) -> @primus.Value
+pub impl Compare for Object
+pub impl Eq for Object
+pub impl Show for Object
+
+pub struct Policy {
+  // private fields
+}
+pub fn Policy::default(@primus.Machine) -> Self?
+pub fn Policy::equal(Self, Self) -> Bool
+pub fn Policy::name(Self, @primus.Machine) -> String
+pub fn Policy::not_equal(Self, Self) -> Bool
+pub fn Policy::of_name(@primus.Machine, String) -> Self raise
+pub fn Policy::of_value(@primus.Value) -> Self
+pub fn Policy::propagate(@primus.Machine, Self, Rel, Rel, ArrayView[@primus.Value], @primus.Value) -> Unit raise
+pub fn Policy::select(@primus.Machine, Self, Kind) -> Unit
+pub fn Policy::selected(@primus.Machine, Self, Kind) -> Bool
+pub fn Policy::set_default(@primus.Machine, Self) -> Unit
+pub fn Policy::to_value(Self) -> @primus.Value
+pub impl Eq for Policy
+
+pub(all) enum Rel {
+  Direct
+  Indirect
+} derive(Compare, Eq, @debug.Debug)
+pub fn Rel::compare(Self, Self) -> Int
+pub fn Rel::equal(Self, Self) -> Bool
+pub fn Rel::not_equal(Self, Self) -> Bool
+pub fn Rel::op_ge(Self, Self) -> Bool
+pub fn Rel::op_gt(Self, Self) -> Bool
+pub fn Rel::op_le(Self, Self) -> Bool
+pub fn Rel::op_lt(Self, Self) -> Bool
+pub fn Rel::output(Self, &Logger) -> Unit
+pub fn Rel::to_repr(Self) -> @debug.Repr
+pub fn Rel::to_string(Self) -> String
+pub impl Show for Rel
+
+pub struct TaintMap {
+  // private fields
+} derive(Eq)
+pub fn TaintMap::add(Self, String, ArrayView[@types.Tid]) -> Self
+pub fn TaintMap::bindings(Self) -> Array[(String, Array[@types.Tid])]
+pub fn TaintMap::empty() -> Self
+pub fn TaintMap::equal(Self, Self) -> Bool
+pub fn TaintMap::get(Self, String) -> Array[@types.Tid]
+pub fn TaintMap::is_empty(Self) -> Bool
+pub fn TaintMap::not_equal(Self, Self) -> Bool
+pub fn TaintMap::output(Self, &Logger) -> Unit
+pub fn TaintMap::parse(String) -> Self raise
+pub fn TaintMap::taints(Self) -> Array[@types.Tid]
+pub fn TaintMap::to_string(Self) -> String
+pub fn TaintMap::union(Self, Self) -> Self
+pub impl Show for TaintMap
+
+pub struct Tracker {
+}
+pub fn Tracker::attach(@primus.Machine, @primus.Value, Rel, @sorted_set.SortedSet[Object]) -> Unit raise
+pub fn Tracker::detach(@primus.Machine, @primus.Value, Rel, @sorted_set.SortedSet[Object]) -> Unit
+pub fn Tracker::inspect(@primus.Machine) -> @primus.Sexp
+pub fn Tracker::lookup(@primus.Machine, @primus.Value, Rel) -> @sorted_set.SortedSet[Object]
+pub fn Tracker::new_direct(@primus.Machine, @primus.Value, Kind) -> Object raise
+pub fn Tracker::new_indirect(@primus.Machine, addr~ : @primus.Value, len~ : @primus.Value, Kind) -> Object raise
+pub fn Tracker::objects(@primus.Machine) -> @sorted_set.SortedSet[Object]
+pub fn Tracker::objects_of(@primus.Machine, @primus.Id) -> @sorted_set.SortedSet[Object] raise
+pub fn Tracker::sanitize(@primus.Machine, @primus.Value, Rel, Kind) -> Unit
+
+// Type aliases
+
+// Traits

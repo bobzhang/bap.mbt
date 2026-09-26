@@ -1,0 +1,79 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/dependencies"
+
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/ogre",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn basename(String) -> String
+
+pub fn declare_plugin(out? : (String) -> Unit) -> Unit raise
+
+pub fn graph_unit(DependencyInfo) -> String
+
+pub fn json_unit(DependencyInfo) -> String
+
+pub fn load_unit(String, root? : String, ldconfig? : LdconfigCache, paths? : Array[String], context? : String, cache? : DependencyCache, fs? : @bap_main.FileSystem) -> DependencyInfo
+
+pub let name : String
+
+pub fn of_image(String, fs? : @bap_main.FileSystem) -> DependencyInfo
+
+pub fn run(String, root? : String, ldconfig? : String, run_command? : (String) -> String?, format? : DependencyFormat, recursive? : Bool, paths? : Array[String], context? : String, cache? : DependencyCache, fs? : @bap_main.FileSystem) -> String
+
+pub fn search(String, root? : String, ldconfig? : LdconfigCache, paths? : Array[String], fs? : @bap_main.FileSystem) -> String?
+
+pub fn sexp_unit(DependencyInfo) -> String
+
+pub fn yaml_unit(DependencyInfo) -> String
+
+// Errors
+
+// Types and methods
+pub struct DependencyCache {
+  entries : Map[String, DependencyInfo]
+}
+pub fn DependencyCache::new() -> Self
+
+pub(all) enum DependencyFormat {
+  Yaml
+  Sexp
+  Json
+  Graph
+} derive(Eq, @debug.Debug)
+pub fn DependencyFormat::equal(Self, Self) -> Bool
+pub fn DependencyFormat::not_equal(Self, Self) -> Bool
+pub fn DependencyFormat::to_repr(Self) -> @debug.Repr
+
+pub(all) struct DependencyInfo {
+  name : String
+  imports : Array[String]
+  exports : Array[String]
+  libraries : Array[String]
+} derive(Eq, @debug.Debug)
+pub fn DependencyInfo::empty(String) -> Self
+pub fn DependencyInfo::equal(Self, Self) -> Bool
+pub fn DependencyInfo::not_equal(Self, Self) -> Bool
+pub fn DependencyInfo::of_spec(String, @ogre.Doc) -> Self
+pub fn DependencyInfo::to_repr(Self) -> @debug.Repr
+
+pub(all) struct DependencyState {
+  root : String
+  units : Map[String, DependencyInfo]
+}
+pub fn DependencyState::load(String, recursive? : Bool, root? : String, ldconfig? : LdconfigCache, paths? : Array[String], context? : String, cache? : DependencyCache, fs? : @bap_main.FileSystem) -> Self
+pub fn DependencyState::render(Self, DependencyFormat) -> String
+pub fn DependencyState::sorted_units(Self) -> Array[DependencyInfo]
+
+pub struct LdconfigCache {
+  paths : Map[String, String]
+}
+pub fn LdconfigCache::lookup(Self, String) -> String?
+pub fn LdconfigCache::parse(String) -> Self
+
+// Type aliases
+
+// Traits

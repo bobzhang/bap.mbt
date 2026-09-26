@@ -1,0 +1,11 @@
+import {
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/microx",
+  "bobzhang/bap/project",
+  "bobzhang/bap/taint",
+  "bobzhang/bap/types",
+  "moonbitlang/core/immut/hashmap" @immut_hashmap,
+  "moonbitlang/core/immut/hashset" @immut_hashset,
+  "moonbitlang/core/immut/sorted_map",
+  "moonbitlang/core/list",
+}

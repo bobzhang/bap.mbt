@@ -1,4 +1,7 @@
 // Port of `Bap_recipe`: recipe descriptions of command line arguments.
+
+///|
+using @sexp {type Sexp}
 //
 // A recipe is a directory with a `recipe.scm` specification (and an
 // optional `descr` file), or a single specification file. Zipped recipes
@@ -173,8 +176,8 @@ fn spec_of_items(items : Array[Item]) -> Spec {
 
 ///|
 fn parse_recipe(text : String) -> Spec raise RecipeError {
-  let sexps = sexps_of_string(text) catch {
-    SexpSyntaxError(line~, column~, msg) =>
+  let sexps = @sexp.Sexp::of_string_many(text) catch {
+    ParseError(line~, column~, msg) =>
       raise BadSexp("line \{line}, column \{column}: \{msg}")
   }
   let items = []

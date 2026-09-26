@@ -288,7 +288,7 @@ pub fn Ctxt::digest(self : Ctxt) -> String {
   for k in sorted_keys(self.env) {
     sb.write_string("\{k} = \{self.env[k].digest}\n")
   }
-  md5_string(sb.to_string())
+  @digest.md5_string(sb.to_string())
 }
 
 ///|

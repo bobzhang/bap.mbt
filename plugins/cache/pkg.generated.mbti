@@ -1,0 +1,96 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/cache"
+
+import {
+  "bobzhang/bap/regular",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn clean(root? : String) -> Int
+
+pub fn command_options_report() -> String
+
+pub fn config_file(root? : String) -> String
+
+pub let config_file_name : String
+
+pub let config_version : Int
+
+pub fn data_dir(root? : String) -> String
+
+pub fn entry_path(@regular.Digest, root? : String) -> String
+
+pub fn info_report(Config, size~ : Int) -> String
+
+pub fn init_cache_dir(root? : String) -> Result[Unit, String]
+
+pub fn initialize(root? : String) -> Result[Unit, String]
+
+pub fn load(@regular.Digest, root? : String) -> Bytes?
+
+pub let min_entry_size : Int
+
+pub let name : String
+
+pub fn provide_service() -> Unit
+
+pub fn read_config(root? : String) -> Config
+
+pub fn read_entries(String) -> Array[Entry]
+
+pub fn register(out? : (String) -> Unit) -> Unit raise
+
+pub fn reset_root() -> Unit
+
+pub fn root() -> String
+
+pub fn save(@regular.Digest, Bytes, root? : String) -> Unit
+
+pub fn select(ArrayView[Int], total~ : Int, to_free~ : Int, (Int) -> Int) -> Array[Int]
+
+pub fn service() -> @regular.CacheService
+
+pub fn set_root(String) -> Unit
+
+pub fn shrink(Config, by_threshold? : Bool, root? : String) -> Int
+
+pub fn size(root? : String) -> Int
+
+pub fn start(dir? : String) -> Unit raise
+
+pub fn total_size(ArrayView[Entry]) -> Int
+
+pub fn update_config(Config, capacity? : Int, overhead? : Int, disable_gc? : Bool, enable_gc? : Bool) -> Config?
+
+pub fn write_config(Config, root? : String) -> Unit
+
+// Errors
+
+// Types and methods
+pub(all) struct Config {
+  capacity : Int
+  overhead : Int
+  gc_enabled : Bool
+} derive(Eq, @debug.Debug)
+pub fn Config::default() -> Self
+pub fn Config::equal(Self, Self) -> Bool
+pub fn Config::gc_threshold(Self) -> Int
+pub fn Config::lower_bound(Self) -> Int
+pub fn Config::new(capacity? : Int, overhead? : Int, gc_enabled? : Bool) -> Self
+pub fn Config::not_equal(Self, Self) -> Bool
+pub fn Config::of_bytes(BytesView) -> Self?
+pub fn Config::to_bytes(Self) -> Bytes
+pub fn Config::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Entry {
+  path : String
+  size : Int
+} derive(Eq, @debug.Debug)
+pub fn Entry::equal(Self, Self) -> Bool
+pub fn Entry::not_equal(Self, Self) -> Bool
+pub fn Entry::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

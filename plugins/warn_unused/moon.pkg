@@ -1,0 +1,13 @@
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/plugins/callsites",
+  "bobzhang/bap/plugins/propagate_taint",
+  "bobzhang/bap/project",
+  "bobzhang/bap/taint",
+  "bobzhang/bap/types",
+  "moonbitlang/core/hashset",
+}
+
+import {
+  "bobzhang/bap/core_theory",
+} for "test"

@@ -1,0 +1,45 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/sexp"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn escape_atom(String) -> String
+
+pub fn must_escape(String) -> Bool
+
+// Errors
+pub(all) suberror ParseError {
+  ParseError(line~ : Int, column~ : Int, String)
+} derive(Eq, @debug.Debug)
+pub fn ParseError::equal(Self, Self) -> Bool
+pub fn ParseError::message(Self) -> String
+pub fn ParseError::not_equal(Self, Self) -> Bool
+pub fn ParseError::output(Self, &Logger) -> Unit
+pub fn ParseError::to_repr(Self) -> @debug.Repr
+pub fn ParseError::to_string(Self) -> String
+pub impl Show for ParseError
+
+// Types and methods
+pub(all) enum Sexp {
+  Atom(String)
+  List(Array[Sexp])
+} derive(Eq, Hash, @debug.Debug)
+pub fn Sexp::atom(Self) -> String?
+pub fn Sexp::equal(Self, Self) -> Bool
+pub fn Sexp::hash(Self) -> Int
+pub fn Sexp::hash_combine(Self, Hasher) -> Unit
+pub fn Sexp::list(Self) -> Array[Self]?
+pub fn Sexp::not_equal(Self, Self) -> Bool
+pub fn Sexp::of_string(String) -> Self raise ParseError
+pub fn Sexp::of_string_many(String) -> Array[Self] raise ParseError
+pub fn Sexp::output(Self, &Logger) -> Unit
+pub fn Sexp::to_repr(Self) -> @debug.Repr
+pub fn Sexp::to_string(Self) -> String
+pub impl Show for Sexp
+
+// Type aliases
+
+// Traits

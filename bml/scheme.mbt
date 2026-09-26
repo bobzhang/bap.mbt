@@ -1,3 +1,7 @@
+///|
+/// S-expressions (`Sexplib.Sexp.t`), shared with the other packages.
+pub using @sexp {type Sexp}
+
 // The BML surface syntax and the term marker (upstream `Scheme` and
 // `marker` of the `map_terms` plugin).
 //
@@ -136,9 +140,9 @@ pub fn parse(sexp : Sexp) -> Result[Pattern, String] {
 }
 
 ///|
-fn syntax_error(err : SexpSyntaxError) -> String {
+fn syntax_error(err : @sexp.ParseError) -> String {
   match err {
-    SexpSyntaxError(line~, column~, msg) =>
+    ParseError(line~, column~, msg) =>
       "Syntax error: line \{line}, column \{column} - \{msg}"
   }
 }
@@ -159,7 +163,7 @@ fn syntax_error(err : SexpSyntaxError) -> String {
 /// }
 /// ```
 pub fn parse_string(text : String) -> Result[Pattern, String] {
-  try sexp_of_string(text) catch {
+  try @sexp.Sexp::of_string(text) catch {
     err => Err(syntax_error(err))
   } noraise {
     sexp => parse(sexp)
@@ -169,7 +173,7 @@ pub fn parse_string(text : String) -> Result[Pattern, String] {
 ///|
 /// Parses a sequence of patterns (the contents of a patterns file).
 pub fn parse_patterns(text : String) -> Result[Array[Pattern], String] {
-  let sexps = sexps_of_string(text) catch {
+  let sexps = @sexp.Sexp::of_string_many(text) catch {
     err => return Err(syntax_error(err))
   }
   let result = []

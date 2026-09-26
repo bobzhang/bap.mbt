@@ -1,0 +1,24 @@
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/graphlib",
+  "bobzhang/bap/memory",
+  "bobzhang/bap/native_io",
+  "bobzhang/bap/plugins/print",
+  "bobzhang/bap/project",
+  "bobzhang/bap/text_tags",
+  "bobzhang/bap/types",
+  "moonbitlang/core/encoding/utf8",
+}
+
+import {
+  "bobzhang/bap/core_theory",
+} for "test"
+
+options(
+  "native-stub": [ "fs.c" ],
+  targets: {
+    "fs_native.mbt": [ "native" ],
+    "fs_stub.mbt": [ "wasm", "wasm-gc", "js", "llvm" ],
+    "store_native_test.mbt": [ "native" ],
+  },
+)

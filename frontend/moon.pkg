@@ -13,6 +13,8 @@ import {
   "bobzhang/bap/arm",
   "bobzhang/bap/thumb",
   "bobzhang/bap/aarch64",
+  "bobzhang/bap/mips",
+  "bobzhang/bap/riscv" @riscv_decoder,
   "bobzhang/bap/plugins/analyze",
   "bobzhang/bap/plugins/beagle",
   "bobzhang/bap/plugins/bil",

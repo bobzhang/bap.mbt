@@ -169,6 +169,8 @@ pub fn register_services() -> Unit raise {
   @arm.register_decoder()
   @thumb.register_decoder()
   @aarch64.register_decoder()
+  @mips.register_decoder()
+  @riscv_decoder.register_decoder()
 }
 
 // Declarations of the plugins whose packages expose only the registration

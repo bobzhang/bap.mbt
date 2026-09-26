@@ -1,0 +1,80 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/beagle"
+
+import {
+  "bobzhang/bap/primus",
+  "bobzhang/bap/types",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn catch_() -> @primus.Statement[(Prey, Words)]
+
+pub fn caught() -> @primus.Observation[(Prey, Words)]
+
+pub let chars_tag : String
+
+pub fn detected() -> @primus.Observation[Prey]
+
+pub fn finished() -> @primus.Statement[Prey]
+
+pub fn latin1(BytesView) -> String
+
+pub fn lexical_compare(String, String) -> Int
+
+pub let max_printed : Int
+
+pub fn ocaml_escaped(String) -> String
+
+pub let statics_tag : String
+
+pub let strings_tag : String
+
+pub fn[T] term_words(@types.Term[T], String) -> Words?
+
+pub fn words_attr(String, Words) -> @types.Attr
+
+pub let words_tag : String
+
+// Errors
+
+// Types and methods
+pub struct Prey {
+  // private fields
+}
+pub fn Prey::create(ArrayView[@types.Tid], BytesView) -> Self
+pub fn Prey::data(Self) -> Bytes
+pub fn Prey::terms(Self) -> Array[@types.Tid]
+pub fn Prey::text(Self) -> String
+
+pub struct Statics {
+  // private fields
+}
+pub fn Statics::find(Self, @types.Word) -> String?
+pub fn Statics::of_array(ArrayView[(@types.Word, String)]) -> Self
+pub fn Statics::to_array(Self) -> Array[(@types.Word, String)]
+pub fn Statics::to_string(Self) -> String
+
+pub struct Words {
+  // private fields
+} derive(Eq, @debug.Debug)
+pub fn Words::add(Self, String) -> Self
+pub fn Words::empty() -> Self
+pub fn Words::equal(Self, Self) -> Bool
+pub fn Words::is_empty(Self) -> Bool
+pub fn Words::length(Self) -> Int
+pub fn Words::mem(Self, String) -> Bool
+pub fn Words::not_equal(Self, Self) -> Bool
+pub fn Words::of_array(ArrayView[String]) -> Self
+pub fn Words::of_sexp(@primus.Sexp) -> Self?
+pub fn Words::output(Self, &Logger) -> Unit
+pub fn Words::to_array(Self) -> Array[String]
+pub fn Words::to_repr(Self) -> @debug.Repr
+pub fn Words::to_sexp(Self) -> @primus.Sexp
+pub fn Words::to_string(Self) -> String
+pub fn Words::union(Self, Self) -> Self
+pub impl Show for Words
+
+// Type aliases
+
+// Traits

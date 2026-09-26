@@ -102,32 +102,33 @@ pub fn register(
   add_writer("graph", desc="print unlabeled CFG for each procedure", (fmt, p) => {
     pp_bir_graph(fmt, extract_program(patterns, p), labeled=false)
   })
-  let disasm = (name, desc, printer) => {
-    add_writer(name, desc~, (fmt, p) => pp_disasm(fmt, p, printer, patterns~))
+  // the printers lift the instructions on the target of the project
+  let disasm = (name, desc, printer : (@core_theory.Target) -> InsnPrinter) => {
+    add_writer(name, desc~, (fmt, p) => {
+      pp_disasm(fmt, p, printer(p.target()), patterns~)
+    })
   }
-  disasm("asm", "print assembly instructions", insn_printer("asm"))
-  disasm(
-    "asm.adt",
-    "print assembly instruction endcoded in ADT format",
-    insn_printer("adt"),
-  )
-  disasm(
-    "asm.decoded",
-    "print assembly instructions as it was decoded",
-    insn_printer("pretty"),
-  )
-  disasm(
-    "asm.sexp",
-    "print assembly instructions as it was decoded",
-    insn_printer("sexp"),
-  )
-  disasm("bil", "print BIL instructions", bil_printer("pretty"))
-  disasm("bil.adt", "print BIL instructions in ADT format", bil_printer("adt"))
-  disasm(
-    "bil.sexp",
-    "print BIL instructions in Sexp format",
-    bil_printer("sexp"),
-  )
+  disasm("asm", "print assembly instructions", target => {
+    insn_printer("asm", target~)
+  })
+  disasm("asm.adt", "print assembly instruction endcoded in ADT format", target => {
+    insn_printer("adt", target~)
+  })
+  disasm("asm.decoded", "print assembly instructions as it was decoded", target => {
+    insn_printer("pretty", target~)
+  })
+  disasm("asm.sexp", "print assembly instructions as it was decoded", target => {
+    insn_printer("sexp", target~)
+  })
+  disasm("bil", "print BIL instructions", target => {
+    bil_printer("pretty", target~)
+  })
+  disasm("bil.adt", "print BIL instructions in ADT format", target => {
+    bil_printer("adt", target~)
+  })
+  disasm("bil.sexp", "print BIL instructions in Sexp format", target => {
+    bil_printer("sexp", target~)
+  })
   add_writer(
     "ogre",
     desc="print the file specification in the OGRE format",

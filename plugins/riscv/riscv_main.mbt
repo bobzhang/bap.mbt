@@ -5,7 +5,8 @@
 // The targets (`riscv`, `riscv32`, `riscv64`) are declared by
 // `core_theory`, and their default encodings (`llvm-riscv32`,
 // `llvm-riscv64`) by `mc.default_encoding`. There is no LLVM (or Ghidra)
-// disassembler backend in the port, so the decoders are not registered.
+// in the port: the `llvm` backend is the native decoder of the `riscv`
+// package, which produces LLVM MC compatible instructions.
 
 ///|
 /// The name of the plugin.
@@ -113,8 +114,9 @@ pub fn define_abi(target : @core_theory.Target) -> Unit {
 
 ///|
 /// Enables the plugin (upstream `main`): defines the ABIs of `riscv32` and
-/// `riscv64` and registers the Primus Lisp RISC-V semantics lifter in the
-/// registry. Only the `llvm` backend (the default) is supported.
+/// `riscv64`, registers the RISC-V decoder (`@rv.register_decoder`) and
+/// the Primus Lisp RISC-V semantics lifter in the registry. Only the
+/// `llvm` backend (the default) is supported.
 pub fn enable(
   backend? : String = "llvm",
   registry? : @mc.Registry = @mc.Registry::global(),
@@ -126,6 +128,7 @@ pub fn enable(
   }
   define_abi(@core_theory.Target::riscv32())
   define_abi(@core_theory.Target::riscv64())
+  @rv.register_decoder()
   let provider = "primus-lisp-riscv"
   if registry.find(provider) is None {
     registry.register(

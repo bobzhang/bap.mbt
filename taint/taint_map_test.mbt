@@ -1,6 +1,6 @@
 ///|
 test "taint maps render as s-expressions and round trip" {
-  let t1 = @types.Tid::for_name("t1")
+  let t1 = @types.Tid::restore(id=5, name="t1")
   let t2 = @types.Tid::restore(id=3)
   let map = @taint.TaintMap::empty()
     .add("RAX", [t2])
@@ -11,7 +11,7 @@ test "taint maps render as s-expressions and round trip" {
   inspect(
     text,
     content=(
-      #|((RAX (@t1 %3)) (RBX (@t1)))
+      #|((RAX (%3 @t1)) (RBX (@t1)))
     ),
   )
   let back = @taint.TaintMap::parse(text)

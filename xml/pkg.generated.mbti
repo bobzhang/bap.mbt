@@ -1,0 +1,113 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/xml"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn escape(String, quotes? : Bool) -> String
+
+pub let ns_xml : String
+
+pub let ns_xmlns : String
+
+pub fn parse_document(StringView, strip? : Bool, entity? : (String) -> String?, ns? : (String) -> String?) -> Document raise XmlError
+
+// Errors
+pub(all) suberror XmlError {
+  XmlError(pos~ : Pos, String)
+} derive(Eq, @debug.Debug)
+pub fn XmlError::equal(Self, Self) -> Bool
+pub fn XmlError::not_equal(Self, Self) -> Bool
+pub fn XmlError::output(Self, &Logger) -> Unit
+pub fn XmlError::to_repr(Self) -> @debug.Repr
+pub fn XmlError::to_string(Self) -> String
+pub impl Show for XmlError
+
+// Types and methods
+pub(all) struct Attribute {
+  name : Name
+  value : String
+} derive(Eq, @debug.Debug)
+pub fn Attribute::equal(Self, Self) -> Bool
+pub fn Attribute::not_equal(Self, Self) -> Bool
+pub fn Attribute::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Document {
+  dtd : String?
+  root : Node
+} derive(Eq, @debug.Debug)
+pub fn Document::equal(Self, Self) -> Bool
+pub fn Document::not_equal(Self, Self) -> Bool
+pub fn Document::to_repr(Self) -> @debug.Repr
+
+pub struct Input {
+  // private fields
+}
+pub fn Input::eoi(Self) -> Bool
+pub fn Input::from_bytes(BytesView, strip? : Bool, entity? : (String) -> String?, ns? : (String) -> String?) -> Self raise XmlError
+pub fn Input::from_string(StringView, strip? : Bool, entity? : (String) -> String?, ns? : (String) -> String?) -> Self
+pub fn Input::input(Self) -> Signal raise XmlError
+pub fn Input::peek(Self) -> Signal raise XmlError
+pub fn Input::pos(Self) -> Pos
+pub fn Input::read_tree(Self) -> Node raise XmlError
+
+pub(all) struct Name {
+  uri : String
+  local_name : String
+} derive(Eq, Hash, @debug.Debug)
+pub fn Name::equal(Self, Self) -> Bool
+pub fn Name::hash(Self) -> Int
+pub fn Name::hash_combine(Self, Hasher) -> Unit
+pub fn Name::local_name(String) -> Self
+pub fn Name::not_equal(Self, Self) -> Bool
+pub fn Name::output(Self, &Logger) -> Unit
+pub fn Name::to_repr(Self) -> @debug.Repr
+pub fn Name::to_string(Self) -> String
+pub impl Show for Name
+
+pub(all) enum Node {
+  Element(Tag, Array[Node])
+  Text(String)
+} derive(Eq, @debug.Debug)
+pub fn Node::attr(Self, String, uri? : String) -> String?
+pub fn Node::children(Self) -> Array[Self]
+pub fn Node::elements(Self, String) -> Array[Self]
+pub fn Node::equal(Self, Self) -> Bool
+pub fn Node::name(Self) -> Name?
+pub fn Node::not_equal(Self, Self) -> Bool
+pub fn Node::text(Self) -> String
+pub fn Node::to_repr(Self) -> @debug.Repr
+pub fn Node::to_string(Self) -> String
+
+pub(all) struct Pos {
+  line : Int
+  col : Int
+} derive(Eq, @debug.Debug)
+pub fn Pos::equal(Self, Self) -> Bool
+pub fn Pos::not_equal(Self, Self) -> Bool
+pub fn Pos::to_repr(Self) -> @debug.Repr
+
+pub(all) enum Signal {
+  Dtd(String?)
+  ElStart(Tag)
+  ElEnd
+  Data(String)
+} derive(Eq, @debug.Debug)
+pub fn Signal::equal(Self, Self) -> Bool
+pub fn Signal::not_equal(Self, Self) -> Bool
+pub fn Signal::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Tag {
+  name : Name
+  attrs : Array[Attribute]
+} derive(Eq, @debug.Debug)
+pub fn Tag::attr(Self, String, uri? : String) -> String?
+pub fn Tag::equal(Self, Self) -> Bool
+pub fn Tag::not_equal(Self, Self) -> Bool
+pub fn Tag::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

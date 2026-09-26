@@ -1,0 +1,28 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/analyze"
+
+// Values
+pub fn declare_plugin(out? : (String) -> Unit, err? : (String) -> Unit, read_line? : () -> String?, write_file? : (String, String) -> Result[Unit, String]) -> Unit raise
+
+pub let doc : String
+
+pub let name : String
+
+pub fn register_core_commands() -> Unit
+
+pub fn run(project? : String, commands? : Array[String], script? : String, read_line? : () -> String?, out? : (String) -> Unit, err? : (String) -> Unit, write_file? : (String, String) -> Result[Unit, String]) -> Unit raise AnalyzeError
+
+// Errors
+pub(all) suberror AnalyzeError {
+  UnknownCommand(pkg~ : String, name~ : String)
+  Conflict(String, String, Array[String])
+  BadDirective(dir~ : String, msg~ : String)
+  SysErrorOnLoad(String)
+}
+pub fn AnalyzeError::to_string(Self) -> String
+
+// Types and methods
+
+// Type aliases
+
+// Traits

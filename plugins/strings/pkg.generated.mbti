@@ -1,0 +1,31 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/strings"
+
+import {
+  "bobzhang/bap/project",
+}
+
+// Values
+pub fn collect(min_length~ : Int, @project.Project) -> Array[(UInt64, String)]
+
+pub fn declare_plugin(out? : (String) -> Unit) -> Unit raise
+
+pub fn escape(String) -> String
+
+pub let name : String
+
+pub fn register(min_length? : Int, with_address? : Bool, out? : (String) -> Unit) -> Result[Unit, String]
+
+pub fn render(Array[(UInt64, String)], with_address~ : Bool) -> String
+
+pub fn statics(@project.Project) -> Array[(UInt64, String)]?
+
+pub let statics_key : String
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

@@ -1,0 +1,149 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/bil"
+
+import {
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/image",
+  "bobzhang/bap/mc",
+  "bobzhang/bap/types",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn apply_passes(Array[@types.Stmt]) -> Result[Array[@types.Stmt], String]
+
+pub fn bil_algebra() -> EffAlgebra[Array[@types.Stmt]]
+
+pub let bnf1 : @types.BilPass
+
+pub let bnf2 : @types.BilPass
+
+pub fn brancher_algebra() -> EffAlgebra[Array[Dst?]]
+
+pub fn configure(Config) -> Unit
+
+pub let consts_propagation : @types.BilPass
+
+pub fn create_intrinsic(@core_theory.Target, @mc.Insn) -> Array[@types.Stmt]
+
+pub fn current_config() -> Config
+
+pub fn declare_plugin(exit? : () -> Unit) -> Unit raise
+
+pub fn enable(list? : Bool, normalization? : String, optimization? : String, passes? : ArrayView[String], with_fp? : Bool, enable_intrinsics? : ArrayView[ISpec]) -> Array[String]? raise Failure
+
+pub let fold_consts : @types.BilPass
+
+pub fn has_special(ArrayView[@types.Stmt]) -> Bool
+
+pub fn insn_encoding(@mc.Insn) -> String
+
+pub fn install_lift_hook() -> Unit
+
+pub fn jump_destinations(ArrayView[@types.Stmt]) -> Array[Dst?] raise ReflectError
+
+pub fn kind_name(@mc.Kind) -> String
+
+pub fn lift(@mc.Registry, @mc.Context, @mc.Insn, cfg? : Config) -> @mc.Lifted raise @mc.LiftError
+
+pub fn lift_bir(Array[@types.Stmt], is_subroutine? : (@types.Tid) -> Bool) -> Array[@types.Term[@types.Blk]]
+
+pub let lift_hook_name : String
+
+pub fn list_passes() -> Array[String]
+
+pub fn map_jmps(ArrayView[@types.Stmt], (@types.Exp) -> Array[@types.Stmt]) -> Array[@types.Stmt]
+
+pub fn matches_spec(ArrayView[ISpec], @mc.Insn) -> Bool
+
+pub let name : String
+
+pub fn normalizations() -> Array[(String, Array[@types.BilPass])]
+
+pub fn o1() -> Array[@types.BilPass]
+
+pub fn optimizations() -> Array[(String, Array[@types.BilPass])]
+
+pub fn pipeline(normalization? : String, optimization? : String, passes? : ArrayView[String]) -> Result[Array[@types.BilPass], String]
+
+pub fn provider(@mc.Registry, relocations? : Relocations) -> @mc.Provider
+
+pub let prune_dead : @types.BilPass
+
+pub fn references(ArrayView[@types.Stmt]) -> Array[UInt64]
+
+pub fn[E] reflect(EffAlgebra[E], ArrayView[@types.Stmt]) -> E raise ReflectError
+
+pub fn reflect_bil(ArrayView[@types.Stmt]) -> Array[@types.Stmt] raise ReflectError
+
+pub fn[E] reflect_data(EffAlgebra[E], ArrayView[@types.Stmt]) -> E raise ReflectError
+
+pub fn select(normalization? : String, optimization? : String, passes? : ArrayView[String]) -> Result[Unit, String]
+
+pub fn uninstall_lift_hook() -> Unit
+
+// Errors
+pub(all) suberror ReflectError {
+  ReflectError(String)
+} derive(Eq, @debug.Debug)
+pub fn ReflectError::equal(Self, Self) -> Bool
+pub fn ReflectError::not_equal(Self, Self) -> Bool
+pub fn ReflectError::output(Self, &Logger) -> Unit
+pub fn ReflectError::to_repr(Self) -> @debug.Repr
+pub fn ReflectError::to_string(Self) -> String
+pub impl Show for ReflectError
+
+// Types and methods
+pub(all) struct Config {
+  with_fp : Bool
+  enable_intrinsics : Array[ISpec]
+}
+pub fn Config::default() -> Self
+
+pub(all) enum Dst {
+  Addr(@types.Word)
+  Name(String)
+  Ivec(Int)
+  Label(@types.Tid)
+} derive(Eq, @debug.Debug)
+pub fn Dst::equal(Self, Self) -> Bool
+pub fn Dst::not_equal(Self, Self) -> Bool
+pub fn Dst::tid(Self) -> @types.Tid
+pub fn Dst::to_repr(Self) -> @debug.Repr
+
+pub struct EffAlgebra[E] {
+  empty : E
+  set : (@types.Var, @types.Exp) -> E
+  repeat : (@types.Exp, E) -> E
+  branch : (@types.Exp, E, E) -> E
+  jmp : (@types.Exp) -> E
+  goto : (Dst, Bool) -> E
+  seq : (E, E) -> E
+  blk : (@types.Tid?, E, E) -> E
+}
+
+pub(all) enum ISpec {
+  Any
+  Unk
+  Special
+  Tag(String)
+  Asm(String)
+  Insn(String, String)
+} derive(Eq, @debug.Debug)
+pub fn ISpec::equal(Self, Self) -> Bool
+pub fn ISpec::not_equal(Self, Self) -> Bool
+pub fn ISpec::parse(String) -> Self raise Failure
+pub fn ISpec::to_repr(Self) -> @debug.Repr
+pub fn ISpec::to_string(Self) -> String
+
+pub struct Relocations {
+  // private fields
+}
+pub fn Relocations::create(rels? : ArrayView[(UInt64, UInt64)], exts? : ArrayView[(UInt64, String)]) -> Self
+pub fn Relocations::empty() -> Self
+pub fn Relocations::fixup(Self, ArrayView[@types.Stmt], addr~ : UInt64, size~ : Int, width~ : Int, is_stub? : Bool) -> Array[@types.Stmt]
+pub fn Relocations::of_image(@image.Image) -> Self
+
+// Type aliases
+
+// Traits

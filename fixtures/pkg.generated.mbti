@@ -1,0 +1,29 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/fixtures"
+
+import {
+  "bobzhang/bap/bap_main",
+}
+
+// Values
+pub fn file_system(Array[(String, Bytes)]) -> @bap_main.FileSystem
+
+pub fn host_read_file(String) -> Bytes raise
+
+pub fn host_remove_dir(String) -> Unit
+
+pub fn host_temp_dir_with_elf() -> String raise
+
+pub fn normalize_tids(String) -> String
+
+pub let x86_64_code : Bytes
+
+pub fn x86_64_elf() -> Bytes
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

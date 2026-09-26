@@ -104,7 +104,8 @@ pub fn ProjectDisassemblyInstruction::lift_context(
 /// the result is type-checked. When no provider accepts the context or all
 /// of them report `Unsupported`, the built-in Basic lifter
 /// (`lift_basic_bil`) is used instead. Other lifter errors (bad operands,
-/// ill-typed semantics, failures) are returned as `Err`.
+/// ill-typed semantics, failures) are returned as `Err`. The registered
+/// post-lift transformations (`register_lift_hook`) are then applied.
 pub fn ProjectDisassemblyInstruction::lift(
   self : ProjectDisassemblyInstruction,
   target~ : @core_theory.Target,
@@ -112,7 +113,7 @@ pub fn ProjectDisassemblyInstruction::lift(
 ) -> Result[@mc.Lifted, String] {
   let ctx = self.lift_context(target)
   let insn = self.to_mc_insn(encoding=ctx.encoding())
-  try registry.lift(ctx, insn) catch {
+  let lifted = try registry.lift(ctx, insn) catch {
     Unsupported(..) =>
       match self.lift_basic_bil() {
         Ok(bil) => Ok(@mc.Lifted::of_bil(bil))
@@ -122,4 +123,77 @@ pub fn ProjectDisassemblyInstruction::lift(
   } noraise {
     lifted => Ok(lifted)
   }
+  match lifted {
+    Ok(lifted) if !project_lift_hooks.is_empty() =>
+      match apply_lift_hooks(lifted.bil()) {
+        Ok(bil) =>
+          Ok(
+            @mc.Lifted::create(
+              bil,
+              delay=lifted.delay(),
+              dest_encoding?=lifted.dest_encoding(),
+            ),
+          )
+        Err(reason) => Err(reason)
+      }
+    other => other
+  }
+}
+
+///|
+/// The post-lift transformations of BIL, applied in the registration order
+/// to the semantics of every instruction lifted by
+/// `ProjectDisassemblyInstruction::lift` (upstream applies the selected BIL
+/// passes in the lifters factory; the `bil` plugin registers them here).
+let project_lift_hooks : Array[
+  (String, (Array[@types.Stmt]) -> Result[Array[@types.Stmt], String]),
+] = []
+
+///|
+/// Registers a post-lift transformation under `name`, replacing the one
+/// registered under the same name. A transformation fails the lifting of
+/// the instruction by returning `Err`.
+pub fn register_lift_hook(
+  name~ : String,
+  hook : (Array[@types.Stmt]) -> Result[Array[@types.Stmt], String],
+) -> Unit {
+  match project_lift_hooks.search_by(h => h.0 == name) {
+    Some(i) => project_lift_hooks[i] = (name, hook)
+    None => project_lift_hooks.push((name, hook))
+  }
+}
+
+///|
+/// Removes the post-lift transformation registered under `name`; `false`
+/// if there was none.
+pub fn unregister_lift_hook(name : String) -> Bool {
+  match project_lift_hooks.search_by(h => h.0 == name) {
+    Some(i) => {
+      project_lift_hooks.remove(i) |> ignore
+      true
+    }
+    None => false
+  }
+}
+
+///|
+/// The names of the registered post-lift transformations.
+pub fn lift_hooks() -> Array[String] {
+  project_lift_hooks.map(h => h.0)
+}
+
+///|
+/// Applies the registered post-lift transformations to the semantics of
+/// an instruction.
+pub fn apply_lift_hooks(
+  bil : Array[@types.Stmt],
+) -> Result[Array[@types.Stmt], String] {
+  let mut bil = bil
+  for h in project_lift_hooks {
+    match (h.1)(bil) {
+      Ok(next) => bil = next
+      Err(reason) => return Err(reason)
+    }
+  }
+  Ok(bil)
 }

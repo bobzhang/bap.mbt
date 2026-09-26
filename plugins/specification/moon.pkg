@@ -1,0 +1,9 @@
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/image",
+  "bobzhang/bap/ogre",
+}
+
+import {
+  "bobzhang/bap/fixtures",
+} for "test"

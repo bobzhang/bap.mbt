@@ -10,11 +10,31 @@ import {
 }
 
 // Values
+pub fn apply_passes(Array[String], Core) -> Core raise
+
+pub fn bil_exp_slot() -> @knowledge.Slot[ValueCls, @types.Exp?]
+
+pub fn bil_slot() -> @knowledge.Slot[EffectCls, Array[@types.Stmt]]
+
+pub fn bitvec_of_int(Int, Int) -> @bitvec.BitVec raise
+
 pub fn common_targets() -> Array[Target]
+
+pub fn current(@knowledge.State) -> Core raise
 
 pub fn declare_target(String, pkg? : String, parent? : Target, nicknames? : Array[String], bits? : Int, byte? : Int, data? : Var, code? : Var, data_alignment? : Int, code_alignment? : Int, endianness? : Endianness, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, options? : TargetOptions, vars? : Array[Var], alias_origins? : Array[AliasOrigin], aliasing? : Array[Alias]) -> Result[Target, String]
 
+pub fn declare_theory(desc? : String, extends? : Array[String], context? : Array[String], provides? : Array[String], pkg? : String, name~ : String, (@knowledge.State) -> Core raise) -> Unit raise
+
 pub fn declared_targets() -> Array[Target]
+
+pub fn declared_theories() -> Array[TheoryDoc]
+
+pub fn eff_const(Effect) -> (@knowledge.State) -> Effect raise
+
+pub fn eval_eff((@knowledge.State) -> Effect raise, @knowledge.State) -> Effect raise
+
+pub fn eval_pure((@knowledge.State) -> Value raise, @knowledge.State) -> Value raise
 
 pub fn filter_targets(parent? : Target, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, options? : TargetOptions, strict? : Bool) -> Array[Target]
 
@@ -22,15 +42,25 @@ pub fn find_target(String, pkg? : String) -> Target?
 
 pub fn get_target(String, pkg? : String) -> Result[Target, String]
 
+pub fn instance(@knowledge.State, context? : Array[String], requires? : Array[String]) -> @knowledge.Object[TheoryCls] raise
+
+pub fn lookup_pass(String) -> ((Core) -> Core) raise
+
 pub fn lookup_target(String, pkg? : String) -> Target?
 
+pub fn pure_const(Value) -> (@knowledge.State) -> Value raise
+
 pub fn read_target(String, pkg? : String) -> Result[Target, String]
+
+pub fn register_pass(String, (Core) -> Core, desc? : String, pkg? : String) -> Unit raise
 
 pub fn register_target(Target) -> Result[Unit, String]
 
 pub fn register_target_variants(Target, systems? : Array[System], abis? : Array[Abi], fabis? : Array[Fabi], filetypes? : Array[Filetype], options? : Array[TargetOptions], pkg? : String) -> Result[Array[Target], String]
 
 pub fn registered_targets() -> Array[Target]
+
+pub fn require(@knowledge.State, @knowledge.Object[TheoryCls]) -> Core raise
 
 pub fn select_target(parent? : Target, system? : System, abi? : Abi, fabi? : Fabi, filetype? : Filetype, options? : TargetOptions, strict? : Bool, unique? : Bool) -> Result[Target, String]
 
@@ -39,6 +69,10 @@ pub fn target_domain() -> @knowledge.Domain[Target]
 pub fn target_families() -> Array[Array[Target]]
 
 pub fn target_family(Target) -> Array[Target]
+
+pub fn theory_class() -> @knowledge.Class[TheoryCls, Unit]
+
+pub fn[R] with_current(@knowledge.State, @knowledge.Object[TheoryCls], () -> R raise) -> R raise
 
 // Errors
 
@@ -139,8 +173,283 @@ pub fn Compiler::specs(Self) -> Map[String, String]
 pub fn Compiler::to_string(Self) -> String
 pub fn Compiler::version(Self) -> Array[String]
 
+pub(all) struct Core {
+  var_ : (Var) -> (@knowledge.State) -> Value raise
+  unk : (Sort) -> (@knowledge.State) -> Value raise
+  let_ : (Var, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  ite : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  b0 : (@knowledge.State) -> Value raise
+  b1 : (@knowledge.State) -> Value raise
+  inv : ((@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  and_ : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  or_ : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  int : (Sort, @bitvec.BitVec) -> (@knowledge.State) -> Value raise
+  msb : ((@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  lsb : ((@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  neg : ((@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  not : ((@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  add : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  sub : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  mul : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  div : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  sdiv : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  modulo : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  smodulo : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  logand : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  logor : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  logxor : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  shiftr : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  shiftl : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  sle : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  ule : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  cast : (Sort, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  concat : (Sort, Array[(@knowledge.State) -> Value raise]) -> (@knowledge.State) -> Value raise
+  append : (Sort, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  load : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  store : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  perform : (EffectSort) -> (@knowledge.State) -> Effect raise
+  set : (Var, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Effect raise
+  jmp : ((@knowledge.State) -> Value raise) -> (@knowledge.State) -> Effect raise
+  goto : (Label) -> (@knowledge.State) -> Effect raise
+  seq : ((@knowledge.State) -> Effect raise, (@knowledge.State) -> Effect raise) -> (@knowledge.State) -> Effect raise
+  blk : (Label, (@knowledge.State) -> Effect raise, (@knowledge.State) -> Effect raise) -> (@knowledge.State) -> Effect raise
+  repeat : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Effect raise) -> (@knowledge.State) -> Effect raise
+  branch : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Effect raise, (@knowledge.State) -> Effect raise) -> (@knowledge.State) -> Effect raise
+  zero : (Sort) -> (@knowledge.State) -> Value raise
+  is_zero : ((@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  non_zero : ((@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  succ : ((@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  pred : ((@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  nsucc : ((@knowledge.State) -> Value raise, Int) -> (@knowledge.State) -> Value raise
+  npred : ((@knowledge.State) -> Value raise, Int) -> (@knowledge.State) -> Value raise
+  high : (Sort, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  low : (Sort, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  signed : (Sort, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  unsigned : (Sort, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  extract : (Sort, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  loadw : (Sort, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  storew : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  arshift : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  rshift : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  lshift : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  eq : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  neq : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  slt : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  ult : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  sgt : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  ugt : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  sge : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  uge : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  float : (Sort, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  fbits : ((@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  is_finite : ((@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  is_nan : ((@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  is_inf : ((@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  is_fzero : ((@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  is_fpos : ((@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  is_fneg : ((@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  rne : (@knowledge.State) -> Value raise
+  rna : (@knowledge.State) -> Value raise
+  rtp : (@knowledge.State) -> Value raise
+  rtn : (@knowledge.State) -> Value raise
+  rtz : (@knowledge.State) -> Value raise
+  requal : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  cast_float : (Sort, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  cast_sfloat : (Sort, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  cast_int : (Sort, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  cast_sint : (Sort, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  fneg : ((@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  fabs : ((@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  fadd : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  fsub : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  fmul : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  fdiv : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  fsqrt : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  fmodulo : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  fmad : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  fround : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  fconvert : (Sort, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  fsucc : ((@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  fpred : ((@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  forder : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  pow : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  compound : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  rootn : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  pown : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  hypot : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  rsqrt : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  exp : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  expm1 : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  exp2 : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  exp2m1 : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  exp10 : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  exp10m1 : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  log : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  log2 : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  log10 : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  logp1 : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  log2p1 : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  log10p1 : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  sin : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  cos : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  tan : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  sinpi : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  cospi : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  atanpi : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  atan2pi : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  asin : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  acos : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  atan : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  atan2 : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  sinh : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  cosh : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  tanh : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  asinh : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  acosh : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+  atanh : ((@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+}
+pub fn Core::acos(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::acosh(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::add(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::and_(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::append(Self, Sort, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::arshift(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::asin(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::asinh(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::atan(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::atan2(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::atan2pi(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::atanh(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::atanpi(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::b0(Self) -> (@knowledge.State) -> Value raise
+pub fn Core::b1(Self) -> (@knowledge.State) -> Value raise
+pub fn Core::basic(Self) -> Self
+pub fn Core::bil() -> Self
+pub fn Core::blk(Self, Label, (@knowledge.State) -> Effect raise, (@knowledge.State) -> Effect raise) -> (@knowledge.State) -> Effect raise
+pub fn Core::branch(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Effect raise, (@knowledge.State) -> Effect raise) -> (@knowledge.State) -> Effect raise
+pub fn Core::cast(Self, Sort, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::cast_float(Self, Sort, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::cast_int(Self, Sort, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::cast_sfloat(Self, Sort, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::cast_sint(Self, Sort, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::compound(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::concat(Self, Sort, Array[(@knowledge.State) -> Value raise]) -> (@knowledge.State) -> Value raise
+pub fn Core::cos(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::cosh(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::cospi(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::desugar(Self) -> Self
+pub fn Core::div(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::empty() -> Self
+pub fn Core::eq(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::exp(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::exp10(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::exp10m1(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::exp2(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::exp2m1(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::expm1(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::extract(Self, Sort, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::fabs(Self, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::fadd(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::fbits(Self, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::fconvert(Self, Sort, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::fdiv(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::float(Self, Sort, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::fmad(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::fmodulo(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::fmul(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::fneg(Self, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::forder(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::fpred(Self, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::fround(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::fsqrt(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::fsub(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::fsucc(Self, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::goto(Self, Label) -> (@knowledge.State) -> Effect raise
+pub fn Core::high(Self, Sort, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::hypot(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::int(Self, Sort, @bitvec.BitVec) -> (@knowledge.State) -> Value raise
+pub fn Core::inv(Self, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::is_finite(Self, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::is_fneg(Self, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::is_fpos(Self, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::is_fzero(Self, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::is_inf(Self, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::is_nan(Self, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::is_zero(Self, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::ite(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::jmp(Self, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Effect raise
+pub fn Core::join(Self, Self) -> Self
+pub fn Core::let_(Self, Var, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::load(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::loadw(Self, Sort, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::log(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::log10(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::log10p1(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::log2(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::log2p1(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::logand(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::logor(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::logp1(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::logxor(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::low(Self, Sort, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::lsb(Self, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::lshift(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::modulo(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::msb(Self, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::mul(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::neg(Self, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::neq(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::non_zero(Self, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::not(Self, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::npred(Self, (@knowledge.State) -> Value raise, Int) -> (@knowledge.State) -> Value raise
+pub fn Core::nsucc(Self, (@knowledge.State) -> Value raise, Int) -> (@knowledge.State) -> Value raise
+pub fn Core::or_(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::perform(Self, EffectSort) -> (@knowledge.State) -> Effect raise
+pub fn Core::pow(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::pown(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::pred(Self, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::repeat(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Effect raise) -> (@knowledge.State) -> Effect raise
+pub fn Core::requal(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::rna(Self) -> (@knowledge.State) -> Value raise
+pub fn Core::rne(Self) -> (@knowledge.State) -> Value raise
+pub fn Core::rootn(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::rshift(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::rsqrt(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::rtn(Self) -> (@knowledge.State) -> Value raise
+pub fn Core::rtp(Self) -> (@knowledge.State) -> Value raise
+pub fn Core::rtz(Self) -> (@knowledge.State) -> Value raise
+pub fn Core::sdiv(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::seq(Self, (@knowledge.State) -> Effect raise, (@knowledge.State) -> Effect raise) -> (@knowledge.State) -> Effect raise
+pub fn Core::set(Self, Var, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Effect raise
+pub fn Core::sge(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::sgt(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::shiftl(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::shiftr(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::signed(Self, Sort, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::sin(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::sinh(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::sinpi(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::sle(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::slt(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::smodulo(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::store(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::storew(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::sub(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::succ(Self, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::tan(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::tanh(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::uge(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::ugt(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::ule(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::ult(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::unk(Self, Sort) -> (@knowledge.State) -> Value raise
+pub fn Core::unsigned(Self, Sort, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::var_(Self, Var) -> (@knowledge.State) -> Value raise
+pub fn Core::zero(Self, Sort) -> (@knowledge.State) -> Value raise
+
 type Effect
 pub fn Effect::barr() -> Self
+pub fn Effect::bil(Self) -> Array[@types.Stmt]
 pub fn Effect::cjmp() -> Self
 pub fn Effect::cjump() -> Self
 pub fn Effect::cls() -> @knowledge.Class[EffectCls, Unit]
@@ -615,6 +924,7 @@ pub fn Role::zero() -> Self
 pub fn Role::zero_flag() -> Self
 
 type Semantics
+pub fn Semantics::bil(Self) -> Array[@types.Stmt]
 pub fn Semantics::cls() -> @knowledge.Class[EffectCls, EffectSort]
 pub fn Semantics::code(Self) -> Bytes?
 pub fn Semantics::code_hex(Self) -> String?
@@ -653,6 +963,7 @@ pub(all) enum Sort {
 } derive(Eq, Hash, @debug.Debug)
 pub fn Sort::app(Self, Self) -> Self
 pub fn Sort::arrow(Self, Self) -> Self
+pub fn Sort::bil_type(Self) -> @types.ValueType
 pub fn Sort::bitv(Int) -> Self
 pub fn Sort::bitv_size(Self) -> Int?
 pub fn Sort::bool() -> Self
@@ -913,7 +1224,18 @@ pub fn TargetOptions::singleton(String, String) -> Self
 pub fn TargetOptions::to_string(Self) -> String
 pub fn TargetOptions::with_value(Self, String, String) -> Self
 
+pub enum TheoryCls {
+}
+
+pub struct TheoryDoc {
+  name : @knowledge.Name
+  desc : String
+  requires : Array[String]
+  provides : Array[String]
+}
+
 type Value
+pub fn Value::bil(Self) -> @types.Exp?
 pub fn[A] Value::both(Self, (Sort) -> Sort?, Self, (Sort) -> Sort?, (Self, Self) -> A, () -> A) -> A
 pub fn[A] Value::can(Self, (Sort) -> Sort?, (Self) -> A, () -> A) -> A
 pub fn Value::cls() -> @knowledge.Class[ValueCls, Unit]
@@ -959,15 +1281,24 @@ pub fn Var::is_virtual(Self) -> Bool
 pub fn Var::name(Self) -> String
 pub fn Var::of_ident(Sort, String) -> Result[Self, String]
 pub fn Var::persistent() -> @knowledge.Persistent[Self]
+pub fn Var::reify(Self) -> @types.Var
 pub fn Var::reset_temporary_counter() -> Unit
 pub fn Var::resort(Self, Sort) -> Self
 pub fn Var::same(Self, Self) -> Bool
 pub fn[A] Var::scoped(Sort, (Self) -> A) -> A
+pub fn Var::scoped_pure(Sort, (Self) -> (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
 pub fn Var::sort(Self) -> Sort
 pub fn Var::to_string(Self) -> String
 pub fn Var::version(Self) -> Int
 pub fn Var::versioned(Self, Int) -> Self
 
 // Type aliases
+pub type Eff = (@knowledge.State) -> Effect raise
+
+pub type Pass = (Core) -> Core
+
+pub type Pure = (@knowledge.State) -> Value raise
+
+pub type Theory = @knowledge.Object[TheoryCls]
 
 // Traits

@@ -1,0 +1,49 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/primus_promiscuous"
+
+import {
+  "bobzhang/bap/primus",
+  "bobzhang/bap/project",
+  "bobzhang/bap/types",
+}
+
+// Values
+pub fn assumptions(@types.Term[@types.Blk]) -> Array[Array[Assn]] raise @primus.PrimusError
+
+pub let component_name : String
+
+pub fn conflicts(@primus.Machine) -> Array[Assn]
+
+pub fn declare_plugin() -> Unit raise
+
+pub let division_by_zero_component : String
+
+pub fn enable_legacy_promiscuous_mode() -> Unit raise @primus.SystemError
+
+pub fn install(@primus.Machine) -> Unit
+
+pub fn install_division_by_zero_handler(@primus.Machine) -> Unit
+
+pub fn is_visited(@primus.Machine, @types.Tid) -> Bool
+
+pub let legacy_promiscuous_mode_components : Array[String]
+
+pub let name : String
+
+pub fn register() -> Bool
+
+pub fn to_tcf(@project.Project) -> @project.Project
+
+// Errors
+
+// Types and methods
+pub(all) struct Assn {
+  jmp : @types.Tid
+  variable : @types.Var
+  res : Bool
+}
+pub fn Assn::to_sexp(Self) -> @primus.Sexp
+
+// Type aliases
+
+// Traits

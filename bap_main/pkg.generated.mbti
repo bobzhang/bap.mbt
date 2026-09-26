@@ -1,0 +1,189 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/bap_main"
+
+import {
+  "bobzhang/bap/future",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn error_to_string(Error) -> String
+
+pub fn file_system() -> FileSystem
+
+pub fn initialize(features? : Array[String], requires? : Array[String], library? : Array[String], argv? : Array[String], env? : (String) -> String?, config? : Array[(String, String)], log? : (String) -> Unit, out? : (String) -> Unit, err? : (String) -> Unit, man? : String, name? : String, version? : String, default? : (Ctxt) -> Unit raise, default_command? : String, recipe? : (String) -> Recipe raise) -> Unit raise
+
+pub fn loaded_plugins() -> Array[String]
+
+pub fn markdown_to_manpage(String) -> Array[ManBlock]
+
+pub fn register_error_printer((Error) -> String?) -> Unit
+
+pub fn register_plugin(String, provides? : Array[String], features? : Array[String], doc? : String, () -> Unit raise) -> Unit raise
+
+pub fn registered_plugins() -> Array[String]
+
+pub fn reset() -> Unit
+
+pub fn set_file_system(FileSystem) -> Unit
+
+// Errors
+pub(all) suberror MainError {
+  Configuration
+  Invalid(String)
+  Bug(Error, String)
+  AlreadyInitialized
+  AlreadyFailed(Error)
+  RecursiveInit
+  BrokenPlugins(Array[(String, String)])
+  UnknownPlugin(String)
+  ExitRequested(Int)
+  BadRecipe(String)
+  AlreadyDefined
+}
+pub fn MainError::output(Self, &Logger) -> Unit
+pub fn MainError::to_string(Self) -> String
+pub impl Show for MainError
+
+// Types and methods
+pub(all) struct Command {
+}
+pub fn[A] Command::args() -> Grammar[A, A]
+pub fn[A] Command::argument(doc? : String, Type[A]) -> CommandParam[A]
+pub fn[A] Command::arguments(doc? : String, Type[A]) -> CommandParam[Array[A]]
+pub fn[K, D] Command::dictionary(doc? : (K) -> String, as_flag? : (K) -> D, aliases? : (K) -> Array[String], Array[K], Type[D], (K) -> String) -> CommandParam[Array[(K, D)]]
+pub fn Command::flag(doc? : String, aliases? : Array[String], String) -> CommandParam[Bool]
+pub fn Command::flags(doc? : String, aliases? : Array[String], String) -> CommandParam[Int]
+pub fn[A] Command::parameter(doc? : String, as_flag? : A, aliases? : Array[String], Type[A], String) -> CommandParam[A]
+pub fn[A] Command::parameters(doc? : String, as_flag? : A, aliases? : Array[String], Type[A], String) -> CommandParam[Array[A]]
+pub fn[F] Command::register(doc? : String, requires? : Array[String], String, Grammar[F, (Ctxt) -> Unit raise], F) -> Unit raise
+pub fn[A] Command::switch(doc? : (A) -> String, aliases? : (A) -> Array[String], Array[A], (A) -> String) -> CommandParam[A?]
+pub fn[A] Command::switches(doc? : (A) -> String, aliases? : (A) -> Array[String], Array[A], (A) -> String) -> CommandParam[Array[A]]
+
+pub struct CommandParam[A] {
+  // private fields
+}
+
+pub(all) struct Configuration {
+}
+pub fn Configuration::bindir() -> String
+pub fn Configuration::build_id() -> String
+pub fn Configuration::cachedir(getenv? : (String) -> String?) -> String
+pub fn Configuration::confdir() -> String
+pub fn Configuration::datadir(getenv? : (String) -> String?) -> String
+pub fn[A] Configuration::determined(Parameter[A]) -> @future.Future[A]
+pub fn Configuration::flag(doc? : String, aliases? : Array[String], String) -> Parameter[Bool]
+pub fn[A] Configuration::get(Ctxt, Parameter[A]) -> A
+pub fn Configuration::libdir() -> String
+pub fn[A] Configuration::parameter(doc? : String, as_flag? : A, aliases? : Array[String], Type[A], String) -> Parameter[A]
+pub fn[A] Configuration::parameters(doc? : String, as_flag? : A, aliases? : Array[String], Type[A], String) -> Parameter[Array[A]]
+pub fn Configuration::plugindir() -> String
+pub fn Configuration::sysdatadir() -> String
+pub fn Configuration::version() -> String
+
+pub struct Ctxt {
+  // private fields
+}
+pub fn Ctxt::commands(Self) -> Array[Info]
+pub fn Ctxt::digest(Self) -> String
+pub fn Ctxt::features(Self) -> Array[String]
+pub fn[A] Ctxt::get(Self, Parameter[A]) -> A
+pub fn Ctxt::output(Self, &Logger) -> Unit
+pub fn Ctxt::plugins(Self) -> Array[Info]
+pub fn Ctxt::refine(Self, provides? : Array[String], exclude? : Array[String]) -> Self
+pub fn Ctxt::to_string(Self) -> String
+pub impl Show for Ctxt
+
+pub(all) struct Extension {
+}
+pub fn Extension::documentation(String) -> Unit
+pub fn Extension::register(features? : Array[String], provides? : Array[String], doc? : String, (Ctxt) -> Unit raise) -> Unit
+
+pub(all) enum FileKind {
+  RegularFile
+  Directory
+  OtherFile
+} derive(Eq, @debug.Debug)
+pub fn FileKind::equal(Self, Self) -> Bool
+pub fn FileKind::not_equal(Self, Self) -> Bool
+pub fn FileKind::to_repr(Self) -> @debug.Repr
+
+pub(all) struct FileSystem {
+  kind : (String) -> FileKind?
+  read_file : (String) -> Bytes?
+  read_dir : (String) -> Array[String]?
+}
+pub fn FileSystem::in_memory(files~ : Array[(String, String)], dirs? : Array[String]) -> Self
+pub fn FileSystem::native() -> Self
+
+pub struct Grammar[F, R] {
+  // private fields
+}
+pub fn[A, B, C] Grammar::add(Self[A, (B) -> C], CommandParam[B]) -> Self[A, C]
+
+pub struct Info {
+  // private fields
+}
+pub fn Info::doc(Self) -> String
+pub fn Info::name(Self) -> String
+
+pub(all) enum ManBlock {
+  Section(String)
+  Paragraph(String)
+  Verbatim(String)
+  Item(String, String)
+  NoBlank
+} derive(Eq, @debug.Debug)
+pub fn ManBlock::equal(Self, Self) -> Bool
+pub fn ManBlock::not_equal(Self, Self) -> Bool
+pub fn ManBlock::to_repr(Self) -> @debug.Repr
+
+pub struct Parameter[A] {
+  // private fields
+}
+
+pub(all) struct Recipe {
+  command : String?
+  args : Array[String]
+} derive(Eq, @debug.Debug)
+pub fn Recipe::equal(Self, Self) -> Bool
+pub fn Recipe::not_equal(Self, Self) -> Bool
+pub fn Recipe::to_repr(Self) -> @debug.Repr
+
+pub struct Type[A] {
+  // private fields
+}
+pub fn[A] Type::array(Self[A], sep? : Char) -> Self[FixedArray[A]]
+pub fn Type::bool() -> Self[Bool]
+pub fn Type::char() -> Self[Char]
+pub fn[A] Type::create(name? : String, digest? : (A) -> String, parse~ : (String) -> A raise, print~ : (A) -> String, A) -> Self[A]
+pub fn[A] Type::default(Self[A]) -> A
+pub fn[A] Type::digest(Self[A], A) -> String
+pub fn Type::dir() -> Self[String]
+pub fn[A : Eq] Type::enumeration(Array[(String, A)]) -> Self[A] raise
+pub fn Type::file() -> Self[String]
+pub fn Type::float() -> Self[Double]
+pub fn Type::int() -> Self[Int]
+pub fn Type::int32() -> Self[Int]
+pub fn Type::int64() -> Self[Int64]
+pub fn[A] Type::list(Self[A], sep? : Char) -> Self[Array[A]]
+pub fn[A] Type::name(Self[A]) -> String
+pub fn Type::nativeint() -> Self[Int64]
+pub fn Type::non_dir_file() -> Self[String]
+pub fn[A, B] Type::pair(Self[A], Self[B], sep? : Char) -> Self[(A, B)]
+pub fn[A] Type::parse(Self[A], String) -> A raise
+pub fn Type::path() -> Self[String]
+pub fn[A] Type::print(Self[A], A) -> String
+pub fn[A] Type::refine(Self[A], (A) -> Unit raise) -> Self[A] raise
+pub fn[A] Type::rename(Self[A], String) -> Self[A]
+pub fn[A] Type::some(Self[A]) -> Self[A?]
+pub fn Type::string() -> Self[String]
+pub fn[A, B] Type::t2(Self[A], Self[B], sep? : Char) -> Self[(A, B)]
+pub fn[A, B, C] Type::t3(Self[A], Self[B], Self[C], sep? : Char) -> Self[(A, B, C)]
+pub fn[A, B, C, D] Type::t4(Self[A], Self[B], Self[C], Self[D], sep? : Char) -> Self[(A, B, C, D)]
+pub fn[A] Type::with_default(Self[A], A) -> Self[A]
+
+// Type aliases
+pub type CommandFn = (Ctxt) -> Unit raise
+
+// Traits

@@ -1,0 +1,13 @@
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/main_event",
+  "bobzhang/bap/primus",
+  "moonbitlang/core/immut/sorted_set",
+  "moonbitlang/core/list",
+}
+
+import {
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/project",
+  "bobzhang/bap/types",
+} for "test"

@@ -71,7 +71,7 @@ priv struct Layer {
 ///|
 priv struct Bank {
   values : @sorted_map.SortedMap[AddrKey, Value]
-  layers : Array[Layer]
+  layers : @list.List[Layer]
 }
 
 ///|
@@ -85,7 +85,7 @@ pub struct Memory {
 
 ///|
 fn empty_bank() -> Bank {
-  { values: @sorted_map.SortedMap::new(), layers: [], }
+  { values: @sorted_map.SortedMap::new(), layers: @list.List::new(), }
 }
 
 ///|
@@ -132,7 +132,7 @@ fn memory_to_sexp(t : Memory) -> Sexp {
       List([
         Atom(name),
         List([Atom("values"), List(values)]),
-        List([Atom("layers"), List(bank.layers.map(layer_to_sexp))]),
+        List([Atom("layers"), List(bank.layers.map(layer_to_sexp).to_array())]),
       ]),
     )
   })
@@ -184,7 +184,10 @@ fn region_contains(r : Region, addr : @types.Word) -> Bool {
       if addr_le(lower, upper) {
         addr_le(lower, addr) && addr_le(addr, upper)
       } else {
-        addr_le(upper, addr) || addr_le(addr, lower)
+        // a region that wraps around the end of the address space:
+        // [lower, max] U [0, upper] (upstream tests the reversed
+        // endpoints, which makes such a region contain every address)
+        addr_le(lower, addr) || addr_le(addr, upper)
       }
     Static(mem) =>
       match addr_to_u64(addr) {
@@ -195,7 +198,7 @@ fn region_contains(r : Region, addr : @types.Word) -> Bool {
 }
 
 ///|
-fn find_layer(layers : Array[Layer], addr : @types.Word) -> Layer? {
+fn find_layer(layers : @list.List[Layer], addr : @types.Word) -> Layer? {
   for l in layers {
     if region_contains(l.mem, addr) {
       return Some(l)
@@ -361,15 +364,19 @@ pub fn Memory::get(m : Machine, addr : @types.Word) -> Value raise {
 
 ///|
 /// Writes a memory cell (`Memory.set`). Raises `Pagefault` if the address
-/// is not mapped or is read-only.
+/// is not mapped or belongs to a read-only region. Unlike upstream, a cell
+/// that already holds a value (initialized or generated) in a read-only
+/// region is still read-only; cells written with `set_never_fail` outside
+/// of any region stay writable.
 pub fn Memory::set(m : Machine, addr : @types.Word, x : Value) -> Unit raise {
   let bank = Memory::get_curr(m)
-  if !bank.values.contains(AddrKey(addr)) {
-    match find_layer(bank.layers, addr) {
-      None => ignore(raise_pagefault(m, addr))
-      Some(l) if l.read_only => ignore(raise_pagefault(m, addr))
-      Some(_) => ()
-    }
+  match find_layer(bank.layers, addr) {
+    Some(l) if l.read_only => ignore(raise_pagefault(m, addr))
+    Some(_) => ()
+    None =>
+      if !bank.values.contains(AddrKey(addr)) {
+        ignore(raise_pagefault(m, addr))
+      }
   }
   Memory::put_curr(m, { ..bank, values: bank.values.add(AddrKey(addr), x), })
 }
@@ -421,14 +428,15 @@ pub fn Memory::store_never_fail(
 ///|
 fn Memory::add_layer(m : Machine, layer : Layer) -> Bank {
   let bank = Memory::get_curr(m)
-  { ..bank, layers: [layer, ..bank.layers], }
+  { ..bank, layers: bank.layers.prepend(layer), }
 }
 
 ///|
 /// Maps a dynamic region `[lower, upper]` (`Memory.add_region`). Reads of
 /// unset cells produce values from `generator` (by default a seeded
 /// pseudorandom generator of the target width); `init`, when given,
-/// initializes the cells in `[lower, upper)`.
+/// initializes every cell of `[lower, upper]` (upstream initializes
+/// `[lower, upper)`, so a one-cell allocation was never initialized).
 pub fn Memory::add_region(
   m : Machine,
   read_only? : Bool = false,
@@ -453,8 +461,11 @@ pub fn Memory::add_region(
     Some(f) => {
       let mut values = bank.values
       let mut addr = lower
-      while addr.compare(upper) < 0 {
+      for ;; {
         values = values.add(AddrKey(addr), Value::of_word(m, f(addr)))
+        if addr.compare(upper) == 0 {
+          break
+        }
         addr = addr.succ()
       }
       Memory::put_curr(m, { ..bank, values, })
@@ -522,8 +533,10 @@ pub fn Memory::is_mapped(m : Machine, addr : @types.Word) -> Bool {
 /// Whether the address is writable (`Memory.is_writable`).
 pub fn Memory::is_writable(m : Machine, addr : @types.Word) -> Bool {
   let bank = Memory::get_curr(m)
-  bank.values.contains(AddrKey(addr)) ||
-  (find_layer(bank.layers, addr) is Some(l) && !l.read_only)
+  match find_layer(bank.layers, addr) {
+    Some(l) => !l.read_only
+    None => bank.values.contains(AddrKey(addr))
+  }
 }
 
 ///|

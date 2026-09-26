@@ -88,6 +88,19 @@ pub fn Interpreter::pos(m : Machine) -> Pos {
 }
 
 ///|
+/// The position of another (live) machine, e.g. for schedulers choosing
+/// which fork to resume.
+pub fn Interpreter::pos_of(m : Machine, id : Id) -> Pos raise {
+  m.get_other(id, interpreter_state).curr
+}
+
+///|
+/// The program counter of another (live) machine.
+pub fn Interpreter::pc_of(m : Machine, id : Id) -> @types.Word raise {
+  m.get_other(id, interpreter_state).addr
+}
+
+///|
 /// The number of clocks elapsed (`Interpreter.time`).
 pub fn Interpreter::time(m : Machine) -> Int {
   m.get_local(interpreter_state).time

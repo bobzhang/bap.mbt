@@ -1,0 +1,10 @@
+import {
+  "bobzhang/bap/primus",
+  "bobzhang/bap/project",
+  "bobzhang/bap/types",
+  "moonbitlang/core/immut/hashset" @immut_hashset,
+}
+
+import {
+  "bobzhang/bap/core_theory",
+} for "test"

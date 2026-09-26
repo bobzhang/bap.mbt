@@ -8,6 +8,7 @@ import {
   "bobzhang/bap/graphlib",
   "bobzhang/bap/image",
   "bobzhang/bap/knowledge",
+  "bobzhang/bap/mc",
   "bobzhang/bap/memory",
   "bobzhang/bap/types",
   "moonbitlang/core/debug",
@@ -619,6 +620,7 @@ pub fn ProjectDisassemblyInstruction::is_branch(Self) -> Bool
 pub fn ProjectDisassemblyInstruction::is_kind(Self, ProjectInstructionKind) -> Bool
 pub fn ProjectDisassemblyInstruction::kinds(Self) -> Array[ProjectInstructionKind]
 pub fn ProjectDisassemblyInstruction::lift_basic_bil(Self) -> Result[Array[@types.Stmt], String]
+pub fn ProjectDisassemblyInstruction::lift_registered_bil(Self, target~ : String) -> Result[Array[@types.Stmt], String]
 pub fn ProjectDisassemblyInstruction::may(Self, ProjectInstructionKind) -> Bool
 pub fn ProjectDisassemblyInstruction::memory(Self) -> @memory.Memory
 pub fn ProjectDisassemblyInstruction::must(Self, ProjectInstructionKind) -> Self
@@ -632,6 +634,7 @@ pub fn ProjectDisassemblyInstruction::should_not(Self, ProjectInstructionKind) -
 pub fn ProjectDisassemblyInstruction::subinstruction_count(Self) -> Int
 pub fn ProjectDisassemblyInstruction::subinstructions(Self) -> Array[Self]
 pub fn ProjectDisassemblyInstruction::subs(Self) -> Array[Self]
+pub fn ProjectDisassemblyInstruction::to_mc_insn(Self) -> @mc.Insn
 pub fn ProjectDisassemblyInstruction::with_kind(Self, ProjectInstructionKind) -> Self
 pub fn ProjectDisassemblyInstruction::with_kinds(Self, Array[ProjectInstructionKind]) -> Self
 pub fn ProjectDisassemblyInstruction::with_metadata(Self, code? : Int, name? : String, encoding? : String) -> Self

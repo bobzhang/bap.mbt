@@ -6,6 +6,7 @@ import {
   "bobzhang/bap/graphlib",
   "bobzhang/bap/image",
   "bobzhang/bap/knowledge",
+  "bobzhang/bap/mc",
   "bobzhang/bap/memory",
   "bobzhang/bap/native_io",
   "bobzhang/bap/types",

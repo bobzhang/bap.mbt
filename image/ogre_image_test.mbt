@@ -200,7 +200,7 @@ test "ogre image specs refine unknown targets from metadata facts" {
       assert_true(image.endian() == BigEndian)
       match image.target() {
         Some(target) => {
-          assert_true(target.matches("unknown"))
+          assert_true(target.name().show() == ":unknown")
           assert_true(target.bits() == 32)
           assert_true(target.endianness().to_string() == "big")
           assert_true(target.system().to_string() == "darwin")

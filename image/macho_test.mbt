@@ -155,7 +155,7 @@ test "Mach-O x86-64 executable image" {
   inspect(
     image_summary(image),
     content=(
-      #|target target:x86_64 entry 0x100000400 base 0x100000000
+      #|target bap:x86_64 entry 0x100000400 base 0x100000000
       #|segment __TEXT 0x100000000+0x1000 @0x0 r-x
       #|segment __DATA 0x100001000+0x10 @0x1000 rw-
       #|segment __LINKEDIT 0x100002000+0x78 @0x1010 r--
@@ -234,7 +234,7 @@ test "Mach-O arm64 executable image" {
   inspect(
     image_summary(image),
     content=(
-      #|target target:aarch64 entry 0x100000400 base 0x100000000
+      #|target bap:aarch64 entry 0x100000400 base 0x100000000
       #|segment __TEXT 0x100000000+0x1000 @0x0 r-x
       #|segment __LINKEDIT 0x100001000+0x30 @0x1000 r--
       #|section __text 0x100000400+0x18
@@ -254,7 +254,7 @@ test "Mach-O universal binary: the architecture of the target" {
   inspect(
     arm.arch().to_string(),
     content=(
-      #|target:aarch64
+      #|bap:aarch64
     ),
   )
   assert_eq(arm.symbols().map(s => s.name()), ["_main", "_foo"])
@@ -265,7 +265,7 @@ test "Mach-O universal binary: the architecture of the target" {
   inspect(
     x86.arch().to_string(),
     content=(
-      #|target:x86_64
+      #|bap:x86_64
     ),
   )
   assert_eq(x86.entry_point(), 0x100000400)
@@ -295,7 +295,7 @@ test "Mach-O i386 executable with LC_UNIXTHREAD" {
   inspect(
     image_summary(image),
     content=(
-      #|target target:x86 entry 0x1400 base 0x1000
+      #|target bap:x86 entry 0x1400 base 0x1000
       #|segment __TEXT 0x1000+0x1000 @0x0 r-x
       #|section __text 0x1400+0x3
     ),
@@ -309,7 +309,7 @@ test "Mach-O relocatable object" {
   inspect(
     image_summary(image),
     content=(
-      #|target target:x86_64 entry 0x0 base 0x0
+      #|target bap:x86_64 entry 0x0 base 0x0
       #|segment  0x0+0x6 @0xd0 rwx
       #|section  0x0+0x6
       #|symbol _main 0x0+0x6 fn=true

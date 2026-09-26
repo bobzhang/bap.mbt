@@ -91,7 +91,7 @@ test "bap disassembles an arm64 Mach-O executable" {
 ///|
 test "bap disassembles the architecture of the target of a universal binary" {
   inspect(
-    bap_objects(["bin/universal", "-dasm", "--target=target:aarch64"]),
+    bap_objects(["bin/universal", "-dasm", "--target=bap:aarch64"]),
     content=(
       #|
       #|Disassembly of section __text
@@ -112,7 +112,7 @@ test "bap disassembles the architecture of the target of a universal binary" {
     ),
   )
   inspect(
-    head(bap_objects(["bin/universal", "-dasm", "--target=target:x86_64"]), 6),
+    head(bap_objects(["bin/universal", "-dasm", "--target=bap:x86_64"]), 6),
     content=(
       #|
       #|Disassembly of section __text

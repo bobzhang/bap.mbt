@@ -59,7 +59,7 @@ test "analyze runs the core commands" {
   inspect(
     run_bap(["analyze", "units", "subroutines", "subroutine bin/true foo"]),
     content=(
-      #|bin/true                                 target:x86_64
+      #|bin/true                                 bap:x86_64
       #|bin/true:0x401000: main
       #|bin/true:0x40100e: foo
       #|bin/true:0x40100e
@@ -149,7 +149,7 @@ test "analyze runs a script" {
   inspect(
     run_bap(["analyze", "--script=cmds.txt"]),
     content=(
-      #|bin/true                                 target:x86_64
+      #|bin/true                                 bap:x86_64
       #|bin/true:0x40100e: foo
       #|
     ),
@@ -177,7 +177,7 @@ test "analyze reads the commands from the input" {
   inspect(
     run_bap(["analyze"], stdin=["units", "nope", "in-package user", "quit"]),
     content=(
-      #|bap> bin/true                                 target:x86_64
+      #|bap> bin/true                                 bap:x86_64
       #|bap> [err] Can't find a command "nope" in the package "bap"
       #|bap> user> 
     ),

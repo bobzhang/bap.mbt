@@ -265,12 +265,13 @@ fn exec32(
 
 ///|
 /// Decode one instruction with the project's Basic decoder (`x86` or
-/// `x86_64` triple).
-fn basic_decode(
+/// `x86_64` triple): `None` when the decoder reports an invalid
+/// instruction.
+fn basic_decode_opt(
   triple : String,
   bytes : Bytes,
   addr? : UInt64 = 0x400000,
-) -> @project.ProjectDisassemblyInstruction raise {
+) -> @project.ProjectDisassemblyInstruction? raise {
   let disasm = match
     @project.ProjectDisassemblyBasic::create(triple, backend="llvm") {
     Ok(d) => d
@@ -282,12 +283,22 @@ fn basic_decode(
     bytes,
   )
   match disasm.insn_of_mem(memory) {
-    Ok(result) =>
-      match result.instruction() {
-        Some(i) => i
-        None => fail("no instruction decoded")
-      }
+    Ok(result) => result.instruction()
     Err(r) => fail(r)
+  }
+}
+
+///|
+/// Decode one instruction with the project's Basic decoder (`x86` or
+/// `x86_64` triple).
+fn basic_decode(
+  triple : String,
+  bytes : Bytes,
+  addr? : UInt64 = 0x400000,
+) -> @project.ProjectDisassemblyInstruction raise {
+  match basic_decode_opt(triple, bytes, addr~) {
+    Some(i) => i
+    None => fail("no instruction decoded")
   }
 }
 

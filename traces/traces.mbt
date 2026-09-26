@@ -261,12 +261,16 @@ pub fn TraceMode::members() -> Array[TraceMode] {
 }
 
 ///|
+/// `TraceMode::domain`, declared once.
+let trace_mode_domain_value : @knowledge.Domain[TraceMode] = @knowledge.Domain::flat(
+  trace_mode_domain_name(),
+  mode => mode.to_string(),
+  empty=TraceMode::unknown(),
+)
+
+///|
 pub fn TraceMode::domain() -> @knowledge.Domain[TraceMode] {
-  @knowledge.Domain::flat(
-    trace_mode_domain_name(),
-    mode => mode.to_string(),
-    empty=TraceMode::unknown(),
-  )
+  trace_mode_domain_value
 }
 
 ///|
@@ -279,14 +283,18 @@ pub fn TraceMode::persistent() -> @knowledge.Persistent[TraceMode] {
 }
 
 ///|
+/// `TraceMode::slot`, declared once.
+let trace_mode_slot_value : @knowledge.Slot[Unit, TraceMode] = @core_theory.Program::cls().property(
+  name=trace_mode_slot_name(),
+  domain=TraceMode::domain(),
+  desc="the CPU execution mode",
+  persistent=TraceMode::persistent(),
+  public=true,
+)
+
+///|
 pub fn TraceMode::slot() -> @knowledge.Slot[Unit, TraceMode] {
-  @core_theory.Program::cls().property(
-    name=trace_mode_slot_name(),
-    domain=TraceMode::domain(),
-    desc="the CPU execution mode",
-    persistent=TraceMode::persistent(),
-    public=true,
-  )
+  trace_mode_slot_value
 }
 
 ///|

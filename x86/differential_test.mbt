@@ -290,11 +290,17 @@ fn diff_one(
     X8664 => "x86_64"
   }
   let addr = 0x400000UL
-  let insn = basic_decode(triple, bytes, addr~) catch {
+  let insn = basic_decode_opt(triple, bytes, addr~) catch {
     _ => {
       report.findings.push("\{hex_bytes(bytes)}: Basic decoder failed")
       return
     }
+  }
+  guard insn is Some(insn) else {
+    // an invalid instruction for the Basic decoder: not decoded, so neither
+    // lifter has an instruction to lift
+    report.basic_undecoded += 1
+    report.neither += 1
   }
   let label = "\{hex_bytes(bytes)} (\{insn.name()})"
   let decoded_len = insn.memory().length()
@@ -307,10 +313,7 @@ fn diff_one(
   } noraise {
     b => Some(b)
   }
-  if decoded_len != bytes.length() && insn.name() == ".byte" {
-    // not decoded by the Basic decoder
-    report.basic_undecoded += 1
-  } else if decoded_len != bytes.length() {
+  if decoded_len != bytes.length() {
     report.findings.push(
       "\{label}: Basic decodes \{decoded_len} of \{bytes.length()} bytes",
     )
@@ -482,10 +485,10 @@ test "differential: Basic decoder does not decode REX bytes as inc/dec" {
   // found by the differential test: in 64-bit mode the Basic decoder fell
   // back to its 32-bit decoder and decoded REX prefixes (40-4f) of
   // instructions it does not know as the one-byte INC/DEC forms
-  let insn = basic_decode("x86_64", b"\x41\x89\xc0")
-  assert_true(insn.name() != "INC32r")
-  let insn = basic_decode("x86_64", b"\x66\x48\x0f\x6e\xc0")
-  assert_true(insn.name() != "DEC16r")
+  let insn = basic_decode_opt("x86_64", b"\x41\x89\xc0")
+  assert_true(!(insn is Some(insn) && insn.name() == "INC32r"))
+  let insn = basic_decode_opt("x86_64", b"\x66\x48\x0f\x6e\xc0")
+  assert_true(!(insn is Some(insn) && insn.name() == "DEC16r"))
   // the 32-bit forms are unchanged
   inspect(basic_decode("x86", b"\x41").name(), content="INC32r")
   inspect(basic_decode("x86", b"\x66\x48").name(), content="DEC16r")
@@ -513,7 +516,7 @@ test "differential: x86-64, combined providers vs Basic" {
   inspect(
     report_text(report),
     content=(
-      #|both=227 agree=205 only_ours=5 only_basic=7 neither=52 basic_undecoded=51
+      #|both=227 agree=205 only_ours=5 only_basic=7 neither=52 basic_undecoded=52
       #|86 d8 (XCHG8rr): only Basic lifts
       #|d1 c0 (ROL32r1): CF: ours 0x0x0 basic 0x0x1; OF: ours 0x0x1 basic 0x0x0; OF: ours 0x0x0 basic 0x0x1
       #|c1 c0 04 (ROL32ri8): CF: ours 0x0x1 basic 0x0x0; CF: ours 0x0x0 basic 0x0x1
@@ -569,7 +572,7 @@ test "differential: x86-64, legacy lifter vs Basic" {
   inspect(
     report_text(report),
     content=(
-      #|both=219 agree=200 only_ours=5 only_basic=15 neither=52 basic_undecoded=51
+      #|both=219 agree=200 only_ours=5 only_basic=15 neither=52 basic_undecoded=52
       #|86 d8 (XCHG8rr): only Basic lifts
       #|d1 c0 (ROL32r1): CF: ours 0x0x0 basic 0x0x1; OF: ours 0x0x1 basic 0x0x0; OF: ours 0x0x0 basic 0x0x1
       #|c1 c0 04 (ROL32ri8): CF: ours 0x0x1 basic 0x0x0; CF: ours 0x0x0 basic 0x0x1
@@ -630,7 +633,7 @@ test "differential: x86, combined providers vs Basic" {
   inspect(
     report_text(report),
     content=(
-      #|both=66 agree=58 only_ours=0 only_basic=0 neither=2 basic_undecoded=0
+      #|both=66 agree=58 only_ours=0 only_basic=0 neither=2 basic_undecoded=2
       #|d1 c0 (ROL32r1): CF: ours 0x0x0 basic 0x0x1; OF: ours 0x0x1 basic 0x0x0; OF: ours 0x0x0 basic 0x0x1
       #|e8 00 01 00 00 (CALLpcrel32): ESP: ours 0x0x000200fc basic 0x0x00020100; mem[0x200fc] differs
       #|ff d0 (CALL32r): ESP: ours 0x0x000200fc basic 0x0x00020100; mem[0x200fc] differs

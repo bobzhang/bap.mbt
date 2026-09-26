@@ -43,9 +43,11 @@ fn semantic_decode_x86_state(
     Err(reason) => fail(reason)
   }
   let memory = @memory.Memory::from_bytes(endian=LittleEndian, start~, bytes)
-  let basic_state = disasm.run(memory)
+  let insns = disasm.run(memory, init=(), return_=_ => [], stopped=(s, _) => {
+    s.insns()
+  })
   let instructions : Array[@project.ProjectDisassemblyInstruction] = []
-  for item in basic_state.insns() {
+  for item in insns {
     match item.1 {
       Some(instruction) => instructions.push(instruction)
       None => ()
@@ -567,10 +569,17 @@ test "project Basic x86 SIMD semantics runs decoded instruction streams" {
     start=0x6100UL,
     bytes,
   )
-  let basic_state = disasm.run(memory)
-  assert_true(basic_state.insns().length() == 2)
-  assert_true(basic_state.insns().map(item => item.0.length()) == [4, 4])
-  match basic_state.apply_x86_simd(semantic_xmm_state(source, dest)) {
+  let (insns, applied) = disasm.run(
+    memory,
+    init=(),
+    return_=_ => ([], Err("not stopped")),
+    stopped=(s, _) => {
+      (s.insns(), s.apply_x86_simd(semantic_xmm_state(source, dest)))
+    },
+  )
+  assert_true(insns.length() == 2)
+  assert_true(insns.map(item => item.0.length()) == [4, 4])
+  match applied {
     Ok(next) => assert_true(next.get_register("xmm1") == Some(source))
     Err(reason) => fail(reason)
   }
@@ -590,9 +599,16 @@ test "project Basic x86 SIMD stream errors include instruction address" {
     start=0x6200UL,
     b"\x66\x0f\xda\xc8\xeb\xfe",
   )
-  let basic_state = disasm.run(memory)
-  assert_true(basic_state.insns().length() == 2)
-  match basic_state.apply_x86_simd(semantic_xmm_state(source, dest)) {
+  let (insns, applied) = disasm.run(
+    memory,
+    init=(),
+    return_=_ => ([], Err("not stopped")),
+    stopped=(s, _) => {
+      (s.insns(), s.apply_x86_simd(semantic_xmm_state(source, dest)))
+    },
+  )
+  assert_true(insns.length() == 2)
+  match applied {
     Err(reason) => {
       assert_true(reason.contains("JMP_1"))
       assert_true(reason.contains("0x6204"))

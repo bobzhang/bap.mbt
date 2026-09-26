@@ -58,7 +58,6 @@ test "disassemble dumps the program in the bir format" {
       #|00000021: SF := high:1[EAX]
       #|00000022: ZF := 0 = EAX
       #|
-
     ),
   )
 }
@@ -211,7 +210,6 @@ test "disassemble runs passes" {
       #|00000036: flat_15 := 0 = EAX
       #|00000037: ZF := flat_15
       #|
-
     ),
   )
 }

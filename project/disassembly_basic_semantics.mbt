@@ -919,8 +919,8 @@ pub fn ProjectX86SimdState::apply_instructions(
 }
 
 ///|
-pub fn ProjectDisassemblyBasicState::apply_x86_simd(
-  self : ProjectDisassemblyBasicState,
+pub fn[S, R] ProjectDisassemblyBasicState::apply_x86_simd(
+  self : ProjectDisassemblyBasicState[S, R],
   state : ProjectX86SimdState,
 ) -> Result[ProjectX86SimdState, String] {
   let instructions : Array[ProjectDisassemblyInstruction] = []

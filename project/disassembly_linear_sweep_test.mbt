@@ -1,5 +1,5 @@
 ///|
-test "project disassembly linear sweep emits byte-granular instructions" {
+test "project disassembly linear sweep with the raw backend emits byte-granular instructions" {
   assert_true(
     @project.ProjectDisassemblyLinearSweep::create(backend="llvm").backend() ==
     "llvm",
@@ -13,6 +13,7 @@ test "project disassembly linear sweep emits byte-granular instructions" {
     @project.ProjectDisassemblyLinearSweep::sweep(
       @core_theory.Target::unknown(),
       memory,
+      backend="raw",
     ) {
     Ok(items) => {
       assert_true(items.length() == 2)
@@ -53,7 +54,7 @@ test "project disassembly linear sweep supports empty memory and exn wrapper" {
   )
   match
     @project.ProjectDisassemblyLinearSweep::sweep(
-      @core_theory.Target::unknown(),
+      @core_theory.Target::x86_64(),
       empty,
       backend="llvm",
     ) {
@@ -68,6 +69,7 @@ test "project disassembly linear sweep supports empty memory and exn wrapper" {
   let items = @project.ProjectDisassemblyLinearSweep::sweep_exn(
     @core_theory.Target::unknown(),
     memory,
+    backend="raw",
   )
   assert_true(items.length() == 1)
   match items[0].1 {
@@ -84,7 +86,7 @@ test "project linear sweep wrapper uses project target" {
     b"\xff",
   )
   let project = @project.Project::empty(@core_theory.Target::unknown())
-  match project.linear_sweep(memory) {
+  match project.linear_sweep(memory, backend="raw") {
     Ok(items) => {
       assert_true(items.length() == 1)
       match items[0].1 {
@@ -97,6 +99,42 @@ test "project linear sweep wrapper uses project target" {
     }
     Err(reason) => fail(reason)
   }
-  let checked = project.linear_sweep_exn(memory)
+  let checked = project.linear_sweep_exn(memory, backend="raw")
   assert_true(checked.length() == 1)
+}
+
+///|
+test "project linear sweep lists the invalid instructions of the llvm backend" {
+  // push rbp; (bad); ret
+  let memory = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0xc300UL,
+    b"\x55\x06\xc3",
+  )
+  let items = @project.ProjectDisassemblyLinearSweep::sweep_exn(
+    @core_theory.Target::x86_64(),
+    memory,
+  )
+  inspect(
+    items
+    .map(item => {
+      let name = match item.1 {
+        Some(insn) => insn.name()
+        None => "invalid"
+      }
+      "\{item.0.min_addr().to_string(radix=16)}:\{name}"
+    })
+    .join(" "),
+    content=(
+      #|c300:PUSH64r c301:invalid c302:RET
+    ),
+  )
+  // an encoding without a disassembler is an error
+  assert_true(
+    @project.ProjectDisassemblyLinearSweep::sweep(
+      @core_theory.Target::unknown(),
+      memory,
+    )
+    is Err(_),
+  )
 }

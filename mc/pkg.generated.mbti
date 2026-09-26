@@ -8,7 +8,15 @@ import {
 }
 
 // Values
+pub fn decoders() -> Array[Decoder]
+
 pub fn default_encoding(@core_theory.Target) -> @core_theory.Language
+
+pub fn find_decoder(Context) -> Decoder?
+
+pub fn register_decoder(Decoder) -> Unit
+
+pub fn unregister_decoder(String) -> Bool
 
 // Errors
 pub(all) suberror LiftError {
@@ -32,6 +40,25 @@ pub fn Context::encoded_as(Self, @core_theory.Language) -> Bool
 pub fn Context::encoding(Self) -> @core_theory.Language
 pub fn Context::target(Self) -> @core_theory.Target
 pub fn Context::to_string(Self) -> String
+
+pub(all) enum Decoded {
+  Decoded(Insn)
+  Invalid(size~ : Int)
+  Truncated
+} derive(Eq, @debug.Debug)
+pub fn Decoded::equal(Self, Self) -> Bool
+pub fn Decoded::not_equal(Self, Self) -> Bool
+pub fn Decoded::to_repr(Self) -> @debug.Repr
+
+pub struct Decoder {
+  name : String
+  accepts : (Context) -> Bool
+  decode : (Context, BytesView, UInt64) -> Decoded
+}
+pub fn Decoder::accepts(Self, Context) -> Bool
+pub fn Decoder::create(String, accepts~ : (Context) -> Bool, decode~ : (Context, BytesView, UInt64) -> Decoded) -> Self
+pub fn Decoder::decode(Self, Context, BytesView, UInt64) -> Decoded
+pub fn Decoder::name(Self) -> String
 
 pub struct Insn {
   name : String

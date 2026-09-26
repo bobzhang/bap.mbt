@@ -256,6 +256,7 @@ ISA 2.06+ opcodes from a Python model of Power ISA 3.0B.
   - `LW`/`LH`/`LHU`/`LWU` load and `SW`/`SH` store 32/16 bits (upstream derives the widths from XLEN, which is wrong on RV32).
   - `SLTI` compares `rs1` signed (upstream compares the destination, unsigned); `BLT`/`BGE` compare signed (upstream: unsigned).
   - Added: `ADD`, `AND`, `OR`, `XOR`, `SLT`, `SLTU`, `SLTIU`, `SLL`/`SRL`/`SRA` (amounts masked to XLEN), `SUBW`, the `*W` shifts, `BLTU`/`BGEU`, the M extension (`MUL`, `MULH[S][U]`, `DIV[U]`, `REM[U]`, `MULW`, `DIV[U]W`, `REM[U]W`, with the ISA's division-by-zero results), `C_AND`/`C_OR`/`C_XOR`/`C_ANDI`/`C_SUBW`/`C_SW`/`C_SWSP`/`C_LWSP`/`C_JAL`, and the fences.
+- SystemZ (`systemz/`): besides upstream's `LR`, the other general-register moves without condition codes are modeled (`LGR`, `LGFR`, `LLGFR`).
 - Primus Lisp lifter (`primus_lisp`): hardwired zero registers (registers with the `zero` role: RISC-V `X0`/`ZERO`, AArch64 `XZR`/`WZR`) read as zero and writes to them are discarded (RISC-V `j`/`ret` write `X0`).
 
 ## Fidelity Gaps (audit, 2026-09-26; several since addressed: knowledge KB evaluator, Core Theory algebra, BIL-to-IR lowering, liveness/SSA, DWARF prefix recovery, typed image memory and raw ELF reader)

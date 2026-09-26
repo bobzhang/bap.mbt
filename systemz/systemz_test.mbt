@@ -69,6 +69,29 @@ test "lift errors" {
 }
 
 ///|
+test "LGR, LGFR and LLGFR copy and extend" {
+  let state = @types.BilState::new()
+    .set("R1", BilWord(@types.Word::of_uint64(width=64, 0x1111111122222222)))
+    .set("R2", BilWord(@types.Word::of_uint64(width=64, 0x33333333AAAABBBB)))
+  let run = (name : String, rs : String) => {
+    let insn = @mc.Insn::create(
+      name,
+      [@mc.Op::reg("R1D"), @mc.Op::reg(rs)],
+      size=4,
+      addr=0,
+    )
+    guard @types.exec_stmts(@systemz.lift(insn), state~) is Ok(next) else {
+      fail("evaluation failed")
+    }
+    guard next.get_word("R1") is Some(w) else { fail("missing R1") }
+    w.to_uint64()
+  }
+  assert_eq(run("LGR", "R2D"), 0x33333333AAAABBBB)
+  assert_eq(run("LGFR", "R2L"), 0xFFFFFFFFAAAABBBB)
+  assert_eq(run("LLGFR", "R2L"), 0x00000000AAAABBBB)
+}
+
+///|
 test "register installs the systemz provider" {
   let registry = @mc.Registry::new()
   @systemz.register(registry~)

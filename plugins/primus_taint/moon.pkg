@@ -1,5 +1,6 @@
 import {
   "bobzhang/bap/primus",
+  "bobzhang/bap/primus_lisp",
   "bobzhang/bap/taint",
 }
 

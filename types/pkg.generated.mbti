@@ -46,6 +46,8 @@ pub fn int_of_uint64(UInt64) -> Result[Int, String]
 
 pub fn int_of_word(Word) -> Result[Int, String]
 
+pub let ir_insn_attr : String
+
 pub fn is_assigned(Array[Stmt], Var, strict? : Bool) -> Bool
 
 pub fn is_assigned_stmts(Array[Stmt], Var, strict? : Bool) -> Bool
@@ -304,6 +306,7 @@ pub fn Attr::filename(String) -> Self
 pub fn Attr::flag(String) -> Self
 pub fn Attr::foreground(IrColor) -> Self
 pub fn Attr::format(String) -> Self
+pub fn Attr::insn(String) -> Self
 pub fn Attr::invariant(Exp) -> Self
 pub fn Attr::live() -> Self
 pub fn Attr::mark(value? : String) -> Self
@@ -526,10 +529,14 @@ pub fn Blk::defines_var(Term[Self], Var) -> Bool
 pub fn Blk::elts(Term[Self], rev? : Bool) -> Array[BlkElt]
 pub fn Blk::find_var(Term[Self], Var) -> VarBinding?
 pub fn Blk::free_vars(Term[Self]) -> Array[Var]
+pub fn Blk::lift_block(Tid, Array[IrInsn], addr? : Word, fall? : IrFall, is_call? : Bool, is_barrier? : Bool, pkg? : String, addr_width? : Int, is_subroutine? : (Tid) -> Bool) -> Array[Term[Self]]
+pub fn Blk::lift_insn(IrInsn, tid? : Tid, pkg? : String, addr_width? : Int, is_subroutine? : (Tid) -> Bool) -> Array[Term[Self]]
+pub fn Blk::lift_insns(Array[IrInsn], fall? : IrFall, addr? : Word, pkg? : String, addr_width? : Int, is_subroutine? : (Tid) -> Bool) -> Array[Term[Self]]
 pub fn Blk::map_elts(Term[Self], phi? : (Term[Phi]) -> Term[Phi], def? : (Term[Def]) -> Term[Def], jmp? : (Term[Jmp]) -> Term[Jmp]) -> Term[Self]
 pub fn Blk::map_exp(Term[Self], (Exp) -> Exp, skip_phi? : Bool, skip_def? : Bool, skip_jmp? : Bool) -> Term[Self]
 pub fn Blk::map_lhs(Term[Self], (Var) -> Var, skip_phi? : Bool, skip_def? : Bool) -> Term[Self]
 pub fn Blk::occurs(Term[Self], after~ : Tid, Tid) -> Bool
+pub fn Blk::of_bil(Array[Stmt], pkg? : String, addr_width? : Int, is_subroutine? : (Tid) -> Bool) -> Array[Term[Self]]
 pub fn Blk::split_after(Term[Self], Term[Def]) -> (Term[Self], Term[Self])
 pub fn Blk::split_before(Term[Self], Term[Def]) -> (Term[Self], Term[Self])
 pub fn Blk::split_bot(Term[Self]) -> (Term[Self], Term[Self])
@@ -779,6 +786,24 @@ pub fn IrColor::not_equal(Self, Self) -> Bool
 pub fn IrColor::of_string(String) -> Self?
 pub fn IrColor::to_repr(Self) -> @debug.Repr
 pub fn IrColor::to_string(Self) -> String
+
+pub(all) enum IrFall {
+  IntraFall(JmpDst)
+  InterFall(JmpDst)
+} derive(Eq, @debug.Debug)
+pub fn IrFall::equal(Self, Self) -> Bool
+pub fn IrFall::not_equal(Self, Self) -> Bool
+pub fn IrFall::to_repr(Self) -> @debug.Repr
+
+pub(all) struct IrInsn {
+  bil : Array[Stmt]
+  addr : Word?
+  insn : String?
+  is_call : Bool
+  is_barrier : Bool
+} derive(@debug.Debug)
+pub fn IrInsn::new(Array[Stmt], addr? : Word, insn? : String, is_call? : Bool, is_barrier? : Bool) -> Self
+pub fn IrInsn::to_repr(Self) -> @debug.Repr
 
 pub(all) enum IrTerm {
   ProgramTerm(Term[Program])
@@ -1141,8 +1166,10 @@ pub(all) struct Program {
   subs : Array[Term[Sub]]
 }
 pub fn Program::create(subs? : Array[Term[Sub]], tid? : Tid) -> Term[Self]
+pub fn Program::insert_synthetic(Term[Self]) -> Term[Self]
 pub fn Program::lookup(Term[Self], IrTermClass, Tid) -> IrTerm?
 pub fn Program::parent(Term[Self], IrTermClass, Tid) -> IrTerm?
+pub fn Program::relink_calls(Term[Self], Map[Tid, Tid], external_callee? : (Term[Blk]) -> Tid?) -> Term[Self]
 pub fn Program::to_graph(Term[Self]) -> @graphlib.Graph[Tid, Array[Term[Jmp]]]
 pub fn Program::to_string(Term[Self]) -> String
 

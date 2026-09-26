@@ -92,7 +92,7 @@ pub fn[K, S, P] Value::get(self : Value[K, S], slot : Slot[K, P]) -> P {
 ///|
 /// The property `p` of `v` if it is set.
 pub fn[K, S, P] Value::find(self : Value[K, S], slot : Slot[K, P]) -> P? {
-  self.data.find(slot.key)
+  self.data.find(slot.core.key)
 }
 
 ///|
@@ -109,7 +109,7 @@ pub fn[K, S, P] Value::put(
   } else {
     {
       ..self,
-      data: self.data.put(slot.key, slot.ops, value),
+      data: self.data.put(slot.core.key, slot.core.ops, value),
       time: next_second(),
     }
   }

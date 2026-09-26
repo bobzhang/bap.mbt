@@ -194,18 +194,14 @@ fn State::update_info(
 ///|
 /// `Object.create`: a fresh object of the class with an indefinite extent.
 ///
-/// Divergence: upstream only registers an object in the class listing
-/// once it gets some knowledge; here it is listed from creation, as the
-/// documentation of `Knowledge.objects` describes.
+/// As upstream, the object is only allocated: it is listed by
+/// `State::objects` (and serialized) once the knowledge base learns
+/// something about it (a property, a computation, or a name).
 pub fn[K, S] State::create(self : State, cls : Class[K, S]) -> Object[K] {
   let name = cls.name()
   let objects = self.class_objects(name)
   let id = objects.last + 1
-  self.set_class_objects(name, {
-    ..objects,
-    last: id,
-    vals: objects.vals.add(id, noinfo),
-  })
+  self.set_class_objects(name, { ..objects, last: id, })
   { id, class_name: name, _phantom: None, }
 }
 
@@ -244,7 +240,8 @@ pub fn[K, S, R] State::scoped(
 }
 
 ///|
-/// `Knowledge.objects cls`: all objects of the class, in creation order.
+/// `Knowledge.objects cls`: all objects of the class that have some
+/// knowledge (properties, computed slots or a name), in creation order.
 pub fn[K, S] State::objects(
   self : State,
   cls : Class[K, S],

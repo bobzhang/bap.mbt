@@ -134,24 +134,26 @@ fn ProjectDelayTemps::control(
 }
 
 ///|
-/// Concatenate the semantics of a sequence of instructions, honoring delay
-/// slots (upstream `Insn.Slot.delay`): the control-transfer statements of
-/// an instruction with `delay = n` are placed after the semantics of the
-/// next `n` instructions, as the disassembler driver of upstream moves the
-/// jump after its delay slot. Conditions and destinations that read
-/// variables written by the delay-slot instructions are captured in virtual
-/// temporaries (`delay_slot_<addr>_<n>`) before the delay slot, so the
-/// branch still observes the values from before it.
+/// Split the semantics of a sequence of instructions into segments in
+/// execution order, each attributed to the index of the instruction it was
+/// lifted from, honoring delay slots (upstream `Insn.Slot.delay`): the
+/// control-transfer statements of an instruction with `delay = n` form a
+/// segment of that instruction placed after the semantics of the next `n`
+/// instructions, as the disassembler driver of upstream moves the jump after
+/// its delay slot. Conditions and destinations that read variables written
+/// by the delay-slot instructions are captured in virtual temporaries
+/// (`delay_slot_<addr>_<n>`) before the delay slot, so the branch still
+/// observes the values from before it.
 ///
 /// `lifted` holds one result per instruction; failures (`Err`) contribute no
 /// statements but still occupy their delay-slot position.
-fn project_lift_sequence(
+fn project_lift_segments(
   instructions : Array[ProjectDisassemblyInstruction],
   lifted : Array[Result[@mc.Lifted, String]],
-) -> Array[@types.Stmt] {
-  let result : Array[@types.Stmt] = []
+) -> Array[(Int, Array[@types.Stmt])] {
+  let result : Array[(Int, Array[@types.Stmt])] = []
   // delayed control statements with the number of instructions to wait
-  let pending : Array[(Int, Array[@types.Stmt])] = []
+  let pending : Array[(Int, Int, Array[@types.Stmt])] = []
   for i, insn in instructions {
     match lifted[i] {
       Ok(item) if item.delay() > 0 => {
@@ -176,20 +178,34 @@ fn project_lift_sequence(
             now.push(stmt)
           }
         }
-        result.push_iter(now.iter())
-        result.push_iter(temps.defs.iter())
+        now.push_iter(temps.defs.iter())
+        result.push((i, now))
         project_lift_release(pending, result)
-        pending.push((item.delay(), later))
+        pending.push((item.delay(), i, later))
       }
       Ok(item) => {
-        result.push_iter(item.bil().iter())
+        result.push((i, item.bil()))
         project_lift_release(pending, result)
       }
       Err(_) => project_lift_release(pending, result)
     }
   }
   for entry in pending {
-    result.push_iter(entry.1.iter())
+    result.push((entry.1, entry.2))
+  }
+  result
+}
+
+///|
+/// Concatenate the semantics of a sequence of instructions, honoring delay
+/// slots (see `project_lift_segments`).
+fn project_lift_sequence(
+  instructions : Array[ProjectDisassemblyInstruction],
+  lifted : Array[Result[@mc.Lifted, String]],
+) -> Array[@types.Stmt] {
+  let result : Array[@types.Stmt] = []
+  for segment in project_lift_segments(instructions, lifted) {
+    result.push_iter(segment.1.iter())
   }
   result
 }
@@ -198,16 +214,16 @@ fn project_lift_sequence(
 /// Count down the pending delayed control statements after one more
 /// instruction, emitting those whose delay slots are complete.
 fn project_lift_release(
-  pending : Array[(Int, Array[@types.Stmt])],
-  result : Array[@types.Stmt],
+  pending : Array[(Int, Int, Array[@types.Stmt])],
+  result : Array[(Int, Array[@types.Stmt])],
 ) -> Unit {
-  let waiting : Array[(Int, Array[@types.Stmt])] = []
+  let waiting : Array[(Int, Int, Array[@types.Stmt])] = []
   for entry in pending {
-    let (count, stmts) = entry
+    let (count, index, stmts) = entry
     if count <= 1 {
-      result.push_iter(stmts.iter())
+      result.push((index, stmts))
     } else {
-      waiting.push((count - 1, stmts))
+      waiting.push((count - 1, index, stmts))
     }
   }
   pending.clear()

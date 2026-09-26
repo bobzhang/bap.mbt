@@ -277,6 +277,9 @@ pub fn primitives() -> Array[Primitive] {
 ///|
 /// Links the primitives into the machine (the `bap:lisp-dictionary`
 /// component body).
+///
+/// The primitives are linked under their names and defined as Primus Lisp
+/// primitives (in the `core` package), as the upstream component does.
 pub fn install(m : @primus.Machine) -> Unit {
   for p in primitives() {
     let run = p.run
@@ -284,6 +287,13 @@ pub fn install(m : @primus.Machine) -> Unit {
       m,
       name=p.name,
       Host(m => m.set_result(Some(run(m, m.call_args())))),
+    )
+    @primus_lisp.define_host_primitive(
+      m,
+      p.name,
+      types=p.types,
+      docs=p.docs,
+      run,
     )
   }
 }

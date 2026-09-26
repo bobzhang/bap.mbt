@@ -200,7 +200,7 @@ test "components are registered once and work in a system" {
   inspect(
     "\{first} \{again}",
     content=(
-      #|6 0
+      #|8 0
     ),
   )
   let names = @primus.Components::list()
@@ -214,6 +214,8 @@ test "components are registered once and work in a system" {
     names,
     content=(
       #|[
+      #|  "bap:taint-signals",
+      #|  "bap:taint-primitives",
       #|  "bap:propagate-taint-exact",
       #|  "bap:select-default-taint-policy",
       #|  "bap:conservative-garbage-collector",

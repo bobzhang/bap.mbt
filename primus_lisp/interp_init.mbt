@@ -25,6 +25,7 @@ pub fn init_signals(m : @primus.Machine) -> Unit {
     signal(
       m,
       @primus.loading,
+      sync=true,
       params=one(int),
       docs="(loading A) is emitted before load from A occurs",
       (_, x) => [x],
@@ -43,6 +44,7 @@ pub fn init_signals(m : @primus.Machine) -> Unit {
     signal(
       m,
       @primus.storing,
+      sync=true,
       params=one(int),
       docs="(storing A) is emitted before store to A occurs",
       (_, x) => [x],
@@ -124,7 +126,6 @@ pub fn init_signals(m : @primus.Machine) -> Unit {
     signal(
       m,
       @primus.system_stop,
-      once=true,
       params=one(sym),
       docs="(system-stop NAME) occurs when the system with the given name finished its execution",
       (m, x) => [sym_arg(m, x)],
@@ -143,7 +144,6 @@ pub fn init_signals(m : @primus.Machine) -> Unit {
     signal(
       m,
       @primus.system_fini,
-      once=true,
       params=unit,
       docs="(fini) occurs when the Primus Machine is finished",
       (_, _) => [],
@@ -158,197 +158,6 @@ pub fn init_signals(m : @primus.Machine) -> Unit {
       (_, _) => [],
     ),
   )
-}
-
-// ---------------------------------------------------------------------------
-// IO channels (upstream `Primus_lisp_io`). Channels are virtual: the
-// output of a channel is accumulated in the per-fork state, the input is
-// provided by the host (see `set_channel_input`).
-
-///|
-priv struct Channel {
-  input : Bytes?
-  pos : Int
-  output : @list.List[String]
-}
-
-///|
-let io_state : @primus.State[@sorted_map.SortedMap[Int, Channel]] = @primus.State::declare_(
-  uuid="f326a07d-16ed-42ec-958d-76ef584cb341",
-  name="io-channels",
-  _ => {
-    @sorted_map.SortedMap::from_iter(
-      [
-        (0, { input: Some(b""), pos: 0, output: @list.empty(), }),
-        (1, { input: None, pos: 0, output: @list.empty(), }),
-        (2, { input: None, pos: 0, output: @list.empty(), }),
-      ].iter(),
-    )
-  },
-)
-
-///|
-/// The contents written to the channel with the descriptor `fd` (e.g.,
-/// `1` for the standard output).
-pub fn channel_output(m : @primus.Machine, fd : Int) -> String {
-  match m.get_local(io_state).get(fd) {
-    None => ""
-    Some(c) => c.output.rev().to_array().join("")
-  }
-}
-
-///|
-/// Sets the input of the channel `fd` (e.g., `0` for the standard input).
-pub fn set_channel_input(m : @primus.Machine, fd : Int, input : Bytes) -> Unit {
-  m.update_local(io_state, cs => {
-    cs.add(
-      fd,
-      match cs.get(fd) {
-        Some(c) => { ..c, input: Some(input), pos: 0, }
-        None => { input: Some(input), pos: 0, output: @list.empty(), }
-      },
-    )
-  })
-}
-
-///|
-fn io_error(m : @primus.Machine) -> @primus.Value raise {
-  @primus.Value::of_word(m, @types.Word::ones(width=addr_width(m)))
-}
-
-///|
-fn io_ok(m : @primus.Machine) -> @primus.Value raise {
-  @primus.Value::zero(m, addr_width(m))
-}
-
-///|
-fn io_primitives(bits : Int) -> Array[(String, Signature, String, Closure)] {
-  let int : Typ = Type(bits)
-  let byte : Typ = Type(8)
-  let fd_of = (_ : @primus.Machine, v : @primus.Value) => {
-    word_to_int(v.to_word())
-  }
-  [
-    (
-      "channel-open",
-      arrow(Gen([int], int), int),
-      "(channel-open PTR) creates a new channel that is associated with a null-terminated path pointed by PTR. Returns a negative value, since the host file system is not accessible.",
-      Closure::sync((m, _, _) => io_error(m)),
-    ),
-    (
-      "channel-close",
-      arrow(Tuple([int]), int),
-      "(channel-close DESCR) closes a channel that has the specified descriptor DESCR.",
-      Closure::sync((m, _, args) => {
-        match args {
-          [fd] =>
-            match fd_of(m, fd) {
-              Some(n) if m.get_local(io_state).contains(n) => {
-                m.update_local(io_state, cs => cs.remove(n))
-                io_ok(m)
-              }
-              _ => io_error(m)
-            }
-          _ => io_error(m)
-        }
-      }),
-    ),
-    (
-      "channel-flush",
-      arrow(Tuple([int]), int),
-      "(channel-flush DESCR) forces data that were written to a channel to be outputted.",
-      Closure::sync((m, _, args) => {
-        match args {
-          [fd] =>
-            match fd_of(m, fd) {
-              Some(n) if m.get_local(io_state).contains(n) => io_ok(m)
-              _ => io_error(m)
-            }
-          _ => io_error(m)
-        }
-      }),
-    ),
-    (
-      "channel-input",
-      arrow(Tuple([int]), int),
-      "(channel-input DESC) reads one byte from a channel that has the descriptor DESC. Returns -1 on error or at the end of file.",
-      Closure::sync((m, _, args) => {
-        match args {
-          [fd] =>
-            match fd_of(m, fd) {
-              Some(n) =>
-                match m.get_local(io_state).get(n) {
-                  Some({ input: Some(bytes), pos, output, }) if pos <
-                    bytes.length() => {
-                    m.update_local(io_state, cs => {
-                      cs.add(n, { input: Some(bytes), pos: pos + 1, output, })
-                    })
-                    @primus.Value::of_int(
-                      m,
-                      width=addr_width(m),
-                      bytes[pos].to_int(),
-                    )
-                  }
-                  _ => io_error(m)
-                }
-              None => io_error(m)
-            }
-          _ => io_error(m)
-        }
-      }),
-    ),
-    (
-      "channel-output",
-      arrow(Gen([int], byte), int),
-      "(channel-output DESCR CHAR ...) outputs one or more characters to a channel that has the descriptor DESCR.",
-      Closure::sync((m, _, args) => {
-        match args {
-          [fd, .. chars] =>
-            match fd_of(m, fd) {
-              Some(n) =>
-                match m.get_local(io_state).get(n) {
-                  Some(c) => {
-                    let buf = StringBuilder()
-                    for ch in chars {
-                      let w = ch.to_word()
-                      let byte = match word_to_int(resize(w, 8)) {
-                        Some(b) => b
-                        None => 0
-                      }
-                      buf.write_char(byte.unsafe_to_char())
-                    }
-                    m.update_local(io_state, cs => {
-                      cs.add(n, { ..c, output: c.output.add(buf.to_string()), })
-                    })
-                    io_ok(m)
-                  }
-                  None => io_error(m)
-                }
-              None => io_error(m)
-            }
-          _ => io_error(m)
-        }
-      }),
-    ),
-  ]
-}
-
-///|
-/// Defines the IO primitives and the standard channel variables (upstream
-/// `Primus_lisp_io`).
-pub fn init_io(m : @primus.Machine) -> Unit raise {
-  let width = addr_width(m)
-  let set = (name : String, fd : Int) => {
-    let v = @types.Var::create(name, Imm(width))
-    @primus.Env::set(m, v, @primus.Value::of_int(m, width~, fd))
-  }
-  set("posix:*standard-input*", 0)
-  set("posix:*standard-output*", 1)
-  set("posix:*error-output*", 2)
-  set("posix:*standard-error*", 2)
-  for p in io_primitives(width) {
-    define_primitive(m, p.0, types=p.1, docs=p.2, p.3)
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -539,16 +348,57 @@ pub fn refine_from_system(m : @primus.Machine) -> Unit raise {
 }
 
 ///|
-/// Loads the features from the embedded library (by default the standard
-/// library `core` and `posix`, searched in the `lisp` and `site-lisp`
-/// directories) in the context of the machine target, and links them into
+/// The embedded directories of the Primus Lisp library: the core library,
+/// the site library, and the libraries of the analysis plugins (taint,
+/// constant tracker, testing framework, approximations).
+pub let library_dirs : Array[String] = [
+  "lisp", "site-lisp", "taint", "constant-tracker", "primus-test", "approximation",
+]
+
+///|
+/// The features and the loader used by `load_library` by default (set by
+/// the `primus-lisp` plugin options).
+let library_config : Ref[(Array[String], Loader)] = Ref(
+  (["core", "posix"], Loader::embedded(library_dirs)),
+)
+
+///|
+/// Sets the features and the loader that `load_library` (and the
+/// `bap:load-lisp-library` component) uses by default.
+pub fn configure_library(features? : Array[String], loader? : Loader) -> Unit {
+  let (fs, l) = library_config.val
+  library_config.val = (
+    match features {
+      Some(f) => f
+      None => fs
+    },
+    match loader {
+      Some(x) => x
+      None => l
+    },
+  )
+}
+
+///|
+/// Loads the features from the library (by default the standard library
+/// `core` and `posix`, searched in the embedded `library_dirs`, see
+/// `configure_library`) in the context of the machine, and links them into
 /// the machine (upstream component `load-lisp-library`).
 pub fn load_library(
   m : @primus.Machine,
-  features? : Array[String] = ["core", "posix"],
-  loader? : Loader = Loader::embedded(["lisp", "site-lisp"]),
+  features? : Array[String],
+  loader? : Loader,
 ) -> Unit raise {
-  let ctxt = Context::of_target(m.target())
+  let (default_features, default_loader) = library_config.val
+  let features = match features {
+    Some(f) => f
+    None => default_features
+  }
+  let loader = match loader {
+    Some(l) => l
+    None => default_loader
+  }
+  let ctxt = get_state(m).program.context.merge(Context::of_target(m.target()))
   let prog = load_program(loader, features, context=ctxt)
   link_program(m, prog)
 }

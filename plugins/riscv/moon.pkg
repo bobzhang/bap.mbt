@@ -1,0 +1,11 @@
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/c",
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/mc",
+  "bobzhang/bap/primus_lisp",
+}
+
+import {
+  "bobzhang/bap/types",
+} for "test"

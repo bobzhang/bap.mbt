@@ -1,0 +1,50 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/primus_lisp"
+
+import {
+  "bobzhang/bap/primus",
+  "bobzhang/bap/project",
+}
+
+// Values
+pub fn declare_plugin() -> Unit raise
+
+pub fn documentation(@project.Project) -> String raise
+
+pub fn dump(@project.Project) -> String raise
+
+pub fn enable(config? : Config) -> Unit raise
+
+pub let name : String
+
+pub fn parse_redirection(String) -> Result[(String, String), String]
+
+pub fn redirect_channels(@primus.Machine, Array[(String, String)]) -> Unit
+
+pub fn set_output((String) -> Unit) -> Unit
+
+pub let standard_channels : Array[String]
+
+pub fn type_error_summary(Int) -> String
+
+pub fn typecheck(@project.Project) -> (String, Array[String]) raise
+
+// Errors
+
+// Types and methods
+pub(all) struct Config {
+  documentation : Bool
+  dump : Bool
+  typecheck : Bool
+  paths : Array[String]
+  features : Array[String]
+  semantics : Array[String]
+  redirects : Array[(String, String)]
+}
+pub fn Config::all_features(Self) -> Array[String]
+pub fn Config::default() -> Self
+pub fn Config::loader(Self) -> @bobzhang/bap/primus_lisp.Loader
+
+// Type aliases
+
+// Traits

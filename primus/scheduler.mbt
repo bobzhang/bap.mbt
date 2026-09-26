@@ -416,7 +416,11 @@ fn Machine::host_step(self : Machine, f : (Machine) -> Unit raise) -> Error? {
 ///   example a scheduler component observing `system_fini`) switched to
 ///   another live machine with a non-empty control stack, the scheduler
 ///   continues with that machine, otherwise `system_stop` is posted in the
-///   restricted mode and the result is returned.
+///   restricted mode and the result is returned. `fini` runs exactly once
+///   per machine: frames that `fini` pushes on the finished machine (e.g.
+///   resumable `system_fini` observers) are executed, but `fini` is not run
+///   again when they complete. Frames pushed by `system_stop` observers are
+///   executed (in the restricted mode) before the result is returned.
 ///
 /// Returns the exit status of the last finished machine and the (possibly
 /// updated) project.
@@ -459,18 +463,45 @@ pub fn Machine::run_with(
       start(m)
     }),
   )
+  // `fini` runs exactly once per machine (as the upstream continuation
+  // `user >>= fini` of every fork): when the frames scheduled by `fini`
+  // itself (e.g., by resumable `system-fini` observers) complete, the
+  // machine is finished without running `fini` again.
+  let finished : Map[Int, ExitStatus] = Map([])
   for ;; {
     let status = m.drive()
-    let final_status = match m.host_step(fini) {
-      Some(e) => Exn(e)
-      None => status
+    let id = m.current.id
+    let final_status = match finished.get(id) {
+      None => {
+        let s = match m.host_step(fini) {
+          Some(e) => Exn(e)
+          None => status
+        }
+        finished[id] = s
+        s
+      }
+      Some(prev) =>
+        match status {
+          Exn(_) => status
+          Normal => prev
+        }
     }
-    if m.current.stack is Cons(_, _) {
+    // continue with the machine that `fini` switched to (it runs its own
+    // `fini` when it finishes, even if nothing was left on its stack)
+    if m.current.stack is Cons(_, _) || !finished.contains(m.current.id) {
       continue
     }
     m.restricted = true
     m.make_even_if_restricted(stopped_stmt, system) catch {
       e => return (Exn(e), m.proj)
+    }
+    // frames scheduled by `system-stop` observers run in the restricted
+    // mode, as the upstream methods of the signal
+    if m.current.stack is Cons(_, _) {
+      match m.drive() {
+        Exn(e) => return (Exn(e), m.proj)
+        Normal => ()
+      }
     }
     return (final_status, m.proj)
   }

@@ -1,0 +1,10 @@
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/primus",
+  "bobzhang/bap/primus_lisp" @lisp,
+  "bobzhang/bap/project",
+}
+
+import {
+  "bobzhang/bap/core_theory",
+} for "test"

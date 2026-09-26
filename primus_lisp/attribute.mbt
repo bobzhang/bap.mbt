@@ -43,10 +43,9 @@ pub(all) suberror AttributeError {
 } derive(Debug)
 
 ///|
-pub impl Show for AttributeError with output(self, logger) {
+pub impl Show for AttributeError with fn output(self, logger) {
   match self {
-    UnknownAttr(name, _) =>
-      logger.write_string("unknown attribute `\{name}'")
+    UnknownAttr(name, _) => logger.write_string("unknown attribute `\{name}'")
     Failure(problem, _) => {
       let msg = match problem {
         ExpectAtom => "expected an atom"
@@ -186,7 +185,10 @@ pub fn compare_names(a : @knowledge.Name, b : @knowledge.Name) -> Int {
 }
 
 ///|
-let custom_attributes : Map[String, (String, Array[Tree]) -> Unit raise AttributeError] = Map([])
+let custom_attributes : Map[
+  String,
+  (String, Array[Tree]) -> Unit raise AttributeError,
+] = Map([])
 
 ///|
 /// Registers a custom attribute `name` (in the `core` package unless the
@@ -222,7 +224,10 @@ fn parse_attr_name(t : Tree) -> String raise AttributeError {
 }
 
 ///|
-fn parse_attr_vars(pkg : String, xs : Array[Tree]) -> Array[LVar] raise AttributeError {
+fn parse_attr_vars(
+  pkg : String,
+  xs : Array[Tree],
+) -> Array[LVar] raise AttributeError {
   let vars = []
   for t in xs {
     match t.data {
@@ -238,7 +243,9 @@ fn parse_attr_vars(pkg : String, xs : Array[Tree]) -> Array[LVar] raise Attribut
 }
 
 ///|
-fn parse_advice(xs : Array[Tree]) -> (AdviceMethod, Array[@knowledge.Name]) raise AttributeError {
+fn parse_advice(
+  xs : Array[Tree],
+) -> (AdviceMethod, Array[@knowledge.Name]) raise AttributeError {
   let targets = (m : AdviceMethod, ts : ArrayView[Tree]) => {
     if ts.length() == 0 {
       raise Failure(NoTargets, ts.to_owned())
@@ -288,27 +295,27 @@ pub fn Attrs::parse(
   let key = qname.show()
   let empty = Attrs::empty()
   let attr = match key {
-    "core:context" => { ..empty, context: Context::parse(values) }
+    "core:context" => { ..empty, context: Context::parse(values), }
     "core:external" => {
       let names = []
       for v in values {
         names.push(parse_attr_name(v))
       }
-      { ..empty, externals: @sorted_set.SortedSet(names) }
+      { ..empty, externals: @sorted_set.SortedSet(names), }
     }
-    "core:global" => { ..empty, globals: parse_attr_vars(pkg, values) }
-    "core:static" => { ..empty, statics: parse_attr_vars(pkg, values) }
+    "core:global" => { ..empty, globals: parse_attr_vars(pkg, values), }
+    "core:static" => { ..empty, statics: parse_attr_vars(pkg, values), }
     "core:visibility" =>
       match values {
-        [{ data: Atom(":public"), .. }] => { ..empty, visibility: [Public] }
-        [{ data: Atom(":private"), .. }] => { ..empty, visibility: [Private] }
+        [{ data: Atom(":public"), .. }] => { ..empty, visibility: [Public], }
+        [{ data: Atom(":private"), .. }] => { ..empty, visibility: [Private], }
         _ => raise Failure(ExpectPublicOrPrivate, values)
       }
     "core:advice" => {
       let (m, names) = parse_advice(values)
       match m {
-        Before => { ..empty, before: names }
-        After => { ..empty, after: names }
+        Before => { ..empty, before: names, }
+        After => { ..empty, after: names, }
       }
     }
     _ =>
@@ -316,7 +323,7 @@ pub fn Attrs::parse(
         None => raise UnknownAttr(qname.show(), head)
         Some(check) => {
           check(pkg, values)
-          { ..empty, custom: @sorted_map.SortedMap::singleton(key, [values]) }
+          { ..empty, custom: @sorted_map.SortedMap::singleton(key, [values]), }
         }
       }
   }

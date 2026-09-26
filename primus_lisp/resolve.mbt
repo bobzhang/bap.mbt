@@ -19,7 +19,7 @@ pub struct Resolution {
 }
 
 ///|
-pub impl Show for Resolution with output(self, logger) {
+pub impl Show for Resolution with fn output(self, logger) {
   if self.stage5.is_empty() {
     logger.write_string("no suitable definitions were found.\n")
   } else {

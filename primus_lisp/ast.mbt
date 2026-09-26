@@ -16,7 +16,7 @@ pub(all) enum Typ {
 } derive(Eq, Compare, Debug)
 
 ///|
-pub impl Show for Typ with output(self, logger) {
+pub impl Show for Typ with fn output(self, logger) {
   match self {
     Any | Symbol => ()
     Name(s) => logger.write_string(s)
@@ -57,11 +57,11 @@ pub(all) struct Signature {
 
 ///|
 pub fn Signature::new(args : Array[Typ], rest? : Typ, ret : Typ) -> Signature {
-  { args, rest, ret }
+  { args, rest, ret, }
 }
 
 ///|
-pub impl Show for Signature with output(self, logger) {
+pub impl Show for Signature with fn output(self, logger) {
   logger.write_char('(')
   for i, t in self.args {
     if i > 0 {
@@ -94,7 +94,7 @@ pub(all) struct LVar {
 } derive(Eq, Debug)
 
 ///|
-pub impl Show for LVar with output(self, logger) {
+pub impl Show for LVar with fn output(self, logger) {
   logger.write_string(self.name.show())
   match self.typ {
     Any => ()
@@ -175,7 +175,7 @@ pub fn Ast::to_string_in(self : Ast, pkg? : String = "user") -> String {
 }
 
 ///|
-pub impl Show for Ast with output(self, logger) {
+pub impl Show for Ast with fn output(self, logger) {
   logger.write_string(self.to_string_in())
 }
 
@@ -308,12 +308,7 @@ fn pp_ast(buf : StringBuilder, pkg : String, x : Ast) -> Unit {
 /// syntax (decimal, `0x`, `0o`, `0b`).
 fn parse_small_int(s : String) -> Int? {
   match parse_bigint(s) {
-    Some(v) =>
-      if v.bit_length() < 31 {
-        Some(v.to_int())
-      } else {
-        None
-      }
+    Some(v) => if v.bit_length() < 31 { Some(v.to_int()) } else { None }
     None => None
   }
 }
@@ -422,15 +417,14 @@ pub fn read_var(
     [pkg, name, sz] =>
       match Typ::read(sz) {
         None => Err(VarBadType)
-        Some(typ) =>
-          Ok({ name: @knowledge.Name::create(name, pkg~), typ, id })
+        Some(typ) => Ok({ name: @knowledge.Name::create(name, pkg~), typ, id, })
       }
-    [x] => Ok({ name: @knowledge.Name::read(x, pkg?), typ: Any, id })
+    [x] => Ok({ name: @knowledge.Name::read(x, pkg?), typ: Any, id, })
     [x, sz] =>
       match Typ::read(sz) {
-        Some(typ) => Ok({ name: @knowledge.Name::read(x, pkg?), typ, id })
+        Some(typ) => Ok({ name: @knowledge.Name::read(x, pkg?), typ, id, })
         None =>
-          Ok({ name: @knowledge.Name::read(x + ":" + sz, pkg?), typ: Any, id })
+          Ok({ name: @knowledge.Name::read(x + ":" + sz, pkg?), typ: Any, id, })
       }
   }
 }
@@ -475,7 +469,7 @@ pub fn read_word(id : Int, x : String) -> Result[LWord, WordReadError] {
     match split_colons(x) {
       [x] =>
         match parse_bigint(x.trim().to_owned()) {
-          Some(value) => Ok({ value, typ: Any, id })
+          Some(value) => Ok({ value, typ: Any, id, })
           None => Err(BadLiteral)
         }
       [x, t] =>
@@ -484,7 +478,7 @@ pub fn read_word(id : Int, x : String) -> Result[LWord, WordReadError] {
           Some(value) =>
             match Typ::read(t) {
               None => Err(WordBadType)
-              Some(typ) => Ok({ value, typ, id })
+              Some(typ) => Ok({ value, typ, id, })
             }
         }
       _ => Err(BadLiteral)
@@ -505,7 +499,7 @@ pub fn word_of_bigint(value : @bigint.BigInt, width : Int) -> @types.Word {
     r = r + m
   }
   let hex = r.to_string(radix=16)
-  try @types.Word::from_hex(width=w, hex) catch {
+  @types.Word::from_hex(width=w, hex) catch {
     _ => try! @types.Word::zero(width=w)
   }
 }

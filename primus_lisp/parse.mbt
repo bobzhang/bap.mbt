@@ -120,7 +120,7 @@ fn string_of_form_syntax(name : String) -> String {
 }
 
 ///|
-pub impl Show for ParseProblem with output(self, logger) {
+pub impl Show for ParseProblem with fn output(self, logger) {
   let msg = match self {
     BadVarLiteral(e) => "bad variable literal - \{string_of_var_error(e)}"
     BadWordLiteral(e) => "bad word literal - \{string_of_word_error(e)}"
@@ -147,10 +147,9 @@ pub impl Show for ParseProblem with output(self, logger) {
 }
 
 ///|
-pub impl Show for LoadError with output(self, logger) {
+pub impl Show for LoadError with fn output(self, logger) {
   match self {
-    ParseError(err, loc) =>
-      logger.write_string("\{loc}\nParse error: \{err}")
+    ParseError(err, loc) => logger.write_string("\{loc}\nParse error: \{err}")
     FormatError(err, loc) => {
       let msg = match err {
         ExpectDigit => "expected digit"
@@ -210,7 +209,7 @@ fn symbol_name(pkg : String, s : String) -> @knowledge.Name {
   if is_keyword(s) {
     @knowledge.Name::read(s)
   } else {
-    @knowledge.Name::read(s.unsafe_substring(start=1, end=s.length()), pkg=pkg)
+    @knowledge.Name::read(s.unsafe_substring(start=1, end=s.length()), pkg~)
   }
 }
 
@@ -249,7 +248,7 @@ pub fn unescape_string(s : String) -> String? {
           return None
         }
         let mut v = 0
-        for k in 1..=3 {
+        for k in 1..<=3 {
           let e = chars[i + k]
           if e < '0' || e > '9' {
             return None
@@ -315,7 +314,10 @@ fn Parser::let_var(self : Parser, t : Tree) -> LVar raise LoadError {
 }
 
 ///|
-fn Parser::expand(self : Parser, cs : ArrayView[Tree]) -> Array[Tree] raise LoadError {
+fn Parser::expand(
+  self : Parser,
+  cs : ArrayView[Tree],
+) -> Array[Tree] raise LoadError {
   let out = []
   for c in cs {
     match c.data {
@@ -327,7 +329,7 @@ fn Parser::expand(self : Parser, cs : ArrayView[Tree]) -> Array[Tree] raise Load
           Some(Err(r)) => raise pfail(Unresolved(KSubst, name, r), [c])
           Some(Ok(d)) =>
             for t in d.code.elts {
-              out.push({ data: t.data, id: c.id })
+              out.push({ data: t.data, id: c.id, })
             }
         }
       }
@@ -339,7 +341,11 @@ fn Parser::expand(self : Parser, cs : ArrayView[Tree]) -> Array[Tree] raise Load
 ///|
 /// Parses a `msg` format string: literal text, `$N` positional references,
 /// and escape sequences.
-fn Parser::fmt(self : Parser, fmt : String, tree : Tree) -> Array[Fmt] raise LoadError {
+fn Parser::fmt(
+  self : Parser,
+  fmt : String,
+  tree : Tree,
+) -> Array[Fmt] raise LoadError {
   let fmt = unquote(fmt)
   let fail = (err : FormatProblem, off : Int) => {
     let loc = self.prog.sources.loc_of_trees([tree]).nth_char(off + 1)
@@ -427,11 +433,14 @@ fn Parser::enter(self : Parser, tree : Tree) -> Unit raise LoadError {
 
 ///|
 fn Parser::cons(self : Parser, tree : Tree, data : Exp) -> Ast {
-  { data, id: self.fresh(tree) }
+  { data, id: self.fresh(tree), }
 }
 
 ///|
-fn Parser::exps(self : Parser, xs : ArrayView[Tree]) -> Array[Ast] raise LoadError {
+fn Parser::exps(
+  self : Parser,
+  xs : ArrayView[Tree],
+) -> Array[Ast] raise LoadError {
   let out = []
   for x in xs {
     out.push(self.parse(x))
@@ -440,10 +449,14 @@ fn Parser::exps(self : Parser, xs : ArrayView[Tree]) -> Array[Ast] raise LoadErr
 }
 
 ///|
-fn Parser::seq(self : Parser, e : Tree, es : ArrayView[Tree]) -> Ast raise LoadError {
+fn Parser::seq(
+  self : Parser,
+  e : Tree,
+  es : ArrayView[Tree],
+) -> Ast raise LoadError {
   let xs = [self.parse(e)]
   xs.append(self.exps(es))
-  { data: Seq(xs), id: self.prog.sources.derive_id(0) }
+  { data: Seq(xs), id: self.prog.sources.derive_id(0), }
 }
 
 ///|
@@ -459,7 +472,7 @@ fn Parser::lit(self : Parser, t : Tree, r : String) -> Ast raise LoadError {
 fn Parser::sym(self : Parser, t : Tree, r : String) -> Ast raise LoadError {
   if is_symbol_literal(r) {
     let name = symbol_name(self.prog.pkg, r)
-    self.cons(t, Sym({ name, id: self.fresh(t) }))
+    self.cons(t, Sym({ name, id: self.fresh(t), }))
   } else {
     match read_var(pkg=self.prog.pkg, self.fresh(t), r) {
       Ok(v) => self.cons(t, Var(v))
@@ -469,10 +482,14 @@ fn Parser::sym(self : Parser, t : Tree, r : String) -> Ast raise LoadError {
 }
 
 ///|
-fn Parser::list(self : Parser, tree : Tree, xs : Array[Tree]) -> Ast raise LoadError {
+fn Parser::list(
+  self : Parser,
+  tree : Tree,
+  xs : Array[Tree],
+) -> Ast raise LoadError {
   match xs {
     [] =>
-      self.cons(tree, Int({ value: 0N, typ: Type(1), id: self.fresh(tree) }))
+      self.cons(tree, Int({ value: 0N, typ: Type(1), id: self.fresh(tree), }))
     [{ data: List(_), .. } as s, ..] => raise pfail(BadApp, [s])
     [{ data: Atom(op), .. }, .. args] =>
       match op {
@@ -554,7 +571,7 @@ fn Parser::list(self : Parser, tree : Tree, xs : Array[Tree]) -> Ast raise LoadE
 /// `Parse.parse`).
 pub fn Program::parse_exp(self : Program, tree : Tree) -> Ast raise LoadError {
   current_source.val = self.sources
-  let p = { prog: self, depth: 0 }
+  let p = { prog: self, depth: 0, }
   p.parse(tree)
 }
 
@@ -613,13 +630,17 @@ fn constrained(prog : Program, attrs : Attrs) -> Program {
 }
 
 ///|
-fn parse_body(prog : Program, body : ArrayView[Tree], tree : Tree) -> Ast raise LoadError {
-  let p = { prog, depth: 0 }
+fn parse_body(
+  prog : Program,
+  body : ArrayView[Tree],
+  tree : Tree,
+) -> Ast raise LoadError {
+  let p = { prog, depth: 0, }
   let es = []
   for b in body {
     es.push(p.parse(b))
   }
-  { data: Seq(es), id: prog.sources.derive_id(tree.id) }
+  { data: Seq(es), id: prog.sources.derive_id(tree.id), }
 }
 
 ///|
@@ -644,12 +665,12 @@ fn defun(
 ) -> Program raise LoadError {
   let attrs = parse_declarations(prog, gattrs, attrs)
   let body = parse_body(constrained(prog, attrs), body, tree)
-  let args = params({ prog, depth: 0 }, ps)
+  let args = params({ prog, depth: 0, }, ps)
   prog.add(item, {
     name,
     docs: docstring(docs),
     attrs,
-    code: { args, body },
+    code: { args, body, },
     id: tree.id,
   })
 }
@@ -685,7 +706,7 @@ fn defmacro(
     name,
     docs: docstring(docs),
     attrs,
-    code: { params: metaparams(ps), body },
+    code: { params: metaparams(ps), body, },
     id: tree.id,
   })
 }
@@ -701,12 +722,12 @@ fn defparameter(
   tree : Tree,
 ) -> Program raise LoadError {
   let attrs = parse_declarations(prog, gattrs, attrs)
-  let p = { prog: constrained(prog, attrs), depth: 0 }
+  let p = { prog: constrained(prog, attrs), depth: 0, }
   prog.add(para, {
     name,
     docs: docstring(docs),
     attrs,
-    code: { default: p.parse(body) },
+    code: { default: p.parse(body), },
     id: tree.id,
   })
 }
@@ -728,7 +749,7 @@ fn ascii(xs : ArrayView[Tree]) -> Array[Tree] raise LoadError {
           } else {
             "0x" + code.to_string(radix=16)
           }
-          out.push(({ data: Atom(text), id: s.id } : Tree))
+          out.push(({ data: Atom(text), id: s.id, } : Tree))
         }
       }
       _ => raise pfail(BadAscii, [s])
@@ -747,7 +768,9 @@ fn hex(xs : ArrayView[Tree]) -> Array[Tree] raise LoadError {
         let x = if x.length() % 2 == 1 { "0" + x } else { x }
         let chars = x.to_array()
         for i = 1; i < chars.length(); i = i + 2 {
-          out.push(({ data: Atom("0x\{chars[i - 1]}\{chars[i]}"), id: s.id } : Tree))
+          out.push(
+            ({ data: Atom("0x\{chars[i - 1]}\{chars[i]}"), id: s.id, } : Tree),
+          )
         }
       }
     }
@@ -935,7 +958,8 @@ fn stmt(gattrs : Attrs, state : Program, s : Tree) -> Program raise LoadError {
         [{ data: Atom(name), .. }, body, { data: Atom(docs), .. }, d] if is_declare(
             d,
           )
-          is Some(attrs) => defparameter(docs~, attrs~, name, body, state, gattrs, s)
+          is Some(attrs) =>
+          defparameter(docs~, attrs~, name, body, state, gattrs, s)
         _ => raise pfail(BadDef(KPara), [s])
       }
     _ => state
@@ -955,14 +979,18 @@ fn meta(gattrs : Attrs, state : Program, s : Tree) -> Program raise LoadError {
       use_packages(state, elts)
     List([{ data: Atom("defconstant"), .. }, .. rest]) =>
       match rest {
-        [{ data: Atom(name), .. }, { data: Atom(body), .. }, { data: Atom(docs), .. }, d] if is_quoted(
-            docs,
-          ) &&
-          is_declare(d) is Some(attrs) =>
+        [
+          { data: Atom(name), .. },
+          { data: Atom(body), .. },
+          { data: Atom(docs), .. },
+          d,
+        ] if is_quoted(docs) && is_declare(d) is Some(attrs) =>
           defconst(docs~, attrs~, name, body, state, gattrs, s)
-        [{ data: Atom(name), .. }, { data: Atom(body), .. }, { data: Atom(docs), .. }] if is_quoted(
-            docs,
-          ) => defconst(docs~, name, body, state, gattrs, s)
+        [
+          { data: Atom(name), .. },
+          { data: Atom(body), .. },
+          { data: Atom(docs), .. },
+        ] if is_quoted(docs) => defconst(docs~, name, body, state, gattrs, s)
         [{ data: Atom(name), .. }, { data: Atom(body), .. }, d] if is_declare(d)
           is Some(attrs) => defconst(attrs~, name, body, state, gattrs, s)
         [{ data: Atom(name), .. }, { data: Atom(body), .. }] =>
@@ -1011,7 +1039,10 @@ fn meta(gattrs : Attrs, state : Program, s : Tree) -> Program raise LoadError {
 /// `Parse.source`). The program is parsed in two passes: first all meta
 /// definitions (constants, macros, substitutions, packages) of all files,
 /// then all functions, methods, and parameters.
-pub fn parse_source(context : Context, source : Source) -> Program raise LoadError {
+pub fn parse_source(
+  context : Context,
+  source : Source,
+) -> Program raise LoadError {
   let init = Program::empty().with_context(context).with_sources(source)
   let files = source.filenames()
   current_source.val = source
@@ -1111,8 +1142,7 @@ pub fn Loader::paths(paths : Array[String]) -> Loader {
           p + "/" + feature + ".lisp"
         }
         match @native_io.read_file(file) {
-          Ok(bytes) =>
-            return Some((file, @utf8.decode_lossy(bytes)))
+          Ok(bytes) => return Some((file, @utf8.decode_lossy(bytes)))
           Err(_) => ()
         }
       }
@@ -1174,7 +1204,10 @@ fn load_feature(
 }
 
 ///|
-fn required(loader : Loader, source : Source) -> Array[(String, Request)] raise LoadError {
+fn required(
+  loader : Loader,
+  source : Source,
+) -> Array[(String, Request)] raise LoadError {
   let out : Array[(String, Request)] = []
   for file in source.filenames() {
     for tree in source.find(file).unwrap() {
@@ -1184,8 +1217,7 @@ fn required(loader : Loader, source : Source) -> Array[(String, Request)] raise 
           match (loader.find)(name) {
             None => raise UnresolvedFeature(name, req)
             Some((file, _)) =>
-              if source.find(file) is None &&
-                !out.iter().any(r => r.0 == name) {
+              if source.find(file) is None && !out.iter().any(r => r.0 == name) {
                 out.push((name, req))
               }
           }

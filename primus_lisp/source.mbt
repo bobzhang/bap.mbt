@@ -28,15 +28,15 @@ pub(all) struct Loc {
 } derive(Eq, Compare, Debug)
 
 ///|
-let no_position : Position = { line: 1, col: 0, offset: 0 }
+let no_position : Position = { line: 1, col: 0, offset: 0, }
 
 ///|
-let no_range : Range = { start_pos: no_position, end_pos: no_position }
+let no_range : Range = { start_pos: no_position, end_pos: no_position, }
 
 ///|
 /// Renders the location in the OCaml-compiler style used upstream:
 /// `File "init.lisp", line 3, characters 2-10`.
-pub impl Show for Loc with output(self, logger) {
+pub impl Show for Loc with fn output(self, logger) {
   let s = self.range.start_pos
   let e = self.range.end_pos
   let len = e.offset - s.offset
@@ -108,7 +108,7 @@ pub(all) struct Tree {
 } derive(Eq, Debug)
 
 ///|
-pub impl Show for Tree with output(self, logger) {
+pub impl Show for Tree with fn output(self, logger) {
   match self.data {
     Atom(x) => logger.write_string(x)
     List(xs) => {
@@ -127,12 +127,12 @@ pub impl Show for Tree with output(self, logger) {
 ///|
 /// Creates a tree that has no source (the null identifier).
 pub fn Tree::atom(x : String, id? : Int = 0) -> Tree {
-  { data: Atom(x), id }
+  { data: Atom(x), id, }
 }
 
 ///|
 pub fn Tree::list(xs : Array[Tree], id? : Int = 0) -> Tree {
-  { data: List(xs), id }
+  { data: List(xs), id, }
 }
 
 ///|
@@ -145,7 +145,7 @@ pub(all) suberror SexpError {
 } derive(Eq, Debug)
 
 ///|
-pub impl Show for SexpError with output(self, logger) {
+pub impl Show for SexpError with fn output(self, logger) {
   let (file, pos, what) = match self {
     UnexpectedEof(file~, pos~) => (file, pos, "unexpected end of input")
     UnexpectedClosingParen(file~, pos~) => (file, pos, "unexpected ')'")
@@ -175,14 +175,7 @@ pub struct Source {
 
 ///|
 pub fn Source::new() -> Source {
-  {
-    lastid: 0,
-    ranges: {},
-    origin: {},
-    files: {},
-    inputs: {},
-    rclass: {},
-  }
+  { lastid: 0, ranges: {}, origin: {}, files: {}, inputs: {}, rclass: {}, }
 }
 
 ///|
@@ -265,7 +258,7 @@ pub fn Source::filename(self : Source, id : Int) -> String {
 
 ///|
 pub fn Source::loc(self : Source, id : Int) -> Loc {
-  { file: self.filename(id), range: self.range(id) }
+  { file: self.filename(id), range: self.range(id), }
 }
 
 ///|
@@ -309,7 +302,11 @@ pub fn Source::text_at(self : Source, loc : Loc) -> String {
 /// Renders the lines around the location, marking the lines of the
 /// location with `>` and underlining the location (upstream
 /// `Source.pp_underline`).
-pub fn Source::underline(self : Source, loc : Loc, context? : Int = 4) -> String {
+pub fn Source::underline(
+  self : Source,
+  loc : Loc,
+  context? : Int = 4,
+) -> String {
   guard self.inputs.get(loc.file) is Some(text) else { return "" }
   let start_pos = loc.range.start_pos
   let end_pos = loc.range.end_pos
@@ -388,12 +385,12 @@ priv struct Reader {
 
 ///|
 fn Reader::new(src : Source, file : String, text : String) -> Reader {
-  { src, file, text, pos: 0, line: 1, bol: 0 }
+  { src, file, text, pos: 0, line: 1, bol: 0, }
 }
 
 ///|
 fn Reader::position(self : Reader) -> Position {
-  { line: self.line, col: self.pos - self.bol, offset: self.pos }
+  { line: self.line, col: self.pos - self.bol, offset: self.pos, }
 }
 
 ///|
@@ -486,9 +483,9 @@ fn Reader::skip(self : Reader) -> Unit raise SexpError {
 fn Reader::register(self : Reader, data : Token, start : Position) -> Tree {
   self.src.lastid += 1
   let id = self.src.lastid
-  self.src.ranges[id] = { start_pos: start, end_pos: self.position() }
+  self.src.ranges[id] = { start_pos: start, end_pos: self.position(), }
   self.src.origin[id] = self.file
-  { data, id }
+  { data, id, }
 }
 
 ///|

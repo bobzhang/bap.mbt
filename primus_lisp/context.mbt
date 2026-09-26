@@ -12,7 +12,7 @@ pub struct Context {
 
 ///|
 pub fn Context::empty() -> Context {
-  { classes: @sorted_map.SortedMap::new() }
+  { classes: @sorted_map.SortedMap::new(), }
 }
 
 ///|
@@ -36,7 +36,7 @@ fn Context::push(
     None => vs
     Some(old) => old.union(vs)
   }
-  { classes: self.classes.add(name, vs) }
+  { classes: self.classes.add(name, vs), }
 }
 
 ///|
@@ -77,7 +77,10 @@ pub fn Context::le(self : Context, other : Context) -> Bool {
 
 ///|
 /// The partial order of contexts (upstream `Context.order`).
-pub fn Context::order(self : Context, other : Context) -> @knowledge.PartialOrder {
+pub fn Context::order(
+  self : Context,
+  other : Context,
+) -> @knowledge.PartialOrder {
   match (self.le(other), other.le(self)) {
     (true, false) => Less
     (true, true) => Equal
@@ -97,7 +100,7 @@ pub fn Context::merge(self : Context, other : Context) -> Context {
 }
 
 ///|
-pub impl Show for Context with output(self, logger) {
+pub impl Show for Context with fn output(self, logger) {
   logger.write_string("(context")
   for kv in self.classes.iter() {
     logger.write_string(" (\{kv.0}")
@@ -155,7 +158,11 @@ pub fn Context::parse(trees : Array[Tree]) -> Context raise AttributeError {
 /// The legacy architecture name of a target (upstream `Arch.to_string` of
 /// `Project.arch`), used as the feature of the `arch` class.
 pub fn legacy_arch_name(t : @core_theory.Target) -> String {
-  let names = [t].iter().concat(t.parents().iter()).map(t => t.name().unqualified()).collect()
+  let names = [t]
+    .iter()
+    .concat(t.parents().iter())
+    .map(t => t.name().unqualified())
+    .collect()
   let has = (n : String) => names.contains(n)
   let name = t.name().unqualified()
   if has("x86_64") {

@@ -54,7 +54,7 @@ pub struct Item[T] {
 pub let func : Item[Func] = {
   name: "func",
   get: p => p.defs,
-  set: (p, x) => { ..p, defs: x },
+  set: (p, x) => { ..p, defs: x, },
 }
 
 ///|
@@ -62,7 +62,7 @@ pub let func : Item[Func] = {
 pub let meth : Item[Func] = {
   name: "meth",
   get: p => p.mets,
-  set: (p, x) => { ..p, mets: x },
+  set: (p, x) => { ..p, mets: x, },
 }
 
 ///|
@@ -70,7 +70,7 @@ pub let meth : Item[Func] = {
 pub let macro_item : Item[Macro] = {
   name: "macro",
   get: p => p.macros,
-  set: (p, x) => { ..p, macros: x },
+  set: (p, x) => { ..p, macros: x, },
 }
 
 ///|
@@ -78,7 +78,7 @@ pub let macro_item : Item[Macro] = {
 pub let subst : Item[Subst] = {
   name: "subst",
   get: p => p.substs,
-  set: (p, x) => { ..p, substs: x },
+  set: (p, x) => { ..p, substs: x, },
 }
 
 ///|
@@ -86,7 +86,7 @@ pub let subst : Item[Subst] = {
 pub let const_item : Item[Const] = {
   name: "const",
   get: p => p.consts,
-  set: (p, x) => { ..p, consts: x },
+  set: (p, x) => { ..p, consts: x, },
 }
 
 ///|
@@ -94,7 +94,7 @@ pub let const_item : Item[Const] = {
 pub let place : Item[Place] = {
   name: "place",
   get: p => p.places,
-  set: (p, x) => { ..p, places: x },
+  set: (p, x) => { ..p, places: x, },
 }
 
 ///|
@@ -102,7 +102,7 @@ pub let place : Item[Place] = {
 pub let para : Item[Para] = {
   name: "para",
   get: p => p.pars,
-  set: (p, x) => { ..p, pars: x },
+  set: (p, x) => { ..p, pars: x, },
 }
 
 ///|
@@ -110,7 +110,7 @@ pub let para : Item[Para] = {
 pub let primitive : Item[Prim] = {
   name: "primitive",
   get: p => p.codes,
-  set: (p, x) => { ..p, codes: x },
+  set: (p, x) => { ..p, codes: x, },
 }
 
 ///|
@@ -118,7 +118,7 @@ pub let primitive : Item[Prim] = {
 pub let semantics : Item[Sema] = {
   name: "semantics",
   get: p => p.semas,
-  set: (p, x) => { ..p, semas: x },
+  set: (p, x) => { ..p, semas: x, },
 }
 
 ///|
@@ -126,7 +126,7 @@ pub let semantics : Item[Sema] = {
 pub let signal : Item[Signal] = {
   name: "signal",
   get: p => p.sigs,
-  set: (p, x) => { ..p, sigs: x },
+  set: (p, x) => { ..p, sigs: x, },
 }
 
 ///|
@@ -196,13 +196,15 @@ pub fn Program::equal(self : Program, other : Program) -> Bool {
 pub fn Program::packages(self : Program) -> Array[(String, String)] {
   self.library
   .keys_as_iter()
-  .map(pkg => (
-    pkg,
-    match self.pkgdocs.get(pkg) {
-      Some(d) => d
-      None => ""
-    },
-  ))
+  .map(pkg => {
+    (
+      pkg,
+      match self.pkgdocs.get(pkg) {
+        Some(d) => d
+        None => ""
+      },
+    )
+  })
   .collect()
 }
 
@@ -212,7 +214,7 @@ pub fn Program::update_package_documentation(
   pkg : String,
   docs : String,
 ) -> Program {
-  { ..self, pkgdocs: self.pkgdocs.add(pkg, docs) }
+  { ..self, pkgdocs: self.pkgdocs.add(pkg, docs), }
 }
 
 ///|
@@ -252,7 +254,12 @@ pub fn Program::get_package(
 ) -> Package {
   match self.library.get(pkg) {
     None => empty_package
-    Some(pkg) => if public { filter_package(pkg, a => a.is_public()) } else { pkg }
+    Some(pkg) =>
+      if public {
+        filter_package(pkg, a => a.is_public())
+      } else {
+        pkg
+      }
   }
 }
 
@@ -352,14 +359,17 @@ pub fn Program::use_package(
     None => @sorted_set.SortedSet::singleton(target)
     Some(s) => s.add(target)
   }
-  let prog = { ..self, exports: self.exports.add(from, exports) }
+  let prog = { ..self, exports: self.exports.add(from, exports), }
   let public = prog.get_package(from, public=true)
   let mut library = prog.library
   for t in prog.transitive_closure(from) {
-    library = library.add(t, match library.get(t) {
-      None => public
-      Some(pkg) => merge_packages(pkg, public)
-    })
+    library = library.add(
+      t,
+      match library.get(t) {
+        None => public
+        Some(pkg) => merge_packages(pkg, public)
+      },
+    )
   }
   { ..prog, library, }
 }
@@ -388,17 +398,23 @@ pub fn Program::merge(self : Program, other : Program) -> Program {
   }
   let mut library = self.library
   for kv in other.library.iter() {
-    library = library.add(kv.0, match library.get(kv.0) {
-      None => kv.1
-      Some(p) => merge_packages(p, kv.1)
-    })
+    library = library.add(
+      kv.0,
+      match library.get(kv.0) {
+        None => kv.1
+        Some(p) => merge_packages(p, kv.1)
+      },
+    )
   }
   let mut exports = self.exports
   for kv in other.exports.iter() {
-    exports = exports.add(kv.0, match exports.get(kv.0) {
-      None => kv.1
-      Some(s) => s.union(kv.1)
-    })
+    exports = exports.add(
+      kv.0,
+      match exports.get(kv.0) {
+        None => kv.1
+        Some(s) => s.union(kv.1)
+      },
+    )
   }
   {
     pkgdocs,
@@ -550,7 +566,7 @@ fn target_registers(
     let pkg = t.name().unqualified()
     for v in t.vars() {
       if bil_var_of_theory(v) is Some(bv) {
-        let name = @knowledge.Name::create(v.name(), pkg=pkg)
+        let name = @knowledge.Name::create(v.name(), pkg~)
         if !regs.iter().any(r => r.0 == name) {
           regs.push((name, bv))
         }
@@ -586,7 +602,7 @@ pub fn Program::with_places(
   let mut prog = self
   let regs = target_registers(target)
   for r in regs {
-    prog = prog.add(place, Def::new(r.0.show(), { location: r.1 }))
+    prog = prog.add(place, Def::new(r.0.show(), { location: r.1, }))
   }
   // globals and statics
   let width = target.bits()
@@ -604,15 +620,15 @@ pub fn Program::with_places(
     collect(def.attrs.statics)
   })
   for v in vars {
-    prog = prog.add(place, Def::new(v.name, { location: v }))
+    prog = prog.add(place, Def::new(v.name, { location: v, }))
   }
   for v in globals {
     let name = @knowledge.Name::create(v.name, pkg="program")
-    prog = prog.add(place, Def::new(name.show(), { location: v }))
+    prog = prog.add(place, Def::new(name.show(), { location: v, }))
   }
   for r in regs {
     let name = @knowledge.Name::create(r.1.name, pkg="target")
-    prog = prog.add(place, Def::new(name.show(), { location: r.1 }))
+    prog = prog.add(place, Def::new(name.show(), { location: r.1, }))
   }
   prog
 }

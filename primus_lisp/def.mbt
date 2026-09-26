@@ -21,7 +21,7 @@ pub fn[T] Def::new(
   id? : Int = 0,
   code : T,
 ) -> Def[T] {
-  { name, docs, attrs, code, id }
+  { name, docs, attrs, code, id, }
 }
 
 ///|
@@ -44,7 +44,7 @@ pub(all) struct Func {
 
 ///|
 pub fn Def::with_body(self : Def[Func], body : Ast) -> Def[Func] {
-  { ..self, code: { ..self.code, body, } }
+  { ..self, code: { ..self.code, body, }, }
 }
 
 ///|
@@ -69,7 +69,7 @@ pub(all) struct Const {
 ///|
 /// The value of a constant as a tree with the identity of the constant.
 pub fn Def::const_value(self : Def[Const]) -> Tree {
-  { data: Atom(self.code.value), id: self.id }
+  { data: Atom(self.code.value), id: self.id, }
 }
 
 ///|
@@ -161,10 +161,7 @@ pub(all) suberror MacroError {
 } derive(Debug)
 
 ///|
-fn find_binding(
-  bs : Array[(String, Array[Tree])],
-  x : String,
-) -> Array[Tree]? {
+fn find_binding(bs : Array[(String, Array[Tree])], x : String) -> Array[Tree]? {
   for b in bs {
     if b.0 == x {
       return Some(b.1)
@@ -187,7 +184,7 @@ pub fn Def::macro_apply(
         for x in xs {
           out.append(sub(x))
         }
-        [{ data: List(out), id: t.id }]
+        [{ data: List(out), id: t.id, }]
       }
       Atom(x) =>
         match find_binding(bs, x) {
@@ -204,7 +201,7 @@ pub fn Def::macro_apply(
       for x in xs {
         out.append(sub(x))
       }
-      { data: List(out), id: body.id }
+      { data: List(out), id: body.id, }
     }
     Atom(x) =>
       match find_binding(bs, x) {

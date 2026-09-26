@@ -24,7 +24,7 @@ pub(all) enum TypeValue {
 } derive(Eq, Debug)
 
 ///|
-pub impl Show for TypeValue with output(self, logger) {
+pub impl Show for TypeValue with fn output(self, logger) {
   match self {
     TAny => logger.write_string("any")
     TSym => logger.write_string("sym")
@@ -51,7 +51,7 @@ pub struct TypeError {
 }
 
 ///|
-pub impl Show for TypeError with output(self, logger) {
+pub impl Show for TypeError with fn output(self, logger) {
   let src = self.sources
   let pp_exp = (id : Int) => {
     let loc = src.loc(id)
@@ -136,7 +136,7 @@ fn Tvals::meet(id : Int, x : Tvals, y : Tvals) -> Tvals {
             Err(NoUnification(x.origin, t1, y.origin, t2))
           }
       }
-      { result, origin: id }
+      { result, origin: id, }
     }
   }
 }
@@ -155,7 +155,7 @@ priv struct Gamma {
 
 ///|
 fn Gamma::new() -> Gamma {
-  { parent: {}, vals: {}, names: {}, next_name: -1, changes: 0 }
+  { parent: {}, vals: {}, names: {}, next_name: -1, changes: 0, }
 }
 
 ///|
@@ -231,7 +231,7 @@ fn Gamma::unify(self : Gamma, x : Int, y : Int) -> Unit {
 ///|
 fn Gamma::constr_grnd(self : Gamma, x : Int, t : TypeValue) -> Unit {
   let r = self.find(x)
-  let t1 = { result: Ok(t), origin: x }
+  let t1 = { result: Ok(t), origin: x, }
   match self.vals.get(r) {
     None => self.set_val(r, t1)
     Some(t2) => self.set_val(r, Tvals::meet(x, t1, t2))
@@ -256,7 +256,7 @@ fn Gamma::widen(self : Gamma, x : Int) -> Unit {
 ///|
 fn Gamma::fail(self : Gamma, x : Int, err : TypeProblem) -> Unit {
   let r = self.find(x)
-  self.set_val(r, { result: Err(err), origin: x })
+  self.set_val(r, { result: Err(err), origin: x, })
 }
 
 ///|
@@ -342,7 +342,12 @@ fn applicable_signature(
 }
 
 ///|
-fn apply_signature(g : Gamma, appid : Int, ts : Array[Int], s : Signature) -> Unit {
+fn apply_signature(
+  g : Gamma,
+  appid : Int,
+  ts : Array[Int],
+  s : Signature,
+) -> Unit {
   let n = @cmp.minimum(ts.length(), s.args.length())
   for i in 0..<n {
     g.constr(ts[i], s.args[i])
@@ -412,7 +417,10 @@ fn Glob::constr_special(self : Glob, v : LVar, g : Gamma) -> Unit {
 }
 
 ///|
-fn varclass(vars : @sorted_map.SortedMap[(String, String), Int], v : LVar) -> Int {
+fn varclass(
+  vars : @sorted_map.SortedMap[(String, String), Int],
+  v : LVar,
+) -> Int {
   match vars.get(key(v.name)) {
     Some(id) => id
     None => v.id
@@ -493,7 +501,9 @@ fn Glob::reduce(
 }
 
 ///|
-fn bind_args(args : Array[LVar]) -> @sorted_map.SortedMap[(String, String), Int] {
+fn bind_args(
+  args : Array[LVar],
+) -> @sorted_map.SortedMap[(String, String), Int] {
   let mut vs = @sorted_map.SortedMap::new()
   for a in args {
     vs = vs.add(key(a.name), a.id)
@@ -515,7 +525,9 @@ fn Glob::transfer(self : Glob, g : Gamma, f : Def[Func]) -> Unit {
 /// Filters the definitions that are not applicable in the program context.
 fn applicable_library(p : Program) -> @sorted_map.SortedMap[String, Package] {
   let ctxt = p.context
-  let filter = (defs : Defs[Func]) => filter_defs(defs, d => d.attrs.context.le(ctxt))
+  let filter = (defs : Defs[Func]) => {
+    filter_defs(defs, d => d.attrs.context.le(ctxt))
+  }
   p.library.map((_, pkg) => {
     ..pkg,
     defs: filter(pkg.defs),
@@ -567,7 +579,10 @@ pub fn TypedProgram::type_of(self : TypedProgram, id : Int) -> Typ {
 
 ///|
 /// The inferred signature of a function definition.
-pub fn TypedProgram::signature(self : TypedProgram, def : Def[Func]) -> Signature {
+pub fn TypedProgram::signature(
+  self : TypedProgram,
+  def : Def[Func],
+) -> Signature {
   signature_of_gamma(self.gamma, def)
 }
 
@@ -584,7 +599,7 @@ pub fn TypedProgram::errors(self : TypedProgram) -> Array[TypeError] {
     if !seen.contains(r) {
       seen[r] = ()
       if g.vals.get(r) is Some({ result: Err(problem), .. }) {
-        errs.push({ sources: self.program.sources, problem })
+        errs.push({ sources: self.program.sources, problem, })
       }
     }
   }
@@ -606,11 +621,11 @@ pub fn Program::infer_types(
   let library = applicable_library(p)
   let prims : Map[(String, String), Signature] = Map([])
   p.fold(semantics, init=(), (pkg, def, _) => {
-    prims[key(@knowledge.Name::create(def.name, pkg=pkg))] = def.code.types
+    prims[key(@knowledge.Name::create(def.name, pkg~))] = def.code.types
   })
   p.fold(primitive, init=(), (pkg, def, _) => {
     if def.code.types is Some(t) {
-      prims[key(@knowledge.Name::create(def.name, pkg=pkg))] = t
+      prims[key(@knowledge.Name::create(def.name, pkg~))] = t
     }
   })
   for e in externals {
@@ -619,12 +634,12 @@ pub fn Program::infer_types(
   let globs : Map[(String, String), Int] = Map([])
   p.fold(place, init=(), (pkg, def, _) => {
     if def.code.location.typ is Imm(n) {
-      globs[key(@knowledge.Name::read(def.name, pkg=pkg))] = n
+      globs[key(@knowledge.Name::read(def.name, pkg~))] = n
     }
   })
   let paras : Map[(String, String), Unit] = Map([])
   p.fold(para, init=(), (pkg, def, _) => {
-    paras[key(@knowledge.Name::read(def.name, pkg=pkg))] = ()
+    paras[key(@knowledge.Name::read(def.name, pkg~))] = ()
   })
   let funcs : Map[(String, String), Array[Def[Func]]] = Map([])
   let unique : Map[Int, Def[Func]] = Map([])
@@ -644,7 +659,7 @@ pub fn Program::infer_types(
       }
     }
   }
-  let glob = { globs, prims, funcs, paras }
+  let glob = { globs, prims, funcs, paras, }
   // the call graph, callees are visited before callers
   let visited : Map[Int, Unit] = Map([])
   let post : Array[Def[Func]] = []
@@ -684,7 +699,7 @@ pub fn Program::infer_types(
     for mk in kv.1.mets.iter() {
       for met in mk.1 {
         let name = met.name
-        let fullname = @knowledge.Name::read(name, pkg=pkg)
+        let fullname = @knowledge.Name::read(name, pkg~)
         let signal = match self.library.get(fullname.pkg()) {
           None => None
           Some(pkg) =>
@@ -709,7 +724,7 @@ pub fn Program::infer_types(
       }
     }
   }
-  { program: self, gamma: g }
+  { program: self, gamma: g, }
 }
 
 ///|

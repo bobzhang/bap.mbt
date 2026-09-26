@@ -1,0 +1,12 @@
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/primus",
+  "bobzhang/bap/primus_lisp",
+  "bobzhang/bap/types",
+  "moonbitlang/core/math",
+}
+
+import {
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/project",
+} for "test"

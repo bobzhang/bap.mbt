@@ -266,8 +266,18 @@ upstream BAP, LLVM's `SoftFail` encodings are valid instructions.
 - PowerPC 32/64, both byte orders (`powerpc/decode_llvm_test.mbt`, 576
   samples, 261 opcodes): exact for every opcode the decoder knows (the
   lifter's); LLVM 22 conventions: raw zero-extended D-form displacements,
-  `LI`/`LIS`, printer mnemonics, no `bctar`. Classic FP, AltiVec/VSX,
-  `ISEL`, traps and `sync` are invalid.
+  `LI`/`LIS`, printer mnemonics, no `bctar`. The instructions the lifter
+  does not know are decoded by tables (`powerpc/decode_ext.mbt`,
+  `powerpc/decode_llvm_ext_test.mbt`: 1639 samples, 1171 opcodes) learned
+  per instruction format from, and swept against, libLLVM: classic FP
+  (loads/stores, arithmetic, compares, `fmr`, `mffs`/`mtfsf`), AltiVec,
+  VSX, `isel`, traps, `sync`/`lwsync`/`isync`/`eieio`, `mftb`,
+  `mfocrf`/`mtocrf`, cache/TLB/system instructions, decimal floating point
+  and most of Power10. Compiled PowerPC code (a 142k-word corpus: 4952
+  llvm-only words before, 0 after; clang -O2 FP/AltiVec/VSX code for
+  ppc32, ppc64 (pwr9) and ppc64le (pwr10): 0) and 1M random words (253,934
+  llvm-only before, 367 after: Power10 AES/MMA/`xvtstdc*`, embedded TLB
+  and DCR instructions) agree exactly. They lift as `Unsupported`.
 - x86/x86-64 (the Basic `llvm` backend, `project/disassembly_basic_x86*.mbt`;
   `project/disassembly_basic_llvm_test.mbt`, 1947 samples): a
   reimplementation of LLVM's X86 disassembler (LLVM's prefix handling,

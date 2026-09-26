@@ -2370,7 +2370,7 @@ test "decode: every SIMD/FP sample decodes like llvm-mc, with LLVM's kinds" {
     assert_eq(render_insn(insn), fields[1].to_owned(), msg=fields[0].to_owned())
     assert_eq(
       render_kinds(insn),
-      fields[2].to_owned(),
+      fields.get(2).map(k => k.to_owned()).unwrap_or(""),
       msg=fields[0].to_owned(),
     )
     names[insn.name] = ()

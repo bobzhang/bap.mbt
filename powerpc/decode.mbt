@@ -1,8 +1,10 @@
 // Native PowerPC decoder: a replacement of the LLVM MC PowerPC disassembler
-// used upstream (`Disasm_expert.Basic` with the `llvm` backend) for the
-// instructions supported by the lifter. It produces `@mc.Insn`s with the
-// LLVM opcode names, operand lists, kinds and (LLVM-style) assembly, so
-// that the lifter can be driven on real binaries.
+// used upstream (`Disasm_expert.Basic` with the `llvm` backend). It
+// produces `@mc.Insn`s with the LLVM opcode names, operand lists, kinds and
+// (LLVM-style) assembly, so that the lifter can be driven on real binaries:
+// the instructions supported by the lifter are decoded by `decode_spec`,
+// the other ones LLVM decodes (floating point, AltiVec, VSX, `isel`, traps,
+// barriers, ...) by the tables of `decode_ext.mbt`.
 
 ///|
 /// The encoding decoded in `mode`: `llvm-powerpc64` for 64-bit code,
@@ -31,7 +33,12 @@ pub fn decode_word(
   encoding? : @core_theory.Language = mode_encoding(mode),
   raw? : Bytes,
 ) -> @mc.Insn? {
-  guard decode_spec(word) is Some(spec) else { None }
+  let decoded = match decode_spec(word) {
+    Some(spec) =>
+      Some((spec.name, spec.ops(), spec.assembly(wide=mode is R64), spec.kinds))
+    None => decode_ext(word)
+  }
+  guard decoded is Some((name, ops, assembly, kinds)) else { None }
   let raw = match raw {
     Some(raw) => raw
     None =>
@@ -44,13 +51,13 @@ pub fn decode_word(
   }
   Some(
     @mc.Insn::create(
-      spec.name,
-      spec.ops(),
+      name,
+      ops,
       addr~,
       size=4,
-      assembly=spec.assembly(wide=mode is R64),
+      assembly~,
       encoding~,
-      kinds=spec.kinds,
+      kinds~,
       raw~,
     ),
   )

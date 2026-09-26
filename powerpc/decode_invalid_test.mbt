@@ -2,26 +2,26 @@
 // registered with `@mc`.
 
 ///|
-test "invalid encodings" {
+test "invalid encodings and table-decoded instructions" {
   let words : Array[UInt] = [
     0x00000000, // primary opcode 0
-    0x44000002, // sc (not supported)
-    0x7c0004ac, // sync (not supported)
-    0xfc210828, // fsub (floating point, not supported)
-    0x7c642e14, // add with OE=1 (addo)
+    0x44000002, // sc (table-decoded, no semantics)
+    0x7c0004ac, // sync (table-decoded)
+    0xfc210828, // fsub (table-decoded floating point)
+    0x7c642e14, // add with OE=1 (addo, table-decoded)
     0x7c6428d6, // mulhw with bit 21 set
     0x7c6429ae | 1, // stbx with Rc=1
-    0x7c6405d4, // addme with rb != 0
+    0x7c6405d4, // addme with OE=1 (addmeo, table-decoded)
     0x7c832bf9, // cmpb with Rc=1
     0x7c8302f5, // popcntw with Rc=1
     0x2c448000, // cmpwi with bit 9 set
     0x7c442800, // cmpw with bit 9 set
     0x4d828020, // bclr with bits 16-18 set
     0x4c800001, // mcrf with LK=1
-    0x7c781120, // mtcrf with bit 11 set (mtocrf)
-    0x7c700026, // mfcr with bit 11 set (mfocrf)
+    0x7c781120, // mtcrf with bit 11 set (mtocrf, table-decoded)
+    0x7c700026, // mfcr with bit 11 set (mfocrf) and FXM = 0
     0xe8610003, // DS form extended opcode 3
-    0xf8610002, // std extended opcode 2 (stq)
+    0xf8610002, // std extended opcode 2 (stq, table-decoded)
     0x78830010, // MD form extended opcode 4 with bit 30 clear is rldcl...
     0x7883001c, // ...extended opcode 7 is invalid
   ]
@@ -29,23 +29,23 @@ test "invalid encodings" {
     listing(R64, words),
     content=(
       #|00000000  invalid
-      #|44000002  invalid
-      #|7c0004ac  invalid
-      #|fc210828  invalid
-      #|7c642e14  invalid
+      #|44000002  SC 0  | sc
+      #|7c0004ac  SYNC 0  | sync  | load,store
+      #|fc210828  FSUB F1, F1, F1  | fsub 1, 1, 1
+      #|7c642e14  ADD4O R3, R4, R5  | addo 3, 4, 5
       #|7c6428d6  invalid
       #|7c6429af  invalid
-      #|7c6405d4  invalid
+      #|7c6405d4  ADDMEO R3, R4  | addmeo 3, 4
       #|7c832bf9  invalid
       #|7c8302f5  invalid
       #|2c448000  invalid
       #|7c442800  invalid
       #|4d828020  invalid
       #|4c800001  invalid
-      #|7c781120  invalid
+      #|7c781120  MTOCRF CR7, R3  | mtocrf 1, 3
       #|7c700026  invalid
       #|e8610003  invalid
-      #|f8610002  invalid
+      #|f8610002  STQ X3, 0, R1  | stq 3, 0(1)  | store
       #|78830010  RLDCL X3, X4, R0, 0  | rotld 3, 4, 0
       #|7883001c  invalid
     ),

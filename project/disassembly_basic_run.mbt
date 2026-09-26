@@ -411,7 +411,8 @@ fn ProjectDisassemblyBasic::project_disassembly_basic_decode(
     return project_disassembly_basic_decode_mc(decoder, ctx, memory)
   }
   let decoded = if self.project_disassembly_basic_is_x86_64_llvm() {
-    match project_disassembly_basic_x86_jcxz_instruction(memory, 64) {
+    let decoded = match
+      project_disassembly_basic_x86_jcxz_instruction(memory, 64) {
       Ok(Some(instruction)) => Ok(Some(instruction))
       Ok(None) =>
         match project_disassembly_basic_decode_x86_64_llvm(memory) {
@@ -428,6 +429,7 @@ fn ProjectDisassemblyBasic::project_disassembly_basic_decode(
         }
       Err(reason) => Err(reason)
     }
+    decoded.map(insn => insn.map(project_disassembly_basic_x86_64_rename))
   } else if self.project_disassembly_basic_is_x86_llvm() {
     project_disassembly_basic_decode_x86_llvm(memory)
   } else if self.project_disassembly_basic_is_arm_llvm() {
@@ -845,5 +847,19 @@ fn project_disassembly_basic_decode_mc(
           None => BasicDecodedEnd
         }
       })
+  }
+}
+
+///|
+/// The 64-bit names of the instructions the 64-bit decoder takes from the
+/// 32-bit one whose semantics depend on the address size: the returns
+/// (LLVM `RET64`), which pop 64-bit return addresses.
+fn project_disassembly_basic_x86_64_rename(
+  instruction : ProjectDisassemblyInstruction,
+) -> ProjectDisassemblyInstruction {
+  match instruction.name() {
+    "RET" => instruction.with_metadata(name="RET64")
+    "RETF" => instruction.with_metadata(name="RETF64")
+    _ => instruction
   }
 }

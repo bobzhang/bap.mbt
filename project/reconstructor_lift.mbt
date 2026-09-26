@@ -341,7 +341,9 @@ fn ProjectIrLifter::group_subroutine(
 /// relinked at the program level (upstream `alternate_nonlocal` and
 /// `link_call`): jumps that may leave their subroutines become calls, and
 /// destinations that are entries of subroutines are relinked to the
-/// subroutines. The rooter roots are the known subroutine starts.
+/// subroutines; every called label that is not a subroutine gets a
+/// synthetic subroutine (`insert_synthetic`). The rooter roots are the
+/// known subroutine starts.
 fn project_reconstructor_lift_groups(
   project : Project,
   names : Array[String],
@@ -369,9 +371,13 @@ fn project_reconstructor_lift_groups(
       _ => ()
     }
   }
-  let program = @types.Program::relink_calls(
-    @types.Program::create(subs=subroutines),
-    entries,
+  // as upstream `Program.lift`, every called label that is not a
+  // subroutine gets a synthetic one (`insert_synthetic`)
+  let program = @types.Program::insert_synthetic(
+    @types.Program::relink_calls(
+      @types.Program::create(subs=subroutines),
+      entries,
+    ),
   )
   Ok(
     project

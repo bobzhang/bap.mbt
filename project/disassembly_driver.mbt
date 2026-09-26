@@ -460,6 +460,7 @@ pub fn register_builtin_disassembly_drivers() -> Result[Unit, String] {
       ProjectDisassemblyDriver::entry_point(),
       ProjectDisassemblyDriver::project_roots(),
       ProjectDisassemblyDriver::raw_bytes(),
+      ProjectDisassemblyDriver::recursive(),
       ProjectDisassemblyDriver::linear_sweep(),
       ProjectDisassemblyDriver::basic(),
       ProjectDisassemblyDriver::memory_blocks(),

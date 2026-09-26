@@ -22,6 +22,12 @@ struct Project {
   libraries_value : Array[Library]
   state_value : ProjectState
   lift_errors_value : Array[ProjectLiftError]
+  /// the knowledge base of the project (shared by the projects derived from
+  /// it, like the upstream global knowledge base)
+  knowledge_value : @knowledge.State
+  /// the state of the incremental disassembler that produced the
+  /// disassembly, if any
+  driver_value : ProjectDisassemblyDriverState?
 }
 
 ///|
@@ -214,6 +220,8 @@ pub fn Project::empty(target : @core_theory.Target) -> Project {
     libraries_value: [],
     state_value: ProjectState::empty(),
     lift_errors_value: [],
+    knowledge_value: @knowledge.State::new(),
+    driver_value: None,
   }
 }
 
@@ -264,6 +272,8 @@ pub fn Project::create(
       None => ProjectState::empty()
     },
     lift_errors_value: [],
+    knowledge_value: @knowledge.State::new(),
+    driver_value: None,
   }
 }
 
@@ -337,7 +347,17 @@ pub fn Project::state(self : Project) -> ProjectState {
 
 ///|
 pub fn Project::with_state(self : Project, state : ProjectState) -> Project {
-  { ..self, state_value: state, }
+  // the state of the incremental disassembler describes the disassembly it
+  // produced only
+  let driver_value = if physical_equal(
+      state.disassembly(),
+      self.state_value.disassembly(),
+    ) {
+    self.driver_value
+  } else {
+    None
+  }
+  { ..self, state_value: state, driver_value, }
 }
 
 ///|

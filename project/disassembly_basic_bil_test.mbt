@@ -6970,42 +6970,53 @@ test "project Basic BIL lift covers direct control transfers" {
     Err(reason) => fail(reason)
   }
 
-  let call = basic_bil_decode("x86_64", b"\xe8\x47\xee\xff\xff", start=0x7300UL)
-  match call.lift_basic_bil() {
-    Ok(stmts) => {
-      assert_true(stmts.length() == 2)
-      assert_true(
-        @types.Stmt::decode(@types.Stmt::call(), stmts[0]) == Some("0x614c"),
-      )
-      assert_string(stmts[1].to_string(), "jmp 0x614C:64u")
+  // calls push the return address and jump to the callee (upstream x86
+  // semantics); the Basic `call` hint precedes the jump
+  let lift_text = (triple : String, bytes : Bytes, start : UInt64) => {
+    try {
+      let insn = basic_bil_decode(triple, bytes, start~)
+      match insn.lift_basic_bil() {
+        Ok(stmts) =>
+          "\{insn.name()}:\n" +
+          stmts.map(stmt => "  " + stmt.to_string()).join("\n")
+        Err(reason) => "\{insn.name()}: \{reason}"
+      }
+    } catch {
+      err => "decoding failed: \{err}"
     }
-    Err(reason) => fail(reason)
   }
-
-  let call32 = basic_bil_decode("x86", b"\xe8\x01\x00\x00\x00", start=0x7310UL)
-  match call32.lift_basic_bil() {
-    Ok(stmts) => {
-      assert_true(stmts.length() == 2)
-      assert_true(
-        @types.Stmt::decode(@types.Stmt::call(), stmts[0]) == Some("0x7316"),
-      )
-      assert_string(stmts[1].to_string(), "jmp 0x7316:32u")
-    }
-    Err(reason) => fail(reason)
-  }
-
-  let indirect_call = basic_bil_decode("x86_64", b"\xff\xd0", start=0x7320UL)
-  match indirect_call.lift_basic_bil() {
-    Ok(stmts) => {
-      assert_true(stmts.length() == 2)
-      assert_true(
-        @types.Stmt::decode(@types.Stmt::call(), stmts[0]) == Some("indirect"),
-      )
-      assert_string(stmts[1].to_string(), "jmp RAX:imm64")
-    }
-    Err(reason) => fail(reason)
-  }
-
+  inspect(
+    [
+      lift_text("x86_64", b"\xe8\x47\xee\xff\xff", 0x7300UL),
+      lift_text("x86", b"\xe8\x01\x00\x00\x00", 0x7310UL),
+      lift_text("x86_64", b"\xff\xd0", 0x7320UL),
+      lift_text("x86_64", b"\xff\x14\x24", 0x7330UL),
+    ].join("\n"),
+    content=(
+      #|CALL64pcrel32:
+      #|  RSP:imm64 := (RSP:imm64 - 8:64u)
+      #|  mem:mem64x8 := store(mem:mem64x8, RSP:imm64, 0x7305:64u)
+      #|  special @attribute:(bap:call 0x614c)
+      #|  jmp 0x614C:64u
+      #|CALLpcrel32:
+      #|  ESP:imm32 := (ESP:imm32 - 4:32u)
+      #|  mem:mem32x8 := store(mem:mem32x8, ESP:imm32, 0x7315:32u)
+      #|  special @attribute:(bap:call 0x7316)
+      #|  jmp 0x7316:32u
+      #|CALL64r:
+      #|  %call_target:imm64 := RAX:imm64
+      #|  RSP:imm64 := (RSP:imm64 - 8:64u)
+      #|  mem:mem64x8 := store(mem:mem64x8, RSP:imm64, 0x7322:64u)
+      #|  special @attribute:(bap:call indirect)
+      #|  jmp %call_target:imm64
+      #|CALL64m:
+      #|  %call_target:imm64 := load(mem:mem64x8, RSP:imm64):imm64
+      #|  RSP:imm64 := (RSP:imm64 - 8:64u)
+      #|  mem:mem64x8 := store(mem:mem64x8, RSP:imm64, 0x7333:64u)
+      #|  special @attribute:(bap:call indirect)
+      #|  jmp %call_target:imm64
+    ),
+  )
   let indirect_jmp = basic_bil_decode("x86_64", b"\xff\x60\x10", start=0x7322UL)
   match indirect_jmp.lift_basic_bil() {
     Ok(stmts) => {
@@ -7020,34 +7031,58 @@ test "project Basic BIL lift covers direct control transfers" {
     }
     Err(reason) => fail(reason)
   }
-
-  let ret = basic_bil_decode("x86_64", b"\xc3", start=0x7400UL)
-  match ret.lift_basic_bil() {
-    Ok(stmts) => assert_basic_bil_text(stmts, ["special ret"])
-    Err(reason) => fail(reason)
-  }
-
-  let ret32 = basic_bil_decode("x86", b"\xc3", start=0x7401UL)
-  match ret32.lift_basic_bil() {
-    Ok(stmts) => assert_basic_bil_text(stmts, ["special ret"])
-    Err(reason) => fail(reason)
-  }
-
-  let return_variants : Array[(String, Bytes)] = [
-    ("x86", b"\xc2\x08\x00"),
-    ("x86", b"\xcb"),
-    ("x86", b"\xca\x10\x00"),
-    ("x86_64", b"\xc2\x08\x00"),
-    ("x86_64", b"\xcb"),
-    ("x86_64", b"\xca\x10\x00"),
-  ]
-  for sample in return_variants {
-    let decoded = basic_bil_decode(sample.0, sample.1, start=0x7402UL)
-    match decoded.lift_basic_bil() {
-      Ok(stmts) => assert_basic_bil_text(stmts, ["special ret"])
-      Err(reason) => fail(reason)
-    }
-  }
+  // returns pop the return address (and the immediate number of bytes) and
+  // jump to it; far returns also pop the code segment selector slot
+  inspect(
+    [
+      lift_text("x86_64", b"\xc3", 0x7400UL),
+      lift_text("x86", b"\xc3", 0x7401UL),
+      lift_text("x86", b"\xc2\x08\x00", 0x7402UL),
+      lift_text("x86", b"\xcb", 0x7402UL),
+      lift_text("x86", b"\xca\x10\x00", 0x7402UL),
+      lift_text("x86_64", b"\xc2\x08\x00", 0x7402UL),
+      lift_text("x86_64", b"\xcb", 0x7402UL),
+      lift_text("x86_64", b"\xca\x10\x00", 0x7402UL),
+    ].join("\n"),
+    content=(
+      #|RET64:
+      #|  %ret_addr:imm64 := load(mem:mem64x8, RSP:imm64):imm64
+      #|  RSP:imm64 := (RSP:imm64 + 8:64u)
+      #|  jmp %ret_addr:imm64
+      #|RET:
+      #|  %ret_addr:imm32 := load(mem:mem32x8, ESP:imm32):imm32
+      #|  ESP:imm32 := (ESP:imm32 + 4:32u)
+      #|  jmp %ret_addr:imm32
+      #|RET:
+      #|  %ret_addr:imm32 := load(mem:mem32x8, ESP:imm32):imm32
+      #|  ESP:imm32 := (ESP:imm32 + 4:32u)
+      #|  ESP:imm32 := (ESP:imm32 + 8:32u)
+      #|  jmp %ret_addr:imm32
+      #|RETF:
+      #|  %ret_addr:imm32 := load(mem:mem32x8, ESP:imm32):imm32
+      #|  ESP:imm32 := (ESP:imm32 + 8:32u)
+      #|  jmp %ret_addr:imm32
+      #|RETF:
+      #|  %ret_addr:imm32 := load(mem:mem32x8, ESP:imm32):imm32
+      #|  ESP:imm32 := (ESP:imm32 + 8:32u)
+      #|  ESP:imm32 := (ESP:imm32 + 0x10:32u)
+      #|  jmp %ret_addr:imm32
+      #|RET64:
+      #|  %ret_addr:imm64 := load(mem:mem64x8, RSP:imm64):imm64
+      #|  RSP:imm64 := (RSP:imm64 + 8:64u)
+      #|  RSP:imm64 := (RSP:imm64 + 8:64u)
+      #|  jmp %ret_addr:imm64
+      #|RETF64:
+      #|  %ret_addr:imm64 := load(mem:mem64x8, RSP:imm64):imm64
+      #|  RSP:imm64 := (RSP:imm64 + 0x10:64u)
+      #|  jmp %ret_addr:imm64
+      #|RETF64:
+      #|  %ret_addr:imm64 := load(mem:mem64x8, RSP:imm64):imm64
+      #|  RSP:imm64 := (RSP:imm64 + 0x10:64u)
+      #|  RSP:imm64 := (RSP:imm64 + 0x10:64u)
+      #|  jmp %ret_addr:imm64
+    ),
+  )
 }
 
 ///|
@@ -7134,7 +7169,7 @@ test "project Basic BIL lift runs over disassembly state and project" {
   assert_true(blocks.length() == 1)
   match blocks[0].lift_basic_bil() {
     Ok(stmts) => {
-      assert_true(stmts.length() == 22)
+      assert_true(stmts.length() == 26)
       assert_string(stmts[0].to_string(), "%sub_dst:imm64 := RSP:imm64")
       assert_string(stmts[1].to_string(), "%sub_src:imm64 := 8:64u")
       assert_string(
@@ -7144,29 +7179,29 @@ test "project Basic BIL lift runs over disassembly state and project" {
       assert_addsub_flag_tail(
         stmts, 3, "%sub_dst:imm64", "%sub_src:imm64", "RSP:imm64", "0:64u", false,
       )
-      assert_true(stmts[21].to_string() == "special ret")
+      assert_true(stmts[25].to_string() == "jmp %ret_addr:imm64")
     }
     Err(reason) => fail(reason)
   }
 
   match disassembly.lift_basic_bil() {
     Ok(stmts) => {
-      assert_true(stmts.length() == 22)
+      assert_true(stmts.length() == 26)
       assert_string(stmts[0].to_string(), "%sub_dst:imm64 := RSP:imm64")
       assert_true(
-        @types.Stmt::decode(@types.Stmt::call(), stmts[9]) == Some("0x6350"),
+        @types.Stmt::decode(@types.Stmt::call(), stmts[11]) == Some("0x6350"),
       )
-      assert_true(stmts[11].to_string().contains("load(mem:mem64x8"))
-      assert_string(stmts[12].to_string(), "%add_dst:imm64 := RSP:imm64")
-      assert_string(stmts[13].to_string(), "%add_src:imm64 := 8:64u")
+      assert_true(stmts[13].to_string().contains("load(mem:mem64x8"))
+      assert_string(stmts[14].to_string(), "%add_dst:imm64 := RSP:imm64")
+      assert_string(stmts[15].to_string(), "%add_src:imm64 := 8:64u")
       assert_string(
-        stmts[14].to_string(),
+        stmts[16].to_string(),
         "RSP:imm64 := (%add_dst:imm64 + %add_src:imm64)",
       )
       assert_addsub_flag_tail(
-        stmts, 15, "%add_dst:imm64", "%add_src:imm64", "RSP:imm64", "0:64u", true,
+        stmts, 17, "%add_dst:imm64", "%add_src:imm64", "RSP:imm64", "0:64u", true,
       )
-      assert_true(stmts[21].to_string() == "special ret")
+      assert_true(stmts[25].to_string() == "jmp %ret_addr:imm64")
     }
     Err(reason) => fail(reason)
   }
@@ -7175,13 +7210,13 @@ test "project Basic BIL lift runs over disassembly state and project" {
     disassembly,
   )
   match project.lift_basic_bil() {
-    Ok(stmts) => assert_true(stmts.length() == 22)
+    Ok(stmts) => assert_true(stmts.length() == 26)
     Err(reason) => fail(reason)
   }
 
   let disasm = @project.ProjectDisasm::from_project(project)
   match disasm.lift_basic_bil() {
-    Ok(stmts) => assert_true(stmts.length() == 22)
+    Ok(stmts) => assert_true(stmts.length() == 26)
     Err(reason) => fail(reason)
   }
 }

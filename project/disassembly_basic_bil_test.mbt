@@ -3160,7 +3160,7 @@ test "project Basic BIL lift covers x86 cmpxchg ops" {
       )
       assert_string(
         stmts[8].to_string(),
-        "EAX:imm32 := ite(ZF:imm1, EAX:imm32, EBX:imm32)",
+        "if ZF:imm1 then 0 stmts else 1 stmts",
       )
     }
     Err(reason) => fail(reason)
@@ -3186,7 +3186,7 @@ test "project Basic BIL lift covers x86 cmpxchg ops" {
       )
       assert_string(
         stmts[8].to_string(),
-        "AL:imm8 := ite(ZF:imm1, AL:imm8, BL:imm8)",
+        "if ZF:imm1 then 0 stmts else 1 stmts",
       )
     }
     Err(reason) => fail(reason)
@@ -3212,7 +3212,7 @@ test "project Basic BIL lift covers x86 cmpxchg ops" {
       )
       assert_string(
         stmts[8].to_string(),
-        "AX:imm16 := ite(ZF:imm1, AX:imm16, BX:imm16)",
+        "if ZF:imm1 then 0 stmts else 1 stmts",
       )
     }
     Err(reason) => fail(reason)
@@ -3248,7 +3248,7 @@ test "project Basic BIL lift covers x86 cmpxchg ops" {
       )
       assert_string(
         stmts[10].to_string(),
-        "AL:imm8 := ite(ZF:imm1, AL:imm8, %cmpxchg_d:imm8)",
+        "if ZF:imm1 then 0 stmts else 1 stmts",
       )
     }
     Err(reason) => fail(reason)
@@ -3284,7 +3284,7 @@ test "project Basic BIL lift covers x86 cmpxchg ops" {
       )
       assert_string(
         stmts[10].to_string(),
-        "AX:imm16 := ite(ZF:imm1, AX:imm16, %cmpxchg_d:imm16)",
+        "if ZF:imm1 then 0 stmts else 1 stmts",
       )
     }
     Err(reason) => fail(reason)
@@ -3320,7 +3320,7 @@ test "project Basic BIL lift covers x86 cmpxchg ops" {
       )
       assert_string(
         stmts[10].to_string(),
-        "RAX:imm64 := ite(ZF:imm1, RAX:imm64, %cmpxchg_d:imm64)",
+        "if ZF:imm1 then 0 stmts else 1 stmts",
       )
     }
     Err(reason) => fail(reason)

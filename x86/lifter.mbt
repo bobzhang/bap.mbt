@@ -134,7 +134,7 @@ fn Ctx::to_ir(self : Ctx, op : Opcode) -> Array[@types.Stmt] raise X86Error {
     Shift(st, s, dst, shift) => self.shift(st, s, dst, shift)
     Shiftd(st, s, dst, fill, count) => self.shiftd(st, s, dst, fill, count)
     Rotate(st, t, dst, shift, use_cf) => self.rotate(st, t, dst, shift, use_cf)
-    Bt(t, bitoffset, bitbase) => self.bt(t, bitoffset, bitbase)
+    Bt(kind, t, bitoffset, bitbase) => self.bt(kind, t, bitoffset, bitbase)
     Bs(t, dst, src, dir) => self.bs(t, dst, src, dir)
     Hlt => [] // x86 Hlt is essentially a NOP
     Rdtsc =>

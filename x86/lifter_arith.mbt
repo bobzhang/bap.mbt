@@ -110,46 +110,64 @@ fn Ctx::to_ir_arith(
       cat([
         [assign(tmp, e_minus(eax_e, dst_e))],
         set_flags_sub(t, eax_e, dst_e, ev(tmp)),
+        // port: the accumulator is only written when the comparison
+        // fails (upstream writes it back unconditionally, which clears the
+        // upper half of RAX in 64-bit mode); the destination is written in
+        // both cases (Intel SDM CMPXCHG)
         [
-          self.assn(t, dst, e_ite(ev(zf), src_e, dst_e)),
-          self.assn(t, o_rax, e_ite(ev(zf), eax_e, dst_e)),
+          if_(ev(zf), [self.assn(t, dst, src_e)], [
+            assign(tmp, dst_e),
+            self.assn(t, o_rax, ev(tmp)),
+            self.assn(t, dst, ev(tmp)),
+          ]),
         ],
       ])
     }
-    Cmpxchg8b(o) => {
-      // only 32bit case
-      let accumulator = e_concat(self.op2e(32, o_rdx), self.op2e(32, o_rax))
-      let dst_e = self.op2e(64, o)
-      let src_e = e_concat(self.op2e(32, o_rcx), self.op2e(32, o_rbx))
-      let dst_low_e = e_extract(63, 32, dst_e)
-      let dst_hi_e = e_extract(31, 0, dst_e)
-      let eax_e = self.op2e(32, o_rax)
-      let edx_e = self.op2e(32, o_rdx)
+    Cmpxchg8b(t, o) => {
+      // port: EDX:EAX <- m64 loads the low half into EAX (upstream swaps the
+      // halves) and is only written when the comparison fails; with REX.W
+      // this is CMPXCHG16B over RDX:RAX and RCX:RBX (Intel SDM)
+      let h = t / 2
+      let accumulator = e_concat(self.op2e(h, o_rdx), self.op2e(h, o_rax))
+      let dst = new_tmp(t, name="dst")
+      let dst_e = ev(dst)
+      let src_e = e_concat(self.op2e(h, o_rcx), self.op2e(h, o_rbx))
       let equal = new_tmp(1)
       let equal_v = ev(equal)
       [
+        assign(dst, self.op2e(t, o)),
         assign(equal, e_eq(accumulator, dst_e)),
         assign(zf, equal_v),
-        self.assn(64, o, e_ite(equal_v, src_e, dst_e)),
-        self.assn(32, o_rax, e_ite(equal_v, eax_e, dst_low_e)),
-        self.assn(32, o_rdx, e_ite(equal_v, edx_e, dst_hi_e)),
+        self.assn(t, o, e_ite(equal_v, src_e, dst_e)),
+        if_(equal_v, [], [
+          self.assn(h, o_rax, e_extract(h - 1, 0, dst_e)),
+          self.assn(h, o_rdx, e_extract(t - 1, h, dst_e)),
+        ]),
       ]
     }
-    Xadd(t, dst_op, src_op) => {
+    Xadd(t, src_op, dst_op) => {
+      // port: the decoder passes (reg, r/m); the sum goes to the r/m
+      // operand and its old value to the register (upstream swaps them)
       let tmp_res = new_tmp(t)
       let tmp_dst = new_tmp(t)
       let tmp_src = new_tmp(t)
-      let dst = self.op2e(t, dst_op)
-      let src = self.op2e(t, src_op)
+      // a memory destination is stored first, as its address may depend
+      // on the register; a register destination is written last (it wins
+      // when both operands are the same register)
+      let writes = match dst_op {
+        Oaddr(_) =>
+          [self.assn(t, dst_op, ev(tmp_res)), self.assn(t, src_op, ev(tmp_dst))]
+        _ =>
+          [self.assn(t, src_op, ev(tmp_dst)), self.assn(t, dst_op, ev(tmp_res))]
+      }
       cat([
         [
-          assign(tmp_src, src),
-          assign(tmp_dst, dst),
-          assign(tmp_res, e_plus(src, dst)),
-          self.assn(t, src_op, dst),
-          self.assn(t, dst_op, ev(tmp_res)),
+          assign(tmp_src, self.op2e(t, src_op)),
+          assign(tmp_dst, self.op2e(t, dst_op)),
+          assign(tmp_res, e_plus(ev(tmp_dst), ev(tmp_src))),
         ],
-        set_flags_add(t, ev(tmp_dst), ev(tmp_src), dst),
+        writes,
+        set_flags_add(t, ev(tmp_dst), ev(tmp_src), ev(tmp_res)),
       ])
     }
     Xchg(t, src, dst) => {
@@ -286,9 +304,9 @@ fn Ctx::to_ir_arith(
             e_signed(new_t, self.op2e(t, src2)),
           ),
         )
-        // Intel checks if EAX == EDX:EAX. Instead of doing this, we are
-        // just going to check if the upper bits are != 0
-        let flag = e_neq(e_extract(new_t - 1, new_t / 2, assne), int_exp(0, t))
+        // port: CF/OF are set when the product is not the sign extension
+        // of its low half (upstream: when the upper half is not zero)
+        let flag = e_neq(assne, e_signed(new_t, e_low(t, assne)))
         cat([assnstmts, [assign(of_, flag), assign(cf, flag)]])
       } else {
         // Two and three operand forms
@@ -342,14 +360,13 @@ fn Ctx::div(
   let result = e_concat(e_low(t, ev(trem)), e_low(t, ev(tdiv)))
   let apply_result = self.assn_dbl(t, result).0
   let body = if signed {
-    let min_bv = (try! @bitvec.one(width=dt)).lshift(dt - 1)
-    let lbound : @types.Exp = Int(@types.Word::from_bitvec(min_bv))
-    let ubound : @types.Exp = Int(@types.Word::from_bitvec(min_bv.pred()))
+    // port: #DE when the quotient is not the sign extension of its low
+    // half (upstream checks the range of the double-width type)
     [
       assign(tdiv, bop(SignedDiv, ev(dividend), ev(divisor))),
       assign(trem, bop(SignedMod, ev(dividend), ev(divisor))),
       if_(
-        e_or(e_sgt(ev(tdiv), ubound), e_slt(ev(tdiv), lbound)),
+        e_neq(ev(tdiv), e_signed(dt, e_low(t, ev(tdiv)))),
         [divide_by_zero],
         apply_result,
       ),
@@ -390,8 +407,10 @@ fn Ctx::shift(
   let old = new_tmp(s, name="tmp")
   let size = int_exp(s, s)
   let dste = self.op2e(s, dst)
-  let count_mask = e_minus(size, int_exp(1, s))
-  let count = e_and(self.op2e(s, shift), count_mask)
+  // port: the count is masked to 5 bits (6 for 64-bit operands), so 8- and
+  // 16-bit operands can be shifted by more than their width (upstream
+  // masks to the width)
+  let count = e_and(self.op2e(s, shift), count_mask(s))
   let new_of = match st {
     LShift => e_xor(e_high(1, dste), ev(cf))
     RShift => e_high(1, ev(old))
@@ -402,7 +421,9 @@ fn Ctx::shift(
   // or equal to the size (in bits) of the destination operand
   let new_cf = match st {
     LShift => e_low(1, e_lsr(ev(old), e_minus(size, count)))
-    _ => e_high(1, e_lsl(ev(old), e_minus(size, count)))
+    // the last bit shifted out; a copy of the sign for SAR by more than
+    // the width
+    _ => e_low(1, bop(st, ev(old), e_minus(count, int_exp(1, s))))
   }
   [
     assign(old, dste),
@@ -439,8 +460,8 @@ fn Ctx::shiftd(
   let e_fill = self.op2e(s, fill)
   // Check for 64-bit operand
   let size = int_exp(s, s)
-  let count_mask = e_minus(size, int_exp(1, s))
-  let e_count = e_and(self.op2e(s, count), count_mask)
+  // port: the count is masked to 5 bits (6 for 64-bit operands)
+  let e_count = e_and(self.op2e(s, count), count_mask(s))
   let (new_cf, ret1, ret2) = match st {
     LShift =>
       (
@@ -484,7 +505,20 @@ fn Ctx::shiftd(
 }
 
 ///|
+/// The count mask of shifts and rotates: 5 bits, 6 bits for 64-bit
+/// operands (Intel SDM SAL/SAR/SHL/SHR, ROL/ROR).
+fn count_mask(size : Int) -> @types.Exp {
+  int_exp(if size == 64 { 0x3f } else { 0x1f }, size)
+}
+
+///|
 /// Upstream `Rotate` (ROL/ROR; RCL/RCR are not implemented upstream).
+///
+/// port: the operand is rotated by the masked count modulo the width, CF
+/// is the bit rotated into the least (ROL) or most (ROR) significant bit
+/// whenever the masked count is not zero and OF is defined for a masked
+/// count of 1 (upstream only assigns CF for a zero count and computes OF
+/// from the stale CF).
 fn Ctx::rotate(
   self : Ctx,
   shift_type : @types.BinOp,
@@ -496,86 +530,100 @@ fn Ctx::rotate(
   if use_cf {
     raise NoSemantics("rotate use_vf")
   }
-  let mask_size = word_size - 1
+  let masked_var = new_tmp(word_size, name="masked")
+  let masked = ev(masked_var)
   let count_var = new_tmp(word_size)
   let count = ev(count_var)
   let zero = int_exp(0, word_size)
   let one = int_exp(1, word_size)
   let dst = self.op2e(word_size, dst_op)
-  let shift_mask = int_exp(mask_size, word_size)
   let size = int_exp(word_size, word_size)
   let shift = self.op2e(word_size, shift_op)
   let unk = e_unknown("OF undefined after rotate of more then 1 bit", 1)
-  let count_stmt = assign(count_var, bop(Mod, e_and(shift, shift_mask), size))
-  if shift_type == LShift {
-    [
-      count_stmt,
-      self.assn(
-        word_size,
-        dst_op,
-        e_or(e_lsl(dst, count), e_lsr(dst, e_minus(size, count))),
-      ),
-      if_(e_eq(count, zero), [assign(cf, e_low(1, dst))], [
-        if_(e_eq(count, one), [assign(of_, e_xor(ev(cf), e_high(1, dst)))], [
-          assign(of_, unk),
-        ]),
-      ]),
-    ]
+  let left = shift_type == LShift
+  let rotated = if left {
+    e_or(e_lsl(dst, count), e_lsr(dst, e_minus(size, count)))
   } else {
-    [
-      count_stmt,
-      self.assn(
-        word_size,
-        dst_op,
-        e_or(e_lsr(dst, count), e_lsl(dst, e_minus(size, count))),
-      ),
-      if_(e_eq(count, zero), [assign(cf, e_high(1, dst))], [
-        if_(
-          e_eq(count, one),
-          [
-            assign(
-              of_,
-              e_xor(
-                e_high(1, dst),
-                e_high(1, e_lsl(dst, int_exp(1, word_size))),
-              ),
-            ),
-          ],
-          [assign(of_, unk)],
-        ),
-      ]),
-    ]
+    e_or(e_lsr(dst, count), e_lsl(dst, e_minus(size, count)))
   }
+  // `dst` reads the rotated value after the assignment
+  let (new_cf, new_of) = if left {
+    (e_low(1, dst), e_xor(e_high(1, dst), e_low(1, dst)))
+  } else {
+    (
+      e_high(1, dst),
+      e_xor(e_high(1, dst), e_extract(word_size - 2, word_size - 2, dst)),
+    )
+  }
+  [
+    assign(masked_var, e_and(shift, count_mask(word_size))),
+    assign(count_var, bop(Mod, masked, size)),
+    self.assn(word_size, dst_op, rotated),
+    if_(
+      e_neq(masked, zero),
+      [
+        assign(cf, new_cf),
+        if_(e_eq(masked, one), [assign(of_, new_of)], [assign(of_, unk)]),
+      ],
+      [],
+    ),
+  ]
 }
 
 ///|
-/// Upstream `Bt`.
+/// Upstream `Bt`, extended to BTS/BTR/BTC (`kind` 5, 6 and 7), which
+/// complement, reset or set the selected bit.
 fn Ctx::bt(
   self : Ctx,
+  kind : Int,
   t : Int,
   bitoffset : Operand,
   bitbase : Operand,
 ) -> Array[@types.Stmt] raise X86Error {
   let offset = self.op2e(t, bitoffset)
-  let (value, shift) = match bitbase {
+  let (value, shift, width, addr) = match bitbase {
     Oreg(_) => {
       let reg = self.op2e(t, bitbase)
-      (reg, e_and(offset, int_exp(t - 1, t)))
+      (reg, e_and(offset, int_exp(t - 1, t)), t, None)
     }
     Oaddr(a) => {
-      let offset = e_unsigned(self.mode.width(), offset)
-      let byte = self.load(8, e_plus(a, e_lsr(offset, int_exp(3, t))))
-      (byte, e_and(e_low(8, offset), int_exp(7, 8)))
+      // port: an immediate offset is taken modulo the operand size and a
+      // register offset is signed (upstream zero-extends both)
+      let aw = self.mode.width()
+      let offset = match bitoffset {
+        Oimm(_) => e_unsigned(aw, e_and(offset, int_exp(t - 1, t)))
+        _ => e_signed(aw, offset)
+      }
+      let byte_addr = e_plus(a, bop(ARShift, offset, int_exp(3, aw)))
+      let byte = self.load(8, byte_addr)
+      (byte, e_and(e_low(8, offset), int_exp(7, 8)), 8, Some(byte_addr))
     }
     _ => raise ArchException("Invalid bt operand")
   }
-  [
-    assign(cf, e_low(1, e_lsr(value, shift))),
-    assign(of_, e_unknown("OF undefined after bt", 1)),
-    assign(sf, e_unknown("SF undefined after bt", 1)),
-    assign(af, e_unknown("AF undefined after bt", 1)),
-    assign(pf, e_unknown("PF undefined after bt", 1)),
-  ]
+  let selected = new_tmp(width, name="bits")
+  let mask = e_lsl(int_exp(1, width), e_unsigned(width, shift))
+  let updated = match kind {
+    5 => Some(e_or(ev(selected), mask))
+    6 => Some(e_and(ev(selected), e_not(mask)))
+    7 => Some(e_xor(ev(selected), mask))
+    _ => None
+  }
+  let write = match (updated, addr) {
+    (None, _) => []
+    (Some(v), None) => [self.assn(t, bitbase, v)]
+    (Some(v), Some(a)) => [self.store(8, a, v)]
+  }
+  cat([
+    [
+      assign(selected, value),
+      assign(cf, e_low(1, e_lsr(ev(selected), shift))),
+      assign(of_, e_unknown("OF undefined after bt", 1)),
+      assign(sf, e_unknown("SF undefined after bt", 1)),
+      assign(af, e_unknown("AF undefined after bt", 1)),
+      assign(pf, e_unknown("PF undefined after bt", 1)),
+    ],
+    write,
+  ])
 }
 
 ///|

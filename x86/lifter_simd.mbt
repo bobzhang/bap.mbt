@@ -12,8 +12,14 @@ fn PackedOp::apply(
     PMin(signed) => min_symbolic(signed, x, y)
     PMax(signed) => max_symbolic(signed, x, y)
     PAvg(et) => {
-      let one = int_exp(1, et)
-      e_lsr(e_plus(e_plus(x, y), one), one)
+      // port: the sum is computed with one more bit (upstream drops the
+      // carry out of the element)
+      let w = et + 1
+      let one = int_exp(1, w)
+      e_low(
+        et,
+        e_lsr(e_plus(e_plus(e_unsigned(w, x), e_unsigned(w, y)), one), one),
+      )
     }
     PAndN => e_and(e_not(x), y)
   }
@@ -136,9 +142,39 @@ fn Ctx::to_ir_simd(
           _ => extract_element(et, self.op2e(t, o), i)
         }
       }
-      let stmts = [assign(tmp_dst, int_exp(0, t))]
+      // port: the shifts by a register or memory operand shift every
+      // element by the (unsigned) low quadword of the source, clearing (or
+      // sign-filling) the elements when it exceeds the element width
+      // (upstream shifts each element by the matching source element)
+      let count = new_tmp(64, name="count")
+      let (shift_count, stmts) = match (fbop, s) {
+        (PBin(LShift | RShift | ARShift), Ovec(_) | Oaddr(_)) =>
+          (
+            Some(ev(count)),
+            [
+              assign(count, e_low(64, self.op2e(t, s))),
+              assign(tmp_dst, int_exp(0, t)),
+            ],
+          )
+        _ => (None, [assign(tmp_dst, int_exp(0, t))])
+      }
+      let apply = (x : @types.Exp, i : Int) => {
+        match (fbop, shift_count) {
+          (PBin(ARShift), Some(c)) => {
+            let big = e_lt(int_exp(et - 1, 64), c)
+            bop(ARShift, x, e_ite(big, int_exp(et - 1, et), e_low(et, c)))
+          }
+          (PBin(op), Some(c)) =>
+            e_ite(
+              e_lt(int_exp(et - 1, 64), c),
+              int_exp(0, et),
+              bop(op, x, e_low(et, c)),
+            )
+          _ => fbop.apply(x, getelement(s, i))
+        }
+      }
       for i in 0..<nops {
-        stmts.push(assign(elt, fbop.apply(getelement(d, i), getelement(s, i))))
+        stmts.push(assign(elt, apply(getelement(d, i), i)))
         stmts.push(assign(iv, int_exp(i, 8)))
         stmts.push(
           assign(
@@ -345,7 +381,9 @@ fn Ctx::to_ir_simd(
             [
               assign(
                 ind,
-                e_unsigned(8, e_extract(index_bits, 0, ev(mask_byte_i))),
+                // port: the low `index_bits` bits (upstream extracts one
+                // bit more, selecting zero bytes past the vector)
+                e_unsigned(8, e_extract(index_bits - 1, 0, ev(mask_byte_i))),
               ),
               assign(
                 tmp_byte,

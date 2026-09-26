@@ -57,19 +57,49 @@ test "legacy lifter" {
 }
 ```
 
-## Known upstream deviations from the Intel SDM (kept)
+## Deliberate deviations from upstream (fixed to follow the Intel SDM)
 
-Found by the differential test against the Basic lifter
-(`differential_test.mbt`): ROL/ROR only assign CF for a zero count, the
-per-opcode BTx lifters do not zero-extend 32-bit register destinations in
-64-bit mode, CMPXCHG8B swaps the loaded halves, XADD swaps its operands,
-the legacy decoder lifts `0f ba /5 /6 /7` as BT, and the one-operand IMUL
-sets CF/OF when the high half is not zero (instead of not a sign
-extension). Other upstream issues kept as is: the explicit-length
-PCMPESTRx forms read the clamped length before assigning it, the mask forms
-PCMPxSTRM are ill-typed (a 128-bit mask assigned to YMM0) and raise
-`IllTyped`, and the VEX forms of PUNPCKx/PSHUFD write the `vvvv` register
-instead of the ModR/M destination.
+Found by the differential tests against the Basic lifter
+(`differential_test.mbt`) and against Unicorn (`x86/semantics`), marked
+`port:` in the sources:
+
+- shifts and SHLD/SHRD mask the count to 5 bits (6 for 64-bit operands),
+  so 8- and 16-bit operands shift by up to 31 (upstream masks to the
+  width); the CF of SHR/SAR is the last bit shifted out (the sign for SAR
+  by more than the width);
+- ROL/ROR rotate by the masked count modulo the width and set CF (the bit
+  rotated in) whenever the masked count is not zero, and OF from the new
+  CF (upstream only assigns CF for a zero count);
+- the one-operand IMUL sets CF/OF when the product is not the sign
+  extension of its low half (upstream: when the high half is not zero);
+  IDIV raises #DE when the quotient exceeds the signed operand range
+  (upstream checks the range of the double-width type);
+- BT/BTS/BTR/BTC leave ZF unchanged; the per-opcode lifters zero-extend
+  32-bit register destinations in 64-bit mode and address
+  `floor(offset / width)` for negative register offsets; the legacy lifter
+  decodes and lifts BTS/BTR/BTC (`0f ab`, `0f b3`, `0f bb`, `0f ba /5 /6
+  /7`; upstream lifts the latter as BT), takes immediate offsets modulo
+  the operand size and register offsets as signed;
+- CMPXCHG only writes the accumulator when the comparison fails and
+  writes the destination back otherwise; CMPXCHG8B loads EDX:EAX <- m64 in
+  the right order and only when the comparison fails, and CMPXCHG16B (REX.W)
+  is lifted over RDX:RAX and RCX:RBX (upstream lifted it as CMPXCHG8B);
+- XADD stores the sum in the r/m operand and its old value in the register
+  (upstream swaps them);
+- LAHF and PUSHF store the reserved flag bits (bit 1 is 1, the others are
+  0) instead of unknown values;
+- PAVGB/PAVGW keep the carry of the sum; the PSLL/PSRL/PSRA forms with a
+  register or memory count shift every element by the low quadword of the
+  source (clearing or sign-filling the elements when it exceeds their
+  width); PSHUFB selects with the low 4 bits of the index; MOVQ `66 0f d6`
+  zero-extends a register destination.
+
+Other upstream issues kept as is: the explicit-length PCMPESTRx forms read
+the clamped length before assigning it, the mask forms PCMPxSTRM are
+ill-typed (a 128-bit mask assigned to YMM0) and raise `IllTyped`, the VEX
+forms of PUNPCKx/PSHUFD write the `vvvv` register instead of the ModR/M
+destination, and RCL/RCR are not lifted (the combined providers fall back
+to the Basic lifter).
 
 ## Not ported
 

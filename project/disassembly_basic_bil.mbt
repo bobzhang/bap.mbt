@@ -4567,15 +4567,12 @@ fn ProjectDisassemblyInstruction::project_basic_bil_cmpxchg_rr(
       ),
     ),
   )
+  // the accumulator is only written when the comparison fails (a 32-bit
+  // write would clear the upper half of RAX in 64-bit mode)
   stmts.push(
-    @types.Stmt::move_stmt(
-      acc,
-      @types.Exp::ite(
-        if_=project_basic_bil_x86_flag("ZF"),
-        then_=acc_exp,
-        else_=old_dst_exp,
-      ),
-    ),
+    @types.Stmt::if_(project_basic_bil_x86_flag("ZF"), [], [
+      @types.Stmt::move_stmt(acc, old_dst_exp),
+    ]),
   )
   Ok(stmts)
 }
@@ -4651,15 +4648,12 @@ fn ProjectDisassemblyInstruction::project_basic_bil_cmpxchg_mr(
       ),
     ),
   )
+  // the accumulator is only written when the comparison fails (a 32-bit
+  // write would clear the upper half of RAX in 64-bit mode)
   stmts.push(
-    @types.Stmt::move_stmt(
-      acc,
-      @types.Exp::ite(
-        if_=project_basic_bil_x86_flag("ZF"),
-        then_=acc_exp,
-        else_=old_dst_exp,
-      ),
-    ),
+    @types.Stmt::if_(project_basic_bil_x86_flag("ZF"), [], [
+      @types.Stmt::move_stmt(acc, old_dst_exp),
+    ]),
   )
   Ok(stmts)
 }

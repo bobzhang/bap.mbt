@@ -317,9 +317,9 @@ let move64_cases : String =
   #|xchg eax, ebx|93|XCHG32ar:%EBX,%EBX|rax=d1d77ca333450e80 rcx=48e8a3816bd1c361 rdx=811b925e34e58c29 rbx=ffff f=8d7|rax=ffff rbx=33450e80 f=8d5/0
   #|cmpxchg r15d, r8d|450fb1c7|CMPXCHG32rr:%R15D,%R8D|rax=39257fff rcx=cc9c3fdece4c8d0e r8=8000 r15=a351785b39257fff f=96|r15=8000 f=44/0
   #|cmpxchg r15d, r8d|450fb1c7|CMPXCHG32rr:%R15D,%R8D|rax=43be383d rcx=d24461397a262d00 rdx=635287986f777f6d r8=e9d8a8dcbc19b377 r15=2de74eea43be383d f=43|r15=bc19b377 f=44/0
-  #|cmpxchg r15d, r8d|450fb1c7|CMPXCHG32rr:%R15D,%R8D|rax=6af4467f00000000 rdx=b6eade1578a7794f r8=b6ff855c19bae179 r15=8000000000000000 f=92|rax=0 r15=19bae179 f=44/0
+  #|cmpxchg r15d, r8d|450fb1c7|CMPXCHG32rr:%R15D,%R8D|rax=6af4467f00000000 rdx=b6eade1578a7794f r8=b6ff855c19bae179 r15=8000000000000000 f=92|r15=19bae179 f=44/0
   #|cmpxchg r15d, r8d|450fb1c7|CMPXCHG32rr:%R15D,%R8D|rax=b45e5660eb28dfe3 rcx=7fb77e4a46398136 rdx=e r8=fffffffffffffffe r15=fee2b5823ad6e178 f=846|rax=3ad6e178 r15=3ad6e178 f=90/0
-  #|cmpxchg dword ptr [rdi + r9*2 - 0x4], r8d|460fb1444ffc|CMPXCHG32rm:%RDI,2,%R9,-4,%,%R8D|rax=76b48f4d168f114c rcx=6d21fb0922e4b370 rbx=7 r8=ede4d30d95fe1843 r9=f f=47 m1011a=4c118f1680483a487e88d64d797c6a54|rax=168f114c f=44/0 m1011a=4318fe95
+  #|cmpxchg dword ptr [rdi + r9*2 - 0x4], r8d|460fb1444ffc|CMPXCHG32rm:%RDI,2,%R9,-4,%,%R8D|rax=76b48f4d168f114c rcx=6d21fb0922e4b370 rbx=7 r8=ede4d30d95fe1843 r9=f f=47 m1011a=4c118f1680483a487e88d64d797c6a54|f=44/0 m1011a=4318fe95
   #|cmpxchg dword ptr [rdi + r9*2 - 0x4], r8d|460fb1444ffc|CMPXCHG32rm:%RDI,2,%R9,-4,%,%R8D|rcx=8000000000000000 rbx=0 r8=5175760ec77e4b46 r9=5 f=3 m10106=00000000848d6d3494b3b20a876ce087|rax=0 f=80/0
   #|cmpxchg dword ptr [rdi + r9*2 - 0x4], r8d|460fb1444ffc|CMPXCHG32rm:%RDI,2,%R9,-4,%,%R8D|rax=fb12 rcx=a44f503b850e1298 rdx=2eb2cad43189da3d rbx=f r8=32d1db127980dbba r9=8 f=52 m1010c=e581030fb03c81690b8e0fcebebcbb97|rax=f0381e5 f=95/0
   #|cmpxchg dword ptr [rdi + r9*2 - 0x4], r8d|460fb1444ffc|CMPXCHG32rm:%RDI,2,%R9,-4,%,%R8D|rax=af060b7a08bd3e46 rcx=e rdx=6a438221baa0db7f rbx=7 r8=67af8a99603576c7 r9=5 f=13 m10106=e7af02f0eef0afe75bc77b61c9326ae6|rax=f002afe7 f=15/0

@@ -6,21 +6,13 @@
 // sub-register variables (EAX, AL, XMM0, ...) are mapped onto the full
 // registers first (`normalize_basic`).
 //
-// Remaining mismatches (the snapshots below), checked against the Intel SDM:
-// - ROL/ROR: upstream only assigns CF when the masked count is zero and
-//   computes OF from the stale CF; Basic follows Intel (CF = the bit
-//   rotated in). Upstream behavior is kept.
-// - BTS/BTR/BTC with a 32-bit register destination (per-opcode lifter):
-//   upstream writes the whole 64-bit register without zero-extending it;
-//   Intel (and Basic) zero-extend. Upstream behavior is kept.
-// - legacy 0f ba /5 /6 /7 (BTS/BTR/BTC imm8): the legacy decoder lifts them
-//   as BT, without the write (masked by the per-opcode lifter in the
-//   combined providers).
-// - CMPXCHG8B: upstream loads the high half of m64 into EAX and the low
-//   half into EDX; Intel (and Basic) load EDX:EAX <- m64. Upstream kept.
-// - XADD: upstream swaps the operands (the register receives the sum and
-//   r/m the old register value); Intel (and Basic) store the sum in r/m and
-//   the old r/m value in the register. Upstream kept.
+// The lifters agree on every instruction both of them lift: the upstream
+// deviations from the Intel SDM this test used to report (ROL/ROR flags,
+// the missing zero-extension of BTS/BTR/BTC with 32-bit registers, the
+// legacy decoding of `0f ba /5 /6 /7` as BT, the swapped CMPXCHG8B halves
+// and XADD operands, the one-operand IMUL flags and the IDIV overflow
+// check) are fixed, see the README and `x86/semantics` (the differential
+// test of all the x86 lifters against Unicorn).
 //
 // CALL/RET agree: like upstream, the Basic lifter pushes the return address
 // on calls and pops it (and the immediate byte count) on returns, jumping to
@@ -518,37 +510,14 @@ test "differential: x86-64, combined providers vs Basic" {
   inspect(
     report_text(report),
     content=(
-      #|both=227 agree=204 only_ours=5 only_basic=7 neither=52 basic_undecoded=52
+      #|both=227 agree=227 only_ours=5 only_basic=7 neither=52 basic_undecoded=52
       #|86 d8 (XCHG8rr): only Basic lifts
-      #|f7 eb (IMUL32r): CF: ours 0x0x1 basic 0x0x0; OF: ours 0x0x1 basic 0x0x0
-      #|48 f7 eb (IMUL64r): CF: ours 0x0x1 basic 0x0x0; OF: ours 0x0x1 basic 0x0x0
-      #|f7 fb (IDIV32r): RAX: ours 0x0x0000000007fd809f basic 0x0x0000000080000000; RDX: ours 0x0x000000000000d840 basic 0x0x000000007fffffff; exn: ours none basic 0
-      #|48 f7 fb (IDIV64r): RAX: ours 0x0x07fd00bfd00c7ce0 basic 0x0x0000000080000000; RDX: ours 0x0x000000000000c800 basic 0x0x000000007fffffff; exn: ours none basic 0
-      #|d1 c0 (ROL32r1): CF: ours 0x0x0 basic 0x0x1; OF: ours 0x0x1 basic 0x0x0; OF: ours 0x0x0 basic 0x0x1
-      #|c1 c0 04 (ROL32ri8): CF: ours 0x0x1 basic 0x0x0; CF: ours 0x0x0 basic 0x0x1
-      #|d3 c0 (ROL32rCL): CF: ours 0x0x1 basic 0x0x0; CF: ours 0x0x0 basic 0x0x1
-      #|d1 c8 (ROR32r1): CF: ours 0x0x1 basic 0x0x0; CF: ours 0x0x0 basic 0x0x1
-      #|c1 c8 04 (ROR32ri8): CF: ours 0x0x1 basic 0x0x0; CF: ours 0x0x0 basic 0x0x1
-      #|d0 c0 (ROL8r1): CF: ours 0x0x1 basic 0x0x0; OF: ours 0x0x1 basic 0x0x0; CF: ours 0x0x0 basic 0x0x1
-      #|48 d1 c0 (ROL64r1): CF: ours 0x0x1 basic 0x0x0; OF: ours 0x0x1 basic 0x0x0
       #|d1 d0 (RCL32r1): only Basic lifts
       #|d1 d8 (RCR32r1): only Basic lifts
-      #|0f ab d8 (BTS32rr): RAX: ours 0x0xffffffffffffffff basic 0x0x00000000ffffffff; RAX: ours 0x0x7fffffffffffffff basic 0x0x00000000ffffffff; RAX: ours 0x0x123456789abcdef1 basic 0x0x000000009abcdef1
-      #|0f b3 d8 (BTR32rr): RAX: ours 0x0xfffffffffffffffe basic 0x0x00000000fffffffe; RAX: ours 0x0x7ffffffffffffffe basic 0x0x00000000fffffffe; RAX: ours 0x0x123456789abcdef0 basic 0x0x000000009abcdef0
-      #|0f bb d8 (BTC32rr): RAX: ours 0x0xfffffffffffffffe basic 0x0x00000000fffffffe; RAX: ours 0x0x7ffffffffffffffe basic 0x0x00000000fffffffe; RAX: ours 0x0x123456789abcdef1 basic 0x0x000000009abcdef1
-      #|0f ba e8 03 (BTS32ri8): RAX: ours 0x0xffffffffffffffff basic 0x0x00000000ffffffff; RAX: ours 0x0x7fffffffffffffff basic 0x0x00000000ffffffff; RAX: ours 0x0x123456789abcdef8 basic 0x0x000000009abcdef8
-      #|0f ba f0 03 (BTR32ri8): RAX: ours 0x0xfffffffffffffff7 basic 0x0x00000000fffffff7; RAX: ours 0x0x7ffffffffffffff7 basic 0x0x00000000fffffff7; RAX: ours 0x0x123456789abcdef0 basic 0x0x000000009abcdef0
-      #|0f ba f8 03 (BTC32ri8): RAX: ours 0x0xfffffffffffffff7 basic 0x0x00000000fffffff7; RAX: ours 0x0x7ffffffffffffff7 basic 0x0x00000000fffffff7; RAX: ours 0x0x123456789abcdef8 basic 0x0x000000009abcdef8
-      #|0f a3 03 (BT32mr): CF: ours 0x0x1 basic 0x0x0
-      #|0f ab 03 (BTS32mr): CF: ours 0x0x1 basic 0x0x0; mem[0x1003f] differs
       #|f8 (CLC): only Basic lifts
       #|f9 (STC): only Basic lifts
       #|f5 (CMC): only Basic lifts
       #|fd (STD): only Basic lifts
-      #|0f c7 0b (CMPXCHG8Bm): RAX: ours 0x0x000000004e2904df basic 0x0x00000000ba95704b; RDX: ours 0x0x00000000ba95704b basic 0x0x000000004e2904df; RAX: ours 0x0x0000000059340fea basic 0x0x00000000c5a07b56
-      #|0f c1 d8 (XADD32rr): RBX: ours 0x0x0000000000010040 basic 0x0x0000000000000000; RAX: ours 0x0x0000000000010040 basic 0x0x000000000001003f; RBX: ours 0x0x000000000001003f basic 0x0x00000000ffffffff
-      #|0f c1 03 (XADD32mr): mem[0x10040] differs; RAX: ours 0x0x00000000c5a07b55 basic 0x0x00000000c5a07b56; RAX: ours 0x0x0000000050ab8661 basic 0x0x00000000d0ab8661
-      #|48 0f c1 d8 (XADD64rr): RBX: ours 0x0x0000000000010040 basic 0x0x0000000000000000; RAX: ours 0x0x0000000000010040 basic 0x0x000000000001003f; RBX: ours 0x0x000000000001003f basic 0x0xffffffffffffffff
       #|0f 28 c1 (MOVAPS): only ours lifts
       #|66 0f 73 d0 04 (PSRLQ): only ours lifts
       #|66 0f 72 e0 04 (PSRAD): only ours lifts
@@ -575,36 +544,14 @@ test "differential: x86-64, legacy lifter vs Basic" {
   inspect(
     report_text(report),
     content=(
-      #|both=219 agree=201 only_ours=5 only_basic=15 neither=52 basic_undecoded=52
+      #|both=223 agree=223 only_ours=5 only_basic=11 neither=52 basic_undecoded=52
       #|86 d8 (XCHG8rr): only Basic lifts
-      #|f7 eb (IMUL32r): CF: ours 0x0x1 basic 0x0x0; OF: ours 0x0x1 basic 0x0x0
-      #|48 f7 eb (IMUL64r): CF: ours 0x0x1 basic 0x0x0; OF: ours 0x0x1 basic 0x0x0
-      #|f7 fb (IDIV32r): RAX: ours 0x0x0000000007fd809f basic 0x0x0000000080000000; RDX: ours 0x0x000000000000d840 basic 0x0x000000007fffffff; exn: ours none basic 0
-      #|48 f7 fb (IDIV64r): RAX: ours 0x0x07fd00bfd00c7ce0 basic 0x0x0000000080000000; RDX: ours 0x0x000000000000c800 basic 0x0x000000007fffffff; exn: ours none basic 0
-      #|d1 c0 (ROL32r1): CF: ours 0x0x0 basic 0x0x1; OF: ours 0x0x1 basic 0x0x0; OF: ours 0x0x0 basic 0x0x1
-      #|c1 c0 04 (ROL32ri8): CF: ours 0x0x1 basic 0x0x0; CF: ours 0x0x0 basic 0x0x1
-      #|d3 c0 (ROL32rCL): CF: ours 0x0x1 basic 0x0x0; CF: ours 0x0x0 basic 0x0x1
-      #|d1 c8 (ROR32r1): CF: ours 0x0x1 basic 0x0x0; CF: ours 0x0x0 basic 0x0x1
-      #|c1 c8 04 (ROR32ri8): CF: ours 0x0x1 basic 0x0x0; CF: ours 0x0x0 basic 0x0x1
-      #|d0 c0 (ROL8r1): CF: ours 0x0x1 basic 0x0x0; OF: ours 0x0x1 basic 0x0x0; CF: ours 0x0x0 basic 0x0x1
-      #|48 d1 c0 (ROL64r1): CF: ours 0x0x1 basic 0x0x0; OF: ours 0x0x1 basic 0x0x0
       #|d1 d0 (RCL32r1): only Basic lifts
       #|d1 d8 (RCR32r1): only Basic lifts
-      #|0f ab d8 (BTS32rr): only Basic lifts
-      #|0f b3 d8 (BTR32rr): only Basic lifts
-      #|0f bb d8 (BTC32rr): only Basic lifts
-      #|0f ba e8 03 (BTS32ri8): RAX: ours 0x0x0000000000000000 basic 0x0x0000000000000008; RAX: ours 0x0xffffffffffffffff basic 0x0x00000000ffffffff; RAX: ours 0x0x0000000080000000 basic 0x0x0000000080000008
-      #|0f ba f0 03 (BTR32ri8): RAX: ours 0x0xffffffffffffffff basic 0x0x00000000fffffff7; RAX: ours 0x0x7fffffffffffffff basic 0x0x00000000fffffff7; RAX: ours 0x0x00000000000000ff basic 0x0x00000000000000f7
-      #|0f ba f8 03 (BTC32ri8): RAX: ours 0x0x0000000000000000 basic 0x0x0000000000000008; RAX: ours 0x0xffffffffffffffff basic 0x0x00000000fffffff7; RAX: ours 0x0x0000000080000000 basic 0x0x0000000080000008
-      #|0f ab 03 (BTS32mr): only Basic lifts
       #|f8 (CLC): only Basic lifts
       #|f9 (STC): only Basic lifts
       #|f5 (CMC): only Basic lifts
       #|fd (STD): only Basic lifts
-      #|0f c7 0b (CMPXCHG8Bm): RAX: ours 0x0x000000004e2904df basic 0x0x00000000ba95704b; RDX: ours 0x0x00000000ba95704b basic 0x0x000000004e2904df; RAX: ours 0x0x0000000059340fea basic 0x0x00000000c5a07b56
-      #|0f c1 d8 (XADD32rr): RBX: ours 0x0x0000000000010040 basic 0x0x0000000000000000; RAX: ours 0x0x0000000000010040 basic 0x0x000000000001003f; RBX: ours 0x0x000000000001003f basic 0x0x00000000ffffffff
-      #|0f c1 03 (XADD32mr): mem[0x10040] differs; RAX: ours 0x0x00000000c5a07b55 basic 0x0x00000000c5a07b56; RAX: ours 0x0x0000000050ab8661 basic 0x0x00000000d0ab8661
-      #|48 0f c1 d8 (XADD64rr): RBX: ours 0x0x0000000000010040 basic 0x0x0000000000000000; RAX: ours 0x0x0000000000010040 basic 0x0x000000000001003f; RBX: ours 0x0x000000000001003f basic 0x0xffffffffffffffff
       #|99 (CDQ): only Basic lifts
       #|48 99 (CQO): only Basic lifts
       #|66 99 (CWD): only Basic lifts
@@ -635,12 +582,7 @@ test "differential: x86, combined providers vs Basic" {
   inspect(
     report_text(report),
     content=(
-      #|both=66 agree=61 only_ours=0 only_basic=0 neither=2 basic_undecoded=2
-      #|f7 eb (IMUL32r): CF: ours 0x0x1 basic 0x0x0; OF: ours 0x0x1 basic 0x0x0
-      #|f7 fb (IDIV32r): EAX: ours 0x0x07fd809f basic 0x0x80000000; EDX: ours 0x0x0000d840 basic 0x0x7fffffff; exn: ours none basic 0
-      #|d1 c0 (ROL32r1): CF: ours 0x0x0 basic 0x0x1; OF: ours 0x0x1 basic 0x0x0; OF: ours 0x0x0 basic 0x0x1
-      #|0f c7 0b (CMPXCHG8Bm): EAX: ours 0x0x4e2904df basic 0x0xba95704b; EDX: ours 0x0xba95704b basic 0x0x4e2904df; EAX: ours 0x0x59340fea basic 0x0xc5a07b56
-      #|0f c1 d8 (XADD32rr): EBX: ours 0x0x00010040 basic 0x0x00000000; EAX: ours 0x0x00010040 basic 0x0x0001003f; EBX: ours 0x0x0001003f basic 0x0xffffffff
+      #|both=66 agree=66 only_ours=0 only_basic=0 neither=2 basic_undecoded=2
     ),
   )
 }

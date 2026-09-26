@@ -584,7 +584,6 @@ test "differential: x86-64, combined providers vs Basic" {
       #|c5 f9 ef c1 (VPXORrr): only ours lifts
       #|c5 fe 6f 03 (VMOVDQUYrm): only ours lifts
       #|c5 f9 6f c1 (VMOVDQArr): only ours lifts
-
     ),
   )
 }
@@ -674,7 +673,6 @@ test "differential: x86-64, legacy lifter vs Basic" {
       #|c5 f9 ef c1 (VPXORrr): only ours lifts
       #|c5 fe 6f 03 (VMOVDQUYrm): only ours lifts
       #|c5 f9 6f c1 (VMOVDQArr): only ours lifts
-
     ),
   )
 }

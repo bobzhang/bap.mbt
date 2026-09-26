@@ -259,5 +259,41 @@ test "plugin configuration" {
     ),
   )
   @bil.configure(@bil.Config::default())
+  @bil.uninstall_lift_hook()
   @types.select_passes([])
+}
+
+///|
+test "project lifting applies the selected passes" {
+  let insn = @project.ProjectDisassemblyInstruction::create(
+    @memory.Memory::from_bytes(
+      endian=LittleEndian,
+      start=0x1000,
+      b"\x90\x90\x90\x90",
+    ),
+    name="ADD",
+    encoding="llvm",
+    operands=[],
+  )
+  let target = @core_theory.Target::x86_64()
+  let lift = () => {
+    match insn.lift(target~, registry=registry()) {
+      Ok(l) => show_bil(l.bil())
+      Err(e) => "error: \{e}"
+    }
+  }
+  // without the hook the lifted code is kept as is (two statements)
+  assert_eq(lift().split("\n").count(), 2)
+  assert_true(@bil.enable() is None)
+  assert_true(@project.lift_hooks().contains(@bil.lift_hook_name))
+  inspect(
+    lift(),
+    content=(
+      #|RAX:imm64 := (RAX:imm64 + 3:64u)
+    ),
+  )
+  @bil.uninstall_lift_hook()
+  @bil.configure(@bil.Config::default())
+  @types.select_passes([])
+  assert_eq(lift().split("\n").count(), 2)
 }

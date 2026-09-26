@@ -18,6 +18,8 @@ import {
 // Values
 pub fn apply_analysis(String, Array[String], pkg? : String) -> Result[Unit, String]
 
+pub fn apply_lift_hooks(Array[@types.Stmt]) -> Result[Array[@types.Stmt], String]
+
 pub fn arch(Project) -> @core_theory.Target
 
 pub fn available_input_loaders() -> Array[String]
@@ -75,6 +77,8 @@ pub fn input_loader_names_for_extension(String) -> Array[String]
 pub fn input_loaders_for_extension(String) -> Array[ProjectInputLoader]
 
 pub fn libraries(Project) -> Array[Library]
+
+pub fn lift_hooks() -> Array[String]
 
 pub fn map_program(Project, (@types.Term[@types.Program]) -> @types.Term[@types.Program]) -> Project
 
@@ -138,6 +142,8 @@ pub fn register_input_loader(ProjectInputLoader) -> Result[Unit, String]
 
 pub fn register_ir_transform_passes() -> Result[Unit, String]
 
+pub fn register_lift_hook(name~ : String, (Array[@types.Stmt]) -> Result[Array[@types.Stmt], String]) -> Unit
+
 pub fn register_pass(ProjectPass) -> Result[Unit, String]
 
 pub fn register_pass_if_absent(ProjectPass) -> Result[Bool, String]
@@ -193,6 +199,8 @@ pub fn symbols(Project) -> Array[@image.Symbol]
 pub fn tag_memory(Project, @memory.Memory, String) -> Project
 
 pub fn target(Project) -> @core_theory.Target
+
+pub fn unregister_lift_hook(String) -> Bool
 
 pub fn with_memory(Project, @memory.MemMap[String]) -> Project
 

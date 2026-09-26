@@ -38,6 +38,8 @@ pub fn has_special(ArrayView[@types.Stmt]) -> Bool
 
 pub fn insn_encoding(@mc.Insn) -> String
 
+pub fn install_lift_hook() -> Unit
+
 pub fn jump_destinations(ArrayView[@types.Stmt]) -> Array[Dst?] raise ReflectError
 
 pub fn kind_name(@mc.Kind) -> String
@@ -45,6 +47,8 @@ pub fn kind_name(@mc.Kind) -> String
 pub fn lift(@mc.Registry, @mc.Context, @mc.Insn, cfg? : Config) -> @mc.Lifted raise @mc.LiftError
 
 pub fn lift_bir(Array[@types.Stmt], is_subroutine? : (@types.Tid) -> Bool) -> Array[@types.Term[@types.Blk]]
+
+pub let lift_hook_name : String
 
 pub fn list_passes() -> Array[String]
 
@@ -75,6 +79,8 @@ pub fn reflect_bil(ArrayView[@types.Stmt]) -> Array[@types.Stmt] raise ReflectEr
 pub fn[E] reflect_data(EffAlgebra[E], ArrayView[@types.Stmt]) -> E raise ReflectError
 
 pub fn select(normalization? : String, optimization? : String, passes? : ArrayView[String]) -> Result[Unit, String]
+
+pub fn uninstall_lift_hook() -> Unit
 
 // Errors
 pub(all) suberror ReflectError {

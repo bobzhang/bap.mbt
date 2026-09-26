@@ -16,8 +16,9 @@ let doc : String =
   #|list of available transformations.
 
 ///|
-/// Configures the plugin (the body of the extension): selects the pipeline
-/// and configures the lifter. Returns the lines to print when
+/// Configures the plugin (the body of the extension): selects the pipeline,
+/// configures the lifter and installs the post-lift hook that applies the
+/// pipeline in project lifting. Returns the lines to print when
 /// `list` is set (upstream prints them and exits), `None`
 /// otherwise.
 pub fn enable(
@@ -36,7 +37,26 @@ pub fn enable(
     Err(e) => raise Failure(e)
   }
   configure({ with_fp, enable_intrinsics: enable_intrinsics.to_owned(), })
+  install_lift_hook()
   None
+}
+
+///|
+/// The name of the post-lift hook that applies the selected passes.
+pub let lift_hook_name : String = "bil-passes"
+
+///|
+/// Makes project lifting apply the selected BIL passes to the semantics of
+/// every lifted instruction (`apply_passes`), as upstream's lifters
+/// factory does. Called by `enable`.
+pub fn install_lift_hook() -> Unit {
+  @project.register_lift_hook(name=lift_hook_name, apply_passes)
+}
+
+///|
+/// Removes the hook installed by `install_lift_hook`.
+pub fn uninstall_lift_hook() -> Unit {
+  @project.unregister_lift_hook(lift_hook_name) |> ignore
 }
 
 ///|

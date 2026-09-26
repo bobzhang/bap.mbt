@@ -202,6 +202,7 @@ fn bap_elf_objects(argv : Array[String]) -> String {
       ("obj/x86.o", @objects.x86_64_elf_object()),
       ("obj/arm64.o", @objects.aarch64_elf_object()),
       ("obj/riscv.o", @objects.riscv64_elf_object()),
+      ("obj/pauth.o", @objects.aarch64_pauth_elf_object()),
     ]),
     out=s => buf.write_string(s),
     err=s => buf.write_string("[err] " + s),
@@ -313,6 +314,32 @@ test "bap resolves the relocated calls of ELF objects" {
       #|1c: 01 d8                                         addl %ebx, %eax
       #|1e: 5b                                            popq %rbx
       #|1f: c3                                            retq
+      #|
+    ),
+  )
+}
+
+///|
+test "bap keeps the blocks that lead to a return without semantics" {
+  // the arm64e `retab` has no semantics: it must end its block rather than
+  // fall through past the end of the code, which reverted the blocks that
+  // led to it (the fall-through of the `cbz`)
+  inspect(
+    bap_elf_objects(["obj/pauth.o", "-dasm"]),
+    content=(
+      #|
+      #|Disassembly of section .text
+      #|
+      #|0: <f>
+      #|0:
+      #|0: 7f 23 03 d5                                    pacibsp
+      #|4: 60 00 00 34                                    cbz w0, #12 # 10
+      #|8:
+      #|8: 20 00 80 52                                    mov w0, #1
+      #|c: ff 0f 5f d6                                    retab
+      #|10:
+      #|10: 40 00 80 52                                   mov w0, #2
+      #|14: ff 0f 5f d6                                   retab
       #|
     ),
   )

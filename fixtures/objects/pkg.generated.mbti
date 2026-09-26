@@ -6,6 +6,10 @@ pub fn aarch64_elf_object() -> Bytes
 
 pub let aarch64_object_code : Bytes
 
+pub fn aarch64_pauth_elf_object() -> Bytes
+
+pub let aarch64_pauth_object_code : Bytes
+
 pub fn arm64_macho(arm64e? : Bool) -> Bytes
 
 pub let arm64_macho_code : Bytes

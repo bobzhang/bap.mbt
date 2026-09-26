@@ -761,16 +761,25 @@ fn project_insn_derived_props(
     }
   }
   match bil {
-    Some(bil) => {
+    Some(bil) if !bil.is_empty() => {
       let jumps : DriverBilJumps = { jump: false, cond: false, call: false, }
       jumps.visit(bil, false)
       let call = jumps.call || insn_is(ProjectCall)
       (call, jumps.jump && !call && !jumps.cond)
     }
-    None => {
+    // no (or empty) semantics, e.g., an instruction the lifters do not
+    // know: from the kinds; a return or a barrier (e.g., the arm64e
+    // `retab`) does not fall through, which would otherwise make the
+    // driver decode past the end of the function, and revert the whole
+    // chain of blocks that led to it when that fails
+    _ => {
       let call = insn_is(ProjectCall)
       let cond = insn_is(ProjectConditionalBranch)
-      let jump = cond || insn_is(ProjectUnconditionalBranch)
+      let jump = cond ||
+        insn_is(ProjectUnconditionalBranch) ||
+        insn_is(ProjectIndirectBranch) ||
+        insn_is(ProjectReturn) ||
+        insn_is(ProjectBarrier)
       (call, jump && !call && !cond)
     }
   }
@@ -909,6 +918,16 @@ fn driver_disassemble(
               let label = driver_new_insn(kb, chunk, insn, unit)
               kb.provide(project_label_encoding, label, encoding.coding)
               let dests = driver_collect_dests(kb, encoding, label)
+              // a barrier without known destinations (an instruction
+              // without semantics, e.g., the arm64e `retab`) jumps to an
+              // unknown destination, as a return does
+              let dests = if dests.barrier &&
+                dests.resolved.is_empty() &&
+                !dests.indirect {
+                { ..dests, indirect: true, }
+              } else {
+                dests
+              }
               if dests.resolved.is_empty() && !dests.indirect {
                 None
               } else {

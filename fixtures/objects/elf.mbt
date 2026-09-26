@@ -292,6 +292,31 @@ pub fn riscv64_elf_object() -> Bytes {
 pub let aarch64_object_code : Bytes = b"\x00\x7c\x00\x1b\xc0\x03\x5f\xd6\xfd\x7b\xbf\xa9\x00\x00\x00\x94\x00\x04\x00\x11\xfd\x7b\xc1\xa8\xc0\x03\x5f\xd6"
 
 ///|
+/// The code of `aarch64_pauth_elf_object`, at address 0 of its `.text`:
+///
+/// ```text
+///  0 <f>: pacibsp; cbz w0, 0x10
+///  8:     mov w0, #1; retab
+/// 10:     mov w0, #2; retab
+/// ```
+pub let aarch64_pauth_object_code : Bytes = b"\x7f\x23\x03\xd5\x60\x00\x00\x34\x20\x00\x80\x52\xff\x0f\x5f\xd6\x40\x00\x80\x52\xff\x0f\x5f\xd6"
+
+///|
+/// An AArch64 ELF relocatable object with the function `f` (see
+/// `aarch64_pauth_object_code`) that returns with the pointer
+/// authenticating `retab`, as arm64e code does.
+pub fn aarch64_pauth_elf_object() -> Bytes {
+  elf64_object(
+    machine=0xb7,
+    code=aarch64_pauth_object_code,
+    locals=[],
+    globals=[elf_object_function("f", 0x0, 0x18)],
+    text_relocs=[],
+    frame_relocs=[],
+  )
+}
+
+///|
 /// An AArch64 ELF relocatable object (see `aarch64_object_code`): the
 /// functions `sq` and `g`, where `g` calls `sq` through a
 /// `R_AARCH64_CALL26` relocation of its `bl`.

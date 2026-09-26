@@ -2,17 +2,30 @@
 package "bobzhang/bap/plugins/constant_tracker"
 
 import {
+  "bobzhang/bap/primus",
   "moonbitlang/core/debug",
 }
 
 // Values
+pub fn all_static_constant(@primus.Machine, ArrayView[@primus.Value]) -> Bool
+
+pub fn call_primitive(@primus.Machine, String, Array[@primus.Value]) -> @primus.Value raise
+
 pub fn components() -> Array[Component]
 
 pub fn declare_plugin() -> Unit raise
 
+pub fn declare_static_constant(@primus.Machine, @primus.Value) -> Unit
+
+pub fn find_primitive(String) -> Primitive?
+
 pub let hardcoded_socket_address : String
 
+pub fn install_primitives((Primitive) -> Unit raise) -> Unit raise
+
 pub fn is_enabled() -> Bool
+
+pub fn is_static_constant(@primus.Machine, @primus.Value) -> Bool
 
 pub fn lisp_primitives() -> Array[LispPrimitive]
 
@@ -20,7 +33,15 @@ pub let name : String
 
 pub let null_pointer_dereference : String
 
+pub fn points_to_static_data(@primus.Machine, @primus.Value, @primus.Value) -> Bool raise
+
+pub fn primitives() -> Array[Primitive]
+
 pub fn register(enable? : Bool) -> Bool
+
+pub fn register_components() -> Unit
+
+pub fn tracker_component(@primus.Machine) -> Unit
 
 // Errors
 
@@ -61,6 +82,14 @@ pub(all) struct LispPrimitive {
 pub fn LispPrimitive::equal(Self, Self) -> Bool
 pub fn LispPrimitive::not_equal(Self, Self) -> Bool
 pub fn LispPrimitive::to_repr(Self) -> @debug.Repr
+
+pub struct Primitive {
+  name : String
+  types : String
+  docs : String
+  run : (@primus.Machine, Array[@primus.Value]) -> @primus.Value raise
+}
+pub fn Primitive::call(Self, @primus.Machine, Array[@primus.Value]) -> @primus.Value raise
 
 // Type aliases
 

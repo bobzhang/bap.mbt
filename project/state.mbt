@@ -305,13 +305,17 @@ fn project_state_inspect(state : ProjectState) -> String {
 }
 
 ///|
+/// `project_state_domain`, declared once.
+let project_state_domain_value : @knowledge.Domain[ProjectState] = @knowledge.Domain::custom(
+  project_name("disassembly"),
+  project_state_inspect,
+  empty=ProjectState::empty(),
+  order=project_state_order,
+)
+
+///|
 fn project_state_domain() -> @knowledge.Domain[ProjectState] {
-  @knowledge.Domain::custom(
-    project_name("disassembly"),
-    project_state_inspect,
-    empty=ProjectState::empty(),
-    order=project_state_order,
-  )
+  project_state_domain_value
 }
 
 ///|
@@ -1303,12 +1307,16 @@ pub fn ProjectState::empty() -> ProjectState {
 }
 
 ///|
+/// `ProjectState::slot`, declared once.
+let project_state_slot_value : @knowledge.Slot[Unit, ProjectState] = @core_theory.ProgramUnit::cls().property(
+  name=project_name("disassembly"),
+  domain=project_state_domain(),
+  persistent=ProjectState::persistent(),
+)
+
+///|
 pub fn ProjectState::slot() -> @knowledge.Slot[Unit, ProjectState] {
-  @core_theory.ProgramUnit::cls().property(
-    name=project_name("disassembly"),
-    domain=project_state_domain(),
-    persistent=ProjectState::persistent(),
-  )
+  project_state_slot_value
 }
 
 ///|

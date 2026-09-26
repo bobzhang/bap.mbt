@@ -70,6 +70,7 @@ test "forks have isolated local state and shared global state" {
           @primus.Env::set(m, x, @primus.Value::of_word(m, w64(2)))
           @primus.Memory::allocate(m, w64(0x100), 1)
           @primus.Memory::store(m, w64(0x100), w8(0xAB))
+          @primus.Linker::link(m, name="child-only", Host(_ => ()))
           m.update_global(counter_state, n => n + 10)
           m.switch(@primus.Id::global())
         } else {
@@ -78,6 +79,9 @@ test "forks have isolated local state and shared global state" {
             "parent mapped=\{@primus.Memory::is_mapped(m, w64(0x100))}",
           )
           results.push("global=\{m.get_global(counter_state)}")
+          results.push(
+            "parent linked=\{@primus.Linker::is_linked(m, Symbol("child-only"))}",
+          )
           let child = @primus.Id(1)
           results.push(
             "child x=\{value_int(@primus.Env::get(m, x))} status=\{m.status(child)}",
@@ -103,6 +107,7 @@ test "forks have isolated local state and shared global state" {
       #|  "parent x=1",
       #|  "parent mapped=false",
       #|  "global=11",
+      #|  "parent linked=false",
       #|  "child x=1 status=Live",
       #|  "other counter=0",
       #|]

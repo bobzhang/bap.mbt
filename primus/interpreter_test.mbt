@@ -267,13 +267,35 @@ test "division by zero raises unless a handler is linked" {
 ///|
 test "unknown expressions produce undefined values" {
   let x = reg("x")
-  let undefined = []
+  let undefs = []
   let b0 = blk(defs=[def(x, Unknown("bad", Imm(64)))])
   let (_, values) = run_main_sub([sub("main", [b0])], [x], init=m => {
-    m.observe(@primus.undefined, v => undefined.push(v.to_word().bitwidth()))
+    m.observe(@primus.undefined, v => undefs.push(v.to_word().bitwidth()))
   })
   debug_inspect(values, content="[Some(0)]")
-  debug_inspect(undefined, content="[64]")
+  debug_inspect(undefs, content="[64]")
+}
+
+///|
+test "interrupt jumps post the interrupt and continue at the return block" {
+  let r = reg("r")
+  let after = blk(defs=[def(r, int64(5))])
+  let entry = blk(jmps=[@types.Jmp::create_int(0x80, after.tid())])
+  let ints = []
+  let data = []
+  let (status, values) = run_main_sub([sub("main", [entry, after])], [r], init=m => {
+    m.observe(@primus.interrupt, n => ints.push(n))
+    @primus.interrupt.provider().on_data(s => data.push(s.to_string()))
+  })
+  inspect(status_string(status), content="Normal")
+  debug_inspect(values, content="[Some(5)]")
+  debug_inspect(ints, content="[128]")
+  debug_inspect(
+    data,
+    content=(
+      #|["128"]
+    ),
+  )
 }
 
 ///|

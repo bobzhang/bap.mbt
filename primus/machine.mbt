@@ -17,13 +17,23 @@
 ///   work of the BIR interpreter (enter a sub, evaluate the next def of a
 ///   block, return from a call, ...); `Task` frames hold host closures.
 /// - the scheduler loop pops frames of the current fork and executes them.
-///   Executing one frame is a *step*.
+///   Executing one frame is a *step*. The interpreter steps are: entering
+///   a subroutine (including binding its input arguments), entering a
+///   block, evaluating one phi node or definition, evaluating one jump
+///   condition (the step of the last jump also leaves the block and
+///   performs the taken jump), returning from a subroutine (binding output
+///   arguments), and continuing after a call returns. A `Task` frame (host
+///   code) is one step too.
 /// - `fork()`, `switch(id)` are requests that take effect at the end of the
 ///   current step (a safe point): the control stack and the state bag are
 ///   persistent, so cloning a fork is O(1). When no step is running (for
 ///   example in `init` code before the scheduler starts) they take effect
 ///   immediately. `kill(id)` is immediate for other forks and deferred (the
 ///   upstream "death row") for the current one.
+/// - consequently the host code that follows a `fork()`/`switch()` call in
+///   the same callback runs once, in the machine that issued the request
+///   (upstream would run it in the child, and later again in the parent).
+///   This is the main behavioral divergence from upstream.
 /// - host code that must run "after" a fork or a switch in both/one of the
 ///   resulting machines is passed as the `then` continuation: it is pushed
 ///   onto the control stack *before* cloning, so after `fork(then=k)` both

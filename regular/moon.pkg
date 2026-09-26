@@ -1,4 +1,5 @@
 import {
+  "bobzhang/bap/digest",
   "moonbitlang/core/debug",
   "moonbitlang/core/encoding/utf8",
   "moonbitlang/core/list",

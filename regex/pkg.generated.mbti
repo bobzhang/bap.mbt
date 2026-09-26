@@ -1,0 +1,23 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/regex"
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct Regex {
+  // private fields
+}
+pub fn Regex::compile(String, caseless? : Bool) -> Result[Self, String]
+pub fn Regex::execp(Self, String) -> Bool
+pub fn Regex::find(Self, String) -> String?
+pub fn Regex::matches(Self, String) -> Bool
+pub fn Regex::output(Self, &Logger) -> Unit
+pub fn Regex::source(Self) -> String
+pub fn Regex::to_string(Self) -> String
+pub impl Show for Regex
+
+// Type aliases
+
+// Traits

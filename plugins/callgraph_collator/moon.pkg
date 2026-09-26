@@ -2,6 +2,7 @@ import {
   "bobzhang/bap/bap_main",
   "bobzhang/bap/native_io",
   "bobzhang/bap/project",
+  "bobzhang/bap/regex",
   "bobzhang/bap/types",
   "moonbitlang/core/encoding/utf8",
 }

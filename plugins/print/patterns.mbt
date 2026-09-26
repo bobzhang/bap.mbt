@@ -115,7 +115,7 @@ pub fn property_descriptions() -> Array[(String, String)] {
 /// A compiled `property:regexp` pattern.
 struct Pattern {
   property : Property
-  regex : Regex
+  regex : @regex.Regex
 }
 
 ///|
@@ -125,7 +125,7 @@ pub fn Pattern::property(self : Pattern) -> String {
 
 ///|
 pub fn Pattern::regexp(self : Pattern) -> String {
-  self.regex.source
+  self.regex.source()
 }
 
 ///|
@@ -155,8 +155,9 @@ pub fn compile_patterns(
     }
     let name = pattern.unsafe_substring(start=0, end=pos)
     let source = pattern.unsafe_substring(start=pos + 1, end=pattern.length())
-    let regex = Regex::compile(source) catch {
-      Failure(msg) =>
+    let regex = match @regex.Regex::compile(source) {
+      Ok(regex) => regex
+      Err(msg) =>
         return Err(
           "bad regular expression \{escape_ocaml_string(source)}: \{msg}",
         )

@@ -3,6 +3,7 @@ package "bobzhang/bap/plugins/callgraph_collator"
 
 import {
   "bobzhang/bap/project",
+  "bobzhang/bap/regex",
   "bobzhang/bap/types",
 }
 
@@ -31,16 +32,10 @@ pub fn summary_text(Int) -> String
 pub struct CallgraphFilter {
   ignore_reserved : Bool
   ignore_unresolved : Bool
-  ignore_matching : Regex?
+  ignore_matching : @regex.Regex?
 }
 pub fn CallgraphFilter::accepts(Self, String) -> Bool
 pub fn CallgraphFilter::new(ignore_reserved? : Bool, ignore_unresolved? : Bool, ignore_matching? : String) -> Result[Self, String]
-
-pub struct Regex {
-  // private fields
-}
-pub fn Regex::compile(String) -> Result[Self, String]
-pub fn Regex::execp(Self, String) -> Bool
 
 // Type aliases
 

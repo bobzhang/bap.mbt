@@ -1,9 +1,9 @@
-// MD5 digests.
+// MD5 digests (OCaml `Stdlib.Digest`, `Core.Md5`).
 //
-// BAP uses `Stdlib.Digest` (MD5) for parameter digests and for the context
-// digest. OCaml returns the raw 16-byte digest; this port returns the
-// lowercase hexadecimal rendering (`Digest.to_hex`) so that digests are
-// printable MoonBit `String`s.
+// BAP uses MD5 for command-line parameter digests, the context digest
+// (`bap_main`) and the cache keys (`Regular.Data.Cache.Digest`). `md5`
+// returns the raw 16-byte digest, `md5_hex` and `md5_string` its
+// lowercase hexadecimal rendering (`Digest.to_hex`).
 
 ///|
 let md5_shifts : FixedArray[Int] = [
@@ -25,7 +25,14 @@ fn md5_rotl(x : UInt, c : Int) -> UInt {
 }
 
 ///|
-fn md5_bytes(data : BytesView) -> Bytes {
+/// The raw 16-byte MD5 digest of `data` (`Digest.bytes`).
+///
+/// ```mbt check
+/// test {
+///   inspect(@digest.md5(b"").length(), content="16")
+/// }
+/// ```
+pub fn md5(data : BytesView) -> Bytes {
   let len = data.length()
   let padded_len = (len + 8) / 64 * 64 + 64
   let msg = FixedArray::make(padded_len, (0 : Byte))
@@ -85,7 +92,8 @@ fn md5_bytes(data : BytesView) -> Bytes {
 }
 
 ///|
-fn hex_of_bytes(bytes : BytesView) -> String {
+/// The lowercase hexadecimal rendering of `bytes` (`Digest.to_hex`).
+pub fn to_hex(bytes : BytesView) -> String {
   let digits = "0123456789abcdef"
   let sb = StringBuilder()
   for b in bytes {
@@ -97,13 +105,20 @@ fn hex_of_bytes(bytes : BytesView) -> String {
 }
 
 ///|
-/// MD5 of the UTF-8 encoding of `text`, as lowercase hexadecimal.
-fn md5_string(text : String) -> String {
-  hex_of_bytes(md5_bytes(@utf8.encode(text)))
+/// The MD5 digest of raw bytes, as lowercase hexadecimal.
+pub fn md5_hex(data : BytesView) -> String {
+  to_hex(md5(data))
 }
 
 ///|
-/// MD5 of raw bytes, as lowercase hexadecimal.
-fn md5_hex(data : BytesView) -> String {
-  hex_of_bytes(md5_bytes(data))
+/// The MD5 digest of the UTF-8 encoding of `text`, as lowercase
+/// hexadecimal (`Digest.(to_hex (string text))`).
+///
+/// ```mbt check
+/// test {
+///   inspect(@digest.md5_string("abc"), content="900150983cd24fb0d6963f7d28e17f72")
+/// }
+/// ```
+pub fn md5_string(text : StringView) -> String {
+  md5_hex(@utf8.encode(text))
 }

@@ -4,7 +4,7 @@ package "bobzhang/bap/plugins/read_symbols"
 import {
   "bobzhang/bap/bap_main",
   "bobzhang/bap/project",
-  "moonbitlang/core/debug",
+  "bobzhang/bap/sexp",
 }
 
 // Values
@@ -24,9 +24,9 @@ pub fn name_matches(String, String) -> Bool
 
 pub fn normalize(String) -> String
 
-pub fn parse_entry(Sexp) -> Result[(String, UInt64), String]
+pub fn parse_entry(@sexp.Sexp) -> Result[(String, UInt64), String]
 
-pub fn parse_sexps(String) -> Result[Array[Sexp], String]
+pub fn parse_sexps(String) -> Result[Array[@sexp.Sexp], String]
 
 pub fn parse_symbols(String) -> Result[Array[(String, UInt64)], String]
 
@@ -41,14 +41,8 @@ pub fn symbolizer(Map[UInt64, String], path? : String) -> @project.ProjectSymbol
 // Errors
 
 // Types and methods
-pub(all) enum Sexp {
-  Atom(String)
-  List(Array[Sexp])
-} derive(Eq, @debug.Debug)
-pub fn Sexp::equal(Self, Self) -> Bool
-pub fn Sexp::not_equal(Self, Self) -> Bool
-pub fn Sexp::to_repr(Self) -> @debug.Repr
 
 // Type aliases
+pub using @sexp {type Sexp}
 
 // Traits

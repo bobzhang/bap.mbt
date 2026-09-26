@@ -15,10 +15,5 @@ import {
 } for "test"
 
 options(
-  "native-stub": [ "fs.c" ],
-  targets: {
-    "fs_native.mbt": [ "native" ],
-    "fs_stub.mbt": [ "wasm", "wasm-gc", "js", "llvm" ],
-    "store_native_test.mbt": [ "native" ],
-  },
+  targets: { "store_native_test.mbt": [ "native" ] },
 )

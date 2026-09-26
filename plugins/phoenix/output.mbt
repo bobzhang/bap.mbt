@@ -239,7 +239,7 @@ pub fn store(
   root? : String,
 ) -> Result[String, String] {
   let env = Env::new(project, options~, symtab?)
-  let cwd = match getcwd() {
+  let cwd = match @native_io.getcwd() {
     Ok(d) => d
     Err(e) => return Err(e)
   }
@@ -248,13 +248,13 @@ pub fn store(
     Some(r) if r != cwd => r
     _ => cwd + "/" + name
   }
-  match mkdir(root) {
+  match @native_io.mkdir_p(root) {
     Ok(_) => ()
     Err(e) => return Err(e)
   }
   for file in env.render(filename=project_filename(project), root~, name~) {
     let path = root + "/" + file.0
-    match mkdir(dirname(path)) {
+    match @native_io.mkdir_p(dirname(path)) {
       Ok(_) => ()
       Err(e) => return Err(e)
     }

@@ -40,9 +40,11 @@ fn basic_bil_decode_state_with_triple(
     Err(reason) => fail(reason)
   }
   let memory = @memory.Memory::from_bytes(endian=LittleEndian, start~, bytes)
-  let basic_state = disasm.run(memory)
+  let insns = disasm.run(memory, init=(), return_=_ => [], stopped=(s, _) => {
+    s.insns()
+  })
   let instructions : Array[@project.ProjectDisassemblyInstruction] = []
-  for item in basic_state.insns() {
+  for item in insns {
     match item.1 {
       Some(instruction) => instructions.push(instruction)
       None => ()
@@ -7186,13 +7188,43 @@ test "project Basic BIL lift runs over disassembly state and project" {
 
 ///|
 test "project Basic BIL lift reports unsupported instruction context" {
-  let raw = basic_bil_decode("x86_64", b"\x0f", start=0x7600UL)
+  // a lone 0x0f is an invalid instruction for the llvm backend
+  let disasm = match
+    @project.ProjectDisassemblyBasic::create("x86_64", backend="llvm") {
+    Ok(disasm) => disasm
+    Err(reason) => fail(reason)
+  }
+  let memory = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x7600UL,
+    b"\x0f",
+  )
+  match disasm.insn_of_mem(memory) {
+    Ok(result) => assert_true(result.instruction() is None)
+    Err(reason) => fail(reason)
+  }
+  // the raw backend decodes it as a `.byte` pseudo instruction, which has
+  // no Basic BIL
+  let raw_disasm = match
+    @project.ProjectDisassemblyBasic::create("x86_64", backend="raw") {
+    Ok(disasm) => disasm
+    Err(reason) => fail(reason)
+  }
+  let raw = match raw_disasm.insn_of_mem(memory) {
+    Ok(result) =>
+      match result.instruction() {
+        Some(insn) => insn
+        None => fail("missing raw instruction")
+      }
+    Err(reason) => fail(reason)
+  }
   match raw.lift_basic_bil() {
     Err(reason) => assert_true(reason.contains("unsupported Basic BIL lift"))
     Ok(_) => fail("raw byte instruction lifted")
   }
-
-  let disassembly = basic_bil_decode_state(b"\x0f", start=0x7600UL)
+  let disassembly = @project.ProjectDisassemblyState::create(blocks=[memory], instructions=[
+    raw,
+  ])
   let blocks = disassembly.blocks_with_instructions()
   assert_true(blocks.length() == 1)
   match blocks[0].lift_basic_bil() {
@@ -7202,7 +7234,6 @@ test "project Basic BIL lift reports unsupported instruction context" {
     }
     Ok(_) => fail("unsupported disassembly block lifted")
   }
-
   match disassembly.lift_basic_bil() {
     Err(reason) => {
       assert_true(reason.contains(".byte"))

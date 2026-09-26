@@ -44,8 +44,7 @@ test "project disassembly basic exposes backend registry and constructors" {
     Err(reason) => fail(reason)
   }
   match @project.ProjectDisassemblyBasic::create("unknown", backend="missing") {
-    Err(reason) =>
-      assert_true(reason == "unknown project disassembly basic backend missing")
+    Err(reason) => assert_true(reason == "Unknown backend: missing")
     Ok(_) => fail("unknown backend creation succeeded")
   }
 }
@@ -217,11 +216,14 @@ test "translated BAP basic disassembly decodes x86_64 llvm samples" {
     start=0xe100UL,
     sequence,
   )
-  let state = disasm.store_kinds().run(run_memory)
-  let insns = state.insns()
+  let (insns, end_addr) = disasm
+    .store_kinds()
+    .run(run_memory, init=(), return_=_ => ([], 0UL), stopped=(s, _) => {
+      (s.insns(), s.addr())
+    })
   assert_true(insns.length() == samples.length())
   assert_true(insns.map(item => item.0.length()) == [1, 4, 5, 10, 5, 3, 4, 1])
-  assert_true(state.addr() == 0xe100UL + sequence.length().to_uint64())
+  assert_true(end_addr == 0xe100UL + sequence.length().to_uint64())
   for i in 0..<samples.length() {
     match insns[i].1 {
       Some(instruction) => {
@@ -4580,11 +4582,14 @@ test "translated BAP basic disassembly decodes x86 llvm call and return fixtures
     start=0xe210UL,
     sequence,
   )
-  let state = disasm.store_kinds().run(run_memory)
-  let insns = state.insns()
+  let (insns, end_addr) = disasm
+    .store_kinds()
+    .run(run_memory, init=(), return_=_ => ([], 0UL), stopped=(s, _) => {
+      (s.insns(), s.addr())
+    })
   assert_true(insns.length() == samples.length())
   assert_true(insns.map(item => item.0.length()) == [5, 1])
-  assert_true(state.addr() == 0xe210UL + sequence.length().to_uint64())
+  assert_true(end_addr == 0xe210UL + sequence.length().to_uint64())
   for i in 0..<samples.length() {
     match insns[i].1 {
       Some(instruction) => {
@@ -4738,10 +4743,13 @@ test "translated BAP basic disassembly recognizes x86 SIMD fixture opcodes" {
     start=0xf100UL,
     sequence,
   )
-  let state = disasm.store_kinds().run(run_memory)
-  let insns = state.insns()
+  let (insns, end_addr) = disasm
+    .store_kinds()
+    .run(run_memory, init=(), return_=_ => ([], 0UL), stopped=(s, _) => {
+      (s.insns(), s.addr())
+    })
   assert_true(insns.length() == samples.length())
-  assert_true(state.addr() == 0xf100UL + sequence.length().to_uint64())
+  assert_true(end_addr == 0xf100UL + sequence.length().to_uint64())
   for i in 0..<samples.length() {
     match insns[i].1 {
       Some(instruction) => {
@@ -4767,10 +4775,13 @@ test "translated BAP basic disassembly decodes ARM llvm strlen fixture" {
     start=0x840cUL,
     bytes,
   )
-  let state = disasm.store_kinds().run(memory)
-  let insns = state.insns()
+  let (insns, end_addr) = disasm
+    .store_kinds()
+    .run(memory, init=(), return_=_ => ([], 0UL), stopped=(s, _) => {
+      (s.insns(), s.addr())
+    })
   assert_true(insns.length() == 21)
-  assert_true(state.addr() == 0x840cUL + bytes.length().to_uint64())
+  assert_true(end_addr == 0x840cUL + bytes.length().to_uint64())
   for item in insns {
     assert_true(item.0.length() == 4)
   }
@@ -4845,38 +4856,168 @@ test "project disassembly basic run exposes state helpers and stop predicates" {
   )
   match @project.ProjectDisassemblyBasic::create("unit", backend="raw") {
     Ok(disasm) => {
-      let state = disasm.run(memory)
-      assert_true(state.disasm().backend() == "raw")
-      assert_true(state.memory().min_addr() == 0xd200UL)
-      assert_true(state.addr() == 0xd203UL)
-      assert_true(state.preds().is_empty())
-      assert_true(state.insns().length() == 3)
-      assert_true(state.last(2).length() == 2)
-      assert_true(state.last(2)[0].0.min_addr() == 0xd201UL)
-      let with_preds = state.with_preds([
-        @project.ProjectDisassemblyBasicPred::valid(),
+      // without callbacks the whole memory is decoded and `stopped` sees
+      // every instruction
+      let summary = disasm.run(memory, init="init", return_=data => [data], stopped=(
+        state,
+        data,
+      ) => {
+        let with_preds = state.with_preds([
+          @project.ProjectDisassemblyBasicPred::valid(),
+          @project.ProjectDisassemblyBasicPred::valid(),
+        ])
+        let switched = state.switch(disasm.store_asm())
+        // `last` lists the most recent instruction first
+        let last = state.last(2).map(item => item.0.min_addr())
+        [
+          data,
+          state.disasm().backend(),
+          state.memory().min_addr().to_string(radix=16),
+          state.preds().length().to_string(),
+          with_preds.preds().map(pred => pred.to_string()).join(","),
+          switched.disasm().stores_asm().to_string(),
+          state.addr().to_string(radix=16),
+          state.insns().length().to_string(),
+          last.map(addr => addr.to_string(radix=16)).join(","),
+        ]
+      })
+      assert_eq(summary, [
+        "init", "raw", "d200", "0", "valid", "true", "d203", "3", "d202,d201",
       ])
-      assert_true(with_preds.preds().length() == 1)
-      assert_true(with_preds.preds()[0].to_string() == "valid")
-      let switched = state.switch(disasm.store_asm())
-      assert_true(switched.disasm().stores_asm())
-      let stopped = disasm.run(memory, stop_on=[
-        @project.ProjectDisassemblyBasicPred::valid(),
-      ])
-      assert_true(stopped.insns().length() == 1)
-      assert_true(stopped.addr() == 0xd201UL)
+      // a stop predicate hands every matching instruction to `hit`, which
+      // continues with `step` and ends with `stop`
+      let visited = disasm.run(
+        memory,
+        stop_on=[@project.ProjectDisassemblyBasicPred::valid()],
+        init=[],
+        return_=addrs => addrs,
+        hit=(state, mem, insn, addrs) => {
+          // the instruction is the only one decoded by this step
+          if insn.addr() == mem.min_addr() && state.insns().length() == 1 {
+            addrs.push(mem.min_addr())
+          }
+          if addrs.length() == 2 {
+            state.stop(addrs)
+          } else {
+            state.step(addrs)
+          }
+        },
+      )
+      assert_eq(visited, [0xd200UL, 0xd201UL])
+      // `jump` restarts at another memory, `back` returns to the position
+      // kept in the history
+      let jumped = disasm.run(
+        memory,
+        backlog=1,
+        stop_on=[@project.ProjectDisassemblyBasicPred::valid()],
+        init=[],
+        return_=addrs => addrs,
+        hit=(state, mem, _, addrs) => {
+          addrs.push(mem.min_addr())
+          match addrs.length() {
+            1 =>
+              match memory.view(from=0xd202UL) {
+                Ok(rest) => state.jump(rest, addrs)
+                Err(_) => state.stop(addrs)
+              }
+            2 => state.back(addrs)
+            _ => state.stop(addrs)
+          }
+        },
+      )
+      assert_eq(jumped, [0xd200UL, 0xd202UL, 0xd202UL])
     }
     Err(reason) => fail(reason)
   }
 }
 
 ///|
+test "project disassembly basic reports invalid instructions" {
+  guard @project.ProjectDisassemblyBasic::create("x86_64", backend="llvm")
+    is Ok(disasm) else {
+    fail("no x86_64 disassembler")
+  }
+  // 0x06 (PUSH ES) is invalid in 64-bit mode
+  let memory = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0xd300UL,
+    b"\x90\x06\x90",
+  )
+  guard memory.view(from=0xd301UL) is Ok(invalid) &&
+    disasm.insn_of_mem(invalid) is Ok(result) else {
+    fail("insn_of_mem failed")
+  }
+  assert_true(result.instruction() is None)
+  assert_eq(result.memory().length(), 1)
+  assert_true(
+    result.remainder().memory().map(m => m.min_addr()) == Some(0xd302UL),
+  )
+  // without an `invalid` callback the invalid instruction is skipped
+  let insns = disasm.run(memory, init=(), return_=_ => [], stopped=(s, _) => {
+    s.insns()
+  })
+  assert_eq(insns.map(item => item.1.map(insn => insn.name())), [
+    Some("NOOP"),
+    None,
+    Some("NOOP"),
+  ])
+  // with one, it decides how to continue
+  let invalid_at = disasm.run(memory, init=0UL, return_=addr => addr, invalid=(
+    state,
+    mem,
+    _,
+  ) => state.stop(mem.min_addr()))
+  assert_eq(invalid_at, 0xd301UL)
+}
+
+///|
 test "project disassembly basic lookup custom and with_disasm wrappers" {
+  // the built-in llvm backend provides the x86 and ARM encodings
+  match
+    @project.ProjectDisassemblyBasic::lookup(
+      @core_theory.Target::x86_64(),
+      @core_theory.Language::llvm_x86_64(),
+    ) {
+    Ok(disasm) => {
+      assert_true(disasm.backend() == "llvm")
+      assert_true(disasm.encoding() == "llvm-x86_64")
+    }
+    Err(reason) => fail(reason)
+  }
+  assert_true(
+    @project.ProjectDisassemblyBasic::registered_encodings().contains(
+      @core_theory.Language::llvm_a32().to_string(),
+    ),
+  )
+  // there is no disassembler for an unknown encoding until one is registered
+  let language = @core_theory.Language::of_string("basic-test-encoding")
+  assert_true(
+    @project.ProjectDisassemblyBasic::lookup(
+      @core_theory.Target::unknown(),
+      language,
+    )
+    is Err(_),
+  )
+  assert_true(
+    @project.ProjectDisassemblyBasic::register(language, target => {
+      Ok(
+        @project.ProjectDisassemblyBasic::custom(
+          target,
+          language,
+          backend="raw",
+        ),
+      )
+    })
+    is Ok(_),
+  )
+  assert_true(
+    @project.ProjectDisassemblyBasic::register(language, _ => Err("again"))
+    is Err(_),
+  )
   match
     @project.ProjectDisassemblyBasic::lookup(
       @core_theory.Target::unknown(),
-      @core_theory.Language::unknown(),
-      backend="raw",
+      language,
     ) {
     Ok(disasm) => {
       assert_true(disasm.backend() == "raw")
@@ -4897,4 +5038,8 @@ test "project disassembly basic lookup custom and with_disasm wrappers" {
     Ok(text) => assert_true(text == "raw:unit")
     Err(reason) => fail(reason)
   }
+  // the llvm backend rejects the targets it cannot decode
+  assert_true(
+    @project.ProjectDisassemblyBasic::create("mips", backend="llvm") is Err(_),
+  )
 }

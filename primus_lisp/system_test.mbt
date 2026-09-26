@@ -63,7 +63,7 @@ test "fini methods run once" {
   debug_inspect(
     log,
     content=(
-      #|["fini", "finished", "fini"]
+      #|["fini", "finished"]
     ),
   )
 }

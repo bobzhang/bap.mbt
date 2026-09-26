@@ -124,7 +124,6 @@ pub fn init_signals(m : @primus.Machine) -> Unit {
     signal(
       m,
       @primus.system_stop,
-      once=true,
       params=one(sym),
       docs="(system-stop NAME) occurs when the system with the given name finished its execution",
       (m, x) => [sym_arg(m, x)],
@@ -143,7 +142,6 @@ pub fn init_signals(m : @primus.Machine) -> Unit {
     signal(
       m,
       @primus.system_fini,
-      once=true,
       params=unit,
       docs="(fini) occurs when the Primus Machine is finished",
       (_, _) => [],

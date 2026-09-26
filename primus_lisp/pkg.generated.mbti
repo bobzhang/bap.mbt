@@ -126,7 +126,7 @@ pub fn semantics_provider(String, @core_theory.Target, Array[String]) -> @mc.Pro
 
 pub fn set_channel_input(@primus.Machine, Int, Bytes) -> Unit
 
-pub fn[T] signal(@primus.Machine, @primus.Observation[T], params? : Signature, docs? : String, once? : Bool, (@primus.Machine, T) -> Array[@primus.Value] raise) -> @primus.Subscription
+pub fn[T] signal(@primus.Machine, @primus.Observation[T], params? : Signature, docs? : String, (@primus.Machine, T) -> Array[@primus.Value] raise) -> @primus.Subscription
 
 pub let signal_item : Item[Signal]
 

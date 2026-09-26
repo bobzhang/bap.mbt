@@ -2,6 +2,7 @@ import {
   "bobzhang/bap/bap_main",
   "bobzhang/bap/bitvec",
   "bobzhang/bap/demangle",
+  "bobzhang/bap/image",
   "bobzhang/bap/memory",
   "bobzhang/bap/project",
   "bobzhang/bap/regex",
@@ -11,5 +12,4 @@ import {
 
 import {
   "bobzhang/bap/core_theory",
-  "bobzhang/bap/image",
 } for "test"

@@ -288,7 +288,7 @@ pub fn Project::from_image(
     filename?=image.filename(),
     pkg?,
     program?,
-    memory=image.memory(),
+    memory=image.segment_names(),
   )
 }
 
@@ -488,7 +488,7 @@ pub fn Project::with_applied_relocations(
           Ok({
             ..self,
             image_value: Some(updated),
-            memory_value: updated.memory(),
+            memory_value: updated.segment_names(),
           })
         Err(reason) => Err(reason)
       }

@@ -1,9 +1,7 @@
 ///|
-struct ImageTag[T] {
-  name_value : String
-  uuid_value : String
-  _phantom : T?
-}
+/// The typed tags of image memory annotations (upstream `Image.segment`,
+/// `Image.symbol`, ...): they are universal value tags from `types`.
+pub type ImageTag[T] = @types.Tag[T]
 
 ///|
 pub(all) struct Spec {}
@@ -14,68 +12,113 @@ fn image_name(text : String) -> @knowledge.Name {
 }
 
 ///|
-fn[T] image_tag(name : String, uuid : String) -> ImageTag[T] {
-  { name_value: name, uuid_value: uuid, _phantom: None, }
+fn string_image_tag(name : String, uuid : String) -> ImageTag[String] {
+  @types.Tag::register(name~, uuid~, encode=x => x, decode=x => Some(x))
 }
 
 ///|
-pub fn[T] ImageTag::name(self : ImageTag[T]) -> String {
-  self.name_value
+fn unit_image_tag(name : String, uuid : String) -> ImageTag[Unit] {
+  @types.Tag::register(name~, uuid~, encode=_ => "", decode=_ => Some(()))
 }
 
 ///|
-pub fn[T] ImageTag::uuid(self : ImageTag[T]) -> String {
-  self.uuid_value
-}
+let segment_tag : ImageTag[Segment] = @types.Tag::register_with(
+  name="segment",
+  uuid="a0eec123-5937-4283-b141-58d579a9b0df",
+  show=Segment::to_string,
+  compare=Segment::compare,
+)
 
 ///|
-pub fn ImageTag::segment() -> ImageTag[Segment] {
-  image_tag("segment", "a0eec123-5937-4283-b141-58d579a9b0df")
-}
+let symbol_tag : ImageTag[String] = string_image_tag(
+  "symbol", "768bc13d-d4be-43fc-9f7a-c369ebab9c7e",
+)
 
 ///|
-pub fn ImageTag::symbol() -> ImageTag[String] {
-  image_tag("symbol", "768bc13d-d4be-43fc-9f7a-c369ebab9c7e")
-}
+let function_start_tag : ImageTag[Unit] = unit_image_tag(
+  "function-start", "1c1809ec-a38a-4aee-a46c-3d49127ba85a",
+)
 
 ///|
-pub fn ImageTag::section() -> ImageTag[String] {
-  image_tag("section", "4014408d-a3af-488f-865b-5413beaf198e")
-}
+let symbol_info_tag : ImageTag[Symbol] = @types.Tag::register_with(
+  name="symbol-info",
+  uuid="706e78cf-07de-4417-a422-effa7821dd02",
+  show=Symbol::to_string,
+  compare=Symbol::compare,
+)
 
 ///|
-pub fn ImageTag::code_region() -> ImageTag[Unit] {
-  image_tag("code-region", "5296b7e9-d5c3-40ce-98ba-7655ec68fad7")
-}
+let section_tag : ImageTag[String] = string_image_tag(
+  "section", "4014408d-a3af-488f-865b-5413beaf198e",
+)
 
 ///|
-pub fn ImageTag::specification() -> ImageTag[OgreDoc] {
-  image_tag("image-specification", "a0c98f1f-3693-412a-a11a-2b6c3f6935a7")
-}
+let code_region_tag : ImageTag[Unit] = unit_image_tag(
+  "code-region", "5296b7e9-d5c3-40ce-98ba-7655ec68fad7",
+)
 
 ///|
+let file_tag : ImageTag[String] = string_image_tag(
+  "file", "c119f700-4069-47ad-ba99-fc29791e0d47",
+)
+
+///|
+let specification_tag : ImageTag[OgreDoc] = @types.Tag::register_with(
+  name="image-specification",
+  uuid="a0c98f1f-3693-412a-a11a-2b6c3f6935a7",
+  show=OgreDoc::to_string,
+  compare=OgreDoc::compare,
+  encode=OgreDoc::to_string,
+  decode=text => ogre_doc_of_string(text).to_option(),
+)
+
+///|
+/// The tag of segment annotations (upstream `Image.segment`).
 pub fn segment() -> ImageTag[Segment] {
-  ImageTag::segment()
+  segment_tag
 }
 
 ///|
+/// The tag of symbol name annotations (upstream `Image.symbol`).
 pub fn symbol() -> ImageTag[String] {
-  ImageTag::symbol()
+  symbol_tag
 }
 
 ///|
+/// The tag of function start annotations (upstream
+/// `Image.function_start`).
+pub fn function_start() -> ImageTag[Unit] {
+  function_start_tag
+}
+
+///|
+/// The tag of symbol annotations (upstream `Image.symbol_info`).
+pub fn symbol_info() -> ImageTag[Symbol] {
+  symbol_info_tag
+}
+
+///|
+/// The tag of section name annotations (upstream `Image.section`).
 pub fn section() -> ImageTag[String] {
-  ImageTag::section()
+  section_tag
 }
 
 ///|
+/// The tag of code region annotations (upstream `Image.code_region`).
 pub fn code_region() -> ImageTag[Unit] {
-  ImageTag::code_region()
+  code_region_tag
 }
 
 ///|
+/// The tag of file name annotations (upstream `Image.file`).
+pub fn file() -> ImageTag[String] {
+  file_tag
+}
+
+///|
+/// The tag of image specifications (upstream `Image.specification`).
 pub fn specification() -> ImageTag[OgreDoc] {
-  ImageTag::specification()
+  specification_tag
 }
 
 ///|

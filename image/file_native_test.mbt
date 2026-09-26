@@ -72,14 +72,14 @@ test "image KB loaders can derive Ogre docs from file paths" {
   match
     @image.KB::register_loader(
       name="unit-native-kb-ogre-loader",
-      from_data=_ => Ok(None),
-      from_file=path => {
+      from_data=(_, _) => None,
+      from_file=(_, path) => {
         if path != "moon.mod" {
-          Err("unexpected loader path")
+          fail("unexpected loader path")
         } else {
           match parse_spec(spec) {
-            Ok(doc) => Ok(Some(doc))
-            Err(reason) => Err(reason)
+            Ok(doc) => Some(doc)
+            Err(reason) => fail(reason)
           }
         }
       },

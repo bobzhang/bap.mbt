@@ -27,7 +27,8 @@ test "b, ba, bl, bla" {
           ("BLA", true, true),
         ] {
         let (name, aa, lk) = case
-        let r = run(a, name, [imm(offs.to_int64())], addr~)
+        let word = enc([(18, 6), (offs, 24), (aa.to_int(), 1), (lk.to_int(), 1)])
+        let r = run(a, name, [imm(offs.to_int64())], addr~, word~)
         let expected = if aa {
           disp(a, offs)
         } else {
@@ -157,12 +158,21 @@ test "bc, bca, bcl, bcla" {
       let (name, aa, lk) = case
       for c in bc_cases {
         for offs in [42, -42] {
+          let word = enc([
+            (16, 6),
+            (c.bo, 5),
+            (0, 5),
+            (offs, 14),
+            (aa.to_int(), 1),
+            (lk.to_int(), 1),
+          ])
           let r = run(
             a,
             name,
             [imm(c.bo.to_int64()), reg("CR0LT"), imm(offs.to_int64())],
             init=[("CR0LT", c.cond_reg0), ("CTR", c.ctr_before)],
             addr~,
+            word~,
           )
           if c.expect_jump {
             let expected = if aa {
@@ -188,7 +198,10 @@ test "bc, bca, bcl, bcla" {
 
 ///|
 /// XL-form conditional branches through `reg` (`LR`, `CTR` or `TAR`) with
-/// `bi = 31` (`CR7UN`); `reg` holds the instruction address.
+/// `bi = 31` (`CR7UN`); `reg` holds the instruction address. The generic
+/// (`gBC...`) forms are decoded from their upstream encoding
+/// `XL [19; bo; 31; 0; 0; xo; lk]`; the `BCC...` forms are code generation
+/// only in LLVM and are never produced by the decoder.
 fn bc_to_reg(
   a : @powerpc.AddrSize,
   name : String,
@@ -197,12 +210,33 @@ fn bc_to_reg(
   c : BoCase,
 ) -> Unit raise {
   let addr = branch_addr(a)
+  let xo = match target {
+    "LR" => 16
+    "CTR" => 528
+    _ => 560
+  }
+  let word = if name.has_prefix("g") {
+    Some(
+      enc([
+        (19, 6),
+        (c.bo, 5),
+        (31, 5),
+        (0, 3),
+        (0, 2),
+        (xo, 10),
+        (lk.to_int(), 1),
+      ]),
+    )
+  } else {
+    None
+  }
   let r = run(
     a,
     name,
     [imm(c.bo.to_int64()), reg("CR7UN"), imm(0)],
     init=[("CR7UN", c.cond_reg0), ("CTR", c.ctr_before), (target, addr)],
     addr~,
+    word?,
   )
   if c.expect_jump {
     r.check_jump(Some(addr & 0xFFFF_FFFF_FFFF_FFFC))
@@ -256,11 +290,12 @@ test "bdnz" {
   for a in archs {
     let addr = branch_addr(a)
     // taken: ctr 42 -> 41
-    let r = run(a, "BDNZ", [imm(42)], init=[("CTR", 42)], addr~)
+    let word = enc([(16, 6), (0b10000, 5), (0, 5), (42, 14), (0, 2)])
+    let r = run(a, "BDNZ", [imm(42)], init=[("CTR", 42)], addr~, word~)
     r.check_jump(Some(trunc(a, addr + (42 << 2))))
     r.check("CTR", 41)
     // not taken: ctr 1 -> 0
-    let r = run(a, "BDNZ", [imm(42)], init=[("CTR", 1)], addr~)
+    let r = run(a, "BDNZ", [imm(42)], init=[("CTR", 1)], addr~, word~)
     r.check_jump(None)
     r.check("CTR", 0)
   }
@@ -270,10 +305,11 @@ test "bdnz" {
 test "bdz" {
   for a in archs {
     let addr = branch_addr(a)
-    let r = run(a, "BDZ", [imm(-2)], init=[("CTR", 1)], addr~)
+    let word = enc([(16, 6), (0b10010, 5), (0, 5), (-2, 14), (0, 2)])
+    let r = run(a, "BDZ", [imm(-2)], init=[("CTR", 1)], addr~, word~)
     r.check_jump(Some(trunc(a, addr - 8)))
     r.check("CTR", 0)
-    let r = run(a, "BDZ", [imm(-2)], init=[("CTR", 42)], addr~)
+    let r = run(a, "BDZ", [imm(-2)], init=[("CTR", 42)], addr~, word~)
     r.check_jump(None)
     r.check("CTR", 41)
   }
@@ -283,10 +319,19 @@ test "bdz" {
 test "bdnzlr" {
   for a in archs {
     let addr = branch_addr(a)
-    let r = run(a, "BDNZLR", [], init=[("CTR", 42), ("LR", addr)], addr~)
+    let word = enc([
+      (19, 6),
+      (0b10000, 5),
+      (0, 5),
+      (0, 3),
+      (0, 2),
+      (16, 10),
+      (0, 1),
+    ])
+    let r = run(a, "BDNZLR", [], init=[("CTR", 42), ("LR", addr)], addr~, word~)
     r.check_jump(Some(addr & 0xFFFF_FFFF_FFFF_FFFC))
     r.check("CTR", 41)
-    let r = run(a, "BDNZLR", [], init=[("CTR", 1), ("LR", addr)], addr~)
+    let r = run(a, "BDNZLR", [], init=[("CTR", 1), ("LR", addr)], addr~, word~)
     r.check_jump(None)
     r.check("CTR", 0)
   }
@@ -298,12 +343,16 @@ test "blr, blrl, bctr, bctrl" {
     let addr = branch_addr(a)
     let target = trunc(a, 0x1234_5678_9ABC_DEF3)
     let aligned = target & 0xFFFF_FFFF_FFFF_FFFC
-    run(a, "BLR", [], init=[("LR", target)], addr~).check_jump(Some(aligned))
-    let r = run(a, "BLRL", [], init=[("LR", target)], addr~)
+    run(a, "BLR", [], init=[("LR", target)], addr~, word=0x4e800020).check_jump(
+      Some(aligned),
+    )
+    let r = run(a, "BLRL", [], init=[("LR", target)], addr~, word=0x4e800021)
     r.check_jump(Some(aligned))
     r.check("LR", trunc(a, addr + 4))
-    run(a, "BCTR", [], init=[("CTR", target)], addr~).check_jump(Some(aligned))
-    let r = run(a, "BCTRL", [], init=[("CTR", target)], addr~)
+    run(a, "BCTR", [], init=[("CTR", target)], addr~, word=0x4e800420).check_jump(
+      Some(aligned),
+    )
+    let r = run(a, "BCTRL", [], init=[("CTR", target)], addr~, word=0x4e800421)
     r.check_jump(Some(aligned))
     r.check("LR", trunc(a, addr + 4))
   }

@@ -9,6 +9,7 @@ import {
   "bobzhang/bap/recipe",
   "bobzhang/bap/types",
   "bobzhang/bap/x86",
+  "bobzhang/bap/powerpc",
   "bobzhang/bap/plugins/analyze",
   "bobzhang/bap/plugins/beagle",
   "bobzhang/bap/plugins/bil",

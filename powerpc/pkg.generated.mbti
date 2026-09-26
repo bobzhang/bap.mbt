@@ -3,6 +3,7 @@ package "bobzhang/bap/powerpc"
 
 import {
   "bobzhang/bap/bitvec",
+  "bobzhang/bap/core_theory",
   "bobzhang/bap/mc",
   "bobzhang/bap/types",
   "moonbitlang/core/debug",
@@ -22,6 +23,16 @@ pub fn case(RtlExp, Array[Rtl]) -> Clause
 pub fn concat((Cpu, Operands) -> Array[Rtl] raise @mc.LiftError, (Cpu, Operands) -> Array[Rtl] raise @mc.LiftError) -> (Cpu, Operands) -> Array[Rtl] raise @mc.LiftError
 
 pub fn const_(Int, Int, Sign) -> RtlExp
+
+pub fn decode(BytesView, UInt64, mode? : AddrSize, endian? : @bitvec.Endian, encoding? : @core_theory.Language) -> @mc.Insn?
+
+pub fn decode_in_context(@mc.Context, BytesView, UInt64) -> @mc.Decoded
+
+pub fn decode_word(UInt, UInt64, mode? : AddrSize, encoding? : @core_theory.Language, raw? : Bytes) -> @mc.Insn?
+
+pub fn decoder() -> @mc.Decoder
+
+pub let decoder_name : String
 
 pub fn default(Array[Rtl]) -> Clause
 
@@ -73,7 +84,11 @@ pub let provider_name : String
 
 pub let quadword : Int
 
+pub fn read_word(BytesView, @bitvec.Endian) -> UInt?
+
 pub fn register(registry? : @mc.Registry) -> Unit
+
+pub fn register_decoder() -> Unit
 
 pub fn register_dot_insn(String, (Cpu, Operands) -> Array[Rtl] raise @mc.LiftError) -> Unit
 

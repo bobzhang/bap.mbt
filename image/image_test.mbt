@@ -1,4 +1,17 @@
 ///|
+/// The annotations of the image memory covering `addr`, as
+/// `tag@min_addr+length=value` strings.
+fn memory_annotations(image : @image.Image, addr : UInt64) -> Array[String] {
+  image
+  .memory()
+  .lookup(addr)
+  .map(entry => {
+    let (mem, value) = entry
+    "\{value.tagname()}@\{mem.min_addr()}+\{mem.length()}=\{value}"
+  })
+}
+
+///|
 fn bytes_0_to_15() -> Bytes {
   bytes_from_range(0, 16)
 }
@@ -54,7 +67,33 @@ test "image exposes segment memory and symbol membership" {
   assert_true(image.addr_size() == 32)
   assert_true(image.arch().is_unknown())
   assert_true(text.is_executable())
-  assert_true(image.memory().lookup(0x4004UL).length() == 1)
+  debug_inspect(
+    memory_annotations(image, 0x4004UL),
+    content=(
+      #|[
+      #|  "segment@16384+16=.text 16384 16",
+      #|  "symbol@16388+4=main",
+      #|  "symbol-info@16388+4=main 16388 4",
+      #|  "section@16388+4=.text.hot",
+      #|]
+    ),
+  )
+  let tagged = image.memory().lookup(0x4004UL)
+  assert_true(
+    tagged
+    .iter()
+    .any(e => e.1.get(@image.segment()) is Some(seg) && seg.equal(text)),
+  )
+  assert_true(
+    tagged
+    .iter()
+    .any(e => e.1.get(@image.symbol_info()) is Some(sym) && sym.equal(symbol)),
+  )
+  assert_true(
+    tagged.iter().any(e => e.1.get(@image.section()) is Some(".text.hot")),
+  )
+  assert_true(!tagged.iter().any(e => e.1.has_tag(@image.code_region())))
+  assert_true(image.segment_names().lookup(0x4004UL) is [(_, ".text")])
   assert_true(image.sections_of_segment(text).length() == 1)
   assert_true(image.segment_of_symbol(symbol) is Some(_))
   assert_true(image.segment_of_symbol_exn(symbol).name() == ".text")
@@ -105,7 +144,12 @@ test "image exposes BAP top-level loading and accessors" {
   assert_true(@image.endian(image) == LittleEndian)
   assert_true(@image.segments(image).length() == 1)
   assert_true(@image.symbols(image).length() == 1)
-  assert_true(@image.memory(image).lookup(0x5002UL).length() == 1)
+  debug_inspect(
+    @image.memory(image).lookup(0x5002UL).map(e => e.1.tagname()),
+    content=(
+      #|["segment", "symbol", "symbol-info"]
+    ),
+  )
   inspect(
     @image.memory_of_segment(image, text).hexdump(),
     content="00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f",
@@ -1156,11 +1200,11 @@ test "image exposes BAP KB loader registration facade" {
   match
     @image.KB::register_loader(
       name="unit-kb-ogre-doc-loader",
-      from_file=_ => Ok(None),
-      from_data=_ => {
+      from_file=(_, _) => None,
+      from_data=(_, _) => {
         match parse_spec(spec) {
-          Ok(doc) => Ok(Some(doc))
-          Err(reason) => Err(reason)
+          Ok(doc) => Some(doc)
+          Err(reason) => fail(reason)
         }
       },
     ) {
@@ -1182,8 +1226,8 @@ test "image exposes BAP KB loader registration facade" {
   assert_true(
     @image.KB::register_loader(
       name="unit-kb-ogre-doc-loader",
-      from_file=_ => Ok(None),
-      from_data=_ => Ok(None),
+      from_file=(_, _) => None,
+      from_data=(_, _) => None,
     )
     is Err(_),
   )

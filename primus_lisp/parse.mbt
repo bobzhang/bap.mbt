@@ -1277,3 +1277,47 @@ pub fn load_program(
   let source = load_sources(loader, features)
   parse_source(context, source)
 }
+
+///|
+/// The features (the `*.lisp` files, without the extension) of the host
+/// folders, in the order of the folders and of the file names (upstream
+/// `collect_features`). Folders that can't be read (in particular on the
+/// non-native backends) provide no features.
+pub fn folder_features(paths : Array[String]) -> Array[String] {
+  let out = []
+  for p in paths {
+    match @native_io.read_dir(p) {
+      Ok(files) => {
+        let files = files.copy()
+        files.sort()
+        for f in files {
+          if f.has_suffix(".lisp") {
+            let feature = f.unsafe_substring(start=0, end=f.length() - 5)
+            if !out.contains(feature) {
+              out.push(feature)
+            }
+          }
+        }
+      }
+      Err(_) => ()
+    }
+  }
+  out
+}
+
+///|
+/// Checks that the user folders exist and are folders (upstream
+/// `check_user_provided`); the check is skipped when the host file system
+/// is not available (non-native backends).
+pub fn check_folders(paths : Array[String]) -> Unit raise {
+  if @native_io.getcwd() is Err(_) {
+    return
+  }
+  for p in paths {
+    if !@native_io.is_directory(p) {
+      fail(
+        "unable to load semantics from \"\{p}\", the path must exist and be a folder",
+      )
+    }
+  }
+}

@@ -18,6 +18,8 @@ pub fn bil_var_of_theory(@core_theory.Var) -> @types.Var?
 
 pub fn channel_output(@primus.Machine, Int) -> String
 
+pub fn check_folders(Array[String]) -> Unit raise
+
 pub fn compare_names(@knowledge.Name, @knowledge.Name) -> Int
 
 pub fn configure_library(features? : Array[String], loader? : Loader) -> Unit
@@ -52,6 +54,10 @@ pub fn eval_signal(@primus.Machine, @knowledge.Name, Array[@primus.Value], (@pri
 
 pub fn failf(@primus.Machine, String) -> Unit raise
 
+pub fn flush_channels(@primus.Machine) -> Unit
+
+pub fn folder_features(Array[String]) -> Array[String]
+
 pub let func : Item[Func]
 
 pub fn init_ieee754(@primus.Machine) -> Unit
@@ -78,7 +84,7 @@ pub fn load_library(@primus.Machine, features? : Array[String], loader? : Loader
 
 pub fn load_program(Loader, Array[String], context? : Context) -> Program raise LoadError
 
-pub fn load_semantics(@core_theory.Target, Array[String], strict? : Bool) -> Lifter raise
+pub fn load_semantics(@core_theory.Target, Array[String], paths? : Array[String], strict? : Bool) -> Lifter raise
 
 pub fn load_sources(Loader, Array[String], source? : Source) -> Source raise LoadError
 
@@ -114,7 +120,7 @@ pub fn refine_from_system(@primus.Machine) -> Unit raise
 
 pub fn register_components() -> Unit raise
 
-pub fn register_semantics_providers(registry? : @mc.Registry) -> Unit
+pub fn register_semantics_providers(registry? : @mc.Registry, paths? : Array[String]) -> Unit
 
 pub fn reify_var(LVar, width~ : Int) -> @types.Var
 
@@ -130,13 +136,17 @@ pub let semantic_dirs : Array[String]
 
 pub let semantics : Item[Sema]
 
-pub fn semantics_provider(String, @core_theory.Target, Array[String]) -> @mc.Provider
+pub fn semantics_provider(String, @core_theory.Target, Array[String], paths? : Array[String]) -> @mc.Provider
 
 pub fn set_channel_input(@primus.Machine, Int, Bytes) -> Unit
+
+pub fn set_redirections(@primus.Machine, Array[(String, String)]) -> Unit
 
 pub fn[T] signal(@primus.Machine, @primus.Observation[T], params? : Signature, docs? : String, sync? : Bool, (@primus.Machine, T) -> Array[@primus.Value] raise) -> @primus.Subscription
 
 pub let signal_item : Item[Signal]
+
+pub let standard_channels : Array[String]
 
 pub fn[T] step(@primus.Machine, (@primus.Machine) -> T raise, (@primus.Machine, T) -> Unit raise) -> Unit raise
 

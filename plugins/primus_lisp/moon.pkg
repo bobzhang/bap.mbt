@@ -1,10 +1,8 @@
 import {
   "bobzhang/bap/bap_main",
-  "bobzhang/bap/native_io",
   "bobzhang/bap/primus",
   "bobzhang/bap/primus_lisp" @lisp,
   "bobzhang/bap/project",
-  "moonbitlang/core/encoding/utf8",
 }
 
 import {

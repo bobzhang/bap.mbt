@@ -47,6 +47,7 @@ test "bap without arguments prints the usage" {
       #|  --recipe <VAL>           extracts command line arguments from the recipe.
       #|
       #|Commands:
+      #|  analyze                  analyses the knowledge base
       #|  config                   prints BAP configuration
       #|  list                     explores various BAP facilities
       #|  .                        does nothing and prints nothing
@@ -63,6 +64,7 @@ test "bap without arguments prints the usage" {
       #|  specification            displays information about the binary
       #|
       #|Plugins:
+      #|  analyze                  analyses the knowledge base
       #|  byteweight               identifies function starts using byteweight signatures
       #|  callgraph-collator       compares projects by their callgraphs
       #|  callsites                annotates callsites with subroutines arguments
@@ -304,7 +306,6 @@ test "bap list and config" {
       #|  warn-unused-mark
       #|  warn-unused
       #|
-
     ),
   )
   inspect(

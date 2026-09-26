@@ -47,8 +47,8 @@ test "print-recipes lists the recipes" {
     run_bap(["print-recipes"]),
     content=(
       #|  base                     base analysis
-      #|  dump                     dumps the program in the IR format
       #|Malformed recipe share/broken.recipe: Parse error: line 1, column 9: unclosed parentheses at end of input
+      #|  dump                     dumps the program in the IR format
       #|
     ),
   )

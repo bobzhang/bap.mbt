@@ -8,6 +8,7 @@ import {
   "bobzhang/bap/project",
   "bobzhang/bap/recipe",
   "bobzhang/bap/types",
+  "bobzhang/bap/plugins/analyze",
   "bobzhang/bap/plugins/cache",
   "bobzhang/bap/plugins/callgraph_collator",
   "bobzhang/bap/plugins/callsites",

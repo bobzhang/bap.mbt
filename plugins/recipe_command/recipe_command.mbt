@@ -179,7 +179,7 @@ pub fn list_recipes(
   for dir in paths {
     if (fs.file_exists)(dir) && (fs.is_directory)(dir) {
       let entries = (fs.read_dir)(dir).copy()
-      entries.sort()
+      entries.sort_by(lex_compare)
       for entry in entries {
         let file = @recipe.concat(dir, entry)
         if entry.has_suffix(".recipe") {
@@ -296,4 +296,18 @@ pub fn declare_plugin(
       )
     },
   )
+}
+
+///|
+/// OCaml's `String.compare`: the lexicographic order (MoonBit's `String`
+/// comparison orders by length first).
+fn lex_compare(a : String, b : String) -> Int {
+  let n = if a.length() < b.length() { a.length() } else { b.length() }
+  for i in 0..<n {
+    let c = a[i].compare(b[i])
+    if c != 0 {
+      return c
+    }
+  }
+  a.length().compare(b.length())
 }

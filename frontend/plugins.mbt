@@ -75,6 +75,17 @@ pub fn plugin_table() -> Array[StaticPlugin] {
     { name: "relocatable", load: _ => @relocatable.declare_plugin(), },
     { name: "report", load: _ => @report.declare_plugin(), },
     { name: "run", load: _ => @run.declare_plugin(), },
+    {
+      name: "analyze",
+      load: io => {
+        @analyze.declare_plugin(
+          out=io.out,
+          err=io.err,
+          read_line=io.read_line,
+          write_file=io.write_file,
+        )
+      },
+    },
     { name: "strings", load: io => @strings.declare_plugin(out=io.out), },
     { name: "trace", load: io => @trace.declare_plugin(out=io.out), },
     { name: "byteweight", load: _ => @byteweight.declare_plugin(), },

@@ -39,6 +39,8 @@ pub fn remove_root_provider(String) -> Unit
 
 pub fn target_type() -> @bap_main.Type[@core_theory.Target]
 
+pub let unit_path_key : String
+
 pub fn validate_input(String) -> Unit raise DisassembleError
 
 pub fn validate_knowledge(Bool, String?) -> Unit raise DisassembleError

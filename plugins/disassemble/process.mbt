@@ -444,6 +444,10 @@ fn load_knowledge(disable : Bool, kb : String?) -> @project.Project? {
 }
 
 ///|
+/// The project storage key of the path of the unit in the knowledge base.
+pub let unit_path_key : String = "bap:unit-path"
+
+///|
 /// Stores the project in the knowledge base (upstream `save_knowledge`).
 fn save_knowledge(
   update : Bool,
@@ -484,7 +488,7 @@ pub fn create_and_process(
     Some(proj) => proj
     None => {
       let loaded = load_input(input, loader~, libraries~, target~)
-      create_project(loaded, components~, pkg=input)
+      create_project(loaded, components~, pkg=input).set(unit_path_key, input)
     }
   }
   let proj = process(passes, outputs, proj, out~, write_file~)

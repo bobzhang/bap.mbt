@@ -56,7 +56,7 @@ pub fn missing_report(project : @project.Project) -> String {
   // group opcodes by their counts, in the increasing order of counts
   let histo : Map[Int, Array[String]] = Map([])
   let names = stats.keys().collect()
-  names.sort()
+  names.sort_by(lex_compare)
   for name in names {
     let count = stats[name]
     match histo.get(count) {
@@ -86,4 +86,18 @@ fn pad_right(s : String, width : Int) -> String {
   } else {
     s + " ".repeat(width - s.length())
   }
+}
+
+///|
+/// OCaml's `String.compare`: the lexicographic order (MoonBit's `String`
+/// comparison orders by length first).
+fn lex_compare(a : String, b : String) -> Int {
+  let n = if a.length() < b.length() { a.length() } else { b.length() }
+  for i in 0..<n {
+    let c = a[i].compare(b[i])
+    if c != 0 {
+      return c
+    }
+  }
+  a.length().compare(b.length())
 }

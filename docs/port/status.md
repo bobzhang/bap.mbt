@@ -211,6 +211,44 @@ This repository is porting `.repos/bap` from OCaml to idiomatic MoonBit.
 - `plugins/bil/theories`: `bap:bil` (Core BIL theory with let simplification) and `bap:bil-fp-emu` (upstream `Bil_float` emulation for binary16/32/64/80/128), `bap:bir`/`bap:jump-dests` theories, and the `bil-lifter`/`machine-code`/`bil-semantics`/`reify-ir` KB rules, with desugaring of lifted code and KB-resolved external names.
 - `image/typed memory` + `elf`: upstream typed universal values (`Tag`/`Value`/`Dict`, typed term attributes); `Image::memory` annotated with typed segment/symbol/section/code-region values; a lossless raw ELF reader package (`elf`) with unknown-enum preservation for non-loadable files, used by the image loader, whose specs now carry upstream `llvm:*` ELF facts.
 
+## Decoder validation against LLVM 22
+
+The native decoders are checked differentially against libLLVM 22 (the
+`llvm-mc -disassemble -show-inst` disassembler, plus the `MCInstrDesc`
+flags upstream's `llvm_disasm.cpp` turns into instruction kinds): opcode
+name, operand list, printed assembly and kinds, over random words,
+encoding-class sweeps and clang output (synthetic C files, musl libc
+sources, dlmalloc/miniz/..., and host binaries). The comparison tools
+are throwaway; each ISA commits a table of LLVM-verified samples
+(`<isa>/decode_llvm_test.mbt`, `mips` and `riscv` included). As for
+upstream BAP, LLVM's `SoftFail` encodings are valid instructions.
+
+- A32 (`arm/decode_llvm_test.mbt`, 809 samples, 210 opcodes) and T32
+  (`thumb/decode_llvm_test.mbt`, 630 samples, 265 opcodes, and IT-block
+  streams): no mismatch on any instruction both decode (100k random words,
+  49k-word class sweeps, every 16-bit Thumb encoding, 98k Thumb-2
+  encodings, ~370k instructions of compiled ARM/Thumb code). Kinds are the
+  opcode's `MCInstrDesc` (`@arm.llvm_kinds`, generated table). LLVM
+  conventions reproduced: unsigned 32-bit patterns for negative 12-bit
+  offsets and bit field masks (`#-0` is `2147483648`), AM3 index-mode bits,
+  unpredicated `BL`, `SMLAL<x><y>` tied sources, `ADDri`/`SUBri` rather
+  than `ADR`, Thumb shifts by 32 as 0, unscaled `t2LDREX`/`t2STREX`
+  offsets, `t2ADDspImm`, `MOVr_TC`, nested IT blocks resuming the outer
+  block. Not decoded: coprocessor, VFP/NEON, saturating/parallel
+  arithmetic (`SDIV`/`UDIV` in Thumb are decoded; LLVM needs `+hwdiv`).
+  The Basic `llvm` backend's built-in ARM decoder (used only by
+  `Basic.create "armv7"` with the `llvm` backend) is not validated.
+- A64 (`aarch64/decode_llvm_test.mbt`, 994 samples, 549 opcodes), with
+  upstream's features `+v8.1a,+v8.2a,+v8.3a`: exact on the whole non-SIMD
+  instruction set (LSE, pointer authentication, system registers from an
+  LLVM-generated table, `SYS` aliases); SIMD/FP/SVE are invalid. FlagM
+  (`CFINV`/`RMIF`/`SETF*`) is decoded although LLVM needs `+flagm`.
+- PowerPC 32/64, both byte orders (`powerpc/decode_llvm_test.mbt`, 576
+  samples, 261 opcodes): exact for every opcode the decoder knows (the
+  lifter's); LLVM 22 conventions: raw zero-extended D-form displacements,
+  `LI`/`LIS`, printer mnemonics, no `bctar`. Classic FP, AltiVec/VSX,
+  `ISEL`, traps and `sync` are invalid.
+
 ## Deliberate upstream semantic fixes
 
 Where upstream semantics are wrong for the operands of the current LLVM
@@ -239,6 +277,8 @@ Release 6 PC-relative opcodes (`ADDIUPC`, `AUIPC`, `ALUIPC`, `LWPC`,
 only.
 
 - PowerPC (`powerpc/`):
+  - D/DS-form loads and stores sign-extend the low 16 bits of the displacement (`Operands::disp`), correct for LLVM 22's raw zero-extended D-form operand and the older signed one; `ldu` sign-extends its DS displacement (upstream reads it unsigned).
+  - `LI`/`LIS` (LLVM 22 decodes `addi`/`addis` with `ra = 0` as them) sign-extend in 64-bit mode, like `addi`/`addis` (upstream zero-extends).
   - Record forms copy `XER[SO]` into `CR0[SO]` (upstream leaves it unchanged).
   - `addc`/`adde`/`addme`/`addze`/`addic[.]`/`subfc`/`subfe`/`subfme`/`subfze`/`subfic` set `CA`/`CA32` to the carries out of the (word) sum; upstream compares the result with an operand, which inverts the carries of subtractions, misses carries when the other addend and the carry-in wrap, and sets `subfme`/`subfze` carries unconditionally.
   - `cmpw`/`cmplw` compare the low words of both operands (upstream compares the low word of `ra` with the whole `rb`).

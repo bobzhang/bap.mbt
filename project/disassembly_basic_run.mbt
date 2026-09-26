@@ -429,9 +429,19 @@ fn ProjectDisassemblyBasic::project_disassembly_basic_decode(
         }
       Err(reason) => Err(reason)
     }
-    decoded.map(insn => insn.map(project_disassembly_basic_x86_64_rename))
+    decoded.map(insn => {
+      insn.map(insn => {
+        project_disassembly_basic_x86_64_rename(insn).with_metadata(
+          encoding="llvm-x86_64",
+        )
+      })
+    })
   } else if self.project_disassembly_basic_is_x86_llvm() {
-    project_disassembly_basic_decode_x86_llvm(memory)
+    // the encoding names the mode, which the Basic lifter needs to resolve
+    // the sub-registers (32-bit writes zero-extend in 64-bit mode only)
+    project_disassembly_basic_decode_x86_llvm(memory).map(insn => {
+      insn.map(insn => insn.with_metadata(encoding="llvm-x86"))
+    })
   } else if self.project_disassembly_basic_is_arm_llvm() {
     project_disassembly_basic_decode_arm_llvm(memory)
   } else if self.backend_value == "llvm" {

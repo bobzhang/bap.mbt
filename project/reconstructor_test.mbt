@@ -206,11 +206,11 @@ test "project reconstructor materializes supported Basic BIL assignments" {
       assert_reconstructor_addsub_flags(
         defs, 3, "%sub_dst:imm64", "%sub_src:imm64", "RSP:imm64", "0:64u", false,
       )
-      assert_true(defs[9] == "EAX:imm32 := 0x12345678:32u")
+      assert_true(defs[9] == "RAX:imm64 := 0x12345678:64u")
       assert_true(defs[10] == "RAX:imm64 := 0x1122334455667788:64u")
       assert_true(
         defs[11] ==
-        "EAX:imm32 := load(mem:mem64x8, (RAX:imm64 + 0x10:64u)):imm32",
+        "RAX:imm64 := pad:64[load(mem:mem64x8, (RAX:imm64 + 0x10:64u)):imm32]",
       )
       assert_true(defs[12] == "%sub_dst:imm64 := RAX:imm64")
       assert_true(defs[13] == "%sub_src:imm64 := 1:64u")

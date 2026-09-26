@@ -6964,7 +6964,27 @@ fn ProjectDisassemblyInstruction::project_basic_bil_arm_store(
 }
 
 ///|
+/// The Basic lifter: the BIL semantics of a decoded instruction. For the
+/// x86 encodings (`llvm-x86`, `llvm-x86_64`) the sub-register variables of
+/// the per-instruction lifters (`EAX`, `AX`, `AL`, `AH`, `R8D`, ...) are
+/// resolved onto the full registers like upstream's x86 lifter does
+/// (`@mc.resolve_x86_subregisters`): 32-bit writes in 64-bit mode
+/// zero-extend into the 64-bit register, the other writes merge.
 pub fn ProjectDisassemblyInstruction::lift_basic_bil(
+  self : ProjectDisassemblyInstruction,
+) -> Result[Array[@types.Stmt], String] {
+  let bits = match self.encoding() {
+    "llvm-x86_64" => 64
+    "llvm-x86" => 32
+    _ => return self.project_basic_bil_lift()
+  }
+  self
+  .project_basic_bil_lift()
+  .map(stmts => @mc.resolve_x86_subregisters(stmts, bits~))
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_lift(
   self : ProjectDisassemblyInstruction,
 ) -> Result[Array[@types.Stmt], String] {
   let name = self.name().to_upper()

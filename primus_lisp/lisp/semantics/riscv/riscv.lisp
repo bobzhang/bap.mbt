@@ -379,14 +379,15 @@
     (exec-addr dst)))
 
 (defun C_JR (dst)
-  (exec-addr dst))
+  "port: jumps to DST & ~1, as JALR (upstream keeps bit 0)."
+  (exec-addr (logand dst (lnot 1))))
 
 (defun C_J (dst)
   (exec-addr (+ (get-program-counter) dst)))
 
 (defun C_JALR (dst)
-  "port: the target is read before X1 is written."
-  (let ((target dst))
+  "port: jumps to DST & ~1, as JALR, read before X1 is written."
+  (let ((target (logand dst (lnot 1))))
     (set X1 (+ (get-program-counter) 2))
     (exec-addr target)))
 

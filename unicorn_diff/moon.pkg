@@ -5,6 +5,7 @@ import {
   "bobzhang/bap/mips",
   "bobzhang/bap/powerpc",
   "bobzhang/bap/primus_lisp",
+  "bobzhang/bap/riscv" @rv,
   "bobzhang/bap/systemz",
   "bobzhang/bap/types",
 } for "test"

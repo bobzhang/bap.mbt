@@ -251,7 +251,7 @@ ISA 2.06+ opcodes from a Python model of Power ISA 3.0B.
   - Modeled although missing or unregistered upstream: `BLTZ`, `BLTZL`, `BGEZL`, `BNEL`, `BLEZL`, `BLTZAL`, `BGEZALL`, `BLTZALL`, `BC`, `BALC`, `JALX`, the hazard-barrier jumps, R6 `DIV`/`DIVU`, `DSDIV`/`DUDIV`, `MOVZ`/`MOVN`, `EXT`/`INS`/`DEXT`/`DINS`, `DSHD`, `DROTR*`, `AUI`, `AUIPC`, `DADD`/`DADDi`, `DCLO`/`DCLZ`, and the no-op hints.
   - Remaining gap: the "likely" branches do not nullify their delay slot when not taken (this needs support from the disassembler's delay-slot handling).
 - RISC-V (`primus_lisp/lisp/semantics/riscv/riscv.lisp`, deviations marked `port:`):
-  - `JALR` jumps to `(rs1 + offset) & ~1`, read before the link register is written (upstream: `pc + rs1 + offset`); `C_JALR` likewise reads its target first.
+  - `JALR` jumps to `(rs1 + offset) & ~1`, read before the link register is written (upstream: `pc + rs1 + offset`); `C_JR`/`C_JALR` likewise clear bit 0 of the target, and `C_JALR` reads it first.
   - `AUIPC` adds `imm << 12` (upstream: `imm`); `LUI`/`C_LUI`/`AUIPC` sign-extend the 32-bit value on RV64.
   - `LW`/`LH`/`LHU`/`LWU` load and `SW`/`SH` store 32/16 bits (upstream derives the widths from XLEN, which is wrong on RV32).
   - `SLTI` compares `rs1` signed (upstream compares the destination, unsigned); `BLT`/`BGE` compare signed (upstream: unsigned).

@@ -22,7 +22,8 @@ let test_written : @knowledge.Slot[@core_theory.EffectCls, String?] = @core_theo
 )
 
 ///|
-/// A tiny constant-folding theory that only knows `int`, `add` and `set`.
+/// A tiny constant-folding theory that only knows `int`, `add`, `set`,
+/// `seq` and `blk` (the latter two merge the properties of their effects).
 fn const_theory() -> @core_theory.Core {
   {
     ..@core_theory.Core::empty(),
@@ -40,6 +41,8 @@ fn const_theory() -> @core_theory.Core {
         }
       }
     },
+    seq: (x, y) => state => x(state).merge(y(state)),
+    blk: (_, x, y) => state => x(state).merge(y(state)),
     set: (v, _) => {
       _ => {
         @core_theory.Effect::empty(@core_theory.EffectSort::bot()).put(

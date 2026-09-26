@@ -14,6 +14,8 @@ pub fn apply_passes(Array[String], Core) -> Core raise
 
 pub fn bil_exp_slot() -> @knowledge.Slot[ValueCls, @types.Exp?]
 
+pub fn bil_parser() -> Parser[@types.Exp, @types.Exp, @types.Stmt]
+
 pub fn bil_slot() -> @knowledge.Slot[EffectCls, Array[@types.Stmt]]
 
 pub fn bitvec_of_int(Int, Int) -> @bitvec.BitVec raise
@@ -158,6 +160,79 @@ pub fn AliasOrigin::subregister(Var, Var, lo~ : Int, hi~ : Int) -> Self
 pub fn AliasOrigin::unknown(Var) -> Self
 
 type AliasPart
+
+pub(all) struct BitvGrammar[E, R] {
+  error : (@knowledge.State) -> Value raise
+  unsigned : (Int, E) -> (@knowledge.State) -> Value raise
+  signed : (Int, E) -> (@knowledge.State) -> Value raise
+  high : (Int, E) -> (@knowledge.State) -> Value raise
+  low : (Int, E) -> (@knowledge.State) -> Value raise
+  cast : (Int, E, E) -> (@knowledge.State) -> Value raise
+  extract : (Int, E, E, E) -> (@knowledge.State) -> Value raise
+  add : (E, E) -> (@knowledge.State) -> Value raise
+  sub : (E, E) -> (@knowledge.State) -> Value raise
+  mul : (E, E) -> (@knowledge.State) -> Value raise
+  div : (E, E) -> (@knowledge.State) -> Value raise
+  sdiv : (E, E) -> (@knowledge.State) -> Value raise
+  modulo : (E, E) -> (@knowledge.State) -> Value raise
+  smodulo : (E, E) -> (@knowledge.State) -> Value raise
+  lshift : (E, E) -> (@knowledge.State) -> Value raise
+  rshift : (E, E) -> (@knowledge.State) -> Value raise
+  arshift : (E, E) -> (@knowledge.State) -> Value raise
+  logand : (E, E) -> (@knowledge.State) -> Value raise
+  logor : (E, E) -> (@knowledge.State) -> Value raise
+  logxor : (E, E) -> (@knowledge.State) -> Value raise
+  neg : (E) -> (@knowledge.State) -> Value raise
+  not : (E) -> (@knowledge.State) -> Value raise
+  load_word : (Int, E, E, E) -> (@knowledge.State) -> Value raise
+  load : (E, E) -> (@knowledge.State) -> Value raise
+  var_ : (String, Int) -> (@knowledge.State) -> Value raise
+  int : (@bitvec.BitVec, Int) -> (@knowledge.State) -> Value raise
+  unknown : (Int) -> (@knowledge.State) -> Value raise
+  ite : (E, E, E) -> (@knowledge.State) -> Value raise
+  let_bit : (String, E, E) -> (@knowledge.State) -> Value raise
+  let_reg : (String, E, E) -> (@knowledge.State) -> Value raise
+  let_mem : (String, E, E) -> (@knowledge.State) -> Value raise
+  let_float : (String, E, E) -> (@knowledge.State) -> Value raise
+  append : (E, E) -> (@knowledge.State) -> Value raise
+  concat : (Array[E]) -> (@knowledge.State) -> Value raise
+  cast_int : (Int, R, E) -> (@knowledge.State) -> Value raise
+  cast_sint : (Int, R, E) -> (@knowledge.State) -> Value raise
+  fbits : (E) -> (@knowledge.State) -> Value raise
+}
+
+pub(all) struct BoolGrammar[E] {
+  error : (@knowledge.State) -> Value raise
+  eq : (E, E) -> (@knowledge.State) -> Value raise
+  neq : (E, E) -> (@knowledge.State) -> Value raise
+  lt : (E, E) -> (@knowledge.State) -> Value raise
+  le : (E, E) -> (@knowledge.State) -> Value raise
+  slt : (E, E) -> (@knowledge.State) -> Value raise
+  sle : (E, E) -> (@knowledge.State) -> Value raise
+  var_ : (String) -> (@knowledge.State) -> Value raise
+  int : (@bitvec.BitVec) -> (@knowledge.State) -> Value raise
+  unknown : () -> (@knowledge.State) -> Value raise
+  ite : (E, E, E) -> (@knowledge.State) -> Value raise
+  let_bit : (String, E, E) -> (@knowledge.State) -> Value raise
+  let_reg : (String, E, E) -> (@knowledge.State) -> Value raise
+  let_mem : (String, E, E) -> (@knowledge.State) -> Value raise
+  let_float : (String, E, E) -> (@knowledge.State) -> Value raise
+  high : (E) -> (@knowledge.State) -> Value raise
+  low : (E) -> (@knowledge.State) -> Value raise
+  extract : (Int, E) -> (@knowledge.State) -> Value raise
+  not : (E) -> (@knowledge.State) -> Value raise
+  logand : (E, E) -> (@knowledge.State) -> Value raise
+  logor : (E, E) -> (@knowledge.State) -> Value raise
+  logxor : (E, E) -> (@knowledge.State) -> Value raise
+  is_inf : (E) -> (@knowledge.State) -> Value raise
+  is_nan : (E) -> (@knowledge.State) -> Value raise
+  is_fzero : (E) -> (@knowledge.State) -> Value raise
+  is_fpos : (E) -> (@knowledge.State) -> Value raise
+  is_fneg : (E) -> (@knowledge.State) -> Value raise
+  fle : (E, E) -> (@knowledge.State) -> Value raise
+  flt : (E, E) -> (@knowledge.State) -> Value raise
+  feq : (E, E) -> (@knowledge.State) -> Value raise
+}
 
 type Compiler
 pub fn Compiler::compare(Self, Self) -> Int
@@ -405,10 +480,15 @@ pub fn Core::npred(Self, (@knowledge.State) -> Value raise, Int) -> (@knowledge.
 pub fn Core::nsucc(Self, (@knowledge.State) -> Value raise, Int) -> (@knowledge.State) -> Value raise
 pub fn Core::of_int(Self, Sort, Int) -> (@knowledge.State) -> Value raise
 pub fn Core::or_(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn[E, R, S] Core::parse(Self, Parser[E, R, S], ArrayView[S]) -> (@knowledge.State) -> Effect raise
+pub fn[E, R, S] Core::parse_bitv(Self, Parser[E, R, S], E) -> (@knowledge.State) -> Value raise
+pub fn[E, R, S] Core::parse_bool(Self, Parser[E, R, S], E) -> (@knowledge.State) -> Value raise
+pub fn[E, R, S] Core::parse_mem(Self, Parser[E, R, S], E) -> (@knowledge.State) -> Value raise
 pub fn Core::perform(Self, EffectSort) -> (@knowledge.State) -> Effect raise
 pub fn Core::pow(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
 pub fn Core::pown(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
 pub fn Core::pred(Self, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
+pub fn Core::reflect_bil(Self, ArrayView[@types.Stmt]) -> (@knowledge.State) -> Effect raise
 pub fn Core::repeat(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Effect raise) -> (@knowledge.State) -> Effect raise
 pub fn Core::requal(Self, (@knowledge.State) -> Value raise, (@knowledge.State) -> Value raise) -> (@knowledge.State) -> Value raise
 pub fn Core::rna(Self) -> (@knowledge.State) -> Value raise
@@ -637,6 +717,32 @@ pub fn Filetype::to_repr(Self) -> @debug.Repr
 pub fn Filetype::to_string(Self) -> String
 pub fn Filetype::unknown() -> Self
 
+pub(all) struct FloatGrammar[E, R] {
+  error : (@knowledge.State) -> Value raise
+  ieee754 : (Ieee754Parameters, E) -> (@knowledge.State) -> Value raise
+  ieee754_var : (Ieee754Parameters, String) -> (@knowledge.State) -> Value raise
+  ieee754_unk : (Ieee754Parameters) -> (@knowledge.State) -> Value raise
+  ieee754_cast : (Ieee754Parameters, R, E) -> (@knowledge.State) -> Value raise
+  ieee754_cast_signed : (Ieee754Parameters, R, E) -> (@knowledge.State) -> Value raise
+  ieee754_convert : (Ieee754Parameters, R, E) -> (@knowledge.State) -> Value raise
+  ite : (E, E, E) -> (@knowledge.State) -> Value raise
+  fadd : (R, E, E) -> (@knowledge.State) -> Value raise
+  fsub : (R, E, E) -> (@knowledge.State) -> Value raise
+  fmul : (R, E, E) -> (@knowledge.State) -> Value raise
+  fdiv : (R, E, E) -> (@knowledge.State) -> Value raise
+  frem : (R, E, E) -> (@knowledge.State) -> Value raise
+  fmin : (E, E) -> (@knowledge.State) -> Value raise
+  fmax : (E, E) -> (@knowledge.State) -> Value raise
+  fabs : (E) -> (@knowledge.State) -> Value raise
+  fneg : (E) -> (@knowledge.State) -> Value raise
+  fsqrt : (R, E) -> (@knowledge.State) -> Value raise
+  fround : (R, E) -> (@knowledge.State) -> Value raise
+  let_bit : (String, E, E) -> (@knowledge.State) -> Value raise
+  let_reg : (String, E, E) -> (@knowledge.State) -> Value raise
+  let_mem : (String, E, E) -> (@knowledge.State) -> Value raise
+  let_float : (String, E, E) -> (@knowledge.State) -> Value raise
+}
+
 pub(all) struct Ieee754Parameters {
   base : Int
   bias : Int
@@ -779,6 +885,28 @@ pub fn Language::to_repr(Self) -> @debug.Repr
 pub fn Language::to_string(Self) -> String
 pub fn Language::unknown() -> Self
 
+pub(all) struct MemGrammar[E] {
+  error : (@knowledge.State) -> Value raise
+  store : (E, E, E) -> (@knowledge.State) -> Value raise
+  store_word : (E, E, E, E) -> (@knowledge.State) -> Value raise
+  var_ : (String, Int, Int) -> (@knowledge.State) -> Value raise
+  unknown : (Int, Int) -> (@knowledge.State) -> Value raise
+  ite : (E, E, E) -> (@knowledge.State) -> Value raise
+  let_bit : (String, E, E) -> (@knowledge.State) -> Value raise
+  let_reg : (String, E, E) -> (@knowledge.State) -> Value raise
+  let_mem : (String, E, E) -> (@knowledge.State) -> Value raise
+  let_float : (String, E, E) -> (@knowledge.State) -> Value raise
+}
+
+pub(all) struct Parser[E, R, S] {
+  bitv : (BitvGrammar[E, R], E) -> (@knowledge.State) -> Value raise
+  bool : (BoolGrammar[E], E) -> (@knowledge.State) -> Value raise
+  mem : (MemGrammar[E], E) -> (@knowledge.State) -> Value raise
+  stmt : (StmtGrammar[E, R, S], S) -> (@knowledge.State) -> Effect raise
+  float : (FloatGrammar[E, R], E) -> (@knowledge.State) -> Value raise
+  rmode : (RmodeGrammar, R) -> (@knowledge.State) -> Value raise
+}
+
 type Program
 pub fn Program::add_label(Self, Label) -> Self
 pub fn Program::add_unit(Self, ProgramUnit) -> Self
@@ -839,6 +967,15 @@ pub fn ProgramUnitFacts::path(Self) -> @knowledge.FactTable[Unit, String?]
 pub fn ProgramUnitFacts::provide_unit(Self, @knowledge.Object[Unit], ProgramUnit) -> Result[Unit, String]
 pub fn ProgramUnitFacts::source(Self) -> @knowledge.FactTable[Unit, Source]
 pub fn ProgramUnitFacts::target(Self) -> @knowledge.FactTable[Unit, Target]
+
+pub(all) struct RmodeGrammar {
+  error : (@knowledge.State) -> Value raise
+  rne : (@knowledge.State) -> Value raise
+  rtz : (@knowledge.State) -> Value raise
+  rtp : (@knowledge.State) -> Value raise
+  rtn : (@knowledge.State) -> Value raise
+  rna : (@knowledge.State) -> Value raise
+}
 
 pub(all) enum Role {
   UnknownRole
@@ -1041,6 +1178,33 @@ pub fn SourceFacts::for_source(Self, Source) -> Result[@knowledge.Object[Unit], 
 pub fn SourceFacts::language(Self) -> @knowledge.FactTable[Unit, Language]
 pub fn SourceFacts::new() -> Self
 pub fn SourceFacts::provide_source(Self, @knowledge.Object[Unit], Source) -> Result[Unit, String]
+
+pub(all) struct StmtGrammar[E, R, S] {
+  error : (@knowledge.State) -> Effect raise
+  set_mem : (String, Int, Int, E) -> (@knowledge.State) -> Effect raise
+  set_reg : (String, Int, E) -> (@knowledge.State) -> Effect raise
+  set_bit : (String, E) -> (@knowledge.State) -> Effect raise
+  set_ieee754 : (String, Ieee754Parameters, E) -> (@knowledge.State) -> Effect raise
+  set_rmode : (String, R) -> (@knowledge.State) -> Effect raise
+  tmp_mem : (String, E) -> (@knowledge.State) -> Effect raise
+  tmp_reg : (String, E) -> (@knowledge.State) -> Effect raise
+  tmp_bit : (String, E) -> (@knowledge.State) -> Effect raise
+  tmp_float : (String, E) -> (@knowledge.State) -> Effect raise
+  tmp_rmode : (String, R) -> (@knowledge.State) -> Effect raise
+  let_mem : (String, E, S) -> (@knowledge.State) -> Effect raise
+  let_reg : (String, E, S) -> (@knowledge.State) -> Effect raise
+  let_bit : (String, E, S) -> (@knowledge.State) -> Effect raise
+  let_float : (String, E, S) -> (@knowledge.State) -> Effect raise
+  let_rmode : (String, R, S) -> (@knowledge.State) -> Effect raise
+  jmp : (E) -> (@knowledge.State) -> Effect raise
+  goto : (@bitvec.BitVec) -> (@knowledge.State) -> Effect raise
+  call : (String) -> (@knowledge.State) -> Effect raise
+  special : (String) -> (@knowledge.State) -> Effect raise
+  cpuexn : (Int) -> (@knowledge.State) -> Effect raise
+  while_ : (E, Array[S]) -> (@knowledge.State) -> Effect raise
+  if_ : (E, Array[S], Array[S]) -> (@knowledge.State) -> Effect raise
+  seq : (Array[S]) -> (@knowledge.State) -> Effect raise
+}
 
 pub(all) enum System {
   UnknownSystem

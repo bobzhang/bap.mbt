@@ -161,7 +161,7 @@ pub fn Library::arch(self : Library) -> @core_theory.Target {
 
 ///|
 pub fn Library::specification(self : Library) -> @image.OgreDoc {
-  @image.OgreDoc::from_target(self.target_value)
+  @image.Spec::from_arch(self.target_value)
 }
 
 ///|
@@ -293,7 +293,7 @@ pub fn Project::arch(self : Project) -> @core_theory.Target {
 pub fn Project::specification(self : Project) -> @image.OgreDoc {
   match self.image_value {
     Some(image) => image.spec()
-    None => @image.OgreDoc::from_target(self.target_value)
+    None => @image.Spec::from_arch(self.target_value)
   }
 }
 

@@ -226,7 +226,7 @@ test "project binary input is raw file loading with explicit target" {
     arch_sizes.push(arch.code_addr_size())
   })
   let spec_id = spec_stream.subscribe(spec => {
-    spec_counts.push(spec.declaration_count())
+    spec_counts.push(spec.declarations())
   })
   match
     @project.ProjectInput::binary(target~, filename="moon.mod", base=0x900UL) {
@@ -236,10 +236,28 @@ test "project binary input is raw file loading with explicit target" {
       spec_stream.unsubscribe(spec_id)
       assert_true(project.filename() == Some("moon.mod"))
       assert_true(project.target().matches("x86_64"))
-      assert_true(project.specification().declaration_count() == 6)
+      debug_inspect(
+        project.specification().attributes(),
+        content=(
+          #|[
+          #|  "arch",
+          #|  "bits",
+          #|  "entry-point",
+          #|  "is-little-endian",
+          #|  "mapped",
+          #|  "named-region",
+          #|  "segment",
+          #|]
+        ),
+      )
       assert_true(project.memory().lookup(0x900UL).length() == 1)
       assert_true(arch_sizes == [64])
-      assert_true(spec_counts == [6])
+      debug_inspect(
+        spec_counts,
+        content=(
+          #|[3]
+        ),
+      )
       match project.image() {
         Some(image) => {
           assert_true(image.endian() == LittleEndian)

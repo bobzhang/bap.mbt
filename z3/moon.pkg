@@ -1,0 +1,18 @@
+import {
+  "bobzhang/bap/types",
+  "moonbitlang/core/bigint",
+  "moonbitlang/core/encoding/utf8",
+}
+
+options(
+  "native-stub": [ "z3_stub.c" ],
+  targets: {
+    "ffi_native.mbt": [ "native" ],
+    "ffi_stub.mbt": [ "wasm", "wasm-gc", "js", "llvm" ],
+    "z3_native_test.mbt": [ "native" ],
+  },
+  // Z3 is loaded with dlopen at run time (see z3_stub.c): no Z3 headers
+  // or link flags are needed, only the dynamic loader (libdl on older
+  // glibc).
+  link: { "native": { "cc-link-flags": "-ldl" } },
+)

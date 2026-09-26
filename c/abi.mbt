@@ -540,39 +540,8 @@ pub fn reify_var(v : @core_theory.Var) -> @types.Var {
 }
 
 ///|
-/// The registers of `target` that have all the `roles` (upstream
-/// `Theory.Target.regs ~roles`).
-///
-/// `@core_theory.Target::regs` recomputes the role tables of the target
-/// family for every register and role, which is prohibitively slow for
-/// repeated use; for the directly assigned roles, this function looks the
-/// role tables up once and matches the register names against them.
-fn target_regs(
-  target : @core_theory.Target,
-  roles : Array[@core_theory.Role],
-) -> Array[@core_theory.Var] {
-  let derived = [
-    @core_theory.Role::general(),
-    @core_theory.Role::special(),
-    @core_theory.Role::pseudo(),
-    @core_theory.Role::alias_register(),
-  ]
-  if roles.iter().any(role => derived.contains(role)) {
-    return target.regs(roles~)
-  }
-  let tables = roles.map(role => target.role_aliases(role))
-  target
-  .vars()
-  .filter(v => {
-    let ident = v.ident().to_lower()
-    let name = v.name().to_lower()
-    tables.iter().all(names => names.contains(ident) || names.contains(name))
-  })
-}
-
-///|
 fn stack_pointer(target : @core_theory.Target) -> @core_theory.Var? {
-  target_regs(target, [@core_theory.Role::stack_pointer()]).get(0)
+  target.regs(roles=[@core_theory.Role::stack_pointer()]).get(0)
 }
 
 ///|

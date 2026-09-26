@@ -430,7 +430,7 @@ pub fn Arena::of_roles(
   roles : Array[@core_theory.Role],
   target : @core_theory.Target,
 ) -> Arg[Arena] {
-  let regs = target_regs(target, roles).filter(v => target.unalias(v) is None)
+  let regs = target.regs(roles~).filter(v => target.unalias(v) is None)
   regs.sort_by((x, y) => x.compare(y))
   Arena::create(regs)
 }

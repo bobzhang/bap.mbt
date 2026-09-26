@@ -3,6 +3,7 @@ package "bobzhang/bap/mips"
 
 import {
   "bobzhang/bap/bitvec",
+  "bobzhang/bap/core_theory",
   "bobzhang/bap/mc",
   "bobzhang/bap/types",
   "moonbitlang/core/debug",
@@ -11,7 +12,15 @@ import {
 // Values
 pub fn accepts(@mc.Context) -> Bool
 
+pub fn decode(BytesView, UInt64, arch? : Arch, endian? : @bitvec.Endian, r6? : Bool) -> @mc.Insn?
+
+pub fn decoder(r6? : Bool) -> @mc.Decoder
+
+pub let decoder_name : String
+
 pub fn delay_slot(String) -> Int?
+
+pub fn encoding(Arch, @bitvec.Endian) -> @core_theory.Language
 
 pub fn is_supported(String) -> Bool
 
@@ -31,6 +40,8 @@ pub fn lift_mipsel(@mc.Insn) -> Array[@types.Stmt] raise @mc.LiftError
 
 pub fn mode_of_context(@mc.Context) -> (Arch, @bitvec.Endian)
 
+pub fn opcode_aliases() -> Array[(String, String)]
+
 pub fn opcodes() -> Array[String]
 
 pub fn provider() -> @mc.Provider
@@ -38,6 +49,8 @@ pub fn provider() -> @mc.Provider
 pub let provider_name : String
 
 pub fn register(registry? : @mc.Registry) -> Unit
+
+pub fn register_decoder() -> Unit
 
 pub let targets : ReadOnlyArray[String]
 

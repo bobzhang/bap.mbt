@@ -99,6 +99,17 @@ fn sem_lui(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
 }
 
 ///|
+/// AUI rt, rs, imm - Add Upper Immediate, MIPS32 Release 6 (`lui` is `aui`
+/// with `rs` zero). Not modeled upstream.
+fn sem_aui(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
+  let rt = cpu.sreg(0)
+  let rs = cpu.sreg(1)
+  let im = cpu.uimm(2)
+  let x = cpu.svar(word)
+  [x.assign(im.lsl(uconst(byte, 16))), rt.assign(rs + x)]
+}
+
+///|
 /// ALUIPC rs, imm - Aligned Add Upper Immediate to PC, MIPS32 Release 6.
 fn sem_aluipc(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
   let rs = cpu.sreg(0)
@@ -172,6 +183,7 @@ let arithmetic_semantics : ReadOnlyArray[(String, Semantics)] = [
   ("LSA", sem_lsa),
   ("DLSA", sem_lsa),
   ("LUi", sem_lui),
+  ("AUI", sem_aui),
   ("ALUipc", sem_aluipc),
   ("SEB", sem_seb),
   ("SEH", sem_seh),

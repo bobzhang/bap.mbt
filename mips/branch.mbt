@@ -44,8 +44,13 @@ fn branch_zero(cmp : (Exp, Exp) -> Exp) -> Semantics {
 }
 
 ///|
-/// BAL rs, offset - Branch and Link, MIPS32.
+/// BAL rs, offset - Branch and Link, MIPS32 (the upstream operand layout);
+/// BAL offset - the Release 6 form decoded by LLVM, which links `RA`.
 fn sem_bal(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
+  if cpu.insn.ops.length() == 1 {
+    let off = cpu.simm(0)
+    return [cpu.gpr(31).assign(cpu.return_address()), cpu.jmp_rel(off)]
+  }
   let rs = cpu.sreg(0)
   let off = cpu.simm(1)
   [rs.assign(cpu.return_address()), cpu.jmp_rel(off)]

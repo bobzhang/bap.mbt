@@ -15,6 +15,7 @@ let samples64 : Array[(String, Array[@mc.Op])] = {
     ("ALUipc", ri),
     ("AND", rrr),
     ("ANDi", rri),
+    ("AUI", rri),
     ("BAL", ri),
     ("BEQ", rri),
     ("BEQC", rri),
@@ -161,7 +162,7 @@ test "lifter: every opcode lifts to well-typed BIL on every target" {
   inspect(
     names.length(),
     content=(
-      #|143
+      #|144
     ),
   )
   for sample in samples64 {

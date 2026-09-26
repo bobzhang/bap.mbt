@@ -36,9 +36,76 @@ let semantics_table : Map[String, Entry] = {
 }
 
 ///|
-/// Whether the lifter models the LLVM MC opcode `name`.
+/// LLVM MC opcode names (as produced by LLVM's disassembler and by the
+/// native decoder, see `decode`) of instructions that upstream registers
+/// under a different spelling: mostly MIPS32 Release 6 opcodes, whose
+/// LLVM definitions carry an `_R6` suffix or upper-case `U`/`PC`
+/// suffixes, their MIPS64 `GPR64` variants (`*64`), and `SELNEZ`,
+/// registered upstream as `SELNEQ`.
+let llvm_aliases : Map[String, String] = {
+  "ADDIUPC": "ADDiupc",
+  "ALUIPC": "ALUipc",
+  "LWUPC": "LWupc",
+  "MUL_R6": "MUL",
+  "MULU": "MULu",
+  "MUHU": "MUHu",
+  "MODU": "MODu",
+  "DMUL_R6": "DMUL",
+  "DMULU": "DMULu",
+  "DMUHU": "DMUHu",
+  "DDIVU": "DDIVu",
+  "DMODU": "DMODu",
+  "SELNEZ": "SELNEQ",
+  "LSA_R6": "LSA",
+  "DLSA_R6": "DLSA",
+  "CLO_R6": "CLO",
+  "CLZ_R6": "CLZ",
+  "LL_R6": "LL",
+  "LLD_R6": "LLD",
+  "SC_R6": "SC",
+  "SCD_R6": "SCD",
+  "JALR_HB": "JALR.HB",
+  "JALR_HB64": "JALR.HB",
+  "JR_HB": "JR",
+  "JR_HB64": "JR",
+  "JR_HB_R6": "JR",
+  "JR_HB64_R6": "JR",
+  "SELEQZ64": "SELEQZ",
+  "SELNEZ64": "SELNEQ",
+  "BEQZC64": "BEQZC",
+  "BNEZC64": "BNEZC",
+  "JIC64": "JIC",
+  "JIALC64": "JIALC",
+}
+
+///|
+/// The opcode modeled under `name`, or under the upstream spelling of the
+/// LLVM name `name` (`llvm_aliases`).
+fn find_entry(name : String) -> Entry? {
+  match semantics_table.get(name) {
+    Some(entry) => Some(entry)
+    None =>
+      match llvm_aliases.get(name) {
+        Some(upstream) => semantics_table.get(upstream)
+        None => None
+      }
+  }
+}
+
+///|
+/// The LLVM MC names accepted as aliases of modeled opcodes, with the
+/// modeled opcode each one denotes, sorted by the LLVM name.
+pub fn opcode_aliases() -> Array[(String, String)] {
+  let pairs = llvm_aliases.iter().collect()
+  pairs.sort_by((a, b) => a.0.compare(b.0))
+  pairs
+}
+
+///|
+/// Whether the lifter models the LLVM MC opcode `name` (either a modeled
+/// opcode or one of its `opcode_aliases`).
 pub fn is_supported(name : String) -> Bool {
-  semantics_table.contains(name)
+  find_entry(name) is Some(_)
 }
 
 ///|
@@ -54,7 +121,7 @@ pub fn opcodes() -> Array[String] {
 /// the source of the `mips:delay-slot` knowledge rule): `Some(1)` for the
 /// branch and jump group, `None` otherwise.
 pub fn delay_slot(name : String) -> Int? {
-  match semantics_table.get(name) {
+  match find_entry(name) {
     Some(entry) => entry.delay
     None => None
   }
@@ -70,7 +137,7 @@ pub fn lift(
   arch~ : Arch,
   endian~ : @bitvec.Endian,
 ) -> Array[@types.Stmt] raise @mc.LiftError {
-  match semantics_table.get(insn.name) {
+  match find_entry(insn.name) {
     None => []
     Some(entry) => {
       let cpu = Cpu::new(arch, endian, insn)
@@ -170,7 +237,7 @@ pub fn lift_in_context(
   ctx : @mc.Context,
   insn : @mc.Insn,
 ) -> @mc.Lifted raise @mc.LiftError {
-  guard semantics_table.get(insn.name) is Some(entry) else {
+  guard find_entry(insn.name) is Some(entry) else {
     raise Unsupported(opcode=insn.name, target=ctx.target.to_string())
   }
   let (arch, endian) = mode_of_context(ctx)

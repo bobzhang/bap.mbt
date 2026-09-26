@@ -22,6 +22,56 @@ fn byte_reverse(value : UInt64, size : Int) -> UInt64 {
 }
 
 ///|
+/// Primary (D-form) or extended (X-form) opcode of a load or store.
+fn ls_opcode(name : String) -> Int {
+  match name {
+    "LBZ" => 34
+    "LHZ" => 40
+    "LWZ" => 32
+    "LBZU" => 35
+    "LHZU" => 41
+    "LWZU" => 33
+    "STB" => 38
+    "STH" => 44
+    "STW" => 36
+    "STBU" => 39
+    "STHU" => 45
+    "STWU" => 37
+    "LBZX" => 87
+    "LHZX" => 279
+    "LWZX" => 23
+    "LBZUX" => 119
+    "LHZUX" => 311
+    "LWZUX" => 55
+    "STBX" => 215
+    "STHX" => 407
+    "STWX" => 151
+    "STBUX" => 247
+    "STHUX" => 439
+    "STWUX" => 183
+    "LHBRX" => 790
+    "LWBRX" => 534
+    "LDBRX" => 532
+    "STHBRX" => 918
+    "STWBRX" => 662
+    "STDBRX" => 660
+    _ => abort("unknown opcode \{name}")
+  }
+}
+
+///|
+/// Upstream `D [opcode; rt; ra; d]`.
+fn d_word(name : String, rt : Int, ra : Int, d : Int) -> UInt {
+  enc([(ls_opcode(name), 6), (rt, 5), (ra, 5), (d, 16)])
+}
+
+///|
+/// Upstream `X [31; rt; ra; rb; xo]`.
+fn x_word(name : String, rt : Int, ra : Int, rb : Int) -> UInt {
+  enc([(31, 6), (rt, 5), (ra, 5), (rb, 5), (ls_opcode(name), 10), (0, 1)])
+}
+
+///|
 let all_ones : UInt64 = 0xFFFF_FFFF_FFFF_FFFF
 
 ///|
@@ -39,6 +89,7 @@ test "lbz, lhz, lwz" {
           [reg("R9"), imm(d.to_int64()), reg("R28")],
           init=[("R28", base), ("R9", trunc(a, all_ones))],
           mem=[(ea, value, size)],
+          word=d_word(name, 9, 28, d),
         )
         r.check("R9", value)
       }
@@ -49,6 +100,7 @@ test "lbz, lhz, lwz" {
         [reg("R9"), imm(20), reg("ZERO")],
         init=[("R9", trunc(a, all_ones))],
         mem=[(20, value, size)],
+        word=d_word(name, 9, 0, 20),
       )
       r.check("R9", value)
     }
@@ -65,13 +117,14 @@ test "lbzx, lhzx, lwzx" {
         ("LWZX", 4, 0xAAAA4242),
       ] {
       let (name, size, value) = case
-      // lzx r9, r29, r10
+      // lzx r9, r10, r29
       let r = run(
         a,
         name,
-        [reg("R9"), reg("R29"), reg("R10")],
+        [reg("R9"), reg("R10"), reg("R29")],
         init=[("R29", 0xABCD0000), ("R10", 0xFF42), ("R9", trunc(a, all_ones))],
         mem=[(0xABCDFF42, value, size)],
+        word=x_word(name, 9, 10, 29),
       )
       r.check("R9", value)
       // lzx r9, 0, r10
@@ -81,6 +134,7 @@ test "lbzx, lhzx, lwzx" {
         [reg("R9"), reg("ZERO"), reg("R10")],
         init=[("R10", 0xABCD0000), ("R9", trunc(a, all_ones))],
         mem=[(0xABCD0000, value, size)],
+        word=x_word(name, 9, 0, 10),
       )
       r.check("R9", value)
     }
@@ -107,6 +161,7 @@ test "lbzu, lhzu, lwzu" {
           [reg("R9"), reg("R28"), imm(d.to_int64()), reg("R28")],
           init=[("R28", base), ("R9", trunc(a, all_ones))],
           mem=[(ea, value, size)],
+          word=d_word(name, 9, 28, d),
         )
         r.check("R9", value)
         r.check("R28", ea)
@@ -132,6 +187,7 @@ test "lbzux, lhzux, lwzux" {
         [reg("R9"), reg("R29"), reg("R29"), reg("R10")],
         init=[("R29", 0xABCD0000), ("R10", 0xEF42), ("R9", trunc(a, all_ones))],
         mem=[(0xABCDEF42, value, size)],
+        word=x_word(name, 9, 29, 10),
       )
       r.check("R9", value)
       r.check("R29", 0xABCDEF42)
@@ -144,9 +200,14 @@ test "lha, lhax, lhau, lhaux" {
   for a in archs {
     let addr = 0x00ABCDEFUL
     // a8 29 00 05  lha r1, 5(r9)
-    let r = run(a, "LHA", [reg("R1"), imm(5), reg("R9")], init=[("R9", addr)], mem=[
-      (addr + 5, 0xFFAB, 2),
-    ])
+    let r = run(
+      a,
+      "LHA",
+      [reg("R1"), imm(5), reg("R9")],
+      init=[("R9", addr)],
+      mem=[(addr + 5, 0xFFAB, 2)],
+      word=0xa8290005,
+    )
     r.check("R1", trunc(a, 0xFFFF_FFFF_FFFF_FFAB))
     // 7c 25 4a ae  lhax r1, r5, r9
     let r = run(
@@ -155,6 +216,7 @@ test "lha, lhax, lhau, lhaux" {
       [reg("R1"), reg("R5"), reg("R9")],
       init=[("R5", 5), ("R9", addr)],
       mem=[(addr + 5, 0xFFAB, 2)],
+      word=0x7c254aae,
     )
     r.check("R1", trunc(a, 0xFFFF_FFFF_FFFF_FFAB))
     // ac 29 00 05  lhau r1, 5(r9)
@@ -164,6 +226,7 @@ test "lha, lhax, lhau, lhaux" {
       [reg("R1"), reg("R9"), imm(5), reg("R9")],
       init=[("R9", addr)],
       mem=[(addr + 5, 0xFFAB, 2)],
+      word=0xac290005,
     )
     r.check("R1", trunc(a, 0xFFFF_FFFF_FFFF_FFAB))
     r.check("R9", addr + 5)
@@ -174,6 +237,7 @@ test "lha, lhax, lhau, lhaux" {
       [reg("R1"), reg("R5"), reg("R5"), reg("R9")],
       init=[("R5", 5), ("R9", addr)],
       mem=[(addr + 5, 0x0FAB, 2)],
+      word=0x7c254aee,
     )
     r.check("R1", 0xFAB)
     r.check("R5", addr + 5)
@@ -188,27 +252,30 @@ test "lwa, lwax, lwaux" {
     let r = run(
       a,
       "LWA",
-      [reg("R31"), imm(276), reg("R11")],
+      [reg("X31"), imm(276), reg("R11")],
       init=[("R11", addr)],
       mem=[(addr + 276, 0xFFACFFAB, 4)],
+      word=0xebeb0116,
     )
     r.check("R31", trunc(a, 0xFFFF_FFFF_FFAC_FFAB))
     // 7c 25 4a aa  lwax r1, r5, r9
     let r = run(
       a,
       "LWAX",
-      [reg("R1"), reg("R5"), reg("R9")],
+      [reg("X1"), reg("R5"), reg("R9")],
       init=[("R5", 5), ("R9", addr)],
       mem=[(addr + 5, 0x0FACFFAB, 4)],
+      word=0x7c254aaa,
     )
     r.check("R1", 0x0FACFFAB)
     // 7c 25 4a ea  lwaux r1, r5, r9
     let r = run(
       a,
       "LWAUX",
-      [reg("R1"), reg("R5"), reg("R5"), reg("R9")],
+      [reg("X1"), reg("R5"), reg("R5"), reg("R9")],
       init=[("R5", 5), ("R9", addr)],
       mem=[(addr + 5, 0xFFACFFAB, 4)],
+      word=0x7c254aea,
     )
     r.check("R1", trunc(a, 0xFFFF_FFFF_FFAC_FFAB))
     r.check("R5", addr + 5)
@@ -220,26 +287,33 @@ test "ld, ldx, ldu, ldux" {
   let addr = 0x00ABCDEFUL
   let data = 0xFFACBBDD_FFACFFABUL
   // e8 29 00 08  ld r1, 8(r9)
-  let r = run(R64, "LD", [reg("X1"), imm(8), reg("X9")], init=[("R9", addr)], mem=[
-    (addr + 8, data, 8),
-  ])
+  let r = run(
+    R64,
+    "LD",
+    [reg("X1"), imm(8), reg("R9")],
+    init=[("R9", addr)],
+    mem=[(addr + 8, data, 8)],
+    word=0xe8290008,
+  )
   r.check("R1", data)
   // 7c 28 48 2a  ldx r1, r8, r9
   let r = run(
     R64,
     "LDX",
-    [reg("X1"), reg("X8"), reg("X9")],
+    [reg("X1"), reg("R8"), reg("R9")],
     init=[("R9", addr), ("R8", 5)],
     mem=[(addr + 5, data, 8)],
+    word=0x7c28482a,
   )
   r.check("R1", data)
   // e8 29 00 09  ldu r1, 8(r9)
   let r = run(
     R64,
     "LDU",
-    [reg("X1"), reg("X9"), imm(8), reg("X9")],
+    [reg("X1"), reg("R9"), imm(8), reg("R9")],
     init=[("R9", addr)],
     mem=[(addr + 8, data, 8)],
+    word=0xe8290009,
   )
   r.check("R1", data)
   r.check("R9", addr + 8)
@@ -247,9 +321,10 @@ test "ld, ldx, ldu, ldux" {
   let r = run(
     R64,
     "LDUX",
-    [reg("X1"), reg("X8"), reg("X8"), reg("X9")],
+    [reg("X1"), reg("R8"), reg("R8"), reg("R9")],
     init=[("R9", addr), ("R8", 5)],
     mem=[(addr + 5, data, 8)],
+    word=0x7c28486a,
   )
   r.check("R1", data)
   r.check("R8", addr + 5)
@@ -258,9 +333,10 @@ test "ld, ldx, ldu, ldux" {
   let r = run(
     R64,
     "LDUX",
-    [reg("X1"), reg("X8"), reg("X8"), reg("X9")],
+    [reg("X1"), reg("R8"), reg("R8"), reg("R9")],
     init=[("R9", big), ("R8", 5)],
     mem=[(big + 5, data, 8)],
+    word=0x7c28486a,
   )
   r.check("R1", data)
   r.check("R8", big + 5)
@@ -278,12 +354,14 @@ test "lhbrx, lwbrx, ldbrx" {
   ]
   for case in cases {
     let (a, name, size) = case
+    let rt = if name == "LDBRX" { "X1" } else { "R1" }
     let r = run(
       a,
       name,
-      [reg("R1"), reg("R2"), reg("R3")],
+      [reg(rt), reg("R2"), reg("R3")],
       init=[("R2", 0xABCDEF00), ("R3", 0x42)],
       mem=[(0xABCDEF42, bytes_of(data, size), size)],
+      word=x_word(name, 1, 2, 3),
     )
     r.check("R1", byte_reverse(data, size))
   }
@@ -301,16 +379,23 @@ test "stb, sth, stw" {
         // st r9, d(r28)
         let base = 0xABCDEF00UL
         let ea = trunc(a, base + d.to_int64().reinterpret_as_uint64())
-        let r = run(a, name, [reg("R9"), imm(d.to_int64()), reg("R28")], init=[
-          ("R9", trunc(a, store_data)),
-          ("R28", base),
-        ])
+        let r = run(
+          a,
+          name,
+          [reg("R9"), imm(d.to_int64()), reg("R28")],
+          init=[("R9", trunc(a, store_data)), ("R28", base)],
+          word=d_word(name, 9, 28, d),
+        )
         r.check_mem(a, ea, size, bytes_of(store_data, size))
       }
       // st r9, 16(0)
-      let r = run(a, name, [reg("R9"), imm(16), reg("ZERO")], init=[
-        ("R9", trunc(a, store_data)),
-      ])
+      let r = run(
+        a,
+        name,
+        [reg("R9"), imm(16), reg("ZERO")],
+        init=[("R9", trunc(a, store_data))],
+        word=d_word(name, 9, 0, 16),
+      )
       r.check_mem(a, 16, size, bytes_of(store_data, size))
     }
   }
@@ -322,17 +407,26 @@ test "stbx, sthx, stwx" {
     for case in [("STBX", 1), ("STHX", 2), ("STWX", 4)] {
       let (name, size) = case
       // stx r9, r14, r31
-      let r = run(a, name, [reg("R9"), reg("R14"), reg("R31")], init=[
-        ("R9", trunc(a, store_data)),
-        ("R14", 0xABCD0000),
-        ("R31", 0xEF42),
-      ])
+      let r = run(
+        a,
+        name,
+        [reg("R9"), reg("R14"), reg("R31")],
+        init=[
+          ("R9", trunc(a, store_data)),
+          ("R14", 0xABCD0000),
+          ("R31", 0xEF42),
+        ],
+        word=x_word(name, 9, 14, 31),
+      )
       r.check_mem(a, 0xABCDEF42, size, bytes_of(store_data, size))
       // stx r9, 0, r31
-      let r = run(a, name, [reg("R9"), reg("ZERO"), reg("R31")], init=[
-        ("R9", trunc(a, store_data)),
-        ("R31", 0xABCD0000),
-      ])
+      let r = run(
+        a,
+        name,
+        [reg("R9"), reg("ZERO"), reg("R31")],
+        init=[("R9", trunc(a, store_data)), ("R31", 0xABCD0000)],
+        word=x_word(name, 9, 0, 31),
+      )
       r.check_mem(a, 0xABCD0000, size, bytes_of(store_data, size))
     }
   }
@@ -352,6 +446,7 @@ test "stbu, sthu, stwu" {
           name,
           [reg("R29"), reg("R4"), imm(d.to_int64()), reg("R29")],
           init=[("R4", trunc(a, store_data)), ("R29", base)],
+          word=d_word(name, 4, 29, d),
         )
         r.check_mem(a, ea, size, bytes_of(store_data, size))
         r.check("R29", ea)
@@ -366,11 +461,17 @@ test "stbux, sthux, stwux" {
     for case in [("STBUX", 1), ("STHUX", 2), ("STWUX", 4)] {
       let (name, size) = case
       // stux r9, r31, r25
-      let r = run(a, name, [reg("R31"), reg("R9"), reg("R31"), reg("R25")], init=[
-        ("R31", 0xABCD0000),
-        ("R25", 0xEF42),
-        ("R9", trunc(a, store_data)),
-      ])
+      let r = run(
+        a,
+        name,
+        [reg("R31"), reg("R9"), reg("R31"), reg("R25")],
+        init=[
+          ("R31", 0xABCD0000),
+          ("R25", 0xEF42),
+          ("R9", trunc(a, store_data)),
+        ],
+        word=x_word(name, 9, 31, 25),
+      )
       r.check_mem(a, 0xABCDEF42, size, bytes_of(store_data, size))
       r.check("R31", 0xABCDEF42)
     }
@@ -381,40 +482,52 @@ test "stbux, sthux, stwux" {
 test "std, stdx, stdu, stdux" {
   let data = 0xCCABDD42_ABCDEF42UL
   // f8 29 00 08  std r1, 8(r9)
-  let r = run(R64, "STD", [reg("X1"), imm(8), reg("X9")], init=[
-    ("R9", 0xABCDEF44),
-    ("R1", data),
-  ])
+  let r = run(
+    R64,
+    "STD",
+    [reg("X1"), imm(8), reg("R9")],
+    init=[("R9", 0xABCDEF44), ("R1", data)],
+    word=0xf8290008,
+  )
   r.check_mem(R64, 0xABCDEF4C, 8, data)
   // 7c 28 49 2a  stdx r1, r8, r9
-  let r = run(R64, "STDX", [reg("X1"), reg("X8"), reg("X9")], init=[
-    ("R1", data),
-    ("R8", 0xABCD0000),
-    ("R9", 0xEF42),
-  ])
+  let r = run(
+    R64,
+    "STDX",
+    [reg("X1"), reg("R8"), reg("R9")],
+    init=[("R1", data), ("R8", 0xABCD0000), ("R9", 0xEF42)],
+    word=0x7c28492a,
+  )
   r.check_mem(R64, 0xABCDEF42, 8, data)
   // f8 29 00 09  stdu r1, 8(r9)
-  let r = run(R64, "STDU", [reg("X9"), reg("X1"), imm(8), reg("X9")], init=[
-    ("R9", 0xABCDEF42),
-    ("R1", data),
-  ])
+  let r = run(
+    R64,
+    "STDU",
+    [reg("R9"), reg("X1"), imm(8), reg("R9")],
+    init=[("R9", 0xABCDEF42), ("R1", data)],
+    word=0xf8290009,
+  )
   r.check_mem(R64, 0xABCDEF4A, 8, data)
   r.check("R9", 0xABCDEF4A)
   // 7c 28 49 6a  stdux r1, r8, r9
-  let r = run(R64, "STDUX", [reg("X8"), reg("X1"), reg("X8"), reg("X9")], init=[
-    ("R1", data),
-    ("R8", 0xABCD0000),
-    ("R9", 0xEF42),
-  ])
+  let r = run(
+    R64,
+    "STDUX",
+    [reg("R8"), reg("X1"), reg("R8"), reg("R9")],
+    init=[("R1", data), ("R8", 0xABCD0000), ("R9", 0xEF42)],
+    word=0x7c28496a,
+  )
   r.check_mem(R64, 0xABCDEF42, 8, data)
   r.check("R8", 0xABCDEF42)
   // with a full 64-bit address
   let x = 0xCABCEF42_ABCD0000UL
-  let r = run(R64, "STDUX", [reg("X8"), reg("X1"), reg("X8"), reg("X9")], init=[
-    ("R1", data),
-    ("R8", x),
-    ("R9", 0xEF42),
-  ])
+  let r = run(
+    R64,
+    "STDUX",
+    [reg("R8"), reg("X1"), reg("R8"), reg("R9")],
+    init=[("R1", data), ("R8", x), ("R9", 0xEF42)],
+    word=0x7c28496a,
+  )
   r.check_mem(R64, x + 0xEF42, 8, data)
   r.check("R8", x + 0xEF42)
 }
@@ -431,11 +544,14 @@ test "sthbrx, stwbrx, stdbrx" {
   ]
   for case in cases {
     let (a, name, size) = case
-    let r = run(a, name, [reg("R1"), reg("R2"), reg("R3")], init=[
-      ("R1", trunc(a, data)),
-      ("R2", 0xABCDEF00),
-      ("R3", 0x42),
-    ])
+    let rs = if name == "STDBRX" { "X1" } else { "R1" }
+    let r = run(
+      a,
+      name,
+      [reg(rs), reg("R2"), reg("R3")],
+      init=[("R1", trunc(a, data)), ("R2", 0xABCDEF00), ("R3", 0x42)],
+      word=x_word(name, 1, 2, 3),
+    )
     r.check_mem(a, 0xABCDEF42, size, byte_reverse(data, size))
   }
 }

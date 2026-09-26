@@ -362,7 +362,98 @@ pub fn Image::base_address(self : Image) -> UInt64? {
 }
 
 ///|
-pub fn Image::memory(self : Image) -> @memory.MemMap[String] {
+/// The memory of the image annotated with typed values (upstream
+/// `Image.memory`).
+///
+/// Following upstream `from_spec`, the map contains, in this order:
+/// - every segment, tagged with `segment()`;
+/// - every mapped location of every symbol, tagged with its name
+///   (`symbol()`) and the symbol itself (`symbol_info()`); a symbol with an
+///   unmapped location is skipped entirely;
+/// - every mapped section, tagged with its name (`section()`);
+/// - every code region of the image specification, tagged with
+///   `code_region()`.
+///
+/// Values are projected back with `Value::get`, e.g.
+/// `value.get(@image.section())`. `Image::segment_names` keeps the former
+/// segment-name view.
+pub fn Image::memory(self : Image) -> @memory.MemMap[@types.Value] {
+  let mut map = @memory.MemMap::empty()
+  for segment in self.segments_value {
+    map = map.add(segment.memory(), @types.Value::create(segment_tag, segment))
+  }
+  for symbol in self.symbols_value {
+    match self.symbol_memory_chunks(symbol) {
+      Some(chunks) =>
+        for chunk in chunks {
+          map = map
+            .add(chunk, @types.Value::create(symbol_tag, symbol.name()))
+            .add(chunk, @types.Value::create(symbol_info_tag, symbol))
+        }
+      None => ()
+    }
+  }
+  for section in self.sections_value {
+    match self.memory_of_section(section) {
+      Some(memory) =>
+        map = map.add(memory, @types.Value::create(section_tag, section.name()))
+      None => ()
+    }
+  }
+  match self.spec_value {
+    Some(doc) =>
+      for code in spec_values(doc, Scheme::code_region()) {
+        match self.code_region_memory(code) {
+          Some(memory) =>
+            map = map.add(memory, @types.Value::create(code_region_tag, ()))
+          None => ()
+        }
+      }
+    None => ()
+  }
+  map
+}
+
+///|
+/// The memory of a code region `(addr, size, off)` of the specification
+/// (upstream `map_region`): a view of the segment that maps it, or the
+/// region's file bytes when no segment covers it.
+fn Image::code_region_memory(
+  self : Image,
+  code : (Int64, Int64, Int64),
+) -> @memory.Memory? {
+  let (addr, size, off) = code
+  if addr < 0L || size <= 0L || size > 0x7fffffffL {
+    return None
+  }
+  let addr = addr.reinterpret_as_uint64()
+  let size = size.to_int()
+  match
+    self.segments_value.search_by(segment => {
+      segment.contains(addr) && segment.contains(addr + size.to_uint64() - 1UL)
+    }) {
+    Some(i) =>
+      self.segments_value[i].memory().view(from=addr, words=size).to_option()
+    None => {
+      if off < 0L || off + size.to_int64() > self.data_value.length().to_int64() {
+        return None
+      }
+      @memory.Memory::create(
+        endian=self.endian_value,
+        start=addr,
+        self.data_value,
+        pos=off.to_int(),
+        len=size,
+      ).to_option()
+    }
+  }
+}
+
+///|
+/// The memory of the image annotated with segment names (the former
+/// string-valued `Image.memory` projection, kept for string-tagged memory
+/// maps such as the project memory).
+pub fn Image::segment_names(self : Image) -> @memory.MemMap[String] {
   let mut map = @memory.MemMap::empty()
   for segment in self.segments_value {
     map = map.add(segment.memory(), segment.name())

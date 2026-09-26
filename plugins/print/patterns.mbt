@@ -21,10 +21,9 @@ fn find_symbol_name(project : @project.Project, addr : UInt64) -> String? {
 fn find_section_name(project : @project.Project, addr : UInt64) -> String? {
   match project.image() {
     Some(image) =>
-      for section in image.sections() {
-        if section.contains(addr) {
-          return Some(section.name())
-        }
+      match find_in_image_memory(image, addr, @image.section()) {
+        Some(name) => return Some(name)
+        None => ()
       }
     None => ()
   }
@@ -34,14 +33,8 @@ fn find_section_name(project : @project.Project, addr : UInt64) -> String? {
 ///|
 fn find_segment_name(project : @project.Project, addr : UInt64) -> String? {
   match project.image() {
-    Some(image) => {
-      for segment in image.segments() {
-        if segment.contains(addr) {
-          return Some(segment.name())
-        }
-      }
-      None
-    }
+    Some(image) =>
+      find_in_image_memory(image, addr, @image.segment()).map(seg => seg.name())
     None =>
       match memory_tag_value(project.memory(), addr, "segment") {
         Some(name) => Some(name)
@@ -55,6 +48,23 @@ fn find_segment_name(project : @project.Project, addr : UInt64) -> String? {
           .map(entry => entry.1)
       }
   }
+}
+
+///|
+/// The first image memory annotation of `tag` covering `addr` (upstream
+/// `find_in_memory`).
+fn[T] find_in_image_memory(
+  image : @image.Image,
+  addr : UInt64,
+  tag : @types.Tag[T],
+) -> T? {
+  for entry in image.memory().lookup(addr) {
+    match entry.1.get(tag) {
+      Some(x) => return Some(x)
+      None => ()
+    }
+  }
+  None
 }
 
 ///|

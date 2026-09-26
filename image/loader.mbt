@@ -55,12 +55,49 @@ pub fn register_loader(
 }
 
 ///|
+/// The knowledge state in which KB loaders run by default (upstream
+/// `Toplevel`).
+let kb_loader_state : @knowledge.State = @knowledge.State::new()
+
+///|
+/// Runs a knowledge computation of a KB loader in `state` (upstream
+/// `Toplevel.put`/`Toplevel.get`): the knowledge the computation produces
+/// is committed to `state`, and a conflict becomes the loader error.
+fn[A] run_kb_loader(
+  state : @knowledge.State,
+  load : (@knowledge.State, A) -> OgreDoc? raise,
+  input : A,
+) -> Result[OgreDoc?, String] {
+  match @knowledge.eval(s => load(s, input), state) {
+    Ok((doc, next)) => {
+      state.assign(next)
+      Ok(doc)
+    }
+    Err(error) => Err(error.to_string())
+  }
+}
+
+///|
+/// Registers a loader whose loading functions are knowledge computations
+/// (upstream `Image.KB.register_loader`, where `from_file` and `from_data`
+/// return `Ogre.doc option KB.t`).
+///
+/// The computations run in `state` (by default a knowledge state shared by
+/// all KB loaders, like upstream `Toplevel`), and the knowledge they
+/// provide is kept there.
 pub fn KB::register_loader(
   name~ : String,
-  from_file~ : (String) -> Result[OgreDoc?, String],
-  from_data~ : (Bytes) -> Result[OgreDoc?, String],
+  from_file~ : (@knowledge.State, String) -> OgreDoc? raise,
+  from_data~ : (@knowledge.State, Bytes) -> OgreDoc? raise,
+  state? : @knowledge.State = kb_loader_state,
 ) -> Result[Unit, String] {
-  register_loader(name~, ImageLoader::create(from_data~, from_file~))
+  register_loader(
+    name~,
+    ImageLoader::create(
+      from_data=data => run_kb_loader(state, from_data, data),
+      from_file=path => run_kb_loader(state, from_file, path),
+    ),
+  )
 }
 
 ///|

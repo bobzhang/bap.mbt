@@ -126,6 +126,8 @@ pub fn[X] resolve_meth(Program, (Typ, X) -> Bool, @knowledge.Name, Array[X]) -> 
 
 pub fn[T] resolve_simple(Program, Item[T], @knowledge.Name) -> Result[Def[T], Resolution]?
 
+pub let semantic_dirs : Array[String]
+
 pub let semantics : Item[Sema]
 
 pub fn semantics_provider(String, @core_theory.Target, Array[String]) -> @mc.Provider

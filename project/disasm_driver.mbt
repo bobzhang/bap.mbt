@@ -652,17 +652,11 @@ fn driver_collect_dests(
   source : DriverEncoding,
   label : @knowledge.Object[Unit],
 ) -> ProjectDisassemblyDriverJump raise {
-  let insn = kb.collect(project_insn_slot, label)
-  let insn_is = (kind : ProjectInstructionKind) => {
-    match insn {
-      Some(insn) => insn.has_kind(kind)
-      None => false
-    }
-  }
+  let (call, barrier) = driver_insn_props(kb, label)
   let init : ProjectDisassemblyDriverJump = {
     encoding: { ..source, coding: @core_theory.Language::unknown(), },
-    call: insn_is(ProjectCall),
-    barrier: insn_is(ProjectBarrier),
+    call,
+    barrier,
     indirect: false,
     resolved: @sorted_set.new(),
     unresolved: @sorted_set.new(),
@@ -707,6 +701,89 @@ fn driver_collect_dests(
       }
     }
   }
+}
+
+///|
+/// The jumps of lifted code (upstream `Insn.Analyzer`): whether it jumps,
+/// whether a jump is under a condition (in a branch or a loop), and whether
+/// it calls (a `call` special).
+priv struct DriverBilJumps {
+  mut jump : Bool
+  mut cond : Bool
+  mut call : Bool
+}
+
+///|
+fn DriverBilJumps::visit(
+  self : DriverBilJumps,
+  bil : Array[@types.Stmt],
+  under_condition : Bool,
+) -> Unit {
+  for stmt in bil {
+    match stmt {
+      Jmp(_) => {
+        self.jump = true
+        if under_condition {
+          self.cond = true
+        }
+      }
+      If(yes~, no~, ..) => {
+        self.visit(yes, true)
+        self.visit(no, true)
+      }
+      While(body~, ..) => self.visit(body, true)
+      Special(_) =>
+        if @types.Stmt::decode(@types.Stmt::call(), stmt) is Some(_) {
+          self.call = true
+        }
+      _ => ()
+    }
+  }
+}
+
+///|
+/// The `call` and `barrier` properties of an instruction (upstream
+/// `Insn.derive_props`): derived from its lifted semantics `bil` when it has
+/// some, from the instruction kinds otherwise. An instruction is a barrier
+/// (control does not fall through it) when it jumps, is not a call and its
+/// jump is not conditional; e.g., a predicated ARM return is not a barrier,
+/// even though LLVM marks the instruction as one.
+fn project_insn_derived_props(
+  insn : ProjectDisassemblyInstruction?,
+  bil : Array[@types.Stmt]?,
+) -> (Bool, Bool) {
+  let insn_is = (kind : ProjectInstructionKind) => {
+    match insn {
+      Some(insn) => insn.has_kind(kind)
+      None => false
+    }
+  }
+  match bil {
+    Some(bil) => {
+      let jumps : DriverBilJumps = { jump: false, cond: false, call: false, }
+      jumps.visit(bil, false)
+      let call = jumps.call || insn_is(ProjectCall)
+      (call, jumps.jump && !call && !jumps.cond)
+    }
+    None => {
+      let call = insn_is(ProjectCall)
+      let cond = insn_is(ProjectConditionalBranch)
+      let jump = cond || insn_is(ProjectUnconditionalBranch)
+      (call, jump && !call && !cond)
+    }
+  }
+}
+
+///|
+/// The `call` and `barrier` properties of the instruction of `label` (see
+/// `project_insn_derived_props`).
+fn driver_insn_props(
+  kb : @knowledge.State,
+  label : @knowledge.Object[Unit],
+) -> (Bool, Bool) raise {
+  let insn = kb.collect(project_insn_slot, label)
+  let bil = kb.collect(project_insn_lifted_slot, label).map(l => l.bil())
+  project_insn_derived_props(insn, bil)
 }
 
 ///|

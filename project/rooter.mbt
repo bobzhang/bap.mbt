@@ -178,7 +178,7 @@ pub fn Project::rooter(self : Project) -> ProjectRooter {
   match self.image_value {
     Some(image) =>
       ProjectRooter::of_symbols(
-        self.symbols_value,
+        project_code_symbols(self),
         entry=image.entry_point(),
         path?=self.filename_value,
         biased~,

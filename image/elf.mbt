@@ -426,9 +426,35 @@ fn image_elf_parse_symbol_entry_at(
 }
 
 ///|
+/// The ARM/AArch64 mapping symbols (`$a`, `$t`, `$d`, `$x`, optionally
+/// followed by `.<suffix>`), which mark the kind of the code or data that
+/// follows and name no program entity.
+fn image_elf_is_mapping_symbol(name : String) -> Bool {
+  match name {
+    [.. "$a"] | [.. "$t"] | [.. "$d"] | [.. "$x"] => true
+    _ =>
+      name.length() > 3 &&
+      (
+        name.has_prefix("$a.") ||
+        name.has_prefix("$t.") ||
+        name.has_prefix("$d.") ||
+        name.has_prefix("$x.")
+      )
+  }
+}
+
+///|
 fn image_elf_symbol_entry_symbol(entry : ImageElfSymbolEntry) -> Symbol? {
+  // the section (STT_SECTION) and source file (STT_FILE) symbols name no
+  // program entity (upstream loaders do not report them as symbols); a file
+  // symbol at address 0 would otherwise make the name of the function at
+  // address 0 ambiguous
+  let kind = entry.info & 0x0f
   match entry.name {
-    Some(name) if entry.shndx != 0 =>
+    Some(name) if entry.shndx != 0 &&
+      kind != 3 &&
+      kind != 4 &&
+      !image_elf_is_mapping_symbol(name) =>
       Some(
         Symbol::create(
           name~,

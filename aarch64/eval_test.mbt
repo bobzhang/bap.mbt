@@ -100,3 +100,49 @@ test "decoded AArch64 branches lift to jumps" {
     assert_true(has_jump, msg="\{p.0} has no jump")
   }
 }
+
+///|
+test "hints lift to no-ops (LLVM decodes hint #0 as NOP)" {
+  let program = lift_program(
+    [
+      0xD503201F, // nop
+       0xD503203F, // yield
+    ],
+    0x400000,
+  )
+  inspect(
+    program.map(p => "\{p.0}:\{p.1.length()}").join(" "),
+    content=(
+      #|NOP:0 HINT:0
+    ),
+  )
+}
+
+///|
+test "the LLVM samples the Lisp semantics define lift without errors" {
+  let registry = @mc.Registry::new()
+  @primus_lisp.register_semantics_providers(registry~)
+  let ctx = @mc.Context::create(@core_theory.Target::aarch64())
+  let lifted : Map[String, Unit] = Map([])
+  let failed = []
+  for sample in llvm_samples {
+    guard @aarch64.decode_a64_word(sample.0, addr=0x400000) is Some(insn) else {
+      fail("not decoded")
+    }
+    try registry.lift(ctx, insn) catch {
+      Unsupported(..) => ()
+      err => failed.push("\{insn.name}: \{err.message()}")
+    } noraise {
+      _ => lifted[insn.name] = ()
+    }
+  }
+  inspect(failed.join("\n"), content="")
+  let names = lifted.keys().collect()
+  names.sort()
+  inspect(
+    names.join(" "),
+    content=(
+      #|B BL BR BLR Bcc DMB DSB ISB NOP RET UDF ADRP CASB CASH CASW CASX CBZW CBZX HINT TBZW TBZX CASAB CASAH CASAW CASAX CASLB CASLH CASLW CASLX CBNZW CBNZX LDPXi STPXi TBNZW TBNZX ADDWri ADDWrs ADDXri ADDXrs ANDWri ANDWrs ANDXri ANDXrs BFMWri BFMXri CASALB CASALH CASALW CASALX CCMNWi CCMNWr CCMNXi CCMNXr CCMPWi CCMPWr CCMPXi CCMPXr CSELWr CSELXr EORWri EORWrs EORXri EORXrs LDRWui LDRXui MOVKWi MOVKXi MOVNWi MOVNXi MOVZWi MOVZXi ORNWrs ORNXrs ORRWri ORRWrs ORRXri ORRXrs SDIVWr SDIVXr STRWui STRXui STURWi STURXi SUBWri SUBWrs SUBXri SUBXrs UDIVWr UDIVXr CSINCWr CSINCXr CSINVWr CSINVXr CSNEGWr CSNEGXr LDRBBui LDRSWui LDRXroX SBFMWri SBFMXri STPXpre STRBBui STRXroX STURBBi STURHHi SUBSWri SUBSWrs SUBSXri SUBSXrs UBFMWri UBFMXri LDPXpost LDRBBroX MADDWrrr MADDXrrr MSUBWrrr MSUBXrrr SUBXrx64
+    ),
+  )
+}

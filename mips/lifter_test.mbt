@@ -151,8 +151,61 @@ let samples64 : Array[(String, Array[@mc.Op])] = {
     ("WSBH", rr),
     ("XOR", rrr),
     ("XORi", rri),
+    // modeled deliberately unlike upstream (see `branch.mbt`,
+    // `multiply.mbt`, `divide.mbt`, ...)
+    ("AUIPC", ri),
+    ("BGEZALL", ri),
+    ("BGEZL", ri),
+    ("BLEZL", ri),
+    ("BLTZ", ri),
+    ("BLTZAL", ri),
+    ("BLTZALL", ri),
+    ("BLTZL", ri),
+    ("BNEL", rri),
+    ("BC", [i(8)]),
+    ("BALC", [i(8)]),
+    ("JALX", [i(0x400000)]),
+    ("DADD", rrr),
+    ("DADDi", rri),
+    ("DIV", rrr),
+    ("DIVU", rrr),
+    ("DSDIV", rr),
+    ("DUDIV", rr),
+    ("DMULT", rr),
+    ("DMULTu", rr),
+    ("MADD", rr),
+    ("MADDU", rr),
+    ("MSUB", rr),
+    ("MSUBU", rr),
+    ("MFHI", [r("V0_64")]),
+    ("MFLO", [r("V0_64")]),
+    ("MTHI", [r("V0_64")]),
+    ("MTLO", [r("V0_64")]),
+    ("MOVZ_I_I", [r("V0_64"), r("A0_64"), r("A1_64"), r("V0_64")]),
+    ("MOVN_I_I", [r("V0_64"), r("A0_64"), r("A1_64"), r("V0_64")]),
+    ("DROTR", rri),
+    ("DROTR32", rri),
+    ("DROTRV", rrr),
+    ("DSHD", rr),
+    ("EXT", [r("V0_64"), r("A0_64"), i(4), i(8)]),
+    ("DEXT", [r("V0_64"), r("A0_64"), i(4), i(8)]),
+    ("INS", [r("V0_64"), r("A0_64"), i(4), i(8), r("V0_64")]),
+    ("DINS", [r("V0_64"), r("A0_64"), i(4), i(8)]),
+    ("SSNOP", []),
+    ("EHB", []),
+    ("PAUSE", []),
+    ("SYNC", [i(0)]),
+    ("SYNCI", [r("A0_64"), i(0)]),
+    ("PREF", [r("A0_64"), i(0), i(0)]),
+    ("PREF_R6", [r("A0_64"), i(0), i(0)]),
   ]
 }
+
+///|
+/// The modeled opcodes without effect on the modeled state.
+let no_effect : Array[String] = [
+  "NOP", "SSNOP", "EHB", "PAUSE", "SYNC", "SYNCI", "PREF", "PREF_R6",
+]
 
 ///|
 test "lifter: every opcode lifts to well-typed BIL on every target" {
@@ -162,7 +215,7 @@ test "lifter: every opcode lifts to well-typed BIL on every target" {
   inspect(
     names.length(),
     content=(
-      #|144
+      #|189
     ),
   )
   for sample in samples64 {
@@ -181,7 +234,7 @@ test "lifter: every opcode lifts to well-typed BIL on every target" {
         assert_true(stmt.check_type() is Ok(_), msg="\{target} \{name}")
       }
       assert_true(
-        bil.length() > 0 || name == "NOP",
+        bil.length() > 0 || no_effect.contains(name),
         msg="\{target} \{name} produced no BIL",
       )
     }
@@ -309,17 +362,16 @@ test "lifter: operand errors" {
   } noraise {
     _ => fail("expected a register operand error")
   }
-  try @mips.lift_mips(insn("ADDu", [r("HWR29"), r("T1"), r("T2")])) catch {
-    err =>
-      inspect(
-        err.message(),
-        content=(
-          #|MIPS lifter fail: unexpected left side of :=
-        ),
-      )
-  } noraise {
-    _ => fail("expected an invalid destination error")
-  }
+  // unknown registers and the zero register read as zero, and writes to
+  // them are discarded (deliberately unlike upstream for `ZERO`)
+  assert_eq(
+    @mips.lift_mips(insn("ADDu", [r("HWR29"), r("T1"), r("T2")])).length(),
+    0,
+  )
+  assert_eq(
+    @mips.lift_mips(insn("ADDu", [r("ZERO"), r("T1"), r("T2")])).length(),
+    0,
+  )
 }
 
 ///|
@@ -335,7 +387,7 @@ test "lifter: register names" {
       #|ADDu V0, HWR29, R8
       #|  V0 := (0:32u + T0)
       #|ADDu V0, T0_64, F2
-      #|  V0 := pad:32[(pad:64[0:32u] + F2)]
+      #|  V0 := (0:32u + extract:31:0[F2])
       #|
     ),
   )
@@ -343,7 +395,7 @@ test "lifter: register names" {
     show("mips64", [("ADDu", [r("R2"), r("V0"), r("T0_64")])]),
     content=(
       #|ADDu R2, V0, T0_64
-      #|  V0 := (V0 + T0)
+      #|  V0 := extend:64[(extract:31:0[V0] + extract:31:0[T0])]
       #|
     ),
   )

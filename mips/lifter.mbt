@@ -16,7 +16,8 @@ let semantics_table : Map[String, Entry] = {
   let table : Map[String, Entry] = Map([])
   let groups : Array[(ReadOnlyArray[(String, Semantics)], Int?)] = [
     (arithmetic_semantics, None),
-    (branch_semantics, Some(1)),
+    (delayed_branch_semantics, Some(1)),
+    (compact_branch_semantics, None),
     (conditional_semantics, None),
     (divide_semantics, None),
     (load_semantics, None),

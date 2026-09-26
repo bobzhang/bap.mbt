@@ -17,7 +17,7 @@ test "conditional: mips32 semantics" {
       #|    V0 := pad:32[0:1u]
       #|  }
       #|SLTi V0, V1, 0x7
-      #|  if (V1 < 7:32u) {
+      #|  if (V1 s< 7:32u) {
       #|    V0 := pad:32[1:1u]
       #|  } else {
       #|    V0 := pad:32[0:1u]

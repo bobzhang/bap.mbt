@@ -64,6 +64,7 @@ pub fn plugin_table() -> Array[StaticPlugin] {
       name: "callgraph-collator",
       load: _ => @callgraph_collator.declare_plugin(),
     },
+    { name: "api", load: io => @api.declare_plugin(out=io.out), },
     { name: "c-parser", load: _ => @c_parser.declare_plugin(), },
     { name: "callsites", load: _ => @callsites.declare_plugin(), },
     { name: "constant-tracker", load: _ => @constant_tracker.declare_plugin(), },
@@ -165,6 +166,9 @@ pub fn register_services() -> Unit raise {
   @primus_lisp.register_components()
   @primus_lisp.register_semantics_providers()
   @x86.register()
+  // C calling conventions (installed by the upstream x86 and arm plugins)
+  @x86_abi.install_calling_conventions()
+  @arm_gnueabi.setup()
   // Native instruction decoders for architectures upstream decodes with LLVM.
   @powerpc.register_decoder()
   @arm.register_decoder()

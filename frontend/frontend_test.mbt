@@ -66,6 +66,7 @@ test "bap without arguments prints the usage" {
       #|
       #|Plugins:
       #|  analyze                  analyses the knowledge base
+      #|  api                      inserts subroutines arg terms
       #|  beagle                   beagle is an obfuscated string solver that uses CPU emulation for
       #|  bil                      defines the semantics of BAP Instruction Language (BIL) and makes old
       #|  byteweight               identifies function starts using byteweight signatures
@@ -128,7 +129,6 @@ test "bap without arguments prints the usage" {
       #|Run 'bap --<PLUGIN>-help for more information about a plugin.
       #|Run 'bap --help' for the detailed manual.
       #|
-
     ),
   )
 }
@@ -161,39 +161,41 @@ test "bap disassemble" {
     bap(["disassemble", "bin/true", "-dbir"]),
     content=(
       #|00000001: program
-      #|00000002: sub main()
+      #|00000002: sub main(main_argc, main_argv, main_result)
+      #|00000003: main_argc :: in u32 = low:32[RDI]
+      #|00000004: main_argv :: in out u64 = RSI
+      #|00000005: main_result :: out u32 = low:32[RAX]
       #|
-      #|
-      #|00000003:
-      #|00000004: v_1 := RBP
-      #|00000005: RSP := RSP - 8
-      #|00000006: mem := mem with [RSP, el]:u64 <- v_1
-      #|00000007: RBP := RSP
+      #|00000006:
+      #|00000007: v_1 := RBP
       #|00000008: RSP := RSP - 8
-      #|00000009: mem := mem with [RSP, el]:u64 <- 0x401009
-      #|00000010: call @foo with return @0x0000000000401009
+      #|00000009: mem := mem with [RSP, el]:u64 <- v_1
+      #|00000010: RBP := RSP
+      #|00000011: RSP := RSP - 8
+      #|00000012: mem := mem with [RSP, el]:u64 <- 0x401009
+      #|00000013: call @foo with return @0x0000000000401009
       #|
-      #|00000011:
-      #|00000012: RBP := mem[RSP, el]:u64
-      #|00000013: RSP := RSP + 8
-      #|00000014: v_1 := mem[RSP, el]:u64
-      #|00000015: RSP := RSP + 8
-      #|00000016: call v_1 with noreturn
+      #|00000014:
+      #|00000015: RBP := mem[RSP, el]:u64
+      #|00000016: RSP := RSP + 8
+      #|00000017: v_1 := mem[RSP, el]:u64
+      #|00000018: RSP := RSP + 8
+      #|00000019: call v_1 with noreturn
       #|
-      #|00000017: sub foo()
+      #|00000020: sub foo(foo_result)
+      #|00000021: foo_result :: out u32 = low:32[RAX]
       #|
-      #|
-      #|00000018:
-      #|00000019: RAX := 0
-      #|00000020: AF := unknown[AF is undefined after xor]:u1
-      #|00000021: ZF := 1
-      #|00000022: PF := 1
-      #|00000023: OF := 0
-      #|00000024: CF := 0
-      #|00000025: SF := 0
-      #|00000026: v_1 := mem[RSP, el]:u64
-      #|00000027: RSP := RSP + 8
-      #|00000028: call v_1 with noreturn
+      #|00000022:
+      #|00000023: RAX := 0
+      #|00000024: AF := unknown[AF is undefined after xor]:u1
+      #|00000025: ZF := 1
+      #|00000026: PF := 1
+      #|00000027: OF := 0
+      #|00000028: CF := 0
+      #|00000029: SF := 0
+      #|00000030: v_1 := mem[RSP, el]:u64
+      #|00000031: RSP := RSP + 8
+      #|00000032: call v_1 with noreturn
       #|
     ),
   )
@@ -318,8 +320,9 @@ test "bap list and config" {
       #|  flatten
       #|  trivial-condition-form
       #|  stub-resolver
-      #|  beagle
       #|  abi
+      #|  api
+      #|  beagle
       #|  callsites
       #|  dump-symbols
       #|  emit-ida-script

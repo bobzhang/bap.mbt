@@ -1,0 +1,41 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/arm_gnueabi"
+
+import {
+  "bobzhang/bap/c",
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/types",
+}
+
+// Values
+pub fn aapcs32(@core_theory.Target) -> Unit
+
+pub fn aapcs64(@core_theory.Target) -> Unit
+
+pub fn setup() -> Unit
+
+// Errors
+
+// Types and methods
+pub(all) struct ArmData {
+  model : @c.Model
+}
+pub fn ArmData::alignment(Self, @c.CType) -> @types.Size
+pub fn ArmData::array(Self, @c.Spec[@c.Qualifier[Bool], @c.ArrayType]) -> Int?
+pub fn ArmData::basic(Self, @c.Basic) -> @types.Size
+pub fn ArmData::bits(Self, @c.CType) -> Int?
+pub fn ArmData::complex(Self, @c.Basic) -> @types.Size
+pub fn ArmData::enum_(Self, Array[(String, Int64?)]) -> @types.Size
+pub fn ArmData::floating(Self, @c.Basic) -> @types.Size
+pub fn ArmData::integer(Self, @c.Basic) -> @types.Size
+pub fn ArmData::model(Self) -> @c.Model
+pub fn ArmData::pointer(Self) -> @types.AddrSize
+pub fn ArmData::real(Self, @c.Basic) -> @types.Size
+pub fn ArmData::scalar(Self, @c.CType) -> @types.Size
+pub fn ArmData::structure(Self, @c.Spec[Unit, @c.Compound]) -> Int?
+pub fn ArmData::union(Self, @c.Spec[Unit, @c.Compound]) -> Int?
+pub impl @c.Ruler for ArmData
+
+// Type aliases
+
+// Traits

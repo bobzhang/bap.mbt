@@ -16,8 +16,9 @@ let doc : String =
 ///|
 /// Keeps only the dependencies that are currently registered as project passes.
 ///
-/// Upstream depends on the `api` pass, which is not part of the port; the
-/// dependency is kept only when some package has registered it.
+/// Upstream depends on the `api` pass (`plugins/api`); the dependency is
+/// kept only when the `api` plugin has registered it (the frontend loads
+/// the `api` plugin before this one).
 fn available_deps(deps : Array[String]) -> Array[String] {
   deps.filter(dep => @project.find_pass(dep) is Some(_))
 }

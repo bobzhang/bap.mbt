@@ -1,0 +1,60 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/mc"
+
+import {
+  "bobzhang/bap/types",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn find_lifter(String) -> ((Insn) -> Array[@types.Stmt] raise LiftError)?
+
+pub fn lift(String, Insn) -> Array[@types.Stmt] raise LiftError
+
+pub fn lifter_targets() -> Array[String]
+
+pub fn register_lifter(String, (Insn) -> Array[@types.Stmt] raise LiftError) -> Unit
+
+// Errors
+pub(all) suberror LiftError {
+  Unsupported(String)
+  BadOperands(String)
+  Failure(String)
+} derive(@debug.Debug)
+pub fn LiftError::message(Self) -> String
+pub fn LiftError::to_repr(Self) -> @debug.Repr
+
+// Types and methods
+pub(all) struct Insn {
+  name : String
+  assembly : String
+  ops : Array[Op]
+  addr : UInt64
+  size : Int
+} derive(Eq, @debug.Debug)
+pub fn Insn::create(String, Array[Op], addr? : UInt64, size? : Int, assembly? : String) -> Self
+pub fn Insn::equal(Self, Self) -> Bool
+pub fn Insn::next_addr(Self) -> UInt64
+pub fn Insn::not_equal(Self, Self) -> Bool
+pub fn Insn::op(Self, Int) -> Op?
+pub fn Insn::to_repr(Self) -> @debug.Repr
+
+pub(all) enum Op {
+  Reg(name~ : String, code~ : Int)
+  Imm(Int64)
+  Fmm(Double)
+} derive(Eq, @debug.Debug)
+pub fn Op::equal(Self, Self) -> Bool
+pub fn Op::imm_value(Self) -> Int64?
+pub fn Op::not_equal(Self, Self) -> Bool
+pub fn Op::output(Self, &Logger) -> Unit
+pub fn Op::reg(String, code? : Int) -> Self
+pub fn Op::reg_name(Self) -> String?
+pub fn Op::to_repr(Self) -> @debug.Repr
+pub fn Op::to_string(Self) -> String
+pub impl Show for Op
+
+// Type aliases
+pub type Lifter = (Insn) -> Array[@types.Stmt] raise LiftError
+
+// Traits

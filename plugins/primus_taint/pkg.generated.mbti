@@ -1,0 +1,47 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/primus_taint"
+
+import {
+  "bobzhang/bap/primus",
+  "bobzhang/bap/taint",
+}
+
+// Values
+pub fn call_primitive(@primus.Machine, String, Array[@primus.Value]) -> @primus.Value raise
+
+pub let default_policy : String
+
+pub fn enable(default_policy? : String, gc? : Bool) -> Bool
+
+pub let finalize_signal : String
+
+pub fn finalize_signal_args(@primus.Machine, @taint.Object, Bool) -> Array[@primus.Value]
+
+pub let finalize_signal_doc : String
+
+pub fn find_primitive(String) -> Primitive?
+
+pub fn install_primitives((Primitive) -> Unit raise) -> Unit raise
+
+pub fn install_signals(@primus.Machine, (String, Array[@primus.Value]) -> Unit raise) -> Unit
+
+pub fn policy_selector(String) -> (@primus.Machine) -> Unit raise
+
+pub fn primitives() -> Array[Primitive]
+
+pub fn register(default_policy? : String) -> Int
+
+// Errors
+
+// Types and methods
+pub struct Primitive {
+  name : String
+  types : String
+  docs : String
+  run : (@primus.Machine, Array[@primus.Value]) -> @primus.Value raise
+}
+pub fn Primitive::call(Self, @primus.Machine, Array[@primus.Value]) -> @primus.Value raise
+
+// Type aliases
+
+// Traits

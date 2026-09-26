@@ -1,0 +1,14 @@
+import {
+  "bobzhang/bap/bitvec",
+  "bobzhang/bap/primus",
+  "bobzhang/bap/taint",
+  "bobzhang/bap/types",
+  "moonbitlang/core/immut/hashmap" @immut_hashmap,
+  "moonbitlang/core/immut/sorted_map",
+  "moonbitlang/core/immut/sorted_set",
+}
+
+import {
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/project",
+} for "test"

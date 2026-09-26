@@ -89,7 +89,8 @@ fn project_memory_inspect(memory : @memory.MemMap[String]) -> String {
 }
 
 ///|
-fn project_memory_domain() -> @knowledge.Domain[@memory.MemMap[String]] {
+/// `project_memory_domain`, declared once.
+let project_memory_domain_value : @knowledge.Domain[@memory.MemMap[String]] = {
   let empty : @memory.MemMap[String] = @memory.MemMap::empty()
   @knowledge.Domain::custom(
     project_name("unit-memory"),
@@ -100,14 +101,23 @@ fn project_memory_domain() -> @knowledge.Domain[@memory.MemMap[String]] {
 }
 
 ///|
+fn project_memory_domain() -> @knowledge.Domain[@memory.MemMap[String]] {
+  project_memory_domain_value
+}
+
+///|
+/// `memory_slot`, declared once.
+let memory_slot_value : @knowledge.Slot[Unit, @memory.MemMap[String]] = @core_theory.ProgramUnit::cls().property(
+  name=project_name("unit-memory"),
+  domain=project_memory_domain(),
+  desc="annotated memory regions of the unit",
+  persistent=project_memory_persistent(),
+  public=true,
+)
+
+///|
 pub fn memory_slot() -> @knowledge.Slot[Unit, @memory.MemMap[String]] {
-  @core_theory.ProgramUnit::cls().property(
-    name=project_name("unit-memory"),
-    domain=project_memory_domain(),
-    desc="annotated memory regions of the unit",
-    persistent=project_memory_persistent(),
-    public=true,
-  )
+  memory_slot_value
 }
 
 ///|
@@ -288,7 +298,7 @@ pub fn Project::from_image(
     filename?=image.filename(),
     pkg?,
     program?,
-    memory=image.memory(),
+    memory=image.segment_names(),
   )
 }
 
@@ -498,7 +508,7 @@ pub fn Project::with_applied_relocations(
           Ok({
             ..self,
             image_value: Some(updated),
-            memory_value: updated.memory(),
+            memory_value: updated.segment_names(),
           })
         Err(reason) => Err(reason)
       }

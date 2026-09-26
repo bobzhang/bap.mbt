@@ -57,6 +57,81 @@ let word_rotate_cases : Array[(Int, Int, Int)] = [
 ]
 
 ///|
+/// Upstream `M [opcode; 9; 10; sh; mb; me; rc]` (`rlw* r10, r9, ...`).
+fn m_word(
+  opcode : Int,
+  sh : Int,
+  mb : Int,
+  me : Int,
+  rc? : Bool = false,
+) -> UInt {
+  enc([
+    (opcode, 6),
+    (9, 5),
+    (10, 5),
+    (sh, 5),
+    (mb, 5),
+    (me, 5),
+    (rc.to_int(), 1),
+  ])
+}
+
+///|
+/// The split 6-bit mask field of the MD and MDS forms (upstream `swap_msb`).
+fn swap_msb(n : Int) -> Int {
+  ((n & 31) << 1) | (n >> 5)
+}
+
+///|
+/// Upstream `MD [30; 9; 10; sh0_4; swap_msb n; xo; sh5; rc]`.
+fn md_word(xo : Int, sh : Int, n : Int, rc? : Bool = false) -> UInt {
+  enc([
+    (30, 6),
+    (9, 5),
+    (10, 5),
+    (sh & 31, 5),
+    (swap_msb(n), 6),
+    (xo, 3),
+    (sh >> 5, 1),
+    (rc.to_int(), 1),
+  ])
+}
+
+///|
+/// Upstream `MDS [30; 9; 10; 11; swap_msb n; xo; rc]`.
+fn mds_word(xo : Int, n : Int, rc? : Bool = false) -> UInt {
+  enc([
+    (30, 6),
+    (9, 5),
+    (10, 5),
+    (11, 5),
+    (swap_msb(n), 6),
+    (xo, 4),
+    (rc.to_int(), 1),
+  ])
+}
+
+///|
+/// Upstream `X [31; 9; 10; rb; xo; rc]`.
+fn shift_word(xo : Int, rb? : Int = 11, rc? : Bool = false) -> UInt {
+  enc([(31, 6), (9, 5), (10, 5), (rb, 5), (xo, 10), (rc.to_int(), 1)])
+}
+
+///|
+/// Upstream `XS [31; 9; 10; sh0_4; 413; sh5; rc]`.
+fn sradi_word(sh : Int, rc? : Bool = false) -> UInt {
+  enc([
+    (31, 6),
+    (9, 5),
+    (10, 5),
+    (sh & 31, 5),
+    (413, 9),
+    (sh >> 5, 1),
+    (rc.to_int(), 1),
+  ])
+}
+
+///|
 test "rlwinm, rlwnm, rlwimi" {
   for a in archs {
     let x = 0xAABBCCDDUL
@@ -77,6 +152,7 @@ test "rlwinm, rlwnm, rlwimi" {
           imm(to.to_int64()),
         ],
         init=[("R9", x)],
+        word=m_word(21, sh, from, to),
       )
       r.check("R10", rotated & mask)
       // 5d 2a 19 ..  rlwnm r10, r9, r3, from, to
@@ -91,6 +167,7 @@ test "rlwinm, rlwnm, rlwimi" {
           imm(to.to_int64()),
         ],
         init=[("R9", x), ("R3", sh.to_uint64())],
+        word=m_word(23, 3, from, to),
       )
       r.check("R10", rotated & mask)
       // 51 2a ...  rlwimi r10, r9, sh, from, to
@@ -106,6 +183,7 @@ test "rlwinm, rlwnm, rlwimi" {
           imm(to.to_int64()),
         ],
         init=[("R9", x), ("R10", y)],
+        word=m_word(20, sh, from, to),
       )
       r.check("R10", (rotated & mask) | (y & mask.lnot()))
     }
@@ -115,12 +193,17 @@ test "rlwinm, rlwnm, rlwimi" {
 ///|
 test "rlwinm. and friends set CR0" {
   let ops = [reg("R10"), reg("R9"), imm(0), imm(0), imm(31)]
-  run(R32, "RLWINMo", ops, init=[("R9", 0x8000_0000)]).check_cr0(1, 0, 0)
-  run(R32, "RLWINM_rec", ops, init=[("R9", 0)]).check_cr0(0, 0, 1)
+  let word = m_word(21, 0, 0, 31, rc=true)
+  run(R32, "RLWINMo", ops, init=[("R9", 0x8000_0000)], word~).check_cr0(1, 0, 0)
+  run(R32, "RLWINM_rec", ops, init=[("R9", 0)], word~).check_cr0(0, 0, 1)
   let ops = [reg("R10"), reg("R9"), reg("R3"), imm(0), imm(31)]
-  run(R32, "RLWNMo", ops, init=[("R9", 1)]).check_cr0(0, 1, 0)
+  run(R32, "RLWNMo", ops, init=[("R9", 1)], word=m_word(23, 3, 0, 31, rc=true)).check_cr0(
+    0, 1, 0,
+  )
   let ops = [reg("R10"), reg("R10"), reg("R9"), imm(0), imm(0), imm(31)]
-  run(R32, "RLWIMIo", ops, init=[("R9", 1)]).check_cr0(0, 1, 0)
+  run(R32, "RLWIMIo", ops, init=[("R9", 1)], word=m_word(20, 0, 0, 31, rc=true)).check_cr0(
+    0, 1, 0,
+  )
 }
 
 ///|
@@ -141,15 +224,15 @@ test "rldicl, rldicr, rldic" {
     let (sh, n) = case
     let rotated = rotl64(x_rot, sh)
     let ops = [reg("X10"), reg("X9"), imm(sh.to_int64()), imm(n.to_int64())]
-    run(R64, "RLDICL", ops, init=[("R9", x_rot)]).check(
+    run(R64, "RLDICL", ops, init=[("R9", x_rot)], word=md_word(0, sh, n)).check(
       "R10",
       rotated & mask64(n, 63),
     )
-    run(R64, "RLDICR", ops, init=[("R9", x_rot)]).check(
+    run(R64, "RLDICR", ops, init=[("R9", x_rot)], word=md_word(1, sh, n)).check(
       "R10",
       rotated & mask64(0, n),
     )
-    run(R64, "RLDIC", ops, init=[("R9", x_rot)]).check(
+    run(R64, "RLDIC", ops, init=[("R9", x_rot)], word=md_word(2, sh, n)).check(
       "R10",
       rotated & mask64(n, 63 - sh),
     )
@@ -161,10 +244,16 @@ test "rldcl, rldcr" {
   for case in dword_rotate_cases {
     let (sh, n) = case
     let rotated = rotl64(x_rot, sh)
-    let ops = [reg("X10"), reg("X9"), reg("X11"), imm(n.to_int64())]
+    let ops = [reg("X10"), reg("X9"), reg("R11"), imm(n.to_int64())]
     let init = [("R9", x_rot), ("R11", sh.to_uint64())]
-    run(R64, "RLDCL", ops, init~).check("R10", rotated & mask64(n, 63))
-    run(R64, "RLDCR", ops, init~).check("R10", rotated & mask64(0, n))
+    run(R64, "RLDCL", ops, init~, word=mds_word(8, n)).check(
+      "R10",
+      rotated & mask64(n, 63),
+    )
+    run(R64, "RLDCR", ops, init~, word=mds_word(9, n)).check(
+      "R10",
+      rotated & mask64(0, n),
+    )
   }
 }
 
@@ -182,25 +271,40 @@ test "rldimi" {
       imm(sh.to_int64()),
       imm(n.to_int64()),
     ]
-    run(R64, "RLDIMI", ops, init=[("R9", x_rot), ("R10", y)]).check(
-      "R10",
-      (rotated & mask) | (y & mask.lnot()),
-    )
+    run(
+      R64,
+      "RLDIMI",
+      ops,
+      init=[("R9", x_rot), ("R10", y)],
+      word=md_word(3, sh, n),
+    ).check("R10", (rotated & mask) | (y & mask.lnot()))
   }
 }
 
 ///|
 test "rld* record forms set CR0" {
   let ops = [reg("X10"), reg("X9"), imm(0), imm(0)]
-  for name in ["RLDICLo", "RLDICRo", "RLDICo", "RLDICL_rec"] {
-    run(R64, name, ops, init=[("R9", 0x8000_0000_0000_0000)]).check_cr0(1, 0, 0)
+  for case in [("RLDICLo", 0), ("RLDICRo", 1), ("RLDICo", 2), ("RLDICL_rec", 0)] {
+    let (name, xo) = case
+    run(
+      R64,
+      name,
+      ops,
+      init=[("R9", 0x8000_0000_0000_0000)],
+      word=md_word(xo, 0, 0, rc=true),
+    ).check_cr0(1, 0, 0)
   }
-  let ops = [reg("X10"), reg("X9"), reg("X11"), imm(0)]
-  for name in ["RLDCLo", "RLDCRo"] {
-    run(R64, name, ops, init=[("R9", 0)]).check_cr0(0, 0, 1)
+  let ops = [reg("X10"), reg("X9"), reg("R11"), imm(0)]
+  for case in [("RLDCLo", 8), ("RLDCRo", 9)] {
+    let (name, xo) = case
+    run(R64, name, ops, init=[("R9", 0)], word=mds_word(xo, 0, rc=true)).check_cr0(
+      0, 0, 1,
+    )
   }
   let ops = [reg("X10"), reg("X10"), reg("X9"), imm(0), imm(0)]
-  run(R64, "RLDIMIo", ops, init=[("R9", 5)]).check_cr0(0, 1, 0)
+  run(R64, "RLDIMIo", ops, init=[("R9", 5)], word=md_word(3, 0, 0, rc=true)).check_cr0(
+    0, 1, 0,
+  )
 }
 
 ///|
@@ -215,8 +319,8 @@ test "slw and srw" {
       } else {
         ((x << sh) & 0xFFFF_FFFF, (x & 0xFFFF_FFFF) >> sh)
       }
-      run(a, "SLW", ops, init~).check("R10", left)
-      run(a, "SRW", ops, init~).check("R10", right)
+      run(a, "SLW", ops, init~, word=shift_word(24)).check("R10", left)
+      run(a, "SRW", ops, init~, word=shift_word(536)).check("R10", right)
     }
   }
 }
@@ -242,9 +346,13 @@ test "srawi" {
     for case in cases {
       let (sh, x, ca) = case
       let x = trunc(a, x)
-      let r = run(a, "SRAWI", [reg("R10"), reg("R9"), imm(sh.to_int64())], init=[
-        ("R9", x),
-      ])
+      let r = run(
+        a,
+        "SRAWI",
+        [reg("R10"), reg("R9"), imm(sh.to_int64())],
+        init=[("R9", x)],
+        word=shift_word(824, rb=sh),
+      )
       r.check("R10", sra32(a, x, sh))
       r.check("CA", ca)
       r.check("CA32", ca)
@@ -265,10 +373,13 @@ test "sraw" {
     for case in cases {
       let (sh, x, ca) = case
       let x = trunc(a, x)
-      let r = run(a, "SRAW", [reg("R10"), reg("R9"), reg("R11")], init=[
-        ("R9", x),
-        ("R11", sh.to_uint64()),
-      ])
+      let r = run(
+        a,
+        "SRAW",
+        [reg("R10"), reg("R9"), reg("R11")],
+        init=[("R9", x), ("R11", sh.to_uint64())],
+        word=shift_word(792),
+      )
       r.check("R10", sra32(a, x, sh))
       r.check("CA", ca)
       r.check("CA32", ca)
@@ -278,14 +389,21 @@ test "sraw" {
 
 ///|
 test "sraw. and srawi. set CR0" {
-  let r = run(R32, "SRAWo", [reg("R10"), reg("R9"), reg("R11")], init=[
-    ("R9", 0x8000_0000),
-    ("R11", 4),
-  ])
+  let r = run(
+    R32,
+    "SRAWo",
+    [reg("R10"), reg("R9"), reg("R11")],
+    init=[("R9", 0x8000_0000), ("R11", 4)],
+    word=shift_word(792, rc=true),
+  )
   r.check_cr0(1, 0, 0)
-  let r = run(R32, "SRAWIo", [reg("R10"), reg("R9"), imm(4)], init=[
-    ("R9", 0x10),
-  ])
+  let r = run(
+    R32,
+    "SRAWIo",
+    [reg("R10"), reg("R9"), imm(4)],
+    init=[("R9", 0x10)],
+    word=shift_word(824, rb=4, rc=true),
+  )
   r.check("R10", 1)
   r.check_cr0(0, 1, 0)
 }
@@ -298,11 +416,17 @@ test "sld and srd" {
   let x = 0xABCDEF42_0ABBCCDDUL
   for sh in [0, 4, 42] {
     let init = [("R9", x), ("R11", sh.to_uint64())]
-    let ops = [reg("X10"), reg("X9"), reg("X11")]
-    run(R64, "SLD", ops, init~).check("R10", x << sh)
-    run(R64, "SRD", ops, init~).check("R10", x >> sh)
-    run(R64, "SLDo", ops, init~).check("R10", x << sh)
-    run(R64, "SRDo", ops, init~).check("R10", x >> sh)
+    let ops = [reg("X10"), reg("X9"), reg("R11")]
+    run(R64, "SLD", ops, init~, word=shift_word(27)).check("R10", x << sh)
+    run(R64, "SRD", ops, init~, word=shift_word(539)).check("R10", x >> sh)
+    run(R64, "SLDo", ops, init~, word=shift_word(27, rc=true)).check(
+      "R10",
+      x << sh,
+    )
+    run(R64, "SRDo", ops, init~, word=shift_word(539, rc=true)).check(
+      "R10",
+      x >> sh,
+    )
   }
 }
 
@@ -328,33 +452,50 @@ test "sradi and srad" {
   for case in cases {
     let (sh, x) = case
     let (expected, ca) = sra64(x, sh)
-    let r = run(R64, "SRADI", [reg("X10"), reg("X9"), imm(sh.to_int64())], init=[
-      ("R9", x),
-    ])
+    let r = run(
+      R64,
+      "SRADI",
+      [reg("X10"), reg("X9"), imm(sh.to_int64())],
+      init=[("R9", x)],
+      word=sradi_word(sh),
+    )
     r.check("R10", expected)
     r.check("CA", ca)
     r.check("CA32", ca)
-    let r = run(R64, "SRAD", [reg("X10"), reg("X9"), reg("X11")], init=[
-      ("R9", x),
-      ("R11", sh.to_uint64()),
-    ])
+    let r = run(
+      R64,
+      "SRAD",
+      [reg("X10"), reg("X9"), reg("R11")],
+      init=[("R9", x), ("R11", sh.to_uint64())],
+      word=shift_word(794),
+    )
     r.check("R10", expected)
     r.check("CA", ca)
     r.check("CA32", ca)
   }
   // shifting by 64 or more fills with the sign bit
   let (expected, ca) = sra64(0x80000000_00000000, 64)
-  let r = run(R64, "SRAD", [reg("X10"), reg("X9"), reg("X11")], init=[
-    ("R9", 0x80000000_00000000),
-    ("R11", 64),
-  ])
+  let r = run(
+    R64,
+    "SRAD",
+    [reg("X10"), reg("X9"), reg("R11")],
+    init=[("R9", 0x80000000_00000000), ("R11", 64)],
+    word=shift_word(794),
+  )
   r.check("R10", expected)
   r.check("CA", ca)
-  run(R64, "SRADo", [reg("X10"), reg("X9"), reg("X11")], init=[
-    ("R9", 0x80000000_00000000),
-    ("R11", 1),
-  ]).check_cr0(1, 0, 0)
-  run(R64, "SRADIo", [reg("X10"), reg("X9"), imm(1)], init=[("R9", 4)]).check_cr0(
-    0, 1, 0,
-  )
+  run(
+    R64,
+    "SRADo",
+    [reg("X10"), reg("X9"), reg("R11")],
+    init=[("R9", 0x80000000_00000000), ("R11", 1)],
+    word=shift_word(794, rc=true),
+  ).check_cr0(1, 0, 0)
+  run(
+    R64,
+    "SRADIo",
+    [reg("X10"), reg("X9"), imm(1)],
+    init=[("R9", 4)],
+    word=sradi_word(1, rc=true),
+  ).check_cr0(0, 1, 0)
 }

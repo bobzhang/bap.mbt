@@ -116,9 +116,8 @@ pub fn LabelFacts::new() -> LabelFacts {
 }
 
 ///|
-/// The slot is declared once: every call returns the same slot (a
-/// redeclaration with a fresh domain would shadow it).
-let label_addr_slot_value : @knowledge.Slot[Unit, @types.Word?] = Label::cls().property(
+/// The `Label::addr_slot` property, declared once.
+let label_addr_slot : @knowledge.Slot[Unit, @types.Word?] = Label::cls().property(
   name=core_name("label-addr"),
   domain=optional_word_domain("label-addr"),
   desc="the program virtual address",
@@ -128,13 +127,12 @@ let label_addr_slot_value : @knowledge.Slot[Unit, @types.Word?] = Label::cls().p
 
 ///|
 pub fn Label::addr_slot() -> @knowledge.Slot[Unit, @types.Word?] {
-  label_addr_slot_value
+  label_addr_slot
 }
 
 ///|
-/// The slot is declared once: every call returns the same slot (a
-/// redeclaration with a fresh domain would shadow it).
-let label_name_slot_value : @knowledge.Slot[Unit, String?] = Label::cls().property(
+/// The `Label::name_slot` property, declared once.
+let label_name_slot : @knowledge.Slot[Unit, String?] = Label::cls().property(
   name=core_name("label-name"),
   domain=optional_string_domain("label-name"),
   desc="the program linkage name",
@@ -144,13 +142,12 @@ let label_name_slot_value : @knowledge.Slot[Unit, String?] = Label::cls().proper
 
 ///|
 pub fn Label::name_slot() -> @knowledge.Slot[Unit, String?] {
-  label_name_slot_value
+  label_name_slot
 }
 
 ///|
-/// The slot is declared once: every call returns the same slot (a
-/// redeclaration with a fresh domain would shadow it).
-let label_possible_name_slot_value : @knowledge.Slot[
+/// The `Label::possible_name_slot` property, declared once.
+let label_possible_name_slot : @knowledge.Slot[
   Unit,
   @knowledge.Opinions[String?],
 ] = Label::cls().property(
@@ -165,13 +162,12 @@ pub fn Label::possible_name_slot() -> @knowledge.Slot[
   Unit,
   @knowledge.Opinions[String?],
 ] {
-  label_possible_name_slot_value
+  label_possible_name_slot
 }
 
 ///|
-/// The slot is declared once: every call returns the same slot (a
-/// redeclaration with a fresh domain would shadow it).
-let label_ivec_slot_value : @knowledge.Slot[Unit, Int?] = Label::cls().property(
+/// The `Label::ivec_slot` property, declared once.
+let label_ivec_slot : @knowledge.Slot[Unit, Int?] = Label::cls().property(
   name=core_name("label-ivec"),
   domain=optional_int_domain("label-ivec"),
   desc="the program interrupt vector",
@@ -181,13 +177,12 @@ let label_ivec_slot_value : @knowledge.Slot[Unit, Int?] = Label::cls().property(
 
 ///|
 pub fn Label::ivec_slot() -> @knowledge.Slot[Unit, Int?] {
-  label_ivec_slot_value
+  label_ivec_slot
 }
 
 ///|
-/// The slot is declared once: every call returns the same slot (a
-/// redeclaration with a fresh domain would shadow it).
-let label_encoding_slot_value : @knowledge.Slot[Unit, Language] = Label::cls().property(
+/// The `Label::encoding_slot` property, declared once.
+let label_encoding_slot : @knowledge.Slot[Unit, Language] = Label::cls().property(
   name=core_name("encoding"),
   domain=source_language_domain(),
   desc="the language of the code",
@@ -197,13 +192,12 @@ let label_encoding_slot_value : @knowledge.Slot[Unit, Language] = Label::cls().p
 
 ///|
 pub fn Label::encoding_slot() -> @knowledge.Slot[Unit, Language] {
-  label_encoding_slot_value
+  label_encoding_slot
 }
 
 ///|
-/// The slot is declared once: every call returns the same slot (a
-/// redeclaration with a fresh domain would shadow it).
-let label_aliases_slot_value : @knowledge.Slot[Unit, Set[String]] = Label::cls().property(
+/// The `Label::aliases_slot` property, declared once.
+let label_aliases_slot : @knowledge.Slot[Unit, Set[String]] = Label::cls().property(
   name=core_name("label-aliases"),
   domain=@knowledge.Domain::set(core_name("label-aliases"), item => item),
   desc="the set of known program names",
@@ -213,13 +207,12 @@ let label_aliases_slot_value : @knowledge.Slot[Unit, Set[String]] = Label::cls()
 
 ///|
 pub fn Label::aliases_slot() -> @knowledge.Slot[Unit, Set[String]] {
-  label_aliases_slot_value
+  label_aliases_slot
 }
 
 ///|
-/// The slot is declared once: every call returns the same slot (a
-/// redeclaration with a fresh domain would shadow it).
-let label_target_slot_value : @knowledge.Slot[Unit, Target] = Label::cls().property(
+/// The `Label::target_slot` property, declared once.
+let label_target_slot : @knowledge.Slot[Unit, Target] = Label::cls().property(
   name=core_name("label-target"),
   domain=target_domain_named("label-target"),
   desc="the explicit program label target",
@@ -229,13 +222,12 @@ let label_target_slot_value : @knowledge.Slot[Unit, Target] = Label::cls().prope
 
 ///|
 pub fn Label::target_slot() -> @knowledge.Slot[Unit, Target] {
-  label_target_slot_value
+  label_target_slot
 }
 
 ///|
-/// The slot is declared once: every call returns the same slot (a
-/// redeclaration with a fresh domain would shadow it).
-let label_unit_slot_value : @knowledge.Slot[Unit, ProgramUnit?] = Label::cls().property(
+/// The `Label::unit_slot` property, declared once.
+let label_unit_slot : @knowledge.Slot[Unit, ProgramUnit?] = Label::cls().property(
   name=core_name("label-unit"),
   domain=program_unit_domain(),
   desc="the program unit",
@@ -245,13 +237,12 @@ let label_unit_slot_value : @knowledge.Slot[Unit, ProgramUnit?] = Label::cls().p
 
 ///|
 pub fn Label::unit_slot() -> @knowledge.Slot[Unit, ProgramUnit?] {
-  label_unit_slot_value
+  label_unit_slot
 }
 
 ///|
-/// The slot is declared once: every call returns the same slot (a
-/// redeclaration with a fresh domain would shadow it).
-let label_is_valid_slot_value : @knowledge.Slot[Unit, Bool?] = Label::cls().property(
+/// The `Label::is_valid_slot` property, declared once.
+let label_is_valid_slot : @knowledge.Slot[Unit, Bool?] = Label::cls().property(
   name=core_name("is-valid"),
   domain=label_bool_domain(),
   desc="is the program valid or not",
@@ -261,13 +252,12 @@ let label_is_valid_slot_value : @knowledge.Slot[Unit, Bool?] = Label::cls().prop
 
 ///|
 pub fn Label::is_valid_slot() -> @knowledge.Slot[Unit, Bool?] {
-  label_is_valid_slot_value
+  label_is_valid_slot
 }
 
 ///|
-/// The slot is declared once: every call returns the same slot (a
-/// redeclaration with a fresh domain would shadow it).
-let label_is_subroutine_slot_value : @knowledge.Slot[Unit, Bool?] = Label::cls().property(
+/// The `Label::is_subroutine_slot` property, declared once.
+let label_is_subroutine_slot : @knowledge.Slot[Unit, Bool?] = Label::cls().property(
   name=core_name("is-subroutine"),
   domain=label_bool_domain(),
   desc="is the program a subroutine entry point",
@@ -277,7 +267,7 @@ let label_is_subroutine_slot_value : @knowledge.Slot[Unit, Bool?] = Label::cls()
 
 ///|
 pub fn Label::is_subroutine_slot() -> @knowledge.Slot[Unit, Bool?] {
-  label_is_subroutine_slot_value
+  label_is_subroutine_slot
 }
 
 ///|

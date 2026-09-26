@@ -26,7 +26,7 @@ pub fn backend_names_for_extension(String) -> Array[String]
 
 pub fn backends_for_extension(String) -> Array[ImageBackend]
 
-pub fn code_region() -> ImageTag[Unit]
+pub fn code_region() -> @types.Tag[Unit]
 
 pub fn create(String, backend? : String) -> Result[(Image, Array[String]), String]
 
@@ -36,6 +36,8 @@ pub fn endian(Image) -> @bitvec.Endian
 
 pub fn entry_point(Image) -> UInt64
 
+pub fn file() -> @types.Tag[String]
+
 pub fn filename(Image) -> String?
 
 pub fn find_backend(String) -> ImageBackend?
@@ -44,7 +46,9 @@ pub fn find_loader(String) -> ImageLoader?
 
 pub fn from_spec(Bytes, @ogre.Doc, filename? : String, target? : @core_theory.Target) -> Result[(Image, Array[String]), String]
 
-pub fn memory(Image) -> @memory.MemMap[String]
+pub fn function_start() -> @types.Tag[Unit]
+
+pub fn memory(Image) -> @memory.MemMap[@types.Value]
 
 pub fn memory_of_segment(Image, Segment) -> @memory.Memory
 
@@ -64,9 +68,9 @@ pub fn register_legacy_backend(name~ : String, LegacyImageBackend, description? 
 
 pub fn register_loader(name~ : String, ImageLoader) -> Result[Unit, String]
 
-pub fn section() -> ImageTag[String]
+pub fn section() -> @types.Tag[String]
 
-pub fn segment() -> ImageTag[Segment]
+pub fn segment() -> @types.Tag[Segment]
 
 pub fn segment_of_symbol(Image, Symbol) -> Segment raise ImageLookupError
 
@@ -74,9 +78,11 @@ pub fn segments(Image) -> Array[Segment]
 
 pub fn spec(Image) -> @ogre.Doc
 
-pub fn specification() -> ImageTag[@ogre.Doc]
+pub fn specification() -> @types.Tag[@ogre.Doc]
 
-pub fn symbol() -> ImageTag[String]
+pub fn symbol() -> @types.Tag[String]
+
+pub fn symbol_info() -> @types.Tag[Symbol]
 
 pub fn symbols(Image) -> Array[Symbol]
 
@@ -126,7 +132,7 @@ pub fn Image::is_executable(Self) -> Bool?
 pub fn Image::load_bias(Self) -> Int64?
 pub fn Image::memories_of_symbol(Self, Symbol) -> Array[@memory.Memory]?
 pub fn Image::memories_of_symbol_exn(Self, Symbol) -> Array[@memory.Memory] raise ImageLookupError
-pub fn Image::memory(Self) -> @memory.MemMap[String]
+pub fn Image::memory(Self) -> @memory.MemMap[@types.Value]
 pub fn Image::memory_of_section(Self, Section) -> @memory.Memory?
 pub fn Image::memory_of_segment(Self, Segment) -> @memory.Memory
 pub fn Image::memory_of_symbol(Self, Symbol) -> (@memory.Memory, Array[@memory.Memory])?
@@ -144,6 +150,7 @@ pub fn Image::rpaths(Self) -> Array[String]
 pub fn Image::runpaths(Self) -> Array[String]
 pub fn Image::sections(Self) -> Array[Section]
 pub fn Image::sections_of_segment(Self, Segment) -> Array[Section]
+pub fn Image::segment_names(Self) -> @memory.MemMap[String]
 pub fn Image::segment_of_symbol(Self, Symbol) -> Segment?
 pub fn Image::segment_of_symbol_exn(Self, Symbol) -> Segment raise ImageLookupError
 pub fn Image::segments(Self) -> Array[Segment]
@@ -244,18 +251,9 @@ pub fn ImageLoader::create(from_data~ : (Bytes) -> Result[@ogre.Doc?, String], f
 pub fn ImageLoader::from_data(Self, Bytes) -> Result[@ogre.Doc?, String]
 pub fn ImageLoader::from_file(Self, String) -> Result[@ogre.Doc?, String]
 
-type ImageTag[T]
-pub fn ImageTag::code_region() -> Self[Unit]
-pub fn[T] ImageTag::name(Self[T]) -> String
-pub fn ImageTag::section() -> Self[String]
-pub fn ImageTag::segment() -> Self[Segment]
-pub fn ImageTag::specification() -> Self[@ogre.Doc]
-pub fn ImageTag::symbol() -> Self[String]
-pub fn[T] ImageTag::uuid(Self[T]) -> String
-
 pub(all) struct KB {
 }
-pub fn KB::register_loader(name~ : String, from_file~ : (String) -> Result[@ogre.Doc?, String], from_data~ : (Bytes) -> Result[@ogre.Doc?, String]) -> Result[Unit, String]
+pub fn KB::register_loader(name~ : String, from_file~ : (@knowledge.State, String) -> @ogre.Doc? raise, from_data~ : (@knowledge.State, Bytes) -> @ogre.Doc? raise, state? : @knowledge.State) -> Result[Unit, String]
 
 type LegacyImageBackend
 pub fn LegacyImageBackend::create(load~ : (Bytes) -> ImageBackendImage?) -> Self
@@ -377,6 +375,8 @@ pub fn SymbolValue::create(addr~ : UInt64, value~ : UInt64) -> Self
 pub fn SymbolValue::value(Self) -> UInt64
 
 // Type aliases
+pub using @types {type Tag as ImageTag}
+
 pub using @ogre {type Doc as OgreDoc}
 
 // Traits

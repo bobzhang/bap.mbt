@@ -11,7 +11,10 @@
 // Deviation: upstream keeps the destinations and the delay of an
 // instruction in its `Theory.Semantics` value; the port keeps them in
 // dedicated label properties (`project_insn_dests_slot` and
-// `project_insn_delay_slot`), leaving the Core Theory semantics alone.
+// `project_insn_delay_slot`), leaving the Core Theory semantics alone. The
+// properties are named `bap:disasm-*`, as the `bap:insn` and
+// `bap:insn-dests` properties of the program class are declared (with the
+// `@mc.Insn` representation) by the BIL plugin.
 
 ///|
 let project_label_cls : @knowledge.Class[Unit, Unit] = @core_theory.Label::cls()
@@ -56,10 +59,10 @@ fn project_disasm_name(text : String) -> @knowledge.Name {
 /// The memory occupied by the instruction of a label (upstream
 /// `Memory.slot`).
 let project_insn_memory_slot : @knowledge.Slot[Unit, @memory.Memory?] = project_label_cls.property(
-  name=project_disasm_name("mem"),
+  name=project_disasm_name("disasm-mem"),
   domain=@knowledge.Domain::optional(
     @knowledge.Domain::new(
-      name=project_disasm_name("mem"),
+      name=project_disasm_name("disasm-mem"),
       empty=None,
       is_empty=_ => false,
       order=(lhs, rhs) => {
@@ -96,10 +99,10 @@ fn project_insn_same(
 /// The instruction decoded at a label (upstream
 /// `Disasm_expert.Basic.Insn.slot`).
 let project_insn_slot : @knowledge.Slot[Unit, ProjectDisassemblyInstruction?] = project_label_cls.property(
-  name=project_disasm_name("insn"),
+  name=project_disasm_name("disasm-insn"),
   domain=@knowledge.Domain::optional(
     @knowledge.Domain::new(
-      name=project_disasm_name("insn"),
+      name=project_disasm_name("disasm-insn"),
       empty=None,
       is_empty=_ => false,
       order=(lhs, rhs) => {
@@ -157,9 +160,9 @@ let project_insn_dests_slot : @knowledge.Slot[
   Unit,
   Array[@knowledge.Object[Unit]]?,
 ] = project_label_cls.property(
-  name=project_disasm_name("insn-dests"),
+  name=project_disasm_name("disasm-insn-dests"),
   domain=@knowledge.Domain::new(
-    name=project_disasm_name("insn-dests"),
+    name=project_disasm_name("disasm-insn-dests"),
     empty=Some(Some([])),
     is_empty=dests => dests is Some([]),
     order=(lhs, rhs) => {
@@ -204,9 +207,9 @@ let project_insn_dests_slot : @knowledge.Slot[
 /// The length of the delay slot of the instruction of a label (upstream
 /// `Insn.Slot.delay`).
 let project_insn_delay_slot : @knowledge.Slot[Unit, Int?] = project_label_cls.property(
-  name=project_disasm_name("insn-delay"),
+  name=project_disasm_name("disasm-insn-delay"),
   domain=@knowledge.Domain::optional(
-    @knowledge.Domain::flat(project_disasm_name("insn-delay"), value => {
+    @knowledge.Domain::flat(project_disasm_name("disasm-insn-delay"), value => {
       value.to_string()
     }),
   ),
@@ -218,10 +221,10 @@ let project_insn_delay_slot : @knowledge.Slot[Unit, Int?] = project_label_cls.pr
 /// delay provided by the lifters), from which the default destinations and
 /// delay are derived.
 let project_insn_lifted_slot : @knowledge.Slot[Unit, @mc.Lifted?] = project_label_cls.property(
-  name=project_disasm_name("insn-lifted"),
+  name=project_disasm_name("disasm-insn-lifted"),
   domain=@knowledge.Domain::optional(
     @knowledge.Domain::new(
-      name=project_disasm_name("insn-lifted"),
+      name=project_disasm_name("disasm-insn-lifted"),
       empty=None,
       is_empty=_ => false,
       order=(lhs, rhs) => if lhs == rhs { Equal } else { Incomparable },

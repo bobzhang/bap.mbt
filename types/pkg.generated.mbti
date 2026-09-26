@@ -1100,6 +1100,20 @@ pub fn Label::substitute_var(Self, Var, Exp) -> Self
 pub fn Label::to_repr(Self) -> @debug.Repr
 pub fn Label::to_string(Self) -> String
 
+type Live
+pub fn Live::blks(Self, Var) -> Array[Tid]
+pub fn Live::compute(Term[Sub], keep? : Array[Var]) -> Self
+pub fn Live::defs(Self, Tid) -> Array[Var]
+pub fn[A] Live::fold(Self, init~ : A, (A, Tid, Array[Var]) -> A) -> A
+pub fn Live::ins(Self, Tid) -> Array[Var]
+pub fn Live::output(Self, &Logger) -> Unit
+pub fn Live::outs(Self, Tid) -> Array[Var]
+pub fn Live::solution(Self) -> @graphlib.Fixpoint[Tid, Array[Var]]
+pub fn Live::to_string(Self) -> String
+pub fn Live::uses(Self, Tid) -> Array[Var]
+pub fn Live::vars(Self) -> Array[Var]
+pub impl Show for Live
+
 pub(all) struct Phi {
   lhs : Var
   values : Array[(Tid, Exp)]
@@ -1221,7 +1235,9 @@ pub(all) struct Sub {
   args : Array[Term[Arg]]
   blks : Array[Term[Blk]]
 }
+pub fn Sub::compute_liveness(Term[Self]) -> @graphlib.Fixpoint[Tid, Array[Var]]
 pub fn Sub::create(name? : String, args? : Array[Term[Arg]], blks? : Array[Term[Blk]], tid? : Tid) -> Term[Self]
+pub fn Sub::free_vars(Term[Self]) -> Array[Var]
 pub fn Sub::name(Term[Self]) -> String
 pub fn Sub::of_cfg(IrCfg) -> Term[Self]
 pub fn Sub::to_cfg(Term[Self]) -> IrCfg
@@ -1558,6 +1574,7 @@ pub fn Term::sub_immediate_dominator(Self[Sub], Self[Blk], entry? : Tid) -> Self
 pub fn Term::sub_immediate_dominator_tids(Self[Sub], entry? : Tid) -> Map[Tid, Tid]
 pub fn Term::sub_in_edges(Self[Sub], Self[Blk]) -> Array[IrCfgEdge]
 pub fn Term::sub_jmps(Self[Sub]) -> Array[Self[Jmp]]
+pub fn Term::sub_live(Self[Sub], keep? : Array[Var]) -> Live
 pub fn Term::sub_live_in_vars(Self[Sub], entry? : Tid) -> Array[Var]
 pub fn Term::sub_liveness(Self[Sub], entry? : Tid) -> Array[BlockLiveness]
 pub fn Term::sub_name(Self[Sub]) -> String

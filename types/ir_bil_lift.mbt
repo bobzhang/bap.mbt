@@ -322,14 +322,17 @@ fn BirContext::call(self : BirContext, name : String) -> BirCfg {
 
 ///|
 /// The destination of a `Jmp` statement: a direct jump for a constant
-/// (upstream `S.goto`), an indirect one otherwise (upstream `S.jmp`).
+/// (upstream `S.goto`), an indirect one otherwise (upstream `S.jmp`). The
+/// destination is constant-folded first, as upstream simplifies the BIL
+/// (the `Bil_semantics` optimizer) before denotating it, so that
+/// pc-relative targets such as `addr + off` become direct.
 fn BirContext::jump(self : BirContext, dst : Exp, is_call~ : Bool) -> BirCfg {
-  match dst {
+  match dst.fold_consts() {
     Int(word) => {
       let label = self.label_for_addr(word)
       bir_goto(label, is_call=is_call || (self.is_subroutine)(label))
     }
-    _ => bir_jmp(dst, is_call~)
+    folded => bir_jmp(folded, is_call~)
   }
 }
 

@@ -77,3 +77,10 @@ test "a64: loads, stores and atomics" {
 test "a64: branches" {
   check(a64(), a64_branch_cases, registry=a64_providers)
 }
+
+///|
+/// Unicorn runs with pointer authentication disabled, as the semantics
+/// model it (the PAC and AUT instructions are identities).
+test "a64: pointer authentication" {
+  check(a64(), a64_pauth_cases, registry=a64_providers)
+}

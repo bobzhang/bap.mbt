@@ -258,3 +258,12 @@
 (defun STLRW (rt rn) (st-n rt 32 rn))
 (defun STLRH (rt rn) (st-n rt 16 rn))
 (defun STLRB (rt rn) (st-n rt 8 rn))
+
+;; port: added, the authenticated loads (pointer authentication disabled,
+;; see aarch64-special.lisp) with their offsets scaled by 8
+(defun LDRAAindexed (rt rn off) (ld-x rt 64 (+ rn (lshift off 3))))
+(defun LDRABindexed (rt rn off) (ld-x rt 64 (+ rn (lshift off 3))))
+(defun LDRAAwriteback (wb rt rn off)
+  (let ((a (+ rn (lshift off 3)))) (set$ wb a) (ld-x rt 64 a)))
+(defun LDRABwriteback (wb rt rn off)
+  (let ((a (+ rn (lshift off 3)))) (set$ wb a) (ld-x rt 64 a)))

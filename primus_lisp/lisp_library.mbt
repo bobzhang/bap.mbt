@@ -3008,6 +3008,20 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|(defun TBNZW (reg pos off) (TB** non-zero reg pos off))
         #|(defun TBNZX (reg pos off) (TB** non-zero reg pos off))
         #|
+        #|;; port: added, the authenticating branches and returns (pointer
+        #|;; authentication disabled, see aarch64-special.lisp)
+        #|
+        #|(defun RETAA () (exec-addr LR))
+        #|(defun RETAB () (exec-addr LR))
+        #|(defun BRAA (rn _) (exec-addr rn))
+        #|(defun BRAB (rn _) (exec-addr rn))
+        #|(defun BRAAZ (rn) (exec-addr rn))
+        #|(defun BRABZ (rn) (exec-addr rn))
+        #|(defun BLRAA (rn _) (BLR rn))
+        #|(defun BLRAB (rn _) (BLR rn))
+        #|(defun BLRAAZ (rn) (BLR rn))
+        #|(defun BLRABZ (rn) (BLR rn))
+        #|
       ),
     ),
     (
@@ -3273,6 +3287,15 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|(defun STLRW (rt rn) (st-n rt 32 rn))
         #|(defun STLRH (rt rn) (st-n rt 16 rn))
         #|(defun STLRB (rt rn) (st-n rt 8 rn))
+        #|
+        #|;; port: added, the authenticated loads (pointer authentication disabled,
+        #|;; see aarch64-special.lisp) with their offsets scaled by 8
+        #|(defun LDRAAindexed (rt rn off) (ld-x rt 64 (+ rn (lshift off 3))))
+        #|(defun LDRABindexed (rt rn off) (ld-x rt 64 (+ rn (lshift off 3))))
+        #|(defun LDRAAwriteback (wb rt rn off)
+        #|  (let ((a (+ rn (lshift off 3)))) (set$ wb a) (ld-x rt 64 a)))
+        #|(defun LDRABwriteback (wb rt rn off)
+        #|  (let ((a (+ rn (lshift off 3)))) (set$ wb a) (ld-x rt 64 a)))
         #|
       ),
     ),
@@ -3719,6 +3742,50 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|
         #|(defun UDF (exn)
         #|  (intrinsic 'undefined-instruction))
+        #|
+        #|;; port: pointer authentication (ARMv8.3 PAuth), added; upstream has no
+        #|;; semantics for it. The semantics model the instructions with pointer
+        #|;; authentication disabled (SCTLR_ELx.EnIA/EnIB/EnDA/EnDB clear), as a
+        #|;; process without keys sees them: the PAC* and AUT* instructions leave
+        #|;; their register unchanged, XPAC* strip nothing, and the authenticating
+        #|;; branches and returns are the plain ones.
+        #|
+        #|(defun PACIASP () (empty))
+        #|(defun PACIBSP () (empty))
+        #|(defun PACIAZ () (empty))
+        #|(defun PACIBZ () (empty))
+        #|(defun PACIA1716 () (empty))
+        #|(defun PACIB1716 () (empty))
+        #|(defun AUTIASP () (empty))
+        #|(defun AUTIBSP () (empty))
+        #|(defun AUTIAZ () (empty))
+        #|(defun AUTIBZ () (empty))
+        #|(defun AUTIA1716 () (empty))
+        #|(defun AUTIB1716 () (empty))
+        #|(defun XPACLRI () (empty))
+        #|
+        #|(defun PACIA (_ _ _) (empty))
+        #|(defun PACIB (_ _ _) (empty))
+        #|(defun PACDA (_ _ _) (empty))
+        #|(defun PACDB (_ _ _) (empty))
+        #|(defun AUTIA (_ _ _) (empty))
+        #|(defun AUTIB (_ _ _) (empty))
+        #|(defun AUTDA (_ _ _) (empty))
+        #|(defun AUTDB (_ _ _) (empty))
+        #|(defun PACIZA (_ _) (empty))
+        #|(defun PACIZB (_ _) (empty))
+        #|(defun PACDZA (_ _) (empty))
+        #|(defun PACDZB (_ _) (empty))
+        #|(defun AUTIZA (_ _) (empty))
+        #|(defun AUTIZB (_ _) (empty))
+        #|(defun AUTDZA (_ _) (empty))
+        #|(defun AUTDZB (_ _) (empty))
+        #|(defun XPACI (_ _) (empty))
+        #|(defun XPACD (_ _) (empty))
+        #|
+        #|(defun BRK (_)
+        #|  "brk #imm ; port: added, a software breakpoint"
+        #|  (intrinsic 'software-breakpoint))
         #|
       ),
     ),

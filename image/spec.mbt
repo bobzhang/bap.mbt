@@ -125,17 +125,21 @@ pub fn Spec::persistent() -> @knowledge.Persistent[OgreDoc] {
 }
 
 ///|
+/// `Spec::domain`, declared once.
+let spec_domain_value : @knowledge.Domain[OgreDoc] = @knowledge.Domain::new(
+  name=image_name("spec"),
+  empty=Some(@ogre.Doc::empty()),
+  is_empty=ogre_doc_is_empty,
+  order=ogre_doc_order,
+  join=ogre_doc_merge,
+  inspect=doc => doc.to_string(),
+)
+
+///|
 /// The flat `bap:spec` domain of image specifications (upstream
 /// `Bap_ogre.domain`): documents are joined with `Doc.merge`.
 pub fn Spec::domain() -> @knowledge.Domain[OgreDoc] {
-  @knowledge.Domain::new(
-    name=image_name("spec"),
-    empty=Some(@ogre.Doc::empty()),
-    is_empty=ogre_doc_is_empty,
-    order=ogre_doc_order,
-    join=ogre_doc_merge,
-    inspect=doc => doc.to_string(),
-  )
+  spec_domain_value
 }
 
 ///|
@@ -149,12 +153,16 @@ pub fn Spec::from_arch(arch : @core_theory.Target) -> OgreDoc {
 }
 
 ///|
+/// `Spec::slot`, declared once.
+let spec_slot_value : @knowledge.Slot[Unit, OgreDoc] = @core_theory.ProgramUnit::cls().property(
+  name=image_name("unit-spec"),
+  domain=Spec::domain(),
+  desc="Ogre image specification of the unit",
+  persistent=Spec::persistent(),
+  public=true,
+)
+
+///|
 pub fn Spec::slot() -> @knowledge.Slot[Unit, OgreDoc] {
-  @core_theory.ProgramUnit::cls().property(
-    name=image_name("unit-spec"),
-    domain=Spec::domain(),
-    desc="Ogre image specification of the unit",
-    persistent=Spec::persistent(),
-    public=true,
-  )
+  spec_slot_value
 }

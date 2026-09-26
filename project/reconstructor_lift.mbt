@@ -100,18 +100,21 @@ fn project_ir_terminator(lifted : Array[Result[@mc.Lifted, String]]) -> Int {
 /// The IR blocks of the basic block at `addr` made of `insns` (upstream
 /// `IrBuilder.blk`): the block falls to `fall`, and its jumps become calls
 /// when its terminator is a call or `explicit_call` holds. When the
-/// terminator cannot be lifted, the exit block gets the jumps `fallback`
-/// instead of the lifted control flow.
+/// terminator cannot be lifted and `fallback` is given, the exit block gets
+/// the jumps `fallback` instead of the fallthrough (upstream lifts such a
+/// block like any other, its terminator having empty semantics).
 fn ProjectIrLifter::lift_blk(
   self : ProjectIrLifter,
   addr : UInt64,
   insns : Array[ProjectDisassemblyInstruction],
   fall~ : @types.IrFall?,
   explicit_call~ : Bool,
-  fallback~ : Array[@types.Term[@types.Jmp]],
+  fallback? : Array[@types.Term[@types.Jmp]],
 ) -> Result[Array[@types.Term[@types.Blk]], String] {
   guard self.word(addr) is Some(word) else {
-    return Err("disassembly block address is not representable by project target")
+    return Err(
+      "disassembly block address is not representable by project target",
+    )
   }
   let tid = @types.Tid::for_addr(word, pkg?=self.pkg)
   let lifted = insns.map(insn => {
@@ -119,7 +122,7 @@ fn ProjectIrLifter::lift_blk(
   })
   for i, insn in insns {
     if lifted[i] is Err(message) {
-      self.errors.push({ addr: insn.addr(), opcode: insn.name(), message })
+      self.errors.push({ addr: insn.addr(), opcode: insn.name(), message, })
     }
   }
   let ir_insns = project_lift_segments(insns, lifted).map(segment => {
@@ -132,40 +135,43 @@ fn ProjectIrLifter::lift_blk(
   })
   let terminator = project_ir_terminator(lifted)
   let is_subroutine = (label : @types.Tid) => self.subroutines.contains(label)
-  if terminator >= 0 && lifted[terminator] is Ok(_) {
-    let insn = insns[terminator]
-    Ok(
+  let lifted_terminator = terminator >= 0 && lifted[terminator] is Ok(_)
+  guard !lifted_terminator && fallback is Some(fallback) else {
+    let (is_call, is_barrier) = match insns.get(terminator) {
+      Some(insn) => (insn.is_kind(ProjectCall), insn.is_kind(ProjectBarrier))
+      None => (false, false)
+    }
+    return Ok(
       @types.Blk::lift_block(
         tid,
         ir_insns,
         addr=word,
         fall?,
-        is_call=insn.is_kind(ProjectCall) || explicit_call,
-        is_barrier=insn.is_kind(ProjectBarrier),
+        is_call=is_call || explicit_call,
+        is_barrier~,
         pkg?=self.pkg,
         addr_width=self.width,
         is_subroutine~,
       ),
     )
-  } else {
-    let blks = @types.Blk::lift_block(
-      tid,
-      ir_insns,
-      addr=word,
-      is_call=false,
-      is_barrier=true,
-      pkg?=self.pkg,
-      addr_width=self.width,
-      is_subroutine~,
-    )
-    let last = blks.length() - 1
-    let mut exit = blks[last]
-    for jmp in fallback {
-      exit = exit.append_jmp(jmp)
-    }
-    blks[last] = exit
-    Ok(blks)
   }
+  let blks = @types.Blk::lift_block(
+    tid,
+    ir_insns,
+    addr=word,
+    is_call=false,
+    is_barrier=true,
+    pkg?=self.pkg,
+    addr_width=self.width,
+    is_subroutine~,
+  )
+  let last = blks.length() - 1
+  let mut exit = blks[last]
+  for jmp in fallback {
+    exit = exit.append_jmp(jmp)
+  }
+  blks[last] = exit
+  Ok(blks)
 }
 
 ///|
@@ -256,8 +262,7 @@ fn project_ir_group_edge_jmps(
   let result : Array[@types.Term[@types.Jmp]] = []
   for edge in ordered {
     if edge.target() is Some(target) &&
-      project_reconstructor_find_block_containing(group, target)
-      is Some(index) {
+      project_reconstructor_find_block_containing(group, target) is Some(index) {
       result.push(project_reconstructor_edge_jmp(edge, labels[index]))
     }
   }

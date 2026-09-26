@@ -1152,6 +1152,7 @@ pub(all) struct Program {
   subs : Array[Term[Sub]]
 }
 pub fn Program::create(subs? : Array[Term[Sub]], tid? : Tid) -> Term[Self]
+pub fn Program::insert_synthetic(Term[Self]) -> Term[Self]
 pub fn Program::lookup(Term[Self], IrTermClass, Tid) -> IrTerm?
 pub fn Program::parent(Term[Self], IrTermClass, Tid) -> IrTerm?
 pub fn Program::relink_calls(Term[Self], Map[Tid, Tid], external_callee? : (Term[Blk]) -> Tid?) -> Term[Self]

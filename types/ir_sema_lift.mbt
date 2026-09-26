@@ -467,3 +467,43 @@ pub fn Program::relink_calls(
     })
   })
 }
+
+///|
+/// Upstream `make_name`: the name of the label, or `interrupt:#<n>` for an
+/// interrupt vector, or the textual tid.
+fn ir_synthetic_name(tid : Tid) -> String {
+  match (tid.name(), tid.ivec()) {
+    (Some(name), _) => name
+    (None, Some(ivec)) => "interrupt:#\{ivec}"
+    (None, None) => tid.to_string()
+  }
+}
+
+///|
+/// Upstream `insert_synthetic`: every resolved call destination that is not
+/// a subroutine of `prog` gets an empty synthetic subroutine (tagged
+/// `synthetic`, and `intrinsic` when its name is in the `intrinsic`
+/// package), so that all calls of the program are to its subroutines.
+pub fn Program::insert_synthetic(prog : Term[Program]) -> Term[Program] {
+  let mut result = prog
+  for sub in prog.subs() {
+    for blk in sub.blks() {
+      for jmp in blk.jmps() {
+        match jmp.alt() {
+          Some(ResolvedDst(dst)) if result.find_sub(dst) is None => {
+            let name = ir_synthetic_name(dst)
+            let mut synthetic = Sub::create(name~, tid=dst).set_attr(
+              Attr::synthetic(),
+            )
+            if name.has_prefix("intrinsic:") {
+              synthetic = synthetic.set_attr(Attr::sub_intrinsic())
+            }
+            result = result.append_sub(synthetic)
+          }
+          _ => ()
+        }
+      }
+    }
+  }
+  result
+}

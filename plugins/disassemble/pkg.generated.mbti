@@ -1,0 +1,105 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/disassemble"
+
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/project",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn create_and_process(String, libraries? : Array[String], outputs? : Array[Output], passes? : Array[@project.ProjectPass], loader? : String, target? : @core_theory.Target, components? : Components, update? : Bool, knowledge? : String?, print_missing? : Bool, out~ : (String) -> Unit, write_file? : (String, String) -> Result[Unit, String]) -> @project.Project raise DisassembleError
+
+pub fn create_project(@project.ProjectInput, components~ : Components, pkg~ : String) -> @project.Project raise DisassembleError
+
+pub fn declare_plugin(out? : (String) -> Unit, write_file? : (String, String) -> Result[Unit, String]) -> Unit raise
+
+pub fn default_write_file(String, String) -> Result[Unit, String]
+
+pub let features_used : Array[String]
+
+pub fn load_input(String, loader~ : String, libraries~ : Array[String], target~ : @core_theory.Target) -> @project.ProjectInput raise DisassembleError
+
+pub let man : String
+
+pub fn missing_report(@project.Project) -> String
+
+pub let plugin_name : String
+
+pub fn process(Array[@project.ProjectPass], Array[Output], @project.Project, out~ : (String) -> Unit, write_file~ : (String, String) -> Result[Unit, String]) -> @project.Project raise DisassembleError
+
+pub let recursive_driver : String
+
+pub fn register_recursive_driver() -> Unit
+
+pub fn target_type() -> @bap_main.Type[@core_theory.Target]
+
+pub fn validate_input(String) -> Unit raise DisassembleError
+
+pub fn validate_knowledge(Bool, String?) -> Unit raise DisassembleError
+
+pub fn validate_passes(Array[String]) -> Array[@project.ProjectPass] raise DisassembleError
+
+pub fn validate_passes_style(Array[String], Array[String]) -> Array[String] raise DisassembleError
+
+// Errors
+pub(all) suberror DisassembleError {
+  Fail(Failure)
+} derive(@debug.Debug)
+pub fn DisassembleError::to_repr(Self) -> @debug.Repr
+
+// Types and methods
+pub(all) struct Components {
+  disassembler : String?
+  rooter : String?
+  symbolizer : String?
+  brancher : String?
+  reconstructor : String?
+} derive(Eq, @debug.Debug)
+pub fn Components::default() -> Self
+pub fn Components::equal(Self, Self) -> Bool
+pub fn Components::not_equal(Self, Self) -> Bool
+pub fn Components::to_repr(Self) -> @debug.Repr
+
+pub(all) enum Destination {
+  Stdout
+  File(String)
+} derive(Eq, @debug.Debug)
+pub fn Destination::equal(Self, Self) -> Bool
+pub fn Destination::not_equal(Self, Self) -> Bool
+pub fn Destination::to_repr(Self) -> @debug.Repr
+
+pub(all) enum Failure {
+  ExpectsARegularFile(String)
+  OldAndNewStylePasses
+  UnknownPass(String)
+  IncompatibleOptions(String, String)
+  ProjectFailure(String)
+  PassUnsatDep(String, String)
+  PassRuntimeError(String, String)
+  UnknownFormat(String)
+  UnavailableFormatVersion(String)
+  UnknownCollator(String)
+  UnknownAnalysis(String)
+  NoKnowledge
+} derive(Eq, @debug.Debug)
+pub fn Failure::equal(Self, Self) -> Bool
+pub fn Failure::not_equal(Self, Self) -> Bool
+pub fn Failure::to_repr(Self) -> @debug.Repr
+pub fn Failure::to_string(Self) -> String
+
+pub(all) struct Output {
+  dst : Destination
+  fmt : String
+  ver : String?
+} derive(Eq, @debug.Debug)
+pub fn Output::equal(Self, Self) -> Bool
+pub fn Output::not_equal(Self, Self) -> Bool
+pub fn Output::parse(String) -> Self raise DisassembleError
+pub fn Output::split(String) -> Self
+pub fn Output::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

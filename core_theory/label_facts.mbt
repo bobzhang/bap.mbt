@@ -97,20 +97,21 @@ pub fn LabelFacts::new() -> LabelFacts {
   let unit = Label::unit_slot()
   let valid = Label::is_valid_slot()
   let subroutine = Label::is_subroutine_slot()
+  let state = @knowledge.State::new()
   {
-    state_value: @knowledge.State::new(),
+    state_value: state,
     class_value: cls,
-    addr_value: @knowledge.FactTable::new(addr),
-    name_value: @knowledge.FactTable::new(name),
-    possible_name_value: @knowledge.FactTable::new(possible_name),
-    ivec_value: @knowledge.FactTable::new(ivec),
-    encoding_value: @knowledge.FactTable::new(encoding),
-    semantics_value: @knowledge.FactTable::new(semantics),
-    target_value: @knowledge.FactTable::new(target),
-    aliases_value: @knowledge.FactTable::new(aliases),
-    unit_value: @knowledge.FactTable::new(unit),
-    valid_value: @knowledge.FactTable::new(valid),
-    subroutine_value: @knowledge.FactTable::new(subroutine),
+    addr_value: @knowledge.FactTable::new(addr, state~),
+    name_value: @knowledge.FactTable::new(name, state~),
+    possible_name_value: @knowledge.FactTable::new(possible_name, state~),
+    ivec_value: @knowledge.FactTable::new(ivec, state~),
+    encoding_value: @knowledge.FactTable::new(encoding, state~),
+    semantics_value: @knowledge.FactTable::new(semantics, state~),
+    target_value: @knowledge.FactTable::new(target, state~),
+    aliases_value: @knowledge.FactTable::new(aliases, state~),
+    unit_value: @knowledge.FactTable::new(unit, state~),
+    valid_value: @knowledge.FactTable::new(valid, state~),
+    subroutine_value: @knowledge.FactTable::new(subroutine, state~),
   }
 }
 

@@ -441,12 +441,13 @@ test "object domains use null as bottom" {
   assert_true(domain.is_empty(null))
   assert_true(!domain.is_empty(object))
   assert_true(domain.order(null, object) == Less)
-  assert_true(domain.order(object, other) == Incomparable)
+  // upstream: a total domain ordered by object identifiers
+  assert_true(domain.order(object, other) == Less)
   match domain.join(null, object) {
     Ok(joined) => assert_true(joined.equal(object))
     Err(reason) => fail(reason)
   }
-  assert_true(domain.join(object, other) is Err(_))
+  assert_true(domain.join(object, other) is Ok(joined) && joined.equal(other))
   assert_eq(domain.inspect(object), "#<test:object-domain 1>")
 }
 
@@ -918,9 +919,10 @@ test "translated BAP opinion proposals materialize deferred suggestions" {
     },
   )
   assert_true(scoped_result == Ok(Some("main")))
-  assert_true(count_during.val == 1)
+  // proposals are registered on the slot: the two permanent ones stay
+  assert_true(count_during.val == 3)
   assert_true(scoped_calls.val == 1)
-  assert_true(scoped_facts.promise_count() == 0)
+  assert_true(scoped_facts.promise_count() == 2)
   assert_true(scoped_facts.resolve(after_scope) == Ok(None))
   assert_true(scoped_calls.val == 1)
 }
@@ -969,8 +971,12 @@ test "translated BAP fact observers receive non-empty provides" {
     name=@knowledge.Name::create("observed", pkg="test"),
     domain~,
   )
+  let mirror = cls.property(
+    name=@knowledge.Name::create("observed-mirror", pkg="test"),
+    domain~,
+  )
   let facts = @knowledge.FactTable::new(slot)
-  let mirrored = @knowledge.FactTable::new(slot)
+  let mirrored = @knowledge.FactTable::new(mirror, state=facts.state())
   let calls : Ref[Int] = Ref(0)
   facts.observe((object, value) => {
     calls.val = calls.val + 1

@@ -261,7 +261,7 @@ fn free_vars(prog : @types.Term[@types.Program]) -> VarSet {
       result.add_all(arg.arg_rhs().free_vars())
       result.add(arg.arg_lhs())
     }
-    for v in sub.sub_free_vars() {
+    for v in @types.Sub::free_vars(sub) {
       if v.is_physical() {
         result.add(v)
       }

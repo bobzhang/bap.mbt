@@ -13,8 +13,34 @@ struct Slot[K, P] {
   domain_value : Domain[P]
   desc : String?
   persistent_value : Persistent[P]?
-  _phantom : K?
+  key : Key[P]
+  ops : EntryOps
+  /// promises registered for this slot (`Slot.promises`), keyed by pid in
+  /// registration order
+  promises : Map[Int, (State, Object[K]) -> Unit raise]
+  /// observers registered for this slot (`Slot.watchers`)
+  watchers : Map[Int, (State, Object[K], P) -> Unit raise]
 }
+
+///|
+/// A type-erased handle on a declared slot, used by `run` to compute all
+/// promised properties of an object (`Slot.enum`) and by the knowledge
+/// base loader to find persistent readers.
+priv struct SlotPack {
+  uid : Int
+  has_promises : () -> Bool
+  collect : (State, Int) -> Unit raise
+  decode : ((String) -> Result[Entry, String])?
+}
+
+///|
+/// Slots of each class (by class name, then by slot name). Redeclaring a
+/// slot with the same name replaces the previous registration.
+let class_slots : Map[Name, Map[Name, SlotPack]] = Map([])
+
+///|
+/// The most recent declaration of every slot, by slot name.
+let slots_by_name : Map[Name, SlotPack] = Map([])
 
 ///|
 struct DocumentationClass {
@@ -73,14 +99,23 @@ pub fn[K, S] Class::create(
 }
 
 ///|
+/// `Class.refine cls s`: the same class with the sort refined to `s`.
+///
+/// Upstream a refinement always denotes the same class (same name, same
+/// slots and objects). The optional `name` is a port extension that
+/// declares a *different* class sharing the sort description; objects of
+/// such a class do not share the slots of `cls`.
 pub fn[K, S, T] Class::refine(
   self : Class[K, S],
-  name~ : Name,
+  name? : Name,
   sort~ : T,
   desc? : String,
 ) -> Class[K, T] {
   {
-    name,
+    name: match name {
+      Some(name) => name
+      None => self.name
+    },
     sort_value: sort,
     desc: match desc {
       Some(text) => Some(text)
@@ -129,14 +164,43 @@ pub fn[K, S, P] Class::property(
       None => ()
     }
   }
-  {
+  let key : Key[P] = Key::fresh(name)
+  let ops = entry_ops(key, domain, persistent)
+  let slot : Slot[K, P] = {
     owner: self.name,
     name,
     domain_value: domain,
     desc,
     persistent_value: persistent,
-    _phantom: None,
+    key,
+    ops,
+    promises: {},
+    watchers: {},
   }
+  let owner = self.name
+  let pack : SlotPack = {
+    uid: key.uid,
+    has_promises: () => !slot.promises.is_empty(),
+    collect: (state, id) => {
+      ignore(state.collect(slot, { id, class_name: owner, _phantom: None, }))
+    },
+    decode: match persistent {
+      Some(io) =>
+        Some(data => {
+          match io.decode(data) {
+            Ok(value) => Ok(key.inject(ops, value))
+            Err(reason) => Err(reason)
+          }
+        })
+      None => None
+    },
+  }
+  match class_slots.get(owner) {
+    Some(slots) => slots[name] = pack
+    None => class_slots[owner] = Map::from_array([(name, pack)])
+  }
+  slots_by_name[name] = pack
+  slot
 }
 
 ///|
@@ -165,6 +229,18 @@ pub fn[K, P] Slot::desc(self : Slot[K, P]) -> String {
     Some(text) => text
     None => "no description"
   }
+}
+
+///|
+/// The number of promises currently registered for the slot.
+pub fn[K, P] Slot::promise_count(self : Slot[K, P]) -> Int {
+  self.promises.length()
+}
+
+///|
+/// The number of observers currently registered for the slot.
+pub fn[K, P] Slot::observer_count(self : Slot[K, P]) -> Int {
+  self.watchers.length()
 }
 
 ///|

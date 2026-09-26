@@ -1,0 +1,63 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/x86"
+
+import {
+  "bobzhang/bap/mc",
+  "bobzhang/bap/types",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn accepts(@mc.Context) -> Bool
+
+pub fn flags() -> Array[@types.Var]
+
+pub fn gprs(Mode) -> Array[@types.Var]
+
+pub fn is_modern_opcode(Mode, String) -> Bool
+
+pub fn legacy_failure(Mode, BytesView, addr~ : UInt64) -> String?
+
+pub fn legacy_length(Mode, BytesView, addr~ : UInt64) -> Int?
+
+pub fn legacy_provider() -> @mc.Provider
+
+pub let legacy_provider_name : String
+
+pub fn lift_legacy(Mode, BytesView, addr~ : UInt64, opcode? : String) -> Array[@types.Stmt] raise @mc.LiftError
+
+pub fn lift_legacy_in_context(@mc.Context, @mc.Insn) -> @mc.Lifted raise @mc.LiftError
+
+pub fn lift_modern(Mode, @mc.Insn, cet_enabled? : Bool) -> Array[@types.Stmt] raise @mc.LiftError
+
+pub fn mem_var(Mode) -> @types.Var
+
+pub fn mode_of_context(@mc.Context) -> Mode?
+
+pub fn modern_provider(cet_enabled? : Bool) -> @mc.Provider
+
+pub fn program_counter(Mode) -> @types.Var
+
+pub let provider_name : String
+
+pub fn register(registry? : @mc.Registry, cet_enabled? : Bool) -> Unit
+
+pub let targets : ReadOnlyArray[String]
+
+pub fn vector_registers(Mode) -> Array[@types.Var]
+
+// Errors
+
+// Types and methods
+pub(all) enum Mode {
+  X86
+  X8664
+} derive(Eq, @debug.Debug)
+pub fn Mode::equal(Self, Self) -> Bool
+pub fn Mode::not_equal(Self, Self) -> Bool
+pub fn Mode::to_repr(Self) -> @debug.Repr
+pub fn Mode::width(Self) -> Int
+
+// Type aliases
+
+// Traits

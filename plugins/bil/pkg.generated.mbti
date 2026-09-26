@@ -4,6 +4,7 @@ package "bobzhang/bap/plugins/bil"
 import {
   "bobzhang/bap/core_theory",
   "bobzhang/bap/image",
+  "bobzhang/bap/knowledge",
   "bobzhang/bap/mc",
   "bobzhang/bap/types",
   "moonbitlang/core/debug",
@@ -18,11 +19,17 @@ pub fn bil_fp_theory() -> @core_theory.Core
 
 pub fn bil_theory() -> @core_theory.Core
 
+pub fn bir_slot() -> @knowledge.Slot[@core_theory.EffectCls, Array[@types.Term[@types.Blk]]]
+
 pub let bnf1 : @types.BilPass
 
 pub let bnf2 : @types.BilPass
 
 pub fn brancher_algebra() -> EffAlgebra[Array[Dst?]]
+
+pub fn brancher_theory() -> @core_theory.Core
+
+pub fn code_slot() -> @knowledge.Slot[Unit, Array[@types.Stmt]]
 
 pub fn configure(Config) -> Unit
 
@@ -32,9 +39,15 @@ pub fn create_intrinsic(@core_theory.Target, @mc.Insn) -> Array[@types.Stmt]
 
 pub fn current_config() -> Config
 
+pub fn declare_ir_theories() -> Unit raise
+
 pub fn declare_plugin(exit? : () -> Unit) -> Unit raise
 
 pub fn declare_theories(with_fp? : Bool) -> Unit raise
+
+pub fn denote_code(@knowledge.State, @knowledge.Object[Unit], Bool) -> @core_theory.Semantics raise
+
+pub fn dests_slot() -> @knowledge.Slot[@core_theory.EffectCls, Array[@core_theory.Label]?]
 
 pub fn enable(list? : Bool, normalization? : String, optimization? : String, passes? : ArrayView[String], with_fp? : Bool, enable_intrinsics? : ArrayView[ISpec]) -> Array[String]? raise Failure
 
@@ -46,15 +59,27 @@ pub fn has_special(ArrayView[@types.Stmt]) -> Bool
 
 pub fn insn_encoding(@mc.Insn) -> String
 
+pub fn insn_slot() -> @knowledge.Slot[Unit, @mc.Insn?]
+
 pub fn install_lift_hook() -> Unit
+
+pub fn install_rules(registry? : @mc.Registry, with_fp? : Bool) -> Unit raise
+
+pub fn ir_graph_slot() -> @knowledge.Slot[@core_theory.EffectCls, Cfg]
+
+pub fn ir_theory() -> @core_theory.Core
 
 pub fn jump_destinations(ArrayView[@types.Stmt]) -> Array[Dst?] raise ReflectError
 
 pub fn kind_name(@mc.Kind) -> String
 
+pub fn label_tid(@core_theory.Label) -> @types.Tid
+
 pub fn lift(@mc.Registry, @mc.Context, @mc.Insn, cfg? : Config) -> @mc.Lifted raise @mc.LiftError
 
 pub fn lift_bir(Array[@types.Stmt], is_subroutine? : (@types.Tid) -> Bool) -> Array[@types.Term[@types.Blk]]
+
+pub fn lift_code(@knowledge.State, @knowledge.Object[Unit], @mc.Registry) -> Array[@types.Stmt] raise
 
 pub let lift_hook_name : String
 
@@ -72,7 +97,11 @@ pub fn o1() -> Array[@types.BilPass]
 
 pub fn optimizations() -> Array[(String, Array[@types.BilPass])]
 
+pub fn optimize(@knowledge.State, Array[@types.Stmt]) -> Array[@types.Stmt] raise
+
 pub fn pipeline(normalization? : String, optimization? : String, passes? : ArrayView[String]) -> Result[Array[@types.BilPass], String]
+
+pub fn provide_relocations(@knowledge.State, @core_theory.ProgramUnit, Relocations) -> Unit raise
 
 pub fn provider(@mc.Registry, relocations? : Relocations) -> @mc.Provider
 
@@ -85,6 +114,8 @@ pub fn[E] reflect(EffAlgebra[E], ArrayView[@types.Stmt]) -> E raise ReflectError
 pub fn reflect_bil(ArrayView[@types.Stmt]) -> Array[@types.Stmt] raise ReflectError
 
 pub fn[E] reflect_data(EffAlgebra[E], ArrayView[@types.Stmt]) -> E raise ReflectError
+
+pub fn reify(@core_theory.Semantics) -> Array[@types.Term[@types.Blk]]
 
 pub fn select(normalization? : String, optimization? : String, passes? : ArrayView[String]) -> Result[Unit, String]
 
@@ -102,6 +133,14 @@ pub fn ReflectError::to_string(Self) -> String
 pub impl Show for ReflectError
 
 // Types and methods
+pub struct Cfg {
+  // private fields
+}
+pub fn Cfg::empty() -> Self
+pub fn Cfg::entry(Self) -> @types.Tid?
+pub fn Cfg::is_empty(Self) -> Bool
+pub fn Cfg::reify(Self) -> Array[@types.Term[@types.Blk]]
+
 pub(all) struct Config {
   with_fp : Bool
   enable_intrinsics : Array[ISpec]
@@ -151,6 +190,7 @@ pub fn Relocations::create(rels? : ArrayView[(UInt64, UInt64)], exts? : ArrayVie
 pub fn Relocations::empty() -> Self
 pub fn Relocations::fixup(Self, ArrayView[@types.Stmt], addr~ : UInt64, size~ : Int, width~ : Int, is_stub? : Bool) -> Array[@types.Stmt]
 pub fn Relocations::of_image(@image.Image) -> Self
+pub fn Relocations::resolve_externals(Self, @knowledge.State) -> Self raise
 
 // Type aliases
 

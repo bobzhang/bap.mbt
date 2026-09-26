@@ -57,9 +57,10 @@ test "legacy rol/ror" {
   inspect(
     bil_text(lift32(b"\xd1\xc0")),
     content=(
-      #|%v_1:imm32 := ((1:32u & 0x1F:32u) % 0x20:32u)
-      #|EAX:imm32 := ((low:32[EAX:imm32] << %v_1:imm32) | (low:32[EAX:imm32] >> (0x20:32u - %v_1:imm32)))
-      #|if (%v_1:imm32 == 0:32u) then 1 stmts else 1 stmts
+      #|%masked_1:imm32 := (1:32u & 0x1F:32u)
+      #|%v_2:imm32 := (%masked_1:imm32 % 0x20:32u)
+      #|EAX:imm32 := ((low:32[EAX:imm32] << %v_2:imm32) | (low:32[EAX:imm32] >> (0x20:32u - %v_2:imm32)))
+      #|if (%masked_1:imm32 != 0:32u) then 2 stmts else 0 stmts
     ),
   )
   // rol eax, 4
@@ -68,11 +69,16 @@ test "legacy rol/ror" {
   // ror al, 1
   let o = exec32(b"\xd0\xc8", regs=[("EAX", 0x03)])
   assert_eq(get_word(o, "EAX") & 0xff, 0x81)
-  // upstream only updates CF when the count is zero (Intel: CF = the bit
-  // rotated in when the count is not zero), so CF keeps its old value here
+  // CF is the bit rotated in when the masked count is not zero (upstream
+  // only updated CF for a zero count)
   let o = exec32(b"\xd1\xc0", regs=[("EAX", 0x80000000)])
   assert_eq(get_word(o, "EAX"), 1)
-  assert_eq(get_flag(o, "CF"), 0)
+  assert_eq(get_flag(o, "CF"), 1)
+  assert_eq(get_flag(o, "OF"), 1)
+  // rol al, 8: the byte is unchanged, CF = its least significant bit
+  let o = exec32(b"\xc0\xc0\x08", regs=[("EAX", 0x81)])
+  assert_eq(get_word(o, "EAX"), 0x81)
+  assert_eq(get_flag(o, "CF"), 1)
   // rcl/rcr are not modeled upstream
   assert_eq(
     @x86.legacy_failure(X86, b"\xd1\xd0", addr=0),
@@ -90,9 +96,15 @@ test "legacy bt/bsf/bsr/tzcnt/lzcnt" {
   let o = exec32(b"\x0f\xba\x23\x09", regs=[("EBX", DATA)])
   let byte = load_mem(o, DATA + 1, 1)
   assert_eq(get_flag(o, "CF").to_uint64(), (byte >> 1) & 1)
-  // bts eax, 3 (0f ba /5) lifts as a plain bt upstream: EAX is unchanged
+  // bts eax, 3 (0f ba /5) sets the bit (upstream lifts it as a plain bt)
   let o = exec32(b"\x0f\xba\xe8\x03", regs=[("EAX", 0)])
-  assert_eq(get_word(o, "EAX"), 0)
+  assert_eq(get_word(o, "EAX"), 8)
+  assert_eq(get_flag(o, "CF"), 0)
+  // bts dword [ebx], ecx with a negative offset sets the bit 4 of the byte
+  // below the base (upstream zero-extends the offset)
+  let o = exec32(b"\x0f\xab\x0b", regs=[("EBX", DATA), ("ECX", 0xfffffffc)])
+  let byte = load_mem(o, DATA - 1, 1)
+  assert_eq(byte, 0xf6)
   // bsf eax, ebx
   let o = exec32(b"\x0f\xbc\xc3", regs=[("EBX", 0x50)])
   assert_eq(get_word(o, "EAX"), 4)

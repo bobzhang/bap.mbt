@@ -71,13 +71,14 @@ fn sem_daddu(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
 }
 
 ///|
-/// Count the leading bits of the low word of `rs` equal to `value`, from
-/// the most significant one, into `rd` (`CLO`/`CLZ rd, rs`).
-fn count_leading(value : Exp) -> Semantics {
+/// Count the leading bits of the low word of `rs` (the whole `rs` with
+/// `doubleword`) equal to `value`, from the most significant one, into `rd`
+/// (`CLO`/`CLZ rd, rs`, `DCLO`/`DCLZ rd, rs`).
+fn count_leading(value : Exp, doubleword? : Bool = false) -> Semantics {
   cpu => {
     let rd = cpu.ureg(0)
-    let rs = cpu.wreg(1, Unsigned)
-    let xv = cpu.uvar(word)
+    let rs = if doubleword { cpu.ureg(1) } else { cpu.wreg(1, Unsigned) }
+    let xv = cpu.uvar(if doubleword { 64 } else { word })
     let cnt = cpu.uvar(byte)
     let counting = cpu.uvar(bit)
     let biti = cpu.uvar(bit)
@@ -200,6 +201,9 @@ let arithmetic_semantics : ReadOnlyArray[(String, Semantics)] = [
   ("ADDu", sem_addu),
   ("CLO", count_leading(one)),
   ("CLZ", count_leading(zero)),
+  // port: not modeled upstream
+  ("DCLO", count_leading(one, doubleword=true)),
+  ("DCLZ", count_leading(zero, doubleword=true)),
   ("LSA", sem_lsa),
   ("DLSA", sem_dlsa),
   ("LUi", sem_lui),

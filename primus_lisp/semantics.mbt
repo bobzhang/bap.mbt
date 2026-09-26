@@ -404,6 +404,13 @@ fn Lifter::operand(self : Lifter, op : Operand) -> SValue {
   let bits = if self.target.bits() <= 0 { 32 } else { self.target.bits() }
   match op {
     Imm(x) => const_word(word_of_bigint(@bigint.BigInt::from_int64(x), bits))
+    // deliberate deviation from upstream: a missing register operand (the
+    // empty name LLVM MC prints for `NoRegister`, e.g. the index of an x86
+    // memory operand without one) reads as zero
+    Reg("") => {
+      let zero = word_zero(bits)
+      { exp: Int(zero), width: bits, static_value: Some(zero), symbol: None, }
+    }
     Reg(name) => {
       let v = match find_target_var(self.target, name) {
         Some(v) => v

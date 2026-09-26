@@ -87,20 +87,34 @@ fn sraw(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
 
 ///|
 /// Shift Left Doubleword. `7d 2a 58 36  sld r10,r9,r11`
+///
+/// port: amounts of 64 to 127 clear `ra` (upstream shifts by the low six
+/// bits of `rb`).
 fn sld(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
   let ra = cpu.ureg(ops, 0)
   let rs = cpu.ureg(ops, 1)
   let rb = cpu.ureg(ops, 2)
-  [ra.set(rs.shl(rb.last(6)))]
+  [
+    if_(rb.last(7).lt(uconst(byte, 64)), [ra.set(rs.shl(rb.last(6)))], [
+      ra.set(zero),
+    ]),
+  ]
 }
 
 ///|
 /// Shift Right Doubleword. `7d 2a 5c 36  srd r10,r9,r11`
+///
+/// port: amounts of 64 to 127 clear `ra` (upstream shifts by the low six
+/// bits of `rb`).
 fn srd(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
   let ra = cpu.ureg(ops, 0)
   let rs = cpu.ureg(ops, 1)
   let rb = cpu.ureg(ops, 2)
-  [ra.set(rs.shr(rb.last(6)))]
+  [
+    if_(rb.last(7).lt(uconst(byte, 64)), [ra.set(rs.shr(rb.last(6)))], [
+      ra.set(zero),
+    ]),
+  ]
 }
 
 ///|

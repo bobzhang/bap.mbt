@@ -43,15 +43,23 @@ fn mulhwu(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
 }
 
 ///|
-/// Multiply Low Word (page 73).
+/// Multiply Low Word (page 73): the doubleword product of the signed low
+/// words.
 /// `7c 22 19 d6  mullw r1,r2,r3`
+///
+/// port: upstream multiplies the zero-extended words, which is wrong in the
+/// upper half on 64-bit targets.
 fn mullw(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
   let rt = cpu.sreg(ops, 0)
   let ra = cpu.sreg(ops, 1)
   let rb = cpu.sreg(ops, 2)
-  let tmp1 = uvar(doubleword)
-  let tmp2 = uvar(doubleword)
-  [tmp1.set(ra.low(word)), tmp2.set(rb.low(word)), rt.set(tmp1 * tmp2)]
+  let tmp1 = svar(doubleword)
+  let tmp2 = svar(doubleword)
+  [
+    tmp1.set(ra.low(word).signed()),
+    tmp2.set(rb.low(word).signed()),
+    rt.set(tmp1 * tmp2),
+  ]
 }
 
 ///|

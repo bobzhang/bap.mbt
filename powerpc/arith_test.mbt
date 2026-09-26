@@ -142,8 +142,9 @@ test "subfic" {
       word=enc([(8, 6), (1, 5), (2, 5), (42, 16)]),
     )
     r.check("R1", trunc(a, 42UL - 43))
-    r.check("CA", 1)
-    r.check("CA32", 1)
+    // a borrow: no carry out of `~ra + si + 1`
+    r.check("CA", 0)
+    r.check("CA32", 0)
   }
 }
 
@@ -159,9 +160,9 @@ test "subfc" {
       word=xo_word(8),
     )
     r.check("R1", trunc(a, x - 0x42))
-    // rb < ra
-    r.check("CA", 0)
-    r.check("CA32", 0)
+    // rb >= ra: no borrow, so a carry out of `~ra + rb + 1`
+    r.check("CA", 1)
+    r.check("CA32", 1)
     let r = run(
       a,
       "SUBFCo",
@@ -169,7 +170,7 @@ test "subfc" {
       init=[("R3", 1), ("R2", 2)],
       word=xo_word(8, rc=true),
     )
-    r.check("CA", 1)
+    r.check("CA", 0)
     r.check_cr0(1, 0, 0)
   }
 }
@@ -221,7 +222,8 @@ test "subfme and subfze" {
       word=xo_word(200, rb=0),
     )
     r.check("R1", trunc(a, x.lnot() + 1))
-    r.check("CA", 1)
+    // `~ra + CA` carries only when `ra` is zero
+    r.check("CA", 0)
     let r = run(
       a,
       "SUBFMEo",
@@ -309,7 +311,8 @@ test "mullw" {
   for a in archs {
     let x = 0xABCD_EFAA_BBCD_EDAAUL
     let y = 0x1234_5678_4242_4242UL
-    let expected = trunc(a, low32(x) * low32(y))
+    // the doubleword product of the signed low words
+    let expected = trunc(a, (slow32(x) * slow32(y)).reinterpret_as_uint64())
     assert_eq(r123(a, "MULLW", x, y), expected)
     assert_eq(r123(a, "MULLWo", x, y), expected)
   }

@@ -167,8 +167,9 @@ test "addme" {
       word=0x7c2201d4,
     )
     r.check("R1", 0xFFFF_FFFF)
-    r.check("CA32", 0)
-    r.check("CA", 0)
+    // `ra + CA - 1` carries unless `ra + CA` is zero
+    r.check("CA32", 1)
+    r.check("CA", 1)
   }
 }
 

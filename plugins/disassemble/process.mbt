@@ -263,23 +263,16 @@ pub fn Components::default() -> Components {
 pub let recursive_driver : String = "recursive"
 
 ///|
-/// Registers the `recursive` disassembly driver: the recursive descent
-/// disassembler (upstream `Disasm.Driver`) that decodes the project memory
-/// with the Basic decoder and splits it into basic blocks connected with
-/// the control-flow edges.
+/// Registers the `recursive` disassembly driver: the incremental recursive
+/// descent disassembler (upstream `Disasm.Driver`, see
+/// `@project.ProjectDisassemblyDriver::recursive`) that scans the code of
+/// the project in its knowledge base and splits it into basic blocks
+/// connected with the control-flow edges.
 pub fn register_recursive_driver() -> Unit {
-  let driver = @project.ProjectDisassemblyDriver::create(
-    name=recursive_driver,
-    description="recursive descent disassembly with the Basic decoder",
-    priority=-98,
-    run=project => {
-      match project.disassemble_rec(driver="basic") {
-        Ok(rec) => Ok(rec.project().set("disassembler", recursive_driver))
-        Err(reason) => Err(reason)
-      }
-    },
+  @project.register_disassembly_driver_if_absent(
+    @project.ProjectDisassemblyDriver::recursive(),
   )
-  @project.register_disassembly_driver_if_absent(driver) |> ignore
+  |> ignore
 }
 
 ///|

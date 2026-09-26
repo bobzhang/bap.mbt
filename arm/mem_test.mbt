@@ -354,7 +354,7 @@ test "indexed addressing mode 3 accesses" {
   let init = state([("R1", 0x1004), ("R2", 1), ("R3", 2)], bytes=words)
   let s = run(
     "STRD_POST",
-    [r("R2"), r("R3"), r("R1"), r("R1"), r("Nil"), i(8), ..al],
+    [r("R1"), r("R2"), r("R3"), r("R1"), r("Nil"), i(8), ..al],
     init,
   )
   debug_inspect(

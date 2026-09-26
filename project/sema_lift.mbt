@@ -251,7 +251,36 @@ pub fn ProjectDisassemblySymtab::lift_ir(
     entries,
     external_callee=blk => callees.get(blk.tid()),
   )
+  let program = project_reify_externals(program, self.externals(), pkg)
   Ok((@types.Program::insert_synthetic(program), lifter.errors))
+}
+
+///|
+/// Upstream `reify_externals`: every external function of the symbol table
+/// that is not a subroutine of `prog` gets a synthetic subroutine (tagged
+/// `synthetic`, and `intrinsic` for the names of the `intrinsic` package).
+/// Upstream lifts the semantics of the external label into the body of the
+/// subroutine; the port knows no semantics of external labels, so the
+/// subroutines are empty.
+fn project_reify_externals(
+  prog : @types.Term[@types.Program],
+  names : Array[String],
+  pkg : String?,
+) -> @types.Term[@types.Program] {
+  let mut result = prog
+  for name in names {
+    let tid = @types.Tid::for_name(name, pkg?)
+    if result.find_sub(tid) is None {
+      let mut sub = @types.Sub::create(name~, tid~).set_attr(
+        @types.Attr::synthetic(),
+      )
+      if name.has_prefix("intrinsic:") {
+        sub = sub.set_attr(@types.Attr::sub_intrinsic())
+      }
+      result = result.append_sub(sub)
+    }
+  }
+  result
 }
 
 ///|

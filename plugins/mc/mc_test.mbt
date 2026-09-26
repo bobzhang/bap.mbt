@@ -95,7 +95,9 @@ test "mc prints the IR, addresses, sizes, memory, and kinds" {
       #|0x1000:64u:
       #|0x1
       #|00000001:
-      #|
+      #|00000002: ret_addr := mem[RSP, el]:u64
+      #|00000003: RSP := RSP + 8
+      #|00000004: goto ret_addr
       #|Return
       #|Barrier
       #|Terminator
@@ -143,14 +145,14 @@ test "mc reports errors" {
   inspect(
     run_bap(["mc", "--show-insn", "--", "c3 0f"]),
     content=(
-      #|RET()
+      #|RET64()
       #|the last byte wasn't disassembled
     ),
   )
   inspect(
     run_bap(["mc", "--show-insn", "--only-one", "--", "c3 c3"]),
     content=(
-      #|RET()
+      #|RET64()
       #|
     ),
   )

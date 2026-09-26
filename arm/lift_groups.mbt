@@ -346,7 +346,10 @@ fn lift_mem(
         cond,
       )
     }
-    (STRD_POST, [dest1, dest2, base, _unknown, reg_off, Imm(imm_off), cond, _]) => {
+    // LLVM's operand order (the written-back base first, as `STRD_PRE`);
+    // upstream matches `[dest1; dest2; base; _unknown; ...]`, which reads
+    // the base register from the second source register
+    (STRD_POST, [_unknown, dest1, dest2, base, reg_off, Imm(imm_off), cond, _]) => {
       let offset = mem_offset_reg_or_imm_neg(reg_off, imm_off)
       exec(
         lift_r_exp(dest1~, dest2~, base~, offset~, PostIndex, Unsigned, D, St),

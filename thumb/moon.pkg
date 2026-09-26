@@ -1,4 +1,5 @@
 import {
+  "bobzhang/bap/arm",
   "bobzhang/bap/bitvec",
   "bobzhang/bap/core_theory",
   "bobzhang/bap/mc",
@@ -6,5 +7,6 @@ import {
 }
 
 import {
-  "bobzhang/bap/arm",
+  "bobzhang/bap/memory",
+  "bobzhang/bap/project",
 } for "test"

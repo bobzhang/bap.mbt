@@ -83,7 +83,8 @@ test "ProjectDisassemblySymtab::lift_ir builds the program of the symbol table" 
   }
   assert_eq(errors, [])
   // the call to 0x9100, an explicit call of `g`, is linked to `g`, which
-  // gets a synthetic subroutine
+  // gets a synthetic subroutine; the returns jump to the popped return
+  // addresses
   inspect(
     program
     .subs()
@@ -101,8 +102,8 @@ test "ProjectDisassemblySymtab::lift_ir builds the program of the symbol table" 
       #|f synthetic=false
       #|@0x0000000000009000 when ZF:imm1 goto @0x000000000000900a; goto @0x0000000000009005
       #|@0x000000000000900a call @g with return @0x000000000000900f
-      #|@0x000000000000900f
-      #|@0x0000000000009005
+      #|@0x000000000000900f call *%ret_addr:imm64 with noreturn
+      #|@0x0000000000009005 call *%ret_addr:imm64 with noreturn
       #|g synthetic=true
     ),
   )

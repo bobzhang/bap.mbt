@@ -191,7 +191,15 @@ test "project reconstructor materializes supported Basic BIL assignments" {
       let blks = subs[0].blks()
       assert_true(blks.length() == 1)
       let defs = reconstructor_def_text(blks[0].defs())
-      assert_true(defs.length() == 30)
+      // the return pops the return address (upstream x86 semantics)
+      inspect(
+        defs[30:].join("\n"),
+        content=(
+          #|%ret_addr:imm64 := load(mem:mem64x8, RSP:imm64):imm64
+          #|RSP:imm64 := (RSP:imm64 + 8:64u)
+        ),
+      )
+      assert_true(defs.length() == 32)
       assert_true(defs[0] == "%sub_dst:imm64 := RSP:imm64")
       assert_true(defs[1] == "%sub_src:imm64 := 8:64u")
       assert_true(defs[2] == "RSP:imm64 := (%sub_dst:imm64 - %sub_src:imm64)")
@@ -238,7 +246,14 @@ test "project reconstructor materializes Basic BIL x86 register arithmetic" {
       let blks = subs[0].blks()
       assert_true(blks.length() == 1)
       let defs = reconstructor_def_text(blks[0].defs())
-      assert_true(defs.length() == 18)
+      inspect(
+        defs[18:].join("\n"),
+        content=(
+          #|%ret_addr:imm32 := load(mem:mem32x8, ESP:imm32):imm32
+          #|ESP:imm32 := (ESP:imm32 + 4:32u)
+        ),
+      )
+      assert_true(defs.length() == 20)
       assert_true(defs[0] == "%add_dst:imm32 := EAX:imm32")
       assert_true(defs[1] == "%add_src:imm32 := 1:32u")
       assert_true(defs[2] == "EAX:imm32 := (%add_dst:imm32 + %add_src:imm32)")
@@ -703,6 +718,18 @@ test "project reconstructor materializes Basic BIL fallback jumps" {
       assert_reconstructor_text(reconstructor_jmp_text(block.jmps()), [
         "call @0x00007226 with noreturn",
       ])
+      // the called label gets a synthetic subroutine (upstream
+      // `insert_synthetic`)
+      inspect(
+        reconstructed
+        .program()
+        .subs()
+        .map(sub => "\{sub.sub_name()} synthetic=\{sub.is_synthetic()}")
+        .join(" "),
+        content=(
+          #|sub_0x7220 synthetic=false 0x00007226 synthetic=true
+        ),
+      )
     }
     Err(reason) => fail(reason)
   }
@@ -754,8 +781,10 @@ test "project reconstructor materializes Basic BIL fallback jumps" {
   match indirect_call_project.reconstruct() {
     Ok(reconstructed) => {
       let block = reconstructed.program().subs()[0].blks()[0]
+      // as upstream, the call target is evaluated before the return address
+      // is pushed
       assert_reconstructor_text(reconstructor_jmp_text(block.jmps()), [
-        "call *RAX:imm64 with noreturn",
+        "call *%call_target:imm64 with noreturn",
       ])
     }
     Err(reason) => fail(reason)

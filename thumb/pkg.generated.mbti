@@ -13,6 +13,8 @@ pub fn accepts(@mc.Context) -> Bool
 
 pub fn branch_dest_encoding(Opcode, @mc.Insn) -> @core_theory.Language?
 
+pub fn decode_t32(BytesView, addr? : UInt64, big_endian? : Bool, it? : ItBlock) -> @mc.Decoded
+
 pub fn dest_encoding(UInt64) -> @core_theory.Language
 
 pub fn lift(@mc.Insn) -> Array[@types.Stmt] raise @mc.LiftError
@@ -26,6 +28,16 @@ pub fn provider() -> @mc.Provider
 pub let provider_name : String
 
 pub fn register(registry? : @mc.Registry) -> Unit
+
+pub fn register_decoder() -> Unit
+
+pub fn t2_expand_imm(Int) -> UInt
+
+pub fn t32_decoder() -> @mc.Decoder
+
+pub fn t32_decoder_accepts(@mc.Context) -> Bool
+
+pub let t32_decoder_name : String
 
 // Errors
 
@@ -53,6 +65,12 @@ pub fn Cond::not_equal(Self, Self) -> Bool
 pub fn Cond::of_int(Int) -> Self?
 pub fn Cond::to_int(Self) -> Int
 pub fn Cond::to_repr(Self) -> @debug.Repr
+
+pub struct ItBlock {
+  // private fields
+}
+pub fn ItBlock::in_block(Self, UInt64) -> Bool
+pub fn ItBlock::new() -> Self
 
 pub(all) enum Opcode {
   TADC

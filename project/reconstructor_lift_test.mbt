@@ -89,8 +89,9 @@ test "reconstruction lifts branches, falls, calls and returns into IR" {
   assert_eq(subs.length(), 1)
   // the conditional branch keeps its lifted jump and falls to the next
   // block; the call returns to its fallthrough and, targeting the entry of
-  // its own subroutine, is linked to the subroutine (the Basic lifter
-  // lifts `ret` into a bare `ret` special, which denotes no jump)
+  // its own subroutine, is linked to the subroutine; as upstream, a return
+  // jumps to the return address popped from the stack, an unresolved jump
+  // that becomes a call without return (`alternate_nonlocal`)
   inspect(
     lift_ir_jmps(subs[0]),
     content=(
@@ -98,9 +99,11 @@ test "reconstruction lifts branches, falls, calls and returns into IR" {
       #|  when ZF:imm1 goto @0x000000000000900a
       #|  goto @0x0000000000009005
       #|@0x0000000000009005
+      #|  call *%ret_addr:imm64 with noreturn
       #|@0x000000000000900a
       #|  call @sub_0x9000 with return @0x000000000000900f
       #|@0x000000000000900f
+      #|  call *%ret_addr:imm64 with noreturn
     ),
   )
   // the terms carry the address and instruction they were lifted from
@@ -223,7 +226,16 @@ test "reconstruction keeps conditional assignments, loops and interrupts" {
     fail("reconstruction failed")
   }
   let subs = reconstructed.program().subs()
-  assert_eq(subs.length(), 1)
+  // as upstream (`insert_synthetic`), the interrupt handler, called but not
+  // disassembled, gets a synthetic subroutine
+  inspect(
+    subs
+    .map(sub => "\{sub.sub_name()} synthetic=\{sub.is_synthetic()}")
+    .join(" "),
+    content=(
+      #|sub_0x100 synthetic=false interrupt:#0 synthetic=true
+    ),
+  )
   // both arms of the conditional and the loop body keep their assignments
   // in blocks of their own; the interrupt of the call instruction returns
   // to the fallthrough; the jump to itself of the last block stays local

@@ -178,26 +178,20 @@ test "bap disassemble" {
       #|00000015: RSP := RSP + 8
       #|00000016: call v_1 with noreturn
       #|
-      #|00000017: sub sub_0x40100b()
+      #|00000017: sub foo()
       #|
       #|
       #|00000018:
-      #|00000019: call @foo with noreturn
-      #|
-      #|00000020: sub foo()
-      #|
-      #|
-      #|00000021:
-      #|00000022: RAX := 0
-      #|00000023: AF := unknown[AF is undefined after xor]:u1
-      #|00000024: ZF := 1
-      #|00000025: PF := 1
-      #|00000026: OF := 0
-      #|00000027: CF := 0
-      #|00000028: SF := 0
-      #|00000029: v_1 := mem[RSP, el]:u64
-      #|00000030: RSP := RSP + 8
-      #|00000031: call v_1 with noreturn
+      #|00000019: RAX := 0
+      #|00000020: AF := unknown[AF is undefined after xor]:u1
+      #|00000021: ZF := 1
+      #|00000022: PF := 1
+      #|00000023: OF := 0
+      #|00000024: CF := 0
+      #|00000025: SF := 0
+      #|00000026: v_1 := mem[RSP, el]:u64
+      #|00000027: RSP := RSP + 8
+      #|00000028: call v_1 with noreturn
       #|
     ),
   )
@@ -237,6 +231,14 @@ test "bap specification" {
       #|(declare entry-point (addr int))
       #|(declare format (name str))
       #|(declare is-little-endian (flag bool))
+      #|(declare llvm:code-entry (name str) (off int) (size int))
+      #|(declare llvm:elf-program-header (name str) (off int) (size int))
+      #|(declare llvm:elf-program-header-flags (name str) (ld bool) (r bool) 
+      #| (w bool) (x bool))
+      #|(declare llvm:elf-virtual-program-header (name str) (addr int) (size int))
+      #|(declare llvm:entry-point (addr int))
+      #|(declare llvm:section-entry (name str) (addr int) (size int) (off int))
+      #|(declare llvm:section-flags (name str) (r bool) (w bool) (x bool))
       #|(declare mapped (addr int) (size int) (off int))
       #|(declare named-region (addr int) (size int) (name str))
       #|(declare named-symbol (addr int) (name str))
@@ -247,26 +249,39 @@ test "bap specification" {
       #|(abi sysv)
       #|(arch x86_64)
       #|(bits 64)
-      #|(code-start 4198414)
       #|(code-start 4198400)
+      #|(code-start 4198414)
       #|(entry-point 4198400)
       #|(format elf)
       #|(is-little-endian true)
+      #|(llvm:code-entry .text 4096 17)
+      #|(llvm:elf-program-header 00 4096 17)
+      #|(llvm:elf-program-header-flags 00 true true false true)
+      #|(llvm:elf-virtual-program-header 00 4198400 17)
+      #|(llvm:entry-point 4198400)
+      #|(llvm:section-entry .shstrtab 0 33 4195)
+      #|(llvm:section-entry .strtab 0 10 4185)
+      #|(llvm:section-entry .symtab 0 72 4113)
+      #|(llvm:section-entry .text 4198400 17 4096)
+      #|(llvm:section-flags .shstrtab true false false)
+      #|(llvm:section-flags .strtab true false false)
+      #|(llvm:section-flags .symtab true false false)
+      #|(llvm:section-flags .text true false true)
       #|(mapped 4198400 17 4096)
-      #|(named-region 0 33 .shstrtab)
-      #|(named-region 0 10 .strtab)
-      #|(named-region 0 72 .symtab)
-      #|(named-region 4198400 17 .text)
       #|(named-region 4198400 17 .load0)
-      #|(named-symbol 4198414 foo)
+      #|(named-region 4198400 17 .text)
+      #|(named-region 0 72 .symtab)
+      #|(named-region 0 10 .strtab)
+      #|(named-region 0 33 .shstrtab)
       #|(named-symbol 4198400 main)
-      #|(section 0 33)
-      #|(section 0 10)
-      #|(section 0 72)
+      #|(named-symbol 4198414 foo)
       #|(section 4198400 17)
+      #|(section 0 72)
+      #|(section 0 10)
+      #|(section 0 33)
       #|(segment 4198400 17 true false true)
-      #|(symbol-chunk 4198414 3 4198414)
       #|(symbol-chunk 4198400 11 4198400)
+      #|(symbol-chunk 4198414 3 4198414)
       #|
       #|
     ),

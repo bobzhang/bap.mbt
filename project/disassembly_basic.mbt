@@ -5697,7 +5697,13 @@ fn project_disassembly_basic_x86_group5_control(
       let control_kinds = if group == 2 {
         [ProjectCall, ProjectMayAffectControlFlow]
       } else {
-        [ProjectUnconditionalBranch, ProjectMayAffectControlFlow]
+        [
+          ProjectUnconditionalBranch,
+          ProjectIndirectBranch,
+          ProjectBarrier,
+          ProjectTerminator,
+          ProjectMayAffectControlFlow,
+        ]
       }
       if ((modrm >> 6) & 0x3) == 0x3 {
         let rex_b = if address_width == 64 && (rex & 0x1) != 0 { 8 } else { 0 }
@@ -5731,6 +5737,9 @@ fn project_disassembly_basic_x86_group5_control(
             } else {
               [
                 ProjectUnconditionalBranch,
+                ProjectIndirectBranch,
+                ProjectBarrier,
+                ProjectTerminator,
                 ProjectMayLoad,
                 ProjectMayAffectControlFlow,
               ]
@@ -6396,7 +6405,12 @@ fn project_disassembly_basic_decode_arm_llvm(
                   kinds=if conditional {
                     [ProjectConditionalBranch, ProjectMayAffectControlFlow]
                   } else {
-                    [ProjectUnconditionalBranch, ProjectMayAffectControlFlow]
+                    [
+                      ProjectUnconditionalBranch,
+                      ProjectBarrier,
+                      ProjectTerminator,
+                      ProjectMayAffectControlFlow,
+                    ]
                   },
                 ),
               ),
@@ -7326,7 +7340,12 @@ fn project_disassembly_basic_decode_x86_llvm(
                 target.reinterpret_as_int64(),
               ),
             ],
-            [ProjectUnconditionalBranch, ProjectMayAffectControlFlow],
+            [
+              ProjectUnconditionalBranch,
+              ProjectBarrier,
+              ProjectTerminator,
+              ProjectMayAffectControlFlow,
+            ],
           ),
         )
       } else if project_disassembly_basic_x86_jmp_rel8(memory) is Some(_) {
@@ -7345,7 +7364,12 @@ fn project_disassembly_basic_decode_x86_llvm(
                 target.reinterpret_as_int64(),
               ),
             ],
-            [ProjectUnconditionalBranch, ProjectMayAffectControlFlow],
+            [
+              ProjectUnconditionalBranch,
+              ProjectBarrier,
+              ProjectTerminator,
+              ProjectMayAffectControlFlow,
+            ],
           ),
         )
       } else {

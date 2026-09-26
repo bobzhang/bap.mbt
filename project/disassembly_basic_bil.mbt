@@ -6519,18 +6519,6 @@ fn ProjectDisassemblyInstruction::project_basic_bil_absolute_target(
 }
 
 ///|
-fn ProjectDisassemblyInstruction::project_basic_bil_call(
-  self : ProjectDisassemblyInstruction,
-  width : Int,
-) -> Result[Array[@types.Stmt], String] {
-  match self.project_basic_bil_direct_target() {
-    Ok(target) =>
-      project_basic_bil_control_with_width(@types.Stmt::call(), target, width)
-    Err(reason) => Err(reason)
-  }
-}
-
-///|
 fn ProjectDisassemblyInstruction::project_basic_bil_jump(
   self : ProjectDisassemblyInstruction,
 ) -> Result[Array[@types.Stmt], String] {
@@ -7764,10 +7752,10 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "JMP_4" => self.project_basic_bil_jump()
     "CALLPCREL32" => self.project_basic_bil_call(32)
     "CALL64PCREL32" => self.project_basic_bil_call(64)
-    "CALL32R" => self.project_basic_bil_control_reg(32, @types.Stmt::call())
-    "CALL64R" => self.project_basic_bil_control_reg(64, @types.Stmt::call())
-    "CALL32M" => self.project_basic_bil_control_mem(32, @types.Stmt::call())
-    "CALL64M" => self.project_basic_bil_control_mem(64, @types.Stmt::call())
+    "CALL32R" => self.project_basic_bil_call_reg(32)
+    "CALL64R" => self.project_basic_bil_call_reg(64)
+    "CALL32M" => self.project_basic_bil_call_mem(32)
+    "CALL64M" => self.project_basic_bil_call_mem(64)
     "JMP32R" => self.project_basic_bil_control_reg(32, @types.Stmt::goto())
     "JMP64R" => self.project_basic_bil_control_reg(64, @types.Stmt::goto())
     "JMP32M" => self.project_basic_bil_control_mem(32, @types.Stmt::goto())
@@ -7802,7 +7790,10 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "LDR_POST_IMM" => self.project_basic_bil_arm_load(true)
     "STRI12" => self.project_basic_bil_arm_store(false)
     "STR_PRE_IMM" => self.project_basic_bil_arm_store(true)
-    "RET" | "RETF" => Ok([@types.Stmt::special("ret")])
+    "RET" => self.project_basic_bil_ret(32, far=false)
+    "RET64" => self.project_basic_bil_ret(64, far=false)
+    "RETF" => self.project_basic_bil_ret(32, far=true)
+    "RETF64" => self.project_basic_bil_ret(64, far=true)
     name => Err("unsupported Basic BIL lift for instruction \{name}")
   }
 }

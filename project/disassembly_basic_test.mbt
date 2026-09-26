@@ -172,7 +172,7 @@ test "translated BAP basic disassembly decodes x86_64 llvm samples" {
     (b"\x48\x83\xc4\x08", ["ADD64ri8", "RSP", "RSP", "0x8"], []),
     (
       b"\xc3",
-      ["RET"],
+      ["RET64"],
       [
         ProjectReturn,
         ProjectBarrier,
@@ -3078,14 +3078,27 @@ test "translated BAP basic disassembly decodes x86 group 5 control fixtures" {
       b"\xff\xe0",
       2,
       ["JMP64r", "RAX"],
-      [ProjectUnconditionalBranch, ProjectMayAffectControlFlow],
+      [
+        ProjectUnconditionalBranch,
+        ProjectIndirectBranch,
+        ProjectBarrier,
+        ProjectTerminator,
+        ProjectMayAffectControlFlow,
+      ],
     ),
     (
       "x86_64",
       b"\xff\x60\x10",
       3,
       ["JMP64m", "RAX", "0x1", "Nil", "0x10", "Nil"],
-      [ProjectUnconditionalBranch, ProjectMayAffectControlFlow, ProjectMayLoad],
+      [
+        ProjectUnconditionalBranch,
+        ProjectIndirectBranch,
+        ProjectBarrier,
+        ProjectTerminator,
+        ProjectMayAffectControlFlow,
+        ProjectMayLoad,
+      ],
     ),
     (
       "x86",
@@ -3099,7 +3112,14 @@ test "translated BAP basic disassembly decodes x86 group 5 control fixtures" {
       b"\xff\x65\xfc",
       3,
       ["JMP32m", "EBP", "0x1", "Nil", "-0x4", "Nil"],
-      [ProjectUnconditionalBranch, ProjectMayAffectControlFlow, ProjectMayLoad],
+      [
+        ProjectUnconditionalBranch,
+        ProjectIndirectBranch,
+        ProjectBarrier,
+        ProjectTerminator,
+        ProjectMayAffectControlFlow,
+        ProjectMayLoad,
+      ],
     ),
   ]
   for sample in samples {
@@ -4614,10 +4634,11 @@ test "translated BAP basic disassembly decodes x86 return variants" {
     ("x86", b"\xc2\x08\x00", 3, ["RET", "0x8"]),
     ("x86", b"\xcb", 1, ["RETF"]),
     ("x86", b"\xca\x10\x00", 3, ["RETF", "0x10"]),
-    ("x86_64", b"\xc3", 1, ["RET"]),
-    ("x86_64", b"\xc2\x08\x00", 3, ["RET", "0x8"]),
-    ("x86_64", b"\xcb", 1, ["RETF"]),
-    ("x86_64", b"\xca\x10\x00", 3, ["RETF", "0x10"]),
+    // the returns pop 64-bit addresses in 64-bit mode (LLVM `RET64`)
+    ("x86_64", b"\xc3", 1, ["RET64"]),
+    ("x86_64", b"\xc2\x08\x00", 3, ["RET64", "0x8"]),
+    ("x86_64", b"\xcb", 1, ["RETF64"]),
+    ("x86_64", b"\xca\x10\x00", 3, ["RETF64", "0x10"]),
   ]
   for sample in samples {
     let disasm = match

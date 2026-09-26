@@ -2,9 +2,14 @@ import {
   "bobzhang/bap/bap_main",
   "bobzhang/bap/core_theory",
   "bobzhang/bap/image",
+  "bobzhang/bap/main_event",
   "bobzhang/bap/mc",
   "bobzhang/bap/project",
   "bobzhang/bap/types",
+  "bobzhang/bap/bitvec",
+  "bobzhang/bap/knowledge",
+  "moonbitlang/core/list",
+  "moonbitlang/core/math",
 }
 
 import {

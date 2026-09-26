@@ -164,6 +164,11 @@ pub fn register_services() -> Unit raise {
   @primus_lisp.register_components()
   @primus_lisp.register_semantics_providers()
   @x86.register()
+  // Native instruction decoders for architectures upstream decodes with LLVM.
+  @powerpc.register_decoder()
+  @arm.register_decoder()
+  @thumb.register_decoder()
+  @aarch64.register_decoder()
 }
 
 // Declarations of the plugins whose packages expose only the registration

@@ -631,6 +631,33 @@ pub fn Def::var_(Term[Self]) -> Var
 pub fn Def::with_lhs(Term[Self], Var) -> Term[Self]
 pub fn Def::with_rhs(Term[Self], Exp) -> Term[Self]
 
+type Dict
+pub fn[T] Dict::add(Self, Tag[T], T) -> Self?
+pub fn[T] Dict::change(Self, Tag[T], (T?) -> T?) -> Self
+pub fn Dict::compare(Self, Self) -> Int
+pub fn Dict::data(Self) -> Array[Value]
+pub fn Dict::empty() -> Self
+pub fn Dict::equal(Self, Self) -> Bool
+pub fn Dict::filter(Self, (Value) -> Bool) -> Self
+pub fn[T] Dict::find(Self, Tag[T]) -> T?
+pub fn Dict::is_empty(Self) -> Bool
+pub fn Dict::length(Self) -> Int
+pub fn[T] Dict::mem(Self, Tag[T]) -> Bool
+pub fn Dict::not_equal(Self, Self) -> Bool
+pub fn Dict::op_ge(Self, Self) -> Bool
+pub fn Dict::op_gt(Self, Self) -> Bool
+pub fn Dict::op_le(Self, Self) -> Bool
+pub fn Dict::op_lt(Self, Self) -> Bool
+pub fn Dict::output(Self, &Logger) -> Unit
+pub fn[T] Dict::remove(Self, Tag[T]) -> Self
+pub fn[T] Dict::set(Self, Tag[T], T) -> Self
+pub fn Dict::set_value(Self, Value) -> Self
+pub fn Dict::to_array(Self) -> Array[(String, Value)]
+pub fn Dict::to_string(Self) -> String
+pub impl Compare for Dict
+pub impl Eq for Dict
+pub impl Show for Dict
+
 pub(all) enum Exp {
   Int(Word)
   Var(Var)
@@ -1278,6 +1305,19 @@ pub fn SubBuilder::add_blk(Self, Term[Blk]) -> Unit
 pub fn SubBuilder::create(tid? : Tid, args? : Int, blks? : Int, name? : String) -> Self
 pub fn SubBuilder::result(Self) -> Term[Sub]
 
+type Tag[T]
+pub fn[T] Tag::decode(Self[T], String) -> T?
+pub fn[T] Tag::desc(Self[T]) -> String
+pub fn[T] Tag::encode(Self[T], T) -> String?
+pub fn[T] Tag::name(Self[T]) -> String
+pub fn[T] Tag::pkg(Self[T]) -> String
+pub fn[T : Show + Compare] Tag::register(name~ : String, uuid~ : String, encode? : (T) -> String, decode? : (String) -> T?, pkg? : String, desc? : String) -> Self[T]
+pub fn[T] Tag::register_with(name~ : String, uuid~ : String, show~ : (T) -> String, compare~ : (T, T) -> Int, encode? : (T) -> String, decode? : (String) -> T?, pkg? : String, desc? : String) -> Self[T]
+pub fn[A, B] Tag::same(Self[A], Self[B]) -> Bool
+pub fn[T] Tag::show(Self[T], T) -> String
+pub fn[T] Tag::typeid(Self[T]) -> String
+pub fn[T] Tag::uuid(Self[T]) -> String
+
 type Term[T]
 pub fn Term::alt(Self[Jmp]) -> JmpDst?
 pub fn Term::append_arg(Self[Sub], Self[Arg]) -> Self[Sub]
@@ -1339,6 +1379,7 @@ pub fn Term::defs(Self[Blk]) -> Array[Self[Def]]
 pub fn Term::defs_after(Self[Blk], Tid, rev? : Bool) -> Array[Self[Def]]
 pub fn Term::defs_before(Self[Blk], Tid, rev? : Bool) -> Array[Self[Def]]
 pub fn[T] Term::del_attr(Self[T], String) -> Self[T]
+pub fn[T, A] Term::del_tag(Self[T], Tag[A]) -> Self[T]
 pub fn Term::destroy_program_ssa(Self[Program]) -> Self[Program]
 pub fn Term::destroy_ssa(Self[Sub]) -> Self[Sub]
 pub fn Term::direct_call_target(Self[Jmp]) -> Tid?
@@ -1396,6 +1437,7 @@ pub fn[A] Term::fold_sub_visit(Self[Sub], A, (A, IrVisitEvent) -> A) -> A
 pub fn[T] Term::foreground(Self[T]) -> IrColor?
 pub fn[T] Term::format(Self[T]) -> String?
 pub fn[T] Term::get_attr(Self[T], String) -> String?
+pub fn[T, A] Term::get_tag(Self[T], Tag[A]) -> A?
 pub fn[T] Term::has_attr(Self[T], String) -> Bool
 pub fn[T] Term::has_background(Self[T], IrColor) -> Bool
 pub fn[T] Term::has_color(Self[T], IrColor) -> Bool
@@ -1406,6 +1448,7 @@ pub fn[T] Term::has_origin(Self[T], Tid) -> Bool
 pub fn[T] Term::has_postcondition(Self[T], Exp) -> Bool
 pub fn[T] Term::has_precondition(Self[T], Exp) -> Bool
 pub fn Term::has_sub_alias(Self[Sub], String) -> Bool
+pub fn[T, A] Term::has_tag(Self[T], Tag[A]) -> Bool
 pub fn[T] Term::has_tainted_ptr(Self[T], Tid) -> Bool
 pub fn[T] Term::has_tainted_reg(Self[T], Tid) -> Bool
 pub fn Term::insert_arg_after(Self[Sub], Self[Arg], after? : Tid) -> Self[Sub]
@@ -1572,6 +1615,7 @@ pub fn[T] Term::same(Self[T], Self[T]) -> Bool
 pub fn Term::select(Self[Phi], Tid) -> Exp?
 pub fn Term::select_or_unknown(Self[Phi], Tid) -> Exp
 pub fn[T] Term::set_attr(Self[T], Attr) -> Self[T]
+pub fn[T, A] Term::set_tag(Self[T], Tag[A], A) -> Self[T]
 pub fn[T] Term::shell(Self[T]) -> String?
 pub fn Term::split_after(Self[Blk], Self[Def]) -> (Self[Blk], Self[Blk])
 pub fn Term::split_after_def(Self[Blk], Self[Def]) -> (Self[Blk], Self[Blk])
@@ -1809,6 +1853,35 @@ pub fn UnOp::not_equal(Self, Self) -> Bool
 pub fn UnOp::string_of_unop(Self) -> String
 pub fn UnOp::to_repr(Self) -> @debug.Repr
 pub fn UnOp::to_string(Self) -> String
+
+type Value
+pub fn Value::compare(Self, Self) -> Int
+pub fn[T] Value::create(Tag[T], T) -> Self
+pub fn Value::decode(String, String) -> Self?
+pub fn Value::encode(Self) -> (String, String)?
+pub fn Value::equal(Self, Self) -> Bool
+pub fn[T] Value::get(Self, Tag[T]) -> T?
+pub fn[T] Value::get_exn(Self, Tag[T]) -> T
+pub fn[T] Value::has_tag(Self, Tag[T]) -> Bool
+pub fn Value::not_equal(Self, Self) -> Bool
+pub fn Value::op_ge(Self, Self) -> Bool
+pub fn Value::op_gt(Self, Self) -> Bool
+pub fn Value::op_le(Self, Self) -> Bool
+pub fn Value::op_lt(Self, Self) -> Bool
+pub fn Value::output(Self, &Logger) -> Unit
+pub fn Value::registered_typeids() -> Array[String]
+pub fn[S] Value::switch(Self, ValueMatch[S]) -> S
+pub fn Value::tagname(Self) -> String
+pub fn Value::to_string(Self) -> String
+pub fn Value::typeid(Self) -> String
+pub impl Compare for Value
+pub impl Eq for Value
+pub impl Show for Value
+
+type ValueMatch[S]
+pub fn[T, S] ValueMatch::case(Self[S], Tag[T], (T) -> S) -> Self[S]
+pub fn[S] ValueMatch::default(() -> S) -> Self[S]
+pub fn[S] ValueMatch::select(Self[S], Value) -> S
 
 pub(all) enum ValueType {
   Imm(Int)

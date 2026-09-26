@@ -26,41 +26,41 @@ pub impl Printable for Digest with fn to_string(self) {
 }
 
 ///|
+/// The digest of a namespace (upstream `Digest.create ~namespace`): the
+/// MD5 of the namespace, in hexadecimal.
 pub fn Digest::create(namespace_name~ : StringView) -> Digest {
   digest_string(namespace_name)
 }
 
 ///|
+/// Extends the digest with `text` (upstream `Digest.add d "%s" text`):
+/// the MD5 of the digest followed by the text.
 pub fn Digest::add(self : Digest, text : StringView) -> Digest {
-  digest_string(self.0 + ":" + text.to_owned())
+  digest_string(self.0 + text.to_owned())
 }
 
 ///|
+/// Extends the digest with the digest of `bytes`.
 pub fn Digest::add_bytes(self : Digest, bytes : BytesView) -> Digest {
   self.add(digest_bytes(bytes).to_string())
 }
 
 ///|
+/// The MD5 digest of `bytes`, in hexadecimal.
 pub fn digest_bytes(bytes : BytesView) -> Digest {
-  let mut hash : UInt64 = 0xcbf29ce484222325
-  for b in bytes {
-    hash = hash ^ b.to_uint64()
-    hash = hash * 0x100000001b3
-  }
-  Digest(hash.to_string(radix=16).pad_start(16, '0'))
+  Digest(@digest.md5_hex(bytes))
 }
 
 ///|
+/// The MD5 digest of the UTF-8 encoding of `text`, in hexadecimal
+/// (upstream `Digest.make`).
 pub fn digest_string(text : StringView) -> Digest {
-  let mut hash : UInt64 = 0xcbf29ce484222325
-  for ch in text {
-    hash = hash ^ ch.to_uint().to_uint64()
-    hash = hash * 0x100000001b3
-  }
-  Digest(hash.to_string(radix=16).pad_start(16, '0'))
+  Digest(@digest.md5_string(text))
 }
 
 ///|
+/// `digest(namespace_name~, text)` is
+/// `Digest::create(namespace_name~).add(text)` (upstream `digest`).
 pub fn digest(namespace_name~ : StringView, text : StringView) -> Digest {
   Digest::create(namespace_name~).add(text)
 }

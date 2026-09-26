@@ -1,4 +1,5 @@
 import {
+  "bobzhang/bap/digest",
   "bobzhang/bap/future",
   "bobzhang/bap/main_event",
   "bobzhang/bap/native_io",

@@ -42,7 +42,7 @@ pub fn[A] Type::create(
 ) -> Type[A] {
   let digest = match digest {
     Some(f) => f
-    None => x => md5_string(print(x))
+    None => x => @digest.md5_string(print(x))
   }
   { name, default, digest, parse, print, }
 }
@@ -335,8 +335,8 @@ pub fn[A : Eq] Type::enumeration(repr : Array[(String, A)]) -> Type[A] raise {
 ///|
 fn digest_of_file_contents(path : String) -> String {
   match (current_file_system.val.read_file)(path) {
-    Some(bytes) => md5_hex(bytes)
-    None => md5_string("no-file")
+    Some(bytes) => @digest.md5_hex(bytes)
+    None => @digest.md5_string("no-file")
   }
 }
 
@@ -359,11 +359,13 @@ fn digest_directory(path : String) -> String {
     match fs_kind(p) {
       Some(RegularFile) => {
         checked += 1
-        acc = md5_string(acc + md5_string(p + ":" + digest_of_file_contents(p)))
+        acc = @digest.md5_string(
+          acc + @digest.md5_string(p + ":" + digest_of_file_contents(p)),
+        )
       }
       Some(Directory) => {
         checked += 1
-        acc = md5_string(acc + md5_string(p + ":dir"))
+        acc = @digest.md5_string(acc + @digest.md5_string(p + ":dir"))
         match (current_file_system.val.read_dir)(p) {
           Some(entries) => {
             let entries = entries.copy()
@@ -386,7 +388,7 @@ fn digest_directory(path : String) -> String {
     }
   }
   if stopped {
-    md5_string("\{path}:\{@env.now()}")
+    @digest.md5_string("\{path}:\{@env.now()}")
   } else {
     acc
   }
@@ -395,7 +397,7 @@ fn digest_directory(path : String) -> String {
 ///|
 fn digest_path(p : String) -> String {
   match fs_kind(p) {
-    None => md5_string("no-file")
+    None => @digest.md5_string("no-file")
     Some(Directory) => digest_directory(p)
     Some(_) => digest_of_file_contents(p)
   }

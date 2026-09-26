@@ -29,7 +29,12 @@ test "format registry records reader and writer metadata" {
 test "digest helpers are deterministic and byte-oriented" {
   let a = @regular.digest_bytes(b"abc")
   let b = @regular.digest_bytes(b"abd")
-  inspect(a.to_string(), content="e71fa2190541574b")
+  inspect(
+    a.to_string(),
+    content=(
+      #|900150983cd24fb0d6963f7d28e17f72
+    ),
+  )
   assert_true(a != b)
   assert_true(@regular.digest_string("abc").to_string() == a.to_string())
   let root = @regular.Digest::create(namespace_name="cache")

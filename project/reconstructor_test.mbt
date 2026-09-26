@@ -718,6 +718,18 @@ test "project reconstructor materializes Basic BIL fallback jumps" {
       assert_reconstructor_text(reconstructor_jmp_text(block.jmps()), [
         "call @0x00007226 with noreturn",
       ])
+      // the called label gets a synthetic subroutine (upstream
+      // `insert_synthetic`)
+      inspect(
+        reconstructed
+        .program()
+        .subs()
+        .map(sub => "\{sub.sub_name()} synthetic=\{sub.is_synthetic()}")
+        .join(" "),
+        content=(
+          #|sub_0x7220 synthetic=false 0x00007226 synthetic=true
+        ),
+      )
     }
     Err(reason) => fail(reason)
   }

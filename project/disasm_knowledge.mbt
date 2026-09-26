@@ -347,14 +347,16 @@ fn project_label_provider_addr(
 ///|
 /// The destinations of lifted code (upstream: the destinations computed by
 /// the BIL semantics): the constant jumps, the unknown destination (the
-/// null label) of the other jumps, and the external functions named by the
-/// `call` specials.
+/// null label) of the other jumps, and the functions named by the `call`
+/// specials. A `call` or `goto` special immediately followed by a jump is
+/// the Basic lifter hint classifying the jump (see `@types` BIR lifting),
+/// not a call of its own.
 fn project_bil_dests(
   kb : @knowledge.State,
   bil : Array[@types.Stmt],
   dests : Array[@knowledge.Object[Unit]],
 ) -> Unit raise {
-  for stmt in bil {
+  for i, stmt in bil {
     match stmt {
       Jmp(Int(word)) =>
         match project_word_addr(word) {
@@ -367,17 +369,10 @@ fn project_bil_dests(
         project_bil_dests(kb, no, dests)
       }
       While(body~, ..) => project_bil_dests(kb, body, dests)
-      Special(_) =>
+      Special(_) if !(bil.get(i + 1) is Some(Jmp(_))) =>
         match @types.Stmt::decode(@types.Stmt::call(), stmt) {
-          Some(name) if !name.has_prefix("0x") && !name.has_prefix("intrinsic:") => {
-            let name = if name.has_suffix(":external") {
-              name[:name.length() - ":external".length()].to_owned()
-            } else {
-              name
-            }
-            dests.push(project_label_for_name(kb, name))
-          }
-          _ => ()
+          Some(name) => dests.push(project_label_for_name(kb, name))
+          None => ()
         }
       _ => ()
     }

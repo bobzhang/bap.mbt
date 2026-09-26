@@ -226,7 +226,16 @@ test "reconstruction keeps conditional assignments, loops and interrupts" {
     fail("reconstruction failed")
   }
   let subs = reconstructed.program().subs()
-  assert_eq(subs.length(), 1)
+  // as upstream (`insert_synthetic`), the interrupt handler, called but not
+  // disassembled, gets a synthetic subroutine
+  inspect(
+    subs
+    .map(sub => "\{sub.sub_name()} synthetic=\{sub.is_synthetic()}")
+    .join(" "),
+    content=(
+      #|sub_0x100 synthetic=false interrupt:#0 synthetic=true
+    ),
+  )
   // both arms of the conditional and the loop body keep their assignments
   // in blocks of their own; the interrupt of the call instruction returns
   // to the fallthrough; the jump to itself of the last block stays local

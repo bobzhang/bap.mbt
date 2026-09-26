@@ -21,7 +21,7 @@ pub fn Context::empty() -> Context {
 pub fn Context::create(descs : Array[(String, Array[String])]) -> Context {
   let mut cs = Context::empty()
   for d in descs {
-    cs = cs.push(d.0, @sorted_set.SortedSet(d.1))
+    cs = cs.push(d.0, @sorted_set.SortedSet::from_iter(d.1.iter()))
   }
   cs
 }
@@ -146,7 +146,7 @@ pub fn Context::parse(trees : Array[Tree]) -> Context raise AttributeError {
         for f in xs {
           vs.push(parse_context_name(f))
         }
-        cs = cs.push(name, @sorted_set.SortedSet(vs))
+        cs = cs.push(name, @sorted_set.SortedSet::from_iter(vs.iter()))
       }
       _ => raise AttributeError::Failure(ExpectList, [t])
     }

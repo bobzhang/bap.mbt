@@ -215,17 +215,24 @@ decoders (which the port's native decoders reproduce) or for the ISA, the
 port follows the ISA. Each fix has a regression test that decodes real
 bytes (checked with `llvm-mc`), lifts them and executes the BIL
 (`mips/isa_semantics_test.mbt`, `plugins/riscv/riscv_isa_test.mbt`).
-The `unicorn_diff` package differentially tests the lifters against
-Unicorn 2.1.4: tables of single instructions assembled by `llvm-mc` 22
-with random initial states (registers, flags, memory) and the states
-Unicorn computed are decoded with the native decoders, lifted with the
-registered providers and executed with `@types.exec_stmts`, comparing the
-whole register file, the next PC and the touched memory. Unicorn's
-PowerPC core is a 32-bit CPU in a 64-bit build (no 64-bit mode, no
-ISA 2.06+ opcodes, `XER` not readable directly), so the tables use its
-full-width registers in 32-bit mode for the common opcodes, recompute the
-64-bit `CR0`/`CA` of record/carrying forms, and take the 64-bit-only and
-ISA 2.06+ opcodes from a Python model of Power ISA 3.0B.
+The `unicorn_diff` package differentially tests the PowerPC, MIPS, RISC-V
+and SystemZ lifters against Unicorn 2.1.4: about 4900 single
+instructions assembled by `llvm-mc` 22 with random initial states
+(registers, `CR`/`XER`, `HI`/`LO`, memory) and the states Unicorn
+computed are decoded with the native decoders, lifted with the
+registered providers (the native lifters and the Primus Lisp semantics)
+and executed with `@types.exec_stmts`, comparing the whole register file,
+the next PC and the touched memory; architecturally undefined outputs are
+skipped. Unicorn's PowerPC core is a 32-bit CPU in a 64-bit build (no
+64-bit mode, no ISA 2.06+ opcodes, `XER` not readable directly), so the
+tables use its full-width registers in 32-bit mode for the common
+opcodes, recompute the 64-bit `CR0`/`CA` of record/carrying forms, and
+take the 64-bit-only and ISA 2.06+ opcodes from a Python model of Power
+ISA 3.0B; little-endian PowerPC memory accesses run on the big-endian
+core with the accessed bytes reversed. Unicorn cannot run the MIPS
+Release 6 PC-relative opcodes (`ADDIUPC`, `AUIPC`, `ALUIPC`, `LWPC`,
+`LWUPC`, `LDPC`), whose fixes are covered by `mips/isa_semantics_test.mbt`
+only.
 
 - PowerPC (`powerpc/`):
   - Record forms copy `XER[SO]` into `CR0[SO]` (upstream leaves it unchanged).

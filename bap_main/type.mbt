@@ -140,6 +140,13 @@ fn[A] wrap_conv(
 fn parse_error_message(err : Error) -> String {
   match err {
     Invalid(msg) => msg
+    // `fail(msg)` prefixes the message with its source location; converters
+    // report only the message, as upstream `Cmdliner` parsers do.
+    Failure(msg) =>
+      match msg.find("FAILED: ") {
+        Some(i) => msg.view(start_offset=i + 8).to_owned()
+        None => msg
+      }
     e => error_to_string(e)
   }
 }

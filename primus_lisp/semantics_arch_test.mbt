@@ -52,7 +52,6 @@ test "lift aarch64 instructions" {
     content=(
       #|X0:imm64 := (0:64u + (X1:imm64 * X2:imm64))
       #|
-
     ),
   )
 }
@@ -92,7 +91,7 @@ test "lift x86 and powerpc instructions" {
   inspect(
     lift("NOP", []),
     content=(
-      #|<no definition>
+      #|
     ),
   )
 }

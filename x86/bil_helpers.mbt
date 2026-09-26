@@ -153,12 +153,6 @@ fn e_slt(x : @types.Exp, y : @types.Exp) -> @types.Exp {
 }
 
 ///|
-/// `x >$ y`, i.e. `y <$ x`.
-fn e_sgt(x : @types.Exp, y : @types.Exp) -> @types.Exp {
-  BinOp(SignedLt, y, x)
-}
-
-///|
 fn e_not(x : @types.Exp) -> @types.Exp {
   UnOp(Not, x)
 }

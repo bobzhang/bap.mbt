@@ -23,16 +23,16 @@ fn circ_shift32(a : @powerpc.AddrSize, x : UInt64, sh : Int) -> UInt64 {
 }
 
 ///|
-/// Upstream `mask64 start stop` (bits numbered from the most significant
-/// one). As upstream, the wrap-around case (`start > stop`) keeps the
-/// lifter's formulation: ones in `0..stop-1` and `start+1..63`.
+/// `MASK(start, stop)` (bits numbered from the most significant one),
+/// wrapping around when `start > stop`: ones in `0..stop` and `start..63`
+/// (upstream's `mask64` leaves out bits `start` and `stop`).
 fn mask64(start : Int, stop : Int) -> UInt64 {
   let mut m = 0UL
   for i in 0..<64 {
     let set = if start <= stop {
       i >= start && i <= stop
     } else {
-      i < stop || i > start
+      i <= stop || i >= start
     }
     if set {
       m = m | (1UL << (63 - i))

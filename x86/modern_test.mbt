@@ -205,13 +205,13 @@ test "modern btx" {
     bil_text(modern64(b"\x0f\xab\xd8")),
     content=(
       #|%o_1:imm5 := low:5[RBX:imm64]
-      #|CF:imm1 := low:1[(RAX:imm64 >> %o_1:imm5)]
+      #|%d_2:imm32 := low:32[RAX:imm64]
+      #|CF:imm1 := low:1[(%d_2:imm32 >> %o_1:imm5)]
       #|OF:imm1 := unknown(bts:imm1)
       #|SF:imm1 := unknown(bts:imm1)
-      #|ZF:imm1 := unknown(bts:imm1)
       #|AF:imm1 := unknown(bts:imm1)
       #|PF:imm1 := unknown(bts:imm1)
-      #|RAX:imm64 := (RAX:imm64 | (1:64u << %o_1:imm5))
+      #|RAX:imm64 := pad:64[(%d_2:imm32 | (1:32u << %o_1:imm5))]
     ),
   )
   // bt eax, ebx with ebx = 36: the offset is taken modulo 32

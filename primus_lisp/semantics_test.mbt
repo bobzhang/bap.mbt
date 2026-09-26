@@ -89,7 +89,6 @@ test "lift riscv instructions" {
     content=(
       #|X1:imm64 := 0x2000:64u
       #|
-
     ),
   )
   inspect(

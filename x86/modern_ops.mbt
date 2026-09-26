@@ -23,6 +23,8 @@ fn BtKind::name(self : BtKind) -> String {
 
 ///|
 /// Upstream `Btx.set_flags`.
+///
+/// port: ZF is unaffected (Intel SDM BT; upstream makes it undefined).
 fn btx_set_flags(
   op : BtKind,
   base : @types.Exp,
@@ -32,7 +34,6 @@ fn btx_set_flags(
     assign(cf, e_low(1, e_lsr(base, off))),
     set_unknown(of_, op.name()),
     set_unknown(sf, op.name()),
-    set_unknown(zf, op.name()),
     set_unknown(af, op.name()),
     set_unknown(pf, op.name()),
   ]
@@ -84,6 +85,8 @@ fn imm_word_value(value : Int64, width : Int) -> Int64 {
 }
 
 ///|
+/// port: the register is written with `set`, so that 32-bit registers are
+/// zero-extended in 64-bit mode (upstream assigns the whole register).
 fn Tools::btx_rr(
   self : Tools,
   op : BtKind,
@@ -94,13 +97,12 @@ fn Tools::btx_rr(
   let size = self.width(base)
   let w = offset_width(size)
   let o = new_tmp(w, name="o")
-  let base = self.reg_var(base)
-  let offset = self.reg_var(offset)
-  let mask = e_lsl(int_exp(1, self.size()), ev(o))
+  let d = new_tmp(size, name="d")
+  let mask = e_lsl(int_exp(1, size), ev(o))
   cat([
-    [assign(o, e_low(w, ev(offset)))],
-    btx_set_flags(op, ev(base), ev(o)),
-    btx_side_effect(op, ev(base), mask, e => assign(base, e)),
+    [assign(o, e_low(w, ev(self.reg_var(offset)))), assign(d, self.get(base))],
+    btx_set_flags(op, ev(d), ev(o)),
+    btx_side_effect(op, ev(d), mask, e => self.set(base, e)),
   ])
 }
 
@@ -114,10 +116,11 @@ fn Tools::btx_ri(
   let size = self.width(base)
   let w = offset_width(size)
   let o = imm_word_value(offset, w)
-  let base = self.reg_var(base)
+  let d = new_tmp(size, name="d")
   cat([
-    btx_set_flags(op, ev(base), int64_exp(o, w)),
-    btx_side_effect(op, ev(base), mask_imm(self.size(), o), e => assign(base, e)),
+    [assign(d, self.get(base))],
+    btx_set_flags(op, ev(d), int64_exp(o, w)),
+    btx_side_effect(op, ev(d), mask_imm(size, o), e => self.set(base, e)),
   ])
 }
 
@@ -156,9 +159,11 @@ fn Tools::btx_mr(
   let w = offset_width(size)
   let o = new_tmp(w, name="o")
   let bexp = {
+    // port: the word at `floor(offset / size)` (upstream divides, rounding
+    // negative offsets towards zero)
     let e = e_times(
       int_exp(size / 8, bsize),
-      bop(SignedDiv, self.get(offset), int_exp(bsize, bsize)),
+      bop(ARShift, self.get(offset), int_exp(w, bsize)),
     )
     if bsize_addr != bsize {
       e_signed(bsize_addr, e)
@@ -411,12 +416,17 @@ fn Tools::cmpxchg_rr(
   let rax = self.reg(cmpxchg_rax(size))
   let size = self.width(rax)
   let v = new_tmp(size, name="v")
+  let d = new_tmp(size, name="d")
   cat([
-    [assign(v, e_minus(self.get(rax), self.get(fst)))],
-    after_sub(ev(v), size, self.get(rax), self.get(fst)),
+    [assign(d, self.get(fst)), assign(v, e_minus(self.get(rax), ev(d)))],
+    after_sub(ev(v), size, self.get(rax), ev(d)),
     [
-      if_(e_eq(self.get(rax), self.get(fst)), [self.set(fst, self.get(snd))], [
-        self.set(rax, self.get(fst)),
+      // port: when the comparison fails the destination is written back
+      // (Intel SDM CMPXCHG: DEST <- TEMP, which zero-extends a 32-bit
+      // register in 64-bit mode)
+      if_(e_eq(self.get(rax), ev(d)), [self.set(fst, self.get(snd))], [
+        self.set(rax, ev(d)),
+        self.set(fst, ev(d)),
       ]),
     ],
   ])

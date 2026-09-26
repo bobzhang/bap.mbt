@@ -50,7 +50,7 @@ test "decoded instructions lift with the Lisp semantics" {
       #|ADDW (addw a0, a0, a1): X10:imm64 := extend:64[low:32[(X10:imm64 + X11:imm64)]]
       #|C_LDSP (ld ra, 8(sp)): X1:imm64 := load(mem:mem64x8, (X2:imm64 + 8:64u)):imm64
       #|C_ADDI (addi sp, sp, 16): X2:imm64 := (X2:imm64 + 0x10:64u)
-      #|C_JR (ret): jmp X1:imm64
+      #|C_JR (ret): jmp (X1:imm64 & 0xFFFFFFFFFFFFFFFE:64u)
     ),
   )
 }

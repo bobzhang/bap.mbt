@@ -64,7 +64,9 @@ fn df_to_offset(mode : Mode, e : @types.Exp) -> @types.Exp {
 /// Upstream `bap_to_rflags`: the expressions of the RFLAGS bits, from bit
 /// 63 down to bit 0.
 let bap_to_rflags : ReadOnlyArray[@types.Exp] = {
-  let undefined = (d : Int) => e_unknown("Undefined RFLAGS bit \{d}", 1)
+  // port: the reserved bits read as 0 except bit 1, which reads as 1
+  // (Intel SDM 3.4.3, LAHF; upstream leaves them undefined)
+  let undefined = (d : Int) => int_exp(if d == 1 { 1 } else { 0 }, 1)
   let unmodeled = (s : String) => e_unknown("Unmodeled RFLAGS bit " + s, 1)
   let bits : Array[@types.Exp] = []
   for d = 63; d >= 22; d = d - 1 {

@@ -139,7 +139,9 @@ priv enum Opcode {
   Shiftd(@types.BinOp, Int, Operand, Operand, Operand)
   /// direction, type, dst, count, through carry
   Rotate(@types.BinOp, Int, Operand, Operand, Bool)
-  Bt(Int, Operand, Operand)
+  /// kind (the ModR/M reg field of `0f ba`: 4 BT, 5 BTS, 6 BTR, 7 BTC),
+  /// type, bit offset, bit base
+  Bt(Int, Int, Operand, Operand)
   Bs(Int, Operand, Operand, Direction)
   Jump(JumpTarget)
   Jcc(JumpTarget, @types.Exp)
@@ -164,7 +166,8 @@ priv enum Opcode {
   Sbb(Int, Operand, Operand)
   Cmp(Int, Operand, Operand)
   Cmpxchg(Int, Operand, Operand)
-  Cmpxchg8b(Operand)
+  /// CMPXCHG8B (64) or CMPXCHG16B (128)
+  Cmpxchg8b(Int, Operand)
   Xadd(Int, Operand, Operand)
   Xchg(Int, Operand, Operand)
   And(Int, Operand, Operand)

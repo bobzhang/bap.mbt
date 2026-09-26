@@ -217,7 +217,35 @@ Where upstream semantics are wrong for the operands of the current LLVM
 decoders (which the port's native decoders reproduce) or for the ISA, the
 port follows the ISA. Each fix has a regression test that decodes real
 bytes (checked with `llvm-mc`), lifts them and executes the BIL
-(`mips/isa_semantics_test.mbt`, `plugins/riscv/riscv_isa_test.mbt`).
+(`mips/isa_semantics_test.mbt`, `plugins/riscv/riscv_isa_test.mbt`; for
+x86, the Unicorn differential tables of `x86/semantics`).
+The `unicorn_diff` package differentially tests the PowerPC, MIPS, RISC-V
+and SystemZ lifters against Unicorn 2.1.4: about 4900 single
+instructions assembled by `llvm-mc` 22 with random initial states
+(registers, `CR`/`XER`, `HI`/`LO`, memory) and the states Unicorn
+computed are decoded with the native decoders, lifted with the
+registered providers (the native lifters and the Primus Lisp semantics)
+and executed with `@types.exec_stmts`, comparing the whole register file,
+the next PC and the touched memory; architecturally undefined outputs are
+skipped. Unicorn's PowerPC core is a 32-bit CPU in a 64-bit build (no
+64-bit mode, no ISA 2.06+ opcodes, `XER` not readable directly), so the
+tables use its full-width registers in 32-bit mode for the common
+opcodes, recompute the 64-bit `CR0`/`CA` of record/carrying forms, and
+take the 64-bit-only and ISA 2.06+ opcodes from a Python model of Power
+ISA 3.0B; little-endian PowerPC memory accesses run on the big-endian
+core with the accessed bytes reversed. Unicorn cannot run the MIPS
+Release 6 PC-relative opcodes (`ADDIUPC`, `AUIPC`, `ALUIPC`, `LWPC`,
+`LWUPC`, `LDPC`), whose fixes are covered by `mips/isa_semantics_test.mbt`
+only.
+
+- PowerPC (`powerpc/`):
+  - Record forms copy `XER[SO]` into `CR0[SO]` (upstream leaves it unchanged).
+  - `addc`/`adde`/`addme`/`addze`/`addic[.]`/`subfc`/`subfe`/`subfme`/`subfze`/`subfic` set `CA`/`CA32` to the carries out of the (word) sum; upstream compares the result with an operand, which inverts the carries of subtractions, misses carries when the other addend and the carry-in wrap, and sets `subfme`/`subfze` carries unconditionally.
+  - `cmpw`/`cmplw` compare the low words of both operands (upstream compares the low word of `ra` with the whole `rb`).
+  - `mullw` produces the doubleword product of the signed low words (upstream multiplies the zero-extended words: the upper half is wrong on 64-bit targets).
+  - Wrapping masks (`mb > me`) of `rlwinm`/`rlwnm`/`rlwimi` include bits `mb` and `me`, and those of `rldic`/`rldimi` are the union of the two halves (upstream leaves out the boundary bits, resp. clears the result).
+  - `sld`/`srd` by 64 to 127 produce zero (upstream shifts by the low six bits).
+  - `powerpc.lisp` defines `NOP` in the `powerpc` package, so that `llvm-powerpc32` instructions resolve to it (upstream defines it in the default package, where no instruction name resolves).
 
 - MIPS (`mips/`):
   - `CLO`/`CLZ` read `rs` and write `rd` (LLVM's `[rd, rs]`) and count from the most significant bit.
@@ -231,15 +259,22 @@ bytes (checked with `llvm-mc`), lifts them and executes the BIL
   - Branch-and-link forms link unconditionally; the compact ones (`*ALC`, `BALC`, `JIALC`) link `cia + 4` and have no delay slot; `JIC`/`JIALC` sign-extend LLVM's unsigned 16-bit offset; `JALR` reads its target before linking.
   - Store-conditionals (LLVM's `[rt, rt, base, offset]`) set the success flag.
   - The hardwired zero register reads as zero and writes to it are discarded (upstream reads and writes a `ZERO` variable).
-  - Modeled although missing or unregistered upstream: `BLTZ`, `BLTZL`, `BGEZL`, `BNEL`, `BLEZL`, `BLTZAL`, `BGEZALL`, `BLTZALL`, `BC`, `BALC`, `JALX`, the hazard-barrier jumps, R6 `DIV`/`DIVU`, `DSDIV`/`DUDIV`, `MOVZ`/`MOVN`, `EXT`/`INS`/`DEXT`/`DINS`, `DSHD`, `DROTR*`, `AUI`, `AUIPC`, `DADD`/`DADDi`, and the no-op hints.
+  - Modeled although missing or unregistered upstream: `BLTZ`, `BLTZL`, `BGEZL`, `BNEL`, `BLEZL`, `BLTZAL`, `BGEZALL`, `BLTZALL`, `BC`, `BALC`, `JALX`, the hazard-barrier jumps, R6 `DIV`/`DIVU`, `DSDIV`/`DUDIV`, `MOVZ`/`MOVN`, `EXT`/`INS`/`DEXT`/`DINS`, `DSHD`, `DROTR*`, `AUI`, `AUIPC`, `DADD`/`DADDi`, `DCLO`/`DCLZ`, and the no-op hints.
   - Remaining gap: the "likely" branches do not nullify their delay slot when not taken (this needs support from the disassembler's delay-slot handling).
 - RISC-V (`primus_lisp/lisp/semantics/riscv/riscv.lisp`, deviations marked `port:`):
-  - `JALR` jumps to `(rs1 + offset) & ~1`, read before the link register is written (upstream: `pc + rs1 + offset`); `C_JALR` likewise reads its target first.
+  - `JALR` jumps to `(rs1 + offset) & ~1`, read before the link register is written (upstream: `pc + rs1 + offset`); `C_JR`/`C_JALR` likewise clear bit 0 of the target, and `C_JALR` reads it first.
   - `AUIPC` adds `imm << 12` (upstream: `imm`); `LUI`/`C_LUI`/`AUIPC` sign-extend the 32-bit value on RV64.
   - `LW`/`LH`/`LHU`/`LWU` load and `SW`/`SH` store 32/16 bits (upstream derives the widths from XLEN, which is wrong on RV32).
   - `SLTI` compares `rs1` signed (upstream compares the destination, unsigned); `BLT`/`BGE` compare signed (upstream: unsigned).
   - Added: `ADD`, `AND`, `OR`, `XOR`, `SLT`, `SLTU`, `SLTIU`, `SLL`/`SRL`/`SRA` (amounts masked to XLEN), `SUBW`, the `*W` shifts, `BLTU`/`BGEU`, the M extension (`MUL`, `MULH[S][U]`, `DIV[U]`, `REM[U]`, `MULW`, `DIV[U]W`, `REM[U]W`, with the ISA's division-by-zero results), `C_AND`/`C_OR`/`C_XOR`/`C_ANDI`/`C_SUBW`/`C_SW`/`C_SWSP`/`C_LWSP`/`C_JAL`, and the fences.
+- SystemZ (`systemz/`): besides upstream's `LR`, the other general-register moves without condition codes are modeled (`LGR`, `LGFR`, `LLGFR`).
 - Primus Lisp lifter (`primus_lisp`): hardwired zero registers (registers with the `zero` role: RISC-V `X0`/`ZERO`, AArch64 `XZR`/`WZR`) read as zero and writes to them are discarded (RISC-V `j`/`ret` write `X0`).
+- Primus Lisp lifter (`primus_lisp`): hardwired zero registers (registers with the `zero` role: RISC-V `X0`/`ZERO`, AArch64 `XZR`/`WZR`) read as zero and writes to them are discarded (RISC-V `j`/`ret` write `X0`); a missing register operand (LLVM's `NoRegister`, an empty name) reads as zero.
+- x86 (`x86/semantics`: ~5000 single-instruction cases assembled with `llvm-mc` and executed in Unicorn 2.1.4, the flags the Intel SDM leaves undefined masked; the Basic lifter, the `x86`/`x86-legacy` providers and the x86 Lisp semantics agree on every case they lift). Where Unicorn (QEMU 5) contradicts the SDM the tables follow the SDM: CMPXCHG does not write the accumulator back when the comparison succeeds (fixed in QEMU 8.1). Fixes:
+  - Basic lifter (`project/disassembly_basic_bil.mbt`): shift/rotate/SHLD/SHRD counts are masked to 5 bits (6 for 64-bit operands), not to the operand width; ROL/ROR set CF whenever the masked count is not zero; SAR's CF is the sign for counts beyond the width; the one-operand IMUL sets CF/OF when the product is not the sign extension of its low half; IDIV raises #DE on signed quotient overflow; BTx leave ZF unchanged and the memory forms floor negative bit offsets; CMPXCHG/CMPXCHG8B only write the accumulator when the comparison fails; LAHF stores the constant reserved bits.
+  - `x86` providers (`x86/`, marked `port:`, listed in `x86/README.mbt.md`): the same shift/rotate, IMUL, IDIV, BTx and LAHF/PUSHF fixes; BTx zero-extend 32-bit registers in 64-bit mode (per-opcode lifter); the legacy lifter decodes BTS/BTR/BTC (upstream lifts `0f ba /5 /6 /7` as BT) and CMPXCHG16B; CMPXCHG8B loads EDX:EAX in order; XADD stores the sum in r/m (upstream swaps the operands); PAVGB/PAVGW keep the carry; packed shifts by a register/memory count use the low quadword of the source; PSHUFB uses 4 index bits; MOVQ `66 0f d6` zero-extends a register destination.
+  - Lisp semantics (`primus_lisp/lisp/semantics/x86`, marked `port:`): memory operands include the scaled index; POP64rmm stores to the full effective address; SHUFPS takes its low words from the destination; ANDNPS/ANDNPD compute `(not src1) & src2`.
+  - Remaining: the Basic lifter models sub-registers (`EAX`, `AL`, `XMM0`) as separate variables; the tests read 32-bit register writes in 64-bit mode as zero-extending (as the SDM requires), but `Core::desugar` merges sub-register writes into the full register. Not lifted: the Basic lifter's SSE integer instructions (its decoder only recognizes fixture encodings, and none is lifted), RCL/RCR by the legacy lifter; not decoded by the Basic decoder: `TEST m, imm`, `82 /r` (32-bit), `D3 /6`, `LODS`, `LOOP*`, `ENTER`, `POP m`, `CMPXCHG16B`, RIP-relative/absolute/32-bit-address `LEA` and some REX-prefixed `MOV` forms.
 
 ## Fidelity Gaps (audit, 2026-09-26; several since addressed: knowledge KB evaluator, Core Theory algebra, BIL-to-IR lowering, liveness/SSA, DWARF prefix recovery, typed image memory and raw ELF reader)
 

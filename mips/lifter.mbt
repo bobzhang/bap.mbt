@@ -61,6 +61,8 @@ let llvm_aliases : Map[String, String] = {
   "DLSA_R6": "DLSA",
   "CLO_R6": "CLO",
   "CLZ_R6": "CLZ",
+  "DCLO_R6": "DCLO",
+  "DCLZ_R6": "DCLZ",
   "LL_R6": "LL",
   "LLD_R6": "LLD",
   "SC_R6": "SC",

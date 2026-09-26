@@ -248,7 +248,7 @@ ISA 2.06+ opcodes from a Python model of Power ISA 3.0B.
   - Branch-and-link forms link unconditionally; the compact ones (`*ALC`, `BALC`, `JIALC`) link `cia + 4` and have no delay slot; `JIC`/`JIALC` sign-extend LLVM's unsigned 16-bit offset; `JALR` reads its target before linking.
   - Store-conditionals (LLVM's `[rt, rt, base, offset]`) set the success flag.
   - The hardwired zero register reads as zero and writes to it are discarded (upstream reads and writes a `ZERO` variable).
-  - Modeled although missing or unregistered upstream: `BLTZ`, `BLTZL`, `BGEZL`, `BNEL`, `BLEZL`, `BLTZAL`, `BGEZALL`, `BLTZALL`, `BC`, `BALC`, `JALX`, the hazard-barrier jumps, R6 `DIV`/`DIVU`, `DSDIV`/`DUDIV`, `MOVZ`/`MOVN`, `EXT`/`INS`/`DEXT`/`DINS`, `DSHD`, `DROTR*`, `AUI`, `AUIPC`, `DADD`/`DADDi`, and the no-op hints.
+  - Modeled although missing or unregistered upstream: `BLTZ`, `BLTZL`, `BGEZL`, `BNEL`, `BLEZL`, `BLTZAL`, `BGEZALL`, `BLTZALL`, `BC`, `BALC`, `JALX`, the hazard-barrier jumps, R6 `DIV`/`DIVU`, `DSDIV`/`DUDIV`, `MOVZ`/`MOVN`, `EXT`/`INS`/`DEXT`/`DINS`, `DSHD`, `DROTR*`, `AUI`, `AUIPC`, `DADD`/`DADDi`, `DCLO`/`DCLZ`, and the no-op hints.
   - Remaining gap: the "likely" branches do not nullify their delay slot when not taken (this needs support from the disassembler's delay-slot handling).
 - RISC-V (`primus_lisp/lisp/semantics/riscv/riscv.lisp`, deviations marked `port:`):
   - `JALR` jumps to `(rs1 + offset) & ~1`, read before the link register is written (upstream: `pc + rs1 + offset`); `C_JALR` likewise reads its target first.

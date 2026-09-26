@@ -49,6 +49,8 @@ let samples64 : Array[(String, Array[@mc.Op])] = {
     ("DADDiu", rri),
     ("DADDu", rrr),
     ("DBITSWAP", rr),
+    ("DCLO", rr),
+    ("DCLZ", rr),
     ("DDIV", rrr),
     ("DDIVu", rrr),
     ("DLSA", [r("V0_64"), r("A0_64"), r("A1_64"), i(1)]),
@@ -215,7 +217,7 @@ test "lifter: every opcode lifts to well-typed BIL on every target" {
   inspect(
     names.length(),
     content=(
-      #|189
+      #|191
     ),
   )
   for sample in samples64 {

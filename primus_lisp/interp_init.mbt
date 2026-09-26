@@ -25,6 +25,7 @@ pub fn init_signals(m : @primus.Machine) -> Unit {
     signal(
       m,
       @primus.loading,
+      sync=true,
       params=one(int),
       docs="(loading A) is emitted before load from A occurs",
       (_, x) => [x],
@@ -43,6 +44,7 @@ pub fn init_signals(m : @primus.Machine) -> Unit {
     signal(
       m,
       @primus.storing,
+      sync=true,
       params=one(int),
       docs="(storing A) is emitted before store to A occurs",
       (_, x) => [x],

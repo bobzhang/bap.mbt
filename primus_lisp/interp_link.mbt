@@ -308,12 +308,19 @@ pub fn define_primitive(
 /// when the observation occurs, all Lisp methods named after the
 /// observation are evaluated with the arguments computed by `proj`. The
 /// methods are evaluated as frames of the machine (a resumable
-/// subscription), so they may fork. Returns the subscription.
+/// subscription), so they may fork, and run right after the step that
+/// posted the observation. With `sync=true` the methods run synchronously,
+/// before the observed operation continues (in a nested run of the
+/// machine, so forks requested by them are deferred until the step ends);
+/// this is used for the pre-operation signals `loading` and `storing`,
+/// whose methods must run before the memory access. Returns the
+/// subscription.
 pub fn[T] signal(
   m : @primus.Machine,
   obs : @primus.Observation[T],
   params? : Signature,
   docs? : String = "undocumented",
+  sync? : Bool = false,
   proj : (@primus.Machine, T) -> Array[@primus.Value] raise,
 ) -> @primus.Subscription {
   let types = match params {
@@ -331,6 +338,16 @@ pub fn[T] signal(
       Def::new(name.show(), docs~, { types, }),
     ),
   })
+  // synchronous methods are run by a linked host code, called in a nested
+  // run of the machine
+  let trampoline = "primus-lisp:signal:" + name.show()
+  if sync {
+    @primus.Linker::link(
+      m,
+      name=trampoline,
+      Host(m => eval_signal(m, name, m.call_args(), _ => ())),
+    )
+  }
   // the methods are scheduled (as a resumable observer would) only if
   // the program has methods for the signal
   m.subscribe(obs, x => {
@@ -339,7 +356,11 @@ pub fn[T] signal(
       .get(meth, name=name.unqualified())
       .is_empty()
     if has_methods {
-      m.schedule(m => eval_signal(m, name, proj(m, x), _ => ()))
+      if sync {
+        ignore(@primus.Linker::call(m, Symbol(trampoline), args=proj(m, x)))
+      } else {
+        m.schedule(m => eval_signal(m, name, proj(m, x), _ => ()))
+      }
     }
   })
 }

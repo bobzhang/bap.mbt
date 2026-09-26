@@ -13,4 +13,7 @@ import {
 
 import {
   "bobzhang/bap/fixtures",
+  "bobzhang/bap/mips",
+  "bobzhang/bap/riscv" @rv,
+  "bobzhang/bap/plugins/riscv" @riscv_plugin,
 } for "test"

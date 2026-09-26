@@ -119,7 +119,6 @@ test "bap without arguments prints the usage" {
       #|Run 'bap --<PLUGIN>-help for more information about a plugin.
       #|Run 'bap --help' for the detailed manual.
       #|
-
     ),
   )
 }

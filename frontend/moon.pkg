@@ -55,4 +55,10 @@ import {
 
 import {
   "bobzhang/bap/fixtures",
+  "bobzhang/bap/native_io",
+  "moonbitlang/core/env",
 } for "test"
+
+options(
+  targets: { "frontend_native_test.mbt": [ "native" ] },
+)

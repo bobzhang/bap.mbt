@@ -144,7 +144,7 @@ test "signed halfword multiplies" {
   inspect(
     lift_str("SMLAWB", [r("R0"), r("R1"), r("R2"), r("R3"), ..al]),
     content=(
-      #|%v1:imm64 := (extend:64[extract[47:16](extend:64[(R1:imm32 * extend:64[extract[15:0](R2:imm32)])])] + extend:64[R3:imm32])
+      #|%v1:imm64 := (extend:64[extract[47:16]((extend:64[R1:imm32] * extend:64[extract[15:0](R2:imm32)]))] + extend:64[R3:imm32])
       #|R0:imm32 := extract[31:0](%v1:imm64)
       #|QF:imm1 := (extend:64[extract[31:0](%v1:imm64)] != %v1:imm64)
     ),
@@ -185,6 +185,13 @@ test "signed halfword multiplies" {
   // 2*4 + (-3)*3
   assert_eq(smul("SMUAD", [r("R0"), r("R2"), r("R3"), ..al]), 0xFFFFFFFF)
   assert_eq(smul("SMLAD", [r("R0"), r("R2"), r("R3"), r("R1"), ..al]), 0)
+  // (0x10000 * bottom(-3)) >> 16 + 0x40003
+  let s = run(
+    "SMLAWB",
+    [r("R0"), r("R1"), r("R2"), r("R3"), ..al],
+    state([("R1", 0x10000), ("R2", 0x0002FFFD), ("R3", 0x00040003)]),
+  )
+  assert_eq(reg_value(s, "R0"), 0x40000)
   // 64-bit accumulate into R1:R0 of bottom(-3) * top(4)
   let s = run("SMLALBT", [r("R0"), r("R1"), r("R2"), r("R3"), ..al], init)
   assert_eq(reg_value(s, "R0"), 0xFFFFFFF9)

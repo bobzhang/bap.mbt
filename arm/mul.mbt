@@ -67,7 +67,10 @@ fn lift_smul(
     BT => mul(bot(src1), top(src2))
     TB => mul(top(src1), bot(src2))
     D => bin(Plus, mul(top(src1), top(src2)), mul(bot(src1), bot(src2)))
-    WB => top32(cast(Signed, 64, mul(src1, bot(src2))))
+    // Upstream writes `top32 (cast signed 64 (src1 * bot src2))`, which
+    // multiplies a 32-bit by a 64-bit value and is ill-typed; the operand
+    // is widened before the multiplication instead.
+    WB => top32(mul(cast(Signed, 64, src1), bot(src2)))
   }
   let result = match (accum, hiaccum) {
     (None, None) => result

@@ -20,6 +20,7 @@ struct Image {
   is_executable_value : Bool?
   base_address_value : UInt64?
   spec_value : OgreDoc?
+  loader_facts_value : OgreDoc?
 }
 
 ///|
@@ -113,6 +114,7 @@ pub fn Image::create(
     is_executable_value: is_executable,
     base_address_value: base_address,
     spec_value: spec,
+    loader_facts_value: None,
   }
 }
 
@@ -267,10 +269,23 @@ pub fn Image::spec(self : Image) -> OgreDoc {
     Some(doc) => doc
     None =>
       match Spec::of_image(self) {
-        Ok(doc) => doc
+        Ok(doc) =>
+          match self.loader_facts_value {
+            Some(facts) => doc.merge(facts) catch { _ => doc }
+            None => doc
+          }
         Err(_) => Spec::from_arch(self.arch())
       }
   }
+}
+
+///|
+/// Attaches the facts a file loader extracted besides the image metadata
+/// (upstream loaders put them in the image specification, e.g. the
+/// `llvm:elf-program-header` facts); they are merged into the
+/// specification derived from the image.
+fn Image::with_loader_facts(self : Image, facts : OgreDoc?) -> Image {
+  { ..self, loader_facts_value: facts, }
 }
 
 ///|

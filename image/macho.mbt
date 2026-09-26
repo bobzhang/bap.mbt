@@ -213,6 +213,17 @@ fn macho_symbol_sizes(
 }
 
 ///|
+/// The assembler temporary labels: the local symbols named `l...` or
+/// `L...` (e.g., the `ltmp0` label that clang puts at the start of the
+/// sections of arm64 objects), which name no program entity (C symbols
+/// start with `_`); the function at the address of such a label would
+/// otherwise have an ambiguous name.
+fn macho_is_temporary_label(sym : @macho.Nlist) -> Bool {
+  (sym.n_type & 0x01) == 0 &&
+  (sym.name.has_prefix("l") || sym.name.has_prefix("L"))
+}
+
+///|
 fn int64(x : UInt64) -> Int64 {
   x.reinterpret_as_int64()
 }
@@ -366,6 +377,9 @@ fn macho_llvm_facts(data : Bytes, m : @macho.MachO) -> Array[@ogre.Ogre[Unit]] {
   for entry in macho_symbol_sizes(data, sections, symbols) {
     let (sym, size) = entry
     let section = sections[sym.n_sect - 1]
+    if macho_is_temporary_label(sym) {
+      continue
+    }
     if sym.typ() == @macho.N_SECT {
       let off = if m.header.filetype == @macho.MH_OBJECT {
         sym.n_value + section.offset.to_uint64()

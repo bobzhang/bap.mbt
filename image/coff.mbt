@@ -191,6 +191,12 @@ fn coff_llvm_facts(data : Bytes, c : @coff.Coff) -> Array[@ogre.Ogre[Unit]] {
   let symbols = @coff.symbols(data, c).unwrap_or([])
   for sym in symbols {
     guard coff_symbol_section(c, sym) is Some(s) else { continue }
+    // section symbols name no program entity; the symbols of the
+    // non-executable sections of objects, which are not mapped, would
+    // alias the addresses of the code
+    if coff_is_section_definition(sym) || (is_rel && !coff_is_code(s)) {
+      continue
+    }
     let addr = coff_symbol_address(c, sym)
     let end = coff_section_address(c, s) + coff_section_size(c, s)
     if end < addr {
@@ -216,8 +222,14 @@ fn coff_llvm_facts(data : Bytes, c : @coff.Coff) -> Array[@ogre.Ogre[Unit]] {
       facts.push(@ogre.provide(llvm_code_entry(), (sym.name, off, int64(size))))
     }
   }
-  // the relocations of the sections (`emit_relocations`)
+  // the relocations of the sections (`emit_relocations`); as the
+  // non-executable sections of objects are not mapped (they would all be
+  // at the same address), their relocations would alias the addresses of
+  // the code and are omitted
   for s in c.sections {
+    if is_rel && !coff_is_code(s) {
+      continue
+    }
     for rel in @coff.relocations(data, c, s).unwrap_or([]) {
       match
         symbols.search_by(sym => {
@@ -225,6 +237,9 @@ fn coff_llvm_facts(data : Bytes, c : @coff.Coff) -> Array[@ogre.Ogre[Unit]] {
         }) {
         Some(i) => {
           let sym = symbols[i]
+          if coff_is_section_definition(sym) {
+            continue
+          }
           let at = int64(
             rel.virtual_address.to_uint64() + coff_section_address(c, s),
           )
@@ -319,5 +334,20 @@ pub fn ImageBackend::coff() -> ImageBackend {
     extensions=["exe", "dll", "sys", "efi", "obj", "coff", "pe"],
     priority=25,
     load=image_coff_load,
+  )
+}
+
+///|
+/// Whether the symbol defines a section (LLVM `isSectionDefinition`: a
+/// static or absolute external symbol followed by the auxiliary section
+/// definition record), e.g., the `.text` symbol of an object. LLVM reports
+/// such symbols as debug symbols (`ST_Debug`); they name no program entity,
+/// and the function at the start of the section would otherwise have an
+/// ambiguous name.
+fn coff_is_section_definition(sym : @coff.Symbol) -> Bool {
+  sym.number_of_aux_symbols > 0 &&
+  (
+    sym.storage_class == 3 ||
+    (sym.storage_class == 2 && sym.section_number == -1)
   )
 }

@@ -79,7 +79,8 @@ fn provide_target_facts(target : @core_theory.Target) -> @ogre.Ogre[Unit] {
 ///|
 /// Provides the facts that describe an image (upstream
 /// `Legacy.provide_image`): the target, the entry point, segments with their
-/// file mappings and names, sections, and function symbols with their chunks.
+/// file mappings and names, sections, the relocations and the references to
+/// external symbols, and function symbols with their chunks.
 fn provide_image(image : Image) -> @ogre.Ogre[Unit] {
   let facts = [
     provide_target_facts(image.arch()),
@@ -116,6 +117,30 @@ fn provide_image(image : Image) -> @ogre.Ogre[Unit] {
     facts.push(@ogre.provide(Scheme::section(), (addr, size)))
     facts.push(
       @ogre.provide(Scheme::named_region(), (addr, size, section.name())),
+    )
+  }
+  for relocation in image.relocations() {
+    let fixup = relocation.fixup().reinterpret_as_int64()
+    match relocation.target() {
+      Some(target) =>
+        facts.push(
+          @ogre.provide(
+            Scheme::relocation(),
+            (fixup, target.reinterpret_as_int64()),
+          ),
+        )
+      None =>
+        if relocation.is_relative() {
+          facts.push(@ogre.provide(Scheme::relative_relocation(), fixup))
+        }
+    }
+  }
+  for reference in image.external_references() {
+    facts.push(
+      @ogre.provide(
+        Scheme::external_reference(),
+        (reference.addr().reinterpret_as_int64(), reference.name()),
+      ),
     )
   }
   for symbol in image.symbols() {

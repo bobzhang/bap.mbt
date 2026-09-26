@@ -46,16 +46,16 @@ test "disassemble dumps the program in the bir format" {
       #|
       #|
       #|00000017:
-      #|00000018: EAX := 0
+      #|00000018: RAX := 0
       #|00000019: CF := 0
       #|00000020: OF := 0
       #|00000021: AF := unknown[AF undefined after logical operation]:u1
       #|00000022: PF :=
-      #|          ~low:1[let parity_tmp1 = EAX >> 4 ^ EAX in
+      #|          ~low:1[let parity_tmp1 = low:32[RAX] >> 4 ^ low:32[RAX] in
       #|                 let parity_tmp2 = parity_tmp1 >> 2 ^ parity_tmp1 in
       #|                 parity_tmp2 >> 1 ^ parity_tmp2]
-      #|00000023: SF := high:1[EAX]
-      #|00000024: ZF := 0 = EAX
+      #|00000023: SF := high:1[low:32[RAX]]
+      #|00000024: ZF := 0 = low:32[RAX]
       #|00000025: ret_addr := mem[RSP, el]:u64
       #|00000026: RSP := RSP + 8
       #|00000027: call ret_addr with noreturn
@@ -197,28 +197,32 @@ test "disassemble runs passes" {
       #|
       #|
       #|00000026:
-      #|00000027: EAX := 0
+      #|00000027: RAX := 0
       #|00000028: CF := 0
       #|00000029: OF := 0
       #|00000030: AF := unknown[AF undefined after logical operation]:u1
-      #|00000031: flat_10 := EAX >> 4
-      #|00000032: flat_11 := flat_10 ^ EAX
-      #|00000033: flat_12 := flat_11 >> 2
-      #|00000034: flat_13 := flat_12 ^ flat_11
-      #|00000035: flat_14 := flat_13 >> 1
+      #|00000031: flat_10 := low:32[RAX]
+      #|00000032: flat_11 := flat_10 >> 4
+      #|00000033: flat_12 := low:32[RAX]
+      #|00000034: flat_13 := flat_11 ^ flat_12
+      #|00000035: flat_14 := flat_13 >> 2
       #|00000036: flat_15 := flat_14 ^ flat_13
-      #|00000037: flat_16 := low:1[flat_15]
-      #|00000038: flat_17 := ~flat_16
-      #|00000039: PF := flat_17
-      #|00000040: flat_18 := high:1[EAX]
-      #|00000041: SF := flat_18
-      #|00000042: flat_19 := 0 = EAX
-      #|00000043: ZF := flat_19
-      #|00000044: flat_20 := mem[RSP, el]:u64
-      #|00000045: ret_addr := flat_20
-      #|00000046: flat_21 := RSP + 8
-      #|00000047: RSP := flat_21
-      #|00000048: call ret_addr with noreturn
+      #|00000037: flat_16 := flat_15 >> 1
+      #|00000038: flat_17 := flat_16 ^ flat_15
+      #|00000039: flat_18 := low:1[flat_17]
+      #|00000040: flat_19 := ~flat_18
+      #|00000041: PF := flat_19
+      #|00000042: flat_20 := low:32[RAX]
+      #|00000043: flat_21 := high:1[flat_20]
+      #|00000044: SF := flat_21
+      #|00000045: flat_22 := low:32[RAX]
+      #|00000046: flat_23 := 0 = flat_22
+      #|00000047: ZF := flat_23
+      #|00000048: flat_24 := mem[RSP, el]:u64
+      #|00000049: ret_addr := flat_24
+      #|00000050: flat_25 := RSP + 8
+      #|00000051: RSP := flat_25
+      #|00000052: call ret_addr with noreturn
       #|
     ),
   )

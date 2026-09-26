@@ -60,6 +60,7 @@ pub fn plugin_table() -> Array[StaticPlugin] {
     { name: "cache", load: io => @cache.register(out=io.out), },
     // printers and analyses
     { name: "print", load: _ => @print.declare_plugin(), },
+    { name: "cxxfilt", load: _ => @cxxfilt.declare_plugin(), },
     {
       name: "callgraph-collator",
       load: _ => @callgraph_collator.declare_plugin(),
@@ -126,6 +127,10 @@ pub fn plugin_table() -> Array[StaticPlugin] {
     {
       name: "primus-round-robin",
       load: _ => @primus_round_robin.declare_plugin(),
+    },
+    {
+      name: "primus-symbolic-executor",
+      load: _ => @primus_symbolic_executor.declare_plugin(),
     },
     { name: "primus-systems", load: _ => @primus_systems.declare_plugin(), },
     { name: "primus-wandering", load: _ => @primus_wandering.declare_plugin(), },

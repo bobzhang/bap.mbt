@@ -67,8 +67,23 @@ pub fn semantics_provider(
     ctx,
     insn,
   ) => {
-    let lifter = cached_lifter(ctx.target(), dirs, paths)
-    (lifter.provider(name~).lift)(ctx, insn)
+    let target = ctx.target()
+    let lifter = cached_lifter(target, dirs, paths)
+    let lifted = (lifter.provider(name~).lift)(ctx, insn)
+    // the x86 semantics write sub-registers (`AL`, `XMM0`, ...); resolve
+    // them onto the full registers like upstream's x86 lifters (32-bit
+    // writes zero-extend in 64-bit mode), instead of relying on
+    // `Core::desugar`, which merges them
+    if target.belongs(@core_theory.Target::i86()) &&
+      (target.bits() == 32 || target.bits() == 64) {
+      @mc.Lifted::create(
+        @mc.resolve_x86_subregisters(lifted.bil(), bits=target.bits()),
+        delay=lifted.delay(),
+        dest_encoding?=lifted.dest_encoding,
+      )
+    } else {
+      lifted
+    }
   })
 }
 

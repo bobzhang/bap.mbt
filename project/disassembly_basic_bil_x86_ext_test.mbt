@@ -46,19 +46,19 @@ test "Basic BIL of x86 memory operands in LLVM's MCInst form" {
       #|leaq 256(%rip), %rax
       #|  RAX:imm64 := 0x401107:64u
       #|movl 16(%rip), %ecx
-      #|  ECX:imm32 := load(mem:mem64x8, 0x401016:64u):imm32
+      #|  RCX:imm64 := pad:64[load(mem:mem64x8, 0x401016:64u):imm32]
       #|movl 4096, %eax
-      #|  EAX:imm32 := load(mem:mem64x8, 0x1000:64u):imm32
+      #|  RAX:imm64 := pad:64[load(mem:mem64x8, 0x1000:64u):imm32]
       #|movq %fs:40, %rax
       #|  RAX:imm64 := load(mem:mem64x8, (FS_BASE:imm64 + 0x28:64u)):imm64
       #|leal (%esi,%eiz), %esi
       #|  ESI:imm32 := ESI:imm32
       #|leal 16(%r9d), %r8d
-      #|  R8D:imm32 := low:32[pad:64[(R9D:imm32 + 0x10:32u)]]
+      #|  R8:imm64 := pad:64[low:32[pad:64[(low:32[R9:imm64] + 0x10:32u)]]]
       #|movl (%ecx), %eax
-      #|  EAX:imm32 := load(mem:mem64x8, pad:64[ECX:imm32]):imm32
+      #|  RAX:imm64 := pad:64[load(mem:mem64x8, pad:64[low:32[RCX:imm64]]):imm32]
       #|movl (%bx), %eax
-      #|  EAX:imm32 := load(mem:mem32x8, pad:32[BX:imm16]):imm32
+      #|  EAX:imm32 := load(mem:mem32x8, pad:32[low:16[EBX:imm32]]):imm32
       #|movl 4096, %eax
       #|  EAX:imm32 := load(mem:mem32x8, 0x1000:32u):imm32
     ),
@@ -107,7 +107,7 @@ test "Basic BIL of x86 TEST m,imm, LODS, LOOP, ENTER, POP m and CMPXCHG16B" {
       #|  SF:imm1 := high:1[%test_tmp:imm32]
       #|  ZF:imm1 := (0:32u == %test_tmp:imm32)
       #|lodsb (%rsi), %al
-      #|  AL:imm8 := load(mem:mem64x8, RSI:imm64):imm8
+      #|  RAX:imm64 := concat(high:56[RAX:imm64], load(mem:mem64x8, RSI:imm64):imm8)
       #|  RSI:imm64 := ite((DF:imm1 == 0:1u), (RSI:imm64 + 1:64u), (RSI:imm64 - 1:64u))
       #|rep  lodsl (%esi), %eax
       #|  %rep_continue:imm1 := 1:1u
@@ -119,8 +119,8 @@ test "Basic BIL of x86 TEST m,imm, LODS, LOOP, ENTER, POP m and CMPXCHG16B" {
       #|  ECX:imm32 := (ECX:imm32 - 1:32u)
       #|  if ((ECX:imm32 != 0:32u) & ZF:imm1) then 2 stmts else 0 stmts
       #|addr32  loopne -2
-      #|  ECX:imm32 := (ECX:imm32 - 1:32u)
-      #|  if ((ECX:imm32 != 0:32u) & (not ZF:imm1)) then 2 stmts else 0 stmts
+      #|  RCX:imm64 := pad:64[(low:32[RCX:imm64] - 1:32u)]
+      #|  if ((low:32[RCX:imm64] != 0:32u) & (not ZF:imm1)) then 2 stmts else 0 stmts
       #|enter $16, $0
       #|  RSP:imm64 := (RSP:imm64 - 8:64u)
       #|  mem:mem64x8 := store(mem:mem64x8, RSP:imm64, RBP:imm64)

@@ -14,5 +14,6 @@ import {
   "bobzhang/bap/taint",
   "bobzhang/bap/plugins/primus_taint",
   "bobzhang/bap/plugins/primus_dictionary",
+  "bobzhang/bap/plugins/primus_region",
   "bobzhang/bap/plugins/constant_tracker",
 } for "test"

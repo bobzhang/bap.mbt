@@ -409,6 +409,37 @@ only.
 - `x86 full-register writes`: the Basic lifter and the x86 Lisp provider write full registers in 64-bit mode (32-bit writes zero-extend, 8/16-bit writes merge, sub-register reads are extracts) via `@mc.resolve_x86_subregisters`, as upstream's x86 lifters do.
 - `z3` + `plugins/primus_symbolic_executor`: a runtime-loaded (`dlopen`) binding to the Z3 SMT solver (bitvector/boolean terms, solvers with push/pop/timeouts, models → `@types.Word`; unavailable-solver errors on hosts or backends without Z3) and the Primus symbolic executor (symbolic computer, path constraints, SMT-checked path exploration with cutoff and visited-edge pruning, symbolic Lisp primitives and the upstream `symbolic-stdio`/`symbolic-stdlib` Lisp files).
 
+## Performance
+
+Release `bap` on an Apple-silicon Mac (2026-09-27), before and after the
+performance pass (outputs byte-identical):
+
+| command | before | after |
+| --- | ---: | ---: |
+| `bap --help` | 4.2 s | 0.01 s |
+| `bap /usr/bin/true -dasm` | 4.4 s | 0.18 s |
+| `bap mc --show-bil -- "48 83 ec 08"` | 4.3 s | 0.08 s |
+| `bap /usr/bin/true --run --run-entry-points=all` | 4.5 s | 0.19 s |
+| `bap /bin/ls -dasm` | 12.0 s | 0.70 s |
+| `bap /bin/ls -dbil` | 12.6 s | 0.72 s |
+| `bap /bin/ls --target=x86_64 -dbir` | 10.1 s | 0.55 s |
+| `bap /bin/bash -dasm` (153k lines) | > 537 s | 21 s |
+| `moon test --target native` (run only) | 113 s | 18 s |
+| `moon test` (wasm-gc, run only) | 116 s | 26 s |
+
+The fixes: built-in targets (and the table `find_target` searches) are
+built once instead of per lookup; target role tables, register roles and
+register-name lookups are memoized per target; the disassembly state,
+CFG, subroutine partition and symbol table are built with hash/sorted
+indices instead of quadratic copy-and-scan updates; `graphlib` traversals
+index the edges once, the fixpoint worklist is a heap, and `GraphBuilder`
+builds graphs incrementally; memory views share their bytes; the Lisp
+semantics of an instruction are compiled once per lifter. The remaining
+time is spread over the knowledge base (persistent maps per property
+update), the Lisp semantics compiler and library loading (about 120 ms
+on the first lifted instruction), and the symbol table, which is
+recomputed by the reconstructor, the info pass and the printer.
+
 ## Fidelity Gaps (audit, 2026-09-26; several since addressed: knowledge KB evaluator, Core Theory algebra, BIL-to-IR lowering, liveness/SSA, DWARF prefix recovery, typed image memory and raw ELF reader)
 
 - `knowledge` (~40%): no least-fixed-point `collect`/promise evaluation, promise rejection or `with_empty`; facts live in per-slot tables instead of one KB state; no KB `run`, context variables, heterogeneous values, symbol imports or whole-state persistence.

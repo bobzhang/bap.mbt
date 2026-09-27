@@ -287,6 +287,10 @@ pub struct Lifter {
   priv places : Map[(String, String), @types.Var]
   priv names : Map[(String, String), SemKind]
   priv mem : @types.Var
+  /// the semantics of the instructions lifted by the `provider`s of the
+  /// lifter (the lifting of an instruction is a pure function of its
+  /// name, operands and address), or the reason why it failed
+  priv lifted : Map[String, Result[Array[@types.Stmt]?, String]]
 }
 
 ///|
@@ -346,7 +350,15 @@ pub fn Lifter::create(
   prog.fold(para, init=(), (p, d, _) => collect(KData, p, d.name, d.attrs))
   prog.fold(const_item, init=(), (p, d, _) => collect(KData, p, d.name, d.attrs))
   prog.fold(meth, init=(), (p, d, _) => collect(KMeth, p, d.name, d.attrs))
-  { target, program: prog, typed, places, names, mem: target_memory(target), }
+  {
+    target,
+    program: prog,
+    typed,
+    places,
+    names,
+    mem: target_memory(target),
+    lifted: Map([]),
+  }
 }
 
 ///|
@@ -549,14 +561,42 @@ pub fn Lifter::provider(
           }
         })
         .collect()
-      let pc = @types.Word::of_uint64(
-        width=@cmp.maximum(1, ctx.target().bits()),
-        insn.addr(),
-      ) catch {
-        _ => @types.Word::b0()
+      let width = @cmp.maximum(1, ctx.target().bits())
+      let memo_key = StringBuilder()
+      memo_key.write_string(lname.show())
+      memo_key.write_char('@')
+      memo_key.write_string(insn.addr().to_string())
+      memo_key.write_char('/')
+      memo_key.write_string(width.to_string())
+      for op in ops {
+        match op {
+          Reg(name) => memo_key.write_string(" r:\{name}")
+          Imm(x) => memo_key.write_string(" i:\{x}")
+          Unknown => memo_key.write_string(" u")
+        }
       }
-      let r = self.lift(lname, ops, pc~) catch {
-        e => raise @mc.LiftError::Failure("primus-lisp: \{insn.name()}: \{e}")
+      let memo_key = memo_key.to_string()
+      let r = match self.lifted.get(memo_key) {
+        Some(result) => result
+        None => {
+          let pc = @types.Word::of_uint64(width~, insn.addr()) catch {
+            _ => @types.Word::b0()
+          }
+          let result : Result[Array[@types.Stmt]?, String] = try
+            self.lift(lname, ops, pc~)
+          catch {
+            e => Err("\{e}")
+          } noraise {
+            r => Ok(r)
+          }
+          self.lifted[memo_key] = result
+          result
+        }
+      }
+      let r = match r {
+        Ok(r) => r.map(bil => bil.copy())
+        Err(e) =>
+          raise @mc.LiftError::Failure("primus-lisp: \{insn.name()}: \{e}")
       }
       match r {
         None =>

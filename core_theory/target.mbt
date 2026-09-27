@@ -6198,7 +6198,54 @@ fn append_powerpc_target_variants(items : Array[Target]) -> Unit {
 }
 
 ///|
+/// The built-in targets are pure values, so the (large) table is built once
+/// together with lower-cased name indices used by `find_target`.
+priv struct CommonTargets {
+  items : Array[Target]
+  by_name : Map[String, Target]
+  by_query : Map[String, Target]
+}
+
+///|
+let common_targets_cache : Ref[CommonTargets?] = { val: None, }
+
+///|
+fn common_targets_table() -> CommonTargets {
+  match common_targets_cache.val {
+    Some(table) => table
+    None => {
+      let items = build_common_targets()
+      let by_name : Map[String, Target] = Map([])
+      let by_query : Map[String, Target] = Map([])
+      fn add(map : Map[String, Target], key : String, target : Target) {
+        let key = key.to_lower()
+        if !map.contains(key) {
+          map[key] = target
+        }
+      }
+
+      for target in items {
+        add(by_name, target.name_value.show(), target)
+        add(by_query, target.name_value.unqualified(), target)
+        add(by_query, target.name_value.show(), target)
+        for nick in target.nicknames_value {
+          add(by_query, nick, target)
+        }
+      }
+      let table = { items, by_name, by_query, }
+      common_targets_cache.val = Some(table)
+      table
+    }
+  }
+}
+
+///|
 pub fn common_targets() -> Array[Target] {
+  common_targets_table().items.copy()
+}
+
+///|
+fn build_common_targets() -> Array[Target] {
   let items = [
     Target::x86(),
     Target::i86(),
@@ -6265,7 +6312,7 @@ pub fn common_targets() -> Array[Target] {
 ///|
 pub fn register_target(target : Target) -> Result[Unit, String] {
   let key = target.name().show()
-  if find_exact_target_in(common_targets(), target.name()) is Some(_) {
+  if common_targets_table().by_name.contains(target.name().show().to_lower()) {
     Err("target \{key} is a built-in target")
   } else if find_exact_target_in(registered_targets(), target.name()) is Some(_) {
     Err("target \{key} is already registered")
@@ -6342,7 +6389,7 @@ pub fn find_target(query : String, pkg? : String) -> Target? {
   match find_exact_target_in(registered_targets(), name) {
     Some(target) => Some(target)
     None =>
-      match find_exact_target_in(common_targets(), name) {
+      match common_targets_table().by_name.get(name.show().to_lower()) {
         Some(target) => Some(target)
         None =>
           if pkg is Some(_) || target_query_is_qualified(query) {
@@ -6354,7 +6401,7 @@ pub fn find_target(query : String, pkg? : String) -> Target? {
                 if target_has_name(Target::unknown(), query) {
                   Some(Target::unknown())
                 } else {
-                  find_in_targets(common_targets(), query)
+                  common_targets_table().by_query.get(query.to_lower())
                 }
             }
           }

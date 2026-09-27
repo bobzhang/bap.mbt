@@ -1597,6 +1597,21 @@ struct Target {
   options_value : TargetOptions
   vars_value : Array[Var]
   alias_origins_value : Array[AliasOrigin]
+  role_memo : TargetRoleMemo
+}
+
+///|
+/// Per-target memo of the role information derived from the target's
+/// identity, register file and aliases. Every construction or functional
+/// update of a `Target` gets a fresh memo.
+priv struct TargetRoleMemo {
+  mut table : Map[String, Array[Role]]?
+  mut var_roles : Array[Array[Role]]?
+}
+
+///|
+fn TargetRoleMemo::new() -> TargetRoleMemo {
+  { table: None, var_roles: None, }
 }
 
 ///|
@@ -3441,6 +3456,18 @@ let target_role_table_roles : ReadOnlyArray[Role] = [
 /// Lower-cased register name to the roles its name carries on `target`, in
 /// the canonical role order used by `Target::roles_of_var`.
 fn target_role_table(target : Target) -> Map[String, Array[Role]] {
+  match target.role_memo.table {
+    Some(table) => table
+    None => {
+      let table = target_role_table_uncached(target)
+      target.role_memo.table = Some(table)
+      table
+    }
+  }
+}
+
+///|
+fn target_role_table_uncached(target : Target) -> Map[String, Array[Role]] {
   let key = target_role_cache_key(target, None)
   match target_role_tables.get(key) {
     Some(table) => table
@@ -4029,6 +4056,7 @@ pub fn Target::unknown() -> Target {
     options_value: TargetOptions::empty(),
     vars_value: [],
     alias_origins_value: [],
+    role_memo: TargetRoleMemo::new(),
   }
 }
 
@@ -4185,6 +4213,7 @@ pub fn Target::create(
     },
     vars_value,
     alias_origins_value: target_alias_origins(parent, alias_origins, aliasing),
+    role_memo: TargetRoleMemo::new(),
   }
 }
 
@@ -4382,7 +4411,7 @@ pub fn Target::alias_origins(self : Target) -> Array[AliasOrigin] {
 pub fn Target::with_var(self : Target, item : Var) -> Target {
   let items = self.vars_value.copy()
   append_var_unique(items, item)
-  { ..self, vars_value: items, }
+  { ..self, role_memo: TargetRoleMemo::new(), vars_value: items, }
 }
 
 ///|
@@ -4391,7 +4420,7 @@ pub fn Target::with_vars(self : Target, more : Array[Var]) -> Target {
   for item in more {
     append_var_unique(items, item)
   }
-  { ..self, vars_value: items, }
+  { ..self, role_memo: TargetRoleMemo::new(), vars_value: items, }
 }
 
 ///|
@@ -4417,6 +4446,7 @@ pub fn Target::with_bits(self : Target, bits : Int) -> Target {
   }
   {
     ..self,
+    role_memo: TargetRoleMemo::new(),
     bits_value: bits,
     data_value: data,
     code_value: code,
@@ -4429,32 +4459,32 @@ pub fn Target::with_endianness(
   self : Target,
   endianness : Endianness,
 ) -> Target {
-  { ..self, endianness_value: endianness, }
+  { ..self, role_memo: TargetRoleMemo::new(), endianness_value: endianness, }
 }
 
 ///|
 pub fn Target::with_system(self : Target, system : System) -> Target {
-  { ..self, system_value: system, }
+  { ..self, role_memo: TargetRoleMemo::new(), system_value: system, }
 }
 
 ///|
 pub fn Target::with_abi(self : Target, abi : Abi) -> Target {
-  { ..self, abi_value: abi, }
+  { ..self, role_memo: TargetRoleMemo::new(), abi_value: abi, }
 }
 
 ///|
 pub fn Target::with_fabi(self : Target, fabi : Fabi) -> Target {
-  { ..self, fabi_value: fabi, }
+  { ..self, role_memo: TargetRoleMemo::new(), fabi_value: fabi, }
 }
 
 ///|
 pub fn Target::with_filetype(self : Target, filetype : Filetype) -> Target {
-  { ..self, filetype_value: filetype, }
+  { ..self, role_memo: TargetRoleMemo::new(), filetype_value: filetype, }
 }
 
 ///|
 pub fn Target::with_options(self : Target, options : TargetOptions) -> Target {
-  { ..self, options_value: options, }
+  { ..self, role_memo: TargetRoleMemo::new(), options_value: options, }
 }
 
 ///|
@@ -4463,14 +4493,18 @@ pub fn Target::with_option(
   key : String,
   value : String,
 ) -> Target {
-  { ..self, options_value: self.options_value.with_value(key, value), }
+  {
+    ..self,
+    role_memo: TargetRoleMemo::new(),
+    options_value: self.options_value.with_value(key, value),
+  }
 }
 
 ///|
 pub fn Target::with_alias_origin(self : Target, origin : AliasOrigin) -> Target {
   let items = self.alias_origins_value.copy()
   items.push(origin)
-  { ..self, alias_origins_value: items, }
+  { ..self, role_memo: TargetRoleMemo::new(), alias_origins_value: items, }
 }
 
 ///|
@@ -4504,6 +4538,27 @@ pub fn Target::origin_of_name(self : Target, name : String) -> AliasOrigin? {
 
 ///|
 pub fn Target::roles_of_var(self : Target, variable : Var) -> Array[Role] {
+  self.compute_roles_of_var(variable)
+}
+
+///|
+/// The roles of each variable of the target's register file, in the order
+/// of `vars_value`; computed once per target.
+fn Target::var_roles(self : Target) -> Array[Array[Role]] {
+  match self.role_memo.var_roles {
+    Some(roles) => roles
+    None => {
+      let roles = self.vars_value.map(variable => {
+        self.compute_roles_of_var(variable)
+      })
+      self.role_memo.var_roles = Some(roles)
+      roles
+    }
+  }
+}
+
+///|
+fn Target::compute_roles_of_var(self : Target, variable : Var) -> Array[Role] {
   let table = target_role_table(self)
   let by_ident = table.get(variable.ident().to_lower()).unwrap_or([])
   let by_name = table.get(variable.name().to_lower()).unwrap_or([])
@@ -4539,7 +4594,14 @@ pub fn Target::roles_of_var(self : Target, variable : Var) -> Array[Role] {
 
 ///|
 pub fn Target::vars_with_role(self : Target, role : Role) -> Array[Var] {
-  self.vars_value.filter(variable => self.roles_of_var(variable).contains(role))
+  let roles = self.var_roles()
+  let items = []
+  for i, variable in self.vars_value {
+    if roles[i].contains(role) {
+      items.push(variable)
+    }
+  }
+  items
 }
 
 ///|
@@ -4566,22 +4628,27 @@ pub fn Target::regs(
     Some(items) => items
     None => []
   }
-  self.vars_value.filter(variable => {
-    let present = self.roles_of_var(variable)
-    included.all(role => present.contains(role)) &&
-    !excluded.any(role => present.contains(role))
-  })
+  let roles = self.var_roles()
+  let items = []
+  for i, variable in self.vars_value {
+    let present = roles[i]
+    if included.all(role => present.contains(role)) &&
+      !excluded.any(role => present.contains(role)) {
+      items.push(variable)
+    }
+  }
+  items
 }
 
 ///|
 pub fn Target::find_role(self : Target, role : Role) -> Var? {
-  match
-    self.vars_value.search_by(variable => {
-      self.roles_of_var(variable).contains(role)
-    }) {
-    Some(i) => Some(self.vars_value[i])
-    None => None
+  let roles = self.var_roles()
+  for i, variable in self.vars_value {
+    if roles[i].contains(role) {
+      return Some(variable)
+    }
   }
+  None
 }
 
 ///|

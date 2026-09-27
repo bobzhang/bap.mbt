@@ -562,12 +562,14 @@ fn target_registers(
   target : @core_theory.Target,
 ) -> Array[(@knowledge.Name, @types.Var)] {
   let regs : Array[(@knowledge.Name, @types.Var)] = []
+  let seen : Map[@knowledge.Name, Unit] = Map([])
   for t in [target].iter().concat(target.parents().iter()) {
     let pkg = t.name().unqualified()
     for v in t.vars() {
       if bil_var_of_theory(v) is Some(bv) {
         let name = @knowledge.Name::create(v.name(), pkg~)
-        if !regs.iter().any(r => r.0 == name) {
+        if !seen.contains(name) {
+          seen[name] = ()
           regs.push((name, bv))
         }
       }

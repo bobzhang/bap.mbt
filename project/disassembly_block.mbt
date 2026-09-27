@@ -108,8 +108,13 @@ pub fn ProjectDisassemblyState::blocks_with_instructions(
   self : ProjectDisassemblyState,
 ) -> Array[ProjectDisassemblyBlock] {
   let result : Array[ProjectDisassemblyBlock] = []
-  for block in self.blocks() {
-    match self.block_view(block) {
+  let order = self.instruction_order()
+  for block in self.blocks_value {
+    match
+      ProjectDisassemblyBlock::create(
+        block,
+        self.instructions_in_ordered(order, block),
+      ) {
       Ok(view) => result.push(view)
       Err(_) => ()
     }

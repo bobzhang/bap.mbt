@@ -99,14 +99,6 @@ fn project_calls_of_graph(
 }
 
 ///|
-fn project_calls_mark_as_root(
-  graph : @graphlib.Graph[CallNode, Unit],
-  addr : UInt64,
-) -> @graphlib.Graph[CallNode, Unit] {
-  graph.add_edge(src=CallEntry, dst=CallBlock(addr), label=())
-}
-
-///|
 /// `Calls.update calls disasm`: the partition of the blocks of the
 /// disassembled program, starting from the partition `self`. The call graph
 /// is explored from the subroutine starts of `driver`; the blocks that the
@@ -117,25 +109,27 @@ pub fn ProjectDisassemblyCalls::update(
   driver : ProjectDisassemblyDriverState,
   kb : @knowledge.State,
 ) -> ProjectDisassemblyCalls raise {
+  let builder : @graphlib.GraphBuilder[CallNode, Unit] = @graphlib.GraphBuilder::new()
+  builder.add_node(CallEntry)
   let graph = driver.explore(
     kb,
     entries=driver.subroutines(),
-    init=@graphlib.Graph::new().add_node(CallEntry),
+    init=builder,
     block=(mem, _) => mem.min_addr(),
     node=(n, g) => {
-      let g = g.add_node(CallBlock(n))
+      g.add_node(CallBlock(n))
       let code = project_label_for_addr(kb, n)
       if kb.collect(project_label_is_subroutine, code) is Some(true) {
-        project_calls_mark_as_root(g, n)
-      } else {
-        g
+        g.add_edge(src=CallEntry, dst=CallBlock(n), label=())
       }
+      g
     },
     edge=(src, dst, g) => {
       g.add_edge(src=CallBlock(src), dst=CallBlock(dst), label=())
+      g
     },
   )
-  project_calls_of_graph(graph, self.parents, [])
+  project_calls_of_graph(graph.to_graph(), self.parents, [])
 }
 
 ///|
@@ -157,23 +151,22 @@ pub fn ProjectDisassemblyCalls::of_disassembly(
     }
     None
   }
-  let mut graph : @graphlib.Graph[CallNode, Unit] = @graphlib.Graph::new().add_node(
-    CallEntry,
-  )
+  let graph : @graphlib.GraphBuilder[CallNode, Unit] = @graphlib.GraphBuilder::new()
+  graph.add_node(CallEntry)
   for span in spans {
-    graph = graph.add_node(CallBlock(span.0))
+    graph.add_node(CallBlock(span.0))
     if roots.contains(span.0) {
-      graph = project_calls_mark_as_root(graph, span.0)
+      graph.add_edge(src=CallEntry, dst=CallBlock(span.0), label=())
     }
   }
   for edge in disassembly.edges() {
     match (start_of(edge.source()), edge.target().bind(start_of)) {
       (Some(src), Some(dst)) =>
-        graph = graph.add_edge(src=CallBlock(src), dst=CallBlock(dst), label=())
+        graph.add_edge(src=CallBlock(src), dst=CallBlock(dst), label=())
       _ => ()
     }
   }
-  project_calls_of_graph(graph, call_parents_init(), spans)
+  project_calls_of_graph(graph.to_graph(), call_parents_init(), spans)
 }
 
 ///|

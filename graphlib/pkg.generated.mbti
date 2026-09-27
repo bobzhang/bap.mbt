@@ -134,6 +134,12 @@ pub fn[N : Eq, E] Graph::union(Self[N, E], Self[N, E]) -> Self[N, E]
 pub fn[N : Eq, E] Graph::update_edge(Self[N, E], N, N, label~ : E) -> Self[N, E]
 pub fn[N, M : Eq, E, F] Graph::view(Self[N, E], node~ : (N) -> M, edge~ : (Edge[N, E]) -> F) -> Self[M, F]
 
+type GraphBuilder[N, E]
+pub fn[N : Hash + Eq, E] GraphBuilder::add_edge(Self[N, E], src~ : N, dst~ : N, label~ : E) -> Unit
+pub fn[N : Hash + Eq, E] GraphBuilder::add_node(Self[N, E], N) -> Unit
+pub fn[N : Hash + Eq, E] GraphBuilder::new() -> Self[N, E]
+pub fn[N, E] GraphBuilder::to_graph(Self[N, E]) -> Graph[N, E]
+
 type GraphPath[E] derive(Eq, @debug.Debug)
 pub fn[E] GraphPath::edges(Self[E]) -> Array[E]
 pub fn[E] GraphPath::edges_rev(Self[E]) -> Array[E]

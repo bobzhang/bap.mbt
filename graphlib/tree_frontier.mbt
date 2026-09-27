@@ -247,12 +247,10 @@ pub fn[N : Hash + Eq, E] Graph::dom_frontier_of_tree(
   rev? : Bool = false,
 ) -> Frontier[N] {
   let frontiers : Map[N, Set[N]] = Map([])
+  // predecessors (successors with `rev`)
+  let adj = self.adjacency(!rev)
   for node in self.nodes {
-    let adjacent = if rev {
-      self.successors(node)
-    } else {
-      self.predecessors(node)
-    }
+    let adjacent = adjacent_nodes(adj, node, !rev)
     let stop = tree.parent(node)
     let visited : Set[N] = Set([])
     for predecessor in adjacent {

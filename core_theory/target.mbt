@@ -1607,11 +1607,12 @@ struct Target {
 priv struct TargetRoleMemo {
   mut table : Map[String, Array[Role]]?
   mut var_roles : Array[Array[Role]]?
+  mut var_index : Map[String, Var]?
 }
 
 ///|
 fn TargetRoleMemo::new() -> TargetRoleMemo {
-  { table: None, var_roles: None, }
+  { table: None, var_roles: None, var_index: None, }
 }
 
 ///|
@@ -4037,27 +4038,29 @@ pub fn AliasOrigin::regs(self : AliasOrigin) -> Array[Var] {
 
 ///|
 pub fn Target::unknown() -> Target {
-  let memory = mem_var(0, 8, "mem")
-  {
-    name_value: @knowledge.Name::create("unknown", pkg="keyword"),
-    parent_value: None,
-    nicknames_value: [],
-    bits_value: 0,
-    byte_value: 8,
-    data_value: memory,
-    code_value: memory,
-    data_alignment_value: 8,
-    code_alignment_value: 8,
-    endianness_value: BiEndian,
-    system_value: UnknownSystem,
-    abi_value: UnknownAbi,
-    fabi_value: UnknownFabi,
-    filetype_value: UnknownFiletype,
-    options_value: TargetOptions::empty(),
-    vars_value: [],
-    alias_origins_value: [],
-    role_memo: TargetRoleMemo::new(),
-  }
+  memo_target("Target::unknown", () => {
+    let memory = mem_var(0, 8, "mem")
+    {
+      name_value: @knowledge.Name::create("unknown", pkg="keyword"),
+      parent_value: None,
+      nicknames_value: [],
+      bits_value: 0,
+      byte_value: 8,
+      data_value: memory,
+      code_value: memory,
+      data_alignment_value: 8,
+      code_alignment_value: 8,
+      endianness_value: BiEndian,
+      system_value: UnknownSystem,
+      abi_value: UnknownAbi,
+      fabi_value: UnknownFabi,
+      filetype_value: UnknownFiletype,
+      options_value: TargetOptions::empty(),
+      vars_value: [],
+      alias_origins_value: [],
+      role_memo: TargetRoleMemo::new(),
+    }
+  })
 }
 
 ///|
@@ -4509,11 +4512,23 @@ pub fn Target::with_alias_origin(self : Target, origin : AliasOrigin) -> Target 
 
 ///|
 pub fn Target::find_var(self : Target, name : String) -> Var? {
-  self.vars_value
-  .search_by(item => {
-    same_target_name(item.ident(), name) || same_target_name(item.name(), name)
-  })
-  .map(i => self.vars_value[i])
+  let index = match self.role_memo.var_index {
+    Some(index) => index
+    None => {
+      // the first variable whose identifier or name matches (ignoring case)
+      let index : Map[String, Var] = Map([])
+      for item in self.vars_value {
+        for key in [item.ident().to_lower(), item.name().to_lower()] {
+          if !index.contains(key) {
+            index[key] = item
+          }
+        }
+      }
+      self.role_memo.var_index = Some(index)
+      index
+    }
+  }
+  index.get(name.to_lower())
 }
 
 ///|
@@ -4742,7 +4757,7 @@ pub fn Target::data_word(
 
 ///|
 pub fn Target::is_unknown(self : Target) -> Bool {
-  self.name_value == @knowledge.Name::create("unknown", pkg="keyword")
+  self.name_value == unknown_target_name
 }
 
 ///|
@@ -4808,104 +4823,124 @@ pub fn Target::parents(self : Target) -> Array[Target] {
 
 ///|
 pub fn Target::x86() -> Target {
-  Target::create(
-    name=target_name("x86"),
-    nicknames=["x86-32", "x86_32", "ia32", "ia-32"],
-    bits=32,
-    endianness=LittleEndian,
-    vars=x86_32_vars(),
-    alias_origins=x86_32_alias_origins(),
-  )
+  memo_target("Target::x86", () => {
+    Target::create(
+      name=target_name("x86"),
+      nicknames=["x86-32", "x86_32", "ia32", "ia-32"],
+      bits=32,
+      endianness=LittleEndian,
+      vars=x86_32_vars(),
+      alias_origins=x86_32_alias_origins(),
+    )
+  })
 }
 
 ///|
 pub fn Target::i86() -> Target {
-  Target::create(
-    name=target_name("i86"),
-    parent=Target::x86(),
-    nicknames=["8086"],
-    bits=16,
-    endianness=LittleEndian,
-    vars=x86_16_vars(),
-    alias_origins=x86_16_alias_origins(),
-  )
+  memo_target("Target::i86", () => {
+    Target::create(
+      name=target_name("i86"),
+      parent=Target::x86(),
+      nicknames=["8086"],
+      bits=16,
+      endianness=LittleEndian,
+      vars=x86_16_vars(),
+      alias_origins=x86_16_alias_origins(),
+    )
+  })
 }
 
 ///|
 pub fn Target::i186() -> Target {
-  Target::create(name=target_name("i186"), parent=Target::i86(), nicknames=[
-    "80186", "186",
-  ])
+  memo_target("Target::i186", () => {
+    Target::create(name=target_name("i186"), parent=Target::i86(), nicknames=[
+      "80186", "186",
+    ])
+  })
 }
 
 ///|
 pub fn Target::i286() -> Target {
-  Target::create(name=target_name("i286"), parent=Target::i186(), nicknames=[
-    "80286", "286",
-  ])
+  memo_target("Target::i286", () => {
+    Target::create(name=target_name("i286"), parent=Target::i186(), nicknames=[
+      "80286", "286",
+    ])
+  })
 }
 
 ///|
 pub fn Target::i386() -> Target {
-  Target::create(
-    name=target_name("i386"),
-    parent=Target::i286(),
-    nicknames=["386", "80386"],
-    bits=32,
-    vars=x86_i386_vars(),
-    alias_origins=x86_32_alias_origins(),
-  )
+  memo_target("Target::i386", () => {
+    Target::create(
+      name=target_name("i386"),
+      parent=Target::i286(),
+      nicknames=["386", "80386"],
+      bits=32,
+      vars=x86_i386_vars(),
+      alias_origins=x86_32_alias_origins(),
+    )
+  })
 }
 
 ///|
 pub fn Target::i486() -> Target {
-  Target::create(
-    name=target_name("i486"),
-    parent=Target::i386(),
-    nicknames=["486", "80486"],
-    vars=x86_i486_vars(),
-    alias_origins=x86_32_alias_origins(),
-  )
+  memo_target("Target::i486", () => {
+    Target::create(
+      name=target_name("i486"),
+      parent=Target::i386(),
+      nicknames=["486", "80486"],
+      vars=x86_i486_vars(),
+      alias_origins=x86_32_alias_origins(),
+    )
+  })
 }
 
 ///|
 pub fn Target::i586() -> Target {
-  Target::create(
-    name=target_name("i586"),
-    parent=Target::i486(),
-    nicknames=["586", "80586", "p5"],
-    vars=x86_i586_vars(),
-    alias_origins=x86_32_alias_origins(),
-  )
+  memo_target("Target::i586", () => {
+    Target::create(
+      name=target_name("i586"),
+      parent=Target::i486(),
+      nicknames=["586", "80586", "p5"],
+      vars=x86_i586_vars(),
+      alias_origins=x86_32_alias_origins(),
+    )
+  })
 }
 
 ///|
 pub fn Target::i686() -> Target {
-  Target::create(
-    name=target_name("i686"),
-    parent=Target::i586(),
-    nicknames=["686", "80686", "p6"],
-    vars=x86_i686_vars(),
-    alias_origins=x86_32_alias_origins(),
-  )
+  memo_target("Target::i686", () => {
+    Target::create(
+      name=target_name("i686"),
+      parent=Target::i586(),
+      nicknames=["686", "80686", "p6"],
+      vars=x86_i686_vars(),
+      alias_origins=x86_32_alias_origins(),
+    )
+  })
 }
 
 ///|
 pub fn Target::x86_64() -> Target {
-  Target::create(
-    name=target_name("x86_64"),
-    parent=Target::i686(),
-    nicknames=["x86-64", "amd64", "x64", "x86_64h"],
-    bits=64,
-    endianness=LittleEndian,
-    vars=x86_64_vars(),
-    alias_origins=x86_64_alias_origins(),
-  )
+  memo_target("Target::x86_64", () => {
+    Target::create(
+      name=target_name("x86_64"),
+      parent=Target::i686(),
+      nicknames=["x86-64", "amd64", "x64", "x86_64h"],
+      bits=64,
+      endianness=LittleEndian,
+      vars=x86_64_vars(),
+      alias_origins=x86_64_alias_origins(),
+    )
+  })
 }
 
 ///|
 pub fn Target::arm_family() -> Target {
-  Target::create(name=target_name("arm-family"))
+  memo_target("Target::arm_family", () => {
+    Target::create(name=target_name("arm-family"))
+  })
 }
 
 ///|
@@ -4942,123 +4977,143 @@ fn arm_bi64_base(name : String, parent : Target) -> Target {
 
 ///|
 fn arm_le_v4() -> Target {
-  Target::create(
-    name=target_name("armv4+le"),
-    parent=Target::arm_family(),
-    nicknames=["armv4"],
-    bits=32,
-    code_alignment=32,
-    endianness=LittleEndian,
-    vars=arm32_vars(),
-    alias_origins=arm32_alias_origins(),
-  )
+  memo_target("arm_le_v4", () => {
+    Target::create(
+      name=target_name("armv4+le"),
+      parent=Target::arm_family(),
+      nicknames=["armv4"],
+      bits=32,
+      code_alignment=32,
+      endianness=LittleEndian,
+      vars=arm32_vars(),
+      alias_origins=arm32_alias_origins(),
+    )
+  })
 }
 
 ///|
 fn arm_le_v4t() -> Target {
-  Target::create(
-    name=target_name("armv4t+le"),
-    parent=arm_le_v4(),
-    nicknames=["armv4t"],
-    code_alignment=16,
-  )
+  memo_target("arm_le_v4t", () => {
+    Target::create(
+      name=target_name("armv4t+le"),
+      parent=arm_le_v4(),
+      nicknames=["armv4t"],
+      code_alignment=16,
+    )
+  })
 }
 
 ///|
 fn arm_le_v5() -> Target {
-  arm_le_base("armv5", "armv5", arm_le_v4t())
+  memo_target("arm_le_v5", () => arm_le_base("armv5", "armv5", arm_le_v4t()))
 }
 
 ///|
 fn arm_le_v5t() -> Target {
-  arm_le_base("armv5t", "armv5t", arm_le_v5())
+  memo_target("arm_le_v5t", () => arm_le_base("armv5t", "armv5t", arm_le_v5()))
 }
 
 ///|
 fn arm_le_v5te() -> Target {
-  arm_le_base("armv5te", "armv5te", arm_le_v5t())
+  memo_target("arm_le_v5te", () => {
+    arm_le_base("armv5te", "armv5te", arm_le_v5t())
+  })
 }
 
 ///|
 fn arm_le_v5tej() -> Target {
-  arm_le_base("armv5tej", "armv5tej", arm_le_v5te())
+  memo_target("arm_le_v5tej", () => {
+    arm_le_base("armv5tej", "armv5tej", arm_le_v5te())
+  })
 }
 
 ///|
 fn arm_le_v6() -> Target {
-  arm_le_base("armv6", "armv6", arm_le_v5tej())
+  memo_target("arm_le_v6", () => arm_le_base("armv6", "armv6", arm_le_v5tej()))
 }
 
 ///|
 fn arm_le_v6t2() -> Target {
-  arm_le_base("armv6t2", "armv6t2", arm_le_v6())
+  memo_target("arm_le_v6t2", () => {
+    arm_le_base("armv6t2", "armv6t2", arm_le_v6())
+  })
 }
 
 ///|
 fn arm_le_v6z() -> Target {
-  arm_le_base("armv6z", "armv6z", arm_le_v6())
+  memo_target("arm_le_v6z", () => arm_le_base("armv6z", "armv6z", arm_le_v6()))
 }
 
 ///|
 fn arm_le_v6k() -> Target {
-  arm_le_base("armv6k", "armv6k", arm_le_v6z())
+  memo_target("arm_le_v6k", () => arm_le_base("armv6k", "armv6k", arm_le_v6z()))
 }
 
 ///|
 fn arm_le_v6m() -> Target {
-  arm_le_base("armv6-m", "armv6-m", arm_le_v6())
+  memo_target("arm_le_v6m", () => arm_le_base("armv6-m", "armv6-m", arm_le_v6()))
 }
 
 ///|
 fn arm_le_v7() -> Target {
-  arm_le_base("armv7", "armv7", arm_le_v6t2())
+  memo_target("arm_le_v7", () => arm_le_base("armv7", "armv7", arm_le_v6t2()))
 }
 
 ///|
 fn arm_le_v7m() -> Target {
-  arm_le_base("armv7-m", "armv7-m", arm_le_v7())
+  memo_target("arm_le_v7m", () => arm_le_base("armv7-m", "armv7-m", arm_le_v7()))
 }
 
 ///|
 fn arm_le_v7fp() -> Target {
-  Target::create(
-    name=target_name("armv7+fp+le"),
-    parent=arm_le_v7(),
-    nicknames=["armv7+fp"],
-    vars=arm32_fp_vars(),
-    alias_origins=arm32_alias_origins(),
-  )
+  memo_target("arm_le_v7fp", () => {
+    Target::create(
+      name=target_name("armv7+fp+le"),
+      parent=arm_le_v7(),
+      nicknames=["armv7+fp"],
+      vars=arm32_fp_vars(),
+      alias_origins=arm32_alias_origins(),
+    )
+  })
 }
 
 ///|
 fn arm_le_v7a() -> Target {
-  arm_le_base("armv7-a", "armv7-a", arm_le_v7())
+  memo_target("arm_le_v7a", () => arm_le_base("armv7-a", "armv7-a", arm_le_v7()))
 }
 
 ///|
 fn arm_le_v7afp() -> Target {
-  Target::create(
-    name=target_name("armv7-a+fp+le"),
-    parent=arm_le_v7a(),
-    nicknames=["armv7-a+fp"],
-    vars=arm32_fp_vars(),
-    alias_origins=arm32_alias_origins(),
-  )
+  memo_target("arm_le_v7afp", () => {
+    Target::create(
+      name=target_name("armv7-a+fp+le"),
+      parent=arm_le_v7a(),
+      nicknames=["armv7-a+fp"],
+      vars=arm32_fp_vars(),
+      alias_origins=arm32_alias_origins(),
+    )
+  })
 }
 
 ///|
 fn arm_le_v8a32() -> Target {
-  arm_le_base("armv8-a+aarch32", "armv8-a+aarch32", arm_le_v7())
+  memo_target("arm_le_v8a32", () => {
+    arm_le_base("armv8-a+aarch32", "armv8-a+aarch32", arm_le_v7())
+  })
 }
 
 ///|
 fn arm_le_v8m32() -> Target {
-  arm_le_base("armv8-m+aarch32", "armv8-m+aarch32", arm_le_v7m())
+  memo_target("arm_le_v8m32", () => {
+    arm_le_base("armv8-m+aarch32", "armv8-m+aarch32", arm_le_v7m())
+  })
 }
 
 ///|
 fn arm_le_v8r32() -> Target {
-  arm_le_base("armv8-r+aarch32", "armv8-r+aarch32", arm_le_v7())
+  memo_target("arm_le_v8r32", () => {
+    arm_le_base("armv8-r+aarch32", "armv8-r+aarch32", arm_le_v7())
+  })
 }
 
 ///|
@@ -5091,129 +5146,155 @@ fn append_arm_le_version_targets(items : Array[Target]) -> Unit {
 
 ///|
 fn arm_be_v4() -> Target {
-  Target::create(
-    name=target_name("armv4+be"),
-    parent=Target::arm_family(),
-    nicknames=["armv4", "armv4eb"],
-    bits=32,
-    code_alignment=32,
-    endianness=BigEndian,
-    vars=arm32_vars(),
-    alias_origins=arm32_alias_origins(),
-  )
+  memo_target("arm_be_v4", () => {
+    Target::create(
+      name=target_name("armv4+be"),
+      parent=Target::arm_family(),
+      nicknames=["armv4", "armv4eb"],
+      bits=32,
+      code_alignment=32,
+      endianness=BigEndian,
+      vars=arm32_vars(),
+      alias_origins=arm32_alias_origins(),
+    )
+  })
 }
 
 ///|
 fn arm_be_v4t() -> Target {
-  Target::create(
-    name=target_name("armv4t+be"),
-    parent=arm_be_v4(),
-    nicknames=["armv4t"],
-    code_alignment=16,
-  )
+  memo_target("arm_be_v4t", () => {
+    Target::create(
+      name=target_name("armv4t+be"),
+      parent=arm_be_v4(),
+      nicknames=["armv4t"],
+      code_alignment=16,
+    )
+  })
 }
 
 ///|
 fn arm_be_v5() -> Target {
-  Target::create(name=target_name("armv5+be"), parent=arm_be_v4t(), nicknames=[
-    "armv5", "armv5eb",
-  ])
+  memo_target("arm_be_v5", () => {
+    Target::create(name=target_name("armv5+be"), parent=arm_be_v4t(), nicknames=[
+      "armv5", "armv5eb",
+    ])
+  })
 }
 
 ///|
 fn arm_be_v5t() -> Target {
-  arm_be_base("armv5t", "armv5t", arm_be_v5())
+  memo_target("arm_be_v5t", () => arm_be_base("armv5t", "armv5t", arm_be_v5()))
 }
 
 ///|
 fn arm_be_v5te() -> Target {
-  arm_be_base("armv5te", "armv5te", arm_be_v5t())
+  memo_target("arm_be_v5te", () => {
+    arm_be_base("armv5te", "armv5te", arm_be_v5t())
+  })
 }
 
 ///|
 fn arm_be_v5tej() -> Target {
-  arm_be_base("armv5tej", "armv5tej", arm_be_v5te())
+  memo_target("arm_be_v5tej", () => {
+    arm_be_base("armv5tej", "armv5tej", arm_be_v5te())
+  })
 }
 
 ///|
 fn arm_be_v6() -> Target {
-  Target::create(name=target_name("armv6+be"), parent=arm_be_v5tej(), nicknames=[
-    "armv6", "armv6eb",
-  ])
+  memo_target("arm_be_v6", () => {
+    Target::create(name=target_name("armv6+be"), parent=arm_be_v5tej(), nicknames=[
+      "armv6", "armv6eb",
+    ])
+  })
 }
 
 ///|
 fn arm_be_v6t2() -> Target {
-  arm_be_base("armv6t2", "armv6t2", arm_be_v6())
+  memo_target("arm_be_v6t2", () => {
+    arm_be_base("armv6t2", "armv6t2", arm_be_v6())
+  })
 }
 
 ///|
 fn arm_be_v6z() -> Target {
-  arm_be_base("armv6z", "armv6z", arm_be_v6())
+  memo_target("arm_be_v6z", () => arm_be_base("armv6z", "armv6z", arm_be_v6()))
 }
 
 ///|
 fn arm_be_v6k() -> Target {
-  arm_be_base("armv6k", "armv6k", arm_be_v6z())
+  memo_target("arm_be_v6k", () => arm_be_base("armv6k", "armv6k", arm_be_v6z()))
 }
 
 ///|
 fn arm_be_v6m() -> Target {
-  arm_be_base("armv6-m", "armv6-m", arm_be_v6())
+  memo_target("arm_be_v6m", () => arm_be_base("armv6-m", "armv6-m", arm_be_v6()))
 }
 
 ///|
 fn arm_be_v7() -> Target {
-  Target::create(name=target_name("armv7+be"), parent=arm_be_v6t2(), nicknames=[
-    "armv7", "armv7eb",
-  ])
+  memo_target("arm_be_v7", () => {
+    Target::create(name=target_name("armv7+be"), parent=arm_be_v6t2(), nicknames=[
+      "armv7", "armv7eb",
+    ])
+  })
 }
 
 ///|
 fn arm_be_v7m() -> Target {
-  arm_be_base("armv7-m", "armv7-m", arm_be_v7())
+  memo_target("arm_be_v7m", () => arm_be_base("armv7-m", "armv7-m", arm_be_v7()))
 }
 
 ///|
 fn arm_be_v7fp() -> Target {
-  Target::create(
-    name=target_name("armv7+fp+be"),
-    parent=arm_be_v7(),
-    nicknames=["armv7+fp"],
-    vars=arm32_fp_vars(),
-    alias_origins=arm32_alias_origins(),
-  )
+  memo_target("arm_be_v7fp", () => {
+    Target::create(
+      name=target_name("armv7+fp+be"),
+      parent=arm_be_v7(),
+      nicknames=["armv7+fp"],
+      vars=arm32_fp_vars(),
+      alias_origins=arm32_alias_origins(),
+    )
+  })
 }
 
 ///|
 fn arm_be_v7a() -> Target {
-  arm_be_base("armv7-a", "armv7-a", arm_be_v7())
+  memo_target("arm_be_v7a", () => arm_be_base("armv7-a", "armv7-a", arm_be_v7()))
 }
 
 ///|
 fn arm_be_v7afp() -> Target {
-  Target::create(
-    name=target_name("armv7-a+fp+be"),
-    parent=arm_be_v7a(),
-    nicknames=["armv7-a+fp"],
-    vars=arm32_fp_vars(),
-    alias_origins=arm32_alias_origins(),
-  )
+  memo_target("arm_be_v7afp", () => {
+    Target::create(
+      name=target_name("armv7-a+fp+be"),
+      parent=arm_be_v7a(),
+      nicknames=["armv7-a+fp"],
+      vars=arm32_fp_vars(),
+      alias_origins=arm32_alias_origins(),
+    )
+  })
 }
 
 ///|
 fn arm_be_v8a32() -> Target {
-  arm_be_base("armv8-a+aarch32", "armv8-a+aarch32", arm_be_v7())
+  memo_target("arm_be_v8a32", () => {
+    arm_be_base("armv8-a+aarch32", "armv8-a+aarch32", arm_be_v7())
+  })
 }
 
 ///|
 fn arm_be_v8m32() -> Target {
-  arm_be_base("armv8-m+aarch32", "armv8-m+aarch32", arm_be_v7m())
+  memo_target("arm_be_v8m32", () => {
+    arm_be_base("armv8-m+aarch32", "armv8-m+aarch32", arm_be_v7m())
+  })
 }
 
 ///|
 fn arm_be_v8r32() -> Target {
-  arm_be_base("armv8-r+aarch32", "armv8-r+aarch32", arm_be_v7())
+  memo_target("arm_be_v8r32", () => {
+    arm_be_base("armv8-r+aarch32", "armv8-r+aarch32", arm_be_v7())
+  })
 }
 
 ///|
@@ -5246,116 +5327,130 @@ fn append_arm_be_version_targets(items : Array[Target]) -> Unit {
 
 ///|
 fn arm_bi_v7() -> Target {
-  Target::create(
-    name=target_name("armv7+bi"),
-    parent=Target::arm_family(),
-    nicknames=["armv7"],
-    bits=32,
-    code_alignment=16,
-    endianness=BiEndian,
-    vars=arm32_vars(),
-    alias_origins=arm32_alias_origins(),
-  )
+  memo_target("arm_bi_v7", () => {
+    Target::create(
+      name=target_name("armv7+bi"),
+      parent=Target::arm_family(),
+      nicknames=["armv7"],
+      bits=32,
+      code_alignment=16,
+      endianness=BiEndian,
+      vars=arm32_vars(),
+      alias_origins=arm32_alias_origins(),
+    )
+  })
 }
 
 ///|
 fn arm_bi_v7m() -> Target {
-  arm_bi_base("armv7-m", "armv7-m", arm_bi_v7())
+  memo_target("arm_bi_v7m", () => arm_bi_base("armv7-m", "armv7-m", arm_bi_v7()))
 }
 
 ///|
 fn arm_bi_v7fp() -> Target {
-  Target::create(
-    name=target_name("armv7+fp+bi"),
-    parent=arm_bi_v7(),
-    nicknames=["armv7+fp"],
-    vars=arm32_fp_vars(),
-    alias_origins=arm32_alias_origins(),
-  )
+  memo_target("arm_bi_v7fp", () => {
+    Target::create(
+      name=target_name("armv7+fp+bi"),
+      parent=arm_bi_v7(),
+      nicknames=["armv7+fp"],
+      vars=arm32_fp_vars(),
+      alias_origins=arm32_alias_origins(),
+    )
+  })
 }
 
 ///|
 fn arm_bi_v7a() -> Target {
-  arm_bi_base("armv7-a", "armv7-a", arm_bi_v7())
+  memo_target("arm_bi_v7a", () => arm_bi_base("armv7-a", "armv7-a", arm_bi_v7()))
 }
 
 ///|
 fn arm_bi_v7afp() -> Target {
-  Target::create(
-    name=target_name("armv7-a+fp+bi"),
-    parent=arm_bi_v7a(),
-    nicknames=["armv7-a+fp"],
-    vars=arm32_fp_vars(),
-    alias_origins=arm32_alias_origins(),
-  )
+  memo_target("arm_bi_v7afp", () => {
+    Target::create(
+      name=target_name("armv7-a+fp+bi"),
+      parent=arm_bi_v7a(),
+      nicknames=["armv7-a+fp"],
+      vars=arm32_fp_vars(),
+      alias_origins=arm32_alias_origins(),
+    )
+  })
 }
 
 ///|
 fn arm_bi_v8() -> Target {
-  Target::create(
-    name=target_name("armv8+bi"),
-    parent=Target::arm_family(),
-    bits=64,
-    code_alignment=32,
-    endianness=BiEndian,
-    vars=aarch64_vars(),
-    alias_origins=aarch64_alias_origins(),
-  )
+  memo_target("arm_bi_v8", () => {
+    Target::create(
+      name=target_name("armv8+bi"),
+      parent=Target::arm_family(),
+      bits=64,
+      code_alignment=32,
+      endianness=BiEndian,
+      vars=aarch64_vars(),
+      alias_origins=aarch64_alias_origins(),
+    )
+  })
 }
 
 ///|
 fn arm_bi_v8a() -> Target {
-  arm_bi64_base("armv8-a", arm_bi_v8())
+  memo_target("arm_bi_v8a", () => arm_bi64_base("armv8-a", arm_bi_v8()))
 }
 
 ///|
 fn arm_bi_v8a32() -> Target {
-  arm_bi_base("armv8-a+aarch32", "armv8-a+aarch32", arm_bi_v7())
+  memo_target("arm_bi_v8a32", () => {
+    arm_bi_base("armv8-a+aarch32", "armv8-a+aarch32", arm_bi_v7())
+  })
 }
 
 ///|
 fn arm_bi_v8m32() -> Target {
-  arm_bi_base("armv8-m+aarch32", "armv8-m+aarch32", arm_bi_v7m())
+  memo_target("arm_bi_v8m32", () => {
+    arm_bi_base("armv8-m+aarch32", "armv8-m+aarch32", arm_bi_v7m())
+  })
 }
 
 ///|
 fn arm_bi_v8r32() -> Target {
-  arm_bi_base("armv8-r+aarch32", "armv8-r+aarch32", arm_bi_v7())
+  memo_target("arm_bi_v8r32", () => {
+    arm_bi_base("armv8-r+aarch32", "armv8-r+aarch32", arm_bi_v7())
+  })
 }
 
 ///|
 fn arm_bi_v81a() -> Target {
-  arm_bi64_base("armv8.1-a", arm_bi_v8a())
+  memo_target("arm_bi_v81a", () => arm_bi64_base("armv8.1-a", arm_bi_v8a()))
 }
 
 ///|
 fn arm_bi_v82a() -> Target {
-  arm_bi64_base("armv8.2-a", arm_bi_v81a())
+  memo_target("arm_bi_v82a", () => arm_bi64_base("armv8.2-a", arm_bi_v81a()))
 }
 
 ///|
 fn arm_bi_v83a() -> Target {
-  arm_bi64_base("armv8.3-a", arm_bi_v82a())
+  memo_target("arm_bi_v83a", () => arm_bi64_base("armv8.3-a", arm_bi_v82a()))
 }
 
 ///|
 fn arm_bi_v84a() -> Target {
-  arm_bi64_base("armv8.4-a", arm_bi_v83a())
+  memo_target("arm_bi_v84a", () => arm_bi64_base("armv8.4-a", arm_bi_v83a()))
 }
 
 ///|
 fn arm_bi_v85a() -> Target {
-  arm_bi64_base("armv8.5-a", arm_bi_v84a())
+  memo_target("arm_bi_v85a", () => arm_bi64_base("armv8.5-a", arm_bi_v84a()))
 }
 
 ///|
 fn arm_bi_v86a() -> Target {
-  arm_bi64_base("armv8.6-a", arm_bi_v85a())
+  memo_target("arm_bi_v86a", () => arm_bi64_base("armv8.6-a", arm_bi_v85a()))
 }
 
 ///|
 fn arm_bi_v9a() -> Target {
-  arm_bi64_base("armv9-a", arm_bi_v86a())
+  memo_target("arm_bi_v9a", () => arm_bi64_base("armv9-a", arm_bi_v86a()))
 }
 
 ///|
@@ -5386,108 +5481,140 @@ fn append_arm_bi_version_targets(items : Array[Target]) -> Unit {
 
 ///|
 fn arm_le_v8() -> Target {
-  Target::create(
-    name=target_name("armv8+le"),
-    parent=Target::arm(),
-    bits=64,
-    code_alignment=32,
-    endianness=LittleEndian,
-    vars=aarch64_vars(),
-    alias_origins=aarch64_alias_origins(),
-  )
+  memo_target("arm_le_v8", () => {
+    Target::create(
+      name=target_name("armv8+le"),
+      parent=Target::arm(),
+      bits=64,
+      code_alignment=32,
+      endianness=LittleEndian,
+      vars=aarch64_vars(),
+      alias_origins=aarch64_alias_origins(),
+    )
+  })
 }
 
 ///|
 fn arm_le_v8a() -> Target {
-  arm_le_base("armv8-a", "armv8-a", arm_le_v8())
+  memo_target("arm_le_v8a", () => arm_le_base("armv8-a", "armv8-a", arm_le_v8()))
 }
 
 ///|
 fn arm_le_v81a() -> Target {
-  arm_le_base("armv8.1-a", "armv8.1-a", arm_le_v8a())
+  memo_target("arm_le_v81a", () => {
+    arm_le_base("armv8.1-a", "armv8.1-a", arm_le_v8a())
+  })
 }
 
 ///|
 fn arm_le_v82a() -> Target {
-  arm_le_base("armv8.2-a", "armv8.2-a", arm_le_v81a())
+  memo_target("arm_le_v82a", () => {
+    arm_le_base("armv8.2-a", "armv8.2-a", arm_le_v81a())
+  })
 }
 
 ///|
 fn arm_le_v83a() -> Target {
-  arm_le_base("armv8.3-a", "armv8.3-a", arm_le_v82a())
+  memo_target("arm_le_v83a", () => {
+    arm_le_base("armv8.3-a", "armv8.3-a", arm_le_v82a())
+  })
 }
 
 ///|
 fn arm_le_v84a() -> Target {
-  arm_le_base("armv8.4-a", "armv8.4-a", arm_le_v83a())
+  memo_target("arm_le_v84a", () => {
+    arm_le_base("armv8.4-a", "armv8.4-a", arm_le_v83a())
+  })
 }
 
 ///|
 fn arm_le_v85a() -> Target {
-  arm_le_base("armv8.5-a", "armv8.5-a", arm_le_v84a())
+  memo_target("arm_le_v85a", () => {
+    arm_le_base("armv8.5-a", "armv8.5-a", arm_le_v84a())
+  })
 }
 
 ///|
 fn arm_le_v86a() -> Target {
-  arm_le_base("armv8.6-a", "armv8.6-a", arm_le_v85a())
+  memo_target("arm_le_v86a", () => {
+    arm_le_base("armv8.6-a", "armv8.6-a", arm_le_v85a())
+  })
 }
 
 ///|
 fn arm_le_v9a() -> Target {
-  arm_le_base("armv9-a", "armv9-a", arm_le_v86a())
+  memo_target("arm_le_v9a", () => {
+    arm_le_base("armv9-a", "armv9-a", arm_le_v86a())
+  })
 }
 
 ///|
 fn arm_be_v8() -> Target {
-  Target::create(
-    name=target_name("armv8+be"),
-    parent=Target::armeb(),
-    bits=64,
-    code_alignment=32,
-    endianness=BigEndian,
-    vars=aarch64_vars(),
-    alias_origins=aarch64_alias_origins(),
-  )
+  memo_target("arm_be_v8", () => {
+    Target::create(
+      name=target_name("armv8+be"),
+      parent=Target::armeb(),
+      bits=64,
+      code_alignment=32,
+      endianness=BigEndian,
+      vars=aarch64_vars(),
+      alias_origins=aarch64_alias_origins(),
+    )
+  })
 }
 
 ///|
 fn arm_be_v8a() -> Target {
-  arm_be_base("armv8-a", "armv8-a", arm_be_v8())
+  memo_target("arm_be_v8a", () => arm_be_base("armv8-a", "armv8-a", arm_be_v8()))
 }
 
 ///|
 fn arm_be_v81a() -> Target {
-  arm_be_base("armv8.1-a", "armv8.1-a", arm_be_v8a())
+  memo_target("arm_be_v81a", () => {
+    arm_be_base("armv8.1-a", "armv8.1-a", arm_be_v8a())
+  })
 }
 
 ///|
 fn arm_be_v82a() -> Target {
-  arm_be_base("armv8.2-a", "armv8.2-a", arm_be_v81a())
+  memo_target("arm_be_v82a", () => {
+    arm_be_base("armv8.2-a", "armv8.2-a", arm_be_v81a())
+  })
 }
 
 ///|
 fn arm_be_v83a() -> Target {
-  arm_be_base("armv8.3-a", "armv8.3-a", arm_be_v82a())
+  memo_target("arm_be_v83a", () => {
+    arm_be_base("armv8.3-a", "armv8.3-a", arm_be_v82a())
+  })
 }
 
 ///|
 fn arm_be_v84a() -> Target {
-  arm_be_base("armv8.4-a", "armv8.4-a", arm_be_v83a())
+  memo_target("arm_be_v84a", () => {
+    arm_be_base("armv8.4-a", "armv8.4-a", arm_be_v83a())
+  })
 }
 
 ///|
 fn arm_be_v85a() -> Target {
-  arm_be_base("armv8.5-a", "armv8.5-a", arm_be_v84a())
+  memo_target("arm_be_v85a", () => {
+    arm_be_base("armv8.5-a", "armv8.5-a", arm_be_v84a())
+  })
 }
 
 ///|
 fn arm_be_v86a() -> Target {
-  arm_be_base("armv8.6-a", "armv8.6-a", arm_be_v85a())
+  memo_target("arm_be_v86a", () => {
+    arm_be_base("armv8.6-a", "armv8.6-a", arm_be_v85a())
+  })
 }
 
 ///|
 fn arm_be_v9a() -> Target {
-  arm_be_base("armv9-a", "armv9-a", arm_be_v86a())
+  memo_target("arm_be_v9a", () => {
+    arm_be_base("armv9-a", "armv9-a", arm_be_v86a())
+  })
 }
 
 ///|
@@ -5555,421 +5682,498 @@ fn aarch64_version_nicknames() -> Array[String] {
 
 ///|
 pub fn Target::arm() -> Target {
-  Target::create(
-    name=target_name("arm"),
-    parent=arm_le_v7afp(),
-    nicknames=arm32_le_nicknames(),
-    bits=32,
-    endianness=LittleEndian,
-    vars=arm32_fp_vars(),
-    alias_origins=arm32_alias_origins(),
-  )
+  memo_target("Target::arm", () => {
+    Target::create(
+      name=target_name("arm"),
+      parent=arm_le_v7afp(),
+      nicknames=arm32_le_nicknames(),
+      bits=32,
+      endianness=LittleEndian,
+      vars=arm32_fp_vars(),
+      alias_origins=arm32_alias_origins(),
+    )
+  })
 }
 
 ///|
 pub fn Target::armeb() -> Target {
-  Target::create(
-    name=target_name("armeb"),
-    parent=arm_be_v7afp(),
-    nicknames=arm32_be_nicknames(),
-    bits=32,
-    endianness=BigEndian,
-    vars=arm32_fp_vars(),
-  )
+  memo_target("Target::armeb", () => {
+    Target::create(
+      name=target_name("armeb"),
+      parent=arm_be_v7afp(),
+      nicknames=arm32_be_nicknames(),
+      bits=32,
+      endianness=BigEndian,
+      vars=arm32_fp_vars(),
+    )
+  })
 }
 
 ///|
 pub fn Target::thumb() -> Target {
-  Target::create(
-    name=target_name("thumb"),
-    parent=Target::arm(),
-    nicknames=[
-      "thumbv4", "thumbv5", "thumbv6", "thumbv7", "armv7-m", "armv7-m+le",
-    ],
-    bits=32,
-    endianness=LittleEndian,
-    vars=arm32_vars(),
-  )
+  memo_target("Target::thumb", () => {
+    Target::create(
+      name=target_name("thumb"),
+      parent=Target::arm(),
+      nicknames=[
+        "thumbv4", "thumbv5", "thumbv6", "thumbv7", "armv7-m", "armv7-m+le",
+      ],
+      bits=32,
+      endianness=LittleEndian,
+      vars=arm32_vars(),
+    )
+  })
 }
 
 ///|
 pub fn Target::thumbeb() -> Target {
-  Target::create(
-    name=target_name("thumbeb"),
-    parent=Target::armeb(),
-    nicknames=["thumbv4eb", "thumbv5eb", "thumbv6eb", "thumbv7eb", "armv7-m+be"],
-    bits=32,
-    endianness=BigEndian,
-    vars=arm32_vars(),
-  )
+  memo_target("Target::thumbeb", () => {
+    Target::create(
+      name=target_name("thumbeb"),
+      parent=Target::armeb(),
+      nicknames=[
+        "thumbv4eb", "thumbv5eb", "thumbv6eb", "thumbv7eb", "armv7-m+be",
+      ],
+      bits=32,
+      endianness=BigEndian,
+      vars=arm32_vars(),
+    )
+  })
 }
 
 ///|
 pub fn Target::aarch64() -> Target {
-  Target::create(
-    name=target_name("aarch64"),
-    parent=arm_le_v86a(),
-    nicknames=["arm64"] + with_endian_suffix(aarch64_version_nicknames(), "le"),
-    bits=64,
-    endianness=LittleEndian,
-    vars=aarch64_vars(),
-    alias_origins=aarch64_alias_origins(),
-  )
+  memo_target("Target::aarch64", () => {
+    Target::create(
+      name=target_name("aarch64"),
+      parent=arm_le_v86a(),
+      nicknames=["arm64"] +
+        with_endian_suffix(aarch64_version_nicknames(), "le"),
+      bits=64,
+      endianness=LittleEndian,
+      vars=aarch64_vars(),
+      alias_origins=aarch64_alias_origins(),
+    )
+  })
 }
 
 ///|
 pub fn Target::aarch64_be() -> Target {
-  Target::create(
-    name=target_name("aarch64_be"),
-    parent=arm_be_v86a(),
-    nicknames=["arm64_be", "arm64eb", "armv8eb"] +
-      [
-        for name in aarch64_version_nicknames() => "\{name}+be"
-      ],
-    bits=64,
-    endianness=BigEndian,
-    vars=aarch64_vars(),
-    alias_origins=aarch64_alias_origins(),
-  )
+  memo_target("Target::aarch64_be", () => {
+    Target::create(
+      name=target_name("aarch64_be"),
+      parent=arm_be_v86a(),
+      nicknames=["arm64_be", "arm64eb", "armv8eb"] +
+        [
+          for name in aarch64_version_nicknames() => "\{name}+be"
+        ],
+      bits=64,
+      endianness=BigEndian,
+      vars=aarch64_vars(),
+      alias_origins=aarch64_alias_origins(),
+    )
+  })
 }
 
 ///|
 pub fn Target::mips() -> Target {
-  Target::create(
-    name=target_name("mips"),
-    parent=Target::mips_family(),
-    nicknames=["mipseb", "mips32", "mips32eb", "mipsbe", "mips32be"],
-    bits=32,
-    endianness=BigEndian,
-    vars=mips_vars(32),
-    alias_origins=mips_alias_origins(32),
-  )
+  memo_target("Target::mips", () => {
+    Target::create(
+      name=target_name("mips"),
+      parent=Target::mips_family(),
+      nicknames=["mipseb", "mips32", "mips32eb", "mipsbe", "mips32be"],
+      bits=32,
+      endianness=BigEndian,
+      vars=mips_vars(32),
+      alias_origins=mips_alias_origins(32),
+    )
+  })
 }
 
 ///|
 pub fn Target::mips_family() -> Target {
-  Target::create(name=target_name("mips-family"))
+  memo_target("Target::mips_family", () => {
+    Target::create(name=target_name("mips-family"))
+  })
 }
 
 ///|
 pub fn Target::mipsbi() -> Target {
-  Target::create(
-    name=target_name("mipsbi"),
-    parent=Target::mips_family(),
-    nicknames=["mips32bi"],
-    bits=32,
-    endianness=BiEndian,
-    vars=mips_vars(32),
-    alias_origins=mips_alias_origins(32),
-  )
+  memo_target("Target::mipsbi", () => {
+    Target::create(
+      name=target_name("mipsbi"),
+      parent=Target::mips_family(),
+      nicknames=["mips32bi"],
+      bits=32,
+      endianness=BiEndian,
+      vars=mips_vars(32),
+      alias_origins=mips_alias_origins(32),
+    )
+  })
 }
 
 ///|
 pub fn Target::mipsel() -> Target {
-  Target::create(
-    name=target_name("mipsel"),
-    parent=Target::mips_family(),
-    nicknames=["mipsle", "mips32le", "mips32el"],
-    bits=32,
-    endianness=LittleEndian,
-    vars=mips_vars(32),
-    alias_origins=mips_alias_origins(32),
-  )
+  memo_target("Target::mipsel", () => {
+    Target::create(
+      name=target_name("mipsel"),
+      parent=Target::mips_family(),
+      nicknames=["mipsle", "mips32le", "mips32el"],
+      bits=32,
+      endianness=LittleEndian,
+      vars=mips_vars(32),
+      alias_origins=mips_alias_origins(32),
+    )
+  })
 }
 
 ///|
 pub fn Target::mips64bi() -> Target {
-  Target::create(
-    name=target_name("mips64bi"),
-    parent=Target::mips_family(),
-    bits=64,
-    endianness=BiEndian,
-    vars=mips_vars(64),
-    alias_origins=mips_alias_origins(64),
-  )
+  memo_target("Target::mips64bi", () => {
+    Target::create(
+      name=target_name("mips64bi"),
+      parent=Target::mips_family(),
+      bits=64,
+      endianness=BiEndian,
+      vars=mips_vars(64),
+      alias_origins=mips_alias_origins(64),
+    )
+  })
 }
 
 ///|
 pub fn Target::mips64() -> Target {
-  Target::create(
-    name=target_name("mips64"),
-    parent=Target::mips_family(),
-    nicknames=["mips64eb", "mips64be"],
-    bits=64,
-    endianness=BigEndian,
-    vars=mips_vars(64),
-    alias_origins=mips_alias_origins(64),
-  )
+  memo_target("Target::mips64", () => {
+    Target::create(
+      name=target_name("mips64"),
+      parent=Target::mips_family(),
+      nicknames=["mips64eb", "mips64be"],
+      bits=64,
+      endianness=BigEndian,
+      vars=mips_vars(64),
+      alias_origins=mips_alias_origins(64),
+    )
+  })
 }
 
 ///|
 pub fn Target::mips64el() -> Target {
-  Target::create(
-    name=target_name("mips64el"),
-    parent=Target::mips_family(),
-    nicknames=["mips64le", "misp64le"],
-    bits=64,
-    endianness=LittleEndian,
-    vars=mips_vars(64),
-    alias_origins=mips_alias_origins(64),
-  )
+  memo_target("Target::mips64el", () => {
+    Target::create(
+      name=target_name("mips64el"),
+      parent=Target::mips_family(),
+      nicknames=["mips64le", "misp64le"],
+      bits=64,
+      endianness=LittleEndian,
+      vars=mips_vars(64),
+      alias_origins=mips_alias_origins(64),
+    )
+  })
 }
 
 ///|
 pub fn Target::powerpc() -> Target {
-  Target::create(
-    name=target_name("powerpc"),
-    parent=Target::powerpc_family(),
-    nicknames=[
-      "powerpc32+eb", "ppc", "powerpc32", "ppc32", "powerpc32eb", "powerpc32be",
-      "ppc32eb", "ppc32be", "power", "power32",
-    ],
-    bits=32,
-    endianness=BigEndian,
-    vars=ppc_vars(32),
-    alias_origins=ppc_alias_origins(32),
-  )
+  memo_target("Target::powerpc", () => {
+    Target::create(
+      name=target_name("powerpc"),
+      parent=Target::powerpc_family(),
+      nicknames=[
+        "powerpc32+eb", "ppc", "powerpc32", "ppc32", "powerpc32eb", "powerpc32be",
+        "ppc32eb", "ppc32be", "power", "power32",
+      ],
+      bits=32,
+      endianness=BigEndian,
+      vars=ppc_vars(32),
+      alias_origins=ppc_alias_origins(32),
+    )
+  })
 }
 
 ///|
 pub fn Target::powerpc_family() -> Target {
-  Target::create(name=target_name("powerpc-family"))
+  memo_target("Target::powerpc_family", () => {
+    Target::create(name=target_name("powerpc-family"))
+  })
 }
 
 ///|
 pub fn Target::powerpcbi() -> Target {
-  Target::create(
-    name=target_name("powerpcbi"),
-    parent=Target::powerpc_family(),
-    nicknames=["powerpc32bi", "ppc32bi", "powerpc32+bi"],
-    bits=32,
-    endianness=BiEndian,
-    vars=ppc_vars(32),
-    alias_origins=ppc_alias_origins(32),
-  )
+  memo_target("Target::powerpcbi", () => {
+    Target::create(
+      name=target_name("powerpcbi"),
+      parent=Target::powerpc_family(),
+      nicknames=["powerpc32bi", "ppc32bi", "powerpc32+bi"],
+      bits=32,
+      endianness=BiEndian,
+      vars=ppc_vars(32),
+      alias_origins=ppc_alias_origins(32),
+    )
+  })
 }
 
 ///|
 pub fn Target::powerpcle() -> Target {
-  Target::create(
-    name=target_name("powerpcle"),
-    parent=Target::powerpc_family(),
-    nicknames=[
-      "powerpc32+le", "ppcle", "ppcel", "powerpc32le", "powerpc32el", "ppc32le",
-      "ppc32el",
-    ],
-    bits=32,
-    endianness=LittleEndian,
-    vars=ppc_vars(32),
-    alias_origins=ppc_alias_origins(32),
-  )
+  memo_target("Target::powerpcle", () => {
+    Target::create(
+      name=target_name("powerpcle"),
+      parent=Target::powerpc_family(),
+      nicknames=[
+        "powerpc32+le", "ppcle", "ppcel", "powerpc32le", "powerpc32el", "ppc32le",
+        "ppc32el",
+      ],
+      bits=32,
+      endianness=LittleEndian,
+      vars=ppc_vars(32),
+      alias_origins=ppc_alias_origins(32),
+    )
+  })
 }
 
 ///|
 pub fn Target::powerpc64bi() -> Target {
-  Target::create(
-    name=target_name("powerpc64bi"),
-    parent=Target::powerpc_family(),
-    nicknames=["powerpc64+bi", "power64bi"],
-    bits=64,
-    endianness=BiEndian,
-    vars=ppc_vars(64),
-    alias_origins=ppc_alias_origins(64),
-  )
+  memo_target("Target::powerpc64bi", () => {
+    Target::create(
+      name=target_name("powerpc64bi"),
+      parent=Target::powerpc_family(),
+      nicknames=["powerpc64+bi", "power64bi"],
+      bits=64,
+      endianness=BiEndian,
+      vars=ppc_vars(64),
+      alias_origins=ppc_alias_origins(64),
+    )
+  })
 }
 
 ///|
 pub fn Target::powerpc64() -> Target {
-  Target::create(
-    name=target_name("powerpc64"),
-    parent=Target::powerpc_family(),
-    nicknames=[
-      // BAP lists this duplicate nickname on powerpc64eb as well as powerpc64bi.
-      "powerpc64+bi", "ppc64", "ppu", "power64", "powerpc64eb", "powerpc64be", "ppc64eb",
-      "ppc64be", "power64eb", "power64be",
-    ],
-    bits=64,
-    endianness=BigEndian,
-    vars=ppc_vars(64),
-    alias_origins=ppc_alias_origins(64),
-  )
+  memo_target("Target::powerpc64", () => {
+    Target::create(
+      name=target_name("powerpc64"),
+      parent=Target::powerpc_family(),
+      nicknames=[
+        // BAP lists this duplicate nickname on powerpc64eb as well as powerpc64bi.
+        "powerpc64+bi", "ppc64", "ppu", "power64", "powerpc64eb", "powerpc64be",
+        "ppc64eb", "ppc64be", "power64eb", "power64be",
+      ],
+      bits=64,
+      endianness=BigEndian,
+      vars=ppc_vars(64),
+      alias_origins=ppc_alias_origins(64),
+    )
+  })
 }
 
 ///|
 pub fn Target::powerpc64le() -> Target {
-  Target::create(
-    name=target_name("powerpc64le"),
-    parent=Target::powerpc_family(),
-    nicknames=[
-      "powerpc64el", "powerpc64+le", "ppc64le", "ppc64el", "power64el", "power64le",
-    ],
-    bits=64,
-    endianness=LittleEndian,
-    vars=ppc_vars(64),
-    alias_origins=ppc_alias_origins(64),
-  )
+  memo_target("Target::powerpc64le", () => {
+    Target::create(
+      name=target_name("powerpc64le"),
+      parent=Target::powerpc_family(),
+      nicknames=[
+        "powerpc64el", "powerpc64+le", "ppc64le", "ppc64el", "power64el", "power64le",
+      ],
+      bits=64,
+      endianness=LittleEndian,
+      vars=ppc_vars(64),
+      alias_origins=ppc_alias_origins(64),
+    )
+  })
 }
 
 ///|
 pub fn Target::riscv() -> Target {
-  Target::create(
-    name=target_name("riscv"),
-    bits=0,
-    endianness=LittleEndian,
-    vars=riscv_family_vars(),
-  )
+  memo_target("Target::riscv", () => {
+    Target::create(
+      name=target_name("riscv"),
+      bits=0,
+      endianness=LittleEndian,
+      vars=riscv_family_vars(),
+    )
+  })
 }
 
 ///|
 pub fn Target::riscv32() -> Target {
-  Target::create(
-    name=target_name("riscv32"),
-    parent=Target::riscv(),
-    bits=32,
-    endianness=LittleEndian,
-    vars=riscv_vars(32),
-    alias_origins=riscv_alias_origins(32),
-  )
+  memo_target("Target::riscv32", () => {
+    Target::create(
+      name=target_name("riscv32"),
+      parent=Target::riscv(),
+      bits=32,
+      endianness=LittleEndian,
+      vars=riscv_vars(32),
+      alias_origins=riscv_alias_origins(32),
+    )
+  })
 }
 
 ///|
 pub fn Target::riscv64() -> Target {
-  Target::create(
-    name=target_name("riscv64"),
-    parent=Target::riscv(),
-    bits=64,
-    endianness=LittleEndian,
-    vars=riscv_vars(64),
-    alias_origins=riscv_alias_origins(64),
-  )
+  memo_target("Target::riscv64", () => {
+    Target::create(
+      name=target_name("riscv64"),
+      parent=Target::riscv(),
+      bits=64,
+      endianness=LittleEndian,
+      vars=riscv_vars(64),
+      alias_origins=riscv_alias_origins(64),
+    )
+  })
 }
 
 ///|
 pub fn Target::loongarch() -> Target {
-  Target::create(name=target_name("loongarch"), bits=0, endianness=LittleEndian)
+  memo_target("Target::loongarch", () => {
+    Target::create(
+      name=target_name("loongarch"),
+      bits=0,
+      endianness=LittleEndian,
+    )
+  })
 }
 
 ///|
 pub fn Target::loongarch32() -> Target {
-  Target::create(
-    name=target_name("loongarch32"),
-    parent=Target::loongarch(),
-    bits=32,
-    endianness=LittleEndian,
-    vars=loongarch_vars(32),
-    alias_origins=loongarch_alias_origins(32),
-  )
+  memo_target("Target::loongarch32", () => {
+    Target::create(
+      name=target_name("loongarch32"),
+      parent=Target::loongarch(),
+      bits=32,
+      endianness=LittleEndian,
+      vars=loongarch_vars(32),
+      alias_origins=loongarch_alias_origins(32),
+    )
+  })
 }
 
 ///|
 pub fn Target::loongarch64() -> Target {
-  Target::create(
-    name=target_name("loongarch64"),
-    parent=Target::loongarch(),
-    bits=64,
-    endianness=LittleEndian,
-    vars=loongarch_vars(64),
-    alias_origins=loongarch_alias_origins(64),
-  )
+  memo_target("Target::loongarch64", () => {
+    Target::create(
+      name=target_name("loongarch64"),
+      parent=Target::loongarch(),
+      bits=64,
+      endianness=LittleEndian,
+      vars=loongarch_vars(64),
+      alias_origins=loongarch_alias_origins(64),
+    )
+  })
 }
 
 ///|
 pub fn Target::sparc() -> Target {
-  Target::create(
-    name=target_name("sparc"),
-    bits=32,
-    endianness=BigEndian,
-    vars=sparc_vars(32),
-    alias_origins=sparc_alias_origins(32),
-  )
+  memo_target("Target::sparc", () => {
+    Target::create(
+      name=target_name("sparc"),
+      bits=32,
+      endianness=BigEndian,
+      vars=sparc_vars(32),
+      alias_origins=sparc_alias_origins(32),
+    )
+  })
 }
 
 ///|
 pub fn Target::sparcv9() -> Target {
-  Target::create(
-    name=target_name("sparcv9"),
-    parent=Target::sparc(),
-    nicknames=["sparc64"],
-    bits=64,
-    endianness=BigEndian,
-    vars=sparc_vars(64),
-    alias_origins=sparc_alias_origins(64),
-  )
+  memo_target("Target::sparcv9", () => {
+    Target::create(
+      name=target_name("sparcv9"),
+      parent=Target::sparc(),
+      nicknames=["sparc64"],
+      bits=64,
+      endianness=BigEndian,
+      vars=sparc_vars(64),
+      alias_origins=sparc_alias_origins(64),
+    )
+  })
 }
 
 ///|
 pub fn Target::nvptx() -> Target {
-  Target::create(
-    name=target_name("nvptx"),
-    bits=32,
-    endianness=LittleEndian,
-    vars=numbered_pc_mem_vars(32, "R", 32),
-  )
+  memo_target("Target::nvptx", () => {
+    Target::create(
+      name=target_name("nvptx"),
+      bits=32,
+      endianness=LittleEndian,
+      vars=numbered_pc_mem_vars(32, "R", 32),
+    )
+  })
 }
 
 ///|
 pub fn Target::nvptx64() -> Target {
-  Target::create(
-    name=target_name("nvptx64"),
-    parent=Target::nvptx(),
-    bits=64,
-    endianness=LittleEndian,
-    vars=numbered_pc_mem_vars(64, "R", 32),
-  )
+  memo_target("Target::nvptx64", () => {
+    Target::create(
+      name=target_name("nvptx64"),
+      parent=Target::nvptx(),
+      bits=64,
+      endianness=LittleEndian,
+      vars=numbered_pc_mem_vars(64, "R", 32),
+    )
+  })
 }
 
 ///|
 pub fn Target::hexagon() -> Target {
-  Target::create(
-    name=target_name("hexagon"),
-    bits=32,
-    endianness=LittleEndian,
-    vars=numbered_pc_mem_vars(32, "R", 32),
-  )
+  memo_target("Target::hexagon", () => {
+    Target::create(
+      name=target_name("hexagon"),
+      bits=32,
+      endianness=LittleEndian,
+      vars=numbered_pc_mem_vars(32, "R", 32),
+    )
+  })
 }
 
 ///|
 pub fn Target::r600() -> Target {
-  Target::create(
-    name=target_name("r600"),
-    bits=32,
-    endianness=LittleEndian,
-    vars=numbered_pc_mem_vars(32, "R", 32),
-  )
+  memo_target("Target::r600", () => {
+    Target::create(
+      name=target_name("r600"),
+      bits=32,
+      endianness=LittleEndian,
+      vars=numbered_pc_mem_vars(32, "R", 32),
+    )
+  })
 }
 
 ///|
 pub fn Target::systemz() -> Target {
-  Target::create(
-    name=target_name("systemz"),
-    bits=64,
-    endianness=BigEndian,
-    vars=systemz_vars(),
-    alias_origins=systemz_alias_origins(),
-  )
+  memo_target("Target::systemz", () => {
+    Target::create(
+      name=target_name("systemz"),
+      bits=64,
+      endianness=BigEndian,
+      vars=systemz_vars(),
+      alias_origins=systemz_alias_origins(),
+    )
+  })
 }
 
 ///|
 pub fn Target::systemz9() -> Target {
-  Target::create(
-    name=target_name("systemz9"),
-    parent=Target::systemz(),
-    nicknames=["s390x"],
-    bits=64,
-    endianness=BigEndian,
-    vars=systemz_vars(),
-    alias_origins=systemz_alias_origins(),
-  )
+  memo_target("Target::systemz9", () => {
+    Target::create(
+      name=target_name("systemz9"),
+      parent=Target::systemz(),
+      nicknames=["s390x"],
+      bits=64,
+      endianness=BigEndian,
+      vars=systemz_vars(),
+      alias_origins=systemz_alias_origins(),
+    )
+  })
 }
 
 ///|
 pub fn Target::xcore() -> Target {
-  Target::create(
-    name=target_name("xcore"),
-    bits=32,
-    endianness=LittleEndian,
-    vars=numbered_pc_mem_vars(32, "R", 16),
-  )
+  memo_target("Target::xcore", () => {
+    Target::create(
+      name=target_name("xcore"),
+      bits=32,
+      endianness=LittleEndian,
+      vars=numbered_pc_mem_vars(32, "R", 16),
+    )
+  })
 }
 
 ///|
@@ -6939,3 +7143,27 @@ pub fn target_families() -> Array[Array[Target]] {
 pub fn Target::families() -> Array[Array[Target]] {
   target_families()
 }
+
+///|
+/// Built-in targets are pure values that are expensive to construct (each
+/// carries its whole register file), so every argument-less target
+/// constructor builds its target once.
+let target_ctor_cache : Map[String, Target] = Map([])
+
+///|
+fn memo_target(key : String, make : () -> Target) -> Target {
+  match target_ctor_cache.get(key) {
+    Some(target) => target
+    None => {
+      let target = make()
+      target_ctor_cache[key] = target
+      target
+    }
+  }
+}
+
+///|
+let unknown_target_name : @knowledge.Name = @knowledge.Name::create(
+  "unknown",
+  pkg="keyword",
+)

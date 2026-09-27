@@ -16,6 +16,8 @@ pub fn find_decoder(Context) -> Decoder?
 
 pub fn register_decoder(Decoder) -> Unit
 
+pub fn resolve_aarch64_registers(Array[@types.Stmt]) -> Array[@types.Stmt]
+
 pub fn resolve_x86_subregisters(Array[@types.Stmt], bits~ : Int) -> Array[@types.Stmt]
 
 pub fn unregister_decoder(String) -> Bool

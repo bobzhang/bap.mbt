@@ -194,8 +194,12 @@ fn popret(regs : Array[@types.Var], cnd : Cond) -> Array[@types.Stmt] {
   for i, r in regs {
     body.push(set(r, load(R32, add(v(sp), const_(i * 4)))))
   }
-  body.push(set_add(sp, const_(regs.length() * 4)))
-  body.push(Jmp(load(R32, v(sp))))
+  // port: SP is incremented past the return address too (upstream only
+  // counts the other registers)
+  let target = fresh32()
+  body.push(set(target, load(R32, add(v(sp), const_(regs.length() * 4)))))
+  body.push(set_add(sp, const_((regs.length() + 1) * 4)))
+  body.push(Jmp(v(target)))
   match cnd {
     AL => body
     _ => [If(cond=holds(cnd), yes=body, no=[])]

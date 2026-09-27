@@ -181,6 +181,26 @@ pub fn Insn::of_name(name : StringView) -> Insn? {
   let name = if is_t2 { name[2:] } else { name }
   match insn_table.get(name.to_owned()) {
     Some(Branch(_)) if is_t2 => None
+    None if is_t2 => insn_table.get(t2_alias(name))
     other => other
+  }
+}
+
+///|
+/// port: the A32 counterpart of a Thumb-2 opcode whose name differs
+/// (upstream has no semantics for them): the shifted-register forms
+/// (`t2ANDrs` is `ANDrsi`, except `t2ADDrs`, `t2EORrs` and `t2RSBrs`, which
+/// the Thumb Lisp semantics define), the negative 8-bit offsets of word and
+/// byte accesses (`t2LDRi8` is `LDRi12`) and the byte accesses with a
+/// shifted register offset (`t2LDRBs` is `LDRBrs`, see `lift_mem_t32`).
+fn t2_alias(name : StringView) -> String {
+  match name {
+    "ADDrs" | "EORrs" | "RSBrs" => ""
+    "LDRi8" | "STRi8" | "LDRBi8" | "STRBi8" =>
+      name[:name.length() - 2].to_owned() + "i12"
+    "LDRBs" | "STRBs" => name[:name.length() - 1].to_owned() + "rs"
+    _ if name.has_suffix("rs") => name.to_owned() + "i"
+    "MVNs" => "MVNsi"
+    _ => ""
   }
 }

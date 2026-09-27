@@ -659,7 +659,12 @@ test "targets inherit defaults and match ancestry" {
   assert_true(!target.equal(family))
   assert_true(target.compare(target) == 0)
   assert_true(target.compare(family) != 0)
-  inspect(target.to_string(), content="target:x86-64")
+  inspect(
+    target.to_string(),
+    content=(
+      #|target:x86-64
+    ),
+  )
   assert_true(target.hash() == target.name().hash())
   assert_true(
     target.hash() ==

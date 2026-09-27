@@ -1193,7 +1193,7 @@ pub fn Project::create_from_input(
         Err(reason) => return Err(reason)
       }
   }
-  let named = project_input_apply_symbolizers(disassembled, selected_symbolizer)
+  let named = project_input_apply_symbolizers(disassembled, selected_symbolizer).name_stubs()
   let branched = match project_input_apply_branchers(named, branchers) {
     Ok(value) => value
     Err(reason) => return Err(reason)

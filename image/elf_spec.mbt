@@ -114,9 +114,36 @@ fn llvm_name_of_index(i : Int) -> String {
 ///
 /// They keep the file layout of all program headers (including the
 /// non-loadable ones) and sections that the image projection drops.
-fn image_elf_loader_facts(data : Bytes, elf : @elf.Elf) -> OgreDoc? {
+///
+/// The relocations (`emit_relocations`) are those of the image: the
+/// `llvm:relocation` of the relocations to a (nonzero) address, the
+/// `llvm:name-reference` of the references to external symbols, and the
+/// `llvm:relative-relocation` of the relative relocations. (Upstream also
+/// names the references to defined symbols.)
+fn image_elf_loader_facts(
+  data : Bytes,
+  elf : @elf.Elf,
+  relocations~ : Array[Relocation],
+  external_references~ : Array[ExternalReference],
+) -> OgreDoc? {
   let int = (x : UInt64) => x.reinterpret_as_int64()
   let facts = [@ogre.provide(llvm_entry_point(), int(elf.e_entry))]
+  for r in relocations {
+    match r.target() {
+      Some(target) if target != 0UL =>
+        facts.push(
+          @ogre.provide(llvm_relocation(), (int(r.fixup()), int(target))),
+        )
+      Some(_) => ()
+      None =>
+        if r.is_relative() {
+          facts.push(@ogre.provide(llvm_relative_relocation(), int(r.fixup())))
+        }
+    }
+  }
+  for x in external_references {
+    facts.push(@ogre.provide(llvm_name_reference(), (int(x.addr()), x.name())))
+  }
   for i, header in elf.e_segments {
     let name = llvm_name_of_index(i)
     facts.push(

@@ -90,9 +90,8 @@ pub fn target_type() -> @bap_main.Type[@core_theory.Target] {
   @bap_main.Type::create(
     name="NAME",
     parse=s => {
-      // Upstream declares architecture targets in the `bap` package; the
-      // port's built-in targets live in their own package, so fall back to an
-      // unqualified lookup (which also accepts nicknames such as `x86_64`).
+      // Architecture targets are declared in the `bap` package, as upstream;
+      // fall back to an unqualified lookup, which also accepts nicknames.
       let found = match @core_theory.Target::lookup(s, pkg="bap") {
         Some(t) => Some(t)
         None => @core_theory.Target::lookup(s)

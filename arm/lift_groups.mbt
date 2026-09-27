@@ -84,12 +84,13 @@ fn lift_bits(
         cond,
       )
     }
-    // pack half (the shift is always an arithmetic right shift)
-    (PKHTB, [Reg(dest), src1, src2, shift, cond, _]) => {
-      let (shifted, _) = shift_c(
+    // pack half (the shift is always an arithmetic right shift; port: an
+    // amount of 0 encodes 32, as for the other immediate shifts)
+    (PKHTB, [Reg(dest), src1, src2, Imm(shift), cond, _]) => {
+      let (shifted, _) = shift_imm_c(
         exp_of_op(src2),
         ASR,
-        exp_of_op(shift),
+        decode_imm_shift(ASR, shift),
         @types.ValueType::reg32_t(),
       )
       exec(
@@ -596,11 +597,13 @@ fn lift_mem(
         lift_r_op(dest1~, base~, offset=zero_off, Offset, Unsigned, H, Ld),
         cond,
       )
-    // `multidest` is one of the register-pair operands
-    (LDREXD, [multidest, base, cond, _]) =>
+    // port: the register pair (LLVM's `GPRPair` operand) is split into
+    // its registers by `ops_of_mc`; upstream fails on it
+    (LDREXD, [dest1, dest2, base, cond, _]) =>
       exec(
         lift_r_op(
-          dest1=multidest,
+          dest1~,
+          dest2~,
           base~,
           offset=zero_off,
           Offset,
@@ -643,12 +646,12 @@ fn lift_mem(
         lift_r_op(dest1=src1, base~, offset=zero_off, Offset, Unsigned, H, St),
         cond,
       )
-    // `multisrc` is one of the register-pair operands
-    (STREXD, [Reg(dest1), multisrc, base, cond, _]) =>
+    (STREXD, [Reg(dest1), src1, src2, base, cond, _]) =>
       strex(
         dest1,
         lift_r_op(
-          dest1=multisrc,
+          dest1=src1,
+          dest2=src2,
           base~,
           offset=zero_off,
           Offset,

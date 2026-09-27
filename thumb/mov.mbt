@@ -66,12 +66,12 @@ fn nz_flags(r : @types.Var) -> Array[@types.Stmt] {
 
 ///|
 fn movi8(rd : @types.Var, x : Int64, cnd : Cond) -> Array[@types.Stmt] {
-  // OCaml `x lsr 7 = 1` on the decoded immediate.
-  let negative = x.reinterpret_as_uint64() >> 7 == 1UL
+  // port: the result is an 8-bit constant, so N is clear (upstream tests
+  // bit 7 of the immediate)
   it_set(
     rd,
     const_(x.to_int()),
-    _ => [set(nf, bool_const(negative)), set(zf, bool_const(x == 0L))],
+    _ => [set(nf, bit0), set(zf, bool_const(x == 0L))],
     cnd,
   )
 }
@@ -113,10 +113,22 @@ fn adcs(
   rm : @types.Var,
   cnd : Cond,
 ) -> Array[@types.Stmt] {
+  // port: the carry out of `rn + rm + C` (upstream compares the result with
+  // `rn`, which misses the carry when `rm + C` wraps)
+  let carry = (r : @types.Var) => {
+    msb(logor(logand(v(rn), v(rm)), logand(logor(v(rn), v(rm)), lnot(v(r)))))
+  }
   it_set(
     rd,
     add(add(v(rn), v(rm)), unsigned32(v(cf))),
-    r => add_flags(r, v(rn), v(rm)),
+    r => {
+      [
+        set(nf, msb(v(r))),
+        set(zf, is_zero(v(r))),
+        set(cf, carry(r)),
+        set(vf, overflow_from_add(v(r), v(rn), v(rm))),
+      ]
+    },
     cnd,
   )
 }
@@ -248,13 +260,19 @@ fn lorr(rd : @types.Var, rm : @types.Var, cnd : Cond) -> Array[@types.Stmt] {
 }
 
 ///|
-fn cmpi8(rd : @types.Var, x : Int) -> Array[@types.Stmt] {
+fn cmpi8(rd : @types.Var, x : Int, cnd : Cond) -> Array[@types.Stmt] {
   let r = fresh32()
-  [set(r, sub(v(rd), const_(x))), ..cmp_flags(v(rd), const_(x), r)]
+  // port: comparisons in IT blocks are conditional (upstream ignores the
+  // predicate)
+  branch(
+    cnd,
+    [set(r, sub(v(rd), const_(x))), ..cmp_flags(v(rd), const_(x), r)],
+    [],
+  )
 }
 
 ///|
-fn cmpr(rn : @types.Var, rm : @types.Var) -> Array[@types.Stmt] {
+fn cmpr(rn : @types.Var, rm : @types.Var, cnd : Cond) -> Array[@types.Stmt] {
   let r = fresh32()
-  [set(r, sub(v(rn), v(rm))), ..cmp_flags(v(rn), v(rm), r)]
+  branch(cnd, [set(r, sub(v(rn), v(rm))), ..cmp_flags(v(rn), v(rm), r)], [])
 }

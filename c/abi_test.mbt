@@ -420,7 +420,7 @@ test "data models and processor registries" {
     _ => fail("expected an invalid name")
   }
   try @c.register_model(t, @c.SizeBase::new(LP64)) catch {
-    err => debug_inspect(err, content="DuplicateModel(\"target:riscv64\")")
+    err => debug_inspect(err, content="DuplicateModel(\"bap:riscv64\")")
   } noraise {
     _ => fail("expected a duplicate model")
   }

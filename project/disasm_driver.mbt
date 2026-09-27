@@ -590,7 +590,8 @@ fn driver_machine_start(
 
 ///|
 /// `new_insn mem insn`: the label of the instruction decoded from `mem`,
-/// with its memory, instruction and unit.
+/// with its memory, instruction (carrying the relocations of its unit) and
+/// unit.
 fn driver_new_insn(
   kb : @knowledge.State,
   mem : @memory.Memory,
@@ -598,6 +599,7 @@ fn driver_new_insn(
   unit : @core_theory.ProgramUnit?,
 ) -> @knowledge.Object[Unit] raise {
   let label = project_label_for_addr(kb, mem.min_addr())
+  let insn = project_insn_with_unit_relocations(kb, insn, unit)
   kb.provide(project_label_unit, label, unit)
   kb.provide(project_insn_memory_slot, label, Some(mem))
   kb.provide(project_insn_slot, label, Some(insn))
@@ -711,6 +713,8 @@ priv struct DriverBilJumps {
   mut jump : Bool
   mut cond : Bool
   mut call : Bool
+  /// whether it calls unconditionally
+  mut top_call : Bool
 }
 
 ///|
@@ -735,6 +739,9 @@ fn DriverBilJumps::visit(
       Special(_) =>
         if @types.Stmt::decode(@types.Stmt::call(), stmt) is Some(_) {
           self.call = true
+          if !under_condition {
+            self.top_call = true
+          }
         }
       _ => ()
     }
@@ -759,16 +766,43 @@ fn project_insn_derived_props(
     }
   }
   match bil {
-    Some(bil) => {
-      let jumps : DriverBilJumps = { jump: false, cond: false, call: false, }
+    Some(bil) if !bil.is_empty() => {
+      let jumps : DriverBilJumps = {
+        jump: false,
+        cond: false,
+        call: false,
+        top_call: false,
+      }
       jumps.visit(bil, false)
       let call = jumps.call || insn_is(ProjectCall)
-      (call, jumps.jump && !call && !jumps.cond)
+      // a branch (that is not a call instruction) that the relocation
+      // fixups made an unconditional call of an external symbol (e.g., the
+      // jump of a stub through its slot, or the tail call `jmp printf` of
+      // an object) is still a barrier
+      let tail_call = jumps.top_call &&
+        !jumps.jump &&
+        !insn_is(ProjectCall) &&
+        (
+          insn_is(ProjectUnconditionalBranch) ||
+          insn_is(ProjectIndirectBranch) ||
+          insn_is(ProjectConditionalBranch) ||
+          insn_is(ProjectBarrier)
+        )
+      (call, (jumps.jump && !call && !jumps.cond) || tail_call)
     }
-    None => {
+    // no (or empty) semantics, e.g., an instruction the lifters do not
+    // know: from the kinds; a return or a barrier (e.g., the arm64e
+    // `retab`) does not fall through, which would otherwise make the
+    // driver decode past the end of the function, and revert the whole
+    // chain of blocks that led to it when that fails
+    _ => {
       let call = insn_is(ProjectCall)
       let cond = insn_is(ProjectConditionalBranch)
-      let jump = cond || insn_is(ProjectUnconditionalBranch)
+      let jump = cond ||
+        insn_is(ProjectUnconditionalBranch) ||
+        insn_is(ProjectIndirectBranch) ||
+        insn_is(ProjectReturn) ||
+        insn_is(ProjectBarrier)
       (call, jump && !call && !cond)
     }
   }
@@ -907,6 +941,16 @@ fn driver_disassemble(
               let label = driver_new_insn(kb, chunk, insn, unit)
               kb.provide(project_label_encoding, label, encoding.coding)
               let dests = driver_collect_dests(kb, encoding, label)
+              // a barrier without known destinations (an instruction
+              // without semantics, e.g., the arm64e `retab`) jumps to an
+              // unknown destination, as a return does
+              let dests = if dests.barrier &&
+                dests.resolved.is_empty() &&
+                !dests.indirect {
+                { ..dests, indirect: true, }
+              } else {
+                dests
+              }
               if dests.resolved.is_empty() && !dests.indirect {
                 None
               } else {

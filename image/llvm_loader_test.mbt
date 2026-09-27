@@ -12,9 +12,9 @@ test "the llvm loader: the loader of the contents" {
       target=@core_theory.Target::aarch64(),
     ),
   )
-  inspect(image.arch().to_string(), content="target:aarch64")
+  inspect(image.arch().to_string(), content="bap:aarch64")
   let (image, _) = macho_ok(@image.Image::of_object(@objects.x86_64_pe()))
-  inspect(image.arch().to_string(), content="target:x86_64")
+  inspect(image.arch().to_string(), content="bap:x86_64")
 }
 
 ///|

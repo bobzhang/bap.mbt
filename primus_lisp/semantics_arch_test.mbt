@@ -31,7 +31,7 @@ test "lift aarch64 instructions" {
   inspect(
     lift("SUBSXri", [Reg("X0"), Reg("X1"), Imm(1), Imm(0)]),
     content=(
-      #|%#1:imm64 := (0xFFFFFFFFFFFFFFFF:64u + X1:imm64)
+      #|%#1:imm64 := ((X1:imm64 + 0xFFFFFFFFFFFFFFFE:64u) + 1:64u)
       #|NF:imm1 := extract[63:63](%#1:imm64)
       #|VF:imm1 := (((extract[63:63](X1:imm64) & 1:1u) & (not extract[63:63](%#1:imm64))) | (((not extract[63:63](X1:imm64)) & 0:1u) & extract[63:63](%#1:imm64)))
       #|ZF:imm1 := (%#1:imm64 == 0:64u)

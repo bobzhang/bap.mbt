@@ -85,7 +85,9 @@
 
 (defmacro setw (reg val)
   "(set Wx V) sets a Wx register clearing the upper 32 bits."
-  (set$ (alias-base-register reg) val))
+  ;; port: the low word of V is written (V is often computed at 64 bits
+  ;; from sign-extended W operands, whose upper half upstream writes too)
+  (set$ (alias-base-register reg) (cast-low 32 (cast-unsigned 64 val))))
 
 (defun replicate-to-fill (bitv n)
   "(replicate-to-fill bitv n) returns the result of repeating bitv
@@ -100,11 +102,36 @@
   "(i-shift r simm) shifts r according to the encoded shift simm.
    The first three bits of simm indicate the shift type, and the
    remaining bits indicate the shift amount."
+  ;; port: lsr and asr by 0 encode shifts by 32 (upstream shifts by 0)
   (let ((amt (rshift simm 3)))
     (case (extract 2 0 simm)
       0b000 r ; none
-      0b001 (arshift r amt) ; asr
+      0b001 (arshift r (if (= amt 0) 31 amt)) ; asr
       0b010 (lshift r amt) ; lsl
-      0b011 (rshift r amt) ; lsr
-      0b100 (logor (rshift r amt) (lshift r (- 32 amt))) ; ror
+      0b011 (if (= amt 0) 0 (rshift r amt)) ; lsr
+      0b100 (rotate-right r amt) ; ror
       0b101 (logor (lshift (cast-unsigned 32 CF) 31) (rshift r 1))))) ; rrx
+
+(defun i-shift-carry (r simm)
+  "(i-shift-carry r simm) is the carry out of (i-shift r simm) ; port: added"
+  (let ((amt (rshift simm 3)))
+    (case (extract 2 0 simm)
+      0b000 CF
+      0b001 (if (= amt 0) (msb r) (lsb (rshift r (- amt 1))))
+      0b010 (if (= amt 0) CF (msb (lshift r (- amt 1))))
+      0b011 (if (= amt 0) (msb r) (lsb (rshift r (- amt 1))))
+      0b100 (lsb (rshift r (- amt 1)))
+      0b101 (lsb r))))
+
+;; port: added, the register-specified shifts of R by the dynamic amount
+;; N (0 to 255) and their carry out for a non-zero N
+
+(defun lsl-by (r n) (if (< n 32) (lshift r n) 0))
+(defun lsr-by (r n) (if (< n 32) (rshift r n) 0))
+(defun asr-by (r n) (arshift r (if (< n 32) n 31)))
+(defun ror-by (r n) (rotate-right r (logand n 31)))
+
+(defun lsl-carry (r n) (if (< n 33) (msb (lshift r (- n 1))) 0))
+(defun lsr-carry (r n) (if (< n 33) (lsb (rshift r (- n 1))) 0))
+(defun asr-carry (r n) (if (< n 33) (lsb (rshift r (- n 1))) (msb r)))
+(defun ror-carry (r n) (msb (ror-by r n)))

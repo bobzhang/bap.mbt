@@ -104,8 +104,8 @@ test "pre-indexed accesses write back before the access" {
       [r("R0"), r("R1"), r("R1"), r("R2"), i(2 << 13), ..al],
     ),
     content=(
-      #|R0:imm32 := load(mem:mem32x8, (R1:imm32 + (R2:imm32 << 0:32u))):imm32
-      #|R1:imm32 := (R1:imm32 + (R2:imm32 << 0:32u))
+      #|R0:imm32 := load(mem:mem32x8, (R1:imm32 + R2:imm32)):imm32
+      #|R1:imm32 := (R1:imm32 + R2:imm32)
     ),
   )
   let init = state([("R0", 0x77), ("R1", 0x1004), ("R2", 4)], bytes=words)
@@ -157,7 +157,7 @@ test "post-indexed accesses write back after the access" {
     ),
     content=(
       #|mem:mem32x8 := store(mem:mem32x8, R1:imm32, R0:imm32)
-      #|R1:imm32 := (R1:imm32 + (R2:imm32 << 0:32u))
+      #|R1:imm32 := (R1:imm32 + R2:imm32)
     ),
   )
   let init = state([("R0", 0x77), ("R1", 0x1004), ("R2", 8)], bytes=words)
@@ -259,8 +259,9 @@ test "halfword, signed and dual accesses (addressing mode 3)" {
   inspect(
     lift_str("LDRD", [r("R2"), r("R3"), r("R1"), r("Nil"), i(8), ..al]),
     content=(
-      #|R2:imm32 := load(mem:mem32x8, (R1:imm32 + 8:32u)):imm32
+      #|%v2:imm32 := load(mem:mem32x8, (R1:imm32 + 8:32u)):imm32
       #|R3:imm32 := load(mem:mem32x8, ((R1:imm32 + 8:32u) + 4:32u)):imm32
+      #|R2:imm32 := %v2:imm32
     ),
   )
   inspect(
@@ -431,14 +432,19 @@ test "exclusive accesses" {
   assert_eq(mem_word(s, 0x1004), 0xAABBCCDD)
   assert_eq(mem_word(s, 0x1008), 0x99AABBCC)
   assert_eq(reg_value(s, "R3"), 0)
-  // register-pair operands are not modeled
-  inspect(
-    lift_error("LDREXD", [r("R0_R1"), r("R2"), ..al]),
-    content="BadOperands: unsupported operand: R0_R1",
-  )
+  // register-pair operands (LLVM's `GPRPair`) stand for their registers
+  // (port: upstream rejects them)
+  let s = run("LDREXD", [r("R2_R3"), r("R1"), ..al], init)
+  assert_eq(reg_value(s, "R2"), 0x55667788)
+  assert_eq(reg_value(s, "R3"), 0x99AABBCC)
+  let s = run("STREXD", [r("R4"), r("R2_R3"), r("R1"), ..al], s)
+  assert_eq(mem_word(s, 0x1004), 0x55667788)
+  assert_eq(reg_value(s, "R4"), 0)
   inspect(
     lift_error("STREXD", [r("R4"), r("R0"), r("R2"), ..al]),
-    content="Failure: STREXD:dual store requires a second source",
+    content=(
+      #|Failure: STREXD:ops ((Reg R4) (Reg R0) (Reg R2) (Imm 0xE:32u) (Reg Nil)) doesn't match mem access insn STREXD
+    ),
   )
 }
 

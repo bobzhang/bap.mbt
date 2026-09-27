@@ -79,8 +79,10 @@ fn lift_smul(
       bin(Plus, result, concat(exp_of_op(hia), exp_of_op(a)))
     _ => fail("Cannot specify only a hi accumulator")
   }
+  // port: Q is sticky, set on overflow and unchanged otherwise (upstream
+  // clears it when the result does not overflow)
   let qflag = if q {
-    [assign(qf, bin(Neq, excast(31, 0, v(res)), v(res)))]
+    [assign(qf, bin(Or, v(qf), bin(Neq, excast(31, 0, v(res)), v(res))))]
   } else {
     []
   }

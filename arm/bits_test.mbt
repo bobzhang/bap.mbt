@@ -9,7 +9,7 @@ test "extensions" {
   inspect(
     lift_str("SXTH", [r("R0"), r("R1"), i(1), ..al]),
     content=(
-      #|R0:imm32 := extend:32[low:16[((R1:imm32 >> 8:32u) | (R1:imm32 << (0x20:32u - 8:32u)))]]
+      #|R0:imm32 := extend:32[low:16[((R1:imm32 >> 8:32u) | (R1:imm32 << 0x18:32u))]]
     ),
   )
   inspect(

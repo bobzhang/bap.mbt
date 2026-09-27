@@ -75,17 +75,34 @@ fn set_sbc(
 }
 
 ///|
-/// Carry flag of data-processing instructions with a modified immediate.
-/// `imm` is the (undecoded) immediate operand, `data` the raw instruction.
-fn set_cf_data(imm~ : UInt, data~ : UInt) -> @types.Stmt {
-  let value = if imm <= 255 {
-    if (data & 0xf00) == 0 {
-      @types.Exp::unknown("undefined", @types.ValueType::bool_t())
-    } else {
-      bool_exp(false)
+/// Carry flag of logical instructions with a modified immediate `imm`
+/// (`ARMExpandImm_C`/`ThumbExpandImm_C`): unchanged when the constant is
+/// not rotated, its most significant bit otherwise. A32 immediates are the
+/// undecoded 12-bit fields, T32 ones are decoded, and their rotated forms
+/// are the constants that are not below 256 nor replicated bytes.
+///
+/// port: upstream sets the carry to an unknown value or to zero for
+/// unrotated constants and ignores T32 encodings.
+fn set_cf_data(encoding : Encoding, imm : UInt) -> @types.Stmt {
+  let rotated = match encoding {
+    A32 => imm >> 8 != 0
+    T32 => {
+      let b = imm & 0xFF
+      let b1 = (imm >> 8) & 0xFF
+      !(imm < 256 ||
+      imm == b * 0x00010001 ||
+      imm == b1 * 0x01000100 ||
+      imm == b * 0x01010101)
     }
+  }
+  let value = if rotated {
+    let decoded = match encoding {
+      A32 => decode_modified_imm(imm)
+      T32 => imm
+    }
+    bool_exp(decoded >> 31 != 0)
   } else {
-    msb(int32(imm))
+    v(cf)
   }
   assign(cf, value)
 }

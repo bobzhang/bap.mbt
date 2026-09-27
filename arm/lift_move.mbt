@@ -8,7 +8,6 @@ fn string_of_ops(ops : ArrayView[Op]) -> String {
 ///|
 fn lift_move(
   encoding : Encoding,
-  raw : UInt,
   ops : ArrayView[Op],
   insn : MoveInsn,
 ) -> Array[@types.Stmt] raise @mc.LiftError {
@@ -24,18 +23,7 @@ fn lift_move(
     cond : Op,
     wflag : Op,
   ) => {
-    mov_lift(
-      encoding~,
-      dest~,
-      src1,
-      src2?,
-      itype,
-      sreg?,
-      simm?,
-      raw,
-      wflag~,
-      cond,
-    )
+    mov_lift(encoding~, dest~, src1, src2?, itype, sreg?, simm?, wflag~, cond)
   }
   // comparisons and tests: no destination, always set the flags
   let cmp = (
@@ -46,17 +34,7 @@ fn lift_move(
     simm : Op?,
     cond : Op,
   ) => {
-    mov_lift(
-      encoding~,
-      src1,
-      src2~,
-      itype,
-      sreg?,
-      simm?,
-      raw,
-      wflag=cpsr_flag,
-      cond,
-    )
+    mov_lift(encoding~, src1, src2~, itype, sreg?, simm?, wflag=cpsr_flag, cond)
   }
   let is_rsr = insn.name().has_suffix("rsr")
   let is_rsi = insn.name().has_suffix("rsi")

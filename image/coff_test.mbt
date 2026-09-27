@@ -47,7 +47,7 @@ test "PE32+ executable image" {
   inspect(
     image_summary(image),
     content=(
-      #|target target:x86_64 entry 0x140001000 base 0x140000000
+      #|target bap:x86_64 entry 0x140001000 base 0x140000000
       #|segment .text 0x140001000+0x200 @0x400 r-x
       #|segment .rdata 0x140002000+0x200 @0x600 r--
       #|section .text 0x140001000+0x17
@@ -110,7 +110,7 @@ test "COFF object image" {
   inspect(
     image_summary(image),
     content=(
-      #|target target:x86 entry 0x0 base 0x0
+      #|target bap:x86 entry 0x0 base 0x0
       #|segment .text 0x0+0x6 @0x64 r-x
       #|section .text 0x0+0x6
       #|symbol _main 0x0+0x6 fn=true

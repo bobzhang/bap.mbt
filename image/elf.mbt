@@ -73,6 +73,7 @@ fn image_elf_section_header_of_raw(
     typ: section.sh_type.to_int().reinterpret_as_int(),
     flags: section.flags_bits(),
     link: section.sh_link.reinterpret_as_int(),
+    info: section.sh_info.reinterpret_as_int(),
     addr: section.sh_addr,
     offset,
     size,
@@ -157,6 +158,9 @@ priv struct ImageElfSectionHeader {
   typ : Int
   flags : UInt64
   link : Int
+  /// `sh_info`: for relocation sections, the index of the section the
+  /// relocations apply to
+  info : Int
   addr : UInt64
   offset : Int
   size : Int
@@ -444,6 +448,17 @@ fn image_elf_is_mapping_symbol(name : String) -> Bool {
 }
 
 ///|
+/// The assembler temporary labels (local untyped symbols named `.L...`,
+/// e.g., the `.L0 ` labels that RISC-V objects keep for relaxation), which
+/// name no program entity.
+fn image_elf_is_temporary_label(
+  entry : ImageElfSymbolEntry,
+  name : String,
+) -> Bool {
+  entry.info >> 4 == 0 && (entry.info & 0x0f) == 0 && name.has_prefix(".L")
+}
+
+///|
 fn image_elf_symbol_entry_symbol(entry : ImageElfSymbolEntry) -> Symbol? {
   // the section (STT_SECTION) and source file (STT_FILE) symbols name no
   // program entity (upstream loaders do not report them as symbols); a file
@@ -454,7 +469,8 @@ fn image_elf_symbol_entry_symbol(entry : ImageElfSymbolEntry) -> Symbol? {
     Some(name) if entry.shndx != 0 &&
       kind != 3 &&
       kind != 4 &&
-      !image_elf_is_mapping_symbol(name) =>
+      !image_elf_is_mapping_symbol(name) &&
+      !image_elf_is_temporary_label(entry, name) =>
       Some(
         Symbol::create(
           name~,
@@ -706,6 +722,61 @@ fn image_elf_relocation_section_symbols(
 }
 
 ///|
+/// Whether the relocations of `section` are relevant to the image, and the
+/// section they apply to: in a relocatable object (where the sections are
+/// placed at their own addresses, usually zero, and the relocation offsets
+/// are relative to the section they apply to), only the relocations of
+/// executable sections are, since the relocations of the other sections
+/// (e.g., `.eh_frame`) would alias the addresses of the code; in other
+/// files, all of them are, and their offsets are addresses.
+fn image_elf_relocations_apply(
+  header : ImageElfHeader,
+  section_headers : Array[ImageElfSectionHeader],
+  section : ImageElfSectionHeader,
+) -> ImageElfSectionHeader?? {
+  if header.typ != 1 {
+    return Some(None)
+  }
+  match section_headers.get(section.info) {
+    Some(target) if section.info != 0 && (target.flags & 0x4UL) != 0UL =>
+      Some(Some(target))
+    _ => None
+  }
+}
+
+///|
+/// Whether a relocation against a symbol of type `typ` refers to it (the
+/// function, object, and untyped symbols, as upstream's
+/// `emit_relocations` keeps the `ST_Function`, `ST_Data` and `ST_Unknown`
+/// symbols): section and file symbols are not references.
+fn image_elf_is_reference_symbol(typ : Int) -> Bool {
+  match typ {
+    0 | 1 | 2 | 5 | 6 | 10 => true // NOTYPE, OBJECT, FUNC, COMMON, TLS, GNU_IFUNC
+    _ => false
+  }
+}
+
+///|
+/// The fixup addresses covered by a relocation at `fixup`: a RISC-V call
+/// relocation (`R_RISCV_CALL`, `R_RISCV_CALL_PLT`) relocates the
+/// `auipc`/`jalr` pair, so it also covers the `jalr` that makes the call.
+fn image_elf_relocation_fixups(
+  header : ImageElfHeader,
+  entry : ImageElfRelocationEntry,
+  fixup : UInt64,
+) -> Array[UInt64] {
+  match (header.machine, entry.typ) {
+    (0xf3, 18 | 19) => [fixup, fixup + 4UL]
+    _ => [fixup]
+  }
+}
+
+///|
+/// The relocations and the external references of the relocation sections
+/// (upstream `emit_relocations`): relocations against defined symbols are
+/// relocations to the symbol address, those against undefined symbols
+/// are references to the external symbol, and the relative relocations
+/// are relative to the load address.
 fn image_elf_relocations(
   data : Bytes,
   header : ImageElfHeader,
@@ -713,8 +784,17 @@ fn image_elf_relocations(
 ) -> Result[(Array[Relocation], Array[ExternalReference]), String] {
   let relocations : Array[Relocation] = []
   let external_references : Array[ExternalReference] = []
+  let relocatable = header.typ == 1
   for section in section_headers {
     if section.typ == 4 || section.typ == 9 {
+      guard image_elf_relocations_apply(header, section_headers, section)
+        is Some(target_section) else {
+        continue
+      }
+      let base = match target_section {
+        Some(target) => target.addr
+        None => 0UL
+      }
       let symbol_entries = match
         image_elf_relocation_section_symbols(
           data, header, section_headers, section,
@@ -732,10 +812,11 @@ fn image_elf_relocations(
           Ok(value) => value
           Err(reason) => return Err(reason)
         }
+        let fixup = base + entry.offset
         if image_elf_is_relative_relocation(header, entry.typ) {
           relocations.push(
             Relocation::create(
-              fixup=entry.offset,
+              fixup~,
               addend?=entry.addend,
               memory_addend=entry.memory_addend,
               relative=true,
@@ -746,21 +827,36 @@ fn image_elf_relocations(
             Some(value) => value
             None => return Err("ELF relocation symbol index is out of bounds")
           }
+          if relocatable && !image_elf_is_reference_symbol(symbol.info & 0xf) {
+            continue
+          }
+          let fixups = image_elf_relocation_fixups(header, entry, fixup)
           match symbol.name {
             Some(name) =>
               if symbol.shndx == 0 {
-                external_references.push(
-                  ExternalReference::create(addr=entry.offset, name~),
-                )
+                for fixup in fixups {
+                  external_references.push(
+                    ExternalReference::create(addr=fixup, name~),
+                  )
+                }
               } else {
-                relocations.push(
-                  Relocation::create(
-                    fixup=entry.offset,
-                    target=symbol.value,
-                    addend?=entry.addend,
-                    memory_addend=entry.memory_addend,
-                  ),
-                )
+                // in relocatable objects, symbol values are relative to
+                // the sections of the symbols
+                let target = match section_headers.get(symbol.shndx) {
+                  Some(s) if relocatable && symbol.shndx < 0xff00 =>
+                    s.addr + symbol.value
+                  _ => symbol.value
+                }
+                for fixup in fixups {
+                  relocations.push(
+                    Relocation::create(
+                      fixup~,
+                      target~,
+                      addend?=entry.addend,
+                      memory_addend=entry.memory_addend,
+                    ),
+                  )
+                }
               }
             None => ()
           }
@@ -1991,7 +2087,14 @@ fn image_elf_load(data : Bytes) -> Result[(Image, Array[String]), String] {
             is_executable=header.typ == 2,
             base_address?,
             target=image_elf_target(header),
-          ).with_loader_facts(image_elf_loader_facts(data, raw)),
+          ).with_loader_facts(
+            image_elf_loader_facts(
+              data,
+              raw,
+              relocations~,
+              external_references~,
+            ),
+          ),
           [],
         ),
       )

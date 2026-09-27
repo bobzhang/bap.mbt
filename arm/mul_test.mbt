@@ -122,7 +122,7 @@ test "signed halfword multiplies" {
     content=(
       #|%v1:imm64 := ((extend:64[extract[15:0](R1:imm32)] * extend:64[extract[15:0](R2:imm32)]) + extend:64[R3:imm32])
       #|R0:imm32 := extract[31:0](%v1:imm64)
-      #|QF:imm1 := (extend:64[extract[31:0](%v1:imm64)] != %v1:imm64)
+      #|QF:imm1 := (QF:imm1 | (extend:64[extract[31:0](%v1:imm64)] != %v1:imm64))
     ),
   )
   inspect(
@@ -130,7 +130,7 @@ test "signed halfword multiplies" {
     content=(
       #|%v1:imm64 := ((extend:64[extract[31:16](R1:imm32)] * extend:64[extract[31:16](R2:imm32)]) + (extend:64[extract[15:0](R1:imm32)] * extend:64[extract[15:0](R2:imm32)]))
       #|R0:imm32 := extract[31:0](%v1:imm64)
-      #|QF:imm1 := (extend:64[extract[31:0](%v1:imm64)] != %v1:imm64)
+      #|QF:imm1 := (QF:imm1 | (extend:64[extract[31:0](%v1:imm64)] != %v1:imm64))
     ),
   )
   inspect(
@@ -138,7 +138,7 @@ test "signed halfword multiplies" {
     content=(
       #|%v1:imm64 := (((extend:64[extract[31:16](R1:imm32)] * extend:64[extract[31:16](R2:imm32)]) + (extend:64[extract[15:0](R1:imm32)] * extend:64[extract[15:0](R2:imm32)])) + extend:64[R3:imm32])
       #|R0:imm32 := extract[31:0](%v1:imm64)
-      #|QF:imm1 := (extend:64[extract[31:0](%v1:imm64)] != %v1:imm64)
+      #|QF:imm1 := (QF:imm1 | (extend:64[extract[31:0](%v1:imm64)] != %v1:imm64))
     ),
   )
   inspect(
@@ -146,7 +146,7 @@ test "signed halfword multiplies" {
     content=(
       #|%v1:imm64 := (extend:64[extract[47:16]((extend:64[R1:imm32] * extend:64[extract[15:0](R2:imm32)]))] + extend:64[R3:imm32])
       #|R0:imm32 := extract[31:0](%v1:imm64)
-      #|QF:imm1 := (extend:64[extract[31:0](%v1:imm64)] != %v1:imm64)
+      #|QF:imm1 := (QF:imm1 | (extend:64[extract[31:0](%v1:imm64)] != %v1:imm64))
     ),
   )
   inspect(

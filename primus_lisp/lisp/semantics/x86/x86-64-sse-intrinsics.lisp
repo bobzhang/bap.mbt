@@ -249,10 +249,13 @@
       +rtz+ (with-rmode 'rtz (sse-binary name rt rn rm)))))
 
 (defmacro set-sse (rd x)
-  (let ((wd (word-width rd))
-        (wx (word-width x)))
+  ;; port: x is evaluated once (upstream substitutes it twice, which
+  ;; calls the intrinsic twice)
+  (let ((v x)
+        (wd (word-width rd))
+        (wx (word-width v)))
     (set$ rd (concat (cast-high (- wd wx) rd)
-                     (cast-low wx x)))))
+                     (cast-low wx v)))))
 
 (defmacro fp-binary (op rt rd rn ptr off)
   (set-sse rd (sse-binary op rt rn (load-mem ptr off))))

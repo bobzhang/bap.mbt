@@ -61,10 +61,10 @@ test "trace reports errors" {
       #|[error] Incompatible arguments, see usage SYNOPSIS
     ),
   )
-  inspect(
-    run_bap(["--trace-load=nothing.binprot"]),
-    content=(
-      #|[error] Protocol error: file IO is only available on the native target: nothing.binprot
+  // The underlying IO error differs between native and non-native targets.
+  assert_true(
+    run_bap(["--trace-load=nothing.binprot"]).has_prefix(
+      "[error] Protocol error: ",
     ),
   )
   inspect(

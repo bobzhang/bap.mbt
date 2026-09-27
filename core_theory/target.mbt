@@ -1636,7 +1636,7 @@ fn target_query_is_qualified(query : String) -> Bool {
 
 ///|
 fn target_name(text : String) -> @knowledge.Name {
-  @knowledge.Name::create(text, pkg="target")
+  @knowledge.Name::create(text, pkg="bap")
 }
 
 ///|
@@ -4012,7 +4012,7 @@ pub fn AliasOrigin::regs(self : AliasOrigin) -> Array[Var] {
 pub fn Target::unknown() -> Target {
   let memory = mem_var(0, 8, "mem")
   {
-    name_value: @knowledge.Name::create("unknown", pkg="target"),
+    name_value: @knowledge.Name::create("unknown", pkg="keyword"),
     parent_value: None,
     nicknames_value: [],
     bits_value: 0,
@@ -4675,7 +4675,7 @@ pub fn Target::data_word(
 
 ///|
 pub fn Target::is_unknown(self : Target) -> Bool {
-  self.name_value == @knowledge.Name::create("unknown", pkg="target")
+  self.name_value == @knowledge.Name::create("unknown", pkg="keyword")
 }
 
 ///|

@@ -95,9 +95,10 @@ fn lift_move(
       lsri(reg(rd), reg(rm), imm(x), cnd(insn, c))
     (TLSLri, [Reg(name=rd, ..), _, Reg(name=rm, ..), Imm(x), Imm(c), _]) =>
       lsli(reg(rd), reg(rm), imm(x), cnd(insn, c))
-    (TCMPi8, [Reg(name=rn, ..), Imm(x), _, _]) => cmpi8(reg(rn), imm(x))
-    (TCMPr, [Reg(name=rn, ..), Reg(name=rm, ..), _, _]) =>
-      cmpr(reg(rn), reg(rm))
+    (TCMPi8, [Reg(name=rn, ..), Imm(x), Imm(c), _]) =>
+      cmpi8(reg(rn), imm(x), cnd(insn, c))
+    (TCMPr, [Reg(name=rn, ..), Reg(name=rm, ..), Imm(c), _]) =>
+      cmpr(reg(rn), reg(rm), cnd(insn, c))
     (TORR, [Reg(name=rd, ..), _, _, Reg(name=rm, ..), Imm(c), _]) =>
       lorr(reg(rd), reg(rm), cnd(insn, c))
     _ => raise bad(insn)
@@ -143,8 +144,18 @@ fn lift_mem(
       ldri(reg(rd), reg(rm), imm(i) * 4, cnd(insn, c))
     (TLDRr, [Reg(name=rd, ..), Reg(name=rm, ..), Reg(name=rn, ..), Imm(c), _]) =>
       ldrr(reg(rd), reg(rm), reg(rn), cnd(insn, c))
+    // port: LLVM encodes the `t2LDRpci` offset `#-0` as `INT32_MIN`
     (TLDRpci | T2LDRpci, [Reg(name=rd, ..), Imm(i), Imm(c), _]) =>
-      ldrpci(reg(rd), pc, imm(i), cnd(insn, c))
+      ldrpci(
+        reg(rd),
+        pc,
+        if i == -0x80000000L {
+          0
+        } else {
+          imm(i)
+        },
+        cnd(insn, c),
+      )
     (TLDRBi, [Reg(name=rd, ..), Reg(name=rm, ..), Imm(i), Imm(c), _]) =>
       ldrbi(reg(rd), reg(rm), imm(i), cnd(insn, c))
     (TLDRBr, [Reg(name=rd, ..), Reg(name=rm, ..), Reg(name=rn, ..), Imm(c), _]) =>
@@ -198,7 +209,9 @@ fn lift_branch(
 ) -> Array[@types.Stmt] raise @mc.LiftError {
   let pc = addr32(insn)
   match (opcode, insn.ops) {
-    (TB, [Imm(dst), _, _]) => b(pc, imm(dst))
+    // port: `tB` in an IT block is conditional (upstream ignores the
+    // predicate), as are `tBX`/`tBLXr`
+    (TB, [Imm(dst), Imm(c), _]) => bcc(pc, cnd(insn, c), imm(dst))
     (TBcc, [Imm(dst), Imm(c), _]) => bcc(pc, cnd(insn, c), imm(dst))
     // LLVM's `tBL` has three operands (the predicate and the target);
     // upstream matches a fourth one
@@ -206,9 +219,11 @@ fn lift_branch(
     | (TBLXi, [_, _, Imm(dst)] | [_, _, Imm(dst), _]) => bli(pc, imm(dst))
     // blx pc is unpredictable in all versions of ARM
     (TBLXr, [_, _, Reg(name=dst, ..)]) if is_pc(reg(dst)) => unpredictable()
-    (TBLXr, [_, _, Reg(name=dst, ..)]) => blxr(pc, reg(dst))
+    (TBLXr, [Imm(c), _, Reg(name=dst, ..)]) =>
+      branch(cnd(insn, c), blxr(pc, reg(dst)), [])
     (TBX, [Reg(name=dst, ..), _, _]) if is_pc(reg(dst)) => bxi(pc, 0)
-    (TBX, [Reg(name=dst, ..), _, _]) => bxr(reg(dst))
+    (TBX, [Reg(name=dst, ..), Imm(c), _]) =>
+      branch(cnd(insn, c), bxr(reg(dst)), [])
     (TCBNZ, [Reg(name=rn, ..), Imm(c)]) => cbnz(pc, reg(rn), imm(c))
     (TCBZ, [Reg(name=rn, ..), Imm(c)]) => cbz(pc, reg(rn), imm(c))
     _ => raise bad(insn)

@@ -317,7 +317,9 @@ pub fn Lifter::create(
   target : @core_theory.Target,
   strict? : Bool = true,
 ) -> Lifter raise SemanticsError {
-  let context = prog.context.merge(Context::of_target(target))
+  let context = prog.context
+    .merge(Context::of_target(target))
+    .merge(Context::create(semantics_context.val))
   let prog = link_semantic_primitives(prog.with_context(context), target).with_places(
     target,
   )
@@ -362,8 +364,36 @@ fn find_target_var(t : @core_theory.Target, name : String) -> @types.Var? {
 /// Whether `name` is a hardwired zero register of `t` (a register with the
 /// `zero` role, e.g. RISC-V `X0`/`ZERO`, AArch64 `XZR`/`WZR`).
 fn is_zero_register(t : @core_theory.Target, name : String) -> Bool {
-  t.vars_with_role(@core_theory.Role::zero()).iter().any(v => v.name() == name)
+  // the role table of a target is costly to compute, the zero registers
+  // are memoized per target
+  let key = t.to_string()
+  let zeros = match zero_registers.get(key) {
+    Some(zs) => zs
+    None => {
+      let zs = t.vars_with_role(@core_theory.Role::zero()).map(v => v.name())
+      zero_registers[key] = zs
+      zs
+    }
+  }
+  zeros.contains(name)
 }
+
+///|
+/// The context of the Lisp semantics, merged into the target context of
+/// the lifters (upstream `Primus.Lisp.Semantics.context`). As upstream's
+/// x86 plugin, which promises it unless the floating-point intrinsics are
+/// disabled (`--x86-disable-floating-point-intrinsics`), it enables the
+/// intrinsic semantics of the x86 SSE floating-point instructions
+/// (`x86-64-sse-intrinsics.lisp`, e.g. `addsd` lifts to a call of the
+/// `fadd_rne_ieee754_binary` intrinsic); without it they have no Lisp
+/// semantics. Changing it affects the lifters created afterwards.
+pub let semantics_context : Ref[Array[(String, Array[String])]] = Ref([
+  ("x86-floating-points", ["intrinsic-semantics"]),
+])
+
+///|
+/// The zero registers of the targets, indexed by the target name.
+let zero_registers : Map[String, Array[String]] = Map([])
 
 ///|
 /// Loads the Lisp semantics from the embedded upstream library: the core

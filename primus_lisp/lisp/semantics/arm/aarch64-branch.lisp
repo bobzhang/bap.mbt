@@ -20,8 +20,11 @@
   (relative-jump off))
 
 (defun BLR (reg)
-  (set LR (+ (get-program-counter) 4))
-  (exec-addr reg))
+  ;; port: the target is read before the link register (which may be the
+  ;; target, as in `blr x30`) is written
+  (let ((dst reg))
+    (set LR (+ (get-program-counter) 4))
+    (exec-addr dst)))
 
 (defun BR (reg)
   (exec-addr reg))
@@ -50,3 +53,17 @@
 (defun TBZX  (reg pos off) (TB** is-zero  reg pos off))
 (defun TBNZW (reg pos off) (TB** non-zero reg pos off))
 (defun TBNZX (reg pos off) (TB** non-zero reg pos off))
+
+;; port: added, the authenticating branches and returns (pointer
+;; authentication disabled, see aarch64-special.lisp)
+
+(defun RETAA () (exec-addr LR))
+(defun RETAB () (exec-addr LR))
+(defun BRAA (rn _) (exec-addr rn))
+(defun BRAB (rn _) (exec-addr rn))
+(defun BRAAZ (rn) (exec-addr rn))
+(defun BRABZ (rn) (exec-addr rn))
+(defun BLRAA (rn _) (BLR rn))
+(defun BLRAB (rn _) (BLR rn))
+(defun BLRAAZ (rn) (BLR rn))
+(defun BLRABZ (rn) (BLR rn))

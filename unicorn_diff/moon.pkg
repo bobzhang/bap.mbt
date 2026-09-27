@@ -1,4 +1,6 @@
 import {
+  "bobzhang/bap/aarch64",
+  "bobzhang/bap/arm",
   "bobzhang/bap/bitvec",
   "bobzhang/bap/core_theory",
   "bobzhang/bap/mc",
@@ -7,5 +9,6 @@ import {
   "bobzhang/bap/primus_lisp",
   "bobzhang/bap/riscv" @rv,
   "bobzhang/bap/systemz",
+  "bobzhang/bap/thumb",
   "bobzhang/bap/types",
 } for "test"

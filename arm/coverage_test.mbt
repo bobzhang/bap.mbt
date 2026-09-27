@@ -151,7 +151,7 @@ test "every supported instruction lifts" {
       }
     }
   }
-  assert_eq(lifted.length(), 185)
+  assert_eq(lifted.length(), 187)
   // barriers and hints are no-ops
   debug_inspect(
     empty,
@@ -159,14 +159,7 @@ test "every supported instruction lifts" {
       #|["CPS2p", "DMB", "DSB", "HINT", "PLDi12"]
     ),
   )
-  // register pairs (e.g. `R0_R1`) are not ARM registers upstream
-  debug_inspect(
-    failed,
-    content=(
-      #|[
-      #|  "LDREXD: bad operands for instruction: LDREXD: unsupported operand: R0_R1",
-      #|  "STREXD: bad operands for instruction: STREXD: unsupported operand: R0_R1",
-      #|]
-    ),
-  )
+  // register pairs (e.g. `R0_R1`) stand for their registers (port:
+  // upstream rejects them)
+  debug_inspect(failed, content="[]")
 }

@@ -255,22 +255,40 @@ pub fn insn_to_string(
 }
 
 ///|
+/// The semantics of an instruction (upstream `Insn.bil`): its lifting on
+/// `target` through the registered lifters (see
+/// `ProjectDisassemblyInstruction::lift`, which also applies the relocation
+/// fixups of the instruction); without a target, the Basic lifter's.
 fn insn_bil(
   insn : @project.ProjectDisassemblyInstruction,
+  target : @core_theory.Target?,
 ) -> Array[@types.Stmt] {
-  match insn.lift_basic_bil() {
-    Ok(bil) => bil
-    Err(_) => []
+  match target {
+    Some(target) if !target.is_unknown() =>
+      match insn.lift(target~) {
+        Ok(lifted) => lifted.bil()
+        Err(_) => []
+      }
+    _ =>
+      match insn.lift_basic_bil() {
+        Ok(bil) => bil
+        Err(_) => []
+      }
   }
 }
 
 ///|
 /// The destination of the first direct jump of an instruction (upstream
-/// `jmp_dst`).
+/// `jmp_dst`); the destinations are constant-folded first, as upstream
+/// prints the optimized semantics.
 fn jmp_dst(bil : ArrayView[@types.Stmt]) -> @types.Word? {
   for stmt in bil {
     match stmt {
-      Jmp(Int(dst)) => return Some(dst)
+      Jmp(dst) =>
+        match dst.fold_consts() {
+          Int(dst) => return Some(dst)
+          _ => ()
+        }
       If(yes~, no~, ..) =>
         match jmp_dst(yes) {
           Some(dst) => return Some(dst)
@@ -314,14 +332,18 @@ pub type InsnPrinter = (
 
 ///|
 /// Prints an instruction as `<bytes> <tab> <insn> [# <dst> <callee>]`
-/// (upstream `pp_insn`).
-pub fn insn_printer(format : String) -> InsnPrinter {
+/// (upstream `pp_insn`). The destination is the one of the semantics of the
+/// instruction lifted on `target` (see `insn_bil`).
+pub fn insn_printer(
+  format : String,
+  target? : @core_theory.Target,
+) -> InsnPrinter {
   (fmt, symtab, blk, mem, insn) => {
     let line = tab_to(memory_to_string(mem), disasm_tab_stop) +
       insn_to_string(insn, format)
     fmt.print_string(line)
     if blk.terminator().addr() == insn.addr() {
-      let dst = jmp_dst(insn_bil(insn))
+      let dst = jmp_dst(insn_bil(insn, target))
       match (dst, symtab.callee(blk.addr())) {
         (Some(dst), Some(name)) =>
           fmt.print_string(" # \{dst.string_of_value()} <\{name}>")
@@ -336,12 +358,15 @@ pub fn insn_printer(format : String) -> InsnPrinter {
 
 ///|
 /// Prints an instruction with its BIL code in the `pretty`, `adt`, or
-/// `sexp` format (upstream `pp_bil`).
-pub fn bil_printer(format : String) -> InsnPrinter {
+/// `sexp` format (upstream `pp_bil`), lifted on `target` (see `insn_bil`).
+pub fn bil_printer(
+  format : String,
+  target? : @core_theory.Target,
+) -> InsnPrinter {
   (fmt, _, _, mem, insn) => {
     fmt.print_string("\{addr_lower(mem.min_addr())}: \{insn.assembly()}")
     fmt.print_format("@\n")
-    let bil = insn_bil(insn)
+    let bil = insn_bil(insn, target)
     match format {
       "adt" => fmt.print_string(bil_to_adt(bil))
       "sexp" => fmt.print_string(bil_to_sexp(bil))
@@ -378,8 +403,18 @@ fn code_regions(project : @project.Project) -> Array[@memory.Memory] {
 }
 
 ///|
-fn section_name(project : @project.Project, start : UInt64) -> String {
-  for s in project_sections(project) {
+/// The name of the section of the code region `mem`: the section that
+/// spans the region, or else the first one that starts with it (in
+/// relocatable objects, all sections start at the same address).
+fn section_name(project : @project.Project, mem : @memory.Memory) -> String {
+  let start = mem.min_addr()
+  let sections = project_sections(project)
+  for s in sections {
+    if s.1.min_addr() == start && s.1.length() == mem.length() {
+      return s.0
+    }
+  }
+  for s in sections {
     if s.1.min_addr() == start {
       return s.0
     }
@@ -403,7 +438,7 @@ pub fn pp_disasm(
     None => project.disassembly_symtab()
   }
   for mem in code_regions(project) {
-    let sec = section_name(project, mem.min_addr())
+    let sec = section_name(project, mem)
     let fns = symtab
       .intersecting(mem)
       .filter(f => matches(patterns, project, Some(f.addr())))

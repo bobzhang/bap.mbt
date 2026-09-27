@@ -2452,17 +2452,51 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|(defun SUBXrx64 (rd rn rm off)
         #|  (set$ rd (- rn (extended rm off))))
         #|
+        #|;; port: the flags of the W forms are computed on the low words (upstream
+        #|;; computes them on 64-bit sign extensions)
         #|(defun SUBSWrs (rd rn rm off)
-        #|  (add-with-carry/clear-base rd rn (lnot (shift-encoded rm off)) 1))
+        #|  (adc32 rd rn (lnot (shift-encoded rm off)) 1))
         #|
         #|(defun SUBSXrs (rd rn rm off)
-        #|  (add-with-carry rd rn (lnot (shift-encoded rm off)) 1))
+        #|  (adc64 rd rn (lnot (shift-encoded rm off)) 1))
         #|
         #|(defun SUBSWri (rd rn imm off)
-        #|  (add-with-carry/clear-base rd rn (lnot (lshift imm off)) 1))
+        #|  (adc32 rd rn (lnot (lshift imm off)) 1))
         #|
         #|(defun SUBSXri (rd rn imm off)
-        #|  (add-with-carry rd rn (lnot (lshift imm off)) 1))
+        #|  (adc64 rd rn (lnot (lshift imm off)) 1))
+        #|
+        #|;; port: added, the flag-setting additions, the extended-register forms and
+        #|;; the additions and subtractions with carry
+        #|(defun ADDSWri (rd rn imm off) (adc32 rd rn (lshift imm off) 0))
+        #|(defun ADDSXri (rd rn imm off) (adc64 rd rn (lshift imm off) 0))
+        #|(defun ADDSWrs (rd rn rm off) (adc32 rd rn (shift-encoded rm off) 0))
+        #|(defun ADDSXrs (rd rn rm off) (adc64 rd rn (shift-encoded rm off) 0))
+        #|
+        #|(defun ADDWrx (rd rn rm ext) (setw rd (+ rn (extended32 rm ext))))
+        #|(defun ADDXrx (rd rn rm ext) (set$ rd (+ rn (extended rm ext))))
+        #|(defun ADDXrx64 (rd rn rm ext) (set$ rd (+ rn (extended rm ext))))
+        #|(defun SUBWrx (rd rn rm ext) (setw rd (- rn (extended32 rm ext))))
+        #|(defun SUBXrx (rd rn rm ext) (set$ rd (- rn (extended rm ext))))
+        #|(defun ADDSWrx (rd rn rm ext) (adc32 rd rn (extended32 rm ext) 0))
+        #|(defun ADDSXrx (rd rn rm ext) (adc64 rd rn (extended rm ext) 0))
+        #|(defun ADDSXrx64 (rd rn rm ext) (adc64 rd rn (extended rm ext) 0))
+        #|(defun SUBSWrx (rd rn rm ext) (adc32 rd rn (lnot (extended32 rm ext)) 1))
+        #|(defun SUBSXrx (rd rn rm ext) (adc64 rd rn (lnot (extended rm ext)) 1))
+        #|(defun SUBSXrx64 (rd rn rm ext) (adc64 rd rn (lnot (extended rm ext)) 1))
+        #|
+        #|(defun ADCWr (rd rn rm) (setw rd (+ rn rm (cast-unsigned 32 CF))))
+        #|(defun ADCXr (rd rn rm) (set$ rd (+ rn rm (cast-unsigned 64 CF))))
+        #|(defun SBCWr (rd rn rm) (setw rd (+ rn (lnot rm) (cast-unsigned 32 CF))))
+        #|(defun SBCXr (rd rn rm) (set$ rd (+ rn (lnot rm) (cast-unsigned 64 CF))))
+        #|(defun ADCSWr (rd rn rm) (adc32 rd rn rm CF))
+        #|(defun ADCSXr (rd rn rm) (adc64 rd rn rm CF))
+        #|(defun SBCSWr (rd rn rm) (adc32 rd rn (lnot rm) CF))
+        #|(defun SBCSXr (rd rn rm) (adc64 rd rn (lnot rm) CF))
+        #|
+        #|(defun ADR (dst imm)
+        #|  "adr dst, imm ; port: added"
+        #|  (set$ dst (+ (get-program-counter) (cast-signed 64 imm))))
         #|
         #|(defmacro Mop*rrr (set op rd rn rm ra)
         #|  "(Mop*rrr set op rd rn rm ra) implements multiply-add, multiply-subtract
@@ -2482,6 +2516,20 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|    (set rd (div rn rm))))
         #|
         #|(defun SDIVWr (rd rn rm) (*DIV*r setw s/ rd rn rm))
+        #|
+        #|;; port: added, the long and high multiplies
+        #|(defun SMADDLrrr (rd rn rm ra)
+        #|  (set$ rd (+ ra (* (cast-signed 64 rn) (cast-signed 64 rm)))))
+        #|(defun UMADDLrrr (rd rn rm ra)
+        #|  (set$ rd (+ ra (* (cast-unsigned 64 rn) (cast-unsigned 64 rm)))))
+        #|(defun SMSUBLrrr (rd rn rm ra)
+        #|  (set$ rd (- ra (* (cast-signed 64 rn) (cast-signed 64 rm)))))
+        #|(defun UMSUBLrrr (rd rn rm ra)
+        #|  (set$ rd (- ra (* (cast-unsigned 64 rn) (cast-unsigned 64 rm)))))
+        #|(defun SMULHrr (rd rn rm)
+        #|  (set$ rd (cast-high 64 (* (cast-signed 128 rn) (cast-signed 128 rm)))))
+        #|(defun UMULHrr (rd rn rm)
+        #|  (set$ rd (cast-high 64 (* (cast-unsigned 128 rn) (cast-unsigned 128 rm)))))
         #|(defun SDIVXr (rd rn rm) (*DIV*r set$ s/ rd rn rm))
         #|(defun UDIVWr (rd rn rm) (*DIV*r setw /  rd rn rm))
         #|(defun UDIVXr (rd rn rm) (*DIV*r set$ /  rd rn rm))
@@ -2575,6 +2623,330 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|(defun CSNEGWr (rd rn rm cnd) (CSop*r setw neg  rd rn rm cnd))  ;; 2's complement negation
         #|(defun CSNEGXr (rd rn rm cnd) (CSop*r set$ neg  rd rn rm cnd))  ;; 2's complement negation
         #|
+        #|;; port: added
+        #|;; LSE atomic memory operations (rt rs rn): memory := op(old, rs),
+        #|;; rt := old
+        #|(defun LDADDX (rt rs rn)
+        #|  (let ((old (load-word rn)))
+        #|    (store-word rn (cast-low 64 (+ old rs)))
+        #|    (set$ rt (cast-unsigned 64 old))))
+        #|(defun LDADDW (rt rs rn)
+        #|  (let ((old (load-bits 32 rn)))
+        #|    (store-word rn (cast-low 32 (+ old (cast-low 32 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDADDH (rt rs rn)
+        #|  (let ((old (load-bits 16 rn)))
+        #|    (store-word rn (cast-low 16 (+ old (cast-low 16 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDADDB (rt rs rn)
+        #|  (let ((old (load-bits 8 rn)))
+        #|    (store-word rn (cast-low 8 (+ old (cast-low 8 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDADDAX (rt rs rn)
+        #|  (let ((old (load-word rn)))
+        #|    (store-word rn (cast-low 64 (+ old rs)))
+        #|    (set$ rt (cast-unsigned 64 old))))
+        #|(defun LDADDAW (rt rs rn)
+        #|  (let ((old (load-bits 32 rn)))
+        #|    (store-word rn (cast-low 32 (+ old (cast-low 32 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDADDAH (rt rs rn)
+        #|  (let ((old (load-bits 16 rn)))
+        #|    (store-word rn (cast-low 16 (+ old (cast-low 16 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDADDAB (rt rs rn)
+        #|  (let ((old (load-bits 8 rn)))
+        #|    (store-word rn (cast-low 8 (+ old (cast-low 8 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDADDALX (rt rs rn)
+        #|  (let ((old (load-word rn)))
+        #|    (store-word rn (cast-low 64 (+ old rs)))
+        #|    (set$ rt (cast-unsigned 64 old))))
+        #|(defun LDADDALW (rt rs rn)
+        #|  (let ((old (load-bits 32 rn)))
+        #|    (store-word rn (cast-low 32 (+ old (cast-low 32 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDADDALH (rt rs rn)
+        #|  (let ((old (load-bits 16 rn)))
+        #|    (store-word rn (cast-low 16 (+ old (cast-low 16 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDADDALB (rt rs rn)
+        #|  (let ((old (load-bits 8 rn)))
+        #|    (store-word rn (cast-low 8 (+ old (cast-low 8 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDADDLX (rt rs rn)
+        #|  (let ((old (load-word rn)))
+        #|    (store-word rn (cast-low 64 (+ old rs)))
+        #|    (set$ rt (cast-unsigned 64 old))))
+        #|(defun LDADDLW (rt rs rn)
+        #|  (let ((old (load-bits 32 rn)))
+        #|    (store-word rn (cast-low 32 (+ old (cast-low 32 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDADDLH (rt rs rn)
+        #|  (let ((old (load-bits 16 rn)))
+        #|    (store-word rn (cast-low 16 (+ old (cast-low 16 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDADDLB (rt rs rn)
+        #|  (let ((old (load-bits 8 rn)))
+        #|    (store-word rn (cast-low 8 (+ old (cast-low 8 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDCLRX (rt rs rn)
+        #|  (let ((old (load-word rn)))
+        #|    (store-word rn (cast-low 64 (logand old (lnot rs))))
+        #|    (set$ rt (cast-unsigned 64 old))))
+        #|(defun LDCLRW (rt rs rn)
+        #|  (let ((old (load-bits 32 rn)))
+        #|    (store-word rn (cast-low 32 (logand old (lnot (cast-low 32 rs)))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDCLRH (rt rs rn)
+        #|  (let ((old (load-bits 16 rn)))
+        #|    (store-word rn (cast-low 16 (logand old (lnot (cast-low 16 rs)))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDCLRB (rt rs rn)
+        #|  (let ((old (load-bits 8 rn)))
+        #|    (store-word rn (cast-low 8 (logand old (lnot (cast-low 8 rs)))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDCLRAX (rt rs rn)
+        #|  (let ((old (load-word rn)))
+        #|    (store-word rn (cast-low 64 (logand old (lnot rs))))
+        #|    (set$ rt (cast-unsigned 64 old))))
+        #|(defun LDCLRAW (rt rs rn)
+        #|  (let ((old (load-bits 32 rn)))
+        #|    (store-word rn (cast-low 32 (logand old (lnot (cast-low 32 rs)))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDCLRAH (rt rs rn)
+        #|  (let ((old (load-bits 16 rn)))
+        #|    (store-word rn (cast-low 16 (logand old (lnot (cast-low 16 rs)))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDCLRAB (rt rs rn)
+        #|  (let ((old (load-bits 8 rn)))
+        #|    (store-word rn (cast-low 8 (logand old (lnot (cast-low 8 rs)))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDCLRALX (rt rs rn)
+        #|  (let ((old (load-word rn)))
+        #|    (store-word rn (cast-low 64 (logand old (lnot rs))))
+        #|    (set$ rt (cast-unsigned 64 old))))
+        #|(defun LDCLRALW (rt rs rn)
+        #|  (let ((old (load-bits 32 rn)))
+        #|    (store-word rn (cast-low 32 (logand old (lnot (cast-low 32 rs)))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDCLRALH (rt rs rn)
+        #|  (let ((old (load-bits 16 rn)))
+        #|    (store-word rn (cast-low 16 (logand old (lnot (cast-low 16 rs)))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDCLRALB (rt rs rn)
+        #|  (let ((old (load-bits 8 rn)))
+        #|    (store-word rn (cast-low 8 (logand old (lnot (cast-low 8 rs)))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDCLRLX (rt rs rn)
+        #|  (let ((old (load-word rn)))
+        #|    (store-word rn (cast-low 64 (logand old (lnot rs))))
+        #|    (set$ rt (cast-unsigned 64 old))))
+        #|(defun LDCLRLW (rt rs rn)
+        #|  (let ((old (load-bits 32 rn)))
+        #|    (store-word rn (cast-low 32 (logand old (lnot (cast-low 32 rs)))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDCLRLH (rt rs rn)
+        #|  (let ((old (load-bits 16 rn)))
+        #|    (store-word rn (cast-low 16 (logand old (lnot (cast-low 16 rs)))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDCLRLB (rt rs rn)
+        #|  (let ((old (load-bits 8 rn)))
+        #|    (store-word rn (cast-low 8 (logand old (lnot (cast-low 8 rs)))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDEORX (rt rs rn)
+        #|  (let ((old (load-word rn)))
+        #|    (store-word rn (cast-low 64 (logxor old rs)))
+        #|    (set$ rt (cast-unsigned 64 old))))
+        #|(defun LDEORW (rt rs rn)
+        #|  (let ((old (load-bits 32 rn)))
+        #|    (store-word rn (cast-low 32 (logxor old (cast-low 32 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDEORH (rt rs rn)
+        #|  (let ((old (load-bits 16 rn)))
+        #|    (store-word rn (cast-low 16 (logxor old (cast-low 16 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDEORB (rt rs rn)
+        #|  (let ((old (load-bits 8 rn)))
+        #|    (store-word rn (cast-low 8 (logxor old (cast-low 8 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDEORAX (rt rs rn)
+        #|  (let ((old (load-word rn)))
+        #|    (store-word rn (cast-low 64 (logxor old rs)))
+        #|    (set$ rt (cast-unsigned 64 old))))
+        #|(defun LDEORAW (rt rs rn)
+        #|  (let ((old (load-bits 32 rn)))
+        #|    (store-word rn (cast-low 32 (logxor old (cast-low 32 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDEORAH (rt rs rn)
+        #|  (let ((old (load-bits 16 rn)))
+        #|    (store-word rn (cast-low 16 (logxor old (cast-low 16 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDEORAB (rt rs rn)
+        #|  (let ((old (load-bits 8 rn)))
+        #|    (store-word rn (cast-low 8 (logxor old (cast-low 8 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDEORALX (rt rs rn)
+        #|  (let ((old (load-word rn)))
+        #|    (store-word rn (cast-low 64 (logxor old rs)))
+        #|    (set$ rt (cast-unsigned 64 old))))
+        #|(defun LDEORALW (rt rs rn)
+        #|  (let ((old (load-bits 32 rn)))
+        #|    (store-word rn (cast-low 32 (logxor old (cast-low 32 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDEORALH (rt rs rn)
+        #|  (let ((old (load-bits 16 rn)))
+        #|    (store-word rn (cast-low 16 (logxor old (cast-low 16 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDEORALB (rt rs rn)
+        #|  (let ((old (load-bits 8 rn)))
+        #|    (store-word rn (cast-low 8 (logxor old (cast-low 8 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDEORLX (rt rs rn)
+        #|  (let ((old (load-word rn)))
+        #|    (store-word rn (cast-low 64 (logxor old rs)))
+        #|    (set$ rt (cast-unsigned 64 old))))
+        #|(defun LDEORLW (rt rs rn)
+        #|  (let ((old (load-bits 32 rn)))
+        #|    (store-word rn (cast-low 32 (logxor old (cast-low 32 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDEORLH (rt rs rn)
+        #|  (let ((old (load-bits 16 rn)))
+        #|    (store-word rn (cast-low 16 (logxor old (cast-low 16 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDEORLB (rt rs rn)
+        #|  (let ((old (load-bits 8 rn)))
+        #|    (store-word rn (cast-low 8 (logxor old (cast-low 8 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDSETX (rt rs rn)
+        #|  (let ((old (load-word rn)))
+        #|    (store-word rn (cast-low 64 (logor old rs)))
+        #|    (set$ rt (cast-unsigned 64 old))))
+        #|(defun LDSETW (rt rs rn)
+        #|  (let ((old (load-bits 32 rn)))
+        #|    (store-word rn (cast-low 32 (logor old (cast-low 32 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDSETH (rt rs rn)
+        #|  (let ((old (load-bits 16 rn)))
+        #|    (store-word rn (cast-low 16 (logor old (cast-low 16 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDSETB (rt rs rn)
+        #|  (let ((old (load-bits 8 rn)))
+        #|    (store-word rn (cast-low 8 (logor old (cast-low 8 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDSETAX (rt rs rn)
+        #|  (let ((old (load-word rn)))
+        #|    (store-word rn (cast-low 64 (logor old rs)))
+        #|    (set$ rt (cast-unsigned 64 old))))
+        #|(defun LDSETAW (rt rs rn)
+        #|  (let ((old (load-bits 32 rn)))
+        #|    (store-word rn (cast-low 32 (logor old (cast-low 32 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDSETAH (rt rs rn)
+        #|  (let ((old (load-bits 16 rn)))
+        #|    (store-word rn (cast-low 16 (logor old (cast-low 16 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDSETAB (rt rs rn)
+        #|  (let ((old (load-bits 8 rn)))
+        #|    (store-word rn (cast-low 8 (logor old (cast-low 8 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDSETALX (rt rs rn)
+        #|  (let ((old (load-word rn)))
+        #|    (store-word rn (cast-low 64 (logor old rs)))
+        #|    (set$ rt (cast-unsigned 64 old))))
+        #|(defun LDSETALW (rt rs rn)
+        #|  (let ((old (load-bits 32 rn)))
+        #|    (store-word rn (cast-low 32 (logor old (cast-low 32 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDSETALH (rt rs rn)
+        #|  (let ((old (load-bits 16 rn)))
+        #|    (store-word rn (cast-low 16 (logor old (cast-low 16 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDSETALB (rt rs rn)
+        #|  (let ((old (load-bits 8 rn)))
+        #|    (store-word rn (cast-low 8 (logor old (cast-low 8 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDSETLX (rt rs rn)
+        #|  (let ((old (load-word rn)))
+        #|    (store-word rn (cast-low 64 (logor old rs)))
+        #|    (set$ rt (cast-unsigned 64 old))))
+        #|(defun LDSETLW (rt rs rn)
+        #|  (let ((old (load-bits 32 rn)))
+        #|    (store-word rn (cast-low 32 (logor old (cast-low 32 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDSETLH (rt rs rn)
+        #|  (let ((old (load-bits 16 rn)))
+        #|    (store-word rn (cast-low 16 (logor old (cast-low 16 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun LDSETLB (rt rs rn)
+        #|  (let ((old (load-bits 8 rn)))
+        #|    (store-word rn (cast-low 8 (logor old (cast-low 8 rs))))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun SWPX (rt rs rn)
+        #|  (let ((old (load-word rn)))
+        #|    (store-word rn (cast-low 64 rs))
+        #|    (set$ rt (cast-unsigned 64 old))))
+        #|(defun SWPW (rt rs rn)
+        #|  (let ((old (load-bits 32 rn)))
+        #|    (store-word rn (cast-low 32 (cast-low 32 rs)))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun SWPH (rt rs rn)
+        #|  (let ((old (load-bits 16 rn)))
+        #|    (store-word rn (cast-low 16 (cast-low 16 rs)))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun SWPB (rt rs rn)
+        #|  (let ((old (load-bits 8 rn)))
+        #|    (store-word rn (cast-low 8 (cast-low 8 rs)))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun SWPAX (rt rs rn)
+        #|  (let ((old (load-word rn)))
+        #|    (store-word rn (cast-low 64 rs))
+        #|    (set$ rt (cast-unsigned 64 old))))
+        #|(defun SWPAW (rt rs rn)
+        #|  (let ((old (load-bits 32 rn)))
+        #|    (store-word rn (cast-low 32 (cast-low 32 rs)))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun SWPAH (rt rs rn)
+        #|  (let ((old (load-bits 16 rn)))
+        #|    (store-word rn (cast-low 16 (cast-low 16 rs)))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun SWPAB (rt rs rn)
+        #|  (let ((old (load-bits 8 rn)))
+        #|    (store-word rn (cast-low 8 (cast-low 8 rs)))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun SWPALX (rt rs rn)
+        #|  (let ((old (load-word rn)))
+        #|    (store-word rn (cast-low 64 rs))
+        #|    (set$ rt (cast-unsigned 64 old))))
+        #|(defun SWPALW (rt rs rn)
+        #|  (let ((old (load-bits 32 rn)))
+        #|    (store-word rn (cast-low 32 (cast-low 32 rs)))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun SWPALH (rt rs rn)
+        #|  (let ((old (load-bits 16 rn)))
+        #|    (store-word rn (cast-low 16 (cast-low 16 rs)))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun SWPALB (rt rs rn)
+        #|  (let ((old (load-bits 8 rn)))
+        #|    (store-word rn (cast-low 8 (cast-low 8 rs)))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun SWPLX (rt rs rn)
+        #|  (let ((old (load-word rn)))
+        #|    (store-word rn (cast-low 64 rs))
+        #|    (set$ rt (cast-unsigned 64 old))))
+        #|(defun SWPLW (rt rs rn)
+        #|  (let ((old (load-bits 32 rn)))
+        #|    (store-word rn (cast-low 32 (cast-low 32 rs)))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun SWPLH (rt rs rn)
+        #|  (let ((old (load-bits 16 rn)))
+        #|    (store-word rn (cast-low 16 (cast-low 16 rs)))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|(defun SWPLB (rt rs rn)
+        #|  (let ((old (load-bits 8 rn)))
+        #|    (store-word rn (cast-low 8 (cast-low 8 rs)))
+        #|    (setw rt (cast-unsigned 32 old))))
+        #|
       ),
     ),
     (
@@ -2602,8 +2974,11 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|  (relative-jump off))
         #|
         #|(defun BLR (reg)
-        #|  (set LR (+ (get-program-counter) 4))
-        #|  (exec-addr reg))
+        #|  ;; port: the target is read before the link register (which may be the
+        #|  ;; target, as in `blr x30`) is written
+        #|  (let ((dst reg))
+        #|    (set LR (+ (get-program-counter) 4))
+        #|    (exec-addr dst)))
         #|
         #|(defun BR (reg)
         #|  (exec-addr reg))
@@ -2632,6 +3007,20 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|(defun TBZX  (reg pos off) (TB** is-zero  reg pos off))
         #|(defun TBNZW (reg pos off) (TB** non-zero reg pos off))
         #|(defun TBNZX (reg pos off) (TB** non-zero reg pos off))
+        #|
+        #|;; port: added, the authenticating branches and returns (pointer
+        #|;; authentication disabled, see aarch64-special.lisp)
+        #|
+        #|(defun RETAA () (exec-addr LR))
+        #|(defun RETAB () (exec-addr LR))
+        #|(defun BRAA (rn _) (exec-addr rn))
+        #|(defun BRAB (rn _) (exec-addr rn))
+        #|(defun BRAAZ (rn) (exec-addr rn))
+        #|(defun BRABZ (rn) (exec-addr rn))
+        #|(defun BLRAA (rn _) (BLR rn))
+        #|(defun BLRAB (rn _) (BLR rn))
+        #|(defun BLRAAZ (rn) (BLR rn))
+        #|(defun BLRABZ (rn) (BLR rn))
         #|
       ),
     ),
@@ -2675,9 +3064,9 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|    (set$ dst (+ dst off))))
         #|
         #|(defun LDPXi (r1 r2 base off)
-        #|  (let ((off (lshift off 3)))
-        #|    (set$ r1 (load-word (+ base off)))
-        #|    (set$ r2 (load-word (+ base off (sizeof word))))))
+        #|  ;; port: both words are loaded before r1 (which may be the base) is
+        #|  ;; written
+        #|  (ldp-x r1 r2 (+ base (lshift off 3))))
         #|
         #|(defun LDRXroX (rt rn rm _ shift)
         #|  (set$ rt (load-word (+ rn (lshift rm (* shift 3))))))
@@ -2715,9 +3104,11 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|    (set$ dst (+ dst off))))
         #|
         #|(defun STPXi (t1 t2 base off)
-        #|  (let ((off (lshift off 4)))
-        #|    (store-word base (+ base off))
-        #|    (store-word base (+ base off (sizeof word)))))
+        #|  ;; port: the offset is scaled by 8 and the stored values are t1 and t2
+        #|  ;; (upstream scales by 16 and stores the base register twice)
+        #|  (let ((off (lshift off 3)))
+        #|    (store-word (+ base off) t1)
+        #|    (store-word (+ base off (sizeof word)) t2)))
         #|
         #|(defun STRXui (src reg off)
         #|  (let ((off (lshift off 3)))
@@ -2741,6 +3132,170 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|(defun STURHHi  (src base off) (STUR*i src base off 16))
         #|
         #|(defun STURBBi (src base off) (STUR*i src base off 8))
+        #|
+        #|;; port: added, the loads and stores of all sizes with unsigned offsets,
+        #|;; pre/post-indexing, register offsets and unscaled offsets, the pairs,
+        #|;; PC-relative loads, the exclusive and acquire/release accesses and the
+        #|;; LSE atomic memory operations
+        #|
+        #|(defmacro ld-x (rt bits addr) (set$ rt (cast-unsigned 64 (load-bits bits addr))))
+        #|(defmacro ld-w (rt bits addr) (setw rt (cast-unsigned 32 (load-bits bits addr))))
+        #|(defmacro lds-x (rt bits addr) (set$ rt (cast-signed 64 (load-bits bits addr))))
+        #|(defmacro lds-w (rt bits addr) (setw rt (cast-signed 32 (load-bits bits addr))))
+        #|(defmacro st-n (rt bits addr) (store-word addr (cast-low bits rt)))
+        #|
+        #|;; unsigned (scaled) offsets
+        #|(defun LDRHHui (rt rn off) (ld-w rt 16 (+ rn (lshift off 1))))
+        #|(defun LDRSBXui (rt rn off) (lds-x rt 8 (+ rn off)))
+        #|(defun LDRSBWui (rt rn off) (lds-w rt 8 (+ rn off)))
+        #|(defun LDRSHXui (rt rn off) (lds-x rt 16 (+ rn (lshift off 1))))
+        #|(defun LDRSHWui (rt rn off) (lds-w rt 16 (+ rn (lshift off 1))))
+        #|(defun STRHHui (rt rn off) (st-n rt 16 (+ rn (lshift off 1))))
+        #|
+        #|;; unscaled offsets
+        #|(defun LDURXi (rt rn off) (ld-x rt 64 (+ rn off)))
+        #|(defun LDURWi (rt rn off) (ld-w rt 32 (+ rn off)))
+        #|(defun LDURHHi (rt rn off) (ld-w rt 16 (+ rn off)))
+        #|(defun LDURBBi (rt rn off) (ld-w rt 8 (+ rn off)))
+        #|(defun LDURSBXi (rt rn off) (lds-x rt 8 (+ rn off)))
+        #|(defun LDURSBWi (rt rn off) (lds-w rt 8 (+ rn off)))
+        #|(defun LDURSHXi (rt rn off) (lds-x rt 16 (+ rn off)))
+        #|(defun LDURSHWi (rt rn off) (lds-w rt 16 (+ rn off)))
+        #|(defun LDURSWi (rt rn off) (lds-x rt 32 (+ rn off)))
+        #|
+        #|;; pre/post-indexed loads (the loaded register differs from the base)
+        #|(defun LDRXpre (wb rt rn off) (let ((a (+ rn off))) (set$ wb a) (ld-x rt 64 a)))
+        #|(defun LDRWpre (wb rt rn off) (let ((a (+ rn off))) (set$ wb a) (ld-w rt 32 a)))
+        #|(defun LDRHHpre (wb rt rn off) (let ((a (+ rn off))) (set$ wb a) (ld-w rt 16 a)))
+        #|(defun LDRBBpre (wb rt rn off) (let ((a (+ rn off))) (set$ wb a) (ld-w rt 8 a)))
+        #|(defun LDRSBXpre (wb rt rn off) (let ((a (+ rn off))) (set$ wb a) (lds-x rt 8 a)))
+        #|(defun LDRSBWpre (wb rt rn off) (let ((a (+ rn off))) (set$ wb a) (lds-w rt 8 a)))
+        #|(defun LDRSHXpre (wb rt rn off) (let ((a (+ rn off))) (set$ wb a) (lds-x rt 16 a)))
+        #|(defun LDRSHWpre (wb rt rn off) (let ((a (+ rn off))) (set$ wb a) (lds-w rt 16 a)))
+        #|(defun LDRSWpre (wb rt rn off) (let ((a (+ rn off))) (set$ wb a) (lds-x rt 32 a)))
+        #|(defun LDRXpost (wb rt rn off) (let ((a rn)) (set$ wb (+ rn off)) (ld-x rt 64 a)))
+        #|(defun LDRWpost (wb rt rn off) (let ((a rn)) (set$ wb (+ rn off)) (ld-w rt 32 a)))
+        #|(defun LDRHHpost (wb rt rn off) (let ((a rn)) (set$ wb (+ rn off)) (ld-w rt 16 a)))
+        #|(defun LDRBBpost (wb rt rn off) (let ((a rn)) (set$ wb (+ rn off)) (ld-w rt 8 a)))
+        #|(defun LDRSBXpost (wb rt rn off) (let ((a rn)) (set$ wb (+ rn off)) (lds-x rt 8 a)))
+        #|(defun LDRSBWpost (wb rt rn off) (let ((a rn)) (set$ wb (+ rn off)) (lds-w rt 8 a)))
+        #|(defun LDRSHXpost (wb rt rn off) (let ((a rn)) (set$ wb (+ rn off)) (lds-x rt 16 a)))
+        #|(defun LDRSHWpost (wb rt rn off) (let ((a rn)) (set$ wb (+ rn off)) (lds-w rt 16 a)))
+        #|(defun LDRSWpost (wb rt rn off) (let ((a rn)) (set$ wb (+ rn off)) (lds-x rt 32 a)))
+        #|
+        #|;; stores write the value before the base is written back (the stored
+        #|;; register may be the base, as the stack pointer)
+        #|(defun STRXpre (wb rt rn off) (let ((a (+ rn off))) (st-n rt 64 a) (set$ wb a)))
+        #|(defun STRWpre (wb rt rn off) (let ((a (+ rn off))) (st-n rt 32 a) (set$ wb a)))
+        #|(defun STRHHpre (wb rt rn off) (let ((a (+ rn off))) (st-n rt 16 a) (set$ wb a)))
+        #|(defun STRBBpre (wb rt rn off) (let ((a (+ rn off))) (st-n rt 8 a) (set$ wb a)))
+        #|(defun STRXpost (wb rt rn off) (let ((a rn)) (st-n rt 64 a) (set$ wb (+ rn off))))
+        #|(defun STRWpost (wb rt rn off) (let ((a rn)) (st-n rt 32 a) (set$ wb (+ rn off))))
+        #|(defun STRHHpost (wb rt rn off) (let ((a rn)) (st-n rt 16 a) (set$ wb (+ rn off))))
+        #|(defun STRBBpost (wb rt rn off) (let ((a rn)) (st-n rt 8 a) (set$ wb (+ rn off))))
+        #|
+        #|;; register offsets: `roX` (X register, lsl or sxtx) and `roW` (W register,
+        #|;; uxtw or sxtw); the first flag is the signedness of the extension, the
+        #|;; second whether the offset is scaled
+        #|(defun LDRXroW (rt rn rm s sh) (ld-x rt 64 (+ rn (mem-extend rm s sh 3))))
+        #|(defun LDRWroX (rt rn rm s sh) (ld-w rt 32 (+ rn (mem-extend rm s sh 2))))
+        #|(defun LDRWroW (rt rn rm s sh) (ld-w rt 32 (+ rn (mem-extend rm s sh 2))))
+        #|(defun LDRHHroX (rt rn rm s sh) (ld-w rt 16 (+ rn (mem-extend rm s sh 1))))
+        #|(defun LDRHHroW (rt rn rm s sh) (ld-w rt 16 (+ rn (mem-extend rm s sh 1))))
+        #|(defun LDRBBroW (rt rn rm s sh) (ld-w rt 8 (+ rn (mem-extend rm s sh 0))))
+        #|(defun LDRSBXroX (rt rn rm s sh) (lds-x rt 8 (+ rn (mem-extend rm s sh 0))))
+        #|(defun LDRSBXroW (rt rn rm s sh) (lds-x rt 8 (+ rn (mem-extend rm s sh 0))))
+        #|(defun LDRSBWroX (rt rn rm s sh) (lds-w rt 8 (+ rn (mem-extend rm s sh 0))))
+        #|(defun LDRSBWroW (rt rn rm s sh) (lds-w rt 8 (+ rn (mem-extend rm s sh 0))))
+        #|(defun LDRSHXroX (rt rn rm s sh) (lds-x rt 16 (+ rn (mem-extend rm s sh 1))))
+        #|(defun LDRSHXroW (rt rn rm s sh) (lds-x rt 16 (+ rn (mem-extend rm s sh 1))))
+        #|(defun LDRSHWroX (rt rn rm s sh) (lds-w rt 16 (+ rn (mem-extend rm s sh 1))))
+        #|(defun LDRSHWroW (rt rn rm s sh) (lds-w rt 16 (+ rn (mem-extend rm s sh 1))))
+        #|(defun LDRSWroX (rt rn rm s sh) (lds-x rt 32 (+ rn (mem-extend rm s sh 2))))
+        #|(defun LDRSWroW (rt rn rm s sh) (lds-x rt 32 (+ rn (mem-extend rm s sh 2))))
+        #|(defun STRXroW (rt rn rm s sh) (st-n rt 64 (+ rn (mem-extend rm s sh 3))))
+        #|(defun STRWroX (rt rn rm s sh) (st-n rt 32 (+ rn (mem-extend rm s sh 2))))
+        #|(defun STRWroW (rt rn rm s sh) (st-n rt 32 (+ rn (mem-extend rm s sh 2))))
+        #|(defun STRHHroX (rt rn rm s sh) (st-n rt 16 (+ rn (mem-extend rm s sh 1))))
+        #|(defun STRHHroW (rt rn rm s sh) (st-n rt 16 (+ rn (mem-extend rm s sh 1))))
+        #|(defun STRBBroX (rt rn rm s sh) (st-n rt 8 (+ rn (mem-extend rm s sh 0))))
+        #|(defun STRBBroW (rt rn rm s sh) (st-n rt 8 (+ rn (mem-extend rm s sh 0))))
+        #|
+        #|;; pairs (scaled signed offsets); both words are loaded before the
+        #|;; registers are written
+        #|(defmacro ldp-x (r1 r2 addr)
+        #|  (let ((w1 (load-word addr)) (w2 (load-word (+ addr 8))))
+        #|    (set$ r1 w1)
+        #|    (set$ r2 w2)))
+        #|(defmacro ldp-w (r1 r2 addr)
+        #|  (let ((w1 (load-bits 32 addr)) (w2 (load-bits 32 (+ addr 4))))
+        #|    (setw r1 w1)
+        #|    (setw r2 w2)))
+        #|(defmacro stp-n (bits t1 t2 addr)
+        #|  (prog (store-word addr (cast-low bits t1))
+        #|        (store-word (+ addr (/ bits 8)) (cast-low bits t2))))
+        #|
+        #|(defun LDPWi (r1 r2 rn off) (ldp-w r1 r2 (+ rn (lshift off 2))))
+        #|(defun LDPXpre (wb r1 r2 rn off)
+        #|  (let ((a (+ rn (lshift off 3)))) (set$ wb a) (ldp-x r1 r2 a)))
+        #|(defun LDPWpre (wb r1 r2 rn off)
+        #|  (let ((a (+ rn (lshift off 2)))) (set$ wb a) (ldp-w r1 r2 a)))
+        #|(defun LDPWpost (wb r1 r2 rn off)
+        #|  (let ((a rn)) (set$ wb (+ rn (lshift off 2))) (ldp-w r1 r2 a)))
+        #|(defun STPWi (t1 t2 rn off) (stp-n 32 t1 t2 (+ rn (lshift off 2))))
+        #|(defun STPWpre (wb t1 t2 rn off)
+        #|  (let ((a (+ rn (lshift off 2)))) (stp-n 32 t1 t2 a) (set$ wb a)))
+        #|(defun STPXpost (wb t1 t2 rn off)
+        #|  (let ((a rn)) (stp-n 64 t1 t2 a) (set$ wb (+ rn (lshift off 3)))))
+        #|(defun STPWpost (wb t1 t2 rn off)
+        #|  (let ((a rn)) (stp-n 32 t1 t2 a) (set$ wb (+ rn (lshift off 2)))))
+        #|(defun LDPSWi (r1 r2 rn off)
+        #|  (let ((a (+ rn (lshift off 2)))
+        #|        (w1 (cast-signed 64 (load-bits 32 a)))
+        #|        (w2 (cast-signed 64 (load-bits 32 (+ a 4)))))
+        #|    (set$ r1 w1)
+        #|    (set$ r2 w2)))
+        #|
+        #|;; PC-relative (literal) loads
+        #|(defun LDRXl (rt off) (ld-x rt 64 (+ (get-program-counter) (lshift (cast-signed 64 off) 2))))
+        #|(defun LDRWl (rt off) (ld-w rt 32 (+ (get-program-counter) (lshift (cast-signed 64 off) 2))))
+        #|(defun LDRSWl (rt off) (lds-x rt 32 (+ (get-program-counter) (lshift (cast-signed 64 off) 2))))
+        #|
+        #|;; exclusive and acquire/release accesses; an exclusive store always
+        #|;; succeeds (as in the ARM lifter, there is no exclusive monitor)
+        #|(defun LDXRX (rt rn) (ld-x rt 64 rn))
+        #|(defun LDXRW (rt rn) (ld-w rt 32 rn))
+        #|(defun LDXRH (rt rn) (ld-w rt 16 rn))
+        #|(defun LDXRB (rt rn) (ld-w rt 8 rn))
+        #|(defun LDAXRX (rt rn) (ld-x rt 64 rn))
+        #|(defun LDAXRW (rt rn) (ld-w rt 32 rn))
+        #|(defun LDAXRH (rt rn) (ld-w rt 16 rn))
+        #|(defun LDAXRB (rt rn) (ld-w rt 8 rn))
+        #|(defun LDARX (rt rn) (ld-x rt 64 rn))
+        #|(defun LDARW (rt rn) (ld-w rt 32 rn))
+        #|(defun LDARH (rt rn) (ld-w rt 16 rn))
+        #|(defun LDARB (rt rn) (ld-w rt 8 rn))
+        #|(defun STXRX (ws rt rn) (st-n rt 64 rn) (setw ws 0))
+        #|(defun STXRW (ws rt rn) (st-n rt 32 rn) (setw ws 0))
+        #|(defun STXRH (ws rt rn) (st-n rt 16 rn) (setw ws 0))
+        #|(defun STXRB (ws rt rn) (st-n rt 8 rn) (setw ws 0))
+        #|(defun STLXRX (ws rt rn) (st-n rt 64 rn) (setw ws 0))
+        #|(defun STLXRW (ws rt rn) (st-n rt 32 rn) (setw ws 0))
+        #|(defun STLXRH (ws rt rn) (st-n rt 16 rn) (setw ws 0))
+        #|(defun STLXRB (ws rt rn) (st-n rt 8 rn) (setw ws 0))
+        #|(defun STLRX (rt rn) (st-n rt 64 rn))
+        #|(defun STLRW (rt rn) (st-n rt 32 rn))
+        #|(defun STLRH (rt rn) (st-n rt 16 rn))
+        #|(defun STLRB (rt rn) (st-n rt 8 rn))
+        #|
+        #|;; port: added, the authenticated loads (pointer authentication disabled,
+        #|;; see aarch64-special.lisp) with their offsets scaled by 8
+        #|(defun LDRAAindexed (rt rn off) (ld-x rt 64 (+ rn (lshift off 3))))
+        #|(defun LDRABindexed (rt rn off) (ld-x rt 64 (+ rn (lshift off 3))))
+        #|(defun LDRAAwriteback (wb rt rn off)
+        #|  (let ((a (+ rn (lshift off 3)))) (set$ wb a) (ld-x rt 64 a)))
+        #|(defun LDRABwriteback (wb rt rn off)
+        #|  (let ((a (+ rn (lshift off 3)))) (set$ wb a) (ld-x rt 64 a)))
         #|
       ),
     ),
@@ -2850,6 +3405,88 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|    0b0001 :oshld
         #|    :unknown))
         #|
+        #|;; port: added helpers of the semantics added or fixed by the port
+        #|
+        #|(defun adc64 (rd x y c)
+        #|  "(adc64 rd x y c) sets the X register rd to x + y + c and the flags."
+        #|  (adc64/ rd (cast-low 64 x) (cast-low 64 y) (cast-unsigned 64 c)))
+        #|
+        #|(defun adc64/ (rd x y c)
+        #|  (let ((r (+ x y c)))
+        #|    (set-nzcv-from-registers r x y)
+        #|    (set$ rd r)))
+        #|
+        #|(defun adc32 (rd x y c)
+        #|  "(adc32 rd x y c) sets the W register rd to x + y + c (low words) and
+        #|   the flags."
+        #|  (adc32/ rd (cast-low 32 x) (cast-low 32 y) (cast-unsigned 32 c)))
+        #|
+        #|(defun adc32/ (rd x y c)
+        #|  (let ((r (+ x y c)))
+        #|    (set-nzcv-from-registers r x y)
+        #|    (setw rd r)))
+        #|
+        #|(defun set-nzcv-of-sum (x y c)
+        #|  "sets the flags of x + y + c computed at the width of x"
+        #|  (set-nzcv-of-sum/ x (cast-low (word-width x) y) (cast-unsigned (word-width x) c)))
+        #|
+        #|(defun set-nzcv-of-sum/ (x y c)
+        #|  (set-nzcv-from-registers (+ x y c) x y))
+        #|
+        #|(defun set-nz-cv0 (r)
+        #|  "sets N and Z from r and clears C and V (logical flag-setting forms)"
+        #|  (set NF (msb r))
+        #|  (set ZF (is-zero r))
+        #|  (set CF 0:1)
+        #|  (set VF 0:1))
+        #|
+        #|(defun extended32 (rm bits)
+        #|  "(extended32 rm bits) is the extended register operand of a W form"
+        #|  (cast-low 32 (extended rm bits)))
+        #|
+        #|(defun mem-extend (rm signed shift scale)
+        #|  "(mem-extend rm signed shift scale) is the register offset of the
+        #|   register-offset loads and stores: rm (a W register is sign- or
+        #|   zero-extended to 64 bits) shifted left by scale when shift is set."
+        #|  (lshift (if signed (cast-signed 64 rm) (cast-unsigned 64 rm))
+        #|          (if (= shift 1) scale 0)))
+        #|
+        #|(defun reverse-bits64 (x)
+        #|  (let ((x (logor (rshift (logand x 0xAAAAAAAAAAAAAAAA) 1)
+        #|                  (lshift (logand x 0x5555555555555555) 1)))
+        #|        (x (logor (rshift (logand x 0xCCCCCCCCCCCCCCCC) 2)
+        #|                  (lshift (logand x 0x3333333333333333) 2)))
+        #|        (x (logor (rshift (logand x 0xF0F0F0F0F0F0F0F0) 4)
+        #|                  (lshift (logand x 0x0F0F0F0F0F0F0F0F) 4))))
+        #|    (reverse-bytes64 x)))
+        #|
+        #|(defun reverse-bits32 (x)
+        #|  (let ((x (logor (rshift (logand x 0xAAAAAAAA) 1)
+        #|                  (lshift (logand x 0x55555555) 1)))
+        #|        (x (logor (rshift (logand x 0xCCCCCCCC) 2)
+        #|                  (lshift (logand x 0x33333333) 2)))
+        #|        (x (logor (rshift (logand x 0xF0F0F0F0) 4)
+        #|                  (lshift (logand x 0x0F0F0F0F) 4))))
+        #|    (reverse-bytes32 x)))
+        #|
+        #|(defun reverse-bytes64 (x)
+        #|  (concat (extract 7 0 x) (extract 15 8 x) (extract 23 16 x) (extract 31 24 x)
+        #|          (extract 39 32 x) (extract 47 40 x) (extract 55 48 x) (extract 63 56 x)))
+        #|
+        #|(defun reverse-bytes32 (x)
+        #|  (concat (extract 7 0 x) (extract 15 8 x) (extract 23 16 x) (extract 31 24 x)))
+        #|
+        #|(defun reverse-halfword-bytes (x)
+        #|  "swaps the bytes of each halfword of x (32 or 64 bits)"
+        #|  (if (= (word-width x) 64)
+        #|      (concat (extract 55 48 x) (extract 63 56 x) (extract 39 32 x) (extract 47 40 x)
+        #|              (extract 23 16 x) (extract 31 24 x) (extract 7 0 x) (extract 15 8 x))
+        #|    (concat (extract 23 16 x) (extract 31 24 x) (extract 7 0 x) (extract 15 8 x))))
+        #|
+        #|(defun count-leading-sign-bits (x)
+        #|  "the number of bits below the most significant one equal to it"
+        #|  (- (clz (rshift (logxor x (lshift x 1)) 1)) 1))
+        #|
       ),
     ),
     (
@@ -2867,7 +3504,9 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|(defmacro ORN*rs (set rd rn rm is)
         #|  "(ORN*rs set rd rn rm is) implements the OR NOT instruction
         #|   accepting either a W or X register."
-        #|  (set rd (logor rn (lnot (lshift rm is)))))
+        #|  ;; port: the operand is shifted as encoded (upstream shifts left by the
+        #|  ;; whole encoded shift operand)
+        #|  (set rd (logor rn (lnot (shift-encoded rm is)))))
         #|
         #|(defun ORNWrs (rd rn rm is) (ORN*rs setw rd rn rm is))
         #|(defun ORNXrs (rd rn rm is) (ORN*rs set$ rd rn rm is))
@@ -2923,23 +3562,86 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|  (make-eBFM setw cast-signed xd xr ir is))
         #|
         #|(defmacro BFM (set rd rn r s)
+        #|  ;; port: for s < r, the s + 1 low bits of rn are inserted at bit
+        #|  ;; size - r (upstream misplaces them by one bit)
         #|  (let ((size (word-width rd)))
         #|    (if (>= s r)
-        #|      (set rd (concat 
-        #|               (cast-high (- size (+1 (- s r))) rd)
-        #|               (if (= r 0)
-        #|                 (cast-low (+1 s) rn) 
-        #|                 (extract s r rn))))
-        #|      (set rd (concat
-        #|               (cast-high (- r s) rd)
-        #|               (cast-low (+1 s) rn)
-        #|               (cast-low (-1 (- size r)) rd))))))
+        #|      (if (= (- s r) (- size 1))
+        #|          (set rd rn)
+        #|        (set rd (concat
+        #|                 (cast-high (- size (+1 (- s r))) rd)
+        #|                 (if (= r 0)
+        #|                   (cast-low (+1 s) rn)
+        #|                   (extract s r rn)))))
+        #|      (if (= r (+1 s))
+        #|          (set rd (concat
+        #|                   (cast-low (+1 s) rn)
+        #|                   (cast-low (- size r) rd)))
+        #|        (set rd (concat
+        #|                 (cast-high (- r (+1 s)) rd)
+        #|                 (cast-low (+1 s) rn)
+        #|                 (cast-low (- size r) rd)))))))
         #|
         #|(defun BFMXri (_ xd xr ir is)
         #|  (BFM set$ xd xr ir is))
         #|
         #|(defun BFMWri (_ xd xr ir is)
         #|  (BFM setw xd xr ir is))
+        #|
+        #|;; port: added, the flag-setting, BIC and EON forms, the variable shifts,
+        #|;; the bit and byte reversals, the leading zero/sign bit counts and EXTR
+        #|
+        #|(defmacro logs*rs (set op rd rn rm is)
+        #|  (let ((r (op rn (shift-encoded rm is))))
+        #|    (set-nz-cv0 r)
+        #|    (set rd r)))
+        #|
+        #|(defun ANDSWrs (rd rn rm is) (logs*rs setw logand rd rn rm is))
+        #|(defun ANDSXrs (rd rn rm is) (logs*rs set$ logand rd rn rm is))
+        #|(defun BICSWrs (rd rn rm is) (logs*rs setw logandnot rd rn rm is))
+        #|(defun BICSXrs (rd rn rm is) (logs*rs set$ logandnot rd rn rm is))
+        #|(defun BICWrs (rd rn rm is) (log*rs setw logandnot rd rn rm is))
+        #|(defun BICXrs (rd rn rm is) (log*rs set$ logandnot rd rn rm is))
+        #|(defun EONWrs (rd rn rm is) (setw rd (logxor rn (lnot (shift-encoded rm is)))))
+        #|(defun EONXrs (rd rn rm is) (set$ rd (logxor rn (lnot (shift-encoded rm is)))))
+        #|
+        #|(defun ANDSWri (rd rn imm)
+        #|  (let ((r (logand rn (immediate-from-bitmask imm 32))))
+        #|    (set-nz-cv0 r)
+        #|    (setw rd r)))
+        #|
+        #|(defun ANDSXri (rd rn imm)
+        #|  (let ((r (logand rn (immediate-from-bitmask imm 64))))
+        #|    (set-nz-cv0 r)
+        #|    (set$ rd r)))
+        #|
+        #|(defun LSLVWr (rd rn rm) (setw rd (lshift rn (logand rm 31))))
+        #|(defun LSLVXr (rd rn rm) (set$ rd (lshift rn (logand rm 63))))
+        #|(defun LSRVWr (rd rn rm) (setw rd (rshift rn (logand rm 31))))
+        #|(defun LSRVXr (rd rn rm) (set$ rd (rshift rn (logand rm 63))))
+        #|(defun ASRVWr (rd rn rm) (setw rd (arshift rn (logand rm 31))))
+        #|(defun ASRVXr (rd rn rm) (set$ rd (arshift rn (logand rm 63))))
+        #|(defun RORVWr (rd rn rm) (setw rd (rotate-right rn (logand rm 31))))
+        #|(defun RORVXr (rd rn rm) (set$ rd (rotate-right rn (logand rm 63))))
+        #|
+        #|(defun CLZWr (rd rn) (setw rd (clz rn)))
+        #|(defun CLZXr (rd rn) (set$ rd (clz rn)))
+        #|(defun CLSWr (rd rn) (setw rd (count-leading-sign-bits rn)))
+        #|(defun CLSXr (rd rn) (set$ rd (count-leading-sign-bits rn)))
+        #|(defun RBITWr (rd rn) (setw rd (reverse-bits32 rn)))
+        #|(defun RBITXr (rd rn) (set$ rd (reverse-bits64 rn)))
+        #|(defun REVWr (rd rn) (setw rd (reverse-bytes32 rn)))
+        #|(defun REVXr (rd rn) (set$ rd (reverse-bytes64 rn)))
+        #|(defun REV16Wr (rd rn) (setw rd (reverse-halfword-bytes rn)))
+        #|(defun REV16Xr (rd rn) (set$ rd (reverse-halfword-bytes rn)))
+        #|(defun REV32Xr (rd rn)
+        #|  (set$ rd (concat (reverse-bytes32 (cast-high 32 rn))
+        #|                   (reverse-bytes32 (cast-low 32 rn)))))
+        #|
+        #|(defun EXTRWrri (rd rn rm lsb)
+        #|  (setw rd (extract (+ lsb 31) lsb (concat rn rm))))
+        #|(defun EXTRXrri (rd rn rm lsb)
+        #|  (set$ rd (extract (+ lsb 63) lsb (concat rn rm))))
         #|
       ),
     ),
@@ -2957,8 +3659,10 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|  "(CCMN** rn rm-or-imm nzcv cnd) implements either CCMN*i
         #|   or CCMN*r. The semantics are the same at the lisp level;
         #|   an immediate or register value is given as second argument."
+        #|  ;; port: the flags of the W forms are those of the 32-bit sum (upstream
+        #|  ;; adds at 64 bits when the second operand is an immediate)
         #|  (if (condition-holds cnd)
-        #|    (set-nzcv-from-registers (+ rn rm-or-imm) rn rm-or-imm)
+        #|    (set-nzcv-of-sum rn rm-or-imm 0)
         #|    (set-nzcv nzcv)))
         #|
         #|(defun CCMNWi (rn imm nzcv cnd) (CCMN** rn imm nzcv cnd))
@@ -2971,8 +3675,7 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|   or CCMP*r. The semantics are the same at the lisp level;
         #|   an immediate or register value is given as second argument."
         #|  (if (condition-holds cnd)
-        #|    (let ((rm-or-imm (lnot rm-or-imm)))
-        #|      (set-nzcv-from-registers (+ rn rm-or-imm 1) rn rm-or-imm))
+        #|    (set-nzcv-of-sum rn (lnot rm-or-imm) 1)
         #|    (set-nzcv nzcv)))
         #|
         #|(defun CCMPWi (rn imm nzcv cnd) (CCMP** rn imm nzcv cnd))
@@ -3039,6 +3742,50 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|
         #|(defun UDF (exn)
         #|  (intrinsic 'undefined-instruction))
+        #|
+        #|;; port: pointer authentication (ARMv8.3 PAuth), added; upstream has no
+        #|;; semantics for it. The semantics model the instructions with pointer
+        #|;; authentication disabled (SCTLR_ELx.EnIA/EnIB/EnDA/EnDB clear), as a
+        #|;; process without keys sees them: the PAC* and AUT* instructions leave
+        #|;; their register unchanged, XPAC* strip nothing, and the authenticating
+        #|;; branches and returns are the plain ones.
+        #|
+        #|(defun PACIASP () (empty))
+        #|(defun PACIBSP () (empty))
+        #|(defun PACIAZ () (empty))
+        #|(defun PACIBZ () (empty))
+        #|(defun PACIA1716 () (empty))
+        #|(defun PACIB1716 () (empty))
+        #|(defun AUTIASP () (empty))
+        #|(defun AUTIBSP () (empty))
+        #|(defun AUTIAZ () (empty))
+        #|(defun AUTIBZ () (empty))
+        #|(defun AUTIA1716 () (empty))
+        #|(defun AUTIB1716 () (empty))
+        #|(defun XPACLRI () (empty))
+        #|
+        #|(defun PACIA (_ _ _) (empty))
+        #|(defun PACIB (_ _ _) (empty))
+        #|(defun PACDA (_ _ _) (empty))
+        #|(defun PACDB (_ _ _) (empty))
+        #|(defun AUTIA (_ _ _) (empty))
+        #|(defun AUTIB (_ _ _) (empty))
+        #|(defun AUTDA (_ _ _) (empty))
+        #|(defun AUTDB (_ _ _) (empty))
+        #|(defun PACIZA (_ _) (empty))
+        #|(defun PACIZB (_ _) (empty))
+        #|(defun PACDZA (_ _) (empty))
+        #|(defun PACDZB (_ _) (empty))
+        #|(defun AUTIZA (_ _) (empty))
+        #|(defun AUTIZB (_ _) (empty))
+        #|(defun AUTDZA (_ _) (empty))
+        #|(defun AUTDZB (_ _) (empty))
+        #|(defun XPACI (_ _) (empty))
+        #|(defun XPACD (_ _) (empty))
+        #|
+        #|(defun BRK (_)
+        #|  "brk #imm ; port: added, a software breakpoint"
+        #|  (intrinsic 'software-breakpoint))
         #|
       ),
     ),
@@ -3159,7 +3906,9 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|
         #|(defmacro setw (reg val)
         #|  "(set Wx V) sets a Wx register clearing the upper 32 bits."
-        #|  (set$ (alias-base-register reg) val))
+        #|  ;; port: the low word of V is written (V is often computed at 64 bits
+        #|  ;; from sign-extended W operands, whose upper half upstream writes too)
+        #|  (set$ (alias-base-register reg) (cast-low 32 (cast-unsigned 64 val))))
         #|
         #|(defun replicate-to-fill (bitv n)
         #|  "(replicate-to-fill bitv n) returns the result of repeating bitv
@@ -3174,14 +3923,39 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|  "(i-shift r simm) shifts r according to the encoded shift simm.
         #|   The first three bits of simm indicate the shift type, and the
         #|   remaining bits indicate the shift amount."
+        #|  ;; port: lsr and asr by 0 encode shifts by 32 (upstream shifts by 0)
         #|  (let ((amt (rshift simm 3)))
         #|    (case (extract 2 0 simm)
         #|      0b000 r ; none
-        #|      0b001 (arshift r amt) ; asr
+        #|      0b001 (arshift r (if (= amt 0) 31 amt)) ; asr
         #|      0b010 (lshift r amt) ; lsl
-        #|      0b011 (rshift r amt) ; lsr
-        #|      0b100 (logor (rshift r amt) (lshift r (- 32 amt))) ; ror
+        #|      0b011 (if (= amt 0) 0 (rshift r amt)) ; lsr
+        #|      0b100 (rotate-right r amt) ; ror
         #|      0b101 (logor (lshift (cast-unsigned 32 CF) 31) (rshift r 1))))) ; rrx
+        #|
+        #|(defun i-shift-carry (r simm)
+        #|  "(i-shift-carry r simm) is the carry out of (i-shift r simm) ; port: added"
+        #|  (let ((amt (rshift simm 3)))
+        #|    (case (extract 2 0 simm)
+        #|      0b000 CF
+        #|      0b001 (if (= amt 0) (msb r) (lsb (rshift r (- amt 1))))
+        #|      0b010 (if (= amt 0) CF (msb (lshift r (- amt 1))))
+        #|      0b011 (if (= amt 0) (msb r) (lsb (rshift r (- amt 1))))
+        #|      0b100 (lsb (rshift r (- amt 1)))
+        #|      0b101 (lsb r))))
+        #|
+        #|;; port: added, the register-specified shifts of R by the dynamic amount
+        #|;; N (0 to 255) and their carry out for a non-zero N
+        #|
+        #|(defun lsl-by (r n) (if (< n 32) (lshift r n) 0))
+        #|(defun lsr-by (r n) (if (< n 32) (rshift r n) 0))
+        #|(defun asr-by (r n) (arshift r (if (< n 32) n 31)))
+        #|(defun ror-by (r n) (rotate-right r (logand n 31)))
+        #|
+        #|(defun lsl-carry (r n) (if (< n 33) (msb (lshift r (- n 1))) 0))
+        #|(defun lsr-carry (r n) (if (< n 33) (lsb (rshift r (- n 1))) 0))
+        #|(defun asr-carry (r n) (if (< n 33) (lsb (rshift r (- n 1))) (msb r)))
+        #|(defun ror-carry (r n) (msb (ror-by r n)))
         #|
       ),
     ),
@@ -3234,11 +4008,24 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|
         #|(in-package thumb)
         #|
+        #|;; port: the definitions marked `port:` are fixed to the ISA (checked
+        #|;; against Unicorn by the `unicorn_diff` tables) or added.
+        #|
         #|(defun tCMPhir (rn rm cnd _)
         #|  "cmp rn, rm"
+        #|  ;; port: rn - rm = rn + ~rm + 1 (upstream adds -rm, which gets the
+        #|  ;; carry of rm = 0 wrong)
         #|  (when (condition-holds cnd)
-        #|    (let ((r (- rn rm)))
-        #|      (set-nzcv-from-registers r rn (- rm)))))
+        #|    (let ((x (t2reg rn))
+        #|          (y (lnot (t2reg rm)))
+        #|          (r (+ x y 1)))
+        #|      (set-nzcv-from-registers r x y))))
+        #|
+        #|(defun tCMNz (rn rm cnd _)
+        #|  "cmn rn, rm ; port: added"
+        #|  (when (condition-holds cnd)
+        #|    (let ((r (+ rn rm)))
+        #|      (set-nzcv-from-registers r rn rm))))
         #|
         #|(defun tADR (rd lbl cnd _)
         #|  "adr rd, lbl"
@@ -3247,18 +4034,27 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|      (set$ rd (+ pc (lshift lbl 2))))))
         #|
         #|(defmacro tLOGs (op rd rn rm cnd)
-        #|  (prog (set$ rd (op rn rm))
-        #|     (when (is-unconditional cnd)
-        #|       (set ZF (is-zero rd))
-        #|       (set NF (msb rd)))))
+        #|  ;; port: conditional in IT blocks (upstream writes rd unconditionally)
+        #|  (when (condition-holds cnd)
+        #|    (let ((r (op rn rm)))
+        #|      (when (is-unconditional cnd)
+        #|        (set ZF (is-zero r))
+        #|        (set NF (msb r)))
+        #|      (set$ rd r))))
         #|
         #|(defun tEOR (rd _ rn rm cnd _)
         #|  (tLOGs logxor rd rn rm cnd))
         #|
-        #|(defun t2EORrs (rd rn rm simm cnd _ _)
+        #|(defun t2EORrs (rd rn rm simm cnd _ s)
         #|  "eor.w rd, rn, rm, simm"
+        #|  ;; port: eors sets the flags (upstream ignores the S operand)
         #|  (when (condition-holds cnd)
-        #|    (set$ rd (logxor rn (i-shift rm simm)))))
+        #|    (let ((r (logxor rn (i-shift rm simm))))
+        #|      (when (is-cpsr s)
+        #|        (set CF (i-shift-carry rm simm))
+        #|        (set ZF (is-zero r))
+        #|        (set NF (msb r)))
+        #|      (set$ rd r))))
         #|
         #|(defun tAND (rd _ rn rm cnd _)
         #|  (tLOGs logand rd rn rm cnd))
@@ -3268,10 +4064,7 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|  (tLOGs logandnot rd rn rm cnd))
         #|
         #|(defun tMVN (rd _ rn cnd _)
-        #|  (set$ rd (lnot rn))
-        #|  (when (is-unconditional cnd)
-        #|    (set ZF (is-zero rd))
-        #|    (set NF (msb rd))))
+        #|  (tLOGs logor rd 0 (lnot rn) cnd))
         #|
         #|(defun tREV (rd rn cnd _)
         #|  (when (condition-holds cnd)
@@ -3280,6 +4073,11 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|              (extract 15 8 rn)
         #|              (extract 23 16 rn)
         #|              (extract 31 24 rn)))))
+        #|
+        #|(defun tREVSH (rd rm cnd _)
+        #|  "revsh rd, rm ; port: added"
+        #|  (when (condition-holds cnd)
+        #|    (set$ rd (cast-signed 32 (concat (extract 7 0 rm) (extract 15 8 rm))))))
         #|
         #|(defun tREV16 (rd rm cnd _)
         #|  "rev16 rd rm"
@@ -3290,50 +4088,125 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|              (extract 7 0 rm)
         #|              (extract 15 8 rm)))))
         #|
+        #|;; port: the register-specified shifts use the least significant byte of
+        #|;; the shift register (amounts of 32 and more shift all bits out), keep
+        #|;; the carry for a zero amount and set the flags outside of IT blocks
+        #|;; only (upstream sets the carry to the msb of the operand and shifts by
+        #|;; the whole register)
+        #|
+        #|(defmacro t-shift-reg (shift carry rd rn rm cnd set-flags)
+        #|  (when (condition-holds cnd)
+        #|    (let ((n (cast-unsigned 32 (extract 7 0 rm)))
+        #|          (r (shift rn n)))
+        #|      (when set-flags
+        #|        (set CF (if (= n 0) CF (carry rn n)))
+        #|        (set ZF (is-zero r))
+        #|        (set NF (msb r)))
+        #|      (set$ rd r))))
+        #|
         #|(defun tLSLrr (rd _ rn rm cnd _)
         #|  "lsls rd, rn, rm"
-        #|  (shift-with-carry lshift rd rn rm cnd))
-        #|
-        #|(defun t2LSLri (rd rm imm cnd _ _)
-        #|  "lsl.w rd, rm, #imm"
-        #|  (when (condition-holds cnd)
-        #|    (set$ rd (lshift rm imm))))
+        #|  (t-shift-reg lsl-by lsl-carry rd rn rm cnd (is-unconditional cnd)))
         #|
         #|(defun tLSRrr (rd _ rn rm cnd _)
         #|  "lsrs rd, rn, rm"
-        #|  (shift-with-carry rshift rd rn rm cnd))
+        #|  (t-shift-reg lsr-by lsr-carry rd rn rm cnd (is-unconditional cnd)))
         #|
-        #|(defun t2LSRri (rd rm imm cnd _ _)
-        #|  "lsr.w rd, rm, #imm"
+        #|(defun tASRrr (rd _ rn rm cnd _)
+        #|  "asrs rd, rn, rm ; port: added"
+        #|  (t-shift-reg asr-by asr-carry rd rn rm cnd (is-unconditional cnd)))
+        #|
+        #|(defun tROR (rd _ rn rm cnd _)
+        #|  "rors rd, rn, rm ; port: added"
+        #|  (t-shift-reg ror-by ror-carry rd rn rm cnd (is-unconditional cnd)))
+        #|
+        #|(defun t2LSLrr (rd rn rm cnd _ s)
+        #|  "lsl.w rd, rn, rm ; port: added"
+        #|  (t-shift-reg lsl-by lsl-carry rd rn rm cnd (is-cpsr s)))
+        #|
+        #|(defun t2LSRrr (rd rn rm cnd _ s)
+        #|  "lsr.w rd, rn, rm ; port: added"
+        #|  (t-shift-reg lsr-by lsr-carry rd rn rm cnd (is-cpsr s)))
+        #|
+        #|(defun t2ASRrr (rd rn rm cnd _ s)
+        #|  "asr.w rd, rn, rm ; port: added"
+        #|  (t-shift-reg asr-by asr-carry rd rn rm cnd (is-cpsr s)))
+        #|
+        #|(defun t2RORrr (rd rn rm cnd _ s)
+        #|  "ror.w rd, rn, rm ; port: added"
+        #|  (t-shift-reg ror-by ror-carry rd rn rm cnd (is-cpsr s)))
+        #|
+        #|;; port: the immediate shifts decode `lsr`/`asr` #32 (encoded as 0) and
+        #|;; set the flags of the S forms (upstream shifts by 0 and ignores S)
+        #|
+        #|(defmacro t2-shift-imm (typ rd rm imm cnd s)
         #|  (when (condition-holds cnd)
-        #|    (set$ rd (rshift rm imm))))
+        #|    (let ((simm (logor (lshift imm 3) typ))
+        #|          (r (i-shift rm simm)))
+        #|      (when (is-cpsr s)
+        #|        (set CF (i-shift-carry rm simm))
+        #|        (set ZF (is-zero r))
+        #|        (set NF (msb r)))
+        #|      (set$ rd r))))
         #|
-        #|(defun tTST (rn rm _ _)
+        #|(defun t2LSLri (rd rm imm cnd _ s)
+        #|  "lsl.w rd, rm, #imm"
+        #|  (t2-shift-imm 0b010 rd rm imm cnd s))
+        #|
+        #|(defun t2LSRri (rd rm imm cnd _ s)
+        #|  "lsr.w rd, rm, #imm"
+        #|  (t2-shift-imm 0b011 rd rm imm cnd s))
+        #|
+        #|(defun t2ASRri (rd rm imm cnd _ s)
+        #|  "asr.w rd, rm, #imm ; port: added"
+        #|  (t2-shift-imm 0b001 rd rm imm cnd s))
+        #|
+        #|(defun t2RORri (rd rm imm cnd _ s)
+        #|  "ror.w rd, rm, #imm ; port: added"
+        #|  (t2-shift-imm 0b100 rd rm imm cnd s))
+        #|
+        #|(defun tTST (rn rm cnd _)
         #|  "tst rn, rm"
-        #|  (let ((rd (logand rn rm)))
-        #|    (set ZF (is-zero rd))
-        #|    (set NF (msb rd))))
+        #|  ;; port: conditional in IT blocks
+        #|  (when (condition-holds cnd)
+        #|    (let ((rd (logand rn rm)))
+        #|      (set ZF (is-zero rd))
+        #|      (set NF (msb rd)))))
         #|
         #|(defun tADDhirr (rd rn rm cnd _)
+        #|  ;; port: reads of pc are the address of the instruction plus 4 and
+        #|  ;; writes to pc are jumps
         #|  (when (condition-holds cnd)
-        #|    (set$ rd (+ rn (t2reg rm)))))
+        #|    (t2set rd (+ (t2reg rn) (t2reg rm)))))
         #|
-        #|(defun t2ADDrs (rd rn rm simm cnd _ _)
+        #|(defun t2ADDrs (rd rn rm simm cnd _ s)
         #|  "add.w rd, rn, rm, simm"
+        #|  ;; port: adds sets the flags
         #|  (when (condition-holds cnd)
-        #|    (set$ rd (+ rn (i-shift rm simm)))))
+        #|    (let ((y (i-shift rm simm))
+        #|          (r (+ rn y)))
+        #|      (when (is-cpsr s)
+        #|        (set-nzcv-from-registers r rn y))
+        #|      (set$ rd r))))
         #|
         #|(defun tSBC (rd _ rn rm cnd _)
-        #|  (add-with-carry/it-block rd rn (lnot rm) CF cnd))
+        #|  ;; port: the carry is zero-extended (upstream sign-extends it)
+        #|  (add-with-carry/it-block rd rn (lnot rm) (cast-unsigned 32 CF) cnd))
         #|
         #|(defun tRSB (rd _ rn cnd _)
         #|  "rsbs        r3, r2, #0"
         #|  (add-with-carry/it-block rd 0 (lnot rn) 1 cnd))
         #|
-        #|(defun t2RSBrs (rd rn rm simm cnd _ _)
+        #|(defun t2RSBrs (rd rn rm simm cnd _ s)
         #|  "rsb rd, rn, rm, simm"
+        #|  ;; port: rsbs sets the flags
         #|  (when (condition-holds cnd)
-        #|    (set$ rd (- (i-shift rm simm) rn))))
+        #|    (let ((x (i-shift rm simm))
+        #|          (y (lnot rn))
+        #|          (r (+ x y 1)))
+        #|      (when (is-cpsr s)
+        #|        (set-nzcv-from-registers r x y))
+        #|      (set$ rd r))))
         #|
         #|(defun tMUL (rd _ rn rm cnd _)
         #|  (when (condition-holds cnd)
@@ -3345,14 +4218,14 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|(defun t2STR_PRE (_ rt rn off cnd _)
         #|  "str rt [rn, #off]!"
         #|  (when (condition-holds cnd)
-        #|    (set$ rn (+ rn off))
+        #|    (set$ rn (+ rn (t2off off)))
         #|    (store-word rn rt)))
         #|
         #|(defun t2STRDi8 (rt1 rt2 rn imm pre _)
         #|  "strd rt1, rt2, [rn, off]"
         #|  (when (condition-holds pre)
-        #|    (store-word (+ rn imm) rt1)
-        #|    (store-word (+ rn imm (sizeof word-width)) rt2)))
+        #|    (store-word (+ rn (t2off imm)) rt1)
+        #|    (store-word (+ rn (t2off imm) (sizeof word-width)) rt2)))
         #|
         #|(defun t2STRs (rt rn rm imm cnd _)
         #|  "str.w rt [rn, rm, lsl imm]"
@@ -3398,25 +4271,29 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|(defun t2LDRi8 (rt rn imm cnd _)
         #|  "ldr rt, [rn, #-imm]"
         #|  (when (condition-holds cnd)
-        #|    (set$ rt (load-word (+ rn imm)))))
+        #|    (t2set rt (load-word (+ rn (t2off imm))))))
         #|
         #|(defun t2LDRDi8 (rt rt2 rn imm cnd _)
         #|  "ldrd rt, rt2, [rn, #imm]"
+        #|  ;; port: both words are loaded before rt (which may be rn) is written
         #|  (when (condition-holds cnd)
-        #|    (set$ rt (load-word (+ rn imm)))
-        #|    (set$ rt2 (load-word (+ rn imm 4)))))
+        #|    (let ((addr (+ rn (t2off imm)))
+        #|          (w1 (load-word addr))
+        #|          (w2 (load-word (+ addr 4))))
+        #|      (set$ rt w1)
+        #|      (set$ rt2 w2))))
         #|
         #|(defun t2LDR_POST (rt _ rn off cnd _)
         #|  "ldr rt, [rn], #imm"
         #|  (when (condition-holds cnd)
         #|    (let ((tmp rn))
-        #|      (set$ rn (+ rn off))
+        #|      (set$ rn (+ rn (t2off off)))
         #|      (t2set rt (load-word tmp)))))
         #|
         #|(defun t2LDRB_PRE (rt _ rn off cnd _)
         #|  "ldrb rt, [rn, #off]!"
         #|  (when (condition-holds cnd)
-        #|    (set$ rn (+ rn off))
+        #|    (set$ rn (+ rn (t2off off)))
         #|    (set$ rt (cast-unsigned 32 (load-bits 8 rn)))))
         #|
         #|(defun t2LDRSBi12 (rt rn imm pre _)
@@ -3436,7 +4313,32 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|
         #|(defun tMOVr (rt rn pre _)
         #|  (when (condition-holds pre)
-        #|    (t2set rt rn)))
+        #|    (t2set rt (t2reg rn))))
+        #|
+        #|(defun tHINT (_ _ _)
+        #|  "nop, yield, wfe, wfi, sev ; port: added"
+        #|  (empty))
+        #|
+        #|(defun t2CLZ (rd rm pre _)
+        #|  "clz rd, rm ; port: added"
+        #|  (when (condition-holds pre)
+        #|    (set$ rd (clz rm))))
+        #|
+        #|(defun t2SDIV (rd rn rm pre _)
+        #|  "sdiv rd, rn, rm ; port: added (division by zero yields zero)"
+        #|  (when (condition-holds pre)
+        #|    (set$ rd (if (= rm 0) 0 (s/ rn rm)))))
+        #|
+        #|(defun t2UDIV (rd rn rm pre _)
+        #|  "udiv rd, rn, rm ; port: added (division by zero yields zero)"
+        #|  (when (condition-holds pre)
+        #|    (set$ rd (if (= rm 0) 0 (/ rn rm)))))
+        #|
+        #|(defun is-cpsr (r) (= (symbol r) 'CPSR))
+        #|
+        #|(defun t2off (imm)
+        #|  "LLVM encodes the 8-bit offset #-0 as INT32_MIN"
+        #|  (if (= imm 0x80000000) 0 imm))
         #|
         #|(defun t2pc () (+ (get-program-counter) 4))
         #|
@@ -3746,10 +4648,13 @@ pub fn embedded_lisp_files() -> Array[(String, String)] {
         #|      +rtz+ (with-rmode 'rtz (sse-binary name rt rn rm)))))
         #|
         #|(defmacro set-sse (rd x)
-        #|  (let ((wd (word-width rd))
-        #|        (wx (word-width x)))
+        #|  ;; port: x is evaluated once (upstream substitutes it twice, which
+        #|  ;; calls the intrinsic twice)
+        #|  (let ((v x)
+        #|        (wd (word-width rd))
+        #|        (wx (word-width v)))
         #|    (set$ rd (concat (cast-high (- wd wx) rd)
-        #|                     (cast-low wx x)))))
+        #|                     (cast-low wx v)))))
         #|
         #|(defmacro fp-binary (op rt rd rn ptr off)
         #|  (set-sse rd (sse-binary op rt rn (load-mem ptr off))))

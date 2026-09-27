@@ -11,7 +11,7 @@ test "MOVi decodes the modified immediate" {
     lift_str("MOVi", [r("R0"), i(0x4FF), ..al, r("CPSR")]),
     content=(
       #|R0:imm32 := 0xFF000000:32u
-      #|CF:imm1 := high:1[0x4FF:32u]
+      #|CF:imm1 := 1:1u
       #|NF:imm1 := high:1[R0:imm32]
       #|ZF:imm1 := (R0:imm32 == 0:32u)
     ),
@@ -25,7 +25,7 @@ test "MOVi decodes the modified immediate" {
     lift_str("MOVi", [r("R0"), i(0x12), ..al, r("CPSR")]),
     content=(
       #|R0:imm32 := 0x12:32u
-      #|CF:imm1 := unknown(undefined:imm1)
+      #|CF:imm1 := CF:imm1
       #|NF:imm1 := high:1[R0:imm32]
       #|ZF:imm1 := (R0:imm32 == 0:32u)
     ),
@@ -34,7 +34,7 @@ test "MOVi decodes the modified immediate" {
     lift_str("MOVi", [r("R0"), i(0x12), ..al, r("CPSR")], raw=0xE3B00F12),
     content=(
       #|R0:imm32 := 0x12:32u
-      #|CF:imm1 := 0:1u
+      #|CF:imm1 := CF:imm1
       #|NF:imm1 := high:1[R0:imm32]
       #|ZF:imm1 := (R0:imm32 == 0:32u)
     ),
@@ -87,8 +87,9 @@ test "register moves and shifted moves" {
     lift_str("MOVsr", [r("R0"), r("R1"), r("R2"), i(1), ..al, r("CPSR")]),
     content=(
       #|%v1:imm32 := R1:imm32
-      #|R0:imm32 := (%v1:imm32 a>> R2:imm32)
-      #|CF:imm1 := low:1[(%v1:imm32 >> (R2:imm32 - 1:32u))]
+      #|%v2:imm32 := pad:32[extract[7:0](R2:imm32)]
+      #|R0:imm32 := ite((%v2:imm32 < 0x20:32u), (%v1:imm32 a>> %v2:imm32), (%v1:imm32 a>> 0x1F:32u))
+      #|CF:imm1 := ite((%v2:imm32 == 0:32u), CF:imm1, ite((%v2:imm32 < 0x20:32u), low:1[(%v1:imm32 >> (%v2:imm32 - 1:32u))], extract[31:31](%v1:imm32)))
       #|NF:imm1 := high:1[R0:imm32]
       #|ZF:imm1 := (R0:imm32 == 0:32u)
     ),
@@ -116,7 +117,8 @@ test "register moves and shifted moves" {
     lift_str("MVNsr", [r("R0"), r("R1"), r("R2"), i(4), ..al, r("Nil")]),
     content=(
       #|%v1:imm32 := R1:imm32
-      #|R0:imm32 := (not ((%v1:imm32 >> R2:imm32) | (%v1:imm32 << (0x20:32u - R2:imm32))))
+      #|%v2:imm32 := pad:32[extract[7:0](R2:imm32)]
+      #|R0:imm32 := (not ite(((%v2:imm32 & 0x1F:32u) == 0:32u), %v1:imm32, ((%v1:imm32 >> (%v2:imm32 & 0x1F:32u)) | (%v1:imm32 << (0x20:32u - (%v2:imm32 & 0x1F:32u))))))
     ),
   )
   inspect(lift_str("MOVPCLR", al), content="jmp LR:imm32")
@@ -188,8 +190,9 @@ test "data processing forms" {
     ),
     content=(
       #|%v1:imm32 := R2:imm32
-      #|R0:imm32 := (R1:imm32 & (%v1:imm32 << R3:imm32))
-      #|CF:imm1 := ite((R3:imm32 != 0:32u), low:1[(%v1:imm32 >> (0x20:32u - R3:imm32))], CF:imm1)
+      #|%v2:imm32 := pad:32[extract[7:0](R3:imm32)]
+      #|R0:imm32 := (R1:imm32 & ite((%v2:imm32 < 0x20:32u), (%v1:imm32 << %v2:imm32), 0:32u))
+      #|CF:imm1 := ite((%v2:imm32 == 0:32u), CF:imm1, ite((0x20:32u < %v2:imm32), 0:1u, low:1[(%v1:imm32 >> (0x20:32u - %v2:imm32))]))
       #|NF:imm1 := high:1[R0:imm32]
       #|ZF:imm1 := (R0:imm32 == 0:32u)
     ),
@@ -198,7 +201,7 @@ test "data processing forms" {
     lift_str("ORRri", [r("R0"), r("R1"), i(0xFF), ..al, r("CPSR")]),
     content=(
       #|R0:imm32 := (R1:imm32 | 0xFF:32u)
-      #|CF:imm1 := unknown(undefined:imm1)
+      #|CF:imm1 := CF:imm1
       #|NF:imm1 := high:1[R0:imm32]
       #|ZF:imm1 := (R0:imm32 == 0:32u)
     ),
@@ -319,7 +322,7 @@ test "comparisons and tests set the flags only" {
     content=(
       #|%v2:imm32 := R2:imm32
       #|%v1:imm32 := (R1:imm32 ^ (%v2:imm32 << 1:32u))
-      #|CF:imm1 := ite((1:32u != 0:32u), low:1[(%v2:imm32 >> (0x20:32u - 1:32u))], CF:imm1)
+      #|CF:imm1 := extract[31:31](%v2:imm32)
       #|NF:imm1 := high:1[%v1:imm32]
       #|ZF:imm1 := (%v1:imm32 == 0:32u)
     ),
@@ -374,7 +377,7 @@ test "comparisons and tests set the flags only" {
     lift_str("TEQri", [r("R1"), i(0x1FF), ..al]),
     content=(
       #|%v1:imm32 := (R1:imm32 ^ 0xC000003F:32u)
-      #|CF:imm1 := high:1[0x1FF:32u]
+      #|CF:imm1 := 1:1u
       #|NF:imm1 := high:1[%v1:imm32]
       #|ZF:imm1 := (%v1:imm32 == 0:32u)
     ),

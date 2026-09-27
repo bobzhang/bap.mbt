@@ -36,14 +36,9 @@ fn bcc(pc : Int, cnd : Cond, dst : Int) -> Array[@types.Stmt] {
 }
 
 ///|
-/// `next pc`: the value stored to `LR` (`pc + 4`).
-fn next(pc : Int) -> @types.Exp {
-  const_(pc_offset(pc, 0))
-}
-
-///|
 fn bli(pc : Int, dst : Int) -> Array[@types.Stmt] {
-  [set(lr, next(pc)), goto(pc_offset(pc, dst) & mask)]
+  // port: the return address has bit 0 set (Thumb); upstream omits it
+  [set(lr, const_(pc_offset(pc, 0) | 1)), goto(pc_offset(pc, dst) & mask)]
 }
 
 ///|
@@ -57,13 +52,10 @@ fn bxi(pc : Int, off : Int) -> Array[@types.Stmt] {
 }
 
 ///|
-fn blr(pc : Int, dst : @types.Var) -> Array[@types.Stmt] {
-  [set(lr, next(pc)), Jmp(logand(v(dst), const_(mask)))]
-}
-
-///|
 fn blxr(pc : Int, dst : @types.Var) -> Array[@types.Stmt] {
-  blr(pc, dst)
+  // port: `blx rm` is a 16-bit instruction, it returns to `pc + 2` in
+  // Thumb (bit 0 set); upstream links `pc + 4`
+  [set(lr, const_((pc + 2) | 1)), Jmp(logand(v(dst), const_(mask)))]
 }
 
 ///|

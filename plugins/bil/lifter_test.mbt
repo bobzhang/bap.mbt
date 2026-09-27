@@ -130,7 +130,7 @@ test "lifting with intrinsics and passes" {
   inspect(
     lift_with([], "UD2"),
     content=(
-      #|error: unsupported instruction: UD2 (target target:x86_64)
+      #|error: unsupported instruction: UD2 (target bap:x86_64)
     ),
   )
   inspect(

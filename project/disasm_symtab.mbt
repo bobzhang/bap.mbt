@@ -20,7 +20,10 @@ pub fn ProjectDisassemblySymtab::create_from_driver(
     UInt64,
     (ProjectDisassemblyBlock?, Array[ProjectDisassemblyBlock]),
   ] = Map([])
-  let mut tab = ProjectDisassemblySymtab::empty()
+  let known_blocks : Map[(UInt64, UInt64, Int), Unit] = Map([])
+  // the callees of the call sites (as `insert_call` would record them)
+  let explicit_calls : Map[UInt64, String] = Map([])
+  let implicit_calls : Map[UInt64, String] = Map([])
   driver.explore(
     kb,
     entries=driver.subroutines(),
@@ -42,10 +45,13 @@ pub fn ProjectDisassemblySymtab::create_from_driver(
       let addr = node.addr()
       let entry = calls.entry(addr)
       let start = if addr == entry { Some(node) } else { None }
+      let key = (entry, addr, node.memory_value.length())
+      let known = known_blocks.contains(key)
+      known_blocks[key] = ()
       match graphs.get(entry) {
         None => graphs[entry] = (start, [node])
         Some((first, blocks)) => {
-          if !blocks.any(block => block.same(node)) {
+          if !known {
             blocks.push(node)
           }
           graphs[entry] = (
@@ -62,10 +68,19 @@ pub fn ProjectDisassemblySymtab::create_from_driver(
       let next = src.memory().max_addr() + 1UL
       if !calls.siblings(src.addr(), dst.addr()) {
         let name = ProjectSymbolizer::get_name(kb, dst.addr())
-        tab = tab.insert_call(src, name, implicit=next == dst.addr())
+        if next == dst.addr() {
+          implicit_calls[src.addr()] = name
+        } else {
+          explicit_calls[src.addr()] = name
+        }
       }
     },
   )
+  let sorted_calls = (calls : Map[UInt64, String]) => {
+    let items = calls.to_array()
+    items.sort_by((left, right) => left.0.compare(right.0))
+    items
+  }
   let externals : Array[String] = []
   for label in driver.externals() {
     match kb.collect(project_label_name, label) {
@@ -73,15 +88,47 @@ pub fn ProjectDisassemblySymtab::create_from_driver(
       _ => ()
     }
   }
-  tab = { ..tab, externals_value: externals, }
+  // the functions, as successive `add_symbol`s would leave them: a symbol
+  // replaces the ones with its name or its address
+  let functions : Array[ProjectDisassemblyFunction?] = []
+  let by_name : Map[String, Int] = Map([])
+  let by_addr : Map[UInt64, Int] = Map([])
+  let drop = (index : Int) => {
+    match functions[index] {
+      Some(function) => {
+        by_name.remove(function.name())
+        by_addr.remove(function.addr())
+        functions[index] = None
+      }
+      None => ()
+    }
+  }
   for entry in graphs.keys().collect() {
     guard graphs.get(entry) is Some((Some(first), blocks)) else { continue }
     let name = ProjectSymbolizer::get_name(kb, entry)
-    tab = tab.add_symbol(
-      ProjectDisassemblyFunction::create(name~, entry=first, blocks~),
+    let function = ProjectDisassemblyFunction::create(
+      name~,
+      entry=first,
+      blocks~,
     )
+    if by_name.get(function.name()) is Some(index) {
+      drop(index)
+    }
+    if by_addr.get(function.addr()) is Some(index) {
+      drop(index)
+    }
+    by_name[function.name()] = functions.length()
+    by_addr[function.addr()] = functions.length()
+    functions.push(Some(function))
   }
-  tab
+  {
+    functions_value: project_disassembly_symtab_unique_functions(
+      functions.filter_map(function => function),
+    ),
+    explicit_calls_value: sorted_calls(explicit_calls),
+    implicit_calls_value: sorted_calls(implicit_calls),
+    externals_value: externals,
+  }
 }
 
 ///|

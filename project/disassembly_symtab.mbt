@@ -19,9 +19,12 @@ struct ProjectDisassemblySymtab {
 fn project_disassembly_function_sort(
   blocks : Array[ProjectDisassemblyBlock],
 ) -> Array[ProjectDisassemblyBlock] {
+  let seen : Map[(UInt64, Int), Unit] = Map([])
   let result : Array[ProjectDisassemblyBlock] = []
   for block in blocks {
-    if !result.any(existing => existing.same(block)) {
+    let key = (block.addr(), block.memory_value.length())
+    if !seen.contains(key) {
+      seen[key] = ()
       result.push(block)
     }
   }
@@ -35,14 +38,6 @@ fn project_disassembly_function_contains_block(
   block : ProjectDisassemblyBlock,
 ) -> Bool {
   blocks.any(existing => existing.same(block))
-}
-
-///|
-fn project_disassembly_function_same(
-  left : ProjectDisassemblyFunction,
-  right : ProjectDisassemblyFunction,
-) -> Bool {
-  left.name() == right.name() && left.addr() == right.addr()
 }
 
 ///|
@@ -62,11 +57,12 @@ fn project_disassembly_function_cmp(
 fn project_disassembly_symtab_unique_functions(
   functions : Array[ProjectDisassemblyFunction],
 ) -> Array[ProjectDisassemblyFunction] {
+  let seen : Map[(String, UInt64), Unit] = Map([])
   let result : Array[ProjectDisassemblyFunction] = []
   for function in functions {
-    if !result.any(existing => {
-        project_disassembly_function_same(existing, function)
-      }) {
+    let key = (function.name(), function.addr())
+    if !seen.contains(key) {
+      seen[key] = ()
       result.push(function)
     }
   }
@@ -104,12 +100,11 @@ fn project_disassembly_symtab_find_call(
   calls : Array[(UInt64, String)],
   addr : UInt64,
 ) -> String? {
-  for call in calls {
-    if call.0 == addr {
-      return Some(call.1)
-    }
+  // the calls are sorted by their (distinct) addresses
+  match calls.binary_search_by(call => call.0.compare(addr)) {
+    Ok(i) => Some(calls[i].1)
+    Err(_) => None
   }
-  None
 }
 
 ///|

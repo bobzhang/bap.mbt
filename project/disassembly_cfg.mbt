@@ -30,12 +30,34 @@ fn project_disassembly_cfg_same_edge(
 }
 
 ///|
+/// Blocks are identified by their address and size (`ProjectDisassemblyBlock::same`).
+fn project_disassembly_cfg_node_key(
+  node : ProjectDisassemblyBlock,
+) -> (UInt64, Int) {
+  (node.addr(), node.memory_value.length())
+}
+
+///|
+/// The rank of an edge kind in the order of its textual name.
+fn project_disassembly_cfg_kind_rank(kind : ProjectDisassemblyEdgeKind) -> Int {
+  match kind {
+    CondEdge => 0
+    FallEdge => 1
+    JumpEdge => 2
+  }
+}
+
+///|
+/// Removes duplicate nodes (keeping the first occurrence) and sorts them.
 fn project_disassembly_cfg_sort_nodes(
   nodes : Array[ProjectDisassemblyBlock],
 ) -> Array[ProjectDisassemblyBlock] {
+  let seen : Map[(UInt64, Int), Unit] = Map([])
   let result : Array[ProjectDisassemblyBlock] = []
   for node in nodes {
-    if !result.any(existing => project_disassembly_cfg_same_node(existing, node)) {
+    let key = project_disassembly_cfg_node_key(node)
+    if !seen.contains(key) {
+      seen[key] = ()
       result.push(node)
     }
   }
@@ -44,29 +66,81 @@ fn project_disassembly_cfg_sort_nodes(
 }
 
 ///|
+fn project_disassembly_cfg_compare_edges(
+  left : ProjectDisassemblyCfgEdge,
+  right : ProjectDisassemblyCfgEdge,
+) -> Int {
+  let src_order = left.src().compare(right.src())
+  if src_order != 0 {
+    src_order
+  } else {
+    let dst_order = left.dst().compare(right.dst())
+    if dst_order != 0 {
+      dst_order
+    } else {
+      project_disassembly_cfg_kind_rank(left.kind()).compare(
+        project_disassembly_cfg_kind_rank(right.kind()),
+      )
+    }
+  }
+}
+
+///|
+/// Removes duplicate edges (keeping the first occurrence) and sorts them.
 fn project_disassembly_cfg_sort_edges(
   edges : Array[ProjectDisassemblyCfgEdge],
 ) -> Array[ProjectDisassemblyCfgEdge] {
+  let seen : Map[(UInt64, Int, UInt64, Int, Int), Unit] = Map([])
   let result : Array[ProjectDisassemblyCfgEdge] = []
   for edge in edges {
-    if !result.any(existing => project_disassembly_cfg_same_edge(existing, edge)) {
+    let (src_addr, src_size) = project_disassembly_cfg_node_key(edge.src())
+    let (dst_addr, dst_size) = project_disassembly_cfg_node_key(edge.dst())
+    let key = (
+      src_addr,
+      src_size,
+      dst_addr,
+      dst_size,
+      project_disassembly_cfg_kind_rank(edge.kind()),
+    )
+    if !seen.contains(key) {
+      seen[key] = ()
       result.push(edge)
     }
   }
-  result.sort_by((left, right) => {
-    let src_order = left.src().compare(right.src())
-    if src_order != 0 {
-      src_order
-    } else {
-      let dst_order = left.dst().compare(right.dst())
-      if dst_order != 0 {
-        dst_order
-      } else {
-        left.kind().to_string().compare(right.kind().to_string())
-      }
-    }
-  })
+  result.sort_by(project_disassembly_cfg_compare_edges)
   result
+}
+
+///|
+/// Inserts `item` into the sorted, duplicate-free array `items` unless an
+/// element comparing equal is already present.
+fn[T] project_disassembly_cfg_sorted_insert(
+  items : Array[T],
+  item : T,
+  compare : (T, T) -> Int,
+) -> Array[T]? {
+  let mut lo = 0
+  let mut hi = items.length()
+  while lo < hi {
+    let mid = lo + (hi - lo) / 2
+    let order = compare(items[mid], item)
+    if order == 0 {
+      return None
+    } else if order < 0 {
+      lo = mid + 1
+    } else {
+      hi = mid
+    }
+  }
+  let result = Array(capacity=items.length() + 1)
+  for i in 0..<lo {
+    result.push(items[i])
+  }
+  result.push(item)
+  for i in lo..<items.length() {
+    result.push(items[i])
+  }
+  Some(result)
 }
 
 ///|
@@ -161,7 +235,8 @@ pub fn ProjectDisassemblyCfg::of_disassembly(
   disassembly : ProjectDisassemblyState,
 ) -> ProjectDisassemblyCfg {
   let blocks = disassembly.blocks_with_instructions()
-  let mut cfg = ProjectDisassemblyCfg::create(nodes=blocks)
+  let nodes = project_disassembly_cfg_sort_nodes(blocks)
+  let edges = []
   for edge in disassembly.edges() {
     match edge.target() {
       Some(target) => {
@@ -175,14 +250,18 @@ pub fn ProjectDisassemblyCfg::of_disassembly(
           Some(block) => block
           None => continue
         }
-        cfg = cfg.insert_edge(
+        edges.push(
           ProjectDisassemblyCfgEdge::create(src~, dst~, kind=edge.kind()),
         )
       }
       None => ()
     }
   }
-  cfg
+  // The endpoints are blocks of `blocks`, hence already nodes.
+  {
+    nodes_value: nodes,
+    edges_value: project_disassembly_cfg_sort_edges(edges),
+  }
 }
 
 ///|
@@ -229,12 +308,12 @@ pub fn ProjectDisassemblyCfg::insert_node(
   self : ProjectDisassemblyCfg,
   node : ProjectDisassemblyBlock,
 ) -> ProjectDisassemblyCfg {
-  if self.has_node(node) {
-    self
-  } else {
-    let nodes = self.nodes_value.copy()
-    nodes.push(node)
-    { ..self, nodes_value: project_disassembly_cfg_sort_nodes(nodes), }
+  match
+    project_disassembly_cfg_sorted_insert(self.nodes_value, node, (l, r) => {
+      l.compare(r)
+    }) {
+    None => self
+    Some(nodes) => { ..self, nodes_value: nodes, }
   }
 }
 
@@ -268,12 +347,14 @@ pub fn ProjectDisassemblyCfg::insert_edge(
 ) -> ProjectDisassemblyCfg {
   let with_src = self.insert_node(edge.src())
   let with_dst = with_src.insert_node(edge.dst())
-  if with_dst.edges_value.any(existing => existing.same(edge)) {
-    with_dst
-  } else {
-    let edges = with_dst.edges_value.copy()
-    edges.push(edge)
-    { ..with_dst, edges_value: project_disassembly_cfg_sort_edges(edges), }
+  match
+    project_disassembly_cfg_sorted_insert(
+      with_dst.edges_value,
+      edge,
+      project_disassembly_cfg_compare_edges,
+    ) {
+    None => with_dst
+    Some(edges) => { ..with_dst, edges_value: edges, }
   }
 }
 

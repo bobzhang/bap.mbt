@@ -274,46 +274,59 @@ pub fn SourceFacts::new() -> SourceFacts {
   let language = Source::language_slot()
   let code = Source::code_slot()
   let file = Source::file_slot()
+  let state = @knowledge.State::new()
   {
-    state_value: @knowledge.State::new(),
+    state_value: state,
     class_value: cls,
-    language_value: @knowledge.FactTable::new(language),
-    code_value: @knowledge.FactTable::new(code),
-    file_value: @knowledge.FactTable::new(file),
+    language_value: @knowledge.FactTable::new(language, state~),
+    code_value: @knowledge.FactTable::new(code, state~),
+    file_value: @knowledge.FactTable::new(file, state~),
   }
 }
 
 ///|
+/// The `Source::language_slot` property, declared once.
+let source_language_slot : @knowledge.Slot[Unit, Language] = Source::cls().property(
+  name=core_name("source-language"),
+  domain=source_language_domain(),
+  desc="the language of the unit source code",
+  persistent=Language::persistent(),
+  public=true,
+)
+
+///|
 pub fn Source::language_slot() -> @knowledge.Slot[Unit, Language] {
-  Source::cls().property(
-    name=core_name("source-language"),
-    domain=source_language_domain(),
-    desc="the language of the unit source code",
-    persistent=Language::persistent(),
-    public=true,
-  )
+  source_language_slot
 }
+
+///|
+/// The `Source::code_slot` property, declared once.
+let source_code_slot : @knowledge.Slot[Unit, String] = Source::cls().property(
+  name=core_name("source-code"),
+  domain=@knowledge.Domain::string(core_name("source-code")),
+  desc="the unit source code text",
+  persistent=@knowledge.Persistent::string(),
+  public=true,
+)
 
 ///|
 pub fn Source::code_slot() -> @knowledge.Slot[Unit, String] {
-  Source::cls().property(
-    name=core_name("source-code"),
-    domain=@knowledge.Domain::string(core_name("source-code")),
-    desc="the unit source code text",
-    persistent=@knowledge.Persistent::string(),
-    public=true,
-  )
+  source_code_slot
 }
 
 ///|
+/// The `Source::file_slot` property, declared once.
+let source_file_slot : @knowledge.Slot[Unit, String?] = Source::cls().property(
+  name=core_name("source-path"),
+  domain=optional_string_domain("source-path"),
+  desc="a path to the source code file",
+  persistent=optional_string_persistent(),
+  public=true,
+)
+
+///|
 pub fn Source::file_slot() -> @knowledge.Slot[Unit, String?] {
-  Source::cls().property(
-    name=core_name("source-path"),
-    domain=optional_string_domain("source-path"),
-    desc="a path to the source code file",
-    persistent=optional_string_persistent(),
-    public=true,
-  )
+  source_file_slot
 }
 
 ///|
@@ -434,70 +447,91 @@ pub fn ProgramUnitFacts::new() -> ProgramUnitFacts {
   let target = ProgramUnit::target_slot()
   let source = ProgramUnit::source_slot()
   let compiler = ProgramUnit::compiler_slot()
+  let state = @knowledge.State::new()
   {
-    state_value: @knowledge.State::new(),
+    state_value: state,
     class_value: cls,
-    path_value: @knowledge.FactTable::new(path),
-    bias_value: @knowledge.FactTable::new(bias),
-    target_value: @knowledge.FactTable::new(target),
-    source_value: @knowledge.FactTable::new(source),
-    compiler_value: @knowledge.FactTable::new(compiler),
+    path_value: @knowledge.FactTable::new(path, state~),
+    bias_value: @knowledge.FactTable::new(bias, state~),
+    target_value: @knowledge.FactTable::new(target, state~),
+    source_value: @knowledge.FactTable::new(source, state~),
+    compiler_value: @knowledge.FactTable::new(compiler, state~),
   }
 }
 
 ///|
+/// The `ProgramUnit::path_slot` property, declared once.
+let program_unit_path_slot : @knowledge.Slot[Unit, String?] = ProgramUnit::cls().property(
+  name=core_name("unit-path"),
+  domain=optional_string_domain("unit-path"),
+  desc="a filesystem name of the file that contains the program",
+  persistent=optional_string_persistent(),
+  public=true,
+)
+
+///|
 pub fn ProgramUnit::path_slot() -> @knowledge.Slot[Unit, String?] {
-  ProgramUnit::cls().property(
-    name=core_name("unit-path"),
-    domain=optional_string_domain("unit-path"),
-    desc="a filesystem name of the file that contains the program",
-    persistent=optional_string_persistent(),
-    public=true,
-  )
+  program_unit_path_slot
 }
+
+///|
+/// The `ProgramUnit::bias_slot` property, declared once.
+let program_unit_bias_slot : @knowledge.Slot[Unit, @types.Word?] = ProgramUnit::cls().property(
+  name=core_name("unit-bias"),
+  domain=optional_word_domain("unit-bias"),
+  desc="the value by which all addresses of the unit are biased",
+  persistent=optional_word_persistent(),
+  public=true,
+)
 
 ///|
 pub fn ProgramUnit::bias_slot() -> @knowledge.Slot[Unit, @types.Word?] {
-  ProgramUnit::cls().property(
-    name=core_name("unit-bias"),
-    domain=optional_word_domain("unit-bias"),
-    desc="the value by which all addresses of the unit are biased",
-    persistent=optional_word_persistent(),
-    public=true,
-  )
+  program_unit_bias_slot
 }
+
+///|
+/// The `ProgramUnit::target_slot` property, declared once.
+let program_unit_target_slot : @knowledge.Slot[Unit, Target] = ProgramUnit::cls().property(
+  name=core_name("unit-target"),
+  domain=target_domain(),
+  desc="the target system for the unit",
+  persistent=Target::persistent(),
+  public=true,
+)
 
 ///|
 pub fn ProgramUnit::target_slot() -> @knowledge.Slot[Unit, Target] {
-  ProgramUnit::cls().property(
-    name=core_name("unit-target"),
-    domain=target_domain(),
-    desc="the target system for the unit",
-    persistent=Target::persistent(),
-    public=true,
-  )
+  program_unit_target_slot
 }
+
+///|
+/// The `ProgramUnit::source_slot` property, declared once.
+let program_unit_source_slot : @knowledge.Slot[Unit, Source] = ProgramUnit::cls().property(
+  name=core_name("unit-source"),
+  domain=Source::domain(),
+  desc="the source of the unit",
+  persistent=Source::persistent(),
+  public=true,
+)
 
 ///|
 pub fn ProgramUnit::source_slot() -> @knowledge.Slot[Unit, Source] {
-  ProgramUnit::cls().property(
-    name=core_name("unit-source"),
-    domain=Source::domain(),
-    desc="the source of the unit",
-    persistent=Source::persistent(),
-    public=true,
-  )
+  program_unit_source_slot
 }
 
 ///|
+/// The `ProgramUnit::compiler_slot` property, declared once.
+let program_unit_compiler_slot : @knowledge.Slot[Unit, Compiler?] = ProgramUnit::cls().property(
+  name=core_name("unit-compiler"),
+  domain=Compiler::domain(),
+  desc="the compiler that compiled the unit",
+  persistent=optional_compiler_persistent(),
+  public=true,
+)
+
+///|
 pub fn ProgramUnit::compiler_slot() -> @knowledge.Slot[Unit, Compiler?] {
-  ProgramUnit::cls().property(
-    name=core_name("unit-compiler"),
-    domain=Compiler::domain(),
-    desc="the compiler that compiled the unit",
-    persistent=optional_compiler_persistent(),
-    public=true,
-  )
+  program_unit_compiler_slot
 }
 
 ///|

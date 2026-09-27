@@ -21,6 +21,13 @@ struct Project {
   storage_value : Map[String, String]
   libraries_value : Array[Library]
   state_value : ProjectState
+  lift_errors_value : Array[ProjectLiftError]
+  /// the knowledge base of the project (shared by the projects derived from
+  /// it, like the upstream global knowledge base)
+  knowledge_value : @knowledge.State
+  /// the state of the incremental disassembler that produced the
+  /// disassembly, if any
+  driver_value : ProjectDisassemblyDriverState?
 }
 
 ///|
@@ -82,7 +89,8 @@ fn project_memory_inspect(memory : @memory.MemMap[String]) -> String {
 }
 
 ///|
-fn project_memory_domain() -> @knowledge.Domain[@memory.MemMap[String]] {
+/// `project_memory_domain`, declared once.
+let project_memory_domain_value : @knowledge.Domain[@memory.MemMap[String]] = {
   let empty : @memory.MemMap[String] = @memory.MemMap::empty()
   @knowledge.Domain::custom(
     project_name("unit-memory"),
@@ -93,14 +101,23 @@ fn project_memory_domain() -> @knowledge.Domain[@memory.MemMap[String]] {
 }
 
 ///|
+fn project_memory_domain() -> @knowledge.Domain[@memory.MemMap[String]] {
+  project_memory_domain_value
+}
+
+///|
+/// `memory_slot`, declared once.
+let memory_slot_value : @knowledge.Slot[Unit, @memory.MemMap[String]] = @core_theory.ProgramUnit::cls().property(
+  name=project_name("unit-memory"),
+  domain=project_memory_domain(),
+  desc="annotated memory regions of the unit",
+  persistent=project_memory_persistent(),
+  public=true,
+)
+
+///|
 pub fn memory_slot() -> @knowledge.Slot[Unit, @memory.MemMap[String]] {
-  @core_theory.ProgramUnit::cls().property(
-    name=project_name("unit-memory"),
-    domain=project_memory_domain(),
-    desc="annotated memory regions of the unit",
-    persistent=project_memory_persistent(),
-    public=true,
-  )
+  memory_slot_value
 }
 
 ///|
@@ -161,7 +178,7 @@ pub fn Library::arch(self : Library) -> @core_theory.Target {
 
 ///|
 pub fn Library::specification(self : Library) -> @image.OgreDoc {
-  @image.OgreDoc::from_target(self.target_value)
+  @image.Spec::from_arch(self.target_value)
 }
 
 ///|
@@ -202,6 +219,9 @@ pub fn Project::empty(target : @core_theory.Target) -> Project {
     storage_value: {},
     libraries_value: [],
     state_value: ProjectState::empty(),
+    lift_errors_value: [],
+    knowledge_value: @knowledge.State::new(),
+    driver_value: None,
   }
 }
 
@@ -251,6 +271,9 @@ pub fn Project::create(
       Some(value) => value
       None => ProjectState::empty()
     },
+    lift_errors_value: [],
+    knowledge_value: @knowledge.State::new(),
+    driver_value: None,
   }
 }
 
@@ -275,7 +298,7 @@ pub fn Project::from_image(
     filename?=image.filename(),
     pkg?,
     program?,
-    memory=image.memory(),
+    memory=image.segment_names(),
   )
 }
 
@@ -293,7 +316,7 @@ pub fn Project::arch(self : Project) -> @core_theory.Target {
 pub fn Project::specification(self : Project) -> @image.OgreDoc {
   match self.image_value {
     Some(image) => image.spec()
-    None => @image.OgreDoc::from_target(self.target_value)
+    None => @image.Spec::from_arch(self.target_value)
   }
 }
 
@@ -324,7 +347,17 @@ pub fn Project::state(self : Project) -> ProjectState {
 
 ///|
 pub fn Project::with_state(self : Project, state : ProjectState) -> Project {
-  { ..self, state_value: state, }
+  // the state of the incremental disassembler describes the disassembly it
+  // produced only
+  let driver_value = if physical_equal(
+      state.disassembly(),
+      self.state_value.disassembly(),
+    ) {
+    self.driver_value
+  } else {
+    None
+  }
+  { ..self, state_value: state, driver_value, }
 }
 
 ///|
@@ -475,7 +508,7 @@ pub fn Project::with_applied_relocations(
           Ok({
             ..self,
             image_value: Some(updated),
-            memory_value: updated.memory(),
+            memory_value: updated.segment_names(),
           })
         Err(reason) => Err(reason)
       }

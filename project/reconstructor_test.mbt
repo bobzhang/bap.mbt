@@ -10,9 +10,11 @@ fn reconstructor_basic_disassembly(
     Err(reason) => fail(reason)
   }
   let memory = @memory.Memory::from_bytes(endian=LittleEndian, start~, bytes)
-  let basic_state = disasm.run(memory)
+  let insns = disasm.run(memory, init=(), return_=_ => [], stopped=(s, _) => {
+    s.insns()
+  })
   let instructions : Array[@project.ProjectDisassemblyInstruction] = []
-  for item in basic_state.insns() {
+  for item in insns {
     match item.1 {
       Some(instruction) => instructions.push(instruction)
       None => ()
@@ -189,18 +191,26 @@ test "project reconstructor materializes supported Basic BIL assignments" {
       let blks = subs[0].blks()
       assert_true(blks.length() == 1)
       let defs = reconstructor_def_text(blks[0].defs())
-      assert_true(defs.length() == 30)
+      // the return pops the return address (upstream x86 semantics)
+      inspect(
+        defs[30:].join("\n"),
+        content=(
+          #|%ret_addr:imm64 := load(mem:mem64x8, RSP:imm64):imm64
+          #|RSP:imm64 := (RSP:imm64 + 8:64u)
+        ),
+      )
+      assert_true(defs.length() == 32)
       assert_true(defs[0] == "%sub_dst:imm64 := RSP:imm64")
       assert_true(defs[1] == "%sub_src:imm64 := 8:64u")
       assert_true(defs[2] == "RSP:imm64 := (%sub_dst:imm64 - %sub_src:imm64)")
       assert_reconstructor_addsub_flags(
         defs, 3, "%sub_dst:imm64", "%sub_src:imm64", "RSP:imm64", "0:64u", false,
       )
-      assert_true(defs[9] == "EAX:imm32 := 0x12345678:32u")
+      assert_true(defs[9] == "RAX:imm64 := 0x12345678:64u")
       assert_true(defs[10] == "RAX:imm64 := 0x1122334455667788:64u")
       assert_true(
         defs[11] ==
-        "EAX:imm32 := load(mem:mem64x8, (RAX:imm64 + 0x10:64u)):imm32",
+        "RAX:imm64 := pad:64[load(mem:mem64x8, (RAX:imm64 + 0x10:64u)):imm32]",
       )
       assert_true(defs[12] == "%sub_dst:imm64 := RAX:imm64")
       assert_true(defs[13] == "%sub_src:imm64 := 1:64u")
@@ -236,7 +246,14 @@ test "project reconstructor materializes Basic BIL x86 register arithmetic" {
       let blks = subs[0].blks()
       assert_true(blks.length() == 1)
       let defs = reconstructor_def_text(blks[0].defs())
-      assert_true(defs.length() == 18)
+      inspect(
+        defs[18:].join("\n"),
+        content=(
+          #|%ret_addr:imm32 := load(mem:mem32x8, ESP:imm32):imm32
+          #|ESP:imm32 := (ESP:imm32 + 4:32u)
+        ),
+      )
+      assert_true(defs.length() == 20)
       assert_true(defs[0] == "%add_dst:imm32 := EAX:imm32")
       assert_true(defs[1] == "%add_src:imm32 := 1:32u")
       assert_true(defs[2] == "EAX:imm32 := (%add_dst:imm32 + %add_src:imm32)")
@@ -673,9 +690,13 @@ test "project reconstructor materializes Basic BIL fallback jumps" {
   )
   match goto_project.reconstruct() {
     Ok(reconstructed) => {
+      // `jmp .` loops to the entry of its subroutine, which upstream
+      // relinks into a (self-recursive) tail call (`link_call`), so that
+      // the entry block has no local predecessors; the 64-bit jump target
+      // resolves to the 32-bit block label (labels are width-independent)
       let block = reconstructed.program().subs()[0].blks()[0]
       assert_reconstructor_text(reconstructor_jmp_text(block.jmps()), [
-        "goto @0x0000000000007200",
+        "call @sub_0x7200 with noreturn",
       ])
     }
     Err(reason) => fail(reason)
@@ -692,9 +713,23 @@ test "project reconstructor materializes Basic BIL fallback jumps" {
   match near_goto_project.reconstruct() {
     Ok(reconstructed) => {
       let block = reconstructed.program().subs()[0].blks()[0]
+      // the target is outside of the reconstructed code: the jump may
+      // leave the subroutine and becomes a call (`alternate_nonlocal`)
       assert_reconstructor_text(reconstructor_jmp_text(block.jmps()), [
-        "goto @0x0000000000007226",
+        "call @0x00007226 with noreturn",
       ])
+      // the called label gets a synthetic subroutine (upstream
+      // `insert_synthetic`)
+      inspect(
+        reconstructed
+        .program()
+        .subs()
+        .map(sub => "\{sub.sub_name()} synthetic=\{sub.is_synthetic()}")
+        .join(" "),
+        content=(
+          #|sub_0x7220 synthetic=false 0x00007226 synthetic=true
+        ),
+      )
     }
     Err(reason) => fail(reason)
   }
@@ -746,8 +781,10 @@ test "project reconstructor materializes Basic BIL fallback jumps" {
   match indirect_call_project.reconstruct() {
     Ok(reconstructed) => {
       let block = reconstructed.program().subs()[0].blks()[0]
+      // as upstream, the call target is evaluated before the return address
+      // is pushed
       assert_reconstructor_text(reconstructor_jmp_text(block.jmps()), [
-        "call *RAX:imm64 with noreturn",
+        "call *%call_target:imm64 with noreturn",
       ])
     }
     Err(reason) => fail(reason)
@@ -764,8 +801,10 @@ test "project reconstructor materializes Basic BIL fallback jumps" {
   match indirect_goto_project.reconstruct() {
     Ok(reconstructed) => {
       let block = reconstructed.program().subs()[0].blks()[0]
+      // unresolved jumps may leave the subroutine and become calls
+      // (`alternate_nonlocal`)
       assert_reconstructor_text(reconstructor_jmp_text(block.jmps()), [
-        "goto *load(mem:mem64x8, (RAX:imm64 + 0x10:64u)):imm64",
+        "call *load(mem:mem64x8, (RAX:imm64 + 0x10:64u)):imm64 with noreturn",
       ])
     }
     Err(reason) => fail(reason)
@@ -782,8 +821,9 @@ test "project reconstructor materializes Basic BIL fallback jumps" {
   match conditional_project.reconstruct() {
     Ok(reconstructed) => {
       let block = reconstructed.program().subs()[0].blks()[0]
+      // the branch leaves the reconstructed code (`alternate_nonlocal`)
       assert_reconstructor_text(reconstructor_jmp_text(block.jmps()), [
-        "when ARM.NE:imm1 goto @0x00008428",
+        "when ARM.NE:imm1 call @0x00008428 with noreturn",
       ])
     }
     Err(reason) => fail(reason)
@@ -1061,11 +1101,19 @@ test "project default reconstructor groups unrooted cyclic components" {
       assert_true(subs[0].sub_name() == "sub_0x5300")
       assert_true(subs[0].blks().length() == 2)
       assert_true(subs[0].sub_has_edge(subs[0].blks()[0], subs[0].blks()[1]))
-      assert_true(subs[0].sub_has_edge(subs[0].blks()[1], subs[0].blks()[0]))
+      // the back edges to the entries are relinked into self-recursive tail
+      // calls (upstream `link_call`)
+      assert_reconstructor_text(
+        reconstructor_jmp_text(subs[0].blks()[1].jmps()),
+        ["call @sub_0x5300 with noreturn"],
+      )
       assert_true(subs[1].sub_name() == "sub_0x5400")
       assert_true(subs[1].blks().length() == 2)
       assert_true(subs[1].sub_has_edge(subs[1].blks()[0], subs[1].blks()[1]))
-      assert_true(subs[1].sub_has_edge(subs[1].blks()[1], subs[1].blks()[0]))
+      assert_reconstructor_text(
+        reconstructor_jmp_text(subs[1].blks()[1].jmps()),
+        ["call @sub_0x5400 with noreturn"],
+      )
     }
     Err(reason) => fail(reason)
   }

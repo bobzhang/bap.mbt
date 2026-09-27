@@ -789,11 +789,11 @@ fn project_basic_bil_btx_flags(
     @types.Exp::binop(@types.BinOp::rshift(), data, offset),
   )
   let unknown = fn() { @types.Exp::unknown(op.to_lower(), Imm(1)) }
+  // Intel SDM BT/BTS/BTR/BTC: ZF is unaffected, OF/SF/AF/PF are undefined
   [
     project_basic_bil_x86_flag_move("CF", selected),
     project_basic_bil_x86_flag_move("OF", unknown()),
     project_basic_bil_x86_flag_move("SF", unknown()),
-    project_basic_bil_x86_flag_move("ZF", unknown()),
     project_basic_bil_x86_flag_move("AF", unknown()),
     project_basic_bil_x86_flag_move("PF", unknown()),
   ]
@@ -1016,7 +1016,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_btx_mr(
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  let bits_per_word = match project_basic_bil_int(width.to_int64(), width) {
+  let word_shift = match project_basic_bil_int(offset_width.to_int64(), width) {
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
@@ -1025,10 +1025,13 @@ fn ProjectDisassemblyInstruction::project_basic_bil_btx_mr(
   let byte_tmp = project_basic_bil_virtual("btx_b", address_width)
   let data_tmp = project_basic_bil_virtual("btx_d", width)
   let offset_exp = @types.Exp::var_exp(offset)
+  // the signed bit offset selects the word at `floor(offset / width)`
+  // (an arithmetic shift: a division would round negative offsets towards
+  // zero)
   let byte_offset = @types.Exp::binop(
     @types.BinOp::times(),
     size_bytes,
-    @types.Exp::binop(@types.BinOp::sdivide(), offset_exp, bits_per_word),
+    @types.Exp::binop(@types.BinOp::arshift(), offset_exp, word_shift),
   )
   let byte_offset = if address_width == width {
     byte_offset
@@ -1417,14 +1420,15 @@ fn project_basic_bil_concat_bits(bits : Array[@types.Exp]) -> @types.Exp {
 ///|
 fn project_basic_bil_x86_lahf() -> Array[@types.Stmt] {
   let ah = project_basic_bil_reg("AH", 8)
+  // Intel SDM LAHF: AH <- SF:ZF:0:AF:0:PF:1:CF
   let value = project_basic_bil_concat_bits([
     project_basic_bil_x86_flag("SF"),
     project_basic_bil_x86_flag("ZF"),
-    @types.Exp::unknown("LAHF bit 5", Imm(1)),
+    @types.Exp::int(@types.Word::b0()),
     project_basic_bil_x86_flag("AF"),
-    @types.Exp::unknown("LAHF bit 3", Imm(1)),
+    @types.Exp::int(@types.Word::b0()),
     project_basic_bil_x86_flag("PF"),
-    @types.Exp::unknown("LAHF bit 1", Imm(1)),
+    @types.Exp::int(@types.Word::b1()),
     project_basic_bil_x86_flag("CF"),
   ])
   [@types.Stmt::move_stmt(ah, value)]
@@ -3085,16 +3089,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_imul_acc(
   )
   if width == 8 {
     let ax = project_basic_bil_reg("AX", 16)
-    let high = @types.Exp::cast(
-      @types.CastKind::high(),
-      width,
-      @types.Exp::var_exp(ax),
-    )
-    let zero = match project_basic_bil_int(0L, width) {
-      Ok(value) => value
-      Err(reason) => return Err(reason)
-    }
-    let flag = @types.Exp::binop(@types.BinOp::neq(), high, zero)
+    let flag = project_basic_bil_x86_imul_overflow(@types.Exp::var_exp(ax), 8)
     let stmts = [@types.Stmt::move_stmt(ax, product)]
     for stmt in project_basic_bil_x86_imul_acc_flag_moves(flag) {
       stmts.push(stmt)
@@ -3107,12 +3102,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_imul_acc(
     }
     let tmp = project_basic_bil_virtual("imul_tmp", product_width)
     let tmp_exp = @types.Exp::var_exp(tmp)
-    let high = @types.Exp::cast(@types.CastKind::high(), width, tmp_exp)
-    let zero = match project_basic_bil_int(0L, width) {
-      Ok(value) => value
-      Err(reason) => return Err(reason)
-    }
-    let flag = @types.Exp::binop(@types.BinOp::neq(), high, zero)
+    let flag = project_basic_bil_x86_imul_overflow(tmp_exp, width)
     let stmts = [
       @types.Stmt::move_stmt(tmp, product),
       @types.Stmt::move_stmt(
@@ -3137,6 +3127,24 @@ fn ProjectDisassemblyInstruction::project_basic_bil_imul_acc(
     }
     Ok(stmts)
   }
+}
+
+///|
+/// CF and OF of the one-operand IMUL: set when the double-width `product`
+/// is not the sign extension of its low `width` bits (Intel SDM IMUL).
+fn project_basic_bil_x86_imul_overflow(
+  product : @types.Exp,
+  width : Int,
+) -> @types.Exp {
+  @types.Exp::binop(
+    @types.BinOp::neq(),
+    product,
+    @types.Exp::cast(
+      @types.CastKind::signed(),
+      width * 2,
+      @types.Exp::cast(@types.CastKind::low(), width, product),
+    ),
+  )
 }
 
 ///|
@@ -3232,28 +3240,6 @@ fn project_basic_bil_x86_apply_double_result(
 }
 
 ///|
-fn project_basic_bil_x86_div_bound(
-  product_width : Int,
-  signed_min : Bool,
-) -> Result[@types.Exp, String] {
-  let one = match project_basic_bil_int(1L, product_width) {
-    Ok(value) => value
-    Err(reason) => return Err(reason)
-  }
-  let shift = match
-    project_basic_bil_int((product_width - 1).to_int64(), product_width) {
-    Ok(value) => value
-    Err(reason) => return Err(reason)
-  }
-  let lbound = @types.Exp::binop(@types.BinOp::lshift(), one, shift)
-  if signed_min {
-    Ok(lbound)
-  } else {
-    Ok(@types.Exp::binop(@types.BinOp::minus(), lbound, one))
-  }
-}
-
-///|
 fn ProjectDisassemblyInstruction::project_basic_bil_div_common(
   self : ProjectDisassemblyInstruction,
   width : Int,
@@ -3315,18 +3301,16 @@ fn ProjectDisassemblyInstruction::project_basic_bil_div_common(
   }
   let failure_branch = [@types.Stmt::cpuexn(0)]
   let checked_result = if signed {
-    let lbound = match project_basic_bil_x86_div_bound(product_width, true) {
-      Ok(value) => value
-      Err(reason) => return Err(reason)
-    }
-    let ubound = match project_basic_bil_x86_div_bound(product_width, false) {
-      Ok(value) => value
-      Err(reason) => return Err(reason)
-    }
+    // the quotient overflows when it is not the sign extension of its low
+    // `width` bits (Intel SDM IDIV: #DE when it exceeds the signed range)
     let overflow = @types.Exp::binop(
-      @types.BinOp::bit_or(),
-      @types.Exp::binop(@types.BinOp::slt(), ubound, quotient_exp),
-      @types.Exp::binop(@types.BinOp::slt(), quotient_exp, lbound),
+      @types.BinOp::neq(),
+      quotient_exp,
+      @types.Exp::cast(
+        @types.CastKind::signed(),
+        product_width,
+        @types.Exp::cast(@types.CastKind::low(), width, quotient_exp),
+      ),
     )
     @types.Stmt::if_(overflow, failure_branch, apply_result)
   } else {
@@ -3409,6 +3393,10 @@ fn ProjectDisassemblyInstruction::project_basic_bil_shift_count_with_width(
 }
 
 ///|
+/// The masked count of a shift, rotate or double-precision shift (Intel
+/// SDM: the count is masked to 5 bits, 6 bits for 64-bit operands, so 8-
+/// and 16-bit operands can be shifted by more than their width) and the
+/// operand width minus the count.
 fn project_basic_bil_shiftd_count(
   raw_count : @types.Exp,
   count_width : Int,
@@ -3419,7 +3407,7 @@ fn project_basic_bil_shiftd_count(
     Err(reason) => return Err(reason)
   }
   let count_mask = match
-    project_basic_bil_int((width - 1).to_int64(), count_width) {
+    project_basic_bil_int(if width == 64 { 0x3FL } else { 0x1FL }, count_width) {
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
@@ -3559,7 +3547,7 @@ fn project_basic_bil_shift_flags(
       @types.CastKind::low(),
       1,
       @types.Exp::binop(
-        @types.BinOp::rshift(),
+        op,
         old_dst,
         @types.Exp::binop(@types.BinOp::minus(), count, one_count),
       ),
@@ -3737,6 +3725,22 @@ fn ProjectDisassemblyInstruction::project_basic_bil_shiftd_mr(
     ),
     flags,
   ])
+}
+
+///|
+/// The rotation amount of ROL/ROR: the masked count modulo the width.
+fn project_basic_bil_rotate_amount(
+  masked : @types.Exp,
+  count_width : Int,
+  width : Int,
+) -> Result[@types.Exp, String] {
+  if width >= 32 {
+    return Ok(masked)
+  }
+  match project_basic_bil_int(width.to_int64(), count_width) {
+    Ok(size) => Ok(@types.Exp::binop(@types.BinOp::modulo(), masked, size))
+    Err(reason) => Err(reason)
+  }
 }
 
 ///|
@@ -3944,8 +3948,13 @@ fn ProjectDisassemblyInstruction::project_basic_bil_rotate_r(
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  let (count, _) = match
+  let (masked, _) = match
     project_basic_bil_shiftd_count(raw_count, count_width, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let count = match
+    project_basic_bil_rotate_amount(masked, count_width, width) {
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
@@ -3957,7 +3966,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_rotate_r(
   let flags = match
     project_basic_bil_rotate_flags(
       @types.Exp::var_exp(dst),
-      count,
+      masked,
       count_width,
       width,
       left,
@@ -4127,8 +4136,13 @@ fn ProjectDisassemblyInstruction::project_basic_bil_rotate_m(
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  let (count, _) = match
+  let (masked, _) = match
     project_basic_bil_shiftd_count(raw_count, count_width, width) {
+    Ok(value) => value
+    Err(reason) => return Err(reason)
+  }
+  let count = match
+    project_basic_bil_rotate_amount(masked, count_width, width) {
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
@@ -4148,7 +4162,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_rotate_m(
     Err(reason) => return Err(reason)
   }
   let flags = match
-    project_basic_bil_rotate_flags(result_exp, count, count_width, width, left) {
+    project_basic_bil_rotate_flags(result_exp, masked, count_width, width, left) {
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
@@ -4553,15 +4567,12 @@ fn ProjectDisassemblyInstruction::project_basic_bil_cmpxchg_rr(
       ),
     ),
   )
+  // the accumulator is only written when the comparison fails (a 32-bit
+  // write would clear the upper half of RAX in 64-bit mode)
   stmts.push(
-    @types.Stmt::move_stmt(
-      acc,
-      @types.Exp::ite(
-        if_=project_basic_bil_x86_flag("ZF"),
-        then_=acc_exp,
-        else_=old_dst_exp,
-      ),
-    ),
+    @types.Stmt::if_(project_basic_bil_x86_flag("ZF"), [], [
+      @types.Stmt::move_stmt(acc, old_dst_exp),
+    ]),
   )
   Ok(stmts)
 }
@@ -4637,15 +4648,12 @@ fn ProjectDisassemblyInstruction::project_basic_bil_cmpxchg_mr(
       ),
     ),
   )
+  // the accumulator is only written when the comparison fails (a 32-bit
+  // write would clear the upper half of RAX in 64-bit mode)
   stmts.push(
-    @types.Stmt::move_stmt(
-      acc,
-      @types.Exp::ite(
-        if_=project_basic_bil_x86_flag("ZF"),
-        then_=acc_exp,
-        else_=old_dst_exp,
-      ),
-    ),
+    @types.Stmt::if_(project_basic_bil_x86_flag("ZF"), [], [
+      @types.Stmt::move_stmt(acc, old_dst_exp),
+    ]),
   )
   Ok(stmts)
 }
@@ -4818,22 +4826,12 @@ fn ProjectDisassemblyInstruction::project_basic_bil_cmpxchg8b(
         size,
       ),
     ),
-    @types.Stmt::move_stmt(
-      eax,
-      @types.Exp::ite(
-        if_=equal_exp,
-        then_=@types.Exp::var_exp(eax),
-        else_=@types.Exp::extract(dst_exp, hi=31, lo=0),
-      ),
-    ),
-    @types.Stmt::move_stmt(
-      edx,
-      @types.Exp::ite(
-        if_=equal_exp,
-        then_=@types.Exp::var_exp(edx),
-        else_=@types.Exp::extract(dst_exp, hi=63, lo=32),
-      ),
-    ),
+    // EDX:EAX is only written when the comparison fails (a 32-bit write,
+    // which clears the upper halves of RAX/RDX in 64-bit mode)
+    @types.Stmt::if_(equal_exp, [], [
+      @types.Stmt::move_stmt(eax, @types.Exp::extract(dst_exp, hi=31, lo=0)),
+      @types.Stmt::move_stmt(edx, @types.Exp::extract(dst_exp, hi=63, lo=32)),
+    ]),
   ])
 }
 
@@ -5290,10 +5288,19 @@ fn ProjectDisassemblyInstruction::project_basic_bil_neg_m(
 
 ///|
 fn project_basic_bil_register_width(name : String) -> Int {
-  if name.has_prefix("R") {
-    64
-  } else {
-    32
+  match name {
+    "AX" | "BX" | "CX" | "DX" | "SI" | "DI" | "BP" | "SP" => 16
+    _ =>
+      if name.has_prefix("R") && name.has_suffix("D") {
+        // R8D..R15D
+        32
+      } else if name.has_prefix("R") && name.has_suffix("W") {
+        16
+      } else if name.has_prefix("R") {
+        64
+      } else {
+        32
+      }
   }
 }
 
@@ -5323,18 +5330,44 @@ fn ProjectDisassemblyInstruction::project_basic_bil_memory_addr(
   self : ProjectDisassemblyInstruction,
   base_index : Int,
 ) -> Result[(@types.Exp, @types.Var, Int), String] {
-  let base_name = match self.project_basic_bil_operand(base_index) {
-    Ok(operand) =>
-      match operand.register_name() {
-        Some(name) if name != "Nil" => name
-        Some(_) => return Err("instruction \{self.name()} memory base is Nil")
-        None =>
-          return Err("instruction \{self.name()} memory base is not a register")
-      }
+  let register = (index : Int, what : String) => {
+    match self.project_basic_bil_operand(index) {
+      Ok(operand) =>
+        match operand.register_name() {
+          Some(name) => Ok(name)
+          None =>
+            Err("instruction \{self.name()} memory \{what} is not a register")
+        }
+      Err(reason) => Err(reason)
+    }
+  }
+  let base_name = match register(base_index, "base") {
+    Ok(name) => name
     Err(reason) => return Err(reason)
   }
-  let address_width = project_basic_bil_register_width(base_name)
-  let base = project_basic_bil_reg(base_name, address_width)
+  // EIZ/RIZ, the pseudo index of a SIB byte without index, is no index
+  let index_name = match register(base_index + 2, "index") {
+    Ok("EIZ" | "RIZ") => "Nil"
+    Ok(name) => name
+    Err(reason) => return Err(reason)
+  }
+  // RIP/EIP-relative addresses are absolute (the next instruction plus the
+  // displacement); without base and index the displacement is absolute and
+  // the address has the width of the mode
+  let pc_relative = base_name == "RIP" || base_name == "EIP"
+  let address_width = if base_name == "RIP" {
+    64
+  } else if base_name == "EIP" {
+    32
+  } else if base_name != "Nil" {
+    project_basic_bil_register_width(base_name)
+  } else if index_name != "Nil" {
+    project_basic_bil_register_width(index_name)
+  } else if self.encoding() == "llvm-x86_64" {
+    64
+  } else {
+    32
+  }
   let scale = match self.project_basic_bil_immediate(base_index + 1) {
     Ok(value) => value
     Err(reason) => return Err(reason)
@@ -5342,57 +5375,94 @@ fn ProjectDisassemblyInstruction::project_basic_bil_memory_addr(
   if scale != 1L && scale != 2L && scale != 4L && scale != 8L {
     return Err("unsupported \{self.name()} memory scale \{scale}")
   }
-  let mut addr = @types.Exp::var_exp(base)
-  match self.project_basic_bil_operand(base_index + 2) {
-    Ok(index_operand) =>
-      match index_operand.register_name() {
-        Some(index_name) if index_name == "Nil" => ()
-        Some(index_name) => {
-          let index_width = project_basic_bil_register_width(index_name)
-          if index_width != address_width {
-            return Err("unsupported \{self.name()} mixed-width memory index")
-          }
-          let index = project_basic_bil_reg(index_name, address_width)
-          let index_exp = @types.Exp::var_exp(index)
-          let scaled = if scale == 1L {
-            index_exp
-          } else {
-            match project_basic_bil_int(scale, address_width) {
-              Ok(scale_exp) =>
-                @types.Exp::binop(@types.BinOp::times(), index_exp, scale_exp)
-              Err(reason) => return Err(reason)
-            }
-          }
-          addr = @types.Exp::binop(@types.BinOp::plus(), addr, scaled)
-        }
-        None =>
-          return Err(
-            "instruction \{self.name()} memory index is not a register",
-          )
+  let mut addr : @types.Exp? = if pc_relative || base_name == "Nil" {
+    None
+  } else {
+    Some(@types.Exp::var_exp(project_basic_bil_reg(base_name, address_width)))
+  }
+  if index_name != "Nil" {
+    let index_width = project_basic_bil_register_width(index_name)
+    if index_width != address_width {
+      return Err("unsupported \{self.name()} mixed-width memory index")
+    }
+    let index_exp = @types.Exp::var_exp(
+      project_basic_bil_reg(index_name, address_width),
+    )
+    let scaled = if scale == 1L {
+      index_exp
+    } else {
+      match project_basic_bil_int(scale, address_width) {
+        Ok(scale_exp) =>
+          @types.Exp::binop(@types.BinOp::times(), index_exp, scale_exp)
+        Err(reason) => return Err(reason)
       }
-    Err(reason) => return Err(reason)
+    }
+    addr = Some(
+      match addr {
+        Some(base) => @types.Exp::binop(@types.BinOp::plus(), base, scaled)
+        None => scaled
+      },
+    )
   }
   let displacement = match self.project_basic_bil_immediate(base_index + 3) {
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  match self.project_basic_bil_operand(base_index + 4) {
-    Ok(segment_operand) =>
-      match segment_operand.register_name() {
-        Some(segment) if segment == "Nil" => ()
-        Some(segment) =>
-          return Err("unsupported \{self.name()} segment register \{segment}")
-        None =>
-          return Err(
-            "instruction \{self.name()} segment operand is not a register",
-          )
-      }
+  // FS and GS overrides add the segment base (FS_BASE, GS_BASE); the other
+  // segments are flat
+  let segment_base = match register(base_index + 4, "segment") {
+    Ok("FS") => Some("FS_BASE")
+    Ok("GS") => Some("GS_BASE")
+    Ok(_) => None
     Err(reason) => return Err(reason)
   }
-  let addr = match
-    project_basic_bil_offset_addr(addr, displacement, address_width) {
-    Ok(value) => value
-    Err(reason) => return Err(reason)
+  let addr = match addr {
+    Some(addr) =>
+      match project_basic_bil_offset_addr(addr, displacement, address_width) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+    None => {
+      let absolute = if pc_relative {
+        displacement +
+        (self.addr() + self.memory().length().to_uint64()).reinterpret_as_int64()
+      } else {
+        displacement
+      }
+      let absolute = if address_width == 32 {
+        absolute & 0xFFFFFFFFL
+      } else {
+        absolute
+      }
+      match project_basic_bil_int(absolute, address_width) {
+        Ok(value) => value
+        Err(reason) => return Err(reason)
+      }
+    }
+  }
+  // an address narrower than the mode (address-size prefix) is
+  // zero-extended into the memory of the mode
+  let mode_width = match self.encoding() {
+    "llvm-x86_64" => 64
+    "llvm-x86" => 32
+    _ => address_width
+  }
+  let (addr, address_width) = if address_width < mode_width {
+    (
+      @types.Exp::cast(@types.CastKind::unsigned(), mode_width, addr),
+      mode_width,
+    )
+  } else {
+    (addr, address_width)
+  }
+  let addr = match segment_base {
+    Some(name) =>
+      @types.Exp::binop(
+        @types.BinOp::plus(),
+        @types.Exp::var_exp(project_basic_bil_reg(name, address_width)),
+        addr,
+      )
+    None => addr
   }
   Ok(
     (
@@ -6519,18 +6589,6 @@ fn ProjectDisassemblyInstruction::project_basic_bil_absolute_target(
 }
 
 ///|
-fn ProjectDisassemblyInstruction::project_basic_bil_call(
-  self : ProjectDisassemblyInstruction,
-  width : Int,
-) -> Result[Array[@types.Stmt], String] {
-  match self.project_basic_bil_direct_target() {
-    Ok(target) =>
-      project_basic_bil_control_with_width(@types.Stmt::call(), target, width)
-    Err(reason) => Err(reason)
-  }
-}
-
-///|
 fn ProjectDisassemblyInstruction::project_basic_bil_jump(
   self : ProjectDisassemblyInstruction,
 ) -> Result[Array[@types.Stmt], String] {
@@ -6978,9 +7036,44 @@ fn ProjectDisassemblyInstruction::project_basic_bil_arm_store(
 }
 
 ///|
+/// The Basic lifter: the BIL semantics of a decoded instruction. For the
+/// x86 encodings (`llvm-x86`, `llvm-x86_64`) the sub-register variables of
+/// the per-instruction lifters (`EAX`, `AX`, `AL`, `AH`, `R8D`, ...) are
+/// resolved onto the full registers like upstream's x86 lifter does
+/// (`@mc.resolve_x86_subregisters`): 32-bit writes in 64-bit mode
+/// zero-extend into the 64-bit register, the other writes merge.
 pub fn ProjectDisassemblyInstruction::lift_basic_bil(
   self : ProjectDisassemblyInstruction,
 ) -> Result[Array[@types.Stmt], String] {
+  // the Basic lifter keys on opcode names only; the names of AArch64
+  // instructions (`B`, `RET`, ...) collide with the x86/ARM fixture forms
+  // below, whose semantics would be wrong (AArch64 is lifted by the Lisp
+  // semantics)
+  if self.encoding_language() == @core_theory.Language::llvm_a64() {
+    return Err(
+      "unsupported Basic BIL lift for AArch64 instruction \{self.name()}",
+    )
+  }
+  let bits = match self.encoding() {
+    "llvm-x86_64" => 64
+    "llvm-x86" => 32
+    _ => return self.project_basic_bil_lift()
+  }
+  self
+  .project_basic_bil_lift()
+  .map(stmts => @mc.resolve_x86_subregisters(stmts, bits~))
+}
+
+///|
+fn ProjectDisassemblyInstruction::project_basic_bil_lift(
+  self : ProjectDisassemblyInstruction,
+) -> Result[Array[@types.Stmt], String] {
+  // the x86 instructions of the LLVM decoder in the names and operand
+  // layouts the per-instruction lifters key on
+  let self = self.project_basic_x86_legacy()
+  if self.project_basic_bil_x86_extension() is Some(result) {
+    return result
+  }
   let name = self.name().to_upper()
   if name.has_prefix("CMOV") {
     let width = if name.contains("64") {
@@ -7764,10 +7857,10 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "JMP_4" => self.project_basic_bil_jump()
     "CALLPCREL32" => self.project_basic_bil_call(32)
     "CALL64PCREL32" => self.project_basic_bil_call(64)
-    "CALL32R" => self.project_basic_bil_control_reg(32, @types.Stmt::call())
-    "CALL64R" => self.project_basic_bil_control_reg(64, @types.Stmt::call())
-    "CALL32M" => self.project_basic_bil_control_mem(32, @types.Stmt::call())
-    "CALL64M" => self.project_basic_bil_control_mem(64, @types.Stmt::call())
+    "CALL32R" => self.project_basic_bil_call_reg(32)
+    "CALL64R" => self.project_basic_bil_call_reg(64)
+    "CALL32M" => self.project_basic_bil_call_mem(32)
+    "CALL64M" => self.project_basic_bil_call_mem(64)
     "JMP32R" => self.project_basic_bil_control_reg(32, @types.Stmt::goto())
     "JMP64R" => self.project_basic_bil_control_reg(64, @types.Stmt::goto())
     "JMP32M" => self.project_basic_bil_control_mem(32, @types.Stmt::goto())
@@ -7802,7 +7895,10 @@ pub fn ProjectDisassemblyInstruction::lift_basic_bil(
     "LDR_POST_IMM" => self.project_basic_bil_arm_load(true)
     "STRI12" => self.project_basic_bil_arm_store(false)
     "STR_PRE_IMM" => self.project_basic_bil_arm_store(true)
-    "RET" | "RETF" => Ok([@types.Stmt::special("ret")])
+    "RET" => self.project_basic_bil_ret(32, far=false)
+    "RET64" => self.project_basic_bil_ret(64, far=false)
+    "RETF" => self.project_basic_bil_ret(32, far=true)
+    "RETF64" => self.project_basic_bil_ret(64, far=true)
     name => Err("unsupported Basic BIL lift for instruction \{name}")
   }
 }

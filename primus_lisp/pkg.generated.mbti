@@ -1,0 +1,797 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/primus_lisp"
+
+import {
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/knowledge",
+  "bobzhang/bap/mc",
+  "bobzhang/bap/primus",
+  "bobzhang/bap/types",
+  "moonbitlang/core/bigint",
+  "moonbitlang/core/debug",
+  "moonbitlang/core/immut/sorted_map",
+  "moonbitlang/core/immut/sorted_set",
+  "moonbitlang/core/ref",
+}
+
+// Values
+pub fn bil_var_of_theory(@core_theory.Var) -> @types.Var?
+
+pub fn channel_output(@primus.Machine, Int) -> String
+
+pub fn check_folders(Array[String]) -> Unit raise
+
+pub fn compare_names(@knowledge.Name, @knowledge.Name) -> Int
+
+pub fn configure_library(features? : Array[String], loader? : Loader) -> Unit
+
+pub let const_item : Item[Const]
+
+pub fn declare_attribute(String, check? : (String, Array[Tree]) -> Unit raise AttributeError) -> Unit
+
+pub let default_package : String
+
+pub fn define_host_primitive(@primus.Machine, String, types~ : String, docs? : String, pkg? : String, (@primus.Machine, Array[@primus.Value]) -> @primus.Value raise) -> Unit
+
+pub fn define_primitive(@primus.Machine, String, types? : Signature, docs? : String, pkg? : String, Closure) -> Unit
+
+pub fn documentation(Program) -> Array[(String, Array[(@knowledge.Name, DocEntry)])]
+
+pub fn documentation_to_org(Array[(String, Array[(@knowledge.Name, DocEntry)])]) -> String
+
+pub fn embedded_features(Array[String]) -> Array[String]
+
+pub fn embedded_lisp_files() -> Array[(String, String)]
+
+pub fn eval(@primus.Machine, Ast, (@primus.Machine, @primus.Value) -> Unit raise) -> Unit raise
+
+pub fn eval_fun(@primus.Machine, String, Array[@primus.Value], then? : (@primus.Machine, @primus.Value) -> Unit raise) -> Unit raise
+
+pub fn eval_lisp(@primus.Machine, @knowledge.Name, Array[@primus.Value], (@primus.Machine, @primus.Value) -> Unit raise) -> Unit raise
+
+pub fn eval_method(@primus.Machine, String, Array[@primus.Value], then? : (@primus.Machine) -> Unit raise) -> Unit raise
+
+pub fn eval_signal(@primus.Machine, @knowledge.Name, Array[@primus.Value], (@primus.Machine) -> Unit raise) -> Unit raise
+
+pub fn failf(@primus.Machine, String) -> Unit raise
+
+pub fn flush_channels(@primus.Machine) -> Unit
+
+pub fn folder_features(Array[String]) -> Array[String]
+
+pub let func : Item[Func]
+
+pub fn init_ieee754(@primus.Machine) -> Unit
+
+pub fn init_io(@primus.Machine) -> Unit raise
+
+pub fn init_primitives(@primus.Machine) -> Unit
+
+pub fn init_runtime(@primus.Machine) -> Unit raise
+
+pub fn init_signals(@primus.Machine) -> Unit
+
+pub fn legacy_arch_name(@core_theory.Target) -> String
+
+pub let library_dirs : Array[String]
+
+pub fn link_places(@primus.Machine) -> Unit raise
+
+pub fn link_program(@primus.Machine, Program) -> Unit raise
+
+pub fn link_semantic_primitives(Program, @core_theory.Target) -> Program
+
+pub fn load_library(@primus.Machine, features? : Array[String], loader? : Loader) -> Unit raise
+
+pub fn load_program(Loader, Array[String], context? : Context) -> Program raise LoadError
+
+pub fn load_semantics(@core_theory.Target, Array[String], paths? : Array[String], strict? : Bool) -> Lifter raise
+
+pub fn load_sources(Loader, Array[String], source? : Source) -> Source raise LoadError
+
+pub let macro_item : Item[Macro]
+
+pub let message : @primus.Observation[String]
+
+pub let meth : Item[Func]
+
+pub let para : Item[Para]
+
+pub fn parse_bigint(String) -> @bigint.BigInt?
+
+pub fn parse_source(Context, Source) -> Program raise LoadError
+
+pub fn parse_type_spec(String, Int) -> Signature?
+
+pub let place : Item[Place]
+
+pub let primitive : Item[Prim]
+
+pub let primitive_called : @primus.Observation[(String, Array[@primus.Value])]
+
+pub fn program(@primus.Machine) -> Program
+
+pub fn read_var(pkg? : String, Int, String) -> Result[LVar, VarReadError]
+
+pub fn read_word(Int, String) -> Result[LWord, WordReadError]
+
+pub fn refine(@primus.Machine, Context) -> Unit
+
+pub fn refine_from_system(@primus.Machine) -> Unit raise
+
+pub fn register_components() -> Unit raise
+
+pub fn register_semantics_providers(registry? : @mc.Registry, paths? : Array[String]) -> Unit
+
+pub fn reify_var(LVar, width~ : Int) -> @types.Var
+
+pub fn[X] resolve_defun(Program, item? : Item[Func], (Typ, X) -> Bool, @knowledge.Name, Array[X]) -> Result[(Def[Func], Array[(LVar, X)]), Resolution]?
+
+pub fn resolve_macro(Program, @knowledge.Name, Array[Tree]) -> Result[(Def[Macro], Array[(String, Array[Tree])]), Resolution]?
+
+pub fn[X] resolve_meth(Program, (Typ, X) -> Bool, @knowledge.Name, Array[X]) -> Result[Array[(Def[Func], Array[(LVar, X)])], Resolution]?
+
+pub fn[T] resolve_simple(Program, Item[T], @knowledge.Name) -> Result[Def[T], Resolution]?
+
+pub let semantic_dirs : Array[String]
+
+pub let semantics : Item[Sema]
+
+pub let semantics_context : @ref.Ref[Array[(String, Array[String])]]
+
+pub fn semantics_provider(String, @core_theory.Target, Array[String], paths? : Array[String]) -> @mc.Provider
+
+pub fn set_channel_input(@primus.Machine, Int, Bytes) -> Unit
+
+pub fn set_redirections(@primus.Machine, Array[(String, String)]) -> Unit
+
+pub fn[T] signal(@primus.Machine, @primus.Observation[T], params? : Signature, docs? : String, sync? : Bool, (@primus.Machine, T) -> Array[@primus.Value] raise) -> @primus.Subscription
+
+pub let signal_item : Item[Signal]
+
+pub let standard_channels : Array[String]
+
+pub fn[T] step(@primus.Machine, (@primus.Machine) -> T raise, (@primus.Machine, T) -> Unit raise) -> Unit raise
+
+pub let subst : Item[Subst]
+
+pub let symbol_size : Int
+
+pub let type_error : @primus.Observation[TypeError]
+
+pub fn typecheck(@primus.Machine) -> Int raise
+
+pub fn types(@primus.Machine) -> TypedProgram?
+
+pub fn unescape_string(String) -> String?
+
+pub fn unquote(String) -> String
+
+pub fn word_of_bigint(@bigint.BigInt, Int) -> @types.Word
+
+// Errors
+pub(all) suberror AttributeError {
+  UnknownAttr(String, Tree)
+  Failure(AttrProblem, Array[Tree])
+} derive(@debug.Debug)
+pub fn AttributeError::output(Self, &Logger) -> Unit
+pub fn AttributeError::to_repr(Self) -> @debug.Repr
+pub fn AttributeError::to_string(Self) -> String
+pub impl Show for AttributeError
+
+pub(all) suberror LispRuntimeError {
+  RuntimeError(String)
+  UnresolvedName(String, String)
+}
+pub fn LispRuntimeError::output(Self, &Logger) -> Unit
+pub fn LispRuntimeError::to_string(Self) -> String
+pub impl Show for LispRuntimeError
+
+pub(all) suberror LoadError {
+  ParseError(ParseProblem, Loc)
+  FormatError(FormatProblem, Loc)
+  SexpParseError(String, Request, SexpError)
+  UnresolvedFeature(String, Request)
+}
+pub fn LoadError::output(Self, &Logger) -> Unit
+pub fn LoadError::to_string(Self) -> String
+pub impl Show for LoadError
+
+pub(all) suberror MacroError {
+  BadSubst(Tree, Array[Tree])
+} derive(@debug.Debug)
+pub fn MacroError::to_repr(Self) -> @debug.Repr
+
+pub(all) suberror SemanticsError {
+  UnresolvedDefinition(String)
+  UserError(String)
+  Illformed(String, String)
+  IllTyped(Array[TypeError])
+}
+pub fn SemanticsError::output(Self, &Logger) -> Unit
+pub fn SemanticsError::to_string(Self) -> String
+pub impl Show for SemanticsError
+
+pub(all) suberror SexpError {
+  UnexpectedEof(file~ : String, pos~ : Position)
+  UnexpectedClosingParen(file~ : String, pos~ : Position)
+  UnterminatedString(file~ : String, pos~ : Position)
+  UnterminatedComment(file~ : String, pos~ : Position)
+} derive(Eq, @debug.Debug)
+pub fn SexpError::equal(Self, Self) -> Bool
+pub fn SexpError::not_equal(Self, Self) -> Bool
+pub fn SexpError::output(Self, &Logger) -> Unit
+pub fn SexpError::to_repr(Self) -> @debug.Repr
+pub fn SexpError::to_string(Self) -> String
+pub impl Show for SexpError
+
+// Types and methods
+pub(all) enum AdviceMethod {
+  Before
+  After
+} derive(Eq, @debug.Debug)
+pub fn AdviceMethod::equal(Self, Self) -> Bool
+pub fn AdviceMethod::not_equal(Self, Self) -> Bool
+pub fn AdviceMethod::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Ast {
+  data : Exp
+  id : Int
+} derive(Eq, @debug.Debug)
+pub fn Ast::equal(Self, Self) -> Bool
+pub fn Ast::not_equal(Self, Self) -> Bool
+pub fn Ast::output(Self, &Logger) -> Unit
+pub fn Ast::to_repr(Self) -> @debug.Repr
+pub fn Ast::to_string(Self) -> String
+pub fn Ast::to_string_in(Self, pkg? : String) -> String
+pub impl Show for Ast
+
+pub(all) enum AttrProblem {
+  ExpectAtom
+  ExpectList
+  UnterminatedQuote
+  VarError(VarReadError)
+  ExpectPublicOrPrivate
+  UnknownMethod(String)
+  BadSyntax
+  EmptyAdvice
+  NoTargets
+  Custom(String)
+} derive(Eq, @debug.Debug)
+pub fn AttrProblem::equal(Self, Self) -> Bool
+pub fn AttrProblem::not_equal(Self, Self) -> Bool
+pub fn AttrProblem::to_repr(Self) -> @debug.Repr
+
+pub struct Attrs {
+  context : Context
+  externals : @sorted_set.SortedSet[String]
+  globals : Array[LVar]
+  statics : Array[LVar]
+  visibility : Array[Visibility]
+  before : Array[@knowledge.Name]
+  after : Array[@knowledge.Name]
+  custom : @sorted_map.SortedMap[String, Array[Array[Tree]]]
+}
+pub fn Attrs::advice(Self, AdviceMethod) -> Array[@knowledge.Name]
+pub fn Attrs::empty() -> Self
+pub fn Attrs::get_custom(Self, String) -> Array[Array[Tree]]
+pub fn Attrs::is_public(Self) -> Bool
+pub fn Attrs::join(Self, Self) -> Self
+pub fn Attrs::parse(Self, pkg~ : String, Tree) -> Self raise AttributeError
+
+pub(all) enum Binding {
+  Dynamic(@knowledge.Name)
+  Static(Array[LVar], Ast)
+} derive(Eq, @debug.Debug)
+pub fn Binding::equal(Self, Self) -> Bool
+pub fn Binding::not_equal(Self, Self) -> Bool
+pub fn Binding::to_repr(Self) -> @debug.Repr
+
+pub struct Closure {
+  run : (@primus.Machine, String, Array[@primus.Value], (@primus.Machine, @primus.Value) -> Unit raise) -> Unit raise
+}
+pub fn Closure::new((@primus.Machine, String, Array[@primus.Value], (@primus.Machine, @primus.Value) -> Unit raise) -> Unit raise) -> Self
+pub fn Closure::sync((@primus.Machine, String, Array[@primus.Value]) -> @primus.Value raise) -> Self
+
+pub(all) struct Const {
+  value : String
+}
+
+pub struct Context {
+  // private fields
+} derive(Eq)
+pub fn Context::classes(Self) -> Array[String]
+pub fn Context::create(Array[(String, Array[String])]) -> Self
+pub fn Context::empty() -> Self
+pub fn Context::equal(Self, Self) -> Bool
+pub fn Context::features(Self, String) -> Array[String]
+pub fn Context::is_empty(Self) -> Bool
+pub fn Context::le(Self, Self) -> Bool
+pub fn Context::merge(Self, Self) -> Self
+pub fn Context::not_equal(Self, Self) -> Bool
+pub fn Context::of_target(@core_theory.Target, abi_name? : String) -> Self
+pub fn Context::order(Self, Self) -> @knowledge.PartialOrder
+pub fn Context::output(Self, &Logger) -> Unit
+pub fn Context::parse(Array[Tree]) -> Self raise AttributeError
+pub fn Context::to_string(Self) -> String
+pub impl Show for Context
+
+pub struct Def[T] {
+  name : String
+  docs : String
+  attrs : Attrs
+  code : T
+  id : Int
+}
+pub fn Def::const_value(Self[Const]) -> Tree
+pub fn[T] Def::context(Self[T]) -> Context
+pub fn Def::macro_apply(Self[Macro], Array[(String, Array[Tree])]) -> Tree raise MacroError
+pub fn Def::macro_bind(Self[Macro], Array[Tree]) -> (Int, Array[(String, Array[Tree])])?
+pub fn[T] Def::new(String, docs? : String, attrs? : Attrs, id? : Int, T) -> Self[T]
+pub fn[T] Def::rename(Self[T], String) -> Self[T]
+pub fn Def::with_body(Self[Func], Ast) -> Self[Func]
+
+pub(all) enum DefKind {
+  KFunc
+  KMacro
+  KConst
+  KSubst
+  KMeth
+  KPara
+  KInpkg
+  KDefpkg
+} derive(Eq, @debug.Debug)
+pub fn DefKind::equal(Self, Self) -> Bool
+pub fn DefKind::not_equal(Self, Self) -> Bool
+pub fn DefKind::to_repr(Self) -> @debug.Repr
+
+pub struct DocEntry {
+  desc : String
+  code : String?
+  loc : Loc?
+}
+
+pub(all) enum Exp {
+  Int(LWord)
+  Var(LVar)
+  Sym(LSym)
+  Ite(Ast, Ast, Ast)
+  Let(LVar, Ast, Ast)
+  App(Binding, Array[Ast])
+  Seq(Array[Ast])
+  Set(LVar, Ast)
+  Rep(Ast, Ast)
+  Msg(Array[Fmt], Array[Ast])
+  Err(String)
+} derive(Eq, @debug.Debug)
+pub fn Exp::equal(Self, Self) -> Bool
+pub fn Exp::not_equal(Self, Self) -> Bool
+pub fn Exp::to_repr(Self) -> @debug.Repr
+
+pub(all) enum Fmt {
+  Lit(String)
+  Pos(Int)
+} derive(Eq, @debug.Debug)
+pub fn Fmt::equal(Self, Self) -> Bool
+pub fn Fmt::not_equal(Self, Self) -> Bool
+pub fn Fmt::to_repr(Self) -> @debug.Repr
+
+pub(all) enum FormatProblem {
+  ExpectDigit
+  IllegalEscape(Char)
+  UnterminatedEsc
+  UnterminatedExp
+} derive(Eq, @debug.Debug)
+pub fn FormatProblem::equal(Self, Self) -> Bool
+pub fn FormatProblem::not_equal(Self, Self) -> Bool
+pub fn FormatProblem::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Func {
+  args : Array[LVar]
+  body : Ast
+}
+
+pub struct Item[T] {
+  name : String
+  get : (Package) -> @sorted_map.SortedMap[String, Array[Def[T]]]
+  set : (Package, @sorted_map.SortedMap[String, Array[Def[T]]]) -> Package
+}
+
+pub(all) struct LSym {
+  name : @knowledge.Name
+  id : Int
+} derive(Eq, @debug.Debug)
+pub fn LSym::equal(Self, Self) -> Bool
+pub fn LSym::not_equal(Self, Self) -> Bool
+pub fn LSym::to_repr(Self) -> @debug.Repr
+
+pub(all) struct LVar {
+  name : @knowledge.Name
+  typ : Typ
+  id : Int
+} derive(Eq, @debug.Debug)
+pub fn LVar::equal(Self, Self) -> Bool
+pub fn LVar::not_equal(Self, Self) -> Bool
+pub fn LVar::output(Self, &Logger) -> Unit
+pub fn LVar::to_repr(Self) -> @debug.Repr
+pub fn LVar::to_string(Self) -> String
+pub impl Show for LVar
+
+pub(all) struct LWord {
+  value : @bigint.BigInt
+  typ : Typ
+  id : Int
+} derive(Eq, @debug.Debug)
+pub fn LWord::equal(Self, Self) -> Bool
+pub fn LWord::not_equal(Self, Self) -> Bool
+pub fn LWord::to_repr(Self) -> @debug.Repr
+
+pub struct Lifter {
+  target : @core_theory.Target
+  program : Program
+  typed : TypedProgram
+  // private fields
+}
+pub fn Lifter::apply(Self, @knowledge.Name, Array[SValue], pc? : @types.Word, out? : StringBuilder) -> SEff raise SemanticsError
+pub fn Lifter::create(Program, @core_theory.Target, strict? : Bool) -> Self raise SemanticsError
+pub fn Lifter::errors(Self) -> Array[TypeError]
+pub fn Lifter::lift(Self, @knowledge.Name, Array[Operand], pc? : @types.Word, out? : StringBuilder) -> Array[@types.Stmt]? raise SemanticsError
+pub fn Lifter::provider(Self, name? : String) -> @mc.Provider
+
+pub struct Loader {
+  // private fields
+}
+pub fn Loader::chain(Array[Self]) -> Self
+pub fn Loader::embedded(Array[String]) -> Self
+pub fn Loader::new((String) -> (String, String)?) -> Self
+pub fn Loader::of_files(Array[(String, String)]) -> Self
+pub fn Loader::paths(Array[String]) -> Self
+
+pub(all) struct Loc {
+  file : String
+  range : Range
+} derive(Compare, Eq, @debug.Debug)
+pub fn Loc::compare(Self, Self) -> Int
+pub fn Loc::equal(Self, Self) -> Bool
+pub fn Loc::merge(Self, Self) -> Self
+pub fn Loc::not_equal(Self, Self) -> Bool
+pub fn Loc::nth_char(Self, Int) -> Self
+pub fn Loc::op_ge(Self, Self) -> Bool
+pub fn Loc::op_gt(Self, Self) -> Bool
+pub fn Loc::op_le(Self, Self) -> Bool
+pub fn Loc::op_lt(Self, Self) -> Bool
+pub fn Loc::output(Self, &Logger) -> Unit
+pub fn Loc::to_repr(Self) -> @debug.Repr
+pub fn Loc::to_string(Self) -> String
+pub impl Show for Loc
+
+pub(all) struct Macro {
+  params : Array[String]
+  body : Tree
+}
+
+pub(all) enum Operand {
+  Imm(Int64)
+  Reg(String)
+  Unknown
+} derive(Eq, @debug.Debug)
+pub fn Operand::equal(Self, Self) -> Bool
+pub fn Operand::not_equal(Self, Self) -> Bool
+pub fn Operand::to_repr(Self) -> @debug.Repr
+
+pub struct Package {
+  semas : @sorted_map.SortedMap[String, Array[Def[Sema]]]
+  codes : @sorted_map.SortedMap[String, Array[Def[Prim]]]
+  macros : @sorted_map.SortedMap[String, Array[Def[Macro]]]
+  substs : @sorted_map.SortedMap[String, Array[Def[Subst]]]
+  consts : @sorted_map.SortedMap[String, Array[Def[Const]]]
+  places : @sorted_map.SortedMap[String, Array[Def[Place]]]
+  defs : @sorted_map.SortedMap[String, Array[Def[Func]]]
+  mets : @sorted_map.SortedMap[String, Array[Def[Func]]]
+  pars : @sorted_map.SortedMap[String, Array[Def[Para]]]
+  sigs : @sorted_map.SortedMap[String, Array[Def[Signal]]]
+}
+
+pub(all) struct Para {
+  default : Ast
+}
+
+pub(all) enum ParseProblem {
+  BadVarLiteral(VarReadError)
+  BadWordLiteral(WordReadError)
+  BadForm(String)
+  BadApp
+  BadLetBinding
+  BadParamList
+  BadMacroParamList
+  BadRequire
+  UnknownToplevel
+  BadToplevel
+  BadDef(DefKind)
+  BadAscii
+  BadHex
+  UnknownSubstSyntax
+  Unresolved(DefKind, @knowledge.Name, Resolution)
+  BadAttribute(AttributeError)
+  BadMacroSubst
+  MacroExpansionLimit
+}
+pub fn ParseProblem::output(Self, &Logger) -> Unit
+pub fn ParseProblem::to_string(Self) -> String
+pub impl Show for ParseProblem
+
+pub(all) struct Place {
+  location : @types.Var
+}
+
+pub(all) struct Position {
+  line : Int
+  col : Int
+  offset : Int
+} derive(Compare, Eq, @debug.Debug)
+pub fn Position::compare(Self, Self) -> Int
+pub fn Position::equal(Self, Self) -> Bool
+pub fn Position::not_equal(Self, Self) -> Bool
+pub fn Position::op_ge(Self, Self) -> Bool
+pub fn Position::op_gt(Self, Self) -> Bool
+pub fn Position::op_le(Self, Self) -> Bool
+pub fn Position::op_lt(Self, Self) -> Bool
+pub fn Position::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Prim {
+  lambda : Closure
+  types : Signature?
+}
+
+pub struct Program {
+  context : Context
+  pkg : String
+  sources : Source
+  exports : @sorted_map.SortedMap[String, @sorted_set.SortedSet[String]]
+  library : @sorted_map.SortedMap[String, Package]
+  pkgdocs : @sorted_map.SortedMap[String, String]
+}
+pub fn[T] Program::add(Self, Item[T], Def[T]) -> Self
+pub fn Program::empty() -> Self
+pub fn Program::equal(Self, Self) -> Bool
+pub fn[T, A] Program::fold(Self, Item[T], init~ : A, (String, Def[T], A) -> A) -> A
+pub fn[T] Program::get(Self, Item[T], name? : String) -> Array[Def[T]]
+pub fn Program::get_package(Self, String, public? : Bool) -> Package
+pub fn[R] Program::in_package(Self, String, (Self) -> R raise?) -> R raise?
+pub fn Program::infer_types(Self, externals? : Array[(String, Signature)], max_passes? : Int) -> TypedProgram
+pub fn[T] Program::is_applicable(Self, Def[T]) -> Bool
+pub fn Program::is_empty(Self) -> Bool
+pub fn Program::merge(Self, Self) -> Self
+pub fn Program::packages(Self) -> Array[(String, String)]
+pub fn Program::parse_exp(Self, Tree) -> Ast raise LoadError
+pub fn Program::reset_package(Self) -> Self
+pub fn Program::type_errors(Self, externals? : Array[(String, Signature)]) -> Array[TypeError]
+pub fn Program::update_package_documentation(Self, String, String) -> Self
+pub fn Program::use_package(Self, target? : String, String) -> Self
+pub fn Program::with_context(Self, Context) -> Self
+pub fn Program::with_package(Self, String) -> Self
+pub fn Program::with_places(Self, @core_theory.Target, globals? : Array[@types.Var]) -> Self
+pub fn Program::with_sources(Self, Source) -> Self
+
+pub(all) struct Range {
+  start_pos : Position
+  end_pos : Position
+} derive(Compare, Eq, @debug.Debug)
+pub fn Range::compare(Self, Self) -> Int
+pub fn Range::equal(Self, Self) -> Bool
+pub fn Range::not_equal(Self, Self) -> Bool
+pub fn Range::op_ge(Self, Self) -> Bool
+pub fn Range::op_gt(Self, Self) -> Bool
+pub fn Range::op_le(Self, Self) -> Bool
+pub fn Range::op_lt(Self, Self) -> Bool
+pub fn Range::to_repr(Self) -> @debug.Repr
+
+pub(all) enum Request {
+  Cmdline
+  Module(Loc)
+} derive(Eq, @debug.Debug)
+pub fn Request::equal(Self, Self) -> Bool
+pub fn Request::not_equal(Self, Self) -> Bool
+pub fn Request::to_repr(Self) -> @debug.Repr
+
+pub struct Resolution {
+  constr : Context
+  stage1 : Array[Loc]
+  stage2 : Array[Loc]
+  stage3 : Array[Loc]
+  stage4 : Array[Loc]
+  stage5 : Array[Loc]
+}
+pub fn Resolution::output(Self, &Logger) -> Unit
+pub fn Resolution::to_string(Self) -> String
+pub impl Show for Resolution
+
+pub struct SEff {
+  stmts : Array[@types.Stmt]
+  value : SValue
+}
+
+pub struct SValue {
+  exp : @types.Exp
+  width : Int
+  static_value : @types.Word?
+  symbol : String?
+}
+
+pub struct SemCtx {
+  target : @core_theory.Target
+  pc : @types.Word?
+  // private fields
+}
+
+pub(all) struct Sema {
+  types : Signature
+  apply : SemaBody
+}
+
+pub struct SemaBody {
+  run : (SemCtx, String, Array[SValue]) -> SEff raise SemanticsError
+}
+
+pub(all) struct Signal {
+  types : Signature
+}
+
+pub(all) struct Signature {
+  args : Array[Typ]
+  rest : Typ?
+  ret : Typ
+} derive(Compare, Eq, @debug.Debug)
+pub fn Signature::compare(Self, Self) -> Int
+pub fn Signature::equal(Self, Self) -> Bool
+pub fn Signature::new(Array[Typ], rest? : Typ, Typ) -> Self
+pub fn Signature::not_equal(Self, Self) -> Bool
+pub fn Signature::op_ge(Self, Self) -> Bool
+pub fn Signature::op_gt(Self, Self) -> Bool
+pub fn Signature::op_le(Self, Self) -> Bool
+pub fn Signature::op_lt(Self, Self) -> Bool
+pub fn Signature::output(Self, &Logger) -> Unit
+pub fn Signature::to_repr(Self) -> @debug.Repr
+pub fn Signature::to_string(Self) -> String
+pub impl Show for Signature
+
+pub struct Source {
+  // private fields
+}
+pub fn Source::derive_id(Self, Int) -> Int
+pub fn Source::filename(Self, Int) -> String
+pub fn Source::filenames(Self) -> Array[String]
+pub fn Source::find(Self, String) -> Array[Tree]?
+pub fn Source::has_loc(Self, Int) -> Bool
+pub fn Source::input(Self, String) -> String?
+pub fn Source::is_empty(Self) -> Bool
+pub fn Source::lastid(Self) -> Int
+pub fn Source::load_string(Self, String, String) -> Array[Tree] raise SexpError
+pub fn Source::loc(Self, Int) -> Loc
+pub fn Source::loc_of_trees(Self, ArrayView[Tree]) -> Loc
+pub fn Source::new() -> Self
+pub fn Source::range(Self, Int) -> Range
+pub fn Source::read_string(Self, String, file? : String) -> Array[Tree] raise SexpError
+pub fn Source::text_at(Self, Loc) -> String
+pub fn Source::underline(Self, Loc, context? : Int) -> String
+
+pub(all) struct Subst {
+  elts : Array[Tree]
+}
+
+pub(all) enum Token {
+  Atom(String)
+  List(Array[Tree])
+} derive(Eq, @debug.Debug)
+pub fn Token::equal(Self, Self) -> Bool
+pub fn Token::not_equal(Self, Self) -> Bool
+pub fn Token::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Tree {
+  data : Token
+  id : Int
+} derive(Eq, @debug.Debug)
+pub fn Tree::atom(String, id? : Int) -> Self
+pub fn Tree::equal(Self, Self) -> Bool
+pub fn Tree::list(Array[Self], id? : Int) -> Self
+pub fn Tree::not_equal(Self, Self) -> Bool
+pub fn Tree::output(Self, &Logger) -> Unit
+pub fn Tree::to_repr(Self) -> @debug.Repr
+pub fn Tree::to_string(Self) -> String
+pub impl Show for Tree
+
+pub(all) enum Typ {
+  Any
+  Symbol
+  Name(String)
+  Type(Int)
+} derive(Compare, Eq, @debug.Debug)
+pub fn Typ::compare(Self, Self) -> Int
+pub fn Typ::equal(Self, Self) -> Bool
+pub fn Typ::mem(Self, Int) -> Bool
+pub fn Typ::not_equal(Self, Self) -> Bool
+pub fn Typ::op_ge(Self, Self) -> Bool
+pub fn Typ::op_gt(Self, Self) -> Bool
+pub fn Typ::op_le(Self, Self) -> Bool
+pub fn Typ::op_lt(Self, Self) -> Bool
+pub fn Typ::output(Self, &Logger) -> Unit
+pub fn Typ::read(String) -> Self?
+pub fn Typ::to_repr(Self) -> @debug.Repr
+pub fn Typ::to_string(Self) -> String
+pub impl Show for Typ
+
+pub struct TypeError {
+  sources : Source
+  problem : TypeProblem
+}
+pub fn TypeError::output(Self, &Logger) -> Unit
+pub fn TypeError::summary(Self) -> String
+pub fn TypeError::to_string(Self) -> String
+pub impl Show for TypeError
+
+pub(all) enum TypeProblem {
+  UnresolvedVariable(Int, String)
+  UnresolvedFunction(Int, String, Array[Signature])
+  UnresolvedSignal(Int, String, Signature?)
+  UnresolvedParameter(Int, String)
+  NoUnification(Int, TypeValue, Int, TypeValue)
+} derive(Eq, @debug.Debug)
+pub fn TypeProblem::equal(Self, Self) -> Bool
+pub fn TypeProblem::not_equal(Self, Self) -> Bool
+pub fn TypeProblem::to_repr(Self) -> @debug.Repr
+
+pub(all) enum TypeValue {
+  TAny
+  TSym
+  TWord(Int)
+} derive(Eq, @debug.Debug)
+pub fn TypeValue::equal(Self, Self) -> Bool
+pub fn TypeValue::not_equal(Self, Self) -> Bool
+pub fn TypeValue::output(Self, &Logger) -> Unit
+pub fn TypeValue::to_repr(Self) -> @debug.Repr
+pub fn TypeValue::to_string(Self) -> String
+pub impl Show for TypeValue
+
+pub struct TypedProgram {
+  program : Program
+  // private fields
+}
+pub fn TypedProgram::errors(Self) -> Array[TypeError]
+pub fn TypedProgram::signature(Self, Def[Func]) -> Signature
+pub fn TypedProgram::type_of(Self, Int) -> Typ
+
+pub(all) enum VarReadError {
+  VarEmpty
+  NotAVar
+  VarBadType
+  VarBadFormat
+} derive(Eq, @debug.Debug)
+pub fn VarReadError::equal(Self, Self) -> Bool
+pub fn VarReadError::not_equal(Self, Self) -> Bool
+pub fn VarReadError::to_repr(Self) -> @debug.Repr
+
+pub(all) enum Visibility {
+  Public
+  Private
+} derive(Eq, @debug.Debug)
+pub fn Visibility::equal(Self, Self) -> Bool
+pub fn Visibility::not_equal(Self, Self) -> Bool
+pub fn Visibility::to_repr(Self) -> @debug.Repr
+
+pub(all) enum WordReadError {
+  WordEmpty
+  NotAnInt
+  Unclosed
+  BadLiteral
+  WordBadType
+} derive(Eq, @debug.Debug)
+pub fn WordReadError::equal(Self, Self) -> Bool
+pub fn WordReadError::not_equal(Self, Self) -> Bool
+pub fn WordReadError::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+pub type Cont = (@primus.Machine, @primus.Value) -> Unit raise
+
+pub type Defs[T] = @sorted_map.SortedMap[String, Array[Def[T]]]
+
+// Traits

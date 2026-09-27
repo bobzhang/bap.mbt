@@ -1,0 +1,19 @@
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/bitvec",
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/image",
+  "bobzhang/bap/mc" @mc_lib,
+  "bobzhang/bap/memory",
+  "bobzhang/bap/plugins/print",
+  "bobzhang/bap/project",
+  "bobzhang/bap/text_tags",
+  "bobzhang/bap/types",
+}
+
+import {
+  "bobzhang/bap/fixtures",
+  "bobzhang/bap/mips",
+  "bobzhang/bap/riscv" @rv,
+  "bobzhang/bap/plugins/riscv" @riscv_plugin,
+} for "test"

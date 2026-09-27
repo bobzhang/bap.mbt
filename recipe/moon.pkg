@@ -1,0 +1,9 @@
+import {
+  "bobzhang/bap/native_io",
+  "bobzhang/bap/sexp",
+  "moonbitlang/core/encoding/utf8",
+}
+
+options(
+  targets: { "recipe_native_test.mbt": [ "native" ] },
+)

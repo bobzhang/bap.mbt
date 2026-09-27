@@ -24,14 +24,17 @@ fn default_pkg(pkg : String?) -> String {
 
 ///|
 fn escape_name_part(input : String) -> String {
-  let mut out = ""
+  if !input.contains_any(chars=":\\") {
+    return input
+  }
+  let out = StringBuilder()
   for ch in input {
     if ch == ':' || ch == '\\' {
-      out = out + "\\"
+      out.write_char('\\')
     }
-    out = out + "\{ch}"
+    out.write_char(ch)
   }
-  out
+  out.to_string()
 }
 
 ///|
@@ -54,23 +57,25 @@ fn escape_keyword_name(input : String) -> String {
 
 ///|
 fn unescape_name_part(input : String) -> String {
-  let mut out = ""
+  if !input.contains_char('\\') {
+    return input
+  }
+  let out = StringBuilder()
   let mut escaped = false
   for ch in input {
     if escaped {
-      out = out + "\{ch}"
+      out.write_char(ch)
       escaped = false
     } else if ch == '\\' {
       escaped = true
     } else {
-      out = out + "\{ch}"
+      out.write_char(ch)
     }
   }
   if escaped {
-    out + "\\"
-  } else {
-    out
+    out.write_char('\\')
   }
+  out.to_string()
 }
 
 ///|

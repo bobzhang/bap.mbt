@@ -1,0 +1,9 @@
+import {
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/mc",
+  "bobzhang/bap/memory",
+  "bobzhang/bap/primus_lisp",
+  "bobzhang/bap/project",
+  "bobzhang/bap/types",
+  "bobzhang/bap/x86",
+} for "test"

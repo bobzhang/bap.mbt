@@ -1,0 +1,200 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/z3"
+
+import {
+  "bobzhang/bap/types",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn is_available() -> Bool
+
+pub fn load_library(String) -> Unit raise Z3Error
+
+pub fn unavailable_reason() -> String
+
+pub fn version() -> String?
+
+// Errors
+pub(all) suberror Z3Error {
+  Unavailable(String)
+  Failure(String)
+} derive(Eq, @debug.Debug)
+pub fn Z3Error::equal(Self, Self) -> Bool
+pub fn Z3Error::message(Self) -> String
+pub fn Z3Error::not_equal(Self, Self) -> Bool
+pub fn Z3Error::output(Self, &Logger) -> Unit
+pub fn Z3Error::to_repr(Self) -> @debug.Repr
+pub fn Z3Error::to_string(Self) -> String
+pub impl Show for Z3Error
+
+// Types and methods
+pub(all) enum BinOp {
+  Add
+  Sub
+  Mul
+  Udiv
+  Sdiv
+  Urem
+  Srem
+  Smod
+  And
+  Or
+  Xor
+  Shl
+  Lshr
+  Ashr
+  Concat
+  Ult
+  Ule
+  Ugt
+  Uge
+  Slt
+  Sle
+  Sgt
+  Sge
+  Eq
+  Distinct
+  BoolAnd
+  BoolOr
+  BoolXor
+  Implies
+  Iff
+} derive(Eq, @debug.Debug)
+pub fn BinOp::equal(Self, Self) -> Bool
+pub fn BinOp::not_equal(Self, Self) -> Bool
+pub fn BinOp::to_repr(Self) -> @debug.Repr
+
+pub(all) enum CheckResult {
+  Sat
+  Unsat
+  Unknown
+} derive(Eq, @debug.Debug)
+pub fn CheckResult::equal(Self, Self) -> Bool
+pub fn CheckResult::not_equal(Self, Self) -> Bool
+pub fn CheckResult::to_repr(Self) -> @debug.Repr
+
+pub struct Context {
+  // private fields
+}
+pub fn Context::and_all(Self, Array[Expr]) -> Expr raise Z3Error
+pub fn Context::bool(Self, Bool) -> Expr raise Z3Error
+pub fn Context::bool_const(Self, String) -> Expr raise Z3Error
+pub fn Context::bv_const(Self, String, Int) -> Expr raise Z3Error
+pub fn Context::bv_int(Self, Int64, Int) -> Expr raise Z3Error
+pub fn Context::bv_numeral(Self, String, Int) -> Expr raise Z3Error
+pub fn Context::distinct(Self, Array[Expr]) -> Expr raise Z3Error
+pub fn Context::ite(Self, Expr, Expr, Expr) -> Expr raise Z3Error
+pub fn Context::new(params? : Array[(String, String)]) -> Self raise Z3Error
+pub fn Context::or_all(Self, Array[Expr]) -> Expr raise Z3Error
+pub fn Context::update_param(Self, String, String) -> Unit raise Z3Error
+pub fn Context::word(Self, @types.Word) -> Expr raise Z3Error
+
+pub struct Expr {
+  // private fields
+}
+pub fn Expr::add(Self, Self) -> Self raise Z3Error
+pub fn Expr::and_(Self, Self) -> Self raise Z3Error
+pub fn Expr::ashr(Self, Self) -> Self raise Z3Error
+pub fn Expr::binop(Self, BinOp, Self) -> Self raise Z3Error
+pub fn Expr::bitwidth(Self) -> Int
+pub fn Expr::bool_value(Self) -> Bool?
+pub fn Expr::compare(Self, Self) -> Int
+pub fn Expr::concat(Self, Self) -> Self raise Z3Error
+pub fn Expr::context(Self) -> Context
+pub fn Expr::eq(Self, Self) -> Self raise Z3Error
+pub fn Expr::equal(Self, Self) -> Bool
+pub fn Expr::extract(Self, Int, Int) -> Self raise Z3Error
+pub fn Expr::hash(Self) -> Int
+pub fn Expr::hash_combine(Self, Hasher) -> Unit
+pub fn Expr::id(Self) -> Int
+pub fn Expr::implies(Self, Self) -> Self raise Z3Error
+pub fn Expr::is_bool(Self) -> Bool
+pub fn Expr::is_numeral(Self) -> Bool
+pub fn Expr::lnot(Self) -> Self raise Z3Error
+pub fn Expr::logand(Self, Self) -> Self raise Z3Error
+pub fn Expr::logor(Self, Self) -> Self raise Z3Error
+pub fn Expr::logxor(Self, Self) -> Self raise Z3Error
+pub fn Expr::lshr(Self, Self) -> Self raise Z3Error
+pub fn Expr::mul(Self, Self) -> Self raise Z3Error
+pub fn Expr::neg(Self) -> Self raise Z3Error
+pub fn Expr::not(Self) -> Self raise Z3Error
+pub fn Expr::not_equal(Self, Self) -> Bool
+pub fn Expr::numeral_string(Self) -> String?
+pub fn Expr::op_ge(Self, Self) -> Bool
+pub fn Expr::op_gt(Self, Self) -> Bool
+pub fn Expr::op_le(Self, Self) -> Bool
+pub fn Expr::op_lt(Self, Self) -> Bool
+pub fn Expr::or_(Self, Self) -> Self raise Z3Error
+pub fn Expr::output(Self, &Logger) -> Unit
+pub fn Expr::redor(Self) -> Self raise Z3Error
+pub fn Expr::rotate_left(Self, Int) -> Self raise Z3Error
+pub fn Expr::rotate_right(Self, Int) -> Self raise Z3Error
+pub fn Expr::sdiv(Self, Self) -> Self raise Z3Error
+pub fn Expr::shl(Self, Self) -> Self raise Z3Error
+pub fn Expr::sign_ext(Self, Int) -> Self raise Z3Error
+pub fn Expr::simplify(Self) -> Self raise Z3Error
+pub fn Expr::sle(Self, Self) -> Self raise Z3Error
+pub fn Expr::slt(Self, Self) -> Self raise Z3Error
+pub fn Expr::sort(Self) -> Sort
+pub fn Expr::srem(Self, Self) -> Self raise Z3Error
+pub fn Expr::sub(Self, Self) -> Self raise Z3Error
+pub fn Expr::to_string(Self) -> String
+pub fn Expr::to_word(Self) -> @types.Word?
+pub fn Expr::udiv(Self, Self) -> Self raise Z3Error
+pub fn Expr::ule(Self, Self) -> Self raise Z3Error
+pub fn Expr::ult(Self, Self) -> Self raise Z3Error
+pub fn Expr::unop(Self, UnOp) -> Self raise Z3Error
+pub fn Expr::urem(Self, Self) -> Self raise Z3Error
+pub fn Expr::zero_ext(Self, Int) -> Self raise Z3Error
+pub impl Compare for Expr
+pub impl Eq for Expr
+pub impl Hash for Expr
+pub impl Show for Expr
+
+pub struct Model {
+  // private fields
+}
+pub fn Model::eval(Self, Expr, completion? : Bool) -> Expr? raise Z3Error
+pub fn Model::eval_word(Self, Expr, completion? : Bool) -> @types.Word? raise Z3Error
+pub fn Model::to_string(Self) -> String
+
+pub struct Solver {
+  // private fields
+}
+pub fn Solver::add(Self, Expr) -> Unit raise Z3Error
+pub fn Solver::check(Self) -> CheckResult
+pub fn Solver::check_formulas(Self, Array[Expr]) -> Model? raise Z3Error
+pub fn Solver::model(Self) -> Model raise Z3Error
+pub fn Solver::new(Context, simple? : Bool) -> Self raise Z3Error
+pub fn Solver::num_scopes(Self) -> Int
+pub fn Solver::pop(Self, n? : Int) -> Unit raise Z3Error
+pub fn Solver::push(Self) -> Unit raise Z3Error
+pub fn Solver::reason_unknown(Self) -> String
+pub fn Solver::reset(Self) -> Unit raise Z3Error
+pub fn Solver::set_timeout(Self, Int) -> Unit raise Z3Error
+pub fn Solver::to_string(Self) -> String
+
+pub(all) enum Sort {
+  Bool
+  BitVec(Int)
+  Other
+} derive(Eq, @debug.Debug)
+pub fn Sort::equal(Self, Self) -> Bool
+pub fn Sort::not_equal(Self, Self) -> Bool
+pub fn Sort::to_repr(Self) -> @debug.Repr
+
+pub(all) enum UnOp {
+  Not
+  Neg
+  RedOr
+  RedAnd
+  BoolNot
+} derive(Eq, @debug.Debug)
+pub fn UnOp::equal(Self, Self) -> Bool
+pub fn UnOp::not_equal(Self, Self) -> Bool
+pub fn UnOp::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

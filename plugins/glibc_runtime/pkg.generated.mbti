@@ -1,0 +1,49 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/glibc_runtime"
+
+import {
+  "bobzhang/bap/ogre",
+  "bobzhang/bap/project",
+  "bobzhang/bap/types",
+}
+
+// Values
+pub let c_proto_attr : String
+
+pub fn declare_plugin() -> Unit raise
+
+pub fn detect_main_address(@types.Term[@types.Program]) -> @types.Word?
+
+pub fn discover_libc_start_main(@project.Project, enable? : Bool) -> @project.Project
+
+pub fn find_libc_start_main(@types.Term[@types.Program]) -> (@types.Tid, @types.Term[@types.Program])?
+
+pub fn glibc_internal_aliases(String?, Array[String]) -> Array[String]
+
+pub fn is_glibc(@project.Project) -> Bool
+
+pub let name : String
+
+pub fn pass(enable? : Bool, main_abi? : (@project.Project, @types.Term[@types.Sub]) -> @types.Term[@types.Sub]) -> @project.ProjectPass
+
+pub fn recover_main(@project.Project, enable? : Bool, main_abi? : (@project.Project, @types.Term[@types.Sub]) -> @types.Term[@types.Sub]) -> @project.Project
+
+pub fn references_glibc_start_main(@ogre.Doc) -> Bool
+
+pub fn refine_glibc_internal_aliases(@types.Term[@types.Program]) -> @types.Term[@types.Program]
+
+pub fn register(enable? : Bool, main_abi? : (@project.Project, @types.Term[@types.Sub]) -> @types.Term[@types.Sub]) -> Result[Bool, String]
+
+pub fn reinsert_args_for_new_name(@types.Term[@types.Sub], String, abi? : (@types.Term[@types.Sub]) -> @types.Term[@types.Sub]) -> @types.Term[@types.Sub]
+
+pub fn rename_libc_start_main(@types.Term[@types.Program]) -> @types.Term[@types.Program]
+
+pub fn rename_main(@types.Term[@types.Program], abi? : (@types.Term[@types.Sub]) -> @types.Term[@types.Sub]) -> @types.Term[@types.Program]
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

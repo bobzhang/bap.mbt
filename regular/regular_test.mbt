@@ -29,7 +29,12 @@ test "format registry records reader and writer metadata" {
 test "digest helpers are deterministic and byte-oriented" {
   let a = @regular.digest_bytes(b"abc")
   let b = @regular.digest_bytes(b"abd")
-  inspect(a.to_string(), content="e71fa2190541574b")
+  inspect(
+    a.to_string(),
+    content=(
+      #|900150983cd24fb0d6963f7d28e17f72
+    ),
+  )
   assert_true(a != b)
   assert_true(@regular.digest_string("abc").to_string() == a.to_string())
   let root = @regular.Digest::create(namespace_name="cache")
@@ -59,6 +64,30 @@ test "regular cache delegates load and save by digest" {
   let empty : @regular.Cache[String] = @regular.Cache::oblivion()
   empty.save(key, "ignored")
   assert_true(empty.load(key) is None)
+}
+
+///|
+test "requested caches go through the provided service" {
+  let cache = @regular.Cache::request(
+    of_bytes=b => if b.length() == 1 { Some(b[0].to_int()) } else { None },
+    to_bytes=n => Bytes::make(1, n.to_byte()),
+  )
+  let key = @regular.digest(namespace_name="test", "service")
+  // the default service stores nothing
+  cache.save(key, 7)
+  assert_true(cache.load(key) is None)
+  let store : Map[@regular.Digest, Bytes] = Map([])
+  @regular.provide_cache_service({
+    load: k => store.get(k),
+    save: (k, v) => store[k] = v,
+  })
+  // the service is looked up when the cache is used
+  cache.save(key, 7)
+  debug_inspect(cache.load(key), content="Some(7)")
+  store[key] = b"bad"
+  assert_true(cache.load(key) is None)
+  @regular.provide_cache_service(@regular.CacheService::oblivion())
+  assert_true(cache.load(key) is None)
 }
 
 ///|

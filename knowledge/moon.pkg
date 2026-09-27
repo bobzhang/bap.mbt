@@ -2,4 +2,8 @@ import {
   "bobzhang/bap/regular",
   "moonbitlang/core/list",
   "moonbitlang/core/string",
+  "moonbitlang/core/immut/sorted_map",
+  "moonbitlang/core/immut/sorted_set",
+  "moonbitlang/core/immut/hashmap",
+  "moonbitlang/core/encoding/utf8",
 }

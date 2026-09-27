@@ -1,0 +1,38 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/riscv"
+
+import {
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/mc",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn accepts(@mc.Context) -> Bool
+
+pub fn decode(BytesView, UInt64, xlen? : Xlen, compressed? : Bool) -> @mc.Insn?
+
+pub fn decoder() -> @mc.Decoder
+
+pub let decoder_name : String
+
+pub fn encoding(Xlen) -> @core_theory.Language
+
+pub fn register_decoder() -> Unit
+
+pub fn xlen_of_context(@mc.Context) -> Xlen
+
+// Errors
+
+// Types and methods
+pub(all) enum Xlen {
+  RV32
+  RV64
+} derive(Eq, @debug.Debug)
+pub fn Xlen::equal(Self, Self) -> Bool
+pub fn Xlen::not_equal(Self, Self) -> Bool
+pub fn Xlen::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

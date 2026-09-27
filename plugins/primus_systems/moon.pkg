@@ -1,0 +1,7 @@
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/knowledge",
+  "bobzhang/bap/main_event",
+  "bobzhang/bap/primus",
+  "moonbitlang/core/encoding/utf8",
+}

@@ -1,0 +1,12 @@
+import {
+  "bobzhang/bap/primus",
+  "bobzhang/bap/types",
+  "moonbitlang/core/immut/sorted_map",
+  "moonbitlang/core/immut/sorted_set",
+}
+
+import {
+  "bobzhang/bap/bml",
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/project",
+} for "test"

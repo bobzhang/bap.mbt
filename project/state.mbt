@@ -9,6 +9,9 @@ struct ProjectDisassemblyInstruction {
   kinds_value : Array[ProjectInstructionKind]
   operands_value : Array[ProjectInstructionOperand]
   subinstructions_value : Array[ProjectDisassemblyInstruction]
+  /// the relocations of the unit of the instruction, applied to its lifted
+  /// semantics (see `ProjectRelocations::fixup`)
+  relocations_value : ProjectRelocations?
 }
 
 ///|
@@ -94,12 +97,22 @@ fn project_disassembly_same_block(
 }
 
 ///|
+/// The identity of a block or instruction region (see
+/// `project_disassembly_same_block`).
+fn project_disassembly_block_key(block : @memory.Memory) -> (UInt64, UInt64) {
+  (block.min_addr(), block.max_addr())
+}
+
+///|
 fn project_disassembly_dedup_blocks(
   blocks : Array[@memory.Memory],
 ) -> Array[@memory.Memory] {
+  let seen : Map[(UInt64, UInt64), Unit] = Map([])
   let result : Array[@memory.Memory] = []
   for block in blocks {
-    if !result.any(existing => project_disassembly_same_block(existing, block)) {
+    let key = project_disassembly_block_key(block)
+    if !seen.contains(key) {
+      seen[key] = ()
       result.push(block)
     }
   }
@@ -138,12 +151,23 @@ fn project_disassembly_replace_instruction(
 }
 
 ///|
+/// Removes the instructions of the same region: the first position of a
+/// region holds its last instruction (as successive
+/// `project_disassembly_replace_instruction`s would).
 fn project_disassembly_dedup_instructions(
   instructions : Array[ProjectDisassemblyInstruction],
 ) -> Array[ProjectDisassemblyInstruction] {
-  let mut result : Array[ProjectDisassemblyInstruction] = []
+  let index : Map[(UInt64, UInt64), Int] = Map([])
+  let result : Array[ProjectDisassemblyInstruction] = []
   for instruction in instructions {
-    result = project_disassembly_replace_instruction(result, instruction)
+    let key = project_disassembly_block_key(instruction.memory_value)
+    match index.get(key) {
+      Some(i) => result[i] = instruction
+      None => {
+        index[key] = result.length()
+        result.push(instruction)
+      }
+    }
   }
   result
 }
@@ -162,9 +186,17 @@ fn project_disassembly_same_edge(
 fn project_disassembly_dedup_edges(
   edges : Array[ProjectDisassemblyEdge],
 ) -> Array[ProjectDisassemblyEdge] {
+  let seen : Map[(UInt64, UInt64?, Int), Unit] = Map([])
   let result : Array[ProjectDisassemblyEdge] = []
   for edge in edges {
-    if !result.any(existing => project_disassembly_same_edge(existing, edge)) {
+    let kind = match edge.kind_value {
+      JumpEdge => 0
+      CondEdge => 1
+      FallEdge => 2
+    }
+    let key = (edge.source_value, edge.target_value, kind)
+    if !seen.contains(key) {
+      seen[key] = ()
       result.push(edge)
     }
   }
@@ -305,13 +337,17 @@ fn project_state_inspect(state : ProjectState) -> String {
 }
 
 ///|
+/// `project_state_domain`, declared once.
+let project_state_domain_value : @knowledge.Domain[ProjectState] = @knowledge.Domain::custom(
+  project_name("disassembly"),
+  project_state_inspect,
+  empty=ProjectState::empty(),
+  order=project_state_order,
+)
+
+///|
 fn project_state_domain() -> @knowledge.Domain[ProjectState] {
-  @knowledge.Domain::custom(
-    project_name("disassembly"),
-    project_state_inspect,
-    empty=ProjectState::empty(),
-    order=project_state_order,
-  )
+  project_state_domain_value
 }
 
 ///|
@@ -736,6 +772,7 @@ pub fn ProjectDisassemblyInstruction::create(
       Some(items) => items.copy()
       None => []
     },
+    relocations_value: None,
   }
 }
 
@@ -861,6 +898,33 @@ pub fn ProjectDisassemblyInstruction::with_subinstructions(
   subinstructions : Array[ProjectDisassemblyInstruction],
 ) -> ProjectDisassemblyInstruction {
   { ..self, subinstructions_value: subinstructions.copy(), }
+}
+
+///|
+/// The instruction with the relocations of its unit: the jumps of its
+/// lifted semantics are fixed up with them (see `ProjectRelocations::fixup`
+/// and `ProjectDisassemblyInstruction::lift`). Empty relocations are the
+/// same as no relocations.
+pub fn ProjectDisassemblyInstruction::with_relocations(
+  self : ProjectDisassemblyInstruction,
+  relocations : ProjectRelocations,
+) -> ProjectDisassemblyInstruction {
+  {
+    ..self,
+    relocations_value: if relocations.is_empty() {
+      None
+    } else {
+      Some(relocations)
+    },
+  }
+}
+
+///|
+/// The relocations of the unit of the instruction, if any.
+pub fn ProjectDisassemblyInstruction::relocations(
+  self : ProjectDisassemblyInstruction,
+) -> ProjectRelocations? {
+  self.relocations_value
 }
 
 ///|
@@ -1101,7 +1165,73 @@ pub fn ProjectDisassemblyState::instructions_in(
   let result = self.instructions_value.filter(instruction => {
     block.dominates(instruction.memory())
   })
-  result.sort_by((left, right) => left.addr().compare(right.addr()))
+  project_disassembly_sort_by_addr(result)
+  result
+}
+
+///|
+fn project_disassembly_sort_by_addr(
+  instructions : Array[ProjectDisassemblyInstruction],
+) -> Unit {
+  instructions.sort_by((left, right) => left.addr().compare(right.addr()))
+}
+
+///|
+/// The positions of the instructions of the state ordered by their start
+/// address, to find the instructions of many blocks without scanning all
+/// instructions for each block.
+fn ProjectDisassemblyState::instruction_order(
+  self : ProjectDisassemblyState,
+) -> Array[Int] {
+  let order = Array::makei(self.instructions_value.length(), i => i)
+  order.sort_by((left, right) => {
+    let l = self.instructions_value[left].memory_value.min_addr()
+    let r = self.instructions_value[right].memory_value.min_addr()
+    let c = l.compare(r)
+    if c != 0 {
+      c
+    } else {
+      left.compare(right)
+    }
+  })
+  order
+}
+
+///|
+/// `self.instructions_in(block)`, using the `instruction_order` of the state.
+fn ProjectDisassemblyState::instructions_in_ordered(
+  self : ProjectDisassemblyState,
+  order : Array[Int],
+  block : @memory.Memory,
+) -> Array[ProjectDisassemblyInstruction] {
+  let instructions = self.instructions_value
+  let lo = block.min_addr()
+  // the first instruction starting at or after the start of the block
+  let mut first = 0
+  let mut last = order.length()
+  while first < last {
+    let mid = first + (last - first) / 2
+    if instructions[order[mid]].memory_value.min_addr() < lo {
+      first = mid + 1
+    } else {
+      last = mid
+    }
+  }
+  let hi = block.max_addr()
+  let found : Array[Int] = []
+  for i in first..<order.length() {
+    let instruction = instructions[order[i]]
+    if instruction.memory_value.min_addr() > hi {
+      break
+    }
+    if block.dominates(instruction.memory()) {
+      found.push(order[i])
+    }
+  }
+  // in the order of the instructions of the state, as `instructions_in`
+  found.sort()
+  let result = found.map(i => instructions[i])
+  project_disassembly_sort_by_addr(result)
   result
 }
 
@@ -1303,12 +1433,16 @@ pub fn ProjectState::empty() -> ProjectState {
 }
 
 ///|
+/// `ProjectState::slot`, declared once.
+let project_state_slot_value : @knowledge.Slot[Unit, ProjectState] = @core_theory.ProgramUnit::cls().property(
+  name=project_name("disassembly"),
+  domain=project_state_domain(),
+  persistent=ProjectState::persistent(),
+)
+
+///|
 pub fn ProjectState::slot() -> @knowledge.Slot[Unit, ProjectState] {
-  @core_theory.ProgramUnit::cls().property(
-    name=project_name("disassembly"),
-    domain=project_state_domain(),
-    persistent=ProjectState::persistent(),
-  )
+  project_state_slot_value
 }
 
 ///|

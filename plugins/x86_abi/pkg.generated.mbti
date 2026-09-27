@@ -1,0 +1,35 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/x86_abi"
+
+import {
+  "bobzhang/bap/core_theory",
+}
+
+// Values
+pub fn cdecl(@core_theory.Target) -> Unit
+
+pub fn cdecl16(@core_theory.Target) -> Unit
+
+pub fn fastcall(@core_theory.Target) -> Unit
+
+pub fn install_calling_conventions() -> Unit
+
+pub fn ms64(@core_theory.Target) -> Unit
+
+pub fn pascal(@core_theory.Target) -> Unit
+
+pub fn pascal16(@core_theory.Target) -> Unit
+
+pub fn sysv(@core_theory.Target) -> Unit
+
+pub fn target_var(@core_theory.Target, String) -> @core_theory.Var?
+
+pub fn watcomregs(@core_theory.Target) -> Unit
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

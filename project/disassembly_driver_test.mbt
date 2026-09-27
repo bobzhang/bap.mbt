@@ -153,27 +153,27 @@ test "project basic disassembly driver materializes Basic instructions" {
   let block = @memory.Memory::from_bytes(
     endian=LittleEndian,
     start=0x7300UL,
-    b"\x41\x42\x43",
+    b"\x55\x06\xc3",
   )
   let memory = @memory.MemMap::singleton(block, "code")
-  let project = @project.Project::empty(@core_theory.Target::unknown()).with_memory(
+  let project = @project.Project::empty(@core_theory.Target::x86_64()).with_memory(
     memory,
   )
   match project.disassemble(driver="basic") {
     Ok(disassembled) => {
       assert_true(disassembled.get("disassembler") == Some("basic"))
       assert_true(disassembled.disassembly().block_count() == 1)
-      assert_true(disassembled.disassembly().instruction_count() == 3)
+      // the byte 0x06 is invalid in 64-bit mode and yields no instruction
+      assert_true(disassembled.disassembly().instruction_count() == 2)
       let instructions = disassembled.disassembly().instructions_in(block)
-      assert_true(instructions.length() == 3)
-      assert_true(instructions[0].addr() == 0x7300UL)
-      assert_true(instructions[0].code() == 0x41)
-      assert_true(instructions[0].assembly() == ".byte 0x41")
-      assert_true(instructions[0].encoding() == "raw")
-      assert_true(instructions[1].addr() == 0x7301UL)
-      assert_true(instructions[1].code() == 0x42)
-      assert_true(instructions[2].addr() == 0x7302UL)
-      assert_true(instructions[2].code() == 0x43)
+      inspect(
+        instructions
+        .map(insn => "\{insn.addr().to_string(radix=16)}:\{insn.name()}")
+        .join(" "),
+        content=(
+          #|7300:PUSH64r 7302:RET64
+        ),
+      )
     }
     Err(reason) => fail(reason)
   }
@@ -185,8 +185,7 @@ test "project basic disassembly driver materializes Basic instructions" {
   )
   match
     @project.ProjectDisassemblyDriver::basic(backend="missing").run(project) {
-    Err(reason) =>
-      assert_true(reason == "unknown project disassembly basic backend missing")
+    Err(reason) => assert_true(reason == "Unknown backend: missing")
     Ok(_) => fail("unknown Basic backend driver succeeded")
   }
 }
@@ -203,7 +202,7 @@ test "project linear-sweep disassembly driver materializes sweep instructions" {
     b"\x55\xc3",
   )
   let memory = @memory.MemMap::singleton(block, "code")
-  let project = @project.Project::empty(@core_theory.Target::unknown()).with_memory(
+  let project = @project.Project::empty(@core_theory.Target::x86_64()).with_memory(
     memory,
   )
   match project.disassemble(driver="linear-sweep") {
@@ -214,12 +213,13 @@ test "project linear-sweep disassembly driver materializes sweep instructions" {
       let instructions = disassembled.disassembly().instructions_in(block)
       assert_true(instructions.length() == 2)
       assert_true(instructions[0].addr() == 0x7200UL)
-      assert_true(instructions[0].code() == 0x55)
-      assert_true(instructions[0].name() == ".byte")
-      assert_true(instructions[0].encoding() == "raw")
+      // the LLVM opcode (LLVM 22's X86::PUSH64r) and the encoding language
+      assert_true(instructions[0].name() == "PUSH64r")
+      assert_true(instructions[0].code() == 3515)
+      assert_true(instructions[0].encoding() == "llvm-x86_64")
       assert_true(instructions[1].addr() == 0x7201UL)
-      assert_true(instructions[1].code() == 0xc3)
-      assert_true(instructions[1].assembly() == ".byte 0xc3")
+      assert_true(instructions[1].name() == "RET64")
+      assert_true(instructions[1].has_kind(ProjectReturn))
     }
     Err(reason) => fail(reason)
   }

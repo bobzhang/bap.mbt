@@ -1,0 +1,371 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/powerpc"
+
+import {
+  "bobzhang/bap/bitvec",
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/mc",
+  "bobzhang/bap/types",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn accepts(@mc.Context) -> Bool
+
+pub fn bil_of_rtl(ArrayView[Rtl]) -> Array[@types.Stmt] raise @mc.LiftError
+
+pub let bit : Int
+
+pub let byte : Int
+
+pub fn case(RtlExp, Array[Rtl]) -> Clause
+
+pub fn concat((Cpu, Operands) -> Array[Rtl] raise @mc.LiftError, (Cpu, Operands) -> Array[Rtl] raise @mc.LiftError) -> (Cpu, Operands) -> Array[Rtl] raise @mc.LiftError
+
+pub fn const_(Int, Int, Sign) -> RtlExp
+
+pub fn decode(BytesView, UInt64, mode? : AddrSize, endian? : @bitvec.Endian, encoding? : @core_theory.Language) -> @mc.Insn?
+
+pub fn decode_in_context(@mc.Context, BytesView, UInt64) -> @mc.Decoded
+
+pub fn decode_word(UInt, UInt64, mode? : AddrSize, encoding? : @core_theory.Language, raw? : Bytes) -> @mc.Insn?
+
+pub fn decoder() -> @mc.Decoder
+
+pub let decoder_name : String
+
+pub fn default(Array[Rtl]) -> Clause
+
+pub fn dot((Cpu, Operands) -> Array[Rtl] raise @mc.LiftError) -> (Cpu, Operands) -> Array[Rtl] raise @mc.LiftError
+
+pub let doubleword : Int
+
+pub fn find_insn_lifter(String) -> ((Cpu, Operands) -> Array[Rtl] raise @mc.LiftError)?
+
+pub fn foreach(RtlExp, RtlExp, Array[Rtl]) -> Rtl
+
+pub fn foreach_from(inverse~ : Bool, RtlExp, RtlExp, Array[Rtl]) -> Rtl
+
+pub let halfword : Int
+
+pub fn if_(RtlExp, Array[Rtl], Array[Rtl]) -> Rtl
+
+pub fn ifnot(RtlExp, Array[Rtl]) -> Rtl
+
+pub fn infallible((Cpu, Operands) -> Array[Rtl]) -> (Cpu, Operands) -> Array[Rtl] raise @mc.LiftError
+
+pub fn jmp(RtlExp) -> Rtl
+
+pub fn lift(AddrSize, @bitvec.Endian, @mc.Insn) -> Array[@types.Stmt] raise @mc.LiftError
+
+pub fn lift32(@mc.Insn) -> Array[@types.Stmt] raise @mc.LiftError
+
+pub fn lift64(@mc.Insn) -> Array[@types.Stmt] raise @mc.LiftError
+
+pub fn lift64le(@mc.Insn) -> Array[@types.Stmt] raise @mc.LiftError
+
+pub fn lift_in_context(@mc.Context, @mc.Insn) -> @mc.Lifted raise @mc.LiftError
+
+pub fn lift_rtl(AddrSize, @bitvec.Endian, @mc.Insn) -> Array[Rtl] raise @mc.LiftError
+
+pub fn message(String) -> Rtl
+
+pub fn mode_of_context(@mc.Context) -> (AddrSize, @bitvec.Endian)
+
+pub fn of_string(String, Sign) -> RtlExp raise @mc.LiftError
+
+pub let one : RtlExp
+
+pub fn ones(Int) -> RtlExp
+
+pub fn provider() -> @mc.Provider
+
+pub let provider_name : String
+
+pub let quadword : Int
+
+pub fn read_word(BytesView, @bitvec.Endian) -> UInt?
+
+pub fn register(registry? : @mc.Registry) -> Unit
+
+pub fn register_decoder() -> Unit
+
+pub fn register_dot_insn(String, (Cpu, Operands) -> Array[Rtl] raise @mc.LiftError) -> Unit
+
+pub fn register_insn(String, (Cpu, Operands) -> Array[Rtl] raise @mc.LiftError) -> Unit
+
+pub fn sconst(Int, Int) -> RtlExp
+
+pub fn store(@types.Var, RtlExp, RtlExp, @bitvec.Endian, @types.Size) -> Rtl
+
+pub fn supported_insns() -> Array[String]
+
+pub fn svar(Int) -> RtlExp
+
+pub fn switch_(RtlExp, Array[Clause]) -> Rtl raise @mc.LiftError
+
+pub fn uconst(Int, Int) -> RtlExp
+
+pub fn uvar(Int) -> RtlExp
+
+pub fn var_(Int, Sign) -> RtlExp
+
+pub fn when_(RtlExp, Array[Rtl]) -> Rtl
+
+pub let word : Int
+
+pub let zero : RtlExp
+
+// Errors
+
+// Types and methods
+pub struct AbiLayout {
+  args : Array[AbiLocation]
+  ret : AbiLocation?
+} derive(Eq, @debug.Debug)
+pub fn AbiLayout::equal(Self, Self) -> Bool
+pub fn AbiLayout::not_equal(Self, Self) -> Bool
+pub fn AbiLayout::to_repr(Self) -> @debug.Repr
+
+pub(all) enum AbiLocation {
+  Registers(Array[String])
+  Pointer(String)
+  Reference(String)
+  Memory
+} derive(Eq, @debug.Debug)
+pub fn AbiLocation::equal(Self, Self) -> Bool
+pub fn AbiLocation::not_equal(Self, Self) -> Bool
+pub fn AbiLocation::to_repr(Self) -> @debug.Repr
+
+pub(all) enum AbiValue {
+  Integral(Int)
+  Floating(Int)
+} derive(Eq, @debug.Debug)
+pub fn AbiValue::equal(Self, Self) -> Bool
+pub fn AbiValue::not_equal(Self, Self) -> Bool
+pub fn AbiValue::to_repr(Self) -> @debug.Repr
+
+pub(all) enum AddrSize {
+  R32
+  R64
+} derive(Eq, @debug.Debug)
+pub fn AddrSize::equal(Self, Self) -> Bool
+pub fn AddrSize::in_bits(Self) -> Int
+pub fn AddrSize::not_equal(Self, Self) -> Bool
+pub fn AddrSize::to_repr(Self) -> @debug.Repr
+
+pub(all) enum Clause {
+  Case(RtlExp, Array[Rtl])
+  Default(Array[Rtl])
+}
+
+pub struct Cpu {
+  model : Model
+  endian : @bitvec.Endian
+  pc : RtlExp
+  word_width : Int
+  ctr : RtlExp
+  lr : RtlExp
+  tar : RtlExp
+  cr : RtlExp
+  cr0 : RtlExp
+  cr1 : RtlExp
+  cr2 : RtlExp
+  cr3 : RtlExp
+  cr4 : RtlExp
+  cr5 : RtlExp
+  cr6 : RtlExp
+  cr7 : RtlExp
+  so : RtlExp
+  ca : RtlExp
+  ov : RtlExp
+  ca32 : RtlExp
+  ov32 : RtlExp
+}
+pub fn Cpu::create(AddrSize, @bitvec.Endian, UInt64) -> Self
+pub fn Cpu::find_reg(Self, String) -> RtlExp
+pub fn Cpu::fpr(Self, Int) -> RtlExp raise @mc.LiftError
+pub fn Cpu::gpr(Self, Int) -> RtlExp raise @mc.LiftError
+pub fn Cpu::jmp(Self, RtlExp) -> Rtl
+pub fn Cpu::load(Self, RtlExp, Int) -> RtlExp raise @mc.LiftError
+pub fn Cpu::reg(Self, Operands, Int, Sign) -> RtlExp raise @mc.LiftError
+pub fn Cpu::sreg(Self, Operands, Int) -> RtlExp raise @mc.LiftError
+pub fn Cpu::store(Self, RtlExp, RtlExp, Int) -> Rtl raise @mc.LiftError
+pub fn Cpu::ureg(Self, Operands, Int) -> RtlExp raise @mc.LiftError
+pub fn Cpu::vr(Self, Int) -> RtlExp raise @mc.LiftError
+
+pub struct Model {
+  addr_size : AddrSize
+  gpr_bitwidth : Int
+  fpr_bitwidth : Int
+  lr_bitwidth : Int
+  ctr_bitwidth : Int
+  tar_bitwidth : Int
+  cr_bitwidth : Int
+  vr_bitwidth : Int
+  gpr : Map[String, @types.Var]
+  gpri : Array[@types.Var]
+  fpr : Map[String, @types.Var]
+  fpri : Array[@types.Var]
+  vr : Map[String, @types.Var]
+  vri : Array[@types.Var]
+  ctr : @types.Var
+  lr : @types.Var
+  tar : @types.Var
+  cri : Array[@types.Var]
+  crn : Map[String, @types.Var]
+  cr_fields : Map[String, Array[@types.Var]]
+  cri_fields : Array[Array[@types.Var]]
+  so : @types.Var
+  ca : @types.Var
+  ov : @types.Var
+  ca32 : @types.Var
+  ov32 : @types.Var
+  float_c : @types.Var
+  float_less : @types.Var
+  float_equal : @types.Var
+  float_greater : @types.Var
+  float_unordered : @types.Var
+  mem : @types.Var
+  flags : Array[@types.Var]
+}
+pub fn Model::cf(Self) -> @types.Var
+pub fn Model::cpu_flags(Self) -> Array[@types.Var]
+pub fn Model::cr(Self) -> RtlExp
+pub fn Model::cr_field(Self, Int) -> RtlExp
+pub fn Model::is_bp(Self, @types.Var) -> Bool
+pub fn Model::is_cf(Self, @types.Var) -> Bool
+pub fn Model::is_flag(Self, @types.Var) -> Bool
+pub fn Model::is_mem(Self, @types.Var) -> Bool
+pub fn Model::is_nf(Self, @types.Var) -> Bool
+pub fn Model::is_reg(Self, @types.Var) -> Bool
+pub fn Model::is_sp(Self, @types.Var) -> Bool
+pub fn Model::is_vf(Self, @types.Var) -> Bool
+pub fn Model::is_zf(Self, @types.Var) -> Bool
+pub fn Model::nf(Self) -> @types.Var
+pub fn Model::of_addr_size(AddrSize) -> Self
+pub fn Model::ppc32() -> Self
+pub fn Model::ppc64() -> Self
+pub fn Model::sp(Self) -> @types.Var
+pub fn Model::vf(Self) -> @types.Var
+pub fn Model::zf(Self) -> @types.Var
+
+pub struct Operands {
+  name : String
+  ops : ReadOnlyArray[@mc.Op]
+}
+pub fn Operands::disp(Self, Int) -> RtlExp raise @mc.LiftError
+pub fn Operands::get(Self, Int) -> @mc.Op raise @mc.LiftError
+pub fn Operands::imm(Self, Int, Sign) -> RtlExp raise @mc.LiftError
+pub fn Operands::of_insn(@mc.Insn) -> Self
+pub fn Operands::simm(Self, Int) -> RtlExp raise @mc.LiftError
+pub fn Operands::uimm(Self, Int) -> RtlExp raise @mc.LiftError
+
+pub(all) enum Rtl {
+  Move(RtlExp, RtlExp)
+  Jmp(RtlExp)
+  Store(@types.Var, RtlExp, RtlExp, @bitvec.Endian, @types.Size)
+  If(RtlExp, Array[Rtl], Array[Rtl])
+  Foreach(Bool, RtlExp, RtlExp, Array[Rtl])
+  Message(String)
+} derive(Eq, @debug.Debug)
+pub fn Rtl::equal(Self, Self) -> Bool
+pub fn Rtl::not_equal(Self, Self) -> Bool
+pub fn Rtl::to_repr(Self) -> @debug.Repr
+
+pub(all) enum RtlBody {
+  Vars(@types.Var, Array[@types.Var])
+  Word(@types.Word)
+  Load(@types.Var, RtlBody, @bitvec.Endian, @types.Size)
+  Concat(RtlBody, RtlBody)
+  Binop(@types.BinOp, RtlBody, RtlBody)
+  Extract(Int, Int, RtlBody)
+  Cast(Sign, Int, RtlBody)
+  Unop(@types.UnOp, RtlBody)
+} derive(Eq, @debug.Debug)
+pub fn RtlBody::equal(Self, Self) -> Bool
+pub fn RtlBody::not_equal(Self, Self) -> Bool
+pub fn RtlBody::to_repr(Self) -> @debug.Repr
+
+pub struct RtlExp {
+  body : RtlBody
+  sign : Sign
+  width : Int
+} derive(Eq, @debug.Debug)
+pub fn RtlExp::add(Self, Self) -> Self
+pub fn RtlExp::bits(Self, Int, Int) -> Self
+pub fn RtlExp::body(Self) -> RtlBody
+pub fn RtlExp::cast(Self, Int, Sign) -> Self
+pub fn RtlExp::concat(Self, Self) -> Self
+pub fn RtlExp::div(Self, Self) -> Self
+pub fn RtlExp::eq(Self, Self) -> Self
+pub fn RtlExp::equal(Self, Self) -> Bool
+pub fn RtlExp::extract(Self, Int, Int) -> Self
+pub fn RtlExp::first(Self, Int) -> Self
+pub fn RtlExp::ge(Self, Self) -> Self
+pub fn RtlExp::gt(Self, Self) -> Self
+pub fn RtlExp::high(Self, Int) -> Self
+pub fn RtlExp::land(Self, Self) -> Self
+pub fn RtlExp::last(Self, Int) -> Self
+pub fn RtlExp::le(Self, Self) -> Self
+pub fn RtlExp::lnot(Self) -> Self
+pub fn RtlExp::load(@types.Var, Self, @bitvec.Endian, @types.Size) -> Self
+pub fn RtlExp::lor(Self, Self) -> Self
+pub fn RtlExp::low(Self, Int) -> Self
+pub fn RtlExp::lsb(Self) -> Self
+pub fn RtlExp::lt(Self, Self) -> Self
+pub fn RtlExp::lxor(Self, Self) -> Self
+pub fn RtlExp::mod(Self, Self) -> Self
+pub fn RtlExp::msb(Self) -> Self
+pub fn RtlExp::mul(Self, Self) -> Self
+pub fn RtlExp::neq(Self, Self) -> Self
+pub fn RtlExp::not_equal(Self, Self) -> Bool
+pub fn RtlExp::nth(Self, Int, Int) -> Self
+pub fn RtlExp::of_var(@types.Var) -> Self
+pub fn RtlExp::of_vars(ArrayView[@types.Var]) -> Self
+pub fn RtlExp::of_word(@types.Word) -> Self
+pub fn RtlExp::set(Self, Self) -> Rtl
+pub fn RtlExp::shl(Self, Self) -> Self
+pub fn RtlExp::shr(Self, Self) -> Self
+pub fn RtlExp::sign(Self) -> Sign
+pub fn RtlExp::signed(Self) -> Self
+pub fn RtlExp::sub(Self, Self) -> Self
+pub fn RtlExp::tmp(Int) -> Self
+pub fn RtlExp::to_bil(Self) -> @types.Exp
+pub fn RtlExp::to_repr(Self) -> @debug.Repr
+pub fn RtlExp::unsigned(Self) -> Self
+pub fn RtlExp::width(Self) -> Int
+pub fn RtlExp::width_exp(Self) -> Self
+pub fn RtlExp::with_sign(Self, Sign) -> Self
+pub impl Add for RtlExp
+pub impl BitAnd for RtlExp
+pub impl BitOr for RtlExp
+pub impl BitXOr for RtlExp
+pub impl Div for RtlExp
+pub impl Mod for RtlExp
+pub impl Mul for RtlExp
+pub impl Sub for RtlExp
+
+pub(all) enum Sign {
+  Signed
+  Unsigned
+} derive(Eq, @debug.Debug)
+pub fn Sign::equal(Self, Self) -> Bool
+pub fn Sign::not_equal(Self, Self) -> Bool
+pub fn Sign::to_repr(Self) -> @debug.Repr
+
+pub struct Sysv32Abi {
+  int_args : Array[String]
+  float_args : Array[String]
+  int_rets : Array[String]
+  float_rets : Array[String]
+  gpr_bits : Int
+  fpr_bits : Int
+}
+pub fn Sysv32Abi::layout(Self, ArrayView[AbiValue], ret? : AbiValue, little_endian? : Bool) -> AbiLayout
+pub fn Sysv32Abi::new() -> Self
+
+// Type aliases
+pub type InsnLift = (Cpu, Operands) -> Array[Rtl] raise @mc.LiftError
+
+// Traits

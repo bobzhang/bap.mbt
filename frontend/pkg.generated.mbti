@@ -1,0 +1,60 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/frontend"
+
+import {
+  "bobzhang/bap/bap_main",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn declare_commands(Io) -> Unit raise
+
+pub let man : String
+
+pub fn plugin_table() -> Array[StaticPlugin]
+
+pub fn register_services() -> Unit raise
+
+pub fn run(Array[String], env? : (String) -> String?, fs? : @bap_main.FileSystem, out? : (String) -> Unit, err? : (String) -> Unit, read_line? : () -> String?, write_file? : (String, String) -> Result[Unit, String], plugins? : Array[StaticPlugin]) -> Int
+
+pub fn usage(@bap_main.Ctxt) -> String
+
+// Errors
+
+// Types and methods
+pub(all) enum Entity {
+  Entities
+  Plugins
+  Commands
+  Recipes
+  Tags
+  Passes
+  Formats
+  Classes
+  Theories
+  Agents
+  Rules
+  Collators
+  Targets
+} derive(Eq, @debug.Debug)
+pub fn Entity::equal(Self, Self) -> Bool
+pub fn Entity::name(Self) -> String
+pub fn Entity::not_equal(Self, Self) -> Bool
+pub fn Entity::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Io {
+  out : (String) -> Unit
+  err : (String) -> Unit
+  read_line : () -> String?
+  write_file : (String, String) -> Result[Unit, String]
+  argv : Array[String]
+}
+
+pub(all) struct StaticPlugin {
+  name : String
+  load : (Io) -> Unit raise
+}
+
+// Type aliases
+
+// Traits

@@ -1,0 +1,10 @@
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/project",
+  "bobzhang/bap/strings" @strings_lib,
+}
+
+import {
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/memory",
+} for "test"

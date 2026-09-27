@@ -83,7 +83,7 @@ pub fn symbols(image : Image) -> Array[Symbol] {
 }
 
 ///|
-pub fn memory(image : Image) -> @memory.MemMap[String] {
+pub fn memory(image : Image) -> @memory.MemMap[@types.Value] {
   image.memory()
 }
 

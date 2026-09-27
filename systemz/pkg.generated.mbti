@@ -1,0 +1,32 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/systemz"
+
+import {
+  "bobzhang/bap/mc",
+  "bobzhang/bap/types",
+}
+
+// Values
+pub fn accepts(@mc.Context) -> Bool
+
+pub fn gpr(Int) -> @types.Var?
+
+pub fn lift(@mc.Insn) -> Array[@types.Stmt] raise @mc.LiftError
+
+pub fn lift_in_context(@mc.Context, @mc.Insn) -> @mc.Lifted raise @mc.LiftError
+
+pub fn provider() -> @mc.Provider
+
+pub let provider_name : String
+
+pub fn register(registry? : @mc.Registry) -> Unit
+
+pub fn regnum(String) -> Int?
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

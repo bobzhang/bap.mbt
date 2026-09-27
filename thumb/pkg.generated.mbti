@@ -1,0 +1,156 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/thumb"
+
+import {
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/mc",
+  "bobzhang/bap/types",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn accepts(@mc.Context) -> Bool
+
+pub fn branch_dest_encoding(Opcode, @mc.Insn) -> @core_theory.Language?
+
+pub fn decode_t32(BytesView, addr? : UInt64, big_endian? : Bool, it? : ItBlock) -> @mc.Decoded
+
+pub fn dest_encoding(UInt64) -> @core_theory.Language
+
+pub fn lift(@mc.Insn) -> Array[@types.Stmt] raise @mc.LiftError
+
+pub fn lift_in_context(@mc.Context, @mc.Insn) -> @mc.Lifted raise @mc.LiftError
+
+pub fn lift_opcode(Opcode, @mc.Insn) -> Array[@types.Stmt] raise @mc.LiftError
+
+pub fn provider() -> @mc.Provider
+
+pub let provider_name : String
+
+pub fn register(registry? : @mc.Registry) -> Unit
+
+pub fn register_decoder() -> Unit
+
+pub fn t2_expand_imm(Int) -> UInt
+
+pub fn t32_decoder() -> @mc.Decoder
+
+pub fn t32_decoder_accepts(@mc.Context) -> Bool
+
+pub let t32_decoder_name : String
+
+// Errors
+
+// Types and methods
+pub(all) enum Cond {
+  EQ
+  NE
+  CS
+  CC
+  MI
+  PL
+  VS
+  VC
+  HI
+  LS
+  GE
+  LT
+  GT
+  LE
+  AL
+} derive(Eq, @debug.Debug)
+pub fn Cond::all() -> Array[Self]
+pub fn Cond::equal(Self, Self) -> Bool
+pub fn Cond::not_equal(Self, Self) -> Bool
+pub fn Cond::of_int(Int) -> Self?
+pub fn Cond::to_int(Self) -> Int
+pub fn Cond::to_repr(Self) -> @debug.Repr
+
+pub struct ItBlock {
+  // private fields
+}
+pub fn ItBlock::in_block(Self, UInt64) -> Bool
+pub fn ItBlock::new() -> Self
+
+pub(all) enum Opcode {
+  TADC
+  TADDi3
+  TADDi8
+  TADDrSPi
+  TADDrr
+  TADDspi
+  TASRri
+  TCMPi8
+  TCMPr
+  TLSLri
+  TLSRri
+  TMOVSr
+  TMOVi8
+  TORR
+  TSUBi3
+  TSUBi8
+  TSUBrr
+  TSUBspi
+  TSTMIA
+  TSTMIA_UPD
+  TLDMIA
+  TLDMIA_UPD
+  TPOP
+  TPUSH
+  T2LDRpci
+  TLDRBi
+  TLDRBr
+  TLDRHi
+  TLDRHr
+  TLDRSB
+  TLDRSH
+  TLDRi
+  TLDRpci
+  TLDRr
+  TLDRspi
+  TSTRBi
+  TSTRBr
+  TSTRHi
+  TSTRHr
+  TSTRi
+  TSTRr
+  TSTRspi
+  TB
+  TBL
+  TBLXi
+  TBLXr
+  TBX
+  TBcc
+  TCBNZ
+  TCBZ
+  TSXTB
+  TSXTH
+  TUXTB
+  TUXTH
+} derive(Eq, @debug.Debug)
+pub fn Opcode::all() -> Array[Self]
+pub fn Opcode::equal(Self, Self) -> Bool
+pub fn Opcode::is_mem(Self) -> Bool
+pub fn Opcode::kind(Self) -> OpcodeKind
+pub fn Opcode::name(Self) -> String
+pub fn Opcode::not_equal(Self, Self) -> Bool
+pub fn Opcode::of_name(String) -> Self?
+pub fn Opcode::output(Self, &Logger) -> Unit
+pub fn Opcode::to_repr(Self) -> @debug.Repr
+pub fn Opcode::to_string(Self) -> String
+pub impl Show for Opcode
+
+pub(all) enum OpcodeKind {
+  Mov
+  MemMulti
+  Mem
+  Branch
+  Bit
+} derive(Eq, @debug.Debug)
+pub fn OpcodeKind::equal(Self, Self) -> Bool
+pub fn OpcodeKind::not_equal(Self, Self) -> Bool
+pub fn OpcodeKind::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

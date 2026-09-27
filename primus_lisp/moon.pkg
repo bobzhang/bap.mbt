@@ -1,0 +1,21 @@
+import {
+  "bobzhang/bap/bitvec",
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/knowledge",
+  "bobzhang/bap/mc",
+  "bobzhang/bap/native_io",
+  "bobzhang/bap/primus",
+  "bobzhang/bap/project",
+  "bobzhang/bap/types",
+  "moonbitlang/core/bigint",
+  "moonbitlang/core/list",
+  "moonbitlang/core/cmp",
+  "moonbitlang/core/math",
+  "moonbitlang/core/immut/sorted_map",
+  "moonbitlang/core/immut/sorted_set",
+  "moonbitlang/core/encoding/utf8",
+}
+
+options(
+  targets: { "host_native_test.mbt": [ "native" ] },
+)

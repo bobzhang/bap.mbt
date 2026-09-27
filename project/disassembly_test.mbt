@@ -55,7 +55,7 @@ test "project disasm of_mem reaches Basic llvm x86_64 fixture decoder" {
     (b"\x48\x83\xc4\x08", ["ADD64ri8", "RSP", "RSP", "0x8"], []),
     (
       b"\xc3",
-      ["RET"],
+      ["RET64"],
       [
         ProjectReturn,
         ProjectBarrier,
@@ -124,7 +124,7 @@ test "project disasm Basic llvm decodes x86 register arithmetic" {
         ["ADD32ri8", "R8D", "R8D", "0x1"],
       )
       assert_true(
-        project_disasm_test_instruction_strings(insns[2].1) == ["RET"],
+        project_disasm_test_instruction_strings(insns[2].1) == ["RET64"],
       )
       assert_true(disasm.disassembly().block_count() == 1)
     }
@@ -156,7 +156,7 @@ test "project disasm Basic llvm decodes x86 register logical immediates" {
         ["XOR64ri8", "RAX", "RAX", "0x1"],
       )
       assert_true(
-        project_disasm_test_instruction_strings(insns[2].1) == ["RET"],
+        project_disasm_test_instruction_strings(insns[2].1) == ["RET64"],
       )
       assert_true(disasm.disassembly().block_count() == 1)
     }
@@ -180,13 +180,15 @@ test "project disasm Basic llvm decodes x86 register inc-dec ops" {
       let insns = disasm.insns()
       assert_true(insns.map(item => item.0.length()) == [3, 3, 1])
       assert_true(
-        project_disasm_test_instruction_strings(insns[0].1) == ["INC64r", "RAX"],
+        project_disasm_test_instruction_strings(insns[0].1) ==
+        ["INC64r", "RAX", "RAX"],
       )
       assert_true(
-        project_disasm_test_instruction_strings(insns[1].1) == ["DEC64r", "RAX"],
+        project_disasm_test_instruction_strings(insns[1].1) ==
+        ["DEC64r", "RAX", "RAX"],
       )
       assert_true(
-        project_disasm_test_instruction_strings(insns[2].1) == ["RET"],
+        project_disasm_test_instruction_strings(insns[2].1) == ["RET64"],
       )
       assert_true(disasm.disassembly().block_count() == 1)
     }
@@ -210,13 +212,15 @@ test "project disasm Basic llvm decodes x86 register not-neg ops" {
       let insns = disasm.insns()
       assert_true(insns.map(item => item.0.length()) == [3, 3, 1])
       assert_true(
-        project_disasm_test_instruction_strings(insns[0].1) == ["NOT64r", "RAX"],
+        project_disasm_test_instruction_strings(insns[0].1) ==
+        ["NOT64r", "RAX", "RAX"],
       )
       assert_true(
-        project_disasm_test_instruction_strings(insns[1].1) == ["NEG64r", "RAX"],
+        project_disasm_test_instruction_strings(insns[1].1) ==
+        ["NEG64r", "RAX", "RAX"],
       )
       assert_true(
-        project_disasm_test_instruction_strings(insns[2].1) == ["RET"],
+        project_disasm_test_instruction_strings(insns[2].1) == ["RET64"],
       )
       assert_true(disasm.disassembly().block_count() == 1)
     }
@@ -241,14 +245,14 @@ test "project disasm Basic llvm decodes x86 register rr arithmetic" {
       assert_true(insns.map(item => item.0.length()) == [3, 3, 1])
       assert_true(
         project_disasm_test_instruction_strings(insns[0].1) ==
-        ["ADD64rr", "RAX", "RBX"],
+        ["ADD64rr", "RAX", "RAX", "RBX"],
       )
       assert_true(
         project_disasm_test_instruction_strings(insns[1].1) ==
-        ["SUB64rr", "RAX", "RCX"],
+        ["SUB64rr", "RAX", "RAX", "RCX"],
       )
       assert_true(
-        project_disasm_test_instruction_strings(insns[2].1) == ["RET"],
+        project_disasm_test_instruction_strings(insns[2].1) == ["RET64"],
       )
       assert_true(disasm.disassembly().block_count() == 1)
     }
@@ -273,14 +277,14 @@ test "project disasm Basic llvm decodes x86 register logical ops" {
       assert_true(insns.map(item => item.0.length()) == [3, 3, 1])
       assert_true(
         project_disasm_test_instruction_strings(insns[0].1) ==
-        ["XOR64rr", "RAX", "RAX"],
+        ["XOR64rr", "RAX", "RAX", "RAX"],
       )
       assert_true(
         project_disasm_test_instruction_strings(insns[1].1) ==
-        ["OR64rr", "RAX", "RBX"],
+        ["OR64rr", "RAX", "RAX", "RBX"],
       )
       assert_true(
-        project_disasm_test_instruction_strings(insns[2].1) == ["RET"],
+        project_disasm_test_instruction_strings(insns[2].1) == ["RET64"],
       )
       assert_true(disasm.disassembly().block_count() == 1)
     }
@@ -309,7 +313,7 @@ test "project disasm Basic llvm decodes x86 lea" {
       )
       assert_true(!insns[0].1.has_kind(ProjectMayLoad))
       assert_true(
-        project_disasm_test_instruction_strings(insns[1].1) == ["RET"],
+        project_disasm_test_instruction_strings(insns[1].1) == ["RET64"],
       )
       assert_true(disasm.disassembly().block_count() == 1)
     }
@@ -341,7 +345,7 @@ test "project disasm Basic llvm decodes BAP call1 micro fixture" {
       )
       for i in 1..<4 {
         assert_true(
-          project_disasm_test_instruction_strings(insns[i].1) == ["RET"],
+          project_disasm_test_instruction_strings(insns[i].1) == ["RET64"],
         )
         assert_true(insns[i].1.has_kind(ProjectReturn))
       }
@@ -395,7 +399,7 @@ test "project disasm Basic llvm decodes x86 call1 micro fixture" {
       )
       for i in 1..<4 {
         assert_true(
-          project_disasm_test_instruction_strings(insns[i].1) == ["RET"],
+          project_disasm_test_instruction_strings(insns[i].1) == ["RET32"],
         )
         assert_true(insns[i].1.has_kind(ProjectReturn))
       }
@@ -441,15 +445,14 @@ test "project disasm Basic llvm splits x86 near jump target blocks" {
       let insns = disasm.insns()
       assert_true(insns.map(item => item.0.length()) == [5, 1, 1])
       assert_true(
-        project_disasm_test_instruction_strings(insns[0].1) ==
-        ["JMP_4", "0xe806"],
+        project_disasm_test_instruction_strings(insns[0].1) == ["JMP_4", "0x1"],
       )
       assert_true(insns[0].1.has_kind(ProjectUnconditionalBranch))
       assert_true(
         project_disasm_test_instruction_strings(insns[1].1) == ["NOOP"],
       )
       assert_true(
-        project_disasm_test_instruction_strings(insns[2].1) == ["RET"],
+        project_disasm_test_instruction_strings(insns[2].1) == ["RET32"],
       )
       assert_true(disasm.disassembly().block_count() == 3)
       let cfg = disasm.cfg()
@@ -493,14 +496,14 @@ test "project disasm Basic llvm splits x86 conditional jump target blocks" {
       assert_true(insns.map(item => item.0.length()) == [2, 1, 1])
       assert_true(
         project_disasm_test_instruction_strings(insns[0].1) ==
-        ["JNE_1", "0xe883"],
+        ["JCC_1", "0x1", "0x5"],
       )
       assert_true(insns[0].1.has_kind(ProjectConditionalBranch))
       assert_true(
         project_disasm_test_instruction_strings(insns[1].1) == ["NOOP"],
       )
       assert_true(
-        project_disasm_test_instruction_strings(insns[2].1) == ["RET"],
+        project_disasm_test_instruction_strings(insns[2].1) == ["RET32"],
       )
       assert_true(disasm.disassembly().block_count() == 3)
       let cfg = disasm.cfg()
@@ -556,8 +559,7 @@ test "project disasm Basic llvm splits x86_64 push and jump blocks" {
       )
       assert_true(insns[1].1.kinds() == [ProjectMayStore])
       assert_true(
-        project_disasm_test_instruction_strings(insns[2].1) ==
-        ["JMP_4", "0xe908"],
+        project_disasm_test_instruction_strings(insns[2].1) == ["JMP_4", "0x1"],
       )
       assert_true(disasm.disassembly().block_count() == 3)
       let cfg = disasm.cfg()
@@ -600,7 +602,7 @@ test "project disasm Basic llvm decodes x86_64 pop epilogue" {
       )
       assert_true(insns[0].1.kinds() == [ProjectMayLoad])
       assert_true(
-        project_disasm_test_instruction_strings(insns[1].1) == ["RET"],
+        project_disasm_test_instruction_strings(insns[1].1) == ["RET64"],
       )
       assert_true(insns[1].1.has_kind(ProjectReturn))
       assert_true(disasm.disassembly().block_count() == 1)
@@ -633,7 +635,7 @@ test "project disasm Basic llvm decodes x86_64 immediate push prologue" {
       )
       assert_true(insns[0].1.kinds() == [ProjectMayStore])
       assert_true(
-        project_disasm_test_instruction_strings(insns[1].1) == ["RET"],
+        project_disasm_test_instruction_strings(insns[1].1) == ["RET64"],
       )
       assert_true(disasm.disassembly().block_count() == 1)
       let cfg = disasm.cfg()
@@ -658,11 +660,11 @@ test "project disasm Basic llvm decodes x86_64 memory push prologue" {
       assert_true(insns.map(item => item.0.length()) == [3, 1])
       assert_true(
         project_disasm_test_instruction_strings(insns[0].1) ==
-        ["PUSH64m", "RAX", "0x1", "Nil", "0x10", "Nil"],
+        ["PUSH64rmm", "RAX", "0x1", "Nil", "0x10", "Nil"],
       )
       assert_true(insns[0].1.kinds() == [ProjectMayLoad, ProjectMayStore])
       assert_true(
-        project_disasm_test_instruction_strings(insns[1].1) == ["RET"],
+        project_disasm_test_instruction_strings(insns[1].1) == ["RET64"],
       )
       assert_true(disasm.disassembly().block_count() == 1)
       let cfg = disasm.cfg()
@@ -691,7 +693,7 @@ test "project disasm Basic llvm decodes x86_64 register mov prologue" {
       )
       assert_true(insns[0].1.kinds().is_empty())
       assert_true(
-        project_disasm_test_instruction_strings(insns[1].1) == ["RET"],
+        project_disasm_test_instruction_strings(insns[1].1) == ["RET64"],
       )
       assert_true(insns[1].1.has_kind(ProjectReturn))
       assert_true(disasm.disassembly().block_count() == 1)
@@ -724,7 +726,7 @@ test "project disasm Basic llvm decodes x86_64 memory mov store" {
       )
       assert_true(insns[0].1.kinds() == [ProjectMayStore])
       assert_true(
-        project_disasm_test_instruction_strings(insns[1].1) == ["RET"],
+        project_disasm_test_instruction_strings(insns[1].1) == ["RET64"],
       )
       assert_true(insns[1].1.has_kind(ProjectReturn))
       assert_true(disasm.disassembly().block_count() == 1)
@@ -756,7 +758,7 @@ test "project disasm Basic llvm decodes x86_64 leave epilogue" {
       )
       assert_true(insns[0].1.kinds() == [ProjectMayLoad])
       assert_true(
-        project_disasm_test_instruction_strings(insns[1].1) == ["RET"],
+        project_disasm_test_instruction_strings(insns[1].1) == ["RET64"],
       )
       assert_true(insns[1].1.has_kind(ProjectReturn))
       assert_true(disasm.disassembly().block_count() == 1)

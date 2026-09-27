@@ -223,8 +223,10 @@ fn project_disassembly_add_basic_instructions(
   block : @memory.Memory,
 ) -> ProjectDisassemblyState {
   let mut next = state.add_block(block)
-  let basic_state = disasm.run(block)
-  for item in basic_state.insns() {
+  let insns = disasm.run(block, init=(), return_=_ => [], stopped=(s, _) => {
+    s.insns()
+  })
+  for item in insns {
     match item.1 {
       Some(instruction) => next = next.add_instruction(instruction)
       None => ()
@@ -235,7 +237,7 @@ fn project_disassembly_add_basic_instructions(
 
 ///|
 pub fn ProjectDisassemblyDriver::linear_sweep(
-  backend? : String = "raw",
+  backend? : String = "llvm",
 ) -> ProjectDisassemblyDriver {
   ProjectDisassemblyDriver::create(
     name="linear-sweep",
@@ -281,11 +283,7 @@ pub fn ProjectDisassemblyDriver::basic(
     priority=-97,
     run=project => {
       let disasm = match
-        ProjectDisassemblyBasic::lookup(
-          project.target(),
-          @core_theory.Language::unknown(),
-          backend~,
-        ) {
+        project_disassembly_basic_for_target(project.target(), backend) {
         Ok(disasm) => disasm
         Err(reason) => return Err(reason)
       }
@@ -462,6 +460,7 @@ pub fn register_builtin_disassembly_drivers() -> Result[Unit, String] {
       ProjectDisassemblyDriver::entry_point(),
       ProjectDisassemblyDriver::project_roots(),
       ProjectDisassemblyDriver::raw_bytes(),
+      ProjectDisassemblyDriver::recursive(),
       ProjectDisassemblyDriver::linear_sweep(),
       ProjectDisassemblyDriver::basic(),
       ProjectDisassemblyDriver::memory_blocks(),

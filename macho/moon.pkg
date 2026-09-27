@@ -1,0 +1,8 @@
+import {
+  "moonbitlang/core/encoding/utf8",
+  "bobzhang/bap/bitvec",
+}
+
+import {
+  "bobzhang/bap/fixtures/objects",
+} for "test"

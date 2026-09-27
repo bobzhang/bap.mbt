@@ -177,7 +177,7 @@ pub fn ProjectInput::create(
   let spec = if target.is_unknown() {
     @image.OgreDoc::empty()
   } else {
-    @image.OgreDoc::from_target(target)
+    @image.Spec::from_arch(target)
   }
   {
     ..ProjectInput::custom(target~, filename~, code?, data?, finish?),
@@ -1193,7 +1193,7 @@ pub fn Project::create_from_input(
         Err(reason) => return Err(reason)
       }
   }
-  let named = project_input_apply_symbolizers(disassembled, selected_symbolizer)
+  let named = project_input_apply_symbolizers(disassembled, selected_symbolizer).name_stubs()
   let branched = match project_input_apply_branchers(named, branchers) {
     Ok(value) => value
     Err(reason) => return Err(reason)

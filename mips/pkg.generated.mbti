@@ -1,0 +1,110 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/mips"
+
+import {
+  "bobzhang/bap/bitvec",
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/mc",
+  "bobzhang/bap/types",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn accepts(@mc.Context) -> Bool
+
+pub fn decode(BytesView, UInt64, arch? : Arch, endian? : @bitvec.Endian, r6? : Bool) -> @mc.Insn?
+
+pub fn decoder(r6? : Bool) -> @mc.Decoder
+
+pub let decoder_name : String
+
+pub fn delay_slot(String) -> Int?
+
+pub fn encoding(Arch, @bitvec.Endian) -> @core_theory.Language
+
+pub fn is_supported(String) -> Bool
+
+pub fn lift(@mc.Insn, arch~ : Arch, endian~ : @bitvec.Endian) -> Array[@types.Stmt] raise @mc.LiftError
+
+pub fn lift_checked(@mc.Insn, arch~ : Arch, endian~ : @bitvec.Endian) -> Array[@types.Stmt] raise @mc.LiftError
+
+pub fn lift_in_context(@mc.Context, @mc.Insn) -> @mc.Lifted raise @mc.LiftError
+
+pub fn lift_mips(@mc.Insn) -> Array[@types.Stmt] raise @mc.LiftError
+
+pub fn lift_mips64(@mc.Insn) -> Array[@types.Stmt] raise @mc.LiftError
+
+pub fn lift_mips64el(@mc.Insn) -> Array[@types.Stmt] raise @mc.LiftError
+
+pub fn lift_mipsel(@mc.Insn) -> Array[@types.Stmt] raise @mc.LiftError
+
+pub fn mode_of_context(@mc.Context) -> (Arch, @bitvec.Endian)
+
+pub fn opcode_aliases() -> Array[(String, String)]
+
+pub fn opcodes() -> Array[String]
+
+pub fn provider() -> @mc.Provider
+
+pub let provider_name : String
+
+pub fn register(registry? : @mc.Registry) -> Unit
+
+pub fn register_decoder() -> Unit
+
+pub let targets : ReadOnlyArray[String]
+
+// Errors
+
+// Types and methods
+pub(all) enum Arch {
+  Mips32
+  Mips64
+} derive(Eq, @debug.Debug)
+pub fn Arch::addr_bitwidth(Self) -> Int
+pub fn Arch::equal(Self, Self) -> Bool
+pub fn Arch::find_fpr(Self, String) -> @types.Var?
+pub fn Arch::find_gpr(Self, String) -> @types.Var?
+pub fn Arch::fp(Self) -> @types.Var
+pub fn Arch::fpr(Self, Int) -> @types.Var?
+pub fn Arch::fpr_bitwidth(Self) -> Int
+pub fn Arch::gnu_calling_convention(Self) -> CallingConvention
+pub fn Arch::gpr(Self, Int) -> @types.Var?
+pub fn Arch::gpr_bitwidth(Self) -> Int
+pub fn Arch::gprs(Self) -> Array[@types.Var]
+pub fn Arch::hi(Self) -> @types.Var
+pub fn Arch::is_bp(Self, @types.Var) -> Bool
+pub fn Arch::is_flag(Self, @types.Var) -> Bool
+pub fn Arch::is_mem(Self, @types.Var) -> Bool
+pub fn Arch::is_reg(Self, @types.Var) -> Bool
+pub fn Arch::is_sp(Self, @types.Var) -> Bool
+pub fn Arch::lo(Self) -> @types.Var
+pub fn Arch::mem(Self) -> @types.Var
+pub fn Arch::not_equal(Self, Self) -> Bool
+pub fn Arch::sp(Self) -> @types.Var
+pub fn Arch::to_repr(Self) -> @debug.Repr
+
+pub(all) struct CallingConvention {
+  data_model : DataModel
+  int_args : Array[@types.Var]
+  float_args : Array[@types.Var]
+  float_args_shadow_int_args : Bool
+  float_bits : Int
+  double_bits : Int
+  long_double_bits : Int
+} derive(Eq, @debug.Debug)
+pub fn CallingConvention::equal(Self, Self) -> Bool
+pub fn CallingConvention::not_equal(Self, Self) -> Bool
+pub fn CallingConvention::to_repr(Self) -> @debug.Repr
+
+pub(all) enum DataModel {
+  ILP32
+  ILP64
+} derive(Eq, @debug.Debug)
+pub fn DataModel::equal(Self, Self) -> Bool
+pub fn DataModel::not_equal(Self, Self) -> Bool
+pub fn DataModel::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

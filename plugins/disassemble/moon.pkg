@@ -1,0 +1,13 @@
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/image",
+  "bobzhang/bap/native_io",
+  "bobzhang/bap/plugins/print",
+  "bobzhang/bap/project",
+  "moonbitlang/core/encoding/utf8",
+}
+
+import {
+  "bobzhang/bap/fixtures",
+} for "test"

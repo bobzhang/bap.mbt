@@ -1,0 +1,719 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/primus"
+
+import {
+  "bobzhang/bap/bitvec",
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/knowledge",
+  "bobzhang/bap/memory",
+  "bobzhang/bap/project",
+  "bobzhang/bap/types",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub let binop : Observation[((@types.BinOp, Value, Value), Value)]
+
+pub let call : Observation[(String, Array[Value])]
+
+pub let call_entered : Statement[(String, Array[Value])]
+
+pub let call_return : Observation[(String, Array[Value])]
+
+pub let call_returned : Statement[(String, Array[Value])]
+
+pub let cast : Observation[((@types.CastKind, Int, Value), Value)]
+
+pub let cfi_violation : Observation[@types.Word]
+
+pub let cfi_violation_handler : String
+
+pub let clock : Observation[Int]
+
+pub let concat : Observation[((Value, Value), Value)]
+
+pub let const_obs : Observation[Value]
+
+pub let division_by_zero : Observation[Unit]
+
+pub let division_by_zero_handler : String
+
+pub let enter_arg : Observation[@types.Term[@types.Arg]]
+
+pub let enter_blk : Observation[@types.Term[@types.Blk]]
+
+pub let enter_def : Observation[@types.Term[@types.Def]]
+
+pub let enter_exp : Observation[@types.Exp]
+
+pub let enter_jmp : Observation[@types.Term[@types.Jmp]]
+
+pub let enter_phi : Observation[@types.Term[@types.Phi]]
+
+pub let enter_pos : Observation[Pos]
+
+pub let enter_sub : Observation[@types.Term[@types.Sub]]
+
+pub let enter_term : Observation[@types.Tid]
+
+pub let enter_top : Observation[@types.Term[@types.Program]]
+
+pub let eval_cond : Observation[Value]
+
+pub fn exn_add_printer((Error) -> String?) -> Unit
+
+pub let exn_raised : Observation[Error]
+
+pub fn exn_to_string(Error) -> String
+
+pub let extract : Observation[((Int, Int, Value), Value)]
+
+pub let halting : Observation[Unit]
+
+pub fn info_normalize_text(String) -> String
+
+pub let interrupt : Observation[Int]
+
+pub fn is_valid_uuid(String) -> Bool
+
+pub let ite : Observation[((Value, Value, Value), Value)]
+
+pub let jumping : Observation[(Value, Value)]
+
+pub let leave_arg : Observation[@types.Term[@types.Arg]]
+
+pub let leave_blk : Observation[@types.Term[@types.Blk]]
+
+pub let leave_def : Observation[@types.Term[@types.Def]]
+
+pub let leave_exp : Observation[@types.Exp]
+
+pub let leave_jmp : Observation[@types.Term[@types.Jmp]]
+
+pub let leave_phi : Observation[@types.Term[@types.Phi]]
+
+pub let leave_pos : Observation[Pos]
+
+pub let leave_sub : Observation[@types.Term[@types.Sub]]
+
+pub let leave_term : Observation[@types.Tid]
+
+pub let leave_top : Observation[@types.Term[@types.Program]]
+
+pub let linker_exec : Observation[Name]
+
+pub let linker_unresolved : Observation[Name]
+
+pub let lisp_call : Observation[(String, Array[Value])]
+
+pub let lisp_call_entered : Statement[(String, Array[Value])]
+
+pub let lisp_call_return : Observation[(String, Array[Value])]
+
+pub let lisp_call_returned : Statement[(String, Array[Value])]
+
+pub let load_generated : Observation[(@types.Word, Value)]
+
+pub let loaded : Observation[(Value, Value)]
+
+pub let loading : Observation[Value]
+
+pub let machine_fork : Observation[(Id, Id)]
+
+pub let machine_kill : Observation[Id]
+
+pub let machine_switch : Observation[(Id, Id)]
+
+pub let memory_switch : Observation[Descriptor]
+
+pub let pagefault : Observation[@types.Word]
+
+pub let pagefault_handler : String
+
+pub let pc_change : Observation[@types.Word]
+
+pub let read : Observation[(@types.Var, Value)]
+
+pub let reading : Observation[@types.Var]
+
+pub let segfault : Observation[@types.Word]
+
+pub let stored : Observation[(Value, Value)]
+
+pub let storing : Observation[Value]
+
+pub let symbol_key_width : Int
+
+pub let system_fini : Observation[Unit]
+
+pub let system_init : Observation[Unit]
+
+pub let system_start : Observation[String]
+
+pub let system_stop : Observation[String]
+
+pub fn[T] term_address(@types.Term[T]) -> @types.Word?
+
+pub let undefined : Observation[Value]
+
+pub let unop : Observation[((@types.UnOp, Value), Value)]
+
+pub let unresolved_handler : String
+
+pub let var_generated : Observation[(@types.Var, Value)]
+
+pub let will_exec : Statement[Name]
+
+pub let writing : Observation[@types.Var]
+
+pub let written : Observation[(@types.Var, Value)]
+
+// Errors
+pub(all) suberror PrimusError {
+  Halt
+  DivisionByZero
+  SegmentationFault(@types.Word)
+  CfiViolation(@types.Word)
+  Pagefault(@types.Word)
+  RuntimeError(String)
+  UndefinedVar(@types.Var)
+  UnboundName(Name)
+  BrokenInvariant(level~ : String, dst~ : String)
+  Restricted(String)
+  DeadMachine(Id)
+}
+
+pub(all) suberror SexpParseError {
+  UnexpectedEof
+  UnexpectedChar(Char, Int)
+  UnbalancedParen(Int)
+} derive(Eq, @debug.Debug)
+pub fn SexpParseError::equal(Self, Self) -> Bool
+pub fn SexpParseError::not_equal(Self, Self) -> Bool
+pub fn SexpParseError::to_repr(Self) -> @debug.Repr
+pub fn SexpParseError::to_string(Self) -> String
+
+pub(all) suberror SystemError {
+  UnknownSystem(String)
+  UnknownComponent(component~ : String, system~ : String)
+  DuplicateSystem(String)
+  DuplicateComponent(String)
+  SystemParseError(file~ : String, system~ : String, msg~ : String)
+} derive(@debug.Debug)
+pub fn SystemError::output(Self, &Logger) -> Unit
+pub fn SystemError::to_repr(Self) -> @debug.Repr
+pub fn SystemError::to_string(Self) -> String
+pub impl Show for SystemError
+
+// Types and methods
+pub(all) enum Code {
+  Host((Machine) -> Unit raise)
+  Subroutine(@types.Term[@types.Sub])
+  Block(@types.Term[@types.Blk])
+}
+
+pub struct Components {
+}
+pub fn Components::list() -> Array[Info]
+pub fn Components::register(internal? : Bool, desc? : String, pkg? : String, String, (Machine) -> Unit raise) -> Unit raise SystemError
+pub fn Components::register_generic(internal? : Bool, desc? : String, pkg? : String, String, (Machine) -> Unit raise) -> Unit raise SystemError
+
+pub struct Descriptor {
+  name : String
+  addr_size : Int
+  data_size : Int
+} derive(@debug.Debug)
+pub fn Descriptor::addr_size(Self) -> Int
+pub fn Descriptor::compare(Self, Self) -> Int
+pub fn Descriptor::create(addr_size~ : Int, data_size~ : Int, String) -> Self
+pub fn Descriptor::data_size(Self) -> Int
+pub fn Descriptor::equal(Self, Self) -> Bool
+pub fn Descriptor::name(Self) -> String
+pub fn Descriptor::not_equal(Self, Self) -> Bool
+pub fn Descriptor::op_ge(Self, Self) -> Bool
+pub fn Descriptor::op_gt(Self, Self) -> Bool
+pub fn Descriptor::op_le(Self, Self) -> Bool
+pub fn Descriptor::op_lt(Self, Self) -> Bool
+pub fn Descriptor::to_repr(Self) -> @debug.Repr
+pub fn Descriptor::to_sexp(Self) -> Sexp
+pub fn Descriptor::unknown(addr_size~ : Int, data_size~ : Int) -> Self
+pub impl Compare for Descriptor
+pub impl Eq for Descriptor
+
+pub struct Env {
+  // private fields
+}
+pub fn Env::add(Machine, @types.Var, Generator) -> Unit
+pub fn Env::all(Machine) -> Array[@types.Var]
+pub fn Env::del(Machine, @types.Var) -> Unit
+pub fn Env::get(Machine, @types.Var) -> Value raise
+pub fn Env::has(Machine, @types.Var) -> Bool
+pub fn Env::inspect(Machine) -> Sexp
+pub fn Env::is_set(Machine, @types.Var) -> Bool
+pub fn Env::set(Machine, @types.Var, Value) -> Unit
+
+pub enum ExitStatus {
+  Normal
+  Exn(Error)
+}
+pub fn ExitStatus::output(Self, &Logger) -> Unit
+pub fn ExitStatus::to_string(Self) -> String
+pub impl Show for ExitStatus
+
+pub(all) struct Finite[T, D] {
+  min : D
+  max : D
+  value : (T) -> D
+  next : (T) -> T?
+}
+
+pub(all) enum ForkStatus {
+  Current
+  Live
+  Dead
+} derive(Eq, @debug.Debug)
+pub fn ForkStatus::equal(Self, Self) -> Bool
+pub fn ForkStatus::not_equal(Self, Self) -> Bool
+pub fn ForkStatus::output(Self, &Logger) -> Unit
+pub fn ForkStatus::to_repr(Self) -> @debug.Repr
+pub fn ForkStatus::to_string(Self) -> String
+pub impl Show for ForkStatus
+
+pub struct Generator {
+  // private fields
+}
+pub fn[T] Generator::create(width? : Int, Infinite[T, Int], T) -> Self
+pub fn Generator::next(Machine, Self) -> Int
+pub fn[T, D] Generator::of_iterator(width? : Int, seed? : (Int) -> T, to_bitvec~ : (D) -> @bitvec.BitVec, Infinite[T, D], T) -> Self
+pub fn Generator::random_byte(Int) -> Self
+pub fn Generator::random_lcg(width? : Int, min? : Int, max? : Int, Int) -> Self
+pub fn Generator::seeded_byte() -> Self
+pub fn Generator::seeded_create(width? : Int, (Int) -> Self) -> Self
+pub fn Generator::seeded_lcg(width? : Int, min? : Int, max? : Int) -> Self
+pub fn Generator::static_value(width? : Int, Int) -> Self
+pub fn Generator::to_sexp(Self) -> Sexp
+pub fn[A] Generator::unfold(width? : Int, min? : Int, max? : Int, seed? : Int, f~ : ((A, Int)) -> (A, Int), A) -> Self
+pub fn Generator::width(Self) -> Int
+pub fn Generator::word(Machine, Self, Int) -> @types.Word
+
+pub(all) struct Id(Int) derive(Compare, Eq, Hash, @debug.Debug)
+pub fn Id::compare(Self, Self) -> Int
+pub fn Id::equal(Self, Self) -> Bool
+pub fn Id::global() -> Self
+pub fn Id::hash(Self) -> Int
+pub fn Id::hash_combine(Self, Hasher) -> Unit
+pub fn Id::not_equal(Self, Self) -> Bool
+pub fn Id::op_ge(Self, Self) -> Bool
+pub fn Id::op_gt(Self, Self) -> Bool
+pub fn Id::op_le(Self, Self) -> Bool
+pub fn Id::op_lt(Self, Self) -> Bool
+pub fn Id::output(Self, &Logger) -> Unit
+pub fn Id::to_int(Self) -> Int
+pub fn Id::to_repr(Self) -> @debug.Repr
+pub fn Id::to_string(Self) -> String
+pub impl Show for Id
+
+pub(all) struct Infinite[T, D] {
+  min : D
+  max : D
+  value : (T) -> D
+  next : (T) -> T
+}
+
+pub struct Info {
+  // private fields
+}
+pub fn Info::create(@knowledge.Name, desc? : String, long? : () -> String) -> Self
+pub fn Info::desc(Self) -> String
+pub fn Info::long(Self) -> String
+pub fn Info::name(Self) -> @knowledge.Name
+pub fn Info::to_string(Self) -> String
+
+pub struct Interpreter {
+  // private fields
+}
+pub fn Interpreter::assign(Machine, @types.Exp, Value) -> Unit raise
+pub fn Interpreter::binop(Machine, @types.BinOp, Value, Value) -> Value raise
+pub fn Interpreter::blk(Machine, @types.Term[@types.Blk]) -> Unit raise
+pub fn[T] Interpreter::branch(Machine, Value, () -> T raise, () -> T raise) -> T raise
+pub fn Interpreter::cast(Machine, @types.CastKind, Int, Value) -> Value raise
+pub fn Interpreter::concat(Machine, Value, Value) -> Value raise
+pub fn Interpreter::constant(Machine, @types.Word) -> Value raise
+pub fn Interpreter::exp(Machine, @types.Exp) -> Value raise
+pub fn Interpreter::extract(Machine, hi~ : Int, lo~ : Int, Value) -> Value raise
+pub fn Interpreter::get(Machine, @types.Var) -> Value raise
+pub fn[T] Interpreter::halt(Machine) -> T raise
+pub fn Interpreter::interrupt(Machine, Int) -> Unit raise
+pub fn Interpreter::ite(Machine, Value, Value, Value) -> Value raise
+pub fn Interpreter::link_program(Machine) -> Unit
+pub fn Interpreter::load(Machine, Value, @bitvec.Endian, @types.Size) -> Value raise
+pub fn Interpreter::pc(Machine) -> @types.Word
+pub fn Interpreter::pc_of(Machine, Id) -> @types.Word raise
+pub fn Interpreter::pos(Machine) -> Pos
+pub fn Interpreter::pos_of(Machine, Id) -> Pos raise
+pub fn Interpreter::repeat(Machine, () -> Value raise, () -> Unit raise) -> Value raise
+pub fn Interpreter::schedule_blk(Machine, @types.Term[@types.Blk]) -> Unit
+pub fn Interpreter::schedule_sub(Machine, @types.Term[@types.Sub]) -> Unit
+pub fn Interpreter::set(Machine, @types.Var, Value) -> Unit raise
+pub fn Interpreter::store(Machine, Value, Value, @bitvec.Endian, @types.Size) -> Unit raise
+pub fn Interpreter::sub(Machine, @types.Term[@types.Sub]) -> Unit raise
+pub fn Interpreter::tick(Machine) -> Unit raise
+pub fn Interpreter::time(Machine) -> Int
+pub fn Interpreter::undefined(Machine, @types.ValueType) -> Value raise
+pub fn Interpreter::unop(Machine, @types.UnOp, Value) -> Value raise
+
+pub(all) enum Iterator[T, D] {
+  Fin(Finite[T, D])
+  Inf(Infinite[T, D])
+}
+pub fn[T, D] Iterator::finite(Finite[T, D]) -> Self[T, D]
+pub fn[T, D] Iterator::infinite(Infinite[T, D]) -> Self[T, D]
+pub fn[T, D] Iterator::max(Self[T, D]) -> D
+pub fn[T, D] Iterator::min(Self[T, D]) -> D
+pub fn[T, D] Iterator::to_iter(Self[T, D], T) -> Iter[D]
+pub fn[T, D] Iterator::value(Self[T, D], T) -> D
+
+pub struct Job {
+  name : String
+  desc : String
+  envp : Array[String]
+  args : Array[String]
+  system : System
+  // private fields
+}
+
+pub(all) enum JobAction {
+  Stop
+  Continue
+} derive(Eq, @debug.Debug)
+pub fn JobAction::equal(Self, Self) -> Bool
+pub fn JobAction::not_equal(Self, Self) -> Bool
+pub fn JobAction::to_repr(Self) -> @debug.Repr
+
+pub struct Jobs {
+}
+pub fn Jobs::enqueue(name? : String, desc? : String, envp? : Array[String], args? : Array[String], init? : (Machine) -> Unit raise, fini? : (Machine) -> Unit raise, start? : (Machine) -> Unit raise, System) -> Unit
+pub fn Jobs::pending() -> Int
+pub fn Jobs::run(on_failure? : (Job, Error, JobsResult) -> JobAction, on_success? : (Job, ExitStatus, JobsResult) -> JobAction, @project.Project) -> JobsResult
+
+pub struct JobsResult {
+  project : @project.Project
+  failures : Array[(Job, Error)]
+  finished : Array[Job]
+}
+
+pub struct Level0[T] {
+  me : @types.Term[T]
+  up : Level1[@types.Blk]
+}
+
+pub struct Level1[T] {
+  me : @types.Term[T]
+  up : SubLevel
+}
+
+pub struct Linker {
+  // private fields
+}
+pub fn Linker::call(Machine, Name, args? : Array[Value]) -> Value? raise
+pub fn Linker::exec(Machine, Name) -> Unit raise
+pub fn Linker::is_linked(Machine, Name) -> Bool
+pub fn Linker::link(Machine, addr? : @types.Word, name? : String, tid? : @types.Tid, Code) -> Unit
+pub fn Linker::lookup(Machine, Name) -> Code?
+pub fn Linker::resolve_addr(Machine, Name) -> @types.Word?
+pub fn Linker::resolve_symbol(Machine, Name) -> String?
+pub fn Linker::resolve_tid(Machine, Name) -> @types.Tid?
+pub fn Linker::schedule_exec(Machine, Name) -> Unit
+pub fn Linker::unlink(Machine, Name) -> Unit
+
+pub struct Machine {
+  // private fields
+}
+pub fn Machine::add_component((Self) -> Unit raise) -> Unit
+pub fn Machine::ancestor(Self, Array[Id]) -> Id
+pub fn Machine::args(Self) -> Array[String]
+pub fn Machine::call(Self, Name, args? : Array[Value], then~ : (Self, Value?) -> Unit raise) -> Unit
+pub fn Machine::call_args(Self) -> Array[Value]
+pub fn Machine::call_code(Self, Code, args? : Array[Value], then~ : (Self, Value?) -> Unit raise) -> Unit
+pub fn Machine::cancel(Self, Subscription) -> Unit
+pub fn Machine::current(Self) -> Id
+pub fn Machine::envp(Self) -> Array[String]
+pub fn Machine::fork(Self, then? : (Self) -> Unit raise) -> Unit raise
+pub fn Machine::forks(Self) -> Array[Id]
+pub fn[T] Machine::get_global(Self, State[T]) -> T
+pub fn[T] Machine::get_local(Self, State[T]) -> T
+pub fn[T] Machine::get_other(Self, Id, State[T]) -> T raise
+pub fn Machine::is_restricted(Self) -> Bool
+pub fn Machine::kill(Self, Id) -> Unit raise
+pub fn[T] Machine::make(Self, Statement[T], T) -> Unit raise
+pub fn Machine::new(@project.Project, args? : Array[String], envp? : Array[String]) -> Self
+pub fn[T] Machine::observe(Self, Observation[T], (T) -> Unit raise) -> Unit
+pub fn Machine::parent(Self) -> Id
+pub fn[T] Machine::post(Self, Statement[T], () -> T raise) -> Unit raise
+pub fn Machine::program(Self) -> @types.Term[@types.Program]
+pub fn Machine::project(Self) -> @project.Project
+pub fn Machine::push_cleanup(Self, (Self) -> Unit raise) -> Unit
+pub fn Machine::push_handler(Self, (Self, Error) -> Unit raise) -> Unit
+pub fn[T] Machine::put_global(Self, State[T], T) -> Unit
+pub fn[T] Machine::put_local(Self, State[T], T) -> Unit
+pub fn[T] Machine::put_other(Self, Id, State[T], T) -> Unit raise
+pub fn[T] Machine::raise_exn(Self, Error) -> T raise
+pub fn Machine::result(Self) -> Value?
+pub fn Machine::run(@project.Project, start? : (Self) -> Unit raise, boot? : (Self) -> Unit raise, init? : (Self) -> Unit raise, fini? : (Self) -> Unit raise, system? : String, args? : Array[String], envp? : Array[String]) -> (ExitStatus, @project.Project)
+pub fn Machine::run_main(envp? : Array[String], args? : Array[String], @project.Project, (Self) -> Unit raise) -> (ExitStatus, @project.Project) raise SystemError
+pub fn Machine::run_with(Self, start? : (Self) -> Unit raise, boot? : (Self) -> Unit raise, init? : (Self) -> Unit raise, fini? : (Self) -> Unit raise, system? : String) -> (ExitStatus, @project.Project)
+pub fn Machine::schedule(Self, (Self) -> Unit raise) -> Unit
+pub fn Machine::set_project(Self, @project.Project) -> Unit
+pub fn Machine::set_result(Self, Value?) -> Unit
+pub fn Machine::stack_depth(Self) -> Int
+pub fn Machine::status(Self, Id) -> ForkStatus
+pub fn[T] Machine::subscribe(Self, Observation[T], (T) -> Unit raise) -> Subscription
+pub fn[T] Machine::subscribe_resumable(Self, Observation[T], (Self, T) -> Unit raise) -> Subscription
+pub fn Machine::switch(Self, Id, then? : (Self) -> Unit raise) -> Unit raise
+pub fn Machine::target(Self) -> @core_theory.Target
+pub fn[T] Machine::update_global(Self, State[T], (T) -> T) -> Unit
+pub fn[T] Machine::update_local(Self, State[T], (T) -> T) -> Unit
+pub fn[T] Machine::update_other(Self, Id, State[T], (T) -> T) -> Unit raise
+pub fn Machine::update_project(Self, (@project.Project) -> @project.Project) -> Unit
+pub fn Machine::watch(Self, Provider, (Sexp) -> Unit raise) -> Subscription
+
+pub struct Mcg {
+  size : Int
+  min : UInt64
+  max : UInt64
+  create : (Int) -> Array[UInt64]
+  next : (Array[UInt64]) -> Array[UInt64]
+  value : (Array[UInt64]) -> @bitvec.BitVec
+}
+pub fn Mcg::create(min? : Int, max? : Int, Int) -> Self
+pub fn Mcg::for_width(Int) -> Self
+pub fn Mcg::tabulate(Self, n~ : Int, Int) -> Array[@bitvec.BitVec]
+
+pub struct Memory {
+  // private fields
+}
+pub fn Memory::add_data(Machine, @memory.Memory) -> Unit
+pub fn Memory::add_region(Machine, read_only? : Bool, executable? : Bool, init? : (@types.Word) -> @types.Word raise, generator? : Generator, lower~ : @types.Word, upper~ : @types.Word) -> Unit raise
+pub fn Memory::add_text(Machine, @memory.Memory) -> Unit
+pub fn Memory::allocate(Machine, read_only? : Bool, executable? : Bool, init? : (@types.Word) -> @types.Word raise, generator? : Generator, @types.Word, Int) -> Unit raise
+pub fn Memory::del(Machine, @types.Word) -> Unit
+pub fn Memory::get(Machine, @types.Word) -> Value raise
+pub fn Memory::inspect(Machine) -> Sexp
+pub fn Memory::is_mapped(Machine, @types.Word) -> Bool
+pub fn Memory::is_writable(Machine, @types.Word) -> Bool
+pub fn Memory::load(Machine, @types.Word) -> @types.Word raise
+pub fn Memory::map(Machine, read_only? : Bool, executable? : Bool, @memory.Memory) -> Unit
+pub fn Memory::memory(Machine) -> Descriptor
+pub fn Memory::set(Machine, @types.Word, Value) -> Unit raise
+pub fn Memory::set_never_fail(Machine, @types.Word, Value) -> Unit
+pub fn Memory::store(Machine, @types.Word, @types.Word) -> Unit raise
+pub fn Memory::store_never_fail(Machine, @types.Word, @types.Word) -> Unit
+pub fn Memory::switch(Machine, Descriptor) -> Unit
+
+pub(all) enum Name {
+  Tid(@types.Tid)
+  Addr(@types.Word)
+  Symbol(String)
+} derive(Eq, @debug.Debug)
+pub fn Name::equal(Self, Self) -> Bool
+pub fn Name::not_equal(Self, Self) -> Bool
+pub fn Name::output(Self, &Logger) -> Unit
+pub fn Name::to_repr(Self) -> @debug.Repr
+pub fn Name::to_sexp(Self) -> Sexp
+pub fn Name::to_string(Self) -> String
+pub impl Show for Name
+
+pub struct Observation[T] {
+  // private fields
+}
+pub fn[T] Observation::inspect(Self[T], T) -> Sexp
+pub fn Observation::list() -> Array[Info]
+pub fn Observation::list_providers() -> Array[Provider]
+pub fn[T] Observation::name(Self[T]) -> String
+pub fn[T] Observation::of_statement(Statement[T]) -> Self[T]
+pub fn[T] Observation::provide(String, desc? : String, inspect? : (T) -> Sexp, pkg? : String) -> (Self[T], Statement[T])
+pub fn[T] Observation::provider(Self[T]) -> Provider
+
+pub struct PersistentMap[K, V] {
+  // private fields
+}
+pub fn[K : Compare, V] PersistentMap::add(Self[K, V], K, V) -> Self[K, V]
+pub fn[K : Compare, V] PersistentMap::contains(Self[K, V], K) -> Bool
+pub fn[K, V] PersistentMap::empty() -> Self[K, V]
+pub fn[K : Compare, V] PersistentMap::get(Self[K, V], K) -> V?
+pub fn[K, V] PersistentMap::length(Self[K, V]) -> Int
+pub fn[K : Compare, V] PersistentMap::remove(Self[K, V], K) -> Self[K, V]
+pub fn[K, V] PersistentMap::to_array(Self[K, V]) -> Array[(K, V)]
+
+pub enum Pos {
+  Top(TopLevel)
+  Sub(SubLevel)
+  Arg(Level1[@types.Arg])
+  Blk(Level1[@types.Blk])
+  Phi(Level0[@types.Phi])
+  Def(Level0[@types.Def])
+  Jmp(Level0[@types.Jmp])
+}
+pub fn Pos::get_attr(Self, String) -> String?
+pub fn Pos::level_name(Self) -> String
+pub fn Pos::next_arg(Self, @types.Term[@types.Arg]) -> Self raise PrimusError
+pub fn Pos::next_blk(Self, @types.Term[@types.Blk]) -> Self raise PrimusError
+pub fn Pos::next_def(Self, @types.Term[@types.Def]) -> Self raise PrimusError
+pub fn Pos::next_jmp(Self, @types.Term[@types.Jmp]) -> Self raise PrimusError
+pub fn Pos::next_phi(Self, @types.Term[@types.Phi]) -> Self raise PrimusError
+pub fn Pos::next_sub(Self, @types.Term[@types.Sub]) -> Self
+pub fn Pos::next_top(Self, @types.Term[@types.Program]) -> Self raise PrimusError
+pub fn Pos::output(Self, &Logger) -> Unit
+pub fn Pos::tid(Self) -> @types.Tid
+pub fn Pos::to_sexp(Self) -> Sexp
+pub fn Pos::to_string(Self) -> String
+pub fn Pos::top(@types.Term[@types.Program]) -> Self
+pub impl Show for Pos
+
+pub struct Provider {
+  // private fields
+}
+pub fn Provider::desc(Self) -> String
+pub fn Provider::find(String) -> Self?
+pub fn Provider::fullname(Self) -> @knowledge.Name
+pub fn Provider::info(Self) -> Info
+pub fn Provider::name(Self) -> String
+pub fn Provider::observers(Self) -> Int
+pub fn Provider::on_data(Self, (Sexp) -> Unit) -> Unit
+pub fn Provider::triggers(Self) -> Int
+
+pub(all) enum Sexp {
+  Atom(String)
+  List(Array[Sexp])
+} derive(Eq, @debug.Debug)
+pub fn Sexp::atoms(Array[String]) -> Self
+pub fn Sexp::equal(Self, Self) -> Bool
+pub fn Sexp::not_equal(Self, Self) -> Bool
+pub fn Sexp::output(Self, &Logger) -> Unit
+pub fn Sexp::parse(String) -> Self raise SexpParseError
+pub fn Sexp::parse_many(String) -> Array[Self] raise SexpParseError
+pub fn Sexp::to_repr(Self) -> @debug.Repr
+pub fn Sexp::to_string(Self) -> String
+pub impl Show for Sexp
+
+pub struct State[T] {
+  // private fields
+}
+pub fn[T] State::declare_(uuid~ : String, name~ : String, inspect? : (T) -> Sexp, clone? : (T) -> T, (@project.Project) -> T) -> Self[T]
+pub fn[T] State::inspect(Self[T], T) -> Sexp
+pub fn[T] State::name(Self[T]) -> String
+pub fn[T] State::uuid(Self[T]) -> String
+
+pub struct Statement[T] {
+  // private fields
+}
+pub fn[T] Statement::observation(Self[T]) -> Observation[T]
+pub fn[T] Statement::provide(String, desc? : String, inspect? : (T) -> Sexp, pkg? : String) -> Self[T]
+
+pub struct SubLevel {
+  me : @types.Term[@types.Sub]
+  up : TopLevel
+}
+
+pub struct Subscription {
+  // private fields
+} derive(Eq, @debug.Debug)
+pub fn Subscription::equal(Self, Self) -> Bool
+pub fn Subscription::not_equal(Self, Self) -> Bool
+pub fn Subscription::to_repr(Self) -> @debug.Repr
+
+pub struct System {
+  // private fields
+}
+pub fn System::add_component(Self, pkg? : String, String) -> Self
+pub fn System::add_dependency(Self, pkg? : String, String) -> Self
+pub fn System::all_components(Self) -> Array[@knowledge.Name] raise SystemError
+pub fn System::component(String, pkg? : String) -> @knowledge.Name
+pub fn System::components(Self) -> Array[@knowledge.Name]
+pub fn System::current(Machine) -> Self?
+pub fn System::define_(desc? : String, depends_on? : Array[@knowledge.Name], components? : Array[@knowledge.Name], pkg? : String, String) -> Self
+pub fn System::dependencies(Self) -> Array[@knowledge.Name]
+pub fn System::depends_on(String, pkg? : String) -> @knowledge.Name
+pub fn System::desc(Self) -> String
+pub fn System::find(@knowledge.Name) -> Self?
+pub fn System::from_file(String) -> Array[Self] raise SystemError
+pub fn System::from_string(String) -> Array[Self] raise SystemError
+pub fn System::get(String, pkg? : String) -> Self raise SystemError
+pub fn System::list() -> Array[Info]
+pub fn System::name(Self) -> @knowledge.Name
+pub fn System::register(Self) -> Unit raise SystemError
+pub fn System::run(Self, @project.Project, envp? : Array[String], args? : Array[String], init? : (Machine) -> Unit raise, fini? : (Machine) -> Unit raise, start? : (Machine) -> Unit raise) -> (ExitStatus, @project.Project) raise SystemError
+pub fn System::to_string(Self) -> String
+pub fn System::update(String, pkg? : String, (Self) -> Self) -> Unit raise SystemError
+pub fn System::validate(Self) -> Unit raise SystemError
+
+pub struct TopLevel {
+  me : @types.Term[@types.Program]
+}
+
+pub struct Value {
+  id : Int64
+  value : @types.Word
+} derive(Eq, @debug.Debug)
+pub fn Value::abs(Machine, Self) -> Self
+pub fn Value::add(Machine, Self, Self) -> Self raise PrimusError
+pub fn Value::arshift(Machine, Self, Self) -> Self
+pub fn Value::b0(Machine) -> Self
+pub fn Value::b1(Machine) -> Self
+pub fn Value::bitwidth(Self) -> Int
+pub fn Value::compare(Self, Self) -> Int
+pub fn Value::concat(Machine, Self, Self) -> Self raise PrimusError
+pub fn Value::div(Machine, Self, Self) -> Self raise PrimusError
+pub fn Value::equal(Self, Self) -> Bool
+pub fn Value::extract(Machine, hi? : Int, lo? : Int, Self) -> Self raise PrimusError
+pub fn Value::hash(Self) -> Int
+pub fn Value::hash_combine(Self, Hasher) -> Unit
+pub fn Value::id(Self) -> Int64
+pub fn Value::is_negative(Self) -> Bool
+pub fn Value::is_non_negative(Self) -> Bool
+pub fn Value::is_non_positive(Self) -> Bool
+pub fn Value::is_one(Self) -> Bool
+pub fn Value::is_positive(Self) -> Bool
+pub fn Value::is_zero(Self) -> Bool
+pub fn Value::lnot(Machine, Self) -> Self
+pub fn Value::logand(Machine, Self, Self) -> Self raise PrimusError
+pub fn Value::logor(Machine, Self, Self) -> Self raise PrimusError
+pub fn Value::logxor(Machine, Self, Self) -> Self raise PrimusError
+pub fn Value::lshift(Machine, Self, Self) -> Self
+pub fn Value::modulo(Machine, Self, Self) -> Self raise PrimusError
+pub fn Value::mul(Machine, Self, Self) -> Self raise PrimusError
+pub fn Value::neg(Machine, Self) -> Self
+pub fn Value::not_equal(Self, Self) -> Bool
+pub fn Value::npred(Machine, Self, Int) -> Self
+pub fn Value::nsucc(Machine, Self, Int) -> Self
+pub fn Value::of_bool(Machine, Bool) -> Self
+pub fn Value::of_int(Machine, width~ : Int, Int) -> Self raise PrimusError
+pub fn Value::of_int64(Machine, width? : Int, Int64) -> Self raise PrimusError
+pub fn Value::of_string(Machine, String) -> Self raise PrimusError
+pub fn Value::of_word(Machine, @types.Word) -> Self
+pub fn Value::one(Machine, Int) -> Self raise PrimusError
+pub fn Value::ones(Machine, Int) -> Self raise PrimusError
+pub fn Value::op_ge(Self, Self) -> Bool
+pub fn Value::op_gt(Self, Self) -> Bool
+pub fn Value::op_le(Self, Self) -> Bool
+pub fn Value::op_lt(Self, Self) -> Bool
+pub fn Value::output(Self, &Logger) -> Unit
+pub fn Value::pred(Machine, Self) -> Self
+pub fn Value::rshift(Machine, Self, Self) -> Self
+pub fn Value::signed(Machine, Self) -> Self
+pub fn Value::sub(Machine, Self, Self) -> Self raise PrimusError
+pub fn Value::succ(Machine, Self) -> Self
+pub fn Value::symbol_of_value(Machine, Self) -> String
+pub fn Value::symbol_to_value(Machine, String) -> Self raise PrimusError
+pub fn Value::to_repr(Self) -> @debug.Repr
+pub fn Value::to_sexp(Self) -> Sexp
+pub fn Value::to_string(Self) -> String
+pub fn Value::to_word(Self) -> @types.Word
+pub fn Value::zero(Machine, Int) -> Self raise PrimusError
+pub impl Compare for Value
+pub impl Hash for Value
+pub impl Show for Value
+
+// Type aliases
+
+// Traits

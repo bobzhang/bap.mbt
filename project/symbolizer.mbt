@@ -211,8 +211,27 @@ pub fn Project::symbolizer(self : Project) -> ProjectSymbolizer {
     None => false
   }
   ProjectSymbolizer::of_symbols(
-    self.symbols_value,
+    project_code_symbols(self),
     path?=self.filename_value,
     biased~,
   )
+}
+
+///|
+/// The symbols naming code: the project symbols, without the non-function
+/// symbols at the address of a function symbol (upstream `Image.symbols`,
+/// the `named-symbol` facts of the specification, name functions only; the
+/// local labels, e.g., the `.L0 ` labels of RISC-V objects, and the data
+/// symbols sharing the address of a function would make its name
+/// ambiguous).
+fn project_code_symbols(project : Project) -> Array[@image.Symbol] {
+  let functions : Map[UInt64, Unit] = Map([])
+  for symbol in project.symbols_value {
+    if symbol.is_function() {
+      functions[symbol.addr()] = ()
+    }
+  }
+  project.symbols_value.filter(symbol => {
+    symbol.is_function() || !functions.contains(symbol.addr())
+  })
 }

@@ -2,5 +2,6 @@ import {
   "bobzhang/bap/bitvec",
   "bobzhang/bap/graphlib",
   "moonbitlang/core/list",
+  "moonbitlang/core/sorted_map",
   "moonbitlang/core/string",
 }

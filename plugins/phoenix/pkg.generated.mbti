@@ -1,0 +1,63 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/phoenix"
+
+import {
+  "bobzhang/bap/project",
+  "bobzhang/bap/text_tags",
+  "bobzhang/bap/types",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn declare_plugin() -> Unit raise
+
+pub fn inline_variables(Array[@types.Stmt]) -> Array[@types.Stmt]
+
+pub let pass_name : String
+
+pub fn register(options? : Options, report? : (String) -> Unit) -> Result[Unit, String]
+
+pub fn store(@project.Project, options? : Options, symtab? : @project.ProjectDisassemblySymtab, root? : String) -> Result[String, String]
+
+// Errors
+
+// Types and methods
+type Env
+pub fn Env::bil_of_block(Self, @project.ProjectDisassemblyBlock) -> Array[@types.Stmt]
+pub fn Env::bil_page(Self, @project.ProjectDisassemblyFunction) -> String
+pub fn Env::block_name(Self, UInt64) -> String
+pub fn Env::cfg_to_dot(Self) -> String
+pub fn Env::dump_page(Self) -> String
+pub fn Env::function_blocks(Self, @project.ProjectDisassemblyFunction) -> Array[@project.ProjectDisassemblyBlock]
+pub fn Env::functions_json(Self, filename~ : String) -> String
+pub fn Env::index_json(Self, filename~ : String, root~ : String) -> String
+pub fn Env::new(@project.Project, options? : Options, symtab? : @project.ProjectDisassemblySymtab, cfg? : @project.ProjectDisassemblyCfg) -> Self
+pub fn Env::optimize(Self, Array[@types.Stmt]) -> Array[@types.Stmt]
+pub fn Env::pp_cfg(Self, @text_tags.Formatter) -> Unit
+pub fn Env::render(Self, filename~ : String, root~ : String, name? : String) -> Array[(String, String)]
+pub fn Env::vertex_label(Self, @project.ProjectDisassemblyBlock) -> String
+
+pub(all) enum LabelFormat {
+  WithName
+  WithAsm
+  WithBil
+} derive(Eq, @debug.Debug)
+pub fn LabelFormat::equal(Self, Self) -> Bool
+pub fn LabelFormat::not_equal(Self, Self) -> Bool
+pub fn LabelFormat::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Options {
+  output_folder : String
+  cfg_format : Array[LabelFormat]
+  no_resolve : Bool
+  keep_alive : Bool
+  no_inline : Bool
+  keep_consts : Bool
+  no_optimizations : Bool
+} derive(@debug.Debug)
+pub fn Options::new(output_folder? : String, cfg_format? : Array[LabelFormat], no_resolve? : Bool, keep_alive? : Bool, no_inline? : Bool, keep_consts? : Bool, no_optimizations? : Bool) -> Self
+pub fn Options::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

@@ -21,7 +21,7 @@ test "project info streams observe input realization" {
     data_counts.push(memory.length())
   })
   let spec_id = spec_stream.subscribe(spec => {
-    spec_counts.push(spec.declaration_count())
+    spec_counts.push(spec.declarations())
   })
   let code_memory = @memory.Memory::from_bytes(
     endian=LittleEndian,
@@ -50,7 +50,7 @@ test "project info streams observe input realization" {
   assert_true(arch_sizes == [64])
   assert_true(code_counts == [1])
   assert_true(data_counts == [1])
-  assert_true(spec_counts == [6])
+  assert_true(spec_counts == [3])
 }
 
 ///|
@@ -66,7 +66,7 @@ test "project info file stream reports unnamed inputs as empty filenames" {
     arch_sizes.push(target.code_addr_size())
   })
   let spec_id = spec_stream.subscribe(spec => {
-    spec_counts.push(spec.declaration_count())
+    spec_counts.push(spec.declarations())
   })
   let input = @project.ProjectInput::custom(
     target=@core_theory.Target::x86_64(),
@@ -77,7 +77,7 @@ test "project info file stream reports unnamed inputs as empty filenames" {
   spec_stream.unsubscribe(spec_id)
   assert_true(project.filename() is None)
   assert_true(project.arch().code_addr_size() == 64)
-  assert_true(project.specification().declaration_count() == 6)
+  assert_true(project.specification().declarations() == 3)
   assert_true(files == [""])
   assert_true(arch_sizes == [0])
   assert_true(spec_counts == [0])
@@ -93,7 +93,7 @@ test "project info streams retain raw input arch and spec provenance" {
     arch_sizes.push(target.code_addr_size())
   })
   let spec_id = spec_stream.subscribe(spec => {
-    spec_counts.push(spec.declaration_count())
+    spec_counts.push(spec.declarations())
   })
   match
     @project.ProjectInput::from_bigstring(
@@ -107,7 +107,20 @@ test "project info streams retain raw input arch and spec provenance" {
       spec_stream.unsubscribe(spec_id)
       assert_true(project.filename() == Some("raw-info.bin"))
       assert_true(project.arch().code_addr_size() == 64)
-      assert_true(project.specification().declaration_count() == 6)
+      debug_inspect(
+        project.specification().attributes(),
+        content=(
+          #|[
+          #|  "arch",
+          #|  "bits",
+          #|  "entry-point",
+          #|  "is-little-endian",
+          #|  "mapped",
+          #|  "named-region",
+          #|  "segment",
+          #|]
+        ),
+      )
       assert_true(arch_sizes == [0])
       assert_true(spec_counts == [0])
     }
@@ -124,7 +137,7 @@ test "project info spec stream reports unknown create inputs as empty specs" {
   let spec_counts = []
   let spec_stream = @project.ProjectInfo::spec()
   let spec_id = spec_stream.subscribe(spec => {
-    spec_counts.push(spec.declaration_count())
+    spec_counts.push(spec.declarations())
   })
   let input = @project.ProjectInput::create(
     target=@core_theory.Target::unknown(),
@@ -133,7 +146,12 @@ test "project info spec stream reports unknown create inputs as empty specs" {
   let project = @project.Project::from_input(input)
   spec_stream.unsubscribe(spec_id)
   assert_true(project.filename() == Some("unknown.bin"))
-  assert_true(project.specification().declaration_count() == 6)
+  debug_inspect(
+    project.specification().attributes(),
+    content=(
+      #|["arch"]
+    ),
+  )
   assert_true(spec_counts == [0])
 }
 

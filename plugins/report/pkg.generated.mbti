@@ -1,0 +1,54 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/report"
+
+import {
+  "bobzhang/bap/main_event",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn declare_plugin() -> Unit raise
+
+pub fn format_event(@main_event.MainEvent) -> String?
+
+pub let interval : Int
+
+pub let name : String
+
+pub fn print_events(write? : (String) -> Unit) -> Int
+
+pub fn register(progress? : Bool, events? : Bool, write? : (String) -> Unit, clock? : () -> Double) -> Bool
+
+pub fn to_hms(Double) -> (Int, Int, Int)
+
+pub fn wall_clock() -> Double
+
+// Errors
+
+// Types and methods
+pub struct ProgressReport {
+  tasks : Map[String, ProgressSlot]
+  // private fields
+}
+pub fn ProgressReport::enable(Self) -> Int
+pub fn ProgressReport::new(clock? : () -> Double, write? : (String) -> Unit) -> Self
+pub fn ProgressReport::render(Self) -> String
+pub fn ProgressReport::render_progress(Self) -> Unit
+pub fn ProgressReport::tick(Self) -> Unit
+pub fn ProgressReport::update(Self, @main_event.MainEvent) -> Unit
+
+pub(all) struct ProgressSlot {
+  note : String?
+  stage : Int?
+  total : Int?
+  created : Double
+  updated : Double
+  active : Bool
+} derive(Eq, @debug.Debug)
+pub fn ProgressSlot::equal(Self, Self) -> Bool
+pub fn ProgressSlot::not_equal(Self, Self) -> Bool
+pub fn ProgressSlot::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

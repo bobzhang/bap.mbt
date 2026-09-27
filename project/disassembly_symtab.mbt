@@ -10,15 +10,21 @@ struct ProjectDisassemblySymtab {
   functions_value : Array[ProjectDisassemblyFunction]
   explicit_calls_value : Array[(UInt64, String)]
   implicit_calls_value : Array[(UInt64, String)]
+  /// the names of the external functions called by the program (upstream
+  /// `Symtab.externals`, the labels without addresses)
+  externals_value : Array[String]
 }
 
 ///|
 fn project_disassembly_function_sort(
   blocks : Array[ProjectDisassemblyBlock],
 ) -> Array[ProjectDisassemblyBlock] {
+  let seen : Map[(UInt64, Int), Unit] = Map([])
   let result : Array[ProjectDisassemblyBlock] = []
   for block in blocks {
-    if !result.any(existing => existing.same(block)) {
+    let key = (block.addr(), block.memory_value.length())
+    if !seen.contains(key) {
+      seen[key] = ()
       result.push(block)
     }
   }
@@ -32,14 +38,6 @@ fn project_disassembly_function_contains_block(
   block : ProjectDisassemblyBlock,
 ) -> Bool {
   blocks.any(existing => existing.same(block))
-}
-
-///|
-fn project_disassembly_function_same(
-  left : ProjectDisassemblyFunction,
-  right : ProjectDisassemblyFunction,
-) -> Bool {
-  left.name() == right.name() && left.addr() == right.addr()
 }
 
 ///|
@@ -59,11 +57,12 @@ fn project_disassembly_function_cmp(
 fn project_disassembly_symtab_unique_functions(
   functions : Array[ProjectDisassemblyFunction],
 ) -> Array[ProjectDisassemblyFunction] {
+  let seen : Map[(String, UInt64), Unit] = Map([])
   let result : Array[ProjectDisassemblyFunction] = []
   for function in functions {
-    if !result.any(existing => {
-        project_disassembly_function_same(existing, function)
-      }) {
+    let key = (function.name(), function.addr())
+    if !seen.contains(key) {
+      seen[key] = ()
       result.push(function)
     }
   }
@@ -101,12 +100,11 @@ fn project_disassembly_symtab_find_call(
   calls : Array[(UInt64, String)],
   addr : UInt64,
 ) -> String? {
-  for call in calls {
-    if call.0 == addr {
-      return Some(call.1)
-    }
+  // the calls are sorted by their (distinct) addresses
+  match calls.binary_search_by(call => call.0.compare(addr)) {
+    Ok(i) => Some(calls[i].1)
+    Err(_) => None
   }
-  None
 }
 
 ///|
@@ -234,7 +232,12 @@ pub fn ProjectDisassemblyFunction::span(
 
 ///|
 pub fn ProjectDisassemblySymtab::empty() -> ProjectDisassemblySymtab {
-  { functions_value: [], explicit_calls_value: [], implicit_calls_value: [], }
+  {
+    functions_value: [],
+    explicit_calls_value: [],
+    implicit_calls_value: [],
+    externals_value: [],
+  }
 }
 
 ///|
@@ -248,6 +251,7 @@ pub fn ProjectDisassemblySymtab::create(
     },
     explicit_calls_value: [],
     implicit_calls_value: [],
+    externals_value: [],
   }
 }
 
@@ -281,6 +285,7 @@ pub fn ProjectDisassemblySymtab::remove(
     implicit_calls_value: self.implicit_calls_value.filter(call => {
       call.1 != function.name() && !function.contains_addr(call.0)
     }),
+    externals_value: self.externals_value,
   }
 }
 
@@ -399,6 +404,28 @@ pub fn ProjectDisassemblySymtab::callee(
 
 ///|
 pub fn ProjectDisassemblySymtab::of_project(
+  project : Project,
+) -> ProjectDisassemblySymtab {
+  match project.disassembly_driver_state() {
+    Some(driver) => {
+      let kb = project.knowledge()
+      project.with_disasm_providers(() => {
+        let calls = ProjectDisassemblyCalls::empty().update(driver, kb)
+        ProjectDisassemblySymtab::create_from_driver(driver, calls, kb)
+      }) catch {
+        _ => project_disassembly_symtab_of_state(project)
+      }
+    }
+    None => project_disassembly_symtab_of_state(project)
+  }
+}
+
+///|
+/// The symbol table of the disassembly state of the project: the functions
+/// are the subroutines of the partition of the blocks (see
+/// `Project::disassembly_calls`), named by the project symbolizer, and the
+/// edges between different functions are calls.
+fn project_disassembly_symtab_of_state(
   project : Project,
 ) -> ProjectDisassemblySymtab {
   let blocks = project.disassembly().blocks_with_instructions()

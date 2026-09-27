@@ -8,13 +8,17 @@ import {
   "bobzhang/bap/graphlib",
   "bobzhang/bap/image",
   "bobzhang/bap/knowledge",
+  "bobzhang/bap/mc",
   "bobzhang/bap/memory",
+  "bobzhang/bap/ogre",
   "bobzhang/bap/types",
   "moonbitlang/core/debug",
 }
 
 // Values
 pub fn apply_analysis(String, Array[String], pkg? : String) -> Result[Unit, String]
+
+pub fn apply_lift_hooks(Array[@types.Stmt]) -> Result[Array[@types.Stmt], String]
 
 pub fn arch(Project) -> @core_theory.Target
 
@@ -74,6 +78,8 @@ pub fn input_loaders_for_extension(String) -> Array[ProjectInputLoader]
 
 pub fn libraries(Project) -> Array[Library]
 
+pub fn lift_hooks() -> Array[String]
+
 pub fn map_program(Project, (@types.Term[@types.Program]) -> @types.Term[@types.Program]) -> Project
 
 pub fn memory(Project) -> @memory.MemMap[String]
@@ -112,6 +118,8 @@ pub fn register_builtin_disassembly_drivers() -> Result[Unit, String]
 
 pub fn register_builtin_input_loaders() -> Result[Unit, String]
 
+pub fn register_builtin_lifters(registry? : @mc.Registry) -> Unit
+
 pub fn register_builtin_reconstructors() -> Result[Unit, String]
 
 pub fn register_builtin_services() -> Result[Unit, String]
@@ -133,6 +141,8 @@ pub fn register_disassembly_driver_source_value(name~ : String, ProjectDisassemb
 pub fn register_input_loader(ProjectInputLoader) -> Result[Unit, String]
 
 pub fn register_ir_transform_passes() -> Result[Unit, String]
+
+pub fn register_lift_hook(name~ : String, (Array[@types.Stmt]) -> Result[Array[@types.Stmt], String]) -> Unit
 
 pub fn register_pass(ProjectPass) -> Result[Unit, String]
 
@@ -174,7 +184,7 @@ pub fn rooter_source_names() -> Array[String]
 
 pub fn set(Project, String, String) -> Project
 
-pub fn specification(Project) -> @image.OgreDoc
+pub fn specification(Project) -> @ogre.Doc
 
 pub fn state(Project) -> ProjectState
 
@@ -189,6 +199,8 @@ pub fn symbols(Project) -> Array[@image.Symbol]
 pub fn tag_memory(Project, @memory.Memory, String) -> Project
 
 pub fn target(Project) -> @core_theory.Target
+
+pub fn unregister_lift_hook(String) -> Bool
 
 pub fn with_memory(Project, @memory.MemMap[String]) -> Project
 
@@ -229,7 +241,7 @@ pub fn Library::disassembly(Self) -> ProjectDisassemblyState
 pub fn Library::memory(Self) -> @memory.MemMap[String]
 pub fn Library::name(Self) -> String
 pub fn Library::program(Self) -> @types.Term[@types.Program]
-pub fn Library::specification(Self) -> @image.OgreDoc
+pub fn Library::specification(Self) -> @ogre.Doc
 pub fn Library::state(Self) -> ProjectState
 pub fn Library::symbols(Self) -> Array[@image.Symbol]
 pub fn Library::target(Self) -> @core_theory.Target
@@ -263,11 +275,14 @@ pub fn Project::disassemble(Self, driver~ : String) -> Result[Self, String]
 pub fn Project::disassemble_and_reconstruct(Self, driver? : String, brancher? : ProjectBrancher, reconstructor? : ProjectReconstructor) -> Result[Self, String]
 pub fn Project::disassemble_and_reconstruct_named(Self, driver? : String, brancher? : String, reconstructor? : String) -> Result[Self, String]
 pub fn Project::disassemble_rec(Self, driver? : String, brancher? : ProjectBrancher) -> Result[ProjectDisassemblyRec, String]
+pub fn Project::disassemble_recursive(Self, brancher? : ProjectBrancher) -> Result[Self, String]
 pub fn Project::disassemble_with_available(Self) -> Result[Self, String]
 pub fn Project::disassemble_with_drivers(Self, Array[ProjectDisassemblyDriver]) -> Result[Self, String]
 pub fn Project::disassembly(Self) -> ProjectDisassemblyState
 pub fn Project::disassembly_calls(Self) -> ProjectDisassemblyCalls
 pub fn Project::disassembly_cfg(Self) -> ProjectDisassemblyCfg
+pub fn Project::disassembly_code_regions(Self) -> Array[@memory.Memory]
+pub fn Project::disassembly_driver_state(Self) -> ProjectDisassemblyDriverState?
 pub fn Project::disassembly_rec(Self) -> ProjectDisassemblyRec
 pub fn Project::disassembly_symtab(Self) -> ProjectDisassemblySymtab
 pub fn Project::empty(@core_theory.Target) -> Self
@@ -284,8 +299,12 @@ pub fn[T] Project::has_tag(Self, ProjectStorageTag[T]) -> Bool
 pub fn Project::image(Self) -> @image.Image?
 pub fn Project::interpreter(Self) -> String?
 pub fn Project::is_executable(Self) -> Bool?
+pub fn Project::knowledge(Self) -> @knowledge.State
 pub fn Project::libraries(Self) -> Array[Library]
+pub fn Project::lift(Self, registry? : @mc.Registry) -> Result[Array[@types.Stmt], String]
 pub fn Project::lift_basic_bil(Self) -> Result[Array[@types.Stmt], String]
+pub fn Project::lift_errors(Self) -> Array[ProjectLiftError]
+pub fn Project::lift_ir(Self, registry? : @mc.Registry) -> Result[(@types.Term[@types.Program], Array[ProjectLiftError]), String]
 pub fn Project::linear_sweep(Self, @memory.Memory, backend? : String) -> Result[Array[(@memory.Memory, ProjectDisassemblyInstruction?)], String]
 pub fn Project::linear_sweep_exn(Self, @memory.Memory, backend? : String) -> Array[(@memory.Memory, ProjectDisassemblyInstruction?)] raise ProjectDisassemblyLinearSweepError
 pub fn Project::load(Bytes, loader~ : String, target? : @core_theory.Target) -> Result[Self, String]
@@ -302,9 +321,11 @@ pub fn Project::pass_run_count(Self, String) -> Int
 pub fn Project::persistent() -> @knowledge.Persistent[Self]
 pub fn Project::pkg(Self) -> String?
 pub fn Project::program(Self) -> @types.Term[@types.Program]
+pub fn Project::program_unit(Self) -> @core_theory.ProgramUnit
 pub fn Project::raw_file(String, target~ : @core_theory.Target, base? : UInt64, offset? : Int, length? : Int, entry? : UInt64, filename? : String) -> Result[Self, String]
 pub fn Project::reconstruct(Self, reconstructor? : ProjectReconstructor) -> Result[Self, String]
 pub fn Project::reconstruct_named(Self, reconstructor~ : String) -> Result[Self, String]
+pub fn Project::relocation_info(Self) -> ProjectRelocations
 pub fn Project::relocations(Self) -> Array[@image.Relocation]
 pub fn Project::required_libraries(Self) -> Array[String]
 pub fn Project::resolve_stub_calls(Self, link_only? : Array[String], no_link? : Array[String]) -> Self
@@ -321,7 +342,7 @@ pub fn Project::runpaths(Self) -> Array[String]
 pub fn Project::set(Self, String, String) -> Self
 pub fn[T] Project::set_tag(Self, ProjectStorageTag[T], T) -> Self
 pub fn Project::soname(Self) -> String?
-pub fn Project::specification(Self) -> @image.OgreDoc
+pub fn Project::specification(Self) -> @ogre.Doc
 pub fn Project::state(Self) -> ProjectState
 pub fn Project::storage(Self) -> Map[String, String]
 pub fn Project::substitute(Self, @memory.Memory, String, String) -> Self
@@ -334,7 +355,10 @@ pub fn Project::to_ssa(Self) -> Self
 pub fn Project::to_trivial_condition_form(Self) -> Self
 pub fn Project::unmark_program_terms(Self, String) -> Self
 pub fn Project::with_applied_relocations(Self) -> Result[Self, String]
+pub fn[R] Project::with_disasm_providers(Self, brancher? : ProjectBrancher, () -> R raise?) -> R raise?
 pub fn Project::with_disassembly(Self, ProjectDisassemblyState) -> Self
+pub fn Project::with_disassembly_driver_state(Self, ProjectDisassemblyDriverState) -> Self
+pub fn Project::with_lift_errors(Self, Array[ProjectLiftError]) -> Self
 pub fn Project::with_memory(Self, @memory.MemMap[String]) -> Self
 pub fn Project::with_program(Self, @types.Term[@types.Program]) -> Self
 pub fn Project::with_state(Self, ProjectState) -> Self
@@ -400,9 +424,15 @@ type ProjectBrancher
 pub fn ProjectBrancher::create((@memory.Memory) -> Array[ProjectDisassemblyEdge]) -> Self
 pub fn ProjectBrancher::empty() -> Self
 pub fn ProjectBrancher::is_biased(Self) -> Bool
+pub fn ProjectBrancher::of_bil(@core_theory.Target) -> Self
 pub fn ProjectBrancher::of_edges(Array[ProjectDisassemblyEdge]) -> Self
+pub fn ProjectBrancher::of_image(@image.Image) -> Self
+pub fn ProjectBrancher::of_resolver((@memory.Memory, ProjectDisassemblyInstruction) -> Array[ProjectDisassemblyEdge]) -> Self
 pub fn ProjectBrancher::path(Self) -> String?
+pub fn ProjectBrancher::provide(Self) -> Unit
+pub fn[R] ProjectBrancher::providing(Self, () -> R raise?) -> R raise?
 pub fn ProjectBrancher::resolve(Self, @memory.Memory) -> Array[ProjectDisassemblyEdge]
+pub fn ProjectBrancher::resolve_insn(Self, @memory.Memory, ProjectDisassemblyInstruction) -> Array[ProjectDisassemblyEdge]
 pub fn ProjectBrancher::set_path(Self, String) -> Self
 pub fn ProjectBrancher::with_biased(Self, Bool) -> Self
 
@@ -434,6 +464,7 @@ pub fn ProjectDisasm::errors(Self) -> Array[ProjectDisassemblyRecError]
 pub fn ProjectDisasm::from_project(Project, errors? : Array[ProjectDisassemblyRecError]) -> Self
 pub fn ProjectDisasm::has_errors(Self) -> Bool
 pub fn ProjectDisasm::insns(Self) -> Array[(@memory.Memory, ProjectDisassemblyInstruction)]
+pub fn ProjectDisasm::lift(Self, registry? : @mc.Registry) -> Result[Array[@types.Stmt], String]
 pub fn ProjectDisasm::lift_basic_bil(Self) -> Result[Array[@types.Stmt], String]
 pub fn ProjectDisasm::merge(Self, Self) -> Self
 pub fn ProjectDisasm::of_file(String, backend? : String, brancher? : ProjectBrancher, rooter? : ProjectRooter, loader? : String) -> Result[Self, String]
@@ -455,9 +486,13 @@ pub fn ProjectDisassemblyBasic::cpu(Self) -> String
 pub fn ProjectDisassemblyBasic::create(String, backend? : String, cpu? : String, attrs? : String, debug_level? : Int) -> Result[Self, String]
 pub fn ProjectDisassemblyBasic::custom(@core_theory.Target, @core_theory.Language, backend? : String) -> Self
 pub fn ProjectDisassemblyBasic::debug_level(Self) -> Int
+pub fn ProjectDisassemblyBasic::encoding(Self) -> String
 pub fn ProjectDisassemblyBasic::insn_of_mem(Self, @memory.Memory) -> Result[ProjectDisassemblyBasicInsnResult, String]
-pub fn ProjectDisassemblyBasic::lookup(@core_theory.Target, @core_theory.Language, backend? : String) -> Result[Self, String]
-pub fn ProjectDisassemblyBasic::run(Self, @memory.Memory, stop_on? : Array[ProjectDisassemblyBasicPred]) -> ProjectDisassemblyBasicState
+pub fn ProjectDisassemblyBasic::lookup(@core_theory.Target, @core_theory.Language) -> Result[Self, String]
+pub fn ProjectDisassemblyBasic::name(Self) -> String
+pub fn ProjectDisassemblyBasic::register(@core_theory.Language, (@core_theory.Target) -> Result[Self, String]) -> Result[Unit, String]
+pub fn ProjectDisassemblyBasic::registered_encodings() -> Array[String]
+pub fn[S, R] ProjectDisassemblyBasic::run(Self, @memory.Memory, return_~ : (S) -> R, init~ : S, backlog? : Int, stop_on? : Array[ProjectDisassemblyBasicPred], invalid? : (ProjectDisassemblyBasicState[S, R], @memory.Memory, S) -> R, stopped? : (ProjectDisassemblyBasicState[S, R], S) -> R, hit? : (ProjectDisassemblyBasicState[S, R], @memory.Memory, ProjectDisassemblyInstruction, S) -> R) -> R
 pub fn ProjectDisassemblyBasic::store_asm(Self) -> Self
 pub fn ProjectDisassemblyBasic::store_kinds(Self) -> Self
 pub fn ProjectDisassemblyBasic::stores_asm(Self) -> Bool
@@ -491,17 +526,20 @@ pub fn ProjectDisassemblyBasicRemainder::is_finished(Self) -> Bool
 pub fn ProjectDisassemblyBasicRemainder::left(@memory.Memory) -> Self
 pub fn ProjectDisassemblyBasicRemainder::memory(Self) -> @memory.Memory?
 
-type ProjectDisassemblyBasicState
-pub fn ProjectDisassemblyBasicState::addr(Self) -> UInt64
-pub fn ProjectDisassemblyBasicState::apply_x86_simd(Self, ProjectX86SimdState) -> Result[ProjectX86SimdState, String]
-pub fn ProjectDisassemblyBasicState::create(disasm~ : ProjectDisassemblyBasic, memory~ : @memory.Memory, addr~ : UInt64, preds~ : Array[ProjectDisassemblyBasicPred], insns~ : Array[(@memory.Memory, ProjectDisassemblyInstruction?)]) -> Self
-pub fn ProjectDisassemblyBasicState::disasm(Self) -> ProjectDisassemblyBasic
-pub fn ProjectDisassemblyBasicState::insns(Self) -> Array[(@memory.Memory, ProjectDisassemblyInstruction?)]
-pub fn ProjectDisassemblyBasicState::last(Self, Int) -> Array[(@memory.Memory, ProjectDisassemblyInstruction?)]
-pub fn ProjectDisassemblyBasicState::memory(Self) -> @memory.Memory
-pub fn ProjectDisassemblyBasicState::preds(Self) -> Array[ProjectDisassemblyBasicPred]
-pub fn ProjectDisassemblyBasicState::switch(Self, ProjectDisassemblyBasic) -> Self
-pub fn ProjectDisassemblyBasicState::with_preds(Self, Array[ProjectDisassemblyBasicPred]) -> Self
+type ProjectDisassemblyBasicState[S, R]
+pub fn[S, R] ProjectDisassemblyBasicState::addr(Self[S, R]) -> UInt64
+pub fn[S, R] ProjectDisassemblyBasicState::apply_x86_simd(Self[S, R], ProjectX86SimdState) -> Result[ProjectX86SimdState, String]
+pub fn[S, R] ProjectDisassemblyBasicState::back(Self[S, R], S) -> R
+pub fn[S, R] ProjectDisassemblyBasicState::disasm(Self[S, R]) -> ProjectDisassemblyBasic
+pub fn[S, R] ProjectDisassemblyBasicState::insns(Self[S, R]) -> Array[(@memory.Memory, ProjectDisassemblyInstruction?)]
+pub fn[S, R] ProjectDisassemblyBasicState::jump(Self[S, R], @memory.Memory, S) -> R
+pub fn[S, R] ProjectDisassemblyBasicState::last(Self[S, R], Int) -> Array[(@memory.Memory, ProjectDisassemblyInstruction?)]
+pub fn[S, R] ProjectDisassemblyBasicState::memory(Self[S, R]) -> @memory.Memory
+pub fn[S, R] ProjectDisassemblyBasicState::preds(Self[S, R]) -> Array[ProjectDisassemblyBasicPred]
+pub fn[S, R] ProjectDisassemblyBasicState::step(Self[S, R], S) -> R
+pub fn[S, R] ProjectDisassemblyBasicState::stop(Self[S, R], S) -> R
+pub fn[S, R] ProjectDisassemblyBasicState::switch(Self[S, R], ProjectDisassemblyBasic) -> Self[S, R]
+pub fn[S, R] ProjectDisassemblyBasicState::with_preds(Self[S, R], Array[ProjectDisassemblyBasicPred]) -> Self[S, R]
 
 type ProjectDisassemblyBlock
 pub fn ProjectDisassemblyBlock::addr(Self) -> UInt64
@@ -511,7 +549,10 @@ pub fn ProjectDisassemblyBlock::insns(Self) -> Array[(@memory.Memory, ProjectDis
 pub fn ProjectDisassemblyBlock::instruction_count(Self) -> Int
 pub fn ProjectDisassemblyBlock::instructions(Self) -> Array[ProjectDisassemblyInstruction]
 pub fn ProjectDisassemblyBlock::leader(Self) -> ProjectDisassemblyInstruction
+pub fn ProjectDisassemblyBlock::lift(Self, target~ : @core_theory.Target, registry? : @mc.Registry) -> Result[Array[@types.Stmt], String]
 pub fn ProjectDisassemblyBlock::lift_basic_bil(Self) -> Result[Array[@types.Stmt], String]
+pub fn ProjectDisassemblyBlock::lift_ir(Self, target~ : @core_theory.Target, cfg? : ProjectDisassemblyCfg, symtab? : ProjectDisassemblySymtab, registry? : @mc.Registry, pkg? : String) -> Result[(Array[@types.Term[@types.Blk]], Array[ProjectLiftError]), String]
+pub fn ProjectDisassemblyBlock::lift_partial(Self, target~ : @core_theory.Target, registry? : @mc.Registry) -> (Array[@types.Stmt], Array[ProjectLiftError])
 pub fn ProjectDisassemblyBlock::memory(Self) -> @memory.Memory
 pub fn ProjectDisassemblyBlock::same(Self, Self) -> Bool
 pub fn ProjectDisassemblyBlock::terminator(Self) -> ProjectDisassemblyInstruction
@@ -522,8 +563,10 @@ pub fn ProjectDisassemblyCalls::belongs(Self, entry~ : UInt64, UInt64) -> Bool
 pub fn ProjectDisassemblyCalls::empty() -> Self
 pub fn ProjectDisassemblyCalls::entries(Self) -> Array[UInt64]
 pub fn ProjectDisassemblyCalls::entry(Self, UInt64) -> UInt64
+pub fn ProjectDisassemblyCalls::equal(Self, Self) -> Bool
 pub fn ProjectDisassemblyCalls::of_disassembly(ProjectDisassemblyState, Array[UInt64]) -> Self
 pub fn ProjectDisassemblyCalls::siblings(Self, UInt64, UInt64) -> Bool
+pub fn ProjectDisassemblyCalls::update(Self, ProjectDisassemblyDriverState, @knowledge.State) -> Self raise
 
 type ProjectDisassemblyCfg
 pub fn ProjectDisassemblyCfg::create(nodes? : Array[ProjectDisassemblyBlock], edges? : Array[ProjectDisassemblyCfgEdge]) -> Self
@@ -574,7 +617,37 @@ pub fn ProjectDisassemblyDriver::name(Self) -> String
 pub fn ProjectDisassemblyDriver::priority(Self) -> Int
 pub fn ProjectDisassemblyDriver::project_roots() -> Self
 pub fn ProjectDisassemblyDriver::raw_bytes() -> Self
+pub fn ProjectDisassemblyDriver::recursive() -> Self
 pub fn ProjectDisassemblyDriver::run(Self, Project) -> Result[Project, String]
+
+type ProjectDisassemblyDriverInsns
+pub fn ProjectDisassemblyDriverInsns::execution_order(Self, @knowledge.State) -> Array[@knowledge.Object[Unit]] raise
+pub fn ProjectDisassemblyDriverInsns::list(Self, rev? : Bool) -> Array[@knowledge.Object[Unit]]
+
+type ProjectDisassemblyDriverJump
+pub fn ProjectDisassemblyDriverJump::destinations(Self) -> Array[UInt64]
+pub fn ProjectDisassemblyDriverJump::is_barrier(Self) -> Bool
+pub fn ProjectDisassemblyDriverJump::is_call(Self) -> Bool
+pub fn ProjectDisassemblyDriverJump::is_indirect(Self) -> Bool
+pub fn ProjectDisassemblyDriverJump::unresolved(Self) -> Array[@knowledge.Object[Unit]]
+
+type ProjectDisassemblyDriverState
+pub fn ProjectDisassemblyDriverState::blocks(Self) -> Array[UInt64]
+pub fn ProjectDisassemblyDriverState::debt_count(Self) -> Int
+pub fn ProjectDisassemblyDriverState::equal(Self, Self) -> Bool
+pub fn[N, C] ProjectDisassemblyDriverState::explore(Self, @knowledge.State, entries? : Array[UInt64], entry? : UInt64, follow? : (UInt64) -> Bool raise, block~ : (@memory.Memory, ProjectDisassemblyDriverInsns) -> N raise, node~ : (N, C) -> C raise, edge~ : (N, N, C) -> C raise, init~ : C) -> C raise
+pub fn ProjectDisassemblyDriverState::externals(Self) -> Array[@knowledge.Object[Unit]]
+pub fn ProjectDisassemblyDriverState::forget_debt(Self) -> Self
+pub fn ProjectDisassemblyDriverState::init() -> Self
+pub fn ProjectDisassemblyDriverState::is_block(Self, UInt64) -> Bool
+pub fn ProjectDisassemblyDriverState::is_data(Self, UInt64) -> Bool
+pub fn ProjectDisassemblyDriverState::is_jump(Self, UInt64) -> Bool
+pub fn ProjectDisassemblyDriverState::is_subroutine(Self, UInt64) -> Bool
+pub fn ProjectDisassemblyDriverState::jump(Self, UInt64) -> ProjectDisassemblyDriverJump?
+pub fn ProjectDisassemblyDriverState::memory(Self) -> Array[@memory.Memory]
+pub fn ProjectDisassemblyDriverState::merge(Self, Self) -> Self
+pub fn ProjectDisassemblyDriverState::scan(Self, @memory.Memory, @knowledge.State) -> Self raise
+pub fn ProjectDisassemblyDriverState::subroutines(Self) -> Array[UInt64]
 
 type ProjectDisassemblyEdge
 pub fn ProjectDisassemblyEdge::create(source~ : UInt64, target? : UInt64, kind? : ProjectDisassemblyEdgeKind) -> Self
@@ -600,6 +673,7 @@ pub fn ProjectDisassemblyFunction::create(name~ : String, entry~ : ProjectDisass
 pub fn ProjectDisassemblyFunction::dominates(Self, @memory.Memory) -> Bool
 pub fn ProjectDisassemblyFunction::entry(Self) -> ProjectDisassemblyBlock
 pub fn ProjectDisassemblyFunction::intersects(Self, @memory.Memory) -> Bool
+pub fn ProjectDisassemblyFunction::lift_ir(Self, target~ : @core_theory.Target, cfg~ : ProjectDisassemblyCfg, symtab? : ProjectDisassemblySymtab, registry? : @mc.Registry, pkg? : String) -> Result[(@types.Term[@types.Sub], Array[ProjectLiftError]), String]
 pub fn ProjectDisassemblyFunction::name(Self) -> String
 pub fn ProjectDisassemblyFunction::span(Self) -> @memory.MemMap[Unit]
 
@@ -613,29 +687,36 @@ pub fn ProjectDisassemblyInstruction::code(Self) -> Int
 pub fn ProjectDisassemblyInstruction::contains(Self, UInt64) -> Bool
 pub fn ProjectDisassemblyInstruction::create(@memory.Memory, assembly? : String, bil? : String, code? : Int, name? : String, encoding? : String, kinds? : Array[ProjectInstructionKind], operands? : Array[ProjectInstructionOperand], subinstructions? : Array[Self]) -> Self
 pub fn ProjectDisassemblyInstruction::encoding(Self) -> String
+pub fn ProjectDisassemblyInstruction::encoding_language(Self) -> @core_theory.Language
 pub fn ProjectDisassemblyInstruction::has_kind(Self, ProjectInstructionKind) -> Bool
 pub fn ProjectDisassemblyInstruction::has_side_effect(Self) -> Bool
 pub fn ProjectDisassemblyInstruction::is_branch(Self) -> Bool
 pub fn ProjectDisassemblyInstruction::is_kind(Self, ProjectInstructionKind) -> Bool
 pub fn ProjectDisassemblyInstruction::kinds(Self) -> Array[ProjectInstructionKind]
+pub fn ProjectDisassemblyInstruction::lift(Self, target~ : @core_theory.Target, registry? : @mc.Registry) -> Result[@mc.Lifted, String]
 pub fn ProjectDisassemblyInstruction::lift_basic_bil(Self) -> Result[Array[@types.Stmt], String]
+pub fn ProjectDisassemblyInstruction::lift_context(Self, @core_theory.Target) -> @mc.Context
 pub fn ProjectDisassemblyInstruction::may(Self, ProjectInstructionKind) -> Bool
 pub fn ProjectDisassemblyInstruction::memory(Self) -> @memory.Memory
 pub fn ProjectDisassemblyInstruction::must(Self, ProjectInstructionKind) -> Self
 pub fn ProjectDisassemblyInstruction::must_not(Self, ProjectInstructionKind) -> Self
 pub fn ProjectDisassemblyInstruction::name(Self) -> String
+pub fn ProjectDisassemblyInstruction::of_mc_insn(@mc.Insn, @memory.Memory) -> Self
 pub fn ProjectDisassemblyInstruction::operand_count(Self) -> Int
 pub fn ProjectDisassemblyInstruction::operands(Self) -> Array[ProjectInstructionOperand]
+pub fn ProjectDisassemblyInstruction::relocations(Self) -> ProjectRelocations?
 pub fn ProjectDisassemblyInstruction::same_normalized_operands(Self, Self) -> Bool
 pub fn ProjectDisassemblyInstruction::should(Self, ProjectInstructionKind) -> Self
 pub fn ProjectDisassemblyInstruction::should_not(Self, ProjectInstructionKind) -> Self
 pub fn ProjectDisassemblyInstruction::subinstruction_count(Self) -> Int
 pub fn ProjectDisassemblyInstruction::subinstructions(Self) -> Array[Self]
 pub fn ProjectDisassemblyInstruction::subs(Self) -> Array[Self]
+pub fn ProjectDisassemblyInstruction::to_mc_insn(Self, encoding? : @core_theory.Language) -> @mc.Insn
 pub fn ProjectDisassemblyInstruction::with_kind(Self, ProjectInstructionKind) -> Self
 pub fn ProjectDisassemblyInstruction::with_kinds(Self, Array[ProjectInstructionKind]) -> Self
 pub fn ProjectDisassemblyInstruction::with_metadata(Self, code? : Int, name? : String, encoding? : String) -> Self
 pub fn ProjectDisassemblyInstruction::with_operands(Self, Array[ProjectInstructionOperand]) -> Self
+pub fn ProjectDisassemblyInstruction::with_relocations(Self, ProjectRelocations) -> Self
 pub fn ProjectDisassemblyInstruction::with_subinstructions(Self, Array[Self]) -> Self
 pub fn ProjectDisassemblyInstruction::without_kind(Self, ProjectInstructionKind) -> Self
 
@@ -722,7 +803,9 @@ pub fn ProjectDisassemblyState::instruction_for(Self, @memory.Memory) -> Project
 pub fn ProjectDisassemblyState::instructions(Self) -> Array[ProjectDisassemblyInstruction]
 pub fn ProjectDisassemblyState::instructions_in(Self, @memory.Memory) -> Array[ProjectDisassemblyInstruction]
 pub fn ProjectDisassemblyState::key_of_first_insns(Self, @memory.Memory, len~ : Int) -> ProjectInstructionKey?
+pub fn ProjectDisassemblyState::lift(Self, target~ : @core_theory.Target, registry? : @mc.Registry) -> Result[Array[@types.Stmt], String]
 pub fn ProjectDisassemblyState::lift_basic_bil(Self) -> Result[Array[@types.Stmt], String]
+pub fn ProjectDisassemblyState::lift_errors(Self, target~ : @core_theory.Target, registry? : @mc.Registry) -> Array[ProjectLiftError]
 pub fn ProjectDisassemblyState::persistent() -> @knowledge.Persistent[Self]
 pub fn ProjectDisassemblyState::remove_block(Self, @memory.Memory) -> Self
 pub fn ProjectDisassemblyState::remove_edge(Self, ProjectDisassemblyEdge) -> Self
@@ -735,18 +818,22 @@ type ProjectDisassemblySymtab
 pub fn ProjectDisassemblySymtab::add_symbol(Self, ProjectDisassemblyFunction) -> Self
 pub fn ProjectDisassemblySymtab::callee(Self, UInt64) -> String?
 pub fn ProjectDisassemblySymtab::create(functions? : Array[ProjectDisassemblyFunction]) -> Self
+pub fn ProjectDisassemblySymtab::create_from_driver(ProjectDisassemblyDriverState, ProjectDisassemblyCalls, @knowledge.State) -> Self raise
 pub fn ProjectDisassemblySymtab::dominators(Self, @memory.Memory) -> Array[ProjectDisassemblyFunction]
 pub fn ProjectDisassemblySymtab::empty() -> Self
 pub fn ProjectDisassemblySymtab::explicit_callee(Self, UInt64) -> String?
+pub fn ProjectDisassemblySymtab::externals(Self) -> Array[String]
 pub fn ProjectDisassemblySymtab::find_by_name(Self, String) -> ProjectDisassemblyFunction?
 pub fn ProjectDisassemblySymtab::find_by_start(Self, UInt64) -> ProjectDisassemblyFunction?
 pub fn ProjectDisassemblySymtab::implicit_callee(Self, UInt64) -> String?
 pub fn ProjectDisassemblySymtab::insert_call(Self, ProjectDisassemblyBlock, String, implicit? : Bool) -> Self
 pub fn ProjectDisassemblySymtab::intersecting(Self, @memory.Memory) -> Array[ProjectDisassemblyFunction]
+pub fn ProjectDisassemblySymtab::lift_ir(Self, target~ : @core_theory.Target, cfg~ : ProjectDisassemblyCfg, registry? : @mc.Registry, pkg? : String) -> Result[(@types.Term[@types.Program], Array[ProjectLiftError]), String]
 pub fn ProjectDisassemblySymtab::of_project(Project) -> Self
 pub fn ProjectDisassemblySymtab::owners(Self, UInt64) -> Array[ProjectDisassemblyFunction]
 pub fn ProjectDisassemblySymtab::remove(Self, ProjectDisassemblyFunction) -> Self
 pub fn ProjectDisassemblySymtab::to_sequence(Self) -> Array[ProjectDisassemblyFunction]
+pub fn ProjectDisassemblySymtab::with_externals(Self, Array[String]) -> Self
 
 type ProjectInfo
 pub fn ProjectInfo::arch() -> @future.Stream[@core_theory.Target]
@@ -755,7 +842,7 @@ pub fn ProjectInfo::code() -> @future.Stream[@memory.MemMap[String]]
 pub fn ProjectInfo::data() -> @future.Stream[@memory.MemMap[String]]
 pub fn ProjectInfo::file() -> @future.Stream[String]
 pub fn ProjectInfo::program() -> @future.Stream[@types.Term[@types.Program]]
-pub fn ProjectInfo::spec() -> @future.Stream[@image.OgreDoc]
+pub fn ProjectInfo::spec() -> @future.Stream[@ogre.Doc]
 pub fn ProjectInfo::symtab() -> @future.Stream[ProjectDisassemblySymtab]
 
 type ProjectInput
@@ -784,7 +871,7 @@ pub fn ProjectInput::raw_bytes(target~ : @core_theory.Target, Bytes, base? : UIn
 pub fn ProjectInput::raw_file(String, target~ : @core_theory.Target, base? : UInt64, offset? : Int, length? : Int, entry? : UInt64, filename? : String) -> Result[Self, String]
 pub fn ProjectInput::register_file_loader(name~ : String, description? : String, extensions? : Array[String], priority? : Int, load~ : (String) -> Result[Self, String]) -> Result[Unit, String]
 pub fn ProjectInput::register_loader(name~ : String, description? : String, extensions? : Array[String], priority? : Int, load~ : (Bytes) -> Result[Self, String], load_file? : (String) -> Result[Self, String]) -> Result[Unit, String]
-pub fn ProjectInput::specification(Self) -> @image.OgreDoc
+pub fn ProjectInput::specification(Self) -> @ogre.Doc
 pub fn ProjectInput::symbols(Self) -> Array[@image.Symbol]
 pub fn ProjectInput::target(Self) -> @core_theory.Target
 
@@ -825,6 +912,8 @@ pub fn ProjectInstructionKind::has_side_effect(Self) -> Bool
 pub fn ProjectInstructionKind::is_branch(Self) -> Bool
 pub fn ProjectInstructionKind::members() -> Array[Self]
 pub fn ProjectInstructionKind::not_equal(Self, Self) -> Bool
+pub fn ProjectInstructionKind::of_mc_kind(@mc.Kind) -> Self
+pub fn ProjectInstructionKind::to_mc_kind(Self) -> @mc.Kind
 pub fn ProjectInstructionKind::to_repr(Self) -> @debug.Repr
 pub fn ProjectInstructionKind::to_string(Self) -> String
 
@@ -855,6 +944,20 @@ pub fn ProjectInstructionToken::of_instruction(ProjectDisassemblyInstruction) ->
 pub fn ProjectInstructionToken::operand_count(Self) -> Int
 pub fn ProjectInstructionToken::operands(Self) -> Array[ProjectInstructionOperand]
 pub fn ProjectInstructionToken::same_normalized(Self, Self) -> Bool
+
+pub struct ProjectLiftError {
+  addr : UInt64
+  opcode : String
+  message : String
+} derive(Eq, @debug.Debug)
+pub fn ProjectLiftError::addr(Self) -> UInt64
+pub fn ProjectLiftError::create(addr~ : UInt64, opcode~ : String, message~ : String) -> Self
+pub fn ProjectLiftError::equal(Self, Self) -> Bool
+pub fn ProjectLiftError::message(Self) -> String
+pub fn ProjectLiftError::not_equal(Self, Self) -> Bool
+pub fn ProjectLiftError::opcode(Self) -> String
+pub fn ProjectLiftError::to_repr(Self) -> @debug.Repr
+pub fn ProjectLiftError::to_string(Self) -> String
 
 type ProjectPass
 pub fn ProjectPass::autorun(Self) -> Bool
@@ -906,9 +1009,26 @@ pub fn ProjectPassRunError::to_string(Self) -> String
 
 type ProjectReconstructor
 pub fn ProjectReconstructor::create((Project) -> Result[Project, String]) -> Self
-pub fn ProjectReconstructor::default() -> Self
-pub fn ProjectReconstructor::of_blocks(Array[(String, UInt64, UInt64)]) -> Self
+pub fn ProjectReconstructor::default(registry? : @mc.Registry) -> Self
+pub fn ProjectReconstructor::of_blocks(Array[(String, UInt64, UInt64)], registry? : @mc.Registry) -> Self
 pub fn ProjectReconstructor::run(Self, Project) -> Result[Project, String]
+
+pub struct ProjectRelocations {
+  // private fields
+}
+pub fn ProjectRelocations::create(rels? : ArrayView[(UInt64, UInt64)], exts? : ArrayView[(UInt64, String)], stubs? : ArrayView[(UInt64, Int)]) -> Self
+pub fn ProjectRelocations::empty() -> Self
+pub fn ProjectRelocations::equal(Self, Self) -> Bool
+pub fn ProjectRelocations::external(Self, UInt64) -> String?
+pub fn ProjectRelocations::fixup(Self, ArrayView[@types.Stmt], addr~ : UInt64, size~ : Int, width~ : Int, is_stub? : Bool) -> Array[@types.Stmt]
+pub fn ProjectRelocations::is_empty(Self) -> Bool
+pub fn ProjectRelocations::is_stub(Self, UInt64) -> Bool
+pub fn ProjectRelocations::not_equal(Self, Self) -> Bool
+pub fn ProjectRelocations::of_image(@image.Image) -> Self
+pub fn ProjectRelocations::references(ArrayView[@types.Stmt]) -> Array[UInt64]
+pub fn ProjectRelocations::relocation(Self, UInt64) -> UInt64?
+pub fn ProjectRelocations::stub_name(Self, UInt64, (UInt64) -> ProjectDisassemblyInstruction?, target~ : @core_theory.Target) -> String?
+pub impl Eq for ProjectRelocations
 
 type ProjectRooter
 pub fn ProjectRooter::contains(Self, UInt64) -> Bool
@@ -920,6 +1040,8 @@ pub fn ProjectRooter::of_blocks(Array[(String, UInt64, UInt64)]) -> Self
 pub fn ProjectRooter::of_image(@image.Image) -> Self
 pub fn ProjectRooter::of_symbols(Array[@image.Symbol], entry? : UInt64, path? : String, biased? : Bool) -> Self
 pub fn ProjectRooter::path(Self) -> String?
+pub fn ProjectRooter::provide(Self) -> Unit
+pub fn[R] ProjectRooter::providing(Self, () -> R raise?) -> R raise?
 pub fn ProjectRooter::roots(Self) -> Array[UInt64]
 pub fn ProjectRooter::set_path(Self, String) -> Self
 pub fn ProjectRooter::union(Self, Self) -> Self
@@ -952,9 +1074,11 @@ pub fn ProjectStorageTag::uint64(String) -> Self[UInt64]
 pub fn ProjectStorageTag::uint64_array(String) -> Self[Array[UInt64]]
 
 type ProjectSymbolizer
+pub fn ProjectSymbolizer::agent() -> @knowledge.Agent
 pub fn ProjectSymbolizer::chain(Array[Self]) -> Self
 pub fn ProjectSymbolizer::create((UInt64) -> String?, path? : String, biased? : Bool) -> Self
 pub fn ProjectSymbolizer::empty() -> Self
+pub fn ProjectSymbolizer::get_name(@knowledge.State, UInt64) -> String raise
 pub fn ProjectSymbolizer::is_biased(Self) -> Bool
 pub fn ProjectSymbolizer::name_is_empty(String) -> Bool
 pub fn ProjectSymbolizer::name_of_addr(UInt64) -> String
@@ -963,6 +1087,8 @@ pub fn ProjectSymbolizer::of_blocks(Array[(String, UInt64, UInt64)]) -> Self
 pub fn ProjectSymbolizer::of_image(@image.Image) -> Self
 pub fn ProjectSymbolizer::of_symbols(Array[@image.Symbol], path? : String, biased? : Bool) -> Self
 pub fn ProjectSymbolizer::path(Self) -> String?
+pub fn ProjectSymbolizer::provide(Self, @knowledge.Agent) -> Unit
+pub fn[R] ProjectSymbolizer::providing(Self, @knowledge.Agent, () -> R raise?) -> R raise?
 pub fn ProjectSymbolizer::resolve(Self, UInt64) -> String
 pub fn ProjectSymbolizer::run(Self, UInt64) -> String?
 pub fn ProjectSymbolizer::set_path(Self, String) -> Self

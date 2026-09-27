@@ -1648,10 +1648,17 @@ test "ir terms render BAP-style strings" {
     @types.Phi::to_string(phi),
     content="r0:imm8 <- phi([1:8u, @left], [2:8u, @right])",
   )
-  inspect(goto.jmp_to_string(), content="when flag:imm1 goto *target:imm32")
+  inspect(
+    goto.jmp_to_string(),
+    content=(
+      #|when flag:imm1 goto *target:imm32
+    ),
+  )
   inspect(
     @types.Jmp::to_string(goto),
-    content="when flag:imm1 goto *target:imm32",
+    content=(
+      #|when flag:imm1 goto *target:imm32
+    ),
   )
   inspect(call.jmp_to_string(), content="call @left with return @right")
   inspect(
@@ -1675,11 +1682,21 @@ test "ir terms render BAP-style strings" {
   )
   inspect(
     blk.blk_to_string(),
-    content="@entry\nr0:imm8 <- phi([1:8u, @left], [2:8u, @right])\nr0:imm8 := 1:8u\nwhen flag:imm1 goto *target:imm32",
+    content=(
+      #|@entry
+      #|r0:imm8 <- phi([1:8u, @left], [2:8u, @right])
+      #|r0:imm8 := 1:8u
+      #|when flag:imm1 goto *target:imm32
+    ),
   )
   inspect(
     @types.Blk::to_string(blk),
-    content="@entry\nr0:imm8 <- phi([1:8u, @left], [2:8u, @right])\nr0:imm8 := 1:8u\nwhen flag:imm1 goto *target:imm32",
+    content=(
+      #|@entry
+      #|r0:imm8 <- phi([1:8u, @left], [2:8u, @right])
+      #|r0:imm8 := 1:8u
+      #|when flag:imm1 goto *target:imm32
+    ),
   )
   let sub = @types.Sub::create(name="main", args=[arg], blks=[blk])
   assert_true(sub.sub_to_string().contains("sub main(r0)"))

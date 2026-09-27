@@ -113,21 +113,78 @@ fn[D] fixpoint_get_approx(approx : Map[Int, D], node : Int, default : D) -> D {
 }
 
 ///|
-fn fixpoint_pop_min(worklist : Set[Int]) -> Int? {
-  let mut minimum : Int? = None
-  for index in worklist {
-    minimum = match minimum {
-      Some(old) if old <= index => Some(old)
-      _ => Some(index)
-    }
+/// The set of nodes (reverse postorder ranks) left to visit, visited in the
+/// increasing order of their ranks: a binary min-heap with a membership
+/// table, so that adding a node twice keeps it once.
+priv struct FixpointWorklist {
+  heap : Array[Int]
+  queued : FixedArray[Bool]
+}
+
+///|
+fn FixpointWorklist::new(size : Int) -> FixpointWorklist {
+  { heap: [], queued: FixedArray::make(size, false), }
+}
+
+///|
+fn FixpointWorklist::is_empty(self : FixpointWorklist) -> Bool {
+  self.heap.is_empty()
+}
+
+///|
+fn FixpointWorklist::add(self : FixpointWorklist, index : Int) -> Unit {
+  if self.queued[index] {
+    return
   }
-  match minimum {
-    Some(index) => {
-      worklist.remove(index)
-      Some(index)
+  self.queued[index] = true
+  let heap = self.heap
+  heap.push(index)
+  let mut i = heap.length() - 1
+  while i > 0 {
+    let parent = (i - 1) / 2
+    if heap[parent] <= heap[i] {
+      break
     }
-    None => None
+    let tmp = heap[parent]
+    heap[parent] = heap[i]
+    heap[i] = tmp
+    i = parent
   }
+}
+
+///|
+fn FixpointWorklist::pop_min(self : FixpointWorklist) -> Int? {
+  let heap = self.heap
+  guard heap.pop() is Some(last) else { return None }
+  let result = if heap.is_empty() {
+    last
+  } else {
+    let top = heap[0]
+    heap[0] = last
+    let n = heap.length()
+    let mut i = 0
+    while true {
+      let l = 2 * i + 1
+      let r = l + 1
+      let mut smallest = i
+      if l < n && heap[l] < heap[smallest] {
+        smallest = l
+      }
+      if r < n && heap[r] < heap[smallest] {
+        smallest = r
+      }
+      if smallest == i {
+        break
+      }
+      let tmp = heap[i]
+      heap[i] = heap[smallest]
+      heap[smallest] = tmp
+      i = smallest
+    }
+    top
+  }
+  self.queued[result] = false
+  Some(result)
 }
 
 ///|
@@ -176,12 +233,9 @@ pub fn[N : Hash + Eq, E, D] Graph::fixpoint(
     rnodes[nodes[i]] = i
   }
   let successors : Array[Set[Int]] = []
+  let adj = self.adjacency(rev)
   for node in nodes {
-    let adjacent = if rev {
-      self.predecessors(node)
-    } else {
-      self.successors(node)
-    }
+    let adjacent = adjacent_nodes(adj, node, rev)
     let ranked : Set[Int] = Set([])
     for next in adjacent {
       match rnodes.get(next) {
@@ -199,13 +253,13 @@ pub fn[N : Hash + Eq, E, D] Graph::fixpoint(
     }
   }
   let visits : Map[Int, Int] = Map([])
-  let worklist : Set[Int] = Set([])
+  let worklist = FixpointWorklist::new(nodes.length())
   for i in 0..<nodes.length() {
     worklist.add(i)
   }
   let mut iterations = init.iterations_value
   while fixpoint_can_iter(steps, iterations) && !worklist.is_empty() {
-    match fixpoint_pop_min(worklist) {
+    match worklist.pop_min() {
       Some(index) => {
         let out = f(
           nodes[index],

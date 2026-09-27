@@ -1,0 +1,15 @@
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/beagle" @beagle_prey,
+  "bobzhang/bap/main_event",
+  "bobzhang/bap/primus",
+  "bobzhang/bap/project",
+  "bobzhang/bap/strings",
+  "bobzhang/bap/types",
+  "moonbitlang/core/immut/sorted_map",
+  "moonbitlang/core/immut/sorted_set",
+}
+
+import {
+  "bobzhang/bap/core_theory",
+} for "test"

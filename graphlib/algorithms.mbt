@@ -1,6 +1,6 @@
 ///|
 fn[N : Hash + Eq, E] dfs_visit(
-  graph : Graph[N, E],
+  adj : Map[N, Array[Edge[N, E]]],
   node : N,
   colors : Map[N, Int],
   entered : Map[N, Int],
@@ -10,11 +10,11 @@ fn[N : Hash + Eq, E] dfs_visit(
   colors[node] = 1
   entered[node] = time.val
   time.val = time.val + 1
-  for edge in graph.out_edges(node) {
+  for edge in adjacent_edges(adj, node) {
     match colors.get(edge.dst) {
       None => {
         events.push((Tree, edge))
-        dfs_visit(graph, edge.dst, colors, entered, time, events)
+        dfs_visit(adj, edge.dst, colors, entered, time, events)
       }
       Some(1) => events.push((Back, edge))
       Some(_) => {
@@ -86,7 +86,7 @@ pub fn[N, E, A] DfsVisitor::identity() -> DfsVisitor[N, E, A] {
 
 ///|
 fn[N : Hash + Eq, E, A] depth_first_search_visit(
-  graph : Graph[N, E],
+  adj : Map[N, Array[Edge[N, E]]],
   node : N,
   state : A,
   rev : Bool,
@@ -104,8 +104,7 @@ fn[N : Hash + Eq, E, A] depth_first_search_visit(
   next_pre.val += 1
   entered[node] = pre
   let mut state = enter_node(pre, node, state)
-  let edges = if rev { graph.in_edges(node) } else { graph.out_edges(node) }
-  for edge in edges {
+  for edge in adjacent_edges(adj, node) {
     let adjacent = if rev { edge.src } else { edge.dst }
     let kind = match colors.get(adjacent) {
       None => Tree
@@ -120,7 +119,7 @@ fn[N : Hash + Eq, E, A] depth_first_search_visit(
     state = enter_edge(kind, edge, state)
     if kind is Tree {
       state = depth_first_search_visit(
-        graph, adjacent, state, rev, colors, entered, nodes_left, next_pre, enter_node,
+        adj, adjacent, state, rev, colors, entered, nodes_left, next_pre, enter_node,
         leave_node, enter_edge, leave_edge,
       )
     }
@@ -147,12 +146,13 @@ pub fn[N : Hash + Eq, E, A] Graph::depth_first_search(
   let entered : Map[N, Int] = Map([])
   let nodes_left = Ref::Ref(self.node_count())
   let next_pre = Ref::Ref(0)
+  let adj = self.adjacency(rev)
   let mut state = init
   match start {
     Some(node) if self.has_node(node) => {
       state = start_tree(node, state)
       state = depth_first_search_visit(
-        self, node, state, rev, colors, entered, nodes_left, next_pre, enter_node,
+        adj, node, state, rev, colors, entered, nodes_left, next_pre, enter_node,
         leave_node, enter_edge, leave_edge,
       )
     }
@@ -162,7 +162,7 @@ pub fn[N : Hash + Eq, E, A] Graph::depth_first_search(
     if !colors.contains(node) {
       state = start_tree(node, state)
       state = depth_first_search_visit(
-        self, node, state, rev, colors, entered, nodes_left, next_pre, enter_node,
+        adj, node, state, rev, colors, entered, nodes_left, next_pre, enter_node,
         leave_node, enter_edge, leave_edge,
       )
     }
@@ -192,7 +192,7 @@ pub fn[N : Hash + Eq, E, A] Graph::depth_first_visit(
 
 ///|
 fn[N : Hash + Eq, E] postorder_visit(
-  graph : Graph[N, E],
+  adj : Map[N, Array[Edge[N, E]]],
   node : N,
   seen : Set[N],
   order : Array[N],
@@ -200,10 +200,9 @@ fn[N : Hash + Eq, E] postorder_visit(
 ) -> Unit {
   if !seen.contains(node) {
     seen.add(node)
-    let edges = if rev { graph.in_edges(node) } else { graph.out_edges(node) }
-    for edge in edges {
+    for edge in adjacent_edges(adj, node) {
       let adjacent = if rev { edge.src } else { edge.dst }
-      postorder_visit(graph, adjacent, seen, order, rev)
+      postorder_visit(adj, adjacent, seen, order, rev)
     }
     order.push(node)
   }
@@ -219,14 +218,14 @@ pub fn[N : Hash + Eq, E] Graph::dfs_edges(
   let time = Ref::Ref(0)
   let events = []
   if self.has_node(start) {
-    dfs_visit(self, start, colors, entered, time, events)
+    dfs_visit(self.adjacency(false), start, colors, entered, time, events)
   }
   events
 }
 
 ///|
 fn[N : Hash + Eq, E] dfs_numbering_visit(
-  graph : Graph[N, E],
+  adj : Map[N, Array[Edge[N, E]]],
   node : N,
   colors : Map[N, Int],
   time : Ref[Int],
@@ -240,10 +239,10 @@ fn[N : Hash + Eq, E] dfs_numbering_visit(
   let pre = next_pre.val
   next_pre.val += 1
   numbering[node] = { enter, leave: -1, pre, rpost: -1, }
-  for edge in graph.out_edges(node) {
+  for edge in adjacent_edges(adj, node) {
     if !colors.contains(edge.dst) {
       dfs_numbering_visit(
-        graph,
+        adj,
         edge.dst,
         colors,
         time,
@@ -275,7 +274,13 @@ pub fn[N : Hash + Eq, E] Graph::dfs_numbering(
   let leave_order : Array[N] = []
   if self.has_node(start) {
     dfs_numbering_visit(
-      self, start, colors, time, next_pre, numbering, leave_order,
+      self.adjacency(false),
+      start,
+      colors,
+      time,
+      next_pre,
+      numbering,
+      leave_order,
     )
   }
   let rpo = leave_order.rev()
@@ -297,14 +302,14 @@ pub fn[N : Hash + Eq, E] Graph::reachable(
   let seen : Set[N] = Set([])
   let order = []
   if self.has_node(start) {
-    postorder_visit(self, start, seen, order, rev)
+    postorder_visit(self.adjacency(rev), start, seen, order, rev)
   }
   seen
 }
 
 ///|
 fn[N : Hash + Eq, E, A] fold_reachable_visit(
-  graph : Graph[N, E],
+  adj : Map[N, Array[Edge[N, E]]],
   node : N,
   seen : Set[N],
   acc : A,
@@ -316,10 +321,9 @@ fn[N : Hash + Eq, E, A] fold_reachable_visit(
   } else {
     seen.add(node)
     let mut next = f(acc, node)
-    let edges = if rev { graph.in_edges(node) } else { graph.out_edges(node) }
-    for edge in edges {
+    for edge in adjacent_edges(adj, node) {
       let adjacent = if rev { edge.src } else { edge.dst }
-      next = fold_reachable_visit(graph, adjacent, seen, next, rev, f)
+      next = fold_reachable_visit(adj, adjacent, seen, next, rev, f)
     }
     next
   }
@@ -334,7 +338,7 @@ pub fn[N : Hash + Eq, E, A] Graph::fold_reachable(
   rev? : Bool = false,
 ) -> A {
   if self.has_node(start) {
-    fold_reachable_visit(self, start, Set([]), init, rev, f)
+    fold_reachable_visit(self.adjacency(rev), start, Set([]), init, rev, f)
   } else {
     init
   }
@@ -373,7 +377,7 @@ pub fn[N : Hash + Eq, E] Graph::postorder(
   let seen : Set[N] = Set([])
   let order = []
   if self.has_node(start) {
-    postorder_visit(self, start, seen, order, rev)
+    postorder_visit(self.adjacency(rev), start, seen, order, rev)
   }
   order
 }
@@ -441,6 +445,7 @@ pub fn[N : Hash + Eq, E] Graph::shortest_path(
     { total: 0, node: start, path: [], },
   ]
   distances[start] = 0
+  let adj = self.adjacency(rev)
   let mut result : GraphPath[Edge[N, E]]? = None
   while result is None && !queue.is_empty() {
     match shortest_path_pop_min(queue) {
@@ -450,12 +455,7 @@ pub fn[N : Hash + Eq, E] Graph::shortest_path(
             result = Some(GraphPath::new(item.path, weight=item.total))
           } else {
             visited.add(item.node)
-            let edges = if rev {
-              self.in_edges(item.node)
-            } else {
-              self.out_edges(item.node)
-            }
-            for edge in edges {
+            for edge in adjacent_edges(adj, item.node) {
               let next = if rev { edge.src } else { edge.dst }
               if !visited.contains(next) {
                 let total = item.total + weight(edge)
@@ -481,7 +481,7 @@ pub fn[N : Hash + Eq, E] Graph::shortest_path(
 
 ///|
 fn[N : Hash + Eq, E] strong_connect(
-  graph : Graph[N, E],
+  adj : Map[N, Array[Edge[N, E]]],
   node : N,
   index : Ref[Int],
   indexes : Map[N, Int],
@@ -495,10 +495,11 @@ fn[N : Hash + Eq, E] strong_connect(
   index.val = index.val + 1
   stack.push(node)
   on_stack.add(node)
-  for succ in graph.successors(node) {
+  for edge in adjacent_edges(adj, node) {
+    let succ = edge.dst
     if !indexes.contains(succ) {
       strong_connect(
-        graph, succ, index, indexes, lowlinks, stack, on_stack, components,
+        adj, succ, index, indexes, lowlinks, stack, on_stack, components,
       )
       lowlinks[node] = Int::min(lowlinks[node], lowlinks[succ])
     } else if on_stack.contains(succ) {
@@ -534,10 +535,11 @@ pub fn[N : Hash + Eq, E] Graph::strong_components(
   let stack : Array[N] = []
   let on_stack : Set[N] = Set([])
   let components : Array[Set[N]] = []
+  let adj = self.adjacency(false)
   for node in self.nodes {
     if !indexes.contains(node) {
       strong_connect(
-        self, node, index, indexes, lowlinks, stack, on_stack, components,
+        adj, node, index, indexes, lowlinks, stack, on_stack, components,
       )
     }
   }
@@ -580,16 +582,14 @@ pub fn[N : Hash + Eq, E] Graph::dominators(
       doms[node] = Set::from_array([node])
     }
   }
+  // predecessors (successors with `rev`)
+  let adj = self.adjacency(!rev)
   let mut changed = true
   while changed {
     changed = false
     for node in self.nodes {
       if node != entry && reachable.contains(node) {
-        let adjacent = if rev {
-          self.successors(node)
-        } else {
-          self.predecessors(node)
-        }
+        let adjacent = adjacent_nodes(adj, node, !rev)
         let preds = adjacent.filter(pred => reachable.contains(pred))
         let mut next : Set[N]? = None
         for pred in preds {
@@ -682,12 +682,10 @@ pub fn[N : Hash + Eq, E] Graph::dominance_frontiers(
   for node in self.nodes {
     frontiers[node] = Set([])
   }
+  // predecessors (successors with `rev`)
+  let adj = self.adjacency(!rev)
   for node in self.nodes {
-    let adjacent = if rev {
-      self.successors(node)
-    } else {
-      self.predecessors(node)
-    }
+    let adjacent = adjacent_nodes(adj, node, !rev)
     let preds = adjacent.filter(pred => reachable.contains(pred))
     if reachable.contains(node) && preds.length() >= 2 {
       match idoms.get(node) {

@@ -1,0 +1,9 @@
+import {
+  "bobzhang/bap/c",
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/types",
+}
+
+import {
+  "bobzhang/bap/c_parser",
+} for "test"

@@ -1,0 +1,19 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/digest"
+
+// Values
+pub fn md5(BytesView) -> Bytes
+
+pub fn md5_hex(BytesView) -> String
+
+pub fn md5_string(StringView) -> String
+
+pub fn to_hex(BytesView) -> String
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

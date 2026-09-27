@@ -1,0 +1,96 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/microx"
+
+import {
+  "bobzhang/bap/types",
+  "moonbitlang/core/debug",
+  "moonbitlang/core/random",
+}
+
+// Values
+pub fn concretizer(memory? : (@types.Word) -> @types.Word?, lookup? : (@types.Var) -> @types.Word?, random_seed? : Int, reg_policy? : Policy, mem_policy? : Policy) -> Expi
+
+pub fn eval(@types.Exp) -> @types.BilResultValue
+
+pub fn generate(@random.Rand, Policy) -> Int64
+
+// Errors
+
+// Types and methods
+pub struct Conqueror {
+  // private fields
+}
+pub fn Conqueror::eval(Self, Context, @types.IrTerm) -> Context
+pub fn Conqueror::eval_sub(Self, Context, @types.Term[@types.Sub]) -> Context
+pub fn Conqueror::new(deterministic? : Bool, expi? : Expi) -> Self
+pub fn Conqueror::run(Self, Context) -> Context
+
+pub struct Context {
+  // private fields
+}
+pub fn Context::add_checkpoint(Self, @types.Tid) -> Self
+pub fn Context::backtrack(Self) -> Self?
+pub fn Context::blk(Self) -> @types.Term[@types.Blk]?
+pub fn Context::checkpoints(Self) -> Map[@types.Tid, Map[@types.Tid, Self]]
+pub fn Context::enter_blk(Self, @types.Term[@types.Blk]) -> Self
+pub fn Context::enter_sub(Self, @types.Term[@types.Sub]) -> Self
+pub fn Context::enter_term(Self, @types.Tid) -> Self
+pub fn Context::exp_context(Self) -> ExpContext
+pub fn Context::leave_sub(Self, @types.Term[@types.Sub]) -> Self
+pub fn Context::lookup(Self, @types.Var) -> @types.BilResult?
+pub fn Context::main(Self) -> @types.Term[@types.Sub]?
+pub fn Context::merge(Self, Self) -> Self
+pub fn Context::new(max_steps? : Int, max_loop? : Int, main? : @types.Term[@types.Sub], @types.Term[@types.Program]) -> Self
+pub fn Context::next(Self) -> @types.Tid?
+pub fn Context::program(Self) -> @types.Term[@types.Program]
+pub fn Context::return_(Self) -> Self
+pub fn Context::set_next(Self, @types.Tid?) -> Self
+pub fn Context::step(Self) -> Self?
+pub fn Context::store_return(Self, @types.Tid) -> Self
+pub fn Context::trace(Self) -> Array[@types.Tid]
+pub fn Context::visit_term(Self, @types.Tid) -> Self
+pub fn Context::visited(Self) -> Map[@types.Tid, Int]
+pub fn Context::visits(Self, @types.Tid) -> Int
+pub fn Context::will_loop(Self, @types.Tid) -> Bool
+pub fn Context::will_return(Self, @types.Tid) -> Bool
+pub fn Context::with_exp_context(Self, ExpContext) -> Self
+
+pub struct ExpContext {
+  // private fields
+} derive(Eq, @debug.Debug)
+pub fn ExpContext::bindings(Self) -> Array[(@types.Var, @types.BilResult)]
+pub fn ExpContext::create_storage(Self, @types.BilResultStorage) -> (Self, @types.BilResult)
+pub fn ExpContext::create_undefined(Self) -> (Self, @types.BilResult)
+pub fn ExpContext::create_value(Self, @types.BilResultValue) -> (Self, @types.BilResult)
+pub fn ExpContext::create_word(Self, @types.Word) -> (Self, @types.BilResult)
+pub fn ExpContext::equal(Self, Self) -> Bool
+pub fn ExpContext::lookup(Self, @types.Var) -> @types.BilResult?
+pub fn ExpContext::new() -> Self
+pub fn ExpContext::next_id(Self) -> @types.BilResultId
+pub fn ExpContext::not_equal(Self, Self) -> Bool
+pub fn ExpContext::to_repr(Self) -> @debug.Repr
+pub fn ExpContext::update(Self, @types.Var, @types.BilResult) -> Self
+
+pub struct Expi {
+  // private fields
+}
+pub fn Expi::empty(Self) -> @types.BilResultStorage
+pub fn Expi::eval_exp(Self, ExpContext, @types.Exp) -> (ExpContext, @types.BilResult)
+pub fn Expi::load(Self, ExpContext, @types.BilResultStorage, @types.Word) -> (ExpContext, @types.BilResult)
+pub fn Expi::lookup(Self, ExpContext, @types.Var) -> (ExpContext, @types.BilResult)
+pub fn Expi::new(lookup? : (@types.Var) -> @types.BilResultValue, load? : (@types.Word) -> @types.BilResultValue, unknown? : (String, @types.ValueType) -> @types.BilResultValue) -> Self
+pub fn Expi::store(Self, ExpContext, @types.BilResultStorage, @types.Word, @types.Word) -> (ExpContext, @types.BilResult)
+
+pub(all) enum Policy {
+  Random
+  Fixed(Int64)
+  Interval(Int64, Int64)
+} derive(Eq, @debug.Debug)
+pub fn Policy::equal(Self, Self) -> Bool
+pub fn Policy::not_equal(Self, Self) -> Bool
+pub fn Policy::to_repr(Self) -> @debug.Repr
+pub fn Policy::to_string(Self) -> String
+
+// Type aliases
+
+// Traits

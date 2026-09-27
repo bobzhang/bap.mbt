@@ -97,133 +97,177 @@ pub fn LabelFacts::new() -> LabelFacts {
   let unit = Label::unit_slot()
   let valid = Label::is_valid_slot()
   let subroutine = Label::is_subroutine_slot()
+  let state = @knowledge.State::new()
   {
-    state_value: @knowledge.State::new(),
+    state_value: state,
     class_value: cls,
-    addr_value: @knowledge.FactTable::new(addr),
-    name_value: @knowledge.FactTable::new(name),
-    possible_name_value: @knowledge.FactTable::new(possible_name),
-    ivec_value: @knowledge.FactTable::new(ivec),
-    encoding_value: @knowledge.FactTable::new(encoding),
-    semantics_value: @knowledge.FactTable::new(semantics),
-    target_value: @knowledge.FactTable::new(target),
-    aliases_value: @knowledge.FactTable::new(aliases),
-    unit_value: @knowledge.FactTable::new(unit),
-    valid_value: @knowledge.FactTable::new(valid),
-    subroutine_value: @knowledge.FactTable::new(subroutine),
+    addr_value: @knowledge.FactTable::new(addr, state~),
+    name_value: @knowledge.FactTable::new(name, state~),
+    possible_name_value: @knowledge.FactTable::new(possible_name, state~),
+    ivec_value: @knowledge.FactTable::new(ivec, state~),
+    encoding_value: @knowledge.FactTable::new(encoding, state~),
+    semantics_value: @knowledge.FactTable::new(semantics, state~),
+    target_value: @knowledge.FactTable::new(target, state~),
+    aliases_value: @knowledge.FactTable::new(aliases, state~),
+    unit_value: @knowledge.FactTable::new(unit, state~),
+    valid_value: @knowledge.FactTable::new(valid, state~),
+    subroutine_value: @knowledge.FactTable::new(subroutine, state~),
   }
 }
 
 ///|
+/// The `Label::addr_slot` property, declared once.
+let label_addr_slot : @knowledge.Slot[Unit, @types.Word?] = Label::cls().property(
+  name=core_name("label-addr"),
+  domain=optional_word_domain("label-addr"),
+  desc="the program virtual address",
+  persistent=optional_word_persistent(),
+  public=true,
+)
+
+///|
 pub fn Label::addr_slot() -> @knowledge.Slot[Unit, @types.Word?] {
-  Label::cls().property(
-    name=core_name("label-addr"),
-    domain=optional_word_domain("label-addr"),
-    desc="the program virtual address",
-    persistent=optional_word_persistent(),
-    public=true,
-  )
+  label_addr_slot
 }
 
 ///|
+/// The `Label::name_slot` property, declared once.
+let label_name_slot : @knowledge.Slot[Unit, String?] = Label::cls().property(
+  name=core_name("label-name"),
+  domain=optional_string_domain("label-name"),
+  desc="the program linkage name",
+  persistent=optional_string_persistent(),
+  public=true,
+)
+
+///|
 pub fn Label::name_slot() -> @knowledge.Slot[Unit, String?] {
-  Label::cls().property(
-    name=core_name("label-name"),
-    domain=optional_string_domain("label-name"),
-    desc="the program linkage name",
-    persistent=optional_string_persistent(),
-    public=true,
-  )
+  label_name_slot
 }
+
+///|
+/// The `Label::possible_name_slot` property, declared once.
+let label_possible_name_slot : @knowledge.Slot[
+  Unit,
+  @knowledge.Opinions[String?],
+] = Label::cls().property(
+  name=core_name("possible-name"),
+  domain=possible_name_domain(),
+  desc="a unique name associated with the program",
+  public=true,
+)
 
 ///|
 pub fn Label::possible_name_slot() -> @knowledge.Slot[
   Unit,
   @knowledge.Opinions[String?],
 ] {
-  Label::cls().property(
-    name=core_name("possible-name"),
-    domain=possible_name_domain(),
-    desc="a unique name associated with the program",
-    public=true,
-  )
+  label_possible_name_slot
 }
+
+///|
+/// The `Label::ivec_slot` property, declared once.
+let label_ivec_slot : @knowledge.Slot[Unit, Int?] = Label::cls().property(
+  name=core_name("label-ivec"),
+  domain=optional_int_domain("label-ivec"),
+  desc="the program interrupt vector",
+  persistent=optional_int_persistent(),
+  public=true,
+)
 
 ///|
 pub fn Label::ivec_slot() -> @knowledge.Slot[Unit, Int?] {
-  Label::cls().property(
-    name=core_name("label-ivec"),
-    domain=optional_int_domain("label-ivec"),
-    desc="the program interrupt vector",
-    persistent=optional_int_persistent(),
-    public=true,
-  )
+  label_ivec_slot
 }
+
+///|
+/// The `Label::encoding_slot` property, declared once.
+let label_encoding_slot : @knowledge.Slot[Unit, Language] = Label::cls().property(
+  name=core_name("encoding"),
+  domain=source_language_domain(),
+  desc="the language of the code",
+  persistent=Language::persistent(),
+  public=true,
+)
 
 ///|
 pub fn Label::encoding_slot() -> @knowledge.Slot[Unit, Language] {
-  Label::cls().property(
-    name=core_name("encoding"),
-    domain=source_language_domain(),
-    desc="the language of the code",
-    persistent=Language::persistent(),
-    public=true,
-  )
+  label_encoding_slot
 }
+
+///|
+/// The `Label::aliases_slot` property, declared once.
+let label_aliases_slot : @knowledge.Slot[Unit, Set[String]] = Label::cls().property(
+  name=core_name("label-aliases"),
+  domain=@knowledge.Domain::set(core_name("label-aliases"), item => item),
+  desc="the set of known program names",
+  persistent=@knowledge.Persistent::set(@knowledge.Persistent::string()),
+  public=true,
+)
 
 ///|
 pub fn Label::aliases_slot() -> @knowledge.Slot[Unit, Set[String]] {
-  Label::cls().property(
-    name=core_name("label-aliases"),
-    domain=@knowledge.Domain::set(core_name("label-aliases"), item => item),
-    desc="the set of known program names",
-    persistent=@knowledge.Persistent::set(@knowledge.Persistent::string()),
-    public=true,
-  )
+  label_aliases_slot
 }
+
+///|
+/// The `Label::target_slot` property, declared once.
+let label_target_slot : @knowledge.Slot[Unit, Target] = Label::cls().property(
+  name=core_name("label-target"),
+  domain=target_domain_named("label-target"),
+  desc="the explicit program label target",
+  persistent=Target::persistent(),
+  public=true,
+)
 
 ///|
 pub fn Label::target_slot() -> @knowledge.Slot[Unit, Target] {
-  Label::cls().property(
-    name=core_name("label-target"),
-    domain=target_domain_named("label-target"),
-    desc="the explicit program label target",
-    persistent=Target::persistent(),
-    public=true,
-  )
+  label_target_slot
 }
+
+///|
+/// The `Label::unit_slot` property, declared once.
+let label_unit_slot : @knowledge.Slot[Unit, ProgramUnit?] = Label::cls().property(
+  name=core_name("label-unit"),
+  domain=program_unit_domain(),
+  desc="the program unit",
+  persistent=optional_program_unit_persistent(),
+  public=true,
+)
 
 ///|
 pub fn Label::unit_slot() -> @knowledge.Slot[Unit, ProgramUnit?] {
-  Label::cls().property(
-    name=core_name("label-unit"),
-    domain=program_unit_domain(),
-    desc="the program unit",
-    persistent=optional_program_unit_persistent(),
-    public=true,
-  )
+  label_unit_slot
 }
+
+///|
+/// The `Label::is_valid_slot` property, declared once.
+let label_is_valid_slot : @knowledge.Slot[Unit, Bool?] = Label::cls().property(
+  name=core_name("is-valid"),
+  domain=label_bool_domain(),
+  desc="is the program valid or not",
+  persistent=optional_bool_persistent(),
+  public=true,
+)
 
 ///|
 pub fn Label::is_valid_slot() -> @knowledge.Slot[Unit, Bool?] {
-  Label::cls().property(
-    name=core_name("is-valid"),
-    domain=label_bool_domain(),
-    desc="is the program valid or not",
-    persistent=optional_bool_persistent(),
-    public=true,
-  )
+  label_is_valid_slot
 }
 
 ///|
+/// The `Label::is_subroutine_slot` property, declared once.
+let label_is_subroutine_slot : @knowledge.Slot[Unit, Bool?] = Label::cls().property(
+  name=core_name("is-subroutine"),
+  domain=label_bool_domain(),
+  desc="is the program a subroutine entry point",
+  persistent=optional_bool_persistent(),
+  public=true,
+)
+
+///|
 pub fn Label::is_subroutine_slot() -> @knowledge.Slot[Unit, Bool?] {
-  Label::cls().property(
-    name=core_name("is-subroutine"),
-    domain=label_bool_domain(),
-    desc="is the program a subroutine entry point",
-    persistent=optional_bool_persistent(),
-    public=true,
-  )
+  label_is_subroutine_slot
 }
 
 ///|

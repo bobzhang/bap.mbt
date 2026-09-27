@@ -1,0 +1,419 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/elf"
+
+import {
+  "bobzhang/bap/bitvec",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn find_section(Bytes, Elf, String, pos? : Int) -> Section?
+
+pub fn from_bigstring(Bytes, pos? : Int, len? : Int) -> Result[Elf, String]
+
+pub fn from_bytes(Bytes, pos? : Int, len? : Int) -> Result[Elf, String]
+
+pub fn relocations(Bytes, Elf, Section, pos? : Int) -> Result[Array[Relocation], String]
+
+pub fn section_name(Bytes, Elf, Section, pos? : Int) -> Result[String, String]
+
+pub fn section_names(Bytes, Elf, pos? : Int) -> Array[String?]
+
+pub fn string_at(BytesView, Int) -> Result[String, String]
+
+pub fn string_of_section(Bytes, Section, pos? : Int) -> Result[Bytes, String]
+
+pub fn string_of_segment(Bytes, Segment, pos? : Int) -> Result[Bytes, String]
+
+pub fn symbol_name(Bytes, Elf, Section, Symbol, pos? : Int) -> Result[String, String]
+
+pub fn symbols(Bytes, Elf, Section, pos? : Int) -> Result[Array[Symbol], String]
+
+// Errors
+
+// Types and methods
+pub(all) enum EClass {
+  ELFCLASS32
+  ELFCLASS64
+} derive(Compare, Eq, @debug.Debug)
+pub fn EClass::compare(Self, Self) -> Int
+pub fn EClass::equal(Self, Self) -> Bool
+pub fn EClass::header_size(Self) -> Int
+pub fn EClass::not_equal(Self, Self) -> Bool
+pub fn EClass::op_ge(Self, Self) -> Bool
+pub fn EClass::op_gt(Self, Self) -> Bool
+pub fn EClass::op_le(Self, Self) -> Bool
+pub fn EClass::op_lt(Self, Self) -> Bool
+pub fn EClass::program_header_size(Self) -> Int
+pub fn EClass::section_header_size(Self) -> Int
+pub fn EClass::symbol_size(Self) -> Int
+pub fn EClass::to_repr(Self) -> @debug.Repr
+
+pub(all) enum EData {
+  ELFDATA2LSB
+  ELFDATA2MSB
+} derive(Compare, Eq, @debug.Debug)
+pub fn EData::compare(Self, Self) -> Int
+pub fn EData::endian(Self) -> @bitvec.Endian
+pub fn EData::equal(Self, Self) -> Bool
+pub fn EData::not_equal(Self, Self) -> Bool
+pub fn EData::op_ge(Self, Self) -> Bool
+pub fn EData::op_gt(Self, Self) -> Bool
+pub fn EData::op_le(Self, Self) -> Bool
+pub fn EData::op_lt(Self, Self) -> Bool
+pub fn EData::to_repr(Self) -> @debug.Repr
+
+pub(all) enum EMachine {
+  EM_NONE
+  EM_M32
+  EM_SPARC
+  EM_386
+  EM_68K
+  EM_88K
+  EM_860
+  EM_MIPS
+  EM_S370
+  EM_MIPS_RS3_LE
+  EM_PARISC
+  EM_VPP500
+  EM_SPARC32PLUS
+  EM_960
+  EM_PPC
+  EM_PPC64
+  EM_S390
+  EM_V800
+  EM_FR20
+  EM_RH32
+  EM_RCE
+  EM_ARM
+  EM_ALPHA
+  EM_SH
+  EM_SPARCV9
+  EM_TRICORE
+  EM_ARC
+  EM_H8_300
+  EM_H8_300H
+  EM_H8S
+  EM_H8_500
+  EM_IA_64
+  EM_MIPS_X
+  EM_COLDFIRE
+  EM_68HC12
+  EM_MMA
+  EM_PCP
+  EM_NCPU
+  EM_NDR1
+  EM_STARCORE
+  EM_ME16
+  EM_ST100
+  EM_TINYJ
+  EM_X86_64
+  EM_PDSP
+  EM_FX66
+  EM_ST9PLUS
+  EM_ST7
+  EM_68HC16
+  EM_68HC11
+  EM_68HC08
+  EM_68HC05
+  EM_SVX
+  EM_ST19
+  EM_VAX
+  EM_CRIS
+  EM_JAVELIN
+  EM_FIREPATH
+  EM_ZSP
+  EM_MMIX
+  EM_HUANY
+  EM_PRISM
+  EM_AVR
+  EM_FR30
+  EM_D10V
+  EM_D30V
+  EM_V850
+  EM_M32R
+  EM_MN10300
+  EM_MN10200
+  EM_PJ
+  EM_OPENRISC
+  EM_ARC_A5
+  EM_XTENSA
+  EM_AARCH64
+  EM_TILEPRO
+  EM_MICROBLAZE
+  EM_TILEGX
+  EM_EXT(Int)
+} derive(Compare, Eq, @debug.Debug)
+pub fn EMachine::compare(Self, Self) -> Int
+pub fn EMachine::equal(Self, Self) -> Bool
+pub fn EMachine::not_equal(Self, Self) -> Bool
+pub fn EMachine::of_int(Int) -> Self
+pub fn EMachine::op_ge(Self, Self) -> Bool
+pub fn EMachine::op_gt(Self, Self) -> Bool
+pub fn EMachine::op_le(Self, Self) -> Bool
+pub fn EMachine::op_lt(Self, Self) -> Bool
+pub fn EMachine::to_int(Self) -> Int
+pub fn EMachine::to_repr(Self) -> @debug.Repr
+
+pub(all) enum EOsabi {
+  ELFOSABI_SYSV
+  ELFOSABI_HPUX
+  ELFOSABI_NETBSD
+  ELFOSABI_LINUX
+  ELFOSABI_SOLARIS
+  ELFOSABI_AIX
+  ELFOSABI_IRIX
+  ELFOSABI_FREEBSD
+  ELFOSABI_TRU64
+  ELFOSABI_MODESTO
+  ELFOSABI_OPENBSD
+  ELFOSABI_ARM_AEABI
+  ELFOSABI_ARM
+  ELFOSABI_STANDALONE
+  ELFOSABI_EXT(Int)
+} derive(Compare, Eq, @debug.Debug)
+pub fn EOsabi::compare(Self, Self) -> Int
+pub fn EOsabi::equal(Self, Self) -> Bool
+pub fn EOsabi::not_equal(Self, Self) -> Bool
+pub fn EOsabi::of_int(Int) -> Self
+pub fn EOsabi::op_ge(Self, Self) -> Bool
+pub fn EOsabi::op_gt(Self, Self) -> Bool
+pub fn EOsabi::op_le(Self, Self) -> Bool
+pub fn EOsabi::op_lt(Self, Self) -> Bool
+pub fn EOsabi::to_int(Self) -> Int
+pub fn EOsabi::to_repr(Self) -> @debug.Repr
+
+pub(all) enum EType {
+  ET_NONE
+  ET_REL
+  ET_EXEC
+  ET_DYN
+  ET_CORE
+  ET_EXT(Int)
+} derive(Compare, Eq, @debug.Debug)
+pub fn EType::compare(Self, Self) -> Int
+pub fn EType::equal(Self, Self) -> Bool
+pub fn EType::not_equal(Self, Self) -> Bool
+pub fn EType::of_int(Int) -> Self
+pub fn EType::op_ge(Self, Self) -> Bool
+pub fn EType::op_gt(Self, Self) -> Bool
+pub fn EType::op_le(Self, Self) -> Bool
+pub fn EType::op_lt(Self, Self) -> Bool
+pub fn EType::to_int(Self) -> Int
+pub fn EType::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Elf {
+  e_class : EClass
+  e_data : EData
+  e_version : Int
+  e_osabi : EOsabi
+  e_abiver : Int
+  e_type : EType
+  e_machine : EMachine
+  e_entry : UInt64
+  e_shstrndx : Int
+  e_sections : Array[Section]
+  e_segments : Array[Segment]
+  e_file_version : UInt
+  e_flags : UInt
+  e_ehsize : Int
+  e_phtab : TableInfo
+  e_shtab : TableInfo
+} derive(Compare, Eq, @debug.Debug)
+pub fn Elf::bits(Self) -> Int
+pub fn Elf::compare(Self, Self) -> Int
+pub fn Elf::endian(Self) -> @bitvec.Endian
+pub fn Elf::equal(Self, Self) -> Bool
+pub fn Elf::not_equal(Self, Self) -> Bool
+pub fn Elf::op_ge(Self, Self) -> Bool
+pub fn Elf::op_gt(Self, Self) -> Bool
+pub fn Elf::op_le(Self, Self) -> Bool
+pub fn Elf::op_lt(Self, Self) -> Bool
+pub fn Elf::to_repr(Self) -> @debug.Repr
+
+pub(all) enum PFlag {
+  PF_X
+  PF_W
+  PF_R
+  PF_EXT(Int)
+} derive(Compare, Eq, @debug.Debug)
+pub fn PFlag::compare(Self, Self) -> Int
+pub fn PFlag::equal(Self, Self) -> Bool
+pub fn PFlag::not_equal(Self, Self) -> Bool
+pub fn PFlag::of_bits(UInt) -> Array[Self]
+pub fn PFlag::of_int(Int) -> Self
+pub fn PFlag::op_ge(Self, Self) -> Bool
+pub fn PFlag::op_gt(Self, Self) -> Bool
+pub fn PFlag::op_le(Self, Self) -> Bool
+pub fn PFlag::op_lt(Self, Self) -> Bool
+pub fn PFlag::to_bits(Array[Self]) -> UInt
+pub fn PFlag::to_int(Self) -> Int
+pub fn PFlag::to_repr(Self) -> @debug.Repr
+
+pub(all) enum PType {
+  PT_NULL
+  PT_LOAD
+  PT_DYNAMIC
+  PT_INTERP
+  PT_NOTE
+  PT_SHLIB
+  PT_PHDR
+  PT_OTHER(UInt)
+} derive(Compare, Eq, @debug.Debug)
+pub fn PType::compare(Self, Self) -> Int
+pub fn PType::equal(Self, Self) -> Bool
+pub fn PType::not_equal(Self, Self) -> Bool
+pub fn PType::of_int(UInt) -> Self
+pub fn PType::op_ge(Self, Self) -> Bool
+pub fn PType::op_gt(Self, Self) -> Bool
+pub fn PType::op_le(Self, Self) -> Bool
+pub fn PType::op_lt(Self, Self) -> Bool
+pub fn PType::to_int(Self) -> UInt
+pub fn PType::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Relocation {
+  r_offset : UInt64
+  r_info : UInt64
+  r_addend : Int64?
+} derive(Compare, Eq, @debug.Debug)
+pub fn Relocation::compare(Self, Self) -> Int
+pub fn Relocation::equal(Self, Self) -> Bool
+pub fn Relocation::not_equal(Self, Self) -> Bool
+pub fn Relocation::op_ge(Self, Self) -> Bool
+pub fn Relocation::op_gt(Self, Self) -> Bool
+pub fn Relocation::op_le(Self, Self) -> Bool
+pub fn Relocation::op_lt(Self, Self) -> Bool
+pub fn Relocation::r_sym(Self, EClass) -> UInt
+pub fn Relocation::r_type(Self, EClass) -> UInt
+pub fn Relocation::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Section {
+  sh_name : UInt
+  sh_type : ShType
+  sh_flags : Array[ShFlag]
+  sh_addr : UInt64
+  sh_size : UInt64
+  sh_link : UInt
+  sh_info : UInt
+  sh_addralign : UInt64
+  sh_entsize : UInt64
+  sh_offset : UInt64
+} derive(Compare, Eq, @debug.Debug)
+pub fn Section::compare(Self, Self) -> Int
+pub fn Section::equal(Self, Self) -> Bool
+pub fn Section::flags_bits(Self) -> UInt64
+pub fn Section::is_alloc(Self) -> Bool
+pub fn Section::is_executable(Self) -> Bool
+pub fn Section::is_writable(Self) -> Bool
+pub fn Section::not_equal(Self, Self) -> Bool
+pub fn Section::op_ge(Self, Self) -> Bool
+pub fn Section::op_gt(Self, Self) -> Bool
+pub fn Section::op_le(Self, Self) -> Bool
+pub fn Section::op_lt(Self, Self) -> Bool
+pub fn Section::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Segment {
+  p_type : PType
+  p_flags : Array[PFlag]
+  p_vaddr : UInt64
+  p_paddr : UInt64
+  p_align : UInt64
+  p_memsz : UInt64
+  p_filesz : UInt64
+  p_offset : UInt64
+} derive(Compare, Eq, @debug.Debug)
+pub fn Segment::compare(Self, Self) -> Int
+pub fn Segment::equal(Self, Self) -> Bool
+pub fn Segment::flags_bits(Self) -> UInt
+pub fn Segment::is_executable(Self) -> Bool
+pub fn Segment::is_readable(Self) -> Bool
+pub fn Segment::is_writable(Self) -> Bool
+pub fn Segment::not_equal(Self, Self) -> Bool
+pub fn Segment::op_ge(Self, Self) -> Bool
+pub fn Segment::op_gt(Self, Self) -> Bool
+pub fn Segment::op_le(Self, Self) -> Bool
+pub fn Segment::op_lt(Self, Self) -> Bool
+pub fn Segment::to_repr(Self) -> @debug.Repr
+
+pub(all) enum ShFlag {
+  SHF_WRITE
+  SHF_ALLOC
+  SHF_EXECINSTR
+  SHF_EXT(Int)
+} derive(Compare, Eq, @debug.Debug)
+pub fn ShFlag::compare(Self, Self) -> Int
+pub fn ShFlag::equal(Self, Self) -> Bool
+pub fn ShFlag::not_equal(Self, Self) -> Bool
+pub fn ShFlag::of_bits(UInt64, width? : Int) -> Array[Self]
+pub fn ShFlag::of_int(Int) -> Self
+pub fn ShFlag::op_ge(Self, Self) -> Bool
+pub fn ShFlag::op_gt(Self, Self) -> Bool
+pub fn ShFlag::op_le(Self, Self) -> Bool
+pub fn ShFlag::op_lt(Self, Self) -> Bool
+pub fn ShFlag::to_bits(Array[Self]) -> UInt64
+pub fn ShFlag::to_int(Self) -> Int
+pub fn ShFlag::to_repr(Self) -> @debug.Repr
+
+pub(all) enum ShType {
+  SHT_NULL
+  SHT_PROGBITS
+  SHT_SYMTAB
+  SHT_STRTAB
+  SHT_RELA
+  SHT_HASH
+  SHT_DYNAMIC
+  SHT_NOTE
+  SHT_NOBITS
+  SHT_REL
+  SHT_SHLIB
+  SHT_DYNSYM
+  SHT_EXT(UInt)
+} derive(Compare, Eq, @debug.Debug)
+pub fn ShType::compare(Self, Self) -> Int
+pub fn ShType::equal(Self, Self) -> Bool
+pub fn ShType::not_equal(Self, Self) -> Bool
+pub fn ShType::of_int(UInt) -> Self
+pub fn ShType::op_ge(Self, Self) -> Bool
+pub fn ShType::op_gt(Self, Self) -> Bool
+pub fn ShType::op_le(Self, Self) -> Bool
+pub fn ShType::op_lt(Self, Self) -> Bool
+pub fn ShType::to_int(Self) -> UInt
+pub fn ShType::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Symbol {
+  st_name : UInt
+  st_value : UInt64
+  st_size : UInt64
+  st_info : Int
+  st_other : Int
+  st_shndx : Int
+} derive(Compare, Eq, @debug.Debug)
+pub fn Symbol::compare(Self, Self) -> Int
+pub fn Symbol::equal(Self, Self) -> Bool
+pub fn Symbol::not_equal(Self, Self) -> Bool
+pub fn Symbol::op_ge(Self, Self) -> Bool
+pub fn Symbol::op_gt(Self, Self) -> Bool
+pub fn Symbol::op_le(Self, Self) -> Bool
+pub fn Symbol::op_lt(Self, Self) -> Bool
+pub fn Symbol::st_bind(Self) -> Int
+pub fn Symbol::st_type(Self) -> Int
+pub fn Symbol::st_visibility(Self) -> Int
+pub fn Symbol::to_repr(Self) -> @debug.Repr
+
+pub(all) struct TableInfo {
+  table_offset : UInt64
+  entry_size : Int
+  entry_num : Int
+} derive(Compare, Eq, @debug.Debug)
+pub fn TableInfo::compare(Self, Self) -> Int
+pub fn TableInfo::equal(Self, Self) -> Bool
+pub fn TableInfo::not_equal(Self, Self) -> Bool
+pub fn TableInfo::op_ge(Self, Self) -> Bool
+pub fn TableInfo::op_gt(Self, Self) -> Bool
+pub fn TableInfo::op_le(Self, Self) -> Bool
+pub fn TableInfo::op_lt(Self, Self) -> Bool
+pub fn TableInfo::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

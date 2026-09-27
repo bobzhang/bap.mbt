@@ -845,6 +845,7 @@ pub fn ProjectDisassemblyInstruction::apply_x86_simd(
   self : ProjectDisassemblyInstruction,
   state : ProjectX86SimdState,
 ) -> Result[ProjectX86SimdState, String] {
+  let self = self.project_basic_x86_legacy()
   if self.name_value.to_upper() == "PMOVMSKB" {
     return self.project_x86_simd_apply_pmovmskb(state)
   } else if self.name_value.to_upper() == "PALIGNR" {
@@ -919,8 +920,8 @@ pub fn ProjectX86SimdState::apply_instructions(
 }
 
 ///|
-pub fn ProjectDisassemblyBasicState::apply_x86_simd(
-  self : ProjectDisassemblyBasicState,
+pub fn[S, R] ProjectDisassemblyBasicState::apply_x86_simd(
+  self : ProjectDisassemblyBasicState[S, R],
   state : ProjectX86SimdState,
 ) -> Result[ProjectX86SimdState, String] {
   let instructions : Array[ProjectDisassemblyInstruction] = []

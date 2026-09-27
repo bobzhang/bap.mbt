@@ -1,0 +1,84 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/bml"
+
+import {
+  "bobzhang/bap/sexp",
+  "bobzhang/bap/types",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub let grammar : String
+
+pub fn has(String) -> (@types.IrTerm) -> Bool
+
+pub fn map_children(@types.IrTerm, (@types.IrTerm) -> @types.IrTerm) -> @types.IrTerm
+
+pub fn map_deep(@types.IrTerm, (@types.IrTerm) -> @types.IrTerm) -> @types.IrTerm
+
+pub fn map_program(Array[Pattern], @types.Term[@types.Program]) -> @types.Term[@types.Program]
+
+pub fn map_terms(Array[String], file? : String, @types.Term[@types.Program]) -> Result[@types.Term[@types.Program], String]
+
+pub let mappers : Ops[(@types.IrTerm) -> @types.IrTerm]
+
+pub fn marker(@types.Attr) -> (@types.IrTerm) -> @types.IrTerm
+
+pub fn marker_of_patterns(Array[Pattern]) -> (@types.IrTerm) -> @types.IrTerm
+
+pub fn parse(@sexp.Sexp) -> Result[Pattern, String]
+
+pub fn parse_color(String) -> @types.IrColor raise ParseError
+
+pub fn parse_file(String) -> Result[Array[Pattern], String]
+
+pub fn parse_mappers(@sexp.Sexp) -> Result[Array[(@types.IrTerm) -> @types.IrTerm], String]
+
+pub fn parse_patterns(String) -> Result[Array[Pattern], String]
+
+pub fn parse_preds(@sexp.Sexp) -> Result[Array[(@types.IrTerm) -> Bool], String]
+
+pub fn parse_string(String) -> Result[Pattern, String]
+
+pub let predicates : Ops[(@types.IrTerm) -> Bool]
+
+pub let tainted_ptrs_attr : String
+
+pub let tainted_regs_attr : String
+
+// Errors
+pub(all) suberror ParseError {
+  ParseError(String)
+} derive(Eq, @debug.Debug)
+pub fn ParseError::equal(Self, Self) -> Bool
+pub fn ParseError::not_equal(Self, Self) -> Bool
+pub fn ParseError::to_repr(Self) -> @debug.Repr
+
+// Types and methods
+pub struct Ops[T] {
+  nullary : Registry[T]
+  unary : Registry[(String) -> T raise ParseError]
+}
+
+pub struct Pattern {
+  preds : Array[(@types.IrTerm) -> Bool]
+  mappers : Array[(@types.IrTerm) -> @types.IrTerm]
+}
+pub fn Pattern::new(Array[(@types.IrTerm) -> Bool], Array[(@types.IrTerm) -> @types.IrTerm]) -> Self
+
+pub struct Registry[T] {
+  // private fields
+}
+pub fn[T] Registry::find(Self[T], String) -> T?
+pub fn[T] Registry::list(Self[T]) -> Array[(String, T)]
+pub fn[T] Registry::new() -> Self[T]
+pub fn[T] Registry::register(Self[T], String, T) -> Unit
+
+// Type aliases
+pub type Mapper = (@types.IrTerm) -> @types.IrTerm
+
+pub type Predicate = (@types.IrTerm) -> Bool
+
+pub using @sexp {type Sexp}
+
+// Traits

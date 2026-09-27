@@ -1,4 +1,14 @@
 ///|
+/// Parses an Ogre document, reporting errors as a message.
+fn parse_spec(text : String) -> Result[@image.OgreDoc, String] {
+  try @ogre.Doc::from_string(text) catch {
+    error => Err(error.message())
+  } noraise {
+    doc => Ok(doc)
+  }
+}
+
+///|
 let raw_ogre_spec : String = "(declare arch (name str))" +
   " (declare bits (size int))" +
   " (declare format (name str))" +
@@ -42,9 +52,9 @@ test "ogre image specs build image metadata" {
       assert_true(image.entry_point() == 4098UL)
       assert_true(image.endian() == LittleEndian)
       let spec = image.spec()
-      assert_true(spec.fact_count("entry-point") == 1)
-      assert_true(spec.fact_count("arch") == 1)
-      assert_true(spec.facts("entry-point")[0].value("addr") == Some("4098"))
+      assert_true(spec.facts("entry-point").length() == 1)
+      assert_true(spec.facts("arch").length() == 1)
+      assert_true(spec.facts("entry-point")[0].get("addr") == Some("4098"))
       match image.target() {
         Some(target) => {
           assert_true(target.matches("x86_64"))
@@ -105,7 +115,7 @@ test "ogre image specs preserve non-contiguous symbol chunks" {
 
 ///|
 test "ogre image from_spec builds image metadata" {
-  match @image.OgreDoc::from_string(raw_ogre_spec) {
+  match parse_spec(raw_ogre_spec) {
     Ok(doc) =>
       match @image.Image::from_spec(b"\x00\xaa\xbb\xcc\xdd", doc) {
         Ok((image, warnings)) => {
@@ -190,7 +200,7 @@ test "ogre image specs refine unknown targets from metadata facts" {
       assert_true(image.endian() == BigEndian)
       match image.target() {
         Some(target) => {
-          assert_true(target.matches("unknown"))
+          assert_true(target.name().show() == ":unknown")
           assert_true(target.bits() == 32)
           assert_true(target.endianness().to_string() == "big")
           assert_true(target.system().to_string() == "darwin")

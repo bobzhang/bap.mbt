@@ -1,4 +1,17 @@
 ///|
+/// The annotations of the image memory covering `addr`, as
+/// `tag@min_addr+length=value` strings.
+fn memory_annotations(image : @image.Image, addr : UInt64) -> Array[String] {
+  image
+  .memory()
+  .lookup(addr)
+  .map(entry => {
+    let (mem, value) = entry
+    "\{value.tagname()}@\{mem.min_addr()}+\{mem.length()}=\{value}"
+  })
+}
+
+///|
 fn bytes_0_to_15() -> Bytes {
   bytes_from_range(0, 16)
 }
@@ -54,7 +67,33 @@ test "image exposes segment memory and symbol membership" {
   assert_true(image.addr_size() == 32)
   assert_true(image.arch().is_unknown())
   assert_true(text.is_executable())
-  assert_true(image.memory().lookup(0x4004UL).length() == 1)
+  debug_inspect(
+    memory_annotations(image, 0x4004UL),
+    content=(
+      #|[
+      #|  "segment@16384+16=.text 16384 16",
+      #|  "symbol@16388+4=main",
+      #|  "symbol-info@16388+4=main 16388 4",
+      #|  "section@16388+4=.text.hot",
+      #|]
+    ),
+  )
+  let tagged = image.memory().lookup(0x4004UL)
+  assert_true(
+    tagged
+    .iter()
+    .any(e => e.1.get(@image.segment()) is Some(seg) && seg.equal(text)),
+  )
+  assert_true(
+    tagged
+    .iter()
+    .any(e => e.1.get(@image.symbol_info()) is Some(sym) && sym.equal(symbol)),
+  )
+  assert_true(
+    tagged.iter().any(e => e.1.get(@image.section()) is Some(".text.hot")),
+  )
+  assert_true(!tagged.iter().any(e => e.1.has_tag(@image.code_region())))
+  assert_true(image.segment_names().lookup(0x4004UL) is [(_, ".text")])
   assert_true(image.sections_of_segment(text).length() == 1)
   assert_true(image.segment_of_symbol(symbol) is Some(_))
   assert_true(image.segment_of_symbol_exn(symbol).name() == ".text")
@@ -105,7 +144,12 @@ test "image exposes BAP top-level loading and accessors" {
   assert_true(@image.endian(image) == LittleEndian)
   assert_true(@image.segments(image).length() == 1)
   assert_true(@image.symbols(image).length() == 1)
-  assert_true(@image.memory(image).lookup(0x5002UL).length() == 1)
+  debug_inspect(
+    @image.memory(image).lookup(0x5002UL).map(e => e.1.tagname()),
+    content=(
+      #|["segment", "symbol", "symbol-info"]
+    ),
+  )
   inspect(
     @image.memory_of_segment(image, text).hexdump(),
     content="00 01 02 03 04 05 06 07 08 09 0a 0b 0c 0d 0e 0f",
@@ -116,7 +160,7 @@ test "image exposes BAP top-level loading and accessors" {
   assert_true(@image.symbols_of_segment(image, text).length() == 1)
   assert_true(@image.segment_of_symbol(image, symbol).name() == ".text")
   assert_true(@image.words(image, 16).lookup(0x5002UL).length() == 1)
-  assert_true(@image.spec(image).fact_count("arch") == 1)
+  assert_true(@image.spec(image).facts("arch").length() == 1)
   assert_true(@image.data(image).is_empty())
 
   match @image.of_bigstring(b"\xaa\xbb") {
@@ -134,9 +178,7 @@ test "image exposes BAP top-level loading and accessors" {
     Err(reason) => fail(reason)
   }
   let doc = match
-    @image.OgreDoc::from_string(
-      "(declare entry-point (addr int)) (entry-point 80)",
-    ) {
+    parse_spec("(declare entry-point (addr int)) (entry-point 80)") {
     Ok(doc) => doc
     Err(reason) => fail(reason)
   }
@@ -170,11 +212,11 @@ test "image address size follows target metadata" {
   assert_true(amd64.addr_size() == 64)
   assert_true(amd64.arch().matches("x86_64"))
   let spec = amd64.spec()
-  assert_true(spec.fact_count("arch") == 1)
-  assert_true(spec.fact_count("bits") == 1)
-  assert_true(spec.fact_count("is-little-endian") == 1)
-  assert_true(spec.facts("arch")[0].value("name") == Some("x86_64"))
-  assert_true(spec.facts("bits")[0].value("size") == Some("64"))
+  assert_true(spec.facts("arch").length() == 1)
+  assert_true(spec.facts("bits").length() == 1)
+  assert_true(spec.facts("is-little-endian").length() == 1)
+  assert_true(spec.facts("arch")[0].get("name") == Some("x86_64"))
+  assert_true(spec.facts("bits")[0].get("size") == Some("64"))
 }
 
 ///|
@@ -272,10 +314,10 @@ test "image exposes BAP tag and specification facades" {
     specification_tag.uuid() == "a0c98f1f-3693-412a-a11a-2b6c3f6935a7",
   )
   let spec = @image.Spec::from_arch(@core_theory.Target::x86_64())
-  assert_true(spec.fact_count("arch") == 1)
-  assert_true(spec.fact_count("bits") == 1)
-  assert_true(spec.fact_count("is-little-endian") == 1)
-  assert_true(spec.facts("arch")[0].value("name") == Some("x86_64"))
+  assert_true(spec.facts("arch").length() == 1)
+  assert_true(spec.facts("bits").length() == 1)
+  assert_true(spec.facts("is-little-endian").length() == 1)
+  assert_true(spec.facts("arch")[0].get("name") == Some("x86_64"))
   let slot = @image.Spec::slot()
   assert_true(
     slot.owner().show() == @core_theory.ProgramUnit::cls().name().show(),
@@ -288,8 +330,8 @@ test "image exposes BAP tag and specification facades" {
     Some(codec) =>
       match codec.decode(codec.encode(spec)) {
         Ok(decoded) => {
-          assert_true(decoded.fact_count("arch") == 1)
-          assert_true(decoded.facts("arch")[0].value("name") == Some("x86_64"))
+          assert_true(decoded.facts("arch").length() == 1)
+          assert_true(decoded.facts("arch")[0].get("name") == Some("x86_64"))
         }
         Err(reason) => fail(reason)
       }
@@ -300,28 +342,26 @@ test "image exposes BAP tag and specification facades" {
   match slot.domain().join(@image.OgreDoc::empty(), arm) {
     Ok(joined) =>
       assert_true(
-        joined.facts("arch")[0].value("name") ==
+        joined.facts("arch")[0].get("name") ==
         Some(arm_target.name().unqualified()),
       )
     Err(reason) => fail(reason)
   }
   match slot.domain().join(spec, arm) {
-    Ok(joined) => assert_true(joined.fact_count("arch") == 2)
+    Ok(joined) => assert_true(joined.facts("arch").length() == 2)
     Err(reason) => fail(reason)
   }
-  let lhs = match
-    @image.OgreDoc::from_string("(declare conflict (value str))") {
+  let lhs = match parse_spec("(declare conflict (value str))") {
     Ok(doc) => doc
     Err(reason) => fail(reason)
   }
-  let rhs = match
-    @image.OgreDoc::from_string("(declare conflict (value int))") {
+  let rhs = match parse_spec("(declare conflict (value int))") {
     Ok(doc) => doc
     Err(reason) => fail(reason)
   }
   match slot.domain().join(lhs, rhs) {
     Ok(_) => fail("expected conflicting Ogre declarations")
-    Err(reason) => assert_true(reason.contains("conflicting Ogre declaration"))
+    Err(reason) => assert_true(reason.contains("signature mismatch"))
   }
 }
 
@@ -1034,11 +1074,11 @@ test "image legacy backend facade materializes backend images" {
         None => fail("expected legacy symbol memory")
       }
       let spec = image.spec()
-      assert_true(spec.fact_count("mapped") == 1)
-      assert_true(spec.fact_count("segment") == 1)
-      assert_true(spec.fact_count("section") == 1)
-      assert_true(spec.fact_count("named-symbol") == 1)
-      assert_true(spec.fact_count("symbol-chunk") == 2)
+      assert_true(spec.facts("mapped").length() == 1)
+      assert_true(spec.facts("segment").length() == 1)
+      assert_true(spec.facts("section").length() == 1)
+      assert_true(spec.facts("named-symbol").length() == 1)
+      assert_true(spec.facts("symbol-chunk").length() == 2)
     }
     Err(reason) => fail(reason)
   }
@@ -1069,7 +1109,7 @@ test "image loader registry builds images from Ogre documents" {
     " (named-region 16 2 loaded)" +
     " (segment 16 2 true false true)"
   let loader = @image.ImageLoader::create(from_data=_ => {
-    match @image.OgreDoc::from_string(spec) {
+    match parse_spec(spec) {
       Ok(doc) => Ok(Some(doc))
       Err(reason) => Err(reason)
     }
@@ -1160,11 +1200,11 @@ test "image exposes BAP KB loader registration facade" {
   match
     @image.KB::register_loader(
       name="unit-kb-ogre-doc-loader",
-      from_file=_ => Ok(None),
-      from_data=_ => {
-        match @image.OgreDoc::from_string(spec) {
-          Ok(doc) => Ok(Some(doc))
-          Err(reason) => Err(reason)
+      from_file=(_, _) => None,
+      from_data=(_, _) => {
+        match parse_spec(spec) {
+          Ok(doc) => Some(doc)
+          Err(reason) => fail(reason)
         }
       },
     ) {
@@ -1186,8 +1226,8 @@ test "image exposes BAP KB loader registration facade" {
   assert_true(
     @image.KB::register_loader(
       name="unit-kb-ogre-doc-loader",
-      from_file=_ => Ok(None),
-      from_data=_ => Ok(None),
+      from_file=(_, _) => None,
+      from_data=(_, _) => None,
     )
     is Err(_),
   )

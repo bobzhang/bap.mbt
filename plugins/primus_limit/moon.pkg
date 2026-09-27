@@ -1,0 +1,13 @@
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/main_event",
+  "bobzhang/bap/primus",
+  "bobzhang/bap/types",
+  "moonbitlang/core/immut/hashmap" @immut_hashmap,
+  "moonbitlang/core/string",
+}
+
+import {
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/project",
+} for "test"

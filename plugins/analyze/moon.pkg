@@ -1,0 +1,12 @@
+import {
+  "bobzhang/bap/bap_main",
+  "bobzhang/bap/knowledge",
+  "bobzhang/bap/plugins/disassemble",
+  "bobzhang/bap/plugins/print",
+  "bobzhang/bap/project",
+  "moonbitlang/core/encoding/utf8",
+}
+
+import {
+  "bobzhang/bap/fixtures",
+} for "test"

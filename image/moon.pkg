@@ -1,14 +1,24 @@
 import {
-  "moonbitlang/core/string",
   "moonbitlang/core/encoding/utf8",
   "bobzhang/bap/bitvec",
   "bobzhang/bap/core_theory",
+  "bobzhang/bap/coff",
+  "bobzhang/bap/elf",
+  "bobzhang/bap/macho",
   "bobzhang/bap/knowledge",
   "bobzhang/bap/memory",
   "bobzhang/bap/native_io",
+  "bobzhang/bap/ogre",
   "bobzhang/bap/types",
 }
 
+import {
+  "bobzhang/bap/fixtures/objects",
+} for "test"
+
 options(
-  targets: { "file_native_test.mbt": [ "native" ] },
+  targets: {
+    "file_native_test.mbt": [ "native" ],
+    "macho_native_test.mbt": [ "native" ],
+  },
 )

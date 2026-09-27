@@ -56,7 +56,8 @@ pub fn[N : Eq, E] Graph::add_node(self : Graph[N, E], node : N) -> Graph[N, E] {
   } else {
     let nodes = self.nodes.copy()
     nodes.push(node)
-    { nodes, edges: self.edges.copy(), }
+    // the arrays of a graph are never updated in place, they can be shared
+    { nodes, edges: self.edges, }
   }
 }
 
@@ -74,7 +75,7 @@ pub fn[N : Eq, E] Graph::add_edge(
     Some(i) => edges[i] = Edge::new(src~, dst~, label~)
     None => edges.push(Edge::new(src~, dst~, label~))
   }
-  { nodes: with_nodes.nodes.copy(), edges, }
+  { nodes: with_nodes.nodes, edges, }
 }
 
 ///|
@@ -403,4 +404,45 @@ pub fn[N : Eq, E] Graph::in_degree(self : Graph[N, E], node : N) -> Int {
 ///|
 pub fn[N : Eq, E] Graph::out_degree(self : Graph[N, E], node : N) -> Int {
   self.out_edges(node).length()
+}
+
+///|
+/// The edges leaving each node (entering it with `rev`), in the order of
+/// the edges of the graph, as `out_edges` (`in_edges`) would list them;
+/// built in one pass for the traversals.
+fn[N : Hash + Eq, E] Graph::adjacency(
+  self : Graph[N, E],
+  rev : Bool,
+) -> Map[N, Array[Edge[N, E]]] {
+  let adj : Map[N, Array[Edge[N, E]]] = Map([])
+  for edge in self.edges {
+    let key = if rev { edge.dst } else { edge.src }
+    match adj.get(key) {
+      Some(edges) => edges.push(edge)
+      None => adj[key] = [edge]
+    }
+  }
+  adj
+}
+
+///|
+fn[N : Hash + Eq, E] adjacent_edges(
+  adj : Map[N, Array[Edge[N, E]]],
+  node : N,
+) -> Array[Edge[N, E]] {
+  match adj.get(node) {
+    Some(edges) => edges
+    None => []
+  }
+}
+
+///|
+/// The successors (predecessors with `rev`) of `node` in the `adjacency`
+/// built with the same `rev`.
+fn[N : Hash + Eq, E] adjacent_nodes(
+  adj : Map[N, Array[Edge[N, E]]],
+  node : N,
+  rev : Bool,
+) -> Array[N] {
+  adjacent_edges(adj, node).map(edge => if rev { edge.src } else { edge.dst })
 }

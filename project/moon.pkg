@@ -1,4 +1,5 @@
 import {
+  "bobzhang/bap/arm",
   "bobzhang/bap/bitvec",
   "bobzhang/bap/core_theory",
   "bobzhang/bap/dwarf",
@@ -6,12 +7,24 @@ import {
   "bobzhang/bap/graphlib",
   "bobzhang/bap/image",
   "bobzhang/bap/knowledge",
+  "bobzhang/bap/mc",
   "bobzhang/bap/memory",
+  "bobzhang/bap/mips",
   "bobzhang/bap/native_io",
+  "bobzhang/bap/powerpc",
+  "bobzhang/bap/systemz",
+  "bobzhang/bap/thumb",
   "bobzhang/bap/types",
   "moonbitlang/core/encoding/utf8",
+  "moonbitlang/core/immut/sorted_map",
+  "moonbitlang/core/immut/sorted_set",
+  "moonbitlang/core/list",
   "moonbitlang/core/string",
 }
+
+import {
+  "bobzhang/bap/aarch64",
+} for "test"
 
 options(
   targets: { "file_native_test.mbt": [ "native" ] },

@@ -26,7 +26,9 @@ pub extend MemoryError with Debug::{to_repr}
 struct Memory {
   endian_value : @bitvec.Endian
   base_addr : UInt64
-  data_value : Bytes
+  /// the contents, a view of (possibly) larger immutable bytes, so that
+  /// views of a memory region share its bytes
+  data_value : BytesView
 }
 
 ///|
@@ -41,15 +43,15 @@ fn u64_from_int(value : Int) -> UInt64 {
 }
 
 ///|
-fn checked_len(data : Bytes, pos : Int, len : Int) -> Result[Int, String] {
-  if data.length() == 0 {
+fn checked_len(data_length : Int, pos : Int, len : Int) -> Result[Int, String] {
+  if data_length == 0 {
     Err("memory input is empty")
   } else if pos < 0 {
     Err("memory position is negative")
-  } else if pos >= data.length() {
+  } else if pos >= data_length {
     Err("memory position is past the input")
   } else {
-    let available = data.length() - pos
+    let available = data_length - pos
     let size = if len < 0 { available } else { len }
     if size <= 0 {
       Err("memory length must be positive")
@@ -78,12 +80,12 @@ pub fn Memory::create(
   pos? : Int = 0,
   len? : Int = -1,
 ) -> Result[Memory, String] {
-  match checked_len(data, pos, len) {
+  match checked_len(data.length(), pos, len) {
     Ok(size) =>
       Ok({
         endian_value: endian,
         base_addr: start,
-        data_value: data[pos:pos + size].to_owned(),
+        data_value: data[pos:pos + size],
       })
     Err(reason) => Err(reason)
   }
@@ -95,7 +97,7 @@ pub fn Memory::from_bytes(
   start~ : UInt64,
   data : Bytes,
 ) -> Memory {
-  { endian_value: endian, base_addr: start, data_value: data, }
+  { endian_value: endian, base_addr: start, data_value: data[:], }
 }
 
 ///|
@@ -129,12 +131,17 @@ pub fn Memory::length(self : Memory) -> Int {
 
 ///|
 pub fn Memory::to_bytes(self : Memory) -> Bytes {
-  self.data_value
+  let data = self.data_value
+  if data.start_offset() == 0 && data.length() == data.data().length() {
+    data.data()
+  } else {
+    data.to_owned()
+  }
 }
 
 ///|
 pub fn Memory::to_buffer(self : Memory) -> BytesView {
-  self.data_value[:]
+  self.data_value
 }
 
 ///|
@@ -183,13 +190,15 @@ pub fn Memory::view(
           if requested < 0 || requested > available {
             Err("memory view exceeds the source region")
           } else {
-            Memory::create(
-              endian=self.endian_value,
-              start~,
-              self.data_value,
-              pos~,
-              len=requested,
-            )
+            match checked_len(self.length(), pos, requested) {
+              Ok(size) =>
+                Ok({
+                  endian_value: self.endian_value,
+                  base_addr: start,
+                  data_value: self.data_value[pos:pos + size],
+                })
+              Err(reason) => Err(reason)
+            }
           }
         }
         None => Err("memory view starts outside the source region")
@@ -759,7 +768,7 @@ pub fn Memory::store(
       for i in 0..<bytes.length() {
         data[pos + i] = bytes[i]
       }
-      Ok({ ..self, data_value: Bytes::from_array(data), })
+      Ok({ ..self, data_value: Bytes::from_array(data)[:], })
     }
     _ => Err("memory store is out of bounds")
   }
@@ -827,14 +836,14 @@ pub fn Memory::merge(self : Memory, other : Memory) -> Result[Memory, String] {
 
 ///|
 pub fn Memory::hexdump(self : Memory) -> String {
-  let mut out = ""
+  let out = StringBuilder()
   for i in 0..<self.length() {
     if i > 0 {
-      out = out + " "
+      out.write_char(' ')
     }
-    out = out + byte_to_hex(self.data_value[i])
+    out.write_string(byte_to_hex(self.data_value[i]))
   }
-  out
+  out.to_string()
 }
 
 ///|

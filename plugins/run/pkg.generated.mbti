@@ -1,0 +1,51 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/run"
+
+import {
+  "bobzhang/bap/primus",
+  "bobzhang/bap/project",
+  "bobzhang/bap/types",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn all_subroutines(@types.Term[@types.Program], marked? : Bool) -> Array[@primus.Name]
+
+pub fn declare_plugin() -> Unit raise
+
+pub let deps : Array[String]
+
+pub fn entry_points(@types.Term[@types.Program]) -> Array[@types.Tid]
+
+pub let name : String
+
+pub fn name_of_entry(Int, String) -> @primus.Name raise
+
+pub fn parse_entry_points(@project.Project, Array[String]) -> Array[@primus.Name] raise
+
+pub fn register(Params) -> Result[Bool, String]
+
+pub fn run(Params, @project.Project) -> @project.Project raise
+
+// Errors
+pub(all) suberror RunError {
+  InvalidArgument(String)
+}
+pub fn RunError::to_string(Self) -> String
+
+// Types and methods
+pub(all) struct Params {
+  argv : Array[String]
+  envp : Array[String]
+  entry : Array[String]
+  in_isolation : Bool
+  with_repetitions : Bool
+  systems : Array[String]
+  until_visited : Bool
+} derive(@debug.Debug)
+pub fn Params::new(argv? : Array[String], envp? : Array[String], entry? : Array[String], in_isolation? : Bool, with_repetitions? : Bool, systems? : Array[String], until_visited? : Bool) -> Self
+pub fn Params::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

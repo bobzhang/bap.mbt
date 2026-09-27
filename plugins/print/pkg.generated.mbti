@@ -1,0 +1,163 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "bobzhang/bap/plugins/print"
+
+import {
+  "bobzhang/bap/core_theory",
+  "bobzhang/bap/memory",
+  "bobzhang/bap/project",
+  "bobzhang/bap/text_tags",
+  "bobzhang/bap/types",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn add_writer(String, desc~ : String, ver? : String, (@text_tags.Formatter, @project.Project) -> Unit) -> Unit
+
+pub fn adt_arg(@text_tags.Formatter, @types.Term[@types.Arg]) -> Unit
+
+pub fn adt_blk(@text_tags.Formatter, @types.Term[@types.Blk]) -> Unit
+
+pub fn adt_def(@text_tags.Formatter, @types.Term[@types.Def]) -> Unit
+
+pub fn adt_ir_term(@text_tags.Formatter, @types.IrTerm) -> Unit
+
+pub fn adt_jmp(@text_tags.Formatter, @types.Term[@types.Jmp]) -> Unit
+
+pub fn adt_phi(@text_tags.Formatter, @types.Term[@types.Phi]) -> Unit
+
+pub fn adt_program(@text_tags.Formatter, @types.Term[@types.Program]) -> Unit
+
+pub fn adt_project(@text_tags.Formatter, @project.Project) -> Unit
+
+pub fn adt_sub(@text_tags.Formatter, @types.Term[@types.Sub]) -> Unit
+
+pub fn bil_printer(String, target? : @core_theory.Target) -> (@text_tags.Formatter, @project.ProjectDisassemblySymtab, @project.ProjectDisassemblyBlock, @memory.Memory, @project.ProjectDisassemblyInstruction) -> Unit
+
+pub fn bil_to_adt(ArrayView[@types.Stmt]) -> String
+
+pub fn bil_to_sexp(ArrayView[@types.Stmt]) -> String
+
+pub fn bil_to_string(ArrayView[@types.Stmt]) -> String
+
+pub fn compile_patterns(symbols? : Array[String], sections? : Array[String], patterns? : Array[String]) -> Result[Array[Pattern], String]
+
+pub fn create_demangler(String?) -> Result[(String) -> String, String]
+
+pub fn declare_plugin() -> Unit raise
+
+pub fn exp_to_adt(@types.Exp) -> String
+
+pub fn exp_to_sexp(@types.Exp) -> String
+
+pub fn exp_to_string(@types.Exp) -> String
+
+pub fn extract_program(Array[Pattern], @project.Project) -> @types.Term[@types.Program]
+
+pub fn find_writer(String) -> Writer?
+
+pub fn insn_printer(String, target? : @core_theory.Target) -> (@text_tags.Formatter, @project.ProjectDisassemblySymtab, @project.ProjectDisassemblyBlock, @memory.Memory, @project.ProjectDisassemblyInstruction) -> Unit
+
+pub fn insn_to_string(@project.ProjectDisassemblyInstruction, String) -> String
+
+pub fn ir_term_to_adt(@types.IrTerm) -> String
+
+pub fn ir_term_to_string(@types.IrTerm) -> String
+
+pub fn matches(Array[Pattern], @project.Project, UInt64?) -> Bool
+
+pub fn memory_to_string(@memory.Memory) -> String
+
+pub fn pp_arg(@text_tags.Formatter, @types.Term[@types.Arg]) -> Unit
+
+pub fn pp_bil(@text_tags.Formatter, ArrayView[@types.Stmt]) -> Unit
+
+pub fn pp_bir_cfg(@text_tags.Formatter, @types.Term[@types.Sub], labeled? : Bool) -> Unit
+
+pub fn pp_bir_graph(@text_tags.Formatter, @types.Term[@types.Program], labeled? : Bool) -> Unit
+
+pub fn pp_blk(@text_tags.Formatter, @types.Term[@types.Blk]) -> Unit
+
+pub fn pp_callgraph(@text_tags.Formatter, @types.Term[@types.Program]) -> Unit
+
+pub fn pp_def(@text_tags.Formatter, @types.Term[@types.Def]) -> Unit
+
+pub fn pp_disasm(@text_tags.Formatter, @project.Project, (@text_tags.Formatter, @project.ProjectDisassemblySymtab, @project.ProjectDisassemblyBlock, @memory.Memory, @project.ProjectDisassemblyInstruction) -> Unit, patterns? : Array[Pattern], symtab? : @project.ProjectDisassemblySymtab) -> Unit
+
+pub fn pp_dot_graph(@text_tags.Formatter, name? : String, cluster? : Bool, subgraph? : Bool, attrs? : Array[String], nodes~ : ArrayView[(String, String)], edges~ : ArrayView[(String, String, String)]) -> Unit
+
+pub fn pp_exp(@text_tags.Formatter, @types.Exp) -> Unit
+
+pub fn pp_ir_term(@text_tags.Formatter, @types.IrTerm) -> Unit
+
+pub fn pp_jmp(@text_tags.Formatter, @types.Term[@types.Jmp]) -> Unit
+
+pub fn pp_phi(@text_tags.Formatter, @types.Term[@types.Phi]) -> Unit
+
+pub fn pp_program(@text_tags.Formatter, @types.Term[@types.Program]) -> Unit
+
+pub fn pp_stmt(@text_tags.Formatter, @types.Stmt) -> Unit
+
+pub fn pp_sub(@text_tags.Formatter, @types.Term[@types.Sub]) -> Unit
+
+pub fn pp_symbols(@text_tags.Formatter, @project.Project, patterns? : Array[Pattern], demangle? : (String) -> String, formats? : Array[SymbolFormat], symtab? : @project.ProjectDisassemblySymtab) -> Unit
+
+pub fn program_to_string(@types.Term[@types.Program]) -> String
+
+pub fn property_descriptions() -> Array[(String, String)]
+
+pub fn register(bir_attrs? : Array[String], ansi_colors? : Bool, demangler? : String, symbol_formats? : Array[SymbolFormat], symbols? : Array[String], sections? : Array[String], patterns? : Array[String], semantics? : Array[String]) -> Result[Unit, String]
+
+pub fn register_term_writers() -> Unit
+
+pub fn stmt_to_adt(@types.Stmt) -> String
+
+pub fn stmt_to_sexp(@types.Stmt) -> String
+
+pub fn term_writers() -> Array[(@types.IrTermClass, String, String)]
+
+pub fn tid_name(@types.Tid) -> String
+
+pub fn tid_to_string(@types.Tid) -> String
+
+pub fn type_to_string(@types.ValueType) -> String
+
+pub fn var_ident(@types.Var) -> String
+
+pub fn var_to_adt(@types.Var) -> String
+
+pub fn word_to_hex(@types.Word) -> String
+
+pub fn write(String, @project.Project) -> Result[String, String]
+
+pub fn write_term(@types.IrTerm, String) -> Result[String, String]
+
+pub fn writers() -> Array[Writer]
+
+// Errors
+
+// Types and methods
+type Pattern
+pub fn Pattern::property(Self) -> String
+pub fn Pattern::regexp(Self) -> String
+
+pub(all) enum SymbolFormat {
+  WithName
+  WithAddr
+  WithSize
+} derive(Eq, @debug.Debug)
+pub fn SymbolFormat::equal(Self, Self) -> Bool
+pub fn SymbolFormat::not_equal(Self, Self) -> Bool
+pub fn SymbolFormat::parse(String) -> Self?
+pub fn SymbolFormat::to_repr(Self) -> @debug.Repr
+
+type Writer
+pub fn Writer::desc(Self) -> String
+pub fn Writer::name(Self) -> String
+pub fn Writer::pp(Self, @text_tags.Formatter, @project.Project) -> Unit
+pub fn Writer::to_string(Self, @project.Project) -> String
+pub fn Writer::version(Self) -> String
+
+// Type aliases
+pub type InsnPrinter = (@text_tags.Formatter, @project.ProjectDisassemblySymtab, @project.ProjectDisassemblyBlock, @memory.Memory, @project.ProjectDisassemblyInstruction) -> Unit
+
+// Traits

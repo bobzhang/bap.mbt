@@ -1,3 +1,9 @@
 import {
   "moonbitlang/core/string",
 }
+
+import {
+  "moonbitlang/core/bigint",
+  "moonbitlang/core/quickcheck",
+  "moonbitlang/core/quickcheck/splitmix",
+} for "test"

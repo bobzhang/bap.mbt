@@ -2,3 +2,9 @@ import {
   "bobzhang/bap/bitvec",
   "moonbitlang/core/encoding/utf8",
 }
+
+import {
+  "bobzhang/bap/fixtures/objects",
+  "moonbitlang/core/quickcheck",
+  "moonbitlang/core/quickcheck/splitmix",
+} for "test"

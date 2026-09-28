@@ -99,7 +99,9 @@ fn[V] MemoryTrie::child(
 
 ///|
 pub fn[V] MemoryTrie::is_empty(self : MemoryTrie[V]) -> Bool {
-  self.value is None && self.children.length() == 0
+  // `remove` clears a value but keeps the path to it, so a node without a
+  // value may still have (empty) children
+  self.value is None && self.children.iter().all(child => child.1.is_empty())
 }
 
 ///|

@@ -70,3 +70,22 @@ test "regression: merge rejects regions 2^32 bytes apart" {
   )
   assert_true(wide.merge(wrapping) is Err(_))
 }
+
+///|
+/// Regression (found by "qc: MemoryTrie agrees with a map model"): `remove`
+/// keeps the path to a removed key, so `is_empty` (which only looked at the
+/// root) reported a trie with no bindings as non-empty.
+test "regression: a memory trie is empty again after removing its only key" {
+  let trie : @memory.MemoryTrie[Int] = @memory.MemoryTrie::r32()
+  let key = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x10UL,
+    b"\x01\x01\x01\x00\x01\x01\x01\x01",
+  )
+  trie.add(key, 0)
+  trie.remove(key)
+  assert_eq(trie.length(), 0)
+  assert_true(trie.is_empty())
+  trie.add(key, 1)
+  assert_true(!trie.is_empty())
+}

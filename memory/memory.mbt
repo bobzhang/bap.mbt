@@ -186,7 +186,14 @@ pub fn Memory::view(
       match self.offset(start) {
         Some(pos) => {
           let available = self.length() - pos
-          let requested = if words < 0 { available } else { words * word_bytes }
+          // `words * word_bytes` may overflow an Int: compare by division
+          let requested = if words < 0 {
+            available
+          } else if words > available / word_bytes {
+            available + 1
+          } else {
+            words * word_bytes
+          }
           if requested < 0 || requested > available {
             Err("memory view exceeds the source region")
           } else {
@@ -227,6 +234,9 @@ pub fn Memory::range(
 ) -> Result[Memory, String] {
   if hi < lo {
     Err("memory range upper bound is below lower bound")
+  } else if hi - lo >= self.length().to_uint64() {
+    // checked before narrowing `hi - lo` to an Int
+    Err("memory view exceeds the source region")
   } else {
     let words = (hi - lo).to_int() + 1
     self.view(from=lo, words~, word_size=8)
@@ -809,13 +819,12 @@ pub fn Memory::merge(self : Memory, other : Memory) -> Result[Memory, String] {
     } else {
       other.max_addr()
     }
-    let total = (hi - lo).to_int() + 1
-    if total > self.length() + other.length() &&
-      !self.intersects(other) &&
-      self.max_addr() + 1UL != other.min_addr() &&
-      other.max_addr() + 1UL != self.min_addr() {
+    // regions that overlap or touch span at most the sum of their lengths;
+    // compare as UInt64 before narrowing the span to an Int
+    if hi - lo >= (self.length() + other.length()).to_uint64() {
       Err("memory regions are not contiguous")
     } else {
+      let total = (hi - lo).to_int() + 1
       let data = Array::make(total, b'\x00')
       for i in 0..<self.length() {
         data[(self.min_addr() - lo).to_int() + i] = self.data_value[i]

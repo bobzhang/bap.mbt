@@ -11,5 +11,8 @@ import {
 } for "test"
 
 options(
-  targets: { "file_native_test.mbt": [ "native" ] },
+  targets: {
+    "file_native_test.mbt": [ "native" ],
+    "memory_large_test.mbt": [ "js", "native" ],
+  },
 )

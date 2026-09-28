@@ -751,3 +751,20 @@ test "regression: a memory trie is empty again after removing its only key" {
   trie.add(key, 1)
   assert_true(!trie.is_empty())
 }
+
+///|
+/// Regression (code review): the merged span is checked against Int::MAX
+/// before it is narrowed; spans that fit are still merged.
+test "regression: merge checks the span against Int::MAX, not the length sum" {
+  let a = @memory.Memory::from_bytes(endian=LittleEndian, start=0UL, b"\x01")
+  let far = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x7fff_fffeUL,
+    b"\x02",
+  )
+  // 2^31 - 1 bytes apart: not contiguous
+  assert_true(a.merge(far) is Err(_))
+  let b = @memory.Memory::from_bytes(endian=LittleEndian, start=1UL, b"\x02")
+  guard a.merge(b) is Ok(m) else { fail("adjacent regions must merge") }
+  inspect(m.hexdump(), content="01 02")
+}

@@ -819,12 +819,17 @@ pub fn Memory::merge(self : Memory, other : Memory) -> Result[Memory, String] {
     } else {
       other.max_addr()
     }
-    // regions that overlap or touch span at most the sum of their lengths;
-    // compare as UInt64 before narrowing the span to an Int
-    if hi - lo >= (self.length() + other.length()).to_uint64() {
+    // `hi - lo + 1` bytes are spanned. Regions that overlap or touch span
+    // at most the sum of their lengths. Compute in UInt64 (the lengths are
+    // widened before adding) and narrow the span only once it fits an Int.
+    let span = hi - lo
+    let lengths = self.length().to_uint64() + other.length().to_uint64()
+    if span >= lengths {
       Err("memory regions are not contiguous")
+    } else if span >= max_int_as_uint64 {
+      Err("merged memory region is too large")
     } else {
-      let total = (hi - lo).to_int() + 1
+      let total = span.to_int() + 1
       let data = Array::make(total, b'\x00')
       for i in 0..<self.length() {
         data[(self.min_addr() - lo).to_int() + i] = self.data_value[i]
@@ -887,3 +892,6 @@ fn byte_to_hex(byte : Byte) -> String {
 pub fn Memory::to_string(self : Memory) -> String {
   "[\{self.min_addr().to_string()}, \{self.max_addr().to_string()}] \{self.hexdump()}"
 }
+
+///|
+let max_int_as_uint64 : UInt64 = 0x7fff_ffffUL

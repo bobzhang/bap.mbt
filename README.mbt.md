@@ -51,6 +51,15 @@ replaces both with native MoonBit implementations, validated against LLVM 22
 against the Unicorn emulator by differential test suites (`unicorn_diff`,
 `x86/semantics`).
 
+The native Itanium demangler (`demangle/itanium`) bounds its recursion so that
+crafted symbol names cannot overflow the stack: names that nest deeper than
+256 levels while parsing, or whose demangled form nests deeper than 96 levels,
+are left mangled. This is a compatibility limit sized for the small default
+stacks of the wasm-gc and js targets (libiberty's default limit is 2048 levels,
+LLVM has none), so some valid but very deeply nested symbols are rejected.
+The deepest of the 3,000+ llvm-cxxfilt reference symbols in the test corpus
+nests 12 parser and 13 printer levels.
+
 Not ported: bindings to external tools and native libraries (LLVM, IDA, Ghidra,
 radare2, objdump), OCaml dynamic plugin loading and build tooling
 (`bap_plugins`, `bap_build`, `bap_bundle`), piqi serialization, and the

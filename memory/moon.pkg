@@ -4,6 +4,15 @@ import {
   "bobzhang/bap/types",
 }
 
+import {
+  "moonbitlang/core/bigint",
+  "moonbitlang/core/quickcheck",
+  "moonbitlang/core/quickcheck/splitmix",
+} for "test"
+
 options(
-  targets: { "file_native_test.mbt": [ "native" ] },
+  targets: {
+    "file_native_test.mbt": [ "native" ],
+    "memory_large_test.mbt": [ "js", "native" ],
+  },
 )

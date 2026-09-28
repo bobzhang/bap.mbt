@@ -99,14 +99,32 @@ fn[V] MemoryTrie::child(
 
 ///|
 pub fn[V] MemoryTrie::is_empty(self : MemoryTrie[V]) -> Bool {
-  self.value is None && self.children.length() == 0
+  // `remove` clears a value but keeps the path to it, so a node without a
+  // value may still have (empty) children. Iterative: keys can be long.
+  let stack = [self]
+  while stack.pop() is Some(node) {
+    if node.value is Some(_) {
+      return false
+    }
+    for child in node.children {
+      stack.push(child.1)
+    }
+  }
+  true
 }
 
 ///|
 pub fn[V] MemoryTrie::length(self : MemoryTrie[V]) -> Int {
-  let mut total = if self.value is Some(_) { 1 } else { 0 }
-  for child in self.children {
-    total = total + child.1.length()
+  // iterative: keys can be long
+  let mut total = 0
+  let stack = [self]
+  while stack.pop() is Some(node) {
+    if node.value is Some(_) {
+      total = total + 1
+    }
+    for child in node.children {
+      stack.push(child.1)
+    }
   }
   total
 }

@@ -337,15 +337,22 @@ fn special_sub_base_name(ssk : Int) -> StringView {
 /// The unqualified base name of a name node (used for constructor and
 /// destructor names).
 fn Node::base_name(self : Node) -> StringView {
-  match self.kind {
+  // iterative: substitutions can chain names arbitrarily deep
+  let mut node = self
+  while true {
+    match node.kind {
+      AbiTagAttr(base, _) => node = base
+      NestedName(_, name)
+      | MemberLikeFriendName(_, name)
+      | ModuleEntity(_, name)
+      | QualifiedName(_, name)
+      | NameWithTemplateArgs(name, _)
+      | GlobalQualifiedName(name) => node = name
+      _ => break
+    }
+  }
+  match node.kind {
     NameType(name) => name
-    AbiTagAttr(base, _) => base.base_name()
-    NestedName(_, name)
-    | MemberLikeFriendName(_, name)
-    | ModuleEntity(_, name)
-    | QualifiedName(_, name)
-    | NameWithTemplateArgs(name, _)
-    | GlobalQualifiedName(name) => name.base_name()
     ExpandedSpecialSubstitution(ssk) => special_sub_base_name(ssk)
     SpecialSubstitution(ssk) => {
       let name = special_sub_base_name(ssk)

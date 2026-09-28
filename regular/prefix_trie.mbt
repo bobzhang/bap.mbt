@@ -35,14 +35,34 @@ pub fn[V] PrefixTrie::new() -> PrefixTrie[V] {
 
 ///|
 pub fn[V] PrefixTrie::is_empty(self : PrefixTrie[V]) -> Bool {
-  self.value is None && self.children.is_empty()
+  // `remove` clears a value but keeps the path to it, so a node without a
+  // value may still have (empty) children. Iterative: keys can be long.
+  let stack = [self]
+  while stack.pop() is Some(node) {
+    if node.value is Some(_) {
+      return false
+    }
+    for child in node.children.values() {
+      stack.push(child)
+    }
+  }
+  true
 }
 
 ///|
 pub fn[V] PrefixTrie::length(self : PrefixTrie[V]) -> Int {
-  let total = Ref(if self.value is Some(_) { 1 } else { 0 })
-  self.children.each((_, child) => total.val = total.val + child.length())
-  total.val
+  // iterative: keys can be long
+  let mut total = 0
+  let stack = [self]
+  while stack.pop() is Some(node) {
+    if node.value is Some(_) {
+      total = total + 1
+    }
+    for child in node.children.values() {
+      stack.push(child)
+    }
+  }
+  total
 }
 
 ///|

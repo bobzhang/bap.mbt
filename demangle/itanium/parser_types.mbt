@@ -166,6 +166,14 @@ fn Parser::parse_class_enum_type(self : Parser) -> Node raise Fail {
 /// <qualifiers> ::= <extended-qualifier>* <CV-qualifiers>
 /// <extended-qualifier> ::= U <source-name> [<template-args>]
 fn Parser::parse_qualified_type(self : Parser) -> Node raise Fail {
+  self.enter()
+  let node = self.parse_qualified_type_body()
+  self.leave()
+  node
+}
+
+///|
+fn Parser::parse_qualified_type_body(self : Parser) -> Node raise Fail {
   if self.consume_if_char('U') {
     let qual = self.parse_bare_source_name()
     if qual.length() == 0 {
@@ -272,6 +280,14 @@ fn builtin_d_type(c : UInt16) -> StringView? {
 ///        ::= <decltype> | P <type> | R <type> | O <type> | C <type>
 ///        ::= G <type> | <substitution> | Dp <type> | <vector-type>
 fn Parser::parse_type(self : Parser) -> Node raise Fail {
+  self.enter()
+  let node = self.parse_type_body()
+  self.leave()
+  node
+}
+
+///|
+fn Parser::parse_type_body(self : Parser) -> Node raise Fail {
   let c = self.look()
   if builtin_type(c) is Some(name) {
     self.first += 1

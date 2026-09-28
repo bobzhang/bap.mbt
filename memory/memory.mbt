@@ -186,7 +186,14 @@ pub fn Memory::view(
       match self.offset(start) {
         Some(pos) => {
           let available = self.length() - pos
-          let requested = if words < 0 { available } else { words * word_bytes }
+          // `words * word_bytes` may overflow an Int: compare by division
+          let requested = if words < 0 {
+            available
+          } else if words > available / word_bytes {
+            available + 1
+          } else {
+            words * word_bytes
+          }
           if requested < 0 || requested > available {
             Err("memory view exceeds the source region")
           } else {
@@ -227,6 +234,9 @@ pub fn Memory::range(
 ) -> Result[Memory, String] {
   if hi < lo {
     Err("memory range upper bound is below lower bound")
+  } else if hi - lo >= self.length().to_uint64() {
+    // checked before narrowing `hi - lo` to an Int
+    Err("memory view exceeds the source region")
   } else {
     let words = (hi - lo).to_int() + 1
     self.view(from=lo, words~, word_size=8)
@@ -809,13 +819,17 @@ pub fn Memory::merge(self : Memory, other : Memory) -> Result[Memory, String] {
     } else {
       other.max_addr()
     }
-    let total = (hi - lo).to_int() + 1
-    if total > self.length() + other.length() &&
-      !self.intersects(other) &&
-      self.max_addr() + 1UL != other.min_addr() &&
-      other.max_addr() + 1UL != self.min_addr() {
+    // `hi - lo + 1` bytes are spanned. Regions that overlap or touch span
+    // at most the sum of their lengths. Compute in UInt64 (the lengths are
+    // widened before adding) and narrow the span only once it fits an Int.
+    let span = hi - lo
+    let lengths = self.length().to_uint64() + other.length().to_uint64()
+    if span >= lengths {
       Err("memory regions are not contiguous")
+    } else if span >= max_int_as_uint64 {
+      Err("merged memory region is too large")
     } else {
+      let total = span.to_int() + 1
       let data = Array::make(total, b'\x00')
       for i in 0..<self.length() {
         data[(self.min_addr() - lo).to_int() + i] = self.data_value[i]
@@ -878,3 +892,6 @@ fn byte_to_hex(byte : Byte) -> String {
 pub fn Memory::to_string(self : Memory) -> String {
   "[\{self.min_addr().to_string()}, \{self.max_addr().to_string()}] \{self.hexdump()}"
 }
+
+///|
+let max_int_as_uint64 : UInt64 = 0x7fff_ffffUL

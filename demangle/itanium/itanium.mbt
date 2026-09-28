@@ -12,6 +12,12 @@
 /// manglings. `params=false` omits the function parameters and return
 /// types (`c++filt -p`). Returns `None` if `name` is not a valid mangling.
 ///
+/// Compatibility limit: names that nest deeper than 256 levels while
+/// parsing, or whose demangled form nests deeper than 96 levels (e.g. a
+/// type with more than 94 pointer declarators), are rejected with `None`
+/// rather than risking a stack overflow on the targets with small stacks
+/// (wasm-gc, js). Real symbols stay far below these limits.
+///
 /// ```mbt check
 /// test {
 ///   assert_eq(
@@ -33,6 +39,9 @@ pub fn demangle(name : String, params? : Bool = true) -> String? {
   }
   let ob = Output::new()
   ast.print(ob)
+  if ob.too_deep {
+    return None
+  }
   Some(ob.contents())
 }
 

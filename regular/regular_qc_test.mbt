@@ -14,3 +14,21 @@ test "regression: bytes_bin_read rejects a length that overflows the end offset"
   )
   assert_eq(@regular.bytes_bin_read(b"\x01\x00\x00\x00\x2a"), Ok((b"\x2a", 5)))
 }
+
+///|
+/// Regression (found by "qc: PrefixTrie is_empty agrees with length"):
+/// `remove` keeps the path to a removed key, so `is_empty` (which only
+/// looked at the root) reported a trie with no bindings as non-empty.
+test "regression: a trie is empty again after removing its only key" {
+  let trie : @regular.PrefixTrie[Int] = @regular.PrefixTrie::new()
+  trie.add("\u{e9}aba", 1)
+  trie.remove("\u{e9}aba")
+  assert_eq(trie.length(), 0)
+  assert_true(trie.is_empty())
+  trie.add("ab", 2)
+  assert_true(!trie.is_empty())
+  let suffix : @regular.SuffixTrie[Int] = @regular.SuffixTrie::new()
+  suffix.add("abc", 3)
+  suffix.remove("abc")
+  assert_true(suffix.is_empty())
+}

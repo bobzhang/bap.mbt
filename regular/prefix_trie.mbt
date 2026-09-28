@@ -35,7 +35,9 @@ pub fn[V] PrefixTrie::new() -> PrefixTrie[V] {
 
 ///|
 pub fn[V] PrefixTrie::is_empty(self : PrefixTrie[V]) -> Bool {
-  self.value is None && self.children.is_empty()
+  // `remove` clears a value but keeps the path to it, so a node without a
+  // value may still have (empty) children
+  self.value is None && self.children.values().all(child => child.is_empty())
 }
 
 ///|

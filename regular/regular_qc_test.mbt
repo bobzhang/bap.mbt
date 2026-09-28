@@ -312,3 +312,27 @@ test "regression: a trie is empty again after removing its only key" {
   suffix.remove("abc")
   assert_true(suffix.is_empty())
 }
+
+///|
+/// Regression (code review): `is_empty` and `length` recursed once per key
+/// byte, so a long (but otherwise supported) key exhausted the stack.
+test "regression: tries with very long keys" {
+  let key = "ab".repeat(100000)
+  let trie : @regular.PrefixTrie[Int] = @regular.PrefixTrie::new()
+  trie.add(key, 1)
+  trie.add("a", 2)
+  assert_true(!trie.is_empty())
+  assert_eq(trie.length(), 2)
+  assert_eq(trie.find(key), Some(1))
+  assert_eq(trie.longest_match(key + "c"), Some((key.length(), 1)))
+  trie.remove(key)
+  trie.remove("a")
+  assert_eq(trie.length(), 0)
+  assert_true(trie.is_empty())
+  let suffix : @regular.SuffixTrie[Int] = @regular.SuffixTrie::new()
+  suffix.add(key, 3)
+  assert_true(!suffix.is_empty())
+  assert_eq(suffix.length(), 1)
+  suffix.remove(key)
+  assert_true(suffix.is_empty())
+}

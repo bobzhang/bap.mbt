@@ -768,3 +768,22 @@ test "regression: merge checks the span against Int::MAX, not the length sum" {
   guard a.merge(b) is Ok(m) else { fail("adjacent regions must merge") }
   inspect(m.hexdump(), content="01 02")
 }
+
+///|
+/// Regression (code review): `is_empty` and `length` recursed once per key
+/// word, so a long (but otherwise supported) key exhausted the stack.
+test "regression: memory tries with very long keys" {
+  let key = @memory.Memory::from_bytes(
+    endian=LittleEndian,
+    start=0x1000UL,
+    Bytes::makei(200000, i => (i % 7).to_byte()),
+  )
+  let trie : @memory.MemoryTrie[Int] = @memory.MemoryTrie::r8()
+  trie.add(key, 1)
+  assert_true(!trie.is_empty())
+  assert_eq(trie.length(), 1)
+  assert_eq(trie.find(key), Some(1))
+  trie.remove(key)
+  assert_eq(trie.length(), 0)
+  assert_true(trie.is_empty())
+}

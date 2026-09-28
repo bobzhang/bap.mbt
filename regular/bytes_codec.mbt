@@ -662,7 +662,8 @@ fn bytes_write_u32_le(out : Array[Byte], offset : Int, value : Int) -> Unit {
 
 ///|
 fn bytes_read_u32_le(data : BytesView, offset : Int) -> Result[Int, String] {
-  if offset < 0 || offset + 4 > data.length() {
+  // `offset + 4` would overflow for offsets near Int max
+  if offset < 0 || offset > data.length() - 4 {
     Err("truncated byte length prefix")
   } else {
     let value = data[offset].to_uint64() |
@@ -696,10 +697,11 @@ pub fn bytes_bin_read(
   match bytes_read_u32_le(data, pos) {
     Ok(len) => {
       let start = pos + 4
-      let stop = start + len
-      if stop > data.length() {
+      // `start + len` would overflow for lengths near Int max
+      if len > data.length() - start {
         Err("truncated byte payload")
       } else {
+        let stop = start + len
         Ok((data[start:stop].to_owned(), stop))
       }
     }

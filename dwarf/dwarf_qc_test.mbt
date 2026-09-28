@@ -348,25 +348,40 @@ test "qc: function extraction survives mutated debug_info and debug_abbrev" {
           rnglists=abbrev.bytes,
         ) {
         Ok(data) => {
-          ignore(data.functions())
           ignore(data.dies())
           ignore(data.unit_headers())
-          ignore(data.iter_functions().to_array())
           ignore(data.die_by_section_offset(info.offset))
           ignore(data.debug_string(offset=abbrev.offset))
-          match @dwarf.DwarfFbi::create(data) {
+          let functions = data.functions()
+          // the lazy iterator yields what `functions` returns when that
+          // succeeds (it skips units with warnings instead of failing)
+          let iterated = data.iter_functions().to_array()
+          let iter_ok = match functions {
+            Ok(fs) =>
+              iterated.length() == fs.length() &&
+              iterated.iter().zip(fs.iter()).all(p => p.0.equal(p.1))
+            Err(_) => true
+          }
+          let fbi_ok = match @dwarf.DwarfFbi::create(data) {
+            // every named function carries its name, its accessors agree,
+            // and it is one of the functions of the data
             Ok(fbi) =>
-              // every function's range is well formed
               fbi
               .functions()
               .iter()
-              .all(f => {
-                match f.1.pc_hi() {
-                  Some(_) | None => true
-                }
+              .all(entry => {
+                let (name, f) = entry
+                name == f.name() &&
+                f.pc_lo() == f.low_pc() &&
+                f.pc_hi() == f.high_pc() &&
+                (match functions {
+                  Ok(fs) => fs.iter().any(g => g.equal(f))
+                  Err(_) => true
+                })
               })
             Err(_) => true
           }
+          iter_ok && fbi_ok
         }
         Err(_) => true
       }

@@ -272,6 +272,14 @@ fn builtin_d_type(c : UInt16) -> StringView? {
 ///        ::= <decltype> | P <type> | R <type> | O <type> | C <type>
 ///        ::= G <type> | <substitution> | Dp <type> | <vector-type>
 fn Parser::parse_type(self : Parser) -> Node raise Fail {
+  self.enter()
+  let node = self.parse_type_body()
+  self.leave()
+  node
+}
+
+///|
+fn Parser::parse_type_body(self : Parser) -> Node raise Fail {
   let c = self.look()
   if builtin_type(c) is Some(name) {
     self.first += 1

@@ -33,6 +33,9 @@ pub fn demangle(name : String, params? : Bool = true) -> String? {
   }
   let ob = Output::new()
   ast.print(ob)
+  if ob.too_deep {
+    return None
+  }
   Some(ob.contents())
 }
 

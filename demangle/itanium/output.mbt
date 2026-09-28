@@ -19,6 +19,35 @@ priv struct Output {
   mut paren_depth : UInt
   /// Whether template arguments are being printed.
   mut inside_template : Bool
+  /// The current nesting of recursive printing calls (see `enter`).
+  mut depth : Int
+  /// Set when printing gave up because the AST nests too deeply.
+  mut too_deep : Bool
+}
+
+///|
+/// The deepest nesting of recursive printing calls. Substitutions let a
+/// short mangling build an arbitrarily deep AST, so the printer bounds its
+/// own recursion instead of exhausting the call stack; `demangle` rejects
+/// such names.
+const MAX_PRINT_DEPTH : Int = 64
+
+///|
+/// Enters a recursive printing call; `false` (and `too_deep` set) if the
+/// nesting limit is reached. A successful `enter` is paired with `leave`.
+fn Output::enter(self : Output) -> Bool {
+  if self.depth >= MAX_PRINT_DEPTH {
+    self.too_deep = true
+    false
+  } else {
+    self.depth += 1
+    true
+  }
+}
+
+///|
+fn Output::leave(self : Output) -> Unit {
+  self.depth -= 1
 }
 
 ///|
@@ -30,6 +59,8 @@ fn Output::new() -> Output {
     pack_max: PACK_NONE,
     paren_depth: 0,
     inside_template: false,
+    depth: 0,
+    too_deep: false,
   }
 }
 

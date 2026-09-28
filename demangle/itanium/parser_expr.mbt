@@ -377,6 +377,14 @@ fn Parser::parse_floating_literal(self : Parser, kind : Int) -> Node raise Fail 
 ///                     ::= dX <range begin expression>
 ///                         <range end expression> <braced-expression>
 fn Parser::parse_braced_expr(self : Parser) -> Node raise Fail {
+  self.enter()
+  let node = self.parse_braced_expr_body()
+  self.leave()
+  node
+}
+
+///|
+fn Parser::parse_braced_expr_body(self : Parser) -> Node raise Fail {
   if self.look() == 'd' {
     match self.look(ahead=1) {
       'i' => {
@@ -539,6 +547,14 @@ fn Parser::parse_requires_expr(self : Parser) -> Node raise Fail {
 ///|
 /// <expression> (see the Itanium C++ ABI for the full grammar).
 fn Parser::parse_expr(self : Parser) -> Node raise Fail {
+  self.enter()
+  let node = self.parse_expr_body()
+  self.leave()
+  node
+}
+
+///|
+fn Parser::parse_expr_body(self : Parser) -> Node raise Fail {
   let global = self.consume_if("gs")
   if self.parse_operator_encoding() is Some(op) {
     let sym = op.symbol()

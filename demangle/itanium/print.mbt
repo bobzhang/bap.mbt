@@ -6,23 +6,32 @@ fn Node::has_rhs(self : Node, ob : Output) -> Bool {
   match self.rhs {
     Yes => true
     No => false
-    Unknown =>
-      match self.kind {
-        QualType(child, _) => child.has_rhs(ob)
-        PointerType(pointee) | ReferenceType(pointee, _) => pointee.has_rhs(ob)
-        PointerToMemberType(_, mem_ty) => mem_ty.has_rhs(ob)
-        ArrayType(_, _)
-        | FunctionType(_, _, _, _, _)
-        | FunctionEncoding(_, _, _, _, _, _, _) => true
-        ParameterPack(data) => {
-          init_pack_expansion(data, ob)
-          let idx = ob.pack_index
-          idx < data.length() && data[idx].has_rhs(ob)
-        }
-        ForwardTemplateReference(_, target) =>
-          self.guarded(false, () => resolved(target).has_rhs(ob))
-        _ => false
-      }
+    Unknown if !ob.enter() => false
+    Unknown => {
+      let result = self.has_rhs_unknown(ob)
+      ob.leave()
+      result
+    }
+  }
+}
+
+///|
+fn Node::has_rhs_unknown(self : Node, ob : Output) -> Bool {
+  match self.kind {
+    QualType(child, _) => child.has_rhs(ob)
+    PointerType(pointee) | ReferenceType(pointee, _) => pointee.has_rhs(ob)
+    PointerToMemberType(_, mem_ty) => mem_ty.has_rhs(ob)
+    ArrayType(_, _)
+    | FunctionType(_, _, _, _, _)
+    | FunctionEncoding(_, _, _, _, _, _, _) => true
+    ParameterPack(data) => {
+      init_pack_expansion(data, ob)
+      let idx = ob.pack_index
+      idx < data.length() && data[idx].has_rhs(ob)
+    }
+    ForwardTemplateReference(_, target) =>
+      self.guarded(false, () => resolved(target).has_rhs(ob))
+    _ => false
   }
 }
 
@@ -31,19 +40,28 @@ fn Node::has_array(self : Node, ob : Output) -> Bool {
   match self.array {
     Yes => true
     No => false
-    Unknown =>
-      match self.kind {
-        QualType(child, _) => child.has_array(ob)
-        ArrayType(_, _) => true
-        ParameterPack(data) => {
-          init_pack_expansion(data, ob)
-          let idx = ob.pack_index
-          idx < data.length() && data[idx].has_array(ob)
-        }
-        ForwardTemplateReference(_, target) =>
-          self.guarded(false, () => resolved(target).has_array(ob))
-        _ => false
-      }
+    Unknown if !ob.enter() => false
+    Unknown => {
+      let result = self.has_array_unknown(ob)
+      ob.leave()
+      result
+    }
+  }
+}
+
+///|
+fn Node::has_array_unknown(self : Node, ob : Output) -> Bool {
+  match self.kind {
+    QualType(child, _) => child.has_array(ob)
+    ArrayType(_, _) => true
+    ParameterPack(data) => {
+      init_pack_expansion(data, ob)
+      let idx = ob.pack_index
+      idx < data.length() && data[idx].has_array(ob)
+    }
+    ForwardTemplateReference(_, target) =>
+      self.guarded(false, () => resolved(target).has_array(ob))
+    _ => false
   }
 }
 
@@ -52,20 +70,28 @@ fn Node::has_function(self : Node, ob : Output) -> Bool {
   match self.function {
     Yes => true
     No => false
-    Unknown =>
-      match self.kind {
-        QualType(child, _) => child.has_function(ob)
-        FunctionType(_, _, _, _, _) | FunctionEncoding(_, _, _, _, _, _, _) =>
-          true
-        ParameterPack(data) => {
-          init_pack_expansion(data, ob)
-          let idx = ob.pack_index
-          idx < data.length() && data[idx].has_function(ob)
-        }
-        ForwardTemplateReference(_, target) =>
-          self.guarded(false, () => resolved(target).has_function(ob))
-        _ => false
-      }
+    Unknown if !ob.enter() => false
+    Unknown => {
+      let result = self.has_function_unknown(ob)
+      ob.leave()
+      result
+    }
+  }
+}
+
+///|
+fn Node::has_function_unknown(self : Node, ob : Output) -> Bool {
+  match self.kind {
+    QualType(child, _) => child.has_function(ob)
+    FunctionType(_, _, _, _, _) | FunctionEncoding(_, _, _, _, _, _, _) => true
+    ParameterPack(data) => {
+      init_pack_expansion(data, ob)
+      let idx = ob.pack_index
+      idx < data.length() && data[idx].has_function(ob)
+    }
+    ForwardTemplateReference(_, target) =>
+      self.guarded(false, () => resolved(target).has_function(ob))
+    _ => false
   }
 }
 
@@ -96,6 +122,16 @@ fn resolved(target : Ref[Node?]) -> Node {
 /// Digs through glue nodes (packs and forward references) to the node that
 /// represents concrete syntax.
 fn Node::syntax_node(self : Node, ob : Output) -> Node {
+  if !ob.enter() {
+    return self
+  }
+  let node = self.syntax_node_body(ob)
+  ob.leave()
+  node
+}
+
+///|
+fn Node::syntax_node_body(self : Node, ob : Output) -> Node {
   match self.kind {
     ParameterPack(data) => {
       init_pack_expansion(data, ob)
@@ -360,6 +396,14 @@ fn print_signed_number(value : StringView, ob : Output) -> Unit {
 
 ///|
 fn Node::print_left(self : Node, ob : Output) -> Unit {
+  if ob.enter() {
+    self.print_left_body(ob)
+    ob.leave()
+  }
+}
+
+///|
+fn Node::print_left_body(self : Node, ob : Output) -> Unit {
   match self.kind {
     NodeArrayNode(array) => print_with_comma(array, ob)
     DotSuffix(prefix, suffix) => {
@@ -964,6 +1008,14 @@ fn Node::print_left(self : Node, ob : Output) -> Unit {
 
 ///|
 fn Node::print_right(self : Node, ob : Output) -> Unit {
+  if ob.enter() {
+    self.print_right_body(ob)
+    ob.leave()
+  }
+}
+
+///|
+fn Node::print_right_body(self : Node, ob : Output) -> Unit {
   match self.kind {
     QualType(child, _) => child.print_right(ob)
     PointerType(pointee) =>

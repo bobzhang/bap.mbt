@@ -45,10 +45,21 @@ priv struct Parser {
 }
 
 ///|
-/// The deepest nesting of recursive productions (types, expressions,
-/// names, encodings) the parser accepts. Deeper inputs are rejected instead
-/// of exhausting the call stack; real manglings stay far below this.
-const MAX_PARSE_DEPTH : Int = 128
+/// The deepest nesting of recursive productions the parser accepts (every
+/// production that can recurse counts one level: types, qualified types,
+/// template arguments, expressions, braced expressions, names, encodings
+/// and template parameter declarations). Deeper names are rejected instead
+/// of exhausting the call stack.
+///
+/// This is a compatibility limit, not a rule of the Itanium ABI (libiberty
+/// defaults to 2048 levels, LLVM has no global limit): it is sized for the
+/// smallest default stack among the supported targets. Measured with the
+/// default stacks and an empty caller stack, the parser survives at least
+/// 465 levels on wasm-gc (release; 522 in debug), 522 on js and 2678 on
+/// native (debug), the worst case being nested expressions. 256 leaves
+/// about half of that stack to the callers of the demangler. The deepest
+/// name in the llvm-cxxfilt corpora nests 12 levels.
+const MAX_PARSE_DEPTH : Int = 256
 
 ///|
 /// Enters a recursive production. The parser never backtracks, so a
@@ -1134,6 +1145,14 @@ fn Parser::parse_template_param_decl_body(
 ///                ::= LZ <encoding> E           # extension
 ///                ::= <template-param-decl> <template-arg>
 fn Parser::parse_template_arg(self : Parser) -> Node raise Fail {
+  self.enter()
+  let node = self.parse_template_arg_body()
+  self.leave()
+  node
+}
+
+///|
+fn Parser::parse_template_arg_body(self : Parser) -> Node raise Fail {
   match self.look() {
     'X' => {
       self.first += 1

@@ -166,6 +166,14 @@ fn Parser::parse_class_enum_type(self : Parser) -> Node raise Fail {
 /// <qualifiers> ::= <extended-qualifier>* <CV-qualifiers>
 /// <extended-qualifier> ::= U <source-name> [<template-args>]
 fn Parser::parse_qualified_type(self : Parser) -> Node raise Fail {
+  self.enter()
+  let node = self.parse_qualified_type_body()
+  self.leave()
+  node
+}
+
+///|
+fn Parser::parse_qualified_type_body(self : Parser) -> Node raise Fail {
   if self.consume_if_char('U') {
     let qual = self.parse_bare_source_name()
     if qual.length() == 0 {

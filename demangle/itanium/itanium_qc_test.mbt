@@ -118,11 +118,47 @@ impl @quickcheck.Arbitrary for Mutant with fn arbitrary(_size, rs) {
 impl @quickcheck.Shrink for Mutant
 
 ///|
+/// The Itanium <seq-id> of substitution `index`: `S_` is the first, then
+/// `S0_`...`S9_`, `SA_`...`SZ_`, `S10_`... (uppercase base 36).
+fn substitution(index : Int) -> String {
+  if index == 0 {
+    return "S_"
+  }
+  let digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  let mut n = index - 1
+  let out : Array[Char] = []
+  while true {
+    out.push(digits.get_char(n % 36).unwrap())
+    n = n / 36
+    if n == 0 {
+      break
+    }
+  }
+  "S" + String::from_array(out.rev()) + "_"
+}
+
+///|
+/// `f(int*, int**, ..., int*...*)` with `len` parameters, each a pointer to
+/// the previous one through a substitution: the parser stays shallow while
+/// the last parameter prints `len` levels deep.
+fn substitution_chain(len : Int) -> String {
+  let sb = StringBuilder()
+  sb.write_string("_Z1fPi")
+  for i in 1..<len {
+    sb.write_string("P" + substitution(i - 1))
+  }
+  sb.to_string()
+}
+
+///|
 /// Deeply nested instances of the recursive productions.
 struct Nest {
   kind : Int
   depth : Int
 } derive(Debug)
+
+///|
+let nest_kinds : Int = 12
 
 ///|
 fn Nest::render(self : Nest) -> String {
@@ -132,24 +168,32 @@ fn Nest::render(self : Nest) -> String {
     1 => "_Z1fI" + "1aI".repeat(d) + "i" + "E".repeat(d) + "Evv" // template args
     2 => "_Z1fP" + "A1_".repeat(d) + "i" // array types
     3 => "_Z1f" + "PF".repeat(d) + "v" + "E".repeat(d) // function types
-    4 => "_Z1fIX" + "plLi1E".repeat(d) + "Li1EEEvv" // expressions
+    4 => "_Z1fIX" + "plLi1E".repeat(d) + "Li1EEEvv" // binary expressions
     5 => "_Z" + "Z1f".repeat(d) + "v" + "E1g".repeat(d) + "v" // local names
-    6 =>
-      // substitutions: every parameter points to the previous one
-      "_Z1fPi" +
-      Array::makei(d, i => if i == 0 { "PS_" } else { "PS\{i - 1}_" }).join("")
-    _ => "_Z1f" + "PVK".repeat(d) + "i" // qualified pointers
+    6 => substitution_chain(d) // substitutions
+    7 => "_Z1f" + "PVK".repeat(d) + "i" // qualified pointers
+    8 => "_Z1f" + "U1a".repeat(d) + "i" // vendor qualifiers
+    9 => "_Z1fI" + "J".repeat(d) + "i" + "E".repeat(d) + "Evv" // argument packs
+    10 => "_Z1f" + "R".repeat(d) + "i" // references (collapse when printed)
+    _ => "_Z1fIX" + "ng".repeat(d) + "Li1EEEvv" // prefix expressions
   }
 }
 
 ///|
 impl @quickcheck.Arbitrary for Nest with fn arbitrary(_size, rs) {
-  let depth = match rs.next_uint(limit=4) {
+  let depth = match rs.next_uint(limit=5) {
     0 => 1 + rs.next_uint(limit=8).reinterpret_as_int()
-    1 => 50 + rs.next_uint(limit=100).reinterpret_as_int()
-    _ => 200 + rs.next_uint(limit=3000).reinterpret_as_int()
+    // around the printer limit (96) and the parser limit (256)
+    1 => 85 + rs.next_uint(limit=20).reinterpret_as_int()
+    2 => 245 + rs.next_uint(limit=20).reinterpret_as_int()
+    _ => 200 + rs.next_uint(limit=20000).reinterpret_as_int()
   }
-  { kind: rs.next_uint(limit=8).reinterpret_as_int(), depth, }
+  {
+    kind: rs
+    .next_uint(limit=nest_kinds.reinterpret_as_uint())
+    .reinterpret_as_int(),
+    depth,
+  }
 }
 
 ///|
@@ -255,9 +299,7 @@ test "qc: deeply nested manglings are rejected, not a stack overflow" {
 test "regression: deep nesting does not overflow the stack" {
   assert_eq(@itanium.demangle("_Z1f" + "P".repeat(200) + "i"), None)
   assert_eq(@itanium.demangle("_Z1f" + "P".repeat(5000) + "!"), None)
-  let chain = "_Z1fPi" +
-    Array::makei(400, i => if i == 0 { "PS_" } else { "PS\{i - 1}_" }).join("")
-  assert_eq(@itanium.demangle(chain), None)
+  assert_eq(@itanium.demangle(substitution_chain(400)), None)
   assert_eq(
     @itanium.cxxfilt("_Z1f" + "P".repeat(200) + "i"),
     "_Z1f" + "P".repeat(200) + "i",
@@ -267,4 +309,77 @@ test "regression: deep nesting does not overflow the stack" {
     @itanium.demangle("_Z1f" + "P".repeat(20) + "i"),
     Some("f(int" + "*".repeat(20) + ")"),
   )
+}
+
+///|
+/// Regression (code review): vendor qualifiers (`U <source-name>`) and
+/// template argument packs (`J ... E`) recursed through productions that
+/// did not count towards the parser limit.
+test "regression: vendor qualifiers and argument packs are depth-limited" {
+  assert_eq(@itanium.demangle("_Z1f" + "U1a".repeat(100000) + "i"), None)
+  assert_eq(
+    @itanium.demangle(
+      "_Z1fI" + "J".repeat(100000) + "i" + "E".repeat(100000) + "Evv",
+    ),
+    None,
+  )
+  assert_eq(
+    @itanium.demangle("_Z1fIX" + "ng".repeat(100000) + "Li1EEEvv"),
+    None,
+  )
+  assert_eq(@itanium.demangle("_Z1f" + "R".repeat(100000) + "i"), None)
+  assert_eq(@itanium.demangle("_Z1fU1aU1bi"), Some("f(int b a)"))
+  assert_eq(@itanium.demangle("_Z1fIJJiEEEvv"), Some("void f<int>()"))
+}
+
+///|
+test "substitution ids are uppercase base 36" {
+  assert_eq(substitution(0), "S_")
+  assert_eq(substitution(1), "S0_")
+  assert_eq(substitution(10), "S9_")
+  assert_eq(substitution(11), "SA_")
+  assert_eq(substitution(36), "SZ_")
+  assert_eq(substitution(37), "S10_")
+  assert_eq(
+    @itanium.demangle(substitution_chain(40)),
+    Some(
+      "f(" + Array::makei(40, i => "int" + "*".repeat(i + 1)).join(", ") + ")",
+    ),
+  )
+}
+
+///|
+/// The limits are a compatibility restriction (see `MAX_PARSE_DEPTH` and
+/// `MAX_PRINT_DEPTH`): names right at a limit are demangled, one level
+/// deeper they are rejected.
+test "limits: names at the parser limit (256 levels) are accepted" {
+  // `R`-chains nest the parser (n + 2 levels) but collapse when printed
+  assert_eq(@itanium.demangle("_Z1f" + "R".repeat(254) + "i"), Some("f(int&)"))
+  assert_eq(@itanium.demangle("_Z1f" + "R".repeat(255) + "i"), None)
+}
+
+///|
+test "limits: names at the printer limit (96 levels) are accepted" {
+  // pointer chains print n + 2 levels deep
+  assert_eq(
+    @itanium.demangle("_Z1f" + "P".repeat(94) + "i"),
+    Some("f(int" + "*".repeat(94) + ")"),
+  )
+  assert_eq(@itanium.demangle("_Z1f" + "P".repeat(95) + "i"), None)
+  // substitution chains stay 3 levels deep in the parser and print the
+  // last parameter len + 2 levels deep
+  assert_true(@itanium.demangle(substitution_chain(94)) is Some(_))
+  assert_eq(@itanium.demangle(substitution_chain(95)), None)
+  // argument packs print n + 4 levels deep
+  assert_eq(
+    @itanium.demangle("_Z1fI" + "J".repeat(92) + "i" + "E".repeat(92) + "Evv"),
+    Some("void f<int>()"),
+  )
+  assert_eq(
+    @itanium.demangle("_Z1fI" + "J".repeat(93) + "i" + "E".repeat(93) + "Evv"),
+    None,
+  )
+  // vendor qualifiers print n + 2 levels deep
+  assert_true(@itanium.demangle("_Z1f" + "U1a".repeat(94) + "i") is Some(_))
+  assert_eq(@itanium.demangle("_Z1f" + "U1a".repeat(95) + "i"), None)
 }

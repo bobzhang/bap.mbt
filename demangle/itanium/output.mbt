@@ -27,10 +27,17 @@ priv struct Output {
 
 ///|
 /// The deepest nesting of recursive printing calls. Substitutions let a
-/// short mangling build an arbitrarily deep AST, so the printer bounds its
-/// own recursion instead of exhausting the call stack; `demangle` rejects
-/// such names.
-const MAX_PRINT_DEPTH : Int = 64
+/// short mangling build an arbitrarily deep AST (each `PS<seq-id>_` points
+/// to the previous parameter), so the printer bounds its own recursion
+/// instead of exhausting the call stack; `demangle` rejects such names.
+///
+/// This is a compatibility limit, not a rule of the Itanium ABI. The
+/// printer's frames are much larger than the parser's: measured with the
+/// default stacks and an empty caller stack, it survives at least 164
+/// levels on wasm-gc (debug; 293 in release), 186 on js and 1168 on native
+/// (debug). 96 leaves about 40% of the smallest stack to the callers of the
+/// demangler. The deepest name in the llvm-cxxfilt corpora nests 13 levels.
+const MAX_PRINT_DEPTH : Int = 96
 
 ///|
 /// Enters a recursive printing call; `false` (and `too_deep` set) if the

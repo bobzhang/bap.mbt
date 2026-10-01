@@ -19,4 +19,12 @@ jobs:
       - name: moon check (warnings are errors)
         run: moon check --deny-warn --target all
       - name: moon fmt (no diff)
-        run: moon fmt --check
+        # One package at a time: moonfmt needs ~7 GB on a few large files
+        # (plugins/arm_gnueabi, plugins/disassemble), and a single parallel
+        # `moon fmt --check` exhausts the runner's memory.
+        run: |
+          find . \( -name moon.pkg -o -name moon.pkg.json \) \
+            -not -path './.mooncakes/*' -not -path './_build/*' -exec dirname {} \; |
+            sort | while read -r pkg; do
+              moon fmt --check "$pkg" || exit 1
+            done

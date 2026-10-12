@@ -18,8 +18,8 @@ fn[T] catch_malformed(f : () -> T raise Malformed) -> Result[T, String] {
 /// offset is relative to the start of the file.
 priv struct Reader {
   data : Bytes
-  pos : Int
-  len : Int
+  pos : Int32
+  len : Int32
   endian : @bitvec.Endian
 }
 
@@ -27,7 +27,7 @@ priv struct Reader {
 fn Reader::uint(
   self : Reader,
   offset : UInt64,
-  bytes : Int,
+  bytes : Int32,
 ) -> UInt64 raise Malformed {
   if offset > self.len.to_uint64() ||
     bytes.to_uint64() > self.len.to_uint64() - offset {
@@ -52,10 +52,10 @@ fn Reader::field(
   self : Reader,
   class : EClass,
   base : UInt64,
-  off32 : Int,
-  off64 : Int,
-  bytes32? : Int = 4,
-  bytes64? : Int = 8,
+  off32 : Int32,
+  off64 : Int32,
+  bytes32~ : Int32 = 4,
+  bytes64~ : Int32 = 8,
 ) -> UInt64 raise Malformed {
   match class {
     ELFCLASS32 => self.uint(base + off32.to_uint64(), bytes32)
@@ -65,7 +65,7 @@ fn Reader::field(
 
 ///|
 /// The size of the file header of a class.
-pub fn EClass::header_size(self : EClass) -> Int {
+pub fn EClass::header_size(self : EClass) -> Int32 {
   match self {
     ELFCLASS32 => 52
     ELFCLASS64 => 64
@@ -74,7 +74,7 @@ pub fn EClass::header_size(self : EClass) -> Int {
 
 ///|
 /// The size of a program header of a class.
-pub fn EClass::program_header_size(self : EClass) -> Int {
+pub fn EClass::program_header_size(self : EClass) -> Int32 {
   match self {
     ELFCLASS32 => 32
     ELFCLASS64 => 56
@@ -83,7 +83,7 @@ pub fn EClass::program_header_size(self : EClass) -> Int {
 
 ///|
 /// The size of a section header of a class.
-pub fn EClass::section_header_size(self : EClass) -> Int {
+pub fn EClass::section_header_size(self : EClass) -> Int32 {
   match self {
     ELFCLASS32 => 40
     ELFCLASS64 => 64
@@ -164,7 +164,7 @@ fn[T] Reader::table(
 }
 
 ///|
-fn parse_elf(data : Bytes, pos : Int, len : Int?) -> Elf raise Malformed {
+fn parse_elf(data : Bytes, pos : Int32, len : Int32?) -> Elf raise Malformed {
   if pos < 0 || pos > data.length() {
     raise Malformed("ELF data position is out of bounds")
   }
@@ -198,7 +198,7 @@ fn parse_elf(data : Bytes, pos : Int, len : Int?) -> Elf raise Malformed {
     raise Malformed("truncated ELF header")
   }
   let r : Reader = { data, pos, len, endian: e_data.endian(), }
-  let half = (off32 : Int, off64 : Int) => {
+  let half = (off32 : Int32, off64 : Int32) => {
     r.field(e_class, 0, off32, off64, bytes32=2, bytes64=2).to_int() & 0xffff
   }
   let e_phoff = r.field(e_class, 0, 28, 32)
@@ -319,8 +319,8 @@ fn parse_elf(data : Bytes, pos : Int, len : Int?) -> Elf raise Malformed {
 /// ```
 pub fn from_bytes(
   data : Bytes,
-  pos? : Int = 0,
-  len? : Int,
+  pos~ : Int32 = 0,
+  len? : Int32,
 ) -> Result[Elf, String] {
   catch_malformed(() => parse_elf(data, pos, len))
 }
@@ -329,8 +329,8 @@ pub fn from_bytes(
 /// Parses an ELF file (upstream name of `from_bytes`).
 pub fn from_bigstring(
   data : Bytes,
-  pos? : Int = 0,
-  len? : Int,
+  pos~ : Int32 = 0,
+  len? : Int32,
 ) -> Result[Elf, String] {
   from_bytes(data, pos~, len?)
 }

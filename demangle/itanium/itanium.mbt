@@ -28,7 +28,7 @@
 ///   assert_eq(@itanium.demangle("main"), None)
 /// }
 /// ```
-pub fn demangle(name : String, params? : Bool = true) -> String? {
+pub fn demangle(name : String, params~ : Bool = true) -> String? {
   if name.length() == 0 {
     return None
   }
@@ -79,9 +79,9 @@ pub fn is_itanium_encoding(name : StringView) -> Bool {
 /// ```
 pub fn cxxfilt(
   name : String,
-  params? : Bool = true,
-  strip_underscore? : Bool = false,
-  types? : Bool = false,
+  params~ : Bool = true,
+  strip_underscore~ : Bool = false,
+  types~ : Bool = false,
 ) -> String {
   let mut decorated = name[:]
   let mut can_have_leading_dot = true

@@ -17,7 +17,7 @@ fn project_rooter_dedup_roots(roots : Array[UInt64]) -> Array[UInt64] {
 }
 
 ///|
-fn project_rooter_find_name(names : Array[String], name : String) -> Int? {
+fn project_rooter_find_name(names : Array[String], name : String) -> Int32? {
   for i in 0..<names.length() {
     if names[i] == name {
       return Some(i)
@@ -30,7 +30,7 @@ fn project_rooter_find_name(names : Array[String], name : String) -> Int? {
 pub fn ProjectRooter::create(
   roots : Array[UInt64],
   path? : String,
-  biased? : Bool = false,
+  biased~ : Bool = false,
 ) -> ProjectRooter {
   {
     path_value: path,
@@ -98,7 +98,7 @@ pub fn ProjectRooter::of_symbols(
   symbols : Array[@image.Symbol],
   entry? : UInt64,
   path? : String,
-  biased? : Bool = false,
+  biased~ : Bool = false,
 ) -> ProjectRooter {
   let roots : Array[UInt64] = []
   match entry {
@@ -145,7 +145,7 @@ pub fn ProjectRooter::of_blocks(
 pub fn ProjectRooter::image_blocks(
   self : ProjectRooter,
   image : @image.Image,
-  executable_only? : Bool = false,
+  executable_only~ : Bool = false,
 ) -> Result[Array[@memory.Memory], String] {
   let blocks : Array[@memory.Memory] = []
   for root in self.roots_value {

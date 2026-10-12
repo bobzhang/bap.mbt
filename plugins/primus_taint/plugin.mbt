@@ -76,7 +76,7 @@ fn is_registered(name : String) -> Bool {
 /// selects `default_policy`. Idempotent: components that are already
 /// registered are left untouched. Returns the number of newly registered
 /// components.
-pub fn register(default_policy? : String = default_policy) -> Int {
+pub fn register(default_policy~ : String = default_policy) -> Int32 {
   let mut added = 0
   for c in components(default_policy) {
     let (name, desc, init) = c
@@ -102,8 +102,8 @@ let enabled : Ref[Bool] = { val: false, }
 /// first call adds components to the machine; returns `false` if the
 /// plugin was already enabled.
 pub fn enable(
-  default_policy? : String = default_policy,
-  gc? : Bool = false,
+  default_policy~ : String = default_policy,
+  gc~ : Bool = false,
 ) -> Bool {
   ignore(register(default_policy~))
   if enabled.val {

@@ -20,7 +20,7 @@ fn out(s : String) -> Unit {
 }
 
 ///|
-fn pad_right(s : String, width : Int) -> String {
+fn pad_right(s : String, width : Int32) -> String {
   if s.length() >= width {
     s
   } else {
@@ -68,9 +68,9 @@ fn parse_addr(s : String) -> UInt64? {
   let mut v = 0UL
   for c in digits {
     let d = match c {
-      '0'..='9' => c.to_int() - '0'.to_int()
-      'a'..='f' => c.to_int() - 'a'.to_int() + 10
-      'A'..='F' => c.to_int() - 'A'.to_int() + 10
+      '0'..<='9' => c.to_int() - '0'.to_int()
+      'a'..<='f' => c.to_int() - 'a'.to_int() + 10
+      'A'..<='F' => c.to_int() - 'A'.to_int() + 10
       _ => return None
     }
     if d >= radix {

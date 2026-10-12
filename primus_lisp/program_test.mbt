@@ -35,7 +35,7 @@ fn load(
 fn resolved_body(
   prog : @primus_lisp.Program,
   name : String,
-  nargs : Int,
+  nargs : Int32,
 ) -> String {
   let args = Array::make(nargs, ())
   match

@@ -40,8 +40,8 @@ pub extend WordSize with Debug::{to_repr}
 
 ///|
 pub(all) suberror SizeError {
-  UnsupportedWordSize(Int)
-  UnsupportedAddressSize(Int)
+  UnsupportedWordSize(Int32)
+  UnsupportedAddressSize(Int32)
   UnsupportedAddressSizeValue(Size)
 } derive(Eq, Debug)
 
@@ -52,7 +52,7 @@ pub extend SizeError with Eq::{not_equal, equal}
 pub extend SizeError with Debug::{to_repr}
 
 ///|
-pub fn Size::in_bits(self : Size) -> Int {
+pub fn Size::in_bits(self : Size) -> Int32 {
   match self {
     R8 => 8
     R16 => 16
@@ -64,7 +64,7 @@ pub fn Size::in_bits(self : Size) -> Int {
 }
 
 ///|
-pub fn Size::in_bytes(self : Size) -> Int {
+pub fn Size::in_bytes(self : Size) -> Int32 {
   self.in_bits() / 8
 }
 
@@ -74,7 +74,7 @@ pub fn Size::to_string(self : Size) -> String {
 }
 
 ///|
-pub fn Size::of_int(bits : Int) -> Result[Size, String] {
+pub fn Size::of_int(bits : Int32) -> Result[Size, String] {
   match bits {
     8 => Ok(R8)
     16 => Ok(R16)
@@ -87,7 +87,7 @@ pub fn Size::of_int(bits : Int) -> Result[Size, String] {
 }
 
 ///|
-pub fn Size::of_int_opt(bits : Int) -> Size? {
+pub fn Size::of_int_opt(bits : Int32) -> Size? {
   match Size::of_int(bits) {
     Ok(size) => Some(size)
     Err(_) => None
@@ -95,7 +95,7 @@ pub fn Size::of_int_opt(bits : Int) -> Size? {
 }
 
 ///|
-pub fn Size::of_int_exn(bits : Int) -> Size raise SizeError {
+pub fn Size::of_int_exn(bits : Int32) -> Size raise SizeError {
   match Size::of_int(bits) {
     Ok(size) => size
     Err(_) => raise UnsupportedWordSize(bits)
@@ -103,7 +103,7 @@ pub fn Size::of_int_exn(bits : Int) -> Size raise SizeError {
 }
 
 ///|
-pub fn AddrSize::in_bits(self : AddrSize) -> Int {
+pub fn AddrSize::in_bits(self : AddrSize) -> Int32 {
   match self {
     Addr32 => 32
     Addr64 => 64
@@ -111,7 +111,7 @@ pub fn AddrSize::in_bits(self : AddrSize) -> Int {
 }
 
 ///|
-pub fn AddrSize::in_bytes(self : AddrSize) -> Int {
+pub fn AddrSize::in_bytes(self : AddrSize) -> Int32 {
   self.in_bits() / 8
 }
 
@@ -129,7 +129,7 @@ pub fn AddrSize::to_size(self : AddrSize) -> Size {
 }
 
 ///|
-pub fn Size::addr_of_int(bits : Int) -> Result[AddrSize, String] {
+pub fn Size::addr_of_int(bits : Int32) -> Result[AddrSize, String] {
   match bits {
     32 => Ok(Addr32)
     64 => Ok(Addr64)
@@ -138,7 +138,7 @@ pub fn Size::addr_of_int(bits : Int) -> Result[AddrSize, String] {
 }
 
 ///|
-pub fn Size::addr_of_int_opt(bits : Int) -> AddrSize? {
+pub fn Size::addr_of_int_opt(bits : Int32) -> AddrSize? {
   match Size::addr_of_int(bits) {
     Ok(size) => Some(size)
     Err(_) => None
@@ -146,7 +146,7 @@ pub fn Size::addr_of_int_opt(bits : Int) -> AddrSize? {
 }
 
 ///|
-pub fn Size::addr_of_int_exn(bits : Int) -> AddrSize raise SizeError {
+pub fn Size::addr_of_int_exn(bits : Int32) -> AddrSize raise SizeError {
   match Size::addr_of_int(bits) {
     Ok(size) => size
     Err(_) => raise UnsupportedAddressSize(bits)
@@ -179,7 +179,7 @@ pub fn Size::to_addr_size_exn(self : Size) -> AddrSize raise SizeError {
 }
 
 ///|
-pub fn WordSize::in_bits(self : WordSize) -> Int {
+pub fn WordSize::in_bits(self : WordSize) -> Int32 {
   match self {
     W32 => 32
     W64 => 64
@@ -187,7 +187,7 @@ pub fn WordSize::in_bits(self : WordSize) -> Int {
 }
 
 ///|
-pub fn WordSize::in_bytes(self : WordSize) -> Int {
+pub fn WordSize::in_bytes(self : WordSize) -> Int32 {
   self.in_bits() / 8
 }
 

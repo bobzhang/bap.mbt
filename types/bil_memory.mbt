@@ -1,7 +1,7 @@
 ///|
 struct BilMemory {
-  addr_width_value : Int
-  value_width_value : Int
+  addr_width_value : Int32
+  value_width_value : Int32
   cells_value : Map[UInt64, Byte]
 } derive(Eq, Debug)
 
@@ -24,7 +24,7 @@ pub extend BilValue with Eq::{not_equal, equal}
 pub extend BilValue with Debug::{to_repr}
 
 ///|
-fn byte_offset(i : Int) -> UInt64 {
+fn byte_offset(i : Int32) -> UInt64 {
   i.to_uint64()
 }
 
@@ -47,7 +47,7 @@ fn require_byte_memory(memory : BilMemory) -> Result[Unit, String] {
 }
 
 ///|
-fn require_byte_width(width : Int) -> Result[Int, String] {
+fn require_byte_width(width : Int32) -> Result[Int32, String] {
   if width <= 0 || width % 8 != 0 {
     Err("memory access width must be a positive multiple of 8")
   } else {
@@ -91,7 +91,10 @@ fn eval_storage(
 }
 
 ///|
-pub fn BilMemory::empty(addr_width~ : Int, value_width? : Int = 8) -> BilMemory {
+pub fn BilMemory::empty(
+  addr_width~ : Int32,
+  value_width~ : Int32 = 8,
+) -> BilMemory {
   {
     addr_width_value: addr_width,
     value_width_value: value_width,
@@ -101,8 +104,8 @@ pub fn BilMemory::empty(addr_width~ : Int, value_width? : Int = 8) -> BilMemory 
 
 ///|
 pub fn BilMemory::from_bytes(
-  addr_width~ : Int,
-  start? : UInt64 = 0UL,
+  addr_width~ : Int32,
+  start~ : UInt64 = 0UL,
   data : Bytes,
 ) -> BilMemory {
   let cells : Map[UInt64, Byte] = Map([])
@@ -113,12 +116,12 @@ pub fn BilMemory::from_bytes(
 }
 
 ///|
-pub fn BilMemory::addr_width(self : BilMemory) -> Int {
+pub fn BilMemory::addr_width(self : BilMemory) -> Int32 {
   self.addr_width_value
 }
 
 ///|
-pub fn BilMemory::value_width(self : BilMemory) -> Int {
+pub fn BilMemory::value_width(self : BilMemory) -> Int32 {
   self.value_width_value
 }
 
@@ -132,7 +135,7 @@ pub fn BilMemory::load(
   self : BilMemory,
   addr : Word,
   endian~ : @bitvec.Endian,
-  width~ : Int,
+  width~ : Int32,
 ) -> Result[Word, String] {
   match
     (require_byte_memory(self), require_byte_width(width), word_addr(addr)) {

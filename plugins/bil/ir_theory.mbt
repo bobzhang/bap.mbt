@@ -30,7 +30,7 @@ pub struct Cfg {
 ///|
 /// The empty graph.
 pub fn Cfg::empty() -> Cfg {
-  { entry: None, blks: @list.empty(), }
+  { entry: None, blks: @list.List([]), }
 }
 
 ///|
@@ -53,10 +53,10 @@ fn fresh() -> @types.Tid {
 ///|
 fn new_blk(
   tid : @types.Tid,
-  keep? : Bool = false,
-  weak? : Bool = false,
+  keep~ : Bool = false,
+  weak~ : Bool = false,
 ) -> IrBlk {
-  { name: tid, keep, weak, defs: @list.empty(), jmps: @list.empty(), }
+  { name: tid, keep, weak, defs: @list.List([]), jmps: @list.List([]), }
 }
 
 ///|
@@ -84,7 +84,7 @@ fn is_unconditional(j : @types.Term[@types.Jmp]) -> Bool {
 fn goto_jmp(
   dst : @types.Tid,
   tid~ : @types.Tid,
-  is_call? : Bool = false,
+  is_call~ : Bool = false,
   cond? : @types.Exp,
 ) -> @types.Term[@types.Jmp] {
   if is_call {
@@ -206,8 +206,8 @@ fn relink(label : @types.Tid, weak : Bool, cfg : Cfg) -> Cfg {
 /// whether a block label is the label of a sub-instruction (such blocks
 /// are weak and may be merged).
 fn ir_algebra(
-  is_subroutine? : (Dst) -> Bool = _ => false,
-  is_subinstruction? : (@types.Tid) -> Bool = _ => false,
+  is_subroutine~ : (Dst) -> Bool = _ => false,
+  is_subinstruction~ : (@types.Tid) -> Bool = _ => false,
 ) -> EffAlgebra[Cfg] {
   {
     empty: Cfg::empty(),
@@ -396,7 +396,7 @@ fn single_dst(jmps : @list.List[@types.Term[@types.Jmp]]) -> @types.Tid? {
 }
 
 ///|
-fn can_contract(refs : Map[@types.Tid, Int], b1 : IrBlk, b2 : IrBlk) -> Bool {
+fn can_contract(refs : Map[@types.Tid, Int32], b1 : IrBlk, b2 : IrBlk) -> Bool {
   b1.name != b2.name &&
   (!b2.keep || b2.weak) &&
   (match single_dst(b1.jmps) {
@@ -415,7 +415,7 @@ priv suberror NormalizeError
 
 ///|
 fn contract(
-  refs : Map[@types.Tid, Int],
+  refs : Map[@types.Tid, Int32],
   graph : Map[@types.Tid, IrBlk],
   output : Array[IrBlk],
   exit : @types.Tid,
@@ -469,7 +469,7 @@ fn normalize_blks(
     }
     graph[b.name] = b
   }
-  let refs : Map[@types.Tid, Int] = Map([])
+  let refs : Map[@types.Tid, Int32] = Map([])
   for b in blks {
     for j in b.jmps {
       match jmp_dst(j) {
@@ -529,7 +529,7 @@ pub fn Cfg::reify(self : Cfg) -> Array[@types.Term[@types.Blk]] {
       }
   }
   let mut first : @types.Term[@types.Blk]? = None
-  let mut rest : @list.List[@types.Term[@types.Blk]] = @list.empty()
+  let mut rest : @list.List[@types.Term[@types.Blk]] = @list.List([])
   for b in blks {
     let blk = b.to_blk()
     if blk.tid() == entry {

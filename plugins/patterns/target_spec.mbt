@@ -8,7 +8,7 @@ pub(all) enum TargetSpec {
   Spec(
     arch~ : String,
     order~ : @core_theory.Endianness?,
-    bits~ : Int?,
+    bits~ : Int32?,
     variant~ : String?,
     compiler~ : String?
   )

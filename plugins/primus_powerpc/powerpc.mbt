@@ -8,7 +8,7 @@ pub let component_name : String = "powerpc-init"
 
 ///|
 /// The registers initialized by the component and their widths.
-pub let registers : Array[(String, Int)] = [
+pub let registers : Array[(String, Int32)] = [
   ("CTR", 32),
   ("SO", 1),
   ("CA", 1),

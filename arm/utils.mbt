@@ -15,7 +15,7 @@ fn assert_reg(op : Op) -> Reg raise @mc.LiftError {
 }
 
 ///|
-fn assert_imm(op : Op) -> UInt raise @mc.LiftError {
+fn assert_imm(op : Op) -> UInt32 raise @mc.LiftError {
   match op {
     Imm(imm) => imm
     Reg(_) => fail("expected imm")
@@ -35,31 +35,31 @@ fn assert_cond(op : Op) -> Cond raise @mc.LiftError {
 /// Counter for virtual temporaries. It is reset at the start of every
 /// lifted instruction so that the produced BIL is deterministic; temporaries
 /// are virtual and never live across instructions.
-let tmp_counter : Ref[Int] = Ref(0)
+let tmp_counter : Ref[Int32] = Ref(0)
 
 ///|
-fn tmp(typ : @types.ValueType, name? : String = "v") -> @types.Var {
+fn tmp(typ : @types.ValueType, name~ : String = "v") -> @types.Var {
   tmp_counter.val += 1
   @types.Var::new(name="\{name}\{tmp_counter.val}", typ~, is_virtual=true)
 }
 
 ///|
-fn word(width : Int, value : UInt64) -> @types.Word {
+fn word(width : Int32, value : UInt64) -> @types.Word {
   try! @types.Word::of_uint64(width~, value)
 }
 
 ///|
-fn imm_word(value : UInt) -> @types.Word {
+fn imm_word(value : UInt32) -> @types.Word {
   word(32, value.to_uint64())
 }
 
 ///|
-fn int32(value : UInt) -> @types.Exp {
+fn int32(value : UInt32) -> @types.Exp {
   Int(imm_word(value))
 }
 
 ///|
-fn int_bits(width : Int, value : UInt64) -> @types.Exp {
+fn int_bits(width : Int32, value : UInt64) -> @types.Exp {
   Int(word(width, value))
 }
 
@@ -89,12 +89,12 @@ fn lnot(x : @types.Exp) -> @types.Exp {
 }
 
 ///|
-fn cast(kind : @types.CastKind, width : Int, x : @types.Exp) -> @types.Exp {
+fn cast(kind : @types.CastKind, width : Int32, x : @types.Exp) -> @types.Exp {
   Cast(kind~, width~, exp=x)
 }
 
 ///|
-fn extract(hi : Int, lo : Int, x : @types.Exp) -> @types.Exp {
+fn extract(hi : Int32, lo : Int32, x : @types.Exp) -> @types.Exp {
   Extract(hi~, lo~, exp=x)
 }
 
@@ -129,7 +129,7 @@ fn assn(dst : @types.Var, src : @types.Exp) -> @types.Stmt {
 }
 
 ///|
-fn bitlen(typ : @types.ValueType) -> Int {
+fn bitlen(typ : @types.ValueType) -> Int32 {
   match typ {
     Imm(len) => len
     Mem(value_width~, ..) => value_width
@@ -150,7 +150,7 @@ fn exp_of_op(op : Op) -> @types.Exp {
 }
 
 ///|
-fn cast_of_sign(sign : Sign, width : Int, exp : @types.Exp) -> @types.Exp {
+fn cast_of_sign(sign : Sign, width : Int32, exp : @types.Exp) -> @types.Exp {
   match sign {
     Signed => cast(Signed, width, exp)
     Unsigned => cast(Unsigned, width, exp)

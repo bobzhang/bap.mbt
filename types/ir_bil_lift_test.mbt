@@ -7,10 +7,10 @@ fn lift_normalize(text : String) -> String {
   let chars = text.to_array()
   let mut i = 0
   while i < chars.length() {
-    if chars[i] == '%' && i + 1 < chars.length() && chars[i + 1] is ('0'..='9') {
+    if chars[i] == '%' && i + 1 < chars.length() && chars[i + 1] is ('0'..<='9') {
       let digits = StringBuilder()
       let mut j = i + 1
-      while j < chars.length() && chars[j] is ('0'..='9') {
+      while j < chars.length() && chars[j] is ('0'..<='9') {
         digits.write_char(chars[j])
         j += 1
       }
@@ -39,24 +39,24 @@ fn lift_text(blks : Array[@types.Term[@types.Blk]]) -> String {
 }
 
 ///|
-fn lift_var(name : String, width? : Int = 32) -> @types.Var {
+fn lift_var(name : String, width~ : Int32 = 32) -> @types.Var {
   @types.Var::new(name~, typ=Imm(width))
 }
 
 ///|
-fn lift_word(value : Int, width? : Int = 32) -> @types.Word {
+fn lift_word(value : Int32, width~ : Int32 = 32) -> @types.Word {
   @types.Word::of_int(width~, value) catch {
     _ => panic()
   }
 }
 
 ///|
-fn lift_int(value : Int, width? : Int = 32) -> @types.Exp {
+fn lift_int(value : Int32, width~ : Int32 = 32) -> @types.Exp {
   Int(lift_word(value, width~))
 }
 
 ///|
-fn lift_move(name : String, value : Int) -> @types.Stmt {
+fn lift_move(name : String, value : Int32) -> @types.Stmt {
   Move(lift_var(name), lift_int(value))
 }
 

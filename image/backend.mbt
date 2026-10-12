@@ -3,7 +3,7 @@ struct ImageBackend {
   name_value : String
   description_value : String
   extensions_value : Array[String]
-  priority_value : Int
+  priority_value : Int32
   load_fn : (Bytes) -> Result[(Image, Array[String]), String]
 }
 
@@ -15,7 +15,7 @@ pub fn ImageBackend::create(
   name~ : String,
   description? : String,
   extensions? : Array[String],
-  priority? : Int,
+  priority? : Int32,
   load~ : (Bytes) -> Result[(Image, Array[String]), String],
 ) -> ImageBackend {
   {
@@ -52,7 +52,7 @@ pub fn ImageBackend::extensions(self : ImageBackend) -> Array[String] {
 }
 
 ///|
-pub fn ImageBackend::priority(self : ImageBackend) -> Int {
+pub fn ImageBackend::priority(self : ImageBackend) -> Int32 {
   self.priority_value
 }
 

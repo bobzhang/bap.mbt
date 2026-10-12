@@ -1,6 +1,6 @@
 ///|
 struct Equiv {
-  index : Int
+  index : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -10,7 +10,7 @@ pub extend Equiv with Eq::{not_equal, equal}
 pub extend Equiv with Debug::{to_repr}
 
 ///|
-pub fn Equiv::to_int(self : Equiv) -> Int {
+pub fn Equiv::to_int(self : Equiv) -> Int32 {
   self.index
 }
 
@@ -25,7 +25,7 @@ struct Group[N] {
 pub extend Group with Debug::{to_repr}
 
 ///|
-fn[N] graph_group_new(root : N, members : Set[N], index : Int) -> Group[N] {
+fn[N] graph_group_new(root : N, members : Set[N], index : Int32) -> Group[N] {
   { top_value: root, members_value: members.copy(), equiv_value: { index, }, }
 }
 
@@ -87,12 +87,12 @@ pub fn[N] Partition::groups(self : Partition[N]) -> Array[Group[N]] {
 }
 
 ///|
-pub fn[N] Partition::group_count(self : Partition[N]) -> Int {
+pub fn[N] Partition::group_count(self : Partition[N]) -> Int32 {
   self.roots_value.length()
 }
 
 ///|
-pub fn[N] Partition::number_of_groups(self : Partition[N]) -> Int {
+pub fn[N] Partition::number_of_groups(self : Partition[N]) -> Int32 {
   self.group_count()
 }
 
@@ -123,7 +123,7 @@ pub fn[N : Hash + Eq] Partition::discrete(
 fn[N : Hash + Eq] partition_group_index(
   groups : ArrayView[Set[N]],
   element : N,
-) -> Int? {
+) -> Int32? {
   groups.search_by(group => group.contains(element))
 }
 
@@ -140,7 +140,7 @@ pub fn[N : Hash + Eq] Partition::equiv(
 }
 
 ///|
-fn[N] Partition::nth_group(self : Partition[N], index : Int) -> Group[N]? {
+fn[N] Partition::nth_group(self : Partition[N], index : Int32) -> Group[N]? {
   if index < 0 || index >= self.group_count() {
     None
   } else {

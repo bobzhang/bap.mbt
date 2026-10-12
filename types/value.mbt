@@ -14,14 +14,14 @@
 /// and reads the cell back, which recovers the typed payload without any
 /// unsafe cast.
 struct Tag[T] {
-  uid : Int
+  uid : Int32
   name_value : String
   uuid_value : String
   package_value : String
   desc_value : String
   cell : Ref[T?]
   show_fn : (T) -> String
-  compare_fn : (T, T) -> Int
+  compare_fn : (T, T) -> Int32
   encode_fn : ((T) -> String)?
   decode_fn : ((String) -> T?)?
 }
@@ -29,11 +29,11 @@ struct Tag[T] {
 ///|
 /// The type-erased operations of a tag, shared by all of its values.
 priv struct ValueInfo {
-  uid : Int
+  uid : Int32
   name : String
   typeid : String
   show : (Value) -> String
-  compare : (Value, Value) -> Int
+  compare : (Value, Value) -> Int32
   encode : ((Value) -> String)?
 }
 
@@ -52,7 +52,7 @@ priv struct TagEntry {
 }
 
 ///|
-let tag_counter : Ref[Int] = { val: 0, }
+let tag_counter : Ref[Int32] = { val: 0, }
 
 ///|
 let tag_registry : Map[String, TagEntry] = Map([])
@@ -79,11 +79,11 @@ pub fn[T] Tag::register_with(
   name~ : String,
   uuid~ : String,
   show~ : (T) -> String,
-  compare~ : (T, T) -> Int,
+  compare~ : (T, T) -> Int32,
   encode? : (T) -> String,
   decode? : (String) -> T?,
-  pkg? : String = "bap",
-  desc? : String = "",
+  pkg~ : String = "bap",
+  desc~ : String = "",
 ) -> Tag[T] {
   let typeid = tag_typeid(uuid, name)
   if tag_registry.contains(typeid) {
@@ -117,7 +117,7 @@ pub fn[T] Tag::register_with(
 ///
 /// ```mbt check
 /// test {
-///   let tag : @types.Tag[Int] = @types.Tag::register(
+///   let tag : @types.Tag[Int32] = @types.Tag::register(
 ///     name="doc-example-int",
 ///     uuid="0e5f5bd2-6a3a-4b43-9c8c-doc000000001",
 ///   )
@@ -132,8 +132,8 @@ pub fn[T : Show + Compare] Tag::register(
   uuid~ : String,
   encode? : (T) -> String,
   decode? : (String) -> T?,
-  pkg? : String = "bap",
-  desc? : String = "",
+  pkg~ : String = "bap",
+  desc~ : String = "",
 ) -> Tag[T] {
   Tag::register_with(
     name~,

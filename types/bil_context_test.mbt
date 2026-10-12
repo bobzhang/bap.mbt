@@ -4,7 +4,7 @@ fn context_var(name : String) -> @types.Var {
 }
 
 ///|
-fn context_result(value : Int, id : UInt64) -> @types.BilResult {
+fn context_result(value : Int32, id : UInt64) -> @types.BilResult {
   @types.BilResult::word(
     try! @types.Word::of_int(width=8, value),
     @types.BilResultId::of_uint64(id),

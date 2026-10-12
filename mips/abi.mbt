@@ -30,9 +30,9 @@ pub(all) struct CallingConvention {
   /// and consume `size / 32` integer registers.
   float_args_shadow_int_args : Bool
   /// Bit widths of C `float`, `double` and `long double`.
-  float_bits : Int
-  double_bits : Int
-  long_double_bits : Int
+  float_bits : Int32
+  double_bits : Int32
+  long_double_bits : Int32
 } derive(Eq, Debug)
 
 ///|

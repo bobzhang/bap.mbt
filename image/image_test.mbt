@@ -17,16 +17,16 @@ fn bytes_0_to_15() -> Bytes {
 }
 
 ///|
-fn bytes_from_range(first : Int, length : Int) -> Bytes {
+fn bytes_from_range(first : Int32, length : Int32) -> Bytes {
   Bytes::from_array(Array::makei(length, i => (first + i).to_byte()))
 }
 
 ///|
 fn assert_contiguous_word_addresses(
   image : @image.Image,
-  word_size : Int,
+  word_size : Int32,
   base : UInt64,
-  count : Int,
+  count : Int32,
 ) -> Unit raise {
   let entries = image.words(word_size~).entries()
   let step = (word_size / 8).to_uint64()

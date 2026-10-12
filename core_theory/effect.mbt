@@ -265,7 +265,7 @@ pub fn EffectSort::persistent() -> @knowledge.Persistent[EffectSort] {
 }
 
 ///|
-fn EffectSort::rank(self : EffectSort) -> Int {
+fn EffectSort::rank(self : EffectSort) -> Int32 {
   match self.normalized() {
     EffectBot => 0
     EffectData | EffectCtrl | EffectBoth | EffectSet(_) => 1

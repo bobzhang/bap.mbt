@@ -5,7 +5,7 @@
 fn ldri(
   rd : @types.Var,
   r : @types.Var,
-  i : Int,
+  i : Int32,
   cnd : Cond,
 ) -> Array[@types.Stmt] {
   set_if(rd, load(R32, add(v(r), const_(i))), cnd)
@@ -25,7 +25,7 @@ fn ldrr(
 fn ldrbi(
   rd : @types.Var,
   rn : @types.Var,
-  i : Int,
+  i : Int32,
   cnd : Cond,
 ) -> Array[@types.Stmt] {
   set_if(rd, unsigned32(load(R8, add(v(rn), const_(i)))), cnd)
@@ -55,7 +55,7 @@ fn ldrsb(
 fn ldrhi(
   rd : @types.Var,
   rn : @types.Var,
-  i : Int,
+  i : Int32,
   cnd : Cond,
 ) -> Array[@types.Stmt] {
   set_if(rd, unsigned32(load(R16, add(v(rn), const_(i)))), cnd)
@@ -86,8 +86,8 @@ fn ldrsh(
 /// instruction address plus 4.
 fn ldrpci(
   rd : @types.Var,
-  pc : Int,
-  off : Int,
+  pc : Int32,
+  off : Int32,
   cnd : Cond,
 ) -> Array[@types.Stmt] {
   set_if(rd, load(R32, add(const_(pc & (3).lnot()), const_(off))), cnd)
@@ -111,7 +111,7 @@ fn ldm(
 fn stri(
   rd : @types.Var,
   rm : @types.Var,
-  i : Int,
+  i : Int32,
   cnd : Cond,
 ) -> Array[@types.Stmt] {
   store_if(add(v(rm), const_(i)), v(rd), cnd)
@@ -131,7 +131,7 @@ fn strr(
 fn strhi(
   rd : @types.Var,
   rm : @types.Var,
-  i : Int,
+  i : Int32,
   cnd : Cond,
 ) -> Array[@types.Stmt] {
   store_if(add(v(rm), const_(i)), low(16, v(rd)), cnd)
@@ -151,7 +151,7 @@ fn strhr(
 fn strbi(
   rd : @types.Var,
   rm : @types.Var,
-  i : Int,
+  i : Int32,
   cnd : Cond,
 ) -> Array[@types.Stmt] {
   store_if(add(v(rm), const_(i)), low(8, v(rd)), cnd)

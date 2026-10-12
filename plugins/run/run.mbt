@@ -65,13 +65,13 @@ pub extend Params with Debug::{to_repr}
 
 ///|
 pub fn Params::new(
-  argv? : Array[String] = [],
-  envp? : Array[String] = [],
-  entry? : Array[String] = [],
-  in_isolation? : Bool = false,
-  with_repetitions? : Bool = false,
-  systems? : Array[String] = ["bap:legacy-main"],
-  until_visited? : Bool = false,
+  argv~ : Array[String] = [],
+  envp~ : Array[String] = [],
+  entry~ : Array[String] = [],
+  in_isolation~ : Bool = false,
+  with_repetitions~ : Bool = false,
+  systems~ : Array[String] = ["bap:legacy-main"],
+  until_visited~ : Bool = false,
 ) -> Params {
   { argv, envp, entry, in_isolation, with_repetitions, systems, until_visited, }
 }
@@ -79,7 +79,7 @@ pub fn Params::new(
 ///|
 /// Parses an entry point (upstream `name_of_entry`): a tid starting with
 /// `%`, an address starting with `0`, or a symbol name.
-pub fn name_of_entry(width : Int, entry : String) -> @primus.Name raise {
+pub fn name_of_entry(width : Int32, entry : String) -> @primus.Name raise {
   if entry == "" {
     raise InvalidArgument("An entry point should be a non-empty string")
   }
@@ -114,9 +114,9 @@ fn parse_int64(s : String) -> Int64 raise {
   let mut v = 0UL
   for c in digits {
     let d = match c {
-      '0'..='9' => c.to_int() - '0'.to_int()
-      'a'..='f' => c.to_int() - 'a'.to_int() + 10
-      'A'..='F' => c.to_int() - 'A'.to_int() + 10
+      '0'..<='9' => c.to_int() - '0'.to_int()
+      'a'..<='f' => c.to_int() - 'a'.to_int() + 10
+      'A'..<='F' => c.to_int() - 'A'.to_int() + 10
       '_' => continue
       _ => raise InvalidArgument("Int64.of_string: \{s}")
     }
@@ -140,7 +140,7 @@ pub fn entry_points(prog : @types.Term[@types.Program]) -> Array[@types.Tid] {
 /// subroutines that have the `mark` attribute.
 pub fn all_subroutines(
   prog : @types.Term[@types.Program],
-  marked? : Bool = false,
+  marked~ : Bool = false,
 ) -> Array[@primus.Name] {
   let entries = entry_points(prog)
   let unmarked : Array[@types.Tid] = []
@@ -251,7 +251,7 @@ fn run_entries(
   need_repeat : Bool,
   entries : Array[@primus.Name],
 ) -> (@primus.Machine) -> Unit raise {
-  fn loop_(m : @primus.Machine, stage : Int) -> Unit raise {
+  fn loop_(m : @primus.Machine, stage : Int32) -> Unit raise {
     match entries.get(stage) {
       None => {
         reporter.info(message="all toplevel machines done, halting")

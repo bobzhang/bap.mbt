@@ -1,5 +1,5 @@
 ///|
-fn hex_digit(value : Int) -> Char {
+fn hex_digit(value : Int32) -> Char {
   if value < 10 {
     (value + '0').unsafe_to_char()
   } else {
@@ -8,7 +8,7 @@ fn hex_digit(value : Int) -> Char {
 }
 
 ///|
-fn parse_hex_digit(c : Char) -> Int raise BitVecError {
+fn parse_hex_digit(c : Char) -> Int32 raise BitVecError {
   if c >= '0' && c <= '9' {
     c.to_int() - '0'
   } else if c >= 'a' && c <= 'f' {
@@ -21,7 +21,7 @@ fn parse_hex_digit(c : Char) -> Int raise BitVecError {
 }
 
 ///|
-pub fn from_hex(width~ : Int, text : StringView) -> BitVec raise BitVecError {
+pub fn from_hex(width~ : Int32, text : StringView) -> BitVec raise BitVecError {
   let source = if text.has_prefix("0x") || text.has_prefix("0X") {
     text[2:]
   } else {
@@ -37,7 +37,7 @@ pub fn from_hex(width~ : Int, text : StringView) -> BitVec raise BitVecError {
 
 ///|
 fn parse_string_value(
-  width : Int,
+  width : Int32,
   text : StringView,
 ) -> BitVec raise BitVecError {
   if text.has_prefix("0x") || text.has_prefix("0X") {
@@ -81,8 +81,8 @@ pub fn from_string(text : StringView) -> BitVec raise BitVecError {
 }
 
 ///|
-pub fn BitVec::to_hex(self : BitVec, prefix? : Bool = true) -> String {
-  let digits = Int::max(1, (self.width + 3) / 4)
+pub fn BitVec::to_hex(self : BitVec, prefix~ : Bool = true) -> String {
+  let digits = Int32::max(1, (self.width + 3) / 4)
   let builder = StringBuilder()
   if prefix {
     builder.write_string("0x")
@@ -124,7 +124,7 @@ pub fn BitVec::to_bytes(self : BitVec, endian~ : Endian) -> Bytes {
 pub fn of_bytes(
   bytes : BytesView,
   endian~ : Endian,
-  width? : Int = -1,
+  width~ : Int32 = -1,
 ) -> BitVec raise BitVecError {
   let actual_width = if width < 0 { bytes.length() * 8 } else { width }
   let mut acc = zero(width=actual_width)

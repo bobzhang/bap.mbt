@@ -42,7 +42,7 @@ test "BAP-style vector traversal and mapping use occupied elements only" {
   assert_true(vector.to_list().to_array() == [3, 4, 5])
   assert_true(vector.foldi(0, (index, acc, value) => acc + index + value) == 15)
   assert_true(vector.fold(1, (acc, value) => acc * value) == 60)
-  let folded : Result[Int, String] = vector.fold_result(0, (acc, value) => {
+  let folded : Result[Int32, String] = vector.fold_result(0, (acc, value) => {
     Ok(acc + value)
   })
   assert_true(folded == Ok(12))

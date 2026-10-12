@@ -11,9 +11,9 @@ priv enum Sexp {
 ///|
 priv struct SexpReader {
   chars : Array[Char]
-  mut pos : Int
-  mut line : Int
-  mut bol : Int
+  mut pos : Int32
+  mut line : Int32
+  mut bol : Int32
 }
 
 ///|
@@ -24,7 +24,7 @@ fn SexpReader::error(self : SexpReader, reason : String) -> OgreError {
 }
 
 ///|
-fn SexpReader::peek(self : SexpReader, offset? : Int = 0) -> Char? {
+fn SexpReader::peek(self : SexpReader, offset~ : Int32 = 0) -> Char? {
   let i = self.pos + offset
   if i < self.chars.length() {
     Some(self.chars[i])
@@ -110,7 +110,7 @@ fn SexpReader::skip_layout(self : SexpReader) -> Bool raise OgreError {
 }
 
 ///|
-fn hex_digit(c : Char) -> Int? {
+fn hex_digit(c : Char) -> Int32? {
   let d = digit_value(c)
   if d < 16 {
     Some(d)
@@ -167,7 +167,7 @@ fn SexpReader::read_quoted(self : SexpReader) -> String raise OgreError {
               }
               None =>
                 match (c, self.peek(offset=1), self.peek(offset=2)) {
-                  ('0'..='9', Some('0'..='9' as c2), Some('0'..='9' as c3)) => {
+                  ('0'..<='9', Some('0'..<='9' as c2), Some('0'..<='9' as c3)) => {
                     let value = digit_value(c) * 100 +
                       digit_value(c2) * 10 +
                       digit_value(c3)
@@ -342,7 +342,7 @@ fn Formatter::pp_atom(self : Formatter, text : String) -> Unit {
 
 ///|
 /// sexplib's `pp_hum_indent`.
-fn Formatter::pp_sexp(self : Formatter, indent : Int, sexp : Sexp) -> Unit {
+fn Formatter::pp_sexp(self : Formatter, indent : Int32, sexp : Sexp) -> Unit {
   match sexp {
     Atom(text) => self.pp_atom(text)
     List([]) => self.print_string("()")
@@ -363,7 +363,7 @@ fn Formatter::pp_sexp(self : Formatter, indent : Int, sexp : Sexp) -> Unit {
 
 ///|
 /// sexplib's `Sexp.to_string_hum ~indent`.
-fn sexp_to_string_hum(sexp : Sexp, indent? : Int = 1) -> String {
+fn sexp_to_string_hum(sexp : Sexp, indent~ : Int32 = 1) -> String {
   match sexp {
     Atom(text) if is_one_line(text) =>
       if must_escape(text) {

@@ -62,7 +62,7 @@ pub fn ProjectDisassemblyInstruction::encoding_language(
 /// `encoding_language()`.
 pub fn ProjectDisassemblyInstruction::to_mc_insn(
   self : ProjectDisassemblyInstruction,
-  encoding? : @core_theory.Language = self.encoding_language(),
+  encoding~ : @core_theory.Language = self.encoding_language(),
 ) -> @mc.Insn {
   let ops = self
     .operands()
@@ -112,7 +112,7 @@ pub fn ProjectDisassemblyInstruction::lift_context(
 pub fn ProjectDisassemblyInstruction::lift(
   self : ProjectDisassemblyInstruction,
   target~ : @core_theory.Target,
-  registry? : @mc.Registry = project_lift_registry(),
+  registry~ : @mc.Registry = project_lift_registry(),
 ) -> Result[@mc.Lifted, String] {
   let ctx = self.lift_context(target)
   let insn = self.to_mc_insn(encoding=ctx.encoding())

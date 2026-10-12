@@ -2,7 +2,7 @@
 struct ProjectDisassemblyDriver {
   name_value : String
   description_value : String
-  priority_value : Int
+  priority_value : Int32
   run_fn : (Project) -> Result[Project, String]
 }
 
@@ -13,7 +13,7 @@ let disassembly_driver_registry : Map[String, ProjectDisassemblyDriver] = Map([]
 pub fn ProjectDisassemblyDriver::create(
   name~ : String,
   description? : String,
-  priority? : Int,
+  priority? : Int32,
   run~ : (Project) -> Result[Project, String],
 ) -> ProjectDisassemblyDriver {
   {
@@ -47,7 +47,7 @@ pub fn ProjectDisassemblyDriver::description(
 ///|
 pub fn ProjectDisassemblyDriver::priority(
   self : ProjectDisassemblyDriver,
-) -> Int {
+) -> Int32 {
   self.priority_value
 }
 
@@ -97,7 +97,7 @@ fn project_raw_byte_bil(memory : @memory.Memory) -> String {
 }
 
 ///|
-fn project_raw_byte_code(memory : @memory.Memory) -> Int {
+fn project_raw_byte_code(memory : @memory.Memory) -> Int32 {
   let bytes = memory.to_bytes()
   if bytes.length() == 0 {
     0
@@ -237,7 +237,7 @@ fn project_disassembly_add_basic_instructions(
 
 ///|
 pub fn ProjectDisassemblyDriver::linear_sweep(
-  backend? : String = "llvm",
+  backend~ : String = "llvm",
 ) -> ProjectDisassemblyDriver {
   ProjectDisassemblyDriver::create(
     name="linear-sweep",
@@ -275,7 +275,7 @@ pub fn ProjectDisassemblyDriver::linear_sweep(
 
 ///|
 pub fn ProjectDisassemblyDriver::basic(
-  backend? : String = "llvm",
+  backend~ : String = "llvm",
 ) -> ProjectDisassemblyDriver {
   ProjectDisassemblyDriver::create(
     name="basic",

@@ -8,13 +8,13 @@ type Semantics = (Cpu) -> Array[Rtl] raise @mc.LiftError
 ///|
 priv struct Entry {
   semantics : Semantics
-  delay : Int?
+  delay : Int32?
 }
 
 ///|
 let semantics_table : Map[String, Entry] = {
   let table : Map[String, Entry] = Map([])
-  let groups : Array[(ReadOnlyArray[(String, Semantics)], Int?)] = [
+  let groups : Array[(ReadOnlyArray[(String, Semantics)], Int32?)] = [
     (arithmetic_semantics, None),
     (delayed_branch_semantics, Some(1)),
     (compact_branch_semantics, None),
@@ -123,7 +123,7 @@ pub fn opcodes() -> Array[String] {
 /// Number of delay slots of the opcode `name` (upstream `delayed_opcodes`,
 /// the source of the `mips:delay-slot` knowledge rule): `Some(1)` for the
 /// branch and jump group, `None` otherwise.
-pub fn delay_slot(name : String) -> Int? {
+pub fn delay_slot(name : String) -> Int32? {
   match find_entry(name) {
     Some(entry) => entry.delay
     None => None
@@ -264,6 +264,6 @@ pub let targets : ReadOnlyArray[String] = [
 ///|
 /// Register the MIPS provider with `registry` (the global `@mc` registry by
 /// default). Idempotent: the provider is replaced by name.
-pub fn register(registry? : @mc.Registry = @mc.Registry::global()) -> Unit {
+pub fn register(registry~ : @mc.Registry = @mc.Registry::global()) -> Unit {
   registry.register(provider())
 }

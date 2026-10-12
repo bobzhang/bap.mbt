@@ -10,15 +10,15 @@ pub struct Def[T] {
   docs : String
   attrs : Attrs
   code : T
-  id : Int
+  id : Int32
 }
 
 ///|
 pub fn[T] Def::new(
   name : String,
-  docs? : String = "",
-  attrs? : Attrs = Attrs::empty(),
-  id? : Int = 0,
+  docs~ : String = "",
+  attrs~ : Attrs = Attrs::empty(),
+  id~ : Int32 = 0,
   code : T,
 ) -> Def[T] {
   { name, docs, attrs, code, id, }
@@ -158,7 +158,7 @@ pub(all) struct Signal {
 pub fn Def::macro_bind(
   self : Def[Macro],
   args : Array[Tree],
-) -> (Int, Array[(String, Array[Tree])])? {
+) -> (Int32, Array[(String, Array[Tree])])? {
   let ps = self.code.params
   let bs = []
   let np = ps.length()

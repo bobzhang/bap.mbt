@@ -35,7 +35,7 @@ pub(all) struct Token {
   /// The file the token comes from.
   file : String
   /// The line of the token (1-based).
-  line : Int
+  line : Int32
   /// Whether the token is the first one on its logical line.
   bol : Bool
   /// Whether the token is preceded by white space (or a comment).
@@ -157,7 +157,7 @@ fn unescape(body : String) -> String {
         }
         out.write_char((v % 0x110000).unsafe_to_char())
       }
-      '0'..='7' => {
+      '0'..<='7' => {
         let mut v = e.to_int() - '0'.to_int()
         let mut k = 1
         while k < 3 &&
@@ -177,7 +177,7 @@ fn unescape(body : String) -> String {
 }
 
 ///|
-fn hex_digit(c : UInt16) -> Int? {
+fn hex_digit(c : UInt16) -> Int32? {
   if c >= '0' && c <= '9' {
     Some(c.to_int() - '0'.to_int())
   } else if c >= 'a' && c <= 'f' {
@@ -193,7 +193,7 @@ fn hex_digit(c : UInt16) -> Int? {
 /// Splits `text` (the contents of `file`) into preprocessing tokens.
 /// Comments are removed, line continuations are spliced, and every token
 /// records whether it starts a logical line.
-pub fn tokenize(text : String, file? : String = "<string>") -> Array[Token] {
+pub fn tokenize(text : String, file~ : String = "<string>") -> Array[Token] {
   let text = splice_lines(text)
   let tokens : Array[Token] = []
   let n = text.length()
@@ -201,8 +201,8 @@ pub fn tokenize(text : String, file? : String = "<string>") -> Array[Token] {
   let mut line = 1
   let mut bol = true
   let mut space = false
-  let slice = (a : Int, b : Int) => text.unsafe_substring(start=a, end=b)
-  let push = (kind : TokenKind, spelling : String, at_line : Int) => {
+  let slice = (a : Int32, b : Int32) => text.unsafe_substring(start=a, end=b)
+  let push = (kind : TokenKind, spelling : String, at_line : Int32) => {
     tokens.push({ kind, text: spelling, file, line: at_line, bol, space, })
     bol = false
     space = false

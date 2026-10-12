@@ -16,8 +16,8 @@ priv enum BoxType {
 ///|
 priv enum Token {
   Text(String)
-  Break(fits~ : (String, Int, String), breaks~ : (String, Int, String))
-  Begin(Int, BoxType)
+  Break(fits~ : (String, Int32, String), breaks~ : (String, Int32, String))
+  Begin(Int32, BoxType)
   End
   Newline
   IfNewline
@@ -27,21 +27,21 @@ priv enum Token {
 
 ///|
 priv struct QueueElem {
-  mut size : Int
+  mut size : Int32
   token : Token
-  length : Int
+  length : Int32
 }
 
 ///|
 priv struct ScanElem {
-  left_total : Int
+  left_total : Int32
   elem : QueueElem
 }
 
 ///|
 priv struct FormatElem {
   box_type : BoxType
-  width : Int
+  width : Int32
 }
 
 ///|
@@ -78,14 +78,14 @@ pub(all) struct OutFunctions {
   out_string : (String) -> Unit
   out_flush : () -> Unit
   out_newline : () -> Unit
-  out_spaces : (Int) -> Unit
-  out_indent : (Int) -> Unit
+  out_spaces : (Int32) -> Unit
+  out_indent : (Int32) -> Unit
 }
 
 ///|
 /// Output functions that write into [logger].
 pub fn OutFunctions::of_logger(logger : &Logger) -> OutFunctions {
-  let blanks = (n : Int) => {
+  let blanks = (n : Int32) => {
     for _ in 0..<n {
       logger.write_char(' ')
     }
@@ -111,16 +111,16 @@ pub struct Formatter {
   priv tag_stack : Array[String]
   priv mark_stack : Array[String]
   priv queue : @deque.Deque[QueueElem]
-  priv mut margin : Int
-  priv mut min_space_left : Int
-  priv mut max_indent : Int
-  priv mut space_left : Int
-  priv mut current_indent : Int
+  priv mut margin : Int32
+  priv mut min_space_left : Int32
+  priv mut max_indent : Int32
+  priv mut space_left : Int32
+  priv mut current_indent : Int32
   priv mut is_new_line : Bool
-  priv mut left_total : Int
-  priv mut right_total : Int
-  priv mut curr_depth : Int
-  priv mut max_boxes : Int
+  priv mut left_total : Int32
+  priv mut right_total : Int32
+  priv mut curr_depth : Int32
+  priv mut max_boxes : Int32
   priv mut ellipsis : String
   priv mut out : OutFunctions
   priv mut print_tags : Bool
@@ -130,7 +130,7 @@ pub struct Formatter {
 }
 
 ///|
-let infinity : Int = 1000000010
+let infinity : Int32 = 1000000010
 
 ///|
 fn sentinel() -> ScanElem {
@@ -219,7 +219,7 @@ pub fn Formatter::flush_str(self : Formatter) -> String {
 ///|
 fn Formatter::format_pp_text(
   self : Formatter,
-  size : Int,
+  size : Int32,
   text : String,
 ) -> Unit {
   self.space_left -= size
@@ -237,8 +237,8 @@ fn Formatter::format_string(self : Formatter, s : String) -> Unit {
 ///|
 fn Formatter::break_new_line(
   self : Formatter,
-  breaks : (String, Int, String),
-  width : Int,
+  breaks : (String, Int32, String),
+  width : Int32,
 ) -> Unit {
   let (before, offset, after) = breaks
   self.format_string(before)
@@ -257,14 +257,14 @@ fn Formatter::break_new_line(
 }
 
 ///|
-fn Formatter::break_line(self : Formatter, width : Int) -> Unit {
+fn Formatter::break_line(self : Formatter, width : Int32) -> Unit {
   self.break_new_line(("", 0, ""), width)
 }
 
 ///|
 fn Formatter::break_same_line(
   self : Formatter,
-  fits : (String, Int, String),
+  fits : (String, Int32, String),
 ) -> Unit {
   let (before, width, after) = fits
   self.format_string(before)
@@ -301,7 +301,7 @@ fn Formatter::skip_token(self : Formatter) -> Unit {
 ///|
 fn Formatter::format_pp_token(
   self : Formatter,
-  size : Int,
+  size : Int32,
   token : Token,
 ) -> Unit {
   match token {
@@ -435,7 +435,7 @@ fn Formatter::scan_push(self : Formatter, b : Bool, elem : QueueElem) -> Unit {
 ///|
 fn Formatter::open_box_gen(
   self : Formatter,
-  indent : Int,
+  indent : Int32,
   ty : BoxType,
 ) -> Unit {
   self.curr_depth += 1
@@ -496,7 +496,7 @@ pub fn Formatter::print_string(self : Formatter, s : String) -> Unit {
 
 ///|
 /// Prints a string that is considered to have the width [size].
-pub fn Formatter::print_as(self : Formatter, size : Int, s : String) -> Unit {
+pub fn Formatter::print_as(self : Formatter, size : Int32, s : String) -> Unit {
   if self.curr_depth < self.max_boxes {
     self.enqueue_advance({ size, token: Text(s), length: size, })
   }
@@ -510,13 +510,13 @@ pub fn Formatter::print_char(self : Formatter, c : Char) -> Unit {
 
 ///|
 /// Prints an integer.
-pub fn Formatter::print_int(self : Formatter, n : Int) -> Unit {
+pub fn Formatter::print_int(self : Formatter, n : Int32) -> Unit {
   self.print_string(n.to_string())
 }
 
 ///|
 /// Opens a compacting box with enhanced structure (`@[<b n>`).
-pub fn Formatter::open_box(self : Formatter, indent : Int) -> Unit {
+pub fn Formatter::open_box(self : Formatter, indent : Int32) -> Unit {
   self.open_box_gen(indent, Box)
 }
 
@@ -528,19 +528,19 @@ pub fn Formatter::open_hbox(self : Formatter) -> Unit {
 
 ///|
 /// Opens a vertical box: every break hint splits the line.
-pub fn Formatter::open_vbox(self : Formatter, indent : Int) -> Unit {
+pub fn Formatter::open_vbox(self : Formatter, indent : Int32) -> Unit {
   self.open_box_gen(indent, VBox)
 }
 
 ///|
 /// Opens a horizontal/vertical box.
-pub fn Formatter::open_hvbox(self : Formatter, indent : Int) -> Unit {
+pub fn Formatter::open_hvbox(self : Formatter, indent : Int32) -> Unit {
   self.open_box_gen(indent, HVBox)
 }
 
 ///|
 /// Opens a horizontal-or-vertical compacting box.
-pub fn Formatter::open_hovbox(self : Formatter, indent : Int) -> Unit {
+pub fn Formatter::open_hovbox(self : Formatter, indent : Int32) -> Unit {
   self.open_box_gen(indent, HovBox)
 }
 
@@ -588,8 +588,8 @@ pub fn Formatter::close_tag(self : Formatter) -> Unit {
 /// otherwise splits the line and adds [offset] to the indentation.
 pub fn Formatter::print_break(
   self : Formatter,
-  width : Int,
-  offset : Int,
+  width : Int32,
+  offset : Int32,
 ) -> Unit {
   self.print_custom_break(fits=("", width, ""), breaks=("", offset, ""))
 }
@@ -599,8 +599,8 @@ pub fn Formatter::print_break(
 /// otherwise (upstream `pp_print_custom_break`).
 pub fn Formatter::print_custom_break(
   self : Formatter,
-  fits~ : (String, Int, String),
-  breaks~ : (String, Int, String),
+  fits~ : (String, Int32, String),
+  breaks~ : (String, Int32, String),
 ) -> Unit {
   let (before, width, after) = fits
   if self.curr_depth < self.max_boxes {
@@ -721,12 +721,12 @@ pub fn Formatter::set_out_functions(
 
 ///|
 /// The right margin (78 by default).
-pub fn Formatter::get_margin(self : Formatter) -> Int {
+pub fn Formatter::get_margin(self : Formatter) -> Int32 {
   self.margin
 }
 
 ///|
-fn limit(n : Int) -> Int {
+fn limit(n : Int32) -> Int32 {
   if n < infinity {
     n
   } else {
@@ -735,7 +735,7 @@ fn limit(n : Int) -> Int {
 }
 
 ///|
-fn Formatter::set_min_space_left(self : Formatter, n : Int) -> Unit {
+fn Formatter::set_min_space_left(self : Formatter, n : Int32) -> Unit {
   if n >= 1 {
     let n = limit(n)
     self.min_space_left = n
@@ -746,7 +746,7 @@ fn Formatter::set_min_space_left(self : Formatter, n : Int) -> Unit {
 
 ///|
 /// Sets the maximum indentation (68 by default).
-pub fn Formatter::set_max_indent(self : Formatter, n : Int) -> Unit {
+pub fn Formatter::set_max_indent(self : Formatter, n : Int32) -> Unit {
   if n > 1 {
     self.set_min_space_left(self.margin - n)
   }
@@ -754,13 +754,13 @@ pub fn Formatter::set_max_indent(self : Formatter, n : Int) -> Unit {
 
 ///|
 /// The maximum indentation.
-pub fn Formatter::get_max_indent(self : Formatter) -> Int {
+pub fn Formatter::get_max_indent(self : Formatter) -> Int32 {
   self.max_indent
 }
 
 ///|
 /// Sets the right margin.
-pub fn Formatter::set_margin(self : Formatter, n : Int) -> Unit {
+pub fn Formatter::set_margin(self : Formatter, n : Int32) -> Unit {
   if n >= 1 {
     self.margin = limit(n)
     let new_max_indent = if self.max_indent <= self.margin {
@@ -781,7 +781,7 @@ pub fn Formatter::set_margin(self : Formatter, n : Int) -> Unit {
 
 ///|
 /// Sets the maximum number of simultaneously open boxes.
-pub fn Formatter::set_max_boxes(self : Formatter, n : Int) -> Unit {
+pub fn Formatter::set_max_boxes(self : Formatter, n : Int32) -> Unit {
   if n > 1 {
     self.max_boxes = n
   }

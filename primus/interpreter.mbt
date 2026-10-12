@@ -6,7 +6,7 @@
 /// operations are static functions taking the machine
 /// (upstream `Interpreter.Make(Machine)`).
 pub struct Interpreter {
-  priv time : Int
+  priv time : Int32
   priv addr : @types.Word
   priv curr : Pos
   priv prompts : @list.List[@types.Tid]
@@ -34,7 +34,7 @@ let interpreter_state : State[Interpreter] = State::declare_(
     time: 0,
     addr: null_addr(p),
     curr: Pos::top(p.program()),
-    prompts: @list.List::new(),
+    prompts: @list.List([]),
     last_blk: None,
     prev_blk: None,
   },
@@ -71,7 +71,7 @@ pub fn[T] Interpreter::halt(m : Machine) -> T raise {
 
 ///|
 /// Posts an interrupt (`Interpreter.interrupt`).
-pub fn Interpreter::interrupt(m : Machine, n : Int) -> Unit raise {
+pub fn Interpreter::interrupt(m : Machine, n : Int32) -> Unit raise {
   m.make(will_interrupt_stmt, n)
 }
 
@@ -102,7 +102,7 @@ pub fn Interpreter::pc_of(m : Machine, id : Id) -> @types.Word raise {
 
 ///|
 /// The number of clocks elapsed (`Interpreter.time`).
-pub fn Interpreter::time(m : Machine) -> Int {
+pub fn Interpreter::time(m : Machine) -> Int32 {
   m.get_local(interpreter_state).time
 }
 
@@ -173,7 +173,7 @@ pub fn Interpreter::unop(
 pub fn Interpreter::cast(
   m : Machine,
   t : @types.CastKind,
-  s : Int,
+  s : Int32,
   x : Value,
 ) -> Value raise {
   let r = match t.apply(s, x.value) {
@@ -197,8 +197,8 @@ pub fn Interpreter::concat(m : Machine, x : Value, y : Value) -> Value raise {
 /// width zero-extends.
 pub fn Interpreter::extract(
   m : Machine,
-  hi~ : Int,
-  lo~ : Int,
+  hi~ : Int32,
+  lo~ : Int32,
   x : Value,
 ) -> Value raise {
   let r = value(m, wrap_word(() => x.value.extract(hi~, lo~)))
@@ -207,7 +207,7 @@ pub fn Interpreter::extract(
 }
 
 ///|
-fn coerce(m : Machine, s : Int, x : Value) -> Value raise {
+fn coerce(m : Machine, s : Int32, x : Value) -> Value raise {
   if x.bitwidth() != s {
     Interpreter::extract(m, hi=s - 1, lo=0, x)
   } else {
@@ -336,7 +336,12 @@ fn succ_value(m : Machine, x : Value) -> Value raise {
 }
 
 ///|
-fn do_load(m : Machine, a : Value, e : @bitvec.Endian, s : Int) -> Value raise {
+fn do_load(
+  m : Machine,
+  a : Value,
+  e : @bitvec.Endian,
+  s : Int32,
+) -> Value raise {
   let v = load_byte(m, a)
   if s <= 8 {
     v
@@ -367,7 +372,7 @@ fn load_bits(
   m : Machine,
   a : Value,
   e : @bitvec.Endian,
-  bits : Int,
+  bits : Int32,
 ) -> Value raise {
   do_load(m, a, e, bits)
 }
@@ -377,7 +382,7 @@ fn do_store(
   m : Machine,
   a : Value,
   x : Value,
-  s : Int,
+  s : Int32,
   hd : @types.CastKind,
   tl : @types.CastKind,
 ) -> Unit raise {
@@ -396,7 +401,7 @@ fn store_bits(
   a : Value,
   x : Value,
   e : @bitvec.Endian,
-  s : Int,
+  s : Int32,
 ) -> Unit raise {
   let x = coerce(m, s, x)
   match e {
@@ -564,7 +569,7 @@ pub fn Interpreter::exp(m : Machine, x : @types.Exp) -> Value raise {
 }
 
 ///|
-fn infer_width(m : Machine, x : @types.Exp) -> Int raise {
+fn infer_width(m : Machine, x : @types.Exp) -> Int32 raise {
   match x.infer_type() {
     Ok(Imm(w)) => w
     _ =>

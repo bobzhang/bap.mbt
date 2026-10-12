@@ -19,7 +19,7 @@ priv struct Smt {
 let smt_state : Ref[Smt?] = Ref(None)
 
 ///|
-let smt_timeout : Ref[Int] = Ref(16)
+let smt_timeout : Ref[Int32] = Ref(16)
 
 ///|
 /// The global SMT context, created on first use. Raises
@@ -41,7 +41,7 @@ fn smt() -> Smt raise @z3.Z3Error {
 ///|
 /// Sets the number of milliseconds allotted to the SMT solver to find a
 /// model (the `timeout` option, 16 by default).
-pub fn set_timeout(ms : Int) -> Unit {
+pub fn set_timeout(ms : Int32) -> Unit {
   smt_timeout.val = ms
   if smt_state.val is Some(s) {
     s.solver.set_timeout(ms) catch {
@@ -161,12 +161,16 @@ fn smt_word(w : @types.Word) -> @z3.Expr raise @z3.Z3Error {
 }
 
 ///|
-fn smt_var(name : String, size : Int) -> @z3.Expr raise @z3.Z3Error {
+fn smt_var(name : String, size : Int32) -> @z3.Expr raise @z3.Z3Error {
   smt().ctx.bv_const(name, size)
 }
 
 ///|
-fn smt_extract(hi : Int, lo : Int, x : @z3.Expr) -> @z3.Expr raise @z3.Z3Error {
+fn smt_extract(
+  hi : Int32,
+  lo : Int32,
+  x : @z3.Expr,
+) -> @z3.Expr raise @z3.Z3Error {
   let xs = x.bitwidth()
   let ns = hi - lo + 1
   simpl(
@@ -199,7 +203,7 @@ fn smt_ite(
 ///|
 fn smt_cast(
   c : @types.CastKind,
-  s : Int,
+  s : Int32,
   x : @z3.Expr,
 ) -> @z3.Expr raise @z3.Z3Error {
   let old = x.bitwidth()
@@ -228,7 +232,7 @@ fn smt_cast(
 /// `SMT.formula`).
 fn smt_formula(
   x : @z3.Expr,
-  refute? : Bool = false,
+  refute~ : Bool = false,
 ) -> @z3.Expr raise @z3.Z3Error {
   let zero = smt().ctx.bv_int(0L, x.bitwidth())
   let f = zero.eq(x)

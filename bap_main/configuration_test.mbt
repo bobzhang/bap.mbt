@@ -265,7 +265,7 @@ test "configuration files are read from the configuration directories" {
 test "context: values, digests, determined futures" {
   fresh()
   let captured : Ref[@bap_main.Ctxt?] = Ref(None)
-  let depth_future : Ref[@future.Future[Int]?] = Ref(None)
+  let depth_future : Ref[@future.Future[Int32]?] = Ref(None)
   @bap_main.register_plugin("foo", provides=["analysis"], () => {
     let depth = @bap_main.Configuration::parameter(
       @bap_main.Type::int(),

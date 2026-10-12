@@ -169,7 +169,7 @@ fn Machine::can_suspend(self : Machine) -> Bool {
 fn Machine::dispatch(
   self : Machine,
   items : Array[() -> Unit raise],
-  from : Int,
+  from : Int32,
 ) -> Unit raise {
   let mark = self.deferred.length()
   for i in from..<items.length() {

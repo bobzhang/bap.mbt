@@ -348,7 +348,7 @@ pub fn Cond::all() -> Array[Cond] {
 ///|
 /// Decode the LLVM predicate immediate (`0..14`) into a condition code,
 /// as upstream `Thumb_main.cnd` does.
-pub fn Cond::of_int(code : Int) -> Cond? {
+pub fn Cond::of_int(code : Int32) -> Cond? {
   if code >= 0 && code < all_conds.length() {
     Some(all_conds[code])
   } else {
@@ -357,7 +357,7 @@ pub fn Cond::of_int(code : Int) -> Cond? {
 }
 
 ///|
-pub fn Cond::to_int(self : Cond) -> Int {
+pub fn Cond::to_int(self : Cond) -> Int32 {
   match self {
     EQ => 0
     NE => 1

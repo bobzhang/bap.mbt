@@ -1,7 +1,7 @@
 ///|
 /// Lexicographic (byte/code-unit) order of strings, as OCaml's
 /// `String.compare` (MoonBit's `String::compare` orders by length first).
-pub fn lexical_compare(a : String, b : String) -> Int {
+pub fn lexical_compare(a : String, b : String) -> Int32 {
   let n = if a.length() < b.length() { a.length() } else { b.length() }
   for i in 0..<n {
     let c = a[i].to_int() - b[i].to_int()
@@ -73,7 +73,7 @@ pub fn Words::mem(self : Words, word : String) -> Bool {
 
 ///|
 /// The number of words.
-pub fn Words::length(self : Words) -> Int {
+pub fn Words::length(self : Words) -> Int32 {
   self.items.length()
 }
 
@@ -92,7 +92,7 @@ pub fn Words::to_array(self : Words) -> Array[String] {
 ///|
 /// The maximum length of the printed representation (upstream
 /// `Words.max`).
-pub let max_printed : Int = 80
+pub let max_printed : Int32 = 80
 
 ///|
 /// OCaml's `String.escaped`: escapes quotes, backslashes, the usual control

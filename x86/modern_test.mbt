@@ -6,7 +6,7 @@
 ///|
 fn modern64(
   bytes : Bytes,
-  addr? : UInt64 = 0x400000,
+  addr~ : UInt64 = 0x400000,
 ) -> Array[@types.Stmt] raise {
   @x86.lift_modern(X8664, mc_insn("x86_64", bytes, addr~))
 }
@@ -14,7 +14,7 @@ fn modern64(
 ///|
 fn modern32(
   bytes : Bytes,
-  addr? : UInt64 = 0x8048000,
+  addr~ : UInt64 = 0x8048000,
 ) -> Array[@types.Stmt] raise {
   @x86.lift_modern(X86, mc_insn("x86", bytes, addr~))
 }
@@ -22,8 +22,8 @@ fn modern32(
 ///|
 fn mexec64(
   bytes : Bytes,
-  regs? : Array[(String, UInt64)] = [],
-  flag_bits? : Int = 0,
+  regs~ : Array[(String, UInt64)] = [],
+  flag_bits~ : Int32 = 0,
 ) -> Outcome raise {
   run(modern64(bytes), machine(X8664, regs~, flag_bits~))
 }
@@ -31,8 +31,8 @@ fn mexec64(
 ///|
 fn mexec32(
   bytes : Bytes,
-  regs? : Array[(String, UInt64)] = [],
-  flag_bits? : Int = 0,
+  regs~ : Array[(String, UInt64)] = [],
+  flag_bits~ : Int32 = 0,
 ) -> Outcome raise {
   run(modern32(bytes), machine(X86, regs~, flag_bits~))
 }

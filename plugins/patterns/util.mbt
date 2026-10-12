@@ -1,6 +1,6 @@
 ///|
 /// Lexicographic (code-unit) order of strings, as OCaml's `compare`.
-fn lexical_compare(a : String, b : String) -> Int {
+fn lexical_compare(a : String, b : String) -> Int32 {
   let n = @cmp.minimum(a.length(), b.length())
   for i in 0..<n {
     let c = a[i].to_int() - b[i].to_int()

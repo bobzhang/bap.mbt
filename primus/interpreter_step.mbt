@@ -208,7 +208,7 @@ fn step_blk_elt(
   m : Machine,
   blk : @types.Term[@types.Blk],
   pos : Pos,
-  i : Int,
+  i : Int32,
 ) -> Unit raise {
   let b = blk.payload()
   let nphis = b.phis.length()
@@ -234,7 +234,7 @@ fn step_blk_elt_body(
   m : Machine,
   blk : @types.Term[@types.Blk],
   pos : Pos,
-  i : Int,
+  i : Int32,
   epos : Pos,
 ) -> Unit raise {
   let b = blk.payload()
@@ -266,7 +266,7 @@ fn step_blk_jmp(
   m : Machine,
   blk : @types.Term[@types.Blk],
   pos : Pos,
-  i : Int,
+  i : Int32,
   constr : Constr,
 ) -> Unit raise {
   let jmps = blk.payload().jmps
@@ -291,7 +291,7 @@ fn step_blk_jmp_body(
   m : Machine,
   blk : @types.Term[@types.Blk],
   pos : Pos,
-  i : Int,
+  i : Int32,
   constr : Constr,
   jpos : Pos,
 ) -> Unit raise {

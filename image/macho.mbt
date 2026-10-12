@@ -4,7 +4,7 @@
 ///|
 /// The LLVM architecture name of a Mach-O CPU type
 /// (`Triple::getArchTypeName(MachOObjectFile::getArch(...))`).
-fn macho_llvm_arch(cputype : Int) -> String {
+fn macho_llvm_arch(cputype : Int32) -> String {
   match cputype {
     @macho.CPU_TYPE_X86 => "i386"
     @macho.CPU_TYPE_X86_64 => "x86_64"
@@ -20,7 +20,7 @@ fn macho_llvm_arch(cputype : Int) -> String {
 ///|
 /// The address size of a Mach-O CPU type: 64 for the `CPU_ARCH_ABI64`
 /// types, 32 otherwise (`arm64_32` has 32-bit addresses).
-fn macho_bits(cputype : Int) -> Int {
+fn macho_bits(cputype : Int32) -> Int32 {
   if (cputype & @macho.CPU_ARCH_ABI64) != 0 {
     64
   } else {
@@ -31,8 +31,8 @@ fn macho_bits(cputype : Int) -> Int {
 ///|
 /// The target of a Mach-O CPU type and subtype.
 fn macho_target(
-  cputype : Int,
-  cpusubtype : Int,
+  cputype : Int32,
+  cpusubtype : Int32,
   endian : @bitvec.Endian,
 ) -> @core_theory.Target {
   let base = match cputype {
@@ -60,7 +60,7 @@ fn macho_target(
 ///|
 /// The name of the host architecture of a Mach-O CPU type, as
 /// `@native_io.host_architecture` names it.
-fn macho_host_arch(cputype : Int) -> String {
+fn macho_host_arch(cputype : Int32) -> String {
   match cputype {
     @macho.CPU_TYPE_X86 => "i386"
     @macho.CPU_TYPE_X86_64 => "x86_64"
@@ -259,7 +259,7 @@ fn macho_llvm_facts(data : Bytes, m : @macho.MachO) -> Array[@ogre.Ogre[Unit]] {
   }
   let sections = m.sections()
   let symbols = @macho.symbols(data, m).unwrap_or([])
-  let symbol_name = (index : UInt) => {
+  let symbol_name = (index : UInt32) => {
     let i = index.reinterpret_as_int()
     if i >= 0 && i < symbols.length() {
       Some(symbols[i])

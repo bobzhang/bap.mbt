@@ -9,12 +9,12 @@ struct MemCase {
   // two addresses expressed as offsets from `start` (may lie outside)
   a : Int64
   b : Int64
-  words : Int
-  word_size : Int
+  words : Int32
+  word_size : Int32
 } derive(Debug)
 
 ///|
-fn gen_offset(len : Int, rs : @splitmix.RandomState) -> Int64 {
+fn gen_offset(len : Int32, rs : @splitmix.RandomState) -> Int64 {
   match rs.next_uint(limit=10) {
     // far away: the distance does not fit in 32 bits
     0 => 0x1_0000_0000L + rs.next_uint(limit=16).to_int64() - 8L
@@ -143,7 +143,7 @@ test "qc: memory cases cover inside, outside and far addresses" {
 ///|
 test "qc: create slices the input or rejects bad positions" {
   @quickcheck.check(
-    (input : (MemCase, Int, Int)) => {
+    (input : (MemCase, Int32, Int32)) => {
       let (c, pos, len) = input
       let n = c.data.length()
       let pos = pos % (n + 2)
@@ -412,8 +412,8 @@ test "qc: intersects and dominates agree with interval models" {
 
 ///|
 struct MapCase {
-  regions : Array[(Int, Int)] // (start, length) with small addresses
-  probe : Int
+  regions : Array[(Int32, Int32)] // (start, length) with small addresses
+  probe : Int32
 } derive(Debug)
 
 ///|
@@ -440,7 +440,7 @@ impl @quickcheck.Shrink for MapCase with fn shrink(c) {
 }
 
 ///|
-fn MapCase::map(self : MapCase) -> @memory.MemMap[Int] {
+fn MapCase::map(self : MapCase) -> @memory.MemMap[Int32] {
   let mut map = @memory.MemMap::empty()
   for i, r in self.regions {
     map = map.add(
@@ -488,7 +488,7 @@ test "qc: memmap queries agree with a list-of-intervals model" {
           dominating.push(i)
         }
       }
-      let ids = (xs : Array[(@memory.Memory, Int)]) => {
+      let ids = (xs : Array[(@memory.Memory, Int32)]) => {
         let out = xs.map(x => x.1)
         out.sort()
         out
@@ -638,13 +638,13 @@ test "regression: merge rejects regions 2^32 bytes apart" {
 ///|
 /// Operations on a `MemoryTrie` keyed by short byte strings.
 struct TrieCase {
-  word_size : Int
-  ops : Array[(Bool, Bytes, Int)] // (add?, key, value)
+  word_size : Int32
+  ops : Array[(Bool, Bytes, Int32)] // (add?, key, value)
   probe : Bytes
 } derive(Debug)
 
 ///|
-fn gen_trie_key(word_bytes : Int, rs : @splitmix.RandomState) -> Bytes {
+fn gen_trie_key(word_bytes : Int32, rs : @splitmix.RandomState) -> Bytes {
   let words = rs.next_uint(limit=4).reinterpret_as_int()
   Bytes::makei(words * word_bytes, _ => rs.next_uint(limit=2).to_byte())
 }
@@ -656,7 +656,7 @@ impl @quickcheck.Arbitrary for TrieCase with fn arbitrary(size, rs) {
   let count = rs
     .next_uint(limit=(size.min(16) + 1).reinterpret_as_uint())
     .reinterpret_as_int()
-  let ops : Array[(Bool, Bytes, Int)] = []
+  let ops : Array[(Bool, Bytes, Int32)] = []
   for i in 0..<count {
     let add = rs.next_uint(limit=3) != 0
     let key = if !add && !ops.is_empty() && rs.next_uint(limit=4) != 0 {
@@ -689,12 +689,12 @@ fn key_memory(key : Bytes) -> @memory.Memory {
 test "qc: MemoryTrie agrees with a map model" {
   @quickcheck.check(
     (t : TrieCase) => {
-      let trie : @memory.MemoryTrie[Int] = match
+      let trie : @memory.MemoryTrie[Int32] = match
         @memory.MemoryTrie::create(word_size=t.word_size) {
         Ok(trie) => trie
         Err(_) => return false
       }
-      let model : Map[Bytes, Int] = Map([])
+      let model : Map[Bytes, Int32] = Map([])
       for op in t.ops {
         let (add, key, value) = op
         if add {
@@ -707,7 +707,7 @@ test "qc: MemoryTrie agrees with a map model" {
       }
       let wb = t.word_size / 8
       // longest stored prefix of the probe, in words
-      let mut best : (Int, Int)? = None
+      let mut best : (Int32, Int32)? = None
       model.each((key, value) => {
         let n = key.length()
         if n <= t.probe.length() && t.probe[:n] == key[:] {
@@ -738,7 +738,7 @@ test "qc: MemoryTrie agrees with a map model" {
 /// keeps the path to a removed key, so `is_empty` (which only looked at the
 /// root) reported a trie with no bindings as non-empty.
 test "regression: a memory trie is empty again after removing its only key" {
-  let trie : @memory.MemoryTrie[Int] = @memory.MemoryTrie::r32()
+  let trie : @memory.MemoryTrie[Int32] = @memory.MemoryTrie::r32()
   let key = @memory.Memory::from_bytes(
     endian=LittleEndian,
     start=0x10UL,
@@ -778,7 +778,7 @@ test "regression: memory tries with very long keys" {
     start=0x1000UL,
     Bytes::makei(200000, i => (i % 7).to_byte()),
   )
-  let trie : @memory.MemoryTrie[Int] = @memory.MemoryTrie::r8()
+  let trie : @memory.MemoryTrie[Int32] = @memory.MemoryTrie::r8()
   trie.add(key, 1)
   assert_true(!trie.is_empty())
   assert_eq(trie.length(), 1)

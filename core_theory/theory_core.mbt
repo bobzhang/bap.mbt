@@ -127,9 +127,9 @@ pub(all) struct Core {
   /// `pred x` is `x - 1`.
   pred : (Pure) -> Pure
   /// `nsucc x n` is `x + n`.
-  nsucc : (Pure, Int) -> Pure
+  nsucc : (Pure, Int32) -> Pure
   /// `npred x n` is `x - n`.
-  npred : (Pure, Int) -> Pure
+  npred : (Pure, Int32) -> Pure
   /// `high s x` is the `size s` most significant bits of `x`.
   high : (Sort, Pure) -> Pure
   /// `low s x` is the `size s` least significant bits of `x`.
@@ -583,13 +583,13 @@ pub fn Core::pred(self : Core, x : Pure) -> Pure {
 
 ///|
 /// `nsucc x n` is `x + n`.
-pub fn Core::nsucc(self : Core, x : Pure, n : Int) -> Pure {
+pub fn Core::nsucc(self : Core, x : Pure, n : Int32) -> Pure {
   (self.nsucc)(x, n)
 }
 
 ///|
 /// `npred x n` is `x - n`.
-pub fn Core::npred(self : Core, x : Pure, n : Int) -> Pure {
+pub fn Core::npred(self : Core, x : Pure, n : Int32) -> Pure {
   (self.npred)(x, n)
 }
 

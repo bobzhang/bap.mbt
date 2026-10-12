@@ -10,7 +10,7 @@
 ///|
 /// A GPR operand of the register class of the instruction: `GPR64` for
 /// the 64-bit (`D*`) instructions, `GPR32` otherwise.
-fn reg_of(wide : Bool) -> (Int) -> Operand {
+fn reg_of(wide : Bool) -> (Int32) -> Operand {
   if wide {
     gpr64
   } else {
@@ -23,10 +23,10 @@ fn reg_of(wide : Bool) -> (Int) -> Operand {
 fn three_regs(
   name : String,
   mnemonic : String,
-  rd : Int,
-  rs : Int,
-  rt : Int,
-  wide? : Bool = false,
+  rd : Int32,
+  rs : Int32,
+  rt : Int32,
+  wide~ : Bool = false,
 ) -> Form {
   let g = reg_of(wide)
   form(name, mnemonic, [g(rd), g(rs), g(rt)])
@@ -55,8 +55,8 @@ fn memory(
 fn store_conditional_form(
   name : String,
   mnemonic : String,
-  rt : Int,
-  base : Int,
+  rt : Int32,
+  base : Int32,
   offset : Int64,
 ) -> Form {
   form(
@@ -84,9 +84,9 @@ fn branch_rr(f : Fields, name : String, mnemonic : String) -> Form {
 fn branch_r(
   name : String,
   mnemonic : String,
-  reg : Int,
+  reg : Int32,
   target : Int64,
-  kinds? : Array[@mc.Kind] = cond_branch,
+  kinds~ : Array[@mc.Kind] = cond_branch,
 ) -> Form {
   form(name, mnemonic, [gpr32(reg), imm(target)], kinds~)
 }
@@ -97,7 +97,7 @@ fn dec_shift_imm(
   name : String,
   mnemonic : String,
   f : Fields,
-  wide? : Bool = false,
+  wide~ : Bool = false,
 ) -> Form {
   let g = reg_of(wide)
   form(name, mnemonic, [g(f.rd), g(f.rt), imm(f.sa.to_int64())])
@@ -110,7 +110,7 @@ fn dec_shift_var(
   name : String,
   mnemonic : String,
   f : Fields,
-  wide? : Bool = false,
+  wide~ : Bool = false,
 ) -> Form {
   let g = reg_of(wide)
   form(name, mnemonic, [g(f.rd), g(f.rt), gpr32(f.rs)])
@@ -318,7 +318,7 @@ fn decode_special(f : Fields, arch : Arch, r6 : Bool) -> Form? {
       Some(dec_shift_var("DROTRV", "drotrv", f, wide=true))
     0x17 if wide && sa == 0 =>
       Some(dec_shift_var("DSRAV", "dsrav", f, wide=true))
-    0x18..=0x1f => decode_mul_div(f, arch, r6)
+    0x18..<=0x1f => decode_mul_div(f, arch, r6)
     0x20 if sa == 0 => Some(three_regs("ADD", "add", rd, rs, rt))
     0x21 if sa == 0 =>
       Some(with_move_alias(three_regs("ADDu", "addu", rd, rs, rt), f))
@@ -591,8 +591,8 @@ fn bit_field(
   name : String,
   mnemonic : String,
   f : Fields,
-  pos : Int,
-  size : Int,
+  pos : Int32,
+  size : Int32,
   insert~ : Bool,
   wide~ : Bool,
 ) -> Form {
@@ -793,7 +793,7 @@ fn decode_cop0(f : Fields, arch : Arch) -> Form? {
       }
       Some(form(name, mnemonic, [gpr32(rt)], layout=Text(text)))
     }
-    0x10..=0x1f =>
+    0x10..<=0x1f =>
       match f.funct {
         _ if bits(f.word, 6, 19) != 0 => None
         0x20 => Some(form("WAIT", "wait", []))
@@ -954,7 +954,7 @@ fn decode_r6_pcrel(f : Fields, arch : Arch) -> Form? {
 ///|
 /// Decode the instruction word `word` (already assembled from the bytes in
 /// the target byte order).
-fn decode_form(word : UInt, arch : Arch, r6 : Bool) -> Form? {
+fn decode_form(word : UInt32, arch : Arch, r6 : Bool) -> Form? {
   let f = fields(word)
   let wide = arch is Mips64
   let { rs, rt, .. } = f

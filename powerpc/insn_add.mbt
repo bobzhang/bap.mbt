@@ -67,14 +67,14 @@ fn add(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
 ///|
 /// `x` as a `width + 1`-bit unsigned value: the low `width` bits of a
 /// wider register, or a narrower operand extended by its sign.
-fn widen(x : RtlExp, width : Int) -> RtlExp {
+fn widen(x : RtlExp, width : Int32) -> RtlExp {
   let x = if x.width() > width { x.low(width) } else { x.cast(width, x.sign()) }
   x.unsigned().cast(width + 1, Unsigned)
 }
 
 ///|
 /// The carry out of the `width`-bit sum `a + b + c`.
-fn carry_out(width : Int, a : RtlExp, b : RtlExp, c : RtlExp) -> RtlExp {
+fn carry_out(width : Int32, a : RtlExp, b : RtlExp, c : RtlExp) -> RtlExp {
   (widen(a, width) + widen(b, width) + widen(c, width)).msb()
 }
 

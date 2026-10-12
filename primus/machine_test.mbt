@@ -1,5 +1,5 @@
 ///|
-let counter_state : @primus.State[Int] = @primus.State::declare_(
+let counter_state : @primus.State[Int32] = @primus.State::declare_(
   uuid="0f3c6f9e-2b7a-4a55-9d1e-6c2f1a7b8c90",
   name="test-counter",
   _ => 0,

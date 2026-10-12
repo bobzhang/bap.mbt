@@ -211,7 +211,7 @@ fn ssa_pop(variable : Var, stacks : Map[String, Array[Var]]) -> Unit {
 fn ssa_new_name(
   variable : Var,
   stacks : Map[String, Array[Var]],
-  counters : Map[String, Int],
+  counters : Map[String, Int32],
 ) -> Var {
   let base = variable.base()
   let key = ssa_var_key(base)
@@ -272,7 +272,7 @@ fn ssa_rename_exp(exp : Exp, stacks : Map[String, Array[Var]]) -> Exp {
 fn ssa_rename_phi_lhs(
   phi : Term[Phi],
   stacks : Map[String, Array[Var]],
-  counters : Map[String, Int],
+  counters : Map[String, Int32],
   pushed : Array[Var],
 ) -> Term[Phi] {
   let lhs = ssa_new_name(phi.phi_lhs(), stacks, counters)
@@ -284,7 +284,7 @@ fn ssa_rename_phi_lhs(
 fn ssa_rename_def(
   def : Term[Def],
   stacks : Map[String, Array[Var]],
-  counters : Map[String, Int],
+  counters : Map[String, Int32],
   pushed : Array[Var],
 ) -> Term[Def] {
   let rhs = ssa_rename_exp(def.rhs(), stacks)
@@ -368,7 +368,7 @@ fn ssa_rename_block(
   idoms : Map[Tid, Tid],
   tid : Tid,
   stacks : Map[String, Array[Var]],
-  counters : Map[String, Int],
+  counters : Map[String, Int32],
 ) -> Term[Sub] {
   let mut current = sub
   let pushed = []
@@ -418,7 +418,7 @@ fn Term::ssa_rename(
   let blocks = self.payload_value.blks.copy()
   let idoms = graph.immediate_dominators(tid_graph_start_node)
   let stacks : Map[String, Array[Var]] = Map([])
-  let counters : Map[String, Int] = Map([])
+  let counters : Map[String, Int32] = Map([])
   ssa_rename_block(
     self, graph, blocks, idoms, tid_graph_start_node, stacks, counters,
   )

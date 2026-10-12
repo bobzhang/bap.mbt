@@ -5,7 +5,7 @@
 priv enum Json {
   JString(String)
   JBool(Bool)
-  JInt(Int)
+  JInt(Int32)
   JArray(Array[Json])
   JObject(Array[(String, Json)])
 }
@@ -37,8 +37,8 @@ fn json_string(s : String) -> String {
 }
 
 ///|
-fn Json::write(self : Json, buf : StringBuilder, indent : Int) -> Unit {
-  let nl = (n : Int) => {
+fn Json::write(self : Json, buf : StringBuilder, indent : Int32) -> Unit {
+  let nl = (n : Int32) => {
     buf.write_char('\n')
     buf.write_string(String::make(2 * n, ' '))
   }
@@ -192,7 +192,7 @@ pub fn Env::render(
   self : Env,
   filename~ : String,
   root~ : String,
-  name? : String = basename(root),
+  name~ : String = basename(root),
 ) -> Array[(String, String)] {
   let files = []
   let cfg = self.cfg_to_dot()
@@ -234,7 +234,7 @@ fn dirname(path : String) -> String {
 /// index files are named after the output folder.
 pub fn store(
   project : @project.Project,
-  options? : Options = Options::new(),
+  options~ : Options = Options::new(),
   symtab? : @project.ProjectDisassemblySymtab,
   root? : String,
 ) -> Result[String, String] {

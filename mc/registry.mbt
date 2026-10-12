@@ -126,7 +126,7 @@ pub fn Registry::lift(
   self : Registry,
   ctx : Context,
   insn : Insn,
-  validate? : Bool = true,
+  validate~ : Bool = true,
 ) -> Lifted raise LiftError {
   for provider in self.providers {
     if (provider.accepts)(ctx) {

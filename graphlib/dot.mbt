@@ -110,12 +110,12 @@ fn[N, E] graph_dot_edge_attrs(
 ///|
 pub fn[N : Hash + Eq, E] Graph::to_dot(
   self : Graph[N, E],
-  name? : String = "G",
-  graph_attrs? : ArrayView[(String, String)] = [],
-  node_attrs? : (N) -> Array[(String, String)] = graph_dot_no_node_attrs,
-  edge_attrs? : (Edge[N, E]) -> Array[(String, String)] = graph_dot_no_edge_attrs,
-  string_of_node? : ((N) -> String)? = None,
-  string_of_edge? : ((Edge[N, E]) -> String)? = None,
+  name~ : String = "G",
+  graph_attrs~ : ArrayView[(String, String)] = [],
+  node_attrs~ : (N) -> Array[(String, String)] = graph_dot_no_node_attrs,
+  edge_attrs~ : (Edge[N, E]) -> Array[(String, String)] = graph_dot_no_edge_attrs,
+  string_of_node~ : ((N) -> String)? = None,
+  string_of_edge~ : ((Edge[N, E]) -> String)? = None,
 ) -> String {
   let default_names = graph_dot_default_node_names(self)
   let builder = StringBuilder()

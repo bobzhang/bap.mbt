@@ -144,9 +144,9 @@ pub fn Pattern::regexp(self : Pattern) -> String {
 /// `symbols` is a shortcut for `symbol:<name>` and each of the `sections`
 /// for `section:<name>`.
 pub fn compile_patterns(
-  symbols? : Array[String] = [],
-  sections? : Array[String] = [],
-  patterns? : Array[String] = [],
+  symbols~ : Array[String] = [],
+  sections~ : Array[String] = [],
+  patterns~ : Array[String] = [],
 ) -> Result[Array[Pattern], String] {
   let sources = []
   for s in symbols {
@@ -221,9 +221,9 @@ fn parse_address_attr(text : String) -> UInt64? {
   let mut n : UInt64 = 0
   for c in digits {
     let d = match c {
-      '0'..='9' => c.to_int() - '0'.to_int()
-      'a'..='f' => c.to_int() - 'a'.to_int() + 10
-      'A'..='F' => c.to_int() - 'A'.to_int() + 10
+      '0'..<='9' => c.to_int() - '0'.to_int()
+      'a'..<='f' => c.to_int() - 'a'.to_int() + 10
+      'A'..<='F' => c.to_int() - 'A'.to_int() + 10
       _ => return None
     }
     if d >= radix {

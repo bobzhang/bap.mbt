@@ -124,7 +124,7 @@ pub fn[T] seq_return(value : T) -> Array[T] {
 }
 
 ///|
-pub fn[T] seq_init(length : Int, f : (Int) -> T) -> Array[T] {
+pub fn[T] seq_init(length : Int32, f : (Int32) -> T) -> Array[T] {
   let out = []
   for i in 0..<length {
     out.push(f(i))
@@ -190,10 +190,10 @@ pub fn[A, B, S] seq_unfold_with(
 
 ///|
 pub fn seq_range(
-  start : Int,
-  stop : Int,
-  inclusive? : Bool = false,
-) -> Array[Int] {
+  start : Int32,
+  stop : Int32,
+  inclusive~ : Bool = false,
+) -> Array[Int32] {
   let out = []
   if inclusive {
     if start > stop {
@@ -260,7 +260,7 @@ pub fn[T] seq_is_empty(values : ArrayView[T]) -> Bool {
 }
 
 ///|
-pub fn[T] seq_length(values : ArrayView[T]) -> Int {
+pub fn[T] seq_length(values : ArrayView[T]) -> Int32 {
   values.length()
 }
 
@@ -295,7 +295,7 @@ pub fn[T] seq_next(values : ArrayView[T]) -> (T, Array[T])? {
 }
 
 ///|
-pub fn[T] seq_nth(values : ArrayView[T], index : Int) -> T? {
+pub fn[T] seq_nth(values : ArrayView[T], index : Int32) -> T? {
   if index < 0 {
     None
   } else {
@@ -309,7 +309,7 @@ pub fn[T] seq_last(values : ArrayView[T]) -> T? {
 }
 
 ///|
-pub fn[T] seq_take(values : ArrayView[T], n : Int) -> Array[T] {
+pub fn[T] seq_take(values : ArrayView[T], n : Int32) -> Array[T] {
   let limit = if n <= 0 {
     0
   } else if n > values.length() {
@@ -325,7 +325,7 @@ pub fn[T] seq_take(values : ArrayView[T], n : Int) -> Array[T] {
 }
 
 ///|
-pub fn[T] seq_drop(values : ArrayView[T], n : Int) -> Array[T] {
+pub fn[T] seq_drop(values : ArrayView[T], n : Int32) -> Array[T] {
   let start = if n <= 0 {
     0
   } else if n > values.length() {
@@ -341,12 +341,12 @@ pub fn[T] seq_drop(values : ArrayView[T], n : Int) -> Array[T] {
 }
 
 ///|
-pub fn[T] seq_drop_eagerly(values : ArrayView[T], n : Int) -> Array[T] {
+pub fn[T] seq_drop_eagerly(values : ArrayView[T], n : Int32) -> Array[T] {
   seq_drop(values, n)
 }
 
 ///|
-pub fn[T] seq_split_n(values : ArrayView[T], n : Int) -> (Array[T], Array[T]) {
+pub fn[T] seq_split_n(values : ArrayView[T], n : Int32) -> (Array[T], Array[T]) {
   (seq_take(values, n), seq_drop(values, n))
 }
 
@@ -381,7 +381,7 @@ pub fn[A, B] seq_map(values : ArrayView[A], f : (A) -> B) -> Array[B] {
 }
 
 ///|
-pub fn[A, B] seq_mapi(values : ArrayView[A], f : (Int, A) -> B) -> Array[B] {
+pub fn[A, B] seq_mapi(values : ArrayView[A], f : (Int32, A) -> B) -> Array[B] {
   Array::makei(values.length(), i => f(i, values[i]))
 }
 
@@ -400,7 +400,7 @@ pub fn[A, B] seq_filter_map(values : ArrayView[A], f : (A) -> B?) -> Array[B] {
 ///|
 pub fn[A, B] seq_filter_mapi(
   values : ArrayView[A],
-  f : (Int, A) -> B?,
+  f : (Int32, A) -> B?,
 ) -> Array[B] {
   let out = []
   for i, value in values {
@@ -441,7 +441,7 @@ pub fn[A, B] seq_concat_map(
 ///|
 pub fn[A, B] seq_concat_mapi(
   values : ArrayView[A],
-  f : (Int, A) -> Array[B],
+  f : (Int32, A) -> Array[B],
 ) -> Array[B] {
   let out = []
   for i, value in values {
@@ -475,7 +475,7 @@ pub fn[A, B] seq_fold(values : ArrayView[A], init : B, f : (B, A) -> B) -> B {
 ///|
 fn[A, S, R] seq_delayed_fold_loop(
   values : ArrayView[A],
-  index : Int,
+  index : Int32,
   acc : S,
   f : (S, A, (S) -> R) -> R,
   finish : (S) -> R,
@@ -503,7 +503,7 @@ pub fn[A, S, R] seq_delayed_fold(
 pub fn[A, B] seq_foldi(
   values : ArrayView[A],
   init : B,
-  f : (Int, B, A) -> B,
+  f : (Int32, B, A) -> B,
 ) -> B {
   let mut acc = init
   for i, value in values {
@@ -520,7 +520,7 @@ pub fn[T] seq_iter(values : ArrayView[T], f : (T) -> Unit) -> Unit {
 }
 
 ///|
-pub fn[T] seq_iteri(values : ArrayView[T], f : (Int, T) -> Unit) -> Unit {
+pub fn[T] seq_iteri(values : ArrayView[T], f : (Int32, T) -> Unit) -> Unit {
   for i, value in values {
     f(i, value)
   }
@@ -598,10 +598,10 @@ pub fn[T] seq_to_list_rev(values : ArrayView[T]) -> @list.List[T] {
 
 ///|
 pub fn[A, B] seq_compare(
-  compare : (A, B) -> Int,
+  compare : (A, B) -> Int32,
   left : ArrayView[A],
   right : ArrayView[B],
-) -> Int {
+) -> Int32 {
   let limit = left.length().min(right.length())
   for i in 0..<limit {
     let order = compare(left[i], right[i])
@@ -621,7 +621,7 @@ pub fn[A, B] seq_compare(
 ///|
 pub fn[T : Printable] seq_render(
   values : ArrayView[T],
-  max? : Int = -1,
+  max~ : Int32 = -1,
 ) -> String {
   let out = StringBuilder()
   out.write_string("{")

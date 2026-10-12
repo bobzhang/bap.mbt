@@ -1,5 +1,5 @@
 ///|
-fn wb_var(name : String, width : Int) -> Exp raise @mc.LiftError {
+fn wb_var(name : String, width : Int32) -> Exp raise @mc.LiftError {
   Exp::of_var(@types.Var::new(name~, typ=Imm(width)))
 }
 

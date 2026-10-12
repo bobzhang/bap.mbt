@@ -72,7 +72,7 @@ fn hex(addr : UInt64) -> String {
 /// and addresses with several names are reported and skipped.
 pub fn build_functions(
   entries : Array[(String, UInt64)],
-  report? : (String) -> Unit = message => {
+  report~ : (String) -> Unit = message => {
     @main_event.message(MainLogError, section=name, message~)
   },
 ) -> Map[UInt64, String] {
@@ -145,7 +145,7 @@ pub fn select_files(
   path : String,
   files : Array[String],
   when_matches? : String?,
-  fs? : @bap_main.FileSystem = @bap_main.file_system(),
+  fs~ : @bap_main.FileSystem = @bap_main.file_system(),
 ) -> Array[String] {
   let always_matches = files.length() == 1 && when_matches is None
   let matches = (file : String) => {
@@ -183,7 +183,7 @@ pub fn collect(
   path : String,
   files : Array[String],
   when_matches? : String?,
-  fs? : @bap_main.FileSystem = @bap_main.file_system(),
+  fs~ : @bap_main.FileSystem = @bap_main.file_system(),
   report? : (String) -> Unit,
 ) -> Result[Map[UInt64, String], String] {
   let entries = []
@@ -238,7 +238,7 @@ pub fn register(
   files~ : Array[String],
   when_matches? : String?,
   path? : String,
-  fs? : @bap_main.FileSystem = @bap_main.file_system(),
+  fs~ : @bap_main.FileSystem = @bap_main.file_system(),
 ) -> Result[Bool, String] {
   if files.is_empty() {
     return Ok(false)

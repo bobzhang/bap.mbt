@@ -149,8 +149,8 @@ pub fn search(
   file : String,
   root? : String,
   ldconfig? : LdconfigCache,
-  paths? : Array[String] = [],
-  fs? : @bap_main.FileSystem = @bap_main.file_system(),
+  paths~ : Array[String] = [],
+  fs~ : @bap_main.FileSystem = @bap_main.file_system(),
 ) -> String? {
   let file = match root {
     // `Filename.concat root file` yields a doubled separator; it is
@@ -201,7 +201,7 @@ fn load_image(
 /// Loads the dependency information of an image file (`Unit.of_image`).
 pub fn of_image(
   path : String,
-  fs? : @bap_main.FileSystem = @bap_main.file_system(),
+  fs~ : @bap_main.FileSystem = @bap_main.file_system(),
 ) -> DependencyInfo {
   match (fs.read_file)(path) {
     None => {
@@ -236,10 +236,10 @@ pub fn load_unit(
   unit_name : String,
   root? : String,
   ldconfig? : LdconfigCache,
-  paths? : Array[String] = [],
-  context? : String = "",
+  paths~ : Array[String] = [],
+  context~ : String = "",
   cache? : DependencyCache,
-  fs? : @bap_main.FileSystem = @bap_main.file_system(),
+  fs~ : @bap_main.FileSystem = @bap_main.file_system(),
 ) -> DependencyInfo {
   match search(unit_name, root?, ldconfig?, paths~, fs~) {
     None => {
@@ -279,13 +279,13 @@ pub(all) struct DependencyState {
 /// library dependencies (`State.load`).
 pub fn DependencyState::load(
   path : String,
-  recursive? : Bool = false,
+  recursive~ : Bool = false,
   root? : String,
   ldconfig? : LdconfigCache,
-  paths? : Array[String] = [],
-  context? : String = "",
+  paths~ : Array[String] = [],
+  context~ : String = "",
   cache? : DependencyCache,
-  fs? : @bap_main.FileSystem = @bap_main.file_system(),
+  fs~ : @bap_main.FileSystem = @bap_main.file_system(),
 ) -> DependencyState {
   let load = (unit_name : String) => {
     load_unit(unit_name, root?, ldconfig?, paths~, context~, cache?, fs~)

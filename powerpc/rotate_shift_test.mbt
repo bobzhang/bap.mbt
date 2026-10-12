@@ -2,7 +2,7 @@
 // `powerpc_shift_tests.ml`.
 
 ///|
-fn rotl64(x : UInt64, sh : Int) -> UInt64 {
+fn rotl64(x : UInt64, sh : Int32) -> UInt64 {
   if sh == 0 {
     x
   } else {
@@ -13,7 +13,7 @@ fn rotl64(x : UInt64, sh : Int) -> UInt64 {
 ///|
 /// Upstream `circ_shift32`: rotate the low word (replicated into both
 /// halves on 64-bit targets).
-fn circ_shift32(a : @powerpc.AddrSize, x : UInt64, sh : Int) -> UInt64 {
+fn circ_shift32(a : @powerpc.AddrSize, x : UInt64, sh : Int32) -> UInt64 {
   if sh == 0 {
     x
   } else {
@@ -26,7 +26,7 @@ fn circ_shift32(a : @powerpc.AddrSize, x : UInt64, sh : Int) -> UInt64 {
 /// `MASK(start, stop)` (bits numbered from the most significant one),
 /// wrapping around when `start > stop`: ones in `0..stop` and `start..63`
 /// (upstream's `mask64` leaves out bits `start` and `stop`).
-fn mask64(start : Int, stop : Int) -> UInt64 {
+fn mask64(start : Int32, stop : Int32) -> UInt64 {
   let mut m = 0UL
   for i in 0..<64 {
     let set = if start <= stop {
@@ -42,12 +42,12 @@ fn mask64(start : Int, stop : Int) -> UInt64 {
 }
 
 ///|
-fn mask32(a : @powerpc.AddrSize, start : Int, stop : Int) -> UInt64 {
+fn mask32(a : @powerpc.AddrSize, start : Int32, stop : Int32) -> UInt64 {
   trunc(a, mask64(start + 32, stop + 32))
 }
 
 ///|
-let word_rotate_cases : Array[(Int, Int, Int)] = [
+let word_rotate_cases : Array[(Int32, Int32, Int32)] = [
   (3, 5, 10),
   (3, 10, 5),
   (3, 0, 5),
@@ -59,12 +59,12 @@ let word_rotate_cases : Array[(Int, Int, Int)] = [
 ///|
 /// Upstream `M [opcode; 9; 10; sh; mb; me; rc]` (`rlw* r10, r9, ...`).
 fn m_word(
-  opcode : Int,
-  sh : Int,
-  mb : Int,
-  me : Int,
-  rc? : Bool = false,
-) -> UInt {
+  opcode : Int32,
+  sh : Int32,
+  mb : Int32,
+  me : Int32,
+  rc~ : Bool = false,
+) -> UInt32 {
   enc([
     (opcode, 6),
     (9, 5),
@@ -78,13 +78,13 @@ fn m_word(
 
 ///|
 /// The split 6-bit mask field of the MD and MDS forms (upstream `swap_msb`).
-fn swap_msb(n : Int) -> Int {
+fn swap_msb(n : Int32) -> Int32 {
   ((n & 31) << 1) | (n >> 5)
 }
 
 ///|
 /// Upstream `MD [30; 9; 10; sh0_4; swap_msb n; xo; sh5; rc]`.
-fn md_word(xo : Int, sh : Int, n : Int, rc? : Bool = false) -> UInt {
+fn md_word(xo : Int32, sh : Int32, n : Int32, rc~ : Bool = false) -> UInt32 {
   enc([
     (30, 6),
     (9, 5),
@@ -99,7 +99,7 @@ fn md_word(xo : Int, sh : Int, n : Int, rc? : Bool = false) -> UInt {
 
 ///|
 /// Upstream `MDS [30; 9; 10; 11; swap_msb n; xo; rc]`.
-fn mds_word(xo : Int, n : Int, rc? : Bool = false) -> UInt {
+fn mds_word(xo : Int32, n : Int32, rc~ : Bool = false) -> UInt32 {
   enc([
     (30, 6),
     (9, 5),
@@ -113,13 +113,13 @@ fn mds_word(xo : Int, n : Int, rc? : Bool = false) -> UInt {
 
 ///|
 /// Upstream `X [31; 9; 10; rb; xo; rc]`.
-fn shift_word(xo : Int, rb? : Int = 11, rc? : Bool = false) -> UInt {
+fn shift_word(xo : Int32, rb~ : Int32 = 11, rc~ : Bool = false) -> UInt32 {
   enc([(31, 6), (9, 5), (10, 5), (rb, 5), (xo, 10), (rc.to_int(), 1)])
 }
 
 ///|
 /// Upstream `XS [31; 9; 10; sh0_4; 413; sh5; rc]`.
-fn sradi_word(sh : Int, rc? : Bool = false) -> UInt {
+fn sradi_word(sh : Int32, rc~ : Bool = false) -> UInt32 {
   enc([
     (31, 6),
     (9, 5),
@@ -210,7 +210,7 @@ test "rlwinm. and friends set CR0" {
 let x_rot : UInt64 = 0xAABBCCDD_4242FFAA
 
 ///|
-let dword_rotate_cases : Array[(Int, Int)] = [
+let dword_rotate_cases : Array[(Int32, Int32)] = [
   (4, 25),
   (4, 55),
   (4, 0),
@@ -328,7 +328,7 @@ test "slw and srw" {
 ///|
 /// Arithmetic shift of the low word of `x`, sign-extended to the register
 /// width.
-fn sra32(a : @powerpc.AddrSize, x : UInt64, sh : Int) -> UInt64 {
+fn sra32(a : @powerpc.AddrSize, x : UInt64, sh : Int32) -> UInt64 {
   let w = x.to_int()
   let shifted = if sh >= 32 { if w < 0 { -1 } else { 0 } } else { w >> sh }
   trunc(a, shifted.to_int64().reinterpret_as_uint64())
@@ -336,7 +336,7 @@ fn sra32(a : @powerpc.AddrSize, x : UInt64, sh : Int) -> UInt64 {
 
 ///|
 test "srawi" {
-  let cases : Array[(Int, UInt64, UInt64)] = [
+  let cases : Array[(Int32, UInt64, UInt64)] = [
     (4, 0xFFFFFFFF_0ABBCCDD, 0),
     (4, 0xFFFFFFFF_0ABBCCD0, 0),
     (4, 0x00000000_8ABBCCD0, 0),
@@ -362,7 +362,7 @@ test "srawi" {
 
 ///|
 test "sraw" {
-  let cases : Array[(Int, UInt64, UInt64)] = [
+  let cases : Array[(Int32, UInt64, UInt64)] = [
     (4, 0xFFFFFFFF_0ABBCCDD, 0),
     (32, 0xFFFFFFFF_0ABBCCDD, 0),
     (4, 0xFFFFFFFF_8ABBCCD0, 0),
@@ -432,7 +432,7 @@ test "sld and srd" {
 
 ///|
 /// 64-bit arithmetic shift with the carry flag of `srad`/`sradi`.
-fn sra64(x : UInt64, sh : Int) -> (UInt64, UInt64) {
+fn sra64(x : UInt64, sh : Int32) -> (UInt64, UInt64) {
   let s = x.reinterpret_as_int64()
   let shifted = if sh >= 64 { if s < 0 { -1L } else { 0L } } else { s >> sh }
   let lost = if sh >= 64 { x } else { x & ((1UL << sh) - 1) }
@@ -442,7 +442,7 @@ fn sra64(x : UInt64, sh : Int) -> (UInt64, UInt64) {
 
 ///|
 test "sradi and srad" {
-  let cases : Array[(Int, UInt64)] = [
+  let cases : Array[(Int32, UInt64)] = [
     (4, 0x8ABCDE42_AABBCCD0),
     (4, 0x8ABCDE42_AABBCCDD),
     (42, 0x8ABCDE42_AABBCCDD),

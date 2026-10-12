@@ -17,8 +17,8 @@ fn[T] catch_malformed(f : () -> T raise Malformed) -> Result[T, String] {
 ///|
 fn check(
   data : BytesView,
-  offset : Int,
-  bytes : Int,
+  offset : Int32,
+  bytes : Int32,
   what : String,
 ) -> Unit raise Malformed {
   if offset < 0 || bytes < 0 || offset > data.length() - bytes {
@@ -28,7 +28,11 @@ fn check(
 
 ///|
 /// A little-endian unsigned integer of `bytes` bytes at `offset`.
-fn read(data : BytesView, offset : Int, bytes : Int) -> UInt64 raise Malformed {
+fn read(
+  data : BytesView,
+  offset : Int32,
+  bytes : Int32,
+) -> UInt64 raise Malformed {
   check(data, offset, bytes, "PE/COFF field")
   let mut value = 0UL
   for i in 0..<bytes {
@@ -38,22 +42,22 @@ fn read(data : BytesView, offset : Int, bytes : Int) -> UInt64 raise Malformed {
 }
 
 ///|
-fn u8(data : BytesView, offset : Int) -> Int raise Malformed {
+fn u8(data : BytesView, offset : Int32) -> Int32 raise Malformed {
   read(data, offset, 1).to_int()
 }
 
 ///|
-fn u16(data : BytesView, offset : Int) -> Int raise Malformed {
+fn u16(data : BytesView, offset : Int32) -> Int32 raise Malformed {
   read(data, offset, 2).to_int()
 }
 
 ///|
-fn u32(data : BytesView, offset : Int) -> UInt raise Malformed {
+fn u32(data : BytesView, offset : Int32) -> UInt32 raise Malformed {
   read(data, offset, 4).to_uint()
 }
 
 ///|
-fn u64(data : BytesView, offset : Int) -> UInt64 raise Malformed {
+fn u64(data : BytesView, offset : Int32) -> UInt64 raise Malformed {
   read(data, offset, 8)
 }
 
@@ -69,8 +73,8 @@ fn decode_name(bytes : BytesView) -> String {
 /// A null-padded name of at most `size` bytes.
 fn fixed_name(
   data : BytesView,
-  offset : Int,
-  size : Int,
+  offset : Int32,
+  size : Int32,
 ) -> String raise Malformed {
   check(data, offset, size, "PE/COFF name")
   let mut stop = offset
@@ -82,7 +86,7 @@ fn fixed_name(
 
 ///|
 /// A null-terminated string at `offset`.
-fn cstring(data : BytesView, offset : Int) -> String raise Malformed {
+fn cstring(data : BytesView, offset : Int32) -> String raise Malformed {
   if offset < 0 || offset >= data.length() {
     raise Malformed("PE/COFF string offset is out of bounds")
   }
@@ -96,7 +100,7 @@ fn cstring(data : BytesView, offset : Int) -> String raise Malformed {
 ///|
 /// The offset of the PE signature (`e_lfanew`) if `data` is a PE image:
 /// an `MZ` DOS header whose `e_lfanew` points at `PE\0\0`.
-fn pe_signature(data : BytesView) -> Int? {
+fn pe_signature(data : BytesView) -> Int32? {
   if data.length() < 0x40 || data[0] != b'M' || data[1] != b'Z' {
     return None
   }
@@ -123,7 +127,7 @@ pub fn is_pe(data : BytesView) -> Bool {
 ///|
 /// The machines whose COFF object files are recognized by their first
 /// bytes (as `llvm::identify_magic` does).
-fn is_object_machine(machine : Int) -> Bool {
+fn is_object_machine(machine : Int32) -> Bool {
   match machine {
     IMAGE_FILE_MACHINE_I386
     | IMAGE_FILE_MACHINE_AMD64
@@ -166,7 +170,10 @@ pub fn is_coff(data : BytesView) -> Bool {
 }
 
 ///|
-fn parse_file_header(data : BytesView, off : Int) -> FileHeader raise Malformed {
+fn parse_file_header(
+  data : BytesView,
+  off : Int32,
+) -> FileHeader raise Malformed {
   check(data, off, 20, "COFF file header")
   {
     machine: u16(data, off),
@@ -182,8 +189,8 @@ fn parse_file_header(data : BytesView, off : Int) -> FileHeader raise Malformed 
 ///|
 fn parse_optional_header(
   data : BytesView,
-  off : Int,
-  size : Int,
+  off : Int32,
+  size : Int32,
 ) -> OptionalHeader raise Malformed {
   check(data, off, size, "PE optional header")
   let magic = u16(data, off)
@@ -199,7 +206,7 @@ fn parse_optional_header(
   // the fields after `base_of_code` are shifted by 4 in PE32+ (no
   // `base_of_data`, 8-byte image base) and the four stack/heap sizes are
   // 8 bytes wide
-  let word = (o : Int) => {
+  let word = (o : Int32) => {
     if plus {
       u64(data, off + o)
     } else {
@@ -265,7 +272,7 @@ fn parse_optional_header(
 ///|
 fn parse_section_header(
   data : BytesView,
-  off : Int,
+  off : Int32,
 ) -> SectionHeader raise Malformed {
   check(data, off, 40, "COFF section header")
   {
@@ -350,7 +357,7 @@ pub fn Coff::is_pe32_plus(self : Coff) -> Bool {
 ///|
 /// The number of bytes of an address: 8 for PE32+ and 64-bit object
 /// machines, 4 otherwise.
-pub fn Coff::bytes_in_address(self : Coff) -> Int {
+pub fn Coff::bytes_in_address(self : Coff) -> Int32 {
   match self.optional_header {
     Some(h) => if h.magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC { 8 } else { 4 }
     None =>
@@ -363,7 +370,7 @@ pub fn Coff::bytes_in_address(self : Coff) -> Int {
 
 ///|
 /// The data directory `index`, if present and non-empty.
-pub fn Coff::data_directory(self : Coff, index : Int) -> DataDirectory? {
+pub fn Coff::data_directory(self : Coff, index : Int32) -> DataDirectory? {
   match self.optional_header {
     Some(h) =>
       match h.data_directories.get(index) {
@@ -377,7 +384,7 @@ pub fn Coff::data_directory(self : Coff, index : Int) -> DataDirectory? {
 ///|
 /// The file offset of a relative virtual address, if a section (or the
 /// headers) maps it.
-pub fn Coff::rva_to_offset(self : Coff, rva : UInt) -> Int? {
+pub fn Coff::rva_to_offset(self : Coff, rva : UInt32) -> Int32? {
   for s in self.sections {
     let size = if s.virtual_size > s.size_of_raw_data {
       s.virtual_size
@@ -402,7 +409,7 @@ pub fn Coff::rva_to_offset(self : Coff, rva : UInt) -> Int? {
 ///|
 /// The section whose virtual range (`VirtualAddress`, `VirtualSize`)
 /// contains the RVA.
-pub fn Coff::section_of_rva(self : Coff, rva : UInt) -> SectionHeader? {
+pub fn Coff::section_of_rva(self : Coff, rva : UInt32) -> SectionHeader? {
   for s in self.sections {
     if s.virtual_address <= rva && rva - s.virtual_address < s.virtual_size {
       return Some(s)
@@ -413,7 +420,7 @@ pub fn Coff::section_of_rva(self : Coff, rva : UInt) -> SectionHeader? {
 
 ///|
 /// The offset of the string table (right after the symbol table).
-fn Coff::string_table_offset(self : Coff) -> Int {
+fn Coff::string_table_offset(self : Coff) -> Int32 {
   (self.header.pointer_to_symbol_table + self.header.number_of_symbols * 18).reinterpret_as_int()
 }
 
@@ -421,7 +428,7 @@ fn Coff::string_table_offset(self : Coff) -> Int {
 fn string_table_entry(
   data : Bytes,
   coff : Coff,
-  offset : Int,
+  offset : Int32,
 ) -> String raise Malformed {
   let table = coff.string_table_offset()
   let size = u32(data, table).reinterpret_as_int()
@@ -453,7 +460,7 @@ pub fn section_name(
 }
 
 ///|
-fn parse_decimal(text : String) -> Int? {
+fn parse_decimal(text : String) -> Int32? {
   if text.is_empty() {
     return None
   }
@@ -562,7 +569,11 @@ pub fn relocations(
 }
 
 ///|
-fn rva_string(data : Bytes, coff : Coff, rva : UInt) -> String raise Malformed {
+fn rva_string(
+  data : Bytes,
+  coff : Coff,
+  rva : UInt32,
+) -> String raise Malformed {
   match coff.rva_to_offset(rva) {
     Some(off) => cstring(data, off)
     None => raise Malformed("PE RVA \{rva} is not mapped")
@@ -570,7 +581,7 @@ fn rva_string(data : Bytes, coff : Coff, rva : UInt) -> String raise Malformed {
 }
 
 ///|
-fn rva_offset(coff : Coff, rva : UInt) -> Int raise Malformed {
+fn rva_offset(coff : Coff, rva : UInt32) -> Int32 raise Malformed {
   match coff.rva_to_offset(rva) {
     Some(off) => off
     None => raise Malformed("PE RVA \{rva} is not mapped")
@@ -579,7 +590,7 @@ fn rva_offset(coff : Coff, rva : UInt) -> Int raise Malformed {
 
 ///|
 /// The largest number of import descriptors or thunks that are read.
-let max_table_entries : Int = 1 << 20
+let max_table_entries : Int32 = 1 << 20
 
 ///|
 fn imports_exn(data : Bytes, coff : Coff) -> Array[Import] raise Malformed {

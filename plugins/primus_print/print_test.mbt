@@ -6,14 +6,14 @@ fn project(subs : Array[@types.Term[@types.Sub]]) -> @project.Project {
 }
 
 ///|
-let event_a : (@primus.Observation[Int], @primus.Statement[Int]) = @primus.Observation::provide(
+let event_a : (@primus.Observation[Int32], @primus.Statement[Int32]) = @primus.Observation::provide(
   "print-a",
   pkg="test",
   inspect=x => Atom(x.to_string()),
 )
 
 ///|
-let event_b : (@primus.Observation[Int], @primus.Statement[Int]) = @primus.Observation::provide(
+let event_b : (@primus.Observation[Int32], @primus.Statement[Int32]) = @primus.Observation::provide(
   "print-b",
   pkg="test",
   inspect=x => Atom(x.to_string()),

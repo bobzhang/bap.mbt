@@ -9,13 +9,13 @@
 /// recovered without any unsafe cast. Every key has a unique `uid`, which
 /// is the record index.
 priv struct Key[T] {
-  uid : Int
+  uid : Int32
   name : Name
   cell : Ref[T?]
 }
 
 ///|
-let key_counter : Ref[Int] = { val: 0, }
+let key_counter : Ref[Int32] = { val: 0, }
 
 ///|
 fn[T] Key::fresh(name : Name) -> Key[T] {
@@ -34,7 +34,7 @@ priv struct Entry {
 /// The domain operations of a field (upstream `Record.vtable` plus the
 /// persistence `slot_io`), closed over the field's typed key.
 priv struct EntryOps {
-  uid : Int
+  uid : Int32
   name : Name
   order : (Entry, Entry) -> PartialOrder
   join : (Entry, Entry) -> Result[() -> Unit, String]
@@ -94,7 +94,7 @@ fn[T] entry_ops(
 /// A heterogeneous record of slot values (`Record.t`), an immutable map
 /// from key uids to type-erased fields.
 priv struct Record {
-  fields : @sorted_map.SortedMap[Int, Entry]
+  fields : @sorted_map.SortedMap[Int32, Entry]
 }
 
 ///|

@@ -1,17 +1,17 @@
 ///|
-let fresh_label_counter : Ref[Int] = Ref(0)
+let fresh_label_counter : Ref[Int32] = Ref(0)
 
 ///|
-let interned_label_ids : Map[String, Int] = Map([])
+let interned_label_ids : Map[String, Int32] = Map([])
 
 ///|
 struct Label {
-  id : Int
+  id : Int32
   target_value : Target?
   unit_value : ProgramUnit?
   addr_value : @types.Word?
   name_value : String?
-  ivec_value : Int?
+  ivec_value : Int32?
   encoding_value : Language?
   semantics_value : Semantics?
   aliases_value : Array[String]
@@ -21,13 +21,13 @@ struct Label {
 }
 
 ///|
-fn next_label_id() -> Int {
+fn next_label_id() -> Int32 {
   fresh_label_counter.val = fresh_label_counter.val + 1
   fresh_label_counter.val
 }
 
 ///|
-fn ensure_label_counter_at_least(id : Int) -> Unit {
+fn ensure_label_counter_at_least(id : Int32) -> Unit {
   if fresh_label_counter.val < id {
     fresh_label_counter.val = id
   }
@@ -52,7 +52,7 @@ fn interned_label_id(
   pkg : String,
   value : String,
   target? : Target,
-) -> Int {
+) -> Int32 {
   let key = "\{kind}|\{pkg}|\{value}|\{label_target_key(target)}"
   match interned_label_ids.get(key) {
     Some(id) => id
@@ -100,12 +100,12 @@ fn empty_possible_label_names() -> @knowledge.Opinions[String?] {
 
 ///|
 fn Label::make(
-  id? : Int,
+  id? : Int32,
   target? : Target,
   unit? : ProgramUnit,
   addr? : @types.Word,
   name? : String,
-  ivec? : Int,
+  ivec? : Int32,
   encoding? : Language,
   semantics? : Semantics,
   aliases? : Array[String],
@@ -193,7 +193,7 @@ pub fn Label::for_addr(
 }
 
 ///|
-pub fn Label::for_ivec(ivec : Int, target? : Target, pkg? : String) -> Label {
+pub fn Label::for_ivec(ivec : Int32, target? : Target, pkg? : String) -> Label {
   let label_pkg = label_package(pkg?)
   Label::make(
     id=interned_label_id("ivec", label_pkg, ivec.to_string(), target?),
@@ -239,20 +239,20 @@ pub fn Label::with_semantics(self : Label, semantics : Semantics) -> Label {
 }
 
 ///|
-pub fn Label::with_valid(self : Label, is_valid? : Bool = true) -> Label {
+pub fn Label::with_valid(self : Label, is_valid~ : Bool = true) -> Label {
   { ..self, valid_flag: is_valid, }
 }
 
 ///|
 pub fn Label::with_subroutine(
   self : Label,
-  is_subroutine? : Bool = true,
+  is_subroutine~ : Bool = true,
 ) -> Label {
   { ..self, subroutine_flag: is_subroutine, }
 }
 
 ///|
-pub fn Label::id(self : Label) -> Int {
+pub fn Label::id(self : Label) -> Int32 {
   self.id
 }
 
@@ -262,7 +262,7 @@ pub fn Label::same(self : Label, other : Label) -> Bool {
 }
 
 ///|
-pub fn Label::compare(self : Label, other : Label) -> Int {
+pub fn Label::compare(self : Label, other : Label) -> Int32 {
   self.id.compare(other.id)
 }
 
@@ -306,7 +306,7 @@ pub fn Label::possible_name_opinions(
 }
 
 ///|
-pub fn Label::ivec(self : Label) -> Int? {
+pub fn Label::ivec(self : Label) -> Int32? {
   self.ivec_value
 }
 

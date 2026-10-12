@@ -19,7 +19,7 @@ fn x86_legacy_register(name : String) -> ProjectInstructionOperand {
 
 ///|
 /// The accumulator of width `width`.
-fn x86_legacy_accumulator(width : Int) -> ProjectInstructionOperand {
+fn x86_legacy_accumulator(width : Int32) -> ProjectInstructionOperand {
   x86_legacy_register(
     match width {
       8 => "AL"
@@ -32,7 +32,7 @@ fn x86_legacy_accumulator(width : Int) -> ProjectInstructionOperand {
 
 ///|
 /// The width encoded in an LLVM opcode name after `prefix` (`ADD32rr`).
-fn x86_legacy_width(name : String, prefix : String) -> Int {
+fn x86_legacy_width(name : String, prefix : String) -> Int32 {
   if !name.has_prefix(prefix) {
     return 0
   }
@@ -52,7 +52,7 @@ fn x86_legacy_width(name : String, prefix : String) -> Int {
 
 ///|
 /// The last repeat prefix (0xF2 or 0xF3) before the opcode, or 0.
-fn x86_legacy_repeat_prefix(bytes : Bytes, mode64 : Bool) -> Int {
+fn x86_legacy_repeat_prefix(bytes : Bytes, mode64 : Bool) -> Int32 {
   let mut rep = 0
   for byte in bytes {
     let b = byte.to_int()
@@ -104,7 +104,7 @@ fn ProjectDisassemblyInstruction::x86_legacy_form(
   let name = self.name()
   let ops = self.operands()
   let n = ops.length()
-  let pick = (indices : Array[Int]) => {
+  let pick = (indices : Array[Int32]) => {
     let out = []
     for i in indices {
       match ops.get(i) {
@@ -114,7 +114,9 @@ fn ProjectDisassemblyInstruction::x86_legacy_form(
     }
     out
   }
-  let range = (from : Int, count : Int) => Array::makei(count, k => from + k)
+  let range = (from : Int32, count : Int32) => {
+    Array::makei(count, k => from + k)
+  }
   let mode_suffix = if mode64 { "_64" } else { "" }
   // absolute target of a relative branch
   let absolute = () => {
@@ -129,7 +131,7 @@ fn ProjectDisassemblyInstruction::x86_legacy_form(
       _ => None
     }
   }
-  let condition = (index : Int) => {
+  let condition = (index : Int32) => {
     match ops.get(index) {
       Some(ProjectImmediateOperand(cc)) if cc >= 0L && cc < 16L =>
         Some(x86_legacy_condition_names[cc.to_int()])
@@ -455,7 +457,7 @@ fn ProjectDisassemblyInstruction::x86_legacy_form(
   }
   // SIMD register forms (apply_x86_simd); memory sources are addressed by
   // a base register alone
-  let simple_base = (index : Int) => {
+  let simple_base = (index : Int32) => {
     match (ops.get(index + 2), ops.get(index + 3)) {
       (Some(ProjectRegisterOperand(_, "Nil")), Some(ProjectImmediateOperand(0L))
       ) => ops.get(index)

@@ -171,8 +171,8 @@ fn Node::print(self : Node, ob : Output) -> Unit {
 fn Node::print_as_operand(
   self : Node,
   ob : Output,
-  prec? : Int = PREC_DEFAULT,
-  strictly_worse? : Bool = false,
+  prec~ : Int32 = PREC_DEFAULT,
+  strictly_worse~ : Bool = false,
 ) -> Unit {
   let paren = self.prec >= prec + (if strictly_worse { 1 } else { 0 })
   if paren {
@@ -270,7 +270,7 @@ fn print_as_string(nodes : Array[Node], ob : Output) -> Bool {
 }
 
 ///|
-fn print_quals(quals : Int, ob : Output) -> Unit {
+fn print_quals(quals : Int32, ob : Output) -> Unit {
   if (quals & QUAL_CONST) != 0 {
     ob.add(" const")
   }
@@ -283,7 +283,7 @@ fn print_quals(quals : Int, ob : Output) -> Unit {
 }
 
 ///|
-fn print_ref_qual(ref_qual : Int, ob : Output) -> Unit {
+fn print_ref_qual(ref_qual : Int32, ob : Output) -> Unit {
   if ref_qual == FREF_LVALUE {
     ob.add(" &")
   } else if ref_qual == FREF_RVALUE {

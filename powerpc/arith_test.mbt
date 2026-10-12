@@ -20,14 +20,14 @@ fn sext32(a : @powerpc.AddrSize, v : Int64) -> UInt64 {
 
 ///|
 /// Upstream encoding `XO [31; 1; 2; rb; 0; xo; rc]` of `rt=r1, ra=r2, rb`.
-fn xo_word(xo : Int, rb? : Int = 3, rc? : Bool = false) -> UInt {
+fn xo_word(xo : Int32, rb~ : Int32 = 3, rc~ : Bool = false) -> UInt32 {
   enc([(31, 6), (1, 5), (2, 5), (rb, 5), (0, 1), (xo, 9), (rc.to_int(), 1)])
 }
 
 ///|
 /// The upstream encoding of `name r1, r2, r3` and whether its registers are
 /// 64-bit (`X`) ones.
-fn r123_word(name : String) -> (UInt, Bool) {
+fn r123_word(name : String) -> (UInt32, Bool) {
   let (base, rc) = match name.strip_suffix("o") {
     Some(base) => (base.to_owned(), true)
     None => (name, false)

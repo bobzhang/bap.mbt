@@ -216,7 +216,7 @@ fn ExpRun::mem(self : ExpRun, exp : Exp) -> BilResultStorage? {
 }
 
 ///|
-fn value_size(mem : Exp) -> Int? {
+fn value_size(mem : Exp) -> Int32? {
   match mem.infer_type() {
     Ok(Mem(value_width~, ..)) => Some(value_width)
     _ => None

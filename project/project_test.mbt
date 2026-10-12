@@ -64,8 +64,8 @@ test "project exposes BAP memory knowledge slot" {
 ///|
 fn assert_project_state_shape(
   state : @project.ProjectState,
-  blocks : Int,
-  subroutines : Int,
+  blocks : Int32,
+  subroutines : Int32,
 ) -> Unit raise {
   assert_true(state.disassembly().block_count() == blocks)
   assert_true(state.subroutines().length() == subroutines)

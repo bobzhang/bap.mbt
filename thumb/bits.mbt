@@ -2,7 +2,7 @@
 
 ///|
 fn sx(
-  width : Int,
+  width : Int32,
   rd : @types.Var,
   rm : @types.Var,
   cnd : Cond,
@@ -12,7 +12,7 @@ fn sx(
 
 ///|
 fn ux(
-  width : Int,
+  width : Int32,
   rd : @types.Var,
   rm : @types.Var,
   cnd : Cond,

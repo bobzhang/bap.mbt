@@ -89,7 +89,7 @@ pub fn ProjectDisassemblyBasicRemainder::memory(
 ///|
 pub fn register_disassembly_basic_backend(
   name~ : String,
-  description? : String = "",
+  description~ : String = "",
 ) -> Result[Unit, String] {
   if project_disassembly_basic_backends.contains(name) {
     Err("project disassembly basic backend \{name} is already registered")
@@ -102,7 +102,7 @@ pub fn register_disassembly_basic_backend(
 ///|
 pub fn register_disassembly_basic_backend_if_absent(
   name~ : String,
-  description? : String = "",
+  description~ : String = "",
 ) -> Result[Bool, String] {
   if project_disassembly_basic_backends.contains(name) {
     Ok(false)
@@ -156,7 +156,7 @@ pub fn ProjectDisassemblyBasic::attrs(self : ProjectDisassemblyBasic) -> String 
 ///|
 pub fn ProjectDisassemblyBasic::debug_level(
   self : ProjectDisassemblyBasic,
-) -> Int {
+) -> Int32 {
   self.debug_level_value
 }
 
@@ -281,7 +281,7 @@ fn project_disassembly_basic_arm_branch_target(
 }
 
 ///|
-fn project_disassembly_basic_arm_word(memory : @memory.Memory) -> Int {
+fn project_disassembly_basic_arm_word(memory : @memory.Memory) -> Int32 {
   let bytes = memory.to_bytes()
   bytes[0].to_int() |
   (bytes[1].to_int() << 8) |
@@ -290,7 +290,7 @@ fn project_disassembly_basic_arm_word(memory : @memory.Memory) -> Int {
 }
 
 ///|
-fn project_disassembly_basic_arm_reg_name(code : Int) -> String {
+fn project_disassembly_basic_arm_reg_name(code : Int32) -> String {
   match code {
     0 => "R0"
     1 => "R1"
@@ -313,7 +313,7 @@ fn project_disassembly_basic_arm_reg_name(code : Int) -> String {
 }
 
 ///|
-fn project_disassembly_basic_arm_reg(code : Int) -> ProjectInstructionOperand {
+fn project_disassembly_basic_arm_reg(code : Int32) -> ProjectInstructionOperand {
   ProjectInstructionOperand::register(
     name=project_disassembly_basic_arm_reg_name(code),
     code~,
@@ -321,7 +321,7 @@ fn project_disassembly_basic_arm_reg(code : Int) -> ProjectInstructionOperand {
 }
 
 ///|
-fn project_disassembly_basic_arm_reg_text(code : Int) -> String {
+fn project_disassembly_basic_arm_reg_text(code : Int32) -> String {
   project_disassembly_basic_arm_reg_name(code).to_lower()
 }
 
@@ -336,7 +336,7 @@ fn project_disassembly_basic_arm_imm_text(value : Int64) -> String {
 
 ///|
 fn project_disassembly_basic_arm_decode_data(
-  word : Int,
+  word : Int32,
 ) -> (
   String,
   String,
@@ -428,7 +428,7 @@ fn project_disassembly_basic_arm_decode_data(
 
 ///|
 fn project_disassembly_basic_arm_decode_load_store(
-  word : Int,
+  word : Int32,
 ) -> (
   String,
   String,
@@ -537,8 +537,8 @@ fn project_disassembly_basic_instruction(
   name : String,
   assembly? : String,
   bil? : String,
-  operands? : Array[ProjectInstructionOperand] = [],
-  kinds? : Array[ProjectInstructionKind] = [],
+  operands~ : Array[ProjectInstructionOperand] = [],
+  kinds~ : Array[ProjectInstructionKind] = [],
 ) -> ProjectDisassemblyInstruction {
   let bytes = memory.to_bytes()
   ProjectDisassemblyInstruction::create(

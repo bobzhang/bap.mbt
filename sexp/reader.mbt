@@ -1,9 +1,9 @@
 ///|
 priv struct Reader {
   text : Array[Char]
-  mut pos : Int
-  mut line : Int
-  mut bol : Int
+  mut pos : Int32
+  mut line : Int32
+  mut bol : Int32
 }
 
 ///|
@@ -17,7 +17,7 @@ fn Reader::peek(self : Reader) -> Char? {
 }
 
 ///|
-fn Reader::at(self : Reader, offset : Int) -> Char? {
+fn Reader::at(self : Reader, offset : Int32) -> Char? {
   self.text.get(self.pos + offset)
 }
 
@@ -82,19 +82,19 @@ fn Reader::skip(self : Reader) -> Unit raise ParseError {
 }
 
 ///|
-fn digit_value(c : Char) -> Int? {
+fn digit_value(c : Char) -> Int32? {
   match c {
-    '0'..='9' => Some(c.to_int() - '0'.to_int())
+    '0'..<='9' => Some(c.to_int() - '0'.to_int())
     _ => None
   }
 }
 
 ///|
-fn hex_value(c : Char) -> Int? {
+fn hex_value(c : Char) -> Int32? {
   match c {
-    '0'..='9' => Some(c.to_int() - '0'.to_int())
-    'a'..='f' => Some(c.to_int() - 'a'.to_int() + 10)
-    'A'..='F' => Some(c.to_int() - 'A'.to_int() + 10)
+    '0'..<='9' => Some(c.to_int() - '0'.to_int())
+    'a'..<='f' => Some(c.to_int() - 'a'.to_int() + 10)
+    'A'..<='F' => Some(c.to_int() - 'A'.to_int() + 10)
     _ => None
   }
 }
@@ -158,7 +158,7 @@ fn Reader::quoted(self : Reader) -> String raise ParseError {
               self.advance()
             }
           }
-          '0'..='9' if self.at(2).bind(digit_value) is Some(d2) &&
+          '0'..<='9' if self.at(2).bind(digit_value) is Some(d2) &&
             self.at(3).bind(digit_value) is Some(d3) => {
             let code = (e.to_int() - '0'.to_int()) * 100 + d2 * 10 + d3
             if code > 255 {

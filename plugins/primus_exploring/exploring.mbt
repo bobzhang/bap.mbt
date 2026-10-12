@@ -31,7 +31,7 @@ pub let component_name : String = "exploring-scheduler"
 
 ///|
 priv struct Exploring {
-  explored : @immut_hashmap.HashMap[@types.Tid, Int]
+  explored : @immut_hashmap.HashMap[@types.Tid, Int32]
   pending : @list.List[@primus.Id]
 }
 
@@ -39,12 +39,12 @@ priv struct Exploring {
 let state : @primus.State[Exploring] = @primus.State::declare_(
   uuid="5a863fc2-96cf-4a00-b046-b9b38f95aa11",
   name="exploring-scheduler",
-  _ => { explored: @immut_hashmap.new(), pending: @list.empty(), },
+  _ => { explored: @immut_hashmap.new(), pending: @list.List([]), },
 )
 
 ///|
 /// How many times the term was explored (evaluated) so far.
-pub fn explored(m : @primus.Machine, tid : @types.Tid) -> Int {
+pub fn explored(m : @primus.Machine, tid : @types.Tid) -> Int32 {
   m.get_global(state).explored.get(tid).unwrap_or(0)
 }
 
@@ -62,13 +62,13 @@ fn position(m : @primus.Machine, id : @primus.Id) -> @types.Tid raise {
 /// (upstream `enqueue`).
 fn enqueue(
   m : @primus.Machine,
-  level : Int,
+  level : Int32,
   t : Exploring,
   queued : Array[@primus.Id],
   id : @primus.Id,
 ) -> Exploring raise {
   let tid = position(m, id)
-  let add = (level : Int) => {
+  let add = (level : Int32) => {
     queued.push(id)
     { ..t, explored: t.explored.add(tid, level), }
   }

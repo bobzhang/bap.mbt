@@ -15,131 +15,131 @@ priv enum Cache {
 // loosest binding; used to decide where parentheses are required.
 
 ///|
-const PREC_PRIMARY : Int = 0
+const PREC_PRIMARY : Int32 = 0
 
 ///|
-const PREC_POSTFIX : Int = 1
+const PREC_POSTFIX : Int32 = 1
 
 ///|
-const PREC_UNARY : Int = 2
+const PREC_UNARY : Int32 = 2
 
 ///|
-const PREC_CAST : Int = 3
+const PREC_CAST : Int32 = 3
 
 ///|
-const PREC_PTR_MEM : Int = 4
+const PREC_PTR_MEM : Int32 = 4
 
 ///|
-const PREC_MULTIPLICATIVE : Int = 5
+const PREC_MULTIPLICATIVE : Int32 = 5
 
 ///|
-const PREC_ADDITIVE : Int = 6
+const PREC_ADDITIVE : Int32 = 6
 
 ///|
-const PREC_SHIFT : Int = 7
+const PREC_SHIFT : Int32 = 7
 
 ///|
-const PREC_SPACESHIP : Int = 8
+const PREC_SPACESHIP : Int32 = 8
 
 ///|
-const PREC_RELATIONAL : Int = 9
+const PREC_RELATIONAL : Int32 = 9
 
 ///|
-const PREC_EQUALITY : Int = 10
+const PREC_EQUALITY : Int32 = 10
 
 ///|
-const PREC_AND : Int = 11
+const PREC_AND : Int32 = 11
 
 ///|
-const PREC_XOR : Int = 12
+const PREC_XOR : Int32 = 12
 
 ///|
-const PREC_IOR : Int = 13
+const PREC_IOR : Int32 = 13
 
 ///|
-const PREC_AND_IF : Int = 14
+const PREC_AND_IF : Int32 = 14
 
 ///|
-const PREC_OR_IF : Int = 15
+const PREC_OR_IF : Int32 = 15
 
 ///|
-const PREC_CONDITIONAL : Int = 16
+const PREC_CONDITIONAL : Int32 = 16
 
 ///|
-const PREC_ASSIGN : Int = 17
+const PREC_ASSIGN : Int32 = 17
 
 ///|
-const PREC_COMMA : Int = 18
+const PREC_COMMA : Int32 = 18
 
 ///|
-const PREC_DEFAULT : Int = 19
+const PREC_DEFAULT : Int32 = 19
 
 // CV-qualifier bits.
 
 ///|
-const QUAL_NONE : Int = 0
+const QUAL_NONE : Int32 = 0
 
 ///|
-const QUAL_CONST : Int = 1
+const QUAL_CONST : Int32 = 1
 
 ///|
-const QUAL_VOLATILE : Int = 2
+const QUAL_VOLATILE : Int32 = 2
 
 ///|
-const QUAL_RESTRICT : Int = 4
+const QUAL_RESTRICT : Int32 = 4
 
 // Function reference qualifiers.
 
 ///|
-const FREF_NONE : Int = 0
+const FREF_NONE : Int32 = 0
 
 ///|
-const FREF_LVALUE : Int = 1
+const FREF_LVALUE : Int32 = 1
 
 ///|
-const FREF_RVALUE : Int = 2
+const FREF_RVALUE : Int32 = 2
 
 // Kinds of synthetic template parameters.
 
 ///|
-const TPARAM_TYPE : Int = 0
+const TPARAM_TYPE : Int32 = 0
 
 ///|
-const TPARAM_NON_TYPE : Int = 1
+const TPARAM_NON_TYPE : Int32 = 1
 
 ///|
-const TPARAM_TEMPLATE : Int = 2
+const TPARAM_TEMPLATE : Int32 = 2
 
 // Kinds of the standard substitutions (`Sa`, `Sb`, `Ss`, `Si`, `So`, `Sd`).
 
 ///|
-const SSK_ALLOCATOR : Int = 0
+const SSK_ALLOCATOR : Int32 = 0
 
 ///|
-const SSK_BASIC_STRING : Int = 1
+const SSK_BASIC_STRING : Int32 = 1
 
 ///|
-const SSK_STRING : Int = 2
+const SSK_STRING : Int32 = 2
 
 ///|
-const SSK_ISTREAM : Int = 3
+const SSK_ISTREAM : Int32 = 3
 
 ///|
-const SSK_OSTREAM : Int = 4
+const SSK_OSTREAM : Int32 = 4
 
 ///|
-const SSK_IOSTREAM : Int = 5
+const SSK_IOSTREAM : Int32 = 5
 
 // Kinds of floating-point literals.
 
 ///|
-const FLOAT_FLOAT : Int = 0
+const FLOAT_FLOAT : Int32 = 0
 
 ///|
-const FLOAT_DOUBLE : Int = 1
+const FLOAT_DOUBLE : Int32 = 1
 
 ///|
-const FLOAT_LONG_DOUBLE : Int = 2
+const FLOAT_LONG_DOUBLE : Int32 = 2
 
 ///|
 /// The concrete syntax represented by a node.
@@ -147,7 +147,7 @@ priv enum Kind {
   NodeArrayNode(Array[Node])
   DotSuffix(Node, StringView)
   VendorExtQualType(Node, StringView, Node?)
-  QualType(Node, Int)
+  QualType(Node, Int32)
   ConversionOperatorType(Node)
   PostfixQualifiedType(Node, StringView)
   ElaboratedTypeSpefType(StringView, Node)
@@ -163,13 +163,13 @@ priv enum Kind {
   PointerToMemberType(Node, Node)
   ArrayType(Node, Node?)
   /// Return type, parameters, cv-qualifiers, ref-qualifier, exception spec.
-  FunctionType(Node, Array[Node], Int, Int, Node?)
+  FunctionType(Node, Array[Node], Int32, Int32, Node?)
   NoexceptSpec(Node)
   DynamicExceptionSpec(Array[Node])
   ExplicitObjectParameter(Node)
   /// Return type, name, parameters, attributes, requires-clause,
   /// cv-qualifiers, ref-qualifier.
-  FunctionEncoding(Node?, Node, Array[Node], Node?, Node?, Int, Int)
+  FunctionEncoding(Node?, Node, Array[Node], Node?, Node?, Int32, Int32)
   LiteralOperator(Node)
   SpecialName(StringView, Node)
   CtorVtableSpecialName(Node, Node)
@@ -184,7 +184,7 @@ priv enum Kind {
   PixelVectorType(Node)
   BinaryFPType(Node)
   BitIntType(Node, Bool)
-  SyntheticTemplateParamName(Int, Int)
+  SyntheticTemplateParamName(Int32, Int32)
   TemplateParamQualifiedArg(Node)
   TypeTemplateParamDecl(Node)
   ConstrainedTypeTemplateParamDecl(Node, Node)
@@ -197,11 +197,11 @@ priv enum Kind {
   ParameterPackExpansion(Node)
   TemplateArgs(Array[Node])
   /// The index and the (later resolved) referenced argument.
-  ForwardTemplateReference(Int, Ref[Node?])
+  ForwardTemplateReference(Int32, Ref[Node?])
   NameWithTemplateArgs(Node, Node)
   GlobalQualifiedName(Node)
-  ExpandedSpecialSubstitution(Int)
-  SpecialSubstitution(Int)
+  ExpandedSpecialSubstitution(Int32)
+  SpecialSubstitution(Int32)
   /// The base name and whether this is a destructor.
   CtorDtorName(Node, Bool)
   DtorName(Node)
@@ -241,7 +241,7 @@ priv enum Kind {
   /// The type suffix/prefix and the value.
   IntegerLiteral(StringView, StringView)
   /// The hexadecimal contents and the literal kind (`FLOAT_*`).
-  FloatLiteral(StringView, Int)
+  FloatLiteral(StringView, Int32)
   /// Element, initializer, whether the designator is an index.
   BracedExpr(Node, Node, Bool)
   BracedRangeExpr(Node, Node, Node)
@@ -255,7 +255,7 @@ priv enum Kind {
 /// A node of the demangling AST. Nodes are compared by identity.
 priv struct Node {
   kind : Kind
-  prec : Int
+  prec : Int32
   rhs : Cache
   array : Cache
   function : Cache
@@ -267,17 +267,17 @@ priv struct Node {
 ///|
 fn Node::new(
   kind : Kind,
-  prec? : Int = PREC_PRIMARY,
-  rhs? : Cache = No,
-  array? : Cache = No,
-  function? : Cache = No,
+  prec~ : Int32 = PREC_PRIMARY,
+  rhs~ : Cache = No,
+  array~ : Cache = No,
+  function~ : Cache = No,
 ) -> Node {
   { kind, prec, rhs, array, function, printing: false, }
 }
 
 ///|
 /// Creates a node with the caches its kind implies.
-fn make(kind : Kind, prec? : Int = PREC_PRIMARY) -> Node {
+fn make(kind : Kind, prec~ : Int32 = PREC_PRIMARY) -> Node {
   match kind {
     QualType(child, _) | AbiTagAttr(child, _) =>
       Node::new(
@@ -322,7 +322,7 @@ fn name_node(name : StringView) -> Node {
 }
 
 ///|
-fn special_sub_base_name(ssk : Int) -> StringView {
+fn special_sub_base_name(ssk : Int32) -> StringView {
   match ssk {
     SSK_ALLOCATOR => "allocator"
     SSK_BASIC_STRING => "basic_string"

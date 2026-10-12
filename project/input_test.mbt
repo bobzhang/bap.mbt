@@ -968,8 +968,8 @@ fn unit_project_image_backend() -> @image.ImageBackend {
 ///|
 fn project_elf_test_set_u16_le(
   buffer : Array[Byte],
-  offset : Int,
-  value : Int,
+  offset : Int32,
+  value : Int32,
 ) -> Unit {
   buffer[offset] = (value & 0xff).to_byte()
   buffer[offset + 1] = ((value >> 8) & 0xff).to_byte()
@@ -978,8 +978,8 @@ fn project_elf_test_set_u16_le(
 ///|
 fn project_elf_test_set_u32_le(
   buffer : Array[Byte],
-  offset : Int,
-  value : Int,
+  offset : Int32,
+  value : Int32,
 ) -> Unit {
   for i in 0..<4 {
     buffer[offset + i] = ((value >> (i * 8)) & 0xff).to_byte()
@@ -989,7 +989,7 @@ fn project_elf_test_set_u32_le(
 ///|
 fn project_elf_test_set_u64_le(
   buffer : Array[Byte],
-  offset : Int,
+  offset : Int32,
   value : UInt64,
 ) -> Unit {
   for i in 0..<8 {
@@ -1000,7 +1000,7 @@ fn project_elf_test_set_u64_le(
 ///|
 fn project_elf_test_write_bytes(
   buffer : Array[Byte],
-  offset : Int,
+  offset : Int32,
   data : Bytes,
 ) -> Unit {
   for i in 0..<data.length() {
@@ -1011,15 +1011,15 @@ fn project_elf_test_write_bytes(
 ///|
 fn project_elf_test_write_section64(
   buffer : Array[Byte],
-  index : Int,
-  name_offset : Int,
-  typ : Int,
+  index : Int32,
+  name_offset : Int32,
+  typ : Int32,
   flags : UInt64,
   addr : UInt64,
-  offset : Int,
-  size : Int,
-  link : Int,
-  entsize : Int,
+  offset : Int32,
+  size : Int32,
+  link : Int32,
+  entsize : Int32,
 ) -> Unit {
   let base = 120 + index * 64
   project_elf_test_set_u32_le(buffer, base, name_offset)
@@ -1035,10 +1035,10 @@ fn project_elf_test_write_section64(
 ///|
 fn project_elf_test_write_symbol64(
   buffer : Array[Byte],
-  offset : Int,
-  name_offset : Int,
-  info : Int,
-  shndx : Int,
+  offset : Int32,
+  name_offset : Int32,
+  info : Int32,
+  shndx : Int32,
   value : UInt64,
   size : UInt64,
 ) -> Unit {

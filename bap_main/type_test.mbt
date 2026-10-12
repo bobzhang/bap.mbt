@@ -142,7 +142,7 @@ test "enumerations accept unambiguous prefixes" {
     ),
   )
   inspect(t.print(3), content="x86")
-  let empty : Result[@bap_main.Type[Int], String] = try
+  let empty : Result[@bap_main.Type[Int32], String] = try
     @bap_main.Type::enumeration([])
   catch {
     e => Err(@bap_main.error_to_string(e))

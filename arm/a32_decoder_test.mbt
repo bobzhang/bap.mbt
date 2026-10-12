@@ -4,7 +4,7 @@
 ///|
 /// Render a decoded instruction as `NAME op, op, ... | assembly`, with
 /// immediates in decimal.
-fn show_a32(word : UInt, addr? : UInt64 = 0) -> String {
+fn show_a32(word : UInt32, addr~ : UInt64 = 0) -> String {
   match @arm.decode_a32_word(word, addr~) {
     None => "invalid"
     Some(insn) => {
@@ -367,7 +367,7 @@ test "A32 kinds, raw bytes and the decoder interface" {
   assert_eq(add.name, "ADDrr")
   assert_eq(add.raw, b"\xe0\x80\x00\x01")
   // kinds of loads, stores, calls and branches
-  let kinds = (w : UInt) => @arm.decode_a32_word(w).unwrap().kinds
+  let kinds = (w : UInt32) => @arm.decode_a32_word(w).unwrap().kinds
   debug_inspect(
     kinds(0xE5910004),
     content=(
@@ -429,7 +429,7 @@ test "every decoded A32 opcode is known to the lifter or listed" {
     "ISB", "MRSsys", "REVSH", "LDRT_POST_IMM", "STRT_POST_IMM", "LDRHTi", "STRHTi",
     "LDRSBTi", "SXTAB", "UXTAH",
   ]
-  let words : Array[UInt] = [
+  let words : Array[UInt32] = [
     0xE0800001, 0xE2932001, 0xE1A00101, 0xE3510000, 0xE5910004, 0xE5210004, 0xE4910004,
     0xE7910102, 0xE1D100B2, 0xE16D20F8, 0xE92D4010, 0xE8BD8010, 0xE12FFF1E, 0xEBFFFFFE,
     0x0A000001, 0xE0000291, 0xE0810392, 0xE6EF0071, 0xE7E70251, 0xE7CB0411, 0xEF000000,

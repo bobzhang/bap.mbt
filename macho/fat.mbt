@@ -2,11 +2,11 @@
 /// The architecture count below which a `0xcafebabe` file is a universal
 /// binary; a Java class file shares the magic and has its major version
 /// (45 or more) there (as `llvm::identify_magic` decides).
-let max_fat_archs : Int = 42
+let max_fat_archs : Int32 = 42
 
 ///|
 /// The magic number and the architecture count of a universal binary.
-fn fat_header(data : BytesView) -> (Bool, Int)? {
+fn fat_header(data : BytesView) -> (Bool, Int32)? {
   if data.length() < 8 {
     return None
   }
@@ -83,7 +83,7 @@ pub fn fat_slice(data : Bytes, arch : FatArch) -> Result[Bytes, String] {
 /// The conventional name of a CPU type and subtype (as `lipo` and `otool`
 /// print them): `x86_64`, `x86_64h`, `i386`, `arm64`, `arm64e`,
 /// `arm64_32`, `armv7`, `armv7s`, `ppc`, ...
-pub fn arch_name(cputype : Int, cpusubtype : Int) -> String {
+pub fn arch_name(cputype : Int32, cpusubtype : Int32) -> String {
   let subtype = cpusubtype & 0x00ffffff
   match cputype {
     CPU_TYPE_X86 => "i386"

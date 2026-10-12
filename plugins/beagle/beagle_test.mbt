@@ -1,5 +1,5 @@
 ///|
-fn w64(n : Int) -> @types.Word {
+fn w64(n : Int32) -> @types.Word {
   try! @types.Word::of_int(width=64, n)
 }
 
@@ -36,7 +36,7 @@ fn store_text(text : String) -> @project.Project {
 ///|
 fn run_hunter(
   text : String,
-  words? : Array[String] = [],
+  words~ : Array[String] = [],
 ) -> (Array[String], Array[(String, Array[String])], Array[String]) {
   let printed = []
   @beagle.configure({

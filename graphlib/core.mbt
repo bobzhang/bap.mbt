@@ -8,7 +8,7 @@ fn[N : Eq, E] edge_index(
   edges : ArrayView[Edge[N, E]],
   src : N,
   dst : N,
-) -> Int? {
+) -> Int32? {
   edges.search_by(edge => edge.src == src && edge.dst == dst)
 }
 
@@ -36,8 +36,8 @@ pub fn[N : Eq, E] Graph::edge(
 
 ///|
 pub fn[N : Eq, E] Graph::create(
-  nodes? : ArrayView[N] = [],
-  edges? : ArrayView[(N, N, E)] = [],
+  nodes~ : ArrayView[N] = [],
+  edges~ : ArrayView[(N, N, E)] = [],
 ) -> Graph[N, E] {
   let mut graph : Graph[N, E] = Graph::new()
   for edge in edges {
@@ -155,12 +155,12 @@ fn[N : Eq, E] contains_edge_pair(
 }
 
 ///|
-fn[N : Compare] compare_nodes(left : N, right : N) -> Int {
+fn[N : Compare] compare_nodes(left : N, right : N) -> Int32 {
   left.compare(right)
 }
 
 ///|
-fn[N : Compare] compare_endpoint_pair(left : (N, N), right : (N, N)) -> Int {
+fn[N : Compare] compare_endpoint_pair(left : (N, N), right : (N, N)) -> Int32 {
   let src_order = left.0.compare(right.0)
   if src_order != 0 {
     src_order
@@ -201,7 +201,7 @@ fn[N : Eq + Compare, E] sorted_unique_endpoint_pairs(
 fn[N : Compare] compare_node_sets(
   left : ArrayView[N],
   right : ArrayView[N],
-) -> Int {
+) -> Int32 {
   let limit = left.length().min(right.length())
   for i in 0..<limit {
     let order = left[i].compare(right[i])
@@ -216,7 +216,7 @@ fn[N : Compare] compare_node_sets(
 fn[N : Compare] compare_endpoint_sets(
   left : ArrayView[(N, N)],
   right : ArrayView[(N, N)],
-) -> Int {
+) -> Int32 {
   let limit = left.length().min(right.length())
   for i in 0..<limit {
     let order = compare_endpoint_pair(left[i], right[i])
@@ -231,7 +231,7 @@ fn[N : Compare] compare_endpoint_sets(
 pub fn[N : Eq + Compare, E, F] Graph::compare(
   self : Graph[N, E],
   other : Graph[N, F],
-) -> Int {
+) -> Int32 {
   let edge_order = compare_endpoint_sets(
     sorted_unique_endpoint_pairs(self.edges),
     sorted_unique_endpoint_pairs(other.edges),
@@ -294,8 +294,8 @@ fn[N, E] skip_no_graph_edge(_edge : Edge[N, E]) -> Bool {
 ///|
 pub fn[N : Eq, E] Graph::filtered(
   self : Graph[N, E],
-  skip_node? : (N) -> Bool = skip_no_graph_node,
-  skip_edge? : (Edge[N, E]) -> Bool = skip_no_graph_edge,
+  skip_node~ : (N) -> Bool = skip_no_graph_node,
+  skip_edge~ : (Edge[N, E]) -> Bool = skip_no_graph_edge,
 ) -> Graph[N, E] {
   let mut out : Graph[N, E] = Graph::new()
   for node in self.nodes {
@@ -392,17 +392,17 @@ pub fn[N : Eq, E] Graph::inputs(
 }
 
 ///|
-pub fn[N : Eq, E] Graph::degree(self : Graph[N, E], node : N) -> Int {
+pub fn[N : Eq, E] Graph::degree(self : Graph[N, E], node : N) -> Int32 {
   self.in_edges(node).length() + self.out_edges(node).length()
 }
 
 ///|
-pub fn[N : Eq, E] Graph::in_degree(self : Graph[N, E], node : N) -> Int {
+pub fn[N : Eq, E] Graph::in_degree(self : Graph[N, E], node : N) -> Int32 {
   self.in_edges(node).length()
 }
 
 ///|
-pub fn[N : Eq, E] Graph::out_degree(self : Graph[N, E], node : N) -> Int {
+pub fn[N : Eq, E] Graph::out_degree(self : Graph[N, E], node : N) -> Int32 {
   self.out_edges(node).length()
 }
 

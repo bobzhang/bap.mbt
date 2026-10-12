@@ -16,15 +16,15 @@
 /// recent point is the first one.
 priv struct Trace {
   trace : @list.List[@types.Word]
-  switches : @list.List[(Int, String)]
+  switches : @list.List[(Int32, String)]
   initial : String
-  length : Int
+  length : Int32
 }
 
 ///|
 let empty_trace : Trace = {
-  trace: @list.empty(),
-  switches: @list.empty(),
+  trace: @list.List([]),
+  switches: @list.List([]),
   initial: "unknown",
   length: 0,
 }
@@ -36,7 +36,7 @@ fn Trace::push(self : Trace, pc : @types.Word, machine : String) -> Trace {
       {
         trace: @list.singleton(pc),
         initial: machine,
-        switches: @list.empty(),
+        switches: @list.List([]),
         length: 1,
       }
     More(last, ..) => {
@@ -47,15 +47,15 @@ fn Trace::push(self : Trace, pc : @types.Word, machine : String) -> Trace {
       let t = if last == pc {
         self
       } else {
-        { ..self, trace: self.trace.add(pc), length: self.length + 1, }
+        { ..self, trace: self.trace.prepend(pc), length: self.length + 1, }
       }
       if current == machine {
         t
       } else {
         {
           ..t,
-          trace: t.trace.add(pc),
-          switches: t.switches.add((t.length, machine)),
+          trace: t.trace.prepend(pc),
+          switches: t.switches.prepend((t.length, machine)),
           length: t.length + 1,
         }
       }
@@ -105,8 +105,8 @@ priv struct Cls {
 
 ///|
 priv struct Incidents {
-  locations : @sorted_map.SortedMap[Int, Trace]
-  incidents : @sorted_map.SortedMap[String, @sorted_map.SortedMap[Int, Cls]]
+  locations : @sorted_map.SortedMap[Int32, Trace]
+  incidents : @sorted_map.SortedMap[String, @sorted_map.SortedMap[Int32, Cls]]
 }
 
 ///|
@@ -127,12 +127,12 @@ let incidents_state : @primus.State[Incidents] = @primus.State::declare_(
 )
 
 ///|
-fn key_value(m : @primus.Machine, key : Int) -> @primus.Value raise {
+fn key_value(m : @primus.Machine, key : Int32) -> @primus.Value raise {
   @primus.Value::of_int(m, width=63, key)
 }
 
 ///|
-fn value_key(v : @primus.Value) -> Int {
+fn value_key(v : @primus.Value) -> Int32 {
   v.to_word().to_int() catch {
     _ => -1
   }
@@ -140,8 +140,8 @@ fn value_key(v : @primus.Value) -> Int {
 
 ///|
 let location_obs : (
-  @primus.Observation[(Int, Array[String])],
-  @primus.Statement[(Int, Array[String])],
+  @primus.Observation[(Int32, Array[String])],
+  @primus.Statement[(Int32, Array[String])],
 ) = @primus.Observation::provide(
   "incident-location",
   desc="Occurs when the location of a possible incident is created.",
@@ -151,10 +151,10 @@ let location_obs : (
 ///|
 /// Occurs when the location of a possible incident is created: the key of
 /// the location and its trace (the oldest point first).
-pub let incident_location : @primus.Observation[(Int, Array[String])] = location_obs.0
+pub let incident_location : @primus.Observation[(Int32, Array[String])] = location_obs.0
 
 ///|
-fn inspect_instance(x : (String, Int, Array[Int])) -> @primus.Sexp {
+fn inspect_instance(x : (String, Int32, Array[Int32])) -> @primus.Sexp {
   List(
     [@primus.Sexp::Atom(x.0), Atom(x.1.to_string())] +
     x.2.map(k => @primus.Sexp::Atom(k.to_string())),
@@ -163,8 +163,8 @@ fn inspect_instance(x : (String, Int, Array[Int])) -> @primus.Sexp {
 
 ///|
 let new_instance_obs : (
-  @primus.Observation[(String, Int, Array[Int])],
-  @primus.Statement[(String, Int, Array[Int])],
+  @primus.Observation[(String, Int32, Array[Int32])],
+  @primus.Statement[(String, Int32, Array[Int32])],
 ) = @primus.Observation::provide(
   "incident-new-instance",
   desc="Occurs on a new instance of the incident class",
@@ -174,12 +174,14 @@ let new_instance_obs : (
 ///|
 /// Occurs on a new instance of an incident class: the name of the
 /// incident, the class, and the locations.
-pub let incident_new_instance : @primus.Observation[(String, Int, Array[Int])] = new_instance_obs.0
+pub let incident_new_instance : @primus.Observation[
+  (String, Int32, Array[Int32]),
+] = new_instance_obs.0
 
 ///|
 let new_class_obs : (
-  @primus.Observation[(String, Int, Array[Int])],
-  @primus.Statement[(String, Int, Array[Int])],
+  @primus.Observation[(String, Int32, Array[Int32])],
+  @primus.Statement[(String, Int32, Array[Int32])],
 ) = @primus.Observation::provide(
   "incident-new-class",
   desc="Occurs when a new incident class is created",
@@ -188,12 +190,12 @@ let new_class_obs : (
 
 ///|
 /// Occurs when a new incident class is created.
-pub let incident_new_class : @primus.Observation[(String, Int, Array[Int])] = new_class_obs.0
+pub let incident_new_class : @primus.Observation[(String, Int32, Array[Int32])] = new_class_obs.0
 
 ///|
 let new_representative_obs : (
-  @primus.Observation[(String, Int, Array[Int])],
-  @primus.Statement[(String, Int, Array[Int])],
+  @primus.Observation[(String, Int32, Array[Int32])],
+  @primus.Statement[(String, Int32, Array[Int32])],
 ) = @primus.Observation::provide(
   "incident-new-representative",
   desc="Occurs when a new representative of the class is selected",
@@ -203,13 +205,13 @@ let new_representative_obs : (
 ///|
 /// Occurs when a new representative of an incident class is selected.
 pub let incident_new_representative : @primus.Observation[
-  (String, Int, Array[Int]),
+  (String, Int32, Array[Int32]),
 ] = new_representative_obs.0
 
 ///|
 let incident_obs : (
-  @primus.Observation[(String, Array[Int])],
-  @primus.Statement[(String, Array[Int])],
+  @primus.Observation[(String, Array[Int32])],
+  @primus.Statement[(String, Array[Int32])],
 ) = @primus.Observation::provide(
   "incident",
   desc="Occurs when the incident is reported that involves the given locations.",
@@ -224,7 +226,7 @@ let incident_obs : (
 ///|
 /// Occurs when an incident is reported: its name and the keys of its
 /// locations.
-pub let incident : @primus.Observation[(String, Array[Int])] = incident_obs.0
+pub let incident : @primus.Observation[(String, Array[Int32])] = incident_obs.0
 
 ///|
 /// Records the end of every executed block in the trace of the machine
@@ -240,7 +242,7 @@ pub fn record_locations(m : @primus.Machine) -> Unit {
 ///|
 /// Creates a new location from the current trace and returns its key
 /// (upstream `incident-location`).
-pub fn new_location(m : @primus.Machine) -> Int raise {
+pub fn new_location(m : @primus.Machine) -> Int32 raise {
   let pc = @primus.Interpreter::pc(m)
   let t = m.get_local(trace_state).push(pc, m.current().to_string())
   let s = m.get_global(incidents_state)
@@ -273,7 +275,7 @@ fn is_member(cls : Cls, traces : Array[Trace]) -> Bool {
 pub fn report(
   m : @primus.Machine,
   name : String,
-  locations : Array[Int],
+  locations : Array[Int32],
 ) -> Unit raise {
   m.make(incident_obs.1, (name, locations))
   let s = m.get_global(incidents_state)
@@ -284,7 +286,7 @@ pub fn report(
     }
   })
   let cls1 = { points: traces.map(t => t.point_set()), traces, }
-  let set_cls = (id : Int, cls : Cls) => {
+  let set_cls = (id : Int32, cls : Cls) => {
     let s = m.get_global(incidents_state)
     let classes = match s.incidents.get(name) {
       Some(c) => c

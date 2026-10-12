@@ -58,7 +58,7 @@ pub fn approx_cos(x : Double) -> Double {
 }
 
 ///|
-fn to_double(w : @types.Word, size : Int) -> Double {
+fn to_double(w : @types.Word, size : Int32) -> Double {
   if size == 32 {
     let bits = (try! w.truncate(width=32).to_uint64()).to_uint()
     Float::reinterpret_from_uint(bits).to_double()
@@ -68,7 +68,7 @@ fn to_double(w : @types.Word, size : Int) -> Double {
 }
 
 ///|
-fn of_double(x : Double, size : Int) -> @types.Word {
+fn of_double(x : Double, size : Int32) -> @types.Word {
   if size == 32 {
     let bits = Float::from_double(x).reinterpret_as_uint()
     try! @types.Word::of_uint64(width=32, bits.to_uint64())
@@ -107,7 +107,7 @@ pub fn approximate(
 }
 
 ///|
-fn size_of(v : @primus.Value) -> Int {
+fn size_of(v : @primus.Value) -> Int32 {
   let n = v.to_word().to_int() catch { _ => 64 }
   if n == 32 {
     32

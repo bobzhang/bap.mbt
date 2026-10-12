@@ -16,7 +16,7 @@ pub extend LabelFormat with Debug::{to_repr}
 /// The order of the label parts: the name goes first, then the assembly,
 /// then the BIL (upstream `label_order`, which compares the polymorphic
 /// variants `with_asm` < `with_bil` by their hashes).
-fn LabelFormat::rank(self : LabelFormat) -> Int {
+fn LabelFormat::rank(self : LabelFormat) -> Int32 {
   match self {
     WithName => 0
     WithAsm => 1
@@ -42,13 +42,13 @@ pub extend Options with Debug::{to_repr}
 ///|
 /// Creates options with the upstream defaults.
 pub fn Options::new(
-  output_folder? : String = "phoenix",
-  cfg_format? : Array[LabelFormat] = [WithName],
-  no_resolve? : Bool = false,
-  keep_alive? : Bool = false,
-  no_inline? : Bool = false,
-  keep_consts? : Bool = false,
-  no_optimizations? : Bool = false,
+  output_folder~ : String = "phoenix",
+  cfg_format~ : Array[LabelFormat] = [WithName],
+  no_resolve~ : Bool = false,
+  keep_alive~ : Bool = false,
+  no_inline~ : Bool = false,
+  keep_consts~ : Bool = false,
+  no_optimizations~ : Bool = false,
 ) -> Options {
   {
     output_folder,

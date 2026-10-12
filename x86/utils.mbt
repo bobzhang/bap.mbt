@@ -2,7 +2,7 @@
 // addresses, flag lists and other helpers of the legacy decoder and lifter.
 
 ///|
-fn Imm::new(bits : UInt64, width : Int, signed? : Bool = false) -> Imm {
+fn Imm::new(bits : UInt64, width : Int32, signed~ : Bool = false) -> Imm {
   { bits: bits & mask64(width), width, signed, }
 }
 
@@ -27,13 +27,13 @@ fn Imm::to_int64(self : Imm) -> Int64 {
 /// Upstream `resize_word v width` (`Word.extract_exn ~hi:(width - 1)`):
 /// signed words are sign-extended, unsigned ones zero-extended; the result
 /// is unsigned. Only widths up to 64 bits are represented.
-fn Imm::resize(self : Imm, width : Int) -> Imm {
+fn Imm::resize(self : Imm, width : Int32) -> Imm {
   Imm::new(self.to_int64().reinterpret_as_uint64(), width)
 }
 
 ///|
 /// `Bil.Int (resize_word i width)` for any width.
-fn Imm::to_exp(self : Imm, width : Int) -> @types.Exp {
+fn Imm::to_exp(self : Imm, width : Int32) -> @types.Exp {
   if width <= 64 {
     Int(word_of_uint64(self.resize(width).bits, width))
   } else {
@@ -66,7 +66,7 @@ fn df_to_offset(mode : Mode, e : @types.Exp) -> @types.Exp {
 let bap_to_rflags : ReadOnlyArray[@types.Exp] = {
   // port: the reserved bits read as 0 except bit 1, which reads as 1
   // (Intel SDM 3.4.3, LAHF; upstream leaves them undefined)
-  let undefined = (d : Int) => int_exp(if d == 1 { 1 } else { 0 }, 1)
+  let undefined = (d : Int32) => int_exp(if d == 1 { 1 } else { 0 }, 1)
   let unmodeled = (s : String) => e_unknown("Unmodeled RFLAGS bit " + s, 1)
   let bits : Array[@types.Exp] = []
   for d = 63; d >= 22; d = d - 1 {
@@ -118,14 +118,14 @@ let rflags_to_bap : ReadOnlyArray[@types.Var?] = [
 ///|
 /// The concatenation of the low `width` bits of RFLAGS (upstream
 /// `rflags_e`, `eflags_e`, `flags_e` and `lflags_e`).
-fn flags_exp(width : Int) -> @types.Exp raise X86Error {
+fn flags_exp(width : Int32) -> @types.Exp raise X86Error {
   concat_explist(bap_to_rflags[64 - width:])
 }
 
 ///|
 /// Assignments of the flags from the bits of `e` (a `width`-bit value, bits
 /// from `width - 1` down to 0), upstream `assns_*flags_to_bap`.
-fn flags_assignments(width : Int, e : @types.Exp) -> Array[@types.Stmt] {
+fn flags_assignments(width : Int32, e : @types.Exp) -> Array[@types.Stmt] {
   let assns = rflags_to_bap[64 - width:]
   let result : Array[@types.Stmt] = []
   for k, flag in assns {
@@ -142,7 +142,7 @@ fn flags_assignments(width : Int, e : @types.Exp) -> Array[@types.Stmt] {
 fn load_s(
   mode : Mode,
   seg : @types.Var?,
-  width : Int,
+  width : Int32,
   addr : @types.Exp,
 ) -> @types.Exp raise X86Error {
   let mem = vars_of_mode(mode).mem
@@ -157,7 +157,7 @@ fn load_s(
 fn store_s(
   mode : Mode,
   seg : @types.Var?,
-  width : Int,
+  width : Int32,
   addr : @types.Exp,
   e : @types.Exp,
 ) -> @types.Stmt raise X86Error {
@@ -170,7 +170,7 @@ fn store_s(
 
 ///|
 /// Upstream `lowbits2elemt`: element size from the low opcode bits.
-fn lowbits2elemt(b : Int) -> Int {
+fn lowbits2elemt(b : Int32) -> Int32 {
   match b & 3 {
     0 => 8
     1 => 16
@@ -181,7 +181,7 @@ fn lowbits2elemt(b : Int) -> Int {
 
 ///|
 /// Upstream `bits2genreg`: the register variable of a register number.
-fn bits2genreg(mode : Mode, b : Int) -> @types.Var raise X86Error {
+fn bits2genreg(mode : Mode, b : Int32) -> @types.Var raise X86Error {
   let r = vars_of_mode(mode)
   match b {
     0 => r.rax
@@ -201,7 +201,7 @@ fn bits2genreg(mode : Mode, b : Int) -> @types.Var raise X86Error {
 }
 
 ///|
-fn bits2segreg(b : Int) -> @types.Var raise X86Error {
+fn bits2segreg(b : Int32) -> @types.Var raise X86Error {
   match b {
     0 => seg_es
     1 => seg_cs
@@ -215,7 +215,7 @@ fn bits2segreg(b : Int) -> @types.Var raise X86Error {
 }
 
 ///|
-fn bits2ymm(mode : Mode, b : Int) -> @types.Var raise X86Error {
+fn bits2ymm(mode : Mode, b : Int32) -> @types.Var raise X86Error {
   match vars_of_mode(mode).ymms.get(b) {
     Some(v) => v
     None => raise ArchException("invalid vector register \{b}")
@@ -223,25 +223,25 @@ fn bits2ymm(mode : Mode, b : Int) -> @types.Var raise X86Error {
 }
 
 ///|
-fn bits2reg64e(mode : Mode, b : Int) -> @types.Exp raise X86Error {
+fn bits2reg64e(mode : Mode, b : Int32) -> @types.Exp raise X86Error {
   ev(bits2genreg(mode, b))
 }
 
 ///|
-fn bits2reg32e(mode : Mode, b : Int) -> @types.Exp raise X86Error {
+fn bits2reg32e(mode : Mode, b : Int32) -> @types.Exp raise X86Error {
   e_low(32, ev(bits2genreg(mode, b)))
 }
 
 ///|
-fn bits2reg16e(mode : Mode, b : Int) -> @types.Exp raise X86Error {
+fn bits2reg16e(mode : Mode, b : Int32) -> @types.Exp raise X86Error {
   e_low(16, bits2reg32e(mode, b))
 }
 
 ///|
 fn bits2reg8e(
   mode : Mode,
-  b : Int,
-  has_rex? : Bool = false,
+  b : Int32,
+  has_rex~ : Bool = false,
 ) -> @types.Exp raise X86Error {
   if b < 4 || has_rex {
     e_low(8, bits2reg32e(mode, b))
@@ -252,7 +252,7 @@ fn bits2reg8e(
 
 ///|
 /// Upstream `eaddr16`: effective addresses of the 16-bit addressing mode.
-fn eaddr16(mode : Mode, rm : Int) -> @types.Exp raise X86Error {
+fn eaddr16(mode : Mode, rm : Int32) -> @types.Exp raise X86Error {
   let r = vars_of_mode(mode)
   let e = (v : @types.Var) => e_low(16, ev(v))
   match rm {

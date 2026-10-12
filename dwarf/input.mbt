@@ -160,7 +160,7 @@ pub(all) enum DwarfTag {
   DwarfCallSiteParameter
   DwarfSkeletonUnit
   DwarfImmutableType
-  DwarfUnknownTag(Int)
+  DwarfUnknownTag(Int32)
 } derive(Eq, Debug)
 
 ///|
@@ -510,7 +510,7 @@ pub fn DwarfTag::immutable_type() -> DwarfTag {
 }
 
 ///|
-pub fn DwarfTag::unknown(code : Int) -> DwarfTag {
+pub fn DwarfTag::unknown(code : Int32) -> DwarfTag {
   DwarfUnknownTag(code)
 }
 
@@ -639,7 +639,7 @@ pub(all) enum DwarfAttr {
   DwarfDefaulted
   DwarfLoclistsBase
   DwarfRangesBase
-  DwarfUnknownAttr(Int)
+  DwarfUnknownAttr(Int32)
 } derive(Eq, Debug)
 
 ///|
@@ -1264,7 +1264,7 @@ pub fn DwarfAttr::ranges_base() -> DwarfAttr {
 }
 
 ///|
-pub fn DwarfAttr::unknown(code : Int) -> DwarfAttr {
+pub fn DwarfAttr::unknown(code : Int32) -> DwarfAttr {
   DwarfUnknownAttr(code)
 }
 
@@ -1448,7 +1448,7 @@ pub fn DwarfForm::sig_() -> DwarfForm {
 ///|
 struct DwarfInput {
   data : Bytes
-  position_value : Int
+  position_value : Int32
 }
 
 ///|
@@ -1470,12 +1470,12 @@ pub fn[T] DwarfInputReader::run(
 }
 
 ///|
-pub fn DwarfInputReader::char() -> DwarfInputReader[Int] {
+pub fn DwarfInputReader::char() -> DwarfInputReader[Int32] {
   { read_fn: input => input.read_byte(), }
 }
 
 ///|
-pub fn DwarfInputReader::code() -> DwarfInputReader[Int] {
+pub fn DwarfInputReader::code() -> DwarfInputReader[Int32] {
   { read_fn: input => input.read_code(), }
 }
 
@@ -1508,19 +1508,19 @@ pub fn DwarfInputReader::address(
 }
 
 ///|
-pub fn DwarfInputReader::version() -> DwarfInputReader[Int] {
+pub fn DwarfInputReader::version() -> DwarfInputReader[Int32] {
   { read_fn: input => input.read_version(), }
 }
 
 ///|
 pub fn DwarfInputReader::unit_size(
   endian~ : @bitvec.Endian,
-) -> DwarfInputReader[(DwarfWordSize, Int)] {
+) -> DwarfInputReader[(DwarfWordSize, Int32)] {
   { read_fn: input => input.read_unit_size(endian~), }
 }
 
 ///|
-pub fn DwarfInputReader::skip(bytes~ : Int) -> DwarfInputReader[Unit] {
+pub fn DwarfInputReader::skip(bytes~ : Int32) -> DwarfInputReader[Unit] {
   { read_fn: input => input.skip(bytes~).map(done => ((), done)), }
 }
 
@@ -1538,7 +1538,7 @@ pub fn DwarfInputReader::address_size() -> DwarfInputReader[DwarfWordSize] {
 pub fn DwarfInputReader::offset(
   endian~ : @bitvec.Endian,
   size~ : DwarfWordSize,
-) -> DwarfInputReader[Int] {
+) -> DwarfInputReader[Int32] {
   { read_fn: input => input.read_offset(endian~, size~), }
 }
 
@@ -1614,22 +1614,25 @@ pub fn[A, B] DwarfInputReader::pair(
 }
 
 ///|
-pub fn DwarfInput::position(self : DwarfInput) -> Int {
+pub fn DwarfInput::position(self : DwarfInput) -> Int32 {
   self.position_value
 }
 
 ///|
-pub fn DwarfInput::remaining(self : DwarfInput) -> Int {
+pub fn DwarfInput::remaining(self : DwarfInput) -> Int32 {
   self.data.length() - self.position_value
 }
 
 ///|
-fn DwarfInput::with_position(self : DwarfInput, position : Int) -> DwarfInput {
+fn DwarfInput::with_position(self : DwarfInput, position : Int32) -> DwarfInput {
   { ..self, position_value: position, }
 }
 
 ///|
-fn DwarfInput::require(self : DwarfInput, bytes : Int) -> Result[Unit, String] {
+fn DwarfInput::require(
+  self : DwarfInput,
+  bytes : Int32,
+) -> Result[Unit, String] {
   if bytes < 0 {
     Err("negative DWARF read size")
   } else if self.position_value + bytes > self.data.length() {
@@ -1642,7 +1645,7 @@ fn DwarfInput::require(self : DwarfInput, bytes : Int) -> Result[Unit, String] {
 ///|
 pub fn DwarfInput::read_byte(
   self : DwarfInput,
-) -> Result[(Int, DwarfInput), String] {
+) -> Result[(Int32, DwarfInput), String] {
   match self.require(1) {
     Ok(_) =>
       Ok(
@@ -1658,7 +1661,7 @@ pub fn DwarfInput::read_byte(
 ///|
 fn DwarfInput::read_uint(
   self : DwarfInput,
-  bytes : Int,
+  bytes : Int32,
   endian : @bitvec.Endian,
 ) -> Result[(UInt64, DwarfInput), String] {
   match self.require(bytes) {
@@ -1679,7 +1682,7 @@ fn DwarfInput::read_uint(
 }
 
 ///|
-fn dwarf_sign_extend(value : UInt64, bits : Int) -> Int64 {
+fn dwarf_sign_extend(value : UInt64, bits : Int32) -> Int64 {
   if bits >= 64 {
     value.reinterpret_as_int64()
   } else {
@@ -1696,7 +1699,7 @@ fn dwarf_sign_extend(value : UInt64, bits : Int) -> Int64 {
 ///|
 fn DwarfInput::read_signed(
   self : DwarfInput,
-  bytes : Int,
+  bytes : Int32,
   endian : @bitvec.Endian,
 ) -> Result[(Int64, DwarfInput), String] {
   match self.read_uint(bytes, endian) {
@@ -1706,7 +1709,7 @@ fn DwarfInput::read_signed(
 }
 
 ///|
-fn dwarf_word_bytes(size : DwarfWordSize) -> Int {
+fn dwarf_word_bytes(size : DwarfWordSize) -> Int32 {
   match size {
     W32 => 4
     W64 => 8
@@ -1714,7 +1717,7 @@ fn dwarf_word_bytes(size : DwarfWordSize) -> Int {
 }
 
 ///|
-fn dwarf_int64_to_int(value : Int64) -> Result[Int, String] {
+fn dwarf_int64_to_int(value : Int64) -> Result[Int32, String] {
   if value < -2147483648L || value > 2147483647L {
     Err("DWARF integer does not fit in Int")
   } else {
@@ -1727,7 +1730,7 @@ pub fn DwarfInput::read_int(
   self : DwarfInput,
   endian~ : @bitvec.Endian,
   size~ : DwarfWordSize,
-) -> Result[(Int, DwarfInput), String] {
+) -> Result[(Int32, DwarfInput), String] {
   match self.read_signed(dwarf_word_bytes(size), endian) {
     Ok((value, next)) =>
       match dwarf_int64_to_int(value) {
@@ -1761,7 +1764,7 @@ pub fn DwarfInput::read_offset(
   self : DwarfInput,
   endian~ : @bitvec.Endian,
   size~ : DwarfWordSize,
-) -> Result[(Int, DwarfInput), String] {
+) -> Result[(Int32, DwarfInput), String] {
   self.read_int(endian~, size~)
 }
 
@@ -1769,7 +1772,7 @@ pub fn DwarfInput::read_offset(
 pub fn DwarfInput::read_int16(
   self : DwarfInput,
   endian~ : @bitvec.Endian,
-) -> Result[(Int, DwarfInput), String] {
+) -> Result[(Int32, DwarfInput), String] {
   match self.read_signed(2, endian) {
     Ok((value, next)) => Ok((value.to_int(), next))
     Err(reason) => Err(reason)
@@ -1779,7 +1782,7 @@ pub fn DwarfInput::read_int16(
 ///|
 pub fn DwarfInput::read_code(
   self : DwarfInput,
-) -> Result[(Int, DwarfInput), String] {
+) -> Result[(Int32, DwarfInput), String] {
   match Leb128::read(self.data[:], pos=self.position_value) {
     Ok((leb, next_pos)) =>
       match leb.to_int() {
@@ -1805,7 +1808,7 @@ fn DwarfInput::read_signed_code(
 }
 
 ///|
-fn dwarf_tag_of_int(code : Int) -> DwarfTag {
+fn dwarf_tag_of_int(code : Int32) -> DwarfTag {
   match code {
     0x01 => DwarfArrayType
     0x02 => DwarfClassType
@@ -1880,7 +1883,7 @@ fn dwarf_tag_of_int(code : Int) -> DwarfTag {
 }
 
 ///|
-fn dwarf_attr_of_int(code : Int) -> DwarfAttr {
+fn dwarf_attr_of_int(code : Int32) -> DwarfAttr {
   match code {
     0x01 => DwarfSibling
     0x02 => DwarfLocation
@@ -2012,7 +2015,7 @@ fn dwarf_attr_of_int(code : Int) -> DwarfAttr {
 }
 
 ///|
-fn dwarf_form_of_int(code : Int) -> Result[DwarfForm, String] {
+fn dwarf_form_of_int(code : Int32) -> Result[DwarfForm, String] {
   match code {
     0x01 => Ok(DwarfAddr)
     0x03 => Ok(DwarfBlock(DwarfTwo))
@@ -2122,7 +2125,7 @@ pub fn DwarfInput::read_cstring(
 ///|
 pub fn DwarfInput::read_version(
   self : DwarfInput,
-) -> Result[(Int, DwarfInput), String] {
+) -> Result[(Int32, DwarfInput), String] {
   match self.read_byte() {
     Ok((first, next)) =>
       match next.read_byte() {
@@ -2158,7 +2161,7 @@ pub fn DwarfInput::read_address_size(
 pub fn DwarfInput::read_unit_size(
   self : DwarfInput,
   endian~ : @bitvec.Endian,
-) -> Result[((DwarfWordSize, Int), DwarfInput), String] {
+) -> Result[((DwarfWordSize, Int32), DwarfInput), String] {
   match self.read_uint(4, endian) {
     Ok((0xffffffffUL, next)) =>
       match next.read_uint(8, endian) {
@@ -2183,7 +2186,7 @@ pub fn DwarfInput::read_unit_size(
 ///|
 pub fn DwarfInput::skip(
   self : DwarfInput,
-  bytes~ : Int,
+  bytes~ : Int32,
 ) -> Result[DwarfInput, String] {
   match self.require(bytes) {
     Ok(_) => Ok(self.with_position(self.position_value + bytes))
@@ -2283,9 +2286,9 @@ fn DwarfInput::read_signed_const(
 ///|
 fn DwarfInput::read_unsigned_bytes(
   self : DwarfInput,
-  bytes : Int,
+  bytes : Int32,
   endian : @bitvec.Endian,
-) -> Result[(Int, DwarfInput), String] {
+) -> Result[(Int32, DwarfInput), String] {
   match self.read_uint(bytes, endian) {
     Ok((value, next)) =>
       if value > 2147483647UL {
@@ -2302,7 +2305,7 @@ fn DwarfInput::read_index(
   self : DwarfInput,
   spec : DwarfIndexSpec,
   endian : @bitvec.Endian,
-) -> Result[(Int, DwarfInput), String] {
+) -> Result[(Int32, DwarfInput), String] {
   match spec {
     DwarfIndexLeb128 => self.read_code()
     DwarfIndexOne =>
@@ -2320,7 +2323,7 @@ fn DwarfInput::read_index(
 fn DwarfInput::read_addrx_offset(
   self : DwarfInput,
   endian : @bitvec.Endian,
-) -> Result[((Int, UInt64), DwarfInput), String] {
+) -> Result[((Int32, UInt64), DwarfInput), String] {
   match self.read_code() {
     Ok((index, after_index)) =>
       match after_index.read_uint(4, endian) {
@@ -2336,7 +2339,7 @@ fn DwarfInput::read_block_length(
   self : DwarfInput,
   lenspec : DwarfLenspec,
   endian : @bitvec.Endian,
-) -> Result[(Int, DwarfInput), String] {
+) -> Result[(Int32, DwarfInput), String] {
   match lenspec {
     DwarfLeb128 => self.read_code()
     DwarfOne => self.read_byte()

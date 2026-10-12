@@ -11,7 +11,7 @@ fn project_symbolizer_addr(addr : UInt64) -> String {
 }
 
 ///|
-fn project_symbolizer_find_name(names : Array[String], name : String) -> Int? {
+fn project_symbolizer_find_name(names : Array[String], name : String) -> Int32? {
   for i in 0..<names.length() {
     if names[i] == name {
       return Some(i)
@@ -62,7 +62,7 @@ fn project_symbolizer_find_pair(
 pub fn ProjectSymbolizer::create(
   find : (UInt64) -> String?,
   path? : String,
-  biased? : Bool = false,
+  biased~ : Bool = false,
 ) -> ProjectSymbolizer {
   { path_value: path, biased_flag: biased, find_fn: find, }
 }
@@ -164,7 +164,7 @@ pub fn ProjectSymbolizer::of_image(image : @image.Image) -> ProjectSymbolizer {
 pub fn ProjectSymbolizer::of_symbols(
   symbols : Array[@image.Symbol],
   path? : String,
-  biased? : Bool = false,
+  biased~ : Bool = false,
 ) -> ProjectSymbolizer {
   let pairs : Array[(UInt64, String)] = [
     for symbol in symbols => (symbol.addr(), symbol.name())

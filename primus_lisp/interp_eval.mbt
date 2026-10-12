@@ -114,7 +114,7 @@ fn lookup_parameter(prog : Program, v : LVar) -> Def[Para]? {
 }
 
 ///|
-fn width_of_typ(s : LState, t : Typ) -> Int {
+fn width_of_typ(s : LState, t : Typ) -> Int32 {
   match t {
     Type(n) => n
     Symbol => symbol_size
@@ -158,7 +158,7 @@ pub fn eval(m : @primus.Machine, e : Ast, k : Cont) -> Unit raise {
         )
       })
     App(Dynamic(name), args) =>
-      eval_args(m, args, 0, @list.empty(), (m, vals) => {
+      eval_args(m, args, 0, @list.List([]), (m, vals) => {
         eval_lisp(m, name, vals, k)
       })
     App(Static(_), _) => failf(m, "static bindings are not supported")
@@ -178,19 +178,19 @@ pub fn eval(m : @primus.Machine, e : Ast, k : Cont) -> Unit raise {
 fn eval_args(
   m : @primus.Machine,
   args : Array[Ast],
-  i : Int,
+  i : Int32,
   acc : @list.List[@primus.Value],
   k : (@primus.Machine, Array[@primus.Value]) -> Unit raise,
 ) -> Unit raise {
   if i >= args.length() {
     k(m, acc.rev().to_array())
   } else {
-    eval(m, args[i], (m, v) => eval_args(m, args, i + 1, acc.add(v), k))
+    eval(m, args[i], (m, v) => eval_args(m, args, i + 1, acc.prepend(v), k))
   }
 }
 
 ///|
-fn seq(m : @primus.Machine, xs : Array[Ast], i : Int, k : Cont) -> Unit raise {
+fn seq(m : @primus.Machine, xs : Array[Ast], i : Int32, k : Cont) -> Unit raise {
   if xs.is_empty() {
     step(m, m => @primus.Interpreter::constant(m, @types.Word::b0()), k)
   } else if i == xs.length() - 1 {
@@ -285,7 +285,7 @@ fn msg(
   m : @primus.Machine,
   fmt : Array[Fmt],
   es : Array[Ast],
-  i : Int,
+  i : Int32,
   buf : StringBuilder,
   k : Cont,
 ) -> Unit raise {
@@ -335,7 +335,7 @@ fn check_value(t : Typ, v : @primus.Value) -> Bool {
 fn fold_advices(
   m : @primus.Machine,
   names : Array[@knowledge.Name],
-  i : Int,
+  i : Int32,
   after : Bool,
   r : @primus.Value,
   args : Array[@primus.Value],
@@ -489,7 +489,7 @@ pub fn eval_signal(
     None => k(m)
     Some(Err(r)) => m.raise_exn(UnresolvedName(name.show(), r.to_string()))
     Some(Ok(mets)) => {
-      fn go(m : @primus.Machine, i : Int) -> Unit raise {
+      fn go(m : @primus.Machine, i : Int32) -> Unit raise {
         if i >= mets.length() {
           k(m)
         } else {
@@ -512,7 +512,7 @@ pub fn eval_fun(
   m : @primus.Machine,
   name : String,
   args : Array[@primus.Value],
-  then? : Cont = (_, _) => (),
+  then~ : Cont = (_, _) => (),
 ) -> Unit raise {
   eval_lisp(m, @knowledge.Name::read(name), args, then)
 }
@@ -523,7 +523,7 @@ pub fn eval_method(
   m : @primus.Machine,
   name : String,
   args : Array[@primus.Value],
-  then? : (@primus.Machine) -> Unit raise = _ => (),
+  then~ : (@primus.Machine) -> Unit raise = _ => (),
 ) -> Unit raise {
   eval_signal(m, @knowledge.Name::read(name, pkg="primus"), args, then)
 }

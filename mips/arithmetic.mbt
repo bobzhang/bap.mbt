@@ -74,7 +74,7 @@ fn sem_daddu(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
 /// Count the leading bits of the low word of `rs` (the whole `rs` with
 /// `doubleword`) equal to `value`, from the most significant one, into `rd`
 /// (`CLO`/`CLZ rd, rs`, `DCLO`/`DCLZ rd, rs`).
-fn count_leading(value : Exp, doubleword? : Bool = false) -> Semantics {
+fn count_leading(value : Exp, doubleword~ : Bool = false) -> Semantics {
   cpu => {
     let rd = cpu.ureg(0)
     let rs = if doubleword { cpu.ureg(1) } else { cpu.wreg(1, Unsigned) }
@@ -156,7 +156,7 @@ fn sem_dlsa(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
 
 ///|
 /// SEB/SEH rd, rt - Sign-Extend Byte/Halfword, MIPS32 Release 2.
-fn sign_extend(width : Int) -> Semantics {
+fn sign_extend(width : Int32) -> Semantics {
   cpu => {
     let rd = cpu.sreg(0)
     let rt = cpu.ureg(1)

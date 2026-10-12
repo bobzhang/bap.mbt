@@ -9,7 +9,7 @@
 // words.
 
 ///|
-let llvm_samples : Array[(@powerpc.AddrSize, UInt, String, String)] = [
+let llvm_samples : Array[(@powerpc.AddrSize, UInt32, String, String)] = [
   (R64, 0x7c632214U, "ADD4 Reg:R3 Reg:R3 Reg:R4 | add 3, 3, 4", ""),
   (R64, 0x7e401a15U, "ADD4_rec Reg:R18 Reg:R0 Reg:R3 | add. 18, 0, 3", ""),
   (R64, 0x7d495014U, "ADDC Reg:R10 Reg:R9 Reg:R10 | addc 10, 9, 10", ""),

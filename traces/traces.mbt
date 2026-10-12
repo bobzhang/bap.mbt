@@ -34,7 +34,7 @@ pub fn Chunk::create(addr~ : @types.Word, data~ : Bytes) -> Chunk {
 
 ///|
 pub(all) struct Syscall {
-  number : Int
+  number : Int32
   args : Array[@types.Word]
 } derive(Eq, Debug)
 
@@ -45,13 +45,13 @@ pub extend Syscall with Eq::{not_equal, equal}
 pub extend Syscall with Debug::{to_repr}
 
 ///|
-pub fn Syscall::create(number~ : Int, args~ : Array[@types.Word]) -> Syscall {
+pub fn Syscall::create(number~ : Int32, args~ : Array[@types.Word]) -> Syscall {
   { number, args, }
 }
 
 ///|
 pub(all) struct TraceException {
-  number : Int
+  number : Int32
   src : @types.Word?
   dst : @types.Word?
 } derive(Eq, Debug)
@@ -67,9 +67,9 @@ pub(all) struct Exn {}
 
 ///|
 pub fn Exn::create(
-  number~ : Int,
-  src? : @types.Word? = None,
-  dst? : @types.Word? = None,
+  number~ : Int32,
+  src~ : @types.Word? = None,
+  dst~ : @types.Word? = None,
 ) -> TraceException {
   { number, src, dst, }
 }
@@ -88,7 +88,7 @@ pub extend Location with Debug::{to_repr}
 
 ///|
 pub fn Location::create(
-  name? : String? = None,
+  name~ : String? = None,
   addr~ : @types.Word,
 ) -> Location {
   { name, addr, }
@@ -231,7 +231,7 @@ pub fn TraceMode::to_string(self : TraceMode) -> String {
 }
 
 ///|
-pub fn TraceMode::hash(self : TraceMode) -> Int {
+pub fn TraceMode::hash(self : TraceMode) -> Int32 {
   self.name().hash()
 }
 
@@ -241,7 +241,7 @@ pub fn TraceMode::equal(self : TraceMode, other : TraceMode) -> Bool {
 }
 
 ///|
-pub fn TraceMode::compare(self : TraceMode, other : TraceMode) -> Int {
+pub fn TraceMode::compare(self : TraceMode, other : TraceMode) -> Int32 {
   self.name().compare(other.name())
 }
 
@@ -344,7 +344,7 @@ pub(all) enum TraceEvent {
   Timestamp(Int64)
   PcUpdate(@types.Word)
   CodeExec(Chunk)
-  ContextSwitch(Int)
+  ContextSwitch(Int32)
   Syscall(Syscall)
   Exception(TraceException)
   Call(Call)
@@ -844,7 +844,7 @@ pub fn TraceEvent::code_exec(value : Chunk) -> TraceEvent {
 }
 
 ///|
-pub fn TraceEvent::context_switch(value : Int) -> TraceEvent {
+pub fn TraceEvent::context_switch(value : Int32) -> TraceEvent {
   ContextSwitch(value)
 }
 
@@ -945,7 +945,7 @@ pub fn TraceEvent::code_exec_value(self : TraceEvent) -> Chunk? {
 }
 
 ///|
-pub fn TraceEvent::context_switch_value(self : TraceEvent) -> Int? {
+pub fn TraceEvent::context_switch_value(self : TraceEvent) -> Int32? {
   match self {
     ContextSwitch(value) => Some(value)
     _ => None
@@ -1140,7 +1140,7 @@ pub extend TracerInfo with Debug::{to_repr}
 
 ///|
 pub(all) struct FileStatsInfo {
-  size : Int
+  size : Int32
   atime : Double
   mtime : Double
   ctime : Double
@@ -1178,17 +1178,17 @@ pub(all) struct File_stats {}
 pub(all) struct Trace_stats {}
 
 ///|
-fn trace_pad2(value : Int) -> String {
+fn trace_pad2(value : Int32) -> String {
   value.to_string().pad_start(2, '0')
 }
 
 ///|
-fn trace_pad4(value : Int) -> String {
+fn trace_pad4(value : Int32) -> String {
   value.to_string().pad_start(4, '0')
 }
 
 ///|
-fn trace_time_floor_seconds(time : Double) -> Int {
+fn trace_time_floor_seconds(time : Double) -> Int32 {
   let mut seconds = time.to_int()
   if time < 0.0 && seconds.to_double() > time {
     seconds -= 1
@@ -1197,12 +1197,12 @@ fn trace_time_floor_seconds(time : Double) -> Int {
 }
 
 ///|
-fn trace_leap_year(year : Int) -> Bool {
+fn trace_leap_year(year : Int32) -> Bool {
   (year % 4 == 0 && year % 100 != 0) || year % 400 == 0
 }
 
 ///|
-fn trace_days_in_year(year : Int) -> Int {
+fn trace_days_in_year(year : Int32) -> Int32 {
   if trace_leap_year(year) {
     366
   } else {
@@ -1211,7 +1211,7 @@ fn trace_days_in_year(year : Int) -> Int {
 }
 
 ///|
-fn trace_days_in_month(year : Int, month : Int) -> Int {
+fn trace_days_in_month(year : Int32, month : Int32) -> Int32 {
   match month {
     0 | 2 | 4 | 6 | 7 | 9 | 11 => 31
     3 | 5 | 8 | 10 => 30
@@ -1315,7 +1315,7 @@ pub fn Binary::to_string(value : BinaryInfo) -> String {
 
 ///|
 pub fn File_stats::create(
-  size~ : Int,
+  size~ : Int32,
   atime~ : Double,
   mtime~ : Double,
   ctime~ : Double,
@@ -1350,7 +1350,7 @@ pub(all) enum TraceAttrValue {
   FileStats(FileStatsInfo)
   TraceStats(TraceStatsInfo)
   Text(String)
-  Int(Int)
+  Int(Int32)
   Bool(Bool)
 } derive(Eq, Debug)
 
@@ -1569,7 +1569,7 @@ pub fn TraceMeta::is_empty(self : TraceMeta) -> Bool {
 }
 
 ///|
-pub fn TraceMeta::length(self : TraceMeta) -> Int {
+pub fn TraceMeta::length(self : TraceMeta) -> Int32 {
   self.attrs.length()
 }
 
@@ -1609,13 +1609,13 @@ pub fn TraceMeta::get_text(self : TraceMeta, key : String) -> String? {
 pub fn TraceMeta::set_int(
   self : TraceMeta,
   key : String,
-  value : Int,
+  value : Int32,
 ) -> TraceMeta {
   self.set(key, Int(value))
 }
 
 ///|
-pub fn TraceMeta::get_int(self : TraceMeta, key : String) -> Int? {
+pub fn TraceMeta::get_int(self : TraceMeta, key : String) -> Int32? {
   match self.get(key) {
     Some(Int(value)) => Some(value)
     _ => None
@@ -1765,7 +1765,7 @@ struct TraceProtocol {
 ///|
 pub fn TraceProtocol::create(
   name~ : String,
-  supported_tags? : Array[String] = [],
+  supported_tags~ : Array[String] = [],
   probe~ : (String) -> Bool,
 ) -> TraceProtocol {
   { name, supported_tags: Set::from_array(supported_tags), probe_fn: probe, }
@@ -1932,7 +1932,7 @@ fn trace_id_is_uuid_text(value : String) -> Bool {
 }
 
 ///|
-fn trace_id_counter_tail(value : Int) -> String {
+fn trace_id_counter_tail(value : Int32) -> String {
   let padded = value.to_string(radix=16).pad_start(12, '0')
   if padded.length() > 12 {
     padded[padded.length() - 12:].to_owned()
@@ -1942,7 +1942,7 @@ fn trace_id_counter_tail(value : Int) -> String {
 }
 
 ///|
-fn trace_id_from_counter(value : Int) -> TraceId {
+fn trace_id_from_counter(value : Int32) -> TraceId {
   { value: "00000000-0000-4000-8000-\{trace_id_counter_tail(value)}", }
 }
 
@@ -1971,7 +1971,7 @@ pub fn TraceId::to_string(self : TraceId) -> String {
 }
 
 ///|
-pub fn TraceId::hash(self : TraceId) -> Int {
+pub fn TraceId::hash(self : TraceId) -> Int32 {
   self.value.hash()
 }
 
@@ -1981,7 +1981,7 @@ pub fn TraceId::equal(self : TraceId, other : TraceId) -> Bool {
 }
 
 ///|
-pub fn TraceId::compare(self : TraceId, other : TraceId) -> Int {
+pub fn TraceId::compare(self : TraceId, other : TraceId) -> Int32 {
   self.value.compare(other.value)
 }
 
@@ -2006,7 +2006,7 @@ pub fn Id::to_string(id : TraceId) -> String {
 }
 
 ///|
-pub fn Id::hash(id : TraceId) -> Int {
+pub fn Id::hash(id : TraceId) -> Int32 {
   id.hash()
 }
 
@@ -2016,7 +2016,7 @@ pub fn Id::equal(id : TraceId, other : TraceId) -> Bool {
 }
 
 ///|
-pub fn Id::compare(id : TraceId, other : TraceId) -> Int {
+pub fn Id::compare(id : TraceId, other : TraceId) -> Int32 {
   id.compare(other)
 }
 
@@ -2062,7 +2062,7 @@ pub(all) struct TraceStreamReader {
 pub(all) struct Reader {}
 
 ///|
-let trace_next_id : Ref[Int] = Ref(0)
+let trace_next_id : Ref[Int32] = Ref(0)
 
 ///|
 let trace_loaded_registry : Map[TraceId, Trace] = Map([])
@@ -2113,7 +2113,7 @@ let trace_builtin_providers_registered : Ref[Bool] = Ref(false)
 let trace_file_uri_prefix : String = "file://"
 
 ///|
-fn next_trace_id() -> Int {
+fn next_trace_id() -> Int32 {
   trace_next_id.val += 1
   trace_next_id.val
 }
@@ -2552,8 +2552,8 @@ fn find_protocol(uri : String) -> Result[String, TraceError] {
 ///|
 pub fn Trace::create(
   tool : TraceTool,
-  events? : Array[TraceEvent] = [],
-  monitor? : TraceMonitor = TraceMonitor::fail_on_error(),
+  events~ : Array[TraceEvent] = [],
+  monitor~ : TraceMonitor = TraceMonitor::fail_on_error(),
 ) -> Trace {
   Trace::from_results(tool, events.map(event => Ok(event)), monitor~)
 }
@@ -2562,7 +2562,7 @@ pub fn Trace::create(
 pub fn Trace::create_stream(
   tool : TraceTool,
   next : () -> Result[TraceEvent, String]?,
-  monitor? : TraceMonitor = TraceMonitor::fail_on_error(),
+  monitor~ : TraceMonitor = TraceMonitor::fail_on_error(),
 ) -> Trace {
   Trace::create_stream_with_id(TraceId::fresh(), tool, next, monitor~)
 }
@@ -2572,7 +2572,7 @@ fn Trace::create_stream_with_id(
   id : TraceId,
   tool : TraceTool,
   next : () -> Result[TraceEvent, String]?,
-  monitor? : TraceMonitor = TraceMonitor::fail_on_error(),
+  monitor~ : TraceMonitor = TraceMonitor::fail_on_error(),
 ) -> Trace {
   {
     id_value: id,
@@ -2589,7 +2589,7 @@ fn Trace::create_stream_with_id(
 pub fn Trace::from_results(
   tool : TraceTool,
   source : Array[Result[TraceEvent, String]],
-  monitor? : TraceMonitor = TraceMonitor::fail_on_error(),
+  monitor~ : TraceMonitor = TraceMonitor::fail_on_error(),
 ) -> Trace {
   Trace::create_stream(tool, trace_array_source(source), monitor~)
 }
@@ -2599,7 +2599,7 @@ fn Trace::from_results_with_id(
   id : TraceId,
   tool : TraceTool,
   source : Array[Result[TraceEvent, String]],
-  monitor? : TraceMonitor = TraceMonitor::fail_on_error(),
+  monitor~ : TraceMonitor = TraceMonitor::fail_on_error(),
 ) -> Trace {
   Trace::create_stream_with_id(id, tool, trace_array_source(source), monitor~)
 }
@@ -2608,7 +2608,7 @@ fn Trace::from_results_with_id(
 pub fn TraceStreamReader::create(
   tool : TraceTool,
   next : () -> Result[TraceEvent, String]?,
-  meta? : TraceMeta = TraceMeta::empty(),
+  meta~ : TraceMeta = TraceMeta::empty(),
 ) -> TraceStreamReader {
   { tool, meta, next: trace_source_once(next), }
 }
@@ -2617,7 +2617,7 @@ pub fn TraceStreamReader::create(
 pub fn TraceStreamReader::from_results(
   tool : TraceTool,
   events : Array[Result[TraceEvent, String]],
-  meta? : TraceMeta = TraceMeta::empty(),
+  meta~ : TraceMeta = TraceMeta::empty(),
 ) -> TraceStreamReader {
   TraceStreamReader::create(tool, trace_array_source(events), meta~)
 }
@@ -2626,7 +2626,7 @@ pub fn TraceStreamReader::from_results(
 pub fn Reader::create(
   tool : TraceTool,
   next : () -> Result[TraceEvent, String]?,
-  meta? : TraceMeta = TraceMeta::empty(),
+  meta~ : TraceMeta = TraceMeta::empty(),
 ) -> TraceStreamReader {
   TraceStreamReader::create(tool, next, meta~)
 }
@@ -2635,7 +2635,7 @@ pub fn Reader::create(
 pub fn Reader::from_results(
   tool : TraceTool,
   events : Array[Result[TraceEvent, String]],
-  meta? : TraceMeta = TraceMeta::empty(),
+  meta~ : TraceMeta = TraceMeta::empty(),
 ) -> TraceStreamReader {
   TraceStreamReader::from_results(tool, events, meta~)
 }
@@ -2763,7 +2763,7 @@ pub fn[T] Trace::next_matching(
 ///|
 pub fn Trace::read_events(
   self : Trace,
-  limit? : Int = -1,
+  limit~ : Int32 = -1,
 ) -> Result[Array[TraceEvent], TraceError] {
   let out : Array[TraceEvent] = []
   let done = Ref(false)
@@ -2822,7 +2822,7 @@ pub fn Trace::save(uri : String, trace : Trace) -> Result[Unit, TraceError] {
 ///|
 pub fn Trace::load(
   uri : String,
-  monitor? : TraceMonitor = TraceMonitor::fail_on_error(),
+  monitor~ : TraceMonitor = TraceMonitor::fail_on_error(),
 ) -> Result[Trace, TraceError] {
   match find_protocol(uri) {
     Ok(protocol) =>

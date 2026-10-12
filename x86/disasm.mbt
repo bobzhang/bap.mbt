@@ -26,19 +26,19 @@ let o_fs : Operand = Oseg(4)
 let o_gs : Operand = Oseg(5)
 
 ///|
-let repnz : Int = 0xf2
+let repnz : Int32 = 0xf2
 
 ///|
-let repz : Int = 0xf3
+let repz : Int32 = 0xf3
 
 ///|
-let pref_opsize : Int = 0x66
+let pref_opsize : Int32 = 0x66
 
 ///|
-let pref_addrsize : Int = 0x67
+let pref_addrsize : Int32 = 0x67
 
 ///|
-fn is_legacy_prefix(i : Int) -> Bool {
+fn is_legacy_prefix(i : Int32) -> Bool {
   match i {
     0xf0
     | 0xf2
@@ -61,10 +61,10 @@ fn is_legacy_prefix(i : Int) -> Bool {
 /// decoded prefix information, the opcode and the position after the
 /// instruction.
 priv struct Decoded {
-  pref : Array[Int]
+  pref : Array[Int32]
   prefix : Prefix
   op : Opcode
-  next : Int
+  next : Int32
 }
 
 ///|
@@ -76,7 +76,7 @@ fn parse_instr(
 ) -> Decoded raise X86Error {
   let d : Decoder = { mode, bytes, base: addr, }
   // legacy prefixes
-  let pref : Array[Int] = []
+  let pref : Array[Int32] = []
   let mut a = 0
   while a < bytes.length() && is_legacy_prefix(d.g(a)) {
     pref.insert(0, d.g(a))
@@ -203,10 +203,13 @@ fn parse_instr(
 /// Upstream `parse_prefixes`: the segment base selected by the segment
 /// override prefixes, and the remaining prefixes (without segment, lock and
 /// operand-size prefixes).
-fn parse_prefixes(mode : Mode, pref : Array[Int]) -> (@types.Var?, Array[Int]) {
+fn parse_prefixes(
+  mode : Mode,
+  pref : Array[Int32],
+) -> (@types.Var?, Array[Int32]) {
   let r = vars_of_mode(mode)
   let mut s : @types.Var? = None
-  let rest : Array[Int] = []
+  let rest : Array[Int32] = []
   for p in pref {
     match p {
       0x2e | 0x36 | 0x3e | 0x26 | 0x64 | 0x65 => s = r.seg_base(p)
@@ -219,7 +222,7 @@ fn parse_prefixes(mode : Mode, pref : Array[Int]) -> (@types.Var?, Array[Int]) {
 
 ///|
 /// Upstream `expanded_jump_type`.
-fn Decoder::expanded_jump_type(self : Decoder, opsize : Int) -> Int {
+fn Decoder::expanded_jump_type(self : Decoder, opsize : Int32) -> Int32 {
   match self.mode {
     X86 => opsize
     X8664 => 32
@@ -231,8 +234,8 @@ fn Decoder::expanded_jump_type(self : Decoder, opsize : Int) -> Int {
 fn Decoder::get_opcode(
   self : Decoder,
   prefix : Prefix,
-  a : Int,
-) -> (Opcode, Int) raise X86Error {
+  a : Int32,
+) -> (Opcode, Int32) raise X86Error {
   let mode = self.mode
   let mt = mode.width()
   let rm_extend = prefix.rm_extend

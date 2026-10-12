@@ -94,7 +94,7 @@ fn word16(value : UInt64) -> @types.Word raise @bitvec.BitVecError {
 fn assert_addr_offset(
   exp : @types.Exp,
   base : @types.Var,
-  offset : Int,
+  offset : Int32,
 ) -> Unit raise {
   if offset == 0 {
     match exp {
@@ -117,7 +117,7 @@ fn assert_byte_load(
   exp : @types.Exp,
   mem : @types.Var,
   addr : @types.Var,
-  offset : Int,
+  offset : Int32,
 ) -> Unit raise {
   match exp {
     Load(mem=Var(load_mem), addr=load_addr, typ=Imm(8), ..) => {

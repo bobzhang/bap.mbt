@@ -2,9 +2,9 @@
 fn[N : Hash + Eq, E] dfs_visit(
   adj : Map[N, Array[Edge[N, E]]],
   node : N,
-  colors : Map[N, Int],
-  entered : Map[N, Int],
-  time : Ref[Int],
+  colors : Map[N, Int32],
+  entered : Map[N, Int32],
+  time : Ref[Int32],
   events : Array[(EdgeKind, Edge[N, E])],
 ) -> Unit {
   colors[node] = 1
@@ -37,7 +37,7 @@ fn[N, A] dfs_start_tree_identity(_node : N, state : A) -> A {
 }
 
 ///|
-fn[N, A] dfs_node_identity(_index : Int, _node : N, state : A) -> A {
+fn[N, A] dfs_node_identity(_index : Int32, _node : N, state : A) -> A {
   state
 }
 
@@ -53,8 +53,8 @@ fn[N, E, A] dfs_edge_identity(
 ///|
 struct DfsVisitor[N, E, A] {
   start_tree_value : (N, A) -> A
-  enter_node_value : (Int, N, A) -> A
-  leave_node_value : (Int, N, A) -> A
+  enter_node_value : (Int32, N, A) -> A
+  leave_node_value : (Int32, N, A) -> A
   enter_edge_value : (EdgeKind, Edge[N, E], A) -> A
   leave_edge_value : (EdgeKind, Edge[N, E], A) -> A
 } derive(Debug)
@@ -64,11 +64,11 @@ pub extend DfsVisitor with Debug::{to_repr}
 
 ///|
 pub fn[N, E, A] DfsVisitor::new(
-  start_tree? : (N, A) -> A = dfs_start_tree_identity,
-  enter_node? : (Int, N, A) -> A = dfs_node_identity,
-  leave_node? : (Int, N, A) -> A = dfs_node_identity,
-  enter_edge? : (EdgeKind, Edge[N, E], A) -> A = dfs_edge_identity,
-  leave_edge? : (EdgeKind, Edge[N, E], A) -> A = dfs_edge_identity,
+  start_tree~ : (N, A) -> A = dfs_start_tree_identity,
+  enter_node~ : (Int32, N, A) -> A = dfs_node_identity,
+  leave_node~ : (Int32, N, A) -> A = dfs_node_identity,
+  enter_edge~ : (EdgeKind, Edge[N, E], A) -> A = dfs_edge_identity,
+  leave_edge~ : (EdgeKind, Edge[N, E], A) -> A = dfs_edge_identity,
 ) -> DfsVisitor[N, E, A] {
   {
     start_tree_value: start_tree,
@@ -90,12 +90,12 @@ fn[N : Hash + Eq, E, A] depth_first_search_visit(
   node : N,
   state : A,
   rev : Bool,
-  colors : Map[N, Int],
-  entered : Map[N, Int],
-  nodes_left : Ref[Int],
-  next_pre : Ref[Int],
-  enter_node : (Int, N, A) -> A,
-  leave_node : (Int, N, A) -> A,
+  colors : Map[N, Int32],
+  entered : Map[N, Int32],
+  nodes_left : Ref[Int32],
+  next_pre : Ref[Int32],
+  enter_node : (Int32, N, A) -> A,
+  leave_node : (Int32, N, A) -> A,
   enter_edge : (EdgeKind, Edge[N, E], A) -> A,
   leave_edge : (EdgeKind, Edge[N, E], A) -> A,
 ) -> A {
@@ -134,16 +134,16 @@ fn[N : Hash + Eq, E, A] depth_first_search_visit(
 pub fn[N : Hash + Eq, E, A] Graph::depth_first_search(
   self : Graph[N, E],
   init~ : A,
-  rev? : Bool = false,
-  start? : N? = None,
-  start_tree? : (N, A) -> A = dfs_start_tree_identity,
-  enter_node? : (Int, N, A) -> A = dfs_node_identity,
-  leave_node? : (Int, N, A) -> A = dfs_node_identity,
-  enter_edge? : (EdgeKind, Edge[N, E], A) -> A = dfs_edge_identity,
-  leave_edge? : (EdgeKind, Edge[N, E], A) -> A = dfs_edge_identity,
+  rev~ : Bool = false,
+  start~ : N? = None,
+  start_tree~ : (N, A) -> A = dfs_start_tree_identity,
+  enter_node~ : (Int32, N, A) -> A = dfs_node_identity,
+  leave_node~ : (Int32, N, A) -> A = dfs_node_identity,
+  enter_edge~ : (EdgeKind, Edge[N, E], A) -> A = dfs_edge_identity,
+  leave_edge~ : (EdgeKind, Edge[N, E], A) -> A = dfs_edge_identity,
 ) -> A {
-  let colors : Map[N, Int] = Map([])
-  let entered : Map[N, Int] = Map([])
+  let colors : Map[N, Int32] = Map([])
+  let entered : Map[N, Int32] = Map([])
   let nodes_left = Ref::Ref(self.node_count())
   let next_pre = Ref::Ref(0)
   let adj = self.adjacency(rev)
@@ -175,8 +175,8 @@ pub fn[N : Hash + Eq, E, A] Graph::depth_first_visit(
   self : Graph[N, E],
   visitor : DfsVisitor[N, E, A],
   init~ : A,
-  rev? : Bool = false,
-  start? : N? = None,
+  rev~ : Bool = false,
+  start~ : N? = None,
 ) -> A {
   self.depth_first_search(
     init~,
@@ -213,8 +213,8 @@ pub fn[N : Hash + Eq, E] Graph::dfs_edges(
   self : Graph[N, E],
   start : N,
 ) -> Array[(EdgeKind, Edge[N, E])] {
-  let colors : Map[N, Int] = Map([])
-  let entered : Map[N, Int] = Map([])
+  let colors : Map[N, Int32] = Map([])
+  let entered : Map[N, Int32] = Map([])
   let time = Ref::Ref(0)
   let events = []
   if self.has_node(start) {
@@ -227,9 +227,9 @@ pub fn[N : Hash + Eq, E] Graph::dfs_edges(
 fn[N : Hash + Eq, E] dfs_numbering_visit(
   adj : Map[N, Array[Edge[N, E]]],
   node : N,
-  colors : Map[N, Int],
-  time : Ref[Int],
-  next_pre : Ref[Int],
+  colors : Map[N, Int32],
+  time : Ref[Int32],
+  next_pre : Ref[Int32],
   numbering : Map[N, DfsNodeInfo],
   leave_order : Array[N],
 ) -> Unit {
@@ -267,7 +267,7 @@ pub fn[N : Hash + Eq, E] Graph::dfs_numbering(
   self : Graph[N, E],
   start : N,
 ) -> Map[N, DfsNodeInfo] {
-  let colors : Map[N, Int] = Map([])
+  let colors : Map[N, Int32] = Map([])
   let numbering : Map[N, DfsNodeInfo] = Map([])
   let time = Ref::Ref(0)
   let next_pre = Ref::Ref(0)
@@ -297,7 +297,7 @@ pub fn[N : Hash + Eq, E] Graph::dfs_numbering(
 pub fn[N : Hash + Eq, E] Graph::reachable(
   self : Graph[N, E],
   start : N,
-  rev? : Bool = false,
+  rev~ : Bool = false,
 ) -> Set[N] {
   let seen : Set[N] = Set([])
   let order = []
@@ -335,7 +335,7 @@ pub fn[N : Hash + Eq, E, A] Graph::fold_reachable(
   start : N,
   init : A,
   f : (A, N) -> A,
-  rev? : Bool = false,
+  rev~ : Bool = false,
 ) -> A {
   if self.has_node(start) {
     fold_reachable_visit(self.adjacency(rev), start, Set([]), init, rev, f)
@@ -349,7 +349,7 @@ pub fn[N : Hash + Eq, E] Graph::is_reachable(
   self : Graph[N, E],
   start : N,
   finish : N,
-  rev? : Bool = false,
+  rev~ : Bool = false,
 ) -> Bool {
   self.fold_reachable(
     start,
@@ -363,7 +363,7 @@ pub fn[N : Hash + Eq, E] Graph::is_reachable(
 pub fn[N : Hash + Eq, E] Graph::reverse_postorder(
   self : Graph[N, E],
   start : N,
-  rev? : Bool = false,
+  rev~ : Bool = false,
 ) -> Array[N] {
   self.postorder(start, rev~).rev()
 }
@@ -372,7 +372,7 @@ pub fn[N : Hash + Eq, E] Graph::reverse_postorder(
 pub fn[N : Hash + Eq, E] Graph::postorder(
   self : Graph[N, E],
   start : N,
-  rev? : Bool = false,
+  rev~ : Bool = false,
 ) -> Array[N] {
   let seen : Set[N] = Set([])
   let order = []
@@ -385,8 +385,8 @@ pub fn[N : Hash + Eq, E] Graph::postorder(
 ///|
 pub fn[N : Hash + Eq, E] Graph::postorder_traverse(
   self : Graph[N, E],
-  rev? : Bool = false,
-  start? : N? = None,
+  rev~ : Bool = false,
+  start~ : N? = None,
 ) -> Array[N] {
   self.depth_first_search(init=([] : Array[N]), rev~, start~, leave_node=(
     _rpost,
@@ -401,15 +401,15 @@ pub fn[N : Hash + Eq, E] Graph::postorder_traverse(
 ///|
 pub fn[N : Hash + Eq, E] Graph::reverse_postorder_traverse(
   self : Graph[N, E],
-  rev? : Bool = false,
-  start? : N? = None,
+  rev~ : Bool = false,
+  start~ : N? = None,
 ) -> Array[N] {
   self.postorder_traverse(rev~, start~).rev()
 }
 
 ///|
 priv struct ShortestPathItem[N, E] {
-  total : Int
+  total : Int32
   node : N
   path : Array[Edge[N, E]]
 }
@@ -436,11 +436,11 @@ pub fn[N : Hash + Eq, E] Graph::shortest_path(
   self : Graph[N, E],
   start : N,
   finish : N,
-  weight? : (Edge[N, E]) -> Int = _ => 1,
-  rev? : Bool = false,
+  weight~ : (Edge[N, E]) -> Int32 = _ => 1,
+  rev~ : Bool = false,
 ) -> GraphPath[Edge[N, E]]? {
   let visited : Set[N] = Set([])
-  let distances : Map[N, Int] = Map([])
+  let distances : Map[N, Int32] = Map([])
   let queue : Array[ShortestPathItem[N, E]] = [
     { total: 0, node: start, path: [], },
   ]
@@ -483,9 +483,9 @@ pub fn[N : Hash + Eq, E] Graph::shortest_path(
 fn[N : Hash + Eq, E] strong_connect(
   adj : Map[N, Array[Edge[N, E]]],
   node : N,
-  index : Ref[Int],
-  indexes : Map[N, Int],
-  lowlinks : Map[N, Int],
+  index : Ref[Int32],
+  indexes : Map[N, Int32],
+  lowlinks : Map[N, Int32],
   stack : Array[N],
   on_stack : Set[N],
   components : Array[Set[N]],
@@ -501,9 +501,9 @@ fn[N : Hash + Eq, E] strong_connect(
       strong_connect(
         adj, succ, index, indexes, lowlinks, stack, on_stack, components,
       )
-      lowlinks[node] = Int::min(lowlinks[node], lowlinks[succ])
+      lowlinks[node] = Int32::min(lowlinks[node], lowlinks[succ])
     } else if on_stack.contains(succ) {
-      lowlinks[node] = Int::min(lowlinks[node], indexes[succ])
+      lowlinks[node] = Int32::min(lowlinks[node], indexes[succ])
     }
   }
   if lowlinks[node] == indexes[node] {
@@ -530,8 +530,8 @@ pub fn[N : Hash + Eq, E] Graph::strong_components(
   self : Graph[N, E],
 ) -> Array[Set[N]] {
   let index = Ref::Ref(0)
-  let indexes : Map[N, Int] = Map([])
-  let lowlinks : Map[N, Int] = Map([])
+  let indexes : Map[N, Int32] = Map([])
+  let lowlinks : Map[N, Int32] = Map([])
   let stack : Array[N] = []
   let on_stack : Set[N] = Set([])
   let components : Array[Set[N]] = []
@@ -568,7 +568,7 @@ pub fn[N : Hash + Eq, E] Graph::strong_component_partition(
 pub fn[N : Hash + Eq, E] Graph::dominators(
   self : Graph[N, E],
   entry : N,
-  rev? : Bool = false,
+  rev~ : Bool = false,
 ) -> Map[N, Set[N]] {
   let all_nodes : Set[N] = Set::from_array(self.nodes)
   let reachable = self.reachable(entry, rev~)
@@ -654,7 +654,7 @@ fn[N : Hash + Eq] immediate_dominator_of(doms : Map[N, Set[N]], node : N) -> N? 
 pub fn[N : Hash + Eq, E] Graph::immediate_dominators(
   self : Graph[N, E],
   entry : N,
-  rev? : Bool = false,
+  rev~ : Bool = false,
 ) -> Map[N, N] {
   let doms = self.dominators(entry, rev~)
   let reachable = self.reachable(entry, rev~)
@@ -674,7 +674,7 @@ pub fn[N : Hash + Eq, E] Graph::immediate_dominators(
 pub fn[N : Hash + Eq, E] Graph::dominance_frontiers(
   self : Graph[N, E],
   entry : N,
-  rev? : Bool = false,
+  rev~ : Bool = false,
 ) -> Map[N, Set[N]] {
   let reachable = self.reachable(entry, rev~)
   let idoms = self.immediate_dominators(entry, rev~)

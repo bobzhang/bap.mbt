@@ -252,7 +252,7 @@ fn arg_order_key(a : ArgInfo) -> String {
 
 ///|
 fn dedup_args(args : Array[ArgInfo]) -> Array[ArgInfo] {
-  let seen : Map[Int, Unit] = Map([])
+  let seen : Map[Int32, Unit] = Map([])
   let out = []
   for a in args {
     if !seen.contains(a.id) {
@@ -297,7 +297,7 @@ fn assemble_manpage(
     Paragraph(synopsis),
   ]
   let emitted : Map[String, Unit] = Map([])
-  let emit_user_tail = (idx : Int) => {
+  let emit_user_tail = (idx : Int32) => {
     // non-standard sections that follow the user section at `idx`
     for j in (idx + 1)..<sections.length() {
       let (s, blocks) = sections[j]

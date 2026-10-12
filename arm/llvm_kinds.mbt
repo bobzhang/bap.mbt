@@ -4,43 +4,43 @@
 // which also holds for the instructions that define the `PC`.
 
 ///|
-const DESC_COND : Int = 0x1
+const DESC_COND : Int32 = 0x1
 
 ///|
-const DESC_UNCOND : Int = 0x2
+const DESC_UNCOND : Int32 = 0x2
 
 ///|
-const DESC_INDIRECT : Int = 0x4
+const DESC_INDIRECT : Int32 = 0x4
 
 ///|
-const DESC_RETURN : Int = 0x8
+const DESC_RETURN : Int32 = 0x8
 
 ///|
-const DESC_CALL : Int = 0x10
+const DESC_CALL : Int32 = 0x10
 
 ///|
-const DESC_BARRIER : Int = 0x20
+const DESC_BARRIER : Int32 = 0x20
 
 ///|
-const DESC_TERMINATOR : Int = 0x40
+const DESC_TERMINATOR : Int32 = 0x40
 
 ///|
 /// `isBranch || isCall || isReturn || isIndirectBranch`.
-const DESC_AFFECT_CF : Int = 0x80
+const DESC_AFFECT_CF : Int32 = 0x80
 
 ///|
-const DESC_MAY_LOAD : Int = 0x100
+const DESC_MAY_LOAD : Int32 = 0x100
 
 ///|
-const DESC_MAY_STORE : Int = 0x200
+const DESC_MAY_STORE : Int32 = 0x200
 
 ///|
 /// `variadicOpsAreDefs`: the variadic operands (register lists) are defs.
-const DESC_VARIADIC_DEFS : Int = 0x400
+const DESC_VARIADIC_DEFS : Int32 = 0x400
 
 ///|
 /// The opcode implicitly defines the `PC`.
-const DESC_IMPLICIT_PC : Int = 0x800
+const DESC_IMPLICIT_PC : Int32 = 0x800
 
 ///|
 /// The kinds of the instruction `name` with the operands `ops`, as LLVM's
@@ -52,7 +52,7 @@ const DESC_IMPLICIT_PC : Int = 0x800
 pub fn llvm_kinds(name : String, ops : ArrayView[@mc.Op]) -> Array[@mc.Kind] {
   guard llvm_descs.get(name) is Some((flags, defs, fixed)) else { return [] }
   let kinds : Array[@mc.Kind] = []
-  let has = (bit : Int) => (flags & bit) != 0
+  let has = (bit : Int32) => (flags & bit) != 0
   if has(DESC_COND) {
     kinds.push(ConditionalBranch)
   }

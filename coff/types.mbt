@@ -1,57 +1,57 @@
 ///|
 /// The COFF file header (`IMAGE_FILE_HEADER`).
 pub(all) struct FileHeader {
-  machine : Int
-  number_of_sections : Int
-  time_date_stamp : UInt
-  pointer_to_symbol_table : UInt
-  number_of_symbols : UInt
-  size_of_optional_header : Int
-  characteristics : Int
+  machine : Int32
+  number_of_sections : Int32
+  time_date_stamp : UInt32
+  pointer_to_symbol_table : UInt32
+  number_of_symbols : UInt32
+  size_of_optional_header : Int32
+  characteristics : Int32
 } derive(Eq, Debug)
 
 ///|
 /// A data directory of the optional header (`IMAGE_DATA_DIRECTORY`).
 pub(all) struct DataDirectory {
-  virtual_address : UInt
-  size : UInt
+  virtual_address : UInt32
+  size : UInt32
 } derive(Eq, Debug)
 
 ///|
 /// The PE optional header (`IMAGE_OPTIONAL_HEADER32` / `64`).
 pub(all) struct OptionalHeader {
   /// `0x10b` (PE32) or `0x20b` (PE32+)
-  magic : Int
-  major_linker_version : Int
-  minor_linker_version : Int
-  size_of_code : UInt
-  size_of_initialized_data : UInt
-  size_of_uninitialized_data : UInt
-  address_of_entry_point : UInt
-  base_of_code : UInt
+  magic : Int32
+  major_linker_version : Int32
+  minor_linker_version : Int32
+  size_of_code : UInt32
+  size_of_initialized_data : UInt32
+  size_of_uninitialized_data : UInt32
+  address_of_entry_point : UInt32
+  base_of_code : UInt32
   /// PE32 only (zero in PE32+)
-  base_of_data : UInt
+  base_of_data : UInt32
   image_base : UInt64
-  section_alignment : UInt
-  file_alignment : UInt
-  major_operating_system_version : Int
-  minor_operating_system_version : Int
-  major_image_version : Int
-  minor_image_version : Int
-  major_subsystem_version : Int
-  minor_subsystem_version : Int
-  win32_version_value : UInt
-  size_of_image : UInt
-  size_of_headers : UInt
-  checksum : UInt
-  subsystem : Int
-  dll_characteristics : Int
+  section_alignment : UInt32
+  file_alignment : UInt32
+  major_operating_system_version : Int32
+  minor_operating_system_version : Int32
+  major_image_version : Int32
+  minor_image_version : Int32
+  major_subsystem_version : Int32
+  minor_subsystem_version : Int32
+  win32_version_value : UInt32
+  size_of_image : UInt32
+  size_of_headers : UInt32
+  checksum : UInt32
+  subsystem : Int32
+  dll_characteristics : Int32
   size_of_stack_reserve : UInt64
   size_of_stack_commit : UInt64
   size_of_heap_reserve : UInt64
   size_of_heap_commit : UInt64
-  loader_flags : UInt
-  number_of_rva_and_sizes : UInt
+  loader_flags : UInt32
+  number_of_rva_and_sizes : UInt32
   data_directories : Array[DataDirectory]
 } derive(Eq, Debug)
 
@@ -60,15 +60,15 @@ pub(all) struct OptionalHeader {
 /// name (see `section_name` for long names of object files).
 pub(all) struct SectionHeader {
   name : String
-  virtual_size : UInt
-  virtual_address : UInt
-  size_of_raw_data : UInt
-  pointer_to_raw_data : UInt
-  pointer_to_relocations : UInt
-  pointer_to_linenumbers : UInt
-  number_of_relocations : Int
-  number_of_linenumbers : Int
-  characteristics : UInt
+  virtual_size : UInt32
+  virtual_address : UInt32
+  size_of_raw_data : UInt32
+  pointer_to_raw_data : UInt32
+  pointer_to_relocations : UInt32
+  pointer_to_linenumbers : UInt32
+  number_of_relocations : Int32
+  number_of_linenumbers : Int32
+  characteristics : UInt32
 } derive(Eq, Debug)
 
 ///|
@@ -76,33 +76,33 @@ pub(all) struct SectionHeader {
 /// and counted in `number_of_aux_symbols`.
 pub(all) struct Symbol {
   /// the index of the record in the symbol table
-  index : Int
+  index : Int32
   name : String
-  value : UInt
+  value : UInt32
   /// one-based section number, or `IMAGE_SYM_UNDEFINED` (0),
   /// `IMAGE_SYM_ABSOLUTE` (-1), `IMAGE_SYM_DEBUG` (-2)
-  section_number : Int
-  typ : Int
-  storage_class : Int
-  number_of_aux_symbols : Int
+  section_number : Int32
+  typ : Int32
+  storage_class : Int32
+  number_of_aux_symbols : Int32
 } derive(Eq, Debug)
 
 ///|
 /// A relocation of a section (`IMAGE_RELOCATION`).
 pub(all) struct Relocation {
-  virtual_address : UInt
-  symbol_table_index : UInt
-  typ : Int
+  virtual_address : UInt32
+  symbol_table_index : UInt32
+  typ : Int32
 } derive(Eq, Debug)
 
 ///|
 /// An imported function: by name (with its hint) or by ordinal.
 pub(all) struct ImportEntry {
   name : String?
-  ordinal : Int?
-  hint : Int
+  ordinal : Int32?
+  hint : Int32
   /// the RVA of the import address table slot of the function
-  iat_rva : UInt
+  iat_rva : UInt32
 } derive(Eq, Debug)
 
 ///|
@@ -110,8 +110,8 @@ pub(all) struct ImportEntry {
 /// functions.
 pub(all) struct Import {
   dll : String
-  lookup_table_rva : UInt
-  address_table_rva : UInt
+  lookup_table_rva : UInt32
+  address_table_rva : UInt32
   entries : Array[ImportEntry]
 } derive(Eq, Debug)
 
@@ -121,8 +121,8 @@ pub(all) struct Export {
   /// the name, if the function is exported by name
   name : String?
   /// the biased ordinal (`ordinal_base` + index)
-  ordinal : UInt
-  rva : UInt
+  ordinal : UInt32
+  rva : UInt32
   /// the forwarder string, if the RVA points into the export directory
   forwarder : String?
 } derive(Eq, Debug)
@@ -131,7 +131,7 @@ pub(all) struct Export {
 /// The export directory (`IMAGE_EXPORT_DIRECTORY`) with its functions.
 pub(all) struct Exports {
   dll : String
-  ordinal_base : UInt
+  ordinal_base : UInt32
   exports : Array[Export]
 } derive(Eq, Debug)
 
@@ -139,7 +139,7 @@ pub(all) struct Exports {
 /// A parsed PE image or COFF object file.
 pub(all) struct Coff {
   /// the offset of the PE signature (`e_lfanew`), for PE images
-  pe_offset : Int?
+  pe_offset : Int32?
   header : FileHeader
   optional_header : OptionalHeader?
   sections : Array[SectionHeader]

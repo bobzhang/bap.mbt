@@ -30,7 +30,7 @@ test "panic redeclaring a property with a different domain" {
 ///|
 test "class equality witnesses cast objects" {
   let cls = kb_class("castable")
-  let same : @knowledge.Class[String, Int] = @knowledge.Class::create(
+  let same : @knowledge.Class[String, Int32] = @knowledge.Class::create(
     name=kb_name("castable"),
     sort=1,
   )

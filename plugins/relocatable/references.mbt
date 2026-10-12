@@ -42,7 +42,7 @@ pub fn chop_version(s : String) -> String {
 }
 
 ///|
-fn modulo(addr : Int64, width : Int) -> UInt64 {
+fn modulo(addr : Int64, width : Int32) -> UInt64 {
   let value = addr.reinterpret_as_uint64()
   if width <= 0 || width >= 64 {
     value

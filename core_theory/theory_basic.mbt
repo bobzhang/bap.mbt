@@ -1,7 +1,7 @@
 ///|
 /// The bitvector `n mod 2^width` (negative numbers are taken in two's
 /// complement); non-bitvector sorts (of size zero) use one bit.
-pub fn bitvec_of_int(width : Int, n : Int) -> @bitvec.BitVec raise {
+pub fn bitvec_of_int(width : Int32, n : Int32) -> @bitvec.BitVec raise {
   let width = if width < 1 { 1 } else { width }
   if n >= 0 {
     @bitvec.of_int(width~, n)
@@ -49,7 +49,7 @@ pub fn Core::basic(self : Core) -> Core {
       l.and_(l.ule(x, y), l.inv(l.ule(y, x)))(state)
     }
   }
-  let small : (Sort, Int) -> Pure = (s, n) => {
+  let small : (Sort, Int32) -> Pure = (s, n) => {
     state => l.int(s, bitvec_of_int(sort_size(s), n))(state)
   }
   let zero : (Sort) -> Pure = s => small(s, 0)
@@ -59,13 +59,13 @@ pub fn Core::basic(self : Core) -> Core {
       eq(pure_const(x), zero(x.sort()))(state)
     }
   }
-  let nsucc : (Pure, Int) -> Pure = (x, n) => {
+  let nsucc : (Pure, Int32) -> Pure = (x, n) => {
     state => {
       let x = x(state)
       l.add(pure_const(x), small(x.sort(), n))(state)
     }
   }
-  let npred : (Pure, Int) -> Pure = (x, n) => {
+  let npred : (Pure, Int32) -> Pure = (x, n) => {
     state => {
       let x = x(state)
       l.sub(pure_const(x), small(x.sort(), n))(state)
@@ -98,11 +98,11 @@ pub fn Core::basic(self : Core) -> Core {
       let chunk_size = sort_size(sort_mem_values(mem.sort()))
       let needed = sort_size(out)
       let mem = pure_const(mem)
-      fn loop_(chunks : @list.List[Pure], loaded : Int) -> Pure {
+      fn loop_(chunks : @list.List[Pure], loaded : Int32) -> Pure {
         if loaded < needed && chunk_size > 0 {
           let key = nsucc(key, loaded / chunk_size)
           bind(l.load(mem, key), chunk => {
-            loop_(chunks.add(l.var_(chunk)), loaded + chunk_size)
+            loop_(chunks.prepend(l.var_(chunk)), loaded + chunk_size)
           })
         } else {
           l.ite(
@@ -113,7 +113,7 @@ pub fn Core::basic(self : Core) -> Core {
         }
       }
 
-      loop_(@list.empty(), 0)(state)
+      loop_(@list.List([]), 0)(state)
     }
   }
   let storew : (Pure, Pure, Pure, Pure) -> Pure = (dir, mem, key, data) => {
@@ -125,7 +125,7 @@ pub fn Core::basic(self : Core) -> Core {
       let needed = sort_size(data_t)
       let chunk_len = sort_size(chunks)
       let data = pure_const(data)
-      let nth : (Int) -> Pure = stored => {
+      let nth : (Int32) -> Pure = stored => {
         let shift = l.ite(
           dir,
           small(data_t, needed - stored - chunk_len),
@@ -133,7 +133,7 @@ pub fn Core::basic(self : Core) -> Core {
         )
         l.cast(chunks, l.b0, l.shiftr(l.b0, data, shift))
       }
-      fn loop_(key : Pure, stored : Int, mem : Pure) -> Pure {
+      fn loop_(key : Pure, stored : Int32, mem : Pure) -> Pure {
         if stored < needed && chunk_len > 0 {
           loop_(succ(key), stored + chunk_len, l.store(mem, key, nth(stored)))
         } else {

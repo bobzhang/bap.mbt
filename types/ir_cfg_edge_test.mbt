@@ -29,7 +29,7 @@ fn edge_tids(edges : Array[@types.IrCfgEdge]) -> Array[@types.Tid] {
 }
 
 ///|
-fn edge_positions(edges : Array[@types.IrCfgEdge]) -> Array[Int] {
+fn edge_positions(edges : Array[@types.IrCfgEdge]) -> Array[Int32] {
   edges.map(edge => edge.position())
 }
 

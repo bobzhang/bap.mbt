@@ -17,19 +17,19 @@
 /// The tables of `disassembly_basic_x86_tables.mbt`, parsed.
 priv struct X86LlvmTables {
   names : Array[String]
-  opcodes : Array[Int]
+  opcodes : Array[Int32]
   specs : Array[String]
-  kinds : Array[Int]
-  tsinfo : Array[Int]
-  dec_start : Array[Int]
-  dec_data : Array[Int]
-  tables : Array[Int]
-  spaces32 : Array[Int]
-  spaces64 : Array[Int]
-  tdn : Array[Int]
-  registers : Map[String, Int]
+  kinds : Array[Int32]
+  tsinfo : Array[Int32]
+  dec_start : Array[Int32]
+  dec_data : Array[Int32]
+  tables : Array[Int32]
+  spaces32 : Array[Int32]
+  spaces64 : Array[Int32]
+  tdn : Array[Int32]
+  registers : Map[String, Int32]
   templates : Array[String]
-  by_name : Map[String, Int]
+  by_name : Map[String, Int32]
 }
 
 ///|
@@ -37,7 +37,7 @@ let x86_llvm_tables_cache : Ref[X86LlvmTables?] = { val: None, }
 
 ///|
 /// Decodes a string of base-32 varints (see the tables file header).
-fn x86_llvm_ints(data : String) -> Array[Int] {
+fn x86_llvm_ints(data : String) -> Array[Int32] {
   let out = []
   let mut acc = 0
   let mut shift = 0
@@ -82,7 +82,7 @@ fn x86_llvm_words(data : String) -> Array[String] {
 ///|
 fn x86_llvm_tables_load() -> X86LlvmTables {
   let names = x86_llvm_words(x86_llvm_names_data)
-  let by_name : Map[String, Int] = Map([])
+  let by_name : Map[String, Int32] = Map([])
   for i, name in names {
     by_name[name] = i
   }
@@ -99,7 +99,7 @@ fn x86_llvm_tables_load() -> X86LlvmTables {
     }
     off += 1 + count
   }
-  let registers : Map[String, Int] = Map([])
+  let registers : Map[String, Int32] = Map([])
   for entry in x86_llvm_words(x86_llvm_registers_data) {
     let parts : Array[StringView] = entry.split("=").collect()
     if parts.length() == 2 {
@@ -145,9 +145,9 @@ fn x86_llvm_tables() -> X86LlvmTables {
 /// or -1 (invalid), and whether LLVM reads the ModR/M byte.
 fn X86LlvmTables::decide(
   self : X86LlvmTables,
-  dec : Int,
-  modrm : Int,
-) -> (Int, Bool) {
+  dec : Int32,
+  modrm : Int32,
+) -> (Int32, Bool) {
   let start = self.dec_start[dec]
   let header = self.dec_data[start]
   let read = header >= 4
@@ -173,10 +173,10 @@ fn X86LlvmTables::decide(
 fn X86LlvmTables::lookup(
   self : X86LlvmTables,
   mode64 : Bool,
-  slot : Int,
-  opcode : Int,
-  modrm : Int,
-) -> (Int, Bool) {
+  slot : Int32,
+  opcode : Int32,
+  modrm : Int32,
+) -> (Int32, Bool) {
   let spaces = if mode64 { self.spaces64 } else { self.spaces32 }
   let table = spaces[slot] - 1
   if table < 0 {
@@ -188,30 +188,30 @@ fn X86LlvmTables::lookup(
 ///|
 /// A decoded x86 instruction in LLVM's MCInst form.
 priv struct X86LlvmInsn {
-  id : Int
-  size : Int
+  id : Int32
+  size : Int32
   operands : Array[ProjectInstructionOperand]
   lock : Bool
-  rep : Int
-  mandatory : Int
+  rep : Int32
+  mandatory : Int32
   adsize : Bool
   mode64 : Bool
-  opcode : Int
+  opcode : Int32
 }
 
 ///|
 priv suberror X86LlvmFail {
-  X86LlvmFail(Int)
+  X86LlvmFail(Int32)
 }
 
 ///|
 priv struct X86LlvmCursor {
   bytes : BytesView
-  mut pos : Int
+  mut pos : Int32
 }
 
 ///|
-fn X86LlvmCursor::consume(self : X86LlvmCursor) -> Int raise X86LlvmFail {
+fn X86LlvmCursor::consume(self : X86LlvmCursor) -> Int32 raise X86LlvmFail {
   if self.pos >= self.bytes.length() {
     raise X86LlvmFail(self.pos)
   }
@@ -221,7 +221,7 @@ fn X86LlvmCursor::consume(self : X86LlvmCursor) -> Int raise X86LlvmFail {
 }
 
 ///|
-fn X86LlvmCursor::peek(self : X86LlvmCursor) -> Int {
+fn X86LlvmCursor::peek(self : X86LlvmCursor) -> Int32 {
   if self.pos >= self.bytes.length() {
     -1
   } else {
@@ -233,7 +233,7 @@ fn X86LlvmCursor::peek(self : X86LlvmCursor) -> Int {
 /// Little-endian unsigned read of `count` bytes.
 fn X86LlvmCursor::read_le(
   self : X86LlvmCursor,
-  count : Int,
+  count : Int32,
 ) -> UInt64 raise X86LlvmFail {
   let mut value = 0UL
   for k in 0..<count {
@@ -243,7 +243,7 @@ fn X86LlvmCursor::read_le(
 }
 
 ///|
-fn x86_llvm_sext(value : UInt64, bits : Int) -> Int64 {
+fn x86_llvm_sext(value : UInt64, bits : Int32) -> Int64 {
   if bits >= 64 {
     value.reinterpret_as_int64()
   } else {
@@ -290,9 +290,9 @@ let x86_llvm_segments : Array[String] = ["ES", "CS", "SS", "DS", "FS", "GS"]
 /// encoding `index`, or `None` when LLVM rejects it.
 fn x86_llvm_register(
   file : Char,
-  index : Int,
+  index : Int32,
   rex : Bool,
-  regsize : Int,
+  regsize : Int32,
 ) -> String? {
   let file = if file == 'v' {
     match regsize {
@@ -336,24 +336,24 @@ fn x86_llvm_register(
 ///|
 /// The effective address of a ModR/M operand.
 priv struct X86LlvmModrm {
-  modrm : Int
-  reg : Int
-  rm : Int
+  modrm : Int32
+  reg : Int32
+  rm : Int32
   memory : Bool
   base : String
   index : String
-  scale : Int
+  scale : Int32
   disp : Int64
   sib : Bool
-  sib_index : Int
+  sib_index : Int32
 }
 
 ///|
 fn x86_llvm_read_modrm(
   cursor : X86LlvmCursor,
   mode64 : Bool,
-  addrsize : Int,
-  rex : Int,
+  addrsize : Int32,
+  rex : Int32,
 ) -> X86LlvmModrm raise X86LlvmFail {
   let modrm = cursor.consume()
   let md = modrm >> 6
@@ -449,7 +449,7 @@ fn x86_llvm_read_modrm(
 }
 
 ///|
-fn x86_llvm_is_legacy_prefix(byte : Int) -> Bool {
+fn x86_llvm_is_legacy_prefix(byte : Int32) -> Bool {
   match byte {
     0x26
     | 0x2E
@@ -473,7 +473,7 @@ fn x86_llvm_is_legacy_prefix(byte : Int) -> Bool {
 fn x86_llvm_decode(
   bytes : BytesView,
   mode64 : Bool,
-) -> Result[X86LlvmInsn, Int] {
+) -> Result[X86LlvmInsn, Int32] {
   let cursor : X86LlvmCursor = { bytes, pos: 0, }
   x86_llvm_decode_cursor(cursor, mode64) catch {
     X86LlvmFail(size) => Err(if size < 1 { 1 } else { size })
@@ -484,10 +484,10 @@ fn x86_llvm_decode(
 fn x86_llvm_decode_cursor(
   cursor : X86LlvmCursor,
   mode64 : Bool,
-) -> Result[X86LlvmInsn, Int] raise X86LlvmFail {
+) -> Result[X86LlvmInsn, Int32] raise X86LlvmFail {
   let tables = x86_llvm_tables()
   let n = cursor.bytes.length()
-  let is_rex = (byte : Int) => mode64 && byte >= 0x40 && byte <= 0x4F
+  let is_rex = (byte : Int32) => mode64 && byte >= 0x40 && byte <= 0x4F
   let mut lock = false
   let mut rep = 0
   let mut mand = 0
@@ -1058,11 +1058,11 @@ fn x86_llvm_decode_cursor(
 /// `MayAffectControlFlow` for branches, calls and returns).
 fn X86LlvmTables::project_kinds(
   self : X86LlvmTables,
-  id : Int,
+  id : Int32,
 ) -> Array[ProjectInstructionKind] {
   let bits = self.kinds[id]
   let kinds = []
-  let all : Array[(Int, ProjectInstructionKind)] = [
+  let all : Array[(Int32, ProjectInstructionKind)] = [
     (1, ProjectConditionalBranch),
     (2, ProjectUnconditionalBranch),
     (4, ProjectIndirectBranch),
@@ -1094,7 +1094,7 @@ fn project_disassembly_basic_decode_x86_mc(
     return Ok(BasicDecodedEnd)
   }
   let window = 32
-  let decode = (count : Int) => {
+  let decode = (count : Int32) => {
     match memory.view(words=count) {
       Ok(chunk) => Ok(x86_llvm_decode(chunk.to_bytes()[:], mode64))
       Err(reason) => Err(reason)

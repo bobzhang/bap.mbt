@@ -4,7 +4,7 @@
 // given mode (`-mcpu=mips32r2`, `mips64r2`, `mips32r6`, `mips64r6`).
 
 ///|
-let llvm_samples : Array[(@mips.Arch, Bool, UInt, String)] = [
+let llvm_samples : Array[(@mips.Arch, Bool, UInt32, String)] = [
   (
     Mips32,
     false,

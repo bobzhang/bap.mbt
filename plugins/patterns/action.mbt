@@ -55,7 +55,7 @@ fn xml_name(name : @xml.Name, default : String) -> @knowledge.Name {
 fn args_compare(
   a : Array[(@knowledge.Name, String)],
   b : Array[(@knowledge.Name, String)],
-) -> Int {
+) -> Int32 {
   let n = @cmp.minimum(a.length(), b.length())
   for i in 0..<n {
     let c = a[i].0.compare(b[i].0)
@@ -89,7 +89,7 @@ pub fn Action::of_tag(tag : @xml.Tag) -> Action {
 /// Creates an action from its name and arguments.
 pub fn Action::create(
   name : @knowledge.Name,
-  args? : Array[(@knowledge.Name, String)] = [],
+  args~ : Array[(@knowledge.Name, String)] = [],
 ) -> Action {
   let args = args.copy()
   args.sort_by((x, y) => x.0.compare(y.0))
@@ -124,7 +124,7 @@ pub fn Action::attribute(self : Action, name : String) -> String? {
 
 ///|
 /// The total order on actions: by names, then by arguments.
-pub fn Action::compare(self : Action, other : Action) -> Int {
+pub fn Action::compare(self : Action, other : Action) -> Int32 {
   let c = self.name_.compare(other.name_)
   if c != 0 {
     c

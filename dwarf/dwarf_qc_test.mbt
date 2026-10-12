@@ -38,7 +38,7 @@ test "qc: LEB128 encodes and decodes every Int64, signed and unsigned" {
 ///|
 test "qc: LEB128 Int readers agree with the Int64 value" {
   @quickcheck.check(
-    (v : Int) => {
+    (v : Int32) => {
       let signed = @dwarf.Leb128::of_int(v, signed=true)
       let unsigned = @dwarf.Leb128::of_int(v)
       let input = @dwarf.DwarfInput::of_bytes(unsigned.bytes() + b"\x2a")
@@ -58,7 +58,7 @@ test "qc: LEB128 Int readers agree with the Int64 value" {
 ///|
 test "qc: LEB128 read never overruns and rejects truncation" {
   @quickcheck.check(
-    (input : (Bytes, Int)) => {
+    (input : (Bytes, Int32)) => {
       let (bytes, pos) = input
       let pos = if bytes.length() == 0 {
         0
@@ -83,7 +83,7 @@ test "qc: LEB128 read never overruns and rejects truncation" {
 /// A section built from a valid sample, then mutated, or pure noise.
 struct Section {
   bytes : Bytes
-  offset : Int
+  offset : Int32
   endian_big : Bool
   wide : Bool
 } derive(Debug)
@@ -178,7 +178,7 @@ fn Section::size(self : Section) -> @dwarf.DwarfWordSize {
 
 ///|
 /// A successful read consumed at least one byte and stayed in the input.
-fn[T] within(r : Result[(T, @dwarf.DwarfInput), String], n : Int) -> Bool {
+fn[T] within(r : Result[(T, @dwarf.DwarfInput), String], n : Int32) -> Bool {
   match r {
     Ok((_, next)) => next.position() > 0 && next.position() <= n
     Err(_) => true
@@ -419,12 +419,12 @@ test "qc: the unmutated sample still yields main" {
 ///|
 /// A real ELF object, truncated or with a few bytes changed.
 struct ElfMutant {
-  which : Int
+  which : Int32
   bytes : Bytes
 } derive(Debug)
 
 ///|
-fn elf_fixture(which : Int) -> Bytes {
+fn elf_fixture(which : Int32) -> Bytes {
   match which {
     0 => @objects.x86_64_elf_object()
     1 => @objects.aarch64_elf_object()

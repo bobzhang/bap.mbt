@@ -1,5 +1,5 @@
 ///|
-fn ct(name : String, lp64? : Bool = false) -> @arm.CType {
+fn ct(name : String, lp64~ : Bool = false) -> @arm.CType {
   @arm.CType::arm_basic(name, lp64~).unwrap()
 }
 

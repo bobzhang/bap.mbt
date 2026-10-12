@@ -3,7 +3,7 @@
 ///|
 /// Decode an A32 modified immediate constant: an 8-bit value rotated
 /// right by twice the 4-bit rotation field (`Arm_mov.MIC.mic`).
-pub fn decode_modified_imm(x : UInt) -> UInt {
+pub fn decode_modified_imm(x : UInt32) -> UInt32 {
   let shift = (x >> 8) & 0xF
   let value = x & 0xFF
   if shift == 0 {

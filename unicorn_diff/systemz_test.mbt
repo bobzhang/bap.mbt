@@ -6,7 +6,7 @@
 ///|
 /// The LLVM MC form of the register-move encodings of the tables.
 fn systemz_insn(bytes : Bytes, addr : UInt64) -> @mc.Insn? {
-  let reg = (n : Int, suffix : String) => @mc.Op::reg("R\{n}\{suffix}")
+  let reg = (n : Int32, suffix : String) => @mc.Op::reg("R\{n}\{suffix}")
   let rr = (byte : Byte) => (byte.to_int() >> 4, byte.to_int() & 15)
   match bytes {
     [b'\x18', regs] => {

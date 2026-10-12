@@ -5,7 +5,7 @@
 // `-mattr=+c,+m,+a,+f,+d,+zicsr,+zifencei`).
 
 ///|
-let llvm_samples : Array[(@riscv.Xlen, UInt, Int, String)] = [
+let llvm_samples : Array[(@riscv.Xlen, UInt32, Int32, String)] = [
   (RV64, 0xff010113U, 4, "ADDI Reg:X2 Reg:X2 Imm:-16 | addi sp, sp, -16"),
   (RV64, 0x00113423U, 4, "SD Reg:X1 Reg:X2 Imm:8 | sd ra, 8(sp)"),
   (RV64, 0x00050513U, 4, "ADDI Reg:X10 Reg:X10 Imm:0 | mv a0, a0"),

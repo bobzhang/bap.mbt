@@ -15,7 +15,7 @@ fn f64_word(x : Double) -> @types.Word {
 /// The BIL expression of a binary operation on the float variables `x` and
 /// `y` of the given format, in the FP-emulating BIL theory.
 fn fp_binop(
-  bits : Int,
+  bits : Int32,
   op : (@core_theory.Core, @core_theory.Pure, @core_theory.Pure) -> @core_theory.Pure,
 ) -> @types.Exp raise {
   let state = @knowledge.State::new()

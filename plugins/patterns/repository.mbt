@@ -15,7 +15,7 @@ fn read_text(fs : @bap_main.FileSystem, path : String) -> String? {
 /// `collect_patternconstraints`); `root` may itself be such a file.
 pub fn find_patternconstraints(
   root : String,
-  fs? : @bap_main.FileSystem = @bap_main.FileSystem::native(),
+  fs~ : @bap_main.FileSystem = @bap_main.FileSystem::native(),
 ) -> Array[String] {
   let found = []
   fn walk(path : String) -> Unit {
@@ -68,7 +68,7 @@ fn[A] parse_file(
 /// malformed target specifications are skipped with a warning.
 pub fn collect(
   roots : ArrayView[String],
-  fs? : @bap_main.FileSystem = @bap_main.FileSystem::native(),
+  fs~ : @bap_main.FileSystem = @bap_main.FileSystem::native(),
 ) -> Array[(TargetSpec, String)] {
   let out = []
   for root in roots {
@@ -96,7 +96,7 @@ pub fn collect(
 pub fn select(
   roots : ArrayView[String],
   target : @core_theory.Target,
-  fs? : @bap_main.FileSystem = @bap_main.FileSystem::native(),
+  fs~ : @bap_main.FileSystem = @bap_main.FileSystem::native(),
 ) -> Array[String] {
   let digests : Map[String, Unit] = Map([])
   let files : Array[String] = []
@@ -125,7 +125,7 @@ pub fn select(
 pub fn load(
   roots : ArrayView[String],
   target : @core_theory.Target,
-  fs? : @bap_main.FileSystem = @bap_main.FileSystem::native(),
+  fs~ : @bap_main.FileSystem = @bap_main.FileSystem::native(),
 ) -> Rules {
   let rules = []
   for file in select(roots, target, fs~) {

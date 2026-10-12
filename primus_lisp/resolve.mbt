@@ -62,13 +62,13 @@ pub impl Show for Resolution with fn output(self, logger) {
 fn[T] stage3(s2 : Array[Def[T]]) -> Array[Def[T]] {
   // fold over the list keeping the upper bounds, the list is kept in the
   // reversed order as in upstream
-  let mut cs : @list.List[Def[T]] = @list.empty()
+  let mut cs : @list.List[Def[T]] = @list.List([])
   for d in s2 {
     match cs {
       Empty => cs = @list.singleton(d)
       More(c, tail=_) =>
         match d.attrs.context.order(c.attrs.context) {
-          Equal | Incomparable => cs = cs.add(d)
+          Equal | Incomparable => cs = cs.prepend(d)
           Less => ()
           Greater => cs = @list.singleton(d)
         }
@@ -191,7 +191,7 @@ fn[X] all_bindings(
 /// parameters.
 pub fn[X] resolve_defun(
   prog : Program,
-  item? : Item[Func] = func,
+  item~ : Item[Func] = func,
   typechecks : (Typ, X) -> Bool,
   name : @knowledge.Name,
   args : Array[X],

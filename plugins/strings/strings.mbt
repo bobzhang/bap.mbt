@@ -39,7 +39,7 @@ fn latin1(bytes : Bytes) -> String {
 /// Collects the strings of at least `min_length` characters from the
 /// project memory (upstream `collect`), in the order of addresses.
 pub fn collect(
-  min_length~ : Int,
+  min_length~ : Int32,
   proj : @project.Project,
 ) -> Array[(UInt64, String)] {
   let strs : Map[UInt64, String] = Map([])
@@ -114,8 +114,8 @@ fn parse_hex(s : String) -> UInt64 {
   let mut v = 0UL
   for c in s {
     let d = match c {
-      '0'..='9' => c.to_int() - '0'.to_int()
-      'a'..='f' => c.to_int() - 'a'.to_int() + 10
+      '0'..<='9' => c.to_int() - '0'.to_int()
+      'a'..<='f' => c.to_int() - 'a'.to_int() + 10
       _ => 0
     }
     v = v * 16UL + d.to_uint64()
@@ -168,7 +168,7 @@ pub fn render(strs : Array[(UInt64, String)], with_address~ : Bool) -> String {
 ///|
 /// The configuration of the passes.
 priv struct Config {
-  mut min_length : Int
+  mut min_length : Int32
   mut with_address : Bool
   mut out : (String) -> Unit
 }
@@ -184,9 +184,9 @@ let config : Config = {
 /// Registers the `strings-collect` and `strings` passes (upstream
 /// `Config.declare_extension`); the passes use the latest configuration.
 pub fn register(
-  min_length? : Int = 4,
-  with_address? : Bool = false,
-  out? : (String) -> Unit = s => println(s.trim_end(chars="\n")),
+  min_length~ : Int32 = 4,
+  with_address~ : Bool = false,
+  out~ : (String) -> Unit = s => println(s.trim_end(chars="\n")),
 ) -> Result[Unit, String] {
   config.min_length = min_length
   config.with_address = with_address
@@ -223,7 +223,7 @@ pub fn register(
 /// `--strings-print-address` options) in the `bap_main` framework. Does
 /// nothing if it is already registered.
 pub fn declare_plugin(
-  out? : (String) -> Unit = s => println(s.trim_end(chars="\n")),
+  out~ : (String) -> Unit = s => println(s.trim_end(chars="\n")),
 ) -> Unit raise {
   if @bap_main.registered_plugins().contains(name) {
     return

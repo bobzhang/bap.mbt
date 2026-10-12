@@ -1,6 +1,6 @@
 ///|
 /// The sentinel of the pack-expansion state (`unsigned` max upstream).
-const PACK_NONE : Int = 2147483647
+const PACK_NONE : Int32 = 2147483647
 
 ///|
 /// The stream the AST is printed into (upstream `OutputBuffer`).
@@ -10,17 +10,17 @@ const PACK_NONE : Int = 2147483647
 /// boundary, so rewinding drops whole pieces.
 priv struct Output {
   pieces : Array[StringView]
-  mut len : Int
+  mut len : Int32
   /// The index into the pack being expanded, or `PACK_NONE`.
-  mut pack_index : Int
+  mut pack_index : Int32
   /// The size of the pack being expanded, or `PACK_NONE`.
-  mut pack_max : Int
+  mut pack_max : Int32
   /// The depth of `(` and `)` inside the printed template arguments.
-  mut paren_depth : UInt
+  mut paren_depth : UInt32
   /// Whether template arguments are being printed.
   mut inside_template : Bool
   /// The current nesting of recursive printing calls (see `enter`).
-  mut depth : Int
+  mut depth : Int32
   /// Set when printing gave up because the AST nests too deeply.
   mut too_deep : Bool
 }
@@ -37,7 +37,7 @@ priv struct Output {
 /// levels on wasm-gc (debug; 293 in release), 186 on js and 1168 on native
 /// (debug). 96 leaves about 40% of the smallest stack to the callers of the
 /// demangler. The deepest name in the llvm-cxxfilt corpora nests 13 levels.
-const MAX_PRINT_DEPTH : Int = 96
+const MAX_PRINT_DEPTH : Int32 = 96
 
 ///|
 /// Enters a recursive printing call; `false` (and `too_deep` set) if the
@@ -80,13 +80,13 @@ fn Output::add(self : Output, s : StringView) -> Unit {
 }
 
 ///|
-fn Output::pos(self : Output) -> Int {
+fn Output::pos(self : Output) -> Int32 {
   self.len
 }
 
 ///|
 /// Rewinds the stream to an earlier position.
-fn Output::set_pos(self : Output, pos : Int) -> Unit {
+fn Output::set_pos(self : Output, pos : Int32) -> Unit {
   while self.len > pos {
     guard self.pieces.pop() is Some(piece) else { break }
     self.len -= piece.length()
@@ -103,7 +103,7 @@ fn Output::back(self : Output) -> UInt16 {
 }
 
 ///|
-fn Output::print_open(self : Output, open? : StringView = "(") -> Unit {
+fn Output::print_open(self : Output, open~ : StringView = "(") -> Unit {
   if self.inside_template {
     self.paren_depth += 1
   }
@@ -111,7 +111,7 @@ fn Output::print_open(self : Output, open? : StringView = "(") -> Unit {
 }
 
 ///|
-fn Output::print_close(self : Output, close? : StringView = ")") -> Unit {
+fn Output::print_close(self : Output, close~ : StringView = ")") -> Unit {
   if self.inside_template {
     self.paren_depth -= 1
   }
@@ -119,7 +119,7 @@ fn Output::print_close(self : Output, close? : StringView = ")") -> Unit {
 }
 
 ///|
-fn Output::add_uint(self : Output, n : Int) -> Unit {
+fn Output::add_uint(self : Output, n : Int32) -> Unit {
   self.add(n.to_string())
 }
 

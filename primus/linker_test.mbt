@@ -190,7 +190,7 @@ test "unresolved names raise or call the unresolved handler" {
     content="true",
   )
   debug_inspect(unresolved, content="[true]")
-  let handled : Ref[Int] = { val: 0, }
+  let handled : Ref[Int32] = { val: 0, }
   let (status, _) = run_main_sub([main], [], init=m => {
     @primus.Linker::link(
       m,

@@ -5,7 +5,7 @@
 /// Decode the little-endian A32 words at `addr` and lift them in the ARM
 /// context.
 fn decode_lift(
-  words : Array[UInt],
+  words : Array[UInt32],
   addr : UInt64,
 ) -> Array[Array[@types.Stmt]] raise {
   let ctx = @mc.Context::create(

@@ -90,9 +90,9 @@ fn[A, B] extend_grammar(
 /// prefixed and long). With `as_flag`, the value may be omitted on the
 /// command line and `as_flag` is used.
 pub fn[A] Configuration::parameter(
-  doc? : String = "Undocumented",
+  doc~ : String = "Undocumented",
   as_flag? : A,
-  aliases? : Array[String] = [],
+  aliases~ : Array[String] = [],
   t : Type[A],
   name : String,
 ) -> Parameter[A] {
@@ -126,9 +126,9 @@ pub fn[A] Configuration::parameter(
 /// list. From the environment and configuration files the value is read
 /// as a comma-separated list.
 pub fn[A] Configuration::parameters(
-  doc? : String = "Undocumented",
+  doc~ : String = "Undocumented",
   as_flag? : A,
-  aliases? : Array[String] = [],
+  aliases~ : Array[String] = [],
   t : Type[A],
   name : String,
 ) -> Parameter[Array[A]] {
@@ -154,8 +154,8 @@ pub fn[A] Configuration::parameters(
 /// `--<plugin>-<name>` (or by a `true` value in the environment or in a
 /// configuration file).
 pub fn Configuration::flag(
-  doc? : String = "Undocumented",
-  aliases? : Array[String] = [],
+  doc~ : String = "Undocumented",
+  aliases~ : Array[String] = [],
   name : String,
 ) -> Parameter[Bool] {
   extend_grammar(
@@ -235,7 +235,7 @@ pub fn Configuration::plugindir() -> String {
 /// `$XDG_DATA_HOME/bap`, or `$HOME/.local/share/bap`, or the current
 /// directory. `getenv` defaults to the process environment.
 pub fn Configuration::datadir(
-  getenv? : (String) -> String? = @env.get_env_var,
+  getenv~ : (String) -> String? = @env.get_env_var,
 ) -> String {
   match getenv("XDG_DATA_HOME") {
     Some(dir) => filename_concat(dir, "bap")
@@ -255,7 +255,7 @@ pub fn Configuration::datadir(
 /// The directory for user-specific non-essential data: `$XDG_CACHE_HOME/bap`,
 /// or `$HOME/.cache/bap`, or `$TMPDIR/bap/cache`.
 pub fn Configuration::cachedir(
-  getenv? : (String) -> String? = @env.get_env_var,
+  getenv~ : (String) -> String? = @env.get_env_var,
 ) -> String {
   match getenv("XDG_CACHE_HOME") {
     Some(dir) => filename_concat(dir, "bap")

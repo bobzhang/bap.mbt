@@ -16,7 +16,7 @@ struct ProjectDisassemblyLinearSweep {
 
 ///|
 pub fn ProjectDisassemblyLinearSweep::create(
-  backend? : String = "llvm",
+  backend~ : String = "llvm",
 ) -> ProjectDisassemblyLinearSweep {
   { backend_value: backend, }
 }
@@ -36,7 +36,7 @@ pub fn ProjectDisassemblyLinearSweep::backend(
 pub fn ProjectDisassemblyLinearSweep::sweep(
   target : @core_theory.Target,
   memory : @memory.Memory,
-  backend? : String = "llvm",
+  backend~ : String = "llvm",
 ) -> Result[Array[(@memory.Memory, ProjectDisassemblyInstruction?)], String] {
   match project_disassembly_basic_for_target(target, backend) {
     Err(reason) => Err(reason)
@@ -51,7 +51,7 @@ pub fn ProjectDisassemblyLinearSweep::sweep(
 pub fn ProjectDisassemblyLinearSweep::sweep_exn(
   target : @core_theory.Target,
   memory : @memory.Memory,
-  backend? : String = "llvm",
+  backend~ : String = "llvm",
 ) -> Array[(@memory.Memory, ProjectDisassemblyInstruction?)] raise ProjectDisassemblyLinearSweepError {
   match ProjectDisassemblyLinearSweep::sweep(target, memory, backend~) {
     Ok(result) => result
@@ -63,7 +63,7 @@ pub fn ProjectDisassemblyLinearSweep::sweep_exn(
 pub fn Project::linear_sweep(
   self : Project,
   memory : @memory.Memory,
-  backend? : String = "llvm",
+  backend~ : String = "llvm",
 ) -> Result[Array[(@memory.Memory, ProjectDisassemblyInstruction?)], String] {
   ProjectDisassemblyLinearSweep::sweep(self.target(), memory, backend~)
 }
@@ -72,7 +72,7 @@ pub fn Project::linear_sweep(
 pub fn Project::linear_sweep_exn(
   self : Project,
   memory : @memory.Memory,
-  backend? : String = "llvm",
+  backend~ : String = "llvm",
 ) -> Array[(@memory.Memory, ProjectDisassemblyInstruction?)] raise ProjectDisassemblyLinearSweepError {
   ProjectDisassemblyLinearSweep::sweep_exn(self.target(), memory, backend~)
 }

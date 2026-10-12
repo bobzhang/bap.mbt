@@ -1,5 +1,5 @@
 ///|
-fn bytes_hex_digit(value : Int) -> Char {
+fn bytes_hex_digit(value : Int32) -> Char {
   if value < 10 {
     (value + '0').unsafe_to_char()
   } else {
@@ -8,7 +8,7 @@ fn bytes_hex_digit(value : Int) -> Char {
 }
 
 ///|
-fn bytes_hex_value(c : Char) -> Int? {
+fn bytes_hex_value(c : Char) -> Int32? {
   if c >= '0' && c <= '9' {
     Some(c.to_int() - '0')
   } else if c >= 'a' && c <= 'f' {
@@ -38,7 +38,7 @@ pub fn bytes_empty() -> Bytes {
 }
 
 ///|
-pub fn bytes_create(length : Int) -> Result[Bytes, String] {
+pub fn bytes_create(length : Int32) -> Result[Bytes, String] {
   if length < 0 {
     Err("byte length is negative")
   } else {
@@ -47,7 +47,7 @@ pub fn bytes_create(length : Int) -> Result[Bytes, String] {
 }
 
 ///|
-pub fn bytes_make(length : Int, byte : Byte) -> Result[Bytes, String] {
+pub fn bytes_make(length : Int32, byte : Byte) -> Result[Bytes, String] {
   if length < 0 {
     Err("byte length is negative")
   } else {
@@ -56,7 +56,7 @@ pub fn bytes_make(length : Int, byte : Byte) -> Result[Bytes, String] {
 }
 
 ///|
-pub fn bytes_init(length : Int, f : (Int) -> Byte) -> Result[Bytes, String] {
+pub fn bytes_init(length : Int32, f : (Int32) -> Byte) -> Result[Bytes, String] {
   if length < 0 {
     Err("byte length is negative")
   } else {
@@ -84,12 +84,12 @@ pub fn bytes_to_string(bytes : BytesView) -> Result[String, String] {
 }
 
 ///|
-pub fn bytes_length(bytes : BytesView) -> Int {
+pub fn bytes_length(bytes : BytesView) -> Int32 {
   bytes.length()
 }
 
 ///|
-pub fn bytes_get(bytes : BytesView, pos : Int) -> Byte? {
+pub fn bytes_get(bytes : BytesView, pos : Int32) -> Byte? {
   bytes.get(pos)
 }
 
@@ -99,20 +99,20 @@ pub fn bytes_equal(left : BytesView, right : BytesView) -> Bool {
 }
 
 ///|
-pub fn bytes_compare(left : BytesView, right : BytesView) -> Int {
+pub fn bytes_compare(left : BytesView, right : BytesView) -> Int32 {
   left.compare(right)
 }
 
 ///|
-pub fn bytes_hash(bytes : BytesView) -> Int {
+pub fn bytes_hash(bytes : BytesView) -> Int32 {
   bytes.hash()
 }
 
 ///|
 pub fn bytes_sub(
   bytes : BytesView,
-  pos : Int,
-  len : Int,
+  pos : Int32,
+  len : Int32,
 ) -> Result[Bytes, String] {
   if pos < 0 || len < 0 || pos > bytes.length() || len > bytes.length() - pos {
     Err("byte slice is out of bounds")
@@ -124,8 +124,8 @@ pub fn bytes_sub(
 ///|
 pub fn bytes_subo(
   bytes : BytesView,
-  pos? : Int = 0,
-  len? : Int,
+  pos~ : Int32 = 0,
+  len? : Int32,
 ) -> Result[Bytes, String] {
   let slice_len = match len {
     Some(len) => len
@@ -137,7 +137,7 @@ pub fn bytes_subo(
 ///|
 pub fn bytes_set(
   bytes : BytesView,
-  pos : Int,
+  pos : Int32,
   byte : Byte,
 ) -> Result[Bytes, String] {
   if pos < 0 || pos >= bytes.length() {
@@ -152,8 +152,8 @@ pub fn bytes_set(
 ///|
 pub fn bytes_fill(
   bytes : BytesView,
-  pos : Int,
-  len : Int,
+  pos : Int32,
+  len : Int32,
   byte : Byte,
 ) -> Result[Bytes, String] {
   if pos < 0 || len < 0 || pos > bytes.length() || len > bytes.length() - pos {
@@ -168,17 +168,17 @@ pub fn bytes_fill(
 }
 
 ///|
-fn bytes_valid_range(bytes : BytesView, pos : Int, len : Int) -> Bool {
+fn bytes_valid_range(bytes : BytesView, pos : Int32, len : Int32) -> Bool {
   pos >= 0 && len >= 0 && pos <= bytes.length() && len <= bytes.length() - pos
 }
 
 ///|
 pub fn bytes_blit(
   src : BytesView,
-  src_pos : Int,
+  src_pos : Int32,
   dst : BytesView,
-  dst_pos : Int,
-  len : Int,
+  dst_pos : Int32,
+  len : Int32,
 ) -> Result[Bytes, String] {
   if !bytes_valid_range(src, src_pos, len) ||
     !bytes_valid_range(dst, dst_pos, len) {
@@ -196,9 +196,9 @@ pub fn bytes_blit(
 pub fn bytes_blito(
   src : BytesView,
   dst : BytesView,
-  src_pos? : Int = 0,
-  dst_pos? : Int = 0,
-  len? : Int,
+  src_pos~ : Int32 = 0,
+  dst_pos~ : Int32 = 0,
+  len? : Int32,
 ) -> Result[Bytes, String] {
   let actual_len = match len {
     Some(len) => len
@@ -210,8 +210,8 @@ pub fn bytes_blito(
 ///|
 pub fn bytes_extend(
   bytes : BytesView,
-  left : Int,
-  right : Int,
+  left : Int32,
+  right : Int32,
 ) -> Result[Bytes, String] {
   let new_len = bytes.length() + left + right
   if new_len < 0 {
@@ -279,7 +279,7 @@ pub fn bytes_trim(bytes : BytesView) -> Bytes {
 }
 
 ///|
-pub fn bytes_iteri(bytes : BytesView, f : (Int, Byte) -> Unit) -> Unit {
+pub fn bytes_iteri(bytes : BytesView, f : (Int32, Byte) -> Unit) -> Unit {
   for i in 0..<bytes.length() {
     f(i, bytes[i])
   }
@@ -364,7 +364,7 @@ pub fn bytes_for_all(bytes : BytesView, f : (Byte) -> Bool) -> Bool {
 }
 
 ///|
-pub fn bytes_count(bytes : BytesView, f : (Byte) -> Bool) -> Int {
+pub fn bytes_count(bytes : BytesView, f : (Byte) -> Bool) -> Int32 {
   let mut total = 0
   for byte in bytes {
     if f(byte) {
@@ -408,7 +408,7 @@ pub fn bytes_map(bytes : BytesView, f : (Byte) -> Byte) -> Bytes {
 }
 
 ///|
-pub fn bytes_mapi(bytes : BytesView, f : (Int, Byte) -> Byte) -> Bytes {
+pub fn bytes_mapi(bytes : BytesView, f : (Int32, Byte) -> Byte) -> Bytes {
   Bytes::from_array(Array::makei(bytes.length(), i => f(i, bytes[i])))
 }
 
@@ -441,7 +441,11 @@ pub fn bytes_concat(sep : BytesView, chunks : ArrayView[Bytes]) -> Bytes {
 }
 
 ///|
-pub fn bytes_index_from(bytes : BytesView, start : Int, needle : Byte) -> Int? {
+pub fn bytes_index_from(
+  bytes : BytesView,
+  start : Int32,
+  needle : Byte,
+) -> Int32? {
   if start < 0 || start >= bytes.length() {
     None
   } else {
@@ -455,12 +459,16 @@ pub fn bytes_index_from(bytes : BytesView, start : Int, needle : Byte) -> Int? {
 }
 
 ///|
-pub fn bytes_index(bytes : BytesView, needle : Byte) -> Int? {
+pub fn bytes_index(bytes : BytesView, needle : Byte) -> Int32? {
   bytes_index_from(bytes, 0, needle)
 }
 
 ///|
-pub fn bytes_rindex_from(bytes : BytesView, start : Int, needle : Byte) -> Int? {
+pub fn bytes_rindex_from(
+  bytes : BytesView,
+  start : Int32,
+  needle : Byte,
+) -> Int32? {
   if bytes.length() == 0 || start < 0 {
     None
   } else {
@@ -479,14 +487,14 @@ pub fn bytes_rindex_from(bytes : BytesView, start : Int, needle : Byte) -> Int? 
 }
 
 ///|
-pub fn bytes_rindex(bytes : BytesView, needle : Byte) -> Int? {
+pub fn bytes_rindex(bytes : BytesView, needle : Byte) -> Int32? {
   bytes_rindex_from(bytes, bytes.length() - 1, needle)
 }
 
 ///|
 pub fn bytes_contains_from(
   bytes : BytesView,
-  start : Int,
+  start : Int32,
   needle : Byte,
 ) -> Bool {
   bytes_index_from(bytes, start, needle) is Some(_)
@@ -495,7 +503,7 @@ pub fn bytes_contains_from(
 ///|
 pub fn bytes_rcontains_from(
   bytes : BytesView,
-  start : Int,
+  start : Int32,
   needle : Byte,
 ) -> Bool {
   bytes_rindex_from(bytes, start, needle) is Some(_)
@@ -562,7 +570,7 @@ pub fn bytes_uncapitalize(bytes : BytesView) -> Bytes {
 }
 
 ///|
-fn bytes_push_decimal_escape(out : Array[Byte], value : Int) -> Unit {
+fn bytes_push_decimal_escape(out : Array[Byte], value : Int32) -> Unit {
   out.push(b'\\')
   out.push((value / 100 + 48).to_byte())
   out.push((value / 10 % 10 + 48).to_byte())
@@ -613,7 +621,7 @@ pub fn bytes_to_hex(bytes : BytesView) -> String {
 
 ///|
 pub fn bytes_from_hex(text : StringView) -> Result[Bytes, String] {
-  let nibbles : Array[Int] = []
+  let nibbles : Array[Int32] = []
   for c in text {
     match bytes_hex_value(c) {
       Some(value) => nibbles.push(value)
@@ -648,12 +656,12 @@ pub fn bytes_from_sexp_atom(text : StringView) -> Result[Bytes, String] {
 }
 
 ///|
-pub fn bytes_bin_size(bytes : BytesView) -> Int {
+pub fn bytes_bin_size(bytes : BytesView) -> Int32 {
   4 + bytes.length()
 }
 
 ///|
-fn bytes_write_u32_le(out : Array[Byte], offset : Int, value : Int) -> Unit {
+fn bytes_write_u32_le(out : Array[Byte], offset : Int32, value : Int32) -> Unit {
   out[offset] = (value & 0xff).to_byte()
   out[offset + 1] = ((value >> 8) & 0xff).to_byte()
   out[offset + 2] = ((value >> 16) & 0xff).to_byte()
@@ -661,7 +669,7 @@ fn bytes_write_u32_le(out : Array[Byte], offset : Int, value : Int) -> Unit {
 }
 
 ///|
-fn bytes_read_u32_le(data : BytesView, offset : Int) -> Result[Int, String] {
+fn bytes_read_u32_le(data : BytesView, offset : Int32) -> Result[Int32, String] {
   // `offset + 4` would overflow for offsets near Int max
   if offset < 0 || offset > data.length() - 4 {
     Err("truncated byte length prefix")
@@ -692,8 +700,8 @@ pub fn bytes_bin_write(bytes : BytesView) -> Bytes {
 ///|
 pub fn bytes_bin_read(
   data : BytesView,
-  pos? : Int = 0,
-) -> Result[(Bytes, Int), String] {
+  pos~ : Int32 = 0,
+) -> Result[(Bytes, Int32), String] {
   match bytes_read_u32_le(data, pos) {
     Ok(len) => {
       let start = pos + 4

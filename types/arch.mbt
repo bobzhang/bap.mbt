@@ -166,7 +166,7 @@ pub fn Arch::to_string(self : Arch) -> String {
 }
 
 ///|
-fn Arch::rank(self : Arch) -> Int {
+fn Arch::rank(self : Arch) -> Int32 {
   match self {
     Aarch64 => 0
     Aarch64_be => 1
@@ -208,7 +208,7 @@ fn Arch::rank(self : Arch) -> Int {
 }
 
 ///|
-pub fn Arch::compare(self : Arch, other : Arch) -> Int {
+pub fn Arch::compare(self : Arch, other : Arch) -> Int32 {
   self.rank().compare(other.rank())
 }
 

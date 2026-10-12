@@ -214,7 +214,7 @@ let registered : Ref[Bool] = Ref(false)
 /// available (see `primitives`), and the tracker component is added to the
 /// legacy main Primus system when `enable` is set (upstream `--enable`).
 /// Returns `false` if the plugin was already registered.
-pub fn register(enable? : Bool = false) -> Bool {
+pub fn register(enable~ : Bool = false) -> Bool {
   if registered.val {
     return false
   }

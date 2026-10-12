@@ -11,7 +11,7 @@ pub extend TypeKind with Eq::{not_equal, equal}
 pub extend TypeKind with Debug::{to_repr}
 
 ///|
-fn TypeKind::rank(self : TypeKind) -> Int {
+fn TypeKind::rank(self : TypeKind) -> Int32 {
   match self {
     MemKind => 0
     ImmKind => 1
@@ -19,7 +19,7 @@ fn TypeKind::rank(self : TypeKind) -> Int {
 }
 
 ///|
-fn TypeKind::compare(self : TypeKind, other : TypeKind) -> Int {
+fn TypeKind::compare(self : TypeKind, other : TypeKind) -> Int32 {
   self.rank().compare(other.rank())
 }
 
@@ -49,7 +49,7 @@ pub extend TypeInferenceError with Eq::{not_equal, equal}
 pub extend TypeInferenceError with Debug::{to_repr}
 
 ///|
-fn TypeError::rank(self : TypeError) -> Int {
+fn TypeError::rank(self : TypeError) -> Int32 {
   match self {
     BadKind(_) => 0
     BadType(_) => 1
@@ -64,7 +64,7 @@ pub fn TypeError::equal(self : TypeError, other : TypeError) -> Bool {
 }
 
 ///|
-pub fn TypeError::compare(self : TypeError, other : TypeError) -> Int {
+pub fn TypeError::compare(self : TypeError, other : TypeError) -> Int32 {
   let rank_order = self.rank().compare(other.rank())
   if rank_order != 0 {
     return rank_order

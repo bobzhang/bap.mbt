@@ -8,9 +8,9 @@
 pub fn pp_dot_graph(
   fmt : @text_tags.Formatter,
   name? : String,
-  cluster? : Bool = false,
-  subgraph? : Bool = false,
-  attrs? : Array[String] = [],
+  cluster~ : Bool = false,
+  subgraph~ : Bool = false,
+  attrs~ : Array[String] = [],
   nodes~ : ArrayView[(String, String)],
   edges~ : ArrayView[(String, String, String)],
 ) -> Unit {
@@ -108,7 +108,7 @@ fn bir_node_name(blk : @types.Term[@types.Blk]) -> String {
 pub fn pp_bir_cfg(
   fmt : @text_tags.Formatter,
   sub : @types.Term[@types.Sub],
-  labeled? : Bool = true,
+  labeled~ : Bool = true,
 ) -> Unit {
   let cfg = sub.to_cfg()
   let nodes = cfg
@@ -147,7 +147,7 @@ pub fn pp_bir_cfg(
 pub fn pp_bir_graph(
   fmt : @text_tags.Formatter,
   program : @types.Term[@types.Program],
-  labeled? : Bool = true,
+  labeled~ : Bool = true,
 ) -> Unit {
   let entries : Map[@types.Tid, @types.Tid] = Map([])
   for sub in program.subs() {

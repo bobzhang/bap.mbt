@@ -17,7 +17,7 @@ pub fn Dict::is_empty(self : Dict) -> Bool {
 }
 
 ///|
-pub fn Dict::length(self : Dict) -> Int {
+pub fn Dict::length(self : Dict) -> Int32 {
   self.entries.length()
 }
 

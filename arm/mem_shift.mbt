@@ -10,9 +10,9 @@ fn repair_negate(bit_set : Bool, rtype : Repair) -> Bool {
 /// `Arm_mem_shift.repair_imm`: extract the immediate offset and apply the
 /// add/subtract bit selected by `sign_mask`.
 fn repair_imm(
-  src : UInt,
-  sign_mask~ : UInt,
-  imm_mask~ : UInt,
+  src : UInt32,
+  sign_mask~ : UInt32,
+  imm_mask~ : UInt32,
   rtype : Repair,
 ) -> @types.Exp {
   let bit_set = (sign_mask & src) == sign_mask
@@ -25,8 +25,8 @@ fn repair_imm(
 /// add/subtract bit says so.
 fn repair_reg(
   reg : @types.Exp,
-  imm : UInt,
-  sign_mask~ : UInt,
+  imm : UInt32,
+  sign_mask~ : UInt32,
   rtype : Repair,
 ) -> @types.Exp {
   let bit_set = (sign_mask & imm) == sign_mask
@@ -138,7 +138,7 @@ fn lift_m(
 /// register is `Nil`, the 8-bit immediate; bit 8 set means subtract.
 fn mem_offset_reg_or_imm_neg(
   reg_off : Op,
-  imm_off : UInt,
+  imm_off : UInt32,
 ) -> @types.Exp raise @mc.LiftError {
   match reg_off {
     Reg(Nil) => repair_imm(imm_off, sign_mask=0x100, imm_mask=0xff, NEG)
@@ -153,7 +153,7 @@ fn mem_offset_reg_or_imm_neg(
 /// where the sign bit is set when the offset is positive.
 fn mem_offset_reg_or_imm_pos(
   reg_off : Op,
-  imm_off : UInt,
+  imm_off : UInt32,
 ) -> @types.Exp raise @mc.LiftError {
   match reg_off {
     Reg(Nil) => repair_imm(imm_off, sign_mask=0x100, imm_mask=0xff, POS)

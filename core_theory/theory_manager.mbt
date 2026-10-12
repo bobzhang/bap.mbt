@@ -96,10 +96,10 @@ let known_theories : Map[String, (@knowledge.Name, TheoryDef)] = Map([])
 /// on the knowledge base. `declare` is a keyword in MoonBit, hence the
 /// name.
 pub fn declare_theory(
-  desc? : String = "",
-  extends? : Array[String] = [],
-  context? : Array[String] = [],
-  provides? : Array[String] = [],
+  desc~ : String = "",
+  extends~ : Array[String] = [],
+  context~ : Array[String] = [],
+  provides~ : Array[String] = [],
   pkg? : String,
   name~ : String,
   structure : (@knowledge.State) -> Core raise,
@@ -215,7 +215,7 @@ let current_theory_var : @knowledge.Var[Theory] = @knowledge.Var::new(
 ///|
 /// The declared theories interned as symbols (`*theories*`), cached with
 /// the number of theories that were declared when the cache was built.
-let theories_var : @knowledge.Var[(Int, Array[(Theory, TheoryDef)])?] = @knowledge.Var::new(
+let theories_var : @knowledge.Var[(Int32, Array[(Theory, TheoryDef)])?] = @knowledge.Var::new(
   "*theories*",
   _ => None,
   pkg="core",

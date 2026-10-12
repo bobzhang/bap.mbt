@@ -31,11 +31,11 @@ pub extend Kind with Debug::{to_repr}
 /// Values are immutable: build them with `Insn::create`.
 pub struct Insn {
   name : String
-  code : Int
+  code : Int32
   assembly : String
   ops : ReadOnlyArray[Op]
   addr : UInt64
-  size : Int
+  size : Int32
   encoding : @core_theory.Language
   kinds : ReadOnlyArray[Kind]
   raw : Bytes
@@ -57,12 +57,12 @@ pub fn Insn::create(
   name : String,
   ops : ArrayView[Op],
   addr~ : UInt64,
-  size~ : Int,
-  assembly? : String = "",
-  code? : Int = 0,
-  encoding? : @core_theory.Language = @core_theory.Language::unknown(),
-  kinds? : ArrayView[Kind] = [],
-  raw? : Bytes = b"",
+  size~ : Int32,
+  assembly~ : String = "",
+  code~ : Int32 = 0,
+  encoding~ : @core_theory.Language = @core_theory.Language::unknown(),
+  kinds~ : ArrayView[Kind] = [],
+  raw~ : Bytes = b"",
 ) -> Insn {
   {
     name,
@@ -85,7 +85,7 @@ pub fn Insn::name(self : Insn) -> String {
 
 ///|
 /// The backend-specific numeric opcode (`0` when unknown).
-pub fn Insn::code(self : Insn) -> Int {
+pub fn Insn::code(self : Insn) -> Int32 {
   self.code
 }
 
@@ -109,7 +109,7 @@ pub fn Insn::addr(self : Insn) -> UInt64 {
 
 ///|
 /// The size of the instruction in bytes.
-pub fn Insn::size(self : Insn) -> Int {
+pub fn Insn::size(self : Insn) -> Int32 {
   self.size
 }
 
@@ -140,7 +140,7 @@ pub fn Insn::raw(self : Insn) -> Bytes {
 
 ///|
 /// The `index`th operand.
-pub fn Insn::op(self : Insn, index : Int) -> Op? {
+pub fn Insn::op(self : Insn, index : Int32) -> Op? {
   self.ops.get(index)
 }
 

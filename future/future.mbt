@@ -334,10 +334,10 @@ struct Signal[T] {
 
 ///|
 struct Stream[T] {
-  subscribers : Map[Int, (Int, T) -> Unit]
-  last_id : Ref[Int]
-  on_subscribe_callbacks : Array[(Int) -> Unit]
-  on_unsubscribe_callbacks : Array[(Int) -> Unit]
+  subscribers : Map[Int32, (Int32, T) -> Unit]
+  last_id : Ref[Int32]
+  on_subscribe_callbacks : Array[(Int32) -> Unit]
+  on_unsubscribe_callbacks : Array[(Int32) -> Unit]
   waiters : Array[() -> Unit]
 }
 
@@ -347,7 +347,7 @@ pub fn[T] Signal::send(self : Signal[T], value : T) -> Unit {
 }
 
 ///|
-pub fn[T] Signal::repeat(self : Signal[T], times~ : Int, value : T) -> Unit {
+pub fn[T] Signal::repeat(self : Signal[T], times~ : Int32, value : T) -> Unit {
   for _ in 0..<times {
     self.send(value)
   }
@@ -355,7 +355,7 @@ pub fn[T] Signal::repeat(self : Signal[T], times~ : Int, value : T) -> Unit {
 
 ///|
 fn[T] Stream::publish(self : Stream[T], value : T) -> Unit {
-  let callbacks : Array[(Int, (Int, T) -> Unit)] = []
+  let callbacks : Array[(Int32, (Int32, T) -> Unit)] = []
   for entry in self.subscribers {
     callbacks.push(entry)
   }
@@ -379,7 +379,7 @@ pub fn[T] Stream::create() -> (Stream[T], Signal[T]) {
 }
 
 ///|
-fn[T] Stream::add(self : Stream[T], notify : (Int, T) -> Unit) -> Int {
+fn[T] Stream::add(self : Stream[T], notify : (Int32, T) -> Unit) -> Int32 {
   self.last_id.val += 1
   let id = self.last_id.val
   self.subscribers[id] = notify
@@ -390,17 +390,20 @@ fn[T] Stream::add(self : Stream[T], notify : (Int, T) -> Unit) -> Int {
 }
 
 ///|
-pub fn[T] Stream::subscribe(self : Stream[T], notify : (T) -> Unit) -> Int {
+pub fn[T] Stream::subscribe(self : Stream[T], notify : (T) -> Unit) -> Int32 {
   self.add(fn(_, value) { notify(value) })
 }
 
 ///|
-pub fn[T] Stream::watch_id(self : Stream[T], notify : (Int, T) -> Unit) -> Int {
+pub fn[T] Stream::watch_id(
+  self : Stream[T],
+  notify : (Int32, T) -> Unit,
+) -> Int32 {
   self.add(notify)
 }
 
 ///|
-pub fn[T] Stream::watch(self : Stream[T], notify : (Int, T) -> Unit) -> Unit {
+pub fn[T] Stream::watch(self : Stream[T], notify : (Int32, T) -> Unit) -> Unit {
   ignore(self.watch_id(notify))
 }
 
@@ -410,7 +413,7 @@ pub fn[T] Stream::observe(self : Stream[T], notify : (T) -> Unit) -> Unit {
 }
 
 ///|
-pub fn[T] Stream::unsubscribe(self : Stream[T], id : Int) -> Unit {
+pub fn[T] Stream::unsubscribe(self : Stream[T], id : Int32) -> Unit {
   self.subscribers.remove(id)
   for callback in self.on_unsubscribe_callbacks {
     callback(id)
@@ -437,7 +440,7 @@ pub fn[T] Stream::on_wait(self : Stream[T], callback : () -> Unit) -> Unit {
 ///|
 pub fn[T] Stream::on_subscribe(
   self : Stream[T],
-  callback : (Int) -> Unit,
+  callback : (Int32) -> Unit,
 ) -> Unit {
   self.on_subscribe_callbacks.insert(0, callback)
 }
@@ -445,7 +448,7 @@ pub fn[T] Stream::on_subscribe(
 ///|
 pub fn[T] Stream::on_unsubscribe(
   self : Stream[T],
-  callback : (Int) -> Unit,
+  callback : (Int32) -> Unit,
 ) -> Unit {
   self.on_unsubscribe_callbacks.insert(0, callback)
 }
@@ -599,7 +602,7 @@ fn[A, B] Stream::link(
   target : Stream[B],
   step : (A) -> Unit,
 ) -> Unit {
-  let key : Ref[Int?] = Ref(None)
+  let key : Ref[Int32?] = Ref(None)
   target.on_subscribe(fn(_) {
     match key.val {
       Some(_) => ()
@@ -893,7 +896,7 @@ pub fn[A, B] Stream::unzip(self : Stream[(A, B)]) -> (Stream[A], Stream[B]) {
 ///|
 pub fn[T] Stream::once(self : Stream[T]) -> Stream[T] {
   let (target, signal) = Stream::create()
-  let key : Ref[Int?] = Ref(None)
+  let key : Ref[Int32?] = Ref(None)
   target.on_subscribe(fn(_) {
     match key.val {
       Some(_) => ()
@@ -939,7 +942,7 @@ pub fn[S, A, B] Stream::parse(
 ///|
 fn[A, B] Stream::resolve_and_unsubscribe(
   self : Stream[A],
-  id : Int,
+  id : Int32,
   value : B,
   promise : Promise[B],
 ) -> Unit {
@@ -965,7 +968,7 @@ pub fn[T, E] Stream::upon(self : Stream[T], event : Future[E]) -> Future[T] {
 pub fn[T, E] Stream::last_before(
   self : Stream[T],
   event : Future[E],
-  count : Int,
+  count : Int32,
 ) -> Future[Array[T]] {
   let buffer : Array[T] = []
   let id = self.subscribe(fn(value) {
@@ -983,13 +986,13 @@ pub fn[T, E] Stream::last_before(
 pub fn[T, E] Stream::last_before_list(
   self : Stream[T],
   event : Future[E],
-  count : Int,
+  count : Int32,
 ) -> Future[@list.List[T]] {
   self.last_before(event, count).map(fn(values) { @list.List(values) })
 }
 
 ///|
-pub fn[T] Stream::take(self : Stream[T], count : Int) -> Future[Array[T]] {
+pub fn[T] Stream::take(self : Stream[T], count : Int32) -> Future[Array[T]] {
   let buffer : Array[T] = []
   let (future, promise) = Future::create()
   ignore(
@@ -1008,13 +1011,13 @@ pub fn[T] Stream::take(self : Stream[T], count : Int) -> Future[Array[T]] {
 ///|
 pub fn[T] Stream::take_list(
   self : Stream[T],
-  count : Int,
+  count : Int32,
 ) -> Future[@list.List[T]] {
   self.take(count).map(fn(values) { @list.List(values) })
 }
 
 ///|
-pub fn[T] Stream::nth(self : Stream[T], index : Int) -> Future[T] {
+pub fn[T] Stream::nth(self : Stream[T], index : Int32) -> Future[T] {
   let seen = Ref(0)
   let (future, promise) = Future::create()
   ignore(
@@ -1113,7 +1116,7 @@ pub fn[T] Stream::concat_merge_list(
 }
 
 ///|
-fn[T] drop_front(buffer : Array[T], count : Int) -> Int {
+fn[T] drop_front(buffer : Array[T], count : Int32) -> Int32 {
   let dropped = Ref(0)
   while dropped.val < count && buffer.length() > 0 {
     ignore(buffer.remove(0))
@@ -1125,10 +1128,10 @@ fn[T] drop_front(buffer : Array[T], count : Int) -> Int {
 ///|
 pub fn[A, B] Stream::foldw(
   self : Stream[A],
-  width : Int,
+  width : Int32,
   init~ : B,
   f~ : (B, A) -> B,
-  stride? : Int = 1,
+  stride~ : Int32 = 1,
 ) -> Stream[B] {
   let buffer : Array[A] = []
   let is_enough = fn() { buffer.length() == width }

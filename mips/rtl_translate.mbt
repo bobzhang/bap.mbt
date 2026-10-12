@@ -12,11 +12,11 @@ fn expand_vars(body : Body) -> Array[@types.Var] {
 ///|
 fn partial_assign(
   v : @types.Var,
-  hi_var : Int,
-  lo_var : Int,
+  hi_var : Int32,
+  lo_var : Int32,
   rhs : Exp,
-  hi_exp : Int,
-  lo_exp : Int,
+  hi_exp : Int32,
+  lo_exp : Int32,
 ) -> @types.Stmt raise @mc.LiftError {
   let width = var_bitwidth(v)
   let rhs = if hi_exp - lo_exp + 1 == rhs.width {
@@ -51,8 +51,8 @@ fn partial_assign(
 /// significant variable first).
 fn assign_vars(
   vars : Array[@types.Var],
-  hi? : Int,
-  lo? : Int = 0,
+  hi? : Int32,
+  lo~ : Int32 = 0,
   rhs : Exp,
 ) -> Array[@types.Stmt] raise @mc.LiftError {
   let vars = vars.rev()
@@ -60,7 +60,7 @@ fn assign_vars(
   let hi = hi.unwrap_or(full - 1)
   let rhs = rhs.cast(hi - lo + 1, rhs.sign)
   let rhs_width = rhs.width
-  fn in_bounds(x : Int) {
+  fn in_bounds(x : Int32) {
     x <= hi && x >= lo
   }
 

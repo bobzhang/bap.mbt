@@ -4,7 +4,7 @@ let trace_snapshot_magic : Bytes = b"BAPMBTTRACE\x01"
 ///|
 priv struct TraceSnapshotInput {
   data : BytesView
-  pos : Ref[Int]
+  pos : Ref[Int32]
 }
 
 ///|
@@ -13,7 +13,7 @@ fn TraceSnapshotInput::create(data : BytesView) -> TraceSnapshotInput {
 }
 
 ///|
-fn trace_write_byte(out : Array[Byte], value : Int) -> Unit {
+fn trace_write_byte(out : Array[Byte], value : Int32) -> Unit {
   out.push((value & 0xff).to_byte())
 }
 
@@ -23,7 +23,7 @@ fn trace_write_bool(out : Array[Byte], value : Bool) -> Unit {
 }
 
 ///|
-fn trace_write_i32(out : Array[Byte], value : Int) -> Unit {
+fn trace_write_i32(out : Array[Byte], value : Int32) -> Unit {
   for i in 0..<4 {
     trace_write_byte(out, value >> (i * 8))
   }
@@ -332,7 +332,7 @@ fn trace_encode_snapshot(snapshot : TraceSnapshot) -> Bytes {
 ///|
 fn TraceSnapshotInput::read_byte(
   self : TraceSnapshotInput,
-) -> Int raise TraceError {
+) -> Int32 raise TraceError {
   if self.pos.val >= self.data.length() {
     raise ProtocolError("truncated trace snapshot")
   }
@@ -367,7 +367,7 @@ fn TraceSnapshotInput::read_u32_bits(
 ///|
 fn TraceSnapshotInput::read_i32(
   self : TraceSnapshotInput,
-) -> Int raise TraceError {
+) -> Int32 raise TraceError {
   self.read_u32_bits().to_int()
 }
 
@@ -375,7 +375,7 @@ fn TraceSnapshotInput::read_i32(
 fn TraceSnapshotInput::read_len(
   self : TraceSnapshotInput,
   what : String,
-) -> Int raise TraceError {
+) -> Int32 raise TraceError {
   let value = self.read_u32_bits()
   if value > 0x7fffffffUL {
     raise ProtocolError("\{what} length is too large")

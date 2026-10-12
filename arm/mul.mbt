@@ -9,7 +9,7 @@ fn lift_mull(
   src1~ : Op,
   src2~ : Op,
   sign : Sign,
-  addend? : Bool = false,
+  addend~ : Bool = false,
   wflag~ : Op,
   cond : Op,
 ) -> Array[@types.Stmt] raise @mc.LiftError {
@@ -47,14 +47,14 @@ fn lift_smul(
   src2~ : Op,
   accum? : Op,
   hiaccum? : Op,
-  q? : Bool = false,
+  q~ : Bool = false,
   size : SmulSize,
   cond : Op,
 ) -> Array[@types.Stmt] raise @mc.LiftError {
   let dest = assert_reg(dest)
   let src1 = exp_of_op(src1)
   let src2 = exp_of_op(src2)
-  let excast = (hi : Int, lo : Int, s : @types.Exp) => {
+  let excast = (hi : Int32, lo : Int32, s : @types.Exp) => {
     cast(Signed, 64, extract(hi, lo, s))
   }
   let top = (s : @types.Exp) => excast(31, 16, s)

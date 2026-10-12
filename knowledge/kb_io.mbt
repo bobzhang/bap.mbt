@@ -8,18 +8,18 @@ fn write_token(buf : StringBuilder, s : String) -> Unit {
 }
 
 ///|
-fn write_int(buf : StringBuilder, n : Int) -> Unit {
+fn write_int(buf : StringBuilder, n : Int32) -> Unit {
   buf.write_string("\{n};")
 }
 
 ///|
 priv struct KbReader {
   input : String
-  mut pos : Int
+  mut pos : Int32
 }
 
 ///|
-fn KbReader::int(self : KbReader) -> Int raise Conflict {
+fn KbReader::int(self : KbReader) -> Int32 raise Conflict {
   let start = self.pos
   while self.pos < self.input.length() && self.input[self.pos] != ';' {
     self.pos = self.pos + 1
@@ -62,7 +62,7 @@ pub fn State::serialize(self : State) -> String {
   let classes = self.env.classes.to_array()
   classes.sort_by((x, y) => x.0.compare(y.0))
   write_int(buf, classes.length())
-  let names_of_uids : Map[Int, Name] = Map([])
+  let names_of_uids : Map[Int32, Name] = Map([])
   for _, slots in class_slots {
     for name, pack in slots {
       names_of_uids[pack.uid] = name

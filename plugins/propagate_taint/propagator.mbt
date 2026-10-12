@@ -20,7 +20,7 @@
 ///|
 /// The results of a propagation (upstream `Propagator.Result.t`).
 pub struct PropagationResult {
-  priv visited : @immut_hashmap.HashMap[@types.Tid, Int]
+  priv visited : @immut_hashmap.HashMap[@types.Tid, Int32]
   priv regs : TermTaints
   priv ptrs : TermTaints
 }
@@ -107,8 +107,8 @@ pub fn PropagationResult::is_visited(
 /// The number of visits of every visited term.
 pub fn PropagationResult::visited(
   self : PropagationResult,
-) -> Map[@types.Tid, Int] {
-  let out : Map[@types.Tid, Int] = Map([])
+) -> Map[@types.Tid, Int32] {
+  let out : Map[@types.Tid, Int32] = Map([])
   for tid, n in self.visited {
     out[tid] = n
   }
@@ -259,7 +259,7 @@ fn Run::mem(self : Run, exp : @types.Exp) -> @types.BilResultStorage? {
 }
 
 ///|
-fn value_size(mem : @types.Exp) -> Int? {
+fn value_size(mem : @types.Exp) -> Int32? {
   match mem.infer_type() {
     Ok(Mem(value_width~, ..)) => Some(value_width)
     _ => None
@@ -604,7 +604,7 @@ fn Run::eval_sub(self : Run, sub : @types.Term[@types.Sub]) -> Unit {
   self.ctxt = self.ctxt.leave_sub(sub)
   self.subs = match self.subs {
     More(_, tail~) => tail
-    Empty => @list.empty()
+    Empty => @list.List([])
   }
 }
 
@@ -892,10 +892,10 @@ fn find_entry(
 ///   of the project image is read from the image, the stack pointer is
 ///   set to 0x40000000).
 pub fn run(
-  max_steps~ : Int,
-  max_loop~ : Int,
+  max_steps~ : Int32,
+  max_loop~ : Int32,
   deterministic~ : Bool,
-  random_seed? : Int,
+  random_seed? : Int32,
   reg_policy~ : @microx.Policy,
   mem_policy~ : @microx.Policy,
   proj : @project.Project,
@@ -919,7 +919,7 @@ pub fn run(
     taint: TaintContext::empty(),
     regs: @immut_hashmap.HashMap::new(),
     ptrs: @immut_hashmap.HashMap::new(),
-    subs: @list.empty(),
+    subs: @list.List([]),
     term: None,
     snapshots: Map([]),
   }

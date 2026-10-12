@@ -15,7 +15,7 @@ pub extend ImageBackendPerm with Debug::{to_repr}
 ///|
 pub(all) struct ImageBackendLocation {
   addr : UInt64
-  len : Int
+  len : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -28,7 +28,7 @@ pub extend ImageBackendLocation with Debug::{to_repr}
 pub(all) struct ImageBackendSegment {
   name : String
   perm : ImageBackendPerm
-  off : Int
+  off : Int32
   location : ImageBackendLocation
 } derive(Eq, Debug)
 
@@ -132,7 +132,7 @@ fn ImageBackendPerm::executable(self : ImageBackendPerm) -> Bool {
 ///|
 pub fn ImageBackendLocation::create(
   addr~ : UInt64,
-  len~ : Int,
+  len~ : Int32,
 ) -> ImageBackendLocation {
   { addr, len, }
 }
@@ -141,7 +141,7 @@ pub fn ImageBackendLocation::create(
 pub fn ImageBackendSegment::create(
   name~ : String,
   perm~ : ImageBackendPerm,
-  off~ : Int,
+  off~ : Int32,
   location~ : ImageBackendLocation,
 ) -> ImageBackendSegment {
   { name, perm, off, location, }
@@ -151,9 +151,9 @@ pub fn ImageBackendSegment::create(
 pub fn ImageBackendSymbol::create(
   name~ : String,
   location~ : ImageBackendLocation,
-  is_function? : Bool = false,
-  is_debug? : Bool = false,
-  extra_locations? : Array[ImageBackendLocation] = [],
+  is_function~ : Bool = false,
+  is_debug~ : Bool = false,
+  extra_locations~ : Array[ImageBackendLocation] = [],
 ) -> ImageBackendSymbol {
   {
     name,
@@ -188,8 +188,8 @@ pub fn ImageBackendImage::create(
   target~ : @core_theory.Target,
   entry~ : UInt64,
   segments : Array[ImageBackendSegment],
-  symbols? : Array[ImageBackendSymbol] = [],
-  sections? : Array[ImageBackendSection] = [],
+  symbols~ : Array[ImageBackendSymbol] = [],
+  sections~ : Array[ImageBackendSection] = [],
 ) -> ImageBackendImage {
   {
     target,
@@ -226,8 +226,8 @@ fn image_backend_target_endian(target : @core_theory.Target) -> @bitvec.Endian {
 ///|
 fn image_backend_slice_data(
   data : Bytes,
-  off : Int,
-  len : Int,
+  off : Int32,
+  len : Int32,
   description : String,
 ) -> Result[Bytes, String] {
   if off < 0 || len < 0 || off > data.length() || len > data.length() - off {
@@ -319,7 +319,7 @@ pub fn ImageBackend::from_legacy(
   backend : LegacyImageBackend,
   description? : String,
   extensions? : Array[String],
-  priority? : Int,
+  priority? : Int32,
 ) -> ImageBackend {
   ImageBackend::create(name~, description?, extensions?, priority?, load=data => {
     match backend.load(data) {
@@ -335,7 +335,7 @@ pub fn register_legacy_backend(
   backend : LegacyImageBackend,
   description? : String,
   extensions? : Array[String],
-  priority? : Int,
+  priority? : Int32,
 ) -> Result[Unit, String] {
   register_backend(
     name~,

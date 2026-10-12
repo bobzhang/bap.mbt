@@ -23,7 +23,7 @@ fn arrow(p : Params, ret : Typ) -> Signature {
 ///|
 /// The type signatures of the semantic primitives for a target with words
 /// of `bits` bits.
-fn semantic_primitive_types(bits : Int) -> Array[(String, Signature, String)] {
+fn semantic_primitive_types(bits : Int32) -> Array[(String, Signature, String)] {
   let any : Typ = Any
   let sym : Typ = Symbol
   let int : Typ = Type(bits)
@@ -166,7 +166,7 @@ pub fn link_semantic_primitives(
 // Helpers
 
 ///|
-fn static_int(name : String, x : SValue) -> Int raise SemanticsError {
+fn static_int(name : String, x : SValue) -> Int32 raise SemanticsError {
   match x.static_value {
     Some(w) =>
       match word_to_int(w) {
@@ -178,7 +178,7 @@ fn static_int(name : String, x : SValue) -> Int raise SemanticsError {
 }
 
 ///|
-fn max_width(s : Int, xs : ArrayView[SValue]) -> Int {
+fn max_width(s : Int32, xs : ArrayView[SValue]) -> Int32 {
   let mut r = 0
   for x in xs {
     r = @cmp.maximum(r, x.width)
@@ -205,10 +205,10 @@ fn apply_binop(
 ///|
 /// A monoid operation over the arguments (upstream `monoid`).
 fn monoid(
-  s0 : Int,
+  s0 : Int32,
   first_width : Bool,
   op : @types.BinOp,
-  init : Int,
+  init : Int32,
   xs : Array[SValue],
 ) -> SValue {
   match xs {
@@ -314,7 +314,7 @@ fn SemCtx::addr(self : SemCtx, x : SValue) -> @types.Exp {
 }
 
 ///|
-fn SemCtx::load(self : SemCtx, bits : Int, p : SValue) -> SValue {
+fn SemCtx::load(self : SemCtx, bits : Int32, p : SValue) -> SValue {
   dynv(
     Load(
       mem=Var(self.lifter.mem),
@@ -397,7 +397,7 @@ fn mk_cast(
 }
 
 ///|
-fn saturate_max(bits : Int, signed : Bool) -> @bigint.BigInt {
+fn saturate_max(bits : Int32, signed : Bool) -> @bigint.BigInt {
   let m = 1N << bits
   if signed {
     (m >> 1) - 1N
@@ -519,7 +519,7 @@ fn concat_prim(xs : Array[SValue]) -> SValue {
 }
 
 ///|
-fn select_prim(s : Int, xs : Array[SValue]) -> SValue raise SemanticsError {
+fn select_prim(s : Int32, xs : Array[SValue]) -> SValue raise SemanticsError {
   match xs {
     [] => const_int(s, 0)
     _ => {
@@ -569,7 +569,7 @@ fn double_of_word(w : @types.Word) -> Double {
 }
 
 ///|
-fn word_of_double(x : Double, s : Int) -> @types.Word {
+fn word_of_double(x : Double, s : Int32) -> @types.Word {
   let bits = x.reinterpret_as_int64()
   resize(try! @types.Word::of_int64(bits, width=64), s)
 }
@@ -588,12 +588,12 @@ fn rmode_name(name : String, x : SValue) -> String raise SemanticsError {
 }
 
 ///|
-fn intrinsic_var(d : Char, i : Int, s : Int) -> @types.Var {
+fn intrinsic_var(d : Char, i : Int32, s : Int32) -> @types.Var {
   @types.Var::create("intrinsic:\{d}\{i}", Imm(@cmp.maximum(1, s)))
 }
 
 ///|
-fn float_intrinsic(name : String, args : Array[SValue], ret : Int) -> SEff {
+fn float_intrinsic(name : String, args : Array[SValue], ret : Int32) -> SEff {
   let stmts : Array[@types.Stmt] = []
   for i, x in args {
     stmts.push(Move(intrinsic_var('x', i, x.width), x.exp))
@@ -755,7 +755,7 @@ fn intrinsic_call(
   let stores : Array[Array[SValue]] = []
   let mut current : Array[SValue] = inputs
   let mut group = 0
-  let flush = (g : Int, c : Array[SValue]) => {
+  let flush = (g : Int32, c : Array[SValue]) => {
     match g {
       1 => results.push(c)
       2 => writes.push(c)

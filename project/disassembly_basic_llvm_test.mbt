@@ -4486,7 +4486,7 @@ let x86_llvm_samples : Array[(String, String, String)] = [
 ]
 
 ///|
-fn x86_llvm_hex_digit(c : Char) -> Int {
+fn x86_llvm_hex_digit(c : Char) -> Int32 {
   if c >= '0' && c <= '9' {
     c.to_int() - '0'.to_int()
   } else {
@@ -4574,7 +4574,7 @@ test "x86 Basic llvm decoder decodes every sample like llvm-mc" {
 ///|
 test "x86 Basic llvm decoder reports invalid encodings with LLVM's sizes" {
   // (triple, bytes, size LLVM consumed before rejecting them)
-  let samples : Array[(String, String, Int)] = [
+  let samples : Array[(String, String, Int32)] = [
     ("x86_64", "06", 1), // push %es is not valid in 64-bit mode
     ("x86_64", "0f0b01", 2), // ud2 is valid: two bytes
     ("x86_64", "c4e2780f", 4), // VEX with no instruction in the map

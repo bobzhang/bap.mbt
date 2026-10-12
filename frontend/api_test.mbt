@@ -4,7 +4,7 @@
 fn bap_with(
   argv : Array[String],
   fs : @bap_main.FileSystem,
-  env? : (String) -> String? = _ => None,
+  env~ : (String) -> String? = _ => None,
 ) -> String {
   let buf = StringBuilder()
   let code = @frontend.run(

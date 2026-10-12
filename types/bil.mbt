@@ -283,8 +283,8 @@ pub(all) enum Exp {
   Load(mem~ : Exp, addr~ : Exp, endian~ : @bitvec.Endian, typ~ : ValueType)
   Store(mem~ : Exp, addr~ : Exp, value~ : Exp, endian~ : @bitvec.Endian)
   Let(Var, Exp, Exp)
-  Cast(kind~ : CastKind, width~ : Int, exp~ : Exp)
-  Extract(hi~ : Int, lo~ : Int, exp~ : Exp)
+  Cast(kind~ : CastKind, width~ : Int32, exp~ : Exp)
+  Extract(hi~ : Int32, lo~ : Int32, exp~ : Exp)
   Concat(high~ : Exp, low~ : Exp)
   UnOp(UnOp, Exp)
   BinOp(BinOp, Exp, Exp)
@@ -355,7 +355,7 @@ pub fn Exp::let_(variable : Var, value : Exp, body : Exp) -> Exp {
 }
 
 ///|
-pub fn Exp::cast(kind : CastKind, width : Int, exp : Exp) -> Exp {
+pub fn Exp::cast(kind : CastKind, width : Int32, exp : Exp) -> Exp {
   Cast(kind~, width~, exp~)
 }
 
@@ -365,7 +365,7 @@ pub fn Exp::unknown(name : String, typ : ValueType) -> Exp {
 }
 
 ///|
-pub fn Exp::extract(exp : Exp, hi? : Int = -1, lo? : Int = 0) -> Exp {
+pub fn Exp::extract(exp : Exp, hi~ : Int32 = -1, lo~ : Int32 = 0) -> Exp {
   let actual_hi = if hi >= 0 {
     hi
   } else {
@@ -442,7 +442,7 @@ pub(all) enum Stmt {
   Move(Var, Exp)
   Jmp(Exp)
   Special(String)
-  CpuExn(Int)
+  CpuExn(Int32)
   If(cond~ : Exp, yes~ : Array[Stmt], no~ : Array[Stmt])
   While(cond~ : Exp, body~ : Array[Stmt])
 } derive(Eq, Debug)
@@ -620,7 +620,7 @@ pub fn Stmt::if_(cond : Exp, yes : Array[Stmt], no : Array[Stmt]) -> Stmt {
 }
 
 ///|
-pub fn Stmt::cpuexn(code : Int) -> Stmt {
+pub fn Stmt::cpuexn(code : Int32) -> Stmt {
   CpuExn(code)
 }
 

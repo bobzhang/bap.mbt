@@ -50,7 +50,7 @@ fn assert_reconstructor_text(
 ///|
 fn assert_reconstructor_logical_flags(
   defs : Array[String],
-  offset : Int,
+  offset : Int32,
   result : String,
   zero : String,
 ) -> Unit raise {
@@ -66,7 +66,7 @@ fn assert_reconstructor_logical_flags(
 ///|
 fn assert_reconstructor_addsub_flags(
   defs : Array[String],
-  offset : Int,
+  offset : Int32,
   lhs : String,
   rhs : String,
   result : String,
@@ -95,7 +95,7 @@ fn assert_reconstructor_addsub_flags(
 ///|
 fn assert_reconstructor_incdec_flags(
   defs : Array[String],
-  offset : Int,
+  offset : Int32,
   lhs : String,
   rhs : String,
   result : String,

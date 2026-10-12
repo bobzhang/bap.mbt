@@ -14,7 +14,7 @@ fn fp64(arch : Arch, r6 : Bool) -> Bool {
 
 ///|
 /// The double-precision register `n` of the FPU mode.
-fn fpr_double(fp64 : Bool, n : Int) -> Operand? {
+fn fpr_double(fp64 : Bool, n : Int32) -> Operand? {
   if fp64 {
     Some(fgr64(n))
   } else {
@@ -193,7 +193,7 @@ priv enum FpuFmt {
 /// The register of the format `fmt` numbered `n`: 32-bit registers for
 /// singles and words, doubles in the FPU mode, and 64-bit registers for
 /// longs.
-fn fpu_reg(fp64 : Bool, fmt : FpuFmt, n : Int) -> Operand? {
+fn fpu_reg(fp64 : Bool, fmt : FpuFmt, n : Int32) -> Operand? {
   match fmt {
     S | W => Some(fgr32(n))
     D => fpr_double(fp64, n)
@@ -230,7 +230,7 @@ fn decode_fpu_arith(f : Fields, arch : Arch, r6 : Bool) -> Form? {
     W => ("_W", "w")
     L => ("_L", "l")
   }
-  let reg = (x : FpuFmt, n : Int) => fpu_reg(fp64, x, n)
+  let reg = (x : FpuFmt, n : Int32) => fpu_reg(fp64, x, n)
   let binary = (op : String) => {
     guard fmt is (S | D) else { return None }
     match (reg(fmt, fd), reg(fmt, fs), reg(fmt, ft)) {
@@ -367,7 +367,7 @@ fn decode_fpu_arith(f : Fields, arch : Arch, r6 : Bool) -> Form? {
     0x26 if fmt is S && arch is Mips64 && !r6 =>
       Some(form("CVT_PS_S64", "cvt.ps.s", [fgr64(fd), fgr32(fs), fgr32(ft)]))
     0x25 if fmt is (S | D) => unary("CVT_L_\{conv(fmt)}", "cvt.l.\{letter}", L)
-    0x30..=0x3f if !r6 && fmt is (S | D) && bits(f.word, 6, 2) == 0 => {
+    0x30..<=0x3f if !r6 && fmt is (S | D) && bits(f.word, 6, 2) == 0 => {
       let cc = bits(f.word, 8, 3)
       let cond = fpu_conditions[f.funct - 0x30]
       match (reg(fmt, fs), reg(fmt, ft)) {
@@ -476,7 +476,7 @@ fn decode_cop1x(f : Fields, arch : Arch) -> Form? {
       } else {
         ("_S", "s")
       }
-      let reg = (n : Int) => {
+      let reg = (n : Int32) => {
         if double {
           fpr_double(fp64, n)
         } else {

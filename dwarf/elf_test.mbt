@@ -29,13 +29,21 @@ fn expect_elf_functions(
 }
 
 ///|
-fn elf_test_set_u16_le(buffer : Array[Byte], offset : Int, value : Int) -> Unit {
+fn elf_test_set_u16_le(
+  buffer : Array[Byte],
+  offset : Int32,
+  value : Int32,
+) -> Unit {
   buffer[offset] = (value & 0xff).to_byte()
   buffer[offset + 1] = ((value >> 8) & 0xff).to_byte()
 }
 
 ///|
-fn elf_test_set_u32_le(buffer : Array[Byte], offset : Int, value : Int) -> Unit {
+fn elf_test_set_u32_le(
+  buffer : Array[Byte],
+  offset : Int32,
+  value : Int32,
+) -> Unit {
   for i in 0..<4 {
     buffer[offset + i] = ((value >> (i * 8)) & 0xff).to_byte()
   }
@@ -44,7 +52,7 @@ fn elf_test_set_u32_le(buffer : Array[Byte], offset : Int, value : Int) -> Unit 
 ///|
 fn elf_test_set_u64_le(
   buffer : Array[Byte],
-  offset : Int,
+  offset : Int32,
   value : UInt64,
 ) -> Unit {
   for i in 0..<8 {
@@ -53,13 +61,21 @@ fn elf_test_set_u64_le(
 }
 
 ///|
-fn elf_test_set_u16_be(buffer : Array[Byte], offset : Int, value : Int) -> Unit {
+fn elf_test_set_u16_be(
+  buffer : Array[Byte],
+  offset : Int32,
+  value : Int32,
+) -> Unit {
   buffer[offset] = ((value >> 8) & 0xff).to_byte()
   buffer[offset + 1] = (value & 0xff).to_byte()
 }
 
 ///|
-fn elf_test_set_u32_be(buffer : Array[Byte], offset : Int, value : Int) -> Unit {
+fn elf_test_set_u32_be(
+  buffer : Array[Byte],
+  offset : Int32,
+  value : Int32,
+) -> Unit {
   for i in 0..<4 {
     buffer[offset + i] = ((value >> ((3 - i) * 8)) & 0xff).to_byte()
   }
@@ -68,7 +84,7 @@ fn elf_test_set_u32_be(buffer : Array[Byte], offset : Int, value : Int) -> Unit 
 ///|
 fn elf_test_write_bytes(
   buffer : Array[Byte],
-  offset : Int,
+  offset : Int32,
   data : Bytes,
 ) -> Unit {
   for i in 0..<data.length() {
@@ -79,11 +95,11 @@ fn elf_test_write_bytes(
 ///|
 fn elf_test_write_section32_be(
   buffer : Array[Byte],
-  index : Int,
-  name_offset : Int,
-  typ : Int,
-  file_offset : Int,
-  size : Int,
+  index : Int32,
+  name_offset : Int32,
+  typ : Int32,
+  file_offset : Int32,
+  size : Int32,
 ) -> Unit {
   let base = 52 + index * 40
   elf_test_set_u32_be(buffer, base, name_offset)
@@ -95,11 +111,11 @@ fn elf_test_write_section32_be(
 ///|
 fn elf_test_write_section64(
   buffer : Array[Byte],
-  index : Int,
-  name_offset : Int,
-  typ : Int,
-  file_offset : Int,
-  size : Int,
+  index : Int32,
+  name_offset : Int32,
+  typ : Int32,
+  file_offset : Int32,
+  size : Int32,
 ) -> Unit {
   let base = 64 + index * 64
   elf_test_set_u32_le(buffer, base, name_offset)

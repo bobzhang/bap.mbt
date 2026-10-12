@@ -4,7 +4,7 @@ fn bytes_0_to_15() -> Bytes {
 }
 
 ///|
-fn memory_at(start : UInt64, size : Int) -> @memory.Memory {
+fn memory_at(start : UInt64, size : Int32) -> @memory.Memory {
   @memory.Memory::from_bytes(
     endian=LittleEndian,
     start~,
@@ -139,7 +139,7 @@ test "translated BAP memory trie matches complete word tokens" {
     iter_entries.push("\{tokens.length()}:\{value}")
   })
   assert_true(iter_entries == ["1:prefix!"])
-  let invalid : Result[@memory.MemoryTrie[Int], String] = @memory.MemoryTrie::create(
+  let invalid : Result[@memory.MemoryTrie[Int32], String] = @memory.MemoryTrie::create(
     word_size=12,
   )
   assert_true(invalid is Err(_))
@@ -490,7 +490,7 @@ test "translated BAP memory result iterators propagate errors and stop" {
   })
   assert_true(forall_result == Ok(false))
   assert_true(forall_seen == [0x4000UL, 0x4001UL, 0x4002UL, 0x4003UL])
-  let counted : Result[Int, String] = memory.count_result(
+  let counted : Result[Int32, String] = memory.count_result(
     (_, word) => Ok(word.to_hex() == "0x0302"),
     word_size=16,
   )
@@ -902,14 +902,14 @@ test "translated BAP image table change applies commands to intersections" {
   let high = memory_at(0x40UL, 0x10)
   let target = memory_at(0x18UL, 0x20)
   let table = @memory.MemMap::empty().add(high, 3).add(low, 1).add(middle, 2)
-  let ignored_matches : Ref[Array[Int]] = Ref([])
+  let ignored_matches : Ref[Array[Int32]] = Ref([])
   let ignored = table.change(target, matches => {
     ignored_matches.val = matches.map(entry => entry.1)
     Ignore
   })
   assert_true(ignored_matches.val == [1, 2])
   assert_true(ignored.entries().map(entry => entry.1) == [1, 2, 3])
-  let updated_matches : Ref[Array[Int]] = Ref([])
+  let updated_matches : Ref[Array[Int32]] = Ref([])
   let updated = table.change(target, matches => {
     updated_matches.val = matches.map(entry => entry.1)
     Update((memory, value) => value + (memory.min_addr() >> 4).to_int())

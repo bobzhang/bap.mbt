@@ -9,7 +9,7 @@ fn kb_class(name : String) -> @knowledge.Class[Unit, Unit] {
 }
 
 ///|
-fn int_domain(name : String) -> @knowledge.Domain[Int] {
+fn int_domain(name : String) -> @knowledge.Domain[Int32] {
   @knowledge.Domain::total(kb_name(name), x => x.to_string(), empty=0, compare=(
     x,
     y,
@@ -366,7 +366,7 @@ test "symbols are interned per package, imported and made public" {
 
 ///|
 test "context variables are part of the (rolled back) state" {
-  let counter : @knowledge.Var[Int] = @knowledge.Var::new(
+  let counter : @knowledge.Var[Int32] = @knowledge.Var::new(
     "counter",
     _ => 0,
     pkg="kb-test",

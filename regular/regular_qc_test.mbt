@@ -21,7 +21,9 @@ test "qc: hex and sexp atom encodings round trip" {
 test "qc: bytes_from_hex rejects odd lengths and non-hex digits" {
   @quickcheck.check(
     (s : String) => {
-      let all_hex = s.iter().all(c => c is ('0'..='9' | 'a'..='f' | 'A'..='F'))
+      let all_hex = s
+        .iter()
+        .all(c => c is ('0'..<='9' | 'a'..<='f' | 'A'..<='F'))
       match @regular.bytes_from_hex(s) {
         Ok(b) => all_hex && s.length() % 2 == 0 && b.length() * 2 == s.length()
         Err(_) => !all_hex || s.length() % 2 != 0
@@ -54,7 +56,7 @@ test "qc: length-prefixed binary form round trips, also when concatenated" {
 ///|
 test "qc: bytes_bin_read never reads out of bounds" {
   @quickcheck.check(
-    (input : (Bytes, Int, UInt)) => {
+    (input : (Bytes, Int32, UInt32)) => {
       let (payload, pos, len) = input
       // a length prefix that may claim far more bytes than there are,
       // often just below 2^31 where the end offset overflows
@@ -101,7 +103,7 @@ test "regression: bytes_bin_read rejects a length that overflows the end offset"
 ///|
 test "qc: bytes_sub agrees with slicing" {
   @quickcheck.check(
-    (input : (Bytes, Int, Int)) => {
+    (input : (Bytes, Int32, Int32)) => {
       let (b, pos, len) = input
       let n = b.length()
       let pos = pos % (n + 3)
@@ -121,7 +123,7 @@ test "qc: bytes_sub agrees with slicing" {
 /// A sequence of trie operations over short keys from a small alphabet
 /// (including non-ASCII characters) so that keys share prefixes.
 struct TrieOps {
-  ops : Array[(Bool, String, Int)] // (add?, key, value)
+  ops : Array[(Bool, String, Int32)] // (add?, key, value)
   probe : String
 } derive(Debug)
 
@@ -143,7 +145,7 @@ impl @quickcheck.Arbitrary for TrieOps with fn arbitrary(size, rs) {
   let count = rs
     .next_uint(limit=(size.min(20) + 1).reinterpret_as_uint())
     .reinterpret_as_int()
-  let ops : Array[(Bool, String, Int)] = []
+  let ops : Array[(Bool, String, Int32)] = []
   for i in 0..<count {
     let add = rs.next_uint(limit=3) != 0
     // removals mostly target a key added earlier
@@ -169,8 +171,8 @@ impl @quickcheck.Shrink for TrieOps with fn shrink(t) {
 }
 
 ///|
-fn TrieOps::model(self : TrieOps) -> Map[String, Int] {
-  let m : Map[String, Int] = Map([])
+fn TrieOps::model(self : TrieOps) -> Map[String, Int32] {
+  let m : Map[String, Int32] = Map([])
   for op in self.ops {
     let (add, key, value) = op
     if add {
@@ -183,7 +185,7 @@ fn TrieOps::model(self : TrieOps) -> Map[String, Int] {
 }
 
 ///|
-fn utf8_length(s : String) -> Int {
+fn utf8_length(s : String) -> Int32 {
   @utf8.encode(s).length()
 }
 
@@ -191,7 +193,7 @@ fn utf8_length(s : String) -> Int {
 test "qc: PrefixTrie agrees with a map model" {
   @quickcheck.check(
     (t : TrieOps) => {
-      let trie : @regular.PrefixTrie[Int] = @regular.PrefixTrie::new()
+      let trie : @regular.PrefixTrie[Int32] = @regular.PrefixTrie::new()
       for op in t.ops {
         let (add, key, value) = op
         if add {
@@ -202,7 +204,7 @@ test "qc: PrefixTrie agrees with a map model" {
       }
       let model = t.model()
       // longest stored prefix of the probe, measured in UTF-8 bytes
-      let mut best : (Int, Int)? = None
+      let mut best : (Int32, Int32)? = None
       model.each((key, value) => {
         if t.probe.has_prefix(key) {
           let len = utf8_length(key)
@@ -212,7 +214,7 @@ test "qc: PrefixTrie agrees with a map model" {
           }
         }
       })
-      let folded = trie.fold(init=Map([]), f=(acc : Map[String, Int], k, v) => {
+      let folded = trie.fold(init=Map([]), f=(acc : Map[String, Int32], k, v) => {
         acc[k] = v
         acc
       })
@@ -231,8 +233,8 @@ test "qc: PrefixTrie agrees with a map model" {
 test "qc: PrefixTrie is_empty agrees with length" {
   @quickcheck.check(
     (t : TrieOps) => {
-      let trie : @regular.PrefixTrie[Int] = @regular.PrefixTrie::new()
-      let suffix : @regular.SuffixTrie[Int] = @regular.SuffixTrie::new()
+      let trie : @regular.PrefixTrie[Int32] = @regular.PrefixTrie::new()
+      let suffix : @regular.SuffixTrie[Int32] = @regular.SuffixTrie::new()
       for op in t.ops {
         let (add, key, value) = op
         if add {
@@ -261,7 +263,7 @@ test "qc: PrefixTrie is_empty agrees with length" {
 test "qc: SuffixTrie agrees with a map model" {
   @quickcheck.check(
     (t : TrieOps) => {
-      let trie : @regular.SuffixTrie[Int] = @regular.SuffixTrie::new()
+      let trie : @regular.SuffixTrie[Int32] = @regular.SuffixTrie::new()
       for op in t.ops {
         let (add, key, value) = op
         if add {
@@ -271,7 +273,7 @@ test "qc: SuffixTrie agrees with a map model" {
         }
       }
       let model = t.model()
-      let mut best : (Int, Int)? = None
+      let mut best : (Int32, Int32)? = None
       model.each((key, value) => {
         if t.probe.has_suffix(key) {
           let len = utf8_length(key)
@@ -281,7 +283,7 @@ test "qc: SuffixTrie agrees with a map model" {
           }
         }
       })
-      let folded = trie.fold(init=Map([]), f=(acc : Map[String, Int], k, v) => {
+      let folded = trie.fold(init=Map([]), f=(acc : Map[String, Int32], k, v) => {
         acc[k] = v
         acc
       })
@@ -300,14 +302,14 @@ test "qc: SuffixTrie agrees with a map model" {
 /// `remove` keeps the path to a removed key, so `is_empty` (which only
 /// looked at the root) reported a trie with no bindings as non-empty.
 test "regression: a trie is empty again after removing its only key" {
-  let trie : @regular.PrefixTrie[Int] = @regular.PrefixTrie::new()
+  let trie : @regular.PrefixTrie[Int32] = @regular.PrefixTrie::new()
   trie.add("\u{e9}aba", 1)
   trie.remove("\u{e9}aba")
   assert_eq(trie.length(), 0)
   assert_true(trie.is_empty())
   trie.add("ab", 2)
   assert_true(!trie.is_empty())
-  let suffix : @regular.SuffixTrie[Int] = @regular.SuffixTrie::new()
+  let suffix : @regular.SuffixTrie[Int32] = @regular.SuffixTrie::new()
   suffix.add("abc", 3)
   suffix.remove("abc")
   assert_true(suffix.is_empty())
@@ -318,7 +320,7 @@ test "regression: a trie is empty again after removing its only key" {
 /// byte, so a long (but otherwise supported) key exhausted the stack.
 test "regression: tries with very long keys" {
   let key = "ab".repeat(100000)
-  let trie : @regular.PrefixTrie[Int] = @regular.PrefixTrie::new()
+  let trie : @regular.PrefixTrie[Int32] = @regular.PrefixTrie::new()
   trie.add(key, 1)
   trie.add("a", 2)
   assert_true(!trie.is_empty())
@@ -329,7 +331,7 @@ test "regression: tries with very long keys" {
   trie.remove("a")
   assert_eq(trie.length(), 0)
   assert_true(trie.is_empty())
-  let suffix : @regular.SuffixTrie[Int] = @regular.SuffixTrie::new()
+  let suffix : @regular.SuffixTrie[Int32] = @regular.SuffixTrie::new()
   suffix.add(key, 3)
   assert_true(!suffix.is_empty())
   assert_eq(suffix.length(), 1)

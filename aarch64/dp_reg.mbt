@@ -5,7 +5,7 @@
 ///|
 /// The shift suffix of a shifted register operand (`ARM_AM` shifter
 /// immediates print nothing for `lsl #0`).
-fn shift_suffix(shift : Int, amount : Int) -> String {
+fn shift_suffix(shift : Int32, amount : Int32) -> String {
   if shift == 0 && amount == 0 {
     ""
   } else {
@@ -15,7 +15,7 @@ fn shift_suffix(shift : Int, amount : Int) -> String {
 
 ///|
 /// Data processing (register).
-fn a64_dp_reg(w : UInt) -> A64Insn? {
+fn a64_dp_reg(w : UInt32) -> A64Insn? {
   let sf = bit(w, 31)
   let sz = size_char(sf)
   let rd = fld(w, 0, 5)
@@ -191,7 +191,7 @@ fn a64_dp_reg(w : UInt) -> A64Insn? {
 
 ///|
 /// Add/subtract (extended register).
-fn a64_add_sub_extended(w : UInt) -> A64Insn? {
+fn a64_add_sub_extended(w : UInt32) -> A64Insn? {
   let sf = bit(w, 31)
   let sz = size_char(sf)
   let rd = fld(w, 0, 5)
@@ -241,7 +241,7 @@ fn a64_add_sub_extended(w : UInt) -> A64Insn? {
 
 ///|
 /// Data processing (3 source).
-fn a64_dp_3src(w : UInt) -> A64Insn? {
+fn a64_dp_3src(w : UInt32) -> A64Insn? {
   let sf = bit(w, 31)
   let sz = size_char(sf)
   let rd = fld(w, 0, 5)
@@ -296,7 +296,7 @@ fn a64_dp_3src(w : UInt) -> A64Insn? {
 
 ///|
 /// Data processing (2 source).
-fn a64_dp_2src(w : UInt) -> A64Insn? {
+fn a64_dp_2src(w : UInt32) -> A64Insn? {
   let sf = bit(w, 31)
   let sz = size_char(sf)
   let rd = fld(w, 0, 5)
@@ -342,7 +342,7 @@ fn a64_dp_2src(w : UInt) -> A64Insn? {
 
 ///|
 /// Data processing (1 source), including pointer authentication.
-fn a64_dp_1src(w : UInt) -> A64Insn? {
+fn a64_dp_1src(w : UInt32) -> A64Insn? {
   let sf = bit(w, 31)
   let sz = size_char(sf)
   let rd = fld(w, 0, 5)

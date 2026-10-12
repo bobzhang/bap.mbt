@@ -8,9 +8,9 @@
 /// `line` is 1-based, `col` and `offset` are 0-based and are counted in
 /// UTF-16 code units.
 pub(all) struct Position {
-  line : Int
-  col : Int
-  offset : Int
+  line : Int32
+  col : Int32
+  offset : Int32
 } derive(Eq, Compare, Debug)
 
 ///|
@@ -73,8 +73,8 @@ pub fn Loc::merge(self : Loc, other : Loc) -> Loc {
 
 ///|
 /// The location of the `off`-th character of the location.
-pub fn Loc::nth_char(self : Loc, off : Int) -> Loc {
-  let shift = (p : Position, n : Int) => {
+pub fn Loc::nth_char(self : Loc, off : Int32) -> Loc {
+  let shift = (p : Position, n : Int32) => {
     line: p.line,
     col: p.col + n,
     offset: p.offset + n,
@@ -104,7 +104,7 @@ pub(all) enum Token {
 /// and the escape sequences), exactly as upstream (Parsexp CST atoms).
 pub(all) struct Tree {
   data : Token
-  id : Int
+  id : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -126,12 +126,12 @@ pub impl Show for Tree with fn output(self, logger) {
 
 ///|
 /// Creates a tree that has no source (the null identifier).
-pub fn Tree::atom(x : String, id? : Int = 0) -> Tree {
+pub fn Tree::atom(x : String, id~ : Int32 = 0) -> Tree {
   { data: Atom(x), id, }
 }
 
 ///|
-pub fn Tree::list(xs : Array[Tree], id? : Int = 0) -> Tree {
+pub fn Tree::list(xs : Array[Tree], id~ : Int32 = 0) -> Tree {
   { data: List(xs), id, }
 }
 
@@ -165,12 +165,12 @@ pub impl Show for SexpError with fn output(self, logger) {
 /// Unlike upstream the store is mutable and shared by all programs that
 /// were derived from it; identifiers only grow, so sharing is safe.
 pub struct Source {
-  priv mut lastid : Int
-  priv ranges : Map[Int, Range]
-  priv origin : Map[Int, String]
+  priv mut lastid : Int32
+  priv ranges : Map[Int32, Range]
+  priv origin : Map[Int32, String]
   priv files : Map[String, Array[Tree]]
   priv inputs : Map[String, String]
-  priv rclass : Map[Int, Int]
+  priv rclass : Map[Int32, Int32]
 }
 
 ///|
@@ -185,14 +185,14 @@ pub fn Source::is_empty(self : Source) -> Bool {
 
 ///|
 /// The last identifier that was allocated.
-pub fn Source::lastid(self : Source) -> Int {
+pub fn Source::lastid(self : Source) -> Int32 {
   self.lastid
 }
 
 ///|
 /// Allocates a fresh identifier that is derived from `from`, i.e., has the
 /// same location as `from` (unless `from` is the null identifier).
-pub fn Source::derive_id(self : Source, from : Int) -> Int {
+pub fn Source::derive_id(self : Source, from : Int32) -> Int32 {
   self.lastid += 1
   let id = self.lastid
   if from != 0 {
@@ -202,7 +202,7 @@ pub fn Source::derive_id(self : Source, from : Int) -> Int {
 }
 
 ///|
-fn Source::repr(self : Source, id : Int) -> Int {
+fn Source::repr(self : Source, id : Int32) -> Int32 {
   let mut id = id
   let mut fuel = 1_000_000
   while fuel > 0 {
@@ -241,7 +241,7 @@ pub fn Source::filenames(self : Source) -> Array[String] {
 }
 
 ///|
-pub fn Source::range(self : Source, id : Int) -> Range {
+pub fn Source::range(self : Source, id : Int32) -> Range {
   match self.ranges.get(self.repr(id)) {
     Some(r) => r
     None => no_range
@@ -249,7 +249,7 @@ pub fn Source::range(self : Source, id : Int) -> Range {
 }
 
 ///|
-pub fn Source::filename(self : Source, id : Int) -> String {
+pub fn Source::filename(self : Source, id : Int32) -> String {
   match self.origin.get(self.repr(id)) {
     Some(f) => f
     None => "/unknown/"
@@ -257,12 +257,12 @@ pub fn Source::filename(self : Source, id : Int) -> String {
 }
 
 ///|
-pub fn Source::loc(self : Source, id : Int) -> Loc {
+pub fn Source::loc(self : Source, id : Int32) -> Loc {
   { file: self.filename(id), range: self.range(id), }
 }
 
 ///|
-pub fn Source::has_loc(self : Source, id : Int) -> Bool {
+pub fn Source::has_loc(self : Source, id : Int32) -> Bool {
   self.origin.contains(self.repr(id))
 }
 
@@ -305,13 +305,13 @@ pub fn Source::text_at(self : Source, loc : Loc) -> String {
 pub fn Source::underline(
   self : Source,
   loc : Loc,
-  context? : Int = 4,
+  context~ : Int32 = 4,
 ) -> String {
   guard self.inputs.get(loc.file) is Some(text) else { return "" }
   let start_pos = loc.range.start_pos
   let end_pos = loc.range.end_pos
   let buf = StringBuilder()
-  let underline = (off : Int, len : Int) => {
+  let underline = (off : Int32, len : Int32) => {
     buf.write_string("> ")
     for i in 0..<len {
       buf.write_char(if i < off { ' ' } else { '^' })
@@ -368,7 +368,7 @@ pub fn Source::load_string(
 pub fn Source::read_string(
   self : Source,
   text : String,
-  file? : String = "/unknown/",
+  file~ : String = "/unknown/",
 ) -> Array[Tree] raise SexpError {
   Reader::new(self, file, text).read_all()
 }
@@ -378,9 +378,9 @@ priv struct Reader {
   src : Source
   file : String
   text : String
-  mut pos : Int
-  mut line : Int
-  mut bol : Int
+  mut pos : Int32
+  mut line : Int32
+  mut bol : Int32
 }
 
 ///|
@@ -394,7 +394,7 @@ fn Reader::position(self : Reader) -> Position {
 }
 
 ///|
-fn Reader::peek(self : Reader) -> Int {
+fn Reader::peek(self : Reader) -> Int32 {
   if self.pos < self.text.length() {
     self.text[self.pos].to_int()
   } else {
@@ -403,7 +403,7 @@ fn Reader::peek(self : Reader) -> Int {
 }
 
 ///|
-fn Reader::peek2(self : Reader) -> Int {
+fn Reader::peek2(self : Reader) -> Int32 {
   if self.pos + 1 < self.text.length() {
     self.text[self.pos + 1].to_int()
   } else {
@@ -423,12 +423,12 @@ fn Reader::advance(self : Reader) -> Unit {
 }
 
 ///|
-fn is_space(c : Int) -> Bool {
+fn is_space(c : Int32) -> Bool {
   c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == 0x0c
 }
 
 ///|
-fn is_atom_char(c : Int) -> Bool {
+fn is_atom_char(c : Int32) -> Bool {
   c >= 0 && !is_space(c) && c != '(' && c != ')' && c != '"' && c != ';'
 }
 

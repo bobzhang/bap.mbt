@@ -40,7 +40,7 @@ fn btx_set_flags(
 }
 
 ///|
-fn offset_width(size : Int) -> Int raise @mc.LiftError {
+fn offset_width(size : Int32) -> Int32 raise @mc.LiftError {
   match size {
     16 => 4
     32 => 5
@@ -67,7 +67,7 @@ fn btx_side_effect(
 
 ///|
 /// `Word.lshift (one size) o`: the mask of an immediate bit offset.
-fn mask_imm(size : Int, o : Int64) -> @types.Exp {
+fn mask_imm(size : Int32, o : Int64) -> @types.Exp {
   let o = o.to_int()
   if o >= size {
     int_exp(0, size)
@@ -80,7 +80,7 @@ fn mask_imm(size : Int, o : Int64) -> @types.Exp {
 
 ///|
 /// The immediate truncated to `width` bits (upstream `Imm.to_word`).
-fn imm_word_value(value : Int64, width : Int) -> Int64 {
+fn imm_word_value(value : Int64, width : Int32) -> Int64 {
   (value.reinterpret_as_uint64() & mask64(width)).reinterpret_as_int64()
 }
 
@@ -128,7 +128,7 @@ fn Tools::btx_ri(
 fn Tools::btx_mi(
   self : Tools,
   op : BtKind,
-  size : Int,
+  size : Int32,
 ) -> Array[@types.Stmt] raise @mc.LiftError {
   let (base_mem, offset) = self.mi()
   let a = new_tmp(self.addr_size(), name="a")
@@ -396,7 +396,7 @@ fn Tools::mov_offset(
 
 ///|
 /// Upstream `Cmpxchg.get_rax`.
-fn cmpxchg_rax(size : Int) -> String {
+fn cmpxchg_rax(size : Int32) -> String {
   match size {
     8 => "AL"
     16 => "AX"
@@ -408,7 +408,7 @@ fn cmpxchg_rax(size : Int) -> String {
 ///|
 fn Tools::cmpxchg_rr(
   self : Tools,
-  size : Int,
+  size : Int32,
 ) -> Array[@types.Stmt] raise @mc.LiftError {
   let (fst, snd) = self.rr()
   let fst = self.reg(fst)
@@ -435,7 +435,7 @@ fn Tools::cmpxchg_rr(
 ///|
 fn Tools::cmpxchg_rm(
   self : Tools,
-  size : Int,
+  size : Int32,
 ) -> Array[@types.Stmt] raise @mc.LiftError {
   let (fst, snd) = self.mr()
   let snd = self.reg(snd)

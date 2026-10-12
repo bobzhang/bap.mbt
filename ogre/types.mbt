@@ -46,7 +46,7 @@ pub fn Typ::all() -> Array[Typ] {
 }
 
 ///|
-fn Typ::index(self : Typ) -> Int {
+fn Typ::index(self : Typ) -> Int32 {
   match self {
     Int => 0
     Str => 1
@@ -104,7 +104,7 @@ pub fn Header::new(name : String, typ : Typ) -> Header {
 }
 
 ///|
-fn Header::compare(self : Header, other : Header) -> Int {
+fn Header::compare(self : Header, other : Header) -> Int32 {
   let c = string_compare(self.name, other.name)
   if c != 0 {
     c
@@ -230,7 +230,7 @@ pub fn Entry::fields(self : Entry) -> Array[(String, String)] {
 
 ///|
 /// The number of fields.
-pub fn Entry::length(self : Entry) -> Int {
+pub fn Entry::length(self : Entry) -> Int32 {
   self.fields.length()
 }
 
@@ -242,7 +242,7 @@ fn Entry::set(self : Entry, name : String, value : String) -> Entry {
 }
 
 ///|
-fn Entry::compare(self : Entry, other : Entry) -> Int {
+fn Entry::compare(self : Entry, other : Entry) -> Int32 {
   let n = self.fields.length()
   let m = other.fields.length()
   for i in 0..<(if n < m { n } else { m }) {

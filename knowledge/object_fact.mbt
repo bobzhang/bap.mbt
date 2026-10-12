@@ -16,7 +16,7 @@ struct FactTable[K, P] {
 /// base).
 pub fn[K, P] FactTable::new(
   slot : Slot[K, P],
-  state? : State = State::new(),
+  state~ : State = State::new(),
 ) -> FactTable[K, P] {
   { slot, state, }
 }
@@ -186,7 +186,7 @@ pub fn[K, P, R] FactTable::observing(
 }
 
 ///|
-pub fn[K, P] FactTable::observer_count(self : FactTable[K, P]) -> Int {
+pub fn[K, P] FactTable::observer_count(self : FactTable[K, P]) -> Int32 {
   self.slot.observer_count()
 }
 
@@ -212,7 +212,7 @@ pub fn[K, P, R] FactTable::promising(
 }
 
 ///|
-pub fn[K, P] FactTable::promise_count(self : FactTable[K, P]) -> Int {
+pub fn[K, P] FactTable::promise_count(self : FactTable[K, P]) -> Int32 {
   self.slot.promise_count()
 }
 

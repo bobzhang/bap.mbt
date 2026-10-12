@@ -2,7 +2,7 @@
 // sinks, incidents.
 
 ///|
-fn w64(n : Int) -> @types.Word {
+fn w64(n : Int32) -> @types.Word {
   try! @types.Word::of_int(width=64, n)
 }
 
@@ -12,7 +12,7 @@ fn reg(name : String) -> @types.Var {
 }
 
 ///|
-fn stub(name : String, ret : Int) -> @types.Term[@types.Sub] {
+fn stub(name : String, ret : Int32) -> @types.Term[@types.Sub] {
   let rdi = reg("RDI")
   let rax = reg("RAX")
   @types.Sub::create(
@@ -65,7 +65,7 @@ fn getenv_system_program(
 }
 
 ///|
-fn store_string(m : @primus.Machine, addr : Int, s : String) -> Unit raise {
+fn store_string(m : @primus.Machine, addr : Int32, s : String) -> Unit raise {
   @primus.Memory::allocate(m, w64(addr), 64)
   for i, c in s {
     @primus.Memory::store(

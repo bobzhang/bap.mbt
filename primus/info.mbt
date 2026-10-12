@@ -58,8 +58,8 @@ pub fn info_normalize_text(s : String) -> String {
 ///|
 pub fn Info::create(
   name : @knowledge.Name,
-  desc? : String = "",
-  long? : () -> String = () => "",
+  desc~ : String = "",
+  long~ : () -> String = () => "",
 ) -> Info {
   { name, desc: info_normalize_text(desc), long, }
 }

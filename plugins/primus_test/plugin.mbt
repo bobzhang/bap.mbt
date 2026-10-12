@@ -16,7 +16,7 @@ pub fn features() -> Array[String] {
 /// Registers the components `bap:incident-location-recorder` and
 /// `bap:lisp-incidents`. Idempotent: returns the number of newly
 /// registered components.
-pub fn register() -> Int {
+pub fn register() -> Int32 {
   let comps : Array[(String, String, (@primus.Machine) -> Unit raise)] = [
     (
       "incident-location-recorder",

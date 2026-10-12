@@ -306,7 +306,7 @@ fn byteweight_signature_update_entries(
 pub fn[T] ByteweightSignatureData::lookup(
   self : ByteweightSignatureData[T],
   target : @core_theory.Target,
-  paths? : Array[String] = [],
+  paths~ : Array[String] = [],
   compiler? : @core_theory.Compiler,
 ) -> Result[T, ByteweightSignatureError] {
   let compiler_name = byteweight_signature_compiler_name(compiler)
@@ -366,17 +366,17 @@ pub fn byteweight_signature_save(
   arch~ : String,
   mode~ : String,
   payload : BytesView,
-  compiler? : String = "default",
+  compiler~ : String = "default",
 ) -> Result[Unit, ByteweightSignatureError] {
   byteweight_signature_update_raw(path, arch, compiler, mode, payload)
 }
 
 ///|
 pub fn byteweight_signature_load(
-  paths? : Array[String] = [],
+  paths~ : Array[String] = [],
   arch~ : String,
   mode~ : String,
-  compiler? : String = "default",
+  compiler~ : String = "default",
 ) -> Result[Bytes, ByteweightSignatureError] {
   for path in byteweight_signature_paths(paths) {
     match byteweight_signature_try_read_entries(path) {

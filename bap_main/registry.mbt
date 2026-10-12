@@ -76,7 +76,7 @@ priv struct MainState {
   plugin_cmds : Array[(String, Array[(String, String)])]
   commands : Array[CommandDecl]
   mut status : Status
-  mut log_subscription : Int?
+  mut log_subscription : Int32?
 }
 
 ///|
@@ -124,9 +124,9 @@ pub fn reset() -> Unit {
 /// Raises `Invalid` if a plugin with the same name is already registered.
 pub fn register_plugin(
   name : String,
-  provides? : Array[String] = [],
-  features? : Array[String] = [],
-  doc? : String = "",
+  provides~ : Array[String] = [],
+  features~ : Array[String] = [],
+  doc~ : String = "",
   load : () -> Unit raise,
 ) -> Unit raise {
   let st = main_state.val
@@ -160,9 +160,9 @@ pub(all) struct Extension {}
 /// `provides` and `features` extend the plugin's features and constraints;
 /// `doc` is appended to the plugin documentation.
 pub fn Extension::register(
-  features? : Array[String] = [],
-  provides? : Array[String] = [],
-  doc? : String = "",
+  features~ : Array[String] = [],
+  provides~ : Array[String] = [],
+  doc~ : String = "",
   code : (Ctxt) -> Unit raise,
 ) -> Unit {
   let slot = main_state.val.slot

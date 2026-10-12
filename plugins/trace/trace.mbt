@@ -137,7 +137,7 @@ let printer_registered : Ref[Bool] = Ref(false)
 /// options) in the `bap_main` framework. Does nothing if it is already
 /// registered.
 pub fn declare_plugin(
-  out? : (String) -> Unit = s => println(s.trim_end(chars="\n")),
+  out~ : (String) -> Unit = s => println(s.trim_end(chars="\n")),
 ) -> Unit raise {
   if @bap_main.registered_plugins().contains(name) {
     return

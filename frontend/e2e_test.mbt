@@ -1,6 +1,6 @@
 ///|
 /// The first `n` lines of the text.
-fn head(text : String, n : Int) -> String {
+fn head(text : String, n : Int32) -> String {
   let lines = text.split("\n").map(l => l.to_owned()).collect()
   lines[:if lines.length() < n { lines.length() } else { n }].join("\n")
 }

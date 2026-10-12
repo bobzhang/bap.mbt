@@ -4,64 +4,64 @@
 
 ///|
 /// Prefix unary: @ expr
-const OP_PREFIX : Int = 0
+const OP_PREFIX : Int32 = 0
 
 ///|
 /// Postfix unary: expr @
-const OP_POSTFIX : Int = 1
+const OP_POSTFIX : Int32 = 1
 
 ///|
 /// Binary: lhs @ rhs
-const OP_BINARY : Int = 2
+const OP_BINARY : Int32 = 2
 
 ///|
 /// Array index: lhs [ rhs ]
-const OP_ARRAY : Int = 3
+const OP_ARRAY : Int32 = 3
 
 ///|
 /// Member access: lhs @ rhs
-const OP_MEMBER : Int = 4
+const OP_MEMBER : Int32 = 4
 
 ///|
-const OP_NEW : Int = 5
+const OP_NEW : Int32 = 5
 
 ///|
-const OP_DEL : Int = 6
+const OP_DEL : Int32 = 6
 
 ///|
 /// Function call: expr (expr*)
-const OP_CALL : Int = 7
+const OP_CALL : Int32 = 7
 
 ///|
 /// C cast: (type)expr
-const OP_CCAST : Int = 8
+const OP_CCAST : Int32 = 8
 
 ///|
 /// Conditional: expr ? expr : expr
-const OP_CONDITIONAL : Int = 9
+const OP_CONDITIONAL : Int32 = 9
 
 ///|
 /// Overload only, not allowed in expressions.
-const OP_NAME_ONLY : Int = 10
+const OP_NAME_ONLY : Int32 = 10
 
 ///|
 /// Named cast, @<type>(expr). Kinds from here on have no operator names.
-const OP_NAMED_CAST : Int = 11
+const OP_NAMED_CAST : Int32 = 11
 
 ///|
 /// alignof, sizeof, typeid
-const OP_OF_ID_OP : Int = 12
+const OP_OF_ID_OP : Int32 = 12
 
 ///|
-const OP_UNNAMEABLE : Int = 11
+const OP_UNNAMEABLE : Int32 = 11
 
 ///|
 priv struct OperatorInfo {
-  kind : Int
+  kind : Int32
   /// Entry-specific flag (array new/delete, parenthesized call, named
   /// member access, type operand).
   flag : Bool
-  prec : Int
+  prec : Int32
   name : StringView
 }
 
@@ -82,7 +82,7 @@ fn OperatorInfo::symbol(self : OperatorInfo) -> StringView {
 
 ///|
 let operators : Map[String, OperatorInfo] = {
-  let table : Array[(String, Int, Bool, Int, StringView)] = [
+  let table : Array[(String, Int32, Bool, Int32, StringView)] = [
     ("aN", OP_BINARY, false, PREC_ASSIGN, "operator&="),
     ("aS", OP_BINARY, false, PREC_ASSIGN, "operator="),
     ("aa", OP_BINARY, false, PREC_AND_IF, "operator&&"),
@@ -176,7 +176,7 @@ fn Parser::parse_operator_encoding(self : Parser) -> OperatorInfo? {
 fn Parser::parse_prefix_expr(
   self : Parser,
   kind : StringView,
-  prec : Int,
+  prec : Int32,
 ) -> Node raise Fail {
   let e = self.parse_expr()
   make(PrefixExpr(kind, e), prec~)
@@ -186,7 +186,7 @@ fn Parser::parse_prefix_expr(
 fn Parser::parse_binary_expr(
   self : Parser,
   kind : StringView,
-  prec : Int,
+  prec : Int32,
 ) -> Node raise Fail {
   let lhs = self.parse_expr()
   let rhs = self.parse_expr()
@@ -257,7 +257,7 @@ fn Parser::parse_expr_primary(self : Parser) -> Node raise Fail {
     self.first += 1
     self.parse_integer_literal(lit)
   }
-  let float = fn(kind : Int) raise Fail {
+  let float = fn(kind : Int32) raise Fail {
     self.first += 1
     self.parse_floating_literal(kind)
   }
@@ -343,7 +343,7 @@ fn Parser::parse_expr_primary(self : Parser) -> Node raise Fail {
 ///|
 /// The number of hexadecimal digits of a floating-point literal. `long
 /// double` follows the reference host (64-bit `long double`).
-fn float_mangled_size(kind : Int) -> Int {
+fn float_mangled_size(kind : Int32) -> Int32 {
   match kind {
     FLOAT_FLOAT => 8
     _ => 16
@@ -351,7 +351,10 @@ fn float_mangled_size(kind : Int) -> Int {
 }
 
 ///|
-fn Parser::parse_floating_literal(self : Parser, kind : Int) -> Node raise Fail {
+fn Parser::parse_floating_literal(
+  self : Parser,
+  kind : Int32,
+) -> Node raise Fail {
   let n = float_mangled_size(kind)
   if self.num_left() <= n {
     raise Fail
@@ -455,7 +458,7 @@ fn Parser::parse_fold_expr(self : Parser) -> Node raise Fail {
 /// <expression> ::= mc <parameter type> <expr> [<offset number>] E
 fn Parser::parse_pointer_to_member_conversion_expr(
   self : Parser,
-  prec : Int,
+  prec : Int32,
 ) -> Node raise Fail {
   let ty = self.parse_type()
   let expr = self.parse_expr()

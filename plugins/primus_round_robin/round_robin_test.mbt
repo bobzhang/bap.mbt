@@ -6,7 +6,7 @@ fn project(subs : Array[@types.Term[@types.Sub]]) -> @project.Project {
 
 ///|
 /// A subroutine `main` with a chain of `n` blocks named `b0`...
-fn chain(n : Int) -> (@types.Term[@types.Sub], Map[@types.Tid, String]) {
+fn chain(n : Int32) -> (@types.Term[@types.Sub], Map[@types.Tid, String]) {
   let tids = Array::makei(n, _ => @types.Tid::create())
   let names = Map([])
   let blks = []

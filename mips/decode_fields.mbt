@@ -3,24 +3,24 @@
 ///|
 /// The fields of a 32-bit MIPS instruction word.
 priv struct Fields {
-  opcode : Int
-  rs : Int
-  rt : Int
-  rd : Int
-  sa : Int
-  funct : Int
+  opcode : Int32
+  rs : Int32
+  rt : Int32
+  rd : Int32
+  sa : Int32
+  funct : Int32
   /// the low 16 bits, unsigned
-  imm16 : Int
-  word : UInt
+  imm16 : Int32
+  word : UInt32
 }
 
 ///|
-fn bits(word : UInt, lo : Int, count : Int) -> Int {
+fn bits(word : UInt32, lo : Int32, count : Int32) -> Int32 {
   ((word >> lo) & ((1U << count) - 1U)).reinterpret_as_int()
 }
 
 ///|
-fn fields(word : UInt) -> Fields {
+fn fields(word : UInt32) -> Fields {
   {
     opcode: bits(word, 26, 6),
     rs: bits(word, 21, 5),
@@ -35,7 +35,7 @@ fn fields(word : UInt) -> Fields {
 
 ///|
 /// Sign-extend the low `width` bits of `value`.
-fn sext(value : Int, width : Int) -> Int64 {
+fn sext(value : Int32, width : Int32) -> Int64 {
   let v = value.to_int64() & ((1L << width) - 1L)
   if v >> (width - 1) != 0L {
     v - (1L << width)
@@ -60,6 +60,6 @@ fn Fields::uimm16(self : Fields) -> Int64 {
 /// The branch target operand of LLVM's `DecodeBranchTarget` (and its 21-
 /// and 26-bit variants): the sign-extended word offset scaled by four, plus
 /// four, i.e. the target relative to the address of the branch.
-fn branch_target(offset : Int, width : Int) -> Int64 {
+fn branch_target(offset : Int32, width : Int32) -> Int64 {
   sext(offset, width) * 4L + 4L
 }

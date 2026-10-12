@@ -9,7 +9,7 @@ fn tmp8(name : String) -> @types.Var {
 }
 
 ///|
-fn int8(value : Int) -> @types.Exp raise {
+fn int8(value : Int32) -> @types.Exp raise {
   @types.Exp::int(@types.Word::of_int(width=8, value))
 }
 
@@ -47,7 +47,7 @@ test "classification by optimization level" {
   debug_inspect(@optimization.classify(is_flag, t), content="Virt")
   debug_inspect(@optimization.classify(is_flag, cf), content="Flag")
   debug_inspect(@optimization.classify(is_flag, rax), content="Phys")
-  let allowed = (level : Int) => {
+  let allowed = (level : Int32) => {
     [t, cf, rax].map(v => {
       @optimization.is_optimization_allowed(is_flag, level, v)
     })

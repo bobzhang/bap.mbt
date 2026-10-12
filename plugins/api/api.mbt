@@ -123,7 +123,7 @@ pub fn reduce(path : String) -> String {
 /// Parses a path: normalizes it and expands the leading `~` to `HOME`.
 pub fn path_of_string(
   x : String,
-  getenv? : (String) -> String? = @env.get_env_var,
+  getenv~ : (String) -> String? = @env.get_env_var,
 ) -> String {
   let path = reduce(x)
   if path.has_prefix("~") {
@@ -150,7 +150,7 @@ fn is_file(path : String) -> Bool {
 ///|
 /// The lexicographic order of strings (`String::compare` orders by the
 /// length first).
-fn lex_compare(a : String, b : String) -> Int {
+fn lex_compare(a : String, b : String) -> Int32 {
   let n = if a.length() < b.length() { a.length() } else { b.length() }
   for i in 0..<n {
     let c = a.code_unit_at(i).to_int() - b.code_unit_at(i).to_int()
@@ -166,7 +166,7 @@ fn lex_compare(a : String, b : String) -> Int {
 /// order of their names within a directory.
 fn find_files(path : String) -> Array[String] {
   let out = []
-  fn walk(p : String, depth : Int) {
+  fn walk(p : String, depth : Int32) {
     if is_file(p) {
       out.push(p)
     } else if depth < 32 && is_dir(p) {
@@ -292,7 +292,7 @@ pub fn[T] with_bundled_files(f : () -> T) -> T {
 /// with the bundled files visible (`with_bundled_files`).
 pub fn all_paths(
   api_paths : Array[String],
-  getenv? : (String) -> String? = @env.get_env_var,
+  getenv~ : (String) -> String? = @env.get_env_var,
 ) -> Array[String] {
   let env_paths = match getenv("BAP_API_PATH") {
     Some(p) =>
@@ -392,8 +392,8 @@ pub fn apply(
 /// that depends on the `abi` pass (which is registered if it isn't yet).
 /// The directories are computed when the pass runs.
 pub fn pass(
-  api_paths? : Array[String] = [],
-  getenv? : (String) -> String? = @env.get_env_var,
+  api_paths~ : Array[String] = [],
+  getenv~ : (String) -> String? = @env.get_env_var,
 ) -> @project.ProjectPass {
   pass_with(() => (api_paths, getenv))
 }
@@ -422,8 +422,8 @@ let registered_config : Ref[(Array[String], (String) -> String?)] = Ref(
 /// given configuration. If the pass is already registered, only its
 /// configuration is updated and `false` is returned.
 pub fn register(
-  api_paths? : Array[String] = [],
-  getenv? : (String) -> String? = @env.get_env_var,
+  api_paths~ : Array[String] = [],
+  getenv~ : (String) -> String? = @env.get_env_var,
 ) -> Result[Bool, String] {
   registered_config.val = (api_paths, getenv)
   @project.register_pass_if_absent(pass_with(() => registered_config.val))
@@ -465,7 +465,7 @@ let doc : String =
 /// and `--api-show` options. `out` receives the output of the listing
 /// options, after which the plugin requests the exit (as upstream exits).
 /// Does nothing if already declared.
-pub fn declare_plugin(out? : (String) -> Unit = print_text) -> Unit raise {
+pub fn declare_plugin(out~ : (String) -> Unit = print_text) -> Unit raise {
   if @bap_main.registered_plugins().contains(name) {
     return
   }

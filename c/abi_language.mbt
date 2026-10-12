@@ -131,7 +131,7 @@ pub fn Language::combine(xs : Array[Statement]) -> Statement {
 ///|
 /// The argument-passing rule of a calling convention: it is given the
 /// alignment (in bits) and the size (in bits) of the argument type.
-pub type SizedStatement = (Int, Int) -> Statement
+pub type SizedStatement = (Int32, Int32) -> Statement
 
 ///|
 /// The `describe` callback of `Language::install` for one prototype.
@@ -153,7 +153,7 @@ pub fn Describer::new(proto : Proto) -> Describer {
 /// of the type (the computation is rejected if the size is unknown).
 pub fn Describer::describe(
   self : Describer,
-  finish? : Arg[Unit] = Arg::pure(()),
+  finish~ : Arg[Unit] = Arg::pure(()),
   return_~ : SizedStatement,
   args : SizedStatement,
 ) -> Arg[Unit] {

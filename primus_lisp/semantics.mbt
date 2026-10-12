@@ -46,7 +46,7 @@ pub impl Show for SemanticsError with fn output(self, logger) {
 /// the name of a register operand).
 pub struct SValue {
   exp : @types.Exp
-  width : Int
+  width : Int32
   static_value : @types.Word?
   symbol : String?
 }
@@ -86,7 +86,7 @@ pub struct SemCtx {
 }
 
 ///|
-fn SemCtx::word(self : SemCtx) -> Int {
+fn SemCtx::word(self : SemCtx) -> Int32 {
   let b = self.target.bits()
   if b <= 0 {
     32
@@ -104,12 +104,12 @@ fn illformed(name : String, msg : String) -> SemanticsError {
 // Values
 
 ///|
-fn word_zero(w : Int) -> @types.Word {
+fn word_zero(w : Int32) -> @types.Word {
   try! @types.Word::zero(width=@cmp.maximum(1, w))
 }
 
 ///|
-fn resize(w : @types.Word, s : Int, signed? : Bool = false) -> @types.Word {
+fn resize(w : @types.Word, s : Int32, signed~ : Bool = false) -> @types.Word {
   let n = w.bitwidth()
   if n == s {
     w
@@ -134,7 +134,7 @@ fn const_word(w : @types.Word) -> SValue {
 }
 
 ///|
-fn const_int(s : Int, n : Int) -> SValue {
+fn const_int(s : Int32, n : Int32) -> SValue {
   const_word(word_of_bigint(@bigint.BigInt::from_int(n), s))
 }
 
@@ -144,7 +144,7 @@ fn const_bool(b : Bool) -> SValue {
 }
 
 ///|
-fn dynv(exp : @types.Exp, width : Int) -> SValue {
+fn dynv(exp : @types.Exp, width : Int32) -> SValue {
   { exp, width, static_value: None, symbol: None, }
 }
 
@@ -159,7 +159,7 @@ fn nil_value() -> SValue {
 }
 
 ///|
-fn word_to_int(w : @types.Word) -> Int? {
+fn word_to_int(w : @types.Word) -> Int32? {
   if w.bitwidth() <= 31 {
     try w.to_int() catch {
       _ => None
@@ -178,7 +178,7 @@ fn word_to_int(w : @types.Word) -> Int? {
 
 ///|
 /// The symbol table of the semantics mode (upstream `KB.Symbol.intern`).
-let symbol_table : Map[String, Int] = Map([])
+let symbol_table : Map[String, Int32] = Map([])
 
 ///|
 fn intern(name : String) -> @types.Word {
@@ -216,7 +216,7 @@ fn reify_sym(v : SValue) -> SValue {
 /// Coerces a value to the given width: static values are truncated or
 /// zero-extended, dynamic values are sign-extended or truncated (upstream
 /// `coerce`, which uses `CT.signed`).
-fn coerce(s : Int, x : SValue) -> SValue {
+fn coerce(s : Int32, x : SValue) -> SValue {
   if x.width == s {
     x
   } else {
@@ -232,7 +232,7 @@ fn coerce(s : Int, x : SValue) -> SValue {
 }
 
 ///|
-fn coerce_unsigned(s : Int, x : SValue) -> SValue {
+fn coerce_unsigned(s : Int32, x : SValue) -> SValue {
   if x.width == s {
     x
   } else {
@@ -319,7 +319,7 @@ fn target_memory(t : @core_theory.Target) -> @types.Var {
 pub fn Lifter::create(
   prog : Program,
   target : @core_theory.Target,
-  strict? : Bool = true,
+  strict~ : Bool = true,
 ) -> Lifter raise SemanticsError {
   let context = prog.context
     .merge(Context::of_target(target))
@@ -416,8 +416,8 @@ let zero_registers : Map[String, Array[String]] = Map([])
 pub fn load_semantics(
   target : @core_theory.Target,
   dirs : Array[String],
-  paths? : Array[String] = [],
-  strict? : Bool = true,
+  paths~ : Array[String] = [],
+  strict~ : Bool = true,
 ) -> Lifter raise Error {
   check_folders(paths)
   let sdirs = ["semantics/primus"] + dirs
@@ -490,7 +490,7 @@ pub fn Lifter::lift(
   name : @knowledge.Name,
   ops : Array[Operand],
   pc? : @types.Word,
-  out? : StringBuilder = StringBuilder(),
+  out~ : StringBuilder = StringBuilder(),
 ) -> Array[@types.Stmt]? raise SemanticsError {
   fresh_counter.val = 0
   let ctx : SemCtx = {
@@ -518,7 +518,7 @@ pub fn Lifter::apply(
   name : @knowledge.Name,
   args : Array[SValue],
   pc? : @types.Word,
-  out? : StringBuilder = StringBuilder(),
+  out~ : StringBuilder = StringBuilder(),
 ) -> SEff raise SemanticsError {
   fresh_counter.val = 0
   let ctx : SemCtx = {
@@ -540,7 +540,7 @@ pub fn Lifter::apply(
 /// target registers, immediates as static words.
 pub fn Lifter::provider(
   self : Lifter,
-  name? : String = "primus-lisp",
+  name~ : String = "primus-lisp",
 ) -> @mc.Provider {
   @mc.Provider::create(
     name,
@@ -617,7 +617,7 @@ pub fn Lifter::provider(
 fn SemCtx::make_var(
   self : SemCtx,
   name : @knowledge.Name,
-  t? : Int,
+  t? : Int32,
 ) -> @types.Var {
   match self.lifter.places.get(key(name)) {
     Some(v) => v
@@ -632,7 +632,7 @@ fn SemCtx::make_var(
 }
 
 ///|
-fn var_width(v : @types.Var) -> Int {
+fn var_width(v : @types.Var) -> Int32 {
   match v.typ {
     Imm(n) => n
     Mem(..) => 0
@@ -667,7 +667,7 @@ fn SemCtx::full(_self : SemCtx, effs : Array[SEff], v : SValue) -> SEff {
 }
 
 ///|
-fn fresh_var(width : Int) -> @types.Var {
+fn fresh_var(width : Int32) -> @types.Var {
   fresh_counter.val += 1
   @types.Var::new(
     name="#\{fresh_counter.val}",
@@ -679,12 +679,12 @@ fn fresh_var(width : Int) -> @types.Var {
 ///|
 /// The counter of temporary variables, reset for every lifted
 /// instruction, so that the temporaries are named `#1`, `#2`, ...
-let fresh_counter : Ref[Int] = Ref(0)
+let fresh_counter : Ref[Int32] = Ref(0)
 
 ///|
 fn SemCtx::assign(
   self : SemCtx,
-  is_local? : Bool = false,
+  is_local~ : Bool = false,
   v : @types.Var,
   eff : SEff,
 ) -> SEff {
@@ -844,7 +844,7 @@ fn SemCtx::rep(
   self : SemCtx,
   c : Ast,
   body : Ast,
-  n : Int,
+  n : Int32,
 ) -> SEff raise SemanticsError {
   let saved = self.binds.copy()
   let saved_scope = self.scope.copy()

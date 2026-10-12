@@ -8,7 +8,7 @@ pub(all) enum Dst {
   /// the label of a named subroutine (a `call` special)
   Name(String)
   /// the label of an interrupt vector (a `cpuexn`)
-  Ivec(Int)
+  Ivec(Int32)
   /// a program label (term identifier)
   Label(@types.Tid)
 } derive(Eq, Debug)

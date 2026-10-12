@@ -64,7 +64,7 @@ pub fn is_modern_opcode(mode : Mode, name : String) -> Bool {
 pub fn lift_modern(
   mode : Mode,
   insn : @mc.Insn,
-  cet_enabled? : Bool = false,
+  cet_enabled~ : Bool = false,
 ) -> Array[@types.Stmt] raise @mc.LiftError {
   guard modern_lifter(mode, insn.name, cet_enabled~) is Some(lift) else {
     raise Unsupported(opcode=insn.name, target=target_name(mode))
@@ -83,7 +83,7 @@ pub let provider_name : String = "x86"
 
 ///|
 /// The per-opcode x86/x86-64 lifter provider (see `lift_modern`).
-pub fn modern_provider(cet_enabled? : Bool = false) -> @mc.Provider {
+pub fn modern_provider(cet_enabled~ : Bool = false) -> @mc.Provider {
   @mc.Provider::create(provider_name, accepts~, lift=(ctx, insn) => {
     guard mode_of_context(ctx) is Some(mode) else {
       raise Unsupported(opcode=insn.name, target=ctx.target.to_string())
@@ -104,8 +104,8 @@ pub fn modern_provider(cet_enabled? : Bool = false) -> @mc.Provider {
 /// (providers registered in the registry are tried before the Basic
 /// fallback of `@project`).
 pub fn register(
-  registry? : @mc.Registry = @mc.Registry::global(),
-  cet_enabled? : Bool = false,
+  registry~ : @mc.Registry = @mc.Registry::global(),
+  cet_enabled~ : Bool = false,
 ) -> Unit {
   registry.register(modern_provider(cet_enabled~))
   registry.register(legacy_provider())

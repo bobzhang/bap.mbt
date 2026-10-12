@@ -250,7 +250,7 @@ fn filter_package(pkg : Package, f : (Attrs) -> Bool) -> Package {
 pub fn Program::get_package(
   self : Program,
   pkg : String,
-  public? : Bool = false,
+  public~ : Bool = false,
 ) -> Package {
   match self.library.get(pkg) {
     None => empty_package
@@ -295,7 +295,7 @@ fn Program::transitive_closure(
 /// Merges two lists of definitions removing duplicates (the same name and
 /// identifier). Mirrors upstream (`++`), including the order.
 fn[T] merge_defs(xs : Defs[T], ys : Defs[T]) -> Defs[T] {
-  let seen : Map[String, Array[Int]] = Map([])
+  let seen : Map[String, Array[Int32]] = Map([])
   let out : Map[String, Array[Def[T]]] = Map([])
   let add = (defs : Defs[T]) => {
     for kv in defs.iter() {
@@ -581,7 +581,7 @@ fn target_registers(
 ///|
 /// The BIL variable of a Lisp variable, a variable without a type
 /// annotation has the width of the machine word.
-pub fn reify_var(v : LVar, width~ : Int) -> @types.Var {
+pub fn reify_var(v : LVar, width~ : Int32) -> @types.Var {
   let n = match v.typ {
     Type(t) => t
     Symbol => symbol_size
@@ -599,7 +599,7 @@ pub fn reify_var(v : LVar, width~ : Int) -> @types.Var {
 pub fn Program::with_places(
   self : Program,
   target : @core_theory.Target,
-  globals? : Array[@types.Var] = [],
+  globals~ : Array[@types.Var] = [],
 ) -> Program {
   let mut prog = self
   let regs = target_registers(target)

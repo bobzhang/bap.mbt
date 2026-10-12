@@ -23,9 +23,9 @@ fn strings_default_stop(byte : Byte) -> Bool {
 
 ///|
 pub fn StringsScanner::next(
-  read : (Int) -> Byte?,
-  offset : Int,
-  is_stop? : (Byte) -> Bool = strings_default_stop,
+  read : (Int32) -> Byte?,
+  offset : Int32,
+  is_stop~ : (Byte) -> Bool = strings_default_stop,
 ) -> Bytes {
   let bytes = []
   let mut pos = offset
@@ -47,10 +47,10 @@ pub fn StringsScanner::next(
 
 ///|
 pub fn StringsScanner::run(
-  read : (Int) -> Byte?,
-  offset : Int,
-  is_stop? : (Byte) -> Bool = strings_default_stop,
-) -> Array[(Int, Bytes)] {
+  read : (Int32) -> Byte?,
+  offset : Int32,
+  is_stop~ : (Byte) -> Bool = strings_default_stop,
+) -> Array[(Int32, Bytes)] {
   let out = []
   let mut pos = offset
   let mut running = true
@@ -70,7 +70,7 @@ pub fn StringsScanner::run(
 }
 
 ///|
-pub fn StringsScanner::read_bytes(data : BytesView) -> (Int) -> Byte? {
+pub fn StringsScanner::read_bytes(data : BytesView) -> (Int32) -> Byte? {
   fn(pos) {
     if pos >= 0 && pos < data.length() {
       Some(data[pos])
@@ -83,8 +83,8 @@ pub fn StringsScanner::read_bytes(data : BytesView) -> (Int) -> Byte? {
 ///|
 pub fn StringsScanner::scan_bytes(
   data : BytesView,
-  offset? : Int = 0,
-  is_stop? : (Byte) -> Bool = strings_default_stop,
-) -> Array[(Int, Bytes)] {
+  offset~ : Int32 = 0,
+  is_stop~ : (Byte) -> Bool = strings_default_stop,
+) -> Array[(Int32, Bytes)] {
   StringsScanner::run(StringsScanner::read_bytes(data), offset, is_stop~)
 }

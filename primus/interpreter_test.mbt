@@ -50,7 +50,7 @@ test "branches pick the first taken jump" {
   let r = reg("r")
   let b1 = blk(defs=[def(r, int64(1))])
   let b2 = blk(defs=[def(r, int64(2))])
-  let prog = (n : Int) => {
+  let prog = (n : Int32) => {
     let b0 = blk(defs=[def(x, int64(n))], jmps=[
       goto(b1, cond=BinOp(Lt, Var(x), int64(5))),
       goto(b2),
@@ -105,7 +105,7 @@ test "an infinite loop is stopped by an iteration bound component" {
   ])
   let entry = blk(defs=[def(i, int64(0))], jmps=[goto(body)])
   let (status, values) = run_main_sub([sub("main", [entry, body])], [i], init=m => {
-    let visits : Ref[Int] = { val: 0, }
+    let visits : Ref[Int32] = { val: 0, }
     m.observe(@primus.enter_blk, b => {
       if b.tid() == tid {
         visits.val += 1
@@ -251,7 +251,7 @@ test "division by zero raises unless a handler is linked" {
   let b0 = blk(defs=[def(x, BinOp(Div, int64(1), int64(0)))])
   let (status, _) = run_main_sub([sub("main", [b0])], [x])
   inspect(status_string(status), content="Exn(Division by zero)")
-  let called : Ref[Int] = { val: 0, }
+  let called : Ref[Int32] = { val: 0, }
   let (status, values) = run_main_sub([sub("main", [b0])], [x], init=m => {
     @primus.Linker::link(
       m,
@@ -315,7 +315,7 @@ test "phi nodes select the option of the predecessor block" {
     (right.tid(), Var(x2)),
   ])
   let join = @types.Blk::create(tid=join_tid, phis=[phi])
-  let prog = (flag : Int) => {
+  let prog = (flag : Int32) => {
     let entry = blk(jmps=[
       goto(left, cond=BinOp(Eq, int64(flag), int64(1))),
       goto(right),

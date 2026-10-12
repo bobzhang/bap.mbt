@@ -116,7 +116,7 @@ pub(all) enum McTarget {
     backend~ : String?,
     cpu~ : String?,
     order~ : @bitvec.Endian,
-    bits~ : Int
+    bits~ : Int32
   )
 }
 
@@ -133,7 +133,7 @@ fn McTarget::endian(self : McTarget) -> @bitvec.Endian {
 }
 
 ///|
-fn McTarget::bits(self : McTarget) -> Int {
+fn McTarget::bits(self : McTarget) -> Int32 {
   match self {
     Target(t, _) => t.bits()
     Triple(bits~, ..) => bits
@@ -145,7 +145,7 @@ fn McTarget::bits(self : McTarget) -> Int {
 /// address size and the byte order (upstream `target_of_arch`).
 pub fn target_of_arch(
   arch : String,
-  bits? : Int,
+  bits? : Int32,
   order? : @bitvec.Endian,
 ) -> McTarget {
   let normalized = arch.replace_all(old="-", new="_")
@@ -189,12 +189,12 @@ fn check_invariants(
 /// `parse_arch`); the default target is `x86-64`.
 pub fn parse_arch(
   arch? : String,
-  target? : @core_theory.Target = @core_theory.Target::unknown(),
-  encoding? : @core_theory.Language = @core_theory.Language::unknown(),
+  target~ : @core_theory.Target = @core_theory.Target::unknown(),
+  encoding~ : @core_theory.Language = @core_theory.Language::unknown(),
   triple? : String,
   cpu? : String,
   backend? : String,
-  bits? : Int,
+  bits? : Int32,
   order? : @bitvec.Endian,
 ) -> McTarget raise McError {
   let target_unknown = target.is_unknown()
@@ -269,9 +269,9 @@ pub fn parse_base(base : String) -> UInt64 raise McError {
   let mut v = 0UL
   for c in digits {
     let d = match c {
-      '0'..='9' => c.to_int() - '0'.to_int()
-      'a'..='f' => c.to_int() - 'a'.to_int() + 10
-      'A'..='F' => c.to_int() - 'A'.to_int() + 10
+      '0'..<='9' => c.to_int() - '0'.to_int()
+      'a'..<='f' => c.to_int() - 'a'.to_int() + 10
+      'A'..<='F' => c.to_int() - 'A'.to_int() + 10
       '_' => continue
       _ => raise McFail(InvalidBase("Bitvec.of_string: \{base}"))
     }
@@ -468,14 +468,14 @@ fn print_insn(
 /// Disassembles the memory (upstream `run`). Returns the number of the
 /// disassembled bytes.
 pub fn run(
-  only_one? : Bool = false,
-  stop_on_error? : Bool = false,
+  only_one~ : Bool = false,
+  stop_on_error~ : Bool = false,
   dis : @project.ProjectDisassemblyBasic,
   target : McTarget,
   mem : @memory.Memory,
   outputs : Outputs,
   out~ : (String) -> Unit,
-) -> Int raise McError {
+) -> Int32 raise McError {
   let show_invalid = is_enabled(formats(outputs, Invalid))
   let total = mem.length()
   let start = mem.min_addr()
@@ -525,19 +525,19 @@ pub fn run(
 /// command line (or read by `read_line`).
 pub fn mc(
   arch? : String,
-  target? : @core_theory.Target = @core_theory.Target::unknown(),
-  encoding? : @core_theory.Language = @core_theory.Language::unknown(),
+  target~ : @core_theory.Target = @core_theory.Target::unknown(),
+  encoding~ : @core_theory.Language = @core_theory.Language::unknown(),
   triple? : String,
   cpu? : String,
   backend? : String,
-  bits? : Int,
+  bits? : Int32,
   order? : @bitvec.Endian,
-  base? : String = "0",
-  only_one? : Bool = false,
-  stop_on_error? : Bool = false,
-  input? : Array[String] = [],
-  outputs? : Outputs = [],
-  read_line? : () -> String? = () => None,
+  base~ : String = "0",
+  only_one~ : Bool = false,
+  stop_on_error~ : Bool = false,
+  input~ : Array[String] = [],
+  outputs~ : Outputs = [],
+  read_line~ : () -> String? = () => None,
   out~ : (String) -> Unit,
 ) -> Unit raise McError {
   validate_formats(outputs)
@@ -568,10 +568,10 @@ pub fn mc(
 /// The `objdump` command (upstream `objdump`): disassembles the code
 /// segments of the binary with the linear sweep.
 pub fn objdump(
-  loader? : String = "llvm",
-  stop_on_error? : Bool = false,
+  loader~ : String = "llvm",
+  stop_on_error~ : Bool = false,
   file : String,
-  outputs? : Outputs = [],
+  outputs~ : Outputs = [],
   out~ : (String) -> Unit,
 ) -> Unit raise McError {
   validate_formats(outputs)

@@ -11,7 +11,7 @@
 ///|
 /// The LLVM name of the 64-bit (`sf`) or 32-bit register `n`; register 31
 /// is the stack pointer when `sp` is set and the zero register otherwise.
-pub fn reg_name(sf : Bool, n : Int, sp? : Bool = false) -> String {
+pub fn reg_name(sf : Bool, n : Int32, sp~ : Bool = false) -> String {
   match (sf, n) {
     (true, 29) => "FP"
     (true, 30) => "LR"
@@ -24,7 +24,7 @@ pub fn reg_name(sf : Bool, n : Int, sp? : Bool = false) -> String {
 
 ///|
 /// The port-local code of a register (see the file header).
-fn reg_code(sf : Bool, n : Int, sp : Bool) -> Int {
+fn reg_code(sf : Bool, n : Int32, sp : Bool) -> Int32 {
   match (sf, n) {
     (true, 31) => if sp { 65 } else { 66 }
     (false, 31) => if sp { 32 } else { 33 }
@@ -35,13 +35,13 @@ fn reg_code(sf : Bool, n : Int, sp : Bool) -> Int {
 
 ///|
 /// The register `n` as an `@mc` operand (see `reg_name`).
-pub fn mc_reg(sf : Bool, n : Int, sp? : Bool = false) -> @mc.Op {
+pub fn mc_reg(sf : Bool, n : Int32, sp~ : Bool = false) -> @mc.Op {
   Reg(name=reg_name(sf, n, sp~), code=reg_code(sf, n, sp))
 }
 
 ///|
 /// The register pair `n`, `n + 1` (`n` even) as an `@mc` operand.
-fn mc_pair(sf : Bool, n : Int) -> @mc.Op {
+fn mc_pair(sf : Bool, n : Int32) -> @mc.Op {
   Reg(
     name=reg_name(sf, n) + "_" + reg_name(sf, n + 1),
     code=(if sf { 132 } else { 100 }) + n,
@@ -50,19 +50,19 @@ fn mc_pair(sf : Bool, n : Int) -> @mc.Op {
 
 ///|
 /// The 64-bit register `n` as an `@mc` operand.
-pub fn mc_x(n : Int, sp? : Bool = false) -> @mc.Op {
+pub fn mc_x(n : Int32, sp~ : Bool = false) -> @mc.Op {
   mc_reg(true, n, sp~)
 }
 
 ///|
 /// The 32-bit register `n` as an `@mc` operand.
-pub fn mc_w(n : Int, sp? : Bool = false) -> @mc.Op {
+pub fn mc_w(n : Int32, sp~ : Bool = false) -> @mc.Op {
   mc_reg(false, n, sp~)
 }
 
 ///|
 /// The assembly name of a register (`x0`, `x29`, `sp`, `wzr`, ...).
-pub fn reg_asm(sf : Bool, n : Int, sp? : Bool = false) -> String {
+pub fn reg_asm(sf : Bool, n : Int32, sp~ : Bool = false) -> String {
   match (sf, n) {
     (true, 31) => if sp { "sp" } else { "xzr" }
     (false, 31) => if sp { "wsp" } else { "wzr" }
@@ -73,7 +73,7 @@ pub fn reg_asm(sf : Bool, n : Int, sp? : Bool = false) -> String {
 
 ///|
 /// The assembly name of a condition code.
-pub fn cond_asm(cond : Int) -> String {
+pub fn cond_asm(cond : Int32) -> String {
   [
     "eq", "ne", "hs", "lo", "mi", "pl", "vs", "vc", "hi", "ls", "ge", "lt", "gt",
     "le", "al", "nv",

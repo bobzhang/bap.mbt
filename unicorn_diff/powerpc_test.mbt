@@ -7,7 +7,7 @@ let ppc_cr_suffixes : Array[String] = ["LT", "GT", "EQ", "UN"]
 
 ///|
 /// `(flag, bit)` of the modelled XER bits.
-let ppc_xer_bits : Array[(String, Int)] = [
+let ppc_xer_bits : Array[(String, Int32)] = [
   ("SO", 31),
   ("OV", 30),
   ("CA", 29),
@@ -16,7 +16,7 @@ let ppc_xer_bits : Array[(String, Int)] = [
 ]
 
 ///|
-fn ppc(bits : Int, endian : @bitvec.Endian) -> Isa {
+fn ppc(bits : Int32, endian : @bitvec.Endian) -> Isa {
   let mode : @powerpc.AddrSize = if bits == 64 { R64 } else { R32 }
   let target = match (bits, endian) {
     (64, LittleEndian) => @core_theory.Target::powerpc64le()

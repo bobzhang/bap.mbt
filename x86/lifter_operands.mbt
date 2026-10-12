@@ -8,7 +8,7 @@
 priv struct Ctx {
   mode : Mode
   ss : @types.Var?
-  pref : Array[Int]
+  pref : Array[Int32]
   has_rex : Bool
   has_vex : Bool
 }
@@ -20,7 +20,11 @@ fn Ctx::vars(self : Ctx) -> ModeVars {
 
 ///|
 /// Upstream `load` (`load_s mode ss`).
-fn Ctx::load(self : Ctx, t : Int, a : @types.Exp) -> @types.Exp raise X86Error {
+fn Ctx::load(
+  self : Ctx,
+  t : Int32,
+  a : @types.Exp,
+) -> @types.Exp raise X86Error {
   load_s(self.mode, self.ss, t, a)
 }
 
@@ -28,7 +32,7 @@ fn Ctx::load(self : Ctx, t : Int, a : @types.Exp) -> @types.Exp raise X86Error {
 /// Upstream `store` (`store_s mode ss`).
 fn Ctx::store(
   self : Ctx,
-  t : Int,
+  t : Int32,
   a : @types.Exp,
   e : @types.Exp,
 ) -> @types.Stmt raise X86Error {
@@ -39,7 +43,7 @@ fn Ctx::store(
 /// Upstream `op2e_s`: read an operand of type `t`.
 fn Ctx::op2e(
   self : Ctx,
-  t : Int,
+  t : Int32,
   operand : Operand,
 ) -> @types.Exp raise X86Error {
   let mode = self.mode
@@ -74,7 +78,7 @@ fn Ctx::op2e(
 /// bits of the register that are not written.
 fn Ctx::assn(
   self : Ctx,
-  t : Int,
+  t : Int32,
   v : Operand,
   e : @types.Exp,
 ) -> @types.Stmt raise X86Error {
@@ -107,10 +111,10 @@ fn Ctx::assn(
 /// Assign to `t` bits of `v`, starting at bit `off`, preserving the other
 /// bits (upstream `sub_assn`).
 fn sub_assn(
-  t : Int,
+  t : Int32,
   v : @types.Var,
   e : @types.Exp,
-  off? : Int = 0,
+  off~ : Int32 = 0,
 ) -> @types.Stmt {
   let bits = match v.typ {
     Imm(n) => n
@@ -134,7 +138,7 @@ fn sub_assn(
 ///|
 /// Upstream `op_dbl`: the double-width operands of multiplication and
 /// division.
-fn op_dbl(t : Int) -> Array[(Int, Operand)] raise X86Error {
+fn op_dbl(t : Int32) -> Array[(Int32, Operand)] raise X86Error {
   match t {
     8 => [(16, o_rax)]
     16 => [(16, o_rdx), (16, o_rax)]
@@ -146,7 +150,7 @@ fn op_dbl(t : Int) -> Array[(Int, Operand)] raise X86Error {
 
 ///|
 /// Upstream `op2e_dbl_s`: the double-width operand (e.g. `EDX:EAX`).
-fn Ctx::op2e_dbl(self : Ctx, t : Int) -> @types.Exp raise X86Error {
+fn Ctx::op2e_dbl(self : Ctx, t : Int32) -> @types.Exp raise X86Error {
   let exps : Array[@types.Exp] = []
   for item in op_dbl(t) {
     exps.push(self.op2e(item.0, item.1))
@@ -159,7 +163,7 @@ fn Ctx::op2e_dbl(self : Ctx, t : Int) -> @types.Exp raise X86Error {
 /// statements and an expression holding the value.
 fn Ctx::assn_dbl(
   self : Ctx,
-  t : Int,
+  t : Int32,
   e : @types.Exp,
 ) -> (Array[@types.Stmt], @types.Exp) raise X86Error {
   match op_dbl(t) {
@@ -193,7 +197,7 @@ fn Ctx::jump_target(
 
 ///|
 /// Upstream `string_incr`.
-fn string_incr(mode : Mode, t : Int, v : @types.Var) -> @types.Stmt {
+fn string_incr(mode : Mode, t : Int32, v : @types.Var) -> @types.Stmt {
   if t == 8 {
     assign(v, e_plus(ev(v), df_to_offset(mode, ev(df))))
   } else {
@@ -213,7 +217,7 @@ fn string_incr(mode : Mode, t : Int, v : @types.Var) -> @types.Stmt {
 fn rep_wrap(
   mode : Mode,
   stmts : Array[@types.Stmt],
-  check_zf? : Int,
+  check_zf? : Int32,
 ) -> Array[@types.Stmt] raise X86Error {
   let w = mode.width()
   let rcx = vars_of_mode(mode).rcx
@@ -238,13 +242,13 @@ fn compute_sf(result : @types.Exp) -> @types.Exp {
 }
 
 ///|
-fn compute_zf(t : Int, result : @types.Exp) -> @types.Exp {
+fn compute_zf(t : Int32, result : @types.Exp) -> @types.Exp {
   e_eq(int_exp(0, t), result)
 }
 
 ///|
 /// Upstream `compute_pf`: the parity of the low byte of `r`.
-fn compute_pf(t : Int, r : @types.Exp) -> @types.Exp {
+fn compute_pf(t : Int32, r : @types.Exp) -> @types.Exp {
   let acc = new_tmp(t)
   let var_acc = ev(acc)
   e_not(
@@ -269,24 +273,24 @@ fn set_sf(r : @types.Exp) -> @types.Stmt {
 }
 
 ///|
-fn set_zf(t : Int, r : @types.Exp) -> @types.Stmt {
+fn set_zf(t : Int32, r : @types.Exp) -> @types.Stmt {
   assign(zf, compute_zf(t, r))
 }
 
 ///|
-fn set_pf(t : Int, r : @types.Exp) -> @types.Stmt {
+fn set_pf(t : Int32, r : @types.Exp) -> @types.Stmt {
   assign(pf, compute_pf(t, r))
 }
 
 ///|
-fn set_pszf(t : Int, r : @types.Exp) -> Array[@types.Stmt] {
+fn set_pszf(t : Int32, r : @types.Exp) -> Array[@types.Stmt] {
   [set_pf(t, r), set_sf(r), set_zf(t, r)]
 }
 
 ///|
 /// Upstream `set_apszf`: AF is `r_4 xor op1_4 xor op2_4`.
 fn set_apszf(
-  t : Int,
+  t : Int32,
   s1 : @types.Exp,
   s2 : @types.Exp,
   r : @types.Exp,
@@ -299,7 +303,7 @@ fn set_apszf(
 
 ///|
 fn set_aopszf_add(
-  t : Int,
+  t : Int32,
   s1 : @types.Exp,
   s2 : @types.Exp,
   r : @types.Exp,
@@ -316,7 +320,7 @@ fn set_aopszf_add(
 
 ///|
 fn set_flags_add(
-  t : Int,
+  t : Int32,
   s1 : @types.Exp,
   s2 : @types.Exp,
   r : @types.Exp,
@@ -328,7 +332,7 @@ fn set_flags_add(
 
 ///|
 fn set_aopszf_sub(
-  t : Int,
+  t : Int32,
   s1 : @types.Exp,
   s2 : @types.Exp,
   r : @types.Exp,
@@ -340,7 +344,7 @@ fn set_aopszf_sub(
 
 ///|
 fn set_flags_sub(
-  t : Int,
+  t : Int32,
   s1 : @types.Exp,
   s2 : @types.Exp,
   r : @types.Exp,
@@ -352,8 +356,8 @@ fn set_flags_sub(
 
 ///|
 /// Upstream `popcount`: the population count of `x`, in place.
-fn popcount(x : @types.Var, width : Int) -> Array[@types.Stmt] {
-  let (sh, m1, m2, m4, h01) : (Int, UInt64, UInt64, UInt64, UInt64) = match
+fn popcount(x : @types.Var, width : Int32) -> Array[@types.Stmt] {
+  let (sh, m1, m2, m4, h01) : (Int32, UInt64, UInt64, UInt64, UInt64) = match
     width {
     16 => (8, 0x5555, 0x3333, 0x0f0f, 0x0101)
     32 => (24, 0x55555555, 0x33333333, 0x0f0f0f0f, 0x01010101)
@@ -374,7 +378,7 @@ fn popcount(x : @types.Var, width : Int) -> Array[@types.Stmt] {
 
 ///|
 /// Upstream `clz16`/`clz32`/`clz64`: count leading zeros of `x`, in place.
-fn clz(x : @types.Var, width : Int) -> Array[@types.Stmt] {
+fn clz(x : @types.Var, width : Int32) -> Array[@types.Stmt] {
   let vx = ev(x)
   let stmts : Array[@types.Stmt] = []
   let mut s = 1
@@ -389,7 +393,7 @@ fn clz(x : @types.Var, width : Int) -> Array[@types.Stmt] {
 
 ///|
 /// Upstream `ctz16`/`ctz32`/`ctz64`: count trailing zeros of `x`, in place.
-fn ctz(x : @types.Var, width : Int) -> Array[@types.Stmt] {
+fn ctz(x : @types.Var, width : Int32) -> Array[@types.Stmt] {
   let vx = ev(x)
   let stmts = [assign(x, e_minus(e_and(vx, e_neg(vx)), int_exp(1, width)))]
   stmts.push_iter(popcount(x, width).iter())

@@ -4,7 +4,7 @@
 fn basic_bil_x86_lift_text(
   triple : String,
   hex : String,
-  start? : UInt64 = 0x401000UL,
+  start~ : UInt64 = 0x401000UL,
 ) -> String raise {
   let disasm = @project.ProjectDisassemblyBasic::create(triple, backend="llvm").unwrap()
   let memory = @memory.Memory::from_bytes(

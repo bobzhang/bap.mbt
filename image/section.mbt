@@ -2,11 +2,15 @@
 struct Section {
   name_value : String
   addr_value : UInt64
-  size_value : Int
+  size_value : Int32
 }
 
 ///|
-pub fn Section::create(name~ : String, addr~ : UInt64, size~ : Int) -> Section {
+pub fn Section::create(
+  name~ : String,
+  addr~ : UInt64,
+  size~ : Int32,
+) -> Section {
   { name_value: name, addr_value: addr, size_value: size, }
 }
 
@@ -21,7 +25,7 @@ pub fn Section::addr(self : Section) -> UInt64 {
 }
 
 ///|
-pub fn Section::size(self : Section) -> Int {
+pub fn Section::size(self : Section) -> Int32 {
   self.size_value
 }
 

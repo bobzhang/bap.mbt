@@ -118,8 +118,8 @@ pub fn define_abi(target : @core_theory.Target) -> Unit {
 /// the Primus Lisp RISC-V semantics lifter in the registry. Only the
 /// `llvm` backend (the default) is supported.
 pub fn enable(
-  backend? : String = "llvm",
-  registry? : @mc.Registry = @mc.Registry::global(),
+  backend~ : String = "llvm",
+  registry~ : @mc.Registry = @mc.Registry::global(),
 ) -> Result[Unit, String] {
   match backend {
     "llvm" => ()

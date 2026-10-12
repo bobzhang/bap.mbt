@@ -8,27 +8,27 @@ priv enum DwarfElfClass {
 priv struct DwarfElfHeader {
   endian : @bitvec.Endian
   class : DwarfElfClass
-  section_table_offset : Int
-  section_header_size : Int
-  section_count : Int
-  section_name_index : Int
+  section_table_offset : Int32
+  section_header_size : Int32
+  section_count : Int32
+  section_name_index : Int32
 }
 
 ///|
 priv struct DwarfElfSectionZero {
-  section_count : Int
-  section_name_index : Int
+  section_count : Int32
+  section_name_index : Int32
 }
 
 ///|
 priv struct DwarfElfSectionHeader {
-  name_offset : Int
-  file_offset : Int
-  size : Int
+  name_offset : Int32
+  file_offset : Int32
+  size : Int32
 }
 
 ///|
-fn dwarf_elf_minimum_section_header(class : DwarfElfClass) -> Int {
+fn dwarf_elf_minimum_section_header(class : DwarfElfClass) -> Int32 {
   match class {
     DwarfElf32 => 40
     DwarfElf64 => 64
@@ -38,8 +38,8 @@ fn dwarf_elf_minimum_section_header(class : DwarfElfClass) -> Int {
 ///|
 fn dwarf_elf_read_uint(
   data : Bytes,
-  offset : Int,
-  bytes : Int,
+  offset : Int32,
+  bytes : Int32,
   endian : @bitvec.Endian,
 ) -> Result[UInt64, String] {
   if offset < 0 {
@@ -53,7 +53,10 @@ fn dwarf_elf_read_uint(
 }
 
 ///|
-fn dwarf_elf_uint_to_int(value : UInt64, what : String) -> Result[Int, String] {
+fn dwarf_elf_uint_to_int(
+  value : UInt64,
+  what : String,
+) -> Result[Int32, String] {
   if value > 2147483647UL {
     Err("\{what} does not fit in Int")
   } else {
@@ -64,11 +67,11 @@ fn dwarf_elf_uint_to_int(value : UInt64, what : String) -> Result[Int, String] {
 ///|
 fn dwarf_elf_read_int(
   data : Bytes,
-  offset : Int,
-  bytes : Int,
+  offset : Int32,
+  bytes : Int32,
   endian : @bitvec.Endian,
   what : String,
-) -> Result[Int, String] {
+) -> Result[Int32, String] {
   match dwarf_elf_read_uint(data, offset, bytes, endian) {
     Ok(value) => dwarf_elf_uint_to_int(value, what)
     Err(reason) => Err(reason)
@@ -80,8 +83,8 @@ fn dwarf_elf_parse_section_zero(
   data : Bytes,
   class : DwarfElfClass,
   endian : @bitvec.Endian,
-  section_table_offset : Int,
-  section_header_size : Int,
+  section_table_offset : Int32,
+  section_header_size : Int32,
 ) -> Result[DwarfElfSectionZero, String] {
   if section_table_offset == 0 {
     return Err("ELF file has no section table")
@@ -278,7 +281,7 @@ fn dwarf_elf_parse_header(data : Bytes) -> Result[DwarfElfHeader, String] {
 fn dwarf_elf_parse_section_header(
   data : Bytes,
   header : DwarfElfHeader,
-  index : Int,
+  index : Int32,
 ) -> Result[DwarfElfSectionHeader, String] {
   let base = header.section_table_offset + index * header.section_header_size
   let name_offset = dwarf_elf_read_int(
@@ -340,7 +343,7 @@ fn dwarf_elf_section_data(
 ///|
 fn dwarf_elf_section_name(
   names : Bytes,
-  offset : Int,
+  offset : Int32,
 ) -> Result[String, String] {
   if offset < 0 || offset >= names.length() {
     return Err("ELF section name offset is out of bounds")

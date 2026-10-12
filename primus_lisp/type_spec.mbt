@@ -3,7 +3,7 @@
 // strings, e.g., `"(sym int int) -> sym"` or `"(all any) -> bool"`.
 
 ///|
-fn spec_type(t : String, bits : Int) -> Typ? {
+fn spec_type(t : String, bits : Int32) -> Typ? {
   match t {
     "any" => Some(Any)
     "sym" => Some(Symbol)
@@ -38,7 +38,7 @@ fn spec_type(t : String, bits : Int) -> Typ? {
 ///   inspect(s.unwrap(), content="(sym 64&rest 8) => (1)")
 /// }
 /// ```
-pub fn parse_type_spec(spec : String, bits : Int) -> Signature? {
+pub fn parse_type_spec(spec : String, bits : Int32) -> Signature? {
   let spec = spec.trim().to_owned()
   guard spec.find("->") is Some(i) else { return None }
   let lhs = spec.unsafe_substring(start=0, end=i).trim().to_owned()
@@ -80,8 +80,8 @@ pub fn define_host_primitive(
   m : @primus.Machine,
   name : String,
   types~ : String,
-  docs? : String = "",
-  pkg? : String = "core",
+  docs~ : String = "",
+  pkg~ : String = "core",
   run : (@primus.Machine, Array[@primus.Value]) -> @primus.Value raise,
 ) -> Unit {
   let types = parse_type_spec(types, addr_width(m))

@@ -3,7 +3,7 @@
 
 ///|
 /// Formats an integer like OCaml's `%#d` (digits grouped with `_`).
-fn ocaml_alt_dec(n : Int) -> String {
+fn ocaml_alt_dec(n : Int32) -> String {
   let digits = n.abs().to_string()
   let buf = StringBuilder()
   if n < 0 {

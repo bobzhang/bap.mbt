@@ -5,9 +5,9 @@
 /// declared with `Observation::provide` and are shared by all machines.
 pub struct Provider {
   priv info : Info
-  priv key : Int
-  priv mut observers : Int
-  priv mut triggers : Int
+  priv key : Int32
+  priv mut observers : Int32
+  priv mut triggers : Int32
   priv listeners : Array[(Sexp) -> Unit]
 }
 
@@ -18,7 +18,7 @@ pub struct Provider {
 /// `Machine::observe`); an observation value is delivered through a private
 /// slot so that heterogeneous observers can share one table.
 pub struct Observation[T] {
-  priv key : Int
+  priv key : Int32
   priv name : String
   priv inspect : (T) -> Sexp
   priv slot : Ref[T?]
@@ -35,8 +35,8 @@ pub struct Statement[T] {
 ///|
 /// A handle of a subscription that can be cancelled with `Machine::cancel`.
 pub struct Subscription {
-  priv key : Int
-  priv id : Int
+  priv key : Int32
+  priv id : Int32
   priv watcher : Bool
 } derive(Eq, Debug)
 
@@ -44,7 +44,7 @@ pub struct Subscription {
 let providers : Map[String, Provider] = Map([])
 
 ///|
-let last_observation_key : Ref[Int] = { val: 0, }
+let last_observation_key : Ref[Int32] = { val: 0, }
 
 ///|
 fn[T] opaque_sexp(_x : T) -> Sexp {
@@ -59,9 +59,9 @@ fn[T] opaque_sexp(_x : T) -> Sexp {
 /// name twice aborts, as upstream.
 pub fn[T] Observation::provide(
   name : String,
-  desc? : String = "",
-  inspect? : (T) -> Sexp = opaque_sexp,
-  pkg? : String = "primus",
+  desc~ : String = "",
+  inspect~ : (T) -> Sexp = opaque_sexp,
+  pkg~ : String = "primus",
 ) -> (Observation[T], Statement[T]) {
   let fullname = @knowledge.Name::create(name, pkg~)
   let shown = fullname.show()
@@ -163,14 +163,14 @@ pub fn Provider::info(self : Provider) -> Info {
 
 ///|
 /// The total number of observers ever subscribed to this provider.
-pub fn Provider::observers(self : Provider) -> Int {
+pub fn Provider::observers(self : Provider) -> Int32 {
   self.observers
 }
 
 ///|
 /// How many times the observation was triggered (upstream `triggers`
 /// stream, represented here as a counter).
-pub fn Provider::triggers(self : Provider) -> Int {
+pub fn Provider::triggers(self : Provider) -> Int32 {
   self.triggers
 }
 
@@ -186,9 +186,9 @@ pub fn Provider::on_data(self : Provider, f : (Sexp) -> Unit) -> Unit {
 /// `Observation::provide`); the observation is `Observation::of_statement`.
 pub fn[T] Statement::provide(
   name : String,
-  desc? : String = "",
-  inspect? : (T) -> Sexp = opaque_sexp,
-  pkg? : String = "primus",
+  desc~ : String = "",
+  inspect~ : (T) -> Sexp = opaque_sexp,
+  pkg~ : String = "primus",
 ) -> Statement[T] {
   Observation::provide(name, desc~, inspect~, pkg~).1
 }

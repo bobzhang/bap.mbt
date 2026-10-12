@@ -1,5 +1,5 @@
 ///|
-fn result_word(value : Int, width? : Int = 8) -> @types.Word {
+fn result_word(value : Int32, width~ : Int32 = 8) -> @types.Word {
   try! @types.Word::of_int(width~, value)
 }
 

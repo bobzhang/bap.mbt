@@ -7,7 +7,7 @@
 // may start with an IT instruction.
 
 ///|
-let arm_flags : Array[(String, Int)] = [
+let arm_flags : Array[(String, Int32)] = [
   ("NF", 3),
   ("ZF", 2),
   ("CF", 1),

@@ -57,7 +57,7 @@ pub struct System {
 /// Names a component in a system specification (`System.component`).
 pub fn System::component(
   name : String,
-  pkg? : String = "user",
+  pkg~ : String = "user",
 ) -> @knowledge.Name {
   @knowledge.Name::create(name, pkg~)
 }
@@ -67,7 +67,7 @@ pub fn System::component(
 /// (`System.depends_on`).
 pub fn System::depends_on(
   name : String,
-  pkg? : String = "user",
+  pkg~ : String = "user",
 ) -> @knowledge.Name {
   @knowledge.Name::create(name, pkg~)
 }
@@ -75,10 +75,10 @@ pub fn System::depends_on(
 ///|
 /// Defines a system (`System.define`).
 pub fn System::define_(
-  desc? : String = "",
-  depends_on? : Array[@knowledge.Name] = [],
-  components? : Array[@knowledge.Name] = [],
-  pkg? : String = "user",
+  desc~ : String = "",
+  depends_on~ : Array[@knowledge.Name] = [],
+  components~ : Array[@knowledge.Name] = [],
+  pkg~ : String = "user",
   name : String,
 ) -> System {
   { name: @knowledge.Name::create(name, pkg~), desc, depends_on, components, }
@@ -110,7 +110,7 @@ pub fn System::dependencies(self : System) -> Array[@knowledge.Name] {
 /// Adds a component to the system (`System.add_component`).
 pub fn System::add_component(
   self : System,
-  pkg? : String = "user",
+  pkg~ : String = "user",
   name : String,
 ) -> System {
   {
@@ -123,7 +123,7 @@ pub fn System::add_component(
 /// Adds a dependency to the system (`System.add_dependency`).
 pub fn System::add_dependency(
   self : System,
-  pkg? : String = "user",
+  pkg~ : String = "user",
   name : String,
 ) -> System {
   {
@@ -168,7 +168,7 @@ pub fn System::find(name : @knowledge.Name) -> System? {
 /// names are looked up in the `pkg` package.
 pub fn System::get(
   name : String,
-  pkg? : String = "user",
+  pkg~ : String = "user",
 ) -> System raise SystemError {
   let n = @knowledge.Name::read(name, pkg~)
   match systems.get(n.show()) {
@@ -181,7 +181,7 @@ pub fn System::get(
 /// Updates a registered system (`System.Repository.update`).
 pub fn System::update(
   name : String,
-  pkg? : String = "user",
+  pkg~ : String = "user",
   f : (System) -> System,
 ) -> Unit raise SystemError {
   let sys = System::get(name, pkg~)
@@ -271,9 +271,9 @@ fn add_component(
 ///|
 /// Registers a generic component (`Components.register_generic`).
 pub fn Components::register_generic(
-  internal? : Bool = false,
-  desc? : String = "",
-  pkg? : String = "user",
+  internal~ : Bool = false,
+  desc~ : String = "",
+  pkg~ : String = "user",
   name : String,
   init : (Machine) -> Unit raise,
 ) -> Unit raise SystemError {
@@ -283,9 +283,9 @@ pub fn Components::register_generic(
 ///|
 /// Registers a specialized analysis component (`Components.register`).
 pub fn Components::register(
-  internal? : Bool = false,
-  desc? : String = "",
-  pkg? : String = "user",
+  internal~ : Bool = false,
+  desc~ : String = "",
+  pkg~ : String = "user",
   name : String,
   init : (Machine) -> Unit raise,
 ) -> Unit raise SystemError {
@@ -373,11 +373,11 @@ fn System::component_inits(
 pub fn System::run(
   self : System,
   proj : @project.Project,
-  envp? : Array[String] = [],
-  args? : Array[String] = [],
-  init? : (Machine) -> Unit raise = _ => (),
-  fini? : (Machine) -> Unit raise = _ => (),
-  start? : (Machine) -> Unit raise = _ => (),
+  envp~ : Array[String] = [],
+  args~ : Array[String] = [],
+  init~ : (Machine) -> Unit raise = _ => (),
+  fini~ : (Machine) -> Unit raise = _ => (),
+  start~ : (Machine) -> Unit raise = _ => (),
 ) -> (ExitStatus, @project.Project) raise SystemError {
   let inits = self.component_inits()
   let sys = self
@@ -565,13 +565,13 @@ let job_queue : Array[Job] = []
 ///|
 /// Enqueues a job (`Jobs.enqueue`).
 pub fn Jobs::enqueue(
-  name? : String = "unnamed",
-  desc? : String = "",
-  envp? : Array[String] = [],
-  args? : Array[String] = [],
-  init? : (Machine) -> Unit raise = _ => (),
-  fini? : (Machine) -> Unit raise = _ => (),
-  start? : (Machine) -> Unit raise = _ => (),
+  name~ : String = "unnamed",
+  desc~ : String = "",
+  envp~ : Array[String] = [],
+  args~ : Array[String] = [],
+  init~ : (Machine) -> Unit raise = _ => (),
+  fini~ : (Machine) -> Unit raise = _ => (),
+  start~ : (Machine) -> Unit raise = _ => (),
   system : System,
 ) -> Unit {
   job_queue.push({ name, desc, envp, args, init, fini, start, system, })
@@ -579,7 +579,7 @@ pub fn Jobs::enqueue(
 
 ///|
 /// The number of pending jobs (`Jobs.pending`).
-pub fn Jobs::pending() -> Int {
+pub fn Jobs::pending() -> Int32 {
   job_queue.length()
 }
 
@@ -588,8 +588,8 @@ pub fn Jobs::pending() -> Int {
 /// (`Jobs.run`). A job fails if its system cannot be started; machine
 /// exceptions are reported to `on_success` through the exit status.
 pub fn Jobs::run(
-  on_failure? : (Job, Error, JobsResult) -> JobAction = (_, _, _) => Continue,
-  on_success? : (Job, ExitStatus, JobsResult) -> JobAction = (_, _, _) => {
+  on_failure~ : (Job, Error, JobsResult) -> JobAction = (_, _, _) => Continue,
+  on_success~ : (Job, ExitStatus, JobsResult) -> JobAction = (_, _, _) => {
     Continue
   },
   proj : @project.Project,

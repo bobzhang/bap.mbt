@@ -1,13 +1,13 @@
 ///|
 pub(all) enum DwarfLocationListEntry {
-  DwarfLocBaseAddressx(Int)
-  DwarfLocStartxEndx(Int, Int, Bytes)
-  DwarfLocStartxLength(Int, Int, Bytes)
-  DwarfLocOffsetPair(Int, Int, Bytes)
+  DwarfLocBaseAddressx(Int32)
+  DwarfLocStartxEndx(Int32, Int32, Bytes)
+  DwarfLocStartxLength(Int32, Int32, Bytes)
+  DwarfLocOffsetPair(Int32, Int32, Bytes)
   DwarfLocDefaultLocation(Bytes)
   DwarfLocBaseAddress(UInt64)
   DwarfLocStartEnd(UInt64, UInt64, Bytes)
-  DwarfLocStartLength(UInt64, Int, Bytes)
+  DwarfLocStartLength(UInt64, Int32, Bytes)
 } derive(Eq, Debug)
 
 ///|
@@ -46,7 +46,7 @@ fn dwarf_legacy_location_base_marker(addr_size : DwarfWordSize) -> UInt64 {
 }
 
 ///|
-fn dwarf_location_offset_to_int(value : UInt64) -> Result[Int, String] {
+fn dwarf_location_offset_to_int(value : UInt64) -> Result[Int32, String] {
   if value > 2147483647UL {
     Err("DWARF location-list offset does not fit in Int")
   } else {
@@ -57,7 +57,7 @@ fn dwarf_location_offset_to_int(value : UInt64) -> Result[Int, String] {
 ///|
 pub fn DwarfLocationList::read(
   buffer : DwarfSectionBuffer,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
   endian~ : @bitvec.Endian,
   addr_size~ : DwarfWordSize,
 ) -> Result[DwarfLocationList, String] {
@@ -192,7 +192,7 @@ pub fn DwarfLocationList::read(
 ///|
 pub fn DwarfLocationList::read_loc(
   buffer : DwarfSectionBuffer,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
   endian~ : @bitvec.Endian,
   addr_size~ : DwarfWordSize,
 ) -> Result[DwarfLocationList, String] {
@@ -247,7 +247,7 @@ pub fn DwarfLocationList::entries(
 }
 
 ///|
-pub fn DwarfLocationList::length(self : DwarfLocationList) -> Int {
+pub fn DwarfLocationList::length(self : DwarfLocationList) -> Int32 {
   self.entries_value.length()
 }
 
@@ -259,7 +259,7 @@ pub fn DwarfLocationList::is_empty(self : DwarfLocationList) -> Bool {
 ///|
 pub fn DwarfData::loclist(
   self : DwarfData,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
   addr_size~ : DwarfWordSize,
 ) -> Result[DwarfLocationList, String] {
   match self.section(DwarfLoclists) {
@@ -277,7 +277,7 @@ pub fn DwarfData::loclist(
 ///|
 pub fn DwarfData::loc(
   self : DwarfData,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
   addr_size~ : DwarfWordSize,
 ) -> Result[DwarfLocationList, String] {
   match self.section(DwarfLoc) {

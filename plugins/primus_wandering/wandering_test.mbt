@@ -6,7 +6,7 @@ fn project(subs : Array[@types.Term[@types.Sub]]) -> @project.Project {
 
 ///|
 /// A subroutine `main` with a chain of `n` blocks named `b0`...
-fn chain(n : Int) -> (@types.Term[@types.Sub], Map[@types.Tid, String]) {
+fn chain(n : Int32) -> (@types.Term[@types.Sub], Map[@types.Tid, String]) {
   let tids = Array::makei(n, _ => @types.Tid::create())
   let names = Map([])
   let blks = []
@@ -33,7 +33,7 @@ fn resume_other(m : @primus.Machine) -> Unit raise {
 }
 
 ///|
-fn run_wandering(seed : Int) -> Array[String] raise {
+fn run_wandering(seed : Int32) -> Array[String] raise {
   let (main, names) = chain(5)
   let log = []
   let (status, _) = @primus.Machine::run(

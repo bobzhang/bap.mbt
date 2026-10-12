@@ -53,13 +53,13 @@ pub fn root() -> String {
 
 ///|
 /// The folder with the cache entries.
-pub fn data_dir(root? : String = root()) -> String {
+pub fn data_dir(root~ : String = root()) -> String {
   concat(root, "data")
 }
 
 ///|
 /// The configuration file.
-pub fn config_file(root? : String = root()) -> String {
+pub fn config_file(root~ : String = root()) -> String {
   concat(root, config_file_name)
 }
 
@@ -94,7 +94,7 @@ fn dirname(path : String) -> String {
 
 ///|
 /// Writes the configuration file of the cache at `root`.
-pub fn write_config(cfg : Config, root? : String = root()) -> Unit {
+pub fn write_config(cfg : Config, root~ : String = root()) -> Unit {
   match
     @native_io.write_file_atomic(config_file(root~), cfg.to_bytes(), perm=0o444) {
     Ok(_) => ()
@@ -105,7 +105,7 @@ pub fn write_config(cfg : Config, root? : String = root()) -> Unit {
 ///|
 /// Reads the configuration of the cache at `root`, or the default one if
 /// the file is missing or malformed.
-pub fn read_config(root? : String = root()) -> Config {
+pub fn read_config(root~ : String = root()) -> Config {
   match @native_io.read_file(config_file(root~)) {
     Ok(data) =>
       match Config::of_bytes(data) {
@@ -164,7 +164,7 @@ fn init_layout(root : String) -> Result[Unit, String] {
 /// `init_cache_dir`). Unlike upstream, a pre-existing root without the
 /// `data` folder (e.g., a shared `~/.cache/bap` created by another tool)
 /// gets the missing parts instead of being left unusable.
-pub fn init_cache_dir(root? : String = root()) -> Result[Unit, String] {
+pub fn init_cache_dir(root~ : String = root()) -> Result[Unit, String] {
   if @native_io.is_directory(data_dir(root~)) {
     return Ok(())
   }
@@ -223,7 +223,7 @@ fn upgrade(root : String) -> Unit {
 ///|
 /// Prepares the cache at `root` for use: creates it and upgrades the old
 /// layouts (upstream `init`).
-pub fn initialize(root? : String = root()) -> Result[Unit, String] {
+pub fn initialize(root~ : String = root()) -> Result[Unit, String] {
   match init_cache_dir(root~) {
     Ok(_) => {
       upgrade(root)
@@ -235,7 +235,7 @@ pub fn initialize(root? : String = root()) -> Result[Unit, String] {
 
 ///|
 /// The total size of the entries, in megabytes (upstream `size`).
-pub fn size(root? : String = root()) -> Int {
+pub fn size(root~ : String = root()) -> Int32 {
   let dir = data_dir(root~)
   let names = @native_io.read_dir(dir).unwrap_or([])
   let mut total : Int64 = 0
@@ -250,7 +250,7 @@ pub fn size(root? : String = root()) -> Int {
 
 ///|
 /// The path of the entry stored under `key`.
-pub fn entry_path(key : @regular.Digest, root? : String = root()) -> String {
+pub fn entry_path(key : @regular.Digest, root~ : String = root()) -> String {
   concat(data_dir(root~), key.to_string())
 }
 
@@ -260,7 +260,7 @@ pub fn entry_path(key : @regular.Digest, root? : String = root()) -> String {
 pub fn save(
   key : @regular.Digest,
   data : Bytes,
-  root? : String = root(),
+  root~ : String = root(),
 ) -> Unit {
   let dir = data_dir(root~)
   match
@@ -277,7 +277,7 @@ pub fn save(
 
 ///|
 /// The entry stored under `key`, if any (upstream `load`).
-pub fn load(key : @regular.Digest, root? : String = root()) -> Bytes? {
+pub fn load(key : @regular.Digest, root~ : String = root()) -> Bytes? {
   match @native_io.read_file(entry_path(key, root~)) {
     Ok(data) => Some(data)
     Err(_) => None

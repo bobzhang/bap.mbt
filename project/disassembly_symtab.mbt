@@ -19,7 +19,7 @@ struct ProjectDisassemblySymtab {
 fn project_disassembly_function_sort(
   blocks : Array[ProjectDisassemblyBlock],
 ) -> Array[ProjectDisassemblyBlock] {
-  let seen : Map[(UInt64, Int), Unit] = Map([])
+  let seen : Map[(UInt64, Int32), Unit] = Map([])
   let result : Array[ProjectDisassemblyBlock] = []
   for block in blocks {
     let key = (block.addr(), block.memory_value.length())
@@ -44,7 +44,7 @@ fn project_disassembly_function_contains_block(
 fn project_disassembly_function_cmp(
   left : ProjectDisassemblyFunction,
   right : ProjectDisassemblyFunction,
-) -> Int {
+) -> Int32 {
   let addr_order = left.addr().compare(right.addr())
   if addr_order != 0 {
     addr_order
@@ -191,7 +191,7 @@ pub fn ProjectDisassemblyFunction::blocks(
 ///|
 pub fn ProjectDisassemblyFunction::block_count(
   self : ProjectDisassemblyFunction,
-) -> Int {
+) -> Int32 {
   self.blocks_value.length()
 }
 
@@ -351,7 +351,7 @@ pub fn ProjectDisassemblySymtab::insert_call(
   self : ProjectDisassemblySymtab,
   callsite : ProjectDisassemblyBlock,
   callee : String,
-  implicit? : Bool = false,
+  implicit~ : Bool = false,
 ) -> ProjectDisassemblySymtab {
   let addr = callsite.addr()
   if implicit {

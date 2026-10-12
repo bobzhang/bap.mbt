@@ -92,7 +92,7 @@ fn systems_dir(root : String) -> String {
 
 ///|
 /// The directories searched for systems, in order.
-pub fn search_paths(user? : Array[String] = []) -> Array[String] {
+pub fn search_paths(user~ : Array[String] = []) -> Array[String] {
   [
     ".",
     ..user,
@@ -103,7 +103,7 @@ pub fn search_paths(user? : Array[String] = []) -> Array[String] {
 
 ///|
 /// Loads the core systems and all systems found in the search paths.
-pub fn load_systems(user? : Array[String] = []) -> Array[@primus.System] {
+pub fn load_systems(user~ : Array[String] = []) -> Array[@primus.System] {
   let out = load_core_systems() catch {
     e => {
       log.error(

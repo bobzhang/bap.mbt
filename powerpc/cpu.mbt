@@ -10,7 +10,7 @@ pub struct Cpu {
   /// address of the current instruction (signed, address-size wide)
   pc : RtlExp
   /// natural register width (32 or 64)
-  word_width : Int
+  word_width : Int32
   ctr : RtlExp
   lr : RtlExp
   tar : RtlExp
@@ -71,7 +71,7 @@ pub fn Cpu::create(
 }
 
 ///|
-fn size_of_width(width : Int) -> @types.Size raise @mc.LiftError {
+fn size_of_width(width : Int32) -> @types.Size raise @mc.LiftError {
   match @types.Size::of_int_opt(width) {
     Some(size) => size
     None => raise Failure("PowerPC lifter fail: invalid size: \{width}")
@@ -83,7 +83,7 @@ fn size_of_width(width : Int) -> @types.Size raise @mc.LiftError {
 pub fn Cpu::load(
   self : Cpu,
   addr : RtlExp,
-  width : Int,
+  width : Int32,
 ) -> RtlExp raise @mc.LiftError {
   RtlExp::load(self.model.mem, addr, self.endian, size_of_width(width))
 }
@@ -94,7 +94,7 @@ pub fn Cpu::store(
   self : Cpu,
   addr : RtlExp,
   data : RtlExp,
-  width : Int,
+  width : Int32,
 ) -> Rtl raise @mc.LiftError {
   Store(self.model.mem, addr, data, self.endian, size_of_width(width))
 }
@@ -110,7 +110,7 @@ pub fn Cpu::jmp(self : Cpu, addr : RtlExp) -> Rtl {
 
 ///|
 /// General purpose register `n` (0..31).
-pub fn Cpu::gpr(self : Cpu, n : Int) -> RtlExp raise @mc.LiftError {
+pub fn Cpu::gpr(self : Cpu, n : Int32) -> RtlExp raise @mc.LiftError {
   match self.model.gpri.get(n) {
     Some(v) => RtlExp::of_var(v)
     None => raise Failure("PowerPC lifter fail: GPR with number \{n} not found")
@@ -119,7 +119,7 @@ pub fn Cpu::gpr(self : Cpu, n : Int) -> RtlExp raise @mc.LiftError {
 
 ///|
 /// Floating-point register `n` (0..31).
-pub fn Cpu::fpr(self : Cpu, n : Int) -> RtlExp raise @mc.LiftError {
+pub fn Cpu::fpr(self : Cpu, n : Int32) -> RtlExp raise @mc.LiftError {
   match self.model.fpri.get(n) {
     Some(v) => RtlExp::of_var(v)
     None => raise Failure("PowerPC lifter fail: FPR with number \{n} not found")
@@ -128,7 +128,7 @@ pub fn Cpu::fpr(self : Cpu, n : Int) -> RtlExp raise @mc.LiftError {
 
 ///|
 /// Vector register `n` (0..31).
-pub fn Cpu::vr(self : Cpu, n : Int) -> RtlExp raise @mc.LiftError {
+pub fn Cpu::vr(self : Cpu, n : Int32) -> RtlExp raise @mc.LiftError {
   match self.model.vri.get(n) {
     Some(v) => RtlExp::of_var(v)
     None => raise Failure("PowerPC lifter fail: VR with number \{n} not found")
@@ -169,7 +169,7 @@ pub fn Operands::of_insn(insn : @mc.Insn) -> Operands {
 
 ///|
 /// Operand `i`, or `BadOperands` when missing.
-pub fn Operands::get(self : Operands, i : Int) -> @mc.Op raise @mc.LiftError {
+pub fn Operands::get(self : Operands, i : Int32) -> @mc.Op raise @mc.LiftError {
   match self.ops.get(i) {
     Some(op) => op
     None => raise BadOperands(opcode=self.name, detail="missing operand \{i}")
@@ -180,7 +180,7 @@ pub fn Operands::get(self : Operands, i : Int) -> @mc.Op raise @mc.LiftError {
 /// Immediate operand `i` as a 32-bit constant with the given sign.
 pub fn Operands::imm(
   self : Operands,
-  i : Int,
+  i : Int32,
   sign : Sign,
 ) -> RtlExp raise @mc.LiftError {
   match self.get(i) {
@@ -192,7 +192,7 @@ pub fn Operands::imm(
 
 ///|
 /// Signed immediate operand `i`.
-pub fn Operands::simm(self : Operands, i : Int) -> RtlExp raise @mc.LiftError {
+pub fn Operands::simm(self : Operands, i : Int32) -> RtlExp raise @mc.LiftError {
   self.imm(i, Signed)
 }
 
@@ -201,7 +201,7 @@ pub fn Operands::simm(self : Operands, i : Int) -> RtlExp raise @mc.LiftError {
 /// signed 32-bit constant: LLVM (since version 17) leaves the D-form
 /// displacement as the raw 16-bit field, so the low 16 bits are
 /// sign-extended (a no-op for the already sign-extended DS-form values).
-pub fn Operands::disp(self : Operands, i : Int) -> RtlExp raise @mc.LiftError {
+pub fn Operands::disp(self : Operands, i : Int32) -> RtlExp raise @mc.LiftError {
   match self.get(i) {
     Imm(value) => {
       let disp = (value.to_int() & 0xffff) << 16 >> 16
@@ -214,7 +214,7 @@ pub fn Operands::disp(self : Operands, i : Int) -> RtlExp raise @mc.LiftError {
 
 ///|
 /// Unsigned immediate operand `i`.
-pub fn Operands::uimm(self : Operands, i : Int) -> RtlExp raise @mc.LiftError {
+pub fn Operands::uimm(self : Operands, i : Int32) -> RtlExp raise @mc.LiftError {
   self.imm(i, Unsigned)
 }
 
@@ -223,7 +223,7 @@ pub fn Operands::uimm(self : Operands, i : Int) -> RtlExp raise @mc.LiftError {
 pub fn Cpu::reg(
   self : Cpu,
   ops : Operands,
-  i : Int,
+  i : Int32,
   sign : Sign,
 ) -> RtlExp raise @mc.LiftError {
   match ops.get(i) {
@@ -238,7 +238,7 @@ pub fn Cpu::reg(
 pub fn Cpu::sreg(
   self : Cpu,
   ops : Operands,
-  i : Int,
+  i : Int32,
 ) -> RtlExp raise @mc.LiftError {
   self.reg(ops, i, Signed)
 }
@@ -248,7 +248,7 @@ pub fn Cpu::sreg(
 pub fn Cpu::ureg(
   self : Cpu,
   ops : Operands,
-  i : Int,
+  i : Int32,
 ) -> RtlExp raise @mc.LiftError {
   self.reg(ops, i, Unsigned)
 }

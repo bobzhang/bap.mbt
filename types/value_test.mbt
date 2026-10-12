@@ -1,5 +1,5 @@
 ///|
-let test_int_tag : @types.Tag[Int] = @types.Tag::register(
+let test_int_tag : @types.Tag[Int32] = @types.Tag::register(
   name="test-int",
   uuid="b3f1c2a0-0000-4000-8000-000000000001",
   encode=x => x.to_string(),
@@ -22,8 +22,8 @@ let test_string_tag : @types.Tag[String] = @types.Tag::register(
 
 ///|
 priv struct TestPoint {
-  x : Int
-  y : Int
+  x : Int32
+  y : Int32
 }
 
 ///|

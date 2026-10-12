@@ -30,8 +30,8 @@ pub(all) enum RtlBody {
   Load(@types.Var, RtlBody, @bitvec.Endian, @types.Size)
   Concat(RtlBody, RtlBody)
   Binop(@types.BinOp, RtlBody, RtlBody)
-  Extract(Int, Int, RtlBody)
-  Cast(Sign, Int, RtlBody)
+  Extract(Int32, Int32, RtlBody)
+  Cast(Sign, Int32, RtlBody)
   Unop(@types.UnOp, RtlBody)
 } derive(Eq, Debug)
 
@@ -46,7 +46,7 @@ pub extend RtlBody with Debug::{to_repr}
 pub struct RtlExp {
   body : RtlBody
   sign : Sign
-  width : Int
+  width : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -76,7 +76,7 @@ pub extend Rtl with Eq::{equal, not_equal}
 pub extend Rtl with Debug::{to_repr}
 
 ///|
-fn var_bitwidth(v : @types.Var) -> Int {
+fn var_bitwidth(v : @types.Var) -> Int32 {
   match v.typ {
     Imm(width) => width
     // RTL never builds expressions out of memory variables; memories only
@@ -86,14 +86,14 @@ fn var_bitwidth(v : @types.Var) -> Int {
 }
 
 ///|
-fn width_of_vars(vars : ArrayView[@types.Var]) -> Int {
+fn width_of_vars(vars : ArrayView[@types.Var]) -> Int32 {
   vars.fold(init=0, (acc, v) => acc + var_bitwidth(v))
 }
 
 ///|
 /// Build a word of `width` bits from a (possibly negative) integer, wrapping
 /// modulo `2^width`. Widths used by the lifter are always positive.
-fn make_word(width : Int, value : Int64) -> @types.Word {
+fn make_word(width : Int32, value : Int64) -> @types.Word {
   @types.Word::of_int64(value, width~) catch {
     _ => abort("PowerPC lifter: invalid word width \{width}")
   }
@@ -128,7 +128,7 @@ pub fn RtlExp::of_word(w : @types.Word) -> RtlExp {
 
 ///|
 /// Fresh virtual temporary of `width` bits.
-pub fn RtlExp::tmp(width : Int) -> RtlExp {
+pub fn RtlExp::tmp(width : Int32) -> RtlExp {
   RtlExp::of_var(
     @types.Var::create("tmp", Imm(width), is_virtual=true, fresh=true),
   )
@@ -152,7 +152,7 @@ pub fn RtlExp::load(
 ///|
 /// Change the width and signedness of `self`, inserting a BIL cast when the
 /// width changes.
-pub fn RtlExp::cast(self : RtlExp, width : Int, sign : Sign) -> RtlExp {
+pub fn RtlExp::cast(self : RtlExp, width : Int32, sign : Sign) -> RtlExp {
   match (self.sign == sign, self.width == width) {
     (true, true) => self
     (false, true) => { ..self, sign, }
@@ -181,7 +181,7 @@ pub fn RtlExp::with_sign(self : RtlExp, sign : Sign) -> RtlExp {
 }
 
 ///|
-pub fn RtlExp::width(self : RtlExp) -> Int {
+pub fn RtlExp::width(self : RtlExp) -> Int32 {
   self.width
 }
 
@@ -210,7 +210,7 @@ fn binop_with_signedness(
   lhs : RtlExp,
   rhs : RtlExp,
 ) -> RtlExp {
-  let width = Int::max(lhs.width, rhs.width)
+  let width = Int32::max(lhs.width, rhs.width)
   let lhs = lhs.cast(width, sign)
   let rhs = rhs.cast(width, sign)
   { sign, width, body: Binop(op, lhs.body, rhs.body), }
@@ -376,12 +376,12 @@ pub fn RtlExp::concat(self : RtlExp, low : RtlExp) -> RtlExp {
 ///|
 fn extract_of_vars(
   e : RtlExp,
-  hi : Int,
-  lo : Int,
+  hi : Int32,
+  lo : Int32,
   vars : ArrayView[@types.Var],
 ) -> RtlExp {
   let width = hi - lo + 1
-  let bounds : Array[(Int, Int, @types.Var)] = []
+  let bounds : Array[(Int32, Int32, @types.Var)] = []
   let mut n = 0
   for v in vars {
     let len = var_bitwidth(v)
@@ -411,7 +411,7 @@ fn extract_of_vars(
 /// unsigned. Extracting from a concatenation of variables at variable
 /// boundaries yields the variables themselves, so the result stays
 /// assignable.
-pub fn RtlExp::extract(self : RtlExp, hi : Int, lo : Int) -> RtlExp {
+pub fn RtlExp::extract(self : RtlExp, hi : Int32, lo : Int32) -> RtlExp {
   let width = hi - lo + 1
   if width == self.width {
     { ..self, sign: Unsigned, }

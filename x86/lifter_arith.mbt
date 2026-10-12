@@ -347,7 +347,7 @@ fn Ctx::to_ir_arith(
 /// Upstream `Div` and `Idiv`.
 fn Ctx::div(
   self : Ctx,
-  t : Int,
+  t : Int32,
   src : Operand,
   signed : Bool,
 ) -> Array[@types.Stmt] raise X86Error {
@@ -400,7 +400,7 @@ fn Ctx::div(
 fn Ctx::shift(
   self : Ctx,
   st : @types.BinOp,
-  s : Int,
+  s : Int32,
   dst : Operand,
   shift : Operand,
 ) -> Array[@types.Stmt] raise X86Error {
@@ -450,7 +450,7 @@ fn Ctx::shift(
 fn Ctx::shiftd(
   self : Ctx,
   st : @types.BinOp,
-  s : Int,
+  s : Int32,
   dst : Operand,
   fill : Operand,
   count : Operand,
@@ -507,7 +507,7 @@ fn Ctx::shiftd(
 ///|
 /// The count mask of shifts and rotates: 5 bits, 6 bits for 64-bit
 /// operands (Intel SDM SAL/SAR/SHL/SHR, ROL/ROR).
-fn count_mask(size : Int) -> @types.Exp {
+fn count_mask(size : Int32) -> @types.Exp {
   int_exp(if size == 64 { 0x3f } else { 0x1f }, size)
 }
 
@@ -522,7 +522,7 @@ fn count_mask(size : Int) -> @types.Exp {
 fn Ctx::rotate(
   self : Ctx,
   shift_type : @types.BinOp,
-  word_size : Int,
+  word_size : Int32,
   dst_op : Operand,
   shift_op : Operand,
   use_cf : Bool,
@@ -575,8 +575,8 @@ fn Ctx::rotate(
 /// complement, reset or set the selected bit.
 fn Ctx::bt(
   self : Ctx,
-  kind : Int,
-  t : Int,
+  kind : Int32,
+  t : Int32,
   bitoffset : Operand,
   bitbase : Operand,
 ) -> Array[@types.Stmt] raise X86Error {
@@ -630,7 +630,7 @@ fn Ctx::bt(
 /// Upstream `Bs` (BSF/BSR, and TZCNT/LZCNT with the F3 prefix).
 fn Ctx::bs(
   self : Ctx,
-  t : Int,
+  t : Int32,
   dst : Operand,
   src : Operand,
   dir : Direction,

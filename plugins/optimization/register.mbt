@@ -26,7 +26,7 @@ fn available_deps(deps : Array[String]) -> Array[String] {
 ///|
 /// Creates the `optimization` project pass for the given level.
 pub fn pass(
-  level~ : Int,
+  level~ : Int32,
   is_flag? : (@types.Var) -> Bool,
   cache? : OptimizationCache,
 ) -> @project.ProjectPass {
@@ -43,7 +43,7 @@ pub fn pass(
 /// the level is positive). Idempotent: returns `false` when nothing was
 /// registered.
 pub fn register(
-  level~ : Int,
+  level~ : Int32,
   is_flag? : (@types.Var) -> Bool,
   cache? : OptimizationCache,
 ) -> Result[Bool, String] {

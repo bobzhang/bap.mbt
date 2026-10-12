@@ -9,23 +9,23 @@ pub extend NonInjective with Debug::{to_repr}
 
 ///|
 struct Relation[K, S] {
-  left_compare : (K, K) -> Int
-  right_compare : (S, S) -> Int
+  left_compare : (K, K) -> Int32
+  right_compare : (S, S) -> Int32
   pairs : Array[(K, S)]
 }
 
 ///|
 pub fn[K, S] Relation::empty(
-  compare_left~ : (K, K) -> Int,
-  compare_right~ : (S, S) -> Int,
+  compare_left~ : (K, K) -> Int32,
+  compare_right~ : (S, S) -> Int32,
 ) -> Relation[K, S] {
   { left_compare: compare_left, right_compare: compare_right, pairs: [], }
 }
 
 ///|
 pub fn[K, S] empty(
-  compare_left~ : (K, K) -> Int,
-  compare_right~ : (S, S) -> Int,
+  compare_left~ : (K, K) -> Int32,
+  compare_right~ : (S, S) -> Int32,
 ) -> Relation[K, S] {
   Relation::empty(compare_left~, compare_right~)
 }
@@ -41,7 +41,7 @@ pub fn[K, S] Relation::is_empty(self : Relation[K, S]) -> Bool {
 }
 
 ///|
-pub fn[K, S] Relation::length(self : Relation[K, S]) -> Int {
+pub fn[K, S] Relation::length(self : Relation[K, S]) -> Int32 {
   self.pairs.length()
 }
 
@@ -50,7 +50,7 @@ fn[K, S] Relation::compare_pair(
   self : Relation[K, S],
   left : (K, S),
   right : (K, S),
-) -> Int {
+) -> Int32 {
   let left_order = (self.left_compare)(left.0, right.0)
   if left_order != 0 {
     left_order

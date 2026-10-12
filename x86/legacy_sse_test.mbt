@@ -1,7 +1,7 @@
 // SSE/AVX moves and packed integer instructions of the legacy lifter.
 
 ///|
-fn ymm(o : Outcome, n : Int) -> @types.Word raise {
+fn ymm(o : Outcome, n : Int32) -> @types.Word raise {
   match o.values.get("YMM\{n}") {
     Some(BilWord(w)) => w
     _ => fail("YMM\{n} is undefined")
@@ -10,7 +10,7 @@ fn ymm(o : Outcome, n : Int) -> @types.Word raise {
 
 ///|
 /// Bits `lo`..`lo + 63` of a vector register.
-fn ymm_q(o : Outcome, n : Int, q : Int) -> UInt64 raise {
+fn ymm_q(o : Outcome, n : Int32, q : Int32) -> UInt64 raise {
   ymm(o, n).extract(hi=q * 64 + 63, lo=q * 64).to_uint64()
 }
 
@@ -19,7 +19,7 @@ fn ymm_q(o : Outcome, n : Int, q : Int) -> UInt64 raise {
 fn exec64_seq(
   setup : Array[Bytes],
   bytes : Bytes,
-  regs? : Array[(String, UInt64)] = [],
+  regs~ : Array[(String, UInt64)] = [],
 ) -> Outcome raise {
   let stmts : Array[@types.Stmt] = []
   for s in setup {

@@ -49,7 +49,7 @@ test "strain specifications" {
 ///|
 fn def_at(
   name : String,
-  addr : Int,
+  addr : Int32,
   lhs : String,
   origin? : @types.Tid,
 ) -> @types.Term[@types.Def] {

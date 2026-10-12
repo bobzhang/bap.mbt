@@ -38,14 +38,14 @@ fn decode_project_bool(name : String, value : String) -> Result[Bool, String] {
 }
 
 ///|
-pub fn ProjectStorageTag::int(name : String) -> ProjectStorageTag[Int] {
+pub fn ProjectStorageTag::int(name : String) -> ProjectStorageTag[Int32] {
   ProjectStorageTag::create(name~, encode=value => value.to_string(), decode=value => {
     decode_project_int(name, value)
   })
 }
 
 ///|
-fn decode_project_int(name : String, value : String) -> Result[Int, String] {
+fn decode_project_int(name : String, value : String) -> Result[Int32, String] {
   try @string.parse_int(value) catch {
     _ => Err("can't decode project int tag \{name}")
   } noraise {
@@ -145,7 +145,7 @@ pub fn ProjectStorageTag::string_array(
 }
 
 ///|
-fn encode_int_array(values : Array[Int]) -> String {
+fn encode_int_array(values : Array[Int32]) -> String {
   encode_string_array([ for value in values => value.to_string() ])
 }
 
@@ -153,7 +153,7 @@ fn encode_int_array(values : Array[Int]) -> String {
 fn decode_int_array(
   name : String,
   value : String,
-) -> Result[Array[Int], String] {
+) -> Result[Array[Int32], String] {
   match decode_string_array(name, value) {
     Err(_) => Err("can't decode project int array tag \{name}")
     Ok(items) => {
@@ -172,7 +172,7 @@ fn decode_int_array(
 ///|
 pub fn ProjectStorageTag::int_array(
   name : String,
-) -> ProjectStorageTag[Array[Int]] {
+) -> ProjectStorageTag[Array[Int32]] {
   ProjectStorageTag::create(name~, encode=values => encode_int_array(values), decode=value => {
     decode_int_array(name, value)
   })

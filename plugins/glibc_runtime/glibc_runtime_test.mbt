@@ -4,7 +4,7 @@ fn rdi() -> @types.Var {
 }
 
 ///|
-fn word64(value : Int) -> @types.Word raise {
+fn word64(value : Int32) -> @types.Word raise {
   @types.Word::of_int(width=64, value)
 }
 

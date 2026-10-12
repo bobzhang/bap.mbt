@@ -1,23 +1,23 @@
 ///|
 struct MemoryTrie[V] {
-  word_size_value : Int
+  word_size_value : Int32
   mut value : V?
   children : Array[(@types.Word, MemoryTrie[V])]
 }
 
 ///|
-fn memory_trie_valid_word_size(word_size : Int) -> Bool {
+fn memory_trie_valid_word_size(word_size : Int32) -> Bool {
   word_size == 8 || word_size == 16 || word_size == 32 || word_size == 64
 }
 
 ///|
-fn[V] memory_trie_make(word_size : Int) -> MemoryTrie[V] {
+fn[V] memory_trie_make(word_size : Int32) -> MemoryTrie[V] {
   { word_size_value: word_size, value: None, children: [], }
 }
 
 ///|
 pub fn[V] MemoryTrie::create(
-  word_size? : Int = 8,
+  word_size~ : Int32 = 8,
 ) -> Result[MemoryTrie[V], String] {
   if memory_trie_valid_word_size(word_size) {
     Ok(memory_trie_make(word_size))
@@ -52,20 +52,20 @@ pub fn[V] MemoryTrie::r64() -> MemoryTrie[V] {
 }
 
 ///|
-pub fn[V] MemoryTrie::word_size(self : MemoryTrie[V]) -> Int {
+pub fn[V] MemoryTrie::word_size(self : MemoryTrie[V]) -> Int32 {
   self.word_size_value
 }
 
 ///|
-fn Memory::trie_token_count(self : Memory, word_size : Int) -> Int {
+fn Memory::trie_token_count(self : Memory, word_size : Int32) -> Int32 {
   self.length() / (word_size / 8)
 }
 
 ///|
 fn Memory::trie_token_at(
   self : Memory,
-  word_size : Int,
-  index : Int,
+  word_size : Int32,
+  index : Int32,
 ) -> @types.Word {
   match self.get(index~, scale=word_size) {
     Ok(word) => word
@@ -77,7 +77,7 @@ fn Memory::trie_token_at(
 fn[V] MemoryTrie::child_index(
   self : MemoryTrie[V],
   token : @types.Word,
-) -> Int? {
+) -> Int32? {
   for i in 0..<self.children.length() {
     if self.children[i].0 == token {
       return Some(i)
@@ -114,7 +114,7 @@ pub fn[V] MemoryTrie::is_empty(self : MemoryTrie[V]) -> Bool {
 }
 
 ///|
-pub fn[V] MemoryTrie::length(self : MemoryTrie[V]) -> Int {
+pub fn[V] MemoryTrie::length(self : MemoryTrie[V]) -> Int32 {
   // iterative: keys can be long
   let mut total = 0
   let stack = [self]
@@ -200,9 +200,9 @@ pub fn[V, A] MemoryTrie::walk(
 pub fn[V] MemoryTrie::longest_match(
   self : MemoryTrie[V],
   key : Memory,
-) -> (Int, V)? {
+) -> (Int32, V)? {
   let len = key.trie_token_count(self.word_size_value)
-  let mut best : (Int, V)? = match self.value {
+  let mut best : (Int32, V)? = match self.value {
     Some(value) => Some((0, value))
     None => None
   }

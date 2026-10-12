@@ -15,7 +15,7 @@ fn lift_custom(
   lifter : @primus_lisp.Lifter,
   name : String,
   ops : Array[@primus_lisp.Operand],
-  out? : StringBuilder = StringBuilder(),
+  out~ : StringBuilder = StringBuilder(),
 ) -> String raise {
   show_bil(lifter.lift(@knowledge.Name::read(name), ops, out~))
 }
@@ -25,7 +25,7 @@ fn exec_bil(
   lifter : @primus_lisp.Lifter,
   name : String,
   ops : Array[@primus_lisp.Operand],
-  inputs : Array[(String, Int)],
+  inputs : Array[(String, Int32)],
   output : String,
 ) -> String raise {
   let bil = lifter.lift(@knowledge.Name::read(name), ops).unwrap()

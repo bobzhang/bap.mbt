@@ -33,7 +33,7 @@ pub let component_name : String = "program-loader"
 
 ///|
 /// The default stack size (8 MiB).
-pub let default_stack_size : Int = 8 * 1024 * 1024
+pub let default_stack_size : Int32 = 8 * 1024 * 1024
 
 ///|
 /// The default address of the stack base (1 GiB).
@@ -100,7 +100,7 @@ fn max_word(a : @types.Word, b : @types.Word) -> @types.Word {
 }
 
 ///|
-fn sub_int(w : @types.Word, n : Int) -> @types.Word raise {
+fn sub_int(w : @types.Word, n : Int32) -> @types.Word raise {
   w.sub(@types.Word::of_int(width=w.bitwidth(), n)) catch {
     _ => raise word_error("address underflow")
   }
@@ -109,7 +109,7 @@ fn sub_int(w : @types.Word, n : Int) -> @types.Word raise {
 ///|
 fn setup_stack(
   m : @primus.Machine,
-  stack_size : Int,
+  stack_size : Int32,
   stack_base : Int64,
 ) -> Unit raise {
   let bottom = make_word(m, stack_base)
@@ -163,7 +163,7 @@ fn bytes_of_word(
 ///|
 fn save_word(
   m : @primus.Machine,
-  force? : Bool = false,
+  force~ : Bool = false,
   endian : @bitvec.Endian,
   word : @types.Word,
   ptr : @types.Word,
@@ -229,7 +229,7 @@ fn save_string(
 }
 
 ///|
-fn bytes_in_array(xs : Array[String]) -> Int {
+fn bytes_in_array(xs : Array[String]) -> Int32 {
   xs.fold(init=0, (sum, s) => sum + @utf8.encode(s).length() + 1)
 }
 
@@ -468,8 +468,8 @@ fn init_names(m : @primus.Machine) -> Unit {
 /// body, upstream `Primus_loader_basic.Make(Param).init`).
 pub fn install(
   m : @primus.Machine,
-  stack_size? : Int = default_stack_size,
-  stack_base? : Int64 = default_stack_base,
+  stack_size~ : Int32 = default_stack_size,
+  stack_base~ : Int64 = default_stack_base,
 ) -> Unit raise {
   log.debug(message="setting up stack")
   setup_stack(m, stack_size, stack_base)
@@ -497,8 +497,8 @@ let desc : String = "Initializes the runtime environment. This is a generic load
 /// Registers the `bap:program-loader` component with the given stack
 /// parameters. Idempotent: returns `false` if it was already registered.
 pub fn register(
-  stack_size? : Int = default_stack_size,
-  stack_base? : Int64 = default_stack_base,
+  stack_size~ : Int32 = default_stack_size,
+  stack_base~ : Int64 = default_stack_base,
 ) -> Bool {
   @primus.Components::register_generic(
     component_name,
@@ -518,8 +518,8 @@ let enabled : Ref[Bool] = { val: false, }
 /// Registers the component and adds it to the legacy main system, as the
 /// upstream plugin does when it is loaded. Idempotent.
 pub fn enable(
-  stack_size? : Int = default_stack_size,
-  stack_base? : Int64 = default_stack_base,
+  stack_size~ : Int32 = default_stack_size,
+  stack_base~ : Int64 = default_stack_base,
 ) -> Unit {
   register(stack_size~, stack_base~) |> ignore
   if !enabled.val {

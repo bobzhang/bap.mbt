@@ -3,7 +3,7 @@
 /// the ELF file starting at `pos`.
 fn file_range(
   data : Bytes,
-  pos : Int,
+  pos : Int32,
   offset : UInt64,
   size : UInt64,
   what : String,
@@ -22,7 +22,7 @@ fn file_range(
 ///|
 /// Decodes a null-terminated string of a string table: UTF-8 when valid,
 /// otherwise byte per character (Latin-1), so every name is readable.
-fn cstring_at(table : BytesView, offset : Int) -> String raise Malformed {
+fn cstring_at(table : BytesView, offset : Int32) -> String raise Malformed {
   if offset < 0 || offset >= table.length() {
     raise Malformed("ELF string offset is out of bounds")
   }
@@ -42,7 +42,7 @@ fn cstring_at(table : BytesView, offset : Int) -> String raise Malformed {
 
 ///|
 /// Reads the null-terminated string at `offset` of a string table.
-pub fn string_at(table : BytesView, offset : Int) -> Result[String, String] {
+pub fn string_at(table : BytesView, offset : Int32) -> Result[String, String] {
   catch_malformed(() => cstring_at(table, offset))
 }
 
@@ -53,7 +53,7 @@ pub fn string_at(table : BytesView, offset : Int) -> Result[String, String] {
 pub fn string_of_section(
   data : Bytes,
   section : Section,
-  pos? : Int = 0,
+  pos~ : Int32 = 0,
 ) -> Result[Bytes, String] {
   catch_malformed(() => {
     file_range(data, pos, section.sh_offset, section.sh_size, "ELF section")
@@ -65,7 +65,7 @@ pub fn string_of_section(
 pub fn string_of_segment(
   data : Bytes,
   segment : Segment,
-  pos? : Int = 0,
+  pos~ : Int32 = 0,
 ) -> Result[Bytes, String] {
   catch_malformed(() => {
     file_range(data, pos, segment.p_offset, segment.p_filesz, "ELF segment")
@@ -79,7 +79,7 @@ pub fn section_name(
   data : Bytes,
   elf : Elf,
   section : Section,
-  pos? : Int = 0,
+  pos~ : Int32 = 0,
 ) -> Result[String, String] {
   catch_malformed(() => {
     guard elf.e_sections.get(elf.e_shstrndx) is Some(names) else {
@@ -101,7 +101,11 @@ pub fn section_name(
 ///|
 /// The names of all sections, in section order; a section whose name
 /// can't be read is `None`.
-pub fn section_names(data : Bytes, elf : Elf, pos? : Int = 0) -> Array[String?] {
+pub fn section_names(
+  data : Bytes,
+  elf : Elf,
+  pos~ : Int32 = 0,
+) -> Array[String?] {
   elf.e_sections.map(section => {
     section_name(data, elf, section, pos~).to_option()
   })
@@ -113,7 +117,7 @@ pub fn find_section(
   data : Bytes,
   elf : Elf,
   name : String,
-  pos? : Int = 0,
+  pos~ : Int32 = 0,
 ) -> Section? {
   for section in elf.e_sections {
     if section_name(data, elf, section, pos~) is Ok(n) && n == name {
@@ -126,12 +130,12 @@ pub fn find_section(
 ///|
 /// A symbol table entry (`Elf32_Sym`/`Elf64_Sym`), with every field.
 pub(all) struct Symbol {
-  st_name : UInt
+  st_name : UInt32
   st_value : UInt64
   st_size : UInt64
-  st_info : Int
-  st_other : Int
-  st_shndx : Int
+  st_info : Int32
+  st_other : Int32
+  st_shndx : Int32
 } derive(Eq, Compare, Debug)
 
 ///|
@@ -145,25 +149,25 @@ pub extend Symbol with Debug::{to_repr}
 
 ///|
 /// The symbol binding (`ELF_ST_BIND`): 0 local, 1 global, 2 weak, ...
-pub fn Symbol::st_bind(self : Symbol) -> Int {
+pub fn Symbol::st_bind(self : Symbol) -> Int32 {
   self.st_info >> 4
 }
 
 ///|
 /// The symbol type (`ELF_ST_TYPE`): 0 none, 1 object, 2 function, ...
-pub fn Symbol::st_type(self : Symbol) -> Int {
+pub fn Symbol::st_type(self : Symbol) -> Int32 {
   self.st_info & 0xf
 }
 
 ///|
 /// The symbol visibility (`ELF_ST_VISIBILITY`).
-pub fn Symbol::st_visibility(self : Symbol) -> Int {
+pub fn Symbol::st_visibility(self : Symbol) -> Int32 {
   self.st_other & 3
 }
 
 ///|
 /// The size of a symbol table entry of a class.
-pub fn EClass::symbol_size(self : EClass) -> Int {
+pub fn EClass::symbol_size(self : EClass) -> Int32 {
   match self {
     ELFCLASS32 => 16
     ELFCLASS64 => 24
@@ -175,9 +179,9 @@ pub fn EClass::symbol_size(self : EClass) -> Int {
 /// `sh_entsize`, or `default` when it is zero.
 fn table_entries(
   section : Section,
-  default : Int,
+  default : Int32,
   what : String,
-) -> (Int, Int) raise Malformed {
+) -> (Int32, Int32) raise Malformed {
   let entsize = if section.sh_entsize == 0UL {
     default.to_uint64()
   } else {
@@ -202,7 +206,7 @@ pub fn symbols(
   data : Bytes,
   elf : Elf,
   section : Section,
-  pos? : Int = 0,
+  pos~ : Int32 = 0,
 ) -> Result[Array[Symbol], String] {
   catch_malformed(() => {
     let (entsize, count) = table_entries(
@@ -249,7 +253,7 @@ pub fn symbol_name(
   elf : Elf,
   symtab : Section,
   symbol : Symbol,
-  pos? : Int = 0,
+  pos~ : Int32 = 0,
 ) -> Result[String, String] {
   catch_malformed(() => {
     guard elf.e_sections.get(symtab.sh_link.reinterpret_as_int())
@@ -287,7 +291,7 @@ pub extend Relocation with Debug::{to_repr}
 
 ///|
 /// The symbol index of the relocation (`ELF_R_SYM`) in a file of `class`.
-pub fn Relocation::r_sym(self : Relocation, class : EClass) -> UInt {
+pub fn Relocation::r_sym(self : Relocation, class : EClass) -> UInt32 {
   match class {
     ELFCLASS32 => (self.r_info >> 8).to_uint()
     ELFCLASS64 => (self.r_info >> 32).to_uint()
@@ -296,7 +300,7 @@ pub fn Relocation::r_sym(self : Relocation, class : EClass) -> UInt {
 
 ///|
 /// The relocation type (`ELF_R_TYPE`) in a file of `class`.
-pub fn Relocation::r_type(self : Relocation, class : EClass) -> UInt {
+pub fn Relocation::r_type(self : Relocation, class : EClass) -> UInt32 {
   match class {
     ELFCLASS32 => (self.r_info & 0xffUL).to_uint()
     ELFCLASS64 => (self.r_info & 0xffffffffUL).to_uint()
@@ -309,7 +313,7 @@ pub fn relocations(
   data : Bytes,
   elf : Elf,
   section : Section,
-  pos? : Int = 0,
+  pos~ : Int32 = 0,
 ) -> Result[Array[Relocation], String] {
   catch_malformed(() => {
     let class = elf.e_class

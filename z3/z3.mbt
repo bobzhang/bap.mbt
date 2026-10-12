@@ -87,7 +87,7 @@ pub struct Context {
 /// `("model", "true")`, `("timeout", "16")`). Raises `Unavailable` if the
 /// solver library is not available.
 pub fn Context::new(
-  params? : Array[(String, String)] = [("model", "true")],
+  params~ : Array[(String, String)] = [("model", "true")],
 ) -> Context raise Z3Error {
   if !is_available() {
     raise Unavailable("SMT solver unavailable: " + unavailable_reason())

@@ -1,11 +1,11 @@
 ///|
 pub(all) struct Ieee754Parameters {
-  base : Int
-  bias : Int
-  k : Int
-  p : Int
-  w : Int
-  t : Int
+  base : Int32
+  bias : Int32
+  k : Int32
+  p : Int32
+  w : Int32
+  t : Int32
 } derive(Eq, Hash, Debug)
 
 ///|
@@ -19,18 +19,18 @@ pub extend Ieee754Parameters with Debug::{to_repr}
 
 ///|
 fn ieee754_parameters(
-  base~ : Int,
-  bias~ : Int,
-  k~ : Int,
-  p~ : Int,
-  w~ : Int,
-  t~ : Int,
+  base~ : Int32,
+  bias~ : Int32,
+  k~ : Int32,
+  p~ : Int32,
+  w~ : Int32,
+  t~ : Int32,
 ) -> Ieee754Parameters {
   { base, bias, k, p, w, t, }
 }
 
 ///|
-fn ieee754_pow(base : Int, exponent : Int) -> Int {
+fn ieee754_pow(base : Int32, exponent : Int32) -> Int32 {
   let mut result = 1
   for _ in 0..<exponent {
     result = result * base
@@ -39,7 +39,7 @@ fn ieee754_pow(base : Int, exponent : Int) -> Int {
 }
 
 ///|
-fn ieee754_binary_generic(width : Int) -> Ieee754Parameters {
+fn ieee754_binary_generic(width : Int32) -> Ieee754Parameters {
   let rounded = @math.round(4.0 * @math.log2(width.to_double())).to_int()
   let precision = width - rounded + 13
   let exponent_width = rounded - 13
@@ -55,7 +55,7 @@ fn ieee754_binary_generic(width : Int) -> Ieee754Parameters {
 }
 
 ///|
-fn ieee754_decimal_generic(width : Int) -> Ieee754Parameters {
+fn ieee754_decimal_generic(width : Int32) -> Ieee754Parameters {
   let precision = 9 * width / 32 - 2
   let exponent = width / 16 + 3
   let emax = 3 * ieee754_pow(2, exponent)
@@ -110,7 +110,7 @@ pub fn Ieee754Parameters::decimal128() -> Ieee754Parameters {
 }
 
 ///|
-pub fn Ieee754Parameters::binary(width : Int) -> Ieee754Parameters? {
+pub fn Ieee754Parameters::binary(width : Int32) -> Ieee754Parameters? {
   match width {
     16 => Some(Ieee754Parameters::binary16())
     32 => Some(Ieee754Parameters::binary32())
@@ -121,7 +121,7 @@ pub fn Ieee754Parameters::binary(width : Int) -> Ieee754Parameters? {
 }
 
 ///|
-pub fn Ieee754Parameters::decimal(width : Int) -> Ieee754Parameters? {
+pub fn Ieee754Parameters::decimal(width : Int32) -> Ieee754Parameters? {
   if width > 0 && width % 32 == 0 {
     Some(ieee754_decimal_generic(width))
   } else {

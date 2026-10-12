@@ -5,7 +5,7 @@
 /// in BAP, and UTF-8 preserves the code-point order, so comparing Unicode
 /// scalar values reproduces the upstream order. MoonBit's own
 /// `String::compare` orders by length first and cannot be used here.
-fn string_compare(a : String, b : String) -> Int {
+fn string_compare(a : String, b : String) -> Int32 {
   let ai = a.iter()
   let bi = b.iter()
   while true {

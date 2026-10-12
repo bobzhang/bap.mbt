@@ -50,22 +50,22 @@ fn a64(name : String, ops : Array[@mc.Op], text : String) -> A64Insn? {
 }
 
 ///|
-fn fld(w : UInt, lo : Int, len : Int) -> Int {
+fn fld(w : UInt32, lo : Int32, len : Int32) -> Int32 {
   ((w >> lo) & ((1U << len) - 1)).reinterpret_as_int()
 }
 
 ///|
-fn bit(w : UInt, n : Int) -> Bool {
+fn bit(w : UInt32, n : Int32) -> Bool {
   ((w >> n) & 1) == 1
 }
 
 ///|
-fn sext(v : Int, bits : Int) -> Int {
+fn sext(v : Int32, bits : Int32) -> Int32 {
   v << (32 - bits) >> (32 - bits)
 }
 
 ///|
-fn imm(v : Int) -> @mc.Op {
+fn imm(v : Int32) -> @mc.Op {
   Imm(v.to_int64())
 }
 
@@ -78,7 +78,7 @@ fn imm_text(v : Int64) -> String {
 ///|
 /// A hexadecimal immediate as LLVM's `printImmHex` prints it (`#%#llx`:
 /// zero has no `0x` prefix).
-fn hex_imm(v : Int) -> String {
+fn hex_imm(v : Int32) -> String {
   if v == 0 {
     "#0"
   } else {
@@ -105,10 +105,10 @@ fn size_char(sf : Bool) -> String {
 /// instruction): the value of `N:immr:imms` for a `width`-bit register,
 /// `None` for reserved encodings.
 pub fn decode_bit_masks(
-  n : Int,
-  imms : Int,
-  immr : Int,
-  width : Int,
+  n : Int32,
+  imms : Int32,
+  immr : Int32,
+  width : Int32,
 ) -> UInt64? {
   let combined = (n << 6) | (imms.lnot() & 0x3F)
   guard combined != 0 else { return None }
@@ -142,8 +142,8 @@ pub fn decode_bit_masks(
 /// Decodes the A64 instruction word `word` located at `addr`. The raw
 /// bytes are the little-endian bytes of the word unless `raw` is given.
 pub fn decode_a64_word(
-  word : UInt,
-  addr? : UInt64 = 0,
+  word : UInt32,
+  addr~ : UInt64 = 0,
   raw? : Bytes,
 ) -> @mc.Insn? {
   let decoded = match fld(word, 25, 4) {
@@ -182,7 +182,7 @@ pub fn decode_a64_word(
 ///|
 /// Decodes the A64 instruction at the start of `bytes` loaded at `addr`.
 /// Instructions are always little-endian (also on big-endian targets).
-pub fn decode_a64(bytes : BytesView, addr? : UInt64 = 0) -> @mc.Decoded {
+pub fn decode_a64(bytes : BytesView, addr~ : UInt64 = 0) -> @mc.Decoded {
   if bytes.length() < 4 {
     return Truncated
   }
@@ -228,6 +228,6 @@ pub fn register_decoder() -> Unit {
 
 ///|
 /// `s` without its last `n` characters.
-fn chop(s : String, n : Int) -> String {
+fn chop(s : String, n : Int32) -> String {
   s[:s.length() - n].to_owned()
 }

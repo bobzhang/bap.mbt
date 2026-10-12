@@ -208,7 +208,7 @@ pub fn provider() -> @mc.Provider {
 ///|
 /// Register the PowerPC provider with `registry` (the global `@mc` registry
 /// by default). Idempotent: the provider is replaced by name.
-pub fn register(registry? : @mc.Registry = @mc.Registry::global()) -> Unit {
+pub fn register(registry~ : @mc.Registry = @mc.Registry::global()) -> Unit {
   init_builtin_lifters()
   registry.register(provider())
 }

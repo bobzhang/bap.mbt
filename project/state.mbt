@@ -1,7 +1,7 @@
 ///|
 struct ProjectDisassemblyInstruction {
   memory_value : @memory.Memory
-  code_value : Int
+  code_value : Int32
   name_value : String
   encoding_value : String
   assembly_value : String
@@ -16,7 +16,7 @@ struct ProjectDisassemblyInstruction {
 
 ///|
 pub(all) enum ProjectInstructionOperand {
-  ProjectRegisterOperand(Int, String)
+  ProjectRegisterOperand(Int32, String)
   ProjectImmediateOperand(Int64)
   ProjectFloatingOperand(Double)
 } derive(Eq, Debug)
@@ -49,7 +49,7 @@ pub extend ProjectInstructionKind with Debug::{to_repr}
 
 ///|
 struct ProjectInstructionToken {
-  code_value : Int
+  code_value : Int32
   operands_value : Array[ProjectInstructionOperand]
 }
 
@@ -157,7 +157,7 @@ fn project_disassembly_replace_instruction(
 fn project_disassembly_dedup_instructions(
   instructions : Array[ProjectDisassemblyInstruction],
 ) -> Array[ProjectDisassemblyInstruction] {
-  let index : Map[(UInt64, UInt64), Int] = Map([])
+  let index : Map[(UInt64, UInt64), Int32] = Map([])
   let result : Array[ProjectDisassemblyInstruction] = []
   for instruction in instructions {
     let key = project_disassembly_block_key(instruction.memory_value)
@@ -186,7 +186,7 @@ fn project_disassembly_same_edge(
 fn project_disassembly_dedup_edges(
   edges : Array[ProjectDisassemblyEdge],
 ) -> Array[ProjectDisassemblyEdge] {
-  let seen : Map[(UInt64, UInt64?, Int), Unit] = Map([])
+  let seen : Map[(UInt64, UInt64?, Int32), Unit] = Map([])
   let result : Array[ProjectDisassemblyEdge] = []
   for edge in edges {
     let kind = match edge.kind_value {
@@ -368,7 +368,7 @@ fn project_disassembly_edge_touches_block(
 ///|
 pub fn ProjectInstructionOperand::register(
   name~ : String,
-  code? : Int = 0,
+  code~ : Int32 = 0,
 ) -> ProjectInstructionOperand {
   ProjectRegisterOperand(code, name)
 }
@@ -406,7 +406,7 @@ pub fn ProjectInstructionOperand::to_string(
 ///|
 pub fn ProjectInstructionOperand::register_code(
   self : ProjectInstructionOperand,
-) -> Int? {
+) -> Int32? {
   match self {
     ProjectRegisterOperand(code, _) => Some(code)
     _ => None
@@ -436,7 +436,7 @@ pub fn ProjectInstructionOperand::to_int64(
 ///|
 pub fn ProjectInstructionOperand::to_int(
   self : ProjectInstructionOperand,
-) -> Int? {
+) -> Int32? {
   match self {
     ProjectImmediateOperand(value) =>
       match @types.int_of_int64(value) {
@@ -450,7 +450,7 @@ pub fn ProjectInstructionOperand::to_int(
 ///|
 pub fn ProjectInstructionOperand::to_word(
   self : ProjectInstructionOperand,
-  width~ : Int,
+  width~ : Int32,
 ) -> @types.Word? {
   match self {
     ProjectImmediateOperand(value) =>
@@ -509,7 +509,7 @@ pub fn project_instruction_operands_same_normalized_prefix(
 
 ///|
 pub fn ProjectInstructionToken::create(
-  code~ : Int,
+  code~ : Int32,
   operands? : Array[ProjectInstructionOperand],
 ) -> ProjectInstructionToken {
   {
@@ -522,7 +522,7 @@ pub fn ProjectInstructionToken::create(
 }
 
 ///|
-pub fn ProjectInstructionToken::code(self : ProjectInstructionToken) -> Int {
+pub fn ProjectInstructionToken::code(self : ProjectInstructionToken) -> Int32 {
   self.code_value
 }
 
@@ -536,7 +536,7 @@ pub fn ProjectInstructionToken::operands(
 ///|
 pub fn ProjectInstructionToken::operand_count(
   self : ProjectInstructionToken,
-) -> Int {
+) -> Int32 {
   self.operands_value.length()
 }
 
@@ -572,7 +572,7 @@ pub fn ProjectInstructionKey::create(
 ///|
 pub fn ProjectInstructionKey::of_instructions(
   instructions : Array[ProjectDisassemblyInstruction],
-  len~ : Int,
+  len~ : Int32,
 ) -> ProjectInstructionKey? {
   if len < 0 || instructions.length() < len {
     return None
@@ -585,7 +585,7 @@ pub fn ProjectInstructionKey::of_instructions(
 }
 
 ///|
-pub fn ProjectInstructionKey::length(self : ProjectInstructionKey) -> Int {
+pub fn ProjectInstructionKey::length(self : ProjectInstructionKey) -> Int32 {
   self.tokens_value.length()
 }
 
@@ -599,7 +599,7 @@ pub fn ProjectInstructionKey::tokens(
 ///|
 pub fn ProjectInstructionKey::nth(
   self : ProjectInstructionKey,
-  index : Int,
+  index : Int32,
 ) -> ProjectInstructionToken? {
   self.tokens_value.get(index)
 }
@@ -719,7 +719,7 @@ pub fn ProjectDisassemblyEdgeKind::to_string(
 pub fn ProjectDisassemblyEdge::create(
   source~ : UInt64,
   target? : UInt64,
-  kind? : ProjectDisassemblyEdgeKind = JumpEdge,
+  kind~ : ProjectDisassemblyEdgeKind = JumpEdge,
 ) -> ProjectDisassemblyEdge {
   { source_value: source, target_value: target, kind_value: kind, }
 }
@@ -744,11 +744,11 @@ pub fn ProjectDisassemblyEdge::kind(
 ///|
 pub fn ProjectDisassemblyInstruction::create(
   memory : @memory.Memory,
-  assembly? : String = "",
-  bil? : String = "",
-  code? : Int = 0,
-  name? : String = "",
-  encoding? : String = "",
+  assembly~ : String = "",
+  bil~ : String = "",
+  code~ : Int32 = 0,
+  name~ : String = "",
+  encoding~ : String = "",
   kinds? : Array[ProjectInstructionKind],
   operands? : Array[ProjectInstructionOperand],
   subinstructions? : Array[ProjectDisassemblyInstruction],
@@ -793,7 +793,7 @@ pub fn ProjectDisassemblyInstruction::assembly(
 ///|
 pub fn ProjectDisassemblyInstruction::code(
   self : ProjectDisassemblyInstruction,
-) -> Int {
+) -> Int32 {
   self.code_value
 }
 
@@ -835,7 +835,7 @@ pub fn ProjectDisassemblyInstruction::operands(
 ///|
 pub fn ProjectDisassemblyInstruction::operand_count(
   self : ProjectDisassemblyInstruction,
-) -> Int {
+) -> Int32 {
   self.operands_value.length()
 }
 
@@ -856,14 +856,14 @@ pub fn ProjectDisassemblyInstruction::subs(
 ///|
 pub fn ProjectDisassemblyInstruction::subinstruction_count(
   self : ProjectDisassemblyInstruction,
-) -> Int {
+) -> Int32 {
   self.subinstructions_value.length()
 }
 
 ///|
 pub fn ProjectDisassemblyInstruction::with_metadata(
   self : ProjectDisassemblyInstruction,
-  code? : Int,
+  code? : Int32,
   name? : String,
   encoding? : String,
 ) -> ProjectDisassemblyInstruction {
@@ -1093,7 +1093,7 @@ pub fn ProjectDisassemblyState::blocks(
 ///|
 pub fn ProjectDisassemblyState::block_count(
   self : ProjectDisassemblyState,
-) -> Int {
+) -> Int32 {
   self.blocks_value.length()
 }
 
@@ -1117,7 +1117,7 @@ pub fn ProjectDisassemblyState::instructions(
 ///|
 pub fn ProjectDisassemblyState::instruction_count(
   self : ProjectDisassemblyState,
-) -> Int {
+) -> Int32 {
   self.instructions_value.length()
 }
 
@@ -1182,7 +1182,7 @@ fn project_disassembly_sort_by_addr(
 /// instructions for each block.
 fn ProjectDisassemblyState::instruction_order(
   self : ProjectDisassemblyState,
-) -> Array[Int] {
+) -> Array[Int32] {
   let order = Array::makei(self.instructions_value.length(), i => i)
   order.sort_by((left, right) => {
     let l = self.instructions_value[left].memory_value.min_addr()
@@ -1201,7 +1201,7 @@ fn ProjectDisassemblyState::instruction_order(
 /// `self.instructions_in(block)`, using the `instruction_order` of the state.
 fn ProjectDisassemblyState::instructions_in_ordered(
   self : ProjectDisassemblyState,
-  order : Array[Int],
+  order : Array[Int32],
   block : @memory.Memory,
 ) -> Array[ProjectDisassemblyInstruction] {
   let instructions = self.instructions_value
@@ -1218,7 +1218,7 @@ fn ProjectDisassemblyState::instructions_in_ordered(
     }
   }
   let hi = block.max_addr()
-  let found : Array[Int] = []
+  let found : Array[Int32] = []
   for i in first..<order.length() {
     let instruction = instructions[order[i]]
     if instruction.memory_value.min_addr() > hi {
@@ -1239,7 +1239,7 @@ fn ProjectDisassemblyState::instructions_in_ordered(
 pub fn ProjectDisassemblyState::key_of_first_insns(
   self : ProjectDisassemblyState,
   block : @memory.Memory,
-  len~ : Int,
+  len~ : Int32,
 ) -> ProjectInstructionKey? {
   ProjectInstructionKey::of_instructions(self.instructions_in(block), len~)
 }
@@ -1254,7 +1254,7 @@ pub fn ProjectDisassemblyState::edges(
 ///|
 pub fn ProjectDisassemblyState::edge_count(
   self : ProjectDisassemblyState,
-) -> Int {
+) -> Int32 {
   self.edges_value.length()
 }
 

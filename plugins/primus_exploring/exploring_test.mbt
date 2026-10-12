@@ -9,7 +9,7 @@ fn project(subs : Array[@types.Term[@types.Sub]]) -> @project.Project {
 fn chain(
   name : String,
   prefix : String,
-  n : Int,
+  n : Int32,
   names : Map[@types.Tid, String],
 ) -> @types.Term[@types.Sub] {
   let tids = Array::makei(n, _ => @types.Tid::create())

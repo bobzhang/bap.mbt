@@ -2,12 +2,12 @@
 // (native target) and pass trivially without it.
 
 ///|
-fn w64(n : Int) -> @types.Word {
+fn w64(n : Int32) -> @types.Word {
   try! @types.Word::of_int(width=64, n)
 }
 
 ///|
-fn int64(n : Int) -> @types.Exp {
+fn int64(n : Int32) -> @types.Exp {
   Int(w64(n))
 }
 

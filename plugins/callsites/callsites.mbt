@@ -84,7 +84,7 @@ pub fn def_of_arg(arg : @types.Term[@types.Arg]) -> @types.Term[@types.Def] {
 }
 
 ///|
-fn intent_rank(intent : @types.Intent?) -> Int {
+fn intent_rank(intent : @types.Intent?) -> Int32 {
   match intent {
     None => 0
     Some(In) => 1

@@ -65,7 +65,7 @@ pub fn semantics_provider(
   name : String,
   family : @core_theory.Target,
   dirs : Array[String],
-  paths? : Array[String] = [],
+  paths~ : Array[String] = [],
 ) -> @mc.Provider {
   @mc.Provider::create(name, accepts=ctx => ctx.target().belongs(family), lift=(
     ctx,
@@ -109,8 +109,8 @@ pub fn semantics_provider(
 /// already registered (e.g., the native lifters). The function is
 /// idempotent.
 pub fn register_semantics_providers(
-  registry? : @mc.Registry = @mc.Registry::global(),
-  paths? : Array[String] = [],
+  registry~ : @mc.Registry = @mc.Registry::global(),
+  paths~ : Array[String] = [],
 ) -> Unit {
   for f in semantic_families() {
     let (name, family) = f

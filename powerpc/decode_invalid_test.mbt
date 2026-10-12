@@ -3,7 +3,7 @@
 
 ///|
 test "invalid encodings and table-decoded instructions" {
-  let words : Array[UInt] = [
+  let words : Array[UInt32] = [
     0x00000000, // primary opcode 0
     0x44000002, // sc (table-decoded, no semantics)
     0x7c0004ac, // sync (table-decoded)
@@ -54,7 +54,7 @@ test "invalid encodings and table-decoded instructions" {
 
 ///|
 test "CTR decrementing and hinted branches" {
-  let words : Array[UInt] = [
+  let words : Array[UInt32] = [
     0x4320fff8, // bdnz- .-8 (BO = 25: bdnz+)
      0x4300fff8, // BO = 24: bdnz-
      0x4360fff8, // BO = 27: bdz+

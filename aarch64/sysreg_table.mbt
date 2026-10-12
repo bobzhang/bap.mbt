@@ -4,7 +4,7 @@
 ///|
 /// The named system registers: `(op0:op1:CRn:CRm:op2, name, access)` where
 /// `access` is 1 when the name is used by `MRS`, 2 by `MSR`, 3 by both.
-let sysreg_table : Array[(Int, String, Int)] = [
+let sysreg_table : Array[(Int32, String, Int32)] = [
   (32770, "OSDTRRX_EL1", 3),
   (32772, "DBGBVR0_EL1", 3),
   (32773, "DBGBCR0_EL1", 3),

@@ -7,7 +7,7 @@
 // float printer) so that normalized documents are spelled exactly like BAP.
 
 ///|
-fn digit_value(c : Char) -> Int {
+fn digit_value(c : Char) -> Int32 {
   if c >= '0' && c <= '9' {
     c.to_int() - '0'.to_int()
   } else if c >= 'a' && c <= 'z' {
@@ -210,12 +210,12 @@ fn parse_ocaml_float(text : String) -> Double? {
 }
 
 ///|
-fn pow10(k : Int) -> @bigint.BigInt {
+fn pow10(k : Int32) -> @bigint.BigInt {
   @bigint.BigInt::from_int(10).pow(@bigint.BigInt::from_int(k))
 }
 
 ///|
-fn pow2(k : Int) -> @bigint.BigInt {
+fn pow2(k : Int32) -> @bigint.BigInt {
   @bigint.BigInt::from_int(1) << k
 }
 
@@ -223,8 +223,8 @@ fn pow2(k : Int) -> @bigint.BigInt {
 /// Exact rational `m * 2^e * 10^s` as a `(numerator, denominator)` pair.
 fn scaled_fraction(
   m : UInt64,
-  e : Int,
-  s : Int,
+  e : Int32,
+  s : Int32,
 ) -> (@bigint.BigInt, @bigint.BigInt) {
   let mut num = @bigint.BigInt::from_uint64(m)
   let mut den = @bigint.BigInt::from_int(1)
@@ -243,7 +243,7 @@ fn scaled_fraction(
 
 ///|
 /// C `printf("%.<precision>G", x)` for a finite, non-zero double.
-fn format_g_finite(x : Double, precision : Int) -> String {
+fn format_g_finite(x : Double, precision : Int32) -> String {
   let bits = x.reinterpret_as_uint64()
   let negative = bits >> 63 != 0
   let exp_bits = ((bits >> 52) & 0x7ff).to_int()
@@ -330,7 +330,7 @@ fn trim_trailing_zeros(text : String) -> String {
 
 ///|
 /// C `printf("%.<precision>G", x)`.
-fn format_g(x : Double, precision : Int) -> String {
+fn format_g(x : Double, precision : Int32) -> String {
   if x.is_nan() {
     "NAN"
   } else if x == @double.infinity {

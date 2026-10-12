@@ -25,12 +25,12 @@ pub fn Env::block_name(self : Env, addr : UInt64) -> String {
 
 ///|
 /// The tab stops set by upstream `setup_tab_stops`.
-let tab_stops : Array[Int] = [6, 31, 51]
+let tab_stops : Array[Int32] = [6, 31, 51]
 
 ///|
 /// Emulates `pp_print_tab` at column `col`: returns the padding and the
 /// new column.
-fn tab(col : Int) -> (String, Int) {
+fn tab(col : Int32) -> (String, Int32) {
   match tab_stops.iter().find_first(t => t >= col) {
     Some(t) => (String::make(t - col, ' '), t)
     None => ("\n" + String::make(tab_stops[0], ' '), tab_stops[0])
@@ -45,7 +45,7 @@ fn tab(col : Int) -> (String, Int) {
 fn insn_line(
   mem : @memory.Memory,
   insn : @project.ProjectDisassemblyInstruction,
-  col? : Int,
+  col? : Int32,
 ) -> String {
   let mem_text = @print.memory_to_string(mem)
   let insn_text = @print.insn_to_string(insn, "pretty")
@@ -65,7 +65,7 @@ fn insn_line(
 fn pp_insns(
   fmt : @text_tags.Formatter,
   blk : @project.ProjectDisassemblyBlock,
-  col? : Int,
+  col? : Int32,
 ) -> Unit {
   for insn in blk.insns() {
     fmt.print_cut()

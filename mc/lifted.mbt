@@ -12,7 +12,7 @@
 ///   `None` when it is unknown or the encoding does not change.
 pub struct Lifted {
   bil : Array[@types.Stmt]
-  delay : Int
+  delay : Int32
   dest_encoding : @core_theory.Language?
 } derive(Eq, Debug)
 
@@ -26,7 +26,7 @@ pub extend Lifted with Debug::{to_repr}
 /// Create a lifting result.
 pub fn Lifted::create(
   bil : Array[@types.Stmt],
-  delay? : Int = 0,
+  delay~ : Int32 = 0,
   dest_encoding? : @core_theory.Language,
 ) -> Lifted {
   { bil, delay, dest_encoding, }
@@ -44,7 +44,7 @@ pub fn Lifted::bil(self : Lifted) -> Array[@types.Stmt] {
 }
 
 ///|
-pub fn Lifted::delay(self : Lifted) -> Int {
+pub fn Lifted::delay(self : Lifted) -> Int32 {
   self.delay
 }
 

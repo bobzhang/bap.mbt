@@ -4,7 +4,7 @@
 
 ///|
 /// `rt := load (base + off) width` with the given destination signedness.
-fn load_base_offset(rt_sign : Sign, width : Int) -> Semantics {
+fn load_base_offset(rt_sign : Sign, width : Int32) -> Semantics {
   cpu => {
     let rt = cpu.reg(0, rt_sign)
     let base = cpu.sreg(1)
@@ -18,7 +18,7 @@ fn load_base_offset(rt_sign : Sign, width : Int) -> Semantics {
 /// operand is already scaled and `base` is the address of the instruction,
 /// aligned to `width` bytes for `LDPC`. Deliberate deviation from
 /// upstream, which scales the offset again (and does not align `LDPC`).
-fn load_pc_relative(rt_sign : Sign, width : Int) -> Semantics {
+fn load_pc_relative(rt_sign : Sign, width : Int32) -> Semantics {
   cpu => {
     let rt = cpu.reg(0, rt_sign)
     let off = cpu.simm(1)

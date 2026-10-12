@@ -83,7 +83,7 @@ fn project_lift_reads_assigned(
 /// statements of a branch must observe.
 priv struct ProjectDelayTemps {
   prefix : String
-  mut next : Int
+  mut next : Int32
   defs : Array[@types.Stmt]
 }
 
@@ -150,10 +150,10 @@ fn ProjectDelayTemps::control(
 fn project_lift_segments(
   instructions : Array[ProjectDisassemblyInstruction],
   lifted : Array[Result[@mc.Lifted, String]],
-) -> Array[(Int, Array[@types.Stmt])] {
-  let result : Array[(Int, Array[@types.Stmt])] = []
+) -> Array[(Int32, Array[@types.Stmt])] {
+  let result : Array[(Int32, Array[@types.Stmt])] = []
   // delayed control statements with the number of instructions to wait
-  let pending : Array[(Int, Int, Array[@types.Stmt])] = []
+  let pending : Array[(Int32, Int32, Array[@types.Stmt])] = []
   for i, insn in instructions {
     match lifted[i] {
       Ok(item) if item.delay() > 0 => {
@@ -214,10 +214,10 @@ fn project_lift_sequence(
 /// Count down the pending delayed control statements after one more
 /// instruction, emitting those whose delay slots are complete.
 fn project_lift_release(
-  pending : Array[(Int, Int, Array[@types.Stmt])],
-  result : Array[(Int, Array[@types.Stmt])],
+  pending : Array[(Int32, Int32, Array[@types.Stmt])],
+  result : Array[(Int32, Array[@types.Stmt])],
 ) -> Unit {
-  let waiting : Array[(Int, Int, Array[@types.Stmt])] = []
+  let waiting : Array[(Int32, Int32, Array[@types.Stmt])] = []
   for entry in pending {
     let (count, index, stmts) = entry
     if count <= 1 {
@@ -277,7 +277,7 @@ fn project_lift_instructions_strict(
 pub fn ProjectDisassemblyBlock::lift(
   self : ProjectDisassemblyBlock,
   target~ : @core_theory.Target,
-  registry? : @mc.Registry = project_lift_registry(),
+  registry~ : @mc.Registry = project_lift_registry(),
 ) -> Result[Array[@types.Stmt], String] {
   project_lift_instructions_strict(
     self.instructions(),
@@ -294,7 +294,7 @@ pub fn ProjectDisassemblyBlock::lift(
 pub fn ProjectDisassemblyBlock::lift_partial(
   self : ProjectDisassemblyBlock,
   target~ : @core_theory.Target,
-  registry? : @mc.Registry = project_lift_registry(),
+  registry~ : @mc.Registry = project_lift_registry(),
 ) -> (Array[@types.Stmt], Array[ProjectLiftError]) {
   project_lift_instructions(self.instructions(), target, registry)
 }
@@ -305,7 +305,7 @@ pub fn ProjectDisassemblyBlock::lift_partial(
 pub fn ProjectDisassemblyState::lift(
   self : ProjectDisassemblyState,
   target~ : @core_theory.Target,
-  registry? : @mc.Registry = project_lift_registry(),
+  registry~ : @mc.Registry = project_lift_registry(),
 ) -> Result[Array[@types.Stmt], String] {
   project_lift_instructions_strict(self.instructions(), target, registry, "")
 }
@@ -316,7 +316,7 @@ pub fn ProjectDisassemblyState::lift(
 pub fn ProjectDisassemblyState::lift_errors(
   self : ProjectDisassemblyState,
   target~ : @core_theory.Target,
-  registry? : @mc.Registry = project_lift_registry(),
+  registry~ : @mc.Registry = project_lift_registry(),
 ) -> Array[ProjectLiftError] {
   project_lift_instructions(self.instructions(), target, registry).1
 }
@@ -325,7 +325,7 @@ pub fn ProjectDisassemblyState::lift_errors(
 /// Lift the disassembly of the project on the project target.
 pub fn ProjectDisasm::lift(
   self : ProjectDisasm,
-  registry? : @mc.Registry = project_lift_registry(),
+  registry~ : @mc.Registry = project_lift_registry(),
 ) -> Result[Array[@types.Stmt], String] {
   let project = self.project_value
   project.disassembly().lift(target=project.target(), registry~)
@@ -335,7 +335,7 @@ pub fn ProjectDisasm::lift(
 /// Lift the disassembly of the project on the project target.
 pub fn Project::lift(
   self : Project,
-  registry? : @mc.Registry = project_lift_registry(),
+  registry~ : @mc.Registry = project_lift_registry(),
 ) -> Result[Array[@types.Stmt], String] {
   self.disassembly().lift(target=self.target(), registry~)
 }

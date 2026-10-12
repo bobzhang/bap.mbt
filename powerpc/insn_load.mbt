@@ -12,7 +12,7 @@
 fn load_d(
   cpu : Cpu,
   ops : Operands,
-  width : Int,
+  width : Int32,
   sign : Sign,
 ) -> Array[Rtl] raise @mc.LiftError {
   let rt = cpu.reg(ops, 0, sign)
@@ -26,7 +26,7 @@ fn load_d(
 fn load_x(
   cpu : Cpu,
   ops : Operands,
-  width : Int,
+  width : Int32,
   sign : Sign,
 ) -> Array[Rtl] raise @mc.LiftError {
   let rt = cpu.reg(ops, 0, sign)
@@ -40,7 +40,7 @@ fn load_x(
 fn load_du(
   cpu : Cpu,
   ops : Operands,
-  width : Int,
+  width : Int32,
   sign : Sign,
 ) -> Array[Rtl] raise @mc.LiftError {
   let rt = cpu.reg(ops, 0, sign)
@@ -54,7 +54,7 @@ fn load_du(
 fn load_xu(
   cpu : Cpu,
   ops : Operands,
-  width : Int,
+  width : Int32,
   sign : Sign,
 ) -> Array[Rtl] raise @mc.LiftError {
   let rt = cpu.reg(ops, 0, sign)
@@ -232,7 +232,7 @@ fn lhbrx(cpu : Cpu, ops : Operands) -> Array[Rtl] raise @mc.LiftError {
 /// `nth byte x (count-1) ^ ... ^ nth byte x 0`: the first `count` bytes of
 /// `x` in reverse order (concatenation associates to the right, as in
 /// upstream).
-fn reverse_bytes(x : RtlExp, count : Int) -> RtlExp {
+fn reverse_bytes(x : RtlExp, count : Int32) -> RtlExp {
   let mut acc = x.nth(byte, 0)
   for i in 1..<count {
     acc = x.nth(byte, i).concat(acc)

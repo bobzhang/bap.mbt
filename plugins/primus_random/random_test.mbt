@@ -6,12 +6,12 @@ fn project(subs : Array[@types.Term[@types.Sub]]) -> @project.Project {
 }
 
 ///|
-fn int64(n : Int) -> @types.Exp {
+fn int64(n : Int32) -> @types.Exp {
   Int(try! @types.Word::of_int(width=64, n))
 }
 
 ///|
-fn load8(addr : Int) -> @types.Exp {
+fn load8(addr : Int32) -> @types.Exp {
   Load(
     mem=Var(@types.Var::create("mem", Mem(addr_width=64, value_width=8))),
     addr=int64(addr),
@@ -21,7 +21,7 @@ fn load8(addr : Int) -> @types.Exp {
 }
 
 ///|
-fn store8(addr : Int, x : Int) -> @types.Term[@types.Def] {
+fn store8(addr : Int32, x : Int32) -> @types.Term[@types.Def] {
   let mem = @types.Var::create("mem", Mem(addr_width=64, value_width=8))
   @types.Def::create(
     mem,

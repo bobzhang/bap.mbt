@@ -26,33 +26,33 @@
 priv enum PpcFlag {
   NoFlag
   /// The given bits are all zero.
-  Zero(Array[Int])
+  Zero(Array[Int32])
   /// The bits at the first positions equal those at the second ones.
-  Eq(Array[Int], Array[Int])
+  Eq(Array[Int32], Array[Int32])
   /// The 1-based index of the value of the given bits among the values, 0
   /// for other values.
-  Vals(Array[Int], Array[Int])
+  Vals(Array[Int32], Array[Int32])
 }
 
 ///|
 priv struct PpcClass {
-  mask : UInt
-  value : UInt
+  mask : UInt32
+  value : UInt32
   /// The key bits (bit 0 is the least significant bit of the word), most
   /// significant first.
-  kpos : Array[Int]
+  kpos : Array[Int32]
   /// The operand fields and their bits, most significant first.
-  fields : Array[(Char, Array[Int])]
+  fields : Array[(Char, Array[Int32])]
   /// Key refinements `(mask, value, keep, bits, flag, tag)`: the first
   /// rule whose `mask` selects `value` in the key bits makes the key the
   /// kept key bits, the given bits (from bit 12), the flag (from bit 26) and the
   /// tag (from bit 28).
-  rules : Array[(Int, Int, Int, Array[Int], PpcFlag, Int)]
-  table : (Int) -> (String, String, String, UInt)?
+  rules : Array[(Int32, Int32, Int32, Array[Int32], PpcFlag, Int32)]
+  table : (Int32) -> (String, String, String, UInt32)?
 }
 
 ///|
-fn word_bits(w : UInt, positions : Array[Int]) -> Int {
+fn word_bits(w : UInt32, positions : Array[Int32]) -> Int32 {
   positions.fold(init=0, (v, b) => {
     (v << 1) | ((w >> b) & 1).reinterpret_as_int()
   })
@@ -61,12 +61,12 @@ fn word_bits(w : UInt, positions : Array[Int]) -> Int {
 ///|
 /// Bits `from..to` of the word, numbered from the most significant bit as
 /// in the Power ISA.
-fn isa_bits(w : UInt, from : Int, to : Int) -> Int {
+fn isa_bits(w : UInt32, from : Int32, to : Int32) -> Int32 {
   field(w, from, to)
 }
 
 ///|
-fn PpcClass::field(self : PpcClass, w : UInt, name : Char) -> Int {
+fn PpcClass::field(self : PpcClass, w : UInt32, name : Char) -> Int32 {
   for f in self.fields {
     if f.0 == name {
       return word_bits(w, f.1)
@@ -76,7 +76,7 @@ fn PpcClass::field(self : PpcClass, w : UInt, name : Char) -> Int {
 }
 
 ///|
-fn PpcClass::key_of(self : PpcClass, w : UInt) -> Int {
+fn PpcClass::key_of(self : PpcClass, w : UInt32) -> Int32 {
   let kb = word_bits(w, self.kpos)
   for rule in self.rules {
     let (mask, value, keep, positions, flag, tag) = rule
@@ -109,7 +109,7 @@ fn PpcClass::key_of(self : PpcClass, w : UInt) -> Int {
 
 ///|
 /// A VSX register (`vsrc`): `VSL0`..`VSL31`, then `V0`..`V31`.
-fn vsx_name(n : Int) -> String {
+fn vsx_name(n : Int32) -> String {
   if n < 32 {
     "VSL\{n}"
   } else {
@@ -119,7 +119,7 @@ fn vsx_name(n : Int) -> String {
 
 ///|
 /// A scalar VSX register (`vsfrc`): `F0`..`F31`, then `VF0`..`VF31`.
-fn vsf_name(n : Int) -> String {
+fn vsf_name(n : Int32) -> String {
   if n < 32 {
     "F\{n}"
   } else {
@@ -129,8 +129,8 @@ fn vsf_name(n : Int) -> String {
 
 ///|
 /// The numeric slots of a word that are not operand fields.
-fn ppc_number_slot(w : UInt, name : String) -> Int? {
-  let b = (from : Int, to : Int) => isa_bits(w, from, to)
+fn ppc_number_slot(w : UInt32, name : String) -> Int32? {
+  let b = (from : Int32, to : Int32) => isa_bits(w, from, to)
   match name {
     "c" => Some(b(21, 25))
     "d" => Some(b(16, 31))
@@ -180,7 +180,7 @@ fn ppc_number_slot(w : UInt, name : String) -> Int? {
 
 ///|
 /// The value of the template slot `name` of `w` (see the file header).
-fn PpcClass::slot(self : PpcClass, w : UInt, name : String) -> String {
+fn PpcClass::slot(self : PpcClass, w : UInt32, name : String) -> String {
   if ppc_number_slot(w, name) is Some(v) {
     return v.to_string()
   }
@@ -220,7 +220,7 @@ fn PpcClass::slot(self : PpcClass, w : UInt, name : String) -> String {
 }
 
 ///|
-fn PpcClass::expand(self : PpcClass, w : UInt, t : String) -> String {
+fn PpcClass::expand(self : PpcClass, w : UInt32, t : String) -> String {
   let out = StringBuilder()
   for i, part in t.split("%").collect() {
     if i % 2 == 0 {
@@ -251,7 +251,7 @@ fn ppc_parse_int(s : String) -> Int64 {
 }
 
 ///|
-fn PpcClass::operands(self : PpcClass, w : UInt, t : String) -> Array[@mc.Op] {
+fn PpcClass::operands(self : PpcClass, w : UInt32, t : String) -> Array[@mc.Op] {
   if t.is_empty() {
     return []
   }
@@ -271,7 +271,7 @@ fn PpcClass::operands(self : PpcClass, w : UInt, t : String) -> Array[@mc.Op] {
 ///|
 /// Decodes `w` with the tables: the LLVM name, operands, assembly and
 /// kinds.
-fn decode_ext(w : UInt) -> (String, Array[@mc.Op], String, Array[@mc.Kind])? {
+fn decode_ext(w : UInt32) -> (String, Array[@mc.Op], String, Array[@mc.Kind])? {
   for cls in ppc_classes {
     guard (w & cls.mask) == cls.value else { continue }
     guard (cls.table)(cls.key_of(w)) is Some((name, ops, text, zero)) &&

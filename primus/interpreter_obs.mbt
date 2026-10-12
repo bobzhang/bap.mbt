@@ -43,7 +43,7 @@ fn[T] provide_term(name : String, before : Bool) -> Statement[@types.Term[T]] {
 }
 
 ///|
-let clock_stmt : Statement[Int] = Statement::provide(
+let clock_stmt : Statement[Int32] = Statement::provide(
   "clock",
   inspect=t => Atom(t.to_string()),
   desc="Occurs on each clock (operation) of the interpreter.",
@@ -51,7 +51,7 @@ let clock_stmt : Statement[Int] = Statement::provide(
 
 ///|
 /// Occurs on each clock (operation) of the interpreter (`Interpreter.clock`).
-pub let clock : Observation[Int] = clock_stmt.obs
+pub let clock : Observation[Int32] = clock_stmt.obs
 
 ///|
 let memory_switch_stmt : Statement[Descriptor] = Statement::provide(
@@ -298,14 +298,14 @@ let page_fail_stmt : Statement[@types.Word] = Statement::provide(
 pub let pagefault : Observation[@types.Word] = page_fail_stmt.obs
 
 ///|
-let will_interrupt_stmt : Statement[Int] = Statement::provide(
+let will_interrupt_stmt : Statement[Int32] = Statement::provide(
   "interrupt",
   inspect=n => Atom(n.to_string()),
   desc="Occurs before an interrupt.",
 )
 
 ///|
-pub let interrupt : Observation[Int] = will_interrupt_stmt.obs
+pub let interrupt : Observation[Int32] = will_interrupt_stmt.obs
 
 ///|
 let on_loading_stmt : Statement[Value] = Statement::provide(
@@ -456,7 +456,7 @@ let on_unop_stmt : Statement[((@types.UnOp, Value), Value)] = Statement::provide
 pub let unop : Observation[((@types.UnOp, Value), Value)] = on_unop_stmt.obs
 
 ///|
-let on_cast_stmt : Statement[((@types.CastKind, Int, Value), Value)] = Statement::provide(
+let on_cast_stmt : Statement[((@types.CastKind, Int32, Value), Value)] = Statement::provide(
   "cast",
   inspect=p => {
     let ((t, s, x), r) = p
@@ -466,10 +466,10 @@ let on_cast_stmt : Statement[((@types.CastKind, Int, Value), Value)] = Statement
 )
 
 ///|
-pub let cast : Observation[((@types.CastKind, Int, Value), Value)] = on_cast_stmt.obs
+pub let cast : Observation[((@types.CastKind, Int32, Value), Value)] = on_cast_stmt.obs
 
 ///|
-let on_extract_stmt : Statement[((Int, Int, Value), Value)] = Statement::provide(
+let on_extract_stmt : Statement[((Int32, Int32, Value), Value)] = Statement::provide(
   "extract",
   inspect=p => {
     let ((hi, lo, x), r) = p
@@ -479,7 +479,7 @@ let on_extract_stmt : Statement[((Int, Int, Value), Value)] = Statement::provide
 )
 
 ///|
-pub let extract : Observation[((Int, Int, Value), Value)] = on_extract_stmt.obs
+pub let extract : Observation[((Int32, Int32, Value), Value)] = on_extract_stmt.obs
 
 ///|
 let on_concat_stmt : Statement[((Value, Value), Value)] = Statement::provide(

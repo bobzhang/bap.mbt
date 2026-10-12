@@ -37,7 +37,7 @@ let doc : String =
 
 ///|
 /// The report printed by `bap cache --info` (upstream `print_info`).
-pub fn info_report(cfg : Config, size~ : Int) -> String {
+pub fn info_report(cfg : Config, size~ : Int32) -> String {
   let pad = (s : String) => s.pad_start(5, ' ')
   let buf = StringBuilder()
   buf.write_string("Capacity:     \{pad(cfg.capacity.to_string())} MB\n")
@@ -78,8 +78,8 @@ pub fn command_options_report() -> String {
 /// `update_config`); `None` if no option is set.
 pub fn update_config(
   cfg : Config,
-  capacity? : Int,
-  overhead? : Int,
+  capacity? : Int32,
+  overhead? : Int32,
   disable_gc? : Bool,
   enable_gc? : Bool,
 ) -> Config? {
@@ -146,7 +146,7 @@ let output : Ref[(String) -> Unit] = Ref(default_output)
 /// options, and the caching service) and the `bap cache` command to
 /// `bap_main`. Idempotent: does nothing if the plugin is already
 /// declared. `out` receives the output of the command.
-pub fn register(out? : (String) -> Unit = default_output) -> Unit raise {
+pub fn register(out~ : (String) -> Unit = default_output) -> Unit raise {
   output.val = out
   if @bap_main.registered_plugins().contains(name) {
     return
@@ -255,8 +255,8 @@ fn declare_command(cache_dir : @bap_main.Parameter[String?]) -> Unit raise {
 /// the command options.
 fn run_command(
   clean_cache~ : Bool,
-  capacity? : Int,
-  overhead? : Int,
+  capacity? : Int32,
+  overhead? : Int32,
   run_gc~ : Bool,
   disable_gc? : Bool,
   enable_gc? : Bool,

@@ -5,32 +5,32 @@ pub(all) enum VarBinding {
 }
 
 ///|
-fn find_sub_index(subs : Array[Term[Sub]], tid : Tid) -> Int? {
+fn find_sub_index(subs : Array[Term[Sub]], tid : Tid) -> Int32? {
   subs.search_by(term => term.tid() == tid)
 }
 
 ///|
-fn find_arg_index(args : Array[Term[Arg]], tid : Tid) -> Int? {
+fn find_arg_index(args : Array[Term[Arg]], tid : Tid) -> Int32? {
   args.search_by(term => term.tid() == tid)
 }
 
 ///|
-fn find_def_index(defs : Array[Term[Def]], tid : Tid) -> Int? {
+fn find_def_index(defs : Array[Term[Def]], tid : Tid) -> Int32? {
   defs.search_by(term => term.tid() == tid)
 }
 
 ///|
-fn find_phi_index(phis : Array[Term[Phi]], tid : Tid) -> Int? {
+fn find_phi_index(phis : Array[Term[Phi]], tid : Tid) -> Int32? {
   phis.search_by(term => term.tid() == tid)
 }
 
 ///|
-fn find_jmp_index(jmps : Array[Term[Jmp]], tid : Tid) -> Int? {
+fn find_jmp_index(jmps : Array[Term[Jmp]], tid : Tid) -> Int32? {
   jmps.search_by(term => term.tid() == tid)
 }
 
 ///|
-fn find_blk_index(blks : Array[Term[Blk]], tid : Tid) -> Int? {
+fn find_blk_index(blks : Array[Term[Blk]], tid : Tid) -> Int32? {
   blks.search_by(term => term.tid() == tid)
 }
 
@@ -62,7 +62,7 @@ fn[T] change_term_array(
 }
 
 ///|
-fn clamp_def_index(index : Int, length : Int) -> Int {
+fn clamp_def_index(index : Int32, length : Int32) -> Int32 {
   if index < 0 {
     0
   } else if index > length {
@@ -75,8 +75,8 @@ fn clamp_def_index(index : Int, length : Int) -> Int {
 ///|
 fn copy_sub_range(
   subs : Array[Term[Sub]],
-  start : Int,
-  stop : Int,
+  start : Int32,
+  stop : Int32,
   rev : Bool,
 ) -> Array[Term[Sub]] {
   let length = subs.length()
@@ -100,8 +100,8 @@ fn copy_sub_range(
 ///|
 fn copy_arg_range(
   args : Array[Term[Arg]],
-  start : Int,
-  stop : Int,
+  start : Int32,
+  stop : Int32,
   rev : Bool,
 ) -> Array[Term[Arg]] {
   let length = args.length()
@@ -125,8 +125,8 @@ fn copy_arg_range(
 ///|
 fn copy_blk_range(
   blks : Array[Term[Blk]],
-  start : Int,
-  stop : Int,
+  start : Int32,
+  stop : Int32,
   rev : Bool,
 ) -> Array[Term[Blk]] {
   let length = blks.length()
@@ -150,8 +150,8 @@ fn copy_blk_range(
 ///|
 fn copy_def_range(
   defs : Array[Term[Def]],
-  start : Int,
-  stop : Int,
+  start : Int32,
+  stop : Int32,
   rev : Bool,
 ) -> Array[Term[Def]] {
   let length = defs.length()
@@ -175,8 +175,8 @@ fn copy_def_range(
 ///|
 fn copy_phi_range(
   phis : Array[Term[Phi]],
-  start : Int,
-  stop : Int,
+  start : Int32,
+  stop : Int32,
   rev : Bool,
 ) -> Array[Term[Phi]] {
   let length = phis.length()
@@ -200,8 +200,8 @@ fn copy_phi_range(
 ///|
 fn copy_jmp_range(
   jmps : Array[Term[Jmp]],
-  start : Int,
-  stop : Int,
+  start : Int32,
+  stop : Int32,
   rev : Bool,
 ) -> Array[Term[Jmp]] {
   let length = jmps.length()
@@ -256,7 +256,10 @@ fn Term::with_blks(self : Term[Sub], blks : Array[Term[Blk]]) -> Term[Sub] {
 }
 
 ///|
-fn Term::split_def_at(self : Term[Blk], index : Int) -> (Term[Blk], Term[Blk]) {
+fn Term::split_def_at(
+  self : Term[Blk],
+  index : Int32,
+) -> (Term[Blk], Term[Blk]) {
   let defs = self.payload_value.defs
   let split = clamp_def_index(index, defs.length())
   let next_tid = Tid::fresh()
@@ -274,12 +277,12 @@ fn Term::split_def_at(self : Term[Blk], index : Int) -> (Term[Blk], Term[Blk]) {
 }
 
 ///|
-pub fn Term::sub_count(self : Term[Program]) -> Int {
+pub fn Term::sub_count(self : Term[Program]) -> Int32 {
   self.payload_value.subs.length()
 }
 
 ///|
-pub fn Term::nth_sub(self : Term[Program], index : Int) -> Term[Sub]? {
+pub fn Term::nth_sub(self : Term[Program], index : Int32) -> Term[Sub]? {
   if index >= 0 && index < self.payload_value.subs.length() {
     Some(self.payload_value.subs[index])
   } else {
@@ -317,7 +320,7 @@ pub fn Term::prev_sub(self : Term[Program], tid : Tid) -> Term[Sub]? {
 pub fn Term::subs_after(
   self : Term[Program],
   tid : Tid,
-  rev? : Bool = false,
+  rev~ : Bool = false,
 ) -> Array[Term[Sub]] {
   match find_sub_index(self.payload_value.subs, tid) {
     Some(i) =>
@@ -335,7 +338,7 @@ pub fn Term::subs_after(
 pub fn Term::subs_before(
   self : Term[Program],
   tid : Tid,
-  rev? : Bool = false,
+  rev~ : Bool = false,
 ) -> Array[Term[Sub]] {
   match find_sub_index(self.payload_value.subs, tid) {
     Some(i) => copy_sub_range(self.payload_value.subs, 0, i, rev)
@@ -455,12 +458,12 @@ pub fn Term::change_sub(
 }
 
 ///|
-pub fn Term::arg_count(self : Term[Sub]) -> Int {
+pub fn Term::arg_count(self : Term[Sub]) -> Int32 {
   self.payload_value.args.length()
 }
 
 ///|
-pub fn Term::nth_arg(self : Term[Sub], index : Int) -> Term[Arg]? {
+pub fn Term::nth_arg(self : Term[Sub], index : Int32) -> Term[Arg]? {
   if index >= 0 && index < self.payload_value.args.length() {
     Some(self.payload_value.args[index])
   } else {
@@ -498,7 +501,7 @@ pub fn Term::prev_arg(self : Term[Sub], tid : Tid) -> Term[Arg]? {
 pub fn Term::args_after(
   self : Term[Sub],
   tid : Tid,
-  rev? : Bool = false,
+  rev~ : Bool = false,
 ) -> Array[Term[Arg]] {
   match find_arg_index(self.payload_value.args, tid) {
     Some(i) =>
@@ -516,7 +519,7 @@ pub fn Term::args_after(
 pub fn Term::args_before(
   self : Term[Sub],
   tid : Tid,
-  rev? : Bool = false,
+  rev~ : Bool = false,
 ) -> Array[Term[Arg]] {
   match find_arg_index(self.payload_value.args, tid) {
     Some(i) => copy_arg_range(self.payload_value.args, 0, i, rev)
@@ -633,12 +636,12 @@ pub fn Term::change_arg(
 }
 
 ///|
-pub fn Term::blk_count(self : Term[Sub]) -> Int {
+pub fn Term::blk_count(self : Term[Sub]) -> Int32 {
   self.payload_value.blks.length()
 }
 
 ///|
-pub fn Term::nth_blk(self : Term[Sub], index : Int) -> Term[Blk]? {
+pub fn Term::nth_blk(self : Term[Sub], index : Int32) -> Term[Blk]? {
   if index >= 0 && index < self.payload_value.blks.length() {
     Some(self.payload_value.blks[index])
   } else {
@@ -676,7 +679,7 @@ pub fn Term::prev_blk(self : Term[Sub], tid : Tid) -> Term[Blk]? {
 pub fn Term::blks_after(
   self : Term[Sub],
   tid : Tid,
-  rev? : Bool = false,
+  rev~ : Bool = false,
 ) -> Array[Term[Blk]] {
   match find_blk_index(self.payload_value.blks, tid) {
     Some(i) =>
@@ -694,7 +697,7 @@ pub fn Term::blks_after(
 pub fn Term::blks_before(
   self : Term[Sub],
   tid : Tid,
-  rev? : Bool = false,
+  rev~ : Bool = false,
 ) -> Array[Term[Blk]] {
   match find_blk_index(self.payload_value.blks, tid) {
     Some(i) => copy_blk_range(self.payload_value.blks, 0, i, rev)
@@ -747,12 +750,12 @@ pub fn Term::insert_blk_before(
 }
 
 ///|
-pub fn Term::def_count(self : Term[Blk]) -> Int {
+pub fn Term::def_count(self : Term[Blk]) -> Int32 {
   self.payload_value.defs.length()
 }
 
 ///|
-pub fn Term::nth_def(self : Term[Blk], index : Int) -> Term[Def]? {
+pub fn Term::nth_def(self : Term[Blk], index : Int32) -> Term[Def]? {
   if index >= 0 && index < self.payload_value.defs.length() {
     Some(self.payload_value.defs[index])
   } else {
@@ -787,12 +790,12 @@ pub fn Term::prev_def(self : Term[Blk], tid : Tid) -> Term[Def]? {
 }
 
 ///|
-pub fn Term::phi_count(self : Term[Blk]) -> Int {
+pub fn Term::phi_count(self : Term[Blk]) -> Int32 {
   self.payload_value.phis.length()
 }
 
 ///|
-pub fn Term::nth_phi(self : Term[Blk], index : Int) -> Term[Phi]? {
+pub fn Term::nth_phi(self : Term[Blk], index : Int32) -> Term[Phi]? {
   if index >= 0 && index < self.payload_value.phis.length() {
     Some(self.payload_value.phis[index])
   } else {
@@ -827,12 +830,12 @@ pub fn Term::prev_phi(self : Term[Blk], tid : Tid) -> Term[Phi]? {
 }
 
 ///|
-pub fn Term::jmp_count(self : Term[Blk]) -> Int {
+pub fn Term::jmp_count(self : Term[Blk]) -> Int32 {
   self.payload_value.jmps.length()
 }
 
 ///|
-pub fn Term::nth_jmp(self : Term[Blk], index : Int) -> Term[Jmp]? {
+pub fn Term::nth_jmp(self : Term[Blk], index : Int32) -> Term[Jmp]? {
   if index >= 0 && index < self.payload_value.jmps.length() {
     Some(self.payload_value.jmps[index])
   } else {
@@ -870,7 +873,7 @@ pub fn Term::prev_jmp(self : Term[Blk], tid : Tid) -> Term[Jmp]? {
 pub fn Term::defs_after(
   self : Term[Blk],
   tid : Tid,
-  rev? : Bool = false,
+  rev~ : Bool = false,
 ) -> Array[Term[Def]] {
   match find_def_index(self.payload_value.defs, tid) {
     Some(i) =>
@@ -888,7 +891,7 @@ pub fn Term::defs_after(
 pub fn Term::defs_before(
   self : Term[Blk],
   tid : Tid,
-  rev? : Bool = false,
+  rev~ : Bool = false,
 ) -> Array[Term[Def]] {
   match find_def_index(self.payload_value.defs, tid) {
     Some(i) => copy_def_range(self.payload_value.defs, 0, i, rev)
@@ -900,7 +903,7 @@ pub fn Term::defs_before(
 pub fn Term::phis_after(
   self : Term[Blk],
   tid : Tid,
-  rev? : Bool = false,
+  rev~ : Bool = false,
 ) -> Array[Term[Phi]] {
   match find_phi_index(self.payload_value.phis, tid) {
     Some(i) =>
@@ -918,7 +921,7 @@ pub fn Term::phis_after(
 pub fn Term::phis_before(
   self : Term[Blk],
   tid : Tid,
-  rev? : Bool = false,
+  rev~ : Bool = false,
 ) -> Array[Term[Phi]] {
   match find_phi_index(self.payload_value.phis, tid) {
     Some(i) => copy_phi_range(self.payload_value.phis, 0, i, rev)
@@ -930,7 +933,7 @@ pub fn Term::phis_before(
 pub fn Term::jmps_after(
   self : Term[Blk],
   tid : Tid,
-  rev? : Bool = false,
+  rev~ : Bool = false,
 ) -> Array[Term[Jmp]] {
   match find_jmp_index(self.payload_value.jmps, tid) {
     Some(i) =>
@@ -948,7 +951,7 @@ pub fn Term::jmps_after(
 pub fn Term::jmps_before(
   self : Term[Blk],
   tid : Tid,
-  rev? : Bool = false,
+  rev~ : Bool = false,
 ) -> Array[Term[Jmp]] {
   match find_jmp_index(self.payload_value.jmps, tid) {
     Some(i) => copy_jmp_range(self.payload_value.jmps, 0, i, rev)

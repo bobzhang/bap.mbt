@@ -30,7 +30,7 @@ fn spec_uint64(value : Int64, what : String) -> Result[UInt64, String] {
 }
 
 ///|
-fn spec_int(value : Int64, what : String) -> Result[Int, String] {
+fn spec_int(value : Int64, what : String) -> Result[Int32, String] {
   if value < 0L || value > 2147483647L {
     Err("Ogre field \{what} is out of Int range")
   } else {
@@ -42,7 +42,7 @@ fn spec_int(value : Int64, what : String) -> Result[Int, String] {
 fn[A] spec_region(
   r : Region[A],
   attribute : String,
-) -> Result[(UInt64, Int), String] {
+) -> Result[(UInt64, Int32), String] {
   match spec_uint64(r.addr, "\{attribute}.addr") {
     Err(reason) => Err(reason)
     Ok(addr) =>

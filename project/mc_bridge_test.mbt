@@ -3,8 +3,8 @@ fn bridge_insn(
   addr : UInt64,
   name : String,
   operands : Array[@project.ProjectInstructionOperand],
-  size? : Int = 4,
-  encoding? : String = "llvm",
+  size~ : Int32 = 4,
+  encoding~ : String = "llvm",
 ) -> @project.ProjectDisassemblyInstruction {
   let bytes = Bytes::make(size, b'\x00')
   let mem = @memory.Memory::from_bytes(endian=BigEndian, start=addr, bytes)

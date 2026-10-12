@@ -1647,7 +1647,7 @@ let llvm_ext_samples : String =
   #|0xffff3888	XSCMPEQQP Reg:V31 Reg:V31 Reg:V7 | xscmpeqqp 31, 31, 7
 
 ///|
-fn hex_word(s : StringView) -> UInt {
+fn hex_word(s : StringView) -> UInt32 {
   s.fold(init=0U, (v, c) => {
     let d = if c >= 'a' {
       c.to_int() - 'a'.to_int() + 10

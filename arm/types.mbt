@@ -65,7 +65,7 @@ pub extend Reg with Debug::{to_repr}
 /// Decoded ARM operand (`Arm_types.op`). Immediates are 32-bit words.
 pub(all) enum Op {
   Reg(Reg)
-  Imm(UInt)
+  Imm(UInt32)
 } derive(Eq, Debug)
 
 ///|

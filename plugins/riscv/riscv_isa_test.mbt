@@ -12,10 +12,10 @@
 fn run_rv(
   code : Bytes,
   regs : Array[(String, Int64)],
-  base? : UInt64 = 0x10000,
-  xlen? : @rv.Xlen = RV64,
-  data_addr? : UInt64 = 0x7fff0000,
-  data? : Bytes = Bytes::make(16, b'\x00'),
+  base~ : UInt64 = 0x10000,
+  xlen~ : @rv.Xlen = RV64,
+  data_addr~ : UInt64 = 0x7fff0000,
+  data~ : Bytes = Bytes::make(16, b'\x00'),
 ) -> (@types.BilState, UInt64) raise {
   let registry = semantics()
   let (target, width) = match xlen {
@@ -52,7 +52,7 @@ fn run_rv(
 
 ///|
 /// The little-endian encoding of the `(value, size)` instructions.
-fn encode(insns : Array[(UInt, Int)]) -> Bytes {
+fn encode(insns : Array[(UInt32, Int32)]) -> Bytes {
   let out = []
   for insn in insns {
     let (value, size) = insn
@@ -139,7 +139,7 @@ test "rv64: loads extend by their width" {
 
 ///|
 test "rv64: signed and unsigned branches" {
-  let exit = (word : UInt) => {
+  let exit = (word : UInt32) => {
     let (_, pc) = run_rv(encode([(word, 4)]), [("X10", -1L), ("X11", 1L)]) catch {
       _ => panic()
     }

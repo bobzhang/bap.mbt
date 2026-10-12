@@ -1,6 +1,6 @@
 ///|
 struct AddrR32 {
-  value : Int
+  value : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -21,17 +21,17 @@ pub extend AddrR64 with Eq::{not_equal, equal}
 pub extend AddrR64 with Debug::{to_repr}
 
 ///|
-fn addr_r32_shift_amount(amount : Int) -> Int {
+fn addr_r32_shift_amount(amount : Int32) -> Int32 {
   amount & 31
 }
 
 ///|
-fn addr_r64_shift_amount(amount : Int64) -> Int {
+fn addr_r64_shift_amount(amount : Int64) -> Int32 {
   (amount.reinterpret_as_uint64() & 63UL).to_int()
 }
 
 ///|
-pub fn AddrR32::of_int32(value : Int) -> AddrR32 {
+pub fn AddrR32::of_int32(value : Int32) -> AddrR32 {
   { value, }
 }
 
@@ -50,12 +50,12 @@ pub fn AddrR32::create_exn(word : Word) -> AddrR32 raise @bitvec.BitVecError {
 }
 
 ///|
-pub fn AddrR32::to_int32(self : AddrR32) -> Int {
+pub fn AddrR32::to_int32(self : AddrR32) -> Int32 {
   self.value
 }
 
 ///|
-pub fn AddrR32::to_uint(self : AddrR32) -> UInt {
+pub fn AddrR32::to_uint(self : AddrR32) -> UInt32 {
   self.value.reinterpret_as_uint()
 }
 

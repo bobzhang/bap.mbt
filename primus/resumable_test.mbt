@@ -2,7 +2,7 @@
 // forks inside callees, suspension at observations, handlers and cleanups.
 
 ///|
-fn val64(m : @primus.Machine, n : Int) -> @primus.Value {
+fn val64(m : @primus.Machine, n : Int32) -> @primus.Value {
   @primus.Value::of_word(m, w64(n))
 }
 
@@ -426,7 +426,7 @@ test "exceptions: dead switch targets, handlers and nested runs" {
 }
 
 ///|
-let array_state : @primus.State[Array[Int]] = @primus.State::declare_(
+let array_state : @primus.State[Array[Int32]] = @primus.State::declare_(
   uuid="7c1d7c2e-5f4b-4b8e-9a61-2f3e4d5c6b7a",
   name="test-array-state",
   clone=a => a.copy(),
@@ -638,8 +638,8 @@ test "shift amounts are clamped by magnitude" {
 /// writes its id to every cell.
 fn spawn(
   m : @primus.Machine,
-  n : Int,
-  cells : Int,
+  n : Int32,
+  cells : Int32,
   seen : Array[Bool],
 ) -> Unit raise {
   if n == 0 {

@@ -70,13 +70,13 @@ pub extend Segment with Debug::{to_repr}
 /// A section header (upstream `section`), with every field of the file
 /// entry.
 pub(all) struct Section {
-  sh_name : UInt
+  sh_name : UInt32
   sh_type : ShType
   sh_flags : Array[ShFlag]
   sh_addr : UInt64
   sh_size : UInt64
-  sh_link : UInt
-  sh_info : UInt
+  sh_link : UInt32
+  sh_info : UInt32
   sh_addralign : UInt64
   sh_entsize : UInt64
   sh_offset : UInt64
@@ -95,8 +95,8 @@ pub extend Section with Debug::{to_repr}
 /// The location of a header table (upstream `table_info`).
 pub(all) struct TableInfo {
   table_offset : UInt64
-  entry_size : Int
-  entry_num : Int
+  entry_size : Int32
+  entry_num : Int32
 } derive(Eq, Compare, Debug)
 
 ///|
@@ -127,18 +127,18 @@ pub extend TableInfo with Debug::{to_repr}
 pub(all) struct Elf {
   e_class : EClass
   e_data : EData
-  e_version : Int
+  e_version : Int32
   e_osabi : EOsabi
-  e_abiver : Int
+  e_abiver : Int32
   e_type : EType
   e_machine : EMachine
   e_entry : UInt64
-  e_shstrndx : Int
+  e_shstrndx : Int32
   e_sections : Array[Section]
   e_segments : Array[Segment]
-  e_file_version : UInt
-  e_flags : UInt
-  e_ehsize : Int
+  e_file_version : UInt32
+  e_flags : UInt32
+  e_ehsize : Int32
   e_phtab : TableInfo
   e_shtab : TableInfo
 } derive(Eq, Compare, Debug)
@@ -160,7 +160,7 @@ pub fn Elf::endian(self : Elf) -> @bitvec.Endian {
 
 ///|
 /// The address size of the file in bits.
-pub fn Elf::bits(self : Elf) -> Int {
+pub fn Elf::bits(self : Elf) -> Int32 {
   match self.e_class {
     ELFCLASS32 => 32
     ELFCLASS64 => 64
@@ -172,8 +172,8 @@ pub fn Elf::bits(self : Elf) -> Int {
 /// flags are listed from the highest set bit to the lowest, as upstream
 /// does.
 fn[F] flags_of_bits(
-  flag_of : (Int) -> F,
-  width : Int,
+  flag_of : (Int32) -> F,
+  width : Int32,
   bits : UInt64,
 ) -> Array[F] {
   let flags = []
@@ -186,19 +186,19 @@ fn[F] flags_of_bits(
 }
 
 ///|
-fn[F] bits_of_flags(to_bit : (F) -> Int, flags : Array[F]) -> UInt64 {
+fn[F] bits_of_flags(to_bit : (F) -> Int32, flags : Array[F]) -> UInt64 {
   flags.fold(init=0UL, (bits, flag) => bits | (1UL << to_bit(flag)))
 }
 
 ///|
 /// The program flags word of a list of flags.
-pub fn PFlag::to_bits(flags : Array[PFlag]) -> UInt {
+pub fn PFlag::to_bits(flags : Array[PFlag]) -> UInt32 {
   bits_of_flags(PFlag::to_int, flags).to_uint()
 }
 
 ///|
 /// Decodes a `p_flags` word.
-pub fn PFlag::of_bits(bits : UInt) -> Array[PFlag] {
+pub fn PFlag::of_bits(bits : UInt32) -> Array[PFlag] {
   flags_of_bits(PFlag::of_int, 32, bits.to_uint64())
 }
 
@@ -210,13 +210,13 @@ pub fn ShFlag::to_bits(flags : Array[ShFlag]) -> UInt64 {
 
 ///|
 /// Decodes an `sh_flags` word of the given width (32 or 64 bits).
-pub fn ShFlag::of_bits(bits : UInt64, width? : Int = 64) -> Array[ShFlag] {
+pub fn ShFlag::of_bits(bits : UInt64, width~ : Int32 = 64) -> Array[ShFlag] {
   flags_of_bits(ShFlag::of_int, width, bits)
 }
 
 ///|
 /// The raw flags word of the program header.
-pub fn Segment::flags_bits(self : Segment) -> UInt {
+pub fn Segment::flags_bits(self : Segment) -> UInt32 {
   PFlag::to_bits(self.p_flags)
 }
 

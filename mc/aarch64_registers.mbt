@@ -13,8 +13,8 @@
 
 ///|
 /// The AArch64 register aliases: name -> (register, lo, hi).
-let aarch64_alias_table : Map[String, (String, Int, Int)] = {
-  let table : Map[String, (String, Int, Int)] = Map([])
+let aarch64_alias_table : Map[String, (String, Int32, Int32)] = {
+  let table : Map[String, (String, Int32, Int32)] = Map([])
   for i in 0..<31 {
     table["R\{i}"] = ("X\{i}", 0, 63)
     table["W\{i}"] = ("X\{i}", 0, 31)

@@ -14,10 +14,10 @@ pub extend ExpEffect with Debug::{to_repr}
 
 ///|
 fn ExpEffect::new(
-  reads_value? : Bool = false,
-  loads_value? : Bool = false,
-  stores_value? : Bool = false,
-  raises_value? : Bool = false,
+  reads_value~ : Bool = false,
+  loads_value~ : Bool = false,
+  stores_value~ : Bool = false,
+  raises_value~ : Bool = false,
 ) -> ExpEffect {
   { reads_value, loads_value, stores_value, raises_value, }
 }
@@ -122,7 +122,7 @@ fn Word::is_all_ones(self : Word) -> Bool {
 }
 
 ///|
-fn narrow_nonzero_bits(bits : Int) -> Int {
+fn narrow_nonzero_bits(bits : Int32) -> Int32 {
   if bits == exists_bits {
     maybe_bits
   } else {
@@ -131,7 +131,7 @@ fn narrow_nonzero_bits(bits : Int) -> Int {
 }
 
 ///|
-fn join_nonzero_bits(lhs : Int, rhs : Int) -> Int {
+fn join_nonzero_bits(lhs : Int32, rhs : Int32) -> Int32 {
   if lhs == forall_bits || rhs == forall_bits {
     forall_bits
   } else if lhs == exists_bits || rhs == exists_bits {
@@ -144,7 +144,7 @@ fn join_nonzero_bits(lhs : Int, rhs : Int) -> Int {
 }
 
 ///|
-fn ite_nonzero_bits(yes : Int, no : Int) -> Int {
+fn ite_nonzero_bits(yes : Int32, no : Int32) -> Int32 {
   if (yes == exists_bits && no == forall_bits) ||
     (yes == forall_bits && no == exists_bits) {
     exists_bits
@@ -156,7 +156,7 @@ fn ite_nonzero_bits(yes : Int, no : Int) -> Int {
 }
 
 ///|
-fn Exp::nonzero_bits(self : Exp) -> Int {
+fn Exp::nonzero_bits(self : Exp) -> Int32 {
   match self {
     Var(_) | Unknown(_) | Load(_) | Store(_) | Let(_) => maybe_bits
     Int(word) =>

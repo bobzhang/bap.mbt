@@ -15,50 +15,50 @@ priv enum BoxType {
 ///|
 priv enum PpToken {
   Text(String)
-  Begin(Int, BoxType)
+  Begin(Int32, BoxType)
   End
-  Break(Int, Int)
+  Break(Int32, Int32)
   Newline
 }
 
 ///|
 priv struct QElem {
-  mut size : Int
+  mut size : Int32
   token : PpToken
-  length : Int
+  length : Int32
 }
 
 ///|
 priv struct ScanElem {
-  left_total : Int
+  left_total : Int32
   elem : QElem
 }
 
 ///|
 priv struct PpBox {
   box_type : BoxType
-  width : Int
+  width : Int32
 }
 
 ///|
 priv struct Formatter {
   queue : Array[QElem]
-  mut head : Int
+  mut head : Int32
   scan_stack : Array[ScanElem]
   format_stack : Array[PpBox]
-  margin : Int
-  max_indent : Int
-  mut space_left : Int
-  mut current_indent : Int
+  margin : Int32
+  max_indent : Int32
+  mut space_left : Int32
+  mut current_indent : Int32
   mut is_new_line : Bool
-  mut left_total : Int
-  mut right_total : Int
-  mut curr_depth : Int
+  mut left_total : Int32
+  mut right_total : Int32
+  mut curr_depth : Int32
   out : StringBuilder
 }
 
 ///|
-let pp_infinity : Int = 1000000010
+let pp_infinity : Int32 = 1000000010
 
 ///|
 fn Formatter::new() -> Formatter {
@@ -99,7 +99,7 @@ fn Formatter::enqueue(self : Formatter, elem : QElem) -> Unit {
 }
 
 ///|
-fn Formatter::output_spaces(self : Formatter, n : Int) -> Unit {
+fn Formatter::output_spaces(self : Formatter, n : Int32) -> Unit {
   for _ in 0..<n {
     self.out.write_char(' ')
   }
@@ -108,8 +108,8 @@ fn Formatter::output_spaces(self : Formatter, n : Int) -> Unit {
 ///|
 fn Formatter::break_new_line(
   self : Formatter,
-  offset : Int,
-  width : Int,
+  offset : Int32,
+  width : Int32,
 ) -> Unit {
   self.out.write_char('\n')
   self.is_new_line = true
@@ -125,7 +125,7 @@ fn Formatter::break_new_line(
 }
 
 ///|
-fn Formatter::break_same_line(self : Formatter, width : Int) -> Unit {
+fn Formatter::break_same_line(self : Formatter, width : Int32) -> Unit {
   self.space_left -= width
   self.output_spaces(width)
 }
@@ -147,7 +147,7 @@ fn Formatter::force_break_line(self : Formatter) -> Unit {
 ///|
 fn Formatter::format_token(
   self : Formatter,
-  size : Int,
+  size : Int32,
   token : PpToken,
 ) -> Unit {
   match token {
@@ -259,7 +259,7 @@ fn Formatter::scan_push(self : Formatter, set : Bool, elem : QElem) -> Unit {
 ///|
 fn Formatter::open_box_gen(
   self : Formatter,
-  indent : Int,
+  indent : Int32,
   ty : BoxType,
 ) -> Unit {
   self.curr_depth += 1
@@ -272,12 +272,12 @@ fn Formatter::open_box_gen(
 
 ///|
 /// `pp_open_box` (a structural `b` box).
-fn Formatter::open_box(self : Formatter, indent : Int) -> Unit {
+fn Formatter::open_box(self : Formatter, indent : Int32) -> Unit {
   self.open_box_gen(indent, Box)
 }
 
 ///|
-fn Formatter::open_vbox(self : Formatter, indent : Int) -> Unit {
+fn Formatter::open_vbox(self : Formatter, indent : Int32) -> Unit {
   self.open_box_gen(indent, VBox)
 }
 
@@ -298,7 +298,11 @@ fn Formatter::print_string(self : Formatter, s : String) -> Unit {
 }
 
 ///|
-fn Formatter::print_break(self : Formatter, width : Int, offset : Int) -> Unit {
+fn Formatter::print_break(
+  self : Formatter,
+  width : Int32,
+  offset : Int32,
+) -> Unit {
   self.scan_push(true, {
     size: -self.right_total,
     token: Break(width, offset),

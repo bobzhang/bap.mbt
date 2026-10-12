@@ -36,7 +36,7 @@
 /// The state of an IT block: the conditions of the instructions left in
 /// the block and the address of the next instruction.
 pub struct ItBlock {
-  priv conds : Array[Int]
+  priv conds : Array[Int32]
   priv mut next : UInt64
 }
 
@@ -50,7 +50,7 @@ pub fn ItBlock::new() -> ItBlock {
 /// The condition of the instruction at `addr`: the next condition of the
 /// block when `addr` follows the last decoded instruction, `None` outside
 /// of an IT block.
-fn ItBlock::current(self : ItBlock, addr : UInt64) -> Int? {
+fn ItBlock::current(self : ItBlock, addr : UInt64) -> Int32? {
   if self.conds.is_empty() || addr != self.next {
     self.conds.clear()
     None
@@ -70,7 +70,7 @@ pub fn ItBlock::in_block(self : ItBlock, addr : UInt64) -> Bool {
 /// the block opened by `IT firstcond, mask` (the mask in LLVM's form). As
 /// in LLVM, they are pushed on the conditions left of an enclosing block
 /// (for an IT instruction in an IT block), which resume after them.
-fn ItBlock::start(self : ItBlock, firstcond : Int, mask : Int) -> Unit {
+fn ItBlock::start(self : ItBlock, firstcond : Int32, mask : Int32) -> Unit {
   let tz = (mask & 0xF).ctz()
   for pos = tz + 1; pos <= 3; pos = pos + 1 {
     self.conds.push(firstcond ^ ((mask >> pos) & 1))
@@ -91,12 +91,12 @@ fn t32(name : String, ops : Array[@mc.Op], text : String) -> T32Insn? {
 }
 
 ///|
-fn t32_bits(x : Int, lo : Int, len : Int) -> Int {
+fn t32_bits(x : Int32, lo : Int32, len : Int32) -> Int32 {
   (x >> lo) & ((1 << len) - 1)
 }
 
 ///|
-fn t32_bit(x : Int, n : Int) -> Bool {
+fn t32_bit(x : Int32, n : Int32) -> Bool {
   ((x >> n) & 1) == 1
 }
 
@@ -104,24 +104,24 @@ fn t32_bit(x : Int, n : Int) -> Bool {
 let t32_cpsr : @mc.Op = @arm.Reg::CPSR.to_mc()
 
 ///|
-fn t_gpr(n : Int) -> @mc.Op {
+fn t_gpr(n : Int32) -> @mc.Op {
   @arm.mc_gpr(n)
 }
 
 ///|
-fn t_rn(n : Int) -> String {
+fn t_rn(n : Int32) -> String {
   @arm.gpr_asm(n)
 }
 
 ///|
-fn t_imm(v : Int) -> @mc.Op {
+fn t_imm(v : Int32) -> @mc.Op {
   @arm.mc_imm(v)
 }
 
 ///|
 /// The address `[rn, #offset]`, with the zero offset omitted (LLVM's
 /// `printThumbAddrModeImm5SOperand` and `printThumbAddrModeSPOperand`).
-fn t_addr_imm(rn : Int, offset : Int) -> String {
+fn t_addr_imm(rn : Int32, offset : Int32) -> String {
   if offset == 0 {
     "[\{t_rn(rn)}]"
   } else {
@@ -132,14 +132,14 @@ fn t_addr_imm(rn : Int, offset : Int) -> String {
 ///|
 /// A 32-bit value as an unsigned immediate (as LLVM stores decoded
 /// Thumb-2 modified immediates).
-fn uimm(v : UInt) -> @mc.Op {
+fn uimm(v : UInt32) -> @mc.Op {
   Imm(v.to_uint64().reinterpret_as_int64())
 }
 
 ///|
 /// An 8-bit or 12-bit offset as LLVM's Thumb-2 decoders produce it:
 /// negative when subtracted, `INT32_MIN` for `#-0`.
-fn t2_offset(add : Bool, v : Int) -> Int {
+fn t2_offset(add : Bool, v : Int32) -> Int32 {
   if add {
     v
   } else if v == 0 {
@@ -151,7 +151,7 @@ fn t2_offset(add : Bool, v : Int) -> Int {
 
 ///|
 /// The address `[rn, #offset]` of an offset form, the zero offset omitted.
-fn t2_addr(rn : Int, offset : Int) -> String {
+fn t2_addr(rn : Int32, offset : Int32) -> String {
   if offset == 0 {
     "[\{t_rn(rn)}]"
   } else {
@@ -160,7 +160,7 @@ fn t2_addr(rn : Int, offset : Int) -> String {
 }
 
 ///|
-fn t2_offset_text(v : Int) -> String {
+fn t2_offset_text(v : Int32) -> String {
   if v == -2147483648 {
     "#-0"
   } else {
@@ -170,7 +170,7 @@ fn t2_offset_text(v : Int) -> String {
 
 ///|
 /// `ThumbExpandImm`: the value of a Thumb-2 modified immediate.
-pub fn t2_expand_imm(imm12 : Int) -> UInt {
+pub fn t2_expand_imm(imm12 : Int32) -> UInt32 {
   let imm8 = (imm12 & 0xFF).reinterpret_as_uint()
   if imm12 >> 10 == 0 {
     match (imm12 >> 8) & 3 {
@@ -189,7 +189,7 @@ pub fn t2_expand_imm(imm12 : Int) -> UInt {
 ///|
 /// Decodes a 16-bit Thumb instruction `h` with the condition `cond` given
 /// by the IT block (`in_it`) or `AL`.
-fn t16_decode(h : Int, cond : Int, in_it : Bool) -> T32Insn? {
+fn t16_decode(h : Int32, cond : Int32, in_it : Bool) -> T32Insn? {
   let s = if in_it { @arm.mc_nil() } else { t32_cpsr }
   let sx = if in_it { "" } else { "s" }
   let c = @arm.cond_asm(cond)
@@ -389,7 +389,7 @@ fn t16_decode(h : Int, cond : Int, in_it : Bool) -> T32Insn? {
 ///|
 /// Thumb data processing (`010000 op Rm Rdn`).
 fn t16_data(
-  h : Int,
+  h : Int32,
   s : @mc.Op,
   sx : String,
   p : Array[@mc.Op],
@@ -444,7 +444,7 @@ fn t16_data(
 
 ///|
 /// Special data instructions and branch and exchange (`010001 op ...`).
-fn t16_special(h : Int, p : Array[@mc.Op], c : String) -> T32Insn? {
+fn t16_special(h : Int32, p : Array[@mc.Op], c : String) -> T32Insn? {
   let rdn = (t32_bits(h, 7, 1) << 3) | t32_bits(h, 0, 3)
   let rm = t32_bits(h, 3, 4)
   match t32_bits(h, 8, 2) {
@@ -493,7 +493,7 @@ fn t16_special(h : Int, p : Array[@mc.Op], c : String) -> T32Insn? {
 
 ///|
 /// Miscellaneous 16-bit instructions (`1011 ...`).
-fn t16_misc(h : Int, p : Array[@mc.Op], c : String) -> T32Insn? {
+fn t16_misc(h : Int32, p : Array[@mc.Op], c : String) -> T32Insn? {
   let r0 = t32_bits(h, 0, 3)
   let r3 = t32_bits(h, 3, 3)
   let op = t32_bits(h, 5, 7)
@@ -627,7 +627,7 @@ fn t16_misc(h : Int, p : Array[@mc.Op], c : String) -> T32Insn? {
 ///|
 /// Decodes the 32-bit Thumb-2 instruction made of the halfwords `h1` and
 /// `h2` with the condition `cond`.
-fn t32_decode(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
+fn t32_decode(h1 : Int32, h2 : Int32, cond : Int32) -> T32Insn? {
   match t32_bits(h1, 11, 2) {
     1 =>
       if t32_bit(h1, 10) {
@@ -680,7 +680,7 @@ let t2_dp_names : ReadOnlyArray[String] = [
 ///|
 /// The name of the comparison a data-processing opcode turns into when
 /// its destination is `PC` and it sets the flags.
-fn t2_compare_name(op : Int) -> String? {
+fn t2_compare_name(op : Int32) -> String? {
   match op {
     0 => Some("TST")
     4 => Some("TEQ")
@@ -692,7 +692,7 @@ fn t2_compare_name(op : Int) -> String? {
 
 ///|
 /// Data processing (modified immediate).
-fn t2_modified_imm(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
+fn t2_modified_imm(h1 : Int32, h2 : Int32, cond : Int32) -> T32Insn? {
   let op = t32_bits(h1, 5, 4)
   let s = t32_bit(h1, 4)
   let rn_ = t32_bits(h1, 0, 4)
@@ -738,7 +738,7 @@ fn t2_modified_imm(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
 ///|
 /// Data processing (plain binary immediate): `ADDW`, `SUBW`, `ADR`,
 /// `MOVW`, `MOVT` and the bit field instructions.
-fn t2_plain_imm(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
+fn t2_plain_imm(h1 : Int32, h2 : Int32, cond : Int32) -> T32Insn? {
   let op = t32_bits(h1, 4, 5)
   let rn_ = t32_bits(h1, 0, 4)
   let rd = t32_bits(h2, 8, 4)
@@ -827,7 +827,7 @@ fn t2_plain_imm(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
 
 ///|
 /// Data processing (shifted register).
-fn t2_dp_shifted(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
+fn t2_dp_shifted(h1 : Int32, h2 : Int32, cond : Int32) -> T32Insn? {
   let op = t32_bits(h1, 5, 4)
   // bit 15 of the second halfword set: a `SoftFail`, except for `ORR` (and
   // the moves and shifts in its encoding space), which LLVM rejects
@@ -934,7 +934,7 @@ fn t2_dp_shifted(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
 
 ///|
 /// Branches and miscellaneous control.
-fn t2_branch_misc(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
+fn t2_branch_misc(h1 : Int32, h2 : Int32, cond : Int32) -> T32Insn? {
   let p = @arm.mc_pred(cond)
   let c = @arm.cond_asm(cond)
   let s = t32_bits(h1, 10, 1)
@@ -943,7 +943,7 @@ fn t2_branch_misc(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
   let i1 = 1 - (j1 ^ s)
   let i2 = 1 - (j2 ^ s)
   // the 25-bit offset of B.W, BL and BLX
-  let long_offset = (lo : Int) => {
+  let long_offset = (lo : Int32) => {
     @arm.sign_extend(
       (s << 24) | (i1 << 23) | (i2 << 22) | (t32_bits(h1, 0, 10) << 12) | lo,
       25,
@@ -989,8 +989,8 @@ fn t2_branch_misc(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
 ///|
 /// Status register accesses, hints and barriers.
 fn t2_misc_control(
-  h1 : Int,
-  h2 : Int,
+  h1 : Int32,
+  h2 : Int32,
   p : Array[@mc.Op],
   c : String,
 ) -> T32Insn? {
@@ -1051,7 +1051,7 @@ fn t2_misc_control(
 
 ///|
 /// Load and store multiple.
-fn t2_ldm_stm(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
+fn t2_ldm_stm(h1 : Int32, h2 : Int32, cond : Int32) -> T32Insn? {
   let mode = match t32_bits(h1, 7, 2) {
     1 => "IA"
     2 => "DB"
@@ -1080,7 +1080,7 @@ fn t2_ldm_stm(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
 
 ///|
 /// Load/store dual, load/store exclusive and table branch.
-fn t2_dual_exclusive(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
+fn t2_dual_exclusive(h1 : Int32, h2 : Int32, cond : Int32) -> T32Insn? {
   let p_bit = t32_bit(h1, 8)
   let add = t32_bit(h1, 7)
   let wb = t32_bit(h1, 5)
@@ -1201,7 +1201,7 @@ fn t2_dual_exclusive(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
 ///|
 /// The name suffix of a single load/store of `size` (0 byte, 1 halfword,
 /// 2 word), signed or not.
-fn t2_size_name(size : Int, signed : Bool) -> String {
+fn t2_size_name(size : Int32, signed : Bool) -> String {
   match (size, signed) {
     (0, false) => "B"
     (0, true) => "SB"
@@ -1214,11 +1214,11 @@ fn t2_size_name(size : Int, signed : Bool) -> String {
 ///|
 /// The single loads and stores (`t2LDR*`, `t2STR*`).
 fn t2_single(
-  h1 : Int,
-  h2 : Int,
-  cond : Int,
+  h1 : Int32,
+  h2 : Int32,
+  cond : Int32,
   load : Bool,
-  size : Int,
+  size : Int32,
   signed : Bool,
 ) -> T32Insn? {
   let rn_ = t32_bits(h1, 0, 4)
@@ -1290,7 +1290,7 @@ fn t2_single(
 
 ///|
 /// Store single data item.
-fn t2_store(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
+fn t2_store(h1 : Int32, h2 : Int32, cond : Int32) -> T32Insn? {
   let size = t32_bits(h1, 5, 2)
   guard size != 3 && t32_bits(h1, 0, 4) != 15 else { return None }
   t2_single(h1, h2, cond, false, size, false)
@@ -1298,7 +1298,7 @@ fn t2_store(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
 
 ///|
 /// Load single data item (the memory hints are not supported).
-fn t2_load(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
+fn t2_load(h1 : Int32, h2 : Int32, cond : Int32) -> T32Insn? {
   let size = t32_bits(h1, 5, 2)
   let signed = t32_bit(h1, 8)
   guard size != 3 && !(size == 2 && signed) else { return None }
@@ -1317,7 +1317,7 @@ fn t2_load(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
 
 ///|
 /// The preload hints `PLD` and (`signed`) `PLI`.
-fn t2_preload(h1 : Int, h2 : Int, cond : Int, signed : Bool) -> T32Insn? {
+fn t2_preload(h1 : Int32, h2 : Int32, cond : Int32, signed : Bool) -> T32Insn? {
   let rn_ = t32_bits(h1, 0, 4)
   let p = @arm.mc_pred(cond)
   let (base, m) = if signed { ("t2PLI", "pli") } else { ("t2PLD", "pld") }
@@ -1359,7 +1359,7 @@ fn t2_preload(h1 : Int, h2 : Int, cond : Int, signed : Bool) -> T32Insn? {
 ///|
 /// Data processing (register): shifts by a register, extensions, byte
 /// reversals and count leading zeros.
-fn t2_dp_register(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
+fn t2_dp_register(h1 : Int32, h2 : Int32, cond : Int32) -> T32Insn? {
   guard t32_bits(h2, 12, 4) == 15 else { return None }
   let op1 = t32_bits(h1, 4, 4)
   let rn_ = t32_bits(h1, 0, 4)
@@ -1428,7 +1428,7 @@ fn t2_dp_register(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
 
 ///|
 /// Multiply, multiply accumulate and the signed halfword multiplies.
-fn t2_multiply(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
+fn t2_multiply(h1 : Int32, h2 : Int32, cond : Int32) -> T32Insn? {
   let op1 = t32_bits(h1, 4, 3)
   let rn_ = t32_bits(h1, 0, 4)
   let ra = t32_bits(h2, 12, 4)
@@ -1478,7 +1478,7 @@ fn t2_multiply(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
 
 ///|
 /// Long multiply, long multiply accumulate and divide.
-fn t2_long_multiply(h1 : Int, h2 : Int, cond : Int) -> T32Insn? {
+fn t2_long_multiply(h1 : Int32, h2 : Int32, cond : Int32) -> T32Insn? {
   let op1 = t32_bits(h1, 4, 3)
   let rn_ = t32_bits(h1, 0, 4)
   let lo = t32_bits(h2, 12, 4)
@@ -1629,14 +1629,14 @@ fn t2_width(d : T32Insn) -> T32Insn {
 /// an IT block get the predicate of the block.
 pub fn decode_t32(
   bytes : BytesView,
-  addr? : UInt64 = 0,
-  big_endian? : Bool = false,
+  addr~ : UInt64 = 0,
+  big_endian~ : Bool = false,
   it? : ItBlock,
 ) -> @mc.Decoded {
   if bytes.length() < 2 {
     return Truncated
   }
-  let half = (i : Int) => {
+  let half = (i : Int32) => {
     let a = bytes[i].to_int()
     let b = bytes[i + 1].to_int()
     if big_endian {

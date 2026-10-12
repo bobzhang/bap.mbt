@@ -221,9 +221,10 @@ fn[A, B] fold_p(p : P[A], f : (B, A) -> B, init : B, plus~ : Bool) -> P[B] {
 
 ///|
 fn[A] list_p(p : P[A], plus~ : Bool) -> P[Array[A]] {
-  fold_p(p, (xs : @list.List[A], x) => xs.add(x), @list.empty(), plus~).map(xs => {
-    xs.rev().to_array()
-  })
+  fold_p(p, (xs : @list.List[A], x) => xs.prepend(x), @list.List([]), plus~).map(xs => {
+      xs.rev().to_array()
+    },
+  )
 }
 
 ///|
@@ -292,7 +293,7 @@ fn[A] run_parser(p : P[A], input : @xml.Input) -> Result[A, String] {
 ///|
 /// OCaml's `int_of_string` (decimal, `0x`, `0o`, `0b` prefixes, `_`
 /// separators and a sign).
-fn ocaml_int(s : String) -> Int? {
+fn ocaml_int(s : String) -> Int32? {
   let s = s.replace_all(old="_", new="")
   let (neg, body) = if s.has_prefix("-") {
     (true, s.unsafe_substring(start=1, end=s.length()))
@@ -319,7 +320,7 @@ fn ocaml_int(s : String) -> Int? {
 }
 
 ///|
-fn int_attr(attrs : Array[@xml.Attribute], name : String) -> Int? {
+fn int_attr(attrs : Array[@xml.Attribute], name : String) -> Int32? {
   for a in attrs {
     if name_matches(name, a.name) {
       return ocaml_int(a.value)

@@ -8,7 +8,7 @@ extern "c" fn read_dir_ffi(path : Bytes) -> Bytes = "bap_mbt_fs_read_dir"
 
 ///|
 #borrow(path)
-extern "c" fn mkdir_ffi(path : Bytes, perm : Int) -> Bytes = "bap_mbt_fs_mkdir"
+extern "c" fn mkdir_ffi(path : Bytes, perm : Int32) -> Bytes = "bap_mbt_fs_mkdir"
 
 ///|
 #borrow(path)
@@ -24,7 +24,7 @@ extern "c" fn rename_ffi(src : Bytes, dst : Bytes) -> Bytes = "bap_mbt_fs_rename
 
 ///|
 #borrow(path)
-extern "c" fn chmod_ffi(path : Bytes, perm : Int) -> Bytes = "bap_mbt_fs_chmod"
+extern "c" fn chmod_ffi(path : Bytes, perm : Int32) -> Bytes = "bap_mbt_fs_chmod"
 
 ///|
 extern "c" fn getcwd_ffi() -> Bytes = "bap_mbt_fs_getcwd"
@@ -46,7 +46,7 @@ extern "c" fn lock_ffi(
 ) -> Bytes = "bap_mbt_fs_lock"
 
 ///|
-extern "c" fn unlock_ffi(fd : Int) -> Int = "bap_mbt_fs_unlock"
+extern "c" fn unlock_ffi(fd : Int32) -> Int32 = "bap_mbt_fs_unlock"
 
 ///|
 fn c_path(path : String) -> Bytes {
@@ -83,7 +83,7 @@ fn fs_string_response(response : Bytes) -> Result[String, String] {
 }
 
 ///|
-fn get_i64(data : BytesView, pos : Int) -> Int64 {
+fn get_i64(data : BytesView, pos : Int32) -> Int64 {
   let mut v : UInt64 = 0
   for i in 0..<8 {
     v = v | (data[pos + i].to_uint64() << (8 * i))
@@ -149,7 +149,7 @@ pub fn read_dir(path : String) -> Result[Array[String], String] {
 ///|
 /// Creates the directory `path` (`mkdir(2)`); fails if it already exists
 /// or if its parent does not exist (see `mkdir_p`).
-pub fn mkdir(path : String, perm? : Int = 0o777) -> Result[Unit, String] {
+pub fn mkdir(path : String, perm~ : Int32 = 0o777) -> Result[Unit, String] {
   fs_unit_response(mkdir_ffi(c_path(path), perm))
 }
 
@@ -175,7 +175,7 @@ pub fn rename(src : String, dst : String) -> Result[Unit, String] {
 
 ///|
 /// Sets the permission bits of `path` (`chmod(2)`).
-pub fn chmod(path : String, perm : Int) -> Result[Unit, String] {
+pub fn chmod(path : String, perm : Int32) -> Result[Unit, String] {
   fs_unit_response(chmod_ffi(c_path(path), perm))
 }
 
@@ -190,7 +190,7 @@ pub fn getcwd() -> Result[String, String] {
 /// 0600) and returns its path.
 pub fn make_temp_file(
   dir~ : String,
-  prefix? : String = "tmp",
+  prefix~ : String = "tmp",
 ) -> Result[String, String] {
   fs_string_response(mkstemp_ffi(c_path(join_path(dir, prefix + "XXXXXX"))))
 }
@@ -200,7 +200,7 @@ pub fn make_temp_file(
 /// 0700) and returns its path.
 pub fn make_temp_dir(
   dir~ : String,
-  prefix? : String = "tmp",
+  prefix~ : String = "tmp",
 ) -> Result[String, String] {
   fs_string_response(mkdtemp_ffi(c_path(join_path(dir, prefix + "XXXXXX"))))
 }
@@ -212,8 +212,8 @@ pub fn make_temp_dir(
 /// conflicting lock to be released.
 pub fn lock_file(
   path : String,
-  exclusive? : Bool = true,
-  blocking? : Bool = true,
+  exclusive~ : Bool = true,
+  blocking~ : Bool = true,
 ) -> Result[FileLock, String] {
   match fs_response(lock_ffi(c_path(path), exclusive, blocking)) {
     Ok(p) if p.length() >= 8 =>

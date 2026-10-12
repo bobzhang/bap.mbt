@@ -3,7 +3,7 @@
 
 ///|
 /// Upstream `parse_imm8cb`: decode the PCMPxSTRx control byte.
-fn parse_imm8cb(b : Int) -> Imm8cb {
+fn parse_imm8cb(b : Int32) -> Imm8cb {
   {
     words: (b & 1) != 0,
     signed: (b & 2) != 0,
@@ -18,8 +18,8 @@ fn parse_imm8cb(b : Int) -> Imm8cb {
 fn Decoder::get_opcode_0f(
   self : Decoder,
   prefix : Prefix,
-  na : Int,
-) -> (Opcode, Int) raise X86Error {
+  na : Int32,
+) -> (Opcode, Int32) raise X86Error {
   let mode = self.mode
   // Add in the second implied vex prefix
   let (b2, na) = match prefix.vex {
@@ -263,7 +263,7 @@ fn Decoder::get_opcode_0f(
       let t = prefix.mopsize
       let (r, rm, rv, na) = self.modrm_vec(prefix, Some(8), na)
       let (i, na) = self.parse_immz(8, na)
-      let (fbop, str, et, i) : (@types.BinOp, String, Int, Operand) = match
+      let (fbop, str, et, i) : (@types.BinOp, String, Int32, Operand) = match
         (b2, r, i) {
         (_, Ovec(2), _) => (RShift, "psrl", lowbits2elemt(b2), i)
         (_, Ovec(6), _) => (LShift, "psll", lowbits2elemt(b2), i)
@@ -495,12 +495,12 @@ fn Decoder::get_opcode_0f(
 fn Decoder::get_opcode_0f38(
   self : Decoder,
   prefix : Prefix,
-  na : Int,
-) -> (Opcode, Int) raise X86Error {
+  na : Int32,
+) -> (Opcode, Int32) raise X86Error {
   let b3 = self.g(na)
   let na = na + 1
   let o = prefix.opsize_override
-  let packed = (et : Int, pop : PackedOp, name : String) => {
+  let packed = (et : Int32, pop : PackedOp, name : String) => {
     let (r, rm, rv, na) = self.modrm_vec(prefix, None, na)
     (Ppackedbinop(prefix.mopsize, et, pop, name, r, rm, rv), na)
   }

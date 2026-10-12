@@ -13,7 +13,7 @@ priv struct Decoder {
 
 ///|
 /// Upstream `g a`: the byte at position `a`.
-fn Decoder::g(self : Decoder, a : Int) -> Int raise X86Error {
+fn Decoder::g(self : Decoder, a : Int32) -> Int32 raise X86Error {
   match self.bytes.get(a) {
     Some(b) => b.to_int()
     None => raise ArchException("truncated instruction")
@@ -22,7 +22,7 @@ fn Decoder::g(self : Decoder, a : Int) -> Int raise X86Error {
 
 ///|
 /// The address of position `a` as a word of the mode width.
-fn Decoder::addr_of(self : Decoder, a : Int) -> Imm {
+fn Decoder::addr_of(self : Decoder, a : Int32) -> Imm {
   Imm::new(self.base + a.to_uint64(), self.mode.width())
 }
 
@@ -30,9 +30,9 @@ fn Decoder::addr_of(self : Decoder, a : Int) -> Imm {
 /// Upstream `parse_int scale a`: an unsigned little-endian integer.
 fn Decoder::parse_int(
   self : Decoder,
-  width : Int,
-  a : Int,
-) -> (Imm, Int) raise X86Error {
+  width : Int32,
+  a : Int32,
+) -> (Imm, Int32) raise X86Error {
   let n = width / 8
   let mut bits = 0UL
   for k in 0..<n {
@@ -45,9 +45,9 @@ fn Decoder::parse_int(
 /// Upstream `parse_sint scale a`: a signed little-endian integer.
 fn Decoder::parse_sint(
   self : Decoder,
-  width : Int,
-  a : Int,
-) -> (Imm, Int) raise X86Error {
+  width : Int32,
+  a : Int32,
+) -> (Imm, Int32) raise X86Error {
   let (i, na) = self.parse_int(width, a)
   (i.as_signed(), na)
 }
@@ -56,9 +56,9 @@ fn Decoder::parse_sint(
 /// Upstream `parse_disp`.
 fn Decoder::parse_disp(
   self : Decoder,
-  width : Int,
-  a : Int,
-) -> (Imm, Int) raise X86Error {
+  width : Int32,
+  a : Int32,
+) -> (Imm, Int32) raise X86Error {
   match width {
     8 | 16 | 32 | 64 => self.parse_sint(width, a)
     _ => raise ArchException("unsupported displacement size")
@@ -69,9 +69,9 @@ fn Decoder::parse_disp(
 /// Upstream `parse_immz`: an unsigned immediate operand.
 fn Decoder::parse_immz(
   self : Decoder,
-  width : Int,
-  a : Int,
-) -> (Operand, Int) raise X86Error {
+  width : Int32,
+  a : Int32,
+) -> (Operand, Int32) raise X86Error {
   match width {
     8 | 16 | 32 | 64 => {
       let (i, na) = self.parse_int(width, a)
@@ -85,9 +85,9 @@ fn Decoder::parse_immz(
 /// Upstream `parse_simm`: a signed immediate operand.
 fn Decoder::parse_simm(
   self : Decoder,
-  width : Int,
-  a : Int,
-) -> (Operand, Int) raise X86Error {
+  width : Int32,
+  a : Int32,
+) -> (Operand, Int32) raise X86Error {
   match width {
     8 | 16 | 32 | 64 => {
       let (i, na) = self.parse_sint(width, a)
@@ -113,7 +113,7 @@ fn add_to_addr(addr : Imm, value : Imm) -> Imm {
 
 ///|
 /// Upstream `oimm_resize`: sign-extend (or truncate) an immediate operand.
-fn oimm_resize(op : Operand, size : Int) -> Operand raise X86Error {
+fn oimm_resize(op : Operand, size : Int32) -> Operand raise X86Error {
   match op {
     Oimm(d) => Oimm(d.as_signed().resize(size))
     _ => raise ArchException("oimm_resize only handles Oimm")
@@ -123,7 +123,7 @@ fn oimm_resize(op : Operand, size : Int) -> Operand raise X86Error {
 ///|
 /// Upstream `cc_to_exp`: the condition of a `Jcc`/`SETcc`/`CMOVcc` from
 /// the low opcode bits.
-fn cc_to_exp(i : Int) -> @types.Exp {
+fn cc_to_exp(i : Int32) -> @types.Exp {
   let cc = match i & 0xe {
     0x0 => ev(of_)
     0x2 => ev(cf)
@@ -142,7 +142,7 @@ fn cc_to_exp(i : Int) -> @types.Exp {
 }
 
 ///|
-fn ext_bit(b : Bool) -> Int {
+fn ext_bit(b : Bool) -> Int32 {
   if b {
     8
   } else {
@@ -166,16 +166,16 @@ fn convert_vex(rex : Rex?, vex : Vex?) -> Rex? raise X86Error {
 fn Decoder::parse_sib(
   self : Decoder,
   rex : Rex?,
-  modb : Int,
-  a : Int,
-) -> (@types.Exp, Int) raise X86Error {
+  modb : Int32,
+  a : Int32,
+) -> (@types.Exp, Int32) raise X86Error {
   let (rex_b, rex_x) = match rex {
     Some(r) => (r.b, r.x)
     None => (false, false)
   }
   let b = self.g(a)
   let mode = self.mode
-  let bits2rege = (n : Int) => {
+  let bits2rege = (n : Int32) => {
     match mode {
       X86 => bits2reg32e(mode, n)
       X8664 => bits2reg64e(mode, n)
@@ -210,8 +210,8 @@ fn Decoder::parse_sib(
 fn Decoder::parse_modrmbits64(
   self : Decoder,
   rex : Rex?,
-  a : Int,
-) -> (Int, Int, Int, Int) raise X86Error {
+  a : Int32,
+) -> (Int32, Int32, Int32, Int32) raise X86Error {
   let b = self.g(a)
   let (rex_r, rex_b) = match rex {
     Some(r) => (r.r, r.b)
@@ -226,11 +226,11 @@ fn Decoder::parse_modrmbits64(
 /// Upstream `parse_modrm16int`.
 fn Decoder::parse_modrm16int(
   self : Decoder,
-  r : Int,
-  modb : Int,
-  rm : Int,
-  na : Int,
-) -> (Int, Operand, Int) raise X86Error {
+  r : Int32,
+  modb : Int32,
+  rm : Int32,
+  na : Int32,
+) -> (Int32, Operand, Int32) raise X86Error {
   let mode = self.mode
   let tm = mode.width()
   match modb & 7 {
@@ -261,17 +261,17 @@ fn Decoder::parse_modrm16int(
 fn Decoder::parse_modrm3264int(
   self : Decoder,
   rex : Rex?,
-  at : Int,
-  r : Int,
-  modb : Int,
-  rm : Int,
-  naoffset : Int?,
-  na : Int,
-) -> (Int, Operand, Int) raise X86Error {
+  at : Int32,
+  r : Int32,
+  modb : Int32,
+  rm : Int32,
+  naoffset : Int32?,
+  na : Int32,
+) -> (Int32, Operand, Int32) raise X86Error {
   let mode = self.mode
   let bits2rege = match at {
-    32 => (b : Int) => e_unsigned(mode.width(), bits2reg32e(mode, b))
-    64 => (b : Int) => bits2reg64e(mode, b)
+    32 => (b : Int32) => e_unsigned(mode.width(), bits2reg32e(mode, b))
+    64 => (b : Int32) => bits2reg64e(mode, b)
     _ => raise ArchException("parse_modrm3264int: invalid address type")
   }
   match modb & 7 {
@@ -329,9 +329,9 @@ fn Decoder::parse_modrm3264int(
 fn Decoder::modrm_ext(
   self : Decoder,
   prefix : Prefix,
-  immoff : Int?,
-  a : Int,
-) -> (Int, Operand, Int) raise X86Error {
+  immoff : Int32?,
+  a : Int32,
+) -> (Int32, Operand, Int32) raise X86Error {
   match prefix.addrsize {
     16 => {
       let (r, modb, rm, na) = self.parse_modrmbits64(prefix.rex, a)
@@ -347,9 +347,9 @@ fn Decoder::modrm_ext(
 fn Decoder::modrm3264_ext(
   self : Decoder,
   prefix : Prefix,
-  immoff : Int?,
-  a : Int,
-) -> (Int, Operand, Int) raise X86Error {
+  immoff : Int32?,
+  a : Int32,
+) -> (Int32, Operand, Int32) raise X86Error {
   let rex = convert_vex(prefix.rex, prefix.vex)
   let (r, modb, rm, na) = self.parse_modrmbits64(rex, a)
   self.parse_modrm3264int(rex, prefix.addrsize, r, modb, rm, immoff, na)
@@ -360,9 +360,9 @@ fn Decoder::modrm3264_ext(
 fn Decoder::modrm(
   self : Decoder,
   prefix : Prefix,
-  immoff : Int?,
-  a : Int,
-) -> (Operand, Operand, Int) raise X86Error {
+  immoff : Int32?,
+  a : Int32,
+) -> (Operand, Operand, Int32) raise X86Error {
   let (r, rm, na) = self.modrm_ext(prefix, immoff, a)
   (Oreg(r), rm, na)
 }
@@ -372,9 +372,9 @@ fn Decoder::modrm(
 fn Decoder::modrm_seg(
   self : Decoder,
   prefix : Prefix,
-  immoff : Int?,
-  a : Int,
-) -> (Operand, Operand, Int) raise X86Error {
+  immoff : Int32?,
+  a : Int32,
+) -> (Operand, Operand, Int32) raise X86Error {
   let (r, rm, na) = self.modrm_ext(prefix, immoff, a)
   match prefix.addrsize {
     16 => (Oseg(r), rm, na)
@@ -405,9 +405,9 @@ fn toreg(op : Operand) -> Operand {
 fn Decoder::modrm_vec(
   self : Decoder,
   prefix : Prefix,
-  immoff : Int?,
-  a : Int,
-) -> (Operand, Operand, Operand?, Int) raise X86Error {
+  immoff : Int32?,
+  a : Int32,
+) -> (Operand, Operand, Operand?, Int32) raise X86Error {
   let (r, rm, na) = self.modrm3264_ext(prefix, immoff, a)
   let rv = match prefix.vex {
     None => None

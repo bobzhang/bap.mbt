@@ -161,7 +161,7 @@ test "post-indexed accesses write back after the access" {
     ),
   )
   let init = state([("R0", 0x77), ("R1", 0x1004), ("R2", 8)], bytes=words)
-  let imm_ld = (name : String, imm : Int) => {
+  let imm_ld = (name : String, imm : Int32) => {
     let ops = [r("R0"), r("R1"), r("R1"), r("Nil"), i(imm), ..al]
     let s = run(name, ops, init)
     (reg_value(s, "R0"), reg_value(s, "R1"))
@@ -169,7 +169,7 @@ test "post-indexed accesses write back after the access" {
   debug_inspect(imm_ld("LDR_POST_IMM", minus4), content="(1432778632, 4096)")
   debug_inspect(imm_ld("LDRB_POST_IMM", 1), content="(136, 4101)")
   debug_inspect(imm_ld("LDRBT_POST_IMM", 1), content="(136, 4101)")
-  let imm_st = (name : String, imm : Int) => {
+  let imm_st = (name : String, imm : Int32) => {
     let ops = [r("R1"), r("R0"), r("R1"), r("Nil"), i(imm), ..al]
     let s = run(name, ops, init)
     (mem_word(s, 0x1004), reg_value(s, "R1"))
@@ -307,7 +307,7 @@ test "halfword, signed and dual accesses (addressing mode 3)" {
 ///|
 test "indexed addressing mode 3 accesses" {
   let init = state([("R0", 0), ("R1", 0x1004), ("R2", 4)], bytes=words)
-  let ld = (name : String, imm : Int) => {
+  let ld = (name : String, imm : Int32) => {
     let s = run(name, [r("R0"), r("R1"), r("R1"), r("Nil"), i(imm), ..al], init)
     (reg_value(s, "R0"), reg_value(s, "R1"))
   }
@@ -329,7 +329,7 @@ test "indexed addressing mode 3 accesses" {
   // register offset of an unprivileged access: bit 0 means ADD
   let s = run("LDRHTr", [r("R0"), r("R1"), r("R1"), r("R2"), i(0), ..al], init)
   assert_eq(reg_value(s, "R1"), 0x1000)
-  let st = (name : String, imm : Int) => {
+  let st = (name : String, imm : Int32) => {
     let ops = [r("R1"), r("R1"), r("R1"), r("Nil"), i(imm), ..al]
     let s = run(name, ops, init)
     (mem_word(s, 0x1000), mem_word(s, 0x1004), reg_value(s, "R1"))

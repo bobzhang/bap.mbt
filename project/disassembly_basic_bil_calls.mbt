@@ -32,7 +32,7 @@ fn project_basic_bil_result(
 /// with `w`-bit addresses).
 fn ProjectDisassemblyInstruction::project_basic_bil_push_return(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Array[@types.Stmt] raise ProjectBasicBilFailure {
   let sp = bil_ok(project_basic_bil_stack_pointer(width))
   let decremented = bil_ok(project_basic_bil_stack_decrement(sp, width, width))
@@ -61,7 +61,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_push_return(
 /// (with the Basic `call` hint).
 fn ProjectDisassemblyInstruction::project_basic_bil_call(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   project_basic_bil_result(() => {
     let target = bil_ok(self.project_basic_bil_direct_target())
@@ -79,7 +79,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_call(
 /// control jumps to the target.
 fn ProjectDisassemblyInstruction::project_basic_bil_indirect_call(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   target : @types.Exp,
 ) -> Array[@types.Stmt] raise ProjectBasicBilFailure {
   let tmp = project_basic_bil_virtual("call_target", width)
@@ -96,7 +96,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_indirect_call(
 /// A call through a register.
 fn ProjectDisassemblyInstruction::project_basic_bil_call_reg(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   project_basic_bil_result(() => {
     let target = bil_ok(self.project_basic_bil_register(0, width))
@@ -108,7 +108,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_call_reg(
 /// A call through memory.
 fn ProjectDisassemblyInstruction::project_basic_bil_call_mem(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   project_basic_bil_result(() => {
     let (addr, mem, _) = bil_ok(self.project_basic_bil_memory_addr(0))
@@ -127,7 +127,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_call_mem(
 /// immediate operand; `jmp tmp`.
 fn ProjectDisassemblyInstruction::project_basic_bil_ret(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   far~ : Bool,
 ) -> Result[Array[@types.Stmt], String] {
   project_basic_bil_result(() => {

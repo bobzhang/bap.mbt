@@ -16,7 +16,7 @@ fn bap_name(name : String) -> @knowledge.Name {
 // The graph of IR blocks of an effect.
 
 ///|
-fn tids_of_blks(blks : Array[@types.Term[@types.Blk]]) -> Array[Int] {
+fn tids_of_blks(blks : Array[@types.Term[@types.Blk]]) -> Array[Int32] {
   blks.map(b => b.tid().id())
 }
 
@@ -513,8 +513,8 @@ let rules_config : Ref[(@mc.Registry, Bool)] = {
 /// The theories are declared as well (`declare_theories`,
 /// `declare_ir_theories`).
 pub fn install_rules(
-  registry? : @mc.Registry = @mc.Registry::global(),
-  with_fp? : Bool = true,
+  registry~ : @mc.Registry = @mc.Registry::global(),
+  with_fp~ : Bool = true,
 ) -> Unit raise {
   declare_theories(with_fp~)
   declare_ir_theories()

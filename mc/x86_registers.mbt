@@ -14,8 +14,10 @@
 ///|
 /// The x86 sub-registers of the `bits`-bit mode (32 or 64): name -> (full
 /// register, full register width, lo, hi).
-fn x86_subregister_table(bits : Int) -> Map[String, (String, Int, Int, Int)] {
-  let table : Map[String, (String, Int, Int, Int)] = Map([])
+fn x86_subregister_table(
+  bits : Int32,
+) -> Map[String, (String, Int32, Int32, Int32)] {
+  let table : Map[String, (String, Int32, Int32, Int32)] = Map([])
   let names : Array[(String, String, String, String)] = [
     ("AX", "AL", "AH", "A"),
     ("CX", "CL", "CH", "C"),
@@ -26,7 +28,7 @@ fn x86_subregister_table(bits : Int) -> Map[String, (String, Int, Int, Int)] {
     ("SI", "SIL", "", "SI"),
     ("DI", "DIL", "", "DI"),
   ]
-  let full = (i : Int) => {
+  let full = (i : Int32) => {
     if i < 8 {
       let stem = names[i].3
       let stem = if stem.length() == 1 { stem + "X" } else { stem }
@@ -66,11 +68,13 @@ fn x86_subregister_table(bits : Int) -> Map[String, (String, Int, Int, Int)] {
 }
 
 ///|
-let x86_subregister_tables : Map[Int, Map[String, (String, Int, Int, Int)]] = Map([],
-)
+let x86_subregister_tables : Map[
+  Int32,
+  Map[String, (String, Int32, Int32, Int32)],
+] = Map([])
 
 ///|
-fn x86_subregisters(bits : Int) -> Map[String, (String, Int, Int, Int)] {
+fn x86_subregisters(bits : Int32) -> Map[String, (String, Int32, Int32, Int32)] {
   match x86_subregister_tables.get(bits) {
     Some(t) => t
     None => {
@@ -82,7 +86,7 @@ fn x86_subregisters(bits : Int) -> Map[String, (String, Int, Int, Int)] {
 }
 
 ///|
-fn x86_imm_width(v : @types.Var) -> Int {
+fn x86_imm_width(v : @types.Var) -> Int32 {
   match v.typ {
     Imm(w) => w
     Mem(..) => 0
@@ -93,9 +97,9 @@ fn x86_imm_width(v : @types.Var) -> Int {
 /// The part `hi..lo` of the full register `base`.
 fn x86_register_part(
   base : @types.Var,
-  width : Int,
-  lo : Int,
-  hi : Int,
+  width : Int32,
+  lo : Int32,
+  hi : Int32,
 ) -> @types.Exp {
   if lo == 0 {
     Cast(kind=Low, width=hi + 1, exp=Var(base))
@@ -122,7 +126,7 @@ fn x86_zero_extend(e : @types.Exp) -> @types.Exp {
 
 ///|
 fn x86_resolve_exp(
-  table : Map[String, (String, Int, Int, Int)],
+  table : Map[String, (String, Int32, Int32, Int32)],
   e : @types.Exp,
 ) -> @types.Exp {
   let n = x => x86_resolve_exp(table, x)
@@ -150,8 +154,8 @@ fn x86_resolve_exp(
 
 ///|
 fn x86_resolve_stmts(
-  bits : Int,
-  table : Map[String, (String, Int, Int, Int)],
+  bits : Int32,
+  table : Map[String, (String, Int32, Int32, Int32)],
   stmts : Array[@types.Stmt],
 ) -> Array[@types.Stmt] {
   let n = x => x86_resolve_exp(table, x)
@@ -219,7 +223,7 @@ fn x86_resolve_stmts(
 /// ```
 pub fn resolve_x86_subregisters(
   stmts : Array[@types.Stmt],
-  bits~ : Int,
+  bits~ : Int32,
 ) -> Array[@types.Stmt] {
   x86_resolve_stmts(bits, x86_subregisters(bits), stmts)
 }

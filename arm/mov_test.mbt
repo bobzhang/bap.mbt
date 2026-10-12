@@ -127,7 +127,7 @@ test "register moves and shifted moves" {
 ///|
 test "shift semantics" {
   let init = state([("R1", 0x80000011), ("R2", 4)], flags=[("CF", true)])
-  let shifted = (simm : Int) => {
+  let shifted = (simm : Int32) => {
     let s = run("MOVsi", [r("R0"), r("R1"), i(simm), ..al, r("CPSR")], init)
     (reg_value(s, "R0"), flag_value(s, "CF"))
   }
@@ -258,7 +258,7 @@ test "data processing forms" {
 
 ///|
 test "arithmetic results and flags" {
-  let arith = (name : String, a : UInt, b : UInt, carry : Bool) => {
+  let arith = (name : String, a : UInt32, b : UInt32, carry : Bool) => {
     let init = state([("R1", a), ("R2", b)], flags=[("CF", carry)])
     let s = run(name, [r("R0"), r("R1"), r("R2"), ..al, r("CPSR")], init)
     "\{reg_value(s, "R0")} \{nzcv(s)}"
@@ -327,7 +327,7 @@ test "comparisons and tests set the flags only" {
       #|ZF:imm1 := (%v1:imm32 == 0:32u)
     ),
   )
-  let cmp = (name : String, a : UInt, b : UInt) => {
+  let cmp = (name : String, a : UInt32, b : UInt32) => {
     let init = state([("R1", a), ("R2", b)])
     nzcv(run(name, [r("R1"), r("R2"), ..al], init))
   }

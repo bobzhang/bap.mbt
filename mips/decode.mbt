@@ -29,7 +29,7 @@ pub fn encoding(arch : Arch, endian : @bitvec.Endian) -> @core_theory.Language {
 
 ///|
 /// Assemble the instruction word from the first four bytes of `bytes`.
-fn read_word(bytes : BytesView, endian : @bitvec.Endian) -> UInt {
+fn read_word(bytes : BytesView, endian : @bitvec.Endian) -> UInt32 {
   let b0 = bytes[0].to_uint()
   let b1 = bytes[1].to_uint()
   let b2 = bytes[2].to_uint()
@@ -64,9 +64,9 @@ fn read_word(bytes : BytesView, endian : @bitvec.Endian) -> UInt {
 pub fn decode(
   bytes : BytesView,
   addr : UInt64,
-  arch? : Arch = Mips32,
-  endian? : @bitvec.Endian = BigEndian,
-  r6? : Bool = false,
+  arch~ : Arch = Mips32,
+  endian~ : @bitvec.Endian = BigEndian,
+  r6~ : Bool = false,
 ) -> @mc.Insn? {
   if bytes.length() < 4 {
     return None
@@ -100,7 +100,7 @@ pub let decoder_name : String = "mips"
 /// the context (`mode_of_context`). With `r6` it decodes the Release 6
 /// encodings (the default decoder decodes Release 2, like the default
 /// LLVM CPUs of the MIPS targets).
-pub fn decoder(r6? : Bool = false) -> @mc.Decoder {
+pub fn decoder(r6~ : Bool = false) -> @mc.Decoder {
   let name = if r6 { decoder_name + "-r6" } else { decoder_name }
   @mc.Decoder::create(name, accepts~, decode=(ctx, bytes, addr) => {
     if bytes.length() < 4 {

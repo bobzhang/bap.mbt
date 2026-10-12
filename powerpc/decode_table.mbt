@@ -16,14 +16,14 @@
 ///|
 /// Bits `from..to` (inclusive, numbered from the most significant bit as in
 /// the Power ISA) of the instruction word.
-fn field(w : UInt, from : Int, to : Int) -> Int {
+fn field(w : UInt32, from : Int32, to : Int32) -> Int32 {
   let width = to - from + 1
   ((w >> (31 - to)) & ((1U << width) - 1)).reinterpret_as_int()
 }
 
 ///|
 /// Sign-extend the low `bits` bits of `v`.
-fn sext(v : Int, bits : Int) -> Int64 {
+fn sext(v : Int32, bits : Int32) -> Int64 {
   let shift = 64 - bits
   v.to_int64() << shift >> shift
 }
@@ -63,7 +63,7 @@ priv enum Cls {
 }
 
 ///|
-fn reg_arg(cls : Cls, n : Int) -> Arg {
+fn reg_arg(cls : Cls, n : Int32) -> Arg {
   match cls {
     W => Gpr(n)
     D => G8(n)
@@ -93,7 +93,7 @@ fn plain(
   mnemonic : String,
   rc : Bool,
   args : Array[Arg],
-  kinds? : Array[@mc.Kind] = [],
+  kinds~ : Array[@mc.Kind] = [],
 ) -> Spec? {
   if rc {
     None
@@ -104,7 +104,7 @@ fn plain(
 
 ///|
 /// Decode an instruction word.
-fn decode_spec(w : UInt) -> Spec? {
+fn decode_spec(w : UInt32) -> Spec? {
   let rt = field(w, 6, 10)
   let ra = field(w, 11, 15)
   let d = sext(field(w, 16, 31), 16)
@@ -209,8 +209,8 @@ fn dec_load_d(
   name : String,
   mnemonic : String,
   update : Bool,
-  rt : Int,
-  ra : Int,
+  rt : Int32,
+  ra : Int32,
   d : Int64,
 ) -> Spec {
   let args = if update {
@@ -228,8 +228,8 @@ fn dec_store_d(
   mnemonic : String,
   update : Bool,
   cls : Cls,
-  rs : Int,
-  ra : Int,
+  rs : Int32,
+  ra : Int32,
   d : Int64,
 ) -> Spec {
   let args = if update {
@@ -242,7 +242,7 @@ fn dec_store_d(
 
 ///|
 /// `cmp[l]wi`/`cmp[l]di bf, ra, imm` (primary opcodes 10 and 11).
-fn decode_cmpi(w : UInt, logical~ : Bool) -> Spec? {
+fn decode_cmpi(w : UInt32, logical~ : Bool) -> Spec? {
   guard field(w, 9, 9) == 0 else { None }
   let bf = field(w, 6, 8)
   let wide = field(w, 10, 10) == 1
@@ -273,7 +273,7 @@ fn omit_cr0(spec : Spec) -> Spec {
 
 ///|
 /// I-form branches: `b`, `ba`, `bl`, `bla`.
-fn decode_iform(w : UInt) -> Spec {
+fn decode_iform(w : UInt32) -> Spec {
   let li = sext(field(w, 6, 29), 24)
   let absolute = field(w, 30, 30) == 1
   let link = field(w, 31, 31) == 1
@@ -290,7 +290,7 @@ fn decode_iform(w : UInt) -> Spec {
 /// The name suffix and mnemonic of the CTR-decrementing forms (`BDNZ`,
 /// `BDZ` and their `+`/`-` hinted variants) selected by `bo`, when `bo` is
 /// one of them.
-fn ctr_branch(bo : Int) -> (String, String, String, String)? {
+fn ctr_branch(bo : Int32) -> (String, String, String, String)? {
   match bo {
     16 => Some(("BDNZ", "", "bdnz", ""))
     24 => Some(("BDNZ", "m", "bdnz", "-"))
@@ -307,7 +307,7 @@ fn ctr_branch(bo : Int) -> (String, String, String, String)? {
 /// branch options `bo` testing a condition register bit, as printed by LLVM:
 /// `bt`/`bf` (with the `-`/`+` hints) and the CTR-decrementing `bdnzt`,
 /// `bdnzf`, `bdzt`, `bdzf`.
-fn bc_mnemonic(bo : Int) -> (String, String)? {
+fn bc_mnemonic(bo : Int32) -> (String, String)? {
   match bo {
     0 => Some(("bdnzf", ""))
     2 => Some(("bdzf", ""))
@@ -327,7 +327,7 @@ fn bc_mnemonic(bo : Int) -> (String, String)? {
 /// B-form conditional branches: `gBC`, `gBCA`, `gBCL`, `gBCLA` with the
 /// operands `bo, bi, target`; the CTR forms with `bi = 0` decode as
 /// `BDNZ`, `BDZ`, ... with the target only.
-fn decode_bform(w : UInt) -> Spec {
+fn decode_bform(w : UInt32) -> Spec {
   let bo = field(w, 6, 10)
   let bi = field(w, 11, 15)
   let bd = sext(field(w, 16, 29), 14)
@@ -362,7 +362,7 @@ fn decode_bform(w : UInt) -> Spec {
 ///|
 /// XL-form (primary opcode 19): branches to LR, CTR and TAR, `mcrf` and the
 /// condition register logical instructions.
-fn decode_xl(w : UInt) -> Spec? {
+fn decode_xl(w : UInt32) -> Spec? {
   let bt = field(w, 6, 10)
   let ba = field(w, 11, 15)
   let bb = field(w, 16, 20)
@@ -405,10 +405,10 @@ fn decode_xl(w : UInt) -> Spec? {
 /// `bclr` (xo 16) and `bcctr` (528) with their link forms (LLVM has no
 /// `bctar`).
 fn decode_branch_to_reg(
-  xo : Int,
-  bo : Int,
-  bi : Int,
-  bh : Int,
+  xo : Int32,
+  bo : Int32,
+  bi : Int32,
+  bh : Int32,
   link : Bool,
 ) -> Spec {
   let l = if link { "L" } else { "" }
@@ -455,7 +455,7 @@ fn decode_branch_to_reg(
 /// M-form rotates: `rlwimi` (20), `rlwinm` (21), `rlwnm` (23), printed with
 /// the extended mnemonics chosen by LLVM (`slwi`, `srwi`, `rotlwi`,
 /// `clrlwi`, `rotlw`; `slwi` and `srwi` only for the non-record `rlwinm`).
-fn decode_mform(w : UInt) -> Spec {
+fn decode_mform(w : UInt32) -> Spec {
   let rs = field(w, 6, 10)
   let ra = field(w, 11, 15)
   let sh = field(w, 16, 20)
@@ -513,7 +513,7 @@ fn decode_mform(w : UInt) -> Spec {
 /// fields are split: `sh = sh[5] || sh[0:4]`, `mb = mb[5] || mb[0:4]`. The
 /// extended mnemonics are those printed by LLVM: `rotldi`, `clrldi`,
 /// `rotld` and (non-record only) `sldi`.
-fn decode_md(w : UInt) -> Spec? {
+fn decode_md(w : UInt32) -> Spec? {
   let rs = field(w, 6, 10)
   let ra = field(w, 11, 15)
   let rb = field(w, 16, 20)

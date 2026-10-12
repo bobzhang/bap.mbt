@@ -28,7 +28,7 @@ pub(all) suberror MainError {
   /// Reference to a plugin that is not loaded.
   UnknownPlugin(String)
   /// The program shall exit with the given code.
-  ExitRequested(Int)
+  ExitRequested(Int32)
   /// The specified recipe could not be loaded.
   BadRecipe(String)
   /// The configuration context is already sealed.

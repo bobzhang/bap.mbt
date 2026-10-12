@@ -10,7 +10,7 @@ pub let provides : Array[String] = ["symbolizer", "rooter", "function-starts"]
 /// The directories searched for the patterns by default (upstream:
 /// `/usr/share/ghidra` and the `signatures` folders of the data
 /// directories), followed by the user-specified paths.
-pub fn default_roots(paths? : ArrayView[String] = []) -> Array[String] {
+pub fn default_roots(paths~ : ArrayView[String] = []) -> Array[String] {
   [
     "/usr/share/ghidra",
     concat_path(@bap_main.Configuration::datadir(), "signatures"),
@@ -25,7 +25,7 @@ let roots : Ref[Array[String]] = { val: [], }
 ///|
 /// Sets the pattern directories used by `register_for_image` (upstream
 /// `Repository.enable`).
-pub fn enable(paths? : ArrayView[String] = []) -> Unit {
+pub fn enable(paths~ : ArrayView[String] = []) -> Unit {
   roots.val = default_roots(paths~)
 }
 
@@ -43,7 +43,7 @@ pub fn register_for_image(
   image : @image.Image,
   path? : String,
   target? : @core_theory.Target,
-  fs? : @bap_main.FileSystem = @bap_main.FileSystem::native(),
+  fs~ : @bap_main.FileSystem = @bap_main.FileSystem::native(),
 ) -> Outcome {
   let target = match target {
     Some(t) => t
@@ -78,7 +78,7 @@ pub fn match_patterns(
   spec~ : String,
   binary~ : String,
   out~ : (String) -> Unit,
-  fs? : @bap_main.FileSystem = @bap_main.FileSystem::native(),
+  fs~ : @bap_main.FileSystem = @bap_main.FileSystem::native(),
 ) -> Unit {
   let text = match (fs.read_file)(spec) {
     Some(bytes) => @utf8.decode_lossy(bytes)

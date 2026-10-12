@@ -85,7 +85,7 @@ pub fn BilState::set_var(
 }
 
 ///|
-fn consume_fuel(fuel : Ref[Int]) -> Result[Unit, String] {
+fn consume_fuel(fuel : Ref[Int32]) -> Result[Unit, String] {
   if fuel.val <= 0 {
     Err("BIL statement fuel exhausted")
   } else {
@@ -107,7 +107,7 @@ fn eval_condition(cond : Exp, state : BilState) -> Result[Bool, String] {
 fn exec_stmt(
   stmt : Stmt,
   state : BilState,
-  fuel : Ref[Int],
+  fuel : Ref[Int32],
 ) -> Result[BilState, String] {
   match consume_fuel(fuel) {
     Err(reason) => Err(reason)
@@ -160,7 +160,7 @@ fn exec_stmt(
 fn exec_sequence(
   stmts : Array[Stmt],
   state : BilState,
-  fuel : Ref[Int],
+  fuel : Ref[Int32],
 ) -> Result[BilState, String] {
   let mut current = state
   for stmt in stmts {
@@ -176,7 +176,7 @@ fn exec_sequence(
 pub fn exec_stmts(
   stmts : Array[Stmt],
   state? : BilState,
-  max_steps? : Int = 10000,
+  max_steps~ : Int32 = 10000,
 ) -> Result[BilState, String] {
   let fuel = Ref(max_steps)
   let initial = match state {
@@ -190,7 +190,7 @@ pub fn exec_stmts(
 pub fn Stmt::exec(
   self : Stmt,
   state? : BilState,
-  max_steps? : Int = 10000,
+  max_steps~ : Int32 = 10000,
 ) -> Result[BilState, String] {
   exec_stmts([self], state?, max_steps~)
 }

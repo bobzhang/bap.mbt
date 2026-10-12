@@ -54,12 +54,12 @@ fn lisp_fail(m : @primus.Machine, msg : String) -> @primus.Value raise {
 }
 
 ///|
-fn to_int(v : @primus.Value) -> Int raise {
+fn to_int(v : @primus.Value) -> Int32 raise {
   v.to_word().to_int()
 }
 
 ///|
-fn arch_addr_size(m : @primus.Machine) -> Int {
+fn arch_addr_size(m : @primus.Machine) -> Int32 {
   m.target().bits()
 }
 

@@ -33,17 +33,21 @@ struct Memory {
 
 ///|
 struct MemoryInputReader {
-  width_value : Int
+  width_value : Int32
   signed_value : Bool
 }
 
 ///|
-fn u64_from_int(value : Int) -> UInt64 {
+fn u64_from_int(value : Int32) -> UInt64 {
   value.to_uint64()
 }
 
 ///|
-fn checked_len(data_length : Int, pos : Int, len : Int) -> Result[Int, String] {
+fn checked_len(
+  data_length : Int32,
+  pos : Int32,
+  len : Int32,
+) -> Result[Int32, String] {
   if data_length == 0 {
     Err("memory input is empty")
   } else if pos < 0 {
@@ -64,7 +68,7 @@ fn checked_len(data_length : Int, pos : Int, len : Int) -> Result[Int, String] {
 }
 
 ///|
-fn memory_word_bytes(word_size : Int) -> Int? {
+fn memory_word_bytes(word_size : Int32) -> Int32? {
   if word_size <= 0 || word_size % 8 != 0 {
     None
   } else {
@@ -77,8 +81,8 @@ pub fn Memory::create(
   endian~ : @bitvec.Endian,
   start~ : UInt64,
   data : Bytes,
-  pos? : Int = 0,
-  len? : Int = -1,
+  pos~ : Int32 = 0,
+  len~ : Int32 = -1,
 ) -> Result[Memory, String] {
   match checked_len(data.length(), pos, len) {
     Ok(size) =>
@@ -125,7 +129,7 @@ pub fn Memory::max_addr(self : Memory) -> UInt64 {
 }
 
 ///|
-pub fn Memory::length(self : Memory) -> Int {
+pub fn Memory::length(self : Memory) -> Int32 {
   self.data_value.length()
 }
 
@@ -161,7 +165,7 @@ pub fn Memory::compare_with(self : Memory, addr : UInt64) -> AddressPosition {
 }
 
 ///|
-fn Memory::offset(self : Memory, addr : UInt64) -> Int? {
+fn Memory::offset(self : Memory, addr : UInt64) -> Int32? {
   if self.contains(addr) {
     Some((addr - self.base_addr).to_int())
   } else {
@@ -173,8 +177,8 @@ fn Memory::offset(self : Memory, addr : UInt64) -> Int? {
 pub fn Memory::view(
   self : Memory,
   from? : UInt64,
-  words? : Int = -1,
-  word_size? : Int = 8,
+  words~ : Int32 = -1,
+  word_size~ : Int32 = 8,
 ) -> Result[Memory, String] {
   let start = match from {
     Some(addr) => addr
@@ -217,8 +221,8 @@ pub fn Memory::view(
 pub fn Memory::view_exn(
   self : Memory,
   from? : UInt64,
-  words? : Int = -1,
-  word_size? : Int = 8,
+  words~ : Int32 = -1,
+  word_size~ : Int32 = 8,
 ) -> Memory raise MemoryError {
   match self.view(from?, words~, word_size~) {
     Ok(memory) => memory
@@ -269,10 +273,10 @@ pub fn Memory::last_byte(self : Memory) -> Memory {
 pub fn Memory::load(
   self : Memory,
   addr : UInt64,
-  width? : Int = 8,
-  disp? : Int = 0,
-  index? : Int = 0,
-  scale? : Int = 1,
+  width~ : Int32 = 8,
+  disp~ : Int32 = 0,
+  index~ : Int32 = 0,
+  scale~ : Int32 = 1,
 ) -> Result[@types.Word, String] {
   let effective = addr + u64_from_int(disp + index * scale)
   if width <= 0 || width % 8 != 0 {
@@ -301,10 +305,10 @@ pub fn Memory::load(
 pub fn Memory::load_exn(
   self : Memory,
   addr : UInt64,
-  width? : Int = 8,
-  disp? : Int = 0,
-  index? : Int = 0,
-  scale? : Int = 1,
+  width~ : Int32 = 8,
+  disp~ : Int32 = 0,
+  index~ : Int32 = 0,
+  scale~ : Int32 = 1,
 ) -> @types.Word raise MemoryError {
   match self.load(addr, width~, disp~, index~, scale~) {
     Ok(word) => word
@@ -316,9 +320,9 @@ pub fn Memory::load_exn(
 pub fn Memory::get(
   self : Memory,
   addr? : UInt64,
-  disp? : Int = 0,
-  index? : Int = 0,
-  scale? : Int = 8,
+  disp~ : Int32 = 0,
+  index~ : Int32 = 0,
+  scale~ : Int32 = 8,
 ) -> Result[@types.Word, String] {
   if scale <= 0 || scale % 8 != 0 {
     Err("memory get scale must be a positive multiple of 8")
@@ -335,9 +339,9 @@ pub fn Memory::get(
 pub fn Memory::get_exn(
   self : Memory,
   addr? : UInt64,
-  disp? : Int = 0,
-  index? : Int = 0,
-  scale? : Int = 8,
+  disp~ : Int32 = 0,
+  index~ : Int32 = 0,
+  scale~ : Int32 = 8,
 ) -> @types.Word raise MemoryError {
   match self.get(addr?, disp~, index~, scale~) {
     Ok(word) => word
@@ -366,7 +370,7 @@ pub fn[A] Memory::foldi(
   self : Memory,
   init : A,
   f : (UInt64, @types.Word, A) -> A,
-  word_size? : Int = 8,
+  word_size~ : Int32 = 8,
 ) -> A {
   match memory_word_bytes(word_size) {
     None => init
@@ -392,7 +396,7 @@ pub fn[A] Memory::fold(
   self : Memory,
   init : A,
   f : (@types.Word, A) -> A,
-  word_size? : Int = 8,
+  word_size~ : Int32 = 8,
 ) -> A {
   self.foldi(init, (_, word, acc) => f(word, acc), word_size~)
 }
@@ -401,7 +405,7 @@ pub fn[A] Memory::fold(
 pub fn Memory::iteri(
   self : Memory,
   f : (UInt64, @types.Word) -> Unit,
-  word_size? : Int = 8,
+  word_size~ : Int32 = 8,
 ) -> Unit {
   self.foldi(
     (),
@@ -417,7 +421,7 @@ pub fn Memory::iteri(
 pub fn Memory::iter(
   self : Memory,
   f : (@types.Word) -> Unit,
-  word_size? : Int = 8,
+  word_size~ : Int32 = 8,
 ) -> Unit {
   self.iteri((_, word) => f(word), word_size~)
 }
@@ -426,7 +430,7 @@ pub fn Memory::iter(
 pub fn Memory::exists(
   self : Memory,
   f : (UInt64, @types.Word) -> Bool,
-  word_size? : Int = 8,
+  word_size~ : Int32 = 8,
 ) -> Bool {
   match
     self.find_map(
@@ -442,7 +446,7 @@ pub fn Memory::exists(
 pub fn Memory::for_all(
   self : Memory,
   f : (UInt64, @types.Word) -> Bool,
-  word_size? : Int = 8,
+  word_size~ : Int32 = 8,
 ) -> Bool {
   match memory_word_bytes(word_size) {
     None => true
@@ -466,8 +470,8 @@ pub fn Memory::for_all(
 pub fn Memory::count(
   self : Memory,
   f : (UInt64, @types.Word) -> Bool,
-  word_size? : Int = 8,
-) -> Int {
+  word_size~ : Int32 = 8,
+) -> Int32 {
   self.foldi(
     0,
     (addr, word, total) => if f(addr, word) { total + 1 } else { total },
@@ -479,7 +483,7 @@ pub fn Memory::count(
 pub fn[A] Memory::find_map(
   self : Memory,
   f : (UInt64, @types.Word) -> A?,
-  word_size? : Int = 8,
+  word_size~ : Int32 = 8,
 ) -> A? {
   match memory_word_bytes(word_size) {
     None => None
@@ -507,7 +511,7 @@ pub fn[A] Memory::find_map(
 pub fn Memory::find_if(
   self : Memory,
   f : (UInt64, @types.Word) -> Bool,
-  word_size? : Int = 8,
+  word_size~ : Int32 = 8,
 ) -> @types.Word? {
   self.find_map(
     (addr, word) => if f(addr, word) { Some(word) } else { None },
@@ -520,7 +524,7 @@ pub fn[A, E] Memory::foldi_result(
   self : Memory,
   init : A,
   f : (UInt64, @types.Word, A) -> Result[A, E],
-  word_size? : Int = 8,
+  word_size~ : Int32 = 8,
 ) -> Result[A, E] {
   match memory_word_bytes(word_size) {
     None => Ok(init)
@@ -550,7 +554,7 @@ pub fn[A, E] Memory::fold_result(
   self : Memory,
   init : A,
   f : (@types.Word, A) -> Result[A, E],
-  word_size? : Int = 8,
+  word_size~ : Int32 = 8,
 ) -> Result[A, E] {
   self.foldi_result(init, (_, word, acc) => f(word, acc), word_size~)
 }
@@ -559,7 +563,7 @@ pub fn[A, E] Memory::fold_result(
 pub fn[E] Memory::iteri_result(
   self : Memory,
   f : (UInt64, @types.Word) -> Result[Unit, E],
-  word_size? : Int = 8,
+  word_size~ : Int32 = 8,
 ) -> Result[Unit, E] {
   self.foldi_result((), (addr, word, _) => f(addr, word), word_size~)
 }
@@ -568,7 +572,7 @@ pub fn[E] Memory::iteri_result(
 pub fn[E] Memory::iter_result(
   self : Memory,
   f : (@types.Word) -> Result[Unit, E],
-  word_size? : Int = 8,
+  word_size~ : Int32 = 8,
 ) -> Result[Unit, E] {
   self.iteri_result((_, word) => f(word), word_size~)
 }
@@ -577,7 +581,7 @@ pub fn[E] Memory::iter_result(
 pub fn[E] Memory::exists_result(
   self : Memory,
   f : (UInt64, @types.Word) -> Result[Bool, E],
-  word_size? : Int = 8,
+  word_size~ : Int32 = 8,
 ) -> Result[Bool, E] {
   match memory_word_bytes(word_size) {
     None => Ok(false)
@@ -606,7 +610,7 @@ pub fn[E] Memory::exists_result(
 pub fn[E] Memory::for_all_result(
   self : Memory,
   f : (UInt64, @types.Word) -> Result[Bool, E],
-  word_size? : Int = 8,
+  word_size~ : Int32 = 8,
 ) -> Result[Bool, E] {
   match memory_word_bytes(word_size) {
     None => Ok(true)
@@ -635,8 +639,8 @@ pub fn[E] Memory::for_all_result(
 pub fn[E] Memory::count_result(
   self : Memory,
   f : (UInt64, @types.Word) -> Result[Bool, E],
-  word_size? : Int = 8,
-) -> Result[Int, E] {
+  word_size~ : Int32 = 8,
+) -> Result[Int32, E] {
   self.foldi_result(
     0,
     (addr, word, total) => {
@@ -654,7 +658,7 @@ pub fn[E] Memory::count_result(
 pub fn[A, E] Memory::find_map_result(
   self : Memory,
   f : (UInt64, @types.Word) -> Result[A?, E],
-  word_size? : Int = 8,
+  word_size~ : Int32 = 8,
 ) -> Result[A?, E] {
   match memory_word_bytes(word_size) {
     None => Ok(None)
@@ -683,7 +687,7 @@ pub fn[A, E] Memory::find_map_result(
 pub fn[E] Memory::find_if_result(
   self : Memory,
   f : (UInt64, @types.Word) -> Result[Bool, E],
-  word_size? : Int = 8,
+  word_size~ : Int32 = 8,
 ) -> Result[@types.Word?, E] {
   self.find_map_result(
     (addr, word) => {
@@ -698,7 +702,7 @@ pub fn[E] Memory::find_if_result(
 }
 
 ///|
-pub fn MemoryInputReader::word(word_size~ : Int) -> MemoryInputReader {
+pub fn MemoryInputReader::word(word_size~ : Int32) -> MemoryInputReader {
   { width_value: word_size, signed_value: false, }
 }
 
@@ -861,7 +865,7 @@ pub fn Memory::hexdump(self : Memory) -> String {
 }
 
 ///|
-fn hex_digit(value : Int) -> String {
+fn hex_digit(value : Int32) -> String {
   match value {
     0 => "0"
     1 => "1"

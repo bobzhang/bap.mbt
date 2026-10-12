@@ -1,5 +1,5 @@
 ///|
-fn execp(pattern : String, input : String, caseless? : Bool = false) -> Bool {
+fn execp(pattern : String, input : String, caseless~ : Bool = false) -> Bool {
   match @regex.Regex::compile(pattern, caseless~) {
     Ok(regex) => regex.execp(input)
     Err(reason) => abort("\{pattern}: \{reason}")

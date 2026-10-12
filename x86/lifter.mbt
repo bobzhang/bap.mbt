@@ -2,7 +2,7 @@
 // general purpose instructions.
 
 ///|
-fn Ctx::is_small_imm(_self : Ctx, op : Operand, t : Int) -> Bool {
+fn Ctx::is_small_imm(_self : Ctx, op : Operand, t : Int32) -> Bool {
   match op {
     Oimm(imm) => imm.width < t
     _ => false
@@ -13,7 +13,7 @@ fn Ctx::is_small_imm(_self : Ctx, op : Operand, t : Int) -> Bool {
 fn Ctx::sign_extend_imm(
   self : Ctx,
   op : Operand,
-  t : Int,
+  t : Int32,
 ) -> @types.Exp raise X86Error {
   match op {
     Oimm(imm) => e_signed(t, self.op2e(imm.width, op))
@@ -27,7 +27,7 @@ fn Ctx::sign_extend_imm(
 fn Ctx::src_operand(
   self : Ctx,
   op : Operand,
-  t : Int,
+  t : Int32,
 ) -> @types.Exp raise X86Error {
   if self.is_small_imm(op, t) {
     self.sign_extend_imm(op, t)
@@ -37,7 +37,7 @@ fn Ctx::src_operand(
 }
 
 ///|
-fn Ctx::pref_is(self : Ctx, p : Int) -> Bool {
+fn Ctx::pref_is(self : Ctx, p : Int32) -> Bool {
   self.pref is [x] && x == p
 }
 

@@ -35,7 +35,7 @@ fn basic_text(insn : @project.ProjectDisassemblyInstruction) -> String {
 pub fn missing_report(project : @project.Project) -> String {
   let target = project.target()
   let sb = StringBuilder()
-  let stats : Map[String, Int] = Map([])
+  let stats : Map[String, Int32] = Map([])
   let mut lifted = 0
   let mut missed = 0
   let failed = 0
@@ -54,7 +54,7 @@ pub fn missing_report(project : @project.Project) -> String {
     }
   }
   // group opcodes by their counts, in the increasing order of counts
-  let histo : Map[Int, Array[String]] = Map([])
+  let histo : Map[Int32, Array[String]] = Map([])
   let names = stats.keys().collect()
   names.sort_by(lex_compare)
   for name in names {
@@ -80,7 +80,7 @@ pub fn missing_report(project : @project.Project) -> String {
 }
 
 ///|
-fn pad_right(s : String, width : Int) -> String {
+fn pad_right(s : String, width : Int32) -> String {
   if s.length() >= width {
     s
   } else {
@@ -91,7 +91,7 @@ fn pad_right(s : String, width : Int) -> String {
 ///|
 /// OCaml's `String.compare`: the lexicographic order (MoonBit's `String`
 /// comparison orders by length first).
-fn lex_compare(a : String, b : String) -> Int {
+fn lex_compare(a : String, b : String) -> Int32 {
   let n = if a.length() < b.length() { a.length() } else { b.length() }
   for i in 0..<n {
     let c = a[i].compare(b[i])

@@ -325,7 +325,7 @@ pub fn pass() -> @project.ProjectPass {
 
 ///|
 /// Registers the component and the project pass.
-pub fn enable(p? : Params = params.val) -> Unit {
+pub fn enable(p~ : Params = params.val) -> Unit {
   configure(p)
   register() |> ignore
   @project.register_pass_if_absent(pass()) |> ignore

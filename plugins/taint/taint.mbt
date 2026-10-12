@@ -63,11 +63,11 @@ fn quote(s : String) -> String {
 }
 
 ///|
-fn hex_digit(c : Char) -> Int? {
+fn hex_digit(c : Char) -> Int32? {
   match c {
-    '0'..='9' => Some(c.to_int() - '0'.to_int())
-    'a'..='f' => Some(c.to_int() - 'a'.to_int() + 10)
-    'A'..='F' => Some(c.to_int() - 'A'.to_int() + 10)
+    '0'..<='9' => Some(c.to_int() - '0'.to_int())
+    'a'..<='f' => Some(c.to_int() - 'a'.to_int() + 10)
+    'A'..<='F' => Some(c.to_int() - 'A'.to_int() + 10)
     _ => None
   }
 }
@@ -293,8 +293,8 @@ pub fn pass(
 /// both lists are empty. Idempotent: returns `Ok(false)` if nothing was
 /// registered.
 pub fn register(
-  regs? : Array[Array[Strain]] = [],
-  ptrs? : Array[Array[Strain]] = [],
+  regs~ : Array[Array[Strain]] = [],
+  ptrs~ : Array[Array[Strain]] = [],
 ) -> Result[Bool, String] {
   if regs.is_empty() && ptrs.is_empty() {
     return Ok(false)

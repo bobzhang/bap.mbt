@@ -23,13 +23,13 @@ priv struct StackInfo {
 /// have no info.
 priv struct ArgStack {
   base : @types.Var
-  data : Array[(Int, StackInfo?, Int)]
-  min_alignment : Int
+  data : Array[(Int32, StackInfo?, Int32)]
+  min_alignment : Int32
   ruler : &Ruler
 }
 
 ///|
-fn bytes_of_bits(bits : Int) -> Int {
+fn bytes_of_bits(bits : Int32) -> Int32 {
   (bits - 1) / 8 + 1
 }
 
@@ -46,7 +46,7 @@ fn ArgStack::create(ruler : &Ruler, target : @core_theory.Target) -> ArgStack? {
 }
 
 ///|
-fn ArgStack::align(self : ArgStack, info : StackInfo?, offset : Int) -> Int {
+fn ArgStack::align(self : ArgStack, info : StackInfo?, offset : Int32) -> Int32 {
   match info {
     None => next_multitude_of(n=self.min_alignment, offset)
     Some({ ctype, .. }) => {
@@ -57,7 +57,11 @@ fn ArgStack::align(self : ArgStack, info : StackInfo?, offset : Int) -> Int {
 }
 
 ///|
-fn ArgStack::append(self : ArgStack, info : StackInfo?, size : Int) -> ArgStack {
+fn ArgStack::append(
+  self : ArgStack,
+  info : StackInfo?,
+  size : Int32,
+) -> ArgStack {
   let data = self.data.copy()
   match self.data.last() {
     None => data.push((0, info, size))
@@ -72,13 +76,13 @@ fn ArgStack::add(
   self : ArgStack,
   ctype : CType,
   datum : Data,
-  size : Int,
+  size : Int32,
 ) -> ArgStack {
   self.append(Some({ ctype, datum, }), size)
 }
 
 ///|
-fn ArgStack::skip(self : ArgStack, size : Int) -> ArgStack {
+fn ArgStack::skip(self : ArgStack, size : Int32) -> ArgStack {
   self.append(None, size)
 }
 
@@ -87,7 +91,7 @@ fn ArgStack::push(
   self : ArgStack,
   ctype : CType,
   datum : Data,
-  size : Int,
+  size : Int32,
 ) -> ArgStack {
   let init : ArgStack = { ..self, data: [(0, Some({ ctype, datum, }), size)], }
   self.data.fold(init~, (stack, entry) => stack.append(entry.1, entry.2))
@@ -99,7 +103,7 @@ fn ArgStack::is_empty(self : ArgStack) -> Bool {
 }
 
 ///|
-fn ArgStack::slots(self : ArgStack) -> Array[(Int, Data, Int)] {
+fn ArgStack::slots(self : ArgStack) -> Array[(Int32, Data, Int32)] {
   self.data.filter_map(entry => {
     match entry {
       (off, Some({ datum, .. }), bits) => Some((off, datum, bits))
@@ -112,8 +116,8 @@ fn ArgStack::slots(self : ArgStack) -> Array[(Int, Data, Int)] {
 /// An ordered collection of locations (upstream `Arg.File`); `args` is
 /// sorted by the location number.
 priv struct File {
-  args : Array[(Int, @types.Exp)]
-  bits : Int
+  args : Array[(Int32, @types.Exp)]
+  bits : Int32
 }
 
 ///|
@@ -138,7 +142,7 @@ fn File::pop(self : File) -> (File, @types.Exp)? {
 }
 
 ///|
-fn File::popn(self : File, n : Int) -> (File, Array[@types.Exp])? {
+fn File::popn(self : File, n : Int32) -> (File, Array[@types.Exp])? {
   guard self.args is [(k, _), ..] else { return None }
   let last = k + n - 1
   guard self.args.search_by(entry => entry.0 == last) is Some(i) else {
@@ -149,7 +153,7 @@ fn File::popn(self : File, n : Int) -> (File, Array[@types.Exp])? {
 }
 
 ///|
-fn File::align(self : File, n : Int) -> File? {
+fn File::align(self : File, n : Int32) -> File? {
   guard self.args is [(k, _), ..] else { return None }
   let k1 = next_multitude_of(n~, k)
   if k == k1 {
@@ -171,7 +175,7 @@ fn File::deplet(self : File) -> File {
 }
 
 ///|
-fn File::available(self : File) -> Int {
+fn File::available(self : File) -> Int32 {
   self.args.length()
 }
 
@@ -201,7 +205,7 @@ pub struct Arg[A] {
 /// An arena: an ordered, expendable collection of locations (usually
 /// registers) used to pass arguments (upstream `C.Abi.Arg.arena`).
 pub struct Arena {
-  priv id : Int
+  priv id : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -342,7 +346,7 @@ fn switch_to(where_ : Where) -> Arg[Unit] {
 /// then the `inputs` rule. If `return_` is rejected, the whole semantics
 /// is rejected.
 pub fn Arg::define_semantics(
-  return_? : Arg[Unit] = Arg::pure(()),
+  return_~ : Arg[Unit] = Arg::pure(()),
   inputs : Arg[Unit],
 ) -> Arg[Unit] {
   Arg::sequence([switch_to(Return), return_, switch_to(Inputs), inputs])
@@ -351,7 +355,7 @@ pub fn Arg::define_semantics(
 ///|
 /// `size(t)` is the size in bits of an object of type `t`; rejected if the
 /// type is incomplete.
-pub fn Arg::size(t : CType) -> Arg[Int] {
+pub fn Arg::size(t : CType) -> Arg[Int32] {
   get_state().bind(s => {
     match s.ruler.bits(t) {
       None => Arg::reject()
@@ -362,7 +366,7 @@ pub fn Arg::size(t : CType) -> Arg[Int] {
 
 ///|
 /// `alignment(t)` is the alignment in bits of the type `t`.
-pub fn Arg::alignment(t : CType) -> Arg[Int] {
+pub fn Arg::alignment(t : CType) -> Arg[Int32] {
   get_state().map(s => s.ruler.alignment(t).in_bits())
 }
 
@@ -497,12 +501,12 @@ pub fn Arg::register(arena : Arena, t : CType) -> Arg[Unit] {
 
 ///|
 /// `discard(arena, n?)` discards `n` (default 1) locations from `arena`.
-pub fn Arg::discard(n? : Int = 1, arena : Arena) -> Arg[Unit] {
+pub fn Arg::discard(n~ : Int32 = 1, arena : Arena) -> Arg[Unit] {
   update_file(arena, file => file.popn(n)).map(_ => ())
 }
 
 ///|
-fn registers_for_bits(arena : Arena, bits : Int) -> Arg[Int?] {
+fn registers_for_bits(arena : Arena, bits : Int32) -> Arg[Int32?] {
   get_file(arena).map(file => {
     if file.bits > 0 {
       Some((bits - 1) / file.bits + 1)
@@ -515,7 +519,7 @@ fn registers_for_bits(arena : Arena, bits : Int) -> Arg[Int?] {
 ///|
 /// `count(arena, t)` is the number of registers needed to pass a value of
 /// type `t`; `None` if the size of `t` is unknown or the arena is empty.
-pub fn Arg::count(arena : Arena, t : CType) -> Arg[Int?] {
+pub fn Arg::count(arena : Arena, t : CType) -> Arg[Int32?] {
   get_state().bind(s => {
     match s.ruler.bits(t) {
       None => Arg::pure(None)
@@ -525,7 +529,7 @@ pub fn Arg::count(arena : Arena, t : CType) -> Arg[Int?] {
 }
 
 ///|
-fn registers_needed(arena : Arena, bits : Int) -> Arg[Int] {
+fn registers_needed(arena : Arena, bits : Int32) -> Arg[Int32] {
   registers_for_bits(arena, bits).bind(n => {
     match n {
       None => Arg::reject()
@@ -540,8 +544,8 @@ fn registers_needed(arena : Arena, bits : Int) -> Arg[Int] {
 /// `limit` registers are needed, or if the size of `t` is unknown. If
 /// `rev` is true, the registers are concatenated in the reversed order.
 pub fn Arg::registers(
-  rev? : Bool = false,
-  limit? : Int,
+  rev~ : Bool = false,
+  limit? : Int32,
   arena : Arena,
   t : CType,
 ) -> Arg[Unit] {
@@ -637,26 +641,26 @@ pub fn Arg::hidden(t : CType) -> Arg[Unit] {
 }
 
 ///|
-fn skip_memory(bits : Int) -> Arg[Unit] {
+fn skip_memory(bits : Int32) -> Arg[Unit] {
   update_stack(stack => stack.skip(bits))
 }
 
 ///|
 /// `rebase(n)` rebases the stack position by `n` words.
-pub fn Arg::rebase(slots : Int) -> Arg[Unit] {
+pub fn Arg::rebase(slots : Int32) -> Arg[Unit] {
   get_state().bind(s => skip_memory(slots * s.target.data_addr_size()))
 }
 
 ///|
 fn load_slot(
   target : @core_theory.Target,
-  bits : Int,
+  bits : Int32,
   sp : @types.Var,
-  base : Int,
+  base : Int32,
 ) -> @types.Exp {
   let mem = @types.Exp::var_exp(reify_var(target.data()))
   let width = target.data_addr_size()
-  let addr = (off : Int) => {
+  let addr = (off : Int32) => {
     if off == 0 {
       @types.Exp::var_exp(sp)
     } else {
@@ -693,8 +697,8 @@ fn load_slot(
 /// used. Rejected if the size of `t` is unknown, if `arena` is empty, or if
 /// some other argument is already passed via memory.
 pub fn Arg::split_with_memory(
-  rev? : Bool = false,
-  limit? : Int,
+  rev~ : Bool = false,
+  limit? : Int32,
   arena : Arena,
   t : CType,
 ) -> Arg[Unit] {
@@ -732,7 +736,7 @@ pub fn Arg::split_with_memory(
 }
 
 ///|
-fn popn_bits(arena : Arena, bits : Int) -> Arg[Array[@types.Exp]] {
+fn popn_bits(arena : Arena, bits : Int32) -> Arg[Array[@types.Exp]] {
   registers_needed(arena, bits).bind(n => {
     update_file(arena, file => file.popn(n))
   })

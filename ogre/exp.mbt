@@ -6,7 +6,7 @@
 /// clause (`field.at(n)`, upstream `field.[n]`).
 priv enum Name {
   ByName(String)
-  ByPos(Int)
+  ByPos(Int32)
 } derive(Debug)
 
 ///|
@@ -65,7 +65,7 @@ fn[V] Term::bool(b : Bool) -> Term[V] {
 ///|
 /// OCaml polymorphic comparison of floats: `nan` equals itself and is
 /// smaller than every other float.
-fn float_compare(x : Double, y : Double) -> Int {
+fn float_compare(x : Double, y : Double) -> Int32 {
   match (x.is_nan(), y.is_nan()) {
     (true, true) => 0
     (true, false) => -1
@@ -243,7 +243,7 @@ pub fn[A, K, T] Attribute::get(self : Attribute[A, K], field : Field[T]) -> Exp 
 ///|
 /// `field.at(n)` (upstream `field.[n]`): a variable ranging over the values
 /// of `field` of the `n`-th attribute of the selection (counting from 0).
-pub fn[T] Field::at(self : Field[T], n : Int) -> Exp {
+pub fn[T] Field::at(self : Field[T], n : Int32) -> Exp {
   { term: Var({ attr: ByPos(n), field: self.header(), }), }
 }
 

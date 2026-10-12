@@ -18,9 +18,9 @@ pub struct Context {
   priv next : Tid?
   priv blk : Term[Blk]?
   priv callstack : @list.List[Term[Sub]]
-  priv steps_left : Int
-  priv max_loop : Int
-  priv vis : @hashmap.HashMap[Tid, Int]
+  priv steps_left : Int32
+  priv max_loop : Int32
+  priv vis : @hashmap.HashMap[Tid, Int32]
   priv cps : @hashmap.HashMap[Tid, @hashmap.HashMap[Tid, Context]]
   priv rets : @list.List[Tid]
 }
@@ -35,8 +35,8 @@ pub struct Context {
 ///   detected;
 /// - `main` is the entry subroutine, defaults to the first subroutine.
 pub fn Context::new(
-  max_steps? : Int = 2147483647,
-  max_loop? : Int,
+  max_steps~ : Int32 = 2147483647,
+  max_loop? : Int32,
   main? : Term[Sub],
   program : Term[Program],
 ) -> Context {
@@ -48,15 +48,15 @@ pub fn Context::new(
     exp: ExpContext::new(),
     program,
     main_sub: main,
-    trace: @list.empty(),
+    trace: @list.List([]),
     next: None,
     blk: None,
-    callstack: @list.empty(),
+    callstack: @list.List([]),
     steps_left: max_steps,
     max_loop,
     vis: @hashmap.HashMap::new(),
     cps: @hashmap.HashMap::new(),
-    rets: @list.empty(),
+    rets: @list.List([]),
   }
 }
 
@@ -120,8 +120,8 @@ pub fn Context::set_next(self : Context, next : Tid?) -> Context {
 
 ///|
 /// The number of visits of every visited term.
-pub fn Context::visited(self : Context) -> Map[Tid, Int] {
-  let result : Map[Tid, Int] = Map([])
+pub fn Context::visited(self : Context) -> Map[Tid, Int32] {
+  let result : Map[Tid, Int32] = Map([])
   for tid, n in self.vis {
     result[tid] = n
   }
@@ -130,7 +130,7 @@ pub fn Context::visited(self : Context) -> Map[Tid, Int] {
 
 ///|
 /// The number of visits of the given term.
-pub fn Context::visits(self : Context, tid : Tid) -> Int {
+pub fn Context::visits(self : Context, tid : Tid) -> Int32 {
   self.vis.get(tid).unwrap_or(0)
 }
 
@@ -150,7 +150,7 @@ pub fn Context::checkpoints(self : Context) -> Map[Tid, Map[Tid, Context]] {
 }
 
 ///|
-fn tid_compare(x : Tid, y : Tid) -> Int {
+fn tid_compare(x : Tid, y : Tid) -> Int32 {
   let c = x.id().compare(y.id())
   if c != 0 {
     c
@@ -312,8 +312,8 @@ pub struct Conqueror {
 ///|
 /// Creates a conqueror.
 pub fn Conqueror::new(
-  deterministic? : Bool = false,
-  expi? : Expi = Expi::new(),
+  deterministic~ : Bool = false,
+  expi~ : Expi = Expi::new(),
 ) -> Conqueror {
   { deterministic, expi, }
 }

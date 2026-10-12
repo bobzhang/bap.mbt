@@ -637,14 +637,14 @@ fn project_memory_persistent() -> @knowledge.Persistent[@memory.MemMap[String]] 
 }
 
 ///|
-fn project_symbol_location_encode(location : (UInt64, Int)) -> String {
+fn project_symbol_location_encode(location : (UInt64, Int32)) -> String {
   "\{location.0}:\{location.1}"
 }
 
 ///|
 fn project_symbol_location_decode(
   text : String,
-) -> Result[(UInt64, Int), String] {
+) -> Result[(UInt64, Int32), String] {
   let parts = text.split(":").to_array()
   if parts.length() != 2 {
     return Err("invalid persistent project symbol location")
@@ -653,7 +653,7 @@ fn project_symbol_location_decode(
     Ok(value) => value
     Err(reason) => return Err(reason)
   }
-  let len : Int = try @string.from_str(parts[1].to_owned()) catch {
+  let len : Int32 = try @string.from_str(parts[1].to_owned()) catch {
     _ => return Err("invalid persistent project symbol location length")
   } noraise {
     value => value

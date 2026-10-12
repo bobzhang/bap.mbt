@@ -3,13 +3,13 @@
 /// reports the outcome, the help output, and the diagnostics.
 fn run_main(
   argv : Array[String],
-  env? : Array[(String, String)] = [],
-  config? : Array[(String, String)] = [],
-  features? : Array[String] = [],
+  env~ : Array[(String, String)] = [],
+  config~ : Array[(String, String)] = [],
+  features~ : Array[String] = [],
   requires? : Array[String],
   default? : (@bap_main.Ctxt) -> Unit raise,
   default_command? : String,
-  man? : String = "",
+  man~ : String = "",
   recipe? : (String) -> @bap_main.Recipe raise,
 ) -> String {
   let out = StringBuilder()

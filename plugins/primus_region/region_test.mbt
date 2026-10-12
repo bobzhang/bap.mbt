@@ -6,7 +6,7 @@ fn project() -> @project.Project {
 }
 
 ///|
-fn v(m : @primus.Machine, n : Int) -> @primus.Value raise {
+fn v(m : @primus.Machine, n : Int32) -> @primus.Value raise {
   @primus.Value::of_int(m, width=64, n)
 }
 

@@ -1,5 +1,5 @@
 ///|
-fn sub_with_args(name : String, n : Int) -> @types.Term[@types.Sub] {
+fn sub_with_args(name : String, n : Int32) -> @types.Term[@types.Sub] {
   let args = Array::makei(n, i => {
     let v = @types.Var::create("\{name}_a\{i + 1}", Imm(32))
     @types.Arg::create(v, @types.Exp::var_exp(v))

@@ -5,13 +5,13 @@ pub(all) struct Header {
   is64 : Bool
   /// the byte order of the file
   endian : @bitvec.Endian
-  cputype : Int
+  cputype : Int32
   /// the CPU subtype with its capability bits
-  cpusubtype : Int
-  filetype : Int
-  ncmds : Int
-  sizeofcmds : Int
-  flags : UInt
+  cpusubtype : Int32
+  filetype : Int32
+  ncmds : Int32
+  sizeofcmds : Int32
+  flags : UInt32
 } derive(Eq, Debug)
 
 ///|
@@ -21,13 +21,13 @@ pub(all) struct Section {
   segname : String
   addr : UInt64
   size : UInt64
-  offset : UInt
-  align : UInt
-  reloff : UInt
-  nreloc : UInt
-  flags : UInt
-  reserved1 : UInt
-  reserved2 : UInt
+  offset : UInt32
+  align : UInt32
+  reloff : UInt32
+  nreloc : UInt32
+  flags : UInt32
+  reserved1 : UInt32
+  reserved2 : UInt32
 } derive(Eq, Debug)
 
 ///|
@@ -38,53 +38,53 @@ pub(all) struct Segment {
   vmsize : UInt64
   fileoff : UInt64
   filesize : UInt64
-  maxprot : Int
-  initprot : Int
-  flags : UInt
+  maxprot : Int32
+  initprot : Int32
+  flags : UInt32
   sections : Array[Section]
 } derive(Eq, Debug)
 
 ///|
 /// The symbol table command (`LC_SYMTAB`).
 pub(all) struct Symtab {
-  symoff : UInt
-  nsyms : UInt
-  stroff : UInt
-  strsize : UInt
+  symoff : UInt32
+  nsyms : UInt32
+  stroff : UInt32
+  strsize : UInt32
 } derive(Eq, Debug)
 
 ///|
 /// The dynamic symbol table command (`LC_DYSYMTAB`).
 pub(all) struct Dysymtab {
-  ilocalsym : UInt
-  nlocalsym : UInt
-  iextdefsym : UInt
-  nextdefsym : UInt
-  iundefsym : UInt
-  nundefsym : UInt
-  tocoff : UInt
-  ntoc : UInt
-  modtaboff : UInt
-  nmodtab : UInt
-  extrefsymoff : UInt
-  nextrefsyms : UInt
-  indirectsymoff : UInt
-  nindirectsyms : UInt
-  extreloff : UInt
-  nextrel : UInt
-  locreloff : UInt
-  nlocrel : UInt
+  ilocalsym : UInt32
+  nlocalsym : UInt32
+  iextdefsym : UInt32
+  nextdefsym : UInt32
+  iundefsym : UInt32
+  nundefsym : UInt32
+  tocoff : UInt32
+  ntoc : UInt32
+  modtaboff : UInt32
+  nmodtab : UInt32
+  extrefsymoff : UInt32
+  nextrefsyms : UInt32
+  indirectsymoff : UInt32
+  nindirectsyms : UInt32
+  extreloff : UInt32
+  nextrel : UInt32
+  locreloff : UInt32
+  nlocrel : UInt32
 } derive(Eq, Debug)
 
 ///|
 /// A dynamic library command (`LC_LOAD_DYLIB`, `LC_ID_DYLIB`, ...).
 pub(all) struct Dylib {
   /// the load command (`LC_LOAD_DYLIB`, `LC_LOAD_WEAK_DYLIB`, ...)
-  cmd : UInt
+  cmd : UInt32
   name : String
-  timestamp : UInt
-  current_version : UInt
-  compatibility_version : UInt
+  timestamp : UInt32
+  current_version : UInt32
+  compatibility_version : UInt32
 } derive(Eq, Debug)
 
 ///|
@@ -100,7 +100,7 @@ pub(all) enum LoadCommand {
   MainCommand(entryoff~ : UInt64, stacksize~ : UInt64)
   /// `LC_THREAD` or `LC_UNIXTHREAD`: the thread states (flavor, state
   /// words as raw bytes)
-  ThreadCommand(cmd~ : UInt, states~ : Array[(UInt, Bytes)])
+  ThreadCommand(cmd~ : UInt32, states~ : Array[(UInt32, Bytes)])
   /// a dylib command
   DylibCommand(Dylib)
   /// `LC_LOAD_DYLINKER`
@@ -108,21 +108,21 @@ pub(all) enum LoadCommand {
   /// `LC_UUID`
   UuidCommand(Bytes)
   /// `LC_FUNCTION_STARTS` (a `linkedit_data_command`)
-  FunctionStartsCommand(dataoff~ : UInt, datasize~ : UInt)
+  FunctionStartsCommand(dataoff~ : UInt32, datasize~ : UInt32)
   /// any other command with its raw contents (after `cmd` and `cmdsize`)
-  OtherCommand(cmd~ : UInt, Bytes)
+  OtherCommand(cmd~ : UInt32, Bytes)
 } derive(Eq, Debug)
 
 ///|
 /// A symbol table entry (`nlist` / `nlist_64`) with its name.
 pub(all) struct Nlist {
   /// the index of the entry in the symbol table
-  index : Int
+  index : Int32
   name : String
-  n_type : Int
+  n_type : Int32
   /// the one-based section number (`NO_SECT` = 0)
-  n_sect : Int
-  n_desc : Int
+  n_sect : Int32
+  n_desc : Int32
   n_value : UInt64
 } derive(Eq, Debug)
 
@@ -130,15 +130,15 @@ pub(all) struct Nlist {
 /// A relocation entry (`relocation_info`); scattered relocations keep
 /// their raw words.
 pub(all) struct Relocation {
-  r_word0 : UInt
-  r_word1 : UInt
-  r_address : Int
+  r_word0 : UInt32
+  r_word1 : UInt32
+  r_address : Int32
   /// a symbol table index if `r_extern`, a section number otherwise
-  r_symbolnum : Int
+  r_symbolnum : Int32
   r_pcrel : Bool
-  r_length : Int
+  r_length : Int32
   r_extern : Bool
-  r_type : Int
+  r_type : Int32
   r_scattered : Bool
 } derive(Eq, Debug)
 
@@ -153,11 +153,11 @@ pub(all) struct MachO {
 /// An architecture (slice) of a universal binary (`fat_arch` /
 /// `fat_arch_64`).
 pub(all) struct FatArch {
-  cputype : Int
-  cpusubtype : Int
+  cputype : Int32
+  cpusubtype : Int32
   offset : UInt64
   size : UInt64
-  align : UInt
+  align : UInt32
 } derive(Eq, Debug)
 
 ///|

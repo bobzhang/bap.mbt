@@ -59,7 +59,7 @@ pub fn resolve_exp(
 fn read(
   memory : @memory.MemMap[String],
   addr : @types.Word,
-  bits : Int,
+  bits : Int32,
 ) -> @types.Exp? {
   let addr = addr.to_uint64() catch { _ => return None }
   guard memory.find_addr(addr) is Some((mem, _)) else { return None }

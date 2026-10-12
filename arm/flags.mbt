@@ -83,7 +83,7 @@ fn set_sbc(
 ///
 /// port: upstream sets the carry to an unknown value or to zero for
 /// unrotated constants and ignores T32 encodings.
-fn set_cf_data(encoding : Encoding, imm : UInt) -> @types.Stmt {
+fn set_cf_data(encoding : Encoding, imm : UInt32) -> @types.Stmt {
   let rotated = match encoding {
     A32 => imm >> 8 != 0
     T32 => {

@@ -15,12 +15,12 @@ struct BapSemaFixture {
 }
 
 ///|
-fn bap_word32(value : Int) -> @types.Word raise @bitvec.BitVecError {
+fn bap_word32(value : Int32) -> @types.Word raise @bitvec.BitVecError {
   @types.Word::of_int(width=32, value)
 }
 
 ///|
-fn bap_int32(value : Int) -> @types.Exp raise @bitvec.BitVecError {
+fn bap_int32(value : Int32) -> @types.Exp raise @bitvec.BitVecError {
   Int(bap_word32(value))
 }
 
@@ -127,7 +127,7 @@ fn bap_assert_live_contains(
 fn bap_find_phi(
   sub : @types.Term[@types.Sub],
   variable : @types.Var,
-  index : Int,
+  index : Int32,
 ) -> @types.Term[@types.Phi] raise {
   match
     sub
@@ -144,9 +144,9 @@ fn bap_find_phi(
 fn bap_assert_phi_edge(
   sub : @types.Term[@types.Sub],
   variable : @types.Var,
-  index : Int,
+  index : Int32,
   predecessor : @types.Term[@types.Blk],
-  predecessor_index : Int,
+  predecessor_index : Int32,
 ) -> Unit raise {
   let phi = bap_find_phi(sub, variable, index)
   assert_true(

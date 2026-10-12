@@ -166,7 +166,7 @@ pub fn Semantics::join(
 pub fn Semantics::merge(
   self : Semantics,
   other : Semantics,
-  on_conflict? : @knowledge.MergeStrategy = DropOld,
+  on_conflict~ : @knowledge.MergeStrategy = DropOld,
 ) -> Semantics {
   Semantics(self.0.merge(other.0, on_conflict~))
 }
@@ -181,7 +181,7 @@ pub fn Semantics::order(
 }
 
 ///|
-fn semantics_hex_digit(value : Int) -> Char {
+fn semantics_hex_digit(value : Int32) -> Char {
   if value < 10 {
     (value + '0').unsafe_to_char()
   } else {
@@ -214,7 +214,7 @@ pub fn Semantics::equal(self : Semantics, other : Semantics) -> Bool {
 
 ///|
 /// A total order on semantics (by information, then by age).
-pub fn Semantics::compare(self : Semantics, other : Semantics) -> Int {
+pub fn Semantics::compare(self : Semantics, other : Semantics) -> Int32 {
   self.0.compare(other.0)
 }
 

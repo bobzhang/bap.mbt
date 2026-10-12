@@ -36,8 +36,8 @@ fn form(
   name : String,
   mnemonic : String,
   operands : Array[Operand],
-  kinds? : Array[@mc.Kind] = [],
-  layout? : Layout = Plain,
+  kinds~ : Array[@mc.Kind] = [],
+  layout~ : Layout = Plain,
 ) -> Form {
   { name, mnemonic, operands, kinds, layout, }
 }
@@ -65,7 +65,7 @@ fn Form::assembly(self : Form) -> String {
 ///|
 /// The name LLVM prints for GPR number `n`: numbers, except for `zero`,
 /// `gp`, `sp`, `fp` and `ra`.
-fn gpr_asm_name(n : Int) -> String {
+fn gpr_asm_name(n : Int32) -> String {
   match n {
     0 => "zero"
     28 => "gp"
@@ -78,13 +78,13 @@ fn gpr_asm_name(n : Int) -> String {
 
 ///|
 /// GPR `n` of the LLVM `GPR32` register class (`ZERO`, `AT`, ..., `RA`).
-fn gpr32(n : Int) -> Operand {
+fn gpr32(n : Int32) -> Operand {
   { op: Reg(name=gpr_names[n], code=n), text: "$" + gpr_asm_name(n), }
 }
 
 ///|
 /// GPR `n` of the LLVM `GPR64` register class (`ZERO_64`, ..., `RA_64`).
-fn gpr64(n : Int) -> Operand {
+fn gpr64(n : Int32) -> Operand {
   { op: Reg(name=gpr_names[n] + "_64", code=n), text: "$" + gpr_asm_name(n), }
 }
 
@@ -96,21 +96,21 @@ fn imm(value : Int64) -> Operand {
 
 ///|
 /// Single-precision FPU register `n` (`FGR32`: `F0`..`F31`).
-fn fgr32(n : Int) -> Operand {
+fn fgr32(n : Int32) -> Operand {
   { op: Reg(name="F\{n}", code=n), text: "$f\{n}", }
 }
 
 ///|
 /// Double-precision FPU register `n` in the 64-bit FPU mode (`FGR64`:
 /// `D0_64`..`D31_64`).
-fn fgr64(n : Int) -> Operand {
+fn fgr64(n : Int32) -> Operand {
   { op: Reg(name="D\{n}_64", code=n), text: "$f\{n}", }
 }
 
 ///|
 /// Double-precision FPU register pair `n`/`n+1` in the 32-bit FPU mode
 /// (`AFGR64`: `D0`..`D15`); odd register numbers are invalid.
-fn afgr64(n : Int) -> Operand? {
+fn afgr64(n : Int32) -> Operand? {
   if n % 2 == 0 {
     Some({ op: Reg(name="D\{n / 2}", code=n / 2), text: "$f\{n}", })
   } else {
@@ -120,25 +120,25 @@ fn afgr64(n : Int) -> Operand? {
 
 ///|
 /// FPU condition code `n` (`FCC0`..`FCC7`).
-fn fcc(n : Int) -> Operand {
+fn fcc(n : Int32) -> Operand {
   { op: Reg(name="FCC\{n}", code=n), text: "$fcc\{n}", }
 }
 
 ///|
 /// FPU control register `n` (`FCR0`..`FCR31`).
-fn fcr(n : Int) -> Operand {
+fn fcr(n : Int32) -> Operand {
   { op: Reg(name="FCR\{n}", code=n), text: "$\{n}", }
 }
 
 ///|
 /// Coprocessor 0 register `n` (`COP00`..`COP031`).
-fn cop0(n : Int) -> Operand {
+fn cop0(n : Int32) -> Operand {
   { op: Reg(name="COP0\{n}", code=n), text: "$\{n}", }
 }
 
 ///|
 /// Hardware register `n` (`HWR0`..`HWR31`), read by `rdhwr`.
-fn hwr(n : Int) -> Operand {
+fn hwr(n : Int32) -> Operand {
   { op: Reg(name="HWR\{n}", code=n), text: "$\{n}", }
 }
 

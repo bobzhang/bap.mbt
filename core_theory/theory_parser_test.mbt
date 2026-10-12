@@ -1,10 +1,10 @@
 ///|
-fn bil_var(name : String, width : Int) -> @types.Var {
+fn bil_var(name : String, width : Int32) -> @types.Var {
   @types.Var::new(name~, typ=Imm(width))
 }
 
 ///|
-fn bil_int(width : Int, n : Int) -> @types.Exp raise {
+fn bil_int(width : Int32, n : Int32) -> @types.Exp raise {
   Int(@types.Word::of_int(width~, n))
 }
 

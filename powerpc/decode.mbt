@@ -27,10 +27,10 @@ fn mode_encoding(mode : AddrSize) -> @core_theory.Language {
 /// and the printing of absolute branch targets (32- or 64-bit addresses).
 /// `raw` defaults to the big-endian encoding of `word`.
 pub fn decode_word(
-  word : UInt,
+  word : UInt32,
   addr : UInt64,
-  mode? : AddrSize = R32,
-  encoding? : @core_theory.Language = mode_encoding(mode),
+  mode~ : AddrSize = R32,
+  encoding~ : @core_theory.Language = mode_encoding(mode),
   raw? : Bytes,
 ) -> @mc.Insn? {
   let decoded = match decode_spec(word) {
@@ -66,7 +66,7 @@ pub fn decode_word(
 ///|
 /// The instruction word at the start of `bytes` in the byte order `endian`,
 /// or `None` when fewer than four bytes are available.
-pub fn read_word(bytes : BytesView, endian : @bitvec.Endian) -> UInt? {
+pub fn read_word(bytes : BytesView, endian : @bitvec.Endian) -> UInt32? {
   guard bytes.length() >= 4 else { None }
   let b = [bytes[0], bytes[1], bytes[2], bytes[3]]
   let (b0, b1, b2, b3) = match endian {
@@ -89,9 +89,9 @@ pub fn read_word(bytes : BytesView, endian : @bitvec.Endian) -> UInt? {
 pub fn decode(
   bytes : BytesView,
   addr : UInt64,
-  mode? : AddrSize = R32,
-  endian? : @bitvec.Endian = BigEndian,
-  encoding? : @core_theory.Language = mode_encoding(mode),
+  mode~ : AddrSize = R32,
+  endian~ : @bitvec.Endian = BigEndian,
+  encoding~ : @core_theory.Language = mode_encoding(mode),
 ) -> @mc.Insn? {
   guard read_word(bytes, endian) is Some(word) else { None }
   decode_word(word, addr, mode~, encoding~, raw=bytes[:4].to_owned())

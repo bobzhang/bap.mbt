@@ -5,7 +5,7 @@
 /// `lsb_width` computes the `(lsb, width)` of a `BFI`/`BFC` bit field from
 /// its inverted-mask operand when the raw instruction word is unknown.
 fn lift_bits(
-  raw : UInt?,
+  raw : UInt32?,
   ops : ArrayView[Op],
   insn : BitsInsn,
 ) -> Array[@types.Stmt] raise @mc.LiftError {
@@ -670,7 +670,7 @@ fn lift_mem(
 
 ///|
 fn lift_branch(
-  addr : UInt,
+  addr : UInt32,
   ops : ArrayView[Op],
   insn : BranchInsn,
 ) -> Array[@types.Stmt] raise @mc.LiftError {
@@ -703,7 +703,7 @@ fn lift_special(
       exec([@types.Stmt::encode(@types.Stmt::call(), dst)], cond)
     }
     (MRS, [Reg(dest), cond, _]) => {
-      let get_bits = (flag : @types.Var, src : @types.Exp, lsb : UInt) => {
+      let get_bits = (flag : @types.Var, src : @types.Exp, lsb : UInt32) => {
         bin(Or, src, bin(LShift, cast(Unsigned, 32, v(flag)), int32(lsb)))
       }
       let d = dest.to_var()
@@ -731,7 +731,7 @@ fn lift_special(
     // bit 3 is APSR_nzcvq
     (MSR, [Imm(imm), Reg(src), cond, _]) => {
       let src = v(src.to_var())
-      let set = (flag : @types.Var, bit : Int) => {
+      let set = (flag : @types.Var, bit : Int32) => {
         assign(flag, extract(bit, bit, src))
       }
       let s1 = if (imm & 0x8) == 0x8 {

@@ -7,7 +7,7 @@ pub fn Attr::address(addr : Word) -> Attr {
 }
 
 ///|
-fn parse_ir_address_text(width : Int, text : String) -> Word? {
+fn parse_ir_address_text(width : Int32, text : String) -> Word? {
   if text == "true" || text == "false" || text.split_once(":") is Some(_) {
     try Word::from_string(text) catch {
       _ => None
@@ -837,7 +837,7 @@ pub fn IrTerm::mark_value(self : IrTerm) -> String? {
 }
 
 ///|
-pub fn IrTerm::set_mark(self : IrTerm, value? : String = "true") -> IrTerm {
+pub fn IrTerm::set_mark(self : IrTerm, value~ : String = "true") -> IrTerm {
   self.set_attr(Attr::mark(value~))
 }
 
@@ -886,7 +886,7 @@ pub fn IrTerm::has_child_tid(self : IrTerm, tid : Tid) -> Bool {
 pub fn IrTerm::children_of_class(
   self : IrTerm,
   cls : IrTermClass,
-  rev? : Bool = false,
+  rev~ : Bool = false,
 ) -> Array[IrTerm] {
   let children = self.children().filter(child => child.class() == cls)
   if rev {
@@ -911,7 +911,7 @@ pub fn IrTerm::find_child(
 }
 
 ///|
-pub fn IrTerm::child_count(self : IrTerm, cls : IrTermClass) -> Int {
+pub fn IrTerm::child_count(self : IrTerm, cls : IrTermClass) -> Int32 {
   self.children_of_class(cls).length()
 }
 
@@ -919,7 +919,7 @@ pub fn IrTerm::child_count(self : IrTerm, cls : IrTermClass) -> Int {
 pub fn IrTerm::nth_child(
   self : IrTerm,
   cls : IrTermClass,
-  index : Int,
+  index : Int32,
 ) -> IrTerm? {
   let children = self.children_of_class(cls)
   if index >= 0 && index < children.length() {
@@ -940,7 +940,7 @@ pub fn IrTerm::last_child(self : IrTerm, cls : IrTermClass) -> IrTerm? {
 }
 
 ///|
-fn ir_child_index(children : Array[IrTerm], tid : Tid) -> Int? {
+fn ir_child_index(children : Array[IrTerm], tid : Tid) -> Int32? {
   children.search_by(child => child.tid() == tid)
 }
 
@@ -973,8 +973,8 @@ pub fn IrTerm::prev_child(
 ///|
 fn ir_child_range(
   children : Array[IrTerm],
-  start : Int,
-  stop : Int,
+  start : Int32,
+  stop : Int32,
   rev : Bool,
 ) -> Array[IrTerm] {
   let out = []
@@ -997,7 +997,7 @@ pub fn IrTerm::children_after(
   self : IrTerm,
   cls : IrTermClass,
   tid : Tid,
-  rev? : Bool = false,
+  rev~ : Bool = false,
 ) -> Array[IrTerm] {
   let children = self.children_of_class(cls)
   match ir_child_index(children, tid) {
@@ -1011,7 +1011,7 @@ pub fn IrTerm::children_before(
   self : IrTerm,
   cls : IrTermClass,
   tid : Tid,
-  rev? : Bool = false,
+  rev~ : Bool = false,
 ) -> Array[IrTerm] {
   let children = self.children_of_class(cls)
   match ir_child_index(children, tid) {
@@ -1334,7 +1334,7 @@ pub fn IrTerm::concat_map_children(
 pub fn IrTerm::to_sequence(
   self : IrTerm,
   cls : IrTermClass,
-  rev? : Bool = false,
+  rev~ : Bool = false,
 ) -> Array[IrTerm] {
   self.children_of_class(cls, rev~)
 }
@@ -1343,7 +1343,7 @@ pub fn IrTerm::to_sequence(
 pub fn IrTerm::enum_(
   self : IrTerm,
   cls : IrTermClass,
-  rev? : Bool = false,
+  rev~ : Bool = false,
 ) -> Array[IrTerm] {
   self.to_sequence(cls, rev~)
 }
@@ -1374,12 +1374,12 @@ pub fn IrTerm::change(
 }
 
 ///|
-pub fn IrTerm::length(self : IrTerm, cls : IrTermClass) -> Int {
+pub fn IrTerm::length(self : IrTerm, cls : IrTermClass) -> Int32 {
   self.child_count(cls)
 }
 
 ///|
-pub fn IrTerm::nth(self : IrTerm, cls : IrTermClass, index : Int) -> IrTerm? {
+pub fn IrTerm::nth(self : IrTerm, cls : IrTermClass, index : Int32) -> IrTerm? {
   self.nth_child(cls, index)
 }
 
@@ -1408,7 +1408,7 @@ pub fn IrTerm::after(
   self : IrTerm,
   cls : IrTermClass,
   tid : Tid,
-  rev? : Bool = false,
+  rev~ : Bool = false,
 ) -> Array[IrTerm] {
   self.children_after(cls, tid, rev~)
 }
@@ -1418,7 +1418,7 @@ pub fn IrTerm::before(
   self : IrTerm,
   cls : IrTermClass,
   tid : Tid,
-  rev? : Bool = false,
+  rev~ : Bool = false,
 ) -> Array[IrTerm] {
   self.children_before(cls, tid, rev~)
 }

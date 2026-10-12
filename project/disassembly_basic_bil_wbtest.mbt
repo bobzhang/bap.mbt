@@ -102,7 +102,7 @@ fn assert_string(actual : String, expected : String) -> Unit raise {
 ///|
 fn assert_logical_flag_tail(
   stmts : Array[@types.Stmt],
-  offset : Int,
+  offset : Int32,
   result : String,
   zero : String,
 ) -> Unit raise {
@@ -125,7 +125,7 @@ fn assert_logical_flag_tail(
 ///|
 fn assert_addsub_flag_tail(
   stmts : Array[@types.Stmt],
-  offset : Int,
+  offset : Int32,
   lhs : String,
   rhs : String,
   result : String,
@@ -157,7 +157,7 @@ fn assert_addsub_flag_tail(
 ///|
 fn assert_incdec_flag_tail(
   stmts : Array[@types.Stmt],
-  offset : Int,
+  offset : Int32,
   lhs : String,
   rhs : String,
   result : String,

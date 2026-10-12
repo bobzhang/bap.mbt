@@ -11,17 +11,17 @@ priv suberror Fail
 priv struct NameState {
   mut ctor_dtor_conversion : Bool
   mut ends_with_template_args : Bool
-  mut cv_qualifiers : Int
-  mut reference_qualifier : Int
-  forward_template_refs_begin : Int
+  mut cv_qualifiers : Int32
+  mut reference_qualifier : Int32
+  forward_template_refs_begin : Int32
   mut has_explicit_object_parameter : Bool
 }
 
 ///|
 priv struct Parser {
   input : String
-  mut first : Int
-  mut last : Int
+  mut first : Int32
+  mut last : Int32
   /// Temporary names collapsed into array nodes.
   names : Array[Node]
   /// The substitution table (`S_`, `S0_`, ...).
@@ -38,10 +38,10 @@ priv struct Parser {
   mut try_to_parse_template_args : Bool
   mut permit_forward_template_references : Bool
   mut has_incomplete_template_parameter_tracking : Bool
-  mut parsing_lambda_params_at_level : Int
-  num_synthetic_template_parameters : FixedArray[Int]
+  mut parsing_lambda_params_at_level : Int32
+  num_synthetic_template_parameters : FixedArray[Int32]
   /// The current nesting of the recursive productions (see `enter`).
-  mut depth : Int
+  mut depth : Int32
 }
 
 ///|
@@ -59,7 +59,7 @@ priv struct Parser {
 /// native (debug), the worst case being nested expressions. 256 leaves
 /// about half of that stack to the callers of the demangler. The deepest
 /// name in the llvm-cxxfilt corpora nests 12 levels.
-const MAX_PARSE_DEPTH : Int = 256
+const MAX_PARSE_DEPTH : Int32 = 256
 
 ///|
 /// Enters a recursive production. The parser never backtracks, so a
@@ -114,7 +114,7 @@ fn is_digit(c : UInt16) -> Bool {
 }
 
 ///|
-fn Parser::look(self : Parser, ahead? : Int = 0) -> UInt16 {
+fn Parser::look(self : Parser, ahead~ : Int32 = 0) -> UInt16 {
   if self.last - self.first <= ahead {
     0
   } else {
@@ -123,7 +123,7 @@ fn Parser::look(self : Parser, ahead? : Int = 0) -> UInt16 {
 }
 
 ///|
-fn Parser::num_left(self : Parser) -> Int {
+fn Parser::num_left(self : Parser) -> Int32 {
   self.last - self.first
 }
 
@@ -164,13 +164,13 @@ fn Parser::consume_if_char(self : Parser, c : UInt16) -> Bool {
 }
 
 ///|
-fn Parser::slice(self : Parser, start : Int, end : Int) -> StringView {
+fn Parser::slice(self : Parser, start : Int32, end : Int32) -> StringView {
   self.input.view(start_offset=start, end_offset=end)
 }
 
 ///|
 /// Collects the names pushed since `from` into an array.
-fn Parser::pop_trailing(self : Parser, from : Int) -> Array[Node] {
+fn Parser::pop_trailing(self : Parser, from : Int32) -> Array[Node] {
   let result = self.names[from:].to_owned()
   self.names.truncate(from)
   result
@@ -180,7 +180,7 @@ fn Parser::pop_trailing(self : Parser, from : Int) -> Array[Node] {
 /// <number> ::= [n] <non-negative decimal integer>
 fn Parser::parse_number(
   self : Parser,
-  allow_negative? : Bool = false,
+  allow_negative~ : Bool = false,
 ) -> StringView {
   let start = self.first
   if allow_negative {
@@ -229,7 +229,7 @@ fn Parser::parse_bare_source_name(self : Parser) -> StringView {
 
 ///|
 /// <CV-Qualifiers> ::= [r] [V] [K]
-fn Parser::parse_cv_qualifiers(self : Parser) -> Int {
+fn Parser::parse_cv_qualifiers(self : Parser) -> Int32 {
   let mut cvr = QUAL_NONE
   if self.consume_if_char('r') {
     cvr = cvr | QUAL_RESTRICT
@@ -350,7 +350,7 @@ fn Parser::resolve_forward_template_refs(
 ///        ::= <unscoped-name>
 fn Parser::parse_name(
   self : Parser,
-  state? : NameState? = None,
+  state~ : NameState? = None,
 ) -> Node raise Fail {
   self.enter()
   let node = self.parse_name_body(state)
@@ -1081,7 +1081,7 @@ fn Parser::parse_template_param_decl_body(
   self : Parser,
   params : Array[Node]?,
 ) -> Node raise Fail {
-  let invent = fn(kind : Int) {
+  let invent = fn(kind : Int32) {
     let index = self.num_synthetic_template_parameters[kind]
     self.num_synthetic_template_parameters[kind] = index + 1
     let node = make(SyntheticTemplateParamName(kind, index))
@@ -1202,7 +1202,7 @@ fn Parser::parse_template_arg_body(self : Parser) -> Node raise Fail {
 /// <template-args> ::= I <template-arg>* [Q <requires-clause expr>] E
 fn Parser::parse_template_args(
   self : Parser,
-  tag_templates? : Bool = false,
+  tag_templates~ : Bool = false,
 ) -> Node raise Fail {
   if !self.consume_if_char('I') {
     raise Fail
@@ -1247,7 +1247,7 @@ fn Parser::parse_template_args(
 ///            ::= <special-name>
 fn Parser::parse_encoding(
   self : Parser,
-  parse_params? : Bool = true,
+  parse_params~ : Bool = true,
 ) -> Node raise Fail {
   // The template parameters of an encoding are unrelated to those of the
   // enclosing context.

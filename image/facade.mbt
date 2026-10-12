@@ -48,7 +48,7 @@ pub fn arch(image : Image) -> @core_theory.Target {
 }
 
 ///|
-pub fn addr_size(image : Image) -> Int {
+pub fn addr_size(image : Image) -> Int32 {
   image.addr_size()
 }
 
@@ -68,7 +68,7 @@ pub fn data(image : Image) -> Bytes {
 }
 
 ///|
-pub fn words(image : Image, size : Int) -> @memory.MemMap[@types.Word] {
+pub fn words(image : Image, size : Int32) -> @memory.MemMap[@types.Word] {
   image.words(word_size=size)
 }
 

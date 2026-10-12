@@ -1,5 +1,5 @@
 ///|
-fn expect_int(value : Result[Int, String]) -> Int raise {
+fn expect_int(value : Result[Int32, String]) -> Int32 raise {
   match value {
     Ok(value) => value
     Err(reason) => fail(reason)
@@ -16,8 +16,8 @@ fn expect_int64(value : Result[Int64, String]) -> Int64 raise {
 
 ///|
 fn expect_read(
-  value : Result[(@dwarf.Leb128, Int), String],
-) -> (@dwarf.Leb128, Int) raise {
+  value : Result[(@dwarf.Leb128, Int32), String],
+) -> (@dwarf.Leb128, Int32) raise {
   match value {
     Ok(value) => value
     Err(reason) => fail(reason)

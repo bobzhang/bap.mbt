@@ -1,10 +1,10 @@
 ///|
-fn w64(n : Int) -> @types.Word {
+fn w64(n : Int32) -> @types.Word {
   try! @types.Word::of_int(width=64, n)
 }
 
 ///|
-fn int64(n : Int) -> @types.Exp {
+fn int64(n : Int32) -> @types.Exp {
   Int(w64(n))
 }
 
@@ -14,7 +14,7 @@ fn reg(name : String) -> @types.Var {
 }
 
 ///|
-fn store64(addr : Int, value : @types.Exp) -> @types.Exp {
+fn store64(addr : Int32, value : @types.Exp) -> @types.Exp {
   Store(
     mem=Var(@types.Var::create("mem", Mem(addr_width=64, value_width=8))),
     addr=int64(addr),
@@ -29,11 +29,11 @@ fn store64(addr : Int, value : @types.Exp) -> @types.Exp {
 /// component installed by `install`.
 fn run_main(
   defs : Array[@types.Term[@types.Def]],
-  install? : (@primus.Machine) -> Unit raise = m => {
+  install~ : (@primus.Machine) -> Unit raise = m => {
     @constant_tracker.tracker_component(m)
   },
-  init? : (@primus.Machine) -> Unit raise = _ => (),
-  fini? : (@primus.Machine) -> Unit raise = _ => (),
+  init~ : (@primus.Machine) -> Unit raise = _ => (),
+  fini~ : (@primus.Machine) -> Unit raise = _ => (),
 ) -> String {
   let main = @types.Sub::create(name="main", blks=[@types.Blk::create(defs~)])
   let proj = @project.Project::empty(@core_theory.Target::x86_64()).with_program(
@@ -95,7 +95,7 @@ test "the tracker component follows the interpreter" {
         "\{name}: \{@constant_tracker.is_static_constant(m, @primus.Env::get(m, v))}",
       )
     }
-    let ptr = (a : Int) => @primus.Value::of_word(m, w64(a))
+    let ptr = (a : Int32) => @primus.Value::of_word(m, w64(a))
     let call = (name, args) => {
       let r = @constant_tracker.call_primitive(m, name, args)
       r.is_one()

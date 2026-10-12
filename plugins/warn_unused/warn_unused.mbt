@@ -214,7 +214,7 @@ pub fn print(project : @project.Project, out~ : (String) -> Unit) -> Unit {
 /// which only chains `warn-unused-taint`, `propagate-taint`, and
 /// `warn-unused-print`.
 pub fn passes(
-  out? : (String) -> Unit = s => println(s.trim_end(chars="\n")),
+  out~ : (String) -> Unit = s => println(s.trim_end(chars="\n")),
 ) -> Array[@project.ProjectPass] {
   [
     @project.ProjectPass::create(name="\{name}-taint", deps=[@callsites.name], run=project => {

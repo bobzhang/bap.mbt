@@ -18,8 +18,8 @@ priv enum Body {
   Load(@types.Var, Body, @bitvec.Endian, @types.Size)
   Concat(Body, Body)
   Binop(@types.BinOp, Body, Body)
-  Extract(Int, Int, Body)
-  Cast(Sign, Int, Body)
+  Extract(Int32, Int32, Body)
+  Cast(Sign, Int32, Body)
   Unop(@types.UnOp, Body)
 }
 
@@ -28,7 +28,7 @@ priv enum Body {
 priv struct Exp {
   body : Body
   sign : Sign
-  width : Int
+  width : Int32
 }
 
 ///|
@@ -49,7 +49,7 @@ fn mips_fail(msg : String) -> @mc.LiftError {
 }
 
 ///|
-fn var_bitwidth(v : @types.Var) -> Int raise @mc.LiftError {
+fn var_bitwidth(v : @types.Var) -> Int32 raise @mc.LiftError {
   match v.typ {
     Imm(w) => w
     _ => raise mips_fail("variable \{v.name} doesn't has notion of bitwidth")
@@ -57,7 +57,7 @@ fn var_bitwidth(v : @types.Var) -> Int raise @mc.LiftError {
 }
 
 ///|
-fn width_of_vars(vars : ArrayView[@types.Var]) -> Int raise @mc.LiftError {
+fn width_of_vars(vars : ArrayView[@types.Var]) -> Int32 raise @mc.LiftError {
   let mut width = 0
   for v in vars {
     width += var_bitwidth(v)
@@ -102,7 +102,7 @@ fn bil_exp(body : Body) -> @types.Exp {
 /// Change width and/or signedness of `x`. A signedness-only change does not
 /// produce a BIL cast; 1-bit values are extended according to their own
 /// signedness.
-fn Exp::cast(x : Exp, width : Int, sign : Sign) -> Exp {
+fn Exp::cast(x : Exp, width : Int32, sign : Sign) -> Exp {
   let same_sign = x.sign == sign
   let same_size = x.width == width
   if same_size {
@@ -320,12 +320,12 @@ fn Exp::load(
 ///|
 fn extract_of_vars(
   e : Exp,
-  hi : Int,
-  lo : Int,
+  hi : Int32,
+  lo : Int32,
   vars : Array[@types.Var],
 ) -> Exp raise @mc.LiftError {
   let width = hi - lo + 1
-  let bounds : Array[(Int, Int, @types.Var)] = []
+  let bounds : Array[(Int32, Int32, @types.Var)] = []
   let mut n = 0
   for v in vars {
     let len = var_bitwidth(v)
@@ -349,7 +349,7 @@ fn extract_of_vars(
 /// Extract bits `hi..lo` (inclusive, LSB is bit 0). Extracting the full
 /// width returns `e` unchanged; extracting a var-aligned slice of a
 /// concatenation of variables returns the covered variables.
-fn Exp::extract(e : Exp, hi : Int, lo : Int) -> Exp raise @mc.LiftError {
+fn Exp::extract(e : Exp, hi : Int32, lo : Int32) -> Exp raise @mc.LiftError {
   let width = hi - lo + 1
   if width == e.width {
     e

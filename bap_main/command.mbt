@@ -22,14 +22,14 @@ priv enum ParamKind {
 /// A command-line parameter of a command (`'a Command.param`).
 pub struct CommandParam[A] {
   priv kind : ParamKind
-  priv make : (Int) -> Term[A]
+  priv make : (Int32) -> Term[A]
 }
 
 ///|
 /// A command-line grammar (`('f, 'r) Command.t`): `F` is the type of the
 /// command function and `R` its result after all arguments are applied.
 pub struct Grammar[F, R] {
-  priv len : Int?
+  priv len : Int32?
   priv invalid : String?
   priv run : (F) -> Term[R]
 }
@@ -71,7 +71,7 @@ pub fn[A, B, C] Grammar::add(
 
 ///|
 /// `Command::argument(t)` is a positional argument of type `t`.
-pub fn[A] Command::argument(doc? : String = "", t : Type[A]) -> CommandParam[A] {
+pub fn[A] Command::argument(doc~ : String = "", t : Type[A]) -> CommandParam[A] {
   {
     kind: PosParam,
     make: n => {
@@ -90,7 +90,7 @@ pub fn[A] Command::argument(doc? : String = "", t : Type[A]) -> CommandParam[A] 
 /// `Command::arguments(t)` is any number of positional arguments of type
 /// `t` (all the remaining ones).
 pub fn[A] Command::arguments(
-  doc? : String = "",
+  doc~ : String = "",
   t : Type[A],
 ) -> CommandParam[Array[A]] {
   {
@@ -116,7 +116,7 @@ fn[A] key_param(t : Term[A]) -> CommandParam[A] {
 /// options; `Some(v)` if one is given, `None` otherwise.
 pub fn[A] Command::switch(
   doc? : (A) -> String,
-  aliases? : (A) -> Array[String] = _ => [],
+  aliases~ : (A) -> Array[String] = _ => [],
   values : Array[A],
   name : (A) -> String,
 ) -> CommandParam[A?] {
@@ -138,7 +138,7 @@ pub fn[A] Command::switch(
 /// of `--<name v>` adds `v` to the list (in command-line order).
 pub fn[A] Command::switches(
   doc? : (A) -> String,
-  aliases? : (A) -> Array[String] = _ => [],
+  aliases~ : (A) -> Array[String] = _ => [],
   values : Array[A],
   name : (A) -> String,
 ) -> CommandParam[Array[A]] {
@@ -159,7 +159,7 @@ pub fn[A] Command::switches(
 pub fn[K, D] Command::dictionary(
   doc? : (K) -> String,
   as_flag? : (K) -> D,
-  aliases? : (K) -> Array[String] = _ => [],
+  aliases~ : (K) -> Array[String] = _ => [],
   keys : Array[K],
   data : Type[D],
   name : (K) -> String,
@@ -199,9 +199,9 @@ pub fn[K, D] Command::dictionary(
 /// (one-letter names and aliases are short keys: `-k v`). The default of
 /// `t` is used when it is absent; with `as_flag` the value may be omitted.
 pub fn[A] Command::parameter(
-  doc? : String = "",
+  doc~ : String = "",
   as_flag? : A,
-  aliases? : Array[String] = [],
+  aliases~ : Array[String] = [],
   t : Type[A],
   name : String,
 ) -> CommandParam[A] {
@@ -223,9 +223,9 @@ pub fn[A] Command::parameter(
 /// `Command::parameters(t, name)` is a multi-occurring parameter; values
 /// are collected in command-line order.
 pub fn[A] Command::parameters(
-  doc? : String = "",
+  doc~ : String = "",
   as_flag? : A,
-  aliases? : Array[String] = [],
+  aliases~ : Array[String] = [],
   t : Type[A],
   name : String,
 ) -> CommandParam[Array[A]] {
@@ -240,8 +240,8 @@ pub fn[A] Command::parameters(
 ///|
 /// `Command::flag(name)` is `true` if `--<name>` occurs (at most once).
 pub fn Command::flag(
-  doc? : String = "",
-  aliases? : Array[String] = [],
+  doc~ : String = "",
+  aliases~ : Array[String] = [],
   name : String,
 ) -> CommandParam[Bool] {
   let info = ArgInfo::new(names=[name, ..aliases], doc~, kind=Flag)
@@ -251,10 +251,10 @@ pub fn Command::flag(
 ///|
 /// `Command::flags(name)` is the number of occurrences of `--<name>`.
 pub fn Command::flags(
-  doc? : String = "",
-  aliases? : Array[String] = [],
+  doc~ : String = "",
+  aliases~ : Array[String] = [],
   name : String,
-) -> CommandParam[Int] {
+) -> CommandParam[Int32] {
   let info = ArgInfo::new(names=[name, ..aliases], doc~, kind=Flag)
   key_param(arg_flag_all(info).map(xs => xs.filter(x => x).length()))
 }
@@ -270,7 +270,7 @@ pub fn Command::flags(
 ///
 /// A command declared twice makes `init` fail with `Configuration`.
 pub fn[F] Command::register(
-  doc? : String = "no description provided",
+  doc~ : String = "no description provided",
   requires? : Array[String],
   name : String,
   grammar : Grammar[F, CommandFn],

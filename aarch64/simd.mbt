@@ -58,19 +58,19 @@ priv enum SimdExtra {
 
 ///|
 priv struct SimdClass {
-  mask : UInt
-  value : UInt
+  mask : UInt32
+  value : UInt32
   /// The key bits, most significant first.
-  kpos : Array[Int]
+  kpos : Array[Int32]
   /// The operand fields and their bits, most significant first.
-  fields : Array[(Char, Array[Int])]
+  fields : Array[(Char, Array[Int32])]
   key : SimdKey
   extra : SimdExtra
-  table : (Int) -> (String, String, String)?
+  table : (Int32) -> (String, String, String)?
 }
 
 ///|
-fn bits_of(w : UInt, positions : Array[Int]) -> Int {
+fn bits_of(w : UInt32, positions : Array[Int32]) -> Int32 {
   positions.fold(init=0, (v, b) => {
     (v << 1) | ((w >> b) & 1).reinterpret_as_int()
   })
@@ -84,7 +84,7 @@ fn SimdClass::has_field(self : SimdClass, name : Char) -> Bool {
 ///|
 /// The value of the operand field `name` of `w` (0 when the class has no
 /// such field).
-fn SimdClass::field(self : SimdClass, w : UInt, name : Char) -> Int {
+fn SimdClass::field(self : SimdClass, w : UInt32, name : Char) -> Int32 {
   for f in self.fields {
     if f.0 == name {
       return bits_of(w, f.1)
@@ -94,14 +94,14 @@ fn SimdClass::field(self : SimdClass, w : UInt, name : Char) -> Int {
 }
 
 ///|
-fn SimdClass::matches(self : SimdClass, w : UInt) -> Bool {
+fn SimdClass::matches(self : SimdClass, w : UInt32) -> Bool {
   (w & self.mask) == self.value &&
   (!(self.key is Shift) || self.field(w, 'h') != 0)
 }
 
 ///|
 /// The index of the lowest set bit of `v` among its low 4 bits, 4 if none.
-fn low_set_bit4(v : Int) -> Int {
+fn low_set_bit4(v : Int32) -> Int32 {
   for s in 0..<4 {
     if ((v >> s) & 1) == 1 {
       return s
@@ -112,7 +112,7 @@ fn low_set_bit4(v : Int) -> Int {
 
 ///|
 /// The index of the highest set bit of the nonzero 4-bit `v`.
-fn high_set_bit4(v : Int) -> Int {
+fn high_set_bit4(v : Int32) -> Int32 {
   for c = 3; c > 0; c = c - 1 {
     if ((v >> c) & 1) == 1 {
       return c
@@ -122,7 +122,7 @@ fn high_set_bit4(v : Int) -> Int {
 }
 
 ///|
-fn SimdClass::key_of(self : SimdClass, w : UInt, kb : Int) -> Int {
+fn SimdClass::key_of(self : SimdClass, w : UInt32, kb : Int32) -> Int32 {
   let f = (c : Char) => self.field(w, c)
   match self.key {
     Plain => kb
@@ -178,7 +178,7 @@ fn SimdClass::key_of(self : SimdClass, w : UInt, kb : Int) -> Int {
 /// The 8-bit floating-point immediate `imm8` (`VFPExpandImm`) as LLVM
 /// prints it (`%.8f`): `(16 + mantissa) / 16 * 2^e` with `e` in -3..4 is
 /// exactly `(16 + mantissa) * 781250 * 2^(e + 3)` hundred-millionths.
-fn fp8_text(imm8 : Int) -> String {
+fn fp8_text(imm8 : Int32) -> String {
   let mant = imm8 & 15
   let cd = (imm8 >> 4) & 3
   let e = if ((imm8 >> 6) & 1) == 1 { cd - 3 } else { cd + 1 }
@@ -191,7 +191,7 @@ fn fp8_text(imm8 : Int) -> String {
 ///|
 /// The 64-bit `MOVI` immediate (each bit of `imm8` gives a byte) as LLVM
 /// prints it (`%#016llx`).
-fn movi64_text(imm8 : Int) -> String {
+fn movi64_text(imm8 : Int32) -> String {
   let mut v = 0UL
   for i in 0..<8 {
     if ((imm8 >> i) & 1) == 1 {
@@ -210,10 +210,10 @@ fn movi64_text(imm8 : Int) -> String {
 /// The class-specific slot `name` of `w`, if any.
 fn SimdClass::extra_slot(
   self : SimdClass,
-  w : UInt,
-  kb : Int,
+  w : UInt32,
+  kb : Int32,
   name : String,
-) -> Int? {
+) -> Int32? {
   let f = (c : Char) => self.field(w, c)
   match (self.extra, name) {
     (CopyIdx, "x" | "y") => {
@@ -262,8 +262,8 @@ fn SimdClass::extra_slot(
 /// The value of the template slot `name` of `w` (see the file header).
 fn SimdClass::slot(
   self : SimdClass,
-  w : UInt,
-  kb : Int,
+  w : UInt32,
+  kb : Int32,
   name : String,
 ) -> String {
   if self.extra_slot(w, kb, name) is Some(v) {
@@ -291,7 +291,7 @@ fn SimdClass::slot(
     }
   }
   match name.to_array() {
-    [c, '1'..='3' as k] =>
+    [c, '1'..<='3' as k] =>
       ((self.field(w, c) + (k.to_int() - '0'.to_int())) % 32).to_string()
     [c] => self.field(w, c).to_string()
     _ => abort("unknown SIMD template slot " + name)
@@ -302,8 +302,8 @@ fn SimdClass::slot(
 /// The template `t` with its `%slot%` placeholders replaced.
 fn SimdClass::expand(
   self : SimdClass,
-  w : UInt,
-  kb : Int,
+  w : UInt32,
+  kb : Int32,
   t : String,
 ) -> String {
   let out = StringBuilder()
@@ -321,7 +321,7 @@ fn SimdClass::expand(
 /// The port-local code of a register named as LLVM names it: the
 /// general-purpose registers as in `registers.mbt`, `B<n>`..`Q<n>` from
 /// 200 (32 per class) and the `D`/`Q` lists (`Q0_Q1`, ...) from 400.
-fn simd_reg_code(name : String) -> Int {
+fn simd_reg_code(name : String) -> Int32 {
   match name {
     "WSP" => 32
     "WZR" => 33
@@ -374,8 +374,8 @@ fn parse_dec(s : String) -> Int64 {
 /// The operand list of the template `t`.
 fn SimdClass::operands(
   self : SimdClass,
-  w : UInt,
-  kb : Int,
+  w : UInt32,
+  kb : Int32,
   t : String,
 ) -> Array[@mc.Op] {
   if t.is_empty() {
@@ -397,7 +397,7 @@ fn SimdClass::operands(
 ///|
 /// Decodes an Advanced SIMD or floating-point instruction (data processing,
 /// loads and stores).
-fn a64_simd(w : UInt) -> A64Insn? {
+fn a64_simd(w : UInt32) -> A64Insn? {
   for cls in simd_classes {
     guard cls.matches(w) else { continue }
     let kb = bits_of(w, cls.kpos)

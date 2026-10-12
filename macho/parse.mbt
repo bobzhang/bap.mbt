@@ -48,7 +48,11 @@ fn parse_header(r : Reader, is64 : Bool) -> Header raise Malformed {
 }
 
 ///|
-fn parse_section(r : Reader, off : Int, is64 : Bool) -> Section raise Malformed {
+fn parse_section(
+  r : Reader,
+  off : Int32,
+  is64 : Bool,
+) -> Section raise Malformed {
   if is64 {
     {
       sectname: r.fixed_name(off, 16),
@@ -83,8 +87,8 @@ fn parse_section(r : Reader, off : Int, is64 : Bool) -> Section raise Malformed 
 ///|
 fn parse_segment(
   r : Reader,
-  off : Int,
-  size : Int,
+  off : Int32,
+  size : Int32,
   is64 : Bool,
 ) -> Segment raise Malformed {
   let (header_size, section_size) = if is64 { (72, 80) } else { (56, 68) }
@@ -124,8 +128,8 @@ fn parse_segment(
 }
 
 ///|
-fn parse_dysymtab(r : Reader, off : Int) -> Dysymtab raise Malformed {
-  let f = (i : Int) => r.u32(off + 8 + i * 4)
+fn parse_dysymtab(r : Reader, off : Int32) -> Dysymtab raise Malformed {
+  let f = (i : Int32) => r.u32(off + 8 + i * 4)
   {
     ilocalsym: f(0),
     nlocalsym: f(1),
@@ -153,9 +157,9 @@ fn parse_dysymtab(r : Reader, off : Int) -> Dysymtab raise Malformed {
 /// start of the command, bounded by the command.
 fn lc_str(
   r : Reader,
-  off : Int,
-  size : Int,
-  str_off : Int,
+  off : Int32,
+  size : Int32,
+  str_off : Int32,
 ) -> String raise Malformed {
   if str_off < 0 || str_off >= size {
     raise Malformed("Mach-O load command string is out of bounds")
@@ -166,9 +170,9 @@ fn lc_str(
 ///|
 fn parse_thread_states(
   r : Reader,
-  off : Int,
-  size : Int,
-) -> Array[(UInt, Bytes)] raise Malformed {
+  off : Int32,
+  size : Int32,
+) -> Array[(UInt32, Bytes)] raise Malformed {
   let states = []
   let mut pos = off + 8
   while pos + 8 <= off + size {
@@ -186,9 +190,9 @@ fn parse_thread_states(
 ///|
 fn parse_command(
   r : Reader,
-  off : Int,
-  cmd : UInt,
-  size : Int,
+  off : Int32,
+  cmd : UInt32,
+  size : Int32,
   is64 : Bool,
 ) -> LoadCommand raise Malformed {
   match cmd {
@@ -391,8 +395,8 @@ pub fn MachO::main_entry_offset(self : MachO) -> UInt64? {
 fn state_word(
   state : Bytes,
   endian : @bitvec.Endian,
-  index : Int,
-  bytes : Int,
+  index : Int32,
+  bytes : Int32,
 ) -> UInt64? {
   let r : Reader = { data: state, endian, }
   try r.uint(index * bytes, bytes) catch {
@@ -405,9 +409,9 @@ fn state_word(
 ///|
 /// The program counter of an initial thread state of the CPU.
 fn thread_pc(
-  cputype : Int,
+  cputype : Int32,
   endian : @bitvec.Endian,
-  flavor : UInt,
+  flavor : UInt32,
   state : Bytes,
 ) -> UInt64? {
   match (cputype, flavor) {
@@ -453,7 +457,7 @@ pub fn MachO::thread_entry(self : MachO) -> UInt64? {
 
 ///|
 /// The type bits of the section flags (`SECTION_TYPE`).
-pub fn Section::typ(self : Section) -> UInt {
+pub fn Section::typ(self : Section) -> UInt32 {
   self.flags & SECTION_TYPE
 }
 
@@ -502,7 +506,7 @@ pub fn Nlist::is_stab(self : Nlist) -> Bool {
 
 ///|
 /// The type bits of `n_type` (`N_TYPE`): `N_UNDF`, `N_ABS`, `N_SECT`, ...
-pub fn Nlist::typ(self : Nlist) -> Int {
+pub fn Nlist::typ(self : Nlist) -> Int32 {
   self.n_type & N_TYPE
 }
 
@@ -562,7 +566,7 @@ pub fn symbols(data : Bytes, macho : MachO) -> Result[Array[Nlist], String] {
 ///|
 fn parse_relocation(
   r : Reader,
-  off : Int,
+  off : Int32,
   is64 : Bool,
 ) -> Relocation raise Malformed {
   let w0 = r.u32(off)
@@ -600,8 +604,8 @@ fn parse_relocation(
 fn relocation_table(
   data : Bytes,
   macho : MachO,
-  offset : UInt,
-  count : UInt,
+  offset : UInt32,
+  count : UInt32,
 ) -> Array[Relocation] raise Malformed {
   let r : Reader = { data, endian: macho.header.endian, }
   let off = offset.reinterpret_as_int()
@@ -650,7 +654,7 @@ pub fn external_relocations(
 pub fn indirect_symbols(
   data : Bytes,
   macho : MachO,
-) -> Result[Array[UInt], String] {
+) -> Result[Array[UInt32], String] {
   catch_malformed(() => {
     guard macho.dysymtab() is Some(d) else { return [] }
     let r : Reader = { data, endian: macho.header.endian, }

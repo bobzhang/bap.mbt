@@ -94,7 +94,7 @@ test "persistent codecs round trip strings names and arrays" {
   }
 
   let decimal_codec = @knowledge.Persistent::convert(
-    to_persistent=(value : Int) => value.to_string(),
+    to_persistent=(value : Int32) => value.to_string(),
     of_persistent=(input : String) => {
       try @string.parse_int(input) catch {
         _ => Err("invalid integer")
@@ -107,7 +107,7 @@ test "persistent codecs round trip strings names and arrays" {
   assert_true(decimal_codec.decode(decimal_codec.encode(42)) == Ok(42))
 
   let map_codec = @knowledge.Persistent::map(string_codec, int_codec)
-  let mapping : Map[String, Int] = { "b": 2, "a": 1, "colon:key": 3 }
+  let mapping : Map[String, Int32] = { "b": 2, "a": 1, "colon:key": 3 }
   assert_eq(map_codec.encode(mapping), "1:a1:11:b1:29:colon:key1:3")
   match map_codec.decode(map_codec.encode(mapping)) {
     Ok(decoded) => {
@@ -322,7 +322,7 @@ test "flat and total domains accept custom joins" {
 
   let total = @knowledge.Domain::total(
     @knowledge.Name::create("bounded-confidence", pkg="test"),
-    (value : Int) => value.to_string(),
+    (value : Int32) => value.to_string(),
     empty=0,
     compare=(lhs, rhs) => lhs.compare(rhs),
     join=(lhs, rhs) => {
@@ -342,7 +342,7 @@ test "flat and total domains accept custom joins" {
 test "custom domains derive default joins from partial order" {
   let domain = @knowledge.Domain::custom(
     @knowledge.Name::create("partial-level", pkg="test"),
-    (value : Int) => value.to_string(),
+    (value : Int32) => value.to_string(),
     empty=0,
     order=(lhs, rhs) => {
       if lhs == rhs {
@@ -367,7 +367,7 @@ test "custom domains derive default joins from partial order" {
 test "total domains order values and join by upper bound" {
   let domain = @knowledge.Domain::total(
     @knowledge.Name::create("confidence", pkg="test"),
-    (value : Int) => value.to_string(),
+    (value : Int32) => value.to_string(),
     empty=0,
     compare=(lhs, rhs) => lhs.compare(rhs),
   )
@@ -385,15 +385,15 @@ test "mapping domains merge pointwise facts" {
   let domain = @knowledge.Domain::mapping(
     @knowledge.Name::create("attributes", pkg="test"),
     key => key,
-    (value : Int) => value.to_string(),
+    (value : Int32) => value.to_string(),
     equal=(lhs, rhs) => lhs == rhs,
   )
-  let empty : Map[String, Int] = Map([])
-  let base : Map[String, Int] = { "a": 1 }
-  let same : Map[String, Int] = { "a": 1 }
-  let extra : Map[String, Int] = { "b": 2 }
-  let extended : Map[String, Int] = { "a": 1, "b": 2 }
-  let conflict : Map[String, Int] = { "a": 2 }
+  let empty : Map[String, Int32] = Map([])
+  let base : Map[String, Int32] = { "a": 1 }
+  let same : Map[String, Int32] = { "a": 1 }
+  let extra : Map[String, Int32] = { "b": 2 }
+  let extended : Map[String, Int32] = { "a": 1, "b": 2 }
+  let conflict : Map[String, Int32] = { "a": 2 }
   assert_true(domain.is_empty(empty))
   assert_true(domain.order(empty, base) == Less)
   assert_true(domain.order(base, same) == Equal)
@@ -413,7 +413,7 @@ test "mapping domains merge pointwise facts" {
   let summing = @knowledge.Domain::mapping(
     @knowledge.Name::create("summed-attributes", pkg="test"),
     key => key,
-    (value : Int) => value.to_string(),
+    (value : Int32) => value.to_string(),
     equal=(lhs, rhs) => lhs == rhs,
     join=(lhs, rhs) => Ok(lhs + rhs),
   )
@@ -902,7 +902,7 @@ test "translated BAP opinion proposals materialize deferred suggestions" {
   let ranked = state.create(cls)
   let missing = state.create(cls)
   let facts = @knowledge.FactTable::new(slot)
-  let calls : Ref[Int] = Ref(0)
+  let calls : Ref[Int32] = Ref(0)
   facts.propose(weak, current => {
     calls.val = calls.val + 1
     if current.equal(object) || current.equal(ranked) {
@@ -931,8 +931,8 @@ test "translated BAP opinion proposals materialize deferred suggestions" {
   let scoped_facts = @knowledge.FactTable::new(slot)
   let scoped_object = state.create(cls)
   let after_scope = state.create(cls)
-  let count_during : Ref[Int] = Ref(-1)
-  let scoped_calls : Ref[Int] = Ref(0)
+  let count_during : Ref[Int32] = Ref(-1)
+  let scoped_calls : Ref[Int32] = Ref(0)
   let scoped_result = scoped_facts.proposing(
     strong,
     current => {
@@ -1007,7 +1007,7 @@ test "translated BAP fact observers receive non-empty provides" {
   )
   let facts = @knowledge.FactTable::new(slot)
   let mirrored = @knowledge.FactTable::new(mirror, state=facts.state())
-  let calls : Ref[Int] = Ref(0)
+  let calls : Ref[Int32] = Ref(0)
   facts.observe((object, value) => {
     calls.val = calls.val + 1
     match mirrored.provide(object, value) {
@@ -1047,8 +1047,8 @@ test "translated BAP fact observing is scoped" {
   let first = state.create(cls)
   let second = state.create(cls)
   let facts = @knowledge.FactTable::new(slot)
-  let calls : Ref[Int] = Ref(0)
-  let count_during : Ref[Int] = Ref(-1)
+  let calls : Ref[Int32] = Ref(0)
+  let count_during : Ref[Int32] = Ref(-1)
   let provided : Ref[Result[Bool, String]] = Ref(Err("not run"))
   let result = facts.observing(
     (_, value) => {
@@ -1088,7 +1088,7 @@ test "translated BAP fact promises materialize deferred values" {
   let facts = @knowledge.FactTable::new(slot)
   let object = @knowledge.State::new().create(cls)
   let null = @knowledge.Object::null(cls)
-  let calls : Ref[Int] = Ref(0)
+  let calls : Ref[Int32] = Ref(0)
   facts.promise(current => {
     calls.val = calls.val + 1
     if current.equal(object) {
@@ -1125,7 +1125,7 @@ test "translated BAP fact promising is scoped" {
   let first = state.create(cls)
   let second = state.create(cls)
   let facts = @knowledge.FactTable::new(slot)
-  let count_during : Ref[Int] = Ref(-1)
+  let count_during : Ref[Int32] = Ref(-1)
   let result = facts.promising(
     current => if current.equal(first) { Ok(true) } else { Ok(false) },
     () => {

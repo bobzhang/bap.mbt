@@ -1,19 +1,19 @@
 ///|
 struct Language {
-  id_value : Int
+  id_value : Int32
   name_value : String
 }
 
 ///|
 struct LanguageProperty[T] {
-  values : Map[Int, T]
+  values : Map[Int32, T]
 }
 
 ///|
-let language_next_id : Ref[Int] = Ref(0)
+let language_next_id : Ref[Int32] = Ref(0)
 
 ///|
-fn language_fresh_id() -> Int {
+fn language_fresh_id() -> Int32 {
   let id = language_next_id.val
   language_next_id.val = id + 1
   id
@@ -35,7 +35,7 @@ pub fn Language::to_string(self : Language) -> String {
 }
 
 ///|
-pub fn Language::compare(self : Language, other : Language) -> Int {
+pub fn Language::compare(self : Language, other : Language) -> Int32 {
   self.id_value.compare(other.id_value)
 }
 

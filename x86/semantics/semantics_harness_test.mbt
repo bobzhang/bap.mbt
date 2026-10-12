@@ -39,7 +39,7 @@ const DATA : UInt64 = 0x10000
 const STACK : UInt64 = 0x20000
 
 ///|
-const REGION : Int = 1024
+const REGION : Int32 = 1024
 
 ///|
 let gpr64_names : Array[String] = [
@@ -53,7 +53,7 @@ let gpr32_names : Array[String] = [
 ]
 
 ///|
-let flag_bits : Array[(String, Int)] = [
+let flag_bits : Array[(String, Int32)] = [
   ("CF", 0),
   ("PF", 2),
   ("AF", 4),
@@ -65,26 +65,26 @@ let flag_bits : Array[(String, Int)] = [
 
 ///|
 priv struct Case {
-  mode : Int
+  mode : Int32
   text : String
   code : Bytes
   mc : String
-  regs : Map[Int, UInt64]
-  xmms : Map[Int, String]
-  flags : Int
+  regs : Map[Int32, UInt64]
+  xmms : Map[Int32, String]
+  flags : Int32
   mem : Array[(UInt64, Bytes)]
-  exp_regs : Map[Int, UInt64?]
-  exp_xmms : Map[Int, String?]
-  exp_flags : Int
-  undef_flags : Int
+  exp_regs : Map[Int32, UInt64?]
+  exp_xmms : Map[Int32, String?]
+  exp_flags : Int32
+  undef_flags : Int32
   exp_mem : Array[(UInt64, Bytes)]
   mem_dontcare : Bool
   jump : UInt64?
-  exn : Int?
+  exn : Int32?
 }
 
 ///|
-fn nregs(mode : Int) -> Int {
+fn nregs(mode : Int32) -> Int32 {
   if mode == 64 {
     16
   } else {
@@ -93,7 +93,7 @@ fn nregs(mode : Int) -> Int {
 }
 
 ///|
-fn gpr_names(mode : Int) -> Array[String] {
+fn gpr_names(mode : Int32) -> Array[String] {
   if mode == 64 {
     gpr64_names
   } else {
@@ -106,9 +106,9 @@ fn parse_hex(s : StringView) -> UInt64 raise {
   let mut v = 0UL
   for c in s {
     let d = match c {
-      '0'..='9' => c.to_int() - '0'.to_int()
-      'a'..='f' => c.to_int() - 'a'.to_int() + 10
-      'A'..='F' => c.to_int() - 'A'.to_int() + 10
+      '0'..<='9' => c.to_int() - '0'.to_int()
+      'a'..<='f' => c.to_int() - 'a'.to_int() + 10
+      'A'..<='F' => c.to_int() - 'A'.to_int() + 10
       _ => fail("bad hex \{s}")
     }
     v = (v << 4) | d.to_uint64()
@@ -120,7 +120,7 @@ fn parse_hex(s : StringView) -> UInt64 raise {
 fn parse_dec(s : StringView) -> Int64 raise {
   let mut v = 0L
   for c in s {
-    guard c is ('0'..='9') else { fail("bad number \{s}") }
+    guard c is ('0'..<='9') else { fail("bad number \{s}") }
     v = v * 10L + (c.to_int() - '0'.to_int()).to_int64()
   }
   v
@@ -137,13 +137,13 @@ fn parse_bytes(s : StringView) -> Bytes raise {
 }
 
 ///|
-fn reg_index(mode : Int, name : StringView) -> Int? {
+fn reg_index(mode : Int32, name : StringView) -> Int32? {
   let upper = name.to_owned().to_upper()
   gpr_names(mode).search(upper)
 }
 
 ///|
-fn parse_case(mode : Int, line : StringView) -> Case raise {
+fn parse_case(mode : Int32, line : StringView) -> Case raise {
   let parts = line.split("|").collect()
   guard parts.length() == 5 else { fail("bad case: \{line}") }
   let regs = Map([])
@@ -227,7 +227,7 @@ fn parse_case(mode : Int, line : StringView) -> Case raise {
 }
 
 ///|
-fn parse_cases(mode : Int, table : String) -> Array[Case] raise {
+fn parse_cases(mode : Int32, table : String) -> Array[Case] raise {
   let out = []
   for line in table.split("\n") {
     if !line.is_empty() {
@@ -240,7 +240,7 @@ fn parse_cases(mode : Int, table : String) -> Array[Case] raise {
 // The default machine state (the generator's formulas).
 
 ///|
-fn default_gpr(i : Int, mode : Int) -> UInt64 {
+fn default_gpr(i : Int32, mode : Int32) -> UInt64 {
   let v = match i {
     4 => STACK + 0x100
     5 => STACK + 0x180
@@ -256,7 +256,7 @@ fn default_gpr(i : Int, mode : Int) -> UInt64 {
 }
 
 ///|
-fn default_xmm(i : Int) -> (UInt64, UInt64) {
+fn default_xmm(i : Int32) -> (UInt64, UInt64) {
   let lo = (0x0123456789ABCDEFUL * (i + 3).to_uint64()) ^ 0x1111111111111111UL
   let hi = (0xFEDCBA9876543210UL * (i + 5).to_uint64()) ^ 0x2222222222222222UL
   (hi, lo)
@@ -282,7 +282,7 @@ let default_stack : Bytes = Bytes::makei(REGION, i => {
 })
 
 ///|
-fn word(width : Int, value : UInt64) -> @types.BilValue {
+fn word(width : Int32, value : UInt64) -> @types.BilValue {
   BilWord(try! @types.Word::of_uint64(width~, value))
 }
 
@@ -292,7 +292,7 @@ fn xmm_word(hex : String) -> @types.Word raise {
 }
 
 ///|
-fn default_xmm_word(i : Int) -> @types.Word raise {
+fn default_xmm_word(i : Int32) -> @types.Word raise {
   let (hi, lo) = default_xmm(i)
   @types.Word::of_uint64(width=64, hi).concat(
     @types.Word::of_uint64(width=64, lo),
@@ -303,7 +303,7 @@ fn default_xmm_word(i : Int) -> @types.Word raise {
 /// The expected bytes of the two memory regions: `(base, bytes)`.
 fn regions(
   updates : Array[(UInt64, Bytes)],
-  more? : Array[(UInt64, Bytes)] = [],
+  more~ : Array[(UInt64, Bytes)] = [],
 ) -> Array[(UInt64, Bytes)] {
   let out = []
   for base in [DATA, STACK] {
@@ -371,11 +371,11 @@ fn initial_state(c : Case) -> Map[String, @types.BilValue] raise {
 }
 
 ///|
-let base_memories : Map[Int, @types.BilMemory] = Map([])
+let base_memories : Map[Int32, @types.BilMemory] = Map([])
 
 ///|
 /// The default memory of the test states (cached per address width).
-fn base_memory(w : Int) -> @types.BilMemory raise {
+fn base_memory(w : Int32) -> @types.BilMemory raise {
   match base_memories.get(w) {
     Some(m) => m
     None => {

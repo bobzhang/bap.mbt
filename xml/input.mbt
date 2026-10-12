@@ -10,9 +10,9 @@ priv struct Scope {
 /// A streaming XML input (`Xmlm.input`).
 pub struct Input {
   priv chars : Array[Char]
-  priv mut pos : Int
-  priv mut line : Int
-  priv mut col : Int
+  priv mut pos : Int32
+  priv mut line : Int32
+  priv mut col : Int32
   priv strip : Bool
   priv entity : (String) -> String?
   priv ns : (String) -> String?
@@ -32,9 +32,9 @@ pub struct Input {
 /// namespace prefixes that are not declared in the document.
 pub fn Input::from_string(
   text : StringView,
-  strip? : Bool = false,
-  entity? : (String) -> String? = _ => None,
-  ns? : (String) -> String? = _ => None,
+  strip~ : Bool = false,
+  entity~ : (String) -> String? = _ => None,
+  ns~ : (String) -> String? = _ => None,
 ) -> Input {
   let chars : Array[Char] = []
   let mut prev_cr = false
@@ -74,9 +74,9 @@ pub fn Input::from_string(
 /// Creates an input from UTF-8 encoded bytes.
 pub fn Input::from_bytes(
   bytes : BytesView,
-  strip? : Bool = false,
-  entity? : (String) -> String? = _ => None,
-  ns? : (String) -> String? = _ => None,
+  strip~ : Bool = false,
+  entity~ : (String) -> String? = _ => None,
+  ns~ : (String) -> String? = _ => None,
 ) -> Input raise XmlError {
   let text = @utf8.decode(bytes) catch {
     _ => raise XmlError(pos={ line: 1, col: 1, }, "malformed UTF-8 input")
@@ -186,7 +186,7 @@ fn is_name_char(c : Char) -> Bool {
 
 ///|
 fn is_name_start(c : Char) -> Bool {
-  is_name_char(c) && !(c is ('-' | '.' | '0'..='9'))
+  is_name_char(c) && !(c is ('-' | '.' | '0'..<='9'))
 }
 
 ///|
@@ -272,7 +272,7 @@ fn Input::read_doctype(self : Input) -> String raise XmlError {
 }
 
 ///|
-fn char_of_code(code : Int) -> Char? {
+fn char_of_code(code : Int32) -> Char? {
   if (code >= 0 && code < 0xD800) || (code > 0xDFFF && code <= 0x10FFFF) {
     Some(code.unsafe_to_char())
   } else {
@@ -295,9 +295,9 @@ fn Input::read_reference(self : Input) -> String raise XmlError {
     let mut digits = 0
     while self.cur() is Some(c) && c != ';' {
       let d = match c {
-        '0'..='9' => c.to_int() - '0'.to_int()
-        'a'..='f' if hex => c.to_int() - 'a'.to_int() + 10
-        'A'..='F' if hex => c.to_int() - 'A'.to_int() + 10
+        '0'..<='9' => c.to_int() - '0'.to_int()
+        'a'..<='f' if hex => c.to_int() - 'a'.to_int() + 10
+        'A'..<='F' if hex => c.to_int() - 'A'.to_int() + 10
         _ => raise self.fail("malformed character reference")
       }
       code = code * (if hex { 16 } else { 10 }) + d

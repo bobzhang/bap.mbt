@@ -1,17 +1,17 @@
 // Helpers shared by the black-box tests of the primus package.
 
 ///|
-fn w64(n : Int) -> @types.Word {
+fn w64(n : Int32) -> @types.Word {
   try! @types.Word::of_int(width=64, n)
 }
 
 ///|
-fn w8(n : Int) -> @types.Word {
+fn w8(n : Int32) -> @types.Word {
   try! @types.Word::of_int(width=8, n)
 }
 
 ///|
-fn int64(n : Int) -> @types.Exp {
+fn int64(n : Int32) -> @types.Exp {
   Int(w64(n))
 }
 
@@ -44,8 +44,8 @@ fn goto(
 ///|
 fn blk(
   tid? : @types.Tid,
-  defs? : Array[@types.Term[@types.Def]] = [],
-  jmps? : Array[@types.Term[@types.Jmp]] = [],
+  defs~ : Array[@types.Term[@types.Def]] = [],
+  jmps~ : Array[@types.Term[@types.Jmp]] = [],
 ) -> @types.Term[@types.Blk] {
   @types.Blk::create(tid?, defs~, jmps~)
 }
@@ -53,7 +53,7 @@ fn blk(
 ///|
 fn sub(
   name : String,
-  args? : Array[@types.Term[@types.Arg]] = [],
+  args~ : Array[@types.Term[@types.Arg]] = [],
   blks : Array[@types.Term[@types.Blk]],
 ) -> @types.Term[@types.Sub] {
   @types.Sub::create(name~, args~, blks~)
@@ -82,7 +82,7 @@ fn value_int(v : @primus.Value) -> UInt64 {
 fn run_main_sub(
   subs : Array[@types.Term[@types.Sub]],
   vars : Array[@types.Var],
-  init? : (@primus.Machine) -> Unit raise = _ => (),
+  init~ : (@primus.Machine) -> Unit raise = _ => (),
 ) -> (@primus.ExitStatus, Array[UInt64?]) {
   let results : Array[UInt64?] = []
   let (status, _) = @primus.Machine::run(

@@ -8,13 +8,13 @@ pub fn run(
   input : String,
   root? : String,
   ldconfig? : String,
-  run_command? : (String) -> String? = _ => None,
-  format? : DependencyFormat = Yaml,
-  recursive? : Bool = false,
-  paths? : Array[String] = [],
-  context? : String = "",
+  run_command~ : (String) -> String? = _ => None,
+  format~ : DependencyFormat = Yaml,
+  recursive~ : Bool = false,
+  paths~ : Array[String] = [],
+  context~ : String = "",
   cache? : DependencyCache,
-  fs? : @bap_main.FileSystem = @bap_main.file_system(),
+  fs~ : @bap_main.FileSystem = @bap_main.file_system(),
 ) -> String {
   let ldconfig = match ldconfig {
     None => None
@@ -46,7 +46,7 @@ let command_cache : DependencyCache = DependencyCache::new()
 /// Declares the `dependencies` plugin and command to `bap_main`. Does nothing
 /// if already declared.
 pub fn declare_plugin(
-  out? : (String) -> Unit = s => println(s.trim_end(chars="\n")),
+  out~ : (String) -> Unit = s => println(s.trim_end(chars="\n")),
 ) -> Unit raise {
   if @bap_main.registered_plugins().contains(name) {
     return

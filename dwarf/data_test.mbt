@@ -191,7 +191,7 @@ fn expect_die_attr_flag(value : Result[Bool, String]) -> Bool raise {
 }
 
 ///|
-fn expect_die_attr_index(value : Result[Int, String]) -> Int raise {
+fn expect_die_attr_index(value : Result[Int32, String]) -> Int32 raise {
   match value {
     Ok(value) => value
     Err(reason) => fail(reason)

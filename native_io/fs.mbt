@@ -31,7 +31,7 @@ pub(all) struct FileStat {
   /// the modification time, in seconds since the epoch
   mtime : Double
   /// the permission bits (`st_mode & 0o7777`)
-  perm : Int
+  perm : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -44,7 +44,7 @@ pub extend FileStat with Debug::{to_repr}
 /// An advisory lock (`flock`) held on a file, see `lock_file`.
 #warnings("-struct_never_constructed")
 pub struct FileLock {
-  priv fd : Int
+  priv fd : Int32
   priv path : String
   priv mut held : Bool
 }
@@ -83,7 +83,7 @@ pub fn is_directory(path : String) -> Bool {
 /// Creates `path` and all its missing parents (`mkdir -p`). Succeeds if
 /// the directory already exists; fails if `path` or one of its parents
 /// exists and is not a directory.
-pub fn mkdir_p(path : String, perm? : Int = 0o777) -> Result[Unit, String] {
+pub fn mkdir_p(path : String, perm~ : Int32 = 0o777) -> Result[Unit, String] {
   match file_kind(path) {
     Some(Directory) => return Ok(())
     Some(_) => return Err("failed to create directory \{path}: not a directory")
@@ -136,7 +136,7 @@ pub fn write_file_atomic(
   path : String,
   data : BytesView,
   temp_dir? : String,
-  perm? : Int,
+  perm? : Int32,
 ) -> Result[Unit, String] {
   let dir = match temp_dir {
     Some(dir) => dir
@@ -175,7 +175,7 @@ pub fn write_file_atomic(
 /// The lock is released when `f` returns or raises.
 pub fn[T] with_lock(
   path : String,
-  exclusive? : Bool = true,
+  exclusive~ : Bool = true,
   f : () -> T raise?,
 ) -> Result[T, String] raise? {
   let lock = match lock_file(path, exclusive~) {

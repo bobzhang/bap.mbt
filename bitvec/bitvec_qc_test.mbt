@@ -2,12 +2,12 @@
 // reference model on `@bigint.BigInt` (an unsigned value in [0, 2^width)).
 
 ///|
-fn pow2(n : Int) -> @bigint.BigInt {
+fn pow2(n : Int32) -> @bigint.BigInt {
   (1N : @bigint.BigInt) << n
 }
 
 ///|
-fn modw(v : @bigint.BigInt, width : Int) -> @bigint.BigInt {
+fn modw(v : @bigint.BigInt, width : Int32) -> @bigint.BigInt {
   let m = pow2(width)
   let r = v % m
   if r < 0N {
@@ -19,7 +19,7 @@ fn modw(v : @bigint.BigInt, width : Int) -> @bigint.BigInt {
 
 ///|
 /// The two's complement reading of an unsigned model value.
-fn signed_of(v : @bigint.BigInt, width : Int) -> @bigint.BigInt {
+fn signed_of(v : @bigint.BigInt, width : Int32) -> @bigint.BigInt {
   if v >= pow2(width - 1) {
     v - pow2(width)
   } else {
@@ -42,7 +42,7 @@ fn to_big(v : @bitvec.BitVec) -> @bigint.BigInt {
 }
 
 ///|
-fn of_big(width : Int, v : @bigint.BigInt) -> @bitvec.BitVec {
+fn of_big(width : Int32, v : @bigint.BigInt) -> @bitvec.BitVec {
   try! @bitvec.from_hex(width~, modw(v, width).to_string(radix=16))
 }
 
@@ -56,7 +56,7 @@ fn[T] raises(f : () -> T raise) -> Bool {
 }
 
 ///|
-fn sign(x : Int) -> Int {
+fn sign(x : Int32) -> Int32 {
   if x < 0 {
     -1
   } else if x > 0 {
@@ -68,12 +68,12 @@ fn sign(x : Int) -> Int {
 
 ///|
 /// Widths around every limb boundary plus small ones.
-let interesting_widths : Array[Int] = [
+let interesting_widths : Array[Int32] = [
   1, 2, 3, 7, 8, 16, 31, 32, 33, 63, 64, 65, 100, 127, 128, 129, 191, 192, 200,
 ]
 
 ///|
-fn gen_width(size : Int, rs : @splitmix.RandomState) -> Int {
+fn gen_width(size : Int32, rs : @splitmix.RandomState) -> Int32 {
   if rs.next_uint(limit=4) == 0 {
     // any width up to 260
     1 + rs.next_uint(limit=260).reinterpret_as_int()
@@ -87,7 +87,7 @@ fn gen_width(size : Int, rs : @splitmix.RandomState) -> Int {
 
 ///|
 /// A value of the given width biased towards edge cases.
-fn gen_value(width : Int, rs : @splitmix.RandomState) -> @bigint.BigInt {
+fn gen_value(width : Int32, rs : @splitmix.RandomState) -> @bigint.BigInt {
   match rs.next_uint(limit=10) {
     0 => 0N
     1 => 1N
@@ -108,10 +108,10 @@ fn gen_value(width : Int, rs : @splitmix.RandomState) -> @bigint.BigInt {
 
 ///|
 struct BvCase {
-  width : Int
+  width : Int32
   a : @bigint.BigInt
   b : @bigint.BigInt
-  k : Int
+  k : Int32
 } derive(Debug)
 
 ///|
@@ -189,7 +189,7 @@ test "qc: hex and string forms round trip" {
 ///|
 test "qc: of_uint64 and of_int64 reduce modulo the width" {
   @quickcheck.check(
-    (input : (UInt64, Int)) => {
+    (input : (UInt64, Int32)) => {
       let (v, wseed) = input
       let width = 1 + (wseed % 130).abs()
       let from_u = @bitvec.of_uint64(width~, v)
@@ -497,7 +497,7 @@ test "qc: integer conversions agree with the model" {
 ///|
 test "qc: select picks the listed bits, zero outside the width" {
   @quickcheck.check(
-    (input : (BvCase, Array[Int])) => {
+    (input : (BvCase, Array[Int32])) => {
       let (c, raw) = input
       let bits = raw.map(i => i % (c.width + 4))
       let out = @bitvec.select(bits, c.x())

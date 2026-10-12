@@ -10,7 +10,7 @@ fn branch_addr(a : @powerpc.AddrSize) -> UInt64 {
 
 ///|
 /// `offs << 2` in the address width.
-fn disp(a : @powerpc.AddrSize, offs : Int) -> UInt64 {
+fn disp(a : @powerpc.AddrSize, offs : Int32) -> UInt64 {
   trunc(a, (offs.to_int64() << 2).reinterpret_as_uint64())
 }
 
@@ -48,7 +48,7 @@ test "b, ba, bl, bla" {
 ///|
 /// A BO-field scenario of the upstream tests.
 struct BoCase {
-  bo : Int
+  bo : Int32
   ctr_before : UInt64
   ctr_after : UInt64?
   cond_reg0 : UInt64
@@ -57,11 +57,11 @@ struct BoCase {
 
 ///|
 fn bo_case(
-  bo : Int,
-  ctr_before? : UInt64 = 0,
+  bo : Int32,
+  ctr_before~ : UInt64 = 0,
   ctr_after? : UInt64,
-  cond_reg0? : UInt64 = 0,
-  expect_jump? : Bool = false,
+  cond_reg0~ : UInt64 = 0,
+  expect_jump~ : Bool = false,
 ) -> BoCase {
   { bo, ctr_before, ctr_after, cond_reg0, expect_jump, }
 }

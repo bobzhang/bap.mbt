@@ -16,8 +16,8 @@ priv struct Machine {
   /// variables whose value is undefined
   undefined : Map[String, Unit]
   mut jump : UInt64?
-  mut exn : Int?
-  mut fuel : Int
+  mut exn : Int32?
+  mut fuel : Int32
 }
 
 ///|
@@ -124,7 +124,7 @@ fn is_rep(code : Bytes) -> Bool {
     match b {
       b'\xf2' | b'\xf3' => return true
       b'\x66' | b'\x67' | b'\x2e' | b'\x3e' | b'\x26' | b'\x36' => continue
-      b'\x40'..=b'\x4f' => continue
+      b'\x40'..<=b'\x4f' => continue
       _ => return false
     }
   }

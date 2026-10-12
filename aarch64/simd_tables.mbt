@@ -2,7 +2,7 @@
 // disassembler (`+v8.1a,+v8.2a,+v8.3a`), DO NOT EDIT. See `simd.mbt`.
 
 ///|
-fn simd_v3same(key : Int) -> (String, String, String)? {
+fn simd_v3same(key : Int32) -> (String, String, String)? {
   match key {
     0x0 =>
       Some(
@@ -2239,7 +2239,7 @@ fn simd_v3same(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_v3diff(key : Int) -> (String, String, String)? {
+fn simd_v3diff(key : Int32) -> (String, String, String)? {
   match key {
     0x0 =>
       Some(
@@ -3122,7 +3122,7 @@ fn simd_v3diff(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_v2misc(key : Int) -> (String, String, String)? {
+fn simd_v2misc(key : Int32) -> (String, String, String)? {
   match key {
     0x0 => Some(("REV64v8i8", "Reg:D%d% Reg:D%n%", "rev64 v%d%.8b, v%n%.8b"))
     0x1 => Some(("REV16v8i8", "Reg:D%d% Reg:D%n%", "rev16 v%d%.8b, v%n%.8b"))
@@ -3732,7 +3732,7 @@ fn simd_v2misc(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_vacross(key : Int) -> (String, String, String)? {
+fn simd_vacross(key : Int32) -> (String, String, String)? {
   match key {
     0x3 => Some(("SADDLVv8i8v", "Reg:H%d% Reg:D%n%", "saddlv h%d%, v%n%.8b"))
     0xa => Some(("SMAXVv8i8v", "Reg:B%d% Reg:D%n%", "smaxv b%d%, v%n%.8b"))
@@ -3782,7 +3782,7 @@ fn simd_vacross(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_vcopy(key : Int) -> (String, String, String)? {
+fn simd_vcopy(key : Int32) -> (String, String, String)? {
   match key {
     0x0 =>
       Some(
@@ -4093,7 +4093,7 @@ fn simd_vcopy(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_vmodimm(key : Int) -> (String, String, String)? {
+fn simd_vmodimm(key : Int32) -> (String, String, String)? {
   match key {
     0x0 => Some(("MOVIv2i32", "Reg:Q%d% Imm:%i% Imm:0", "movi v%d%.2s, #%i%"))
     0x2 =>
@@ -4339,7 +4339,7 @@ fn simd_vmodimm(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_vshift(key : Int) -> (String, String, String)? {
+fn simd_vshift(key : Int32) -> (String, String, String)? {
   match key {
     0x0 =>
       Some(
@@ -5366,7 +5366,7 @@ fn simd_vshift(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_velem(key : Int) -> (String, String, String)? {
+fn simd_velem(key : Int32) -> (String, String, String)? {
   match key {
     0x12 | 0x112 =>
       Some(
@@ -5881,7 +5881,7 @@ fn simd_velem(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_v3extra(key : Int) -> (String, String, String)? {
+fn simd_v3extra(key : Int32) -> (String, String, String)? {
   match key {
     0x50 =>
       Some(
@@ -6044,7 +6044,7 @@ fn simd_v3extra(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_vperm(key : Int) -> (String, String, String)? {
+fn simd_vperm(key : Int32) -> (String, String, String)? {
   match key {
     0x1 =>
       Some(
@@ -6303,7 +6303,7 @@ fn simd_vperm(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_vext(key : Int) -> (String, String, String)? {
+fn simd_vext(key : Int32) -> (String, String, String)? {
   match key {
     0x0 =>
       Some(
@@ -6322,7 +6322,7 @@ fn simd_vext(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_vtbl(key : Int) -> (String, String, String)? {
+fn simd_vtbl(key : Int32) -> (String, String, String)? {
   match key {
     0x0 =>
       Some(
@@ -6427,7 +6427,7 @@ fn simd_vtbl(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_scopy(key : Int) -> (String, String, String)? {
+fn simd_scopy(key : Int32) -> (String, String, String)? {
   match key {
     0x0 => Some(("DUPi8", "Reg:B%d% Reg:Q%n% Imm:%x%", "mov b%d%, v%n%.b[%x%]"))
     0x40 =>
@@ -6444,7 +6444,7 @@ fn simd_scopy(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_spair(key : Int) -> (String, String, String)? {
+fn simd_spair(key : Int32) -> (String, String, String)? {
   match key {
     0x7b => Some(("ADDPv2i64p", "Reg:D%d% Reg:Q%n%", "addp d%d%, v%n%.2d"))
     0x8c =>
@@ -6466,7 +6466,7 @@ fn simd_spair(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_s3same(key : Int) -> (String, String, String)? {
+fn simd_s3same(key : Int32) -> (String, String, String)? {
   match key {
     0x1 =>
       Some(
@@ -6699,7 +6699,7 @@ fn simd_s3same(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_s3diff(key : Int) -> (String, String, String)? {
+fn simd_s3diff(key : Int32) -> (String, String, String)? {
   match key {
     0x19 =>
       Some(
@@ -6738,7 +6738,7 @@ fn simd_s3diff(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_s2misc(key : Int) -> (String, String, String)? {
+fn simd_s2misc(key : Int32) -> (String, String, String)? {
   match key {
     0x3 =>
       Some(("SUQADDv1i8", "Reg:B%d% Reg:B%d% Reg:B%n%", "suqadd b%d%, b%n%"))
@@ -6836,7 +6836,7 @@ fn simd_s2misc(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_sshift(key : Int) -> (String, String, String)? {
+fn simd_sshift(key : Int32) -> (String, String, String)? {
   match key {
     0xe =>
       Some(("SQSHLb", "Reg:B%d% Reg:B%n% Imm:%b%", "sqshl b%d%, b%n%, #%b%"))
@@ -6980,7 +6980,7 @@ fn simd_sshift(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_selem(key : Int) -> (String, String, String)? {
+fn simd_selem(key : Int32) -> (String, String, String)? {
   match key {
     0x13 | 0x113 =>
       Some(
@@ -7127,7 +7127,7 @@ fn simd_selem(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_s3extra(key : Int) -> (String, String, String)? {
+fn simd_s3extra(key : Int32) -> (String, String, String)? {
   match key {
     0x50 =>
       Some(
@@ -7158,7 +7158,7 @@ fn simd_s3extra(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_fpfix(key : Int) -> (String, String, String)? {
+fn simd_fpfix(key : Int32) -> (String, String, String)? {
   match key {
     0x102 | 0x502 =>
       Some(
@@ -7261,7 +7261,7 @@ fn simd_fpfix(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_fpint(key : Int) -> (String, String, String)? {
+fn simd_fpint(key : Int32) -> (String, String, String)? {
   match key {
     0x0 => Some(("FCVTNSUWSr", "Reg:%W:d% Reg:S%n%", "fcvtns %w:d%, s%n%"))
     0x1 => Some(("FCVTNUUWSr", "Reg:%W:d% Reg:S%n%", "fcvtnu %w:d%, s%n%"))
@@ -7325,7 +7325,7 @@ fn simd_fpint(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_fp1(key : Int) -> (String, String, String)? {
+fn simd_fp1(key : Int32) -> (String, String, String)? {
   match key {
     0x0 => Some(("FMOVSr", "Reg:S%d% Reg:S%n%", "fmov s%d%, s%n%"))
     0x1 => Some(("FABSSr", "Reg:S%d% Reg:S%n%", "fabs s%d%, s%n%"))
@@ -7360,7 +7360,7 @@ fn simd_fp1(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_fpcmp(key : Int) -> (String, String, String)? {
+fn simd_fpcmp(key : Int32) -> (String, String, String)? {
   match key {
     0x0 => Some(("FCMPSrr", "Reg:S%n% Reg:S%m%", "fcmp s%n%, s%m%"))
     0x8 => Some(("FCMPSri", "Reg:S%n%", "fcmp s%n%, #0.0"))
@@ -7375,7 +7375,7 @@ fn simd_fpcmp(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_fpimm(key : Int) -> (String, String, String)? {
+fn simd_fpimm(key : Int32) -> (String, String, String)? {
   match key {
     0x0 => Some(("FMOVSi", "Reg:S%d% Imm:%i%", "fmov s%d%, #%fp%"))
     0x20 => Some(("FMOVDi", "Reg:D%d% Imm:%i%", "fmov d%d%, #%fp%"))
@@ -7384,7 +7384,7 @@ fn simd_fpimm(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_fpccmp(key : Int) -> (String, String, String)? {
+fn simd_fpccmp(key : Int32) -> (String, String, String)? {
   match key {
     0x0 =>
       Some(
@@ -7415,7 +7415,7 @@ fn simd_fpccmp(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_fp2(key : Int) -> (String, String, String)? {
+fn simd_fp2(key : Int32) -> (String, String, String)? {
   match key {
     0x0 =>
       Some(("FMULSrr", "Reg:S%d% Reg:S%n% Reg:S%m%", "fmul s%d%, s%n%, s%m%"))
@@ -7466,7 +7466,7 @@ fn simd_fp2(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_fpcsel(key : Int) -> (String, String, String)? {
+fn simd_fpcsel(key : Int32) -> (String, String, String)? {
   match key {
     0x0 =>
       Some(
@@ -7485,7 +7485,7 @@ fn simd_fpcsel(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_fp3(key : Int) -> (String, String, String)? {
+fn simd_fp3(key : Int32) -> (String, String, String)? {
   match key {
     0x0 =>
       Some(
@@ -7540,7 +7540,7 @@ fn simd_fp3(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_lsui(key : Int) -> (String, String, String)? {
+fn simd_lsui(key : Int32) -> (String, String, String)? {
   match key {
     0x0 =>
       Some(
@@ -7607,7 +7607,7 @@ fn simd_lsui(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_lsi9(key : Int) -> (String, String, String)? {
+fn simd_lsi9(key : Int32) -> (String, String, String)? {
   match key {
     0x0 =>
       Some(
@@ -7914,7 +7914,7 @@ fn simd_lsi9(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_lsreg(key : Int) -> (String, String, String)? {
+fn simd_lsreg(key : Int32) -> (String, String, String)? {
   match key {
     0x4 =>
       Some(
@@ -8401,7 +8401,7 @@ fn simd_lsreg(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_lspair(key : Int) -> (String, String, String)? {
+fn simd_lspair(key : Int32) -> (String, String, String)? {
   match key {
     0x0 =>
       Some(
@@ -8696,7 +8696,7 @@ fn simd_lspair(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_lslit(key : Int) -> (String, String, String)? {
+fn simd_lslit(key : Int32) -> (String, String, String)? {
   match key {
     0x0 => Some(("LDRSl", "Reg:S%t% Imm:%s%", "ldr s%t%, #%s2%"))
     0x1 => Some(("LDRDl", "Reg:D%t% Imm:%s%", "ldr d%t%, #%s2%"))
@@ -8706,7 +8706,7 @@ fn simd_lslit(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_lsmul(key : Int) -> (String, String, String)? {
+fn simd_lsmul(key : Int32) -> (String, String, String)? {
   match key {
     0x0 =>
       Some(
@@ -9289,7 +9289,7 @@ fn simd_lsmul(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_lsmulp(key : Int) -> (String, String, String)? {
+fn simd_lsmulp(key : Int32) -> (String, String, String)? {
   match key {
     0x0 =>
       Some(
@@ -10696,7 +10696,7 @@ fn simd_lsmulp(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_lssgl(key : Int) -> (String, String, String)? {
+fn simd_lssgl(key : Int32) -> (String, String, String)? {
   match key {
     0x0 | 0x80 | 0x100 | 0x180 =>
       Some(
@@ -11063,7 +11063,7 @@ fn simd_lssgl(key : Int) -> (String, String, String)? {
 }
 
 ///|
-fn simd_lssglp(key : Int) -> (String, String, String)? {
+fn simd_lssglp(key : Int32) -> (String, String, String)? {
   match key {
     0x0 | 0x80 | 0x100 | 0x180 =>
       Some(

@@ -5,7 +5,7 @@ fn project(subs : Array[@types.Term[@types.Sub]]) -> @project.Project {
 }
 
 ///|
-fn int64(n : Int) -> @types.Exp {
+fn int64(n : Int32) -> @types.Exp {
   Int(try! @types.Word::of_int(width=64, n))
 }
 
@@ -27,8 +27,8 @@ fn infinite_loop(i : @types.Var) -> (@types.Term[@types.Sub], @types.Tid) {
 ///|
 fn run_loop(
   max_length? : @primus_limit.Bound,
-  max_visited? : Int,
-) -> (@primus.ExitStatus, Int, Int) {
+  max_visited? : Int32,
+) -> (@primus.ExitStatus, Int32, Int32) {
   let i = @types.Var::create("i", Imm(64))
   let (main, _) = infinite_loop(i)
   let result = Ref(-1)

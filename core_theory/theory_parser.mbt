@@ -4,12 +4,12 @@
 /// modes). Actions are fields: call them as `(g.add)(x, y)`.
 pub(all) struct BitvGrammar[E, R] {
   error : Pure
-  unsigned : (Int, E) -> Pure
-  signed : (Int, E) -> Pure
-  high : (Int, E) -> Pure
-  low : (Int, E) -> Pure
-  cast : (Int, E, E) -> Pure
-  extract : (Int, E, E, E) -> Pure
+  unsigned : (Int32, E) -> Pure
+  signed : (Int32, E) -> Pure
+  high : (Int32, E) -> Pure
+  low : (Int32, E) -> Pure
+  cast : (Int32, E, E) -> Pure
+  extract : (Int32, E, E, E) -> Pure
   add : (E, E) -> Pure
   sub : (E, E) -> Pure
   mul : (E, E) -> Pure
@@ -26,13 +26,13 @@ pub(all) struct BitvGrammar[E, R] {
   neg : (E) -> Pure
   not : (E) -> Pure
   /// `load_word size dir mem key` (big endian if `dir` holds)
-  load_word : (Int, E, E, E) -> Pure
+  load_word : (Int32, E, E, E) -> Pure
   load : (E, E) -> Pure
   /// `var name size`
-  var_ : (String, Int) -> Pure
+  var_ : (String, Int32) -> Pure
   /// `int word size`
-  int : (@bitvec.BitVec, Int) -> Pure
-  unknown : (Int) -> Pure
+  int : (@bitvec.BitVec, Int32) -> Pure
+  unknown : (Int32) -> Pure
   ite : (E, E, E) -> Pure
   let_bit : (String, E, E) -> Pure
   let_reg : (String, E, E) -> Pure
@@ -40,8 +40,8 @@ pub(all) struct BitvGrammar[E, R] {
   let_float : (String, E, E) -> Pure
   append : (E, E) -> Pure
   concat : (Array[E]) -> Pure
-  cast_int : (Int, R, E) -> Pure
-  cast_sint : (Int, R, E) -> Pure
+  cast_int : (Int32, R, E) -> Pure
+  cast_sint : (Int32, R, E) -> Pure
   fbits : (E) -> Pure
 }
 
@@ -66,7 +66,7 @@ pub(all) struct BoolGrammar[E] {
   high : (E) -> Pure
   low : (E) -> Pure
   /// `extract n x`: the `n`-th bit of `x`
-  extract : (Int, E) -> Pure
+  extract : (Int32, E) -> Pure
   not : (E) -> Pure
   logand : (E, E) -> Pure
   logor : (E, E) -> Pure
@@ -90,8 +90,8 @@ pub(all) struct MemGrammar[E] {
   /// `store_word dir mem key data`
   store_word : (E, E, E, E) -> Pure
   /// `var name key_size value_size`
-  var_ : (String, Int, Int) -> Pure
-  unknown : (Int, Int) -> Pure
+  var_ : (String, Int32, Int32) -> Pure
+  unknown : (Int32, Int32) -> Pure
   ite : (E, E, E) -> Pure
   let_bit : (String, E, E) -> Pure
   let_reg : (String, E, E) -> Pure
@@ -144,9 +144,9 @@ pub(all) struct RmodeGrammar {
 pub(all) struct StmtGrammar[E, R, S] {
   error : Eff
   /// `set_mem name key_size value_size x`
-  set_mem : (String, Int, Int, E) -> Eff
+  set_mem : (String, Int32, Int32, E) -> Eff
   /// `set_reg name size x`
-  set_reg : (String, Int, E) -> Eff
+  set_reg : (String, Int32, E) -> Eff
   set_bit : (String, E) -> Eff
   set_ieee754 : (String, Ieee754Parameters, E) -> Eff
   set_rmode : (String, R) -> Eff
@@ -168,7 +168,7 @@ pub(all) struct StmtGrammar[E, R, S] {
   goto : (@bitvec.BitVec) -> Eff
   call : (String) -> Eff
   special : (String) -> Eff
-  cpuexn : (Int) -> Eff
+  cpuexn : (Int32) -> Eff
   while_ : (E, Array[S]) -> Eff
   if_ : (E, Array[S], Array[S]) -> Eff
   seq : (Array[S]) -> Eff
@@ -220,7 +220,7 @@ fn[E, R, S] ParserEnv::bind(
   name : String,
   v : Var,
 ) -> ParserEnv[E, R, S] {
-  { ..self, ctxt: self.ctxt.add((name, v)), }
+  { ..self, ctxt: self.ctxt.prepend((name, v)), }
 }
 
 ///|
@@ -530,7 +530,7 @@ fn[E, R, S] ParserEnv::set_bit(
 fn[E, R, S] ParserEnv::set_reg(
   self : ParserEnv[E, R, S],
   name : String,
-  size : Int,
+  size : Int32,
   x : E,
 ) -> Eff {
   self.ct.set(parser_mkvar(Sort::bitv(size), name), self.expw(x))
@@ -540,8 +540,8 @@ fn[E, R, S] ParserEnv::set_reg(
 fn[E, R, S] ParserEnv::set_mem(
   self : ParserEnv[E, R, S],
   name : String,
-  ks : Int,
-  vs : Int,
+  ks : Int32,
+  vs : Int32,
   x : E,
 ) -> Eff {
   let sort = Sort::mem(Sort::bitv(ks), Sort::bitv(vs))
@@ -720,7 +720,7 @@ pub fn[E, R, S] Core::parse(
   parser : Parser[E, R, S],
   program : ArrayView[S],
 ) -> Eff {
-  let env : ParserEnv[E, R, S] = { ct: self, ctxt: @list.empty(), parser, }
+  let env : ParserEnv[E, R, S] = { ct: self, ctxt: @list.List([]), parser, }
   env.stmts(program)
 }
 
@@ -731,7 +731,7 @@ pub fn[E, R, S] Core::parse_bitv(
   parser : Parser[E, R, S],
   exp : E,
 ) -> Pure {
-  let env : ParserEnv[E, R, S] = { ct: self, ctxt: @list.empty(), parser, }
+  let env : ParserEnv[E, R, S] = { ct: self, ctxt: @list.List([]), parser, }
   env.expw(exp)
 }
 
@@ -742,7 +742,7 @@ pub fn[E, R, S] Core::parse_bool(
   parser : Parser[E, R, S],
   exp : E,
 ) -> Pure {
-  let env : ParserEnv[E, R, S] = { ct: self, ctxt: @list.empty(), parser, }
+  let env : ParserEnv[E, R, S] = { ct: self, ctxt: @list.List([]), parser, }
   env.expb(exp)
 }
 
@@ -753,6 +753,6 @@ pub fn[E, R, S] Core::parse_mem(
   parser : Parser[E, R, S],
   exp : E,
 ) -> Pure {
-  let env : ParserEnv[E, R, S] = { ct: self, ctxt: @list.empty(), parser, }
+  let env : ParserEnv[E, R, S] = { ct: self, ctxt: @list.List([]), parser, }
   env.expm(exp)
 }

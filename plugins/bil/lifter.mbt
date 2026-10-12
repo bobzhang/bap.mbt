@@ -101,7 +101,7 @@ pub fn matches_spec(specs : ArrayView[ISpec], insn : @mc.Insn) -> Bool {
 }
 
 ///|
-fn word(width : Int, n : Int64) -> @types.Word {
+fn word(width : Int32, n : Int64) -> @types.Word {
   @types.Word::of_int64(n, width~) catch {
     _ => @types.Word::zero(width~) catch { _ => @types.Word::b0() }
   }
@@ -201,7 +201,7 @@ pub fn lift(
   registry : @mc.Registry,
   ctx : @mc.Context,
   insn : @mc.Insn,
-  cfg? : Config = config.val,
+  cfg~ : Config = config.val,
 ) -> @mc.Lifted raise @mc.LiftError {
   let specs = cfg.enable_intrinsics
   let for_all = specs.contains(Any)
@@ -237,7 +237,7 @@ pub fn lift(
 /// through `lift`, with the relocation fixups of `relocations`.
 pub fn provider(
   registry : @mc.Registry,
-  relocations? : Relocations = Relocations::empty(),
+  relocations~ : Relocations = Relocations::empty(),
 ) -> @mc.Provider {
   @mc.Provider::create(
     "bil",

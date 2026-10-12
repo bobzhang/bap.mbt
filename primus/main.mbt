@@ -1,5 +1,5 @@
 ///|
-let legacy_components : Ref[Int] = { val: 0, }
+let legacy_components : Ref[Int32] = { val: 0, }
 
 ///|
 fn init {
@@ -49,8 +49,8 @@ pub fn Machine::add_component(init : (Machine) -> Unit raise) -> Unit {
 /// Runs the legacy main system with the user code as the start
 /// computation (upstream `Primus.Machine.Main(M).run`).
 pub fn Machine::run_main(
-  envp? : Array[String] = [],
-  args? : Array[String] = [],
+  envp~ : Array[String] = [],
+  args~ : Array[String] = [],
   proj : @project.Project,
   user : (Machine) -> Unit raise,
 ) -> (ExitStatus, @project.Project) raise SystemError {

@@ -29,8 +29,8 @@ pub extend CTypeKind with Debug::{to_repr}
 /// its alignment in bits.
 pub(all) struct CType {
   kind : CTypeKind
-  bits : Int
-  alignment : Int
+  bits : Int32
+  alignment : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -40,7 +40,7 @@ pub extend CType with Eq::{equal, not_equal}
 pub extend CType with Debug::{to_repr}
 
 ///|
-pub fn CType::new(kind : CTypeKind, bits~ : Int, alignment? : Int) -> CType {
+pub fn CType::new(kind : CTypeKind, bits~ : Int32, alignment? : Int32) -> CType {
   let alignment = match alignment {
     Some(a) => a
     None => bits
@@ -58,8 +58,8 @@ pub fn CType::new(kind : CTypeKind, bits~ : Int, alignment? : Int) -> CType {
 /// and `LP64` for AAPCS64, with `long double` being 64-bit (the ARM
 /// `C.Size` override). Recognized names: `char`, `short`, `int`, `long`,
 /// `long long`, `enum`, `float`, `double`, `long double`, `pointer`.
-pub fn CType::arm_basic(name : String, lp64? : Bool = false) -> CType? {
-  let int = (bits : Int) => Some(CType::new(Integer, bits~))
+pub fn CType::arm_basic(name : String, lp64~ : Bool = false) -> CType? {
+  let int = (bits : Int32) => Some(CType::new(Integer, bits~))
   match name {
     "char" | "signed char" | "unsigned char" | "bool" => int(8)
     "short" | "unsigned short" => int(16)
@@ -79,10 +79,10 @@ pub(all) enum ArgLocation {
   /// Passed in registers, listed in allocation order.
   Registers(Array[String])
   /// Passed on the stack, `offset` bytes above the stack pointer.
-  Stack(offset~ : Int, bits~ : Int)
+  Stack(offset~ : Int32, bits~ : Int32)
   /// Passed partly in registers and partly on the stack, where the
   /// remaining `bits` start at the stack pointer.
-  Split(regs~ : Array[String], bits~ : Int)
+  Split(regs~ : Array[String], bits~ : Int32)
 } derive(Eq, Debug)
 
 ///|
@@ -115,12 +115,12 @@ pub extend ArgLayout with Debug::{to_repr}
 /// A register file (`Bap_c_abi.File`): registers indexed by their original
 /// position, and the width of its registers (`-1` when empty).
 priv struct RegFile {
-  mut regs : Array[(Int, String)]
-  bits : Int
+  mut regs : Array[(Int32, String)]
+  bits : Int32
 }
 
 ///|
-fn RegFile::create(names : Array[String], bits : Int) -> RegFile {
+fn RegFile::create(names : Array[String], bits : Int32) -> RegFile {
   {
     regs: [
       for i, name in names => (i, name)
@@ -142,8 +142,8 @@ priv enum Where {
 
 ///|
 priv struct StackSlot {
-  offset : Int
-  bits : Int
+  offset : Int32
+  bits : Int32
   is_data : Bool
 }
 
@@ -155,8 +155,8 @@ priv struct AbiState {
   mut ret : ArgLocation?
   mut inputs : Array[ArgLocation]
   mut hidden : Array[ArgLocation]
-  min_alignment : Int
-  pointer_bits : Int
+  min_alignment : Int32
+  pointer_bits : Int32
 }
 
 ///|
@@ -198,7 +198,7 @@ fn AbiState::push_arg(self : AbiState, loc : ArgLocation) -> Unit {
 
 ///|
 /// `File.popn`: take `n` registers starting at the lowest index.
-fn AbiState::popn(self : AbiState, file : Int, n : Int) -> Array[String]? {
+fn AbiState::popn(self : AbiState, file : Int32, n : Int32) -> Array[String]? {
   let f = self.files[file]
   guard f.regs is [(k, _), ..] else { return None }
   let last = k + n - 1
@@ -209,7 +209,7 @@ fn AbiState::popn(self : AbiState, file : Int, n : Int) -> Array[String]? {
 }
 
 ///|
-fn registers_for_bits(f : RegFile, bits : Int) -> Int? {
+fn registers_for_bits(f : RegFile, bits : Int32) -> Int32? {
   if f.bits > 0 {
     Some((bits - 1) / f.bits + 1)
   } else {
@@ -219,7 +219,7 @@ fn registers_for_bits(f : RegFile, bits : Int) -> Int? {
 
 ///|
 /// `Arg.register`: a single register wide enough for the value.
-fn AbiState::register(self : AbiState, file : Int, bits : Int) -> Bool {
+fn AbiState::register(self : AbiState, file : Int32, bits : Int32) -> Bool {
   if self.files[file].bits < bits {
     return false
   }
@@ -234,7 +234,7 @@ fn AbiState::register(self : AbiState, file : Int, bits : Int) -> Bool {
 
 ///|
 /// `Arg.registers`: as many registers as the value needs.
-fn AbiState::registers(self : AbiState, file : Int, t : CType) -> Bool {
+fn AbiState::registers(self : AbiState, file : Int32, t : CType) -> Bool {
   guard registers_for_bits(self.files[file], t.bits) is Some(n) else {
     return false
   }
@@ -250,7 +250,7 @@ fn AbiState::registers(self : AbiState, file : Int, t : CType) -> Bool {
 ///|
 /// `Arg.reference`: pass a pointer to the value in a register, as a
 /// hidden argument.
-fn AbiState::reference(self : AbiState, file : Int) -> Bool {
+fn AbiState::reference(self : AbiState, file : Int32) -> Bool {
   let was = self.where_
   self.where_ = Hidden
   let ok = self.register(file, self.pointer_bits)
@@ -261,7 +261,7 @@ fn AbiState::reference(self : AbiState, file : Int) -> Bool {
 ///|
 /// `File.align`: skip registers so that the next one has an index that is
 /// a multiple of `n`.
-fn AbiState::align(self : AbiState, file : Int, n : Int) -> Bool {
+fn AbiState::align(self : AbiState, file : Int32, n : Int32) -> Bool {
   let f = self.files[file]
   guard f.regs is [(k, _), ..] else { return false }
   let k1 = (k + n - 1) / n * n
@@ -276,7 +276,7 @@ fn AbiState::align(self : AbiState, file : Int, n : Int) -> Bool {
 }
 
 ///|
-fn AbiState::deplet(self : AbiState, file : Int) -> Bool {
+fn AbiState::deplet(self : AbiState, file : Int32) -> Bool {
   self.files[file].regs = []
   true
 }
@@ -285,10 +285,10 @@ fn AbiState::deplet(self : AbiState, file : Int) -> Bool {
 /// `Stack.append`: allocate a stack slot after the last one.
 fn AbiState::append_slot(
   self : AbiState,
-  bits : Int,
-  alignment : Int?,
+  bits : Int32,
+  alignment : Int32?,
   is_data : Bool,
-) -> Int {
+) -> Int32 {
   let offset = match self.stack.last() {
     None => 0
     Some(last) => {
@@ -316,7 +316,11 @@ fn AbiState::memory(self : AbiState, t : CType) -> Bool {
 ///|
 /// `Arg.split_with_memory`: pass the value in the remaining registers and,
 /// if they are not enough, the rest at the bottom of the (empty) stack.
-fn AbiState::split_with_memory(self : AbiState, file : Int, t : CType) -> Bool {
+fn AbiState::split_with_memory(
+  self : AbiState,
+  file : Int32,
+  t : CType,
+) -> Bool {
   let f = self.files[file]
   guard registers_for_bits(f, t.bits) is Some(needed) else { return false }
   let available = f.regs.length()
@@ -361,8 +365,8 @@ fn AbiState::choose(
 /// (`C.Abi.Language.install`), then collect the layout (`reify`).
 fn run_abi(
   files : Array[RegFile],
-  min_alignment~ : Int,
-  pointer_bits~ : Int,
+  min_alignment~ : Int32,
+  pointer_bits~ : Int32,
   return_type : CType?,
   params : ArrayView[CType],
   return_rule : (AbiState, CType) -> Bool,
@@ -398,7 +402,7 @@ fn run_abi(
 }
 
 ///|
-fn names(prefix : String, n : Int) -> Array[String] {
+fn names(prefix : String, n : Int32) -> Array[String] {
   [
     for i in 0..<n => "\{prefix}\{i}"
   ]

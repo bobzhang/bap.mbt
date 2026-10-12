@@ -182,7 +182,7 @@ test "foreach, collect and the monadic combinators" {
 ///|
 test "failures abort the computation" {
   let doc = loaded()
-  let failing : @ogre.Ogre[Int] = @ogre.provide(entry_point, 1L).then(
+  let failing : @ogre.Ogre[Int32] = @ogre.provide(entry_point, 1L).then(
     @ogre.Ogre::failf("the file type elf is unsupported"),
   )
   inspect(

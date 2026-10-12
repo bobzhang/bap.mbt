@@ -1,7 +1,7 @@
 ///|
 pub(all) enum Sort {
   Sym(@knowledge.Name)
-  IntSort(Int)
+  IntSort(Int32)
   App(Sort, Sort)
 } derive(Eq, Hash, Debug)
 
@@ -20,7 +20,7 @@ pub fn Sort::sym(name : @knowledge.Name) -> Sort {
 }
 
 ///|
-pub fn Sort::int(width : Int) -> Sort {
+pub fn Sort::int(width : Int32) -> Sort {
   IntSort(width)
 }
 
@@ -45,7 +45,7 @@ pub fn Sort::bool() -> Sort {
 }
 
 ///|
-pub fn Sort::bitv(width : Int) -> Sort {
+pub fn Sort::bitv(width : Int32) -> Sort {
   App(Sym(@knowledge.Name::create("bitv", pkg="core")), IntSort(width))
 }
 
@@ -55,7 +55,7 @@ pub fn Sort::mem(keys : Sort, values : Sort) -> Sort {
 }
 
 ///|
-pub fn Sort::float(width : Int) -> Sort {
+pub fn Sort::float(width : Int32) -> Sort {
   App(Sym(@knowledge.Name::create("float", pkg="core")), IntSort(width))
 }
 
@@ -142,7 +142,7 @@ pub fn Sort::name(self : Sort) -> @knowledge.Name? {
 }
 
 ///|
-pub fn Sort::value(self : Sort) -> Int? {
+pub fn Sort::value(self : Sort) -> Int32? {
   match self {
     IntSort(value) => Some(value)
     _ => None
@@ -174,7 +174,7 @@ pub fn Sort::refine_bitv(self : Sort) -> Sort? {
 }
 
 ///|
-pub fn Sort::bitv_size(self : Sort) -> Int? {
+pub fn Sort::bitv_size(self : Sort) -> Int32? {
   match self.refine_bitv() {
     Some(sort) =>
       match sort.tail() {
@@ -220,7 +220,7 @@ pub fn Sort::refine_float(self : Sort) -> Sort? {
 }
 
 ///|
-pub fn Sort::float_width(self : Sort) -> Int? {
+pub fn Sort::float_width(self : Sort) -> Int32? {
   match self.float_format_of() {
     Some(IntSort(width)) => Some(width)
     Some(format) =>
@@ -265,7 +265,7 @@ pub fn Sort::refine_rmode(self : Sort) -> Sort? {
 }
 
 ///|
-fn sort_with_args(head : Sort, args : Array[Sort], start : Int) -> Sort {
+fn sort_with_args(head : Sort, args : Array[Sort], start : Int32) -> Sort {
   let mut result = head
   for i in start..<args.length() {
     result = App(result, args[i])

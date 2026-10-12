@@ -2,14 +2,14 @@
 /// Writes a COFF section header.
 fn Buf::coff_section(
   self : Buf,
-  off : Int,
+  off : Int32,
   name : String,
   virtual_size~ : UInt64,
   virtual_address~ : UInt64,
   raw_size~ : UInt64,
   raw_ptr~ : UInt64,
-  relocs_ptr? : UInt64 = 0,
-  nrelocs? : Int = 0,
+  relocs_ptr~ : UInt64 = 0,
+  nrelocs~ : Int32 = 0,
   characteristics~ : UInt64,
 ) -> Unit {
   self.str(off, name)
@@ -26,13 +26,13 @@ fn Buf::coff_section(
 /// Writes a COFF symbol record with a short name.
 fn Buf::coff_symbol(
   self : Buf,
-  off : Int,
+  off : Int32,
   name : String,
   value~ : UInt64,
-  section~ : Int,
-  typ~ : Int,
-  class~ : Int,
-  aux? : Int = 0,
+  section~ : Int32,
+  typ~ : Int32,
+  class~ : Int32,
+  aux~ : Int32 = 0,
 ) -> Unit {
   self.str(off, name)
   self.u32(off + 8, value)

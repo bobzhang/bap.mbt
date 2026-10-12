@@ -1,21 +1,21 @@
 ///|
 struct DwarfDie {
-  section_offset_value : Int
-  unit_offset_value : Int
-  depth_value : Int
-  code_value : Int
+  section_offset_value : Int32
+  unit_offset_value : Int32
+  depth_value : Int32
+  code_value : Int32
   entry_value : DwarfAbbrevEntry
   attributes_value : Array[DwarfDieAttribute]
-  attributes_offset_value : Int
-  end_offset_value : Int
+  attributes_offset_value : Int32
+  end_offset_value : Int32
 }
 
 ///|
 struct DwarfDieAttribute {
-  index_value : Int
+  index_value : Int32
   field_value : DwarfAbbrevField
-  offset_value : Int
-  end_offset_value : Int
+  offset_value : Int32
+  end_offset_value : Int32
 }
 
 ///|
@@ -26,10 +26,10 @@ pub(all) enum DwarfDieLocationValue {
 
 ///|
 pub(all) enum DwarfDieReference {
-  DwarfUnitReference(Int)
-  DwarfSectionReference(Int)
-  DwarfSupplementaryReference(Int)
-  DwarfAlternateReference(Int)
+  DwarfUnitReference(Int32)
+  DwarfSectionReference(Int32)
+  DwarfSupplementaryReference(Int32)
+  DwarfAlternateReference(Int32)
   DwarfTypeSignatureReference(UInt64)
 } derive(Eq, Debug)
 
@@ -42,8 +42,8 @@ pub extend DwarfDieReference with Debug::{to_repr}
 ///|
 pub fn DwarfDieReference::section_offset(
   self : DwarfDieReference,
-  unit_start~ : Int,
-) -> Result[Int, String] {
+  unit_start~ : Int32,
+) -> Result[Int32, String] {
   if unit_start < 0 {
     return Err("negative DWARF unit start offset")
   }
@@ -74,14 +74,14 @@ pub fn DwarfDieReference::section_offset(
 
 ///|
 fn dwarf_die_create(
-  section_offset~ : Int,
-  unit_offset~ : Int,
-  depth~ : Int,
-  code~ : Int,
+  section_offset~ : Int32,
+  unit_offset~ : Int32,
+  depth~ : Int32,
+  code~ : Int32,
   entry~ : DwarfAbbrevEntry,
   attributes~ : Array[DwarfDieAttribute],
-  attributes_offset~ : Int,
-  end_offset~ : Int,
+  attributes_offset~ : Int32,
+  end_offset~ : Int32,
 ) -> DwarfDie {
   {
     section_offset_value: section_offset,
@@ -97,10 +97,10 @@ fn dwarf_die_create(
 
 ///|
 fn dwarf_die_attribute_create(
-  index~ : Int,
+  index~ : Int32,
   field~ : DwarfAbbrevField,
-  offset~ : Int,
-  end_offset~ : Int,
+  offset~ : Int32,
+  end_offset~ : Int32,
 ) -> DwarfDieAttribute {
   {
     index_value: index,
@@ -142,7 +142,7 @@ fn dwarf_die_attribute_finish_uint_reference(
   attribute : DwarfDieAttribute,
   offset : UInt64,
   next : DwarfInput,
-  make : (Int) -> DwarfDieReference,
+  make : (Int32) -> DwarfDieReference,
 ) -> Result[DwarfDieReference, String] {
   match dwarf_ref_uint_offset_to_int(offset) {
     Ok(value) => dwarf_die_attribute_finish(attribute, make(value), next)
@@ -151,7 +151,7 @@ fn dwarf_die_attribute_finish_uint_reference(
 }
 
 ///|
-fn dwarf_die_index(dies : Array[DwarfDie], die : DwarfDie) -> Int? {
+fn dwarf_die_index(dies : Array[DwarfDie], die : DwarfDie) -> Int32? {
   dies.search_by(item => item.section_offset() == die.section_offset())
 }
 
@@ -159,9 +159,9 @@ fn dwarf_die_index(dies : Array[DwarfDie], die : DwarfDie) -> Int? {
 fn dwarf_skip_die_attributes(
   input : DwarfInput,
   entry : DwarfAbbrevEntry,
-  unit_end : Int,
+  unit_end : Int32,
   endian : @bitvec.Endian,
-  version : Int,
+  version : Int32,
   dwarf_size : DwarfWordSize,
   addr_size : DwarfWordSize,
 ) -> Result[(Array[DwarfDieAttribute], DwarfInput), String] {
@@ -201,7 +201,7 @@ fn dwarf_skip_die_attributes(
 }
 
 ///|
-pub fn DwarfDieAttribute::index(self : DwarfDieAttribute) -> Int {
+pub fn DwarfDieAttribute::index(self : DwarfDieAttribute) -> Int32 {
   self.index_value
 }
 
@@ -238,12 +238,12 @@ pub fn DwarfDieAttribute::is_reference_field(self : DwarfDieAttribute) -> Bool {
 }
 
 ///|
-pub fn DwarfDieAttribute::offset(self : DwarfDieAttribute) -> Int {
+pub fn DwarfDieAttribute::offset(self : DwarfDieAttribute) -> Int32 {
   self.offset_value
 }
 
 ///|
-pub fn DwarfDieAttribute::end_offset(self : DwarfDieAttribute) -> Int {
+pub fn DwarfDieAttribute::end_offset(self : DwarfDieAttribute) -> Int32 {
   self.end_offset_value
 }
 
@@ -332,7 +332,7 @@ pub fn DwarfDieAttribute::string_value(
   self : DwarfDieAttribute,
   data : DwarfData,
   dwarf_size~ : DwarfWordSize,
-  str_offsets_base? : Int = 0,
+  str_offsets_base~ : Int32 = 0,
 ) -> Result[String, String] {
   let info = match data.section(DwarfInfo) {
     Ok(section) => section
@@ -406,7 +406,7 @@ pub fn DwarfDieAttribute::address_value(
   self : DwarfDieAttribute,
   data : DwarfData,
   addr_size~ : DwarfWordSize,
-  addr_base? : Int,
+  addr_base? : Int32,
 ) -> Result[UInt64, String] {
   let info = match data.section(DwarfInfo) {
     Ok(section) => section
@@ -459,11 +459,11 @@ pub fn DwarfDieAttribute::address_value(
 pub fn DwarfDieAttribute::range_list_value(
   self : DwarfDieAttribute,
   data : DwarfData,
-  version~ : Int,
+  version~ : Int32,
   dwarf_size~ : DwarfWordSize,
   addr_size~ : DwarfWordSize,
-  ranges_base? : Int,
-  rnglists_base? : Int,
+  ranges_base? : Int32,
+  rnglists_base? : Int32,
 ) -> Result[DwarfRangeList, String] {
   let info = match data.section(DwarfInfo) {
     Ok(section) => section
@@ -531,10 +531,10 @@ pub fn DwarfDieAttribute::range_list_value(
 pub fn DwarfDieAttribute::location_list_value(
   self : DwarfDieAttribute,
   data : DwarfData,
-  version~ : Int,
+  version~ : Int32,
   dwarf_size~ : DwarfWordSize,
   addr_size~ : DwarfWordSize,
-  loclists_base? : Int,
+  loclists_base? : Int32,
 ) -> Result[DwarfLocationList, String] {
   let info = match data.section(DwarfInfo) {
     Ok(section) => section
@@ -601,10 +601,10 @@ pub fn DwarfDieAttribute::location_list_value(
 pub fn DwarfDieAttribute::location_value(
   self : DwarfDieAttribute,
   data : DwarfData,
-  version~ : Int,
+  version~ : Int32,
   dwarf_size~ : DwarfWordSize,
   addr_size~ : DwarfWordSize,
-  loclists_base? : Int,
+  loclists_base? : Int32,
 ) -> Result[DwarfDieLocationValue, String] {
   let info = match data.section(DwarfInfo) {
     Ok(section) => section
@@ -650,7 +650,7 @@ pub fn DwarfDieAttribute::section_offset_value(
   info : DwarfSectionBuffer,
   endian~ : @bitvec.Endian,
   dwarf_size~ : DwarfWordSize,
-) -> Result[Int, String] {
+) -> Result[Int32, String] {
   match self.form() {
     DwarfStrp
     | DwarfLineStrp
@@ -680,7 +680,7 @@ pub fn DwarfDieAttribute::index_value(
   self : DwarfDieAttribute,
   info : DwarfSectionBuffer,
   endian~ : @bitvec.Endian,
-) -> Result[Int, String] {
+) -> Result[Int32, String] {
   let read = match self.form() {
     DwarfStrx(spec) | DwarfAddrx(spec) =>
       (input : DwarfInput) => input.read_index(spec, endian)
@@ -712,7 +712,7 @@ fn DwarfDieAttribute::addrx_offset_value(
   self : DwarfDieAttribute,
   info : DwarfSectionBuffer,
   endian~ : @bitvec.Endian,
-) -> Result[(Int, UInt64), String] {
+) -> Result[(Int32, UInt64), String] {
   match self.form() {
     DwarfAddrxOffset =>
       match self.input(info) {
@@ -737,7 +737,7 @@ pub fn DwarfDieAttribute::reference(
   self : DwarfDieAttribute,
   info : DwarfSectionBuffer,
   endian~ : @bitvec.Endian,
-  version~ : Int,
+  version~ : Int32,
   dwarf_size~ : DwarfWordSize,
   addr_size~ : DwarfWordSize,
 ) -> Result[DwarfDieReference, String] {
@@ -997,27 +997,27 @@ pub fn DwarfDieAttribute::flag(
 }
 
 ///|
-pub fn DwarfDie::section_offset(self : DwarfDie) -> Int {
+pub fn DwarfDie::section_offset(self : DwarfDie) -> Int32 {
   self.section_offset_value
 }
 
 ///|
-pub fn DwarfDie::unit_start_offset(self : DwarfDie) -> Int {
+pub fn DwarfDie::unit_start_offset(self : DwarfDie) -> Int32 {
   self.section_offset_value - self.unit_offset_value
 }
 
 ///|
-pub fn DwarfDie::unit_offset(self : DwarfDie) -> Int {
+pub fn DwarfDie::unit_offset(self : DwarfDie) -> Int32 {
   self.unit_offset_value
 }
 
 ///|
-pub fn DwarfDie::depth(self : DwarfDie) -> Int {
+pub fn DwarfDie::depth(self : DwarfDie) -> Int32 {
   self.depth_value
 }
 
 ///|
-pub fn DwarfDie::code(self : DwarfDie) -> Int {
+pub fn DwarfDie::code(self : DwarfDie) -> Int32 {
   self.code_value
 }
 
@@ -1165,12 +1165,12 @@ pub fn DwarfDie::descendants(
 }
 
 ///|
-pub fn DwarfDie::attributes_offset(self : DwarfDie) -> Int {
+pub fn DwarfDie::attributes_offset(self : DwarfDie) -> Int32 {
   self.attributes_offset_value
 }
 
 ///|
-pub fn DwarfDie::end_offset(self : DwarfDie) -> Int {
+pub fn DwarfDie::end_offset(self : DwarfDie) -> Int32 {
   self.end_offset_value
 }
 
@@ -1253,7 +1253,7 @@ pub fn DwarfInfoUnitHeader::dies(
 ///|
 pub fn DwarfData::unit_dies(
   self : DwarfData,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
 ) -> Result[Array[DwarfDie], String] {
   let header = match self.unit_header(offset~) {
     Ok(header) => header
@@ -1276,7 +1276,7 @@ pub fn DwarfData::unit_dies(
 ///|
 pub fn DwarfData::die_by_section_offset(
   self : DwarfData,
-  offset : Int,
+  offset : Int32,
 ) -> Result[DwarfDie?, String] {
   if offset < 0 {
     return Err("negative DWARF DIE section offset")
@@ -1295,7 +1295,7 @@ pub fn DwarfData::die_by_section_offset(
 pub fn DwarfData::referenced_die(
   self : DwarfData,
   reference : DwarfDieReference,
-  unit_start~ : Int,
+  unit_start~ : Int32,
 ) -> Result[DwarfDie?, String] {
   match reference.section_offset(unit_start~) {
     Ok(offset) => self.die_by_section_offset(offset)

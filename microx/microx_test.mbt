@@ -1,10 +1,10 @@
 ///|
-fn w(width : Int, value : Int) -> @types.Word {
+fn w(width : Int32, value : Int32) -> @types.Word {
   try! @types.Word::of_int(width~, value)
 }
 
 ///|
-fn reg(name : String, width : Int) -> @types.Var {
+fn reg(name : String, width : Int32) -> @types.Var {
   @types.Var::new(name~, typ=Imm(width))
 }
 

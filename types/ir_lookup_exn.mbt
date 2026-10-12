@@ -1,7 +1,7 @@
 ///|
 pub(all) suberror IrTermLookupError {
   MissingIrTerm(String, Tid)
-  MissingIrTermIndex(String, Int)
+  MissingIrTermIndex(String, Int32)
 } derive(Eq, Debug)
 
 ///|
@@ -25,7 +25,7 @@ fn[T] unwrap_ir_term(
 ///|
 fn[T] unwrap_ir_term_index(
   kind : String,
-  index : Int,
+  index : Int32,
   term : T?,
 ) -> T raise IrTermLookupError {
   match term {
@@ -45,7 +45,7 @@ pub fn Term::find_sub_exn(
 ///|
 pub fn Term::nth_sub_exn(
   self : Term[Program],
-  index : Int,
+  index : Int32,
 ) -> Term[Sub] raise IrTermLookupError {
   unwrap_ir_term_index("sub", index, self.nth_sub(index))
 }
@@ -71,7 +71,7 @@ pub fn Term::find_arg_exn(
 ///|
 pub fn Term::nth_arg_exn(
   self : Term[Sub],
-  index : Int,
+  index : Int32,
 ) -> Term[Arg] raise IrTermLookupError {
   unwrap_ir_term_index("arg", index, self.nth_arg(index))
 }
@@ -87,7 +87,7 @@ pub fn Term::find_blk_exn(
 ///|
 pub fn Term::nth_blk_exn(
   self : Term[Sub],
-  index : Int,
+  index : Int32,
 ) -> Term[Blk] raise IrTermLookupError {
   unwrap_ir_term_index("blk", index, self.nth_blk(index))
 }
@@ -103,7 +103,7 @@ pub fn Term::find_phi_exn(
 ///|
 pub fn Term::nth_phi_exn(
   self : Term[Blk],
-  index : Int,
+  index : Int32,
 ) -> Term[Phi] raise IrTermLookupError {
   unwrap_ir_term_index("phi", index, self.nth_phi(index))
 }
@@ -119,7 +119,7 @@ pub fn Term::find_def_exn(
 ///|
 pub fn Term::nth_def_exn(
   self : Term[Blk],
-  index : Int,
+  index : Int32,
 ) -> Term[Def] raise IrTermLookupError {
   unwrap_ir_term_index("def", index, self.nth_def(index))
 }
@@ -135,7 +135,7 @@ pub fn Term::find_jmp_exn(
 ///|
 pub fn Term::nth_jmp_exn(
   self : Term[Blk],
-  index : Int,
+  index : Int32,
 ) -> Term[Jmp] raise IrTermLookupError {
   unwrap_ir_term_index("jmp", index, self.nth_jmp(index))
 }
@@ -144,7 +144,7 @@ pub fn Term::nth_jmp_exn(
 pub fn IrTerm::nth_child_exn(
   self : IrTerm,
   cls : IrTermClass,
-  index : Int,
+  index : Int32,
 ) -> IrTerm raise IrTermLookupError {
   unwrap_ir_term_index(cls.to_string(), index, self.nth_child(cls, index))
 }
@@ -165,7 +165,7 @@ pub fn IrTerm::find_exn(
 pub fn IrTerm::nth_exn(
   self : IrTerm,
   cls : IrTermClass,
-  index : Int,
+  index : Int32,
 ) -> IrTerm raise IrTermLookupError {
   self.nth_child_exn(cls, index)
 }

@@ -11,8 +11,8 @@ fn expect_elf_image(
 ///|
 fn image_elf_test_set_u16_le(
   buffer : Array[Byte],
-  offset : Int,
-  value : Int,
+  offset : Int32,
+  value : Int32,
 ) -> Unit {
   buffer[offset] = (value & 0xff).to_byte()
   buffer[offset + 1] = ((value >> 8) & 0xff).to_byte()
@@ -21,8 +21,8 @@ fn image_elf_test_set_u16_le(
 ///|
 fn image_elf_test_set_u32_le(
   buffer : Array[Byte],
-  offset : Int,
-  value : Int,
+  offset : Int32,
+  value : Int32,
 ) -> Unit {
   for i in 0..<4 {
     buffer[offset + i] = ((value >> (i * 8)) & 0xff).to_byte()
@@ -32,7 +32,7 @@ fn image_elf_test_set_u32_le(
 ///|
 fn image_elf_test_set_u64_le(
   buffer : Array[Byte],
-  offset : Int,
+  offset : Int32,
   value : UInt64,
 ) -> Unit {
   for i in 0..<8 {
@@ -43,7 +43,7 @@ fn image_elf_test_set_u64_le(
 ///|
 fn image_elf_test_write_bytes(
   buffer : Array[Byte],
-  offset : Int,
+  offset : Int32,
   data : Bytes,
 ) -> Unit {
   for i in 0..<data.length() {
@@ -54,15 +54,15 @@ fn image_elf_test_write_bytes(
 ///|
 fn image_elf_test_write_section64(
   buffer : Array[Byte],
-  index : Int,
-  name_offset : Int,
-  typ : Int,
+  index : Int32,
+  name_offset : Int32,
+  typ : Int32,
   flags : UInt64,
   addr : UInt64,
-  offset : Int,
-  size : Int,
-  link : Int,
-  entsize : Int,
+  offset : Int32,
+  size : Int32,
+  link : Int32,
+  entsize : Int32,
 ) -> Unit {
   image_elf_test_write_section64_at(
     buffer, 120, index, name_offset, typ, flags, addr, offset, size, link, entsize,
@@ -72,16 +72,16 @@ fn image_elf_test_write_section64(
 ///|
 fn image_elf_test_write_section64_at(
   buffer : Array[Byte],
-  section_table_offset : Int,
-  index : Int,
-  name_offset : Int,
-  typ : Int,
+  section_table_offset : Int32,
+  index : Int32,
+  name_offset : Int32,
+  typ : Int32,
   flags : UInt64,
   addr : UInt64,
-  offset : Int,
-  size : Int,
-  link : Int,
-  entsize : Int,
+  offset : Int32,
+  size : Int32,
+  link : Int32,
+  entsize : Int32,
 ) -> Unit {
   let base = section_table_offset + index * 64
   image_elf_test_set_u32_le(buffer, base, name_offset)
@@ -97,10 +97,10 @@ fn image_elf_test_write_section64_at(
 ///|
 fn image_elf_test_write_symbol64(
   buffer : Array[Byte],
-  offset : Int,
-  name_offset : Int,
-  info : Int,
-  shndx : Int,
+  offset : Int32,
+  name_offset : Int32,
+  info : Int32,
+  shndx : Int32,
   value : UInt64,
   size : UInt64,
 ) -> Unit {
@@ -114,11 +114,11 @@ fn image_elf_test_write_symbol64(
 ///|
 fn image_elf_test_write_rela64(
   buffer : Array[Byte],
-  offset : Int,
+  offset : Int32,
   relocation_offset : UInt64,
-  symbol_index : Int,
-  typ : Int,
-  addend? : Int64 = 0L,
+  symbol_index : Int32,
+  typ : Int32,
+  addend~ : Int64 = 0L,
 ) -> Unit {
   image_elf_test_set_u64_le(buffer, offset, relocation_offset)
   image_elf_test_set_u64_le(
@@ -132,10 +132,10 @@ fn image_elf_test_write_rela64(
 ///|
 fn image_elf_test_write_rel64(
   buffer : Array[Byte],
-  offset : Int,
+  offset : Int32,
   relocation_offset : UInt64,
-  symbol_index : Int,
-  typ : Int,
+  symbol_index : Int32,
+  typ : Int32,
 ) -> Unit {
   image_elf_test_set_u64_le(buffer, offset, relocation_offset)
   image_elf_test_set_u64_le(
@@ -148,7 +148,7 @@ fn image_elf_test_write_rel64(
 ///|
 fn image_elf_test_write_dynamic64(
   buffer : Array[Byte],
-  offset : Int,
+  offset : Int32,
   tag : UInt64,
   value : UInt64,
 ) -> Unit {
@@ -395,8 +395,8 @@ fn image_elf_test_make_x86_64_with_relocations() -> Bytes {
 ///|
 fn image_elf_test_rewrite_machine_relative_type(
   data : Bytes,
-  machine : Int,
-  relative_type : Int,
+  machine : Int32,
+  relative_type : Int32,
 ) -> Bytes {
   let buffer = Array::make(data.length(), b'\x00')
   for i in 0..<data.length() {
@@ -763,8 +763,8 @@ fn image_elf_test_make_x86_64_extended_tables() -> Bytes {
 ///|
 fn image_elf_test_rewrite_machine_osabi(
   data : Bytes,
-  machine : Int,
-  osabi : Int,
+  machine : Int32,
+  osabi : Int32,
 ) -> Bytes {
   let buffer = Array::make(data.length(), b'\x00')
   for i in 0..<data.length() {
@@ -854,7 +854,15 @@ test "image ELF backend refines target system and ABI from OSABI" {
     Err(reason) => fail(reason)
   }
   let cases : Array[
-    (String, Int, Int, String, String, @core_theory.System, @core_theory.Abi),
+    (
+      String,
+      Int32,
+      Int32,
+      String,
+      String,
+      @core_theory.System,
+      @core_theory.Abi,
+    ),
   ] = [
     ("sysv", 0x3e, 0, "x86_64", "bap:x86_64", UnknownSystem, SysV),
     ("hpux", 0x3e, 1, "x86_64", "bap:x86_64", HPUX, UnknownAbi),
@@ -977,7 +985,7 @@ test "image ELF backend recognizes architecture-relative relocation types" {
     Ok(_) => ()
     Err(reason) => fail(reason)
   }
-  let cases : Array[(String, Int, Int)] = [
+  let cases : Array[(String, Int32, Int32)] = [
     ("m68k", 0x04, 22),
     ("sparc", 0x02, 22),
     ("sparcv9", 0x2b, 22),

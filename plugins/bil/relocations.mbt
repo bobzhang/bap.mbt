@@ -18,8 +18,8 @@ pub fn Relocations::empty() -> Relocations {
 /// Creates the relocation information from the lists of relocations and
 /// external references.
 pub fn Relocations::create(
-  rels? : ArrayView[(UInt64, UInt64)] = [],
-  exts? : ArrayView[(UInt64, String)] = [],
+  rels~ : ArrayView[(UInt64, UInt64)] = [],
+  exts~ : ArrayView[(UInt64, String)] = [],
 ) -> Relocations {
   let r : Map[UInt64, UInt64] = Map([])
   for x in rels {
@@ -169,9 +169,9 @@ pub fn Relocations::fixup(
   self : Relocations,
   bil : ArrayView[@types.Stmt],
   addr~ : UInt64,
-  size~ : Int,
-  width~ : Int,
-  is_stub? : Bool = false,
+  size~ : Int32,
+  width~ : Int32,
+  is_stub~ : Bool = false,
 ) -> Array[@types.Stmt] {
   let addresses = references(bil)
   for i in 0..<size {

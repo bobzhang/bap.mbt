@@ -3,7 +3,7 @@
 
 ///|
 /// The IDA color code of a BIR color (IDA uses the BGR order).
-pub fn idacode_of_color(color : @types.IrColor) -> Int {
+pub fn idacode_of_color(color : @types.IrColor) -> Int32 {
   match color {
     IrBlack => 0x000000
     IrRed => 0xCCCCFF
@@ -60,7 +60,7 @@ fn py_escape(s : String) -> String {
 }
 
 ///|
-fn hex6(n : Int) -> String {
+fn hex6(n : Int32) -> String {
   let digits = n.to_string(radix=16)
   if digits.length() >= 6 {
     digits
@@ -86,7 +86,7 @@ pub fn python_of_attr(name : String, value : String) -> String {
 
 ///|
 fn is_ident_char(c : Char) -> Bool {
-  c is ('a'..='z' | 'A'..='Z' | '0'..='9' | '_')
+  c is ('a'..<='z' | 'A'..<='Z' | '0'..<='9' | '_')
 }
 
 ///|
@@ -187,9 +187,9 @@ fn parse_address(text : String) -> UInt64? {
   let mut n : UInt64 = 0
   for c in digits {
     let d = match c {
-      '0'..='9' => c.to_int() - '0'.to_int()
-      'a'..='f' => c.to_int() - 'a'.to_int() + 10
-      'A'..='F' => c.to_int() - 'A'.to_int() + 10
+      '0'..<='9' => c.to_int() - '0'.to_int()
+      'a'..<='f' => c.to_int() - 'a'.to_int() + 10
+      'A'..<='F' => c.to_int() - 'A'.to_int() + 10
       _ => return None
     }
     guard d.to_uint64() < radix else { return None }
@@ -299,7 +299,7 @@ pub fn emit(
   project : @project.Project,
   attrs~ : Array[String],
   file? : String,
-  out? : (String) -> Unit = print_string,
+  out~ : (String) -> Unit = print_string,
 ) -> Result[Unit, String] {
   let data = project_script(project, attrs)
   match file {
@@ -331,8 +331,8 @@ pub let pass_name : String = "emit-ida-script"
 /// configuration of the already registered pass.
 pub fn register(
   file? : String,
-  attrs? : Array[String] = [],
-  out? : (String) -> Unit = print_string,
+  attrs~ : Array[String] = [],
+  out~ : (String) -> Unit = print_string,
 ) -> Result[Unit, String] {
   config.file = file
   config.attrs = attrs

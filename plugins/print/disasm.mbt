@@ -54,7 +54,7 @@ fn addr_lower(addr : UInt64) -> String {
 }
 
 ///|
-fn function_size(f : @project.ProjectDisassemblyFunction) -> Int {
+fn function_size(f : @project.ProjectDisassemblyFunction) -> Int32 {
   f.span().to_sequence().fold(init=0, (acc, entry) => acc + entry.0.length())
 }
 
@@ -63,9 +63,9 @@ fn function_size(f : @project.ProjectDisassemblyFunction) -> Int {
 pub fn pp_symbols(
   fmt : @text_tags.Formatter,
   project : @project.Project,
-  patterns? : Array[Pattern] = [],
-  demangle? : (String) -> String = s => s,
-  formats? : Array[SymbolFormat] = [WithName],
+  patterns~ : Array[Pattern] = [],
+  demangle~ : (String) -> String = s => s,
+  formats~ : Array[SymbolFormat] = [WithName],
   symtab? : @project.ProjectDisassemblySymtab,
 ) -> Unit {
   let symtab = match symtab {
@@ -109,7 +109,7 @@ pub fn memory_to_string(mem : @memory.Memory) -> String {
     }
   } else {
     let chars : Array[Byte] = []
-    let print_chars = (off : Int) => {
+    let print_chars = (off : Int32) => {
       if !chars.is_empty() {
         buf.write_string(String::make(3 * off, ' ') + "|")
         for c in chars {
@@ -310,7 +310,7 @@ let disasm_tab_stop = 50
 
 ///|
 /// Emulates a `pp_print_tab` in a tabulation box with a single tab stop.
-fn tab_to(line : String, stop : Int) -> String {
+fn tab_to(line : String, stop : Int32) -> String {
   if line.length() <= stop {
     line + String::make(stop - line.length(), ' ')
   } else {
@@ -430,7 +430,7 @@ pub fn pp_disasm(
   fmt : @text_tags.Formatter,
   project : @project.Project,
   pp_insn : InsnPrinter,
-  patterns? : Array[Pattern] = [],
+  patterns~ : Array[Pattern] = [],
   symtab? : @project.ProjectDisassemblySymtab,
 ) -> Unit {
   let symtab = match symtab {

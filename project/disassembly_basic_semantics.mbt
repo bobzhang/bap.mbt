@@ -52,7 +52,7 @@ fn project_x86_simd_addr(word : @types.Word) -> Result[UInt64, String] {
 ///|
 fn ProjectDisassemblyInstruction::project_x86_simd_register_operand(
   self : ProjectDisassemblyInstruction,
-  index : Int,
+  index : Int32,
 ) -> Result[String, String] {
   match self.operands_value.get(index) {
     Some(ProjectRegisterOperand(_, name)) =>
@@ -65,8 +65,8 @@ fn ProjectDisassemblyInstruction::project_x86_simd_register_operand(
 ///|
 fn ProjectDisassemblyInstruction::project_x86_simd_immediate_operand(
   self : ProjectDisassemblyInstruction,
-  index : Int,
-) -> Result[Int, String] {
+  index : Int32,
+) -> Result[Int32, String] {
   match self.operands_value.get(index) {
     Some(operand) =>
       match operand.to_int() {
@@ -105,7 +105,7 @@ fn ProjectX86SimdState::project_x86_simd_require_vector_memory(
 fn ProjectX86SimdState::project_x86_simd_source_word(
   self : ProjectX86SimdState,
   source : String,
-  memory_width : Int,
+  memory_width : Int32,
 ) -> Result[@types.Word, String] {
   if project_x86_simd_is_vector_register(source) {
     self.project_x86_simd_require_register(source)
@@ -179,8 +179,8 @@ fn project_x86_simd_pmovmskb(
 ///|
 fn project_x86_simd_element_at(
   word : @types.Word,
-  index : Int,
-  element_width : Int,
+  index : Int32,
+  element_width : Int32,
 ) -> Result[@types.Word, String] {
   if index < 0 || element_width <= 0 {
     Err("x86 SIMD element extraction failed")
@@ -230,7 +230,7 @@ fn project_x86_simd_unsigned_element_value(
 fn project_x86_simd_pavg(
   dest : @types.Word,
   source : @types.Word,
-  element_width~ : Int,
+  element_width~ : Int32,
 ) -> Result[@types.Word, String] {
   if dest.width() != source.width() {
     Err("pavg requires matching operand widths")
@@ -270,7 +270,7 @@ fn project_x86_simd_pavg(
 }
 
 ///|
-fn project_x86_simd_element_mask(element_width : Int) -> UInt64 {
+fn project_x86_simd_element_mask(element_width : Int32) -> UInt64 {
   if element_width >= 64 {
     UInt64::lnot(0)
   } else {
@@ -282,8 +282,8 @@ fn project_x86_simd_element_mask(element_width : Int) -> UInt64 {
 fn project_x86_simd_packed_add_sub(
   dest : @types.Word,
   source : @types.Word,
-  element_width~ : Int,
-  subtract? : Bool = false,
+  element_width~ : Int32,
+  subtract~ : Bool = false,
 ) -> Result[@types.Word, String] {
   if dest.width() != source.width() {
     Err("packed add/sub requires matching operand widths")
@@ -332,7 +332,7 @@ fn project_x86_simd_packed_add_sub(
 }
 
 ///|
-fn project_x86_simd_sign_bit(element_width : Int) -> UInt64 {
+fn project_x86_simd_sign_bit(element_width : Int32) -> UInt64 {
   (1 : UInt64) << (element_width - 1)
 }
 
@@ -340,7 +340,7 @@ fn project_x86_simd_sign_bit(element_width : Int) -> UInt64 {
 fn project_x86_simd_shift_element(
   value : @types.Word,
   count_value : UInt64,
-  element_width : Int,
+  element_width : Int32,
   kind : ProjectX86SimdShiftKind,
 ) -> Result[@types.Word, String] {
   let mask = project_x86_simd_element_mask(element_width)
@@ -381,7 +381,7 @@ fn project_x86_simd_shift_element(
 fn project_x86_simd_packed_shift(
   dest : @types.Word,
   source : @types.Word,
-  element_width~ : Int,
+  element_width~ : Int32,
   kind : ProjectX86SimdShiftKind,
 ) -> Result[@types.Word, String] {
   if dest.width() != source.width() {
@@ -419,8 +419,8 @@ fn project_x86_simd_packed_shift(
 ///|
 fn project_x86_simd_packed_shift_immediate(
   dest : @types.Word,
-  count : Int,
-  element_width~ : Int,
+  count : Int32,
+  element_width~ : Int32,
   kind : ProjectX86SimdShiftKind,
 ) -> Result[@types.Word, String] {
   if count < 0 || count > 255 {
@@ -450,7 +450,7 @@ fn project_x86_simd_packed_shift_immediate(
 ///|
 fn project_x86_simd_byte_shift_immediate(
   dest : @types.Word,
-  count : Int,
+  count : Int32,
   kind : ProjectX86SimdShiftKind,
 ) -> Result[@types.Word, String] {
   if count < 0 || count > 255 {
@@ -470,7 +470,7 @@ fn project_x86_simd_byte_shift_immediate(
 fn project_x86_simd_palignr(
   dest : @types.Word,
   source : @types.Word,
-  immediate : Int,
+  immediate : Int32,
 ) -> Result[@types.Word, String] {
   if dest.width() != source.width() {
     Err("palignr requires matching operand widths")
@@ -508,7 +508,7 @@ fn project_x86_simd_movdq(
 fn ProjectDisassemblyInstruction::project_x86_simd_eval_immediate(
   self : ProjectDisassemblyInstruction,
   dest : @types.Word,
-  immediate : Int,
+  immediate : Int32,
 ) -> Result[@types.Word, String] {
   match self.name_value.to_upper() {
     "PSRLW" =>
@@ -774,8 +774,8 @@ pub fn ProjectX86SimdState::empty() -> ProjectX86SimdState {
 
 ///|
 pub fn ProjectX86SimdState::create(
-  registers? : Array[(String, @types.Word)] = [],
-  vector_memory? : Array[(UInt64, @types.Word)] = [],
+  registers~ : Array[(String, @types.Word)] = [],
+  vector_memory~ : Array[(UInt64, @types.Word)] = [],
 ) -> ProjectX86SimdState {
   let registers_map : Map[String, @types.Word] = Map([])
   for item in registers {

@@ -1,5 +1,5 @@
 ///|
-let test_stmt : @primus.Statement[Int] = @primus.Statement::provide(
+let test_stmt : @primus.Statement[Int32] = @primus.Statement::provide(
   "test-observation",
   pkg="primus-test",
   inspect=n => Atom("n=\{n}"),
@@ -7,12 +7,12 @@ let test_stmt : @primus.Statement[Int] = @primus.Statement::provide(
 )
 
 ///|
-let test_obs : @primus.Observation[Int] = test_stmt.observation()
+let test_obs : @primus.Observation[Int32] = test_stmt.observation()
 
 ///|
 test "observers are called newest first and can be cancelled" {
   let log = []
-  let computed : Ref[Int] = { val: 0, }
+  let computed : Ref[Int32] = { val: 0, }
   let (_, _) = @primus.Machine::run(project([]), start=m => {
     // nobody observes yet: `post` does not compute the value
     m.post(test_stmt, () => {

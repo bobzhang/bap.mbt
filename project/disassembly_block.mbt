@@ -59,7 +59,7 @@ pub fn ProjectDisassemblyBlock::insns(
 ///|
 pub fn ProjectDisassemblyBlock::instruction_count(
   self : ProjectDisassemblyBlock,
-) -> Int {
+) -> Int32 {
   self.instructions_value.length()
 }
 
@@ -67,7 +67,7 @@ pub fn ProjectDisassemblyBlock::instruction_count(
 pub fn ProjectDisassemblyBlock::compare(
   self : ProjectDisassemblyBlock,
   other : ProjectDisassemblyBlock,
-) -> Int {
+) -> Int32 {
   let addr_order = self.addr().compare(other.addr())
   if addr_order != 0 {
     addr_order

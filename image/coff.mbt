@@ -5,7 +5,7 @@
 /// The LLVM triple parts (architecture, subarchitecture, vendor) of a
 /// COFF machine (`COFFObjectFile::getArch` and `ObjectFile::makeTriple`,
 /// which makes ARMNT files `thumbv7-windows`).
-fn coff_llvm_triple(machine : Int) -> (String, String, String) {
+fn coff_llvm_triple(machine : Int32) -> (String, String, String) {
   match machine {
     @coff.IMAGE_FILE_MACHINE_I386 => ("i386", "", "")
     @coff.IMAGE_FILE_MACHINE_AMD64 => ("x86_64", "", "")

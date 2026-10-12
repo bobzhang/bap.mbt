@@ -37,7 +37,7 @@ pub fn[T] Domain::custom(
   inspect : (T) -> String,
   empty~ : T,
   order~ : (T, T) -> PartialOrder,
-  join? : (T, T) -> Result[T, String] = (lhs, rhs) => {
+  join~ : (T, T) -> Result[T, String] = (lhs, rhs) => {
     match order(lhs, rhs) {
       Greater => Ok(lhs)
       Equal | Less => Ok(rhs)
@@ -85,7 +85,7 @@ pub fn[T : Eq] Domain::flat(
   name : Name,
   inspect : (T) -> String,
   empty? : T,
-  join? : (T, T) -> Result[T, String] = (lhs, rhs) => {
+  join~ : (T, T) -> Result[T, String] = (lhs, rhs) => {
     flat_default_join(name, empty, lhs, rhs)
   },
 ) -> Domain[T] {
@@ -117,7 +117,7 @@ pub fn[T : Eq] Domain::flat(
 
 ///|
 fn[T] total_default_join(
-  compare : (T, T) -> Int,
+  compare : (T, T) -> Int32,
   lhs : T,
   rhs : T,
 ) -> Result[T, String] {
@@ -133,8 +133,8 @@ pub fn[T] Domain::total(
   name : Name,
   inspect : (T) -> String,
   empty~ : T,
-  compare~ : (T, T) -> Int,
-  join? : (T, T) -> Result[T, String] = (lhs, rhs) => {
+  compare~ : (T, T) -> Int32,
+  join~ : (T, T) -> Result[T, String] = (lhs, rhs) => {
     total_default_join(compare, lhs, rhs)
   },
 ) -> Domain[T] {
@@ -352,7 +352,7 @@ pub fn[K : Eq + Hash, T] Domain::mapping(
   inspect_key : (K) -> String,
   inspect_value : (T) -> String,
   equal~ : (T, T) -> Bool,
-  join? : (T, T) -> Result[T, String] = (lhs, rhs) => {
+  join~ : (T, T) -> Result[T, String] = (lhs, rhs) => {
     if equal(lhs, rhs) {
       Ok(rhs)
     } else {

@@ -9,7 +9,7 @@ fn cfg_edge_tids(edges : Array[@types.IrCfgEdge]) -> Array[@types.Tid] {
 }
 
 ///|
-fn cfg_edge_positions(edges : Array[@types.IrCfgEdge]) -> Array[Int] {
+fn cfg_edge_positions(edges : Array[@types.IrCfgEdge]) -> Array[Int32] {
   edges.map(edge => edge.position())
 }
 
@@ -17,7 +17,7 @@ fn cfg_edge_positions(edges : Array[@types.IrCfgEdge]) -> Array[Int] {
 fn cfg_block_jmp_count(
   cfg : @types.IrCfg,
   blk : @types.Term[@types.Blk],
-) -> Int {
+) -> Int32 {
   cfg.to_sub().find_blk(blk.tid()).unwrap().jmps().length()
 }
 

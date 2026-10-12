@@ -102,7 +102,7 @@ pub extend Tag with Debug::{to_repr}
 pub fn Tag::attr(
   self : Tag,
   local_name : String,
-  uri? : String = "",
+  uri~ : String = "",
 ) -> String? {
   for a in self.attrs {
     if a.name.local_name == local_name && a.name.uri == uri {
@@ -135,8 +135,8 @@ pub extend Signal with Debug::{to_repr}
 ///|
 /// A position in the input: line and column, both starting at 1.
 pub(all) struct Pos {
-  line : Int
-  col : Int
+  line : Int32
+  col : Int32
 } derive(Eq, Debug)
 
 ///|

@@ -31,14 +31,14 @@ pub fn Doc::is_empty(self : Doc) -> Bool {
 
 ///|
 /// The number of declared attributes (upstream `Doc.declarations`).
-pub fn Doc::declarations(self : Doc) -> Int {
+pub fn Doc::declarations(self : Doc) -> Int32 {
   self.scheme.length()
 }
 
 ///|
 /// The number of attributes that have at least one fact (upstream
 /// `Doc.definitions`, which counts attributes rather than individual facts).
-pub fn Doc::definitions(self : Doc) -> Int {
+pub fn Doc::definitions(self : Doc) -> Int32 {
   self.entries.length()
 }
 
@@ -163,7 +163,7 @@ fn Doc::update_entries(
       if facts.set.contains(normalized) {
         return self
       } else {
-        { items: facts.items.add(normalized), set: facts.set, }
+        { items: facts.items.prepend(normalized), set: facts.set, }
       }
   }
   let facts = { ..facts, set: facts.set.add(normalized), }
@@ -205,8 +205,8 @@ pub fn[A, K] Doc::get(self : Doc, attr : Attribute[A, K]) -> Array[A] {
 fn[V] compare_maps(
   m1 : @hashmap.HashMap[String, V],
   m2 : @hashmap.HashMap[String, V],
-  compare_data : (V, V) -> Int,
-) -> Int {
+  compare_data : (V, V) -> Int32,
+) -> Int32 {
   let k1 = sort_strings(m1.keys().collect())
   let k2 = sort_strings(m2.keys().collect())
   let n = if k1.length() < k2.length() { k1.length() } else { k2.length() }
@@ -224,7 +224,11 @@ fn[V] compare_maps(
 }
 
 ///|
-fn[T] compare_lists(xs : Array[T], ys : Array[T], cmp : (T, T) -> Int) -> Int {
+fn[T] compare_lists(
+  xs : Array[T],
+  ys : Array[T],
+  cmp : (T, T) -> Int32,
+) -> Int32 {
   let n = if xs.length() < ys.length() { xs.length() } else { ys.length() }
   for i in 0..<n {
     let c = cmp(xs[i], ys[i])
@@ -238,7 +242,7 @@ fn[T] compare_lists(xs : Array[T], ys : Array[T], cmp : (T, T) -> Int) -> Int {
 ///|
 /// The structural document order of upstream's derived `Doc.compare`:
 /// declarations first, then facts, both in byte-wise key order.
-pub fn Doc::compare(self : Doc, other : Doc) -> Int {
+pub fn Doc::compare(self : Doc, other : Doc) -> Int32 {
   let c = compare_maps(self.scheme, other.scheme, (s1, s2) => {
     compare_lists(s1, s2, Header::compare)
   })

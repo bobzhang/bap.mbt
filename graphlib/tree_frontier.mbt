@@ -200,7 +200,7 @@ pub fn[N : Hash + Eq] Frontier::mem(
 pub fn[N : Hash + Eq, E] Graph::dominator_tree(
   self : Graph[N, E],
   entry : N,
-  rev? : Bool = false,
+  rev~ : Bool = false,
 ) -> Tree[N] {
   let idoms = self.immediate_dominators(entry, rev~)
   let reachable = self.reachable(entry, rev~)
@@ -223,7 +223,7 @@ pub fn[N : Hash + Eq, E] Graph::dominator_tree(
 pub fn[N : Hash + Eq, E] Graph::dom_frontier(
   self : Graph[N, E],
   entry : N,
-  rev? : Bool = false,
+  rev~ : Bool = false,
 ) -> Frontier[N] {
   let raw = self.dominance_frontiers(entry, rev~)
   let nodes : Array[N] = []
@@ -244,7 +244,7 @@ pub fn[N : Hash + Eq, E] Graph::dom_frontier(
 pub fn[N : Hash + Eq, E] Graph::dom_frontier_of_tree(
   self : Graph[N, E],
   tree : Tree[N],
-  rev? : Bool = false,
+  rev~ : Bool = false,
 ) -> Frontier[N] {
   let frontiers : Map[N, Set[N]] = Map([])
   // predecessors (successors with `rev`)

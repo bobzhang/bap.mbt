@@ -51,7 +51,7 @@ let writer_registry : Array[Writer] = []
 pub fn add_writer(
   name : String,
   desc~ : String,
-  ver? : String = @bap_main.Configuration::version(),
+  ver~ : String = @bap_main.Configuration::version(),
   pp : (@text_tags.Formatter, @project.Project) -> Unit,
 ) -> Unit {
   let writer = { name, desc, ver, pp, }

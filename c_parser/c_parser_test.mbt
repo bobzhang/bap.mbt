@@ -79,7 +79,7 @@ fn lp64() -> &@c.Ruler {
 
 ///|
 /// Parses `text` and renders the declarations except the predefined ones.
-fn decls(text : String, size? : &@c.Ruler = lp64()) -> String raise {
+fn decls(text : String, size~ : &@c.Ruler = lp64()) -> String raise {
   let predefined = @c_parser.predefined_types(size).map(p => p.0)
   @c_parser.parse_string(size, text)
   .filter(d => !predefined.contains(d.0))

@@ -39,7 +39,7 @@ fn parse_fname(name : String) -> String raise OgreError {
 }
 
 ///|
-fn parse_fdecl(pos : Int, sexp : Sexp) -> Header raise OgreError {
+fn parse_fdecl(pos : Int32, sexp : Sexp) -> Header raise OgreError {
   match sexp {
     Atom(tname) => { name: pos.to_string(), typ: parse_tname(tname), }
     List([Atom(fname), Atom(tname)]) => {

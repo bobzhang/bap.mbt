@@ -3,59 +3,71 @@
 
 ///|
 /// D form `opcode rt, ra, imm`.
-fn d_form(opcode : Int, rt : Int, ra : Int, imm : Int) -> UInt {
+fn d_form(opcode : Int32, rt : Int32, ra : Int32, imm : Int32) -> UInt32 {
   enc([(opcode, 6), (rt, 5), (ra, 5), (imm, 16)])
 }
 
 ///|
 /// DS form `opcode rt, ds(ra)` with the extended opcode `xo`.
-fn ds_form(opcode : Int, rt : Int, ra : Int, ds : Int, xo : Int) -> UInt {
+fn ds_form(
+  opcode : Int32,
+  rt : Int32,
+  ra : Int32,
+  ds : Int32,
+  xo : Int32,
+) -> UInt32 {
   enc([(opcode, 6), (rt, 5), (ra, 5), (ds, 14), (xo, 2)])
 }
 
 ///|
 /// X form (primary opcode 31).
-fn x_form(rt : Int, ra : Int, rb : Int, xo : Int, rc? : Int = 0) -> UInt {
+fn x_form(
+  rt : Int32,
+  ra : Int32,
+  rb : Int32,
+  xo : Int32,
+  rc~ : Int32 = 0,
+) -> UInt32 {
   enc([(31, 6), (rt, 5), (ra, 5), (rb, 5), (xo, 10), (rc, 1)])
 }
 
 ///|
 /// XO form (primary opcode 31) with `OE = oe`.
 fn xo_form(
-  rt : Int,
-  ra : Int,
-  rb : Int,
-  xo : Int,
-  rc? : Int = 0,
-  oe? : Int = 0,
-) -> UInt {
+  rt : Int32,
+  ra : Int32,
+  rb : Int32,
+  xo : Int32,
+  rc~ : Int32 = 0,
+  oe~ : Int32 = 0,
+) -> UInt32 {
   enc([(31, 6), (rt, 5), (ra, 5), (rb, 5), (oe, 1), (xo, 9), (rc, 1)])
 }
 
 ///|
 /// M form rotates.
 fn m_form(
-  opcode : Int,
-  rs : Int,
-  ra : Int,
-  sh : Int,
-  mb : Int,
-  me : Int,
-  rc? : Int = 0,
-) -> UInt {
+  opcode : Int32,
+  rs : Int32,
+  ra : Int32,
+  sh : Int32,
+  mb : Int32,
+  me : Int32,
+  rc~ : Int32 = 0,
+) -> UInt32 {
   enc([(opcode, 6), (rs, 5), (ra, 5), (sh, 5), (mb, 5), (me, 5), (rc, 1)])
 }
 
 ///|
 /// MD form rotates: the 6-bit `sh` and `mb` fields are split.
 fn md_form(
-  xo : Int,
-  rs : Int,
-  ra : Int,
-  sh : Int,
-  mb : Int,
-  rc? : Int = 0,
-) -> UInt {
+  xo : Int32,
+  rs : Int32,
+  ra : Int32,
+  sh : Int32,
+  mb : Int32,
+  rc~ : Int32 = 0,
+) -> UInt32 {
   enc([
     (30, 6),
     (rs, 5),
@@ -71,13 +83,13 @@ fn md_form(
 ///|
 /// MDS form rotates.
 fn mds_form(
-  xo : Int,
-  rs : Int,
-  ra : Int,
-  rb : Int,
-  mb : Int,
-  rc? : Int = 0,
-) -> UInt {
+  xo : Int32,
+  rs : Int32,
+  ra : Int32,
+  rb : Int32,
+  mb : Int32,
+  rc~ : Int32 = 0,
+) -> UInt32 {
   enc([
     (30, 6),
     (rs, 5),
@@ -91,39 +103,45 @@ fn mds_form(
 
 ///|
 /// XL form branches `bo, bi, bh`.
-fn xl_branch(bo : Int, bi : Int, bh : Int, xo : Int, lk : Int) -> UInt {
+fn xl_branch(
+  bo : Int32,
+  bi : Int32,
+  bh : Int32,
+  xo : Int32,
+  lk : Int32,
+) -> UInt32 {
   enc([(19, 6), (bo, 5), (bi, 5), (0, 3), (bh, 2), (xo, 10), (lk, 1)])
 }
 
 ///|
 /// XL form CR logical instructions `bt, ba, bb`.
-fn xl_cr(bt : Int, ba : Int, bb : Int, xo : Int) -> UInt {
+fn xl_cr(bt : Int32, ba : Int32, bb : Int32, xo : Int32) -> UInt32 {
   enc([(19, 6), (bt, 5), (ba, 5), (bb, 5), (xo, 10), (0, 1)])
 }
 
 ///|
 /// B form `bc bo, bi, bd`.
-fn b_form(bo : Int, bi : Int, bd : Int, aa : Int, lk : Int) -> UInt {
+fn b_form(bo : Int32, bi : Int32, bd : Int32, aa : Int32, lk : Int32) -> UInt32 {
   enc([(16, 6), (bo, 5), (bi, 5), (bd, 14), (aa, 1), (lk, 1)])
 }
 
 ///|
 /// I form `b li`.
-fn i_form(li : Int, aa : Int, lk : Int) -> UInt {
+fn i_form(li : Int32, aa : Int32, lk : Int32) -> UInt32 {
   enc([(18, 6), (li, 24), (aa, 1), (lk, 1)])
 }
 
 ///|
 /// XFX form `mtspr`/`mfspr` of the SPR number `spr` (the halves of the
 /// 10-bit field are swapped).
-fn spr_form(rt : Int, spr : Int, xo : Int) -> UInt {
+fn spr_form(rt : Int32, spr : Int32, xo : Int32) -> UInt32 {
   enc([(31, 6), (rt, 5), (spr & 31, 5), (spr >> 5, 5), (xo, 10), (0, 1)])
 }
 
 ///|
 /// Hand-assembled encodings of every opcode supported by the lifter and
 /// decoded by LLVM, with the expected LLVM opcode name.
-let opcode_samples : Array[(String, UInt)] = [
+let opcode_samples : Array[(String, UInt32)] = [
   // D form arithmetic and compares
   ("MULLI", d_form(7, 3, 4, 0xFFF9)),
   ("SUBFIC", d_form(8, 3, 4, 100)),

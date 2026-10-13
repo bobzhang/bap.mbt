@@ -6,7 +6,7 @@ struct DwarfStringTable {
 ///|
 pub fn DwarfStringTable::read(
   buffer : DwarfSectionBuffer,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
 ) -> Result[DwarfStringTable, String] {
   match buffer.offset(offset) {
     Ok(section) => Ok({ buffer_value: section, })
@@ -15,7 +15,7 @@ pub fn DwarfStringTable::read(
 }
 
 ///|
-pub fn DwarfStringTable::base_offset(self : DwarfStringTable) -> Int {
+pub fn DwarfStringTable::base_offset(self : DwarfStringTable) -> Int32 {
   self.buffer_value.position()
 }
 
@@ -32,7 +32,7 @@ pub fn DwarfStringTable::is_empty(self : DwarfStringTable) -> Bool {
 ///|
 pub fn DwarfStringTable::string(
   self : DwarfStringTable,
-  offset : Int,
+  offset : Int32,
 ) -> Result[String, String] {
   dwarf_read_str_section_name(self.buffer_value, offset)
 }
@@ -40,8 +40,8 @@ pub fn DwarfStringTable::string(
 ///|
 pub fn DwarfStringTable::entries(
   self : DwarfStringTable,
-) -> Result[Array[(Int, String)], String] {
-  let entries : Array[(Int, String)] = []
+) -> Result[Array[(Int32, String)], String] {
+  let entries : Array[(Int32, String)] = []
   let mut cursor = self.buffer_value.input()
   let end_position = self.buffer_value.data().length()
   while cursor.position() < end_position {
@@ -70,7 +70,7 @@ pub fn DwarfStringTable::strings(
 ///|
 pub fn DwarfData::string_table(
   self : DwarfData,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
 ) -> Result[DwarfStringTable, String] {
   match self.section(DwarfStr) {
     Ok(section) => DwarfStringTable::read(section, offset~)
@@ -81,7 +81,7 @@ pub fn DwarfData::string_table(
 ///|
 pub fn DwarfData::line_string_table(
   self : DwarfData,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
 ) -> Result[DwarfStringTable, String] {
   match self.section(DwarfLineStr) {
     Ok(section) => DwarfStringTable::read(section, offset~)
@@ -92,7 +92,7 @@ pub fn DwarfData::line_string_table(
 ///|
 pub fn DwarfData::debug_string(
   self : DwarfData,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
 ) -> Result[String, String] {
   match self.string_table() {
     Ok(table) => table.string(offset)
@@ -103,7 +103,7 @@ pub fn DwarfData::debug_string(
 ///|
 pub fn DwarfData::line_string(
   self : DwarfData,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
 ) -> Result[String, String] {
   match self.line_string_table() {
     Ok(table) => table.string(offset)

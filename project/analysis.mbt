@@ -1,7 +1,7 @@
 ///|
 priv struct ProjectAnalysisContext {
   rule_value : String
-  position_value : Int
+  position_value : Int32
   parsed_value : Array[String]
   inputs_value : Array[String]
 }
@@ -250,7 +250,7 @@ pub fn ProjectAnalysisArg::string() -> ProjectAnalysisArg[String] {
 }
 
 ///|
-pub fn ProjectAnalysisArg::int() -> ProjectAnalysisArg[Int] {
+pub fn ProjectAnalysisArg::int() -> ProjectAnalysisArg[Int32] {
   ProjectAnalysisArg::argument(rule="<int>", description="an integer", parse=text => {
     try @string.parse_int(text) catch {
       _ => Err("invalid integer")

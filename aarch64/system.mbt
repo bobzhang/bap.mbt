@@ -5,7 +5,7 @@
 /// The aliases of `SYS` (generated from LLVM 22 with the upstream target
 /// features): `(op1:CRn:CRm:op2, mnemonic, needs a register)`. An mnem
 /// that takes no register is only used when `Rt` is `XZR`.
-let sys_aliases : Array[(Int, String, Bool)] = [
+let sys_aliases : Array[(Int32, String, Bool)] = [
   (904, "ic ialluis", false),
   (936, "ic iallu", false),
   (945, "dc ivac", true),
@@ -70,8 +70,8 @@ let sys_aliases : Array[(Int, String, Bool)] = [
 ]
 
 ///|
-let sys_alias_map : Map[Int, (String, Bool)] = {
-  let map : Map[Int, (String, Bool)] = Map([])
+let sys_alias_map : Map[Int32, (String, Bool)] = {
+  let map : Map[Int32, (String, Bool)] = Map([])
   for entry in sys_aliases {
     map[entry.0] = (entry.1, entry.2)
   }
@@ -80,8 +80,8 @@ let sys_alias_map : Map[Int, (String, Bool)] = {
 
 ///|
 /// System register names by encoding: the `MRS` name and the `MSR` name.
-let sysreg_map : Map[Int, (String?, String?)] = {
-  let map : Map[Int, (String?, String?)] = Map([])
+let sysreg_map : Map[Int32, (String?, String?)] = {
+  let map : Map[Int32, (String?, String?)] = Map([])
   for entry in sysreg_table {
     let (key, name, access) = entry
     let (r, w) = map.get(key).unwrap_or((None, None))
@@ -95,7 +95,7 @@ let sysreg_map : Map[Int, (String?, String?)] = {
 ///|
 /// The assembly name of the system register `op0:op1:CRn:CRm:op2` as read
 /// (`MRS`) or written (`MSR`).
-fn sysreg_asm(reg : Int, read : Bool) -> String {
+fn sysreg_asm(reg : Int32, read : Bool) -> String {
   let named = match sysreg_map.get(reg) {
     Some((r, w)) => if read { r } else { w }
     None => None
@@ -109,7 +109,7 @@ fn sysreg_asm(reg : Int, read : Bool) -> String {
 
 ///|
 /// The name of a barrier option (`dmb`/`dsb`).
-fn barrier_option(crm : Int) -> String {
+fn barrier_option(crm : Int32) -> String {
   match crm {
     1 => "oshld"
     2 => "oshst"
@@ -129,7 +129,7 @@ fn barrier_option(crm : Int) -> String {
 
 ///|
 /// The instructions of the hint space (`HINT #imm` and its named forms).
-fn a64_hint(v : Int) -> A64Insn? {
+fn a64_hint(v : Int32) -> A64Insn? {
   let named = match v {
     0 => Some("NOP")
     7 => Some("XPACLRI")
@@ -172,7 +172,7 @@ fn a64_hint(v : Int) -> A64Insn? {
 ///|
 /// The `MSR (immediate)` forms writing `PSTATE` fields, `None` when the
 /// encoding is an `MSR (register)`.
-fn a64_pstate(op1 : Int, crm : Int, op2 : Int) -> A64Insn? {
+fn a64_pstate(op1 : Int32, crm : Int32, op2 : Int32) -> A64Insn? {
   let field = match (op1, op2) {
     (0, 3) => Some("UAO")
     (0, 4) => Some("PAN")
@@ -210,7 +210,7 @@ fn a64_pstate(op1 : Int, crm : Int, op2 : Int) -> A64Insn? {
 
 ///|
 /// The system instruction space (`0xD5000000`-`0xD53FFFFF`).
-fn a64_system(w : UInt) -> A64Insn? {
+fn a64_system(w : UInt32) -> A64Insn? {
   let l = bit(w, 21)
   let op0 = fld(w, 19, 2)
   let op1 = fld(w, 16, 3)

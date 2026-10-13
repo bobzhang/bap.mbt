@@ -110,7 +110,7 @@ fn bil_value(sort : Sort, exp : @types.Exp) -> Value {
 }
 
 ///|
-fn bil_word(width : Int, n : Int) -> @types.Word raise {
+fn bil_word(width : Int32, n : Int32) -> @types.Word raise {
   @types.Word::create(
     bitvec_of_int(width, n),
     if width < 1 {
@@ -221,7 +221,7 @@ let bil_core : Core = {
       }
     }
   }
-  let mask_high : (Sort, Int) -> Pure = (res, n) => {
+  let mask_high : (Sort, Int32) -> Pure = (res, n) => {
     _ => {
       let width = sort_size(res)
       let ones = @types.Word::ones(width~)
@@ -515,7 +515,7 @@ let bil_core : Core = {
     sge: base.sge,
     uge: base.uge,
   }
-  let rmode : (Int) -> Pure = n => {
+  let rmode : (Int32) -> Pure = n => {
     state => {
       let s = Sort::bitv(8)
       basic.int(s, bitvec_of_int(8, n))(state).refine(Sort::rmode())

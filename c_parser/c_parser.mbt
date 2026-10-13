@@ -41,10 +41,10 @@ pub fn default_read_file(path : String) -> String? {
 pub fn parse_string(
   size : &@c.Ruler,
   text : String,
-  file? : String = "<string>",
-  read_file? : (String) -> String? = default_read_file,
-  include_dirs? : Array[String] = [],
-  defines? : Array[(String, String)] = [],
+  file~ : String = "<string>",
+  read_file~ : (String) -> String? = default_read_file,
+  include_dirs~ : Array[String] = [],
+  defines~ : Array[(String, String)] = [],
 ) -> Array[(String, @c.CType)] raise ParseError {
   let pp = Preprocessor::new(read_file~, include_dirs~, defines~)
   let tokens = pp.run(text, file~)
@@ -58,9 +58,9 @@ pub fn parse_string(
 pub fn parse_file(
   size : &@c.Ruler,
   file : String,
-  read_file? : (String) -> String? = default_read_file,
-  include_dirs? : Array[String] = [],
-  defines? : Array[(String, String)] = [],
+  read_file~ : (String) -> String? = default_read_file,
+  include_dirs~ : Array[String] = [],
+  defines~ : Array[(String, String)] = [],
 ) -> Result[Array[(String, @c.CType)], String] {
   guard read_file(file) is Some(text) else {
     return Err("\{file}: no such file")
@@ -77,9 +77,9 @@ pub fn parse_file(
 ///|
 /// A C parser for the `@c` parser registry.
 pub fn parser(
-  read_file? : (String) -> String? = default_read_file,
-  include_dirs? : Array[String] = [],
-  defines? : Array[(String, String)] = [],
+  read_file~ : (String) -> String? = default_read_file,
+  include_dirs~ : Array[String] = [],
+  defines~ : Array[(String, String)] = [],
 ) -> @c.CParser {
   (size, file) => parse_file(size, file, read_file~, include_dirs~, defines~)
 }
@@ -88,9 +88,9 @@ pub fn parser(
 /// Provides the parser to the `@c` parser registry (upstream
 /// `C.Parser.provide`).
 pub fn provide(
-  read_file? : (String) -> String? = default_read_file,
-  include_dirs? : Array[String] = [],
-  defines? : Array[(String, String)] = [],
+  read_file~ : (String) -> String? = default_read_file,
+  include_dirs~ : Array[String] = [],
+  defines~ : Array[(String, String)] = [],
 ) -> Unit {
   @c.provide_parser(parser(read_file~, include_dirs~, defines~))
 }

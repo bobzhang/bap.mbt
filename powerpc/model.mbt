@@ -15,7 +15,7 @@ pub extend AddrSize with Eq::{equal, not_equal}
 pub extend AddrSize with Debug::{to_repr}
 
 ///|
-pub fn AddrSize::in_bits(self : AddrSize) -> Int {
+pub fn AddrSize::in_bits(self : AddrSize) -> Int32 {
   match self {
     R32 => 32
     R64 => 64
@@ -26,13 +26,13 @@ pub fn AddrSize::in_bits(self : AddrSize) -> Int {
 /// Registers of a PowerPC model (the `PowerPC` module type of upstream).
 pub struct Model {
   addr_size : AddrSize
-  gpr_bitwidth : Int
-  fpr_bitwidth : Int
-  lr_bitwidth : Int
-  ctr_bitwidth : Int
-  tar_bitwidth : Int
-  cr_bitwidth : Int
-  vr_bitwidth : Int
+  gpr_bitwidth : Int32
+  fpr_bitwidth : Int32
+  lr_bitwidth : Int32
+  ctr_bitwidth : Int32
+  tar_bitwidth : Int32
+  cr_bitwidth : Int32
+  vr_bitwidth : Int32
   /// general purpose registers by name (`R0`..`R31`, aliased as `X0`..`X31`)
   gpr : Map[String, @types.Var]
   /// general purpose registers by number
@@ -93,7 +93,7 @@ fn make_model(addr_size : AddrSize) -> Model {
   let gpr_bitwidth = addr_size.in_bits()
   let fpr_bitwidth = 64
   let vr_bitwidth = 128
-  let reg = (prefix : String, width : Int, i : Int) => {
+  let reg = (prefix : String, width : Int32, i : Int32) => {
     @types.Var::new(name="\{prefix}\{i}", typ=Imm(width))
   }
   let gpri = Array::makei(32, i => reg("R", gpr_bitwidth, i))
@@ -204,7 +204,7 @@ pub fn Model::cr(self : Model) -> RtlExp {
 
 ///|
 /// Condition register field `n` (0..7) as an expression.
-pub fn Model::cr_field(self : Model, n : Int) -> RtlExp {
+pub fn Model::cr_field(self : Model, n : Int32) -> RtlExp {
   RtlExp::of_vars(self.cri_fields[n])
 }
 

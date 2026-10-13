@@ -27,9 +27,9 @@ priv struct SlotCore[P] {
   persistent : Persistent[P]?
   /// promises registered for this slot (`Slot.promises`), keyed by pid in
   /// registration order
-  promises : Map[Int, (State, Int, Name) -> Unit raise]
+  promises : Map[Int32, (State, Int32, Name) -> Unit raise]
   /// observers registered for this slot (`Slot.watchers`)
-  watchers : Map[Int, (State, Int, Name, P) -> Unit raise]
+  watchers : Map[Int32, (State, Int32, Name, P) -> Unit raise]
 }
 
 ///|
@@ -37,13 +37,13 @@ priv struct SlotCore[P] {
 /// promised properties of an object (`Slot.enum`) and by the knowledge
 /// base loader to find persistent readers.
 priv struct SlotPack {
-  uid : Int
+  uid : Int32
   /// writes the slot core into the exchange cell of its domain
   publish : () -> Unit
   /// clears the exchange cell of its domain
   unpublish : () -> Unit
   has_promises : () -> Bool
-  collect : (State, Int) -> Unit raise
+  collect : (State, Int32) -> Unit raise
   decode : ((String) -> Result[Entry, String])?
 }
 
@@ -98,7 +98,7 @@ pub fn[K, S] Class::create(
   name~ : Name,
   sort~ : S,
   desc? : String,
-  public? : Bool = false,
+  public~ : Bool = false,
 ) -> Class[K, S] {
   if public {
     documented_classes[name.show()] = {
@@ -166,7 +166,7 @@ pub fn[K, S, P] Class::property(
   domain~ : Domain[P],
   desc? : String,
   persistent? : Persistent[P],
-  public? : Bool = false,
+  public~ : Bool = false,
 ) -> Slot[K, P] {
   if public {
     match documented_properties.get(self.name.show()) {
@@ -282,13 +282,13 @@ pub fn[K, P] Slot::desc(self : Slot[K, P]) -> String {
 
 ///|
 /// The number of promises currently registered for the slot.
-pub fn[K, P] Slot::promise_count(self : Slot[K, P]) -> Int {
+pub fn[K, P] Slot::promise_count(self : Slot[K, P]) -> Int32 {
   self.core.promises.length()
 }
 
 ///|
 /// The number of observers currently registered for the slot.
-pub fn[K, P] Slot::observer_count(self : Slot[K, P]) -> Int {
+pub fn[K, P] Slot::observer_count(self : Slot[K, P]) -> Int32 {
   self.core.watchers.length()
 }
 

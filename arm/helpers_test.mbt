@@ -6,7 +6,7 @@ fn r(name : String) -> @mc.Op {
 }
 
 ///|
-fn i(value : Int) -> @mc.Op {
+fn i(value : Int32) -> @mc.Op {
   Imm(value.to_int64())
 }
 
@@ -16,7 +16,7 @@ let al : Array[@mc.Op] = [i(14), r("Nil")]
 
 ///|
 /// A condition code followed by the unused predicate register.
-fn cc(code : Int) -> Array[@mc.Op] {
+fn cc(code : Int32) -> Array[@mc.Op] {
   [i(code), r("Nil")]
 }
 
@@ -62,8 +62,8 @@ fn render_to(
 fn lift_insn(
   name : String,
   ops : Array[@mc.Op],
-  addr? : UInt64 = 0,
-  raw? : UInt,
+  addr~ : UInt64 = 0,
+  raw? : UInt32,
 ) -> Array[@types.Stmt] raise {
   @arm.lift(@mc.Insn::create(name, ops, addr~, size=4), raw?)
 }
@@ -72,8 +72,8 @@ fn lift_insn(
 fn lift_str(
   name : String,
   ops : Array[@mc.Op],
-  addr? : UInt64 = 0,
-  raw? : UInt,
+  addr~ : UInt64 = 0,
+  raw? : UInt32,
 ) -> String raise {
   render(lift_insn(name, ops, addr~, raw?))
 }
@@ -91,7 +91,7 @@ fn lift_error(name : String, ops : Array[@mc.Op]) -> String {
 }
 
 ///|
-fn word32(x : UInt) -> @types.Word {
+fn word32(x : UInt32) -> @types.Word {
   try! @types.Word::of_uint64(width=32, x.to_uint64())
 }
 
@@ -104,9 +104,9 @@ fn bit(b : Bool) -> @types.BilValue {
 /// Initial machine state: the given 32-bit registers, the given flags (all
 /// other flags cleared), and a memory holding `bytes` at address `0x1000`.
 fn state(
-  regs : Array[(String, UInt)],
-  flags? : Array[(String, Bool)] = [],
-  bytes? : Bytes = b"",
+  regs : Array[(String, UInt32)],
+  flags~ : Array[(String, Bool)] = [],
+  bytes~ : Bytes = b"",
 ) -> @types.BilState {
   let values : Map[String, @types.BilValue] = Map([])
   for f in ["NF", "ZF", "CF", "VF", "QF", "GE0", "GE1", "GE2", "GE3"] {
@@ -141,14 +141,14 @@ fn run(
   name : String,
   ops : Array[@mc.Op],
   init : @types.BilState,
-  addr? : UInt64 = 0,
-  raw? : UInt,
+  addr~ : UInt64 = 0,
+  raw? : UInt32,
 ) -> @types.BilState raise {
   exec(lift_insn(name, ops, addr~, raw?), init)
 }
 
 ///|
-fn reg_value(s : @types.BilState, name : String) -> UInt raise {
+fn reg_value(s : @types.BilState, name : String) -> UInt32 raise {
   match s.get_word(name) {
     Some(w) => w.to_uint64().to_uint()
     None => fail("register \{name} is undefined")
@@ -175,7 +175,7 @@ fn nzcv(s : @types.BilState) -> String raise {
 
 ///|
 /// Read a little-endian 32-bit word from memory.
-fn mem_word(s : @types.BilState, addr : UInt) -> UInt raise {
+fn mem_word(s : @types.BilState, addr : UInt32) -> UInt32 raise {
   guard s.get_memory("mem") is Some(m) else { fail("no memory") }
   match m.load(word32(addr), endian=LittleEndian, width=32) {
     Ok(w) => w.to_uint64().to_uint()
@@ -188,7 +188,7 @@ fn mem_word(s : @types.BilState, addr : UInt) -> UInt raise {
 fn jump_target(
   stmts : Array[@types.Stmt],
   init : @types.BilState,
-) -> UInt? raise {
+) -> UInt32? raise {
   let mut st = init
   for s in stmts {
     match s {

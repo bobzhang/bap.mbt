@@ -87,7 +87,7 @@ pub fn arg_intent(t : CType) -> @types.Intent {
 }
 
 ///|
-fn sizeof(size : &Ruler, t : CType) -> Int {
+fn sizeof(size : &Ruler, t : CType) -> Int32 {
   match size.bits(t) {
     None => size.pointer().in_bits()
     Some(s) => s
@@ -99,7 +99,7 @@ fn sizeof(size : &Ruler, t : CType) -> Int {
 /// `t`, including inner and trailing paddings. `size` defines the data
 /// model.
 pub fn data(size : &Ruler, t : CType) -> Data {
-  fn padding_data(pad : Int) -> Data {
+  fn padding_data(pad : Int32) -> Data {
     match @types.Size::of_int_opt(pad) {
       Some(pad) => Imm(pad, Set([]))
       None => Seq(Array::make(pad / 8, Imm(R8, Set([]))))
@@ -144,7 +144,7 @@ pub fn data(size : &Ruler, t : CType) -> Data {
 ///|
 /// `layout(size, t)` computes the layout of the C data type `t`.
 pub fn layout(size : &Ruler, t : CType) -> Layout {
-  fn imm(bits : Int, obj : Obj[Layout]) -> Layout {
+  fn imm(bits : Int32, obj : Obj[Layout]) -> Layout {
     { layout: Imm(bits, obj), }
   }
 
@@ -205,7 +205,7 @@ pub fn layout(size : &Ruler, t : CType) -> Layout {
 
 ///|
 /// The total size in bits of a datum (pointers have the pointer size).
-pub fn size_of_data(size : &Ruler, d : Data) -> Int {
+pub fn size_of_data(size : &Ruler, d : Data) -> Int32 {
   match d {
     Imm(s, _) => s.in_bits()
     Seq(xs) => xs.fold(init=0, (acc, x) => acc + size_of_data(size, x))
@@ -214,7 +214,7 @@ pub fn size_of_data(size : &Ruler, d : Data) -> Int {
 }
 
 ///|
-fn size_of_datum(size : &Ruler, d : Datum[Obj[Layout], Int]) -> Int {
+fn size_of_datum(size : &Ruler, d : Datum[Obj[Layout], Int32]) -> Int32 {
   match d {
     Imm(s, _) => s
     Seq(xs) => xs.fold(init=0, (acc, x) => acc + size_of_datum(size, x))
@@ -224,7 +224,7 @@ fn size_of_datum(size : &Ruler, d : Datum[Obj[Layout], Int]) -> Int {
 
 ///|
 /// The total size in bits of a layout (pointers have the pointer size).
-pub fn size_of_layout(size : &Ruler, l : Layout) -> Int {
+pub fn size_of_layout(size : &Ruler, l : Layout) -> Int32 {
   size_of_datum(size, l.layout)
 }
 
@@ -269,7 +269,7 @@ fn coerce(
 ///|
 fn create_arg(
   size : &Ruler,
-  i : Int,
+  i : Int32,
   intent : @types.Intent,
   name : String,
   t : CType,
@@ -502,7 +502,7 @@ pub fn api_processors() -> Array[ApiProcessor] {
 }
 
 ///|
-fn word_exp(width : Int, value : Int) -> @types.Exp {
+fn word_exp(width : Int32, value : Int32) -> @types.Exp {
   try @types.Word::of_int(width~, value) catch {
     _ => @types.Exp::unknown("invalid offset \{value}", Imm(width))
   } noraise {
@@ -551,8 +551,8 @@ fn stack_pointer(target : @core_theory.Target) -> @core_theory.Var? {
 /// the target has no stack pointer.
 pub fn stack_slot(
   target : @core_theory.Target,
-  growsup? : Bool = false,
-  off : Int,
+  growsup~ : Bool = false,
+  off : Int32,
 ) -> @types.Exp? {
   guard stack_pointer(target) is Some(sp) else { return None }
   let width = target.data_addr_size()
@@ -575,8 +575,8 @@ pub fn stack_slot(
 /// target that has the same name as `arch`, if any.
 pub fn stack_slot_of_arch(
   arch : @types.Arch,
-  growsup? : Bool = false,
-  off : Int,
+  growsup~ : Bool = false,
+  off : Int32,
 ) -> @types.Exp? {
   match @core_theory.Target::lookup(arch.to_string()) {
     None => None

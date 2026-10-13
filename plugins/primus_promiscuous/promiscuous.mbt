@@ -112,8 +112,8 @@ fn neg(assns : @list.List[Assn]) -> @list.List[Assn] {
 pub fn assumptions(
   blk : @types.Term[@types.Blk],
 ) -> Array[Array[Assn]] raise @primus.PrimusError {
-  let mut assns : @list.List[Assn] = @list.empty()
-  let mut assms : @list.List[Array[Assn]] = @list.empty()
+  let mut assns : @list.List[Assn] = @list.List([])
+  let mut assms : @list.List[Array[Assn]] = @list.List([])
   for jmp in blk.jmps() {
     match jmp.cond() {
       Var(c) => {
@@ -182,7 +182,7 @@ fn fork_each(
   m : @primus.Machine,
   blk : @types.Term[@types.Blk],
   lists : Array[Array[Assn]],
-  i : Int,
+  i : Int32,
 ) -> Unit raise {
   guard i < lists.length() else { return }
   let conflicts = lists[i]

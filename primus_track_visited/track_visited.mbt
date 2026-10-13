@@ -23,11 +23,11 @@ pub let component_name : String = "mark-visited"
 ///|
 priv struct Tracked {
   visited : @immut_hashset.HashSet[@types.Tid]
-  total : Int
+  total : Int32
 }
 
 ///|
-fn count_blks(prog : @types.Term[@types.Program]) -> Int {
+fn count_blks(prog : @types.Term[@types.Program]) -> Int32 {
   prog.subs().fold(init=0, (n, sub) => n + sub.blk_count())
 }
 
@@ -61,8 +61,8 @@ let state : @primus.State[Tracked] = @primus.State::declare_(
 
 ///|
 let progress_pair : (
-  @primus.Observation[(Int, Int)],
-  @primus.Statement[(Int, Int)],
+  @primus.Observation[(Int32, Int32)],
+  @primus.Statement[(Int32, Int32)],
 ) = @primus.Observation::provide(
   "visited-blocks",
   inspect=p => List([Atom(p.0.to_string()), Atom(p.1.to_string())]),
@@ -73,7 +73,7 @@ let progress_pair : (
 /// `progress (visited, total)` is posted every time a Primus machine
 /// enters a basic block: `visited` is the number of visited blocks and
 /// `total` is the number of blocks in the program.
-pub let progress : @primus.Observation[(Int, Int)] = progress_pair.0
+pub let progress : @primus.Observation[(Int32, Int32)] = progress_pair.0
 
 ///|
 fn visit(m : @primus.Machine, tid : @types.Tid) -> Unit raise {
@@ -193,7 +193,7 @@ pub fn all(m : @primus.Machine) -> Array[@types.Tid] {
 
 ///|
 /// The total number of blocks in the program.
-pub fn total(m : @primus.Machine) -> Int {
+pub fn total(m : @primus.Machine) -> Int32 {
   m.get_global(state).total
 }
 

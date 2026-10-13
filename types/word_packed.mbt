@@ -7,8 +7,8 @@ fn word_packed_error() -> String {
 fn word_packed_element_count(
   left : Word,
   right : Word,
-  element_width : Int,
-) -> Result[Int, String] {
+  element_width : Int32,
+) -> Result[Int32, String] {
   if left.width() != right.width() {
     Err("packed word operation requires matching widths")
   } else if element_width <= 0 || left.width() % element_width != 0 {
@@ -23,8 +23,8 @@ fn word_packed_element_count(
 ///|
 fn Word::word_packed_element_at(
   self : Word,
-  index : Int,
-  element_width : Int,
+  index : Int32,
+  element_width : Int32,
 ) -> Result[Word, String] {
   if index < 0 || element_width <= 0 {
     Err(word_packed_error())
@@ -60,7 +60,7 @@ fn word_packed_from_little_elements(
 }
 
 ///|
-fn word_packed_mask(width : Int, enabled : Bool) -> Result[Word, String] {
+fn word_packed_mask(width : Int32, enabled : Bool) -> Result[Word, String] {
   try {
     if enabled {
       Word::ones(width~)
@@ -79,7 +79,7 @@ fn word_packed_order(
   left : Word,
   right : Word,
   signed : Bool,
-) -> Result[Int, String] {
+) -> Result[Int32, String] {
   try {
     if signed {
       left.compare_signed(right)
@@ -97,9 +97,9 @@ fn word_packed_order(
 fn Word::word_packed_compare_mask(
   self : Word,
   other : Word,
-  element_width : Int,
+  element_width : Int32,
   signed : Bool,
-  accept : (Int) -> Bool,
+  accept : (Int32) -> Bool,
 ) -> Result[Word, String] {
   match word_packed_element_count(self, other, element_width) {
     Ok(count) => {
@@ -132,9 +132,9 @@ fn Word::word_packed_compare_mask(
 fn Word::word_packed_min_max(
   self : Word,
   other : Word,
-  element_width : Int,
+  element_width : Int32,
   signed : Bool,
-  choose_left : (Int) -> Bool,
+  choose_left : (Int32) -> Bool,
 ) -> Result[Word, String] {
   match word_packed_element_count(self, other, element_width) {
     Ok(count) => {
@@ -161,7 +161,7 @@ fn Word::word_packed_min_max(
 }
 
 ///|
-fn word_packed_byte_index(byte : Word) -> Result[Int, String] {
+fn word_packed_byte_index(byte : Word) -> Result[Int32, String] {
   try byte.to_int() catch {
     _ => Err(word_packed_error())
   } noraise {
@@ -173,7 +173,7 @@ fn word_packed_byte_index(byte : Word) -> Result[Int, String] {
 pub fn Word::packed_eq(
   self : Word,
   other : Word,
-  element_width~ : Int,
+  element_width~ : Int32,
 ) -> Result[Word, String] {
   self.word_packed_compare_mask(other, element_width, false, order => order == 0)
 }
@@ -182,8 +182,8 @@ pub fn Word::packed_eq(
 pub fn Word::packed_gt(
   self : Word,
   other : Word,
-  element_width~ : Int,
-  signed? : Bool = false,
+  element_width~ : Int32,
+  signed~ : Bool = false,
 ) -> Result[Word, String] {
   self.word_packed_compare_mask(other, element_width, signed, order => order > 0)
 }
@@ -192,8 +192,8 @@ pub fn Word::packed_gt(
 pub fn Word::packed_min(
   self : Word,
   other : Word,
-  element_width~ : Int,
-  signed? : Bool = false,
+  element_width~ : Int32,
+  signed~ : Bool = false,
 ) -> Result[Word, String] {
   self.word_packed_min_max(other, element_width, signed, order => order <= 0)
 }
@@ -202,8 +202,8 @@ pub fn Word::packed_min(
 pub fn Word::packed_max(
   self : Word,
   other : Word,
-  element_width~ : Int,
-  signed? : Bool = false,
+  element_width~ : Int32,
+  signed~ : Bool = false,
 ) -> Result[Word, String] {
   self.word_packed_min_max(other, element_width, signed, order => order >= 0)
 }

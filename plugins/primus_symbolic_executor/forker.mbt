@@ -33,10 +33,10 @@ priv struct Task {
 ///|
 priv struct Master {
   self_ : @primus.Id?
-  ready : Int
-  tasks : @sorted_map.SortedMap[Int, Task]
+  ready : Int32
+  tasks : @sorted_map.SortedMap[Int32, Task]
   /// the number of queued or finished forks per term
-  tries : @immut_hashmap.HashMap[@types.Tid, Int]
+  tries : @immut_hashmap.HashMap[@types.Tid, Int32]
 }
 
 ///|
@@ -83,22 +83,22 @@ let log : @main_event.MainLogReporter = @main_event.MainLogReporter::create(
 ///|
 /// The number of times the same branch is retried (the `cutoff-level`
 /// option, 1 by default).
-let cutoff : Ref[Int] = Ref(1)
+let cutoff : Ref[Int32] = Ref(1)
 
 ///|
 /// Sets the number of times the same branch is retried.
-pub fn set_cutoff(n : Int) -> Unit {
+pub fn set_cutoff(n : Int32) -> Unit {
   cutoff.val = n
 }
 
 ///|
 /// The number of tasks queued by the workers and not yet processed.
-pub fn pending_tasks(m : @primus.Machine) -> Int {
+pub fn pending_tasks(m : @primus.Machine) -> Int32 {
   m.get_global(master).tasks.length()
 }
 
 ///|
-fn max_key(tasks : @sorted_map.SortedMap[Int, Task]) -> Int? {
+fn max_key(tasks : @sorted_map.SortedMap[Int32, Task]) -> Int32? {
   for k in tasks.rev_keys() {
     return Some(k)
   }
@@ -107,9 +107,9 @@ fn max_key(tasks : @sorted_map.SortedMap[Int, Task]) -> Int? {
 
 ///|
 fn count(
-  tries : @immut_hashmap.HashMap[@types.Tid, Int],
+  tries : @immut_hashmap.HashMap[@types.Tid, Int32],
   key : @types.Tid,
-) -> Int {
+) -> Int32 {
   tries.get(key).unwrap_or(0)
 }
 

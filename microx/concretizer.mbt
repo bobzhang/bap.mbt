@@ -51,7 +51,7 @@ pub fn generate(rng : @random.Rand, policy : Policy) -> Int64 {
 }
 
 ///|
-fn generate_word(rng : @random.Rand, policy : Policy, size : Int) -> Word {
+fn generate_word(rng : @random.Rand, policy : Policy, size : Int32) -> Word {
   let value = generate(rng, policy)
   @types.Word::of_int64(value).extract(hi=size - 1, lo=0) catch {
     _ => panic()
@@ -59,9 +59,9 @@ fn generate_word(rng : @random.Rand, policy : Policy, size : Int) -> Word {
 }
 
 ///|
-fn seeded_rng(seed : Int?) -> @random.Rand {
+fn seeded_rng(seed : Int32?) -> @random.Rand {
   match seed {
-    None => @random.Rand::new()
+    None => @random.Rand()
     Some(seed) => {
       let bytes = FixedArray::make(32, (0 : Byte))
       for i in 0..<4 {
@@ -90,9 +90,9 @@ fn seeded_rng(seed : Int?) -> @random.Rand {
 pub fn concretizer(
   memory? : (Word) -> Word?,
   lookup? : (Var) -> Word?,
-  random_seed? : Int,
-  reg_policy? : Policy = Random,
-  mem_policy? : Policy = Random,
+  random_seed? : Int32,
+  reg_policy~ : Policy = Random,
+  mem_policy~ : Policy = Random,
 ) -> Expi {
   let rng = seeded_rng(random_seed)
   let emit = (typ : ValueType) => {

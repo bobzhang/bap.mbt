@@ -7,8 +7,8 @@ fn visible(text : String) -> String {
 fn progress(
   task : String,
   note? : String,
-  stage? : Int,
-  total? : Int,
+  stage? : Int32,
+  total? : Int32,
 ) -> @main_event.MainEvent {
   @main_event.MainEvent::progress(
     @main_event.MainProgress::create(task~, note?, stage?, total?),

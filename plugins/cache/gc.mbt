@@ -14,7 +14,7 @@
 pub(all) struct Entry {
   path : String
   /// the size of the entry, in kilobytes
-  size : Int
+  size : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -25,7 +25,7 @@ pub extend Entry with Debug::{to_repr}
 
 ///|
 /// The smallest size (in kilobytes) that an entry has in the distribution.
-pub let min_entry_size : Int = 4
+pub let min_entry_size : Int32 = 4
 
 ///|
 /// The entries of the data folder `dir` (upstream `read_cache`).
@@ -44,14 +44,14 @@ pub fn read_entries(dir : String) -> Array[Entry] {
 
 ///|
 /// The total size of the entries, in kilobytes.
-pub fn total_size(entries : ArrayView[Entry]) -> Int {
+pub fn total_size(entries : ArrayView[Entry]) -> Int32 {
   entries.fold(init=0, (s, e) => s + e.size)
 }
 
 ///|
 /// The starts of the intervals of the cumulative distribution: the `i`-th
 /// entry owns `[starts[i], starts[i + 1])` (upstream `cdf`).
-fn cdf(sizes : ArrayView[Int]) -> Array[Int] {
+fn cdf(sizes : ArrayView[Int32]) -> Array[Int32] {
   let starts = []
   let mut prev = 0
   for size in sizes {
@@ -64,7 +64,7 @@ fn cdf(sizes : ArrayView[Int]) -> Array[Int] {
 ///|
 /// The index of the interval that contains `u` (upstream `closest_key`
 /// with `Less_or_equal_to`).
-fn find_interval(starts : Array[Int], u : Int) -> Int {
+fn find_interval(starts : Array[Int32], u : Int32) -> Int32 {
   let mut lo = 0
   let mut hi = starts.length() - 1
   while lo < hi {
@@ -89,17 +89,17 @@ fn find_interval(starts : Array[Int], u : Int) -> Int {
 /// draws stop making progress, the remaining entries are taken largest
 /// first, which also guarantees termination.
 pub fn select(
-  sizes : ArrayView[Int],
-  total~ : Int,
-  to_free~ : Int,
-  random : (Int) -> Int,
-) -> Array[Int] {
+  sizes : ArrayView[Int32],
+  total~ : Int32,
+  to_free~ : Int32,
+  random : (Int32) -> Int32,
+) -> Array[Int32] {
   let n = sizes.length()
   if n == 0 || total <= 0 {
     return []
   }
   let starts = cdf(sizes)
-  let selected : Map[Int, Unit] = Map([])
+  let selected : Map[Int32, Unit] = Map([])
   let order = []
   let mut freed = 0
   let mut misses = 0
@@ -153,7 +153,7 @@ fn remove_entry(e : Entry) -> Bool {
 
 ///|
 /// Runs `f` unless another process is collecting the cache at `root`.
-fn with_gc_lock(root : String, f : () -> Int) -> Int {
+fn with_gc_lock(root : String, f : () -> Int32) -> Int32 {
   match @native_io.lock_file(concat(root, "gc.lock"), blocking=false) {
     Ok(lock) => {
       defer lock.unlock() |> ignore
@@ -170,9 +170,9 @@ fn with_gc_lock(root : String, f : () -> Int) -> Int {
 /// nothing if another process is already collecting the cache.
 pub fn shrink(
   cfg : Config,
-  by_threshold? : Bool = false,
-  root? : String = root(),
-) -> Int {
+  by_threshold~ : Bool = false,
+  root~ : String = root(),
+) -> Int32 {
   with_gc_lock(root, () => {
     let entries = read_entries(data_dir(root~))
     let total = total_size(entries)
@@ -210,7 +210,7 @@ pub fn shrink(
 ///|
 /// Removes all entries of the cache at `root` (upstream `clean`).
 /// Returns the number of removed entries.
-pub fn clean(root? : String = root()) -> Int {
+pub fn clean(root~ : String = root()) -> Int32 {
   read_entries(data_dir(root~)).fold(init=0, (n, e) => {
     if remove_entry(e) {
       n + 1

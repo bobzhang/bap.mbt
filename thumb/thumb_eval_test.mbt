@@ -2,7 +2,7 @@
 // concrete effect of flags, conditions and memory operations.
 
 ///|
-fn word(width : Int, value : UInt64) -> @types.BilValue raise {
+fn word(width : Int32, value : UInt64) -> @types.BilValue raise {
   BilWord(@types.Word::of_uint64(width~, value))
 }
 

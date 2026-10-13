@@ -431,8 +431,8 @@ fn declare_compare(
 /// `out` receives the dumps written to the standard output; `write_file`
 /// writes the dumps and the knowledge base to files.
 pub fn declare_plugin(
-  out? : (String) -> Unit = s => println(s.trim_end(chars="\n")),
-  write_file? : (String, String) -> Result[Unit, String] = default_write_file,
+  out~ : (String) -> Unit = s => println(s.trim_end(chars="\n")),
+  write_file~ : (String, String) -> Result[Unit, String] = default_write_file,
 ) -> Unit raise {
   if @bap_main.registered_plugins().contains(plugin_name) {
     return

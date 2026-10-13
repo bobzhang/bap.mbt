@@ -3,7 +3,7 @@ struct ProjectCollator[S, R] {
   name_value : @knowledge.Name
   description_value : String
   prepare_fn : (Project) -> S
-  collate_fn : (Int, S, Project) -> S
+  collate_fn : (Int32, S, Project) -> S
   summary_fn : (S) -> R
 }
 
@@ -34,7 +34,7 @@ pub fn[S, R] ProjectCollator::create(
   pkg? : String,
   description? : String,
   prepare~ : (Project) -> S,
-  collate~ : (Int, S, Project) -> S,
+  collate~ : (Int32, S, Project) -> S,
   summary~ : (S) -> R,
 ) -> ProjectCollator[S, R] {
   {
@@ -123,7 +123,7 @@ pub fn[S, R] ProjectCollator::prepare(
 ///|
 pub fn[S, R] ProjectCollator::collate(
   self : ProjectCollator[S, R],
-  version : Int,
+  version : Int32,
   state : S,
   project : Project,
 ) -> S {
@@ -160,7 +160,7 @@ pub fn[S] RegisteredProjectCollator::create(
   pkg? : String,
   description? : String,
   prepare~ : (Project) -> S,
-  collate~ : (Int, S, Project) -> S,
+  collate~ : (Int32, S, Project) -> S,
   summary~ : (S) -> Unit,
 ) -> RegisteredProjectCollator {
   let collator = ProjectCollator::create(
@@ -254,7 +254,7 @@ pub fn[S] register_project_collator(
   pkg? : String,
   description? : String,
   prepare~ : (Project) -> S,
-  collate~ : (Int, S, Project) -> S,
+  collate~ : (Int32, S, Project) -> S,
   summary~ : (S) -> Unit,
 ) -> Result[Unit, String] {
   register_collator(

@@ -19,7 +19,7 @@ struct ProjectInputLoader {
   name_value : String
   description_value : String
   extensions_value : Array[String]
-  priority_value : Int
+  priority_value : Int32
   load_fn : (Bytes) -> Result[ProjectInput, String]
   load_file_fn : ((String) -> Result[ProjectInput, String])?
 }
@@ -223,9 +223,9 @@ pub fn ProjectInput::from_bytes(
   target~ : @core_theory.Target,
   data : Bytes,
   endian~ : @bitvec.Endian,
-  base? : UInt64 = 0UL,
+  base~ : UInt64 = 0UL,
   entry? : UInt64,
-  file_offset? : Int = 0,
+  file_offset~ : Int32 = 0,
   filename? : String,
   finish? : (Project) -> Project,
 ) -> ProjectInput {
@@ -247,9 +247,9 @@ fn ProjectInput::from_raw_bytes(
   target~ : @core_theory.Target,
   data : Bytes,
   endian~ : @bitvec.Endian,
-  base? : UInt64 = 0UL,
+  base~ : UInt64 = 0UL,
   entry? : UInt64,
-  file_offset? : Int = 0,
+  file_offset~ : Int32 = 0,
   filename? : String,
   finish? : (Project) -> Project,
   segment_name~ : String,
@@ -286,8 +286,8 @@ fn ProjectInput::from_raw_bytes(
 ///|
 fn project_slice_raw_bytes(
   data : Bytes,
-  offset : Int,
-  length : Int?,
+  offset : Int32,
+  length : Int32?,
 ) -> Result[Bytes, String] {
   if offset < 0 {
     Err("raw project input offset is negative")
@@ -315,9 +315,9 @@ fn project_slice_raw_bytes(
 pub fn ProjectInput::raw_bytes(
   target~ : @core_theory.Target,
   data : Bytes,
-  base? : UInt64 = 0UL,
-  offset? : Int = 0,
-  length? : Int,
+  base~ : UInt64 = 0UL,
+  offset~ : Int32 = 0,
+  length? : Int32,
   entry? : UInt64,
   filename? : String,
   finish? : (Project) -> Project,
@@ -345,9 +345,9 @@ pub fn ProjectInput::raw_bytes(
 pub fn ProjectInput::from_bigstring(
   target~ : @core_theory.Target,
   data : Bytes,
-  base? : UInt64 = 0UL,
-  offset? : Int = 0,
-  length? : Int,
+  base~ : UInt64 = 0UL,
+  offset~ : Int32 = 0,
+  length? : Int32,
   entry? : UInt64,
   filename? : String,
   finish? : (Project) -> Project,
@@ -368,9 +368,9 @@ pub fn ProjectInput::from_bigstring(
 pub fn ProjectInput::from_string(
   target~ : @core_theory.Target,
   text : String,
-  base? : UInt64 = 0UL,
-  offset? : Int = 0,
-  length? : Int,
+  base~ : UInt64 = 0UL,
+  offset~ : Int32 = 0,
+  length? : Int32,
   entry? : UInt64,
   filename? : String,
   finish? : (Project) -> Project,
@@ -442,7 +442,7 @@ pub fn ProjectInputLoader::create(
   name~ : String,
   description? : String,
   extensions? : Array[String],
-  priority? : Int,
+  priority? : Int32,
   load~ : (Bytes) -> Result[ProjectInput, String],
   load_file? : (String) -> Result[ProjectInput, String],
 ) -> ProjectInputLoader {
@@ -470,7 +470,7 @@ pub fn ProjectInputLoader::create_file(
   name~ : String,
   description? : String,
   extensions? : Array[String],
-  priority? : Int,
+  priority? : Int32,
   load~ : (String) -> Result[ProjectInput, String],
 ) -> ProjectInputLoader {
   ProjectInputLoader::create(
@@ -501,7 +501,7 @@ pub fn ProjectInputLoader::extensions(
 }
 
 ///|
-pub fn ProjectInputLoader::priority(self : ProjectInputLoader) -> Int {
+pub fn ProjectInputLoader::priority(self : ProjectInputLoader) -> Int32 {
   self.priority_value
 }
 
@@ -544,7 +544,7 @@ pub fn ProjectInput::register_loader(
   name~ : String,
   description? : String,
   extensions? : Array[String],
-  priority? : Int,
+  priority? : Int32,
   load~ : (Bytes) -> Result[ProjectInput, String],
   load_file? : (String) -> Result[ProjectInput, String],
 ) -> Result[Unit, String] {
@@ -566,7 +566,7 @@ pub fn ProjectInput::register_file_loader(
   name~ : String,
   description? : String,
   extensions? : Array[String],
-  priority? : Int,
+  priority? : Int32,
   load~ : (String) -> Result[ProjectInput, String],
 ) -> Result[Unit, String] {
   set_input_loader(
@@ -636,7 +636,9 @@ fn push_unique_string(items : Array[String], item : String) -> Unit {
 }
 
 ///|
-fn project_input_dwarf_symbol_size(function_item : @dwarf.DwarfFunction) -> Int {
+fn project_input_dwarf_symbol_size(
+  function_item : @dwarf.DwarfFunction,
+) -> Int32 {
   match function_item.high_pc() {
     Some(high) if high > function_item.low_pc() => {
       let size = high - function_item.low_pc()

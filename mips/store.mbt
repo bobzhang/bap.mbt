@@ -7,7 +7,7 @@
 
 ///|
 /// `store (base + off) rt width`; the stored value is truncated to `width`.
-fn store_base_offset(width : Int) -> Semantics {
+fn store_base_offset(width : Int32) -> Semantics {
   cpu => {
     let rt = cpu.sreg(0)
     let base = cpu.sreg(1)
@@ -20,7 +20,7 @@ fn store_base_offset(width : Int) -> Semantics {
 /// Store conditional: `store_base_offset` over `[rt, base, offset]` (the
 /// upstream layout), or over `[rt_out, rt, base, offset]` (the layout of
 /// LLVM's `DecodeMem`), which also sets `rt_out` to one.
-fn store_conditional(width : Int) -> Semantics {
+fn store_conditional(width : Int32) -> Semantics {
   cpu => {
     if cpu.insn.ops.length() < 4 {
       return store_base_offset(width)(cpu)

@@ -20,7 +20,7 @@ pub extend Mode with Debug::{to_repr}
 ///|
 /// Width in bits of the general purpose registers and of addresses in the
 /// mode (upstream `width_of_mode`).
-pub fn Mode::width(self : Mode) -> Int {
+pub fn Mode::width(self : Mode) -> Int32 {
   match self {
     X86 => 32
     X8664 => 64
@@ -34,7 +34,7 @@ pub fn Mode::width(self : Mode) -> Int {
 /// sign-extended, unsigned ones zero-extended, like BAP `Word.extract`.
 priv struct Imm {
   bits : UInt64
-  width : Int
+  width : Int32
   signed : Bool
 } derive(Eq, Debug)
 
@@ -42,11 +42,11 @@ priv struct Imm {
 /// Operands of the decoded instructions (upstream `X86_types.operand`).
 priv enum Operand {
   /// general purpose register by number (0-15)
-  Oreg(Int)
+  Oreg(Int32)
   /// vector (XMM/YMM) register by number
-  Ovec(Int)
+  Ovec(Int32)
   /// segment register by number
-  Oseg(Int)
+  Oseg(Int32)
   /// memory reference by effective address
   Oaddr(@types.Exp)
   /// immediate
@@ -79,7 +79,7 @@ priv enum PackedOp {
   PBin(@types.BinOp)
   PMin(Bool)
   PMax(Bool)
-  PAvg(Int)
+  PAvg(Int32)
   PAndN
 } derive(Debug)
 
@@ -89,7 +89,7 @@ priv struct Imm8cb {
   words : Bool
   signed : Bool
   /// 0 = equal any, 1 = ranges, 2 = equal each, 3 = equal ordered
-  agg : Int
+  agg : Int32
   negintres1 : Bool
   maskintres1 : Bool
   /// `MSB` output selection (otherwise `LSB`)
@@ -107,11 +107,11 @@ priv struct PcmpInfo {
 ///|
 /// `offsetinfo`: a source slice of `Movoffset`.
 priv struct OffsetInfo {
-  offlen : Int
-  offtyp : Int
+  offlen : Int32
+  offtyp : Int32
   offop : Operand
-  offsrcoffset : Int
-  offdstoffset : Int
+  offsrcoffset : Int32
+  offdstoffset : Int32
 } derive(Debug)
 
 ///|
@@ -119,69 +119,69 @@ priv struct OffsetInfo {
 /// widths.
 #warnings("-unused_value")
 priv enum Opcode {
-  Bswap(Int, Operand)
+  Bswap(Int32, Operand)
   /// bytes to release, far return
-  Retn((Int, Operand)?, Bool)
+  Retn((Int32, Operand)?, Bool)
   Nop
   /// type, dst, src, condition
-  Mov(Int, Operand, Operand, @types.Exp?)
-  Movs(Int)
+  Mov(Int32, Operand, Operand, @types.Exp?)
+  Movs(Int32)
   /// dst type, dst, src type, src
-  Movzx(Int, Operand, Int, Operand)
-  Movsx(Int, Operand, Int, Operand)
+  Movzx(Int32, Operand, Int32, Operand)
+  Movsx(Int32, Operand, Int32, Operand)
   /// dst type, dst, src type, src, aligned
-  Movdq(Int, Operand, Int, Operand, Bool)
-  Movoffset((Int, Operand), Array[OffsetInfo])
-  Lea(Int, Operand, @types.Exp)
+  Movdq(Int32, Operand, Int32, Operand, Bool)
+  Movoffset((Int32, Operand), Array[OffsetInfo])
+  Lea(Int32, Operand, @types.Exp)
   /// target, return address
   Call(Operand, Imm)
-  Shift(@types.BinOp, Int, Operand, Operand)
-  Shiftd(@types.BinOp, Int, Operand, Operand, Operand)
+  Shift(@types.BinOp, Int32, Operand, Operand)
+  Shiftd(@types.BinOp, Int32, Operand, Operand, Operand)
   /// direction, type, dst, count, through carry
-  Rotate(@types.BinOp, Int, Operand, Operand, Bool)
+  Rotate(@types.BinOp, Int32, Operand, Operand, Bool)
   /// kind (the ModR/M reg field of `0f ba`: 4 BT, 5 BTS, 6 BTR, 7 BTC),
   /// type, bit offset, bit base
-  Bt(Int, Int, Operand, Operand)
-  Bs(Int, Operand, Operand, Direction)
+  Bt(Int32, Int32, Operand, Operand)
+  Bs(Int32, Operand, Operand, Direction)
   Jump(JumpTarget)
   Jcc(JumpTarget, @types.Exp)
-  Setcc(Int, Operand, @types.Exp)
+  Setcc(Int32, Operand, @types.Exp)
   Hlt
-  Cmps(Int)
-  Scas(Int)
-  Stos(Int)
-  Push(Int, Operand)
-  Pop(Int, Operand)
-  Pushf(Int)
-  Popf(Int)
+  Cmps(Int32)
+  Scas(Int32)
+  Stos(Int32)
+  Push(Int32, Operand)
+  Pop(Int32, Operand)
+  Pushf(Int32)
+  Popf(Int32)
   /// size, src, dst
-  Popcnt(Int, Operand, Operand)
+  Popcnt(Int32, Operand, Operand)
   Sahf
   Lahf
-  Add(Int, Operand, Operand)
-  Adc(Int, Operand, Operand)
-  Inc(Int, Operand)
-  Dec(Int, Operand)
-  Sub(Int, Operand, Operand)
-  Sbb(Int, Operand, Operand)
-  Cmp(Int, Operand, Operand)
-  Cmpxchg(Int, Operand, Operand)
+  Add(Int32, Operand, Operand)
+  Adc(Int32, Operand, Operand)
+  Inc(Int32, Operand)
+  Dec(Int32, Operand)
+  Sub(Int32, Operand, Operand)
+  Sbb(Int32, Operand, Operand)
+  Cmp(Int32, Operand, Operand)
+  Cmpxchg(Int32, Operand, Operand)
   /// CMPXCHG8B (64) or CMPXCHG16B (128)
-  Cmpxchg8b(Int, Operand)
-  Xadd(Int, Operand, Operand)
-  Xchg(Int, Operand, Operand)
-  And(Int, Operand, Operand)
-  Or(Int, Operand, Operand)
-  Xor(Int, Operand, Operand)
-  Test(Int, Operand, Operand)
-  Ptest(Int, Operand, Operand)
-  Not(Int, Operand)
-  Neg(Int, Operand)
-  Mul(Int, Operand)
+  Cmpxchg8b(Int32, Operand)
+  Xadd(Int32, Operand, Operand)
+  Xchg(Int32, Operand, Operand)
+  And(Int32, Operand, Operand)
+  Or(Int32, Operand, Operand)
+  Xor(Int32, Operand, Operand)
+  Test(Int32, Operand, Operand)
+  Ptest(Int32, Operand, Operand)
+  Not(Int32, Operand)
+  Neg(Int32, Operand)
+  Mul(Int32, Operand)
   /// type, (one operand form, dst), src1, src2
-  Imul(Int, (Bool, Operand), Operand, Operand)
-  Div(Int, Operand)
-  Idiv(Int, Operand)
+  Imul(Int32, (Bool, Operand), Operand, Operand)
+  Div(Int32, Operand)
+  Idiv(Int32, Operand)
   Cld
   Rdtsc
   Cpuid
@@ -193,18 +193,18 @@ priv enum Opcode {
   Fld(Operand)
   Fst(Operand, Bool)
   /// dest size, element size, order, dest, src, VEX src
-  Punpck(Int, Int, Order, Operand, Operand, Operand?)
-  Ppackedbinop(Int, Int, PackedOp, String, Operand, Operand, Operand?)
-  Pbinop(Int, PackedOp, String, Operand, Operand, Operand?)
+  Punpck(Int32, Int32, Order, Operand, Operand, Operand?)
+  Ppackedbinop(Int32, Int32, PackedOp, String, Operand, Operand, Operand?)
+  Pbinop(Int32, PackedOp, String, Operand, Operand, Operand?)
   /// dest size, dest element size, source element size, dst, src, signed
-  Pmov(Int, Int, Int, Operand, Operand, Bool, String)
-  Pmovmskb(Int, Operand, Operand)
-  Pcmp(Int, Int, @types.BinOp, String, Operand, Operand, Operand?)
-  Palignr(Int, Operand, Operand, Operand?, Operand)
-  Pcmpstr(Int, Operand, Operand, Operand, Imm8cb, PcmpInfo)
-  Pshufb(Int, Operand, Operand, Operand?)
-  Pshufd(Int, Operand, Operand, Operand?, Operand)
-  Leave(Int)
+  Pmov(Int32, Int32, Int32, Operand, Operand, Bool, String)
+  Pmovmskb(Int32, Operand, Operand)
+  Pcmp(Int32, Int32, @types.BinOp, String, Operand, Operand, Operand?)
+  Palignr(Int32, Operand, Operand, Operand?, Operand)
+  Pcmpstr(Int32, Operand, Operand, Operand, Imm8cb, PcmpInfo)
+  Pshufb(Int32, Operand, Operand, Operand?)
+  Pshufd(Int32, Operand, Operand, Operand?, Operand)
+  Leave(Int32)
   Interrupt(Operand)
   Interrupt3
   Sysenter
@@ -226,11 +226,11 @@ priv struct Vex {
   nr : Bool
   nx : Bool
   nb : Bool
-  map_select : Int
+  map_select : Int32
   we : Bool
-  v : Int
+  v : Int32
   l : Bool
-  pp : Int
+  pp : Int32
 }
 
 ///|
@@ -238,19 +238,19 @@ priv struct Vex {
 /// widths.
 #warnings("-unused_field")
 priv struct Prefix {
-  addrsize : Int
-  opsize : Int
-  bopsize : Int
-  mopsize : Int
+  addrsize : Int32
+  opsize : Int32
+  bopsize : Int32
+  mopsize : Int32
   repeat : Bool
   nrepeat : Bool
   addrsize_override : Bool
   opsize_override : Bool
   rex : Rex?
   vex : Vex?
-  r_extend : Int
-  rm_extend : Int
-  sib_extend : Int
+  r_extend : Int32
+  rm_extend : Int32
+  sib_extend : Int32
 }
 
 ///|

@@ -16,7 +16,7 @@ fn resume_newest(m : @primus.Machine) -> Unit raise {
 fn run_stdio(
   src : String,
   fname : String,
-  features? : Array[String] = ["core", "symbolic-stdio", "test"],
+  features~ : Array[String] = ["core", "symbolic-stdio", "test"],
 ) -> (Array[String], Array[String], String) {
   @primus_symbolic_executor.set_timeout(10000)
   let log = []

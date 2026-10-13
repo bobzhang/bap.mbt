@@ -1,8 +1,8 @@
 ///|
 /// A program header of a test file.
 priv struct TPhdr {
-  typ : UInt
-  flags : UInt
+  typ : UInt32
+  flags : UInt32
   offset : UInt64
   vaddr : UInt64
   paddr : UInt64
@@ -15,12 +15,12 @@ priv struct TPhdr {
 /// A section of a test file; its contents are placed after the headers.
 priv struct TSection {
   name : String
-  typ : UInt
+  typ : UInt32
   flags : UInt64
   addr : UInt64
   data : Bytes
-  link : UInt
-  info : UInt
+  link : UInt32
+  info : UInt32
   align : UInt64
   entsize : UInt64
 }
@@ -28,14 +28,14 @@ priv struct TSection {
 ///|
 fn tsection(
   name : String,
-  typ : UInt,
+  typ : UInt32,
   data : Bytes,
-  flags? : UInt64 = 0,
-  addr? : UInt64 = 0,
-  link? : UInt = 0,
-  info? : UInt = 0,
-  align? : UInt64 = 1,
-  entsize? : UInt64 = 0,
+  flags~ : UInt64 = 0,
+  addr~ : UInt64 = 0,
+  link~ : UInt32 = 0,
+  info~ : UInt32 = 0,
+  align~ : UInt64 = 1,
+  entsize~ : UInt64 = 0,
 ) -> TSection {
   { name, typ, flags, addr, data, link, info, align, entsize, }
 }
@@ -49,8 +49,8 @@ priv struct Writer {
 ///|
 fn Writer::put(
   self : Writer,
-  offset : Int,
-  bytes : Int,
+  offset : Int32,
+  bytes : Int32,
   value : UInt64,
 ) -> Unit {
   while self.buf.length() < offset + bytes {
@@ -63,7 +63,7 @@ fn Writer::put(
 }
 
 ///|
-fn Writer::blob(self : Writer, offset : Int, data : Bytes) -> Unit {
+fn Writer::blob(self : Writer, offset : Int32, data : Bytes) -> Unit {
   while self.buf.length() < offset + data.length() {
     self.buf.push(b'\x00')
   }
@@ -77,16 +77,16 @@ fn Writer::blob(self : Writer, offset : Int, data : Bytes) -> Unit {
 /// their natural order after the headers), a `.shstrtab` section appended
 /// when there are sections, then the section header table.
 fn build_elf(
-  is64? : Bool = true,
-  big? : Bool = false,
-  typ? : Int = 2,
-  machine? : Int = 62,
-  osabi? : Int = 0,
-  entry? : UInt64 = 0,
-  flags? : UInt = 0,
-  phdrs? : Array[TPhdr] = [],
-  sections? : Array[TSection] = [],
-  tail? : Bytes = b"",
+  is64~ : Bool = true,
+  big~ : Bool = false,
+  typ~ : Int32 = 2,
+  machine~ : Int32 = 62,
+  osabi~ : Int32 = 0,
+  entry~ : UInt64 = 0,
+  flags~ : UInt32 = 0,
+  phdrs~ : Array[TPhdr] = [],
+  sections~ : Array[TSection] = [],
+  tail~ : Bytes = b"",
 ) -> Bytes {
   let w : Writer = { buf: [], big, }
   let word = if is64 { 8 } else { 4 }
@@ -222,7 +222,7 @@ fn build_elf(
 ///|
 /// The offset of the first byte after the headers of a file built by
 /// `build_elf` with `phnum` program headers.
-fn contents_offset(phnum : Int, is64? : Bool = true) -> UInt64 {
+fn contents_offset(phnum : Int32, is64~ : Bool = true) -> UInt64 {
   (if is64 { 64 + phnum * 56 } else { 52 + phnum * 32 }).to_uint64()
 }
 
@@ -238,10 +238,10 @@ fn le64(values : Array[UInt64]) -> Bytes {
 ///|
 /// An `Elf64_Sym` entry.
 fn sym64(
-  name : Int,
-  info : Int,
-  other : Int,
-  shndx : Int,
+  name : Int32,
+  info : Int32,
+  other : Int32,
+  shndx : Int32,
   value : UInt64,
   size : UInt64,
 ) -> Bytes {

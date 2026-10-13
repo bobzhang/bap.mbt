@@ -8,7 +8,7 @@
 // unchanged for zero amounts.
 
 ///|
-fn shift_of_word(op : UInt) -> Shift raise @mc.LiftError {
+fn shift_of_word(op : UInt32) -> Shift raise @mc.LiftError {
   match op {
     1 => ASR
     2 => LSL
@@ -21,7 +21,7 @@ fn shift_of_word(op : UInt) -> Shift raise @mc.LiftError {
 
 ///|
 /// Bit `n` of `e`.
-fn bit_of(n : Int, e : @types.Exp) -> @types.Exp {
+fn bit_of(n : Int32, e : @types.Exp) -> @types.Exp {
   extract(n, n, e)
 }
 
@@ -32,7 +32,7 @@ fn bit_of(n : Int, e : @types.Exp) -> @types.Exp {
 fn shift_imm_c(
   src : @types.Exp,
   shift_type : Shift,
-  n : Int,
+  n : Int32,
   t : @types.ValueType,
 ) -> (@types.Exp, @types.Exp) {
   let bits = bitlen(t)
@@ -87,7 +87,7 @@ fn shift_reg_c(
   t : @types.ValueType,
 ) -> (@types.Exp, @types.Exp) {
   let bits = bitlen(t)
-  let k = (n : Int) => int_bits(bits, n.to_uint64())
+  let k = (n : Int32) => int_bits(bits, n.to_uint64())
   let ite = (c, y, n) => @types.Exp::Ite(cond=c, yes=y, no=n)
   let is_zero = bin(Eq, amount, k(0))
   let out = bin(Lt, k(bits), amount) // amount > bits
@@ -162,7 +162,7 @@ fn shift_amount(reg : @types.Exp, t : @types.ValueType) -> @types.Exp {
 
 ///|
 /// The amount of an immediate shift: `LSR`/`ASR` amounts of 0 encode 32.
-fn decode_imm_shift(shift_type : Shift, amount : UInt) -> Int {
+fn decode_imm_shift(shift_type : Shift, amount : UInt32) -> Int32 {
   match shift_type {
     LSR | ASR if amount == 0 => 32
     _ => amount.reinterpret_as_int()

@@ -11,7 +11,7 @@ fn type_unify(
 }
 
 ///|
-fn checked_imm(typ : ValueType) -> Result[Int, TypeError] {
+fn checked_imm(typ : ValueType) -> Result[Int32, TypeError] {
   match typ {
     Imm(width) => Ok(width)
     Mem(_) => Err(TypeError::bad_imm())
@@ -19,7 +19,7 @@ fn checked_imm(typ : ValueType) -> Result[Int, TypeError] {
 }
 
 ///|
-fn checked_mem(typ : ValueType) -> Result[(Int, Int), TypeError] {
+fn checked_mem(typ : ValueType) -> Result[(Int32, Int32), TypeError] {
   match typ {
     Mem(addr_width~, value_width~) => Ok((addr_width, value_width))
     Imm(_) => Err(TypeError::bad_mem())
@@ -132,8 +132,8 @@ fn checked_ite(cond : Exp, yes : Exp, no : Exp) -> Result[ValueType, TypeError] 
 
 ///|
 fn checked_extract(
-  hi : Int,
-  lo : Int,
+  hi : Int32,
+  lo : Int32,
   exp : Exp,
 ) -> Result[ValueType, TypeError] {
   match exp.infer_type() {
@@ -151,7 +151,7 @@ fn checked_extract(
 ///|
 fn checked_cast(
   kind : CastKind,
-  width : Int,
+  width : Int32,
   exp : Exp,
 ) -> Result[ValueType, TypeError] {
   if width <= 0 {

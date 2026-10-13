@@ -25,7 +25,7 @@ pub fn classify(is_flag : (@types.Var) -> Bool, v : @types.Var) -> VarClass {
 /// virtual variables, level 2 also flags, and level 3 all variables.
 pub fn is_optimization_allowed(
   is_flag : (@types.Var) -> Bool,
-  level : Int,
+  level : Int32,
   v : @types.Var,
 ) -> Bool {
   match classify(is_flag, v) {
@@ -295,7 +295,7 @@ fn process_sub(
 ///|
 /// The cache key of a subroutine (`digest_of_sub`): the set of term addresses,
 /// the subroutine name, and the optimization level.
-pub fn digest_of_sub(sub : @types.Term[@types.Sub], level : Int) -> String {
+pub fn digest_of_sub(sub : @types.Term[@types.Sub], level : Int32) -> String {
   let addrs : Array[String] = []
   let add = (attrs : Map[String, String]) => {
     match attrs.get("address") {
@@ -347,7 +347,7 @@ pub fn OptimizationCache::save(
 }
 
 ///|
-pub fn OptimizationCache::length(self : OptimizationCache) -> Int {
+pub fn OptimizationCache::length(self : OptimizationCache) -> Int32 {
   self.entries.length()
 }
 
@@ -359,8 +359,8 @@ pub fn OptimizationCache::length(self : OptimizationCache) -> Int {
 /// blocks. `is_flag` classifies processor flags (see `target_is_flag`).
 pub fn optimize_program(
   prog : @types.Term[@types.Program],
-  level~ : Int,
-  is_flag? : (@types.Var) -> Bool = _ => false,
+  level~ : Int32,
+  is_flag~ : (@types.Var) -> Bool = _ => false,
   cache? : OptimizationCache,
 ) -> @types.Term[@types.Program] {
   let can_touch = v => is_optimization_allowed(is_flag, level, v)
@@ -387,7 +387,7 @@ pub fn optimize_program(
 /// with the project target unless `is_flag` is given.
 pub fn run(
   project : @project.Project,
-  level~ : Int,
+  level~ : Int32,
   is_flag? : (@types.Var) -> Bool,
   cache? : OptimizationCache,
 ) -> @project.Project {

@@ -29,9 +29,9 @@ fn PackedOp::apply(
 /// Upstream `op2e_s_keep_width` (the width is the requested type).
 fn Ctx::op2e_keep_width(
   self : Ctx,
-  t : Int,
+  t : Int32,
   operand : Operand,
-) -> (@types.Exp, Int) raise X86Error {
+) -> (@types.Exp, Int32) raise X86Error {
   (self.op2e(t, operand), t)
 }
 
@@ -42,7 +42,7 @@ fn Ctx::to_ir_simd(
 ) -> Array[@types.Stmt] raise X86Error {
   let mode = self.mode
   let mw = mode.width()
-  let im = (i : Int) => int_exp(i, mw)
+  let im = (i : Int32) => int_exp(i, mw)
   match op {
     Movdq(ts, s, td, d, align) => {
       let (s, al) = match s {
@@ -73,7 +73,7 @@ fn Ctx::to_ir_simd(
     Movoffset((tdst, dst), offsets) => {
       // If a vex prefix is present, then extra space is filled with 0.
       // Otherwise, the bits are preserved.
-      let padding = (hi : Int, lo : Int) => {
+      let padding = (hi : Int32, lo : Int32) => {
         if hi < lo {
           []
         } else if self.has_vex {
@@ -136,7 +136,7 @@ fn Ctx::to_ir_simd(
       let iv = new_tmp(8)
       let elt = new_tmp(et)
       // assumption: immediate operands are repeated for all vector elements
-      let getelement = (o : Operand, i : Int) => {
+      let getelement = (o : Operand, i : Int32) => {
         match o {
           Oimm(_) => self.op2e(et, o)
           _ => extract_element(et, self.op2e(t, o), i)
@@ -158,7 +158,7 @@ fn Ctx::to_ir_simd(
           )
         _ => (None, [assign(tmp_dst, int_exp(0, t))])
       }
-      let apply = (x : @types.Exp, i : Int) => {
+      let apply = (x : @types.Exp, i : Int32) => {
         match (fbop, shift_count) {
           (PBin(ARShift), Some(c)) => {
             let big = e_lt(int_exp(et - 1, 64), c)
@@ -312,7 +312,7 @@ fn Ctx::to_ir_simd(
     Pshufd(t, dst, src, vsrc, imm) => {
       let src_e = self.op2e(t, src)
       let imm_e = self.op2e(t, imm)
-      let get_dword = (ndword : Int) => {
+      let get_dword = (ndword : Int32) => {
         let high_b = 2 * (ndword % 4) + 1
         let low_b = 2 * (ndword % 4)
         let index = e_unsigned(t, e_extract(high_b, low_b, imm_e))
@@ -423,7 +423,7 @@ fn cat_exps(parts : Array[Array[@types.Exp]]) -> Array[@types.Exp] {
 /// bytes and bits are numbered with zero being the least significant.
 fn Ctx::pcmpstr(
   self : Ctx,
-  t : Int,
+  t : Int32,
   xmm1 : Operand,
   xmm2m128 : Operand,
   imm8cb : Imm8cb,
@@ -435,15 +435,15 @@ fn Ctx::pcmpstr(
   let regm = self.mode.width()
   let (nelem, elemt) = if imm8cb.words { (8, 16) } else { (16, 8) }
   // Get element index in e
-  let get_elem = (e : @types.Exp, i : Int) => extract_element(elemt, e, i)
-  let get_xmm1 = (i : Int) => get_elem(xmm1_e, i)
-  let get_xmm2 = (i : Int) => get_elem(xmm2m128_e, i)
+  let get_elem = (e : @types.Exp, i : Int32) => extract_element(elemt, e, i)
+  let get_xmm1 = (i : Int32) => get_elem(xmm1_e, i)
+  let get_xmm2 = (i : Int32) => get_elem(xmm2m128_e, i)
   // nelem - 1, ..., 0
   let nelem_range = [ for i in 0..<nelem => nelem - 1 - i ]
   // the is_valid variables: whether an index is a valid element (before
   // the NULL element)
-  let valid_vars : Map[(Int, Int), @types.Var] = Map([])
-  let is_valid = (xmmnum : Int, index : Int) => {
+  let valid_vars : Map[(Int32, Int32), @types.Var] = Map([])
+  let is_valid = (xmmnum : Int32, index : Int32) => {
     match valid_vars.get((xmmnum, index)) {
       Some(v) => v
       None => {
@@ -453,10 +453,10 @@ fn Ctx::pcmpstr(
       }
     }
   }
-  let is_valid_xmm1_e = (i : Int) => ev(is_valid(1, i))
-  let is_valid_xmm2_e = (i : Int) => ev(is_valid(2, i))
+  let is_valid_xmm1_e = (i : Int32) => ev(is_valid(1, i))
+  let is_valid_xmm2_e = (i : Int32) => ev(is_valid(2, i))
   // implicit (NULL-based) string length
-  let implicit_check = (xmmnum : Int, get : (Int) -> @types.Exp) => {
+  let implicit_check = (xmmnum : Int32, get : (Int32) -> @types.Exp) => {
     let acc : Array[@types.Stmt] = []
     for i in nelem_range {
       let previous_valid = if i == 0 {
@@ -473,7 +473,7 @@ fn Ctx::pcmpstr(
     acc
   }
   // explicit string length
-  let explicit_check = (xmmnum : Int, sizee : @types.Exp) => {
+  let explicit_check = (xmmnum : Int32, sizee : @types.Exp) => {
     let nelem_e = int_exp(nelem, regm)
     let sizev = new_tmp(regm, name="sz")
     // upstream folds the element checks in front of the size computation
@@ -493,7 +493,7 @@ fn Ctx::pcmpstr(
   } else {
     (explicit_check(1, ev(r.rax)), explicit_check(2, ev(r.rdx)))
   }
-  let get_bit = (index : Int) => {
+  let get_bit = (index : Int32) => {
     match imm8cb.agg {
       0 => {
         // EqualAny: is xmm2[index] at xmm1[j] for any j?

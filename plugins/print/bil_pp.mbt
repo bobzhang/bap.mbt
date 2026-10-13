@@ -85,7 +85,7 @@ fn unop_to_string(op : @types.UnOp) -> String {
 }
 
 ///|
-fn op_prec(op : @types.BinOp) -> Int {
+fn op_prec(op : @types.BinOp) -> Int32 {
   match op {
     Times | Div | SignedDiv | Mod | SignedMod => 8
     Plus | Minus => 7
@@ -99,7 +99,7 @@ fn op_prec(op : @types.BinOp) -> Int {
 }
 
 ///|
-fn exp_prec(e : @types.Exp) -> Int {
+fn exp_prec(e : @types.Exp) -> Int32 {
   match e {
     Var(_) | Int(_) | Unknown(_, _) => 10
     Load(_) | Cast(_) | Extract(_) => 10
@@ -116,7 +116,7 @@ fn is_bit(w : @types.Word, value : Bool) -> Bool {
 
 ///|
 /// The size (in bits) of the value stored or loaded by a memory access.
-fn exp_bits(e : @types.Exp) -> Int? {
+fn exp_bits(e : @types.Exp) -> Int32? {
   match e.infer_type() {
     Ok(Imm(n)) => Some(n)
     _ => None

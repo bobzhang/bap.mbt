@@ -1,5 +1,5 @@
 ///|
-fn flat_int8(value : Int) -> @types.Exp raise @bitvec.BitVecError {
+fn flat_int8(value : Int32) -> @types.Exp raise @bitvec.BitVecError {
   Int(@types.Word::of_int(width=8, value))
 }
 

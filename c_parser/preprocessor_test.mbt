@@ -3,8 +3,8 @@
 ///|
 fn pp(
   text : String,
-  files? : Map[String, String] = {},
-  include_dirs? : Array[String] = [],
+  files~ : Map[String, String] = {},
+  include_dirs~ : Array[String] = [],
 ) -> String raise {
   let p = @c_parser.Preprocessor::new(
     read_file=path => files.get(path),
@@ -14,7 +14,7 @@ fn pp(
 }
 
 ///|
-fn pp_error(text : String, files? : Map[String, String] = {}) -> String {
+fn pp_error(text : String, files~ : Map[String, String] = {}) -> String {
   try pp(text, files~) catch {
     @c_parser.ParseError(msg) => msg
     e => e.to_string()

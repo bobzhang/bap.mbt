@@ -137,7 +137,7 @@ pub fn fp_emulation(ct : @core_theory.Core) -> @core_theory.Core {
           let y = pc(y.refine(bs))
           let ws = bits_sort(p.w)
           let fs = bits_sort(p.t)
-          let small = (s : Sort, n : Int) => ct.of_int(s, n)
+          let small = (s : Sort, n : Int32) => ct.of_int(s, n)
           let ones = small(ws, -1)
           let zero = small(fs, 0)
           let expn = (v : Pure) => {
@@ -224,7 +224,7 @@ fn is_declared(name : String) -> Bool {
 /// `bap:bil-fp-emu` (extending `bap:bil` with the floating-point
 /// emulation, providing also `floating-point`). Theories that are already
 /// declared are left as they are.
-pub fn declare_theories(with_fp? : Bool = true) -> Unit raise {
+pub fn declare_theories(with_fp~ : Bool = true) -> Unit raise {
   if !is_declared("bap:bil") {
     @core_theory.declare_theory(
       name="bil",

@@ -45,7 +45,7 @@ pub fn Persistent::string() -> Persistent[String] {
 }
 
 ///|
-pub fn Persistent::int() -> Persistent[Int] {
+pub fn Persistent::int() -> Persistent[Int32] {
   Persistent::create(to_string=value => value.to_string(), of_string=input => {
     try @string.parse_int(input) catch {
       _ => Err("invalid persistent int")
@@ -105,9 +105,9 @@ fn[T] persistent_decode_array(
 ///|
 fn persistent_decode_chunk(
   input : String,
-  offset : Int,
+  offset : Int32,
   context : String,
-) -> Result[(String, Int), String] {
+) -> Result[(String, Int32), String] {
   let mut separator = -1
   let mut cursor = offset
   while cursor < input.length() && separator < 0 {

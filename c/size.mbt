@@ -14,14 +14,14 @@
 ///|
 /// `next_multitude_of(n~, x)` returns `y >= x` such that `y` is a multiple
 /// of `n` (`n` must be a power of two).
-pub fn next_multitude_of(n~ : Int, x : Int) -> Int {
+pub fn next_multitude_of(n~ : Int32, x : Int32) -> Int32 {
   (x + (n - 1)) & (n - 1).lnot()
 }
 
 ///|
 /// `padding(alignment, offset)` computes the padding (in bits) required at
 /// `offset` (in bits) to ensure the `alignment`.
-pub fn padding(alignment : @types.Size, offset : Int) -> Int {
+pub fn padding(alignment : @types.Size, offset : Int32) -> Int32 {
   let align = alignment.in_bits()
   (align - offset % align) % align
 }
@@ -76,19 +76,19 @@ pub(open) trait Ruler {
   /// The size of the data type representation in bits, or `None` for
   /// incomplete types. The size is always a multiple of the alignment and
   /// includes the paddings necessary for preserving the alignment.
-  fn bits(Self, CType) -> Int? = _
+  fn bits(Self, CType) -> Int32? = _
   /// The alignment of a data type: `void` or an incomplete type is 8 bits; a
   /// scalar is `sizeof(t)`; an array is the alignment of its element; a
   /// function is the pointer size; a structure or union is the largest of
   /// its elements' alignments.
   fn alignment(Self, CType) -> @types.Size = _
   /// The size of a complete array (element count times element size).
-  fn array(Self, Spec[Qualifier[Bool], ArrayType]) -> Int? = _
+  fn array(Self, Spec[Qualifier[Bool], ArrayType]) -> Int32? = _
   /// The size of the biggest union element, excluding trailing padding.
-  fn union(Self, Spec[Unit, Compound]) -> Int? = _
+  fn union(Self, Spec[Unit, Compound]) -> Int32? = _
   /// The total size of a structure including the padding between fields,
   /// but excluding the trailing padding.
-  fn structure(Self, Spec[Unit, Compound]) -> Int? = _
+  fn structure(Self, Spec[Unit, Compound]) -> Int32? = _
   /// The size of an integral type.
   fn integer(Self, Basic) -> @types.Size = _
   /// The size of a pointer.
@@ -238,7 +238,7 @@ impl Ruler with fn array(self, s) {
 
 ///|
 impl Ruler with fn union(self, s) {
-  let mut result : Int? = None
+  let mut result : Int32? = None
   for field in s.t.fields {
     match self.bits(field.1) {
       None => return None

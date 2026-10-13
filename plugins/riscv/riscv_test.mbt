@@ -12,7 +12,7 @@ fn show_args(args : @c.Args?) -> String {
 }
 
 ///|
-fn proto(args : Array[@c.CType], return_? : @c.CType = Void) -> @c.Proto {
+fn proto(args : Array[@c.CType], return_~ : @c.CType = Void) -> @c.Proto {
   { return_, args: args.mapi((i, t) => ("x\{i}", t)), variadic: false, }
 }
 

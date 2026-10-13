@@ -89,7 +89,7 @@ pub fn KB::register_loader(
   name~ : String,
   from_file~ : (@knowledge.State, String) -> OgreDoc? raise,
   from_data~ : (@knowledge.State, Bytes) -> OgreDoc? raise,
-  state? : @knowledge.State = kb_loader_state,
+  state~ : @knowledge.State = kb_loader_state,
 ) -> Result[Unit, String] {
   register_loader(
     name~,

@@ -1,8 +1,8 @@
 ///|
-let program_unit_counter : Ref[Int] = Ref(0)
+let program_unit_counter : Ref[Int32] = Ref(0)
 
 ///|
-let interned_program_unit_ids : Map[String, Int] = Map([])
+let interned_program_unit_ids : Map[String, Int32] = Map([])
 
 ///|
 pub(all) enum Language {
@@ -121,7 +121,7 @@ struct Compiler {
 
 ///|
 struct ProgramUnit {
-  id_value : Int
+  id_value : Int32
   pkg_value : String
   path_value : String?
   lower_value : @types.Word?
@@ -140,7 +140,7 @@ struct Program {
 }
 
 ///|
-fn next_program_unit_id() -> Int {
+fn next_program_unit_id() -> Int32 {
   program_unit_counter.val = program_unit_counter.val + 1
   program_unit_counter.val
 }
@@ -151,7 +151,7 @@ fn program_unit_pkg(pkg? : String) -> String {
 }
 
 ///|
-fn interned_program_unit_id(kind : String, value : String) -> Int {
+fn interned_program_unit_id(kind : String, value : String) -> Int32 {
   let key = "\{kind}|\{value}"
   match interned_program_unit_ids.get(key) {
     Some(id) => id
@@ -304,7 +304,7 @@ pub fn Language::name(self : Language) -> @knowledge.Name {
 }
 
 ///|
-pub fn Language::hash(self : Language) -> Int {
+pub fn Language::hash(self : Language) -> Int32 {
   self.name().hash()
 }
 
@@ -366,7 +366,7 @@ pub fn Language::is_unknown(self : Language) -> Bool {
 }
 
 ///|
-fn Language::rank(self : Language) -> Int {
+fn Language::rank(self : Language) -> Int32 {
   match self {
     C => 0
     Cxx => 1
@@ -413,7 +413,7 @@ pub fn Language::equal(self : Language, other : Language) -> Bool {
 }
 
 ///|
-pub fn Language::compare(self : Language, other : Language) -> Int {
+pub fn Language::compare(self : Language, other : Language) -> Int32 {
   let rank_order = self.rank().compare(other.rank())
   if rank_order != 0 {
     return rank_order
@@ -481,7 +481,7 @@ pub fn Source::equal(self : Source, other : Source) -> Bool {
 }
 
 ///|
-fn optional_string_compare(lhs : String?, rhs : String?) -> Int {
+fn optional_string_compare(lhs : String?, rhs : String?) -> Int32 {
   match (lhs, rhs) {
     (None, None) => 0
     (None, Some(_)) => -1
@@ -491,7 +491,7 @@ fn optional_string_compare(lhs : String?, rhs : String?) -> Int {
 }
 
 ///|
-pub fn Source::compare(self : Source, other : Source) -> Int {
+pub fn Source::compare(self : Source, other : Source) -> Int32 {
   let language_order = self.language_value.compare(other.language_value)
   if language_order != 0 {
     return language_order
@@ -557,7 +557,7 @@ fn persistent_string_fields() -> @knowledge.Persistent[Array[String]] {
 ///|
 fn persistent_decode_fields(
   fields : Array[String],
-  count : Int,
+  count : Int32,
   context : String,
 ) -> Result[Array[String], String] {
   if fields.length() == count {
@@ -787,7 +787,7 @@ pub fn Compiler::persistent() -> @knowledge.Persistent[Compiler] {
 }
 
 ///|
-fn ensure_program_unit_counter_at_least(id : Int) -> Unit {
+fn ensure_program_unit_counter_at_least(id : Int32) -> Unit {
   if program_unit_counter.val < id {
     program_unit_counter.val = id
   }
@@ -795,7 +795,7 @@ fn ensure_program_unit_counter_at_least(id : Int) -> Unit {
 
 ///|
 fn ProgramUnit::make(
-  id? : Int,
+  id? : Int32,
   pkg? : String,
   path? : String,
   lower? : @types.Word,
@@ -891,7 +891,7 @@ pub fn ProgramUnit::for_region(
 }
 
 ///|
-pub fn ProgramUnit::id(self : ProgramUnit) -> Int {
+pub fn ProgramUnit::id(self : ProgramUnit) -> Int32 {
   self.id_value
 }
 
@@ -901,7 +901,7 @@ pub fn ProgramUnit::same(self : ProgramUnit, other : ProgramUnit) -> Bool {
 }
 
 ///|
-pub fn ProgramUnit::compare(self : ProgramUnit, other : ProgramUnit) -> Int {
+pub fn ProgramUnit::compare(self : ProgramUnit, other : ProgramUnit) -> Int32 {
   self.id_value.compare(other.id_value)
 }
 
@@ -1253,7 +1253,7 @@ fn optional_target_equal(lhs : Target?, rhs : Target?) -> Bool {
 }
 
 ///|
-fn optional_target_compare(lhs : Target?, rhs : Target?) -> Int {
+fn optional_target_compare(lhs : Target?, rhs : Target?) -> Int32 {
   match (lhs, rhs) {
     (None, None) => 0
     (None, Some(_)) => -1
@@ -1266,7 +1266,7 @@ fn optional_target_compare(lhs : Target?, rhs : Target?) -> Int {
 fn program_unit_array_compare(
   lhs : Array[ProgramUnit],
   rhs : Array[ProgramUnit],
-) -> Int {
+) -> Int32 {
   let limit = if lhs.length() < rhs.length() {
     lhs.length()
   } else {
@@ -1282,7 +1282,7 @@ fn program_unit_array_compare(
 }
 
 ///|
-fn label_array_compare(lhs : Array[Label], rhs : Array[Label]) -> Int {
+fn label_array_compare(lhs : Array[Label], rhs : Array[Label]) -> Int32 {
   let limit = if lhs.length() < rhs.length() {
     lhs.length()
   } else {
@@ -1305,7 +1305,7 @@ pub fn Program::equal(self : Program, other : Program) -> Bool {
 }
 
 ///|
-pub fn Program::compare(self : Program, other : Program) -> Int {
+pub fn Program::compare(self : Program, other : Program) -> Int32 {
   let unit_order = program_unit_array_compare(
     self.units_value,
     other.units_value,

@@ -21,7 +21,7 @@ pub fn must_escape(atom : String) -> Bool {
 }
 
 ///|
-fn write_escaped_byte(buf : StringBuilder, b : Int) -> Unit {
+fn write_escaped_byte(buf : StringBuilder, b : Int32) -> Unit {
   match b {
     0x22 => buf.write_string("\\\"")
     0x5C => buf.write_string("\\\\")

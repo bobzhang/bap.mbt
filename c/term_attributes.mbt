@@ -182,7 +182,7 @@ fn layout_to_json(l : Layout) -> Json {
 }
 
 ///|
-fn layout_datum_to_json(d : Datum[Obj[Layout], Int]) -> Json {
+fn layout_datum_to_json(d : Datum[Obj[Layout], Int32]) -> Json {
   match d {
     Imm(size, obj) => {
       let obj : Json = match obj {
@@ -209,7 +209,7 @@ fn layout_of_json(json : Json) -> Layout? {
 }
 
 ///|
-fn layout_datum_of_json(json : Json) -> Datum[Obj[Layout], Int]? {
+fn layout_datum_of_json(json : Json) -> Datum[Obj[Layout], Int32]? {
   match json {
     [String("Imm"), Number(size, ..), obj] => {
       let obj : Obj[Layout] = match obj {

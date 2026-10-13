@@ -2,8 +2,8 @@
 /// The size constraints of a `patternpairs` element: the minimal total
 /// number of non-masked bits and in the postpattern part.
 pub(all) struct Sizes {
-  total : Int
-  post : Int
+  total : Int32
+  post : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -69,7 +69,7 @@ pub fn Rule::to_string(self : Rule) -> String {
 pub struct Case {
   pattern : Pattern
   actions : ActionSet
-  shifted : Int
+  shifted : Int32
 }
 
 ///|

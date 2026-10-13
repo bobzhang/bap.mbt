@@ -129,7 +129,7 @@ fn Term::live_exit_vars(self : Term[Sub], keep : Array[Var]) -> Array[Var] {
 ///
 /// Variables in `keep` are kept live at the exit from the subroutine, in
 /// addition to the free variables of `Out`/`Both` arguments.
-pub fn Live::compute(sub : Term[Sub], keep? : Array[Var] = []) -> Live {
+pub fn Live::compute(sub : Term[Sub], keep~ : Array[Var] = []) -> Live {
   let graph = sub.sub_tid_graph()
   let (order, blks) = sub.live_block_transitions()
   let exit_vars = sub.live_exit_vars(keep)
@@ -149,7 +149,7 @@ pub fn Live::compute(sub : Term[Sub], keep? : Array[Var] = []) -> Live {
 
 ///|
 /// Method-style alias of `Live::compute`.
-pub fn Term::sub_live(self : Term[Sub], keep? : Array[Var] = []) -> Live {
+pub fn Term::sub_live(self : Term[Sub], keep~ : Array[Var] = []) -> Live {
   Live::compute(self, keep~)
 }
 

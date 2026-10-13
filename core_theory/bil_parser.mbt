@@ -24,7 +24,7 @@ fn bil_is_big(endian : @bitvec.Endian) -> @types.Exp {
 }
 
 ///|
-fn bil_byte(n : Int) -> @types.Exp {
+fn bil_byte(n : Int32) -> @types.Exp {
   Int(@types.Word::from_bitvec(bitvec_of_int(8, n) catch { _ => @bitvec.b0() }))
 }
 

@@ -24,8 +24,8 @@ fn empty_project() -> @project.Project {
 fn run_lisp(
   src : String,
   name : String,
-  args : Array[Int],
-  proj? : @project.Project = empty_project(),
+  args : Array[Int32],
+  proj~ : @project.Project = empty_project(),
 ) -> (String, Array[String]) raise {
   let prog = lisp_program(src)
   let result : Ref[String] = Ref("<none>")

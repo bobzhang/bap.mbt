@@ -84,29 +84,29 @@ pub struct Machine {
   priv args : Array[String]
   priv envp : Array[String]
   priv mut current : Proc
-  priv procs : Map[Int, Proc]
-  priv parents : Map[Int, Int]
+  priv procs : Map[Int32, Proc]
+  priv parents : Map[Int32, Int32]
   priv mut global : Bag
-  priv mut last_id : Int
-  priv observers : Map[Int, Array[(Int, () -> Unit raise)]]
-  priv watchers : Map[Int, Array[(Int, (Sexp) -> Unit raise)]]
-  priv mut last_sub : Int
+  priv mut last_id : Int32
+  priv observers : Map[Int32, Array[(Int32, () -> Unit raise)]]
+  priv watchers : Map[Int32, Array[(Int32, (Sexp) -> Unit raise)]]
+  priv mut last_sub : Int32
   priv mut restricted : Bool
-  priv deathrow : Array[Int]
+  priv deathrow : Array[Int32]
   priv pending : Array[Pending]
   priv mut applying : Bool
-  priv mut depth : Int
-  priv mut nested : Int
+  priv mut depth : Int32
+  priv mut nested : Int32
   priv deferred : Array[Frame]
   priv mut last_value : Int64
-  priv mut last_barrier : Int
+  priv mut last_barrier : Int32
 }
 
 ///|
 /// A fork: its identifier, its local state bag, its result register, the
 /// arguments of the innermost call and its control stack.
 priv struct Proc {
-  id : Int
+  id : Int32
   mut locals : Bag
   mut stack : Stack
   mut result : Value?
@@ -116,7 +116,7 @@ priv struct Proc {
 ///|
 /// A fork or switch request together with the machine that issued it.
 priv struct Pending {
-  issuer : Int
+  issuer : Int32
   op : PendingOp
 }
 
@@ -151,8 +151,8 @@ pub impl Show for ForkStatus with fn output(self, logger) {
 /// restriction after `boot`.
 pub fn Machine::new(
   proj : @project.Project,
-  args? : Array[String] = [],
-  envp? : Array[String] = [],
+  args~ : Array[String] = [],
+  envp~ : Array[String] = [],
 ) -> Machine {
   {
     proj,
@@ -366,12 +366,12 @@ pub fn Machine::status(self : Machine, id : Id) -> ForkStatus {
 }
 
 ///|
-fn Machine::is_alive(self : Machine, id : Int) -> Bool {
+fn Machine::is_alive(self : Machine, id : Int32) -> Bool {
   id == self.current.id || self.procs.contains(id)
 }
 
 ///|
-fn Machine::live_parent(self : Machine, id : Int) -> Int {
+fn Machine::live_parent(self : Machine, id : Int32) -> Int32 {
   for i = id {
     match self.parents.get(i) {
       None => break 0
@@ -448,7 +448,7 @@ pub fn Machine::switch(
 ///|
 fn Machine::with_context(
   self : Machine,
-  id : Int,
+  id : Int32,
   f : () -> Unit raise,
 ) -> Unit raise {
   if id == self.current.id {
@@ -522,7 +522,7 @@ fn Machine::snapshot(self : Machine) -> Proc {
 /// the `then` continuation of the request itself (on top).
 fn Machine::push_continuation(
   self : Machine,
-  issuer : Int,
+  issuer : Int32,
   then : ((Machine) -> Unit raise)?,
 ) -> Unit {
   let rest = []

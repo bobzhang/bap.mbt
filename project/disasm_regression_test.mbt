@@ -60,7 +60,7 @@ fn regression_disassemble(
         fresh = true
         out.write_char(c)
         out.write_char('_')
-      } else if fresh && c is ('0'..='9') {
+      } else if fresh && c is ('0'..<='9') {
         ()
       } else {
         fresh = false
@@ -117,10 +117,10 @@ test "a predicated ARM return is not a barrier" {
 /// with the Primus Lisp semantics, not loaded here): `b.cond` and `cbz`
 /// jump under a condition, `ret` jumps to the link register.
 fn regression_a64_lifter() -> @mc.Provider {
-  let v = (name : String, width : Int) => {
+  let v = (name : String, width : Int32) => {
     @types.Exp::Var(@types.Var::new(name~, typ=Imm(width)))
   }
-  let target = (insn : @mc.Insn, index : Int) => {
+  let target = (insn : @mc.Insn, index : Int32) => {
     match insn.op(index) {
       Some(Imm(off)) =>
         @types.Exp::Int(

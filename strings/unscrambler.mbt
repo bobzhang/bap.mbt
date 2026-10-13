@@ -1,7 +1,7 @@
 ///|
 struct StringsAlphabet {
-  length_value : Int
-  index_fn : (Byte) -> Int
+  length_value : Int32
+  index_fn : (Byte) -> Int32
 }
 
 ///|
@@ -11,7 +11,7 @@ struct StringsUnscrambler {
 }
 
 ///|
-fn strings_byte_delta(byte : Byte, base : Byte) -> Int {
+fn strings_byte_delta(byte : Byte, base : Byte) -> Int32 {
   byte.to_int() - base.to_int()
 }
 
@@ -40,7 +40,7 @@ fn strings_uppercase(byte : Byte) -> Byte {
 }
 
 ///|
-fn strings_ascii_alpha_index(byte : Byte) -> Int {
+fn strings_ascii_alpha_index(byte : Byte) -> Int32 {
   if strings_is_upper(byte) {
     strings_byte_delta(byte, b'A')
   } else {
@@ -49,30 +49,30 @@ fn strings_ascii_alpha_index(byte : Byte) -> Int {
 }
 
 ///|
-fn strings_ascii_alpha_caseless_index(byte : Byte) -> Int {
+fn strings_ascii_alpha_caseless_index(byte : Byte) -> Int32 {
   strings_byte_delta(strings_uppercase(byte), b'A')
 }
 
 ///|
-fn strings_ascii_digit_index(byte : Byte) -> Int {
+fn strings_ascii_digit_index(byte : Byte) -> Int32 {
   strings_byte_delta(byte, b'0')
 }
 
 ///|
 pub fn StringsAlphabet::create(
-  length~ : Int,
-  index~ : (Byte) -> Int,
+  length~ : Int32,
+  index~ : (Byte) -> Int32,
 ) -> StringsAlphabet {
   { length_value: length, index_fn: index, }
 }
 
 ///|
-pub fn StringsAlphabet::length(self : StringsAlphabet) -> Int {
+pub fn StringsAlphabet::length(self : StringsAlphabet) -> Int32 {
   self.length_value
 }
 
 ///|
-pub fn StringsAlphabet::index(self : StringsAlphabet, byte : Byte) -> Int {
+pub fn StringsAlphabet::index(self : StringsAlphabet, byte : Byte) -> Int32 {
   (self.index_fn)(byte)
 }
 
@@ -135,7 +135,7 @@ pub fn StringsAlphabet::printable() -> StringsAlphabet {
 fn StringsAlphabet::spectrum(
   self : StringsAlphabet,
   word : BytesView,
-) -> Array[Int] {
+) -> Array[Int32] {
   let counts = Array::make(self.length_value, 0)
   for byte in word {
     let index = self.index(byte)
@@ -148,8 +148,8 @@ fn StringsAlphabet::spectrum(
 
 ///|
 fn strings_spectrum_subset(
-  available : ArrayView[Int],
-  needed : ArrayView[Int],
+  available : ArrayView[Int32],
+  needed : ArrayView[Int32],
 ) -> Bool {
   if available.length() != needed.length() {
     false
@@ -165,7 +165,10 @@ fn strings_spectrum_subset(
 }
 
 ///|
-fn strings_compare_spectrum(lhs : ArrayView[Int], rhs : ArrayView[Int]) -> Int {
+fn strings_compare_spectrum(
+  lhs : ArrayView[Int32],
+  rhs : ArrayView[Int32],
+) -> Int32 {
   let limit = if lhs.length() < rhs.length() {
     lhs.length()
   } else {

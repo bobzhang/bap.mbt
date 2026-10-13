@@ -9,7 +9,7 @@
 
 ///|
 /// A Thumb-2 8-bit immediate offset: LLVM encodes `#-0` as `INT32_MIN`.
-fn t2_offset(x : UInt) -> @types.Exp {
+fn t2_offset(x : UInt32) -> @types.Exp {
   int32(if x == 0x80000000 { 0 } else { x })
 }
 
@@ -41,7 +41,7 @@ fn lift_mem_t32(
   let single = (
     dest1 : Op,
     base : Op,
-    off : UInt,
+    off : UInt32,
     cond : Op,
     mode : ModeR,
     sign : Sign,
@@ -65,7 +65,7 @@ fn lift_mem_t32(
     dest1 : Op,
     dest2 : Op,
     base : Op,
-    off : UInt,
+    off : UInt32,
     cond : Op,
     mode : ModeR,
     operation : Operation,

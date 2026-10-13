@@ -191,14 +191,14 @@ test "mcg generators" {
 
 ///|
 test "iterators" {
-  let count : @primus.Iterator[Int, Int] = Fin({
+  let count : @primus.Iterator[Int32, Int32] = Fin({
     min: 0,
     max: 3,
     value: x => x,
     next: x => if x < 3 { Some(x + 1) } else { None },
   })
   debug_inspect(count.to_iter(0).collect(), content="[0, 1, 2, 3]")
-  let evens : @primus.Iterator[Int, Int] = Inf({
+  let evens : @primus.Iterator[Int32, Int32] = Inf({
     min: 0,
     max: 100,
     value: x => x * 2,

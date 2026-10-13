@@ -19,7 +19,7 @@ test "extensions" {
     ),
   )
   let init = state([("R1", 0x100), ("R2", 0x8081F2F3)])
-  let ext = (name : String, rot : Int) => {
+  let ext = (name : String, rot : Int32) => {
     let s = run(name, [r("R0"), r("R2"), i(rot), ..al], init)
     reg_value(s, "R0")
   }
@@ -32,7 +32,7 @@ test "extensions" {
   assert_eq(ext("UXTH", 2), 0x8081)
   assert_eq(ext("SXTH", 0), 0xFFFFF2F3)
   assert_eq(ext("SXTH", 1), 0xFFFF81F2)
-  let ext_add = (name : String, rot : Int) => {
+  let ext_add = (name : String, rot : Int32) => {
     let s = run(name, [r("R0"), r("R1"), r("R2"), i(rot), ..al], init)
     reg_value(s, "R0")
   }
@@ -111,7 +111,7 @@ test "bit reversal" {
       #|R0:imm32 := (%r2:imm32 << %s3:imm32)
     ),
   )
-  let rbit = (x : UInt) => {
+  let rbit = (x : UInt32) => {
     let s = run("RBIT", [r("R0"), r("R1"), ..al], state([("R1", x)]))
     reg_value(s, "R0")
   }

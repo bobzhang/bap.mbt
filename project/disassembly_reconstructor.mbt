@@ -322,7 +322,7 @@ fn project_disassembly_reconstructor_find_node(
 fn project_disassembly_reconstructor_find_group(
   names : Array[String],
   name : String,
-) -> Int? {
+) -> Int32? {
   for index in 0..<names.length() {
     if names[index] == name {
       return Some(index)

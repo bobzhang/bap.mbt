@@ -32,7 +32,7 @@ pub extend Sexp with Debug::{to_repr}
 /// A syntax error at the given line (1-based) and column (0-based,
 /// counted in characters).
 pub(all) suberror ParseError {
-  ParseError(line~ : Int, column~ : Int, String)
+  ParseError(line~ : Int32, column~ : Int32, String)
 } derive(Eq, Debug)
 
 ///|

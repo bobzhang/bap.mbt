@@ -42,8 +42,8 @@ pub fn encoding(xlen : Xlen) -> @core_theory.Language {
 pub fn decode(
   bytes : BytesView,
   addr : UInt64,
-  xlen? : Xlen = RV64,
-  compressed? : Bool = true,
+  xlen~ : Xlen = RV64,
+  compressed~ : Bool = true,
 ) -> @mc.Insn? {
   if bytes.length() < 2 {
     return None
@@ -79,7 +79,7 @@ pub fn decode(
 ///|
 /// The size of the instruction starting with `bytes` (2 or 4), if the
 /// bytes hold at least its first halfword.
-fn instruction_size(bytes : BytesView) -> Int? {
+fn instruction_size(bytes : BytesView) -> Int32? {
   if bytes.length() < 2 {
     None
   } else if (bytes[0].to_int() & 3) != 3 {

@@ -3,8 +3,8 @@
 /// Descriptors are compared by name only, as upstream.
 pub struct Descriptor {
   name : String
-  addr_size : Int
-  data_size : Int
+  addr_size : Int32
+  data_size : Int32
 } derive(Debug)
 
 ///|
@@ -19,15 +19,18 @@ pub impl Compare for Descriptor with fn compare(self, other) {
 
 ///|
 pub fn Descriptor::create(
-  addr_size~ : Int,
-  data_size~ : Int,
+  addr_size~ : Int32,
+  data_size~ : Int32,
   name : String,
 ) -> Descriptor {
   { name, addr_size, data_size, }
 }
 
 ///|
-pub fn Descriptor::unknown(addr_size~ : Int, data_size~ : Int) -> Descriptor {
+pub fn Descriptor::unknown(
+  addr_size~ : Int32,
+  data_size~ : Int32,
+) -> Descriptor {
   Descriptor::create(addr_size~, data_size~, "unknown")
 }
 
@@ -37,12 +40,12 @@ pub fn Descriptor::name(self : Descriptor) -> String {
 }
 
 ///|
-pub fn Descriptor::addr_size(self : Descriptor) -> Int {
+pub fn Descriptor::addr_size(self : Descriptor) -> Int32 {
   self.addr_size
 }
 
 ///|
-pub fn Descriptor::data_size(self : Descriptor) -> Int {
+pub fn Descriptor::data_size(self : Descriptor) -> Int32 {
   self.data_size
 }
 
@@ -85,7 +88,7 @@ pub struct Memory {
 
 ///|
 fn empty_bank() -> Bank {
-  { values: @sorted_map.SortedMap::new(), layers: @list.List::new(), }
+  { values: @sorted_map.SortedMap::new(), layers: @list.List([]), }
 }
 
 ///|
@@ -245,7 +248,7 @@ fn target_endian(m : Machine) -> @bitvec.Endian {
 fn read_small(
   mem : @memory.Memory,
   addr : UInt64,
-  size : Int,
+  size : Int32,
 ) -> @types.Word raise {
   let off_bits = (addr - mem.min_addr()) * size.to_uint64()
   let full = off_bits / 8UL
@@ -268,7 +271,7 @@ fn read_small(
 fn read_word(
   mem : @memory.Memory,
   base : @types.Word,
-  size : Int,
+  size : Int32,
 ) -> @types.Word raise {
   let b = addr_to_u64(base).unwrap_or(0UL)
   if size < 8 {
@@ -439,8 +442,8 @@ fn Memory::add_layer(m : Machine, layer : Layer) -> Bank {
 /// `[lower, upper)`, so a one-cell allocation was never initialized).
 pub fn Memory::add_region(
   m : Machine,
-  read_only? : Bool = false,
-  executable? : Bool = false,
+  read_only~ : Bool = false,
+  executable~ : Bool = false,
   init? : (@types.Word) -> @types.Word raise,
   generator? : Generator,
   lower~ : @types.Word,
@@ -477,12 +480,12 @@ pub fn Memory::add_region(
 /// Allocates `len` cells starting at `base` (`Memory.allocate`).
 pub fn Memory::allocate(
   m : Machine,
-  read_only? : Bool = false,
-  executable? : Bool = false,
+  read_only~ : Bool = false,
+  executable~ : Bool = false,
   init? : (@types.Word) -> @types.Word raise,
   generator? : Generator,
   base : @types.Word,
-  len : Int,
+  len : Int32,
 ) -> Unit raise {
   Memory::add_region(
     m,
@@ -499,8 +502,8 @@ pub fn Memory::allocate(
 /// Maps a static memory chunk (`Memory.map`).
 pub fn Memory::map(
   m : Machine,
-  read_only? : Bool = false,
-  executable? : Bool = false,
+  read_only~ : Bool = false,
+  executable~ : Bool = false,
   mem : @memory.Memory,
 ) -> Unit {
   Memory::put_curr(

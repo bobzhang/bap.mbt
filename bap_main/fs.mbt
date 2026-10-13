@@ -68,7 +68,7 @@ pub fn FileSystem::native() -> FileSystem {
 /// Useful for tests and for embedding.
 pub fn FileSystem::in_memory(
   files~ : Array[(String, String)],
-  dirs? : Array[String] = [],
+  dirs~ : Array[String] = [],
 ) -> FileSystem {
   let file_map : Map[String, Bytes] = Map([])
   for entry in files {

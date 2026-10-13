@@ -1,12 +1,12 @@
 // Helpers shared by the black-box tests of the taint package.
 
 ///|
-fn w64(n : Int) -> @types.Word {
+fn w64(n : Int32) -> @types.Word {
   try! @types.Word::of_int(width=64, n)
 }
 
 ///|
-fn int64(n : Int) -> @types.Exp {
+fn int64(n : Int32) -> @types.Exp {
   Int(w64(n))
 }
 
@@ -24,7 +24,7 @@ fn mem_var() -> @types.Var {
 /// A definition located at the given address (so that the program
 /// counter changes when it is entered).
 fn def_at(
-  addr : Int,
+  addr : Int32,
   v : @types.Var,
   e : @types.Exp,
 ) -> @types.Term[@types.Def] {
@@ -54,8 +54,8 @@ fn project(blks : Array[@types.Term[@types.Blk]]) -> @project.Project {
 /// runs at the end of every machine.
 fn run(
   blks : Array[@types.Term[@types.Blk]],
-  init? : (@primus.Machine) -> Unit raise = _ => (),
-  fini? : (@primus.Machine) -> Unit raise = _ => (),
+  init~ : (@primus.Machine) -> Unit raise = _ => (),
+  fini~ : (@primus.Machine) -> Unit raise = _ => (),
 ) -> String {
   let (status, _) = @primus.Machine::run(
     project(blks),
@@ -101,7 +101,7 @@ fn direct_of(m : @primus.Machine, target : @types.Var) -> String {
 
 ///|
 /// The objects indirectly attached to the address.
-fn indirect_at(m : @primus.Machine, addr : Int) -> String {
+fn indirect_at(m : @primus.Machine, addr : Int32) -> String {
   let a = @primus.Value::of_word(m, w64(addr))
   objects_string(@taint.Tracker::lookup(m, a, Indirect))
 }

@@ -61,7 +61,7 @@ fn agent_vote_key(agents : Array[Agent]) -> String {
 }
 
 ///|
-fn agent_vote_weight(agents : Array[Agent]) -> Int {
+fn agent_vote_weight(agents : Array[Agent]) -> Int32 {
   let mut weight = 0
   for agent in agents {
     weight = weight + agent.weight()
@@ -73,7 +73,7 @@ fn agent_vote_weight(agents : Array[Agent]) -> Int {
 fn[T] opinion_entry_compare(
   left : OpinionEntry[T],
   right : OpinionEntry[T],
-) -> Int {
+) -> Int32 {
   let weight_order = agent_vote_weight(left.votes).compare(
     agent_vote_weight(right.votes),
   )
@@ -146,7 +146,7 @@ pub fn[T] Opinions::is_empty(self : Opinions[T]) -> Bool {
 }
 
 ///|
-pub fn[T] Opinions::total_weight(self : Opinions[T]) -> Int {
+pub fn[T] Opinions::total_weight(self : Opinions[T]) -> Int32 {
   let mut weight = 0
   for entry in self.entries_value {
     weight = weight + agent_vote_weight(entry.votes)
@@ -158,7 +158,7 @@ pub fn[T] Opinions::total_weight(self : Opinions[T]) -> Int {
 pub fn[T] Opinions::compare_votes(
   self : Opinions[T],
   other : Opinions[T],
-) -> Int {
+) -> Int32 {
   self.total_weight().compare(other.total_weight())
 }
 

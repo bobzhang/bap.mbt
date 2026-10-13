@@ -11,8 +11,8 @@ pub extend BitVecOrder with Eq::{not_equal, equal}
 pub extend BitVecOrder with Debug::{to_repr}
 
 ///|
-pub fn BitVec::compare(self : BitVec, other : BitVec) -> Int {
-  let count = Int::max(self.limbs.length(), other.limbs.length())
+pub fn BitVec::compare(self : BitVec, other : BitVec) -> Int32 {
+  let count = Int32::max(self.limbs.length(), other.limbs.length())
   let mut result = 0
   for offset in 0..<count {
     if result == 0 {
@@ -34,7 +34,7 @@ pub fn BitVec::compare(self : BitVec, other : BitVec) -> Int {
 }
 
 ///|
-pub fn compare(lhs : BitVec, rhs : BitVec) -> Int {
+pub fn compare(lhs : BitVec, rhs : BitVec) -> Int32 {
   lhs.compare(rhs)
 }
 
@@ -68,7 +68,7 @@ pub fn BitVecOrder::compare(
   self : BitVecOrder,
   lhs : BitVec,
   rhs : BitVec,
-) -> Int {
+) -> Int32 {
   match self {
     BitVecAscending => lhs.compare(rhs)
     BitVecDescending => rhs.compare(lhs)

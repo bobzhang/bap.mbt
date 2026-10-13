@@ -2,14 +2,14 @@
 /// Writes a `segment_command_64` (without its sections).
 fn Buf::segment64(
   self : Buf,
-  off : Int,
+  off : Int32,
   name : String,
   vmaddr~ : UInt64,
   vmsize~ : UInt64,
   fileoff~ : UInt64,
   filesize~ : UInt64,
   prot~ : UInt64,
-  nsects? : Int = 0,
+  nsects~ : Int32 = 0,
 ) -> Unit {
   self.u32(off, 0x19)
   self.u32(off + 4, (72 + 80 * nsects).to_uint64())
@@ -27,18 +27,18 @@ fn Buf::segment64(
 /// Writes a `section_64`.
 fn Buf::section64(
   self : Buf,
-  off : Int,
+  off : Int32,
   sectname : String,
   segname : String,
   addr~ : UInt64,
   size~ : UInt64,
   offset~ : UInt64,
-  align? : UInt64 = 0,
+  align~ : UInt64 = 0,
   flags~ : UInt64,
-  reloff? : UInt64 = 0,
-  nreloc? : UInt64 = 0,
-  reserved1? : UInt64 = 0,
-  reserved2? : UInt64 = 0,
+  reloff~ : UInt64 = 0,
+  nreloc~ : UInt64 = 0,
+  reserved1~ : UInt64 = 0,
+  reserved2~ : UInt64 = 0,
 ) -> Unit {
   self.str(off, sectname)
   self.str(off + 16, segname)
@@ -57,11 +57,11 @@ fn Buf::section64(
 /// Writes an `nlist_64`.
 fn Buf::nlist64(
   self : Buf,
-  off : Int,
+  off : Int32,
   strx : UInt64,
-  n_type : Int,
-  n_sect : Int,
-  n_desc : Int,
+  n_type : Int32,
+  n_sect : Int32,
+  n_desc : Int32,
   value : UInt64,
 ) -> Unit {
   self.u32(off, strx)
@@ -275,7 +275,7 @@ pub let arm64_macho_code : Bytes = b"\xfd\x7b\xbf\xa9\x03\x00\x00\x94\xfd\x7b\xc
 /// `__text` (see `arm64_macho_code`), `__LINKEDIT`, a symbol table with
 /// `_main` and `_foo`, and `LC_MAIN`. The CPU subtype is `arm64e` when
 /// `arm64e` is set.
-pub fn arm64_macho(arm64e? : Bool = false) -> Bytes {
+pub fn arm64_macho(arm64e~ : Bool = false) -> Bytes {
   let b = Buf::new(0x1030)
   b.header64(
     0x0100000c,

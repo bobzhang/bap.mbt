@@ -20,12 +20,12 @@ priv struct FE {
 using @core_theory {type Pure, type Sort}
 
 ///|
-fn bits_sort(n : Int) -> Sort {
+fn bits_sort(n : Int32) -> Sort {
   Sort::bitv(n)
 }
 
 ///|
-fn sort_size(s : Sort) -> Int {
+fn sort_size(s : Sort) -> Int32 {
   match s.bitv_size() {
     Some(n) => n
     None => if s == Sort::bool() { 1 } else { 0 }
@@ -109,7 +109,7 @@ fn fbits_sort(fsort : Sort) -> Sort {
 // Bitvector helpers (upstream module `B`).
 
 ///|
-fn FE::of_int(self : FE, s : Sort, n : Int) -> Pure {
+fn FE::of_int(self : FE, s : Sort, n : Int32) -> Pure {
   self.b.of_int(s, n)
 }
 
@@ -446,7 +446,7 @@ fn FE::round(
 ///|
 /// The maximum exponent that fits in `n` bits (reserving one for special
 /// numbers).
-fn max_exponent1(n : Int) -> Int {
+fn max_exponent1(n : Int32) -> Int32 {
   @math.pow(2.0, n.to_double()).to_int() - 2
 }
 
@@ -462,7 +462,7 @@ fn FE::min_exponent(self : FE, s : Sort) -> Pure {
 
 ///|
 /// The power of 2 nearest to `num` (from above) and its exponent.
-fn nearest_pow2(num : Int) -> (Int, Int) {
+fn nearest_pow2(num : Int32) -> (Int32, Int32) {
   for pow = 0, n = 1 {
     let n1 = 2 * n
     if n1 >= num {
@@ -480,7 +480,7 @@ fn FE::clz(self : FE, x : Pure) -> Pure {
     let size = sort_size(sort)
     let (pow, num) = nearest_pow2(size)
     let sort1 = bits_sort(num)
-    let shifts : Array[(Int, Int)] = []
+    let shifts : Array[(Int32, Int32)] = []
     let mut prev = 0
     for p in 0..<pow {
       let curr = num / (2 << p)
@@ -488,7 +488,7 @@ fn FE::clz(self : FE, x : Pure) -> Pure {
       shifts.push((total, curr))
       prev = total
     }
-    fn go(lets : @list.List[Pure], x : Pure, i : Int) -> Pure {
+    fn go(lets : @list.List[Pure], x : Pure, i : Int32) -> Pure {
       if i >= shifts.length() {
         lets.fold(init=b.zero(sort), (acc, n) => b.add(acc, n))
       } else {
@@ -509,7 +509,7 @@ fn FE::clz(self : FE, x : Pure) -> Pure {
       }
     }
 
-    self.bind(go(@list.empty(), b.unsigned(sort1, x), 0), n => {
+    self.bind(go(@list.List([]), b.unsigned(sort1, x), 0), n => {
       self.bind(self.of_int(sort, num - size), dif => {
         b.ite(b.is_zero(x), self.of_int(sort, size), b.sub(n, dif))
       })
@@ -900,7 +900,7 @@ fn FE::fmul(self : FE, fsort : Sort, rm : Pure, x : Pure, y : Pure) -> Pure {
 }
 
 ///|
-fn FE::mask_bit(self : FE, sort : Sort, i : Int) -> Pure {
+fn FE::mask_bit(self : FE, sort : Sort, i : Int32) -> Pure {
   self.b.lshift(self.one(sort), self.of_int(sort, i))
 }
 
@@ -909,7 +909,7 @@ fn FE::mask_bit(self : FE, sort : Sort, i : Int) -> Pure {
 /// quotient and the gbit, round and sticky bits.
 fn FE::long_division(
   self : FE,
-  prec : Int,
+  prec : Int32,
   nomin : Pure,
   denom : Pure,
   f : (Pure, (Pure, Pure, Pure)) -> Pure,
@@ -920,7 +920,7 @@ fn FE::long_division(
   let lost_zero = (b.b0, b.b0, b.b0)
   let lost_afew = (b.b0, b.b0, b.b1)
   with_sort(nomin, (sort, nomin) => {
-    fn go(i : Int, bits : @list.List[Pure], nomin : Pure) -> Pure {
+    fn go(i : Int32, bits : @list.List[Pure], nomin : Pure) -> Pure {
       if i < 0 {
         self.bind(bits.fold(init=b.zero(sort), (acc, x) => b.logor(acc, x)), coef => {
           self.match_([
@@ -944,7 +944,7 @@ fn FE::long_division(
       }
     }
 
-    go(prec - 1, @list.empty(), nomin)
+    go(prec - 1, @list.List([]), nomin)
   })
 }
 
@@ -1318,7 +1318,7 @@ fn FE::range_reconstruction(
 fn FE::horner(self : FE, fsort : Sort, x : Pure, cfs : Array[Pure]) -> Pure {
   let add = (x, y) => self.add_or_sub_finite(self.b.b0, fsort, self.b.rne, x, y)
   let mul = (x, y) => self.fmul_finite(fsort, self.b.rne, x, y)
-  fn sum(y : Pure, i : Int) -> Pure {
+  fn sum(y : Pure, i : Int32) -> Pure {
     if i >= cfs.length() {
       y
     } else {
@@ -1530,7 +1530,7 @@ fn Lets::normalize_coef(self : Lets, coef : Pure) -> (Pure, Pure) raise {
 fn Lets::bitv_extend(
   self : Lets,
   bitv : Pure,
-  addend : Int,
+  addend : Int32,
 ) -> (Pure, Sort) raise {
   let sort = self.sort_of(bitv)
   let sort1 = bits_sort(sort_size(sort) + addend)

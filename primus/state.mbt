@@ -24,7 +24,7 @@
 /// continuations: frames are shared between the parent and the child) and
 /// to custom generator iterator states (`next` must return a new state).
 pub struct State[T] {
-  priv id : Int
+  priv id : Int32
   priv uuid : String
   priv name : String
   priv init : (@project.Project) -> T
@@ -37,7 +37,7 @@ pub struct State[T] {
 let state_uuids : Map[String, String] = Map([])
 
 ///|
-let last_state_id : Ref[Int] = { val: 0, }
+let last_state_id : Ref[Int32] = { val: 0, }
 
 ///|
 fn is_hex_char(c : Char) -> Bool {
@@ -77,7 +77,7 @@ pub fn is_valid_uuid(uuid : String) -> Bool {
 pub fn[T] State::declare_(
   uuid~ : String,
   name~ : String,
-  inspect? : (T) -> Sexp = opaque_sexp,
+  inspect~ : (T) -> Sexp = opaque_sexp,
   clone? : (T) -> T,
   init : (@project.Project) -> T,
 ) -> State[T] {
@@ -127,8 +127,8 @@ pub fn[T] State::inspect(self : State[T], x : T) -> Sexp {
 /// universal map and keeps the bag immutable, so forking is O(1) unless
 /// some states declare a `clone` function.
 priv struct Bag {
-  slots : @sorted_map.SortedMap[Int, Slot]
-  cloneable : Int
+  slots : @sorted_map.SortedMap[Int32, Slot]
+  cloneable : Int32
 }
 
 ///|

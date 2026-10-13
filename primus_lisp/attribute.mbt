@@ -175,7 +175,7 @@ fn union_names(
 
 ///|
 /// A total order on names: by package, then by the unqualified name.
-pub fn compare_names(a : @knowledge.Name, b : @knowledge.Name) -> Int {
+pub fn compare_names(a : @knowledge.Name, b : @knowledge.Name) -> Int32 {
   let c = a.pkg().compare(b.pkg())
   if c != 0 {
     c
@@ -196,7 +196,7 @@ let custom_attributes : Map[
 /// attribute, the arguments are stored unparsed in `Attrs::custom`.
 pub fn declare_attribute(
   name : String,
-  check? : (String, Array[Tree]) -> Unit raise AttributeError = (_, _) => (),
+  check~ : (String, Array[Tree]) -> Unit raise AttributeError = (_, _) => (),
 ) -> Unit {
   let key = @knowledge.Name::read(name, pkg="core").show()
   custom_attributes[key] = check

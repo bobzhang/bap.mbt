@@ -1,5 +1,5 @@
 ///|
-fn signals(text : String, strip? : Bool = false) -> Array[@xml.Signal] raise {
+fn signals(text : String, strip~ : Bool = false) -> Array[@xml.Signal] raise {
   let input = @xml.Input::from_string(text, strip~)
   let out = []
   while !input.eoi() {
@@ -9,7 +9,7 @@ fn signals(text : String, strip? : Bool = false) -> Array[@xml.Signal] raise {
 }
 
 ///|
-fn show_signals(text : String, strip? : Bool = false) -> String raise {
+fn show_signals(text : String, strip~ : Bool = false) -> String raise {
   let buf = StringBuilder()
   for s in signals(text, strip~) {
     match s {

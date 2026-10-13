@@ -50,7 +50,7 @@ pub fn[V] PrefixTrie::is_empty(self : PrefixTrie[V]) -> Bool {
 }
 
 ///|
-pub fn[V] PrefixTrie::length(self : PrefixTrie[V]) -> Int {
+pub fn[V] PrefixTrie::length(self : PrefixTrie[V]) -> Int32 {
   // iterative: keys can be long
   let mut total = 0
   let stack = [self]
@@ -183,7 +183,7 @@ pub fn[V] PrefixTrie::iter(
 pub fn[V] PrefixTrie::longest_match(
   self : PrefixTrie[V],
   key : StringView,
-) -> (Int, V)? {
+) -> (Int32, V)? {
   self.longest_match_bytes(trie_key_bytes(key))
 }
 
@@ -191,9 +191,9 @@ pub fn[V] PrefixTrie::longest_match(
 fn[V] PrefixTrie::longest_match_bytes(
   self : PrefixTrie[V],
   key : BytesView,
-) -> (Int, V)? {
+) -> (Int32, V)? {
   let mut node = self
-  let mut best : (Int, V)? = match node.value {
+  let mut best : (Int32, V)? = match node.value {
     Some(value) => Some((0, value))
     None => None
   }
@@ -223,7 +223,7 @@ pub fn[V] SuffixTrie::is_empty(self : SuffixTrie[V]) -> Bool {
 }
 
 ///|
-pub fn[V] SuffixTrie::length(self : SuffixTrie[V]) -> Int {
+pub fn[V] SuffixTrie::length(self : SuffixTrie[V]) -> Int32 {
   self.trie.length()
 }
 
@@ -278,6 +278,6 @@ pub fn[V] SuffixTrie::iter(
 pub fn[V] SuffixTrie::longest_match(
   self : SuffixTrie[V],
   key : StringView,
-) -> (Int, V)? {
+) -> (Int32, V)? {
   self.trie.longest_match_bytes(reverse_trie_bytes(trie_key_bytes(key)))
 }

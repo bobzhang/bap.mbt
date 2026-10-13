@@ -23,7 +23,7 @@ fn render_insn(insn : @mc.Insn) -> String {
 }
 
 ///|
-fn be_bytes(word : UInt) -> Bytes {
+fn be_bytes(word : UInt32) -> Bytes {
   [
     (word >> 24).to_byte(),
     (word >> 16).to_byte(),
@@ -33,7 +33,7 @@ fn be_bytes(word : UInt) -> Bytes {
 }
 
 ///|
-fn le_bytes(word : UInt) -> Bytes {
+fn le_bytes(word : UInt32) -> Bytes {
   [
     word.to_byte(),
     (word >> 8).to_byte(),
@@ -88,9 +88,9 @@ test "decode: every sample decodes like llvm-mc, in both byte orders" {
 ///|
 /// Decode `word` (big endian) at `addr` and show its kinds.
 fn kinds_of(
-  word : UInt,
-  arch? : @mips.Arch = Mips32,
-  r6? : Bool = false,
+  word : UInt32,
+  arch~ : @mips.Arch = Mips32,
+  r6~ : Bool = false,
 ) -> String {
   match @mips.decode(be_bytes(word), 0x1000UL, arch~, r6~) {
     Some(insn) =>

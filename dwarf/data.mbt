@@ -21,7 +21,7 @@ pub extend DwarfSection with Debug::{to_repr}
 ///|
 struct DwarfSectionBuffer {
   data_value : Bytes
-  position_value : Int
+  position_value : Int32
 }
 
 ///|
@@ -99,7 +99,7 @@ pub fn DwarfSection::loc() -> DwarfSection {
 ///|
 pub fn DwarfSectionBuffer::create(
   data : Bytes,
-  position? : Int = 0,
+  position~ : Int32 = 0,
 ) -> Result[DwarfSectionBuffer, String] {
   if position < 0 || position > data.length() {
     Err("DWARF section buffer position is out of bounds")
@@ -114,19 +114,19 @@ pub fn DwarfSectionBuffer::data(self : DwarfSectionBuffer) -> Bytes {
 }
 
 ///|
-pub fn DwarfSectionBuffer::position(self : DwarfSectionBuffer) -> Int {
+pub fn DwarfSectionBuffer::position(self : DwarfSectionBuffer) -> Int32 {
   self.position_value
 }
 
 ///|
-pub fn DwarfSectionBuffer::pos(self : DwarfSectionBuffer) -> Int {
+pub fn DwarfSectionBuffer::pos(self : DwarfSectionBuffer) -> Int32 {
   self.position()
 }
 
 ///|
 pub fn DwarfSectionBuffer::with_position(
   self : DwarfSectionBuffer,
-  position : Int,
+  position : Int32,
 ) -> Result[DwarfSectionBuffer, String] {
   DwarfSectionBuffer::create(self.data_value, position~)
 }
@@ -134,7 +134,7 @@ pub fn DwarfSectionBuffer::with_position(
 ///|
 pub fn DwarfSectionBuffer::with_pos(
   self : DwarfSectionBuffer,
-  position : Int,
+  position : Int32,
 ) -> Result[DwarfSectionBuffer, String] {
   self.with_position(position)
 }
@@ -142,7 +142,7 @@ pub fn DwarfSectionBuffer::with_pos(
 ///|
 pub fn DwarfSectionBuffer::offset(
   self : DwarfSectionBuffer,
-  offset : Int,
+  offset : Int32,
 ) -> Result[DwarfSectionBuffer, String] {
   self.with_position(self.position_value + offset)
 }
@@ -150,7 +150,7 @@ pub fn DwarfSectionBuffer::offset(
 ///|
 pub fn DwarfSectionBuffer::with_off(
   self : DwarfSectionBuffer,
-  offset : Int,
+  offset : Int32,
 ) -> Result[DwarfSectionBuffer, String] {
   self.offset(offset)
 }
@@ -164,7 +164,7 @@ pub fn DwarfSectionBuffer::input(self : DwarfSectionBuffer) -> DwarfInput {
 fn dwarf_section_index(
   sections : Array[(DwarfSection, DwarfSectionBuffer)],
   section : DwarfSection,
-) -> Int? {
+) -> Int32? {
   sections.search_by(entry => entry.0 == section)
 }
 

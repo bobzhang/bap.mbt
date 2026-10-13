@@ -2,7 +2,7 @@
 // disassembler (thumbv7 Thumb-2), DO NOT EDIT. See `decode_ext.mbt`.
 
 ///|
-fn t32_t2_bin(key : Int) -> (String, String, String, UInt, Int)? {
+fn t32_t2_bin(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x10000010 =>
       Some(
@@ -93,7 +93,7 @@ fn t32_t2_bin(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn t32_t2_mul(key : Int) -> (String, String, String, UInt, Int)? {
+fn t32_t2_mul(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x10000010 =>
       Some(
@@ -198,7 +198,7 @@ fn t32_t2_mul(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn t32_t2_lmul(key : Int) -> (String, String, String, UInt, Int)? {
+fn t32_t2_lmul(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x48 =>
       Some(
@@ -268,7 +268,7 @@ fn t32_t2_lmul(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn t32_t2_dpreg(key : Int) -> (String, String, String, UInt, Int)? {
+fn t32_t2_dpreg(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x10000028 | 0x1000002c =>
       Some(
@@ -1018,7 +1018,7 @@ fn t32_t2_dpreg(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn t32_t2_ldst_t(key : Int) -> (String, String, String, UInt, Int)? {
+fn t32_t2_ldst_t(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x10000000 =>
       Some(
@@ -1137,7 +1137,7 @@ fn t32_t2_ldst_t(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn t32_t2_udf(key : Int) -> (String, String, String, UInt, Int)? {
+fn t32_t2_udf(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x0 => Some(("t2UDF", "Imm:%i%", "udf.w #%i%", 0x0U, -1))
     _ => None

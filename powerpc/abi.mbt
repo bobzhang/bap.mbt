@@ -9,9 +9,9 @@
 /// Classification of a C value for argument passing.
 pub(all) enum AbiValue {
   /// integers, pointers and aggregates of the given size in bits
-  Integral(Int)
+  Integral(Int32)
   /// floating-point values of the given size in bits
-  Floating(Int)
+  Floating(Int32)
 } derive(Eq, Debug)
 
 ///|
@@ -64,9 +64,9 @@ pub struct Sysv32Abi {
   /// floating-point return registers (`F0`)
   float_rets : Array[String]
   /// width of general purpose registers
-  gpr_bits : Int
+  gpr_bits : Int32
   /// width of floating point registers
-  fpr_bits : Int
+  fpr_bits : Int32
 }
 
 ///|
@@ -84,8 +84,8 @@ pub fn Sysv32Abi::new() -> Sysv32Abi {
 
 ///|
 /// Registers needed to hold `bits` in registers of `reg_bits`.
-fn registers_needed(bits : Int, reg_bits : Int) -> Int {
-  Int::max(1, (bits + reg_bits - 1) / reg_bits)
+fn registers_needed(bits : Int32, reg_bits : Int32) -> Int32 {
+  Int32::max(1, (bits + reg_bits - 1) / reg_bits)
 }
 
 ///|
@@ -93,8 +93,8 @@ fn registers_needed(bits : Int, reg_bits : Int) -> Int {
 /// is exhausted.
 fn take_registers(
   arena : Array[String],
-  next : Ref[Int],
-  count : Int,
+  next : Ref[Int32],
+  count : Int32,
 ) -> Array[String]? {
   if next.val + count > arena.length() {
     None
@@ -112,7 +112,7 @@ pub fn Sysv32Abi::layout(
   self : Sysv32Abi,
   args : ArrayView[AbiValue],
   ret? : AbiValue,
-  little_endian? : Bool = false,
+  little_endian~ : Bool = false,
 ) -> AbiLayout {
   let next_int = Ref(0)
   let next_float = Ref(0)

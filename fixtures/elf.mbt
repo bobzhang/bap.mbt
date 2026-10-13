@@ -2,14 +2,14 @@
 // executable: a tiny x86-64 ELF executable and file systems.
 
 ///|
-fn set_le(buf : Array[Byte], off : Int, v : UInt64, n : Int) -> Unit {
+fn set_le(buf : Array[Byte], off : Int32, v : UInt64, n : Int32) -> Unit {
   for i in 0..<n {
     buf[off + i] = ((v >> (i * 8)) & 0xffUL).to_byte()
   }
 }
 
 ///|
-fn put(buf : Array[Byte], off : Int, data : Bytes) -> Unit {
+fn put(buf : Array[Byte], off : Int32, data : Bytes) -> Unit {
   for i, b in data {
     buf[off + i] = b
   }
@@ -67,7 +67,7 @@ pub fn x86_64_elf() -> Bytes {
   set_le(buf, 112, 0x1000, 8)
   put(buf, text_off, text)
   // symbols: the null symbol, main, foo (STB_GLOBAL, STT_FUNC)
-  let sym = (i : Int, name : Int, value : UInt64, size : UInt64) => {
+  let sym = (i : Int32, name : Int32, value : UInt64, size : UInt64) => {
     let o = symtab_off + i * 24
     set_le(buf, o, name.to_uint64(), 4)
     buf[o + 4] = b'\x12'
@@ -80,16 +80,16 @@ pub fn x86_64_elf() -> Bytes {
   put(buf, strtab_off, strtab)
   put(buf, shstr_off, shstr)
   let sec = (
-    i : Int,
-    name : Int,
-    typ : Int,
+    i : Int32,
+    name : Int32,
+    typ : Int32,
     flags : UInt64,
     addr : UInt64,
-    off : Int,
-    size : Int,
-    link : Int,
-    info : Int,
-    entsize : Int,
+    off : Int32,
+    size : Int32,
+    link : Int32,
+    info : Int32,
+    entsize : Int32,
   ) => {
     let o = sh_off + i * 64
     set_le(buf, o, name.to_uint64(), 4)

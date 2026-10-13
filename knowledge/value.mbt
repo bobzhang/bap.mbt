@@ -10,14 +10,14 @@
 struct Value[K, S] {
   cls : Class[K, S]
   data : Record
-  time : Int
+  time : Int32
 }
 
 ///|
-let value_clock : Ref[Int] = { val: 0, }
+let value_clock : Ref[Int32] = { val: 0, }
 
 ///|
-fn next_second() -> Int {
+fn next_second() -> Int32 {
   value_clock.val = value_clock.val + 1
   value_clock.val
 }
@@ -57,7 +57,7 @@ pub fn[K, S] Value::order(
 ///|
 /// The total order of values: by information content, and values with
 /// non-comparable information are ordered by their age.
-pub fn[K, S] Value::compare(self : Value[K, S], other : Value[K, S]) -> Int {
+pub fn[K, S] Value::compare(self : Value[K, S], other : Value[K, S]) -> Int32 {
   match self.data.order(other.data) {
     Less => -1
     Equal => 0
@@ -202,7 +202,7 @@ pub extend MergeStrategy with Debug::{to_repr}
 pub fn[K, S] Value::merge(
   self : Value[K, S],
   other : Value[K, S],
-  on_conflict? : MergeStrategy = DropOld,
+  on_conflict~ : MergeStrategy = DropOld,
 ) -> Value[K, S] {
   let drop_left = match on_conflict {
     DropOld => self.time < other.time

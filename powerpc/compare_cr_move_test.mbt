@@ -270,7 +270,7 @@ fn spr_operand(n : Int64) -> @mc.Op {
 ///|
 /// Upstream encoding `XFX [31; 1; n; xo; 0]` (the 10-bit SPR field holds
 /// `n`).
-fn xfx_word(n : Int, xo : Int) -> UInt {
+fn xfx_word(n : Int32, xo : Int32) -> UInt32 {
   enc([(31, 6), (1, 5), (n, 10), (xo, 10), (0, 1)])
 }
 

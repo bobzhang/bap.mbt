@@ -12,10 +12,10 @@
 /// by the matcher (but are still counted by `weight`), as upstream does.
 pub struct Pattern {
   priv repr : String
-  priv bits : Array[Int]
-  priv mask : Array[Int]
-  priv pops : Int
-  priv size : Int
+  priv bits : Array[Int32]
+  priv mask : Array[Int32]
+  priv pops : Int32
+  priv size : Int32
 }
 
 ///|
@@ -39,11 +39,11 @@ pub extend PatternError with Eq::{not_equal, equal}
 pub extend PatternError with Debug::{to_repr}
 
 ///|
-fn hex_digit(c : Char) -> Int? {
+fn hex_digit(c : Char) -> Int32? {
   match c {
-    '0'..='9' => Some(c.to_int() - '0'.to_int())
-    'a'..='f' => Some(c.to_int() - 'a'.to_int() + 10)
-    'A'..='F' => Some(c.to_int() - 'A'.to_int() + 10)
+    '0'..<='9' => Some(c.to_int() - '0'.to_int())
+    'a'..<='f' => Some(c.to_int() - 'a'.to_int() + 10)
+    'A'..<='F' => Some(c.to_int() - 'A'.to_int() + 10)
     _ => None
   }
 }
@@ -108,7 +108,7 @@ pub fn Pattern::create(repr : String) -> Pattern raise PatternError {
   let size = bits.length()
   let nbytes = size / 8
   let skip = size - nbytes * 8
-  let byte_of = (xs : Array[Bool], n : Int) => {
+  let byte_of = (xs : Array[Bool], n : Int32) => {
     let mut v = 0
     for i in 0..<8 {
       v = (v << 1) | (if xs[skip + n * 8 + i] { 1 } else { 0 })
@@ -144,19 +144,19 @@ pub fn Pattern::concat(self : Pattern, other : Pattern) -> Pattern {
 
 ///|
 /// The number of bytes matched by the pattern.
-pub fn Pattern::length(self : Pattern) -> Int {
+pub fn Pattern::length(self : Pattern) -> Int32 {
   self.size / 8
 }
 
 ///|
 /// The number of non-masked bits.
-pub fn Pattern::weight(self : Pattern) -> Int {
+pub fn Pattern::weight(self : Pattern) -> Int32 {
   self.pops
 }
 
 ///|
 /// `true` if the byte `data` matches the `pos`-th byte of the pattern.
-pub fn Pattern::matches(self : Pattern, pos~ : Int, data : Int) -> Bool {
+pub fn Pattern::matches(self : Pattern, pos~ : Int32, data : Int32) -> Bool {
   match (self.mask.get(pos), self.bits.get(pos)) {
     (Some(m), Some(b)) => (data & m) == b
     _ => false

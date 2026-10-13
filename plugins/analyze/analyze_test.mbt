@@ -21,7 +21,7 @@ fn knowledge_base() -> Bytes raise {
 }
 
 ///|
-fn run_bap(argv : Array[String], stdin? : Array[String] = []) -> String {
+fn run_bap(argv : Array[String], stdin~ : Array[String] = []) -> String {
   let buf = StringBuilder()
   let lines = stdin.copy()
   try {

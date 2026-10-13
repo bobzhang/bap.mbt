@@ -26,7 +26,7 @@ struct Image {
 ///|
 pub(all) suberror ImageLookupError {
   MissingImageSegment(String, UInt64)
-  MissingImageSymbolMemory(String, UInt64, Int)
+  MissingImageSymbolMemory(String, UInt64, Int32)
 } derive(Eq, Debug)
 
 ///|
@@ -289,7 +289,7 @@ fn Image::with_loader_facts(self : Image, facts : OgreDoc?) -> Image {
 }
 
 ///|
-pub fn Image::addr_size(self : Image) -> Int {
+pub fn Image::addr_size(self : Image) -> Int32 {
   match self.target_value {
     Some(target) if target.bits() > 0 => target.bits()
     _ => 32
@@ -544,7 +544,7 @@ pub fn Image::symbols_of_segment(
 }
 
 ///|
-fn min_int(lhs : Int, rhs : Int) -> Int {
+fn min_int(lhs : Int32, rhs : Int32) -> Int32 {
   if lhs < rhs {
     lhs
   } else {
@@ -556,7 +556,7 @@ fn min_int(lhs : Int, rhs : Int) -> Int {
 fn Image::memory_chunks_at(
   self : Image,
   addr : UInt64,
-  size : Int,
+  size : Int32,
 ) -> Array[@memory.Memory]? {
   let size = if size <= 0 { 1 } else { size }
   let chunks = []
@@ -655,7 +655,7 @@ pub fn Image::memory_of_symbol_exn(
 
 ///|
 fn image_relocation_word(
-  width : Int,
+  width : Int32,
   value : UInt64,
 ) -> Result[@types.Word, String] {
   try @types.Word::of_uint64(width~, value) catch {
@@ -678,7 +678,7 @@ fn image_relocation_word_value(word : @types.Word) -> Result[UInt64, String] {
 fn image_memory_covers_word(
   memory : @memory.Memory,
   addr : UInt64,
-  width : Int,
+  width : Int32,
 ) -> Bool {
   let bytes = width / 8
   bytes > 0 &&
@@ -689,7 +689,7 @@ fn image_memory_covers_word(
 ///|
 fn image_relocation_memory_addend(
   relocation : Relocation,
-  width : Int,
+  width : Int32,
   memory : @memory.Memory,
 ) -> Result[UInt64, String] {
   match memory.load(relocation.fixup(), width~) {
@@ -701,7 +701,7 @@ fn image_relocation_memory_addend(
 ///|
 fn image_relocation_addend_value(
   relocation : Relocation,
-  width : Int,
+  width : Int32,
   memory : @memory.Memory,
   fallback_to_memory~ : Bool,
 ) -> Result[UInt64, String] {
@@ -720,7 +720,7 @@ fn image_relocation_addend_value(
 fn Image::relocation_value(
   self : Image,
   relocation : Relocation,
-  width : Int,
+  width : Int32,
   memory : @memory.Memory,
 ) -> Result[@types.Word?, String] {
   if relocation.is_relative() {
@@ -771,7 +771,7 @@ fn Image::apply_relocation_to_segments(
   self : Image,
   segments : Array[Segment],
   relocation : Relocation,
-  width : Int,
+  width : Int32,
 ) -> Result[Unit, String] {
   for i in 0..<segments.length() {
     let memory = segments[i].memory()
@@ -812,7 +812,7 @@ pub fn Image::with_applied_relocations(self : Image) -> Result[Image, String] {
 ///|
 pub fn Image::words(
   self : Image,
-  word_size~ : Int,
+  word_size~ : Int32,
 ) -> @memory.MemMap[@types.Word] {
   let bytes_per_word = word_size / 8
   let mut map = @memory.MemMap::empty()

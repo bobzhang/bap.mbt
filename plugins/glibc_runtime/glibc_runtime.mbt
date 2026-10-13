@@ -163,7 +163,7 @@ pub fn detect_main_address(prog : @types.Term[@types.Program]) -> @types.Word? {
 pub fn reinsert_args_for_new_name(
   sub : @types.Term[@types.Sub],
   new_name : String,
-  abi? : (@types.Term[@types.Sub]) -> @types.Term[@types.Sub] = sub => sub,
+  abi~ : (@types.Term[@types.Sub]) -> @types.Term[@types.Sub] = sub => sub,
 ) -> @types.Term[@types.Sub] {
   abi(sub.filter_args(_ => false).del_attr(c_proto_attr).with_name(new_name))
 }
@@ -173,7 +173,7 @@ pub fn reinsert_args_for_new_name(
 /// when the program has no `main` subroutine (`rename_main`).
 pub fn rename_main(
   prog : @types.Term[@types.Program],
-  abi? : (@types.Term[@types.Sub]) -> @types.Term[@types.Sub] = sub => sub,
+  abi~ : (@types.Term[@types.Sub]) -> @types.Term[@types.Sub] = sub => sub,
 ) -> @types.Term[@types.Program] {
   if !is_sub_absent(prog, "main") {
     return prog
@@ -214,7 +214,7 @@ pub fn rename_libc_start_main(
 /// when the project references glibc.
 pub fn discover_libc_start_main(
   project : @project.Project,
-  enable? : Bool = false,
+  enable~ : Bool = false,
 ) -> @project.Project {
   if enable || is_glibc(project) {
     project.map_program(rename_libc_start_main)
@@ -228,8 +228,8 @@ pub fn discover_libc_start_main(
 /// references glibc (`recover_main`).
 pub fn recover_main(
   project : @project.Project,
-  enable? : Bool = false,
-  main_abi? : (@project.Project, @types.Term[@types.Sub]) -> @types.Term[
+  enable~ : Bool = false,
+  main_abi~ : (@project.Project, @types.Term[@types.Sub]) -> @types.Term[
     @types.Sub,
   ] = (_, sub) => sub,
 ) -> @project.Project {
@@ -314,7 +314,7 @@ fn available_deps(deps : Array[String]) -> Array[String] {
 /// pass (`plugins/api`); the dependency is kept only when the `api` plugin
 /// has registered it (the frontend loads the `api` plugin first).
 pub fn pass(
-  enable? : Bool = false,
+  enable~ : Bool = false,
   main_abi? : (@project.Project, @types.Term[@types.Sub]) -> @types.Term[
     @types.Sub,
   ],
@@ -332,7 +332,7 @@ pub fn pass(
 /// autorun `glibc-runtime` pass. Idempotent: returns `false` if the pass was
 /// already registered.
 pub fn register(
-  enable? : Bool = false,
+  enable~ : Bool = false,
   main_abi? : (@project.Project, @types.Term[@types.Sub]) -> @types.Term[
     @types.Sub,
   ],

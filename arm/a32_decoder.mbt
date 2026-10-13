@@ -36,12 +36,12 @@
 // `decode_llvm_ext_test.mbt` hold samples verified against LLVM 22.
 
 ///|
-fn a32_field(w : UInt, lo : Int, len : Int) -> Int {
+fn a32_field(w : UInt32, lo : Int32, len : Int32) -> Int32 {
   ((w >> lo) & ((1U << len) - 1)).reinterpret_as_int()
 }
 
 ///|
-fn a32_bit(w : UInt, n : Int) -> Bool {
+fn a32_bit(w : UInt32, n : Int32) -> Bool {
   ((w >> n) & 1) == 1
 }
 
@@ -61,7 +61,7 @@ fn decoded(name : String, ops : Array[@mc.Op], text : String) -> A32Insn? {
 ///|
 /// The value of a 12-bit offset as LLVM's `DecodeAddrModeImm12Operand`
 /// produces it: negative when `U` is clear, `INT32_MIN` for `#-0`.
-fn a32_offset12(add : Bool, imm : Int) -> Int {
+fn a32_offset12(add : Bool, imm : Int32) -> Int32 {
   if add {
     imm
   } else if imm == 0 {
@@ -72,7 +72,7 @@ fn a32_offset12(add : Bool, imm : Int) -> Int {
 }
 
 ///|
-fn a32_offset_asm(offset : Int) -> String {
+fn a32_offset_asm(offset : Int32) -> String {
   if offset == -2147483648 {
     "#-0"
   } else {
@@ -85,9 +85,9 @@ fn a32_offset_asm(offset : Int) -> String {
 /// `printAddrModeImm12Operand`: a zero offset is only printed for the
 /// pre-indexed forms.
 fn a32_offset12_addr(
-  rn : Int,
-  offset : Int,
-  always_imm0? : Bool = false,
+  rn : Int32,
+  offset : Int32,
+  always_imm0~ : Bool = false,
 ) -> String {
   if offset == 0 && !always_imm0 {
     "[\{gpr_asm(rn)}]"
@@ -98,14 +98,14 @@ fn a32_offset12_addr(
 
 ///|
 /// `ARM_AM::getAM2Opc`.
-fn am2_opc(add : Bool, amount : Int, shift : Int, index : Int) -> Int {
+fn am2_opc(add : Bool, amount : Int32, shift : Int32, index : Int32) -> Int32 {
   amount | ((if add { 0 } else { 1 }) << 12) | (shift << 13) | (index << 16)
 }
 
 ///|
 /// `ARM_AM::getAM3Opc`: the index mode `index` is 0 for the offset
 /// forms, 1 for the pre-indexed and 2 for the post-indexed ones.
-fn am3_opc(add : Bool, imm8 : Int, index? : Int = 0) -> Int {
+fn am3_opc(add : Bool, imm8 : Int32, index~ : Int32 = 0) -> Int32 {
   imm8 | ((if add { 0 } else { 1 }) << 8) | (index << 9)
 }
 
@@ -123,8 +123,8 @@ fn a32_sign(add : Bool) -> String {
 /// bytes of the instruction are the little-endian bytes of the word unless
 /// `raw` is given.
 pub fn decode_a32_word(
-  word : UInt,
-  addr? : UInt64 = 0,
+  word : UInt32,
+  addr~ : UInt64 = 0,
   raw? : Bytes,
 ) -> @mc.Insn? {
   let cond = a32_field(word, 28, 4)
@@ -179,13 +179,13 @@ pub fn decode_a32_word(
 /// Instruction words are little-endian unless `big_endian` is set.
 pub fn decode_a32(
   bytes : BytesView,
-  addr? : UInt64 = 0,
-  big_endian? : Bool = false,
+  addr~ : UInt64 = 0,
+  big_endian~ : Bool = false,
 ) -> @mc.Decoded {
   if bytes.length() < 4 {
     return Truncated
   }
-  let b = (i : Int) => bytes[if big_endian { 3 - i } else { i }].to_uint()
+  let b = (i : Int32) => bytes[if big_endian { 3 - i } else { i }].to_uint()
   let word = b(0) | (b(1) << 8) | (b(2) << 16) | (b(3) << 24)
   match decode_a32_word(word, addr~, raw=bytes[:4].to_owned()) {
     Some(insn) => Decoded(insn)
@@ -195,7 +195,7 @@ pub fn decode_a32(
 
 ///|
 /// Instructions with the condition field `0b1111`.
-fn a32_unconditional(w : UInt) -> A32Insn? {
+fn a32_unconditional(w : UInt32) -> A32Insn? {
   if a32_field(w, 25, 3) == 5 {
     // BLX (immediate): always switches to Thumb
     let offset = sign_extend(
@@ -267,7 +267,7 @@ fn a32_unconditional(w : UInt) -> A32Insn? {
 /// Instructions with bits 27..25 equal to `000`: data processing with
 /// register operands, multiplies, synchronization primitives, the extra
 /// load/store instructions and the miscellaneous instructions.
-fn a32_group0(w : UInt, cond : Int) -> A32Insn? {
+fn a32_group0(w : UInt32, cond : Int32) -> A32Insn? {
   let op = a32_field(w, 20, 5)
   if a32_bit(w, 7) && a32_bit(w, 4) {
     if a32_field(w, 5, 2) == 0 {
@@ -300,7 +300,7 @@ let a32_dp_mnemonics : ReadOnlyArray[String] = [
 /// The LLVM name of a data-processing instruction with the opcode `opc`
 /// and the operand form `form` (0: immediate, 1: register, 2: register
 /// shifted by an immediate, 3: register shifted by a register).
-fn a32_dp_name(opc : Int, form : Int) -> String {
+fn a32_dp_name(opc : Int32, form : Int32) -> String {
   let base = a32_dp_mnemonics[opc]
   match opc {
     13 | 15 => base + ["i", "r", "si", "sr"][form]
@@ -313,10 +313,10 @@ fn a32_dp_name(opc : Int, form : Int) -> String {
 /// Builds a data-processing instruction from its opcode, form and the
 /// operands of its second (shifter) operand.
 fn a32_dp(
-  w : UInt,
-  cond : Int,
-  opc : Int,
-  form : Int,
+  w : UInt32,
+  cond : Int32,
+  opc : Int32,
+  form : Int32,
   shifter : Array[@mc.Op],
   shifter_asm : String,
   mov_alias? : (String, String),
@@ -340,7 +340,7 @@ fn a32_dp(
       // a non-zero `Rn` field: LLVM rejects the moves (but decodes the
       // register form as `MOVr_TC` when the registers are in its `tcGPR`
       // class: `R0`..`R3`, `R12`) and accepts the `MVN` register forms
-      let tc_gpr = (n : Int) => n <= 3 || n == 12
+      let tc_gpr = (n : Int32) => n <= 3 || n == 12
       let name = match (opc, form) {
         _ if rn == 0 => name
         (13, 1) if tc_gpr(rd) && tc_gpr(a32_field(w, 0, 4)) => "MOVr_TC"
@@ -370,7 +370,7 @@ fn a32_dp(
 ///|
 /// Data processing with a register, a register shifted by an immediate,
 /// or a register shifted by a register as the second operand.
-fn a32_dp_reg(w : UInt, cond : Int) -> A32Insn? {
+fn a32_dp_reg(w : UInt32, cond : Int32) -> A32Insn? {
   let opc = a32_field(w, 21, 4)
   let rm = a32_field(w, 0, 4)
   let typ = a32_field(w, 5, 2)
@@ -416,7 +416,7 @@ fn a32_dp_reg(w : UInt, cond : Int) -> A32Insn? {
 ///|
 /// Data processing with a modified immediate, `MOVW`, `MOVT` and the
 /// hints.
-fn a32_dp_imm(w : UInt, cond : Int) -> A32Insn? {
+fn a32_dp_imm(w : UInt32, cond : Int32) -> A32Insn? {
   let op = a32_field(w, 20, 5)
   let rd = a32_field(w, 12, 4)
   match op {
@@ -466,7 +466,7 @@ fn a32_dp_imm(w : UInt, cond : Int) -> A32Insn? {
 
 ///|
 /// Load/store word and unsigned byte with an immediate offset.
-fn a32_ldst_imm(w : UInt, cond : Int) -> A32Insn? {
+fn a32_ldst_imm(w : UInt32, cond : Int32) -> A32Insn? {
   let p = a32_bit(w, 24)
   let add = a32_bit(w, 23)
   let byte = a32_bit(w, 22)
@@ -531,7 +531,7 @@ fn a32_ldst_imm(w : UInt, cond : Int) -> A32Insn? {
 
 ///|
 /// Load/store word and unsigned byte with a (shifted) register offset.
-fn a32_ldst_reg(w : UInt, cond : Int) -> A32Insn? {
+fn a32_ldst_reg(w : UInt32, cond : Int32) -> A32Insn? {
   let p = a32_bit(w, 24)
   let add = a32_bit(w, 23)
   let byte = a32_bit(w, 22)
@@ -586,7 +586,7 @@ fn a32_ldst_reg(w : UInt, cond : Int) -> A32Insn? {
 ///|
 /// The extra load/store instructions: halfword, signed byte and
 /// doubleword accesses (addressing mode 3).
-fn a32_extra_ldst(w : UInt, cond : Int) -> A32Insn? {
+fn a32_extra_ldst(w : UInt32, cond : Int32) -> A32Insn? {
   let p = a32_bit(w, 24)
   let add = a32_bit(w, 23)
   let imm_form = a32_bit(w, 22)
@@ -675,7 +675,7 @@ fn a32_extra_ldst(w : UInt, cond : Int) -> A32Insn? {
 ///|
 /// Multiply and multiply-accumulate (bits 27..24 `0000`, bits 7..4
 /// `1001`).
-fn a32_multiply(w : UInt, cond : Int) -> A32Insn? {
+fn a32_multiply(w : UInt32, cond : Int32) -> A32Insn? {
   let s = a32_bit(w, 20)
   let hi = a32_field(w, 16, 4)
   let lo = a32_field(w, 12, 4)
@@ -738,7 +738,7 @@ fn a32_multiply(w : UInt, cond : Int) -> A32Insn? {
 ///|
 /// The signed halfword multiplies (`SMLA<x><y>`, `SMLAW<y>`, `SMULW<y>`,
 /// `SMLAL<x><y>`, `SMUL<x><y>`).
-fn a32_halfword_multiply(w : UInt, cond : Int) -> A32Insn? {
+fn a32_halfword_multiply(w : UInt32, cond : Int32) -> A32Insn? {
   guard !a32_bit(w, 4) else { return None }
   let rd = a32_field(w, 16, 4)
   let ra = a32_field(w, 12, 4)
@@ -787,7 +787,7 @@ fn a32_halfword_multiply(w : UInt, cond : Int) -> A32Insn? {
 ///|
 /// Swaps and the exclusive loads and stores (bits 27..24 `0001`, bits
 /// 7..4 `1001`).
-fn a32_sync(w : UInt, cond : Int) -> A32Insn? {
+fn a32_sync(w : UInt32, cond : Int32) -> A32Insn? {
   let rn = a32_field(w, 16, 4)
   let rt = a32_field(w, 12, 4)
   let low = a32_field(w, 0, 4)
@@ -849,7 +849,7 @@ fn a32_sync(w : UInt, cond : Int) -> A32Insn? {
 ///|
 /// The miscellaneous instructions: status register accesses, branch and
 /// exchange, count leading zeros.
-fn a32_misc(w : UInt, cond : Int) -> A32Insn? {
+fn a32_misc(w : UInt32, cond : Int32) -> A32Insn? {
   let op = a32_field(w, 21, 2)
   let rm = a32_field(w, 0, 4)
   let rd = a32_field(w, 12, 4)
@@ -920,7 +920,7 @@ fn a32_misc(w : UInt, cond : Int) -> A32Insn? {
 ///|
 /// The media instructions (bits 27..25 `011`, bit 4 set): extensions,
 /// packing, reversals, bit fields and the dual multiplies.
-fn a32_media(w : UInt, cond : Int) -> A32Insn? {
+fn a32_media(w : UInt32, cond : Int32) -> A32Insn? {
   let op1 = a32_field(w, 20, 5)
   let op2 = a32_field(w, 5, 3)
   let rn = a32_field(w, 16, 4)
@@ -1042,7 +1042,7 @@ fn a32_media(w : UInt, cond : Int) -> A32Insn? {
 
 ///|
 /// Load and store multiple.
-fn a32_ldm_stm(w : UInt, cond : Int) -> A32Insn? {
+fn a32_ldm_stm(w : UInt32, cond : Int32) -> A32Insn? {
   // the user-mode and exception-return variants (`^`) are `sysLDM...`
   let sys = a32_bit(w, 22)
   let mode = match (a32_bit(w, 24), a32_bit(w, 23)) {
@@ -1078,7 +1078,7 @@ fn a32_ldm_stm(w : UInt, cond : Int) -> A32Insn? {
 
 ///|
 /// Branch and branch with link (immediate).
-fn a32_branch(w : UInt, cond : Int) -> A32Insn? {
+fn a32_branch(w : UInt32, cond : Int32) -> A32Insn? {
   let offset = sign_extend(a32_field(w, 0, 24) << 2, 26)
   let c = cond_asm(cond)
   if a32_bit(w, 24) {

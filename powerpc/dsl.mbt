@@ -3,22 +3,22 @@
 // are numbered from the most significant bit, as in the Power ISA.
 
 ///|
-pub let bit : Int = 1
+pub let bit : Int32 = 1
 
 ///|
-pub let byte : Int = 8
+pub let byte : Int32 = 8
 
 ///|
-pub let halfword : Int = 16
+pub let halfword : Int32 = 16
 
 ///|
-pub let word : Int = 32
+pub let word : Int32 = 32
 
 ///|
-pub let doubleword : Int = 64
+pub let doubleword : Int32 = 64
 
 ///|
-pub let quadword : Int = 128
+pub let quadword : Int32 = 128
 
 ///|
 /// One-bit zero.
@@ -30,52 +30,52 @@ pub let one : RtlExp = RtlExp::of_word(@types.Word::b1())
 
 ///|
 /// Expression of `width` bits, all set to one.
-pub fn ones(width : Int) -> RtlExp {
+pub fn ones(width : Int32) -> RtlExp {
   RtlExp::of_word(make_word(width, -1))
 }
 
 ///|
 /// Fresh temporary of `width` bits with the given sign.
-pub fn var_(width : Int, sign : Sign) -> RtlExp {
+pub fn var_(width : Int32, sign : Sign) -> RtlExp {
   RtlExp::tmp(width).with_sign(sign)
 }
 
 ///|
 /// Fresh signed temporary of `width` bits.
-pub fn svar(width : Int) -> RtlExp {
+pub fn svar(width : Int32) -> RtlExp {
   var_(width, Signed)
 }
 
 ///|
 /// Fresh unsigned temporary of `width` bits.
-pub fn uvar(width : Int) -> RtlExp {
+pub fn uvar(width : Int32) -> RtlExp {
   var_(width, Unsigned)
 }
 
 ///|
 /// Constant `value` of `width` bits with the given sign.
-pub fn const_(width : Int, value : Int, sign : Sign) -> RtlExp {
+pub fn const_(width : Int32, value : Int32, sign : Sign) -> RtlExp {
   RtlExp::of_word(make_word(width, value.to_int64())).with_sign(sign)
 }
 
 ///|
 /// Signed constant.
-pub fn sconst(width : Int, value : Int) -> RtlExp {
+pub fn sconst(width : Int32, value : Int32) -> RtlExp {
   const_(width, value, Signed)
 }
 
 ///|
 /// Unsigned constant.
-pub fn uconst(width : Int, value : Int) -> RtlExp {
+pub fn uconst(width : Int32, value : Int32) -> RtlExp {
   const_(width, value, Unsigned)
 }
 
 ///|
-fn digit_value(c : Char) -> Int? {
+fn digit_value(c : Char) -> Int32? {
   match c {
-    '0'..='9' => Some(c.to_int() - '0'.to_int())
-    'a'..='f' => Some(c.to_int() - 'a'.to_int() + 10)
-    'A'..='F' => Some(c.to_int() - 'A'.to_int() + 10)
+    '0'..<='9' => Some(c.to_int() - '0'.to_int())
+    'a'..<='f' => Some(c.to_int() - 'a'.to_int() + 10)
+    'A'..<='F' => Some(c.to_int() - 'A'.to_int() + 10)
     _ => None
   }
 }
@@ -83,8 +83,8 @@ fn digit_value(c : Char) -> Int? {
 ///|
 fn parse_digits(
   digits : String,
-  base : Int,
-  width : Int,
+  base : Int32,
+  width : Int32,
 ) -> @types.Word raise @mc.LiftError {
   let fail_parse = () => {
     @mc.LiftError::Failure("PowerPC lifter fail: bad numeral \{digits}")
@@ -112,7 +112,7 @@ fn parse_digits(
 /// number of significant bits. Underscores are ignored.
 pub fn of_string(s : String, sign : Sign) -> RtlExp raise @mc.LiftError {
   let s = s.replace_all(old="_", new="")
-  let prefixed : Array[(String, Int, Int)] = [
+  let prefixed : Array[(String, Int32, Int32)] = [
     ("0x", 16, 4),
     ("0o", 8, 3),
     ("0b", 2, 1),
@@ -125,7 +125,7 @@ pub fn of_string(s : String, sign : Sign) -> RtlExp raise @mc.LiftError {
     }
   } nobreak {
     // enough room for any decimal numeral: log2(10) < 4
-    let wide = parse_digits(s, 10, Int::max(1, s.length() * 4))
+    let wide = parse_digits(s, 10, Int32::max(1, s.length() * 4))
     let mut numbits = 0
     for i in 0..<wide.width() {
       let bit_set = wide.extract(hi=i, lo=i) catch {
@@ -135,7 +135,7 @@ pub fn of_string(s : String, sign : Sign) -> RtlExp raise @mc.LiftError {
         numbits = i + 1
       }
     }
-    wide.extract(hi=Int::max(numbits, 1) - 1, lo=0) catch {
+    wide.extract(hi=Int32::max(numbits, 1) - 1, lo=0) catch {
       _ => raise Failure("PowerPC lifter fail: bad numeral \{s}")
     }
   }
@@ -144,25 +144,25 @@ pub fn of_string(s : String, sign : Sign) -> RtlExp raise @mc.LiftError {
 
 ///|
 /// First (most significant) `bits` bits.
-pub fn RtlExp::first(self : RtlExp, bits : Int) -> RtlExp {
+pub fn RtlExp::first(self : RtlExp, bits : Int32) -> RtlExp {
   self.extract(self.width - 1, self.width - bits)
 }
 
 ///|
 /// Last (least significant) `bits` bits.
-pub fn RtlExp::last(self : RtlExp, bits : Int) -> RtlExp {
+pub fn RtlExp::last(self : RtlExp, bits : Int32) -> RtlExp {
   self.extract(bits - 1, 0)
 }
 
 ///|
 /// High `width` bits.
-pub fn RtlExp::high(self : RtlExp, width : Int) -> RtlExp {
+pub fn RtlExp::high(self : RtlExp, width : Int32) -> RtlExp {
   self.first(width)
 }
 
 ///|
 /// Low `width` bits.
-pub fn RtlExp::low(self : RtlExp, width : Int) -> RtlExp {
+pub fn RtlExp::low(self : RtlExp, width : Int32) -> RtlExp {
   self.last(width)
 }
 
@@ -183,7 +183,7 @@ pub fn RtlExp::lsb(self : RtlExp) -> RtlExp {
 /// `e.nth(width, index)` extracts the `index`-th `width`-sized portion,
 /// counting from the most significant portion. When `width` does not divide
 /// the expression width, the leftover high bits are skipped.
-pub fn RtlExp::nth(self : RtlExp, width : Int, index : Int) -> RtlExp {
+pub fn RtlExp::nth(self : RtlExp, width : Int32, index : Int32) -> RtlExp {
   let total = self.width
   let n = total / width
   let x = n - index - 1
@@ -201,7 +201,7 @@ pub fn RtlExp::nth(self : RtlExp, width : Int, index : Int) -> RtlExp {
 /// `e.bits(left, right)` extracts bits `left..right` inclusive, numbered from
 /// the most significant bit (upstream DSL `extract`). If the expression is
 /// narrower than the requested range, it is zero-extended instead.
-pub fn RtlExp::bits(self : RtlExp, left : Int, right : Int) -> RtlExp {
+pub fn RtlExp::bits(self : RtlExp, left : Int32, right : Int32) -> RtlExp {
   let width = self.width
   let target_width = right - left + 1
   if width >= target_width {

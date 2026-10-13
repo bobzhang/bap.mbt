@@ -5,7 +5,7 @@
 /// symbol table (with the externals `extra` added).
 fn externals_test_run(
   extra : Array[String],
-) -> (Int, Array[String], String) raise {
+) -> (Int32, Array[String], String) raise {
   guard @project.register_builtin_disassembly_drivers() is Ok(_) else {
     fail("registration failed")
   }

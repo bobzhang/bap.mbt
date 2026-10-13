@@ -16,7 +16,7 @@ pub fn Digest::to_string(self : Digest) -> String {
 }
 
 ///|
-pub fn Digest::compare(self : Digest, other : Digest) -> Int {
+pub fn Digest::compare(self : Digest, other : Digest) -> Int32 {
   self.0.compare(other.0)
 }
 

@@ -1,5 +1,5 @@
 ///|
-fn int64(n : Int) -> @types.Exp {
+fn int64(n : Int32) -> @types.Exp {
   Int(try! @types.Word::of_int(width=64, n))
 }
 
@@ -54,8 +54,8 @@ fn describe(prog : @types.Term[@types.Program]) -> Array[String] {
 ///|
 fn run(
   prog : @types.Term[@types.Program],
-  start? : (@primus.Machine) -> Unit raise = _ => (),
-) -> (@types.Term[@types.Program], Array[(Int, Int)]) raise {
+  start~ : (@primus.Machine) -> Unit raise = _ => (),
+) -> (@types.Term[@types.Program], Array[(Int32, Int32)]) raise {
   let progress = []
   let proj = @project.Project::empty(@core_theory.Target::x86_64()).with_program(
     prog,

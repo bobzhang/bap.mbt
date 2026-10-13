@@ -48,7 +48,7 @@ fn raw_ctx_is_null(_c : RawCtx) -> Bool {
 }
 
 ///|
-fn raw_error_code(_c : RawCtx) -> Int {
+fn raw_error_code(_c : RawCtx) -> Int32 {
   -1
 }
 
@@ -73,7 +73,7 @@ fn raw_bool_val(_c : RawCtx, _b : Bool) -> RawAst {
 }
 
 ///|
-fn raw_bv_const(_c : RawCtx, _name : Bytes, _width : Int) -> RawAst {
+fn raw_bv_const(_c : RawCtx, _name : Bytes, _width : Int32) -> RawAst {
   ()
 }
 
@@ -83,27 +83,27 @@ fn raw_bool_const(_c : RawCtx, _name : Bytes) -> RawAst {
 }
 
 ///|
-fn raw_bv_numeral(_c : RawCtx, _dec : Bytes, _width : Int) -> RawAst {
+fn raw_bv_numeral(_c : RawCtx, _dec : Bytes, _width : Int32) -> RawAst {
   ()
 }
 
 ///|
-fn raw_binop(_c : RawCtx, _op : Int, _x : RawAst, _y : RawAst) -> RawAst {
+fn raw_binop(_c : RawCtx, _op : Int32, _x : RawAst, _y : RawAst) -> RawAst {
   ()
 }
 
 ///|
-fn raw_unop(_c : RawCtx, _op : Int, _x : RawAst) -> RawAst {
+fn raw_unop(_c : RawCtx, _op : Int32, _x : RawAst) -> RawAst {
   ()
 }
 
 ///|
-fn raw_indexed(_c : RawCtx, _op : Int, _n : Int, _x : RawAst) -> RawAst {
+fn raw_indexed(_c : RawCtx, _op : Int32, _n : Int32, _x : RawAst) -> RawAst {
   ()
 }
 
 ///|
-fn raw_extract(_c : RawCtx, _hi : Int, _lo : Int, _x : RawAst) -> RawAst {
+fn raw_extract(_c : RawCtx, _hi : Int32, _lo : Int32, _x : RawAst) -> RawAst {
   ()
 }
 
@@ -113,7 +113,7 @@ fn raw_ite(_c : RawCtx, _cnd : RawAst, _x : RawAst, _y : RawAst) -> RawAst {
 }
 
 ///|
-fn raw_sort_of(_c : RawCtx, _x : RawAst) -> Int {
+fn raw_sort_of(_c : RawCtx, _x : RawAst) -> Int32 {
   -1
 }
 
@@ -128,7 +128,7 @@ fn raw_numeral_string(_c : RawCtx, _x : RawAst) -> Bytes {
 }
 
 ///|
-fn raw_bool_value(_c : RawCtx, _x : RawAst) -> Int {
+fn raw_bool_value(_c : RawCtx, _x : RawAst) -> Int32 {
   0
 }
 
@@ -138,12 +138,12 @@ fn raw_ast_to_string(_c : RawCtx, _x : RawAst) -> Bytes {
 }
 
 ///|
-fn raw_ast_id(_c : RawCtx, _x : RawAst) -> Int {
+fn raw_ast_id(_c : RawCtx, _x : RawAst) -> Int32 {
   0
 }
 
 ///|
-fn raw_ast_hash(_c : RawCtx, _x : RawAst) -> Int {
+fn raw_ast_hash(_c : RawCtx, _x : RawAst) -> Int32 {
   0
 }
 
@@ -153,7 +153,7 @@ fn raw_ast_eq(_c : RawCtx, _x : RawAst, _y : RawAst) -> Bool {
 }
 
 ///|
-fn raw_mk_solver(_c : RawCtx, _kind : Int) -> RawSolver {
+fn raw_mk_solver(_c : RawCtx, _kind : Int32) -> RawSolver {
   ()
 }
 
@@ -167,7 +167,7 @@ fn raw_solver_set_uint(
   _c : RawCtx,
   _s : RawSolver,
   _key : Bytes,
-  _value : Int,
+  _value : Int32,
 ) -> Unit {
   ()
 }
@@ -178,7 +178,7 @@ fn raw_solver_push(_c : RawCtx, _s : RawSolver) -> Unit {
 }
 
 ///|
-fn raw_solver_pop(_c : RawCtx, _s : RawSolver, _n : Int) -> Unit {
+fn raw_solver_pop(_c : RawCtx, _s : RawSolver, _n : Int32) -> Unit {
   ()
 }
 
@@ -188,7 +188,7 @@ fn raw_solver_reset(_c : RawCtx, _s : RawSolver) -> Unit {
 }
 
 ///|
-fn raw_solver_num_scopes(_c : RawCtx, _s : RawSolver) -> Int {
+fn raw_solver_num_scopes(_c : RawCtx, _s : RawSolver) -> Int32 {
   0
 }
 
@@ -198,7 +198,7 @@ fn raw_solver_assert(_c : RawCtx, _s : RawSolver, _x : RawAst) -> Unit {
 }
 
 ///|
-fn raw_solver_check(_c : RawCtx, _s : RawSolver) -> Int {
+fn raw_solver_check(_c : RawCtx, _s : RawSolver) -> Int32 {
   0
 }
 

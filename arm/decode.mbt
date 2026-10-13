@@ -96,7 +96,7 @@ pub fn Op::of_mc(op : @mc.Op) -> Op? {
 
 ///|
 /// `Arm_cond.of_int_exn` without the exception.
-pub fn Cond::of_int(n : Int) -> Cond? {
+pub fn Cond::of_int(n : Int32) -> Cond? {
   match n {
     0 => Some(EQ)
     1 => Some(NE)

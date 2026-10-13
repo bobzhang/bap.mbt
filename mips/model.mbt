@@ -23,7 +23,7 @@ let gpr_names : ReadOnlyArray[String] = [
 
 ///|
 /// Width of general purpose registers (and of `HI`/`LO`).
-pub fn Arch::gpr_bitwidth(self : Arch) -> Int {
+pub fn Arch::gpr_bitwidth(self : Arch) -> Int32 {
   match self {
     Mips32 => 32
     Mips64 => 64
@@ -32,19 +32,19 @@ pub fn Arch::gpr_bitwidth(self : Arch) -> Int {
 
 ///|
 /// Width of floating point registers (always 64 upstream).
-pub fn Arch::fpr_bitwidth(_ : Arch) -> Int {
+pub fn Arch::fpr_bitwidth(_ : Arch) -> Int32 {
   64
 }
 
 ///|
 /// Address width of the memory variable.
-pub fn Arch::addr_bitwidth(self : Arch) -> Int {
+pub fn Arch::addr_bitwidth(self : Arch) -> Int32 {
   self.gpr_bitwidth()
 }
 
 ///|
 /// General purpose register number `index` (0..31), e.g. `gpr(29)` is `SP`.
-pub fn Arch::gpr(self : Arch, index : Int) -> @types.Var? {
+pub fn Arch::gpr(self : Arch, index : Int32) -> @types.Var? {
   match gpr_names.get(index) {
     Some(name) => Some(@types.Var::new(name~, typ=Imm(self.gpr_bitwidth())))
     None => None
@@ -66,7 +66,7 @@ pub fn Arch::find_gpr(self : Arch, name : String) -> @types.Var? {
 
 ///|
 /// Floating point register number `index` (0..31), named `F<index>`.
-pub fn Arch::fpr(self : Arch, index : Int) -> @types.Var? {
+pub fn Arch::fpr(self : Arch, index : Int32) -> @types.Var? {
   if index >= 0 && index < 32 {
     Some(@types.Var::new(name="F\{index}", typ=Imm(self.fpr_bitwidth())))
   } else {

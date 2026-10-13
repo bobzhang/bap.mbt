@@ -8,7 +8,7 @@
 
 ///|
 /// Thumb interworking mask (`0xffff_fffe`).
-let mask : Int = 0xfffffffe
+let mask : Int32 = 0xfffffffe
 
 ///|
 /// Encoding of an interworking branch destination: `llvm-thumb` when
@@ -23,12 +23,12 @@ pub fn dest_encoding(dst : UInt64) -> @core_theory.Language {
 }
 
 ///|
-fn b(pc : Int, dst : Int) -> Array[@types.Stmt] {
+fn b(pc : Int32, dst : Int32) -> Array[@types.Stmt] {
   [goto(pc_offset(pc, dst))]
 }
 
 ///|
-fn bcc(pc : Int, cnd : Cond, dst : Int) -> Array[@types.Stmt] {
+fn bcc(pc : Int32, cnd : Cond, dst : Int32) -> Array[@types.Stmt] {
   match cnd {
     AL => b(pc, dst)
     cnd => [If(cond=holds(cnd), yes=[goto(pc_offset(pc, dst))], no=[])]
@@ -36,7 +36,7 @@ fn bcc(pc : Int, cnd : Cond, dst : Int) -> Array[@types.Stmt] {
 }
 
 ///|
-fn bli(pc : Int, dst : Int) -> Array[@types.Stmt] {
+fn bli(pc : Int32, dst : Int32) -> Array[@types.Stmt] {
   // port: the return address has bit 0 set (Thumb); upstream omits it
   [set(lr, const_(pc_offset(pc, 0) | 1)), goto(pc_offset(pc, dst) & mask)]
 }
@@ -47,24 +47,24 @@ fn bxr(dst : @types.Var) -> Array[@types.Stmt] {
 }
 
 ///|
-fn bxi(pc : Int, off : Int) -> Array[@types.Stmt] {
+fn bxi(pc : Int32, off : Int32) -> Array[@types.Stmt] {
   [goto(pc_offset(pc, off) & mask)]
 }
 
 ///|
-fn blxr(pc : Int, dst : @types.Var) -> Array[@types.Stmt] {
+fn blxr(pc : Int32, dst : @types.Var) -> Array[@types.Stmt] {
   // port: `blx rm` is a 16-bit instruction, it returns to `pc + 2` in
   // Thumb (bit 0 set); upstream links `pc + 4`
   [set(lr, const_((pc + 2) | 1)), Jmp(logand(v(dst), const_(mask)))]
 }
 
 ///|
-fn cbnz(pc : Int, rn : @types.Var, dst : Int) -> Array[@types.Stmt] {
+fn cbnz(pc : Int32, rn : @types.Var, dst : Int32) -> Array[@types.Stmt] {
   [If(cond=lnot(is_zero(v(rn))), yes=[goto(pc_offset(pc, dst))], no=[])]
 }
 
 ///|
-fn cbz(pc : Int, rn : @types.Var, dst : Int) -> Array[@types.Stmt] {
+fn cbz(pc : Int32, rn : @types.Var, dst : Int32) -> Array[@types.Stmt] {
   [If(cond=is_zero(v(rn)), yes=[goto(pc_offset(pc, dst))], no=[])]
 }
 

@@ -40,7 +40,7 @@ pub fn Primitive::call(
 fn arity_error(
   m : @primus.Machine,
   name : String,
-  expected : Int,
+  expected : Int32,
   args : Array[@primus.Value],
 ) -> @primus.Value raise {
   m.raise_exn(

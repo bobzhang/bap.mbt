@@ -7,7 +7,7 @@ pub(all) enum DwarfInfoUnitKind {
   DwarfInfoUnitSkeleton
   DwarfInfoUnitSplitCompile
   DwarfInfoUnitSplitType
-  DwarfInfoUnitUnknown(Int)
+  DwarfInfoUnitUnknown(Int32)
 } derive(Eq, Debug)
 
 ///|
@@ -18,20 +18,20 @@ pub extend DwarfInfoUnitKind with Debug::{to_repr}
 
 ///|
 struct DwarfInfoUnitHeader {
-  start_offset_value : Int
-  end_offset_value : Int
-  header_end_offset_value : Int
-  unit_size_value : Int
+  start_offset_value : Int32
+  end_offset_value : Int32
+  header_end_offset_value : Int32
+  unit_size_value : Int32
   dwarf_size_value : DwarfWordSize
-  version_value : Int
+  version_value : Int32
   kind_value : DwarfInfoUnitKind
   address_size_value : DwarfWordSize
-  abbrev_offset_value : Int
+  abbrev_offset_value : Int32
   supported_value : Bool
 }
 
 ///|
-fn dwarf_info_unit_kind_of_code(code : Int) -> DwarfInfoUnitKind {
+fn dwarf_info_unit_kind_of_code(code : Int32) -> DwarfInfoUnitKind {
   match code {
     1 => DwarfInfoUnitCompile
     2 => DwarfInfoUnitType
@@ -47,7 +47,7 @@ fn dwarf_info_unit_kind_of_code(code : Int) -> DwarfInfoUnitKind {
 fn DwarfInfoUnitKind::tail_bytes(
   self : DwarfInfoUnitKind,
   dwarf_size : DwarfWordSize,
-) -> Int? {
+) -> Int32? {
   match self {
     DwarfInfoUnitLegacy | DwarfInfoUnitCompile | DwarfInfoUnitPartial => Some(0)
     DwarfInfoUnitSkeleton | DwarfInfoUnitSplitCompile => Some(8)
@@ -58,7 +58,7 @@ fn DwarfInfoUnitKind::tail_bytes(
 }
 
 ///|
-pub fn DwarfInfoUnitKind::unit_type(self : DwarfInfoUnitKind) -> Int? {
+pub fn DwarfInfoUnitKind::unit_type(self : DwarfInfoUnitKind) -> Int32? {
   match self {
     DwarfInfoUnitLegacy => None
     DwarfInfoUnitCompile => Some(1)
@@ -78,15 +78,15 @@ pub fn DwarfInfoUnitKind::is_supported(self : DwarfInfoUnitKind) -> Bool {
 
 ///|
 fn dwarf_info_unit_header_create(
-  start~ : Int,
-  end~ : Int,
-  header_end~ : Int,
-  unit_size~ : Int,
+  start~ : Int32,
+  end~ : Int32,
+  header_end~ : Int32,
+  unit_size~ : Int32,
   dwarf_size~ : DwarfWordSize,
-  version~ : Int,
+  version~ : Int32,
   kind~ : DwarfInfoUnitKind,
   address_size~ : DwarfWordSize,
-  abbrev_offset~ : Int,
+  abbrev_offset~ : Int32,
   supported~ : Bool,
 ) -> Result[DwarfInfoUnitHeader, String] {
   if header_end > end {
@@ -110,7 +110,7 @@ fn dwarf_info_unit_header_create(
 ///|
 pub fn DwarfInfoUnitHeader::read(
   buffer : DwarfSectionBuffer,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
   endian~ : @bitvec.Endian,
 ) -> Result[DwarfInfoUnitHeader, String] {
   let start = match buffer.offset(offset) {
@@ -204,34 +204,34 @@ pub fn DwarfInfoUnitHeader::read(
 }
 
 ///|
-pub fn DwarfInfoUnitHeader::start_offset(self : DwarfInfoUnitHeader) -> Int {
+pub fn DwarfInfoUnitHeader::start_offset(self : DwarfInfoUnitHeader) -> Int32 {
   self.start_offset_value
 }
 
 ///|
-pub fn DwarfInfoUnitHeader::end_offset(self : DwarfInfoUnitHeader) -> Int {
+pub fn DwarfInfoUnitHeader::end_offset(self : DwarfInfoUnitHeader) -> Int32 {
   self.end_offset_value
 }
 
 ///|
-pub fn DwarfInfoUnitHeader::next_offset(self : DwarfInfoUnitHeader) -> Int {
+pub fn DwarfInfoUnitHeader::next_offset(self : DwarfInfoUnitHeader) -> Int32 {
   self.end_offset_value
 }
 
 ///|
 pub fn DwarfInfoUnitHeader::header_end_offset(
   self : DwarfInfoUnitHeader,
-) -> Int {
+) -> Int32 {
   self.header_end_offset_value
 }
 
 ///|
-pub fn DwarfInfoUnitHeader::body_offset(self : DwarfInfoUnitHeader) -> Int {
+pub fn DwarfInfoUnitHeader::body_offset(self : DwarfInfoUnitHeader) -> Int32 {
   self.header_end_offset_value
 }
 
 ///|
-pub fn DwarfInfoUnitHeader::unit_size(self : DwarfInfoUnitHeader) -> Int {
+pub fn DwarfInfoUnitHeader::unit_size(self : DwarfInfoUnitHeader) -> Int32 {
   self.unit_size_value
 }
 
@@ -243,7 +243,7 @@ pub fn DwarfInfoUnitHeader::dwarf_size(
 }
 
 ///|
-pub fn DwarfInfoUnitHeader::version(self : DwarfInfoUnitHeader) -> Int {
+pub fn DwarfInfoUnitHeader::version(self : DwarfInfoUnitHeader) -> Int32 {
   self.version_value
 }
 
@@ -255,7 +255,7 @@ pub fn DwarfInfoUnitHeader::kind(
 }
 
 ///|
-pub fn DwarfInfoUnitHeader::unit_type(self : DwarfInfoUnitHeader) -> Int? {
+pub fn DwarfInfoUnitHeader::unit_type(self : DwarfInfoUnitHeader) -> Int32? {
   self.kind_value.unit_type()
 }
 
@@ -267,7 +267,7 @@ pub fn DwarfInfoUnitHeader::address_size(
 }
 
 ///|
-pub fn DwarfInfoUnitHeader::abbrev_offset(self : DwarfInfoUnitHeader) -> Int {
+pub fn DwarfInfoUnitHeader::abbrev_offset(self : DwarfInfoUnitHeader) -> Int32 {
   self.abbrev_offset_value
 }
 
@@ -279,7 +279,7 @@ pub fn DwarfInfoUnitHeader::is_supported(self : DwarfInfoUnitHeader) -> Bool {
 ///|
 pub fn DwarfData::unit_header(
   self : DwarfData,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
 ) -> Result[DwarfInfoUnitHeader, String] {
   match self.section(DwarfInfo) {
     Ok(section) =>

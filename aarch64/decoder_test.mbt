@@ -2,7 +2,7 @@
 // from the ARM Architecture Reference Manual, ARMv8-A).
 
 ///|
-fn show(word : UInt) -> String {
+fn show(word : UInt32) -> String {
   match @aarch64.decode_a64_word(word, addr=0x1000) {
     None => "invalid"
     Some(insn) => {
@@ -237,7 +237,7 @@ test "A64 kinds, raw bytes and the decoder interface" {
   assert_true(@aarch64.decode_a64(bytes[4:]) is Truncated)
   // SVE is not enabled
   assert_true(@aarch64.decode_a64(b"\x00\x00\xa0\x04"[:]) is Invalid(size=4))
-  fn kinds(w : UInt) -> Array[@mc.Kind] {
+  fn kinds(w : UInt32) -> Array[@mc.Kind] {
     @aarch64.decode_a64_word(w).unwrap().kinds.iter().collect()
   }
   debug_inspect(kinds(0x94000000), content="[Call, MayAffectControlFlow]")

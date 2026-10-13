@@ -2,7 +2,7 @@
 
 ///|
 /// Branches, exception generation and system instructions.
-fn a64_branch_system(w : UInt) -> A64Insn? {
+fn a64_branch_system(w : UInt32) -> A64Insn? {
   if fld(w, 26, 5) == 0b00101 {
     let offset = sext(fld(w, 0, 26), 26)
     let name = if bit(w, 31) { "BL" } else { "B" }
@@ -56,7 +56,7 @@ fn a64_branch_system(w : UInt) -> A64Insn? {
 
 ///|
 /// Exception generation.
-fn a64_exception(w : UInt) -> A64Insn? {
+fn a64_exception(w : UInt32) -> A64Insn? {
   guard fld(w, 2, 3) == 0 else { return None }
   let v = fld(w, 5, 16)
   let (name, mnemonic) = match (fld(w, 21, 3), fld(w, 0, 2)) {
@@ -81,7 +81,7 @@ fn a64_exception(w : UInt) -> A64Insn? {
 ///|
 /// Unconditional branch (register), including the pointer authenticating
 /// branches and returns.
-fn a64_branch_register(w : UInt) -> A64Insn? {
+fn a64_branch_register(w : UInt32) -> A64Insn? {
   let opc = fld(w, 21, 4)
   let op2 = fld(w, 16, 5)
   let op3 = fld(w, 10, 6)

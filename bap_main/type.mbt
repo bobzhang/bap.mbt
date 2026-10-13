@@ -34,7 +34,7 @@ pub struct Type[A] {
 /// }
 /// ```
 pub fn[A] Type::create(
-  name? : String = "VAL",
+  name~ : String = "VAL",
   digest? : (A) -> String,
   parse~ : (String) -> A raise,
   print~ : (A) -> String,
@@ -196,10 +196,10 @@ pub fn Type::char() -> Type[Char] {
 
 ///|
 fn int_type(
-  bits : Int,
+  bits : Int32,
   expected : String,
-  of_int64 : (Int64) -> Int,
-) -> Type[Int] {
+  of_int64 : (Int64) -> Int32,
+) -> Type[Int32] {
   wrap_conv(
     s => {
       match parse_ocaml_int(s, bits) {
@@ -218,13 +218,13 @@ fn int_type(
 ///
 /// OCaml `int` is 63 bits wide; this port uses MoonBit's 32-bit `Int` and
 /// rejects decimal literals outside of its range.
-pub fn Type::int() -> Type[Int] {
+pub fn Type::int() -> Type[Int32] {
   int_type(32, "expected an integer", v => v.to_int())
 }
 
 ///|
 /// `int32` is a 32-bit integer.
-pub fn Type::int32() -> Type[Int] {
+pub fn Type::int32() -> Type[Int32] {
   int_type(32, "expected a 32-bit integer", v => v.to_int())
 }
 
@@ -491,7 +491,7 @@ fn[A] split_and_parse(
 
 ///|
 /// `list(t, sep?)` is a `sep`-separated (default `,`) list of `t` values.
-pub fn[A] Type::list(t : Type[A], sep? : Char = ',') -> Type[Array[A]] {
+pub fn[A] Type::list(t : Type[A], sep~ : Char = ',') -> Type[Array[A]] {
   let parse = converter(t)
   wrap_conv(
     s => {
@@ -508,7 +508,7 @@ pub fn[A] Type::list(t : Type[A], sep? : Char = ',') -> Type[Array[A]] {
 ///|
 /// `array(t, sep?)` is a `sep`-separated (default `,`) array of `t`
 /// values.
-pub fn[A] Type::array(t : Type[A], sep? : Char = ',') -> Type[FixedArray[A]] {
+pub fn[A] Type::array(t : Type[A], sep~ : Char = ',') -> Type[FixedArray[A]] {
   let parse = converter(t)
   wrap_conv(
     s => {
@@ -538,7 +538,7 @@ fn err_sep_miss(sep : Char, s : String) -> String {
 pub fn[A, B] Type::pair(
   a : Type[A],
   b : Type[B],
-  sep? : Char = ',',
+  sep~ : Char = ',',
 ) -> Type[(A, B)] {
   let pa = converter(a)
   let pb = converter(b)
@@ -564,7 +564,7 @@ pub fn[A, B] Type::pair(
 pub fn[A, B] Type::t2(
   a : Type[A],
   b : Type[B],
-  sep? : Char = ',',
+  sep~ : Char = ',',
 ) -> Type[(A, B)] {
   Type::pair(a, b, sep~)
 }
@@ -575,7 +575,7 @@ pub fn[A, B, C] Type::t3(
   a : Type[A],
   b : Type[B],
   c : Type[C],
-  sep? : Char = ',',
+  sep~ : Char = ',',
 ) -> Type[(A, B, C)] {
   let pa = converter(a)
   let pb = converter(b)
@@ -611,7 +611,7 @@ pub fn[A, B, C, D] Type::t4(
   b : Type[B],
   c : Type[C],
   d : Type[D],
-  sep? : Char = ',',
+  sep~ : Char = ',',
 ) -> Type[(A, B, C, D)] {
   let pa = converter(a)
   let pb = converter(b)

@@ -18,7 +18,7 @@ fn hex(v : UInt64) -> String {
 fn compare(c : Case, m : Machine) -> Array[String] raise {
   let diffs = []
   if c.exn != m.exn {
-    let show = (x : Int?) => {
+    let show = (x : Int32?) => {
       match x {
         Some(n) => n.to_string()
         None => "none"
@@ -122,7 +122,7 @@ priv enum Lift {
 }
 
 ///|
-let decoders : Map[Int, @project.ProjectDisassemblyBasic] = Map([])
+let decoders : Map[Int32, @project.ProjectDisassemblyBasic] = Map([])
 
 ///|
 fn decode(c : Case) -> @project.ProjectDisassemblyInstruction? raise {
@@ -171,7 +171,7 @@ fn decode_case(
 }
 
 ///|
-fn target_of(mode : Int) -> @core_theory.Target {
+fn target_of(mode : Int32) -> @core_theory.Target {
   if mode == 64 {
     @core_theory.Target::x86_64()
   } else {
@@ -180,7 +180,7 @@ fn target_of(mode : Int) -> @core_theory.Target {
 }
 
 ///|
-fn x86_mode(mode : Int) -> @x86.Mode {
+fn x86_mode(mode : Int32) -> @x86.Mode {
   if mode == 64 {
     X8664
   } else {
@@ -285,16 +285,16 @@ fn lift_legacy(c : Case) -> Lift {
 ///|
 /// Agreement statistics of one lifter on one table.
 priv struct Report {
-  mut cases : Int
-  mut lifted : Int
-  mut agree : Int
-  mut failed : Int
+  mut cases : Int32
+  mut lifted : Int32
+  mut agree : Int32
+  mut failed : Int32
   findings : Map[String, String]
 }
 
 ///|
 fn run_table(
-  mode : Int,
+  mode : Int32,
   table : String,
   lift : (Case) -> Lift raise,
 ) -> Report raise {

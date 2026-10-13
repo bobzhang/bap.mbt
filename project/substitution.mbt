@@ -14,7 +14,11 @@ fn project_subst_is_ident(c : Char) -> Bool {
 }
 
 ///|
-fn project_subst_find_close(value : String, start : Int, close : Char) -> Int? {
+fn project_subst_find_close(
+  value : String,
+  start : Int32,
+  close : Char,
+) -> Int32? {
   let cursor = Ref(start)
   while cursor.val < value.length() {
     match value.get_char(cursor.val) {
@@ -27,7 +31,7 @@ fn project_subst_find_close(value : String, start : Int, close : Char) -> Int? {
 }
 
 ///|
-fn project_subst_name(value : String, start : Int) -> (String, Int)? {
+fn project_subst_name(value : String, start : Int32) -> (String, Int32)? {
   match value.get_char(start) {
     Some('{') =>
       match project_subst_find_close(value, start + 1, '}') {
@@ -65,7 +69,7 @@ fn project_subst_addr(addr : UInt64) -> String {
 }
 
 ///|
-fn project_subst_code(code : Int) -> String {
+fn project_subst_code(code : Int32) -> String {
   "0x" + code.to_string(radix=16)
 }
 

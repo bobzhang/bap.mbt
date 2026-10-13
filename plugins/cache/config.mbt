@@ -5,9 +5,9 @@
 /// The configuration of the cache (upstream `Bap_cache_types.config`).
 pub(all) struct Config {
   /// the capacity of the cache, in megabytes
-  capacity : Int
+  capacity : Int32
   /// the allowed excess over the capacity, in percents of the capacity
-  overhead : Int
+  overhead : Int32
   /// whether the garbage collector runs on startup
   gc_enabled : Bool
 } derive(Eq, Debug)
@@ -21,9 +21,9 @@ pub extend Config with Debug::{to_repr}
 ///|
 /// A configuration; the defaults are 4 Gb, 25% overhead, GC enabled.
 pub fn Config::new(
-  capacity? : Int = 4 * 1024,
-  overhead? : Int = 25,
-  gc_enabled? : Bool = true,
+  capacity~ : Int32 = 4 * 1024,
+  overhead~ : Int32 = 25,
+  gc_enabled~ : Bool = true,
 ) -> Config {
   { capacity, overhead, gc_enabled, }
 }
@@ -36,7 +36,7 @@ pub fn Config::default() -> Config {
 
 ///|
 /// The version of the configuration file format.
-pub let config_version : Int = 3
+pub let config_version : Int32 = 3
 
 ///|
 /// The name of the configuration file in the cache root (`config.3`).
@@ -45,14 +45,14 @@ pub let config_file_name : String = "config.\{config_version}"
 ///|
 /// The size (in megabytes) above which the garbage collector shrinks the
 /// cache on startup: `capacity + capacity * overhead / 100`.
-pub fn Config::gc_threshold(self : Config) -> Int {
+pub fn Config::gc_threshold(self : Config) -> Int32 {
   self.capacity + self.capacity * self.overhead / 100
 }
 
 ///|
 /// The size (in kilobytes) to which the garbage collector shrinks the
 /// cache: `capacity - capacity * overhead / 100`, but not negative.
-pub fn Config::lower_bound(self : Config) -> Int {
+pub fn Config::lower_bound(self : Config) -> Int32 {
   let mb = self.capacity - self.capacity * self.overhead / 100
   (if mb < 0 { 0 } else { mb }) * 1024
 }
@@ -62,8 +62,8 @@ pub fn Config::lower_bound(self : Config) -> Int {
 // boolean byte.
 
 ///|
-fn bin_write_int(buf : Array[Byte], n : Int) -> Unit {
-  let put = (value : Int, bytes : Int) => {
+fn bin_write_int(buf : Array[Byte], n : Int32) -> Unit {
+  let put = (value : Int32, bytes : Int32) => {
     for i in 0..<bytes {
       buf.push((value >> (8 * i)).to_byte())
     }
@@ -83,8 +83,8 @@ fn bin_write_int(buf : Array[Byte], n : Int) -> Unit {
 }
 
 ///|
-fn bin_read_int(data : BytesView, pos : Ref[Int]) -> Int? {
-  let get = (bytes : Int) => {
+fn bin_read_int(data : BytesView, pos : Ref[Int32]) -> Int32? {
+  let get = (bytes : Int32) => {
     guard pos.val + bytes <= data.length() else { None }
     let mut v : Int64 = 0
     for i in 0..<bytes {

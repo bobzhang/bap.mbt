@@ -6,9 +6,9 @@
 /// saving the return address in `LR`.
 fn branch_lift(
   operand : Op,
-  link? : Bool = false,
+  link~ : Bool = false,
   cond? : Op,
-  addr : UInt,
+  addr : UInt32,
 ) -> Array[@types.Stmt] raise @mc.LiftError {
   let target = match operand {
     Reg(r) => v(r.to_var())

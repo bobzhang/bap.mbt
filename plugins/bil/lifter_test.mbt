@@ -29,9 +29,9 @@ test "intrinsic specifications" {
 ///|
 fn insn(
   name : String,
-  ops? : Array[@mc.Op] = [],
-  assembly? : String = "",
-  kinds? : Array[@mc.Kind] = [],
+  ops~ : Array[@mc.Op] = [],
+  assembly~ : String = "",
+  kinds~ : Array[@mc.Kind] = [],
 ) -> @mc.Insn {
   @mc.Insn::create(
     name,
@@ -102,7 +102,7 @@ fn registry() -> @mc.Registry {
 fn lift_with(
   specs : Array[@bil.ISpec],
   name : String,
-  assembly? : String = "",
+  assembly~ : String = "",
 ) -> String {
   let ctx = @mc.Context::create(@core_theory.Target::x86_64())
   let cfg = { ..@bil.Config::default(), enable_intrinsics: specs, }

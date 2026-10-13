@@ -2,8 +2,8 @@
 fn[A] compare_array(
   left : Array[A],
   right : Array[A],
-  compare_item : (A, A) -> Int,
-) -> Int {
+  compare_item : (A, A) -> Int32,
+) -> Int32 {
   let length_order = left.length().compare(right.length())
   if length_order != 0 {
     return length_order
@@ -18,8 +18,8 @@ fn[A] compare_array(
 }
 
 ///|
-fn compare_endian(left : @bitvec.Endian, right : @bitvec.Endian) -> Int {
-  fn rank(value : @bitvec.Endian) -> Int {
+fn compare_endian(left : @bitvec.Endian, right : @bitvec.Endian) -> Int32 {
+  fn rank(value : @bitvec.Endian) -> Int32 {
     match value {
       LittleEndian => 0
       BigEndian => 1
@@ -29,7 +29,7 @@ fn compare_endian(left : @bitvec.Endian, right : @bitvec.Endian) -> Int {
 }
 
 ///|
-fn UnOp::rank(self : UnOp) -> Int {
+fn UnOp::rank(self : UnOp) -> Int32 {
   match self {
     Not => 0
     Neg => 1
@@ -42,12 +42,12 @@ pub fn UnOp::equal(self : UnOp, other : UnOp) -> Bool {
 }
 
 ///|
-pub fn UnOp::compare(self : UnOp, other : UnOp) -> Int {
+pub fn UnOp::compare(self : UnOp, other : UnOp) -> Int32 {
   self.rank().compare(other.rank())
 }
 
 ///|
-fn BinOp::rank(self : BinOp) -> Int {
+fn BinOp::rank(self : BinOp) -> Int32 {
   match self {
     Plus => 0
     Minus => 1
@@ -77,12 +77,12 @@ pub fn BinOp::equal(self : BinOp, other : BinOp) -> Bool {
 }
 
 ///|
-pub fn BinOp::compare(self : BinOp, other : BinOp) -> Int {
+pub fn BinOp::compare(self : BinOp, other : BinOp) -> Int32 {
   self.rank().compare(other.rank())
 }
 
 ///|
-fn CastKind::rank(self : CastKind) -> Int {
+fn CastKind::rank(self : CastKind) -> Int32 {
   match self {
     Unsigned => 0
     Signed => 1
@@ -97,12 +97,12 @@ pub fn CastKind::equal(self : CastKind, other : CastKind) -> Bool {
 }
 
 ///|
-pub fn CastKind::compare(self : CastKind, other : CastKind) -> Int {
+pub fn CastKind::compare(self : CastKind, other : CastKind) -> Int32 {
   self.rank().compare(other.rank())
 }
 
 ///|
-fn Exp::rank(self : Exp) -> Int {
+fn Exp::rank(self : Exp) -> Int32 {
   match self {
     Int(_) => 0
     Var(_) => 1
@@ -125,7 +125,7 @@ fn compare_exp_pair(
   left_second : Exp,
   right_first : Exp,
   right_second : Exp,
-) -> Int {
+) -> Int32 {
   let first_order = left_first.compare(right_first)
   if first_order != 0 {
     return first_order
@@ -139,7 +139,7 @@ pub fn Exp::equal(self : Exp, other : Exp) -> Bool {
 }
 
 ///|
-pub fn Exp::compare(self : Exp, other : Exp) -> Int {
+pub fn Exp::compare(self : Exp, other : Exp) -> Int32 {
   let rank_order = self.rank().compare(other.rank())
   if rank_order != 0 {
     return rank_order
@@ -274,7 +274,7 @@ pub fn Exp::compare(self : Exp, other : Exp) -> Int {
 }
 
 ///|
-fn Stmt::rank(self : Stmt) -> Int {
+fn Stmt::rank(self : Stmt) -> Int32 {
   match self {
     Move(_) => 0
     Jmp(_) => 1
@@ -291,7 +291,7 @@ pub fn Stmt::equal(self : Stmt, other : Stmt) -> Bool {
 }
 
 ///|
-pub fn Stmt::compare(self : Stmt, other : Stmt) -> Int {
+pub fn Stmt::compare(self : Stmt, other : Stmt) -> Int32 {
   let rank_order = self.rank().compare(other.rank())
   if rank_order != 0 {
     return rank_order

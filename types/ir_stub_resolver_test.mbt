@@ -26,7 +26,7 @@ fn stub_sub(name : String, aliases : Array[String]) -> @types.Term[@types.Sub] {
 }
 
 ///|
-fn stub_link_count(links : Map[@types.Tid, @types.Tid]) -> Int {
+fn stub_link_count(links : Map[@types.Tid, @types.Tid]) -> Int32 {
   let count = Ref(0)
   links.each((_, _) => count.val = count.val + 1)
   count.val

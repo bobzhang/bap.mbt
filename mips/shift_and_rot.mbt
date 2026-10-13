@@ -10,7 +10,7 @@
 ///|
 /// The shift amount operand 2: the immediate, or the low `bits` bits of
 /// the register.
-fn shift_amount(bits : Int) -> (Cpu) -> Exp raise @mc.LiftError {
+fn shift_amount(bits : Int32) -> (Cpu) -> Exp raise @mc.LiftError {
   cpu => {
     match cpu.op(2) {
       Imm(_) => cpu.uimm(2)
@@ -38,7 +38,7 @@ fn rotate_word(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
 
 ///|
 /// DROTR/DROTR32/DROTRV rd, rt, sa - Doubleword Rotate Right, MIPS64.
-fn rotate_doubleword(plus32? : Bool = false) -> Semantics {
+fn rotate_doubleword(plus32~ : Bool = false) -> Semantics {
   cpu => {
     let rd = cpu.ureg(0)
     let rt = cpu.ureg(1)
@@ -65,7 +65,7 @@ fn shift_word(op : (Exp, Exp) -> Exp) -> Semantics {
 /// DSLLV, DSRA, DSRA32, DSRAV, DSRL, DSRL32, DSRLV).
 fn shift_doubleword(
   op : (Exp, Exp) -> Exp,
-  plus32? : Bool = false,
+  plus32~ : Bool = false,
 ) -> Semantics {
   cpu => {
     let rd = cpu.ureg(0)

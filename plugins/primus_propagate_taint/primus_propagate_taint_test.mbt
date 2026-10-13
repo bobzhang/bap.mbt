@@ -1,10 +1,10 @@
 ///|
-fn w64(n : Int) -> @types.Word {
+fn w64(n : Int32) -> @types.Word {
   try! @types.Word::of_int(width=64, n)
 }
 
 ///|
-fn int64(n : Int) -> @types.Exp {
+fn int64(n : Int32) -> @types.Exp {
   Int(w64(n))
 }
 
@@ -43,7 +43,7 @@ fn def(
 /// Returns the final program and the report produced by `fini`.
 fn run(
   blks : Array[@types.Term[@types.Blk]],
-  fini? : (@primus.Machine) -> Unit raise = _ => (),
+  fini~ : (@primus.Machine) -> Unit raise = _ => (),
 ) -> (String, @types.Term[@types.Program]) {
   let main = @types.Sub::create(name="main", blks~)
   let prog = @types.Program::create(subs=[main])

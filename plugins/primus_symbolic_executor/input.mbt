@@ -55,7 +55,7 @@ fn hex(w : @types.Word) -> String {
 
 ///|
 /// The width of the input in bits.
-pub fn Input::size(self : Input) -> Int {
+pub fn Input::size(self : Input) -> Int32 {
   match self {
     Ptr(bank~, ..) => bank.data_size()
     Var(v) =>
@@ -96,7 +96,7 @@ pub impl Show for Input with fn output(self, logger) {
 ///|
 /// A deterministic hash of a string (the seed of the generator of a
 /// symbolic memory, upstream `Hashtbl.hash` of its name).
-fn string_seed(s : String) -> Int {
+fn string_seed(s : String) -> Int32 {
   let mut h = 0x811c9dc5U
   for c in s {
     h = (h ^ c.to_int().reinterpret_as_uint()) * 0x01000193U

@@ -170,7 +170,7 @@ fn word_error() -> Result[Word, String] {
 }
 
 ///|
-fn extract_word(hi : Int, lo : Int, value : Word) -> Result[Word, String] {
+fn extract_word(hi : Int32, lo : Int32, value : Word) -> Result[Word, String] {
   try value.extract(hi~, lo~) catch {
     _ => word_error()
   } noraise {
@@ -187,7 +187,7 @@ fn eval_unop(op : UnOp, value : Word) -> Result[Word, String] {
 }
 
 ///|
-fn shift_amount(value : Word) -> Result[Int, String] {
+fn shift_amount(value : Word) -> Result[Int32, String] {
   try value.to_uint64() catch {
     _ => Err("shift amount is too wide")
   } noraise {
@@ -198,7 +198,7 @@ fn shift_amount(value : Word) -> Result[Int, String] {
 ///|
 fn cast_word(
   kind : CastKind,
-  width : Int,
+  width : Int32,
   value : Word,
 ) -> Result[Word, String] {
   if width <= 0 {
@@ -219,7 +219,7 @@ fn cast_word(
 ///|
 pub fn CastKind::apply(
   self : CastKind,
-  width : Int,
+  width : Int32,
   value : Word,
 ) -> Result[Word, String] {
   cast_word(self, width, value)
@@ -228,7 +228,7 @@ pub fn CastKind::apply(
 ///|
 pub fn CastKind::apply_exn(
   self : CastKind,
-  width : Int,
+  width : Int32,
   value : Word,
 ) -> Word raise BilApplyError {
   unwrap_word_apply(self.apply(width, value))
@@ -238,8 +238,8 @@ pub fn CastKind::apply_exn(
 fn eval_cmp(
   lhs : Word,
   rhs : Word,
-  compare : (Word, Word) -> Int raise @bitvec.BitVecError,
-  accept : (Int) -> Bool,
+  compare : (Word, Word) -> Int32 raise @bitvec.BitVecError,
+  accept : (Int32) -> Bool,
 ) -> Result[Word, String] {
   try compare(lhs, rhs) catch {
     _ => word_error()
@@ -336,7 +336,7 @@ fn eval_binop(op : BinOp, lhs : Word, rhs : Word) -> Result[Word, String] {
 }
 
 ///|
-fn widen_apply_operand(value : Word, width : Int) -> Result[Word, String] {
+fn widen_apply_operand(value : Word, width : Int32) -> Result[Word, String] {
   if value.width() == width {
     Ok(value)
   } else if value.width() < width {
@@ -356,7 +356,7 @@ fn widen_apply_operand(value : Word, width : Int) -> Result[Word, String] {
 
 ///|
 fn align_apply_operands(lhs : Word, rhs : Word) -> Result[(Word, Word), String] {
-  let width = Int::max(lhs.width(), rhs.width())
+  let width = Int32::max(lhs.width(), rhs.width())
   match (widen_apply_operand(lhs, width), widen_apply_operand(rhs, width)) {
     (Ok(left), Ok(right)) => Ok((left, right))
     (Err(reason), _) | (_, Err(reason)) => Err(reason)
@@ -493,7 +493,7 @@ fn Stmt::is_assigned_under(
 pub fn Stmt::is_assigned(
   self : Stmt,
   variable : Var,
-  strict? : Bool = false,
+  strict~ : Bool = false,
 ) -> Bool {
   self.is_assigned_under(variable, strict, false)
 }
@@ -502,7 +502,7 @@ pub fn Stmt::is_assigned(
 pub fn is_assigned_stmts(
   stmts : Array[Stmt],
   variable : Var,
-  strict? : Bool = false,
+  strict~ : Bool = false,
 ) -> Bool {
   stmts.any(stmt => stmt.is_assigned_under(variable, strict, false))
 }
@@ -511,7 +511,7 @@ pub fn is_assigned_stmts(
 pub fn is_assigned(
   stmts : Array[Stmt],
   variable : Var,
-  strict? : Bool = false,
+  strict~ : Bool = false,
 ) -> Bool {
   is_assigned_stmts(stmts, variable, strict~)
 }

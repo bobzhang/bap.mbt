@@ -44,7 +44,7 @@ fn sort_float_bits(sort : Sort) -> Sort {
 ///|
 /// The size of a bitvector sort (booleans are one bit wide, other sorts
 /// have size zero).
-fn sort_size(sort : Sort) -> Int {
+fn sort_size(sort : Sort) -> Int32 {
   match sort.bitv_size() {
     Some(size) => size
     None => if sort == Sort::bool() { 1 } else { 0 }
@@ -54,7 +54,7 @@ fn sort_size(sort : Sort) -> Int {
 ///|
 /// The depth of `Var::scoped_pure` scopes (upstream the `pure` context
 /// variable of `bap_core_theory_var.ml`).
-let scoped_pure_depth : @knowledge.Var[Int] = @knowledge.Var::new(
+let scoped_pure_depth : @knowledge.Var[Int32] = @knowledge.Var::new(
   "scoped-var-depth",
   _ => 0,
   pkg="core",
@@ -87,6 +87,6 @@ pub fn Var::scoped_pure(sort : Sort, f : (Var) -> Pure) -> Pure {
 /// negative `n` is taken in two's complement). A convenience for
 /// `Core::int` that defers the construction of the bitvector to the
 /// evaluation of the term.
-pub fn Core::of_int(self : Core, sort : Sort, n : Int) -> Pure {
+pub fn Core::of_int(self : Core, sort : Sort, n : Int32) -> Pure {
   state => self.int(sort, bitvec_of_int(sort_size(sort), n))(state)
 }

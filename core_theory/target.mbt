@@ -178,7 +178,7 @@ pub fn Endianness::is_unknown(self : Endianness) -> Bool {
 }
 
 ///|
-fn Endianness::rank(self : Endianness) -> Int {
+fn Endianness::rank(self : Endianness) -> Int32 {
   match self {
     UnknownEndianness => 0
     LittleEndian => 1
@@ -193,7 +193,7 @@ pub fn Endianness::equal(self : Endianness, other : Endianness) -> Bool {
 }
 
 ///|
-pub fn Endianness::compare(self : Endianness, other : Endianness) -> Int {
+pub fn Endianness::compare(self : Endianness, other : Endianness) -> Int32 {
   self.rank().compare(other.rank())
 }
 
@@ -208,7 +208,7 @@ pub fn Endianness::name(self : Endianness) -> @knowledge.Name {
 }
 
 ///|
-pub fn Endianness::hash(self : Endianness) -> Int {
+pub fn Endianness::hash(self : Endianness) -> Int32 {
   self.name().hash()
 }
 
@@ -379,7 +379,7 @@ pub fn System::is_unknown(self : System) -> Bool {
 }
 
 ///|
-fn System::rank(self : System) -> Int {
+fn System::rank(self : System) -> Int32 {
   match self {
     UnknownSystem => 0
     HPUX => 1
@@ -407,7 +407,7 @@ pub fn System::equal(self : System, other : System) -> Bool {
 }
 
 ///|
-pub fn System::compare(self : System, other : System) -> Int {
+pub fn System::compare(self : System, other : System) -> Int32 {
   self.rank().compare(other.rank())
 }
 
@@ -435,7 +435,7 @@ pub fn System::name(self : System) -> @knowledge.Name {
 }
 
 ///|
-pub fn System::hash(self : System) -> Int {
+pub fn System::hash(self : System) -> Int32 {
   self.name().hash()
 }
 
@@ -619,7 +619,7 @@ pub fn Abi::is_unknown(self : Abi) -> Bool {
 }
 
 ///|
-fn Abi::rank(self : Abi) -> Int {
+fn Abi::rank(self : Abi) -> Int32 {
   match self {
     UnknownAbi => 0
     SysV => 1
@@ -646,7 +646,7 @@ pub fn Abi::equal(self : Abi, other : Abi) -> Bool {
 }
 
 ///|
-pub fn Abi::compare(self : Abi, other : Abi) -> Int {
+pub fn Abi::compare(self : Abi, other : Abi) -> Int32 {
   self.rank().compare(other.rank())
 }
 
@@ -673,7 +673,7 @@ pub fn Abi::name(self : Abi) -> @knowledge.Name {
 }
 
 ///|
-pub fn Abi::hash(self : Abi) -> Int {
+pub fn Abi::hash(self : Abi) -> Int32 {
   self.name().hash()
 }
 
@@ -760,7 +760,7 @@ pub fn Fabi::is_unknown(self : Fabi) -> Bool {
 }
 
 ///|
-fn Fabi::rank(self : Fabi) -> Int {
+fn Fabi::rank(self : Fabi) -> Int32 {
   match self {
     UnknownFabi => 0
     Soft => 1
@@ -774,7 +774,7 @@ pub fn Fabi::equal(self : Fabi, other : Fabi) -> Bool {
 }
 
 ///|
-pub fn Fabi::compare(self : Fabi, other : Fabi) -> Int {
+pub fn Fabi::compare(self : Fabi, other : Fabi) -> Int32 {
   self.rank().compare(other.rank())
 }
 
@@ -788,7 +788,7 @@ pub fn Fabi::name(self : Fabi) -> @knowledge.Name {
 }
 
 ///|
-pub fn Fabi::hash(self : Fabi) -> Int {
+pub fn Fabi::hash(self : Fabi) -> Int32 {
   self.name().hash()
 }
 
@@ -886,7 +886,7 @@ pub fn Filetype::is_unknown(self : Filetype) -> Bool {
 }
 
 ///|
-fn Filetype::rank(self : Filetype) -> Int {
+fn Filetype::rank(self : Filetype) -> Int32 {
   match self {
     UnknownFiletype => 0
     Elf => 1
@@ -904,7 +904,7 @@ pub fn Filetype::equal(self : Filetype, other : Filetype) -> Bool {
 }
 
 ///|
-pub fn Filetype::compare(self : Filetype, other : Filetype) -> Int {
+pub fn Filetype::compare(self : Filetype, other : Filetype) -> Int32 {
   self.rank().compare(other.rank())
 }
 
@@ -922,7 +922,7 @@ pub fn Filetype::name(self : Filetype) -> @knowledge.Name {
 }
 
 ///|
-pub fn Filetype::hash(self : Filetype) -> Int {
+pub fn Filetype::hash(self : Filetype) -> Int32 {
   self.name().hash()
 }
 
@@ -1033,7 +1033,7 @@ pub fn TargetOptions::equal(
 fn target_option_entries_compare(
   lhs : Array[(String, String)],
   rhs : Array[(String, String)],
-) -> Int {
+) -> Int32 {
   let limit = if lhs.length() < rhs.length() {
     lhs.length()
   } else {
@@ -1056,7 +1056,7 @@ fn target_option_entries_compare(
 pub fn TargetOptions::compare(
   self : TargetOptions,
   other : TargetOptions,
-) -> Int {
+) -> Int32 {
   target_option_entries_compare(self.entries(), other.entries())
 }
 
@@ -1121,7 +1121,7 @@ fn target_options_join(
 pub fn TargetOptions::matches(
   self : TargetOptions,
   constraint : TargetOptions,
-  strict? : Bool = false,
+  strict~ : Bool = false,
 ) -> Bool {
   if strict && self.values_value.length() != constraint.values_value.length() {
     return false
@@ -1435,7 +1435,7 @@ pub fn Role::is_unknown(self : Role) -> Bool {
 }
 
 ///|
-fn Role::rank(self : Role) -> Int {
+fn Role::rank(self : Role) -> Int32 {
   match self {
     UnknownRole => 0
     General => 1
@@ -1480,7 +1480,7 @@ pub fn Role::equal(self : Role, other : Role) -> Bool {
 }
 
 ///|
-pub fn Role::compare(self : Role, other : Role) -> Int {
+pub fn Role::compare(self : Role, other : Role) -> Int32 {
   self.rank().compare(other.rank())
 }
 
@@ -1493,7 +1493,7 @@ pub fn Role::name(self : Role) -> @knowledge.Name {
 }
 
 ///|
-pub fn Role::hash(self : Role) -> Int {
+pub fn Role::hash(self : Role) -> Int32 {
   self.name().hash()
 }
 
@@ -1561,7 +1561,7 @@ pub fn Role::domain() -> @knowledge.Domain[Role] {
 ///|
 pub(all) enum AliasOrigin {
   RegisterAlias(aliased~ : Var, source~ : Var)
-  SubRegister(aliased~ : Var, source~ : Var, lo~ : Int, hi~ : Int)
+  SubRegister(aliased~ : Var, source~ : Var, lo~ : Int32, hi~ : Int32)
   SuperRegister(aliased~ : Var, regs~ : Array[Var])
   BitSetAlias(aliased~ : Var, bits~ : Array[Var])
   UnknownAlias(aliased~ : Var)
@@ -1583,12 +1583,12 @@ struct Target {
   name_value : @knowledge.Name
   parent_value : Target?
   nicknames_value : Array[String]
-  bits_value : Int
-  byte_value : Int
+  bits_value : Int32
+  byte_value : Int32
   data_value : Var
   code_value : Var
-  data_alignment_value : Int
-  code_alignment_value : Int
+  data_alignment_value : Int32
+  code_alignment_value : Int32
   endianness_value : Endianness
   system_value : System
   abi_value : Abi
@@ -1656,7 +1656,7 @@ fn target_name(text : String) -> @knowledge.Name {
 }
 
 ///|
-fn word_var(bits : Int, name : String) -> Var {
+fn word_var(bits : Int32, name : String) -> Var {
   Var::create(Sort::bitv(bits), name)
 }
 
@@ -1666,7 +1666,7 @@ fn bool_var(name : String) -> Var {
 }
 
 ///|
-fn mem_var(addr_bits : Int, byte_bits : Int, name : String) -> Var {
+fn mem_var(addr_bits : Int32, byte_bits : Int32, name : String) -> Var {
   Var::create(
     Sort::mem(Sort::bitv(addr_bits), Sort::bitv(byte_bits)),
     name,
@@ -1675,7 +1675,11 @@ fn mem_var(addr_bits : Int, byte_bits : Int, name : String) -> Var {
 }
 
 ///|
-fn default_memory_in_vars(items : Array[Var], bits : Int, byte : Int) -> Var? {
+fn default_memory_in_vars(
+  items : Array[Var],
+  bits : Int32,
+  byte : Int32,
+) -> Var? {
   let expected = mem_var(bits, byte, "mem")
   items
   .search_by(variable => {
@@ -1741,7 +1745,7 @@ fn replace_var(items : Array[Var], old : Var, replacement : Var) -> Array[Var] {
 }
 
 ///|
-fn bitv_sort_width(sort : Sort) -> Int? {
+fn bitv_sort_width(sort : Sort) -> Int32? {
   match sort {
     App(Sym(name), IntSort(width)) =>
       if name == @knowledge.Name::create("bitv", pkg="core") {
@@ -1767,7 +1771,7 @@ fn mem_sort_parts(sort : Sort) -> (Sort, Sort)? {
 }
 
 ///|
-fn memory_key_width(variable : Var, default : Int) -> Int {
+fn memory_key_width(variable : Var, default : Int32) -> Int32 {
   match mem_sort_parts(variable.sort()) {
     Some((keys, _)) =>
       match bitv_sort_width(keys) {
@@ -1779,14 +1783,18 @@ fn memory_key_width(variable : Var, default : Int) -> Int {
 }
 
 ///|
-fn named_word_vars(bits : Int, names : Array[String]) -> Array[Var] {
+fn named_word_vars(bits : Int32, names : Array[String]) -> Array[Var] {
   [
     for name in names => word_var(bits, name)
   ]
 }
 
 ///|
-fn numbered_word_vars(bits : Int, prefix : String, count : Int) -> Array[Var] {
+fn numbered_word_vars(
+  bits : Int32,
+  prefix : String,
+  count : Int32,
+) -> Array[Var] {
   [
     for i in 0..<count => word_var(bits, "\{prefix}\{i}")
   ]
@@ -2252,7 +2260,7 @@ fn mips_gpr_alias_names() -> Array[String] {
 }
 
 ///|
-fn mips_gpr_alias_role_names(first : Int, last : Int) -> Array[String] {
+fn mips_gpr_alias_role_names(first : Int32, last : Int32) -> Array[String] {
   let names = mips_gpr_alias_names()
   let items = []
   for i in first..<=last {
@@ -2264,14 +2272,14 @@ fn mips_gpr_alias_role_names(first : Int, last : Int) -> Array[String] {
 }
 
 ///|
-fn mips_alias_vars(bits : Int) -> Array[Var] {
+fn mips_alias_vars(bits : Int32) -> Array[Var] {
   [
     for name in mips_gpr_alias_names() => word_var(bits, name)
   ]
 }
 
 ///|
-fn mips_alias_origins(bits : Int) -> Array[AliasOrigin] {
+fn mips_alias_origins(bits : Int32) -> Array[AliasOrigin] {
   let names = mips_gpr_alias_names()
   [
     for i in 0..<names.length() => {
@@ -2281,7 +2289,7 @@ fn mips_alias_origins(bits : Int) -> Array[AliasOrigin] {
 }
 
 ///|
-fn mips_vars(bits : Int) -> Array[Var] {
+fn mips_vars(bits : Int32) -> Array[Var] {
   let items = numbered_word_vars(bits, "R", 32)
   append_vars(items, numbered_word_vars(bits, "F", 32))
   append_vars(items, mips_alias_vars(bits))
@@ -2300,8 +2308,8 @@ fn riscv_gpr_alias_names() -> Array[String] {
 }
 
 ///|
-fn riscv_fpr_alias_pairs() -> Array[(Int, String)] {
-  let items : Array[(Int, String)] = []
+fn riscv_fpr_alias_pairs() -> Array[(Int32, String)] {
+  let items : Array[(Int32, String)] = []
   for i in 0..<=7 {
     items.push((i, "FT\{i}"))
   }
@@ -2328,7 +2336,7 @@ fn riscv_fpr_alias_names() -> Array[String] {
 }
 
 ///|
-fn riscv_alias_vars(bits : Int) -> Array[Var] {
+fn riscv_alias_vars(bits : Int32) -> Array[Var] {
   let items = [ for name in riscv_gpr_alias_names() => word_var(bits, name) ]
   append_vars(
     items,
@@ -2340,7 +2348,7 @@ fn riscv_alias_vars(bits : Int) -> Array[Var] {
 }
 
 ///|
-fn riscv_alias_origins(bits : Int) -> Array[AliasOrigin] {
+fn riscv_alias_origins(bits : Int32) -> Array[AliasOrigin] {
   let names = riscv_gpr_alias_names()
   let items = [
     for i in 0..<names.length() => {
@@ -2359,8 +2367,8 @@ fn riscv_alias_origins(bits : Int) -> Array[AliasOrigin] {
 }
 
 ///|
-fn loongarch_gpr_alias_pairs() -> Array[(Int, String)] {
-  let items : Array[(Int, String)] = [
+fn loongarch_gpr_alias_pairs() -> Array[(Int32, String)] {
+  let items : Array[(Int32, String)] = [
     (0, "ZERO"),
     (1, "RA"),
     (2, "TP"),
@@ -2388,8 +2396,8 @@ fn loongarch_gpr_alias_names() -> Array[String] {
 }
 
 ///|
-fn loongarch_fpr_alias_pairs() -> Array[(Int, String)] {
-  let items : Array[(Int, String)] = []
+fn loongarch_fpr_alias_pairs() -> Array[(Int32, String)] {
+  let items : Array[(Int32, String)] = []
   for i in 0..<=7 {
     items.push((i, "FA\{i}"))
   }
@@ -2410,7 +2418,7 @@ fn loongarch_fpr_alias_names() -> Array[String] {
 }
 
 ///|
-fn loongarch_alias_vars(bits : Int) -> Array[Var] {
+fn loongarch_alias_vars(bits : Int32) -> Array[Var] {
   let items = [
     for name in loongarch_gpr_alias_names() => word_var(bits, name)
   ]
@@ -2424,7 +2432,7 @@ fn loongarch_alias_vars(bits : Int) -> Array[Var] {
 }
 
 ///|
-fn loongarch_alias_origins(bits : Int) -> Array[AliasOrigin] {
+fn loongarch_alias_origins(bits : Int32) -> Array[AliasOrigin] {
   let items = [
     for pair in loongarch_gpr_alias_pairs() => {
       AliasOrigin::register(
@@ -2445,7 +2453,7 @@ fn loongarch_alias_origins(bits : Int) -> Array[AliasOrigin] {
 }
 
 ///|
-fn sparc_vars(bits : Int) -> Array[Var] {
+fn sparc_vars(bits : Int32) -> Array[Var] {
   let items = []
   for prefix in ["G", "O", "L", "I"] {
     append_vars(items, numbered_word_vars(bits, prefix, 8))
@@ -2457,7 +2465,7 @@ fn sparc_vars(bits : Int) -> Array[Var] {
 }
 
 ///|
-fn sparc_alias_origins(bits : Int) -> Array[AliasOrigin] {
+fn sparc_alias_origins(bits : Int32) -> Array[AliasOrigin] {
   [
     AliasOrigin::register(word_var(bits, "SP"), word_var(bits, "O6")),
     AliasOrigin::register(word_var(bits, "FP"), word_var(bits, "I6")),
@@ -2487,7 +2495,7 @@ fn ppc_flag_vars() -> Array[Var] {
 }
 
 ///|
-fn ppc_vars(bits : Int) -> Array[Var] {
+fn ppc_vars(bits : Int32) -> Array[Var] {
   let items = numbered_word_vars(bits, "R", 32)
   append_vars(items, numbered_word_vars(64, "F", 32))
   append_vars(items, numbered_word_vars(128, "V", 32))
@@ -2501,12 +2509,16 @@ fn ppc_vars(bits : Int) -> Array[Var] {
 }
 
 ///|
-fn ppc_alias_origins(bits : Int) -> Array[AliasOrigin] {
+fn ppc_alias_origins(bits : Int32) -> Array[AliasOrigin] {
   [AliasOrigin::register(word_var(bits, "SP"), word_var(bits, "R1"))]
 }
 
 ///|
-fn numbered_pc_mem_vars(bits : Int, prefix : String, count : Int) -> Array[Var] {
+fn numbered_pc_mem_vars(
+  bits : Int32,
+  prefix : String,
+  count : Int32,
+) -> Array[Var] {
   let items = numbered_word_vars(bits, prefix, count)
   append_vars(items, named_word_vars(bits, ["PC"]))
   items.push(mem_var(bits, 8, "mem"))
@@ -2533,7 +2545,7 @@ fn riscv_family_vars() -> Array[Var] {
 }
 
 ///|
-fn riscv_vars(bits : Int) -> Array[Var] {
+fn riscv_vars(bits : Int32) -> Array[Var] {
   let items = numbered_word_vars(bits, "X", 32)
   append_vars(items, numbered_word_vars(bits, "F", 32))
   append_vars(items, riscv_alias_vars(bits))
@@ -2543,7 +2555,7 @@ fn riscv_vars(bits : Int) -> Array[Var] {
 }
 
 ///|
-fn loongarch_vars(bits : Int) -> Array[Var] {
+fn loongarch_vars(bits : Int32) -> Array[Var] {
   let items = numbered_word_vars(bits, "R", 32)
   append_vars(items, numbered_word_vars(bits, "F", 32))
   append_vars(items, loongarch_alias_vars(bits))
@@ -2617,7 +2629,7 @@ fn target_role_names(role : Role) -> Array[String] {
 }
 
 ///|
-fn role_names(prefix : String, first : Int, last : Int) -> Array[String] {
+fn role_names(prefix : String, first : Int32, last : Int32) -> Array[String] {
   [
     for i in first..<=last => "\{prefix}\{i}"
   ]
@@ -2987,7 +2999,7 @@ fn aarch64_status_flag_role_names() -> Array[String] {
 }
 
 ///|
-fn mips_role_names(bits : Int, role : Role) -> Array[String] {
+fn mips_role_names(bits : Int32, role : Role) -> Array[String] {
   match role {
     UnknownRole => []
     General =>
@@ -3522,7 +3534,7 @@ fn add_role(roles : Array[Role], role : Role) -> Unit {
 }
 
 ///|
-fn alias_part_size(variable : Var) -> Int? {
+fn alias_part_size(variable : Var) -> Int32? {
   match variable.sort().bitv_size() {
     Some(width) => Some(width)
     None =>
@@ -3618,7 +3630,7 @@ fn Alias::has_unknown(self : Alias) -> Bool {
 }
 
 ///|
-fn Alias::part_width(self : Alias) -> Int? {
+fn Alias::part_width(self : Alias) -> Int32? {
   match alias_part_size(self.aliased_value) {
     Some(total) => Some(total / self.parts_value.length())
     None => None
@@ -3626,7 +3638,7 @@ fn Alias::part_width(self : Alias) -> Int? {
 }
 
 ///|
-fn Alias::known_part_offsets(self : Alias) -> Array[(Int, Var)]? {
+fn Alias::known_part_offsets(self : Alias) -> Array[(Int32, Var)]? {
   let width = match self.part_width() {
     Some(width) => width
     None => return None
@@ -3635,7 +3647,7 @@ fn Alias::known_part_offsets(self : Alias) -> Array[(Int, Var)]? {
     Some(total) => total
     None => return None
   }
-  let result : Array[(Int, Var)] = []
+  let result : Array[(Int32, Var)] = []
   for i in 0..<self.parts_value.length() {
     match self.parts_value[i].variable {
       Some(variable) => result.push((total - i * width - width, variable))
@@ -3755,9 +3767,9 @@ fn resolve_sub_alias_origin(
   origins : Array[AliasOrigin],
   aliased : Var,
   source : Var,
-  lo : Int,
-  hi : Int,
-  depth : Int,
+  lo : Int32,
+  hi : Int32,
+  depth : Int32,
 ) -> AliasOrigin {
   if depth <= 0 {
     return AliasOrigin::subregister(aliased, source, lo~, hi~)
@@ -3783,7 +3795,7 @@ fn resolve_register_alias_origin(
   origins : Array[AliasOrigin],
   aliased : Var,
   source : Var,
-  depth : Int,
+  depth : Int32,
 ) -> AliasOrigin {
   if depth <= 0 {
     return AliasOrigin::register(aliased, source)
@@ -3914,8 +3926,8 @@ pub fn AliasOrigin::register(aliased : Var, source : Var) -> AliasOrigin {
 pub fn AliasOrigin::subregister(
   aliased : Var,
   source : Var,
-  lo~ : Int,
-  hi~ : Int,
+  lo~ : Int32,
+  hi~ : Int32,
 ) -> AliasOrigin {
   SubRegister(aliased~, source~, lo~, hi~)
 }
@@ -3988,7 +4000,7 @@ pub fn AliasOrigin::cast_set(self : AliasOrigin) -> AliasOrigin? {
 }
 
 ///|
-pub fn AliasOrigin::range(self : AliasOrigin) -> (Int, Int)? {
+pub fn AliasOrigin::range(self : AliasOrigin) -> (Int32, Int32)? {
   match self {
     SubRegister(lo~, hi~, ..) => Some((lo, hi))
     RegisterAlias(source~, ..) =>
@@ -3998,12 +4010,12 @@ pub fn AliasOrigin::range(self : AliasOrigin) -> (Int, Int)? {
 }
 
 ///|
-pub fn AliasOrigin::lo(self : AliasOrigin) -> Int? {
+pub fn AliasOrigin::lo(self : AliasOrigin) -> Int32? {
   self.range().map(range => range.0)
 }
 
 ///|
-pub fn AliasOrigin::hi(self : AliasOrigin) -> Int? {
+pub fn AliasOrigin::hi(self : AliasOrigin) -> Int32? {
   self.range().map(range => range.1)
 }
 
@@ -4068,12 +4080,12 @@ pub fn Target::create(
   name~ : @knowledge.Name,
   parent? : Target,
   nicknames? : Array[String],
-  bits? : Int,
-  byte? : Int,
+  bits? : Int32,
+  byte? : Int32,
   data? : Var,
   code? : Var,
-  data_alignment? : Int,
-  code_alignment? : Int,
+  data_alignment? : Int32,
+  code_alignment? : Int32,
   endianness? : Endianness,
   system? : System,
   abi? : Abi,
@@ -4226,12 +4238,12 @@ pub fn Target::declare_target(
   pkg? : String,
   parent? : Target,
   nicknames? : Array[String],
-  bits? : Int,
-  byte? : Int,
+  bits? : Int32,
+  byte? : Int32,
   data? : Var,
   code? : Var,
-  data_alignment? : Int,
-  code_alignment? : Int,
+  data_alignment? : Int32,
+  code_alignment? : Int32,
   endianness? : Endianness,
   system? : System,
   abi? : Abi,
@@ -4274,12 +4286,12 @@ pub fn declare_target(
   pkg? : String,
   parent? : Target,
   nicknames? : Array[String],
-  bits? : Int,
-  byte? : Int,
+  bits? : Int32,
+  byte? : Int32,
   data? : Var,
   code? : Var,
-  data_alignment? : Int,
-  code_alignment? : Int,
+  data_alignment? : Int32,
+  code_alignment? : Int32,
   endianness? : Endianness,
   system? : System,
   abi? : Abi,
@@ -4333,7 +4345,7 @@ pub fn Target::persistent() -> @knowledge.Persistent[Target] {
 }
 
 ///|
-pub fn Target::hash(self : Target) -> Int {
+pub fn Target::hash(self : Target) -> Int32 {
   self.name_value.hash()
 }
 
@@ -4343,7 +4355,7 @@ pub fn Target::equal(self : Target, other : Target) -> Bool {
 }
 
 ///|
-pub fn Target::compare(self : Target, other : Target) -> Int {
+pub fn Target::compare(self : Target, other : Target) -> Int32 {
   self.name_value.to_string().compare(other.name_value.to_string())
 }
 
@@ -4361,12 +4373,12 @@ pub fn Target::nicknames(self : Target) -> Array[String] {
 }
 
 ///|
-pub fn Target::bits(self : Target) -> Int {
+pub fn Target::bits(self : Target) -> Int32 {
   self.bits_value
 }
 
 ///|
-pub fn Target::byte(self : Target) -> Int {
+pub fn Target::byte(self : Target) -> Int32 {
   self.byte_value
 }
 
@@ -4427,7 +4439,7 @@ pub fn Target::with_vars(self : Target, more : Array[Var]) -> Target {
 }
 
 ///|
-pub fn Target::with_bits(self : Target, bits : Int) -> Target {
+pub fn Target::with_bits(self : Target, bits : Int32) -> Target {
   let previous = self.default_memory()
   let current = mem_var(bits, self.byte_value, "mem")
   let data = if self.data_value.same(previous) {
@@ -4671,7 +4683,7 @@ pub fn Target::reg(
   self : Target,
   role : Role,
   exclude? : Array[Role],
-  unique? : Bool = false,
+  unique~ : Bool = false,
 ) -> Var? {
   match self.regs(roles=[role], exclude?) {
     [] => None
@@ -4712,12 +4724,12 @@ pub fn Target::code(self : Target) -> Var {
 }
 
 ///|
-pub fn Target::data_addr_size(self : Target) -> Int {
+pub fn Target::data_addr_size(self : Target) -> Int32 {
   memory_key_width(self.data_value, self.bits_value)
 }
 
 ///|
-pub fn Target::data_alignment(self : Target) -> Int {
+pub fn Target::data_alignment(self : Target) -> Int32 {
   self.data_alignment_value
 }
 
@@ -4730,12 +4742,12 @@ pub fn Target::data_addr(
 }
 
 ///|
-pub fn Target::code_addr_size(self : Target) -> Int {
+pub fn Target::code_addr_size(self : Target) -> Int32 {
   memory_key_width(self.code_value, self.bits_value)
 }
 
 ///|
-pub fn Target::code_alignment(self : Target) -> Int {
+pub fn Target::code_alignment(self : Target) -> Int32 {
   self.code_alignment_value
 }
 
@@ -6765,7 +6777,7 @@ pub fn Target::filter(
   fabi? : Fabi,
   filetype? : Filetype,
   options? : TargetOptions,
-  strict? : Bool = false,
+  strict~ : Bool = false,
 ) -> Array[Target] {
   let parent = match parent {
     Some(target) => target
@@ -6808,7 +6820,7 @@ pub fn filter_targets(
   fabi? : Fabi,
   filetype? : Filetype,
   options? : TargetOptions,
-  strict? : Bool = false,
+  strict~ : Bool = false,
 ) -> Array[Target] {
   Target::filter(parent?, system?, abi?, fabi?, filetype?, options?, strict~)
 }
@@ -6821,8 +6833,8 @@ pub fn Target::select(
   fabi? : Fabi,
   filetype? : Filetype,
   options? : TargetOptions,
-  strict? : Bool = false,
-  unique? : Bool = false,
+  strict~ : Bool = false,
+  unique~ : Bool = false,
 ) -> Result[Target, String] {
   let matches = Target::filter(
     parent?,
@@ -6863,8 +6875,8 @@ pub fn select_target(
   fabi? : Fabi,
   filetype? : Filetype,
   options? : TargetOptions,
-  strict? : Bool = false,
-  unique? : Bool = false,
+  strict~ : Bool = false,
+  unique~ : Bool = false,
 ) -> Result[Target, String] {
   Target::select(
     parent?,
@@ -7060,7 +7072,7 @@ pub fn register_target_variants(
 }
 
 ///|
-fn target_family_compare(left : Target, right : Target) -> Int {
+fn target_family_compare(left : Target, right : Target) -> Int32 {
   if left.name().show() == right.name().show() {
     0
   } else if left.belongs(right) {
@@ -7096,7 +7108,10 @@ fn grandest_target_in(target : Target, universe : Array[Target]) -> Target {
 }
 
 ///|
-fn target_partition_compare(left : Array[Target], right : Array[Target]) -> Int {
+fn target_partition_compare(
+  left : Array[Target],
+  right : Array[Target],
+) -> Int32 {
   match (left.get(0), right.get(0)) {
     (Some(lhs), Some(rhs)) =>
       lhs.name().unqualified().compare(rhs.name().unqualified())

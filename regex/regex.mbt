@@ -41,7 +41,7 @@ priv enum Node {
   Eol
   WordBoundary(Bool)
   Group(Array[Array[Node]])
-  Repeat(Node, Int, Int, Mode)
+  Repeat(Node, Int32, Int32, Mode)
 }
 
 ///|
@@ -55,7 +55,7 @@ pub struct Regex {
 ///|
 priv struct Parser {
   chars : Array[Char]
-  mut pos : Int
+  mut pos : Int32
 }
 
 ///|
@@ -144,7 +144,7 @@ fn Parser::parse_seq(self : Parser) -> Array[Node] raise RegexError {
 }
 
 ///|
-fn Parser::parse_number(self : Parser) -> Int? {
+fn Parser::parse_number(self : Parser) -> Int32? {
   let start = self.pos
   let mut n = 0
   while self.peek() is Some(c) && is_digit(c) {
@@ -162,7 +162,7 @@ fn Parser::parse_number(self : Parser) -> Int? {
 /// Parses a `{n}`, `{n,}` or `{n,m}` bound at the current (opening brace)
 /// position. A brace that does not start a valid bound is a literal (as in
 /// PCRE), in which case the position is left unchanged and `None` returned.
-fn Parser::parse_bound(self : Parser) -> (Int, Int)? {
+fn Parser::parse_bound(self : Parser) -> (Int32, Int32)? {
   let save = self.pos
   self.pos += 1
   guard self.parse_number() is Some(lo) else {
@@ -329,7 +329,7 @@ fn Parser::parse_atom(self : Parser) -> Node raise RegexError {
 /// ```
 pub fn Regex::compile(
   pattern : String,
-  caseless? : Bool = false,
+  caseless~ : Bool = false,
 ) -> Result[Regex, String] {
   let parser : Parser = { chars: pattern.iter().collect(), pos: 0, }
   try {
@@ -411,9 +411,9 @@ fn Matcher::class_item_matches(
 fn Matcher::match_seq(
   self : Matcher,
   seq : Array[Node],
-  index : Int,
-  pos : Int,
-  k : (Int) -> Bool,
+  index : Int32,
+  pos : Int32,
+  k : (Int32) -> Bool,
 ) -> Bool {
   if index == seq.length() {
     k(pos)
@@ -426,8 +426,8 @@ fn Matcher::match_seq(
 fn Matcher::match_alts(
   self : Matcher,
   alts : Array[Array[Node]],
-  pos : Int,
-  k : (Int) -> Bool,
+  pos : Int32,
+  k : (Int32) -> Bool,
 ) -> Bool {
   alts.any(seq => self.match_seq(seq, 0, pos, k))
 }
@@ -439,12 +439,12 @@ fn Matcher::match_alts(
 fn Matcher::match_repeat(
   self : Matcher,
   node : Node,
-  min : Int,
-  max : Int,
+  min : Int32,
+  max : Int32,
   reluctant : Bool,
-  count : Int,
-  pos : Int,
-  k : (Int) -> Bool,
+  count : Int32,
+  pos : Int32,
+  k : (Int32) -> Bool,
 ) -> Bool {
   if count < min {
     return self.match_node(node, pos, p => {
@@ -471,9 +471,9 @@ fn Matcher::match_repeat(
 fn Matcher::single_char_run(
   self : Matcher,
   node : Node,
-  pos : Int,
-  max : Int,
-) -> Int? {
+  pos : Int32,
+  max : Int32,
+) -> Int32? {
   match node {
     Lit(_) | AnyChar | Class(_) => ()
     _ => return None
@@ -492,8 +492,8 @@ fn Matcher::single_char_run(
 fn Matcher::match_node(
   self : Matcher,
   node : Node,
-  pos : Int,
-  k : (Int) -> Bool,
+  pos : Int32,
+  k : (Int32) -> Bool,
 ) -> Bool {
   let input = self.input
   let len = input.length()
@@ -570,7 +570,7 @@ fn Regex::search(
   self : Regex,
   chars : Array[Char],
   anchored~ : Bool,
-) -> (Int, Int)? {
+) -> (Int32, Int32)? {
   let matcher = { input: chars, caseless: self.caseless, }
   let last = if anchored { 0 } else { chars.length() }
   for start in 0..<=last {

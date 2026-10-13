@@ -20,7 +20,7 @@
 pub(all) enum TypeValue {
   TAny
   TSym
-  TWord(Int)
+  TWord(Int32)
 } derive(Eq, Debug)
 
 ///|
@@ -36,11 +36,11 @@ pub impl Show for TypeValue with fn output(self, logger) {
 /// A type error (upstream `type_error`). Every problem refers to the
 /// identifiers of the expressions involved.
 pub(all) enum TypeProblem {
-  UnresolvedVariable(Int, String)
-  UnresolvedFunction(Int, String, Array[Signature])
-  UnresolvedSignal(Int, String, Signature?)
-  UnresolvedParameter(Int, String)
-  NoUnification(Int, TypeValue, Int, TypeValue)
+  UnresolvedVariable(Int32, String)
+  UnresolvedFunction(Int32, String, Array[Signature])
+  UnresolvedSignal(Int32, String, Signature?)
+  UnresolvedParameter(Int32, String)
+  NoUnification(Int32, TypeValue, Int32, TypeValue)
 } derive(Eq, Debug)
 
 ///|
@@ -53,7 +53,7 @@ pub struct TypeError {
 ///|
 pub impl Show for TypeError with fn output(self, logger) {
   let src = self.sources
-  let pp_exp = (id : Int) => {
+  let pp_exp = (id : Int32) => {
     let loc = src.loc(id)
     "\{loc}:\n\{src.underline(loc)}"
   }
@@ -94,7 +94,7 @@ pub impl Show for TypeError with fn output(self, logger) {
 ///|
 /// A short one-line description of the error (without the source excerpt).
 pub fn TypeError::summary(self : TypeError) -> String {
-  let loc = (id : Int) => {
+  let loc = (id : Int32) => {
     let l = self.sources.loc(id)
     let file = match l.file.rev_find("/") {
       Some(i) => l.file.unsafe_substring(start=i + 1, end=l.file.length())
@@ -118,11 +118,11 @@ pub fn TypeError::summary(self : TypeError) -> String {
 ///|
 priv struct Tvals {
   result : Result[TypeValue, TypeProblem]
-  origin : Int
+  origin : Int32
 } derive(Eq)
 
 ///|
-fn Tvals::meet(id : Int, x : Tvals, y : Tvals) -> Tvals {
+fn Tvals::meet(id : Int32, x : Tvals, y : Tvals) -> Tvals {
   match (x.result, y.result) {
     (Err(_), _) => x
     (_, Err(_)) => y
@@ -146,11 +146,11 @@ fn Tvals::meet(id : Int, x : Tvals, y : Tvals) -> Tvals {
 /// identifiers) and the type variables (negative nodes), with type values
 /// attached to the class representatives.
 priv struct Gamma {
-  parent : Map[Int, Int]
-  vals : Map[Int, Tvals]
-  names : Map[String, Int]
-  mut next_name : Int
-  mut changes : Int
+  parent : Map[Int32, Int32]
+  vals : Map[Int32, Tvals]
+  names : Map[String, Int32]
+  mut next_name : Int32
+  mut changes : Int32
 }
 
 ///|
@@ -159,7 +159,7 @@ fn Gamma::new() -> Gamma {
 }
 
 ///|
-fn Gamma::find(self : Gamma, x : Int) -> Int {
+fn Gamma::find(self : Gamma, x : Int32) -> Int32 {
   match self.parent.get(x) {
     None => {
       self.parent[x] = x
@@ -180,7 +180,7 @@ fn Gamma::find(self : Gamma, x : Int) -> Int {
 }
 
 ///|
-fn Gamma::name_node(self : Gamma, n : String) -> Int {
+fn Gamma::name_node(self : Gamma, n : String) -> Int32 {
   match self.names.get(n) {
     Some(x) => x
     None => {
@@ -193,7 +193,7 @@ fn Gamma::name_node(self : Gamma, n : String) -> Int {
 }
 
 ///|
-fn Gamma::set_val(self : Gamma, r : Int, t : Tvals) -> Unit {
+fn Gamma::set_val(self : Gamma, r : Int32, t : Tvals) -> Unit {
   match self.vals.get(r) {
     Some(old) if old == t => ()
     _ => {
@@ -204,7 +204,7 @@ fn Gamma::set_val(self : Gamma, r : Int, t : Tvals) -> Unit {
 }
 
 ///|
-fn Gamma::unify(self : Gamma, x : Int, y : Int) -> Unit {
+fn Gamma::unify(self : Gamma, x : Int32, y : Int32) -> Unit {
   if x == y {
     ignore(self.find(x))
     return
@@ -229,7 +229,7 @@ fn Gamma::unify(self : Gamma, x : Int, y : Int) -> Unit {
 }
 
 ///|
-fn Gamma::constr_grnd(self : Gamma, x : Int, t : TypeValue) -> Unit {
+fn Gamma::constr_grnd(self : Gamma, x : Int32, t : TypeValue) -> Unit {
   let r = self.find(x)
   let t1 = { result: Ok(t), origin: x, }
   match self.vals.get(r) {
@@ -239,7 +239,7 @@ fn Gamma::constr_grnd(self : Gamma, x : Int, t : TypeValue) -> Unit {
 }
 
 ///|
-fn Gamma::constr(self : Gamma, x : Int, t : Typ) -> Unit {
+fn Gamma::constr(self : Gamma, x : Int32, t : Typ) -> Unit {
   match t {
     Any => ignore(self.find(x))
     Name(n) => self.unify(x, self.name_node(n))
@@ -249,18 +249,18 @@ fn Gamma::constr(self : Gamma, x : Int, t : Typ) -> Unit {
 }
 
 ///|
-fn Gamma::widen(self : Gamma, x : Int) -> Unit {
+fn Gamma::widen(self : Gamma, x : Int32) -> Unit {
   self.constr_grnd(x, TAny)
 }
 
 ///|
-fn Gamma::fail(self : Gamma, x : Int, err : TypeProblem) -> Unit {
+fn Gamma::fail(self : Gamma, x : Int32, err : TypeProblem) -> Unit {
   let r = self.find(x)
   self.set_val(r, { result: Err(err), origin: x, })
 }
 
 ///|
-fn Gamma::type_of(self : Gamma, x : Int) -> Typ {
+fn Gamma::type_of(self : Gamma, x : Int32) -> Typ {
   match self.vals.get(self.find(x)) {
     Some({ result: Ok(TSym), .. }) => Symbol
     Some({ result: Ok(TWord(n)), .. }) => Type(n)
@@ -271,7 +271,7 @@ fn Gamma::type_of(self : Gamma, x : Int) -> Typ {
 ///|
 /// The global typing information (upstream `Typing.t`).
 priv struct Glob {
-  globs : Map[(String, String), Int]
+  globs : Map[(String, String), Int32]
   prims : Map[(String, String), Signature]
   funcs : Map[(String, String), Array[Def[Func]]]
   paras : Map[(String, String), Unit]
@@ -283,7 +283,7 @@ fn key(n : @knowledge.Name) -> (String, String) {
 }
 
 ///|
-fn prenex_type(id : Int, t : Typ) -> Typ {
+fn prenex_type(id : Int32, t : Typ) -> Typ {
   match t {
     Name(n) => Name("\{n}$\{id}")
     t => t
@@ -291,7 +291,7 @@ fn prenex_type(id : Int, t : Typ) -> Typ {
 }
 
 ///|
-fn prenex_signature(id : Int, s : Signature) -> Signature {
+fn prenex_signature(id : Int32, s : Signature) -> Signature {
   {
     args: s.args.map(t => prenex_type(id, t)),
     rest: s.rest.map(t => prenex_type(id, t)),
@@ -311,7 +311,7 @@ fn signature_of_gamma(g : Gamma, def : Def[Func]) -> Signature {
 ///|
 fn Glob::signatures(
   self : Glob,
-  id : Int,
+  id : Int32,
   g : Gamma,
   name : @knowledge.Name,
 ) -> Array[Signature] {
@@ -329,7 +329,7 @@ fn Glob::signatures(
 /// Checks the arity, returns `true` if the signature is applicable.
 fn applicable_signature(
   s : Signature,
-  nargs : Int,
+  nargs : Int32,
   allow_partial~ : Bool,
 ) -> Bool {
   if nargs < s.args.length() {
@@ -344,8 +344,8 @@ fn applicable_signature(
 ///|
 fn apply_signature(
   g : Gamma,
-  appid : Int,
-  ts : Array[Int],
+  appid : Int32,
+  ts : Array[Int32],
   s : Signature,
 ) -> Unit {
   let n = @cmp.minimum(ts.length(), s.args.length())
@@ -368,7 +368,7 @@ fn apply_signature(
 fn Glob::apply(
   self : Glob,
   g : Gamma,
-  id : Int,
+  id : Int32,
   name : @knowledge.Name,
   args : Array[Ast],
 ) -> Unit {
@@ -386,7 +386,7 @@ fn Glob::apply(
 ///|
 fn Glob::constr_glob(
   self : Glob,
-  vars : @sorted_map.SortedMap[(String, String), Int],
+  vars : @sorted_map.SortedMap[(String, String), Int32],
   v : LVar,
   g : Gamma,
 ) -> Unit {
@@ -418,9 +418,9 @@ fn Glob::constr_special(self : Glob, v : LVar, g : Gamma) -> Unit {
 
 ///|
 fn varclass(
-  vars : @sorted_map.SortedMap[(String, String), Int],
+  vars : @sorted_map.SortedMap[(String, String), Int32],
   v : LVar,
-) -> Int {
+) -> Int32 {
   match vars.get(key(v.name)) {
     Some(id) => id
     None => v.id
@@ -431,7 +431,7 @@ fn varclass(
 fn Glob::infer(
   self : Glob,
   g : Gamma,
-  vs : @sorted_map.SortedMap[(String, String), Int],
+  vs : @sorted_map.SortedMap[(String, String), Int32],
   e : Ast,
 ) -> Unit {
   let id = e.id
@@ -492,7 +492,7 @@ fn Glob::infer(
 fn Glob::reduce(
   self : Glob,
   g : Gamma,
-  vs : @sorted_map.SortedMap[(String, String), Int],
+  vs : @sorted_map.SortedMap[(String, String), Int32],
   xs : Array[Ast],
 ) -> Unit {
   for i = xs.length() - 1; i >= 0; i = i - 1 {
@@ -503,7 +503,7 @@ fn Glob::reduce(
 ///|
 fn bind_args(
   args : Array[LVar],
-) -> @sorted_map.SortedMap[(String, String), Int] {
+) -> @sorted_map.SortedMap[(String, String), Int32] {
   let mut vs = @sorted_map.SortedMap::new()
   for a in args {
     vs = vs.add(key(a.name), a.id)
@@ -573,7 +573,7 @@ pub struct TypedProgram {
 
 ///|
 /// The inferred type of the expression with the given identifier.
-pub fn TypedProgram::type_of(self : TypedProgram, id : Int) -> Typ {
+pub fn TypedProgram::type_of(self : TypedProgram, id : Int32) -> Typ {
   self.gamma.type_of(id)
 }
 
@@ -590,7 +590,7 @@ pub fn TypedProgram::signature(
 /// Type errors of the typed program (upstream `Type.errors`).
 pub fn TypedProgram::errors(self : TypedProgram) -> Array[TypeError] {
   let g = self.gamma
-  let seen : Map[Int, Unit] = Map([])
+  let seen : Map[Int32, Unit] = Map([])
   let errs = []
   let nodes = g.parent.keys().collect()
   nodes.sort()
@@ -614,8 +614,8 @@ pub fn TypedProgram::errors(self : TypedProgram) -> Array[TypeError] {
 /// `external:<name>`.
 pub fn Program::infer_types(
   self : Program,
-  externals? : Array[(String, Signature)] = [],
-  max_passes? : Int = 16,
+  externals~ : Array[(String, Signature)] = [],
+  max_passes~ : Int32 = 16,
 ) -> TypedProgram {
   let p = self
   let library = applicable_library(p)
@@ -631,7 +631,7 @@ pub fn Program::infer_types(
   for e in externals {
     prims[key(@knowledge.Name::create(e.0, pkg="external"))] = e.1
   }
-  let globs : Map[(String, String), Int] = Map([])
+  let globs : Map[(String, String), Int32] = Map([])
   p.fold(place, init=(), (pkg, def, _) => {
     if def.code.location.typ is Imm(n) {
       globs[key(@knowledge.Name::read(def.name, pkg~))] = n
@@ -642,8 +642,8 @@ pub fn Program::infer_types(
     paras[key(@knowledge.Name::read(def.name, pkg~))] = ()
   })
   let funcs : Map[(String, String), Array[Def[Func]]] = Map([])
-  let unique : Map[Int, Def[Func]] = Map([])
-  let order : Array[Int] = []
+  let unique : Map[Int32, Def[Func]] = Map([])
+  let order : Array[Int32] = []
   for kv in library.iter() {
     for dk in kv.1.defs.iter() {
       for def in dk.1 {
@@ -661,7 +661,7 @@ pub fn Program::infer_types(
   }
   let glob = { globs, prims, funcs, paras, }
   // the call graph, callees are visited before callers
-  let visited : Map[Int, Unit] = Map([])
+  let visited : Map[Int32, Unit] = Map([])
   let post : Array[Def[Func]] = []
   fn visit(def : Def[Func]) -> Unit {
     if visited.contains(def.id) {
@@ -732,7 +732,7 @@ pub fn Program::infer_types(
 /// `Type.check`).
 pub fn Program::type_errors(
   self : Program,
-  externals? : Array[(String, Signature)] = [],
+  externals~ : Array[(String, Signature)] = [],
 ) -> Array[TypeError] {
   self.infer_types(externals~).errors()
 }

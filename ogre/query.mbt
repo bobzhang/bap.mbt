@@ -15,7 +15,7 @@ struct Tables[T] {
 fn[A, K] read_column(
   row : Array[Entry],
   attr : Attribute[A, K],
-  pos : Int,
+  pos : Int32,
 ) -> A raise OgreError {
   match (attr.read)(row[pos]) {
     Some(value) => value
@@ -107,8 +107,8 @@ struct Query[T] {
 /// `tables` that satisfy every join class (all variables of a class are
 /// equal) and the `where_` condition (upstream `select`).
 pub fn[T] select(
-  where_? : Exp = Exp::bool(true),
-  join? : Array[Array[Join]] = [],
+  where_~ : Exp = Exp::bool(true),
+  join~ : Array[Array[Join]] = [],
   tables : Tables[T],
 ) -> Query[T] {
   { where_, join: join.map(cls => cls.copy()), tables, }
@@ -147,7 +147,7 @@ fn lift_value(typ : Typ, value : String) -> Term[Getter] raise OgreError {
 ///|
 fn row_field(
   row : Array[Entry],
-  idx : Int,
+  idx : Int32,
   name : String,
 ) -> String raise OgreError {
   match row.get(idx) {
@@ -220,12 +220,12 @@ fn unify(
 fn normalize_vars(
   names : Array[String],
   e : Term[Column[Name]],
-) -> Term[Column[Int]] raise OgreError {
-  let offsets : Map[String, Int] = Map([])
+) -> Term[Column[Int32]] raise OgreError {
+  let offsets : Map[String, Int32] = Map([])
   for pos, name in names {
     offsets[name] = pos
   }
-  fn subst(e : Term[Column[Name]]) -> Term[Column[Int]] raise OgreError {
+  fn subst(e : Term[Column[Name]]) -> Term[Column[Int32]] raise OgreError {
     match e {
       True => True
       Int(x) => Int(x)
@@ -252,7 +252,7 @@ fn normalize_vars(
 }
 
 ///|
-fn lambda(e : Term[Column[Int]]) -> Term[Getter] {
+fn lambda(e : Term[Column[Int32]]) -> Term[Getter] {
   match e {
     True => True
     Int(x) => Int(x)
@@ -324,7 +324,7 @@ fn eval_rows(
   }
   let result = []
   let row = []
-  fn cross(i : Int) -> Unit raise OgreError {
+  fn cross(i : Int32) -> Unit raise OgreError {
     if i == columns.length() {
       if row.length() > 0 && sat(row, exp) {
         result.push(row.copy())

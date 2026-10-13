@@ -9,7 +9,7 @@ fn export_externals(prog : Program) -> Program {
     acc
   })
   let mut prog = prog
-  let seen : Map[(Int, String), Unit] = Map([])
+  let seen : Map[(Int32, String), Unit] = Map([])
   for def in defs {
     for name in def.attrs.externals {
       if !seen.contains((def.id, name)) {
@@ -30,7 +30,7 @@ fn collect_advisors(
     (String, String),
     (Array[@knowledge.Name], Array[@knowledge.Name]),
   ] = Map([])
-  let seen : Map[((String, String), Int, Bool), Unit] = Map([])
+  let seen : Map[((String, String), Int32, Bool), Unit] = Map([])
   prog.fold(func, init=(), (pkg, def, _) => {
     if prog.is_applicable(def) {
       let advisor = @knowledge.Name::create(def.name, pkg~)
@@ -266,7 +266,7 @@ fn signature_of_sub(sub : @types.Term[@types.Sub]) -> Signature {
 /// places and infers the types, the subroutines of the binary program are
 /// available as externals. Every type error is posted as the `type_error`
 /// observation. Returns the number of errors.
-pub fn typecheck(m : @primus.Machine) -> Int raise {
+pub fn typecheck(m : @primus.Machine) -> Int32 raise {
   link_places(m)
   let externals = m
     .program()
@@ -289,8 +289,8 @@ pub fn define_primitive(
   m : @primus.Machine,
   name : String,
   types? : Signature,
-  docs? : String = "",
-  pkg? : String = "core",
+  docs~ : String = "",
+  pkg~ : String = "core",
   closure : Closure,
 ) -> Unit {
   let qname = @knowledge.Name::read(name, pkg~).show()
@@ -319,8 +319,8 @@ pub fn[T] signal(
   m : @primus.Machine,
   obs : @primus.Observation[T],
   params? : Signature,
-  docs? : String = "undocumented",
-  sync? : Bool = false,
+  docs~ : String = "undocumented",
+  sync~ : Bool = false,
   proj : (@primus.Machine, T) -> Array[@primus.Value] raise,
 ) -> @primus.Subscription {
   let types = match params {

@@ -1,7 +1,7 @@
 // Tests of the `resolve-indirects` pass.
 
 ///|
-fn word(width : Int, v : Int) -> @types.Word {
+fn word(width : Int32, v : Int32) -> @types.Word {
   @types.Word::of_int(width~, v) catch {
     _ => panic()
   }
@@ -10,8 +10,8 @@ fn word(width : Int, v : Int) -> @types.Word {
 ///|
 fn load(
   addr : @types.Exp,
-  bits : Int,
-  endian? : @bitvec.Endian = LittleEndian,
+  bits : Int32,
+  endian~ : @bitvec.Endian = LittleEndian,
 ) -> @types.Exp {
   Load(mem=@types.Exp::var_exp(mem_var()), addr~, endian~, typ=Imm(bits))
 }
@@ -22,7 +22,7 @@ fn mem_var() -> @types.Var {
 }
 
 ///|
-fn const_(v : Int) -> @types.Exp {
+fn const_(v : Int32) -> @types.Exp {
   @types.Exp::int(word(32, v))
 }
 

@@ -15,7 +15,7 @@ fn semantics() -> @mc.Registry raise {
 fn decode_all(
   code : Bytes,
   base : UInt64,
-  xlen? : @rv.Xlen = RV64,
+  xlen~ : @rv.Xlen = RV64,
 ) -> Array[@mc.Insn] raise {
   let insns = []
   let mut offset = 0

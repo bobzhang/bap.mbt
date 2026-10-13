@@ -23,7 +23,7 @@ fn al() -> Array[@mc.Op] {
 fn insn(
   name : String,
   ops : Array[@mc.Op],
-  addr? : UInt64 = 0x1000,
+  addr~ : UInt64 = 0x1000,
 ) -> @mc.Insn {
   @mc.Insn::create(name, ops, addr~, size=2)
 }
@@ -31,7 +31,7 @@ fn insn(
 ///|
 /// Render BIL one statement per line, expanding `If` bodies (the default
 /// `Stmt::to_string` only summarises them).
-fn render(stmts : Array[@types.Stmt], indent? : String = "") -> String {
+fn render(stmts : Array[@types.Stmt], indent~ : String = "") -> String {
   stmts
   .map(s => {
     match s {
@@ -54,7 +54,7 @@ fn render(stmts : Array[@types.Stmt], indent? : String = "") -> String {
 fn lift(
   name : String,
   ops : Array[@mc.Op],
-  addr? : UInt64 = 0x1000,
+  addr~ : UInt64 = 0x1000,
 ) -> String raise {
   render(@thumb.lift(insn(name, ops, addr~)))
 }

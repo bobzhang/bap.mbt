@@ -234,7 +234,7 @@ pub fn Attr::dead() -> Attr {
 }
 
 ///|
-pub fn Attr::mark(value? : String = "true") -> Attr {
+pub fn Attr::mark(value~ : String = "true") -> Attr {
   Attr::new(key=term_mark_attr, value~)
 }
 

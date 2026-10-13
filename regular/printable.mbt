@@ -11,7 +11,7 @@ pub fn[T : Printable] render(value : T) -> String {
 ///|
 pub fn[T : Printable] render_array(
   values : ArrayView[T],
-  sep? : String = ", ",
+  sep~ : String = ", ",
 ) -> String {
   let out = StringBuilder()
   for i, value in values {
@@ -29,7 +29,7 @@ pub impl Printable for String with fn to_string(self) {
 }
 
 ///|
-pub impl Printable for Int with fn to_string(self) {
+pub impl Printable for Int32 with fn to_string(self) {
   self.to_string()
 }
 

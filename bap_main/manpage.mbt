@@ -62,7 +62,7 @@ fn subst_markup(s : String, vars : (String) -> String?) -> String {
 ///|
 /// Fills `text` (whitespace collapsed) into lines of at most `man_width`
 /// columns, each prefixed by `indent` spaces.
-fn fill(sb : StringBuilder, text : String, indent : Int) -> Unit {
+fn fill(sb : StringBuilder, text : String, indent : Int32) -> Unit {
   let words = text
     .split(" ")
     .flat_map(w => w.split("\n"))

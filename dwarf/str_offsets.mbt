@@ -1,19 +1,19 @@
 ///|
 struct DwarfStringOffsetsTable {
-  offsets_value : Array[Int]
-  base_offset_value : Int
-  version_value : Int?
+  offsets_value : Array[Int32]
+  base_offset_value : Int32
+  version_value : Int32?
   dwarf_size_value : DwarfWordSize
 }
 
 ///|
 fn dwarf_read_string_offset_entries(
   input : DwarfInput,
-  end_position : Int,
+  end_position : Int32,
   endian : @bitvec.Endian,
   dwarf_size : DwarfWordSize,
-) -> Result[Array[Int], String] {
-  let offsets : Array[Int] = []
+) -> Result[Array[Int32], String] {
+  let offsets : Array[Int32] = []
   let mut cursor = input
   while cursor.position() < end_position {
     match cursor.read_offset(endian~, size=dwarf_size) {
@@ -34,7 +34,7 @@ fn dwarf_read_string_offset_entries(
 ///|
 pub fn DwarfStringOffsetsTable::read(
   buffer : DwarfSectionBuffer,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
   endian~ : @bitvec.Endian,
   dwarf_size~ : DwarfWordSize,
 ) -> Result[DwarfStringOffsetsTable, String] {
@@ -64,7 +64,7 @@ pub fn DwarfStringOffsetsTable::read(
 ///|
 pub fn DwarfStringOffsetsTable::read_contribution(
   buffer : DwarfSectionBuffer,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
   endian~ : @bitvec.Endian,
 ) -> Result[DwarfStringOffsetsTable, String] {
   let start = match buffer.offset(offset) {
@@ -108,15 +108,15 @@ pub fn DwarfStringOffsetsTable::read_contribution(
 ///|
 pub fn DwarfStringOffsetsTable::offsets(
   self : DwarfStringOffsetsTable,
-) -> Array[Int] {
+) -> Array[Int32] {
   self.offsets_value.copy()
 }
 
 ///|
 pub fn DwarfStringOffsetsTable::offset(
   self : DwarfStringOffsetsTable,
-  index : Int,
-) -> Result[Int, String] {
+  index : Int32,
+) -> Result[Int32, String] {
   if index < 0 || index >= self.offsets_value.length() {
     Err("DWARF string-offset index is out of bounds")
   } else {
@@ -143,7 +143,7 @@ pub fn DwarfStringOffsetsTable::strings(
 pub fn DwarfStringOffsetsTable::string(
   self : DwarfStringOffsetsTable,
   str_section : DwarfSectionBuffer,
-  index : Int,
+  index : Int32,
 ) -> Result[String, String] {
   match self.offset(index) {
     Ok(offset) => dwarf_read_str_section_name(str_section, offset)
@@ -152,7 +152,7 @@ pub fn DwarfStringOffsetsTable::string(
 }
 
 ///|
-pub fn DwarfStringOffsetsTable::length(self : DwarfStringOffsetsTable) -> Int {
+pub fn DwarfStringOffsetsTable::length(self : DwarfStringOffsetsTable) -> Int32 {
   self.offsets_value.length()
 }
 
@@ -166,12 +166,14 @@ pub fn DwarfStringOffsetsTable::is_empty(
 ///|
 pub fn DwarfStringOffsetsTable::base_offset(
   self : DwarfStringOffsetsTable,
-) -> Int {
+) -> Int32 {
   self.base_offset_value
 }
 
 ///|
-pub fn DwarfStringOffsetsTable::version(self : DwarfStringOffsetsTable) -> Int? {
+pub fn DwarfStringOffsetsTable::version(
+  self : DwarfStringOffsetsTable,
+) -> Int32? {
   self.version_value
 }
 
@@ -185,7 +187,7 @@ pub fn DwarfStringOffsetsTable::dwarf_size(
 ///|
 pub fn DwarfData::string_offsets(
   self : DwarfData,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
   dwarf_size~ : DwarfWordSize,
 ) -> Result[DwarfStringOffsetsTable, String] {
   match self.section(DwarfStrOffsets) {
@@ -203,7 +205,7 @@ pub fn DwarfData::string_offsets(
 ///|
 pub fn DwarfData::string_offsets_contribution(
   self : DwarfData,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
 ) -> Result[DwarfStringOffsetsTable, String] {
   match self.section(DwarfStrOffsets) {
     Ok(section) =>

@@ -4,7 +4,7 @@
 // print the attributes selected with `--print-bir-attr`.
 
 ///|
-fn hex8(n : Int) -> String {
+fn hex8(n : Int32) -> String {
   let digits = n.to_uint64().to_string(radix=16)
   if digits.length() >= 8 {
     digits
@@ -48,8 +48,8 @@ fn pp_label(fmt : @text_tags.Formatter, label : @types.Label) -> Unit {
 fn[T] pp_term(
   fmt : @text_tags.Formatter,
   term : @types.Term[T],
-  no_cut? : Bool = false,
-  vertical? : Bool = false,
+  no_cut~ : Bool = false,
+  vertical~ : Bool = false,
   pp_self : () -> Unit,
 ) -> Unit {
   let attrs = term.attrs()

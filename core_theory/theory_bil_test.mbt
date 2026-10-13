@@ -14,7 +14,7 @@ fn bil_stmts(state : @knowledge.State, term : @core_theory.Eff) -> String raise 
 }
 
 ///|
-fn bv(width : Int, n : Int) -> @bitvec.BitVec raise {
+fn bv(width : Int32, n : Int32) -> @bitvec.BitVec raise {
   @core_theory.bitvec_of_int(width, n)
 }
 

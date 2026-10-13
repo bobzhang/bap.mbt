@@ -20,7 +20,7 @@ fn imm(value : Int64) -> @mc.Op {
 }
 
 ///|
-fn bits(a : @powerpc.AddrSize) -> Int {
+fn bits(a : @powerpc.AddrSize) -> Int32 {
   a.in_bits()
 }
 
@@ -34,7 +34,7 @@ fn trunc(a : @powerpc.AddrSize, value : UInt64) -> UInt64 {
 }
 
 ///|
-fn word_of(width : Int, value : UInt64) -> @types.Word raise {
+fn word_of(width : Int32, value : UInt64) -> @types.Word raise {
   @types.Word::of_uint64(width~, value)
 }
 
@@ -111,10 +111,10 @@ fn run(
   a : @powerpc.AddrSize,
   name : String,
   ops : Array[@mc.Op],
-  init? : Array[(String, UInt64)] = [],
-  mem? : Array[(UInt64, UInt64, Int)] = [],
-  addr? : UInt64 = 0,
-  word? : UInt,
+  init~ : Array[(String, UInt64)] = [],
+  mem~ : Array[(UInt64, UInt64, Int32)] = [],
+  addr~ : UInt64 = 0,
+  word? : UInt32,
 ) -> Run raise {
   let insn = match word {
     None => @mc.Insn::create(name, ops, addr~, size=4)
@@ -154,7 +154,7 @@ fn show_insn(name : String, ops : ArrayView[@mc.Op]) -> String {
 
 ///|
 /// Big-endian encoding of an instruction word.
-fn word_bytes(word : UInt) -> Bytes {
+fn word_bytes(word : UInt32) -> Bytes {
   [
     (word >> 24).to_byte(),
     (word >> 16).to_byte(),
@@ -167,8 +167,8 @@ fn word_bytes(word : UInt) -> Bytes {
 /// Decode the big-endian `word` at `addr` in the mode of `a`.
 fn decode_at(
   a : @powerpc.AddrSize,
-  word : UInt,
-  addr? : UInt64 = 0,
+  word : UInt32,
+  addr~ : UInt64 = 0,
 ) -> @mc.Insn raise {
   match @powerpc.decode(word_bytes(word), addr, mode=a) {
     Some(insn) => insn
@@ -181,10 +181,10 @@ fn decode_at(
 /// decoder yields the instruction `name ops` constructed by hand.
 fn decode_as(
   a : @powerpc.AddrSize,
-  word : UInt,
+  word : UInt32,
   name : String,
   ops : Array[@mc.Op],
-  addr? : UInt64 = 0,
+  addr~ : UInt64 = 0,
 ) -> @mc.Insn raise {
   let insn = decode_at(a, word, addr~)
   assert_eq(
@@ -199,7 +199,7 @@ fn decode_as(
 ///|
 /// Concatenate `(value, width)` fields, the most significant first, into an
 /// instruction word (upstream `make_insn`/`make_bytes`).
-fn enc(fields : Array[(Int, Int)]) -> UInt {
+fn enc(fields : Array[(Int32, Int32)]) -> UInt32 {
   let mut word = 0U
   let mut total = 0
   for f in fields {
@@ -217,8 +217,8 @@ fn enc(fields : Array[(Int, Int)]) -> UInt {
 fn run_insn(
   a : @powerpc.AddrSize,
   insn : @mc.Insn,
-  init? : Array[(String, UInt64)] = [],
-  mem? : Array[(UInt64, UInt64, Int)] = [],
+  init~ : Array[(String, UInt64)] = [],
+  mem~ : Array[(UInt64, UInt64, Int32)] = [],
 ) -> Run raise {
   let bil = @powerpc.lift(a, BigEndian, insn)
   let env = initial_env(a)
@@ -289,7 +289,7 @@ fn Run::load(
   self : Run,
   a : @powerpc.AddrSize,
   at : UInt64,
-  size : Int,
+  size : Int32,
 ) -> UInt64 raise {
   guard self.env.get("mem") is Some(BilMem(memory)) else { fail("no memory") }
   match memory.load(word_of(bits(a), at), endian=BigEndian, width=size * 8) {
@@ -304,7 +304,7 @@ fn Run::check_mem(
   self : Run,
   a : @powerpc.AddrSize,
   at : UInt64,
-  size : Int,
+  size : Int32,
   expected : UInt64,
 ) -> Unit raise {
   let actual = self.load(a, at, size)

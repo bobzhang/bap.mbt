@@ -70,7 +70,7 @@ pub fn Context::le(self : Context, other : Context) -> Bool {
     let (name, xs) = kv
     match other.classes.get(name) {
       None => xs.is_empty()
-      Some(ys) => xs.subset(ys)
+      Some(ys) => xs.is_subset(ys)
     }
   })
 }

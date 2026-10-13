@@ -41,7 +41,7 @@ fn init {
 
 ///|
 /// The upstream ordering of Primus values (by their words).
-fn word_compare(x : @primus.Value, y : @primus.Value) -> Int {
+fn word_compare(x : @primus.Value, y : @primus.Value) -> Int32 {
   x.to_word().compare(y.to_word())
 }
 
@@ -170,7 +170,7 @@ pub extend Object with Show::{output}
 
 ///|
 /// The width of object identifiers (upstream `Object.t` Lisp type).
-pub let object_width : Int = 63
+pub let object_width : Int32 = 63
 
 ///|
 /// The global registry of all ever created objects and their kinds.

@@ -5,7 +5,7 @@ struct LabelFacts {
   addr_value : @knowledge.FactTable[Unit, @types.Word?]
   name_value : @knowledge.FactTable[Unit, String?]
   possible_name_value : @knowledge.FactTable[Unit, @knowledge.Opinions[String?]]
-  ivec_value : @knowledge.FactTable[Unit, Int?]
+  ivec_value : @knowledge.FactTable[Unit, Int32?]
   encoding_value : @knowledge.FactTable[Unit, Language]
   semantics_value : @knowledge.FactTable[Unit, Semantics]
   target_value : @knowledge.FactTable[Unit, Target]
@@ -16,7 +16,7 @@ struct LabelFacts {
 }
 
 ///|
-fn optional_int_domain(name : String) -> @knowledge.Domain[Int?] {
+fn optional_int_domain(name : String) -> @knowledge.Domain[Int32?] {
   @knowledge.Domain::optional(
     @knowledge.Domain::flat(core_name(name), value => value.to_string()),
   )
@@ -28,7 +28,7 @@ fn label_bool_domain() -> @knowledge.Domain[Bool?] {
 }
 
 ///|
-fn optional_int_persistent() -> @knowledge.Persistent[Int?] {
+fn optional_int_persistent() -> @knowledge.Persistent[Int32?] {
   @knowledge.Persistent::optional(@knowledge.Persistent::int())
 }
 
@@ -167,7 +167,7 @@ pub fn Label::possible_name_slot() -> @knowledge.Slot[
 
 ///|
 /// The `Label::ivec_slot` property, declared once.
-let label_ivec_slot : @knowledge.Slot[Unit, Int?] = Label::cls().property(
+let label_ivec_slot : @knowledge.Slot[Unit, Int32?] = Label::cls().property(
   name=core_name("label-ivec"),
   domain=optional_int_domain("label-ivec"),
   desc="the program interrupt vector",
@@ -176,7 +176,7 @@ let label_ivec_slot : @knowledge.Slot[Unit, Int?] = Label::cls().property(
 )
 
 ///|
-pub fn Label::ivec_slot() -> @knowledge.Slot[Unit, Int?] {
+pub fn Label::ivec_slot() -> @knowledge.Slot[Unit, Int32?] {
   label_ivec_slot
 }
 
@@ -302,7 +302,9 @@ pub fn LabelFacts::possible_name(
 }
 
 ///|
-pub fn LabelFacts::ivec(self : LabelFacts) -> @knowledge.FactTable[Unit, Int?] {
+pub fn LabelFacts::ivec(
+  self : LabelFacts,
+) -> @knowledge.FactTable[Unit, Int32?] {
   self.ivec_value
 }
 
@@ -474,7 +476,7 @@ pub fn LabelFacts::collect_possible_name_opinions(
 pub fn LabelFacts::collect_ivec(
   self : LabelFacts,
   object : @knowledge.Object[Unit],
-) -> Int? {
+) -> Int32? {
   match self.ivec_value.collect(object) {
     Some(ivec) => ivec
     None => None

@@ -14,10 +14,10 @@ priv enum StringsDetectorAnswer {
 
 ///|
 struct StringsDecision[T] {
-  m_value : Int
-  n_value : Int
-  cut_value : Int
-  len_value : Int
+  m_value : Int32
+  n_value : Int32
+  cut_value : Int32
+  len_value : Int32
   chars_rev : Array[Byte]
   data_rev : Array[T]
   stage_value : StringsDetectorStage
@@ -192,10 +192,10 @@ fn[T] StringsDetector::step_byte(
 ///|
 pub fn[T] StringsDetector::create(
   alphabet : StringsAlphabet,
-  alpha? : Double = 0.05,
-  beta? : Double = 0.001,
-  p1? : Double = 0.5,
-  ps? : Double = 0.05,
+  alpha~ : Double = 0.05,
+  beta~ : Double = 0.001,
+  p1~ : Double = 0.5,
+  ps~ : Double = 0.05,
 ) -> StringsDetector[T] {
   let s = 245.0
   let a = alphabet.length().to_double()
@@ -320,7 +320,7 @@ pub fn[T] StringsDecision::chars(self : StringsDecision[T]) -> Bytes {
 ///|
 pub fn[T] StringsDecision::data(
   self : StringsDecision[T],
-  rev? : Bool = false,
+  rev~ : Bool = false,
 ) -> Array[T] {
   let out = []
   if rev {
@@ -341,16 +341,16 @@ pub fn[T] StringsDecision::data(
 }
 
 ///|
-pub fn[T] StringsDecision::length(self : StringsDecision[T]) -> Int {
+pub fn[T] StringsDecision::length(self : StringsDecision[T]) -> Int32 {
   self.len_value - self.cut_value
 }
 
 ///|
-pub fn[T] StringsDecision::accepted_count(self : StringsDecision[T]) -> Int {
+pub fn[T] StringsDecision::accepted_count(self : StringsDecision[T]) -> Int32 {
   self.n_value
 }
 
 ///|
-pub fn[T] StringsDecision::rejected_count(self : StringsDecision[T]) -> Int {
+pub fn[T] StringsDecision::rejected_count(self : StringsDecision[T]) -> Int32 {
   self.m_value
 }

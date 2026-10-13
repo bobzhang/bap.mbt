@@ -2,7 +2,7 @@
 // forks.
 
 ///|
-fn w64(n : Int) -> @types.Word {
+fn w64(n : Int32) -> @types.Word {
   try! @types.Word::of_int(width=64, n)
 }
 
@@ -12,7 +12,7 @@ fn reg64(name : String) -> @types.Var {
 }
 
 ///|
-fn store_string(m : @primus.Machine, addr : Int, s : String) -> Unit raise {
+fn store_string(m : @primus.Machine, addr : Int32, s : String) -> Unit raise {
   @primus.Memory::allocate(m, w64(addr), 64)
   for i, c in s {
     @primus.Memory::store(
@@ -95,7 +95,7 @@ fn strlen_program() -> @project.Project {
 ///|
 fn run_program(
   src : String,
-  typecheck? : Bool = false,
+  typecheck~ : Bool = false,
 ) -> (String, Array[String]) raise {
   let prog = lisp_program(strlen_src + src)
   let log : Array[String] = []

@@ -2,11 +2,11 @@
 // `to_binary`).
 
 ///|
-fn hex_value(c : Char) -> Int? {
+fn hex_value(c : Char) -> Int32? {
   match c {
-    '0'..='9' => Some(c.to_int() - '0'.to_int())
-    'a'..='f' => Some(c.to_int() - 'a'.to_int() + 10)
-    'A'..='F' => Some(c.to_int() - 'A'.to_int() + 10)
+    '0'..<='9' => Some(c.to_int() - '0'.to_int())
+    'a'..<='f' => Some(c.to_int() - 'a'.to_int() + 10)
+    'A'..<='F' => Some(c.to_int() - 'A'.to_int() + 10)
     _ => None
   }
 }
@@ -42,11 +42,11 @@ fn unescape(s : String) -> Bytes raise McError {
         }
         i += 4
       }
-      '0'..='9' => {
+      '0'..<='9' => {
         let mut v = 0
         for k in 1..<=3 {
           match chars.get(i + k) {
-            Some('0'..='9' as d) => v = v * 10 + (d.to_int() - '0'.to_int())
+            Some('0'..<='9' as d) => v = v * 10 + (d.to_int() - '0'.to_int())
             _ => raise McFail(BadUserInput)
           }
         }
@@ -89,7 +89,7 @@ fn unescape(s : String) -> Bytes raise McError {
 /// `map` is applied to each piece, and the result is unescaped.
 fn to_binary(
   s : String,
-  map? : (String) -> String = x => x,
+  map~ : (String) -> String = x => x,
 ) -> Bytes raise McError {
   let is_sep = (c : Char) => c is (' ' | ',' | ';')
   let separated = s.iter().any(is_sep)
@@ -125,7 +125,7 @@ fn to_binary(
 /// `-`. Accepts `\x31\xd2`, `0x31 0xd2`, `31 d2`, and `31d2` forms.
 pub fn read_input(
   input : Array[String],
-  read_line? : () -> String? = () => None,
+  read_line~ : () -> String? = () => None,
 ) -> Bytes raise McError {
   let input = match input {
     [] | ["-"] => read_line()

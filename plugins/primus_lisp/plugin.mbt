@@ -97,7 +97,7 @@ pub fn redirect_channels(
 ///|
 /// The message printed by the `lisp-type-checker` component (upstream
 /// `TypeErrorSummary`).
-pub fn type_error_summary(errors : Int) -> String {
+pub fn type_error_summary(errors : Int32) -> String {
   if errors == 0 {
     "Primus Lisp code is well-typed"
   } else {
@@ -191,7 +191,7 @@ let enabled : Ref[Bool] = { val: false, }
 /// `bap:lisp-type-error-printer`, adds the core components to the legacy
 /// main system, and, unless disabled, registers the Lisp semantics
 /// lifters. Idempotent with respect to the registrations.
-pub fn enable(config? : Config = Config::default()) -> Unit raise {
+pub fn enable(config~ : Config = Config::default()) -> Unit raise {
   @lisp.configure_library(
     features=config.all_features(),
     loader=config.loader(),

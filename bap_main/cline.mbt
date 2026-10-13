@@ -17,14 +17,14 @@ priv enum OptKind {
 
 ///|
 priv struct PosKind {
-  start : Int
-  len : Int?
+  start : Int32
+  len : Int32?
   rev : Bool
 }
 
 ///|
 priv struct ArgInfo {
-  id : Int
+  id : Int32
   names : Array[String]
   docv : String
   doc : String
@@ -36,7 +36,7 @@ priv struct ArgInfo {
 }
 
 ///|
-let arg_counter : Ref[Int] = Ref(0)
+let arg_counter : Ref[Int32] = Ref(0)
 
 ///|
 let s_options = "OPTIONS"
@@ -59,14 +59,14 @@ fn dash_name(n : String) -> String {
 
 ///|
 fn ArgInfo::new(
-  names? : Array[String] = [],
-  docv? : String = "",
-  doc? : String = "",
-  docs? : String = "",
+  names~ : Array[String] = [],
+  docv~ : String = "",
+  doc~ : String = "",
+  docs~ : String = "",
   env? : (String, String),
-  kind? : OptKind = Flag,
+  kind~ : OptKind = Flag,
   pos? : PosKind,
-  absent? : String = "",
+  absent~ : String = "",
 ) -> ArgInfo {
   arg_counter.val += 1
   let docs = if docs != "" {
@@ -96,17 +96,17 @@ fn ArgInfo::is_pos(self : ArgInfo) -> Bool {
 
 ///|
 priv enum ClArg {
-  O(Array[(Int, String, String?)])
+  O(Array[(Int32, String, String?)])
   P(Array[String])
 }
 
 ///|
 priv struct Cline {
-  values : Map[Int, ClArg]
+  values : Map[Int32, ClArg]
 }
 
 ///|
-fn Cline::opt_arg(self : Cline, a : ArgInfo) -> Array[(Int, String, String?)] {
+fn Cline::opt_arg(self : Cline, a : ArgInfo) -> Array[(Int32, String, String?)] {
   match self.values.get(a.id) {
     Some(O(l)) => l
     _ => []
@@ -173,7 +173,7 @@ fn hint_matching_opt(
 }
 
 ///|
-fn take_range(start : Int, stop : Int, l : Array[String]) -> Array[String] {
+fn take_range(start : Int32, stop : Int32, l : Array[String]) -> Array[String] {
   let out = []
   for i, v in l {
     if i >= start && i <= stop {
@@ -197,11 +197,11 @@ fn err_pos_excess(excess : Array[String]) -> String {
 fn Cline::create(
   al : Array[ArgInfo],
   args : Array[String],
-  peek_opts? : Bool = false,
+  peek_opts~ : Bool = false,
 ) -> Result[Cline, (String, Cline)] {
   let optidx : Array[(String, ArgInfo)] = []
   let posidx : Array[ArgInfo] = []
-  let values : Map[Int, ClArg] = Map([])
+  let values : Map[Int32, ClArg] = Map([])
   for a in al {
     if a.is_pos() {
       posidx.push(a)
@@ -276,7 +276,7 @@ fn Cline::create(
     return Ok(cl)
   }
   let last = pargs.length() - 1
-  let pos = (rev : Bool, k : Int) => if rev { last - k } else { k }
+  let pos = (rev : Bool, k : Int32) => if rev { last - k } else { k }
   let mut max_spec = -1
   for a in posidx {
     let apos = a.pos.unwrap()
@@ -499,7 +499,7 @@ fn[A] arg_vflag_all(
   {
     args: choices.map(c => c.1),
     convert: (_, cl) => {
-      let acc : Array[(Int, A)] = []
+      let acc : Array[(Int32, A)] = []
       for c in choices {
         let (fv, a) = c
         for occ in cl.opt_arg(a) {
@@ -579,7 +579,7 @@ fn[A] arg_opt_all(
             default,
           )
         l => {
-          let parsed : Array[(Int, A)] = []
+          let parsed : Array[(Int32, A)] = []
           for occ in l {
             let (k, f, v) = occ
             match v {

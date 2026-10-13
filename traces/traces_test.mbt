@@ -1,5 +1,5 @@
 ///|
-fn word32(value : Int) -> @types.Word raise {
+fn word32(value : Int32) -> @types.Word raise {
   @types.Word::of_int32(value)
 }
 

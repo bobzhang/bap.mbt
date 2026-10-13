@@ -9,7 +9,7 @@ priv struct BlkBuilder {
 }
 
 ///|
-fn BlkBuilder::new(tid? : @types.Tid = @types.Tid::fresh()) -> BlkBuilder {
+fn BlkBuilder::new(tid~ : @types.Tid = @types.Tid::fresh()) -> BlkBuilder {
   { tid, defs: [], jmps: [], }
 }
 

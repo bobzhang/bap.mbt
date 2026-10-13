@@ -15,12 +15,12 @@
 
 ///|
 /// Number of SystemZ general-purpose registers (`R0`..`R15`).
-let gpr_count : Int = 16
+let gpr_count : Int32 = 16
 
 ///|
 /// The 64-bit general-purpose register `R<index>` (upstream
 /// `Bap_systemz_target.gpr`), or `None` when `index` is out of range.
-pub fn gpr(index : Int) -> @types.Var? {
+pub fn gpr(index : Int32) -> @types.Var? {
   if index >= 0 && index < gpr_count {
     Some(@types.Var::new(name="R\{index}", typ=Imm(64)))
   } else {
@@ -32,7 +32,7 @@ pub fn gpr(index : Int) -> @types.Var? {
 /// Upstream `regnum`: `Scanf.sscanf s "R%d"`, i.e. an `R` followed by a
 /// decimal register number; any trailing suffix (LLVM spells 32-bit
 /// halves `R1L`, 64-bit registers `R1D`) is ignored.
-pub fn regnum(name : String) -> Int? {
+pub fn regnum(name : String) -> Int32? {
   guard name is ['R', .. rest] else { None }
   let mut n = 0
   let mut digits = 0
@@ -54,7 +54,7 @@ pub fn regnum(name : String) -> Int? {
 ///|
 /// `require_gpr insn pos`: the `pos`th operand must be a register naming a
 /// general-purpose register.
-fn require_gpr(insn : @mc.Insn, pos : Int) -> @types.Var raise @mc.LiftError {
+fn require_gpr(insn : @mc.Insn, pos : Int32) -> @types.Var raise @mc.LiftError {
   guard insn.op(pos) is Some(Reg(name~, ..)) &&
     regnum(name) is Some(n) &&
     gpr(n) is Some(r) else {
@@ -157,6 +157,6 @@ pub fn provider() -> @mc.Provider {
 ///|
 /// Register the SystemZ provider with `registry` (the global `@mc`
 /// registry by default). Idempotent: the provider is replaced by name.
-pub fn register(registry? : @mc.Registry = @mc.Registry::global()) -> Unit {
+pub fn register(registry~ : @mc.Registry = @mc.Registry::global()) -> Unit {
   registry.register(provider())
 }

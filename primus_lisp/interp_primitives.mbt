@@ -2,12 +2,12 @@
 // `plugins/primus_lisp/primus_lisp_primitives.ml`).
 
 ///|
-fn addr_width(m : @primus.Machine) -> Int {
+fn addr_width(m : @primus.Machine) -> Int32 {
   get_state(m).width
 }
 
 ///|
-fn to_small_int(m : @primus.Machine, v : @primus.Value) -> Int raise {
+fn to_small_int(m : @primus.Machine, v : @primus.Value) -> Int32 raise {
   match word_to_int(v.to_word()) {
     Some(n) => n
     None => {
@@ -166,7 +166,7 @@ fn find_sub_by_addr(
 ///|
 /// The standard primitives: name, signature, documentation, implementation.
 fn standard_primitives(
-  bits : Int,
+  bits : Int32,
 ) -> Array[(String, Signature, String, Closure)] {
   let any : Typ = Any
   let sym : Typ = Symbol

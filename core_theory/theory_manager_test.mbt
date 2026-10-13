@@ -1,6 +1,6 @@
 ///|
 /// A test property of values: the constant value of an expression.
-let test_const : @knowledge.Slot[@core_theory.ValueCls, Int?] = @core_theory.Value::cls().property(
+let test_const : @knowledge.Slot[@core_theory.ValueCls, Int32?] = @core_theory.Value::cls().property(
   name=@knowledge.Name::create("const", pkg="core-test"),
   domain=@knowledge.Domain::optional(
     @knowledge.Domain::flat(@knowledge.Name::create("const", pkg="core-test"), n => {

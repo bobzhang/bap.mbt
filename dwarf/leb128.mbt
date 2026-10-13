@@ -53,7 +53,7 @@ fn leb128_of_int64_signed(value : Int64) -> Leb128 {
 }
 
 ///|
-pub fn Leb128::of_int(value : Int, signed? : Bool = false) -> Leb128 {
+pub fn Leb128::of_int(value : Int32, signed~ : Bool = false) -> Leb128 {
   if signed {
     leb128_of_int64_signed(value.to_int64())
   } else {
@@ -62,12 +62,12 @@ pub fn Leb128::of_int(value : Int, signed? : Bool = false) -> Leb128 {
 }
 
 ///|
-pub fn Leb128::of_int32(value : Int, signed? : Bool = false) -> Leb128 {
+pub fn Leb128::of_int32(value : Int32, signed~ : Bool = false) -> Leb128 {
   Leb128::of_int(value, signed~)
 }
 
 ///|
-pub fn Leb128::of_int64(value : Int64, signed? : Bool = false) -> Leb128 {
+pub fn Leb128::of_int64(value : Int64, signed~ : Bool = false) -> Leb128 {
   if signed {
     leb128_of_int64_signed(value)
   } else {
@@ -78,9 +78,9 @@ pub fn Leb128::of_int64(value : Int64, signed? : Bool = false) -> Leb128 {
 ///|
 pub fn Leb128::read(
   data : BytesView,
-  signed? : Bool = false,
-  pos? : Int = 0,
-) -> Result[(Leb128, Int), String] {
+  signed~ : Bool = false,
+  pos~ : Int32 = 0,
+) -> Result[(Leb128, Int32), String] {
   if pos < 0 || pos > data.length() {
     return Err("LEB128 read position is out of bounds")
   }
@@ -104,7 +104,7 @@ pub fn Leb128::read(
 }
 
 ///|
-pub fn Leb128::size(self : Leb128) -> Int {
+pub fn Leb128::size(self : Leb128) -> Int32 {
   self.data.length().max(1)
 }
 
@@ -153,7 +153,7 @@ pub fn Leb128::to_int64(self : Leb128) -> Result[Int64, String] {
 }
 
 ///|
-pub fn Leb128::to_int(self : Leb128) -> Result[Int, String] {
+pub fn Leb128::to_int(self : Leb128) -> Result[Int32, String] {
   match self.to_int64() {
     Ok(value) =>
       if value < -2147483648L || value > 2147483647L {
@@ -166,6 +166,6 @@ pub fn Leb128::to_int(self : Leb128) -> Result[Int, String] {
 }
 
 ///|
-pub fn Leb128::to_int32(self : Leb128) -> Result[Int, String] {
+pub fn Leb128::to_int32(self : Leb128) -> Result[Int32, String] {
   self.to_int()
 }

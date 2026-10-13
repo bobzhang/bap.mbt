@@ -70,7 +70,7 @@ fn parse_cases(table : String) -> Array[Case] raise {
       continue
     }
     let fields : Array[StringView] = line.split(";").collect()
-    let field = (i : Int) => fields.get(i).unwrap_or("")
+    let field = (i : Int32) => fields.get(i).unwrap_or("")
     let regs = (s : StringView) => {
       words(s).map(w => {
         let parts : Array[StringView] = w.split("=").collect()
@@ -101,7 +101,7 @@ fn parse_cases(table : String) -> Array[Case] raise {
 /// How to run the tables of one ISA mode.
 struct Isa {
   target : @core_theory.Target
-  addr_width : Int
+  addr_width : Int32
   /// address of the tested instruction
   pc : UInt64
   /// the instruction bytes of an encoding (see `word_encoding`)
@@ -123,7 +123,7 @@ struct Isa {
 
 ///|
 /// An encoding written as one hexadecimal instruction word.
-fn word_encoding(encode : (UInt) -> Bytes) -> (String) -> Bytes {
+fn word_encoding(encode : (UInt32) -> Bytes) -> (String) -> Bytes {
   code => encode(parse_hex(code).to_uint())
 }
 
@@ -154,7 +154,7 @@ fn hex(v : UInt64) -> String {
 }
 
 ///|
-fn word(width : Int, v : UInt64) -> @types.BilValue raise {
+fn word(width : Int32, v : UInt64) -> @types.BilValue raise {
   let v = if width >= 64 { v } else { v & ((1UL << width) - 1) }
   BilWord(@types.Word::of_uint64(width~, v))
 }
@@ -310,8 +310,8 @@ fn run_case(
 fn check(
   isa : Isa,
   table : String,
-  registry? : @mc.Registry = providers,
-  only? : String = "",
+  registry~ : @mc.Registry = providers,
+  only~ : String = "",
 ) -> Unit raise {
   let cases = parse_cases(table).filter(c => c.text.has_prefix(only))
   if cases.is_empty() {

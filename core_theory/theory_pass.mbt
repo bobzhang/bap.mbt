@@ -45,7 +45,7 @@ pub fn apply_passes(names : Array[String], core : Core) -> Core raise {
 ///|
 /// The variables bound by `let_` in the scope of the desugared term
 /// (`desugar-scope-vars`), with their binding multiplicity.
-let desugar_scope_vars : @knowledge.Var[Map[String, Int]] = @knowledge.Var::new(
+let desugar_scope_vars : @knowledge.Var[Map[String, Int32]] = @knowledge.Var::new(
   "desugar-scope-vars",
   _ => {},
   pkg="core",
@@ -101,13 +101,13 @@ fn desugar_target(state : @knowledge.State) -> Target raise {
 pub fn Core::desugar(self : Core) -> Core {
   let ct = self
   let pass : Eff = _ => Effect::empty(EffectSort::bot())
-  let pos : (Int) -> Pure = x => {
+  let pos : (Int32) -> Pure = x => {
     state => ct.int(Sort::bitv(32), bitvec_of_int(32, x))(state)
   }
-  let take : ((Sort, Pure) -> Pure, Int, Var) -> Pure = (what, bits, x) => {
+  let take : ((Sort, Pure) -> Pure, Int32, Var) -> Pure = (what, bits, x) => {
     what(Sort::bitv(bits), ct.var_(x))
   }
-  let assign_sub : (Var, Pure, Int) -> Eff = (dst, src, off) => {
+  let assign_sub : (Var, Pure, Int32) -> Eff = (dst, src, off) => {
     state => {
       let src = src(state)
       let s = dst.sort()
@@ -195,7 +195,7 @@ pub fn Core::desugar(self : Core) -> Core {
       let t = desugar_target(state)
       let s = r.sort()
       let ret : (Pure) -> Pure = x => state => x(state).refine(s)
-      let constant : (Role, Int) -> Pure? = (role, value) => {
+      let constant : (Role, Int32) -> Pure? = (role, value) => {
         if t.has_roles([role], r) {
           match s.refine_bitv() {
             None => Some(ct.unk(s))

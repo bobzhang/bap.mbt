@@ -6,7 +6,7 @@
 // lowercase hexadecimal rendering (`Digest.to_hex`).
 
 ///|
-let md5_shifts : FixedArray[Int] = [
+let md5_shifts : FixedArray[Int32] = [
   7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 5, 9, 14, 20, 5, 9,
   14, 20, 5, 9, 14, 20, 5, 9, 14, 20, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23,
   4, 11, 16, 23, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21,
@@ -14,13 +14,13 @@ let md5_shifts : FixedArray[Int] = [
 
 ///|
 /// `K[i] = floor(|sin(i + 1)| * 2^32)`, the standard MD5 round constants.
-let md5_constants : FixedArray[UInt] = FixedArray::makei(64, i => {
+let md5_constants : FixedArray[UInt32] = FixedArray::makei(64, i => {
   let v = @math.sin((i + 1).to_double()).abs() * 4294967296.0
   v.floor().to_uint64().to_uint()
 })
 
 ///|
-fn md5_rotl(x : UInt, c : Int) -> UInt {
+fn md5_rotl(x : UInt32, c : Int32) -> UInt32 {
   (x << c) | (x >> (32 - c))
 }
 
@@ -44,11 +44,11 @@ pub fn md5(data : BytesView) -> Bytes {
   for i in 0..<8 {
     msg[padded_len - 8 + i] = (bit_len >> (8 * i)).to_byte()
   }
-  let mut a0 : UInt = 0x67452301
-  let mut b0 : UInt = 0xefcdab89
-  let mut c0 : UInt = 0x98badcfe
-  let mut d0 : UInt = 0x10325476
-  let m = FixedArray::make(16, (0 : UInt))
+  let mut a0 : UInt32 = 0x67452301
+  let mut b0 : UInt32 = 0xefcdab89
+  let mut c0 : UInt32 = 0x98badcfe
+  let mut d0 : UInt32 = 0x10325476
+  let m = FixedArray::make(16, (0 : UInt32))
   for chunk = 0; chunk < padded_len; chunk = chunk + 64 {
     for j in 0..<16 {
       let o = chunk + j * 4

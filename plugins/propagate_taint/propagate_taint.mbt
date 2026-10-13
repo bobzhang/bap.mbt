@@ -15,13 +15,13 @@
 /// The options of the pass (upstream `args`).
 pub(all) struct Args {
   /// the maximum length of a path, in blocks (`--max-trace`)
-  max_trace : Int
+  max_trace : Int32
   /// the maximum number of loop iterations (`--max-iterations`)
-  max_loop : Int
+  max_loop : Int32
   /// follow only one path, without backtracking (`--deterministic`)
   deterministic : Bool
   /// the seed of the random generator (`--random-seed`)
-  random_seed : Int?
+  random_seed : Int32?
   /// the concretization policy of registers (`--reg-value`)
   reg_policy : @microx.Policy
   /// the concretization policy of memory cells (`--mem-value`)
@@ -36,14 +36,14 @@ pub(all) struct Args {
 ///|
 /// The options with the upstream default values.
 pub fn Args::new(
-  max_trace? : Int = 1_000_000,
-  max_loop? : Int = 10,
-  deterministic? : Bool = false,
-  random_seed? : Int,
-  reg_policy? : @microx.Policy = Random,
-  mem_policy? : @microx.Policy = Random,
-  interesting? : Array[String] = [],
-  print_coverage? : Bool = false,
+  max_trace~ : Int32 = 1_000_000,
+  max_loop~ : Int32 = 10,
+  deterministic~ : Bool = false,
+  random_seed? : Int32,
+  reg_policy~ : @microx.Policy = Random,
+  mem_policy~ : @microx.Policy = Random,
+  interesting~ : Array[String] = [],
+  print_coverage~ : Bool = false,
 ) -> Args {
   {
     max_trace,
@@ -78,9 +78,9 @@ fn parse_int64(s : String) -> Int64? {
   let mut acc = 0UL
   for c in digits {
     let d = match c {
-      '0'..='9' => c.to_int() - '0'.to_int()
-      'a'..='f' if radix == 16UL => c.to_int() - 'a'.to_int() + 10
-      'A'..='F' if radix == 16UL => c.to_int() - 'A'.to_int() + 10
+      '0'..<='9' => c.to_int() - '0'.to_int()
+      'a'..<='f' if radix == 16UL => c.to_int() - 'a'.to_int() + 10
+      'A'..<='F' if radix == 16UL => c.to_int() - 'A'.to_int() + 10
       '_' => continue
       _ => return None
     }
@@ -183,7 +183,7 @@ fn tids_of_sub(
 /// counters).
 pub struct Analysis {
   /// the number of analyzed subroutines
-  subs : Int
+  subs : Int32
   /// the visited terms
   priv visited : @immut_hashset.HashSet[@types.Tid]
   /// the terms of the analyzed subroutines
@@ -195,7 +195,7 @@ pub struct Analysis {
 ///|
 /// The coverage: the number of visited terms of the analyzed subroutines
 /// and the number of their terms (upstream `State.coverage`).
-pub fn Analysis::coverage(self : Analysis) -> (Int, Int) {
+pub fn Analysis::coverage(self : Analysis) -> (Int32, Int32) {
   (self.terms.intersection(self.visited).length(), self.terms.length())
 }
 
@@ -316,13 +316,13 @@ pub let name : String = "propagate-taint"
 
 ///|
 /// The legacy taint propagation pass.
-pub fn pass(args? : Args = Args::new()) -> @project.ProjectPass {
+pub fn pass(args~ : Args = Args::new()) -> @project.ProjectPass {
   @project.ProjectPass::create(name~, run=proj => Ok(propagate(args, proj)))
 }
 
 ///|
 /// Registers the `propagate-taint` pass (upstream `declare_extension`).
 /// Idempotent: returns `Ok(false)` if the pass was already registered.
-pub fn register(args? : Args = Args::new()) -> Result[Bool, String] {
+pub fn register(args~ : Args = Args::new()) -> Result[Bool, String] {
   @project.register_pass_if_absent(pass(args~))
 }

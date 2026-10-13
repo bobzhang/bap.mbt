@@ -1,7 +1,7 @@
 ///|
 struct Fixpoint[N, D] {
-  steps_value : Int?
-  iterations_value : Int
+  steps_value : Int32?
+  iterations_value : Int32
   default_value : D
   approx_value : Map[N, D]
 } derive(Debug)
@@ -23,7 +23,7 @@ pub fn[N, D] Fixpoint::create(
 }
 
 ///|
-pub fn[N, D] Fixpoint::iterations(self : Fixpoint[N, D]) -> Int {
+pub fn[N, D] Fixpoint::iterations(self : Fixpoint[N, D]) -> Int32 {
   self.iterations_value
 }
 
@@ -105,7 +105,11 @@ pub fn[N : Hash + Eq, D, A] Fixpoint::derive_values(
 }
 
 ///|
-fn[D] fixpoint_get_approx(approx : Map[Int, D], node : Int, default : D) -> D {
+fn[D] fixpoint_get_approx(
+  approx : Map[Int32, D],
+  node : Int32,
+  default : D,
+) -> D {
   match approx.get(node) {
     Some(value) => value
     None => default
@@ -117,12 +121,12 @@ fn[D] fixpoint_get_approx(approx : Map[Int, D], node : Int, default : D) -> D {
 /// increasing order of their ranks: a binary min-heap with a membership
 /// table, so that adding a node twice keeps it once.
 priv struct FixpointWorklist {
-  heap : Array[Int]
+  heap : Array[Int32]
   queued : FixedArray[Bool]
 }
 
 ///|
-fn FixpointWorklist::new(size : Int) -> FixpointWorklist {
+fn FixpointWorklist::new(size : Int32) -> FixpointWorklist {
   { heap: [], queued: FixedArray::make(size, false), }
 }
 
@@ -132,7 +136,7 @@ fn FixpointWorklist::is_empty(self : FixpointWorklist) -> Bool {
 }
 
 ///|
-fn FixpointWorklist::add(self : FixpointWorklist, index : Int) -> Unit {
+fn FixpointWorklist::add(self : FixpointWorklist, index : Int32) -> Unit {
   if self.queued[index] {
     return
   }
@@ -153,7 +157,7 @@ fn FixpointWorklist::add(self : FixpointWorklist, index : Int) -> Unit {
 }
 
 ///|
-fn FixpointWorklist::pop_min(self : FixpointWorklist) -> Int? {
+fn FixpointWorklist::pop_min(self : FixpointWorklist) -> Int32? {
   let heap = self.heap
   guard heap.pop() is Some(last) else { return None }
   let result = if heap.is_empty() {
@@ -188,7 +192,7 @@ fn FixpointWorklist::pop_min(self : FixpointWorklist) -> Int? {
 }
 
 ///|
-fn fixpoint_can_iter(steps : Int?, iterations : Int) -> Bool {
+fn fixpoint_can_iter(steps : Int32?, iterations : Int32) -> Bool {
   match steps {
     Some(limit) => iterations < limit
     None => true
@@ -198,10 +202,10 @@ fn fixpoint_can_iter(steps : Int?, iterations : Int) -> Bool {
 ///|
 fn[N : Hash + Eq, D] fixpoint_make_solution(
   init : Fixpoint[N, D],
-  steps : Int?,
-  iterations : Int,
+  steps : Int32?,
+  iterations : Int32,
   nodes : ArrayView[N],
-  approx : Map[Int, D],
+  approx : Map[Int32, D],
 ) -> Fixpoint[N, D] {
   let out = init.approx_value.copy()
   for entry in approx {
@@ -222,21 +226,21 @@ pub fn[N : Hash + Eq, E, D] Graph::fixpoint(
   equal~ : (D, D) -> Bool,
   merge~ : (D, D) -> D,
   f~ : (N, D) -> D,
-  steps? : Int? = None,
-  start? : N? = None,
-  rev? : Bool = false,
-  step? : ((Int, N, D, D) -> D)? = None,
+  steps~ : Int32? = None,
+  start~ : N? = None,
+  rev~ : Bool = false,
+  step~ : ((Int32, N, D, D) -> D)? = None,
 ) -> Fixpoint[N, D] {
   let nodes = self.reverse_postorder_traverse(rev~, start~)
-  let rnodes : Map[N, Int] = Map([])
+  let rnodes : Map[N, Int32] = Map([])
   for i in 0..<nodes.length() {
     rnodes[nodes[i]] = i
   }
-  let successors : Array[Set[Int]] = []
+  let successors : Array[Set[Int32]] = []
   let adj = self.adjacency(rev)
   for node in nodes {
     let adjacent = adjacent_nodes(adj, node, rev)
-    let ranked : Set[Int] = Set([])
+    let ranked : Set[Int32] = Set([])
     for next in adjacent {
       match rnodes.get(next) {
         Some(index) => ranked.add(index)
@@ -245,14 +249,14 @@ pub fn[N : Hash + Eq, E, D] Graph::fixpoint(
     }
     successors.push(ranked)
   }
-  let approx : Map[Int, D] = Map([])
+  let approx : Map[Int32, D] = Map([])
   for entry in init.approx_value {
     match rnodes.get(entry.0) {
       Some(index) => approx[index] = entry.1
       None => ()
     }
   }
-  let visits : Map[Int, Int] = Map([])
+  let visits : Map[Int32, Int32] = Map([])
   let worklist = FixpointWorklist::new(nodes.length())
   for i in 0..<nodes.length() {
     worklist.add(i)

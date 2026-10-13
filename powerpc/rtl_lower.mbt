@@ -41,11 +41,11 @@ fn expand_vars(body : RtlBody) -> Array[@types.Var] {
 ///|
 fn partial_assign(
   v : @types.Var,
-  hi_var : Int,
-  lo_var : Int,
+  hi_var : Int32,
+  lo_var : Int32,
   rhs : RtlExp,
-  hi_exp : Int,
-  lo_exp : Int,
+  hi_exp : Int32,
+  lo_exp : Int32,
 ) -> @types.Stmt {
   let width = var_bitwidth(v)
   let rhs = if hi_exp - lo_exp + 1 == rhs.width {
@@ -80,8 +80,8 @@ fn partial_assign(
 /// significant first).
 fn assign_vars(
   vars : Array[@types.Var],
-  hi? : Int,
-  lo? : Int = 0,
+  hi? : Int32,
+  lo~ : Int32 = 0,
   rhs : RtlExp,
 ) -> Array[@types.Stmt] {
   let vars = vars.rev()
@@ -89,7 +89,7 @@ fn assign_vars(
   let hi = hi.unwrap_or(full - 1)
   let rhs = rhs.cast(hi - lo + 1, rhs.sign)
   let rhs_width = rhs.width
-  let in_bounds = (x : Int) => x <= hi && x >= lo
+  let in_bounds = (x : Int32) => x <= hi && x >= lo
   let mut es : Array[@types.Stmt] = []
   let mut assigned = 0
   let mut vars_lo = 0
@@ -97,8 +97,8 @@ fn assign_vars(
     let width = var_bitwidth(v)
     let vars_hi = width + vars_lo - 1
     if hi < width || in_bounds(vars_lo) || in_bounds(vars_hi) {
-      let lo_var = Int::max(lo, vars_lo) - vars_lo
-      let hi_var = Int::min(rhs_width + lo - 1, vars_hi) - vars_lo
+      let lo_var = Int32::max(lo, vars_lo) - vars_lo
+      let hi_var = Int32::min(rhs_width + lo - 1, vars_hi) - vars_lo
       let bits_to_assign = hi_var - lo_var + 1
       let hi_exp = assigned + bits_to_assign - 1
       let lo_exp = assigned

@@ -24,13 +24,13 @@ pub extend Xlen with Eq::{equal, not_equal}
 pub extend Xlen with Debug::{to_repr}
 
 ///|
-fn bits(word : UInt, lo : Int, count : Int) -> Int {
+fn bits(word : UInt32, lo : Int32, count : Int32) -> Int32 {
   ((word >> lo) & ((1U << count) - 1U)).reinterpret_as_int()
 }
 
 ///|
 /// Sign-extend the low `width` bits of `value`.
-fn sext(value : Int, width : Int) -> Int64 {
+fn sext(value : Int32, width : Int32) -> Int64 {
   let v = value.to_int64() & ((1L << width) - 1L)
   if v >> (width - 1) != 0L {
     v - (1L << width)
@@ -41,19 +41,19 @@ fn sext(value : Int, width : Int) -> Int64 {
 
 ///|
 /// The I-type immediate.
-fn imm_i(w : UInt) -> Int64 {
+fn imm_i(w : UInt32) -> Int64 {
   sext(bits(w, 20, 12), 12)
 }
 
 ///|
 /// The S-type immediate.
-fn imm_s(w : UInt) -> Int64 {
+fn imm_s(w : UInt32) -> Int64 {
   sext((bits(w, 25, 7) << 5) | bits(w, 7, 5), 12)
 }
 
 ///|
 /// The B-type immediate (a byte offset).
-fn imm_b(w : UInt) -> Int64 {
+fn imm_b(w : UInt32) -> Int64 {
   sext(
     (bits(w, 31, 1) << 12) |
     (bits(w, 7, 1) << 11) |
@@ -65,7 +65,7 @@ fn imm_b(w : UInt) -> Int64 {
 
 ///|
 /// The J-type immediate (a byte offset).
-fn imm_j(w : UInt) -> Int64 {
+fn imm_j(w : UInt32) -> Int64 {
   sext(
     (bits(w, 31, 1) << 20) |
     (bits(w, 12, 8) << 12) |
@@ -89,7 +89,7 @@ fn mem_text(
 ///|
 /// `OP-IMM` forms (`ADDI`, `XORI`, ..., the shifts and their `W`
 /// variants) with LLVM's preferred aliases.
-fn op_imm(name : String, rd : Int, rs1 : Int, value : Int64) -> Form {
+fn op_imm(name : String, rd : Int32, rs1 : Int32, value : Int64) -> Form {
   let ops = [x(rd), x(rs1), imm(value)]
   let mnemonic = name.to_lower()
   let text = match (name, rs1, value) {
@@ -107,7 +107,7 @@ fn op_imm(name : String, rd : Int, rs1 : Int, value : Int64) -> Form {
 
 ///|
 /// `OP` forms (`ADD`, `SUB`, ..., `MUL`, ..., and their `W` variants).
-fn op_reg(name : String, rd : Int, rs1 : Int, rs2 : Int) -> Form {
+fn op_reg(name : String, rd : Int32, rs1 : Int32, rs2 : Int32) -> Form {
   let ops = [x(rd), x(rs1), x(rs2)]
   let mnemonic = name.to_lower()
   let text = match (name, rs1, rs2) {
@@ -123,7 +123,7 @@ fn op_reg(name : String, rd : Int, rs1 : Int, rs2 : Int) -> Form {
 
 ///|
 /// Conditional branches: `[rs1, rs2, offset]`.
-fn branch(name : String, rs1 : Int, rs2 : Int, offset : Int64) -> Form {
+fn branch(name : String, rs1 : Int32, rs2 : Int32, offset : Int64) -> Form {
   let ops = [x(rs1), x(rs2), imm(offset)]
   let mnemonic = name.to_lower()
   let a = ops[0].text
@@ -142,7 +142,7 @@ fn branch(name : String, rs1 : Int, rs2 : Int, offset : Int64) -> Form {
 
 ///|
 /// `JAL rd, offset`.
-fn jal(rd : Int, offset : Int64) -> Form {
+fn jal(rd : Int32, offset : Int64) -> Form {
   let ops = [x(rd), imm(offset)]
   let text = match rd {
     0 => "j \{offset}"
@@ -154,7 +154,7 @@ fn jal(rd : Int, offset : Int64) -> Form {
 
 ///|
 /// `JALR rd, offset(rs1)`.
-fn jalr(rd : Int, rs1 : Int, offset : Int64) -> Form {
+fn jalr(rd : Int32, rs1 : Int32, offset : Int64) -> Form {
   let ops = [x(rd), x(rs1), imm(offset)]
   let base = ops[1].text
   let text = match (rd, rs1, offset) {
@@ -178,9 +178,9 @@ fn jalr(rd : Int, rs1 : Int, offset : Int64) -> Form {
 /// Loads: `[rd, rs1, offset]` (`reg` gives the class of `rd`).
 fn load(
   name : String,
-  reg : (Int) -> Operand,
-  rd : Int,
-  rs1 : Int,
+  reg : (Int32) -> Operand,
+  rd : Int32,
+  rs1 : Int32,
   offset : Int64,
 ) -> Form {
   let ops = [reg(rd), x(rs1), imm(offset)]
@@ -198,9 +198,9 @@ fn load(
 /// Stores: `[rs2, rs1, offset]` (`reg` gives the class of `rs2`).
 fn store(
   name : String,
-  reg : (Int) -> Operand,
-  rs2 : Int,
-  rs1 : Int,
+  reg : (Int32) -> Operand,
+  rs2 : Int32,
+  rs1 : Int32,
   offset : Int64,
 ) -> Form {
   let ops = [reg(rs2), x(rs1), imm(offset)]
@@ -217,7 +217,7 @@ fn store(
 ///|
 /// The name LLVM prints for the CSR `csr`: its standard name, or its
 /// number.
-fn csr_name(csr : Int, xlen : Xlen) -> String {
+fn csr_name(csr : Int32, xlen : Xlen) -> String {
   match csr_names.get(csr) {
     Some(name) => name
     None =>
@@ -230,7 +230,7 @@ fn csr_name(csr : Int, xlen : Xlen) -> String {
 
 ///|
 /// The Zicsr instructions and their aliases.
-fn decode_csr(w : UInt, xlen : Xlen) -> Form? {
+fn decode_csr(w : UInt32, xlen : Xlen) -> Form? {
   let rd = bits(w, 7, 5)
   let rs1 = bits(w, 15, 5)
   let csr = bits(w, 20, 12)
@@ -296,7 +296,7 @@ fn decode_csr(w : UInt, xlen : Xlen) -> Form? {
 
 ///|
 /// The text of a `fence` predecessor or successor set.
-fn fence_set(set : Int) -> String {
+fn fence_set(set : Int32) -> String {
   if set == 0 {
     "0"
   } else {
@@ -319,7 +319,7 @@ fn fence_set(set : Int) -> String {
 
 ///|
 /// The system instructions (`ecall`, `ebreak`, `mret`, ...) and Zicsr.
-fn decode_system(w : UInt, xlen : Xlen) -> Form? {
+fn decode_system(w : UInt32, xlen : Xlen) -> Form? {
   if bits(w, 12, 3) != 0 {
     if w == 0xc0001073U {
       return Some(form("UNIMP", "unimp", []))
@@ -351,7 +351,7 @@ fn decode_system(w : UInt, xlen : Xlen) -> Form? {
 
 ///|
 /// The atomic memory operations of the A extension.
-fn decode_amo(w : UInt, xlen : Xlen) -> Form? {
+fn decode_amo(w : UInt32, xlen : Xlen) -> Form? {
   let width = match bits(w, 12, 3) {
     2 => "W"
     3 if xlen is RV64 => "D"
@@ -408,7 +408,7 @@ fn decode_amo(w : UInt, xlen : Xlen) -> Form? {
 
 ///|
 /// The names of the rounding modes (`7`, dynamic, is not printed).
-fn rounding_mode(rm : Int) -> String? {
+fn rounding_mode(rm : Int32) -> String? {
   match rm {
     0 => Some("rne")
     1 => Some("rtz")
@@ -427,7 +427,7 @@ fn with_rm(
   name : String,
   mnemonic : String,
   regs : Array[Operand],
-  rm : Int,
+  rm : Int32,
 ) -> Form? {
   guard rounding_mode(rm) is Some(mode) else { return None }
   // the exact conversions into doubles take a legacy rounding mode
@@ -445,7 +445,7 @@ fn with_rm(
 
 ///|
 /// The OP-FP instructions of the F and D extensions.
-fn decode_op_fp(w : UInt, xlen : Xlen) -> Form? {
+fn decode_op_fp(w : UInt32, xlen : Xlen) -> Form? {
   let rd = bits(w, 7, 5)
   let rs1 = bits(w, 15, 5)
   let rs2 = bits(w, 20, 5)
@@ -572,7 +572,7 @@ fn decode_op_fp(w : UInt, xlen : Xlen) -> Form? {
 
 ///|
 /// Decode the 32-bit instruction word `w`.
-fn decode_base(w : UInt, xlen : Xlen) -> Form? {
+fn decode_base(w : UInt32, xlen : Xlen) -> Form? {
   let rd = bits(w, 7, 5)
   let f3 = bits(w, 12, 3)
   let rs1 = bits(w, 15, 5)

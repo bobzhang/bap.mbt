@@ -6,14 +6,14 @@
 /// an intermediate approximation of the slot (`waiting`).
 priv enum Work {
   Done
-  Working(@sorted_set.SortedSet[Int], @sorted_set.SortedSet[Int])
+  Working(@sorted_set.SortedSet[Int32], @sorted_set.SortedSet[Int32])
 }
 
 ///|
 /// Everything the knowledge base knows about an object (`Env.info`).
 priv struct Info {
   data : Record
-  comp : @sorted_map.SortedMap[Int, Work]
+  comp : @sorted_map.SortedMap[Int32, Work]
   name : Name?
 }
 
@@ -33,10 +33,10 @@ let noinfo : Info = {
 ///   imported into other packages) to objects;
 /// - `pubs` lists the public symbols of each package.
 priv struct Objects {
-  last : Int
-  vals : @sorted_map.SortedMap[Int, Info]
-  objs : @hashmap.HashMap[Name, Int]
-  pubs : @hashmap.HashMap[String, @sorted_set.SortedSet[Int]]
+  last : Int32
+  vals : @sorted_map.SortedMap[Int32, Info]
+  objs : @hashmap.HashMap[Name, Int32]
+  pubs : @hashmap.HashMap[String, @sorted_set.SortedSet[Int32]]
 }
 
 ///|
@@ -53,7 +53,7 @@ let empty_class : Objects = {
 priv struct Env {
   classes : @hashmap.HashMap[Name, Objects]
   pkg : String
-  context : @sorted_map.SortedMap[Int, () -> Unit]
+  context : @sorted_map.SortedMap[Int32, () -> Unit]
 }
 
 ///|
@@ -169,7 +169,7 @@ fn State::set_class_objects(
 }
 
 ///|
-fn State::info(self : State, cls : Name, id : Int) -> Info? {
+fn State::info(self : State, cls : Name, id : Int32) -> Info? {
   self.class_objects(cls).vals.get(id)
 }
 
@@ -177,7 +177,7 @@ fn State::info(self : State, cls : Name, id : Int) -> Info? {
 fn State::update_info(
   self : State,
   cls : Name,
-  id : Int,
+  id : Int32,
   f : (Info) -> Info,
 ) -> Unit {
   let objects = self.class_objects(cls)
@@ -287,7 +287,7 @@ pub fn[R] State::with_pkg(self : State, pkg : String, body : () -> R) -> R {
 }
 
 ///|
-fn Objects::publicize(self : Objects, name : Name, id : Int) -> Objects {
+fn Objects::publicize(self : Objects, name : Name, id : Int32) -> Objects {
   let pkg = name.pkg()
   let pubs = match self.pubs.get(pkg) {
     Some(ids) => ids.add(id)
@@ -345,7 +345,7 @@ pub fn[K, S] State::intern_symbol(
   self : State,
   name : String,
   cls : Class[K, S],
-  public? : Bool = false,
+  public~ : Bool = false,
   desc? : String,
   pkg? : String,
 ) -> Object[K] {
@@ -436,7 +436,7 @@ pub fn[K] State::repr(self : State, object : Object[K]) -> String {
 pub fn State::import_(
   self : State,
   names : Array[String],
-  strict? : Bool = false,
+  strict~ : Bool = false,
   pkg? : String,
 ) -> Unit raise Conflict {
   let pkg = match pkg {

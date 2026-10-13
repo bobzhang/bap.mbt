@@ -27,7 +27,7 @@ fn read_cstring(m : @primus.Machine, addr : @types.Word) -> String raise {
     if b == 0 {
       break
     }
-    buf.write_char(Int::unsafe_to_char(b))
+    buf.write_char(Int32::unsafe_to_char(b))
     continue a.succ()
   }
   buf.to_string()

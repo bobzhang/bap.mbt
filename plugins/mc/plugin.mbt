@@ -290,8 +290,8 @@ fn declare_objdump(out : (String) -> Unit) -> Unit raise {
 /// `out` receives the output; `read_line` reads a line of the standard
 /// input (used by `mc` when no bytes are given on the command line).
 pub fn declare_plugin(
-  out? : (String) -> Unit = s => println(s.trim_end(chars="\n")),
-  read_line? : () -> String? = () => None,
+  out~ : (String) -> Unit = s => println(s.trim_end(chars="\n")),
+  read_line~ : () -> String? = () => None,
 ) -> Unit raise {
   if @bap_main.registered_plugins().contains(plugin_name) {
     return

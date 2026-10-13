@@ -51,9 +51,9 @@ fn register_pair(name : String) -> (Reg, Reg)? {
 pub fn lift_typed(
   insn : Insn,
   ops : ArrayView[Op],
-  addr? : UInt = 0,
-  encoding? : Encoding = A32,
-  raw? : UInt,
+  addr~ : UInt32 = 0,
+  encoding~ : Encoding = A32,
+  raw? : UInt32,
 ) -> Array[@types.Stmt] raise @mc.LiftError {
   tmp_counter.val = 0
   match insn {
@@ -83,7 +83,7 @@ pub fn lift_typed(
 /// into jumps (`Arm_lifter.resolve_pc`).
 pub fn resolve_pc(
   stmts : ArrayView[@types.Stmt],
-  pc_value : UInt,
+  pc_value : UInt32,
 ) -> Array[@types.Stmt] {
   let pc_exp = int32(pc_value)
   let map_exp = (e : @types.Exp) => e.substitute_var(pc, pc_exp)
@@ -122,7 +122,7 @@ pub fn encoding_of_name(name : StringView) -> Encoding {
 pub fn lift(
   insn : @mc.Insn,
   encoding? : Encoding,
-  raw? : UInt,
+  raw? : UInt32,
 ) -> Array[@types.Stmt] raise @mc.LiftError {
   match Insn::of_name(insn.name) {
     None => []
@@ -169,7 +169,7 @@ pub fn accepts(ctx : @mc.Context) -> Bool {
 ///|
 /// The instruction word of an A32 instruction from its raw (little-endian)
 /// bytes, when available.
-fn raw_word(insn : @mc.Insn) -> UInt? {
+fn raw_word(insn : @mc.Insn) -> UInt32? {
   let raw = insn.raw
   if raw.length() == 4 {
     Some(
@@ -199,7 +199,7 @@ pub fn lift_in_context(
   guard is_thumb2(insn.name) == thumb && Insn::of_name(insn.name) is Some(_) else {
     raise Unsupported(opcode=insn.name, target=ctx.target.to_string())
   }
-  let (encoding, raw) : (Encoding, UInt?) = if thumb {
+  let (encoding, raw) : (Encoding, UInt32?) = if thumb {
     (T32, None)
   } else {
     (A32, raw_word(insn))
@@ -224,6 +224,6 @@ pub fn provider() -> @mc.Provider {
 /// default). Idempotent: the provider is replaced by name. To lift Thumb
 /// code, register the `thumb` provider first so that Thumb-1 opcodes reach
 /// it before this provider (which handles Thumb-2 ones).
-pub fn register(registry? : @mc.Registry = @mc.Registry::global()) -> Unit {
+pub fn register(registry~ : @mc.Registry = @mc.Registry::global()) -> Unit {
   registry.register(provider())
 }

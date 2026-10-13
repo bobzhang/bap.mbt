@@ -21,7 +21,7 @@ pub let component_name : String = "wondering-scheduler"
 
 ///|
 /// The number of attempts to pick a live machine before the next draw.
-let attempts : Int = 4
+let attempts : Int32 = 4
 
 ///|
 let log : @main_event.MainLogReporter = @main_event.MainLogReporter::create(
@@ -29,7 +29,7 @@ let log : @main_event.MainLogReporter = @main_event.MainLogReporter::create(
 )
 
 ///|
-let state : @primus.State[@sorted_map.SortedMap[Int, @primus.Id]] = @primus.State::declare_(
+let state : @primus.State[@sorted_map.SortedMap[Int32, @primus.Id]] = @primus.State::declare_(
   uuid="99883d0e-94b2-41a4-bce6-1e4a949fd919",
   name="wandering-scheduler",
   _ => @sorted_map.new(),
@@ -38,7 +38,7 @@ let state : @primus.State[@sorted_map.SortedMap[Int, @primus.Id]] = @primus.Stat
 ///|
 /// The current party of contestants of the machine: pairs of the draw
 /// number and the machine identifier.
-pub fn pending(m : @primus.Machine) -> Array[(Int, @primus.Id)] {
+pub fn pending(m : @primus.Machine) -> Array[(Int32, @primus.Id)] {
   m.get_local(state).to_array()
 }
 
@@ -46,7 +46,7 @@ pub fn pending(m : @primus.Machine) -> Array[(Int, @primus.Id)] {
 fn schedule(
   m : @primus.Machine,
   generator : @primus.Generator,
-  pending : @sorted_map.SortedMap[Int, @primus.Id],
+  pending : @sorted_map.SortedMap[Int32, @primus.Id],
 ) -> Unit raise {
   for n = attempts, t = pending {
     if n > 0 && !t.is_empty() {
@@ -75,7 +75,7 @@ fn schedule(
 ///|
 /// Initializes the scheduler in the machine (the component body), using
 /// a pseudo-random generator with the given seed.
-pub fn install(m : @primus.Machine, seed? : Int = 0) -> Unit {
+pub fn install(m : @primus.Machine, seed~ : Int32 = 0) -> Unit {
   let generator = @primus.Generator::random_lcg(seed)
   m.observe(@primus.leave_pos, _ => schedule(m, generator, m.get_local(state)))
 }
@@ -84,7 +84,7 @@ pub fn install(m : @primus.Machine, seed? : Int = 0) -> Unit {
 /// Registers the `bap:wondering-scheduler` component (the upstream
 /// spelling). Idempotent: returns `false` if the component was already
 /// registered (the seed of the first registration is used).
-pub fn register(seed? : Int = 0) -> Bool {
+pub fn register(seed~ : Int32 = 0) -> Bool {
   @primus.Components::register_generic(
     component_name,
     m => install(m, seed~),
@@ -102,7 +102,7 @@ let enabled : Ref[Bool] = { val: false, }
 ///|
 /// Adds the scheduler to the legacy main system (upstream
 /// `--primus-wandering-scheduler`). Idempotent.
-pub fn enable(seed? : Int = 0) -> Unit {
+pub fn enable(seed~ : Int32 = 0) -> Unit {
   if !enabled.val {
     enabled.val = true
     log.info(message="enabling the scheduler, using \{seed} as the seed")

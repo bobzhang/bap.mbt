@@ -1,15 +1,15 @@
 ///|
 struct DwarfAddressTable {
   addresses_value : Array[UInt64]
-  base_offset_value : Int
-  version_value : Int?
+  base_offset_value : Int32
+  version_value : Int32?
   addr_size_value : DwarfWordSize
 }
 
 ///|
 fn dwarf_read_address_entries(
   input : DwarfInput,
-  end_position : Int,
+  end_position : Int32,
   endian : @bitvec.Endian,
   addr_size : DwarfWordSize,
 ) -> Result[Array[UInt64], String] {
@@ -34,7 +34,7 @@ fn dwarf_read_address_entries(
 ///|
 pub fn DwarfAddressTable::read(
   buffer : DwarfSectionBuffer,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
   endian~ : @bitvec.Endian,
   addr_size~ : DwarfWordSize,
 ) -> Result[DwarfAddressTable, String] {
@@ -59,7 +59,7 @@ pub fn DwarfAddressTable::read(
 ///|
 pub fn DwarfAddressTable::read_contribution(
   buffer : DwarfSectionBuffer,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
   endian~ : @bitvec.Endian,
 ) -> Result[DwarfAddressTable, String] {
   let start = match buffer.offset(offset) {
@@ -114,7 +114,7 @@ pub fn DwarfAddressTable::addresses(self : DwarfAddressTable) -> Array[UInt64] {
 ///|
 pub fn DwarfAddressTable::address(
   self : DwarfAddressTable,
-  index : Int,
+  index : Int32,
 ) -> Result[UInt64, String] {
   if index < 0 || index >= self.addresses_value.length() {
     Err("DWARF address index is out of bounds")
@@ -124,7 +124,7 @@ pub fn DwarfAddressTable::address(
 }
 
 ///|
-pub fn DwarfAddressTable::length(self : DwarfAddressTable) -> Int {
+pub fn DwarfAddressTable::length(self : DwarfAddressTable) -> Int32 {
   self.addresses_value.length()
 }
 
@@ -134,12 +134,12 @@ pub fn DwarfAddressTable::is_empty(self : DwarfAddressTable) -> Bool {
 }
 
 ///|
-pub fn DwarfAddressTable::base_offset(self : DwarfAddressTable) -> Int {
+pub fn DwarfAddressTable::base_offset(self : DwarfAddressTable) -> Int32 {
   self.base_offset_value
 }
 
 ///|
-pub fn DwarfAddressTable::version(self : DwarfAddressTable) -> Int? {
+pub fn DwarfAddressTable::version(self : DwarfAddressTable) -> Int32? {
   self.version_value
 }
 
@@ -153,7 +153,7 @@ pub fn DwarfAddressTable::address_size(
 ///|
 pub fn DwarfData::address_table(
   self : DwarfData,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
   addr_size~ : DwarfWordSize,
 ) -> Result[DwarfAddressTable, String] {
   match self.section(DwarfAddr) {
@@ -171,7 +171,7 @@ pub fn DwarfData::address_table(
 ///|
 pub fn DwarfData::address_table_contribution(
   self : DwarfData,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
 ) -> Result[DwarfAddressTable, String] {
   match self.section(DwarfAddr) {
     Ok(section) =>

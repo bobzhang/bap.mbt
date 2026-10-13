@@ -5,7 +5,7 @@ fn project(subs : Array[@types.Term[@types.Sub]]) -> @project.Project {
 }
 
 ///|
-fn int64(n : Int) -> @types.Exp {
+fn int64(n : Int32) -> @types.Exp {
   Int(try! @types.Word::of_int(width=64, n))
 }
 
@@ -44,7 +44,7 @@ fn resume_other(m : @primus.Machine) -> Unit raise {
 /// conflicts.
 fn explore(
   subs : Array[@types.Term[@types.Sub]],
-  init? : (@primus.Machine) -> Unit raise = _ => (),
+  init~ : (@primus.Machine) -> Unit raise = _ => (),
 ) -> Array[String] {
   let log = []
   let status = Ref("normal")

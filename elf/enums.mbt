@@ -18,7 +18,7 @@ pub(all) enum EOsabi {
   ELFOSABI_ARM_AEABI
   ELFOSABI_ARM
   ELFOSABI_STANDALONE
-  ELFOSABI_EXT(Int)
+  ELFOSABI_EXT(Int32)
 } derive(Eq, Compare, Debug)
 
 ///|
@@ -33,7 +33,7 @@ pub extend EOsabi with Debug::{to_repr}
 ///|
 /// Decodes an `EI_OSABI` byte; values without a named constructor are kept as
 /// `ELFOSABI_EXT`, so decoding is lossless.
-pub fn EOsabi::of_int(value : Int) -> EOsabi {
+pub fn EOsabi::of_int(value : Int32) -> EOsabi {
   match value {
     0 => ELFOSABI_SYSV
     1 => ELFOSABI_HPUX
@@ -55,7 +55,7 @@ pub fn EOsabi::of_int(value : Int) -> EOsabi {
 
 ///|
 /// The raw encoding of the value (the inverse of `EOsabi::of_int`).
-pub fn EOsabi::to_int(self : EOsabi) -> Int {
+pub fn EOsabi::to_int(self : EOsabi) -> Int32 {
   match self {
     ELFOSABI_SYSV => 0
     ELFOSABI_HPUX => 1
@@ -83,7 +83,7 @@ pub(all) enum EType {
   ET_EXEC
   ET_DYN
   ET_CORE
-  ET_EXT(Int)
+  ET_EXT(Int32)
 } derive(Eq, Compare, Debug)
 
 ///|
@@ -98,7 +98,7 @@ pub extend EType with Debug::{to_repr}
 ///|
 /// Decodes an `e_type` half-word; values without a named constructor are kept as
 /// `ET_EXT`, so decoding is lossless.
-pub fn EType::of_int(value : Int) -> EType {
+pub fn EType::of_int(value : Int32) -> EType {
   match value {
     0 => ET_NONE
     1 => ET_REL
@@ -111,7 +111,7 @@ pub fn EType::of_int(value : Int) -> EType {
 
 ///|
 /// The raw encoding of the value (the inverse of `EType::of_int`).
-pub fn EType::to_int(self : EType) -> Int {
+pub fn EType::to_int(self : EType) -> Int32 {
   match self {
     ET_NONE => 0
     ET_REL => 1
@@ -203,7 +203,7 @@ pub(all) enum EMachine {
   EM_TILEPRO
   EM_MICROBLAZE
   EM_TILEGX
-  EM_EXT(Int)
+  EM_EXT(Int32)
 } derive(Eq, Compare, Debug)
 
 ///|
@@ -218,7 +218,7 @@ pub extend EMachine with Debug::{to_repr}
 ///|
 /// Decodes an `e_machine` half-word; values without a named constructor are kept as
 /// `EM_EXT`, so decoding is lossless.
-pub fn EMachine::of_int(value : Int) -> EMachine {
+pub fn EMachine::of_int(value : Int32) -> EMachine {
   match value {
     0 => EM_NONE
     1 => EM_M32
@@ -304,7 +304,7 @@ pub fn EMachine::of_int(value : Int) -> EMachine {
 
 ///|
 /// The raw encoding of the value (the inverse of `EMachine::of_int`).
-pub fn EMachine::to_int(self : EMachine) -> Int {
+pub fn EMachine::to_int(self : EMachine) -> Int32 {
   match self {
     EM_NONE => 0
     EM_M32 => 1
@@ -398,7 +398,7 @@ pub(all) enum PType {
   PT_NOTE
   PT_SHLIB
   PT_PHDR
-  PT_OTHER(UInt)
+  PT_OTHER(UInt32)
 } derive(Eq, Compare, Debug)
 
 ///|
@@ -413,7 +413,7 @@ pub extend PType with Debug::{to_repr}
 ///|
 /// Decodes a `p_type` word; values without a named constructor are kept as
 /// `PT_OTHER`, so decoding is lossless.
-pub fn PType::of_int(value : UInt) -> PType {
+pub fn PType::of_int(value : UInt32) -> PType {
   match value {
     0 => PT_NULL
     1 => PT_LOAD
@@ -428,7 +428,7 @@ pub fn PType::of_int(value : UInt) -> PType {
 
 ///|
 /// The raw encoding of the value (the inverse of `PType::of_int`).
-pub fn PType::to_int(self : PType) -> UInt {
+pub fn PType::to_int(self : PType) -> UInt32 {
   match self {
     PT_NULL => 0
     PT_LOAD => 1
@@ -456,7 +456,7 @@ pub(all) enum ShType {
   SHT_REL
   SHT_SHLIB
   SHT_DYNSYM
-  SHT_EXT(UInt)
+  SHT_EXT(UInt32)
 } derive(Eq, Compare, Debug)
 
 ///|
@@ -471,7 +471,7 @@ pub extend ShType with Debug::{to_repr}
 ///|
 /// Decodes an `sh_type` word; values without a named constructor are kept as
 /// `SHT_EXT`, so decoding is lossless.
-pub fn ShType::of_int(value : UInt) -> ShType {
+pub fn ShType::of_int(value : UInt32) -> ShType {
   match value {
     0 => SHT_NULL
     1 => SHT_PROGBITS
@@ -491,7 +491,7 @@ pub fn ShType::of_int(value : UInt) -> ShType {
 
 ///|
 /// The raw encoding of the value (the inverse of `ShType::of_int`).
-pub fn ShType::to_int(self : ShType) -> UInt {
+pub fn ShType::to_int(self : ShType) -> UInt32 {
   match self {
     SHT_NULL => 0
     SHT_PROGBITS => 1
@@ -516,7 +516,7 @@ pub(all) enum PFlag {
   PF_X
   PF_W
   PF_R
-  PF_EXT(Int)
+  PF_EXT(Int32)
 } derive(Eq, Compare, Debug)
 
 ///|
@@ -531,7 +531,7 @@ pub extend PFlag with Debug::{to_repr}
 ///|
 /// Decodes a `p_flags` bit index; values without a named constructor are kept as
 /// `PF_EXT`, so decoding is lossless.
-pub fn PFlag::of_int(value : Int) -> PFlag {
+pub fn PFlag::of_int(value : Int32) -> PFlag {
   match value {
     0 => PF_X
     1 => PF_W
@@ -542,7 +542,7 @@ pub fn PFlag::of_int(value : Int) -> PFlag {
 
 ///|
 /// The raw encoding of the value (the inverse of `PFlag::of_int`).
-pub fn PFlag::to_int(self : PFlag) -> Int {
+pub fn PFlag::to_int(self : PFlag) -> Int32 {
   match self {
     PF_X => 0
     PF_W => 1
@@ -558,7 +558,7 @@ pub(all) enum ShFlag {
   SHF_WRITE
   SHF_ALLOC
   SHF_EXECINSTR
-  SHF_EXT(Int)
+  SHF_EXT(Int32)
 } derive(Eq, Compare, Debug)
 
 ///|
@@ -573,7 +573,7 @@ pub extend ShFlag with Debug::{to_repr}
 ///|
 /// Decodes an `sh_flags` bit index; values without a named constructor are kept as
 /// `SHF_EXT`, so decoding is lossless.
-pub fn ShFlag::of_int(value : Int) -> ShFlag {
+pub fn ShFlag::of_int(value : Int32) -> ShFlag {
   match value {
     0 => SHF_WRITE
     1 => SHF_ALLOC
@@ -584,7 +584,7 @@ pub fn ShFlag::of_int(value : Int) -> ShFlag {
 
 ///|
 /// The raw encoding of the value (the inverse of `ShFlag::of_int`).
-pub fn ShFlag::to_int(self : ShFlag) -> Int {
+pub fn ShFlag::to_int(self : ShFlag) -> Int32 {
   match self {
     SHF_WRITE => 0
     SHF_ALLOC => 1

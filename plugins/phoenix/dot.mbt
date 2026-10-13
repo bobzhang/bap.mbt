@@ -74,7 +74,7 @@ fn pp_attributes(fmt : @text_tags.Formatter, attrs : Array[String]) -> Unit {
 }
 
 ///|
-fn dot_color(c : Int) -> String {
+fn dot_color(c : Int32) -> String {
   let hex = c.to_string(radix=16).to_upper()
   "\"#" + String::make(6 - hex.length(), '0') + hex + "\""
 }

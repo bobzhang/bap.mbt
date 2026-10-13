@@ -97,7 +97,7 @@ fn program_vars(prog : @types.Term[@types.Program]) -> Array[@types.Var] {
 pub fn randomize_vars(
   m : @primus.Machine,
   specs : Array[Spec],
-  seed? : Int = 0,
+  seed~ : Int32 = 0,
 ) -> Unit raise {
   for v in program_vars(m.program()) {
     guard v.typ() is Imm(width) else { continue }
@@ -116,15 +116,15 @@ pub fn randomize_vars(
 /// component body).
 pub fn install_var_randomizer(
   m : @primus.Machine,
-  specs? : Array[Spec] = [],
-  seed? : Int = 0,
+  specs~ : Array[Spec] = [],
+  seed~ : Int32 = 0,
 ) -> Unit {
   let specs = with_default(specs)
   m.observe(@primus.system_start, _ => randomize_vars(m, specs, seed~))
 }
 
 ///|
-fn parse_exp(width : Int, s : String) -> @types.Exp {
+fn parse_exp(width : Int32, s : String) -> @types.Exp {
   if s.length() > 0 && s[0] >= '0' && s[0] <= '9' {
     let w = try @string.parse_int64(s, base=0) catch {
       _ => 0L
@@ -144,7 +144,7 @@ fn parse_exp(width : Int, s : String) -> @types.Exp {
 ///|
 fn allocate_region(
   m : @primus.Machine,
-  width : Int,
+  width : Int32,
   lower : String,
   upper : String?,
   generator : @primus.Generator,
@@ -167,7 +167,7 @@ fn allocate_region(
 pub fn initialize_regions(
   m : @primus.Machine,
   specs : Array[Spec],
-  seed? : Int = 0,
+  seed~ : Int32 = 0,
 ) -> Unit raise {
   let width = m.target().bits()
   for i = specs.length() - 1; i >= 0; i = i - 1 {
@@ -196,7 +196,7 @@ pub fn initialize_regions(
 }
 
 ///|
-let default_page_size : Int = 4096
+let default_page_size : Int32 = 4096
 
 ///|
 fn map_page(
@@ -248,9 +248,9 @@ fn pagefault(
 /// body).
 pub fn install_mem_randomizer(
   m : @primus.Machine,
-  specs? : Array[Spec] = [],
-  seed? : Int = 0,
-  keep_protected? : Bool = false,
+  specs~ : Array[Spec] = [],
+  seed~ : Int32 = 0,
+  keep_protected~ : Bool = false,
 ) -> Unit raise {
   let specs = with_default(specs)
   let width = m.target().bits()
@@ -275,7 +275,7 @@ let args_state : @primus.State[Array[(@types.Var, @primus.Generator)]?] = @primu
 fn arg_generators(
   m : @primus.Machine,
   specs : Array[Spec],
-  seed : Int,
+  seed : Int32,
 ) -> Array[(@types.Var, @primus.Generator)] raise {
   match m.get_local(args_state) {
     Some(gens) => gens
@@ -362,7 +362,7 @@ fn is_entry(
 fn pertube_outputs(
   m : @primus.Machine,
   specs : Array[Spec],
-  seed : Int,
+  seed : Int32,
 ) -> Unit raise {
   debug(m, "the unresolved handler is called")
   match @primus.Interpreter::pos(m) {
@@ -392,8 +392,8 @@ fn pertube_outputs(
 /// component body): links the unresolved handler.
 pub fn install_arg_randomizer(
   m : @primus.Machine,
-  specs? : Array[Spec] = [],
-  seed? : Int = 0,
+  specs~ : Array[Spec] = [],
+  seed~ : Int32 = 0,
 ) -> Unit {
   let specs = with_default(specs)
   @primus.Linker::link(
@@ -410,9 +410,9 @@ pub fn install_arg_randomizer(
 /// `false` if the components were already registered (the configuration
 /// of the first registration is used).
 pub fn register(
-  specs? : Array[Spec] = [],
-  seed? : Int = 0,
-  keep_protected? : Bool = false,
+  specs~ : Array[Spec] = [],
+  seed~ : Int32 = 0,
+  keep_protected~ : Bool = false,
 ) -> Bool {
   @primus.Components::register_generic(
     var_randomizer,

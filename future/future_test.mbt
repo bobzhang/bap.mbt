@@ -30,7 +30,7 @@ test "translated BAP future rejects double fulfillment" {
 
 ///|
 test "translated BAP future peek_exn rejects empty futures" {
-  let (future, _) : (@future.Future[Int], @future.Promise[Int]) = @future.Future::create()
+  let (future, _) : (@future.Future[Int32], @future.Promise[Int32]) = @future.Future::create()
   try future.peek_exn() catch {
     EmptyFuture => ()
     _ => fail("expected empty future")
@@ -42,12 +42,12 @@ test "translated BAP future peek_exn rejects empty futures" {
 ///|
 test "translated BAP future upon fires after and after fulfillment" {
   let (future, promise) = @future.Future::create()
-  let result : Ref[Int?] = Ref(None)
+  let result : Ref[Int32?] = Ref(None)
   future.upon(fn(value) { result.val = Some(value) })
   assert_true(result.val == None)
   promise.fulfill(future_magic_value)
   assert_true(result.val == Some(future_magic_value))
-  let late : Ref[Int?] = Ref(None)
+  let late : Ref[Int32?] = Ref(None)
   future.upon(fn(value) { late.val = Some(value + 1) })
   assert_true(late.val == Some(future_magic_value + 1))
 }
@@ -171,7 +171,7 @@ test "BAP-style future args apply curried functions" {
   let (first, first_promise) = @future.Future::create()
   let (second, second_promise) = @future.Future::create()
   let (third, third_promise) = @future.Future::create()
-  let args : @future.FutureArgs[(Int) -> (Int) -> (Int) -> Int, Int] = @future.FutureArgs::cons(
+  let args : @future.FutureArgs[(Int32) -> (Int32) -> (Int32) -> Int32, Int32] = @future.FutureArgs::cons(
     first,
     @future.FutureArgs::cons(
       second,
@@ -190,7 +190,7 @@ test "BAP-style future args apply curried functions" {
 
   let (left, left_promise) = @future.Future::create()
   let (right, right_promise) = @future.Future::create()
-  let pair_args : @future.FutureArgs[(Int) -> (Int) -> Int, Int] = @future.FutureArgs::cons(
+  let pair_args : @future.FutureArgs[(Int32) -> (Int32) -> Int32, Int32] = @future.FutureArgs::cons(
     left,
     @future.FutureArgs::cons(right, @future.FutureArgs::nil()),
   )
@@ -207,9 +207,9 @@ test "BAP-style future args apply curried functions" {
 ///|
 test "BAP-style future args step adapts a function input" {
   let (value, promise) = @future.Future::create()
-  let args : @future.FutureArgs[(String) -> Int, Int] = @future.FutureArgs::step(
+  let args : @future.FutureArgs[(String) -> Int32, Int32] = @future.FutureArgs::step(
     @future.FutureArgs::cons(value, @future.FutureArgs::nil()),
-    fn(f : (String) -> Int) { fn(number : Int) { f(number.to_string()) } },
+    fn(f : (String) -> Int32) { fn(number : Int32) { f(number.to_string()) } },
   )
   let mapped = @future.FutureArgs::mapN(
     fn(text : String) { text.length() + 1 },
@@ -222,7 +222,7 @@ test "BAP-style future args step adapts a function input" {
 
 ///|
 test "BAP-style future collection helpers preserve input order" {
-  let empty_inputs : Array[@future.Future[Int]] = []
+  let empty_inputs : Array[@future.Future[Int32]] = []
   let empty = @future.Future::all(empty_inputs)
   assert_true(empty.is_decided())
   assert_true(empty.peek_exn() == [])
@@ -256,7 +256,7 @@ test "BAP-style future collection helpers preserve input order" {
 
 ///|
 test "BAP-style future list helpers preserve input order" {
-  let empty_inputs : @list.List[@future.Future[Int]] = @list.List([])
+  let empty_inputs : @list.List[@future.Future[Int32]] = @list.List([])
   let empty = @future.Future::all_list(empty_inputs)
   assert_true(empty.is_decided())
   assert_true(empty.peek_exn().to_array() == [])
@@ -296,7 +296,7 @@ test "translated BAP future resolved values are immediately decided" {
 fn[T : Eq] assert_stream_before_eq(
   stream : @future.Stream[T],
   signal : @future.Signal[Unit],
-  repeat~ : Int,
+  repeat~ : Int32,
   expected : Array[T],
 ) -> Unit raise {
   let (event, promise) = @future.Future::create()
@@ -309,7 +309,7 @@ fn[T : Eq] assert_stream_before_eq(
 ///|
 test "translated BAP stream sends and repeats signals" {
   let (stream, signal) = @future.Stream::create()
-  let buffer : Array[Int] = []
+  let buffer : Array[Int32] = []
   stream.observe(fn(value) { buffer.push(value) })
   signal.send(0)
   signal.send(1)
@@ -317,7 +317,7 @@ test "translated BAP stream sends and repeats signals" {
   assert_true(buffer == [0, 1, 2])
 
   let (repeated, repeat_signal) = @future.Stream::create()
-  let repeated_values : Array[Int] = []
+  let repeated_values : Array[Int32] = []
   repeated.observe(fn(value) { repeated_values.push(value) })
   repeat_signal.repeat(times=0, future_magic_value)
   assert_true(repeated_values == [])
@@ -397,8 +397,8 @@ test "translated BAP stream iterator and sequence sources are finite" {
 test "translated BAP stream subscriptions hooks and ids" {
   let (stream, signal, _) = @future.Stream::of_array([0, 1, 2, 3, 4, 5, 6, 7])
   assert_true(!stream.has_subscribers())
-  let subscribed : Ref[Int?] = Ref(None)
-  let unsubscribed : Ref[Int?] = Ref(None)
+  let subscribed : Ref[Int32?] = Ref(None)
+  let unsubscribed : Ref[Int32?] = Ref(None)
   let waited = Ref(false)
   stream.on_subscribe(fn(id) { subscribed.val = Some(id) })
   stream.on_unsubscribe(fn(id) { unsubscribed.val = Some(id) })
@@ -458,7 +458,7 @@ test "translated BAP stream lifecycle hooks run newest first" {
 ///|
 test "translated BAP stream watch receives stable callback ids" {
   let (stream, signal, _) = @future.Stream::of_array([0, 1])
-  let first_seen : Ref[Int?] = Ref(None)
+  let first_seen : Ref[Int32?] = Ref(None)
   stream.watch(fn(id, _) { first_seen.val = Some(id) })
   signal.send(())
   let first_id = match first_seen.val {
@@ -469,8 +469,8 @@ test "translated BAP stream watch receives stable callback ids" {
   assert_true(first_seen.val == Some(first_id))
 
   let (other, other_signal) = @future.Stream::create()
-  let left : Ref[Int?] = Ref(None)
-  let right : Ref[Int?] = Ref(None)
+  let left : Ref[Int32?] = Ref(None)
+  let right : Ref[Int32?] = Ref(None)
   other.watch(fn(id, _) { left.val = Some(id) })
   other.watch(fn(id, _) { right.val = Some(id) })
   other_signal.send(())
@@ -483,17 +483,17 @@ test "translated BAP stream watch receives stable callback ids" {
 }
 
 ///|
-fn stream_values() -> Array[Int] {
+fn stream_values() -> Array[Int32] {
   [0, 1, 2, 3, 4, 5, 6, 7]
 }
 
 ///|
-fn is_even(value : Int) -> Bool {
+fn is_even(value : Int32) -> Bool {
   value % 2 == 0
 }
 
 ///|
-fn even_opt(value : Int) -> Int? {
+fn even_opt(value : Int32) -> Int32? {
   if is_even(value) {
     Some(value)
   } else {
@@ -532,13 +532,13 @@ test "translated BAP stream map filter merge apply split and zip" {
   let (left, left_signal, _) = @future.Stream::of_array([0, 1, 2, 3])
   let (right, right_signal, _) = @future.Stream::of_array([0, 1, 2, 3, 4, 5])
   let merged = left.merge(right, fn(l, r) { l * 10 + r })
-  let merged_values : Array[Int] = []
+  let merged_values : Array[Int32] = []
   merged.observe(fn(value) { merged_values.push(value) })
   left_signal.repeat(times=6, ())
   right_signal.repeat(times=6, ())
   assert_true(merged_values == [0, 11, 22, 33])
 
-  let functions : Array[(Int) -> Int] = [
+  let functions : Array[(Int32) -> Int32] = [
     fn(value) { value + 0 },
     fn(value) { value + 1 },
     fn(value) { value + 2 },
@@ -549,7 +549,7 @@ test "translated BAP stream map filter merge apply split and zip" {
   )
   let (value_stream, value_signal, _) = @future.Stream::of_array([0, 1, 2, 3])
   let applied = @future.Stream::apply(function_stream, value_stream)
-  let applied_values : Array[Int] = []
+  let applied_values : Array[Int32] = []
   applied.observe(fn(value) { applied_values.push(value) })
   function_signal.repeat(times=4, ())
   value_signal.repeat(times=4, ())
@@ -559,8 +559,8 @@ test "translated BAP stream map filter merge apply split and zip" {
   let (split_left, split_right) = split_source.split(fn(value) {
     (value, value + 1)
   })
-  let split_left_values : Array[Int] = []
-  let split_right_values : Array[Int] = []
+  let split_left_values : Array[Int32] = []
+  let split_right_values : Array[Int32] = []
   split_left.observe(fn(value) { split_left_values.push(value) })
   split_right.observe(fn(value) { split_right_values.push(value) })
   split_signal.repeat(times=4, ())
@@ -570,7 +570,7 @@ test "translated BAP stream map filter merge apply split and zip" {
   let (zip_left, zip_left_signal, _) = @future.Stream::of_array([0, 1, 2, 3])
   let (zip_right, zip_right_signal, _) = @future.Stream::of_array([4, 5])
   let zipped = zip_left.zip(zip_right)
-  let zipped_values : Array[(Int, Int)] = []
+  let zipped_values : Array[(Int32, Int32)] = []
   zipped.observe(fn(value) { zipped_values.push(value) })
   zip_left_signal.repeat(times=4, ())
   zip_right_signal.repeat(times=4, ())
@@ -582,7 +582,7 @@ test "translated BAP stream map filter merge apply split and zip" {
     (2, "2"),
   ])
   let (unzipped_left, unzipped_right) = unzip_source.unzip()
-  let unzipped_left_values : Array[Int] = []
+  let unzipped_left_values : Array[Int32] = []
   let unzipped_right_values : Array[String] = []
   unzipped_left.observe(fn(value) { unzipped_left_values.push(value) })
   unzipped_right.observe(fn(value) { unzipped_right_values.push(value) })
@@ -596,13 +596,13 @@ test "translated BAP stream multi-argument applicative helpers" {
   let (left, left_signal, _) = @future.Stream::of_array([1, 2])
   let (right, right_signal, _) = @future.Stream::of_array([10, 20])
   let mapped2 = @future.Stream::map2(left, right, fn(l, r) { l + r })
-  let mapped2_values : Array[Int] = []
+  let mapped2_values : Array[Int32] = []
   mapped2.observe(fn(value) { mapped2_values.push(value) })
   left_signal.repeat(times=2, ())
   right_signal.repeat(times=2, ())
   assert_true(mapped2_values == [11, 22])
 
-  let functions2 : Array[(Int, Int) -> Int] = [
+  let functions2 : Array[(Int32, Int32) -> Int32] = [
     fn(l, r) { l + r },
     fn(l, r) { l * r },
   ]
@@ -614,7 +614,7 @@ test "translated BAP stream multi-argument applicative helpers" {
   let applied2 = @future.Stream::apply2(
     function2_stream, apply2_left, apply2_right,
   )
-  let applied2_values : Array[Int] = []
+  let applied2_values : Array[Int32] = []
   applied2.observe(fn(value) { applied2_values.push(value) })
   function2_signal.repeat(times=2, ())
   apply2_left_signal.repeat(times=2, ())
@@ -627,14 +627,14 @@ test "translated BAP stream multi-argument applicative helpers" {
   let mapped3 = @future.Stream::map3(first, second, third, fn(a, b, c) {
     a + b + c
   })
-  let mapped3_values : Array[Int] = []
+  let mapped3_values : Array[Int32] = []
   mapped3.observe(fn(value) { mapped3_values.push(value) })
   first_signal.repeat(times=2, ())
   second_signal.repeat(times=2, ())
   third_signal.repeat(times=2, ())
   assert_true(mapped3_values == [111, 222])
 
-  let functions3 : Array[(Int, Int, Int) -> Int] = [
+  let functions3 : Array[(Int32, Int32, Int32) -> Int32] = [
     fn(a, b, c) { a + b + c },
     fn(a, b, c) { a * b + c },
   ]
@@ -651,7 +651,7 @@ test "translated BAP stream multi-argument applicative helpers" {
   let applied3 = @future.Stream::apply3(
     function3_stream, apply3_first, apply3_second, apply3_third,
   )
-  let applied3_values : Array[Int] = []
+  let applied3_values : Array[Int32] = []
   applied3.observe(fn(value) { applied3_values.push(value) })
   function3_signal.repeat(times=2, ())
   apply3_first_signal.repeat(times=2, ())
@@ -672,7 +672,7 @@ test "translated BAP stream multi-argument applicative helpers" {
     map4_fourth,
     fn(a, b, c, d) { a + b + c + d },
   )
-  let mapped4_values : Array[Int] = []
+  let mapped4_values : Array[Int32] = []
   mapped4.observe(fn(value) { mapped4_values.push(value) })
   map4_first_signal.repeat(times=2, ())
   map4_second_signal.repeat(times=2, ())
@@ -680,7 +680,7 @@ test "translated BAP stream multi-argument applicative helpers" {
   map4_fourth_signal.repeat(times=2, ())
   assert_true(mapped4_values == [1111, 2222])
 
-  let functions4 : Array[(Int, Int, Int, Int) -> Int] = [
+  let functions4 : Array[(Int32, Int32, Int32, Int32) -> Int32] = [
     fn(a, b, c, d) { a + b + c + d },
     fn(a, b, c, d) { a * b + c + d },
   ]
@@ -700,7 +700,7 @@ test "translated BAP stream multi-argument applicative helpers" {
   let applied4 = @future.Stream::apply4(
     function4_stream, apply4_first, apply4_second, apply4_third, apply4_fourth,
   )
-  let applied4_values : Array[Int] = []
+  let applied4_values : Array[Int32] = []
   applied4.observe(fn(value) { applied4_values.push(value) })
   function4_signal.repeat(times=2, ())
   apply4_first_signal.repeat(times=2, ())
@@ -726,7 +726,7 @@ test "translated BAP stream multi-argument applicative helpers" {
     map5_fifth,
     fn(a, b, c, d, e) { a + b + c + d + e },
   )
-  let mapped5_values : Array[Int] = []
+  let mapped5_values : Array[Int32] = []
   mapped5.observe(fn(value) { mapped5_values.push(value) })
   map5_first_signal.repeat(times=2, ())
   map5_second_signal.repeat(times=2, ())
@@ -735,7 +735,7 @@ test "translated BAP stream multi-argument applicative helpers" {
   map5_fifth_signal.repeat(times=2, ())
   assert_true(mapped5_values == [11111, 22222])
 
-  let functions5 : Array[(Int, Int, Int, Int, Int) -> Int] = [
+  let functions5 : Array[(Int32, Int32, Int32, Int32, Int32) -> Int32] = [
     fn(a, b, c, d, e) { a + b + c + d + e },
     fn(a, b, c, d, e) { a * b + c + d + e },
   ]
@@ -758,7 +758,7 @@ test "translated BAP stream multi-argument applicative helpers" {
   let applied5 = @future.Stream::apply5(
     function5_stream, apply5_first, apply5_second, apply5_third, apply5_fourth, apply5_fifth,
   )
-  let applied5_values : Array[Int] = []
+  let applied5_values : Array[Int32] = []
   applied5.observe(fn(value) { applied5_values.push(value) })
   function5_signal.repeat(times=2, ())
   apply5_first_signal.repeat(times=2, ())
@@ -774,7 +774,7 @@ test "BAP-style stream args apply curried functions" {
   let (first, first_signal, _) = @future.Stream::of_array([1, 2])
   let (second, second_signal, _) = @future.Stream::of_array([10, 20])
   let (third, third_signal, _) = @future.Stream::of_array([100, 200])
-  let args : @future.StreamArgs[(Int) -> (Int) -> (Int) -> Int, Int] = @future.StreamArgs::args(
+  let args : @future.StreamArgs[(Int32) -> (Int32) -> (Int32) -> Int32, Int32] = @future.StreamArgs::args(
       first,
     )
     .add(second)
@@ -783,7 +783,7 @@ test "BAP-style stream args apply curried functions" {
     fn(a) { fn(b) { fn(c) { a + b + c } } },
     args,
   )
-  let values : Array[Int] = []
+  let values : Array[Int32] = []
   mapped.observe(fn(value) { values.push(value) })
   first_signal.repeat(times=2, ())
   second_signal.repeat(times=2, ())
@@ -794,14 +794,16 @@ test "BAP-style stream args apply curried functions" {
 ///|
 test "BAP-style stream args step adapts a function input" {
   let (numbers, signal, _) = @future.Stream::of_array([7, 42])
-  let args : @future.StreamArgs[(String) -> Int, Int] = @future.StreamArgs::args(
+  let args : @future.StreamArgs[(String) -> Int32, Int32] = @future.StreamArgs::args(
     numbers,
-  ).step(fn(f : (String) -> Int) { fn(number : Int) { f(number.to_string()) } })
+  ).step(fn(f : (String) -> Int32) {
+    fn(number : Int32) { f(number.to_string()) }
+  })
   let mapped = @future.StreamArgs::apply(
     fn(text : String) { text.length() + 1 },
     args,
   )
-  let values : Array[Int] = []
+  let values : Array[Int32] = []
   mapped.observe(fn(value) { values.push(value) })
   signal.repeat(times=2, ())
   assert_true(values == [2, 3])
@@ -810,8 +812,8 @@ test "BAP-style stream args step adapts a function input" {
 ///|
 fn fulfill_after_signals(
   promise : @future.Promise[Unit],
-  after~ : Int,
-  max~ : Int,
+  after~ : Int32,
+  max~ : Int32,
   signal : @future.Signal[Unit],
 ) -> Unit raise {
   for index in 0..<(max + 1) {
@@ -848,7 +850,7 @@ test "translated BAP stream once parse and selector futures" {
   assert_true(hd.peek() == Some(0))
 
   let (empty_hd_source, empty_hd_signal, _) = @future.Stream::of_array([])
-  let empty_hd : @future.Future[Int] = empty_hd_source.hd()
+  let empty_hd : @future.Future[Int32] = empty_hd_source.hd()
   empty_hd_signal.repeat(times=2, ())
   assert_true(!empty_hd.is_decided())
 
@@ -936,7 +938,7 @@ test "translated BAP stream once parse and selector futures" {
 }
 
 ///|
-fn append_int(acc : Array[Int], value : Int) -> Array[Int] {
+fn append_int(acc : Array[Int32], value : Int32) -> Array[Int32] {
   let out = acc.copy()
   out.push(value)
   out
@@ -944,10 +946,10 @@ fn append_int(acc : Array[Int], value : Int) -> Array[Int] {
 
 ///|
 fn assert_foldw_sum_eq(
-  values : Array[Int],
-  stride~ : Int,
-  width~ : Int,
-  expected : Array[Int],
+  values : Array[Int32],
+  stride~ : Int32,
+  width~ : Int32,
+  expected : Array[Int32],
 ) -> Unit raise {
   let (source, signal, _) = @future.Stream::of_array(values)
   let folded = source.foldw(
@@ -961,11 +963,11 @@ fn assert_foldw_sum_eq(
 
 ///|
 fn assert_foldw_array_eq(
-  values : Array[Int],
-  stride~ : Int,
-  width~ : Int,
-  init~ : Array[Int],
-  expected : Array[Array[Int]],
+  values : Array[Int32],
+  stride~ : Int32,
+  width~ : Int32,
+  init~ : Array[Int32],
+  expected : Array[Array[Int32]],
 ) -> Unit raise {
   let (source, signal, _) = @future.Stream::of_array(values)
   let folded = source.foldw(width, init~, f=append_int, stride~)
@@ -976,7 +978,7 @@ fn assert_foldw_array_eq(
 fn run_time_line(
   signal : @future.Signal[Unit],
   clk_signal : @future.Signal[Unit],
-  timeline : Array[Int],
+  timeline : Array[Int32],
 ) -> Unit {
   let index = Ref(0)
   let cursor = Ref(0)
@@ -1011,7 +1013,7 @@ test "translated BAP stream batched unfold either concat and concat merge" {
   let (left, left_signal, _) = @future.Stream::of_array([0, 1])
   let (right, right_signal, _) = @future.Stream::of_array(["a"])
   let either = left.either(right)
-  let either_values : Array[@future.Either[Int, String]] = []
+  let either_values : Array[@future.Either[Int32, String]] = []
   either.observe(fn(value) { either_values.push(value) })
   left_signal.repeat(times=2, ())
   right_signal.send(())
@@ -1020,7 +1022,7 @@ test "translated BAP stream batched unfold either concat and concat merge" {
   let (first, first_signal, _) = @future.Stream::of_array([1, 2])
   let (second, second_signal, _) = @future.Stream::of_array([10])
   let concatenated = @future.Stream::concat([first, second])
-  let concatenated_values : Array[Int] = []
+  let concatenated_values : Array[Int32] = []
   concatenated.observe(fn(value) { concatenated_values.push(value) })
   first_signal.repeat(times=2, ())
   second_signal.send(())
@@ -1034,7 +1036,7 @@ test "translated BAP stream batched unfold either concat and concat merge" {
   ) {
     value + previous
   })
-  let merged_values : Array[Int] = []
+  let merged_values : Array[Int32] = []
   merged.observe(fn(value) { merged_values.push(value) })
   merge_first_signal.repeat(times=2, ())
   merge_second_signal.send(())
@@ -1072,7 +1074,7 @@ test "BAP-style stream list adapters mirror list-facing OCaml APIs" {
   let (first, first_signal, _) = @future.Stream::of_list(@list.List([1, 2]))
   let (second, second_signal, _) = @future.Stream::of_list(@list.List([10]))
   let concatenated = @future.Stream::concat_list(@list.List([first, second]))
-  let concatenated_values : Array[Int] = []
+  let concatenated_values : Array[Int32] = []
   concatenated.observe(fn(value) { concatenated_values.push(value) })
   first_signal.repeat(times=2, ())
   second_signal.send(())
@@ -1088,7 +1090,7 @@ test "BAP-style stream list adapters mirror list-facing OCaml APIs" {
     @list.List([merge_first, merge_second]),
     fn(value, previous) { value + previous },
   )
-  let merged_values : Array[Int] = []
+  let merged_values : Array[Int32] = []
   merged.observe(fn(value) { merged_values.push(value) })
   merge_first_signal.repeat(times=2, ())
   merge_second_signal.send(())
@@ -1172,7 +1174,7 @@ test "translated BAP stream foldw frame and sample" {
   let (frame_source, frame_signal, _) = @future.Stream::of_array(values)
   let (clock, clock_signal) = @future.Stream::from(fn() { () })
   let framed = frame_source.frame(clk=clock, init=[], f=append_int)
-  let frames : Array[Array[Int]] = []
+  let frames : Array[Array[Int32]] = []
   framed.observe(fn(value) { frames.push(value) })
   run_time_line(frame_signal, clock_signal, [1, 1, 3])
   assert_true(frames == [[0], [], [1, 2]])
@@ -1186,7 +1188,7 @@ test "translated BAP stream foldw frame and sample" {
     init=[],
     f=append_int,
   )
-  let early_frames : Array[Array[Int]] = []
+  let early_frames : Array[Array[Int32]] = []
   early_framed.observe(fn(value) { early_frames.push(value) })
   run_time_line(early_frame_signal, early_clock_signal, [0, 1, 3])
   assert_true(early_frames == [[], [0], [1, 2]])
@@ -1200,7 +1202,7 @@ test "translated BAP stream foldw frame and sample" {
     init=[],
     f=append_int,
   )
-  let empty_frames : Array[Array[Int]] = []
+  let empty_frames : Array[Array[Int32]] = []
   empty_framed.observe(fn(value) { empty_frames.push(value) })
   run_time_line(empty_frame_signal, empty_clock_signal, [0, 0, 3, 4])
   assert_true(empty_frames == [[], [], [0, 1, 2], [3]])
@@ -1208,7 +1210,7 @@ test "translated BAP stream foldw frame and sample" {
   let (sample_source, sample_signal, _) = @future.Stream::of_array(values)
   let (sample_clock, sample_clock_signal) = @future.Stream::from(fn() { () })
   let sampled = sample_source.sample(clk=sample_clock)
-  let samples : Array[Int?] = []
+  let samples : Array[Int32?] = []
   sampled.observe(fn(value) { samples.push(value) })
   run_time_line(sample_signal, sample_clock_signal, [0, 0, 1, 2])
   assert_true(samples == [None, None, Some(0), Some(1)])
@@ -1220,7 +1222,7 @@ test "translated BAP stream foldw frame and sample" {
     ()
   })
   let late_sampled = late_sample_source.sample(clk=late_sample_clock)
-  let late_samples : Array[Int?] = []
+  let late_samples : Array[Int32?] = []
   late_sampled.observe(fn(value) { late_samples.push(value) })
   run_time_line(late_sample_signal, late_sample_clock_signal, [1, 1, 3])
   assert_true(late_samples == [Some(0), None, Some(1)])

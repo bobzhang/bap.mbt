@@ -60,7 +60,7 @@ fn[T] describe(
   item : Item[T],
 ) -> Array[(@knowledge.Name, DocEntry)] {
   let entries : Map[String, (@knowledge.Name, DocEntry)] = Map([])
-  let seen : Map[(String, Int), Unit] = Map([])
+  let seen : Map[(String, Int32), Unit] = Map([])
   prog.fold(item, init=(), (pkg, def, _) => {
     let name = @knowledge.Name::create(def.name, pkg~)
     let k = name.show()

@@ -30,7 +30,7 @@ pub struct Primitive {
 ///|
 /// The numeric order of words (upstream `Primus.Value.compare`): values
 /// are compared ignoring their widths.
-fn value_order(a : @types.Word, b : @types.Word) -> Int {
+fn value_order(a : @types.Word, b : @types.Word) -> Int32 {
   let w = if a.bitwidth() > b.bitwidth() { a.bitwidth() } else { b.bitwidth() }
   let widen = (x : @types.Word) => {
     if x.bitwidth() == w {
@@ -193,7 +193,7 @@ pub fn length(m : @primus.Machine, dic : @primus.Value) -> @primus.Value raise {
 }
 
 ///|
-fn arity(name : String, args : Array[@primus.Value], n : Int) -> Unit raise {
+fn arity(name : String, args : Array[@primus.Value], n : Int32) -> Unit raise {
   if args.length() != n {
     raise @primus.RuntimeError(
       "\{name}: expects \{n} arguments, got \{args.length()}",

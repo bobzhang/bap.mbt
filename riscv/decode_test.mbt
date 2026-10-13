@@ -23,13 +23,13 @@ fn render_insn(insn : @mc.Insn) -> String {
 
 ///|
 /// The little-endian bytes of the `size`-byte instruction `value`.
-fn le(value : UInt, size : Int) -> Bytes {
+fn le(value : UInt32, size : Int32) -> Bytes {
   Bytes::makei(size, i => (value >> (8 * i)).to_byte())
 }
 
 ///|
 /// The encoding `value` (2 or 4 bytes, by its low bits) decoded for RV64.
-fn show(value : UInt, xlen? : @riscv.Xlen = RV64) -> String {
+fn show(value : UInt32, xlen~ : @riscv.Xlen = RV64) -> String {
   let size = if (value & 3U) == 3U { 4 } else { 2 }
   match @riscv.decode(le(value, size), 0x10000UL, xlen~) {
     Some(insn) =>

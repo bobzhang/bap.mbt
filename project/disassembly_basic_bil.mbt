@@ -6,7 +6,7 @@ fn project_basic_bil_addr_text(addr : UInt64) -> String {
 ///|
 fn project_basic_bil_word(
   value : UInt64,
-  width : Int,
+  width : Int32,
 ) -> Result[@types.Word, String] {
   try @types.Word::of_uint64(width~, value) catch {
     _ => Err("unable to create \{width}-bit BIL word")
@@ -18,7 +18,7 @@ fn project_basic_bil_word(
 ///|
 fn project_basic_bil_int(
   value : Int64,
-  width : Int,
+  width : Int32,
 ) -> Result[@types.Exp, String] {
   try @types.Word::of_int64(value, width~) catch {
     _ => Err("unable to create \{width}-bit BIL immediate")
@@ -30,7 +30,7 @@ fn project_basic_bil_int(
 ///|
 fn project_basic_bil_addr_with_width(
   value : UInt64,
-  width : Int,
+  width : Int32,
 ) -> Result[@types.Exp, String] {
   match project_basic_bil_word(value, width) {
     Ok(word) => Ok(@types.Exp::int(word))
@@ -39,12 +39,12 @@ fn project_basic_bil_addr_with_width(
 }
 
 ///|
-fn project_basic_bil_reg(name : String, width : Int) -> @types.Var {
+fn project_basic_bil_reg(name : String, width : Int32) -> @types.Var {
   @types.Var::new(name=name.to_upper(), typ=Imm(width))
 }
 
 ///|
-fn project_basic_bil_virtual(name : String, width : Int) -> @types.Var {
+fn project_basic_bil_virtual(name : String, width : Int32) -> @types.Var {
   @types.Var::new(name~, typ=Imm(width), is_virtual=true)
 }
 
@@ -54,13 +54,13 @@ fn project_basic_bil_arm_mem() -> @types.Var {
 }
 
 ///|
-fn project_basic_bil_stack_mem(address_width : Int) -> @types.Var {
+fn project_basic_bil_stack_mem(address_width : Int32) -> @types.Var {
   @types.Var::new(name="mem", typ=Mem(addr_width=address_width, value_width=8))
 }
 
 ///|
 fn project_basic_bil_stack_pointer(
-  address_width : Int,
+  address_width : Int32,
 ) -> Result[@types.Var, String] {
   match address_width {
     32 => Ok(project_basic_bil_reg("ESP", 32))
@@ -72,8 +72,8 @@ fn project_basic_bil_stack_pointer(
 ///|
 fn project_basic_bil_stack_offset(
   sp : @types.Var,
-  value_width : Int,
-  address_width : Int,
+  value_width : Int32,
+  address_width : Int32,
   op : @types.BinOp,
 ) -> Result[@types.Exp, String] {
   match project_basic_bil_int((value_width / 8).to_int64(), address_width) {
@@ -85,8 +85,8 @@ fn project_basic_bil_stack_offset(
 ///|
 fn project_basic_bil_stack_decrement(
   sp : @types.Var,
-  value_width : Int,
-  address_width : Int,
+  value_width : Int32,
+  address_width : Int32,
 ) -> Result[@types.Exp, String] {
   project_basic_bil_stack_offset(
     sp,
@@ -99,8 +99,8 @@ fn project_basic_bil_stack_decrement(
 ///|
 fn project_basic_bil_stack_increment(
   sp : @types.Var,
-  value_width : Int,
-  address_width : Int,
+  value_width : Int32,
+  address_width : Int32,
 ) -> Result[@types.Exp, String] {
   project_basic_bil_stack_offset(
     sp,
@@ -185,7 +185,7 @@ fn project_basic_bil_x86_unknown_regs(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_port_in(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let dst = match self.project_basic_bil_register(0, width) {
     Ok(value) => value
@@ -197,7 +197,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_port_in(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_random(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   source : String,
 ) -> Result[Array[@types.Stmt], String] {
   let dst = match self.project_basic_bil_register(0, width) {
@@ -251,7 +251,7 @@ fn project_basic_bil_x86_not(exp : @types.Exp) -> @types.Exp {
 ///|
 fn project_basic_bil_bitscan_popcount(
   tmp : @types.Var,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let (
     one_value,
@@ -353,7 +353,7 @@ fn project_basic_bil_bitscan_popcount(
 ///|
 fn project_basic_bil_bitscan_ctz(
   tmp : @types.Var,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let one = match project_basic_bil_int(1L, width) {
     Ok(value) => value
@@ -384,7 +384,7 @@ fn project_basic_bil_bitscan_ctz(
 ///|
 fn project_basic_bil_bitscan_clz(
   tmp : @types.Var,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let shifts : Array[Int64] = match width {
     16 => [1L, 2L, 4L, 8L]
@@ -444,7 +444,7 @@ fn project_basic_bil_bitscan_flags() -> Array[@types.Stmt] {
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_bitscan_common(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   source : @types.Exp,
   forward : Bool,
 ) -> Result[Array[@types.Stmt], String] {
@@ -511,7 +511,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_bitscan_common(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_bitscan_rr(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   forward : Bool,
 ) -> Result[Array[@types.Stmt], String] {
   let source = match self.project_basic_bil_register(1, width) {
@@ -524,7 +524,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_bitscan_rr(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_bitscan_rm(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   forward : Bool,
 ) -> Result[Array[@types.Stmt], String] {
   let (addr, mem, _) = match self.project_basic_bil_memory_addr(1) {
@@ -562,7 +562,7 @@ fn project_basic_bil_popcnt_clear_flags() -> Result[Array[@types.Stmt], String] 
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_popcnt_common(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   source : @types.Exp,
 ) -> Result[Array[@types.Stmt], String] {
   let dst = match self.project_basic_bil_register(0, width) {
@@ -602,7 +602,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_popcnt_common(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_popcnt_rr(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let source = match self.project_basic_bil_register(1, width) {
     Ok(value) => @types.Exp::var_exp(value)
@@ -614,7 +614,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_popcnt_rr(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_popcnt_rm(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let (addr, mem, _) = match self.project_basic_bil_memory_addr(1) {
     Ok(value) => value
@@ -648,7 +648,7 @@ fn project_basic_bil_count_zero_undefined_flags(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_count_zero_common(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   source : @types.Exp,
   trailing : Bool,
 ) -> Result[Array[@types.Stmt], String] {
@@ -699,7 +699,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_count_zero_common(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_count_zero_rr(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   trailing : Bool,
 ) -> Result[Array[@types.Stmt], String] {
   let source = match self.project_basic_bil_register(1, width) {
@@ -712,7 +712,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_count_zero_rr(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_count_zero_rm(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   trailing : Bool,
 ) -> Result[Array[@types.Stmt], String] {
   let (addr, mem, _) = match self.project_basic_bil_memory_addr(1) {
@@ -733,7 +733,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_count_zero_rm(
 }
 
 ///|
-fn project_basic_bil_btx_offset_width(width : Int) -> Result[Int, String] {
+fn project_basic_bil_btx_offset_width(width : Int32) -> Result[Int32, String] {
   match width {
     16 => Ok(4)
     32 => Ok(5)
@@ -745,8 +745,8 @@ fn project_basic_bil_btx_offset_width(width : Int) -> Result[Int, String] {
 ///|
 fn project_basic_bil_btx_truncated_offset(
   offset : Int64,
-  offset_width : Int,
-) -> Result[(Int, @types.Exp), String] {
+  offset_width : Int32,
+) -> Result[(Int32, @types.Exp), String] {
   let raw = match @types.int_of_int64(offset) {
     Ok(value) => value
     Err(reason) => return Err(reason)
@@ -760,7 +760,7 @@ fn project_basic_bil_btx_truncated_offset(
 
 ///|
 fn project_basic_bil_btx_mask_reg(
-  width : Int,
+  width : Int32,
   offset : @types.Exp,
 ) -> Result[@types.Exp, String] {
   match project_basic_bil_int(1L, width) {
@@ -771,8 +771,8 @@ fn project_basic_bil_btx_mask_reg(
 
 ///|
 fn project_basic_bil_btx_mask_imm(
-  width : Int,
-  offset : Int,
+  width : Int32,
+  offset : Int32,
 ) -> Result[@types.Exp, String] {
   project_basic_bil_addr_with_width(1UL << offset, width)
 }
@@ -819,7 +819,7 @@ fn project_basic_bil_btx_side_effect(
 fn project_basic_bil_btx_store(
   mem : @types.Var,
   addr : @types.Exp,
-  width : Int,
+  width : Int32,
   value : @types.Exp,
 ) -> Result[@types.Stmt, String] {
   let size = match @types.Size::of_int(width) {
@@ -843,7 +843,7 @@ fn project_basic_bil_btx_store(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_btx_rr(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   op : String,
 ) -> Result[Array[@types.Stmt], String] {
   let offset_width = match project_basic_bil_btx_offset_width(width) {
@@ -889,7 +889,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_btx_rr(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_btx_ri(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   op : String,
 ) -> Result[Array[@types.Stmt], String] {
   let offset_width = match project_basic_bil_btx_offset_width(width) {
@@ -925,7 +925,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_btx_ri(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_btx_mi(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   op : String,
 ) -> Result[Array[@types.Stmt], String] {
   let offset_width = match project_basic_bil_btx_offset_width(width) {
@@ -997,7 +997,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_btx_mi(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_btx_mr(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   op : String,
 ) -> Result[Array[@types.Stmt], String] {
   let offset_width = match project_basic_bil_btx_offset_width(width) {
@@ -1093,7 +1093,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_btx_mr(
 ///|
 fn project_basic_bil_x86_parity(
   result : @types.Exp,
-  width : Int,
+  width : Int32,
 ) -> Result[@types.Exp, String] {
   let four = match project_basic_bil_int(4L, width) {
     Ok(value) => value
@@ -1137,7 +1137,7 @@ fn project_basic_bil_x86_sub_flag_moves(
   lhs : @types.Exp,
   rhs : @types.Exp,
   result : @types.Exp,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let zero = match project_basic_bil_int(0L, width) {
     Ok(value) => value
@@ -1187,7 +1187,7 @@ fn project_basic_bil_x86_add_carryless_flag_moves(
   lhs : @types.Exp,
   rhs : @types.Exp,
   result : @types.Exp,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let lhs_high = @types.Exp::cast(@types.CastKind::high(), 1, lhs)
   let rhs_high = @types.Exp::cast(@types.CastKind::high(), 1, rhs)
@@ -1218,7 +1218,7 @@ fn project_basic_bil_x86_add_flag_moves(
   lhs : @types.Exp,
   rhs : @types.Exp,
   result : @types.Exp,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let stmts = [
     project_basic_bil_x86_flag_move(
@@ -1243,7 +1243,7 @@ fn project_basic_bil_x86_apszf_flag_moves(
   lhs : @types.Exp,
   rhs : @types.Exp,
   result : @types.Exp,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let zero = match project_basic_bil_int(0L, width) {
     Ok(value) => value
@@ -1277,7 +1277,7 @@ fn project_basic_bil_x86_apszf_flag_moves(
 ///|
 fn project_basic_bil_x86_logical_flag_moves(
   result : @types.Exp,
-  width : Int,
+  width : Int32,
   af_reason : String,
 ) -> Result[Array[@types.Stmt], String] {
   let zero = match project_basic_bil_int(0L, width) {
@@ -1314,7 +1314,7 @@ fn project_basic_bil_x86_logical_flag_moves(
 ///|
 fn project_basic_bil_x86_test_flag_moves(
   result : @types.Exp,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   project_basic_bil_x86_logical_flag_moves(
     result, width, "AF undefined after TEST",
@@ -1447,7 +1447,7 @@ fn project_basic_bil_x86_sahf() -> Array[@types.Stmt] {
 }
 
 ///|
-fn project_basic_bil_x86_flags_bit(index : Int) -> @types.Exp {
+fn project_basic_bil_x86_flags_bit(index : Int32) -> @types.Exp {
   match index {
     0 => project_basic_bil_x86_flag("CF")
     2 => project_basic_bil_x86_flag("PF")
@@ -1461,7 +1461,9 @@ fn project_basic_bil_x86_flags_bit(index : Int) -> @types.Exp {
 }
 
 ///|
-fn project_basic_bil_x86_flags_image(width : Int) -> Result[@types.Exp, String] {
+fn project_basic_bil_x86_flags_image(
+  width : Int32,
+) -> Result[@types.Exp, String] {
   if width != 16 && width != 32 && width != 64 {
     return Err("unsupported PUSHF width \{width}")
   }
@@ -1474,8 +1476,8 @@ fn project_basic_bil_x86_flags_image(width : Int) -> Result[@types.Exp, String] 
 
 ///|
 fn project_basic_bil_x86_pushf(
-  value_width : Int,
-  address_width : Int,
+  value_width : Int32,
+  address_width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   match project_basic_bil_x86_flags_image(value_width) {
     Ok(flags) => project_basic_bil_push_exp(flags, value_width, address_width)
@@ -1485,8 +1487,8 @@ fn project_basic_bil_x86_pushf(
 
 ///|
 fn project_basic_bil_x86_popf(
-  value_width : Int,
-  address_width : Int,
+  value_width : Int32,
+  address_width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   if value_width != 16 && value_width != 32 && value_width != 64 {
     return Err("unsupported POPF width \{value_width}")
@@ -1519,7 +1521,7 @@ fn project_basic_bil_x86_popf(
     ),
     @types.Stmt::move_stmt(sp, updated_sp),
   ]
-  let flag_bits : Array[(Int, String)] = [
+  let flag_bits : Array[(Int32, String)] = [
     (11, "OF"),
     (10, "DF"),
     (7, "SF"),
@@ -1563,7 +1565,7 @@ fn project_basic_bil_arm_offset_addr(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_operand(
   self : ProjectDisassemblyInstruction,
-  index : Int,
+  index : Int32,
 ) -> Result[ProjectInstructionOperand, String] {
   match self.operands_value.get(index) {
     Some(operand) => Ok(operand)
@@ -1574,8 +1576,8 @@ fn ProjectDisassemblyInstruction::project_basic_bil_operand(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_register(
   self : ProjectDisassemblyInstruction,
-  index : Int,
-  width : Int,
+  index : Int32,
+  width : Int32,
 ) -> Result[@types.Var, String] {
   match self.project_basic_bil_operand(index) {
     Ok(operand) =>
@@ -1591,7 +1593,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_register(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_immediate(
   self : ProjectDisassemblyInstruction,
-  index : Int,
+  index : Int32,
 ) -> Result[Int64, String] {
   match self.project_basic_bil_operand(index) {
     Ok(operand) =>
@@ -1607,8 +1609,8 @@ fn ProjectDisassemblyInstruction::project_basic_bil_immediate(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_value(
   self : ProjectDisassemblyInstruction,
-  index : Int,
-  width : Int,
+  index : Int32,
+  width : Int32,
 ) -> Result[@types.Exp, String] {
   match self.project_basic_bil_operand(index) {
     Ok(operand) =>
@@ -1646,7 +1648,7 @@ fn project_basic_bil_x86_addsub_flag_moves(
   lhs : @types.Exp,
   rhs : @types.Exp,
   result : @types.Exp,
-  width : Int,
+  width : Int32,
   op : @types.BinOp,
 ) -> Result[Array[@types.Stmt], String] {
   if op == @types.BinOp::plus() {
@@ -1664,7 +1666,7 @@ fn project_basic_bil_x86_append_addsub_flags(
   lhs : @types.Exp,
   rhs : @types.Exp,
   result : @types.Exp,
-  width : Int,
+  width : Int32,
   op : @types.BinOp,
 ) -> Result[Array[@types.Stmt], String] {
   let flags = match
@@ -1681,7 +1683,7 @@ fn project_basic_bil_x86_append_addsub_flags(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_addsub_common(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   lhs : @types.Exp,
   rhs : @types.Exp,
   op : @types.BinOp,
@@ -1719,7 +1721,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_addsub_common(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_addsub_ri(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   op : @types.BinOp,
 ) -> Result[Array[@types.Stmt], String] {
   let src = match self.project_basic_bil_register(1, width) {
@@ -1740,7 +1742,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_addsub_ri(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_addsub_mi(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   op : @types.BinOp,
 ) -> Result[Array[@types.Stmt], String] {
   let prefix = match project_basic_bil_x86_addsub_prefix(op) {
@@ -1810,7 +1812,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_addsub_mi(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_addsub_rm(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   op : @types.BinOp,
 ) -> Result[Array[@types.Stmt], String] {
   let dst = match self.project_basic_bil_register(0, width) {
@@ -1836,7 +1838,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_addsub_rm(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_addsub_mr(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   op : @types.BinOp,
 ) -> Result[Array[@types.Stmt], String] {
   let prefix = match project_basic_bil_x86_addsub_prefix(op) {
@@ -1902,7 +1904,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_addsub_mr(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_addsub_rr(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   op : @types.BinOp,
 ) -> Result[Array[@types.Stmt], String] {
   let dst = match self.project_basic_bil_register(0, width) {
@@ -1925,7 +1927,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_addsub_rr(
 fn project_basic_bil_x86_append_logical_flags(
   stmts : Array[@types.Stmt],
   result : @types.Exp,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let flags = match
     project_basic_bil_x86_logical_flag_moves(
@@ -1943,7 +1945,7 @@ fn project_basic_bil_x86_append_logical_flags(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_logic_ri(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   op : @types.BinOp,
 ) -> Result[Array[@types.Stmt], String] {
   let dst = match self.project_basic_bil_register(0, width) {
@@ -1978,7 +1980,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_logic_ri(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_logic_mi(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   op : @types.BinOp,
 ) -> Result[Array[@types.Stmt], String] {
   let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
@@ -2035,7 +2037,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_logic_mi(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_logic_rm(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   op : @types.BinOp,
 ) -> Result[Array[@types.Stmt], String] {
   let dst = match self.project_basic_bil_register(0, width) {
@@ -2075,7 +2077,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_logic_rm(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_logic_mr(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   op : @types.BinOp,
 ) -> Result[Array[@types.Stmt], String] {
   let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
@@ -2131,7 +2133,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_logic_mr(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_logic_rr(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   op : @types.BinOp,
 ) -> Result[Array[@types.Stmt], String] {
   let dst = match self.project_basic_bil_register(0, width) {
@@ -2159,7 +2161,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_logic_rr(
 }
 
 ///|
-fn project_basic_bil_x86_carry(width : Int) -> @types.Exp {
+fn project_basic_bil_x86_carry(width : Int32) -> @types.Exp {
   @types.Exp::cast(
     @types.CastKind::unsigned(),
     width,
@@ -2170,7 +2172,7 @@ fn project_basic_bil_x86_carry(width : Int) -> @types.Exp {
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_adc_common(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   rhs : @types.Exp,
 ) -> Result[Array[@types.Stmt], String] {
   let dst = match self.project_basic_bil_register(0, width) {
@@ -2225,7 +2227,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_adc_common(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_adc_mi(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
     Ok(value) => value
@@ -2313,7 +2315,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_adc_mi(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_sbb_common(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   rhs : @types.Exp,
 ) -> Result[Array[@types.Stmt], String] {
   let dst = match self.project_basic_bil_register(0, width) {
@@ -2371,7 +2373,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_sbb_common(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_sbb_mi(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
     Ok(value) => value
@@ -2462,7 +2464,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_sbb_mi(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_adc_rr(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let src = match self.project_basic_bil_register(1, width) {
     Ok(value) => @types.Exp::var_exp(value)
@@ -2474,7 +2476,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_adc_rr(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_adc_ri(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let imm = match self.project_basic_bil_immediate(2) {
     Ok(value) => value
@@ -2490,7 +2492,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_adc_ri(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_adc_rm(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let (addr, mem, _) = match self.project_basic_bil_memory_addr(1) {
     Ok(value) => value
@@ -2512,7 +2514,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_adc_rm(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_adc_mr(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
     Ok(value) => value
@@ -2596,7 +2598,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_adc_mr(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_sbb_rr(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let src = match self.project_basic_bil_register(1, width) {
     Ok(value) => @types.Exp::var_exp(value)
@@ -2608,7 +2610,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_sbb_rr(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_sbb_ri(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let imm = match self.project_basic_bil_immediate(2) {
     Ok(value) => value
@@ -2624,7 +2626,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_sbb_ri(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_sbb_rm(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let (addr, mem, _) = match self.project_basic_bil_memory_addr(1) {
     Ok(value) => value
@@ -2646,7 +2648,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_sbb_rm(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_sbb_mr(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
     Ok(value) => value
@@ -2733,7 +2735,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_sbb_mr(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_imul_common(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   lhs : @types.Exp,
   rhs : @types.Exp,
 ) -> Result[Array[@types.Stmt], String] {
@@ -2785,9 +2787,9 @@ fn ProjectDisassemblyInstruction::project_basic_bil_imul_common(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_imul_imm_common(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   src : @types.Exp,
-  imm_index : Int,
+  imm_index : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let imm = match self.project_basic_bil_immediate(imm_index) {
     Ok(value) => value
@@ -2803,7 +2805,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_imul_imm_common(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_imul_rr_imm(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let src = match self.project_basic_bil_register(1, width) {
     Ok(value) => @types.Exp::var_exp(value)
@@ -2815,7 +2817,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_imul_rr_imm(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_imul_rm_imm(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let (addr, mem, _) = match self.project_basic_bil_memory_addr(1) {
     Ok(value) => value
@@ -2837,7 +2839,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_imul_rm_imm(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_imul_rr(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let lhs = match self.project_basic_bil_register(0, width) {
     Ok(value) => @types.Exp::var_exp(value)
@@ -2853,7 +2855,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_imul_rr(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_imul_rm(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let lhs = match self.project_basic_bil_register(0, width) {
     Ok(value) => @types.Exp::var_exp(value)
@@ -2930,7 +2932,9 @@ fn project_basic_bil_x86_imul_acc_flag_moves(
 }
 
 ///|
-fn project_basic_bil_x86_accumulator(width : Int) -> Result[@types.Var, String] {
+fn project_basic_bil_x86_accumulator(
+  width : Int32,
+) -> Result[@types.Var, String] {
   match width {
     8 => Ok(project_basic_bil_reg("AL", 8))
     16 => Ok(project_basic_bil_reg("AX", 16))
@@ -2942,7 +2946,7 @@ fn project_basic_bil_x86_accumulator(width : Int) -> Result[@types.Var, String] 
 
 ///|
 fn project_basic_bil_x86_high_accumulator(
-  width : Int,
+  width : Int32,
 ) -> Result[@types.Var, String] {
   match width {
     16 => Ok(project_basic_bil_reg("DX", 16))
@@ -2955,7 +2959,7 @@ fn project_basic_bil_x86_high_accumulator(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_mul_source(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[@types.Exp, String] {
   match self.operands().length() {
     1 =>
@@ -2988,7 +2992,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_mul_source(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_mul(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let src = match self.project_basic_bil_mul_source(width) {
     Ok(value) => value
@@ -3067,7 +3071,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_mul(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_imul_acc(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let src = match self.project_basic_bil_mul_source(width) {
     Ok(value) => value
@@ -3134,7 +3138,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_imul_acc(
 /// is not the sign extension of its low `width` bits (Intel SDM IMUL).
 fn project_basic_bil_x86_imul_overflow(
   product : @types.Exp,
-  width : Int,
+  width : Int32,
 ) -> @types.Exp {
   @types.Exp::binop(
     @types.BinOp::neq(),
@@ -3181,7 +3185,7 @@ fn project_basic_bil_x86_div_undefined_flag_moves(
 
 ///|
 fn project_basic_bil_x86_double_accumulator_exp(
-  width : Int,
+  width : Int32,
 ) -> Result[@types.Exp, String] {
   if width == 8 {
     Ok(@types.Exp::var_exp(project_basic_bil_reg("AX", 16)))
@@ -3200,7 +3204,7 @@ fn project_basic_bil_x86_double_accumulator_exp(
 
 ///|
 fn project_basic_bil_x86_apply_double_result(
-  width : Int,
+  width : Int32,
   result : @types.Exp,
   tmp_name : String,
 ) -> Result[Array[@types.Stmt], String] {
@@ -3242,7 +3246,7 @@ fn project_basic_bil_x86_apply_double_result(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_div_common(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   signed : Bool,
 ) -> Result[Array[@types.Stmt], String] {
   let src = match self.project_basic_bil_mul_source(width) {
@@ -3351,7 +3355,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_div_common(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_div(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   self.project_basic_bil_div_common(width, false)
 }
@@ -3359,7 +3363,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_div(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_idiv(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   self.project_basic_bil_div_common(width, true)
 }
@@ -3367,9 +3371,9 @@ fn ProjectDisassemblyInstruction::project_basic_bil_idiv(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_shift_count_with_width(
   self : ProjectDisassemblyInstruction,
-  index : Int,
-  width : Int,
-) -> Result[(@types.Exp, Int), String] {
+  index : Int32,
+  width : Int32,
+) -> Result[(@types.Exp, Int32), String] {
   match self.project_basic_bil_operand(index) {
     Ok(operand) =>
       match operand.register_name() {
@@ -3399,8 +3403,8 @@ fn ProjectDisassemblyInstruction::project_basic_bil_shift_count_with_width(
 /// operand width minus the count.
 fn project_basic_bil_shiftd_count(
   raw_count : @types.Exp,
-  count_width : Int,
-  width : Int,
+  count_width : Int32,
+  width : Int32,
 ) -> Result[(@types.Exp, @types.Exp), String] {
   let size = match project_basic_bil_int(width.to_int64(), count_width) {
     Ok(value) => value
@@ -3443,8 +3447,8 @@ fn project_basic_bil_shiftd_flags(
   result : @types.Exp,
   count : @types.Exp,
   remaining : @types.Exp,
-  count_width : Int,
-  width : Int,
+  count_width : Int32,
+  width : Int32,
   left : Bool,
 ) -> Result[@types.Stmt, String] {
   let zero_count = match project_basic_bil_int(0L, count_width) {
@@ -3516,8 +3520,8 @@ fn project_basic_bil_shift_flags(
   result : @types.Exp,
   count : @types.Exp,
   remaining : @types.Exp,
-  count_width : Int,
-  width : Int,
+  count_width : Int32,
+  width : Int32,
   op : @types.BinOp,
 ) -> Result[@types.Stmt, String] {
   let zero_count = match project_basic_bil_int(0L, count_width) {
@@ -3608,7 +3612,7 @@ fn project_basic_bil_shift_flags(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_shiftd_rr(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   left : Bool,
 ) -> Result[Array[@types.Stmt], String] {
   let dst = match self.project_basic_bil_register(0, width) {
@@ -3659,7 +3663,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_shiftd_rr(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_shiftd_mr(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   left : Bool,
 ) -> Result[Array[@types.Stmt], String] {
   let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
@@ -3731,8 +3735,8 @@ fn ProjectDisassemblyInstruction::project_basic_bil_shiftd_mr(
 /// The rotation amount of ROL/ROR: the masked count modulo the width.
 fn project_basic_bil_rotate_amount(
   masked : @types.Exp,
-  count_width : Int,
-  width : Int,
+  count_width : Int32,
+  width : Int32,
 ) -> Result[@types.Exp, String] {
   if width >= 32 {
     return Ok(masked)
@@ -3747,8 +3751,8 @@ fn project_basic_bil_rotate_amount(
 fn project_basic_bil_rotate_exp(
   src_exp : @types.Exp,
   count : @types.Exp,
-  count_width : Int,
-  width : Int,
+  count_width : Int32,
+  width : Int32,
   left : Bool,
 ) -> Result[@types.Exp, String] {
   let width_exp = match project_basic_bil_int(width.to_int64(), count_width) {
@@ -3779,8 +3783,8 @@ fn project_basic_bil_rotate_exp(
 fn project_basic_bil_rotate_expr(
   src : @types.Var,
   count : @types.Exp,
-  count_width : Int,
-  width : Int,
+  count_width : Int32,
+  width : Int32,
   left : Bool,
 ) -> Result[@types.Exp, String] {
   project_basic_bil_rotate_exp(
@@ -3796,8 +3800,8 @@ fn project_basic_bil_rotate_expr(
 fn project_basic_bil_rotate_flags(
   result : @types.Exp,
   count : @types.Exp,
-  count_width : Int,
-  width : Int,
+  count_width : Int32,
+  width : Int32,
   left : Bool,
 ) -> Result[@types.Stmt, String] {
   let zero_count = match project_basic_bil_int(0L, count_width) {
@@ -3855,8 +3859,8 @@ fn project_basic_bil_rotate_flags(
 ///|
 fn project_basic_bil_rotate_carry_count(
   raw_count : @types.Exp,
-  count_width : Int,
-  width : Int,
+  count_width : Int32,
+  width : Int32,
 ) -> Result[@types.Exp, String] {
   let mask_value = if width == 64 { 0x3FL } else { 0x1FL }
   let count_mask = match project_basic_bil_int(mask_value, count_width) {
@@ -3881,8 +3885,8 @@ fn project_basic_bil_rotate_carry_flags(
   rotated : @types.Exp,
   result : @types.Exp,
   count : @types.Exp,
-  count_width : Int,
-  width : Int,
+  count_width : Int32,
+  width : Int32,
   left : Bool,
 ) -> Result[@types.Stmt, String] {
   let zero_count = match project_basic_bil_int(0L, count_width) {
@@ -3932,7 +3936,7 @@ fn project_basic_bil_rotate_carry_flags(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_rotate_r(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   left : Bool,
 ) -> Result[Array[@types.Stmt], String] {
   let dst = match self.project_basic_bil_register(0, width) {
@@ -3980,7 +3984,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_rotate_r(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_rotate_carry_r(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   left : Bool,
 ) -> Result[Array[@types.Stmt], String] {
   let dst = match self.project_basic_bil_register(0, width) {
@@ -4042,7 +4046,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_rotate_carry_r(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_rotate_carry_m(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   left : Bool,
 ) -> Result[Array[@types.Stmt], String] {
   let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
@@ -4124,7 +4128,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_rotate_carry_m(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_rotate_m(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   left : Bool,
 ) -> Result[Array[@types.Stmt], String] {
   let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
@@ -4195,7 +4199,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_rotate_m(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_shift_r(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   op : @types.BinOp,
 ) -> Result[Array[@types.Stmt], String] {
   let dst = match self.project_basic_bil_register(0, width) {
@@ -4236,7 +4240,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_shift_r(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_shift_m(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   op : @types.BinOp,
 ) -> Result[Array[@types.Stmt], String] {
   let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
@@ -4299,7 +4303,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_shift_m(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_cmp_rr(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let lhs = match self.project_basic_bil_register(0, width) {
     Ok(value) => value
@@ -4333,7 +4337,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_cmp_rr(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_cmp_ri(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let lhs = match self.project_basic_bil_register(0, width) {
     Ok(value) => value
@@ -4370,7 +4374,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_cmp_ri(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_cmp_mi(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
     Ok(value) => value
@@ -4424,7 +4428,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_cmp_mi(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_cmp_rm(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let lhs = match self.project_basic_bil_register(0, width) {
     Ok(value) => value
@@ -4467,7 +4471,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_cmp_rm(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_cmp_mr(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
     Ok(value) => value
@@ -4518,7 +4522,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_cmp_mr(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_cmpxchg_rr(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let dst = match self.project_basic_bil_register(0, width) {
     Ok(value) => value
@@ -4580,7 +4584,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_cmpxchg_rr(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_cmpxchg_mr(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
     Ok(value) => value
@@ -4661,7 +4665,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_cmpxchg_mr(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_xadd_rr(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let dst = match self.project_basic_bil_register(0, width) {
     Ok(value) => value
@@ -4707,7 +4711,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_xadd_rr(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_xadd_mr(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
     Ok(value) => value
@@ -4838,7 +4842,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_cmpxchg8b(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_test_rr(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let lhs = match self.project_basic_bil_register(0, width) {
     Ok(value) => value
@@ -4871,7 +4875,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_test_rr(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_test_ri(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let lhs = match self.project_basic_bil_register(0, width) {
     Ok(value) => value
@@ -4907,7 +4911,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_test_ri(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_test_mr(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
     Ok(value) => value
@@ -4972,7 +4976,7 @@ fn project_basic_bil_x86_incdec_flag_moves(
   lhs : @types.Exp,
   rhs : @types.Exp,
   result : @types.Exp,
-  width : Int,
+  width : Int32,
   op : @types.BinOp,
 ) -> Result[Array[@types.Stmt], String] {
   if op == @types.BinOp::plus() {
@@ -4999,7 +5003,7 @@ fn project_basic_bil_x86_append_incdec_flags(
   lhs : @types.Exp,
   rhs : @types.Exp,
   result : @types.Exp,
-  width : Int,
+  width : Int32,
   op : @types.BinOp,
 ) -> Result[Array[@types.Stmt], String] {
   let flags = match
@@ -5016,7 +5020,7 @@ fn project_basic_bil_x86_append_incdec_flags(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_incdec(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   op : @types.BinOp,
 ) -> Result[Array[@types.Stmt], String] {
   let prefix = match project_basic_bil_x86_incdec_prefix(op) {
@@ -5056,7 +5060,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_incdec(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_incdec_m(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   op : @types.BinOp,
 ) -> Result[Array[@types.Stmt], String] {
   let prefix = match project_basic_bil_x86_incdec_prefix(op) {
@@ -5122,7 +5126,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_incdec_m(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_unop_r(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   op : @types.UnOp,
 ) -> Result[Array[@types.Stmt], String] {
   match self.project_basic_bil_register(0, width) {
@@ -5140,7 +5144,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_unop_r(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_unop_m(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   op : @types.UnOp,
 ) -> Result[Array[@types.Stmt], String] {
   let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
@@ -5185,7 +5189,7 @@ fn project_basic_bil_x86_append_neg_flags(
   zero : @types.Exp,
   operand : @types.Exp,
   result : @types.Exp,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let flags = match
     project_basic_bil_x86_sub_flag_moves(zero, operand, result, width) {
@@ -5201,7 +5205,7 @@ fn project_basic_bil_x86_append_neg_flags(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_neg_r(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let dst = match self.project_basic_bil_register(0, width) {
     Ok(value) => value
@@ -5232,7 +5236,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_neg_r(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_neg_m(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let (addr, mem, address_width) = match self.project_basic_bil_memory_addr(0) {
     Ok(value) => value
@@ -5287,7 +5291,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_neg_m(
 }
 
 ///|
-fn project_basic_bil_register_width(name : String) -> Int {
+fn project_basic_bil_register_width(name : String) -> Int32 {
   match name {
     "AX" | "BX" | "CX" | "DX" | "SI" | "DI" | "BP" | "SP" => 16
     _ =>
@@ -5308,7 +5312,7 @@ fn project_basic_bil_register_width(name : String) -> Int {
 fn project_basic_bil_offset_addr(
   base : @types.Exp,
   offset : Int64,
-  width : Int,
+  width : Int32,
 ) -> Result[@types.Exp, String] {
   if offset == 0L {
     Ok(base)
@@ -5328,9 +5332,9 @@ fn project_basic_bil_offset_addr(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_memory_addr(
   self : ProjectDisassemblyInstruction,
-  base_index : Int,
-) -> Result[(@types.Exp, @types.Var, Int), String] {
-  let register = (index : Int, what : String) => {
+  base_index : Int32,
+) -> Result[(@types.Exp, @types.Var, Int32), String] {
+  let register = (index : Int32, what : String) => {
     match self.project_basic_bil_operand(index) {
       Ok(operand) =>
         match operand.register_name() {
@@ -5479,7 +5483,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_memory_addr(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_mov_rm_endian(
   self : ProjectDisassemblyInstruction,
-  data_width : Int,
+  data_width : Int32,
   endian : @bitvec.Endian,
 ) -> Result[Array[@types.Stmt], String] {
   let dst = match self.project_basic_bil_register(0, data_width) {
@@ -5505,7 +5509,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_mov_rm_endian(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_mov_rm(
   self : ProjectDisassemblyInstruction,
-  data_width : Int,
+  data_width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   self.project_basic_bil_mov_rm_endian(data_width, LittleEndian)
 }
@@ -5513,7 +5517,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_mov_rm(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_mov_mr_endian(
   self : ProjectDisassemblyInstruction,
-  data_width : Int,
+  data_width : Int32,
   endian : @bitvec.Endian,
 ) -> Result[Array[@types.Stmt], String] {
   let (addr, mem, _) = match self.project_basic_bil_memory_addr(0) {
@@ -5545,7 +5549,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_mov_mr_endian(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_mov_mr(
   self : ProjectDisassemblyInstruction,
-  data_width : Int,
+  data_width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   self.project_basic_bil_mov_mr_endian(data_width, LittleEndian)
 }
@@ -5553,7 +5557,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_mov_mr(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_mov_mi(
   self : ProjectDisassemblyInstruction,
-  data_width : Int,
+  data_width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let (addr, mem, _) = match self.project_basic_bil_memory_addr(0) {
     Ok(value) => value
@@ -5587,7 +5591,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_mov_mi(
 
 ///|
 fn project_basic_bil_string_index(
-  address_width : Int,
+  address_width : Int32,
   source : Bool,
 ) -> Result[@types.Var, String] {
   match (address_width, source) {
@@ -5602,8 +5606,8 @@ fn project_basic_bil_string_index(
 ///|
 fn project_basic_bil_string_next(
   register : @types.Var,
-  data_width : Int,
-  address_width : Int,
+  data_width : Int32,
+  address_width : Int32,
 ) -> Result[@types.Exp, String] {
   let step = match
     project_basic_bil_int((data_width / 8).to_int64(), address_width) {
@@ -5632,7 +5636,7 @@ fn project_basic_bil_string_next(
 
 ///|
 fn project_basic_bil_string_count(
-  address_width : Int,
+  address_width : Int32,
 ) -> Result[@types.Var, String] {
   match address_width {
     32 => Ok(project_basic_bil_reg("ECX", 32))
@@ -5644,8 +5648,8 @@ fn project_basic_bil_string_count(
 ///|
 fn project_basic_bil_string_rep_wrap(
   body : Array[@types.Stmt],
-  address_width : Int,
-  zf_mode : Int,
+  address_width : Int32,
+  zf_mode : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let count = match project_basic_bil_string_count(address_width) {
     Ok(value) => value
@@ -5701,8 +5705,8 @@ fn project_basic_bil_string_rep_wrap(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_movs(
   _self : ProjectDisassemblyInstruction,
-  data_width : Int,
-  address_width : Int,
+  data_width : Int32,
+  address_width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let src = match project_basic_bil_string_index(address_width, true) {
     Ok(value) => value
@@ -5754,8 +5758,8 @@ fn ProjectDisassemblyInstruction::project_basic_bil_movs(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_stos(
   _self : ProjectDisassemblyInstruction,
-  data_width : Int,
-  address_width : Int,
+  data_width : Int32,
+  address_width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let dst = match project_basic_bil_string_index(address_width, false) {
     Ok(value) => value
@@ -5793,8 +5797,8 @@ fn ProjectDisassemblyInstruction::project_basic_bil_stos(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_cmps(
   _self : ProjectDisassemblyInstruction,
-  data_width : Int,
-  address_width : Int,
+  data_width : Int32,
+  address_width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let src_index = match project_basic_bil_string_index(address_width, true) {
     Ok(value) => value
@@ -5867,8 +5871,8 @@ fn ProjectDisassemblyInstruction::project_basic_bil_cmps(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_scas(
   _self : ProjectDisassemblyInstruction,
-  data_width : Int,
-  address_width : Int,
+  data_width : Int32,
+  address_width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let dst_index = match project_basic_bil_string_index(address_width, false) {
     Ok(value) => value
@@ -5927,8 +5931,8 @@ fn ProjectDisassemblyInstruction::project_basic_bil_scas(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_rep_movs(
   self : ProjectDisassemblyInstruction,
-  data_width : Int,
-  address_width : Int,
+  data_width : Int32,
+  address_width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   match self.project_basic_bil_movs(data_width, address_width) {
     Ok(body) => project_basic_bil_string_rep_wrap(body, address_width, 0)
@@ -5939,8 +5943,8 @@ fn ProjectDisassemblyInstruction::project_basic_bil_rep_movs(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_rep_stos(
   self : ProjectDisassemblyInstruction,
-  data_width : Int,
-  address_width : Int,
+  data_width : Int32,
+  address_width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   match self.project_basic_bil_stos(data_width, address_width) {
     Ok(body) => project_basic_bil_string_rep_wrap(body, address_width, 0)
@@ -5951,9 +5955,9 @@ fn ProjectDisassemblyInstruction::project_basic_bil_rep_stos(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_rep_cmps(
   self : ProjectDisassemblyInstruction,
-  data_width : Int,
-  address_width : Int,
-  zf_mode : Int,
+  data_width : Int32,
+  address_width : Int32,
+  zf_mode : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   match self.project_basic_bil_cmps(data_width, address_width) {
     Ok(body) => project_basic_bil_string_rep_wrap(body, address_width, zf_mode)
@@ -5964,9 +5968,9 @@ fn ProjectDisassemblyInstruction::project_basic_bil_rep_cmps(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_rep_scas(
   self : ProjectDisassemblyInstruction,
-  data_width : Int,
-  address_width : Int,
-  zf_mode : Int,
+  data_width : Int32,
+  address_width : Int32,
+  zf_mode : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   match self.project_basic_bil_scas(data_width, address_width) {
     Ok(body) => project_basic_bil_string_rep_wrap(body, address_width, zf_mode)
@@ -5977,7 +5981,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_rep_scas(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_absolute_address_width(
   self : ProjectDisassemblyInstruction,
-) -> Int {
+) -> Int32 {
   if self.memory().length() >= 9 {
     64
   } else {
@@ -5988,8 +5992,8 @@ fn ProjectDisassemblyInstruction::project_basic_bil_absolute_address_width(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_absolute_addr(
   self : ProjectDisassemblyInstruction,
-  index : Int,
-  address_width : Int,
+  index : Int32,
+  address_width : Int32,
 ) -> Result[@types.Exp, String] {
   let immediate = match self.project_basic_bil_immediate(index) {
     Ok(value) => value
@@ -6005,7 +6009,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_absolute_addr(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_mov_abs_load(
   self : ProjectDisassemblyInstruction,
-  data_width : Int,
+  data_width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let address_width = self.project_basic_bil_absolute_address_width()
   let dst = match self.project_basic_bil_register(0, data_width) {
@@ -6035,7 +6039,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_mov_abs_load(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_mov_abs_store(
   self : ProjectDisassemblyInstruction,
-  data_width : Int,
+  data_width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let address_width = self.project_basic_bil_absolute_address_width()
   let addr = match self.project_basic_bil_absolute_addr(0, address_width) {
@@ -6110,7 +6114,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_setcc(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_cmov(
   self : ProjectDisassemblyInstruction,
-  data_width : Int,
+  data_width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let dst = match self.project_basic_bil_register(0, data_width) {
     Ok(value) => value
@@ -6151,7 +6155,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_cmov(
 ///|
 fn project_basic_bil_reverse_bytes(
   value : @types.Exp,
-  width : Int,
+  width : Int32,
 ) -> Result[@types.Exp, String] {
   if width != 32 && width != 64 {
     return Err("unsupported BSWAP width \{width}")
@@ -6170,7 +6174,7 @@ fn project_basic_bil_reverse_bytes(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_bswap(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let dst = match self.project_basic_bil_register(0, width) {
     Ok(value) => value
@@ -6187,7 +6191,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_bswap(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_lea(
   self : ProjectDisassemblyInstruction,
-  data_width : Int,
+  data_width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let dst = match self.project_basic_bil_register(0, data_width) {
     Ok(value) => value
@@ -6208,7 +6212,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_lea(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_mov_imm(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   match self.project_basic_bil_register(0, width) {
     Ok(dst) =>
@@ -6227,7 +6231,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_mov_imm(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_mov_rr(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   match self.project_basic_bil_register(0, width) {
     Ok(dst) =>
@@ -6242,8 +6246,8 @@ fn ProjectDisassemblyInstruction::project_basic_bil_mov_rr(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_movx_rr(
   self : ProjectDisassemblyInstruction,
-  dst_width : Int,
-  src_width : Int,
+  dst_width : Int32,
+  src_width : Int32,
   cast_kind : @types.CastKind,
 ) -> Result[Array[@types.Stmt], String] {
   let dst = match self.project_basic_bil_register(0, dst_width) {
@@ -6265,8 +6269,8 @@ fn ProjectDisassemblyInstruction::project_basic_bil_movx_rr(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_movx_rm(
   self : ProjectDisassemblyInstruction,
-  dst_width : Int,
-  src_width : Int,
+  dst_width : Int32,
+  src_width : Int32,
   cast_kind : @types.CastKind,
 ) -> Result[Array[@types.Stmt], String] {
   let dst = match self.project_basic_bil_register(0, dst_width) {
@@ -6295,9 +6299,9 @@ fn ProjectDisassemblyInstruction::project_basic_bil_movx_rm(
 ///|
 fn project_basic_bil_sign_extend_register(
   src_name : String,
-  src_width : Int,
+  src_width : Int32,
   dst_name : String,
-  dst_width : Int,
+  dst_width : Int32,
 ) -> Array[@types.Stmt] {
   let src = project_basic_bil_reg(src_name, src_width)
   let dst = project_basic_bil_reg(dst_name, dst_width)
@@ -6316,9 +6320,9 @@ fn project_basic_bil_sign_extend_register(
 ///|
 fn project_basic_bil_sign_extend_high_register(
   src_name : String,
-  src_width : Int,
+  src_width : Int32,
   dst_name : String,
-  dst_width : Int,
+  dst_width : Int32,
 ) -> Array[@types.Stmt] {
   let src = project_basic_bil_reg(src_name, src_width)
   let dst = project_basic_bil_reg(dst_name, dst_width)
@@ -6338,7 +6342,7 @@ fn project_basic_bil_sign_extend_high_register(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_xchg_rr(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let left = match self.project_basic_bil_register(0, width) {
     Ok(value) => value
@@ -6359,7 +6363,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_xchg_rr(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_xchg_rm(
   self : ProjectDisassemblyInstruction,
-  data_width : Int,
+  data_width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let register = match self.project_basic_bil_register(0, data_width) {
     Ok(value) => value
@@ -6396,8 +6400,8 @@ fn ProjectDisassemblyInstruction::project_basic_bil_xchg_rm(
 ///|
 fn project_basic_bil_push_exp(
   src : @types.Exp,
-  value_width : Int,
-  address_width : Int,
+  value_width : Int32,
+  address_width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let sp = match project_basic_bil_stack_pointer(address_width) {
     Ok(value) => value
@@ -6436,8 +6440,8 @@ fn project_basic_bil_push_exp(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_push(
   self : ProjectDisassemblyInstruction,
-  value_width : Int,
-  address_width : Int,
+  value_width : Int32,
+  address_width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   match self.project_basic_bil_value(0, value_width) {
     Ok(src) => project_basic_bil_push_exp(src, value_width, address_width)
@@ -6448,8 +6452,8 @@ fn ProjectDisassemblyInstruction::project_basic_bil_push(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_push_mem(
   self : ProjectDisassemblyInstruction,
-  value_width : Int,
-  address_width : Int,
+  value_width : Int32,
+  address_width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let (addr, mem, _) = match self.project_basic_bil_memory_addr(0) {
     Ok(value) => value
@@ -6469,8 +6473,8 @@ fn ProjectDisassemblyInstruction::project_basic_bil_push_mem(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_pop(
   self : ProjectDisassemblyInstruction,
-  value_width : Int,
-  address_width : Int,
+  value_width : Int32,
+  address_width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let dst = match self.project_basic_bil_register(0, value_width) {
     Ok(value) => value
@@ -6510,8 +6514,8 @@ fn ProjectDisassemblyInstruction::project_basic_bil_pop(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_leave(
   _self : ProjectDisassemblyInstruction,
-  value_width : Int,
-  address_width : Int,
+  value_width : Int32,
+  address_width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let sp = match project_basic_bil_stack_pointer(address_width) {
     Ok(value) => value
@@ -6631,7 +6635,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_jcc(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_jcxz(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let target = match self.project_basic_bil_immediate(0) {
     Ok(value) => value
@@ -6681,7 +6685,7 @@ fn project_basic_bil_indirect_control(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_control_reg(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   attr : @types.StmtAttribute[String],
 ) -> Result[Array[@types.Stmt], String] {
   match self.project_basic_bil_register(0, width) {
@@ -6694,7 +6698,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_control_reg(
 ///|
 fn ProjectDisassemblyInstruction::project_basic_bil_control_mem(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
   attr : @types.StmtAttribute[String],
 ) -> Result[Array[@types.Stmt], String] {
   let (addr, mem, _) = match self.project_basic_bil_memory_addr(0) {
@@ -6801,7 +6805,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_fpu_control_mem(
 fn project_basic_bil_control_with_width(
   attr : @types.StmtAttribute[String],
   target : UInt64,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   match project_basic_bil_addr_with_width(target, width) {
     Ok(addr_exp) =>

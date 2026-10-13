@@ -1,8 +1,8 @@
 ///|
-let tcf_counter : Ref[Int] = Ref(0)
+let tcf_counter : Ref[Int32] = Ref(0)
 
 ///|
-fn tcf_next_id() -> Int {
+fn tcf_next_id() -> Int32 {
   tcf_counter.val = tcf_counter.val + 1
   tcf_counter.val
 }

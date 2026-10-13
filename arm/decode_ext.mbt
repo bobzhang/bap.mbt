@@ -33,9 +33,9 @@
 ///|
 priv enum ArmFlag {
   NoFlag
-  Zero(Array[Int])
-  Eq(Array[Int], Array[Int])
-  Vals(Array[Int], Array[Int])
+  Zero(Array[Int32])
+  Eq(Array[Int32], Array[Int32])
+  Vals(Array[Int32], Array[Int32])
 }
 
 ///|
@@ -57,30 +57,30 @@ priv enum ArmValid {
 
 ///|
 priv struct ArmClass {
-  mask : UInt
-  value : UInt
-  kpos : Array[Int]
-  fields : Array[(Char, Array[Int])]
-  rules : Array[(Int, Int, Int, Array[Int], ArmFlag, Int)]
+  mask : UInt32
+  value : UInt32
+  kpos : Array[Int32]
+  fields : Array[(Char, Array[Int32])]
+  rules : Array[(Int32, Int32, Int32, Array[Int32], ArmFlag, Int32)]
   /// Whether bits 28-31 are the condition (predicate operands and
   /// assembly suffix).
   cond : Bool
   valid : ArmValid
   /// The bits of the first register of a register list, whose largest
   /// value an entry may limit.
-  limit : Array[Int]
-  table : (Int) -> (String, String, String, UInt, Int)?
+  limit : Array[Int32]
+  table : (Int32) -> (String, String, String, UInt32, Int32)?
 }
 
 ///|
-fn arm_bits(w : UInt, positions : Array[Int]) -> Int {
+fn arm_bits(w : UInt32, positions : Array[Int32]) -> Int32 {
   positions.fold(init=0, (v, b) => {
     (v << 1) | ((w >> b) & 1).reinterpret_as_int()
   })
 }
 
 ///|
-fn ArmClass::field(self : ArmClass, w : UInt, name : Char) -> Int {
+fn ArmClass::field(self : ArmClass, w : UInt32, name : Char) -> Int32 {
   for f in self.fields {
     if f.0 == name {
       return arm_bits(w, f.1)
@@ -90,7 +90,7 @@ fn ArmClass::field(self : ArmClass, w : UInt, name : Char) -> Int {
 }
 
 ///|
-fn ArmClass::matches(self : ArmClass, w : UInt) -> Bool {
+fn ArmClass::matches(self : ArmClass, w : UInt32) -> Bool {
   guard (w & self.mask) == self.value else { return false }
   guard !self.cond || w >> 28 != 15 else { return false }
   let not_vfp = () => a32_field(w, 9, 3) != 5
@@ -105,12 +105,12 @@ fn ArmClass::matches(self : ArmClass, w : UInt) -> Bool {
 }
 
 ///|
-fn ArmClass::key_of(self : ArmClass, w : UInt) -> Int {
+fn ArmClass::key_of(self : ArmClass, w : UInt32) -> Int32 {
   let kb = arm_bits(w, self.kpos)
   for rule in self.rules {
     let (mask, value, keep, positions, flag, tag) = rule
     guard (kb & mask) == value else { continue }
-    let bit_of = (p : Int) => (w >> p) & 1
+    let bit_of = (p : Int32) => (w >> p) & 1
     let flag = match flag {
       NoFlag => 0
       Zero(ps) => if ps.iter().all(p => bit_of(p) == 0) { 1 } else { 0 }
@@ -138,7 +138,7 @@ fn ArmClass::key_of(self : ArmClass, w : UInt) -> Int {
 /// The 8-bit VFP/NEON floating-point immediate as LLVM prints it
 /// (`%.6e`): the values are `k / 128` for an integer `k`, whose decimal
 /// mantissas have at most six digits.
-fn vfp_imm_text(imm8 : Int) -> String {
+fn vfp_imm_text(imm8 : Int32) -> String {
   let mant = imm8 & 15
   let cd = (imm8 >> 4) & 3
   let e = if ((imm8 >> 6) & 1) == 1 { cd - 3 } else { cd + 1 }
@@ -163,7 +163,7 @@ fn vfp_imm_text(imm8 : Int) -> String {
 
 ///|
 /// The NEON modified immediate `a:bcd:efgh`.
-fn neon_imm8(w : UInt) -> Int {
+fn neon_imm8(w : UInt32) -> Int32 {
   (a32_field(w, 24, 1) << 7) | (a32_field(w, 16, 3) << 4) | a32_field(w, 0, 4)
 }
 
@@ -174,8 +174,8 @@ fn hex_text(v : UInt64) -> String {
 
 ///|
 /// The numeric slots of the VFP/NEON register numbers and immediates.
-fn arm_number_slot(w : UInt, name : String) -> Int? {
-  let f = (lo : Int, len : Int) => a32_field(w, lo, len)
+fn arm_number_slot(w : UInt32, name : String) -> Int32? {
+  let f = (lo : Int32, len : Int32) => a32_field(w, lo, len)
   let dd = (f(22, 1) << 4) | f(12, 4)
   let dn = (f(7, 1) << 4) | f(16, 4)
   let dm = (f(5, 1) << 4) | f(0, 4)
@@ -244,7 +244,7 @@ fn arm_number_slot(w : UInt, name : String) -> Int? {
 
 ///|
 /// The value of the template slot `name` of `w` (see the file header).
-fn ArmClass::slot(self : ArmClass, w : UInt, name : String) -> String {
+fn ArmClass::slot(self : ArmClass, w : UInt32, name : String) -> String {
   if arm_number_slot(w, name) is Some(v) {
     return v.to_string()
   }
@@ -317,7 +317,7 @@ fn ArmClass::slot(self : ArmClass, w : UInt, name : String) -> String {
 }
 
 ///|
-fn ArmClass::expand(self : ArmClass, w : UInt, t : String) -> String {
+fn ArmClass::expand(self : ArmClass, w : UInt32, t : String) -> String {
   let out = StringBuilder()
   for i, part in t.split("%").collect() {
     if i % 2 == 0 {
@@ -378,7 +378,7 @@ fn arm_reg_op(name : String) -> @mc.Op {
 }
 
 ///|
-fn ArmClass::operands(self : ArmClass, w : UInt, t : String) -> Array[@mc.Op] {
+fn ArmClass::operands(self : ArmClass, w : UInt32, t : String) -> Array[@mc.Op] {
   if t.is_empty() {
     return []
   }
@@ -410,7 +410,7 @@ fn fix_list_names(insn_text : String) -> String {
 ///|
 /// `insn_text` with the condition suffix after the mnemonic (before its first
 /// `.` or space).
-fn with_cond_suffix(insn_text : String, cond : Int) -> String {
+fn with_cond_suffix(insn_text : String, cond : Int32) -> String {
   let suffix = cond_asm(cond)
   guard suffix != "" else { return insn_text }
   let mut at = insn_text.length()
@@ -428,7 +428,7 @@ fn with_cond_suffix(insn_text : String, cond : Int) -> String {
 /// forms (a `D` register list with an odd length field). As LLVM does,
 /// lists running past the last register are truncated and empty lists
 /// have one register.
-fn a32_vldm(w : UInt) -> A32Insn? {
+fn a32_vldm(w : UInt32) -> A32Insn? {
   let cond = a32_field(w, 28, 4)
   guard cond != 15 && a32_field(w, 25, 3) == 6 && a32_field(w, 9, 3) == 5 else {
     return None
@@ -499,8 +499,8 @@ fn is_coprocessor(name : String) -> Bool {
 /// leading bits of NEON (`111U1111` for `1111001U`, `11111001` for
 /// `11110100`) and the condition field.
 pub fn decode_t32_ext(
-  word : UInt,
-  cond : Int,
+  word : UInt32,
+  cond : Int32,
 ) -> (String, Array[@mc.Op], String)? {
   let top = word >> 24
   let (a32, neon, thumb_only) = if (top & 0xEF) == 0xEF {
@@ -551,7 +551,7 @@ pub fn decode_t32_ext(
 
 ///|
 /// Decodes `w` with the A32 tables.
-fn a32_ext(w : UInt) -> A32Insn? {
+fn a32_ext(w : UInt32) -> A32Insn? {
   if a32_vldm(w) is Some(insn) {
     return Some(insn)
   }
@@ -560,7 +560,7 @@ fn a32_ext(w : UInt) -> A32Insn? {
 
 ///|
 /// Decodes `w` with the tables of `classes`.
-fn table_ext(classes : Array[ArmClass], w : UInt) -> A32Insn? {
+fn table_ext(classes : Array[ArmClass], w : UInt32) -> A32Insn? {
   for cls in classes {
     guard cls.matches(w) else { continue }
     guard (cls.table)(cls.key_of(w)) is Some((name, ops, text, zero, max_first)) &&

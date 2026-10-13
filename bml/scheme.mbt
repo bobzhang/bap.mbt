@@ -39,7 +39,7 @@ pub fn Pattern::new(
 
 ///|
 fn[T] lookup(
-  arity : Int,
+  arity : Int32,
   first : (String) -> T?,
   second : (String) -> Bool,
   tag : String,

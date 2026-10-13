@@ -293,11 +293,11 @@ pub fn unescape_string(s : String) -> String? {
 /// constants, and substitutions) and the macro expansion depth.
 priv struct Parser {
   prog : Program
-  mut depth : Int
+  mut depth : Int32
 }
 
 ///|
-fn Parser::fresh(self : Parser, t : Tree) -> Int {
+fn Parser::fresh(self : Parser, t : Tree) -> Int32 {
   self.prog.sources.derive_id(t.id)
 }
 
@@ -347,7 +347,7 @@ fn Parser::fmt(
   tree : Tree,
 ) -> Array[Fmt] raise LoadError {
   let fmt = unquote(fmt)
-  let fail = (err : FormatProblem, off : Int) => {
+  let fail = (err : FormatProblem, off : Int32) => {
     let loc = self.prog.sources.loc_of_trees([tree]).nth_char(off + 1)
     raise FormatError(err, loc)
   }
@@ -654,14 +654,14 @@ fn docstring(docs : String?) -> String {
 ///|
 fn defun(
   docs? : String,
-  attrs? : ArrayView[Tree] = [],
+  attrs~ : ArrayView[Tree] = [],
   name : String,
   ps : Tree,
   body : ArrayView[Tree],
   prog : Program,
   gattrs : Attrs,
   tree : Tree,
-  item? : Item[Func] = func,
+  item~ : Item[Func] = func,
 ) -> Program raise LoadError {
   let attrs = parse_declarations(prog, gattrs, attrs)
   let body = parse_body(constrained(prog, attrs), body, tree)
@@ -678,7 +678,7 @@ fn defun(
 ///|
 fn defmethod(
   docs? : String,
-  attrs? : ArrayView[Tree] = [],
+  attrs~ : ArrayView[Tree] = [],
   name : String,
   ps : Tree,
   body : ArrayView[Tree],
@@ -693,7 +693,7 @@ fn defmethod(
 ///|
 fn defmacro(
   docs? : String,
-  attrs? : ArrayView[Tree] = [],
+  attrs~ : ArrayView[Tree] = [],
   name : String,
   ps : Tree,
   body : Tree,
@@ -714,7 +714,7 @@ fn defmacro(
 ///|
 fn defparameter(
   docs? : String,
-  attrs? : ArrayView[Tree] = [],
+  attrs~ : ArrayView[Tree] = [],
   name : String,
   body : Tree,
   prog : Program,
@@ -789,7 +789,7 @@ fn is_keyarg(t : Tree) -> Bool {
 ///|
 fn defsubst(
   docs? : String,
-  attrs? : ArrayView[Tree] = [],
+  attrs~ : ArrayView[Tree] = [],
   name : String,
   body : ArrayView[Tree],
   prog : Program,
@@ -815,7 +815,7 @@ fn defsubst(
 ///|
 fn defconst(
   docs? : String,
-  attrs? : ArrayView[Tree] = [],
+  attrs~ : ArrayView[Tree] = [],
   name : String,
   value : String,
   prog : Program,
@@ -1237,7 +1237,7 @@ fn required(
 pub fn load_sources(
   loader : Loader,
   features : Array[String],
-  source? : Source = Source::new(),
+  source~ : Source = Source::new(),
 ) -> Source raise LoadError {
   let fs = features.copy()
   fs.sort()
@@ -1272,7 +1272,7 @@ pub fn load_sources(
 pub fn load_program(
   loader : Loader,
   features : Array[String],
-  context? : Context = Context::empty(),
+  context~ : Context = Context::empty(),
 ) -> Program raise LoadError {
   let source = load_sources(loader, features)
   parse_source(context, source)

@@ -19,7 +19,7 @@ pub fn read_dir(path : String) -> Result[Array[String], String] {
 }
 
 ///|
-pub fn mkdir(path : String, perm? : Int = 0o777) -> Result[Unit, String] {
+pub fn mkdir(path : String, perm~ : Int32 = 0o777) -> Result[Unit, String] {
   ignore(perm)
   Err(unsupported(path))
 }
@@ -41,7 +41,7 @@ pub fn rename(src : String, dst : String) -> Result[Unit, String] {
 }
 
 ///|
-pub fn chmod(path : String, perm : Int) -> Result[Unit, String] {
+pub fn chmod(path : String, perm : Int32) -> Result[Unit, String] {
   ignore(perm)
   Err(unsupported(path))
 }
@@ -54,7 +54,7 @@ pub fn getcwd() -> Result[String, String] {
 ///|
 pub fn make_temp_file(
   dir~ : String,
-  prefix? : String = "tmp",
+  prefix~ : String = "tmp",
 ) -> Result[String, String] {
   Err(unsupported(join_path(dir, prefix)))
 }
@@ -62,7 +62,7 @@ pub fn make_temp_file(
 ///|
 pub fn make_temp_dir(
   dir~ : String,
-  prefix? : String = "tmp",
+  prefix~ : String = "tmp",
 ) -> Result[String, String] {
   Err(unsupported(join_path(dir, prefix)))
 }
@@ -70,8 +70,8 @@ pub fn make_temp_dir(
 ///|
 pub fn lock_file(
   path : String,
-  exclusive? : Bool = true,
-  blocking? : Bool = true,
+  exclusive~ : Bool = true,
+  blocking~ : Bool = true,
 ) -> Result[FileLock, String] {
   ignore((exclusive, blocking))
   Err(unsupported(path))

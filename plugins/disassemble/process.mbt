@@ -323,7 +323,7 @@ fn[T] combine(
   names : Array[String]?,
   all : () -> Array[String],
   find : (String) -> @project.ProjectDisassemblySource[T]?,
-  extra? : Array[Result[T, String]] = [],
+  extra~ : Array[Result[T, String]] = [],
 ) -> @project.ProjectDisassemblySource[T]? raise DisassembleError {
   let names = match names {
     Some(names) => names
@@ -477,17 +477,17 @@ fn save_knowledge(
 /// and updates the knowledge base (upstream `create_and_process`).
 pub fn create_and_process(
   input : String,
-  libraries? : Array[String] = [],
-  outputs? : Array[Output] = [],
-  passes? : Array[@project.ProjectPass] = [],
-  loader? : String = "llvm",
-  target? : @core_theory.Target = @core_theory.Target::unknown(),
-  components? : Components = Components::default(),
-  update? : Bool = false,
-  knowledge? : String? = None,
-  print_missing? : Bool = false,
+  libraries~ : Array[String] = [],
+  outputs~ : Array[Output] = [],
+  passes~ : Array[@project.ProjectPass] = [],
+  loader~ : String = "llvm",
+  target~ : @core_theory.Target = @core_theory.Target::unknown(),
+  components~ : Components = Components::default(),
+  update~ : Bool = false,
+  knowledge~ : String? = None,
+  print_missing~ : Bool = false,
   out~ : (String) -> Unit,
-  write_file? : (String, String) -> Result[Unit, String] = default_write_file,
+  write_file~ : (String, String) -> Result[Unit, String] = default_write_file,
 ) -> @project.Project raise DisassembleError {
   let proj = match load_knowledge(print_missing, knowledge) {
     Some(proj) => proj

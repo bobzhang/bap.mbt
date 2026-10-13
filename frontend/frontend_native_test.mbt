@@ -1,7 +1,9 @@
 ///|
 /// Runs `bap` on the host file system (with all plugins, including the
 /// cache) in a fresh temporary directory holding the ELF fixture.
-fn native_bap(argv : (String) -> Array[String]) -> (Int, String, String) raise {
+fn native_bap(
+  argv : (String) -> Array[String],
+) -> (Int32, String, String) raise {
   let dir = @fixtures.host_temp_dir_with_elf()
   let file = dir + "/true.elf"
   let buf = StringBuilder()

@@ -2,7 +2,7 @@
 struct IrCfgEdge {
   src_value : Term[Blk]
   dst_value : Term[Blk]
-  pos_value : Int
+  pos_value : Int32
 }
 
 ///|
@@ -16,12 +16,12 @@ pub fn IrCfgEdge::dst(self : IrCfgEdge) -> Term[Blk] {
 }
 
 ///|
-pub fn IrCfgEdge::position(self : IrCfgEdge) -> Int {
+pub fn IrCfgEdge::position(self : IrCfgEdge) -> Int32 {
   self.pos_value
 }
 
 ///|
-pub fn IrCfgEdge::label(self : IrCfgEdge) -> Int {
+pub fn IrCfgEdge::label(self : IrCfgEdge) -> Int32 {
   self.position()
 }
 
@@ -48,20 +48,20 @@ fn ir_cfg_edge_current_src(sub : Term[Sub], edge : IrCfgEdge) -> Term[Blk]? {
 ///|
 fn ir_cfg_edge_jmps_before_index(
   src : Term[Blk],
-  index : Int,
+  index : Int32,
 ) -> Array[Term[Jmp]] {
   let jmps = src.payload_value.jmps
-  let stop = Int::max(0, Int::min(index, jmps.length()))
+  let stop = Int32::max(0, Int32::min(index, jmps.length()))
   jmps[0:stop].to_owned()
 }
 
 ///|
 fn ir_cfg_edge_jmps_after_index(
   src : Term[Blk],
-  index : Int,
+  index : Int32,
 ) -> Array[Term[Jmp]] {
   let jmps = src.payload_value.jmps
-  let start = Int::max(0, Int::min(index + 1, jmps.length()))
+  let start = Int32::max(0, Int32::min(index + 1, jmps.length()))
   jmps[start:].to_owned()
 }
 
@@ -100,7 +100,7 @@ pub fn IrCfgEdge::cond(self : IrCfgEdge, sub : Term[Sub]) -> Exp {
 fn ir_cfg_edge_of_jmp(
   sub : Term[Sub],
   src : Term[Blk],
-  pos : Int,
+  pos : Int32,
   jmp : Term[Jmp],
 ) -> IrCfgEdge? {
   match jmp.succ_tid_of_jmp() {
@@ -117,12 +117,12 @@ fn ir_cfg_edge_of_jmp(
 fn ir_cfg_edge_edges_in_range(
   sub : Term[Sub],
   src : Term[Blk],
-  start : Int,
-  stop : Int,
+  start : Int32,
+  stop : Int32,
 ) -> Array[IrCfgEdge] {
   let jmps = src.payload_value.jmps
-  let lo = Int::max(0, Int::min(start, jmps.length()))
-  let hi = Int::max(lo, Int::min(stop, jmps.length()))
+  let lo = Int32::max(0, Int32::min(start, jmps.length()))
+  let hi = Int32::max(lo, Int32::min(stop, jmps.length()))
   let edges = []
   for pos in lo..<hi {
     match ir_cfg_edge_of_jmp(sub, src, pos, jmps[pos]) {

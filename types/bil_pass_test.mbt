@@ -4,7 +4,7 @@ fn bil_pass_var(name : String) -> @types.Var {
 }
 
 ///|
-fn bil_pass_stmt(name : String, value : Int) -> @types.Stmt {
+fn bil_pass_stmt(name : String, value : Int32) -> @types.Stmt {
   Move(bil_pass_var(name), Int(try! @types.Word::of_int(width=8, value)))
 }
 

@@ -37,7 +37,7 @@ pub fn optimize(bil : Array[@types.Stmt]) -> Array[@types.Stmt] {
 /// Collects the BIL of up to `number_of_instructions` instructions starting
 /// at `entry`, following unconditional constant jumps (`collect_insns`).
 pub fn collect_insns(
-  number_of_instructions : Int,
+  number_of_instructions : Int32,
   entry : UInt64,
   lift : (UInt64) -> LiftedInsn?,
 ) -> Array[@types.Stmt] {
@@ -66,7 +66,7 @@ pub fn collect_insns(
 
 ///|
 /// The number of instructions of a PLT entry for a target.
-pub fn plt_size(target : @core_theory.Target) -> Int? {
+pub fn plt_size(target : @core_theory.Target) -> Int32? {
   let sizes = [
     (@core_theory.Target::arm_family(), 4),
     (@core_theory.Target::x86(), 1),
@@ -159,7 +159,7 @@ pub fn symbolizer(
   refs : References,
   target : @core_theory.Target,
   is_stub~ : (UInt64) -> Bool,
-  lift? : (UInt64) -> LiftedInsn? = _ => None,
+  lift~ : (UInt64) -> LiftedInsn? = _ => None,
 ) -> @project.ProjectSymbolizer {
   @project.ProjectSymbolizer::create(addr => {
     if is_stub(addr) {

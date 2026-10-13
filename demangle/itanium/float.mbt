@@ -15,7 +15,11 @@ fn hex_value(c : UInt16) -> UInt64 {
 
 ///|
 /// Formats a double given by its fields.
-fn format_hex_double(sign : Bool, exponent : Int, fraction : UInt64) -> String {
+fn format_hex_double(
+  sign : Bool,
+  exponent : Int32,
+  fraction : UInt64,
+) -> String {
   let sb = StringBuilder()
   if sign {
     sb.write_string("-")
@@ -61,7 +65,11 @@ fn format_hex_double(sign : Bool, exponent : Int, fraction : UInt64) -> String {
 }
 
 ///|
-fn print_float_literal(contents : StringView, kind : Int, ob : Output) -> Unit {
+fn print_float_literal(
+  contents : StringView,
+  kind : Int32,
+  ob : Output,
+) -> Unit {
   let n = float_mangled_size(kind)
   if contents.length() < n {
     return

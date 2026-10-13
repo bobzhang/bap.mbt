@@ -5,8 +5,8 @@
 ///|
 struct Corpus {
   data : Bytes
-  starts : Array[Int] // offsets classified as function starts
-  max_length : Int
+  starts : Array[Int32] // offsets classified as function starts
+  max_length : Int32
 } derive(Debug)
 
 ///|
@@ -61,8 +61,8 @@ fn Corpus::trained(self : Corpus) -> @byteweight.Byteweight {
 ///|
 /// Reference counts: (h1, h0) for every key of length 1..max_length that
 /// occurs at least once at a start.
-fn Corpus::model(self : Corpus) -> Map[Bytes, (Int, Int)] {
-  let counts : Map[Bytes, (Int, Int)] = Map([])
+fn Corpus::model(self : Corpus) -> Map[Bytes, (Int32, Int32)] {
+  let counts : Map[Bytes, (Int32, Int32)] = Map([])
   let n = self.data.length()
   for len in 1..<=self.max_length {
     for o in 0..<=(n - len) {
@@ -148,7 +148,7 @@ test "qc: longest_match returns the longest stored prefix of the key" {
         (raw[i].to_int() % 3).to_byte()
       })
       let bw = c.trained()
-      let mut best : Int? = None
+      let mut best : Int32? = None
       for entry in bw.entries() {
         let k = entry.0
         if k.length() <= key.length() && key[:k.length()] == k[:] {
@@ -193,7 +193,7 @@ test "qc: serialized signatures round trip" {
 ///|
 test "qc: of_bytes rejects or accepts corrupted signature files without aborting" {
   @quickcheck.check(
-    (input : (Corpus, Int, Byte)) => {
+    (input : (Corpus, Int32, Byte)) => {
       let (c, pos, b) = input
       let data = c.trained().to_bytes().to_array()
       if data.length() > 0 {
@@ -214,7 +214,7 @@ test "qc: of_bytes rejects or accepts corrupted signature files without aborting
 ///|
 test "qc: find_positive reports exactly the offsets whose longest match is likely" {
   @quickcheck.check(
-    (input : (Corpus, UInt)) => {
+    (input : (Corpus, UInt32)) => {
       let (c, t) = input
       let threshold = (t % 11).reinterpret_as_int().to_double() / 10.0
       let bw = c.trained()

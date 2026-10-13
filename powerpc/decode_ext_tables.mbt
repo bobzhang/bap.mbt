@@ -2,7 +2,7 @@
 // disassembler, DO NOT EDIT. See `decode_ext.mbt`.
 
 ///|
-fn ppc_d46(key : Int) -> (String, String, String, UInt)? {
+fn ppc_d46(key : Int32) -> (String, String, String, UInt32)? {
   match key {
     0x0 =>
       Some(("LMW", "Reg:%R:t% Imm:%d% Reg:%G0:a%", "lmw %t%, %sd%(%a%)", 0x0U))
@@ -11,7 +11,7 @@ fn ppc_d46(key : Int) -> (String, String, String, UInt)? {
 }
 
 ///|
-fn ppc_d47(key : Int) -> (String, String, String, UInt)? {
+fn ppc_d47(key : Int32) -> (String, String, String, UInt32)? {
   match key {
     0x0 =>
       Some(
@@ -22,7 +22,7 @@ fn ppc_d47(key : Int) -> (String, String, String, UInt)? {
 }
 
 ///|
-fn ppc_d48(key : Int) -> (String, String, String, UInt)? {
+fn ppc_d48(key : Int32) -> (String, String, String, UInt32)? {
   match key {
     0x0 =>
       Some(("LFS", "Reg:%F:t% Imm:%d% Reg:%G0:a%", "lfs %t%, %sd%(%a%)", 0x0U))
@@ -31,7 +31,7 @@ fn ppc_d48(key : Int) -> (String, String, String, UInt)? {
 }
 
 ///|
-fn ppc_d49(key : Int) -> (String, String, String, UInt)? {
+fn ppc_d49(key : Int32) -> (String, String, String, UInt32)? {
   match key {
     0x0 =>
       Some(
@@ -45,7 +45,7 @@ fn ppc_d49(key : Int) -> (String, String, String, UInt)? {
 }
 
 ///|
-fn ppc_d50(key : Int) -> (String, String, String, UInt)? {
+fn ppc_d50(key : Int32) -> (String, String, String, UInt32)? {
   match key {
     0x0 =>
       Some(("LFD", "Reg:%F:t% Imm:%d% Reg:%G0:a%", "lfd %t%, %sd%(%a%)", 0x0U))
@@ -54,7 +54,7 @@ fn ppc_d50(key : Int) -> (String, String, String, UInt)? {
 }
 
 ///|
-fn ppc_d51(key : Int) -> (String, String, String, UInt)? {
+fn ppc_d51(key : Int32) -> (String, String, String, UInt32)? {
   match key {
     0x0 =>
       Some(
@@ -68,7 +68,7 @@ fn ppc_d51(key : Int) -> (String, String, String, UInt)? {
 }
 
 ///|
-fn ppc_d52(key : Int) -> (String, String, String, UInt)? {
+fn ppc_d52(key : Int32) -> (String, String, String, UInt32)? {
   match key {
     0x0 =>
       Some(
@@ -79,7 +79,7 @@ fn ppc_d52(key : Int) -> (String, String, String, UInt)? {
 }
 
 ///|
-fn ppc_d53(key : Int) -> (String, String, String, UInt)? {
+fn ppc_d53(key : Int32) -> (String, String, String, UInt32)? {
   match key {
     0x0 =>
       Some(
@@ -93,7 +93,7 @@ fn ppc_d53(key : Int) -> (String, String, String, UInt)? {
 }
 
 ///|
-fn ppc_d54(key : Int) -> (String, String, String, UInt)? {
+fn ppc_d54(key : Int32) -> (String, String, String, UInt32)? {
   match key {
     0x0 =>
       Some(
@@ -104,7 +104,7 @@ fn ppc_d54(key : Int) -> (String, String, String, UInt)? {
 }
 
 ///|
-fn ppc_d55(key : Int) -> (String, String, String, UInt)? {
+fn ppc_d55(key : Int32) -> (String, String, String, UInt32)? {
   match key {
     0x0 =>
       Some(
@@ -118,7 +118,7 @@ fn ppc_d55(key : Int) -> (String, String, String, UInt)? {
 }
 
 ///|
-fn ppc_d2(key : Int) -> (String, String, String, UInt)? {
+fn ppc_d2(key : Int32) -> (String, String, String, UInt32)? {
   match key {
     0x0 => Some(("TDI", "Imm:0 Reg:%X:a% Imm:%sd%", "tdi 0, %a%, %sd%", 0x0U))
     0x1 => Some(("TDI", "Imm:1 Reg:%X:a% Imm:%sd%", "tdlgti %a%, %sd%", 0x0U))
@@ -170,7 +170,7 @@ fn ppc_d2(key : Int) -> (String, String, String, UInt)? {
 }
 
 ///|
-fn ppc_d3(key : Int) -> (String, String, String, UInt)? {
+fn ppc_d3(key : Int32) -> (String, String, String, UInt32)? {
   match key {
     0x0 => Some(("TWI", "Imm:0 Reg:%R:a% Imm:%sd%", "twi 0, %a%, %sd%", 0x0U))
     0x1 => Some(("TWI", "Imm:1 Reg:%R:a% Imm:%sd%", "twlgti %a%, %sd%", 0x0U))
@@ -222,7 +222,7 @@ fn ppc_d3(key : Int) -> (String, String, String, UInt)? {
 }
 
 ///|
-fn ppc_o56(key : Int) -> (String, String, String, UInt)? {
+fn ppc_o56(key : Int32) -> (String, String, String, UInt32)? {
   match key {
     0x0 =>
       Some(("LQ", "Reg:%X:t% Imm:%dq% Reg:%G0:a%", "lq %t%, %dq%(%a%)", 0x0U))
@@ -231,7 +231,7 @@ fn ppc_o56(key : Int) -> (String, String, String, UInt)? {
 }
 
 ///|
-fn ppc_o57(key : Int) -> (String, String, String, UInt)? {
+fn ppc_o57(key : Int32) -> (String, String, String, UInt32)? {
   match key {
     0x2 =>
       Some(
@@ -248,7 +248,7 @@ fn ppc_o57(key : Int) -> (String, String, String, UInt)? {
 }
 
 ///|
-fn ppc_o61(key : Int) -> (String, String, String, UInt)? {
+fn ppc_o61(key : Int32) -> (String, String, String, UInt32)? {
   match key {
     0x1 =>
       Some(
@@ -295,7 +295,7 @@ fn ppc_o61(key : Int) -> (String, String, String, UInt)? {
 }
 
 ///|
-fn ppc_o62(key : Int) -> (String, String, String, UInt)? {
+fn ppc_o62(key : Int32) -> (String, String, String, UInt32)? {
   match key {
     0x2 =>
       Some(("STQ", "Reg:%X:t% Imm:%ds% Reg:%G0:a%", "stq %t%, %ds%(%a%)", 0x0U))
@@ -304,7 +304,7 @@ fn ppc_o62(key : Int) -> (String, String, String, UInt)? {
 }
 
 ///|
-fn ppc_o6(key : Int) -> (String, String, String, UInt)? {
+fn ppc_o6(key : Int32) -> (String, String, String, UInt32)? {
   match key {
     0x0 =>
       Some(
@@ -324,7 +324,7 @@ fn ppc_o6(key : Int) -> (String, String, String, UInt)? {
 }
 
 ///|
-fn ppc_o31(key : Int) -> (String, String, String, UInt)? {
+fn ppc_o31(key : Int32) -> (String, String, String, UInt32)? {
   match key {
     0xc =>
       Some(
@@ -2463,7 +2463,7 @@ fn ppc_o31(key : Int) -> (String, String, String, UInt)? {
 }
 
 ///|
-fn ppc_o63(key : Int) -> (String, String, String, UInt)? {
+fn ppc_o63(key : Int32) -> (String, String, String, UInt32)? {
   match key {
     0x0 =>
       Some(
@@ -3485,7 +3485,7 @@ fn ppc_o63(key : Int) -> (String, String, String, UInt)? {
 }
 
 ///|
-fn ppc_o59(key : Int) -> (String, String, String, UInt)? {
+fn ppc_o59(key : Int32) -> (String, String, String, UInt32)? {
   match key {
     0x4 =>
       Some(
@@ -6894,7 +6894,7 @@ fn ppc_o59(key : Int) -> (String, String, String, UInt)? {
 }
 
 ///|
-fn ppc_o60(key : Int) -> (String, String, String, UInt)? {
+fn ppc_o60(key : Int32) -> (String, String, String, UInt32)? {
   match key {
     0x0 =>
       Some(
@@ -9122,7 +9122,7 @@ fn ppc_o60(key : Int) -> (String, String, String, UInt)? {
 }
 
 ///|
-fn ppc_o4(key : Int) -> (String, String, String, UInt)? {
+fn ppc_o4(key : Int32) -> (String, String, String, UInt32)? {
   match key {
     0x0 =>
       Some(
@@ -11708,7 +11708,7 @@ fn ppc_o4(key : Int) -> (String, String, String, UInt)? {
 }
 
 ///|
-fn ppc_o19(key : Int) -> (String, String, String, UInt)? {
+fn ppc_o19(key : Int32) -> (String, String, String, UInt32)? {
   match key {
     0x24 => Some(("RFID", "", "rfid", 0x3fff800U))
     0x4c => Some(("RFMCI", "", "rfmci", 0x3fff800U))
@@ -11727,7 +11727,7 @@ fn ppc_o19(key : Int) -> (String, String, String, UInt)? {
 }
 
 ///|
-fn ppc_o17(key : Int) -> (String, String, String, UInt)? {
+fn ppc_o17(key : Int32) -> (String, String, String, UInt32)? {
   match key {
     0x10000001 => Some(("SCV", "Imm:%l%", "scv %l%", 0x0U))
     0x10000002 => Some(("SC", "Imm:%l%", "sc %l%", 0x0U))

@@ -11,7 +11,7 @@ struct Outcome {
   /// the jump target, if the instruction jumped
   jump : UInt64?
   /// the CPU exception, if one was raised
-  exn : Int?
+  exn : Int32?
   /// specials (e.g. intrinsics) executed
   specials : Array[String]
 }
@@ -58,7 +58,7 @@ fn eval_word(o : Outcome, e : @types.Exp) -> @types.Word? raise {
 fn exec_seq(
   o : Outcome,
   stmts : Array[@types.Stmt],
-  fuel : Ref[Int],
+  fuel : Ref[Int32],
 ) -> Bool raise {
   for stmt in stmts {
     fuel.val -= 1
@@ -140,7 +140,7 @@ fn run(
 }
 
 ///|
-fn word(width : Int, value : UInt64) -> @types.BilValue {
+fn word(width : Int32, value : UInt64) -> @types.BilValue {
   BilWord(try! @types.Word::of_uint64(width~, value))
 }
 
@@ -159,9 +159,9 @@ const STACK : UInt64 = 0x20000
 /// regions (1024 bytes each, from 256 bytes below `DATA` and `STACK`).
 fn machine(
   mode : @x86.Mode,
-  regs? : Array[(String, UInt64)] = [],
-  flag_bits? : Int = 0,
-  seed? : Int = 1,
+  regs~ : Array[(String, UInt64)] = [],
+  flag_bits~ : Int32 = 0,
+  seed~ : Int32 = 1,
 ) -> Map[String, @types.BilValue] {
   let w = mode.width()
   let values : Map[String, @types.BilValue] = Map([])
@@ -208,12 +208,12 @@ fn get_word(o : Outcome, name : String) -> UInt64 raise {
 }
 
 ///|
-fn get_flag(o : Outcome, name : String) -> Int raise {
+fn get_flag(o : Outcome, name : String) -> Int32 raise {
   get_word(o, name).to_int()
 }
 
 ///|
-fn load_mem(o : Outcome, addr : UInt64, bytes : Int) -> UInt64 raise {
+fn load_mem(o : Outcome, addr : UInt64, bytes : Int32) -> UInt64 raise {
   match o.values.get("mem") {
     Some(BilMem(m)) => {
       let mut v = 0UL
@@ -230,14 +230,14 @@ fn load_mem(o : Outcome, addr : UInt64, bytes : Int) -> UInt64 raise {
 }
 
 ///|
-fn lift64(bytes : Bytes, addr? : UInt64 = 0x400000) -> Array[@types.Stmt] raise {
+fn lift64(bytes : Bytes, addr~ : UInt64 = 0x400000) -> Array[@types.Stmt] raise {
   @x86.lift_legacy(X8664, bytes, addr~)
 }
 
 ///|
 fn lift32(
   bytes : Bytes,
-  addr? : UInt64 = 0x8048000,
+  addr~ : UInt64 = 0x8048000,
 ) -> Array[@types.Stmt] raise {
   @x86.lift_legacy(X86, bytes, addr~)
 }
@@ -246,9 +246,9 @@ fn lift32(
 /// Lift with the legacy lifter and run on a machine state.
 fn exec64(
   bytes : Bytes,
-  regs? : Array[(String, UInt64)] = [],
-  flag_bits? : Int = 0,
-  addr? : UInt64 = 0x400000,
+  regs~ : Array[(String, UInt64)] = [],
+  flag_bits~ : Int32 = 0,
+  addr~ : UInt64 = 0x400000,
 ) -> Outcome raise {
   run(lift64(bytes, addr~), machine(X8664, regs~, flag_bits~))
 }
@@ -256,9 +256,9 @@ fn exec64(
 ///|
 fn exec32(
   bytes : Bytes,
-  regs? : Array[(String, UInt64)] = [],
-  flag_bits? : Int = 0,
-  addr? : UInt64 = 0x8048000,
+  regs~ : Array[(String, UInt64)] = [],
+  flag_bits~ : Int32 = 0,
+  addr~ : UInt64 = 0x8048000,
 ) -> Outcome raise {
   run(lift32(bytes, addr~), machine(X86, regs~, flag_bits~))
 }
@@ -270,7 +270,7 @@ fn exec32(
 fn basic_decode_opt(
   triple : String,
   bytes : Bytes,
-  addr? : UInt64 = 0x400000,
+  addr~ : UInt64 = 0x400000,
 ) -> @project.ProjectDisassemblyInstruction? raise {
   let disasm = match
     @project.ProjectDisassemblyBasic::create(triple, backend="llvm") {
@@ -294,7 +294,7 @@ fn basic_decode_opt(
 fn basic_decode(
   triple : String,
   bytes : Bytes,
-  addr? : UInt64 = 0x400000,
+  addr~ : UInt64 = 0x400000,
 ) -> @project.ProjectDisassemblyInstruction raise {
   match basic_decode_opt(triple, bytes, addr~) {
     Some(i) => i
@@ -307,7 +307,7 @@ fn basic_decode(
 fn mc_insn(
   triple : String,
   bytes : Bytes,
-  addr? : UInt64 = 0x400000,
+  addr~ : UInt64 = 0x400000,
 ) -> @mc.Insn raise {
   basic_decode(triple, bytes, addr~).to_mc_insn()
 }
@@ -335,12 +335,12 @@ fn flags_text(o : Outcome) -> String {
 }
 
 ///|
-let memory_cache : Map[(Int, Int), @types.BilMemory] = Map([])
+let memory_cache : Map[(Int32, Int32), @types.BilMemory] = Map([])
 
 ///|
 /// The initial memory of the test states: two 1024-byte regions starting
 /// 256 bytes below `DATA` and `STACK`, cached per address width and seed.
-fn initial_memory(w : Int, seed : Int) -> @types.BilMemory {
+fn initial_memory(w : Int32, seed : Int32) -> @types.BilMemory {
   match memory_cache.get((w, seed)) {
     Some(m) => m
     None => {

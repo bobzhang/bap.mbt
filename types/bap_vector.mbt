@@ -1,6 +1,6 @@
 ///|
 struct BapVector[T] {
-  mut size_value : Int
+  mut size_value : Int32
   mut data_value : Array[T]
   default_value : T
 }
@@ -18,7 +18,10 @@ pub extend ContinueOrStop with Eq::{not_equal, equal}
 pub extend ContinueOrStop with Debug::{to_repr}
 
 ///|
-pub fn[T] BapVector::create(default : T, capacity? : Int = 16) -> BapVector[T] {
+pub fn[T] BapVector::create(
+  default : T,
+  capacity~ : Int32 = 16,
+) -> BapVector[T] {
   let actual_capacity = if capacity < 1 { 1 } else { capacity }
   {
     size_value: 0,
@@ -52,7 +55,7 @@ pub fn[T] BapVector::append(self : BapVector[T], value : T) -> Unit {
 }
 
 ///|
-pub fn[T] BapVector::length(self : BapVector[T]) -> Int {
+pub fn[T] BapVector::length(self : BapVector[T]) -> Int32 {
   self.size_value
 }
 
@@ -62,7 +65,7 @@ pub fn[T] BapVector::is_empty(self : BapVector[T]) -> Bool {
 }
 
 ///|
-pub fn[T] BapVector::capacity(self : BapVector[T]) -> Int {
+pub fn[T] BapVector::capacity(self : BapVector[T]) -> Int32 {
   self.data_value.length()
 }
 
@@ -77,7 +80,7 @@ pub fn[T] BapVector::to_list(self : BapVector[T]) -> @list.List[T] {
 }
 
 ///|
-pub fn[T] BapVector::nth(self : BapVector[T], index : Int) -> T? {
+pub fn[T] BapVector::nth(self : BapVector[T], index : Int32) -> T? {
   if index >= 0 && index < self.size_value {
     Some(self.data_value.unsafe_get(index))
   } else {
@@ -86,7 +89,7 @@ pub fn[T] BapVector::nth(self : BapVector[T], index : Int) -> T? {
 }
 
 ///|
-pub fn[T] BapVector::get(self : BapVector[T], index : Int) -> T {
+pub fn[T] BapVector::get(self : BapVector[T], index : Int32) -> T {
   match self.nth(index) {
     Some(value) => value
     None => abort("Index out of bounds")
@@ -94,7 +97,7 @@ pub fn[T] BapVector::get(self : BapVector[T], index : Int) -> T {
 }
 
 ///|
-pub fn[T] BapVector::set(self : BapVector[T], index : Int, value : T) -> Unit {
+pub fn[T] BapVector::set(self : BapVector[T], index : Int32, value : T) -> Unit {
   if index >= 0 && index < self.size_value {
     self.data_value.unsafe_set(index, value)
   } else {
@@ -111,7 +114,7 @@ pub fn[A, B] BapVector::map_to_array(
 }
 
 ///|
-pub fn[T] BapVector::iteri(self : BapVector[T], f : (Int, T) -> Unit) -> Unit {
+pub fn[T] BapVector::iteri(self : BapVector[T], f : (Int32, T) -> Unit) -> Unit {
   for i in 0..<self.size_value {
     f(i, self.data_value.unsafe_get(i))
   }
@@ -126,7 +129,7 @@ pub fn[T] BapVector::iter(self : BapVector[T], f : (T) -> Unit) -> Unit {
 pub fn[T, A] BapVector::foldi(
   self : BapVector[T],
   init : A,
-  f : (Int, A, T) -> A,
+  f : (Int32, A, T) -> A,
 ) -> A {
   let mut acc = init
   for i in 0..<self.size_value {
@@ -180,8 +183,8 @@ pub fn[T, A, R] BapVector::fold_until(
 ///|
 pub fn[T] BapVector::findi(
   self : BapVector[T],
-  f : (Int, T) -> Bool,
-) -> (Int, T)? {
+  f : (Int32, T) -> Bool,
+) -> (Int32, T)? {
   for i in 0..<self.size_value {
     let value = self.data_value.unsafe_get(i)
     if f(i, value) {
@@ -194,7 +197,7 @@ pub fn[T] BapVector::findi(
 ///|
 pub fn[T, A] BapVector::find_mapi(
   self : BapVector[T],
-  f : (Int, T) -> A?,
+  f : (Int32, T) -> A?,
 ) -> A? {
   for i in 0..<self.size_value {
     match f(i, self.data_value.unsafe_get(i)) {
@@ -240,7 +243,7 @@ pub fn[T] BapVector::for_all(self : BapVector[T], f : (T) -> Bool) -> Bool {
 }
 
 ///|
-pub fn[T] BapVector::count(self : BapVector[T], f : (T) -> Bool) -> Int {
+pub fn[T] BapVector::count(self : BapVector[T], f : (T) -> Bool) -> Int32 {
   let mut total = 0
   for i in 0..<self.size_value {
     if f(self.data_value.unsafe_get(i)) {
@@ -253,7 +256,7 @@ pub fn[T] BapVector::count(self : BapVector[T], f : (T) -> Bool) -> Int {
 ///|
 pub fn[T] BapVector::min_elt_by(
   self : BapVector[T],
-  compare : (T, T) -> Int,
+  compare : (T, T) -> Int32,
 ) -> T? {
   if self.size_value == 0 {
     return None
@@ -271,7 +274,7 @@ pub fn[T] BapVector::min_elt_by(
 ///|
 pub fn[T] BapVector::min_elt(
   self : BapVector[T],
-  compare~ : (T, T) -> Int,
+  compare~ : (T, T) -> Int32,
 ) -> T? {
   self.min_elt_by(compare)
 }
@@ -279,7 +282,7 @@ pub fn[T] BapVector::min_elt(
 ///|
 pub fn[T] BapVector::max_elt_by(
   self : BapVector[T],
-  compare : (T, T) -> Int,
+  compare : (T, T) -> Int32,
 ) -> T? {
   if self.size_value == 0 {
     return None
@@ -297,7 +300,7 @@ pub fn[T] BapVector::max_elt_by(
 ///|
 pub fn[T] BapVector::max_elt(
   self : BapVector[T],
-  compare~ : (T, T) -> Int,
+  compare~ : (T, T) -> Int32,
 ) -> T? {
   self.max_elt_by(compare)
 }
@@ -306,9 +309,9 @@ pub fn[T] BapVector::max_elt(
 pub fn[T] BapVector::index_with_by(
   self : BapVector[T],
   value : T,
-  default~ : Int,
+  default~ : Int32,
   equal : (T, T) -> Bool,
-) -> Int {
+) -> Int32 {
   for i in 0..<self.size_value {
     if equal(value, self.data_value.unsafe_get(i)) {
       return i
@@ -321,8 +324,8 @@ pub fn[T] BapVector::index_with_by(
 pub fn[T : Eq] BapVector::index_with(
   self : BapVector[T],
   value : T,
-  default~ : Int,
-) -> Int {
+  default~ : Int32,
+) -> Int32 {
   self.index_with_by(value, default~, (left, right) => left == right)
 }
 
@@ -331,7 +334,7 @@ pub fn[T] BapVector::index_by(
   self : BapVector[T],
   value : T,
   equal : (T, T) -> Bool,
-) -> Int? {
+) -> Int32? {
   let index = self.index_with_by(value, default=-1, equal)
   if index < 0 {
     None
@@ -341,7 +344,7 @@ pub fn[T] BapVector::index_by(
 }
 
 ///|
-pub fn[T : Eq] BapVector::index(self : BapVector[T], value : T) -> Int? {
+pub fn[T : Eq] BapVector::index(self : BapVector[T], value : T) -> Int32? {
   let index = self.index_with(value, default=-1)
   if index < 0 {
     None
@@ -355,7 +358,7 @@ pub fn[T] BapVector::index_exn_by(
   self : BapVector[T],
   value : T,
   equal : (T, T) -> Bool,
-) -> Int {
+) -> Int32 {
   match self.index_by(value, equal) {
     Some(index) => index
     None => abort("index out of bounds")
@@ -363,7 +366,7 @@ pub fn[T] BapVector::index_exn_by(
 }
 
 ///|
-pub fn[T : Eq] BapVector::index_exn(self : BapVector[T], value : T) -> Int {
+pub fn[T : Eq] BapVector::index_exn(self : BapVector[T], value : T) -> Int32 {
   match self.index(value) {
     Some(index) => index
     None => abort("index out of bounds")

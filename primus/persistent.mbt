@@ -45,7 +45,7 @@ pub fn[K : Compare, V] PersistentMap::remove(
 }
 
 ///|
-pub fn[K, V] PersistentMap::length(self : PersistentMap[K, V]) -> Int {
+pub fn[K, V] PersistentMap::length(self : PersistentMap[K, V]) -> Int32 {
   self.map.length()
 }
 

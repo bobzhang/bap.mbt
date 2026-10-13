@@ -14,10 +14,10 @@ pub extend EdgeKind with Debug::{to_repr}
 
 ///|
 pub(all) struct DfsNodeInfo {
-  enter : Int
-  leave : Int
-  pre : Int
-  rpost : Int
+  enter : Int32
+  leave : Int32
+  pre : Int32
+  rpost : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -67,7 +67,7 @@ pub fn[N, E] Edge::label(self : Edge[N, E]) -> E {
 ///|
 struct GraphPath[E] {
   edges_value : Array[E]
-  weight_value : Int
+  weight_value : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -77,17 +77,17 @@ pub extend GraphPath with Eq::{not_equal, equal}
 pub extend GraphPath with Debug::{to_repr}
 
 ///|
-pub fn[E] GraphPath::new(edges : ArrayView[E], weight~ : Int) -> GraphPath[E] {
+pub fn[E] GraphPath::new(edges : ArrayView[E], weight~ : Int32) -> GraphPath[E] {
   { edges_value: edges.to_owned(), weight_value: weight, }
 }
 
 ///|
-pub fn[E] GraphPath::length(self : GraphPath[E]) -> Int {
+pub fn[E] GraphPath::length(self : GraphPath[E]) -> Int32 {
   self.edges_value.length()
 }
 
 ///|
-pub fn[E] GraphPath::weight(self : GraphPath[E]) -> Int {
+pub fn[E] GraphPath::weight(self : GraphPath[E]) -> Int32 {
   self.weight_value
 }
 
@@ -161,12 +161,12 @@ pub fn[N, E] Graph::new() -> Graph[N, E] {
 }
 
 ///|
-pub fn[N, E] Graph::node_count(self : Graph[N, E]) -> Int {
+pub fn[N, E] Graph::node_count(self : Graph[N, E]) -> Int32 {
   self.nodes.length()
 }
 
 ///|
-pub fn[N, E] Graph::edge_count(self : Graph[N, E]) -> Int {
+pub fn[N, E] Graph::edge_count(self : Graph[N, E]) -> Int32 {
   self.edges.length()
 }
 

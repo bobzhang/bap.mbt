@@ -10,7 +10,7 @@ priv struct Cpu {
   insn : @mc.Insn
   /// Address of the current instruction, as a signed expression.
   cia : Exp
-  tmps : Ref[Int]
+  tmps : Ref[Int32]
 }
 
 ///|
@@ -26,7 +26,7 @@ fn Cpu::new(
 }
 
 ///|
-fn Cpu::op(self : Cpu, index : Int) -> @mc.Op raise @mc.LiftError {
+fn Cpu::op(self : Cpu, index : Int32) -> @mc.Op raise @mc.LiftError {
   match self.insn.ops.get(index) {
     Some(op) => op
     None =>
@@ -66,12 +66,12 @@ fn sword(e : Exp) -> Exp raise @mc.LiftError {
 ///|
 /// The low word of the register operand `index`, with the signedness
 /// `sign` (the source operand of a 32-bit operation).
-fn Cpu::wreg(self : Cpu, index : Int, sign : Sign) -> Exp raise @mc.LiftError {
+fn Cpu::wreg(self : Cpu, index : Int32, sign : Sign) -> Exp raise @mc.LiftError {
   apply_sign(sign, low(word, self.reg(index, sign)))
 }
 
 ///|
-fn Cpu::reg(self : Cpu, index : Int, sign : Sign) -> Exp raise @mc.LiftError {
+fn Cpu::reg(self : Cpu, index : Int32, sign : Sign) -> Exp raise @mc.LiftError {
   match self.op(index) {
     Reg(name~, ..) => apply_sign(sign, self.find_reg(name))
     Imm(_) | Fmm(_) => raise mips_fail("reg operand expected")
@@ -80,19 +80,19 @@ fn Cpu::reg(self : Cpu, index : Int, sign : Sign) -> Exp raise @mc.LiftError {
 
 ///|
 /// Upstream `signed cpu.reg ops.(index)`.
-fn Cpu::sreg(self : Cpu, index : Int) -> Exp raise @mc.LiftError {
+fn Cpu::sreg(self : Cpu, index : Int32) -> Exp raise @mc.LiftError {
   self.reg(index, Signed)
 }
 
 ///|
 /// Upstream `unsigned cpu.reg ops.(index)`.
-fn Cpu::ureg(self : Cpu, index : Int) -> Exp raise @mc.LiftError {
+fn Cpu::ureg(self : Cpu, index : Int32) -> Exp raise @mc.LiftError {
   self.reg(index, Unsigned)
 }
 
 ///|
 /// Immediates are always materialized as 32-bit words.
-fn Cpu::imm(self : Cpu, index : Int, sign : Sign) -> Exp raise @mc.LiftError {
+fn Cpu::imm(self : Cpu, index : Int32, sign : Sign) -> Exp raise @mc.LiftError {
   match self.op(index) {
     Imm(x) => apply_sign(sign, Exp::of_word(make_word(32, x)))
     Reg(_) | Fmm(_) => raise mips_fail("imm operand expected")
@@ -101,13 +101,13 @@ fn Cpu::imm(self : Cpu, index : Int, sign : Sign) -> Exp raise @mc.LiftError {
 
 ///|
 /// Upstream `signed imm ops.(index)`.
-fn Cpu::simm(self : Cpu, index : Int) -> Exp raise @mc.LiftError {
+fn Cpu::simm(self : Cpu, index : Int32) -> Exp raise @mc.LiftError {
   self.imm(index, Signed)
 }
 
 ///|
 /// Upstream `unsigned imm ops.(index)`.
-fn Cpu::uimm(self : Cpu, index : Int) -> Exp raise @mc.LiftError {
+fn Cpu::uimm(self : Cpu, index : Int32) -> Exp raise @mc.LiftError {
   self.imm(index, Unsigned)
 }
 
@@ -115,7 +115,7 @@ fn Cpu::uimm(self : Cpu, index : Int) -> Exp raise @mc.LiftError {
 /// A fresh virtual temporary of the given width (upstream `var`). Names
 /// are numbered per lifted instruction (`tmp1`, `tmp2`, ...), so the output
 /// is deterministic.
-fn Cpu::tmp(self : Cpu, sign : Sign, width : Int) -> Exp raise @mc.LiftError {
+fn Cpu::tmp(self : Cpu, sign : Sign, width : Int32) -> Exp raise @mc.LiftError {
   self.tmps.val += 1
   let v = @types.Var::new(
     name="tmp\{self.tmps.val}",
@@ -126,17 +126,17 @@ fn Cpu::tmp(self : Cpu, sign : Sign, width : Int) -> Exp raise @mc.LiftError {
 }
 
 ///|
-fn Cpu::svar(self : Cpu, width : Int) -> Exp raise @mc.LiftError {
+fn Cpu::svar(self : Cpu, width : Int32) -> Exp raise @mc.LiftError {
   self.tmp(Signed, width)
 }
 
 ///|
-fn Cpu::uvar(self : Cpu, width : Int) -> Exp raise @mc.LiftError {
+fn Cpu::uvar(self : Cpu, width : Int32) -> Exp raise @mc.LiftError {
   self.tmp(Unsigned, width)
 }
 
 ///|
-fn size_of_width(width : Int) -> @types.Size raise @mc.LiftError {
+fn size_of_width(width : Int32) -> @types.Size raise @mc.LiftError {
   match @types.Size::of_int(width) {
     Ok(size) => size
     Err(_) => raise mips_fail("invalid size: \{width}")
@@ -144,7 +144,7 @@ fn size_of_width(width : Int) -> @types.Size raise @mc.LiftError {
 }
 
 ///|
-fn Cpu::load(self : Cpu, addr : Exp, width : Int) -> Exp raise @mc.LiftError {
+fn Cpu::load(self : Cpu, addr : Exp, width : Int32) -> Exp raise @mc.LiftError {
   Exp::load(self.arch.mem(), addr, self.endian, size_of_width(width))
 }
 
@@ -153,7 +153,7 @@ fn Cpu::store(
   self : Cpu,
   addr : Exp,
   data : Exp,
-  width : Int,
+  width : Int32,
 ) -> Rtl raise @mc.LiftError {
   Store(self.arch.mem(), addr, data, self.endian, size_of_width(width))
 }
@@ -168,7 +168,7 @@ fn Cpu::jmp(self : Cpu, dst : Exp) -> Rtl raise @mc.LiftError {
 }
 
 ///|
-fn Cpu::gpr(self : Cpu, index : Int) -> Exp raise @mc.LiftError {
+fn Cpu::gpr(self : Cpu, index : Int32) -> Exp raise @mc.LiftError {
   match self.arch.gpr(index) {
     Some(v) => Exp::of_var(v)
     None => raise mips_fail("GPR with number \{index} not found")

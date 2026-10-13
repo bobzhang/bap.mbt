@@ -114,7 +114,7 @@ fn mem_lift_m(
   operation : Operation,
 ) -> Array[@types.Stmt] {
   let o_base = tmp(@types.ValueType::reg32_t())
-  let calc_offset = (ith : Int) => {
+  let calc_offset = (ith : Int32) => {
     match mode {
       IB => 4 * (ith + 1)
       DB => -4 * (ith + 1)

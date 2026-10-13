@@ -98,7 +98,7 @@ test "regular sequence helpers mirror BAP sequence wrappers" {
   source[0] = 9
   assert_true(copied == [1, 2, 3])
   assert_true(@regular.seq_of_list(@list.List([1, 2, 3])) == [1, 2, 3])
-  let helper_empty : Array[Int] = @regular.seq_empty()
+  let helper_empty : Array[Int32] = @regular.seq_empty()
   assert_true(helper_empty == [])
   assert_true(@regular.seq_singleton(4) == [4])
   assert_true(@regular.seq_return(4) == [4])
@@ -148,7 +148,7 @@ test "regular sequence helpers mirror BAP sequence wrappers" {
   assert_true(@regular.seq_shift_right(copied, 0) == [0, 1, 2, 3])
   assert_true(@regular.seq_append([0], copied) == [0, 1, 2, 3])
   assert_true(@regular.seq_concat([[0], copied, [4, 5]]) == [0, 1, 2, 3, 4, 5])
-  let empty : Array[Int] = []
+  let empty : Array[Int32] = []
   assert_true(@regular.seq_is_empty(empty))
   assert_true(!@regular.seq_is_empty(copied))
   assert_true(@regular.seq_length(copied) == 3)
@@ -295,17 +295,17 @@ test "regular sequence helpers mirror BAP sequence wrappers" {
   assert_true(owned == [4, 5, 6])
   assert_true(@regular.seq_rev(copied) == [3, 2, 1])
   assert_true(@regular.seq_to_list_rev(copied).to_array() == [3, 2, 1])
-  assert_true(@regular.seq_compare(Int::compare, [1, 2], [1, 3]) < 0)
-  assert_true(@regular.seq_compare(Int::compare, [1, 2, 3], [1, 2]) > 0)
-  assert_true(@regular.seq_compare(Int::compare, [1, 2], [1, 2, 0]) < 0)
-  assert_true(@regular.seq_compare(Int::compare, [1, 2], [1, 2]) == 0)
+  assert_true(@regular.seq_compare(Int32::compare, [1, 2], [1, 3]) < 0)
+  assert_true(@regular.seq_compare(Int32::compare, [1, 2, 3], [1, 2]) > 0)
+  assert_true(@regular.seq_compare(Int32::compare, [1, 2], [1, 2, 0]) < 0)
+  assert_true(@regular.seq_compare(Int32::compare, [1, 2], [1, 2]) == 0)
   inspect(@regular.seq_render(copied), content="{1, 2, 3}")
   inspect(@regular.seq_render(copied, max=2), content="{1, 2, ...}")
 }
 
 ///|
 test "regular sequence generator helpers preserve monadic yield order" {
-  let empty : @regular.SeqGenerator[Unit, Int] = @regular.seq_generator_return(
+  let empty : @regular.SeqGenerator[Unit, Int32] = @regular.seq_generator_return(
     (),
   )
   assert_true(@regular.seq_generator_run(empty) == [])
@@ -317,7 +317,7 @@ test "regular sequence generator helpers preserve monadic yield order" {
     @regular.seq_generator_yield(2).bind(_ => @regular.seq_generator_yield(3))
   })
   assert_true(@regular.seq_generator_run(direct) == [1, 2, 3])
-  let seeded : @regular.SeqGenerator[Int, Int] = @regular.seq_generator_return(
+  let seeded : @regular.SeqGenerator[Int32, Int32] = @regular.seq_generator_return(
     4,
   )
   let mapped = seeded
@@ -332,8 +332,8 @@ test "regular sequence generator helpers preserve monadic yield order" {
 
 ///|
 fn assert_trie_longest(
-  trie : @regular.PrefixTrie[Int],
-  cases : Array[(String, (Int, Int)?)],
+  trie : @regular.PrefixTrie[Int32],
+  cases : Array[(String, (Int32, Int32)?)],
 ) -> Unit raise {
   for item in cases {
     let (key, expected) = item
@@ -343,8 +343,8 @@ fn assert_trie_longest(
 
 ///|
 fn assert_trie_find(
-  trie : @regular.PrefixTrie[Int],
-  cases : Array[(String, Int?)],
+  trie : @regular.PrefixTrie[Int32],
+  cases : Array[(String, Int32?)],
 ) -> Unit raise {
   for item in cases {
     let (key, expected) = item
@@ -354,7 +354,7 @@ fn assert_trie_find(
 
 ///|
 test "prefix trie find and longest_match follow BAP trie behavior" {
-  let trie : @regular.PrefixTrie[Int] = @regular.PrefixTrie::new()
+  let trie : @regular.PrefixTrie[Int32] = @regular.PrefixTrie::new()
   assert_true(trie.length() == 0)
   trie.change("missing", _ => None)
   assert_true(trie.length() == 0)
@@ -445,7 +445,7 @@ test "prefix trie find and longest_match follow BAP trie behavior" {
 
 ///|
 test "suffix trie mirrors BAP reversed-token matching" {
-  let trie : @regular.SuffixTrie[Int] = @regular.SuffixTrie::new()
+  let trie : @regular.SuffixTrie[Int32] = @regular.SuffixTrie::new()
   assert_true(trie.is_empty())
   trie.add("", 0)
   trie.add("c", 1)
@@ -475,7 +475,7 @@ test "suffix trie mirrors BAP reversed-token matching" {
 
 ///|
 test "prefix and suffix tries report UTF-8 byte match lengths like BAP strings" {
-  let prefix : @regular.PrefixTrie[Int] = @regular.PrefixTrie::new()
+  let prefix : @regular.PrefixTrie[Int32] = @regular.PrefixTrie::new()
   prefix.add("é", 1)
   prefix.add("éx", 2)
   assert_true(prefix.find("éx") == Some(2))
@@ -488,7 +488,7 @@ test "prefix and suffix tries report UTF-8 byte match lengths like BAP strings" 
   prefix_entries.sort_by((left, right) => left.compare(right))
   assert_true(prefix_entries == ["é=1", "éx=2"])
 
-  let suffix : @regular.SuffixTrie[Int] = @regular.SuffixTrie::new()
+  let suffix : @regular.SuffixTrie[Int32] = @regular.SuffixTrie::new()
   suffix.add("é", 1)
   suffix.add("xé", 2)
   assert_true(suffix.find("xé") == Some(2))

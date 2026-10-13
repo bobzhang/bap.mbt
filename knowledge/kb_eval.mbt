@@ -1,9 +1,9 @@
 ///|
 /// Global promise/observer identifiers (`pids`).
-let pids : Ref[Int] = { val: 0, }
+let pids : Ref[Int32] = { val: 0, }
 
 ///|
-fn next_pid() -> Int {
+fn next_pid() -> Int32 {
   pids.val = pids.val + 1
   pids.val
 }
@@ -186,7 +186,7 @@ fn[K, P] State::working(
   self : State,
   slot : Slot[K, P],
   object : Object[K],
-  f : (@sorted_set.SortedSet[Int], @sorted_set.SortedSet[Int]) -> Work,
+  f : (@sorted_set.SortedSet[Int32], @sorted_set.SortedSet[Int32]) -> Work,
 ) -> Unit {
   self.update_work(slot, object, work => {
     match work {
@@ -202,7 +202,7 @@ fn[K, P] State::dequeue_waiting(
   self : State,
   slot : Slot[K, P],
   object : Object[K],
-) -> Array[(Int, (State, Int, Name) -> Unit raise)] {
+) -> Array[(Int32, (State, Int32, Name) -> Unit raise)] {
   let waiting = match self.info(slot.owner, object.id()) {
     Some({ comp, .. }) =>
       match comp.get(slot.core.key.uid) {
@@ -235,7 +235,7 @@ fn[K, P] State::collect_inner(
   self : State,
   slot : Slot[K, P],
   object : Object[K],
-  promises : Array[(Int, (State, Int, Name) -> Unit raise)],
+  promises : Array[(Int32, (State, Int32, Name) -> Unit raise)],
 ) -> Unit raise {
   let was = self.current_opt(slot, object)
   for promise in promises {
@@ -368,7 +368,7 @@ pub fn[K, P] State::suggest(
 fn[K, P] Slot::promise_action(
   self : Slot[K, P],
   get : (State, Object[K]) -> P raise,
-) -> (State, Int, Name) -> Unit raise {
+) -> (State, Int32, Name) -> Unit raise {
   (state, id, class_name) => {
     let object : Object[K] = { id, class_name, _phantom: None, }
     match state.rejectable(() => get(state, object)) {
@@ -386,7 +386,7 @@ fn[K, P] Slot::proposal_action(
   self : Slot[K, Opinions[P]],
   agent : Agent,
   get : (State, Object[K]) -> P raise,
-) -> (State, Int, Name) -> Unit raise {
+) -> (State, Int32, Name) -> Unit raise {
   (state, id, class_name) => {
     let object : Object[K] = { id, class_name, _phantom: None, }
     match state.rejectable(() => get(state, object)) {
@@ -408,7 +408,7 @@ fn[K, P] Slot::proposal_action(
 pub fn[K, P] Slot::promise(
   self : Slot[K, P],
   f : (State, Object[K]) -> P raise,
-) -> Int {
+) -> Int32 {
   let pid = next_pid()
   self.core.promises[pid] = self.promise_action(f)
   pid
@@ -416,13 +416,13 @@ pub fn[K, P] Slot::promise(
 
 ///|
 /// Retracts a promise or proposal registered on the slot.
-pub fn[K, P] Slot::retract(self : Slot[K, P], pid : Int) -> Unit {
+pub fn[K, P] Slot::retract(self : Slot[K, P], pid : Int32) -> Unit {
   self.core.promises.remove(pid)
 }
 
 ///|
 /// Removes an observer registered on the slot.
-pub fn[K, P] Slot::unobserve(self : Slot[K, P], pid : Int) -> Unit {
+pub fn[K, P] Slot::unobserve(self : Slot[K, P], pid : Int32) -> Unit {
   self.core.watchers.remove(pid)
 }
 
@@ -447,7 +447,7 @@ pub fn[K, P] Slot::propose(
   self : Slot[K, Opinions[P]],
   agent : Agent,
   f : (State, Object[K]) -> P raise,
-) -> Int {
+) -> Int32 {
   let pid = next_pid()
   self.core.promises[pid] = self.proposal_action(agent, f)
   pid
@@ -475,7 +475,7 @@ pub fn[K, P, R] Slot::proposing(
 pub fn[K, P] Slot::observe(
   self : Slot[K, P],
   push : (State, Object[K], P) -> Unit raise,
-) -> Int {
+) -> Int32 {
   let pid = next_pid()
   self.core.watchers[pid] = (state, id, class_name, value) => {
     push(state, { id, class_name, _phantom: None, }, value)

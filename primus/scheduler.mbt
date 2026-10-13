@@ -46,9 +46,9 @@ priv enum Frame {
   /// A cleanup (`Machine::push_cleanup`).
   Cleanup((Machine) -> Unit raise)
   /// The remaining observers of a suspended observation dispatch.
-  Dispatch(Array[() -> Unit raise], Int)
+  Dispatch(Array[() -> Unit raise], Int32)
   /// Marks the bottom of a nested (synchronous) run.
-  Barrier(Int)
+  Barrier(Int32)
   /// Executes a linked name (`Linker::schedule_exec`).
   Exec(Name)
   /// Calls a linked name with arguments (`Machine::call`).
@@ -66,13 +66,13 @@ priv enum Frame {
   /// Enters a block term.
   BlkEnter(@types.Term[@types.Blk])
   /// Enters the i-th phi node or definition of a block (phis first).
-  BlkElt(@types.Term[@types.Blk], Pos, Int)
+  BlkElt(@types.Term[@types.Blk], Pos, Int32)
   /// Evaluates and leaves the i-th phi node or definition of a block.
-  BlkEltBody(@types.Term[@types.Blk], Pos, Int, Pos)
+  BlkEltBody(@types.Term[@types.Blk], Pos, Int32, Pos)
   /// Enters the i-th jump of a block with the accumulated constraint.
-  BlkJmp(@types.Term[@types.Blk], Pos, Int, Constr)
+  BlkJmp(@types.Term[@types.Blk], Pos, Int32, Constr)
   /// Evaluates the condition of the i-th jump and leaves it.
-  BlkJmpBody(@types.Term[@types.Blk], Pos, Int, Constr, Pos)
+  BlkJmpBody(@types.Term[@types.Blk], Pos, Int32, Constr, Pos)
   /// Performs the jump taken by a block.
   Jump(Value, @types.Term[@types.Jmp])
   /// Continues after a call returns: pops the call prompt and jumps to
@@ -121,7 +121,7 @@ pub fn Machine::schedule(
 pub fn Machine::call(
   self : Machine,
   name : Name,
-  args? : Array[Value] = [],
+  args~ : Array[Value] = [],
   then~ : (Machine, Value?) -> Unit raise,
 ) -> Unit {
   self.push_user(Cont(then))
@@ -133,7 +133,7 @@ pub fn Machine::call(
 pub fn Machine::call_code(
   self : Machine,
   code : Code,
-  args? : Array[Value] = [],
+  args~ : Array[Value] = [],
   then~ : (Machine, Value?) -> Unit raise,
 ) -> Unit {
   self.push_user(Cont(then))
@@ -181,7 +181,7 @@ pub fn Machine::push_cleanup(
 
 ///|
 /// The number of frames on the control stack of the current machine.
-pub fn Machine::stack_depth(self : Machine) -> Int {
+pub fn Machine::stack_depth(self : Machine) -> Int32 {
   let mut n = 0
   for s = self.current.stack {
     match s {
@@ -263,7 +263,7 @@ fn Machine::run_step(self : Machine, frame : Frame) -> Error? {
 /// down to the nearest handler frame (or to the barrier `floor`). Cleanup
 /// frames met on the way are run. Returns `None` if a handler was found (it
 /// is scheduled as the next step), otherwise the error to propagate.
-fn Machine::recover(self : Machine, e : Error, floor : Int?) -> Error? {
+fn Machine::recover(self : Machine, e : Error, floor : Int32?) -> Error? {
   let mut err = e
   for ;; {
     match self.current.stack {
@@ -323,7 +323,7 @@ fn Machine::drive(self : Machine) -> ExitStatus {
 }
 
 ///|
-fn Machine::unwind_barrier(self : Machine, marker : Int) -> Unit {
+fn Machine::unwind_barrier(self : Machine, marker : Int32) -> Unit {
   for ;; {
     match self.current.stack {
       Cons(Barrier(k), rest) if k == marker => {
@@ -426,13 +426,13 @@ fn Machine::host_step(self : Machine, f : (Machine) -> Unit raise) -> Error? {
 /// updated) project.
 pub fn Machine::run(
   proj : @project.Project,
-  start? : (Machine) -> Unit raise = _ => (),
-  boot? : (Machine) -> Unit raise = _ => (),
-  init? : (Machine) -> Unit raise = _ => (),
-  fini? : (Machine) -> Unit raise = _ => (),
-  system? : String = "primus",
-  args? : Array[String] = [],
-  envp? : Array[String] = [],
+  start~ : (Machine) -> Unit raise = _ => (),
+  boot~ : (Machine) -> Unit raise = _ => (),
+  init~ : (Machine) -> Unit raise = _ => (),
+  fini~ : (Machine) -> Unit raise = _ => (),
+  system~ : String = "primus",
+  args~ : Array[String] = [],
+  envp~ : Array[String] = [],
 ) -> (ExitStatus, @project.Project) {
   let m = Machine::new(proj, args~, envp~)
   m.run_with(start~, boot~, init~, fini~, system~)
@@ -442,11 +442,11 @@ pub fn Machine::run(
 /// Runs an already created machine (see `Machine::run`).
 pub fn Machine::run_with(
   self : Machine,
-  start? : (Machine) -> Unit raise = _ => (),
-  boot? : (Machine) -> Unit raise = _ => (),
-  init? : (Machine) -> Unit raise = _ => (),
-  fini? : (Machine) -> Unit raise = _ => (),
-  system? : String = "primus",
+  start~ : (Machine) -> Unit raise = _ => (),
+  boot~ : (Machine) -> Unit raise = _ => (),
+  init~ : (Machine) -> Unit raise = _ => (),
+  fini~ : (Machine) -> Unit raise = _ => (),
+  system~ : String = "primus",
 ) -> (ExitStatus, @project.Project) {
   let m = self
   m.restricted = true
@@ -467,7 +467,7 @@ pub fn Machine::run_with(
   // `user >>= fini` of every fork): when the frames scheduled by `fini`
   // itself (e.g., by resumable `system-fini` observers) complete, the
   // machine is finished without running `fini` again.
-  let finished : Map[Int, ExitStatus] = Map([])
+  let finished : Map[Int32, ExitStatus] = Map([])
   for ;; {
     let status = m.drive()
     let id = m.current.id

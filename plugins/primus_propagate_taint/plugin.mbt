@@ -44,7 +44,7 @@ fn is_registered(name : String) -> Bool {
 /// Registers the `taint-mapper`, `taint-marker` and `taint-intro`
 /// components (package `bap`). Idempotent; returns the number of newly
 /// registered components.
-pub fn register() -> Int {
+pub fn register() -> Int32 {
   let mut added = 0
   for c in components() {
     let (name, desc, init) = c
@@ -80,10 +80,10 @@ let projection_enabled : Ref[Bool] = { val: false, }
 /// `no_marks` without `run`, is an error. The components are registered
 /// (see `register`) and every component is added at most once.
 pub fn enable(
-  from_attributes? : Bool = false,
-  to_attributes? : Bool = false,
-  run? : Bool = false,
-  no_marks? : Bool = false,
+  from_attributes~ : Bool = false,
+  to_attributes~ : Bool = false,
+  run~ : Bool = false,
+  no_marks~ : Bool = false,
 ) -> Unit raise ConfigError {
   if (from_attributes || to_attributes) && (run || no_marks) {
     raise ConfigError("Incorrect mix of old and new parameters")

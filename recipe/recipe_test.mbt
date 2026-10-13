@@ -31,7 +31,7 @@ fn sample_fs() -> @recipe.FileSystem {
 ///|
 fn load(
   name : String,
-  env? : Array[(String, String)] = [],
+  env~ : Array[(String, String)] = [],
 ) -> @recipe.Recipe raise {
   match @recipe.load(paths=["recipes"], env~, fs=sample_fs(), name) {
     Ok(recipe) => recipe
@@ -40,7 +40,7 @@ fn load(
 }
 
 ///|
-fn load_error(name : String, env? : Array[(String, String)] = []) -> String {
+fn load_error(name : String, env~ : Array[(String, String)] = []) -> String {
   match @recipe.load(paths=["nowhere", "recipes"], env~, fs=sample_fs(), name) {
     Ok(_) => "ok"
     Err(err) => err.to_string()

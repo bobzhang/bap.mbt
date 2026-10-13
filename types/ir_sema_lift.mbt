@@ -27,8 +27,8 @@ pub fn IrInsn::new(
   bil : Array[Stmt],
   addr? : Word,
   insn? : String,
-  is_call? : Bool = false,
-  is_barrier? : Bool = false,
+  is_call~ : Bool = false,
+  is_barrier~ : Bool = false,
 ) -> IrInsn {
   { bil, addr, insn, is_call, is_barrier, }
 }
@@ -310,7 +310,7 @@ pub fn Blk::lift_insn(
   insn : IrInsn,
   tid? : Tid,
   pkg? : String,
-  addr_width? : Int,
+  addr_width? : Int32,
   is_subroutine? : (Tid) -> Bool,
 ) -> Array[Term[Blk]] {
   let context = bir_context(pkg, addr_width, is_subroutine)
@@ -340,7 +340,7 @@ pub fn Blk::lift_block(
   is_call? : Bool,
   is_barrier? : Bool,
   pkg? : String,
-  addr_width? : Int,
+  addr_width? : Int32,
   is_subroutine? : (Tid) -> Bool,
 ) -> Array[Term[Blk]] {
   let context = bir_context(pkg, addr_width, is_subroutine)
@@ -372,7 +372,7 @@ pub fn Blk::lift_insns(
   fall? : IrFall,
   addr? : Word,
   pkg? : String,
-  addr_width? : Int,
+  addr_width? : Int32,
   is_subroutine? : (Tid) -> Bool,
 ) -> Array[Term[Blk]] {
   let context = bir_context(pkg, addr_width, is_subroutine)

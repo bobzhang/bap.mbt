@@ -2,7 +2,7 @@
 // disassembler (armv7, VFP and NEON), DO NOT EDIT. See `decode_ext.mbt`.
 
 ///|
-fn arm_vfp_dp(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_vfp_dp(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x0 =>
       Some(
@@ -469,7 +469,7 @@ fn arm_vfp_dp(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn arm_vfp_xfer(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_vfp_xfer(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x0 =>
       Some(
@@ -1185,7 +1185,7 @@ fn arm_vfp_xfer(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn arm_vfp_ldr(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_vfp_ldr(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x10000000 =>
       Some(
@@ -1304,7 +1304,7 @@ fn arm_vfp_ldr(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn arm_vfp_mov64(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_vfp_mov64(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x10000000 =>
       Some(
@@ -1353,7 +1353,7 @@ fn arm_vfp_mov64(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn arm_cop_mcr(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_cop_mcr(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x0 =>
       Some(
@@ -1374,7 +1374,7 @@ fn arm_cop_mcr(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn arm_cop_cdp(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_cop_cdp(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x0 =>
       Some(
@@ -1388,7 +1388,7 @@ fn arm_cop_cdp(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn arm_cop_mcrr(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_cop_mcrr(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x0 =>
       Some(
@@ -1409,7 +1409,7 @@ fn arm_cop_mcrr(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn arm_cop_ldc(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_cop_ldc(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x10000002 =>
       Some(
@@ -1752,7 +1752,7 @@ fn arm_cop_ldc(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn arm_cop_mcr2(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_cop_mcr2(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x0 =>
       Some(
@@ -1773,7 +1773,7 @@ fn arm_cop_mcr2(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn arm_cop_cdp2(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_cop_cdp2(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x0 =>
       Some(
@@ -1787,7 +1787,7 @@ fn arm_cop_cdp2(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn arm_cop_mcrr2(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_cop_mcrr2(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x0 =>
       Some(
@@ -1808,7 +1808,7 @@ fn arm_cop_mcrr2(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn arm_cop_ldco(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_cop_ldco(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x0 =>
       Some(
@@ -1843,7 +1843,7 @@ fn arm_cop_ldco(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn arm_cop_ldc2o(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_cop_ldc2o(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x0 =>
       Some(
@@ -1878,7 +1878,7 @@ fn arm_cop_ldc2o(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn arm_cop_ldc2(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_cop_ldc2(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x10000002 =>
       Some(
@@ -2221,7 +2221,7 @@ fn arm_cop_ldc2(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn arm_mult(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_mult(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x4 =>
       Some(
@@ -2235,7 +2235,7 @@ fn arm_mult(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn arm_clrex(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_clrex(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x0 => Some(("CLREX", "", "clrex", 0x0U, -1))
     _ => None
@@ -2243,7 +2243,7 @@ fn arm_clrex(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn arm_sys_rfe(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_sys_rfe(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x1 => Some(("RFEDA_UPD", "Reg:%G:n%", "rfeda %g:n%!", 0x0U, -1))
     0x3 => Some(("RFEIA_UPD", "Reg:%G:n%", "rfeia %g:n%!", 0x0U, -1))
@@ -2254,7 +2254,7 @@ fn arm_sys_rfe(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn arm_sys_srs(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_sys_srs(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x0 => Some(("SRSDA", "Imm:%i%", "srsda sp, #%i%", 0x0U, -1))
     0x1 => Some(("SRSDA_UPD", "Imm:%i%", "srsda sp!, #%i%", 0x0U, -1))
@@ -2269,7 +2269,7 @@ fn arm_sys_srs(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn arm_sys_mrs(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_sys_mrs(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x2 =>
       Some(
@@ -2280,7 +2280,7 @@ fn arm_sys_mrs(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn arm_media(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_media(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x10000008 =>
       Some(
@@ -3240,7 +3240,7 @@ fn arm_media(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn arm_misc_q(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_misc_q(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x0 =>
       Some(
@@ -3275,7 +3275,7 @@ fn arm_misc_q(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn arm_misc_bk(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_misc_bk(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x1000e001 => Some(("BKPT", "Imm:%i%", "bkpt #%i%", 0x0U, -1))
     _ => None
@@ -3283,7 +3283,7 @@ fn arm_misc_bk(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn arm_n3same(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_n3same(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x0 =>
       Some(
@@ -5572,7 +5572,7 @@ fn arm_n3same(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn arm_n3diff(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_n3diff(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x0 =>
       Some(
@@ -6090,7 +6090,7 @@ fn arm_n3diff(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn arm_nscalar(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_nscalar(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x10 =>
       Some(
@@ -6405,7 +6405,7 @@ fn arm_nscalar(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn arm_nshift(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_nshift(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x2 | 0x42 | 0x82 | 0xc2 | 0x102 | 0x142 | 0x182 | 0x1c2 =>
       Some(
@@ -8022,7 +8022,7 @@ fn arm_nshift(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn arm_nmodimm(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_nmodimm(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x0 =>
       Some(
@@ -8463,7 +8463,7 @@ fn arm_nmodimm(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn arm_n2misc(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_n2misc(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x0 =>
       Some(
@@ -9653,7 +9653,7 @@ fn arm_n2misc(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn arm_nvext(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_nvext(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x0 =>
       Some(
@@ -9828,7 +9828,7 @@ fn arm_nvext(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn arm_nvtbl(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_nvtbl(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x0 =>
       Some(
@@ -9891,7 +9891,7 @@ fn arm_nvtbl(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn arm_nvdup(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_nvdup(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x2 =>
       Some(
@@ -10094,7 +10094,7 @@ fn arm_nvdup(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn arm_nldm(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_nldm(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x10000000 =>
       Some(
@@ -14759,7 +14759,7 @@ fn arm_nldm(key : Int) -> (String, String, String, UInt, Int)? {
 }
 
 ///|
-fn arm_nlds(key : Int) -> (String, String, String, UInt, Int)? {
+fn arm_nlds(key : Int32) -> (String, String, String, UInt32, Int32)? {
   match key {
     0x10000000 =>
       Some(

@@ -7,7 +7,7 @@
 // random words of every encoding class on which the decoder and LLVM agree.
 
 ///|
-let llvm_samples : Array[(UInt, String)] = [
+let llvm_samples : Array[(UInt32, String)] = [
   (
     0xe2a6160fU, "ADCri Reg:R1 Reg:R6 Imm:1551 Imm:14 Reg:Nil Reg:Nil | adc r1, r6, #15728640",
   ),

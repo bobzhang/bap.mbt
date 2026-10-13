@@ -10,7 +10,7 @@
 // agree.
 
 ///|
-let llvm_samples : Array[(Int, UInt, String)] = [
+let llvm_samples : Array[(Int32, UInt32, String)] = [
   (
     4, 0xf1406400U, "t2ADCri Reg:R4 Reg:R0 Imm:134217728 Imm:14 Reg:Nil Reg:Nil | adc r4, r0, #134217728",
   ),
@@ -1783,7 +1783,7 @@ fn render_llvm(insn : @mc.Insn) -> String {
 
 ///|
 /// The little-endian bytes of a sample.
-fn sample_bytes(size : Int, value : UInt) -> Bytes {
+fn sample_bytes(size : Int32, value : UInt32) -> Bytes {
   let halves = if size == 2 { [value] } else { [value >> 16, value & 0xFFFF] }
   let bytes = []
   for h in halves {

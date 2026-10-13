@@ -144,7 +144,7 @@ test "concat and extract match BAP bit numbering cases" {
   assert_true(
     @bitvec.select([8], @bitvec.of_int(width=8, 0xff)) == @bitvec.b0(),
   )
-  let empty_bits : Array[Int] = []
+  let empty_bits : Array[Int32] = []
   assert_true(@bitvec.select(empty_bits, high) == @bitvec.b0())
   let word = @bitvec.of_int(width=16, 0xdad5)
   inspect(word.extract(lo=0xC).to_hex(), content="0xd")

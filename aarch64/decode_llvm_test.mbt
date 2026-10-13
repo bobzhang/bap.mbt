@@ -8,7 +8,7 @@
 // macOS system binaries.
 
 ///|
-let llvm_samples : Array[(UInt, String, String)] = [
+let llvm_samples : Array[(UInt32, String, String)] = [
   (0x00000100U, "UDF Imm:256 | udf #256", ""),
   (
     0x080bfc2aU, "STLXRB Reg:W11 Reg:W10 Reg:X1 | stlxrb w11, w10, [x1]", "may_load,may_store",

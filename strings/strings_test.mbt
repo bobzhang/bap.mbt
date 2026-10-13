@@ -1,5 +1,5 @@
 ///|
-fn byte_values(data : Bytes) -> Array[Int] {
+fn byte_values(data : Bytes) -> Array[Int32] {
   data.to_array().map(byte => byte.to_int())
 }
 
@@ -125,7 +125,7 @@ test "translated BAP strings unscrambler loads newline dictionaries" {
 
 ///|
 test "translated BAP strings detector emits finished decisions" {
-  let detector : @strings.StringsDetector[Int] = @strings.StringsDetector::create(
+  let detector : @strings.StringsDetector[Int32] = @strings.StringsDetector::create(
     @strings.StringsAlphabet::alpha_caseless(),
     beta=0.4,
   )
@@ -151,7 +151,7 @@ test "translated BAP strings detector emits finished decisions" {
 
 ///|
 test "translated BAP strings detector supports aborting accepted hypotheses" {
-  let mut detector : @strings.StringsDetector[Int] = @strings.StringsDetector::create(
+  let mut detector : @strings.StringsDetector[Int32] = @strings.StringsDetector::create(
     @strings.StringsAlphabet::alpha_caseless(),
     beta=0.4,
   )

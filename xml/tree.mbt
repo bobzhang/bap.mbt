@@ -54,9 +54,9 @@ pub fn Input::read_tree(self : Input) -> Node raise XmlError {
 /// Parses a whole document.
 pub fn parse_document(
   text : StringView,
-  strip? : Bool = false,
-  entity? : (String) -> String? = _ => None,
-  ns? : (String) -> String? = _ => None,
+  strip~ : Bool = false,
+  entity~ : (String) -> String? = _ => None,
+  ns~ : (String) -> String? = _ => None,
 ) -> Document raise XmlError {
   let input = Input::from_string(text, strip~, entity~, ns~)
   let dtd = match input.input() {
@@ -98,7 +98,7 @@ pub fn Node::elements(self : Node, local_name : String) -> Array[Node] {
 pub fn Node::attr(
   self : Node,
   local_name : String,
-  uri? : String = "",
+  uri~ : String = "",
 ) -> String? {
   match self {
     Element(tag, _) => tag.attr(local_name, uri~)
@@ -117,7 +117,7 @@ pub fn Node::text(self : Node) -> String {
 
 ///|
 /// Escapes the character data (`<`, `>`, `&`, and, when `quotes`, `"`).
-pub fn escape(s : String, quotes? : Bool = false) -> String {
+pub fn escape(s : String, quotes~ : Bool = false) -> String {
   let buf = StringBuilder()
   for c in s {
     match c {

@@ -119,7 +119,7 @@ pub fn Effect::join(
 pub fn Effect::merge(
   self : Effect,
   other : Effect,
-  on_conflict? : @knowledge.MergeStrategy = DropOld,
+  on_conflict~ : @knowledge.MergeStrategy = DropOld,
 ) -> Effect {
   Effect(self.0.merge(other.0, on_conflict~))
 }
@@ -138,7 +138,7 @@ pub fn Effect::equal(self : Effect, other : Effect) -> Bool {
 
 ///|
 /// A total order: by sort, then by the knowledge value order.
-pub fn Effect::compare(self : Effect, other : Effect) -> Int {
+pub fn Effect::compare(self : Effect, other : Effect) -> Int32 {
   let order = self.sort().rank().compare(other.sort().rank())
   if order != 0 {
     return order

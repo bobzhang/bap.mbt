@@ -13,7 +13,7 @@
 priv struct Channel {
   /// the input contents and the position of the next byte
   input : Bytes?
-  pos : Int
+  pos : Int32
   /// the output, the most recent chunk first
   output : @list.List[String]
   /// the host file of the channel, if any
@@ -25,14 +25,14 @@ priv struct Channel {
 
 ///|
 priv struct Io {
-  channels : @sorted_map.SortedMap[Int, Channel]
+  channels : @sorted_map.SortedMap[Int32, Channel]
   /// emulated path -> host path
   redirections : @sorted_map.SortedMap[String, String]
 }
 
 ///|
 fn std_channel(input : Bytes?) -> Channel {
-  { input, pos: 0, output: @list.empty(), file: None, base: b"", }
+  { input, pos: 0, output: @list.List([]), file: None, base: b"", }
 }
 
 ///|
@@ -52,14 +52,14 @@ let io_state : @primus.State[Io] = @primus.State::declare_(
 )
 
 ///|
-fn update_channel(m : @primus.Machine, fd : Int, c : Channel) -> Unit {
+fn update_channel(m : @primus.Machine, fd : Int32, c : Channel) -> Unit {
   m.update_local(io_state, io => { ..io, channels: io.channels.add(fd, c), })
 }
 
 ///|
 /// The contents written to the channel with the descriptor `fd` (e.g.,
 /// `1` for the standard output), including the data that was not flushed.
-pub fn channel_output(m : @primus.Machine, fd : Int) -> String {
+pub fn channel_output(m : @primus.Machine, fd : Int32) -> String {
   match m.get_local(io_state).channels.get(fd) {
     None => ""
     Some(c) => c.output.rev().to_array().join("")
@@ -68,7 +68,11 @@ pub fn channel_output(m : @primus.Machine, fd : Int) -> String {
 
 ///|
 /// Sets the input of the channel `fd` (e.g., `0` for the standard input).
-pub fn set_channel_input(m : @primus.Machine, fd : Int, input : Bytes) -> Unit {
+pub fn set_channel_input(
+  m : @primus.Machine,
+  fd : Int32,
+  input : Bytes,
+) -> Unit {
   let c = match m.get_local(io_state).channels.get(fd) {
     Some(c) => { ..c, input: Some(input), pos: 0, }
     None => { ..std_channel(Some(input)), input: Some(input), }
@@ -81,7 +85,7 @@ pub fn set_channel_input(m : @primus.Machine, fd : Int, input : Bytes) -> Unit {
 pub let standard_channels : Array[String] = ["<stdin>", "<stdout>", "<stderr>"]
 
 ///|
-fn fd_of_channel_name(name : String) -> Int? {
+fn fd_of_channel_name(name : String) -> Int32? {
   match name {
     "<stdin>" => Some(0)
     "<stdout>" => Some(1)
@@ -138,7 +142,7 @@ fn bytes_of_chunks(base : Bytes, chunks : Array[String]) -> Bytes {
 ///|
 /// Writes the output of the channel to its host file. Returns `false` on
 /// an IO error.
-fn flush_channel(m : @primus.Machine, fd : Int) -> Bool {
+fn flush_channel(m : @primus.Machine, fd : Int32) -> Bool {
   match m.get_local(io_state).channels.get(fd) {
     None => false
     Some({ file: None, .. }) => true
@@ -173,12 +177,12 @@ fn io_ok(m : @primus.Machine) -> @primus.Value raise {
 }
 
 ///|
-fn fd_of_value(v : @primus.Value) -> Int? {
+fn fd_of_value(v : @primus.Value) -> Int32? {
   word_to_int(v.to_word())
 }
 
 ///|
-fn next_fd(io : Io) -> Int {
+fn next_fd(io : Io) -> Int32 {
   match io.channels.rev_keys().head() {
     None => 0
     Some(fd) => fd + 1
@@ -204,7 +208,7 @@ fn channel_open(
           update_channel(m, fd, {
             input: Some(contents),
             pos: 0,
-            output: @list.empty(),
+            output: @list.List([]),
             file: Some(host),
             base: contents,
           })
@@ -281,7 +285,7 @@ fn channel_output_prim(
         }
         buf.write_char(byte.unsafe_to_char())
       }
-      update_channel(m, n, { ..c, output: c.output.add(buf.to_string()), })
+      update_channel(m, n, { ..c, output: c.output.prepend(buf.to_string()), })
       io_ok(m)
     }
     None => io_error(m)
@@ -289,7 +293,7 @@ fn channel_output_prim(
 }
 
 ///|
-fn io_primitives(bits : Int) -> Array[(String, Signature, String, Closure)] {
+fn io_primitives(bits : Int32) -> Array[(String, Signature, String, Closure)] {
   let int : Typ = Type(bits)
   let byte : Typ = Type(8)
   let sync = (
@@ -335,7 +339,7 @@ fn io_primitives(bits : Int) -> Array[(String, Signature, String, Closure)] {
 /// stops.
 pub fn init_io(m : @primus.Machine) -> Unit raise {
   let width = addr_width(m)
-  let set = (name : String, fd : Int) => {
+  let set = (name : String, fd : Int32) => {
     let v = @types.Var::create(name, Imm(width))
     @primus.Env::set(m, v, @primus.Value::of_int(m, width~, fd))
   }

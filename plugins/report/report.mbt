@@ -10,8 +10,8 @@ let doc : String =
 /// The state of a reported task (`slot`).
 pub(all) struct ProgressSlot {
   note : String?
-  stage : Int?
-  total : Int?
+  stage : Int32?
+  total : Int32?
   created : Double
   updated : Double
   active : Bool
@@ -35,7 +35,7 @@ pub struct ProgressReport {
 
 ///|
 /// The interval, in seconds, between periodic re-renderings.
-pub let interval : Int = 1
+pub let interval : Int32 = 1
 
 ///|
 let ping_frames = "|/-\\|/-\\"
@@ -55,20 +55,20 @@ fn default_write(text : String) -> Unit {
 /// Creates a renderer; `clock` returns the current time in seconds and
 /// `write` receives the rendered (ANSI) text.
 pub fn ProgressReport::new(
-  clock? : () -> Double = wall_clock,
-  write? : (String) -> Unit = default_write,
+  clock~ : () -> Double = wall_clock,
+  write~ : (String) -> Unit = default_write,
 ) -> ProgressReport {
   { tasks: Map([]), clock, write, rendering: false, last_tick: clock(), }
 }
 
 ///|
-fn duration(x : Double, y : Double) -> Int {
+fn duration(x : Double, y : Double) -> Int32 {
   (y - x).to_int()
 }
 
 ///|
 /// Splits a duration in seconds into hours, minutes, and seconds (`to_hms`).
-pub fn to_hms(t : Double) -> (Int, Int, Int) {
+pub fn to_hms(t : Double) -> (Int32, Int32, Int32) {
   let minute = 60.0
   let hour = 60.0 * minute
   let day = 24.0 * hour
@@ -79,7 +79,7 @@ pub fn to_hms(t : Double) -> (Int, Int, Int) {
 }
 
 ///|
-fn pos(x : Int, y : Int) -> String {
+fn pos(x : Int32, y : Int32) -> String {
   "\u{1b}[\{y};\{x}H"
 }
 
@@ -96,7 +96,7 @@ let ansi_em = "\u{1b}[1m"
 let ansi_reset = "\u{1b}[0m"
 
 ///|
-fn pad(n : Int, width : Int, fill : Char) -> String {
+fn pad(n : Int32, width : Int32, fill : Char) -> String {
   let s = n.to_string()
   if s.length() >= width {
     s
@@ -106,7 +106,7 @@ fn pad(n : Int, width : Int, fill : Char) -> String {
 }
 
 ///|
-fn render_duration(sb : StringBuilder, line : Int, d : Double) -> Unit {
+fn render_duration(sb : StringBuilder, line : Int32, d : Double) -> Unit {
   let (h, m, s) = to_hms(d)
   sb.write_string(pos(1, line + 1))
   sb.write_string(ansi_kill)
@@ -117,7 +117,7 @@ fn render_duration(sb : StringBuilder, line : Int, d : Double) -> Unit {
 fn ProgressReport::render_times(
   self : ProgressReport,
   sb : StringBuilder,
-  line : Int,
+  line : Int32,
   slot : ProgressSlot,
 ) -> Unit {
   if slot.active {
@@ -135,7 +135,7 @@ fn ProgressReport::render_times(
 }
 
 ///|
-fn render_percentbar(sb : StringBuilder, s : Int, total : Int) -> Unit {
+fn render_percentbar(sb : StringBuilder, s : Int32, total : Int32) -> Unit {
   let percent = (s + 1) * 100 / total
   sb.write_string("\{pad(percent, 3, ' ')}% (\{s + 1}/\{total})")
 }
@@ -166,8 +166,8 @@ fn render_progress_bar(sb : StringBuilder, slot : ProgressSlot) -> Unit {
 fn ProgressReport::render_slot(
   self : ProgressReport,
   sb : StringBuilder,
-  line : Int,
-  level : Int,
+  line : Int32,
+  level : Int32,
   path : Array[String],
   slot : ProgressSlot,
 ) -> Unit {
@@ -262,7 +262,7 @@ pub fn ProgressReport::tick(self : ProgressReport) -> Unit {
 ///|
 /// Clears the screen and starts rendering progress events from the main
 /// event stream (`enable`). Returns the subscription identifier.
-pub fn ProgressReport::enable(self : ProgressReport) -> Int {
+pub fn ProgressReport::enable(self : ProgressReport) -> Int32 {
   (self.write)(ansi_clear + pos(1, 1))
   let id = @main_event.stream().subscribe(event => {
     self.update(event)
@@ -278,7 +278,7 @@ pub fn format_event(event : @main_event.MainEvent) -> String? {
   match event {
     MainLogProgress(p) => {
       let opt = (x : String?) => x.unwrap_or("")
-      let int = (x : Int?) => x.map(n => n.to_string()).unwrap_or("")
+      let int = (x : Int32?) => x.map(n => n.to_string()).unwrap_or("")
       Some(
         "\{p.task()}, \{opt(p.note())}, \{int(p.stage())}, \{int(p.total())}\n",
       )
@@ -290,7 +290,7 @@ pub fn format_event(event : @main_event.MainEvent) -> String? {
 ///|
 /// Prints every progress event (`print_events`). Returns the subscription
 /// identifier.
-pub fn print_events(write? : (String) -> Unit = default_write) -> Int {
+pub fn print_events(write~ : (String) -> Unit = default_write) -> Int32 {
   @main_event.stream().subscribe(event => {
     match format_event(event) {
       Some(text) => write(text)
@@ -306,10 +306,10 @@ let registered : Ref[Bool] = Ref(false)
 /// Enables the progress bars and/or the event printer once. Returns `false`
 /// if the plugin was already registered.
 pub fn register(
-  progress? : Bool = false,
-  events? : Bool = false,
-  write? : (String) -> Unit = default_write,
-  clock? : () -> Double = wall_clock,
+  progress~ : Bool = false,
+  events~ : Bool = false,
+  write~ : (String) -> Unit = default_write,
+  clock~ : () -> Double = wall_clock,
 ) -> Bool {
   if registered.val {
     return false

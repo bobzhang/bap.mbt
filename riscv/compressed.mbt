@@ -34,39 +34,39 @@ fn compressed_text(name : String, ops : Array[Operand], text : String) -> Form {
 
 ///|
 /// The 3-bit register fields of the compressed formats denote `x8`-`x15`.
-fn creg(field : Int) -> Int {
+fn creg(field : Int32) -> Int32 {
   8 + field
 }
 
 ///|
 /// The 6-bit signed immediate `imm[5] = bit 12`, `imm[4:0] = bits 6:2`.
-fn ci_imm(h : UInt) -> Int64 {
+fn ci_imm(h : UInt32) -> Int64 {
   sext((bits(h, 12, 1) << 5) | bits(h, 2, 5), 6)
 }
 
 ///|
 /// The 6-bit unsigned shift amount of `c.slli`/`c.srli`/`c.srai`.
-fn ci_shamt(h : UInt) -> Int {
+fn ci_shamt(h : UInt32) -> Int32 {
   (bits(h, 12, 1) << 5) | bits(h, 2, 5)
 }
 
 ///|
 /// The offset of `c.lw`/`c.sw`/`c.flw`/`c.fsw`: `uimm[5:3] = bits 12:10`,
 /// `uimm[2] = bit 6`, `uimm[6] = bit 5`.
-fn cl_word_offset(h : UInt) -> Int64 {
+fn cl_word_offset(h : UInt32) -> Int64 {
   ((bits(h, 10, 3) << 3) | (bits(h, 6, 1) << 2) | (bits(h, 5, 1) << 6)).to_int64()
 }
 
 ///|
 /// The offset of `c.ld`/`c.sd`/`c.fld`/`c.fsd`: `uimm[5:3] = bits 12:10`,
 /// `uimm[7:6] = bits 6:5`.
-fn cl_double_offset(h : UInt) -> Int64 {
+fn cl_double_offset(h : UInt32) -> Int64 {
   ((bits(h, 10, 3) << 3) | (bits(h, 5, 2) << 6)).to_int64()
 }
 
 ///|
 /// The jump offset of `c.j`/`c.jal`.
-fn cj_offset(h : UInt) -> Int64 {
+fn cj_offset(h : UInt32) -> Int64 {
   sext(
     (bits(h, 12, 1) << 11) |
     (bits(h, 11, 1) << 4) |
@@ -82,7 +82,7 @@ fn cj_offset(h : UInt) -> Int64 {
 
 ///|
 /// The branch offset of `c.beqz`/`c.bnez`.
-fn cb_offset(h : UInt) -> Int64 {
+fn cb_offset(h : UInt32) -> Int64 {
   sext(
     (bits(h, 12, 1) << 8) |
     (bits(h, 10, 2) << 3) |
@@ -95,7 +95,7 @@ fn cb_offset(h : UInt) -> Int64 {
 
 ///|
 /// Quadrant 0: stack-pointer based additions, loads and stores.
-fn decode_c0(h : UInt, xlen : Xlen) -> Form? {
+fn decode_c0(h : UInt32, xlen : Xlen) -> Form? {
   let rd = creg(bits(h, 2, 3))
   let rs1 = creg(bits(h, 7, 3))
   let rv64 = xlen is RV64
@@ -155,7 +155,7 @@ fn decode_c0(h : UInt, xlen : Xlen) -> Form? {
 
 ///|
 /// Quadrant 1: immediates, arithmetic, jumps and branches.
-fn decode_c1(h : UInt, xlen : Xlen) -> Form? {
+fn decode_c1(h : UInt32, xlen : Xlen) -> Form? {
   let rd = bits(h, 7, 5)
   let rv64 = xlen is RV64
   match bits(h, 13, 3) {
@@ -316,7 +316,7 @@ fn decode_c1(h : UInt, xlen : Xlen) -> Form? {
 ///|
 /// Quadrant 2: shifts, stack-pointer based loads and stores, register
 /// moves, jumps and `ebreak`.
-fn decode_c2(h : UInt, xlen : Xlen) -> Form? {
+fn decode_c2(h : UInt32, xlen : Xlen) -> Form? {
   let rd = bits(h, 7, 5)
   let rs2 = bits(h, 2, 5)
   let rv64 = xlen is RV64
@@ -414,7 +414,7 @@ fn decode_c2(h : UInt, xlen : Xlen) -> Form? {
 
 ///|
 /// Decode the 16-bit instruction `h` (whose low two bits are not `11`).
-fn decode_compressed(h : UInt, xlen : Xlen) -> Form? {
+fn decode_compressed(h : UInt32, xlen : Xlen) -> Form? {
   match bits(h, 0, 2) {
     0 => decode_c0(h, xlen)
     1 => decode_c1(h, xlen)

@@ -1,10 +1,10 @@
 ///|
-fn w64(n : Int) -> @types.Word {
+fn w64(n : Int32) -> @types.Word {
   try! @types.Word::of_int(width=64, n)
 }
 
 ///|
-fn int64(n : Int) -> @types.Exp {
+fn int64(n : Int32) -> @types.Exp {
   Int(w64(n))
 }
 
@@ -58,7 +58,7 @@ fn project(subs : Array[@types.Term[@types.Sub]]) -> @project.Project {
 ///|
 fn propagate(
   subs : Array[@types.Term[@types.Sub]],
-  deterministic? : Bool = true,
+  deterministic~ : Bool = true,
 ) -> @propagate_taint.PropagationResult raise {
   @propagate_taint.run(
     max_steps=100,

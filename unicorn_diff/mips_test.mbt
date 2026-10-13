@@ -4,7 +4,7 @@
 // delay slot (`pc + 8` when a branch is not taken).
 
 ///|
-fn mips(bits : Int, endian : @bitvec.Endian, r6? : Bool = false) -> Isa {
+fn mips(bits : Int32, endian : @bitvec.Endian, r6~ : Bool = false) -> Isa {
   let arch : @mips.Arch = if bits == 64 { Mips64 } else { Mips32 }
   let target = match (bits, endian) {
     (64, LittleEndian) => @core_theory.Target::mips64el()

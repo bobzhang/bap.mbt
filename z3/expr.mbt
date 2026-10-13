@@ -13,7 +13,7 @@ pub struct Expr {
 /// The sort of a term.
 pub(all) enum Sort {
   Bool
-  BitVec(Int)
+  BitVec(Int32)
   Other
 } derive(Eq, Debug)
 
@@ -56,7 +56,7 @@ pub(all) enum BinOp {
 } derive(Eq, Debug)
 
 ///|
-fn BinOp::code(self : BinOp) -> Int {
+fn BinOp::code(self : BinOp) -> Int32 {
   match self {
     Add => 0
     Sub => 1
@@ -103,7 +103,7 @@ pub(all) enum UnOp {
 } derive(Eq, Debug)
 
 ///|
-fn UnOp::code(self : UnOp) -> Int {
+fn UnOp::code(self : UnOp) -> Int32 {
   match self {
     Not => 0
     Neg => 1
@@ -139,7 +139,7 @@ pub fn Context::bool_const(self : Context, name : String) -> Expr raise Z3Error 
 pub fn Context::bv_const(
   self : Context,
   name : String,
-  width : Int,
+  width : Int32,
 ) -> Expr raise Z3Error {
   if width <= 0 {
     raise Failure("invalid bitvector width \{width}")
@@ -153,7 +153,7 @@ pub fn Context::bv_const(
 pub fn Context::bv_numeral(
   self : Context,
   decimal : String,
-  width : Int,
+  width : Int32,
 ) -> Expr raise Z3Error {
   if width <= 0 {
     raise Failure("invalid bitvector width \{width}")
@@ -166,7 +166,7 @@ pub fn Context::bv_numeral(
 pub fn Context::bv_int(
   self : Context,
   value : Int64,
-  width : Int,
+  width : Int32,
 ) -> Expr raise Z3Error {
   let dec = if value >= 0L {
     value.to_string()
@@ -371,7 +371,7 @@ pub fn Expr::simplify(self : Expr) -> Expr raise Z3Error {
 
 ///|
 /// The bits `hi..lo` (inclusive) of a bitvector.
-pub fn Expr::extract(self : Expr, hi : Int, lo : Int) -> Expr raise Z3Error {
+pub fn Expr::extract(self : Expr, hi : Int32, lo : Int32) -> Expr raise Z3Error {
   if hi < lo || lo < 0 {
     raise Failure("invalid extraction [\{hi}:\{lo}]")
   }
@@ -380,25 +380,25 @@ pub fn Expr::extract(self : Expr, hi : Int, lo : Int) -> Expr raise Z3Error {
 
 ///|
 /// Extends a bitvector with `n` zero bits.
-pub fn Expr::zero_ext(self : Expr, n : Int) -> Expr raise Z3Error {
+pub fn Expr::zero_ext(self : Expr, n : Int32) -> Expr raise Z3Error {
   self.ctx.wrap(raw_indexed(self.ctx.raw, 0, n, self.raw))
 }
 
 ///|
 /// Extends a bitvector with `n` copies of its sign bit.
-pub fn Expr::sign_ext(self : Expr, n : Int) -> Expr raise Z3Error {
+pub fn Expr::sign_ext(self : Expr, n : Int32) -> Expr raise Z3Error {
   self.ctx.wrap(raw_indexed(self.ctx.raw, 1, n, self.raw))
 }
 
 ///|
 /// Rotates a bitvector to the left by `n` bits.
-pub fn Expr::rotate_left(self : Expr, n : Int) -> Expr raise Z3Error {
+pub fn Expr::rotate_left(self : Expr, n : Int32) -> Expr raise Z3Error {
   self.ctx.wrap(raw_indexed(self.ctx.raw, 2, n, self.raw))
 }
 
 ///|
 /// Rotates a bitvector to the right by `n` bits.
-pub fn Expr::rotate_right(self : Expr, n : Int) -> Expr raise Z3Error {
+pub fn Expr::rotate_right(self : Expr, n : Int32) -> Expr raise Z3Error {
   self.ctx.wrap(raw_indexed(self.ctx.raw, 3, n, self.raw))
 }
 
@@ -482,7 +482,7 @@ pub fn Expr::is_bool(self : Expr) -> Bool {
 
 ///|
 /// The width of a bitvector term (0 for other sorts).
-pub fn Expr::bitwidth(self : Expr) -> Int {
+pub fn Expr::bitwidth(self : Expr) -> Int32 {
   match self.sort() {
     BitVec(n) => n
     _ => 0
@@ -539,7 +539,7 @@ pub impl Show for Expr with fn output(self, logger) {
 ///|
 /// The Z3 identifier of the term (unique among the live terms of the
 /// context).
-pub fn Expr::id(self : Expr) -> Int {
+pub fn Expr::id(self : Expr) -> Int32 {
   raw_ast_id(self.ctx.raw, self.raw)
 }
 

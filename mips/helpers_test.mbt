@@ -15,7 +15,7 @@ fn i(value : Int64) -> @mc.Op {
 fn insn(
   name : String,
   ops : Array[@mc.Op],
-  addr? : UInt64 = 0x1000,
+  addr~ : UInt64 = 0x1000,
 ) -> @mc.Insn {
   @mc.Insn::create(name, ops, addr~, size=4)
 }
@@ -125,7 +125,7 @@ fn show(
 }
 
 ///|
-fn word_value(width : Int, value : Int64) -> @types.BilValue raise {
+fn word_value(width : Int32, value : Int64) -> @types.BilValue raise {
   BilWord(@types.Word::of_int64(value, width~))
 }
 
@@ -161,7 +161,7 @@ fn eval32(
   ops : Array[@mc.Op],
   regs : Array[(String, Int64)],
   out : String,
-  wide? : Bool = false,
+  wide~ : Bool = false,
 ) -> String raise {
   let width = if wide { 64 } else { 32 }
   let bil = if wide {

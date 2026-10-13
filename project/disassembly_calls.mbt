@@ -256,7 +256,7 @@ pub fn ProjectDisassemblyCalls::siblings(
       } else if p2.is_empty() {
         p1.contains(x)
       } else {
-        !p1.disjoint(p2)
+        !p1.is_disjoint(p2)
       }
   })
 }

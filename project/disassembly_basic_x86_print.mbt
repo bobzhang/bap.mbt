@@ -58,11 +58,11 @@ fn x86_llvm_register_asm(name : String) -> String {
 ///|
 fn x86_llvm_render_operand(
   kind : Char,
-  index : Int,
+  index : Int32,
   operands : Array[ProjectInstructionOperand],
 ) -> String {
-  let register = (k : Int) => x86_llvm_operand_register(operands.get(k))
-  let immediate = (k : Int) => x86_llvm_operand_immediate(operands.get(k))
+  let register = (k : Int32) => x86_llvm_operand_register(operands.get(k))
+  let immediate = (k : Int32) => x86_llvm_operand_immediate(operands.get(k))
   let segment_prefix = (name : String) => {
     if name == "" {
       ""
@@ -172,7 +172,7 @@ fn x86_llvm_vector_compare_family(name : String) -> String {
 /// is needed by the operand (`X86_MC::needsAddressSizeOverride`).
 fn x86_llvm_memory_needs_adsize(
   operands : Array[ProjectInstructionOperand],
-  index : Int,
+  index : Int32,
   mode64 : Bool,
 ) -> Bool {
   let base = x86_llvm_operand_register(operands.get(index))
@@ -208,7 +208,7 @@ fn x86_llvm_print(
   let mut has_dst = false
   let mut position = 0
   let items = spec.length() / 2
-  let widths : Array[Int] = []
+  let widths : Array[Int32] = []
   for k in 0..<items {
     let tag = spec[2 * k].to_int().unsafe_to_char()
     let width = match tag {

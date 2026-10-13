@@ -116,7 +116,7 @@ fn ocaml_int_of_string(s : String) -> Int64? {
 }
 
 ///|
-fn array_size(e : Expression) -> Int? {
+fn array_size(e : Expression) -> Int32? {
   match e {
     Literal(ConstInt(s)) => ocaml_int_of_string(s).map(v => v.to_int())
     _ => None
@@ -124,7 +124,7 @@ fn array_size(e : Expression) -> Int? {
 }
 
 ///|
-fn array(size : Int?, t : @c.CType) -> @c.CType {
+fn array(size : Int32?, t : @c.CType) -> @c.CType {
   Array({ qualifier: cvr, t: { element: t, size, }, attrs: [], })
 }
 
@@ -347,7 +347,7 @@ impl @c.TypeMapper for Resolver with fn map_union(self, t) {
 
 ///|
 /// The name of an integer type definition, e.g., `uint32_t`.
-fn int_typedef_name(bits : Int, t : @c.Basic) -> String {
+fn int_typedef_name(bits : Int32, t : @c.Basic) -> String {
   let sign = if t.is_signed() { "" } else { "u" }
   "\{sign}int\{bits}_t"
 }

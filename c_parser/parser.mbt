@@ -13,7 +13,7 @@
 ///|
 priv struct Parser {
   toks : Array[Token]
-  mut pos : Int
+  mut pos : Int32
   /// The names declared with `typedef` (FrontC `Clexer.add_type`).
   types : Map[String, Unit]
   eof : Token
@@ -59,7 +59,7 @@ fn Parser::peek(self : Parser) -> Token {
 }
 
 ///|
-fn Parser::peek_at(self : Parser, k : Int) -> Token {
+fn Parser::peek_at(self : Parser, k : Int32) -> Token {
   match self.toks.get(self.pos + k) {
     Some(t) => t
     None => self.eof
@@ -131,7 +131,7 @@ fn is_keyword(name : String) -> Bool {
 /// are the names that are already known to be type names.
 pub fn parse_definitions(
   tokens : Array[Token],
-  types? : Array[String] = [],
+  types~ : Array[String] = [],
 ) -> Array[Definition] raise ParseError {
   let eof = match tokens.last() {
     Some(t) => { ..t, kind: Other, text: "", }
@@ -507,7 +507,7 @@ fn Parser::specifiers(self : Parser) -> Specifiers raise ParseError {
 }
 
 ///|
-fn sign_of(signed : Int, unsigned : Int) -> Sign {
+fn sign_of(signed : Int32, unsigned : Int32) -> Sign {
   if unsigned > 0 {
     Unsigned
   } else if signed > 0 {

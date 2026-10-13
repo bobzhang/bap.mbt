@@ -44,7 +44,7 @@ pub extend ProjectPassEventKind with Eq::{not_equal, equal}
 struct ProjectPassEvent {
   pass_name_value : String
   kind_value : ProjectPassEventKind
-  sequence_value : Int
+  sequence_value : Int32
 }
 
 ///|
@@ -57,7 +57,7 @@ let pass_registry_order : Array[String] = []
 let pass_event_log : Array[ProjectPassEvent] = []
 
 ///|
-let pass_event_sequence : Ref[Int] = Ref(0)
+let pass_event_sequence : Ref[Int32] = Ref(0)
 
 ///|
 let pass_registration_pair : (
@@ -156,7 +156,7 @@ pub fn ProjectPassEvent::kind(self : ProjectPassEvent) -> ProjectPassEventKind {
 }
 
 ///|
-pub fn ProjectPassEvent::sequence(self : ProjectPassEvent) -> Int {
+pub fn ProjectPassEvent::sequence(self : ProjectPassEvent) -> Int32 {
   self.sequence_value
 }
 
@@ -311,7 +311,7 @@ fn pass_run_key(name : String) -> String {
 }
 
 ///|
-pub fn Project::pass_run_count(self : Project, name : String) -> Int {
+pub fn Project::pass_run_count(self : Project, name : String) -> Int32 {
   match self.get(pass_run_key(name)) {
     Some(value) =>
       try @string.parse_int(value) catch {

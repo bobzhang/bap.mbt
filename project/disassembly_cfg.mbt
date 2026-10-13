@@ -33,13 +33,15 @@ fn project_disassembly_cfg_same_edge(
 /// Blocks are identified by their address and size (`ProjectDisassemblyBlock::same`).
 fn project_disassembly_cfg_node_key(
   node : ProjectDisassemblyBlock,
-) -> (UInt64, Int) {
+) -> (UInt64, Int32) {
   (node.addr(), node.memory_value.length())
 }
 
 ///|
 /// The rank of an edge kind in the order of its textual name.
-fn project_disassembly_cfg_kind_rank(kind : ProjectDisassemblyEdgeKind) -> Int {
+fn project_disassembly_cfg_kind_rank(
+  kind : ProjectDisassemblyEdgeKind,
+) -> Int32 {
   match kind {
     CondEdge => 0
     FallEdge => 1
@@ -52,7 +54,7 @@ fn project_disassembly_cfg_kind_rank(kind : ProjectDisassemblyEdgeKind) -> Int {
 fn project_disassembly_cfg_sort_nodes(
   nodes : Array[ProjectDisassemblyBlock],
 ) -> Array[ProjectDisassemblyBlock] {
-  let seen : Map[(UInt64, Int), Unit] = Map([])
+  let seen : Map[(UInt64, Int32), Unit] = Map([])
   let result : Array[ProjectDisassemblyBlock] = []
   for node in nodes {
     let key = project_disassembly_cfg_node_key(node)
@@ -69,7 +71,7 @@ fn project_disassembly_cfg_sort_nodes(
 fn project_disassembly_cfg_compare_edges(
   left : ProjectDisassemblyCfgEdge,
   right : ProjectDisassemblyCfgEdge,
-) -> Int {
+) -> Int32 {
   let src_order = left.src().compare(right.src())
   if src_order != 0 {
     src_order
@@ -90,7 +92,7 @@ fn project_disassembly_cfg_compare_edges(
 fn project_disassembly_cfg_sort_edges(
   edges : Array[ProjectDisassemblyCfgEdge],
 ) -> Array[ProjectDisassemblyCfgEdge] {
-  let seen : Map[(UInt64, Int, UInt64, Int, Int), Unit] = Map([])
+  let seen : Map[(UInt64, Int32, UInt64, Int32, Int32), Unit] = Map([])
   let result : Array[ProjectDisassemblyCfgEdge] = []
   for edge in edges {
     let (src_addr, src_size) = project_disassembly_cfg_node_key(edge.src())
@@ -117,7 +119,7 @@ fn project_disassembly_cfg_sort_edges(
 fn[T] project_disassembly_cfg_sorted_insert(
   items : Array[T],
   item : T,
-  compare : (T, T) -> Int,
+  compare : (T, T) -> Int32,
 ) -> Array[T]? {
   let mut lo = 0
   let mut hi = items.length()
@@ -151,8 +153,8 @@ fn[T] project_disassembly_cfg_sorted_insert(
 priv struct ProjectBlockLocator {
   blocks : Array[ProjectDisassemblyBlock]
   /// the positions of the blocks, ordered by their start addresses
-  order : Array[Int]
-  max_length : Int
+  order : Array[Int32]
+  max_length : Int32
 }
 
 ///|
@@ -165,7 +167,7 @@ fn ProjectBlockLocator::new(
   })
   let mut max_length = 0
   for block in blocks {
-    max_length = Int::max(max_length, block.memory_value.length())
+    max_length = Int32::max(max_length, block.memory_value.length())
   }
   { blocks, order, max_length, }
 }
@@ -187,7 +189,7 @@ fn ProjectBlockLocator::find(
       hi = mid
     }
   }
-  let mut best : Int? = None
+  let mut best : Int32? = None
   for i = lo - 1; i >= 0; i = i - 1 {
     let index = order[i]
     let block = self.blocks[index]
@@ -219,7 +221,7 @@ fn project_disassembly_cfg_edge_to_state_edge(
 pub fn ProjectDisassemblyCfgEdge::create(
   src~ : ProjectDisassemblyBlock,
   dst~ : ProjectDisassemblyBlock,
-  kind? : ProjectDisassemblyEdgeKind = JumpEdge,
+  kind~ : ProjectDisassemblyEdgeKind = JumpEdge,
 ) -> ProjectDisassemblyCfgEdge {
   { src_value: src, dst_value: dst, kind_value: kind, }
 }
@@ -326,12 +328,12 @@ pub fn ProjectDisassemblyCfg::edges(
 }
 
 ///|
-pub fn ProjectDisassemblyCfg::node_count(self : ProjectDisassemblyCfg) -> Int {
+pub fn ProjectDisassemblyCfg::node_count(self : ProjectDisassemblyCfg) -> Int32 {
   self.nodes_value.length()
 }
 
 ///|
-pub fn ProjectDisassemblyCfg::edge_count(self : ProjectDisassemblyCfg) -> Int {
+pub fn ProjectDisassemblyCfg::edge_count(self : ProjectDisassemblyCfg) -> Int32 {
   self.edges_value.length()
 }
 
@@ -529,7 +531,7 @@ pub fn ProjectDisassemblyCfg::inputs(
 pub fn ProjectDisassemblyCfg::out_degree(
   self : ProjectDisassemblyCfg,
   node : ProjectDisassemblyBlock,
-) -> Int {
+) -> Int32 {
   self.out_edges(node).length()
 }
 
@@ -537,7 +539,7 @@ pub fn ProjectDisassemblyCfg::out_degree(
 pub fn ProjectDisassemblyCfg::in_degree(
   self : ProjectDisassemblyCfg,
   node : ProjectDisassemblyBlock,
-) -> Int {
+) -> Int32 {
   self.in_edges(node).length()
 }
 
@@ -545,7 +547,7 @@ pub fn ProjectDisassemblyCfg::in_degree(
 pub fn ProjectDisassemblyCfg::degree(
   self : ProjectDisassemblyCfg,
   node : ProjectDisassemblyBlock,
-) -> Int {
+) -> Int32 {
   self.in_degree(node) + self.out_degree(node)
 }
 

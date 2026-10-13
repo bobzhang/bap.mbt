@@ -30,7 +30,7 @@ struct DwarfAbbrevField {
 
 ///|
 struct DwarfAbbrevEntry {
-  code_value : Int
+  code_value : Int32
   tag_value : DwarfTag
   has_children_value : Bool
   fields_value : Array[DwarfAbbrevField]
@@ -189,7 +189,7 @@ pub fn DwarfAbbrevField::is_value_field(self : DwarfAbbrevField) -> Bool {
 
 ///|
 pub fn DwarfAbbrevEntry::create(
-  code~ : Int,
+  code~ : Int32,
   tag~ : DwarfTag,
   has_children~ : Bool,
   fields~ : Array[DwarfAbbrevField],
@@ -203,7 +203,7 @@ pub fn DwarfAbbrevEntry::create(
 }
 
 ///|
-pub fn DwarfAbbrevEntry::code(self : DwarfAbbrevEntry) -> Int {
+pub fn DwarfAbbrevEntry::code(self : DwarfAbbrevEntry) -> Int32 {
   self.code_value
 }
 
@@ -246,7 +246,7 @@ pub fn DwarfAbbrevEntry::value_fields(
 ///|
 fn DwarfAbbrevTable::contains_code(
   entries : Array[DwarfAbbrevEntry],
-  code : Int,
+  code : Int32,
 ) -> Bool {
   entries.any(entry => entry.code() == code)
 }
@@ -290,7 +290,7 @@ fn read_abbrev_fields(
 
 ///|
 fn dwarf_abbrev_form_of_int(
-  form_code : Int,
+  form_code : Int32,
   input : DwarfInput,
 ) -> Result[(DwarfForm, DwarfInput), String] {
   match form_code {
@@ -356,7 +356,7 @@ pub fn DwarfAbbrevTable::read(
 ///|
 pub fn DwarfAbbrevTable::of_bytes(
   data : Bytes,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
 ) -> Result[DwarfAbbrevTable, String] {
   match
     DwarfAbbrevTable::read(DwarfInput::of_bytes(data).with_position(offset)) {
@@ -368,7 +368,7 @@ pub fn DwarfAbbrevTable::of_bytes(
 ///|
 pub fn DwarfData::abbrev_table(
   self : DwarfData,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
 ) -> Result[DwarfAbbrevTable, String] {
   match self.section(DwarfAbbrev) {
     Ok(section) =>
@@ -394,7 +394,7 @@ pub fn DwarfAbbrevTable::entries(
 ///|
 pub fn DwarfAbbrevTable::lookup(
   self : DwarfAbbrevTable,
-  code : Int,
+  code : Int32,
 ) -> DwarfAbbrevEntry? {
   match self.entries_value.search_by(entry => entry.code() == code) {
     Some(index) => Some(self.entries_value[index])

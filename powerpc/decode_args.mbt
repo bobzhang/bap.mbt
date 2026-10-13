@@ -17,20 +17,20 @@
 /// A decoded operand, before it is turned into `@mc.Op`s and text.
 priv enum Arg {
   /// `gprc` register.
-  Gpr(Int)
+  Gpr(Int32)
   /// `gprc_nor0` register: `0` is `ZERO`.
-  Gpr0(Int)
+  Gpr0(Int32)
   /// `g8rc` register.
-  G8(Int)
+  G8(Int32)
   /// Condition register field.
-  Crf(Int)
+  Crf(Int32)
   /// Condition register bit.
-  Crb(Int)
+  Crb(Int32)
   /// Integer immediate.
   Imm(Int64)
   /// Memory operand `disp(base)`: an immediate and a `gprc_nor0` base. The
   /// displacement is printed sign-extended from 16 bits.
-  Mem(Int64, Int)
+  Mem(Int64, Int32)
   /// Branch target (in words): relative unless absolute.
   Target(Int64, absolute~ : Bool)
   /// An operand present in the instruction but not printed (tied operands
@@ -42,12 +42,12 @@ priv enum Arg {
 let crbit_names : FixedArray[String] = ["LT", "GT", "EQ", "UN"]
 
 ///|
-fn gpr_op(n : Int) -> @mc.Op {
+fn gpr_op(n : Int32) -> @mc.Op {
   @mc.Op::reg("R\{n}")
 }
 
 ///|
-fn gpr0_op(n : Int) -> @mc.Op {
+fn gpr0_op(n : Int32) -> @mc.Op {
   if n == 0 {
     @mc.Op::reg("ZERO")
   } else {
@@ -119,7 +119,7 @@ fn spec(
   name : String,
   mnemonic : String,
   args : Array[Arg],
-  kinds? : Array[@mc.Kind] = [],
+  kinds~ : Array[@mc.Kind] = [],
 ) -> Spec {
   { name, mnemonic, args, kinds, printed: None, }
 }

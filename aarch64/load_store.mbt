@@ -2,7 +2,7 @@
 
 ///|
 /// The name of a prefetch operation (`prfm`), `#n` for unnamed ones.
-fn prfop_text(op : Int) -> String {
+fn prfop_text(op : Int32) -> String {
   let kind = op >> 3
   let target = (op >> 1) & 3
   if kind > 2 || target == 3 {
@@ -13,7 +13,7 @@ fn prfop_text(op : Int) -> String {
 
 ///|
 /// The name of a range prefetch operation (`rprfm`), `#n` for unnamed ones.
-fn rprfop_text(op : Int) -> String {
+fn rprfop_text(op : Int32) -> String {
   match op {
     0 => "pldkeep"
     1 => "pstkeep"
@@ -39,7 +39,11 @@ fn mem_text(base : String, offset : Int64) -> String {
 /// `opc` (without the addressing mode suffix), the assembly mnemonic,
 /// whether the transfer register is 64-bit. `prefix` selects the
 /// `LDR`/`LDUR`/`LDTR` spelling.
-fn a64_ldst_name(size : Int, opc : Int, mode : Int) -> (String, String, Bool)? {
+fn a64_ldst_name(
+  size : Int32,
+  opc : Int32,
+  mode : Int32,
+) -> (String, String, Bool)? {
   // mode: 0 = LDR/STR, 1 = LDUR/STUR, 2 = LDTR/STTR
   let (load, suffix, m, sf) = match (size, opc) {
     (0, 0) => (false, "BB", "b", false)
@@ -75,7 +79,7 @@ fn a64_ldst_name(size : Int, opc : Int, mode : Int) -> (String, String, Bool)? {
 
 ///|
 /// Loads and stores.
-fn a64_load_store(w : UInt) -> A64Insn? {
+fn a64_load_store(w : UInt32) -> A64Insn? {
   if bit(w, 26) {
     return a64_simd(w)
   }
@@ -131,7 +135,7 @@ fn a64_load_store(w : UInt) -> A64Insn? {
 
 ///|
 /// Load/store register (unsigned immediate).
-fn a64_ldst_unsigned(w : UInt) -> A64Insn? {
+fn a64_ldst_unsigned(w : UInt32) -> A64Insn? {
   let rt = fld(w, 0, 5)
   let rn = fld(w, 5, 5)
   let base = reg_asm(true, rn, sp=true)
@@ -157,7 +161,7 @@ fn a64_ldst_unsigned(w : UInt) -> A64Insn? {
 ///|
 /// Load/store register with a signed 9-bit offset: unscaled, unprivileged,
 /// pre- and post-indexed.
-fn a64_ldst_imm9(w : UInt) -> A64Insn? {
+fn a64_ldst_imm9(w : UInt32) -> A64Insn? {
   let rt = fld(w, 0, 5)
   let rn = fld(w, 5, 5)
   let base = reg_asm(true, rn, sp=true)
@@ -206,7 +210,7 @@ fn a64_ldst_imm9(w : UInt) -> A64Insn? {
 
 ///|
 /// Load/store register (register offset), including the range prefetch.
-fn a64_ldst_register(w : UInt) -> A64Insn? {
+fn a64_ldst_register(w : UInt32) -> A64Insn? {
   let rt = fld(w, 0, 5)
   let rn = fld(w, 5, 5)
   let base = reg_asm(true, rn, sp=true)
@@ -264,7 +268,7 @@ fn a64_ldst_register(w : UInt) -> A64Insn? {
 
 ///|
 /// The pointer authenticating loads `LDRAA`/`LDRAB`.
-fn a64_ldra(w : UInt) -> A64Insn? {
+fn a64_ldra(w : UInt32) -> A64Insn? {
   guard fld(w, 30, 2) == 3 else { return None }
   let rt = fld(w, 0, 5)
   let rn = fld(w, 5, 5)
@@ -290,7 +294,7 @@ fn a64_ldra(w : UInt) -> A64Insn? {
 
 ///|
 /// Load/store pair (all addressing modes) and the no-allocate pairs.
-fn a64_ldst_pair(w : UInt) -> A64Insn? {
+fn a64_ldst_pair(w : UInt32) -> A64Insn? {
   let rt = fld(w, 0, 5)
   let rn = fld(w, 5, 5)
   let base = reg_asm(true, rn, sp=true)
@@ -339,7 +343,7 @@ fn a64_ldst_pair(w : UInt) -> A64Insn? {
 ///|
 /// Load/store exclusive, load-acquire/store-release and compare and swap
 /// (single and pair).
-fn a64_exclusive(w : UInt) -> A64Insn? {
+fn a64_exclusive(w : UInt32) -> A64Insn? {
   let size = fld(w, 30, 2)
   let o2 = bit(w, 23)
   let l = bit(w, 22)
@@ -434,7 +438,7 @@ fn a64_exclusive(w : UInt) -> A64Insn? {
 
 ///|
 /// Atomic memory operations (LSE) and `LDAPR`.
-fn a64_atomic(w : UInt) -> A64Insn? {
+fn a64_atomic(w : UInt32) -> A64Insn? {
   let size = fld(w, 30, 2)
   let a = bit(w, 23)
   let r = bit(w, 22)

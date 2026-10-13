@@ -12,7 +12,7 @@ pub(all) enum Typ {
   Any
   Symbol
   Name(String)
-  Type(Int)
+  Type(Int32)
 } derive(Eq, Compare, Debug)
 
 ///|
@@ -26,7 +26,7 @@ pub impl Show for Typ with fn output(self, logger) {
 
 ///|
 /// The width of symbols (upstream `Type.symbol_size`).
-pub let symbol_size : Int = 63
+pub let symbol_size : Int32 = 63
 
 ///|
 /// Parses a type annotation, e.g., `32` (upstream `Type.read`).
@@ -39,7 +39,7 @@ pub fn Typ::read(s : String) -> Typ? {
 
 ///|
 /// `Typ::mem(t, n)` is true if an `n`-bit word is a member of `t`.
-pub fn Typ::mem(self : Typ, n : Int) -> Bool {
+pub fn Typ::mem(self : Typ, n : Int32) -> Bool {
   match self {
     Any | Name(_) => true
     Symbol => n == symbol_size
@@ -90,7 +90,7 @@ fn show_typ(t : Typ) -> String {
 pub(all) struct LVar {
   name : @knowledge.Name
   typ : Typ
-  id : Int
+  id : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -107,28 +107,28 @@ pub impl Show for LVar with fn output(self, logger) {
 pub(all) struct LWord {
   value : @bigint.BigInt
   typ : Typ
-  id : Int
+  id : Int32
 } derive(Eq, Debug)
 
 ///|
 /// A symbol literal (upstream `sym = KB.Name.t indexed`).
 pub(all) struct LSym {
   name : @knowledge.Name
-  id : Int
+  id : Int32
 } derive(Eq, Debug)
 
 ///|
 /// An element of a `msg` format string.
 pub(all) enum Fmt {
   Lit(String)
-  Pos(Int)
+  Pos(Int32)
 } derive(Eq, Debug)
 
 ///|
 /// A Lisp expression (upstream `ast = exp indexed`).
 pub(all) struct Ast {
   data : Exp
-  id : Int
+  id : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -168,7 +168,7 @@ fn show_name_in(name : @knowledge.Name, pkg : String) -> String {
 ///|
 /// Pretty-prints an expression (upstream `Program.Ast.pp`), names from
 /// the package `pkg` are printed unqualified.
-pub fn Ast::to_string_in(self : Ast, pkg? : String = "user") -> String {
+pub fn Ast::to_string_in(self : Ast, pkg~ : String = "user") -> String {
   let buf = StringBuilder()
   pp_ast(buf, pkg, self)
   buf.to_string()
@@ -306,7 +306,7 @@ fn pp_ast(buf : StringBuilder, pkg : String, x : Ast) -> Unit {
 ///|
 /// Parses a small non-negative or negative integer in OCaml `int_of_string`
 /// syntax (decimal, `0x`, `0o`, `0b`).
-fn parse_small_int(s : String) -> Int? {
+fn parse_small_int(s : String) -> Int32? {
   match parse_bigint(s) {
     Some(v) => if v.bit_length() < 31 { Some(v.to_int()) } else { None }
     None => None
@@ -314,7 +314,7 @@ fn parse_small_int(s : String) -> Int? {
 }
 
 ///|
-fn digit_value(c : Char) -> Int {
+fn digit_value(c : Char) -> Int32 {
   if c >= '0' && c <= '9' {
     c.to_int() - '0'.to_int()
   } else if c >= 'a' && c <= 'z' {
@@ -400,7 +400,7 @@ pub(all) enum VarReadError {
 /// (upstream `Bap_primus_lisp_var.read`).
 pub fn read_var(
   pkg? : String,
-  id : Int,
+  id : Int32,
   x : String,
 ) -> Result[LVar, VarReadError] {
   if x == "" {
@@ -447,7 +447,7 @@ pub(all) enum WordReadError {
 ///|
 /// Reads a word literal: `42`, `-1`, `0x2a:8`, `?a` (upstream
 /// `Bap_primus_lisp_word.read`).
-pub fn read_word(id : Int, x : String) -> Result[LWord, WordReadError] {
+pub fn read_word(id : Int32, x : String) -> Result[LWord, WordReadError] {
   if x == "" {
     return Err(WordEmpty)
   }
@@ -491,7 +491,7 @@ pub fn read_word(id : Int, x : String) -> Result[LWord, WordReadError] {
 ///|
 /// Converts an arbitrary-precision integer to a word of the given width
 /// (upstream `Bitvec.(bigint x mod modulus width)`).
-pub fn word_of_bigint(value : @bigint.BigInt, width : Int) -> @types.Word {
+pub fn word_of_bigint(value : @bigint.BigInt, width : Int32) -> @types.Word {
   let w = if width <= 0 { 1 } else { width }
   let m = @bigint.BigInt::from_int(1) << w
   let mut r = value % m

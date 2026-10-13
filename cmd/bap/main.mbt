@@ -2,16 +2,16 @@
 
 ///|
 #borrow(data)
-extern "c" fn write_ffi(fd : Int, data : Bytes) -> Int = "bap_cli_write"
+extern "c" fn write_ffi(fd : Int32, data : Bytes) -> Int32 = "bap_cli_write"
 
 ///|
 extern "c" fn read_line_ffi() -> Bytes = "bap_cli_read_line"
 
 ///|
-extern "c" fn exit_ffi(code : Int) = "bap_cli_exit"
+extern "c" fn exit_ffi(code : Int32) = "bap_cli_exit"
 
 ///|
-fn write(fd : Int, s : String) -> Unit {
+fn write(fd : Int32, s : String) -> Unit {
   write_ffi(fd, @utf8.encode(s)) |> ignore
 }
 

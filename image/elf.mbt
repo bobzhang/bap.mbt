@@ -10,11 +10,11 @@ priv enum ImageElfClass {
 priv struct ImageElfHeader {
   endian : @bitvec.Endian
   class : ImageElfClass
-  osabi : Int
-  typ : Int
-  machine : Int
+  osabi : Int32
+  typ : Int32
+  machine : Int32
   entry : UInt64
-  section_name_index : Int
+  section_name_index : Int32
 }
 
 ///|
@@ -144,43 +144,43 @@ fn image_elf_parse(
 
 ///|
 priv struct ImageElfProgramHeader {
-  typ : Int
-  flags : Int
-  offset : Int
+  typ : Int32
+  flags : Int32
+  offset : Int32
   vaddr : UInt64
-  filesz : Int
-  memsz : Int
+  filesz : Int32
+  memsz : Int32
 }
 
 ///|
 priv struct ImageElfSectionHeader {
-  name_offset : Int
-  typ : Int
+  name_offset : Int32
+  typ : Int32
   flags : UInt64
-  link : Int
+  link : Int32
   /// `sh_info`: for relocation sections, the index of the section the
   /// relocations apply to
-  info : Int
+  info : Int32
   addr : UInt64
-  offset : Int
-  size : Int
-  entsize : Int
+  offset : Int32
+  size : Int32
+  entsize : Int32
 }
 
 ///|
 priv struct ImageElfSymbolEntry {
   name : String?
-  shndx : Int
+  shndx : Int32
   value : UInt64
-  size : Int
-  info : Int
+  size : Int32
+  info : Int32
 }
 
 ///|
 priv struct ImageElfRelocationEntry {
   offset : UInt64
-  symbol_index : Int
-  typ : Int
+  symbol_index : Int32
+  typ : Int32
   addend : Int64?
   memory_addend : Bool
 }
@@ -188,8 +188,8 @@ priv struct ImageElfRelocationEntry {
 ///|
 priv struct ImageElfDynamicRelocationTable {
   addr : UInt64?
-  size : Int?
-  entry_size : Int?
+  size : Int32?
+  entry_size : Int32?
 }
 
 ///|
@@ -203,8 +203,8 @@ priv struct ImageElfDynamicMetadata {
 ///|
 fn image_elf_read_uint(
   data : Bytes,
-  offset : Int,
-  bytes : Int,
+  offset : Int32,
+  bytes : Int32,
   endian : @bitvec.Endian,
 ) -> Result[UInt64, String] {
   if offset < 0 || bytes < 0 || offset + bytes > data.length() {
@@ -222,7 +222,10 @@ fn image_elf_read_uint(
 }
 
 ///|
-fn image_elf_uint_to_int(value : UInt64, what : String) -> Result[Int, String] {
+fn image_elf_uint_to_int(
+  value : UInt64,
+  what : String,
+) -> Result[Int32, String] {
   if value > 2147483647UL {
     Err("\{what} does not fit in Int")
   } else {
@@ -233,11 +236,11 @@ fn image_elf_uint_to_int(value : UInt64, what : String) -> Result[Int, String] {
 ///|
 fn image_elf_read_int(
   data : Bytes,
-  offset : Int,
-  bytes : Int,
+  offset : Int32,
+  bytes : Int32,
   endian : @bitvec.Endian,
   what : String,
-) -> Result[Int, String] {
+) -> Result[Int32, String] {
   match image_elf_read_uint(data, offset, bytes, endian) {
     Ok(value) => image_elf_uint_to_int(value, what)
     Err(reason) => Err(reason)
@@ -247,8 +250,8 @@ fn image_elf_read_int(
 ///|
 fn image_elf_read_u64(
   data : Bytes,
-  offset : Int,
-  bytes : Int,
+  offset : Int32,
+  bytes : Int32,
   endian : @bitvec.Endian,
 ) -> Result[UInt64, String] {
   image_elf_read_uint(data, offset, bytes, endian)
@@ -257,8 +260,8 @@ fn image_elf_read_u64(
 ///|
 fn image_elf_section_data(
   data : Bytes,
-  offset : Int,
-  size : Int,
+  offset : Int32,
+  size : Int32,
 ) -> Result[Bytes, String] {
   if offset < 0 || size < 0 {
     return Err("ELF section range is invalid")
@@ -273,7 +276,7 @@ fn image_elf_section_data(
 }
 
 ///|
-fn image_elf_cstring(data : Bytes, offset : Int) -> Result[String, String] {
+fn image_elf_cstring(data : Bytes, offset : Int32) -> Result[String, String] {
   if offset < 0 || offset >= data.length() {
     return Err("ELF string offset is out of bounds")
   }
@@ -337,7 +340,7 @@ fn image_elf_segment_data(
 ///|
 fn image_elf_symbol_count(
   section : ImageElfSectionHeader,
-) -> Result[Int, String] {
+) -> Result[Int32, String] {
   if section.entsize <= 0 {
     Err("ELF symbol section entry size is invalid")
   } else if section.size % section.entsize != 0 {
@@ -348,7 +351,7 @@ fn image_elf_symbol_count(
 }
 
 ///|
-fn image_elf_symbol_entry_size(header : ImageElfHeader) -> Int {
+fn image_elf_symbol_entry_size(header : ImageElfHeader) -> Int32 {
   match header.class {
     ImageElf32 => 16
     ImageElf64 => 24
@@ -361,7 +364,7 @@ fn image_elf_parse_symbol_entry(
   header : ImageElfHeader,
   symbol_table : ImageElfSectionHeader,
   string_table : Bytes,
-  index : Int,
+  index : Int32,
 ) -> Result[ImageElfSymbolEntry, String] {
   let base = symbol_table.offset + index * symbol_table.entsize
   image_elf_parse_symbol_entry_at(data, header, string_table, base)
@@ -372,7 +375,7 @@ fn image_elf_parse_symbol_entry_at(
   data : Bytes,
   header : ImageElfHeader,
   string_table : Bytes,
-  base : Int,
+  base : Int32,
 ) -> Result[ImageElfSymbolEntry, String] {
   let name_offset = image_elf_read_int(
     data,
@@ -561,7 +564,7 @@ fn image_elf_symbol_table_values(
 ///|
 fn image_elf_relocation_count(
   section : ImageElfSectionHeader,
-) -> Result[Int, String] {
+) -> Result[Int32, String] {
   if section.entsize <= 0 {
     Err("ELF relocation section entry size is invalid")
   } else if section.size % section.entsize != 0 {
@@ -576,7 +579,7 @@ fn image_elf_parse_relocation_entry(
   data : Bytes,
   header : ImageElfHeader,
   relocation_section : ImageElfSectionHeader,
-  index : Int,
+  index : Int32,
 ) -> Result[ImageElfRelocationEntry, String] {
   let base = relocation_section.offset + index * relocation_section.entsize
   image_elf_parse_relocation_entry_at(
@@ -591,7 +594,7 @@ fn image_elf_parse_relocation_entry(
 fn image_elf_parse_relocation_info(
   header : ImageElfHeader,
   info : UInt64,
-) -> Result[(Int, Int), String] {
+) -> Result[(Int32, Int32), String] {
   let symbol_index = match header.class {
     ImageElf32 =>
       image_elf_uint_to_int(info >> 8, "ELF relocation symbol index")
@@ -610,7 +613,7 @@ fn image_elf_parse_relocation_info(
 }
 
 ///|
-fn image_elf_sign_extend(value : UInt64, bits : Int) -> Int64 {
+fn image_elf_sign_extend(value : UInt64, bits : Int32) -> Int64 {
   if bits >= 64 {
     value.reinterpret_as_int64()
   } else {
@@ -627,8 +630,8 @@ fn image_elf_sign_extend(value : UInt64, bits : Int) -> Int64 {
 ///|
 fn image_elf_read_addend(
   data : Bytes,
-  offset : Int,
-  bytes : Int,
+  offset : Int32,
+  bytes : Int32,
   endian : @bitvec.Endian,
 ) -> Result[Int64, String] {
   match image_elf_read_uint(data, offset, bytes, endian) {
@@ -641,7 +644,7 @@ fn image_elf_read_addend(
 fn image_elf_parse_relocation_entry_at(
   data : Bytes,
   header : ImageElfHeader,
-  base : Int,
+  base : Int32,
   has_addend : Bool,
 ) -> Result[ImageElfRelocationEntry, String] {
   let offset = match header.class {
@@ -682,7 +685,10 @@ fn image_elf_parse_relocation_entry_at(
 }
 
 ///|
-fn image_elf_is_relative_relocation(header : ImageElfHeader, typ : Int) -> Bool {
+fn image_elf_is_relative_relocation(
+  header : ImageElfHeader,
+  typ : Int32,
+) -> Bool {
   match header.machine {
     0x04 => typ == 22 // R_68K_RELATIVE
     0x02 | 0x2b => typ == 22 // R_SPARC_RELATIVE
@@ -749,7 +755,7 @@ fn image_elf_relocations_apply(
 /// function, object, and untyped symbols, as upstream's
 /// `emit_relocations` keeps the `ST_Function`, `ST_Data` and `ST_Unknown`
 /// symbols): section and file symbols are not references.
-fn image_elf_is_reference_symbol(typ : Int) -> Bool {
+fn image_elf_is_reference_symbol(typ : Int32) -> Bool {
   match typ {
     0 | 1 | 2 | 5 | 6 | 10 => true // NOTYPE, OBJECT, FUNC, COMMON, TLS, GNU_IFUNC
     _ => false
@@ -878,7 +884,7 @@ fn image_elf_has_relocation_sections(
 fn image_elf_relocation_entry_size(
   header : ImageElfHeader,
   has_addend : Bool,
-) -> Int {
+) -> Int32 {
   match (header.class, has_addend) {
     (ImageElf32, false) => 8
     (ImageElf32, true) => 12
@@ -943,7 +949,7 @@ fn image_elf_dynamic_relocation_table_entries(
 }
 
 ///|
-fn image_elf_dynamic_relr_word_bytes(header : ImageElfHeader) -> Int {
+fn image_elf_dynamic_relr_word_bytes(header : ImageElfHeader) -> Int32 {
   match header.class {
     ImageElf32 => 4
     ImageElf64 => 8
@@ -1031,7 +1037,7 @@ fn image_elf_dynamic_relr_relocations(
 ///|
 fn image_elf_dynamic_count(
   section : ImageElfSectionHeader,
-) -> Result[Int, String] {
+) -> Result[Int32, String] {
   if section.size == 0 {
     Ok(0)
   } else if section.entsize <= 0 {
@@ -1044,7 +1050,7 @@ fn image_elf_dynamic_count(
 }
 
 ///|
-fn image_elf_dynamic_entry_size(header : ImageElfHeader) -> Int {
+fn image_elf_dynamic_entry_size(header : ImageElfHeader) -> Int32 {
   match header.class {
     ImageElf32 => 8
     ImageElf64 => 16
@@ -1055,7 +1061,7 @@ fn image_elf_dynamic_entry_size(header : ImageElfHeader) -> Int {
 fn image_elf_parse_dynamic_entry_at(
   data : Bytes,
   header : ImageElfHeader,
-  base : Int,
+  base : Int32,
 ) -> Result[(UInt64, UInt64), String] {
   let tag = match header.class {
     ImageElf32 => image_elf_read_u64(data, base, 4, header.endian)
@@ -1076,7 +1082,7 @@ fn image_elf_parse_dynamic_entry(
   data : Bytes,
   header : ImageElfHeader,
   dynamic_section : ImageElfSectionHeader,
-  index : Int,
+  index : Int32,
 ) -> Result[(UInt64, UInt64), String] {
   image_elf_parse_dynamic_entry_at(
     data,
@@ -1242,7 +1248,7 @@ fn image_elf_dynamic_entries_from_program(
 fn image_elf_uint_to_dynamic_size(
   value : UInt64,
   what : String,
-) -> Result[Int, String] {
+) -> Result[Int32, String] {
   image_elf_uint_to_int(value, what)
 }
 
@@ -1252,9 +1258,9 @@ fn image_elf_dynamic_symbol_entry(
   header : ImageElfHeader,
   program_headers : Array[ImageElfProgramHeader],
   symbol_table_addr : UInt64?,
-  symbol_entry_size : Int?,
+  symbol_entry_size : Int32?,
   strings : Bytes?,
-  symbol_index : Int,
+  symbol_index : Int32,
 ) -> Result[ImageElfSymbolEntry?, String] {
   match (symbol_table_addr, strings) {
     (Some(symbol_table_addr), Some(strings)) => {
@@ -1292,7 +1298,7 @@ fn image_elf_dynamic_external_or_target_relocation(
   program_headers : Array[ImageElfProgramHeader],
   strings : Bytes?,
   symbol_table_addr : UInt64?,
-  symbol_entry_size : Int?,
+  symbol_entry_size : Int32?,
   entry : ImageElfRelocationEntry,
 ) -> Result[(Relocation?, ExternalReference?), String] {
   if entry.symbol_index == 0 {
@@ -1346,7 +1352,7 @@ fn image_elf_add_dynamic_relocation_entry(
   program_headers : Array[ImageElfProgramHeader],
   strings : Bytes?,
   symbol_table_addr : UInt64?,
-  symbol_entry_size : Int?,
+  symbol_entry_size : Int32?,
   entry : ImageElfRelocationEntry,
 ) -> Result[Unit, String] {
   if image_elf_is_relative_relocation(header, entry.typ) {
@@ -1376,10 +1382,10 @@ fn image_elf_add_dynamic_relocation_entry(
 ///|
 fn image_elf_dynamic_plt_table(
   addr : UInt64?,
-  size : Int?,
+  size : Int32?,
   typ : UInt64?,
-  rel_entry_size : Int?,
-  rela_entry_size : Int?,
+  rel_entry_size : Int32?,
+  rela_entry_size : Int32?,
 ) -> Result[(ImageElfDynamicRelocationTable, Bool), String] {
   match (addr, size, typ) {
     (_, Some(0), _) => Ok((image_elf_dynamic_relocation_table_empty(), false))
@@ -1423,11 +1429,11 @@ fn image_elf_dynamic_relocations_from_programs(
       let mut rel = image_elf_dynamic_relocation_table_empty()
       let mut rela = image_elf_dynamic_relocation_table_empty()
       let mut string_table_addr : UInt64? = None
-      let mut string_table_size : Int? = None
+      let mut string_table_size : Int32? = None
       let mut symbol_table_addr : UInt64? = None
-      let mut symbol_entry_size : Int? = None
+      let mut symbol_entry_size : Int32? = None
       let mut plt_addr : UInt64? = None
-      let mut plt_size : Int? = None
+      let mut plt_size : Int32? = None
       let mut plt_type : UInt64? = None
       let mut relr = image_elf_dynamic_relocation_table_empty()
       for entry in entries {
@@ -1589,9 +1595,9 @@ fn image_elf_dynamic_relocations_from_programs(
 fn image_elf_vaddr_range_offset(
   program_headers : Array[ImageElfProgramHeader],
   addr : UInt64,
-  size : Int,
+  size : Int32,
   what : String,
-) -> Result[Int, String] {
+) -> Result[Int32, String] {
   if size < 0 {
     return Err("\{what} size is invalid")
   }
@@ -1625,7 +1631,7 @@ fn image_elf_dynamic_metadata_from_programs(
       }
       if image_elf_dynamic_entries_use_strings(entries) {
         let mut strtab : UInt64? = None
-        let mut strsz : Int? = None
+        let mut strsz : Int32? = None
         for entry in entries {
           match entry {
             (5UL, value) => strtab = Some(value)
@@ -1733,7 +1739,7 @@ fn image_elf_target_endian(endian : @bitvec.Endian) -> @core_theory.Endianness {
 }
 
 ///|
-fn image_elf_target_system(osabi : Int) -> @core_theory.System? {
+fn image_elf_target_system(osabi : Int32) -> @core_theory.System? {
   match osabi {
     1 => Some(HPUX)
     2 => Some(NetBSD)
@@ -1751,7 +1757,7 @@ fn image_elf_target_system(osabi : Int) -> @core_theory.System? {
 }
 
 ///|
-fn image_elf_target_abi(osabi : Int) -> @core_theory.Abi? {
+fn image_elf_target_abi(osabi : Int32) -> @core_theory.Abi? {
   match osabi {
     0 => Some(SysV)
     3 => Some(GNU)
@@ -1854,7 +1860,7 @@ fn image_elf_target(header : ImageElfHeader) -> @core_theory.Target {
 }
 
 ///|
-fn image_elf_flag_set(flags : Int, flag : Int) -> Bool {
+fn image_elf_flag_set(flags : Int32, flag : Int32) -> Bool {
   (flags & flag) != 0
 }
 
@@ -1867,7 +1873,7 @@ fn image_elf_section_flag_set(
 }
 
 ///|
-fn image_elf_section_segment_name(index : Int, name : String?) -> String {
+fn image_elf_section_segment_name(index : Int32, name : String?) -> String {
   match name {
     Some(name) => name
     None => ".section\{index}"

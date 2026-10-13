@@ -78,7 +78,7 @@ fn compiler_equal(lhs : Compiler, rhs : Compiler) -> Bool {
 }
 
 ///|
-fn string_array_compare(lhs : Array[String], rhs : Array[String]) -> Int {
+fn string_array_compare(lhs : Array[String], rhs : Array[String]) -> Int32 {
   let limit = if lhs.length() < rhs.length() {
     lhs.length()
   } else {
@@ -116,7 +116,7 @@ fn sorted_string_map_entries(
 fn string_map_compare(
   lhs : Map[String, String],
   rhs : Map[String, String],
-) -> Int {
+) -> Int32 {
   let lhs_entries = sorted_string_map_entries(lhs)
   let rhs_entries = sorted_string_map_entries(rhs)
   let limit = if lhs_entries.length() < rhs_entries.length() {
@@ -143,7 +143,7 @@ pub fn Compiler::equal(self : Compiler, other : Compiler) -> Bool {
 }
 
 ///|
-pub fn Compiler::compare(self : Compiler, other : Compiler) -> Int {
+pub fn Compiler::compare(self : Compiler, other : Compiler) -> Int32 {
   let name_order = self.name_value.compare(other.name_value)
   if name_order != 0 {
     return name_order

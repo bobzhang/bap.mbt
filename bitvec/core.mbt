@@ -11,19 +11,19 @@ let max_uint32_as_uint64 : UInt64 = 0xffffffff
 let max_int64_as_uint64 : UInt64 = 0x7fffffffffffffff
 
 ///|
-fn check_width(width : Int) -> Unit raise BitVecError {
+fn check_width(width : Int32) -> Unit raise BitVecError {
   if width <= 0 {
     raise InvalidWidth(width)
   }
 }
 
 ///|
-fn limb_count_for_width(width : Int) -> Int {
+fn limb_count_for_width(width : Int32) -> Int32 {
   (width + 63) / 64
 }
 
 ///|
-fn low_mask(bits : Int) -> UInt64 {
+fn low_mask(bits : Int32) -> UInt64 {
   if bits <= 0 {
     0
   } else if bits >= 64 {
@@ -34,7 +34,7 @@ fn low_mask(bits : Int) -> UInt64 {
 }
 
 ///|
-fn high_limb_mask(width : Int) -> UInt64 {
+fn high_limb_mask(width : Int32) -> UInt64 {
   let bits = width % 64
   if bits == 0 {
     all_ones64
@@ -44,10 +44,10 @@ fn high_limb_mask(width : Int) -> UInt64 {
 }
 
 ///|
-fn normalize_limbs(width : Int, limbs : ArrayView[UInt64]) -> Array[UInt64] {
+fn normalize_limbs(width : Int32, limbs : ArrayView[UInt64]) -> Array[UInt64] {
   let count = limb_count_for_width(width)
   let out = Array::make(count, (0 : UInt64))
-  let take = Int::min(count, limbs.length())
+  let take = Int32::min(count, limbs.length())
   for i in 0..<take {
     out[i] = limbs[i]
   }
@@ -59,13 +59,13 @@ fn normalize_limbs(width : Int, limbs : ArrayView[UInt64]) -> Array[UInt64] {
 }
 
 ///|
-fn make(width : Int, limbs : ArrayView[UInt64]) -> BitVec raise BitVecError {
+fn make(width : Int32, limbs : ArrayView[UInt64]) -> BitVec raise BitVecError {
   check_width(width)
   { width, limbs: normalize_limbs(width, limbs), }
 }
 
 ///|
-fn make_unchecked(width : Int, limbs : ArrayView[UInt64]) -> BitVec {
+fn make_unchecked(width : Int32, limbs : ArrayView[UInt64]) -> BitVec {
   { width, limbs: normalize_limbs(width, limbs), }
 }
 
@@ -77,18 +77,18 @@ fn require_same_width(lhs : BitVec, rhs : BitVec) -> Unit raise BitVecError {
 }
 
 ///|
-pub fn zero(width~ : Int) -> BitVec raise BitVecError {
+pub fn zero(width~ : Int32) -> BitVec raise BitVecError {
   check_width(width)
   make_unchecked(width, [])
 }
 
 ///|
-pub fn one(width~ : Int) -> BitVec raise BitVecError {
+pub fn one(width~ : Int32) -> BitVec raise BitVecError {
   of_uint64(width~, 1)
 }
 
 ///|
-pub fn ones(width~ : Int) -> BitVec raise BitVecError {
+pub fn ones(width~ : Int32) -> BitVec raise BitVecError {
   check_width(width)
   let count = limb_count_for_width(width)
   let limbs = Array::make(count, all_ones64)
@@ -105,17 +105,17 @@ pub fn of_bool(value : Bool) -> BitVec {
 }
 
 ///|
-pub fn of_uint64(width~ : Int, value : UInt64) -> BitVec raise BitVecError {
+pub fn of_uint64(width~ : Int32, value : UInt64) -> BitVec raise BitVecError {
   make(width, [value])
 }
 
 ///|
-pub fn of_int(width~ : Int, value : Int) -> BitVec raise BitVecError {
+pub fn of_int(width~ : Int32, value : Int32) -> BitVec raise BitVecError {
   of_uint64(width~, value.to_uint64())
 }
 
 ///|
-pub fn of_int64(width~ : Int, value : Int64) -> BitVec raise BitVecError {
+pub fn of_int64(width~ : Int32, value : Int64) -> BitVec raise BitVecError {
   of_uint64(width~, value.reinterpret_as_uint64())
 }
 
@@ -147,7 +147,7 @@ pub fn BitVec::msb(self : BitVec) -> Bool {
 }
 
 ///|
-pub fn BitVec::nth(self : BitVec, index : Int) -> Bool {
+pub fn BitVec::nth(self : BitVec, index : Int32) -> Bool {
   if index < 0 {
     self.lsb()
   } else if index >= self.width {
@@ -160,7 +160,7 @@ pub fn BitVec::nth(self : BitVec, index : Int) -> Bool {
 }
 
 ///|
-fn BitVec::set_bit(self : BitVec, index : Int) -> BitVec {
+fn BitVec::set_bit(self : BitVec, index : Int32) -> BitVec {
   let limbs = self.limbs.copy()
   let limb = index / 64
   let bit = index % 64
@@ -186,7 +186,7 @@ pub fn BitVec::fits_int(self : BitVec) -> Bool {
 }
 
 ///|
-pub fn BitVec::to_int(self : BitVec) -> Int raise BitVecError {
+pub fn BitVec::to_int(self : BitVec) -> Int32 raise BitVecError {
   let raw = self.to_uint64()
   if raw > max_int_as_uint64 {
     raise InvalidWidth(self.width)
@@ -204,7 +204,7 @@ pub fn BitVec::fits_int32(self : BitVec) -> Bool {
 }
 
 ///|
-pub fn BitVec::to_int32(self : BitVec) -> Int raise BitVecError {
+pub fn BitVec::to_int32(self : BitVec) -> Int32 raise BitVecError {
   let raw = self.to_uint64()
   if raw > max_uint32_as_uint64 {
     raise InvalidWidth(self.width)
@@ -230,7 +230,7 @@ pub fn BitVec::to_int64(self : BitVec) -> Int64 raise BitVecError {
 pub fn BitVec::compare_unsigned(
   self : BitVec,
   other : BitVec,
-) -> Int raise BitVecError {
+) -> Int32 raise BitVecError {
   require_same_width(self, other)
   let mut result = 0
   for k in 0..<self.limbs.length() {
@@ -250,7 +250,7 @@ pub fn BitVec::compare_unsigned(
 pub fn BitVec::compare_signed(
   self : BitVec,
   other : BitVec,
-) -> Int raise BitVecError {
+) -> Int32 raise BitVecError {
   require_same_width(self, other)
   let self_negative = self.msb()
   let other_negative = other.msb()

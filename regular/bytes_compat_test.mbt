@@ -1,5 +1,5 @@
 ///|
-fn byte_values(bytes : Bytes) -> Array[Int] {
+fn byte_values(bytes : Bytes) -> Array[Int32] {
   bytes.to_array().map(byte => byte.to_int())
 }
 
@@ -248,7 +248,7 @@ test "translated BAP bytes traversal helpers scan in byte order" {
     @regular.bytes_to_list(bytes).to_array().map(byte => byte.to_int()) ==
     [97, 98, 99, 97],
   )
-  let folded : Result[Int, String] = @regular.bytes_fold_result(bytes, 0, (
+  let folded : Result[Int32, String] = @regular.bytes_fold_result(bytes, 0, (
     acc,
     byte,
   ) => Ok(acc + byte.to_int()))

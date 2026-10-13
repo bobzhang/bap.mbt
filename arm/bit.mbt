@@ -61,7 +61,7 @@ fn bit_extract(
 ///|
 /// `Arm_bit.get_lsb_width`: the `lsb` and `width` fields of a `BFI`/`BFC`
 /// instruction word.
-fn get_lsb_width(instr : UInt) -> (Int, Int) {
+fn get_lsb_width(instr : UInt32) -> (Int32, Int32) {
   let lsb = ((instr >> 7) & 0x1f).reinterpret_as_int()
   let msb = ((instr >> 16) & 0x1f).reinterpret_as_int()
   (lsb, (msb - lsb + 1).abs())
@@ -71,7 +71,7 @@ fn get_lsb_width(instr : UInt) -> (Int, Int) {
 /// The `lsb` and `width` of a bit field, recovered from the LLVM
 /// `bf_inv_mask_imm` operand (the inverted field mask). Used when the raw
 /// instruction word is not available.
-fn lsb_width_of_inv_mask(mask : UInt) -> (Int, Int) {
+fn lsb_width_of_inv_mask(mask : UInt32) -> (Int32, Int32) {
   let field = mask.lnot()
   if field == 0 {
     (0, 0)
@@ -85,7 +85,7 @@ fn lsb_width_of_inv_mask(mask : UInt) -> (Int, Int) {
 fn bit_field_insert(
   dest~ : Op,
   src~ : Op,
-  lsb_width : (Int, Int),
+  lsb_width : (Int32, Int32),
   cond : Op,
 ) -> Array[@types.Stmt] raise @mc.LiftError {
   let dest = assert_reg(dest)
@@ -93,8 +93,8 @@ fn bit_field_insert(
   let d_e = v(d)
   let (lsb, width) = lsb_width
   let extracted = extract(width - 1, 0, exp_of_op(src))
-  let ext_h = (b : Int, s : @types.Exp) => extract(31, b, s)
-  let ext_l = (b : Int, s : @types.Exp) => extract(b, 0, s)
+  let ext_h = (b : Int32, s : @types.Exp) => extract(31, b, s)
+  let ext_l = (b : Int32, s : @types.Exp) => extract(b, 0, s)
   let inst = match (lsb + width - 1, lsb) {
     (31, 0) => extracted
     (31, l) => concat(extracted, ext_l(l - 1, d_e))

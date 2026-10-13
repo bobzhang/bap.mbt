@@ -23,12 +23,12 @@ let doc : String =
 /// `list` is set (upstream prints them and exits), `None`
 /// otherwise.
 pub fn enable(
-  list? : Bool = false,
-  normalization? : String = "0",
-  optimization? : String = "1",
-  passes? : ArrayView[String] = [],
-  with_fp? : Bool = true,
-  enable_intrinsics? : ArrayView[ISpec] = [],
+  list~ : Bool = false,
+  normalization~ : String = "0",
+  optimization~ : String = "1",
+  passes~ : ArrayView[String] = [],
+  with_fp~ : Bool = true,
+  enable_intrinsics~ : ArrayView[ISpec] = [],
 ) -> Array[String]? raise Failure {
   if list {
     return Some(list_passes())
@@ -66,7 +66,7 @@ pub fn uninstall_lift_hook() -> Unit {
 ///|
 /// Declares the `bil` plugin to `bap_main` with its parameters. Does
 /// nothing if already declared.
-pub fn declare_plugin(exit? : () -> Unit = () => ()) -> Unit raise {
+pub fn declare_plugin(exit~ : () -> Unit = () => ()) -> Unit raise {
   if @bap_main.registered_plugins().contains(name) {
     return
   }

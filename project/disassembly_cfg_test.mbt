@@ -2,7 +2,7 @@
 fn cfg_test_block(
   start : UInt64,
   bytes : Bytes,
-  assembly? : String = "nop",
+  assembly~ : String = "nop",
 ) -> @project.ProjectDisassemblyBlock raise {
   let memory = @memory.Memory::from_bytes(endian=LittleEndian, start~, bytes)
   match

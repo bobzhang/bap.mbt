@@ -48,7 +48,7 @@ fn sem_not(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
 ///|
 /// Concatenate byte `indexes` of `rs` (most significant first). Like
 /// upstream's right-associative `^`, the concatenation nests to the right.
-fn concat_bytes(rs : Exp, indexes : Array[Int]) -> Exp raise @mc.LiftError {
+fn concat_bytes(rs : Exp, indexes : Array[Int32]) -> Exp raise @mc.LiftError {
   let n = indexes.length()
   let mut acc = nth(byte, rs, indexes[n - 1])
   for i = n - 2; i >= 0; i = i - 1 {
@@ -120,7 +120,7 @@ fn sem_dbitswap(cpu : Cpu) -> Array[Rtl] raise @mc.LiftError {
 
 ///|
 /// The immediate operand `index` as an `Int`.
-fn Cpu::int_imm(self : Cpu, index : Int) -> Int raise @mc.LiftError {
+fn Cpu::int_imm(self : Cpu, index : Int32) -> Int32 raise @mc.LiftError {
   match self.op(index) {
     Imm(x) => x.to_int()
     _ => raise mips_fail("imm operand expected")
@@ -130,7 +130,7 @@ fn Cpu::int_imm(self : Cpu, index : Int) -> Int raise @mc.LiftError {
 ///|
 /// EXT/DEXT rt, rs, pos, size - Extract Bit Field (LLVM decodes `dextm`
 /// and `dextu` as `DEXT`).
-fn extract_field(width : Int) -> Semantics {
+fn extract_field(width : Int32) -> Semantics {
   cpu => {
     let rt = cpu.reg(0, if width == word { Signed } else { Unsigned })
     let rs = cpu.ureg(1)
@@ -147,7 +147,7 @@ fn extract_field(width : Int) -> Semantics {
 ///|
 /// INS/DINS rt, rs, pos, size - Insert Bit Field (LLVM decodes `dinsm`
 /// and `dinsu` as `DINS`).
-fn insert_field(width : Int) -> Semantics {
+fn insert_field(width : Int32) -> Semantics {
   cpu => {
     let rt = cpu.reg(0, if width == word { Signed } else { Unsigned })
     let rs = cpu.ureg(1)

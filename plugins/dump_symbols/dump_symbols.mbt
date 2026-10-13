@@ -137,7 +137,7 @@ pub fn dump(project : @project.Project) -> String {
 pub fn run(
   project : @project.Project,
   file? : String,
-  out? : (String) -> Unit = s => println(s.trim_end(chars="\n")),
+  out~ : (String) -> Unit = s => println(s.trim_end(chars="\n")),
 ) -> Result[Unit, String] {
   let text = dump(project)
   match file {

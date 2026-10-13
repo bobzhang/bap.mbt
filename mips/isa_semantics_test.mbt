@@ -6,7 +6,7 @@
 
 ///|
 /// The big-endian bytes of `program`.
-fn code_bytes(program : Array[UInt]) -> Bytes {
+fn code_bytes(program : Array[UInt32]) -> Bytes {
   Bytes::makei(program.length() * 4, i => {
     (program[i / 4] >> (24 - 8 * (i % 4))).to_byte()
   })
@@ -16,11 +16,11 @@ fn code_bytes(program : Array[UInt]) -> Bytes {
 /// Run `program` at `base` from the registers `regs` (with the program
 /// itself loaded in memory) and return the state and the exit address.
 fn exec(
-  program : Array[UInt],
+  program : Array[UInt32],
   regs : Array[(String, Int64)],
-  base? : UInt64 = 0x400000,
-  arch? : @mips.Arch = Mips32,
-  r6? : Bool = false,
+  base~ : UInt64 = 0x400000,
+  arch~ : @mips.Arch = Mips32,
+  r6~ : Bool = false,
   data? : (UInt64, Bytes),
 ) -> (@types.BilState, UInt64) raise {
   let width = match arch {
@@ -151,9 +151,9 @@ test "mips32: conditional moves and the zero register" {
 /// Where the branch at `0x400000` followed by a `nop` delay slot goes, and
 /// the final state.
 fn branch(
-  word : UInt,
+  word : UInt32,
   regs : Array[(String, Int64)],
-  base? : UInt64 = 0x400000,
+  base~ : UInt64 = 0x400000,
 ) -> (@types.BilState, String) raise {
   let (s, exit) = exec([word, 0], regs, base~)
   (s, "0x" + exit.to_string(radix=16))
@@ -161,7 +161,7 @@ fn branch(
 
 ///|
 test "mips32: branches compare signed values" {
-  let outcomes = (word : UInt, reg : String) => {
+  let outcomes = (word : UInt32, reg : String) => {
     [-5L, 0L, 5L]
     .map(v => {
       let (_, exit) = branch(word, [(reg, v)]) catch { _ => panic() }
@@ -285,7 +285,7 @@ test "mips32r6: three-operand multiplies and divides, and PC-relative forms" {
 
 ///|
 test "mips32r6: compact branches have no delay slot and link cia + 4" {
-  let run = (program : Array[UInt], regs : Array[(String, Int64)]) => {
+  let run = (program : Array[UInt32], regs : Array[(String, Int64)]) => {
     exec(program, regs, r6=true)
   }
   // bltc $4, $5, 16: A0 < A1 (signed) is taken to 0x400014

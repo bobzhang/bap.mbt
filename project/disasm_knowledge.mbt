@@ -206,7 +206,7 @@ let project_insn_dests_slot : @knowledge.Slot[
 ///|
 /// The length of the delay slot of the instruction of a label (upstream
 /// `Insn.Slot.delay`).
-let project_insn_delay_slot : @knowledge.Slot[Unit, Int?] = project_label_cls.property(
+let project_insn_delay_slot : @knowledge.Slot[Unit, Int32?] = project_label_cls.property(
   name=project_disasm_name("disasm-insn-delay"),
   domain=@knowledge.Domain::optional(
     @knowledge.Domain::flat(project_disasm_name("disasm-insn-delay"), value => {
@@ -243,7 +243,7 @@ let project_insn_lifted_slot : @knowledge.Slot[Unit, @mc.Lifted?] = project_labe
 
 ///|
 /// The width of the label addresses.
-const PROJECT_LABEL_ADDR_WIDTH : Int = 64
+const PROJECT_LABEL_ADDR_WIDTH : Int32 = 64
 
 ///|
 fn project_label_word(addr : UInt64) -> @types.Word {

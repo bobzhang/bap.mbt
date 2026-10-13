@@ -3,7 +3,7 @@
 // the number of fixed operands (`NumOperands`). See `llvm_kinds`.
 
 ///|
-let llvm_descs : Map[String, (Int, Int, Int)] = {
+let llvm_descs : Map[String, (Int32, Int32, Int32)] = {
   "ADCri": (0x0, 1, 6),
   "ADCrr": (0x0, 1, 6),
   "ADCrsi": (0x0, 1, 7),

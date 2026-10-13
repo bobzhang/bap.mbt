@@ -23,7 +23,7 @@ fn x86_ext_has_adsize(bytes : Bytes, mode64 : Bool) -> Bool {
 /// the immediate.
 fn ProjectDisassemblyInstruction::project_basic_bil_test_mi(
   self : ProjectDisassemblyInstruction,
-  width : Int,
+  width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   project_basic_bil_result(() => {
     let (addr, mem, address_width) = bil_ok(
@@ -68,7 +68,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_test_mi(
 /// according to `DF`; with a repeat prefix, `RCX`/`ECX` times.
 fn ProjectDisassemblyInstruction::project_basic_bil_lods(
   self : ProjectDisassemblyInstruction,
-  data_width : Int,
+  data_width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let address_width = match self.operands().get(0) {
     Some(ProjectRegisterOperand(_, "RSI")) => 64
@@ -114,7 +114,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_lods(
 /// `ZF` is set, or clear).
 fn ProjectDisassemblyInstruction::project_basic_bil_loop(
   self : ProjectDisassemblyInstruction,
-  zf_mode : Int,
+  zf_mode : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let mode64 = self.encoding() == "llvm-x86_64"
   let adsize = x86_ext_has_adsize(self.memory().to_bytes(), mode64)
@@ -270,7 +270,7 @@ fn ProjectDisassemblyInstruction::project_basic_bil_enter(
 /// incremented.
 fn ProjectDisassemblyInstruction::project_basic_bil_pop_mem(
   self : ProjectDisassemblyInstruction,
-  value_width : Int,
+  value_width : Int32,
 ) -> Result[Array[@types.Stmt], String] {
   let stack_width = if self.encoding() == "llvm-x86_64" { 64 } else { 32 }
   project_basic_bil_result(() => {

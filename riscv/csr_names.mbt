@@ -5,7 +5,7 @@
 
 ///|
 /// CSR names of both RV32 and RV64.
-let csr_names : Map[Int, String] = {
+let csr_names : Map[Int32, String] = {
   0x001: "fflags",
   0x002: "frm",
   0x003: "fcsr",
@@ -318,7 +318,7 @@ let csr_names : Map[Int, String] = {
 
 ///|
 /// CSR names of RV32 only (the high halves of 64-bit CSRs).
-let csr_names_rv32 : Map[Int, String] = {
+let csr_names_rv32 : Map[Int32, String] = {
   0x114: "sieh",
   0x154: "siph",
   0x15d: "stimecmph",

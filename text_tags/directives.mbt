@@ -1,5 +1,5 @@
 ///|
-fn parse_int_prefix(s : String, start : Int) -> (Int?, Int) {
+fn parse_int_prefix(s : String, start : Int32) -> (Int32?, Int32) {
   let mut i = start
   while i < s.length() && s[i] == ' ' {
     i += 1
@@ -24,7 +24,7 @@ fn parse_int_prefix(s : String, start : Int) -> (Int?, Int) {
 
 ///|
 /// The index of the first `>` at or after [start], or the length of [s].
-fn index_from(s : String, start : Int) -> Int {
+fn index_from(s : String, start : Int32) -> Int32 {
   for i in start..<s.length() {
     if s[i] == '>' {
       return i

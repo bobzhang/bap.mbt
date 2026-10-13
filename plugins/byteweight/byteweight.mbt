@@ -46,9 +46,9 @@ let reporter : @main_event.MainLogReporter = @main_event.MainLogReporter::create
 pub fn find_roots(
   sigs : @bw.Byteweight,
   memory : Array[@memory.Memory],
-  min_length? : Int = 8,
-  max_length? : Int = 16,
-  threshold? : Double = 10.0,
+  min_length~ : Int32 = 8,
+  max_length~ : Int32 = 16,
+  threshold~ : Double = 10.0,
 ) -> Array[UInt64] {
   let roots = []
   for mem in memory {
@@ -108,9 +108,9 @@ fn lookup_signatures(
 /// (upstream `enable`).
 pub fn enable(
   sigs? : String,
-  min_length? : Int = 8,
-  max_length? : Int = 16,
-  threshold? : Double = 10.0,
+  min_length~ : Int32 = 8,
+  max_length~ : Int32 = 16,
+  threshold~ : Double = 10.0,
   compiler? : String,
 ) -> Unit {
   @disassemble.register_root_provider(name, input => {

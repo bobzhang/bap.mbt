@@ -115,7 +115,7 @@ pub fn write_file(path : String, data : BytesView) -> Result[Unit, String] {
 }
 
 ///|
-extern "c" fn host_arch_ffi() -> Int = "bap_mbt_host_arch"
+extern "c" fn host_arch_ffi() -> Int32 = "bap_mbt_host_arch"
 
 ///|
 /// The architecture of the host, as LLVM names it (`x86_64`, `i386`,

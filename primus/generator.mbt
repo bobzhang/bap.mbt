@@ -4,7 +4,7 @@
 priv struct GenIter {
   value : () -> @bitvec.BitVec
   next : () -> GenIter
-  seed : (Int) -> GenIter
+  seed : (Int32) -> GenIter
 }
 
 ///|
@@ -12,7 +12,7 @@ fn[T, D] make_gen_iter(
   iface : Infinite[T, D],
   to_bitvec : (D) -> @bitvec.BitVec,
   state : T,
-  seed : (Int) -> T,
+  seed : (Int32) -> T,
 ) -> GenIter {
   {
     value: () => to_bitvec((iface.value)(state)),
@@ -24,7 +24,7 @@ fn[T, D] make_gen_iter(
 ///|
 priv enum GenCtor {
   Const(GenIter)
-  Seeded((Int) -> GenIter)
+  Seeded((Int32) -> GenIter)
 }
 
 ///|
@@ -36,23 +36,23 @@ priv enum GenCtor {
 /// When a generator is first used in a machine it is seeded with the
 /// machine identifier plus a per-machine salt (seedable generators only).
 pub struct Generator {
-  priv size : Int
+  priv size : Int32
   priv init : GenCtor
-  priv id : Int
+  priv id : Int32
 }
 
 ///|
-let last_generator_id : Ref[Int] = { val: 0, }
+let last_generator_id : Ref[Int32] = { val: 0, }
 
 ///|
-fn next_generator_id() -> Int {
+fn next_generator_id() -> Int32 {
   last_generator_id.val += 1
   last_generator_id.val
 }
 
 ///|
 /// The number of bits produced by one iteration.
-pub fn Generator::width(self : Generator) -> Int {
+pub fn Generator::width(self : Generator) -> Int32 {
   self.size
 }
 
@@ -66,13 +66,13 @@ pub fn Generator::to_sexp(self : Generator) -> Sexp {
 /// `Generator.of_iterator`). `seed` rebuilds the iterator state from a seed;
 /// without it the generator always starts from `init`.
 pub fn[T, D] Generator::of_iterator(
-  width? : Int = 8,
-  seed? : (Int) -> T,
+  width~ : Int32 = 8,
+  seed? : (Int32) -> T,
   to_bitvec~ : (D) -> @bitvec.BitVec,
   iface : Infinite[T, D],
   init : T,
 ) -> Generator {
-  let seed : (Int) -> T = match seed {
+  let seed : (Int32) -> T = match seed {
     Some(f) => f
     None => _ => init
   }
@@ -87,13 +87,13 @@ pub fn[T, D] Generator::of_iterator(
 /// Creates a generator from an iterator over integers (upstream
 /// `Generator.create`); values are taken modulo `2^width`.
 pub fn[T] Generator::create(
-  width? : Int = 8,
-  iface : Infinite[T, Int],
+  width~ : Int32 = 8,
+  iface : Infinite[T, Int32],
   init : T,
 ) -> Generator {
   Generator::of_iterator(
     width~,
-    to_bitvec=(x : Int) => bv_of_u64(width, x.to_uint64()),
+    to_bitvec=(x : Int32) => bv_of_u64(width, x.to_uint64()),
     iface,
     init,
   )
@@ -102,7 +102,7 @@ pub fn[T] Generator::create(
 ///|
 /// A generator that always produces the same value (upstream
 /// `Generator.static`).
-pub fn Generator::static_value(width? : Int = 8, value : Int) -> Generator {
+pub fn Generator::static_value(width~ : Int32 = 8, value : Int32) -> Generator {
   let v = bv_of_u64(width, value.to_uint64())
   Generator::of_iterator(
     width~,
@@ -116,22 +116,22 @@ pub fn Generator::static_value(width? : Int = 8, value : Int) -> Generator {
 /// A generator defined by an unfolding function over `(state, value)`
 /// pairs (upstream `Generator.unfold`).
 pub fn[A] Generator::unfold(
-  width? : Int = 8,
-  min? : Int = -2147483648,
-  max? : Int = 2147483647,
-  seed? : Int = 0,
-  f~ : ((A, Int)) -> (A, Int),
+  width~ : Int32 = 8,
+  min~ : Int32 = -2147483648,
+  max~ : Int32 = 2147483647,
+  seed~ : Int32 = 0,
+  f~ : ((A, Int32)) -> (A, Int32),
   init : A,
 ) -> Generator {
   Generator::create(
     width~,
-    { min, max, value: (p : (A, Int)) => p.1, next: f, },
+    { min, max, value: (p : (A, Int32)) => p.1, next: f, },
     (init, seed),
   )
 }
 
 ///|
-fn mcg_generator(width : Int, mcg : Mcg, start : Int) -> Generator {
+fn mcg_generator(width : Int32, mcg : Mcg, start : Int32) -> Generator {
   let iface : Infinite[Array[UInt64], @bitvec.BitVec] = {
     min: bv_of_u64(width, mcg.min),
     max: bv_of_u64(width, mcg.max),
@@ -150,17 +150,17 @@ fn mcg_generator(width : Int, mcg : Mcg, start : Int) -> Generator {
 ///|
 /// A seedable pseudorandom generator (upstream `Generator.Random.lcg`).
 pub fn Generator::random_lcg(
-  width? : Int = 8,
-  min? : Int,
-  max? : Int,
-  seed : Int,
+  width~ : Int32 = 8,
+  min? : Int32,
+  max? : Int32,
+  seed : Int32,
 ) -> Generator {
   mcg_generator(width, Mcg::create(min?, max?, width), seed)
 }
 
 ///|
 /// A seedable pseudorandom byte generator (upstream `Generator.Random.byte`).
-pub fn Generator::random_byte(seed : Int) -> Generator {
+pub fn Generator::random_byte(seed : Int32) -> Generator {
   Generator::random_lcg(min=0, max=255, seed)
 }
 
@@ -168,10 +168,10 @@ pub fn Generator::random_byte(seed : Int) -> Generator {
 /// A generator whose iterator is built from the machine seed (upstream
 /// `Generator.Random.Seeded.create`).
 pub fn Generator::seeded_create(
-  width? : Int = 8,
-  init : (Int) -> Generator,
+  width~ : Int32 = 8,
+  init : (Int32) -> Generator,
 ) -> Generator {
-  let make = fn(seed : Int) -> GenIter {
+  let make = fn(seed : Int32) -> GenIter {
     match init(seed).init {
       Const(it) => it
       Seeded(f) => f(seed)
@@ -184,9 +184,9 @@ pub fn Generator::seeded_create(
 /// A pseudorandom generator seeded by the machine (upstream
 /// `Generator.Random.Seeded.lcg`).
 pub fn Generator::seeded_lcg(
-  width? : Int = 8,
-  min? : Int,
-  max? : Int,
+  width~ : Int32 = 8,
+  min? : Int32,
+  max? : Int32,
 ) -> Generator {
   Generator::random_lcg(width~, min?, max?, 0)
 }
@@ -200,8 +200,8 @@ pub fn Generator::seeded_byte() -> Generator {
 
 ///|
 priv struct GenState {
-  iterators : @sorted_map.SortedMap[Int, GenIter]
-  salt : Int
+  iterators : @sorted_map.SortedMap[Int32, GenIter]
+  salt : Int32
 }
 
 ///|
@@ -246,7 +246,7 @@ fn Generator::call(self : Generator, m : Machine) -> @bitvec.BitVec {
 ///|
 /// The next value of the generator as an integer (upstream
 /// `Generator.Make(M).next`); values that do not fit are saturated.
-pub fn Generator::next(m : Machine, gen : Generator) -> Int {
+pub fn Generator::next(m : Machine, gen : Generator) -> Int32 {
   let x = gen.call(m)
   if x.fits_int() {
     x.to_int() catch {
@@ -265,7 +265,7 @@ pub fn Generator::next(m : Machine, gen : Generator) -> Int {
 pub fn Generator::word(
   m : Machine,
   gen : Generator,
-  width : Int,
+  width : Int32,
 ) -> @types.Word {
   let mut x = gen.call(m)
   let mut built = gen.size

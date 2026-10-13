@@ -178,7 +178,7 @@ fn float_of_value(v : @primus.Value) -> Double {
 ///|
 fn value_of_float(
   m : @primus.Machine,
-  width : Int,
+  width : Int32,
   x : Double,
 ) -> @primus.Value {
   if width == 32 {

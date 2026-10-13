@@ -44,7 +44,7 @@ pub fn[T] term_address(t : @types.Term[T]) -> @types.Word? {
 ///|
 /// Bit width of the target's code/data addresses (falls back to 32 for
 /// targets that do not specify it, like upstream `Theory.Target.unknown`).
-fn target_bits(t : @core_theory.Target) -> Int {
+fn target_bits(t : @core_theory.Target) -> Int32 {
   let b = t.bits()
   if b <= 0 {
     32

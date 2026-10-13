@@ -63,7 +63,7 @@ pub fn render(format : SpecFormat, spec : @ogre.Doc) -> String {
 /// recognize the file.
 pub fn load(
   input : String,
-  loader? : String = "llvm",
+  loader~ : String = "llvm",
 ) -> @ogre.Doc? raise SpecificationError {
   @image.register_builtin_backends() |> ignore
   let data = match (@bap_main.file_system().read_file)(input) {
@@ -106,7 +106,7 @@ let printer_registered : Ref[Bool] = Ref(false)
 /// Declares the `specification` plugin and command in the `bap_main`
 /// framework. Does nothing if it is already registered.
 pub fn declare_plugin(
-  out? : (String) -> Unit = s => println(s.trim_end(chars="\n")),
+  out~ : (String) -> Unit = s => println(s.trim_end(chars="\n")),
 ) -> Unit raise {
   if @bap_main.registered_plugins().contains(plugin_name) {
     return

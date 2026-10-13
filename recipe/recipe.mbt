@@ -227,7 +227,7 @@ priv suberror SubstError {
 
 ///|
 fn is_ident_char(c : UInt16) -> Bool {
-  c is ('a'..='z' | 'A'..='Z' | '0'..='9' | '_')
+  c is ('a'..<='z' | 'A'..<='Z' | '0'..<='9' | '_')
 }
 
 ///|
@@ -385,7 +385,7 @@ fn check_vars(
 /// paths are returned).
 pub fn search(
   paths : Array[String],
-  fs? : FileSystem = FileSystem::native(),
+  fs~ : FileSystem = FileSystem::native(),
 ) -> Array[String] {
   let result = []
   for p in paths {
@@ -461,9 +461,9 @@ fn parse_var(s : String) -> (String, String) raise RecipeError {
 /// the bindings from [name]; every bound variable must be a parameter of
 /// the recipe or of a recipe it directly extends.
 pub fn load(
-  paths? : Array[String] = [],
-  env? : Array[(String, String)] = [],
-  fs? : FileSystem = FileSystem::native(),
+  paths~ : Array[String] = [],
+  env~ : Array[(String, String)] = [],
+  fs~ : FileSystem = FileSystem::native(),
   name : String,
 ) -> Result[Recipe, RecipeError] {
   try {
@@ -531,7 +531,7 @@ fn prepend_before_dash_dash(
 /// specifies a command then it is inserted after the first argument of
 /// [argv], unless the second argument is a prefix of the command, in which
 /// case the second argument is replaced by the command.
-pub fn Recipe::argv(self : Recipe, argv? : Array[String] = []) -> Array[String] {
+pub fn Recipe::argv(self : Recipe, argv~ : Array[String] = []) -> Array[String] {
   match self.command() {
     None => prepend_before_dash_dash(argv, self.args())
     Some(cmd) => {

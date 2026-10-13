@@ -88,9 +88,9 @@ fn find_level(
 /// optimization passes of the level, then the selected passes (looked up
 /// by name). Fails on unknown levels or pass names.
 pub fn pipeline(
-  normalization? : String = "0",
-  optimization? : String = "1",
-  passes? : ArrayView[String] = [],
+  normalization~ : String = "0",
+  optimization~ : String = "1",
+  passes~ : ArrayView[String] = [],
 ) -> Result[Array[@types.BilPass], String] {
   let norm = match find_level(normalizations(), normalization) {
     Some(ps) => ps
@@ -113,9 +113,9 @@ pub fn pipeline(
 ///|
 /// Selects the pipeline (upstream `Bil.select_passes`).
 pub fn select(
-  normalization? : String = "0",
-  optimization? : String = "1",
-  passes? : ArrayView[String] = [],
+  normalization~ : String = "0",
+  optimization~ : String = "1",
+  passes~ : ArrayView[String] = [],
 ) -> Result[Unit, String] {
   match pipeline(normalization~, optimization~, passes~) {
     Ok(ps) => {

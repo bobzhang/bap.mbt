@@ -7,7 +7,7 @@ let reader_abbrev : Bytes = b"\x01\x2e\x00\x03\x08\x11\x01\x12\x0b\x00\x00\x00"
 ///|
 /// A DWARF4 32-bit compilation unit with one function DIE. With
 /// `terminator = 0x7f` the DIE list ends with an unknown abbreviation code.
-fn reader_unit(name : String, low : Byte, terminator? : Byte = 0) -> Bytes {
+fn reader_unit(name : String, low : Byte, terminator~ : Byte = 0) -> Bytes {
   let body : Array[Byte] = [0x04, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04, 0x01]
   for ch in name {
     body.push(ch.to_int().to_byte())

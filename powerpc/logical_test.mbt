@@ -46,7 +46,7 @@ fn logic3(
   rb : String,
   x : Int64,
   y : Int64,
-  word? : UInt,
+  word? : UInt32,
 ) -> Run raise {
   run(
     a,

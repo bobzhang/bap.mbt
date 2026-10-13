@@ -79,7 +79,7 @@ test "updating the configuration" {
 
 ///|
 /// A deterministic "random" generator cycling through `values`.
-fn cycling(values : Array[Int]) -> (Int) -> Int {
+fn cycling(values : Array[Int32]) -> (Int32) -> Int32 {
   let i = Ref(0)
   limit => {
     let v = values[i.val % values.length()] % limit

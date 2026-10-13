@@ -5,7 +5,7 @@
 ///|
 /// SPR number of the split 10-bit field of `mtspr`/`mfspr`
 /// (`spr[5:9] || spr[0:4]`).
-fn spr_field(w : UInt) -> Int {
+fn spr_field(w : UInt32) -> Int32 {
   (field(w, 16, 20) << 5) | field(w, 11, 15)
 }
 
@@ -19,7 +19,7 @@ let spr_kinds : Array[@mc.Kind] = [MayLoad, MayStore]
 /// special purpose register `spr` (`mfxer`, `mtsrr0`, ...), with the index
 /// operand of the BAT registers (`mfibatu 3, 0`). Some registers are
 /// only named in reads (`from`, `mfspr`) or only in writes (`mtspr`).
-fn spr_mnemonic(spr : Int, from~ : Bool) -> (String, Int?)? {
+fn spr_mnemonic(spr : Int32, from~ : Bool) -> (String, Int32?)? {
   match spr {
     1 => Some(("xer", None))
     4 if from => Some(("rtcu", None))
@@ -39,7 +39,7 @@ fn spr_mnemonic(spr : Int, from~ : Bool) -> (String, Int?)? {
     285 if !from => Some(("tbu", None))
     287 if from => Some(("pvr", None))
     512 => Some(("spefscr", None))
-    528..=543 => {
+    528..<=543 => {
       let n = spr - 528
       let kind = if n < 8 { "ibat" } else { "dbat" }
       let half = if n % 2 == 0 { "u" } else { "l" }
@@ -67,7 +67,7 @@ fn sub_alias(spec : Spec, mnemonic : String, rc : Bool) -> Spec {
 }
 
 ///|
-fn decode_x31(w : UInt) -> Spec? {
+fn decode_x31(w : UInt32) -> Spec? {
   let rt = field(w, 6, 10)
   let ra = field(w, 11, 15)
   let rb = field(w, 16, 20)

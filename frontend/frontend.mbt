@@ -30,7 +30,7 @@ pub let man : String =
   #|
 
 ///|
-fn pad_right(s : String, width : Int) -> String {
+fn pad_right(s : String, width : Int32) -> String {
   if s.length() >= width {
     s
   } else {
@@ -103,14 +103,14 @@ fn load_recipe(spec : String) -> @bap_main.Recipe raise {
 /// (`plugin_table()` by default).
 pub fn run(
   argv : Array[String],
-  env? : (String) -> String? = _ => None,
-  fs? : @bap_main.FileSystem = @bap_main.FileSystem::native(),
-  out? : (String) -> Unit = _ => (),
-  err? : (String) -> Unit = _ => (),
-  read_line? : () -> String? = () => None,
-  write_file? : (String, String) -> Result[Unit, String] = @disassemble.default_write_file,
-  plugins? : Array[StaticPlugin] = plugin_table(),
-) -> Int {
+  env~ : (String) -> String? = _ => None,
+  fs~ : @bap_main.FileSystem = @bap_main.FileSystem::native(),
+  out~ : (String) -> Unit = _ => (),
+  err~ : (String) -> Unit = _ => (),
+  read_line~ : () -> String? = () => None,
+  write_file~ : (String, String) -> Result[Unit, String] = @disassemble.default_write_file,
+  plugins~ : Array[StaticPlugin] = plugin_table(),
+) -> Int32 {
   let io = { out, err, read_line, write_file, argv, }
   @bap_main.reset()
   @bap_main.set_file_system(fs)

@@ -40,7 +40,7 @@ fn agent_id_of_name(name : Name) -> String {
 }
 
 ///|
-fn AgentReliability::weight(self : AgentReliability) -> Int {
+fn AgentReliability::weight(self : AgentReliability) -> Int32 {
   match self {
     Authorative => 16
     Reliable => 8
@@ -79,8 +79,8 @@ pub fn AgentReliability::unreliable() -> AgentReliability {
 pub fn Agent::register(
   name : String,
   pkg? : String,
-  desc? : String = "no description provided",
-  reliability? : AgentReliability = Trustworthy,
+  desc~ : String = "no description provided",
+  reliability~ : AgentReliability = Trustworthy,
 ) -> Result[Agent, String] {
   let full_name = Name::create(name, pkg?)
   let id = agent_id_of_name(full_name)
@@ -166,6 +166,6 @@ pub fn Agent::set_reliability(
 }
 
 ///|
-pub fn Agent::weight(self : Agent) -> Int {
+pub fn Agent::weight(self : Agent) -> Int32 {
   self.reliability().weight()
 }

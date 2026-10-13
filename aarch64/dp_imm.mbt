@@ -3,7 +3,7 @@
 
 ///|
 /// `AArch64_AM::isMOVZMovAlias`.
-fn is_movz_mov_alias(value : UInt64, shift : Int, width : Int) -> Bool {
+fn is_movz_mov_alias(value : UInt64, shift : Int32, width : Int32) -> Bool {
   let value = if width == 32 { value & 0xFFFFFFFFUL } else { value }
   if value == 0UL && shift != 0 {
     return false
@@ -13,7 +13,7 @@ fn is_movz_mov_alias(value : UInt64, shift : Int, width : Int) -> Bool {
 
 ///|
 /// `AArch64_AM::isAnyMOVZMovAlias`.
-fn is_any_movz_mov_alias(value : UInt64, width : Int) -> Bool {
+fn is_any_movz_mov_alias(value : UInt64, width : Int32) -> Bool {
   for shift = 0; shift <= width - 16; shift = shift + 16 {
     if is_movz_mov_alias(value, shift, width) {
       return true
@@ -24,7 +24,7 @@ fn is_any_movz_mov_alias(value : UInt64, width : Int) -> Bool {
 
 ///|
 /// `AArch64_AM::isMOVNMovAlias`.
-fn is_movn_mov_alias(value : UInt64, shift : Int, width : Int) -> Bool {
+fn is_movn_mov_alias(value : UInt64, shift : Int32, width : Int32) -> Bool {
   if is_any_movz_mov_alias(value, width) {
     return false
   }
@@ -35,7 +35,7 @@ fn is_movn_mov_alias(value : UInt64, shift : Int, width : Int) -> Bool {
 
 ///|
 /// `AArch64_AM::isAnyMOVWMovAlias`.
-fn is_any_movw_mov_alias(value : UInt64, width : Int) -> Bool {
+fn is_any_movw_mov_alias(value : UInt64, width : Int32) -> Bool {
   if is_any_movz_mov_alias(value, width) {
     return true
   }
@@ -46,7 +46,7 @@ fn is_any_movw_mov_alias(value : UInt64, width : Int) -> Bool {
 
 ///|
 /// A `width`-bit value as a signed decimal immediate.
-fn signed_imm_text(value : UInt64, width : Int) -> String {
+fn signed_imm_text(value : UInt64, width : Int32) -> String {
   let v = if width == 32 {
     value.reinterpret_as_int64() << 32 >> 32
   } else {
@@ -57,7 +57,7 @@ fn signed_imm_text(value : UInt64, width : Int) -> String {
 
 ///|
 /// Data processing (immediate).
-fn a64_dp_imm(w : UInt) -> A64Insn? {
+fn a64_dp_imm(w : UInt32) -> A64Insn? {
   let sf = bit(w, 31)
   let sz = size_char(sf)
   let width = if sf { 64 } else { 32 }
@@ -217,10 +217,10 @@ fn a64_dp_imm(w : UInt) -> A64Insn? {
 fn sbfm_ubfm_text(
   signed : Bool,
   sf : Bool,
-  rd : Int,
-  rn : Int,
-  immr : Int,
-  imms : Int,
+  rd : Int32,
+  rn : Int32,
+  immr : Int32,
+  imms : Int32,
 ) -> String {
   let d = reg_asm(sf, rd)
   let n = reg_asm(sf, rn)
@@ -252,7 +252,13 @@ fn sbfm_ubfm_text(
 ///|
 /// The assembly of `BFM` with LLVM's preferred aliases (`bfc` needs the
 /// v8.2a features, which are enabled).
-fn bfm_text(sf : Bool, rd : Int, rn : Int, immr : Int, imms : Int) -> String {
+fn bfm_text(
+  sf : Bool,
+  rd : Int32,
+  rn : Int32,
+  immr : Int32,
+  imms : Int32,
+) -> String {
   let d = reg_asm(sf, rd)
   let width = if sf { 64 } else { 32 }
   let lsb = (width - immr) % width

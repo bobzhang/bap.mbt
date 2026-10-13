@@ -24,7 +24,7 @@ priv struct Reg {
   cls : RegClass
   /// the index of the underlying general purpose (0-15) or vector (0-31)
   /// register, `-1` for the others
-  index : Int
+  index : Int32
 }
 
 ///|
@@ -103,7 +103,7 @@ fn Tools::fail(self : Tools, msg : String) -> @mc.LiftError {
 
 ///|
 /// The mode size in bits (upstream `RR.size`).
-fn Tools::size(self : Tools) -> Int {
+fn Tools::size(self : Tools) -> Int32 {
   self.mode.width()
 }
 
@@ -142,7 +142,7 @@ fn Tools::reg(self : Tools, name : String) -> Reg raise @mc.LiftError {
 
 ///|
 /// Upstream `RR.width`.
-fn Tools::width(self : Tools, r : Reg) -> Int raise @mc.LiftError {
+fn Tools::width(self : Tools, r : Reg) -> Int32 raise @mc.LiftError {
   match r.cls {
     R8L | R8H => 8
     R16 => 16
@@ -222,7 +222,7 @@ fn Tools::set(
 /// Upstream `FR.after_sub`: the flags after `diff = op1 - op2`.
 fn after_sub(
   diff : @types.Exp,
-  size : Int,
+  size : Int32,
   op1 : @types.Exp,
   op2 : @types.Exp,
 ) -> Array[@types.Stmt] {
@@ -238,8 +238,8 @@ fn after_sub(
 
 ///|
 /// Upstream `FR.parity`.
-fn parity(width : Int, result : @types.Exp) -> @types.Exp {
-  let i = (value : Int) => int_exp(value, width)
+fn parity(width : Int32, result : @types.Exp) -> @types.Exp {
+  let i = (value : Int32) => int_exp(value, width)
   let v2 = new_tmp(width)
   e_not(
     e_low(
@@ -272,7 +272,7 @@ fn lock(bil : Array[@types.Stmt]) -> Array[@types.Stmt] {
 ///|
 /// Upstream `X86_prefix.exists`: whether the known prefix bytes at the
 /// start of the instruction include `prefix`.
-fn Tools::has_prefix(self : Tools, prefix : Int) -> Bool {
+fn Tools::has_prefix(self : Tools, prefix : Int32) -> Bool {
   for b in self.insn.raw {
     let b = b.to_int()
     if !is_legacy_prefix(b) {
@@ -291,7 +291,7 @@ priv enum Mem {
   Segment(
     seg~ : Reg?,
     base~ : MemBase?,
-    scale~ : Int?,
+    scale~ : Int32?,
     index~ : Reg?,
     disp~ : Int64
   )
@@ -305,7 +305,7 @@ priv enum MemBase {
 
 ///|
 /// Upstream `MM.addr_size`.
-fn Tools::addr_size(self : Tools) -> Int {
+fn Tools::addr_size(self : Tools) -> Int32 {
   self.mode.width()
 }
 
@@ -425,7 +425,7 @@ fn Tools::addr(self : Tools, m : Mem) -> @types.Exp raise @mc.LiftError {
 fn Tools::load_from(
   self : Tools,
   addr : @types.Exp,
-  size : Int,
+  size : Int32,
 ) -> @types.Exp raise @mc.LiftError {
   e_load(vars_of_mode(self.mode).mem, addr, size) catch {
     _ => raise self.fail("invalid load size")
@@ -437,7 +437,7 @@ fn Tools::load_from(
 fn Tools::store_to(
   self : Tools,
   addr : @types.Exp,
-  size : Int,
+  size : Int32,
   data : @types.Exp,
 ) -> @types.Stmt raise @mc.LiftError {
   store_stmt(vars_of_mode(self.mode).mem, addr, size, data) catch {
@@ -449,7 +449,7 @@ fn Tools::store_to(
 fn Tools::load(
   self : Tools,
   m : Mem,
-  size : Int,
+  size : Int32,
 ) -> @types.Exp raise @mc.LiftError {
   self.load_from(self.addr(m), size)
 }
@@ -458,7 +458,7 @@ fn Tools::load(
 fn Tools::store(
   self : Tools,
   m : Mem,
-  size : Int,
+  size : Int32,
   data : @types.Exp,
 ) -> @types.Stmt raise @mc.LiftError {
   self.store_to(self.addr(m), size, data)
@@ -467,7 +467,7 @@ fn Tools::store(
 ///|
 /// Upstream `IM.get ~width` (`Imm.to_word`): the immediate truncated to
 /// `width` bits.
-fn imm_get(value : Int64, width : Int) -> @types.Exp {
+fn imm_get(value : Int64, width : Int32) -> @types.Exp {
   int64_exp(value, width)
 }
 
@@ -496,7 +496,7 @@ fn op_imm(op : @mc.Op) -> Int64? {
 ///|
 /// A memory operand (base, scale, index, disp, seg) at position `k` of the
 /// operands.
-fn Tools::mem_at(self : Tools, k : Int) -> Mem? raise @mc.LiftError {
+fn Tools::mem_at(self : Tools, k : Int32) -> Mem? raise @mc.LiftError {
   let ops = self.insn.ops
   guard k + 5 <= ops.length() else { return None }
   match

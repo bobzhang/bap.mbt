@@ -3,7 +3,7 @@
 // be rejected, never abort, and loaded segments must describe their bytes.
 
 ///|
-fn image_fixture(which : Int) -> Bytes {
+fn image_fixture(which : Int32) -> Bytes {
   match which {
     0 => @objects.x86_64_elf_object()
     1 => @objects.aarch64_elf_object()
@@ -17,13 +17,13 @@ fn image_fixture(which : Int) -> Bytes {
 }
 
 ///|
-let image_fixture_count : Int = 8
+let image_fixture_count : Int32 = 8
 
 ///|
 /// A fixture with a few bytes changed or its tail cut off.
 struct ImageMutant {
-  which : Int
-  edits : Array[(Int, Int, Int)] // (kind, position seed, byte)
+  which : Int32
+  edits : Array[(Int32, Int32, Int32)] // (kind, position seed, byte)
 } derive(Debug)
 
 ///|

@@ -9,7 +9,7 @@ struct Env {
   symtab : @project.ProjectDisassemblySymtab
   cfg : @project.ProjectDisassemblyCfg
   memory : @memory.MemMap[String]
-  addr_bits : Int
+  addr_bits : Int32
 }
 
 ///|
@@ -17,7 +17,7 @@ struct Env {
 /// default to the ones reconstructed from the project disassembly.
 pub fn Env::new(
   project : @project.Project,
-  options? : Options = Options::new(),
+  options~ : Options = Options::new(),
   symtab? : @project.ProjectDisassemblySymtab,
   cfg? : @project.ProjectDisassemblyCfg,
 ) -> Env {

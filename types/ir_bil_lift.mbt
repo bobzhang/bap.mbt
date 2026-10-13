@@ -38,7 +38,7 @@ priv struct BirCfg {
 /// `Theory.Label.is_subroutine` property of labels.
 priv struct BirContext {
   pkg : String?
-  addr_width : Int?
+  addr_width : Int32?
   is_subroutine : (Tid) -> Bool
 }
 
@@ -53,7 +53,7 @@ fn BirCfg::is_empty(self : BirCfg) -> Bool {
 }
 
 ///|
-fn bir_blk(name : Tid, keep? : Bool = false, weak? : Bool = false) -> BirBlk {
+fn bir_blk(name : Tid, keep~ : Bool = false, weak~ : Bool = false) -> BirBlk {
   { name, keep, weak, defs: [], jmps: [], }
 }
 
@@ -97,7 +97,7 @@ fn BirBlk::push_jmp(self : BirBlk, jmp : Term[Jmp]) -> BirBlk {
 ///|
 /// Upstream `IR.goto`: a jump to `dst`, which is a call (the destination is
 /// the alternate route) when `dst` is a subroutine.
-fn bir_goto_jmp(dst : Tid, is_call? : Bool = false, cond? : Exp) -> Term[Jmp] {
+fn bir_goto_jmp(dst : Tid, is_call~ : Bool = false, cond? : Exp) -> Term[Jmp] {
   if is_call {
     Jmp::create_call(Call::create(target=Label::direct(dst)), cond?)
   } else {
@@ -449,7 +449,7 @@ fn bir_normalize(entry : Tid, blks : Array[BirBlk]) -> Array[BirBlk] {
     }
     graph[blk.name] = blk
   }
-  let refs : Map[Tid, Int] = Map([])
+  let refs : Map[Tid, Int32] = Map([])
   for blk in blks {
     for jmp in blk.jmps {
       if jmp.dst() is Some(ResolvedDst(tid)) && graph.contains(tid) {
@@ -538,7 +538,7 @@ fn bir_reify(cfg : BirCfg) -> Array[Term[Blk]] {
 ///|
 fn bir_context(
   pkg : String?,
-  addr_width : Int?,
+  addr_width : Int32?,
   is_subroutine : ((Tid) -> Bool)?,
 ) -> BirContext {
   {
@@ -569,7 +569,7 @@ fn bir_context(
 pub fn Blk::of_bil(
   bil : Array[Stmt],
   pkg? : String,
-  addr_width? : Int,
+  addr_width? : Int32,
   is_subroutine? : (Tid) -> Bool,
 ) -> Array[Term[Blk]] {
   bir_reify(bir_context(pkg, addr_width, is_subroutine).stmts(bil))

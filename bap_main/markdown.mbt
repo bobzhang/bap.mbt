@@ -93,7 +93,7 @@ fn md_list_item(s : String) -> (String, String)? {
     ('*' | '+' | '-', ' ') =>
       Some((String::from_array(cs[:1]), String::from_array(cs[2:])))
     (x, _) =>
-      if x is ('0'..='9') {
+      if x is ('0'..<='9') {
         for n = 1; n + 1 < len; n = n + 1 {
           match (cs[n], cs[n + 1]) {
             ('.' | ')', ' ') =>
@@ -103,7 +103,7 @@ fn md_list_item(s : String) -> (String, String)? {
                   strip(String::from_array(cs[n + 1:])),
                 ),
               )
-            (d, _) if d is ('0'..='9') => continue
+            (d, _) if d is ('0'..<='9') => continue
             _ => return None
           }
         }
@@ -246,7 +246,7 @@ fn first_sentence_of_man(man : Array[ManBlock]) -> String? {
 /// Lowercases the first character (OCaml `String.uncapitalize`).
 fn uncapitalize(s : String) -> String {
   match s.to_array() {
-    [c, .. rest] if c is ('A'..='Z') =>
+    [c, .. rest] if c is ('A'..<='Z') =>
       String::from_array([(c.to_int() + 32).unsafe_to_char(), ..rest])
     _ => s
   }
@@ -254,7 +254,7 @@ fn uncapitalize(s : String) -> String {
 
 ///|
 fn short_description(
-  default? : String = "no description provided",
+  default~ : String = "no description provided",
   input : String?,
 ) -> String {
   match input {

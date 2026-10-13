@@ -31,7 +31,7 @@ pub(all) enum Counter {
 /// A length bound: at most `limit` events of the kind `counter`.
 pub(all) struct Bound {
   counter : Counter
-  limit : Int
+  limit : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -75,7 +75,7 @@ fn suffix_of_counter(c : Counter) -> String {
 }
 
 ///|
-fn parse_int(s : StringView) -> Int raise BoundParseError {
+fn parse_int(s : StringView) -> Int32 raise BoundParseError {
   @string.parse_int(s) catch {
     _ => raise BoundParseError("Expected a number, got \{s}")
   }
@@ -120,8 +120,8 @@ fn string_of_counter(c : Counter) -> String {
 
 ///|
 priv struct Limits {
-  visited : @immut_hashmap.HashMap[@types.Tid, Int]
-  length : Int
+  visited : @immut_hashmap.HashMap[@types.Tid, Int32]
+  length : Int32
 }
 
 ///|
@@ -133,13 +133,13 @@ let state : @primus.State[Limits] = @primus.State::declare_(
 
 ///|
 /// The number of counted events of the current machine.
-pub fn length(m : @primus.Machine) -> Int {
+pub fn length(m : @primus.Machine) -> Int32 {
   m.get_local(state).length
 }
 
 ///|
 /// How many times the current machine entered the block.
-pub fn visits(m : @primus.Machine, tid : @types.Tid) -> Int {
+pub fn visits(m : @primus.Machine, tid : @types.Tid) -> Int32 {
   m.get_local(state).visited.get(tid).unwrap_or(0)
 }
 
@@ -169,7 +169,7 @@ fn check(m : @primus.Machine, bound : Bound) -> Unit raise {
 ///|
 fn on_blk(
   m : @primus.Machine,
-  max_visited : Int?,
+  max_visited : Int32?,
   blk : @types.Term[@types.Blk],
 ) -> Unit raise {
   let tid = blk.tid()
@@ -190,8 +190,8 @@ fn on_blk(
 /// `max_length` defaults to `default_bound`.
 pub fn install(
   m : @primus.Machine,
-  max_length? : Bound = default_bound,
-  max_visited? : Int,
+  max_length~ : Bound = default_bound,
+  max_visited? : Int32,
 ) -> Unit {
   m.observe(@primus.enter_blk, blk => on_blk(m, max_visited, blk))
   let bound = max_length
@@ -207,7 +207,7 @@ pub fn install(
 /// Registers the `bap:limit` component with the given limits. Idempotent:
 /// returns `false` if the component was already registered (the limits of
 /// the first registration are used).
-pub fn register(max_length? : Bound, max_visited? : Int) -> Bool {
+pub fn register(max_length? : Bound, max_visited? : Int32) -> Bool {
   @primus.Components::register_generic(
     component_name,
     m => install(m, max_length?, max_visited?),
@@ -225,7 +225,7 @@ let enabled : Ref[Bool] = { val: false, }
 ///|
 /// Adds the limits to the legacy main system (upstream does it when
 /// either limit is specified). Idempotent.
-pub fn enable(max_length? : Bound, max_visited? : Int) -> Unit {
+pub fn enable(max_length? : Bound, max_visited? : Int32) -> Unit {
   if !enabled.val {
     enabled.val = true
     @primus.Machine::add_component(m => install(m, max_length?, max_visited?))

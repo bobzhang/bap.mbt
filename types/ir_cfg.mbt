@@ -91,7 +91,7 @@ fn Term::with_cfg_jmps(self : Term[Blk], jmps : Array[Term[Jmp]]) -> Term[Blk] {
 ///|
 fn Term::replace_cfg_jmp(
   self : Term[Blk],
-  pos : Int,
+  pos : Int32,
   jmp : Term[Jmp],
 ) -> Term[Blk] {
   let jmps = self.jmps()
@@ -119,11 +119,11 @@ fn Term::append_cfg_jmps(
 fn Term::cfg_edge_source_at(
   self : Term[Blk],
   dst : Term[Blk],
-  pos : Int,
+  pos : Int32,
 ) -> Term[Blk] {
   let target = Jmp::create_goto(Label::direct(dst.tid()))
   let jmps = self.jmps()
-  let actual_pos = Int::max(0, pos)
+  let actual_pos = Int32::max(0, pos)
   if actual_pos < jmps.length() {
     match jmps[actual_pos].succ_tid_of_jmp() {
       Some(tid) if tid == dst.tid() => self
@@ -140,7 +140,7 @@ fn Term::cfg_edge_source_at(
 }
 
 ///|
-fn Term::remove_cfg_jmp_at(self : Term[Blk], pos : Int) -> Term[Blk] {
+fn Term::remove_cfg_jmp_at(self : Term[Blk], pos : Int32) -> Term[Blk] {
   let jmps = self.jmps()
   if pos < 0 || pos >= jmps.length() {
     self
@@ -160,12 +160,12 @@ pub fn IrCfg::edges(self : IrCfg) -> Array[IrCfgEdge] {
 }
 
 ///|
-pub fn IrCfg::node_count(self : IrCfg) -> Int {
+pub fn IrCfg::node_count(self : IrCfg) -> Int32 {
   self.sub_value.blks().length()
 }
 
 ///|
-pub fn IrCfg::number_of_nodes(self : IrCfg) -> Int {
+pub fn IrCfg::number_of_nodes(self : IrCfg) -> Int32 {
   self.node_count()
 }
 
@@ -178,7 +178,7 @@ fn ir_cfg_contains_pair(
 }
 
 ///|
-pub fn IrCfg::edge_count(self : IrCfg) -> Int {
+pub fn IrCfg::edge_count(self : IrCfg) -> Int32 {
   let pairs : Array[(Tid, Tid)] = []
   for edge in self.edges() {
     let pair = (edge.src().tid(), edge.dst().tid())
@@ -190,7 +190,7 @@ pub fn IrCfg::edge_count(self : IrCfg) -> Int {
 }
 
 ///|
-pub fn IrCfg::number_of_edges(self : IrCfg) -> Int {
+pub fn IrCfg::number_of_edges(self : IrCfg) -> Int32 {
   self.edge_count()
 }
 
@@ -242,7 +242,7 @@ pub fn IrCfg::insert_edge(
   self : IrCfg,
   src : Term[Blk],
   dst : Term[Blk],
-  position? : Int = -1,
+  position~ : Int32 = -1,
 ) -> IrCfg {
   let current_src = match self.sub_value.find_blk(src.tid()) {
     Some(block) => block
@@ -284,7 +284,7 @@ pub fn IrCfg::remove_edge(self : IrCfg, edge : IrCfgEdge) -> IrCfg {
 pub fn IrCfg::update_edge(
   self : IrCfg,
   edge : IrCfgEdge,
-  position~ : Int,
+  position~ : Int32,
 ) -> IrCfg {
   if !edge.mem(self) {
     self
@@ -343,17 +343,17 @@ pub fn IrCfg::inputs(self : IrCfg, blk : Term[Blk]) -> Array[IrCfgEdge] {
 }
 
 ///|
-pub fn IrCfg::out_degree(self : IrCfg, blk : Term[Blk]) -> Int {
+pub fn IrCfg::out_degree(self : IrCfg, blk : Term[Blk]) -> Int32 {
   self.out_edges(blk).length()
 }
 
 ///|
-pub fn IrCfg::in_degree(self : IrCfg, blk : Term[Blk]) -> Int {
+pub fn IrCfg::in_degree(self : IrCfg, blk : Term[Blk]) -> Int32 {
   self.in_edges(blk).length()
 }
 
 ///|
-pub fn IrCfg::degree(self : IrCfg, blk : Term[Blk]) -> Int {
+pub fn IrCfg::degree(self : IrCfg, blk : Term[Blk]) -> Int32 {
   self.in_degree(blk) + self.out_degree(blk)
 }
 

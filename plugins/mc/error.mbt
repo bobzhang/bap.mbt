@@ -6,11 +6,11 @@
 pub(all) enum McFailure {
   BadUserInput
   /// An invalid instruction: the memory, the start and stop offsets.
-  BadInsn(@memory.Memory, Int, Int)
+  BadInsn(@memory.Memory, Int32, Int32)
   CreateMem(String)
   NoInput
   InvalidBase(String)
-  TrailingData(Int)
+  TrailingData(Int32)
   /// The instruction printers of a module: module, format, known formats.
   UnknownFormat(String, String, Array[String])
   NoFormatsExpected(String)
@@ -39,7 +39,7 @@ fn hexdump(mem : @memory.Memory) -> String {
   let bytes = mem.to_bytes()
   let buf = StringBuilder()
   let chars : Array[Byte] = []
-  let print_chars = (off : Int) => {
+  let print_chars = (off : Int32) => {
     if !chars.is_empty() {
       buf.write_string(String::make(3 * off, ' ') + "|")
       for c in chars {
@@ -78,9 +78,9 @@ fn hexdump(mem : @memory.Memory) -> String {
 ///|
 /// Marks the offsets `boff` and `stop` in the hexdump of `mem` with
 /// parentheses (upstream `Bad_insn` printer).
-fn mark_hexdump(mem : @memory.Memory, boff : Int, stop : Int) -> String {
+fn mark_hexdump(mem : @memory.Memory, boff : Int32, stop : Int32) -> String {
   let dump = hexdump(mem).to_array()
-  let pos = (off : Int) => {
+  let pos = (off : Int32) => {
     let line = boff / 16
     line * 77 + off % 16 * 3 + 9
   }

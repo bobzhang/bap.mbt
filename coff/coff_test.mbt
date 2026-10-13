@@ -7,7 +7,7 @@ fn[T] ok(r : Result[T, String]) -> T raise {
 }
 
 ///|
-fn hex(x : UInt) -> String {
+fn hex(x : UInt32) -> String {
   "0x" + x.to_string(radix=16)
 }
 

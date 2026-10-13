@@ -2,8 +2,8 @@
 struct Symbol {
   name_value : String
   addr_value : UInt64
-  size_value : Int
-  extra_locations_value : Array[(UInt64, Int)]
+  size_value : Int32
+  extra_locations_value : Array[(UInt64, Int32)]
   function_flag : Bool
   debug_flag : Bool
 }
@@ -12,8 +12,8 @@ struct Symbol {
 pub fn Symbol::create(
   name~ : String,
   addr~ : UInt64,
-  size? : Int = 0,
-  extra_locations? : Array[(UInt64, Int)] = [],
+  size~ : Int32 = 0,
+  extra_locations~ : Array[(UInt64, Int32)] = [],
   is_function? : Bool,
   is_debug? : Bool,
 ) -> Symbol {
@@ -38,17 +38,17 @@ pub fn Symbol::addr(self : Symbol) -> UInt64 {
 }
 
 ///|
-pub fn Symbol::size(self : Symbol) -> Int {
+pub fn Symbol::size(self : Symbol) -> Int32 {
   self.size_value
 }
 
 ///|
-pub fn Symbol::extra_locations(self : Symbol) -> Array[(UInt64, Int)] {
+pub fn Symbol::extra_locations(self : Symbol) -> Array[(UInt64, Int32)] {
   self.extra_locations_value.copy()
 }
 
 ///|
-pub fn Symbol::locations(self : Symbol) -> Array[(UInt64, Int)] {
+pub fn Symbol::locations(self : Symbol) -> Array[(UInt64, Int32)] {
   let locations = [(self.addr_value, self.size_value)]
   for location in self.extra_locations_value {
     locations.push(location)
@@ -68,7 +68,7 @@ pub fn Symbol::is_debug(self : Symbol) -> Bool {
 
 ///|
 fn image_symbol_location_contains(
-  location : (UInt64, Int),
+  location : (UInt64, Int32),
   addr : UInt64,
 ) -> Bool {
   let (base, size) = location
@@ -92,7 +92,7 @@ pub fn Symbol::to_string(self : Symbol) -> String {
 }
 
 ///|
-pub fn Symbol::hash(self : Symbol) -> Int {
+pub fn Symbol::hash(self : Symbol) -> Int32 {
   self.addr().to_string().hash()
 }
 
@@ -102,7 +102,10 @@ pub fn Symbol::equal(self : Symbol, other : Symbol) -> Bool {
 }
 
 ///|
-fn symbol_location_compare(left : (UInt64, Int), right : (UInt64, Int)) -> Int {
+fn symbol_location_compare(
+  left : (UInt64, Int32),
+  right : (UInt64, Int32),
+) -> Int32 {
   let addr_order = left.0.compare(right.0)
   if addr_order != 0 {
     return addr_order
@@ -112,9 +115,9 @@ fn symbol_location_compare(left : (UInt64, Int), right : (UInt64, Int)) -> Int {
 
 ///|
 fn symbol_locations_compare(
-  left : Array[(UInt64, Int)],
-  right : Array[(UInt64, Int)],
-) -> Int {
+  left : Array[(UInt64, Int32)],
+  right : Array[(UInt64, Int32)],
+) -> Int32 {
   let length_order = left.length().compare(right.length())
   if length_order != 0 {
     return length_order
@@ -129,7 +132,7 @@ fn symbol_locations_compare(
 }
 
 ///|
-pub fn Symbol::compare(self : Symbol, other : Symbol) -> Int {
+pub fn Symbol::compare(self : Symbol, other : Symbol) -> Int32 {
   let name_order = self.name_value.compare(other.name_value)
   if name_order != 0 {
     return name_order

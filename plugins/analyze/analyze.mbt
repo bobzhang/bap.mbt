@@ -261,13 +261,13 @@ fn dispatch(line : String, session : Session) -> Unit raise AnalyzeError {
 /// reads the commands with `read_line` until the end of the input or the
 /// `quit` directive, reporting the errors to `err` and continuing.
 pub fn run(
-  project? : String = "a.proj",
-  commands? : Array[String] = [],
+  project~ : String = "a.proj",
+  commands~ : Array[String] = [],
   script? : String,
-  read_line? : () -> String? = () => None,
+  read_line~ : () -> String? = () => None,
   out? : (String) -> Unit,
-  err? : (String) -> Unit = _ => (),
-  write_file? : (String, String) -> Result[Unit, String] = (path, _) => {
+  err~ : (String) -> Unit = _ => (),
+  write_file~ : (String, String) -> Result[Unit, String] = (path, _) => {
     Err("can't write \{path}")
   },
 ) -> Unit raise AnalyzeError {
@@ -324,10 +324,10 @@ let printer_registered : Ref[Bool] = Ref(false)
 /// Declares the `analyze` plugin and command in the `bap_main`
 /// framework. Does nothing if it is already registered.
 pub fn declare_plugin(
-  out? : (String) -> Unit = s => println(s.trim_end(chars="\n")),
-  err? : (String) -> Unit = s => println(s.trim_end(chars="\n")),
-  read_line? : () -> String? = () => None,
-  write_file? : (String, String) -> Result[Unit, String] = (path, _) => {
+  out~ : (String) -> Unit = s => println(s.trim_end(chars="\n")),
+  err~ : (String) -> Unit = s => println(s.trim_end(chars="\n")),
+  read_line~ : () -> String? = () => None,
+  write_file~ : (String, String) -> Result[Unit, String] = (path, _) => {
     Err("can't write \{path}")
   },
 ) -> Unit raise {
@@ -405,7 +405,7 @@ pub fn declare_plugin(
 ///|
 /// OCaml's `String.compare`: the lexicographic order (MoonBit's `String`
 /// comparison orders by length first).
-fn lex_compare(a : String, b : String) -> Int {
+fn lex_compare(a : String, b : String) -> Int32 {
   let n = if a.length() < b.length() { a.length() } else { b.length() }
   for i in 0..<n {
     let c = a[i].compare(b[i])

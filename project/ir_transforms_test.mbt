@@ -9,7 +9,7 @@ fn ir_reg8(name : String) -> @types.Var {
 }
 
 ///|
-fn ir_word8(value : Int) -> @types.Exp raise @bitvec.BitVecError {
+fn ir_word8(value : Int32) -> @types.Exp raise @bitvec.BitVecError {
   @types.Exp::int(@types.Word::of_int(width=8, value))
 }
 

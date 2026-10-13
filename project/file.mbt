@@ -122,7 +122,7 @@ fn project_input_load_libraries(
   loader : String?,
   target : @core_theory.Target?,
   initial_bias : UInt64?,
-  allow_main_library? : Bool = false,
+  allow_main_library~ : Bool = false,
 ) -> Result[Array[Library], String] {
   let loaded = []
   let mut next_bias = initial_bias
@@ -169,9 +169,9 @@ fn project_raw_endian(target : @core_theory.Target) -> @bitvec.Endian {
 pub fn ProjectInput::raw_file(
   path : String,
   target~ : @core_theory.Target,
-  base? : UInt64 = 0UL,
-  offset? : Int = 0,
-  length? : Int,
+  base~ : UInt64 = 0UL,
+  offset~ : Int32 = 0,
+  length? : Int32,
   entry? : UInt64,
   filename? : String,
 ) -> Result[ProjectInput, String] {
@@ -198,9 +198,9 @@ pub fn ProjectInput::raw_file(
 pub fn Project::raw_file(
   path : String,
   target~ : @core_theory.Target,
-  base? : UInt64 = 0UL,
-  offset? : Int = 0,
-  length? : Int,
+  base~ : UInt64 = 0UL,
+  offset~ : Int32 = 0,
+  length? : Int32,
   entry? : UInt64,
   filename? : String,
 ) -> Result[Project, String] {
@@ -221,9 +221,9 @@ pub fn Project::raw_file(
 pub fn ProjectInput::binary(
   target~ : @core_theory.Target,
   filename~ : String,
-  base? : UInt64 = 0UL,
-  offset? : Int = 0,
-  length? : Int,
+  base~ : UInt64 = 0UL,
+  offset~ : Int32 = 0,
+  length? : Int32,
   entry? : UInt64,
 ) -> Result[ProjectInput, String] {
   match
@@ -246,9 +246,9 @@ pub fn ProjectInput::binary(
 pub fn Project::binary(
   target~ : @core_theory.Target,
   filename~ : String,
-  base? : UInt64 = 0UL,
-  offset? : Int = 0,
-  length? : Int,
+  base~ : UInt64 = 0UL,
+  offset~ : Int32 = 0,
+  length? : Int32,
   entry? : UInt64,
 ) -> Result[Project, String] {
   project_from_input_result(
@@ -275,7 +275,7 @@ pub fn ProjectInputLoader::load_file(
 pub fn ProjectInput::load_file(
   path : String,
   loader~ : String,
-  libraries? : Array[String] = [],
+  libraries~ : Array[String] = [],
   target? : @core_theory.Target,
 ) -> Result[ProjectInput, String] {
   let input_loader = find_input_loader(loader)
@@ -315,7 +315,7 @@ pub fn ProjectInput::load_file(
 pub fn Project::load_file(
   path : String,
   loader~ : String,
-  libraries? : Array[String] = [],
+  libraries~ : Array[String] = [],
   target? : @core_theory.Target,
 ) -> Result[Project, String] {
   project_from_input_result(
@@ -327,7 +327,7 @@ pub fn Project::load_file(
 pub fn ProjectInput::file(
   filename~ : String,
   loader? : String,
-  libraries? : Array[String] = [],
+  libraries~ : Array[String] = [],
   target? : @core_theory.Target,
 ) -> Result[ProjectInput, String] {
   match loader {
@@ -341,7 +341,7 @@ pub fn ProjectInput::file(
 pub fn Project::file(
   filename~ : String,
   loader? : String,
-  libraries? : Array[String] = [],
+  libraries~ : Array[String] = [],
   target? : @core_theory.Target,
 ) -> Result[Project, String] {
   project_from_input_result(
@@ -353,7 +353,7 @@ pub fn Project::file(
 pub fn Project::create_file(
   filename~ : String,
   loader? : String,
-  libraries? : Array[String] = [],
+  libraries~ : Array[String] = [],
   target? : @core_theory.Target,
   disassembler? : String,
   driver_source? : ProjectDisassemblySource[ProjectDisassemblyDriver],
@@ -385,7 +385,7 @@ pub fn Project::create_file(
 pub fn Project::create_file_named(
   filename~ : String,
   loader? : String,
-  libraries? : Array[String] = [],
+  libraries~ : Array[String] = [],
   target? : @core_theory.Target,
   disassembler? : String,
   driver_source? : String,
@@ -417,7 +417,7 @@ pub fn Project::create_file_named(
 pub fn ProjectInput::load_file_for_filename(
   path : String,
   filename? : String,
-  libraries? : Array[String] = [],
+  libraries~ : Array[String] = [],
   target? : @core_theory.Target,
 ) -> Result[ProjectInput, String] {
   let selected_filename = match filename {
@@ -460,7 +460,7 @@ pub fn ProjectInput::load_file_for_filename(
 pub fn Project::load_file_for_filename(
   path : String,
   filename? : String,
-  libraries? : Array[String] = [],
+  libraries~ : Array[String] = [],
   target? : @core_theory.Target,
 ) -> Result[Project, String] {
   project_from_input_result(

@@ -215,7 +215,7 @@ pub fn pos_to_string(pos : @primus.Pos) -> String {
 let trace_state : @primus.State[@list.List[@primus.Pos]] = @primus.State::declare_(
   uuid="2fdb0758-3233-4d69-b2e6-704b303ac03a",
   name="primus-debug",
-  _ => @list.empty(),
+  _ => @list.List([]),
 )
 
 ///|
@@ -230,8 +230,8 @@ pub fn trace(m : @primus.Machine) -> Array[@primus.Pos] {
 /// recorded and the trace is printed when the system stops.
 pub fn install(
   m : @primus.Machine,
-  traceback? : Int,
-  out? : (String) -> Unit = stdout_sink,
+  traceback? : Int32,
+  out~ : (String) -> Unit = stdout_sink,
 ) -> Unit {
   if traceback is Some(_) {
     m.observe(@primus.enter_pos, p => {
@@ -287,11 +287,11 @@ let started : Ref[Bool] = { val: false, }
 /// output goes to `output` (a file) or to `out` (standard output by
 /// default). Does nothing if monitoring was already started.
 pub fn start_monitoring(
-  observations? : Array[String] = [],
+  observations~ : Array[String] = [],
   output? : String,
-  rules? : Array[String] = [],
-  traceback? : Int,
-  out? : (String) -> Unit = stdout_sink,
+  rules~ : Array[String] = [],
+  traceback? : Int32,
+  out~ : (String) -> Unit = stdout_sink,
 ) -> Unit raise PrintError {
   if started.val {
     return

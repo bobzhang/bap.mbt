@@ -21,7 +21,7 @@ fn kind_name(kind : @mc.Kind) -> String {
 
 ///|
 /// One line per word: the decoded instruction, its assembly and kinds.
-fn listing(a : @powerpc.AddrSize, words : Array[UInt]) -> String {
+fn listing(a : @powerpc.AddrSize, words : Array[UInt32]) -> String {
   words
   .map(word => {
     let hex = word.to_string(radix=16).pad_start(8, '0')
@@ -43,7 +43,7 @@ fn listing(a : @powerpc.AddrSize, words : Array[UInt]) -> String {
 
 ///|
 test "compiler-generated code" {
-  let words : Array[UInt] = [
+  let words : Array[UInt32] = [
     0x9421fff0, // stwu r1, -16(r1)
      0x7c0802a6, // mflr r0
      0x90010014, // stw r0, 20(r1)
@@ -94,7 +94,7 @@ test "compiler-generated code" {
       #|4200fff8  BDNZ -2  | bdnz .-8  | cond,term,flow
     ),
   )
-  let words64 : Array[UInt] = [
+  let words64 : Array[UInt32] = [
     0xf821ff91, // stdu r1, -112(r1)
      0xe8010010, // ld r0, 16(r1)
      0xf8010010, // std r0, 16(r1)
@@ -177,7 +177,7 @@ fn sorted_kinds(kinds : String) -> String {
 
 ///|
 /// Little-endian encoding of an instruction word.
-fn word_bytes_le(word : UInt) -> Bytes {
+fn word_bytes_le(word : UInt32) -> Bytes {
   [
     word.to_byte(),
     (word >> 8).to_byte(),

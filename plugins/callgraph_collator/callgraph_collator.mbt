@@ -26,8 +26,8 @@ pub struct CallgraphFilter {
 /// Creates a filter; `ignore_matching` is a PCRE-style regular expression that
 /// ignores functions it partially matches.
 pub fn CallgraphFilter::new(
-  ignore_reserved? : Bool = false,
-  ignore_unresolved? : Bool = false,
+  ignore_reserved~ : Bool = false,
+  ignore_unresolved~ : Bool = false,
   ignore_matching? : String,
 ) -> Result[CallgraphFilter, String] {
   let regex = match ignore_matching {
@@ -163,7 +163,7 @@ pub fn diff_calls(
 
 ///|
 /// The summary line printed after all versions were collated.
-pub fn summary_text(diffs : Int) -> String {
+pub fn summary_text(diffs : Int32) -> String {
   match diffs {
     0 => "All versions have the same callgraph as the base version\n"
     1 => "Found one version that is different\n"
@@ -177,7 +177,7 @@ pub fn summary_text(diffs : Int) -> String {
 pub fn collator(
   filter : CallgraphFilter,
   file? : String,
-  out? : (String) -> Unit = s => println(s.trim_end(chars="\n")),
+  out~ : (String) -> Unit = s => println(s.trim_end(chars="\n")),
 ) -> @project.RegisteredProjectCollator {
   let buffer = StringBuilder()
   let emit = (text : String) => {
@@ -227,8 +227,8 @@ let registered : Ref[Bool] = Ref(false)
 /// Registers the `bap:callgraph` collator. Idempotent: returns `false` when it
 /// was already registered by this package.
 pub fn register(
-  ignore_reserved? : Bool = false,
-  ignore_unresolved? : Bool = false,
+  ignore_reserved~ : Bool = false,
+  ignore_unresolved~ : Bool = false,
   ignore_matching? : String,
   file? : String,
   out? : (String) -> Unit,

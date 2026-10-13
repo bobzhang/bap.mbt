@@ -1,14 +1,14 @@
 ///|
-let fresh_var_counter : Ref[Int] = Ref(0)
+let fresh_var_counter : Ref[Int32] = Ref(0)
 
 ///|
-let scoped_var_depth : Ref[Int] = Ref(0)
+let scoped_var_depth : Ref[Int32] = Ref(0)
 
 ///|
 struct Var {
   sort_value : Sort
   ident_value : String
-  version_value : Int
+  version_value : Int32
   mutable_flag : Bool
   virtual_flag : Bool
 }
@@ -36,7 +36,7 @@ fn next_var_ident() -> String {
 }
 
 ///|
-fn var_parse_int(text : StringView, source : String) -> Result[Int, String] {
+fn var_parse_int(text : StringView, source : String) -> Result[Int32, String] {
   if text.length() == 0 {
     Err("invalid variable identifier: \{source}")
   } else {
@@ -49,7 +49,7 @@ fn var_parse_int(text : StringView, source : String) -> Result[Int, String] {
 }
 
 ///|
-fn var_split_version(text : String) -> Result[(String, Int), String] {
+fn var_split_version(text : String) -> Result[(String, Int32), String] {
   let mut split = -1
   let mut escaped = false
   for i in 0..<text.char_length() {
@@ -228,7 +228,7 @@ pub fn Var::forget(self : Var) -> Var {
 }
 
 ///|
-pub fn Var::versioned(self : Var, version : Int) -> Var {
+pub fn Var::versioned(self : Var, version : Int32) -> Var {
   { ..self, version_value: version, }
 }
 
@@ -247,7 +247,7 @@ pub fn Var::equal(self : Var, other : Var) -> Bool {
 }
 
 ///|
-fn bool_compare(lhs : Bool, rhs : Bool) -> Int {
+fn bool_compare(lhs : Bool, rhs : Bool) -> Int32 {
   if lhs == rhs {
     0
   } else if !lhs && rhs {
@@ -258,7 +258,7 @@ fn bool_compare(lhs : Bool, rhs : Bool) -> Int {
 }
 
 ///|
-pub fn Var::compare(self : Var, other : Var) -> Int {
+pub fn Var::compare(self : Var, other : Var) -> Int32 {
   let ident_order = self.ident_value.compare(other.ident_value)
   if ident_order != 0 {
     return ident_order
@@ -300,7 +300,7 @@ pub fn Var::sort(self : Var) -> Sort {
 }
 
 ///|
-pub fn Var::version(self : Var) -> Int {
+pub fn Var::version(self : Var) -> Int32 {
   self.version_value
 }
 

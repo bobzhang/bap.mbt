@@ -1,7 +1,7 @@
 // The `mc` provider of the Lisp semantics and evaluation of the lifted BIL.
 
 ///|
-fn w(width : Int, n : Int) -> @types.Word {
+fn w(width : Int32, n : Int32) -> @types.Word {
   try! @types.Word::of_int(width~, n)
 }
 
@@ -57,7 +57,7 @@ test "evaluate lifted aarch64 flags" {
       Imm(0),
     ])
     .unwrap()
-  let run = (x1 : Int) => {
+  let run = (x1 : Int32) => {
     let state = @types.BilState::new().set("X1", BilWord(w(64, x1)))
     let s = @types.exec_stmts(bil, state~).unwrap()
     let get = (n : String) => s.get_word(n).unwrap().to_string()

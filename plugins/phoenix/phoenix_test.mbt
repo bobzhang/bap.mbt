@@ -37,7 +37,7 @@ fn block(
 
 ///|
 fn sample_env(
-  options? : @phoenix.Options = @phoenix.Options::new(),
+  options~ : @phoenix.Options = @phoenix.Options::new(),
 ) -> (@project.Project, @phoenix.Env) {
   let b1 = block(0x1000UL, [
     (

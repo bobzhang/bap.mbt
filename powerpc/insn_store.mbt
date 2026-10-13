@@ -11,7 +11,7 @@
 fn store_d(
   cpu : Cpu,
   ops : Operands,
-  width : Int,
+  width : Int32,
 ) -> Array[Rtl] raise @mc.LiftError {
   let rs = cpu.ureg(ops, 0)
   let im = ops.disp(1)
@@ -23,7 +23,7 @@ fn store_d(
 fn store_x(
   cpu : Cpu,
   ops : Operands,
-  width : Int,
+  width : Int32,
 ) -> Array[Rtl] raise @mc.LiftError {
   let rs = cpu.ureg(ops, 0)
   let ra = cpu.sreg(ops, 1)
@@ -35,7 +35,7 @@ fn store_x(
 fn store_du(
   cpu : Cpu,
   ops : Operands,
-  width : Int,
+  width : Int32,
 ) -> Array[Rtl] raise @mc.LiftError {
   let rs = cpu.ureg(ops, 1)
   let im = ops.disp(2)
@@ -47,7 +47,7 @@ fn store_du(
 fn store_xu(
   cpu : Cpu,
   ops : Operands,
-  width : Int,
+  width : Int32,
 ) -> Array[Rtl] raise @mc.LiftError {
   let rs = cpu.ureg(ops, 1)
   let ra = cpu.sreg(ops, 2)

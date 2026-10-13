@@ -37,7 +37,7 @@ fn form(
   name : String,
   mnemonic : String,
   operands : Array[Operand],
-  kinds? : Array[@mc.Kind] = [],
+  kinds~ : Array[@mc.Kind] = [],
   assembly? : String,
 ) -> Form {
   {
@@ -67,19 +67,19 @@ let fpr_abi_names : ReadOnlyArray[String] = [
 
 ///|
 /// Integer register `n` (`X0`..`X31`).
-fn x(n : Int) -> Operand {
+fn x(n : Int32) -> Operand {
   { op: Reg(name="X\{n}", code=n), text: gpr_abi_names[n], }
 }
 
 ///|
 /// Single-precision FP register `n` (`F0_F`..`F31_F`).
-fn fs(n : Int) -> Operand {
+fn fs(n : Int32) -> Operand {
   { op: Reg(name="F\{n}_F", code=n), text: fpr_abi_names[n], }
 }
 
 ///|
 /// Double-precision FP register `n` (`F0_D`..`F31_D`).
-fn fd(n : Int) -> Operand {
+fn fd(n : Int32) -> Operand {
   { op: Reg(name="F\{n}_D", code=n), text: fpr_abi_names[n], }
 }
 
@@ -134,7 +134,7 @@ let call_kinds : Array[@mc.Kind] = [Call, MayAffectControlFlow]
 /// (`C_J`, `C_JR`) are. Deviation: LLVM marks `JAL` and `JALR` as calls
 /// whatever their link register, which makes every `ret` a call that
 /// falls through into the next function.
-fn link_kinds(rd : Int, jump : Array[@mc.Kind]) -> Array[@mc.Kind] {
+fn link_kinds(rd : Int32, jump : Array[@mc.Kind]) -> Array[@mc.Kind] {
   if rd == 0 {
     jump
   } else {

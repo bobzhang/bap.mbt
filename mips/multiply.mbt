@@ -20,7 +20,7 @@ fn wide_product(sign : Sign, x : Exp, y : Exp) -> Exp {
 /// MUL/MUH/MULU/MUHU rd, rs, rt: `rd := part (rs * rt)` over the low words.
 fn mul_word(
   sign : Sign,
-  part : (Int, Exp) -> Exp raise @mc.LiftError,
+  part : (Int32, Exp) -> Exp raise @mc.LiftError,
 ) -> Semantics {
   cpu => {
     let rd = cpu.sreg(0)
@@ -34,7 +34,7 @@ fn mul_word(
 /// DMUL/DMUH/DMULU/DMUHU rd, rs, rt: via a 128-bit product.
 fn mul_doubleword(
   sign : Sign,
-  part : (Int, Exp) -> Exp raise @mc.LiftError,
+  part : (Int32, Exp) -> Exp raise @mc.LiftError,
 ) -> Semantics {
   cpu => {
     let rd = cpu.reg(0, sign)

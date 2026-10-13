@@ -40,7 +40,7 @@ pub fn mode_of_target(t : @core_theory.Target) -> Mode? {
 }
 
 ///|
-fn imm(name : String, width : Int) -> @types.Var {
+fn imm(name : String, width : Int32) -> @types.Var {
   @types.Var::create(name, Imm(width))
 }
 
@@ -156,7 +156,7 @@ fn correct_sp(
   m : @primus.Machine,
   ignore : Array[String],
   sp : @types.Var,
-  addend : Int,
+  addend : Int32,
 ) -> Unit raise {
   guard sp.typ() is Imm(width) else { return }
   let addend = @primus.Value::of_int(m, width~, addend)

@@ -52,13 +52,13 @@ fn fresh32() -> @types.Var {
 }
 
 ///|
-fn word32(value : Int) -> @types.Word {
+fn word32(value : Int32) -> @types.Word {
   try! @types.Word::of_uint64(width=32, value.reinterpret_as_uint().to_uint64())
 }
 
 ///|
 /// `const x` / `bitv (W32.int x)`: a 32-bit constant, wrapping modulo 2^32.
-fn const_(value : Int) -> @types.Exp {
+fn const_(value : Int32) -> @types.Exp {
   Int(word32(value))
 }
 
@@ -141,7 +141,7 @@ fn ite(c : @types.Exp, yes : @types.Exp, no : @types.Exp) -> @types.Exp {
 
 ///|
 /// `nth n x`: bit `n` of `x` as a 1-bit value.
-fn nth(n : Int, x : @types.Exp) -> @types.Exp {
+fn nth(n : Int32, x : @types.Exp) -> @types.Exp {
   Extract(hi=n, lo=n, exp=x)
 }
 
@@ -167,7 +167,7 @@ fn unsigned32(x : @types.Exp) -> @types.Exp {
 }
 
 ///|
-fn low(width : Int, x : @types.Exp) -> @types.Exp {
+fn low(width : Int32, x : @types.Exp) -> @types.Exp {
   Cast(kind=Low, width~, exp=x)
 }
 
@@ -287,12 +287,12 @@ fn branch(
 
 ///|
 /// `goto addr` for a code address.
-fn goto(addr : Int) -> @types.Stmt {
+fn goto(addr : Int32) -> @types.Stmt {
   Jmp(const_(addr))
 }
 
 ///|
 /// `pc +> off`: Thumb pc-relative target, `pc + off + 4` modulo 2^32.
-fn pc_offset(pc : Int, off : Int) -> Int {
+fn pc_offset(pc : Int32, off : Int32) -> Int32 {
   pc + off + 4
 }

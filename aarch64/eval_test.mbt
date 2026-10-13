@@ -9,7 +9,7 @@ fn word64(v : Int64) -> @types.BilValue {
 ///|
 /// Decode the words at `addr` and lift them with the Lisp semantics.
 fn lift_program(
-  words : Array[UInt],
+  words : Array[UInt32],
   addr : UInt64,
 ) -> Array[(String, Array[@types.Stmt])] raise {
   let registry = @mc.Registry::new()

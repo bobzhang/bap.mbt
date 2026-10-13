@@ -1,15 +1,15 @@
 ///|
-let tid_counter : Ref[Int] = Ref(0)
+let tid_counter : Ref[Int32] = Ref(0)
 
 ///|
-let interned_tid_ids : Map[String, Int] = Map([])
+let interned_tid_ids : Map[String, Int32] = Map([])
 
 ///|
 pub(all) struct Tid {
-  id : Int
+  id : Int32
   pkg_value : String
   name : String?
-  ivec_value : Int?
+  ivec_value : Int32?
 } derive(Eq, Hash, Debug)
 
 ///|
@@ -33,7 +33,7 @@ pub extend TidParseError with Eq::{not_equal, equal}
 pub extend TidParseError with Debug::{to_repr}
 
 ///|
-fn next_tid_id() -> Int {
+fn next_tid_id() -> Int32 {
   tid_counter.val = tid_counter.val + 1
   tid_counter.val
 }
@@ -47,14 +47,14 @@ fn tid_default_pkg(pkg : String?) -> String {
 }
 
 ///|
-fn ensure_tid_counter_at_least(id : Int) -> Unit {
+fn ensure_tid_counter_at_least(id : Int32) -> Unit {
   if tid_counter.val < id {
     tid_counter.val = id
   }
 }
 
 ///|
-fn interned_tid_id(kind : String, pkg : String, value : String) -> Int {
+fn interned_tid_id(kind : String, pkg : String, value : String) -> Int32 {
   let key = "\{kind}|\{pkg}|\{value}"
   match interned_tid_ids.get(key) {
     Some(id) => id
@@ -71,7 +71,7 @@ fn register_interned_tid_id(
   kind : String,
   pkg : String,
   value : String,
-  id : Int,
+  id : Int32,
 ) -> Unit {
   interned_tid_ids["\{kind}|\{pkg}|\{value}"] = id
   ensure_tid_counter_at_least(id)
@@ -149,10 +149,10 @@ pub fn Tid::fresh() -> Tid {
 
 ///|
 pub fn Tid::restore(
-  id~ : Int,
+  id~ : Int32,
   pkg? : String,
   name? : String,
-  ivec? : Int,
+  ivec? : Int32,
 ) -> Tid {
   let tid_pkg = tid_default_pkg(pkg)
   match (name, ivec) {
@@ -181,7 +181,7 @@ pub fn Tid::for_addr(addr : Word, pkg? : String) -> Tid {
 }
 
 ///|
-pub fn Tid::for_ivec(ivec : Int, pkg? : String) -> Tid {
+pub fn Tid::for_ivec(ivec : Int32, pkg? : String) -> Tid {
   let tid_pkg = tid_default_pkg(pkg)
   {
     id: interned_tid_id("ivec", tid_pkg, ivec.to_string()),
@@ -192,7 +192,7 @@ pub fn Tid::for_ivec(ivec : Int, pkg? : String) -> Tid {
 }
 
 ///|
-fn tid_for_id(id : Int) -> Tid {
+fn tid_for_id(id : Int32) -> Tid {
   Tid::restore(id~)
 }
 
@@ -202,7 +202,7 @@ fn tid_parse_error(text : String) -> String {
 }
 
 ///|
-fn tid_parse_int(text : StringView, source : String) -> Result[Int, String] {
+fn tid_parse_int(text : StringView, source : String) -> Result[Int32, String] {
   if text.length() == 0 {
     Err(tid_parse_error(source))
   } else {
@@ -253,7 +253,7 @@ pub fn Tid::from_string_exn(text : String) -> Tid raise TidParseError {
 }
 
 ///|
-pub fn Tid::id(self : Tid) -> Int {
+pub fn Tid::id(self : Tid) -> Int32 {
   self.id
 }
 
@@ -268,7 +268,7 @@ pub fn Tid::name(self : Tid) -> String? {
 }
 
 ///|
-pub fn Tid::ivec(self : Tid) -> Int? {
+pub fn Tid::ivec(self : Tid) -> Int32? {
   self.ivec_value
 }
 
@@ -531,7 +531,7 @@ fn jmp_dst_to_label(dst : JmpDst) -> Label {
 }
 
 ///|
-fn jmp_dst_ivec(dst : JmpDst) -> Int? {
+fn jmp_dst_ivec(dst : JmpDst) -> Int32? {
   match dst {
     ResolvedDst(tid) => tid.ivec()
     IndirectDst(_) => None
@@ -609,7 +609,7 @@ pub(all) enum JmpKind {
   JmpCall(Call)
   Goto(Label)
   Ret(Label)
-  Interrupt(Int, Tid)
+  Interrupt(Int32, Tid)
 } derive(Eq, Debug)
 
 ///|
@@ -752,7 +752,7 @@ pub fn Program::create(subs? : Array[Term[Sub]], tid? : Tid) -> Term[Program] {
 }
 
 ///|
-pub fn ProgramBuilder::create(tid? : Tid, subs? : Int) -> ProgramBuilder {
+pub fn ProgramBuilder::create(tid? : Tid, subs? : Int32) -> ProgramBuilder {
   ignore(subs)
   { tid_value: tid, subs_value: [], }
 }
@@ -815,8 +815,8 @@ pub fn Sub::create(
 ///|
 pub fn SubBuilder::create(
   tid? : Tid,
-  args? : Int,
-  blks? : Int,
+  args? : Int32,
+  blks? : Int32,
   name? : String,
 ) -> SubBuilder {
   ignore(args)
@@ -937,9 +937,9 @@ pub fn Blk::create(
 ///|
 pub fn BlkBuilder::create(
   tid? : Tid,
-  phis? : Int,
-  defs? : Int,
-  jmps? : Int,
+  phis? : Int32,
+  defs? : Int32,
+  jmps? : Int32,
 ) -> BlkBuilder {
   ignore(phis)
   ignore(defs)
@@ -950,10 +950,10 @@ pub fn BlkBuilder::create(
 ///|
 pub fn BlkBuilder::init(
   blk : Term[Blk],
-  same_tid? : Bool = true,
-  copy_phis? : Bool = false,
-  copy_defs? : Bool = false,
-  copy_jmps? : Bool = false,
+  same_tid~ : Bool = true,
+  copy_phis~ : Bool = false,
+  copy_defs~ : Bool = false,
+  copy_jmps~ : Bool = false,
 ) -> BlkBuilder {
   let builder = BlkBuilder::create(
     tid=if same_tid { blk.tid() } else { Tid::fresh() },
@@ -1029,7 +1029,7 @@ pub fn Term::jmps(self : Term[Blk]) -> Array[Term[Jmp]] {
 }
 
 ///|
-pub fn Term::elts(self : Term[Blk], rev? : Bool = false) -> Array[BlkElt] {
+pub fn Term::elts(self : Term[Blk], rev~ : Bool = false) -> Array[BlkElt] {
   let elts = []
   for phi in self.payload_value.phis {
     elts.push(PhiElt(phi))
@@ -1048,7 +1048,7 @@ pub fn Term::elts(self : Term[Blk], rev? : Bool = false) -> Array[BlkElt] {
 }
 
 ///|
-pub fn Blk::elts(blk : Term[Blk], rev? : Bool = false) -> Array[BlkElt] {
+pub fn Blk::elts(blk : Term[Blk], rev~ : Bool = false) -> Array[BlkElt] {
   blk.elts(rev~)
 }
 
@@ -1314,7 +1314,7 @@ pub fn Jmp::create_ret(label : Label, cond? : Exp, tid? : Tid) -> Term[Jmp] {
 
 ///|
 pub fn Jmp::create_int(
-  num : Int,
+  num : Int32,
   tid : Tid,
   cond? : Exp,
   term_tid? : Tid,

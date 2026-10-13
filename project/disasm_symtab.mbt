@@ -20,7 +20,7 @@ pub fn ProjectDisassemblySymtab::create_from_driver(
     UInt64,
     (ProjectDisassemblyBlock?, Array[ProjectDisassemblyBlock]),
   ] = Map([])
-  let known_blocks : Map[(UInt64, UInt64, Int), Unit] = Map([])
+  let known_blocks : Map[(UInt64, UInt64, Int32), Unit] = Map([])
   // the callees of the call sites (as `insert_call` would record them)
   let explicit_calls : Map[UInt64, String] = Map([])
   let implicit_calls : Map[UInt64, String] = Map([])
@@ -91,9 +91,9 @@ pub fn ProjectDisassemblySymtab::create_from_driver(
   // the functions, as successive `add_symbol`s would leave them: a symbol
   // replaces the ones with its name or its address
   let functions : Array[ProjectDisassemblyFunction?] = []
-  let by_name : Map[String, Int] = Map([])
-  let by_addr : Map[UInt64, Int] = Map([])
-  let drop = (index : Int) => {
+  let by_name : Map[String, Int32] = Map([])
+  let by_addr : Map[UInt64, Int32] = Map([])
+  let drop = (index : Int32) => {
     match functions[index] {
       Some(function) => {
         by_name.remove(function.name())

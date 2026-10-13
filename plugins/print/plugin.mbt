@@ -62,13 +62,13 @@ pub fn register_term_writers() -> Unit {
 ///
 /// Registration is idempotent: writers are replaced by name.
 pub fn register(
-  bir_attrs? : Array[String] = [],
-  ansi_colors? : Bool = false,
+  bir_attrs~ : Array[String] = [],
+  ansi_colors~ : Bool = false,
   demangler? : String,
-  symbol_formats? : Array[SymbolFormat] = [WithName],
-  symbols? : Array[String] = [],
-  sections? : Array[String] = [],
-  patterns? : Array[String] = [],
+  symbol_formats~ : Array[SymbolFormat] = [WithName],
+  symbols~ : Array[String] = [],
+  sections~ : Array[String] = [],
+  patterns~ : Array[String] = [],
   semantics? : Array[String],
 ) -> Result[Unit, String] {
   ignore(semantics)

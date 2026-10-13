@@ -6,7 +6,7 @@
 ///|
 /// OCaml's `String.compare`: lexicographic order (MoonBit's `String`
 /// comparison orders by length first).
-fn lex_compare(a : String, b : String) -> Int {
+fn lex_compare(a : String, b : String) -> Int32 {
   let n = if a.length() < b.length() { a.length() } else { b.length() }
   for i in 0..<n {
     let c = a[i].compare(b[i])
@@ -162,7 +162,7 @@ fn[V] trie_ambiguities(
 }
 
 ///|
-fn min3(a : Int, b : Int, c : Int) -> Int {
+fn min3(a : Int32, b : Int32, c : Int32) -> Int32 {
   let m = if a < b { a } else { b }
   if m < c {
     m
@@ -173,7 +173,7 @@ fn min3(a : Int, b : Int, c : Int) -> Int {
 
 ///|
 /// Levenshtein distance (Cmdliner_base.edit_distance).
-fn edit_distance(s0 : String, s1 : String) -> Int {
+fn edit_distance(s0 : String, s1 : String) -> Int32 {
   let a = s0.to_array()
   let b = s1.to_array()
   let m = a.length()
@@ -221,11 +221,11 @@ fn suggest(s : String, candidates : Array[String]) -> Array[String] {
 // OCaml integer literals ---------------------------------------------------
 
 ///|
-fn digit_value(c : Char) -> Int {
+fn digit_value(c : Char) -> Int32 {
   match c {
-    '0'..='9' => c.to_int() - '0'.to_int()
-    'a'..='f' => c.to_int() - 'a'.to_int() + 10
-    'A'..='F' => c.to_int() - 'A'.to_int() + 10
+    '0'..<='9' => c.to_int() - '0'.to_int()
+    'a'..<='f' => c.to_int() - 'a'.to_int() + 10
+    'A'..<='F' => c.to_int() - 'A'.to_int() + 10
     _ => 99
   }
 }
@@ -236,7 +236,7 @@ fn digit_value(c : Char) -> Int {
 /// separators after the first digit. Decimal literals are range checked as
 /// signed `bits`-wide integers; other bases accept the full unsigned range
 /// and wrap. Returns `None` on failure.
-fn parse_ocaml_int(s : String, bits : Int) -> Int64? {
+fn parse_ocaml_int(s : String, bits : Int32) -> Int64? {
   let cs = s.to_array()
   let n = cs.length()
   let mut i = 0
@@ -388,8 +388,8 @@ fn parse_ocaml_float(s : String) -> Double? {
   } else {
     let ok = body
       .iter()
-      .all(c => c is ('0'..='9' | '.' | 'e' | 'E' | '+' | '-')) &&
-      body.iter().any(c => c is ('0'..='9'))
+      .all(c => c is ('0'..<='9' | '.' | 'e' | 'E' | '+' | '-')) &&
+      body.iter().any(c => c is ('0'..<='9'))
     if !ok {
       None
     } else {
@@ -419,7 +419,7 @@ fn parse_ocaml_float(s : String) -> Double? {
 ///|
 /// Splits a finite, nonzero, positive double into its shortest decimal
 /// digits and the decimal exponent of the first digit.
-fn decimal_digits(v : Double) -> (String, Int) {
+fn decimal_digits(v : Double) -> (String, Int32) {
   let s = v.to_string()
   let (mantissa, exp) = match s.find("e") {
     Some(i) => {
@@ -451,7 +451,7 @@ fn decimal_digits(v : Double) -> (String, Int) {
 ///|
 /// Rounds a digit string to `prec` significant digits (half-up on the
 /// shortest representation). Returns the digits and an exponent carry.
-fn round_digits(digits : String, prec : Int) -> (String, Int) {
+fn round_digits(digits : String, prec : Int32) -> (String, Int32) {
   if digits.length() <= prec {
     return (digits, 0)
   }
@@ -525,7 +525,7 @@ fn format_g12(v : Double) -> String {
 /// values.
 fn ocaml_string_of_float(v : Double) -> String {
   let s = format_g12(v)
-  if s.iter().all(c => c == '-' || c is ('0'..='9')) {
+  if s.iter().all(c => c == '-' || c is ('0'..<='9')) {
     s + "."
   } else {
     s

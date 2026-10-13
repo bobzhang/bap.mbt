@@ -16,7 +16,7 @@ pub let pattern_actions_file : String = "pattern-actions.lisp"
 /// `(patterns enabled)` (upstream `setup_context`).
 pub fn load_actions_program(
   target : @core_theory.Target,
-  extra? : ArrayView[(String, String)] = [],
+  extra~ : ArrayView[(String, String)] = [],
 ) -> @primus_lisp.Program raise {
   let files = [(pattern_actions_file, pattern_actions_lisp), ..extra]
   let features = ["core"]
@@ -59,7 +59,7 @@ pub fn analyze_lisp(
   rules : Rules,
   code : ArrayView[@memory.Memory],
   program : @primus_lisp.Program,
-  target? : @core_theory.Target = @core_theory.Target::unknown(),
+  target~ : @core_theory.Target = @core_theory.Target::unknown(),
 ) -> Outcome raise {
   let actions = match_actions(rules, code)
   let ctxt = ActionContext::new()
@@ -123,7 +123,7 @@ pub fn analyze_lisp(
           jobs.push((entry.0, a))
         }
       }
-      fn go(m : @primus.Machine, i : Int) -> Unit raise {
+      fn go(m : @primus.Machine, i : Int32) -> Unit raise {
         if i < jobs.length() {
           let (addr, action) = jobs[i]
           let handle = attrs.length()

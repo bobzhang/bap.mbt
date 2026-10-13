@@ -23,7 +23,7 @@ pub fn Value::id(self : Value) -> Int64 {
 
 ///|
 /// Upstream ordering: by identifier, then by word.
-pub fn Value::compare(self : Value, other : Value) -> Int {
+pub fn Value::compare(self : Value, other : Value) -> Int32 {
   let c = self.id.compare(other.id)
   if c != 0 {
     c
@@ -59,7 +59,7 @@ pub fn Value::to_sexp(self : Value) -> Sexp {
 }
 
 ///|
-pub fn Value::bitwidth(self : Value) -> Int {
+pub fn Value::bitwidth(self : Value) -> Int32 {
   self.value.bitwidth()
 }
 
@@ -125,8 +125,8 @@ pub fn Value::of_bool(m : Machine, b : Bool) -> Value {
 ///|
 pub fn Value::of_int(
   m : Machine,
-  width~ : Int,
-  x : Int,
+  width~ : Int32,
+  x : Int32,
 ) -> Value raise PrimusError {
   Value::of_word(m, wrap_word(() => @types.Word::of_int(width~, x)))
 }
@@ -134,7 +134,7 @@ pub fn Value::of_int(
 ///|
 pub fn Value::of_int64(
   m : Machine,
-  width? : Int = 64,
+  width~ : Int32 = 64,
   x : Int64,
 ) -> Value raise PrimusError {
   Value::of_word(m, wrap_word(() => @types.Word::of_int64(x, width~)))
@@ -151,17 +151,17 @@ pub fn Value::b1(m : Machine) -> Value {
 }
 
 ///|
-pub fn Value::one(m : Machine, width : Int) -> Value raise PrimusError {
+pub fn Value::one(m : Machine, width : Int32) -> Value raise PrimusError {
   Value::of_word(m, wrap_word(() => @types.Word::one(width~)))
 }
 
 ///|
-pub fn Value::zero(m : Machine, width : Int) -> Value raise PrimusError {
+pub fn Value::zero(m : Machine, width : Int32) -> Value raise PrimusError {
   Value::of_word(m, wrap_word(() => @types.Word::zero(width~)))
 }
 
 ///|
-pub fn Value::ones(m : Machine, width : Int) -> Value raise PrimusError {
+pub fn Value::ones(m : Machine, width : Int32) -> Value raise PrimusError {
   Value::of_word(m, wrap_word(() => @types.Word::ones(width~)))
 }
 
@@ -173,8 +173,8 @@ pub fn Value::signed(m : Machine, x : Value) -> Value {
 ///|
 pub fn Value::extract(
   m : Machine,
-  hi? : Int,
-  lo? : Int = 0,
+  hi? : Int32,
+  lo~ : Int32 = 0,
   x : Value,
 ) -> Value raise PrimusError {
   let hi = hi.unwrap_or(x.bitwidth() - 1)
@@ -201,12 +201,12 @@ pub fn Value::pred(m : Machine, x : Value) -> Value {
 }
 
 ///|
-pub fn Value::nsucc(m : Machine, x : Value, n : Int) -> Value {
+pub fn Value::nsucc(m : Machine, x : Value, n : Int32) -> Value {
   Value::of_word(m, x.value.nsucc(n))
 }
 
 ///|
-pub fn Value::npred(m : Machine, x : Value, n : Int) -> Value {
+pub fn Value::npred(m : Machine, x : Value, n : Int32) -> Value {
   Value::of_word(m, x.value.npred(n))
 }
 
@@ -292,7 +292,7 @@ pub fn Value::logxor(
 }
 
 ///|
-fn shift_amount(y : Value) -> Int {
+fn shift_amount(y : Value) -> Int32 {
   // clamp by numeric magnitude: a wide operand with a small value (e.g.
   // `1:128`) is a small shift amount
   let big = 0x7fffffffUL
@@ -338,14 +338,14 @@ pub fn Value::arshift(m : Machine, x : Value, y : Value) -> Value {
 ///|
 /// Persistent string interning table (upstream `Value.Index`).
 priv struct SymbolIndex {
-  by_name : @immut_hashmap.HashMap[String, Int]
-  by_key : @sorted_map.SortedMap[Int, String]
-  last : Int
+  by_name : @immut_hashmap.HashMap[String, Int32]
+  by_key : @sorted_map.SortedMap[Int32, String]
+  last : Int32
 }
 
 ///|
 /// Width of symbol keys (upstream `Value.Index.key_width`).
-pub let symbol_key_width : Int = 63
+pub let symbol_key_width : Int32 = 63
 
 ///|
 let symbols_state : State[SymbolIndex] = State::declare_(

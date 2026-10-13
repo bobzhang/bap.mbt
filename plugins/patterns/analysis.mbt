@@ -164,7 +164,7 @@ pub fn match_actions(
 pub fn analyze(
   rules : Rules,
   code : ArrayView[@memory.Memory],
-  handlers? : ArrayView[ActionHandler] = action_handlers,
+  handlers~ : ArrayView[ActionHandler] = action_handlers,
 ) -> Outcome {
   let ctxt = ActionContext::new()
   for entry in match_actions(rules, code) {
@@ -198,8 +198,8 @@ let use_lisp : Ref[Bool] = { val: true, }
 /// with `extra` Lisp sources loaded after `pattern-actions.lisp`; or, when
 /// `lisp` is false, with the native action handlers.
 pub fn set_action_semantics(
-  lisp? : Bool = true,
-  extra? : ArrayView[(String, String)] = [],
+  lisp~ : Bool = true,
+  extra~ : ArrayView[(String, String)] = [],
 ) -> Unit {
   use_lisp.val = lisp
   lisp_sources.val = extra.to_owned()
@@ -213,7 +213,7 @@ pub fn set_action_semantics(
 pub fn analyze_image(
   image : @image.Image,
   rules : Rules,
-  handlers? : ArrayView[ActionHandler] = action_handlers,
+  handlers~ : ArrayView[ActionHandler] = action_handlers,
 ) -> Outcome {
   let code = code_regions(image)
   if use_lisp.val {

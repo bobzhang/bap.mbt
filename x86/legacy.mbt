@@ -8,7 +8,7 @@ fn legacy_lift_exn(
   mode : Mode,
   bytes : BytesView,
   addr : UInt64,
-) -> (Array[@types.Stmt], Int) raise X86Error {
+) -> (Array[@types.Stmt], Int32) raise X86Error {
   reset_tmps()
   let decoded = parse_instr(mode, bytes, addr)
   let (ss, pref) = parse_prefixes(mode, decoded.pref)
@@ -44,7 +44,7 @@ pub fn lift_legacy(
   mode : Mode,
   bytes : BytesView,
   addr~ : UInt64,
-  opcode? : String = "x86",
+  opcode~ : String = "x86",
 ) -> Array[@types.Stmt] raise @mc.LiftError {
   let bil = legacy_lift_exn(mode, bytes, addr).0 catch {
       NoSemantics(_) | ArchException(_) =>
@@ -60,7 +60,7 @@ pub fn lift_legacy(
 /// The length in bytes of the instruction encoded at the start of `bytes`
 /// according to the legacy decoder, `None` when it is not decoded (or not
 /// lifted) by the legacy lifter.
-pub fn legacy_length(mode : Mode, bytes : BytesView, addr~ : UInt64) -> Int? {
+pub fn legacy_length(mode : Mode, bytes : BytesView, addr~ : UInt64) -> Int32? {
   try legacy_lift_exn(mode, bytes, addr).1 catch {
     _ => None
   } noraise {

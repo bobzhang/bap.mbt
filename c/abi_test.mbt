@@ -59,7 +59,7 @@ fn riscv_like(target : @core_theory.Target, proto : @c.Proto) -> @c.Arg[Unit] {
 }
 
 ///|
-fn proto_of(args : Array[@c.CType], return_? : @c.CType = Void) -> @c.Proto {
+fn proto_of(args : Array[@c.CType], return_~ : @c.CType = Void) -> @c.Proto {
   { return_, args: args.mapi((i, t) => ("x\{i}", t)), variadic: false, }
 }
 

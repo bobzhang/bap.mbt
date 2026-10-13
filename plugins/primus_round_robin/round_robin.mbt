@@ -32,7 +32,7 @@ priv struct RoundRobin {
 let state : @primus.State[RoundRobin] = @primus.State::declare_(
   uuid="d1b33e16-bf5d-48d5-a174-3901dff3d123",
   name="round-robin-scheduler",
-  _ => { pending: @list.empty(), finished: @sorted_set.new(), },
+  _ => { pending: @list.List([]), finished: @sorted_set.new(), },
 )
 
 ///|

@@ -19,7 +19,7 @@ fn documented_core_properties(class_name : String) -> Array[String] {
 }
 
 ///|
-fn documented_name_count(names : Array[String], name : String) -> Int {
+fn documented_name_count(names : Array[String], name : String) -> Int32 {
   let mut count = 0
   for item in names {
     if item == name {
@@ -4401,7 +4401,7 @@ test "program source and unit facts expose BAP-style Knowledge slots" {
     None,
     "empty unit compiler",
   )
-  let observed_paths : Ref[Int] = Ref(0)
+  let observed_paths : Ref[Int32] = Ref(0)
   unit_facts
   .path()
   .observe((_, path) => {
@@ -4581,7 +4581,7 @@ test "program label facts expose BAP-style Knowledge slots" {
     (None : Bool?),
     "empty label subroutine flag",
   )
-  let alias_notifications : Ref[Int] = Ref(0)
+  let alias_notifications : Ref[Int32] = Ref(0)
   facts
   .aliases()
   .observe((_, aliases) => {

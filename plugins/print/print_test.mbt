@@ -1,15 +1,15 @@
 ///|
-fn tid(n : Int, name? : String) -> @types.Tid {
+fn tid(n : Int32, name? : String) -> @types.Tid {
   { id: n, pkg_value: "user", name, ivec_value: None, }
 }
 
 ///|
-fn word(width : Int, n : Int) -> @types.Word raise {
+fn word(width : Int32, n : Int32) -> @types.Word raise {
   @types.Word::of_int(width~, n)
 }
 
 ///|
-fn reg(name : String, width? : Int = 64) -> @types.Var {
+fn reg(name : String, width~ : Int32 = 64) -> @types.Var {
   @types.Var::new(name~, typ=Imm(width))
 }
 

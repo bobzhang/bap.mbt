@@ -5,7 +5,7 @@
 /// Counter of virtual temporaries; reset at the start of every lifted
 /// instruction so that the produced BIL is deterministic (temporaries never
 /// live across instructions).
-let tmp_counter : Ref[Int] = Ref(0)
+let tmp_counter : Ref[Int32] = Ref(0)
 
 ///|
 fn reset_tmps() -> Unit {
@@ -15,7 +15,7 @@ fn reset_tmps() -> Unit {
 ///|
 /// A fresh virtual temporary (upstream `Var.create ~fresh:true
 /// ~is_virtual:true name`).
-fn new_tmp(width : Int, name? : String = "v") -> @types.Var {
+fn new_tmp(width : Int32, name~ : String = "v") -> @types.Var {
   tmp_counter.val += 1
   @types.Var::new(
     name="\{name}_\{tmp_counter.val}",
@@ -25,7 +25,7 @@ fn new_tmp(width : Int, name? : String = "v") -> @types.Var {
 }
 
 ///|
-fn mask64(width : Int) -> UInt64 {
+fn mask64(width : Int32) -> UInt64 {
   if width >= 64 {
     0xFFFFFFFFFFFFFFFFUL
   } else {
@@ -36,7 +36,7 @@ fn mask64(width : Int) -> UInt64 {
 ///|
 /// A `width`-bit word with the (two's complement) value `value`,
 /// sign-extended when `width` exceeds 64 bits.
-fn word_of_int64(value : Int64, width : Int) -> @types.Word {
+fn word_of_int64(value : Int64, width : Int32) -> @types.Word {
   let bits = value.reinterpret_as_uint64() & mask64(width)
   if width > 64 && value < 0L {
     let low = try! @bitvec.of_uint64(width~, bits)
@@ -49,23 +49,23 @@ fn word_of_int64(value : Int64, width : Int) -> @types.Word {
 
 ///|
 /// A `width`-bit word with the unsigned value `bits` (truncated).
-fn word_of_uint64(bits : UInt64, width : Int) -> @types.Word {
+fn word_of_uint64(bits : UInt64, width : Int32) -> @types.Word {
   try! @types.Word::of_uint64(width~, bits & mask64(width))
 }
 
 ///|
 /// Upstream `int_exp n width` (`BV.of_int n ~width`): negative values wrap.
-fn int_exp(n : Int, width : Int) -> @types.Exp {
+fn int_exp(n : Int32, width : Int32) -> @types.Exp {
   Int(word_of_int64(n.to_int64(), width))
 }
 
 ///|
-fn int64_exp(n : Int64, width : Int) -> @types.Exp {
+fn int64_exp(n : Int64, width : Int32) -> @types.Exp {
   Int(word_of_int64(n, width))
 }
 
 ///|
-fn uint64_exp(n : UInt64, width : Int) -> @types.Exp {
+fn uint64_exp(n : UInt64, width : Int32) -> @types.Exp {
   Int(word_of_uint64(n, width))
 }
 
@@ -163,27 +163,27 @@ fn e_neg(x : @types.Exp) -> @types.Exp {
 }
 
 ///|
-fn e_low(width : Int, x : @types.Exp) -> @types.Exp {
+fn e_low(width : Int32, x : @types.Exp) -> @types.Exp {
   Cast(kind=Low, width~, exp=x)
 }
 
 ///|
-fn e_high(width : Int, x : @types.Exp) -> @types.Exp {
+fn e_high(width : Int32, x : @types.Exp) -> @types.Exp {
   Cast(kind=High, width~, exp=x)
 }
 
 ///|
-fn e_unsigned(width : Int, x : @types.Exp) -> @types.Exp {
+fn e_unsigned(width : Int32, x : @types.Exp) -> @types.Exp {
   Cast(kind=Unsigned, width~, exp=x)
 }
 
 ///|
-fn e_signed(width : Int, x : @types.Exp) -> @types.Exp {
+fn e_signed(width : Int32, x : @types.Exp) -> @types.Exp {
   Cast(kind=Signed, width~, exp=x)
 }
 
 ///|
-fn e_extract(hi : Int, lo : Int, x : @types.Exp) -> @types.Exp {
+fn e_extract(hi : Int32, lo : Int32, x : @types.Exp) -> @types.Exp {
   Extract(hi~, lo~, exp=x)
 }
 
@@ -198,7 +198,7 @@ fn e_ite(c : @types.Exp, x : @types.Exp, y : @types.Exp) -> @types.Exp {
 }
 
 ///|
-fn e_unknown(name : String, width : Int) -> @types.Exp {
+fn e_unknown(name : String, width : Int32) -> @types.Exp {
   Unknown(name, Imm(width))
 }
 
@@ -206,7 +206,7 @@ fn e_unknown(name : String, width : Int) -> @types.Exp {
 fn e_load(
   mem : @types.Var,
   addr : @types.Exp,
-  width : Int,
+  width : Int32,
 ) -> @types.Exp raise X86Error {
   match @types.Size::of_int_opt(width) {
     Some(size) => @types.Exp::load(mem=Var(mem), addr~, LittleEndian, size)
@@ -218,7 +218,7 @@ fn e_load(
 fn store_stmt(
   mem : @types.Var,
   addr : @types.Exp,
-  width : Int,
+  width : Int32,
   value : @types.Exp,
 ) -> @types.Stmt raise X86Error {
   match @types.Size::of_int_opt(width) {
@@ -260,14 +260,14 @@ fn concat_explist(exps : ArrayView[@types.Exp]) -> @types.Exp raise X86Error {
 
 ///|
 /// Upstream `extract_element nbits e n`.
-fn extract_element(nbits : Int, e : @types.Exp, n : Int) -> @types.Exp {
+fn extract_element(nbits : Int32, e : @types.Exp, n : Int32) -> @types.Exp {
   e_extract(n * nbits + (nbits - 1), n * nbits, e)
 }
 
 ///|
 /// Upstream `reverse_bytes`: the bytes of `e` from the lowest to the
 /// highest, concatenated (so that the lowest byte becomes the highest).
-fn reverse_bytes(e : @types.Exp, width : Int) -> @types.Exp raise X86Error {
+fn reverse_bytes(e : @types.Exp, width : Int32) -> @types.Exp raise X86Error {
   let bytes = width / 8
   concat_explist([ for n in 0..<bytes => extract_element(8, e, n) ])
 }

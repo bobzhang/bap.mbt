@@ -2,7 +2,7 @@
 fn disasm_reconstructor_test_block(
   start : UInt64,
   bytes : Bytes,
-  assembly? : String = "nop",
+  assembly~ : String = "nop",
   kinds? : Array[@project.ProjectInstructionKind],
 ) -> @project.ProjectDisassemblyBlock raise {
   let memory = @memory.Memory::from_bytes(endian=LittleEndian, start~, bytes)

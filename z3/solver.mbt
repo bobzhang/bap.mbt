@@ -19,7 +19,7 @@ pub struct Solver {
 /// otherwise the default combined solver.
 pub fn Solver::new(
   ctx : Context,
-  simple? : Bool = false,
+  simple~ : Bool = false,
 ) -> Solver raise Z3Error {
   let raw = raw_mk_solver(ctx.raw, if simple { 1 } else { 0 })
   ctx.check()
@@ -32,7 +32,7 @@ pub fn Solver::new(
 ///|
 /// Limits each check to `ms` milliseconds (0 disables the limit); a check
 /// that times out returns `Unknown`.
-pub fn Solver::set_timeout(self : Solver, ms : Int) -> Unit raise Z3Error {
+pub fn Solver::set_timeout(self : Solver, ms : Int32) -> Unit raise Z3Error {
   raw_solver_set_uint(self.ctx.raw, self.raw, c_string("timeout"), ms)
   self.ctx.check()
 }
@@ -46,7 +46,7 @@ pub fn Solver::push(self : Solver) -> Unit raise Z3Error {
 
 ///|
 /// Closes the `n` innermost scopes, removing their assertions.
-pub fn Solver::pop(self : Solver, n? : Int = 1) -> Unit raise Z3Error {
+pub fn Solver::pop(self : Solver, n~ : Int32 = 1) -> Unit raise Z3Error {
   raw_solver_pop(self.ctx.raw, self.raw, n)
   self.ctx.check()
 }
@@ -60,7 +60,7 @@ pub fn Solver::reset(self : Solver) -> Unit raise Z3Error {
 
 ///|
 /// The number of open scopes.
-pub fn Solver::num_scopes(self : Solver) -> Int {
+pub fn Solver::num_scopes(self : Solver) -> Int32 {
   raw_solver_num_scopes(self.ctx.raw, self.raw)
 }
 
@@ -141,7 +141,7 @@ pub struct Model {
 pub fn Model::eval(
   self : Model,
   x : Expr,
-  completion? : Bool = false,
+  completion~ : Bool = false,
 ) -> Expr? raise Z3Error {
   let raw = raw_model_eval(self.ctx.raw, self.raw, x.raw, completion)
   self.ctx.check()
@@ -158,7 +158,7 @@ pub fn Model::eval(
 pub fn Model::eval_word(
   self : Model,
   x : Expr,
-  completion? : Bool = false,
+  completion~ : Bool = false,
 ) -> @types.Word? raise Z3Error {
   match self.eval(x, completion~) {
     Some(v) => v.to_word()

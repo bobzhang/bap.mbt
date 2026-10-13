@@ -223,7 +223,7 @@ pub fn spec_type() -> @bap_main.Type[Spec] {
 }
 
 ///|
-fn parse_int(s : String) -> Int raise SpecError {
+fn parse_int(s : String) -> Int32 raise SpecError {
   @string.parse_int(s, base=0) catch {
     _ => raise SpecError("expected a number, got \{s}")
   }
@@ -237,7 +237,7 @@ fn parse_int64(s : String) -> Int64 raise SpecError {
 }
 
 ///|
-fn bitvec_of_int64(width : Int, x : Int64) -> @bitvec.BitVec {
+fn bitvec_of_int64(width : Int32, x : Int64) -> @bitvec.BitVec {
   let u = x.reinterpret_as_uint64()
   let u = if width < 64 { u & ((1UL << width) - 1UL) } else { u }
   @bitvec.of_uint64(width~, u) catch {
@@ -252,8 +252,8 @@ fn bitvec_of_int64(width : Int, x : Int64) -> @bitvec.BitVec {
 /// of the global seed and the local one; as upstream, the one-parameter
 /// form uses the global seed as the local one.
 fn create_uniform(
-  seed : Int,
-  width : Int,
+  seed : Int32,
+  width : Int32,
   ps : Array[String],
 ) -> @primus.Generator raise SpecError {
   let (min, max, local_seed) = match ps {
@@ -274,7 +274,7 @@ fn create_uniform(
 /// always produces the first value although the documentation says the
 /// values are enumerated; the port enumerates them.
 fn create_const(
-  width : Int,
+  width : Int32,
   ps : Array[String],
 ) -> @primus.Generator raise SpecError {
   let xs = ps.map(parse_int64)
@@ -287,7 +287,7 @@ fn create_const(
       )
   }
   let n = if xs.is_empty() { 1 } else { xs.length() }
-  let value = (i : Int) => if xs.is_empty() { 0L } else { xs[i % n] }
+  let value = (i : Int32) => if xs.is_empty() { 0L } else { xs[i % n] }
   @primus.Generator::of_iterator(
     width~,
     to_bitvec=x => bitvec_of_int64(width, x),
@@ -301,8 +301,8 @@ fn create_const(
 /// given width.
 pub fn Spec::create(
   self : Spec,
-  seed? : Int = 0,
-  width? : Int = 8,
+  seed~ : Int32 = 0,
+  width~ : Int32 = 8,
 ) -> @primus.Generator raise SpecError {
   match self.distribution {
     Random => create_uniform(seed, width, self.parameters)
@@ -315,8 +315,8 @@ pub fn Spec::create(
 /// `matches`.
 pub fn first_match(
   specs : Array[Spec],
-  seed? : Int = 0,
-  width? : Int = 8,
+  seed~ : Int32 = 0,
+  width~ : Int32 = 8,
   matches : (Predicate) -> Bool,
 ) -> @primus.Generator? raise SpecError {
   for s in specs {
@@ -331,8 +331,8 @@ pub fn first_match(
 /// The generator for the variable (upstream `Generator.for_var`).
 pub fn for_var(
   specs : Array[Spec],
-  seed? : Int = 0,
-  width? : Int = 8,
+  seed~ : Int32 = 0,
+  width~ : Int32 = 8,
   v : @types.Var,
 ) -> @primus.Generator? raise SpecError {
   first_match(specs, seed~, width~, p => {

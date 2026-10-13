@@ -75,14 +75,14 @@ pub fn Sexp::atoms(xs : Array[String]) -> Sexp {
 /// Errors raised by the S-expression reader.
 pub(all) suberror SexpParseError {
   UnexpectedEof
-  UnexpectedChar(Char, Int)
-  UnbalancedParen(Int)
+  UnexpectedChar(Char, Int32)
+  UnbalancedParen(Int32)
 } derive(Eq, Debug)
 
 ///|
 priv struct SexpReader {
   chars : Array[Char]
-  mut pos : Int
+  mut pos : Int32
 }
 
 ///|

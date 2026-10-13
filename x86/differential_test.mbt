@@ -24,7 +24,7 @@
 fn diff_states(mode : @x86.Mode) -> Array[Map[String, @types.BilValue]] {
   let w = mode.width()
   let wide = (x : UInt64) => if w == 32 { x & 0xffffffff } else { x }
-  let values : Array[(UInt64, UInt64, Int)] = [
+  let values : Array[(UInt64, UInt64, Int32)] = [
     // (RAX, RDX, flags)
     (0, 0, 0),
     (0xffffffffffffffff, 0xffffffffffffffff, 0b0111111),
@@ -138,12 +138,12 @@ fn hex_bytes(bytes : Bytes) -> String {
 ///|
 /// Statistics and findings of a differential run.
 struct DiffReport {
-  mut both : Int
-  mut only_ours : Int
-  mut only_basic : Int
-  mut neither : Int
-  mut basic_undecoded : Int
-  mut agree : Int
+  mut both : Int32
+  mut only_ours : Int32
+  mut only_basic : Int32
+  mut neither : Int32
+  mut basic_undecoded : Int32
+  mut agree : Int32
   findings : Array[String]
 }
 

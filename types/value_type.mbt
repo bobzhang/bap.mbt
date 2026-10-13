@@ -1,7 +1,7 @@
 ///|
 pub(all) enum ValueType {
-  Imm(Int)
-  Mem(addr_width~ : Int, value_width~ : Int)
+  Imm(Int32)
+  Mem(addr_width~ : Int32, value_width~ : Int32)
 } derive(Eq, Debug)
 
 ///|
@@ -11,7 +11,7 @@ pub extend ValueType with Eq::{not_equal}
 pub extend ValueType with Debug::{to_repr}
 
 ///|
-fn ValueType::rank(self : ValueType) -> Int {
+fn ValueType::rank(self : ValueType) -> Int32 {
   match self {
     Imm(_) => 0
     Mem(_) => 1
@@ -24,7 +24,7 @@ pub fn ValueType::equal(self : ValueType, other : ValueType) -> Bool {
 }
 
 ///|
-pub fn ValueType::compare(self : ValueType, other : ValueType) -> Int {
+pub fn ValueType::compare(self : ValueType, other : ValueType) -> Int32 {
   let rank_order = self.rank().compare(other.rank())
   if rank_order != 0 {
     return rank_order
@@ -101,7 +101,7 @@ pub fn ValueType::mem64_t(value_size : Size) -> ValueType {
 }
 
 ///|
-pub fn ValueType::bitwidth(self : ValueType) -> Int? {
+pub fn ValueType::bitwidth(self : ValueType) -> Int32? {
   match self {
     Imm(width) => Some(width)
     Mem(_) => None
@@ -146,7 +146,7 @@ pub extend Var with Eq::{not_equal}
 pub extend Var with Debug::{to_repr}
 
 ///|
-let var_create_fresh_counter : Ref[Int] = Ref(0xC00000)
+let var_create_fresh_counter : Ref[Int32] = Ref(0xC00000)
 
 ///|
 fn next_create_fresh_var_name() -> String {
@@ -158,7 +158,7 @@ fn next_create_fresh_var_name() -> String {
 pub fn Var::new(
   name~ : String,
   typ~ : ValueType,
-  is_virtual? : Bool = false,
+  is_virtual~ : Bool = false,
 ) -> Var {
   { name, typ, is_virtual, }
 }
@@ -167,8 +167,8 @@ pub fn Var::new(
 pub fn Var::create(
   name : String,
   typ : ValueType,
-  is_virtual? : Bool = false,
-  fresh? : Bool = false,
+  is_virtual~ : Bool = false,
+  fresh~ : Bool = false,
 ) -> Var {
   if is_virtual || fresh {
     Var::new(name=next_create_fresh_var_name(), typ~, is_virtual=true)
@@ -198,7 +198,7 @@ pub fn Var::is_physical(self : Var) -> Bool {
 }
 
 ///|
-fn parse_var_index(name : String) -> (String, Int)? {
+fn parse_var_index(name : String) -> (String, Int32)? {
   match name.rev_split_once("#") {
     Some((base, suffix)) => {
       let suffix_text = suffix.to_owned()
@@ -231,7 +231,7 @@ pub fn Var::equal(self : Var, other : Var) -> Bool {
 }
 
 ///|
-pub fn Var::compare(self : Var, other : Var) -> Int {
+pub fn Var::compare(self : Var, other : Var) -> Int32 {
   let name_order = self.name.compare(other.name)
   if name_order != 0 {
     return name_order
@@ -244,7 +244,7 @@ pub fn Var::compare(self : Var, other : Var) -> Int {
 }
 
 ///|
-pub fn Var::index(self : Var) -> Int {
+pub fn Var::index(self : Var) -> Int32 {
   match parse_var_index(self.name) {
     Some((_, index)) => index
     None => 0
@@ -252,7 +252,7 @@ pub fn Var::index(self : Var) -> Int {
 }
 
 ///|
-pub fn Var::with_index(self : Var, index : Int) -> Var {
+pub fn Var::with_index(self : Var, index : Int32) -> Var {
   let base = self.base()
   if index <= 0 {
     base

@@ -46,11 +46,11 @@ priv struct LState {
   typed : TypedProgram?
   advices : @sorted_map.SortedMap[(String, String), Advisors]
   places : @sorted_map.SortedMap[(String, String), @types.Var]
-  width : Int
+  width : Int32
   /// local (dynamically scoped) bindings: variable name -> value
   env : @sorted_map.SortedMap[String, @primus.Value]
   /// the identifier of the expression being evaluated
-  cur : Int
+  cur : Int32
   /// the value that is passed through cleanup frames
   ret : @primus.Value?
   /// the error message that is passed through handler frames
@@ -58,7 +58,7 @@ priv struct LState {
 }
 
 ///|
-fn width_of_project(proj : @project.Project) -> Int {
+fn width_of_project(proj : @project.Project) -> Int32 {
   let b = proj.target().bits()
   if b <= 0 {
     32

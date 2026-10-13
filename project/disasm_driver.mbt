@@ -137,7 +137,7 @@ priv enum DriverTask {
   )
   TaskJump(
     src~ : UInt64,
-    age~ : Int,
+    age~ : Int32,
     dsts~ : ProjectDisassemblyDriverJump,
     parent~ : DriverTask,
     encoding~ : DriverEncoding
@@ -249,7 +249,7 @@ fn[T] driver_add_multi(
 ) -> @sorted_map.SortedMap[UInt64, @list.List[T]] {
   let tasks = match map.get(key) {
     Some(tasks) => tasks
-    None => @list.empty()
+    None => @list.List([])
   }
   map.add(key, tasks.prepend(value))
 }
@@ -440,7 +440,7 @@ fn DriverMachine::jumped(
   encoding : DriverEncoding,
   mem : @memory.Memory,
   dsts : ProjectDisassemblyDriverJump,
-  delay : Int,
+  delay : Int32,
 ) -> DriverMachine {
   let s = self.decoded(mem, encoding)
   let parent = s.curr
@@ -575,7 +575,7 @@ fn driver_machine_start(
     data,
     usat: code,
     addr: start,
-    debt: @list.empty(),
+    debt: @list.List([]),
     curr: TaskDest(dst=start, parent=None, encoding=DriverEncoding::unknown()),
     stop: false,
     dels: @sorted_set.new(),
@@ -624,7 +624,7 @@ fn driver_get_encoding(
 fn[R] driver_scoped(
   kb : @knowledge.State,
   addr : UInt64,
-  unit? : @core_theory.ProgramUnit? = None,
+  unit~ : @core_theory.ProgramUnit? = None,
   f : (@knowledge.Object[Unit]) -> R raise,
 ) -> R raise {
   kb.scoped(project_label_cls, label => {
@@ -825,7 +825,7 @@ fn driver_insn_props(
 fn driver_delay(
   kb : @knowledge.State,
   label : @knowledge.Object[Unit],
-) -> Int raise {
+) -> Int32 raise {
   match kb.collect(project_insn_delay_slot, label) {
     Some(delay) => delay
     None => 0
@@ -1001,8 +1001,8 @@ pub fn ProjectDisassemblyDriverState::init() -> ProjectDisassemblyDriverState {
     begs: @sorted_set.new(),
     jmps: @sorted_map.new(),
     data: @sorted_set.new(),
-    mems: @list.empty(),
-    debt: @list.empty(),
+    mems: @list.List([]),
+    debt: @list.List([]),
     exts: @sorted_set.new(),
   }
 }
@@ -1033,7 +1033,7 @@ pub fn ProjectDisassemblyDriverState::equal(
 pub fn ProjectDisassemblyDriverState::forget_debt(
   self : ProjectDisassemblyDriverState,
 ) -> ProjectDisassemblyDriverState {
-  { ..self, debt: @list.empty(), }
+  { ..self, debt: @list.List([]), }
 }
 
 ///|
@@ -1111,7 +1111,7 @@ pub fn ProjectDisassemblyDriverState::is_block(
 /// scanned regions).
 pub fn ProjectDisassemblyDriverState::debt_count(
   self : ProjectDisassemblyDriverState,
-) -> Int {
+) -> Int32 {
   self.debt.length()
 }
 
@@ -1206,9 +1206,9 @@ fn ProjectDisassemblyDriverState::scan_step(
   self : ProjectDisassemblyDriverState,
   kb : @knowledge.State,
   mem : @memory.Memory,
-  code? : @sorted_set.SortedSet[UInt64] = @sorted_set.new(),
-  data? : @sorted_set.SortedSet[UInt64] = @sorted_set.new(),
-  funs? : @sorted_set.SortedSet[UInt64] = @sorted_set.new(),
+  code~ : @sorted_set.SortedSet[UInt64] = @sorted_set.new(),
+  data~ : @sorted_set.SortedSet[UInt64] = @sorted_set.new(),
+  funs~ : @sorted_set.SortedSet[UInt64] = @sorted_set.new(),
 ) -> ProjectDisassemblyDriverState raise {
   let m = driver_disassemble(kb, code~, data~, funs~, self.debt, mem)
   let data = self.data.union(m.data)
@@ -1319,7 +1319,7 @@ struct ProjectDisassemblyDriverInsns {
 /// order of their addresses (the reverse order with `rev`).
 pub fn ProjectDisassemblyDriverInsns::list(
   self : ProjectDisassemblyDriverInsns,
-  rev? : Bool = false,
+  rev~ : Bool = false,
 ) -> Array[@knowledge.Object[Unit]] {
   if rev {
     self.stack.to_array()
@@ -1362,7 +1362,7 @@ pub fn[N, C] ProjectDisassemblyDriverState::explore(
   kb : @knowledge.State,
   entries? : Array[UInt64],
   entry? : UInt64,
-  follow? : (UInt64) -> Bool raise = _ => true,
+  follow~ : (UInt64) -> Bool raise = _ => true,
   block~ : (@memory.Memory, ProjectDisassemblyDriverInsns) -> N raise,
   node~ : (N, C) -> C raise,
   edge~ : (N, N, C) -> C raise,
@@ -1400,7 +1400,7 @@ pub fn[N, C] ProjectDisassemblyDriverState::explore(
     // decode the instructions of the block
     let mut curr = beg
     let mut len = 0
-    let mut insns : @list.List[@knowledge.Object[Unit]] = @list.empty()
+    let mut insns : @list.List[@knowledge.Object[Unit]] = @list.List([])
     let mut pos = beg
     while base.contains(pos) {
       guard base.view(from=pos) is Ok(mem) else { break }

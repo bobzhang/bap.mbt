@@ -1,7 +1,7 @@
 ///|
 /// Identifier of a machine (fork). The initial machine is `Id::global()`
 /// (upstream `Monad.State.Multi.Id` / `Machine.global`).
-pub(all) struct Id(Int) derive(Eq, Compare, Hash, Debug)
+pub(all) struct Id(Int32) derive(Eq, Compare, Hash, Debug)
 
 ///|
 pub fn Id::global() -> Id {
@@ -9,7 +9,7 @@ pub fn Id::global() -> Id {
 }
 
 ///|
-pub fn Id::to_int(self : Id) -> Int {
+pub fn Id::to_int(self : Id) -> Int32 {
   self.0
 }
 

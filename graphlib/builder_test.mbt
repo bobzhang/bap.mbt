@@ -1,6 +1,6 @@
 ///|
 test "graph builder agrees with the persistent graph operations" {
-  let ops : Array[(Int, Int?, String)] = [
+  let ops : Array[(Int32, Int32?, String)] = [
     (5, None, ""),
     (0, Some(1), "entry"),
     (1, Some(2), "then"),
@@ -13,8 +13,8 @@ test "graph builder agrees with the persistent graph operations" {
     (2, None, ""),
     (0, Some(1), "entry again"),
   ]
-  let builder : @graphlib.GraphBuilder[Int, String] = @graphlib.GraphBuilder::new()
-  let mut graph : @graphlib.Graph[Int, String] = @graphlib.Graph::new()
+  let builder : @graphlib.GraphBuilder[Int32, String] = @graphlib.GraphBuilder::new()
+  let mut graph : @graphlib.Graph[Int32, String] = @graphlib.Graph::new()
   for op in ops {
     match op {
       (node, None, _) => {

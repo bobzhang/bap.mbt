@@ -35,7 +35,7 @@ pub fn BitVec::bit_xor(
 }
 
 ///|
-pub fn BitVec::lshift(self : BitVec, amount : Int) -> BitVec {
+pub fn BitVec::lshift(self : BitVec, amount : Int32) -> BitVec {
   if amount <= 0 {
     self
   } else if amount >= self.width {
@@ -59,7 +59,7 @@ pub fn BitVec::lshift(self : BitVec, amount : Int) -> BitVec {
 }
 
 ///|
-pub fn BitVec::rshift(self : BitVec, amount : Int) -> BitVec {
+pub fn BitVec::rshift(self : BitVec, amount : Int32) -> BitVec {
   if amount <= 0 {
     self
   } else if amount >= self.width {
@@ -84,7 +84,7 @@ pub fn BitVec::rshift(self : BitVec, amount : Int) -> BitVec {
 }
 
 ///|
-pub fn BitVec::arshift(self : BitVec, amount : Int) -> BitVec {
+pub fn BitVec::arshift(self : BitVec, amount : Int32) -> BitVec {
   if amount <= 0 {
     self
   } else if amount >= self.width {
@@ -113,7 +113,7 @@ pub fn BitVec::concat(self : BitVec, low : BitVec) -> BitVec raise BitVecError {
 }
 
 ///|
-fn BitVec::low_bits(self : BitVec, width : Int) -> BitVec raise BitVecError {
+fn BitVec::low_bits(self : BitVec, width : Int32) -> BitVec raise BitVecError {
   if width <= 0 {
     raise InvalidWidth(width)
   } else if self.width > width {
@@ -126,7 +126,7 @@ fn BitVec::low_bits(self : BitVec, width : Int) -> BitVec raise BitVecError {
 }
 
 ///|
-fn BitVec::bounded_bit(self : BitVec, index : Int) -> Bool {
+fn BitVec::bounded_bit(self : BitVec, index : Int32) -> Bool {
   if index < 0 || index >= self.width {
     false
   } else {
@@ -137,7 +137,7 @@ fn BitVec::bounded_bit(self : BitVec, index : Int) -> Bool {
 }
 
 ///|
-pub fn select(bits : ArrayView[Int], value : BitVec) -> BitVec {
+pub fn select(bits : ArrayView[Int32], value : BitVec) -> BitVec {
   if bits.length() == 0 {
     return b0()
   }
@@ -152,8 +152,8 @@ pub fn select(bits : ArrayView[Int], value : BitVec) -> BitVec {
 
 ///|
 pub fn append(
-  high_width : Int,
-  low_width : Int,
+  high_width : Int32,
+  low_width : Int32,
   high : BitVec,
   low : BitVec,
 ) -> BitVec raise BitVecError {
@@ -162,8 +162,8 @@ pub fn append(
 
 ///|
 pub fn repeat(
-  width : Int,
-  times~ : Int,
+  width : Int32,
+  times~ : Int32,
   value : BitVec,
 ) -> BitVec raise BitVecError {
   if width <= 0 {
@@ -182,7 +182,7 @@ pub fn repeat(
 
 ///|
 pub fn concat(
-  width : Int,
+  width : Int32,
   values : ArrayView[BitVec],
 ) -> BitVec raise BitVecError {
   if width <= 0 {
@@ -199,7 +199,7 @@ pub fn concat(
 }
 
 ///|
-pub fn BitVec::widen(self : BitVec, width~ : Int) -> BitVec raise BitVecError {
+pub fn BitVec::widen(self : BitVec, width~ : Int32) -> BitVec raise BitVecError {
   if width < self.width {
     raise InvalidWidth(width)
   }
@@ -209,8 +209,8 @@ pub fn BitVec::widen(self : BitVec, width~ : Int) -> BitVec raise BitVecError {
 ///|
 pub fn BitVec::extract(
   self : BitVec,
-  hi? : Int = -1,
-  lo? : Int = 0,
+  hi~ : Int32 = -1,
+  lo~ : Int32 = 0,
 ) -> BitVec raise BitVecError {
   let actual_hi = if hi < 0 { self.width - 1 } else { hi }
   if lo < 0 || actual_hi < lo || actual_hi >= self.width {
@@ -223,7 +223,7 @@ pub fn BitVec::extract(
 ///|
 pub fn BitVec::truncate(
   self : BitVec,
-  width~ : Int,
+  width~ : Int32,
 ) -> BitVec raise BitVecError {
   if width > self.width {
     raise InvalidWidth(width)

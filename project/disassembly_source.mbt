@@ -2,7 +2,7 @@
 struct ProjectDisassemblySourceContext {
   path_value : String?
   bias_value : @types.Word?
-  size_value : Int
+  size_value : Int32
 }
 
 ///|
@@ -55,7 +55,7 @@ fn project_disassembly_source_context_size(
   target : @core_theory.Target,
   addr : @types.Word?,
   bias : @types.Word?,
-) -> Int {
+) -> Int32 {
   let target_size = target.code_addr_size()
   if target_size > 0 {
     target_size
@@ -73,7 +73,7 @@ fn project_disassembly_source_context_size(
 
 ///|
 fn project_disassembly_source_context_word(
-  size : Int,
+  size : Int32,
   value : UInt64,
 ) -> Result[@types.Word, String] {
   if size <= 0 {
@@ -91,7 +91,7 @@ fn project_disassembly_source_context_word(
 ///|
 fn project_disassembly_source_context_normalize_word(
   word : @types.Word,
-  size : Int,
+  size : Int32,
 ) -> Result[@types.Word, String] {
   if word.bitwidth() == size {
     Ok(word)
@@ -182,13 +182,13 @@ pub fn[T] ProjectDisassemblySource::is_empty(
 ///|
 pub fn[T] ProjectDisassemblySource::length(
   self : ProjectDisassemblySource[T],
-) -> Int {
+) -> Int32 {
   self.items_value.length()
 }
 
 ///|
 pub fn ProjectDisassemblySourceContext::create(
-  size? : Int = 64,
+  size~ : Int32 = 64,
   path? : String,
   bias? : @types.Word,
 ) -> Result[ProjectDisassemblySourceContext, String] {
@@ -269,7 +269,7 @@ pub fn ProjectDisassemblySourceContext::bias(
 ///|
 pub fn ProjectDisassemblySourceContext::size(
   self : ProjectDisassemblySourceContext,
-) -> Int {
+) -> Int32 {
   self.size_value
 }
 
@@ -292,7 +292,7 @@ pub fn ProjectDisassemblySourceContext::is_applicable(
 pub fn ProjectDisassemblySourceContext::create_addr(
   self : ProjectDisassemblySourceContext,
   value : UInt64,
-  unbiased? : Bool = false,
+  unbiased~ : Bool = false,
 ) -> Result[@types.Word, String] {
   match project_disassembly_source_context_word(self.size_value, value) {
     Ok(address) =>
@@ -313,7 +313,7 @@ pub fn ProjectDisassemblySourceContext::create_addr(
 pub fn ProjectDisassemblySourceContext::create_word_addr(
   self : ProjectDisassemblySourceContext,
   value : @types.Word,
-  unbiased? : Bool = false,
+  unbiased~ : Bool = false,
 ) -> Result[@types.Word, String] {
   try value.to_uint64() catch {
     _ => Err("project disassembly source context address conversion failed")

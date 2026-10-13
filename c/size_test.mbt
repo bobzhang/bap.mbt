@@ -1,5 +1,5 @@
 ///|
-fn int_sizes(model : @c.Model) -> Array[Int] {
+fn int_sizes(model : @c.Model) -> Array[Int32] {
   let size = @c.SizeBase::new(model)
   [
     @c.CType::basic(Char),

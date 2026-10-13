@@ -9,8 +9,8 @@ priv struct ElfObjectSymbol {
   name : String
   value : UInt64
   size : UInt64
-  info : Int
-  shndx : Int
+  info : Int32
+  shndx : Int32
 }
 
 ///|
@@ -18,14 +18,14 @@ priv struct ElfObjectSymbol {
 /// addend.
 priv struct ElfObjectReloc {
   offset : UInt64
-  sym : Int
-  typ : Int
+  sym : Int32
+  typ : Int32
   addend : Int64
 }
 
 ///|
 /// The index of the `.text` section of the object fixtures.
-const ELF_OBJECT_TEXT : Int = 1
+const ELF_OBJECT_TEXT : Int32 = 1
 
 ///|
 /// A little-endian 64-bit ELF relocatable object for `machine`: the
@@ -36,7 +36,7 @@ const ELF_OBJECT_TEXT : Int = 1
 /// indices of relocations count from the null symbol, then `locals`,
 /// then `globals`.
 fn elf64_object(
-  machine~ : Int,
+  machine~ : Int32,
   code~ : Bytes,
   locals~ : Array[ElfObjectSymbol],
   globals~ : Array[ElfObjectSymbol],
@@ -75,7 +75,7 @@ fn elf64_object(
     }
   }
   let strtab = @utf8.encode(strtab.to_string())
-  let align8 = (x : Int) => (x + 7) / 8 * 8
+  let align8 = (x : Int32) => (x + 7) / 8 * 8
   let text_off = 0x40
   let rela_text_off = align8(text_off + code.length())
   let frame_off = rela_text_off + text_relocs.length() * 24
@@ -97,7 +97,7 @@ fn elf64_object(
   b.u16(60, names.length())
   b.u16(62, names.length() - 1)
   b.blob(text_off, code)
-  let reloc = (off : Int, r : ElfObjectReloc) => {
+  let reloc = (off : Int32, r : ElfObjectReloc) => {
     b.u64(off, r.offset)
     b.u64(off + 8, (r.sym.to_uint64() << 32) | r.typ.to_uint64())
     b.u64(off + 16, r.addend.reinterpret_as_uint64())
@@ -121,15 +121,15 @@ fn elf64_object(
   // the section headers: name, type, flags, offset, size, link, info,
   // alignment, entry size
   let section = (
-    i : Int,
-    typ : Int,
+    i : Int32,
+    typ : Int32,
     flags : UInt64,
-    off : Int,
-    size : Int,
-    link : Int,
-    info : Int,
-    align : Int,
-    entsize : Int,
+    off : Int32,
+    size : Int32,
+    link : Int32,
+    info : Int32,
+    align : Int32,
+    entsize : Int32,
   ) => {
     let h = sh_off + i * 64
     b.u32(h, name_offsets[i].to_uint64())

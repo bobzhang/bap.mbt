@@ -53,8 +53,8 @@ pub fn[V] MemMap::entries(self : MemMap[V]) -> Array[(Memory, V)] {
 ///|
 fn[V] MemMap::ranged_entries(
   self : MemMap[V],
-  start? : Memory? = None,
-  until? : Memory? = None,
+  start~ : Memory? = None,
+  until~ : Memory? = None,
 ) -> Array[(Memory, V)] {
   let entries = self.ordered_entries()
   if entries.is_empty() {
@@ -84,7 +84,7 @@ fn[V] MemMap::ranged_entries(
 }
 
 ///|
-pub fn[V] MemMap::length(self : MemMap[V]) -> Int {
+pub fn[V] MemMap::length(self : MemMap[V]) -> Int32 {
   self.entries.length()
 }
 
@@ -110,8 +110,8 @@ pub fn[V] MemMap::contains(self : MemMap[V], addr : UInt64) -> Bool {
 pub fn[V, U] MemMap::map(
   self : MemMap[V],
   f : (V) -> U,
-  start? : Memory? = None,
-  until? : Memory? = None,
+  start~ : Memory? = None,
+  until~ : Memory? = None,
 ) -> MemMap[U] {
   {
     entries: self
@@ -124,8 +124,8 @@ pub fn[V, U] MemMap::map(
 pub fn[V, U] MemMap::mapi(
   self : MemMap[V],
   f : (Memory, V) -> U,
-  start? : Memory? = None,
-  until? : Memory? = None,
+  start~ : Memory? = None,
+  until~ : Memory? = None,
 ) -> MemMap[U] {
   {
     entries: self
@@ -138,8 +138,8 @@ pub fn[V, U] MemMap::mapi(
 pub fn[V] MemMap::filter(
   self : MemMap[V],
   f : (V) -> Bool,
-  start? : Memory? = None,
-  until? : Memory? = None,
+  start~ : Memory? = None,
+  until~ : Memory? = None,
 ) -> MemMap[V] {
   self.filteri((_, value) => f(value), start~, until~)
 }
@@ -148,8 +148,8 @@ pub fn[V] MemMap::filter(
 pub fn[V] MemMap::filteri(
   self : MemMap[V],
   f : (Memory, V) -> Bool,
-  start? : Memory? = None,
-  until? : Memory? = None,
+  start~ : Memory? = None,
+  until~ : Memory? = None,
 ) -> MemMap[V] {
   self.filter_mapi(
     (memory, value) => if f(memory, value) { Some(value) } else { None },
@@ -162,8 +162,8 @@ pub fn[V] MemMap::filteri(
 pub fn[V, U] MemMap::filter_map(
   self : MemMap[V],
   f : (V) -> U?,
-  start? : Memory? = None,
-  until? : Memory? = None,
+  start~ : Memory? = None,
+  until~ : Memory? = None,
 ) -> MemMap[U] {
   self.filter_mapi((_, value) => f(value), start~, until~)
 }
@@ -172,8 +172,8 @@ pub fn[V, U] MemMap::filter_map(
 pub fn[V, U] MemMap::filter_mapi(
   self : MemMap[V],
   f : (Memory, V) -> U?,
-  start? : Memory? = None,
-  until? : Memory? = None,
+  start~ : Memory? = None,
+  until~ : Memory? = None,
 ) -> MemMap[U] {
   let entries = []
   for entry in self.ranged_entries(start~, until~) {
@@ -425,8 +425,8 @@ pub fn[V, A] MemMap::foldi(
   self : MemMap[V],
   init : A,
   f : (Memory, V, A) -> A,
-  start? : Memory? = None,
-  until? : Memory? = None,
+  start~ : Memory? = None,
+  until~ : Memory? = None,
 ) -> A {
   let mut result = init
   for entry in self.ranged_entries(start~, until~) {
@@ -440,8 +440,8 @@ pub fn[V, A] MemMap::fold(
   self : MemMap[V],
   init : A,
   f : (V, A) -> A,
-  start? : Memory? = None,
-  until? : Memory? = None,
+  start~ : Memory? = None,
+  until~ : Memory? = None,
 ) -> A {
   self.foldi(init, (_, value, acc) => f(value, acc), start~, until~)
 }
@@ -450,8 +450,8 @@ pub fn[V, A] MemMap::fold(
 pub fn[V] MemMap::iteri(
   self : MemMap[V],
   f : (Memory, V) -> Unit,
-  start? : Memory? = None,
-  until? : Memory? = None,
+  start~ : Memory? = None,
+  until~ : Memory? = None,
 ) -> Unit {
   for entry in self.ranged_entries(start~, until~) {
     f(entry.0, entry.1)
@@ -462,8 +462,8 @@ pub fn[V] MemMap::iteri(
 pub fn[V] MemMap::iter(
   self : MemMap[V],
   f : (V) -> Unit,
-  start? : Memory? = None,
-  until? : Memory? = None,
+  start~ : Memory? = None,
+  until~ : Memory? = None,
 ) -> Unit {
   self.iteri((_, value) => f(value), start~, until~)
 }
@@ -472,8 +472,8 @@ pub fn[V] MemMap::iter(
 pub fn[V] MemMap::existsi(
   self : MemMap[V],
   f : (Memory, V) -> Bool,
-  start? : Memory? = None,
-  until? : Memory? = None,
+  start~ : Memory? = None,
+  until~ : Memory? = None,
 ) -> Bool {
   for entry in self.ranged_entries(start~, until~) {
     if f(entry.0, entry.1) {
@@ -487,8 +487,8 @@ pub fn[V] MemMap::existsi(
 pub fn[V] MemMap::exists(
   self : MemMap[V],
   f : (V) -> Bool,
-  start? : Memory? = None,
-  until? : Memory? = None,
+  start~ : Memory? = None,
+  until~ : Memory? = None,
 ) -> Bool {
   self.existsi((_, value) => f(value), start~, until~)
 }
@@ -497,8 +497,8 @@ pub fn[V] MemMap::exists(
 pub fn[V] MemMap::for_alli(
   self : MemMap[V],
   f : (Memory, V) -> Bool,
-  start? : Memory? = None,
-  until? : Memory? = None,
+  start~ : Memory? = None,
+  until~ : Memory? = None,
 ) -> Bool {
   for entry in self.ranged_entries(start~, until~) {
     if !f(entry.0, entry.1) {
@@ -512,8 +512,8 @@ pub fn[V] MemMap::for_alli(
 pub fn[V] MemMap::for_all(
   self : MemMap[V],
   f : (V) -> Bool,
-  start? : Memory? = None,
-  until? : Memory? = None,
+  start~ : Memory? = None,
+  until~ : Memory? = None,
 ) -> Bool {
   self.for_alli((_, value) => f(value), start~, until~)
 }
@@ -522,9 +522,9 @@ pub fn[V] MemMap::for_all(
 pub fn[V] MemMap::count(
   self : MemMap[V],
   f : (V) -> Bool,
-  start? : Memory? = None,
-  until? : Memory? = None,
-) -> Int {
+  start~ : Memory? = None,
+  until~ : Memory? = None,
+) -> Int32 {
   let mut total = 0
   for entry in self.ranged_entries(start~, until~) {
     if f(entry.1) {
@@ -538,8 +538,8 @@ pub fn[V] MemMap::count(
 pub fn[V, U] MemMap::find_mapi(
   self : MemMap[V],
   f : (Memory, V) -> U?,
-  start? : Memory? = None,
-  until? : Memory? = None,
+  start~ : Memory? = None,
+  until~ : Memory? = None,
 ) -> U? {
   for entry in self.ranged_entries(start~, until~) {
     match f(entry.0, entry.1) {
@@ -554,8 +554,8 @@ pub fn[V, U] MemMap::find_mapi(
 pub fn[V, U] MemMap::find_map(
   self : MemMap[V],
   f : (V) -> U?,
-  start? : Memory? = None,
-  until? : Memory? = None,
+  start~ : Memory? = None,
+  until~ : Memory? = None,
 ) -> U? {
   self.find_mapi((_, value) => f(value), start~, until~)
 }
@@ -564,8 +564,8 @@ pub fn[V, U] MemMap::find_map(
 pub fn[V] MemMap::find_if(
   self : MemMap[V],
   f : (V) -> Bool,
-  start? : Memory? = None,
-  until? : Memory? = None,
+  start~ : Memory? = None,
+  until~ : Memory? = None,
 ) -> V? {
   self.find_map(
     value => if f(value) { Some(value) } else { None },
@@ -577,8 +577,8 @@ pub fn[V] MemMap::find_if(
 ///|
 pub fn[V] MemMap::to_sequence(
   self : MemMap[V],
-  start? : Memory? = None,
-  until? : Memory? = None,
+  start~ : Memory? = None,
+  until~ : Memory? = None,
 ) -> Array[(Memory, V)] {
   self.ranged_entries(start~, until~)
 }
@@ -586,8 +586,8 @@ pub fn[V] MemMap::to_sequence(
 ///|
 pub fn[V] MemMap::regions(
   self : MemMap[V],
-  start? : Memory? = None,
-  until? : Memory? = None,
+  start~ : Memory? = None,
+  until~ : Memory? = None,
 ) -> Array[Memory] {
   self.ranged_entries(start~, until~).map(entry => entry.0)
 }
@@ -595,8 +595,8 @@ pub fn[V] MemMap::regions(
 ///|
 pub fn[V] MemMap::elements(
   self : MemMap[V],
-  start? : Memory? = None,
-  until? : Memory? = None,
+  start~ : Memory? = None,
+  until~ : Memory? = None,
 ) -> Array[V] {
   self.ranged_entries(start~, until~).map(entry => entry.1)
 }
@@ -679,7 +679,7 @@ pub fn[V] MemMap::remove_dominators(
 
 ///|
 pub fn[V] MemMap::min_binding(self : MemMap[V]) -> (Memory, V)? {
-  let mut best : Int? = None
+  let mut best : Int32? = None
   for i in 0..<self.entries.length() {
     best = match best {
       Some(j) if self.entries[j].0.min_addr() <= self.entries[i].0.min_addr() =>
@@ -695,7 +695,7 @@ pub fn[V] MemMap::min_binding(self : MemMap[V]) -> (Memory, V)? {
 
 ///|
 pub fn[V] MemMap::max_binding(self : MemMap[V]) -> (Memory, V)? {
-  let mut best : Int? = None
+  let mut best : Int32? = None
   for i in 0..<self.entries.length() {
     let candidate = self.entries[i].0
     best = match best {
@@ -732,7 +732,7 @@ fn memory_range_less(left : Memory, right : Memory) -> Bool {
 }
 
 ///|
-fn memory_range_compare(left : Memory, right : Memory) -> Int {
+fn memory_range_compare(left : Memory, right : Memory) -> Int32 {
   if memory_range_less(left, right) {
     -1
   } else if memory_range_less(right, left) {
@@ -761,7 +761,7 @@ pub fn[V] MemMap::next_binding(
   self : MemMap[V],
   memory : Memory,
 ) -> (Memory, V)? {
-  let mut best : Int? = None
+  let mut best : Int32? = None
   for i in 0..<self.entries.length() {
     let candidate = self.entries[i].0
     if memory_range_less(memory, candidate) {
@@ -787,7 +787,7 @@ pub fn[V] MemMap::prev_binding(
   self : MemMap[V],
   memory : Memory,
 ) -> (Memory, V)? {
-  let mut best : Int? = None
+  let mut best : Int32? = None
   for i in 0..<self.entries.length() {
     let candidate = self.entries[i].0
     if memory_range_less(candidate, memory) {

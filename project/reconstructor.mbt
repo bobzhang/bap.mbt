@@ -10,7 +10,7 @@ let project_reconstructor_registry : Map[String, ProjectReconstructor] = Map([])
 fn project_reconstructor_find_name(
   names : Array[String],
   name : String,
-) -> Int? {
+) -> Int32? {
   for i in 0..<names.length() {
     if names[i] == name {
       return Some(i)
@@ -23,7 +23,7 @@ fn project_reconstructor_find_name(
 fn project_reconstructor_find_block_start(
   blocks : Array[@memory.Memory],
   addr : UInt64,
-) -> Int? {
+) -> Int32? {
   for i in 0..<blocks.length() {
     if blocks[i].min_addr() == addr {
       return Some(i)
@@ -36,7 +36,7 @@ fn project_reconstructor_find_block_start(
 fn project_reconstructor_find_block_containing(
   blocks : Array[@memory.Memory],
   addr : UInt64,
-) -> Int? {
+) -> Int32? {
   for i in 0..<blocks.length() {
     if blocks[i].contains(addr) {
       return Some(i)
@@ -49,7 +49,7 @@ fn project_reconstructor_find_block_containing(
 fn project_reconstructor_edge_target_index(
   blocks : Array[@memory.Memory],
   edge : ProjectDisassemblyEdge,
-) -> Int? {
+) -> Int32? {
   match edge.target() {
     Some(target) => project_reconstructor_find_block_containing(blocks, target)
     None => None
@@ -242,7 +242,7 @@ pub fn ProjectReconstructor::run(
 /// are grouped into subroutines by their reachability from the rooter
 /// roots and the blocks without predecessors.
 pub fn ProjectReconstructor::default(
-  registry? : @mc.Registry = project_lift_registry(),
+  registry~ : @mc.Registry = project_lift_registry(),
 ) -> ProjectReconstructor {
   ProjectReconstructor::create(project => {
     let blocks = project.disassembly().blocks()
@@ -269,7 +269,7 @@ pub fn ProjectReconstructor::default(
 /// `ProjectReconstructor::default`.
 pub fn ProjectReconstructor::of_blocks(
   blocks : Array[(String, UInt64, UInt64)],
-  registry? : @mc.Registry = project_lift_registry(),
+  registry~ : @mc.Registry = project_lift_registry(),
 ) -> ProjectReconstructor {
   ProjectReconstructor::create(project => {
     let disassembly_blocks = project.disassembly().blocks()

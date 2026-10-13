@@ -237,7 +237,7 @@ test "translated BAP basic disassembly decodes x86_64 llvm samples" {
 
 ///|
 test "translated BAP basic disassembly decodes x86 ENDBR noops" {
-  let samples : Array[(String, Bytes, Int, Array[String])] = [
+  let samples : Array[(String, Bytes, Int32, Array[String])] = [
     ("x86", b"\xf3\x0f\x1e\xfb", 4, ["ENDBR32"]),
     ("x86_64", b"\xf3\x0f\x1e\xfa", 4, ["ENDBR64"]),
     ("x86_64", b"\xf3\x0f\x1e\xfb", 4, ["ENDBR32"]),
@@ -272,7 +272,7 @@ test "translated BAP basic disassembly decodes x86 ENDBR noops" {
 
 ///|
 test "translated BAP basic disassembly decodes x86 flag controls" {
-  let samples : Array[(String, Bytes, Int, Array[String])] = [
+  let samples : Array[(String, Bytes, Int32, Array[String])] = [
     ("x86", b"\xf8", 1, ["CLC"]),
     ("x86", b"\xf9", 1, ["STC"]),
     ("x86", b"\xf5", 1, ["CMC"]),
@@ -315,7 +315,7 @@ test "translated BAP basic disassembly decodes x86 flag controls" {
 
 ///|
 test "translated BAP basic disassembly decodes x86 random instructions" {
-  let samples : Array[(String, Bytes, Int, Array[String])] = [
+  let samples : Array[(String, Bytes, Int32, Array[String])] = [
     ("x86", b"\x0f\xc7\xf1", 3, ["RDRAND32r", "ECX"]),
     ("x86", b"\x66\x0f\xc7\xf1", 4, ["RDRAND16r", "CX"]),
     ("x86", b"\x0f\xc7\xf8", 3, ["RDSEED32r", "EAX"]),
@@ -354,7 +354,13 @@ test "translated BAP basic disassembly decodes x86 random instructions" {
 ///|
 test "translated BAP basic disassembly decodes x86 memory cmp-test rr fixtures" {
   let samples : Array[
-    (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),
+    (
+      String,
+      Bytes,
+      Int32,
+      Array[String],
+      Array[@project.ProjectInstructionKind],
+    ),
   ] = [
     (
       "x86_64",
@@ -444,7 +450,13 @@ test "translated BAP basic disassembly decodes x86 memory cmp-test rr fixtures" 
 ///|
 test "translated BAP basic disassembly decodes x86 mul fixtures" {
   let samples : Array[
-    (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),
+    (
+      String,
+      Bytes,
+      Int32,
+      Array[String],
+      Array[@project.ProjectInstructionKind],
+    ),
   ] = [
     ("x86", b"\xf6\xe1", 2, ["MUL8r", "CL"], []),
     ("x86", b"\xf7\xe1", 2, ["MUL32r", "ECX"], []),
@@ -504,7 +516,13 @@ test "translated BAP basic disassembly decodes x86 mul fixtures" {
 ///|
 test "translated BAP basic disassembly decodes x86 one-operand imul fixtures" {
   let samples : Array[
-    (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),
+    (
+      String,
+      Bytes,
+      Int32,
+      Array[String],
+      Array[@project.ProjectInstructionKind],
+    ),
   ] = [
     ("x86", b"\xf6\xe9", 2, ["IMUL8r", "CL"], []),
     ("x86", b"\xf7\xe9", 2, ["IMUL32r", "ECX"], []),
@@ -564,7 +582,13 @@ test "translated BAP basic disassembly decodes x86 one-operand imul fixtures" {
 ///|
 test "translated BAP basic disassembly decodes x86 div-idiv fixtures" {
   let samples : Array[
-    (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),
+    (
+      String,
+      Bytes,
+      Int32,
+      Array[String],
+      Array[@project.ProjectInstructionKind],
+    ),
   ] = [
     ("x86", b"\xf6\xf1", 2, ["DIV8r", "CL"], []),
     ("x86", b"\xf7\xf1", 2, ["DIV32r", "ECX"], []),
@@ -650,7 +674,13 @@ test "translated BAP basic disassembly decodes x86 div-idiv fixtures" {
 ///|
 test "translated BAP basic disassembly decodes x86 memory inc-dec fixtures" {
   let samples : Array[
-    (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),
+    (
+      String,
+      Bytes,
+      Int32,
+      Array[String],
+      Array[@project.ProjectInstructionKind],
+    ),
   ] = [
     (
       "x86_64",
@@ -719,7 +749,13 @@ test "translated BAP basic disassembly decodes x86 memory inc-dec fixtures" {
 ///|
 test "translated BAP basic disassembly decodes x86 memory not-neg fixtures" {
   let samples : Array[
-    (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),
+    (
+      String,
+      Bytes,
+      Int32,
+      Array[String],
+      Array[@project.ProjectInstructionKind],
+    ),
   ] = [
     (
       "x86_64",
@@ -788,7 +824,13 @@ test "translated BAP basic disassembly decodes x86 memory not-neg fixtures" {
 ///|
 test "translated BAP basic disassembly decodes x86 register mov fixtures" {
   let samples : Array[
-    (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),
+    (
+      String,
+      Bytes,
+      Int32,
+      Array[String],
+      Array[@project.ProjectInstructionKind],
+    ),
   ] = [
     ("x86_64", b"\x48\x89\xe5", 3, ["MOV64rr", "RBP", "RSP"], []),
     ("x86_64", b"\x48\x8b\xec", 3, ["MOV64rr_REV", "RBP", "RSP"], []),
@@ -835,7 +877,13 @@ test "translated BAP basic disassembly decodes x86 register mov fixtures" {
 ///|
 test "translated BAP basic disassembly decodes x86 movsx movzx fixtures" {
   let samples : Array[
-    (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),
+    (
+      String,
+      Bytes,
+      Int32,
+      Array[String],
+      Array[@project.ProjectInstructionKind],
+    ),
   ] = [
     ("x86_64", b"\x48\x0f\xb6\xc1", 4, ["MOVZX64rr8", "RAX", "CL"], []),
     ("x86_64", b"\x4d\x0f\xb7\xc1", 4, ["MOVZX64rr16", "R8", "R9W"], []),
@@ -908,7 +956,13 @@ test "translated BAP basic disassembly decodes x86 movsx movzx fixtures" {
 ///|
 test "translated BAP basic disassembly decodes x86 popcnt fixtures" {
   let samples : Array[
-    (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),
+    (
+      String,
+      Bytes,
+      Int32,
+      Array[String],
+      Array[@project.ProjectInstructionKind],
+    ),
   ] = [
     ("x86", b"\xf3\x0f\xb8\xc1", 4, ["POPCNT32rr", "EAX", "ECX"], []),
     ("x86", b"\x66\xf3\x0f\xb8\xc1", 5, ["POPCNT16rr", "AX", "CX"], []),
@@ -967,7 +1021,13 @@ test "translated BAP basic disassembly decodes x86 popcnt fixtures" {
 ///|
 test "translated BAP basic disassembly decodes x86 lzcnt tzcnt fixtures" {
   let samples : Array[
-    (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),
+    (
+      String,
+      Bytes,
+      Int32,
+      Array[String],
+      Array[@project.ProjectInstructionKind],
+    ),
   ] = [
     ("x86", b"\xf3\x0f\xbc\xc1", 4, ["TZCNT32rr", "EAX", "ECX"], []),
     ("x86", b"\x66\xf3\x0f\xbd\xc1", 5, ["LZCNT16rr", "AX", "CX"], []),
@@ -1020,7 +1080,13 @@ test "translated BAP basic disassembly decodes x86 lzcnt tzcnt fixtures" {
 ///|
 test "translated BAP basic disassembly decodes x86 accumulator sign-extension fixtures" {
   let samples : Array[
-    (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),
+    (
+      String,
+      Bytes,
+      Int32,
+      Array[String],
+      Array[@project.ProjectInstructionKind],
+    ),
   ] = [
     ("x86_64", b"\x48\x98", 2, ["CDQE"], []),
     ("x86_64", b"\x98", 1, ["CWDE"], []),
@@ -1063,7 +1129,13 @@ test "translated BAP basic disassembly decodes x86 accumulator sign-extension fi
 ///|
 test "translated BAP basic disassembly decodes x86 memory mov fixtures" {
   let samples : Array[
-    (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),
+    (
+      String,
+      Bytes,
+      Int32,
+      Array[String],
+      Array[@project.ProjectInstructionKind],
+    ),
   ] = [
     (
       "x86_64",
@@ -1188,7 +1260,13 @@ test "translated BAP basic disassembly decodes x86 memory mov fixtures" {
 ///|
 test "translated BAP basic disassembly decodes x86 movbe fixtures" {
   let samples : Array[
-    (String, Bytes, Int, Array[String], Array[@project.ProjectInstructionKind]),
+    (
+      String,
+      Bytes,
+      Int32,
+      Array[String],
+      Array[@project.ProjectInstructionKind],
+    ),
   ] = [
     (
       "x86",

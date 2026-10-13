@@ -25,7 +25,7 @@ pub fn target_var(
 fn arena(
   target : @core_theory.Target,
   names : Array[String],
-  low? : Int,
+  low? : Int32,
 ) -> @c.Arg[@c.Arena] {
   let exps = []
   for name in names {
@@ -113,7 +113,7 @@ fn ia32(target : @core_theory.Target, make_pass : @c.Arg[@c.Statement]) -> Unit 
   install(target, ILP32, describer => {
     arena(target, ["EAX", "EDX"]).bind(irets => {
       arena(target, ["ST0"]).bind(frets => {
-        let return_ = (_ : Int, size : Int) => {
+        let return_ = (_ : Int32, size : Int32) => {
           @c.Language::select([
             (t => t.is_real(), t => @c.Arg::register(frets, t)),
             (
@@ -286,7 +286,7 @@ fn merge_kinds(k1 : Kind, k2 : Kind) -> Kind {
 
 ///|
 /// Groups the classified fields into eightbytes.
-fn partition(fields : Array[(Kind, Int)]) -> Array[Kind] {
+fn partition(fields : Array[(Kind, Int32)]) -> Array[Kind] {
   let words = []
   let mut k = Nil
   let mut s = 0
@@ -343,10 +343,11 @@ pub fn sysv(target : @core_theory.Target) -> Unit {
       arena(target, low=64, [ for i in 0..<8 => "ymm\{i}" ]).bind(vregs => {
         arena(target, ["rax", "rdx"]).bind(irets => {
           arena(target, low=64, ["ymm0", "ymm1"]).bind(vrets => {
-            let union_fields = (size : Int, fields : Array[(String, @c.CType)]) => {
-              @c.Arg::pure([(classify_fields(fields), size)])
-            }
-            fn fields(c : @c.Compound) -> @c.Arg[Array[(Kind, Int)]] {
+            let union_fields = (
+              size : Int32,
+              fields : Array[(String, @c.CType)],
+            ) => @c.Arg::pure([(classify_fields(fields), size)])
+            fn fields(c : @c.Compound) -> @c.Arg[Array[(Kind, Int32)]] {
               fold_arg(c.fields, (0, []), (state, field) => {
                 let (off, acc) = state
                 let t = field.1

@@ -1,5 +1,5 @@
 ///|
-fn addr_attr(n : Int) -> @types.Attr raise {
+fn addr_attr(n : Int32) -> @types.Attr raise {
   @types.Attr::address(@types.Word::of_int(width=64, n))
 }
 

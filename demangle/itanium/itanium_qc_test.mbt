@@ -120,7 +120,7 @@ impl @quickcheck.Shrink for Mutant
 ///|
 /// The Itanium <seq-id> of substitution `index`: `S_` is the first, then
 /// `S0_`...`S9_`, `SA_`...`SZ_`, `S10_`... (uppercase base 36).
-fn substitution(index : Int) -> String {
+fn substitution(index : Int32) -> String {
   if index == 0 {
     return "S_"
   }
@@ -141,7 +141,7 @@ fn substitution(index : Int) -> String {
 /// `f(int*, int**, ..., int*...*)` with `len` parameters, each a pointer to
 /// the previous one through a substitution: the parser stays shallow while
 /// the last parameter prints `len` levels deep.
-fn substitution_chain(len : Int) -> String {
+fn substitution_chain(len : Int32) -> String {
   let sb = StringBuilder()
   sb.write_string("_Z1fPi")
   for i in 1..<len {
@@ -153,12 +153,12 @@ fn substitution_chain(len : Int) -> String {
 ///|
 /// Deeply nested instances of the recursive productions.
 struct Nest {
-  kind : Int
-  depth : Int
+  kind : Int32
+  depth : Int32
 } derive(Debug)
 
 ///|
-let nest_kinds : Int = 12
+let nest_kinds : Int32 = 12
 
 ///|
 fn Nest::render(self : Nest) -> String {

@@ -1,15 +1,15 @@
 ///|
-fn int_compare(left : Int, right : Int) -> Int {
+fn int_compare(left : Int32, right : Int32) -> Int32 {
   left.compare(right)
 }
 
 ///|
-fn string_compare(left : String, right : String) -> Int {
+fn string_compare(left : String, right : String) -> Int32 {
   left.compare(right)
 }
 
 ///|
-fn int_string_relation() -> @relation.Relation[Int, String] {
+fn int_string_relation() -> @relation.Relation[Int32, String] {
   @relation.Relation::empty(
     compare_left=int_compare,
     compare_right=string_compare,

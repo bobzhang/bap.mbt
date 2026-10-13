@@ -45,12 +45,12 @@ fn step(
 /// to. Delayed branches execute the instruction in their delay slot before
 /// the jump takes effect.
 fn run_program(
-  program : Array[UInt],
+  program : Array[UInt32],
   base : UInt64,
   state : @types.BilState,
-  arch? : @mips.Arch = Mips32,
-  endian? : @bitvec.Endian = BigEndian,
-  r6? : Bool = false,
+  arch~ : @mips.Arch = Mips32,
+  endian~ : @bitvec.Endian = BigEndian,
+  r6~ : Bool = false,
 ) -> (@types.BilState, UInt64) raise {
   let code = Bytes::makei(program.length() * 4, i => {
     let word = program[i / 4]
@@ -112,7 +112,7 @@ fn show_regs(state : @types.BilState, names : Array[String]) -> String {
 
 ///|
 test "decode, lift and run a counting loop with a filled delay slot" {
-  let program : Array[UInt] = [
+  let program : Array[UInt32] = [
     0x24020000, // 0x400000: addiu $v0, $zero, 0
      0x24040005, // 0x400004: addiu $a0, $zero, 5
      0x00441021, // 0x400008: addu $v0, $v0, $a0
@@ -136,7 +136,7 @@ test "decode, lift and run a counting loop with a filled delay slot" {
 
 ///|
 test "decode, lift and run a little-endian stack frame" {
-  let program : Array[UInt] = [
+  let program : Array[UInt32] = [
     0x27bdffe0, // addiu $sp, $sp, -32
      0xafbf001c, // sw $ra, 28($sp)
      0x3c051234, // lui $a1, 0x1234
@@ -171,7 +171,7 @@ test "decode, lift and run a little-endian stack frame" {
 
 ///|
 test "decode, lift and run a MIPS64 call through $t9" {
-  let program : Array[UInt] = [
+  let program : Array[UInt32] = [
     0x67bdfff0, // 0x120000000: daddiu $sp, $sp, -16
      0xffbf0008, // sd $ra, 8($sp)
      0x0320f809, // jalr $t9 (to 0x120000020)

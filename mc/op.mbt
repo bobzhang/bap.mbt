@@ -9,7 +9,7 @@
 pub(all) enum Op {
   /// Register operand with its backend-specific name (LLVM MC style, e.g.
   /// `R0`, `ZERO_64`, `X1`) and numeric code (`0` when unknown).
-  Reg(name~ : String, code~ : Int)
+  Reg(name~ : String, code~ : Int32)
   /// Integer immediate.
   Imm(Int64)
   /// Floating-point immediate.
@@ -23,7 +23,7 @@ pub extend Op with Eq::{equal, not_equal}
 pub extend Op with Debug::{to_repr}
 
 ///|
-pub fn Op::reg(name : String, code? : Int = 0) -> Op {
+pub fn Op::reg(name : String, code~ : Int32 = 0) -> Op {
   Reg(name~, code~)
 }
 

@@ -48,9 +48,9 @@ pub fn ProjectRelocations::empty() -> ProjectRelocations {
 /// version suffix (`name@version`), which is removed (upstream
 /// `chop_version`).
 pub fn ProjectRelocations::create(
-  rels? : ArrayView[(UInt64, UInt64)] = [],
-  exts? : ArrayView[(UInt64, String)] = [],
-  stubs? : ArrayView[(UInt64, Int)] = [],
+  rels~ : ArrayView[(UInt64, UInt64)] = [],
+  exts~ : ArrayView[(UInt64, String)] = [],
+  stubs~ : ArrayView[(UInt64, Int32)] = [],
 ) -> ProjectRelocations {
   let r : Map[UInt64, UInt64] = Map([])
   for x in rels {
@@ -302,9 +302,9 @@ pub fn ProjectRelocations::fixup(
   self : ProjectRelocations,
   bil : ArrayView[@types.Stmt],
   addr~ : UInt64,
-  size~ : Int,
-  width~ : Int,
-  is_stub? : Bool = self.is_stub(addr),
+  size~ : Int32,
+  width~ : Int32,
+  is_stub~ : Bool = self.is_stub(addr),
 ) -> Array[@types.Stmt] {
   if self.is_empty() {
     return bil.to_owned()
@@ -400,7 +400,7 @@ pub fn Project::relocation_info(self : Project) -> ProjectRelocations {
 /// reference to the external symbol (upstream `plt_sizes`: 4 on ARM and
 /// PowerPC, 1 on x86; the port also searches the 4 instructions of the
 /// AArch64 and RISC-V stubs).
-let project_stub_size : Int = 4
+let project_stub_size : Int32 = 4
 
 ///|
 /// The name of the external symbol a stub at `addr` refers to (upstream

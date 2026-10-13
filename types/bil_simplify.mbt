@@ -52,7 +52,7 @@ fn fold_binop(op : BinOp, lhs : Exp, rhs : Exp) -> Exp? {
 }
 
 ///|
-fn fold_cast(kind : CastKind, width : Int, exp : Exp) -> Exp? {
+fn fold_cast(kind : CastKind, width : Int32, exp : Exp) -> Exp? {
   match exp {
     Int(word) =>
       match cast_word(kind, width, word) {
@@ -64,7 +64,7 @@ fn fold_cast(kind : CastKind, width : Int, exp : Exp) -> Exp? {
 }
 
 ///|
-fn fold_extract(hi : Int, lo : Int, exp : Exp) -> Exp? {
+fn fold_extract(hi : Int32, lo : Int32, exp : Exp) -> Exp? {
   match exp {
     Int(word) =>
       match extract_word(hi, lo, word) {
@@ -76,7 +76,7 @@ fn fold_extract(hi : Int, lo : Int, exp : Exp) -> Exp? {
 }
 
 ///|
-fn simplify_cast(kind : CastKind, width : Int, exp : Exp) -> Exp {
+fn simplify_cast(kind : CastKind, width : Int32, exp : Exp) -> Exp {
   match fold_cast(kind, width, exp) {
     Some(result) => result
     None =>
@@ -268,7 +268,7 @@ pub fn Exp::smart_unop(op : UnOp, exp : Exp) -> Exp {
 }
 
 ///|
-fn exp_has_width(width : Int, exp : Exp) -> Bool {
+fn exp_has_width(width : Int32, exp : Exp) -> Bool {
   match exp.infer_type() {
     Ok(Imm(actual)) => actual == width
     _ => false
@@ -276,7 +276,7 @@ fn exp_has_width(width : Int, exp : Exp) -> Bool {
 }
 
 ///|
-pub fn Exp::smart_cast(kind : CastKind, width : Int, exp : Exp) -> Exp {
+pub fn Exp::smart_cast(kind : CastKind, width : Int32, exp : Exp) -> Exp {
   match exp {
     Int(word) =>
       match kind.apply(width, word) {
@@ -306,7 +306,7 @@ pub fn Exp::smart_ite(if_~ : Exp, then_~ : Exp, else_~ : Exp) -> Exp {
 }
 
 ///|
-pub fn Exp::smart_extract(exp : Exp, hi~ : Int, lo~ : Int) -> Exp {
+pub fn Exp::smart_extract(exp : Exp, hi~ : Int32, lo~ : Int32) -> Exp {
   match exp {
     Int(word) =>
       match extract_word(hi, lo, word) {
@@ -458,7 +458,7 @@ pub fn Exp::normalize(self : Exp) -> Exp {
 }
 
 ///|
-fn memory_addr_offset(mem : Exp, addr : Exp, offset : Int) -> Exp {
+fn memory_addr_offset(mem : Exp, addr : Exp, offset : Int32) -> Exp {
   if offset == 0 {
     addr
   } else {
@@ -471,7 +471,7 @@ fn memory_addr_offset(mem : Exp, addr : Exp, offset : Int) -> Exp {
 }
 
 ///|
-fn memory_cell_count(total_width : Int, cell_width : Int) -> Int? {
+fn memory_cell_count(total_width : Int32, cell_width : Int32) -> Int32? {
   if cell_width <= 0 || total_width <= cell_width {
     None
   } else if total_width % cell_width == 0 {
@@ -486,9 +486,9 @@ fn expand_load_memory(
   mem : Exp,
   addr : Exp,
   endian : @bitvec.Endian,
-  cell_width : Int,
-  count : Int,
-  index : Int,
+  cell_width : Int32,
+  count : Int32,
+  index : Int32,
 ) -> Exp {
   let current = Load(
     mem~,
@@ -521,8 +521,8 @@ fn expand_store_memory(
   addr : Exp,
   value : Exp,
   endian : @bitvec.Endian,
-  cell_width : Int,
-  count : Int,
+  cell_width : Int32,
+  count : Int32,
 ) -> Exp {
   let mut result = mem
   for index in 0..<count {
@@ -972,7 +972,7 @@ fn hoist_load_stores(stmts : Array[Stmt]) -> Array[Stmt] {
 }
 
 ///|
-let normalize_tmp_counter : Ref[Int] = Ref(0)
+let normalize_tmp_counter : Ref[Int32] = Ref(0)
 
 ///|
 fn normalize_fresh_var(typ : ValueType) -> Var {
@@ -1171,7 +1171,7 @@ fn hoist_non_generative(stmts : Array[Stmt]) -> Array[Stmt] {
 ///|
 pub fn Stmt::normalize(
   self : Stmt,
-  normalize_exp? : Bool = false,
+  normalize_exp~ : Bool = false,
 ) -> Array[Stmt] {
   match self {
     Move(variable, exp) => {
@@ -1253,7 +1253,7 @@ pub fn normalize_negatives(stmts : Array[Stmt]) -> Array[Stmt] {
 ///|
 pub fn normalize(
   stmts : Array[Stmt],
-  normalize_exp? : Bool = false,
+  normalize_exp~ : Bool = false,
 ) -> Array[Stmt] {
   let stmts = hoist_non_generative(stmts)
   let result = []
@@ -1711,8 +1711,8 @@ fn should_prune_unreferenced(
 pub fn prune_unreferenced(
   stmts : Array[Stmt],
   such_that? : (Var) -> Bool,
-  physicals? : Bool = false,
-  virtuals? : Bool = false,
+  physicals~ : Bool = false,
+  virtuals~ : Bool = false,
 ) -> Array[Stmt] {
   let kept = []
   for i in 0..<stmts.length() {
@@ -1741,7 +1741,7 @@ fn optimize_stmts_once(stmts : Array[Stmt]) -> Array[Stmt] {
 ///|
 pub fn optimize_stmts(
   stmts : Array[Stmt],
-  max_iterations? : Int = 16,
+  max_iterations~ : Int32 = 16,
 ) -> Array[Stmt] {
   let mut current = stmts
   let mut next = optimize_stmts_once(current)

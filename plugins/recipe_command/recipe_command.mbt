@@ -130,7 +130,7 @@ pub fn describe_recipe(r : @recipe.Recipe, argv~ : Array[String]) -> String {
 }
 
 ///|
-fn prefix(s : String, len : Int) -> String {
+fn prefix(s : String, len : Int32) -> String {
   String::from_array(s.to_array()[:len])
 }
 
@@ -158,7 +158,7 @@ fn summary(s : String) -> String {
 }
 
 ///|
-fn pad_right(s : String, width : Int) -> String {
+fn pad_right(s : String, width : Int32) -> String {
   if s.length() >= width {
     s
   } else {
@@ -170,11 +170,11 @@ fn pad_right(s : String, width : Int) -> String {
 /// Lists the recipes installed in `recipe_paths` (upstream
 /// `print_all_recipes`). Malformed recipes are reported to `err`.
 pub fn list_recipes(
-  keep? : Bool = false,
-  paths? : Array[String] = recipe_paths(),
-  fs? : @recipe.FileSystem = @recipe.FileSystem::native(),
+  keep~ : Bool = false,
+  paths~ : Array[String] = recipe_paths(),
+  fs~ : @recipe.FileSystem = @recipe.FileSystem::native(),
   out~ : (String) -> Unit,
-  err? : (String) -> Unit = _ => (),
+  err~ : (String) -> Unit = _ => (),
 ) -> Unit {
   for dir in paths {
     if (fs.file_exists)(dir) && (fs.is_directory)(dir) {
@@ -208,12 +208,12 @@ pub fn list_recipes(
 /// arguments).
 pub fn print_recipes(
   recipes : Array[String],
-  keep? : Bool = false,
-  paths? : Array[String] = recipe_paths(),
-  fs? : @recipe.FileSystem = @recipe.FileSystem::native(),
-  argv? : Array[String] = @env.args(),
+  keep~ : Bool = false,
+  paths~ : Array[String] = recipe_paths(),
+  fs~ : @recipe.FileSystem = @recipe.FileSystem::native(),
+  argv~ : Array[String] = @env.args(),
   out~ : (String) -> Unit,
-  err? : (String) -> Unit = _ => (),
+  err~ : (String) -> Unit = _ => (),
 ) -> Unit raise RecipeCommandError {
   match recipes {
     [] => list_recipes(keep~, paths~, fs~, out~, err~)
@@ -241,10 +241,10 @@ let printer_registered : Ref[Bool] = Ref(false)
 /// `argv` is the command line of the process, shown in the recipe
 /// descriptions; `fs` is the file system with the recipes.
 pub fn declare_plugin(
-  out? : (String) -> Unit = s => println(s.trim_end(chars="\n")),
-  err? : (String) -> Unit = s => println(s.trim_end(chars="\n")),
-  argv? : Array[String] = @env.args(),
-  fs? : @recipe.FileSystem = @recipe.FileSystem::native(),
+  out~ : (String) -> Unit = s => println(s.trim_end(chars="\n")),
+  err~ : (String) -> Unit = s => println(s.trim_end(chars="\n")),
+  argv~ : Array[String] = @env.args(),
+  fs~ : @recipe.FileSystem = @recipe.FileSystem::native(),
   paths? : Array[String],
 ) -> Unit raise {
   if @bap_main.registered_plugins().contains(plugin_name) {
@@ -301,7 +301,7 @@ pub fn declare_plugin(
 ///|
 /// OCaml's `String.compare`: the lexicographic order (MoonBit's `String`
 /// comparison orders by length first).
-fn lex_compare(a : String, b : String) -> Int {
+fn lex_compare(a : String, b : String) -> Int32 {
   let n = if a.length() < b.length() { a.length() } else { b.length() }
   for i in 0..<n {
     let c = a[i].compare(b[i])

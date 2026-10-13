@@ -2,7 +2,7 @@
 struct StringsIndexKey[K] {
   null_value : K
   succ_fn : (K) -> K
-  compare_fn : (K, K) -> Int
+  compare_fn : (K, K) -> Int32
 }
 
 ///|
@@ -16,13 +16,13 @@ struct StringsIndex[K] {
 pub fn[K] StringsIndexKey::create(
   null~ : K,
   succ~ : (K) -> K,
-  compare~ : (K, K) -> Int,
+  compare~ : (K, K) -> Int32,
 ) -> StringsIndexKey[K] {
   { null_value: null, succ_fn: succ, compare_fn: compare, }
 }
 
 ///|
-pub fn StringsIndexKey::int() -> StringsIndexKey[Int] {
+pub fn StringsIndexKey::int() -> StringsIndexKey[Int32] {
   StringsIndexKey::create(null=0, succ=key => key + 1, compare=(lhs, rhs) => {
     lhs.compare(rhs)
   })
@@ -34,7 +34,7 @@ pub fn[K] StringsIndex::empty(key~ : StringsIndexKey[K]) -> StringsIndex[K] {
 }
 
 ///|
-pub fn StringsIndex::empty_int() -> StringsIndex[Int] {
+pub fn StringsIndex::empty_int() -> StringsIndex[Int32] {
   StringsIndex::empty(key=StringsIndexKey::int())
 }
 

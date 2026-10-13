@@ -2,7 +2,7 @@
 struct Segment {
   name_value : String
   memory_value : @memory.Memory
-  offset_value : Int
+  offset_value : Int32
   readable_flag : Bool
   writable_flag : Bool
   executable_flag : Bool
@@ -22,7 +22,7 @@ pub fn Segment::create(
   endian~ : @bitvec.Endian,
   addr~ : UInt64,
   data : Bytes,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
   readable? : Bool,
   writable? : Bool,
   executable? : Bool,
@@ -41,7 +41,7 @@ pub fn Segment::create(
 pub fn Segment::from_memory(
   name~ : String,
   memory~ : @memory.Memory,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
   readable? : Bool,
   writable? : Bool,
   executable? : Bool,
@@ -82,12 +82,12 @@ pub fn Segment::max_addr(self : Segment) -> UInt64 {
 }
 
 ///|
-pub fn Segment::size(self : Segment) -> Int {
+pub fn Segment::size(self : Segment) -> Int32 {
   self.memory_value.length()
 }
 
 ///|
-pub fn Segment::offset(self : Segment) -> Int {
+pub fn Segment::offset(self : Segment) -> Int32 {
   self.offset_value
 }
 
@@ -112,7 +112,7 @@ pub fn Segment::contains(self : Segment, addr : UInt64) -> Bool {
 }
 
 ///|
-fn image_bool_compare(lhs : Bool, rhs : Bool) -> Int {
+fn image_bool_compare(lhs : Bool, rhs : Bool) -> Int32 {
   if lhs == rhs {
     0
   } else if !lhs && rhs {
@@ -123,8 +123,8 @@ fn image_bool_compare(lhs : Bool, rhs : Bool) -> Int {
 }
 
 ///|
-fn image_endian_compare(lhs : @bitvec.Endian, rhs : @bitvec.Endian) -> Int {
-  fn rank(value : @bitvec.Endian) -> Int {
+fn image_endian_compare(lhs : @bitvec.Endian, rhs : @bitvec.Endian) -> Int32 {
+  fn rank(value : @bitvec.Endian) -> Int32 {
     match value {
       LittleEndian => 0
       BigEndian => 1
@@ -139,7 +139,7 @@ pub fn Segment::to_string(self : Segment) -> String {
 }
 
 ///|
-pub fn Segment::hash(self : Segment) -> Int {
+pub fn Segment::hash(self : Segment) -> Int32 {
   self.addr().to_string().hash()
 }
 
@@ -149,7 +149,7 @@ pub fn Segment::equal(self : Segment, other : Segment) -> Bool {
 }
 
 ///|
-pub fn Segment::compare(self : Segment, other : Segment) -> Int {
+pub fn Segment::compare(self : Segment, other : Segment) -> Int32 {
   let name_order = self.name_value.compare(other.name_value)
   if name_order != 0 {
     return name_order

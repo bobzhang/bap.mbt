@@ -36,7 +36,7 @@ let builtin_lifters_registered : Ref[Bool] = Ref(false)
 /// global registry (the default) it happens only once per process, so that
 /// providers registered later under the same names are not overridden.
 pub fn register_builtin_lifters(
-  registry? : @mc.Registry = @mc.Registry::global(),
+  registry~ : @mc.Registry = @mc.Registry::global(),
 ) -> Unit {
   let global = physical_equal(registry, @mc.Registry::global())
   if global && builtin_lifters_registered.val {

@@ -157,7 +157,7 @@ test "search terminates at the first match" {
 ///|
 /// A state-passing visitor that counts the basic types.
 struct Counter {
-  mut basics : Int
+  mut basics : Int32
 }
 
 ///|
@@ -185,7 +185,7 @@ impl @c.TypeMapper for Failing with fn enter_enum(_self, _) {
 
 ///|
 test "errors other than the search termination propagate" {
-  let search : @c.Search[Int] = @c.Search::new()
+  let search : @c.Search[Int32] = @c.Search::new()
   try search.find(Failing::{ }, sample_type()) catch {
     Abort => ()
     _ => fail("unexpected error")

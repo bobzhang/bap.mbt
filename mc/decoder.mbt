@@ -14,7 +14,7 @@ pub(all) enum Decoded {
   /// A valid instruction; it occupies `insn.size` bytes.
   Decoded(Insn)
   /// An invalid instruction occupying `size` (at least one) bytes.
-  Invalid(size~ : Int)
+  Invalid(size~ : Int32)
   /// Not enough bytes are left to decode an instruction.
   Truncated
 } derive(Eq, Debug)

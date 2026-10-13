@@ -2,7 +2,7 @@
 // the Z3 library cannot be loaded on the host.
 
 ///|
-fn w(width : Int, n : Int) -> @types.Word {
+fn w(width : Int32, n : Int32) -> @types.Word {
   try! @types.Word::of_int(width~, n)
 }
 

@@ -477,7 +477,7 @@ pub fn Term::program_jmps(self : Term[Program]) -> Array[Term[Jmp]] {
 ///|
 pub fn Term::blk_terms(
   self : Term[Blk],
-  include_self? : Bool = true,
+  include_self~ : Bool = true,
 ) -> Array[IrTerm] {
   let result = []
   if include_self {
@@ -498,7 +498,7 @@ pub fn Term::blk_terms(
 ///|
 pub fn Term::sub_terms(
   self : Term[Sub],
-  include_self? : Bool = true,
+  include_self~ : Bool = true,
 ) -> Array[IrTerm] {
   let result = []
   if include_self {
@@ -518,7 +518,7 @@ pub fn Term::sub_terms(
 ///|
 pub fn Term::program_terms(
   self : Term[Program],
-  include_self? : Bool = true,
+  include_self~ : Bool = true,
 ) -> Array[IrTerm] {
   let result = []
   if include_self {
@@ -537,7 +537,7 @@ pub fn[A] Term::fold_blk_terms(
   self : Term[Blk],
   init : A,
   f : (A, IrTerm) -> A,
-  include_self? : Bool = true,
+  include_self~ : Bool = true,
 ) -> A {
   let mut acc = init
   for term in self.blk_terms(include_self~) {
@@ -551,7 +551,7 @@ pub fn[A] Term::fold_sub_terms(
   self : Term[Sub],
   init : A,
   f : (A, IrTerm) -> A,
-  include_self? : Bool = true,
+  include_self~ : Bool = true,
 ) -> A {
   let mut acc = init
   for term in self.sub_terms(include_self~) {
@@ -565,7 +565,7 @@ pub fn[A] Term::fold_program_terms(
   self : Term[Program],
   init : A,
   f : (A, IrTerm) -> A,
-  include_self? : Bool = true,
+  include_self~ : Bool = true,
 ) -> A {
   let mut acc = init
   for term in self.program_terms(include_self~) {
@@ -578,7 +578,7 @@ pub fn[A] Term::fold_program_terms(
 pub fn Term::find_blk_term(
   self : Term[Blk],
   f : (IrTerm) -> Bool,
-  include_self? : Bool = true,
+  include_self~ : Bool = true,
 ) -> IrTerm? {
   for term in self.blk_terms(include_self~) {
     if f(term) {
@@ -592,7 +592,7 @@ pub fn Term::find_blk_term(
 pub fn Term::find_sub_term(
   self : Term[Sub],
   f : (IrTerm) -> Bool,
-  include_self? : Bool = true,
+  include_self~ : Bool = true,
 ) -> IrTerm? {
   for term in self.sub_terms(include_self~) {
     if f(term) {
@@ -606,7 +606,7 @@ pub fn Term::find_sub_term(
 pub fn Term::find_program_term(
   self : Term[Program],
   f : (IrTerm) -> Bool,
-  include_self? : Bool = true,
+  include_self~ : Bool = true,
 ) -> IrTerm? {
   for term in self.program_terms(include_self~) {
     if f(term) {
@@ -620,7 +620,7 @@ pub fn Term::find_program_term(
 pub fn Term::exists_blk_term(
   self : Term[Blk],
   f : (IrTerm) -> Bool,
-  include_self? : Bool = true,
+  include_self~ : Bool = true,
 ) -> Bool {
   self.find_blk_term(f, include_self~) is Some(_)
 }
@@ -629,7 +629,7 @@ pub fn Term::exists_blk_term(
 pub fn Term::exists_sub_term(
   self : Term[Sub],
   f : (IrTerm) -> Bool,
-  include_self? : Bool = true,
+  include_self~ : Bool = true,
 ) -> Bool {
   self.find_sub_term(f, include_self~) is Some(_)
 }
@@ -638,7 +638,7 @@ pub fn Term::exists_sub_term(
 pub fn Term::exists_program_term(
   self : Term[Program],
   f : (IrTerm) -> Bool,
-  include_self? : Bool = true,
+  include_self~ : Bool = true,
 ) -> Bool {
   self.find_program_term(f, include_self~) is Some(_)
 }

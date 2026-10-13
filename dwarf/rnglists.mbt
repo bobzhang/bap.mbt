@@ -1,12 +1,12 @@
 ///|
 pub(all) enum DwarfRangeListEntry {
-  DwarfRangeBaseAddressx(Int)
-  DwarfRangeStartxEndx(Int, Int)
-  DwarfRangeStartxLength(Int, Int)
-  DwarfRangeOffsetPair(Int, Int)
+  DwarfRangeBaseAddressx(Int32)
+  DwarfRangeStartxEndx(Int32, Int32)
+  DwarfRangeStartxLength(Int32, Int32)
+  DwarfRangeOffsetPair(Int32, Int32)
   DwarfRangeBaseAddress(UInt64)
   DwarfRangeStartEnd(UInt64, UInt64)
-  DwarfRangeStartLength(UInt64, Int)
+  DwarfRangeStartLength(UInt64, Int32)
 } derive(Eq, Debug)
 
 ///|
@@ -23,7 +23,7 @@ struct DwarfRangeList {
 ///|
 pub fn DwarfRangeList::read(
   buffer : DwarfSectionBuffer,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
   endian~ : @bitvec.Endian,
   addr_size~ : DwarfWordSize,
 ) -> Result[DwarfRangeList, String] {
@@ -125,7 +125,7 @@ pub fn DwarfRangeList::read(
 ///|
 pub fn DwarfRangeList::read_ranges(
   buffer : DwarfSectionBuffer,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
   endian~ : @bitvec.Endian,
   addr_size~ : DwarfWordSize,
 ) -> Result[DwarfRangeList, String] {
@@ -168,7 +168,7 @@ pub fn DwarfRangeList::entries(
 }
 
 ///|
-pub fn DwarfRangeList::length(self : DwarfRangeList) -> Int {
+pub fn DwarfRangeList::length(self : DwarfRangeList) -> Int32 {
   self.entries_value.length()
 }
 
@@ -180,7 +180,7 @@ pub fn DwarfRangeList::is_empty(self : DwarfRangeList) -> Bool {
 ///|
 pub fn DwarfData::ranges(
   self : DwarfData,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
   addr_size~ : DwarfWordSize,
 ) -> Result[DwarfRangeList, String] {
   match self.section(DwarfRanges) {
@@ -198,7 +198,7 @@ pub fn DwarfData::ranges(
 ///|
 pub fn DwarfData::rnglist(
   self : DwarfData,
-  offset? : Int = 0,
+  offset~ : Int32 = 0,
   addr_size~ : DwarfWordSize,
 ) -> Result[DwarfRangeList, String] {
   match self.section(DwarfRnglists) {

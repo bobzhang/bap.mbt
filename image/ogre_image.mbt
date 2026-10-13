@@ -74,8 +74,8 @@ fn OgreDoc::image_endian(
 ///|
 fn ogre_slice_data(
   data : Bytes,
-  off : Int,
-  len : Int,
+  off : Int32,
+  len : Int32,
   description : String,
 ) -> Result[Bytes, String] {
   if off < 0 || len < 0 || off > data.length() || len > data.length() - off {
@@ -86,7 +86,7 @@ fn ogre_slice_data(
 }
 
 ///|
-fn region_max_addr(addr : UInt64, size : Int) -> UInt64 {
+fn region_max_addr(addr : UInt64, size : Int32) -> UInt64 {
   if size <= 0 {
     addr
   } else {
@@ -98,7 +98,7 @@ fn region_max_addr(addr : UInt64, size : Int) -> UInt64 {
 fn segments_cover_region(
   segments : Array[Segment],
   addr : UInt64,
-  size : Int,
+  size : Int32,
 ) -> Bool {
   if size <= 0 {
     false
@@ -112,7 +112,7 @@ fn segments_cover_region(
 fn OgreDoc::find_named_region(
   self : OgreDoc,
   addr : UInt64,
-  size : Int,
+  size : Int32,
 ) -> String? {
   for named in spec_values(self, Scheme::named_region()) {
     if spec_region(named, "named-region") is Ok((a, s)) &&
@@ -138,8 +138,8 @@ fn OgreDoc::find_named_region_at(self : OgreDoc, addr : UInt64) -> String? {
 fn OgreDoc::find_mapped_region(
   self : OgreDoc,
   addr : UInt64,
-  size : Int,
-) -> (Int, Int)? {
+  size : Int32,
+) -> (Int32, Int32)? {
   // upstream joins `segment` and `mapped` by the address only: the mapped
   // size is the size of the file image, which is smaller than the segment
   // when its tail is zero filled (e.g. a Mach-O `__DATA` with `__bss`);
@@ -285,7 +285,7 @@ fn OgreDoc::symbol_name(self : OgreDoc, addr : UInt64) -> String? {
 fn OgreDoc::symbol_locations(
   self : OgreDoc,
   root : UInt64,
-) -> Result[(Int, Array[(UInt64, Int)]), String] {
+) -> Result[(Int32, Array[(UInt64, Int32)]), String] {
   let mut root_size = 1
   let extra_locations = []
   for chunk in spec_values(self, Scheme::symbol_chunk()) {

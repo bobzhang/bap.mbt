@@ -98,7 +98,7 @@ fn llvm_code_entry() -> @ogre.Attribute[
 
 ///|
 /// The name of the `i`th program header (upstream `name_of_index`).
-fn llvm_name_of_index(i : Int) -> String {
+fn llvm_name_of_index(i : Int32) -> String {
   if i < 10 {
     "0\{i}"
   } else {

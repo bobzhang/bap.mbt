@@ -2,7 +2,7 @@
 // x86-64 CPU models used by the lifters.
 
 ///|
-fn reg_var(name : String, width : Int) -> @types.Var {
+fn reg_var(name : String, width : Int32) -> @types.Var {
   @types.Var::new(name~, typ=Imm(width))
 }
 
@@ -146,7 +146,7 @@ fn vars_of_mode(mode : Mode) -> ModeVars {
 ///|
 /// Segment base used for FS/GS overrides (upstream `seg_fs`/`seg_gs`; the
 /// other segments have a zero base, `None`).
-fn ModeVars::seg_base(self : ModeVars, prefix : Int) -> @types.Var? {
+fn ModeVars::seg_base(self : ModeVars, prefix : Int32) -> @types.Var? {
   match prefix {
     0x64 => Some(self.fs_base)
     0x65 => Some(self.gs_base)

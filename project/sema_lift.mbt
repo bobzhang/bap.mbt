@@ -100,7 +100,7 @@ fn ProjectIrLifter::cfg_sub_blks(
     }
   }
   let succs = blocks.map(block => {
-    let result : Array[Int] = []
+    let result : Array[Int32] = []
     for edge in cfg.outputs(block) {
       match blocks.search_by(item => item.same(edge.dst())) {
         Some(index) if !result.contains(index) => result.push(index)
@@ -131,9 +131,9 @@ fn ProjectIrLifter::cfg_sub_blks(
 pub fn ProjectDisassemblyBlock::lift_ir(
   self : ProjectDisassemblyBlock,
   target~ : @core_theory.Target,
-  cfg? : ProjectDisassemblyCfg = ProjectDisassemblyCfg::empty(),
+  cfg~ : ProjectDisassemblyCfg = ProjectDisassemblyCfg::empty(),
   symtab? : ProjectDisassemblySymtab,
-  registry? : @mc.Registry = project_lift_registry(),
+  registry~ : @mc.Registry = project_lift_registry(),
   pkg? : String,
 ) -> Result[(Array[@types.Term[@types.Blk]], Array[ProjectLiftError]), String] {
   let lifter = ProjectIrLifter::new(
@@ -158,7 +158,7 @@ pub fn ProjectDisassemblyFunction::lift_ir(
   target~ : @core_theory.Target,
   cfg~ : ProjectDisassemblyCfg,
   symtab? : ProjectDisassemblySymtab,
-  registry? : @mc.Registry = project_lift_registry(),
+  registry~ : @mc.Registry = project_lift_registry(),
   pkg? : String,
 ) -> Result[(@types.Term[@types.Sub], Array[ProjectLiftError]), String] {
   let lifter = ProjectIrLifter::new(
@@ -199,7 +199,7 @@ pub fn ProjectDisassemblySymtab::lift_ir(
   self : ProjectDisassemblySymtab,
   target~ : @core_theory.Target,
   cfg~ : ProjectDisassemblyCfg,
-  registry? : @mc.Registry = project_lift_registry(),
+  registry~ : @mc.Registry = project_lift_registry(),
   pkg? : String,
 ) -> Result[(@types.Term[@types.Program], Array[ProjectLiftError]), String] {
   let lifter = ProjectIrLifter::new(
@@ -288,7 +288,7 @@ fn project_reify_externals(
 /// `ProjectDisassemblySymtab::lift_ir`).
 pub fn Project::lift_ir(
   self : Project,
-  registry? : @mc.Registry = project_lift_registry(),
+  registry~ : @mc.Registry = project_lift_registry(),
 ) -> Result[(@types.Term[@types.Program], Array[ProjectLiftError]), String] {
   self
   .disassembly_symtab()

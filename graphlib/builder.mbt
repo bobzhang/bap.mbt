@@ -7,7 +7,7 @@ struct GraphBuilder[N, E] {
   nodes : Array[N]
   node_set : Map[N, Unit]
   edges : Array[Edge[N, E]]
-  edge_index : Map[(N, N), Int]
+  edge_index : Map[(N, N), Int32]
 }
 
 ///|

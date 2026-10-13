@@ -56,12 +56,12 @@ priv struct Refs {
 /// (per-fork) state; all operations are static functions taking the
 /// machine.
 pub struct Linker {
-  priv codes : @sorted_map.SortedMap[Int, Code]
-  priv aliases : @sorted_map.SortedMap[Int, Refs]
-  priv terms : @immut_hashmap.HashMap[@types.Tid, Int]
-  priv names : @immut_hashmap.HashMap[String, Int]
-  priv addrs : @sorted_map.SortedMap[AddrKey, Int]
-  priv last : Int
+  priv codes : @sorted_map.SortedMap[Int32, Code]
+  priv aliases : @sorted_map.SortedMap[Int32, Refs]
+  priv terms : @immut_hashmap.HashMap[@types.Tid, Int32]
+  priv names : @immut_hashmap.HashMap[String, Int32]
+  priv addrs : @sorted_map.SortedMap[AddrKey, Int32]
+  priv last : Int32
 }
 
 ///|
@@ -165,7 +165,7 @@ pub let lisp_call_returned : Statement[(String, Array[Value])] = Statement::prov
 pub let lisp_call_return : Observation[(String, Array[Value])] = lisp_call_returned.obs
 
 ///|
-fn Linker::id_of_name(self : Linker, name : Name) -> Int? {
+fn Linker::id_of_name(self : Linker, name : Name) -> Int32? {
   match name {
     Symbol(s) => self.names.get(s)
     Addr(a) => self.addrs.get(AddrKey(a))
@@ -415,7 +415,7 @@ pub fn Linker::exec(m : Machine, name : Name) -> Unit raise {
 pub fn Linker::call(
   m : Machine,
   name : Name,
-  args? : Array[Value] = [],
+  args~ : Array[Value] = [],
 ) -> Value? raise {
   m.run_nested(() => m.push(CallName(name, args)))
   m.current.result

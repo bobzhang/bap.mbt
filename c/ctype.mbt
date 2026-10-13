@@ -169,7 +169,7 @@ pub(all) struct Attr {
 } derive(Eq, Debug, ToJson, FromJson)
 
 ///|
-pub fn Attr::new(name : String, args? : Array[String] = []) -> Attr {
+pub fn Attr::new(name : String, args~ : Array[String] = []) -> Attr {
   { name, args, }
 }
 
@@ -203,7 +203,7 @@ pub(all) struct Compound {
 /// (upstream `Array.t`).
 pub(all) struct ArrayType {
   element : CType
-  size : Int?
+  size : Int32?
 } derive(Eq, Debug, ToJson, FromJson)
 
 ///|
@@ -272,9 +272,9 @@ pub fn CType::is_void(self : CType) -> Bool {
 /// `basic x` constructs a basic type; all parameters default to `false`
 /// or empty.
 pub fn CType::basic(
-  attrs? : Array[Attr] = [],
-  const_? : Bool = false,
-  volatile_? : Bool = false,
+  attrs~ : Array[Attr] = [],
+  const_~ : Bool = false,
+  volatile_~ : Bool = false,
   t : Basic,
 ) -> CType {
   Basic({ t, attrs, qualifier: { const_, volatile_, restrict: (), }, })
@@ -346,10 +346,10 @@ pub fn CType::is_floating(self : CType) -> Bool {
 ///|
 /// `pointer t` constructs a pointer to the type `t`.
 pub fn CType::pointer(
-  attrs? : Array[Attr] = [],
-  const_? : Bool = false,
-  volatile_? : Bool = false,
-  restrict? : Bool = false,
+  attrs~ : Array[Attr] = [],
+  const_~ : Bool = false,
+  volatile_~ : Bool = false,
+  restrict~ : Bool = false,
   t : CType,
 ) -> CType {
   Pointer({ t, attrs, qualifier: { const_, volatile_, restrict, }, })
@@ -364,11 +364,11 @@ pub fn CType::is_pointer(self : CType) -> Bool {
 /// `array t` constructs an array of `t` elements; `size` is the optional
 /// number of elements.
 pub fn CType::array(
-  attrs? : Array[Attr] = [],
-  const_? : Bool = false,
-  volatile_? : Bool = false,
-  restrict? : Bool = false,
-  size? : Int,
+  attrs~ : Array[Attr] = [],
+  const_~ : Bool = false,
+  volatile_~ : Bool = false,
+  restrict~ : Bool = false,
+  size? : Int32,
   t : CType,
 ) -> CType {
   Array({
@@ -386,7 +386,7 @@ pub fn CType::is_array(self : CType) -> Bool {
 ///|
 /// `structure name fields` constructs a structure type.
 pub fn CType::structure(
-  attrs? : Array[Attr] = [],
+  attrs~ : Array[Attr] = [],
   name : String,
   fields : Array[(String, CType)],
 ) -> CType {
@@ -401,7 +401,7 @@ pub fn CType::is_structure(self : CType) -> Bool {
 ///|
 /// `union name fields` constructs a union type.
 pub fn CType::union(
-  attrs? : Array[Attr] = [],
+  attrs~ : Array[Attr] = [],
   name : String,
   fields : Array[(String, CType)],
 ) -> CType {
@@ -417,9 +417,9 @@ pub fn CType::is_union(self : CType) -> Bool {
 /// `function_ args` constructs a function type; `return_` defaults to
 /// `Void`.
 pub fn CType::function_(
-  attrs? : Array[Attr] = [],
-  variadic? : Bool = false,
-  return_? : CType = Void,
+  attrs~ : Array[Attr] = [],
+  variadic~ : Bool = false,
+  return_~ : CType = Void,
   args : Array[(String, CType)],
 ) -> CType {
   Function({ t: { return_, args, variadic, }, attrs, qualifier: (), })

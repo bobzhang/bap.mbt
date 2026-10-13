@@ -17,7 +17,7 @@ fn reg(name : String) -> @types.Var {
 }
 
 ///|
-fn imm(x : Int64) -> Int {
+fn imm(x : Int64) -> Int32 {
   x.to_int()
 }
 
@@ -52,7 +52,7 @@ fn is_pc(r : @types.Var) -> Bool {
 
 ///|
 /// Low 32 bits of the instruction address.
-fn addr32(insn : @mc.Insn) -> Int {
+fn addr32(insn : @mc.Insn) -> Int32 {
   insn.addr.to_int()
 }
 
@@ -340,6 +340,6 @@ pub fn provider() -> @mc.Provider {
 /// by default). Idempotent: the provider is replaced by name. Register it
 /// before the ARM provider so that Thumb-1 opcodes are lifted here and
 /// Thumb-2 ones fall through to ARM.
-pub fn register(registry? : @mc.Registry = @mc.Registry::global()) -> Unit {
+pub fn register(registry~ : @mc.Registry = @mc.Registry::global()) -> Unit {
   registry.register(provider())
 }

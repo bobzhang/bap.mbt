@@ -85,14 +85,14 @@ fn movsr(rd : @types.Var, rn : @types.Var) -> Array[@types.Stmt] {
 fn addi3(
   rd : @types.Var,
   rn : @types.Var,
-  x : Int,
+  x : Int32,
   cnd : Cond,
 ) -> Array[@types.Stmt] {
   it_set(rd, add(v(rn), const_(x)), r => add_flags(r, v(rn), const_(x)), cnd)
 }
 
 ///|
-fn addi8(rd : @types.Var, x : Int, cnd : Cond) -> Array[@types.Stmt] {
+fn addi8(rd : @types.Var, x : Int32, cnd : Cond) -> Array[@types.Stmt] {
   it_set(rd, add(v(rd), const_(x)), r => add_flags(r, v(rd), const_(x)), cnd)
 }
 
@@ -134,12 +134,12 @@ fn adcs(
 }
 
 ///|
-fn addspi(off : Int, cnd : Cond) -> Array[@types.Stmt] {
+fn addspi(off : Int32, cnd : Cond) -> Array[@types.Stmt] {
   set_if(sp, add(v(sp), const_(off)), cnd)
 }
 
 ///|
-fn addrspi(rd : @types.Var, off : Int, cnd : Cond) -> Array[@types.Stmt] {
+fn addrspi(rd : @types.Var, off : Int32, cnd : Cond) -> Array[@types.Stmt] {
   set_if(rd, add(v(sp), const_(off)), cnd)
 }
 
@@ -157,14 +157,14 @@ fn sub_(
 fn subi3(
   rd : @types.Var,
   rn : @types.Var,
-  x : Int,
+  x : Int32,
   cnd : Cond,
 ) -> Array[@types.Stmt] {
   sub_(rd, v(rn), const_(x), cnd)
 }
 
 ///|
-fn subi8(rd : @types.Var, x : Int, cnd : Cond) -> Array[@types.Stmt] {
+fn subi8(rd : @types.Var, x : Int32, cnd : Cond) -> Array[@types.Stmt] {
   sub_(rd, v(rd), const_(x), cnd)
 }
 
@@ -181,7 +181,7 @@ fn subrr(
 ///|
 /// Upstream also defines `subrspi` (`rd := SP - off`), but `Thumb_main`
 /// never dispatches to it, so it is not ported.
-fn subspi(off : Int, cnd : Cond) -> Array[@types.Stmt] {
+fn subspi(off : Int32, cnd : Cond) -> Array[@types.Stmt] {
   set_if(sp, sub(v(sp), const_(off)), cnd)
 }
 
@@ -189,7 +189,7 @@ fn subspi(off : Int, cnd : Cond) -> Array[@types.Stmt] {
 fn asri(
   rd : @types.Var,
   rm : @types.Var,
-  n : Int,
+  n : Int32,
   cnd : Cond,
 ) -> Array[@types.Stmt] {
   match n {
@@ -214,7 +214,7 @@ fn asri(
 fn lsri(
   rd : @types.Var,
   rm : @types.Var,
-  n : Int,
+  n : Int32,
   cnd : Cond,
 ) -> Array[@types.Stmt] {
   match n {
@@ -239,7 +239,7 @@ fn lsri(
 fn lsli(
   rd : @types.Var,
   rm : @types.Var,
-  n : Int,
+  n : Int32,
   cnd : Cond,
 ) -> Array[@types.Stmt] {
   match n {
@@ -260,7 +260,7 @@ fn lorr(rd : @types.Var, rm : @types.Var, cnd : Cond) -> Array[@types.Stmt] {
 }
 
 ///|
-fn cmpi8(rd : @types.Var, x : Int, cnd : Cond) -> Array[@types.Stmt] {
+fn cmpi8(rd : @types.Var, x : Int32, cnd : Cond) -> Array[@types.Stmt] {
   let r = fresh32()
   // port: comparisons in IT blocks are conditional (upstream ignores the
   // predicate)

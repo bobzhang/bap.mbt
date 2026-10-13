@@ -3,7 +3,7 @@
 
 ///|
 /// `value` truncated to `size` bytes.
-fn bytes_of(value : UInt64, size : Int) -> UInt64 {
+fn bytes_of(value : UInt64, size : Int32) -> UInt64 {
   if size >= 8 {
     value
   } else {
@@ -13,7 +13,7 @@ fn bytes_of(value : UInt64, size : Int) -> UInt64 {
 
 ///|
 /// The low `size` bytes of `value` in reverse order.
-fn byte_reverse(value : UInt64, size : Int) -> UInt64 {
+fn byte_reverse(value : UInt64, size : Int32) -> UInt64 {
   let mut acc = 0UL
   for i in 0..<size {
     acc = (acc << 8) | ((value >> (8 * i)) & 0xFF)
@@ -23,7 +23,7 @@ fn byte_reverse(value : UInt64, size : Int) -> UInt64 {
 
 ///|
 /// Primary (D-form) or extended (X-form) opcode of a load or store.
-fn ls_opcode(name : String) -> Int {
+fn ls_opcode(name : String) -> Int32 {
   match name {
     "LBZ" => 34
     "LHZ" => 40
@@ -61,20 +61,20 @@ fn ls_opcode(name : String) -> Int {
 
 ///|
 /// Upstream `D [opcode; rt; ra; d]`.
-fn d_word(name : String, rt : Int, ra : Int, d : Int) -> UInt {
+fn d_word(name : String, rt : Int32, ra : Int32, d : Int32) -> UInt32 {
   enc([(ls_opcode(name), 6), (rt, 5), (ra, 5), (d, 16)])
 }
 
 ///|
 /// Upstream `X [31; rt; ra; rb; xo]`.
-fn x_word(name : String, rt : Int, ra : Int, rb : Int) -> UInt {
+fn x_word(name : String, rt : Int32, ra : Int32, rb : Int32) -> UInt32 {
   enc([(31, 6), (rt, 5), (ra, 5), (rb, 5), (ls_opcode(name), 10), (0, 1)])
 }
 
 ///|
 /// The D-form displacement operand `d` as decoded by LLVM 22: the raw
 /// 16-bit field (the lifter sign-extends it).
-fn disp16(d : Int) -> Int64 {
+fn disp16(d : Int32) -> Int64 {
   (d & 0xFFFF).to_int64()
 }
 
@@ -352,7 +352,7 @@ test "ld, ldx, ldu, ldux" {
 ///|
 test "lhbrx, lwbrx, ldbrx" {
   let data = 0xABCDEFAB_CCDDEEFFUL
-  let cases : Array[(@powerpc.AddrSize, String, Int)] = [
+  let cases : Array[(@powerpc.AddrSize, String, Int32)] = [
     (R32, "LHBRX", 2),
     (R32, "LWBRX", 4),
     (R64, "LHBRX", 2),
@@ -542,7 +542,7 @@ test "std, stdx, stdu, stdux" {
 ///|
 test "sthbrx, stwbrx, stdbrx" {
   let data = 0xCCABDD42_ABCDEF42UL
-  let cases : Array[(@powerpc.AddrSize, String, Int)] = [
+  let cases : Array[(@powerpc.AddrSize, String, Int32)] = [
     (R32, "STHBRX", 2),
     (R32, "STWBRX", 4),
     (R64, "STHBRX", 2),

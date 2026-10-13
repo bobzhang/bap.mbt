@@ -98,9 +98,9 @@ fn DwarfData::unit_sections(
 ///|
 priv enum DwarfUnitStep {
   /// A unit was read; when its `error` is set the reader stops after it.
-  DwarfUnitStepParsed(DwarfParsedUnit, Int)
+  DwarfUnitStepParsed(DwarfParsedUnit, Int32)
   /// A unit header (or its abbreviation table) could not be read.
-  DwarfUnitStepFailed(String, Int)
+  DwarfUnitStepFailed(String, Int32)
   DwarfUnitStepDone
 }
 
@@ -110,7 +110,7 @@ priv enum DwarfUnitStep {
 priv struct DwarfUnitReader {
   sections : DwarfUnitSections
   mut cursor : DwarfInput
-  mut units : Int
+  mut units : Int32
   mut finished : Bool
 }
 
@@ -158,12 +158,12 @@ fn DwarfUnitReader::next(self : DwarfUnitReader) -> DwarfUnitStep {
 }
 
 ///|
-fn dwarf_stopped_diagnostic(reason : String, offset : Int) -> String {
+fn dwarf_stopped_diagnostic(reason : String, offset : Int32) -> String {
   "DWARF parser stopped prematurely in the unit at .debug_info offset \{offset}: \{reason}; some symbols may be omitted"
 }
 
 ///|
-fn dwarf_next_unit_diagnostic(reason : String, offset : Int) -> String {
+fn dwarf_next_unit_diagnostic(reason : String, offset : Int32) -> String {
   "failed to move to the next DWARF unit at .debug_info offset \{offset}: \{reason}; some symbols may be omitted"
 }
 
@@ -278,7 +278,7 @@ pub fn DwarfData::functions(
 /// after the functions recovered so far.
 pub fn DwarfData::iter_functions(
   self : DwarfData,
-  on_warning? : (String) -> Unit = _ => (),
+  on_warning~ : (String) -> Unit = _ => (),
 ) -> Iter[DwarfFunction] {
   let reader = match self.unit_sections() {
     Ok(sections) => DwarfUnitReader::new(sections)
@@ -382,7 +382,7 @@ pub fn DwarfFbi::functions(self : DwarfFbi) -> Array[(String, DwarfFunction)] {
 /// Lazily enumerates the named functions (see `DwarfData::iter_functions`).
 pub fn DwarfFbi::iter(
   self : DwarfFbi,
-  on_warning? : (String) -> Unit = _ => (),
+  on_warning~ : (String) -> Unit = _ => (),
 ) -> Iter[(String, DwarfFunction)] {
   self.data
   .iter_functions(on_warning~)

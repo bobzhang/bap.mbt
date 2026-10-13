@@ -131,12 +131,12 @@ test "reconstruction lifts branches, falls, calls and returns into IR" {
 }
 
 ///|
-fn lift_ir_var(name : String, width? : Int = 32) -> @types.Var {
+fn lift_ir_var(name : String, width~ : Int32 = 32) -> @types.Var {
   @types.Var::new(name~, typ=Imm(width))
 }
 
 ///|
-fn lift_ir_int(value : Int) -> @types.Exp {
+fn lift_ir_int(value : Int32) -> @types.Exp {
   Int(@types.Word::of_int(width=32, value)) catch {
     _ => panic()
   }
@@ -276,10 +276,10 @@ fn lift_ir_normalize(text : String) -> String {
   let chars = text.to_array()
   let mut i = 0
   while i < chars.length() {
-    if chars[i] == '%' && i + 1 < chars.length() && chars[i + 1] is ('0'..='9') {
+    if chars[i] == '%' && i + 1 < chars.length() && chars[i + 1] is ('0'..<='9') {
       let digits = StringBuilder()
       let mut j = i + 1
-      while j < chars.length() && chars[j] is ('0'..='9') {
+      while j < chars.length() && chars[j] is ('0'..<='9') {
         digits.write_char(chars[j])
         j += 1
       }

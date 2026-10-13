@@ -1,6 +1,6 @@
 ///|
 struct Object[K] {
-  id : Int
+  id : Int32
   class_name : Name
   _phantom : K?
 }
@@ -11,7 +11,7 @@ pub fn[K, S] Object::null(cls : Class[K, S]) -> Object[K] {
 }
 
 ///|
-pub fn[K] Object::id(self : Object[K]) -> Int {
+pub fn[K] Object::id(self : Object[K]) -> Int32 {
   self.id
 }
 
@@ -26,7 +26,7 @@ pub fn[K] Object::is_null(self : Object[K]) -> Bool {
 }
 
 ///|
-fn object_read_id(input : String) -> Result[Int, String] {
+fn object_read_id(input : String) -> Result[Int32, String] {
   if !(input.has_prefix("#<") && input.has_suffix(">")) {
     return Err("invalid object representation: \{input}")
   }
@@ -54,7 +54,7 @@ pub fn[K] Object::equal(self : Object[K], other : Object[K]) -> Bool {
 }
 
 ///|
-pub fn[K] Object::compare(self : Object[K], other : Object[K]) -> Int {
+pub fn[K] Object::compare(self : Object[K], other : Object[K]) -> Int32 {
   let class_order = self.class_name.compare(other.class_name)
   if class_order != 0 {
     class_order

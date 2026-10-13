@@ -29,8 +29,8 @@ pub extend MainLogInfo with Debug::{to_repr}
 struct MainProgress {
   task_value : String
   note_value : String?
-  stage_value : Int?
-  total_value : Int?
+  stage_value : Int32?
+  total_value : Int32?
 } derive(Eq, Debug)
 
 ///|
@@ -68,10 +68,10 @@ let main_event_pair : (@future.Stream[MainEvent], @future.Signal[MainEvent]) = @
 let main_event_printers : Array[(MainEvent) -> String?] = []
 
 ///|
-let main_progress_last_total : Map[String, Int] = Map([])
+let main_progress_last_total : Map[String, Int32] = Map([])
 
 ///|
-fn main_progress_total(task : String, total : Int?) -> Int? {
+fn main_progress_total(task : String, total : Int32?) -> Int32? {
   match total {
     Some(total) => {
       main_progress_last_total[task] = total
@@ -139,8 +139,8 @@ pub fn MainLogInfo::to_string(self : MainLogInfo) -> String {
 pub fn MainProgress::create(
   task~ : String,
   note? : String,
-  stage? : Int,
-  total? : Int,
+  stage? : Int32,
+  total? : Int32,
 ) -> MainProgress {
   {
     task_value: task,
@@ -161,12 +161,12 @@ pub fn MainProgress::note(self : MainProgress) -> String? {
 }
 
 ///|
-pub fn MainProgress::stage(self : MainProgress) -> Int? {
+pub fn MainProgress::stage(self : MainProgress) -> Int32? {
   self.stage_value
 }
 
 ///|
-pub fn MainProgress::total(self : MainProgress) -> Int? {
+pub fn MainProgress::total(self : MainProgress) -> Int32? {
   self.total_value
 }
 
@@ -230,7 +230,7 @@ pub fn pp(event : MainEvent) -> String {
 }
 
 ///|
-pub fn observe_log_messages(notify~ : (MainLogInfo) -> Unit) -> Int {
+pub fn observe_log_messages(notify~ : (MainLogInfo) -> Unit) -> Int32 {
   stream().subscribe(event => {
     match event {
       MainLogMessage(info) => notify(info)
@@ -243,7 +243,7 @@ pub fn observe_log_messages(notify~ : (MainLogInfo) -> Unit) -> Int {
 pub fn process_log_events(
   write~ : (String) -> Unit,
   error? : (String) -> Unit,
-) -> Int {
+) -> Int32 {
   observe_log_messages(notify=info => {
     write(info.to_string())
     if info.level() == MainLogError {
@@ -259,12 +259,12 @@ pub fn process_log_events(
 pub fn process_events(
   write~ : (String) -> Unit,
   error? : (String) -> Unit,
-) -> Int {
+) -> Int32 {
   process_log_events(write~, error?)
 }
 
 ///|
-pub fn unsubscribe(id : Int) -> Unit {
+pub fn unsubscribe(id : Int32) -> Unit {
   stream().unsubscribe(id)
 }
 
@@ -281,8 +281,8 @@ pub fn message(
 pub fn progress(
   task : String,
   note? : String,
-  stage? : Int,
-  total? : Int,
+  stage? : Int32,
+  total? : Int32,
 ) -> Unit {
   let total = main_progress_total(task, total)
   send(MainLogProgress(MainProgress::create(task~, note?, stage?, total?)))
@@ -301,8 +301,8 @@ pub fn Log::message(
 pub fn Log::progress(
   task : String,
   note? : String,
-  stage? : Int,
-  total? : Int,
+  stage? : Int32,
+  total? : Int32,
 ) -> Unit {
   progress(task, note?, stage?, total?)
 }
@@ -310,7 +310,7 @@ pub fn Log::progress(
 ///|
 pub fn Log::create(
   section~ : String,
-  debug_enabled? : Bool = false,
+  debug_enabled~ : Bool = false,
 ) -> MainLogReporter {
   MainLogReporter::create(section~, debug_enabled~)
 }
@@ -318,7 +318,7 @@ pub fn Log::create(
 ///|
 pub fn MainLogReporter::create(
   section~ : String,
-  debug_enabled? : Bool = false,
+  debug_enabled~ : Bool = false,
 ) -> MainLogReporter {
   { section_value: section, debug_enabled_value: debug_enabled, }
 }
@@ -382,8 +382,8 @@ pub fn MainLogReporter::report_progress(
   self : MainLogReporter,
   task? : String,
   note? : String,
-  stage? : Int,
-  total? : Int,
+  stage? : Int32,
+  total? : Int32,
 ) -> Unit {
   let task = match task {
     Some(task) => self.section_value + "/" + task

@@ -111,7 +111,7 @@ pub fn concat(dir : String, file : String) -> String {
 }
 
 ///|
-fn trailing_slashes_end(s : String) -> Int {
+fn trailing_slashes_end(s : String) -> Int32 {
   let mut n = s.length()
   while n > 1 && s[n - 1] == '/' {
     n -= 1

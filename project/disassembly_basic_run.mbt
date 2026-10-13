@@ -26,7 +26,7 @@ struct ProjectDisassemblyBasic {
   triple_value : String
   cpu_value : String
   attrs_value : String
-  debug_level_value : Int
+  debug_level_value : Int32
   store_asm_value : Bool
   store_kinds_value : Bool
   name_value : String
@@ -51,7 +51,7 @@ struct ProjectDisassemblyBasicInsnResult {
 /// predicates.
 priv struct ProjectDisassemblyBasicStep {
   mem : @memory.Memory
-  off : Int
+  off : Int32
   preds : Array[ProjectDisassemblyBasicPred]
 }
 
@@ -61,7 +61,7 @@ priv struct ProjectDisassemblyBasicStep {
 /// the type of the user data threaded through the callbacks and `R` the
 /// type of the result of the run.
 struct ProjectDisassemblyBasicState[S, R] {
-  backlog : Int
+  backlog : Int32
   dis : ProjectDisassemblyBasic
   current : ProjectDisassemblyBasicStep
   history : Array[ProjectDisassemblyBasicStep]
@@ -187,10 +187,10 @@ pub fn ProjectDisassemblyBasic::registered_encodings() -> Array[String] {
 /// `@mc` decoders for the targets it cannot decode itself.
 pub fn ProjectDisassemblyBasic::create(
   triple : String,
-  backend? : String = "llvm",
-  cpu? : String = "",
-  attrs? : String = "",
-  debug_level? : Int = 0,
+  backend~ : String = "llvm",
+  cpu~ : String = "",
+  attrs~ : String = "",
+  debug_level~ : Int32 = 0,
 ) -> Result[ProjectDisassemblyBasic, String] {
   let name = [backend, triple, cpu].filter(part => part != "").join("-") + attrs
   let mc_decoder = if backend != "llvm" &&
@@ -318,7 +318,7 @@ pub fn ProjectDisassemblyBasic::lookup(
 pub fn ProjectDisassemblyBasic::custom(
   target : @core_theory.Target,
   encoding : @core_theory.Language,
-  backend? : String = "raw",
+  backend~ : String = "raw",
 ) -> ProjectDisassemblyBasic {
   {
     backend_value: backend,
@@ -339,7 +339,7 @@ pub fn ProjectDisassemblyBasic::custom(
 /// created with `create`.
 pub fn[A] ProjectDisassemblyBasic::with_disasm(
   triple : String,
-  backend? : String = "llvm",
+  backend~ : String = "llvm",
   f : (ProjectDisassemblyBasic) -> Result[A, String],
 ) -> Result[A, String] {
   match ProjectDisassemblyBasic::create(triple, backend~) {
@@ -479,7 +479,7 @@ fn[S, R] ProjectDisassemblyBasicState::update(
 fn[S, R] ProjectDisassemblyBasicState::decode_round(
   self : ProjectDisassemblyBasicState[S, R],
   insns : Array[(@memory.Memory, ProjectDisassemblyInstruction?)],
-) -> (Int, ProjectDisassemblyBasicOutcome) {
+) -> (Int32, ProjectDisassemblyBasicOutcome) {
   let mem = self.current.mem
   let length = mem.length()
   for off = self.current.off {
@@ -596,8 +596,8 @@ pub fn[S, R] ProjectDisassemblyBasic::run(
   mem : @memory.Memory,
   return_~ : (S) -> R,
   init~ : S,
-  backlog? : Int = 0,
-  stop_on? : Array[ProjectDisassemblyBasicPred] = [],
+  backlog~ : Int32 = 0,
+  stop_on~ : Array[ProjectDisassemblyBasicPred] = [],
   invalid? : (ProjectDisassemblyBasicState[S, R], @memory.Memory, S) -> R,
   stopped? : (ProjectDisassemblyBasicState[S, R], S) -> R,
   hit? : (
@@ -743,7 +743,7 @@ pub fn[S, R] ProjectDisassemblyBasicState::insns(
 /// first.
 pub fn[S, R] ProjectDisassemblyBasicState::last(
   self : ProjectDisassemblyBasicState[S, R],
-  count : Int,
+  count : Int32,
 ) -> Array[(@memory.Memory, ProjectDisassemblyInstruction?)] {
   let m = self.insns_value.length()
   let n = if count < m { count } else { m }
@@ -785,7 +785,7 @@ fn project_disassembly_basic_for_target(
 
 ///|
 /// The longest instruction the `@mc` decoders are given the bytes of.
-const PROJECT_DISASSEMBLY_BASIC_MC_WINDOW : Int = 16
+const PROJECT_DISASSEMBLY_BASIC_MC_WINDOW : Int32 = 16
 
 ///|
 /// Decodes the instruction at the start of `memory` with the `@mc`
@@ -804,7 +804,7 @@ fn project_disassembly_basic_decode_mc(
     Ok(view) => view.to_bytes()
     Err(reason) => return Err(reason)
   }
-  let chunk = (size : Int) => {
+  let chunk = (size : Int32) => {
     if size <= 0 || size > memory.length() {
       Ok(None)
     } else {

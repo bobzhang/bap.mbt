@@ -13,8 +13,8 @@ let reporter : Ref[(String) -> Unit] = Ref(s => println(s))
 /// `Stored data to <dir>` (upstream `run`). Calling it again only updates
 /// the configuration of the already registered pass.
 pub fn register(
-  options? : Options = Options::new(),
-  report? : (String) -> Unit = s => println(s),
+  options~ : Options = Options::new(),
+  report~ : (String) -> Unit = s => println(s),
 ) -> Result[Unit, String] {
   current_options.val = options
   reporter.val = report

@@ -209,7 +209,7 @@ pub fn Value::join(
 pub fn Value::merge(
   self : Value,
   other : Value,
-  on_conflict? : @knowledge.MergeStrategy = DropOld,
+  on_conflict~ : @knowledge.MergeStrategy = DropOld,
 ) -> Value {
   Value(self.0.merge(other.0, on_conflict~))
 }
@@ -228,7 +228,7 @@ pub fn Value::equal(self : Value, other : Value) -> Bool {
 
 ///|
 /// A total order: by sort, then by the knowledge value order.
-pub fn Value::compare(self : Value, other : Value) -> Int {
+pub fn Value::compare(self : Value, other : Value) -> Int32 {
   let order = self.sort().to_string().compare(other.sort().to_string())
   if order != 0 {
     order

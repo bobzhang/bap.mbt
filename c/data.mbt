@@ -80,7 +80,7 @@ pub(all) enum Datum[D, S] {
 ///|
 /// The layout of a C object (sizes are in bits).
 pub(all) struct Layout {
-  layout : Datum[Obj[Layout], Int]
+  layout : Datum[Obj[Layout], Int32]
 } derive(Eq, Debug)
 
 ///|
@@ -139,7 +139,7 @@ pub fn data_to_string(d : Data) -> String {
 }
 
 ///|
-fn pp_datum(buf : StringBuilder, d : Datum[Obj[Layout], Int]) -> Unit {
+fn pp_datum(buf : StringBuilder, d : Datum[Obj[Layout], Int32]) -> Unit {
   match d {
     Imm(sz, v) => {
       buf.write_string("[")

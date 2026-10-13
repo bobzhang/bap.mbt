@@ -1,10 +1,10 @@
 ///|
-fn bare_parse_error(pos : Int, reason : String) -> BareError {
+fn bare_parse_error(pos : Int32, reason : String) -> BareError {
   BareParseError("invalid BARE specification at offset \{pos}: \{reason}")
 }
 
 ///|
-fn bare_skip_ws(text : String, pos : Ref[Int]) -> Unit {
+fn bare_skip_ws(text : String, pos : Ref[Int32]) -> Unit {
   while pos.val < text.length() {
     match text.get_char(pos.val) {
       Some(c) if bare_is_space(c) => pos.val = pos.val + c.utf16_len()
@@ -16,7 +16,7 @@ fn bare_skip_ws(text : String, pos : Ref[Int]) -> Unit {
 ///|
 fn bare_parse_quoted(
   text : String,
-  pos : Ref[Int],
+  pos : Ref[Int32],
 ) -> Result[String, BareError] {
   pos.val = pos.val + 1
   let builder = StringBuilder()
@@ -55,7 +55,10 @@ fn bare_parse_quoted(
 }
 
 ///|
-fn bare_parse_atom(text : String, pos : Ref[Int]) -> Result[String, BareError] {
+fn bare_parse_atom(
+  text : String,
+  pos : Ref[Int32],
+) -> Result[String, BareError] {
   let start = pos.val
   while pos.val < text.length() {
     let c = match text.get_char(pos.val) {
@@ -77,7 +80,7 @@ fn bare_parse_atom(text : String, pos : Ref[Int]) -> Result[String, BareError] {
 ///|
 fn bare_parse_term(
   text : String,
-  pos : Ref[Int],
+  pos : Ref[Int32],
 ) -> Result[BareTerm, BareError] {
   bare_skip_ws(text, pos)
   if pos.val >= text.length() {
@@ -125,7 +128,7 @@ fn bare_parse_term(
 pub fn BareTerm::parse_many(
   text : String,
 ) -> Result[Array[BareTerm], BareError] {
-  let pos : Ref[Int] = Ref(0)
+  let pos : Ref[Int32] = Ref(0)
   let terms = []
   while true {
     bare_skip_ws(text, pos)

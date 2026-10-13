@@ -107,7 +107,7 @@ fn fnv1a_hash_step(hash : UInt64, text : String) -> UInt64 {
 }
 
 ///|
-fn fnv1a_hash_parts(pkg : String, text : String) -> Int {
+fn fnv1a_hash_parts(pkg : String, text : String) -> Int32 {
   fnv1a_hash_step(fnv1a_hash_step(0xcbf29ce484222325, pkg), text).to_int()
 }
 
@@ -167,7 +167,7 @@ pub fn Name::equal(self : Name, other : Name) -> Bool {
 }
 
 ///|
-pub fn Name::compare(self : Name, other : Name) -> Int {
+pub fn Name::compare(self : Name, other : Name) -> Int32 {
   let pkg_order = self.pkg.compare(other.pkg)
   if pkg_order != 0 {
     pkg_order
@@ -177,7 +177,7 @@ pub fn Name::compare(self : Name, other : Name) -> Int {
 }
 
 ///|
-pub fn Name::hash(self : Name) -> Int {
+pub fn Name::hash(self : Name) -> Int32 {
   fnv1a_hash_parts(self.pkg, self.text)
 }
 

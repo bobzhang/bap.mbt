@@ -1,8 +1,8 @@
 ///|
-let flatten_counter : Ref[Int] = Ref(0)
+let flatten_counter : Ref[Int32] = Ref(0)
 
 ///|
-fn flatten_next_id() -> Int {
+fn flatten_next_id() -> Int32 {
   flatten_counter.val = flatten_counter.val + 1
   flatten_counter.val
 }

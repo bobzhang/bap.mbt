@@ -4,7 +4,7 @@
 
 ///|
 /// The little-endian bytes of the halfwords `hs`.
-fn halfwords(hs : Array[Int]) -> Bytes {
+fn halfwords(hs : Array[Int32]) -> Bytes {
   Bytes::makei(hs.length() * 2, i => {
     let h = hs[i / 2]
     (if i % 2 == 0 { h } else { h >> 8 }).to_byte()
@@ -30,7 +30,7 @@ fn show_insn(insn : @mc.Insn) -> String {
 ///|
 /// Decode the instruction made of the halfwords `hs` (outside of an IT
 /// block).
-fn show_t32(hs : Array[Int]) -> String {
+fn show_t32(hs : Array[Int32]) -> String {
   match @thumb.decode_t32(halfwords(hs)[:], addr=0x1000) {
     Decoded(insn) => {
       assert_eq(insn.size, hs.length() * 2) catch {
@@ -45,7 +45,7 @@ fn show_t32(hs : Array[Int]) -> String {
 
 ///|
 /// Decode a sequence of instructions with an IT state.
-fn show_seq(hs : Array[Int]) -> String {
+fn show_seq(hs : Array[Int32]) -> String {
   let bytes = halfwords(hs)
   let it = @thumb.ItBlock::new()
   let out = []

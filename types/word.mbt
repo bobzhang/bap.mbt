@@ -66,7 +66,7 @@ pub extend WordSuffix with Debug::{to_repr}
 ///|
 pub fn Word::from_bitvec(
   value : @bitvec.BitVec,
-  signed? : Bool = false,
+  signed~ : Bool = false,
 ) -> Word {
   { bits_value: value, signed_value: signed, }
 }
@@ -74,7 +74,7 @@ pub fn Word::from_bitvec(
 ///|
 pub fn Word::create(
   value : @bitvec.BitVec,
-  width : Int,
+  width : Int32,
 ) -> Word raise @bitvec.BitVecError {
   let resized = if width >= value.width() {
     value.widen(width~)
@@ -90,12 +90,12 @@ pub fn Word::to_bitvec(self : Word) -> @bitvec.BitVec {
 }
 
 ///|
-pub fn Word::width(self : Word) -> Int {
+pub fn Word::width(self : Word) -> Int32 {
   self.bits_value.width()
 }
 
 ///|
-pub fn Word::bitwidth(self : Word) -> Int {
+pub fn Word::bitwidth(self : Word) -> Int32 {
   self.width()
 }
 
@@ -121,16 +121,16 @@ pub fn Word::of_bool(value : Bool) -> Word {
 
 ///|
 pub fn Word::of_int(
-  width~ : Int,
-  value : Int,
+  width~ : Int32,
+  value : Int32,
 ) -> Word raise @bitvec.BitVecError {
   Word::from_bitvec(@bitvec.of_int(width~, value))
 }
 
 ///|
 pub fn Word::of_int32(
-  value : Int,
-  width? : Int = 32,
+  value : Int32,
+  width~ : Int32 = 32,
 ) -> Word raise @bitvec.BitVecError {
   Word::from_bitvec(@bitvec.of_int(width~, value))
 }
@@ -138,14 +138,14 @@ pub fn Word::of_int32(
 ///|
 pub fn Word::of_int64(
   value : Int64,
-  width? : Int = 64,
+  width~ : Int32 = 64,
 ) -> Word raise @bitvec.BitVecError {
   Word::from_bitvec(@bitvec.of_int64(width~, value))
 }
 
 ///|
 pub fn Word::of_uint64(
-  width~ : Int,
+  width~ : Int32,
   value : UInt64,
 ) -> Word raise @bitvec.BitVecError {
   Word::from_bitvec(@bitvec.of_uint64(width~, value))
@@ -153,7 +153,7 @@ pub fn Word::of_uint64(
 
 ///|
 pub fn Word::from_hex(
-  width~ : Int,
+  width~ : Int32,
   text : StringView,
 ) -> Word raise @bitvec.BitVecError {
   Word::from_bitvec(@bitvec.from_hex(width~, text))
@@ -173,7 +173,7 @@ pub fn Word::from_string(text : StringView) -> Word raise @bitvec.BitVecError {
 pub fn Word::from_bytes(
   bytes : BytesView,
   endian~ : @bitvec.Endian,
-  width? : Int = -1,
+  width~ : Int32 = -1,
 ) -> Word raise @bitvec.BitVecError {
   Word::from_bitvec(@bitvec.of_bytes(bytes, endian~, width~))
 }
@@ -182,23 +182,23 @@ pub fn Word::from_bytes(
 pub fn Word::of_binary(
   endian : @bitvec.Endian,
   bytes : BytesView,
-  width? : Int = -1,
+  width~ : Int32 = -1,
 ) -> Word raise @bitvec.BitVecError {
   Word::from_bytes(bytes, endian~, width~)
 }
 
 ///|
-pub fn Word::zero(width~ : Int) -> Word raise @bitvec.BitVecError {
+pub fn Word::zero(width~ : Int32) -> Word raise @bitvec.BitVecError {
   Word::from_bitvec(@bitvec.zero(width~))
 }
 
 ///|
-pub fn Word::one(width~ : Int) -> Word raise @bitvec.BitVecError {
+pub fn Word::one(width~ : Int32) -> Word raise @bitvec.BitVecError {
   Word::from_bitvec(@bitvec.one(width~))
 }
 
 ///|
-pub fn Word::ones(width~ : Int) -> Word raise @bitvec.BitVecError {
+pub fn Word::ones(width~ : Int32) -> Word raise @bitvec.BitVecError {
   Word::from_bitvec(@bitvec.ones(width~))
 }
 
@@ -417,13 +417,13 @@ pub fn Word::pred(self : Word) -> Word {
 }
 
 ///|
-pub fn Word::nsucc(self : Word, count : Int) -> Word {
+pub fn Word::nsucc(self : Word, count : Int32) -> Word {
   let delta = try! @bitvec.of_int(width=self.width(), count)
   Word::from_bitvec(try! self.bits_value.add(delta))
 }
 
 ///|
-pub fn Word::npred(self : Word, count : Int) -> Word {
+pub fn Word::npred(self : Word, count : Int32) -> Word {
   let delta = try! @bitvec.of_int(width=self.width(), count)
   Word::from_bitvec(try! self.bits_value.sub(delta))
 }
@@ -431,9 +431,9 @@ pub fn Word::npred(self : Word, count : Int) -> Word {
 ///|
 pub fn Word::memref(
   self : Word,
-  disp? : Int = 0,
-  index? : Int = 0,
-  scale? : Size = R8,
+  disp~ : Int32 = 0,
+  index~ : Int32 = 0,
+  scale~ : Size = R8,
 ) -> Word {
   self.nsucc(scale.in_bytes() * index + disp)
 }
@@ -484,17 +484,17 @@ pub fn Word::logxor(
 }
 
 ///|
-pub fn Word::lshift(self : Word, amount : Int) -> Word {
+pub fn Word::lshift(self : Word, amount : Int32) -> Word {
   Word::from_bitvec(self.bits_value.lshift(amount))
 }
 
 ///|
-pub fn Word::rshift(self : Word, amount : Int) -> Word {
+pub fn Word::rshift(self : Word, amount : Int32) -> Word {
   Word::from_bitvec(self.bits_value.rshift(amount))
 }
 
 ///|
-pub fn Word::arshift(self : Word, amount : Int) -> Word {
+pub fn Word::arshift(self : Word, amount : Int32) -> Word {
   Word::from_bitvec(self.bits_value.arshift(amount))
 }
 
@@ -506,8 +506,8 @@ pub fn Word::concat(self : Word, low : Word) -> Word raise @bitvec.BitVecError {
 ///|
 pub fn Word::extract(
   self : Word,
-  hi? : Int = -1,
-  lo? : Int = 0,
+  hi~ : Int32 = -1,
+  lo~ : Int32 = 0,
 ) -> Word raise @bitvec.BitVecError {
   let actual_hi = if hi < 0 { self.width() - 1 } else { hi }
   if lo < 0 || actual_hi < lo {
@@ -546,21 +546,24 @@ pub fn Word::extract(
 ///|
 pub fn Word::extract_exn(
   self : Word,
-  hi? : Int = -1,
-  lo? : Int = 0,
+  hi~ : Int32 = -1,
+  lo~ : Int32 = 0,
 ) -> Word raise @bitvec.BitVecError {
   self.extract(hi~, lo~)
 }
 
 ///|
-pub fn Word::widen(self : Word, width~ : Int) -> Word raise @bitvec.BitVecError {
+pub fn Word::widen(
+  self : Word,
+  width~ : Int32,
+) -> Word raise @bitvec.BitVecError {
   Word::from_bitvec(self.bits_value.widen(width~))
 }
 
 ///|
 pub fn Word::truncate(
   self : Word,
-  width~ : Int,
+  width~ : Int32,
 ) -> Word raise @bitvec.BitVecError {
   Word::from_bitvec(self.bits_value.truncate(width~))
 }
@@ -575,7 +578,7 @@ let min_int_value : Int64 = -0x80000000L
 let max_int_value : Int64 = 0x7fffffffL
 
 ///|
-fn word_low_mask(width : Int) -> UInt64 {
+fn word_low_mask(width : Int32) -> UInt64 {
   if width <= 0 {
     0
   } else if width >= 64 {
@@ -621,7 +624,7 @@ pub fn Word::to_int64_exn(self : Word) -> Int64 raise @bitvec.BitVecError {
 }
 
 ///|
-pub fn Word::to_int32(self : Word) -> Int raise @bitvec.BitVecError {
+pub fn Word::to_int32(self : Word) -> Int32 raise @bitvec.BitVecError {
   if self.signed_value {
     let value = self.signed_int64_value()
     if value < min_int_value || value > max_int_value {
@@ -638,12 +641,12 @@ pub fn Word::to_int32(self : Word) -> Int raise @bitvec.BitVecError {
 }
 
 ///|
-pub fn Word::to_int32_exn(self : Word) -> Int raise @bitvec.BitVecError {
+pub fn Word::to_int32_exn(self : Word) -> Int32 raise @bitvec.BitVecError {
   self.to_int32()
 }
 
 ///|
-pub fn Word::to_int(self : Word) -> Int raise @bitvec.BitVecError {
+pub fn Word::to_int(self : Word) -> Int32 raise @bitvec.BitVecError {
   if self.signed_value {
     let value = self.signed_int64_value()
     if value < min_int_value || value > max_int_value {
@@ -660,7 +663,7 @@ pub fn Word::to_int(self : Word) -> Int raise @bitvec.BitVecError {
 }
 
 ///|
-pub fn Word::to_int_exn(self : Word) -> Int raise @bitvec.BitVecError {
+pub fn Word::to_int_exn(self : Word) -> Int32 raise @bitvec.BitVecError {
   self.to_int()
 }
 
@@ -668,7 +671,7 @@ pub fn Word::to_int_exn(self : Word) -> Int raise @bitvec.BitVecError {
 pub fn Word::compare_unsigned(
   self : Word,
   other : Word,
-) -> Int raise @bitvec.BitVecError {
+) -> Int32 raise @bitvec.BitVecError {
   self.bits_value.compare_unsigned(other.bits_value)
 }
 
@@ -676,7 +679,7 @@ pub fn Word::compare_unsigned(
 pub fn Word::compare_signed(
   self : Word,
   other : Word,
-) -> Int raise @bitvec.BitVecError {
+) -> Int32 raise @bitvec.BitVecError {
   self.bits_value.compare_signed(other.bits_value)
 }
 
@@ -686,7 +689,7 @@ pub fn Word::equal(self : Word, other : Word) -> Bool {
 }
 
 ///|
-pub fn Word::compare(self : Word, other : Word) -> Int {
+pub fn Word::compare(self : Word, other : Word) -> Int32 {
   let width_order = self.width().compare(other.width())
   if width_order != 0 {
     return width_order
@@ -703,7 +706,7 @@ pub fn Word::compare(self : Word, other : Word) -> Int {
 }
 
 ///|
-fn WordValueFormat::base(self : WordValueFormat) -> Int {
+fn WordValueFormat::base(self : WordValueFormat) -> Int32 {
   match self {
     WordHex => 16
     WordDec => 10
@@ -723,7 +726,7 @@ fn WordValueFormat::base_prefix(self : WordValueFormat) -> String {
 }
 
 ///|
-fn base_digit_char(digit : Int, letter_case : WordLetterCase) -> Char {
+fn base_digit_char(digit : Int32, letter_case : WordLetterCase) -> Char {
   if digit < 10 {
     (digit + '0').unsafe_to_char()
   } else {
@@ -736,7 +739,7 @@ fn base_digit_char(digit : Int, letter_case : WordLetterCase) -> Char {
 }
 
 ///|
-fn digit_char_value(digit : Char) -> Int {
+fn digit_char_value(digit : Char) -> Int32 {
   if digit >= '0' && digit <= '9' {
     digit.to_int() - '0'
   } else if digit >= 'A' && digit <= 'F' {
@@ -751,10 +754,10 @@ fn digit_char_value(digit : Char) -> Int {
 ///|
 fn bitvec_to_base_string(
   value : @bitvec.BitVec,
-  base : Int,
+  base : Int32,
   letter_case : WordLetterCase,
 ) -> String {
-  let digits : Array[Int] = [0]
+  let digits : Array[Int32] = [0]
   for offset in 0..<value.width() {
     let bit = value.width() - offset - 1
     let mut carry = if value.nth(bit) { 1 } else { 0 }
@@ -839,10 +842,10 @@ fn Word::format_suffix(self : Word, suffix : WordSuffix) -> String {
 ///|
 pub fn Word::format_value(
   self : Word,
-  format? : WordValueFormat = WordHex,
-  letter_case? : WordLetterCase = WordUpperCase,
-  prefix? : WordPrefix = WordAutoPrefix,
-  suffix? : WordSuffix = WordNoSuffix,
+  format~ : WordValueFormat = WordHex,
+  letter_case~ : WordLetterCase = WordUpperCase,
+  prefix~ : WordPrefix = WordAutoPrefix,
+  suffix~ : WordSuffix = WordNoSuffix,
 ) -> String {
   let magnitude = self.unsigned_magnitude()
   let digits = bitvec_to_base_string(magnitude, format.base(), letter_case)
@@ -851,7 +854,7 @@ pub fn Word::format_value(
 }
 
 ///|
-pub fn Word::string_of_value(self : Word, hex? : Bool = true) -> String {
+pub fn Word::string_of_value(self : Word, hex~ : Bool = true) -> String {
   if hex {
     self.format_value(
       format=WordHex,
@@ -864,7 +867,7 @@ pub fn Word::string_of_value(self : Word, hex? : Bool = true) -> String {
 }
 
 ///|
-pub fn Word::to_hex(self : Word, prefix? : Bool = true) -> String {
+pub fn Word::to_hex(self : Word, prefix~ : Bool = true) -> String {
   self.bits_value.to_hex(prefix~)
 }
 

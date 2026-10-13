@@ -66,7 +66,7 @@ pub struct Preprocessor {
   read_file : (String) -> String?
   include_dirs : Array[String]
   once : Map[String, Unit]
-  mut depth : Int
+  mut depth : Int32
 }
 
 ///|
@@ -74,9 +74,9 @@ pub struct Preprocessor {
 /// searches them in `include_dirs`. `defines` are predefined object-like
 /// macros (`(name, replacement)`).
 pub fn Preprocessor::new(
-  read_file? : (String) -> String? = _ => None,
-  include_dirs? : Array[String] = [],
-  defines? : Array[(String, String)] = [],
+  read_file~ : (String) -> String? = _ => None,
+  include_dirs~ : Array[String] = [],
+  defines~ : Array[(String, String)] = [],
 ) -> Preprocessor {
   let pp = {
     macros: Map([]),
@@ -120,7 +120,7 @@ fn split_lines(tokens : Array[Token]) -> Array[Array[Token]] {
 pub fn Preprocessor::run(
   self : Preprocessor,
   text : String,
-  file? : String = "<string>",
+  file~ : String = "<string>",
 ) -> Array[Token] raise ParseError {
   let out = []
   self.process(file, text, out)
@@ -504,7 +504,7 @@ fn collect_args(
 fn merge_variadic(
   at : Token,
   args : Array[Array[PTok]],
-  n : Int,
+  n : Int32,
 ) -> Array[Array[PTok]] {
   let fixed = args[0:n - 1].to_owned()
   let rest = []
@@ -537,7 +537,7 @@ fn Preprocessor::substitute(
       None
     }
   }
-  let expanded : Map[Int, Array[PTok]] = Map([])
+  let expanded : Map[Int32, Array[PTok]] = Map([])
   let body = relocate(m.body, at)
   let out : Array[PTok] = []
   let mut i = 0
@@ -662,7 +662,7 @@ fn Preprocessor::eval_condition(
 ///|
 priv struct CondParser {
   toks : Array[Token]
-  mut pos : Int
+  mut pos : Int32
   hash : Token
 }
 
@@ -710,7 +710,10 @@ let binary_levels : Array[Array[String]] = [
 ]
 
 ///|
-fn CondParser::binary(self : CondParser, level : Int) -> Int64 raise ParseError {
+fn CondParser::binary(
+  self : CondParser,
+  level : Int32,
+) -> Int64 raise ParseError {
   if level >= binary_levels.length() {
     return self.unary()
   }

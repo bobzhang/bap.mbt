@@ -4,8 +4,8 @@
 
 ///|
 struct GCase {
-  n : Int
-  edges : Array[(Int, Int, Int)] // (src, dst, weight)
+  n : Int32
+  edges : Array[(Int32, Int32, Int32)] // (src, dst, weight)
 } derive(Debug)
 
 ///|
@@ -46,17 +46,17 @@ impl @quickcheck.Shrink for GCase with fn shrink(c) {
 }
 
 ///|
-fn GCase::graph(self : GCase) -> @graphlib.Graph[Int, Int] {
+fn GCase::graph(self : GCase) -> @graphlib.Graph[Int32, Int32] {
   @graphlib.Graph::create(nodes=Array::makei(self.n, i => i), edges=self.edges)
 }
 
 ///|
-fn GCase::succs(self : GCase, node : Int) -> Array[Int] {
+fn GCase::succs(self : GCase, node : Int32) -> Array[Int32] {
   self.edges.filter(e => e.0 == node).map(e => e.1)
 }
 
 ///|
-fn GCase::preds(self : GCase, node : Int) -> Array[Int] {
+fn GCase::preds(self : GCase, node : Int32) -> Array[Int32] {
   self.edges.filter(e => e.1 == node).map(e => e.0)
 }
 
@@ -64,9 +64,9 @@ fn GCase::preds(self : GCase, node : Int) -> Array[Int] {
 /// Naive reachability by a worklist, optionally avoiding one node.
 fn GCase::reach(
   self : GCase,
-  start : Int,
-  avoid? : Int = -1,
-  rev? : Bool = false,
+  start : Int32,
+  avoid~ : Int32 = -1,
+  rev~ : Bool = false,
 ) -> Array[Bool] {
   let seen = Array::make(self.n, false)
   if start == avoid {
@@ -88,12 +88,12 @@ fn GCase::reach(
 
 ///|
 /// `d` dominates `v` (both reachable from `entry`) in the reference model.
-fn GCase::dominates(self : GCase, entry : Int, d : Int, v : Int) -> Bool {
+fn GCase::dominates(self : GCase, entry : Int32, d : Int32, v : Int32) -> Bool {
   d == v || d == entry || !self.reach(entry, avoid=d)[v]
 }
 
 ///|
-fn set_of(xs : Array[Int]) -> @set.Set[Int] {
+fn set_of(xs : Array[Int32]) -> @set.Set[Int32] {
   @set.Set::from_array(xs)
 }
 
@@ -253,10 +253,10 @@ test "qc: immediate dominators and the dominator tree are the closest strict dom
 ///|
 /// DF(x) = { y | x dominates a predecessor of y and x does not strictly
 /// dominate y }, restricted to the part of the graph reachable from entry.
-fn GCase::frontier_model(self : GCase, entry : Int) -> Array[@set.Set[Int]] {
+fn GCase::frontier_model(self : GCase, entry : Int32) -> Array[@set.Set[Int32]] {
   let reach = self.reach(entry)
   Array::makei(self.n, x => {
-    let out : @set.Set[Int] = @set.Set([])
+    let out : @set.Set[Int32] = @set.Set([])
     if reach[x] {
       for y in 0..<self.n {
         if reach[y] {
@@ -278,7 +278,7 @@ fn GCase::frontier_model(self : GCase, entry : Int) -> Array[@set.Set[Int]] {
 ///|
 /// The reachable part of a case, so that the dominator tree has no
 /// unreachable nodes hanging off the entry.
-fn GCase::reachable_part(self : GCase, entry : Int) -> GCase {
+fn GCase::reachable_part(self : GCase, entry : Int32) -> GCase {
   let reach = self.reach(entry)
   { ..self, edges: self.edges.filter(e => reach[e.0] && reach[e.1]), }
 }
@@ -398,7 +398,7 @@ test "qc: dfs_edges classifies every edge reached from the start" {
       let events = g.dfs_edges(0)
       let info = g.dfs_numbering(0)
       // v is a DFS-tree ancestor of u (or u itself)
-      let ancestor = (v : Int, u : Int) => {
+      let ancestor = (v : Int32, u : Int32) => {
         match (info.get(v), info.get(u)) {
           (Some(a), Some(b)) => a.enter <= b.enter && b.leave <= a.leave
           _ => false
@@ -460,7 +460,7 @@ test "qc: postorder finishes successors first unless they close a cycle" {
 ///|
 test "qc: node and edge updates keep the graph consistent" {
   @quickcheck.check(
-    (input : (GCase, Int, Int)) => {
+    (input : (GCase, Int32, Int32)) => {
       let (c, a, b) = input
       let g = c.graph()
       let a = (a % c.n + c.n) % c.n
@@ -492,8 +492,8 @@ test "qc: union and intersect agree with endpoint set operations" {
       let (c, d) = input
       let g = c.graph()
       let h = d.graph()
-      let pairs = (x : @graphlib.Graph[Int, Int]) => {
-        let s : @set.Set[(Int, Int)] = @set.Set([])
+      let pairs = (x : @graphlib.Graph[Int32, Int32]) => {
+        let s : @set.Set[(Int32, Int32)] = @set.Set([])
         for e in x.edges() {
           s.add((e.src, e.dst))
         }

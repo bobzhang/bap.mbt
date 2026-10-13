@@ -19,7 +19,7 @@ priv struct ProjectIrLifter {
   errors : Array[ProjectLiftError]
   pkg : String?
   /// the width of code addresses
-  width : Int
+  width : Int32
   /// the labels of the known subroutine starts (upstream
   /// `Theory.Label.is_subroutine`)
   subroutines : Map[@types.Tid, Unit]
@@ -86,7 +86,7 @@ fn project_ir_insn_text(insn : ProjectDisassemblyInstruction) -> String {
 ///|
 /// The index of the instruction that terminates a block: the last one, or
 /// the delayed branch whose delay slot ends the block.
-fn project_ir_terminator(lifted : Array[Result[@mc.Lifted, String]]) -> Int {
+fn project_ir_terminator(lifted : Array[Result[@mc.Lifted, String]]) -> Int32 {
   let last = lifted.length() - 1
   for i, item in lifted {
     if item is Ok(value) && value.delay() > 0 && i + value.delay() >= last {
@@ -186,12 +186,12 @@ fn ProjectIrLifter::lift_blk(
 /// from `nodes[0]` along `succs` (upstream
 /// `Graphlib.reverse_postorder_traverse`), followed by the unreached
 /// indices in order.
-fn project_ir_reverse_postorder(succs : Array[Array[Int]]) -> Array[Int] {
+fn project_ir_reverse_postorder(succs : Array[Array[Int32]]) -> Array[Int32] {
   let n = succs.length()
   let visited = Array::make(n, false)
-  let postorder : Array[Int] = []
+  let postorder : Array[Int32] = []
   if n > 0 {
-    let stack : Array[(Int, Int)] = [(0, 0)]
+    let stack : Array[(Int32, Int32)] = [(0, 0)]
     visited[0] = true
     while stack.last() is Some((node, next)) {
       if next < succs[node].length() {
@@ -297,8 +297,8 @@ fn ProjectIrLifter::group_subroutine(
         )
     }
   }
-  let succs : Array[Array[Int]] = group.map(block => {
-    let result : Array[Int] = []
+  let succs : Array[Array[Int32]] = group.map(block => {
+    let result : Array[Int32] = []
     for edge in project.disassembly().edges_from_block(block) {
       if edge.target() is Some(target) &&
         project_reconstructor_find_block_containing(group, target)

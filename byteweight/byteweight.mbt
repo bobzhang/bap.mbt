@@ -1,7 +1,7 @@
 ///|
 struct ByteweightStats {
-  h1_value : Int
-  h0_value : Int
+  h1_value : Int32
+  h0_value : Int32
 }
 
 ///|
@@ -10,22 +10,25 @@ struct Byteweight {
 }
 
 ///|
-pub fn ByteweightStats::create(h1? : Int = 0, h0? : Int = 0) -> ByteweightStats {
+pub fn ByteweightStats::create(
+  h1~ : Int32 = 0,
+  h0~ : Int32 = 0,
+) -> ByteweightStats {
   { h1_value: h1, h0_value: h0, }
 }
 
 ///|
-pub fn ByteweightStats::h1(self : ByteweightStats) -> Int {
+pub fn ByteweightStats::h1(self : ByteweightStats) -> Int32 {
   self.h1_value
 }
 
 ///|
-pub fn ByteweightStats::h0(self : ByteweightStats) -> Int {
+pub fn ByteweightStats::h0(self : ByteweightStats) -> Int32 {
   self.h0_value
 }
 
 ///|
-pub fn ByteweightStats::trials(self : ByteweightStats) -> Int {
+pub fn ByteweightStats::trials(self : ByteweightStats) -> Int32 {
   self.h1_value + self.h0_value
 }
 
@@ -71,7 +74,7 @@ pub fn Byteweight::create() -> Byteweight {
 }
 
 ///|
-pub fn Byteweight::length(self : Byteweight) -> Int {
+pub fn Byteweight::length(self : Byteweight) -> Int32 {
   self.entries_value.length()
 }
 
@@ -96,8 +99,8 @@ pub fn Byteweight::find(self : Byteweight, key : BytesView) -> ByteweightStats? 
 ///|
 fn byteweight_look(
   corpus : @memory.Memory,
-  length : Int,
-  offset : Int,
+  length : Int32,
+  offset : Int32,
 ) -> @memory.Memory? {
   if length <= 0 || offset < 0 {
     None
@@ -181,7 +184,7 @@ fn Byteweight::observe_negative(
 ///|
 fn Byteweight::train_pass(
   self : Byteweight,
-  max_length : Int,
+  max_length : Int32,
   classify : (@memory.Memory) -> Bool,
   corpus : @memory.Memory,
   positive : Bool,
@@ -214,7 +217,7 @@ fn Byteweight::train_pass(
 ///|
 pub fn Byteweight::train(
   self : Byteweight,
-  max_length~ : Int,
+  max_length~ : Int32,
   classify : (@memory.Memory) -> Bool,
   corpus : @memory.Memory,
 ) -> Byteweight {
@@ -227,8 +230,8 @@ pub fn Byteweight::train(
 pub fn Byteweight::longest_match(
   self : Byteweight,
   key : BytesView,
-) -> (Int, ByteweightStats)? {
-  let mut best : (Int, ByteweightStats)? = None
+) -> (Int32, ByteweightStats)? {
+  let mut best : (Int32, ByteweightStats)? = None
   for entry in self.entries_value {
     let length = entry.0.length()
     if bytes_starts_with(key, entry.0) {
@@ -290,7 +293,7 @@ pub fn Byteweight::to_bytes(self : Byteweight) -> Bytes {
 fn byteweight_parse_count(
   field : StringView,
   label : String,
-) -> Result[Int, String] {
+) -> Result[Int32, String] {
   try @string.parse_int(field) catch {
     _ => Err("invalid byteweight \{label}: \{field}")
   } noraise {
@@ -345,11 +348,11 @@ pub fn Byteweight::of_bytes(data : BytesView) -> Result[Byteweight, String] {
 ///|
 pub fn Byteweight::next_if(
   self : Byteweight,
-  length~ : Int,
-  f~ : (@memory.Memory, Int, ByteweightStats) -> Bool,
+  length~ : Int32,
+  f~ : (@memory.Memory, Int32, ByteweightStats) -> Bool,
   corpus : @memory.Memory,
-  offset : Int,
-) -> Int? {
+  offset : Int32,
+) -> Int32? {
   let mut current = if offset < 0 { 0 } else { offset }
   let mut running = true
   while running {
@@ -369,11 +372,11 @@ pub fn Byteweight::next_if(
 ///|
 pub fn Byteweight::next(
   self : Byteweight,
-  length~ : Int,
+  length~ : Int32,
   threshold~ : Double,
   corpus : @memory.Memory,
-  offset : Int,
-) -> Int? {
+  offset : Int32,
+) -> Int32? {
   self.next_if(
     length~,
     f=(_, _, stats) => stats.probability_h1() > threshold,
@@ -385,8 +388,8 @@ pub fn Byteweight::next(
 ///|
 pub fn Byteweight::find_if(
   self : Byteweight,
-  length~ : Int,
-  f~ : (@memory.Memory, Int, ByteweightStats) -> Bool,
+  length~ : Int32,
+  f~ : (@memory.Memory, Int32, ByteweightStats) -> Bool,
   corpus : @memory.Memory,
 ) -> Array[UInt64] {
   let addresses = []
@@ -407,7 +410,7 @@ pub fn Byteweight::find_if(
 ///|
 pub fn Byteweight::find_positive(
   self : Byteweight,
-  length~ : Int,
+  length~ : Int32,
   threshold~ : Double,
   corpus : @memory.Memory,
 ) -> Array[UInt64] {
@@ -426,8 +429,8 @@ fn byteweight_ratio(numerator : Double, denominator : Double) -> Double {
 ///|
 pub fn Byteweight::find_using_bayes_factor(
   self : Byteweight,
-  min_length~ : Int,
-  max_length~ : Int,
+  min_length~ : Int32,
+  max_length~ : Int32,
   threshold : Double,
   corpus : @memory.Memory,
 ) -> Array[UInt64] {
@@ -462,8 +465,8 @@ pub fn Byteweight::find_using_bayes_factor(
 ///|
 pub fn Byteweight::find_using_threshold(
   self : Byteweight,
-  min_length~ : Int,
-  max_length~ : Int,
+  min_length~ : Int32,
+  max_length~ : Int32,
   threshold : Double,
   corpus : @memory.Memory,
 ) -> Array[UInt64] {

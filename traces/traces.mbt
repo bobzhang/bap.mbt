@@ -2272,39 +2272,15 @@ fn trace_reader_registered(protocol_name : String) -> Bool {
 }
 
 ///|
-#warnings("-78")
-pub fn Trace::try_register_protocol(
-  protocol : TraceProtocol,
-) -> Result[Unit, TraceError] {
-  ensure_builtin_providers()
-  let name = protocol.name()
-  if trace_protocol_registry.contains(name) {
-    Err(trace_duplicate_registration("trace protocol", name))
-  } else {
-    trace_install_protocol(protocol)
-    Ok(())
-  }
-}
-
-///|
 pub fn Trace::register_protocol(
   protocol : TraceProtocol,
 ) -> Unit raise TraceError {
-  match Trace::try_register_protocol(protocol) {
-    Ok(_) => ()
-    Err(error) => raise error
+  ensure_builtin_providers()
+  let name = protocol.name()
+  if trace_protocol_registry.contains(name) {
+    raise trace_duplicate_registration("trace protocol", name)
   }
-}
-
-///|
-#warnings("-78")
-pub fn Trace::try_register_proto(
-  protocol : TraceProtocol,
-) -> Result[String, TraceError] {
-  match Trace::try_register_protocol(protocol) {
-    Ok(_) => Ok(protocol.name())
-    Err(error) => Err(error)
-  }
+  trace_install_protocol(protocol)
 }
 
 ///|
@@ -2320,25 +2296,12 @@ pub fn Trace::register_tool(
   name~ : String,
   supported_tags~ : Array[String],
 ) -> TraceTool raise TraceError {
-  match Trace::try_register_tool(name~, supported_tags~) {
-    Ok(tool) => tool
-    Err(error) => raise error
-  }
-}
-
-///|
-#warnings("-78")
-pub fn Trace::try_register_tool(
-  name~ : String,
-  supported_tags~ : Array[String],
-) -> Result[TraceTool, TraceError] {
   if trace_tool_registry.contains(name) {
-    Err(trace_duplicate_registration("trace tool", name))
-  } else {
-    let tool = TraceTool::register(name~, supported_tags~)
-    trace_tool_registry[name] = tool
-    Ok(tool)
+    raise trace_duplicate_registration("trace tool", name)
   }
+  let tool = TraceTool::register(name~, supported_tags~)
+  trace_tool_registry[name] = tool
+  tool
 }
 
 ///|
@@ -2346,25 +2309,11 @@ pub fn Trace::register_reader(
   protocol_name : String,
   reader : (String) -> Result[TraceReader, TraceError],
 ) -> Unit raise TraceError {
-  match Trace::try_register_reader(protocol_name, reader) {
-    Ok(_) => ()
-    Err(error) => raise error
-  }
-}
-
-///|
-#warnings("-78")
-pub fn Trace::try_register_reader(
-  protocol_name : String,
-  reader : (String) -> Result[TraceReader, TraceError],
-) -> Result[Unit, TraceError] {
   ensure_builtin_providers()
   if trace_reader_registered(protocol_name) {
-    Err(trace_duplicate_registration("trace reader", protocol_name))
-  } else {
-    trace_install_reader(protocol_name, reader)
-    Ok(())
+    raise trace_duplicate_registration("trace reader", protocol_name)
   }
+  trace_install_reader(protocol_name, reader)
 }
 
 ///|
@@ -2372,25 +2321,11 @@ pub fn Trace::register_reader_with_id(
   protocol_name : String,
   reader : (String, TraceId) -> Result[TraceReader, TraceError],
 ) -> Unit raise TraceError {
-  match Trace::try_register_reader_with_id(protocol_name, reader) {
-    Ok(_) => ()
-    Err(error) => raise error
-  }
-}
-
-///|
-#warnings("-78")
-pub fn Trace::try_register_reader_with_id(
-  protocol_name : String,
-  reader : (String, TraceId) -> Result[TraceReader, TraceError],
-) -> Result[Unit, TraceError] {
   ensure_builtin_providers()
   if trace_reader_registered(protocol_name) {
-    Err(trace_duplicate_registration("trace reader", protocol_name))
-  } else {
-    trace_install_reader_with_id(protocol_name, reader)
-    Ok(())
+    raise trace_duplicate_registration("trace reader", protocol_name)
   }
+  trace_install_reader_with_id(protocol_name, reader)
 }
 
 ///|
@@ -2398,25 +2333,11 @@ pub fn Trace::register_stream_reader(
   protocol_name : String,
   reader : (String) -> Result[TraceStreamReader, TraceError],
 ) -> Unit raise TraceError {
-  match Trace::try_register_stream_reader(protocol_name, reader) {
-    Ok(_) => ()
-    Err(error) => raise error
-  }
-}
-
-///|
-#warnings("-78")
-pub fn Trace::try_register_stream_reader(
-  protocol_name : String,
-  reader : (String) -> Result[TraceStreamReader, TraceError],
-) -> Result[Unit, TraceError] {
   ensure_builtin_providers()
   if trace_reader_registered(protocol_name) {
-    Err(trace_duplicate_registration("trace reader", protocol_name))
-  } else {
-    trace_install_stream_reader(protocol_name, reader)
-    Ok(())
+    raise trace_duplicate_registration("trace reader", protocol_name)
   }
+  trace_install_stream_reader(protocol_name, reader)
 }
 
 ///|
@@ -2424,25 +2345,11 @@ pub fn Trace::register_stream_reader_with_id(
   protocol_name : String,
   reader : (String, TraceId) -> Result[TraceStreamReader, TraceError],
 ) -> Unit raise TraceError {
-  match Trace::try_register_stream_reader_with_id(protocol_name, reader) {
-    Ok(_) => ()
-    Err(error) => raise error
-  }
-}
-
-///|
-#warnings("-78")
-pub fn Trace::try_register_stream_reader_with_id(
-  protocol_name : String,
-  reader : (String, TraceId) -> Result[TraceStreamReader, TraceError],
-) -> Result[Unit, TraceError] {
   ensure_builtin_providers()
   if trace_reader_registered(protocol_name) {
-    Err(trace_duplicate_registration("trace reader", protocol_name))
-  } else {
-    trace_install_stream_reader_with_id(protocol_name, reader)
-    Ok(())
+    raise trace_duplicate_registration("trace reader", protocol_name)
   }
+  trace_install_stream_reader_with_id(protocol_name, reader)
 }
 
 ///|
@@ -2450,25 +2357,11 @@ pub fn Trace::register_writer(
   protocol_name : String,
   writer : (String, Trace) -> Result[Unit, TraceError],
 ) -> Unit raise TraceError {
-  match Trace::try_register_writer(protocol_name, writer) {
-    Ok(_) => ()
-    Err(error) => raise error
-  }
-}
-
-///|
-#warnings("-78")
-pub fn Trace::try_register_writer(
-  protocol_name : String,
-  writer : (String, Trace) -> Result[Unit, TraceError],
-) -> Result[Unit, TraceError] {
   ensure_builtin_providers()
   if trace_writer_registry.contains(protocol_name) {
-    Err(trace_duplicate_registration("trace writer", protocol_name))
-  } else {
-    trace_install_writer(protocol_name, writer)
-    Ok(())
+    raise trace_duplicate_registration("trace writer", protocol_name)
   }
+  trace_install_writer(protocol_name, writer)
 }
 
 ///|

@@ -442,24 +442,14 @@ test "translated BAP traces preserve ids tools metadata and in-memory save/load"
   let with_meta = trace.set_meta(test_meta())
   assert_true(with_meta.meta() == test_meta())
 
-  match save_result("memory://bap-trace", with_meta) {
-    Ok(_) => ()
-    Err(_) => fail("save failed")
-  }
-  match load_result("memory://bap-trace") {
-    Ok(loaded) => {
-      assert_true(loaded.protocol() == Some("memory"))
-      assert_true(loaded.tool() == test_tool())
-      assert_true(loaded.meta() == test_meta())
-      assert_true(unwrap_events(loaded.read_events()) == test_events())
-    }
-    Err(_) => fail("load failed")
-  }
-  match load_result("memory://bap-trace") {
-    Ok(loaded) =>
-      assert_true(unwrap_events(loaded.read_events()) == test_events())
-    Err(_) => fail("second load failed")
-  }
+  @traces.Trace::save("memory://bap-trace", with_meta)
+  let loaded = @traces.Trace::load("memory://bap-trace")
+  assert_true(loaded.protocol() == Some("memory"))
+  assert_true(loaded.tool() == test_tool())
+  assert_true(loaded.meta() == test_meta())
+  assert_true(unwrap_events(loaded.read_events()) == test_events())
+  let reloaded = @traces.Trace::load("memory://bap-trace")
+  assert_true(unwrap_events(reloaded.read_events()) == test_events())
 }
 
 ///|
@@ -692,10 +682,9 @@ test "BAP-style loaded trace facade delegates to the registry" {
 
 ///|
 test "translated BAP trace protocol registry selects URI providers" {
-  match load_result("unknown://trace") {
-    Err(NoProvider("unknown://trace")) => ()
-    _ => fail("expected no provider")
-  }
+  assert_true(
+    load_error("unknown://trace") == Some(NoProvider("unknown://trace")),
+  )
 
   let custom_tool = @traces.Trace::register_tool(name="custom_tool", supported_tags=[
     "memory-load", "register-read",
@@ -727,21 +716,15 @@ test "translated BAP trace protocol registry selects URI providers" {
     ignore(trace.read_events() catch { error => return Err(error) })
     Ok(())
   })
-  match load_result("custom://trace") {
-    Ok(trace) => {
-      assert_true(trace.protocol() == Some("custom-provider"))
-      assert_true(trace.tool() == custom_tool)
-      assert_true(trace.meta() == test_meta())
-      assert_true(trace.supports("memory-load"))
-      assert_true(!trace.supports("register-read"))
-      assert_true(unwrap_events(trace.read_events()).length() == 2)
-    }
-    Err(_) => fail("custom provider load failed")
-  }
-  match save_result("custom://saved", new_trace()) {
-    Ok(_) => assert_true(saved_custom.val == Some("custom://saved"))
-    Err(_) => fail("custom provider save failed")
-  }
+  let custom_trace = @traces.Trace::load("custom://trace")
+  assert_true(custom_trace.protocol() == Some("custom-provider"))
+  assert_true(custom_trace.tool() == custom_tool)
+  assert_true(custom_trace.meta() == test_meta())
+  assert_true(custom_trace.supports("memory-load"))
+  assert_true(!custom_trace.supports("register-read"))
+  assert_true(unwrap_events(custom_trace.read_events()).length() == 2)
+  @traces.Trace::save("custom://saved", new_trace())
+  assert_true(saved_custom.val == Some("custom://saved"))
 
   let stream_calls = Ref(0)
   @traces.Trace::register_protocol(
@@ -774,24 +757,20 @@ test "translated BAP trace protocol registry selects URI providers" {
       )
     }
   })
-  match load_result("stream://trace") {
-    Ok(trace) => {
-      assert_true(trace.protocol() == Some("stream-provider"))
-      assert_true(trace.meta() == test_meta())
-      assert_true(stream_calls.val == 0)
-      match trace.next_event() {
-        Some(MemoryLoad(value)) => assert_true(value == test_move())
-        _ => fail("expected stream reader first event")
-      }
-      assert_true(stream_calls.val == 1)
-      assert_true(
-        unwrap_events(trace.read_events()) ==
-        [@traces.TraceEvent::register_read(register_move())],
-      )
-      assert_true(stream_calls.val == custom_events.length() + 1)
-    }
-    Err(_) => fail("stream provider load failed")
+  let stream_trace = @traces.Trace::load("stream://trace")
+  assert_true(stream_trace.protocol() == Some("stream-provider"))
+  assert_true(stream_trace.meta() == test_meta())
+  assert_true(stream_calls.val == 0)
+  match stream_trace.next_event() {
+    Some(MemoryLoad(value)) => assert_true(value == test_move())
+    _ => fail("expected stream reader first event")
   }
+  assert_true(stream_calls.val == 1)
+  assert_true(
+    unwrap_events(stream_trace.read_events()) ==
+    [@traces.TraceEvent::register_read(register_move())],
+  )
+  assert_true(stream_calls.val == custom_events.length() + 1)
 
   @traces.Trace::register_protocol(
     @traces.TraceProtocol::create(name="ambiguous-a", probe=fn(uri) {
@@ -803,84 +782,83 @@ test "translated BAP trace protocol registry selects URI providers" {
       uri.has_prefix("ambiguous://")
     }),
   )
-  match load_result("ambiguous://trace") {
-    Err(AmbiguousUri("ambiguous://trace")) => ()
-    _ => fail("expected ambiguous URI")
+  assert_true(
+    load_error("ambiguous://trace") == Some(AmbiguousUri("ambiguous://trace")),
+  )
+}
+
+///|
+fn assert_duplicate_registration(
+  expected : String,
+  f : () -> Unit raise @traces.TraceError,
+) -> Unit raise {
+  let reason : String? = try {
+    f()
+    None
+  } catch {
+    DuplicateRegistration(reason) => Some(reason)
+    _ => None
+  }
+  match reason {
+    Some(reason) =>
+      if !reason.contains(expected) {
+        fail("duplicate registration message \{reason} lacks \{expected}")
+      }
+    None =>
+      fail("expected a duplicate registration error containing \{expected}")
   }
 }
 
 ///|
 test "translated BAP trace registries reject duplicate providers" {
-  match
-    @traces.Trace::try_register_tool(name="duplicate_tool", supported_tags=[
-      "memory-load",
-    ]) {
-    Ok(tool) => assert_true(tool.supports("memory-load"))
-    Err(_) => fail("unexpected duplicate trace tool")
+  let tool = @traces.Trace::register_tool(name="duplicate_tool", supported_tags=[
+    "memory-load",
+  ]) catch {
+    _ => fail("unexpected duplicate trace tool")
   }
-  match
-    @traces.Trace::try_register_tool(name="duplicate_tool", supported_tags=[
+  assert_true(tool.supports("memory-load"))
+  assert_duplicate_registration("trace tool duplicate_tool", () => {
+    let _ = @traces.Trace::register_tool(name="duplicate_tool", supported_tags=[
       "memory-store",
-    ]) {
-    Err(DuplicateRegistration(reason)) =>
-      assert_true(reason.contains("trace tool duplicate_tool"))
-    _ => fail("expected duplicate trace tool")
-  }
+    ])
+  })
 
   let protocol = @traces.TraceProtocol::create(name="duplicate-provider", probe=fn(
     uri,
   ) {
     uri.has_prefix("duplicate://")
   })
-  match @traces.Trace::try_register_proto(protocol) {
-    Ok(name) => assert_true(name == "duplicate-provider")
-    Err(_) => fail("unexpected duplicate trace protocol")
+  let proto_name = @traces.Trace::register_proto(protocol) catch {
+    _ => fail("unexpected duplicate trace protocol")
   }
-  match @traces.Trace::try_register_proto(protocol) {
-    Err(DuplicateRegistration(reason)) =>
-      assert_true(reason.contains("trace protocol duplicate-provider"))
-    _ => fail("expected duplicate trace protocol")
-  }
-  try {
+  assert_true(proto_name == "duplicate-provider")
+  assert_duplicate_registration("trace protocol duplicate-provider", () => {
     let _ = @traces.Trace::register_proto(protocol)
-    fail("duplicate trace protocol did not raise")
-  } catch {
-    @traces.DuplicateRegistration(reason) =>
-      assert_true(reason.contains("trace protocol duplicate-provider"))
-    _ => fail("unexpected trace protocol registration failure")
-  }
+  })
 
   let original_events = [Ok(@traces.TraceEvent::memory_load(test_move()))]
   let replacement_events = [Ok(@traces.TraceEvent::memory_store(test_move()))]
-  match
-    @traces.Trace::try_register_reader("duplicate-provider", fn(uri) {
-      if uri == "duplicate://trace" {
-        Ok({ tool: test_tool(), meta: test_meta(), events: original_events, })
-      } else {
-        Err(NoProvider(uri))
-      }
-    }) {
-    Ok(_) => ()
-    Err(_) => fail("unexpected duplicate trace reader")
+  @traces.Trace::register_reader("duplicate-provider", fn(uri) {
+    if uri == "duplicate://trace" {
+      Ok({ tool: test_tool(), meta: test_meta(), events: original_events, })
+    } else {
+      Err(NoProvider(uri))
+    }
+  }) catch {
+    _ => fail("unexpected duplicate trace reader")
   }
-  match
-    @traces.Trace::try_register_reader("duplicate-provider", fn(_) {
+  assert_duplicate_registration("trace reader duplicate-provider", () => {
+    @traces.Trace::register_reader("duplicate-provider", fn(_) {
       Ok({ tool: test_tool(), meta: test_meta(), events: replacement_events, })
-    }) {
-    Err(DuplicateRegistration(reason)) =>
-      assert_true(reason.contains("trace reader duplicate-provider"))
-    _ => fail("expected duplicate trace reader")
-  }
-  match
-    @traces.Trace::try_register_reader_with_id("duplicate-provider", fn(_, _) {
+    })
+  })
+  assert_duplicate_registration("trace reader duplicate-provider", () => {
+    @traces.Trace::register_reader_with_id("duplicate-provider", fn(_, _) {
       Ok({ tool: test_tool(), meta: test_meta(), events: replacement_events, })
-    }) {
-    Err(DuplicateRegistration(reason)) =>
-      assert_true(reason.contains("trace reader duplicate-provider"))
-    _ => fail("expected duplicate id-aware trace reader")
-  }
-  match
-    @traces.Trace::try_register_stream_reader("duplicate-provider", fn(_) {
+    })
+  })
+  assert_duplicate_registration("trace reader duplicate-provider", () => {
+    @traces.Trace::register_stream_reader("duplicate-provider", fn(_) {
       Ok(
         @traces.Reader::from_results(
           test_tool(),
@@ -888,44 +866,30 @@ test "translated BAP trace registries reject duplicate providers" {
           meta=test_meta(),
         ),
       )
-    }) {
-    Err(DuplicateRegistration(reason)) =>
-      assert_true(reason.contains("trace reader duplicate-provider"))
-    _ => fail("expected duplicate stream trace reader")
-  }
+    })
+  })
 
   let saved_uri : Ref[String?] = Ref(None)
-  match
-    @traces.Trace::try_register_writer("duplicate-provider", fn(uri, trace) {
-      saved_uri.val = Some(uri)
-      ignore(trace.read_events() catch { error => return Err(error) })
-      Ok(())
-    }) {
-    Ok(_) => ()
-    Err(_) => fail("unexpected duplicate trace writer")
+  @traces.Trace::register_writer("duplicate-provider", fn(uri, trace) {
+    saved_uri.val = Some(uri)
+    ignore(trace.read_events() catch { error => return Err(error) })
+    Ok(())
+  }) catch {
+    _ => fail("unexpected duplicate trace writer")
   }
-  match
-    @traces.Trace::try_register_writer("duplicate-provider", fn(_, _) {
+  assert_duplicate_registration("trace writer duplicate-provider", () => {
+    @traces.Trace::register_writer("duplicate-provider", fn(_, _) {
       saved_uri.val = Some("replacement")
       Ok(())
-    }) {
-    Err(DuplicateRegistration(reason)) =>
-      assert_true(reason.contains("trace writer duplicate-provider"))
-    _ => fail("expected duplicate trace writer")
-  }
+    })
+  })
 
-  match load_result("duplicate://trace") {
-    Ok(trace) =>
-      assert_true(
-        unwrap_events(trace.read_events()) ==
-        [@traces.TraceEvent::memory_load(test_move())],
-      )
-    Err(_) => fail("unexpected duplicate trace load failure")
-  }
-  match save_result("duplicate://saved", new_trace()) {
-    Ok(_) => assert_true(saved_uri.val == Some("duplicate://saved"))
-    Err(_) => fail("unexpected duplicate trace save failure")
-  }
+  assert_true(
+    unwrap_events(@traces.Trace::load("duplicate://trace").read_events()) ==
+    [@traces.TraceEvent::memory_load(test_move())],
+  )
+  @traces.Trace::save("duplicate://saved", new_trace())
+  assert_true(saved_uri.val == Some("duplicate://saved"))
 }
 
 ///|
@@ -948,14 +912,10 @@ test "translated BAP trace readers receive generated ids" {
       Ok({ tool: custom_tool, meta: test_meta(), events: custom_events, })
     }
   })
-  match load_result("id-reader://trace") {
-    Ok(trace) => {
-      assert_true(seen_reader_id.val == Some(trace.id()))
-      assert_true(trace.protocol() == Some("id-reader-provider"))
-      assert_true(unwrap_events(trace.read_events()).length() == 1)
-    }
-    Err(_) => fail("id-aware reader load failed")
-  }
+  let id_trace = @traces.Trace::load("id-reader://trace")
+  assert_true(seen_reader_id.val == Some(id_trace.id()))
+  assert_true(id_trace.protocol() == Some("id-reader-provider"))
+  assert_true(unwrap_events(id_trace.read_events()).length() == 1)
 
   let seen_stream_id : Ref[@traces.TraceId?] = Ref(None)
   @traces.Trace::register_protocol(
@@ -989,14 +949,10 @@ test "translated BAP trace readers receive generated ids" {
       )
     }
   })
-  match load_result("id-stream://trace") {
-    Ok(trace) => {
-      assert_true(seen_stream_id.val == Some(trace.id()))
-      assert_true(trace.protocol() == Some("id-stream-provider"))
-      assert_true(unwrap_events(trace.read_events()).length() == 1)
-    }
-    Err(_) => fail("id-aware stream reader load failed")
-  }
+  let id_stream_trace = @traces.Trace::load("id-stream://trace")
+  assert_true(seen_stream_id.val == Some(id_stream_trace.id()))
+  assert_true(id_stream_trace.protocol() == Some("id-stream-provider"))
+  assert_true(unwrap_events(id_stream_trace.read_events()).length() == 1)
 }
 
 ///|
@@ -1061,46 +1017,36 @@ test "translated BAP trace filter maps compose and preserve context" {
   let source = new_trace()
     .set_meta(test_meta())
     .set_attr("complete", Bool(true))
-  match save_result("memory://bap-filter-map-context", source) {
-    Ok(_) => ()
-    Err(_) => fail("filter-map save failed")
-  }
+  @traces.Trace::save("memory://bap-filter-map-context", source)
 
-  match load_result("memory://bap-filter-map-context") {
-    Ok(loaded) => {
-      let loaded_id = loaded.id()
-      let filtered = loaded
-        .filter_map(fn(event) {
-          match event {
-            MemoryLoad(_) | MemoryStore(_) | RegisterRead(_) => Some(event)
-            _ => None
-          }
-        })
-        .filter_map(fn(event) {
-          match event {
-            MemoryStore(_) => Some(@traces.TraceEvent::mode("store"))
-            RegisterRead(_) => Some(@traces.TraceEvent::mode("register"))
-            _ => None
-          }
-        })
-      assert_true(filtered.id() == loaded_id)
-      assert_true(filtered.protocol() == Some("memory"))
-      assert_true(filtered.tool() == test_tool())
-      assert_true(filtered.meta() == expected_meta)
-      assert_true(filtered.has_attr("complete"))
-      assert_true(filtered.get_attr("complete") == Some(Bool(true)))
-      assert_true(filtered.supports("memory-store"))
-      assert_true(!filtered.supports("register-write"))
-      assert_true(
-        unwrap_events(filtered.read_events()) ==
-        [
-          @traces.TraceEvent::mode("store"),
-          @traces.TraceEvent::mode("register"),
-        ],
-      )
-    }
-    Err(_) => fail("filter-map load failed")
-  }
+  let loaded = @traces.Trace::load("memory://bap-filter-map-context")
+  let loaded_id = loaded.id()
+  let filtered = loaded
+    .filter_map(fn(event) {
+      match event {
+        MemoryLoad(_) | MemoryStore(_) | RegisterRead(_) => Some(event)
+        _ => None
+      }
+    })
+    .filter_map(fn(event) {
+      match event {
+        MemoryStore(_) => Some(@traces.TraceEvent::mode("store"))
+        RegisterRead(_) => Some(@traces.TraceEvent::mode("register"))
+        _ => None
+      }
+    })
+  assert_true(filtered.id() == loaded_id)
+  assert_true(filtered.protocol() == Some("memory"))
+  assert_true(filtered.tool() == test_tool())
+  assert_true(filtered.meta() == expected_meta)
+  assert_true(filtered.has_attr("complete"))
+  assert_true(filtered.get_attr("complete") == Some(Bool(true)))
+  assert_true(filtered.supports("memory-store"))
+  assert_true(!filtered.supports("register-write"))
+  assert_true(
+    unwrap_events(filtered.read_events()) ==
+    [@traces.TraceEvent::mode("store"), @traces.TraceEvent::mode("register")],
+  )
 }
 
 ///|
@@ -1234,54 +1180,30 @@ test "BAP-style trace load monitor controls provider stream errors" {
       Err(NoProvider(uri))
     }
   })
-  match load_result("load-monitor://trace") {
-    Ok(trace) =>
-      assert_true(
-        try {
-          ignore(trace.read_events())
-          false
-        } catch {
-          TraceFailure("syscall failed") => true
-          _ => false
-        },
-      )
-    Err(_) => fail("default monitored load failed")
-  }
-  match
-    load_result(
-      "load-monitor://trace",
-      monitor=@traces.TraceMonitor::ignore_errors(),
-    ) {
-    Ok(trace) =>
-      assert_true(unwrap_events(trace.read_events()) == test_events())
-    Err(_) => fail("ignore-error monitored load failed")
-  }
+  let monitored = @traces.Trace::load("load-monitor://trace")
+  assert_true(
+    try {
+      ignore(monitored.read_events())
+      false
+    } catch {
+      TraceFailure("syscall failed") => true
+      _ => false
+    },
+  )
+  let ignored = @traces.Trace::load(
+    "load-monitor://trace",
+    monitor=@traces.TraceMonitor::ignore_errors(),
+  )
+  assert_true(unwrap_events(ignored.read_events()) == test_events())
 }
 
 ///|
-/// The tests below keep matching on `Result`; these thin wrappers turn the
-/// raising API back into one. Private, so warning 78 does not apply.
-#warnings("-78")
-fn load_result(
-  uri : String,
-  monitor~ : @traces.TraceMonitor = @traces.TraceMonitor::fail_on_error(),
-) -> Result[@traces.Trace, @traces.TraceError] {
-  try @traces.Trace::load(uri, monitor~) catch {
-    error => Err(error)
-  } noraise {
-    trace => Ok(trace)
-  }
-}
-
-///|
-#warnings("-78")
-fn save_result(
-  uri : String,
-  trace : @traces.Trace,
-) -> Result[Unit, @traces.TraceError] {
-  try @traces.Trace::save(uri, trace) catch {
-    error => Err(error)
-  } noraise {
-    _ => Ok(())
+/// A load that must fail: the tests below compare the reported error.
+fn load_error(uri : String) -> @traces.TraceError? {
+  try {
+    let _ = @traces.Trace::load(uri)
+    None
+  } catch {
+    error => Some(error)
   }
 }

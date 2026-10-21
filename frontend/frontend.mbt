@@ -85,10 +85,10 @@ pub fn usage(ctxt : @bap_main.Ctxt) -> String {
 ///|
 /// Loads a recipe for the `--recipe` option.
 fn load_recipe(spec : String) -> @bap_main.Recipe raise {
-  match @recipe.load(paths=@recipe_command.recipe_paths(), spec) {
-    Ok(r) => { command: r.command(), args: r.args(), }
-    Err(err) => fail(err.to_string())
+  let r = @recipe.load(paths=@recipe_command.recipe_paths(), spec) catch {
+    err => fail(err.to_string())
   }
+  { command: r.command(), args: r.args(), }
 }
 
 ///|

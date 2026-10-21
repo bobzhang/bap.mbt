@@ -466,28 +466,22 @@ pub fn load(
   env~ : Array[(String, String)] = [],
   fs~ : FileSystem = FileSystem::native(),
   name : String,
-) -> Result[Recipe, RecipeError] {
-  try {
-    let parts = name.split(":").to_array()
-    let name = parts[0].trim().to_owned()
-    let vars : Map[String, String] = Map([])
-    let bindings = env.copy()
-    for part in parts[1:] {
-      bindings.push(parse_var(part.to_owned()))
-    }
-    for binding in bindings {
-      let (key, value) = binding
-      if vars.contains(key) {
-        raise DuplicateVar(key)
-      }
-      vars[key] = value
-    }
-    load_name({ fs, vars, paths, }, name)
-  } catch {
-    err => Err(err)
-  } noraise {
-    recipe => Ok(recipe)
+) -> Recipe raise RecipeError {
+  let parts = name.split(":").to_array()
+  let name = parts[0].trim().to_owned()
+  let vars : Map[String, String] = Map([])
+  let bindings = env.copy()
+  for part in parts[1:] {
+    bindings.push(parse_var(part.to_owned()))
   }
+  for binding in bindings {
+    let (key, value) = binding
+    if vars.contains(key) {
+      raise DuplicateVar(key)
+    }
+    vars[key] = value
+  }
+  load_name({ fs, vars, paths, }, name)
 }
 
 ///|

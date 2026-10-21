@@ -12,7 +12,7 @@ pub fn concat(String, String) -> String
 
 pub fn dirname(String) -> String
 
-pub fn load(paths? : Array[String], env? : Array[(String, String)], fs? : FileSystem, String) -> Result[Recipe, RecipeError]
+pub fn load(paths? : Array[String], env? : Array[(String, String)], fs? : FileSystem, String) -> Recipe raise RecipeError
 
 pub fn search(Array[String], fs? : FileSystem) -> Array[String]
 

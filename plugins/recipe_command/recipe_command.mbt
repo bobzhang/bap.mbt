@@ -184,8 +184,12 @@ pub fn list_recipes(
         let file = @recipe.concat(dir, entry)
         if entry.has_suffix(".recipe") {
           let name = prefix(entry, entry.length() - ".recipe".length())
-          match @recipe.load(paths~, fs~, name) {
-            Ok(r) => {
+          try {
+            @recipe.load(paths~, fs~, name)
+          } catch {
+            e => err("Malformed recipe \{file}: \{e.to_string()}\n")
+          } noraise {
+            r => {
               out(
                 "  " +
                 pad_right(@recipe.basename(name), 24) +
@@ -195,7 +199,6 @@ pub fn list_recipes(
               )
               cleanup(keep, r)
             }
-            Err(e) => err("Malformed recipe \{file}: \{e.to_string()}\n")
           }
         }
       }
@@ -219,13 +222,11 @@ pub fn print_recipes(
     [] => list_recipes(keep~, paths~, fs~, out~, err~)
     recipes =>
       for name in recipes {
-        match @recipe.load(paths~, fs~, name) {
-          Ok(r) => {
-            out(describe_recipe(r, argv~))
-            cleanup(keep, r)
-          }
-          Err(e) => raise RecipeError(e)
+        let r = @recipe.load(paths~, fs~, name) catch {
+          e => raise RecipeError(e)
         }
+        out(describe_recipe(r, argv~))
+        cleanup(keep, r)
       }
   }
 }

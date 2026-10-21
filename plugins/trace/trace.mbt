@@ -98,10 +98,10 @@ pub fn dump(trace : @traces.Trace) -> String raise TraceCommandError {
 
 ///|
 fn load(uri : String) -> @traces.Trace raise TraceCommandError {
-  match @traces.Trace::load(uri_of_string(uri)) {
-    Ok(trace) => trace
-    Err(err) => raise LoadFailed(err)
+  let trace = @traces.Trace::load(uri_of_string(uri)) catch {
+    err => raise LoadFailed(err)
   }
+  trace
 }
 
 ///|

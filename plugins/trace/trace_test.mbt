@@ -7,9 +7,8 @@ fn save_sample(uri : String) -> Unit {
     @traces.TraceEvent::context_switch(1),
     @traces.TraceEvent::context_switch(2),
   ])
-  match @traces.Trace::save(uri, trace) {
-    Ok(_) => ()
-    Err(_) => abort("cannot save the trace")
+  @traces.Trace::save(uri, trace) catch {
+    _ => abort("cannot save the trace")
   }
 }
 

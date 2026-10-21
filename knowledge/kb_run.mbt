@@ -50,6 +50,7 @@ pub fn[K, S] State::value(
 ///   obj
 /// }, @knowledge.State::empty()).unwrap()
 /// ```
+#warnings("-78")
 pub fn[K, S] run(
   cls : Class[K, S],
   comp : (State) -> Object[K] raise,
@@ -69,6 +70,7 @@ pub fn[K, S] run(
 ///|
 /// Evaluates a knowledge computation in a copy of `init`, returning its
 /// result and the resulting knowledge base (the generic form of `run`).
+#warnings("-78")
 pub fn[R] eval(
   comp : (State) -> R raise,
   init : State,

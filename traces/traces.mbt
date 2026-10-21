@@ -2272,6 +2272,7 @@ fn trace_reader_registered(protocol_name : String) -> Bool {
 }
 
 ///|
+#warnings("-78")
 pub fn Trace::try_register_protocol(
   protocol : TraceProtocol,
 ) -> Result[Unit, TraceError] {
@@ -2296,6 +2297,7 @@ pub fn Trace::register_protocol(
 }
 
 ///|
+#warnings("-78")
 pub fn Trace::try_register_proto(
   protocol : TraceProtocol,
 ) -> Result[String, TraceError] {
@@ -2325,6 +2327,7 @@ pub fn Trace::register_tool(
 }
 
 ///|
+#warnings("-78")
 pub fn Trace::try_register_tool(
   name~ : String,
   supported_tags~ : Array[String],
@@ -2350,6 +2353,7 @@ pub fn Trace::register_reader(
 }
 
 ///|
+#warnings("-78")
 pub fn Trace::try_register_reader(
   protocol_name : String,
   reader : (String) -> Result[TraceReader, TraceError],
@@ -2375,6 +2379,7 @@ pub fn Trace::register_reader_with_id(
 }
 
 ///|
+#warnings("-78")
 pub fn Trace::try_register_reader_with_id(
   protocol_name : String,
   reader : (String, TraceId) -> Result[TraceReader, TraceError],
@@ -2400,6 +2405,7 @@ pub fn Trace::register_stream_reader(
 }
 
 ///|
+#warnings("-78")
 pub fn Trace::try_register_stream_reader(
   protocol_name : String,
   reader : (String) -> Result[TraceStreamReader, TraceError],
@@ -2425,6 +2431,7 @@ pub fn Trace::register_stream_reader_with_id(
 }
 
 ///|
+#warnings("-78")
 pub fn Trace::try_register_stream_reader_with_id(
   protocol_name : String,
   reader : (String, TraceId) -> Result[TraceStreamReader, TraceError],
@@ -2450,6 +2457,7 @@ pub fn Trace::register_writer(
 }
 
 ///|
+#warnings("-78")
 pub fn Trace::try_register_writer(
   protocol_name : String,
   writer : (String, Trace) -> Result[Unit, TraceError],
@@ -2478,9 +2486,11 @@ fn ensure_builtin_providers() -> Unit {
     trace_install_reader("memory", fn(uri) {
       match trace_store.get(uri) {
         Some(bytes) =>
-          match trace_snapshot_from_bytes(bytes) {
-            Ok(snapshot) => Ok(snapshot.to_reader())
-            Err(error) => Err(error)
+          try {
+            let snapshot = trace_snapshot_from_bytes(bytes)
+            Ok(snapshot.to_reader())
+          } catch {
+            error => Err(error)
           }
         None => Err(NoProvider(uri))
       }
@@ -2505,9 +2515,11 @@ fn ensure_builtin_providers() -> Unit {
       let path = trace_file_uri_path(uri)
       match @native_io.read_file(path) {
         Ok(bytes) =>
-          match trace_snapshot_from_bytes(bytes) {
-            Ok(snapshot) => Ok(snapshot.to_reader())
-            Err(error) => Err(error)
+          try {
+            let snapshot = trace_snapshot_from_bytes(bytes)
+            Ok(snapshot.to_reader())
+          } catch {
+            error => Err(error)
           }
         Err(reason) => Err(ProtocolError(reason))
       }
@@ -2541,11 +2553,11 @@ fn protocols_of_uri(uri : String) -> Array[String] {
 }
 
 ///|
-fn find_protocol(uri : String) -> Result[String, TraceError] {
+fn find_protocol(uri : String) -> String raise TraceError {
   match protocols_of_uri(uri) {
-    [] => Err(NoProvider(uri))
-    [protocol] => Ok(protocol)
-    _ => Err(AmbiguousUri(uri))
+    [] => raise NoProvider(uri)
+    [protocol] => protocol
+    _ => raise AmbiguousUri(uri)
   }
 }
 
@@ -2714,6 +2726,7 @@ pub fn Trace::filter_map(
 }
 
 ///|
+#warnings("-78")
 pub fn Trace::next_event(self : Trace) -> Result[TraceEvent?, TraceError] {
   match self.read_events(limit=1) {
     Ok([event]) => Ok(Some(event))
@@ -2723,6 +2736,7 @@ pub fn Trace::next_event(self : Trace) -> Result[TraceEvent?, TraceError] {
 }
 
 ///|
+#warnings("-78")
 pub fn Trace::next(
   self : Trace,
   tag : String,
@@ -2737,6 +2751,7 @@ pub fn Trace::next(
 }
 
 ///|
+#warnings("-78")
 pub fn[T] Trace::next_matching(
   self : Trace,
   select : (TraceEvent) -> T?,
@@ -2761,6 +2776,7 @@ pub fn[T] Trace::next_matching(
 }
 
 ///|
+#warnings("-78")
 pub fn Trace::read_events(
   self : Trace,
   limit~ : Int32 = -1,
@@ -2792,6 +2808,7 @@ pub fn Trace::read_events(
 }
 
 ///|
+#warnings("-78")
 pub fn Trace::read_all(
   self : Trace,
   tag : String,
@@ -2800,6 +2817,7 @@ pub fn Trace::read_all(
 }
 
 ///|
+#warnings("-78")
 pub fn[T] Trace::read_all_matching(
   self : Trace,
   select : (TraceEvent) -> T?,
@@ -2808,94 +2826,98 @@ pub fn[T] Trace::read_all_matching(
 }
 
 ///|
+#warnings("-78")
 pub fn Trace::save(uri : String, trace : Trace) -> Result[Unit, TraceError] {
-  match find_protocol(uri) {
-    Ok(protocol) =>
-      match trace_writer_registry.get(protocol) {
-        Some(writer) => writer(uri, trace)
-        None => Err(NoProvider(uri))
-      }
-    Err(error) => Err(error)
+  try {
+    let protocol = find_protocol(uri)
+    match trace_writer_registry.get(protocol) {
+      Some(writer) => writer(uri, trace)
+      None => Err(NoProvider(uri))
+    }
+  } catch {
+    error => Err(error)
   }
 }
 
 ///|
+#warnings("-78")
 pub fn Trace::load(
   uri : String,
   monitor~ : TraceMonitor = TraceMonitor::fail_on_error(),
 ) -> Result[Trace, TraceError] {
-  match find_protocol(uri) {
-    Ok(protocol) =>
-      match trace_stream_reader_with_id_registry.get(protocol) {
-        Some(reader) => {
-          let trace_id = TraceId::fresh()
-          match reader(uri, trace_id) {
-            Ok(trace_reader) =>
-              Ok({
-                ..Trace::create_stream_with_id(
-                  trace_id,
-                  trace_reader.tool,
-                  trace_reader.next,
-                  monitor~,
-                ).set_meta(trace_reader.meta),
-                proto_name: Some(protocol),
-              })
-            Err(error) => Err(error)
-          }
+  try {
+    let protocol = find_protocol(uri)
+    match trace_stream_reader_with_id_registry.get(protocol) {
+      Some(reader) => {
+        let trace_id = TraceId::fresh()
+        match reader(uri, trace_id) {
+          Ok(trace_reader) =>
+            Ok({
+              ..Trace::create_stream_with_id(
+                trace_id,
+                trace_reader.tool,
+                trace_reader.next,
+                monitor~,
+              ).set_meta(trace_reader.meta),
+              proto_name: Some(protocol),
+            })
+          Err(error) => Err(error)
         }
-        None =>
-          match trace_stream_reader_registry.get(protocol) {
-            Some(reader) =>
-              match reader(uri) {
-                Ok(trace_reader) =>
-                  Ok({
-                    ..Trace::create_stream(
-                      trace_reader.tool,
-                      trace_reader.next,
-                      monitor~,
-                    ).set_meta(trace_reader.meta),
-                    proto_name: Some(protocol),
-                  })
-                Err(error) => Err(error)
-              }
-            None =>
-              match trace_reader_with_id_registry.get(protocol) {
-                Some(reader) => {
-                  let trace_id = TraceId::fresh()
-                  match reader(uri, trace_id) {
-                    Ok(trace_reader) =>
-                      Ok({
-                        ..Trace::from_results_with_id(
-                          trace_id,
-                          trace_reader.tool,
-                          trace_reader.events,
-                          monitor~,
-                        ).set_meta(trace_reader.meta),
-                        proto_name: Some(protocol),
-                      })
-                    Err(error) => Err(error)
-                  }
-                }
-                None =>
-                  match trace_reader_registry.get(protocol) {
-                    Some(reader) =>
-                      match reader(uri) {
-                        Ok(trace_reader) =>
-                          Ok({
-                            ..Trace::from_results(
-                              trace_reader.tool,
-                              trace_reader.events,
-                              monitor~,
-                            ).set_meta(trace_reader.meta),
-                            proto_name: Some(protocol),
-                          })
-                        Err(error) => Err(error)
-                      }
-                    None => Err(NoProvider(uri))
-                  }
-              }
-          }
       }
-    Err(error) => Err(error)
+      None =>
+        match trace_stream_reader_registry.get(protocol) {
+          Some(reader) =>
+            match reader(uri) {
+              Ok(trace_reader) =>
+                Ok({
+                  ..Trace::create_stream(
+                    trace_reader.tool,
+                    trace_reader.next,
+                    monitor~,
+                  ).set_meta(trace_reader.meta),
+                  proto_name: Some(protocol),
+                })
+              Err(error) => Err(error)
+            }
+          None =>
+            match trace_reader_with_id_registry.get(protocol) {
+              Some(reader) => {
+                let trace_id = TraceId::fresh()
+                match reader(uri, trace_id) {
+                  Ok(trace_reader) =>
+                    Ok({
+                      ..Trace::from_results_with_id(
+                        trace_id,
+                        trace_reader.tool,
+                        trace_reader.events,
+                        monitor~,
+                      ).set_meta(trace_reader.meta),
+                      proto_name: Some(protocol),
+                    })
+                  Err(error) => Err(error)
+                }
+              }
+              None =>
+                match trace_reader_registry.get(protocol) {
+                  Some(reader) =>
+                    match reader(uri) {
+                      Ok(trace_reader) =>
+                        Ok({
+                          ..Trace::from_results(
+                            trace_reader.tool,
+                            trace_reader.events,
+                            monitor~,
+                          ).set_meta(trace_reader.meta),
+                          proto_name: Some(protocol),
+                        })
+                      Err(error) => Err(error)
+                    }
+                  None => Err(NoProvider(uri))
+                }
+            }
+        }
+    }
+  } catch {
+    error => Err(error)
   }
 }

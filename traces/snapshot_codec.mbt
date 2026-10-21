@@ -730,12 +730,8 @@ fn trace_decode_snapshot(data : BytesView) -> TraceSnapshot raise TraceError {
 ///|
 fn trace_snapshot_from_bytes(
   data : BytesView,
-) -> Result[TraceSnapshot, TraceError] {
-  try trace_decode_snapshot(data) catch {
-    error => Err(error)
-  } noraise {
-    snapshot => Ok(snapshot)
-  }
+) -> TraceSnapshot raise TraceError {
+  trace_decode_snapshot(data)
 }
 
 ///|
@@ -748,6 +744,7 @@ fn TraceSnapshot::to_reader(self : TraceSnapshot) -> TraceReader {
 }
 
 ///|
+#warnings("-78")
 pub fn Trace::to_bytes(self : Trace) -> Result[Bytes, TraceError] {
   match self.read_events() {
     Ok(events) =>
@@ -763,15 +760,17 @@ pub fn Trace::to_bytes(self : Trace) -> Result[Bytes, TraceError] {
 }
 
 ///|
+#warnings("-78")
 pub fn Trace::of_bytes(data : BytesView) -> Result[Trace, TraceError] {
-  match trace_snapshot_from_bytes(data) {
-    Ok(snapshot) =>
-      Ok(
-        Trace::from_results(
-          snapshot.tool,
-          snapshot.events.map(event => Ok(event)),
-        ).set_meta(snapshot.meta),
-      )
-    Err(error) => Err(error)
+  try {
+    let snapshot = trace_snapshot_from_bytes(data)
+    Ok(
+      Trace::from_results(
+        snapshot.tool,
+        snapshot.events.map(event => Ok(event)),
+      ).set_meta(snapshot.meta),
+    )
+  } catch {
+    error => Err(error)
   }
 }

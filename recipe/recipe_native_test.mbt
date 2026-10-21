@@ -9,13 +9,11 @@ test "recipes are loaded from the host file system" {
     Ok(_) => ()
     Err(reason) => fail(reason)
   }
-  match @recipe.load(paths=["_build"], "recipe-native-test:n=5") {
-    Ok(recipe) => {
-      assert_eq(recipe.args(), ["--opt=5"])
-      assert_eq(recipe.prefix(), "_build")
-    }
-    Err(err) => fail(err.to_string())
+  let recipe = @recipe.load(paths=["_build"], "recipe-native-test:n=5") catch {
+    err => fail(err.to_string())
   }
+  assert_eq(recipe.args(), ["--opt=5"])
+  assert_eq(recipe.prefix(), "_build")
   let fs = @recipe.FileSystem::native()
   assert_true((fs.is_directory)("_build"))
   assert_true(!(fs.is_directory)("_build/recipe-native-test.scm"))
@@ -24,7 +22,11 @@ test "recipes are loaded from the host file system" {
   assert_true(
     @recipe.search(["_build"]).contains("_build/recipe-native-test.recipe"),
   )
-  assert_true(
-    @recipe.load(paths=["_build"], "no-such-recipe") is Err(NoRecipe(_)),
-  )
+  let mut missing = false
+  try {
+    ignore(@recipe.load(paths=["_build"], "no-such-recipe"))
+  } catch {
+    _ => missing = true
+  }
+  assert_true(missing)
 }

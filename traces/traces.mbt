@@ -2808,9 +2808,8 @@ pub fn[T] Trace::read_all_matching(
 }
 
 ///|
-#warnings("-78")
-pub fn Trace::save(uri : String, trace : Trace) -> Result[Unit, TraceError] {
-  try {
+pub fn Trace::save(uri : String, trace : Trace) -> Unit raise TraceError {
+  let result = try {
     let protocol = find_protocol(uri)
     match trace_writer_registry.get(protocol) {
       Some(writer) => writer(uri, trace)
@@ -2819,15 +2818,18 @@ pub fn Trace::save(uri : String, trace : Trace) -> Result[Unit, TraceError] {
   } catch {
     error => Err(error)
   }
+  match result {
+    Ok(_) => ()
+    Err(error) => raise error
+  }
 }
 
 ///|
-#warnings("-78")
 pub fn Trace::load(
   uri : String,
   monitor~ : TraceMonitor = TraceMonitor::fail_on_error(),
-) -> Result[Trace, TraceError] {
-  try {
+) -> Trace raise TraceError {
+  let loaded = try {
     let protocol = find_protocol(uri)
     match trace_stream_reader_with_id_registry.get(protocol) {
       Some(reader) => {
@@ -2901,5 +2903,9 @@ pub fn Trace::load(
     }
   } catch {
     error => Err(error)
+  }
+  match loaded {
+    Ok(trace) => trace
+    Err(error) => raise error
   }
 }

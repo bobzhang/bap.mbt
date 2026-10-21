@@ -442,11 +442,11 @@ test "translated BAP traces preserve ids tools metadata and in-memory save/load"
   let with_meta = trace.set_meta(test_meta())
   assert_true(with_meta.meta() == test_meta())
 
-  match @traces.Trace::save("memory://bap-trace", with_meta) {
+  match save_result("memory://bap-trace", with_meta) {
     Ok(_) => ()
     Err(_) => fail("save failed")
   }
-  match @traces.Trace::load("memory://bap-trace") {
+  match load_result("memory://bap-trace") {
     Ok(loaded) => {
       assert_true(loaded.protocol() == Some("memory"))
       assert_true(loaded.tool() == test_tool())
@@ -455,7 +455,7 @@ test "translated BAP traces preserve ids tools metadata and in-memory save/load"
     }
     Err(_) => fail("load failed")
   }
-  match @traces.Trace::load("memory://bap-trace") {
+  match load_result("memory://bap-trace") {
     Ok(loaded) =>
       assert_true(unwrap_events(loaded.read_events()) == test_events())
     Err(_) => fail("second load failed")
@@ -692,7 +692,7 @@ test "BAP-style loaded trace facade delegates to the registry" {
 
 ///|
 test "translated BAP trace protocol registry selects URI providers" {
-  match @traces.Trace::load("unknown://trace") {
+  match load_result("unknown://trace") {
     Err(NoProvider("unknown://trace")) => ()
     _ => fail("expected no provider")
   }
@@ -727,7 +727,7 @@ test "translated BAP trace protocol registry selects URI providers" {
     ignore(trace.read_events() catch { error => return Err(error) })
     Ok(())
   })
-  match @traces.Trace::load("custom://trace") {
+  match load_result("custom://trace") {
     Ok(trace) => {
       assert_true(trace.protocol() == Some("custom-provider"))
       assert_true(trace.tool() == custom_tool)
@@ -738,7 +738,7 @@ test "translated BAP trace protocol registry selects URI providers" {
     }
     Err(_) => fail("custom provider load failed")
   }
-  match @traces.Trace::save("custom://saved", new_trace()) {
+  match save_result("custom://saved", new_trace()) {
     Ok(_) => assert_true(saved_custom.val == Some("custom://saved"))
     Err(_) => fail("custom provider save failed")
   }
@@ -774,7 +774,7 @@ test "translated BAP trace protocol registry selects URI providers" {
       )
     }
   })
-  match @traces.Trace::load("stream://trace") {
+  match load_result("stream://trace") {
     Ok(trace) => {
       assert_true(trace.protocol() == Some("stream-provider"))
       assert_true(trace.meta() == test_meta())
@@ -803,7 +803,7 @@ test "translated BAP trace protocol registry selects URI providers" {
       uri.has_prefix("ambiguous://")
     }),
   )
-  match @traces.Trace::load("ambiguous://trace") {
+  match load_result("ambiguous://trace") {
     Err(AmbiguousUri("ambiguous://trace")) => ()
     _ => fail("expected ambiguous URI")
   }
@@ -914,7 +914,7 @@ test "translated BAP trace registries reject duplicate providers" {
     _ => fail("expected duplicate trace writer")
   }
 
-  match @traces.Trace::load("duplicate://trace") {
+  match load_result("duplicate://trace") {
     Ok(trace) =>
       assert_true(
         unwrap_events(trace.read_events()) ==
@@ -922,7 +922,7 @@ test "translated BAP trace registries reject duplicate providers" {
       )
     Err(_) => fail("unexpected duplicate trace load failure")
   }
-  match @traces.Trace::save("duplicate://saved", new_trace()) {
+  match save_result("duplicate://saved", new_trace()) {
     Ok(_) => assert_true(saved_uri.val == Some("duplicate://saved"))
     Err(_) => fail("unexpected duplicate trace save failure")
   }
@@ -948,7 +948,7 @@ test "translated BAP trace readers receive generated ids" {
       Ok({ tool: custom_tool, meta: test_meta(), events: custom_events, })
     }
   })
-  match @traces.Trace::load("id-reader://trace") {
+  match load_result("id-reader://trace") {
     Ok(trace) => {
       assert_true(seen_reader_id.val == Some(trace.id()))
       assert_true(trace.protocol() == Some("id-reader-provider"))
@@ -989,7 +989,7 @@ test "translated BAP trace readers receive generated ids" {
       )
     }
   })
-  match @traces.Trace::load("id-stream://trace") {
+  match load_result("id-stream://trace") {
     Ok(trace) => {
       assert_true(seen_stream_id.val == Some(trace.id()))
       assert_true(trace.protocol() == Some("id-stream-provider"))
@@ -1061,12 +1061,12 @@ test "translated BAP trace filter maps compose and preserve context" {
   let source = new_trace()
     .set_meta(test_meta())
     .set_attr("complete", Bool(true))
-  match @traces.Trace::save("memory://bap-filter-map-context", source) {
+  match save_result("memory://bap-filter-map-context", source) {
     Ok(_) => ()
     Err(_) => fail("filter-map save failed")
   }
 
-  match @traces.Trace::load("memory://bap-filter-map-context") {
+  match load_result("memory://bap-filter-map-context") {
     Ok(loaded) => {
       let loaded_id = loaded.id()
       let filtered = loaded
@@ -1234,7 +1234,7 @@ test "BAP-style trace load monitor controls provider stream errors" {
       Err(NoProvider(uri))
     }
   })
-  match @traces.Trace::load("load-monitor://trace") {
+  match load_result("load-monitor://trace") {
     Ok(trace) =>
       assert_true(
         try {
@@ -1248,12 +1248,40 @@ test "BAP-style trace load monitor controls provider stream errors" {
     Err(_) => fail("default monitored load failed")
   }
   match
-    @traces.Trace::load(
+    load_result(
       "load-monitor://trace",
       monitor=@traces.TraceMonitor::ignore_errors(),
     ) {
     Ok(trace) =>
       assert_true(unwrap_events(trace.read_events()) == test_events())
     Err(_) => fail("ignore-error monitored load failed")
+  }
+}
+
+///|
+/// The tests below keep matching on `Result`; these thin wrappers turn the
+/// raising API back into one. Private, so warning 78 does not apply.
+#warnings("-78")
+fn load_result(
+  uri : String,
+  monitor~ : @traces.TraceMonitor = @traces.TraceMonitor::fail_on_error(),
+) -> Result[@traces.Trace, @traces.TraceError] {
+  try @traces.Trace::load(uri, monitor~) catch {
+    error => Err(error)
+  } noraise {
+    trace => Ok(trace)
+  }
+}
+
+///|
+#warnings("-78")
+fn save_result(
+  uri : String,
+  trace : @traces.Trace,
+) -> Result[Unit, @traces.TraceError] {
+  try @traces.Trace::save(uri, trace) catch {
+    error => Err(error)
+  } noraise {
+    _ => Ok(())
   }
 }

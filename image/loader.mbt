@@ -68,13 +68,11 @@ fn[A] run_kb_loader(
   load : (@knowledge.State, A) -> OgreDoc? raise,
   input : A,
 ) -> Result[OgreDoc?, String] {
-  match @knowledge.eval(s => load(s, input), state) {
-    Ok((doc, next)) => {
-      state.assign(next)
-      Ok(doc)
-    }
-    Err(error) => Err(error.to_string())
+  let (doc, next) = @knowledge.eval(s => load(s, input), state) catch {
+    error => return Err(error.to_string())
   }
+  state.assign(next)
+  Ok(doc)
 }
 
 ///|

@@ -57,14 +57,12 @@ pub fn[K, P] FactTable::provide(
   if self.owner_error(object) is Some(reason) {
     return Err(reason)
   }
-  match
-    self.state.transaction(() => self.state.provide(self.slot, object, value)) {
-    Ok(_) =>
-      match self.state.current_opt(self.slot, object) {
-        Some(current) => Ok(current)
-        None => Ok(value)
-      }
-    Err(err) => Err(Conflict::to_string(err))
+  self.state.transaction(() => self.state.provide(self.slot, object, value)) catch {
+    err => return Err(Conflict::to_string(err))
+  }
+  match self.state.current_opt(self.slot, object) {
+    Some(current) => Ok(current)
+    None => Ok(value)
   }
 }
 
@@ -94,11 +92,11 @@ pub fn[K, P] FactTable::collect_promised(
   if self.owner_error(object) is Some(reason) {
     return Err(reason)
   }
-  match self.state.transaction(() => self.state.collect(self.slot, object)) {
-    Ok(value) => Ok(Some(value))
-    Err(Empty(_)) => Ok(None)
-    Err(err) => Err(Conflict::to_string(err))
+  let value = self.state.transaction(() => self.state.collect(self.slot, object)) catch {
+    Empty(_) => return Ok(None)
+    err => return Err(Conflict::to_string(err))
   }
+  Ok(Some(value))
 }
 
 ///|
@@ -227,14 +225,13 @@ pub fn[K, P] FactTable::suggest(
   if self.owner_error(object) is Some(reason) {
     return Err(reason)
   }
-  let result = self.state.transaction(() => {
+  let opinions = self.state.transaction(() => {
     self.state.suggest(agent, self.slot, object, value)
     self.state.current(self.slot, object)
-  })
-  match result {
-    Ok(opinions) => Ok(opinions)
-    Err(err) => Err(Conflict::to_string(err))
+  }) catch {
+    err => return Err(Conflict::to_string(err))
   }
+  Ok(opinions)
 }
 
 ///|
@@ -267,8 +264,8 @@ pub fn[K, P] FactTable::resolve(
   if self.owner_error(object) is Some(reason) {
     return Err(reason)
   }
-  match self.state.transaction(() => self.state.resolve(self.slot, object)) {
-    Ok(value) => Ok(value)
-    Err(err) => Err(Conflict::to_string(err))
+  let value = self.state.transaction(() => self.state.resolve(self.slot, object)) catch {
+    err => return Err(Conflict::to_string(err))
   }
+  Ok(value)
 }

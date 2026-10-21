@@ -122,8 +122,10 @@ test "two promises of the same slot are joined and conflicts diverge" {
   ignore(flat.promise((_, _) => Some("right")))
   let other = kb.create(cls)
   let before = kb.fork()
-  match kb.transaction(() => kb.collect(flat, other)) {
-    Err(@knowledge.NonMonotonicUpdate(slot~, ..)) =>
+  try {
+    ignore(kb.transaction(() => kb.collect(flat, other)))
+  } catch {
+    @knowledge.NonMonotonicUpdate(slot~, ..) =>
       assert_eq(slot.show(), "kb-test:joined-flat")
     _ => fail("expected a conflict")
   }
@@ -142,17 +144,22 @@ test "provide diverges on non-monotonic updates and run discards the state" {
   let init = @knowledge.State::new()
   let obj = init.create(cls)
   init.provide(slot, obj, Some("a"))
-  let result = @knowledge.run(
-    cls,
-    kb => {
-      kb.provide(slot, obj, Some("a"))
-      kb.provide(slot, obj, Some("b"))
-      obj
-    },
-    init,
-  )
-  match result {
-    Err(err) => {
+  let mut saw_conflict = false
+  try {
+    ignore(
+      @knowledge.run(
+        cls,
+        kb => {
+          kb.provide(slot, obj, Some("a"))
+          kb.provide(slot, obj, Some("b"))
+          obj
+        },
+        init,
+      ),
+    )
+  } catch {
+    err => {
+      saw_conflict = true
       assert_true(err is @knowledge.NonMonotonicUpdate(_))
       assert_true(
         @knowledge.Conflict::to_string(err).has_prefix(
@@ -160,8 +167,8 @@ test "provide diverges on non-monotonic updates and run discards the state" {
         ),
       )
     }
-    Ok(_) => fail("expected a conflict")
   }
+  assert_true(saw_conflict)
   assert_eq(init.current(slot, obj), Some("a"))
   // providing empty values or to the null object is a no-op
   init.provide(slot, obj, None)
@@ -249,9 +256,15 @@ test "with_empty catches rejections only" {
     0,
   )
   // other conflicts propagate
-  let failed = kb.transaction(() => {
-    kb.with_empty(missing=0, () => raise @knowledge.Failure("boom"))
-  })
+  let failed = try {
+    kb.transaction(() => {
+      kb.with_empty(missing=0, () => raise @knowledge.Failure("boom"))
+    })
+  } catch {
+    err => Err(err)
+  } noraise {
+    _ => Ok(())
+  }
   assert_true(failed is Err(@knowledge.Failure("boom")))
   // catch_ restores the state and runs the handler
   let handled = kb.catch_(
@@ -345,20 +358,34 @@ test "symbols are interned per package, imported and made public" {
   assert_true(kb.read(cls, "y", pkg="app2").unwrap().equal(priv_y))
   // strict imports refuse to shadow; non-strict imports shadow
   let own = kb.intern_symbol("x", cls, pkg="app3")
-  let strict = kb.transaction(() => kb.import_(["lib"], strict=true, pkg="app3"))
+  let strict = try {
+    kb.transaction(() => kb.import_(["lib"], strict=true, pkg="app3"))
+  } catch {
+    err => Err(err)
+  } noraise {
+    _ => Ok(())
+  }
   assert_true(strict is Err(@knowledge.ImportConflict(_, _)))
   assert_true(kb.read(cls, "x", pkg="app3").unwrap().equal(own))
   kb.import_(["lib"], pkg="app3")
   assert_true(kb.read(cls, "x", pkg="app3").unwrap().equal(pub_x))
   // unknown packages and symbols
-  assert_true(
+  let unknown = try {
     kb.transaction(() => kb.import_(["nowhere"]))
-    is Err(@knowledge.NotAPackage("nowhere")),
-  )
-  assert_true(
+  } catch {
+    err => Err(err)
+  } noraise {
+    _ => Ok(())
+  }
+  assert_true(unknown is Err(@knowledge.NotAPackage("nowhere")))
+  let unknown_symbol = try {
     kb.transaction(() => kb.import_(["lib:nothing"]))
-    is Err(@knowledge.NotASymbol(_)),
-  )
+  } catch {
+    err => Err(err)
+  } noraise {
+    _ => Ok(())
+  }
+  assert_true(unknown_symbol is Err(@knowledge.NotASymbol(_)))
   // keywords live in the keyword package
   let kw = kb.read(cls, ":kw").unwrap()
   assert_eq(kb.repr(kw), ":kw")
@@ -391,7 +418,7 @@ test "context variables are part of the (rolled back) state" {
       counter.get(kb)
     },
     kb,
-  ).unwrap()
+  )
   assert_eq(r, 7)
   assert_eq(counter.get(after), 7)
   assert_eq(counter.get(kb), 6)
@@ -421,7 +448,7 @@ test "run computes all promised properties into a value" {
       obj
     },
     @knowledge.State::new(),
-  ).unwrap()
+  )
   assert_eq(value.get(a), 41)
   assert_eq(value.get(b), 42)
   assert_eq(value.get(c), 0)

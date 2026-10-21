@@ -136,20 +136,15 @@ pub fn[R] State::catch_(
 ///|
 /// Evaluates `body` as a transaction: if it diverges, the knowledge base
 /// is restored and the conflict is returned as an `Err`.
-#warnings("-78")
 pub fn[R] State::transaction(
   self : State,
   body : () -> R raise,
-) -> Result[R, Error] {
+) -> R raise {
   let snapshot = self.env
-  try body() catch {
-    err => {
-      self.env = snapshot
-      Err(err)
-    }
-  } noraise {
-    r => Ok(r)
+  errdefer {
+    self.env = snapshot
   }
+  body()
 }
 
 ///|

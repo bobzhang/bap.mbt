@@ -937,26 +937,32 @@ fn driver_disassemble(
         let s = s.switch(encoding)
         let next = match driver_decode(decoder, mem) {
           BasicDecodedValid(chunk, insn) => {
-            let hit = kb.transaction(() => {
-              let label = driver_new_insn(kb, chunk, insn, unit)
-              kb.provide(project_label_encoding, label, encoding.coding)
-              let dests = driver_collect_dests(kb, encoding, label)
-              // a barrier without known destinations (an instruction
-              // without semantics, e.g., the arm64e `retab`) jumps to an
-              // unknown destination, as a return does
-              let dests = if dests.barrier &&
-                dests.resolved.is_empty() &&
-                !dests.indirect {
-                { ..dests, indirect: true, }
-              } else {
-                dests
-              }
-              if dests.resolved.is_empty() && !dests.indirect {
-                None
-              } else {
-                Some((dests, driver_delay(kb, label)))
-              }
-            })
+            let hit = try {
+              kb.transaction(() => {
+                let label = driver_new_insn(kb, chunk, insn, unit)
+                kb.provide(project_label_encoding, label, encoding.coding)
+                let dests = driver_collect_dests(kb, encoding, label)
+                // a barrier without known destinations (an instruction
+                // without semantics, e.g., the arm64e `retab`) jumps to an
+                // unknown destination, as a return does
+                let dests = if dests.barrier &&
+                  dests.resolved.is_empty() &&
+                  !dests.indirect {
+                  { ..dests, indirect: true, }
+                } else {
+                  dests
+                }
+                if dests.resolved.is_empty() && !dests.indirect {
+                  None
+                } else {
+                  Some((dests, driver_delay(kb, label)))
+                }
+              })
+            } catch {
+              err => Err(err)
+            } noraise {
+              value => Ok(value)
+            }
             match hit {
               Ok(None) => s.moved(encoding, chunk)
               Ok(Some((dests, delay))) =>

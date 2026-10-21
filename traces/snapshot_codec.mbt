@@ -744,6 +744,7 @@ fn TraceSnapshot::to_reader(self : TraceSnapshot) -> TraceReader {
 }
 
 ///|
+#warnings("-78")
 pub fn Trace::to_bytes(self : Trace) -> Result[Bytes, TraceError] {
   match self.read_events() {
     Ok(events) =>
@@ -759,6 +760,7 @@ pub fn Trace::to_bytes(self : Trace) -> Result[Bytes, TraceError] {
 }
 
 ///|
+#warnings("-78")
 pub fn Trace::of_bytes(data : BytesView) -> Result[Trace, TraceError] {
   try {
     let snapshot = trace_snapshot_from_bytes(data)

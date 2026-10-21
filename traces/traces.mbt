@@ -2272,6 +2272,7 @@ fn trace_reader_registered(protocol_name : String) -> Bool {
 }
 
 ///|
+#warnings("-78")
 pub fn Trace::try_register_protocol(
   protocol : TraceProtocol,
 ) -> Result[Unit, TraceError] {
@@ -2296,6 +2297,7 @@ pub fn Trace::register_protocol(
 }
 
 ///|
+#warnings("-78")
 pub fn Trace::try_register_proto(
   protocol : TraceProtocol,
 ) -> Result[String, TraceError] {
@@ -2325,6 +2327,7 @@ pub fn Trace::register_tool(
 }
 
 ///|
+#warnings("-78")
 pub fn Trace::try_register_tool(
   name~ : String,
   supported_tags~ : Array[String],
@@ -2350,6 +2353,7 @@ pub fn Trace::register_reader(
 }
 
 ///|
+#warnings("-78")
 pub fn Trace::try_register_reader(
   protocol_name : String,
   reader : (String) -> Result[TraceReader, TraceError],
@@ -2375,6 +2379,7 @@ pub fn Trace::register_reader_with_id(
 }
 
 ///|
+#warnings("-78")
 pub fn Trace::try_register_reader_with_id(
   protocol_name : String,
   reader : (String, TraceId) -> Result[TraceReader, TraceError],
@@ -2400,6 +2405,7 @@ pub fn Trace::register_stream_reader(
 }
 
 ///|
+#warnings("-78")
 pub fn Trace::try_register_stream_reader(
   protocol_name : String,
   reader : (String) -> Result[TraceStreamReader, TraceError],
@@ -2425,6 +2431,7 @@ pub fn Trace::register_stream_reader_with_id(
 }
 
 ///|
+#warnings("-78")
 pub fn Trace::try_register_stream_reader_with_id(
   protocol_name : String,
   reader : (String, TraceId) -> Result[TraceStreamReader, TraceError],
@@ -2450,6 +2457,7 @@ pub fn Trace::register_writer(
 }
 
 ///|
+#warnings("-78")
 pub fn Trace::try_register_writer(
   protocol_name : String,
   writer : (String, Trace) -> Result[Unit, TraceError],
@@ -2718,6 +2726,7 @@ pub fn Trace::filter_map(
 }
 
 ///|
+#warnings("-78")
 pub fn Trace::next_event(self : Trace) -> Result[TraceEvent?, TraceError] {
   match self.read_events(limit=1) {
     Ok([event]) => Ok(Some(event))
@@ -2727,6 +2736,7 @@ pub fn Trace::next_event(self : Trace) -> Result[TraceEvent?, TraceError] {
 }
 
 ///|
+#warnings("-78")
 pub fn Trace::next(
   self : Trace,
   tag : String,
@@ -2741,6 +2751,7 @@ pub fn Trace::next(
 }
 
 ///|
+#warnings("-78")
 pub fn[T] Trace::next_matching(
   self : Trace,
   select : (TraceEvent) -> T?,
@@ -2765,6 +2776,7 @@ pub fn[T] Trace::next_matching(
 }
 
 ///|
+#warnings("-78")
 pub fn Trace::read_events(
   self : Trace,
   limit~ : Int32 = -1,
@@ -2796,6 +2808,7 @@ pub fn Trace::read_events(
 }
 
 ///|
+#warnings("-78")
 pub fn Trace::read_all(
   self : Trace,
   tag : String,
@@ -2804,6 +2817,7 @@ pub fn Trace::read_all(
 }
 
 ///|
+#warnings("-78")
 pub fn[T] Trace::read_all_matching(
   self : Trace,
   select : (TraceEvent) -> T?,
@@ -2812,6 +2826,7 @@ pub fn[T] Trace::read_all_matching(
 }
 
 ///|
+#warnings("-78")
 pub fn Trace::save(uri : String, trace : Trace) -> Result[Unit, TraceError] {
   try {
     let protocol = find_protocol(uri)
@@ -2825,6 +2840,7 @@ pub fn Trace::save(uri : String, trace : Trace) -> Result[Unit, TraceError] {
 }
 
 ///|
+#warnings("-78")
 pub fn Trace::load(
   uri : String,
   monitor~ : TraceMonitor = TraceMonitor::fail_on_error(),

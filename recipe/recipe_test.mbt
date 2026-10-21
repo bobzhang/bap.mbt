@@ -33,17 +33,17 @@ fn load(
   name : String,
   env~ : Array[(String, String)] = [],
 ) -> @recipe.Recipe raise {
-  match @recipe.load(paths=["recipes"], env~, fs=sample_fs(), name) {
-    Ok(recipe) => recipe
-    Err(err) => fail(err.to_string())
-  }
+  @recipe.load(paths=["recipes"], env~, fs=sample_fs(), name)
 }
 
 ///|
 fn load_error(name : String, env~ : Array[(String, String)] = []) -> String {
-  match @recipe.load(paths=["nowhere", "recipes"], env~, fs=sample_fs(), name) {
-    Ok(_) => "ok"
-    Err(err) => err.to_string()
+  try {
+    @recipe.load(paths=["nowhere", "recipes"], env~, fs=sample_fs(), name)
+  } catch {
+    err => err.to_string()
+  } noraise {
+    _ => "ok"
   }
 }
 
@@ -167,14 +167,16 @@ test "errors" {
     content="The required file `recipes/missing.recipe/recipe.scm' is missing",
   )
   // the search continues in the next directories
-  match
+  try {
     @recipe.load(
       paths=["recipes/base.recipe", "recipes"],
       fs=sample_fs(),
       "main",
-    ) {
-    Ok(recipe) => assert_eq(recipe.command(), Some("analyze"))
-    Err(err) => fail(err.to_string())
+    )
+  } catch {
+    err => fail(err.to_string())
+  } noraise {
+    recipe => assert_eq(recipe.command(), Some("analyze"))
   }
 }
 

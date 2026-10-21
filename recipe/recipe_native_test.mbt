@@ -23,9 +23,7 @@ test "recipes are loaded from the host file system" {
     @recipe.search(["_build"]).contains("_build/recipe-native-test.recipe"),
   )
   let mut missing = false
-  try {
-    ignore(@recipe.load(paths=["_build"], "no-such-recipe"))
-  } catch {
+  ignore(@recipe.load(paths=["_build"], "no-such-recipe")) catch {
     _ => missing = true
   }
   assert_true(missing)

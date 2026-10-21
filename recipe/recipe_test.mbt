@@ -38,9 +38,9 @@ fn load(
 
 ///|
 fn load_error(name : String, env~ : Array[(String, String)] = []) -> String {
-  try {
+  try
     @recipe.load(paths=["nowhere", "recipes"], env~, fs=sample_fs(), name)
-  } catch {
+  catch {
     err => err.to_string()
   } noraise {
     _ => "ok"
@@ -167,13 +167,13 @@ test "errors" {
     content="The required file `recipes/missing.recipe/recipe.scm' is missing",
   )
   // the search continues in the next directories
-  try {
+  try
     @recipe.load(
       paths=["recipes/base.recipe", "recipes"],
       fs=sample_fs(),
       "main",
     )
-  } catch {
+  catch {
     err => fail(err.to_string())
   } noraise {
     recipe => assert_eq(recipe.command(), Some("analyze"))

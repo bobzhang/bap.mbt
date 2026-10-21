@@ -2496,9 +2496,7 @@ fn ensure_builtin_providers() -> Unit {
       }
     })
     trace_install_writer("memory", fn(uri, trace) {
-      let bytes = trace.to_bytes() catch {
-        error => return Err(error)
-      }
+      let bytes = trace.to_bytes() catch { error => return Err(error) }
       trace_store[uri] = bytes
       Ok(())
     })
@@ -2524,9 +2522,7 @@ fn ensure_builtin_providers() -> Unit {
     })
     trace_install_writer("trace.binprot", fn(uri, trace) {
       let path = trace_file_uri_path(uri)
-      let bytes = trace.to_bytes() catch {
-        error => return Err(error)
-      }
+      let bytes = trace.to_bytes() catch { error => return Err(error) }
       match @native_io.write_file(path, bytes) {
         Ok(_) => Ok(())
         Err(reason) => Err(ProtocolError(reason))
@@ -2731,10 +2727,7 @@ pub fn Trace::next_event(self : Trace) -> TraceEvent? raise TraceError {
 }
 
 ///|
-pub fn Trace::next(
-  self : Trace,
-  tag : String,
-) -> TraceEvent? raise TraceError {
+pub fn Trace::next(self : Trace, tag : String) -> TraceEvent? raise TraceError {
   self.next_matching(fn(event) {
     if event.tag() == tag {
       Some(event)

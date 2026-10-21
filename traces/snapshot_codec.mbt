@@ -756,8 +756,7 @@ pub fn Trace::to_bytes(self : Trace) -> Bytes raise TraceError {
 ///|
 pub fn Trace::of_bytes(data : BytesView) -> Trace raise TraceError {
   let snapshot = trace_snapshot_from_bytes(data)
-  Trace::from_results(
-    snapshot.tool,
-    snapshot.events.map(event => Ok(event)),
-  ).set_meta(snapshot.meta)
+  Trace::from_results(snapshot.tool, snapshot.events.map(event => Ok(event))).set_meta(
+    snapshot.meta,
+  )
 }

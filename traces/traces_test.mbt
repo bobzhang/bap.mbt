@@ -50,12 +50,9 @@ fn new_trace() -> @traces.Trace raise {
 
 ///|
 fn unwrap_events(
-  result : Result[Array[@traces.TraceEvent], @traces.TraceError],
-) -> Array[@traces.TraceEvent] raise {
-  match result {
-    Ok(events) => events
-    Err(_) => fail("unexpected trace error")
-  }
+  events : Array[@traces.TraceEvent],
+) -> Array[@traces.TraceEvent] {
+  events
 }
 
 ///|
@@ -472,26 +469,24 @@ test "translated BAP trace byte snapshots round trip metadata and event variants
   let trace = @traces.Trace::create(tool_for_events(events), events~).set_meta(
     meta,
   )
-  match trace.to_bytes() {
-    Ok(bytes) => {
-      assert_true(bytes.length() > 0)
-      match @traces.Trace::of_bytes(bytes) {
-        Ok(loaded) => {
-          assert_true(loaded.tool() == tool_for_events(events))
-          assert_true(loaded.meta() == meta)
-          assert_true(unwrap_events(loaded.read_events()) == events)
-        }
-        Err(_) => fail("snapshot decode failed")
-      }
-      match @traces.Trace::of_bytes(bytes) {
-        Ok(loaded) => assert_true(unwrap_events(loaded.read_events()) == events)
-        Err(_) => fail("second snapshot decode failed")
-      }
-    }
-    Err(_) => fail("snapshot encode failed")
+  let bytes = trace.to_bytes() catch {
+    _ => fail("snapshot encode failed")
   }
-  match @traces.Trace::of_bytes(b"not a trace snapshot") {
-    Err(ProtocolError(_)) => ()
+  assert_true(bytes.length() > 0)
+  let loaded = @traces.Trace::of_bytes(bytes) catch {
+    _ => fail("snapshot decode failed")
+  }
+  assert_true(loaded.tool() == tool_for_events(events))
+  assert_true(loaded.meta() == meta)
+  assert_true(unwrap_events(loaded.read_events()) == events)
+  let again = @traces.Trace::of_bytes(bytes) catch {
+    _ => fail("second snapshot decode failed")
+  }
+  assert_true(unwrap_events(again.read_events()) == events)
+  try {
+    ignore(@traces.Trace::of_bytes(b"not a trace snapshot"))
+  } catch {
+    @traces.ProtocolError(_) => ()
     _ => fail("expected protocol error for malformed snapshot")
   }
 }
@@ -733,10 +728,12 @@ test "translated BAP trace protocol registry selects URI providers" {
   let saved_custom : Ref[String?] = Ref(None)
   @traces.Trace::register_writer("custom-provider", fn(uri, trace) {
     saved_custom.val = Some(uri)
-    match trace.read_events() {
-      Ok(_) => Ok(())
-      Err(error) => Err(error)
-    }
+    ignore(
+      trace.read_events() catch {
+        error => return Err(error)
+      },
+    )
+    Ok(())
   })
   match @traces.Trace::load("custom://trace") {
     Ok(trace) => {
@@ -791,7 +788,7 @@ test "translated BAP trace protocol registry selects URI providers" {
       assert_true(trace.meta() == test_meta())
       assert_true(stream_calls.val == 0)
       match trace.next_event() {
-        Ok(Some(MemoryLoad(value))) => assert_true(value == test_move())
+        Some(MemoryLoad(value)) => assert_true(value == test_move())
         _ => fail("expected stream reader first event")
       }
       assert_true(stream_calls.val == 1)
@@ -909,7 +906,8 @@ test "translated BAP trace registries reject duplicate providers" {
   match
     @traces.Trace::try_register_writer("duplicate-provider", fn(uri, trace) {
       saved_uri.val = Some(uri)
-      trace.read_events().map(_ => ())
+      ignore(trace.read_events() catch { error => return Err(error) })
+      Ok(())
     }) {
     Ok(_) => ()
     Err(_) => fail("unexpected duplicate trace writer")
@@ -1028,19 +1026,22 @@ test "translated BAP traces read matching events and tool support" {
 
   let memory = unwrap_events(new_trace().read_all("memory-load"))
   assert_true(memory == [@traces.TraceEvent::memory_load(test_move())])
-  match new_trace().read_all_matching(fn(event) { event.memory_load_value() }) {
-    Ok(loads) => assert_true(loads == [test_move()])
-    _ => fail("expected typed memory-load values")
-  }
-  match
-    new_trace().read_all_matching(fn(event) { event.register_read_value() }) {
-    Ok(reads) => assert_true(reads == [register_move()])
-    _ => fail("expected typed register-read values")
-  }
+  let loads = new_trace().read_all_matching(fn(event) {
+    event.memory_load_value()
+  })
+  assert_true(loads == [test_move()])
+  let reads = new_trace().read_all_matching(fn(event) {
+    event.register_read_value()
+  })
+  assert_true(reads == [register_move()])
 
   match new_trace().next("register-read") {
-    Ok(Some(RegisterRead(access))) => assert_true(access == register_move())
-    _ => fail("expected next register-read event")
+    Some(event) =>
+      match event.register_read_value() {
+        Some(access) => assert_true(access == register_move())
+        None => fail("expected next register-read event")
+      }
+    None => fail("expected next register-read event")
   }
   match
     new_trace().next_matching(fn(event) {
@@ -1049,8 +1050,8 @@ test "translated BAP traces read matching events and tool support" {
         _ => None
       }
     }) {
-    Ok(Some(value)) => assert_true(value == test_move())
-    _ => fail("expected next matching memory-store event")
+    Some(value) => assert_true(value == test_move())
+    None => fail("expected next matching memory-store event")
   }
 
   let filtered = new_trace().filter_map(fn(event) {
@@ -1127,7 +1128,7 @@ test "translated BAP traces create from a lazy next callback" {
   })
   assert_true(calls.val == 0)
   match trace.next_event() {
-    Ok(Some(MemoryLoad(value))) => assert_true(value == test_move())
+    Some(MemoryLoad(value)) => assert_true(value == test_move())
     _ => fail("expected first lazy event")
   }
   assert_true(calls.val == 1)
@@ -1141,12 +1142,9 @@ test "translated BAP traces create from a lazy next callback" {
 
 ///|
 fn unwrap_string_events(
-  result : Result[Array[String], @traces.TraceError],
-) -> Array[String] raise {
-  match result {
-    Ok(events) => events
-    Err(_) => fail("unexpected trace error")
-  }
+  events : Array[String],
+) -> Array[String] {
+  events
 }
 
 ///|
@@ -1168,8 +1166,13 @@ fn trace_with_monitor(monitor : @traces.TraceMonitor) -> @traces.Trace raise {
 
 ///|
 test "translated BAP trace monitors handle source errors" {
-  let failed = trace_with_monitor(@traces.TraceMonitor::fail_on_error()).read_events()
-  assert_true(failed == Err(TraceFailure("syscall failed")))
+  let mut failed = false
+  try {
+    ignore(trace_with_monitor(@traces.TraceMonitor::fail_on_error()).read_events())
+  } catch {
+    _ => failed = true
+  }
+  assert_true(failed)
 
   let ignored = trace_with_monitor(@traces.TraceMonitor::ignore_errors())
   assert_true(unwrap_events(ignored.read_events()) == test_events())
@@ -1195,8 +1198,13 @@ test "translated BAP trace monitors handle source errors" {
   let user = trace_with_monitor(@traces.TraceMonitor::create(fn(_) { Skip }))
   assert_true(unwrap_events(user.read_events()) == test_events())
 
-  let facade_failed = trace_with_monitor(@traces.Monitor::fail_on_error()).read_events()
-  assert_true(facade_failed == Err(TraceFailure("syscall failed")))
+  let mut facade_failed = false
+  try {
+    ignore(trace_with_monitor(@traces.Monitor::fail_on_error()).read_events())
+  } catch {
+    _ => facade_failed = true
+  }
+  assert_true(facade_failed)
 
   let facade_ignored = trace_with_monitor(@traces.Monitor::ignore_errors())
   assert_true(unwrap_events(facade_ignored.read_events()) == test_events())
@@ -1240,7 +1248,15 @@ test "BAP-style trace load monitor controls provider stream errors" {
   })
   match @traces.Trace::load("load-monitor://trace") {
     Ok(trace) =>
-      assert_true(trace.read_events() == Err(TraceFailure("syscall failed")))
+      assert_true(
+        try {
+          ignore(trace.read_events())
+          false
+        } catch {
+          TraceFailure("syscall failed") => true
+          _ => false
+        },
+      )
     Err(_) => fail("default monitored load failed")
   }
   match

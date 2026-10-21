@@ -63,10 +63,7 @@ pub fn[K, S] run(
 ///|
 /// Evaluates a knowledge computation in a copy of `init`, returning its
 /// result and the resulting knowledge base (the generic form of `run`).
-pub fn[R] eval(
-  comp : (State) -> R raise,
-  init : State,
-) -> (R, State) raise {
+pub fn[R] eval(comp : (State) -> R raise, init : State) -> (R, State) raise {
   let state = init.fork()
   (comp(state), state)
 }

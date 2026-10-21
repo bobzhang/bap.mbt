@@ -937,7 +937,7 @@ fn driver_disassemble(
         let s = s.switch(encoding)
         let next = match driver_decode(decoder, mem) {
           BasicDecodedValid(chunk, insn) => {
-            let hit = try {
+            let hit = try
               kb.transaction(() => {
                 let label = driver_new_insn(kb, chunk, insn, unit)
                 kb.provide(project_label_encoding, label, encoding.coding)
@@ -958,7 +958,7 @@ fn driver_disassemble(
                   Some((dests, driver_delay(kb, label)))
                 }
               })
-            } catch {
+            catch {
               err => Err(err)
             } noraise {
               value => Ok(value)

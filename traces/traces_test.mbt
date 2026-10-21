@@ -469,9 +469,7 @@ test "translated BAP trace byte snapshots round trip metadata and event variants
   let trace = @traces.Trace::create(tool_for_events(events), events~).set_meta(
     meta,
   )
-  let bytes = trace.to_bytes() catch {
-    _ => fail("snapshot encode failed")
-  }
+  let bytes = trace.to_bytes() catch { _ => fail("snapshot encode failed") }
   assert_true(bytes.length() > 0)
   let loaded = @traces.Trace::of_bytes(bytes) catch {
     _ => fail("snapshot decode failed")
@@ -483,9 +481,7 @@ test "translated BAP trace byte snapshots round trip metadata and event variants
     _ => fail("second snapshot decode failed")
   }
   assert_true(unwrap_events(again.read_events()) == events)
-  try {
-    ignore(@traces.Trace::of_bytes(b"not a trace snapshot"))
-  } catch {
+  ignore(@traces.Trace::of_bytes(b"not a trace snapshot")) catch {
     @traces.ProtocolError(_) => ()
     _ => fail("expected protocol error for malformed snapshot")
   }
@@ -728,11 +724,7 @@ test "translated BAP trace protocol registry selects URI providers" {
   let saved_custom : Ref[String?] = Ref(None)
   @traces.Trace::register_writer("custom-provider", fn(uri, trace) {
     saved_custom.val = Some(uri)
-    ignore(
-      trace.read_events() catch {
-        error => return Err(error)
-      },
-    )
+    ignore(trace.read_events() catch { error => return Err(error) })
     Ok(())
   })
   match @traces.Trace::load("custom://trace") {
@@ -1141,9 +1133,7 @@ test "translated BAP traces create from a lazy next callback" {
 }
 
 ///|
-fn unwrap_string_events(
-  events : Array[String],
-) -> Array[String] {
+fn unwrap_string_events(events : Array[String]) -> Array[String] {
   events
 }
 
@@ -1167,9 +1157,9 @@ fn trace_with_monitor(monitor : @traces.TraceMonitor) -> @traces.Trace raise {
 ///|
 test "translated BAP trace monitors handle source errors" {
   let mut failed = false
-  try {
-    ignore(trace_with_monitor(@traces.TraceMonitor::fail_on_error()).read_events())
-  } catch {
+  ignore(
+    trace_with_monitor(@traces.TraceMonitor::fail_on_error()).read_events(),
+  ) catch {
     _ => failed = true
   }
   assert_true(failed)
@@ -1199,9 +1189,7 @@ test "translated BAP trace monitors handle source errors" {
   assert_true(unwrap_events(user.read_events()) == test_events())
 
   let mut facade_failed = false
-  try {
-    ignore(trace_with_monitor(@traces.Monitor::fail_on_error()).read_events())
-  } catch {
+  ignore(trace_with_monitor(@traces.Monitor::fail_on_error()).read_events()) catch {
     _ => facade_failed = true
   }
   assert_true(facade_failed)

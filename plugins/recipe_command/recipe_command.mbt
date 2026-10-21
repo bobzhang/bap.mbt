@@ -184,9 +184,7 @@ pub fn list_recipes(
         let file = @recipe.concat(dir, entry)
         if entry.has_suffix(".recipe") {
           let name = prefix(entry, entry.length() - ".recipe".length())
-          try {
-            @recipe.load(paths~, fs~, name)
-          } catch {
+          try @recipe.load(paths~, fs~, name) catch {
             e => err("Malformed recipe \{file}: \{e.to_string()}\n")
           } noraise {
             r => {

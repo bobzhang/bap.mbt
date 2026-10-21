@@ -122,9 +122,7 @@ test "two promises of the same slot are joined and conflicts diverge" {
   ignore(flat.promise((_, _) => Some("right")))
   let other = kb.create(cls)
   let before = kb.fork()
-  try {
-    ignore(kb.transaction(() => kb.collect(flat, other)))
-  } catch {
+  ignore(kb.transaction(() => kb.collect(flat, other))) catch {
     @knowledge.NonMonotonicUpdate(slot~, ..) =>
       assert_eq(slot.show(), "kb-test:joined-flat")
     _ => fail("expected a conflict")
@@ -145,19 +143,17 @@ test "provide diverges on non-monotonic updates and run discards the state" {
   let obj = init.create(cls)
   init.provide(slot, obj, Some("a"))
   let mut saw_conflict = false
-  try {
-    ignore(
-      @knowledge.run(
-        cls,
-        kb => {
-          kb.provide(slot, obj, Some("a"))
-          kb.provide(slot, obj, Some("b"))
-          obj
-        },
-        init,
-      ),
-    )
-  } catch {
+  ignore(
+    @knowledge.run(
+      cls,
+      kb => {
+        kb.provide(slot, obj, Some("a"))
+        kb.provide(slot, obj, Some("b"))
+        obj
+      },
+      init,
+    ),
+  ) catch {
     err => {
       saw_conflict = true
       assert_true(err is @knowledge.NonMonotonicUpdate(_))
@@ -256,11 +252,11 @@ test "with_empty catches rejections only" {
     0,
   )
   // other conflicts propagate
-  let failed = try {
+  let failed = try
     kb.transaction(() => {
       kb.with_empty(missing=0, () => raise @knowledge.Failure("boom"))
     })
-  } catch {
+  catch {
     err => Err(err)
   } noraise {
     _ => Ok(())
@@ -358,9 +354,9 @@ test "symbols are interned per package, imported and made public" {
   assert_true(kb.read(cls, "y", pkg="app2").unwrap().equal(priv_y))
   // strict imports refuse to shadow; non-strict imports shadow
   let own = kb.intern_symbol("x", cls, pkg="app3")
-  let strict = try {
+  let strict = try
     kb.transaction(() => kb.import_(["lib"], strict=true, pkg="app3"))
-  } catch {
+  catch {
     err => Err(err)
   } noraise {
     _ => Ok(())
@@ -370,17 +366,15 @@ test "symbols are interned per package, imported and made public" {
   kb.import_(["lib"], pkg="app3")
   assert_true(kb.read(cls, "x", pkg="app3").unwrap().equal(pub_x))
   // unknown packages and symbols
-  let unknown = try {
-    kb.transaction(() => kb.import_(["nowhere"]))
-  } catch {
+  let unknown = try kb.transaction(() => kb.import_(["nowhere"])) catch {
     err => Err(err)
   } noraise {
     _ => Ok(())
   }
   assert_true(unknown is Err(@knowledge.NotAPackage("nowhere")))
-  let unknown_symbol = try {
+  let unknown_symbol = try
     kb.transaction(() => kb.import_(["lib:nothing"]))
-  } catch {
+  catch {
     err => Err(err)
   } noraise {
     _ => Ok(())

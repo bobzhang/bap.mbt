@@ -55,16 +55,10 @@ pub fn[K, S] run(
   cls : Class[K, S],
   comp : (State) -> Object[K] raise,
   init : State,
-) -> Result[(Value[K, S], State), Error] {
+) -> (Value[K, S], State) raise {
   let state = init.fork()
-  try {
-    let object = comp(state)
-    state.value(cls, object)
-  } catch {
-    err => Err(err)
-  } noraise {
-    value => Ok((value, state))
-  }
+  let object = comp(state)
+  (state.value(cls, object), state)
 }
 
 ///|
@@ -74,13 +68,9 @@ pub fn[K, S] run(
 pub fn[R] eval(
   comp : (State) -> R raise,
   init : State,
-) -> Result[(R, State), Error] {
+) -> (R, State) raise {
   let state = init.fork()
-  try comp(state) catch {
-    err => Err(err)
-  } noraise {
-    r => Ok((r, state))
-  }
+  (comp(state), state)
 }
 
 ///|

@@ -140,16 +140,12 @@ pub fn[R] State::catch_(
 pub fn[R] State::transaction(
   self : State,
   body : () -> R raise,
-) -> Result[R, Error] {
+) -> R raise {
   let snapshot = self.env
-  try body() catch {
-    err => {
-      self.env = snapshot
-      Err(err)
-    }
-  } noraise {
-    r => Ok(r)
+  errdefer {
+    self.env = snapshot
   }
+  body()
 }
 
 ///|

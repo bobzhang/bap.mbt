@@ -12,7 +12,7 @@ pub const KEYWORD_PACKAGE : String = "keyword"
 
 pub const USER_PACKAGE : String = "user"
 
-pub fn[R] eval((State) -> R raise, State) -> Result[(R, State), Error]
+pub fn[R] eval((State) -> R raise, State) -> (R, State) raise
 
 pub fn guard_(Bool) -> Unit raise Conflict
 
@@ -22,7 +22,7 @@ pub fn proceed(unless~ : Bool) -> Unit raise Conflict
 
 pub fn[T] reject() -> T raise Conflict
 
-pub fn[K, S] run(Class[K, S], (State) -> Object[K] raise, State) -> Result[(Value[K, S], State), Error]
+pub fn[K, S] run(Class[K, S], (State) -> Object[K] raise, State) -> (Value[K, S], State) raise
 
 pub fn unless(Bool, () -> Unit raise) -> Unit raise
 
@@ -54,7 +54,7 @@ pub fn Agent::registry() -> Array[Self]
 pub fn Agent::reliability(Self) -> AgentReliability
 pub fn Agent::set_reliability(Self, AgentReliability) -> Result[Unit, String]
 pub fn Agent::to_repr(Self) -> @debug.Repr
-pub fn Agent::weight(Self) -> Int
+pub fn Agent::weight(Self) -> Int32
 
 pub(all) enum AgentReliability {
   Authorative
@@ -118,7 +118,7 @@ pub fn[T] Domain::order(Self[T], T, T) -> PartialOrder
 pub fn[T : Eq] Domain::powerset(Name, (T) -> String) -> Self[Array[T]]
 pub fn[T : Eq + Hash] Domain::set(Name, (T) -> String) -> Self[@set.Set[T]]
 pub fn Domain::string(Name) -> Self[String]
-pub fn[T] Domain::total(Name, (T) -> String, empty~ : T, compare~ : (T, T) -> Int, join? : (T, T) -> Result[T, String]) -> Self[T]
+pub fn[T] Domain::total(Name, (T) -> String, empty~ : T, compare~ : (T, T) -> Int32, join? : (T, T) -> Result[T, String]) -> Self[T]
 pub fn Domain::tribool(name? : Name) -> Self[Bool?]
 
 type Enum
@@ -137,10 +137,10 @@ pub fn[K, P] FactTable::collect_promised(Self[K, P], Object[K]) -> Result[P?, St
 pub fn[K, P] FactTable::has(Self[K, P], Object[K]) -> Bool
 pub fn[K, P] FactTable::new(Slot[K, P], state? : State) -> Self[K, P]
 pub fn[K, P] FactTable::observe(Self[K, P], (Object[K], P) -> Result[Unit, String]) -> Unit
-pub fn[K, P] FactTable::observer_count(Self[K, P]) -> Int
+pub fn[K, P] FactTable::observer_count(Self[K, P]) -> Int32
 pub fn[K, P, R] FactTable::observing(Self[K, P], (Object[K], P) -> Result[Unit, String], () -> R) -> R
 pub fn[K, P] FactTable::promise(Self[K, P], (Object[K]) -> Result[P, String]) -> Unit
-pub fn[K, P] FactTable::promise_count(Self[K, P]) -> Int
+pub fn[K, P] FactTable::promise_count(Self[K, P]) -> Int32
 pub fn[K, P, R] FactTable::promising(Self[K, P], (Object[K]) -> Result[P, String], () -> R) -> R
 pub fn[K, P] FactTable::propose(Self[K, Opinions[P]], Agent, (Object[K]) -> Result[P, String]) -> Unit
 pub fn[K, P, R] FactTable::proposing(Self[K, Opinions[P]], Agent, (Object[K]) -> Result[P, String], () -> R) -> R
@@ -166,10 +166,10 @@ pub(all) struct Name {
   pkg : String
   text : String
 } derive(Eq, Hash, @debug.Debug)
-pub fn Name::compare(Self, Self) -> Int
+pub fn Name::compare(Self, Self) -> Int32
 pub fn Name::create(String, pkg? : String) -> Self
 pub fn Name::equal(Self, Self) -> Bool
-pub fn Name::hash(Self) -> Int
+pub fn Name::hash(Self) -> Int32
 pub fn Name::hash_combine(Self, Hasher) -> Unit
 pub fn Name::not_equal(Self, Self) -> Bool
 pub fn Name::of_string(String) -> Self
@@ -184,11 +184,11 @@ pub fn Name::unqualified(Self) -> String
 type Object[K]
 pub fn[A, B] Object::cast(ClassEq[A, B], Self[A]) -> Self[B]
 pub fn[K] Object::class_name(Self[K]) -> Name
-pub fn[K] Object::compare(Self[K], Self[K]) -> Int
+pub fn[K] Object::compare(Self[K], Self[K]) -> Int32
 pub fn[K] Object::equal(Self[K], Self[K]) -> Bool
-pub fn[K] Object::hash(Self[K]) -> Int
+pub fn[K] Object::hash(Self[K]) -> Int32
 pub fn[K] Object::hash_combine(Self[K], Hasher) -> Unit
-pub fn[K] Object::id(Self[K]) -> Int
+pub fn[K] Object::id(Self[K]) -> Int32
 pub fn[K] Object::is_null(Self[K]) -> Bool
 pub fn[K] Object::not_equal(Self[K], Self[K]) -> Bool
 pub fn[K, S] Object::null(Class[K, S]) -> Self[K]
@@ -206,7 +206,7 @@ pub impl[K] Hash for Object[K]
 type Opinions[T]
 pub fn[T] Opinions::add(Self[T], Agent, T) -> Self[T]
 pub fn[T] Opinions::choice(Self[T]) -> T
-pub fn[T] Opinions::compare_votes(Self[T], Self[T]) -> Int
+pub fn[T] Opinions::compare_votes(Self[T], Self[T]) -> Int32
 pub fn[T] Opinions::empty(empty~ : T, equal~ : (T, T) -> Bool, inspect~ : (T) -> String) -> Self[T]
 pub fn[T] Opinions::entries(Self[T]) -> Array[(T, Array[Agent])]
 pub fn[T] Opinions::inspect(Self[T]) -> String
@@ -215,7 +215,7 @@ pub fn[T] Opinions::join(Self[T], Self[T]) -> Self[T]
 pub fn[T] Opinions::merge(Self[T], Self[T]) -> Self[T]
 pub fn[T] Opinions::of_list(Array[(Agent, T)], empty~ : T, equal~ : (T, T) -> Bool, inspect~ : (T) -> String) -> Self[T]
 pub fn[T] Opinions::persistent(Persistent[T], empty~ : T, equal~ : (T, T) -> Bool, inspect~ : (T) -> String) -> Persistent[Self[T]]
-pub fn[T] Opinions::total_weight(Self[T]) -> Int
+pub fn[T] Opinions::total_weight(Self[T]) -> Int32
 
 pub(all) enum PartialOrder {
   Less
@@ -238,7 +238,7 @@ pub fn[A, B] Persistent::convert(to_persistent~ : (A) -> B, of_persistent~ : (B)
 pub fn[T] Persistent::create(to_string~ : (T) -> String, of_string~ : (String) -> Result[T, String]) -> Self[T]
 pub fn[T] Persistent::decode(Self[T], String) -> Result[T, String]
 pub fn[T] Persistent::encode(Self[T], T) -> String
-pub fn Persistent::int() -> Self[Int]
+pub fn Persistent::int() -> Self[Int32]
 pub fn[T] Persistent::list(Self[T]) -> Self[@list.List[T]]
 pub fn[K : Eq + Hash, V] Persistent::map(Self[K], Self[V]) -> Self[Map[K, V]]
 pub fn Persistent::name() -> Self[Name]
@@ -268,18 +268,18 @@ pub fn[K, P] Slot::cls(Self[K, P]) -> Class[K, Unit]
 pub fn[K, P] Slot::desc(Self[K, P]) -> String
 pub fn[K, P] Slot::domain(Self[K, P]) -> Domain[P]
 pub fn[K, P] Slot::name(Self[K, P]) -> Name
-pub fn[K, P] Slot::observe(Self[K, P], (State, Object[K], P) -> Unit raise) -> Int
-pub fn[K, P] Slot::observer_count(Self[K, P]) -> Int
+pub fn[K, P] Slot::observe(Self[K, P], (State, Object[K], P) -> Unit raise) -> Int32
+pub fn[K, P] Slot::observer_count(Self[K, P]) -> Int32
 pub fn[K, P, R] Slot::observing(Self[K, P], observe~ : (State, Object[K], P) -> Unit raise, () -> R raise?) -> R raise?
 pub fn[K, P] Slot::owner(Self[K, P]) -> Name
 pub fn[K, P] Slot::persistent(Self[K, P]) -> Persistent[P]?
-pub fn[K, P] Slot::promise(Self[K, P], (State, Object[K]) -> P raise) -> Int
-pub fn[K, P] Slot::promise_count(Self[K, P]) -> Int
+pub fn[K, P] Slot::promise(Self[K, P], (State, Object[K]) -> P raise) -> Int32
+pub fn[K, P] Slot::promise_count(Self[K, P]) -> Int32
 pub fn[K, P, R] Slot::promising(Self[K, P], promise~ : (State, Object[K]) -> P raise, () -> R raise?) -> R raise?
-pub fn[K, P] Slot::propose(Self[K, Opinions[P]], Agent, (State, Object[K]) -> P raise) -> Int
+pub fn[K, P] Slot::propose(Self[K, Opinions[P]], Agent, (State, Object[K]) -> P raise) -> Int32
 pub fn[K, P, R] Slot::proposing(Self[K, Opinions[P]], Agent, propose~ : (State, Object[K]) -> P raise, () -> R raise?) -> R raise?
-pub fn[K, P] Slot::retract(Self[K, P], Int) -> Unit
-pub fn[K, P] Slot::unobserve(Self[K, P], Int) -> Unit
+pub fn[K, P] Slot::retract(Self[K, P], Int32) -> Unit
+pub fn[K, P] Slot::unobserve(Self[K, P], Int32) -> Unit
 
 type State
 pub fn State::assign(Self, Self) -> Unit
@@ -313,14 +313,14 @@ pub fn State::serialize(Self) -> String
 pub fn State::set_current_pkg(Self, String) -> Unit
 pub fn[K, P] State::suggest(Self, Agent, Slot[K, Opinions[P]], Object[K], P) -> Unit raise
 pub fn State::to_bytes(Self) -> Bytes
-pub fn[R] State::transaction(Self, () -> R raise) -> Result[R, Error]
+pub fn[R] State::transaction(Self, () -> R raise) -> R raise
 pub fn[K, S] State::value(Self, Class[K, S], Object[K]) -> Value[K, S] raise
 pub fn[R] State::with_empty(Self, missing~ : R, () -> R raise) -> R raise
 pub fn[R] State::with_pkg(Self, String, () -> R) -> R
 
 type Value[K, S]
 pub fn[K, S] Value::cls(Self[K, S]) -> Class[K, S]
-pub fn[K, S] Value::compare(Self[K, S], Self[K, S]) -> Int
+pub fn[K, S] Value::compare(Self[K, S], Self[K, S]) -> Int32
 pub fn[K, S] Value::domain(Class[K, S]) -> Domain[Self[K, S]]
 pub fn[K, S] Value::empty(Class[K, S]) -> Self[K, S]
 pub fn[K, S] Value::equal(Self[K, S], Self[K, S]) -> Bool

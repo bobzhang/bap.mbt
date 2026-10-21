@@ -88,9 +88,8 @@ pub fn dump(trace : @traces.Trace) -> String raise TraceCommandError {
     sb.write_string(attr_to_string(entry.1) + "\n")
   }
   sb.write_string("events {\n")
-  let events = match trace.read_events() {
-    Ok(events) => events
-    Err(err) => raise LoadFailed(err)
+  let events = trace.read_events() catch {
+    err => raise LoadFailed(err)
   }
   for event in events {
     sb.write_string("  \{event.to_string()}\n")

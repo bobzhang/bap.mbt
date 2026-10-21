@@ -744,33 +744,20 @@ fn TraceSnapshot::to_reader(self : TraceSnapshot) -> TraceReader {
 }
 
 ///|
-#warnings("-78")
-pub fn Trace::to_bytes(self : Trace) -> Result[Bytes, TraceError] {
-  match self.read_events() {
-    Ok(events) =>
-      Ok(
-        trace_encode_snapshot({
-          tool: self.tool_value,
-          meta: self.meta_value,
-          events,
-        }),
-      )
-    Err(error) => Err(error)
-  }
+pub fn Trace::to_bytes(self : Trace) -> Bytes raise TraceError {
+  let events = self.read_events()
+  trace_encode_snapshot({
+    tool: self.tool_value,
+    meta: self.meta_value,
+    events,
+  })
 }
 
 ///|
-#warnings("-78")
-pub fn Trace::of_bytes(data : BytesView) -> Result[Trace, TraceError] {
-  try {
-    let snapshot = trace_snapshot_from_bytes(data)
-    Ok(
-      Trace::from_results(
-        snapshot.tool,
-        snapshot.events.map(event => Ok(event)),
-      ).set_meta(snapshot.meta),
-    )
-  } catch {
-    error => Err(error)
-  }
+pub fn Trace::of_bytes(data : BytesView) -> Trace raise TraceError {
+  let snapshot = trace_snapshot_from_bytes(data)
+  Trace::from_results(
+    snapshot.tool,
+    snapshot.events.map(event => Ok(event)),
+  ).set_meta(snapshot.meta)
 }

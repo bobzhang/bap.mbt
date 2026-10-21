@@ -2496,13 +2496,11 @@ fn ensure_builtin_providers() -> Unit {
       }
     })
     trace_install_writer("memory", fn(uri, trace) {
-      match trace.to_bytes() {
-        Ok(bytes) => {
-          trace_store[uri] = bytes
-          Ok(())
-        }
-        Err(error) => Err(error)
+      let bytes = trace.to_bytes() catch {
+        error => return Err(error)
       }
+      trace_store[uri] = bytes
+      Ok(())
     })
 
     let binprot_protocol = TraceProtocol::create(name="trace.binprot", probe=fn(
@@ -2526,13 +2524,12 @@ fn ensure_builtin_providers() -> Unit {
     })
     trace_install_writer("trace.binprot", fn(uri, trace) {
       let path = trace_file_uri_path(uri)
-      match trace.to_bytes() {
-        Ok(bytes) =>
-          match @native_io.write_file(path, bytes) {
-            Ok(_) => Ok(())
-            Err(reason) => Err(ProtocolError(reason))
-          }
-        Err(error) => Err(error)
+      let bytes = trace.to_bytes() catch {
+        error => return Err(error)
+      }
+      match @native_io.write_file(path, bytes) {
+        Ok(_) => Ok(())
+        Err(reason) => Err(ProtocolError(reason))
       }
     })
     trace_builtin_providers_registered.val = true
@@ -2726,21 +2723,18 @@ pub fn Trace::filter_map(
 }
 
 ///|
-#warnings("-78")
-pub fn Trace::next_event(self : Trace) -> Result[TraceEvent?, TraceError] {
+pub fn Trace::next_event(self : Trace) -> TraceEvent? raise TraceError {
   match self.read_events(limit=1) {
-    Ok([event]) => Ok(Some(event))
-    Ok(_) => Ok(None)
-    Err(error) => Err(error)
+    [event] => Some(event)
+    _ => None
   }
 }
 
 ///|
-#warnings("-78")
 pub fn Trace::next(
   self : Trace,
   tag : String,
-) -> Result[TraceEvent?, TraceError] {
+) -> TraceEvent? raise TraceError {
   self.next_matching(fn(event) {
     if event.tag() == tag {
       Some(event)
@@ -2751,16 +2745,15 @@ pub fn Trace::next(
 }
 
 ///|
-#warnings("-78")
 pub fn[T] Trace::next_matching(
   self : Trace,
   select : (TraceEvent) -> T?,
-) -> Result[T?, TraceError] {
+) -> T? raise TraceError {
   let done = Ref(false)
   let result : Ref[T?] = Ref(None)
   while !done.val {
     match self.next_event() {
-      Ok(Some(event)) =>
+      Some(event) =>
         match select(event) {
           Some(value) => {
             result.val = Some(value)
@@ -2768,19 +2761,17 @@ pub fn[T] Trace::next_matching(
           }
           None => ()
         }
-      Ok(None) => done.val = true
-      Err(error) => return Err(error)
+      None => done.val = true
     }
   }
-  Ok(result.val)
+  result.val
 }
 
 ///|
-#warnings("-78")
 pub fn Trace::read_events(
   self : Trace,
   limit~ : Int32 = -1,
-) -> Result[Array[TraceEvent], TraceError] {
+) -> Array[TraceEvent] raise TraceError {
   let out : Array[TraceEvent] = []
   let done = Ref(false)
   while !done.val {
@@ -2797,32 +2788,30 @@ pub fn Trace::read_events(
           match (self.monitor.handle)(reason) {
             Stop => done.val = true
             Skip => ()
-            Fail => return Err(TraceFailure(reason))
+            Fail => raise TraceFailure(reason)
             Make(event) => out.push(event)
           }
         None => done.val = true
       }
     }
   }
-  Ok(out)
+  out
 }
 
 ///|
-#warnings("-78")
 pub fn Trace::read_all(
   self : Trace,
   tag : String,
-) -> Result[Array[TraceEvent], TraceError] {
-  self.read_events().map(events => events.filter(event => event.tag() == tag))
+) -> Array[TraceEvent] raise TraceError {
+  self.read_events().filter(event => event.tag() == tag)
 }
 
 ///|
-#warnings("-78")
 pub fn[T] Trace::read_all_matching(
   self : Trace,
   select : (TraceEvent) -> T?,
-) -> Result[Array[T], TraceError] {
-  self.read_events().map(events => events.filter_map(select))
+) -> Array[T] raise TraceError {
+  self.read_events().filter_map(select)
 }
 
 ///|

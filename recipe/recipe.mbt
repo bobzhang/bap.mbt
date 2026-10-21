@@ -460,7 +460,6 @@ fn parse_var(s : String) -> (String, String) raise RecipeError {
 /// search paths and bindings. Parameters are substituted using [env] and
 /// the bindings from [name]; every bound variable must be a parameter of
 /// the recipe or of a recipe it directly extends.
-#warnings("-78")
 pub fn load(
   paths~ : Array[String] = [],
   env~ : Array[(String, String)] = [],

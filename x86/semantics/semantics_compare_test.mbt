@@ -204,15 +204,15 @@ fn lift_basic(c : Case) -> Lift raise {
 /// LLVM's MCInst of the case (`None` when LLVM does not decode it).
 fn mc_insn(c : Case) -> @mc.Insn? raise {
   guard c.mc.find(":") is Some(colon) else { return None }
-  let name = c.mc.view(end_offset=colon).to_owned()
+  let name = c.mc[:colon].to_owned()
   let ops : Array[@mc.Op] = []
-  let rest = c.mc.view(start_offset=colon + 1)
+  let rest = c.mc[colon + 1:]
   if !rest.is_empty() {
     for op in rest.split(",") {
       if op.has_prefix("%") {
-        ops.push(@mc.Op::reg(op.view(start_offset=1).to_owned()))
+        ops.push(@mc.Op::reg(op[1:].to_owned()))
       } else if op.has_prefix("-") {
-        ops.push(Imm(-parse_dec(op.view(start_offset=1))))
+        ops.push(Imm(-parse_dec(op[1:])))
       } else {
         ops.push(Imm(parse_dec(op)))
       }

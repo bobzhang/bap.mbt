@@ -69,9 +69,9 @@ priv struct OperatorInfo {
 /// The spelling used in expressions: the name without `operator`.
 fn OperatorInfo::symbol(self : OperatorInfo) -> StringView {
   if self.kind < OP_UNNAMEABLE {
-    let rest = self.name.view(start_offset=8) // drop "operator"
+    let rest = self.name[8:] // drop "operator"
     if rest.length() > 0 && rest.at(0) == ' ' {
-      rest.view(start_offset=1)
+      rest[1:]
     } else {
       rest
     }

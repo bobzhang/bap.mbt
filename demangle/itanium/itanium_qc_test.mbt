@@ -43,9 +43,10 @@ impl @quickcheck.Shrink for Token with fn shrink(t) {
   let Token(s) = t
   let out : Array[Token] = []
   if s.length() > 0 {
-    out.push(Token(s.view(end_offset=s.length() / 2).to_owned()))
-    out.push(Token(s.view(start_offset=1).to_owned()))
-    out.push(Token(s.view(end_offset=s.length() - 1).to_owned()))
+    // Bounds are valid; shrinking deliberately preserves raw code units.
+    out.push(Token(s.unsafe_view(start=0, end=s.length() / 2).to_owned()))
+    out.push(Token(s.unsafe_view(start=1, end=s.length()).to_owned()))
+    out.push(Token(s.unsafe_view(start=0, end=s.length() - 1).to_owned()))
   }
   out.iter()
 }
@@ -265,7 +266,8 @@ test "qc: every prefix of a real mangling is handled" {
       let name = m.original
       let mut ok = true
       for i in 0..<=name.length() {
-        let prefix = name.view(end_offset=i).to_owned()
+        // Exercise every raw code-unit prefix, including malformed input.
+        let prefix = name.unsafe_view(start=0, end=i).to_owned()
         ok = ok && agrees_with_cxxfilt(prefix)
       }
       ok

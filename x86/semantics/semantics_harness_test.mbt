@@ -131,7 +131,7 @@ fn parse_bytes(s : StringView) -> Bytes raise {
   let n = s.length() / 2
   let out = FixedArray::make(n, b'\x00')
   for i in 0..<n {
-    out[i] = parse_hex(s.view(start_offset=2 * i, end_offset=2 * i + 2)).to_byte()
+    out[i] = parse_hex(s[2 * i:2 * i + 2]).to_byte()
   }
   Bytes::from_array(out)
 }
@@ -155,14 +155,14 @@ fn parse_case(mode : Int32, line : StringView) -> Case raise {
       continue
     }
     guard item.find("=") is Some(eq) else { fail("bad item \{item}") }
-    let key = item.view(end_offset=eq)
-    let value = item.view(start_offset=eq + 1)
+    let key = item[:eq]
+    let value = item[eq + 1:]
     if key == "f" {
       flags = parse_hex(value).to_int()
     } else if key.has_prefix("xmm") {
-      xmms[parse_dec(key.view(start_offset=3)).to_int()] = value.to_owned()
+      xmms[parse_dec(key[3:]).to_int()] = value.to_owned()
     } else if key.has_prefix("m") {
-      mem.push((parse_hex(key.view(start_offset=1)), parse_bytes(value)))
+      mem.push((parse_hex(key[1:]), parse_bytes(value)))
     } else {
       guard reg_index(mode, key) is Some(i) else { fail("bad reg \{key}") }
       regs[i] = parse_hex(value)
@@ -181,12 +181,12 @@ fn parse_case(mode : Int32, line : StringView) -> Case raise {
       continue
     }
     guard item.find("=") is Some(eq) else { fail("bad item \{item}") }
-    let key = item.view(end_offset=eq)
-    let value = item.view(start_offset=eq + 1)
+    let key = item[:eq]
+    let value = item[eq + 1:]
     if key == "f" {
       guard value.find("/") is Some(sl) else { fail("bad flags \{value}") }
-      exp_flags = parse_hex(value.view(end_offset=sl)).to_int()
-      undef_flags = parse_hex(value.view(start_offset=sl + 1)).to_int()
+      exp_flags = parse_hex(value[:sl]).to_int()
+      undef_flags = parse_hex(value[sl + 1:]).to_int()
     } else if key == "j" {
       jump = Some(parse_hex(value))
     } else if key == "m" && value == "?" {
@@ -194,13 +194,13 @@ fn parse_case(mode : Int32, line : StringView) -> Case raise {
     } else if key == "e" {
       exn = Some(parse_dec(value).to_int())
     } else if key.has_prefix("xmm") {
-      exp_xmms[parse_dec(key.view(start_offset=3)).to_int()] = if value == "?" {
+      exp_xmms[parse_dec(key[3:]).to_int()] = if value == "?" {
         None
       } else {
         Some(value.to_owned())
       }
     } else if key.has_prefix("m") {
-      exp_mem.push((parse_hex(key.view(start_offset=1)), parse_bytes(value)))
+      exp_mem.push((parse_hex(key[1:]), parse_bytes(value)))
     } else {
       guard reg_index(mode, key) is Some(i) else { fail("bad reg \{key}") }
       exp_regs[i] = if value == "?" { None } else { Some(parse_hex(value)) }

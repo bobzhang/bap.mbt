@@ -36,7 +36,7 @@ fn x86_legacy_width(name : String, prefix : String) -> Int32 {
   if !name.has_prefix(prefix) {
     return 0
   }
-  let rest = name.view(start_offset=prefix.length())
+  let rest = name[prefix.length():]
   if rest.has_prefix("16") {
     16
   } else if rest.has_prefix("32") {
@@ -145,7 +145,7 @@ fn ProjectDisassemblyInstruction::x86_legacy_form(
       continue
     }
     let w = width.to_string()
-    let rest = name.view(start_offset=op.length() + w.length()).to_owned()
+    let rest = name[op.length() + w.length():].to_owned()
     return match rest {
       "rr" | "rr_REV" if n == 3 => Some((name, pick([0, 2])))
       "rm" if n == 7 => Some((name, pick([0] + range(2, 5))))
@@ -177,7 +177,7 @@ fn ProjectDisassemblyInstruction::x86_legacy_form(
       continue
     }
     let w = width.to_string()
-    let rest = name.view(start_offset=op.length() + w.length()).to_owned()
+    let rest = name[op.length() + w.length():].to_owned()
     let imm_suffix = if width == 8 {
       "ri8"
     } else if width == 64 {
@@ -225,7 +225,7 @@ fn ProjectDisassemblyInstruction::x86_legacy_form(
       continue
     }
     let w = width.to_string()
-    let rest = name.view(start_offset=op.length() + w.length()).to_owned()
+    let rest = name[op.length() + w.length():].to_owned()
     let one = ProjectInstructionOperand::immediate(1L)
     let cl = x86_legacy_register("CL")
     return match rest {
@@ -255,7 +255,7 @@ fn ProjectDisassemblyInstruction::x86_legacy_form(
       continue
     }
     let w = width.to_string()
-    let rest = name.view(start_offset=op.length() + w.length()).to_owned()
+    let rest = name[op.length() + w.length():].to_owned()
     return match rest {
       "r" | "r_alt" if n == 2 => Some((op + w + "r", [ops[0]]))
       _ => None
@@ -306,7 +306,7 @@ fn ProjectDisassemblyInstruction::x86_legacy_form(
   // moves
   match name {
     "MOV8ri_alt" | "MOV16ri_alt" | "MOV32ri_alt" =>
-      return Some((name.view(end_offset=name.length() - 4).to_owned(), ops))
+      return Some((name[:name.length() - 4].to_owned(), ops))
     "MOV64mi32" => return Some(("MOV64mi", ops))
     "LEA64_32r" => return Some(("LEA32r", ops))
     _ => ()
@@ -375,7 +375,7 @@ fn ProjectDisassemblyInstruction::x86_legacy_form(
     "JCC_1" | "JCC_4" =>
       return match (condition(1), absolute()) {
         (Some(cc), Some(target)) =>
-          Some(("J" + cc + name.view(start_offset=3).to_owned(), target))
+          Some(("J" + cc + name[3:].to_owned(), target))
         _ => None
       }
     "JECXZ" => return absolute().map(target => ("JECXZ_1", target))
@@ -479,9 +479,7 @@ fn ProjectDisassemblyInstruction::x86_legacy_form(
   }
   match name {
     "PSRLDQri" | "PSLLDQri" if n == 3 =>
-      return Some(
-        (name.view(end_offset=name.length() - 2).to_owned(), pick([0, 2])),
-      )
+      return Some((name[:name.length() - 2].to_owned(), pick([0, 2])))
     "MOVUPSrr" | "MOVUPSrr_REV" => return Some(("MOVUPS", ops))
     "MOVAPSrr" | "MOVAPSrr_REV" => return Some(("MOVAPS", ops))
     "MOVDQArr" | "MOVDQArr_REV" => return Some(("MOVDQA", ops))

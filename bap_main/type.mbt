@@ -144,7 +144,7 @@ fn parse_error_message(err : Error) -> String {
     // report only the message, as upstream `Cmdliner` parsers do.
     Failure(msg) =>
       match msg.find("FAILED: ") {
-        Some(i) => msg.view(start_offset=i + 8).to_owned()
+        Some(i) => msg[i + 8:].to_owned()
         None => msg
       }
     e => error_to_string(e)

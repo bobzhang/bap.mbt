@@ -1172,7 +1172,7 @@ fn x86_llvm_bil_text(
           let jump = "jmp 0x" + target.to_string(radix=16)
           if (bits & 1) != 0 {
             let mnemonic = match assembly.find(" ") {
-              Some(space) => assembly.view(end_offset=space).to_owned()
+              Some(space) => assembly[:space].to_owned()
               None => assembly
             }
             "if " + mnemonic + " then " + jump

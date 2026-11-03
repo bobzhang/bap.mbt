@@ -137,8 +137,8 @@ pub fn statics(proj : @project.Project) -> Array[(UInt64, String)]? {
             Some(i) =>
               out.push(
                 (
-                  parse_hex(line.view(end_offset=i).to_owned()),
-                  unescape(line.view(start_offset=i + 1).to_owned()),
+                  parse_hex(line[:i].to_owned()),
+                  unescape(line[i + 1:].to_owned()),
                 ),
               )
             None => ()

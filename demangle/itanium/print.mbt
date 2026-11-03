@@ -256,9 +256,9 @@ fn print_as_string(nodes : Array[Node], ob : Output) -> Bool {
             ob.add("x")
           }
           if v >= 16 {
-            ob.add(hex.view(start_offset=v >> 4, end_offset=(v >> 4) + 1))
+            ob.add(hex[v >> 4:(v >> 4) + 1])
           }
-          ob.add(hex.view(start_offset=v & 15, end_offset=(v & 15) + 1))
+          ob.add(hex[v & 15:(v & 15) + 1])
           last_was_numeric_escape = true
         } else {
           ob.add(v.unsafe_to_char().to_string())
@@ -388,7 +388,7 @@ fn print_closure_declarator(
 fn print_signed_number(value : StringView, ob : Output) -> Unit {
   if value.length() > 0 && value.at(0) == 'n' {
     ob.add("-")
-    ob.add(value.view(start_offset=1))
+    ob.add(value[1:])
   } else {
     ob.add(value)
   }

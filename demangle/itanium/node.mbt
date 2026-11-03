@@ -358,7 +358,7 @@ fn Node::base_name(self : Node) -> StringView {
     SpecialSubstitution(ssk) => {
       let name = special_sub_base_name(ssk)
       if ssk >= SSK_STRING {
-        name.view(start_offset=6) // drop "basic_"
+        name[6:] // drop "basic_"
       } else {
         name
       }

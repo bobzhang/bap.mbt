@@ -49,7 +49,7 @@ fn x86_llvm_operand_immediate(operand : ProjectInstructionOperand?) -> Int64 {
 /// The AT&T name of a register: lower case, `st(i)` for the x87 stack.
 fn x86_llvm_register_asm(name : String) -> String {
   if name.length() == 3 && name.has_prefix("ST") {
-    "st(" + name.view(start_offset=2).to_owned() + ")"
+    "st(" + name[2:].to_owned() + ")"
   } else {
     name.to_lower()
   }
@@ -281,10 +281,10 @@ fn x86_llvm_print(
     let limit = if family == "vcmp" { 31L } else { 7L }
     if predicate >= 0L && predicate <= limit {
       let mnemonic = match template.find(" ") {
-        Some(space) => template.view(end_offset=space).to_owned()
+        Some(space) => template[:space].to_owned()
         None => template
       }
-      let rest = mnemonic.view(start_offset=family.length()).to_owned()
+      let rest = mnemonic[family.length():].to_owned()
       let names = if family == "vpcom" {
         x86_llvm_vpcom_predicates
       } else {

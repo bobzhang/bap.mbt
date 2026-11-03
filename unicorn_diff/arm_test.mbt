@@ -32,9 +32,7 @@ fn arm(thumb : Bool) -> Isa {
       let digits = 2 * unit
       Bytes::makei(code.length() / 2, i => {
         let k = i / unit
-        let v = parse_hex(
-          code.view(start_offset=k * digits, end_offset=(k + 1) * digits),
-        )
+        let v = parse_hex(code[k * digits:(k + 1) * digits])
         (v >> (8 * (i % unit))).to_byte()
       })
     },

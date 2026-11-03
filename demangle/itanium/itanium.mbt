@@ -86,14 +86,14 @@ pub fn cxxfilt(
   let mut decorated = name[:]
   let mut can_have_leading_dot = true
   if strip_underscore && decorated.length() > 0 && decorated.at(0) == '_' {
-    decorated = decorated.view(start_offset=1)
+    decorated = decorated[1:]
     can_have_leading_dot = false
   }
   let mut mangled = decorated
   let mut prefix = ""
   // A leading dot is not part of the demangled symbol name.
   if can_have_leading_dot && mangled.length() > 0 && mangled.at(0) == '.' {
-    mangled = mangled.view(start_offset=1)
+    mangled = mangled[1:]
     prefix = "."
   }
   if is_itanium_encoding(mangled) &&
@@ -104,7 +104,7 @@ pub fn cxxfilt(
     return result
   }
   if decorated.has_prefix("__imp_") &&
-    demangle(decorated.view(start_offset=6).to_owned(), params~) is Some(result) {
+    demangle(decorated[6:].to_owned(), params~) is Some(result) {
     return "import thunk for " + result
   }
   name

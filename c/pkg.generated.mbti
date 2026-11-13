@@ -177,7 +177,7 @@ pub(all) struct ArrayType {
   size : Int32?
 }
 pub fn ArrayType::equal(Self, Self) -> Bool
-pub fn ArrayType::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ArrayType::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn ArrayType::not_equal(Self, Self) -> Bool
 pub fn ArrayType::to_json(Self) -> @json.Json
 pub fn ArrayType::to_repr(Self) -> @debug.Repr
@@ -188,7 +188,7 @@ pub(all) struct Attr {
   args : Array[String]
 }
 pub fn Attr::equal(Self, Self) -> Bool
-pub fn Attr::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Attr::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Attr::new(String, args? : Array[String]) -> Self
 pub fn Attr::not_equal(Self, Self) -> Bool
 pub fn Attr::output(Self, &Logger) -> Unit
@@ -230,7 +230,7 @@ pub fn Basic::all_shorts() -> Array[Self]
 pub fn Basic::all_signed() -> Array[Self]
 pub fn Basic::all_unsigned() -> Array[Self]
 pub fn Basic::equal(Self, Self) -> Bool
-pub fn Basic::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Basic::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Basic::is_char(Self) -> Bool
 pub fn Basic::is_cint(Self) -> Bool
 pub fn Basic::is_complex(Self) -> Bool
@@ -264,7 +264,7 @@ pub fn CType::array(attrs? : Array[Attr], const_? : Bool, volatile_? : Bool, res
 pub fn CType::attrs(Self) -> Array[Attr]
 pub fn CType::basic(attrs? : Array[Attr], const_? : Bool, volatile_? : Bool, Basic) -> Self
 pub fn CType::equal(Self, Self) -> Bool
-pub fn CType::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn CType::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn CType::function_(attrs? : Array[Attr], variadic? : Bool, return_? : Self, Array[(String, Self)]) -> Self
 pub fn CType::is_array(Self) -> Bool
 pub fn CType::is_basic(Self) -> Bool
@@ -302,7 +302,7 @@ pub(all) struct Compound {
   fields : Array[(String, CType)]
 }
 pub fn Compound::equal(Self, Self) -> Bool
-pub fn Compound::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Compound::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Compound::not_equal(Self, Self) -> Bool
 pub fn Compound::to_json(Self) -> @json.Json
 pub fn Compound::to_repr(Self) -> @debug.Repr
@@ -451,7 +451,7 @@ pub(all) struct Proto {
   variadic : Bool
 }
 pub fn Proto::equal(Self, Self) -> Bool
-pub fn Proto::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Proto::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Proto::not_equal(Self, Self) -> Bool
 pub fn Proto::output(Self, &Logger) -> Unit
 pub fn Proto::to_json(Self) -> @json.Json
@@ -466,7 +466,7 @@ pub(all) struct Qualifier[R] {
   restrict : R
 }
 pub fn[R : Eq] Qualifier::equal(Self[R], Self[R]) -> Bool
-pub fn[R : @json.FromJson] Qualifier::from_json(@json.Json, @json.JsonPath) -> Self[R] raise @json.JsonDecodeError
+pub fn[R : @json.FromJson] Qualifier::from_json(@json.Json, @json.DecodeContext) -> Self[R] raise @json.JsonDecodeError
 pub fn[R : Eq] Qualifier::not_equal(Self[R], Self[R]) -> Bool
 pub fn[R : @json.ToJson] Qualifier::to_json(Self[R]) -> @json.Json
 pub fn[R : @debug.Debug] Qualifier::to_repr(Self[R]) -> @debug.Repr
@@ -510,7 +510,7 @@ pub(all) struct Spec[Q, T] {
   attrs : Array[Attr]
 }
 pub fn[Q : Eq, T : Eq] Spec::equal(Self[Q, T], Self[Q, T]) -> Bool
-pub fn[Q : @json.FromJson, T : @json.FromJson] Spec::from_json(@json.Json, @json.JsonPath) -> Self[Q, T] raise @json.JsonDecodeError
+pub fn[Q : @json.FromJson, T : @json.FromJson] Spec::from_json(@json.Json, @json.DecodeContext) -> Self[Q, T] raise @json.JsonDecodeError
 pub fn[Q : Eq, T : Eq] Spec::not_equal(Self[Q, T], Self[Q, T]) -> Bool
 pub fn[Q : @json.ToJson, T : @json.ToJson] Spec::to_json(Self[Q, T]) -> @json.Json
 pub fn[Q : @debug.Debug, T : @debug.Debug] Spec::to_repr(Self[Q, T]) -> @debug.Repr

@@ -126,7 +126,7 @@ pub fn install_var_randomizer(
 ///|
 fn parse_exp(width : Int32, s : String) -> @types.Exp {
   if s.length() > 0 && s[0] >= '0' && s[0] <= '9' {
-    let w = try @string.parse_int64(s, base=0) catch {
+    let w = try @string.parse_int64(s, radix=0) catch {
       _ => 0L
     } noraise {
       x => x

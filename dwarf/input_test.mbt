@@ -637,7 +637,7 @@ test "translated DWARF input skips zero padding and reads const blocks" {
 
 ///|
 test "translated DWARF input reads fixed block lengths as unsigned" {
-  let payload = Bytes::new(32768)
+  let payload = Bytes::make(32768, b'\x00')
   let input = @dwarf.DwarfInput::of_bytes(b"\x00\x80" + payload)
   let (block, input) = expect_input_read(
     input.read_block(lenspec=DwarfTwo, endian=LittleEndian),

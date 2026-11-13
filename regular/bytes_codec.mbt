@@ -35,7 +35,7 @@ pub extend BytesFoldStep with Debug::{to_repr}
 
 ///|
 pub fn bytes_empty() -> Bytes {
-  Bytes::new(0)
+  b""
 }
 
 ///|
@@ -43,7 +43,7 @@ pub fn bytes_create(length : Int32) -> Result[Bytes, String] {
   if length < 0 {
     Err("byte length is negative")
   } else {
-    Ok(Bytes::new(length))
+    Ok(Bytes::make(length, b'\x00'))
   }
 }
 

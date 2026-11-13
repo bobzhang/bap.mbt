@@ -6,6 +6,7 @@ import {
 
 import {
   "moonbitlang/core/bigint",
+  "moonbitlang/core/string",
   "moonbitlang/core/quickcheck",
   "moonbitlang/core/quickcheck/splitmix",
 } for "test"

@@ -26,7 +26,7 @@ pub fn is_anonymous(s : String) -> Bool {
 
 ///|
 fn parse_addr(text : String) -> Result[UInt64, String] {
-  try @string.parse_uint64(text, base=0) catch {
+  try @string.parse_uint64(text, radix=0) catch {
     _ => Err("failed to read symbols, invalid address \{text}")
   } noraise {
     addr => Ok(addr)

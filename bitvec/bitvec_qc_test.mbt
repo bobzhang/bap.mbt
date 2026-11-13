@@ -38,7 +38,7 @@ fn big_abs(v : @bigint.BigInt) -> @bigint.BigInt {
 
 ///|
 fn to_big(v : @bitvec.BitVec) -> @bigint.BigInt {
-  @bigint.BigInt::from_string(v.to_hex(prefix=false), radix=16)
+  try! @string.parse_bigint(v.to_hex(prefix=false), radix=16)
 }
 
 ///|

@@ -1889,7 +1889,7 @@ fn image_elf_section_segment_data(
     return Err("ELF section range is invalid")
   }
   if section.typ == 8 {
-    Ok(Bytes::new(section.size))
+    Ok(Bytes::make(section.size, b'\x00'))
   } else {
     image_elf_section_data(data, section.offset, section.size)
   }

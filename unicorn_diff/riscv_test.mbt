@@ -19,11 +19,9 @@ fn riscv(xlen : @rv.Xlen) -> Isa {
     decode: (bytes, addr) => @rv.decode(bytes, addr, xlen~),
     regs: Array::makei(31, i => "R\{i + 1}"),
     write: (state, name, v) => {
-      state.set("X" + name.view(start_offset=1).to_owned(), word(bits, v))
+      state.set("X" + name[1:].to_owned(), word(bits, v))
     },
-    read: (state, name) => {
-      read_word(state, "X" + name.view(start_offset=1).to_owned())
-    },
+    read: (state, name) => read_word(state, "X" + name[1:].to_owned()),
     fallthrough: insn => insn.addr() + insn.size().to_uint64(),
     care: default_care,
     pc_care: 0xFFFF_FFFF_FFFF_FFFF,

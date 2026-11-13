@@ -408,7 +408,7 @@ fn saturate_max(bits : Int32, signed : Bool) -> @bigint.BigInt {
 
 ///|
 fn bigint_of_word(w : @types.Word) -> @bigint.BigInt {
-  @bigint.BigInt::from_string(w.to_hex(prefix=false), radix=16)
+  try! @string.parse_bigint(w.to_hex(prefix=false), radix=16)
 }
 
 ///|

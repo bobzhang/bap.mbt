@@ -315,7 +315,7 @@ fn ocaml_int(s : String) -> Int32? {
   if digits == "" {
     return None
   }
-  let n = @string.parse_int(digits, base~) catch { _ => return None }
+  let n = @string.parse_int(digits, radix=base) catch { _ => return None }
   Some(if neg { -n } else { n })
 }
 

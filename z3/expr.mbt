@@ -188,7 +188,7 @@ fn word_to_decimal(w : @types.Word) -> String {
   if hex == "" {
     "0"
   } else {
-    @bigint.BigInt::from_string(hex, radix=16).to_string()
+    (try! @string.parse_bigint(hex, radix=16)).to_string()
   }
 }
 
@@ -522,7 +522,7 @@ pub fn Expr::numeral_string(self : Expr) -> String? {
 pub fn Expr::to_word(self : Expr) -> @types.Word? {
   guard self.sort() is BitVec(width) else { return None }
   guard self.numeral_string() is Some(dec) else { return None }
-  let hex = @bigint.BigInt::from_string(dec).to_string(radix=16)
+  let hex = (try! @string.parse_bigint(dec)).to_string(radix=16)
   Some(@types.Word::from_hex(width~, hex)) catch {
     _ => None
   }

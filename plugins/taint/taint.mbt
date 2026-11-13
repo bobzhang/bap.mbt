@@ -78,7 +78,7 @@ fn hex_digit(c : Char) -> Int32? {
 /// value wraps modulo 2^64).
 fn parse_word(s : String) -> Int64? {
   guard s.has_prefix("0x") || s.has_prefix("0X") else { None }
-  let digits = s.view(start_offset=2)
+  let digits = s[2:]
   if digits.is_empty() || digits.length() > 16 {
     return None
   }
@@ -121,7 +121,7 @@ fn tokens(s : String) -> (Array[String], Bool)? {
   let is_list = text.has_prefix("(")
   let body = if is_list {
     guard text.has_suffix(")") else { return None }
-    text.view(start_offset=1, end_offset=text.length() - 1).to_owned()
+    text[1:text.length() - 1].to_owned()
   } else {
     text
   }

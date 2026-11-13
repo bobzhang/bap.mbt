@@ -13,7 +13,7 @@ fn a64() -> Isa {
     encode: code => {
       Bytes::makei(code.length() / 2, i => {
         let k = i / 4
-        let v = parse_hex(code.view(start_offset=k * 8, end_offset=(k + 1) * 8))
+        let v = parse_hex(code[k * 8:(k + 1) * 8])
         (v >> (8 * (i % 4))).to_byte()
       })
     },

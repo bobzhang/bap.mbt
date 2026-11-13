@@ -100,7 +100,7 @@ pub fn Bound::parse(s : String) -> Bound raise BoundParseError {
   let n = s.length()
   match (if n > 0 { counter_of_suffix(s[n - 1]) } else { None }) {
     None => { counter: Clk, limit: parse_int(s), }
-    Some(counter) => { counter, limit: parse_int(s.view(end_offset=n - 1)), }
+    Some(counter) => { counter, limit: parse_int(s[:n - 1]), }
   }
 }
 

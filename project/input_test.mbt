@@ -275,7 +275,7 @@ test "project file library loading assigns page-aligned unit biases" {
           name=".text",
           endian=LittleEndian,
           addr~,
-          Bytes::new(size),
+          Bytes::make(size, b'\x00'),
           executable=true,
         )
         Ok(

@@ -60,7 +60,7 @@ pub fn Args::new(
 ///|
 fn parse_int64(s : String) -> Int64? {
   let (neg, body) = if s.has_prefix("-") {
-    (true, s.view(start_offset=1))
+    (true, s[1:])
   } else {
     (false, s[:])
   }
@@ -68,7 +68,7 @@ fn parse_int64(s : String) -> Int64? {
     return None
   }
   let (radix, digits) = if body.has_prefix("0x") || body.has_prefix("0X") {
-    (16UL, body.view(start_offset=2))
+    (16UL, body[2:])
   } else {
     (10UL, body)
   }
@@ -100,7 +100,7 @@ pub fn parse_policy(input : String) -> Result[@microx.Policy, String] {
     return Ok(Random)
   }
   if s.has_prefix("(") && s.has_suffix(")") {
-    let body = s.view(start_offset=1, end_offset=s.length() - 1)
+    let body = s[1:s.length() - 1]
     let parts = body
       .split(" ")
       .filter(p => !p.is_empty())

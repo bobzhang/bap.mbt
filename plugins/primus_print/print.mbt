@@ -45,7 +45,7 @@ pub fn stdout_sink(s : String) -> Unit {
     return
   }
   if s.has_suffix("\n") {
-    println(s.view(end_offset=s.length() - 1))
+    println(s[:s.length() - 1])
   } else {
     println(s)
   }
@@ -64,7 +64,7 @@ fn starts_with(name : String, c : Char) -> Bool {
 ///|
 fn strip(name : String) -> String {
   if starts_with(name, '+') || starts_with(name, '-') {
-    name.view(start_offset=1).to_owned()
+    name[1:].to_owned()
   } else {
     name
   }

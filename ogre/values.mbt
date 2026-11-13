@@ -182,8 +182,8 @@ fn parse_ocaml_float(text : String) -> Double? {
     return None
   }
   let (negative, body) = match s.get_char(0) {
-    Some('-') => (true, s.view(start_offset=1).to_owned())
-    Some('+') => (false, s.view(start_offset=1).to_owned())
+    Some('-') => (true, s[1:].to_owned())
+    Some('+') => (false, s[1:].to_owned())
     _ => (false, s)
   }
   let lower = body.to_lower()
@@ -192,7 +192,7 @@ fn parse_ocaml_float(text : String) -> Double? {
     "nan" => Some(@double.not_a_number)
     _ =>
       if lower.has_prefix("0x") {
-        parse_hex_float(lower.view(start_offset=2).to_owned())
+        parse_hex_float(lower[2:].to_owned())
       } else if lower.has_prefix("+") ||
         lower.has_prefix("-") ||
         lower.contains("inf") ||
@@ -286,8 +286,8 @@ fn format_g_finite(x : Double, precision : Int32) -> String {
     out.write_char('-')
   }
   if exp10 < -4 || exp10 >= precision {
-    out.write_string(digits.view(end_offset=1).to_owned())
-    let rest = trim_trailing_zeros(digits.view(start_offset=1).to_owned())
+    out.write_string(digits[:1].to_owned())
+    let rest = trim_trailing_zeros(digits[1:].to_owned())
     if rest != "" {
       out.write_char('.')
       out.write_string(rest)
@@ -300,10 +300,8 @@ fn format_g_finite(x : Double, precision : Int32) -> String {
     }
     out.write_string(magnitude.to_string())
   } else if exp10 >= 0 {
-    out.write_string(digits.view(end_offset=exp10 + 1).to_owned())
-    let rest = trim_trailing_zeros(
-      digits.view(start_offset=exp10 + 1).to_owned(),
-    )
+    out.write_string(digits[:exp10 + 1].to_owned())
+    let rest = trim_trailing_zeros(digits[exp10 + 1:].to_owned())
     if rest != "" {
       out.write_char('.')
       out.write_string(rest)
@@ -325,7 +323,7 @@ fn trim_trailing_zeros(text : String) -> String {
   while end > 0 && text[end - 1] == '0' {
     end -= 1
   }
-  text.view(end_offset=end).to_owned()
+  text[:end].to_owned()
 }
 
 ///|

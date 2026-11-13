@@ -72,7 +72,7 @@ pub fn ProjectRelocations::create(
 /// `name@version` is `name`; names that start with `@` are kept.
 fn project_relocation_chop_version(name : String) -> String {
   match name.find("@") {
-    Some(i) if i > 0 => name.view(end_offset=i).to_owned()
+    Some(i) if i > 0 => name[:i].to_owned()
     _ => name
   }
 }
@@ -430,11 +430,7 @@ pub fn ProjectRelocations::stub_name(
     for stmt in bil {
       match @types.Stmt::decode(@types.Stmt::call(), stmt) {
         Some(name) if name.has_suffix(":external") =>
-          return Some(
-            name
-            .view(end_offset=name.length() - ":external".length())
-            .to_owned(),
-          )
+          return Some(name[:name.length() - ":external".length()].to_owned())
         _ => ()
       }
     }

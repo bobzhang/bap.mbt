@@ -80,7 +80,7 @@ fn strip(s : StringView) -> String {
         is_ws(s.code_unit_at(stop - 1).to_int().unsafe_to_char()) {
     stop -= 1
   }
-  s.view(start_offset=start, end_offset=stop).to_owned()
+  s[start:stop].to_owned()
 }
 
 ///|
@@ -90,7 +90,7 @@ fn lstrip(s : StringView) -> String {
         is_ws(s.code_unit_at(start).to_int().unsafe_to_char()) {
     start += 1
   }
-  s.view(start_offset=start).to_owned()
+  s[start:].to_owned()
 }
 
 ///|
@@ -99,17 +99,22 @@ fn rstrip(s : StringView) -> String {
   while stop > 0 && is_ws(s.code_unit_at(stop - 1).to_int().unsafe_to_char()) {
     stop -= 1
   }
-  s.view(end_offset=stop).to_owned()
+  s[:stop].to_owned()
 }
 
 ///|
 /// Splits `s` at the first occurrence of `sep` (Base `String.lsplit2`).
+// Retain the existing one-code-unit suffix advance for this compatibility
+// helper; changing separator semantics is outside the toolchain migration.
 fn lsplit2(s : String, sep : Char) -> (String, String)? {
   match s.find(sep.to_string()) {
     None => None
     Some(i) =>
       Some(
-        (s.view(end_offset=i).to_owned(), s.view(start_offset=i + 1).to_owned()),
+        (
+          s[:i].to_owned(),
+          s.unsafe_view(start=i + 1, end=s.length()).to_owned(),
+        ),
       )
   }
 }

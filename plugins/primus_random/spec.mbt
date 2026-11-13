@@ -229,14 +229,14 @@ pub fn spec_type() -> @bap_main.Type[Spec] {
 
 ///|
 fn parse_int(s : String) -> Int32 raise SpecError {
-  @string.parse_int(s, base=0) catch {
+  @string.parse_int(s, radix=0) catch {
     _ => raise SpecError("expected a number, got \{s}")
   }
 }
 
 ///|
 fn parse_int64(s : String) -> Int64 raise SpecError {
-  @string.parse_int64(s, base=0) catch {
+  @string.parse_int64(s, radix=0) catch {
     _ => raise SpecError("expected a number, got \{s}")
   }
 }

@@ -206,11 +206,11 @@ fn btx_lifter(
   }
   let rest = rest.to_owned()
   let (size, form) = if rest.has_prefix("16") {
-    (16, rest.view(start_offset=2).to_owned())
+    (16, rest[2:].to_owned())
   } else if rest.has_prefix("32") {
-    (32, rest.view(start_offset=2).to_owned())
+    (32, rest[2:].to_owned())
   } else if rest.has_prefix("64") {
-    (64, rest.view(start_offset=2).to_owned())
+    (64, rest[2:].to_owned())
   } else {
     return None
   }

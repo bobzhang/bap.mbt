@@ -164,8 +164,13 @@ fn Parser::consume_if_char(self : Parser, c : UInt16) -> Bool {
 }
 
 ///|
+// Preserve raw parser offsets and the legacy bounds check. Clamped text
+// slices would silently move an offset inside a surrogate pair.
 fn Parser::slice(self : Parser, start : Int32, end : Int32) -> StringView {
-  self.input.view(start_offset=start, end_offset=end)
+  guard start >= 0 && start <= end && end <= self.input.length() else {
+    abort("Invalid index for View")
+  }
+  self.input.unsafe_view(start~, end~)
 }
 
 ///|

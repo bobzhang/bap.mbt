@@ -50,7 +50,7 @@ fn hex(w : @types.Word) -> String {
   while i < digits.length() - 1 && digits[i] == '0' {
     i += 1
   }
-  "0x" + digits.view(start_offset=i).to_owned()
+  "0x" + digits[i:].to_owned()
 }
 
 ///|

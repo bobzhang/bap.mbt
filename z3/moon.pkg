@@ -1,5 +1,6 @@
 import {
   "bobzhang/bap/types",
+  "moonbitlang/core/string",
   "moonbitlang/core/bigint",
   "moonbitlang/core/encoding/utf8",
 }

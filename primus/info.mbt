@@ -25,7 +25,7 @@ pub fn Info::long(self : Info) -> String {
 ///|
 fn info_unquote(s : String) -> String {
   if s.length() >= 2 && s.has_prefix("\"") && s.has_suffix("\"") {
-    s.view(start_offset=1, end_offset=s.length() - 1).to_owned()
+    s[1:s.length() - 1].to_owned()
   } else {
     s
   }

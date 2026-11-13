@@ -113,7 +113,7 @@ fn bytes_value(bytes : BytesView, big_endian : Bool) -> @bigint.BigInt {
 
 ///|
 fn word_value(word : @types.Word) -> @bigint.BigInt {
-  @bigint.BigInt::from_string(word.to_bitvec().to_hex(prefix=false), radix=16)
+  try! @string.parse_bigint(word.to_bitvec().to_hex(prefix=false), radix=16)
 }
 
 ///|

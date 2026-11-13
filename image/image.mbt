@@ -38,7 +38,7 @@ pub extend ImageLookupError with Debug::{to_repr}
 
 ///|
 fn empty_bytes() -> Bytes {
-  Bytes::new(0)
+  Bytes::make(0, b'\x00')
 }
 
 ///|

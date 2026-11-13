@@ -5,7 +5,7 @@ fn byte_values(bytes : Bytes) -> Array[Int32] {
 
 ///|
 test "translated BAP bytes create allocates zero-filled byte storage" {
-  let bytes = Bytes::new(8)
+  let bytes = Bytes::make(8, b'\x00')
   assert_true(bytes.length() == 8)
   assert_true(byte_values(bytes) == [0, 0, 0, 0, 0, 0, 0, 0])
   assert_true(@regular.bytes_empty().length() == 0)

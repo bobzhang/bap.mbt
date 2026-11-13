@@ -7,6 +7,10 @@ on:
 
 jobs:
   check:
+    strategy:
+      fail-fast: false
+      matrix:
+        moonbit: [pre-release]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -28,3 +32,5 @@ jobs:
             sort | while read -r pkg; do
               moon fmt --check "$pkg" || exit 1
             done
+      - name: Run supported-target tests
+        run: moon test --target all --deny-warn -j 2

@@ -36,6 +36,76 @@ fn eval2(e : @types.Exp, x : @types.Word, y : @types.Word) -> @types.Word raise 
 }
 
 ///|
+// Host arithmetic may choose a different NaN sign or payload. Keep exact
+// word equality for every other result, including signed zero and infinity.
+fn same_fp_result(got : @types.Word, expected : @types.Word) -> Bool raise {
+  if got == expected {
+    return true
+  }
+  if got.width() != expected.width() {
+    return false
+  }
+  let (exponent, fraction) = match got.width() {
+    32 => (0x7F800000UL, 0x007FFFFFUL)
+    64 => (0x7FF0000000000000UL, 0x000FFFFFFFFFFFFFUL)
+    _ => return false
+  }
+  let a = got.to_uint64()
+  let b = expected.to_uint64()
+  (a & exponent) == exponent &&
+  (a & fraction) != 0UL &&
+  (b & exponent) == exponent &&
+  (b & fraction) != 0UL
+}
+
+///|
+test "NaN comparison preserves non-NaN bit equality and BAP qnan" {
+  for width in [32, 64] {
+    let positive_nan = try! @types.Word::of_int64(
+      if width == 32 {
+        0x7FC00000L
+      } else {
+        0x7FF8000000000000L
+      },
+      width~,
+    )
+    let negative_nan = try! @types.Word::of_int64(
+      if width == 32 {
+        0xFFC00000L
+      } else {
+        0xFFF8000000000000UL.reinterpret_as_int64()
+      },
+      width~,
+    )
+    let zero = try! @types.Word::of_int64(0L, width~)
+    let negative_zero = try! @types.Word::of_int64(
+      if width == 32 {
+        0x80000000L
+      } else {
+        0x8000000000000000UL.reinterpret_as_int64()
+      },
+      width~,
+    )
+    let infinity = try! @types.Word::of_int64(
+      if width == 32 {
+        0x7F800000L
+      } else {
+        0x7FF0000000000000L
+      },
+      width~,
+    )
+    assert_true(same_fp_result(positive_nan, negative_nan))
+    assert_false(same_fp_result(positive_nan, infinity))
+    assert_false(same_fp_result(zero, positive_nan))
+    assert_false(same_fp_result(zero, negative_zero))
+    assert_true(same_fp_result(infinity, infinity))
+    // Test BAP's exact quiet-NaN representation independently of the host.
+    let div = fp_binop(width, (ct, x, y) => ct.fdiv(ct.rne, x, y))
+    assert_eq(eval2(div, zero, zero), negative_nan)
+  }
+}
+
+///|
 let f32_samples : Array[Float] = [
   1.0, 2.0, 3.0, 0.5, -1.5, 100.25, 1.0e-3, -7.75, 3.4e38, 1.0e-40, 0.0, 12345.678,
 ]
@@ -52,7 +122,7 @@ fn check_f32(
     for b in f32_samples {
       let got = eval2(e, f32_word(a), f32_word(b))
       let expected = f32_word(native(a, b))
-      if got != expected {
+      if !same_fp_result(got, expected) {
         wrong.push(
           "\{name} \{a} \{b}: \{got.to_string()} /= \{expected.to_string()}",
         )
@@ -67,8 +137,7 @@ test "floating-point emulation of binary32 arithmetic" {
   let add = check_f32("fadd", (ct, x, y) => ct.fadd(ct.rne, x, y), (a, b) => {
     a + b
   })
-  // all results agree with the native arithmetic, except the sign of the
-  // NaN of 0/0 (upstream `qnan` sets the sign bit)
+  // All results agree with host arithmetic, allowing NaN representation differences.
   debug_inspect(
     add,
     content=(
@@ -99,7 +168,7 @@ test "floating-point emulation of binary32 arithmetic" {
   debug_inspect(
     div,
     content=(
-      #|["fdiv 0 0: 0xFFC00000:32u /= 0x7FC00000:32u"]
+      #|[]
     ),
   )
 }
@@ -126,7 +195,7 @@ test "floating-point emulation of binary64 arithmetic" {
       for b in samples {
         let got = eval2(e, f64_word(a), f64_word(b))
         let expected = f64_word((op.2)(a, b))
-        if got != expected {
+        if !same_fp_result(got, expected) {
           wrong.push(
             "\{op.0} \{a} \{b}: \{got.to_string()} /= \{expected.to_string()}",
           )
@@ -137,7 +206,7 @@ test "floating-point emulation of binary64 arithmetic" {
   debug_inspect(
     wrong,
     content=(
-      #|["fdiv 0 0: 0xFFF8000000000000:64u /= 0x7FF8000000000000:64u"]
+      #|[]
     ),
   )
 }
@@ -178,7 +247,11 @@ test "floating-point square roots, casts and predicates" {
   results.push(
     "cast_sfloat -3: \{eval1(of_int, minus3)} (native \{f32_word(-3.0).to_string()})",
   )
-  let nan : Float = 0.0 / 0.0
+  let nan = try! @types.Word::of_int64(0x7FC00000L, width=32)
+  let negative_nan = try! @types.Word::of_int64(0xFFC00000L, width=32)
+  assert_eq(eval1(ct.is_nan(x), negative_nan), "1:1u")
+  assert_eq(eval1(ct.is_fneg(x), nan), "0:1u")
+  assert_eq(eval1(ct.is_fneg(x), negative_nan), "1:1u")
   let inf : Float = 1.0 / 0.0
   for
     p in [
@@ -188,7 +261,9 @@ test "floating-point square roots, casts and predicates" {
       ("is_fzero", ct.is_fzero(x)),
       ("is_fneg", ct.is_fneg(x)),
     ] {
-    let vals = [nan, inf, 0.0, -1.0].map(v => eval1(p.1, f32_word(v)))
+    let vals = [nan, f32_word(inf), f32_word(0.0), f32_word(-1.0)].map(v => {
+      eval1(p.1, v)
+    })
     results.push("\{p.0}: \{vals.join(" ")}")
   }
   let y = ct.var_(@core_theory.Var::create(fs, "y"))

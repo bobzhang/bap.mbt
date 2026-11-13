@@ -4,9 +4,10 @@
 /// This is the port of the `Or_error.t` failures of BAP's `Ogre` module. The
 /// payload is the human-readable message, spelled like upstream wherever the
 /// upstream message is deterministic.
+#derive(Debug, Eq)
 pub(all) suberror OgreError {
   OgreError(String)
-} derive(Debug, Eq)
+}
 
 ///|
 /// Returns the human-readable message carried by the error.

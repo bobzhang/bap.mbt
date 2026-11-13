@@ -8,12 +8,13 @@
 
 ///|
 /// The kind of a file-system entry.
+#derive(Eq, Debug)
 pub(all) enum FileKind {
   RegularFile
   Directory
   Symlink
   OtherFile
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend FileKind with Eq::{equal, not_equal}
@@ -23,6 +24,7 @@ pub extend FileKind with Debug::{to_repr}
 
 ///|
 /// The subset of `struct stat` used by BAP.
+#derive(Eq, Debug)
 pub(all) struct FileStat {
   /// the kind of the entry
   kind : FileKind
@@ -32,7 +34,7 @@ pub(all) struct FileStat {
   mtime : Double
   /// the permission bits (`st_mode & 0o7777`)
   perm : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend FileStat with Eq::{equal, not_equal}

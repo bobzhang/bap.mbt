@@ -7,33 +7,33 @@ import {
 }
 
 // Values
-pub fn bytes_bin_read(BytesView, pos? : Int) -> Result[(Bytes, Int), String]
+pub fn bytes_bin_read(BytesView, pos? : Int32) -> Result[(Bytes, Int32), String]
 
-pub fn bytes_bin_size(BytesView) -> Int
+pub fn bytes_bin_size(BytesView) -> Int32
 
 pub fn bytes_bin_write(BytesView) -> Bytes
 
-pub fn bytes_blit(BytesView, Int, BytesView, Int, Int) -> Result[Bytes, String]
+pub fn bytes_blit(BytesView, Int32, BytesView, Int32, Int32) -> Result[Bytes, String]
 
-pub fn bytes_blito(BytesView, BytesView, src_pos? : Int, dst_pos? : Int, len? : Int) -> Result[Bytes, String]
+pub fn bytes_blito(BytesView, BytesView, src_pos? : Int32, dst_pos? : Int32, len? : Int32) -> Result[Bytes, String]
 
 pub fn bytes_capitalize(BytesView) -> Bytes
 
 pub fn bytes_cat(BytesView, BytesView) -> Bytes
 
-pub fn bytes_compare(BytesView, BytesView) -> Int
+pub fn bytes_compare(BytesView, BytesView) -> Int32
 
 pub fn bytes_concat(BytesView, ArrayView[Bytes]) -> Bytes
 
 pub fn bytes_contains(BytesView, Byte) -> Bool
 
-pub fn bytes_contains_from(BytesView, Int, Byte) -> Bool
+pub fn bytes_contains_from(BytesView, Int32, Byte) -> Bool
 
 pub fn bytes_copy(BytesView) -> Bytes
 
-pub fn bytes_count(BytesView, (Byte) -> Bool) -> Int
+pub fn bytes_count(BytesView, (Byte) -> Bool) -> Int32
 
-pub fn bytes_create(Int) -> Result[Bytes, String]
+pub fn bytes_create(Int32) -> Result[Bytes, String]
 
 pub fn bytes_empty() -> Bytes
 
@@ -43,9 +43,9 @@ pub fn bytes_escaped(BytesView) -> Bytes
 
 pub fn bytes_exists(BytesView, (Byte) -> Bool) -> Bool
 
-pub fn bytes_extend(BytesView, Int, Int) -> Result[Bytes, String]
+pub fn bytes_extend(BytesView, Int32, Int32) -> Result[Bytes, String]
 
-pub fn bytes_fill(BytesView, Int, Int, Byte) -> Result[Bytes, String]
+pub fn bytes_fill(BytesView, Int32, Int32, Byte) -> Result[Bytes, String]
 
 pub fn bytes_find(BytesView, (Byte) -> Bool) -> Byte?
 
@@ -63,31 +63,31 @@ pub fn bytes_from_hex(StringView) -> Result[Bytes, String]
 
 pub fn bytes_from_sexp_atom(StringView) -> Result[Bytes, String]
 
-pub fn bytes_get(BytesView, Int) -> Byte?
+pub fn bytes_get(BytesView, Int32) -> Byte?
 
-pub fn bytes_hash(BytesView) -> Int
+pub fn bytes_hash(BytesView) -> Int32
 
-pub fn bytes_index(BytesView, Byte) -> Int?
+pub fn bytes_index(BytesView, Byte) -> Int32?
 
-pub fn bytes_index_from(BytesView, Int, Byte) -> Int?
+pub fn bytes_index_from(BytesView, Int32, Byte) -> Int32?
 
-pub fn bytes_init(Int, (Int) -> Byte) -> Result[Bytes, String]
+pub fn bytes_init(Int32, (Int32) -> Byte) -> Result[Bytes, String]
 
 pub fn bytes_is_empty(BytesView) -> Bool
 
 pub fn bytes_iter(BytesView, (Byte) -> Unit) -> Unit
 
-pub fn bytes_iteri(BytesView, (Int, Byte) -> Unit) -> Unit
+pub fn bytes_iteri(BytesView, (Int32, Byte) -> Unit) -> Unit
 
-pub fn bytes_length(BytesView) -> Int
+pub fn bytes_length(BytesView) -> Int32
 
 pub fn bytes_lowercase(BytesView) -> Bytes
 
-pub fn bytes_make(Int, Byte) -> Result[Bytes, String]
+pub fn bytes_make(Int32, Byte) -> Result[Bytes, String]
 
 pub fn bytes_map(BytesView, (Byte) -> Byte) -> Bytes
 
-pub fn bytes_mapi(BytesView, (Int, Byte) -> Byte) -> Bytes
+pub fn bytes_mapi(BytesView, (Int32, Byte) -> Byte) -> Bytes
 
 pub fn bytes_max_elt(BytesView) -> Byte?
 
@@ -97,17 +97,17 @@ pub fn bytes_min_elt(BytesView) -> Byte?
 
 pub fn bytes_of_string(StringView) -> Result[Bytes, String]
 
-pub fn bytes_rcontains_from(BytesView, Int, Byte) -> Bool
+pub fn bytes_rcontains_from(BytesView, Int32, Byte) -> Bool
 
-pub fn bytes_rindex(BytesView, Byte) -> Int?
+pub fn bytes_rindex(BytesView, Byte) -> Int32?
 
-pub fn bytes_rindex_from(BytesView, Int, Byte) -> Int?
+pub fn bytes_rindex_from(BytesView, Int32, Byte) -> Int32?
 
-pub fn bytes_set(BytesView, Int, Byte) -> Result[Bytes, String]
+pub fn bytes_set(BytesView, Int32, Byte) -> Result[Bytes, String]
 
-pub fn bytes_sub(BytesView, Int, Int) -> Result[Bytes, String]
+pub fn bytes_sub(BytesView, Int32, Int32) -> Result[Bytes, String]
 
-pub fn bytes_subo(BytesView, pos? : Int, len? : Int) -> Result[Bytes, String]
+pub fn bytes_subo(BytesView, pos? : Int32, len? : Int32) -> Result[Bytes, String]
 
 pub fn bytes_to_array(BytesView) -> Array[Byte]
 
@@ -143,21 +143,21 @@ pub fn[T] seq_all(ArrayView[T], (T) -> Bool) -> Bool
 
 pub fn[T] seq_append(ArrayView[T], ArrayView[T]) -> Array[T]
 
-pub fn[A, B] seq_compare((A, B) -> Int, ArrayView[A], ArrayView[B]) -> Int
+pub fn[A, B] seq_compare((A, B) -> Int32, ArrayView[A], ArrayView[B]) -> Int32
 
 pub fn[T] seq_concat(ArrayView[Array[T]]) -> Array[T]
 
 pub fn[A, B] seq_concat_map(ArrayView[A], (A) -> Array[B]) -> Array[B]
 
-pub fn[A, B] seq_concat_mapi(ArrayView[A], (Int, A) -> Array[B]) -> Array[B]
+pub fn[A, B] seq_concat_mapi(ArrayView[A], (Int32, A) -> Array[B]) -> Array[B]
 
 pub fn[T] seq_cons(T, ArrayView[T]) -> Array[T]
 
 pub fn[A, S, R] seq_delayed_fold(ArrayView[A], init~ : S, f~ : (S, A, (S) -> R) -> R, finish~ : (S) -> R) -> R
 
-pub fn[T] seq_drop(ArrayView[T], Int) -> Array[T]
+pub fn[T] seq_drop(ArrayView[T], Int32) -> Array[T]
 
-pub fn[T] seq_drop_eagerly(ArrayView[T], Int) -> Array[T]
+pub fn[T] seq_drop_eagerly(ArrayView[T], Int32) -> Array[T]
 
 pub fn[T] seq_drop_while(ArrayView[T], (T) -> Bool) -> Array[T]
 
@@ -169,7 +169,7 @@ pub fn[T] seq_filter(ArrayView[T], (T) -> Bool) -> Array[T]
 
 pub fn[A, B] seq_filter_map(ArrayView[A], (A) -> B?) -> Array[B]
 
-pub fn[A, B] seq_filter_mapi(ArrayView[A], (Int, A) -> B?) -> Array[B]
+pub fn[A, B] seq_filter_mapi(ArrayView[A], (Int32, A) -> B?) -> Array[B]
 
 pub fn[T] seq_filter_opt(ArrayView[T?]) -> Array[T]
 
@@ -179,7 +179,7 @@ pub fn[A, B] seq_find_map(ArrayView[A], (A) -> B?) -> B?
 
 pub fn[A, B] seq_fold(ArrayView[A], B, (B, A) -> B) -> B
 
-pub fn[A, B] seq_foldi(ArrayView[A], B, (Int, B, A) -> B) -> B
+pub fn[A, B] seq_foldi(ArrayView[A], B, (Int32, B, A) -> B) -> B
 
 pub fn[T] seq_for_all(ArrayView[T], (T) -> Bool) -> Bool
 
@@ -199,33 +199,33 @@ pub fn[T] seq_hd(ArrayView[T]) -> T?
 
 pub fn[T] seq_hd_exn(ArrayView[T]) -> T raise SeqError
 
-pub fn[T] seq_init(Int, (Int) -> T) -> Array[T]
+pub fn[T] seq_init(Int32, (Int32) -> T) -> Array[T]
 
 pub fn[T] seq_is_empty(ArrayView[T]) -> Bool
 
 pub fn[T] seq_iter(ArrayView[T], (T) -> Unit) -> Unit
 
-pub fn[T] seq_iteri(ArrayView[T], (Int, T) -> Unit) -> Unit
+pub fn[T] seq_iteri(ArrayView[T], (Int32, T) -> Unit) -> Unit
 
 pub fn[T] seq_last(ArrayView[T]) -> T?
 
-pub fn[T] seq_length(ArrayView[T]) -> Int
+pub fn[T] seq_length(ArrayView[T]) -> Int32
 
 pub fn[A, B] seq_map(ArrayView[A], (A) -> B) -> Array[B]
 
-pub fn[A, B] seq_mapi(ArrayView[A], (Int, A) -> B) -> Array[B]
+pub fn[A, B] seq_mapi(ArrayView[A], (Int32, A) -> B) -> Array[B]
 
 pub fn[T] seq_next(ArrayView[T]) -> (T, Array[T])?
 
-pub fn[T] seq_nth(ArrayView[T], Int) -> T?
+pub fn[T] seq_nth(ArrayView[T], Int32) -> T?
 
 pub fn[T] seq_of_array(ArrayView[T]) -> Array[T]
 
 pub fn[T] seq_of_list(@list.List[T]) -> Array[T]
 
-pub fn seq_range(Int, Int, inclusive? : Bool) -> Array[Int]
+pub fn seq_range(Int32, Int32, inclusive? : Bool) -> Array[Int32]
 
-pub fn[T : Printable] seq_render(ArrayView[T], max? : Int) -> String
+pub fn[T : Printable] seq_render(ArrayView[T], max? : Int32) -> String
 
 pub fn[T] seq_return(T) -> Array[T]
 
@@ -235,9 +235,9 @@ pub fn[T] seq_shift_right(ArrayView[T], T) -> Array[T]
 
 pub fn[T] seq_singleton(T) -> Array[T]
 
-pub fn[T] seq_split_n(ArrayView[T], Int) -> (Array[T], Array[T])
+pub fn[T] seq_split_n(ArrayView[T], Int32) -> (Array[T], Array[T])
 
-pub fn[T] seq_take(ArrayView[T], Int) -> Array[T]
+pub fn[T] seq_take(ArrayView[T], Int32) -> Array[T]
 
 pub fn[T] seq_take_while(ArrayView[T], (T) -> Bool) -> Array[T]
 
@@ -256,18 +256,20 @@ pub fn[T, S] seq_unfold_step(init~ : S, f~ : (S) -> SeqStep[T, S]) -> Array[T]
 pub fn[A, B, S] seq_unfold_with(ArrayView[A], init~ : S, f~ : (S, A) -> SeqStep[B, S]) -> Array[B]
 
 // Errors
+#derive(Eq, @debug.Debug)
 pub(all) suberror SeqError {
   EmptySeq
-} derive(Eq, @debug.Debug)
+}
 pub fn SeqError::equal(Self, Self) -> Bool
 pub fn SeqError::not_equal(Self, Self) -> Bool
 pub fn SeqError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) enum BytesFoldStep[A, R] {
   BytesContinue(A)
   BytesStop(R)
-} derive(Eq, @debug.Debug)
+}
 pub fn[A : Eq, R : Eq] BytesFoldStep::equal(Self[A, R], Self[A, R]) -> Bool
 pub fn[A : Eq, R : Eq] BytesFoldStep::not_equal(Self[A, R], Self[A, R]) -> Bool
 pub fn[A : @debug.Debug, R : @debug.Debug] BytesFoldStep::to_repr(Self[A, R]) -> @debug.Repr
@@ -285,24 +287,26 @@ pub(all) struct CacheService {
 }
 pub fn CacheService::oblivion() -> Self
 
-pub(all) struct Digest(String) derive(Eq, Hash, @debug.Debug)
+#derive(Eq, Hash, @debug.Debug)
+pub(all) struct Digest(String)
 pub fn Digest::add(Self, StringView) -> Self
 pub fn Digest::add_bytes(Self, BytesView) -> Self
-pub fn Digest::compare(Self, Self) -> Int
+pub fn Digest::compare(Self, Self) -> Int32
 pub fn Digest::create(namespace_name~ : StringView) -> Self
 pub fn Digest::equal(Self, Self) -> Bool
-pub fn Digest::hash(Self) -> Int
+pub fn Digest::hash(Self) -> Int32
 pub fn Digest::hash_combine(Self, Hasher) -> Unit
 pub fn Digest::not_equal(Self, Self) -> Bool
 pub fn Digest::to_repr(Self) -> @debug.Repr
 pub fn Digest::to_string(Self) -> String
 pub impl Printable for Digest
 
+#derive(Eq, @debug.Debug)
 pub(all) struct FormatInfo {
   name : String
   version : String
   description : String?
-} derive(Eq, @debug.Debug)
+}
 pub fn FormatInfo::equal(Self, Self) -> Bool
 pub fn FormatInfo::new(name~ : String, version~ : String, description? : String) -> Self
 pub fn FormatInfo::not_equal(Self, Self) -> Bool
@@ -310,7 +314,8 @@ pub fn FormatInfo::to_repr(Self) -> @debug.Repr
 pub fn FormatInfo::to_string(Self) -> String
 pub impl Printable for FormatInfo
 
-type FormatRegistry derive(@debug.Debug)
+#derive(@debug.Debug)
+type FormatRegistry
 pub fn FormatRegistry::add_reader(Self, FormatInfo) -> Unit
 pub fn FormatRegistry::add_writer(Self, FormatInfo) -> Unit
 pub fn FormatRegistry::default_reader(Self) -> FormatInfo?
@@ -329,8 +334,8 @@ pub fn[V] PrefixTrie::find(Self[V], StringView) -> V?
 pub fn[V, A] PrefixTrie::fold(Self[V], init~ : A, f~ : (A, String, V) -> A) -> A
 pub fn[V] PrefixTrie::is_empty(Self[V]) -> Bool
 pub fn[V] PrefixTrie::iter(Self[V], f~ : (String, V) -> Unit) -> Unit
-pub fn[V] PrefixTrie::length(Self[V]) -> Int
-pub fn[V] PrefixTrie::longest_match(Self[V], StringView) -> (Int, V)?
+pub fn[V] PrefixTrie::length(Self[V]) -> Int32
+pub fn[V] PrefixTrie::longest_match(Self[V], StringView) -> (Int32, V)?
 pub fn[V] PrefixTrie::new() -> Self[V]
 pub fn[V] PrefixTrie::remove(Self[V], StringView) -> Unit
 
@@ -338,11 +343,12 @@ type SeqGenerator[R, T]
 pub fn[A, B, T] SeqGenerator::bind(Self[A, T], (A) -> Self[B, T]) -> Self[B, T]
 pub fn[A, B, T] SeqGenerator::map(Self[A, T], (A) -> B) -> Self[B, T]
 
+#derive(Eq, @debug.Debug)
 pub(all) enum SeqStep[T, S] {
   SeqYield(T, S)
   SeqSkip(S)
   SeqDone
-} derive(Eq, @debug.Debug)
+}
 pub fn[T : Eq, S : Eq] SeqStep::equal(Self[T, S], Self[T, S]) -> Bool
 pub fn[T : Eq, S : Eq] SeqStep::not_equal(Self[T, S], Self[T, S]) -> Bool
 pub fn[T : @debug.Debug, S : @debug.Debug] SeqStep::to_repr(Self[T, S]) -> @debug.Repr
@@ -354,8 +360,8 @@ pub fn[V] SuffixTrie::find(Self[V], StringView) -> V?
 pub fn[V, A] SuffixTrie::fold(Self[V], init~ : A, f~ : (A, String, V) -> A) -> A
 pub fn[V] SuffixTrie::is_empty(Self[V]) -> Bool
 pub fn[V] SuffixTrie::iter(Self[V], f~ : (String, V) -> Unit) -> Unit
-pub fn[V] SuffixTrie::length(Self[V]) -> Int
-pub fn[V] SuffixTrie::longest_match(Self[V], StringView) -> (Int, V)?
+pub fn[V] SuffixTrie::length(Self[V]) -> Int32
+pub fn[V] SuffixTrie::longest_match(Self[V], StringView) -> (Int32, V)?
 pub fn[V] SuffixTrie::new() -> Self[V]
 pub fn[V] SuffixTrie::remove(Self[V], StringView) -> Unit
 
@@ -365,6 +371,6 @@ pub fn[V] SuffixTrie::remove(Self[V], StringView) -> Unit
 pub(open) trait Printable {
   fn to_string(Self) -> String
 }
-pub impl Printable for Int
+pub impl Printable for Int32
 pub impl Printable for UInt64
 pub impl Printable for String

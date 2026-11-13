@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum BareTerm {
   BareAtom(String)
   BareList(Array[BareTerm])
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend BareTerm with Eq::{not_equal, equal}
@@ -17,12 +18,13 @@ pub type BareTuple = BareTerm
 pub type BareFact = BareTerm
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum BareError {
   BareUnbound(String)
   BareWildcard
   BareParseError(String)
   BareNotASexp(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend BareError with Eq::{not_equal, equal}

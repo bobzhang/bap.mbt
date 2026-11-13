@@ -22,10 +22,11 @@ pub let component_name : String = "observation-printer"
 
 ///|
 /// Errors of the monitor specification.
+#derive(Debug)
 pub suberror PrintError {
   UnknownProvider(String)
   BadRules(String)
-} derive(Debug)
+}
 
 ///|
 pub impl Show for PrintError with fn output(self, logger) {

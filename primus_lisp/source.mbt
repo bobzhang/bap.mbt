@@ -7,25 +7,28 @@
 ///
 /// `line` is 1-based, `col` and `offset` are 0-based and are counted in
 /// UTF-16 code units.
+#derive(Eq, Compare, Debug)
 pub(all) struct Position {
   line : Int32
   col : Int32
   offset : Int32
-} derive(Eq, Compare, Debug)
+}
 
 ///|
 /// A region of a source text, `end_pos` is exclusive.
+#derive(Eq, Compare, Debug)
 pub(all) struct Range {
   start_pos : Position
   end_pos : Position
-} derive(Eq, Compare, Debug)
+}
 
 ///|
 /// A region of the specified file (upstream `Loc.t`).
+#derive(Eq, Compare, Debug)
 pub(all) struct Loc {
   file : String
   range : Range
-} derive(Eq, Compare, Debug)
+}
 
 ///|
 let no_position : Position = { line: 1, col: 0, offset: 0, }
@@ -90,10 +93,11 @@ pub fn Loc::nth_char(self : Loc, off : Int32) -> Loc {
 
 ///|
 /// A token of the Lisp syntax tree.
+#derive(Eq, Debug)
 pub(all) enum Token {
   Atom(String)
   List(Array[Tree])
-} derive(Eq, Debug)
+}
 
 ///|
 /// A node of the concrete syntax tree. Every node read from a source has a
@@ -102,10 +106,11 @@ pub(all) enum Token {
 ///
 /// Quoted atoms keep their source representation (including the quotes
 /// and the escape sequences), exactly as upstream (Parsexp CST atoms).
+#derive(Eq, Debug)
 pub(all) struct Tree {
   data : Token
   id : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub impl Show for Tree with fn output(self, logger) {
@@ -137,12 +142,13 @@ pub fn Tree::list(xs : Array[Tree], id~ : Int32 = 0) -> Tree {
 
 ///|
 /// Errors of the s-expression reader.
+#derive(Eq, Debug)
 pub(all) suberror SexpError {
   UnexpectedEof(file~ : String, pos~ : Position)
   UnexpectedClosingParen(file~ : String, pos~ : Position)
   UnterminatedString(file~ : String, pos~ : Position)
   UnterminatedComment(file~ : String, pos~ : Position)
-} derive(Eq, Debug)
+}
 
 ///|
 pub impl Show for SexpError with fn output(self, logger) {

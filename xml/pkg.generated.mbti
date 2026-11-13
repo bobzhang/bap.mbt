@@ -15,9 +15,10 @@ pub let ns_xmlns : String
 pub fn parse_document(StringView, strip? : Bool, entity? : (String) -> String?, ns? : (String) -> String?) -> Document raise XmlError
 
 // Errors
+#derive(Eq, @debug.Debug)
 pub(all) suberror XmlError {
   XmlError(pos~ : Pos, String)
-} derive(Eq, @debug.Debug)
+}
 pub fn XmlError::equal(Self, Self) -> Bool
 pub fn XmlError::not_equal(Self, Self) -> Bool
 pub fn XmlError::output(Self, &Logger) -> Unit
@@ -26,18 +27,20 @@ pub fn XmlError::to_string(Self) -> String
 pub impl Show for XmlError
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) struct Attribute {
   name : Name
   value : String
-} derive(Eq, @debug.Debug)
+}
 pub fn Attribute::equal(Self, Self) -> Bool
 pub fn Attribute::not_equal(Self, Self) -> Bool
 pub fn Attribute::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Document {
   dtd : String?
   root : Node
-} derive(Eq, @debug.Debug)
+}
 pub fn Document::equal(Self, Self) -> Bool
 pub fn Document::not_equal(Self, Self) -> Bool
 pub fn Document::to_repr(Self) -> @debug.Repr
@@ -53,12 +56,13 @@ pub fn Input::peek(Self) -> Signal raise XmlError
 pub fn Input::pos(Self) -> Pos
 pub fn Input::read_tree(Self) -> Node raise XmlError
 
+#derive(Eq, Hash, @debug.Debug)
 pub(all) struct Name {
   uri : String
   local_name : String
-} derive(Eq, Hash, @debug.Debug)
+}
 pub fn Name::equal(Self, Self) -> Bool
-pub fn Name::hash(Self) -> Int
+pub fn Name::hash(Self) -> Int32
 pub fn Name::hash_combine(Self, Hasher) -> Unit
 pub fn Name::local_name(String) -> Self
 pub fn Name::not_equal(Self, Self) -> Bool
@@ -67,10 +71,11 @@ pub fn Name::to_repr(Self) -> @debug.Repr
 pub fn Name::to_string(Self) -> String
 pub impl Show for Name
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Node {
   Element(Tag, Array[Node])
   Text(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn Node::attr(Self, String, uri? : String) -> String?
 pub fn Node::children(Self) -> Array[Self]
 pub fn Node::elements(Self, String) -> Array[Self]
@@ -81,28 +86,31 @@ pub fn Node::text(Self) -> String
 pub fn Node::to_repr(Self) -> @debug.Repr
 pub fn Node::to_string(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Pos {
-  line : Int
-  col : Int
-} derive(Eq, @debug.Debug)
+  line : Int32
+  col : Int32
+}
 pub fn Pos::equal(Self, Self) -> Bool
 pub fn Pos::not_equal(Self, Self) -> Bool
 pub fn Pos::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Signal {
   Dtd(String?)
   ElStart(Tag)
   ElEnd
   Data(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn Signal::equal(Self, Self) -> Bool
 pub fn Signal::not_equal(Self, Self) -> Bool
 pub fn Signal::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Tag {
   name : Name
   attrs : Array[Attribute]
-} derive(Eq, @debug.Debug)
+}
 pub fn Tag::attr(Self, String, uri? : String) -> String?
 pub fn Tag::equal(Self, Self) -> Bool
 pub fn Tag::not_equal(Self, Self) -> Bool

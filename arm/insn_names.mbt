@@ -4,6 +4,7 @@
 
 ///|
 /// Data-processing (move/arithmetic/logic/compare) instructions.
+#derive(Eq, Debug)
 pub(all) enum MoveInsn {
   ADCri
   ADCrr
@@ -72,7 +73,7 @@ pub(all) enum MoveInsn {
   TSTrr
   TSTrsi
   TSTrsr
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend MoveInsn with Eq::{equal, not_equal}
@@ -230,6 +231,7 @@ pub fn MoveInsn::all() -> Array[MoveInsn] {
 
 ///|
 /// Bit-manipulation, extension, reversal and byte-swap instructions.
+#derive(Eq, Debug)
 pub(all) enum BitsInsn {
   BFC
   BFI
@@ -248,7 +250,7 @@ pub(all) enum BitsInsn {
   UXTH
   REV
   REV16
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend BitsInsn with Eq::{equal, not_equal}
@@ -306,6 +308,7 @@ pub fn BitsInsn::all() -> Array[BitsInsn] {
 
 ///|
 /// Multiply and multiply-accumulate instructions.
+#derive(Eq, Debug)
 pub(all) enum MultInsn {
   MLA
   MLS
@@ -321,7 +324,7 @@ pub(all) enum MultInsn {
   SMULTB
   UMLAL
   UMULL
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend MultInsn with Eq::{equal, not_equal}
@@ -373,6 +376,7 @@ pub fn MultInsn::all() -> Array[MultInsn] {
 
 ///|
 /// Load/store multiple instructions (`mem_multi_insn`).
+#derive(Eq, Debug)
 pub(all) enum MemMultiInsn {
   LDMDA
   LDMDA_UPD
@@ -390,7 +394,7 @@ pub(all) enum MemMultiInsn {
   STMIA_UPD
   STMIB
   STMIB_UPD
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend MemMultiInsn with Eq::{equal, not_equal}
@@ -446,6 +450,7 @@ pub fn MemMultiInsn::all() -> Array[MemMultiInsn] {
 
 ///|
 /// Single and dual register load/store instructions, including exclusives.
+#derive(Eq, Debug)
 pub(all) enum MemInsn {
   LDRBT_POST_IMM
   LDRBT_POST_REG
@@ -508,7 +513,7 @@ pub(all) enum MemInsn {
   STR_PRE_REG
   STRi12
   STRrs
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend MemInsn with Eq::{equal, not_equal}
@@ -654,6 +659,7 @@ pub fn MemInsn::all() -> Array[MemInsn] {
 
 ///|
 /// Branch instructions.
+#derive(Eq, Debug)
 pub(all) enum BranchInsn {
   BL
   BLX
@@ -664,7 +670,7 @@ pub(all) enum BranchInsn {
   BX_RET
   BX_pred
   Bcc
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend BranchInsn with Eq::{equal, not_equal}
@@ -696,6 +702,7 @@ pub fn BranchInsn::all() -> Array[BranchInsn] {
 
 ///|
 /// System and hint instructions.
+#derive(Eq, Debug)
 pub(all) enum SpecialInsn {
   CPS2p
   DMB
@@ -705,7 +712,7 @@ pub(all) enum SpecialInsn {
   MSR
   PLDi12
   SVC
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend SpecialInsn with Eq::{equal, not_equal}

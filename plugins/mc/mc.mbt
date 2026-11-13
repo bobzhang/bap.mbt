@@ -3,6 +3,7 @@
 
 ///|
 /// The kinds of information that `mc` and `objdump` print.
+#derive(Eq, Debug)
 pub(all) enum Show {
   Insn
   Bil
@@ -14,7 +15,7 @@ pub(all) enum Show {
   Addr
   Memory
   Knowledge
-} derive(Eq, Debug)
+}
 
 ///|
 /// All kinds of outputs, in the order of their declaration.
@@ -116,7 +117,7 @@ pub(all) enum McTarget {
     backend~ : String?,
     cpu~ : String?,
     order~ : @bitvec.Endian,
-    bits~ : Int32
+    bits~ : Int32,
   )
 }
 

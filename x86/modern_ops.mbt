@@ -4,12 +4,13 @@
 
 ///|
 /// The kind of a BTx instruction.
+#derive(Eq)
 priv enum BtKind {
   Bt
   Btc
   Btr
   Bts
-} derive(Eq)
+}
 
 ///|
 fn BtKind::name(self : BtKind) -> String {

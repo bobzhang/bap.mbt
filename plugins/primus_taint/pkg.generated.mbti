@@ -33,7 +33,7 @@ pub fn policy_selector(String) -> (@primus.Machine) -> Unit raise
 
 pub fn primitives() -> Array[Primitive]
 
-pub fn register(default_policy? : String) -> Int
+pub fn register(default_policy? : String) -> Int32
 
 // Errors
 

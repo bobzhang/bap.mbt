@@ -178,7 +178,7 @@ pub fn Exp::compare(self : Exp, other : Exp) -> Int32 {
         mem=right_mem,
         addr=right_addr,
         value=right_value,
-        endian=right_endian
+        endian=right_endian,
       ),
     ) => {
       let mem_order = left_mem.compare(right_mem)

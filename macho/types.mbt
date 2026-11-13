@@ -1,5 +1,6 @@
 ///|
 /// The Mach-O header (`mach_header` / `mach_header_64`).
+#derive(Eq, Debug)
 pub(all) struct Header {
   /// true for `MH_MAGIC_64` files
   is64 : Bool
@@ -12,10 +13,11 @@ pub(all) struct Header {
   ncmds : Int32
   sizeofcmds : Int32
   flags : UInt32
-} derive(Eq, Debug)
+}
 
 ///|
 /// A section of a segment command (`section` / `section_64`).
+#derive(Eq, Debug)
 pub(all) struct Section {
   sectname : String
   segname : String
@@ -28,10 +30,11 @@ pub(all) struct Section {
   flags : UInt32
   reserved1 : UInt32
   reserved2 : UInt32
-} derive(Eq, Debug)
+}
 
 ///|
 /// A segment command (`LC_SEGMENT` / `LC_SEGMENT_64`) with its sections.
+#derive(Eq, Debug)
 pub(all) struct Segment {
   segname : String
   vmaddr : UInt64
@@ -42,19 +45,21 @@ pub(all) struct Segment {
   initprot : Int32
   flags : UInt32
   sections : Array[Section]
-} derive(Eq, Debug)
+}
 
 ///|
 /// The symbol table command (`LC_SYMTAB`).
+#derive(Eq, Debug)
 pub(all) struct Symtab {
   symoff : UInt32
   nsyms : UInt32
   stroff : UInt32
   strsize : UInt32
-} derive(Eq, Debug)
+}
 
 ///|
 /// The dynamic symbol table command (`LC_DYSYMTAB`).
+#derive(Eq, Debug)
 pub(all) struct Dysymtab {
   ilocalsym : UInt32
   nlocalsym : UInt32
@@ -74,10 +79,11 @@ pub(all) struct Dysymtab {
   nextrel : UInt32
   locreloff : UInt32
   nlocrel : UInt32
-} derive(Eq, Debug)
+}
 
 ///|
 /// A dynamic library command (`LC_LOAD_DYLIB`, `LC_ID_DYLIB`, ...).
+#derive(Eq, Debug)
 pub(all) struct Dylib {
   /// the load command (`LC_LOAD_DYLIB`, `LC_LOAD_WEAK_DYLIB`, ...)
   cmd : UInt32
@@ -85,10 +91,11 @@ pub(all) struct Dylib {
   timestamp : UInt32
   current_version : UInt32
   compatibility_version : UInt32
-} derive(Eq, Debug)
+}
 
 ///|
 /// A load command.
+#derive(Eq, Debug)
 pub(all) enum LoadCommand {
   /// `LC_SEGMENT` or `LC_SEGMENT_64`
   SegmentCommand(Segment)
@@ -111,10 +118,11 @@ pub(all) enum LoadCommand {
   FunctionStartsCommand(dataoff~ : UInt32, datasize~ : UInt32)
   /// any other command with its raw contents (after `cmd` and `cmdsize`)
   OtherCommand(cmd~ : UInt32, Bytes)
-} derive(Eq, Debug)
+}
 
 ///|
 /// A symbol table entry (`nlist` / `nlist_64`) with its name.
+#derive(Eq, Debug)
 pub(all) struct Nlist {
   /// the index of the entry in the symbol table
   index : Int32
@@ -124,11 +132,12 @@ pub(all) struct Nlist {
   n_sect : Int32
   n_desc : Int32
   n_value : UInt64
-} derive(Eq, Debug)
+}
 
 ///|
 /// A relocation entry (`relocation_info`); scattered relocations keep
 /// their raw words.
+#derive(Eq, Debug)
 pub(all) struct Relocation {
   r_word0 : UInt32
   r_word1 : UInt32
@@ -140,25 +149,27 @@ pub(all) struct Relocation {
   r_extern : Bool
   r_type : Int32
   r_scattered : Bool
-} derive(Eq, Debug)
+}
 
 ///|
 /// A parsed (thin) Mach-O file.
+#derive(Eq, Debug)
 pub(all) struct MachO {
   header : Header
   commands : Array[LoadCommand]
-} derive(Eq, Debug)
+}
 
 ///|
 /// An architecture (slice) of a universal binary (`fat_arch` /
 /// `fat_arch_64`).
+#derive(Eq, Debug)
 pub(all) struct FatArch {
   cputype : Int32
   cpusubtype : Int32
   offset : UInt64
   size : UInt64
   align : UInt32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Header with Eq::{equal, not_equal}

@@ -81,12 +81,13 @@ test "qc: LEB128 read never overruns and rejects truncation" {
 
 ///|
 /// A section built from a valid sample, then mutated, or pure noise.
+#derive(Debug)
 struct Section {
   bytes : Bytes
   offset : Int32
   endian_big : Bool
   wide : Bool
-} derive(Debug)
+}
 
 ///|
 let sample_abbrev : Bytes = b"\x01\x2e\x00\x03\x08\x11\x01\x12\x0b\x00\x00\x00"
@@ -302,10 +303,11 @@ test "qc: section-table readers accept any bytes and offset" {
 
 ///|
 /// debug_info and debug_abbrev sections derived from a valid pair.
+#derive(Debug)
 struct DebugPair {
   info : Section
   abbrev : Section
-} derive(Debug)
+}
 
 ///|
 impl @quickcheck.Arbitrary for DebugPair with fn arbitrary(size, rs) {
@@ -418,10 +420,11 @@ test "qc: the unmutated sample still yields main" {
 
 ///|
 /// A real ELF object, truncated or with a few bytes changed.
+#derive(Debug)
 struct ElfMutant {
   which : Int32
   bytes : Bytes
-} derive(Debug)
+}
 
 ///|
 fn elf_fixture(which : Int32) -> Bytes {

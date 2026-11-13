@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum Size {
   R8
   R16
@@ -6,7 +7,7 @@ pub(all) enum Size {
   R64
   R128
   R256
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Size with Eq::{not_equal, equal}
@@ -15,10 +16,11 @@ pub extend Size with Eq::{not_equal, equal}
 pub extend Size with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum AddrSize {
   Addr32
   Addr64
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend AddrSize with Eq::{not_equal, equal}
@@ -27,10 +29,11 @@ pub extend AddrSize with Eq::{not_equal, equal}
 pub extend AddrSize with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum WordSize {
   W32
   W64
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend WordSize with Eq::{not_equal, equal}
@@ -39,11 +42,12 @@ pub extend WordSize with Eq::{not_equal, equal}
 pub extend WordSize with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) suberror SizeError {
   UnsupportedWordSize(Int32)
   UnsupportedAddressSize(Int32)
   UnsupportedAddressSizeValue(Size)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend SizeError with Eq::{not_equal, equal}

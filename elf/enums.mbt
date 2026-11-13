@@ -3,6 +3,7 @@
 
 ///|
 /// The OS/ABI of an ELF file (`EI_OSABI`, upstream `e_osabi`).
+#derive(Eq, Compare, Debug)
 pub(all) enum EOsabi {
   ELFOSABI_SYSV
   ELFOSABI_HPUX
@@ -19,7 +20,7 @@ pub(all) enum EOsabi {
   ELFOSABI_ARM
   ELFOSABI_STANDALONE
   ELFOSABI_EXT(Int32)
-} derive(Eq, Compare, Debug)
+}
 
 ///|
 pub extend EOsabi with Eq::{equal, not_equal}
@@ -77,6 +78,7 @@ pub fn EOsabi::to_int(self : EOsabi) -> Int32 {
 
 ///|
 /// The object file type (`e_type`, upstream `e_type`).
+#derive(Eq, Compare, Debug)
 pub(all) enum EType {
   ET_NONE
   ET_REL
@@ -84,7 +86,7 @@ pub(all) enum EType {
   ET_DYN
   ET_CORE
   ET_EXT(Int32)
-} derive(Eq, Compare, Debug)
+}
 
 ///|
 pub extend EType with Eq::{equal, not_equal}
@@ -124,6 +126,7 @@ pub fn EType::to_int(self : EType) -> Int32 {
 
 ///|
 /// The target machine (`e_machine`, upstream `e_machine`).
+#derive(Eq, Compare, Debug)
 pub(all) enum EMachine {
   EM_NONE
   EM_M32
@@ -204,7 +207,7 @@ pub(all) enum EMachine {
   EM_MICROBLAZE
   EM_TILEGX
   EM_EXT(Int32)
-} derive(Eq, Compare, Debug)
+}
 
 ///|
 pub extend EMachine with Eq::{equal, not_equal}
@@ -390,6 +393,7 @@ pub fn EMachine::to_int(self : EMachine) -> Int32 {
 
 ///|
 /// The type of a program header (`p_type`, upstream `p_type`).
+#derive(Eq, Compare, Debug)
 pub(all) enum PType {
   PT_NULL
   PT_LOAD
@@ -399,7 +403,7 @@ pub(all) enum PType {
   PT_SHLIB
   PT_PHDR
   PT_OTHER(UInt32)
-} derive(Eq, Compare, Debug)
+}
 
 ///|
 pub extend PType with Eq::{equal, not_equal}
@@ -443,6 +447,7 @@ pub fn PType::to_int(self : PType) -> UInt32 {
 
 ///|
 /// The type of a section header (`sh_type`, upstream `sh_type`).
+#derive(Eq, Compare, Debug)
 pub(all) enum ShType {
   SHT_NULL
   SHT_PROGBITS
@@ -457,7 +462,7 @@ pub(all) enum ShType {
   SHT_SHLIB
   SHT_DYNSYM
   SHT_EXT(UInt32)
-} derive(Eq, Compare, Debug)
+}
 
 ///|
 pub extend ShType with Eq::{equal, not_equal}
@@ -512,12 +517,13 @@ pub fn ShType::to_int(self : ShType) -> UInt32 {
 ///|
 /// A program header flag (upstream `p_flag`): the constructors name
 /// flag bits, `PF_EXT(n)` is any other set bit `n`.
+#derive(Eq, Compare, Debug)
 pub(all) enum PFlag {
   PF_X
   PF_W
   PF_R
   PF_EXT(Int32)
-} derive(Eq, Compare, Debug)
+}
 
 ///|
 pub extend PFlag with Eq::{equal, not_equal}
@@ -554,12 +560,13 @@ pub fn PFlag::to_int(self : PFlag) -> Int32 {
 ///|
 /// A section header flag (upstream `sh_flag`): the constructors name
 /// flag bits, `SHF_EXT(n)` is any other set bit `n`.
+#derive(Eq, Compare, Debug)
 pub(all) enum ShFlag {
   SHF_WRITE
   SHF_ALLOC
   SHF_EXECINSTR
   SHF_EXT(Int32)
-} derive(Eq, Compare, Debug)
+}
 
 ///|
 pub extend ShFlag with Eq::{equal, not_equal}

@@ -15,9 +15,10 @@ pub fn lexical_compare(a : String, b : String) -> Int32 {
 ///|
 /// A set of words (upstream `Beagle_prey.Words.t = String.Set.t`), ordered
 /// lexicographically.
+#derive(Eq, Debug)
 pub struct Words {
   priv items : Array[String]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Words with Eq::{not_equal, equal}

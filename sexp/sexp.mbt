@@ -14,10 +14,11 @@
 
 ///|
 /// An s-expression (`Sexplib.Sexp.t`).
+#derive(Eq, Hash, Debug)
 pub(all) enum Sexp {
   Atom(String)
   List(Array[Sexp])
-} derive(Eq, Hash, Debug)
+}
 
 ///|
 pub extend Sexp with Eq::{not_equal, equal}
@@ -31,9 +32,10 @@ pub extend Sexp with Debug::{to_repr}
 ///|
 /// A syntax error at the given line (1-based) and column (0-based,
 /// counted in characters).
+#derive(Eq, Debug)
 pub(all) suberror ParseError {
   ParseError(line~ : Int32, column~ : Int32, String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ParseError with Eq::{not_equal, equal}

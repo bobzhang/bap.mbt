@@ -6,9 +6,10 @@
 /// with the `(declare (context ...))` attribute, and a definition is
 /// applicable in a program context `P` if its context `D` satisfies
 /// `D <= P`.
+#derive(Eq)
 pub struct Context {
   priv classes : @sorted_map.SortedMap[String, @sorted_set.SortedSet[String]]
-} derive(Eq)
+}
 
 ///|
 pub fn Context::empty() -> Context {

@@ -6,10 +6,11 @@ let log : @main_event.MainLogReporter = @main_event.MainLogReporter::create(
 ///|
 /// The outcome of the analysis of a unit (upstream `Analysis.outcome`):
 /// the promised function starts and function names.
+#derive(Eq, Debug)
 pub struct Outcome {
   roots : Array[UInt64]
   names : Array[(UInt64, String)]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Outcome with Eq::{not_equal, equal}

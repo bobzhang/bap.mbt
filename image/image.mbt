@@ -24,10 +24,11 @@ struct Image {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) suberror ImageLookupError {
   MissingImageSegment(String, UInt64)
   MissingImageSymbolMemory(String, UInt64, Int32)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ImageLookupError with Eq::{not_equal, equal}

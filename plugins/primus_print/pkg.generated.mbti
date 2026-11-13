@@ -12,7 +12,7 @@ pub let component_name : String
 
 pub fn declare_plugin() -> Unit raise
 
-pub fn install(@primus.Machine, traceback? : Int, out? : (String) -> Unit) -> Unit
+pub fn install(@primus.Machine, traceback? : Int32, out? : (String) -> Unit) -> Unit
 
 pub fn monitor(Array[@primus.Provider], (String) -> Unit) -> Unit
 
@@ -26,17 +26,18 @@ pub fn process_rule(@bare.Rule, (String) -> Unit) -> Unit
 
 pub fn setup_rules(Array[String], (String) -> Unit) -> Unit raise PrintError
 
-pub fn start_monitoring(observations? : Array[String], output? : String, rules? : Array[String], traceback? : Int, out? : (String) -> Unit) -> Unit raise PrintError
+pub fn start_monitoring(observations? : Array[String], output? : String, rules? : Array[String], traceback? : Int32, out? : (String) -> Unit) -> Unit raise PrintError
 
 pub fn stdout_sink(String) -> Unit
 
 pub fn trace(@primus.Machine) -> Array[@primus.Pos]
 
 // Errors
+#derive(@debug.Debug)
 pub suberror PrintError {
   UnknownProvider(String)
   BadRules(String)
-} derive(@debug.Debug)
+}
 pub fn PrintError::output(Self, &Logger) -> Unit
 pub fn PrintError::to_repr(Self) -> @debug.Repr
 pub fn PrintError::to_string(Self) -> String

@@ -18,17 +18,18 @@ pub fn register_decoder(Decoder) -> Unit
 
 pub fn resolve_aarch64_registers(Array[@types.Stmt]) -> Array[@types.Stmt]
 
-pub fn resolve_x86_subregisters(Array[@types.Stmt], bits~ : Int) -> Array[@types.Stmt]
+pub fn resolve_x86_subregisters(Array[@types.Stmt], bits~ : Int32) -> Array[@types.Stmt]
 
 pub fn unregister_decoder(String) -> Bool
 
 // Errors
+#derive(@debug.Debug)
 pub(all) suberror LiftError {
   Unsupported(opcode~ : String, target~ : String)
   BadOperands(opcode~ : String, detail~ : String)
   IllTyped(opcode~ : String, detail~ : String)
   Failure(String)
-} derive(@debug.Debug)
+}
 pub fn LiftError::is_unsupported(Self) -> Bool
 pub fn LiftError::message(Self) -> String
 pub fn LiftError::to_repr(Self) -> @debug.Repr
@@ -45,11 +46,12 @@ pub fn Context::encoding(Self) -> @core_theory.Language
 pub fn Context::target(Self) -> @core_theory.Target
 pub fn Context::to_string(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Decoded {
   Decoded(Insn)
-  Invalid(size~ : Int)
+  Invalid(size~ : Int32)
   Truncated
-} derive(Eq, @debug.Debug)
+}
 pub fn Decoded::equal(Self, Self) -> Bool
 pub fn Decoded::not_equal(Self, Self) -> Bool
 pub fn Decoded::to_repr(Self) -> @debug.Repr
@@ -64,21 +66,22 @@ pub fn Decoder::create(String, accepts~ : (Context) -> Bool, decode~ : (Context,
 pub fn Decoder::decode(Self, Context, BytesView, UInt64) -> Decoded
 pub fn Decoder::name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct Insn {
   name : String
-  code : Int
+  code : Int32
   assembly : String
   ops : ReadOnlyArray[Op]
   addr : UInt64
-  size : Int
+  size : Int32
   encoding : @core_theory.Language
   kinds : ReadOnlyArray[Kind]
   raw : Bytes
-} derive(Eq, @debug.Debug)
+}
 pub fn Insn::addr(Self) -> UInt64
 pub fn Insn::assembly(Self) -> String
-pub fn Insn::code(Self) -> Int
-pub fn Insn::create(String, ArrayView[Op], addr~ : UInt64, size~ : Int, assembly? : String, code? : Int, encoding? : @core_theory.Language, kinds? : ArrayView[Kind], raw? : Bytes) -> Self
+pub fn Insn::code(Self) -> Int32
+pub fn Insn::create(String, ArrayView[Op], addr~ : UInt64, size~ : Int32, assembly? : String, code? : Int32, encoding? : @core_theory.Language, kinds? : ArrayView[Kind], raw? : Bytes) -> Self
 pub fn Insn::encoding(Self) -> @core_theory.Language
 pub fn Insn::equal(Self, Self) -> Bool
 pub fn Insn::has_kind(Self, Kind) -> Bool
@@ -86,12 +89,13 @@ pub fn Insn::kinds(Self) -> ReadOnlyArray[Kind]
 pub fn Insn::name(Self) -> String
 pub fn Insn::next_addr(Self) -> UInt64
 pub fn Insn::not_equal(Self, Self) -> Bool
-pub fn Insn::op(Self, Int) -> Op?
+pub fn Insn::op(Self, Int32) -> Op?
 pub fn Insn::ops(Self) -> ReadOnlyArray[Op]
 pub fn Insn::raw(Self) -> Bytes
-pub fn Insn::size(Self) -> Int
+pub fn Insn::size(Self) -> Int32
 pub fn Insn::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Kind {
   ConditionalBranch
   UnconditionalBranch
@@ -103,35 +107,37 @@ pub(all) enum Kind {
   MayAffectControlFlow
   MayLoad
   MayStore
-} derive(Eq, @debug.Debug)
+}
 pub fn Kind::equal(Self, Self) -> Bool
 pub fn Kind::not_equal(Self, Self) -> Bool
 pub fn Kind::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub struct Lifted {
   bil : Array[@types.Stmt]
-  delay : Int
+  delay : Int32
   dest_encoding : @core_theory.Language?
-} derive(Eq, @debug.Debug)
+}
 pub fn Lifted::bil(Self) -> Array[@types.Stmt]
-pub fn Lifted::create(Array[@types.Stmt], delay? : Int, dest_encoding? : @core_theory.Language) -> Self
-pub fn Lifted::delay(Self) -> Int
+pub fn Lifted::create(Array[@types.Stmt], delay? : Int32, dest_encoding? : @core_theory.Language) -> Self
+pub fn Lifted::delay(Self) -> Int32
 pub fn Lifted::dest_encoding(Self) -> @core_theory.Language?
 pub fn Lifted::equal(Self, Self) -> Bool
 pub fn Lifted::not_equal(Self, Self) -> Bool
 pub fn Lifted::of_bil(Array[@types.Stmt]) -> Self
 pub fn Lifted::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Op {
-  Reg(name~ : String, code~ : Int)
+  Reg(name~ : String, code~ : Int32)
   Imm(Int64)
   Fmm(Double)
-} derive(Eq, @debug.Debug)
+}
 pub fn Op::equal(Self, Self) -> Bool
 pub fn Op::imm_value(Self) -> Int64?
 pub fn Op::not_equal(Self, Self) -> Bool
 pub fn Op::output(Self, &Logger) -> Unit
-pub fn Op::reg(String, code? : Int) -> Self
+pub fn Op::reg(String, code? : Int32) -> Self
 pub fn Op::reg_name(Self) -> String?
 pub fn Op::to_repr(Self) -> @debug.Repr
 pub fn Op::to_string(Self) -> String

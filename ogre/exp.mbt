@@ -4,19 +4,22 @@
 /// How a query variable designates an attribute of the selection: by name
 /// (`attr[field]`, upstream `attr.(field)`) or by position in the `from`
 /// clause (`field.at(n)`, upstream `field.[n]`).
+#derive(Debug)
 priv enum Name {
   ByName(String)
   ByPos(Int32)
-} derive(Debug)
+}
 
 ///|
 /// A variable: a field of some attribute of the selection.
+#derive(Debug)
 priv struct Column[A] {
   attr : A
   field : Header
-} derive(Debug)
+}
 
 ///|
+#derive(Debug)
 priv enum Bop {
   And
   Or
@@ -24,9 +27,10 @@ priv enum Bop {
   EqOp
   Add
   Sub
-} derive(Debug)
+}
 
 ///|
+#derive(Debug)
 priv enum Term[V] {
   True
   Int(Int64)
@@ -35,7 +39,7 @@ priv enum Term[V] {
   Var(V)
   Bop(Bop, Term[V], Term[V])
   Not(Term[V])
-} derive(Debug)
+}
 
 ///|
 /// A query expression (upstream `Query.exp`).

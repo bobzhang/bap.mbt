@@ -8,9 +8,9 @@ import {
 // Values
 pub fn declare_plugin() -> Unit raise
 
-pub fn enable(sigs? : String, min_length? : Int, max_length? : Int, threshold? : Double, compiler? : String) -> Unit
+pub fn enable(sigs? : String, min_length? : Int32, max_length? : Int32, threshold? : Double, compiler? : String) -> Unit
 
-pub fn find_roots(@bobzhang/bap/byteweight.Byteweight, Array[@memory.Memory], min_length? : Int, max_length? : Int, threshold? : Double) -> Array[UInt64]
+pub fn find_roots(@bobzhang/bap/byteweight.Byteweight, Array[@memory.Memory], min_length? : Int32, max_length? : Int32, threshold? : Double) -> Array[UInt64]
 
 pub let name : String
 

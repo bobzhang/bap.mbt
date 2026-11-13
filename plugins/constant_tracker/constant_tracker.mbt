@@ -142,11 +142,12 @@ pub fn ConstantTracker::points_to_static_data(
 
 ///|
 /// A Primus Lisp primitive exposed by the plugin.
+#derive(Eq, Debug)
 pub(all) struct LispPrimitive {
   name : String
   types : String
   docs : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend LispPrimitive with Eq::{not_equal, equal}
@@ -173,11 +174,12 @@ pub fn lisp_primitives() -> Array[LispPrimitive] {
 
 ///|
 /// A Primus component declared by the plugin.
+#derive(Eq, Debug)
 pub(all) struct Component {
   name : String
   pkg : String
   desc : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Component with Eq::{not_equal, equal}

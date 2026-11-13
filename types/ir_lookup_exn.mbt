@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug)
 pub(all) suberror IrTermLookupError {
   MissingIrTerm(String, Tid)
   MissingIrTermIndex(String, Int32)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend IrTermLookupError with Eq::{not_equal, equal}

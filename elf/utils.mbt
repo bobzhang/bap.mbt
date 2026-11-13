@@ -129,6 +129,7 @@ pub fn find_section(
 
 ///|
 /// A symbol table entry (`Elf32_Sym`/`Elf64_Sym`), with every field.
+#derive(Eq, Compare, Debug)
 pub(all) struct Symbol {
   st_name : UInt32
   st_value : UInt64
@@ -136,7 +137,7 @@ pub(all) struct Symbol {
   st_info : Int32
   st_other : Int32
   st_shndx : Int32
-} derive(Eq, Compare, Debug)
+}
 
 ///|
 pub extend Symbol with Eq::{equal, not_equal}
@@ -274,11 +275,12 @@ pub fn symbol_name(
 ///|
 /// A relocation entry (`Elf_Rel`/`Elf_Rela`); `r_addend` is present for
 /// `SHT_RELA` sections.
+#derive(Eq, Compare, Debug)
 pub(all) struct Relocation {
   r_offset : UInt64
   r_info : UInt64
   r_addend : Int64?
-} derive(Eq, Compare, Debug)
+}
 
 ///|
 pub extend Relocation with Eq::{equal, not_equal}

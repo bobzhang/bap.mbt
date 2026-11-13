@@ -1,7 +1,8 @@
 ///|
+#derive(Eq, Debug)
 struct AddrR32 {
   value : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend AddrR32 with Eq::{not_equal, equal}
@@ -10,9 +11,10 @@ pub extend AddrR32 with Eq::{not_equal, equal}
 pub extend AddrR32 with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 struct AddrR64 {
   value : Int64
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend AddrR64 with Eq::{not_equal, equal}

@@ -11,11 +11,12 @@
 
 ///|
 /// A cache entry considered by the collector.
+#derive(Eq, Debug)
 pub(all) struct Entry {
   path : String
   /// the size of the entry, in kilobytes
   size : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Entry with Eq::{equal, not_equal}

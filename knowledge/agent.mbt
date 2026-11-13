@@ -1,11 +1,12 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum AgentReliability {
   Authorative
   Reliable
   Trustworthy
   Doubtful
   Unreliable
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend AgentReliability with Eq::{not_equal, equal}
@@ -14,9 +15,10 @@ pub extend AgentReliability with Eq::{not_equal, equal}
 pub extend AgentReliability with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 struct Agent {
   id_value : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Agent with Eq::{not_equal, equal}

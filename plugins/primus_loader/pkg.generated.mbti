@@ -14,15 +14,15 @@ pub fn declare_plugin() -> Unit raise
 
 pub let default_stack_base : Int64
 
-pub let default_stack_size : Int
+pub let default_stack_size : Int32
 
-pub fn enable(stack_size? : Int, stack_base? : Int64) -> Unit
+pub fn enable(stack_size? : Int32, stack_base? : Int64) -> Unit
 
-pub fn install(@primus.Machine, stack_size? : Int, stack_base? : Int64) -> Unit raise
+pub fn install(@primus.Machine, stack_size? : Int32, stack_base? : Int64) -> Unit raise
 
 pub let name : String
 
-pub fn register(stack_size? : Int, stack_base? : Int64) -> Bool
+pub fn register(stack_size? : Int32, stack_base? : Int64) -> Bool
 
 pub fn stack_pointer(@core_theory.Target) -> @types.Var?
 

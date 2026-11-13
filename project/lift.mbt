@@ -5,11 +5,12 @@
 ///|
 /// A failure to lift one instruction: its address, opcode name and the
 /// reason reported by the lifters.
+#derive(Eq, Debug)
 pub struct ProjectLiftError {
   addr : UInt64
   opcode : String
   message : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ProjectLiftError with Eq::{equal, not_equal}

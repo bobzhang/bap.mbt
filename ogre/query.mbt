@@ -76,10 +76,11 @@ pub fn[T] Tables::names(self : Tables[T]) -> Array[String] {
 ///|
 /// A join variable (upstream `join`): a field, optionally qualified by the
 /// attribute it belongs to. See [field] and [field_of].
+#derive(Eq, Debug)
 struct Join {
   attr : String?
   field : Header
-} derive(Eq, Debug)
+}
 
 ///|
 /// An unqualified join variable (upstream `field fld`): it stands for the

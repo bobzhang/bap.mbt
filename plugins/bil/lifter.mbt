@@ -1,6 +1,7 @@
 ///|
 /// An instruction specification of `--bil-enable-intrinsics` (upstream
 /// `Bil_lifter.ispec`).
+#derive(Eq, Debug)
 pub(all) enum ISpec {
   /// `:any` - every instruction
   Any
@@ -16,7 +17,7 @@ pub(all) enum ISpec {
   /// `<s1>:<s2>` - instructions with an opcode starting with `s2` in an
   /// encoding starting with `s1`
   Insn(String, String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ISpec with Eq::{not_equal, equal}

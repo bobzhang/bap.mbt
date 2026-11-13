@@ -15,12 +15,13 @@
 ///
 /// Every object keeps its context alive; Z3 errors are reported as
 /// `Z3Error::Failure` instead of aborting the process.
+#derive(Eq, Debug)
 pub(all) suberror Z3Error {
   /// The solver library is not available (with the reason).
   Unavailable(String)
   /// A Z3 call failed (with the Z3 error message).
   Failure(String)
-} derive(Eq, Debug)
+}
 
 ///|
 /// The message of the error.

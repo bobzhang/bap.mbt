@@ -9,7 +9,8 @@ pub type TaintSet = @immut_hashset.HashSet[@types.Tid]
 
 ///|
 /// An address: the key of tainted memory cells.
-priv struct Addr(@types.Word) derive(Eq)
+#derive(Eq)
+priv struct Addr(@types.Word)
 
 ///|
 impl Compare for Addr with fn compare(self, other) {

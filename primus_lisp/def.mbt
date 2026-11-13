@@ -184,9 +184,10 @@ pub fn Def::macro_bind(
 }
 
 ///|
+#derive(Debug)
 pub(all) suberror MacroError {
   BadSubst(Tree, Array[Tree])
-} derive(Debug)
+}
 
 ///|
 fn find_binding(bs : Array[(String, Array[Tree])], x : String) -> Array[Tree]? {

@@ -27,6 +27,7 @@ pub fn[K, S] run(Class[K, S], (State) -> Object[K] raise, State) -> (Value[K, S]
 pub fn unless(Bool, () -> Unit raise) -> Unit raise
 
 // Errors
+#derive(@debug.Debug)
 pub(all) suberror Conflict {
   Empty(Name)
   Reject
@@ -36,12 +37,13 @@ pub(all) suberror Conflict {
   ImportConflict(Name, Name)
   JoinConflict(String)
   Failure(String)
-} derive(@debug.Debug)
+}
 pub fn Conflict::to_repr(Self) -> @debug.Repr
 pub fn Conflict::to_string(Error) -> String
 
 // Types and methods
-type Agent derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type Agent
 pub fn Agent::desc(Self) -> String
 pub fn Agent::equal(Self, Self) -> Bool
 pub fn Agent::id(Self) -> String
@@ -56,13 +58,14 @@ pub fn Agent::set_reliability(Self, AgentReliability) -> Result[Unit, String]
 pub fn Agent::to_repr(Self) -> @debug.Repr
 pub fn Agent::weight(Self) -> Int32
 
+#derive(Eq, @debug.Debug)
 pub(all) enum AgentReliability {
   Authorative
   Reliable
   Trustworthy
   Doubtful
   Unreliable
-} derive(Eq, @debug.Debug)
+}
 pub fn AgentReliability::authorative() -> Self
 pub fn AgentReliability::doubtful() -> Self
 pub fn AgentReliability::equal(Self, Self) -> Bool
@@ -152,20 +155,22 @@ pub fn[K, P] FactTable::slot(Self[K, P]) -> Slot[K, P]
 pub fn[K, P] FactTable::state(Self[K, P]) -> State
 pub fn[K, P] FactTable::suggest(Self[K, Opinions[P]], Agent, Object[K], P) -> Result[Opinions[P], String]
 
+#derive(Eq, @debug.Debug)
 pub(all) enum MergeStrategy {
   DropOld
   DropNew
   DropRight
   DropLeft
-} derive(Eq, @debug.Debug)
+}
 pub fn MergeStrategy::equal(Self, Self) -> Bool
 pub fn MergeStrategy::not_equal(Self, Self) -> Bool
 pub fn MergeStrategy::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, Hash, @debug.Debug)
 pub(all) struct Name {
   pkg : String
   text : String
-} derive(Eq, Hash, @debug.Debug)
+}
 pub fn Name::compare(Self, Self) -> Int32
 pub fn Name::create(String, pkg? : String) -> Self
 pub fn Name::equal(Self, Self) -> Bool
@@ -217,12 +222,13 @@ pub fn[T] Opinions::of_list(Array[(Agent, T)], empty~ : T, equal~ : (T, T) -> Bo
 pub fn[T] Opinions::persistent(Persistent[T], empty~ : T, equal~ : (T, T) -> Bool, inspect~ : (T) -> String) -> Persistent[Self[T]]
 pub fn[T] Opinions::total_weight(Self[T]) -> Int32
 
+#derive(Eq, @debug.Debug)
 pub(all) enum PartialOrder {
   Less
   Equal
   Greater
   Incomparable
-} derive(Eq, @debug.Debug)
+}
 pub fn PartialOrder::equal(Self, Self) -> Bool
 pub fn PartialOrder::geq(Self) -> Bool
 pub fn PartialOrder::invert(Self) -> Self

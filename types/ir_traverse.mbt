@@ -1,6 +1,7 @@
 ///|
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum IrTermClass {
   ProgramTermClass
   SubTermClass
@@ -9,7 +10,7 @@ pub(all) enum IrTermClass {
   PhiTermClass
   DefTermClass
   JmpTermClass
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend IrTermClass with Eq::{not_equal, equal}

@@ -1,7 +1,8 @@
 ///|
+#derive(Eq, Debug)
 struct Equiv {
   index : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Equiv with Eq::{not_equal, equal}
@@ -15,11 +16,12 @@ pub fn Equiv::to_int(self : Equiv) -> Int32 {
 }
 
 ///|
+#derive(Debug)
 struct Group[N] {
   top_value : N
   members_value : Set[N]
   equiv_value : Equiv
-} derive(Debug)
+}
 
 ///|
 pub extend Group with Debug::{to_repr}
@@ -64,10 +66,11 @@ pub fn[N] Group::to_equiv(self : Group[N]) -> Equiv {
 }
 
 ///|
+#derive(Debug)
 struct Partition[N] {
   roots_value : Array[N]
   groups_value : Array[Set[N]]
-} derive(Debug)
+}
 
 ///|
 pub extend Partition with Debug::{to_repr}

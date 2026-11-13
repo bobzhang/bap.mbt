@@ -4,6 +4,7 @@
 
 ///|
 /// A manual page block (`Cmdliner.Manpage.block`).
+#derive(Eq, Debug)
 pub(all) enum ManBlock {
   /// A section header.
   Section(String)
@@ -15,7 +16,7 @@ pub(all) enum ManBlock {
   Item(String, String)
   /// Suppresses the blank line before the next block.
   NoBlank
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ManBlock with Eq::{equal, not_equal}

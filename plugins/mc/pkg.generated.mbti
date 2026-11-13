@@ -19,7 +19,7 @@ pub fn create_disassembler(McTarget) -> @project.ProjectDisassemblyBasic raise M
 
 pub fn declare_plugin(out? : (String) -> Unit, read_line? : () -> String?) -> Unit raise
 
-pub fn mc(arch? : String, target? : @core_theory.Target, encoding? : @core_theory.Language, triple? : String, cpu? : String, backend? : String, bits? : Int, order? : @bitvec.Endian, base? : String, only_one? : Bool, stop_on_error? : Bool, input? : Array[String], outputs? : Array[(Show, Array[String])], read_line? : () -> String?, out~ : (String) -> Unit) -> Unit raise McError
+pub fn mc(arch? : String, target? : @core_theory.Target, encoding? : @core_theory.Language, triple? : String, cpu? : String, backend? : String, bits? : Int32, order? : @bitvec.Endian, base? : String, only_one? : Bool, stop_on_error? : Bool, input? : Array[String], outputs? : Array[(Show, Array[String])], read_line? : () -> String?, out~ : (String) -> Unit) -> Unit raise McError
 
 pub let mc_man : String
 
@@ -27,7 +27,7 @@ pub fn objdump(loader? : String, stop_on_error? : Bool, String, outputs? : Array
 
 pub let objdump_man : String
 
-pub fn parse_arch(arch? : String, target? : @core_theory.Target, encoding? : @core_theory.Language, triple? : String, cpu? : String, backend? : String, bits? : Int, order? : @bitvec.Endian) -> McTarget raise McError
+pub fn parse_arch(arch? : String, target? : @core_theory.Target, encoding? : @core_theory.Language, triple? : String, cpu? : String, backend? : String, bits? : Int32, order? : @bitvec.Endian) -> McTarget raise McError
 
 pub fn parse_base(String) -> UInt64 raise McError
 
@@ -35,9 +35,9 @@ pub let plugin_name : String
 
 pub fn read_input(Array[String], read_line? : () -> String?) -> Bytes raise McError
 
-pub fn run(only_one? : Bool, stop_on_error? : Bool, @project.ProjectDisassemblyBasic, McTarget, @memory.Memory, Array[(Show, Array[String])], out~ : (String) -> Unit) -> Int raise McError
+pub fn run(only_one? : Bool, stop_on_error? : Bool, @project.ProjectDisassemblyBasic, McTarget, @memory.Memory, Array[(Show, Array[String])], out~ : (String) -> Unit) -> Int32 raise McError
 
-pub fn target_of_arch(String, bits? : Int, order? : @bitvec.Endian) -> McTarget
+pub fn target_of_arch(String, bits? : Int32, order? : @bitvec.Endian) -> McTarget
 
 pub fn validate_formats(Array[(Show, Array[String])]) -> Unit raise McError
 
@@ -49,11 +49,11 @@ pub(all) suberror McError {
 // Types and methods
 pub(all) enum McFailure {
   BadUserInput
-  BadInsn(@memory.Memory, Int, Int)
+  BadInsn(@memory.Memory, Int32, Int32)
   CreateMem(String)
   NoInput
   InvalidBase(String)
-  TrailingData(Int)
+  TrailingData(Int32)
   UnknownFormat(String, String, Array[String])
   NoFormatsExpected(String)
   DisassemblerFailed(String)
@@ -71,9 +71,10 @@ pub fn McFailure::to_string(Self) -> String
 
 pub(all) enum McTarget {
   Target(@core_theory.Target, @core_theory.Language)
-  Triple(name~ : String, backend~ : String?, cpu~ : String?, order~ : @bitvec.Endian, bits~ : Int)
+  Triple(name~ : String, backend~ : String?, cpu~ : String?, order~ : @bitvec.Endian, bits~ : Int32)
 }
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Show {
   Insn
   Bil
@@ -85,7 +86,7 @@ pub(all) enum Show {
   Addr
   Memory
   Knowledge
-} derive(Eq, @debug.Debug)
+}
 pub fn Show::equal(Self, Self) -> Bool
 pub fn Show::name(Self) -> String
 pub fn Show::not_equal(Self, Self) -> Bool

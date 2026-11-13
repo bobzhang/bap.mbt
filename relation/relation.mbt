@@ -1,8 +1,9 @@
 ///|
+#derive(Debug)
 pub(all) enum NonInjective[K, S] {
   NonInjectiveFwd(Array[K], S)
   NonInjectiveBwd(Array[S], K)
-} derive(Debug)
+}
 
 ///|
 pub extend NonInjective with Debug::{to_repr}

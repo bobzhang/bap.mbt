@@ -12,10 +12,11 @@
 
 ///|
 /// The register width: RV32 or RV64.
+#derive(Eq, Debug)
 pub(all) enum Xlen {
   RV32
   RV64
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Xlen with Eq::{equal, not_equal}

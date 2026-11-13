@@ -1,5 +1,6 @@
 ///|
 /// Errors of the system layer (systems, components and jobs).
+#derive(Debug)
 pub(all) suberror SystemError {
   /// No system with this name is registered.
   UnknownSystem(String)
@@ -11,7 +12,7 @@ pub(all) suberror SystemError {
   DuplicateComponent(String)
   /// A system description could not be parsed.
   SystemParseError(file~ : String, system~ : String, msg~ : String)
-} derive(Debug)
+}
 
 ///|
 /// Renders a system error as a human readable message.
@@ -541,10 +542,11 @@ pub struct Job {
 
 ///|
 /// What to do after a job finishes (upstream `Jobs.action`).
+#derive(Eq, Debug)
 pub(all) enum JobAction {
   Stop
   Continue
-} derive(Eq, Debug)
+}
 
 ///|
 /// The result of running the job queue (upstream `Jobs.result`).

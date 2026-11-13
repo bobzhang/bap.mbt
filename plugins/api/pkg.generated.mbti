@@ -49,18 +49,20 @@ pub fn[T] with_bundled_files(() -> T) -> T
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) struct Api {
   desc : ApiDescr
   path : String
-} derive(Eq, @debug.Debug)
+}
 pub fn Api::equal(Self, Self) -> Bool
 pub fn Api::not_equal(Self, Self) -> Bool
 pub fn Api::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct ApiDescr {
   lang : String
   name : String
-} derive(Eq, @debug.Debug)
+}
 pub fn ApiDescr::equal(Self, Self) -> Bool
 pub fn ApiDescr::not_equal(Self, Self) -> Bool
 pub fn ApiDescr::to_repr(Self) -> @debug.Repr

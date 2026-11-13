@@ -3,6 +3,7 @@
 
 ///|
 /// The entities that `bap list` can print.
+#derive(Eq, Debug)
 pub(all) enum Entity {
   Entities
   Plugins
@@ -17,7 +18,7 @@ pub(all) enum Entity {
   Rules
   Collators
   Targets
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Entity with Eq::{equal, not_equal}

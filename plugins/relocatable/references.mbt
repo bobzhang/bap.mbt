@@ -1,10 +1,11 @@
 ///|
 /// A reference extracted from relocations: either an address or an external
 /// symbol name.
+#derive(Eq, Debug)
 pub(all) enum RelRef {
   Addr(UInt64)
   Name(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend RelRef with Eq::{not_equal, equal}
@@ -14,10 +15,11 @@ pub extend RelRef with Debug::{to_repr}
 
 ///|
 /// A reference or a conflict between references at the same address.
+#derive(Eq, Debug)
 pub(all) enum RefValue {
   Ref(RelRef)
   Bad
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend RefValue with Eq::{not_equal, equal}

@@ -10,16 +10,17 @@ pub(all) enum TargetSpec {
     order~ : @core_theory.Endianness?,
     bits~ : Int32?,
     variant~ : String?,
-    compiler~ : String?
+    compiler~ : String?,
   )
 }
 
 ///|
 /// A malformed target specification.
+#derive(Eq, Debug)
 pub(all) suberror TargetSpecError {
   WrongEndianness(String)
   UnrecognizedTarget(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TargetSpecError with Eq::{not_equal, equal}

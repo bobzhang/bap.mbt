@@ -1,9 +1,10 @@
 ///|
+#derive(Eq, @debug.Debug)
 pub(all) enum SeqStep[T, S] {
   SeqYield(T, S)
   SeqSkip(S)
   SeqDone
-} derive(Eq, @debug.Debug)
+}
 
 ///|
 pub extend SeqStep with Eq::{not_equal, equal}
@@ -12,9 +13,10 @@ pub extend SeqStep with Eq::{not_equal, equal}
 pub extend SeqStep with Debug::{to_repr}
 
 ///|
+#derive(Eq, @debug.Debug)
 pub(all) suberror SeqError {
   EmptySeq
-} derive(Eq, @debug.Debug)
+}
 
 ///|
 pub extend SeqError with Eq::{not_equal, equal}

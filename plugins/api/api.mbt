@@ -37,10 +37,11 @@ pub let provides : Array[String] = ["abi", "api", "pass"]
 
 ///|
 /// A description of an API: its language and name.
+#derive(Eq, Debug)
 pub(all) struct ApiDescr {
   lang : String
   name : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ApiDescr with Eq::{equal, not_equal}
@@ -50,10 +51,11 @@ pub extend ApiDescr with Debug::{to_repr}
 
 ///|
 /// An API: its description and the path to its specification.
+#derive(Eq, Debug)
 pub(all) struct Api {
   desc : ApiDescr
   path : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Api with Eq::{equal, not_equal}

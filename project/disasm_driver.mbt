@@ -133,14 +133,14 @@ priv enum DriverTask {
     dst~ : UInt64,
     parent~ : DriverTask,
     delay~ : DriverDelaySlot,
-    encoding~ : DriverEncoding
+    encoding~ : DriverEncoding,
   )
   TaskJump(
     src~ : UInt64,
     age~ : Int32,
     dsts~ : ProjectDisassemblyDriverJump,
     parent~ : DriverTask,
-    encoding~ : DriverEncoding
+    encoding~ : DriverEncoding,
   )
 }
 
@@ -389,8 +389,8 @@ fn DriverMachine::step(self : DriverMachine) -> DriverMachine {
         TaskJump(age~, dsts~, parent~, encoding~, ..) as self_,
         tail=More(
           TaskFall(dst=next, parent=slot_parent, encoding=slot_encoding, ..),
-          tail=work
-        )
+          tail=work,
+        ),
       ) => {
         let s = s.revert_incoming(next)
         let delay = if age == 1 { DelayReady(Some(self_)) } else { DelayWait }

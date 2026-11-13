@@ -3,10 +3,11 @@
 
 ///|
 /// Address size of a PowerPC model.
+#derive(Eq, Debug)
 pub(all) enum AddrSize {
   R32
   R64
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend AddrSize with Eq::{equal, not_equal}

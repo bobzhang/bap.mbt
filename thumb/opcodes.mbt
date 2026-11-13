@@ -9,6 +9,7 @@
 
 ///|
 /// Thumb opcodes understood by the lifter (upstream `Thumb_opcodes.opcode`).
+#derive(Eq, Debug)
 pub(all) enum Opcode {
   // opmov: all the `mov` series
   TADC
@@ -69,7 +70,7 @@ pub(all) enum Opcode {
   TSXTH
   TUXTB
   TUXTH
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Opcode with Eq::{equal, not_equal}
@@ -80,13 +81,14 @@ pub extend Opcode with Debug::{to_repr}
 ///|
 /// Opcode family, mirroring upstream's polymorphic-variant subsets.
 /// `MemMulti` opcodes also belong to upstream's `opmem`.
+#derive(Eq, Debug)
 pub(all) enum OpcodeKind {
   Mov
   MemMulti
   Mem
   Branch
   Bit
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend OpcodeKind with Eq::{equal, not_equal}
@@ -297,6 +299,7 @@ pub fn Opcode::is_mem(self : Opcode) -> Bool {
 
 ///|
 /// ARM condition codes (upstream `Thumb_opcodes.cond`).
+#derive(Eq, Debug)
 pub(all) enum Cond {
   EQ
   NE
@@ -313,7 +316,7 @@ pub(all) enum Cond {
   GT
   LE
   AL
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Cond with Eq::{equal, not_equal}

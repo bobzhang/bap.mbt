@@ -31,10 +31,11 @@ pub let ns_xmlns : String = "http://www.w3.org/2000/xmlns/"
 ///|
 /// An expanded name: the namespace URI (empty when the name is not in a
 /// namespace) and the local_name part.
+#derive(Eq, Hash, Debug)
 pub(all) struct Name {
   uri : String
   local_name : String
-} derive(Eq, Hash, Debug)
+}
 
 ///|
 pub extend Name with Eq::{not_equal, equal}
@@ -71,10 +72,11 @@ pub impl Show for Name with fn output(self, logger) {
 
 ///|
 /// An attribute: its name and its (normalized, entity-expanded) value.
+#derive(Eq, Debug)
 pub(all) struct Attribute {
   name : Name
   value : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Attribute with Eq::{not_equal, equal}
@@ -85,10 +87,11 @@ pub extend Attribute with Debug::{to_repr}
 ///|
 /// A start tag: the element name and its attributes, in the document
 /// order (namespace declarations included).
+#derive(Eq, Debug)
 pub(all) struct Tag {
   name : Name
   attrs : Array[Attribute]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Tag with Eq::{not_equal, equal}
@@ -114,6 +117,7 @@ pub fn Tag::attr(
 
 ///|
 /// An input signal (`Xmlm.signal`).
+#derive(Eq, Debug)
 pub(all) enum Signal {
   /// the document type declaration (verbatim), if any; always the first
   /// signal of a document
@@ -124,7 +128,7 @@ pub(all) enum Signal {
   ElEnd
   /// character data (entities and CDATA sections are expanded)
   Data(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Signal with Eq::{not_equal, equal}
@@ -134,10 +138,11 @@ pub extend Signal with Debug::{to_repr}
 
 ///|
 /// A position in the input: line and column, both starting at 1.
+#derive(Eq, Debug)
 pub(all) struct Pos {
   line : Int32
   col : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Pos with Eq::{not_equal, equal}
@@ -147,9 +152,10 @@ pub extend Pos with Debug::{to_repr}
 
 ///|
 /// An error, with the position where it was detected.
+#derive(Eq, Debug)
 pub(all) suberror XmlError {
   XmlError(pos~ : Pos, String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend XmlError with Eq::{not_equal, equal}

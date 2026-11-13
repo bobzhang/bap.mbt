@@ -1,9 +1,10 @@
 ///|
 /// A node of a document tree.
+#derive(Eq, Debug)
 pub(all) enum Node {
   Element(Tag, Array[Node])
   Text(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Node with Eq::{not_equal, equal}
@@ -13,10 +14,11 @@ pub extend Node with Debug::{to_repr}
 
 ///|
 /// A parsed document: the document type declaration and the root element.
+#derive(Eq, Debug)
 pub(all) struct Document {
   dtd : String?
   root : Node
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Document with Eq::{not_equal, equal}

@@ -16,10 +16,11 @@ let doc : String =
 
 ///|
 /// The output format of the specification.
+#derive(Eq, Debug)
 pub(all) enum SpecFormat {
   Sexp
   Yaml
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend SpecFormat with Eq::{equal, not_equal}
@@ -29,10 +30,11 @@ pub extend SpecFormat with Debug::{to_repr}
 
 ///|
 /// A reason why the command failed (upstream `problem`).
+#derive(Debug)
 pub(all) suberror SpecificationError {
   UnknownLoader(String)
   LoaderError(String)
-} derive(Debug)
+}
 
 ///|
 pub extend SpecificationError with Debug::{to_repr}

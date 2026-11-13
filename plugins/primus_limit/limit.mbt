@@ -19,26 +19,29 @@ pub let component_name : String = "limit"
 
 ///|
 /// The kind of events counted by a length bound.
+#derive(Eq, Debug)
 pub(all) enum Counter {
   Blk
   Insn
   Term
   Exp
   Clk
-} derive(Eq, Debug)
+}
 
 ///|
 /// A length bound: at most `limit` events of the kind `counter`.
+#derive(Eq, Debug)
 pub(all) struct Bound {
   counter : Counter
   limit : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 /// Errors of the bound syntax.
+#derive(Debug)
 pub suberror BoundParseError {
   BoundParseError(String)
-} derive(Debug)
+}
 
 ///|
 pub impl Show for BoundParseError with fn output(self, logger) {

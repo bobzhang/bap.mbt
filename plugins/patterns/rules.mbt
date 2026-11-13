@@ -1,10 +1,11 @@
 ///|
 /// The size constraints of a `patternpairs` element: the minimal total
 /// number of non-masked bits and in the postpattern part.
+#derive(Eq, Debug)
 pub(all) struct Sizes {
   total : Int32
   post : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Sizes with Eq::{not_equal, equal}

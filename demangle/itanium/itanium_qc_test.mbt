@@ -14,7 +14,8 @@ let mangling_alphabet : Array[String] = [
 
 ///|
 /// A string made of mangling tokens, biased to start like a mangled name.
-struct Token(String) derive(Debug)
+#derive(Debug)
+struct Token(String)
 
 ///|
 impl @quickcheck.Arbitrary for Token with fn arbitrary(size, rs) {
@@ -51,10 +52,11 @@ impl @quickcheck.Shrink for Token with fn shrink(t) {
 
 ///|
 /// A real mangled name from the verified corpora, mutated a few times.
+#derive(Debug)
 struct Mutant {
   original : String
   mutated : String
-} derive(Debug)
+}
 
 ///|
 fn corpus_names() -> Array[String] {
@@ -152,10 +154,11 @@ fn substitution_chain(len : Int32) -> String {
 
 ///|
 /// Deeply nested instances of the recursive productions.
+#derive(Debug)
 struct Nest {
   kind : Int32
   depth : Int32
-} derive(Debug)
+}
 
 ///|
 let nest_kinds : Int32 = 12

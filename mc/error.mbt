@@ -1,5 +1,6 @@
 ///|
 /// Lifter failure, mirroring BAP's `Error.t` results from lifters.
+#derive(Debug)
 pub(all) suberror LiftError {
   /// The lifter (provider) does not model the opcode in this context.
   /// This is different from a successful empty program: a registry tries
@@ -11,7 +12,7 @@ pub(all) suberror LiftError {
   IllTyped(opcode~ : String, detail~ : String)
   /// Any other lifting failure.
   Failure(String)
-} derive(Debug)
+}
 
 ///|
 pub extend LiftError with Debug::{to_repr}

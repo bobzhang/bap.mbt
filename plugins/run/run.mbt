@@ -41,6 +41,7 @@ let reporter : @main_event.MainLogReporter = @main_event.MainLogReporter::create
 
 ///|
 /// The parameters of the pass (the `--run-*` options).
+#derive(Debug)
 pub(all) struct Params {
   /// The process argument vector (`--run-argv`).
   argv : Array[String]
@@ -58,7 +59,7 @@ pub(all) struct Params {
   /// Run until all subroutines and blocks are visited
   /// (`--run-until-visited-all`).
   until_visited : Bool
-} derive(Debug)
+}
 
 ///|
 pub extend Params with Debug::{to_repr}

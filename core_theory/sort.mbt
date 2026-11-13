@@ -1,9 +1,10 @@
 ///|
+#derive(Eq, Hash, Debug)
 pub(all) enum Sort {
   Sym(@knowledge.Name)
   IntSort(Int32)
   App(Sort, Sort)
-} derive(Eq, Hash, Debug)
+}
 
 ///|
 pub extend Sort with Eq::{not_equal, equal}

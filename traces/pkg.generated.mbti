@@ -11,13 +11,14 @@ import {
 // Values
 
 // Errors
+#derive(Eq, @debug.Debug)
 pub(all) suberror TraceError {
   TraceFailure(String)
   NoProvider(String)
   AmbiguousUri(String)
   ProtocolError(String)
   DuplicateRegistration(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn TraceError::equal(Self, Self) -> Bool
 pub fn TraceError::not_equal(Self, Self) -> Bool
 pub fn TraceError::to_repr(Self) -> @debug.Repr
@@ -28,32 +29,35 @@ pub(all) struct Binary {
 pub fn Binary::create(path~ : String, args~ : Array[String], envp~ : Array[String], md5sum~ : String) -> BinaryInfo
 pub fn Binary::to_string(BinaryInfo) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) struct BinaryInfo {
   path : String
   args : Array[String]
   envp : Array[String]
   md5sum : String
-} derive(Eq, @debug.Debug)
+}
 pub fn BinaryInfo::equal(Self, Self) -> Bool
 pub fn BinaryInfo::not_equal(Self, Self) -> Bool
 pub fn BinaryInfo::to_repr(Self) -> @debug.Repr
 pub fn BinaryInfo::to_string(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Call {
   caller : Location
   callee : Location
   args : Array[@types.Word]
-} derive(Eq, @debug.Debug)
+}
 pub fn Call::create(caller~ : Location, callee~ : Location, args~ : Array[@types.Word]) -> Self
 pub fn Call::equal(Self, Self) -> Bool
 pub fn Call::not_equal(Self, Self) -> Bool
 pub fn Call::to_repr(Self) -> @debug.Repr
 pub fn Call::to_string(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Chunk {
   addr : @types.Word
   data : Bytes
-} derive(Eq, @debug.Debug)
+}
 pub fn Chunk::create(addr~ : @types.Word, data~ : Bytes) -> Self
 pub fn Chunk::equal(Self, Self) -> Bool
 pub fn Chunk::not_equal(Self, Self) -> Bool
@@ -82,12 +86,13 @@ pub(all) struct Exn {
 pub fn Exn::create(number~ : Int32, src? : @types.Word?, dst? : @types.Word?) -> TraceException
 pub fn Exn::to_string(TraceException) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) struct FileStatsInfo {
   size : Int32
   atime : Double
   mtime : Double
   ctime : Double
-} derive(Eq, @debug.Debug)
+}
 pub fn FileStatsInfo::equal(Self, Self) -> Bool
 pub fn FileStatsInfo::not_equal(Self, Self) -> Bool
 pub fn FileStatsInfo::to_repr(Self) -> @debug.Repr
@@ -108,10 +113,11 @@ pub fn Id::hash(TraceId) -> Int32
 pub fn Id::of_string(String) -> Result[TraceId, String]
 pub fn Id::to_string(TraceId) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Location {
   name : String?
   addr : @types.Word
-} derive(Eq, @debug.Debug)
+}
 pub fn Location::create(name? : String?, addr~ : @types.Word) -> Self
 pub fn Location::equal(Self, Self) -> Bool
 pub fn Location::not_equal(Self, Self) -> Bool
@@ -136,11 +142,12 @@ pub fn Mode::read(String, pkg? : String) -> Result[TraceMode, String]
 pub fn Mode::slot() -> @knowledge.Slot[Unit, TraceMode]
 pub fn Mode::unknown() -> TraceMode
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Modload {
   name : String
   low : @types.Word
   high : @types.Word
-} derive(Eq, @debug.Debug)
+}
 pub fn Modload::create(name~ : String, low~ : @types.Word, high~ : @types.Word) -> Self
 pub fn Modload::equal(Self, Self) -> Bool
 pub fn Modload::not_equal(Self, Self) -> Bool
@@ -156,10 +163,11 @@ pub fn Monitor::pack_errors((String) -> TraceEvent) -> TraceMonitor
 pub fn Monitor::stop_on_error() -> TraceMonitor
 pub fn Monitor::warn_on_error((String) -> Unit) -> TraceMonitor
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Move[T] {
   cell : T
   data : @types.Word
-} derive(Eq, @debug.Debug)
+}
 pub fn[T] Move::create(cell~ : T, data~ : @types.Word) -> Self[T]
 pub fn[T : Eq] Move::equal(Self[T], Self[T]) -> Bool
 pub fn[T : Eq] Move::not_equal(Self[T], Self[T]) -> Bool
@@ -171,20 +179,22 @@ pub(all) struct Reader {
 pub fn Reader::create(TraceTool, () -> Result[TraceEvent, String]?, meta? : TraceMeta) -> TraceStreamReader
 pub fn Reader::from_results(TraceTool, Array[Result[TraceEvent, String]], meta? : TraceMeta) -> TraceStreamReader
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Return {
   caller : String
   callee : String
-} derive(Eq, @debug.Debug)
+}
 pub fn Return::create(caller~ : String, callee~ : String) -> Self
 pub fn Return::equal(Self, Self) -> Bool
 pub fn Return::not_equal(Self, Self) -> Bool
 pub fn Return::to_repr(Self) -> @debug.Repr
 pub fn Return::to_string(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Syscall {
   number : Int32
   args : Array[@types.Word]
-} derive(Eq, @debug.Debug)
+}
 pub fn Syscall::create(number~ : Int32, args~ : Array[@types.Word]) -> Self
 pub fn Syscall::equal(Self, Self) -> Bool
 pub fn Syscall::not_equal(Self, Self) -> Bool
@@ -228,6 +238,7 @@ pub fn Trace::supports(Self, String) -> Bool
 pub fn Trace::to_bytes(Self) -> Bytes raise TraceError
 pub fn Trace::tool(Self) -> TraceTool
 
+#derive(Eq, @debug.Debug)
 pub(all) enum TraceAttrValue {
   Binary(BinaryInfo)
   Tracer(TracerInfo)
@@ -237,11 +248,12 @@ pub(all) enum TraceAttrValue {
   Text(String)
   Int(Int32)
   Bool(Bool)
-} derive(Eq, @debug.Debug)
+}
 pub fn TraceAttrValue::equal(Self, Self) -> Bool
 pub fn TraceAttrValue::not_equal(Self, Self) -> Bool
 pub fn TraceAttrValue::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum TraceEvent {
   MemoryLoad(Move[@types.Word])
   MemoryStore(Move[@types.Word])
@@ -257,7 +269,7 @@ pub(all) enum TraceEvent {
   Return(Return)
   Modload(Modload)
   Mode(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn TraceEvent::call(Call) -> Self
 pub fn TraceEvent::call_tag() -> String
 pub fn TraceEvent::call_uuid() -> String
@@ -329,27 +341,30 @@ pub fn TraceEvent::timestamp_value(Self) -> Int64?
 pub fn TraceEvent::to_repr(Self) -> @debug.Repr
 pub fn TraceEvent::to_string(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) struct TraceEventTagInfo {
   name : String
   uuid : String
-} derive(Eq, @debug.Debug)
+}
 pub fn TraceEventTagInfo::equal(Self, Self) -> Bool
 pub fn TraceEventTagInfo::not_equal(Self, Self) -> Bool
 pub fn TraceEventTagInfo::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct TraceException {
   number : Int32
   src : @types.Word?
   dst : @types.Word?
-} derive(Eq, @debug.Debug)
+}
 pub fn TraceException::equal(Self, Self) -> Bool
 pub fn TraceException::not_equal(Self, Self) -> Bool
 pub fn TraceException::to_repr(Self) -> @debug.Repr
 pub fn TraceException::to_string(Self) -> String
 
+#derive(Eq, Hash, @debug.Debug)
 pub(all) struct TraceId {
   value : String
-} derive(Eq, Hash, @debug.Debug)
+}
 pub fn TraceId::compare(Self, Self) -> Int32
 pub fn TraceId::create(String) -> Result[Self, String]
 pub fn TraceId::equal(Self, Self) -> Bool
@@ -361,9 +376,10 @@ pub fn TraceId::of_string(String) -> Result[Self, String]
 pub fn TraceId::to_repr(Self) -> @debug.Repr
 pub fn TraceId::to_string(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) struct TraceMeta {
   attrs : Map[String, TraceAttrValue]
-} derive(Eq, @debug.Debug)
+}
 pub fn TraceMeta::arch(Self) -> @types.Arch?
 pub fn TraceMeta::arch_key() -> String
 pub fn TraceMeta::arch_uuid() -> String
@@ -406,17 +422,19 @@ pub fn TraceMeta::tracer(Self) -> TracerInfo?
 pub fn TraceMeta::tracer_key() -> String
 pub fn TraceMeta::tracer_uuid() -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) struct TraceMetaTagInfo {
   name : String
   uuid : String
-} derive(Eq, @debug.Debug)
+}
 pub fn TraceMetaTagInfo::equal(Self, Self) -> Bool
 pub fn TraceMetaTagInfo::not_equal(Self, Self) -> Bool
 pub fn TraceMetaTagInfo::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct TraceMode {
   name_value : @knowledge.Name
-} derive(Eq, @debug.Debug)
+}
 pub fn TraceMode::compare(Self, Self) -> Int32
 pub fn TraceMode::declare_mode(String, pkg? : String) -> Result[Self, String]
 pub fn TraceMode::domain() -> @knowledge.Domain[Self]
@@ -447,31 +465,34 @@ pub fn TraceProtocol::name(Self) -> String
 pub fn TraceProtocol::probe(Self, String) -> Bool
 pub fn TraceProtocol::supports(Self, String) -> Bool
 
+#derive(Eq, @debug.Debug)
 pub(all) struct TraceReader {
   tool : TraceTool
   meta : TraceMeta
   events : Array[Result[TraceEvent, String]]
-} derive(Eq, @debug.Debug)
+}
 pub fn TraceReader::equal(Self, Self) -> Bool
 pub fn TraceReader::not_equal(Self, Self) -> Bool
 pub fn TraceReader::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct TraceStatsInfo {
   user : String
   host : String
   time : Double
-} derive(Eq, @debug.Debug)
+}
 pub fn TraceStatsInfo::equal(Self, Self) -> Bool
 pub fn TraceStatsInfo::not_equal(Self, Self) -> Bool
 pub fn TraceStatsInfo::to_repr(Self) -> @debug.Repr
 pub fn TraceStatsInfo::to_string(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum TraceStep {
   Stop
   Skip
   Fail
   Make(TraceEvent)
-} derive(Eq, @debug.Debug)
+}
 pub fn TraceStep::equal(Self, Self) -> Bool
 pub fn TraceStep::not_equal(Self, Self) -> Bool
 pub fn TraceStep::to_repr(Self) -> @debug.Repr
@@ -484,10 +505,11 @@ pub(all) struct TraceStreamReader {
 pub fn TraceStreamReader::create(TraceTool, () -> Result[TraceEvent, String]?, meta? : TraceMeta) -> Self
 pub fn TraceStreamReader::from_results(TraceTool, Array[Result[TraceEvent, String]], meta? : TraceMeta) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) struct TraceTool {
   name : String
   supported_tags : @set.Set[String]
-} derive(Eq, @debug.Debug)
+}
 pub fn TraceTool::create(name~ : String, supported_tags~ : Array[String]) -> Self
 pub fn TraceTool::equal(Self, Self) -> Bool
 pub fn TraceTool::name(Self) -> String
@@ -507,12 +529,13 @@ pub(all) struct Tracer {
 pub fn Tracer::create(name~ : String, args~ : Array[String], envp~ : Array[String], version~ : String) -> TracerInfo
 pub fn Tracer::to_string(TracerInfo) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) struct TracerInfo {
   name : String
   args : Array[String]
   envp : Array[String]
   version : String
-} derive(Eq, @debug.Debug)
+}
 pub fn TracerInfo::equal(Self, Self) -> Bool
 pub fn TracerInfo::not_equal(Self, Self) -> Bool
 pub fn TracerInfo::to_repr(Self) -> @debug.Repr

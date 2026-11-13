@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum DwarfRangeListEntry {
   DwarfRangeBaseAddressx(Int32)
   DwarfRangeStartxEndx(Int32, Int32)
@@ -7,7 +8,7 @@ pub(all) enum DwarfRangeListEntry {
   DwarfRangeBaseAddress(UInt64)
   DwarfRangeStartEnd(UInt64, UInt64)
   DwarfRangeStartLength(UInt64, Int32)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend DwarfRangeListEntry with Eq::{not_equal, equal}

@@ -15,13 +15,14 @@ pub fn plugin_table() -> Array[StaticPlugin]
 
 pub fn register_services() -> Unit raise
 
-pub fn run(Array[String], env? : (String) -> String?, fs? : @bap_main.FileSystem, out? : (String) -> Unit, err? : (String) -> Unit, read_line? : () -> String?, write_file? : (String, String) -> Result[Unit, String], plugins? : Array[StaticPlugin]) -> Int
+pub fn run(Array[String], env? : (String) -> String?, fs? : @bap_main.FileSystem, out? : (String) -> Unit, err? : (String) -> Unit, read_line? : () -> String?, write_file? : (String, String) -> Result[Unit, String], plugins? : Array[StaticPlugin]) -> Int32
 
 pub fn usage(@bap_main.Ctxt) -> String
 
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) enum Entity {
   Entities
   Plugins
@@ -36,7 +37,7 @@ pub(all) enum Entity {
   Rules
   Collators
   Targets
-} derive(Eq, @debug.Debug)
+}
 pub fn Entity::equal(Self, Self) -> Bool
 pub fn Entity::name(Self) -> String
 pub fn Entity::not_equal(Self, Self) -> Bool

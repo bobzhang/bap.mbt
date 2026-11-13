@@ -1,10 +1,11 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum ImageBackendPerm {
   ImageBackendR
   ImageBackendW
   ImageBackendX
   ImageBackendOr(ImageBackendPerm, ImageBackendPerm)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ImageBackendPerm with Eq::{not_equal, equal}
@@ -13,10 +14,11 @@ pub extend ImageBackendPerm with Eq::{not_equal, equal}
 pub extend ImageBackendPerm with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct ImageBackendLocation {
   addr : UInt64
   len : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ImageBackendLocation with Eq::{not_equal, equal}
@@ -25,12 +27,13 @@ pub extend ImageBackendLocation with Eq::{not_equal, equal}
 pub extend ImageBackendLocation with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct ImageBackendSegment {
   name : String
   perm : ImageBackendPerm
   off : Int32
   location : ImageBackendLocation
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ImageBackendSegment with Eq::{not_equal, equal}
@@ -39,13 +42,14 @@ pub extend ImageBackendSegment with Eq::{not_equal, equal}
 pub extend ImageBackendSegment with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct ImageBackendSymbol {
   name : String
   is_function : Bool
   is_debug : Bool
   location : ImageBackendLocation
   extra_locations : Array[ImageBackendLocation]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ImageBackendSymbol with Eq::{not_equal, equal}
@@ -54,10 +58,11 @@ pub extend ImageBackendSymbol with Eq::{not_equal, equal}
 pub extend ImageBackendSymbol with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct ImageBackendSection {
   name : String
   location : ImageBackendLocation
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ImageBackendSection with Eq::{not_equal, equal}

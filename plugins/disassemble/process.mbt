@@ -3,19 +3,21 @@
 
 ///|
 /// Where a dump goes.
+#derive(Eq, Debug)
 pub(all) enum Destination {
   Stdout
   File(String)
-} derive(Eq, Debug)
+}
 
 ///|
 /// A parsed `--dump` specification: the destination, the format name,
 /// and the optional format version (`<FMT>[-<VER>][:<FILE>]`).
+#derive(Eq, Debug)
 pub(all) struct Output {
   dst : Destination
   fmt : String
   ver : String?
-} derive(Eq, Debug)
+}
 
 ///|
 fn parse_fmt(fmt : String) -> (String, String?) {
@@ -251,13 +253,14 @@ pub fn load_input(
 /// sources (`@project.register_rooter_source`, ...); when not specified,
 /// all registered sources (and root providers) are used, as upstream BAP
 /// combines all providers of the knowledge base.
+#derive(Eq, Debug)
 pub(all) struct Components {
   disassembler : String?
   rooters : Array[String]?
   symbolizers : Array[String]?
   branchers : Array[String]?
   reconstructor : String?
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn Components::default() -> Components {

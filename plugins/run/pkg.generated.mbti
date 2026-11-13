@@ -19,7 +19,7 @@ pub fn entry_points(@types.Term[@types.Program]) -> Array[@types.Tid]
 
 pub let name : String
 
-pub fn name_of_entry(Int, String) -> @primus.Name raise
+pub fn name_of_entry(Int32, String) -> @primus.Name raise
 
 pub fn parse_entry_points(@project.Project, Array[String]) -> Array[@primus.Name] raise
 
@@ -34,6 +34,7 @@ pub(all) suberror RunError {
 pub fn RunError::to_string(Self) -> String
 
 // Types and methods
+#derive(@debug.Debug)
 pub(all) struct Params {
   argv : Array[String]
   envp : Array[String]
@@ -42,7 +43,7 @@ pub(all) struct Params {
   with_repetitions : Bool
   systems : Array[String]
   until_visited : Bool
-} derive(@debug.Debug)
+}
 pub fn Params::new(argv? : Array[String], envp? : Array[String], entry? : Array[String], in_isolation? : Bool, with_repetitions? : Bool, systems? : Array[String], until_visited? : Bool) -> Self
 pub fn Params::to_repr(Self) -> @debug.Repr
 

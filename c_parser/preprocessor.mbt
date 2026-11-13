@@ -21,9 +21,10 @@
 ///|
 /// A parsing (or preprocessing) error with the location of the offending
 /// token.
+#derive(Eq, Debug)
 pub(all) suberror ParseError {
   ParseError(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ParseError with Eq::{equal, not_equal}
@@ -38,6 +39,7 @@ fn error_at(t : Token, msg : String) -> ParseError {
 
 ///|
 /// A macro definition.
+#derive(Debug)
 pub(all) struct Macro {
   /// The parameters of a function-like macro (`None` for object-like ones).
   params : Array[String]?
@@ -45,7 +47,7 @@ pub(all) struct Macro {
   variadic : Bool
   /// The replacement list.
   body : Array[Token]
-} derive(Debug)
+}
 
 ///|
 pub extend Macro with Debug::{to_repr}

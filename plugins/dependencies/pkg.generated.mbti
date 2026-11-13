@@ -38,22 +38,24 @@ pub struct DependencyCache {
 }
 pub fn DependencyCache::new() -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) enum DependencyFormat {
   Yaml
   Sexp
   Json
   Graph
-} derive(Eq, @debug.Debug)
+}
 pub fn DependencyFormat::equal(Self, Self) -> Bool
 pub fn DependencyFormat::not_equal(Self, Self) -> Bool
 pub fn DependencyFormat::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct DependencyInfo {
   name : String
   imports : Array[String]
   exports : Array[String]
   libraries : Array[String]
-} derive(Eq, @debug.Debug)
+}
 pub fn DependencyInfo::empty(String) -> Self
 pub fn DependencyInfo::equal(Self, Self) -> Bool
 pub fn DependencyInfo::not_equal(Self, Self) -> Bool

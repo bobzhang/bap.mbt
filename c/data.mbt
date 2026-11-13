@@ -11,13 +11,14 @@
 /// long     32     32     64     32    64
 /// addr     32     32     64     64    64
 /// ```
+#derive(Eq, Debug)
 pub(all) enum Model {
   LP32
   ILP32
   ILP64
   LLP64
   LP64
-} derive(Eq, Debug)
+}
 
 ///|
 /// Models for 32-bit systems (upstream `model32`).
@@ -44,16 +45,18 @@ pub fn Model::to_string(self : Model) -> String {
 
 ///|
 /// A value lattice.
+#derive(Eq, Debug)
 pub(all) enum Value {
   /// Any possible value.
   Top
   /// One of the specified values; `Set([])` is bottom.
   Set(Array[@types.Word])
-} derive(Eq, Debug)
+}
 
 ///|
 /// A C object representation, parameterized by the layout representation
 /// so that the generalized layout type can be defined recursively.
+#derive(Eq, Debug)
 pub(all) enum Obj[D] {
   /// A value of a basic type.
   Basic(Basic)
@@ -63,11 +66,12 @@ pub(all) enum Obj[D] {
   Undef
   /// A union of values.
   Union(Array[D])
-} derive(Eq, Debug)
+}
 
 ///|
 /// An abstraction of a C datum: an immediate value of the given size, a
 /// sequence of data, or a pointer to a datum.
+#derive(Eq, Debug)
 pub(all) enum Datum[D, S] {
   /// `Imm(size, value)`
   Imm(S, D)
@@ -75,13 +79,14 @@ pub(all) enum Datum[D, S] {
   Seq(Array[Datum[D, S]])
   /// `Ptr(datum)`
   Ptr(Datum[D, S])
-} derive(Eq, Debug)
+}
 
 ///|
 /// The layout of a C object (sizes are in bits).
+#derive(Eq, Debug)
 pub(all) struct Layout {
   layout : Datum[Obj[Layout], Int32]
-} derive(Eq, Debug)
+}
 
 ///|
 /// The datum that uses the value lattice for object representation

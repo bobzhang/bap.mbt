@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum ProjectDisassemblyBasicPred {
   BasicValid
   BasicKind(ProjectInstructionKind)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ProjectDisassemblyBasicPred with Eq::{not_equal, equal}

@@ -178,10 +178,11 @@ pub fn install_computer(m : @primus.Machine) -> Unit raise {
 /// The scope of an assertion: the `user` scope holds the assumptions made
 /// with `symbolic-assume`, the `path` scope the branch conditions of the
 /// current path.
+#derive(Eq, Debug)
 pub(all) enum Scope {
   User
   Path
-} derive(Eq, Debug)
+}
 
 ///|
 fn Scope::name(self : Scope) -> String {

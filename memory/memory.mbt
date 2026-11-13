@@ -1,9 +1,10 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum AddressPosition {
   AddrInside
   AddrBelow
   AddrAbove
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend AddressPosition with Eq::{not_equal, equal}
@@ -12,9 +13,10 @@ pub extend AddressPosition with Eq::{not_equal, equal}
 pub extend AddressPosition with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) suberror MemoryError {
   MemoryFailure(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend MemoryError with Eq::{not_equal, equal}

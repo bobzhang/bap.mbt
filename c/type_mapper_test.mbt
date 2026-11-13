@@ -173,7 +173,8 @@ test "state-passing visitor" {
 }
 
 ///|
-suberror Abort derive(Debug)
+#derive(Debug)
+suberror Abort
 
 ///|
 struct Failing {}

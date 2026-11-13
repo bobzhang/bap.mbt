@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Hash, Debug)
 pub(all) struct Ieee754Parameters {
   base : Int32
   bias : Int32
@@ -6,7 +7,7 @@ pub(all) struct Ieee754Parameters {
   p : Int32
   w : Int32
   t : Int32
-} derive(Eq, Hash, Debug)
+}
 
 ///|
 pub extend Ieee754Parameters with Eq::{not_equal, equal}

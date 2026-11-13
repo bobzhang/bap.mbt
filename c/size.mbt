@@ -279,9 +279,10 @@ impl Ruler with fn structure(self, s) {
 ///   assert_eq(size.bits(foo), Some(96))
 /// }
 /// ```
+#derive(Eq, Debug)
 pub(all) struct SizeBase {
   model : Model
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn SizeBase::new(model : Model) -> SizeBase {

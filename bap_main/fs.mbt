@@ -11,11 +11,12 @@
 
 ///|
 /// The kind of an existing file-system entry.
+#derive(Eq, Debug)
 pub(all) enum FileKind {
   RegularFile
   Directory
   OtherFile
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend FileKind with Eq::{equal, not_equal}

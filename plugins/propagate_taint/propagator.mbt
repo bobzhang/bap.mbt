@@ -136,10 +136,11 @@ pub(all) enum Point {
 
 ///|
 /// Errors of the propagator.
+#derive(Eq, Debug)
 pub(all) suberror PropagatorError {
   /// the entry point is not a subroutine of the program
   EntryPointNotFound
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PropagatorError with Eq::{not_equal, equal}

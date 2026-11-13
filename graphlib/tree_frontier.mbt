@@ -1,9 +1,10 @@
 ///|
+#derive(Debug)
 struct Tree[N] {
   all_value : Array[N]
   parents_value : Map[N, N]
   children_value : Map[N, Set[N]]
-} derive(Debug)
+}
 
 ///|
 pub extend Tree with Debug::{to_repr}
@@ -137,10 +138,11 @@ pub fn[N : Hash + Eq] Tree::is_descendant_of(
 }
 
 ///|
+#derive(Debug)
 struct Frontier[N] {
   all_value : Array[N]
   map_value : Map[N, Set[N]]
-} derive(Debug)
+}
 
 ///|
 pub extend Frontier with Debug::{to_repr}

@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum DwarfInfoUnitKind {
   DwarfInfoUnitLegacy
   DwarfInfoUnitCompile
@@ -8,7 +9,7 @@ pub(all) enum DwarfInfoUnitKind {
   DwarfInfoUnitSplitCompile
   DwarfInfoUnitSplitType
   DwarfInfoUnitUnknown(Int32)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend DwarfInfoUnitKind with Eq::{not_equal, equal}

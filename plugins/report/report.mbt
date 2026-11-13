@@ -8,6 +8,7 @@ let doc : String =
 
 ///|
 /// The state of a reported task (`slot`).
+#derive(Eq, Debug)
 pub(all) struct ProgressSlot {
   note : String?
   stage : Int32?
@@ -15,7 +16,7 @@ pub(all) struct ProgressSlot {
   created : Double
   updated : Double
   active : Bool
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ProgressSlot with Eq::{not_equal, equal}

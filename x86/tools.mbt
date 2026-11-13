@@ -4,6 +4,7 @@
 
 ///|
 /// Register classes of `X86_asm.reg`.
+#derive(Eq)
 priv enum RegClass {
   R8L
   R8H
@@ -15,7 +16,7 @@ priv enum RegClass {
   Ip
   Segment
   SegmentBase
-} derive(Eq)
+}
 
 ///|
 /// An `X86_asm.reg` register of the modern lifters.
@@ -293,7 +294,7 @@ priv enum Mem {
     base~ : MemBase?,
     scale~ : Int32?,
     index~ : Reg?,
-    disp~ : Int64
+    disp~ : Int64,
   )
 }
 

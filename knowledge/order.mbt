@@ -1,10 +1,11 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum PartialOrder {
   Less
   Equal
   Greater
   Incomparable
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PartialOrder with Eq::{not_equal, equal}

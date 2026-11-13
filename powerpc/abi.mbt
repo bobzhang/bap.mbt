@@ -7,12 +7,13 @@
 
 ///|
 /// Classification of a C value for argument passing.
+#derive(Eq, Debug)
 pub(all) enum AbiValue {
   /// integers, pointers and aggregates of the given size in bits
   Integral(Int32)
   /// floating-point values of the given size in bits
   Floating(Int32)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend AbiValue with Eq::{equal, not_equal}
@@ -22,6 +23,7 @@ pub extend AbiValue with Debug::{to_repr}
 
 ///|
 /// Where a value is passed.
+#derive(Eq, Debug)
 pub(all) enum AbiLocation {
   /// in the given (consecutive) registers
   Registers(Array[String])
@@ -31,7 +33,7 @@ pub(all) enum AbiLocation {
   Reference(String)
   /// on the stack
   Memory
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend AbiLocation with Eq::{equal, not_equal}
@@ -41,10 +43,11 @@ pub extend AbiLocation with Debug::{to_repr}
 
 ///|
 /// Result of applying the calling convention to a function prototype.
+#derive(Eq, Debug)
 pub struct AbiLayout {
   args : Array[AbiLocation]
   ret : AbiLocation?
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend AbiLayout with Eq::{equal, not_equal}

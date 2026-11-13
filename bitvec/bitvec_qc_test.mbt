@@ -107,12 +107,13 @@ fn gen_value(width : Int32, rs : @splitmix.RandomState) -> @bigint.BigInt {
 }
 
 ///|
+#derive(Debug)
 struct BvCase {
   width : Int32
   a : @bigint.BigInt
   b : @bigint.BigInt
   k : Int32
-} derive(Debug)
+}
 
 ///|
 impl @quickcheck.Arbitrary for BvCase with fn arbitrary(size, rs) {

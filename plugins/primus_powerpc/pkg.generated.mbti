@@ -21,7 +21,7 @@ pub let name : String
 
 pub fn register() -> Bool
 
-pub let registers : Array[(String, Int)]
+pub let registers : Array[(String, Int32)]
 
 // Errors
 

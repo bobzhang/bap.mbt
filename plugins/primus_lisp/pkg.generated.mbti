@@ -25,7 +25,7 @@ pub fn set_output((String) -> Unit) -> Unit
 
 pub let standard_channels : Array[String]
 
-pub fn type_error_summary(Int) -> String
+pub fn type_error_summary(Int32) -> String
 
 pub fn typecheck(@project.Project) -> (String, Array[String]) raise
 

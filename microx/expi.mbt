@@ -22,10 +22,11 @@ using @types {
 /// variable bindings plus the generator of fresh result identifiers.
 ///
 /// The context is persistent; every operation returns an updated copy.
+#derive(Eq, Debug)
 pub struct ExpContext {
   priv vars : BilContext
   priv id : BilResultId
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ExpContext with Eq::{not_equal, equal}

@@ -2,6 +2,7 @@
 /// A jump destination label (upstream `Theory.Label` objects created by
 /// the BIL parser with `for_addr`, `for_name` and `for_ivec`, or any
 /// other program label).
+#derive(Eq, Debug)
 pub(all) enum Dst {
   /// the label of the instruction at the address
   Addr(@types.Word)
@@ -11,7 +12,7 @@ pub(all) enum Dst {
   Ivec(Int32)
   /// a program label (term identifier)
   Label(@types.Tid)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Dst with Eq::{not_equal, equal}
@@ -58,9 +59,10 @@ pub struct EffAlgebra[E] {
 
 ///|
 /// A BIL program that can't be reflected.
+#derive(Eq, Debug)
 pub(all) suberror ReflectError {
   ReflectError(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ReflectError with Eq::{not_equal, equal}

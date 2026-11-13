@@ -9,10 +9,11 @@
 
 ///|
 /// Signedness of an RTL expression.
+#derive(Eq, Debug)
 pub(all) enum Sign {
   Signed
   Unsigned
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Sign with Eq::{equal, not_equal}
@@ -22,6 +23,7 @@ pub extend Sign with Debug::{to_repr}
 
 ///|
 /// The shape of an RTL expression.
+#derive(Eq, Debug)
 pub(all) enum RtlBody {
   /// A single variable, or a concatenation of variables (most significant
   /// first).
@@ -33,7 +35,7 @@ pub(all) enum RtlBody {
   Extract(Int32, Int32, RtlBody)
   Cast(Sign, Int32, RtlBody)
   Unop(@types.UnOp, RtlBody)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend RtlBody with Eq::{equal, not_equal}
@@ -43,11 +45,12 @@ pub extend RtlBody with Debug::{to_repr}
 
 ///|
 /// An RTL expression: a body annotated with signedness and bit width.
+#derive(Eq, Debug)
 pub struct RtlExp {
   body : RtlBody
   sign : Sign
   width : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend RtlExp with Eq::{equal, not_equal}
@@ -57,6 +60,7 @@ pub extend RtlExp with Debug::{to_repr}
 
 ///|
 /// An RTL statement.
+#derive(Eq, Debug)
 pub(all) enum Rtl {
   /// `lhs := rhs`
   Move(RtlExp, RtlExp)
@@ -67,7 +71,7 @@ pub(all) enum Rtl {
   /// sized chunk of `exp`; `inverse` starts from the most significant chunk.
   Foreach(Bool, RtlExp, RtlExp, Array[Rtl])
   Message(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Rtl with Eq::{equal, not_equal}

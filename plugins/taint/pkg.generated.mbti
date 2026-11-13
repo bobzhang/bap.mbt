@@ -29,11 +29,12 @@ pub fn strain_to_string(ArrayView[Strain]) -> String
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) enum Strain {
   Addr(Int64)
   Tid(String)
   Var(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn Strain::equal(Self, Self) -> Bool
 pub fn Strain::not_equal(Self, Self) -> Bool
 pub fn Strain::to_repr(Self) -> @debug.Repr

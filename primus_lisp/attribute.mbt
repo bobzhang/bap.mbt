@@ -9,20 +9,23 @@
 
 ///|
 /// The visibility of a definition.
+#derive(Eq, Debug)
 pub(all) enum Visibility {
   Public
   Private
-} derive(Eq, Debug)
+}
 
 ///|
 /// The advice method (upstream `Advice.cmethod`).
+#derive(Eq, Debug)
 pub(all) enum AdviceMethod {
   Before
   After
-} derive(Eq, Debug)
+}
 
 ///|
 /// What went wrong when an attribute was parsed.
+#derive(Eq, Debug)
 pub(all) enum AttrProblem {
   ExpectAtom
   ExpectList
@@ -34,13 +37,14 @@ pub(all) enum AttrProblem {
   EmptyAdvice
   NoTargets
   Custom(String)
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Debug)
 pub(all) suberror AttributeError {
   UnknownAttr(String, Tree)
   Failure(AttrProblem, Array[Tree])
-} derive(Debug)
+}
 
 ///|
 pub impl Show for AttributeError with fn output(self, logger) {

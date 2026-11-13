@@ -10,11 +10,12 @@
 ///   destination when the branch switches the instruction set
 ///   (interworking, upstream `Theory.Label.encoding` of the destination),
 ///   `None` when it is unknown or the encoding does not change.
+#derive(Eq, Debug)
 pub struct Lifted {
   bil : Array[@types.Stmt]
   delay : Int32
   dest_encoding : @core_theory.Language?
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Lifted with Eq::{equal, not_equal}

@@ -36,14 +36,16 @@ pub fn tokenize(String, file? : String) -> Array[Token]
 pub fn tokens_to_string(ArrayView[Token]) -> String
 
 // Errors
+#derive(Eq, @debug.Debug)
 pub(all) suberror ParseError {
   ParseError(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn ParseError::equal(Self, Self) -> Bool
 pub fn ParseError::not_equal(Self, Self) -> Bool
 pub fn ParseError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) enum BaseType {
   NoType
   Void
@@ -69,40 +71,44 @@ pub(all) enum BaseType {
   Volatile(BaseType)
   GnuType(Array[GnuAttr], BaseType)
   BuiltinType(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn BaseType::equal(Self, Self) -> Bool
 pub fn BaseType::not_equal(Self, Self) -> Bool
 pub fn BaseType::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Constant {
   ConstInt(String)
   ConstFloat(String)
   ConstChar(String)
   ConstString(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn Constant::equal(Self, Self) -> Bool
 pub fn Constant::not_equal(Self, Self) -> Bool
 pub fn Constant::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Definition {
   FunDef(SingleName)
   DecDef(NameGroup)
   TypeDef(NameGroup, Array[GnuAttr])
   OnlyTypeDef(NameGroup)
-} derive(Eq, @debug.Debug)
+}
 pub fn Definition::equal(Self, Self) -> Bool
 pub fn Definition::not_equal(Self, Self) -> Bool
 pub fn Definition::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Expression {
   Nothing
   Literal(Constant)
   Other
-} derive(Eq, @debug.Debug)
+}
 pub fn Expression::equal(Self, Self) -> Bool
 pub fn Expression::not_equal(Self, Self) -> Bool
 pub fn Expression::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum GnuAttr {
   GnuNone
   GnuCall(String, Array[GnuAttr])
@@ -111,43 +117,47 @@ pub(all) enum GnuAttr {
   GnuExtension
   GnuInline
   GnuTypeArg
-} derive(Eq, @debug.Debug)
+}
 pub fn GnuAttr::equal(Self, Self) -> Bool
 pub fn GnuAttr::not_equal(Self, Self) -> Bool
 pub fn GnuAttr::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum IntSize {
   NoSize
   Short
   Long
   LongLong
-} derive(Eq, @debug.Debug)
+}
 pub fn IntSize::equal(Self, Self) -> Bool
 pub fn IntSize::not_equal(Self, Self) -> Bool
 pub fn IntSize::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub(all) struct Macro {
   params : Array[String]?
   variadic : Bool
   body : Array[Token]
-} derive(@debug.Debug)
+}
 pub fn Macro::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Name {
   name : String
   typ : BaseType
   attrs : Array[GnuAttr]
   init : Expression
-} derive(Eq, @debug.Debug)
+}
 pub fn Name::equal(Self, Self) -> Bool
 pub fn Name::not_equal(Self, Self) -> Bool
 pub fn Name::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct NameGroup {
   typ : BaseType
   storage : Storage
   names : Array[Name]
-} derive(Eq, @debug.Debug)
+}
 pub fn NameGroup::equal(Self, Self) -> Bool
 pub fn NameGroup::not_equal(Self, Self) -> Bool
 pub fn NameGroup::to_repr(Self) -> @debug.Repr
@@ -157,54 +167,59 @@ pub struct Preprocessor {
   read_file : (String) -> String?
   include_dirs : Array[String]
   once : Map[String, Unit]
-  mut depth : Int
+  mut depth : Int32
 }
 pub fn Preprocessor::expand(Self, Array[Token]) -> Array[Token] raise ParseError
 pub fn Preprocessor::macros(Self) -> Map[String, Macro]
 pub fn Preprocessor::new(read_file? : (String) -> String?, include_dirs? : Array[String], defines? : Array[(String, String)]) -> Self
 pub fn Preprocessor::run(Self, String, file? : String) -> Array[Token] raise ParseError
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Sign {
   NoSign
   Signed
   Unsigned
-} derive(Eq, @debug.Debug)
+}
 pub fn Sign::equal(Self, Self) -> Bool
 pub fn Sign::not_equal(Self, Self) -> Bool
 pub fn Sign::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct SingleName {
   typ : BaseType
   storage : Storage
   name : Name
-} derive(Eq, @debug.Debug)
+}
 pub fn SingleName::equal(Self, Self) -> Bool
 pub fn SingleName::not_equal(Self, Self) -> Bool
 pub fn SingleName::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Storage {
   NoStorage
   Auto
   Static
   Extern
   Register
-} derive(Eq, @debug.Debug)
+}
 pub fn Storage::equal(Self, Self) -> Bool
 pub fn Storage::not_equal(Self, Self) -> Bool
 pub fn Storage::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Token {
   kind : TokenKind
   text : String
   file : String
-  line : Int
+  line : Int32
   bol : Bool
   space : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn Token::equal(Self, Self) -> Bool
 pub fn Token::not_equal(Self, Self) -> Bool
 pub fn Token::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum TokenKind {
   Ident
   IntLit
@@ -213,7 +228,7 @@ pub(all) enum TokenKind {
   StrLit
   Punct
   Other
-} derive(Eq, @debug.Debug)
+}
 pub fn TokenKind::equal(Self, Self) -> Bool
 pub fn TokenKind::not_equal(Self, Self) -> Bool
 pub fn TokenKind::to_repr(Self) -> @debug.Repr

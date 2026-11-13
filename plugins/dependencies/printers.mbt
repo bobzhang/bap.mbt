@@ -1,11 +1,12 @@
 ///|
 /// Output formats of the `dependencies` command.
+#derive(Eq, Debug)
 pub(all) enum DependencyFormat {
   Yaml
   Sexp
   Json
   Graph
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend DependencyFormat with Eq::{not_equal, equal}

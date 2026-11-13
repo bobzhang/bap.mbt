@@ -12,9 +12,10 @@ struct ProjectPass {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) suberror ProjectPassError {
   ProjectPassFailure(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ProjectPassError with Eq::{not_equal, equal}
@@ -29,13 +30,14 @@ pub(all) enum ProjectPassRunError {
 }
 
 ///|
+#derive(Eq)
 pub(all) enum ProjectPassEventKind {
   PassRegistered
   PassStarted
   PassSucceeded
   PassFailed
   PassFinished
-} derive(Eq)
+}
 
 ///|
 pub extend ProjectPassEventKind with Eq::{not_equal, equal}

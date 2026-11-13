@@ -17,7 +17,7 @@ pub let exact_policy_name : String
 
 pub fn[T] merge_term_taint_map(@types.Term[T], String, TaintMap) -> @types.Term[T]
 
-pub let object_width : Int
+pub let object_width : Int32
 
 pub fn propagate_by_computation(@primus.Machine) -> Unit
 
@@ -52,7 +52,7 @@ pub fn Gc::conservative(@primus.Machine) -> Unit
 pub struct Kind {
   // private fields
 }
-pub fn Kind::compare(Self, Self) -> Int
+pub fn Kind::compare(Self, Self) -> Int32
 pub fn Kind::create(@primus.Machine, String) -> Self raise
 pub fn Kind::equal(Self, Self) -> Bool
 pub fn Kind::name(Self, @primus.Machine) -> String
@@ -72,7 +72,7 @@ pub impl Show for Kind
 pub struct Object {
   // private fields
 }
-pub fn Object::compare(Self, Self) -> Int
+pub fn Object::compare(Self, Self) -> Int32
 pub fn Object::create(@primus.Machine, Kind) -> Self raise
 pub fn Object::equal(Self, Self) -> Bool
 pub fn Object::inspect(Self) -> @primus.Sexp
@@ -106,11 +106,12 @@ pub fn Policy::set_default(@primus.Machine, Self) -> Unit
 pub fn Policy::to_value(Self) -> @primus.Value
 pub impl Eq for Policy
 
+#derive(Compare, Eq, @debug.Debug)
 pub(all) enum Rel {
   Direct
   Indirect
-} derive(Compare, Eq, @debug.Debug)
-pub fn Rel::compare(Self, Self) -> Int
+}
+pub fn Rel::compare(Self, Self) -> Int32
 pub fn Rel::equal(Self, Self) -> Bool
 pub fn Rel::not_equal(Self, Self) -> Bool
 pub fn Rel::op_ge(Self, Self) -> Bool
@@ -122,9 +123,10 @@ pub fn Rel::to_repr(Self) -> @debug.Repr
 pub fn Rel::to_string(Self) -> String
 pub impl Show for Rel
 
+#derive(Eq)
 pub struct TaintMap {
   // private fields
-} derive(Eq)
+}
 pub fn TaintMap::add(Self, String, ArrayView[@types.Tid]) -> Self
 pub fn TaintMap::bindings(Self) -> Array[(String, Array[@types.Tid])]
 pub fn TaintMap::empty() -> Self

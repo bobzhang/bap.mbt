@@ -20,9 +20,9 @@ pub fn finished() -> @primus.Statement[Prey]
 
 pub fn latin1(BytesView) -> String
 
-pub fn lexical_compare(String, String) -> Int
+pub fn lexical_compare(String, String) -> Int32
 
-pub let max_printed : Int
+pub let max_printed : Int32
 
 pub fn ocaml_escaped(String) -> String
 
@@ -55,14 +55,15 @@ pub fn Statics::of_array(ArrayView[(@types.Word, String)]) -> Self
 pub fn Statics::to_array(Self) -> Array[(@types.Word, String)]
 pub fn Statics::to_string(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub struct Words {
   // private fields
-} derive(Eq, @debug.Debug)
+}
 pub fn Words::add(Self, String) -> Self
 pub fn Words::empty() -> Self
 pub fn Words::equal(Self, Self) -> Bool
 pub fn Words::is_empty(Self) -> Bool
-pub fn Words::length(Self) -> Int
+pub fn Words::length(Self) -> Int32
 pub fn Words::mem(Self, String) -> Bool
 pub fn Words::not_equal(Self, Self) -> Bool
 pub fn Words::of_array(ArrayView[String]) -> Self

@@ -1,16 +1,18 @@
 ///|
 /// A recorded update of a jump term (`Optimization_data.jmp_update`).
+#derive(Eq, Debug)
 pub(all) struct JmpUpdate {
   cond : @types.Exp
   kind : @types.JmpKind
-} derive(Eq, Debug)
+}
 
 ///|
 /// A recorded update of a term (`Optimization_data.update`).
+#derive(Eq, Debug)
 pub(all) enum TermUpdate {
   Rhs(@types.Exp)
   Jmp(JmpUpdate)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend JmpUpdate with Eq::{not_equal, equal}

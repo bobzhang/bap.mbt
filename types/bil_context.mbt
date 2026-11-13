@@ -1,7 +1,8 @@
 ///|
+#derive(Eq, Debug)
 struct BilContext {
   entries : Array[(Var, BilResult)]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend BilContext with Eq::{not_equal, equal}

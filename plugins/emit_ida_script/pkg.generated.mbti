@@ -18,7 +18,7 @@ pub let epilogue : String
 
 pub fn extract_script(@memory.MemMap[String], @types.Term[@types.Program], Array[String]) -> String
 
-pub fn idacode_of_color(@types.IrColor) -> Int
+pub fn idacode_of_color(@types.IrColor) -> Int32
 
 pub let pass_name : String
 

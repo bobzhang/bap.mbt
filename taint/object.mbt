@@ -231,13 +231,14 @@ fn kind_of(m : @primus.Machine, obj : Object) -> Kind? {
 ///|
 /// A relation between a value and a tracked object (upstream
 /// `Taint.Rel.t`).
+#derive(Eq, Compare, Debug)
 pub(all) enum Rel {
   /// The value contains (bits of) the object or is influenced by it.
   Direct
   /// The value is an address of a value that is directly related to the
   /// object.
   Indirect
-} derive(Eq, Compare, Debug)
+}
 
 ///|
 pub extend Rel with Eq::{not_equal, equal}

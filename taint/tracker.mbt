@@ -9,7 +9,8 @@
 
 ///|
 /// An address: the key of the indirect relation.
-priv struct Addr(@types.Word) derive(Eq)
+#derive(Eq)
+priv struct Addr(@types.Word)
 
 ///|
 impl Compare for Addr with fn compare(self, other) {

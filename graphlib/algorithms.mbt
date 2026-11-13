@@ -51,13 +51,14 @@ fn[N, E, A] dfs_edge_identity(
 }
 
 ///|
+#derive(Debug)
 struct DfsVisitor[N, E, A] {
   start_tree_value : (N, A) -> A
   enter_node_value : (Int32, N, A) -> A
   leave_node_value : (Int32, N, A) -> A
   enter_edge_value : (EdgeKind, Edge[N, E], A) -> A
   leave_edge_value : (EdgeKind, Edge[N, E], A) -> A
-} derive(Debug)
+}
 
 ///|
 pub extend DfsVisitor with Debug::{to_repr}

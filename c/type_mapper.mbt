@@ -179,7 +179,8 @@ pub impl TypeMapper for IdentityMapper
 
 ///|
 /// Raised by `Search::finished` to abort the traversal.
-pub suberror SearchFinished derive(Debug)
+#derive(Debug)
+pub suberror SearchFinished
 
 ///|
 /// A search with an early exit (upstream `C.Type.Mapper.Search` and the

@@ -1,11 +1,12 @@
 ///|
 /// A name of linked code (upstream ``Primus.Linker.name``:
 /// `` `tid | `addr | `symbol ``).
+#derive(Eq, Debug)
 pub(all) enum Name {
   Tid(@types.Tid)
   Addr(@types.Word)
   Symbol(String)
-} derive(Eq, Debug)
+}
 
 ///|
 /// Renders a name: symbols as is, addresses in hex, tids in the usual tid

@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug)
 struct Leb128 {
   negative : Bool
   data : Array[Byte]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Leb128 with Eq::{not_equal, equal}

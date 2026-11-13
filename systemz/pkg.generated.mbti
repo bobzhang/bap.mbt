@@ -9,7 +9,7 @@ import {
 // Values
 pub fn accepts(@mc.Context) -> Bool
 
-pub fn gpr(Int) -> @types.Var?
+pub fn gpr(Int32) -> @types.Var?
 
 pub fn lift(@mc.Insn) -> Array[@types.Stmt] raise @mc.LiftError
 
@@ -21,7 +21,7 @@ pub let provider_name : String
 
 pub fn register(registry? : @mc.Registry) -> Unit
 
-pub fn regnum(String) -> Int?
+pub fn regnum(String) -> Int32?
 
 // Errors
 

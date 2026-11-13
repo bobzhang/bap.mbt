@@ -3,11 +3,12 @@
 // over a tiny byte alphabet (so that signatures repeat).
 
 ///|
+#derive(Debug)
 struct Corpus {
   data : Bytes
   starts : Array[Int32] // offsets classified as function starts
   max_length : Int32
-} derive(Debug)
+}
 
 ///|
 impl @quickcheck.Arbitrary for Corpus with fn arbitrary(size, rs) {

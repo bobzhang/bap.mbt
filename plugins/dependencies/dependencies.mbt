@@ -17,12 +17,13 @@ let doc : String =
 
 ///|
 /// The dependency information of one unit (`info`).
+#derive(Eq, Debug)
 pub(all) struct DependencyInfo {
   name : String
   imports : Array[String]
   exports : Array[String]
   libraries : Array[String]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend DependencyInfo with Eq::{not_equal, equal}

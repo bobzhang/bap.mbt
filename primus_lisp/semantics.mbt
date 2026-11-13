@@ -432,6 +432,7 @@ pub fn load_semantics(
 
 ///|
 /// An operand of an instruction.
+#derive(Eq, Debug)
 pub(all) enum Operand {
   /// an immediate value
   Imm(Int64)
@@ -439,7 +440,7 @@ pub(all) enum Operand {
   Reg(String)
   /// an unknown (e.g., floating-point) operand
   Unknown
-} derive(Eq, Debug)
+}
 
 ///|
 fn Lifter::operand(self : Lifter, op : Operand) -> SValue {

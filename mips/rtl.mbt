@@ -4,10 +4,11 @@
 // zero-extended) the same way upstream does before being lowered to BIL.
 
 ///|
+#derive(Eq)
 priv enum Sign {
   Signed
   Unsigned
-} derive(Eq)
+}
 
 ///|
 /// Body of an RTL expression; mirrors upstream `Mips_rtl.body`.

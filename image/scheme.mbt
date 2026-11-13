@@ -5,11 +5,12 @@ pub(all) struct Scheme {}
 
 ///|
 /// A memory region with extra information (upstream `Scheme.region`).
+#derive(Eq, Debug)
 pub(all) struct Region[A] {
   addr : Int64
   size : Int64
   info : A
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Region with Eq::{equal, not_equal}

@@ -34,11 +34,12 @@ pub struct Statement[T] {
 
 ///|
 /// A handle of a subscription that can be cancelled with `Machine::cancel`.
+#derive(Eq, Debug)
 pub struct Subscription {
   priv key : Int32
   priv id : Int32
   priv watcher : Bool
-} derive(Eq, Debug)
+}
 
 ///|
 let providers : Map[String, Provider] = Map([])

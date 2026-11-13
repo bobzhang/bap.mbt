@@ -1,9 +1,10 @@
 ///|
+#derive(Eq, Debug)
 pub(all) struct FormatInfo {
   name : String
   version : String
   description : String?
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend FormatInfo with Eq::{not_equal, equal}
@@ -34,10 +35,11 @@ pub impl Printable for FormatInfo with fn to_string(self) {
 }
 
 ///|
+#derive(Debug)
 struct FormatRegistry {
   readers : Array[FormatInfo]
   writers : Array[FormatInfo]
-} derive(Debug)
+}
 
 ///|
 pub extend FormatRegistry with Debug::{to_repr}

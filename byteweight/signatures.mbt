@@ -1,10 +1,11 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum ByteweightSignatureError {
   ByteweightSignatureCorrupted(String)
   ByteweightSignatureNoSignatures
   ByteweightSignatureNoEntry(String)
   ByteweightSignatureSysError(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ByteweightSignatureError with Eq::{not_equal, equal}

@@ -38,10 +38,11 @@ pub fn unresolve(@primus.Machine) -> Unit
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) enum Mode {
   IA32
   AMD64
-} derive(Eq, @debug.Debug)
+}
 pub fn Mode::equal(Self, Self) -> Bool
 pub fn Mode::not_equal(Self, Self) -> Bool
 pub fn Mode::to_repr(Self) -> @debug.Repr

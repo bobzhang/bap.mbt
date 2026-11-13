@@ -13,7 +13,7 @@ pub fn declare_plugin() -> Unit raise
 
 pub fn enable() -> Unit
 
-pub fn explored(@primus.Machine, @types.Tid) -> Int
+pub fn explored(@primus.Machine, @types.Tid) -> Int32
 
 pub fn install(@primus.Machine) -> Unit
 

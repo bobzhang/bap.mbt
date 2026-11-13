@@ -1,10 +1,11 @@
 ///|
+#derive(Debug)
 struct Fixpoint[N, D] {
   steps_value : Int32?
   iterations_value : Int32
   default_value : D
   approx_value : Map[N, D]
-} derive(Debug)
+}
 
 ///|
 pub extend Fixpoint with Debug::{to_repr}

@@ -46,6 +46,7 @@ pub(all) struct AbiProcessor {
 
 ///|
 /// Errors raised by the ABI registries.
+#derive(Eq, Debug)
 pub(all) suberror AbiError {
   /// The ABI name is not a valid target name.
   InvalidAbiName(String)
@@ -53,7 +54,7 @@ pub(all) suberror AbiError {
   DuplicateAbi(String)
   /// A data model for the target is already registered.
   DuplicateModel(String)
-} derive(Eq, Debug)
+}
 
 ///|
 fn is_mutable_qualifier(const_ : Bool) -> Bool {

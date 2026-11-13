@@ -8,6 +8,7 @@
 /// conflicts raised by the knowledge base itself. Users may raise their own
 /// `suberror`s from promises and they will propagate through `collect` and
 /// `run` exactly like upstream user-defined conflicts.
+#derive(Debug)
 pub(all) suberror Conflict {
   /// `Empty slot`: raised by `require`/`-->?`/`.![]` when the property is
   /// empty. Rejects the enclosing `with_empty` scope (e.g. a promise).
@@ -29,7 +30,7 @@ pub(all) suberror Conflict {
   /// A generic failure, e.g., a legacy `Result`-based provider error or a
   /// corrupted serialized knowledge base.
   Failure(String)
-} derive(Debug)
+}
 
 ///|
 pub extend Conflict with Debug::{to_repr}

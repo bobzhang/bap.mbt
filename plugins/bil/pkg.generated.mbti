@@ -122,9 +122,10 @@ pub fn select(normalization? : String, optimization? : String, passes? : ArrayVi
 pub fn uninstall_lift_hook() -> Unit
 
 // Errors
+#derive(Eq, @debug.Debug)
 pub(all) suberror ReflectError {
   ReflectError(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn ReflectError::equal(Self, Self) -> Bool
 pub fn ReflectError::not_equal(Self, Self) -> Bool
 pub fn ReflectError::output(Self, &Logger) -> Unit
@@ -147,12 +148,13 @@ pub(all) struct Config {
 }
 pub fn Config::default() -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Dst {
   Addr(@types.Word)
   Name(String)
-  Ivec(Int)
+  Ivec(Int32)
   Label(@types.Tid)
-} derive(Eq, @debug.Debug)
+}
 pub fn Dst::equal(Self, Self) -> Bool
 pub fn Dst::not_equal(Self, Self) -> Bool
 pub fn Dst::tid(Self) -> @types.Tid
@@ -169,6 +171,7 @@ pub struct EffAlgebra[E] {
   blk : (@types.Tid?, E, E) -> E
 }
 
+#derive(Eq, @debug.Debug)
 pub(all) enum ISpec {
   Any
   Unk
@@ -176,7 +179,7 @@ pub(all) enum ISpec {
   Tag(String)
   Asm(String)
   Insn(String, String)
-} derive(Eq, @debug.Debug)
+}
 pub fn ISpec::equal(Self, Self) -> Bool
 pub fn ISpec::not_equal(Self, Self) -> Bool
 pub fn ISpec::parse(String) -> Self raise Failure
@@ -188,7 +191,7 @@ pub struct Relocations {
 }
 pub fn Relocations::create(rels? : ArrayView[(UInt64, UInt64)], exts? : ArrayView[(UInt64, String)]) -> Self
 pub fn Relocations::empty() -> Self
-pub fn Relocations::fixup(Self, ArrayView[@types.Stmt], addr~ : UInt64, size~ : Int, width~ : Int, is_stub? : Bool) -> Array[@types.Stmt]
+pub fn Relocations::fixup(Self, ArrayView[@types.Stmt], addr~ : UInt64, size~ : Int32, width~ : Int32, is_stub? : Bool) -> Array[@types.Stmt]
 pub fn Relocations::of_image(@image.Image) -> Self
 pub fn Relocations::resolve_externals(Self, @knowledge.State) -> Self raise
 

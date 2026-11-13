@@ -8,7 +8,7 @@ import {
 }
 
 // Values
-pub fn concretizer(memory? : (@types.Word) -> @types.Word?, lookup? : (@types.Var) -> @types.Word?, random_seed? : Int, reg_policy? : Policy, mem_policy? : Policy) -> Expi
+pub fn concretizer(memory? : (@types.Word) -> @types.Word?, lookup? : (@types.Var) -> @types.Word?, random_seed? : Int32, reg_policy? : Policy, mem_policy? : Policy) -> Expi
 
 pub fn eval(@types.Exp) -> @types.BilResultValue
 
@@ -40,7 +40,7 @@ pub fn Context::leave_sub(Self, @types.Term[@types.Sub]) -> Self
 pub fn Context::lookup(Self, @types.Var) -> @types.BilResult?
 pub fn Context::main(Self) -> @types.Term[@types.Sub]?
 pub fn Context::merge(Self, Self) -> Self
-pub fn Context::new(max_steps? : Int, max_loop? : Int, main? : @types.Term[@types.Sub], @types.Term[@types.Program]) -> Self
+pub fn Context::new(max_steps? : Int32, max_loop? : Int32, main? : @types.Term[@types.Sub], @types.Term[@types.Program]) -> Self
 pub fn Context::next(Self) -> @types.Tid?
 pub fn Context::program(Self) -> @types.Term[@types.Program]
 pub fn Context::return_(Self) -> Self
@@ -49,15 +49,16 @@ pub fn Context::step(Self) -> Self?
 pub fn Context::store_return(Self, @types.Tid) -> Self
 pub fn Context::trace(Self) -> Array[@types.Tid]
 pub fn Context::visit_term(Self, @types.Tid) -> Self
-pub fn Context::visited(Self) -> Map[@types.Tid, Int]
-pub fn Context::visits(Self, @types.Tid) -> Int
+pub fn Context::visited(Self) -> Map[@types.Tid, Int32]
+pub fn Context::visits(Self, @types.Tid) -> Int32
 pub fn Context::will_loop(Self, @types.Tid) -> Bool
 pub fn Context::will_return(Self, @types.Tid) -> Bool
 pub fn Context::with_exp_context(Self, ExpContext) -> Self
 
+#derive(Eq, @debug.Debug)
 pub struct ExpContext {
   // private fields
-} derive(Eq, @debug.Debug)
+}
 pub fn ExpContext::bindings(Self) -> Array[(@types.Var, @types.BilResult)]
 pub fn ExpContext::create_storage(Self, @types.BilResultStorage) -> (Self, @types.BilResult)
 pub fn ExpContext::create_undefined(Self) -> (Self, @types.BilResult)
@@ -81,11 +82,12 @@ pub fn Expi::lookup(Self, ExpContext, @types.Var) -> (ExpContext, @types.BilResu
 pub fn Expi::new(lookup? : (@types.Var) -> @types.BilResultValue, load? : (@types.Word) -> @types.BilResultValue, unknown? : (String, @types.ValueType) -> @types.BilResultValue) -> Self
 pub fn Expi::store(Self, ExpContext, @types.BilResultStorage, @types.Word, @types.Word) -> (ExpContext, @types.BilResult)
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Policy {
   Random
   Fixed(Int64)
   Interval(Int64, Int64)
-} derive(Eq, @debug.Debug)
+}
 pub fn Policy::equal(Self, Self) -> Bool
 pub fn Policy::not_equal(Self, Self) -> Bool
 pub fn Policy::to_repr(Self) -> @debug.Repr

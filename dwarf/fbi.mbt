@@ -1668,7 +1668,7 @@ fn dwarf_parse_unit(
                               next_ranges_offset_base,
                               next_range_base,
                               next,
-                            )
+                            ),
                           ) => {
                             match function_item {
                               Some(value) => function_candidates.push(value)

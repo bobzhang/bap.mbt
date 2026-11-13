@@ -6,10 +6,11 @@
 /// Processor mode of the legacy decoder and lifter (upstream
 /// `X86_types.mode`): 32-bit protected mode (`X86`) or 64-bit long mode
 /// (`X8664`).
+#derive(Eq, Debug)
 pub(all) enum Mode {
   X86
   X8664
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Mode with Eq::{equal, not_equal}
@@ -32,14 +33,16 @@ pub fn Mode::width(self : Mode) -> Int32 {
 /// the bits, a width and a signedness flag. The signedness only matters
 /// when the immediate is resized (`Imm::resize`): signed immediates are
 /// sign-extended, unsigned ones zero-extended, like BAP `Word.extract`.
+#derive(Eq, Debug)
 priv struct Imm {
   bits : UInt64
   width : Int32
   signed : Bool
-} derive(Eq, Debug)
+}
 
 ///|
 /// Operands of the decoded instructions (upstream `X86_types.operand`).
+#derive(Eq, Debug)
 priv enum Operand {
   /// general purpose register by number (0-15)
   Oreg(Int32)
@@ -51,40 +54,45 @@ priv enum Operand {
   Oaddr(@types.Exp)
   /// immediate
   Oimm(Imm)
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Debug)
 priv enum JumpTarget {
   Jabs(Operand)
   /// next instruction address and offset
   Jrel(Imm, Imm)
-} derive(Debug)
+}
 
 ///|
+#derive(Debug)
 priv enum Order {
   Low
   High
-} derive(Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 priv enum Direction {
   Forward
   Backward
-} derive(Eq, Debug)
+}
 
 ///|
 /// Element operations of packed instructions (upstream passes OCaml
 /// closures of type `binopf`).
+#derive(Debug)
 priv enum PackedOp {
   PBin(@types.BinOp)
   PMin(Bool)
   PMax(Bool)
   PAvg(Int32)
   PAndN
-} derive(Debug)
+}
 
 ///|
 /// `Pcmpstr.imm8cb`: the decoded immediate control byte of PCMPxSTRx.
+#derive(Debug)
 priv struct Imm8cb {
   words : Bool
   signed : Bool
@@ -94,29 +102,32 @@ priv struct Imm8cb {
   maskintres1 : Bool
   /// `MSB` output selection (otherwise `LSB`)
   msb : Bool
-} derive(Debug)
+}
 
 ///|
 /// `Pcmpstr.pcmpinfo`: whether the instruction outputs an index (or a
 /// mask) and whether string lengths are implicit (or explicit).
+#derive(Debug)
 priv struct PcmpInfo {
   index : Bool
   implicit : Bool
-} derive(Debug)
+}
 
 ///|
 /// `offsetinfo`: a source slice of `Movoffset`.
+#derive(Debug)
 priv struct OffsetInfo {
   offlen : Int32
   offtyp : Int32
   offop : Operand
   offsrcoffset : Int32
   offdstoffset : Int32
-} derive(Debug)
+}
 
 ///|
 /// Decoded instructions (upstream `X86_types.opcode`). Types are bit
 /// widths.
+#derive(Debug)
 #warnings("-unused_value")
 priv enum Opcode {
   Bswap(Int32, Operand)
@@ -209,7 +220,7 @@ priv enum Opcode {
   Interrupt3
   Sysenter
   Syscall
-} derive(Debug)
+}
 
 ///|
 /// The REX prefix (Table 2-4).
@@ -257,7 +268,8 @@ priv struct Prefix {
 /// Failures of the legacy decoder and lifter: upstream `No_semantics`
 /// (unimplemented instructions, lifted to an empty program upstream) and
 /// `Arch_exception` (invalid instructions).
+#derive(Debug)
 priv suberror X86Error {
   NoSemantics(String)
   ArchException(String)
-} derive(Debug)
+}

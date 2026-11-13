@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug)
 pub(all) suberror FutureError {
   AlreadyDecided
   EmptyFuture
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend FutureError with Eq::{not_equal, equal}
@@ -11,10 +12,11 @@ pub extend FutureError with Eq::{not_equal, equal}
 pub extend FutureError with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Either[A, B] {
   Left(A)
   Right(B)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Either with Eq::{not_equal, equal}

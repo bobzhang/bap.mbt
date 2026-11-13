@@ -17,11 +17,12 @@
 
 ///|
 /// A ground type value.
+#derive(Eq, Debug)
 pub(all) enum TypeValue {
   TAny
   TSym
   TWord(Int32)
-} derive(Eq, Debug)
+}
 
 ///|
 pub impl Show for TypeValue with fn output(self, logger) {
@@ -35,13 +36,14 @@ pub impl Show for TypeValue with fn output(self, logger) {
 ///|
 /// A type error (upstream `type_error`). Every problem refers to the
 /// identifiers of the expressions involved.
+#derive(Eq, Debug)
 pub(all) enum TypeProblem {
   UnresolvedVariable(Int32, String)
   UnresolvedFunction(Int32, String, Array[Signature])
   UnresolvedSignal(Int32, String, Signature?)
   UnresolvedParameter(Int32, String)
   NoUnification(Int32, TypeValue, Int32, TypeValue)
-} derive(Eq, Debug)
+}
 
 ///|
 /// A type error together with the sources, so that it can be rendered.
@@ -116,10 +118,11 @@ pub fn TypeError::summary(self : TypeError) -> String {
 }
 
 ///|
+#derive(Eq)
 priv struct Tvals {
   result : Result[TypeValue, TypeProblem]
   origin : Int32
-} derive(Eq)
+}
 
 ///|
 fn Tvals::meet(id : Int32, x : Tvals, y : Tvals) -> Tvals {

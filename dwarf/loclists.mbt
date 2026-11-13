@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum DwarfLocationListEntry {
   DwarfLocBaseAddressx(Int32)
   DwarfLocStartxEndx(Int32, Int32, Bytes)
@@ -8,7 +9,7 @@ pub(all) enum DwarfLocationListEntry {
   DwarfLocBaseAddress(UInt64)
   DwarfLocStartEnd(UInt64, UInt64, Bytes)
   DwarfLocStartLength(UInt64, Int32, Bytes)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend DwarfLocationListEntry with Eq::{not_equal, equal}

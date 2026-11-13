@@ -1,10 +1,11 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum EdgeKind {
   Tree
   Back
   Cross
   Forward
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend EdgeKind with Eq::{not_equal, equal}
@@ -13,12 +14,13 @@ pub extend EdgeKind with Eq::{not_equal, equal}
 pub extend EdgeKind with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct DfsNodeInfo {
   enter : Int32
   leave : Int32
   pre : Int32
   rpost : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend DfsNodeInfo with Eq::{not_equal, equal}
@@ -27,11 +29,12 @@ pub extend DfsNodeInfo with Eq::{not_equal, equal}
 pub extend DfsNodeInfo with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Edge[N, E] {
   src : N
   dst : N
   label : E
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Edge with Eq::{not_equal, equal}
@@ -65,10 +68,11 @@ pub fn[N, E] Edge::label(self : Edge[N, E]) -> E {
 }
 
 ///|
+#derive(Eq, Debug)
 struct GraphPath[E] {
   edges_value : Array[E]
   weight_value : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend GraphPath with Eq::{not_equal, equal}
@@ -147,10 +151,11 @@ pub fn[E] GraphPath::finish_exn(self : GraphPath[E]) -> E {
 }
 
 ///|
+#derive(Debug)
 struct Graph[N, E] {
   nodes : Array[N]
   edges : Array[Edge[N, E]]
-} derive(Debug)
+}
 
 ///|
 pub extend Graph with Debug::{to_repr}

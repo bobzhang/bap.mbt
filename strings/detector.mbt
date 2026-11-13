@@ -1,9 +1,10 @@
 ///|
+#derive(Eq)
 priv enum StringsDetectorStage {
   StringsDetectorWorking
   StringsDetectorAccepted
   StringsDetectorFinished
-} derive(Eq)
+}
 
 ///|
 priv enum StringsDetectorAnswer {

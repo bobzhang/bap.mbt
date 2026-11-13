@@ -18,7 +18,7 @@ pub fn is_modern_opcode(Mode, String) -> Bool
 
 pub fn legacy_failure(Mode, BytesView, addr~ : UInt64) -> String?
 
-pub fn legacy_length(Mode, BytesView, addr~ : UInt64) -> Int?
+pub fn legacy_length(Mode, BytesView, addr~ : UInt64) -> Int32?
 
 pub fn legacy_provider() -> @mc.Provider
 
@@ -49,14 +49,15 @@ pub fn vector_registers(Mode) -> Array[@types.Var]
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) enum Mode {
   X86
   X8664
-} derive(Eq, @debug.Debug)
+}
 pub fn Mode::equal(Self, Self) -> Bool
 pub fn Mode::not_equal(Self, Self) -> Bool
 pub fn Mode::to_repr(Self) -> @debug.Repr
-pub fn Mode::width(Self) -> Int
+pub fn Mode::width(Self) -> Int32
 
 // Type aliases
 

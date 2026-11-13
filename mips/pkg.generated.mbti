@@ -18,7 +18,7 @@ pub fn decoder(r6? : Bool) -> @mc.Decoder
 
 pub let decoder_name : String
 
-pub fn delay_slot(String) -> Int?
+pub fn delay_slot(String) -> Int32?
 
 pub fn encoding(Arch, @bitvec.Endian) -> @core_theory.Language
 
@@ -57,20 +57,21 @@ pub let targets : ReadOnlyArray[String]
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) enum Arch {
   Mips32
   Mips64
-} derive(Eq, @debug.Debug)
-pub fn Arch::addr_bitwidth(Self) -> Int
+}
+pub fn Arch::addr_bitwidth(Self) -> Int32
 pub fn Arch::equal(Self, Self) -> Bool
 pub fn Arch::find_fpr(Self, String) -> @types.Var?
 pub fn Arch::find_gpr(Self, String) -> @types.Var?
 pub fn Arch::fp(Self) -> @types.Var
-pub fn Arch::fpr(Self, Int) -> @types.Var?
-pub fn Arch::fpr_bitwidth(Self) -> Int
+pub fn Arch::fpr(Self, Int32) -> @types.Var?
+pub fn Arch::fpr_bitwidth(Self) -> Int32
 pub fn Arch::gnu_calling_convention(Self) -> CallingConvention
-pub fn Arch::gpr(Self, Int) -> @types.Var?
-pub fn Arch::gpr_bitwidth(Self) -> Int
+pub fn Arch::gpr(Self, Int32) -> @types.Var?
+pub fn Arch::gpr_bitwidth(Self) -> Int32
 pub fn Arch::gprs(Self) -> Array[@types.Var]
 pub fn Arch::hi(Self) -> @types.Var
 pub fn Arch::is_bp(Self, @types.Var) -> Bool
@@ -84,23 +85,25 @@ pub fn Arch::not_equal(Self, Self) -> Bool
 pub fn Arch::sp(Self) -> @types.Var
 pub fn Arch::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct CallingConvention {
   data_model : DataModel
   int_args : Array[@types.Var]
   float_args : Array[@types.Var]
   float_args_shadow_int_args : Bool
-  float_bits : Int
-  double_bits : Int
-  long_double_bits : Int
-} derive(Eq, @debug.Debug)
+  float_bits : Int32
+  double_bits : Int32
+  long_double_bits : Int32
+}
 pub fn CallingConvention::equal(Self, Self) -> Bool
 pub fn CallingConvention::not_equal(Self, Self) -> Bool
 pub fn CallingConvention::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum DataModel {
   ILP32
   ILP64
-} derive(Eq, @debug.Debug)
+}
 pub fn DataModel::equal(Self, Self) -> Bool
 pub fn DataModel::not_equal(Self, Self) -> Bool
 pub fn DataModel::to_repr(Self) -> @debug.Repr

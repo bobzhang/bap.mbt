@@ -3,10 +3,11 @@
 ///|
 /// MIPS register-file flavour: 32-bit (`mips`/`mipsel`) or 64-bit
 /// (`mips64`/`mips64el`) general purpose registers.
+#derive(Eq, Debug)
 pub(all) enum Arch {
   Mips32
   Mips64
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Arch with Eq::{equal, not_equal}

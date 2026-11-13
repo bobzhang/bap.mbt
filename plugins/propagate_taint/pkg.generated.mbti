@@ -28,38 +28,39 @@ pub fn propagate(Args, @project.Project) -> @project.Project
 
 pub fn register(args? : Args) -> Result[Bool, String]
 
-pub fn run(max_steps~ : Int, max_loop~ : Int, deterministic~ : Bool, random_seed? : Int, reg_policy~ : @microx.Policy, mem_policy~ : @microx.Policy, @project.Project, Point) -> PropagationResult raise PropagatorError
+pub fn run(max_steps~ : Int32, max_loop~ : Int32, deterministic~ : Bool, random_seed? : Int32, reg_policy~ : @microx.Policy, mem_policy~ : @microx.Policy, @project.Project, Point) -> PropagationResult raise PropagatorError
 
 pub fn sorted_taints(@hashset.HashSet[@types.Tid]) -> Array[@types.Tid]
 
 // Errors
+#derive(Eq, @debug.Debug)
 pub(all) suberror PropagatorError {
   EntryPointNotFound
-} derive(Eq, @debug.Debug)
+}
 pub fn PropagatorError::equal(Self, Self) -> Bool
 pub fn PropagatorError::not_equal(Self, Self) -> Bool
 pub fn PropagatorError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
 pub struct Analysis {
-  subs : Int
+  subs : Int32
   result : PropagationResult
   // private fields
 }
-pub fn Analysis::coverage(Self) -> (Int, Int)
+pub fn Analysis::coverage(Self) -> (Int32, Int32)
 pub fn Analysis::coverage_to_string(Self) -> String
 
 pub(all) struct Args {
-  max_trace : Int
-  max_loop : Int
+  max_trace : Int32
+  max_loop : Int32
   deterministic : Bool
-  random_seed : Int?
+  random_seed : Int32?
   reg_policy : @microx.Policy
   mem_policy : @microx.Policy
   interesting : Array[String]
   print_coverage : Bool
 }
-pub fn Args::new(max_trace? : Int, max_loop? : Int, deterministic? : Bool, random_seed? : Int, reg_policy? : @microx.Policy, mem_policy? : @microx.Policy, interesting? : Array[String], print_coverage? : Bool) -> Self
+pub fn Args::new(max_trace? : Int32, max_loop? : Int32, deterministic? : Bool, random_seed? : Int32, reg_policy? : @microx.Policy, mem_policy? : @microx.Policy, interesting? : Array[String], print_coverage? : Bool) -> Self
 
 pub(all) enum Point {
   Term(@types.Tid)
@@ -76,7 +77,7 @@ pub fn PropagationResult::tainted_ptrs(Self, @types.Tid) -> @taint.TaintMap
 pub fn PropagationResult::tainted_regs(Self, @types.Tid) -> @taint.TaintMap
 pub fn PropagationResult::tainted_terms(Self) -> Array[@types.Tid]
 pub fn PropagationResult::union(Self, Self) -> Self
-pub fn PropagationResult::visited(Self) -> Map[@types.Tid, Int]
+pub fn PropagationResult::visited(Self) -> Map[@types.Tid, Int32]
 
 pub struct TaintContext {
   // private fields

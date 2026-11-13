@@ -10,19 +10,21 @@ import {
 // Values
 
 // Errors
+#derive(Eq, @debug.Debug)
 pub(all) suberror MemoryError {
   MemoryFailure(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn MemoryError::equal(Self, Self) -> Bool
 pub fn MemoryError::not_equal(Self, Self) -> Bool
 pub fn MemoryError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) enum AddressPosition {
   AddrInside
   AddrBelow
   AddrAbove
-} derive(Eq, @debug.Debug)
+}
 pub fn AddressPosition::equal(Self, Self) -> Bool
 pub fn AddressPosition::not_equal(Self, Self) -> Bool
 pub fn AddressPosition::to_repr(Self) -> @debug.Repr
@@ -32,7 +34,7 @@ pub fn[V] MemMap::add(Self[V], Memory, V) -> Self[V]
 pub fn[V] MemMap::add_checked(Self[V], Memory, V) -> Result[Self[V], String]
 pub fn[V] MemMap::change(Self[V], Memory, (Array[(Memory, V)]) -> MemMapChange[V]) -> Self[V]
 pub fn[V] MemMap::contains(Self[V], UInt64) -> Bool
-pub fn[V] MemMap::count(Self[V], (V) -> Bool, start? : Memory?, until? : Memory?) -> Int
+pub fn[V] MemMap::count(Self[V], (V) -> Bool, start? : Memory?, until? : Memory?) -> Int32
 pub fn[V] MemMap::dominates(Self[V], Memory) -> Bool
 pub fn[V] MemMap::dominators(Self[V], Memory) -> Array[(Memory, V)]
 pub fn[V] MemMap::elements(Self[V], start? : Memory?, until? : Memory?) -> Array[V]
@@ -60,7 +62,7 @@ pub fn[V] MemMap::intersections(Self[V], Memory) -> Array[(Memory, V)]
 pub fn[V] MemMap::intersects(Self[V], Memory) -> Bool
 pub fn[V] MemMap::iter(Self[V], (V) -> Unit, start? : Memory?, until? : Memory?) -> Unit
 pub fn[V] MemMap::iteri(Self[V], (Memory, V) -> Unit, start? : Memory?, until? : Memory?) -> Unit
-pub fn[V] MemMap::length(Self[V]) -> Int
+pub fn[V] MemMap::length(Self[V]) -> Int32
 pub fn[V : Hash + Eq, U] MemMap::link_at_least_one(Self[V], Self[U]) -> Map[V, (U, Array[U])]
 pub fn[V : Hash + Eq, U] MemMap::link_at_least_one_checked(Self[V], Self[U]) -> Result[Map[V, (U, Array[U])], String]
 pub fn[V : Hash + Eq, U] MemMap::link_many(Self[V], Self[U]) -> Map[V, Array[U]]
@@ -104,39 +106,39 @@ pub(all) enum MemMapChange[V] {
 type Memory
 pub fn Memory::compare_with(Self, UInt64) -> AddressPosition
 pub fn Memory::contains(Self, UInt64) -> Bool
-pub fn Memory::count(Self, (UInt64, @types.Word) -> Bool, word_size? : Int) -> Int
-pub fn[E] Memory::count_result(Self, (UInt64, @types.Word) -> Result[Bool, E], word_size? : Int) -> Result[Int, E]
-pub fn Memory::create(endian~ : @bitvec.Endian, start~ : UInt64, Bytes, pos? : Int, len? : Int) -> Result[Self, String]
+pub fn Memory::count(Self, (UInt64, @types.Word) -> Bool, word_size? : Int32) -> Int32
+pub fn[E] Memory::count_result(Self, (UInt64, @types.Word) -> Result[Bool, E], word_size? : Int32) -> Result[Int32, E]
+pub fn Memory::create(endian~ : @bitvec.Endian, start~ : UInt64, Bytes, pos? : Int32, len? : Int32) -> Result[Self, String]
 pub fn Memory::deref(Self, UInt64) -> Result[@types.Word, String]
 pub fn Memory::deref_exn(Self, UInt64) -> @types.Word raise MemoryError
 pub fn Memory::dominates(Self, Self) -> Bool
 pub fn Memory::endian(Self) -> @bitvec.Endian
-pub fn Memory::exists(Self, (UInt64, @types.Word) -> Bool, word_size? : Int) -> Bool
-pub fn[E] Memory::exists_result(Self, (UInt64, @types.Word) -> Result[Bool, E], word_size? : Int) -> Result[Bool, E]
-pub fn Memory::find_if(Self, (UInt64, @types.Word) -> Bool, word_size? : Int) -> @types.Word?
-pub fn[E] Memory::find_if_result(Self, (UInt64, @types.Word) -> Result[Bool, E], word_size? : Int) -> Result[@types.Word?, E]
-pub fn[A] Memory::find_map(Self, (UInt64, @types.Word) -> A?, word_size? : Int) -> A?
-pub fn[A, E] Memory::find_map_result(Self, (UInt64, @types.Word) -> Result[A?, E], word_size? : Int) -> Result[A?, E]
+pub fn Memory::exists(Self, (UInt64, @types.Word) -> Bool, word_size? : Int32) -> Bool
+pub fn[E] Memory::exists_result(Self, (UInt64, @types.Word) -> Result[Bool, E], word_size? : Int32) -> Result[Bool, E]
+pub fn Memory::find_if(Self, (UInt64, @types.Word) -> Bool, word_size? : Int32) -> @types.Word?
+pub fn[E] Memory::find_if_result(Self, (UInt64, @types.Word) -> Result[Bool, E], word_size? : Int32) -> Result[@types.Word?, E]
+pub fn[A] Memory::find_map(Self, (UInt64, @types.Word) -> A?, word_size? : Int32) -> A?
+pub fn[A, E] Memory::find_map_result(Self, (UInt64, @types.Word) -> Result[A?, E], word_size? : Int32) -> Result[A?, E]
 pub fn Memory::first_byte(Self) -> Self
-pub fn[A] Memory::fold(Self, A, (@types.Word, A) -> A, word_size? : Int) -> A
-pub fn[A, E] Memory::fold_result(Self, A, (@types.Word, A) -> Result[A, E], word_size? : Int) -> Result[A, E]
-pub fn[A] Memory::foldi(Self, A, (UInt64, @types.Word, A) -> A, word_size? : Int) -> A
-pub fn[A, E] Memory::foldi_result(Self, A, (UInt64, @types.Word, A) -> Result[A, E], word_size? : Int) -> Result[A, E]
-pub fn Memory::for_all(Self, (UInt64, @types.Word) -> Bool, word_size? : Int) -> Bool
-pub fn[E] Memory::for_all_result(Self, (UInt64, @types.Word) -> Result[Bool, E], word_size? : Int) -> Result[Bool, E]
+pub fn[A] Memory::fold(Self, A, (@types.Word, A) -> A, word_size? : Int32) -> A
+pub fn[A, E] Memory::fold_result(Self, A, (@types.Word, A) -> Result[A, E], word_size? : Int32) -> Result[A, E]
+pub fn[A] Memory::foldi(Self, A, (UInt64, @types.Word, A) -> A, word_size? : Int32) -> A
+pub fn[A, E] Memory::foldi_result(Self, A, (UInt64, @types.Word, A) -> Result[A, E], word_size? : Int32) -> Result[A, E]
+pub fn Memory::for_all(Self, (UInt64, @types.Word) -> Bool, word_size? : Int32) -> Bool
+pub fn[E] Memory::for_all_result(Self, (UInt64, @types.Word) -> Result[Bool, E], word_size? : Int32) -> Result[Bool, E]
 pub fn Memory::from_bytes(endian~ : @bitvec.Endian, start~ : UInt64, Bytes) -> Self
-pub fn Memory::get(Self, addr? : UInt64, disp? : Int, index? : Int, scale? : Int) -> Result[@types.Word, String]
-pub fn Memory::get_exn(Self, addr? : UInt64, disp? : Int, index? : Int, scale? : Int) -> @types.Word raise MemoryError
+pub fn Memory::get(Self, addr? : UInt64, disp? : Int32, index? : Int32, scale? : Int32) -> Result[@types.Word, String]
+pub fn Memory::get_exn(Self, addr? : UInt64, disp? : Int32, index? : Int32, scale? : Int32) -> @types.Word raise MemoryError
 pub fn Memory::hexdump(Self) -> String
 pub fn Memory::intersects(Self, Self) -> Bool
-pub fn Memory::iter(Self, (@types.Word) -> Unit, word_size? : Int) -> Unit
-pub fn[E] Memory::iter_result(Self, (@types.Word) -> Result[Unit, E], word_size? : Int) -> Result[Unit, E]
-pub fn Memory::iteri(Self, (UInt64, @types.Word) -> Unit, word_size? : Int) -> Unit
-pub fn[E] Memory::iteri_result(Self, (UInt64, @types.Word) -> Result[Unit, E], word_size? : Int) -> Result[Unit, E]
+pub fn Memory::iter(Self, (@types.Word) -> Unit, word_size? : Int32) -> Unit
+pub fn[E] Memory::iter_result(Self, (@types.Word) -> Result[Unit, E], word_size? : Int32) -> Result[Unit, E]
+pub fn Memory::iteri(Self, (UInt64, @types.Word) -> Unit, word_size? : Int32) -> Unit
+pub fn[E] Memory::iteri_result(Self, (UInt64, @types.Word) -> Result[Unit, E], word_size? : Int32) -> Result[Unit, E]
 pub fn Memory::last_byte(Self) -> Self
-pub fn Memory::length(Self) -> Int
-pub fn Memory::load(Self, UInt64, width? : Int, disp? : Int, index? : Int, scale? : Int) -> Result[@types.Word, String]
-pub fn Memory::load_exn(Self, UInt64, width? : Int, disp? : Int, index? : Int, scale? : Int) -> @types.Word raise MemoryError
+pub fn Memory::length(Self) -> Int32
+pub fn Memory::load(Self, UInt64, width? : Int32, disp? : Int32, index? : Int32, scale? : Int32) -> Result[@types.Word, String]
+pub fn Memory::load_exn(Self, UInt64, width? : Int32, disp? : Int32, index? : Int32, scale? : Int32) -> @types.Word raise MemoryError
 pub fn Memory::max_addr(Self) -> UInt64
 pub fn Memory::merge(Self, Self) -> Result[Self, String]
 pub fn Memory::min_addr(Self) -> UInt64
@@ -147,8 +149,8 @@ pub fn Memory::store(Self, UInt64, @types.Word) -> Result[Self, String]
 pub fn Memory::to_buffer(Self) -> BytesView
 pub fn Memory::to_bytes(Self) -> Bytes
 pub fn Memory::to_string(Self) -> String
-pub fn Memory::view(Self, from? : UInt64, words? : Int, word_size? : Int) -> Result[Self, String]
-pub fn Memory::view_exn(Self, from? : UInt64, words? : Int, word_size? : Int) -> Self raise MemoryError
+pub fn Memory::view(Self, from? : UInt64, words? : Int32, word_size? : Int32) -> Result[Self, String]
+pub fn Memory::view_exn(Self, from? : UInt64, words? : Int32, word_size? : Int32) -> Self raise MemoryError
 
 type MemoryInputReader
 pub fn MemoryInputReader::int128() -> Self
@@ -160,18 +162,18 @@ pub fn MemoryInputReader::int8() -> Self
 pub fn MemoryInputReader::run(Self, Memory, UInt64) -> Result[(@types.Word, UInt64), String]
 pub fn MemoryInputReader::uint16() -> Self
 pub fn MemoryInputReader::uint8() -> Self
-pub fn MemoryInputReader::word(word_size~ : Int) -> Self
+pub fn MemoryInputReader::word(word_size~ : Int32) -> Self
 
 type MemoryTrie[V]
 pub fn[V] MemoryTrie::add(Self[V], Memory, V) -> Unit
 pub fn[V] MemoryTrie::change(Self[V], Memory, (V?) -> V?) -> Unit
-pub fn[V] MemoryTrie::create(word_size? : Int) -> Result[Self[V], String]
+pub fn[V] MemoryTrie::create(word_size? : Int32) -> Result[Self[V], String]
 pub fn[V] MemoryTrie::find(Self[V], Memory) -> V?
 pub fn[V, A] MemoryTrie::fold(Self[V], init~ : A, f~ : (A, ArrayView[@types.Word], V) -> A) -> A
 pub fn[V] MemoryTrie::is_empty(Self[V]) -> Bool
 pub fn[V] MemoryTrie::iter(Self[V], f~ : (ArrayView[@types.Word], V) -> Unit) -> Unit
-pub fn[V] MemoryTrie::length(Self[V]) -> Int
-pub fn[V] MemoryTrie::longest_match(Self[V], Memory) -> (Int, V)?
+pub fn[V] MemoryTrie::length(Self[V]) -> Int32
+pub fn[V] MemoryTrie::longest_match(Self[V], Memory) -> (Int32, V)?
 pub fn[V] MemoryTrie::new() -> Self[V]
 pub fn[V] MemoryTrie::r16() -> Self[V]
 pub fn[V] MemoryTrie::r32() -> Self[V]
@@ -179,7 +181,7 @@ pub fn[V] MemoryTrie::r64() -> Self[V]
 pub fn[V] MemoryTrie::r8() -> Self[V]
 pub fn[V] MemoryTrie::remove(Self[V], Memory) -> Unit
 pub fn[V, A] MemoryTrie::walk(Self[V], Memory, init~ : A, f~ : (A, V?) -> A) -> A
-pub fn[V] MemoryTrie::word_size(Self[V]) -> Int
+pub fn[V] MemoryTrie::word_size(Self[V]) -> Int32
 
 // Type aliases
 

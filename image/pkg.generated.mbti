@@ -12,7 +12,7 @@ import {
 }
 
 // Values
-pub fn addr_size(Image) -> Int
+pub fn addr_size(Image) -> Int32
 
 pub fn arch(Image) -> @core_theory.Target
 
@@ -74,7 +74,7 @@ pub fn register_backend_if_absent(ImageBackend) -> Result[Bool, String]
 
 pub fn register_builtin_backends() -> Result[Unit, String]
 
-pub fn register_legacy_backend(name~ : String, LegacyImageBackend, description? : String, extensions? : Array[String], priority? : Int) -> Result[Unit, String]
+pub fn register_legacy_backend(name~ : String, LegacyImageBackend, description? : String, extensions? : Array[String], priority? : Int32) -> Result[Unit, String]
 
 pub fn register_loader(name~ : String, ImageLoader) -> Result[Unit, String]
 
@@ -100,13 +100,14 @@ pub fn symbols_of_segment(Image, Segment) -> Array[Symbol]
 
 pub fn thin_binary(Bytes, target? : @core_theory.Target) -> Result[Bytes, String]
 
-pub fn words(Image, Int) -> @memory.MemMap[@types.Word]
+pub fn words(Image, Int32) -> @memory.MemMap[@types.Word]
 
 // Errors
+#derive(Eq, @debug.Debug)
 pub(all) suberror ImageLookupError {
   MissingImageSegment(String, UInt64)
-  MissingImageSymbolMemory(String, UInt64, Int)
-} derive(Eq, @debug.Debug)
+  MissingImageSymbolMemory(String, UInt64, Int32)
+}
 pub fn ImageLookupError::equal(Self, Self) -> Bool
 pub fn ImageLookupError::not_equal(Self, Self) -> Bool
 pub fn ImageLookupError::to_repr(Self) -> @debug.Repr
@@ -127,7 +128,7 @@ pub fn Image::add_section(Self, Section) -> Self
 pub fn Image::add_segment(Self, Segment) -> Self
 pub fn Image::add_symbol(Self, Symbol) -> Self
 pub fn Image::add_symbol_value(Self, SymbolValue) -> Self
-pub fn Image::addr_size(Self) -> Int
+pub fn Image::addr_size(Self) -> Int32
 pub fn Image::arch(Self) -> @core_theory.Target
 pub fn Image::base_address(Self) -> UInt64?
 pub fn Image::create(entry~ : UInt64, endian~ : @bitvec.Endian, filename? : String, target? : @core_theory.Target, data? : Bytes, segments? : Array[Segment], sections? : Array[Section], symbols? : Array[Symbol], relocations? : Array[Relocation], external_references? : Array[ExternalReference], required_libraries? : Array[String], rpaths? : Array[String], runpaths? : Array[String], symbol_values? : Array[SymbolValue], interpreter? : String, soname? : String, load_bias? : Int64, is_executable? : Bool, base_address? : UInt64, spec? : @ogre.Doc) -> Self
@@ -179,21 +180,21 @@ pub fn Image::with_interpreter(Self, String) -> Self
 pub fn Image::with_is_executable(Self, Bool) -> Self
 pub fn Image::with_load_bias(Self, Int64) -> Self
 pub fn Image::with_soname(Self, String) -> Self
-pub fn Image::words(Self, word_size~ : Int) -> @memory.MemMap[@types.Word]
+pub fn Image::words(Self, word_size~ : Int32) -> @memory.MemMap[@types.Word]
 
 type ImageBackend
 pub fn ImageBackend::coff() -> Self
-pub fn ImageBackend::create(name~ : String, description? : String, extensions? : Array[String], priority? : Int, load~ : (Bytes) -> Result[(Image, Array[String]), String]) -> Self
+pub fn ImageBackend::create(name~ : String, description? : String, extensions? : Array[String], priority? : Int32, load~ : (Bytes) -> Result[(Image, Array[String]), String]) -> Self
 pub fn ImageBackend::description(Self) -> String
 pub fn ImageBackend::elf() -> Self
 pub fn ImageBackend::extensions(Self) -> Array[String]
-pub fn ImageBackend::from_legacy(name~ : String, LegacyImageBackend, description? : String, extensions? : Array[String], priority? : Int) -> Self
+pub fn ImageBackend::from_legacy(name~ : String, LegacyImageBackend, description? : String, extensions? : Array[String], priority? : Int32) -> Self
 pub fn ImageBackend::llvm() -> Self
 pub fn ImageBackend::load(Self, Bytes) -> Result[(Image, Array[String]), String]
 pub fn ImageBackend::macho() -> Self
 pub fn ImageBackend::name(Self) -> String
 pub fn ImageBackend::ogre() -> Self
-pub fn ImageBackend::priority(Self) -> Int
+pub fn ImageBackend::priority(Self) -> Int32
 pub fn ImageBackend::raw() -> Self
 pub fn ImageBackend::supports_extension(Self, String) -> Bool
 
@@ -206,21 +207,23 @@ pub(all) struct ImageBackendImage {
 }
 pub fn ImageBackendImage::create(target~ : @core_theory.Target, entry~ : UInt64, Array[ImageBackendSegment], symbols? : Array[ImageBackendSymbol], sections? : Array[ImageBackendSection]) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) struct ImageBackendLocation {
   addr : UInt64
-  len : Int
-} derive(Eq, @debug.Debug)
-pub fn ImageBackendLocation::create(addr~ : UInt64, len~ : Int) -> Self
+  len : Int32
+}
+pub fn ImageBackendLocation::create(addr~ : UInt64, len~ : Int32) -> Self
 pub fn ImageBackendLocation::equal(Self, Self) -> Bool
 pub fn ImageBackendLocation::not_equal(Self, Self) -> Bool
 pub fn ImageBackendLocation::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum ImageBackendPerm {
   ImageBackendR
   ImageBackendW
   ImageBackendX
   ImageBackendOr(ImageBackendPerm, ImageBackendPerm)
-} derive(Eq, @debug.Debug)
+}
 pub fn ImageBackendPerm::equal(Self, Self) -> Bool
 pub fn ImageBackendPerm::not_equal(Self, Self) -> Bool
 pub fn ImageBackendPerm::r() -> Self
@@ -229,33 +232,36 @@ pub fn ImageBackendPerm::union(Self, Self) -> Self
 pub fn ImageBackendPerm::w() -> Self
 pub fn ImageBackendPerm::x() -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) struct ImageBackendSection {
   name : String
   location : ImageBackendLocation
-} derive(Eq, @debug.Debug)
+}
 pub fn ImageBackendSection::create(name~ : String, location~ : ImageBackendLocation) -> Self
 pub fn ImageBackendSection::equal(Self, Self) -> Bool
 pub fn ImageBackendSection::not_equal(Self, Self) -> Bool
 pub fn ImageBackendSection::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct ImageBackendSegment {
   name : String
   perm : ImageBackendPerm
-  off : Int
+  off : Int32
   location : ImageBackendLocation
-} derive(Eq, @debug.Debug)
-pub fn ImageBackendSegment::create(name~ : String, perm~ : ImageBackendPerm, off~ : Int, location~ : ImageBackendLocation) -> Self
+}
+pub fn ImageBackendSegment::create(name~ : String, perm~ : ImageBackendPerm, off~ : Int32, location~ : ImageBackendLocation) -> Self
 pub fn ImageBackendSegment::equal(Self, Self) -> Bool
 pub fn ImageBackendSegment::not_equal(Self, Self) -> Bool
 pub fn ImageBackendSegment::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct ImageBackendSymbol {
   name : String
   is_function : Bool
   is_debug : Bool
   location : ImageBackendLocation
   extra_locations : Array[ImageBackendLocation]
-} derive(Eq, @debug.Debug)
+}
 pub fn ImageBackendSymbol::create(name~ : String, location~ : ImageBackendLocation, is_function? : Bool, is_debug? : Bool, extra_locations? : Array[ImageBackendLocation]) -> Self
 pub fn ImageBackendSymbol::equal(Self, Self) -> Bool
 pub fn ImageBackendSymbol::locations(Self) -> Array[ImageBackendLocation]
@@ -275,11 +281,12 @@ type LegacyImageBackend
 pub fn LegacyImageBackend::create(load~ : (Bytes) -> ImageBackendImage?) -> Self
 pub fn LegacyImageBackend::load(Self, Bytes) -> ImageBackendImage?
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Region[A] {
   addr : Int64
   size : Int64
   info : A
-} derive(Eq, @debug.Debug)
+}
 pub fn[A : Eq] Region::equal(Self[A], Self[A]) -> Bool
 pub fn[A : Eq] Region::not_equal(Self[A], Self[A]) -> Bool
 pub fn[A : @debug.Debug] Region::to_repr(Self[A]) -> @debug.Repr
@@ -334,19 +341,19 @@ pub fn Scheme::writable() -> @ogre.Field[Bool]
 type Section
 pub fn Section::addr(Self) -> UInt64
 pub fn Section::contains(Self, UInt64) -> Bool
-pub fn Section::create(name~ : String, addr~ : UInt64, size~ : Int) -> Self
+pub fn Section::create(name~ : String, addr~ : UInt64, size~ : Int32) -> Self
 pub fn Section::max_addr(Self) -> UInt64
 pub fn Section::name(Self) -> String
-pub fn Section::size(Self) -> Int
+pub fn Section::size(Self) -> Int32
 
 type Segment
 pub fn Segment::addr(Self) -> UInt64
-pub fn Segment::compare(Self, Self) -> Int
+pub fn Segment::compare(Self, Self) -> Int32
 pub fn Segment::contains(Self, UInt64) -> Bool
-pub fn Segment::create(name~ : String, endian~ : @bitvec.Endian, addr~ : UInt64, Bytes, offset? : Int, readable? : Bool, writable? : Bool, executable? : Bool) -> Self
+pub fn Segment::create(name~ : String, endian~ : @bitvec.Endian, addr~ : UInt64, Bytes, offset? : Int32, readable? : Bool, writable? : Bool, executable? : Bool) -> Self
 pub fn Segment::equal(Self, Self) -> Bool
-pub fn Segment::from_memory(name~ : String, memory~ : @memory.Memory, offset? : Int, readable? : Bool, writable? : Bool, executable? : Bool) -> Self
-pub fn Segment::hash(Self) -> Int
+pub fn Segment::from_memory(name~ : String, memory~ : @memory.Memory, offset? : Int32, readable? : Bool, writable? : Bool, executable? : Bool) -> Self
+pub fn Segment::hash(Self) -> Int32
 pub fn Segment::is_executable(Self) -> Bool
 pub fn Segment::is_readable(Self) -> Bool
 pub fn Segment::is_writable(Self) -> Bool
@@ -354,8 +361,8 @@ pub fn Segment::max_addr(Self) -> UInt64
 pub fn Segment::memory(Self) -> @memory.Memory
 pub fn Segment::module_name() -> String?
 pub fn Segment::name(Self) -> String
-pub fn Segment::offset(Self) -> Int
-pub fn Segment::size(Self) -> Int
+pub fn Segment::offset(Self) -> Int32
+pub fn Segment::size(Self) -> Int32
 pub fn Segment::to_string(Self) -> String
 pub fn Segment::version() -> String
 pub fn Segment::with_memory(Self, @memory.Memory) -> Self
@@ -370,18 +377,18 @@ pub fn Spec::slot() -> @knowledge.Slot[Unit, @ogre.Doc]
 
 type Symbol
 pub fn Symbol::addr(Self) -> UInt64
-pub fn Symbol::compare(Self, Self) -> Int
+pub fn Symbol::compare(Self, Self) -> Int32
 pub fn Symbol::contains(Self, UInt64) -> Bool
-pub fn Symbol::create(name~ : String, addr~ : UInt64, size? : Int, extra_locations? : Array[(UInt64, Int)], is_function? : Bool, is_debug? : Bool) -> Self
+pub fn Symbol::create(name~ : String, addr~ : UInt64, size? : Int32, extra_locations? : Array[(UInt64, Int32)], is_function? : Bool, is_debug? : Bool) -> Self
 pub fn Symbol::equal(Self, Self) -> Bool
-pub fn Symbol::extra_locations(Self) -> Array[(UInt64, Int)]
-pub fn Symbol::hash(Self) -> Int
+pub fn Symbol::extra_locations(Self) -> Array[(UInt64, Int32)]
+pub fn Symbol::hash(Self) -> Int32
 pub fn Symbol::is_debug(Self) -> Bool
 pub fn Symbol::is_function(Self) -> Bool
-pub fn Symbol::locations(Self) -> Array[(UInt64, Int)]
+pub fn Symbol::locations(Self) -> Array[(UInt64, Int32)]
 pub fn Symbol::module_name() -> String?
 pub fn Symbol::name(Self) -> String
-pub fn Symbol::size(Self) -> Int
+pub fn Symbol::size(Self) -> Int32
 pub fn Symbol::to_string(Self) -> String
 pub fn Symbol::version() -> String
 

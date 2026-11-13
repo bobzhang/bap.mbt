@@ -37,15 +37,17 @@ pub fn Env::pp_cfg(Self, @text_tags.Formatter) -> Unit
 pub fn Env::render(Self, filename~ : String, root~ : String, name? : String) -> Array[(String, String)]
 pub fn Env::vertex_label(Self, @project.ProjectDisassemblyBlock) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum LabelFormat {
   WithName
   WithAsm
   WithBil
-} derive(Eq, @debug.Debug)
+}
 pub fn LabelFormat::equal(Self, Self) -> Bool
 pub fn LabelFormat::not_equal(Self, Self) -> Bool
 pub fn LabelFormat::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub(all) struct Options {
   output_folder : String
   cfg_format : Array[LabelFormat]
@@ -54,7 +56,7 @@ pub(all) struct Options {
   no_inline : Bool
   keep_consts : Bool
   no_optimizations : Bool
-} derive(@debug.Debug)
+}
 pub fn Options::new(output_folder? : String, cfg_format? : Array[LabelFormat], no_resolve? : Bool, keep_alive? : Bool, no_inline? : Bool, keep_consts? : Bool, no_optimizations? : Bool) -> Self
 pub fn Options::to_repr(Self) -> @debug.Repr
 

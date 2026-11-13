@@ -2,6 +2,7 @@
 /// Instruction properties reported by the decoder (upstream
 /// `Disasm_expert.Kind.t`, restricted to the members the port models).
 /// Mirrors `@project.ProjectInstructionKind`.
+#derive(Eq, Debug)
 pub(all) enum Kind {
   ConditionalBranch
   UnconditionalBranch
@@ -13,7 +14,7 @@ pub(all) enum Kind {
   MayAffectControlFlow
   MayLoad
   MayStore
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Kind with Eq::{equal, not_equal}
@@ -29,6 +30,7 @@ pub extend Kind with Debug::{to_repr}
 /// its kinds, and the raw encoded bytes.
 ///
 /// Values are immutable: build them with `Insn::create`.
+#derive(Eq, Debug)
 pub struct Insn {
   name : String
   code : Int32
@@ -39,7 +41,7 @@ pub struct Insn {
   encoding : @core_theory.Language
   kinds : ReadOnlyArray[Kind]
   raw : Bytes
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Insn with Eq::{equal, not_equal}

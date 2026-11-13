@@ -50,32 +50,36 @@ pub fn validate_passes(Array[String]) -> Array[@project.ProjectPass] raise Disas
 pub fn validate_passes_style(Array[String], Array[String]) -> Array[String] raise DisassembleError
 
 // Errors
+#derive(@debug.Debug)
 pub(all) suberror DisassembleError {
   Fail(Failure)
-} derive(@debug.Debug)
+}
 pub fn DisassembleError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) struct Components {
   disassembler : String?
   rooters : Array[String]?
   symbolizers : Array[String]?
   branchers : Array[String]?
   reconstructor : String?
-} derive(Eq, @debug.Debug)
+}
 pub fn Components::default() -> Self
 pub fn Components::equal(Self, Self) -> Bool
 pub fn Components::not_equal(Self, Self) -> Bool
 pub fn Components::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Destination {
   Stdout
   File(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn Destination::equal(Self, Self) -> Bool
 pub fn Destination::not_equal(Self, Self) -> Bool
 pub fn Destination::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Failure {
   ExpectsARegularFile(String)
   OldAndNewStylePasses
@@ -89,17 +93,18 @@ pub(all) enum Failure {
   UnknownCollator(String)
   UnknownAnalysis(String)
   NoKnowledge
-} derive(Eq, @debug.Debug)
+}
 pub fn Failure::equal(Self, Self) -> Bool
 pub fn Failure::not_equal(Self, Self) -> Bool
 pub fn Failure::to_repr(Self) -> @debug.Repr
 pub fn Failure::to_string(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Output {
   dst : Destination
   fmt : String
   ver : String?
-} derive(Eq, @debug.Debug)
+}
 pub fn Output::equal(Self, Self) -> Bool
 pub fn Output::not_equal(Self, Self) -> Bool
 pub fn Output::parse(String) -> Self raise DisassembleError

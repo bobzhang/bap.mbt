@@ -10,6 +10,7 @@
 
 ///|
 /// A condition of a strain specification (upstream `strain`).
+#derive(Eq, Debug)
 pub(all) enum Strain {
   /// the definition corresponds to an instruction at the address
   Addr(Int64)
@@ -19,7 +20,7 @@ pub(all) enum Strain {
   Tid(String)
   /// the definition defines a variable with the given name
   Var(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Strain with Eq::{not_equal, equal}

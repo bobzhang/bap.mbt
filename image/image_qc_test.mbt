@@ -21,10 +21,11 @@ let image_fixture_count : Int32 = 8
 
 ///|
 /// A fixture with a few bytes changed or its tail cut off.
+#derive(Debug)
 struct ImageMutant {
   which : Int32
   edits : Array[(Int32, Int32, Int32)] // (kind, position seed, byte)
-} derive(Debug)
+}
 
 ///|
 impl @quickcheck.Arbitrary for ImageMutant with fn arbitrary(_size, rs) {

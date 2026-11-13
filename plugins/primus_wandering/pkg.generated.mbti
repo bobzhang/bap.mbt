@@ -10,15 +10,15 @@ pub let component_name : String
 
 pub fn declare_plugin() -> Unit raise
 
-pub fn enable(seed? : Int) -> Unit
+pub fn enable(seed? : Int32) -> Unit
 
-pub fn install(@primus.Machine, seed? : Int) -> Unit
+pub fn install(@primus.Machine, seed? : Int32) -> Unit
 
 pub let name : String
 
-pub fn pending(@primus.Machine) -> Array[(Int, @primus.Id)]
+pub fn pending(@primus.Machine) -> Array[(Int32, @primus.Id)]
 
-pub fn register(seed? : Int) -> Bool
+pub fn register(seed? : Int32) -> Bool
 
 // Errors
 

@@ -1,10 +1,11 @@
 ///|
+#derive(Eq, Debug)
 struct ExpEffect {
   reads_value : Bool
   loads_value : Bool
   stores_value : Bool
   raises_value : Bool
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ExpEffect with Eq::{not_equal, equal}

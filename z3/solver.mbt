@@ -1,10 +1,11 @@
 ///|
 /// The result of a satisfiability check.
+#derive(Eq, Debug)
 pub(all) enum CheckResult {
   Sat
   Unsat
   Unknown
-} derive(Eq, Debug)
+}
 
 ///|
 /// An incremental Z3 solver with a stack of assertion scopes.

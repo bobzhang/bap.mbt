@@ -21,10 +21,11 @@ fn bytes_hex_value(c : Char) -> Int32? {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum BytesFoldStep[A, R] {
   BytesContinue(A)
   BytesStop(R)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend BytesFoldStep with Eq::{not_equal, equal}

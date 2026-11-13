@@ -1,7 +1,8 @@
 ///|
+#derive(Eq, Debug)
 struct BilState {
   values_value : Map[String, BilValue]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend BilState with Eq::{not_equal, equal}

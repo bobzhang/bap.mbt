@@ -24,7 +24,7 @@ pub let plugin_name : String
 
 pub fn register(ignore_reserved? : Bool, ignore_unresolved? : Bool, ignore_matching? : String, file? : String, out? : (String) -> Unit) -> Result[Bool, String]
 
-pub fn summary_text(Int) -> String
+pub fn summary_text(Int32) -> String
 
 // Errors
 

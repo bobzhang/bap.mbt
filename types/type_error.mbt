@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum TypeKind {
   MemKind
   ImmKind
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TypeKind with Eq::{not_equal, equal}
@@ -24,12 +25,13 @@ fn TypeKind::compare(self : TypeKind, other : TypeKind) -> Int32 {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum TypeError {
   BadKind(TypeKind)
   BadType(expected~ : ValueType, got~ : ValueType)
   BadCast
   UnknownType
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TypeError with Eq::{not_equal}
@@ -38,9 +40,10 @@ pub extend TypeError with Eq::{not_equal}
 pub extend TypeError with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) suberror TypeInferenceError {
   InvalidExpType(TypeError)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TypeInferenceError with Eq::{not_equal, equal}

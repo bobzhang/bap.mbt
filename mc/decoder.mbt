@@ -10,6 +10,7 @@
 
 ///|
 /// The result of decoding the bytes at an address.
+#derive(Eq, Debug)
 pub(all) enum Decoded {
   /// A valid instruction; it occupies `insn.size` bytes.
   Decoded(Insn)
@@ -17,7 +18,7 @@ pub(all) enum Decoded {
   Invalid(size~ : Int32)
   /// Not enough bytes are left to decode an instruction.
   Truncated
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Decoded with Eq::{equal, not_equal}

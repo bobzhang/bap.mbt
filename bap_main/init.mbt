@@ -90,10 +90,11 @@ fn read_config_files(
 ///|
 /// A recipe, as seen by the command line: an optional command and the
 /// arguments that the recipe contributes.
+#derive(Eq, Debug)
 pub(all) struct Recipe {
   command : String?
   args : Array[String]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Recipe with Eq::{equal, not_equal}

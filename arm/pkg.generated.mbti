@@ -22,11 +22,11 @@ pub fn accepts(@mc.Context) -> Bool
 
 pub fn addr_of_pc(UInt64) -> UInt64
 
-pub fn barrier_asm(Int, Int, String) -> String
+pub fn barrier_asm(Int32, Int32, String) -> String
 
 pub let cf : @types.Var
 
-pub fn cond_asm(Int) -> String
+pub fn cond_asm(Int32) -> String
 
 pub let cpsr : @types.Var
 
@@ -40,21 +40,21 @@ pub fn cpu_regs() -> Array[@types.Var]
 
 pub fn decode_a32(BytesView, addr? : UInt64, big_endian? : Bool) -> @mc.Decoded
 
-pub fn decode_a32_word(UInt, addr? : UInt64, raw? : Bytes) -> @mc.Insn?
+pub fn decode_a32_word(UInt32, addr? : UInt64, raw? : Bytes) -> @mc.Insn?
 
-pub fn decode_modified_imm(UInt) -> UInt
+pub fn decode_modified_imm(UInt32) -> UInt32
 
-pub fn decode_t32_ext(UInt, Int) -> (String, Array[@mc.Op], String)?
+pub fn decode_t32_ext(UInt32, Int32) -> (String, Array[@mc.Op], String)?
 
 pub fn encoding_of_name(StringView) -> Encoding
 
 pub let ge : ReadOnlyArray[@types.Var]
 
-pub fn gpr(Int) -> Reg
+pub fn gpr(Int32) -> Reg
 
-pub fn gpr_asm(Int) -> String
+pub fn gpr_asm(Int32) -> String
 
-pub fn imm_asm(Int) -> String
+pub fn imm_asm(Int32) -> String
 
 pub fn is_bp(@types.Var) -> Bool
 
@@ -80,11 +80,11 @@ pub fn is_zf(@types.Var) -> Bool
 
 pub let itstate : @types.Var
 
-pub fn lift(@mc.Insn, encoding? : Encoding, raw? : UInt) -> Array[@types.Stmt] raise @mc.LiftError
+pub fn lift(@mc.Insn, encoding? : Encoding, raw? : UInt32) -> Array[@types.Stmt] raise @mc.LiftError
 
 pub fn lift_in_context(@mc.Context, @mc.Insn) -> @mc.Lifted raise @mc.LiftError
 
-pub fn lift_typed(Insn, ArrayView[Op], addr? : UInt, encoding? : Encoding, raw? : UInt) -> Array[@types.Stmt] raise @mc.LiftError
+pub fn lift_typed(Insn, ArrayView[Op], addr? : UInt32, encoding? : Encoding, raw? : UInt32) -> Array[@types.Stmt] raise @mc.LiftError
 
 pub fn llvm_kinds(String, ArrayView[@mc.Op]) -> Array[@mc.Kind]
 
@@ -92,23 +92,23 @@ pub let lr : @types.Var
 
 pub fn mc_cc_out(Bool) -> @mc.Op
 
-pub fn mc_gpr(Int) -> @mc.Op
+pub fn mc_gpr(Int32) -> @mc.Op
 
-pub fn mc_gpr_pair(Int) -> @mc.Op
+pub fn mc_gpr_pair(Int32) -> @mc.Op
 
-pub fn mc_imm(Int) -> @mc.Op
+pub fn mc_imm(Int32) -> @mc.Op
 
-pub fn mc_imm_u32(Int) -> @mc.Op
+pub fn mc_imm_u32(Int32) -> @mc.Op
 
 pub fn mc_nil() -> @mc.Op
 
-pub fn mc_pred(Int) -> Array[@mc.Op]
+pub fn mc_pred(Int32) -> Array[@mc.Op]
 
-pub fn mc_reglist(Int) -> Array[@mc.Op]
+pub fn mc_reglist(Int32) -> Array[@mc.Op]
 
 pub let mem : @types.Var
 
-pub fn msr_mask_asm(Int) -> String
+pub fn msr_mask_asm(Int32) -> String
 
 pub let nf : @types.Var
 
@@ -154,17 +154,17 @@ pub fn register(registry? : @mc.Registry) -> Unit
 
 pub fn register_decoder() -> Unit
 
-pub fn reglist_asm(Int) -> String
+pub fn reglist_asm(Int32) -> String
 
-pub fn resolve_pc(ArrayView[@types.Stmt], UInt) -> Array[@types.Stmt]
+pub fn resolve_pc(ArrayView[@types.Stmt], UInt32) -> Array[@types.Stmt]
 
-pub fn shift_imm_asm(Int, Int) -> String
+pub fn shift_imm_asm(Int32, Int32) -> String
 
-pub fn shift_opc_asm(Int) -> String
+pub fn shift_opc_asm(Int32) -> String
 
-pub fn shift_opc_of_type(Int, Int) -> Int
+pub fn shift_opc_of_type(Int32, Int32) -> Int32
 
-pub fn sign_extend(Int, Int) -> Int
+pub fn sign_extend(Int32, Int32) -> Int32
 
 pub let sp : @types.Var
 
@@ -177,24 +177,27 @@ pub let zf : @types.Var
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) struct ArgLayout {
   return_value : ArgLocation?
   params : Array[ArgLocation]
   hidden : Array[ArgLocation]
-} derive(Eq, @debug.Debug)
+}
 pub fn ArgLayout::equal(Self, Self) -> Bool
 pub fn ArgLayout::not_equal(Self, Self) -> Bool
 pub fn ArgLayout::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum ArgLocation {
   Registers(Array[String])
-  Stack(offset~ : Int, bits~ : Int)
-  Split(regs~ : Array[String], bits~ : Int)
-} derive(Eq, @debug.Debug)
+  Stack(offset~ : Int32, bits~ : Int32)
+  Split(regs~ : Array[String], bits~ : Int32)
+}
 pub fn ArgLocation::equal(Self, Self) -> Bool
 pub fn ArgLocation::not_equal(Self, Self) -> Bool
 pub fn ArgLocation::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum BitsInsn {
   BFC
   BFI
@@ -213,13 +216,14 @@ pub(all) enum BitsInsn {
   UXTH
   REV
   REV16
-} derive(Eq, @debug.Debug)
+}
 pub fn BitsInsn::all() -> Array[Self]
 pub fn BitsInsn::equal(Self, Self) -> Bool
 pub fn BitsInsn::name(Self) -> String
 pub fn BitsInsn::not_equal(Self, Self) -> Bool
 pub fn BitsInsn::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum BranchInsn {
   BL
   BLX
@@ -230,24 +234,26 @@ pub(all) enum BranchInsn {
   BX_RET
   BX_pred
   Bcc
-} derive(Eq, @debug.Debug)
+}
 pub fn BranchInsn::all() -> Array[Self]
 pub fn BranchInsn::equal(Self, Self) -> Bool
 pub fn BranchInsn::name(Self) -> String
 pub fn BranchInsn::not_equal(Self, Self) -> Bool
 pub fn BranchInsn::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct CType {
   kind : CTypeKind
-  bits : Int
-  alignment : Int
-} derive(Eq, @debug.Debug)
+  bits : Int32
+  alignment : Int32
+}
 pub fn CType::arm_basic(String, lp64? : Bool) -> Self?
 pub fn CType::equal(Self, Self) -> Bool
-pub fn CType::new(CTypeKind, bits~ : Int, alignment? : Int) -> Self
+pub fn CType::new(CTypeKind, bits~ : Int32, alignment? : Int32) -> Self
 pub fn CType::not_equal(Self, Self) -> Bool
 pub fn CType::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum CTypeKind {
   Integer
   Floating
@@ -255,11 +261,12 @@ pub(all) enum CTypeKind {
   Structure
   Union
   Array
-} derive(Eq, @debug.Debug)
+}
 pub fn CTypeKind::equal(Self, Self) -> Bool
 pub fn CTypeKind::not_equal(Self, Self) -> Bool
 pub fn CTypeKind::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Cond {
   EQ
   NE
@@ -276,20 +283,22 @@ pub(all) enum Cond {
   GT
   LE
   AL
-} derive(Eq, @debug.Debug)
+}
 pub fn Cond::equal(Self, Self) -> Bool
 pub fn Cond::not_equal(Self, Self) -> Bool
-pub fn Cond::of_int(Int) -> Self?
+pub fn Cond::of_int(Int32) -> Self?
 pub fn Cond::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Encoding {
   A32
   T32
-} derive(Eq, @debug.Debug)
+}
 pub fn Encoding::equal(Self, Self) -> Bool
 pub fn Encoding::not_equal(Self, Self) -> Bool
 pub fn Encoding::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Insn {
   Move(MoveInsn)
   Bits(BitsInsn)
@@ -298,7 +307,7 @@ pub(all) enum Insn {
   MemMulti(MemMultiInsn)
   Branch(BranchInsn)
   Special(SpecialInsn)
-} derive(Eq, @debug.Debug)
+}
 pub fn Insn::all() -> Array[Self]
 pub fn Insn::equal(Self, Self) -> Bool
 pub fn Insn::name(Self) -> String
@@ -306,6 +315,7 @@ pub fn Insn::not_equal(Self, Self) -> Bool
 pub fn Insn::of_name(StringView) -> Self?
 pub fn Insn::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum MemInsn {
   LDRBT_POST_IMM
   LDRBT_POST_REG
@@ -368,13 +378,14 @@ pub(all) enum MemInsn {
   STR_PRE_REG
   STRi12
   STRrs
-} derive(Eq, @debug.Debug)
+}
 pub fn MemInsn::all() -> Array[Self]
 pub fn MemInsn::equal(Self, Self) -> Bool
 pub fn MemInsn::name(Self) -> String
 pub fn MemInsn::not_equal(Self, Self) -> Bool
 pub fn MemInsn::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum MemMultiInsn {
   LDMDA
   LDMDA_UPD
@@ -392,13 +403,14 @@ pub(all) enum MemMultiInsn {
   STMIA_UPD
   STMIB
   STMIB_UPD
-} derive(Eq, @debug.Debug)
+}
 pub fn MemMultiInsn::all() -> Array[Self]
 pub fn MemMultiInsn::equal(Self, Self) -> Bool
 pub fn MemMultiInsn::name(Self) -> String
 pub fn MemMultiInsn::not_equal(Self, Self) -> Bool
 pub fn MemMultiInsn::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum MoveInsn {
   ADCri
   ADCrr
@@ -467,13 +479,14 @@ pub(all) enum MoveInsn {
   TSTrr
   TSTrsi
   TSTrsr
-} derive(Eq, @debug.Debug)
+}
 pub fn MoveInsn::all() -> Array[Self]
 pub fn MoveInsn::equal(Self, Self) -> Bool
 pub fn MoveInsn::name(Self) -> String
 pub fn MoveInsn::not_equal(Self, Self) -> Bool
 pub fn MoveInsn::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum MultInsn {
   MLA
   MLS
@@ -489,23 +502,25 @@ pub(all) enum MultInsn {
   SMULTB
   UMLAL
   UMULL
-} derive(Eq, @debug.Debug)
+}
 pub fn MultInsn::all() -> Array[Self]
 pub fn MultInsn::equal(Self, Self) -> Bool
 pub fn MultInsn::name(Self) -> String
 pub fn MultInsn::not_equal(Self, Self) -> Bool
 pub fn MultInsn::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Op {
   Reg(Reg)
-  Imm(UInt)
-} derive(Eq, @debug.Debug)
+  Imm(UInt32)
+}
 pub fn Op::equal(Self, Self) -> Bool
 pub fn Op::not_equal(Self, Self) -> Bool
 pub fn Op::of_mc(@mc.Op) -> Self?
 pub fn Op::to_repr(Self) -> @debug.Repr
 pub fn Op::to_string(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Reg {
   Nil
   R0
@@ -527,9 +542,9 @@ pub(all) enum Reg {
   CPSR
   SPSR
   ITSTATE
-} derive(Eq, @debug.Debug)
+}
 pub fn Reg::all() -> Array[Self]
-pub fn Reg::code(Self) -> Int
+pub fn Reg::code(Self) -> Int32
 pub fn Reg::equal(Self, Self) -> Bool
 pub fn Reg::is_gpr(Self) -> Bool
 pub fn Reg::name(Self) -> String
@@ -539,6 +554,7 @@ pub fn Reg::to_mc(Self) -> @mc.Op
 pub fn Reg::to_repr(Self) -> @debug.Repr
 pub fn Reg::to_var(Self) -> @types.Var
 
+#derive(Eq, @debug.Debug)
 pub(all) enum SpecialInsn {
   CPS2p
   DMB
@@ -548,7 +564,7 @@ pub(all) enum SpecialInsn {
   MSR
   PLDi12
   SVC
-} derive(Eq, @debug.Debug)
+}
 pub fn SpecialInsn::all() -> Array[Self]
 pub fn SpecialInsn::equal(Self, Self) -> Bool
 pub fn SpecialInsn::name(Self) -> String

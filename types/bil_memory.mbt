@@ -1,9 +1,10 @@
 ///|
+#derive(Eq, Debug)
 struct BilMemory {
   addr_width_value : Int32
   value_width_value : Int32
   cells_value : Map[UInt64, Byte]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend BilMemory with Eq::{not_equal, equal}
@@ -12,10 +13,11 @@ pub extend BilMemory with Eq::{not_equal, equal}
 pub extend BilMemory with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum BilValue {
   BilWord(Word)
   BilMem(BilMemory)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend BilValue with Eq::{not_equal, equal}

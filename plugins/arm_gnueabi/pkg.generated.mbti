@@ -21,9 +21,9 @@ pub(all) struct ArmData {
   model : @c.Model
 }
 pub fn ArmData::alignment(Self, @c.CType) -> @types.Size
-pub fn ArmData::array(Self, @c.Spec[@c.Qualifier[Bool], @c.ArrayType]) -> Int?
+pub fn ArmData::array(Self, @c.Spec[@c.Qualifier[Bool], @c.ArrayType]) -> Int32?
 pub fn ArmData::basic(Self, @c.Basic) -> @types.Size
-pub fn ArmData::bits(Self, @c.CType) -> Int?
+pub fn ArmData::bits(Self, @c.CType) -> Int32?
 pub fn ArmData::complex(Self, @c.Basic) -> @types.Size
 pub fn ArmData::enum_(Self, Array[(String, Int64?)]) -> @types.Size
 pub fn ArmData::floating(Self, @c.Basic) -> @types.Size
@@ -32,8 +32,8 @@ pub fn ArmData::model(Self) -> @c.Model
 pub fn ArmData::pointer(Self) -> @types.AddrSize
 pub fn ArmData::real(Self, @c.Basic) -> @types.Size
 pub fn ArmData::scalar(Self, @c.CType) -> @types.Size
-pub fn ArmData::structure(Self, @c.Spec[Unit, @c.Compound]) -> Int?
-pub fn ArmData::union(Self, @c.Spec[Unit, @c.Compound]) -> Int?
+pub fn ArmData::structure(Self, @c.Spec[Unit, @c.Compound]) -> Int32?
+pub fn ArmData::union(Self, @c.Spec[Unit, @c.Compound]) -> Int32?
 pub impl @c.Ruler for ArmData
 
 // Type aliases

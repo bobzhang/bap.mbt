@@ -5,12 +5,13 @@ let tid_counter : Ref[Int32] = Ref(0)
 let interned_tid_ids : Map[String, Int32] = Map([])
 
 ///|
+#derive(Eq, Hash, Debug)
 pub(all) struct Tid {
   id : Int32
   pkg_value : String
   name : String?
   ivec_value : Int32?
-} derive(Eq, Hash, Debug)
+}
 
 ///|
 pub extend Tid with Eq::{not_equal, equal}
@@ -22,9 +23,10 @@ pub extend Tid with Hash::{hash, hash_combine}
 pub extend Tid with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) suberror TidParseError {
   InvalidTid(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TidParseError with Eq::{not_equal, equal}
@@ -290,10 +292,11 @@ pub fn Tid::to_string(self : Tid) -> String {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Attr {
   key : String
   value : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Attr with Eq::{not_equal, equal}
@@ -418,10 +421,11 @@ pub fn[T] Term::with_attrs(
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Label {
   Direct(Tid)
   Indirect(Exp)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Label with Eq::{not_equal, equal}
@@ -473,10 +477,11 @@ pub fn Label::to_string(self : Label) -> String {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum JmpDst {
   ResolvedDst(Tid)
   IndirectDst(Exp)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend JmpDst with Eq::{not_equal, equal}
@@ -485,10 +490,11 @@ pub extend JmpDst with Eq::{not_equal, equal}
 pub extend JmpDst with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum JmpResolution {
   ResolvedTarget(Tid)
   IndirectTarget(Exp)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend JmpResolution with Eq::{not_equal, equal}
@@ -564,10 +570,11 @@ fn jmp_kind_of_dst_alt(dst : JmpDst?, alt : JmpDst?) -> JmpKind {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Call {
   target : Label
   return_label : Label?
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Call with Eq::{not_equal, equal}
@@ -605,12 +612,13 @@ pub fn Call::to_string(self : Call) -> String {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum JmpKind {
   JmpCall(Call)
   Goto(Label)
   Ret(Label)
   Interrupt(Int32, Tid)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend JmpKind with Eq::{not_equal, equal}
@@ -629,11 +637,12 @@ pub fn JmpKind::to_string(self : JmpKind) -> String {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Intent {
   In
   Out
   Both
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Intent with Eq::{not_equal, equal}
@@ -661,10 +670,11 @@ pub(all) struct Blk {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Def {
   lhs : Var
   rhs : Exp
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Def with Eq::{not_equal, equal}
@@ -673,10 +683,11 @@ pub extend Def with Eq::{not_equal, equal}
 pub extend Def with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Phi {
   lhs : Var
   values : Array[(Tid, Exp)]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Phi with Eq::{not_equal, equal}
@@ -685,10 +696,11 @@ pub extend Phi with Eq::{not_equal, equal}
 pub extend Phi with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Jmp {
   kind : JmpKind
   cond : Exp
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Jmp with Eq::{not_equal, equal}
@@ -697,11 +709,12 @@ pub extend Jmp with Eq::{not_equal, equal}
 pub extend Jmp with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Arg {
   lhs : Var
   rhs : Exp
   intent : Intent?
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Arg with Eq::{not_equal, equal}

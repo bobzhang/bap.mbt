@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum DwarfWordSize {
   W32
   W64
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend DwarfWordSize with Eq::{not_equal, equal}
@@ -11,13 +12,14 @@ pub extend DwarfWordSize with Eq::{not_equal, equal}
 pub extend DwarfWordSize with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum DwarfLenspec {
   DwarfOne
   DwarfTwo
   DwarfFour
   DwarfEight
   DwarfLeb128
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend DwarfLenspec with Eq::{not_equal, equal}
@@ -51,13 +53,14 @@ pub fn DwarfLenspec::eight() -> DwarfLenspec {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum DwarfIndexSpec {
   DwarfIndexLeb128
   DwarfIndexOne
   DwarfIndexTwo
   DwarfIndexThree
   DwarfIndexFour
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend DwarfIndexSpec with Eq::{not_equal, equal}
@@ -91,6 +94,7 @@ pub fn DwarfIndexSpec::four() -> DwarfIndexSpec {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum DwarfTag {
   DwarfArrayType
   DwarfClassType
@@ -161,7 +165,7 @@ pub(all) enum DwarfTag {
   DwarfSkeletonUnit
   DwarfImmutableType
   DwarfUnknownTag(Int32)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend DwarfTag with Eq::{not_equal, equal}
@@ -515,6 +519,7 @@ pub fn DwarfTag::unknown(code : Int32) -> DwarfTag {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum DwarfAttr {
   DwarfSibling
   DwarfLocation
@@ -640,7 +645,7 @@ pub(all) enum DwarfAttr {
   DwarfLoclistsBase
   DwarfRangesBase
   DwarfUnknownAttr(Int32)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend DwarfAttr with Eq::{not_equal, equal}
@@ -1269,6 +1274,7 @@ pub fn DwarfAttr::unknown(code : Int32) -> DwarfAttr {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum DwarfForm {
   DwarfAddr
   DwarfBlock(DwarfLenspec)
@@ -1297,7 +1303,7 @@ pub(all) enum DwarfForm {
   DwarfIndirect
   DwarfExpr
   DwarfFlagPresent
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend DwarfForm with Eq::{not_equal, equal}

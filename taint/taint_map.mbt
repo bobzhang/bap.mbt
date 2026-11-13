@@ -31,7 +31,8 @@ pub let tainted_regs_attr : String = "tainted-regs"
 pub let tainted_ptrs_attr : String = "tainted-ptrs"
 
 ///|
-priv struct TidKey(@types.Tid) derive(Eq)
+#derive(Eq)
+priv struct TidKey(@types.Tid)
 
 ///|
 impl Compare for TidKey with fn compare(self, other) {
@@ -46,9 +47,10 @@ impl Compare for TidKey with fn compare(self, other) {
 ///|
 /// A persistent map from variables (names) to sets of taints (upstream
 /// `Taint.map`).
+#derive(Eq)
 pub struct TaintMap {
   priv map : @sorted_map.SortedMap[String, @sorted_set.SortedSet[TidKey]]
-} derive(Eq)
+}
 
 ///|
 pub extend TaintMap with Eq::{not_equal, equal}

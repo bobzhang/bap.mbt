@@ -161,11 +161,12 @@ pub fn ProjectBrancher::resolve_insn(
 
 ///|
 /// The kinds of the destinations of lifted code (upstream `dests`).
+#derive(Eq)
 priv enum ProjectBilDestKind {
   BilJump
   BilCond
   BilFall
-} derive(Eq)
+}
 
 ///|
 fn project_bil_dests_kind(

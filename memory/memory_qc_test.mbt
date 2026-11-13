@@ -2,6 +2,7 @@
 // the naive-list `MemMap` checked against simple interval models.
 
 ///|
+#derive(Debug)
 struct MemCase {
   big_endian : Bool
   start : UInt64
@@ -11,7 +12,7 @@ struct MemCase {
   b : Int64
   words : Int32
   word_size : Int32
-} derive(Debug)
+}
 
 ///|
 fn gen_offset(len : Int32, rs : @splitmix.RandomState) -> Int64 {
@@ -411,10 +412,11 @@ test "qc: intersects and dominates agree with interval models" {
 }
 
 ///|
+#derive(Debug)
 struct MapCase {
   regions : Array[(Int32, Int32)] // (start, length) with small addresses
   probe : Int32
-} derive(Debug)
+}
 
 ///|
 impl @quickcheck.Arbitrary for MapCase with fn arbitrary(size, rs) {
@@ -637,11 +639,12 @@ test "regression: merge rejects regions 2^32 bytes apart" {
 
 ///|
 /// Operations on a `MemoryTrie` keyed by short byte strings.
+#derive(Debug)
 struct TrieCase {
   word_size : Int32
   ops : Array[(Bool, Bytes, Int32)] // (add?, key, value)
   probe : Bytes
-} derive(Debug)
+}
 
 ///|
 fn gen_trie_key(word_bytes : Int32, rs : @splitmix.RandomState) -> Bytes {

@@ -11,17 +11,19 @@ pub struct Expr {
 
 ///|
 /// The sort of a term.
+#derive(Eq, Debug)
 pub(all) enum Sort {
   Bool
   BitVec(Int32)
   Other
-} derive(Eq, Debug)
+}
 
 ///|
 /// Binary operators. The bitvector operators take bitvectors of the same
 /// width (`Concat` excepted); the comparisons return booleans; `Eq` and
 /// `Distinct` take terms of the same sort; the `Bool*`, `Implies` and
 /// `Iff` operators take booleans.
+#derive(Eq, Debug)
 pub(all) enum BinOp {
   Add
   Sub
@@ -53,7 +55,7 @@ pub(all) enum BinOp {
   BoolXor
   Implies
   Iff
-} derive(Eq, Debug)
+}
 
 ///|
 fn BinOp::code(self : BinOp) -> Int32 {
@@ -94,13 +96,14 @@ fn BinOp::code(self : BinOp) -> Int32 {
 ///|
 /// Unary operators: bitwise complement, two's complement negation, the
 /// reductions to a 1-bit vector, and the boolean negation.
+#derive(Eq, Debug)
 pub(all) enum UnOp {
   Not
   Neg
   RedOr
   RedAnd
   BoolNot
-} derive(Eq, Debug)
+}
 
 ///|
 fn UnOp::code(self : UnOp) -> Int32 {

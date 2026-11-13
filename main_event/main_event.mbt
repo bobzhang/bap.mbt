@@ -1,10 +1,11 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum MainLogLevel {
   MainLogDebug
   MainLogInfo
   MainLogWarning
   MainLogError
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend MainLogLevel with Eq::{not_equal, equal}
@@ -13,11 +14,12 @@ pub extend MainLogLevel with Eq::{not_equal, equal}
 pub extend MainLogLevel with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 struct MainLogInfo {
   level_value : MainLogLevel
   section_value : String
   message_value : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend MainLogInfo with Eq::{not_equal, equal}
@@ -26,12 +28,13 @@ pub extend MainLogInfo with Eq::{not_equal, equal}
 pub extend MainLogInfo with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 struct MainProgress {
   task_value : String
   note_value : String?
   stage_value : Int32?
   total_value : Int32?
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend MainProgress with Eq::{not_equal, equal}
@@ -40,11 +43,12 @@ pub extend MainProgress with Eq::{not_equal, equal}
 pub extend MainProgress with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum MainEvent {
   MainLogMessage(MainLogInfo)
   MainLogProgress(MainProgress)
   MainCustomEvent(String, String?)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend MainEvent with Eq::{not_equal, equal}

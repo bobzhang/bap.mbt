@@ -28,9 +28,10 @@ priv enum Mode {
 
 ///|
 /// An ill-formed pattern.
+#derive(Eq, Debug)
 pub(all) suberror PatternError {
   PatternError(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PatternError with Eq::{not_equal, equal}

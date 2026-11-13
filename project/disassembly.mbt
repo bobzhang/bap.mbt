@@ -1,7 +1,8 @@
 ///|
+#derive(Eq, Debug)
 pub(all) suberror ProjectDisasmError {
   ProjectDisasmFailure(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ProjectDisasmError with Eq::{not_equal, equal}

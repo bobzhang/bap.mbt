@@ -6,6 +6,7 @@
 
 ///|
 /// The classification of a C type that the ARM calling conventions look at.
+#derive(Eq, Debug)
 pub(all) enum CTypeKind {
   /// Integral and enumeration types (`C.Type.is_basic`, not floating).
   Integer
@@ -15,7 +16,7 @@ pub(all) enum CTypeKind {
   Structure
   Union
   Array
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend CTypeKind with Eq::{equal, not_equal}
@@ -27,11 +28,12 @@ pub extend CTypeKind with Debug::{to_repr}
 /// A C type reduced to what the calling conventions need: its kind, its
 /// size in bits (rounded up to its alignment, as `C.Size.bits` does) and
 /// its alignment in bits.
+#derive(Eq, Debug)
 pub(all) struct CType {
   kind : CTypeKind
   bits : Int32
   alignment : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend CType with Eq::{equal, not_equal}
@@ -75,6 +77,7 @@ pub fn CType::arm_basic(name : String, lp64~ : Bool = false) -> CType? {
 
 ///|
 /// The location of a value passed under the calling convention.
+#derive(Eq, Debug)
 pub(all) enum ArgLocation {
   /// Passed in registers, listed in allocation order.
   Registers(Array[String])
@@ -83,7 +86,7 @@ pub(all) enum ArgLocation {
   /// Passed partly in registers and partly on the stack, where the
   /// remaining `bits` start at the stack pointer.
   Split(regs~ : Array[String], bits~ : Int32)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ArgLocation with Eq::{equal, not_equal}
@@ -93,6 +96,7 @@ pub extend ArgLocation with Debug::{to_repr}
 
 ///|
 /// The argument layout of a prototype (`C.Abi.args`).
+#derive(Eq, Debug)
 pub(all) struct ArgLayout {
   /// The location of the returned value, `None` for `void` or for values
   /// returned through a hidden reference.
@@ -103,7 +107,7 @@ pub(all) struct ArgLayout {
   /// Hidden arguments, i.e., references to values returned or passed in
   /// memory.
   hidden : Array[ArgLocation]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ArgLayout with Eq::{equal, not_equal}

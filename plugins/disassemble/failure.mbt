@@ -3,6 +3,7 @@
 
 ///|
 /// A reason why the `disassemble` (or `compare`) command failed.
+#derive(Eq, Debug)
 pub(all) enum Failure {
   /// The input file (or a library) does not exist.
   ExpectsARegularFile(String)
@@ -28,13 +29,14 @@ pub(all) enum Failure {
   UnknownAnalysis(String)
   /// `--update` requires the path to a knowledge base.
   NoKnowledge
-} derive(Eq, Debug)
+}
 
 ///|
 /// The error raised by the commands of the plugin (`Fail` in upstream).
+#derive(Debug)
 pub(all) suberror DisassembleError {
   Fail(Failure)
-} derive(Debug)
+}
 
 ///|
 /// Suggestions for a mistyped pass name (upstream `pp_guesses`).

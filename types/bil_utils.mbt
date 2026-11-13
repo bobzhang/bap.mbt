@@ -146,9 +146,10 @@ fn result_word(value : Word) -> Result[Word, String] {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) suberror BilApplyError {
   InvalidWordApply(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend BilApplyError with Eq::{not_equal, equal}

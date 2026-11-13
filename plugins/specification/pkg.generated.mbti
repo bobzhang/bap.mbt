@@ -16,18 +16,20 @@ pub let plugin_name : String
 pub fn render(SpecFormat, @ogre.Doc) -> String
 
 // Errors
+#derive(@debug.Debug)
 pub(all) suberror SpecificationError {
   UnknownLoader(String)
   LoaderError(String)
-} derive(@debug.Debug)
+}
 pub fn SpecificationError::to_repr(Self) -> @debug.Repr
 pub fn SpecificationError::to_string(Self) -> String
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) enum SpecFormat {
   Sexp
   Yaml
-} derive(Eq, @debug.Debug)
+}
 pub fn SpecFormat::equal(Self, Self) -> Bool
 pub fn SpecFormat::not_equal(Self, Self) -> Bool
 pub fn SpecFormat::to_repr(Self) -> @debug.Repr

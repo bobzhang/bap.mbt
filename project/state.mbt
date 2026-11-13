@@ -15,11 +15,12 @@ struct ProjectDisassemblyInstruction {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum ProjectInstructionOperand {
   ProjectRegisterOperand(Int32, String)
   ProjectImmediateOperand(Int64)
   ProjectFloatingOperand(Double)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ProjectInstructionOperand with Eq::{not_equal, equal}
@@ -28,6 +29,7 @@ pub extend ProjectInstructionOperand with Eq::{not_equal, equal}
 pub extend ProjectInstructionOperand with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum ProjectInstructionKind {
   ProjectConditionalBranch
   ProjectUnconditionalBranch
@@ -39,7 +41,7 @@ pub(all) enum ProjectInstructionKind {
   ProjectMayAffectControlFlow
   ProjectMayLoad
   ProjectMayStore
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ProjectInstructionKind with Eq::{not_equal, equal}
@@ -59,11 +61,12 @@ struct ProjectInstructionKey {
 }
 
 ///|
+#derive(Eq)
 pub(all) enum ProjectDisassemblyEdgeKind {
   JumpEdge
   CondEdge
   FallEdge
-} derive(Eq)
+}
 
 ///|
 pub extend ProjectDisassemblyEdgeKind with Eq::{not_equal, equal}

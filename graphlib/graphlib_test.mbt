@@ -116,10 +116,11 @@ test "translated BAP graph removal keeps nodes and incident edges coherent" {
 }
 
 ///|
+#derive(Eq, Debug)
 struct LabeledNode {
   id : Int32
   name : String
-} derive(Eq, Debug)
+}
 
 ///|
 test "translated BAP graph node update preserves incident edges" {

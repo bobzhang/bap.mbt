@@ -19,7 +19,7 @@ pub fn mapper_component(@primus.Machine) -> Unit
 
 pub fn marker_component(@primus.Machine) -> Unit
 
-pub fn register() -> Int
+pub fn register() -> Int32
 
 pub fn seed_of(@primus.Machine, @taint.Object) -> @types.Tid?
 
@@ -28,9 +28,10 @@ pub fn tainted_ptrs(@primus.Machine, @types.Tid) -> @taint.TaintMap
 pub fn tainted_regs(@primus.Machine, @types.Tid) -> @taint.TaintMap
 
 // Errors
+#derive(Eq, @debug.Debug)
 pub(all) suberror ConfigError {
   ConfigError(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn ConfigError::equal(Self, Self) -> Bool
 pub fn ConfigError::not_equal(Self, Self) -> Bool
 pub fn ConfigError::to_repr(Self) -> @debug.Repr

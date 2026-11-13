@@ -6,69 +6,71 @@ import {
 }
 
 // Values
-pub fn append(Int, Int, BitVec, BitVec) -> BitVec raise BitVecError
+pub fn append(Int32, Int32, BitVec, BitVec) -> BitVec raise BitVecError
 
 pub fn b0() -> BitVec
 
 pub fn b1() -> BitVec
 
-pub fn compare(BitVec, BitVec) -> Int
+pub fn compare(BitVec, BitVec) -> Int32
 
-pub fn concat(Int, ArrayView[BitVec]) -> BitVec raise BitVecError
+pub fn concat(Int32, ArrayView[BitVec]) -> BitVec raise BitVecError
 
 pub fn equal(BitVec, BitVec) -> Bool
 
-pub fn from_hex(width~ : Int, StringView) -> BitVec raise BitVecError
+pub fn from_hex(width~ : Int32, StringView) -> BitVec raise BitVecError
 
 pub fn from_string(StringView) -> BitVec raise BitVecError
 
 pub fn of_bool(Bool) -> BitVec
 
-pub fn of_bytes(BytesView, endian~ : Endian, width? : Int) -> BitVec raise BitVecError
+pub fn of_bytes(BytesView, endian~ : Endian, width? : Int32) -> BitVec raise BitVecError
 
-pub fn of_int(width~ : Int, Int) -> BitVec raise BitVecError
+pub fn of_int(width~ : Int32, Int32) -> BitVec raise BitVecError
 
-pub fn of_int64(width~ : Int, Int64) -> BitVec raise BitVecError
+pub fn of_int64(width~ : Int32, Int64) -> BitVec raise BitVecError
 
-pub fn of_uint64(width~ : Int, UInt64) -> BitVec raise BitVecError
+pub fn of_uint64(width~ : Int32, UInt64) -> BitVec raise BitVecError
 
-pub fn one(width~ : Int) -> BitVec raise BitVecError
+pub fn one(width~ : Int32) -> BitVec raise BitVecError
 
-pub fn ones(width~ : Int) -> BitVec raise BitVecError
+pub fn ones(width~ : Int32) -> BitVec raise BitVecError
 
-pub fn repeat(Int, times~ : Int, BitVec) -> BitVec raise BitVecError
+pub fn repeat(Int32, times~ : Int32, BitVec) -> BitVec raise BitVecError
 
-pub fn select(ArrayView[Int], BitVec) -> BitVec
+pub fn select(ArrayView[Int32], BitVec) -> BitVec
 
-pub fn zero(width~ : Int) -> BitVec raise BitVecError
+pub fn zero(width~ : Int32) -> BitVec raise BitVecError
 
 // Errors
+#derive(Eq, @debug.Debug)
 pub(all) suberror BitVecError {
-  InvalidWidth(Int)
-  IncompatibleWidths(lhs~ : Int, rhs~ : Int)
+  InvalidWidth(Int32)
+  IncompatibleWidths(lhs~ : Int32, rhs~ : Int32)
   InvalidHexDigit(Char)
   InvalidLiteral(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn BitVecError::equal(Self, Self) -> Bool
 pub fn BitVecError::not_equal(Self, Self) -> Bool
 pub fn BitVecError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
-type BitVec derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type BitVec
 pub fn BitVec::abs_signed(Self) -> Self
 pub fn BitVec::add(Self, Self) -> Self raise BitVecError
-pub fn BitVec::arshift(Self, Int) -> Self
+pub fn BitVec::arshift(Self, Int32) -> Self
 pub fn BitVec::bit_and(Self, Self) -> Self raise BitVecError
 pub fn BitVec::bit_or(Self, Self) -> Self raise BitVecError
 pub fn BitVec::bit_xor(Self, Self) -> Self raise BitVecError
-pub fn BitVec::compare(Self, Self) -> Int
-pub fn BitVec::compare_signed(Self, Self) -> Int raise BitVecError
-pub fn BitVec::compare_unsigned(Self, Self) -> Int raise BitVecError
+pub fn BitVec::compare(Self, Self) -> Int32
+pub fn BitVec::compare_signed(Self, Self) -> Int32 raise BitVecError
+pub fn BitVec::compare_unsigned(Self, Self) -> Int32 raise BitVecError
 pub fn BitVec::concat(Self, Self) -> Self raise BitVecError
 pub fn BitVec::div(Self, Self) -> Self raise BitVecError
 pub fn BitVec::div_rem(Self, Self) -> (Self, Self) raise BitVecError
 pub fn BitVec::equal(Self, Self) -> Bool
-pub fn BitVec::extract(Self, hi? : Int, lo? : Int) -> Self raise BitVecError
+pub fn BitVec::extract(Self, hi? : Int32, lo? : Int32) -> Self raise BitVecError
 pub fn BitVec::fits_int(Self) -> Bool
 pub fn BitVec::fits_int32(Self) -> Bool
 pub fn BitVec::fits_int64(Self) -> Bool
@@ -76,50 +78,52 @@ pub fn BitVec::gcd(Self, Self) -> Self raise BitVecError
 pub fn BitVec::gcd_ext(Self, Self) -> (Self, Self, Self) raise BitVecError
 pub fn BitVec::is_zero(Self) -> Bool
 pub fn BitVec::lcm(Self, Self) -> Self raise BitVecError
-pub fn BitVec::limb_count(Self) -> Int
+pub fn BitVec::limb_count(Self) -> Int32
 pub fn BitVec::lnot(Self) -> Self
 pub fn BitVec::lsb(Self) -> Bool
-pub fn BitVec::lshift(Self, Int) -> Self
+pub fn BitVec::lshift(Self, Int32) -> Self
 pub fn BitVec::msb(Self) -> Bool
 pub fn BitVec::mul(Self, Self) -> Self raise BitVecError
 pub fn BitVec::neg(Self) -> Self
 pub fn BitVec::not_equal(Self, Self) -> Bool
-pub fn BitVec::nth(Self, Int) -> Bool
+pub fn BitVec::nth(Self, Int32) -> Bool
 pub fn BitVec::pred(Self) -> Self
 pub fn BitVec::rem(Self, Self) -> Self raise BitVecError
-pub fn BitVec::rshift(Self, Int) -> Self
+pub fn BitVec::rshift(Self, Int32) -> Self
 pub fn BitVec::sdiv(Self, Self) -> Self raise BitVecError
 pub fn BitVec::srem(Self, Self) -> Self raise BitVecError
 pub fn BitVec::sub(Self, Self) -> Self raise BitVecError
 pub fn BitVec::succ(Self) -> Self
 pub fn BitVec::to_bytes(Self, endian~ : Endian) -> Bytes
 pub fn BitVec::to_hex(Self, prefix? : Bool) -> String
-pub fn BitVec::to_int(Self) -> Int raise BitVecError
-pub fn BitVec::to_int32(Self) -> Int raise BitVecError
+pub fn BitVec::to_int(Self) -> Int32 raise BitVecError
+pub fn BitVec::to_int32(Self) -> Int32 raise BitVecError
 pub fn BitVec::to_int64(Self) -> Int64 raise BitVecError
 pub fn BitVec::to_repr(Self) -> @debug.Repr
 pub fn BitVec::to_string(Self) -> String
 pub fn BitVec::to_uint64(Self) -> UInt64 raise BitVecError
-pub fn BitVec::truncate(Self, width~ : Int) -> Self raise BitVecError
-pub fn BitVec::widen(Self, width~ : Int) -> Self raise BitVecError
-pub fn BitVec::width(Self) -> Int
+pub fn BitVec::truncate(Self, width~ : Int32) -> Self raise BitVecError
+pub fn BitVec::widen(Self, width~ : Int32) -> Self raise BitVecError
+pub fn BitVec::width(Self) -> Int32
 
+#derive(Eq, @debug.Debug)
 pub(all) enum BitVecOrder {
   BitVecAscending
   BitVecDescending
-} derive(Eq, @debug.Debug)
+}
 pub fn BitVecOrder::ascending() -> Self
-pub fn BitVecOrder::compare(Self, BitVec, BitVec) -> Int
+pub fn BitVecOrder::compare(Self, BitVec, BitVec) -> Int32
 pub fn BitVecOrder::descending() -> Self
 pub fn BitVecOrder::equal(Self, Self) -> Bool
 pub fn BitVecOrder::natural() -> Self
 pub fn BitVecOrder::not_equal(Self, Self) -> Bool
 pub fn BitVecOrder::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Endian {
   LittleEndian
   BigEndian
-} derive(Eq, @debug.Debug)
+}
 pub fn Endian::equal(Self, Self) -> Bool
 pub fn Endian::not_equal(Self, Self) -> Bool
 pub fn Endian::to_repr(Self) -> @debug.Repr

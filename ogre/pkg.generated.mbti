@@ -47,9 +47,10 @@ pub fn[A, B, C, D, E] scheme5(Field[A], Field[B], Field[C], Field[D], Field[E]) 
 pub fn[T] select(where_? : Exp, join? : Array[Array[Join]], Tables[T]) -> Query[T]
 
 // Errors
+#derive(Eq, @debug.Debug)
 pub(all) suberror OgreError {
   OgreError(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn OgreError::equal(Self, Self) -> Bool
 pub fn OgreError::message(Self) -> String
 pub fn OgreError::not_equal(Self, Self) -> Bool
@@ -80,10 +81,10 @@ pub fn[A, K] Context::require(Self, Attribute[A, K], that? : (A) -> Bool) -> A r
 type Doc
 pub fn Doc::attributes(Self) -> Array[String]
 pub fn Doc::clear(Self) -> Self
-pub fn Doc::compare(Self, Self) -> Int
+pub fn Doc::compare(Self, Self) -> Int32
 pub fn Doc::declaration(Self, String) -> Array[Header]?
-pub fn Doc::declarations(Self) -> Int
-pub fn Doc::definitions(Self) -> Int
+pub fn Doc::declarations(Self) -> Int32
+pub fn Doc::definitions(Self) -> Int32
 pub fn Doc::empty() -> Self
 pub fn Doc::equal(Self, Self) -> Bool
 pub fn Doc::facts(Self, String) -> Array[Entry]
@@ -99,13 +100,14 @@ pub fn Doc::to_yaml(Self) -> String
 pub impl Eq for Doc
 pub impl Show for Doc
 
-type Entry derive(Eq, Hash, @debug.Debug)
+#derive(Eq, Hash, @debug.Debug)
+type Entry
 pub fn Entry::equal(Self, Self) -> Bool
 pub fn Entry::fields(Self) -> Array[(String, String)]
 pub fn Entry::get(Self, String) -> String?
-pub fn Entry::hash(Self) -> Int
+pub fn Entry::hash(Self) -> Int32
 pub fn Entry::hash_combine(Self, Hasher) -> Unit
-pub fn Entry::length(Self) -> Int
+pub fn Entry::length(Self) -> Int32
 pub fn Entry::not_equal(Self, Self) -> Bool
 pub fn Entry::to_repr(Self) -> @debug.Repr
 
@@ -132,21 +134,23 @@ pub impl Sub for Exp
 pub impl @debug.Debug for Exp
 
 type Field[T]
-pub fn[T] Field::at(Self[T], Int) -> Exp
+pub fn[T] Field::at(Self[T], Int32) -> Exp
 pub fn[T] Field::header(Self[T]) -> Header
 pub fn[T] Field::name(Self[T]) -> String
 pub fn[T] Field::typ(Self[T]) -> Type[T]
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Header {
   name : String
   typ : Typ
-} derive(Eq, @debug.Debug)
+}
 pub fn Header::equal(Self, Self) -> Bool
 pub fn Header::new(String, Typ) -> Self
 pub fn Header::not_equal(Self, Self) -> Bool
 pub fn Header::to_repr(Self) -> @debug.Repr
 
-type Join derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type Join
 pub fn Join::equal(Self, Self) -> Bool
 pub fn Join::not_equal(Self, Self) -> Bool
 pub fn Join::to_repr(Self) -> @debug.Repr
@@ -182,12 +186,13 @@ type Tables[T]
 pub fn[T, B, K] Tables::add(Self[T], Attribute[B, K]) -> Self[(T, B)]
 pub fn[T] Tables::names(Self[T]) -> Array[String]
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Typ {
   Int
   Str
   Bool
   Float
-} derive(Eq, @debug.Debug)
+}
 pub fn Typ::all() -> Array[Self]
 pub fn Typ::check(Self, String) -> Bool
 pub fn Typ::equal(Self, Self) -> Bool

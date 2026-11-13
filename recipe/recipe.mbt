@@ -10,6 +10,7 @@ using @sexp {type Sexp}
 
 ///|
 /// Recipe errors (upstream `error`).
+#derive(Eq, Debug)
 pub(all) suberror RecipeError {
   /// an item argument must be an atom, got a list with these elements
   ExpectAtom(String)
@@ -35,7 +36,7 @@ pub(all) suberror RecipeError {
   MalformedRecipe(String, String, String)
   /// a system error
   SystemError(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend RecipeError with Eq::{not_equal, equal}
@@ -65,11 +66,12 @@ pub fn RecipeError::to_string(self : RecipeError) -> String {
 
 ///|
 /// A recipe parameter.
+#derive(Eq, Debug)
 pub struct Param {
   priv name : String
   priv defl : String
   priv desc : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Param with Eq::{not_equal, equal}

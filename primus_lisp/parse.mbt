@@ -3,6 +3,7 @@
 
 ///|
 /// Kinds of top-level definitions.
+#derive(Eq, Debug)
 pub(all) enum DefKind {
   KFunc
   KMacro
@@ -12,7 +13,7 @@ pub(all) enum DefKind {
   KPara
   KInpkg
   KDefpkg
-} derive(Eq, Debug)
+}
 
 ///|
 /// Parse errors (upstream `parse_error`).
@@ -39,19 +40,21 @@ pub(all) enum ParseProblem {
 
 ///|
 /// Errors in format strings of the `msg` form.
+#derive(Eq, Debug)
 pub(all) enum FormatProblem {
   ExpectDigit
   IllegalEscape(Char)
   UnterminatedEsc
   UnterminatedExp
-} derive(Eq, Debug)
+}
 
 ///|
 /// Who requested a feature.
+#derive(Eq, Debug)
 pub(all) enum Request {
   Cmdline
   Module(Loc)
-} derive(Eq, Debug)
+}
 
 ///|
 /// Errors of the Lisp program loader (upstream `Load.error`).

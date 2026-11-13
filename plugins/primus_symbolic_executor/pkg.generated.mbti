@@ -33,17 +33,17 @@ pub fn is_solver_available() -> Bool
 
 pub let name : String
 
-pub fn pending_tasks(@primus.Machine) -> Int
+pub fn pending_tasks(@primus.Machine) -> Int32
 
 pub fn primitive_names() -> Array[String]
 
 pub fn register() -> Bool
 
-pub fn set_cutoff(Int) -> Unit
+pub fn set_cutoff(Int32) -> Unit
 
 pub fn set_input(@primus.Machine, Input, @primus.Value) -> Unit
 
-pub fn set_timeout(Int) -> Unit
+pub fn set_timeout(Int32) -> Unit
 
 pub fn value_formula(@primus.Machine, @primus.Value) -> @z3.Expr?
 
@@ -61,7 +61,7 @@ pub(all) enum Input {
   Var(@types.Var)
   Ptr(bank~ : @primus.Descriptor, addr~ : @types.Word)
 }
-pub fn Input::compare(Self, Self) -> Int
+pub fn Input::compare(Self, Self) -> Int32
 pub fn Input::equal(Self, Self) -> Bool
 pub fn Input::not_equal(Self, Self) -> Bool
 pub fn Input::op_ge(Self, Self) -> Bool
@@ -70,17 +70,18 @@ pub fn Input::op_le(Self, Self) -> Bool
 pub fn Input::op_lt(Self, Self) -> Bool
 pub fn Input::output(Self, &Logger) -> Unit
 pub fn Input::set(Self, @primus.Machine, @primus.Value) -> Unit raise
-pub fn Input::size(Self) -> Int
+pub fn Input::size(Self) -> Int32
 pub fn Input::to_string(Self) -> String
 pub fn Input::to_symbol(Self) -> String
 pub impl Compare for Input
 pub impl Eq for Input
 pub impl Show for Input
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Scope {
   User
   Path
-} derive(Eq, @debug.Debug)
+}
 pub fn Scope::equal(Self, Self) -> Bool
 pub fn Scope::not_equal(Self, Self) -> Bool
 pub fn Scope::to_repr(Self) -> @debug.Repr

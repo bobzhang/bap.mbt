@@ -122,10 +122,11 @@ test "qc: bytes_sub agrees with slicing" {
 ///|
 /// A sequence of trie operations over short keys from a small alphabet
 /// (including non-ASCII characters) so that keys share prefixes.
+#derive(Debug)
 struct TrieOps {
   ops : Array[(Bool, String, Int32)] // (add?, key, value)
   probe : String
-} derive(Debug)
+}
 
 ///|
 let trie_alphabet : Array[String] = ["a", "b", "ab", "\u{e9}", "\u{1F600}", "x"]

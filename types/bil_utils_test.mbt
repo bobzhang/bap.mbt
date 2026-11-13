@@ -337,8 +337,8 @@ test "bil BAP normalize_exp expands wide loads into byte loads" {
       lhs,
       Concat(
         high=Concat(high=Concat(high=byte3, low=byte2), low=byte1),
-        low=byte0
-      )
+        low=byte0,
+      ),
     ) => {
       assert_true(lhs == x)
       assert_byte_load(byte3, mem, addr, 3)
@@ -376,20 +376,20 @@ test "bil BAP normalize_exp expands wide stores into byte stores" {
               mem=Var(base),
               addr=addr0,
               value=Extract(hi=31, lo=24, exp=Var(value0)),
-              endian=LittleEndian
+              endian=LittleEndian,
             ),
             addr=addr1,
             value=Extract(hi=23, lo=16, exp=Var(value1)),
-            endian=LittleEndian
+            endian=LittleEndian,
           ),
           addr=addr2,
           value=Extract(hi=15, lo=8, exp=Var(value2)),
-          endian=LittleEndian
+          endian=LittleEndian,
         ),
         addr=addr3,
         value=Extract(hi=7, lo=0, exp=Var(value3)),
-        endian=LittleEndian
-      )
+        endian=LittleEndian,
+      ),
     ) => {
       assert_true(lhs == mem)
       assert_true(base == mem)
@@ -469,7 +469,7 @@ test "bil BAP normalize hoists store-chain load memories" {
     (
       Move(
         temp,
-        Store(mem=Var(base), addr=Int(store_addr), value=Int(value), ..)
+        Store(mem=Var(base), addr=Int(store_addr), value=Int(value), ..),
       ),
       Move(lhs, Load(mem=Var(load_mem), addr=Int(load_addr), typ=Imm(32), ..)),
     ) => {
@@ -550,9 +550,9 @@ test "bil BAP normalize keeps let body hoists scoped" {
         Let(
           temp,
           Load(mem=Var(addr_mem), addr=Var(addr_var), typ=Imm(32), ..),
-          Load(mem=Var(load_mem), addr=Var(load_addr), typ=Imm(8), ..)
-        )
-      )
+          Load(mem=Var(load_mem), addr=Var(load_addr), typ=Imm(8), ..),
+        ),
+      ),
     ) => {
       assert_true(lhs == y)
       assert_true(bound == x)
@@ -615,7 +615,7 @@ test "bil BAP normalize hoists memory-effect branch conditions" {
       match body[1] {
         Move(
           update,
-          Load(mem=Var(update_mem), addr=Int(update_addr), typ=Imm(8), ..)
+          Load(mem=Var(update_mem), addr=Int(update_addr), typ=Imm(8), ..),
         ) => {
           assert_true(update == temp)
           assert_true(update_mem == mem)

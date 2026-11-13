@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug)
 struct Word {
   bits_value : @bitvec.BitVec
   signed_value : Bool
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Word with Eq::{not_equal}
@@ -11,12 +12,13 @@ pub extend Word with Eq::{not_equal}
 pub extend Word with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum WordValueFormat {
   WordHex
   WordDec
   WordOct
   WordBin
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend WordValueFormat with Eq::{not_equal, equal}
@@ -25,10 +27,11 @@ pub extend WordValueFormat with Eq::{not_equal, equal}
 pub extend WordValueFormat with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum WordLetterCase {
   WordUpperCase
   WordLowerCase
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend WordLetterCase with Eq::{not_equal, equal}
@@ -37,12 +40,13 @@ pub extend WordLetterCase with Eq::{not_equal, equal}
 pub extend WordLetterCase with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum WordPrefix {
   WordAutoPrefix
   WordBasePrefix
   WordNoPrefix
   WordCustomPrefix(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend WordPrefix with Eq::{not_equal, equal}
@@ -51,11 +55,12 @@ pub extend WordPrefix with Eq::{not_equal, equal}
 pub extend WordPrefix with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum WordSuffix {
   WordNoSuffix
   WordFullSuffix
   WordSizeSuffix
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend WordSuffix with Eq::{not_equal, equal}

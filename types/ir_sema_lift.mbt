@@ -11,13 +11,14 @@
 /// `insn` value that `Bap_sema_lift` uses): its BIL semantics, the
 /// `address` and `insn` attributes of the terms lifted from it, and whether
 /// it is a call or a barrier (`Insn.is call`, `Insn.is barrier`).
+#derive(Debug)
 pub(all) struct IrInsn {
   bil : Array[Stmt]
   addr : Word?
   insn : String?
   is_call : Bool
   is_barrier : Bool
-} derive(Debug)
+}
 
 ///|
 pub extend IrInsn with Debug::{to_repr}
@@ -37,10 +38,11 @@ pub fn IrInsn::new(
 /// The fallthrough of a basic block (upstream
 /// ``[`Intra of dst | `Inter of dst]``): to a block of the same subroutine,
 /// or into another subroutine (an implicit call).
+#derive(Eq, Debug)
 pub(all) enum IrFall {
   IntraFall(JmpDst)
   InterFall(JmpDst)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend IrFall with Eq::{equal, not_equal}

@@ -8,12 +8,13 @@
 /// - `Symbol` is the type of symbols;
 /// - `Name(a)` is a type variable;
 /// - `Type(n)` is the type of `n`-bit words.
+#derive(Eq, Compare, Debug)
 pub(all) enum Typ {
   Any
   Symbol
   Name(String)
   Type(Int32)
-} derive(Eq, Compare, Debug)
+}
 
 ///|
 pub impl Show for Typ with fn output(self, logger) {
@@ -49,11 +50,12 @@ pub fn Typ::mem(self : Typ, n : Int32) -> Bool {
 
 ///|
 /// A signature of a function (upstream `Type.signature`).
+#derive(Eq, Compare, Debug)
 pub(all) struct Signature {
   args : Array[Typ]
   rest : Typ?
   ret : Typ
-} derive(Eq, Compare, Debug)
+}
 
 ///|
 pub fn Signature::new(args : Array[Typ], rest? : Typ, ret : Typ) -> Signature {
@@ -87,11 +89,12 @@ fn show_typ(t : Typ) -> String {
 
 ///|
 /// A variable occurrence (upstream `var = KB.Name.t term indexed`).
+#derive(Eq, Debug)
 pub(all) struct LVar {
   name : @knowledge.Name
   typ : Typ
   id : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub impl Show for LVar with fn output(self, logger) {
@@ -104,35 +107,40 @@ pub impl Show for LVar with fn output(self, logger) {
 
 ///|
 /// A word literal (upstream `word = Z.t term indexed`).
+#derive(Eq, Debug)
 pub(all) struct LWord {
   value : @bigint.BigInt
   typ : Typ
   id : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 /// A symbol literal (upstream `sym = KB.Name.t indexed`).
+#derive(Eq, Debug)
 pub(all) struct LSym {
   name : @knowledge.Name
   id : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 /// An element of a `msg` format string.
+#derive(Eq, Debug)
 pub(all) enum Fmt {
   Lit(String)
   Pos(Int32)
-} derive(Eq, Debug)
+}
 
 ///|
 /// A Lisp expression (upstream `ast = exp indexed`).
+#derive(Eq, Debug)
 pub(all) struct Ast {
   data : Exp
   id : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 /// The expression language (upstream `Bap_primus_lisp_types.exp`).
+#derive(Eq, Debug)
 pub(all) enum Exp {
   Int(LWord)
   Var(LVar)
@@ -145,14 +153,15 @@ pub(all) enum Exp {
   Rep(Ast, Ast)
   Msg(Array[Fmt], Array[Ast])
   Err(String)
-} derive(Eq, Debug)
+}
 
 ///|
 /// The callee of an application.
+#derive(Eq, Debug)
 pub(all) enum Binding {
   Dynamic(@knowledge.Name)
   Static(Array[LVar], Ast)
-} derive(Eq, Debug)
+}
 
 ///|
 /// The unqualified name when the name is in `pkg`, otherwise the fully
@@ -388,12 +397,13 @@ pub fn parse_bigint(s : String) -> @bigint.BigInt? {
 
 ///|
 /// Errors of the variable literal reader (upstream `Var.read_error`).
+#derive(Eq, Debug)
 pub(all) enum VarReadError {
   VarEmpty
   NotAVar
   VarBadType
   VarBadFormat
-} derive(Eq, Debug)
+}
 
 ///|
 /// Reads a variable literal `name[:type]` or `package:name:type`
@@ -436,13 +446,14 @@ fn split_colons(x : String) -> Array[String] {
 
 ///|
 /// Errors of the word literal reader (upstream `Word.read_error`).
+#derive(Eq, Debug)
 pub(all) enum WordReadError {
   WordEmpty
   NotAnInt
   Unclosed
   BadLiteral
   WordBadType
-} derive(Eq, Debug)
+}
 
 ///|
 /// Reads a word literal: `42`, `-1`, `0x2a:8`, `?a` (upstream

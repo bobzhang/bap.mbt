@@ -204,9 +204,10 @@ pub struct Arg[A] {
 ///|
 /// An arena: an ordered, expendable collection of locations (usually
 /// registers) used to pass arguments (upstream `C.Abi.Arg.arena`).
+#derive(Eq, Debug)
 pub struct Arena {
   priv id : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 fn[A] make(run : (ArgState) -> (A, ArgState)?) -> Arg[A] {

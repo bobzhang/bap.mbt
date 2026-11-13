@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum BitVecOrder {
   BitVecAscending
   BitVecDescending
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend BitVecOrder with Eq::{not_equal, equal}

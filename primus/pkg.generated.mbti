@@ -22,13 +22,13 @@ pub let call_return : Observation[(String, Array[Value])]
 
 pub let call_returned : Statement[(String, Array[Value])]
 
-pub let cast : Observation[((@types.CastKind, Int, Value), Value)]
+pub let cast : Observation[((@types.CastKind, Int32, Value), Value)]
 
 pub let cfi_violation : Observation[@types.Word]
 
 pub let cfi_violation_handler : String
 
-pub let clock : Observation[Int]
+pub let clock : Observation[Int32]
 
 pub let concat : Observation[((Value, Value), Value)]
 
@@ -66,13 +66,13 @@ pub let exn_raised : Observation[Error]
 
 pub fn exn_to_string(Error) -> String
 
-pub let extract : Observation[((Int, Int, Value), Value)]
+pub let extract : Observation[((Int32, Int32, Value), Value)]
 
 pub let halting : Observation[Unit]
 
 pub fn info_normalize_text(String) -> String
 
-pub let interrupt : Observation[Int]
+pub let interrupt : Observation[Int32]
 
 pub fn is_valid_uuid(String) -> Bool
 
@@ -142,7 +142,7 @@ pub let stored : Observation[(Value, Value)]
 
 pub let storing : Observation[Value]
 
-pub let symbol_key_width : Int
+pub let symbol_key_width : Int32
 
 pub let system_fini : Observation[Unit]
 
@@ -183,23 +183,25 @@ pub(all) suberror PrimusError {
   DeadMachine(Id)
 }
 
+#derive(Eq, @debug.Debug)
 pub(all) suberror SexpParseError {
   UnexpectedEof
-  UnexpectedChar(Char, Int)
-  UnbalancedParen(Int)
-} derive(Eq, @debug.Debug)
+  UnexpectedChar(Char, Int32)
+  UnbalancedParen(Int32)
+}
 pub fn SexpParseError::equal(Self, Self) -> Bool
 pub fn SexpParseError::not_equal(Self, Self) -> Bool
 pub fn SexpParseError::to_repr(Self) -> @debug.Repr
 pub fn SexpParseError::to_string(Self) -> String
 
+#derive(@debug.Debug)
 pub(all) suberror SystemError {
   UnknownSystem(String)
   UnknownComponent(component~ : String, system~ : String)
   DuplicateSystem(String)
   DuplicateComponent(String)
   SystemParseError(file~ : String, system~ : String, msg~ : String)
-} derive(@debug.Debug)
+}
 pub fn SystemError::output(Self, &Logger) -> Unit
 pub fn SystemError::to_repr(Self) -> @debug.Repr
 pub fn SystemError::to_string(Self) -> String
@@ -218,15 +220,16 @@ pub fn Components::list() -> Array[Info]
 pub fn Components::register(internal? : Bool, desc? : String, pkg? : String, String, (Machine) -> Unit raise) -> Unit raise SystemError
 pub fn Components::register_generic(internal? : Bool, desc? : String, pkg? : String, String, (Machine) -> Unit raise) -> Unit raise SystemError
 
+#derive(@debug.Debug)
 pub struct Descriptor {
   name : String
-  addr_size : Int
-  data_size : Int
-} derive(@debug.Debug)
-pub fn Descriptor::addr_size(Self) -> Int
-pub fn Descriptor::compare(Self, Self) -> Int
-pub fn Descriptor::create(addr_size~ : Int, data_size~ : Int, String) -> Self
-pub fn Descriptor::data_size(Self) -> Int
+  addr_size : Int32
+  data_size : Int32
+}
+pub fn Descriptor::addr_size(Self) -> Int32
+pub fn Descriptor::compare(Self, Self) -> Int32
+pub fn Descriptor::create(addr_size~ : Int32, data_size~ : Int32, String) -> Self
+pub fn Descriptor::data_size(Self) -> Int32
 pub fn Descriptor::equal(Self, Self) -> Bool
 pub fn Descriptor::name(Self) -> String
 pub fn Descriptor::not_equal(Self, Self) -> Bool
@@ -236,7 +239,7 @@ pub fn Descriptor::op_le(Self, Self) -> Bool
 pub fn Descriptor::op_lt(Self, Self) -> Bool
 pub fn Descriptor::to_repr(Self) -> @debug.Repr
 pub fn Descriptor::to_sexp(Self) -> Sexp
-pub fn Descriptor::unknown(addr_size~ : Int, data_size~ : Int) -> Self
+pub fn Descriptor::unknown(addr_size~ : Int32, data_size~ : Int32) -> Self
 pub impl Compare for Descriptor
 pub impl Eq for Descriptor
 
@@ -267,11 +270,12 @@ pub(all) struct Finite[T, D] {
   next : (T) -> T?
 }
 
+#derive(Eq, @debug.Debug)
 pub(all) enum ForkStatus {
   Current
   Live
   Dead
-} derive(Eq, @debug.Debug)
+}
 pub fn ForkStatus::equal(Self, Self) -> Bool
 pub fn ForkStatus::not_equal(Self, Self) -> Bool
 pub fn ForkStatus::output(Self, &Logger) -> Unit
@@ -282,25 +286,26 @@ pub impl Show for ForkStatus
 pub struct Generator {
   // private fields
 }
-pub fn[T] Generator::create(width? : Int, Infinite[T, Int], T) -> Self
-pub fn Generator::next(Machine, Self) -> Int
-pub fn[T, D] Generator::of_iterator(width? : Int, seed? : (Int) -> T, to_bitvec~ : (D) -> @bitvec.BitVec, Infinite[T, D], T) -> Self
-pub fn Generator::random_byte(Int) -> Self
-pub fn Generator::random_lcg(width? : Int, min? : Int, max? : Int, Int) -> Self
+pub fn[T] Generator::create(width? : Int32, Infinite[T, Int32], T) -> Self
+pub fn Generator::next(Machine, Self) -> Int32
+pub fn[T, D] Generator::of_iterator(width? : Int32, seed? : (Int32) -> T, to_bitvec~ : (D) -> @bitvec.BitVec, Infinite[T, D], T) -> Self
+pub fn Generator::random_byte(Int32) -> Self
+pub fn Generator::random_lcg(width? : Int32, min? : Int32, max? : Int32, Int32) -> Self
 pub fn Generator::seeded_byte() -> Self
-pub fn Generator::seeded_create(width? : Int, (Int) -> Self) -> Self
-pub fn Generator::seeded_lcg(width? : Int, min? : Int, max? : Int) -> Self
-pub fn Generator::static_value(width? : Int, Int) -> Self
+pub fn Generator::seeded_create(width? : Int32, (Int32) -> Self) -> Self
+pub fn Generator::seeded_lcg(width? : Int32, min? : Int32, max? : Int32) -> Self
+pub fn Generator::static_value(width? : Int32, Int32) -> Self
 pub fn Generator::to_sexp(Self) -> Sexp
-pub fn[A] Generator::unfold(width? : Int, min? : Int, max? : Int, seed? : Int, f~ : ((A, Int)) -> (A, Int), A) -> Self
-pub fn Generator::width(Self) -> Int
-pub fn Generator::word(Machine, Self, Int) -> @types.Word
+pub fn[A] Generator::unfold(width? : Int32, min? : Int32, max? : Int32, seed? : Int32, f~ : ((A, Int32)) -> (A, Int32), A) -> Self
+pub fn Generator::width(Self) -> Int32
+pub fn Generator::word(Machine, Self, Int32) -> @types.Word
 
-pub(all) struct Id(Int) derive(Compare, Eq, Hash, @debug.Debug)
-pub fn Id::compare(Self, Self) -> Int
+#derive(Compare, Eq, Hash, @debug.Debug)
+pub(all) struct Id(Int32)
+pub fn Id::compare(Self, Self) -> Int32
 pub fn Id::equal(Self, Self) -> Bool
 pub fn Id::global() -> Self
-pub fn Id::hash(Self) -> Int
+pub fn Id::hash(Self) -> Int32
 pub fn Id::hash_combine(Self, Hasher) -> Unit
 pub fn Id::not_equal(Self, Self) -> Bool
 pub fn Id::op_ge(Self, Self) -> Bool
@@ -308,7 +313,7 @@ pub fn Id::op_gt(Self, Self) -> Bool
 pub fn Id::op_le(Self, Self) -> Bool
 pub fn Id::op_lt(Self, Self) -> Bool
 pub fn Id::output(Self, &Logger) -> Unit
-pub fn Id::to_int(Self) -> Int
+pub fn Id::to_int(Self) -> Int32
 pub fn Id::to_repr(Self) -> @debug.Repr
 pub fn Id::to_string(Self) -> String
 pub impl Show for Id
@@ -336,14 +341,14 @@ pub fn Interpreter::assign(Machine, @types.Exp, Value) -> Unit raise
 pub fn Interpreter::binop(Machine, @types.BinOp, Value, Value) -> Value raise
 pub fn Interpreter::blk(Machine, @types.Term[@types.Blk]) -> Unit raise
 pub fn[T] Interpreter::branch(Machine, Value, () -> T raise, () -> T raise) -> T raise
-pub fn Interpreter::cast(Machine, @types.CastKind, Int, Value) -> Value raise
+pub fn Interpreter::cast(Machine, @types.CastKind, Int32, Value) -> Value raise
 pub fn Interpreter::concat(Machine, Value, Value) -> Value raise
 pub fn Interpreter::constant(Machine, @types.Word) -> Value raise
 pub fn Interpreter::exp(Machine, @types.Exp) -> Value raise
-pub fn Interpreter::extract(Machine, hi~ : Int, lo~ : Int, Value) -> Value raise
+pub fn Interpreter::extract(Machine, hi~ : Int32, lo~ : Int32, Value) -> Value raise
 pub fn Interpreter::get(Machine, @types.Var) -> Value raise
 pub fn[T] Interpreter::halt(Machine) -> T raise
-pub fn Interpreter::interrupt(Machine, Int) -> Unit raise
+pub fn Interpreter::interrupt(Machine, Int32) -> Unit raise
 pub fn Interpreter::ite(Machine, Value, Value, Value) -> Value raise
 pub fn Interpreter::link_program(Machine) -> Unit
 pub fn Interpreter::load(Machine, Value, @bitvec.Endian, @types.Size) -> Value raise
@@ -358,7 +363,7 @@ pub fn Interpreter::set(Machine, @types.Var, Value) -> Unit raise
 pub fn Interpreter::store(Machine, Value, Value, @bitvec.Endian, @types.Size) -> Unit raise
 pub fn Interpreter::sub(Machine, @types.Term[@types.Sub]) -> Unit raise
 pub fn Interpreter::tick(Machine) -> Unit raise
-pub fn Interpreter::time(Machine) -> Int
+pub fn Interpreter::time(Machine) -> Int32
 pub fn Interpreter::undefined(Machine, @types.ValueType) -> Value raise
 pub fn Interpreter::unop(Machine, @types.UnOp, Value) -> Value raise
 
@@ -382,10 +387,11 @@ pub struct Job {
   // private fields
 }
 
+#derive(Eq, @debug.Debug)
 pub(all) enum JobAction {
   Stop
   Continue
-} derive(Eq, @debug.Debug)
+}
 pub fn JobAction::equal(Self, Self) -> Bool
 pub fn JobAction::not_equal(Self, Self) -> Bool
 pub fn JobAction::to_repr(Self) -> @debug.Repr
@@ -393,7 +399,7 @@ pub fn JobAction::to_repr(Self) -> @debug.Repr
 pub struct Jobs {
 }
 pub fn Jobs::enqueue(name? : String, desc? : String, envp? : Array[String], args? : Array[String], init? : (Machine) -> Unit raise, fini? : (Machine) -> Unit raise, start? : (Machine) -> Unit raise, System) -> Unit
-pub fn Jobs::pending() -> Int
+pub fn Jobs::pending() -> Int32
 pub fn Jobs::run(on_failure? : (Job, Error, JobsResult) -> JobAction, on_success? : (Job, ExitStatus, JobsResult) -> JobAction, @project.Project) -> JobsResult
 
 pub struct JobsResult {
@@ -465,7 +471,7 @@ pub fn Machine::run_with(Self, start? : (Self) -> Unit raise, boot? : (Self) -> 
 pub fn Machine::schedule(Self, (Self) -> Unit raise) -> Unit
 pub fn Machine::set_project(Self, @project.Project) -> Unit
 pub fn Machine::set_result(Self, Value?) -> Unit
-pub fn Machine::stack_depth(Self) -> Int
+pub fn Machine::stack_depth(Self) -> Int32
 pub fn Machine::status(Self, Id) -> ForkStatus
 pub fn[T] Machine::subscribe(Self, Observation[T], (T) -> Unit raise) -> Subscription
 pub fn[T] Machine::subscribe_resumable(Self, Observation[T], (Self, T) -> Unit raise) -> Subscription
@@ -478,16 +484,16 @@ pub fn Machine::update_project(Self, (@project.Project) -> @project.Project) -> 
 pub fn Machine::watch(Self, Provider, (Sexp) -> Unit raise) -> Subscription
 
 pub struct Mcg {
-  size : Int
+  size : Int32
   min : UInt64
   max : UInt64
-  create : (Int) -> Array[UInt64]
+  create : (Int32) -> Array[UInt64]
   next : (Array[UInt64]) -> Array[UInt64]
   value : (Array[UInt64]) -> @bitvec.BitVec
 }
-pub fn Mcg::create(min? : Int, max? : Int, Int) -> Self
-pub fn Mcg::for_width(Int) -> Self
-pub fn Mcg::tabulate(Self, n~ : Int, Int) -> Array[@bitvec.BitVec]
+pub fn Mcg::create(min? : Int32, max? : Int32, Int32) -> Self
+pub fn Mcg::for_width(Int32) -> Self
+pub fn Mcg::tabulate(Self, n~ : Int32, Int32) -> Array[@bitvec.BitVec]
 
 pub struct Memory {
   // private fields
@@ -495,7 +501,7 @@ pub struct Memory {
 pub fn Memory::add_data(Machine, @memory.Memory) -> Unit
 pub fn Memory::add_region(Machine, read_only? : Bool, executable? : Bool, init? : (@types.Word) -> @types.Word raise, generator? : Generator, lower~ : @types.Word, upper~ : @types.Word) -> Unit raise
 pub fn Memory::add_text(Machine, @memory.Memory) -> Unit
-pub fn Memory::allocate(Machine, read_only? : Bool, executable? : Bool, init? : (@types.Word) -> @types.Word raise, generator? : Generator, @types.Word, Int) -> Unit raise
+pub fn Memory::allocate(Machine, read_only? : Bool, executable? : Bool, init? : (@types.Word) -> @types.Word raise, generator? : Generator, @types.Word, Int32) -> Unit raise
 pub fn Memory::del(Machine, @types.Word) -> Unit
 pub fn Memory::get(Machine, @types.Word) -> Value raise
 pub fn Memory::inspect(Machine) -> Sexp
@@ -510,11 +516,12 @@ pub fn Memory::store(Machine, @types.Word, @types.Word) -> Unit raise
 pub fn Memory::store_never_fail(Machine, @types.Word, @types.Word) -> Unit
 pub fn Memory::switch(Machine, Descriptor) -> Unit
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Name {
   Tid(@types.Tid)
   Addr(@types.Word)
   Symbol(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn Name::equal(Self, Self) -> Bool
 pub fn Name::not_equal(Self, Self) -> Bool
 pub fn Name::output(Self, &Logger) -> Unit
@@ -541,7 +548,7 @@ pub fn[K : Compare, V] PersistentMap::add(Self[K, V], K, V) -> Self[K, V]
 pub fn[K : Compare, V] PersistentMap::contains(Self[K, V], K) -> Bool
 pub fn[K, V] PersistentMap::empty() -> Self[K, V]
 pub fn[K : Compare, V] PersistentMap::get(Self[K, V], K) -> V?
-pub fn[K, V] PersistentMap::length(Self[K, V]) -> Int
+pub fn[K, V] PersistentMap::length(Self[K, V]) -> Int32
 pub fn[K : Compare, V] PersistentMap::remove(Self[K, V], K) -> Self[K, V]
 pub fn[K, V] PersistentMap::to_array(Self[K, V]) -> Array[(K, V)]
 
@@ -578,14 +585,15 @@ pub fn Provider::find(String) -> Self?
 pub fn Provider::fullname(Self) -> @knowledge.Name
 pub fn Provider::info(Self) -> Info
 pub fn Provider::name(Self) -> String
-pub fn Provider::observers(Self) -> Int
+pub fn Provider::observers(Self) -> Int32
 pub fn Provider::on_data(Self, (Sexp) -> Unit) -> Unit
-pub fn Provider::triggers(Self) -> Int
+pub fn Provider::triggers(Self) -> Int32
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Sexp {
   Atom(String)
   List(Array[Sexp])
-} derive(Eq, @debug.Debug)
+}
 pub fn Sexp::atoms(Array[String]) -> Self
 pub fn Sexp::equal(Self, Self) -> Bool
 pub fn Sexp::not_equal(Self, Self) -> Bool
@@ -615,9 +623,10 @@ pub struct SubLevel {
   up : TopLevel
 }
 
+#derive(Eq, @debug.Debug)
 pub struct Subscription {
   // private fields
-} derive(Eq, @debug.Debug)
+}
 pub fn Subscription::equal(Self, Self) -> Bool
 pub fn Subscription::not_equal(Self, Self) -> Bool
 pub fn Subscription::to_repr(Self) -> @debug.Repr
@@ -651,22 +660,23 @@ pub struct TopLevel {
   me : @types.Term[@types.Program]
 }
 
+#derive(Eq, @debug.Debug)
 pub struct Value {
   id : Int64
   value : @types.Word
-} derive(Eq, @debug.Debug)
+}
 pub fn Value::abs(Machine, Self) -> Self
 pub fn Value::add(Machine, Self, Self) -> Self raise PrimusError
 pub fn Value::arshift(Machine, Self, Self) -> Self
 pub fn Value::b0(Machine) -> Self
 pub fn Value::b1(Machine) -> Self
-pub fn Value::bitwidth(Self) -> Int
-pub fn Value::compare(Self, Self) -> Int
+pub fn Value::bitwidth(Self) -> Int32
+pub fn Value::compare(Self, Self) -> Int32
 pub fn Value::concat(Machine, Self, Self) -> Self raise PrimusError
 pub fn Value::div(Machine, Self, Self) -> Self raise PrimusError
 pub fn Value::equal(Self, Self) -> Bool
-pub fn Value::extract(Machine, hi? : Int, lo? : Int, Self) -> Self raise PrimusError
-pub fn Value::hash(Self) -> Int
+pub fn Value::extract(Machine, hi? : Int32, lo? : Int32, Self) -> Self raise PrimusError
+pub fn Value::hash(Self) -> Int32
 pub fn Value::hash_combine(Self, Hasher) -> Unit
 pub fn Value::id(Self) -> Int64
 pub fn Value::is_negative(Self) -> Bool
@@ -684,15 +694,15 @@ pub fn Value::modulo(Machine, Self, Self) -> Self raise PrimusError
 pub fn Value::mul(Machine, Self, Self) -> Self raise PrimusError
 pub fn Value::neg(Machine, Self) -> Self
 pub fn Value::not_equal(Self, Self) -> Bool
-pub fn Value::npred(Machine, Self, Int) -> Self
-pub fn Value::nsucc(Machine, Self, Int) -> Self
+pub fn Value::npred(Machine, Self, Int32) -> Self
+pub fn Value::nsucc(Machine, Self, Int32) -> Self
 pub fn Value::of_bool(Machine, Bool) -> Self
-pub fn Value::of_int(Machine, width~ : Int, Int) -> Self raise PrimusError
-pub fn Value::of_int64(Machine, width? : Int, Int64) -> Self raise PrimusError
+pub fn Value::of_int(Machine, width~ : Int32, Int32) -> Self raise PrimusError
+pub fn Value::of_int64(Machine, width? : Int32, Int64) -> Self raise PrimusError
 pub fn Value::of_string(Machine, String) -> Self raise PrimusError
 pub fn Value::of_word(Machine, @types.Word) -> Self
-pub fn Value::one(Machine, Int) -> Self raise PrimusError
-pub fn Value::ones(Machine, Int) -> Self raise PrimusError
+pub fn Value::one(Machine, Int32) -> Self raise PrimusError
+pub fn Value::ones(Machine, Int32) -> Self raise PrimusError
 pub fn Value::op_ge(Self, Self) -> Bool
 pub fn Value::op_gt(Self, Self) -> Bool
 pub fn Value::op_le(Self, Self) -> Bool
@@ -709,7 +719,7 @@ pub fn Value::to_repr(Self) -> @debug.Repr
 pub fn Value::to_sexp(Self) -> Sexp
 pub fn Value::to_string(Self) -> String
 pub fn Value::to_word(Self) -> @types.Word
-pub fn Value::zero(Machine, Int) -> Self raise PrimusError
+pub fn Value::zero(Machine, Int32) -> Self raise PrimusError
 pub impl Compare for Value
 pub impl Hash for Value
 pub impl Show for Value

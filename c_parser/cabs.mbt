@@ -5,32 +5,36 @@
 // function bodies and initializers are dropped.
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Sign {
   NoSign
   Signed
   Unsigned
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum IntSize {
   NoSize
   Short
   Long
   LongLong
-} derive(Eq, Debug)
+}
 
 ///|
 /// A literal constant; the payload is its spelling (the decoded contents
 /// for characters and strings).
+#derive(Eq, Debug)
 pub(all) enum Constant {
   ConstInt(String)
   ConstFloat(String)
   ConstChar(String)
   ConstString(String)
-} derive(Eq, Debug)
+}
 
 ///|
 /// An expression: only literal constants are distinguished.
+#derive(Eq, Debug)
 pub(all) enum Expression {
   /// No expression (e.g., the size of `a[]`, or an enumerator without a
   /// value).
@@ -38,10 +42,11 @@ pub(all) enum Expression {
   Literal(Constant)
   /// Any other expression.
   Other
-} derive(Eq, Debug)
+}
 
 ///|
 /// A GNU attribute (FrontC `gnu_attr`).
+#derive(Eq, Debug)
 pub(all) enum GnuAttr {
   GnuNone
   GnuCall(String, Array[GnuAttr])
@@ -50,10 +55,11 @@ pub(all) enum GnuAttr {
   GnuExtension
   GnuInline
   GnuTypeArg
-} derive(Eq, Debug)
+}
 
 ///|
 /// A C type (FrontC `base_type`).
+#derive(Eq, Debug)
 pub(all) enum BaseType {
   /// No type specifier was given.
   NoType
@@ -86,45 +92,50 @@ pub(all) enum BaseType {
   Volatile(BaseType)
   GnuType(Array[GnuAttr], BaseType)
   BuiltinType(String)
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Storage {
   NoStorage
   Auto
   Static
   Extern
   Register
-} derive(Eq, Debug)
+}
 
 ///|
 /// A declarator: the declared name, its type, its attributes, and its
 /// initializer.
+#derive(Eq, Debug)
 pub(all) struct Name {
   name : String
   typ : BaseType
   attrs : Array[GnuAttr]
   init : Expression
-} derive(Eq, Debug)
+}
 
 ///|
 /// A declaration with several declarators sharing the same specifiers.
+#derive(Eq, Debug)
 pub(all) struct NameGroup {
   typ : BaseType
   storage : Storage
   names : Array[Name]
-} derive(Eq, Debug)
+}
 
 ///|
 /// A declaration with one declarator (a parameter).
+#derive(Eq, Debug)
 pub(all) struct SingleName {
   typ : BaseType
   storage : Storage
   name : Name
-} derive(Eq, Debug)
+}
 
 ///|
 /// A top-level definition (FrontC `definition`).
+#derive(Eq, Debug)
 pub(all) enum Definition {
   /// A function definition (the body is dropped).
   FunDef(SingleName)
@@ -134,7 +145,7 @@ pub(all) enum Definition {
   TypeDef(NameGroup, Array[GnuAttr])
   /// A declaration without declarators (e.g., `struct s {...};`).
   OnlyTypeDef(NameGroup)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Sign with Eq::{equal, not_equal}

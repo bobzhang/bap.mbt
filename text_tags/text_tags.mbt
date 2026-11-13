@@ -7,9 +7,10 @@ pub type Mode = String
 
 ///|
 /// Raised by `install` when the mode is not registered.
+#derive(Eq, Debug)
 pub(all) suberror UnknownMode {
   UnknownMode(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend UnknownMode with Eq::{not_equal, equal}

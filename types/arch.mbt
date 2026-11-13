@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum Arch {
   X86
   X86_64
@@ -36,7 +37,7 @@ pub(all) enum Arch {
   Systemz
   Xcore
   UnknownArch
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Arch with Eq::{not_equal}

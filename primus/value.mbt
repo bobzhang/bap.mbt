@@ -6,10 +6,11 @@
 /// analyses (e.g. taint trackers) distinguish values that are equal as
 /// words. Identifiers are allocated from the machine-wide counter (the
 /// upstream global `value` state), see `Value::of_word`.
+#derive(Eq, Debug)
 pub struct Value {
   id : Int64
   value : @types.Word
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn Value::to_word(self : Value) -> @types.Word {

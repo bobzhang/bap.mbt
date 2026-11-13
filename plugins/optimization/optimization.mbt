@@ -1,11 +1,12 @@
 ///|
 /// Variable classes that decide which optimization level may touch a
 /// variable (`Optimization_main.cls`).
+#derive(Eq, Debug)
 pub(all) enum VarClass {
   Phys
   Virt
   Flag
-} derive(Eq, Debug)
+}
 
 ///|
 /// Classifies a variable as a processor flag, a physical register, or a

@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug)
 pub(all) struct Move[T] {
   cell : T
   data : @types.Word
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Move with Eq::{not_equal, equal}
@@ -16,10 +17,11 @@ pub fn[T] Move::create(cell~ : T, data~ : @types.Word) -> Move[T] {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Chunk {
   addr : @types.Word
   data : Bytes
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Chunk with Eq::{not_equal, equal}
@@ -33,10 +35,11 @@ pub fn Chunk::create(addr~ : @types.Word, data~ : Bytes) -> Chunk {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Syscall {
   number : Int32
   args : Array[@types.Word]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Syscall with Eq::{not_equal, equal}
@@ -50,11 +53,12 @@ pub fn Syscall::create(number~ : Int32, args~ : Array[@types.Word]) -> Syscall {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct TraceException {
   number : Int32
   src : @types.Word?
   dst : @types.Word?
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TraceException with Eq::{not_equal, equal}
@@ -75,10 +79,11 @@ pub fn Exn::create(
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Location {
   name : String?
   addr : @types.Word
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Location with Eq::{not_equal, equal}
@@ -95,11 +100,12 @@ pub fn Location::create(
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Call {
   caller : Location
   callee : Location
   args : Array[@types.Word]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Call with Eq::{not_equal, equal}
@@ -117,10 +123,11 @@ pub fn Call::create(
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Return {
   caller : String
   callee : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Return with Eq::{not_equal, equal}
@@ -134,11 +141,12 @@ pub fn Return::create(caller~ : String, callee~ : String) -> Return {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Modload {
   name : String
   low : @types.Word
   high : @types.Word
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Modload with Eq::{not_equal, equal}
@@ -156,9 +164,10 @@ pub fn Modload::create(
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct TraceMode {
   name_value : @knowledge.Name
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TraceMode with Eq::{not_equal}
@@ -336,6 +345,7 @@ pub fn Mode::slot() -> @knowledge.Slot[Unit, TraceMode] {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum TraceEvent {
   MemoryLoad(Move[@types.Word])
   MemoryStore(Move[@types.Word])
@@ -351,7 +361,7 @@ pub(all) enum TraceEvent {
   Return(Return)
   Modload(Modload)
   Mode(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TraceEvent with Eq::{not_equal, equal}
@@ -360,10 +370,11 @@ pub extend TraceEvent with Eq::{not_equal, equal}
 pub extend TraceEvent with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct TraceEventTagInfo {
   name : String
   uuid : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TraceEventTagInfo with Eq::{not_equal, equal}
@@ -1111,12 +1122,13 @@ pub fn TraceEvent::to_string(self : TraceEvent) -> String {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct BinaryInfo {
   path : String
   args : Array[String]
   envp : Array[String]
   md5sum : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend BinaryInfo with Eq::{not_equal, equal}
@@ -1125,12 +1137,13 @@ pub extend BinaryInfo with Eq::{not_equal, equal}
 pub extend BinaryInfo with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct TracerInfo {
   name : String
   args : Array[String]
   envp : Array[String]
   version : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TracerInfo with Eq::{not_equal, equal}
@@ -1139,12 +1152,13 @@ pub extend TracerInfo with Eq::{not_equal, equal}
 pub extend TracerInfo with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct FileStatsInfo {
   size : Int32
   atime : Double
   mtime : Double
   ctime : Double
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend FileStatsInfo with Eq::{not_equal, equal}
@@ -1153,11 +1167,12 @@ pub extend FileStatsInfo with Eq::{not_equal, equal}
 pub extend FileStatsInfo with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct TraceStatsInfo {
   user : String
   host : String
   time : Double
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TraceStatsInfo with Eq::{not_equal, equal}
@@ -1343,6 +1358,7 @@ pub fn Trace_stats::to_string(value : TraceStatsInfo) -> String {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum TraceAttrValue {
   Binary(BinaryInfo)
   Tracer(TracerInfo)
@@ -1352,7 +1368,7 @@ pub(all) enum TraceAttrValue {
   Text(String)
   Int(Int32)
   Bool(Bool)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TraceAttrValue with Eq::{not_equal, equal}
@@ -1361,9 +1377,10 @@ pub extend TraceAttrValue with Eq::{not_equal, equal}
 pub extend TraceAttrValue with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct TraceMeta {
   attrs : Map[String, TraceAttrValue]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TraceMeta with Eq::{not_equal, equal}
@@ -1372,10 +1389,11 @@ pub extend TraceMeta with Eq::{not_equal, equal}
 pub extend TraceMeta with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct TraceMetaTagInfo {
   name : String
   uuid : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TraceMetaTagInfo with Eq::{not_equal, equal}
@@ -1711,10 +1729,11 @@ pub fn TraceMeta::trace_stats(self : TraceMeta) -> TraceStatsInfo? {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct TraceTool {
   name : String
   supported_tags : Set[String]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TraceTool with Eq::{not_equal, equal}
@@ -1787,12 +1806,13 @@ pub fn TraceProtocol::supports(self : TraceProtocol, tag : String) -> Bool {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum TraceStep {
   Stop
   Skip
   Fail
   Make(TraceEvent)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TraceStep with Eq::{not_equal, equal}
@@ -1874,13 +1894,14 @@ pub fn Monitor::create(filter : (String) -> TraceStep) -> TraceMonitor {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) suberror TraceError {
   TraceFailure(String)
   NoProvider(String)
   AmbiguousUri(String)
   ProtocolError(String)
   DuplicateRegistration(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TraceError with Eq::{not_equal, equal}
@@ -1889,9 +1910,10 @@ pub extend TraceError with Eq::{not_equal, equal}
 pub extend TraceError with Debug::{to_repr}
 
 ///|
+#derive(Eq, Hash, Debug)
 pub(all) struct TraceId {
   value : String
-} derive(Eq, Hash, Debug)
+}
 
 ///|
 pub extend TraceId with Eq::{not_equal}
@@ -2039,11 +2061,12 @@ priv struct TraceSnapshot {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct TraceReader {
   tool : TraceTool
   meta : TraceMeta
   events : Array[Result[TraceEvent, String]]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TraceReader with Eq::{not_equal, equal}

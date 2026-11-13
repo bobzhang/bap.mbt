@@ -13,18 +13,18 @@ pub fn StringsAlphabet::alphanum() -> Self
 pub fn StringsAlphabet::alphanum_caseless() -> Self
 pub fn StringsAlphabet::ascii() -> Self
 pub fn StringsAlphabet::contains(Self, Byte) -> Bool
-pub fn StringsAlphabet::create(length~ : Int, index~ : (Byte) -> Int) -> Self
+pub fn StringsAlphabet::create(length~ : Int32, index~ : (Byte) -> Int32) -> Self
 pub fn StringsAlphabet::digits() -> Self
-pub fn StringsAlphabet::index(Self, Byte) -> Int
-pub fn StringsAlphabet::length(Self) -> Int
+pub fn StringsAlphabet::index(Self, Byte) -> Int32
+pub fn StringsAlphabet::length(Self) -> Int32
 pub fn StringsAlphabet::printable() -> Self
 
 type StringsDecision[T]
-pub fn[T] StringsDecision::accepted_count(Self[T]) -> Int
+pub fn[T] StringsDecision::accepted_count(Self[T]) -> Int32
 pub fn[T] StringsDecision::chars(Self[T]) -> Bytes
 pub fn[T] StringsDecision::data(Self[T], rev? : Bool) -> Array[T]
-pub fn[T] StringsDecision::length(Self[T]) -> Int
-pub fn[T] StringsDecision::rejected_count(Self[T]) -> Int
+pub fn[T] StringsDecision::length(Self[T]) -> Int32
+pub fn[T] StringsDecision::rejected_count(Self[T]) -> Int32
 pub fn[T] StringsDecision::result(Self[T]) -> Array[(T, Byte)]
 
 type StringsDetector[T]
@@ -39,22 +39,22 @@ pub fn[T, R] StringsDetector::when_decided(Self[T], R, (StringsDecision[T]) -> R
 
 type StringsIndex[K]
 pub fn[K] StringsIndex::empty(key~ : StringsIndexKey[K]) -> Self[K]
-pub fn StringsIndex::empty_int() -> Self[Int]
+pub fn StringsIndex::empty_int() -> Self[Int32]
 pub fn[K] StringsIndex::key(Self[K], BytesView) -> K
 pub fn[K] StringsIndex::register(Self[K], BytesView) -> Self[K]
 pub fn[K] StringsIndex::registered(Self[K], BytesView) -> Bool
 pub fn[K] StringsIndex::string(Self[K], K) -> Bytes
 
 type StringsIndexKey[K]
-pub fn[K] StringsIndexKey::create(null~ : K, succ~ : (K) -> K, compare~ : (K, K) -> Int) -> Self[K]
-pub fn StringsIndexKey::int() -> Self[Int]
+pub fn[K] StringsIndexKey::create(null~ : K, succ~ : (K) -> K, compare~ : (K, K) -> Int32) -> Self[K]
+pub fn StringsIndexKey::int() -> Self[Int32]
 
 pub(all) struct StringsScanner {
 }
-pub fn StringsScanner::next((Int) -> Byte?, Int, is_stop? : (Byte) -> Bool) -> Bytes
-pub fn StringsScanner::read_bytes(BytesView) -> (Int) -> Byte?
-pub fn StringsScanner::run((Int) -> Byte?, Int, is_stop? : (Byte) -> Bool) -> Array[(Int, Bytes)]
-pub fn StringsScanner::scan_bytes(BytesView, offset? : Int, is_stop? : (Byte) -> Bool) -> Array[(Int, Bytes)]
+pub fn StringsScanner::next((Int32) -> Byte?, Int32, is_stop? : (Byte) -> Bool) -> Bytes
+pub fn StringsScanner::read_bytes(BytesView) -> (Int32) -> Byte?
+pub fn StringsScanner::run((Int32) -> Byte?, Int32, is_stop? : (Byte) -> Bool) -> Array[(Int32, Bytes)]
+pub fn StringsScanner::scan_bytes(BytesView, offset? : Int32, is_stop? : (Byte) -> Bool) -> Array[(Int32, Bytes)]
 
 type StringsUnscrambler
 pub fn StringsUnscrambler::add_word(Self, BytesView) -> Self

@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Hash, Debug)
 pub(all) struct Name {
   pkg : String
   text : String
-} derive(Eq, Hash, Debug)
+}
 
 ///|
 pub extend Name with Eq::{not_equal}

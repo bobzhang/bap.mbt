@@ -48,11 +48,12 @@ pub fn tracker_component(@primus.Machine) -> Unit
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) struct Component {
   name : String
   pkg : String
   desc : String
-} derive(Eq, @debug.Debug)
+}
 pub fn Component::equal(Self, Self) -> Bool
 pub fn Component::not_equal(Self, Self) -> Bool
 pub fn Component::to_repr(Self) -> @debug.Repr
@@ -76,11 +77,12 @@ pub fn ConstantTracker::on_unop(Self, Int64, Int64) -> Unit
 pub fn ConstantTracker::points_to_static_data(Self, UInt64, UInt64, (UInt64) -> Int64?) -> Bool
 pub fn ConstantTracker::propagate(Self, ArrayView[Int64], Int64) -> Unit
 
+#derive(Eq, @debug.Debug)
 pub(all) struct LispPrimitive {
   name : String
   types : String
   docs : String
-} derive(Eq, @debug.Debug)
+}
 pub fn LispPrimitive::equal(Self, Self) -> Bool
 pub fn LispPrimitive::not_equal(Self, Self) -> Bool
 pub fn LispPrimitive::to_repr(Self) -> @debug.Repr

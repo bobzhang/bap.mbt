@@ -25,13 +25,14 @@ pub(all) enum DwarfDieLocationValue {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum DwarfDieReference {
   DwarfUnitReference(Int32)
   DwarfSectionReference(Int32)
   DwarfSupplementaryReference(Int32)
   DwarfAlternateReference(Int32)
   DwarfTypeSignatureReference(UInt64)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend DwarfDieReference with Eq::{not_equal, equal}

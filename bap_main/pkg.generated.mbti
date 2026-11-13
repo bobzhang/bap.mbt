@@ -37,7 +37,7 @@ pub(all) suberror MainError {
   RecursiveInit
   BrokenPlugins(Array[(String, String)])
   UnknownPlugin(String)
-  ExitRequested(Int)
+  ExitRequested(Int32)
   BadRecipe(String)
   AlreadyDefined
 }
@@ -53,7 +53,7 @@ pub fn[A] Command::argument(doc? : String, Type[A]) -> CommandParam[A]
 pub fn[A] Command::arguments(doc? : String, Type[A]) -> CommandParam[Array[A]]
 pub fn[K, D] Command::dictionary(doc? : (K) -> String, as_flag? : (K) -> D, aliases? : (K) -> Array[String], Array[K], Type[D], (K) -> String) -> CommandParam[Array[(K, D)]]
 pub fn Command::flag(doc? : String, aliases? : Array[String], String) -> CommandParam[Bool]
-pub fn Command::flags(doc? : String, aliases? : Array[String], String) -> CommandParam[Int]
+pub fn Command::flags(doc? : String, aliases? : Array[String], String) -> CommandParam[Int32]
 pub fn[A] Command::parameter(doc? : String, as_flag? : A, aliases? : Array[String], Type[A], String) -> CommandParam[A]
 pub fn[A] Command::parameters(doc? : String, as_flag? : A, aliases? : Array[String], Type[A], String) -> CommandParam[Array[A]]
 pub fn[F] Command::register(doc? : String, requires? : Array[String], String, Grammar[F, (Ctxt) -> Unit raise], F) -> Unit raise
@@ -99,11 +99,12 @@ pub(all) struct Extension {
 pub fn Extension::documentation(String) -> Unit
 pub fn Extension::register(features? : Array[String], provides? : Array[String], doc? : String, (Ctxt) -> Unit raise) -> Unit
 
+#derive(Eq, @debug.Debug)
 pub(all) enum FileKind {
   RegularFile
   Directory
   OtherFile
-} derive(Eq, @debug.Debug)
+}
 pub fn FileKind::equal(Self, Self) -> Bool
 pub fn FileKind::not_equal(Self, Self) -> Bool
 pub fn FileKind::to_repr(Self) -> @debug.Repr
@@ -127,13 +128,14 @@ pub struct Info {
 pub fn Info::doc(Self) -> String
 pub fn Info::name(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum ManBlock {
   Section(String)
   Paragraph(String)
   Verbatim(String)
   Item(String, String)
   NoBlank
-} derive(Eq, @debug.Debug)
+}
 pub fn ManBlock::equal(Self, Self) -> Bool
 pub fn ManBlock::not_equal(Self, Self) -> Bool
 pub fn ManBlock::to_repr(Self) -> @debug.Repr
@@ -142,10 +144,11 @@ pub struct Parameter[A] {
   // private fields
 }
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Recipe {
   command : String?
   args : Array[String]
-} derive(Eq, @debug.Debug)
+}
 pub fn Recipe::equal(Self, Self) -> Bool
 pub fn Recipe::not_equal(Self, Self) -> Bool
 pub fn Recipe::to_repr(Self) -> @debug.Repr
@@ -163,8 +166,8 @@ pub fn Type::dir() -> Self[String]
 pub fn[A : Eq] Type::enumeration(Array[(String, A)]) -> Self[A] raise
 pub fn Type::file() -> Self[String]
 pub fn Type::float() -> Self[Double]
-pub fn Type::int() -> Self[Int]
-pub fn Type::int32() -> Self[Int]
+pub fn Type::int() -> Self[Int32]
+pub fn Type::int32() -> Self[Int32]
 pub fn Type::int64() -> Self[Int64]
 pub fn[A] Type::list(Self[A], sep? : Char) -> Self[Array[A]]
 pub fn[A] Type::name(Self[A]) -> String

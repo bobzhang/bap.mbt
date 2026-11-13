@@ -6,7 +6,7 @@ import {
 }
 
 // Values
-pub fn chmod(String, Int) -> Result[Unit, String]
+pub fn chmod(String, Int32) -> Result[Unit, String]
 
 pub fn file_exists(String) -> Bool
 
@@ -26,9 +26,9 @@ pub fn make_temp_dir(dir~ : String, prefix? : String) -> Result[String, String]
 
 pub fn make_temp_file(dir~ : String, prefix? : String) -> Result[String, String]
 
-pub fn mkdir(String, perm? : Int) -> Result[Unit, String]
+pub fn mkdir(String, perm? : Int32) -> Result[Unit, String]
 
-pub fn mkdir_p(String, perm? : Int) -> Result[Unit, String]
+pub fn mkdir_p(String, perm? : Int32) -> Result[Unit, String]
 
 pub fn read_dir(String) -> Result[Array[String], String]
 
@@ -48,17 +48,18 @@ pub fn[T] with_lock(String, exclusive? : Bool, () -> T raise?) -> Result[T, Stri
 
 pub fn write_file(String, BytesView) -> Result[Unit, String]
 
-pub fn write_file_atomic(String, BytesView, temp_dir? : String, perm? : Int) -> Result[Unit, String]
+pub fn write_file_atomic(String, BytesView, temp_dir? : String, perm? : Int32) -> Result[Unit, String]
 
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) enum FileKind {
   RegularFile
   Directory
   Symlink
   OtherFile
-} derive(Eq, @debug.Debug)
+}
 pub fn FileKind::equal(Self, Self) -> Bool
 pub fn FileKind::not_equal(Self, Self) -> Bool
 pub fn FileKind::to_repr(Self) -> @debug.Repr
@@ -69,12 +70,13 @@ pub struct FileLock {
 pub fn FileLock::path(Self) -> String
 pub fn FileLock::unlock(Self) -> Result[Unit, String]
 
+#derive(Eq, @debug.Debug)
 pub(all) struct FileStat {
   kind : FileKind
   size : Int64
   mtime : Double
-  perm : Int
-} derive(Eq, @debug.Debug)
+  perm : Int32
+}
 pub fn FileStat::equal(Self, Self) -> Bool
 pub fn FileStat::not_equal(Self, Self) -> Bool
 pub fn FileStat::to_repr(Self) -> @debug.Repr

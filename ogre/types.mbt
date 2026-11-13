@@ -3,12 +3,13 @@
 ///
 /// The constructor order matches upstream, which matters for the derived
 /// ordering used when documents are compared.
+#derive(Eq, Debug)
 pub(all) enum Typ {
   Int
   Str
   Bool
   Float
-} derive(Eq, Debug)
+}
 
 ///|
 /// The textual name of a type as used in declarations: `int`, `str`, `bool`,
@@ -93,10 +94,11 @@ pub fn Typ::normalize(self : Typ, value : String) -> String? {
 ///|
 /// A field header of an attribute signature: a field name and its type
 /// (upstream `Type.header`).
+#derive(Eq, Debug)
 pub(all) struct Header {
   name : String
   typ : Typ
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn Header::new(name : String, typ : Typ) -> Header {
@@ -200,9 +202,10 @@ pub fn[T] Field::header(self : Field[T]) -> Header {
 /// attribute value, keyed by field name (upstream `entry`).
 ///
 /// Fields are kept sorted by name, so entries have a canonical form.
+#derive(Eq, Hash, Debug)
 struct Entry {
   fields : Array[(String, String)]
-} derive(Eq, Hash, Debug)
+}
 
 ///|
 fn Entry::of_pairs(pairs : Array[(String, String)]) -> Entry {

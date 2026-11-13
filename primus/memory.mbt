@@ -1,11 +1,12 @@
 ///|
 /// Describes a memory bank (upstream `Primus.Memory.Descriptor.t`).
 /// Descriptors are compared by name only, as upstream.
+#derive(Debug)
 pub struct Descriptor {
   name : String
   addr_size : Int32
   data_size : Int32
-} derive(Debug)
+}
 
 ///|
 pub impl Eq for Descriptor with fn equal(self, other) {

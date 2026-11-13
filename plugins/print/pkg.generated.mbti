@@ -140,11 +140,12 @@ type Pattern
 pub fn Pattern::property(Self) -> String
 pub fn Pattern::regexp(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum SymbolFormat {
   WithName
   WithAddr
   WithSize
-} derive(Eq, @debug.Debug)
+}
 pub fn SymbolFormat::equal(Self, Self) -> Bool
 pub fn SymbolFormat::not_equal(Self, Self) -> Bool
 pub fn SymbolFormat::parse(String) -> Self?

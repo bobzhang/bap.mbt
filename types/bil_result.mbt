@@ -1,7 +1,8 @@
 ///|
+#derive(Eq, Debug)
 struct BilResultId {
   value : UInt64
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend BilResultId with Eq::{not_equal, equal}
@@ -10,10 +11,11 @@ pub extend BilResultId with Eq::{not_equal, equal}
 pub extend BilResultId with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 struct BilResultStorage {
   sparse : Bool
   entries : Array[(Word, Word)]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend BilResultStorage with Eq::{not_equal, equal}
@@ -22,11 +24,12 @@ pub extend BilResultStorage with Eq::{not_equal, equal}
 pub extend BilResultStorage with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum BilResultValue {
   BilResultImm(Word)
   BilResultMem(BilResultStorage)
   BilResultBot
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend BilResultValue with Eq::{not_equal, equal}
@@ -35,10 +38,11 @@ pub extend BilResultValue with Eq::{not_equal, equal}
 pub extend BilResultValue with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 struct BilResult {
   id_value : BilResultId
   value_value : BilResultValue
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend BilResult with Eq::{not_equal, equal}

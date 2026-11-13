@@ -21,10 +21,11 @@ pub let plt_component : String = "x86-setup-plt"
 
 ///|
 /// The x86 mode of a target.
+#derive(Eq, Debug)
 pub(all) enum Mode {
   IA32
   AMD64
-} derive(Eq, Debug)
+}
 
 ///|
 /// The x86 mode of the target, if it is an x86 target (upstream

@@ -128,11 +128,12 @@ priv enum PendingOp {
 
 ///|
 /// The status of a machine (upstream ``[`Current | `Live | `Dead]``).
+#derive(Eq, Debug)
 pub(all) enum ForkStatus {
   Current
   Live
   Dead
-} derive(Eq, Debug)
+}
 
 ///|
 pub impl Show for ForkStatus with fn output(self, logger) {

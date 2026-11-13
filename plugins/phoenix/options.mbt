@@ -1,10 +1,11 @@
 ///|
 /// What to put on the labels of the CFG nodes (upstream `label_format`).
+#derive(Eq, Debug)
 pub(all) enum LabelFormat {
   WithName
   WithAsm
   WithBil
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend LabelFormat with Eq::{not_equal, equal}
@@ -26,6 +27,7 @@ fn LabelFormat::rank(self : LabelFormat) -> Int32 {
 
 ///|
 /// The phoenix options (upstream `Phoenix_options.t`).
+#derive(Debug)
 pub(all) struct Options {
   output_folder : String
   cfg_format : Array[LabelFormat]
@@ -34,7 +36,7 @@ pub(all) struct Options {
   no_inline : Bool
   keep_consts : Bool
   no_optimizations : Bool
-} derive(Debug)
+}
 
 ///|
 pub extend Options with Debug::{to_repr}

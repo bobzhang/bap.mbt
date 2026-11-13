@@ -19,9 +19,10 @@ pub type Mapper = (IrTerm) -> IrTerm
 ///|
 /// A parser error (upstream `Parse_error`), raised by unary constructors
 /// on a malformed argument.
+#derive(Eq, Debug)
 pub(all) suberror ParseError {
   ParseError(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ParseError with Eq::{not_equal, equal}

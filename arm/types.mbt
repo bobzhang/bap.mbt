@@ -4,6 +4,7 @@
 
 ///|
 /// ARM condition codes (`Arm_types.cond`).
+#derive(Eq, Debug)
 pub(all) enum Cond {
   EQ
   NE
@@ -20,7 +21,7 @@ pub(all) enum Cond {
   GT
   LE
   AL
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Cond with Eq::{equal, not_equal}
@@ -32,6 +33,7 @@ pub extend Cond with Debug::{to_repr}
 /// ARM registers known to the lifter (`Arm_types.reg`): the `Nil`
 /// placeholder, the general purpose registers, and the condition-code
 /// registers.
+#derive(Eq, Debug)
 pub(all) enum Reg {
   Nil
   R0
@@ -53,7 +55,7 @@ pub(all) enum Reg {
   CPSR
   SPSR
   ITSTATE
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Reg with Eq::{equal, not_equal}
@@ -63,10 +65,11 @@ pub extend Reg with Debug::{to_repr}
 
 ///|
 /// Decoded ARM operand (`Arm_types.op`). Immediates are 32-bit words.
+#derive(Eq, Debug)
 pub(all) enum Op {
   Reg(Reg)
   Imm(UInt32)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Op with Eq::{equal, not_equal}
@@ -78,6 +81,7 @@ pub extend Op with Debug::{to_repr}
 /// Instruction groups of `Arm_types.insn`. Upstream uses a single
 /// polymorphic variant made of the group variants; here each group is its
 /// own enum and `Insn` tags the group.
+#derive(Eq, Debug)
 pub(all) enum Insn {
   Move(MoveInsn)
   Bits(BitsInsn)
@@ -86,7 +90,7 @@ pub(all) enum Insn {
   MemMulti(MemMultiInsn)
   Branch(BranchInsn)
   Special(SpecialInsn)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Insn with Eq::{equal, not_equal}
@@ -191,10 +195,11 @@ priv enum SmulSize {
 /// Instruction set encoding of the lifted instruction. Upstream reads it
 /// from `Theory.Language` (`llvm-armv7` vs `llvm-thumb`); it only affects
 /// decoding of modified immediate constants.
+#derive(Eq, Debug)
 pub(all) enum Encoding {
   A32
   T32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Encoding with Eq::{equal, not_equal}

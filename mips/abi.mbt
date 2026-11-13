@@ -4,10 +4,11 @@
 
 ///|
 /// C data model used by the MIPS GNU ABI.
+#derive(Eq, Debug)
 pub(all) enum DataModel {
   ILP32
   ILP64
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend DataModel with Eq::{equal, not_equal}
@@ -17,6 +18,7 @@ pub extend DataModel with Debug::{to_repr}
 
 ///|
 /// GNU C calling convention of a MIPS target.
+#derive(Eq, Debug)
 pub(all) struct CallingConvention {
   /// `ILP32` on 32-bit targets, `ILP64` on 64-bit ones.
   data_model : DataModel
@@ -33,7 +35,7 @@ pub(all) struct CallingConvention {
   float_bits : Int32
   double_bits : Int32
   long_double_bits : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend CallingConvention with Eq::{equal, not_equal}

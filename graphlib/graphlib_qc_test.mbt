@@ -3,10 +3,11 @@
 // reference implementations on small random graphs over the nodes 0..n-1.
 
 ///|
+#derive(Debug)
 struct GCase {
   n : Int32
   edges : Array[(Int32, Int32, Int32)] // (src, dst, weight)
-} derive(Debug)
+}
 
 ///|
 impl @quickcheck.Arbitrary for GCase with fn arbitrary(size, rs) {

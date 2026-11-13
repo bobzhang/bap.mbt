@@ -6,10 +6,11 @@ struct BapVector[T] {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum ContinueOrStop[A, R] {
   Continue(A)
   Stop(R)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ContinueOrStop with Eq::{not_equal, equal}

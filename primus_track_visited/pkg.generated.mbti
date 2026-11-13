@@ -28,11 +28,11 @@ pub fn mark_live(@primus.Machine) -> Unit
 
 pub fn mem(@primus.Machine, @types.Tid) -> Bool
 
-pub let progress : @primus.Observation[(Int, Int)]
+pub let progress : @primus.Observation[(Int32, Int32)]
 
 pub fn register() -> Bool
 
-pub fn total(@primus.Machine) -> Int
+pub fn total(@primus.Machine) -> Int32
 
 // Errors
 

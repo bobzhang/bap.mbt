@@ -3,6 +3,7 @@
 
 ///|
 /// The configuration of the cache (upstream `Bap_cache_types.config`).
+#derive(Eq, Debug)
 pub(all) struct Config {
   /// the capacity of the cache, in megabytes
   capacity : Int32
@@ -10,7 +11,7 @@ pub(all) struct Config {
   overhead : Int32
   /// whether the garbage collector runs on startup
   gc_enabled : Bool
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Config with Eq::{equal, not_equal}

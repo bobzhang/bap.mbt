@@ -13,8 +13,8 @@ import {
 // Types and methods
 type DwarfAbbrevEntry
 pub fn DwarfAbbrevEntry::captures_values(Self) -> Bool
-pub fn DwarfAbbrevEntry::code(Self) -> Int
-pub fn DwarfAbbrevEntry::create(code~ : Int, tag~ : DwarfTag, has_children~ : Bool, fields~ : Array[DwarfAbbrevField]) -> Self
+pub fn DwarfAbbrevEntry::code(Self) -> Int32
+pub fn DwarfAbbrevEntry::create(code~ : Int32, tag~ : DwarfTag, has_children~ : Bool, fields~ : Array[DwarfAbbrevField]) -> Self
 pub fn DwarfAbbrevEntry::fields(Self) -> Array[DwarfAbbrevField]
 pub fn DwarfAbbrevEntry::has_children(Self) -> Bool
 pub fn DwarfAbbrevEntry::tag(Self) -> DwarfTag
@@ -30,10 +30,11 @@ pub fn DwarfAbbrevField::value_kind(Self) -> DwarfAbbrevValueKind
 
 type DwarfAbbrevTable
 pub fn DwarfAbbrevTable::entries(Self) -> Array[DwarfAbbrevEntry]
-pub fn DwarfAbbrevTable::lookup(Self, Int) -> DwarfAbbrevEntry?
-pub fn DwarfAbbrevTable::of_bytes(Bytes, offset? : Int) -> Result[Self, String]
+pub fn DwarfAbbrevTable::lookup(Self, Int32) -> DwarfAbbrevEntry?
+pub fn DwarfAbbrevTable::of_bytes(Bytes, offset? : Int32) -> Result[Self, String]
 pub fn DwarfAbbrevTable::read(DwarfInput) -> Result[(Self, DwarfInput), String]
 
+#derive(Eq, @debug.Debug)
 pub(all) enum DwarfAbbrevValueKind {
   DwarfIgnoredValue
   DwarfNameValue
@@ -49,22 +50,23 @@ pub(all) enum DwarfAbbrevValueKind {
   DwarfRangesBaseValue
   DwarfRnglistsBaseValue
   DwarfLoclistsBaseValue
-} derive(Eq, @debug.Debug)
+}
 pub fn DwarfAbbrevValueKind::equal(Self, Self) -> Bool
 pub fn DwarfAbbrevValueKind::not_equal(Self, Self) -> Bool
 pub fn DwarfAbbrevValueKind::to_repr(Self) -> @debug.Repr
 
 type DwarfAddressTable
-pub fn DwarfAddressTable::address(Self, Int) -> Result[UInt64, String]
+pub fn DwarfAddressTable::address(Self, Int32) -> Result[UInt64, String]
 pub fn DwarfAddressTable::address_size(Self) -> DwarfWordSize
 pub fn DwarfAddressTable::addresses(Self) -> Array[UInt64]
-pub fn DwarfAddressTable::base_offset(Self) -> Int
+pub fn DwarfAddressTable::base_offset(Self) -> Int32
 pub fn DwarfAddressTable::is_empty(Self) -> Bool
-pub fn DwarfAddressTable::length(Self) -> Int
-pub fn DwarfAddressTable::read(DwarfSectionBuffer, offset? : Int, endian~ : @bitvec.Endian, addr_size~ : DwarfWordSize) -> Result[Self, String]
-pub fn DwarfAddressTable::read_contribution(DwarfSectionBuffer, offset? : Int, endian~ : @bitvec.Endian) -> Result[Self, String]
-pub fn DwarfAddressTable::version(Self) -> Int?
+pub fn DwarfAddressTable::length(Self) -> Int32
+pub fn DwarfAddressTable::read(DwarfSectionBuffer, offset? : Int32, endian~ : @bitvec.Endian, addr_size~ : DwarfWordSize) -> Result[Self, String]
+pub fn DwarfAddressTable::read_contribution(DwarfSectionBuffer, offset? : Int32, endian~ : @bitvec.Endian) -> Result[Self, String]
+pub fn DwarfAddressTable::version(Self) -> Int32?
 
+#derive(Eq, @debug.Debug)
 pub(all) enum DwarfAttr {
   DwarfSibling
   DwarfLocation
@@ -189,8 +191,8 @@ pub(all) enum DwarfAttr {
   DwarfDefaulted
   DwarfLoclistsBase
   DwarfRangesBase
-  DwarfUnknownAttr(Int)
-} derive(Eq, @debug.Debug)
+  DwarfUnknownAttr(Int32)
+}
 pub fn DwarfAttr::abstract_origin() -> Self
 pub fn DwarfAttr::accessibility() -> Self
 pub fn DwarfAttr::addr_base() -> Self
@@ -310,7 +312,7 @@ pub fn DwarfAttr::threads_scaled() -> Self
 pub fn DwarfAttr::to_repr(Self) -> @debug.Repr
 pub fn DwarfAttr::trampoline() -> Self
 pub fn DwarfAttr::type_() -> Self
-pub fn DwarfAttr::unknown(Int) -> Self
+pub fn DwarfAttr::unknown(Int32) -> Self
 pub fn DwarfAttr::upper_bound() -> Self
 pub fn DwarfAttr::use_location() -> Self
 pub fn DwarfAttr::use_utf8() -> Self
@@ -320,12 +322,12 @@ pub fn DwarfAttr::visibility() -> Self
 pub fn DwarfAttr::vtable_elem_location() -> Self
 
 type DwarfData
-pub fn DwarfData::abbrev_table(Self, offset? : Int) -> Result[DwarfAbbrevTable, String]
-pub fn DwarfData::address_table(Self, offset? : Int, addr_size~ : DwarfWordSize) -> Result[DwarfAddressTable, String]
-pub fn DwarfData::address_table_contribution(Self, offset? : Int) -> Result[DwarfAddressTable, String]
+pub fn DwarfData::abbrev_table(Self, offset? : Int32) -> Result[DwarfAbbrevTable, String]
+pub fn DwarfData::address_table(Self, offset? : Int32, addr_size~ : DwarfWordSize) -> Result[DwarfAddressTable, String]
+pub fn DwarfData::address_table_contribution(Self, offset? : Int32) -> Result[DwarfAddressTable, String]
 pub fn DwarfData::create(endian~ : @bitvec.Endian, sections~ : Array[(DwarfSection, DwarfSectionBuffer)]) -> Result[Self, String]
-pub fn DwarfData::debug_string(Self, offset? : Int) -> Result[String, String]
-pub fn DwarfData::die_by_section_offset(Self, Int) -> Result[DwarfDie?, String]
+pub fn DwarfData::debug_string(Self, offset? : Int32) -> Result[String, String]
+pub fn DwarfData::die_by_section_offset(Self, Int32) -> Result[DwarfDie?, String]
 pub fn DwarfData::dies(Self) -> Result[Array[DwarfDie], String]
 pub fn DwarfData::endian(Self) -> @bitvec.Endian
 pub fn DwarfData::from_bytes(endian~ : @bitvec.Endian, info? : Bytes, abbrev? : Bytes, str? : Bytes, line_str? : Bytes, str_offsets? : Bytes, addr? : Bytes, ranges? : Bytes, rnglists? : Bytes, loclists? : Bytes, loc? : Bytes) -> Result[Self, String]
@@ -333,69 +335,69 @@ pub fn DwarfData::from_elf_bytes(Bytes) -> Result[Self, String]
 pub fn DwarfData::functions(Self) -> Result[Array[DwarfFunction], String]
 pub fn DwarfData::has_section(Self, DwarfSection) -> Bool
 pub fn DwarfData::iter_functions(Self, on_warning? : (String) -> Unit) -> Iter[DwarfFunction]
-pub fn DwarfData::line_string(Self, offset? : Int) -> Result[String, String]
-pub fn DwarfData::line_string_table(Self, offset? : Int) -> Result[DwarfStringTable, String]
-pub fn DwarfData::loc(Self, offset? : Int, addr_size~ : DwarfWordSize) -> Result[DwarfLocationList, String]
-pub fn DwarfData::loclist(Self, offset? : Int, addr_size~ : DwarfWordSize) -> Result[DwarfLocationList, String]
-pub fn DwarfData::ranges(Self, offset? : Int, addr_size~ : DwarfWordSize) -> Result[DwarfRangeList, String]
-pub fn DwarfData::referenced_die(Self, DwarfDieReference, unit_start~ : Int) -> Result[DwarfDie?, String]
-pub fn DwarfData::rnglist(Self, offset? : Int, addr_size~ : DwarfWordSize) -> Result[DwarfRangeList, String]
+pub fn DwarfData::line_string(Self, offset? : Int32) -> Result[String, String]
+pub fn DwarfData::line_string_table(Self, offset? : Int32) -> Result[DwarfStringTable, String]
+pub fn DwarfData::loc(Self, offset? : Int32, addr_size~ : DwarfWordSize) -> Result[DwarfLocationList, String]
+pub fn DwarfData::loclist(Self, offset? : Int32, addr_size~ : DwarfWordSize) -> Result[DwarfLocationList, String]
+pub fn DwarfData::ranges(Self, offset? : Int32, addr_size~ : DwarfWordSize) -> Result[DwarfRangeList, String]
+pub fn DwarfData::referenced_die(Self, DwarfDieReference, unit_start~ : Int32) -> Result[DwarfDie?, String]
+pub fn DwarfData::rnglist(Self, offset? : Int32, addr_size~ : DwarfWordSize) -> Result[DwarfRangeList, String]
 pub fn DwarfData::scan_functions(Self) -> DwarfFunctionScan
 pub fn DwarfData::section(Self, DwarfSection) -> Result[DwarfSectionBuffer, String]
 pub fn DwarfData::sections(Self) -> Array[(DwarfSection, DwarfSectionBuffer)]
-pub fn DwarfData::string_offsets(Self, offset? : Int, dwarf_size~ : DwarfWordSize) -> Result[DwarfStringOffsetsTable, String]
-pub fn DwarfData::string_offsets_contribution(Self, offset? : Int) -> Result[DwarfStringOffsetsTable, String]
-pub fn DwarfData::string_table(Self, offset? : Int) -> Result[DwarfStringTable, String]
-pub fn DwarfData::unit_dies(Self, offset? : Int) -> Result[Array[DwarfDie], String]
-pub fn DwarfData::unit_header(Self, offset? : Int) -> Result[DwarfInfoUnitHeader, String]
+pub fn DwarfData::string_offsets(Self, offset? : Int32, dwarf_size~ : DwarfWordSize) -> Result[DwarfStringOffsetsTable, String]
+pub fn DwarfData::string_offsets_contribution(Self, offset? : Int32) -> Result[DwarfStringOffsetsTable, String]
+pub fn DwarfData::string_table(Self, offset? : Int32) -> Result[DwarfStringTable, String]
+pub fn DwarfData::unit_dies(Self, offset? : Int32) -> Result[Array[DwarfDie], String]
+pub fn DwarfData::unit_header(Self, offset? : Int32) -> Result[DwarfInfoUnitHeader, String]
 pub fn DwarfData::unit_headers(Self) -> Result[Array[DwarfInfoUnitHeader], String]
 
 type DwarfDie
 pub fn DwarfDie::attribute(Self, DwarfAttr) -> DwarfDieAttribute?
 pub fn DwarfDie::attributes(Self) -> Array[DwarfDieAttribute]
 pub fn DwarfDie::attributes_by_attr(Self, DwarfAttr) -> Array[DwarfDieAttribute]
-pub fn DwarfDie::attributes_offset(Self) -> Int
-pub fn DwarfDie::code(Self) -> Int
-pub fn DwarfDie::depth(Self) -> Int
+pub fn DwarfDie::attributes_offset(Self) -> Int32
+pub fn DwarfDie::code(Self) -> Int32
+pub fn DwarfDie::depth(Self) -> Int32
 pub fn DwarfDie::descendants(Self, Array[Self]) -> Array[Self]
 pub fn DwarfDie::direct_children(Self, Array[Self]) -> Array[Self]
-pub fn DwarfDie::end_offset(Self) -> Int
+pub fn DwarfDie::end_offset(Self) -> Int32
 pub fn DwarfDie::entry(Self) -> DwarfAbbrevEntry
 pub fn DwarfDie::fields(Self) -> Array[DwarfAbbrevField]
 pub fn DwarfDie::has_children(Self) -> Bool
 pub fn DwarfDie::parent(Self, Array[Self]) -> Self?
 pub fn DwarfDie::reference_attributes(Self) -> Array[DwarfDieAttribute]
 pub fn DwarfDie::reference_target(Self, DwarfData, DwarfDieAttribute) -> Result[Self?, String]
-pub fn DwarfDie::section_offset(Self) -> Int
+pub fn DwarfDie::section_offset(Self) -> Int32
 pub fn DwarfDie::tag(Self) -> DwarfTag
-pub fn DwarfDie::unit_offset(Self) -> Int
-pub fn DwarfDie::unit_start_offset(Self) -> Int
+pub fn DwarfDie::unit_offset(Self) -> Int32
+pub fn DwarfDie::unit_start_offset(Self) -> Int32
 
 type DwarfDieAttribute
 pub fn DwarfDieAttribute::address(Self, DwarfSectionBuffer, endian~ : @bitvec.Endian, addr_size~ : DwarfWordSize) -> Result[UInt64, String]
-pub fn DwarfDieAttribute::address_value(Self, DwarfData, addr_size~ : DwarfWordSize, addr_base? : Int) -> Result[UInt64, String]
+pub fn DwarfDieAttribute::address_value(Self, DwarfData, addr_size~ : DwarfWordSize, addr_base? : Int32) -> Result[UInt64, String]
 pub fn DwarfDieAttribute::attr(Self) -> DwarfAttr
 pub fn DwarfDieAttribute::block(Self, DwarfSectionBuffer, endian~ : @bitvec.Endian) -> Result[Bytes, String]
 pub fn DwarfDieAttribute::const_value(Self, DwarfSectionBuffer, endian~ : @bitvec.Endian) -> Result[Int64, String]
 pub fn DwarfDieAttribute::data16(Self, DwarfSectionBuffer) -> Result[Bytes, String]
-pub fn DwarfDieAttribute::end_offset(Self) -> Int
+pub fn DwarfDieAttribute::end_offset(Self) -> Int32
 pub fn DwarfDieAttribute::field(Self) -> DwarfAbbrevField
 pub fn DwarfDieAttribute::flag(Self, DwarfSectionBuffer) -> Result[Bool, String]
 pub fn DwarfDieAttribute::form(Self) -> DwarfForm
-pub fn DwarfDieAttribute::index(Self) -> Int
-pub fn DwarfDieAttribute::index_value(Self, DwarfSectionBuffer, endian~ : @bitvec.Endian) -> Result[Int, String]
+pub fn DwarfDieAttribute::index(Self) -> Int32
+pub fn DwarfDieAttribute::index_value(Self, DwarfSectionBuffer, endian~ : @bitvec.Endian) -> Result[Int32, String]
 pub fn DwarfDieAttribute::input(Self, DwarfSectionBuffer) -> Result[DwarfInput, String]
 pub fn DwarfDieAttribute::is_reference_field(Self) -> Bool
 pub fn DwarfDieAttribute::is_value_field(Self) -> Bool
-pub fn DwarfDieAttribute::location_list_value(Self, DwarfData, version~ : Int, dwarf_size~ : DwarfWordSize, addr_size~ : DwarfWordSize, loclists_base? : Int) -> Result[DwarfLocationList, String]
-pub fn DwarfDieAttribute::location_value(Self, DwarfData, version~ : Int, dwarf_size~ : DwarfWordSize, addr_size~ : DwarfWordSize, loclists_base? : Int) -> Result[DwarfDieLocationValue, String]
-pub fn DwarfDieAttribute::offset(Self) -> Int
+pub fn DwarfDieAttribute::location_list_value(Self, DwarfData, version~ : Int32, dwarf_size~ : DwarfWordSize, addr_size~ : DwarfWordSize, loclists_base? : Int32) -> Result[DwarfLocationList, String]
+pub fn DwarfDieAttribute::location_value(Self, DwarfData, version~ : Int32, dwarf_size~ : DwarfWordSize, addr_size~ : DwarfWordSize, loclists_base? : Int32) -> Result[DwarfDieLocationValue, String]
+pub fn DwarfDieAttribute::offset(Self) -> Int32
 pub fn DwarfDieAttribute::payload(Self, DwarfSectionBuffer) -> Result[Bytes, String]
-pub fn DwarfDieAttribute::range_list_value(Self, DwarfData, version~ : Int, dwarf_size~ : DwarfWordSize, addr_size~ : DwarfWordSize, ranges_base? : Int, rnglists_base? : Int) -> Result[DwarfRangeList, String]
-pub fn DwarfDieAttribute::reference(Self, DwarfSectionBuffer, endian~ : @bitvec.Endian, version~ : Int, dwarf_size~ : DwarfWordSize, addr_size~ : DwarfWordSize) -> Result[DwarfDieReference, String]
-pub fn DwarfDieAttribute::section_offset_value(Self, DwarfSectionBuffer, endian~ : @bitvec.Endian, dwarf_size~ : DwarfWordSize) -> Result[Int, String]
+pub fn DwarfDieAttribute::range_list_value(Self, DwarfData, version~ : Int32, dwarf_size~ : DwarfWordSize, addr_size~ : DwarfWordSize, ranges_base? : Int32, rnglists_base? : Int32) -> Result[DwarfRangeList, String]
+pub fn DwarfDieAttribute::reference(Self, DwarfSectionBuffer, endian~ : @bitvec.Endian, version~ : Int32, dwarf_size~ : DwarfWordSize, addr_size~ : DwarfWordSize) -> Result[DwarfDieReference, String]
+pub fn DwarfDieAttribute::section_offset_value(Self, DwarfSectionBuffer, endian~ : @bitvec.Endian, dwarf_size~ : DwarfWordSize) -> Result[Int32, String]
 pub fn DwarfDieAttribute::string(Self, DwarfSectionBuffer) -> Result[String, String]
-pub fn DwarfDieAttribute::string_value(Self, DwarfData, dwarf_size~ : DwarfWordSize, str_offsets_base? : Int) -> Result[String, String]
+pub fn DwarfDieAttribute::string_value(Self, DwarfData, dwarf_size~ : DwarfWordSize, str_offsets_base? : Int32) -> Result[String, String]
 pub fn DwarfDieAttribute::unsigned_const_value(Self, DwarfSectionBuffer, endian~ : @bitvec.Endian) -> Result[UInt64, String]
 pub fn DwarfDieAttribute::value_kind(Self) -> DwarfAbbrevValueKind
 
@@ -404,16 +406,17 @@ pub(all) enum DwarfDieLocationValue {
   DwarfDieLocationList(DwarfLocationList)
 }
 
+#derive(Eq, @debug.Debug)
 pub(all) enum DwarfDieReference {
-  DwarfUnitReference(Int)
-  DwarfSectionReference(Int)
-  DwarfSupplementaryReference(Int)
-  DwarfAlternateReference(Int)
+  DwarfUnitReference(Int32)
+  DwarfSectionReference(Int32)
+  DwarfSupplementaryReference(Int32)
+  DwarfAlternateReference(Int32)
   DwarfTypeSignatureReference(UInt64)
-} derive(Eq, @debug.Debug)
+}
 pub fn DwarfDieReference::equal(Self, Self) -> Bool
 pub fn DwarfDieReference::not_equal(Self, Self) -> Bool
-pub fn DwarfDieReference::section_offset(Self, unit_start~ : Int) -> Result[Int, String]
+pub fn DwarfDieReference::section_offset(Self, unit_start~ : Int32) -> Result[Int32, String]
 pub fn DwarfDieReference::to_repr(Self) -> @debug.Repr
 
 type DwarfFbi
@@ -422,6 +425,7 @@ pub fn DwarfFbi::diagnostics(Self) -> Array[String]
 pub fn DwarfFbi::functions(Self) -> Array[(String, DwarfFunction)]
 pub fn DwarfFbi::iter(Self, on_warning? : (String) -> Unit) -> Iter[(String, DwarfFunction)]
 
+#derive(Eq, @debug.Debug)
 pub(all) enum DwarfForm {
   DwarfAddr
   DwarfBlock(DwarfLenspec)
@@ -450,7 +454,7 @@ pub(all) enum DwarfForm {
   DwarfIndirect
   DwarfExpr
   DwarfFlagPresent
-} derive(Eq, @debug.Debug)
+}
 pub fn DwarfForm::addr() -> Self
 pub fn DwarfForm::addrx(DwarfIndexSpec) -> Self
 pub fn DwarfForm::addrx_offset() -> Self
@@ -485,10 +489,10 @@ pub fn DwarfForm::to_repr(Self) -> @debug.Repr
 
 #alias(DwarfFn)
 type DwarfFunction
-pub fn DwarfFunction::compare(Self, Self) -> Int
+pub fn DwarfFunction::compare(Self, Self) -> Int32
 pub fn DwarfFunction::create(name~ : String, low_pc~ : UInt64, high_pc? : UInt64) -> Self
 pub fn DwarfFunction::equal(Self, Self) -> Bool
-pub fn DwarfFunction::hash(Self) -> Int
+pub fn DwarfFunction::hash(Self) -> Int32
 pub fn DwarfFunction::high_pc(Self) -> UInt64?
 pub fn DwarfFunction::low_pc(Self) -> UInt64
 pub fn DwarfFunction::module_name() -> String?
@@ -503,13 +507,14 @@ pub fn DwarfFunctionScan::diagnostics(Self) -> Array[String]
 pub fn DwarfFunctionScan::functions(Self) -> Array[DwarfFunction]
 pub fn DwarfFunctionScan::is_complete(Self) -> Bool
 
+#derive(Eq, @debug.Debug)
 pub(all) enum DwarfIndexSpec {
   DwarfIndexLeb128
   DwarfIndexOne
   DwarfIndexTwo
   DwarfIndexThree
   DwarfIndexFour
-} derive(Eq, @debug.Debug)
+}
 pub fn DwarfIndexSpec::equal(Self, Self) -> Bool
 pub fn DwarfIndexSpec::four() -> Self
 pub fn DwarfIndexSpec::leb128() -> Self
@@ -520,22 +525,23 @@ pub fn DwarfIndexSpec::to_repr(Self) -> @debug.Repr
 pub fn DwarfIndexSpec::two() -> Self
 
 type DwarfInfoUnitHeader
-pub fn DwarfInfoUnitHeader::abbrev_offset(Self) -> Int
+pub fn DwarfInfoUnitHeader::abbrev_offset(Self) -> Int32
 pub fn DwarfInfoUnitHeader::address_size(Self) -> DwarfWordSize
-pub fn DwarfInfoUnitHeader::body_offset(Self) -> Int
+pub fn DwarfInfoUnitHeader::body_offset(Self) -> Int32
 pub fn DwarfInfoUnitHeader::dies(Self, DwarfSectionBuffer, DwarfAbbrevTable, endian~ : @bitvec.Endian) -> Result[Array[DwarfDie], String]
 pub fn DwarfInfoUnitHeader::dwarf_size(Self) -> DwarfWordSize
-pub fn DwarfInfoUnitHeader::end_offset(Self) -> Int
-pub fn DwarfInfoUnitHeader::header_end_offset(Self) -> Int
+pub fn DwarfInfoUnitHeader::end_offset(Self) -> Int32
+pub fn DwarfInfoUnitHeader::header_end_offset(Self) -> Int32
 pub fn DwarfInfoUnitHeader::is_supported(Self) -> Bool
 pub fn DwarfInfoUnitHeader::kind(Self) -> DwarfInfoUnitKind
-pub fn DwarfInfoUnitHeader::next_offset(Self) -> Int
-pub fn DwarfInfoUnitHeader::read(DwarfSectionBuffer, offset? : Int, endian~ : @bitvec.Endian) -> Result[Self, String]
-pub fn DwarfInfoUnitHeader::start_offset(Self) -> Int
-pub fn DwarfInfoUnitHeader::unit_size(Self) -> Int
-pub fn DwarfInfoUnitHeader::unit_type(Self) -> Int?
-pub fn DwarfInfoUnitHeader::version(Self) -> Int
+pub fn DwarfInfoUnitHeader::next_offset(Self) -> Int32
+pub fn DwarfInfoUnitHeader::read(DwarfSectionBuffer, offset? : Int32, endian~ : @bitvec.Endian) -> Result[Self, String]
+pub fn DwarfInfoUnitHeader::start_offset(Self) -> Int32
+pub fn DwarfInfoUnitHeader::unit_size(Self) -> Int32
+pub fn DwarfInfoUnitHeader::unit_type(Self) -> Int32?
+pub fn DwarfInfoUnitHeader::version(Self) -> Int32
 
+#derive(Eq, @debug.Debug)
 pub(all) enum DwarfInfoUnitKind {
   DwarfInfoUnitLegacy
   DwarfInfoUnitCompile
@@ -544,35 +550,35 @@ pub(all) enum DwarfInfoUnitKind {
   DwarfInfoUnitSkeleton
   DwarfInfoUnitSplitCompile
   DwarfInfoUnitSplitType
-  DwarfInfoUnitUnknown(Int)
-} derive(Eq, @debug.Debug)
+  DwarfInfoUnitUnknown(Int32)
+}
 pub fn DwarfInfoUnitKind::equal(Self, Self) -> Bool
 pub fn DwarfInfoUnitKind::is_supported(Self) -> Bool
 pub fn DwarfInfoUnitKind::not_equal(Self, Self) -> Bool
 pub fn DwarfInfoUnitKind::to_repr(Self) -> @debug.Repr
-pub fn DwarfInfoUnitKind::unit_type(Self) -> Int?
+pub fn DwarfInfoUnitKind::unit_type(Self) -> Int32?
 
 type DwarfInput
 pub fn DwarfInput::of_bytes(Bytes) -> Self
-pub fn DwarfInput::position(Self) -> Int
+pub fn DwarfInput::position(Self) -> Int32
 pub fn DwarfInput::read_address(Self, endian~ : @bitvec.Endian, size~ : DwarfWordSize) -> Result[(UInt64, Self), String]
 pub fn DwarfInput::read_address_size(Self) -> Result[(DwarfWordSize, Self), String]
 pub fn DwarfInput::read_attr(Self) -> Result[(DwarfAttr, Self), String]
 pub fn DwarfInput::read_block(Self, lenspec~ : DwarfLenspec, endian~ : @bitvec.Endian) -> Result[(Bytes, Self), String]
-pub fn DwarfInput::read_byte(Self) -> Result[(Int, Self), String]
-pub fn DwarfInput::read_code(Self) -> Result[(Int, Self), String]
+pub fn DwarfInput::read_byte(Self) -> Result[(Int32, Self), String]
+pub fn DwarfInput::read_code(Self) -> Result[(Int32, Self), String]
 pub fn DwarfInput::read_const(Self, lenspec~ : DwarfLenspec, endian~ : @bitvec.Endian) -> Result[(Int64, Self), String]
 pub fn DwarfInput::read_cstring(Self) -> Result[(String, Self), String]
 pub fn DwarfInput::read_form(Self) -> Result[(DwarfForm, Self), String]
-pub fn DwarfInput::read_int(Self, endian~ : @bitvec.Endian, size~ : DwarfWordSize) -> Result[(Int, Self), String]
-pub fn DwarfInput::read_int16(Self, endian~ : @bitvec.Endian) -> Result[(Int, Self), String]
+pub fn DwarfInput::read_int(Self, endian~ : @bitvec.Endian, size~ : DwarfWordSize) -> Result[(Int32, Self), String]
+pub fn DwarfInput::read_int16(Self, endian~ : @bitvec.Endian) -> Result[(Int32, Self), String]
 pub fn DwarfInput::read_int64(Self, endian~ : @bitvec.Endian, size~ : DwarfWordSize) -> Result[(Int64, Self), String]
-pub fn DwarfInput::read_offset(Self, endian~ : @bitvec.Endian, size~ : DwarfWordSize) -> Result[(Int, Self), String]
+pub fn DwarfInput::read_offset(Self, endian~ : @bitvec.Endian, size~ : DwarfWordSize) -> Result[(Int32, Self), String]
 pub fn DwarfInput::read_tag(Self) -> Result[(DwarfTag, Self), String]
-pub fn DwarfInput::read_unit_size(Self, endian~ : @bitvec.Endian) -> Result[((DwarfWordSize, Int), Self), String]
-pub fn DwarfInput::read_version(Self) -> Result[(Int, Self), String]
-pub fn DwarfInput::remaining(Self) -> Int
-pub fn DwarfInput::skip(Self, bytes~ : Int) -> Result[Self, String]
+pub fn DwarfInput::read_unit_size(Self, endian~ : @bitvec.Endian) -> Result[((DwarfWordSize, Int32), Self), String]
+pub fn DwarfInput::read_version(Self) -> Result[(Int32, Self), String]
+pub fn DwarfInput::remaining(Self) -> Int32
+pub fn DwarfInput::skip(Self, bytes~ : Int32) -> Result[Self, String]
 pub fn DwarfInput::skip_zeros(Self) -> Result[Self, String]
 
 type DwarfInputReader[T]
@@ -580,31 +586,32 @@ pub fn DwarfInputReader::address(endian~ : @bitvec.Endian, size~ : DwarfWordSize
 pub fn DwarfInputReader::address_size() -> Self[DwarfWordSize]
 pub fn DwarfInputReader::attr() -> Self[DwarfAttr]
 pub fn DwarfInputReader::block(lenspec~ : DwarfLenspec, endian~ : @bitvec.Endian) -> Self[Bytes]
-pub fn DwarfInputReader::char() -> Self[Int]
-pub fn DwarfInputReader::code() -> Self[Int]
+pub fn DwarfInputReader::char() -> Self[Int32]
+pub fn DwarfInputReader::code() -> Self[Int32]
 pub fn DwarfInputReader::const_(lenspec~ : DwarfLenspec, endian~ : @bitvec.Endian) -> Self[Int64]
 pub fn[T] DwarfInputReader::drop(Self[T]) -> Self[T?]
 pub fn DwarfInputReader::form() -> Self[DwarfForm]
 pub fn[T] DwarfInputReader::ignore_(Self[T]) -> Self[Unit]
 pub fn[A, B] DwarfInputReader::map(Self[A], (A) -> B) -> Self[B]
-pub fn DwarfInputReader::offset(endian~ : @bitvec.Endian, size~ : DwarfWordSize) -> Self[Int]
+pub fn DwarfInputReader::offset(endian~ : @bitvec.Endian, size~ : DwarfWordSize) -> Self[Int32]
 pub fn[A, B] DwarfInputReader::pair(Self[A], Self[B]) -> Self[(A, B)]
 pub fn[T] DwarfInputReader::run(Self[T], DwarfInput) -> Result[(T, DwarfInput), String]
-pub fn DwarfInputReader::skip(bytes~ : Int) -> Self[Unit]
+pub fn DwarfInputReader::skip(bytes~ : Int32) -> Self[Unit]
 pub fn DwarfInputReader::skip_zeros() -> Self[Unit]
 pub fn DwarfInputReader::string() -> Self[String]
 pub fn DwarfInputReader::tag() -> Self[DwarfTag]
 pub fn[T] DwarfInputReader::take(Self[T]) -> Self[T?]
-pub fn DwarfInputReader::unit_size(endian~ : @bitvec.Endian) -> Self[(DwarfWordSize, Int)]
-pub fn DwarfInputReader::version() -> Self[Int]
+pub fn DwarfInputReader::unit_size(endian~ : @bitvec.Endian) -> Self[(DwarfWordSize, Int32)]
+pub fn DwarfInputReader::version() -> Self[Int32]
 
+#derive(Eq, @debug.Debug)
 pub(all) enum DwarfLenspec {
   DwarfOne
   DwarfTwo
   DwarfFour
   DwarfEight
   DwarfLeb128
-} derive(Eq, @debug.Debug)
+}
 pub fn DwarfLenspec::eight() -> Self
 pub fn DwarfLenspec::equal(Self, Self) -> Bool
 pub fn DwarfLenspec::four() -> Self
@@ -617,20 +624,21 @@ pub fn DwarfLenspec::two() -> Self
 type DwarfLocationList
 pub fn DwarfLocationList::entries(Self) -> Array[DwarfLocationListEntry]
 pub fn DwarfLocationList::is_empty(Self) -> Bool
-pub fn DwarfLocationList::length(Self) -> Int
-pub fn DwarfLocationList::read(DwarfSectionBuffer, offset? : Int, endian~ : @bitvec.Endian, addr_size~ : DwarfWordSize) -> Result[Self, String]
-pub fn DwarfLocationList::read_loc(DwarfSectionBuffer, offset? : Int, endian~ : @bitvec.Endian, addr_size~ : DwarfWordSize) -> Result[Self, String]
+pub fn DwarfLocationList::length(Self) -> Int32
+pub fn DwarfLocationList::read(DwarfSectionBuffer, offset? : Int32, endian~ : @bitvec.Endian, addr_size~ : DwarfWordSize) -> Result[Self, String]
+pub fn DwarfLocationList::read_loc(DwarfSectionBuffer, offset? : Int32, endian~ : @bitvec.Endian, addr_size~ : DwarfWordSize) -> Result[Self, String]
 
+#derive(Eq, @debug.Debug)
 pub(all) enum DwarfLocationListEntry {
-  DwarfLocBaseAddressx(Int)
-  DwarfLocStartxEndx(Int, Int, Bytes)
-  DwarfLocStartxLength(Int, Int, Bytes)
-  DwarfLocOffsetPair(Int, Int, Bytes)
+  DwarfLocBaseAddressx(Int32)
+  DwarfLocStartxEndx(Int32, Int32, Bytes)
+  DwarfLocStartxLength(Int32, Int32, Bytes)
+  DwarfLocOffsetPair(Int32, Int32, Bytes)
   DwarfLocDefaultLocation(Bytes)
   DwarfLocBaseAddress(UInt64)
   DwarfLocStartEnd(UInt64, UInt64, Bytes)
-  DwarfLocStartLength(UInt64, Int, Bytes)
-} derive(Eq, @debug.Debug)
+  DwarfLocStartLength(UInt64, Int32, Bytes)
+}
 pub fn DwarfLocationListEntry::equal(Self, Self) -> Bool
 pub fn DwarfLocationListEntry::not_equal(Self, Self) -> Bool
 pub fn DwarfLocationListEntry::to_repr(Self) -> @debug.Repr
@@ -638,23 +646,25 @@ pub fn DwarfLocationListEntry::to_repr(Self) -> @debug.Repr
 type DwarfRangeList
 pub fn DwarfRangeList::entries(Self) -> Array[DwarfRangeListEntry]
 pub fn DwarfRangeList::is_empty(Self) -> Bool
-pub fn DwarfRangeList::length(Self) -> Int
-pub fn DwarfRangeList::read(DwarfSectionBuffer, offset? : Int, endian~ : @bitvec.Endian, addr_size~ : DwarfWordSize) -> Result[Self, String]
-pub fn DwarfRangeList::read_ranges(DwarfSectionBuffer, offset? : Int, endian~ : @bitvec.Endian, addr_size~ : DwarfWordSize) -> Result[Self, String]
+pub fn DwarfRangeList::length(Self) -> Int32
+pub fn DwarfRangeList::read(DwarfSectionBuffer, offset? : Int32, endian~ : @bitvec.Endian, addr_size~ : DwarfWordSize) -> Result[Self, String]
+pub fn DwarfRangeList::read_ranges(DwarfSectionBuffer, offset? : Int32, endian~ : @bitvec.Endian, addr_size~ : DwarfWordSize) -> Result[Self, String]
 
+#derive(Eq, @debug.Debug)
 pub(all) enum DwarfRangeListEntry {
-  DwarfRangeBaseAddressx(Int)
-  DwarfRangeStartxEndx(Int, Int)
-  DwarfRangeStartxLength(Int, Int)
-  DwarfRangeOffsetPair(Int, Int)
+  DwarfRangeBaseAddressx(Int32)
+  DwarfRangeStartxEndx(Int32, Int32)
+  DwarfRangeStartxLength(Int32, Int32)
+  DwarfRangeOffsetPair(Int32, Int32)
   DwarfRangeBaseAddress(UInt64)
   DwarfRangeStartEnd(UInt64, UInt64)
-  DwarfRangeStartLength(UInt64, Int)
-} derive(Eq, @debug.Debug)
+  DwarfRangeStartLength(UInt64, Int32)
+}
 pub fn DwarfRangeListEntry::equal(Self, Self) -> Bool
 pub fn DwarfRangeListEntry::not_equal(Self, Self) -> Bool
 pub fn DwarfRangeListEntry::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum DwarfSection {
   DwarfInfo
   DwarfAbbrev
@@ -666,7 +676,7 @@ pub(all) enum DwarfSection {
   DwarfRnglists
   DwarfLoclists
   DwarfLoc
-} derive(Eq, @debug.Debug)
+}
 pub fn DwarfSection::abbrev() -> Self
 pub fn DwarfSection::addr() -> Self
 pub fn DwarfSection::equal(Self, Self) -> Bool
@@ -683,38 +693,39 @@ pub fn DwarfSection::to_repr(Self) -> @debug.Repr
 pub fn DwarfSection::to_string(Self) -> String
 
 type DwarfSectionBuffer
-pub fn DwarfSectionBuffer::create(Bytes, position? : Int) -> Result[Self, String]
+pub fn DwarfSectionBuffer::create(Bytes, position? : Int32) -> Result[Self, String]
 pub fn DwarfSectionBuffer::data(Self) -> Bytes
 pub fn DwarfSectionBuffer::input(Self) -> DwarfInput
-pub fn DwarfSectionBuffer::offset(Self, Int) -> Result[Self, String]
-pub fn DwarfSectionBuffer::pos(Self) -> Int
-pub fn DwarfSectionBuffer::position(Self) -> Int
-pub fn DwarfSectionBuffer::with_off(Self, Int) -> Result[Self, String]
-pub fn DwarfSectionBuffer::with_pos(Self, Int) -> Result[Self, String]
-pub fn DwarfSectionBuffer::with_position(Self, Int) -> Result[Self, String]
+pub fn DwarfSectionBuffer::offset(Self, Int32) -> Result[Self, String]
+pub fn DwarfSectionBuffer::pos(Self) -> Int32
+pub fn DwarfSectionBuffer::position(Self) -> Int32
+pub fn DwarfSectionBuffer::with_off(Self, Int32) -> Result[Self, String]
+pub fn DwarfSectionBuffer::with_pos(Self, Int32) -> Result[Self, String]
+pub fn DwarfSectionBuffer::with_position(Self, Int32) -> Result[Self, String]
 
 type DwarfStringOffsetsTable
-pub fn DwarfStringOffsetsTable::base_offset(Self) -> Int
+pub fn DwarfStringOffsetsTable::base_offset(Self) -> Int32
 pub fn DwarfStringOffsetsTable::dwarf_size(Self) -> DwarfWordSize
 pub fn DwarfStringOffsetsTable::is_empty(Self) -> Bool
-pub fn DwarfStringOffsetsTable::length(Self) -> Int
-pub fn DwarfStringOffsetsTable::offset(Self, Int) -> Result[Int, String]
-pub fn DwarfStringOffsetsTable::offsets(Self) -> Array[Int]
-pub fn DwarfStringOffsetsTable::read(DwarfSectionBuffer, offset? : Int, endian~ : @bitvec.Endian, dwarf_size~ : DwarfWordSize) -> Result[Self, String]
-pub fn DwarfStringOffsetsTable::read_contribution(DwarfSectionBuffer, offset? : Int, endian~ : @bitvec.Endian) -> Result[Self, String]
-pub fn DwarfStringOffsetsTable::string(Self, DwarfSectionBuffer, Int) -> Result[String, String]
+pub fn DwarfStringOffsetsTable::length(Self) -> Int32
+pub fn DwarfStringOffsetsTable::offset(Self, Int32) -> Result[Int32, String]
+pub fn DwarfStringOffsetsTable::offsets(Self) -> Array[Int32]
+pub fn DwarfStringOffsetsTable::read(DwarfSectionBuffer, offset? : Int32, endian~ : @bitvec.Endian, dwarf_size~ : DwarfWordSize) -> Result[Self, String]
+pub fn DwarfStringOffsetsTable::read_contribution(DwarfSectionBuffer, offset? : Int32, endian~ : @bitvec.Endian) -> Result[Self, String]
+pub fn DwarfStringOffsetsTable::string(Self, DwarfSectionBuffer, Int32) -> Result[String, String]
 pub fn DwarfStringOffsetsTable::strings(Self, DwarfSectionBuffer) -> Result[Array[String], String]
-pub fn DwarfStringOffsetsTable::version(Self) -> Int?
+pub fn DwarfStringOffsetsTable::version(Self) -> Int32?
 
 type DwarfStringTable
-pub fn DwarfStringTable::base_offset(Self) -> Int
+pub fn DwarfStringTable::base_offset(Self) -> Int32
 pub fn DwarfStringTable::data(Self) -> Bytes
-pub fn DwarfStringTable::entries(Self) -> Result[Array[(Int, String)], String]
+pub fn DwarfStringTable::entries(Self) -> Result[Array[(Int32, String)], String]
 pub fn DwarfStringTable::is_empty(Self) -> Bool
-pub fn DwarfStringTable::read(DwarfSectionBuffer, offset? : Int) -> Result[Self, String]
-pub fn DwarfStringTable::string(Self, Int) -> Result[String, String]
+pub fn DwarfStringTable::read(DwarfSectionBuffer, offset? : Int32) -> Result[Self, String]
+pub fn DwarfStringTable::string(Self, Int32) -> Result[String, String]
 pub fn DwarfStringTable::strings(Self) -> Result[Array[String], String]
 
+#derive(Eq, @debug.Debug)
 pub(all) enum DwarfTag {
   DwarfArrayType
   DwarfClassType
@@ -784,8 +795,8 @@ pub(all) enum DwarfTag {
   DwarfCallSiteParameter
   DwarfSkeletonUnit
   DwarfImmutableType
-  DwarfUnknownTag(Int)
-} derive(Eq, @debug.Debug)
+  DwarfUnknownTag(Int32)
+}
 pub fn DwarfTag::access_declaration() -> Self
 pub fn DwarfTag::array_type() -> Self
 pub fn DwarfTag::atomic_type() -> Self
@@ -850,7 +861,7 @@ pub fn DwarfTag::try_block() -> Self
 pub fn DwarfTag::type_unit() -> Self
 pub fn DwarfTag::typedef_() -> Self
 pub fn DwarfTag::union_type() -> Self
-pub fn DwarfTag::unknown(Int) -> Self
+pub fn DwarfTag::unknown(Int32) -> Self
 pub fn DwarfTag::unspecified_parameters() -> Self
 pub fn DwarfTag::unspecified_type() -> Self
 pub fn DwarfTag::variable() -> Self
@@ -859,26 +870,28 @@ pub fn DwarfTag::variant_part() -> Self
 pub fn DwarfTag::volatile_type() -> Self
 pub fn DwarfTag::with_stmt() -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) enum DwarfWordSize {
   W32
   W64
-} derive(Eq, @debug.Debug)
+}
 pub fn DwarfWordSize::equal(Self, Self) -> Bool
 pub fn DwarfWordSize::not_equal(Self, Self) -> Bool
 pub fn DwarfWordSize::to_repr(Self) -> @debug.Repr
 
-type Leb128 derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type Leb128
 pub fn Leb128::bytes(Self) -> Bytes
 pub fn Leb128::equal(Self, Self) -> Bool
 pub fn Leb128::is_negative(Self) -> Bool
 pub fn Leb128::not_equal(Self, Self) -> Bool
-pub fn Leb128::of_int(Int, signed? : Bool) -> Self
-pub fn Leb128::of_int32(Int, signed? : Bool) -> Self
+pub fn Leb128::of_int(Int32, signed? : Bool) -> Self
+pub fn Leb128::of_int32(Int32, signed? : Bool) -> Self
 pub fn Leb128::of_int64(Int64, signed? : Bool) -> Self
-pub fn Leb128::read(BytesView, signed? : Bool, pos? : Int) -> Result[(Self, Int), String]
-pub fn Leb128::size(Self) -> Int
-pub fn Leb128::to_int(Self) -> Result[Int, String]
-pub fn Leb128::to_int32(Self) -> Result[Int, String]
+pub fn Leb128::read(BytesView, signed? : Bool, pos? : Int32) -> Result[(Self, Int32), String]
+pub fn Leb128::size(Self) -> Int32
+pub fn Leb128::to_int(Self) -> Result[Int32, String]
+pub fn Leb128::to_int32(Self) -> Result[Int32, String]
 pub fn Leb128::to_int64(Self) -> Result[Int64, String]
 pub fn Leb128::to_repr(Self) -> @debug.Repr
 pub fn Leb128::write(Self) -> Bytes

@@ -3,11 +3,12 @@
 
 ///|
 /// What to print for each symbol (upstream `--print-symbol-format`).
+#derive(Eq, Debug)
 pub(all) enum SymbolFormat {
   WithName
   WithAddr
   WithSize
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend SymbolFormat with Eq::{not_equal, equal}

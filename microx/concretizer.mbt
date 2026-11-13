@@ -3,6 +3,7 @@
 
 ///|
 /// A policy for concretizing unknown values.
+#derive(Eq, Debug)
 pub(all) enum Policy {
   /// a random 64-bit value
   Random
@@ -10,7 +11,7 @@ pub(all) enum Policy {
   Fixed(Int64)
   /// a random value from the inclusive interval `[lo, hi]`
   Interval(Int64, Int64)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Policy with Eq::{not_equal, equal}

@@ -18,7 +18,7 @@ pub fn check_stmt_types(Array[Stmt]) -> Result[Unit, TypeError]
 
 pub fn def_t() -> IrTermClass
 
-pub fn exec_stmts(Array[Stmt], state? : BilState, max_steps? : Int) -> Result[BilState, String]
+pub fn exec_stmts(Array[Stmt], state? : BilState, max_steps? : Int32) -> Result[BilState, String]
 
 pub fn exists_exp(Array[Stmt], (Exp) -> Bool) -> Bool
 
@@ -38,13 +38,13 @@ pub fn[A] fold_exps(Array[Stmt], A, (A, Exp) -> A) -> A
 
 pub fn free_vars(Array[Stmt]) -> Array[Var]
 
-pub fn int_of_int32(Int) -> Result[Int, String]
+pub fn int_of_int32(Int32) -> Result[Int32, String]
 
-pub fn int_of_int64(Int64) -> Result[Int, String]
+pub fn int_of_int64(Int64) -> Result[Int32, String]
 
-pub fn int_of_uint64(UInt64) -> Result[Int, String]
+pub fn int_of_uint64(UInt64) -> Result[Int32, String]
 
-pub fn int_of_word(Word) -> Result[Int, String]
+pub fn int_of_word(Word) -> Result[Int32, String]
 
 pub let ir_insn_attr : String
 
@@ -66,7 +66,7 @@ pub fn normalize_for_trie(Array[Stmt], subst? : Array[(Exp, Exp)]) -> Array[Stmt
 
 pub fn normalize_negatives(Array[Stmt]) -> Array[Stmt]
 
-pub fn optimize_stmts(Array[Stmt], max_iterations? : Int) -> Array[Stmt]
+pub fn optimize_stmts(Array[Stmt], max_iterations? : Int32) -> Array[Stmt]
 
 pub fn passes() -> Array[BilPass]
 
@@ -105,53 +105,60 @@ pub fn tid_graph_exit() -> Tid
 pub fn tid_graph_start() -> Tid
 
 // Errors
+#derive(Eq, @debug.Debug)
 pub(all) suberror BilApplyError {
   InvalidWordApply(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn BilApplyError::equal(Self, Self) -> Bool
 pub fn BilApplyError::not_equal(Self, Self) -> Bool
 pub fn BilApplyError::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) suberror IrTermLookupError {
   MissingIrTerm(String, Tid)
-  MissingIrTermIndex(String, Int)
-} derive(Eq, @debug.Debug)
+  MissingIrTermIndex(String, Int32)
+}
 pub fn IrTermLookupError::equal(Self, Self) -> Bool
 pub fn IrTermLookupError::not_equal(Self, Self) -> Bool
 pub fn IrTermLookupError::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) suberror SizeError {
-  UnsupportedWordSize(Int)
-  UnsupportedAddressSize(Int)
+  UnsupportedWordSize(Int32)
+  UnsupportedAddressSize(Int32)
   UnsupportedAddressSizeValue(Size)
-} derive(Eq, @debug.Debug)
+}
 pub fn SizeError::equal(Self, Self) -> Bool
 pub fn SizeError::not_equal(Self, Self) -> Bool
 pub fn SizeError::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) suberror StmtAttributeError {
   DuplicateStmtAttribute(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn StmtAttributeError::equal(Self, Self) -> Bool
 pub fn StmtAttributeError::not_equal(Self, Self) -> Bool
 pub fn StmtAttributeError::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) suberror TidParseError {
   InvalidTid(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn TidParseError::equal(Self, Self) -> Bool
 pub fn TidParseError::not_equal(Self, Self) -> Bool
 pub fn TidParseError::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) suberror TypeInferenceError {
   InvalidExpType(TypeError)
-} derive(Eq, @debug.Debug)
+}
 pub fn TypeInferenceError::equal(Self, Self) -> Bool
 pub fn TypeInferenceError::not_equal(Self, Self) -> Bool
 pub fn TypeInferenceError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
-type AddrR32 derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type AddrR32
 pub fn AddrR32::abs(Self) -> Self
 pub fn AddrR32::add(Self, Self) -> Self
 pub fn AddrR32::arshift(Self, Self) -> Self
@@ -168,19 +175,20 @@ pub fn AddrR32::modulo(Self, Self) -> Self
 pub fn AddrR32::mul(Self, Self) -> Self
 pub fn AddrR32::neg(Self) -> Self
 pub fn AddrR32::not_equal(Self, Self) -> Bool
-pub fn AddrR32::of_int32(Int) -> Self
+pub fn AddrR32::of_int32(Int32) -> Self
 pub fn AddrR32::one() -> Self
 pub fn AddrR32::pred(Self) -> Self
 pub fn AddrR32::rshift(Self, Self) -> Self
 pub fn AddrR32::sub(Self, Self) -> Self
 pub fn AddrR32::succ(Self) -> Self
-pub fn AddrR32::to_int32(Self) -> Int
+pub fn AddrR32::to_int32(Self) -> Int32
 pub fn AddrR32::to_repr(Self) -> @debug.Repr
-pub fn AddrR32::to_uint(Self) -> UInt
+pub fn AddrR32::to_uint(Self) -> UInt32
 pub fn AddrR32::to_word(Self) -> Word raise @bitvec.BitVecError
 pub fn AddrR32::zero() -> Self
 
-type AddrR64 derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type AddrR64
 pub fn AddrR64::abs(Self) -> Self
 pub fn AddrR64::add(Self, Self) -> Self
 pub fn AddrR64::arshift(Self, Self) -> Self
@@ -209,18 +217,20 @@ pub fn AddrR64::to_uint64(Self) -> UInt64
 pub fn AddrR64::to_word(Self) -> Word raise @bitvec.BitVecError
 pub fn AddrR64::zero() -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) enum AddrSize {
   Addr32
   Addr64
-} derive(Eq, @debug.Debug)
+}
 pub fn AddrSize::equal(Self, Self) -> Bool
-pub fn AddrSize::in_bits(Self) -> Int
-pub fn AddrSize::in_bytes(Self) -> Int
+pub fn AddrSize::in_bits(Self) -> Int32
+pub fn AddrSize::in_bytes(Self) -> Int32
 pub fn AddrSize::not_equal(Self, Self) -> Bool
 pub fn AddrSize::to_repr(Self) -> @debug.Repr
 pub fn AddrSize::to_size(Self) -> Size
 pub fn AddrSize::to_string(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Arch {
   X86
   X86_64
@@ -258,9 +268,9 @@ pub(all) enum Arch {
   Systemz
   Xcore
   UnknownArch
-} derive(Eq, @debug.Debug)
+}
 pub fn Arch::addr_size(Self) -> AddrSize
-pub fn Arch::compare(Self, Self) -> Int
+pub fn Arch::compare(Self, Self) -> Int32
 pub fn Arch::endian(Self) -> @bitvec.Endian
 pub fn Arch::equal(Self, Self) -> Bool
 pub fn Arch::from_string(String) -> Self
@@ -269,11 +279,12 @@ pub fn Arch::of_string(String) -> Self?
 pub fn Arch::to_repr(Self) -> @debug.Repr
 pub fn Arch::to_string(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Arg {
   lhs : Var
   rhs : Exp
   intent : Intent?
-} derive(Eq, @debug.Debug)
+}
 pub fn Arg::alloc_size() -> Attr
 pub fn Arg::create(Var, Exp, intent? : Intent, tid? : Tid) -> Term[Self]
 pub fn Arg::equal(Self, Self) -> Bool
@@ -292,10 +303,11 @@ pub fn Arg::warn_unused() -> Attr
 pub fn Arg::with_intent(Term[Self], Intent) -> Term[Self]
 pub fn Arg::with_unknown_intent(Term[Self]) -> Term[Self]
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Attr {
   key : String
   value : String
-} derive(Eq, @debug.Debug)
+}
 pub fn Attr::address(Word) -> Self
 pub fn Attr::background(IrColor) -> Self
 pub fn Attr::color(IrColor) -> Self
@@ -338,45 +350,46 @@ pub fn Attr::weight(Double) -> Self
 
 type BapVector[T]
 pub fn[T] BapVector::append(Self[T], T) -> Unit
-pub fn[T] BapVector::capacity(Self[T]) -> Int
+pub fn[T] BapVector::capacity(Self[T]) -> Int32
 pub fn[T : Eq] BapVector::contains(Self[T], T) -> Bool
-pub fn[T] BapVector::count(Self[T], (T) -> Bool) -> Int
-pub fn[T] BapVector::create(T, capacity? : Int) -> Self[T]
+pub fn[T] BapVector::count(Self[T], (T) -> Bool) -> Int32
+pub fn[T] BapVector::create(T, capacity? : Int32) -> Self[T]
 pub fn[T] BapVector::exists(Self[T], (T) -> Bool) -> Bool
 pub fn[T] BapVector::find(Self[T], (T) -> Bool) -> T?
 pub fn[T, A] BapVector::find_map(Self[T], (T) -> A?) -> A?
-pub fn[T, A] BapVector::find_mapi(Self[T], (Int, T) -> A?) -> A?
-pub fn[T] BapVector::findi(Self[T], (Int, T) -> Bool) -> (Int, T)?
+pub fn[T, A] BapVector::find_mapi(Self[T], (Int32, T) -> A?) -> A?
+pub fn[T] BapVector::findi(Self[T], (Int32, T) -> Bool) -> (Int32, T)?
 pub fn[T, A] BapVector::fold(Self[T], A, (A, T) -> A) -> A
 pub fn[T, A, E] BapVector::fold_result(Self[T], A, (A, T) -> Result[A, E]) -> Result[A, E]
 pub fn[T, A, R] BapVector::fold_until(Self[T], init~ : A, f~ : (A, T) -> ContinueOrStop[A, R], finish~ : (A) -> R) -> R
-pub fn[T, A] BapVector::foldi(Self[T], A, (Int, A, T) -> A) -> A
+pub fn[T, A] BapVector::foldi(Self[T], A, (Int32, A, T) -> A) -> A
 pub fn[T] BapVector::for_all(Self[T], (T) -> Bool) -> Bool
-pub fn[T] BapVector::get(Self[T], Int) -> T
-pub fn[T : Eq] BapVector::index(Self[T], T) -> Int?
-pub fn[T] BapVector::index_by(Self[T], T, (T, T) -> Bool) -> Int?
-pub fn[T : Eq] BapVector::index_exn(Self[T], T) -> Int
-pub fn[T] BapVector::index_exn_by(Self[T], T, (T, T) -> Bool) -> Int
-pub fn[T : Eq] BapVector::index_with(Self[T], T, default~ : Int) -> Int
-pub fn[T] BapVector::index_with_by(Self[T], T, default~ : Int, (T, T) -> Bool) -> Int
+pub fn[T] BapVector::get(Self[T], Int32) -> T
+pub fn[T : Eq] BapVector::index(Self[T], T) -> Int32?
+pub fn[T] BapVector::index_by(Self[T], T, (T, T) -> Bool) -> Int32?
+pub fn[T : Eq] BapVector::index_exn(Self[T], T) -> Int32
+pub fn[T] BapVector::index_exn_by(Self[T], T, (T, T) -> Bool) -> Int32
+pub fn[T : Eq] BapVector::index_with(Self[T], T, default~ : Int32) -> Int32
+pub fn[T] BapVector::index_with_by(Self[T], T, default~ : Int32, (T, T) -> Bool) -> Int32
 pub fn[T] BapVector::is_empty(Self[T]) -> Bool
 pub fn[T] BapVector::iter(Self[T], (T) -> Unit) -> Unit
-pub fn[T] BapVector::iteri(Self[T], (Int, T) -> Unit) -> Unit
-pub fn[T] BapVector::length(Self[T]) -> Int
+pub fn[T] BapVector::iteri(Self[T], (Int32, T) -> Unit) -> Unit
+pub fn[T] BapVector::length(Self[T]) -> Int32
 pub fn[A, B] BapVector::map_to_array(Self[A], (A) -> B) -> Array[B]
-pub fn[T] BapVector::max_elt(Self[T], compare~ : (T, T) -> Int) -> T?
-pub fn[T] BapVector::max_elt_by(Self[T], (T, T) -> Int) -> T?
+pub fn[T] BapVector::max_elt(Self[T], compare~ : (T, T) -> Int32) -> T?
+pub fn[T] BapVector::max_elt_by(Self[T], (T, T) -> Int32) -> T?
 pub fn[T : Eq] BapVector::mem(Self[T], T) -> Bool
 pub fn[T] BapVector::mem_by(Self[T], T, (T, T) -> Bool) -> Bool
-pub fn[T] BapVector::min_elt(Self[T], compare~ : (T, T) -> Int) -> T?
-pub fn[T] BapVector::min_elt_by(Self[T], (T, T) -> Int) -> T?
-pub fn[T] BapVector::nth(Self[T], Int) -> T?
-pub fn[T] BapVector::set(Self[T], Int, T) -> Unit
+pub fn[T] BapVector::min_elt(Self[T], compare~ : (T, T) -> Int32) -> T?
+pub fn[T] BapVector::min_elt_by(Self[T], (T, T) -> Int32) -> T?
+pub fn[T] BapVector::nth(Self[T], Int32) -> T?
+pub fn[T] BapVector::set(Self[T], Int32, T) -> Unit
 pub fn[T] BapVector::to_array(Self[T]) -> Array[T]
 pub fn[T] BapVector::to_list(Self[T]) -> @list.List[T]
 pub fn[T] BapVector::to_string(Self[T], (T) -> String) -> String
 
-type BilContext derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type BilContext
 pub fn BilContext::bindings(Self) -> Array[(Var, BilResult)]
 pub fn BilContext::equal(Self, Self) -> Bool
 pub fn BilContext::lookup(Self, Var) -> BilResult?
@@ -385,17 +398,18 @@ pub fn BilContext::not_equal(Self, Self) -> Bool
 pub fn BilContext::to_repr(Self) -> @debug.Repr
 pub fn BilContext::update(Self, Var, BilResult) -> Self
 
-type BilMemory derive(Eq, @debug.Debug)
-pub fn BilMemory::addr_width(Self) -> Int
+#derive(Eq, @debug.Debug)
+type BilMemory
+pub fn BilMemory::addr_width(Self) -> Int32
 pub fn BilMemory::cell(Self, UInt64) -> Byte?
-pub fn BilMemory::empty(addr_width~ : Int, value_width? : Int) -> Self
+pub fn BilMemory::empty(addr_width~ : Int32, value_width? : Int32) -> Self
 pub fn BilMemory::equal(Self, Self) -> Bool
-pub fn BilMemory::from_bytes(addr_width~ : Int, start? : UInt64, Bytes) -> Self
-pub fn BilMemory::load(Self, Word, endian~ : @bitvec.Endian, width~ : Int) -> Result[Word, String]
+pub fn BilMemory::from_bytes(addr_width~ : Int32, start? : UInt64, Bytes) -> Self
+pub fn BilMemory::load(Self, Word, endian~ : @bitvec.Endian, width~ : Int32) -> Result[Word, String]
 pub fn BilMemory::not_equal(Self, Self) -> Bool
 pub fn BilMemory::store(Self, Word, Word, endian~ : @bitvec.Endian) -> Result[Self, String]
 pub fn BilMemory::to_repr(Self) -> @debug.Repr
-pub fn BilMemory::value_width(Self) -> Int
+pub fn BilMemory::value_width(Self) -> Int32
 
 type BilPass
 pub fn BilPass::desc(Self) -> String
@@ -403,7 +417,8 @@ pub fn BilPass::name(Self) -> String
 pub fn BilPass::run(Self, Array[Stmt]) -> Array[Stmt]
 pub fn BilPass::to_string(Self) -> String
 
-type BilResult derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type BilResult
 pub fn BilResult::equal(Self, Self) -> Bool
 pub fn BilResult::id(Self) -> BilResultId
 pub fn BilResult::not_equal(Self, Self) -> Bool
@@ -414,7 +429,8 @@ pub fn BilResult::undefined(BilResultId) -> Self
 pub fn BilResult::value(Self) -> BilResultValue
 pub fn BilResult::word(Word, BilResultId) -> Self
 
-type BilResultId derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type BilResultId
 pub fn BilResultId::equal(Self, Self) -> Bool
 pub fn BilResultId::not_equal(Self, Self) -> Bool
 pub fn BilResultId::of_uint64(UInt64) -> Self
@@ -424,7 +440,8 @@ pub fn BilResultId::to_string(Self) -> String
 pub fn BilResultId::to_uint64(Self) -> UInt64
 pub fn BilResultId::zero() -> Self
 
-type BilResultStorage derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type BilResultStorage
 pub fn BilResultStorage::equal(Self, Self) -> Bool
 pub fn BilResultStorage::is_sparse(Self) -> Bool
 pub fn BilResultStorage::linear() -> Self
@@ -434,17 +451,19 @@ pub fn BilResultStorage::save(Self, Word, Word) -> Self
 pub fn BilResultStorage::sparse() -> Self
 pub fn BilResultStorage::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum BilResultValue {
   BilResultImm(Word)
   BilResultMem(BilResultStorage)
   BilResultBot
-} derive(Eq, @debug.Debug)
+}
 pub fn BilResultValue::equal(Self, Self) -> Bool
 pub fn BilResultValue::not_equal(Self, Self) -> Bool
 pub fn BilResultValue::to_repr(Self) -> @debug.Repr
 pub fn BilResultValue::to_string(Self) -> String
 
-type BilState derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type BilState
 pub fn BilState::equal(Self, Self) -> Bool
 pub fn BilState::from_values(Map[String, BilValue]) -> Self
 pub fn BilState::get(Self, String) -> BilValue?
@@ -458,16 +477,18 @@ pub fn BilState::set_var(Self, Var, BilValue) -> Result[Self, String]
 pub fn BilState::to_repr(Self) -> @debug.Repr
 pub fn BilState::values(Self) -> Map[String, BilValue]
 
+#derive(Eq, @debug.Debug)
 pub(all) enum BilValue {
   BilWord(Word)
   BilMem(BilMemory)
-} derive(Eq, @debug.Debug)
+}
 pub fn BilValue::equal(Self, Self) -> Bool
 pub fn BilValue::memory(Self) -> BilMemory?
 pub fn BilValue::not_equal(Self, Self) -> Bool
 pub fn BilValue::to_repr(Self) -> @debug.Repr
 pub fn BilValue::word(Self) -> Word?
 
+#derive(Eq, @debug.Debug)
 pub(all) enum BinOp {
   Plus
   Minus
@@ -488,14 +509,14 @@ pub(all) enum BinOp {
   Le
   SignedLt
   SignedLe
-} derive(Eq, @debug.Debug)
+}
 pub fn BinOp::apply(Self, Word, Word) -> Result[Word, String]
 pub fn BinOp::apply_exn(Self, Word, Word) -> Word raise BilApplyError
 pub fn BinOp::arshift() -> Self
 pub fn BinOp::bit_and() -> Self
 pub fn BinOp::bit_or() -> Self
 pub fn BinOp::bit_xor() -> Self
-pub fn BinOp::compare(Self, Self) -> Int
+pub fn BinOp::compare(Self, Self) -> Int32
 pub fn BinOp::divide() -> Self
 pub fn BinOp::eq() -> Self
 pub fn BinOp::equal(Self, Self) -> Bool
@@ -529,14 +550,14 @@ pub fn Blk::defines_var(Term[Self], Var) -> Bool
 pub fn Blk::elts(Term[Self], rev? : Bool) -> Array[BlkElt]
 pub fn Blk::find_var(Term[Self], Var) -> VarBinding?
 pub fn Blk::free_vars(Term[Self]) -> Array[Var]
-pub fn Blk::lift_block(Tid, Array[IrInsn], addr? : Word, fall? : IrFall, is_call? : Bool, is_barrier? : Bool, pkg? : String, addr_width? : Int, is_subroutine? : (Tid) -> Bool) -> Array[Term[Self]]
-pub fn Blk::lift_insn(IrInsn, tid? : Tid, pkg? : String, addr_width? : Int, is_subroutine? : (Tid) -> Bool) -> Array[Term[Self]]
-pub fn Blk::lift_insns(Array[IrInsn], fall? : IrFall, addr? : Word, pkg? : String, addr_width? : Int, is_subroutine? : (Tid) -> Bool) -> Array[Term[Self]]
+pub fn Blk::lift_block(Tid, Array[IrInsn], addr? : Word, fall? : IrFall, is_call? : Bool, is_barrier? : Bool, pkg? : String, addr_width? : Int32, is_subroutine? : (Tid) -> Bool) -> Array[Term[Self]]
+pub fn Blk::lift_insn(IrInsn, tid? : Tid, pkg? : String, addr_width? : Int32, is_subroutine? : (Tid) -> Bool) -> Array[Term[Self]]
+pub fn Blk::lift_insns(Array[IrInsn], fall? : IrFall, addr? : Word, pkg? : String, addr_width? : Int32, is_subroutine? : (Tid) -> Bool) -> Array[Term[Self]]
 pub fn Blk::map_elts(Term[Self], phi? : (Term[Phi]) -> Term[Phi], def? : (Term[Def]) -> Term[Def], jmp? : (Term[Jmp]) -> Term[Jmp]) -> Term[Self]
 pub fn Blk::map_exp(Term[Self], (Exp) -> Exp, skip_phi? : Bool, skip_def? : Bool, skip_jmp? : Bool) -> Term[Self]
 pub fn Blk::map_lhs(Term[Self], (Var) -> Var, skip_phi? : Bool, skip_def? : Bool) -> Term[Self]
 pub fn Blk::occurs(Term[Self], after~ : Tid, Tid) -> Bool
-pub fn Blk::of_bil(Array[Stmt], pkg? : String, addr_width? : Int, is_subroutine? : (Tid) -> Bool) -> Array[Term[Self]]
+pub fn Blk::of_bil(Array[Stmt], pkg? : String, addr_width? : Int32, is_subroutine? : (Tid) -> Bool) -> Array[Term[Self]]
 pub fn Blk::split_after(Term[Self], Term[Def]) -> (Term[Self], Term[Self])
 pub fn Blk::split_before(Term[Self], Term[Def]) -> (Term[Self], Term[Self])
 pub fn Blk::split_bot(Term[Self]) -> (Term[Self], Term[Self])
@@ -551,7 +572,7 @@ pub fn BlkBuilder::add_def(Self, Term[Def]) -> Unit
 pub fn BlkBuilder::add_elt(Self, BlkElt) -> Unit
 pub fn BlkBuilder::add_jmp(Self, Term[Jmp]) -> Unit
 pub fn BlkBuilder::add_phi(Self, Term[Phi]) -> Unit
-pub fn BlkBuilder::create(tid? : Tid, phis? : Int, defs? : Int, jmps? : Int) -> Self
+pub fn BlkBuilder::create(tid? : Tid, phis? : Int32, defs? : Int32, jmps? : Int32) -> Self
 pub fn BlkBuilder::init(Term[Blk], same_tid? : Bool, copy_phis? : Bool, copy_defs? : Bool, copy_jmps? : Bool) -> Self
 pub fn BlkBuilder::result(Self) -> Term[Blk]
 
@@ -566,10 +587,11 @@ pub fn BlockLiveness::block(Self) -> Term[Blk]
 pub fn BlockLiveness::live_in(Self) -> Array[Var]
 pub fn BlockLiveness::live_out(Self) -> Array[Var]
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Call {
   target : Label
   return_label : Label?
-} derive(Eq, @debug.Debug)
+}
 pub fn Call::create(target~ : Label, return_label? : Label) -> Self
 pub fn Call::equal(Self, Self) -> Bool
 pub fn Call::free_vars(Self) -> Array[Var]
@@ -585,15 +607,16 @@ pub fn Call::with_noreturn(Self) -> Self
 pub fn Call::with_return(Self, Label) -> Self
 pub fn Call::with_target(Self, Label) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) enum CastKind {
   Unsigned
   Signed
   High
   Low
-} derive(Eq, @debug.Debug)
-pub fn CastKind::apply(Self, Int, Word) -> Result[Word, String]
-pub fn CastKind::apply_exn(Self, Int, Word) -> Word raise BilApplyError
-pub fn CastKind::compare(Self, Self) -> Int
+}
+pub fn CastKind::apply(Self, Int32, Word) -> Result[Word, String]
+pub fn CastKind::apply_exn(Self, Int32, Word) -> Word raise BilApplyError
+pub fn CastKind::compare(Self, Self) -> Int32
 pub fn CastKind::equal(Self, Self) -> Bool
 pub fn CastKind::high() -> Self
 pub fn CastKind::low() -> Self
@@ -604,18 +627,20 @@ pub fn CastKind::to_repr(Self) -> @debug.Repr
 pub fn CastKind::to_string(Self) -> String
 pub fn CastKind::unsigned() -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) enum ContinueOrStop[A, R] {
   Continue(A)
   Stop(R)
-} derive(Eq, @debug.Debug)
+}
 pub fn[A : Eq, R : Eq] ContinueOrStop::equal(Self[A, R], Self[A, R]) -> Bool
 pub fn[A : Eq, R : Eq] ContinueOrStop::not_equal(Self[A, R], Self[A, R]) -> Bool
 pub fn[A : @debug.Debug, R : @debug.Debug] ContinueOrStop::to_repr(Self[A, R]) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Def {
   lhs : Var
   rhs : Exp
-} derive(Eq, @debug.Debug)
+}
 pub fn Def::create(Var, Exp, tid? : Tid) -> Term[Self]
 pub fn Def::equal(Self, Self) -> Bool
 pub fn Def::free_vars(Term[Self]) -> Array[Var]
@@ -634,14 +659,14 @@ pub fn Def::with_rhs(Term[Self], Exp) -> Term[Self]
 type Dict
 pub fn[T] Dict::add(Self, Tag[T], T) -> Self?
 pub fn[T] Dict::change(Self, Tag[T], (T?) -> T?) -> Self
-pub fn Dict::compare(Self, Self) -> Int
+pub fn Dict::compare(Self, Self) -> Int32
 pub fn Dict::data(Self) -> Array[Value]
 pub fn Dict::empty() -> Self
 pub fn Dict::equal(Self, Self) -> Bool
 pub fn Dict::filter(Self, (Value) -> Bool) -> Self
 pub fn[T] Dict::find(Self, Tag[T]) -> T?
 pub fn Dict::is_empty(Self) -> Bool
-pub fn Dict::length(Self) -> Int
+pub fn Dict::length(Self) -> Int32
 pub fn[T] Dict::mem(Self, Tag[T]) -> Bool
 pub fn Dict::not_equal(Self, Self) -> Bool
 pub fn Dict::op_ge(Self, Self) -> Bool
@@ -658,6 +683,7 @@ pub impl Compare for Dict
 pub impl Eq for Dict
 pub impl Show for Dict
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Exp {
   Int(Word)
   Var(Var)
@@ -665,23 +691,23 @@ pub(all) enum Exp {
   Load(mem~ : Exp, addr~ : Exp, endian~ : @bitvec.Endian, typ~ : ValueType)
   Store(mem~ : Exp, addr~ : Exp, value~ : Exp, endian~ : @bitvec.Endian)
   Let(Var, Exp, Exp)
-  Cast(kind~ : CastKind, width~ : Int, exp~ : Exp)
-  Extract(hi~ : Int, lo~ : Int, exp~ : Exp)
+  Cast(kind~ : CastKind, width~ : Int32, exp~ : Exp)
+  Extract(hi~ : Int32, lo~ : Int32, exp~ : Exp)
   Concat(high~ : Exp, low~ : Exp)
   UnOp(UnOp, Exp)
   BinOp(BinOp, Exp, Exp)
   Ite(cond~ : Exp, yes~ : Exp, no~ : Exp)
-} derive(Eq, @debug.Debug)
+}
 pub fn Exp::binop(BinOp, Self, Self) -> Self
-pub fn Exp::cast(CastKind, Int, Self) -> Self
-pub fn Exp::compare(Self, Self) -> Int
+pub fn Exp::cast(CastKind, Int32, Self) -> Self
+pub fn Exp::compare(Self, Self) -> Int32
 pub fn Exp::concat(Self, Self) -> Self
 pub fn Exp::effect(Self) -> ExpEffect
 pub fn Exp::equal(Self, Self) -> Bool
 pub fn Exp::eval(Self, Map[String, Word]) -> Result[Word, String]
 pub fn Exp::eval_value(Self, Map[String, BilValue]) -> Result[BilValue, String]
 pub fn Exp::exists(Self, (Self) -> Bool) -> Bool
-pub fn Exp::extract(Self, hi? : Int, lo? : Int) -> Self
+pub fn Exp::extract(Self, hi? : Int32, lo? : Int32) -> Self
 pub fn Exp::find(Self, (Self) -> Bool) -> Self?
 pub fn Exp::fixpoint(Self, (Self) -> Self) -> Self
 pub fn[A] Exp::fold(Self, A, (A, Self) -> A) -> A
@@ -703,9 +729,9 @@ pub fn Exp::normalize_negatives(Self) -> Self
 pub fn Exp::not_equal(Self, Self) -> Bool
 pub fn Exp::simplify(Self) -> Self
 pub fn Exp::smart_binop(BinOp, Self, Self) -> Self
-pub fn Exp::smart_cast(CastKind, Int, Self) -> Self
+pub fn Exp::smart_cast(CastKind, Int32, Self) -> Self
 pub fn Exp::smart_concat(Self, Self) -> Self
-pub fn Exp::smart_extract(Self, hi~ : Int, lo~ : Int) -> Self
+pub fn Exp::smart_extract(Self, hi~ : Int32, lo~ : Int32) -> Self
 pub fn Exp::smart_ite(if_~ : Self, then_~ : Self, else_~ : Self) -> Self
 pub fn Exp::smart_unop(UnOp, Self) -> Self
 pub fn Exp::store(mem~ : Self, addr~ : Self, Self, @bitvec.Endian, Size) -> Self
@@ -719,7 +745,8 @@ pub fn Exp::unknown(String, ValueType) -> Self
 pub fn Exp::unop(UnOp, Self) -> Self
 pub fn Exp::var_exp(Var) -> Self
 
-type ExpEffect derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type ExpEffect
 pub fn ExpEffect::compute(Exp) -> Self
 pub fn ExpEffect::equal(Self, Self) -> Bool
 pub fn ExpEffect::has_coeffects(Self) -> Bool
@@ -739,36 +766,37 @@ pub fn ExpEffect::store() -> Self
 pub fn ExpEffect::stores(Self) -> Bool
 pub fn ExpEffect::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Intent {
   In
   Out
   Both
-} derive(Eq, @debug.Debug)
+}
 pub fn Intent::equal(Self, Self) -> Bool
 pub fn Intent::not_equal(Self, Self) -> Bool
 pub fn Intent::to_repr(Self) -> @debug.Repr
 
 type IrCfg
 pub fn IrCfg::create(tid? : Tid, name? : String) -> Self
-pub fn IrCfg::degree(Self, Term[Blk]) -> Int
+pub fn IrCfg::degree(Self, Term[Blk]) -> Int32
 pub fn IrCfg::edge(Self, Term[Blk], Term[Blk]) -> IrCfgEdge?
-pub fn IrCfg::edge_count(Self) -> Int
+pub fn IrCfg::edge_count(Self) -> Int32
 pub fn IrCfg::edges(Self) -> Array[IrCfgEdge]
 pub fn IrCfg::has_edge(Self, Term[Blk], Term[Blk]) -> Bool
 pub fn IrCfg::has_node(Self, Term[Blk]) -> Bool
-pub fn IrCfg::in_degree(Self, Term[Blk]) -> Int
+pub fn IrCfg::in_degree(Self, Term[Blk]) -> Int32
 pub fn IrCfg::in_edges(Self, Term[Blk]) -> Array[IrCfgEdge]
 pub fn IrCfg::inputs(Self, Term[Blk]) -> Array[IrCfgEdge]
-pub fn IrCfg::insert_edge(Self, Term[Blk], Term[Blk], position? : Int) -> Self
+pub fn IrCfg::insert_edge(Self, Term[Blk], Term[Blk], position? : Int32) -> Self
 pub fn IrCfg::insert_node(Self, Term[Blk]) -> Self
 pub fn IrCfg::is_directed() -> Bool
 pub fn IrCfg::is_empty(Self) -> Bool
-pub fn IrCfg::node_count(Self) -> Int
+pub fn IrCfg::node_count(Self) -> Int32
 pub fn IrCfg::nodes(Self) -> Array[Term[Blk]]
-pub fn IrCfg::number_of_edges(Self) -> Int
-pub fn IrCfg::number_of_nodes(Self) -> Int
+pub fn IrCfg::number_of_edges(Self) -> Int32
+pub fn IrCfg::number_of_nodes(Self) -> Int32
 pub fn IrCfg::of_sub(Term[Sub]) -> Self
-pub fn IrCfg::out_degree(Self, Term[Blk]) -> Int
+pub fn IrCfg::out_degree(Self, Term[Blk]) -> Int32
 pub fn IrCfg::out_edges(Self, Term[Blk]) -> Array[IrCfgEdge]
 pub fn IrCfg::outputs(Self, Term[Blk]) -> Array[IrCfgEdge]
 pub fn IrCfg::predecessors(Self, Term[Blk]) -> Array[Term[Blk]]
@@ -780,7 +808,7 @@ pub fn IrCfg::succs(Self, Term[Blk]) -> Array[Term[Blk]]
 pub fn IrCfg::to_dot(Self) -> String
 pub fn IrCfg::to_string(Self) -> String
 pub fn IrCfg::to_sub(Self) -> Term[Sub]
-pub fn IrCfg::update_edge(Self, IrCfgEdge, position~ : Int) -> Self
+pub fn IrCfg::update_edge(Self, IrCfgEdge, position~ : Int32) -> Self
 pub fn IrCfg::update_node(Self, Term[Blk], Term[Blk]) -> Self
 
 type IrCfgEdge
@@ -791,12 +819,13 @@ pub fn IrCfgEdge::edges_before(Self, Term[Sub]) -> Array[Self]
 pub fn IrCfgEdge::jmp(Self) -> Term[Jmp]
 pub fn IrCfgEdge::jmps_after(Self, Term[Sub]) -> Array[Term[Jmp]]
 pub fn IrCfgEdge::jmps_before(Self, Term[Sub]) -> Array[Term[Jmp]]
-pub fn IrCfgEdge::label(Self) -> Int
+pub fn IrCfgEdge::label(Self) -> Int32
 pub fn IrCfgEdge::mem(Self, IrCfg) -> Bool
-pub fn IrCfgEdge::position(Self) -> Int
+pub fn IrCfgEdge::position(Self) -> Int32
 pub fn IrCfgEdge::src(Self) -> Term[Blk]
 pub fn IrCfgEdge::tid(Self) -> Tid
 
+#derive(Eq, @debug.Debug)
 pub(all) enum IrColor {
   IrBlack
   IrRed
@@ -807,28 +836,30 @@ pub(all) enum IrColor {
   IrCyan
   IrWhite
   IrGray
-} derive(Eq, @debug.Debug)
+}
 pub fn IrColor::equal(Self, Self) -> Bool
 pub fn IrColor::not_equal(Self, Self) -> Bool
 pub fn IrColor::of_string(String) -> Self?
 pub fn IrColor::to_repr(Self) -> @debug.Repr
 pub fn IrColor::to_string(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum IrFall {
   IntraFall(JmpDst)
   InterFall(JmpDst)
-} derive(Eq, @debug.Debug)
+}
 pub fn IrFall::equal(Self, Self) -> Bool
 pub fn IrFall::not_equal(Self, Self) -> Bool
 pub fn IrFall::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub(all) struct IrInsn {
   bil : Array[Stmt]
   addr : Word?
   insn : String?
   is_call : Bool
   is_barrier : Bool
-} derive(@debug.Debug)
+}
 pub fn IrInsn::new(Array[Stmt], addr? : Word, insn? : String, is_call? : Bool, is_barrier? : Bool) -> Self
 pub fn IrInsn::to_repr(Self) -> @debug.Repr
 
@@ -851,7 +882,7 @@ pub fn IrTerm::before(Self, IrTermClass, Tid, rev? : Bool) -> Array[Self]
 pub fn[A] IrTerm::cata(Self, init~ : A, program? : (Term[Program]) -> A, sub? : (Term[Sub]) -> A, arg? : (Term[Arg]) -> A, blk? : (Term[Blk]) -> A, phi? : (Term[Phi]) -> A, def? : (Term[Def]) -> A, jmp? : (Term[Jmp]) -> A) -> A
 pub fn IrTerm::change(Self, IrTermClass, Tid, (Self?) -> Self?) -> Self
 pub fn IrTerm::change_child(Self, IrTermClass, Tid, (Self?) -> Self?) -> Self
-pub fn IrTerm::child_count(Self, IrTermClass) -> Int
+pub fn IrTerm::child_count(Self, IrTermClass) -> Int32
 pub fn IrTerm::children(Self) -> Array[Self]
 pub fn IrTerm::children_after(Self, IrTermClass, Tid, rev? : Bool) -> Array[Self]
 pub fn IrTerm::children_before(Self, IrTermClass, Tid, rev? : Bool) -> Array[Self]
@@ -966,17 +997,17 @@ pub fn IrTerm::is_synthetic(Self) -> Bool
 pub fn IrTerm::is_visited(Self) -> Bool
 pub fn IrTerm::last(Self, IrTermClass) -> Self?
 pub fn IrTerm::last_child(Self, IrTermClass) -> Self?
-pub fn IrTerm::length(Self, IrTermClass) -> Int
+pub fn IrTerm::length(Self, IrTermClass) -> Int32
 pub fn IrTerm::map(Self, program? : (Term[Program]) -> Term[Program], sub? : (Term[Sub]) -> Term[Sub], arg? : (Term[Arg]) -> Term[Arg], blk? : (Term[Blk]) -> Term[Blk], phi? : (Term[Phi]) -> Term[Phi], def? : (Term[Def]) -> Term[Def], jmp? : (Term[Jmp]) -> Term[Jmp]) -> Self
 pub fn IrTerm::map_children(Self, IrTermClass, (Self) -> Self) -> Self
 pub fn IrTerm::mark_value(Self) -> String?
 pub fn IrTerm::name(Self) -> String
 pub fn IrTerm::next(Self, IrTermClass, Tid) -> Self?
 pub fn IrTerm::next_child(Self, IrTermClass, Tid) -> Self?
-pub fn IrTerm::nth(Self, IrTermClass, Int) -> Self?
-pub fn IrTerm::nth_child(Self, IrTermClass, Int) -> Self?
-pub fn IrTerm::nth_child_exn(Self, IrTermClass, Int) -> Self raise IrTermLookupError
-pub fn IrTerm::nth_exn(Self, IrTermClass, Int) -> Self raise IrTermLookupError
+pub fn IrTerm::nth(Self, IrTermClass, Int32) -> Self?
+pub fn IrTerm::nth_child(Self, IrTermClass, Int32) -> Self?
+pub fn IrTerm::nth_child_exn(Self, IrTermClass, Int32) -> Self raise IrTermLookupError
+pub fn IrTerm::nth_exn(Self, IrTermClass, Int32) -> Self raise IrTermLookupError
 pub fn IrTerm::origin(Self) -> Tid?
 pub fn IrTerm::origin_text(Self) -> String?
 pub fn IrTerm::postcondition(Self) -> String?
@@ -1053,6 +1084,7 @@ pub fn IrTerm::visit_events(Self) -> Array[IrVisitEvent]
 pub fn IrTerm::weight(Self) -> Double?
 pub fn IrTerm::with_attrs(Self, Map[String, String]) -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) enum IrTermClass {
   ProgramTermClass
   SubTermClass
@@ -1061,7 +1093,7 @@ pub(all) enum IrTermClass {
   PhiTermClass
   DefTermClass
   JmpTermClass
-} derive(Eq, @debug.Debug)
+}
 pub fn IrTermClass::equal(Self, Self) -> Bool
 pub fn IrTermClass::not_equal(Self, Self) -> Bool
 pub fn IrTermClass::to_repr(Self) -> @debug.Repr
@@ -1075,16 +1107,17 @@ pub(all) enum IrVisitEvent {
 }
 pub fn IrVisitEvent::kind(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Jmp {
   kind : JmpKind
   cond : Exp
-} derive(Eq, @debug.Debug)
+}
 pub fn Jmp::alt(Term[Self]) -> JmpDst?
 pub fn Jmp::cond(Term[Self]) -> Exp
 pub fn Jmp::create(JmpKind, cond? : Exp, tid? : Tid) -> Term[Self]
 pub fn Jmp::create_call(Call, cond? : Exp, tid? : Tid) -> Term[Self]
 pub fn Jmp::create_goto(Label, cond? : Exp, tid? : Tid) -> Term[Self]
-pub fn Jmp::create_int(Int, Tid, cond? : Exp, term_tid? : Tid) -> Term[Self]
+pub fn Jmp::create_int(Int32, Tid, cond? : Exp, term_tid? : Tid) -> Term[Self]
 pub fn Jmp::create_ret(Label, cond? : Exp, tid? : Tid) -> Term[Self]
 pub fn Jmp::dst(Term[Self]) -> JmpDst?
 pub fn Jmp::equal(Self, Self) -> Bool
@@ -1106,20 +1139,22 @@ pub fn Jmp::with_dst(Term[Self], JmpDst?) -> Term[Self]
 pub fn Jmp::with_guard(Term[Self], Exp?) -> Term[Self]
 pub fn Jmp::with_kind(Term[Self], JmpKind) -> Term[Self]
 
+#derive(Eq, @debug.Debug)
 pub(all) enum JmpDst {
   ResolvedDst(Tid)
   IndirectDst(Exp)
-} derive(Eq, @debug.Debug)
+}
 pub fn JmpDst::equal(Self, Self) -> Bool
 pub fn JmpDst::not_equal(Self, Self) -> Bool
 pub fn JmpDst::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum JmpKind {
   JmpCall(Call)
   Goto(Label)
   Ret(Label)
-  Interrupt(Int, Tid)
-} derive(Eq, @debug.Debug)
+  Interrupt(Int32, Tid)
+}
 pub fn JmpKind::equal(Self, Self) -> Bool
 pub fn JmpKind::free_vars(Self) -> Array[Var]
 pub fn JmpKind::map_exp(Self, (Exp) -> Exp) -> Self
@@ -1128,18 +1163,20 @@ pub fn JmpKind::substitute_var(Self, Var, Exp) -> Self
 pub fn JmpKind::to_repr(Self) -> @debug.Repr
 pub fn JmpKind::to_string(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum JmpResolution {
   ResolvedTarget(Tid)
   IndirectTarget(Exp)
-} derive(Eq, @debug.Debug)
+}
 pub fn JmpResolution::equal(Self, Self) -> Bool
 pub fn JmpResolution::not_equal(Self, Self) -> Bool
 pub fn JmpResolution::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Label {
   Direct(Tid)
   Indirect(Exp)
-} derive(Eq, @debug.Debug)
+}
 pub fn Label::change(Self, direct? : (Tid) -> Tid, indirect? : (Exp) -> Exp) -> Self
 pub fn Label::create() -> Self
 pub fn Label::direct(Tid) -> Self
@@ -1166,10 +1203,11 @@ pub fn Live::uses(Self, Tid) -> Array[Var]
 pub fn Live::vars(Self) -> Array[Var]
 pub impl Show for Live
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Phi {
   lhs : Var
   values : Array[(Tid, Exp)]
-} derive(Eq, @debug.Debug)
+}
 pub fn Phi::create(Var, Tid, Exp, tid? : Tid) -> Term[Self]
 pub fn Phi::equal(Self, Self) -> Bool
 pub fn Phi::free_vars(Term[Self]) -> Array[Var]
@@ -1202,9 +1240,10 @@ pub fn Program::to_string(Term[Self]) -> String
 
 type ProgramBuilder
 pub fn ProgramBuilder::add_sub(Self, Term[Sub]) -> Unit
-pub fn ProgramBuilder::create(tid? : Tid, subs? : Int) -> Self
+pub fn ProgramBuilder::create(tid? : Tid, subs? : Int32) -> Self
 pub fn ProgramBuilder::result(Self) -> Term[Program]
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Size {
   R8
   R16
@@ -1212,18 +1251,18 @@ pub(all) enum Size {
   R64
   R128
   R256
-} derive(Eq, @debug.Debug)
-pub fn Size::addr_of_int(Int) -> Result[AddrSize, String]
-pub fn Size::addr_of_int_exn(Int) -> AddrSize raise SizeError
-pub fn Size::addr_of_int_opt(Int) -> AddrSize?
+}
+pub fn Size::addr_of_int(Int32) -> Result[AddrSize, String]
+pub fn Size::addr_of_int_exn(Int32) -> AddrSize raise SizeError
+pub fn Size::addr_of_int_opt(Int32) -> AddrSize?
 pub fn Size::addr_of_word_size(WordSize) -> AddrSize
 pub fn Size::equal(Self, Self) -> Bool
-pub fn Size::in_bits(Self) -> Int
-pub fn Size::in_bytes(Self) -> Int
+pub fn Size::in_bits(Self) -> Int32
+pub fn Size::in_bytes(Self) -> Int32
 pub fn Size::not_equal(Self, Self) -> Bool
-pub fn Size::of_int(Int) -> Result[Self, String]
-pub fn Size::of_int_exn(Int) -> Self raise SizeError
-pub fn Size::of_int_opt(Int) -> Self?
+pub fn Size::of_int(Int32) -> Result[Self, String]
+pub fn Size::of_int_exn(Int32) -> Self raise SizeError
+pub fn Size::of_int_opt(Int32) -> Self?
 pub fn Size::to_addr_size(Self) -> Result[AddrSize, String]
 pub fn Size::to_addr_size_exn(Self) -> AddrSize raise SizeError
 pub fn Size::to_addr_size_opt(Self) -> AddrSize?
@@ -1231,23 +1270,24 @@ pub fn Size::to_repr(Self) -> @debug.Repr
 pub fn Size::to_string(Self) -> String
 pub fn Size::word_of_addr_size(AddrSize) -> WordSize
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Stmt {
   Move(Var, Exp)
   Jmp(Exp)
   Special(String)
-  CpuExn(Int)
+  CpuExn(Int32)
   If(cond~ : Exp, yes~ : Array[Stmt], no~ : Array[Stmt])
   While(cond~ : Exp, body~ : Array[Stmt])
-} derive(Eq, @debug.Debug)
+}
 pub fn Stmt::call() -> StmtAttribute[String]
 pub fn Stmt::check_type(Self) -> Result[Unit, TypeError]
-pub fn Stmt::compare(Self, Self) -> Int
-pub fn Stmt::cpuexn(Int) -> Self
+pub fn Stmt::compare(Self, Self) -> Int32
+pub fn Stmt::cpuexn(Int32) -> Self
 pub fn[T] Stmt::decode(StmtAttribute[T], Self) -> T?
 pub fn Stmt::defined_var(Self) -> Var?
 pub fn[T] Stmt::encode(StmtAttribute[T], T) -> Self
 pub fn Stmt::equal(Self, Self) -> Bool
-pub fn Stmt::exec(Self, state? : BilState, max_steps? : Int) -> Result[BilState, String]
+pub fn Stmt::exec(Self, state? : BilState, max_steps? : Int32) -> Result[BilState, String]
 pub fn Stmt::exists(Self, (Self) -> Bool) -> Bool
 pub fn Stmt::exists_exp(Self, (Exp) -> Bool) -> Bool
 pub fn Stmt::find(Self, (Self) -> Bool) -> Self?
@@ -1302,7 +1342,7 @@ pub fn Sub::with_name(Term[Self], String) -> Term[Self]
 type SubBuilder
 pub fn SubBuilder::add_arg(Self, Term[Arg]) -> Unit
 pub fn SubBuilder::add_blk(Self, Term[Blk]) -> Unit
-pub fn SubBuilder::create(tid? : Tid, args? : Int, blks? : Int, name? : String) -> Self
+pub fn SubBuilder::create(tid? : Tid, args? : Int32, blks? : Int32, name? : String) -> Self
 pub fn SubBuilder::result(Self) -> Term[Sub]
 
 type Tag[T]
@@ -1312,7 +1352,7 @@ pub fn[T] Tag::encode(Self[T], T) -> String?
 pub fn[T] Tag::name(Self[T]) -> String
 pub fn[T] Tag::pkg(Self[T]) -> String
 pub fn[T : Show + Compare] Tag::register(name~ : String, uuid~ : String, encode? : (T) -> String, decode? : (String) -> T?, pkg? : String, desc? : String) -> Self[T]
-pub fn[T] Tag::register_with(name~ : String, uuid~ : String, show~ : (T) -> String, compare~ : (T, T) -> Int, encode? : (T) -> String, decode? : (String) -> T?, pkg? : String, desc? : String) -> Self[T]
+pub fn[T] Tag::register_with(name~ : String, uuid~ : String, show~ : (T) -> String, compare~ : (T, T) -> Int32, encode? : (T) -> String, decode? : (String) -> T?, pkg? : String, desc? : String) -> Self[T]
 pub fn[A, B] Tag::same(Self[A], Self[B]) -> Bool
 pub fn[T] Tag::show(Self[T], T) -> String
 pub fn[T] Tag::typeid(Self[T]) -> String
@@ -1326,7 +1366,7 @@ pub fn Term::append_def(Self[Blk], Self[Def]) -> Self[Blk]
 pub fn Term::append_jmp(Self[Blk], Self[Jmp]) -> Self[Blk]
 pub fn Term::append_phi(Self[Blk], Self[Phi]) -> Self[Blk]
 pub fn Term::append_sub(Self[Program], Self[Sub]) -> Self[Program]
-pub fn Term::arg_count(Self[Sub]) -> Int
+pub fn Term::arg_count(Self[Sub]) -> Int32
 pub fn Term::arg_format(Self[Arg]) -> String?
 pub fn Term::arg_free_vars(Self[Arg]) -> Array[Var]
 pub fn Term::arg_lhs(Self[Arg]) -> Var
@@ -1339,7 +1379,7 @@ pub fn Term::args_after(Self[Sub], Tid, rev? : Bool) -> Array[Self[Arg]]
 pub fn Term::args_before(Self[Sub], Tid, rev? : Bool) -> Array[Self[Arg]]
 pub fn[T] Term::attrs(Self[T]) -> Map[String, String]
 pub fn[T] Term::background(Self[T]) -> IrColor?
-pub fn Term::blk_count(Self[Sub]) -> Int
+pub fn Term::blk_count(Self[Sub]) -> Int32
 pub fn Term::blk_defined_vars(Self[Blk]) -> Array[Var]
 pub fn Term::blk_free_vars(Self[Blk]) -> Array[Var]
 pub fn Term::blk_phi_edge_free_vars(Self[Blk], Tid) -> Array[Var]
@@ -1368,7 +1408,7 @@ pub fn Term::concat_map_phis(Self[Blk], (Self[Phi]) -> Array[Self[Phi]]) -> Self
 pub fn Term::concat_map_subs(Self[Program], (Self[Sub]) -> Array[Self[Sub]]) -> Self[Program]
 pub fn Term::cond(Self[Jmp]) -> Exp
 pub fn[T] Term::create(T, tid? : Tid) -> Self[T]
-pub fn Term::def_count(Self[Blk]) -> Int
+pub fn Term::def_count(Self[Blk]) -> Int32
 pub fn Term::def_free_vars(Self[Def]) -> Array[Var]
 pub fn Term::def_occurs_after(Self[Blk], Tid, Tid) -> Bool
 pub fn Term::def_to_string(Self[Def]) -> String
@@ -1484,7 +1524,7 @@ pub fn Term::is_stub(Self[Sub]) -> Bool
 pub fn[T] Term::is_synthetic(Self[T]) -> Bool
 pub fn[T] Term::is_visited(Self[T]) -> Bool
 pub fn Term::is_warn_unused(Self[Arg]) -> Bool
-pub fn Term::jmp_count(Self[Blk]) -> Int
+pub fn Term::jmp_count(Self[Blk]) -> Int32
 pub fn Term::jmp_exps(Self[Jmp]) -> Array[Exp]
 pub fn Term::jmp_free_vars(Self[Jmp]) -> Array[Var]
 pub fn Term::jmp_guard(Self[Jmp]) -> Exp?
@@ -1530,25 +1570,25 @@ pub fn Term::next_def(Self[Blk], Tid) -> Self[Def]?
 pub fn Term::next_jmp(Self[Blk], Tid) -> Self[Jmp]?
 pub fn Term::next_phi(Self[Blk], Tid) -> Self[Phi]?
 pub fn Term::next_sub(Self[Program], Tid) -> Self[Sub]?
-pub fn Term::nth_arg(Self[Sub], Int) -> Self[Arg]?
-pub fn Term::nth_arg_exn(Self[Sub], Int) -> Self[Arg] raise IrTermLookupError
-pub fn Term::nth_blk(Self[Sub], Int) -> Self[Blk]?
-pub fn Term::nth_blk_exn(Self[Sub], Int) -> Self[Blk] raise IrTermLookupError
-pub fn Term::nth_def(Self[Blk], Int) -> Self[Def]?
-pub fn Term::nth_def_exn(Self[Blk], Int) -> Self[Def] raise IrTermLookupError
-pub fn Term::nth_jmp(Self[Blk], Int) -> Self[Jmp]?
-pub fn Term::nth_jmp_exn(Self[Blk], Int) -> Self[Jmp] raise IrTermLookupError
-pub fn Term::nth_phi(Self[Blk], Int) -> Self[Phi]?
-pub fn Term::nth_phi_exn(Self[Blk], Int) -> Self[Phi] raise IrTermLookupError
-pub fn Term::nth_sub(Self[Program], Int) -> Self[Sub]?
-pub fn Term::nth_sub_exn(Self[Program], Int) -> Self[Sub] raise IrTermLookupError
+pub fn Term::nth_arg(Self[Sub], Int32) -> Self[Arg]?
+pub fn Term::nth_arg_exn(Self[Sub], Int32) -> Self[Arg] raise IrTermLookupError
+pub fn Term::nth_blk(Self[Sub], Int32) -> Self[Blk]?
+pub fn Term::nth_blk_exn(Self[Sub], Int32) -> Self[Blk] raise IrTermLookupError
+pub fn Term::nth_def(Self[Blk], Int32) -> Self[Def]?
+pub fn Term::nth_def_exn(Self[Blk], Int32) -> Self[Def] raise IrTermLookupError
+pub fn Term::nth_jmp(Self[Blk], Int32) -> Self[Jmp]?
+pub fn Term::nth_jmp_exn(Self[Blk], Int32) -> Self[Jmp] raise IrTermLookupError
+pub fn Term::nth_phi(Self[Blk], Int32) -> Self[Phi]?
+pub fn Term::nth_phi_exn(Self[Blk], Int32) -> Self[Phi] raise IrTermLookupError
+pub fn Term::nth_sub(Self[Program], Int32) -> Self[Sub]?
+pub fn Term::nth_sub_exn(Self[Program], Int32) -> Self[Sub] raise IrTermLookupError
 pub fn Term::occurs(Self[Blk], after~ : Tid, Tid) -> Bool
 pub fn Term::options(Self[Phi]) -> Array[(Tid, Exp)]
 pub fn[T] Term::origin(Self[T]) -> Tid?
 pub fn[T] Term::origin_text(Self[T]) -> String?
 pub fn Term::parent(Self[Program], IrTermClass, Tid) -> IrTerm?
 pub fn[T] Term::payload(Self[T]) -> T
-pub fn Term::phi_count(Self[Blk]) -> Int
+pub fn Term::phi_count(Self[Blk]) -> Int32
 pub fn Term::phi_edge_free_vars(Self[Phi], Tid) -> Array[Var]
 pub fn Term::phi_free_vars(Self[Phi]) -> Array[Var]
 pub fn Term::phi_lhs(Self[Phi]) -> Var
@@ -1629,7 +1669,7 @@ pub fn Term::split_top_defs(Self[Blk]) -> (Self[Blk], Self[Blk])
 pub fn Term::split_while(Self[Blk], (Self[Def]) -> Bool) -> (Self[Blk], Self[Blk])
 pub fn Term::sub_aliases(Self[Sub]) -> Array[String]
 pub fn Term::sub_cfg(Self[Sub]) -> @graphlib.Graph[Tid, Tid]
-pub fn Term::sub_count(Self[Program]) -> Int
+pub fn Term::sub_count(Self[Program]) -> Int32
 pub fn Term::sub_defs(Self[Sub]) -> Array[Self[Def]]
 pub fn Term::sub_direct_call_tids(Self[Sub]) -> Array[Tid]
 pub fn Term::sub_dominance_frontier_blocks(Self[Sub], Self[Blk], entry? : Tid) -> Array[Self[Blk]]
@@ -1789,63 +1829,67 @@ pub fn[T] Term::without_visited(Self[T]) -> Self[T]
 pub fn Term::without_warn_unused(Self[Arg]) -> Self[Arg]
 pub fn[T] Term::without_weight(Self[T]) -> Self[T]
 
+#derive(Eq, Hash, @debug.Debug)
 pub(all) struct Tid {
-  id : Int
+  id : Int32
   pkg_value : String
   name : String?
-  ivec_value : Int?
-} derive(Eq, Hash, @debug.Debug)
+  ivec_value : Int32?
+}
 pub fn Tid::create() -> Self
 pub fn Tid::equal(Self, Self) -> Bool
 pub fn Tid::for_addr(Word, pkg? : String) -> Self
-pub fn Tid::for_ivec(Int, pkg? : String) -> Self
+pub fn Tid::for_ivec(Int32, pkg? : String) -> Self
 pub fn Tid::for_name(String, pkg? : String) -> Self
 pub fn Tid::fresh() -> Self
 pub fn Tid::from_string(String) -> Result[Self, String]
 pub fn Tid::from_string_exn(String) -> Self raise TidParseError
-pub fn Tid::hash(Self) -> Int
+pub fn Tid::hash(Self) -> Int32
 pub fn Tid::hash_combine(Self, Hasher) -> Unit
-pub fn Tid::id(Self) -> Int
-pub fn Tid::ivec(Self) -> Int?
+pub fn Tid::id(Self) -> Int32
+pub fn Tid::ivec(Self) -> Int32?
 pub fn Tid::name(Self) -> String?
 pub fn Tid::not_equal(Self, Self) -> Bool
 pub fn Tid::pkg(Self) -> String
-pub fn Tid::restore(id~ : Int, pkg? : String, name? : String, ivec? : Int) -> Self
+pub fn Tid::restore(id~ : Int32, pkg? : String, name? : String, ivec? : Int32) -> Self
 pub fn Tid::to_repr(Self) -> @debug.Repr
 pub fn Tid::to_string(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum TypeError {
   BadKind(TypeKind)
   BadType(expected~ : ValueType, got~ : ValueType)
   BadCast
   UnknownType
-} derive(Eq, @debug.Debug)
+}
 pub fn TypeError::bad_cast() -> Self
 pub fn TypeError::bad_imm() -> Self
 pub fn TypeError::bad_mem() -> Self
 pub fn TypeError::bad_type(expected~ : ValueType, got~ : ValueType) -> Self
-pub fn TypeError::compare(Self, Self) -> Int
+pub fn TypeError::compare(Self, Self) -> Int32
 pub fn TypeError::equal(Self, Self) -> Bool
 pub fn TypeError::not_equal(Self, Self) -> Bool
 pub fn TypeError::to_repr(Self) -> @debug.Repr
 pub fn TypeError::to_string(Self) -> String
 pub fn TypeError::unknown() -> Self
 
+#derive(Eq, @debug.Debug)
 pub(all) enum TypeKind {
   MemKind
   ImmKind
-} derive(Eq, @debug.Debug)
+}
 pub fn TypeKind::equal(Self, Self) -> Bool
 pub fn TypeKind::not_equal(Self, Self) -> Bool
 pub fn TypeKind::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum UnOp {
   Not
   Neg
-} derive(Eq, @debug.Debug)
+}
 pub fn UnOp::apply(Self, Word) -> Result[Word, String]
 pub fn UnOp::apply_exn(Self, Word) -> Word raise BilApplyError
-pub fn UnOp::compare(Self, Self) -> Int
+pub fn UnOp::compare(Self, Self) -> Int32
 pub fn UnOp::equal(Self, Self) -> Bool
 pub fn UnOp::neg() -> Self
 pub fn UnOp::not() -> Self
@@ -1855,7 +1899,7 @@ pub fn UnOp::to_repr(Self) -> @debug.Repr
 pub fn UnOp::to_string(Self) -> String
 
 type Value
-pub fn Value::compare(Self, Self) -> Int
+pub fn Value::compare(Self, Self) -> Int32
 pub fn[T] Value::create(Tag[T], T) -> Self
 pub fn Value::decode(String, String) -> Self?
 pub fn Value::encode(Self) -> (String, String)?
@@ -1883,14 +1927,15 @@ pub fn[T, S] ValueMatch::case(Self[S], Tag[T], (T) -> S) -> Self[S]
 pub fn[S] ValueMatch::default(() -> S) -> Self[S]
 pub fn[S] ValueMatch::select(Self[S], Value) -> S
 
+#derive(Eq, @debug.Debug)
 pub(all) enum ValueType {
-  Imm(Int)
-  Mem(addr_width~ : Int, value_width~ : Int)
-} derive(Eq, @debug.Debug)
+  Imm(Int32)
+  Mem(addr_width~ : Int32, value_width~ : Int32)
+}
 pub fn ValueType::addr_size(Self) -> AddrSize?
-pub fn ValueType::bitwidth(Self) -> Int?
+pub fn ValueType::bitwidth(Self) -> Int32?
 pub fn ValueType::bool_t() -> Self
-pub fn ValueType::compare(Self, Self) -> Int
+pub fn ValueType::compare(Self, Self) -> Int32
 pub fn ValueType::equal(Self, Self) -> Bool
 pub fn ValueType::mem(AddrSize, Size) -> Self
 pub fn ValueType::mem32_t(Size) -> Self
@@ -1907,16 +1952,17 @@ pub fn ValueType::to_repr(Self) -> @debug.Repr
 pub fn ValueType::to_string(Self) -> String
 pub fn ValueType::value_size(Self) -> Size?
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Var {
   name : String
   typ : ValueType
   is_virtual : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn Var::base(Self) -> Self
-pub fn Var::compare(Self, Self) -> Int
+pub fn Var::compare(Self, Self) -> Int32
 pub fn Var::create(String, ValueType, is_virtual? : Bool, fresh? : Bool) -> Self
 pub fn Var::equal(Self, Self) -> Bool
-pub fn Var::index(Self) -> Int
+pub fn Var::index(Self) -> Int32
 pub fn Var::is_physical(Self) -> Bool
 pub fn Var::is_virtual(Self) -> Bool
 pub fn Var::name(Self) -> String
@@ -1926,39 +1972,40 @@ pub fn Var::same(Self, Self) -> Bool
 pub fn Var::to_repr(Self) -> @debug.Repr
 pub fn Var::to_string(Self) -> String
 pub fn Var::typ(Self) -> ValueType
-pub fn Var::with_index(Self, Int) -> Self
+pub fn Var::with_index(Self, Int32) -> Self
 
 pub(all) enum VarBinding {
   PhiBinding(Term[Phi])
   DefBinding(Term[Def])
 }
 
-type Word derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type Word
 pub fn Word::abs(Self) -> Self
 pub fn Word::add(Self, Self) -> Self raise @bitvec.BitVecError
-pub fn Word::arshift(Self, Int) -> Self
+pub fn Word::arshift(Self, Int32) -> Self
 pub fn Word::b0() -> Self
 pub fn Word::b1() -> Self
 pub fn Word::bit_and(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::bit_or(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::bit_xor(Self, Self) -> Self raise @bitvec.BitVecError
-pub fn Word::bitwidth(Self) -> Int
-pub fn Word::compare(Self, Self) -> Int
-pub fn Word::compare_signed(Self, Self) -> Int raise @bitvec.BitVecError
-pub fn Word::compare_unsigned(Self, Self) -> Int raise @bitvec.BitVecError
+pub fn Word::bitwidth(Self) -> Int32
+pub fn Word::compare(Self, Self) -> Int32
+pub fn Word::compare_signed(Self, Self) -> Int32 raise @bitvec.BitVecError
+pub fn Word::compare_unsigned(Self, Self) -> Int32 raise @bitvec.BitVecError
 pub fn Word::concat(Self, Self) -> Self raise @bitvec.BitVecError
-pub fn Word::create(@bitvec.BitVec, Int) -> Self raise @bitvec.BitVecError
+pub fn Word::create(@bitvec.BitVec, Int32) -> Self raise @bitvec.BitVecError
 pub fn Word::div(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::enum_bits(Self, endian~ : @bitvec.Endian) -> Array[Bool]
 pub fn Word::enum_bytes(Self, endian~ : @bitvec.Endian) -> Array[Self]
 pub fn Word::enum_chars(Self, endian~ : @bitvec.Endian) -> Bytes
 pub fn Word::equal(Self, Self) -> Bool
-pub fn Word::extract(Self, hi? : Int, lo? : Int) -> Self raise @bitvec.BitVecError
-pub fn Word::extract_exn(Self, hi? : Int, lo? : Int) -> Self raise @bitvec.BitVecError
+pub fn Word::extract(Self, hi? : Int32, lo? : Int32) -> Self raise @bitvec.BitVecError
+pub fn Word::extract_exn(Self, hi? : Int32, lo? : Int32) -> Self raise @bitvec.BitVecError
 pub fn Word::format_value(Self, format? : WordValueFormat, letter_case? : WordLetterCase, prefix? : WordPrefix, suffix? : WordSuffix) -> String
 pub fn Word::from_bitvec(@bitvec.BitVec, signed? : Bool) -> Self
-pub fn Word::from_bytes(BytesView, endian~ : @bitvec.Endian, width? : Int) -> Self raise @bitvec.BitVecError
-pub fn Word::from_hex(width~ : Int, StringView) -> Self raise @bitvec.BitVecError
+pub fn Word::from_bytes(BytesView, endian~ : @bitvec.Endian, width? : Int32) -> Self raise @bitvec.BitVecError
+pub fn Word::from_hex(width~ : Int32, StringView) -> Self raise @bitvec.BitVecError
 pub fn Word::from_string(StringView) -> Self raise @bitvec.BitVecError
 pub fn Word::gcd(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::gcd_exn(Self, Self) -> Self raise @bitvec.BitVecError
@@ -1979,30 +2026,30 @@ pub fn Word::logand(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::logor(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::logxor(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::lsb(Self) -> Bool
-pub fn Word::lshift(Self, Int) -> Self
-pub fn Word::memref(Self, disp? : Int, index? : Int, scale? : Size) -> Self
+pub fn Word::lshift(Self, Int32) -> Self
+pub fn Word::memref(Self, disp? : Int32, index? : Int32, scale? : Size) -> Self
 pub fn Word::modulo(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::msb(Self) -> Bool
 pub fn Word::mul(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::neg(Self) -> Self
 pub fn Word::not_equal(Self, Self) -> Bool
-pub fn Word::npred(Self, Int) -> Self
-pub fn Word::nsucc(Self, Int) -> Self
-pub fn Word::of_binary(@bitvec.Endian, BytesView, width? : Int) -> Self raise @bitvec.BitVecError
+pub fn Word::npred(Self, Int32) -> Self
+pub fn Word::nsucc(Self, Int32) -> Self
+pub fn Word::of_binary(@bitvec.Endian, BytesView, width? : Int32) -> Self raise @bitvec.BitVecError
 pub fn Word::of_bool(Bool) -> Self
-pub fn Word::of_int(width~ : Int, Int) -> Self raise @bitvec.BitVecError
-pub fn Word::of_int32(Int, width? : Int) -> Self raise @bitvec.BitVecError
-pub fn Word::of_int64(Int64, width? : Int) -> Self raise @bitvec.BitVecError
-pub fn Word::of_uint64(width~ : Int, UInt64) -> Self raise @bitvec.BitVecError
-pub fn Word::one(width~ : Int) -> Self raise @bitvec.BitVecError
-pub fn Word::ones(width~ : Int) -> Self raise @bitvec.BitVecError
-pub fn Word::packed_eq(Self, Self, element_width~ : Int) -> Result[Self, String]
-pub fn Word::packed_gt(Self, Self, element_width~ : Int, signed? : Bool) -> Result[Self, String]
-pub fn Word::packed_max(Self, Self, element_width~ : Int, signed? : Bool) -> Result[Self, String]
-pub fn Word::packed_min(Self, Self, element_width~ : Int, signed? : Bool) -> Result[Self, String]
+pub fn Word::of_int(width~ : Int32, Int32) -> Self raise @bitvec.BitVecError
+pub fn Word::of_int32(Int32, width? : Int32) -> Self raise @bitvec.BitVecError
+pub fn Word::of_int64(Int64, width? : Int32) -> Self raise @bitvec.BitVecError
+pub fn Word::of_uint64(width~ : Int32, UInt64) -> Self raise @bitvec.BitVecError
+pub fn Word::one(width~ : Int32) -> Self raise @bitvec.BitVecError
+pub fn Word::ones(width~ : Int32) -> Self raise @bitvec.BitVecError
+pub fn Word::packed_eq(Self, Self, element_width~ : Int32) -> Result[Self, String]
+pub fn Word::packed_gt(Self, Self, element_width~ : Int32, signed? : Bool) -> Result[Self, String]
+pub fn Word::packed_max(Self, Self, element_width~ : Int32, signed? : Bool) -> Result[Self, String]
+pub fn Word::packed_min(Self, Self, element_width~ : Int32, signed? : Bool) -> Result[Self, String]
 pub fn Word::pred(Self) -> Self
 pub fn Word::rem(Self, Self) -> Self raise @bitvec.BitVecError
-pub fn Word::rshift(Self, Int) -> Self
+pub fn Word::rshift(Self, Int32) -> Self
 pub fn Word::signed(Self) -> Self
 pub fn Word::signed_div(Self, Self) -> Self raise @bitvec.BitVecError
 pub fn Word::signed_rem(Self, Self) -> Self raise @bitvec.BitVecError
@@ -2012,71 +2059,76 @@ pub fn Word::succ(Self) -> Self
 pub fn Word::to_bitvec(Self) -> @bitvec.BitVec
 pub fn Word::to_bytes(Self, endian~ : @bitvec.Endian) -> Bytes
 pub fn Word::to_hex(Self, prefix? : Bool) -> String
-pub fn Word::to_int(Self) -> Int raise @bitvec.BitVecError
-pub fn Word::to_int32(Self) -> Int raise @bitvec.BitVecError
-pub fn Word::to_int32_exn(Self) -> Int raise @bitvec.BitVecError
+pub fn Word::to_int(Self) -> Int32 raise @bitvec.BitVecError
+pub fn Word::to_int32(Self) -> Int32 raise @bitvec.BitVecError
+pub fn Word::to_int32_exn(Self) -> Int32 raise @bitvec.BitVecError
 pub fn Word::to_int64(Self) -> Int64 raise @bitvec.BitVecError
 pub fn Word::to_int64_exn(Self) -> Int64 raise @bitvec.BitVecError
-pub fn Word::to_int_exn(Self) -> Int raise @bitvec.BitVecError
+pub fn Word::to_int_exn(Self) -> Int32 raise @bitvec.BitVecError
 pub fn Word::to_repr(Self) -> @debug.Repr
 pub fn Word::to_string(Self) -> String
 pub fn Word::to_uint64(Self) -> UInt64 raise @bitvec.BitVecError
-pub fn Word::truncate(Self, width~ : Int) -> Self raise @bitvec.BitVecError
+pub fn Word::truncate(Self, width~ : Int32) -> Self raise @bitvec.BitVecError
 pub fn Word::unsigned(Self) -> Self
 pub fn Word::validate_negative(Self) -> Result[Unit, String]
 pub fn Word::validate_non_negative(Self) -> Result[Unit, String]
 pub fn Word::validate_non_positive(Self) -> Result[Unit, String]
 pub fn Word::validate_positive(Self) -> Result[Unit, String]
-pub fn Word::widen(Self, width~ : Int) -> Self raise @bitvec.BitVecError
-pub fn Word::width(Self) -> Int
+pub fn Word::widen(Self, width~ : Int32) -> Self raise @bitvec.BitVecError
+pub fn Word::width(Self) -> Int32
 pub fn Word::x86_pshufb(Self, Self) -> Result[Self, String]
-pub fn Word::zero(width~ : Int) -> Self raise @bitvec.BitVecError
+pub fn Word::zero(width~ : Int32) -> Self raise @bitvec.BitVecError
 
+#derive(Eq, @debug.Debug)
 pub(all) enum WordLetterCase {
   WordUpperCase
   WordLowerCase
-} derive(Eq, @debug.Debug)
+}
 pub fn WordLetterCase::equal(Self, Self) -> Bool
 pub fn WordLetterCase::not_equal(Self, Self) -> Bool
 pub fn WordLetterCase::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum WordPrefix {
   WordAutoPrefix
   WordBasePrefix
   WordNoPrefix
   WordCustomPrefix(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn WordPrefix::equal(Self, Self) -> Bool
 pub fn WordPrefix::not_equal(Self, Self) -> Bool
 pub fn WordPrefix::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum WordSize {
   W32
   W64
-} derive(Eq, @debug.Debug)
+}
 pub fn WordSize::equal(Self, Self) -> Bool
-pub fn WordSize::in_bits(Self) -> Int
-pub fn WordSize::in_bytes(Self) -> Int
+pub fn WordSize::in_bits(Self) -> Int32
+pub fn WordSize::in_bytes(Self) -> Int32
 pub fn WordSize::not_equal(Self, Self) -> Bool
 pub fn WordSize::to_repr(Self) -> @debug.Repr
 pub fn WordSize::to_size(Self) -> Size
 pub fn WordSize::to_string(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum WordSuffix {
   WordNoSuffix
   WordFullSuffix
   WordSizeSuffix
-} derive(Eq, @debug.Debug)
+}
 pub fn WordSuffix::equal(Self, Self) -> Bool
 pub fn WordSuffix::not_equal(Self, Self) -> Bool
 pub fn WordSuffix::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum WordValueFormat {
   WordHex
   WordDec
   WordOct
   WordBin
-} derive(Eq, @debug.Debug)
+}
 pub fn WordValueFormat::equal(Self, Self) -> Bool
 pub fn WordValueFormat::not_equal(Self, Self) -> Bool
 pub fn WordValueFormat::to_repr(Self) -> @debug.Repr

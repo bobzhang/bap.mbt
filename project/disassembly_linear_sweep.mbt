@@ -1,7 +1,8 @@
 ///|
+#derive(Eq, Debug)
 pub(all) suberror ProjectDisassemblyLinearSweepError {
   LinearSweepFailure(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ProjectDisassemblyLinearSweepError with Eq::{not_equal, equal}

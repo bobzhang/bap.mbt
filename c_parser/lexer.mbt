@@ -7,6 +7,7 @@
 
 ///|
 /// The kind of a preprocessing token.
+#derive(Eq, Debug)
 pub(all) enum TokenKind {
   Ident
   IntLit
@@ -18,7 +19,7 @@ pub(all) enum TokenKind {
   Punct
   /// A character sequence that is not a valid token.
   Other
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TokenKind with Eq::{equal, not_equal}
@@ -28,6 +29,7 @@ pub extend TokenKind with Debug::{to_repr}
 
 ///|
 /// A preprocessing token.
+#derive(Eq, Debug)
 pub(all) struct Token {
   kind : TokenKind
   /// The spelling (the decoded contents for character and string literals).
@@ -40,7 +42,7 @@ pub(all) struct Token {
   bol : Bool
   /// Whether the token is preceded by white space (or a comment).
   space : Bool
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Token with Eq::{equal, not_equal}

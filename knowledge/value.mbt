@@ -179,6 +179,7 @@ pub fn[K, S] Value::join(
 
 ///|
 /// Conflict resolution strategies of `Value::merge`.
+#derive(Eq, Debug)
 pub(all) enum MergeStrategy {
   /// a conflicting property of the older value is ignored
   DropOld
@@ -188,7 +189,7 @@ pub(all) enum MergeStrategy {
   DropRight
   /// a conflicting property of the left value is ignored
   DropLeft
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend MergeStrategy with Eq::{not_equal, equal}

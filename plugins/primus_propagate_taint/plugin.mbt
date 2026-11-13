@@ -2,9 +2,10 @@
 
 ///|
 /// Errors in the plugin configuration (upstream `invalid_arg`).
+#derive(Eq, Debug)
 pub(all) suberror ConfigError {
   ConfigError(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ConfigError with Eq::{not_equal, equal}

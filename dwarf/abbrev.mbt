@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum DwarfAbbrevValueKind {
   DwarfIgnoredValue
   DwarfNameValue
@@ -14,7 +15,7 @@ pub(all) enum DwarfAbbrevValueKind {
   DwarfRangesBaseValue
   DwarfRnglistsBaseValue
   DwarfLoclistsBaseValue
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend DwarfAbbrevValueKind with Eq::{not_equal, equal}

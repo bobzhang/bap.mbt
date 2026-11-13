@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum DwarfSection {
   DwarfInfo
   DwarfAbbrev
@@ -10,7 +11,7 @@ pub(all) enum DwarfSection {
   DwarfRnglists
   DwarfLoclists
   DwarfLoc
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend DwarfSection with Eq::{not_equal, equal}

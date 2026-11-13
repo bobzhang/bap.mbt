@@ -2,10 +2,11 @@
 /// A minimal S-expression, the MoonBit counterpart of `Sexp.t` used by
 /// upstream Primus for inspecting observations, states and values, and for
 /// the `defsystem` system-description language.
+#derive(Eq, Debug)
 pub(all) enum Sexp {
   Atom(String)
   List(Array[Sexp])
-} derive(Eq, Debug)
+}
 
 ///|
 fn sexp_needs_quotes(s : String) -> Bool {
@@ -73,11 +74,12 @@ pub fn Sexp::atoms(xs : Array[String]) -> Sexp {
 
 ///|
 /// Errors raised by the S-expression reader.
+#derive(Eq, Debug)
 pub(all) suberror SexpParseError {
   UnexpectedEof
   UnexpectedChar(Char, Int32)
   UnbalancedParen(Int32)
-} derive(Eq, Debug)
+}
 
 ///|
 priv struct SexpReader {

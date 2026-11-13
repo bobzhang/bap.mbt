@@ -5,11 +5,12 @@
 ///|
 /// A three-way cached property: `Unknown` when the node has an unexpanded
 /// parameter pack below it that may affect the value.
+#derive(Eq)
 priv enum Cache {
   Yes
   No
   Unknown
-} derive(Eq)
+}
 
 // Operator precedences of expression nodes, from the tightest to the
 // loosest binding; used to decide where parentheses are required.

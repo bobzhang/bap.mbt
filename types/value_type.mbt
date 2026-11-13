@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum ValueType {
   Imm(Int32)
   Mem(addr_width~ : Int32, value_width~ : Int32)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend ValueType with Eq::{not_equal}
@@ -133,11 +134,12 @@ pub fn ValueType::to_string(self : ValueType) -> String {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Var {
   name : String
   typ : ValueType
   is_virtual : Bool
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Var with Eq::{not_equal}

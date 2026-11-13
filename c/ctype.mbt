@@ -14,6 +14,7 @@
 /// `long_long`, `signed`, `unsigned` (which includes `_Bool`), `enum`,
 /// `integer = char|signed|unsigned|enum`, `real`, `complex`,
 /// `floating = real|complex`.
+#derive(Eq, Debug, ToJson, FromJson)
 pub(all) enum Basic {
   SChar
   Char
@@ -35,7 +36,7 @@ pub(all) enum Basic {
   CFloat
   CDouble
   CLongDouble
-} derive(Eq, Debug, ToJson, FromJson)
+}
 
 ///|
 pub fn Basic::is_char(self : Basic) -> Bool {
@@ -155,18 +156,20 @@ pub fn Basic::all_floating() -> Array[Basic] {
 ///
 /// The fields are spelled `const_`/`volatile_` since `const` is a MoonBit
 /// keyword and `volatile` is reserved.
+#derive(Eq, Debug, ToJson, FromJson)
 pub(all) struct Qualifier[R] {
   const_ : Bool
   volatile_ : Bool
   restrict : R
-} derive(Eq, Debug, ToJson, FromJson)
+}
 
 ///|
 /// A C attribute `name(args)`, e.g., `__attribute__((format(printf,1,2)))`.
+#derive(Eq, Debug, ToJson, FromJson)
 pub(all) struct Attr {
   name : String
   args : Array[String]
-} derive(Eq, Debug, ToJson, FromJson)
+}
 
 ///|
 pub fn Attr::new(name : String, args~ : Array[String] = []) -> Attr {
@@ -177,37 +180,42 @@ pub fn Attr::new(name : String, args~ : Array[String] = []) -> Attr {
 /// A specification of a type: the qualifier, the type payload, and the list
 /// of attributes (upstream `('a,'b) Spec.t`). Structures, unions, and
 /// functions use `Unit` as the qualifier (upstream `` `no_qualifier ``).
+#derive(Eq, Debug, ToJson, FromJson)
 pub(all) struct Spec[Q, T] {
   qualifier : Q
   t : T
   attrs : Array[Attr]
-} derive(Eq, Debug, ToJson, FromJson)
+}
 
 ///|
 /// A function prototype (upstream `Proto.t`).
+#derive(Eq, Debug, ToJson, FromJson)
 pub(all) struct Proto {
   return_ : CType
   args : Array[(String, CType)]
   variadic : Bool
-} derive(Eq, Debug, ToJson, FromJson)
+}
 
 ///|
 /// A structure or union body (upstream `Compound.t`).
+#derive(Eq, Debug, ToJson, FromJson)
 pub(all) struct Compound {
   name : String
   fields : Array[(String, CType)]
-} derive(Eq, Debug, ToJson, FromJson)
+}
 
 ///|
 /// An array body: the element type and the optional number of elements
 /// (upstream `Array.t`).
+#derive(Eq, Debug, ToJson, FromJson)
 pub(all) struct ArrayType {
   element : CType
   size : Int32?
-} derive(Eq, Debug, ToJson, FromJson)
+}
 
 ///|
 /// A C type (upstream `Bap_c_type.t`).
+#derive(Eq, Debug, ToJson, FromJson)
 pub(all) enum CType {
   Void
   Basic(Spec[Qualifier[Unit], Basic])
@@ -216,7 +224,7 @@ pub(all) enum CType {
   Structure(Spec[Unit, Compound])
   Union(Spec[Unit, Compound])
   Function(Spec[Unit, Proto])
-} derive(Eq, Debug, ToJson, FromJson)
+}
 
 ///|
 /// `attrs t` is the list of attributes associated with the type `t`.

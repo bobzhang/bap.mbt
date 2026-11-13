@@ -104,6 +104,7 @@ let term_postcondition_attr = "postcondition"
 let term_mark_attr = "mark"
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum IrColor {
   IrBlack
   IrRed
@@ -114,7 +115,7 @@ pub(all) enum IrColor {
   IrCyan
   IrWhite
   IrGray
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend IrColor with Eq::{not_equal, equal}

@@ -5,6 +5,7 @@ let program_unit_counter : Ref[Int32] = Ref(0)
 let interned_program_unit_ids : Map[String, Int32] = Map([])
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Language {
   C
   Cxx
@@ -12,7 +13,7 @@ pub(all) enum Language {
   Fortran
   Pascal
   OtherLanguage(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Language with Eq::{not_equal}

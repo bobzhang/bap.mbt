@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum Endian {
   LittleEndian
   BigEndian
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Endian with Eq::{not_equal, equal}
@@ -11,12 +12,13 @@ pub extend Endian with Eq::{not_equal, equal}
 pub extend Endian with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) suberror BitVecError {
   InvalidWidth(Int32)
   IncompatibleWidths(lhs~ : Int32, rhs~ : Int32)
   InvalidHexDigit(Char)
   InvalidLiteral(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend BitVecError with Eq::{not_equal, equal}
@@ -25,10 +27,11 @@ pub extend BitVecError with Eq::{not_equal, equal}
 pub extend BitVecError with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 struct BitVec {
   width : Int32
   limbs : Array[UInt64]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend BitVec with Eq::{not_equal}

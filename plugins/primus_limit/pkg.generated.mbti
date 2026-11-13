@@ -17,45 +17,48 @@ pub fn declare_plugin() -> Unit raise
 
 pub let default_bound : Bound
 
-pub fn enable(max_length? : Bound, max_visited? : Int) -> Unit
+pub fn enable(max_length? : Bound, max_visited? : Int32) -> Unit
 
-pub fn install(@primus.Machine, max_length? : Bound, max_visited? : Int) -> Unit
+pub fn install(@primus.Machine, max_length? : Bound, max_visited? : Int32) -> Unit
 
-pub fn length(@primus.Machine) -> Int
+pub fn length(@primus.Machine) -> Int32
 
 pub let name : String
 
-pub fn register(max_length? : Bound, max_visited? : Int) -> Bool
+pub fn register(max_length? : Bound, max_visited? : Int32) -> Bool
 
-pub fn visits(@primus.Machine, @types.Tid) -> Int
+pub fn visits(@primus.Machine, @types.Tid) -> Int32
 
 // Errors
+#derive(@debug.Debug)
 pub suberror BoundParseError {
   BoundParseError(String)
-} derive(@debug.Debug)
+}
 pub fn BoundParseError::output(Self, &Logger) -> Unit
 pub fn BoundParseError::to_repr(Self) -> @debug.Repr
 pub fn BoundParseError::to_string(Self) -> String
 pub impl Show for BoundParseError
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) struct Bound {
   counter : Counter
-  limit : Int
-} derive(Eq, @debug.Debug)
+  limit : Int32
+}
 pub fn Bound::equal(Self, Self) -> Bool
 pub fn Bound::not_equal(Self, Self) -> Bool
 pub fn Bound::parse(String) -> Self raise BoundParseError
 pub fn Bound::to_repr(Self) -> @debug.Repr
 pub fn Bound::to_string(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Counter {
   Blk
   Insn
   Term
   Exp
   Clk
-} derive(Eq, @debug.Debug)
+}
 pub fn Counter::equal(Self, Self) -> Bool
 pub fn Counter::not_equal(Self, Self) -> Bool
 pub fn Counter::to_repr(Self) -> @debug.Repr

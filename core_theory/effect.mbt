@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum EffectSort {
   EffectBot
   EffectData
@@ -6,7 +7,7 @@ pub(all) enum EffectSort {
   EffectBoth
   EffectSet(names~ : Array[String])
   EffectTop
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend EffectSort with Eq::{not_equal, equal}

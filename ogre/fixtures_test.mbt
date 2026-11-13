@@ -22,13 +22,14 @@ let writable : @ogre.Field[Bool] = @ogre.def("w", @ogre.Type::bool())
 let executable : @ogre.Field[Bool] = @ogre.def("x", @ogre.Type::bool())
 
 ///|
+#derive(Debug, Eq)
 struct Segment {
   addr : Int64
   size : Int64
   r : Bool
   w : Bool
   x : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 let segment : @ogre.Attribute[Segment, (Int64, Int64, Bool, Bool, Bool)] = @ogre.Attribute::new(

@@ -1,9 +1,10 @@
 ///|
 /// The file class (`EI_CLASS`, upstream `e_class`).
+#derive(Eq, Compare, Debug)
 pub(all) enum EClass {
   ELFCLASS32
   ELFCLASS64
-} derive(Eq, Compare, Debug)
+}
 
 ///|
 pub extend EClass with Eq::{equal, not_equal}
@@ -16,10 +17,11 @@ pub extend EClass with Debug::{to_repr}
 
 ///|
 /// The data encoding (`EI_DATA`, upstream `e_data`).
+#derive(Eq, Compare, Debug)
 pub(all) enum EData {
   ELFDATA2LSB
   ELFDATA2MSB
-} derive(Eq, Compare, Debug)
+}
 
 ///|
 pub extend EData with Eq::{equal, not_equal}
@@ -46,6 +48,7 @@ pub fn EData::endian(self : EData) -> @bitvec.Endian {
 /// Unlike upstream, which widens 32-bit fields with `Int64.of_int32` (and
 /// thus sign-extends them), addresses, sizes and offsets are zero-extended
 /// unsigned values.
+#derive(Eq, Compare, Debug)
 pub(all) struct Segment {
   p_type : PType
   p_flags : Array[PFlag]
@@ -55,7 +58,7 @@ pub(all) struct Segment {
   p_memsz : UInt64
   p_filesz : UInt64
   p_offset : UInt64
-} derive(Eq, Compare, Debug)
+}
 
 ///|
 pub extend Segment with Eq::{equal, not_equal}
@@ -69,6 +72,7 @@ pub extend Segment with Debug::{to_repr}
 ///|
 /// A section header (upstream `section`), with every field of the file
 /// entry.
+#derive(Eq, Compare, Debug)
 pub(all) struct Section {
   sh_name : UInt32
   sh_type : ShType
@@ -80,7 +84,7 @@ pub(all) struct Section {
   sh_addralign : UInt64
   sh_entsize : UInt64
   sh_offset : UInt64
-} derive(Eq, Compare, Debug)
+}
 
 ///|
 pub extend Section with Eq::{equal, not_equal}
@@ -93,11 +97,12 @@ pub extend Section with Debug::{to_repr}
 
 ///|
 /// The location of a header table (upstream `table_info`).
+#derive(Eq, Compare, Debug)
 pub(all) struct TableInfo {
   table_offset : UInt64
   entry_size : Int32
   entry_num : Int32
-} derive(Eq, Compare, Debug)
+}
 
 ///|
 pub extend TableInfo with Eq::{equal, not_equal}
@@ -124,6 +129,7 @@ pub extend TableInfo with Debug::{to_repr}
 /// (`e_phnum == PN_XNUM`, `e_shnum == 0`, `e_shstrndx == SHN_XINDEX`), the
 /// counts and `e_shstrndx` come from section header 0, and the table
 /// infos hold the resolved counts.
+#derive(Eq, Compare, Debug)
 pub(all) struct Elf {
   e_class : EClass
   e_data : EData
@@ -141,7 +147,7 @@ pub(all) struct Elf {
   e_ehsize : Int32
   e_phtab : TableInfo
   e_shtab : TableInfo
-} derive(Eq, Compare, Debug)
+}
 
 ///|
 pub extend Elf with Eq::{equal, not_equal}

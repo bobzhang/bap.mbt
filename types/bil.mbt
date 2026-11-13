@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum UnOp {
   Not
   Neg
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend UnOp with Eq::{not_equal}
@@ -37,6 +38,7 @@ pub fn UnOp::string_of_unop(self : UnOp) -> String {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum BinOp {
   Plus
   Minus
@@ -57,7 +59,7 @@ pub(all) enum BinOp {
   Le
   SignedLt
   SignedLe
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend BinOp with Eq::{not_equal}
@@ -227,12 +229,13 @@ pub fn BinOp::is_associative(self : BinOp) -> Bool {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum CastKind {
   Unsigned
   Signed
   High
   Low
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend CastKind with Eq::{not_equal}
@@ -276,6 +279,7 @@ pub fn CastKind::string_of_cast(self : CastKind) -> String {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Exp {
   Int(Word)
   Var(Var)
@@ -289,7 +293,7 @@ pub(all) enum Exp {
   UnOp(UnOp, Exp)
   BinOp(BinOp, Exp, Exp)
   Ite(cond~ : Exp, yes~ : Exp, no~ : Exp)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Exp with Eq::{not_equal}
@@ -438,6 +442,7 @@ pub fn Exp::to_string(self : Exp) -> String {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Stmt {
   Move(Var, Exp)
   Jmp(Exp)
@@ -445,7 +450,7 @@ pub(all) enum Stmt {
   CpuExn(Int32)
   If(cond~ : Exp, yes~ : Array[Stmt], no~ : Array[Stmt])
   While(cond~ : Exp, body~ : Array[Stmt])
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Stmt with Eq::{not_equal}
@@ -461,9 +466,10 @@ struct StmtAttribute[T] {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) suberror StmtAttributeError {
   DuplicateStmtAttribute(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend StmtAttributeError with Eq::{not_equal, equal}

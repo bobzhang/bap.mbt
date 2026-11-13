@@ -1,10 +1,11 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum Endianness {
   UnknownEndianness
   LittleEndian
   BigEndian
   BiEndian
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Endianness with Eq::{not_equal}
@@ -33,6 +34,7 @@ pub fn Endianness::bi() -> Endianness {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum System {
   UnknownSystem
   HPUX
@@ -51,7 +53,7 @@ pub(all) enum System {
   MSDOS
   UEFI
   NoSystem
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend System with Eq::{not_equal}
@@ -60,6 +62,7 @@ pub extend System with Eq::{not_equal}
 pub extend System with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Abi {
   UnknownAbi
   SysV
@@ -77,7 +80,7 @@ pub(all) enum Abi {
   MSVC
   SMC
   HVC
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Abi with Eq::{not_equal}
@@ -86,11 +89,12 @@ pub extend Abi with Eq::{not_equal}
 pub extend Abi with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Fabi {
   UnknownFabi
   Soft
   Hard
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Fabi with Eq::{not_equal}
@@ -99,6 +103,7 @@ pub extend Fabi with Eq::{not_equal}
 pub extend Fabi with Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Filetype {
   UnknownFiletype
   Elf
@@ -107,7 +112,7 @@ pub(all) enum Filetype {
   PE
   AOut
   Raw
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Filetype with Eq::{not_equal}
@@ -1135,6 +1140,7 @@ pub fn TargetOptions::to_string(self : TargetOptions) -> String {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Role {
   UnknownRole
   General
@@ -1170,7 +1176,7 @@ pub(all) enum Role {
   OverflowFlag
   ParityFlag
   ThumbMode
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Role with Eq::{not_equal}

@@ -1,5 +1,6 @@
 ///|
-pub(all) struct Digest(String) derive(Eq, Hash, Debug)
+#derive(Eq, Hash, Debug)
+pub(all) struct Digest(String)
 
 ///|
 pub extend Digest with Eq::{not_equal, equal}

@@ -6,6 +6,7 @@
 
 ///|
 /// A decoded machine-code operand.
+#derive(Eq, Debug)
 pub(all) enum Op {
   /// Register operand with its backend-specific name (LLVM MC style, e.g.
   /// `R0`, `ZERO_64`, `X1`) and numeric code (`0` when unknown).
@@ -14,7 +15,7 @@ pub(all) enum Op {
   Imm(Int64)
   /// Floating-point immediate.
   Fmm(Double)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Op with Eq::{equal, not_equal}

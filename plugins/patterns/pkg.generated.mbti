@@ -75,17 +75,19 @@ pub fn select(ArrayView[String], @core_theory.Target, fs? : @bap_main.FileSystem
 pub fn set_action_semantics(lisp? : Bool, extra? : ArrayView[(String, String)]) -> Unit
 
 // Errors
+#derive(Eq, @debug.Debug)
 pub(all) suberror PatternError {
   PatternError(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn PatternError::equal(Self, Self) -> Bool
 pub fn PatternError::not_equal(Self, Self) -> Bool
 pub fn PatternError::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) suberror TargetSpecError {
   WrongEndianness(String)
   UnrecognizedTarget(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn TargetSpecError::equal(Self, Self) -> Bool
 pub fn TargetSpecError::not_equal(Self, Self) -> Bool
 pub fn TargetSpecError::output(Self, &Logger) -> Unit
@@ -99,7 +101,7 @@ pub struct Action {
 }
 pub fn Action::args(Self) -> Array[(@knowledge.Name, String)]
 pub fn Action::attribute(Self, String) -> String?
-pub fn Action::compare(Self, Self) -> Int
+pub fn Action::compare(Self, Self) -> Int32
 pub fn Action::create(@knowledge.Name, args? : Array[(@knowledge.Name, String)]) -> Self
 pub fn Action::equal(Self, Self) -> Bool
 pub fn Action::name(Self) -> @knowledge.Name
@@ -132,13 +134,14 @@ pub fn ActionSet::union(Self, Self) -> Self
 pub struct Case {
   pattern : Pattern
   actions : ActionSet
-  shifted : Int
+  shifted : Int32
 }
 
+#derive(Eq, @debug.Debug)
 pub struct Outcome {
   roots : Array[UInt64]
   names : Array[(UInt64, String)]
-} derive(Eq, @debug.Debug)
+}
 pub fn Outcome::equal(Self, Self) -> Bool
 pub fn Outcome::not_equal(Self, Self) -> Bool
 pub fn Outcome::rooter(Self, path? : String) -> @project.ProjectRooter
@@ -151,11 +154,11 @@ pub struct Pattern {
 pub fn Pattern::concat(Self, Self) -> Self
 pub fn Pattern::create(String) -> Self raise PatternError
 pub fn Pattern::empty() -> Self
-pub fn Pattern::length(Self) -> Int
-pub fn Pattern::matches(Self, pos~ : Int, Int) -> Bool
+pub fn Pattern::length(Self) -> Int32
+pub fn Pattern::matches(Self, pos~ : Int32, Int32) -> Bool
 pub fn Pattern::output(Self, &Logger) -> Unit
 pub fn Pattern::to_string(Self) -> String
-pub fn Pattern::weight(Self) -> Int
+pub fn Pattern::weight(Self) -> Int32
 pub impl Show for Pattern
 
 pub(all) struct Rule {
@@ -179,17 +182,18 @@ pub fn Rules::known(Self) -> ActionSet
 pub fn[X] Rules::search(Self, @memory.Memory, (UInt64, Action, X) -> X, X) -> X
 pub fn Rules::to_string(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Sizes {
-  total : Int
-  post : Int
-} derive(Eq, @debug.Debug)
+  total : Int32
+  post : Int32
+}
 pub fn Sizes::equal(Self, Self) -> Bool
 pub fn Sizes::not_equal(Self, Self) -> Bool
 pub fn Sizes::to_repr(Self) -> @debug.Repr
 
 pub(all) enum TargetSpec {
   Named(@core_theory.Target)
-  Spec(arch~ : String, order~ : @core_theory.Endianness?, bits~ : Int?, variant~ : String?, compiler~ : String?)
+  Spec(arch~ : String, order~ : @core_theory.Endianness?, bits~ : Int32?, variant~ : String?, compiler~ : String?)
 }
 pub fn TargetSpec::matches(Self, @core_theory.Target) -> Bool
 pub fn TargetSpec::parse(String) -> Self raise TargetSpecError

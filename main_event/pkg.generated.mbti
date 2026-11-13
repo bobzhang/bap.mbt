@@ -9,15 +9,15 @@ import {
 // Values
 pub fn message(MainLogLevel, section~ : String, message~ : String) -> Unit
 
-pub fn observe_log_messages(notify~ : (MainLogInfo) -> Unit) -> Int
+pub fn observe_log_messages(notify~ : (MainLogInfo) -> Unit) -> Int32
 
 pub fn pp(MainEvent) -> String
 
-pub fn process_events(write~ : (String) -> Unit, error? : (String) -> Unit) -> Int
+pub fn process_events(write~ : (String) -> Unit, error? : (String) -> Unit) -> Int32
 
-pub fn process_log_events(write~ : (String) -> Unit, error? : (String) -> Unit) -> Int
+pub fn process_log_events(write~ : (String) -> Unit, error? : (String) -> Unit) -> Int32
 
-pub fn progress(String, note? : String, stage? : Int, total? : Int) -> Unit
+pub fn progress(String, note? : String, stage? : Int32, total? : Int32) -> Unit
 
 pub fn register_printer((MainEvent) -> String?) -> Unit
 
@@ -25,7 +25,7 @@ pub fn send(MainEvent) -> Unit
 
 pub fn stream() -> @future.Stream[MainEvent]
 
-pub fn unsubscribe(Int) -> Unit
+pub fn unsubscribe(Int32) -> Unit
 
 // Errors
 
@@ -34,13 +34,14 @@ pub(all) struct Log {
 }
 pub fn Log::create(section~ : String, debug_enabled? : Bool) -> MainLogReporter
 pub fn Log::message(MainLogLevel, section~ : String, message~ : String) -> Unit
-pub fn Log::progress(String, note? : String, stage? : Int, total? : Int) -> Unit
+pub fn Log::progress(String, note? : String, stage? : Int32, total? : Int32) -> Unit
 
+#derive(Eq, @debug.Debug)
 pub(all) enum MainEvent {
   MainLogMessage(MainLogInfo)
   MainLogProgress(MainProgress)
   MainCustomEvent(String, String?)
-} derive(Eq, @debug.Debug)
+}
 pub fn MainEvent::custom(name~ : String, payload? : String) -> Self
 pub fn MainEvent::equal(Self, Self) -> Bool
 pub fn MainEvent::log(MainLogInfo) -> Self
@@ -49,7 +50,8 @@ pub fn MainEvent::progress(MainProgress) -> Self
 pub fn MainEvent::to_repr(Self) -> @debug.Repr
 pub fn MainEvent::to_string(Self) -> String
 
-type MainLogInfo derive(Eq, @debug.Debug)
+#derive(Eq, @debug.Debug)
+type MainLogInfo
 pub fn MainLogInfo::create(level~ : MainLogLevel, section~ : String, message~ : String) -> Self
 pub fn MainLogInfo::equal(Self, Self) -> Bool
 pub fn MainLogInfo::level(Self) -> MainLogLevel
@@ -59,12 +61,13 @@ pub fn MainLogInfo::section(Self) -> String
 pub fn MainLogInfo::to_repr(Self) -> @debug.Repr
 pub fn MainLogInfo::to_string(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum MainLogLevel {
   MainLogDebug
   MainLogInfo
   MainLogWarning
   MainLogError
-} derive(Eq, @debug.Debug)
+}
 pub fn MainLogLevel::equal(Self, Self) -> Bool
 pub fn MainLogLevel::not_equal(Self, Self) -> Bool
 pub fn MainLogLevel::to_repr(Self) -> @debug.Repr
@@ -77,20 +80,21 @@ pub fn MainLogReporter::debug_enabled(Self) -> Bool
 pub fn MainLogReporter::error(Self, message~ : String) -> Unit
 pub fn MainLogReporter::info(Self, message~ : String) -> Unit
 pub fn MainLogReporter::message(Self, MainLogLevel, message~ : String) -> Unit
-pub fn MainLogReporter::report_progress(Self, task? : String, note? : String, stage? : Int, total? : Int) -> Unit
+pub fn MainLogReporter::report_progress(Self, task? : String, note? : String, stage? : Int32, total? : Int32) -> Unit
 pub fn MainLogReporter::section(Self) -> String
 pub fn MainLogReporter::warning(Self, message~ : String) -> Unit
 
-type MainProgress derive(Eq, @debug.Debug)
-pub fn MainProgress::create(task~ : String, note? : String, stage? : Int, total? : Int) -> Self
+#derive(Eq, @debug.Debug)
+type MainProgress
+pub fn MainProgress::create(task~ : String, note? : String, stage? : Int32, total? : Int32) -> Self
 pub fn MainProgress::equal(Self, Self) -> Bool
 pub fn MainProgress::not_equal(Self, Self) -> Bool
 pub fn MainProgress::note(Self) -> String?
-pub fn MainProgress::stage(Self) -> Int?
+pub fn MainProgress::stage(Self) -> Int32?
 pub fn MainProgress::task(Self) -> String
 pub fn MainProgress::to_repr(Self) -> @debug.Repr
 pub fn MainProgress::to_string(Self) -> String
-pub fn MainProgress::total(Self) -> Int?
+pub fn MainProgress::total(Self) -> Int32?
 
 // Type aliases
 

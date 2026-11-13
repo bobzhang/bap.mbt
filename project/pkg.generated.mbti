@@ -154,7 +154,7 @@ pub fn register_pass_transform(name~ : String, autorun? : Bool, run_once? : Bool
 
 pub fn[T] register_project_analysis(name~ : String, pkg? : String, description? : String, args~ : ProjectAnalysisArgs[T], run~ : (T) -> Result[Unit, String]) -> Result[Unit, String]
 
-pub fn[S] register_project_collator(name~ : String, pkg? : String, description? : String, prepare~ : (Project) -> S, collate~ : (Int, S, Project) -> S, summary~ : (S) -> Unit) -> Result[Unit, String]
+pub fn[S] register_project_collator(name~ : String, pkg? : String, description? : String, prepare~ : (Project) -> S, collate~ : (Int32, S, Project) -> S, summary~ : (S) -> Unit) -> Result[Unit, String]
 
 pub fn register_reconstructor(name~ : String, ProjectReconstructor) -> Result[Unit, String]
 
@@ -211,23 +211,26 @@ pub fn with_storage(Project, Map[String, String]) -> Project
 pub fn with_symbols(Project, Array[@image.Symbol]) -> Project
 
 // Errors
+#derive(Eq, @debug.Debug)
 pub(all) suberror ProjectDisasmError {
   ProjectDisasmFailure(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn ProjectDisasmError::equal(Self, Self) -> Bool
 pub fn ProjectDisasmError::not_equal(Self, Self) -> Bool
 pub fn ProjectDisasmError::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) suberror ProjectDisassemblyLinearSweepError {
   LinearSweepFailure(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn ProjectDisassemblyLinearSweepError::equal(Self, Self) -> Bool
 pub fn ProjectDisassemblyLinearSweepError::not_equal(Self, Self) -> Bool
 pub fn ProjectDisassemblyLinearSweepError::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) suberror ProjectPassError {
   ProjectPassFailure(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn ProjectPassError::equal(Self, Self) -> Bool
 pub fn ProjectPassError::not_equal(Self, Self) -> Bool
 pub fn ProjectPassError::to_repr(Self) -> @debug.Repr
@@ -254,7 +257,7 @@ pub fn Project::apply_brancher_named(Self, brancher~ : String) -> Result[Self, S
 pub fn Project::apply_x86_simd(Self, ProjectX86SimdState) -> Result[ProjectX86SimdState, String]
 pub fn Project::arch(Self) -> @core_theory.Target
 pub fn Project::base_address(Self) -> UInt64?
-pub fn Project::binary(target~ : @core_theory.Target, filename~ : String, base? : UInt64, offset? : Int, length? : Int, entry? : UInt64) -> Result[Self, String]
+pub fn Project::binary(target~ : @core_theory.Target, filename~ : String, base? : UInt64, offset? : Int32, length? : Int32, entry? : UInt64) -> Result[Self, String]
 pub fn Project::callees(Self, @types.Term[@types.Sub]) -> Array[@types.Tid]
 pub fn Project::callers(Self, @types.Term[@types.Sub]) -> Array[@types.Tid]
 pub fn Project::callgraph(Self) -> @graphlib.Graph[@types.Tid, Array[@types.Term[@types.Jmp]]]
@@ -317,12 +320,12 @@ pub fn Project::map_program_terms(Self, (@types.IrTerm) -> @types.IrTerm) -> Sel
 pub fn Project::mark_program_terms(Self, (@types.IrTerm) -> Bool, @types.Attr) -> Self
 pub fn Project::memory(Self) -> @memory.MemMap[String]
 pub fn Project::pass_has_run(Self, String) -> Bool
-pub fn Project::pass_run_count(Self, String) -> Int
+pub fn Project::pass_run_count(Self, String) -> Int32
 pub fn Project::persistent() -> @knowledge.Persistent[Self]
 pub fn Project::pkg(Self) -> String?
 pub fn Project::program(Self) -> @types.Term[@types.Program]
 pub fn Project::program_unit(Self) -> @core_theory.ProgramUnit
-pub fn Project::raw_file(String, target~ : @core_theory.Target, base? : UInt64, offset? : Int, length? : Int, entry? : UInt64, filename? : String) -> Result[Self, String]
+pub fn Project::raw_file(String, target~ : @core_theory.Target, base? : UInt64, offset? : Int32, length? : Int32, entry? : UInt64, filename? : String) -> Result[Self, String]
 pub fn Project::reconstruct(Self, reconstructor? : ProjectReconstructor) -> Result[Self, String]
 pub fn Project::reconstruct_named(Self, reconstructor~ : String) -> Result[Self, String]
 pub fn Project::relocation_info(Self) -> ProjectRelocations
@@ -384,7 +387,7 @@ pub fn ProjectAnalysisArg::bitvec() -> Self[@bitvec.BitVec]
 pub fn[T] ProjectAnalysisArg::description(Self[T]) -> String
 pub fn ProjectAnalysisArg::empty() -> Self[Unit]
 pub fn ProjectAnalysisArg::flag(String) -> Self[Bool]
-pub fn ProjectAnalysisArg::int() -> Self[Int]
+pub fn ProjectAnalysisArg::int() -> Self[Int32]
 pub fn[T] ProjectAnalysisArg::keyword(String, Self[T]) -> Self[T?]
 pub fn[A, B] ProjectAnalysisArg::map(Self[A], (A) -> B) -> Self[B]
 pub fn[T] ProjectAnalysisArg::optional(Self[T]) -> Self[T?]
@@ -438,8 +441,8 @@ pub fn ProjectBrancher::with_biased(Self, Bool) -> Self
 
 type ProjectCollator[S, R]
 pub fn[S, R] ProjectCollator::apply(Self[S, R], Array[Project]) -> R?
-pub fn[S, R] ProjectCollator::collate(Self[S, R], Int, S, Project) -> S
-pub fn[S, R] ProjectCollator::create(name~ : String, pkg? : String, description? : String, prepare~ : (Project) -> S, collate~ : (Int, S, Project) -> S, summary~ : (S) -> R) -> Self[S, R]
+pub fn[S, R] ProjectCollator::collate(Self[S, R], Int32, S, Project) -> S
+pub fn[S, R] ProjectCollator::create(name~ : String, pkg? : String, description? : String, prepare~ : (Project) -> S, collate~ : (Int32, S, Project) -> S, summary~ : (S) -> R) -> Self[S, R]
 pub fn[S, R] ProjectCollator::desc(Self[S, R]) -> String
 pub fn[S, R] ProjectCollator::description(Self[S, R]) -> String
 pub fn[S, R] ProjectCollator::info(Self[S, R]) -> ProjectCollatorInfo
@@ -483,16 +486,16 @@ pub fn ProjectDisassemblyBasic::available_backends() -> Array[String]
 pub fn ProjectDisassemblyBasic::backend(Self) -> String
 pub fn ProjectDisassemblyBasic::close(Self) -> Unit
 pub fn ProjectDisassemblyBasic::cpu(Self) -> String
-pub fn ProjectDisassemblyBasic::create(String, backend? : String, cpu? : String, attrs? : String, debug_level? : Int) -> Result[Self, String]
+pub fn ProjectDisassemblyBasic::create(String, backend? : String, cpu? : String, attrs? : String, debug_level? : Int32) -> Result[Self, String]
 pub fn ProjectDisassemblyBasic::custom(@core_theory.Target, @core_theory.Language, backend? : String) -> Self
-pub fn ProjectDisassemblyBasic::debug_level(Self) -> Int
+pub fn ProjectDisassemblyBasic::debug_level(Self) -> Int32
 pub fn ProjectDisassemblyBasic::encoding(Self) -> String
 pub fn ProjectDisassemblyBasic::insn_of_mem(Self, @memory.Memory) -> Result[ProjectDisassemblyBasicInsnResult, String]
 pub fn ProjectDisassemblyBasic::lookup(@core_theory.Target, @core_theory.Language) -> Result[Self, String]
 pub fn ProjectDisassemblyBasic::name(Self) -> String
 pub fn ProjectDisassemblyBasic::register(@core_theory.Language, (@core_theory.Target) -> Result[Self, String]) -> Result[Unit, String]
 pub fn ProjectDisassemblyBasic::registered_encodings() -> Array[String]
-pub fn[S, R] ProjectDisassemblyBasic::run(Self, @memory.Memory, return_~ : (S) -> R, init~ : S, backlog? : Int, stop_on? : Array[ProjectDisassemblyBasicPred], invalid? : (ProjectDisassemblyBasicState[S, R], @memory.Memory, S) -> R, stopped? : (ProjectDisassemblyBasicState[S, R], S) -> R, hit? : (ProjectDisassemblyBasicState[S, R], @memory.Memory, ProjectDisassemblyInstruction, S) -> R) -> R
+pub fn[S, R] ProjectDisassemblyBasic::run(Self, @memory.Memory, return_~ : (S) -> R, init~ : S, backlog? : Int32, stop_on? : Array[ProjectDisassemblyBasicPred], invalid? : (ProjectDisassemblyBasicState[S, R], @memory.Memory, S) -> R, stopped? : (ProjectDisassemblyBasicState[S, R], S) -> R, hit? : (ProjectDisassemblyBasicState[S, R], @memory.Memory, ProjectDisassemblyInstruction, S) -> R) -> R
 pub fn ProjectDisassemblyBasic::store_asm(Self) -> Self
 pub fn ProjectDisassemblyBasic::store_kinds(Self) -> Self
 pub fn ProjectDisassemblyBasic::stores_asm(Self) -> Bool
@@ -506,10 +509,11 @@ pub fn ProjectDisassemblyBasicInsnResult::instruction(Self) -> ProjectDisassembl
 pub fn ProjectDisassemblyBasicInsnResult::memory(Self) -> @memory.Memory
 pub fn ProjectDisassemblyBasicInsnResult::remainder(Self) -> ProjectDisassemblyBasicRemainder
 
+#derive(Eq, @debug.Debug)
 pub(all) enum ProjectDisassemblyBasicPred {
   BasicValid
   BasicKind(ProjectInstructionKind)
-} derive(Eq, @debug.Debug)
+}
 pub fn ProjectDisassemblyBasicPred::equal(Self, Self) -> Bool
 pub fn ProjectDisassemblyBasicPred::kind(ProjectInstructionKind) -> Self
 pub fn ProjectDisassemblyBasicPred::not_equal(Self, Self) -> Bool
@@ -533,7 +537,7 @@ pub fn[S, R] ProjectDisassemblyBasicState::back(Self[S, R], S) -> R
 pub fn[S, R] ProjectDisassemblyBasicState::disasm(Self[S, R]) -> ProjectDisassemblyBasic
 pub fn[S, R] ProjectDisassemblyBasicState::insns(Self[S, R]) -> Array[(@memory.Memory, ProjectDisassemblyInstruction?)]
 pub fn[S, R] ProjectDisassemblyBasicState::jump(Self[S, R], @memory.Memory, S) -> R
-pub fn[S, R] ProjectDisassemblyBasicState::last(Self[S, R], Int) -> Array[(@memory.Memory, ProjectDisassemblyInstruction?)]
+pub fn[S, R] ProjectDisassemblyBasicState::last(Self[S, R], Int32) -> Array[(@memory.Memory, ProjectDisassemblyInstruction?)]
 pub fn[S, R] ProjectDisassemblyBasicState::memory(Self[S, R]) -> @memory.Memory
 pub fn[S, R] ProjectDisassemblyBasicState::preds(Self[S, R]) -> Array[ProjectDisassemblyBasicPred]
 pub fn[S, R] ProjectDisassemblyBasicState::step(Self[S, R], S) -> R
@@ -543,10 +547,10 @@ pub fn[S, R] ProjectDisassemblyBasicState::with_preds(Self[S, R], Array[ProjectD
 
 type ProjectDisassemblyBlock
 pub fn ProjectDisassemblyBlock::addr(Self) -> UInt64
-pub fn ProjectDisassemblyBlock::compare(Self, Self) -> Int
+pub fn ProjectDisassemblyBlock::compare(Self, Self) -> Int32
 pub fn ProjectDisassemblyBlock::create(@memory.Memory, Array[ProjectDisassemblyInstruction]) -> Result[Self, String]
 pub fn ProjectDisassemblyBlock::insns(Self) -> Array[(@memory.Memory, ProjectDisassemblyInstruction)]
-pub fn ProjectDisassemblyBlock::instruction_count(Self) -> Int
+pub fn ProjectDisassemblyBlock::instruction_count(Self) -> Int32
 pub fn ProjectDisassemblyBlock::instructions(Self) -> Array[ProjectDisassemblyInstruction]
 pub fn ProjectDisassemblyBlock::leader(Self) -> ProjectDisassemblyInstruction
 pub fn ProjectDisassemblyBlock::lift(Self, target~ : @core_theory.Target, registry? : @mc.Registry) -> Result[Array[@types.Stmt], String]
@@ -570,23 +574,23 @@ pub fn ProjectDisassemblyCalls::update(Self, ProjectDisassemblyDriverState, @kno
 
 type ProjectDisassemblyCfg
 pub fn ProjectDisassemblyCfg::create(nodes? : Array[ProjectDisassemblyBlock], edges? : Array[ProjectDisassemblyCfgEdge]) -> Self
-pub fn ProjectDisassemblyCfg::degree(Self, ProjectDisassemblyBlock) -> Int
+pub fn ProjectDisassemblyCfg::degree(Self, ProjectDisassemblyBlock) -> Int32
 pub fn ProjectDisassemblyCfg::edge(Self, ProjectDisassemblyBlock, ProjectDisassemblyBlock) -> ProjectDisassemblyCfgEdge?
-pub fn ProjectDisassemblyCfg::edge_count(Self) -> Int
+pub fn ProjectDisassemblyCfg::edge_count(Self) -> Int32
 pub fn ProjectDisassemblyCfg::edges(Self) -> Array[ProjectDisassemblyCfgEdge]
 pub fn ProjectDisassemblyCfg::empty() -> Self
 pub fn ProjectDisassemblyCfg::has_edge(Self, ProjectDisassemblyBlock, ProjectDisassemblyBlock) -> Bool
 pub fn ProjectDisassemblyCfg::has_node(Self, ProjectDisassemblyBlock) -> Bool
-pub fn ProjectDisassemblyCfg::in_degree(Self, ProjectDisassemblyBlock) -> Int
+pub fn ProjectDisassemblyCfg::in_degree(Self, ProjectDisassemblyBlock) -> Int32
 pub fn ProjectDisassemblyCfg::in_edges(Self, ProjectDisassemblyBlock) -> Array[ProjectDisassemblyCfgEdge]
 pub fn ProjectDisassemblyCfg::inputs(Self, ProjectDisassemblyBlock) -> Array[ProjectDisassemblyCfgEdge]
 pub fn ProjectDisassemblyCfg::insert_edge(Self, ProjectDisassemblyCfgEdge) -> Self
 pub fn ProjectDisassemblyCfg::insert_node(Self, ProjectDisassemblyBlock) -> Self
 pub fn ProjectDisassemblyCfg::is_empty(Self) -> Bool
-pub fn ProjectDisassemblyCfg::node_count(Self) -> Int
+pub fn ProjectDisassemblyCfg::node_count(Self) -> Int32
 pub fn ProjectDisassemblyCfg::nodes(Self) -> Array[ProjectDisassemblyBlock]
 pub fn ProjectDisassemblyCfg::of_disassembly(ProjectDisassemblyState) -> Self
-pub fn ProjectDisassemblyCfg::out_degree(Self, ProjectDisassemblyBlock) -> Int
+pub fn ProjectDisassemblyCfg::out_degree(Self, ProjectDisassemblyBlock) -> Int32
 pub fn ProjectDisassemblyCfg::out_edges(Self, ProjectDisassemblyBlock) -> Array[ProjectDisassemblyCfgEdge]
 pub fn ProjectDisassemblyCfg::outputs(Self, ProjectDisassemblyBlock) -> Array[ProjectDisassemblyCfgEdge]
 pub fn ProjectDisassemblyCfg::predecessors(Self, ProjectDisassemblyBlock) -> Array[ProjectDisassemblyBlock]
@@ -606,7 +610,7 @@ pub fn ProjectDisassemblyCfgEdge::src(Self) -> ProjectDisassemblyBlock
 
 type ProjectDisassemblyDriver
 pub fn ProjectDisassemblyDriver::basic(backend? : String) -> Self
-pub fn ProjectDisassemblyDriver::create(name~ : String, description? : String, priority? : Int, run~ : (Project) -> Result[Project, String]) -> Self
+pub fn ProjectDisassemblyDriver::create(name~ : String, description? : String, priority? : Int32, run~ : (Project) -> Result[Project, String]) -> Self
 pub fn ProjectDisassemblyDriver::description(Self) -> String
 pub fn ProjectDisassemblyDriver::entry_point() -> Self
 pub fn ProjectDisassemblyDriver::function_symbols() -> Self
@@ -614,7 +618,7 @@ pub fn ProjectDisassemblyDriver::image_roots() -> Self
 pub fn ProjectDisassemblyDriver::linear_sweep(backend? : String) -> Self
 pub fn ProjectDisassemblyDriver::memory_blocks() -> Self
 pub fn ProjectDisassemblyDriver::name(Self) -> String
-pub fn ProjectDisassemblyDriver::priority(Self) -> Int
+pub fn ProjectDisassemblyDriver::priority(Self) -> Int32
 pub fn ProjectDisassemblyDriver::project_roots() -> Self
 pub fn ProjectDisassemblyDriver::raw_bytes() -> Self
 pub fn ProjectDisassemblyDriver::recursive() -> Self
@@ -633,7 +637,7 @@ pub fn ProjectDisassemblyDriverJump::unresolved(Self) -> Array[@knowledge.Object
 
 type ProjectDisassemblyDriverState
 pub fn ProjectDisassemblyDriverState::blocks(Self) -> Array[UInt64]
-pub fn ProjectDisassemblyDriverState::debt_count(Self) -> Int
+pub fn ProjectDisassemblyDriverState::debt_count(Self) -> Int32
 pub fn ProjectDisassemblyDriverState::equal(Self, Self) -> Bool
 pub fn[N, C] ProjectDisassemblyDriverState::explore(Self, @knowledge.State, entries? : Array[UInt64], entry? : UInt64, follow? : (UInt64) -> Bool raise, block~ : (@memory.Memory, ProjectDisassemblyDriverInsns) -> N raise, node~ : (N, C) -> C raise, edge~ : (N, N, C) -> C raise, init~ : C) -> C raise
 pub fn ProjectDisassemblyDriverState::externals(Self) -> Array[@knowledge.Object[Unit]]
@@ -655,18 +659,19 @@ pub fn ProjectDisassemblyEdge::kind(Self) -> ProjectDisassemblyEdgeKind
 pub fn ProjectDisassemblyEdge::source(Self) -> UInt64
 pub fn ProjectDisassemblyEdge::target(Self) -> UInt64?
 
+#derive(Eq)
 pub(all) enum ProjectDisassemblyEdgeKind {
   JumpEdge
   CondEdge
   FallEdge
-} derive(Eq)
+}
 pub fn ProjectDisassemblyEdgeKind::equal(Self, Self) -> Bool
 pub fn ProjectDisassemblyEdgeKind::not_equal(Self, Self) -> Bool
 pub fn ProjectDisassemblyEdgeKind::to_string(Self) -> String
 
 type ProjectDisassemblyFunction
 pub fn ProjectDisassemblyFunction::addr(Self) -> UInt64
-pub fn ProjectDisassemblyFunction::block_count(Self) -> Int
+pub fn ProjectDisassemblyFunction::block_count(Self) -> Int32
 pub fn ProjectDisassemblyFunction::blocks(Self) -> Array[ProjectDisassemblyBlock]
 pub fn ProjectDisassemblyFunction::contains_addr(Self, UInt64) -> Bool
 pub fn ProjectDisassemblyFunction::create(name~ : String, entry~ : ProjectDisassemblyBlock, blocks? : Array[ProjectDisassemblyBlock]) -> Self
@@ -683,9 +688,9 @@ pub fn ProjectDisassemblyInstruction::affects_control_flow(Self) -> Bool
 pub fn ProjectDisassemblyInstruction::apply_x86_simd(Self, ProjectX86SimdState) -> Result[ProjectX86SimdState, String]
 pub fn ProjectDisassemblyInstruction::assembly(Self) -> String
 pub fn ProjectDisassemblyInstruction::bil(Self) -> String
-pub fn ProjectDisassemblyInstruction::code(Self) -> Int
+pub fn ProjectDisassemblyInstruction::code(Self) -> Int32
 pub fn ProjectDisassemblyInstruction::contains(Self, UInt64) -> Bool
-pub fn ProjectDisassemblyInstruction::create(@memory.Memory, assembly? : String, bil? : String, code? : Int, name? : String, encoding? : String, kinds? : Array[ProjectInstructionKind], operands? : Array[ProjectInstructionOperand], subinstructions? : Array[Self]) -> Self
+pub fn ProjectDisassemblyInstruction::create(@memory.Memory, assembly? : String, bil? : String, code? : Int32, name? : String, encoding? : String, kinds? : Array[ProjectInstructionKind], operands? : Array[ProjectInstructionOperand], subinstructions? : Array[Self]) -> Self
 pub fn ProjectDisassemblyInstruction::encoding(Self) -> String
 pub fn ProjectDisassemblyInstruction::encoding_language(Self) -> @core_theory.Language
 pub fn ProjectDisassemblyInstruction::has_kind(Self, ProjectInstructionKind) -> Bool
@@ -702,19 +707,19 @@ pub fn ProjectDisassemblyInstruction::must(Self, ProjectInstructionKind) -> Self
 pub fn ProjectDisassemblyInstruction::must_not(Self, ProjectInstructionKind) -> Self
 pub fn ProjectDisassemblyInstruction::name(Self) -> String
 pub fn ProjectDisassemblyInstruction::of_mc_insn(@mc.Insn, @memory.Memory) -> Self
-pub fn ProjectDisassemblyInstruction::operand_count(Self) -> Int
+pub fn ProjectDisassemblyInstruction::operand_count(Self) -> Int32
 pub fn ProjectDisassemblyInstruction::operands(Self) -> Array[ProjectInstructionOperand]
 pub fn ProjectDisassemblyInstruction::relocations(Self) -> ProjectRelocations?
 pub fn ProjectDisassemblyInstruction::same_normalized_operands(Self, Self) -> Bool
 pub fn ProjectDisassemblyInstruction::should(Self, ProjectInstructionKind) -> Self
 pub fn ProjectDisassemblyInstruction::should_not(Self, ProjectInstructionKind) -> Self
-pub fn ProjectDisassemblyInstruction::subinstruction_count(Self) -> Int
+pub fn ProjectDisassemblyInstruction::subinstruction_count(Self) -> Int32
 pub fn ProjectDisassemblyInstruction::subinstructions(Self) -> Array[Self]
 pub fn ProjectDisassemblyInstruction::subs(Self) -> Array[Self]
 pub fn ProjectDisassemblyInstruction::to_mc_insn(Self, encoding? : @core_theory.Language) -> @mc.Insn
 pub fn ProjectDisassemblyInstruction::with_kind(Self, ProjectInstructionKind) -> Self
 pub fn ProjectDisassemblyInstruction::with_kinds(Self, Array[ProjectInstructionKind]) -> Self
-pub fn ProjectDisassemblyInstruction::with_metadata(Self, code? : Int, name? : String, encoding? : String) -> Self
+pub fn ProjectDisassemblyInstruction::with_metadata(Self, code? : Int32, name? : String, encoding? : String) -> Self
 pub fn ProjectDisassemblyInstruction::with_operands(Self, Array[ProjectInstructionOperand]) -> Self
 pub fn ProjectDisassemblyInstruction::with_relocations(Self, ProjectRelocations) -> Self
 pub fn ProjectDisassemblyInstruction::with_subinstructions(Self, Array[Self]) -> Self
@@ -760,33 +765,33 @@ pub fn[T] ProjectDisassemblySource::error(String) -> Self[T]
 pub fn[T] ProjectDisassemblySource::errors(Self[T]) -> Array[String]
 pub fn[T] ProjectDisassemblySource::is_empty(Self[T]) -> Bool
 pub fn[T] ProjectDisassemblySource::items(Self[T]) -> Array[Result[T, String]]
-pub fn[T] ProjectDisassemblySource::length(Self[T]) -> Int
+pub fn[T] ProjectDisassemblySource::length(Self[T]) -> Int32
 pub fn[T] ProjectDisassemblySource::single(T) -> Self[T]
 pub fn[T] ProjectDisassemblySource::values(Self[T]) -> Array[T]
 
 type ProjectDisassemblySourceContext
 pub fn ProjectDisassemblySourceContext::bias(Self) -> @types.Word?
-pub fn ProjectDisassemblySourceContext::create(size? : Int, path? : String, bias? : @types.Word) -> Result[Self, String]
+pub fn ProjectDisassemblySourceContext::create(size? : Int32, path? : String, bias? : @types.Word) -> Result[Self, String]
 pub fn ProjectDisassemblySourceContext::create_addr(Self, UInt64, unbiased? : Bool) -> Result[@types.Word, String]
 pub fn ProjectDisassemblySourceContext::create_word_addr(Self, @types.Word, unbiased? : Bool) -> Result[@types.Word, String]
 pub fn ProjectDisassemblySourceContext::for_label(@core_theory.Label) -> Result[Self, String]
 pub fn ProjectDisassemblySourceContext::for_unit(@core_theory.ProgramUnit) -> Result[Self, String]
 pub fn ProjectDisassemblySourceContext::is_applicable(Self, path? : String) -> Bool
 pub fn ProjectDisassemblySourceContext::path(Self) -> String?
-pub fn ProjectDisassemblySourceContext::size(Self) -> Int
+pub fn ProjectDisassemblySourceContext::size(Self) -> Int32
 
 type ProjectDisassemblyState
 pub fn ProjectDisassemblyState::add_block(Self, @memory.Memory) -> Self
 pub fn ProjectDisassemblyState::add_edge(Self, ProjectDisassemblyEdge) -> Self
 pub fn ProjectDisassemblyState::add_instruction(Self, ProjectDisassemblyInstruction) -> Self
 pub fn ProjectDisassemblyState::apply_x86_simd(Self, ProjectX86SimdState) -> Result[ProjectX86SimdState, String]
-pub fn ProjectDisassemblyState::block_count(Self) -> Int
+pub fn ProjectDisassemblyState::block_count(Self) -> Int32
 pub fn ProjectDisassemblyState::block_view(Self, @memory.Memory) -> Result[ProjectDisassemblyBlock, String]
 pub fn ProjectDisassemblyState::blocks(Self) -> Array[@memory.Memory]
 pub fn ProjectDisassemblyState::blocks_with_instructions(Self) -> Array[ProjectDisassemblyBlock]
 pub fn ProjectDisassemblyState::cfg(Self) -> ProjectDisassemblyCfg
 pub fn ProjectDisassemblyState::create(blocks? : Array[@memory.Memory], instructions? : Array[ProjectDisassemblyInstruction], edges? : Array[ProjectDisassemblyEdge]) -> Self
-pub fn ProjectDisassemblyState::edge_count(Self) -> Int
+pub fn ProjectDisassemblyState::edge_count(Self) -> Int32
 pub fn ProjectDisassemblyState::edges(Self) -> Array[ProjectDisassemblyEdge]
 pub fn ProjectDisassemblyState::edges_from(Self, UInt64) -> Array[ProjectDisassemblyEdge]
 pub fn ProjectDisassemblyState::edges_from_block(Self, @memory.Memory) -> Array[ProjectDisassemblyEdge]
@@ -798,11 +803,11 @@ pub fn ProjectDisassemblyState::has_block(Self, @memory.Memory) -> Bool
 pub fn ProjectDisassemblyState::has_edge(Self, ProjectDisassemblyEdge) -> Bool
 pub fn ProjectDisassemblyState::has_instruction(Self, ProjectDisassemblyInstruction) -> Bool
 pub fn ProjectDisassemblyState::instruction_at(Self, UInt64) -> ProjectDisassemblyInstruction?
-pub fn ProjectDisassemblyState::instruction_count(Self) -> Int
+pub fn ProjectDisassemblyState::instruction_count(Self) -> Int32
 pub fn ProjectDisassemblyState::instruction_for(Self, @memory.Memory) -> ProjectDisassemblyInstruction?
 pub fn ProjectDisassemblyState::instructions(Self) -> Array[ProjectDisassemblyInstruction]
 pub fn ProjectDisassemblyState::instructions_in(Self, @memory.Memory) -> Array[ProjectDisassemblyInstruction]
-pub fn ProjectDisassemblyState::key_of_first_insns(Self, @memory.Memory, len~ : Int) -> ProjectInstructionKey?
+pub fn ProjectDisassemblyState::key_of_first_insns(Self, @memory.Memory, len~ : Int32) -> ProjectInstructionKey?
 pub fn ProjectDisassemblyState::lift(Self, target~ : @core_theory.Target, registry? : @mc.Registry) -> Result[Array[@types.Stmt], String]
 pub fn ProjectDisassemblyState::lift_basic_bil(Self) -> Result[Array[@types.Stmt], String]
 pub fn ProjectDisassemblyState::lift_errors(Self, target~ : @core_theory.Target, registry? : @mc.Registry) -> Array[ProjectLiftError]
@@ -848,7 +853,7 @@ pub fn ProjectInfo::symtab() -> @future.Stream[ProjectDisassemblySymtab]
 type ProjectInput
 pub fn ProjectInput::arch(Self) -> @core_theory.Target
 pub fn ProjectInput::available_loaders() -> Array[String]
-pub fn ProjectInput::binary(target~ : @core_theory.Target, filename~ : String, base? : UInt64, offset? : Int, length? : Int, entry? : UInt64) -> Result[Self, String]
+pub fn ProjectInput::binary(target~ : @core_theory.Target, filename~ : String, base? : UInt64, offset? : Int32, length? : Int32, entry? : UInt64) -> Result[Self, String]
 pub fn ProjectInput::code(Self) -> @memory.MemMap[String]
 pub fn ProjectInput::create(target~ : @core_theory.Target, filename~ : String, code? : @memory.MemMap[String], data? : @memory.MemMap[String], finish? : (Project) -> Project) -> Self
 pub fn ProjectInput::custom(target~ : @core_theory.Target, filename? : String, image? : @image.Image, program? : @types.Term[@types.Program], memory? : @memory.MemMap[String], code? : @memory.MemMap[String], data? : @memory.MemMap[String], symbols? : Array[@image.Symbol], libraries? : Array[Library], finish? : (Project) -> Project) -> Self
@@ -856,10 +861,10 @@ pub fn ProjectInput::data(Self) -> @memory.MemMap[String]
 pub fn ProjectInput::file(filename~ : String, loader? : String, libraries? : Array[String], target? : @core_theory.Target) -> Result[Self, String]
 pub fn ProjectInput::filename(Self) -> String?
 pub fn ProjectInput::find_loader(String) -> ProjectInputLoader?
-pub fn ProjectInput::from_bigstring(target~ : @core_theory.Target, Bytes, base? : UInt64, offset? : Int, length? : Int, entry? : UInt64, filename? : String, finish? : (Project) -> Project) -> Result[Self, String]
-pub fn ProjectInput::from_bytes(target~ : @core_theory.Target, Bytes, endian~ : @bitvec.Endian, base? : UInt64, entry? : UInt64, file_offset? : Int, filename? : String, finish? : (Project) -> Project) -> Self
+pub fn ProjectInput::from_bigstring(target~ : @core_theory.Target, Bytes, base? : UInt64, offset? : Int32, length? : Int32, entry? : UInt64, filename? : String, finish? : (Project) -> Project) -> Result[Self, String]
+pub fn ProjectInput::from_bytes(target~ : @core_theory.Target, Bytes, endian~ : @bitvec.Endian, base? : UInt64, entry? : UInt64, file_offset? : Int32, filename? : String, finish? : (Project) -> Project) -> Self
 pub fn ProjectInput::from_image(@image.Image, target? : @core_theory.Target, program? : @types.Term[@types.Program], finish? : (Project) -> Project) -> Self
-pub fn ProjectInput::from_string(target~ : @core_theory.Target, String, base? : UInt64, offset? : Int, length? : Int, entry? : UInt64, filename? : String, finish? : (Project) -> Project) -> Result[Self, String]
+pub fn ProjectInput::from_string(target~ : @core_theory.Target, String, base? : UInt64, offset? : Int32, length? : Int32, entry? : UInt64, filename? : String, finish? : (Project) -> Project) -> Result[Self, String]
 pub fn ProjectInput::image(Self) -> @image.Image?
 pub fn ProjectInput::libraries(Self) -> Array[Library]
 pub fn ProjectInput::load(Bytes, loader~ : String, target? : @core_theory.Target) -> Result[Self, String]
@@ -867,33 +872,34 @@ pub fn ProjectInput::load_file(String, loader~ : String, libraries? : Array[Stri
 pub fn ProjectInput::load_file_for_filename(String, filename? : String, libraries? : Array[String], target? : @core_theory.Target) -> Result[Self, String]
 pub fn ProjectInput::load_for_filename(Bytes, filename~ : String, target? : @core_theory.Target) -> Result[Self, String]
 pub fn ProjectInput::memory(Self) -> @memory.MemMap[String]
-pub fn ProjectInput::raw_bytes(target~ : @core_theory.Target, Bytes, base? : UInt64, offset? : Int, length? : Int, entry? : UInt64, filename? : String, finish? : (Project) -> Project) -> Result[Self, String]
-pub fn ProjectInput::raw_file(String, target~ : @core_theory.Target, base? : UInt64, offset? : Int, length? : Int, entry? : UInt64, filename? : String) -> Result[Self, String]
-pub fn ProjectInput::register_file_loader(name~ : String, description? : String, extensions? : Array[String], priority? : Int, load~ : (String) -> Result[Self, String]) -> Result[Unit, String]
-pub fn ProjectInput::register_loader(name~ : String, description? : String, extensions? : Array[String], priority? : Int, load~ : (Bytes) -> Result[Self, String], load_file? : (String) -> Result[Self, String]) -> Result[Unit, String]
+pub fn ProjectInput::raw_bytes(target~ : @core_theory.Target, Bytes, base? : UInt64, offset? : Int32, length? : Int32, entry? : UInt64, filename? : String, finish? : (Project) -> Project) -> Result[Self, String]
+pub fn ProjectInput::raw_file(String, target~ : @core_theory.Target, base? : UInt64, offset? : Int32, length? : Int32, entry? : UInt64, filename? : String) -> Result[Self, String]
+pub fn ProjectInput::register_file_loader(name~ : String, description? : String, extensions? : Array[String], priority? : Int32, load~ : (String) -> Result[Self, String]) -> Result[Unit, String]
+pub fn ProjectInput::register_loader(name~ : String, description? : String, extensions? : Array[String], priority? : Int32, load~ : (Bytes) -> Result[Self, String], load_file? : (String) -> Result[Self, String]) -> Result[Unit, String]
 pub fn ProjectInput::specification(Self) -> @ogre.Doc
 pub fn ProjectInput::symbols(Self) -> Array[@image.Symbol]
 pub fn ProjectInput::target(Self) -> @core_theory.Target
 
 type ProjectInputLoader
-pub fn ProjectInputLoader::create(name~ : String, description? : String, extensions? : Array[String], priority? : Int, load~ : (Bytes) -> Result[ProjectInput, String], load_file? : (String) -> Result[ProjectInput, String]) -> Self
-pub fn ProjectInputLoader::create_file(name~ : String, description? : String, extensions? : Array[String], priority? : Int, load~ : (String) -> Result[ProjectInput, String]) -> Self
+pub fn ProjectInputLoader::create(name~ : String, description? : String, extensions? : Array[String], priority? : Int32, load~ : (Bytes) -> Result[ProjectInput, String], load_file? : (String) -> Result[ProjectInput, String]) -> Self
+pub fn ProjectInputLoader::create_file(name~ : String, description? : String, extensions? : Array[String], priority? : Int32, load~ : (String) -> Result[ProjectInput, String]) -> Self
 pub fn ProjectInputLoader::description(Self) -> String
 pub fn ProjectInputLoader::extensions(Self) -> Array[String]
 pub fn ProjectInputLoader::load(Self, Bytes) -> Result[ProjectInput, String]
 pub fn ProjectInputLoader::load_file(Self, String) -> Result[ProjectInput, String]
 pub fn ProjectInputLoader::name(Self) -> String
-pub fn ProjectInputLoader::priority(Self) -> Int
+pub fn ProjectInputLoader::priority(Self) -> Int32
 pub fn ProjectInputLoader::supports_extension(Self, String) -> Bool
 
 type ProjectInstructionKey
 pub fn ProjectInstructionKey::create(Array[ProjectInstructionToken]) -> Self
-pub fn ProjectInstructionKey::length(Self) -> Int
-pub fn ProjectInstructionKey::nth(Self, Int) -> ProjectInstructionToken?
-pub fn ProjectInstructionKey::of_instructions(Array[ProjectDisassemblyInstruction], len~ : Int) -> Self?
+pub fn ProjectInstructionKey::length(Self) -> Int32
+pub fn ProjectInstructionKey::nth(Self, Int32) -> ProjectInstructionToken?
+pub fn ProjectInstructionKey::of_instructions(Array[ProjectDisassemblyInstruction], len~ : Int32) -> Self?
 pub fn ProjectInstructionKey::same_normalized(Self, Self) -> Bool
 pub fn ProjectInstructionKey::tokens(Self) -> Array[ProjectInstructionToken]
 
+#derive(Eq, @debug.Debug)
 pub(all) enum ProjectInstructionKind {
   ProjectConditionalBranch
   ProjectUnconditionalBranch
@@ -905,7 +911,7 @@ pub(all) enum ProjectInstructionKind {
   ProjectMayAffectControlFlow
   ProjectMayLoad
   ProjectMayStore
-} derive(Eq, @debug.Debug)
+}
 pub fn ProjectInstructionKind::affects_control_flow(Self) -> Bool
 pub fn ProjectInstructionKind::equal(Self, Self) -> Bool
 pub fn ProjectInstructionKind::has_side_effect(Self) -> Bool
@@ -917,39 +923,41 @@ pub fn ProjectInstructionKind::to_mc_kind(Self) -> @mc.Kind
 pub fn ProjectInstructionKind::to_repr(Self) -> @debug.Repr
 pub fn ProjectInstructionKind::to_string(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum ProjectInstructionOperand {
-  ProjectRegisterOperand(Int, String)
+  ProjectRegisterOperand(Int32, String)
   ProjectImmediateOperand(Int64)
   ProjectFloatingOperand(Double)
-} derive(Eq, @debug.Debug)
+}
 pub fn ProjectInstructionOperand::equal(Self, Self) -> Bool
 pub fn ProjectInstructionOperand::floating(Double) -> Self
 pub fn ProjectInstructionOperand::immediate(Int64) -> Self
 pub fn ProjectInstructionOperand::not_equal(Self, Self) -> Bool
-pub fn ProjectInstructionOperand::register(name~ : String, code? : Int) -> Self
-pub fn ProjectInstructionOperand::register_code(Self) -> Int?
+pub fn ProjectInstructionOperand::register(name~ : String, code? : Int32) -> Self
+pub fn ProjectInstructionOperand::register_code(Self) -> Int32?
 pub fn ProjectInstructionOperand::register_name(Self) -> String?
 pub fn ProjectInstructionOperand::same_normalized(Self, Self) -> Bool
 pub fn ProjectInstructionOperand::to_float(Self) -> Double?
-pub fn ProjectInstructionOperand::to_int(Self) -> Int?
+pub fn ProjectInstructionOperand::to_int(Self) -> Int32?
 pub fn ProjectInstructionOperand::to_int64(Self) -> Int64?
 pub fn ProjectInstructionOperand::to_repr(Self) -> @debug.Repr
 pub fn ProjectInstructionOperand::to_string(Self) -> String
-pub fn ProjectInstructionOperand::to_word(Self, width~ : Int) -> @types.Word?
+pub fn ProjectInstructionOperand::to_word(Self, width~ : Int32) -> @types.Word?
 
 type ProjectInstructionToken
-pub fn ProjectInstructionToken::code(Self) -> Int
-pub fn ProjectInstructionToken::create(code~ : Int, operands? : Array[ProjectInstructionOperand]) -> Self
+pub fn ProjectInstructionToken::code(Self) -> Int32
+pub fn ProjectInstructionToken::create(code~ : Int32, operands? : Array[ProjectInstructionOperand]) -> Self
 pub fn ProjectInstructionToken::of_instruction(ProjectDisassemblyInstruction) -> Self
-pub fn ProjectInstructionToken::operand_count(Self) -> Int
+pub fn ProjectInstructionToken::operand_count(Self) -> Int32
 pub fn ProjectInstructionToken::operands(Self) -> Array[ProjectInstructionOperand]
 pub fn ProjectInstructionToken::same_normalized(Self, Self) -> Bool
 
+#derive(Eq, @debug.Debug)
 pub struct ProjectLiftError {
   addr : UInt64
   opcode : String
   message : String
-} derive(Eq, @debug.Debug)
+}
 pub fn ProjectLiftError::addr(Self) -> UInt64
 pub fn ProjectLiftError::create(addr~ : UInt64, opcode~ : String, message~ : String) -> Self
 pub fn ProjectLiftError::equal(Self, Self) -> Bool
@@ -985,15 +993,16 @@ pub fn ProjectPass::trivial_condition_form() -> Self
 type ProjectPassEvent
 pub fn ProjectPassEvent::kind(Self) -> ProjectPassEventKind
 pub fn ProjectPassEvent::pass_name(Self) -> String
-pub fn ProjectPassEvent::sequence(Self) -> Int
+pub fn ProjectPassEvent::sequence(Self) -> Int32
 
+#derive(Eq)
 pub(all) enum ProjectPassEventKind {
   PassRegistered
   PassStarted
   PassSucceeded
   PassFailed
   PassFinished
-} derive(Eq)
+}
 pub fn ProjectPassEventKind::equal(Self, Self) -> Bool
 pub fn ProjectPassEventKind::not_equal(Self, Self) -> Bool
 pub fn ProjectPassEventKind::to_string(Self) -> String
@@ -1016,11 +1025,11 @@ pub fn ProjectReconstructor::run(Self, Project) -> Result[Project, String]
 pub struct ProjectRelocations {
   // private fields
 }
-pub fn ProjectRelocations::create(rels? : ArrayView[(UInt64, UInt64)], exts? : ArrayView[(UInt64, String)], stubs? : ArrayView[(UInt64, Int)]) -> Self
+pub fn ProjectRelocations::create(rels? : ArrayView[(UInt64, UInt64)], exts? : ArrayView[(UInt64, String)], stubs? : ArrayView[(UInt64, Int32)]) -> Self
 pub fn ProjectRelocations::empty() -> Self
 pub fn ProjectRelocations::equal(Self, Self) -> Bool
 pub fn ProjectRelocations::external(Self, UInt64) -> String?
-pub fn ProjectRelocations::fixup(Self, ArrayView[@types.Stmt], addr~ : UInt64, size~ : Int, width~ : Int, is_stub? : Bool) -> Array[@types.Stmt]
+pub fn ProjectRelocations::fixup(Self, ArrayView[@types.Stmt], addr~ : UInt64, size~ : Int32, width~ : Int32, is_stub? : Bool) -> Array[@types.Stmt]
 pub fn ProjectRelocations::is_empty(Self) -> Bool
 pub fn ProjectRelocations::is_stub(Self, UInt64) -> Bool
 pub fn ProjectRelocations::not_equal(Self, Self) -> Bool
@@ -1065,8 +1074,8 @@ pub fn ProjectStorageTag::bool_array(String) -> Self[Array[Bool]]
 pub fn[T] ProjectStorageTag::create(name~ : String, encode~ : (T) -> String, decode~ : (String) -> Result[T, String]) -> Self[T]
 pub fn[T] ProjectStorageTag::decode(Self[T], String) -> Result[T, String]
 pub fn[T] ProjectStorageTag::encode(Self[T], T) -> String
-pub fn ProjectStorageTag::int(String) -> Self[Int]
-pub fn ProjectStorageTag::int_array(String) -> Self[Array[Int]]
+pub fn ProjectStorageTag::int(String) -> Self[Int32]
+pub fn ProjectStorageTag::int_array(String) -> Self[Array[Int32]]
 pub fn[T] ProjectStorageTag::name(Self[T]) -> String
 pub fn ProjectStorageTag::string(String) -> Self[String]
 pub fn ProjectStorageTag::string_array(String) -> Self[Array[String]]
@@ -1107,7 +1116,7 @@ pub fn ProjectX86SimdState::with_vector_memory(Self, addr~ : UInt64, @types.Word
 
 type RegisteredProjectCollator
 pub fn RegisteredProjectCollator::apply(Self, Array[Project]) -> Unit
-pub fn[S] RegisteredProjectCollator::create(name~ : String, pkg? : String, description? : String, prepare~ : (Project) -> S, collate~ : (Int, S, Project) -> S, summary~ : (S) -> Unit) -> Self
+pub fn[S] RegisteredProjectCollator::create(name~ : String, pkg? : String, description? : String, prepare~ : (Project) -> S, collate~ : (Int32, S, Project) -> S, summary~ : (S) -> Unit) -> Self
 pub fn RegisteredProjectCollator::desc(Self) -> String
 pub fn RegisteredProjectCollator::description(Self) -> String
 pub fn[S] RegisteredProjectCollator::from_collator(ProjectCollator[S, Unit]) -> Self

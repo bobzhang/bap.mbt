@@ -13,19 +13,21 @@
 
 ///|
 /// A node of the call graph: the artificial entry or a block start.
+#derive(Eq, Hash)
 priv enum CallNode {
   CallEntry
   CallBlock(UInt64)
-} derive(Eq, Hash)
+}
 
 ///|
 /// The parents of a block (upstream `Parent.t`).
+#derive(Eq)
 priv enum CallParent {
   /// all blocks (unknown)
   CallTop
   /// the known parents
   CallParents(@sorted_set.SortedSet[UInt64])
-} derive(Eq)
+}
 
 ///|
 /// The subroutine partition of the disassembled blocks (upstream

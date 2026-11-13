@@ -6,7 +6,7 @@ import {
 }
 
 // Values
-pub fn collect(min_length~ : Int, @project.Project) -> Array[(UInt64, String)]
+pub fn collect(min_length~ : Int32, @project.Project) -> Array[(UInt64, String)]
 
 pub fn declare_plugin(out? : (String) -> Unit) -> Unit raise
 
@@ -14,7 +14,7 @@ pub fn escape(String) -> String
 
 pub let name : String
 
-pub fn register(min_length? : Int, with_address? : Bool, out? : (String) -> Unit) -> Result[Unit, String]
+pub fn register(min_length? : Int32, with_address? : Bool, out? : (String) -> Unit) -> Result[Unit, String]
 
 pub fn render(Array[(UInt64, String)], with_address~ : Bool) -> String
 

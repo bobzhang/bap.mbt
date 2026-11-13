@@ -26,6 +26,7 @@
 ///
 /// The generators are checked in order and the first matching one is
 /// used.
+#derive(Eq, Debug)
 pub(all) enum MemRegion {
   /// `(mem _)`: any address.
   Default
@@ -36,10 +37,11 @@ pub(all) enum MemRegion {
   Section(String)
   /// `(mem <expr> <expr>)`: an interval (bounds included).
   Interval(String, String)
-} derive(Eq, Debug)
+}
 
 ///|
 /// What a generator specification applies to.
+#derive(Eq, Debug)
 pub(all) enum Predicate {
   /// `_` or no predicate: anything.
   Any
@@ -48,30 +50,33 @@ pub(all) enum Predicate {
   Vars(Array[String])
   /// `(mem ...)`: memory.
   Mem(MemRegion)
-} derive(Eq, Debug)
+}
 
 ///|
 /// The generator kind.
+#derive(Eq, Debug)
 pub(all) enum Distribution {
   /// Enumerates the given values (zero by default).
   Static
   /// A uniform pseudo-random sequence.
   Random
-} derive(Eq, Debug)
+}
 
 ///|
 /// A generator specification.
+#derive(Eq, Debug)
 pub(all) struct Spec {
   predicate : Predicate
   distribution : Distribution
   parameters : Array[String]
-} derive(Eq, Debug)
+}
 
 ///|
 /// Errors in generator specifications.
+#derive(Debug)
 pub suberror SpecError {
   SpecError(String)
-} derive(Debug)
+}
 
 ///|
 pub impl Show for SpecError with fn output(self, logger) {

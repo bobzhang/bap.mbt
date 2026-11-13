@@ -12,23 +12,23 @@ pub fn a64_decoder_accepts(@mc.Context) -> Bool
 
 pub let a64_decoder_name : String
 
-pub fn cond_asm(Int) -> String
+pub fn cond_asm(Int32) -> String
 
 pub fn decode_a64(BytesView, addr? : UInt64) -> @mc.Decoded
 
-pub fn decode_a64_word(UInt, addr? : UInt64, raw? : Bytes) -> @mc.Insn?
+pub fn decode_a64_word(UInt32, addr? : UInt64, raw? : Bytes) -> @mc.Insn?
 
-pub fn decode_bit_masks(Int, Int, Int, Int) -> UInt64?
+pub fn decode_bit_masks(Int32, Int32, Int32, Int32) -> UInt64?
 
-pub fn mc_reg(Bool, Int, sp? : Bool) -> @mc.Op
+pub fn mc_reg(Bool, Int32, sp? : Bool) -> @mc.Op
 
-pub fn mc_w(Int, sp? : Bool) -> @mc.Op
+pub fn mc_w(Int32, sp? : Bool) -> @mc.Op
 
-pub fn mc_x(Int, sp? : Bool) -> @mc.Op
+pub fn mc_x(Int32, sp? : Bool) -> @mc.Op
 
-pub fn reg_asm(Bool, Int, sp? : Bool) -> String
+pub fn reg_asm(Bool, Int32, sp? : Bool) -> String
 
-pub fn reg_name(Bool, Int, sp? : Bool) -> String
+pub fn reg_name(Bool, Int32, sp? : Bool) -> String
 
 pub fn register_decoder() -> Unit
 

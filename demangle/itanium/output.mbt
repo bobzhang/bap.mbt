@@ -125,7 +125,7 @@ fn Output::add_uint(self : Output, n : Int32) -> Unit {
 
 ///|
 fn Output::contents(self : Output) -> String {
-  let sb = StringBuilder(size_hint=self.len)
+  let sb = StringBuilder(capacity=self.len)
   for piece in self.pieces {
     sb.write_view(piece)
   }

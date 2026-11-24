@@ -267,7 +267,7 @@ fn GCase::frontier_model(self : GCase, entry : Int32) -> Array[@set.Set[Int32]] 
             .iter()
             .any(p => reach[p] && self.dominates(entry, x, p))
           if dominates_pred && !sdom {
-            out.add(y)
+            out.insert(y)
           }
         }
       }
@@ -496,7 +496,7 @@ test "qc: union and intersect agree with endpoint set operations" {
       let pairs = (x : @graphlib.Graph[Int32, Int32]) => {
         let s : @set.Set[(Int32, Int32)] = @set.Set([])
         for e in x.edges() {
-          s.add((e.src, e.dst))
+          s.insert((e.src, e.dst))
         }
         s
       }

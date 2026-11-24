@@ -8,7 +8,7 @@ pub struct PersistentMap[K, V] {
 
 ///|
 pub fn[K, V] PersistentMap::empty() -> PersistentMap[K, V] {
-  { map: @sorted_map.SortedMap::new(), }
+  { map: @sorted_map.SortedMap::empty(), }
 }
 
 ///|
@@ -33,7 +33,7 @@ pub fn[K : Compare, V] PersistentMap::add(
   key : K,
   value : V,
 ) -> PersistentMap[K, V] {
-  { map: self.map.add(key, value), }
+  { map: self.map.insert(key, value), }
 }
 
 ///|

@@ -27,7 +27,7 @@ pub struct TaintContext {
 ///|
 /// The state without taints.
 pub fn TaintContext::empty() -> TaintContext {
-  { tvs: @sorted_map.SortedMap::new(), tas: @sorted_map.SortedMap::new(), }
+  { tvs: @sorted_map.SortedMap::empty(), tas: @sorted_map.SortedMap::empty(), }
 }
 
 ///|
@@ -42,7 +42,7 @@ pub fn TaintContext::taint_reg(
   if ts.is_empty() {
     { ..self, tvs: self.tvs.remove(key), }
   } else {
-    { ..self, tvs: self.tvs.add(key, ts), }
+    { ..self, tvs: self.tvs.insert(key, ts), }
   }
 }
 
@@ -60,7 +60,7 @@ pub fn TaintContext::taint_ptr(
   }
   let mut tas = self.tas
   for n in 0..<s.in_bytes() {
-    tas = tas.add(Addr(a.nsucc(n)), ts)
+    tas = tas.insert(Addr(a.nsucc(n)), ts)
   }
   { ..self, tas, }
 }
@@ -71,7 +71,7 @@ pub fn TaintContext::reg_taints(
   self : TaintContext,
   r : @types.BilResult,
 ) -> TaintSet {
-  self.tvs.get(r.id().to_uint64()).unwrap_or(@immut_hashset.HashSet::new())
+  self.tvs.get(r.id().to_uint64()).unwrap_or(@immut_hashset.HashSet::empty())
 }
 
 ///|
@@ -80,13 +80,13 @@ pub fn TaintContext::ptr_taints(
   self : TaintContext,
   a : @types.Word,
 ) -> TaintSet {
-  self.tas.get(Addr(a)).unwrap_or(@immut_hashset.HashSet::new())
+  self.tas.get(Addr(a)).unwrap_or(@immut_hashset.HashSet::empty())
 }
 
 ///|
 /// All taints of the state.
 pub fn TaintContext::all_taints(self : TaintContext) -> TaintSet {
-  let init : TaintSet = @immut_hashset.HashSet::new()
+  let init : TaintSet = @immut_hashset.HashSet::empty()
   let acc = self.tvs.fold((acc : TaintSet, _, ts) => acc.union(ts), init~)
   self.tas.fold((acc, _, ts) => acc.union(ts), init=acc)
 }
@@ -124,5 +124,5 @@ fn propagate_taints(
     return taints
   }
   let map = taints.get(tid).unwrap_or(@taint.TaintMap::empty())
-  taints.add(tid, map.add(v.name(), sorted_taints(ts)))
+  taints.insert(tid, map.add(v.name(), sorted_taints(ts)))
 }

@@ -208,7 +208,7 @@ priv struct GenState {
 let generators_state : State[GenState] = State::declare_(
   name="iterators",
   uuid="9927004d-fe57-4de9-8705-c3d6862238cf",
-  _ => { iterators: @sorted_map.SortedMap::new(), salt: 1, },
+  _ => { iterators: @sorted_map.SortedMap::empty(), salt: 1, },
 )
 
 ///|
@@ -219,7 +219,7 @@ fn Generator::call(self : Generator, m : Machine) -> @bitvec.BitVec {
       Some(it) => {
         let value = (it.value)()
         m.put_local(generators_state, {
-          iterators: st.iterators.add(self.id, (it.next)()),
+          iterators: st.iterators.insert(self.id, (it.next)()),
           salt: st.salt,
         })
         return value
@@ -229,12 +229,12 @@ fn Generator::call(self : Generator, m : Machine) -> @bitvec.BitVec {
         match self.init {
           Const(it) =>
             m.put_local(generators_state, {
-              iterators: st.iterators.add(self.id, (it.seed)(seed)),
+              iterators: st.iterators.insert(self.id, (it.seed)(seed)),
               salt: st.salt + 1,
             })
           Seeded(init) =>
             m.put_local(generators_state, {
-              iterators: st.iterators.add(self.id, init(seed)),
+              iterators: st.iterators.insert(self.id, init(seed)),
               salt: st.salt,
             })
         }

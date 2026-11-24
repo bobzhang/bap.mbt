@@ -286,7 +286,7 @@ pub fn[T : Eq + Hash] Persistent::set(
           Err(reason) => return Err(reason)
         }
         match element.decode(encoded) {
-          Ok(item) => result.add(item)
+          Ok(item) => result.insert(item)
           Err(reason) => return Err(reason)
         }
         offset = next

@@ -131,7 +131,7 @@ priv struct Limits {
 let state : @primus.State[Limits] = @primus.State::declare_(
   uuid="b1b58dff-54de-4611-abf8-88ff8f6c7481",
   name="primus-limiter",
-  _ => { visited: @immut_hashmap.new(), length: 0, },
+  _ => { visited: @immut_hashmap.empty(), length: 0, },
 )
 
 ///|
@@ -184,7 +184,7 @@ fn on_blk(
   }
   m.put_local(state, {
     ..s,
-    visited: s.visited.add(tid, s.visited.get(tid).unwrap_or(0) + 1),
+    visited: s.visited.insert(tid, s.visited.get(tid).unwrap_or(0) + 1),
   })
 }
 

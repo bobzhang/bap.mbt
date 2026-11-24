@@ -81,7 +81,7 @@ fn[K, P] State::commit(
     Ok(data) =>
       self.set_class_objects(slot.owner, {
         ..objects,
-        vals: objects.vals.add(object.id(), { ..info, data, }),
+        vals: objects.vals.insert(object.id(), { ..info, data, }),
       })
     Err(error) =>
       raise NonMonotonicUpdate(slot=slot.name, repr=self.repr(object), error~)
@@ -177,7 +177,7 @@ fn[K, P] State::update_work(
   let uid = slot.core.key.uid
   self.update_info(slot.owner, object.id(), info => {
     ..info,
-    comp: info.comp.add(uid, f(info.comp.get(uid))),
+    comp: info.comp.insert(uid, f(info.comp.get(uid))),
   })
 }
 
@@ -191,7 +191,7 @@ fn[K, P] State::working(
   self.update_work(slot, object, work => {
     match work {
       Some(Working(waiting, current)) => f(waiting, current)
-      _ => f(@sorted_set.SortedSet::new(), @sorted_set.SortedSet::new())
+      _ => f(@sorted_set.SortedSet::empty(), @sorted_set.SortedSet::empty())
     }
   })
 }
@@ -207,12 +207,12 @@ fn[K, P] State::dequeue_waiting(
     Some({ comp, .. }) =>
       match comp.get(slot.core.key.uid) {
         Some(Working(waiting, _)) => waiting
-        _ => @sorted_set.SortedSet::new()
+        _ => @sorted_set.SortedSet::empty()
       }
-    None => @sorted_set.SortedSet::new()
+    None => @sorted_set.SortedSet::empty()
   }
   self.working(slot, object, (_, _) => {
-    Working(@sorted_set.SortedSet::new(), @sorted_set.SortedSet::new())
+    Working(@sorted_set.SortedSet::empty(), @sorted_set.SortedSet::empty())
   })
   // upstream folds the pid tree into a list, i.e., the waiting promises
   // are re-run newest first
@@ -241,7 +241,7 @@ fn[K, P] State::collect_inner(
   for promise in promises {
     let (pid, run) = promise
     self.working(slot, object, (waiting, current) => {
-      Working(waiting, current.add(pid))
+      Working(waiting, current.insert(pid))
     })
     run(self, object.id(), object.class_name())
     self.working(slot, object, (waiting, current) => {
@@ -300,7 +300,7 @@ pub fn[K, P] State::collect(
       })
     Sleep => {
       self.update_work(slot, object, _ => {
-        Working(@sorted_set.SortedSet::new(), @sorted_set.SortedSet::new())
+        Working(@sorted_set.SortedSet::empty(), @sorted_set.SortedSet::empty())
       })
       let promises = [ for pid, run in slot.core.promises => (pid, run) ]
       self.collect_inner(slot, object, promises)

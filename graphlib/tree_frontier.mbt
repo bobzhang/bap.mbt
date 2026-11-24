@@ -34,7 +34,7 @@ fn[N : Hash + Eq] graph_tree_new(
           Some(existing) => existing
           None => Set([])
         }
-        siblings.add(node)
+        siblings.insert(node)
         children[parent] = siblings
       }
       None => ()
@@ -75,7 +75,7 @@ pub fn[N : Hash + Eq] Tree::ancestors(self : Tree[N], node : N) -> Array[N] {
     match self.parents_value.get(current) {
       Some(parent) if !seen.contains(parent) => {
         out.push(parent)
-        seen.add(parent)
+        seen.insert(parent)
         current = parent
       }
       _ => done = true
@@ -93,7 +93,7 @@ fn[N : Hash + Eq] graph_tree_collect_descendants(
 ) -> Unit {
   for child in tree.children(node) {
     if !seen.contains(child) {
-      seen.add(child)
+      seen.insert(child)
       out.push(child)
       graph_tree_collect_descendants(tree, child, seen, out)
     }
@@ -262,7 +262,7 @@ pub fn[N : Hash + Eq, E] Graph::dom_frontier_of_tree(
         match stop {
           Some(limit) if runner == limit => done = true
           _ => {
-            visited.add(runner)
+            visited.insert(runner)
             match tree.parent(runner) {
               Some(parent) => runner = parent
               None => done = true
@@ -276,7 +276,7 @@ pub fn[N : Hash + Eq, E] Graph::dom_frontier_of_tree(
         Some(set) => set
         None => Set([])
       }
-      frontier.add(node)
+      frontier.insert(node)
       frontiers[runner] = frontier
     }
   }

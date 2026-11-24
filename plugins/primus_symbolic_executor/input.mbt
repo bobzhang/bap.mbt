@@ -28,7 +28,7 @@ fn SymMemory::same(self : SymMemory, other : SymMemory) -> Bool {
 let memories : @primus.State[@sorted_map.SortedMap[String, SymMemory]] = @primus.State::declare_(
   uuid="15dbb89a-3bfb-421c-8b19-16605425c3f5",
   name="symbolic-memories",
-  _ => @sorted_map.new(),
+  _ => @sorted_map.empty(),
 )
 
 ///|

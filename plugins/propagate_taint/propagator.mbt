@@ -29,9 +29,9 @@ pub struct PropagationResult {
 /// No visited terms and no taints.
 pub fn PropagationResult::empty() -> PropagationResult {
   {
-    visited: @immut_hashmap.HashMap::new(),
-    regs: @immut_hashmap.HashMap::new(),
-    ptrs: @immut_hashmap.HashMap::new(),
+    visited: @immut_hashmap.HashMap::empty(),
+    regs: @immut_hashmap.HashMap::empty(),
+    ptrs: @immut_hashmap.HashMap::empty(),
   }
 }
 
@@ -39,8 +39,8 @@ pub fn PropagationResult::empty() -> PropagationResult {
 fn union_taints(x : TermTaints, y : TermTaints) -> TermTaints {
   y.fold(init=x, (acc, tid, map) => {
     match acc.get(tid) {
-      None => acc.add(tid, map)
-      Some(old) => acc.add(tid, old.union(map))
+      None => acc.insert(tid, map)
+      Some(old) => acc.insert(tid, old.union(map))
     }
   })
 }
@@ -55,7 +55,7 @@ pub fn PropagationResult::union(
   let visited = other.visited.fold(init=self.visited, (acc, tid, n) => {
     match acc.get(tid) {
       Some(m) if m >= n => acc
-      _ => acc.add(tid, n)
+      _ => acc.insert(tid, n)
     }
   })
   {
@@ -122,8 +122,8 @@ pub fn PropagationResult::tainted_terms(
 ) -> Array[@types.Tid] {
   let set : TaintSet = self.regs
     .keys()
-    .fold(init=@immut_hashset.HashSet::new(), (acc, t) => acc.add(t))
-  sorted_taints(self.ptrs.keys().fold(init=set, (acc, t) => acc.add(t)))
+    .fold(init=@immut_hashset.HashSet::empty(), (acc, t) => acc.insert(t))
+  sorted_taints(self.ptrs.keys().fold(init=set, (acc, t) => acc.insert(t)))
 }
 
 ///|
@@ -280,7 +280,7 @@ fn Run::propagate(
   args : Array[@types.BilResult],
   rr : @types.BilResult,
 ) -> Unit {
-  let init : TaintSet = @immut_hashset.HashSet::new()
+  let init : TaintSet = @immut_hashset.HashSet::empty()
   let ts = args.fold(init~, (acc, r) => acc.union(self.taint.reg_taints(r)))
   self.taint = self.taint.taint_reg(rr, ts)
 }
@@ -503,7 +503,7 @@ fn Run::taint_result(
     Some(seed) =>
       self.taint = self.taint.taint_reg(
         r,
-        @immut_hashset.HashSet::new().add(seed),
+        @immut_hashset.HashSet::empty().insert(seed),
       )
     None => ()
   }
@@ -512,7 +512,7 @@ fn Run::taint_result(
       self.taint = self.taint.taint_ptr(
         a,
         @types.Size::of_int_opt(8).unwrap(),
-        @immut_hashset.HashSet::new().add(seed),
+        @immut_hashset.HashSet::empty().insert(seed),
       )
     _ => ()
   }
@@ -918,8 +918,8 @@ pub fn run(
     ctxt,
     exp: ctxt.exp_context(),
     taint: TaintContext::empty(),
-    regs: @immut_hashmap.HashMap::new(),
-    ptrs: @immut_hashmap.HashMap::new(),
+    regs: @immut_hashmap.HashMap::empty(),
+    ptrs: @immut_hashmap.HashMap::empty(),
     subs: @list.List([]),
     term: None,
     snapshots: Map([]),
@@ -928,6 +928,6 @@ pub fn run(
   let visited = run.ctxt
     .visited()
     .iter()
-    .fold(init=@immut_hashmap.HashMap::new(), (acc, p) => acc.add(p.0, p.1))
+    .fold(init=@immut_hashmap.HashMap::empty(), (acc, p) => acc.insert(p.0, p.1))
   { visited, regs: run.regs, ptrs: run.ptrs, }
 }

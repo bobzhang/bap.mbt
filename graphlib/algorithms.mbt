@@ -200,7 +200,7 @@ fn[N : Hash + Eq, E] postorder_visit(
   rev : Bool,
 ) -> Unit {
   if !seen.contains(node) {
-    seen.add(node)
+    seen.insert(node)
     for edge in adjacent_edges(adj, node) {
       let adjacent = if rev { edge.src } else { edge.dst }
       postorder_visit(adj, adjacent, seen, order, rev)
@@ -320,7 +320,7 @@ fn[N : Hash + Eq, E, A] fold_reachable_visit(
   if seen.contains(node) {
     acc
   } else {
-    seen.add(node)
+    seen.insert(node)
     let mut next = f(acc, node)
     for edge in adjacent_edges(adj, node) {
       let adjacent = if rev { edge.src } else { edge.dst }
@@ -455,7 +455,7 @@ pub fn[N : Hash + Eq, E] Graph::shortest_path(
           if item.node == finish {
             result = Some(GraphPath::new(item.path, weight=item.total))
           } else {
-            visited.add(item.node)
+            visited.insert(item.node)
             for edge in adjacent_edges(adj, item.node) {
               let next = if rev { edge.src } else { edge.dst }
               if !visited.contains(next) {
@@ -495,7 +495,7 @@ fn[N : Hash + Eq, E] strong_connect(
   lowlinks[node] = index.val
   index.val = index.val + 1
   stack.push(node)
-  on_stack.add(node)
+  on_stack.insert(node)
   for edge in adjacent_edges(adj, node) {
     let succ = edge.dst
     if !indexes.contains(succ) {
@@ -514,7 +514,7 @@ fn[N : Hash + Eq, E] strong_connect(
       match stack.pop() {
         Some(item) => {
           on_stack.remove(item)
-          component.add(item)
+          component.insert(item)
           if item == node {
             done = true
           }
@@ -605,7 +605,7 @@ pub fn[N : Hash + Eq, E] Graph::dominators(
         }
         let candidate = match next {
           Some(set) => {
-            set.add(node)
+            set.insert(node)
             set
           }
           None => Set::from_array([node])
@@ -698,7 +698,7 @@ pub fn[N : Hash + Eq, E] Graph::dominance_frontiers(
                 Some(set) => set
                 None => Set([])
               }
-              frontier.add(node)
+              frontier.insert(node)
               frontiers[runner] = frontier
               match idoms.get(runner) {
                 Some(next) => runner = next

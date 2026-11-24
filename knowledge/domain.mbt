@@ -459,10 +459,10 @@ fn[T : Eq + Hash] set_subset(lhs : Set[T], rhs : Set[T]) -> Bool {
 fn[T : Eq + Hash] set_union(lhs : Set[T], rhs : Set[T]) -> Set[T] {
   let result : Set[T] = Set([])
   for item in lhs {
-    result.add(item)
+    result.insert(item)
   }
   for item in rhs {
-    result.add(item)
+    result.insert(item)
   }
   result
 }

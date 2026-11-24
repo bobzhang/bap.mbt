@@ -58,7 +58,7 @@ pub extend TaintMap with Eq::{not_equal, equal}
 ///|
 /// The empty map.
 pub fn TaintMap::empty() -> TaintMap {
-  { map: @sorted_map.SortedMap::new(), }
+  { map: @sorted_map.SortedMap::empty(), }
 }
 
 ///|
@@ -82,7 +82,7 @@ pub fn TaintMap::add(
     None => set
     Some(old) => old.union(set)
   }
-  { map: self.map.add(name, set), }
+  { map: self.map.insert(name, set), }
 }
 
 ///|
@@ -116,7 +116,7 @@ pub fn TaintMap::bindings(
 pub fn TaintMap::taints(self : TaintMap) -> Array[@types.Tid] {
   let all : @sorted_set.SortedSet[TidKey] = self.map.fold(
     (acc, _, set) => acc.union(set),
-    init=@sorted_set.SortedSet::new(),
+    init=@sorted_set.SortedSet::empty(),
   )
   all.to_array().map(k => k.0)
 }

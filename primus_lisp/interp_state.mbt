@@ -83,10 +83,10 @@ let lisp_state : @primus.State[LState] = {
     proj => {
       program: Program::empty(),
       typed: None,
-      advices: @sorted_map.SortedMap::new(),
-      places: @sorted_map.SortedMap::new(),
+      advices: @sorted_map.SortedMap::empty(),
+      places: @sorted_map.SortedMap::empty(),
       width: width_of_project(proj),
-      env: @sorted_map.SortedMap::new(),
+      env: @sorted_map.SortedMap::empty(),
       cur: 0,
       ret: None,
       failure: None,

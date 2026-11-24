@@ -42,7 +42,7 @@ pub fn[T, D] Iterator::to_iter(self : Iterator[T, D], init : T) -> Iter[D] {
   match self {
     Inf(it) => {
       let mut state = init
-      Iter::new(() => {
+      Iter::Iter(() => {
         let v = (it.value)(state)
         state = (it.next)(state)
         Some(v)
@@ -50,7 +50,7 @@ pub fn[T, D] Iterator::to_iter(self : Iterator[T, D], init : T) -> Iter[D] {
     }
     Fin(it) => {
       let mut state : T? = Some(init)
-      Iter::new(() => {
+      Iter::Iter(() => {
         match state {
           None => None
           Some(s) => {

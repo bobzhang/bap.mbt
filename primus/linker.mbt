@@ -70,11 +70,11 @@ let linker_state : State[Linker] = State::declare_(
   uuid="38bf35bf-1091-4220-bf75-de79db9de4d2",
   name="linker",
   _ => {
-    codes: @sorted_map.SortedMap::new(),
-    aliases: @sorted_map.SortedMap::new(),
-    terms: @immut_hashmap.HashMap::new(),
-    names: @immut_hashmap.HashMap::new(),
-    addrs: @sorted_map.SortedMap::new(),
+    codes: @sorted_map.SortedMap::empty(),
+    aliases: @sorted_map.SortedMap::empty(),
+    terms: @immut_hashmap.HashMap::empty(),
+    names: @immut_hashmap.HashMap::empty(),
+    addrs: @sorted_map.SortedMap::empty(),
     last: 0,
   },
 )
@@ -212,18 +212,18 @@ pub fn Linker::link(
   m.update_local(linker_state, s => {
     let key = s.last + 1
     {
-      codes: s.codes.add(key, code),
-      aliases: s.aliases.add(key, { term: tid, name, addr, }),
+      codes: s.codes.insert(key, code),
+      aliases: s.aliases.insert(key, { term: tid, name, addr, }),
       terms: match tid {
-        Some(t) => s.terms.add(t, key)
+        Some(t) => s.terms.insert(t, key)
         None => s.terms
       },
       names: match name {
-        Some(n) => s.names.add(n, key)
+        Some(n) => s.names.insert(n, key)
         None => s.names
       },
       addrs: match addr {
-        Some(a) => s.addrs.add(AddrKey(a), key)
+        Some(a) => s.addrs.insert(AddrKey(a), key)
         None => s.addrs
       },
       last: key,

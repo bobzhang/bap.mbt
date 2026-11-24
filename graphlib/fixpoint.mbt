@@ -244,7 +244,7 @@ pub fn[N : Hash + Eq, E, D] Graph::fixpoint(
     let ranked : Set[Int32] = Set([])
     for next in adjacent {
       match rnodes.get(next) {
-        Some(index) => ranked.add(index)
+        Some(index) => ranked.insert(index)
         None => ()
       }
     }

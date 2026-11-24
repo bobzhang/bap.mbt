@@ -57,10 +57,10 @@ pub struct Gc {}
 /// variable of the environment.
 fn collect_direct(m : @primus.Machine) -> Unit raise {
   let s = m.get_local(tainter)
-  let mut live : @sorted_set.SortedSet[Int64] = @sorted_set.SortedSet::new()
+  let mut live : @sorted_set.SortedSet[Int64] = @sorted_set.SortedSet::empty()
   for v in @primus.Env::all(m) {
     if @primus.Env::is_set(m, v) {
-      live = live.add(@primus.Env::get(m, v).id())
+      live = live.insert(@primus.Env::get(m, v).id())
     }
   }
   m.put_local(tainter, {
@@ -82,7 +82,7 @@ pub fn Gc::collect(m : @primus.Machine) -> Unit raise {
   let mut dead = dying
   for id in m.forks() {
     let objs = Tracker::objects_of(m, id) catch {
-      _ => @sorted_set.SortedSet::new()
+      _ => @sorted_set.SortedSet::empty()
     }
     dead = dead.difference(objs)
   }

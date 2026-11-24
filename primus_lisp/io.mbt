@@ -47,13 +47,13 @@ let io_state : @primus.State[Io] = @primus.State::declare_(
         (2, std_channel(None)),
       ].iter(),
     ),
-    redirections: @sorted_map.SortedMap::new(),
+    redirections: @sorted_map.SortedMap::empty(),
   },
 )
 
 ///|
 fn update_channel(m : @primus.Machine, fd : Int32, c : Channel) -> Unit {
-  m.update_local(io_state, io => { ..io, channels: io.channels.add(fd, c), })
+  m.update_local(io_state, io => { ..io, channels: io.channels.insert(fd, c), })
 }
 
 ///|
@@ -121,7 +121,7 @@ pub fn set_redirections(
       None =>
         m.update_local(io_state, io => {
           ..io,
-          redirections: io.redirections.add(r.0, r.1),
+          redirections: io.redirections.insert(r.0, r.1),
         })
     }
   }
@@ -130,7 +130,7 @@ pub fn set_redirections(
 ///|
 fn bytes_of_chunks(base : Bytes, chunks : Array[String]) -> Bytes {
   let buf = Buffer()
-  buf.write_bytes(base)
+  buf.write_bytesview(base)
   for c in chunks {
     for ch in c {
       buf.write_byte(ch.to_int().to_byte())

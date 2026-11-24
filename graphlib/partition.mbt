@@ -184,7 +184,7 @@ pub fn[N : Hash + Eq] Partition::union(
       let target = left.min(right)
       let source = left.max(right)
       for element in groups[source] {
-        groups[target].add(element)
+        groups[target].insert(element)
       }
       ignore(groups.remove(source))
       ignore(roots.remove(source))
@@ -203,7 +203,7 @@ fn[N : Hash + Eq] add_to_refined_groups(
   for group in groups {
     match group.iter().next() {
       Some(representative) if equiv(representative, element) => {
-        group.add(element)
+        group.insert(element)
         return
       }
       _ => ()

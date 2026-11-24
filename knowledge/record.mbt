@@ -98,7 +98,7 @@ priv struct Record {
 }
 
 ///|
-let empty_record : Record = { fields: @sorted_map.SortedMap::new(), }
+let empty_record : Record = { fields: @sorted_map.SortedMap::empty(), }
 
 ///|
 fn Record::is_empty(self : Record) -> Bool {
@@ -120,12 +120,12 @@ fn[T] Record::put(
   ops : EntryOps,
   value : T,
 ) -> Record {
-  { fields: self.fields.add(key.uid, key.inject(ops, value)), }
+  { fields: self.fields.insert(key.uid, key.inject(ops, value)), }
 }
 
 ///|
 fn Record::put_entry(self : Record, entry : Entry) -> Record {
-  { fields: self.fields.add(entry.ops.uid, entry), }
+  { fields: self.fields.insert(entry.ops.uid, entry), }
 }
 
 ///|
@@ -138,10 +138,11 @@ fn[T] Record::commit(
 ) -> Result[Record, String] {
   let entry = key.inject(ops, value)
   match self.fields.get(key.uid) {
-    None => Ok({ fields: self.fields.add(key.uid, entry), })
+    None => Ok({ fields: self.fields.insert(key.uid, entry), })
     Some(old) =>
       match (ops.join)(old, entry) {
-        Ok(store) => Ok({ fields: self.fields.add(key.uid, { store, ops, }), })
+        Ok(store) =>
+          Ok({ fields: self.fields.insert(key.uid, { store, ops, }), })
         Err(reason) => Err(reason)
       }
   }
@@ -195,13 +196,13 @@ fn Record::merge_with(
   let mut fields = self.fields
   for uid, entry in other.fields {
     match fields.get(uid) {
-      None => fields = fields.add(uid, entry)
+      None => fields = fields.insert(uid, entry)
       Some(mine) =>
         match (mine.ops.join)(mine, entry) {
-          Ok(store) => fields = fields.add(uid, { store, ops: mine.ops, })
+          Ok(store) => fields = fields.insert(uid, { store, ops: mine.ops, })
           Err(reason) =>
             match resolve(mine, entry) {
-              Some(chosen) => fields = fields.add(uid, chosen)
+              Some(chosen) => fields = fields.insert(uid, chosen)
               None => return Err(reason)
             }
         }

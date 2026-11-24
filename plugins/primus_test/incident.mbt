@@ -121,8 +121,8 @@ let incidents_state : @primus.State[Incidents] = @primus.State::declare_(
   uuid="22d66ae9-82ad-4185-a1f8-5eb99f5569df",
   name="incident-locations",
   _ => {
-    locations: @sorted_map.SortedMap::new(),
-    incidents: @sorted_map.SortedMap::new(),
+    locations: @sorted_map.SortedMap::empty(),
+    incidents: @sorted_map.SortedMap::empty(),
   },
 )
 
@@ -250,7 +250,7 @@ pub fn new_location(m : @primus.Machine) -> Int32 raise {
     None => 1
     Some(k) => k + 1
   }
-  m.put_global(incidents_state, { ..s, locations: s.locations.add(key, t), })
+  m.put_global(incidents_state, { ..s, locations: s.locations.insert(key, t), })
   m.post(location_obs.1, () => (key, t.points()))
   key
 }
@@ -290,16 +290,16 @@ pub fn report(
     let s = m.get_global(incidents_state)
     let classes = match s.incidents.get(name) {
       Some(c) => c
-      None => @sorted_map.SortedMap::new()
+      None => @sorted_map.SortedMap::empty()
     }
     m.put_global(incidents_state, {
       ..s,
-      incidents: s.incidents.add(name, classes.add(id, cls)),
+      incidents: s.incidents.insert(name, classes.insert(id, cls)),
     })
   }
   let classes = match s.incidents.get(name) {
     Some(c) => c
-    None => @sorted_map.SortedMap::new()
+    None => @sorted_map.SortedMap::empty()
   }
   let mut found = false
   for kv in classes.iter() {

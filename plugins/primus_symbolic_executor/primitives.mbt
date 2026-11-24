@@ -92,7 +92,7 @@ fn register_memory(m : @primus.Machine, mem : SymMemory) -> Unit raise {
   let name = mem.bank.name()
   let mems = m.get_global(memories)
   match mems.get(name) {
-    None => m.put_global(memories, mems.add(name, mem))
+    None => m.put_global(memories, mems.insert(name, mem))
     Some(old) if old.same(mem) => ()
     Some(_) =>
       m.raise_exn(

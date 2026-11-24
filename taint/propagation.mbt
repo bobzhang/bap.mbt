@@ -54,7 +54,7 @@ priv struct Policies {
 let policies : @primus.State[Policies] = @primus.State::declare_(
   name="taint-policies",
   uuid="4c370c33-ef1b-4e10-be27-ee751a4d6cf3",
-  _ => { servers: @sorted_map.SortedMap::new(), default: None, },
+  _ => { servers: @sorted_map.SortedMap::empty(), default: None, },
 )
 
 ///|
@@ -63,7 +63,7 @@ let policies : @primus.State[Policies] = @primus.State::declare_(
 /// default policy is already set.
 pub fn Policy::select(m : @primus.Machine, p : Policy, kind : Kind) -> Unit {
   m.update_local(policies, s => {
-    servers: s.servers.add(kind, p),
+    servers: s.servers.insert(kind, p),
     default: match s.default {
       Some(d) => Some(d)
       None => Some(p)
@@ -119,7 +119,7 @@ pub fn Policy::propagate(
   let state = m.get_local(tainter)
   let objects = m.get_global(kinds).objects
   let ps = m.get_local(policies)
-  let mut taints = @sorted_set.SortedSet::new()
+  let mut taints = @sorted_set.SortedSet::empty()
   for src in srcs {
     match find(state, src, rs) {
       None => ()

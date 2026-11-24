@@ -93,13 +93,13 @@ pub struct Attrs {
 pub fn Attrs::empty() -> Attrs {
   {
     context: Context::empty(),
-    externals: @sorted_set.SortedSet::new(),
+    externals: @sorted_set.SortedSet::empty(),
     globals: [],
     statics: [],
     visibility: [],
     before: [],
     after: [],
-    custom: @sorted_map.SortedMap::new(),
+    custom: @sorted_map.SortedMap::empty(),
   }
 }
 
@@ -137,7 +137,7 @@ pub fn Attrs::join(self : Attrs, other : Attrs) -> Attrs {
       Some(xs) => xs
       None => []
     }
-    custom = custom.add(kv.0, old + kv.1)
+    custom = custom.insert(kv.0, old + kv.1)
   }
   {
     context: self.context.merge(other.context),

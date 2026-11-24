@@ -84,7 +84,7 @@ fn ssa_iterated_frontier(
       match frontiers.get(seed) {
         Some(frontier) =>
           for tid in frontier {
-            next.add(tid)
+            next.insert(tid)
           }
         None => ()
       }
@@ -93,7 +93,7 @@ fn ssa_iterated_frontier(
       match frontiers.get(tid) {
         Some(frontier) =>
           for item in frontier {
-            next.add(item)
+            next.insert(item)
           }
         None => ()
       }

@@ -41,9 +41,9 @@ let mapper : @primus.State[Mapper] = @primus.State::declare_(
   name="primus-taint-mapper",
   uuid="12511d75-e626-4b0d-8dcd-2a3b597992cf",
   _ => {
-    regs: @immut_hashmap.HashMap::new(),
-    ptrs: @immut_hashmap.HashMap::new(),
-    tids: @sorted_map.SortedMap::new(),
+    regs: @immut_hashmap.HashMap::empty(),
+    ptrs: @immut_hashmap.HashMap::empty(),
+    tids: @sorted_map.SortedMap::empty(),
   },
 )
 
@@ -88,7 +88,7 @@ fn gentaint(
   t : @types.Tid,
 ) -> @sorted_set.SortedSet[@taint.Object] raise {
   let taint = @taint.Object::create(m, seed_kind(m, t))
-  m.update_local(mapper, s => { ..s, tids: s.tids.add(taint, t), })
+  m.update_local(mapper, s => { ..s, tids: s.tids.insert(taint, t), })
   @sorted_set.SortedSet::singleton(taint)
 }
 
@@ -210,7 +210,7 @@ fn update_field(
     Indirect => s.ptrs
   }
   let map = field.get(tid).unwrap_or(@taint.TaintMap::empty())
-  let field = field.add(tid, map.add(v.name(), taints))
+  let field = field.insert(tid, map.add(v.name(), taints))
   match rel {
     Direct => { ..s, regs: field, }
     Indirect => { ..s, ptrs: field, }

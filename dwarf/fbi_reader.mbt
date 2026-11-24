@@ -292,7 +292,7 @@ pub fn DwarfData::iter_functions(
   let pending : Array[DwarfFunction] = []
   let mut position = 0
   let mut flushed = false
-  Iter::new(() => {
+  Iter::Iter(() => {
     for ;; {
       if position < pending.length() {
         let item = pending[position]

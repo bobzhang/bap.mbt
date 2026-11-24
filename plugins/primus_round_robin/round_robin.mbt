@@ -32,7 +32,7 @@ priv struct RoundRobin {
 let state : @primus.State[RoundRobin] = @primus.State::declare_(
   uuid="d1b33e16-bf5d-48d5-a174-3901dff3d123",
   name="round-robin-scheduler",
-  _ => { pending: @list.List([]), finished: @sorted_set.new(), },
+  _ => { pending: @list.List([]), finished: @sorted_set.empty(), },
 )
 
 ///|
@@ -54,7 +54,7 @@ fn schedule(m : @primus.Machine, t : RoundRobin) -> Unit raise {
       }
       More(next, tail=pending) =>
         if m.status(next) is Dead || t.finished.contains(next) {
-          continue { pending, finished: t.finished.add(next), }
+          continue { pending, finished: t.finished.insert(next), }
         } else {
           m.put_global(state, { ..t, pending, })
           m.switch(next)
@@ -72,7 +72,7 @@ fn step(m : @primus.Machine) -> Unit raise {
 ///|
 fn finish(m : @primus.Machine) -> Unit raise {
   let id = m.current()
-  m.update_global(state, t => { ..t, finished: t.finished.add(id), })
+  m.update_global(state, t => { ..t, finished: t.finished.insert(id), })
   step(m)
 }
 

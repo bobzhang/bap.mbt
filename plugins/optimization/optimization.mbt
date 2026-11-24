@@ -53,7 +53,7 @@ pub fn target_is_flag(target : @core_theory.Target) -> (@types.Var) -> Bool {
   let names : @hashset.HashSet[String] = @hashset.HashSet([])
   for role in flag_roles {
     for reg in target.regs(roles=[role]) {
-      names.add(reg.name())
+      names.insert(reg.name())
     }
   }
   v => names.contains(v.base().name())
@@ -76,7 +76,7 @@ fn VarSet::new() -> VarSet {
 
 ///|
 fn VarSet::add(self : VarSet, v : @types.Var) -> Unit {
-  self.items.add(var_key(v))
+  self.items.insert(var_key(v))
 }
 
 ///|

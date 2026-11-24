@@ -33,8 +33,8 @@ let env_state : State[Env] = State::declare_(
   uuid="44b24ea4-48fa-47e8-927e-f7ba65202743",
   name="environment",
   _ => {
-    values: @sorted_map.SortedMap::new(),
-    random: @sorted_map.SortedMap::new(),
+    values: @sorted_map.SortedMap::empty(),
+    random: @sorted_map.SortedMap::empty(),
   },
 )
 
@@ -55,13 +55,16 @@ pub let var_generated : Observation[(@types.Var, Value)] = var_generated_stmt.ob
 /// Registers a generator for the variable: reading it while it is unset
 /// produces a fresh value from the generator (`Env.add`).
 pub fn Env::add(m : Machine, v : @types.Var, gen : Generator) -> Unit {
-  m.update_local(env_state, s => { ..s, random: s.random.add(VarKey(v), gen), })
+  m.update_local(env_state, s => {
+    ..s,
+    random: s.random.insert(VarKey(v), gen),
+  })
 }
 
 ///|
 /// Sets the value of a variable (`Env.set`).
 pub fn Env::set(m : Machine, v : @types.Var, x : Value) -> Unit {
-  m.update_local(env_state, s => { ..s, values: s.values.add(VarKey(v), x), })
+  m.update_local(env_state, s => { ..s, values: s.values.insert(VarKey(v), x), })
 }
 
 ///|

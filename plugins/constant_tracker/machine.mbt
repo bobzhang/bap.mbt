@@ -12,7 +12,7 @@
 let state : @primus.State[@sorted_set.SortedSet[Int64]] = @primus.State::declare_(
   uuid="caf680aa-ef54-4468-9a24-4a125de6ace9",
   name="constant-tracker",
-  _ => @sorted_set.SortedSet::new(),
+  _ => @sorted_set.SortedSet::empty(),
 )
 
 ///|
@@ -34,7 +34,7 @@ pub fn all_static_constant(
 ///|
 /// Declares the value a static constant (`declare_const`).
 pub fn declare_static_constant(m : @primus.Machine, v : @primus.Value) -> Unit {
-  m.update_local(state, s => s.add(v.id()))
+  m.update_local(state, s => s.insert(v.id()))
 }
 
 ///|

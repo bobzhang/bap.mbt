@@ -130,7 +130,7 @@ fn Regions::length(self : Regions) -> Int32 {
 let state : @primus.State[@sorted_map.SortedMap[Key, Regions]] = @primus.State::declare_(
   uuid="0FC4AF7F-7237-4CE1-874A-4971801C6D67",
   name="region",
-  _ => @sorted_map.new(),
+  _ => @sorted_map.empty(),
 )
 
 ///|
@@ -159,7 +159,7 @@ pub fn create(
   let key = Key(reg.to_word())
   m.update_local(state, regions => {
     let set = regions.get(key).unwrap_or(Regions([]))
-    regions.add(key, set.add({ lower, upper, }))
+    regions.insert(key, set.add({ lower, upper, }))
   })
   reg
 }
@@ -231,7 +231,7 @@ pub fn move_regions(
     dst_set = dst_set.add(r)
     n += 1
   }
-  m.put_local(state, regions.add(skey, src_set).add(dkey, dst_set))
+  m.put_local(state, regions.insert(skey, src_set).insert(dkey, dst_set))
   @primus.Value::of_bool(m, n > 0)
 }
 

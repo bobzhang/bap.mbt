@@ -13,7 +13,7 @@ pub struct Context {
 
 ///|
 pub fn Context::empty() -> Context {
-  { classes: @sorted_map.SortedMap::new(), }
+  { classes: @sorted_map.SortedMap::empty(), }
 }
 
 ///|
@@ -37,7 +37,7 @@ fn Context::push(
     None => vs
     Some(old) => old.union(vs)
   }
-  { classes: self.classes.add(name, vs), }
+  { classes: self.classes.insert(name, vs), }
 }
 
 ///|
@@ -52,7 +52,7 @@ pub fn Context::features(self : Context, name : String) -> Array[String] {
 ///|
 /// The classes of the context.
 pub fn Context::classes(self : Context) -> Array[String] {
-  self.classes.keys_as_iter().collect()
+  self.classes.keys().collect()
 }
 
 ///|

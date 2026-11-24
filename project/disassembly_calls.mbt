@@ -53,7 +53,7 @@ fn call_parent_transfer(node : CallNode, parents : CallParent) -> CallParent {
   match (node, parents) {
     (CallEntry, parents) => parents
     (_, CallTop) => CallTop
-    (CallBlock(addr), CallParents(parents)) => CallParents(parents.add(addr))
+    (CallBlock(addr), CallParents(parents)) => CallParents(parents.insert(addr))
   }
 }
 
@@ -62,7 +62,7 @@ fn call_parent_transfer(node : CallNode, parents : CallParent) -> CallParent {
 /// unknown.
 fn call_parents_init() -> @graphlib.Fixpoint[CallNode, CallParent] {
   @graphlib.Fixpoint::create(
-    Map::from_array([(CallEntry, CallParents(@sorted_set.new()))]),
+    Map::from_array([(CallEntry, CallParents(@sorted_set.empty()))]),
     CallTop,
   )
 }
@@ -70,7 +70,11 @@ fn call_parents_init() -> @graphlib.Fixpoint[CallNode, CallParent] {
 ///|
 /// `Calls.empty`.
 pub fn ProjectDisassemblyCalls::empty() -> ProjectDisassemblyCalls {
-  { parents: call_parents_init(), entries_value: @sorted_set.new(), spans: [], }
+  {
+    parents: call_parents_init(),
+    entries_value: @sorted_set.empty(),
+    spans: [],
+  }
 }
 
 ///|
@@ -87,12 +91,12 @@ fn project_calls_of_graph(
     merge=call_parent_merge,
     f=call_parent_transfer,
   )
-  let mut entries = @sorted_set.new()
+  let mut entries = @sorted_set.empty()
   for node in graph.nodes() {
     match node {
       CallBlock(addr) =>
         if parents.get(node) is CallParents(p) && p.is_empty() {
-          entries = entries.add(addr)
+          entries = entries.insert(addr)
         }
       CallEntry => ()
     }

@@ -142,13 +142,13 @@ fn seeded(
   subs : Array[@types.Term[@types.Sub]],
 ) -> @immut_hashset.HashSet[@types.Tid] {
   let callgraph = prog.program_callgraph()
-  let mut out : @immut_hashset.HashSet[@types.Tid] = @immut_hashset.HashSet::new()
+  let mut out : @immut_hashset.HashSet[@types.Tid] = @immut_hashset.HashSet::empty()
   for sub in subs {
     if contains_seed(sub) {
       for caller in callgraph.reachable(sub.tid(), rev=true) {
-        out = out.add(caller)
+        out = out.insert(caller)
       }
-      out = out.add(sub.tid())
+      out = out.insert(sub.tid())
     }
   }
   out
@@ -160,19 +160,19 @@ fn seeded(
 fn tids_of_sub(
   sub : @types.Term[@types.Sub],
 ) -> @immut_hashset.HashSet[@types.Tid] {
-  let mut out : @immut_hashset.HashSet[@types.Tid] = @immut_hashset.HashSet::new()
+  let mut out : @immut_hashset.HashSet[@types.Tid] = @immut_hashset.HashSet::empty()
   for arg in sub.args() {
-    out = out.add(arg.tid())
+    out = out.insert(arg.tid())
   }
   for blk in sub.blks() {
     for t in blk.phis() {
-      out = out.add(t.tid())
+      out = out.insert(t.tid())
     }
     for t in blk.defs() {
-      out = out.add(t.tid())
+      out = out.insert(t.tid())
     }
     for t in blk.jmps() {
-      out = out.add(t.tid())
+      out = out.insert(t.tid())
     }
   }
   out
@@ -226,8 +226,8 @@ pub fn analyze(args : Args, proj : @project.Project) -> Analysis {
   let selected = seeded(prog, candidates)
   let mut state : Analysis = {
     subs: 0,
-    visited: @immut_hashset.HashSet::new(),
-    terms: @immut_hashset.HashSet::new(),
+    visited: @immut_hashset.HashSet::empty(),
+    terms: @immut_hashset.HashSet::empty(),
     result: PropagationResult::empty(),
   }
   for sub in prog.subs() {
@@ -252,7 +252,7 @@ pub fn analyze(args : Args, proj : @project.Project) -> Analysis {
     let visited = result
       .visited()
       .keys()
-      .fold(init=state.visited, (acc, t) => acc.add(t))
+      .fold(init=state.visited, (acc, t) => acc.insert(t))
     state = { ..state, visited, result: state.result.union(result), }
   }
   state

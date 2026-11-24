@@ -32,7 +32,7 @@ let log : @main_event.MainLogReporter = @main_event.MainLogReporter::create(
 let state : @primus.State[@sorted_map.SortedMap[Int32, @primus.Id]] = @primus.State::declare_(
   uuid="99883d0e-94b2-41a4-bce6-1e4a949fd919",
   name="wandering-scheduler",
-  _ => @sorted_map.new(),
+  _ => @sorted_map.empty(),
 )
 
 ///|

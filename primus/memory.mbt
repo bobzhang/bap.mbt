@@ -89,7 +89,7 @@ pub struct Memory {
 
 ///|
 fn empty_bank() -> Bank {
-  { values: @sorted_map.SortedMap::new(), layers: @list.List([]), }
+  { values: @sorted_map.SortedMap::empty(), layers: @list.List([]), }
 }
 
 ///|
@@ -148,7 +148,10 @@ let memory_state : State[Memory] = State::declare_(
   uuid="4b94186d-3ae9-48e0-8a93-8c83c747bdbb",
   inspect=memory_to_sexp,
   name="memory",
-  p => { curr: virtual_memory(p.target()), mems: @sorted_map.SortedMap::new(), },
+  p => {
+    curr: virtual_memory(p.target()),
+    mems: @sorted_map.SortedMap::empty(),
+  },
 )
 
 ///|
@@ -233,7 +236,7 @@ fn Memory::get_curr(m : Machine) -> Bank {
 fn Memory::put_curr(m : Machine, bank : Bank) -> Unit {
   m.update_local(memory_state, s => {
     ..s,
-    mems: s.mems.add(s.curr.name, bank),
+    mems: s.mems.insert(s.curr.name, bank),
   })
 }
 
@@ -322,7 +325,7 @@ fn Memory::remember(
     let data = Value::of_word(m, chunk)
     if !values.contains(AddrKey(key)) {
       m.make(load_generated_stmt, (key, data))
-      values = values.add(AddrKey(key), data)
+      values = values.insert(AddrKey(key), data)
     }
     key = if little { key.succ() } else { key.pred() }
     w = w.rshift(bytesize)
@@ -382,7 +385,7 @@ pub fn Memory::set(m : Machine, addr : @types.Word, x : Value) -> Unit raise {
         ignore(raise_pagefault(m, addr))
       }
   }
-  Memory::put_curr(m, { ..bank, values: bank.values.add(AddrKey(addr), x), })
+  Memory::put_curr(m, { ..bank, values: bank.values.insert(AddrKey(addr), x), })
 }
 
 ///|
@@ -393,7 +396,7 @@ pub fn Memory::set_never_fail(
   x : Value,
 ) -> Unit {
   let bank = Memory::get_curr(m)
-  Memory::put_curr(m, { ..bank, values: bank.values.add(AddrKey(addr), x), })
+  Memory::put_curr(m, { ..bank, values: bank.values.insert(AddrKey(addr), x), })
 }
 
 ///|
@@ -466,7 +469,7 @@ pub fn Memory::add_region(
       let mut values = bank.values
       let mut addr = lower
       for ;; {
-        values = values.add(AddrKey(addr), Value::of_word(m, f(addr)))
+        values = values.insert(AddrKey(addr), Value::of_word(m, f(addr)))
         if addr.compare(upper) == 0 {
           break
         }

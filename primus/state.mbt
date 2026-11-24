@@ -139,7 +139,7 @@ priv struct Slot {
 
 ///|
 fn Bag::empty() -> Bag {
-  { slots: @sorted_map.SortedMap::new(), cloneable: 0, }
+  { slots: @sorted_map.SortedMap::empty(), cloneable: 0, }
 }
 
 ///|
@@ -176,7 +176,7 @@ fn[T] Bag::set(self : Bag, state : State[T], value : T) -> Bag {
   let slot = make_slot(state, value)
   let new = if slot.copy is Some(_) { 1 } else { 0 }
   {
-    slots: self.slots.add(state.id, slot),
+    slots: self.slots.insert(state.id, slot),
     cloneable: self.cloneable - old + new,
   }
 }

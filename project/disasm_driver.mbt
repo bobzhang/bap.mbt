@@ -251,7 +251,7 @@ fn[T] driver_add_multi(
     Some(tasks) => tasks
     None => @list.List([])
   }
-  map.add(key, tasks.prepend(value))
+  map.insert(key, tasks.prepend(value))
 }
 
 ///|
@@ -311,7 +311,7 @@ fn DriverMachine::delete(self : DriverMachine, addr : UInt64) -> DriverMachine {
   let s = self.revert_incoming(addr)
   {
     ..s,
-    data: s.data.add(addr),
+    data: s.data.insert(addr),
     begs: s.begs.remove(addr),
     usat: s.usat.remove(addr),
     code: s.code.remove(addr),
@@ -327,7 +327,7 @@ fn DriverMachine::step(self : DriverMachine) -> DriverMachine {
     match s.work {
       Empty =>
         if s.usat.is_empty() {
-          break { ..s, stop: true, code: @sorted_map.new(), }
+          break { ..s, stop: true, code: @sorted_map.empty(), }
         } else {
           // restart from the first unsatisfied address
           continue {
@@ -376,7 +376,7 @@ fn DriverMachine::step(self : DriverMachine) -> DriverMachine {
             continue { ..s, work, }.revert(jump)
           } else {
             let dsts = { ..dsts, resolved, }
-            let init = { ..s, jmps: s.jmps.add(src, dsts), work, }
+            let init = { ..s, jmps: s.jmps.insert(src, dsts), work, }
             continue resolved.fold(init~, (s, next) => {
                 ..s,
                 work: s.work.prepend(
@@ -407,7 +407,7 @@ fn DriverMachine::step(self : DriverMachine) -> DriverMachine {
                 encoding=slot_encoding,
               ),
             ),
-            dels: s.dels.add(next),
+            dels: s.dels.insert(next),
           }
       }
       More(TaskJump(src~, dsts~, parent~, encoding~, ..), tail=work) =>
@@ -428,7 +428,7 @@ fn DriverMachine::decoded(
   let addr = mem.min_addr()
   {
     ..self,
-    code: self.code.add(addr, encoding.coding),
+    code: self.code.insert(addr, encoding.coding),
     usat: self.usat.remove(addr),
   }
 }
@@ -578,10 +578,10 @@ fn driver_machine_start(
     debt: @list.List([]),
     curr: TaskDest(dst=start, parent=None, encoding=DriverEncoding::unknown()),
     stop: false,
-    dels: @sorted_set.new(),
-    begs: @sorted_map.new(),
-    jmps: @sorted_map.new(),
-    code: @sorted_map.new(),
+    dels: @sorted_set.empty(),
+    begs: @sorted_map.empty(),
+    jmps: @sorted_map.empty(),
+    code: @sorted_map.empty(),
   }
   machine.view(mem)
 }
@@ -660,8 +660,8 @@ fn driver_collect_dests(
     call,
     barrier,
     indirect: false,
-    resolved: @sorted_set.new(),
-    unresolved: @sorted_set.new(),
+    resolved: @sorted_set.empty(),
+    unresolved: @sorted_set.empty(),
   }
   match kb.collect(project_insn_dests_slot, label) {
     None => { ..init, encoding: source, }
@@ -685,13 +685,13 @@ fn driver_collect_dests(
               ..dest,
               encoding,
               call: dest.call || is_call == Some(true),
-              resolved: dest.resolved.add(addr),
+              resolved: dest.resolved.insert(addr),
             }
           None =>
             {
               ..dest,
               indirect: true,
-              unresolved: dest.unresolved.add(dst),
+              unresolved: dest.unresolved.insert(dst),
               encoding,
             }
         }
@@ -844,21 +844,21 @@ fn driver_classify(
   @sorted_set.SortedSet[UInt64],
 ) raise {
   let unit = driver_unit_for_mem(kb, mem)
-  let mut code = @sorted_set.new()
-  let mut data = @sorted_set.new()
-  let mut root = @sorted_set.new()
+  let mut code = @sorted_set.empty()
+  let mut data = @sorted_set.empty()
+  let mut root = @sorted_set.empty()
   let base = mem.min_addr()
   for off in 0..<mem.length() {
     let addr = base + off.to_uint64()
     driver_scoped(kb, addr, unit~, label => {
       match kb.collect(project_label_is_valid, label) {
-        Some(false) => data = data.add(addr)
+        Some(false) => data = data.insert(addr)
         valid => {
           if valid is Some(_) {
-            code = code.add(addr)
+            code = code.insert(addr)
           }
           if kb.collect(project_label_is_subroutine, label) is Some(true) {
-            root = root.add(addr)
+            root = root.insert(addr)
           }
         }
       }
@@ -1003,13 +1003,13 @@ struct ProjectDisassemblyDriverState {
 /// `Driver.init`: nothing is disassembled.
 pub fn ProjectDisassemblyDriverState::init() -> ProjectDisassemblyDriverState {
   {
-    funs: @sorted_set.new(),
-    begs: @sorted_set.new(),
-    jmps: @sorted_map.new(),
-    data: @sorted_set.new(),
+    funs: @sorted_set.empty(),
+    begs: @sorted_set.empty(),
+    jmps: @sorted_map.empty(),
+    data: @sorted_set.empty(),
     mems: @list.List([]),
     debt: @list.List([]),
-    exts: @sorted_set.new(),
+    exts: @sorted_set.empty(),
   }
 }
 
@@ -1164,7 +1164,7 @@ fn driver_commit_calls(
   kb : @knowledge.State,
   jmps : @sorted_map.SortedMap[UInt64, ProjectDisassemblyDriverJump],
 ) -> @sorted_set.SortedSet[UInt64] raise {
-  let mut calls = @sorted_set.new()
+  let mut calls = @sorted_set.empty()
   for entry in jmps.iter() {
     let dsts = entry.1
     if dsts.call {
@@ -1172,7 +1172,7 @@ fn driver_commit_calls(
         let dst = project_label_for_addr(kb, addr)
         kb.provide(project_label_is_valid, dst, Some(true))
         kb.provide(project_label_is_subroutine, dst, Some(true))
-        calls = calls.add(addr)
+        calls = calls.insert(addr)
       }
     }
   }
@@ -1184,13 +1184,13 @@ fn driver_commit_calls(
 fn driver_commit_externals(
   jmps : @sorted_map.SortedMap[UInt64, ProjectDisassemblyDriverJump],
 ) -> @sorted_set.SortedSet[@knowledge.Object[Unit]] {
-  let mut exts = @sorted_set.new()
+  let mut exts = @sorted_set.empty()
   for entry in jmps.iter() {
     let dsts = entry.1
     if dsts.call {
       for dst in dsts.unresolved {
         if !dst.is_null() {
-          exts = exts.add(dst)
+          exts = exts.insert(dst)
         }
       }
     }
@@ -1212,38 +1212,38 @@ fn ProjectDisassemblyDriverState::scan_step(
   self : ProjectDisassemblyDriverState,
   kb : @knowledge.State,
   mem : @memory.Memory,
-  code~ : @sorted_set.SortedSet[UInt64] = @sorted_set.new(),
-  data~ : @sorted_set.SortedSet[UInt64] = @sorted_set.new(),
-  funs~ : @sorted_set.SortedSet[UInt64] = @sorted_set.new(),
+  code~ : @sorted_set.SortedSet[UInt64] = @sorted_set.empty(),
+  data~ : @sorted_set.SortedSet[UInt64] = @sorted_set.empty(),
+  funs~ : @sorted_set.SortedSet[UInt64] = @sorted_set.empty(),
 ) -> ProjectDisassemblyDriverState raise {
   let m = driver_disassemble(kb, code~, data~, funs~, self.debt, mem)
   let data = self.data.union(m.data)
-  let mut jmps = @sorted_map.new()
+  let mut jmps = @sorted_map.empty()
   for entry in m.jmps.iter() {
     match driver_valid_dsts(data, entry.1) {
-      Some(dsts) => jmps = jmps.add(entry.0, dsts)
+      Some(dsts) => jmps = jmps.insert(entry.0, dsts)
       None => ()
     }
   }
   let exts = driver_commit_externals(jmps)
   let funs_ = driver_commit_calls(kb, jmps)
-  let mut merged = @sorted_map.new()
+  let mut merged = @sorted_map.empty()
   for entry in self.jmps.iter() {
     let dsts = match jmps.get(entry.0) {
       None => driver_valid_dsts(data, entry.1)
       Some(d2) => driver_valid_dsts(data, driver_merge_dests(entry.1, d2))
     }
     match dsts {
-      Some(dsts) => merged = merged.add(entry.0, dsts)
+      Some(dsts) => merged = merged.insert(entry.0, dsts)
       None => ()
     }
   }
   for entry in jmps.iter() {
     if !self.jmps.contains(entry.0) {
-      merged = merged.add(entry.0, entry.1)
+      merged = merged.insert(entry.0, entry.1)
     }
   }
-  let begs = @sorted_set.from_iter(m.begs.keys_as_iter()).difference(data)
+  let begs = @sorted_set.from_iter(m.begs.keys()).difference(data)
   let funs = self.funs
     .union(funs)
     .union(funs_)
@@ -1298,7 +1298,7 @@ pub fn ProjectDisassemblyDriverState::merge(
       Some(d1) => driver_merge_dests(d1, entry.1)
       None => entry.1
     }
-    jmps = jmps.add(entry.0, dsts)
+    jmps = jmps.insert(entry.0, dsts)
   }
   {
     funs: self.funs.union(other.funs),
@@ -1438,7 +1438,7 @@ pub fn[N, C] ProjectDisassemblyDriverState::explore(
         if jump.barrier {
           jump.resolved.to_array()
         } else {
-          jump.resolved.add(fall).to_array()
+          jump.resolved.insert(fall).to_array()
         }
     }
     for dst in dsts {

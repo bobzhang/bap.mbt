@@ -67,7 +67,7 @@ priv struct Dict(@sorted_map.SortedMap[Key, (@primus.Value, @primus.Value)])
 let state : @primus.State[@sorted_map.SortedMap[Key, Dict]] = @primus.State::declare_(
   uuid="F050079C-7FDB-4A8F-8A59-72C9693ADBCE",
   name="lisp-dictionaries",
-  _ => @sorted_map.new(),
+  _ => @sorted_map.empty(),
 )
 
 ///|
@@ -91,8 +91,8 @@ pub fn add(
 ) -> @primus.Value {
   let k = Key(dic.to_word())
   m.update_local(state, dicts => {
-    let Dict(d) = dicts.get(k).unwrap_or(Dict(@sorted_map.new()))
-    dicts.add(k, Dict(d.add(Key(key.to_word()), (key, data))))
+    let Dict(d) = dicts.get(k).unwrap_or(Dict(@sorted_map.empty()))
+    dicts.insert(k, Dict(d.insert(Key(key.to_word()), (key, data))))
   })
   key
 }
@@ -142,7 +142,7 @@ pub fn del(
       Some(key) =>
         match dicts.get(k) {
           None => dicts
-          Some(Dict(d)) => dicts.add(k, Dict(d.remove(Key(key.to_word()))))
+          Some(Dict(d)) => dicts.insert(k, Dict(d.remove(Key(key.to_word()))))
         }
     }
   })

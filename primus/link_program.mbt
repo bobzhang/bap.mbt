@@ -18,14 +18,14 @@ pub fn Interpreter::link_program(m : Machine) -> Unit {
   let prog = m.program()
   let subs = prog.payload().subs
   let linked : @immut_hashmap.HashMap[@types.Tid, Unit] = {
-    let mut acc = @immut_hashmap.HashMap::new()
+    let mut acc = @immut_hashmap.HashMap::empty()
     for sub in subs {
       if is_term_linked(m, @types.Sub::name(sub), sub) {
-        acc = acc.add(sub.tid(), ())
+        acc = acc.insert(sub.tid(), ())
       }
       for blk in sub.payload().blks {
         if is_term_linked(m, blk.name(), blk) {
-          acc = acc.add(blk.tid(), ())
+          acc = acc.insert(blk.tid(), ())
         }
       }
     }

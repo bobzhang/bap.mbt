@@ -130,7 +130,7 @@ pub fn[T] Var::get(self : Var[T], state : State) -> T raise {
 pub fn[T] Var::set(self : Var[T], state : State, value : T) -> Unit {
   state.env = {
     ..state.env,
-    context: state.env.context.add(self.key.uid, self.key.storing(value)),
+    context: state.env.context.insert(self.key.uid, self.key.storing(value)),
   }
 }
 

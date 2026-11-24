@@ -54,8 +54,8 @@ pub fn Context::new(
     callstack: @list.List([]),
     steps_left: max_steps,
     max_loop,
-    vis: @hashmap.HashMap::new(),
-    cps: @hashmap.HashMap::new(),
+    vis: @hashmap.HashMap::empty(),
+    cps: @hashmap.HashMap::empty(),
     rets: @list.List([]),
   }
 }
@@ -176,7 +176,7 @@ pub fn Context::backtrack(self : Context) -> Context? {
     }
   }
   guard best is Some((p, old)) else { None }
-  let current = { ..self, cps: self.cps.add(key, points.remove(p)), }
+  let current = { ..self, cps: self.cps.insert(key, points.remove(p)), }
   Some(old.merge(current).set_next(Some(p)))
 }
 
@@ -191,9 +191,9 @@ pub fn Context::add_checkpoint(self : Context, p : Tid) -> Context {
   let key = sub.tid()
   let points = match self.cps.get(key) {
     None => @hashmap.HashMap::singleton(p, self)
-    Some(points) => points.add(p, self)
+    Some(points) => points.insert(p, self)
   }
-  { ..self, cps: self.cps.add(key, points), }
+  { ..self, cps: self.cps.insert(key, points), }
 }
 
 ///|
@@ -258,7 +258,7 @@ pub fn Context::step(self : Context) -> Context? {
 ///|
 /// Increments the visit counter of [tid].
 pub fn Context::visit_term(self : Context, tid : Tid) -> Context {
-  { ..self, vis: self.vis.add(tid, self.visits(tid) + 1), }
+  { ..self, vis: self.vis.insert(tid, self.visits(tid) + 1), }
 }
 
 ///|

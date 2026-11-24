@@ -39,7 +39,7 @@ priv struct Exploring {
 let state : @primus.State[Exploring] = @primus.State::declare_(
   uuid="5a863fc2-96cf-4a00-b046-b9b38f95aa11",
   name="exploring-scheduler",
-  _ => { explored: @immut_hashmap.new(), pending: @list.List([]), },
+  _ => { explored: @immut_hashmap.empty(), pending: @list.List([]), },
 )
 
 ///|
@@ -70,7 +70,7 @@ fn enqueue(
   let tid = position(m, id)
   let add = (level : Int32) => {
     queued.push(id)
-    { ..t, explored: t.explored.add(tid, level), }
+    { ..t, explored: t.explored.insert(tid, level), }
   }
   match t.explored.get(tid) {
     None => add(0)
@@ -118,7 +118,7 @@ fn step(m : @primus.Machine) -> Unit raise {
 fn visit(m : @primus.Machine, tid : @types.Tid) -> Unit {
   m.update_global(state, s => {
     ..s,
-    explored: s.explored.add(tid, s.explored.get(tid).unwrap_or(0) + 1),
+    explored: s.explored.insert(tid, s.explored.get(tid).unwrap_or(0) + 1),
   })
 }
 

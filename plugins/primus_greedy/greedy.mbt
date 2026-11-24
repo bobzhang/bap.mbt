@@ -28,7 +28,7 @@ let log : @main_event.MainLogReporter = @main_event.MainLogReporter::create(
 let state : @primus.State[@sorted_set.SortedSet[@primus.Id]] = @primus.State::declare_(
   uuid="328fd42b-1ffd-44da-8400-8494732dcfa3",
   name="greedy-scheduler-state",
-  _ => @sorted_set.new(),
+  _ => @sorted_set.empty(),
 )
 
 ///|
@@ -61,7 +61,7 @@ fn reschedule(m : @primus.Machine) -> Unit raise {
 ///|
 fn halt(m : @primus.Machine) -> Unit raise {
   let pid = m.current()
-  m.update_global(state, s => s.add(pid))
+  m.update_global(state, s => s.insert(pid))
   reschedule(m)
 }
 

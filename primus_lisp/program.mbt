@@ -23,7 +23,7 @@ pub struct Package {
 
 ///|
 fn[T] nodefs() -> Defs[T] {
-  @sorted_map.SortedMap::new()
+  @sorted_map.SortedMap::empty()
 }
 
 ///|
@@ -154,9 +154,9 @@ pub fn Program::empty() -> Program {
     context: Context::empty(),
     pkg: default_package,
     sources: Source::new(),
-    exports: @sorted_map.SortedMap::new(),
-    library: @sorted_map.SortedMap::new(),
-    pkgdocs: @sorted_map.SortedMap::new(),
+    exports: @sorted_map.SortedMap::empty(),
+    library: @sorted_map.SortedMap::empty(),
+    pkgdocs: @sorted_map.SortedMap::empty(),
   }
 }
 
@@ -195,7 +195,7 @@ pub fn Program::equal(self : Program, other : Program) -> Bool {
 /// Packages and their documentation.
 pub fn Program::packages(self : Program) -> Array[(String, String)] {
   self.library
-  .keys_as_iter()
+  .keys()
   .map(pkg => {
     (
       pkg,
@@ -214,7 +214,7 @@ pub fn Program::update_package_documentation(
   pkg : String,
   docs : String,
 ) -> Program {
-  { ..self, pkgdocs: self.pkgdocs.add(pkg, docs), }
+  { ..self, pkgdocs: self.pkgdocs.insert(pkg, docs), }
 }
 
 ///|
@@ -223,7 +223,7 @@ fn[T] filter_defs(defs : Defs[T], f : (Def[T]) -> Bool) -> Defs[T] {
   for kv in defs.iter() {
     let xs = kv.1.filter(f)
     if xs.length() > 0 {
-      out = out.add(kv.0, xs)
+      out = out.insert(kv.0, xs)
     }
   }
   out
@@ -278,11 +278,11 @@ fn Program::transitive_closure(
   self : Program,
   from : String,
 ) -> @sorted_set.SortedSet[String] {
-  let mut seen = @sorted_set.SortedSet::new()
+  let mut seen = @sorted_set.SortedSet::empty()
   let todo = [from]
   while todo.pop() is Some(p) {
     if !seen.contains(p) {
-      seen = seen.add(p)
+      seen = seen.insert(p)
       for t in self.targets(p) {
         todo.push(t)
       }
@@ -322,7 +322,7 @@ fn[T] merge_defs(xs : Defs[T], ys : Defs[T]) -> Defs[T] {
   add(ys)
   let mut r = nodefs()
   for k, v in out {
-    r = r.add(k, v)
+    r = r.insert(k, v)
   }
   r
 }
@@ -357,13 +357,13 @@ pub fn Program::use_package(
   }
   let exports = match self.exports.get(from) {
     None => @sorted_set.SortedSet::singleton(target)
-    Some(s) => s.add(target)
+    Some(s) => s.insert(target)
   }
-  let prog = { ..self, exports: self.exports.add(from, exports), }
+  let prog = { ..self, exports: self.exports.insert(from, exports), }
   let public = prog.get_package(from, public=true)
   let mut library = prog.library
   for t in prog.transitive_closure(from) {
-    library = library.add(
+    library = library.insert(
       t,
       match library.get(t) {
         None => public
@@ -391,14 +391,14 @@ pub fn Program::merge(self : Program, other : Program) -> Program {
   let mut pkgdocs = self.pkgdocs
   for kv in other.pkgdocs.iter() {
     match pkgdocs.get(kv.0) {
-      None => pkgdocs = pkgdocs.add(kv.0, kv.1)
-      Some("") => pkgdocs = pkgdocs.add(kv.0, kv.1)
+      None => pkgdocs = pkgdocs.insert(kv.0, kv.1)
+      Some("") => pkgdocs = pkgdocs.insert(kv.0, kv.1)
       Some(_) => ()
     }
   }
   let mut library = self.library
   for kv in other.library.iter() {
-    library = library.add(
+    library = library.insert(
       kv.0,
       match library.get(kv.0) {
         None => kv.1
@@ -408,7 +408,7 @@ pub fn Program::merge(self : Program, other : Program) -> Program {
   }
   let mut exports = self.exports
   for kv in other.exports.iter() {
-    exports = exports.add(
+    exports = exports.insert(
       kv.0,
       match exports.get(kv.0) {
         None => kv.1
@@ -429,12 +429,12 @@ pub fn Program::merge(self : Program, other : Program) -> Program {
 ///|
 fn[T] add_to_defs(defs : Defs[T], x : Def[T]) -> Defs[T] {
   match defs.get(x.name) {
-    None => defs.add(x.name, [x])
+    None => defs.insert(x.name, [x])
     Some(ds) =>
       if ds.iter().any(d => d.name == x.name && d.id == x.id) {
         defs
       } else {
-        defs.add(x.name, [x] + ds)
+        defs.insert(x.name, [x] + ds)
       }
   }
 }
@@ -455,7 +455,10 @@ pub fn[T] Program::add(self : Program, item : Item[T], elt : Def[T]) -> Program 
         None => empty_package
         Some(p) => p
       }
-      library = library.add(pkg, (item.set)(p, add_to_defs((item.get)(p), elt)))
+      library = library.insert(
+        pkg,
+        (item.set)(p, add_to_defs((item.get)(p), elt)),
+      )
     }
   }
   { ..self, library, }

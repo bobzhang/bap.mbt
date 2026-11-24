@@ -88,10 +88,10 @@ test "collect reaches the fixed point of mutually recursive properties" {
     reach.promise((kb, obj) => {
       let me = kb.require_some(name, obj)
       let result : Set[String] = Set([])
-      result.add(me)
+      result.insert(me)
       for succ in edges[me] {
         for x in kb.collect(reach, nodes[succ]) {
-          result.add(x)
+          result.insert(x)
         }
       }
       result

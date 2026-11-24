@@ -455,7 +455,7 @@ fn Glob::infer(
     Let(v, x, y) => {
       g.constr(v.id, v.typ)
       self.infer(g, vs, x)
-      self.infer(g, vs.add(key(v.name), v.id), y)
+      self.infer(g, vs.insert(key(v.name), v.id), y)
       g.unify(x.id, v.id)
       g.unify(y.id, id)
       self.constr_special(v, g)
@@ -507,9 +507,9 @@ fn Glob::reduce(
 fn bind_args(
   args : Array[LVar],
 ) -> @sorted_map.SortedMap[(String, String), Int32] {
-  let mut vs = @sorted_map.SortedMap::new()
+  let mut vs = @sorted_map.SortedMap::empty()
   for a in args {
-    vs = vs.add(key(a.name), a.id)
+    vs = vs.insert(key(a.name), a.id)
   }
   vs
 }

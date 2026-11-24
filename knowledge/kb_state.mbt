@@ -20,7 +20,7 @@ priv struct Info {
 ///|
 let noinfo : Info = {
   data: empty_record,
-  comp: @sorted_map.SortedMap::new(),
+  comp: @sorted_map.SortedMap::empty(),
   name: None,
 }
 
@@ -42,9 +42,9 @@ priv struct Objects {
 ///|
 let empty_class : Objects = {
   last: 0,
-  vals: @sorted_map.SortedMap::new(),
-  objs: @hashmap.HashMap::new(),
-  pubs: @hashmap.HashMap::new(),
+  vals: @sorted_map.SortedMap::empty(),
+  objs: @hashmap.HashMap::empty(),
+  pubs: @hashmap.HashMap::empty(),
 }
 
 ///|
@@ -58,9 +58,9 @@ priv struct Env {
 
 ///|
 let empty_env : Env = {
-  classes: @hashmap.HashMap::new(),
+  classes: @hashmap.HashMap::empty(),
   pkg: "user",
-  context: @sorted_map.SortedMap::new(),
+  context: @sorted_map.SortedMap::empty(),
 }
 
 ///|
@@ -158,7 +158,7 @@ fn State::set_class_objects(
   cls : Name,
   objects : Objects,
 ) -> Unit {
-  self.env = { ..self.env, classes: self.env.classes.add(cls, objects), }
+  self.env = { ..self.env, classes: self.env.classes.insert(cls, objects), }
 }
 
 ///|
@@ -180,7 +180,7 @@ fn State::update_info(
   }
   self.set_class_objects(cls, {
     ..objects,
-    vals: objects.vals.add(id, f(info)),
+    vals: objects.vals.insert(id, f(info)),
   })
 }
 
@@ -241,7 +241,7 @@ pub fn[K, S] State::objects(
 ) -> Array[Object[K]] {
   let name = cls.name()
   self.class_objects(name).vals
-  .keys_as_iter()
+  .keys()
   .map(id => Object::{ id, class_name: name, _phantom: None, })
   .to_array()
 }
@@ -283,10 +283,10 @@ pub fn[R] State::with_pkg(self : State, pkg : String, body : () -> R) -> R {
 fn Objects::publicize(self : Objects, name : Name, id : Int32) -> Objects {
   let pkg = name.pkg()
   let pubs = match self.pubs.get(pkg) {
-    Some(ids) => ids.add(id)
+    Some(ids) => ids.insert(id)
     None => @sorted_set.SortedSet::singleton(id)
   }
-  { ..self, pubs: self.pubs.add(pkg, pubs), }
+  { ..self, pubs: self.pubs.insert(pkg, pubs), }
 }
 
 ///|
@@ -306,8 +306,8 @@ fn[K, S] State::do_intern(
       let objects = {
         ..objects,
         last: id,
-        vals: objects.vals.add(id, info),
-        objs: objects.objs.add(name, id),
+        vals: objects.vals.insert(id, info),
+        objs: objects.objs.insert(name, id),
       }
       self.set_class_objects(
         cls_name,
@@ -470,7 +470,7 @@ pub fn State::import_(
         let imported = Name::create(sym.unqualified(), pkg~)
         let existing = objs.get(imported).unwrap_or(0)
         if !strict || existing == 0 || existing == id {
-          objs = objs.add(imported, id)
+          objs = objs.insert(imported, id)
         } else {
           let other = match objects.vals.get(existing) {
             Some({ name: Some(other), .. }) => other
@@ -479,7 +479,7 @@ pub fn State::import_(
           raise ImportConflict(sym, other)
         }
       }
-      classes = classes.add(cls, { ..objects, objs, })
+      classes = classes.insert(cls, { ..objects, objs, })
     }
   }
   self.env = { ..self.env, classes, }

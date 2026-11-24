@@ -26,8 +26,8 @@ priv struct Tainter {
 ///|
 fn empty_tainter() -> Tainter {
   {
-    direct: @sorted_map.SortedMap::new(),
-    indirect: @sorted_map.SortedMap::new(),
+    direct: @sorted_map.SortedMap::empty(),
+    indirect: @sorted_map.SortedMap::empty(),
   }
 }
 
@@ -62,7 +62,7 @@ let tainter : @primus.State[Tainter] = @primus.State::declare_(
 fn[K] union_all(
   m : @sorted_map.SortedMap[K, @sorted_set.SortedSet[Object]],
 ) -> @sorted_set.SortedSet[Object] {
-  m.fold((acc, _, s) => acc.union(s), init=@sorted_set.SortedSet::new())
+  m.fold((acc, _, s) => acc.union(s), init=@sorted_set.SortedSet::empty())
 }
 
 ///|
@@ -79,7 +79,7 @@ fn[K : Compare] change_map(
 ) -> @sorted_map.SortedMap[K, @sorted_set.SortedSet[Object]] {
   match f(m.get(key)) {
     None => m.remove(key)
-    Some(s) => m.add(key, s)
+    Some(s) => m.insert(key, s)
   }
 }
 
@@ -200,7 +200,7 @@ pub fn Tracker::lookup(
   rel : Rel,
 ) -> @sorted_set.SortedSet[Object] {
   match find(m.get_local(tainter), v, rel) {
-    None => @sorted_set.SortedSet::new()
+    None => @sorted_set.SortedSet::empty()
     Some(s) => s
   }
 }
@@ -218,7 +218,7 @@ pub fn Tracker::new_direct(
     change(t, v, Direct, old => {
       match old {
         None => Some(@sorted_set.SortedSet::singleton(taint))
-        Some(old) => Some(old.add(taint))
+        Some(old) => Some(old.insert(taint))
       }
     })
   })
@@ -247,7 +247,7 @@ pub fn Tracker::new_indirect(
     indirect = change_map(indirect, Addr(a.to_word()), old => {
       match old {
         None => Some(@sorted_set.SortedSet::singleton(taint))
-        Some(old) => Some(old.add(taint))
+        Some(old) => Some(old.insert(taint))
       }
     })
   }
@@ -266,10 +266,10 @@ fn[K : Compare] kill_objects(
       if rest.is_empty() {
         acc
       } else {
-        acc.add(k, rest)
+        acc.insert(k, rest)
       }
     },
-    init=@sorted_map.SortedMap::new(),
+    init=@sorted_map.SortedMap::empty(),
   )
 }
 

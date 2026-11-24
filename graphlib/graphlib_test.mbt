@@ -372,7 +372,7 @@ test "partitions support BAP trivial discrete union and refinement invariants" {
   for group in refined.groups() {
     let representative = group.top()
     for element in group.elements() {
-      covered.add(element)
+      covered.insert(element)
       assert_true((representative - element) % 2 == 0)
     }
   }
@@ -682,7 +682,7 @@ fn dfs_tree_ancestors(parents : Map[Int32, Int32], node : Int32) -> Set[Int32] {
   while !done {
     match parents.get(current) {
       Some(parent) => {
-        ancestors.add(parent)
+        ancestors.insert(parent)
         current = parent
       }
       None => done = true
@@ -906,7 +906,7 @@ test "dominance frontiers report diamond joins" {
 ///|
 fn int_set_transfer(node : Int32, facts : Set[Int32]) -> Set[Int32] {
   let out = facts.copy()
-  out.add(node)
+  out.insert(node)
   out
 }
 

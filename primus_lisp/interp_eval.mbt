@@ -152,7 +152,7 @@ pub fn eval(m : @primus.Machine, e : Ast, k : Cont) -> Unit raise {
         let name = lisp_var(s, v).name
         scoped(
           m,
-          s => { ..s, env: s.env.add(name, w), },
+          s => { ..s, env: s.env.insert(name, w), },
           (m, k) => eval(m, body, k),
           k,
         )
@@ -258,7 +258,7 @@ fn set_var(
   let s = get_state(m)
   let bvar = lisp_var(s, v)
   if s.env.contains(bvar.name) {
-    put_state(m, { ..s, env: s.env.add(bvar.name, w), })
+    put_state(m, { ..s, env: s.env.insert(bvar.name, w), })
     k(m, w)
   } else {
     step(
@@ -398,7 +398,7 @@ fn eval_body(
     s => {
       let mut env = s.env
       for b in bs {
-        env = env.add(lisp_var(s, b.0).name, b.1)
+        env = env.insert(lisp_var(s, b.0).name, b.1)
       }
       { ..s, env, cur: body.id, }
     },

@@ -162,7 +162,7 @@ fn assert_optional_label_semantics_equal(
 fn string_set(items : Array[String]) -> Set[String] {
   let result : Set[String] = Set([])
   for item in items {
-    result.add(item)
+    result.insert(item)
   }
   result
 }

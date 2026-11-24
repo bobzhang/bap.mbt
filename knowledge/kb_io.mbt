@@ -125,7 +125,7 @@ pub fn State::deserialize(input : String) -> State raise Conflict {
   if version != 2 {
     raise Failure("unsupported knowledge base version \{version}")
   }
-  let mut classes : @hashmap.HashMap[Name, Objects] = @hashmap.HashMap::new()
+  let mut classes : @hashmap.HashMap[Name, Objects] = @hashmap.HashMap::empty()
   let nclasses = r.int()
   for _ in 0..<nclasses {
     let cls = Name::read(r.token())
@@ -157,24 +157,24 @@ pub fn State::deserialize(input : String) -> State raise Conflict {
           _ => ()
         }
       }
-      let mut comp = @sorted_map.SortedMap::new()
+      let mut comp = @sorted_map.SortedMap::empty()
       let ncomp = r.int()
       for _ in 0..<ncomp {
         match slots_by_name.get(Name::read(r.token())) {
-          Some(pack) => comp = comp.add(pack.uid, Done)
+          Some(pack) => comp = comp.insert(pack.uid, Done)
           None => ()
         }
       }
       objects = {
         ..objects,
-        vals: objects.vals.add(id, { data, comp, name: sym, }),
+        vals: objects.vals.insert(id, { data, comp, name: sym, }),
         objs: match sym {
-          Some(s) => objects.objs.add(s, id)
+          Some(s) => objects.objs.insert(s, id)
           None => objects.objs
         },
       }
     }
-    classes = classes.add(cls, objects)
+    classes = classes.insert(cls, objects)
   }
   { env: { ..empty_env, classes, }, }
 }

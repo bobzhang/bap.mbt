@@ -125,7 +125,7 @@ fn dedup_tids(tids : Array[@types.Tid]) -> Array[@types.Tid] {
   let result = []
   for tid in tids {
     if !seen.contains(tid) {
-      seen.add(tid)
+      seen.insert(tid)
       result.push(tid)
     }
   }
@@ -169,7 +169,7 @@ pub fn OptimizationData::find_unreachable(
   let dead_jmps : @hashset.HashSet[@types.Tid] = @hashset.HashSet([])
   for blk in sub.blks() {
     for tid in dead_jmps_of_blk(blk) {
-      dead_jmps.add(tid)
+      dead_jmps.insert(tid)
     }
   }
   let graph = sub

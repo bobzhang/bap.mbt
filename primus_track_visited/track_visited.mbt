@@ -35,11 +35,11 @@ fn count_blks(prog : @types.Term[@types.Program]) -> Int32 {
 fn init_visited(
   prog : @types.Term[@types.Program],
 ) -> @immut_hashset.HashSet[@types.Tid] {
-  let mut visited = @immut_hashset.new()
+  let mut visited = @immut_hashset.empty()
   for sub in prog.subs() {
     for blk in sub.blks() {
       if blk.is_visited() {
-        visited = visited.add(blk.tid())
+        visited = visited.insert(blk.tid())
       }
     }
   }
@@ -78,7 +78,7 @@ pub let progress : @primus.Observation[(Int32, Int32)] = progress_pair.0
 ///|
 fn visit(m : @primus.Machine, tid : @types.Tid) -> Unit raise {
   let s = m.get_global(state)
-  let s = { ..s, visited: s.visited.add(tid), }
+  let s = { ..s, visited: s.visited.insert(tid), }
   m.post(progress_pair.1, () => (s.visited.iter().count(), s.total))
   m.put_global(state, s)
 }
@@ -176,7 +176,7 @@ pub fn mem(m : @primus.Machine, tid : @types.Tid) -> Bool {
 ///|
 /// Forcefully adds the term to the set of visited terms.
 pub fn add(m : @primus.Machine, tid : @types.Tid) -> Unit {
-  m.update_global(state, s => { ..s, visited: s.visited.add(tid), })
+  m.update_global(state, s => { ..s, visited: s.visited.insert(tid), })
 }
 
 ///|

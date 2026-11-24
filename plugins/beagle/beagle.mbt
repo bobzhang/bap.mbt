@@ -164,7 +164,7 @@ priv struct Club {
 let club : @primus.State[Club] = @primus.State::declare_(
   uuid="1fa35cfe-f720-473c-a5ac-50fa8fa9f1fd",
   name="beagle-hunters-club",
-  _ => { addrs: @sorted_set.new(), cache: @sorted_map.new(), },
+  _ => { addrs: @sorted_set.empty(), cache: @sorted_map.empty(), },
 )
 
 ///|
@@ -256,7 +256,7 @@ fn hunt(m : @primus.Machine, prey : @beagle_prey.Prey) -> Unit raise {
     None => {
       let Hunter(hunt) = m.get_local(hunter)
       let words = hunt(prey.data())
-      m.update_global(club, c => { ..c, cache: c.cache.add(key, words), })
+      m.update_global(club, c => { ..c, cache: c.cache.insert(key, words), })
       words
     }
   }
@@ -270,7 +270,7 @@ pub fn install(m : @primus.Machine) -> Unit {
   m.observe(@primus.loading, addr => {
     m.update_global(club, c => {
       ..c,
-      addrs: c.addrs.add(Addr(addr.to_word())),
+      addrs: c.addrs.insert(Addr(addr.to_word())),
     })
   })
   m.observe(@primus.stored, x => process_word(m, x.1.to_word()))

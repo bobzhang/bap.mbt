@@ -59,11 +59,11 @@ fn collect_advisors(
       }
     }
   })
-  let mut r = @sorted_map.SortedMap::new()
+  let mut r = @sorted_map.SortedMap::empty()
   for k, v in out {
     v.0.sort_by(compare_names)
     v.1.sort_by(compare_names)
-    r = r.add(k, { before: v.0, after: v.1, })
+    r = r.insert(k, { before: v.0, after: v.1, })
   }
   r
 }
@@ -220,7 +220,7 @@ pub fn link_places(m : @primus.Machine) -> Unit raise {
   let prog = s.program.with_places(m.target(), globals~)
   let mut places = s.places
   prog.fold(place, init=(), (pkg, def, _) => {
-    places = places.add(
+    places = places.insert(
       key(@knowledge.Name::create(def.name, pkg~)),
       def.code.location,
     )

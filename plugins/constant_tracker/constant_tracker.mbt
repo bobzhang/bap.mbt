@@ -45,7 +45,7 @@ pub fn ConstantTracker::all_consts(
 /// Declares a value a static constant (`declare_const`, the `const`
 /// observation).
 pub fn ConstantTracker::intro(self : ConstantTracker, id : Int64) -> Unit {
-  self.consts.add(id)
+  self.consts.insert(id)
 }
 
 ///|

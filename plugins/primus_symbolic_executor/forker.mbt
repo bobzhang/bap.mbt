@@ -46,8 +46,8 @@ let master : @primus.State[Master] = @primus.State::declare_(
   _ => {
     self_: None,
     ready: 0,
-    tasks: @sorted_map.new(),
-    tries: @immut_hashmap.new(),
+    tasks: @sorted_map.empty(),
+    tries: @immut_hashmap.empty(),
   },
 )
 
@@ -69,8 +69,8 @@ let worker : @primus.State[Worker] = @primus.State::declare_(
     task: {
       id: null_tid,
       edge: None,
-      constraints: @sorted_set.new(),
-      inputs: @sorted_set.new(),
+      constraints: @sorted_set.empty(),
+      inputs: @sorted_set.empty(),
     },
   },
 )
@@ -151,7 +151,7 @@ fn new_task(
     return
   }
   let user = get_constraints(m, User)
-  let constraints = user.union(self_.task.constraints).add(formula)
+  let constraints = user.union(self_.task.constraints).insert(formula)
   let inputs = m.get_local(executor).inputs.union(self_.task.inputs)
   let task = { inputs, constraints, edge, id: self_.tid, }
   m.update_global(master, s => {
@@ -159,7 +159,7 @@ fn new_task(
       None => 0
       Some(k) => k + 1
     }
-    { ..s, tasks: s.tasks.add(key, task), }
+    { ..s, tasks: s.tasks.insert(key, task), }
   })
 }
 
@@ -215,7 +215,7 @@ fn pop_task(m : @primus.Machine) -> (@z3.Model, Task)? {
     None => {
       let ready = s.ready + queued
       log.report_progress(stage=ready - 1, total=ready)
-      m.put_global(master, { ..s, tasks: @sorted_map.new(), })
+      m.put_global(master, { ..s, tasks: @sorted_map.empty(), })
       None
     }
     Some((model, t)) => {
@@ -226,7 +226,7 @@ fn pop_task(m : @primus.Machine) -> (@z3.Model, Task)? {
         ..s,
         tasks: ts,
         ready: s.ready + processed,
-        tries: s.tries.add(t.id, count(s.tries, t.id) + 1),
+        tries: s.tries.insert(t.id, count(s.tries, t.id) + 1),
       })
       Some((model, t))
     }

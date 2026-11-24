@@ -353,8 +353,8 @@ let symbols_state : State[SymbolIndex] = State::declare_(
   uuid="2d2293e9-4c42-4b82-90a7-7e8e74fd01ed",
   name="symbols",
   _ => {
-    by_name: @immut_hashmap.HashMap::new(),
-    by_key: @sorted_map.SortedMap::new(),
+    by_name: @immut_hashmap.HashMap::empty(),
+    by_key: @sorted_map.SortedMap::empty(),
     last: 0,
   },
 )
@@ -373,8 +373,8 @@ pub fn Value::symbol_to_value(
     None => {
       let k = index.last + 1
       m.put_global(symbols_state, {
-        by_name: index.by_name.add(sym, k),
-        by_key: index.by_key.add(k, sym),
+        by_name: index.by_name.insert(sym, k),
+        by_key: index.by_key.insert(k, sym),
         last: k,
       })
       k

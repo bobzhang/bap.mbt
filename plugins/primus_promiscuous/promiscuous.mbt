@@ -66,11 +66,11 @@ priv struct Conflicts {
 fn init_visited(
   prog : @types.Term[@types.Program],
 ) -> @immut_hashset.HashSet[@types.Tid] {
-  let mut visited = @immut_hashset.new()
+  let mut visited = @immut_hashset.empty()
   for sub in prog.subs() {
     for blk in sub.blks() {
       if blk.is_visited() {
-        visited = visited.add(blk.tid())
+        visited = visited.insert(blk.tid())
       }
     }
   }
@@ -251,7 +251,7 @@ fn step(m : @primus.Machine, pos : @primus.Pos) -> Unit raise {
 
 ///|
 fn mark_visited(m : @primus.Machine, blk : @types.Term[@types.Blk]) -> Unit {
-  m.update_global(state, t => { ..t, visited: t.visited.add(blk.tid()), })
+  m.update_global(state, t => { ..t, visited: t.visited.insert(blk.tid()), })
 }
 
 ///|

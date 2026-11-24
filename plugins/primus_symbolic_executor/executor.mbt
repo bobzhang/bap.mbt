@@ -13,7 +13,7 @@ priv struct ExecutorState {
 let executor : @primus.State[ExecutorState] = @primus.State::declare_(
   uuid="e21aa0fe-bc37-48e3-b398-ce7e764843c8",
   name="symbolic-executor-formulae",
-  _ => { values: @sorted_map.new(), inputs: @sorted_set.new(), },
+  _ => { values: @sorted_map.empty(), inputs: @sorted_set.empty(), },
 )
 
 ///|
@@ -65,7 +65,7 @@ fn put_value(
   f : () -> @z3.Expr raise @z3.Z3Error,
 ) -> Unit {
   let x = f() catch { _ => return }
-  m.update_local(executor, s => { ..s, values: s.values.add(r.id(), x), })
+  m.update_local(executor, s => { ..s, values: s.values.insert(r.id(), x), })
 }
 
 ///|
@@ -125,8 +125,8 @@ pub fn set_input(
 ) -> Unit {
   let f = smt_var(origin.to_symbol(), origin.size()) catch { _ => return }
   m.update_local(executor, s => {
-    inputs: s.inputs.add(origin),
-    values: s.values.add(x.id(), f),
+    inputs: s.inputs.insert(origin),
+    values: s.values.insert(x.id(), f),
   })
 }
 
@@ -198,14 +198,14 @@ let context : @primus.State[
 ] = @primus.State::declare_(
   uuid="9538b1fa-b6c0-464a-b11e-22377a10b0b6",
   name="symbolic-context",
-  _ => @sorted_map.new(),
+  _ => @sorted_map.empty(),
 )
 
 ///|
 fn add_constraint(m : @primus.Machine, scope : Scope, x : @z3.Expr) -> Unit {
   m.update_local(context, s => {
-    let xs = s.get(scope.name()).unwrap_or(@sorted_set.new())
-    s.add(scope.name(), xs.add(x))
+    let xs = s.get(scope.name()).unwrap_or(@sorted_set.empty())
+    s.insert(scope.name(), xs.insert(x))
   })
 }
 
@@ -214,7 +214,7 @@ fn get_constraints(
   m : @primus.Machine,
   scope : Scope,
 ) -> @sorted_set.SortedSet[@z3.Expr] {
-  m.get_local(context).get(scope.name()).unwrap_or(@sorted_set.new())
+  m.get_local(context).get(scope.name()).unwrap_or(@sorted_set.empty())
 }
 
 ///|

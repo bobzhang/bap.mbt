@@ -189,7 +189,7 @@ let kinds : @primus.State[Kinds] = @primus.State::declare_(
       .map(p => @primus.Sexp::List([p.0.inspect(), Atom(p.1.to_string())])),
     )
   },
-  _ => { objects: @sorted_map.SortedMap::new(), },
+  _ => { objects: @sorted_map.SortedMap::empty(), },
 )
 
 ///|
@@ -208,7 +208,7 @@ fn next_key(m : @primus.Machine, s : Kinds) -> @primus.Value raise {
 pub fn Object::create(m : @primus.Machine, kind : Kind) -> Object raise {
   let s = m.get_global(kinds)
   let key : Object = { value: next_key(m, s), }
-  m.put_global(kinds, { objects: s.objects.add(key, kind), })
+  m.put_global(kinds, { objects: s.objects.insert(key, kind), })
   key
 }
 

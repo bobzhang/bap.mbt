@@ -20,7 +20,7 @@ struct Doc {
 ///|
 /// The empty document (upstream `Doc.empty`).
 pub fn Doc::empty() -> Doc {
-  { scheme: @hashmap.new(), entries: @hashmap.new(), }
+  { scheme: @hashmap.empty(), entries: @hashmap.empty(), }
 }
 
 ///|
@@ -45,7 +45,7 @@ pub fn Doc::definitions(self : Doc) -> Int32 {
 ///|
 /// Removes all facts, keeping the declarations (upstream `Doc.clear`).
 pub fn Doc::clear(self : Doc) -> Doc {
-  { ..self, entries: @hashmap.new(), }
+  { ..self, entries: @hashmap.empty(), }
 }
 
 ///|
@@ -100,7 +100,7 @@ fn Doc::update_scheme(
   match self.scheme.get(name) {
     Some(existing) if existing != sign =>
       raise signature_mismatch(existing, sign)
-    _ => { ..self, scheme: self.scheme.add(name, sign.copy()), }
+    _ => { ..self, scheme: self.scheme.insert(name, sign.copy()), }
   }
 }
 
@@ -158,7 +158,7 @@ fn Doc::update_entries(
     }),
   )
   let facts = match self.entries.get(name) {
-    None => { items: @list.singleton(normalized), set: @hashset.new(), }
+    None => { items: @list.singleton(normalized), set: @hashset.empty(), }
     Some(facts) =>
       if facts.set.contains(normalized) {
         return self
@@ -166,8 +166,8 @@ fn Doc::update_entries(
         { items: facts.items.prepend(normalized), set: facts.set, }
       }
   }
-  let facts = { ..facts, set: facts.set.add(normalized), }
-  { ..self, entries: self.entries.add(name, facts), }
+  let facts = { ..facts, set: facts.set.insert(normalized), }
+  { ..self, entries: self.entries.insert(name, facts), }
 }
 
 ///|

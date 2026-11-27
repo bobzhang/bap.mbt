@@ -6,7 +6,7 @@
 //
 // Or manually declare it in `import`, for example:
 // import {
-//   "moonbitlang/x@0.4.6",
+//   "moonbitlang/x@0.5.9",
 // }
 
 name = "bobzhang/bap"

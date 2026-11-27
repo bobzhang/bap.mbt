@@ -11,7 +11,7 @@
 
 name = "bobzhang/bap"
 
-version = "0.4.2"
+version = "0.4.3"
 
 readme = "README.mbt.md"
 
